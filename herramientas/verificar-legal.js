@@ -79,6 +79,7 @@ function enlacesEnTodoElSitio() {
   // existe y, si lleva ancla, a una sección que existe.
   const destinos = { "privacidad.html": ids(leer("privacidad.html")), "terminos.html": ids(leer("terminos.html")) };
   const rotos = [];
+  const correoAjeno = [];   // el dominio es ajedrez-integral.com, con guion
   let cuantos = 0;
   const recorrer = (dir) => {
     for (const e of fs.readdirSync(path.join(RAIZ, dir), { withFileTypes: true })) {
@@ -89,6 +90,7 @@ function enlacesEnTodoElSitio() {
       }
       if (!r.endsWith(".html")) continue;
       const html = leer(r);
+      if (/@ajedrezintegral\.com/i.test(html)) correoAjeno.push(r);
       for (const m of html.matchAll(/href="([^"]*(?:privacidad|terminos)\.html)(?:#([^"]*))?"/g)) {
         cuantos += 1;
         const propia = m[1].match(/^https:\/\/ajedrez-integral\.com\/(.*)$/);   // el canonical
@@ -100,6 +102,8 @@ function enlacesEnTodoElSitio() {
   };
   recorrer("");
   igual("los " + cuantos + " enlaces a las páginas legales llegan a donde dicen", rotos, []);
+  igual("ninguna página da un correo de otro dominio (ajedrezintegral.com, sin guion, no es nuestro)",
+    correoAjeno, []);
 
   const tienda = leer("tienda.html");
   igual("el pedido de la tienda deja escrita la aceptación de las condiciones",
