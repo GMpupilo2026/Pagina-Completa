@@ -4964,9 +4964,44 @@ de antes.
   sin él lo sacaría sin que nadie lo pidiera. No puede tocar los cupos ni las
   fechas: eso es lo que se pagó.
 - **Quién ve un paquete** lo contesta `puede_ver_paquete()`: administración, su
-  titular y quien coordina al titular. **El alumno NO ve la fila del paquete**
+  titular, quien coordina al titular y, si el titular es una academia, su
+  supervisor. **El alumno NO ve la fila del paquete**
   (su nombre, su precio): ve su propio renglón de `paquete_alumnos` y lo que le
   diga `mi_acceso()`.
+
+### El titular puede ser una academia
+
+Lo que se vende casi siempre es «la academia X compra 50 cupos», y un profesor
+de titular no sirve para eso: los cupos quedarían atados a una persona que
+puede irse, y el que de verdad reparte es el supervisor. Por eso
+`paquetes_acceso.academia_id`: el titular es **una academia o un profesor,
+nunca los dos** (lo impide el CHECK `paquetes_acceso_un_titular` y
+`paquete_guardar()` lo rechaza con su mensaje).
+
+- **Lo reparte el supervisor de esa academia, y solo entre sus MIEMBROS**
+  (`academia_miembros`) — la misma regla del supervisor en todo lo demás: un
+  profesor puede estar en dos academias, y sus alumnos de la otra no son de
+  este supervisor. Lo que ya estaba en el paquete y no es miembro **se
+  conserva**, igual que con el titular profesor: la pantalla no puede quitar lo
+  que no le corresponde.
+- **Cambiar de supervisor no toca el paquete**: la pregunta es «¿supervisas la
+  academia titular?», así que el nuevo lo reparte desde el primer día.
+- **En pantalla el selector recorta a los miembros** (`candidatos()` de
+  `accesos.html`). El supervisor VE a más alumnos que esos —la RLS de
+  `profiles` le abre todo lo que está bajo su coordinación—, y sin el recorte le
+  ofrecería a alguien que la base rechaza: el fallo lo descubriría al apretar.
+- `paquete_guardar()` quedó con **una sola firma** (la vieja se borró): con dos,
+  PostgREST elegiría una según los parámetros que lleguen.
+- El supervisor llega por «🎟️ Cupos de tu academia» (grupo Administración de su
+  panel); sin ningún paquete de su academia, la página le dice que no es para
+  su cuenta y quién se lo arma.
+
+Comprobado impersonando cuentas reales en SQL (revertido): un paquete con
+academia y profesor a la vez se rechaza; la supervisora de ADAPZ ve el paquete
+y suma a dos miembros; un alumno de fuera se rechaza, igual que subirse los
+cupos; el supervisor de OTRA academia no lo ve ni lo reparte; el alumno no ve
+ninguna fila de paquetes y `mi_acceso()` le dice `paquete`; y vaciar la lista
+desde la supervisora deja al alumno ajeno que había puesto administración.
 
 ### `mi_acceso()` es la única pregunta
 
@@ -5086,7 +5121,9 @@ de paquetes, correr `node herramientas/verificar-accesos.js`** (con el sitio en
 localhost:8777 y playwright; `--sin-navegador` corre solo el módulo). Comprueba
 que comprar un alumno más nunca salga más barato (de 1 a 1000), que ninguna
 página escriba un precio a mano, que el control esté en las 61 páginas y no en
-las dos que quedan abiertas, que crear un paquete mande lo que se escribió, que
+las dos que quedan abiertas, que crear un paquete mande lo que se escribió (con una academia de titular, la
+academia y ningún profesor), que al supervisor solo se le ofrezcan los miembros
+de su academia —también al sumar un grupo—, que
 **sumar un grupo mande la UNIÓN** y que uno que no cabe no se mande, que el
 interruptor pida dos toques, que al titular no se le pinte el formulario, y que
 el control tape con el acceso vencido, no tape con el vigente y **no tape si la
