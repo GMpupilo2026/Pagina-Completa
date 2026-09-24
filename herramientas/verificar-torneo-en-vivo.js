@@ -34,6 +34,11 @@ const RAIZ = path.resolve(__dirname, "..");
 const CHROME = process.env.CHROME_PATH || "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
 const BASE = process.env.BASE_URL || "http://localhost:8777";
 
+/* Lo que cuenta como «escribir en la partida». platform_activity_log es el
+   latido del tiempo (js/tiempo-plataforma.js, en toda página de la Academia):
+   mirar una partida también es tiempo en la plataforma, y está bien que cuente. */
+const ESCRITURAS_DE_JUEGO = () => window.__escrituras.filter((e) => e.tabla !== "platform_activity_log").length;
+
 /* chess.js llega por CDN en la página; acá se sirve el de node_modules, igual
    que en el resto de los verificadores. Sin él las páginas de partida se
    quedan en "Cargando…" y esta prueba no mediría nada. */
@@ -311,7 +316,7 @@ async function pruebaPanelEnVivo(browser) {
   igualTablero("el tablero de al lado no se movió",
     await page.evaluate(LEER_TABLERO, '[data-tablero-sala="r3"]'), piezasDeFen(FEN_TABLERO_3));
 
-  igual("mirar no escribe nada en la base", await page.evaluate(() => window.__escrituras.length), 0);
+  igual("mirar no escribe nada en la base", await page.evaluate(ESCRITURAS_DE_JUEGO), 0);
   await ctx.close();
 }
 
@@ -398,7 +403,7 @@ async function pruebaEspectadorEnCartas(browser) {
   ok("ni la de las negras, ni siquiera con la carta de visión jugada",
     r.manoRival.indexOf("Visión") === -1 && r.manoRival.indexOf("Salto") === -1, r.manoRival);
 
-  igual("mirar no escribe nada en la base", await page.evaluate(() => window.__escrituras.length), 0);
+  igual("mirar no escribe nada en la base", await page.evaluate(ESCRITURAS_DE_JUEGO), 0);
   await ctx.close();
 }
 

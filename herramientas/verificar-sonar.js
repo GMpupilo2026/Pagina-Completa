@@ -253,7 +253,9 @@ async function navegador() {
     // El teclado del tablero: la flecha mueve el foco de verdad.
     await page.focus("#board [tabindex='0']");
     const antes = await page.evaluate(() => document.activeElement.dataset.square);
-    await page.keyboard.press("ArrowRight");
+    /* La casilla la elige el azar de la partida: en la columna h no hay «a la
+       derecha» y la prueba fallaba sola una vez de cada tantas. */
+    await page.keyboard.press(antes && antes[0] === "h" ? "ArrowLeft" : "ArrowRight");
     const despues = await page.evaluate(() => document.activeElement.dataset.square);
     cierto("la flecha mueve el foco a la casilla de al lado", antes !== despues && despues, antes + " → " + despues);
     const raro = await escribir(page, "hola");
