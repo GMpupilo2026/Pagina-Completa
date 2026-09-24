@@ -24,7 +24,6 @@
          dentro del navegador en cada visita. -->
     <link rel="stylesheet" href="css/tailwind-inscripcion.css">
     <!-- Three.js para animación 3D -->
-    <script src="js/vendor/three.min.js"></script>
     <!-- SDK de Supabase (nuevo: fuente real de instituciones) -->
     <script src="js/vendor/supabase.js"></script>
     <!-- Widget anti-bots de Cloudflare Turnstile -->
@@ -342,6 +341,9 @@
     </script>
 
     <!-- Script 3D para Piezas de Ajedrez Animadas -->
+    <!-- three.js (589 KB) va aquí y no en el <head>: es solo el fondo animado, y
+         en el <head> dejaba el formulario en blanco hasta bajarlo. -->
+    <script src="js/vendor/three.min.js"></script>
     <script>
         document.getElementById('current-year').textContent = new Date().getFullYear();
 
