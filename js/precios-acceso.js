@@ -16,24 +16,25 @@
 
   const MONEDA = "₡";
 
-  /* El precio de UNA cuenta. Es el mismo que ya se le ofrecía a las familias
-     en elegir-plan.html ("Acceso a la plataforma"): no se cambió, se mudó acá. */
-  const INDIVIDUAL = 6900;
+  /* El precio de UNA cuenta, y de él salen los demás: cada tramo es un
+     descuento redondo sobre este (20, 30, 40, 50 y 58 %). Si cambia este
+     número, los tramos se vuelven a sacar en la misma proporción. */
+  const INDIVIDUAL = 3000;
 
   /* Cada tramo: desde cuántos alumnos aplica, cuánto cuesta cada uno al mes,
      cuántas cuentas de profesor incluye y si incluye coordinación. El último es
      de convenio: su precio es un "desde", porque un colegio se conversa. */
   const TRAMOS = [
     { id: "individual", nombre: "Una cuenta",   desde: 1,   precio: INDIVIDUAL, profesores: 0, coordinacion: false },
-    { id: "p10",        nombre: "Paquete 10",   desde: 10,  precio: 5500,       profesores: 1, coordinacion: false },
-    { id: "p25",        nombre: "Paquete 25",   desde: 25,  precio: 4900,       profesores: 2, coordinacion: false },
-    { id: "p50",        nombre: "Paquete 50",   desde: 50,  precio: 4200,       profesores: 3, coordinacion: true },
-    { id: "p100",       nombre: "Paquete 100",  desde: 100, precio: 3500,       profesores: 6, coordinacion: true },
-    { id: "colegio",    nombre: "Colegio",      desde: 300, precio: 2900,       profesores: null, coordinacion: true, convenio: true },
+    { id: "p10",        nombre: "Paquete 10",   desde: 10,  precio: 2400,       profesores: 1, coordinacion: false },
+    { id: "p25",        nombre: "Paquete 25",   desde: 25,  precio: 2100,       profesores: 2, coordinacion: false },
+    { id: "p50",        nombre: "Paquete 50",   desde: 50,  precio: 1800,       profesores: 3, coordinacion: true },
+    { id: "p100",       nombre: "Paquete 100",  desde: 100, precio: 1500,       profesores: 6, coordinacion: true },
+    { id: "colegio",    nombre: "Colegio",      desde: 300, precio: 1250,       profesores: null, coordinacion: true, convenio: true },
   ];
 
   /* Una cuenta de profesor de más, por encima de las que trae el paquete. */
-  const PROFESOR_EXTRA = 8000;
+  const PROFESOR_EXTRA = 3500;
 
   /* El ciclo lectivo: se usan 12 meses y se pagan 10. */
   const MESES_CICLO = 12;

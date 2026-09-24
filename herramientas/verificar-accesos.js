@@ -66,7 +66,7 @@ function pruebaModulo() {
   cierto("comprar un alumno más nunca sale más barato (de 1 a 1000)", saltos.length === 0, saltos.slice(0, 5).join(", "));
   cierto("y el precio por alumno nunca sube al comprar más", subidas.length === 0, subidas.slice(0, 5).join(", "));
   igual("con 9 alumnos se cobra el paquete de 10, que sale más barato", P.cotizar(9).cobrados, 10);
-  igual("con 25, el paquete 25 exacto", [P.cotizar(25).tramo.id, P.cotizar(25).total], ["p25", 25 * 4900]);
+  igual("con 25, el paquete 25 exacto", [P.cotizar(25).tramo.id, P.cotizar(25).total], ["p25", 25 * 2100]);
   igual("el ciclo lectivo son los meses cobrados", P.cotizar(10).ciclo, P.cotizar(10).total * P.MESES_COBRADOS_CICLO);
   igual("el formato es el de acá, con punto de miles", P.formato(122500), "₡122.500");
 
