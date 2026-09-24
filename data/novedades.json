@@ -1,6 +1,18 @@
 {
  "cambios": [
   {
+   "hash": "e9e3da0",
+   "fecha": "2026-09-24T06:20:00-06:00",
+   "titulo": "Paneles: la burbuja de conectados se queda en el panel de quien administra",
+   "pr": 416
+  },
+  {
+   "hash": "9e4a79e",
+   "fecha": "2026-09-24T00:14:47-06:00",
+   "titulo": "Modo sencillo en la clase en vivo, y pantallas de carga y listas vacías iguales en todo el sitio",
+   "pr": 415
+  },
+  {
    "hash": "ea0a5ab",
    "fecha": "2026-09-23T23:55:54-06:00",
    "titulo": "Panel: quien administra no da clase, y tiene su propio panel",
