@@ -11,7 +11,9 @@
    queda vieja, y el verificador nuevo que no se sumó a ella no corre nunca
    sin que nada lo avise. Qué necesita cada uno también se lee del archivo:
 
-     - navegador: hace require("playwright"). Si el sitio no está servido en
+     - navegador: hace require de playwright (a secas o por su ruta en
+       node_modules: detectar solo `require("playwright")` dejaba uno fuera de
+       las tandas con navegador sin que nada avisara). Si el sitio no está servido en
        localhost:8777 (o en BASE), se levanta un servidor y se apaga al final.
      - Python: los .py. Usan PYTHON si está puesta, si no python3.
 
@@ -84,7 +86,7 @@ function leerVerificadores() {
         archivo,
         nombre: archivo.replace(/^verificar-/, "").replace(/\.(js|py)$/, ""),
         py,
-        navegador: !py && /require\(\s*["']playwright["']\s*\)/.test(texto),
+        navegador: !py && /require\([^)]*playwright/.test(texto),
         aceptaSinNavegador: /--sin-navegador/.test(texto),
       };
     });
