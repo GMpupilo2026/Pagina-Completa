@@ -135,6 +135,15 @@
                 <p id="buscar-panel-estado" role="status" class="text-sm text-brand-600 dark:text-brand-300 mt-2 empty:hidden"></p>
             </form>
 
+            <!-- Las personas que coinciden: solo para quien da clase, coordina,
+                 supervisa o administra, y solo las que la base le deja ver
+                 (mi_gente()). Va pegado al buscador, como la grilla filtrada. -->
+            <section id="buscar-personas" hidden aria-labelledby="buscar-personas-titulo" class="mb-8">
+                <h2 id="buscar-personas-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Personas</h2>
+                <ul id="buscar-personas-lista" class="grid sm:grid-cols-2 gap-2"></ul>
+                <p id="buscar-personas-mas" class="text-sm text-brand-500 dark:text-brand-300 mt-2 empty:hidden"></p>
+            </section>
+
             <!-- ===== Estado de la clase =====
                  Solo aparece cuando tiene algo que decir: si hay clase en curso
                  (para todo el mundo) o si quien mira da clase y puede iniciar
@@ -995,6 +1004,8 @@
         }
 
         function renderTiles() {
+            // Quien puede buscar gente lo ve escrito en el campo.
+            if (buscaPersonas()) campoBusqueda.placeholder = "Cobros, tareas, el nombre de un alumno…";
             const grid = document.getElementById("tile-grid");
             grid.innerHTML = "";
             TILE_GROUPS.forEach((group) => {
@@ -1116,8 +1127,13 @@
 
         // Sin tildes y en minúscula: «contraseña», «contrasena» y «CONTRASEÑA»
         // encuentran lo mismo, como el buscador de admin.html.
+        // Y solo letras y números, separados por un espacio (con uno al
+        // principio): así cada palabra buscada se compara con el COMIENZO de
+        // una palabra. «mari» encuentra a María, no la tarjeta de Cursos por
+        // decir «temario».
         function textoBuscable(t) {
-            return String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+            return " " + String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
+                .replace(/[^a-z0-9]+/g, " ").trim();
         }
         function buscableDeTile(t) {
             const destino = String(t.href || "").split("?")[0];
@@ -1128,10 +1144,116 @@
         const estadoBusqueda = document.getElementById("buscar-panel-estado");
         let primeroDeLaBusqueda = null;
         let anuncioBusqueda = null;
+        let accesosEncontrados = 0, personasEncontradas = 0;
+
+        /* ---------- Buscar personas ----------
+           Además de las tarjetas, el buscador encuentra a la GENTE: «María»
+           lleva al informe de María. Lo que se puede encontrar lo decide la
+           base, no esta página: mi_gente() devuelve solo a quien cada uno
+           alcanza (sus alumnos si da clase; sus profesores y los alumnos de
+           ellos si coordina o supervisa; todos si administra), filtra sin
+           tildes y corta. Al alumnado no se le busca gente: no la tiene. */
+        const PERSONAS_A_LA_VEZ = 6;
+        let busquedaDePersonas = 0, esperaDePersonas = null;
+
+        function buscaPersonas() {
+            return !!profile && (esEquipoDocente() || profile.es_supervisor || profile.es_coordinador);
+        }
+        function ofreceCoordinacion() {
+            return !!profile && (profile.is_admin || profile.es_coordinador || profile.es_supervisor);
+        }
+        // A dónde lleva cada persona: el alumno, a su informe; quien da clase,
+        // a Coordinación con su nombre puesto (si quien busca puede entrar ahí).
+        function destinoDePersona(p) {
+            if (p.role === "alumno") return { href: "informes.html?alumno=" + encodeURIComponent(p.id), que: "Ver su informe" };
+            if (ofreceCoordinacion()) return { href: "coordinacion.html?buscar=" + encodeURIComponent(p.full_name || p.email || ""), que: "Verlo en Coordinación" };
+            return null;
+        }
+
+        function pintarPersonas(filas, total) {
+            const caja = document.getElementById("buscar-personas");
+            const lista = document.getElementById("buscar-personas-lista");
+            const mas = document.getElementById("buscar-personas-mas");
+            lista.innerHTML = "";
+            mas.textContent = "";
+            let pintadas = 0;
+            filas.forEach((p) => {
+                const destino = destinoDePersona(p);
+                if (!destino || (session && p.id === session.user.id)) return;
+                const li = document.createElement("li");
+                const a = document.createElement("a");
+                a.href = destino.href;
+                a.className = "flex items-center justify-between gap-3 rounded-xl bg-white dark:bg-brand-900 shadow-md px-4 py-3 hover:shadow-lg transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+                const quien = document.createElement("span");
+                quien.className = "min-w-0";
+                const nombre = document.createElement("span");
+                nombre.className = "block font-semibold text-sm text-brand-800 dark:text-white truncate";
+                nombre.textContent = p.full_name || p.email || "Sin nombre";
+                const dato = document.createElement("span");
+                dato.className = "block text-xs text-brand-500 dark:text-brand-300 truncate";
+                dato.textContent = [p.role === "alumno" ? "Alumno" : (p.is_admin ? "Administración" : "Profesor"), p.grupo].filter(Boolean).join(" · ");
+                quien.append(nombre, dato);
+                const que = document.createElement("span");
+                que.className = "shrink-0 text-xs font-semibold text-accent-700 dark:text-accent-400";
+                que.textContent = destino.que + " →";
+                a.append(quien, que);
+                li.appendChild(a);
+                lista.appendChild(li);
+                pintadas += 1;
+            });
+            if (total > filas.length) {
+                mas.textContent = `Hay ${total} en total. Escribe más para acotar`
+                    + (ofreceCoordinacion() ? ", o búscalos a todos en Coordinación." : ".");
+            }
+            caja.hidden = pintadas === 0;
+            personasEncontradas = pintadas;
+            return pintadas;
+        }
+
+        function buscarPersonas(escrito) {
+            clearTimeout(esperaDePersonas);
+            const mia = ++busquedaDePersonas;
+            if (!buscaPersonas() || escrito.length < 2) { pintarPersonas([], 0); return; }
+            // Se espera a que se deje de escribir: una consulta por palabra, no por letra.
+            esperaDePersonas = setTimeout(async () => {
+                const { data, error } = await sb.rpc("mi_gente",
+                    { p_busqueda: escrito, p_rol: null, p_limite: PERSONAS_A_LA_VEZ, p_desde: 0 });
+                if (mia !== busquedaDePersonas) return;   // llegó tarde: ya se escribió otra cosa
+                const filas = error ? [] : (data || []);
+                pintarPersonas(filas, filas.length ? Number(filas[0].total) : 0);
+                anunciarBusqueda();
+            }, 300);
+        }
+
+        /* El resultado se anuncia (role="status"), pero no a cada tecla: con
+           un lector de pantalla, «tres accesos» dicho por cada letra tapa lo
+           que se está escribiendo. Junta las tarjetas y las personas. */
+        function anunciarBusqueda() {
+            clearTimeout(anuncioBusqueda);
+            const escrito = campoBusqueda.value.trim();
+            if (!escrito) { estadoBusqueda.textContent = ""; return; }
+            anuncioBusqueda = setTimeout(() => {
+                if (!accesosEncontrados && !personasEncontradas) {
+                    estadoBusqueda.textContent = `Nada con «${escrito}». Prueba con otra palabra: cobros, tareas, contraseña…`;
+                    return;
+                }
+                const partes = [];
+                if (accesosEncontrados) partes.push(`${accesosEncontrados} ${accesosEncontrados === 1 ? "acceso" : "accesos"}`);
+                if (personasEncontradas) partes.push(`${personasEncontradas} ${personasEncontradas === 1 ? "persona" : "personas"}`);
+                const primero = primerResultado();
+                const nombre = primero ? (primero.querySelector("span > span") || primero).textContent : "";
+                estadoBusqueda.textContent = `${partes.join(" y ")} con «${escrito}».` + (nombre ? ` Enter abre «${nombre}».` : "");
+            }, 350);
+        }
+
+        // Enter abre la primera tarjeta; si no quedó ninguna, la primera persona.
+        function primerResultado() {
+            return primeroDeLaBusqueda || document.querySelector("#buscar-personas:not([hidden]) a[href]");
+        }
 
         function aplicarBusqueda() {
             const escrito = campoBusqueda.value.trim();
-            const palabras = textoBuscable(escrito).split(/\s+/).filter(Boolean);
+            const palabras = textoBuscable(escrito).split(" ").filter(Boolean);
             let total = 0;
             primeroDeLaBusqueda = null;
             document.querySelectorAll("#tile-grid > section").forEach((sec) => {
@@ -1139,7 +1261,7 @@
                 sec.querySelectorAll(".grid > [data-buscar]").forEach((celda) => {
                     // Todas las palabras tienen que estar, en la tarjeta o en
                     // el rótulo de su grupo: «cobros academia» encuentra una.
-                    const ok = palabras.every((p) => (celda.dataset.buscar + " " + sec.dataset.buscar).includes(p));
+                    const ok = palabras.every((p) => (celda.dataset.buscar + sec.dataset.buscar).includes(" " + p));
                     celda.style.display = ok ? "" : "none";
                     if (celda.id === "sesion-wrap") sesionVisible = ok;
                     if (!ok) return;
@@ -1164,37 +1286,45 @@
                bloque y borrar lo escrito tiene que dejarlos como estaban. */
             const buscando = palabras.length > 0;
             for (let el = document.getElementById("buscar-panel").nextElementSibling; el; el = el.nextElementSibling) {
-                if (el.id !== "tile-grid") el.style.display = buscando ? "none" : "";
+                if (el.id !== "tile-grid" && el.id !== "buscar-personas") el.style.display = buscando ? "none" : "";
             }
-
-            /* El resultado se anuncia (role="status"), pero no a cada tecla: con
-               un lector de pantalla, «tres accesos» dicho por cada letra tapa
-               lo que se está escribiendo. */
-            clearTimeout(anuncioBusqueda);
-            if (!palabras.length) { estadoBusqueda.textContent = ""; return; }
-            anuncioBusqueda = setTimeout(() => {
-                if (!total) {
-                    estadoBusqueda.textContent = `Nada con «${escrito}». Prueba con otra palabra: cobros, tareas, contraseña…`;
-                } else {
-                    const nombre = primeroDeLaBusqueda ? primeroDeLaBusqueda.querySelector("span > span").textContent : "";
-                    estadoBusqueda.textContent = `${total} ${total === 1 ? "acceso" : "accesos"} con «${escrito}».`
-                        + (nombre ? ` Enter abre «${nombre}».` : "");
-                }
-            }, 350);
+            accesosEncontrados = total;
+            anunciarBusqueda();
         }
 
-        campoBusqueda.addEventListener("input", aplicarBusqueda);
+        campoBusqueda.addEventListener("input", () => {
+            aplicarBusqueda();
+            buscarPersonas(campoBusqueda.value.trim());
+        });
         document.getElementById("buscar-panel").addEventListener("submit", (e) => {
             e.preventDefault();
             aplicarBusqueda();
-            if (primeroDeLaBusqueda && campoBusqueda.value.trim()) window.location.href = primeroDeLaBusqueda.href;
+            const primero = primerResultado();
+            if (primero && campoBusqueda.value.trim()) window.location.href = primero.href;
         });
         campoBusqueda.addEventListener("keydown", (e) => {
-            if (e.key === "Escape" && campoBusqueda.value) { e.preventDefault(); campoBusqueda.value = ""; aplicarBusqueda(); }
+            if (e.key === "Escape" && campoBusqueda.value) { e.preventDefault(); campoBusqueda.value = ""; aplicarBusqueda(); buscarPersonas(""); }
         });
         /* Ctrl + K (⌘ + K en Mac) o «/» llevan al buscador desde cualquier
            parte del panel. «/» solo cuando no se está escribiendo en otro
            campo: ahí es una barra, no un atajo. */
+        /* clases.html?buscar=… es a donde manda el Ctrl + K de las demás páginas
+           de la Academia (js/atajo-buscar.js): el panel abre con el foco en el
+           buscador y, si venía un texto (lo que estaba seleccionado), ya
+           buscándolo. Se llama al final de init(), con el panel ya pintado. */
+        function abrirBusquedaPedida() {
+            const params = new URLSearchParams(location.search);
+            if (!params.has("buscar")) return;
+            const texto = (params.get("buscar") || "").slice(0, 80);
+            campoBusqueda.value = texto;
+            if (texto) { aplicarBusqueda(); buscarPersonas(texto); }
+            campoBusqueda.focus();
+            campoBusqueda.select();
+            // La dirección queda limpia: recargar no vuelve a buscar.
+            params.delete("buscar");
+            history.replaceState(null, "", location.pathname + (params.toString() ? "?" + params : "") + location.hash);
+        }
+
         document.addEventListener("keydown", (e) => {
             const escribiendo = e.target.closest && e.target.closest("input, textarea, select, [contenteditable]");
             const atajo = ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === "k")
@@ -2321,6 +2451,7 @@
                 if (!document.activeElement || document.activeElement === document.body) {
                     document.getElementById("panel-titulo").focus({ preventScroll: true });
                 }
+                abrirBusquedaPedida();
                 return;
             }
 
@@ -2338,6 +2469,7 @@
                 if (!document.activeElement || document.activeElement === document.body) {
                     document.getElementById("panel-titulo").focus({ preventScroll: true });
                 }
+                abrirBusquedaPedida();
                 return;
             }
 
@@ -2400,6 +2532,7 @@
             if (!document.activeElement || document.activeElement === document.body) {
                 document.getElementById("panel-titulo").focus({ preventScroll: true });
             }
+            abrirBusquedaPedida();
         }
 
         init();

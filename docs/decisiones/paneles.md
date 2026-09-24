@@ -681,6 +681,31 @@ ninguna tarjeta se llama así.
   búsqueda. Se esconde con `style.display` y no con `hidden`, porque ese
   atributo lo maneja el código de cada bloque. Al borrar lo escrito, cada
   bloque queda exactamente como estaba.
+- **Cada palabra buscada se compara con el COMIENZO de una palabra**, no con
+  cualquier pedazo: «mari» traía la tarjeta de Cursos porque su descripción
+  dice «temario», y Enter abría Cursos en vez de a María. El texto que se busca
+  se guarda solo con letras y números, separados por espacios.
+- **También encuentra personas.** A quien da clase, coordina, supervisa o
+  administra, debajo del campo le aparecen las personas que coinciden, de a
+  seis, con cuántas hay en total. **Lo que se puede encontrar lo decide la
+  base**: `mi_gente()` devuelve solo a quien cada uno alcanza (sus alumnos si
+  da clase; sus profesores y los alumnos de ellos si coordina o supervisa;
+  todos si administra), filtra sin tildes y corta. Al alumnado no se le busca
+  gente: ni se le pide a la base.
+  - Un alumno lleva a su informe (`informes.html?alumno=<id>`). Informes lo
+    elige solo si está en la lista de quien mira; si no, se queda el resumen.
+  - Un profesor lleva a Coordinación con su nombre puesto
+    (`coordinacion.html?buscar=…`), solo si quien busca puede entrar ahí
+    (administración, coordinación o supervisión). A un profesor que no
+    coordina no se le ofrece un enlace que la página le va a negar.
+  - Se consulta cuando se deja de escribir (300 ms), y una respuesta que llega
+    tarde, con otro texto ya escrito, se descarta. El anuncio (`role="status"`)
+    cuenta las dos cosas: «1 acceso y 2 personas con «mari»». Si no quedó
+    ninguna tarjeta, Enter abre la primera persona.
+- **`clases.html?buscar=…`** abre el panel con el foco en el buscador y, si
+  viene un texto, ya buscándolo. Es a donde lleva el Ctrl + K de las demás
+  páginas (ver «Ctrl + K en toda la Academia» en sitio-e-infraestructura.md).
+  Después se limpia la dirección, para que recargar no vuelva a buscar.
 - Lo prueba `pruebaBuscador` en `verificar-panel.js`, midiendo con
   `checkVisibility()` qué tarjetas quedan a la vista.
 

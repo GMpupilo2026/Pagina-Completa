@@ -641,6 +641,29 @@ capítulo «Los cursos de la Academia».
     «como estudiante»;
   - el contraste contra el encabezado.
 
+### Ctrl + K en toda la Academia
+
+En cualquier página de la Academia, **Ctrl + K** (⌘ + K en Mac) lleva al
+buscador del panel (`clases.html?buscar=…`), que encuentra tarjetas y
+personas. Si había texto seleccionado, llega ya buscándolo: seleccionar «María
+Rojas» en una lista y apretar Ctrl + K la busca.
+
+- Lo pone `herramientas/academia-cabecera.py` (`js/atajo-buscar.js`, con
+  `data-arriba` para volver a la raíz desde `entreno/` o `cursos/academia/`).
+- **No va en tres páginas, a propósito**:
+  - `clases.html` tiene su propio atajo, que lleva al campo sin recargar;
+  - `sesion.html`, porque salir de la clase en vivo tiene que cerrar antes la
+    asistencia del alumno (lo hacen sus migas y su logo), y un atajo que cambia
+    de página por su cuenta se la saltaría;
+  - `examen.html`, porque salir del examen cuenta como salida y lo congela.
+- Solo Ctrl + K, no «/»: fuera del panel hay tableros, ejercicios y cuadros de
+  comandos donde «/» es parte de lo que se escribe.
+- Lo comprueba `herramientas/verificar-atajo.js`:
+  - que las 65 páginas lo carguen con su ruta y las tres de la excepción no;
+  - que Ctrl + K y ⌘ + K lleven al panel con lo seleccionado;
+  - que una «k» sola no haga nada;
+  - que desde `entreno/` suba bien.
+
 ## Los avisos son de la página, no del navegador
 
 `alert()`, `confirm()` y `prompt()` quedaron **prohibidos en todo el sitio**. En
