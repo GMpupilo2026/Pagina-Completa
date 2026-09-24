@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20260924155425
+# al-dia-con: 20260924214817
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -334,6 +334,8 @@ columna  formulario_respuestas.cuenta_creada_por  uuid
 columna  formulario_respuestas.cuenta_id  uuid
 columna  formulario_respuestas.formulario_id  uuid
 columna  formulario_respuestas.id  uuid
+columna  formulario_respuestas.privacidad_aceptada_en  timestamp with time zone
+columna  formulario_respuestas.privacidad_version  text
 columna  formulario_respuestas.respuestas  jsonb
 columna  formularios.abierto  boolean
 columna  formularios.academia_id  uuid
@@ -619,9 +621,13 @@ columna  solicitudes_academia.mensaje  text
 columna  solicitudes_academia.nombre  text
 columna  solicitudes_academia.plan_elegido  text
 columna  solicitudes_academia.plan_elegido_en  timestamp with time zone
+columna  solicitudes_academia.privacidad_aceptada_en  timestamp with time zone
+columna  solicitudes_academia.privacidad_version  text
 columna  solicitudes_academia.revisado_en  timestamp with time zone
 columna  solicitudes_academia.revisado_por  uuid
 columna  solicitudes_academia.telefono  text
+columna  solicitudes_academia.terminos_aceptados_en  timestamp with time zone
+columna  solicitudes_academia.terminos_version  text
 columna  subgrupo_alumnos.alumno_id  uuid
 columna  subgrupo_alumnos.created_at  timestamp with time zone
 columna  subgrupo_alumnos.subgrupo_id  uuid
@@ -797,7 +803,7 @@ funcion  devolver_invitacion(p_profesor uuid)  definer  anon=false  auth=false
 funcion  disparar_informes_encargados()  definer  anon=false  auth=false
 funcion  disparar_recordatorios_cobro()  definer  anon=false  auth=false
 funcion  disparar_recordatorios_programados()  definer  anon=false  auth=false
-funcion  elegir_plan(p_id uuid, p_plan text)  definer  anon=true  auth=true
+funcion  elegir_plan(p_id uuid, p_plan text, p_version_terminos text, p_version_privacidad text)  definer  anon=true  auth=true
 funcion  equipo_bajo_mi_coordinacion(p_equipo uuid)  definer  anon=false  auth=true
 funcion  equipo_docente()  definer  anon=false  auth=true
 funcion  equipo_lo_cree_yo(p_equipo uuid)  definer  anon=false  auth=true
@@ -843,6 +849,7 @@ funcion  interno.bajo_mi_coordinacion_conjunto()  definer  anon=false  auth=true
 funcion  interno.frenar_envio_publico(p_tipo text, p_ambito text, p_correo text)  invoker  anon=false  auth=false
 funcion  interno.profesores_de(p_alumno uuid)  definer  anon=false  auth=true
 funcion  interno.supervisados_por_mi()  definer  anon=false  auth=true
+funcion  interno.version_legal_valida(p text)  invoker  anon=false  auth=false
 funcion  json_seguro(p_texto text)  invoker  anon=false  auth=true
 funcion  jugadores_de_asientos(p_asientos jsonb)  invoker  anon=false  auth=true
 funcion  marca_de_alumno(p_alumno uuid)  definer  anon=false  auth=false
@@ -899,7 +906,7 @@ funcion  registrar_arbitraje_publico(p_nombre text, p_email text, p_porcentaje i
 funcion  registrar_salida_examen(p_examen uuid, p_segundos integer)  definer  anon=false  auth=true
 funcion  reporte_actividades(p_desde date, p_hasta date)  invoker  anon=false  auth=true
 funcion  responder_examen(p_item uuid, p_respuesta jsonb, p_segundos integer)  definer  anon=false  auth=true
-funcion  responder_formulario(p_slug text, p_respuestas jsonb)  definer  anon=true  auth=true
+funcion  responder_formulario(p_slug text, p_respuestas jsonb, p_version_privacidad text)  definer  anon=true  auth=true
 funcion  resumen_profesores_supervisados(p_periodo date)  definer  anon=false  auth=true
 funcion  resumen_tareas_examenes(p_alumno uuid, p_desde timestamp with time zone, p_hasta timestamp with time zone)  definer  anon=false  auth=true
 funcion  revisar_informe_mensual(p_id uuid, p_comentario text)  definer  anon=false  auth=true
@@ -911,7 +918,7 @@ funcion  set_cuentas_del_supervisor(p_supervisor uuid, p_cuentas uuid[])  define
 funcion  set_profesores_del_coordinador(p_coordinador uuid, p_profesores uuid[])  definer  anon=false  auth=true
 funcion  set_student_elo(p_student uuid, p_elo integer, p_tipo text)  definer  anon=false  auth=true
 funcion  sincronizar_profesor_principal()  definer  anon=false  auth=false
-funcion  solicitar_academia(p_nombre text, p_email text, p_telefono text, p_edad_nivel text, p_mensaje text)  definer  anon=true  auth=true
+funcion  solicitar_academia(p_nombre text, p_email text, p_telefono text, p_edad_nivel text, p_mensaje text, p_version_privacidad text)  definer  anon=true  auth=true
 funcion  solicitud_para_elegir_plan(p_id uuid)  definer  anon=true  auth=true
 funcion  soy_admin()  definer  anon=true  auth=true
 funcion  soy_coordinador()  definer  anon=false  auth=true

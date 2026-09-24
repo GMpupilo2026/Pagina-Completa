@@ -24,6 +24,7 @@
     </script>
     <script src="js/vendor/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
+    <script src="js/legal-version.js"></script>
     <script src="js/adaptive-mode.js"></script>
 
 
@@ -173,7 +174,12 @@
                 document.querySelectorAll(".plan-btn").forEach((b) => (b.disabled = true));
                 btn.textContent = "Guardando…";
 
-                const { data, error } = await sb.rpc("elegir_plan", { p_id: solicitudId, p_plan: btn.dataset.plan });
+                const { data, error } = await sb.rpc("elegir_plan", {
+                    p_id: solicitudId, p_plan: btn.dataset.plan,
+                    // Qué versiones aceptó: la base las guarda con la hora.
+                    p_version_terminos: window.LegalVersion.TERMINOS,
+                    p_version_privacidad: window.LegalVersion.PRIVACIDAD,
+                });
 
                 if (error || !data?.ok) {
                     document.getElementById("elegir-error").textContent = data?.error || "No se pudo guardar tu elección. Intenta de nuevo.";

@@ -501,6 +501,8 @@ async function pruebaPublica(browser) {
   await page.waitForSelector("#listo:not(.hidden)");
   const envio = await page.evaluate(() => window.__rpc.find((r) => r.nombre === "responder_formulario").args);
   igual("manda el slug del enlace", envio.p_slug, "torneo-sub14-ab12");
+  igual("manda qué versión de la Política de privacidad se aceptó (la base la guarda)",
+    envio.p_version_privacidad, await page.evaluate(() => window.LegalVersion.PRIVACIDAD));
   igual("manda las respuestas con la clave de cada pregunta", envio.p_respuestas,
     { nombre: "Ana Rojas", nacimiento: "2012-05-03", correo: "mama@x.cr", modalidad: "En línea", dias: ["Sábado"], autoriza: true });
   igual("lo que se dejó en blanco no se manda", "notas" in envio.p_respuestas, "false");

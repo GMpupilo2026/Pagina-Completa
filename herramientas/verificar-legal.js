@@ -28,8 +28,25 @@ function igual(nombre, hallado, esperado) {
 const leer = (r) => fs.readFileSync(path.join(RAIZ, r), "utf8");
 const ids = (html) => new Set([...html.matchAll(/\sid="([^"]+)"/g)].map((m) => m[1]));
 
+// js/legal-version.js, leído como lo lee el navegador.
+const VERSIONES = (() => {
+  const w = {};
+  new Function("window", fs.readFileSync(path.join(RAIZ, "js/legal-version.js"), "utf8"))(w);
+  return JSON.stringify(w.LegalVersion);
+})();
+const MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "setiembre", "octubre", "noviembre", "diciembre"];
+
 function paginasLegales() {
   console.log("\n=== Las dos páginas ===");
+  // La versión que viaja con cada aceptación es la fecha que la página dice.
+  // Si se cambia el texto y no el módulo, la base guardaría que se aceptó
+  // otra cosa.
+  const v = JSON.parse(VERSIONES);
+  for (const [r, clave] of [["privacidad.html", "PRIVACIDAD"], ["terminos.html", "TERMINOS"]]) {
+    const m = leer(r).match(/Última actualización: (\d{1,2}) de ([a-z]+) de (\d{4})\./);
+    const impresa = m ? `${m[3]}-${String(MESES.indexOf(m[2]) + 1).padStart(2, "0")}-${m[1].padStart(2, "0")}` : null;
+    igual(`${r}: la fecha impresa es la versión de js/legal-version.js`, impresa, v[clave]);
+  }
   for (const r of ["privacidad.html", "terminos.html"]) {
     const t = leer(r);
     igual(r + ": dice quién responde, con su cédula",
@@ -128,7 +145,9 @@ async function unirse(ctx) {
   await page.check("#acepto-datos");
   await page.click("#submit-btn");
   await page.waitForFunction(() => window.__rpc.length > 0);
-  igual("aceptada, la solicitud sale", await llamadas(page, "solicitar_academia"), 1);
+  igual("aceptada, la solicitud sale con la versión de la política que se aceptó",
+    await page.evaluate(() => window.__rpc.filter((r) => r.n === "solicitar_academia").map((r) => r.a.p_version_privacidad)),
+    [JSON.parse(VERSIONES).PRIVACIDAD]);
   igual("sin errores en la página", errores, []);
   await page.close();
 }
@@ -151,9 +170,44 @@ async function elegirPlan(ctx) {
   await page.click('.plan-btn[data-plan="grupal"]');
   await page.waitForSelector("#ya-elegido:not(.hidden)");
   igual("aceptados, se guarda el plan elegido",
-    await page.evaluate(() => window.__rpc.filter((r) => r.n === "elegir_plan").map((r) => r.a.p_plan)), ["grupal"]);
+    await page.evaluate(() => window.__rpc.filter((r) => r.n === "elegir_plan").map((r) => [r.a.p_plan, r.a.p_version_terminos, r.a.p_version_privacidad])),
+    [["grupal", JSON.parse(VERSIONES).TERMINOS, JSON.parse(VERSIONES).PRIVACIDAD]]);
   igual("sin errores en la página", errores, []);
   await page.close();
+}
+
+function laBaseLoExige() {
+  console.log("\n=== La base exige y guarda la aceptación ===");
+  // Lee supabase/migraciones/, como verificar-envios-publicos.js: la ÚLTIMA
+  // migración que define cada función es la que vale. Una migración futura
+  // que la vuelva a crear copiando una versión vieja borraría la exigencia
+  // sin ningún error: el formulario se seguiría enviando igual.
+  const DIR = path.join(RAIZ, "supabase", "migraciones");
+  const archivos = fs.readdirSync(DIR).filter((f) => f.endsWith(".sql")).sort();
+  const casos = [
+    ["solicitar_academia", "p_version_privacidad", /privacidad_version/],
+    ["responder_formulario", "p_version_privacidad", /privacidad_version/],
+    ["elegir_plan", "p_version_terminos", /terminos_version\s*=\s*p_version_terminos/],
+  ];
+  for (const [fn, param, guarda] of casos) {
+    const inicio = new RegExp("create\\s+or\\s+replace\\s+function\\s+public\\." + fn + "\\s*\\(", "i");
+    let ultima = null, cuerpo = null, firma = null;
+    for (const f of archivos) {
+      const sql = fs.readFileSync(path.join(DIR, f), "utf8");
+      const m = sql.match(inicio);
+      if (!m) continue;
+      const resto = sql.slice(m.index);
+      const d = resto.match(/as\s+(\$[a-z_]*\$)/i);
+      if (!d) continue;
+      const desde = resto.indexOf(d[1]) + d[1].length;
+      ultima = f; firma = resto.slice(0, resto.indexOf(d[1])); cuerpo = resto.slice(desde, resto.indexOf(d[1], desde));
+    }
+    const exige = cuerpo ? cuerpo.search(new RegExp("interno\\.version_legal_valida\\(" + param + "\\)")) : -1;
+    const escribe = cuerpo ? cuerpo.search(/insert\s+into|update\s+public\./i) : -1;
+    igual(`${fn} (${ultima}): recibe ${param}, lo exige antes de escribir y lo guarda`,
+      [!!firma && firma.includes(param), exige >= 0 && exige < escribe, !!cuerpo && guarda.test(cuerpo), !!cuerpo && /now\(\)/.test(cuerpo)],
+      [true, true, true, true]);
+  }
 }
 
 async function proveedores(ctx) {
@@ -181,6 +235,7 @@ async function proveedores(ctx) {
 (async () => {
   paginasLegales();
   enlacesEnTodoElSitio();
+  laBaseLoExige();
   const browser = await chromium.launch({ executablePath: fs.existsSync(CHROME) ? CHROME : undefined });
   const ctx = await browser.newContext({ serviceWorkers: "block" });
   await unirse(ctx);
