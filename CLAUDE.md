@@ -3943,6 +3943,38 @@ tiene que ver al entrar.
 - Dentro del tema «🧭 Diagnóstico de nivel», el apartado de visitantes que va
   debajo de los alumnos se salta por lo mismo.
 
+
+#### El diagnóstico de un visitante se descarga en PDF
+
+Cada visitante del panel «🌐 Diagnósticos de visitantes» trae **«⬇ Descargar
+PDF»**: su resultado, área por área, lo que ya tiene firme, dónde conviene
+empezar y el plan de cuatro semanas, con la **marca de agua de Oscar Angulo
+Cubero en todas las páginas** y su firma —nombre, cargo, Ajedrez Integral y el
+sitio— en el pie, en los datos del archivo y al final. Es un contacto para
+invitar a la Academia, y lo que más convence es mandarle su resultado bien
+presentado.
+
+- **No cuenta nada por su lado.** El resultado sale de
+  `PlanEntrenamiento.resumir()` —el mismo del «Ver detalle»— y el plan de
+  `generarPlan()`; el PDF lo escribe `js/reporte-pdf.js`, el generador de los
+  reportes de actividades. `js/diagnostico-visitante-pdf.js` solo arma el
+  documento neutral. Una segunda cuenta diría otro nivel que la pantalla.
+- **La marca vive en `js/marca-agua.js`**, que salió de `reportes.html`: la
+  usan las dos pantallas, y escrita dos veces un PDF saldría marcado y el otro
+  no. Si la marca no se puede bajar, **el PDF no sale**: se pidió marcado.
+- **El WhatsApp sale de `ajustes_academia`** (`whatsapp_consultas`), como en
+  los correos a las familias. Sin número, no se inventa: el PDF va solo con el
+  sitio.
+- **Los tres archivos se bajan al apretar el botón**, no al abrir Informes.
+- Un área que un diagnóstico viejo no midió dice «No se midió», no «A
+  trabajar».
+
+`verificar-informes.js` («El diagnóstico de un visitante, en PDF») descarga el
+archivo de verdad y lo lee sin librerías —los flujos van sin comprimir—: que la
+marca esté en TODAS las páginas y con su canal alfa, la firma, el WhatsApp de
+los ajustes, el nombre del visitante y **no el de otro**, y que nada se baje al
+abrir la página. Con `GUARDAR_PDF=<ruta>` deja una copia para mirarla.
+
 En el informe de UN alumno:
 
 - **Ocho números a la vista y ocho detrás de «Ver todos los números».**

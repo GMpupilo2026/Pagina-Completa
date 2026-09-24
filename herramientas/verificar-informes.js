@@ -1074,6 +1074,70 @@ async function pruebaClaseGrande(browser) {
   await page.close();
 }
 
+/* EL PDF DEL DIAGNÓSTICO DE UN VISITANTE. Se descarga de verdad, apretando el
+   botón, y se mira el archivo que salió — no la función que lo arma. Lo que se
+   rompe acá no da ningún error: un PDF sin la marca de agua se ve perfecto y
+   circula igual, y uno con el nombre de otro visitante también.
+
+   Los flujos de contenido de js/reporte-pdf.js van sin comprimir, así que se
+   pueden leer sin ninguna librería: cada página dice «/Marca Do» si lleva la
+   marca, y el texto va entre paréntesis en WinAnsi (o sea, en latin1). */
+async function pruebaPdfVisitante(browser) {
+  console.log("\n=== El diagnóstico de un visitante, en PDF ===");
+  const VISITANTES = [
+    { id: "v-1", created_at: "2026-09-20T15:00:00Z", nombre: "Lucía Fernández (visitante)", email: "lucia@x.cr",
+      telefono: "8888-1111", nivel: "Intermedio", porcentaje: 68, elo: null, atendido: false, detalle: DIAGNOSTICO },
+    { id: "v-2", created_at: "2026-09-12T15:00:00Z", nombre: "Otro Visitante", email: "otro@x.cr",
+      telefono: null, nivel: "Básico", porcentaje: 40, elo: null, atendido: true, detalle: DIAGNOSTICO },
+  ];
+  const { page, errores } = await abrir(browser, {
+    rpc: {
+      informes_resumen_alumnos: [ANA], informes_cursos_alumnos: [], informes_diagnosticos_alumnos: [],
+      informes_totales: { clases_cerradas: 0, preguntas: 0, partidas: 0 },
+    },
+    tablas: {
+      profiles: [{ id: "prof-1", role: "profesor", is_admin: true, full_name: "Oscar", email: "o@x.cr" }],
+      training_plans: [], diagnosticos_publicos: VISITANTES, arbitrajes_publicos: [],
+      ajustes_academia: [{ clave: "whatsapp_consultas", valor: "8309 2291" }],
+    },
+  }, "prof-1");
+
+  igual("al abrir Informes no se baja el generador de PDF", await page.evaluate(() =>
+    typeof window.ReportePDF + " " + typeof window.DiagnosticoVisitantePDF), "undefined undefined");
+  await page.evaluate(() => document.getElementById("diagnosticos-visitantes").closest("details").querySelector("summary").click());
+  const botones = page.locator("#diagnosticos-visitantes [data-pdf]");
+  igual("cada visitante tiene su botón de PDF", await botones.count(), 2);
+  igual("y el botón dice de quién es", await botones.first().getAttribute("aria-label"),
+    "Descargar en PDF el diagnóstico de Lucía Fernández (visitante)");
+
+  const [descarga] = await Promise.all([page.waitForEvent("download"), botones.first().click()]);
+  igual("el archivo se llama como el visitante y el día", descarga.suggestedFilename(), "diagnostico-lucia-fernandez-visitante-2026-09-20.pdf");
+  const ruta = await descarga.path();
+  if (process.env.GUARDAR_PDF) require("fs").copyFileSync(ruta, process.env.GUARDAR_PDF);
+  const bytes = require("fs").readFileSync(ruta);
+  const pdf = bytes.toString("latin1");
+  const paginas = (pdf.match(/\/Type \/Page\b(?!s)/g) || []).length;
+  igual("es un PDF", pdf.slice(0, 5), "%PDF-");
+  igual("tiene más de una página (el plan no entra en una)", paginas > 1, true);
+  igual("y la marca de agua está en TODAS", (pdf.match(/\/Marca Do/g) || []).length, paginas);
+  igual("la marca lleva su canal alfa, o taparía el texto", /\/SMask \d+ 0 R/.test(pdf), true);
+  const tiene = (t) => pdf.includes(Buffer.from(t, "latin1").toString("latin1"));
+  igual("firma de Oscar en los datos del archivo", /\/Author \(Oscar Angulo Cubero\)/.test(pdf), true);
+  igual("y en el pie", tiene("Oscar Angulo Cubero · Ajedrez Integral · ajedrez-integral.com"), true);
+  igual("con su cargo", tiene("Entrenador FIDE y Árbitro Internacional"), true);
+  igual("el WhatsApp sale de los ajustes, no escrito en la página", tiene("WhatsApp: 8309 2291"), true);
+  igual("el nombre del visitante está, con su paréntesis escapado", tiene("Lucía Fernández \\(visitante\\)"), true);
+  igual("y NO se cuela el del otro visitante", tiene("Otro Visitante"), false);
+  igual("dice el nivel que cuenta la pantalla", tiene("Resultado") && tiene("Área por área"), true);
+  igual("el estado de cada área va escrito, no solo en color", tiene("A trabajar") || tiene("En camino") || tiene("Firme"), true);
+  igual("y avisa que no es un rating oficial", tiene("no son un rating oficial"), true);
+  igual("la pantalla dice que se descargó", await page.textContent("#diagnosticos-visitantes [data-pdf-estado]"),
+    "Listo, se descargó diagnostico-lucia-fernandez-visitante-2026-09-20.pdf.");
+
+  if (errores.length) { console.log("  ✗ errores en la página: " + errores.join(" | ")); fallos += 1; }
+  await page.close();
+}
+
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
@@ -1083,6 +1147,7 @@ async function pruebaClaseGrande(browser) {
     await pruebaAlumno(browser);
     await pruebaCompartirPlanes(browser);
     await pruebaNombreAjeno(browser);
+    await pruebaPdfVisitante(browser);
   } finally {
     await browser.close();
   }
