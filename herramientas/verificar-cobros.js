@@ -376,7 +376,9 @@ async function pruebaCoordinacion(browser) {
   // El método ya no se escribe: se elige de una lista que solo tiene los que existen.
   igual("el formulario del pago ofrece los cinco métodos, y nada más",
     await page.evaluate(() => window.__avisos.filter((a) => a.includes("Registrar un pago")).pop()
-      .includes("SINPE Móvil Transferencia Efectivo Tarjeta Otro")), "true");
+      .replace(/\s/g, "")
+      // Las cinco opciones, en orden, y enseguida el campo que sigue: ni una más.
+      .includes("SINPEMóvilTransferenciaEfectivoTarjetaOtroNúmerodecomprobante")), "true");
   // Y si igual llegara uno inventado (desde la consola), tampoco se manda.
   await page.evaluate(() => { window.__llamadas = []; window.__respuestas = [{ monto: "5000", metodo: "bitcoin", referencia: "" }]; });
   await page.locator("#cobros-lista .cobro-fila").nth(1).locator("button").first().click();

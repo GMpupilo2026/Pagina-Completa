@@ -323,6 +323,25 @@
                 <p id="sup-aviso" hidden class="mt-4 pt-4 border-t border-brand-100 dark:border-brand-800 text-sm text-brand-600 dark:text-brand-300"></p>
             </div>
 
+            <!-- ===== Buscador de accesos =====
+                 Quien administra ve trece grupos y casi sesenta tarjetas: para
+                 llegar a Cobros había que saber en qué grupo vivía. Escribir
+                 deja en la grilla solo lo que coincide, y Enter abre el
+                 primero. Solo filtra lo que ya está pintado: no inventa
+                 destinos ni se salta los permisos (ver «El buscador del
+                 panel» en docs/decisiones/paneles.md). -->
+            <form id="buscar-panel" role="search" aria-label="Buscar en el panel" class="mb-6">
+                <label for="buscar-panel-campo" class="block font-serif text-lg font-bold text-brand-800 dark:text-white mb-2">¿Qué buscas?</label>
+                <div class="relative max-w-xl">
+                    <span aria-hidden="true" class="absolute left-3 top-1/2 -translate-y-1/2 text-base pointer-events-none">🔎</span>
+                    <input id="buscar-panel-campo" type="search" autocomplete="off" spellcheck="false" enterkeyhint="go"
+                           placeholder="Cobros, tareas, contraseña…" aria-describedby="buscar-panel-ayuda"
+                           class="w-full rounded-xl border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 text-brand-800 dark:text-white placeholder:text-brand-450 dark:placeholder:text-brand-350 pl-10 pr-3 py-2.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                </div>
+                <p id="buscar-panel-ayuda" class="text-xs text-brand-450 dark:text-brand-350 mt-1.5">El panel deja solo lo que coincide; Enter abre el primero.<span class="hidden sm:inline"> Atajo: Ctrl + K.</span></p>
+                <p id="buscar-panel-estado" role="status" class="text-sm text-brand-600 dark:text-brand-300 mt-2 empty:hidden"></p>
+            </form>
+
             <!-- ===== Grilla de accesos (agrupada por secciones, ver TILE_GROUPS) ===== -->
             <div id="tile-grid" class="space-y-8 mb-10"></div>
 
@@ -996,6 +1015,8 @@
                    cambia para el equipo docente—, así que se descubriría en el
                    panel de otra persona. */
                 heading.textContent = (esEquipoDocente() && group.titleProfe) || group.title;
+                // Lo que se busca: el rótulo que se VE, no el de la lista.
+                section.dataset.buscar = textoBuscable(heading.textContent);
                 const tilesGrid = document.createElement("div");
                 // Un grupo destacado lleva un solo acceso: en la grilla de cuatro
                 // columnas quedaría un cuadrito perdido a la izquierda, así que
@@ -1008,7 +1029,12 @@
                     ? "grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-4 md:gap-5"
                     : "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5";
                 group.tiles.forEach((t) => {
-                    if (!t.videollamada) { tilesGrid.appendChild(renderTileCard(t, !!group.destacado)); return; }
+                    if (!t.videollamada) {
+                        const tarjeta = renderTileCard(t, !!group.destacado);
+                        tarjeta.dataset.buscar = buscableDeTile(t);
+                        tilesGrid.appendChild(tarjeta);
+                        return;
+                    }
                     /* La tarjeta de la clase en vivo va dentro de un envoltorio
                        para poder repintarla sola cuando se abre o se cierra una
                        clase — repintar la grilla entera cerraría cualquier cosa
@@ -1020,6 +1046,9 @@
                     const envoltorio = document.createElement("div");
                     envoltorio.id = "sesion-wrap";
                     envoltorio.className = "contents";
+                    // La tarjeta de adentro se repinta sola; el texto que se
+                    // busca vive en el envoltorio, que no se repinta.
+                    envoltorio.dataset.buscar = buscableDeTile(t);
                     tilesGrid.appendChild(envoltorio);
                     const caja = document.createElement("div");
                     caja.id = "videollamada-wrap";
@@ -1032,7 +1061,132 @@
                 grid.appendChild(section);
             });
             pintarClaseEnVivo();
+            aplicarBusqueda();
         }
+
+        /* ---------- El buscador de accesos ----------
+           Filtra la grilla que YA está pintada: lo que el rol de cada quien no
+           tiene no está en la grilla, así que tampoco aparece al buscar. No
+           hay una segunda lista de destinos que se pueda desordenar de la
+           primera; lo único propio es CLAVES_BUSQUEDA, las palabras con que la
+           gente pide una cosa que se llama distinto («pagos» es Cobros,
+           «contraseña» es Configuración). Van por destino (el href sin su
+           ?tema=), así que valen igual en el panel de quien supervisa. Cada
+           clave tiene que ser cierta: está porque ESA página lo tiene. */
+        const CLAVES_BUSQUEDA = {
+            "sesion.html": "clase en vivo tablero videollamada meet zoom teams pizarra",
+            "tareas.html": "deberes asignaciones pendientes fecha limite",
+            "examenes.html": "prueba pruebas evaluacion evaluaciones nota notas",
+            "entreno/index.html": "ejercicios practicar tactica mates coordenadas lecciones problemas",
+            "entreno/estudio.html": "fichas aperturas defensas repasar conceptos",
+            "cursos/academia/index.html": "curso temario lecciones",
+            "articulos.html": "leer lecturas blog",
+            "juegos.html": "partidas jugar rival crazyhouse niebla variantes retar",
+            "torneos.html": "torneo competir competencia rondas tabla",
+            "tv.html": "ver partidas en directo transmision",
+            "tablero.html": "bot motor oscar jugar contra la computadora",
+            "logros.html": "medallas racha premios",
+            "entreno/diagnostico.html": "nivel examen de nivel prueba de nivel",
+            "nivel-de-arbitraje.html": "arbitro reglamento fide",
+            "arbitraje.html": "arbitro reglamento fide revisar",
+            "partidas.html": "pgn partidas guardadas carpetas subir",
+            "informes.html": "progreso estadisticas notas reportes asistencia alumnos informe a la casa encargados padres",
+            "configuracion.html": "contrasena clave perfil cuenta tema colores tablero piezas avisos notificaciones videollamada voz",
+            "admin.html": "cuentas usuarios roles crear cuenta novedades",
+            "supervision.html": "profesores informe mensual actividad",
+            "academias.html": "academia supervisor",
+            "tablero-academias.html": "cifras numeros del mes",
+            "planes.html": "planificar preparar clase posiciones",
+            "asistencia.html": "pasar lista presencial aula",
+            "informe-mensual.html": "informe del mes supervision",
+            "subgrupos.html": "listas grupos de alumnos",
+            "guia-del-profesor-accesible.html": "ayuda manual como se hace",
+            "coordinacion.html": "cuentas usuarios profesores alumnos",
+            "solicitudes.html": "aprobar nuevos unirse inscripciones",
+            "formularios.html": "inscripcion inscripciones enlace respuestas",
+            "cobros.html": "pagos pago mensualidad mensualidades dinero morosos morosidad recibos",
+            "reportes.html": "word pdf actividades periodo",
+            "accesos.html": "cupos paquetes acceso",
+        };
+
+        // Sin tildes y en minúscula: «contraseña», «contrasena» y «CONTRASEÑA»
+        // encuentran lo mismo, como el buscador de admin.html.
+        function textoBuscable(t) {
+            return String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+        }
+        function buscableDeTile(t) {
+            const destino = String(t.href || "").split("?")[0];
+            return textoBuscable([t.label, t.desc, t.nota || "", CLAVES_BUSQUEDA[destino] || ""].join(" "));
+        }
+
+        const campoBusqueda = document.getElementById("buscar-panel-campo");
+        const estadoBusqueda = document.getElementById("buscar-panel-estado");
+        let primeroDeLaBusqueda = null;
+        let anuncioBusqueda = null;
+
+        function aplicarBusqueda() {
+            const escrito = campoBusqueda.value.trim();
+            const palabras = textoBuscable(escrito).split(/\s+/).filter(Boolean);
+            let total = 0;
+            primeroDeLaBusqueda = null;
+            document.querySelectorAll("#tile-grid > section").forEach((sec) => {
+                let visibles = 0, sesionVisible = true;
+                sec.querySelectorAll(".grid > [data-buscar]").forEach((celda) => {
+                    // Todas las palabras tienen que estar, en la tarjeta o en
+                    // el rótulo de su grupo: «cobros academia» encuentra una.
+                    const ok = palabras.every((p) => (celda.dataset.buscar + " " + sec.dataset.buscar).includes(p));
+                    celda.style.display = ok ? "" : "none";
+                    if (celda.id === "sesion-wrap") sesionVisible = ok;
+                    if (!ok) return;
+                    visibles += 1;
+                    const enlace = celda.matches("a[href]") ? celda : celda.querySelector("a[href]");
+                    if (!primeroDeLaBusqueda && enlace) primeroDeLaBusqueda = enlace;
+                });
+                // El botón de la videollamada va con su tarjeta.
+                const video = sec.querySelector("#videollamada-wrap");
+                if (video) video.style.display = sesionVisible ? "" : "none";
+                sec.style.display = visibles ? "" : "none";
+                total += visibles;
+            });
+
+            /* El resultado se anuncia (role="status"), pero no a cada tecla: con
+               un lector de pantalla, «tres accesos» dicho por cada letra tapa
+               lo que se está escribiendo. */
+            clearTimeout(anuncioBusqueda);
+            if (!palabras.length) { estadoBusqueda.textContent = ""; return; }
+            anuncioBusqueda = setTimeout(() => {
+                if (!total) {
+                    estadoBusqueda.textContent = `Nada con «${escrito}». Prueba con otra palabra: cobros, tareas, contraseña…`;
+                } else {
+                    const nombre = primeroDeLaBusqueda ? primeroDeLaBusqueda.querySelector("span > span").textContent : "";
+                    estadoBusqueda.textContent = `${total} ${total === 1 ? "acceso" : "accesos"} con «${escrito}».`
+                        + (nombre ? ` Enter abre «${nombre}».` : "");
+                }
+            }, 350);
+        }
+
+        campoBusqueda.addEventListener("input", aplicarBusqueda);
+        document.getElementById("buscar-panel").addEventListener("submit", (e) => {
+            e.preventDefault();
+            aplicarBusqueda();
+            if (primeroDeLaBusqueda && campoBusqueda.value.trim()) window.location.href = primeroDeLaBusqueda.href;
+        });
+        campoBusqueda.addEventListener("keydown", (e) => {
+            if (e.key === "Escape" && campoBusqueda.value) { e.preventDefault(); campoBusqueda.value = ""; aplicarBusqueda(); }
+        });
+        /* Ctrl + K (⌘ + K en Mac) o «/» llevan al buscador desde cualquier
+           parte del panel. «/» solo cuando no se está escribiendo en otro
+           campo: ahí es una barra, no un atajo. */
+        document.addEventListener("keydown", (e) => {
+            const escribiendo = e.target.closest && e.target.closest("input, textarea, select, [contenteditable]");
+            const atajo = ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === "k")
+                || (e.key === "/" && !escribiendo && !e.ctrlKey && !e.metaKey && !e.altKey);
+            if (!atajo || document.getElementById("app").classList.contains("hidden")) return;
+            e.preventDefault();
+            campoBusqueda.focus();
+            campoBusqueda.select();
+            campoBusqueda.scrollIntoView({ block: "center", behavior: "smooth" });
+        });
 
         async function doLogout() {
             await sb.auth.signOut();

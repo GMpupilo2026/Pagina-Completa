@@ -199,6 +199,7 @@ function igual(nombre, hallado, esperado) {
   if (a !== b) { console.log("  ✗ " + nombre + "\n      esperaba: " + b + "\n      salió:    " + a); fallos += 1; }
   else console.log("  ✓ " + nombre + ": " + a);
 }
+function cierto(n, v) { if (v) bien(n); else mal(n); }
 function mal(t) { console.log("  ✗ " + t); fallos += 1; }
 function bien(t) { console.log("  ✓ " + t); }
 
@@ -511,6 +512,86 @@ async function pruebaAdmin(browser) {
     grupo(grupos, "Mide tu nivel").tiles.map((t) => t.enlace),
     ["entreno/diagnostico.html", "arbitraje.html"]);
   await ctx.close();
+}
+
+/* El buscador del panel. Lo que importa: que deje a la vista SOLO lo que
+   coincide (medido con checkVisibility, no con el style), que encuentre por
+   las palabras con que la gente pide las cosas («pagos», «contrasena» sin
+   tilde), que no invente lo que el rol no tiene, que Enter abra el primero y
+   que Escape lo devuelva todo. */
+const VISIBLES = () => Array.from(document.querySelectorAll("#tile-grid .grid > *"))
+  .filter((el) => el.id !== "videollamada-wrap")
+  .map((el) => (el.id === "sesion-wrap" ? el.firstElementChild : el))
+  .filter((el) => el && el.checkVisibility())
+  .map((el) => el.querySelector("span > span").textContent);
+
+async function buscar(page, texto) {
+  await page.fill("#buscar-panel-campo", texto);
+  await page.waitForTimeout(450); // el anuncio espera a que se deje de escribir
+}
+
+async function pruebaBuscador(browser) {
+  console.log("\n=== El buscador del panel ===");
+  const { page, ctx, errores } = await panel(browser, [ADMIN], "u-admin");
+  const todas = await page.evaluate(VISIBLES);
+  bien(`sin buscar se ven las ${todas.length} tarjetas`);
+  cierto("el buscador se ve de verdad y tiene su etiqueta",
+    await page.evaluate(() => document.getElementById("buscar-panel-campo").checkVisibility()
+      && document.getElementById("buscar-panel-campo").labels[0].textContent === "¿Qué buscas?"));
+
+  await buscar(page, "pagos");
+  igual("«pagos» encuentra Cobros aunque la tarjeta no diga «pagos» en el nombre",
+    await page.evaluate(VISIBLES), ["Cobros de la Academia"]);
+  igual("los grupos sin nada que mostrar no se ven",
+    await page.evaluate(() => Array.from(document.querySelectorAll("#tile-grid > section"))
+      .filter((s) => s.checkVisibility()).map((s) => s.querySelector("h2").textContent)), ["Herramientas"]);
+  igual("el resultado se anuncia", await page.textContent("#buscar-panel-estado"),
+    "1 acceso con «pagos». Enter abre «Cobros de la Academia».");
+  igual("y el anuncio va en role=status", await page.getAttribute("#buscar-panel-estado", "role"), "status");
+
+  await buscar(page, "CONTRASENA");
+  igual("sin tilde y en mayúscula, «contraseña» encuentra Configuración", await page.evaluate(VISIBLES), ["Configuración"]);
+
+  await buscar(page, "diagnostico arbitraje");
+  igual("todas las palabras tienen que estar", await page.evaluate(VISIBLES), ["Diagnóstico de arbitraje"]);
+
+  await buscar(page, "videollamada");
+  cierto("«videollamada» deja Sesión en vivo con su botón al lado",
+    await page.evaluate(() => document.querySelector("#sesion-wrap > *").checkVisibility()
+      && document.getElementById("videollamada-wrap").style.display !== "none"));
+
+  await buscar(page, "xilofono");
+  igual("sin resultados no queda ninguna tarjeta", await page.evaluate(VISIBLES), []);
+  cierto("y se dice qué probar", /^Nada con «xilofono»\. Prueba con otra palabra/.test(await page.textContent("#buscar-panel-estado")));
+
+  await page.focus("#buscar-panel-campo");
+  await page.keyboard.press("Escape");
+  igual("Escape borra lo escrito", await page.inputValue("#buscar-panel-campo"), "");
+  igual("y vuelven todas las tarjetas", (await page.evaluate(VISIBLES)).length, todas.length);
+  igual("sin buscar no se anuncia nada", await page.textContent("#buscar-panel-estado"), "");
+
+  await page.focus("body");
+  await page.keyboard.press("Control+K");
+  igual("Ctrl + K lleva al buscador", await page.evaluate(() => document.activeElement.id), "buscar-panel-campo");
+  await page.evaluate(() => document.activeElement.blur());
+  await page.keyboard.press("/");
+  igual("«/» también", await page.evaluate(() => document.activeElement.id), "buscar-panel-campo");
+  igual("y la barra no se escribe en el campo", await page.inputValue("#buscar-panel-campo"), "");
+
+  await buscar(page, "pagos");
+  await Promise.all([page.waitForURL(/cobros\.html$/, { timeout: 10000 }), page.press("#buscar-panel-campo", "Enter")]);
+  bien("Enter abre el primero: " + page.url().replace(BASE, ""));
+  igual("sin errores en la página", errores.filter((e) => !/cobros/.test(e)), []);
+  await ctx.close();
+
+  // La alumna no tiene Cobros: buscarlo no lo inventa.
+  const alumna = await panel(browser, [ALUMNA, PROFE], "u-ana");
+  await buscar(alumna.page, "cobros");
+  igual("a la alumna, «cobros» no le encuentra nada: busca solo en SU panel", await alumna.page.evaluate(VISIBLES), []);
+  await buscar(alumna.page, "tareas");
+  igual("y lo suyo sí", await alumna.page.evaluate(VISIBLES), ["Tareas"]);
+  igual("sin errores en la página de la alumna", alumna.errores, []);
+  await alumna.ctx.close();
 }
 
 /* El supervisor de su academia le apagó los cobros y las solicitudes: esas dos
@@ -1713,6 +1794,7 @@ if (require.main !== module) return;
     await pruebaProfesora(browser);
     await pruebaTextosPorRol(browser);
     await pruebaAdmin(browser);
+    await pruebaBuscador(browser);
     await pruebaCoordinadorRecortado(browser);
     await pruebaRegistro(browser);
     await pruebaPantalla(browser);

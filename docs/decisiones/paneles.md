@@ -624,6 +624,52 @@ fijas la prueba se pudre sola con el almanaque.
   encontraba nunca nada, así que el récord de racha táctica salía siempre en
   "todavía nadie" y la prueba daba verde porque no lo miraba.
 
+### El buscador del panel
+
+Encima de la grilla va «¿Qué buscas?». Quien administra ve trece grupos y casi
+sesenta tarjetas: para llegar a Cobros había que saber que vive en
+«Herramientas», y quien busca «pagos» no lo encuentra con los ojos, porque
+ninguna tarjeta se llama así.
+
+- **Filtra la grilla que YA está pintada; no tiene su propia lista de
+  destinos.** Lo que el rol de cada quien no tiene no está en la grilla, así
+  que tampoco aparece al buscar. A la alumna, «cobros» no le encuentra nada.
+  Una segunda lista de «todo lo que existe» se habría desordenado de
+  `TILE_GROUPS` a la primera tarjeta nueva, y encima habría ofrecido destinos
+  que la persona no puede usar.
+- **Lo único propio son las palabras clave** (`CLAVES_BUSQUEDA`): cómo pide la
+  gente una cosa que se llama distinto. «pagos» y «mensualidad» es Cobros,
+  «contraseña» y «avisos» es Configuración, «deberes» es Tareas. Van por
+  destino (el `href` sin su `?tema=`), así que valen igual en el panel de quien
+  supervisa y en el de administración. **Cada clave tiene que ser cierta**: está
+  porque esa página lo tiene. Una clave que promete lo que la página no hace
+  lleva a alguien al lugar equivocado con toda confianza.
+- Se busca en el nombre, la descripción que ESA persona ve (la de alumno o la
+  `descProfe`), la nota de la tarjeta, las claves y el rótulo del grupo. Sin
+  tildes ni mayúsculas, y **tienen que estar todas las palabras**: «cobros
+  academia» deja una sola.
+- **Enter abre la primera** tarjeta que quedó (la primera con enlace: una
+  apagada no cuenta). **Escape** borra y vuelve a mostrar todo. **Ctrl + K**
+  (⌘ + K en Mac) y **«/»** llevan al buscador desde cualquier parte del panel.
+  «/» solo cuenta cuando no se está escribiendo en otro campo.
+- Un grupo del que no queda ninguna tarjeta se esconde entero, igual que
+  `renderTiles()` no pinta un grupo vacío. El botón de la videollamada va con
+  «Sesión en vivo»: si la tarjeta se va, el botón también.
+- El resultado se anuncia en un `role="status"` («1 acceso con «pagos». Enter
+  abre «Cobros de la Academia».»), **pero no a cada tecla**: espera a que se
+  deje de escribir (350 ms). Con lector de pantalla, «tres accesos» por cada
+  letra tapaba lo que se estaba escribiendo. Sin resultados, dice qué probar.
+- **El texto que se busca se arma al pintar** (`data-buscar` en cada tarjeta y
+  en cada grupo). El de «Sesión en vivo» va en su envoltorio `#sesion-wrap`,
+  que no se repinta, porque la tarjeta de adentro se repinta sola al abrir o
+  cerrar la clase. `renderTiles()` vuelve a aplicar la búsqueda al final, así
+  que un repintado no devuelve lo que estaba filtrado.
+- Va encima de la grilla y no arriba de todo: el orden de la página es el de
+  las preguntas que uno se hace al entrar, y «¿a dónde voy?» es la de la grilla.
+  El atajo lo trae desde cualquier altura.
+- Lo prueba `pruebaBuscador` en `verificar-panel.js`, midiendo con
+  `checkVisibility()` qué tarjetas quedan a la vista.
+
 ## La burbuja de "quién está conectado"
 
 El pedido era de quien da clase: **ver cuántos estudiantes están conectados
