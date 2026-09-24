@@ -8282,14 +8282,35 @@ uuid— pero es justo la relación que `profiles_select` acota con tanto cuidado
   perfiles; y la coordinadora su `mi_gente()`. Ninguna página del sitio las
   llamaba por RPC — se buscó.
 
-**Lo que esto NO cierra, y queda anotado:** un alumno con sesión
-(`authenticated`) las sigue pudiendo llamar con el id de cualquiera. No se le
-puede quitar el execute sin romper esas cinco funciones, porque PostgREST
-expone por RPC todo lo que `authenticated` puede ejecutar. La salida sería
-**moverlas fuera del esquema `public`** —a uno que PostgREST no exponga—, y eso
-toca las quince funciones que las usan: es un cambio aparte, no un arreglo
-puntual. Queda escrito acá porque un pendiente que solo vive en la cabeza de
-alguien no existe.
+**Y se cerró del todo mudándolas a `interno`.** Un alumno con sesión
+(`authenticated`) las seguía pudiendo llamar por RPC con el id de cualquiera, y
+no se les podía quitar el execute sin romper esas cinco funciones. La migración
+`mover_profesores_de_a_interno` las pasó al esquema **`interno`**, que PostgREST
+no expone: siguen existiendo, las cinco INVOKER las siguen llamando con los
+permisos de quien mira (`authenticated` tiene `usage` sobre el esquema), pero
+desde el navegador ya no hay dirección que las alcance.
+
+- **Las 22 funciones que las nombraban se reescribieron solas**, en la misma
+  migración: un bloque que toma cada definición con `pg_get_functiondef()`,
+  cambia `public.profesores_de(`/`public.alumnos_de(` por `interno.…` y la
+  vuelve a crear (`CREATE OR REPLACE` conserva dueño, permisos y triggers). Al
+  final comprueba que no quede ninguna en `public` nombrándolas; si queda una,
+  la migración entera se deshace. Ninguna política ni vista las nombra directo.
+- **Al escribir una función nueva que pregunte quién es profesor de quién, se
+  llama a `interno.profesores_de()` / `interno.alumnos_de()`**, con el esquema
+  escrito. Sin él, no se encuentran (el `search_path` de las funciones es
+  `public`).
+- Se aplicó **sin ninguna clase en vivo abierta**, a propósito: si se hubiera
+  escapado una de las 22, la regla «¿es mi profesor?» que decide si el alumno
+  ve el tablero habría fallado en medio de la clase. Antes se probó entera
+  dentro de una transacción que se deshacía, con una clase abierta de verdad:
+  en seis cuentas reales (alumna, profesora, supervisores, coordinador,
+  administración) las 16 medidas de «quién ve qué» dieron idénticas antes y
+  después —incluido que la alumna viera el tablero de esa clase— y la llamada
+  directa pasó a «la función no existe» (42883).
+- La vuelta atrás es el mismo bloque al revés: `alter function
+  interno.profesores_de(uuid) set schema public` (y `alumnos_de`) y reescribir
+  `interno.` por `public.` en las funciones de `public` que las nombren.
 
 **La regla que deja esto:** una función `SECURITY DEFINER` que conteste sobre
 una persona que NO es quien llama es una API aunque no lo parezca. Al escribir
