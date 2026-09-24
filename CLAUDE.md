@@ -87,7 +87,9 @@ y hace otra cosa. Estas reglas existen por eso.
   fila (`soy_profesor_de(student_id)`): se arma el conjunto una vez,
   `student_id in (select interno.alumnos_de(auth.uid()))`. Fila por fila, el
   informe se cayó por statement timeout con 7000 filas (ver «La RLS de las
-  tablas de actividad arma el conjunto UNA vez»).
+  tablas de actividad arma el conjunto UNA vez»). Y en una política
+  `auth.uid()` va siempre envuelto, `(select auth.uid())`: suelto se evalúa
+  por fila (`verificar-rls-auth-uid.js` lo revisa en cada migración nueva).
 - Las tablas que reparten permisos (`profile_teachers`, `equipos`,
   `coordinador_profesores`, `paquetes_acceso`…) no tienen política de
   escritura: las escriben funciones que validan.
@@ -189,7 +191,7 @@ el archivo de cada tema dice cuál corresponde a cada pieza.
 | [`cuentas-y-formularios`](docs/decisiones/cuentas-y-formularios.md) | Formularios de inscripción y adjuntos, freno de los envíos sin cuenta, alta de cuentas, alumno sin correo, invitación y bienvenida | formularios, envios-publicos, inscripcion-adjuntos, alumno-sin-correo, bienvenida, admin |
 | [`clase-en-vivo`](docs/decisiones/clase-en-vivo.md) | `sesion.html`: material del profesor, videollamada, abrir/cerrar y registrar la clase, ficha presencial y horario, chat, coordenadas, miniaturas, Táctica y Archivos, la clase con lector de pantalla | clase-registrada, sesion-orden, sesion-curso, videollamada, asistencia, chat-clase, clase-adaptada, panel |
 | [`seguimiento-del-alumno`](docs/decisiones/seguimiento-del-alumno.md) | Tareas, plan de clase y planes de arranque, bitácora, exámenes | tareas, planes, planes-semilla, notas, examenes |
-| [`informes`](docs/decisiones/informes.md) | `informes.html`, «Cómo viene», tiempo por sección, informes a la casa, reportes de actividades | informes, informe-casa, tiempo-secciones, reportes |
+| [`informes`](docs/decisiones/informes.md) | `informes.html`, «Cómo viene», tiempo por sección, informes a la casa, reportes de actividades | informes, informe-casa, tiempo-secciones, reportes, rls-auth-uid |
 | [`cobros-acceso-y-tienda`](docs/decisiones/cobros-acceso-y-tienda.md) | Cobros y avisos de morosidad, paquetes de acceso y cupos, tienda | cobros, accesos, tienda |
 | [`cursos-y-material`](docs/decisiones/cursos-y-material.md) | Cursos (temario público, contenido con sesión y su candado en el worker), material de estudio, catálogo, guía del profesor, video, contenido abierto para admin | worker, curso-adaptado, material, guia-profesores, contenido-admin |
 | [`entrenamiento`](docs/decisiones/entrenamiento.md) | Progreso sincronizado, logros, hub de Entrenamiento, aperturas, Estudio, precisión posicional, diagnóstico, arbitraje, Confites, Sonar | entreno, aperturas, aperturas-pagina, fichas, estudio, precision-posicional, diagnostico, libro-diagnostico, arbitraje, logros, sonar |

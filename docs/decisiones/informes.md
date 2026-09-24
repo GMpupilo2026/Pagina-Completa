@@ -640,6 +640,44 @@ cero diferencias. Leer `profiles` pasó de ~200 ms a menos de 10 ms, y con eso
 `informes_inactivos()` bajó a 27 ms y `mis_clases()` a 14 ms. Quedan con
 función por fila solo tablas chicas que no crecen con cada alumno.
 
+### `auth.uid()` va envuelto: `(select auth.uid())`
+
+La otra mitad del mismo costo: **150 políticas** llamaban a `auth.uid()` tal
+cual, y Postgres la evalúa **una vez por fila** (el aviso `auth_rls_initplan`
+de Supabase). Envuelta como `(select auth.uid())` se calcula una vez por
+consulta: el mismo valor, sin el costo por fila. Se aplicó con
+`rls_auth_uid_una_vez_por_consulta`, que no reescribe ninguna política a mano:
+lee cada definición de `pg_policies`, cambia solo esa llamada y **se comprueba
+a sí misma** (desenvuelta, cada una tiene que quedar idéntica a la vieja, o no
+se aplica ninguna).
+
+- Comprobado antes de aplicarlo, con la migración corrida en seco: lo que ve
+  cada tipo de cuenta real (administración, alumno, coordinación, profesor,
+  supervisión y sin sesión) en las 60 tablas tocadas, antes y después, **igual
+  fila por fila**. Las dos únicas diferencias eran filas nuevas de actividad
+  que entraron en esos minutos, y se confirmó contándolas sin la migración.
+- Las tres tablas de actividad más grandes, leídas enteras, pasaron de 13 a
+  5 ms para administración, de 27 a 15 ms para coordinación y de 34 a 26 ms
+  para supervisión.
+- **Una política nueva se escribe ya envuelta**: `(select auth.uid())`, nunca
+  `auth.uid()` suelto. Queda fuera la única de `storage.objects`, que es de
+  Supabase y no se puede alterar desde las migraciones.
+
+**Las claves foráneas llevan índice** (`indices_de_claves_foraneas`, 54 de
+una vez, armados desde el catálogo). Sin índice, borrar una cuenta recorre
+entera cada tabla que la nombra. Hoy son tablas chicas; es para el día que no
+lo sean. Una columna nueva que apunte a otra tabla lleva su índice en la misma
+migración.
+
+**Lo que NO se hizo, a propósito: fusionar las políticas «duplicadas»**
+(`multiple_permissive_policies`, 42 avisos). Son varias políticas permisivas
+para la misma acción —`…_select`, `…_select_supervisor`,
+`…_coordinacion`—, y Postgres las evalúa todas. Juntarlas en una sola ahorraría
+poco en tablas de este tamaño y borraría justo lo que hace legible el modelo de
+permisos: cada vía con su nombre, que es como la citan estas notas y como se
+revisa. Si una tabla con varias vías se vuelve lenta, se arma su conjunto una
+vez, como arriba.
+
 ## Los informes que llegan a la casa
 
 En Informes, mirando a UN alumno, está "📧 Informes a la casa": a qué correos se

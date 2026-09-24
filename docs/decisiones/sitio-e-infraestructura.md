@@ -433,6 +433,14 @@ JSON truncado o un 404 tampoco darían error) y que el bot conteste.
   de 40 y 80 px. El grande se sigue usando donde de verdad se ve grande
   (`sobre-oscar.html`, a 256 px).
 
+**`inscripcion.html` baja three.js al terminar de cargar.** Son ~600 KB que
+son solo el decorado de fondo, y se pedían con un `<script>` en el `<head>`, que
+frena el dibujo de la página hasta bajarlos enteros. Con red de celular lenta
+el formulario quedaba listo a los 5 s; ahora a los 1,9 s, y la animación
+aparece cuando llega. Si no llega, el formulario funciona igual.
+`verificar-vendor.js` reconoce también la ruta escrita en el código (no solo en
+un `src="…"`), así que sigue comprobando que llegue al archivo.
+
 ## Metadatos: que el enlace se vea y la página se encuentre
 
 Cada página pública lleva su descripción, su `canonical` y su bloque de Open
