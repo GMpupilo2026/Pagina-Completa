@@ -458,8 +458,13 @@ llegan y corren todos los scripts síncronos del `<head>`. Lo que había ahí:
   vive en `js/vendor/chess.js` (ver «La librería de Supabase tampoco viene de
   un CDN»), y las mediciones de abajo cuentan esa mudanza.
 - **three.js (589 KB) en `inscripcion.html`**, síncrono en el `<head>`, para
-  el fondo animado de piezas: el formulario quedaba en blanco hasta bajarlo. Va
-  justo antes del script del fondo.
+  el fondo animado de piezas: el formulario quedaba en blanco hasta bajarlo.
+  Ahora no va en ningún `<script src>`: `cargarFondo3D()` lo pide cuando la
+  página ya terminó de cargar, y la animación arranca al llegar (si no llega, el
+  formulario funciona igual). Con 4G lenta el formulario queda listo
+  (`DOMContentLoaded`) a los 1,9 s en vez de 5 s. Como la ruta va escrita en el
+  código y no en un `src="…"`, `verificar-vendor.js` la busca también entre
+  comillas, y sigue comprobando que llegue al archivo.
 - **La hoja de Google Fonts frenaba el pintado** de las 107 páginas: otro
   origen más. Va con `media="print"` y `onload="this.media='all'"`: se baja
   igual, pero el texto sale enseguida con la fuente del sistema y cambia a Inter

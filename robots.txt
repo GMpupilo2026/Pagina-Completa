@@ -11,8 +11,8 @@ Allow: /
 Disallow: /cursos/protegido/
 # El material de estudio de cada lección (cuadernillos y presentaciones) es de
 # uso docente: no tiene sentido que salga en una búsqueda. Como siempre acá,
-# esto es un filtro informativo: quien sepa la dirección lo baja igual, y por
-# eso los PDF van además con marca de agua y protegidos.
+# esto no es la puerta: la puerta la pone worker.js, que solo le sirve estas dos
+# carpetas a una cuenta de la Academia con el acceso vigente.
 Disallow: /cursos/recursos/
 Disallow: /cursos/academia/
 # El entrenamiento pide sesión, salvo el diagnóstico de nivel: ese se hace sin

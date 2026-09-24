@@ -531,10 +531,11 @@ si otro alumno pagó. Con `auth.uid()` nulo (la service role, las tandas de
   tiempo se rechaza con 42501, su update cambia 0 filas y el examen dice «Tu
   acceso a la Academia no está activo»; con paquete vuelve a todo; el profesor
   sigue viendo su tablero.
-- **Lo que la base NO alcanza son los archivos estáticos**: el contenido de los
-  cursos (`cursos/protegido/`), el material y los bancos de ejercicios los sirve
-  el worker sin candado. Cerrarlo pediría que `worker.js` valide la sesión, que
-  es justo lo que ya se probó y se abandonó (ver «Cursos»): se decide aparte.
+- **Los archivos de los cursos los cierra el worker con la misma pregunta**:
+  `cursos/protegido/` y `cursos/recursos/` le preguntan `acceso_vigente()` a
+  Supabase con el token de quien los pide (ver «El candado de los cursos está
+  en el servidor»). Los bancos de ejercicios de `js/` (`*-items.js`) siguen
+  siendo archivos públicos: los usan páginas que se abren sin cuenta.
 
 ### El tiempo de entrenamiento dejó de registrarse, y nadie se enteró
 
@@ -673,12 +674,12 @@ funciona de verdad una academia acá y no necesita ninguna credencial. La entreg
 es a mano, por correo.
 
 **Antes de abrirla al público hay UNA cosa que resolver, y está escrita arriba
-de la propia página**: hoy `worker.js` sirve `cursos/recursos/` y los libros de
-la raíz **sin ningún candado**, así que quien conozca la dirección exacta de un
-archivo se lo baja sin pagar — y eso no da ningún error ni queda registrado en
-ninguna parte. Mientras la entrega se haga a mano no cambia nada; el día que la
-tienda abra, el material que se cobra tiene que mudarse detrás de un candado de
-verdad. Va escrito EN LA PÁGINA y no solo acá porque es la decisión que hay que
+de la propia página**: `cursos/recursos/` ya tiene candado, pero es el de la
+Academia —lo baja **cualquier cuenta con el acceso vigente**, no quien compró
+ese material—, y los libros de la raíz siguen **sin ninguno**: quien conozca la
+dirección exacta se los baja sin pagar, sin ningún error ni registro. Mientras
+la entrega se haga a mano no cambia nada; el día que la tienda abra, lo que se
+cobra aparte necesita un permiso por producto comprado. Va escrito EN LA PÁGINA y no solo acá porque es la decisión que hay que
 tomar antes de apretar el botón de abrir.
 
 **Al tocar `js/tienda-catalogo.js`, `tienda.html` o el material que vende,

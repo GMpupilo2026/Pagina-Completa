@@ -19,3 +19,4 @@ respaldos/
 
 # El video promocional se regenera con herramientas/video-promo.js
 promo/
+.wrangler/

@@ -25,3 +25,53 @@ window.SUPABASE_ANON_KEY =
 if (!window.sb) {
   window.sb = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
 }
+
+// La llave de los cursos. El contenido completo (cursos/protegido/) y el
+// material (cursos/recursos/) los cuida worker.js, que para dejarlos pasar
+// necesita ver la sesión — y la sesión vive en localStorage, adonde el servidor
+// no llega. Por eso se copia el token de acceso a una cookie que el navegador
+// manda SOLO a /cursos/: el worker le pregunta a Supabase si vale y si el
+// acceso a la Academia está vigente (acceso_vigente()). Es el mismo token que
+// ya está en localStorage, así que no se expone nada que no estuviera.
+//
+// Se escribe en tres momentos, porque cualquiera que falte deja a una cuenta
+// válida sin su material y sin ningún error a la vista:
+//   · al cargar, con lo que haya guardado (si no venció);
+//   · en cada cambio de sesión (entrar, renovar el token, salir);
+//   · justo antes de pedir un fragmento (SesionCursos.guardar(session)), para
+//     no depender del orden en que Supabase avisa de la renovación.
+window.SesionCursos = (function () {
+  var NOMBRE = "ai_sesion_cursos";
+  var seguro = location.protocol === "https:" ? "; Secure" : "";
+  function borrar() {
+    try { document.cookie = NOMBRE + "=; Path=/cursos/; Max-Age=0; SameSite=Lax" + seguro; } catch (e) { }
+  }
+  function guardar(session) {
+    try {
+      if (!session || !session.access_token) return borrar();
+      var quedan = Math.floor((session.expires_at || 0) - Date.now() / 1000);
+      if (quedan <= 0) return borrar();
+      document.cookie = NOMBRE + "=" + session.access_token +
+        "; Path=/cursos/; Max-Age=" + quedan + "; SameSite=Lax" + seguro;
+    } catch (e) { }
+  }
+  return { guardar: guardar, borrar: borrar };
+})();
+
+(function () {
+  try {
+    // La clave con que supabase-js guarda la sesión: sb-<proyecto>-auth-token.
+    var proyecto = window.SUPABASE_URL.replace(/^https:\/\/([^.]+)\..*$/, "$1");
+    var guardada = JSON.parse(localStorage.getItem("sb-" + proyecto + "-auth-token") || "null");
+    if (guardada && guardada.access_token) window.SesionCursos.guardar(guardada);
+  } catch (e) { }
+  // El doble de un verificador puede no traer onAuthStateChange, y una página
+  // no puede caerse por esto.
+  try {
+    if (window.sb && window.sb.auth && typeof window.sb.auth.onAuthStateChange === "function") {
+      window.sb.auth.onAuthStateChange(function (evento, session) {
+        window.SesionCursos.guardar(session);
+      });
+    }
+  } catch (e) { }
+})();

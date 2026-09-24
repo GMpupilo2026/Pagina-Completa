@@ -52,7 +52,9 @@ for (const lib of LIBRERIAS) {
   const desdeCdn = [];
   const rutaMala = [];
   const conLibreria = [];
-  const nombreArchivo = new RegExp('src="([^"]*js/vendor/' + escaparRe(path.basename(VENDOR)) + ')"', "g");
+  // La ruta entre comillas: en un src="…" o en el código que la pide después
+  // (inscripcion.html baja three.js recién al terminar de cargar).
+  const nombreArchivo = new RegExp('["\']([^"\']*js/vendor/' + escaparRe(path.basename(VENDOR)) + ')["\']', "g");
   for (const { a, rel, html } of todas) {
     if (lib.cdn.test(html)) desdeCdn.push(rel);
     const rutas = [...html.matchAll(nombreArchivo)].map((m) => m[1]);
