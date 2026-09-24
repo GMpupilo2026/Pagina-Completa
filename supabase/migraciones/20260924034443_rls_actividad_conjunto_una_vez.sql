@@ -1,3 +1,4 @@
+-- La RLS de las tablas de actividad llamaba a soy_profesor_de(student_id) y a
 -- supervisado_por_mi(student_id) UNA VEZ POR FILA. Son SECURITY DEFINER con
 -- SET, así que Postgres no las puede meter dentro de la consulta: con ~7000
 -- filas en training_progress, contar lo que ve un profesor-supervisor tardaba
