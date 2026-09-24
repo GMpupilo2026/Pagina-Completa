@@ -27,7 +27,7 @@
    Uso:  python3 -m http.server 8777    (desde la raíz del sitio)
          npm install playwright chess.js@0.10.3
          node herramientas/verificar-entreno-accesible.js                      */
-const { chromium } = require("playwright");
+const { chromium } = require("./lib/playwright-con-sesion");
 const fs = require("fs");
 const path = require("path");
 
@@ -45,7 +45,6 @@ function igual(nombre, hallado, esperado) {
 function mal(t) { console.log("  ✗ " + t); fallos += 1; }
 function bien(t) { console.log("  ✓ " + t); }
 
-const CHESSJS = fs.readFileSync(require.resolve("chess.js"), "utf8");
 
 const STUB = `
 window.SUPABASE_URL = "https://ejemplo.supabase.co";
@@ -79,13 +78,7 @@ window.sb = {
    verificar-reportes.js. */
 async function abrir(browser, ruta, adaptado) {
   const ctx = await browser.newContext({ serviceWorkers: "block" });
-  // Ojo con el orden: playwright resuelve la ÚLTIMA ruta que encaje, así que la
-  // de chess.js va DESPUÉS de la de su CDN. Al revés llega vacío y la página
-  // muere con "Chess is not defined" — un fallo del andamiaje que se cuenta
-  // como si fuera de la página.
   await ctx.route("**/cdn.jsdelivr.net/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
-  await ctx.route("**/cdnjs.cloudflare.com/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
-  await ctx.route("**/chess.min.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: CHESSJS }));
   await ctx.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await ctx.route("**/fonts.gstatic.com/**", (r) => r.abort());
   await ctx.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: STUB }));

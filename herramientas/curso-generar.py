@@ -104,9 +104,6 @@ def portada(curso):
                     <p class="text-sm text-brand-500 dark:text-brand-400"><strong class="text-brand-800 dark:text-white">{total} lecciones</strong> · {nivel}</p>
                     <p class="text-xs text-brand-400 dark:text-brand-500 mt-0.5">Cada lección con su presentación y su PDF de ejercicios para imprimir.</p>
                 </div>
-                <div class="hidden items-center gap-2" id="course-access-cta" hidden>
-                    <a href="../login.html?next=cursos/{slug}.html" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-6 py-2.5 rounded-lg transition-colors whitespace-nowrap">Iniciar sesión →</a>
-                </div>
             </div>
 
             <h2 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-6">Temario del curso</h2>
@@ -114,18 +111,17 @@ def portada(curso):
 {bloques}
             </div>
 
-            <h2 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-1 mt-12">Contenido completo del curso</h2>
-            <p class="text-brand-500 dark:text-brand-400 text-sm mb-6">{intro_contenido}</p>
-
-            <div id="course-content-body" data-course="{slug}" class="space-y-8">
-                <p class="text-sm text-brand-400 dark:text-brand-500">Cargando lecciones…</p>
-            </div>
-
-            <div class="mt-10 bg-brand-800 dark:bg-brand-900 rounded-2xl p-6 text-center hidden" id="course-login-cta" hidden>
-                <p class="text-white font-serif text-lg font-bold mb-2">Contenido para alumnos de Ajedrez Integral</p>
-                <p class="text-brand-200 text-sm mb-4">Inicia sesión con tu cuenta de Ajedrez Integral para ver las {total} lecciones completas de este curso, con sus recursos descargables.</p>
-                <a href="../login.html?next=cursos/{slug}.html" class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-6 py-2.5 rounded-lg transition-colors">Iniciar sesión →</a>
-            </div>
+            <section aria-labelledby="academia-invite" class="mt-12 rounded-2xl bg-brand-800 dark:bg-brand-900 p-6 md:p-8 text-center shadow-lg">
+                <p class="text-accent-400 text-xs font-semibold uppercase tracking-wide">Contenido completo</p>
+                <h2 id="academia-invite" class="font-serif text-2xl font-bold text-white mt-2 mb-3">Este curso se estudia en Ajedrez Integral</h2>
+                <p class="text-brand-200 text-sm max-w-2xl mx-auto mb-2">{intro_contenido}</p>
+                <p class="text-brand-200 text-sm max-w-2xl mx-auto mb-6">Las {total} lecciones completas están dentro del panel de Ajedrez Integral, en orden y con tu línea de progreso: cada lección se abre al terminar la anterior, y tu profesor ve hasta dónde llegaste.</p>
+                <div class="flex flex-wrap justify-center gap-3">
+                    <a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-6 py-2.5 rounded-lg transition-colors">💬 Inscribirme en Ajedrez Integral</a>
+                    <a href="../login.html?next=cursos/academia/{slug}.html" class="inline-block border border-brand-400 hover:border-accent-400 text-white font-semibold px-6 py-2.5 rounded-lg transition-colors">Ya soy alumno: iniciar sesión →</a>
+                </div>
+                <p class="text-brand-200 text-sm mt-5">¿No sabes qué nivel tienes? <a href="../entreno/diagnostico.html" class="text-accent-400 hover:text-accent-300 font-semibold underline">Haz el diagnóstico de nivel gratis</a> (20 minutos, sin cuenta) y el profesor ve tu resultado.</p>
+            </section>
 
             <nav aria-label="Navegación entre cursos" class="mt-10 flex items-center justify-between border-t border-brand-100 dark:border-brand-800 pt-6">
                 <a href="{anterior_href}" class="text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors" aria-label="Curso anterior: {anterior_titulo}"><span aria-hidden="true">←</span> {anterior_titulo}</a>

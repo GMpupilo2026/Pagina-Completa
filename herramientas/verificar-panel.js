@@ -31,7 +31,7 @@
 
    Uso:  python3 -m http.server 8777    (desde la raíz del sitio)
          node herramientas/verificar-panel.js                                 */
-const { chromium } = require("playwright");
+const { chromium } = require("./lib/playwright-con-sesion");
 
 const CHROME = process.env.CHROME_PATH || "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
 const BASE = process.env.BASE_URL || "http://localhost:8777";
@@ -221,7 +221,6 @@ async function panel(browser, perfiles, quien, opciones, datos) {
   // Lo que el supervisor de su academia le dejó a un coordinador.
   if (datos && datos.misFunciones) await ctx.addInitScript((f) => { window.__misFunciones = f; }, datos.misFunciones);
   await ctx.route("**/cdn.jsdelivr.net/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
-  await ctx.route("**/cdnjs.cloudflare.com/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
   await ctx.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await ctx.route("**/fonts.gstatic.com/**", (r) => r.abort());
   await ctx.route("**/js/supabase-client.js", (r) =>

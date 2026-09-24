@@ -31,12 +31,11 @@
  */
 const fs = require("fs");
 const path = require("path");
-const { chromium } = require("playwright");
+const { chromium } = require("./lib/playwright-con-sesion");
 const { abrir, igual, CHROME, BASE, fallos } = require("./verificar-clase-registrada.js");
 const guia = require("./guia-capturas.js");
 
 const RAIZ = path.join(__dirname, "..");
-const CHESSJS = fs.readFileSync(path.join(RAIZ, "node_modules/chess.js/chess.js"), "utf8");
 let mias = 0;
 function si(nombre, cond, detalle) {
   if (cond) console.log("  ✓ " + nombre);
@@ -160,7 +159,6 @@ async function pruebaPregunta(browser) {
 async function contextoAlumna(browser, opciones, adaptado) {
   const ctx = await browser.newContext(Object.assign({ serviceWorkers: "block" }, opciones || {}));
   await ctx.route("**/fonts.gstatic.com/**", (r) => r.abort());
-  await ctx.route("**/cdnjs.cloudflare.com/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: CHESSJS }));
   await ctx.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript",
     body: guia.clienteFalso({ yo: guia.ALUMNOS[0] }) }));
   if (adaptado) await ctx.addInitScript(() => { try { localStorage.setItem("oscarBlindMode_v1", "1"); } catch (e) {} });

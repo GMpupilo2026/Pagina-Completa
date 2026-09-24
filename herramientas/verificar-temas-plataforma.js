@@ -39,7 +39,7 @@
 
 const fs = require("fs");
 const path = require("path");
-const { chromium } = require("playwright");
+const { chromium } = require("./lib/playwright-con-sesion");
 const { clienteFalso, PROFE, ALUMNOS } = require("./guia-capturas.js");
 const { cssDeTemas } = require("./css-construir.js");
 const { TEMAS } = require("../js/temas-plataforma.js");
@@ -245,8 +245,6 @@ async function abrir(navegador, url, sembrar) {
   await ctx.route("**/fonts.googleapis.com/**", (r) =>
     r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await ctx.route("**/cdn.jsdelivr.net/**", (r) =>
-    r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
-  await ctx.route("**/cdnjs.cloudflare.com/**", (r) =>
     r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
   await ctx.route("**/js/supabase-client.js", (r) =>
     r.fulfill({ status: 200, contentType: "application/javascript",

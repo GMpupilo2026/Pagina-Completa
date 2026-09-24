@@ -17,7 +17,7 @@
 
    Uso:  python3 -m http.server 8777    (desde la raíz del sitio)
          node herramientas/verificar-profesor-juega.js                        */
-const { chromium } = require("playwright");
+const { chromium } = require("./lib/playwright-con-sesion");
 
 const CHROME = process.env.CHROME_PATH || "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
 const BASE = process.env.BASE_URL || "http://localhost:8777";
@@ -149,7 +149,6 @@ async function pagina(browser, ruta, script) {
   // cartas y de 4 jugadores son archivos del sitio—. Cortarlos de verdad, en
   // vez de dejarlos fallar, es lo que permite exigir CERO errores de consola.
   await ctx.route("**/cdn.jsdelivr.net/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
-  await ctx.route("**/cdnjs.cloudflare.com/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
   await ctx.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await ctx.route("**/fonts.gstatic.com/**", (r) => r.abort());
   await ctx.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: script }));

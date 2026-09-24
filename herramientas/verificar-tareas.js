@@ -163,19 +163,14 @@ window.__llamadas = [];
 `;
 }
 
-/* chess.js viene de un CDN y las páginas de entreno lo NECESITAN para armar
-   el tablero: se les sirve la copia local (la misma versión) en vez de
-   cortarlo. Las rutas van en el CONTEXTO y no en la página, y el service
+/* Las rutas van en el CONTEXTO y no en la página, y el service
    worker se bloquea: lo que pide el service worker no pasa por las rutas de
    una página, así que al recargar volvería el cliente de Supabase de verdad
    y la página moriría con "sb is not defined" (la piedra que ya documentó
    verificar-reportes.js). */
-const CHESSJS = fs.readFileSync(require.resolve("chess.js"), "utf8");
 
 async function contextoEntreno(navegador, initScript) {
   const ctx = await navegador.newContext({ serviceWorkers: "block" });
-  await ctx.route("**/chess.min.js", (r) =>
-    r.fulfill({ status: 200, contentType: "application/javascript", body: CHESSJS }));
   await ctx.route("**/fonts.googleapis.com/**", (r) =>
     r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await ctx.route("**/fonts.gstatic.com/**", (r) => r.abort());

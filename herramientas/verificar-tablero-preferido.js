@@ -69,12 +69,10 @@ async function navegador() {
   const { chromium } = require(path.join(RAIZ, "node_modules/playwright"));
   const CHROME = process.env.CHROME_PATH || "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
   const b = await chromium.launch({ executablePath: CHROME, args: ["--no-sandbox"] });
-  const chess = fs.readFileSync(path.join(RAIZ, "node_modules/chess.js/chess.js"), "utf8");
   const paginas = ["index.html", "tablero.html", "articulos/la-clavada.html"];
   for (const adaptado of [false, true]) {
     for (const estilo of ["ilustrado", "clasico"]) {
       const ctx = await b.newContext({ serviceWorkers: "block" });
-      await ctx.route(/cdnjs\.cloudflare\.com.*chess/, (r) => r.fulfill({ contentType: "text/javascript", body: chess }));
       await ctx.addInitScript(([estilo, adaptado]) => {
         localStorage.setItem("piece_style_theme_v1", estilo);
         localStorage.setItem("board_color_theme_v1", "madera");

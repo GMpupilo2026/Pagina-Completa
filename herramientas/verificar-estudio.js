@@ -18,7 +18,7 @@
  *       node herramientas/verificar-estudio.js                */
 const path = require("path");
 const fs = require("fs");
-const { chromium } = require("playwright");
+const { chromium } = require("./lib/playwright-con-sesion");
 const { FICHAS } = require(path.join(__dirname, "..", "js", "fichas-estudio.js"));
 const { LINEAS } = require(path.join(__dirname, "..", "js", "aperturas-lineas.js"));
 
@@ -33,13 +33,6 @@ const sinTildes = (t) => String(t).normalize("NFD").replace(/[\u0300-\u036f]/g, 
 const textoDe = (F) => [F.titulo, F.subtitulo, F.resumen, F.diagrama, F.centro.join(" "),
                         F.bloques.map((b) => b.join(" ")).join(" ")].join(" ");
 
-let CHESSJS = "";
-for (const base of String(process.env.NODE_PATH || "").split(path.delimiter).filter(Boolean)
-                  .concat([path.join(__dirname, "..", "node_modules")])) {
-  const f = path.join(base, "chess.js", "chess.js");
-  if (!CHESSJS && fs.existsSync(f)) CHESSJS = fs.readFileSync(f, "utf8");
-}
-if (!CHESSJS) { console.error("Falta chess.js. Instálalo con:  npm install chess.js@0.10.3"); process.exit(2); }
 const CJS = require("chess.js");
 const Chess = CJS.Chess || CJS;
 
@@ -66,7 +59,6 @@ async function abrir(browser, ruta, cliente) {
   await ctx.route("**/cdn.jsdelivr.net/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
   await ctx.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await ctx.route("**/fonts.gstatic.com/**", (r) => r.abort());
-  await ctx.route("**/cdnjs.cloudflare.com/**/chess.min.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: CHESSJS }));
   await ctx.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: cliente || CON_SESION }));
   const page = await ctx.newPage();
   const errores = [];
@@ -311,7 +303,6 @@ function jugadasDe(F) {
       await oscuro.route("**/cdn.jsdelivr.net/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
       await oscuro.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
       await oscuro.route("**/fonts.gstatic.com/**", (r) => r.abort());
-      await oscuro.route("**/cdnjs.cloudflare.com/**/chess.min.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: CHESSJS }));
       await oscuro.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: CON_SESION }));
       const p2 = await oscuro.newPage();
       await p2.goto(BASE + "/entreno/estudio.html", { waitUntil: "networkidle" });

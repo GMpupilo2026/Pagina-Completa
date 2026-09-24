@@ -39,16 +39,6 @@ const BASE = process.env.BASE_URL || "http://localhost:8777";
    mirar una partida también es tiempo en la plataforma, y está bien que cuente. */
 const ESCRITURAS_DE_JUEGO = () => window.__escrituras.filter((e) => e.tabla !== "platform_activity_log").length;
 
-/* chess.js llega por CDN en la página; acá se sirve el de node_modules, igual
-   que en el resto de los verificadores. Sin él las páginas de partida se
-   quedan en "Cargando…" y esta prueba no mediría nada. */
-let CHESSJS = null;
-for (const base of (module.paths || []).concat([path.join(RAIZ, "node_modules")])) {
-  const f = path.join(base, "chess.js", "chess.js");
-  if (fs.existsSync(f)) { CHESSJS = fs.readFileSync(f, "utf8"); break; }
-}
-if (!CHESSJS) { console.error("Falta chess.js. Instálalo con:  npm install chess.js@0.10.3"); process.exit(2); }
-
 const ANA   = { id: "u-ana",   full_name: "Ana Rojas",  email: "ana@x.cr",   role: "alumno", is_admin: false };
 const BRUNO = { id: "u-bruno", full_name: "Bruno Mena", email: "bruno@x.cr", role: "alumno", is_admin: false };
 const CARLA = { id: "u-carla", full_name: "Carla Soto", email: "carla@x.cr", role: "alumno", is_admin: false };
@@ -169,8 +159,6 @@ function igual(nombre, hallado, esperado) {
 
 async function abrir(browser, url, datos, usuarioId) {
   const ctx = await browser.newContext();
-  await ctx.route("**/cdnjs.cloudflare.com/**/chess*.js",
-    (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: CHESSJS }));
   await ctx.addInitScript(doble(datos, usuarioId));
   const page = await ctx.newPage();
   const errores = [];

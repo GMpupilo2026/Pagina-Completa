@@ -11,7 +11,7 @@
 "use strict";
 const fs = require("fs");
 const path = require("path");
-const { chromium } = require("playwright");
+const { chromium } = require("./lib/playwright-con-sesion");
 
 const CHROME = process.env.CHROME_PATH || "/opt/pw-browsers/chromium";
 const BASE = process.env.BASE_URL || "http://localhost:8777";

@@ -24,7 +24,7 @@
    Uso:  python3 -m http.server 8777    (desde la raíz del sitio)
          npm install chess.js@0.10.3
          node herramientas/verificar-entreno.js                                */
-const { chromium } = require("playwright");
+const { chromium } = require("./lib/playwright-con-sesion");
 const fs = require("fs");
 const path = require("path");
 
@@ -113,14 +113,12 @@ window.sb = {
 `;
 }
 
-/* chess.js viene de un CDN y temas.html lo NECESITA para armar el tablero: se
-   le sirve la copia local (la misma versión) en vez de cortarlo. Lo de Supabase
-   sí se corta: el cliente se reemplaza por el doble. */
-const CHESSJS = fs.readFileSync(require.resolve("chess.js"), "utf8");
+/* Lo de afuera se corta: el cliente de Supabase se reemplaza por el doble.
+   chess.js no se toca: temas.html lo NECESITA para armar el tablero, y lo sirve
+   el propio sitio (js/vendor/chess.js). */
 
 function rutasDeAfuera(ctx) {
   return Promise.all([
-    ctx.route("**/chess.min.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: CHESSJS })),
     ctx.route("**/cdn.jsdelivr.net/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" })),
     ctx.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" })),
     ctx.route("**/fonts.gstatic.com/**", (r) => r.abort()),

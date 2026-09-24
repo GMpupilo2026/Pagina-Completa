@@ -458,18 +458,10 @@ async function capturar(navegador, pagina) {
 
   await ctx.route("**/cdn.jsdelivr.net/**", (r) =>
     r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
-  await ctx.route("**/cdnjs.cloudflare.com/**", (r) =>
-    r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
 
-  /* chess.js se sirve DE VERDAD desde node_modules, y esta ruta va DESPUÉS de
-     las dos de arriba a propósito: playwright resuelve la última que se
-     registró, así que puesta antes la tapaba la de cdnjs y la clase en vivo se
-     quedaba en «Cargando…» para siempre —su tablero no llega a montarse— sin
-     dar ningún error. Es la misma razón por la que `verificar-planes.js` lo
-     sirve en lugar de simularlo. */
-  await ctx.route("**/chess.js/**", (r) =>
-    r.fulfill({ status: 200, contentType: "application/javascript",
-                body: fs.readFileSync(path.join(RAIZ, "node_modules/chess.js/chess.js"), "utf8") }));
+  /* chess.js ya no se intercepta: vive en js/vendor/chess.js y lo sirve el
+     propio sitio. Antes venía de cdnjs, y simularlo vacío dejaba la clase en
+     vivo en «Cargando…» para siempre, sin ningún error. */
 
   if (pagina.sesion !== false) {
     await ctx.route("**/js/supabase-client.js", (r) =>

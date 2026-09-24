@@ -100,9 +100,24 @@ function inventarios() {
   for (const f of ["inventario-academia.txt", "inventario-colegios.txt", "cron.txt"]) {
     const p = path.join(ESQUEMA, f);
     if (!fs.existsSync(p)) { mal(`falta esquema/${f}`); continue; }
-    const lineas = fs.readFileSync(p, "utf8").split("\n").filter((l) => l.trim() && !l.startsWith("#"));
+    const texto = fs.readFileSync(p, "utf8");
+    const lineas = texto.split("\n").filter((l) => l.trim() && !l.startsWith("#"));
     if (!lineas.length) mal(`esquema/${f}: está vacío`);
     else bien(`${f}: ${lineas.length} líneas`);
+  }
+
+  /* Un retrato viejo es peor que ninguno, porque se le cree: llegó a decir 186
+     políticas cuando había 252, y nada lo avisaba. Su cabecera dice con qué
+     migración está al día; si hay alguna más nueva, se vuelve a armar con
+     herramientas/inventario-esquema.sql. */
+  const academia = path.join(ESQUEMA, "inventario-academia.txt");
+  if (fs.existsSync(academia)) {
+    const alDia = (fs.readFileSync(academia, "utf8").match(/^# al-dia-con: (\d{14})$/m) || [])[1];
+    const ultima = fs.readdirSync(MIGRACIONES).filter((f) => f.endsWith(".sql")).sort().pop().split("_")[0];
+    if (!alDia) mal("inventario-academia.txt no dice con qué migración está al día (# al-dia-con: <versión>)");
+    else if (alDia < ultima) mal(`inventario-academia.txt está al día con ${alDia}, pero hay migraciones hasta ${ultima}: `
+      + "volver a armarlo con herramientas/inventario-esquema.sql");
+    else bien(`inventario-academia.txt al día con la última migración (${ultima})`);
   }
 }
 

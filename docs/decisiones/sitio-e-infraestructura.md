@@ -342,10 +342,11 @@ el sitio adentro.
   se pedía de ahí. La lista de librerías está UNA vez, en
   `herramientas/lib/librerias-vendor.js`: la leen `vendor.js` y el verificador.
   `curso-generar.py` escribe también la ruta local, así que un curso nuevo no
-  vuelve a traer el CDN. Unos 25 verificadores todavía interceptan
-  `cdnjs.cloudflare.com` para servir su copia de chess.js (o nada): esas rutas
-  quedaron sin efecto, porque la página ya no pide nada ahí, y todos pasan
-  igual con la librería local. Se pueden ir quitando al tocar cada uno.
+  vuelve a traer el CDN. Los verificadores ya no interceptan chess.js (ni
+  `cdnjs.cloudflare.com` ni `**/chess.min.js`): esas rutas quedaron sin efecto
+  con la mudanza y se quitaron, junto con la copia de `node_modules` que
+  servían. Un verificador nuevo no necesita hacer nada: el sitio servido trae
+  su chess.js.
 - **jsDelivr sigue en el `script-src` de `_headers`, pero ya solo por la
   transcripción** de `reportes.html`, que importa `@huggingface/transformers`
   desde ahí (fijado a 3.3.3). Si algún día se quita esa función, jsDelivr se va
@@ -504,6 +505,34 @@ como Cloudflare y los orígenes de terceros simulados con 600 ms:
   lo que falta en la Academia (`clases.html`, Entrenamiento, Juegos: ~1,1 s).
   No se tocó: los scripts de sesión del propio `<head>` lo usan al cargar, y
   diferirlo es cambiar el orden de arranque de cada página, no una línea.
+
+### Sin sesión, al login antes de bajar nada
+
+Cada página de la Academia decide que no hay sesión en su propio script, **al
+final**, después de bajar todo lo demás. Sin sesión, `sesion.html` bajaba
+773 KB, `entreno/mates.html` 647 KB y `juegos.html` 509 KB solo para mandar al
+login, y `juegos.html`, `torneos.html`, `clases.html` y otras ni siquiera
+volvían: `login.html` sin `next`.
+
+- **La guardia de sesión** (la pone `academia-cabecera.py`, justo después de
+  `<meta charset>`) mira si hay una sesión guardada (`sb-<proyecto>-auth-token`,
+  la clave de supabase-js; el proyecto se lee de `js/supabase-client.js`) y si
+  no hay **ninguna**, detiene la carga y manda a `login.html?next=<la página>`.
+- **`window.stop()` va ANTES de `location.replace()`**, y el orden importa. El
+  navegador ya lanzó por adelantado los scripts del `<head>` (el *preload
+  scanner*) antes de que la guardia corra: sin cortarlos, igual se bajaban 150 a
+  200 KB. Al revés —navegar y después `stop()`— cancelaría la propia navegación
+  al login. Medido desde la página original: de 390 a 773 KB a **10 KB** en la
+  mayoría (hasta 107 KB si la hoja de estilos alcanza a llegar).
+- **Solo decide lo seguro.** Con una sesión guardada, aunque esté vencida, no
+  hace nada: la renueva o la rechaza el flujo de siempre. Si `localStorage`
+  falla, tampoco. Si ya hay un `window.sb` (el doble que ponen los
+  verificadores antes de cargar la página), se aparta.
+- **`cobros.html` va sin guardia** (`SIN_GUARDIA`): sin sesión enseña su propia
+  tarjeta de «Iniciar sesión», a propósito.
+- `node herramientas/verificar-guardia-sesion.js` (sin navegador) comprueba que
+  cada página de `PAGINAS` la lleve una vez, en su lugar, con la clave del
+  proyecto, su propio `next` y una ruta al login que llegue.
 
 **Al agregar un script o una página, correr
 `node herramientas/verificar-carga-paginas.js`** (sin navegador): que ningún

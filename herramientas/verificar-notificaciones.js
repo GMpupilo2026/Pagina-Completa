@@ -21,7 +21,7 @@
    Uso:  python3 -m http.server 8777    (desde la raíz del sitio)
          node herramientas/verificar-notificaciones.js                        */
 const path = require("path");
-const { chromium } = require("playwright");
+const { chromium } = require("./lib/playwright-con-sesion");
 
 const CHROME = process.env.CHROME_PATH || undefined;
 const BASE = process.env.BASE_URL || "http://localhost:8777";

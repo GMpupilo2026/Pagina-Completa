@@ -593,3 +593,14 @@ html.adaptive-mode .tarea-en-curso-detalle { font-size: 0.95rem; opacity: 1; }
 .cc-ayuda-det > summary { cursor: pointer; font-size: 0.9rem; font-weight: 600; }
 .cc-ayuda-det h3 { font-size: 0.95rem; margin: 0.7rem 0 0.2rem; font-weight: 700; }
 .cc-ayuda-det p { margin: 0 0 0.4rem; font-size: 0.88rem; line-height: 1.55; }
+
+/* ===== Los enlaces del pie, cómodos de tocar =====
+   Medían 16 px de alto. Cumplían WCAG 2.5.8 por la excepción de espacio (entre
+   uno y otro quedan justo 24 px), pero en el límite: con dedos de niño en un
+   celular, el que se toca es el de al lado. Con 4 px arriba y abajo cada uno
+   mide 24 px por sí solo, sin depender del espacio que quede alrededor. Una
+   regla acá en vez de tocar el pie copiado en cada página. */
+footer li > a {
+  display: inline-block;
+  padding-block: 4px;
+}

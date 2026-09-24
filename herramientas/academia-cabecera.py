@@ -318,6 +318,55 @@ def poner_juego_aviso(ruta, s):
     return s[:cierre] + juego_aviso(ruta) + s[cierre:]
 
 
+# La guardia de sesión, al principio del <head>. Cada página decide que no hay
+# sesión en su propio script, al final, después de bajar todo lo demás: juegos,
+# torneos, la tienda o novedades se bajaban entre 250 y 400 KB (y hasta 45
+# pedidos) solo para mandar al login, y alguna ni siquiera se acordaba de
+# volver (`login.html` sin `next`). Esta línea mira si hay una sesión guardada
+# y, si no hay NINGUNA, manda al login antes de pedir nada más, con la página
+# de vuelta en `next`.
+#
+# Solo decide lo seguro. Con una sesión guardada, aunque esté vencida, no hace
+# nada: la renueva o la rechaza el flujo de siempre. Si localStorage falla
+# (modo privado bloqueado), tampoco: mejor bajar de más que dejar a alguien
+# fuera. Y si la página ya tiene un `window.sb` —el doble que ponen los
+# verificadores antes de cargarla— se aparta. La clave es la que usa
+# supabase-js, `sb-<proyecto>-auth-token`, y el proyecto se lee de
+# js/supabase-client.js: una sola copia.
+GUARDIA_INICIO = "<!-- guardia: inicio -->"
+GUARDIA_FIN = "<!-- guardia: fin -->"
+# cobros.html no manda al login: sin sesión enseña su propia tarjeta de
+# «Iniciar sesión», a propósito (es la puerta para arreglar un pago).
+SIN_GUARDIA = {"cobros.html"}
+
+
+def proyecto_supabase():
+    cliente = open(os.path.join(RAIZ, "js", "supabase-client.js"), encoding="utf-8").read()
+    m = re.search(r'SUPABASE_URL = "https://([a-z0-9]+)\.supabase\.co"', cliente)
+    if not m:
+        sys.exit("No encontré SUPABASE_URL en js/supabase-client.js: la guardia no sabría qué sesión buscar.")
+    return m.group(1)
+
+
+def poner_guardia(ruta, s):
+    i = s.find(GUARDIA_INICIO)
+    if i >= 0:
+        j = s.find(GUARDIA_FIN, i)
+        s = s[:i] + s[j + len(GUARDIA_FIN):]
+    if ruta in SIN_GUARDIA:
+        return s
+    m = re.search(r'<meta charset="[^"]*">', s)
+    if not m:
+        print(f"⚠️  {ruta}: no tiene <meta charset>, se queda sin guardia de sesión.")
+        return s
+    arriba = "../" * ruta.count("/")
+    guardia = (GUARDIA_INICIO + "<script>(function(){try{if(window.sb||localStorage.getItem("
+               + json.dumps("sb-" + proyecto_supabase() + "-auth-token") + "))return;}catch(e){return;}"
+               + "try{window.stop()}catch(e){}location.replace(" + json.dumps(arriba + "login.html?next=") + "+encodeURIComponent("
+               + json.dumps(ruta) + "));})();</script>" + GUARDIA_FIN)
+    return s[:m.end()] + guardia + s[m.end():]
+
+
 def poner_acceso(ruta, s):
     i = s.find(ACCESO_INICIO)
     if i >= 0:
@@ -628,6 +677,7 @@ def procesar(ruta):
         print(f"⚠️  {ruta}: no encontré un <footer>…</footer> único, no se tocó.")
         return False
 
+    s = poner_guardia(ruta, s)
     s = poner_migas(ruta, s)
     s = poner_burbuja(ruta, s)
     s = poner_juego_aviso(ruta, s)

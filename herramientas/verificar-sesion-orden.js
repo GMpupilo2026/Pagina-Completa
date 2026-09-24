@@ -33,7 +33,7 @@
  * Uso:  python3 -m http.server 8777    (desde la raíz del sitio)
  *       npm install playwright chess.js@0.10.3
  *       node herramientas/verificar-sesion-orden.js                          */
-const { chromium } = require("playwright");
+const { chromium } = require("./lib/playwright-con-sesion");
 const { clienteFalso, abrir, igual, CHROME } = require("./verificar-clase-registrada.js");
 
 const CLASE_ABIERTA = { id: "s-1", title: null, created_by: "u-profe",
