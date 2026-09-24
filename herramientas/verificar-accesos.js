@@ -215,6 +215,7 @@ async function pruebaAccesos(browser) {
       profiles: [ADMIN, PROFE, ...ALUMNOS],
       paquete_alumnos: [{ paquete_id: "pk1", alumno_id: "a1" }],
       ajustes_academia: [],
+      academias: [{ id: "acad1", nombre: "Academia Norte", supervisor_id: "u-sup" }],
     },
     rpc: {
       paquetes_con_uso: [PAQ],
@@ -230,15 +231,25 @@ async function pruebaAccesos(browser) {
 
   // --- crear un paquete
   await page.fill("#f-nombre", "Academia Norte");
-  await page.selectOption("#f-titular", "u-kari");
+  await page.selectOption("#f-titular", "p:u-kari");
   await page.fill("#f-cupos", "25");
   igual("con 25 cupos propone el precio del módulo", await page.inputValue("#f-precio"), String(P.cotizar(25).total));
   await page.click("#f-guardar");
   await page.waitForTimeout(200);
   const g = (await rpcs(page, "paquete_guardar"))[0];
   igual("crear manda nombre, titular, cupos y precio",
-    g && [g.args.p_id, g.args.p_nombre, g.args.p_titular, g.args.p_cupos, g.args.p_precio],
-    [null, "Academia Norte", "u-kari", 25, P.cotizar(25).total]);
+    g && [g.args.p_id, g.args.p_nombre, g.args.p_titular, g.args.p_academia, g.args.p_cupos, g.args.p_precio],
+    [null, "Academia Norte", "u-kari", null, 25, P.cotizar(25).total]);
+
+  // --- un paquete cuyo titular es una academia: viaja el id de la academia y
+  // NINGÚN profesor (la base rechaza los dos a la vez).
+  await page.fill("#f-nombre", "Cupos Norte");
+  await page.selectOption("#f-titular", "a:acad1");
+  await page.click("#f-guardar");
+  await page.waitForTimeout(200);
+  const ga = (await rpcs(page, "paquete_guardar"))[1];
+  igual("con una academia de titular manda la academia y no un profesor",
+    ga && [ga.args.p_academia, ga.args.p_titular], ["acad1", null]);
 
   // --- una fecha al revés no viaja
   await page.fill("#f-nombre", "Al revés");
@@ -246,7 +257,7 @@ async function pruebaAccesos(browser) {
   await page.fill("#f-hasta", "2026-01-01");
   await page.click("#f-guardar");
   await page.waitForTimeout(100);
-  igual("una fecha final anterior a la de inicio no se manda", (await rpcs(page, "paquete_guardar")).length, 1);
+  igual("una fecha final anterior a la de inicio no se manda", (await rpcs(page, "paquete_guardar")).length, 2);
 
   await page.close();
 
@@ -324,6 +335,47 @@ async function pruebaAccesos(browser) {
   }
 }
 
+/* El supervisor reparte los cupos de SU academia, y solo entre sus miembros.
+   Ve más alumnos que esos (la RLS le deja ver también a otros bajo su
+   coordinación), así que el selector tiene que recortar: si no, le ofrecería a
+   alguien que la base va a rechazar. */
+async function pruebaAcademia(browser) {
+  console.log("\n=== accesos.html · un paquete de academia ===");
+  const SUP = { id: "u-sup", full_name: "Sara Supervisora", role: "profesor", is_admin: false, es_supervisor: true };
+  const PAQA = {
+    id: "pka", nombre: "Academia Norte 2026", titular_id: null, titular_nombre: null,
+    academia_id: "acad1", academia_nombre: "Academia Norte", academia_supervisor_id: "u-sup",
+    academia_supervisor_nombre: "Sara Supervisora", cupos: 10, usados: 1,
+    vigente_desde: HOY, vigente_hasta: "2099-12-31", precio_mensual: null, moneda: "CRC", notas: null,
+  };
+  const { page, errores } = await abrir(browser, "accesos.html", {
+    yo: SUP.id,
+    tablas: {
+      profiles: [SUP, ...ALUMNOS],
+      paquete_alumnos: [{ paquete_id: "pka", alumno_id: "a1" }],
+      // Miembros: Ana, Bruno y Diego. Carla (7B) y Elena (8A) no.
+      academia_miembros: ["a1", "a2", "a4"].map((id) => ({ academia_id: "acad1", persona_id: id })),
+    },
+    rpc: { paquetes_con_uso: [PAQA], paquete_set_alumnos: { ok: true, total: 2, cupos: 10 }, mi_acceso: { vigente: true, motivo: "equipo" } },
+  });
+  await page.waitForSelector("#app:not(.hidden)");
+  const card = 'li[data-paquete="pka"]';
+  const t = await page.textContent(card);
+  cierto("la tarjeta dice de qué academia es y quién la reparte", t.includes("Academia Norte") && t.includes("Sara Supervisora"), t);
+  igual("no se le pinta el formulario de administración", await page.evaluate(() => document.getElementById("zona-form").checkVisibility()), false);
+  await page.click(card + " summary");
+  const ofrecidos = await page.$$eval(card + " select[aria-label='Alumno para sumar'] option", (os) => os.map((o) => o.value).filter(Boolean));
+  igual("para sumar solo le ofrece a los miembros que faltan", ofrecidos.sort(), ["a2", "a4"]);
+  await page.selectOption("#grupo-pka", "7B");
+  await page.click(card + " [data-grupo]");
+  await page.waitForTimeout(250);
+  const s = (await rpcs(page, "paquete_set_alumnos"))[0];
+  igual("sumar 7B manda la unión con SOLO el miembro de ese grupo (Carla no es de la academia)",
+    s && [...s.args.p_alumnos].sort(), ["a1", "a2"]);
+  cierto("sin errores en la página", errores.length === 0, errores.join(" | "));
+  await page.close();
+}
+
 async function pruebaControl(browser) {
   console.log("\n=== El control de acceso, en una página de la Academia (logros.html) ===");
   const base = (mi) => ({
@@ -376,6 +428,7 @@ async function pruebaControl(browser) {
   try {
     await pruebaPrecios(browser);
     await pruebaAccesos(browser);
+    await pruebaAcademia(browser);
     await pruebaControl(browser);
   } finally {
     await browser.close();
