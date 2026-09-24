@@ -532,7 +532,12 @@ donde se comparte esto, y sin `og:image` el enlace sale pelado.
   común está una sola vez. Cada red recorta lo que se sube —Facebook, en el
   celular, deja solo el centro 16:9 de la portada; Instagram, en la cuadrícula
   del perfil, el centro 3:4 de la publicación—, así que el script **falla si
-  algo del contenido se sale de la franja que siempre se ve**. Van en PNG porque
+  algo del contenido se sale de la franja que siempre se ve**. En Facebook,
+  además, la foto de perfil de la página tapa el centro de la mitad de abajo en
+  el celular (la primera versión de la portada tenía ahí el lema y la
+  dirección, y quedaban tapados): esa zona, medida en una captura real, va en
+  `tapado` y el script falla si un texto cae debajo. Por eso el nombre, el lema
+  y la dirección van arriba, y abajo solo hay textos cortos a los costados. Van en PNG porque
   las dos recomprimen lo que se sube y un JPEG recomprimido ensucia las letras.
   No las pide ninguna página, así que `img/redes/` está en `.assetsignore`.
 - **Las páginas que piden sesión llevan `noindex`** y no llevan `canonical`: no
