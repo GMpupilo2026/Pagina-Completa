@@ -837,15 +837,19 @@ adentro), en el celular parecían un error del sistema, el botón decía siempre
   o el foco están encima no se van: nadie tiene que alcanzar «Deshacer» contra
   el reloj.
 - **«Deshacer» en vez de preguntar, solo donde deshacer es de verdad
-  devolver la fila.** Hoy es borrar un PGN propio en Archivos: se borra, y
-  «Deshacer» lo vuelve a insertar igual (mismo id, carpeta y fecha), porque de
-  esa fila no cuelga nada. Donde algo cuelga en cascada (una tarea y sus
+  devolver la fila.** Hoy son dos: borrar un PGN propio en Archivos (se
+  borra, y «Deshacer» lo vuelve a insertar igual: mismo id, carpeta y fecha) y
+  quitar un encargado que uno mismo apuntó en Informes (vuelve con su id,
+  frecuencia, hora, día y último envío, así el próximo informe sale cuando
+  tocaba). De esas filas no cuelga nada, y quitar un encargado no manda correo. Donde algo cuelga en cascada (una tarea y sus
   renglones, un examen y sus respuestas) o hay un correo que ya salió, se sigue
   preguntando antes: reinsertar la fila no devolvería lo que se borró con ella
   ni desmandaría el correo. Cualquier otro «Deshacer» nuevo tiene que pasar la
   misma prueba antes de reemplazar una confirmación. El PGN de OTRO profesor (lo que borra
-  quien administra) también se pregunta: la política de insert exige
-  `profesor_id = auth.uid()` y no se podría devolver.
+  quien administra) y el encargado que apuntó otra persona también se
+  preguntan: sus políticas de insert exigen `profesor_id = auth.uid()` y
+  `creado_por = auth.uid()`, y no se podrían devolver tal cual.
+  `verificar-informes.js` comprueba las dos ramas.
 - Las páginas que ya tenían su franja `#aviso` propia (cobros, coordinación,
   subgrupos…) la conservan: es un mensaje dentro de la página, no una ventana
   del navegador.

@@ -328,7 +328,10 @@ async function pruebaProfesor(browser) {
       question_answers: RESPUESTAS,
       training_progress: DIAGNOSTICOS,
       encargados: [{ id: "enc-1", student_id: "a-1", nombre: "Mamá de Ana", email: "mama@x.cr",
-                     frecuencia: "semanal", activo: true, ultimo_envio_at: "2026-09-08T12:00:00Z" }],
+                     frecuencia: "semanal", activo: true, ultimo_envio_at: "2026-09-08T12:00:00Z", creado_por: "otra" },
+                   { id: "enc-2", student_id: "a-1", nombre: "Tía de Ana", email: "tia@x.cr", frecuencia: "mensual",
+                     activo: true, hora_envio: 18, dia_semana: null, ultimo_envio_at: "2026-09-01T12:00:00Z",
+                     creado_por: "prof-1", created_at: "2026-09-02T10:00:00Z" }],
     },
   }, "prof-1");
 
@@ -599,6 +602,34 @@ async function pruebaProfesor(browser) {
   await page.waitForFunction(() => window.__funcion.length > 0);
   igual("«enviar ahora» le pide a la función ese encargado", await page.evaluate(() => window.__funcion[0]),
     { action: "enviar_ahora", encargado_id: "enc-1" });
+
+  /* Quitar el que uno apuntó no pregunta: se quita, y «Deshacer» lo devuelve
+     TAL CUAL (mismo id, hora y último envío). El que apuntó otra persona sí se
+     pregunta, porque la política de insert no dejaría devolverlo. */
+  const quitarA = (correo) => page.evaluate((c) => {
+    window.__escrituras.length = 0; window.__avisos.length = 0;
+    [...document.querySelectorAll("#encargados-lista button")].find((b) => b.getAttribute("aria-label") === "Quitar a " + c).click();
+  }, correo);
+  await quitarA("Tía de Ana");
+  await page.waitForFunction(() => window.__escrituras.some((e) => e.accion === "delete"));
+  igual("quitar el propio: sin preguntar, borra ESE", await page.evaluate(() =>
+    [window.__avisos.filter((a) => /¿Quitar/.test(a)).length, JSON.stringify(window.__escrituras[0].donde)]), [0, '[["id","enc-2"]]']);
+  await page.waitForSelector("[data-avisos-deshacer]", { state: "visible" });
+  await page.click("[data-avisos-deshacer]");
+  await page.waitForFunction(() => window.__escrituras.some((e) => e.accion === "insert"));
+  igual("«Deshacer» lo vuelve a insertar tal cual", await page.evaluate(() =>
+    window.__escrituras.find((e) => e.accion === "insert").fila),
+    { id: "enc-2", student_id: "a-1", nombre: "Tía de Ana", email: "tia@x.cr", frecuencia: "mensual",
+      activo: true, hora_envio: 18, dia_semana: null, ultimo_envio_at: "2026-09-01T12:00:00Z",
+      creado_por: "prof-1", created_at: "2026-09-02T10:00:00Z" });
+  await page.waitForFunction(() => window.__avisos.some((a) => /vuelve a recibir/.test(a)));
+  await page.evaluate(() => { window.__cancelarAvisos = true; });
+  await quitarA("Mamá de Ana");
+  await page.waitForFunction(() => window.__avisos.some((a) => /¿Quitar a mama@x\.cr\?/.test(a)));
+  await page.waitForTimeout(200);
+  igual("el que apuntó otra persona se pregunta, y cancelar no borra nada",
+    await page.evaluate(() => window.__escrituras.length), 0);
+  await page.evaluate(() => { window.__cancelarAvisos = false; });
 
   await page.evaluate(() => { window.__funcion.length = 0; });
   await page.selectOption("#enc-ver-frecuencia", "mensual");
