@@ -1,6 +1,96 @@
 {
  "cambios": [
   {
+   "hash": "24d6f46",
+   "fecha": "2026-09-24T16:46:19-06:00",
+   "titulo": "Lo que quedaba de la usabilidad: margen, mensajes, Deshacer, franjas y guía",
+   "pr": 431
+  },
+  {
+   "hash": "0904264",
+   "fecha": "2026-09-24T16:44:24-06:00",
+   "titulo": "Quita la opción de adjuntar documentos en la inscripción al torneo",
+   "pr": 430
+  },
+  {
+   "hash": "d014658",
+   "fecha": "2026-09-24T16:34:56-06:00",
+   "titulo": "El correo del pie es info@ajedrez-integral.com",
+   "pr": 429
+  },
+  {
+   "hash": "fa75116",
+   "fecha": "2026-09-24T16:21:23-06:00",
+   "titulo": "Lo legal: el domicilio es «San José» y la revisión ya se hizo",
+   "pr": 427
+  },
+  {
+   "hash": "649ce7a",
+   "fecha": "2026-09-24T16:18:32-06:00",
+   "titulo": "Elegir un plan pide sesión (la del correo de la solicitud), y los planes se ven sin cuenta",
+   "pr": 428
+  },
+  {
+   "hash": "f98482d",
+   "fecha": "2026-09-24T15:59:00-06:00",
+   "titulo": "El «Acepto» queda guardado en la base",
+   "pr": 426
+  },
+  {
+   "hash": "cd8c767",
+   "fecha": "2026-09-24T15:46:32-06:00",
+   "titulo": "Privacidad: la lista de proveedores va plegada",
+   "pr": 425
+  },
+  {
+   "hash": "e65fdb3",
+   "fecha": "2026-09-24T14:27:14-06:00",
+   "titulo": "Política de privacidad, términos y consentimiento en los formularios",
+   "pr": 424
+  },
+  {
+   "hash": "b322b01",
+   "fecha": "2026-09-24T12:24:36-06:00",
+   "titulo": "Revisión: guardia de sesión, portadas sin «Cargando…», inventario del esquema al día y equipo_docente solo con sesión",
+   "pr": 423
+  },
+  {
+   "hash": "97f589e",
+   "fecha": "2026-09-24T11:41:11-06:00",
+   "titulo": "Portada de Facebook sin nada bajo la foto de perfil",
+   "pr": 422
+  },
+  {
+   "hash": "094ad61",
+   "fecha": "2026-09-24T10:57:24-06:00",
+   "titulo": "Imágenes para redes: portada de Facebook y publicación de Instagram",
+   "pr": 421
+  },
+  {
+   "hash": "aa72c0b",
+   "fecha": "2026-09-24T09:04:34-06:00",
+   "titulo": "Candado de los cursos en el servidor, RLS una vez por consulta y three.js diferido",
+   "pr": 419
+  },
+  {
+   "hash": "eb48b01",
+   "fecha": "2026-09-24T08:30:06-06:00",
+   "titulo": "Velocidad: que las páginas pinten sin esperar lo que no usan todavía",
+   "pr": 420
+  },
+  {
+   "hash": "313a5a3",
+   "fecha": "2026-09-24T06:44:30-06:00",
+   "titulo": "chess.js y three.js salen del repositorio, no de cdnjs; freno a los envíos sin cuenta",
+   "pr": 418
+  },
+  {
+   "hash": "ab7fd02",
+   "fecha": "2026-09-24T06:31:49-06:00",
+   "titulo": "Buscador: también encuentra personas, y Ctrl + K en toda la Academia",
+   "pr": 417
+  },
+  {
    "hash": "e9e3da0",
    "fecha": "2026-09-24T06:20:00-06:00",
    "titulo": "Paneles: la burbuja de conectados se queda en el panel de quien administra",
