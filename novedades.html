@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/favicon.svg">
+    <title>Actualizaciones de la plataforma — Ajedrez Integral</title>
+    <meta name="description" content="Todo lo que se le ha hecho a la plataforma desde el primer día, cambio por cambio.">
+    <meta name="robots" content="noindex">
+    <!-- Tailwind compilado: lo genera herramientas/css-construir.js.
+         Antes venía del CDN, que baja ~400 KB de JavaScript y compila el CSS
+         dentro del navegador en cada visita. -->
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('theme');
+                if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+            } catch (e) {}
+        })();
+    </script>
+    <script src="js/vendor/supabase.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/adaptive-mode.js"></script>
+
+
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/pwa.js" defer></script><!-- app: fin --><!-- tema: inicio --><script>(function(){try{var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');var f=localStorage.getItem('plataforma_tema_fuente_v1');if(!f||!/^[A-Za-z0-9 ]{2,32}$/.test(f))return;var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family='+f.replace(/ /g,'+')+':wght@400;500;600;700&display=swap';document.head.appendChild(l);}catch(e){}})();</script><!-- tema: fin --></head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a id="marca-enlace" href="clases.html" class="flex items-center gap-2 text-white min-w-0"><span class="text-3xl" aria-hidden="true">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></nav></header>
+        <main id="main-content" class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div id="loading" class="text-center py-20 text-brand-500 dark:text-brand-300">Comprobando tu sesión…</div>
+
+        <div id="denegado" class="hidden max-w-2xl mx-auto bg-white dark:bg-brand-900 rounded-2xl shadow-md p-8 text-center">
+            <p class="text-4xl mb-3" aria-hidden="true">🔒</p>
+            <h1 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-2">Esto es de quien administra</h1>
+            <p class="text-brand-500 dark:text-brand-300">Acá está la lista de todos los cambios que se le han hecho a la plataforma.</p>
+            <a href="clases.html" class="inline-block mt-5 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors">Volver al panel</a>
+        </div>
+
+        <div id="app" class="hidden">
+            <a href="admin.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors mb-3">← <span aria-hidden="true">🛠️</span> Administración</a>
+            <h1 class="font-serif text-3xl sm:text-4xl font-bold text-brand-800 dark:text-white"><span aria-hidden="true">🗂️</span> Actualizaciones de la plataforma</h1>
+            <p class="text-brand-500 dark:text-brand-300 mt-1 mb-6">Todo lo que se le ha hecho al sitio desde el primer día, cambio por cambio y del más nuevo al más viejo. Sale de la historia del código, así que no se escribe a mano ni se queda atrás.</p>
+
+            <p id="aviso" role="status" class="hidden mb-6 rounded-xl px-4 py-3 text-sm"></p>
+
+            <div id="resumen" class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6"></div>
+
+            <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4 mb-6">
+                <label for="buscar" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Buscar un cambio</label>
+                <input id="buscar" type="search" autocomplete="off" placeholder="Por ejemplo: tareas, cobros, accesibilidad…" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                <p id="conteo" role="status" class="text-xs text-brand-450 dark:text-brand-350 mt-2"></p>
+            </div>
+
+            <div id="lista" class="space-y-3"></div>
+        </div>
+    </main>
+
+    <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
+    <script>
+/* Actualizaciones de la plataforma: todo lo que entró a `main` desde el
+ * primer commit.
+ *
+ * La lista la escribe herramientas/novedades-generar.js leyendo la historia
+ * de git (data/novedades.json). Esta página no la arma ni la corrige: si una
+ * bitácora se escribiera aparte, la primera tanda que se olvidara de anotarse
+ * la dejaría mintiendo, y nadie se enteraría.
+ *
+ * Es solo de quien administra. Como todo filtro del sitio, decide qué se
+ * pinta: por eso el archivo trae solo los títulos, nunca el cuerpo de cada
+ * cambio.
+ */
+const REPO = "https://github.com/GMpupilo2026/Pagina-Completa";
+let cambios = [];
+const abiertos = new Set();
+
+function el(tag, clase, texto) {
+    const n = document.createElement(tag);
+    if (clase) n.className = clase;
+    if (texto != null) n.textContent = texto;
+    return n;
+}
+
+/* Sin tildes y en minúscula: «accion» tiene que encontrar «acción». */
+function plano(s) {
+    return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+}
+
+/* La fecha del commit trae su propio huso; el día se cuenta en Costa Rica,
+ * como el resto del sitio. */
+function diaCR(iso) {
+    return new Date(iso).toLocaleDateString("en-CA", { timeZone: "America/Costa_Rica" });
+}
+function diaLargo(dia) {
+    const t = new Date(dia + "T12:00:00-06:00").toLocaleDateString("es-CR", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "America/Costa_Rica" });
+    return t.charAt(0).toUpperCase() + t.slice(1);
+}
+function hora(iso) {
+    return new Date(iso).toLocaleTimeString("es-CR", { hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone: "America/Costa_Rica" });
+}
+function plural(n, uno, varios) { return n + " " + (n === 1 ? uno : varios); }
+
+function tarjeta(numero, texto) {
+    const c = el("div", "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4");
+    c.append(el("p", "text-2xl font-bold text-brand-800 dark:text-white", numero), el("p", "text-xs text-brand-450 dark:text-brand-350 mt-0.5", texto));
+    return c;
+}
+
+function pintarResumen() {
+    const dias = new Set(cambios.map((c) => diaCR(c.fecha)));
+    const primero = cambios[cambios.length - 1], ultimo = cambios[0];
+    const caja = document.getElementById("resumen");
+    caja.innerHTML = "";
+    caja.append(
+        tarjeta(String(cambios.length), "cambios en total"),
+        tarjeta(String(dias.size), "días con cambios"),
+        tarjeta(new Date(primero.fecha).toLocaleDateString("es-CR", { day: "numeric", month: "short", year: "numeric", timeZone: "America/Costa_Rica" }), "el primero · el último fue el " + new Date(ultimo.fecha).toLocaleDateString("es-CR", { day: "numeric", month: "short", timeZone: "America/Costa_Rica" }))
+    );
+}
+
+function pintarLista() {
+    const q = plano(document.getElementById("buscar").value.trim());
+    const visibles = q ? cambios.filter((c) => plano(c.titulo).includes(q) || (c.pr && ("#" + c.pr) === q)) : cambios;
+    document.getElementById("conteo").textContent = q
+        ? (visibles.length ? "Coinciden " + plural(visibles.length, "cambio", "cambios") + " de " + cambios.length + "." : "Ningún cambio coincide con esa búsqueda.")
+        : "Mostrando los " + cambios.length + " cambios, agrupados por día.";
+
+    const porDia = new Map();
+    visibles.forEach((c) => {
+        const d = diaCR(c.fecha);
+        if (!porDia.has(d)) porDia.set(d, []);
+        porDia.get(d).push(c);
+    });
+
+    const lista = document.getElementById("lista");
+    lista.innerHTML = "";
+    let i = 0;
+    porDia.forEach((items, dia) => {
+        const det = el("details", "group bg-white dark:bg-brand-900 rounded-2xl shadow-md");
+        /* Buscando se abre todo lo que coincide; sin buscar, el día más nuevo
+         * y los que se hayan abierto a mano (repintar no los cierra). */
+        det.open = q ? true : (abiertos.size ? abiertos.has(dia) : i === 0);
+        det.addEventListener("toggle", () => { if (!q) { det.open ? abiertos.add(dia) : abiertos.delete(dia); } });
+        const sum = el("summary", "cursor-pointer list-none flex items-center justify-between gap-3 px-4 py-3 rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400");
+        const h = el("h2", "inline font-semibold text-brand-800 dark:text-white", diaLargo(dia));
+        const n = el("span", "text-xs text-brand-450 dark:text-brand-350 shrink-0", plural(items.length, "cambio", "cambios"));
+        sum.append(h, n);
+        const ul = el("ul", "divide-y divide-brand-100 dark:divide-brand-800 border-t border-brand-100 dark:border-brand-800");
+        items.forEach((c) => {
+            const li = el("li", "px-4 py-2.5 flex items-start gap-3 text-sm");
+            li.append(el("span", "text-xs tabular-nums text-brand-450 dark:text-brand-350 pt-0.5 shrink-0 w-12", hora(c.fecha)));
+            li.append(el("span", "flex-1 min-w-0 text-brand-700 dark:text-brand-100", c.titulo));
+            if (c.pr) {
+                const a = el("a", "text-xs font-semibold text-accent-700 dark:text-accent-400 hover:underline shrink-0 pt-0.5", "#" + c.pr);
+                a.href = REPO + "/pull/" + c.pr;
+                a.target = "_blank";
+                a.rel = "noopener";
+                a.setAttribute("aria-label", "Cambio número " + c.pr + " en GitHub (se abre en otra pestaña)");
+                li.append(a);
+            }
+            ul.append(li);
+        });
+        det.append(sum, ul);
+        lista.append(det);
+        i++;
+    });
+}
+
+async function init() {
+    const { data } = await sb.auth.getSession();
+    const session = data.session;
+    if (!session) { location.href = "login.html?next=novedades.html"; return; }
+    const { data: perfil } = await sb.from("profiles").select("is_admin").eq("id", session.user.id).maybeSingle();
+    document.getElementById("loading").classList.add("hidden");
+    if (!perfil || !perfil.is_admin) {
+        document.getElementById("denegado").classList.remove("hidden");
+        return;
+    }
+    document.getElementById("app").classList.remove("hidden");
+    try {
+        const r = await fetch("data/novedades.json", { cache: "no-cache" });
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        cambios = (await r.json()).cambios || [];
+        if (!cambios.length) throw new Error("vacía");
+    } catch (e) {
+        const a = document.getElementById("aviso");
+        a.textContent = "No se pudo leer la lista de actualizaciones. Vuelve a intentarlo en un momento.";
+        a.className = "mb-6 rounded-xl px-4 py-3 text-sm bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300";
+        return;
+    }
+    pintarResumen();
+    pintarLista();
+    document.getElementById("buscar").addEventListener("input", pintarLista);
+}
+
+init();
+    </script>
+<!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="js/modo-vista.js" defer></script><!-- modo-vista: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --></body>
+</html>

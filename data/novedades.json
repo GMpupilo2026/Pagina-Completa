@@ -1,0 +1,3106 @@
+{
+ "cambios": [
+  {
+   "hash": "18f8686",
+   "fecha": "2026-09-23T20:54:39-06:00",
+   "titulo": "profesores_de y alumnos_de pasan al esquema interno",
+   "pr": 407
+  },
+  {
+   "hash": "a28ed24",
+   "fecha": "2026-09-23T20:11:42-06:00",
+   "titulo": "CI: package.json y las comprobaciones en cada PR",
+   "pr": 406
+  },
+  {
+   "hash": "5244452",
+   "fecha": "2026-09-23T19:02:18-06:00",
+   "titulo": "Aviso de IA al 80 % del tope y al agotarlo",
+   "pr": 405
+  },
+  {
+   "hash": "2b9e610",
+   "fecha": "2026-09-23T18:49:57-06:00",
+   "titulo": "Paquetes de acceso de una academia: los reparte su supervisor",
+   "pr": 404
+  },
+  {
+   "hash": "8236713",
+   "fecha": "2026-09-23T18:49:18-06:00",
+   "titulo": "Diagnósticos de visitantes: descargar en PDF con la marca de Oscar",
+   "pr": 403
+  },
+  {
+   "hash": "09a9f83",
+   "fecha": "2026-09-23T18:18:23-06:00",
+   "titulo": "Tablero por academia: una fila por academia con las cifras del mes",
+   "pr": 402
+  },
+  {
+   "hash": "654c89f",
+   "fecha": "2026-09-23T17:47:28-06:00",
+   "titulo": "Horario de clases: la ficha se llena sola, la que falta se pide y el informe dice cuántas se dieron",
+   "pr": 401
+  },
+  {
+   "hash": "e306969",
+   "fecha": "2026-09-23T17:24:54-06:00",
+   "titulo": "Recordatorios del informe mensual: al profesor los días 1 y 3, a la supervisión el 5",
+   "pr": 400
+  },
+  {
+   "hash": "95fd4c3",
+   "fecha": "2026-09-23T17:16:11-06:00",
+   "titulo": "Los correos a la casa llevan el logo y el color de la academia",
+   "pr": 399
+  },
+  {
+   "hash": "23afc52",
+   "fecha": "2026-09-23T16:58:28-06:00",
+   "titulo": "Crear una academia desde un grupo, con sus profesores y su supervisor, en un paso",
+   "pr": 398
+  },
+  {
+   "hash": "56ad7ca",
+   "fecha": "2026-09-23T16:18:12-06:00",
+   "titulo": "actividad_profesor(): el permiso envuelto en coalesce, como las del detalle",
+   "pr": 397
+  },
+  {
+   "hash": "5e7af16",
+   "fecha": "2026-09-23T16:12:39-06:00",
+   "titulo": "Informe mensual con el detalle por clase y por estudiante, en línea y presencial juntos",
+   "pr": 396
+  },
+  {
+   "hash": "b5b7ba5",
+   "fecha": "2026-09-23T15:42:07-06:00",
+   "titulo": "«Mejorar informe»: la IA por academia, con tope y gasto medido, solo para quien administra",
+   "pr": 395
+  },
+  {
+   "hash": "21ccaf5",
+   "fecha": "2026-09-23T15:18:48-06:00",
+   "titulo": "Marca de cada academia: logo y color en la plataforma y en sus formularios",
+   "pr": 394
+  },
+  {
+   "hash": "1c1a207",
+   "fecha": "2026-09-23T14:44:32-06:00",
+   "titulo": "Academias: supervisor por academia, funciones del coordinador y correos a su nombre",
+   "pr": 393
+  },
+  {
+   "hash": "a13cd0c",
+   "fecha": "2026-09-23T13:00:44-06:00",
+   "titulo": "El supervisor supervisa a los profesores y ellos le mandan un informe mensual",
+   "pr": 392
+  },
+  {
+   "hash": "c67701b",
+   "fecha": "2026-09-23T12:30:41-06:00",
+   "titulo": "El supervisor también lee la bitácora de notas",
+   "pr": 391
+  },
+  {
+   "hash": "40dc4b4",
+   "fecha": "2026-09-23T12:17:41-06:00",
+   "titulo": "El rol de supervisor y los modos de vista de quien administra",
+   "pr": 390
+  },
+  {
+   "hash": "1df0379",
+   "fecha": "2026-09-23T11:22:19-06:00",
+   "titulo": "Quitar la copia vieja de contacto-academia.ts que trababa funciones-armar",
+   "pr": 389
+  },
+  {
+   "hash": "f4961b0",
+   "fecha": "2026-09-23T11:20:19-06:00",
+   "titulo": "Anota que informes-encargados ya está desplegada",
+   "pr": 388
+  },
+  {
+   "hash": "38d255e",
+   "fecha": "2026-09-23T10:52:29-06:00",
+   "titulo": "El tiempo en la plataforma, sección por sección: cursos, partidas y exámenes también suman",
+   "pr": 387
+  },
+  {
+   "hash": "523ae81",
+   "fecha": "2026-09-23T10:23:35-06:00",
+   "titulo": "Más ritmos de juego y el tiempo del torneo se puede cambiar",
+   "pr": 386
+  },
+  {
+   "hash": "a6249a4",
+   "fecha": "2026-09-23T09:11:20-06:00",
+   "titulo": "El reloj cuenta con la hora del servidor, y la triple repetición termina la partida",
+   "pr": 385
+  },
+  {
+   "hash": "b2f2564",
+   "fecha": "2026-09-23T07:56:13-06:00",
+   "titulo": "Tercera revisión: permisos de las Edge Functions, fin de partida, torneos y progreso entre aparatos",
+   "pr": 384
+  },
+  {
+   "hash": "685f508",
+   "fecha": "2026-09-23T06:41:18-06:00",
+   "titulo": "Segunda revisión: la clase en vivo, los tableros de partida, las lecturas largas y varios fallos callados",
+   "pr": 383
+  },
+  {
+   "hash": "f8b445e",
+   "fecha": "2026-09-23T06:23:20-06:00",
+   "titulo": "Revisión general: el respaldo de la base vuelve a cuadrar y 16 funciones internas dejan de estar abiertas al público",
+   "pr": 382
+  },
+  {
+   "hash": "3db0f34",
+   "fecha": "2026-09-22T23:14:14-06:00",
+   "titulo": "Verificadores: el del torneo en vivo y el de la PWA vuelven a medir la página",
+   "pr": 381
+  },
+  {
+   "hash": "6eab559",
+   "fecha": "2026-09-22T23:09:55-06:00",
+   "titulo": "Tablero: la elección del alumno se ve igual en todo el sitio, y las negras sin borde",
+   "pr": 380
+  },
+  {
+   "hash": "454ace3",
+   "fecha": "2026-09-22T22:48:07-06:00",
+   "titulo": "Archivos adjuntos en los dos formularios de inscripción",
+   "pr": 379
+  },
+  {
+   "hash": "2132fd3",
+   "fecha": "2026-09-22T22:38:53-06:00",
+   "titulo": "Acceso: el candado pasa a la base, y el tiempo de entreno vuelve a registrarse",
+   "pr": 378
+  },
+  {
+   "hash": "88c8a16",
+   "fecha": "2026-09-22T22:23:57-06:00",
+   "titulo": "Formularios: preguntas de tipo imagen, con vista y descarga en las respuestas",
+   "pr": 377
+  },
+  {
+   "hash": "7769205",
+   "fecha": "2026-09-22T22:23:50-06:00",
+   "titulo": "CENFO: cada ejercicio cuenta como mínimo 2 minutos, y «Cómo viene» suma la clase",
+   "pr": 376
+  },
+  {
+   "hash": "588b802",
+   "fecha": "2026-09-22T21:09:33-06:00",
+   "titulo": "Colores a tu gusto: tablero entero de vista previa y código escrito",
+   "pr": 375
+  },
+  {
+   "hash": "56a7836",
+   "fecha": "2026-09-22T20:58:22-06:00",
+   "titulo": "Configuración: colores a tu gusto para casillas y piezas (modo normal)",
+   "pr": 374
+  },
+  {
+   "hash": "40aefc1",
+   "fecha": "2026-09-22T20:43:38-06:00",
+   "titulo": "Configuración: botón para ver mejor el tablero en el celular (modo normal)",
+   "pr": 373
+  },
+  {
+   "hash": "594b45e",
+   "fecha": "2026-09-22T20:38:47-06:00",
+   "titulo": "Modo Adaptado dibuja las piezas con aro por omisión",
+   "pr": 372
+  },
+  {
+   "hash": "4202c0c",
+   "fecha": "2026-09-22T20:27:56-06:00",
+   "titulo": "Estilo de pieza «Dibujado con aro» para el celular en alto contraste",
+   "pr": 371
+  },
+  {
+   "hash": "d09adac",
+   "fecha": "2026-09-22T20:10:09-06:00",
+   "titulo": "Colores de tablero para el celular con baja visión",
+   "pr": 370
+  },
+  {
+   "hash": "6927b9b",
+   "fecha": "2026-09-22T19:42:19-06:00",
+   "titulo": "Las tareas cuentan los ejercicios que el alumno ya había resuelto",
+   "pr": 369
+  },
+  {
+   "hash": "2adc073",
+   "fecha": "2026-09-22T18:34:15-06:00",
+   "titulo": "Los diagramas fijos del curso también se mandan al tablero de la clase",
+   "pr": 368
+  },
+  {
+   "hash": "93ff9d0",
+   "fecha": "2026-09-22T18:07:06-06:00",
+   "titulo": "Acceso por paquetes: cupos, vigencia y la tabla de precios",
+   "pr": 367
+  },
+  {
+   "hash": "8e9f528",
+   "fecha": "2026-09-22T17:13:22-06:00",
+   "titulo": "Panel de Clases: que se pueda recorrer con lector de pantalla",
+   "pr": 366
+  },
+  {
+   "hash": "51f6cf7",
+   "fecha": "2026-09-22T15:23:00-06:00",
+   "titulo": "El Sonar: el tablero conserva sus 64 casillas cuadradas",
+   "pr": 365
+  },
+  {
+   "hash": "02a1d26",
+   "fecha": "2026-09-22T14:52:51-06:00",
+   "titulo": "El Sonar: un juego nuevo hecho para jugarse sin ver",
+   "pr": 364
+  },
+  {
+   "hash": "93db9a0",
+   "fecha": "2026-09-22T14:02:26-06:00",
+   "titulo": "Modo Adaptado: la clase en vivo y el entreno, sin ver la pantalla",
+   "pr": 363
+  },
+  {
+   "hash": "71639d6",
+   "fecha": "2026-09-22T11:51:02-06:00",
+   "titulo": "Juegos: las tres páginas con tablero se juegan sin ver la pantalla",
+   "pr": 362
+  },
+  {
+   "hash": "b75dcf9",
+   "fecha": "2026-09-22T11:26:20-06:00",
+   "titulo": "Corrige 5 posiciones del Evaluador de precisión posicional",
+   "pr": 361
+  },
+  {
+   "hash": "d4caeac",
+   "fecha": "2026-09-22T11:05:03-06:00",
+   "titulo": "Entrenamiento: los tableros se recorren y se les puede preguntar",
+   "pr": 360
+  },
+  {
+   "hash": "2e7ed3a",
+   "fecha": "2026-09-22T09:38:05-06:00",
+   "titulo": "Galaxia tiene cohetes cruzando el fondo y Dragones, dragones tirando fuego",
+   "pr": 359
+  },
+  {
+   "hash": "0b4ee60",
+   "fecha": "2026-09-22T09:22:07-06:00",
+   "titulo": "Amplía el banco del Evaluador de precisión posicional a 96 ítems",
+   "pr": 358
+  },
+  {
+   "hash": "491b2f8",
+   "fecha": "2026-09-22T08:49:24-06:00",
+   "titulo": "Tienda de materiales: el catálogo de venta, todavía cerrada al público",
+   "pr": 357
+  },
+  {
+   "hash": "7105459",
+   "fecha": "2026-09-22T08:17:04-06:00",
+   "titulo": "Nuevo entrenamiento: Evaluador de precisión posicional",
+   "pr": 356
+  },
+  {
+   "hash": "6fcab88",
+   "fecha": "2026-09-22T08:00:17-06:00",
+   "titulo": "La ficha de asistencia distingue quién llegó tarde",
+   "pr": 355
+  },
+  {
+   "hash": "12625ac",
+   "fecha": "2026-09-22T07:37:21-06:00",
+   "titulo": "El aviso de partida asignada llega a cualquier página, no solo a Juegos",
+   "pr": 354
+  },
+  {
+   "hash": "fabcf59",
+   "fecha": "2026-09-22T07:35:02-06:00",
+   "titulo": "Las coordenadas señalaban la columna que no era en pantallas bajas",
+   "pr": 353
+  },
+  {
+   "hash": "778140f",
+   "fecha": "2026-09-22T07:17:40-06:00",
+   "titulo": "Ver todas las posiciones de una lista, en Archivos y en Táctica",
+   "pr": 352
+  },
+  {
+   "hash": "1a57697",
+   "fecha": "2026-09-22T07:06:36-06:00",
+   "titulo": "El editor de posición confundía blancas con negras en modo oscuro",
+   "pr": 351
+  },
+  {
+   "hash": "093d054",
+   "fecha": "2026-09-22T06:23:03-06:00",
+   "titulo": "Sumar más colores a las flechas y marcas del tablero de sesión",
+   "pr": 350
+  },
+  {
+   "hash": "e3fab1f",
+   "fecha": "2026-09-22T00:31:26-06:00",
+   "titulo": "El editor de posición se perdía detrás del tablero, y sesión en vivo pide menos scroll en laptops",
+   "pr": 349
+  },
+  {
+   "hash": "249b329",
+   "fecha": "2026-09-22T00:23:29-06:00",
+   "titulo": "Ficha de asistencia presencial: la clase del aula también queda registrada",
+   "pr": 348
+  },
+  {
+   "hash": "730f9ef",
+   "fecha": "2026-09-22T00:11:22-06:00",
+   "titulo": "Popup de novedades de la plataforma para quien administra",
+   "pr": 347
+  },
+  {
+   "hash": "f22dfd0",
+   "fecha": "2026-09-21T23:51:41-06:00",
+   "titulo": "Tareas y exámenes se pueden programar con \"Disponible desde\"",
+   "pr": 346
+  },
+  {
+   "hash": "17dbb52",
+   "fecha": "2026-09-21T23:15:29-06:00",
+   "titulo": "Cobros: cobro personalizado, planes privados por coordinador y días de aviso configurables",
+   "pr": 345
+  },
+  {
+   "hash": "45d3eea",
+   "fecha": "2026-09-21T22:40:20-06:00",
+   "titulo": "Temas de toda la plataforma: el sitio entero cambia de color, no solo el tablero",
+   "pr": 344
+  },
+  {
+   "hash": "a3ef817",
+   "fecha": "2026-09-21T21:54:59-06:00",
+   "titulo": "Cobros: recordatorios para un día y hora exactos, y cerrar el permiso de anon que le faltaba",
+   "pr": 343
+  },
+  {
+   "hash": "245f0e3",
+   "fecha": "2026-09-21T21:02:24-06:00",
+   "titulo": "La burbuja de \"quién está conectado\"",
+   "pr": 342
+  },
+  {
+   "hash": "10464eb",
+   "fecha": "2026-09-21T20:07:26-06:00",
+   "titulo": "La sesión en vivo se abre cuando el profesor abre la clase",
+   "pr": 341
+  },
+  {
+   "hash": "80b092a",
+   "fecha": "2026-09-21T19:14:26-06:00",
+   "titulo": "Bajar el umbral de \"sin entrenar\" a 4 días y agregar botón de invitar a la casa",
+   "pr": 340
+  },
+  {
+   "hash": "2ce9742",
+   "fecha": "2026-09-21T18:30:12-06:00",
+   "titulo": "Las partidas de un torneo se pueden ver, y el candado lo pone la base",
+   "pr": 339
+  },
+  {
+   "hash": "bc4f4b9",
+   "fecha": "2026-09-21T17:30:10-06:00",
+   "titulo": "Las miniaturas de la práctica: a 16 px no se distingue una pieza",
+   "pr": 338
+  },
+  {
+   "hash": "9f570bb",
+   "fecha": "2026-09-21T17:13:52-06:00",
+   "titulo": "Táctica de la clase: los botones de cada ejercicio no caben en la fila",
+   "pr": 337
+  },
+  {
+   "hash": "0e0a149",
+   "fecha": "2026-09-21T16:58:31-06:00",
+   "titulo": "Una videollamada por grupo: la de SJ, la de CENFO, y una para el resto",
+   "pr": 336
+  },
+  {
+   "hash": "83e6af7",
+   "fecha": "2026-09-21T16:40:44-06:00",
+   "titulo": "Una sola forma de guardar la videollamada: se quita profiles.enlace_llamada",
+   "pr": 335
+  },
+  {
+   "hash": "a87c49c",
+   "fecha": "2026-09-21T16:32:23-06:00",
+   "titulo": "Videollamada de la clase: el botón al lado de «Sesión en vivo»",
+   "pr": 334
+  },
+  {
+   "hash": "0b731fb",
+   "fecha": "2026-09-21T15:46:37-06:00",
+   "titulo": "Informes: cortar «Sin diagnóstico todavía», donde además el nombre iba crudo",
+   "pr": 333
+  },
+  {
+   "hash": "d6d743a",
+   "fecha": "2026-09-21T15:29:08-06:00",
+   "titulo": "Informes: cortar en tres, y lo del público solo para administración",
+   "pr": 332
+  },
+  {
+   "hash": "ff6551f",
+   "fecha": "2026-09-21T15:16:16-06:00",
+   "titulo": "Informes: un índice de la clase, no tres volcados de los mismos alumnos",
+   "pr": 331
+  },
+  {
+   "hash": "10052f0",
+   "fecha": "2026-09-21T14:54:29-06:00",
+   "titulo": "Compartir varios planes de clase de una vez y ocultar la marca «· AI»",
+   "pr": 330
+  },
+  {
+   "hash": "7da39c4",
+   "fecha": "2026-09-21T14:43:00-06:00",
+   "titulo": "Permitir cambiar el correo del alumno desde admin.html",
+   "pr": 329
+  },
+  {
+   "hash": "b1aa36a",
+   "fecha": "2026-09-21T13:09:24-06:00",
+   "titulo": "Ordenar el panel: Aprender, Jugar y competir, y dos accesos que eran solo de administración",
+   "pr": 328
+  },
+  {
+   "hash": "c483b85",
+   "fecha": "2026-09-21T12:24:11-06:00",
+   "titulo": "Formularios: el dueño puede compartirlos con el coordinador que elija",
+   "pr": 327
+  },
+  {
+   "hash": "d9beb1b",
+   "fecha": "2026-09-21T11:45:08-06:00",
+   "titulo": "Tu semana: el tile \"Sin entrenar\" lleva a la lista de quiénes, no al resumen",
+   "pr": 326
+  },
+  {
+   "hash": "4c2af25",
+   "fecha": "2026-09-21T11:38:38-06:00",
+   "titulo": "El video promocional, armado desde las capturas y no grabado a mano",
+   "pr": 325
+  },
+  {
+   "hash": "a208410",
+   "fecha": "2026-09-21T11:35:34-06:00",
+   "titulo": "Informes a la casa: hora y día de envío por encargado, y plan editable a mano",
+   "pr": 324
+  },
+  {
+   "hash": "9b92bea",
+   "fecha": "2026-09-21T11:24:51-06:00",
+   "titulo": "Aislar formularios, avisos de cobro, datos de facturación y equipos por coordinador",
+   "pr": 323
+  },
+  {
+   "hash": "f9ca741",
+   "fecha": "2026-09-21T10:46:24-06:00",
+   "titulo": "El commit que RESTAURAR.md nombra es el del estado bueno de hoy",
+   "pr": 322
+  },
+  {
+   "hash": "8488639",
+   "fecha": "2026-09-21T10:45:42-06:00",
+   "titulo": "El volcado de datos iba con el puerto del pooler de transacciones",
+   "pr": 321
+  },
+  {
+   "hash": "12510d0",
+   "fecha": "2026-09-21T10:15:53-06:00",
+   "titulo": "La etiqueta del punto de restauración se pone a mano, y RESTAURAR.md lo dice",
+   "pr": 320
+  },
+  {
+   "hash": "0e14950",
+   "fecha": "2026-09-21T10:14:26-06:00",
+   "titulo": "Un punto de restauración de verdad: la base no vivía en ninguna parte",
+   "pr": 319
+  },
+  {
+   "hash": "77ddef1",
+   "fecha": "2026-09-21T09:10:09-06:00",
+   "titulo": "El nivel 3 del bot decía \"tres jugadas\" y estaba haciendo dos",
+   "pr": 318
+  },
+  {
+   "hash": "91ff01c",
+   "fecha": "2026-09-21T08:23:40-06:00",
+   "titulo": "Los equipos se llenan de una vez, y coordinación los maneja",
+   "pr": 317
+  },
+  {
+   "hash": "84d4d4e",
+   "fecha": "2026-09-21T08:16:35-06:00",
+   "titulo": "El camino del entrenador, recorrido entero",
+   "pr": 316
+  },
+  {
+   "hash": "cbd4ef0",
+   "fecha": "2026-09-21T08:06:10-06:00",
+   "titulo": "Por dónde empezar, del lado del que da clase",
+   "pr": 315
+  },
+  {
+   "hash": "365a69e",
+   "fecha": "2026-09-21T07:40:26-06:00",
+   "titulo": "Coordinar es también corregir: la ficha de cada cuenta",
+   "pr": 314
+  },
+  {
+   "hash": "8e37356",
+   "fecha": "2026-09-20T23:41:28-06:00",
+   "titulo": "Compartir los planes de todos de una vez",
+   "pr": 313
+  },
+  {
+   "hash": "f76f6bb",
+   "fecha": "2026-09-20T23:22:24-06:00",
+   "titulo": "El informe a la casa cuenta el plan, que estaba hecho y era invisible",
+   "pr": 311
+  },
+  {
+   "hash": "2a42b19",
+   "fecha": "2026-09-20T23:14:49-06:00",
+   "titulo": "Dar clase, los diagnósticos y el espacio de juegos",
+   "pr": 310
+  },
+  {
+   "hash": "024c318",
+   "fecha": "2026-09-20T23:01:31-06:00",
+   "titulo": "El plan de entrenamiento apunta al ejercicio, no a la página",
+   "pr": 309
+  },
+  {
+   "hash": "fda118c",
+   "fecha": "2026-09-20T22:49:45-06:00",
+   "titulo": "El panel le dice por dónde empezar a quien todavía no arrancó",
+   "pr": 308
+  },
+  {
+   "hash": "6b23cd2",
+   "fecha": "2026-09-20T22:34:06-06:00",
+   "titulo": "Coordinar es un alcance, no una llave maestra",
+   "pr": 307
+  },
+  {
+   "hash": "2bb144f",
+   "fecha": "2026-09-20T22:00:22-06:00",
+   "titulo": "Subgrupos del profesor, correos corregibles y cobros que no se acumulan",
+   "pr": 306
+  },
+  {
+   "hash": "28560ea",
+   "fecha": "2026-09-20T20:59:52-06:00",
+   "titulo": "Sesión en vivo: reiniciar suelta el curso, el alumno puede salir de Practicar/Preguntar y se valida el bot antes de usarlo",
+   "pr": 305
+  },
+  {
+   "hash": "262b737",
+   "fecha": "2026-09-20T20:55:59-06:00",
+   "titulo": "Clase en vivo: vaciar el chat, coordenadas en los tableros del alumno y que cerrar la clase la cierre",
+   "pr": 304
+  },
+  {
+   "hash": "dc696de",
+   "fecha": "2026-09-20T20:36:05-06:00",
+   "titulo": "Solicitudes de ingreso a la Academia: formulario público + bandeja de revisión",
+   "pr": 203
+  },
+  {
+   "hash": "a9dcf95",
+   "fecha": "2026-09-20T20:32:48-06:00",
+   "titulo": "Cargar un archivo en la clase arranca desde la posición inicial, no la última",
+   "pr": 303
+  },
+  {
+   "hash": "c1b4797",
+   "fecha": "2026-09-20T20:29:28-06:00",
+   "titulo": "Las cédulas de menores ya no dependen de un interruptor",
+   "pr": 302
+  },
+  {
+   "hash": "a06e12c",
+   "fecha": "2026-09-20T18:56:33-06:00",
+   "titulo": "Dos agujeros que no daban ningún error",
+   "pr": 301
+  },
+  {
+   "hash": "f64106d",
+   "fecha": "2026-09-20T18:52:16-06:00",
+   "titulo": "Las funciones de trigger salen de la API pública",
+   "pr": 300
+  },
+  {
+   "hash": "7ff2407",
+   "fecha": "2026-09-20T18:30:21-06:00",
+   "titulo": "La franja del panel también cuenta los exámenes",
+   "pr": 299
+  },
+  {
+   "hash": "d435f58",
+   "fecha": "2026-09-20T18:13:33-06:00",
+   "titulo": "Ordenar el panel del alumno por lo que le toca, no por categorías",
+   "pr": 298
+  },
+  {
+   "hash": "d15136b",
+   "fecha": "2026-09-20T17:59:10-06:00",
+   "titulo": "Ordenar la clase en vivo por quién ve cada cosa",
+   "pr": 297
+  },
+  {
+   "hash": "1961585",
+   "fecha": "2026-09-20T17:41:11-06:00",
+   "titulo": "La clase se registra sola: el botón vivía en la página que no era",
+   "pr": 296
+  },
+  {
+   "hash": "a27a7ff",
+   "fecha": "2026-09-20T17:27:58-06:00",
+   "titulo": "Cómo viene un alumno en el tiempo, no cuánto lleva acumulado",
+   "pr": 295
+  },
+  {
+   "hash": "4762b1c",
+   "fecha": "2026-09-20T17:23:36-06:00",
+   "titulo": "Guía del profesor: enseñar cada pantalla, no solo contarla",
+   "pr": 294
+  },
+  {
+   "hash": "170eac7",
+   "fecha": "2026-09-20T14:55:44-06:00",
+   "titulo": "Guía del profesor: la plataforma entera explicada, en tres salidas",
+   "pr": 293
+  },
+  {
+   "hash": "3d4d655",
+   "fecha": "2026-09-20T14:27:27-06:00",
+   "titulo": "Compartir un plan de clase: se ve y se duplica, no se edita",
+   "pr": 292
+  },
+  {
+   "hash": "13a1a7b",
+   "fecha": "2026-09-20T12:30:15-06:00",
+   "titulo": "Planes de arranque: 53 clases listas, de bancos ya verificados",
+   "pr": 291
+  },
+  {
+   "hash": "0842f93",
+   "fecha": "2026-09-20T10:56:50-06:00",
+   "titulo": "Habilitar a coordinación reenviar el acceso y crear alumnos a mano",
+   "pr": 290
+  },
+  {
+   "hash": "f428e43",
+   "fecha": "2026-09-20T10:53:34-06:00",
+   "titulo": "Plan de clase: preparar la clase antes de darla",
+   "pr": 289
+  },
+  {
+   "hash": "7e1f161",
+   "fecha": "2026-09-20T10:26:43-06:00",
+   "titulo": "Bitácora: lo que el profesor observa, donde lo observa",
+   "pr": 288
+  },
+  {
+   "hash": "0c87321",
+   "fecha": "2026-09-20T09:36:57-06:00",
+   "titulo": "Exámenes: preguntas por bloques, y el tope de salidas lo pone el profesor",
+   "pr": 287
+  },
+  {
+   "hash": "8bb7cc1",
+   "fecha": "2026-09-20T08:42:27-06:00",
+   "titulo": "Informes: las tareas, los exámenes y si está trabajando o no",
+   "pr": 286
+  },
+  {
+   "hash": "9a2ce2b",
+   "fecha": "2026-09-20T08:11:58-06:00",
+   "titulo": "Exámenes: el tiempo, recomendado o a mano",
+   "pr": 285
+  },
+  {
+   "hash": "8f649fa",
+   "fecha": "2026-09-20T07:57:22-06:00",
+   "titulo": "Exámenes: reabrir también avisa al celular",
+   "pr": 284
+  },
+  {
+   "hash": "1e75497",
+   "fecha": "2026-09-20T07:52:14-06:00",
+   "titulo": "Exámenes: el aviso al celular, y el trigger va diferido",
+   "pr": 283
+  },
+  {
+   "hash": "3a605f7",
+   "fecha": "2026-09-20T07:27:46-06:00",
+   "titulo": "Exámenes: acá se ejecuta y se demuestra, no se practica",
+   "pr": 282
+  },
+  {
+   "hash": "1d02520",
+   "fecha": "2026-09-20T01:13:58-06:00",
+   "titulo": "Tareas: el profesor pide cantidades y la tarea se llena sola",
+   "pr": 281
+  },
+  {
+   "hash": "c89d9a9",
+   "fecha": "2026-09-20T00:29:05-06:00",
+   "titulo": "Panel: \"Mis pagos\" es del alumnado, no del equipo docente",
+   "pr": 280
+  },
+  {
+   "hash": "531cdfd",
+   "fecha": "2026-09-20T00:26:49-06:00",
+   "titulo": "Panel: a quien da clase el panel le hablaba como a un alumno",
+   "pr": 279
+  },
+  {
+   "hash": "c61dd0a",
+   "fecha": "2026-09-20T00:18:06-06:00",
+   "titulo": "Panel: primero lo que toca, después cómo voy, y al final a dónde ir",
+   "pr": 278
+  },
+  {
+   "hash": "da1db74",
+   "fecha": "2026-09-20T00:06:36-06:00",
+   "titulo": "Panel: \"Aprender\" va antes que \"Jugar y competir\"",
+   "pr": 277
+  },
+  {
+   "hash": "f2bab84",
+   "fecha": "2026-09-20T00:00:25-06:00",
+   "titulo": "Panel: el grid son lugares; y los cuatro total-* no estaban muertos",
+   "pr": 276
+  },
+  {
+   "hash": "6d2710a",
+   "fecha": "2026-09-19T23:52:01-06:00",
+   "titulo": "Panel: arriba lo que vence, y cada quien ve lo suyo",
+   "pr": 275
+  },
+  {
+   "hash": "69a2193",
+   "fecha": "2026-09-19T23:30:08-06:00",
+   "titulo": "Fichas se fusiona con Estudio: una sola página, las 56",
+   "pr": 274
+  },
+  {
+   "hash": "e68cf56",
+   "fecha": "2026-09-19T23:10:55-06:00",
+   "titulo": "El alumno sin correo propio entra con un usuario, y el correo va a la casa",
+   "pr": 273
+  },
+  {
+   "hash": "e2e24a9",
+   "fecha": "2026-09-19T23:07:43-06:00",
+   "titulo": "Fichas: de 28 a 56, el doble en las cuatro pestañas",
+   "pr": 272
+  },
+  {
+   "hash": "e0ccff6",
+   "fecha": "2026-09-19T22:16:43-06:00",
+   "titulo": "Estudio: quitar las pestañas Aperturas/Defensas y mostrar las fichas de verdad",
+   "pr": 271
+  },
+  {
+   "hash": "097f005",
+   "fecha": "2026-09-19T21:48:00-06:00",
+   "titulo": "Subir el nivel del bot al máximo y enseñarle a jugar cada modalidad de verdad",
+   "pr": 270
+  },
+  {
+   "hash": "cbacdde",
+   "fecha": "2026-09-19T21:42:03-06:00",
+   "titulo": "Fichas: una pantalla por idea, con su mapa y su posición",
+   "pr": 269
+  },
+  {
+   "hash": "682a170",
+   "fecha": "2026-09-19T21:34:21-06:00",
+   "titulo": "Páginas públicas: el lugar se llama Ajedrez Integral, no \"Academia\"",
+   "pr": 268
+  },
+  {
+   "hash": "dcd3c48",
+   "fecha": "2026-09-19T21:26:26-06:00",
+   "titulo": "Portada: nombrar Ajedrez Integral y poner los números en cifras",
+   "pr": 267
+  },
+  {
+   "hash": "f110280",
+   "fecha": "2026-09-19T21:22:55-06:00",
+   "titulo": "Sumar Preguntar y Practicar al panel de Jalar un archivo a la clase",
+   "pr": 266
+  },
+  {
+   "hash": "506abde",
+   "fecha": "2026-09-19T21:15:34-06:00",
+   "titulo": "Corregir el tablero de un ejercicio y sumar seleccionar/descargar/borrar todo",
+   "pr": 265
+  },
+  {
+   "hash": "7322a8a",
+   "fecha": "2026-09-19T20:57:40-06:00",
+   "titulo": "En clase, el curso es del profesor y sus posiciones van al tablero con un botón",
+   "pr": 264
+  },
+  {
+   "hash": "0a2cef0",
+   "fecha": "2026-09-19T20:55:22-06:00",
+   "titulo": "Ordenar Archivos en carpetas, para que no se amontone todo en un lugar",
+   "pr": 263
+  },
+  {
+   "hash": "c8a692d",
+   "fecha": "2026-09-19T20:45:28-06:00",
+   "titulo": "La invitación pide la contraseña y explica cómo se entra",
+   "pr": 262
+  },
+  {
+   "hash": "d33167e",
+   "fecha": "2026-09-19T20:37:14-06:00",
+   "titulo": "Renombrar Caja de Compartir a Archivos y sumar PGN completos por profesor",
+   "pr": 261
+  },
+  {
+   "hash": "d8befc2",
+   "fecha": "2026-09-19T19:43:12-06:00",
+   "titulo": "Quitar el encabezado y el pie de marketing de las páginas de la Academia",
+   "pr": 260
+  },
+  {
+   "hash": "158c401",
+   "fecha": "2026-09-19T19:30:33-06:00",
+   "titulo": "Al rechazar un reto, avisar con un motivo y no dejar esperando a quien retó",
+   "pr": 259
+  },
+  {
+   "hash": "69e9a78",
+   "fecha": "2026-09-19T19:20:18-06:00",
+   "titulo": "Colapsar Profesores y Equipos en admin.html para llegar antes a la lista de cuentas",
+   "pr": 258
+  },
+  {
+   "hash": "2f20988",
+   "fecha": "2026-09-19T19:09:41-06:00",
+   "titulo": "Poner en 0 el reloj de quien pierde por tiempo en las partidas de dos",
+   "pr": 257
+  },
+  {
+   "hash": "bd93f86",
+   "fecha": "2026-09-19T17:04:25-06:00",
+   "titulo": "Arreglar verificar-varios-profesores.js: seguía la maqueta vieja del panel",
+   "pr": 256
+  },
+  {
+   "hash": "2c44f19",
+   "fecha": "2026-09-19T16:58:52-06:00",
+   "titulo": "Sumar equipos: un alumno en varios a la vez, sin límite de entrenadores",
+   "pr": 255
+  },
+  {
+   "hash": "cd7d65a",
+   "fecha": "2026-09-19T16:22:43-06:00",
+   "titulo": "Optimizar: cruces de torneo en paralelo y búsqueda de temas con respiro",
+   "pr": 254
+  },
+  {
+   "hash": "f646a3f",
+   "fecha": "2026-09-19T16:01:46-06:00",
+   "titulo": "Limpieza: sacar código muerto encontrado en el escaneo",
+   "pr": 253
+  },
+  {
+   "hash": "5b8c736",
+   "fecha": "2026-09-19T14:51:12-06:00",
+   "titulo": "Sumar Cartas y Duelo Simultáneo al bot, y arreglar que no jugaba de verdad",
+   "pr": 252
+  },
+  {
+   "hash": "7c867ef",
+   "fecha": "2026-09-19T14:13:05-06:00",
+   "titulo": "Sumar logros y racha de días a la Academia",
+   "pr": 251
+  },
+  {
+   "hash": "671c849",
+   "fecha": "2026-09-19T13:37:03-06:00",
+   "titulo": "Resaltar y deslizar la última jugada; validar el reloj en el servidor",
+   "pr": 250
+  },
+  {
+   "hash": "9579012",
+   "fecha": "2026-09-19T13:10:58-06:00",
+   "titulo": "Mover el botón \"Estoy listo\" debajo del nombre del jugador",
+   "pr": 249
+  },
+  {
+   "hash": "af8d42d",
+   "fecha": "2026-09-19T11:22:07-06:00",
+   "titulo": "Arreglar la creación de rondas de torneo: variante, recursión RLS y resultado de Cartas",
+   "pr": 247
+  },
+  {
+   "hash": "db3dbd6",
+   "fecha": "2026-09-19T09:42:12-06:00",
+   "titulo": "Renovar el token antes de pedir el informe a la casa (Ver/Descargar)",
+   "pr": 246
+  },
+  {
+   "hash": "5484b9d",
+   "fecha": "2026-09-19T08:22:48-06:00",
+   "titulo": "Agregar Visualización a Entrenamiento: resolver líneas sin mover piezas",
+   "pr": 245
+  },
+  {
+   "hash": "b14eaef",
+   "fecha": "2026-09-19T07:27:51-06:00",
+   "titulo": "Separar Estudio en dos pestañas: Aperturas y Defensas",
+   "pr": 244
+  },
+  {
+   "hash": "fc08d2e",
+   "fecha": "2026-09-19T07:05:58-06:00",
+   "titulo": "Estudio sale de Aprende: página propia, con acceso en el panel",
+   "pr": 243
+  },
+  {
+   "hash": "c814c5a",
+   "fecha": "2026-09-19T06:48:53-06:00",
+   "titulo": "Aprende: tarjetas de aperturas y defensas \"Para estudiar\"",
+   "pr": 242
+  },
+  {
+   "hash": "2d125d3",
+   "fecha": "2026-09-19T06:28:04-06:00",
+   "titulo": "Validar las marcas de training_progress que se ven como \"la mejor\" en Informes",
+   "pr": 241
+  },
+  {
+   "hash": "da648bf",
+   "fecha": "2026-09-19T06:20:55-06:00",
+   "titulo": "Cerrar la puerta a inflar minutos_clase/minutos_ejercicios y juntar la fórmula de tramos duplicada",
+   "pr": 240
+  },
+  {
+   "hash": "1819794",
+   "fecha": "2026-09-19T05:59:03-06:00",
+   "titulo": "Agregar el área de Tareas: el profesor asigna material con fecha límite",
+   "pr": 239
+  },
+  {
+   "hash": "e2e0ed1",
+   "fecha": "2026-09-18T23:55:07-06:00",
+   "titulo": "Regenerar examen-de-arbitraje.pdf con las 500 preguntas del banco",
+   "pr": 238
+  },
+  {
+   "hash": "cf6335c",
+   "fecha": "2026-09-18T18:36:39-06:00",
+   "titulo": "Arreglar el botón \"📚 Curso\" en la sesión en vivo",
+   "pr": 237
+  },
+  {
+   "hash": "a6e6210",
+   "fecha": "2026-09-18T17:57:54-06:00",
+   "titulo": "Permitir que coordinadores del mismo equipo vean formularios y respuestas",
+   "pr": 236
+  },
+  {
+   "hash": "9bc6bc4",
+   "fecha": "2026-09-18T17:06:10-06:00",
+   "titulo": "Sumar 300 preguntas al banco de arbitraje: 100 Nacional, 100 FIDE, 100 Internacional",
+   "pr": 235
+  },
+  {
+   "hash": "94aec13",
+   "fecha": "2026-09-18T12:13:10-06:00",
+   "titulo": "Sumar tres exámenes de arbitraje (Nacional, FIDE, Internacional)",
+   "pr": 234
+  },
+  {
+   "hash": "2e25eed",
+   "fecha": "2026-09-18T11:12:36-06:00",
+   "titulo": "Corregir 23 citas del banco de arbitraje en conducta y ritmos",
+   "pr": 233
+  },
+  {
+   "hash": "a610514",
+   "fecha": "2026-09-18T11:09:11-06:00",
+   "titulo": "Corregir 21 citas del banco de arbitraje en leyes, reloj, irregularidades y tablas",
+   "pr": 232
+  },
+  {
+   "hash": "46c28aa",
+   "fecha": "2026-09-18T11:02:57-06:00",
+   "titulo": "Corregir 6 citas del banco de arbitraje en las áreas competición y títulos",
+   "pr": 231
+  },
+  {
+   "hash": "41d693c",
+   "fecha": "2026-09-18T10:25:56-06:00",
+   "titulo": "Corregir el sistema suizo del curso Árbitro Nacional contra el manual completo",
+   "pr": 230
+  },
+  {
+   "hash": "1f04f72",
+   "fecha": "2026-09-18T08:25:53-06:00",
+   "titulo": "Corregir el curso Árbitro Nacional y el banco de arbitraje contra el manual real",
+   "pr": 229
+  },
+  {
+   "hash": "ad79267",
+   "fecha": "2026-09-18T07:04:30-06:00",
+   "titulo": "Sumar el curso Árbitro Nacional (Leyes del Ajedrez y Handbook FIDE a fondo)",
+   "pr": 228
+  },
+  {
+   "hash": "9fb03ae",
+   "fecha": "2026-09-18T06:25:31-06:00",
+   "titulo": "Sumar el curso Formación Ajedrez (reglamento FIDE, JDE y arbitraje práctico)",
+   "pr": 227
+  },
+  {
+   "hash": "8e77662",
+   "fecha": "2026-09-17T22:10:15-06:00",
+   "titulo": "De la respuesta del formulario a la cuenta del alumno, en un botón",
+   "pr": 226
+  },
+  {
+   "hash": "322b320",
+   "fecha": "2026-09-17T21:28:32-06:00",
+   "titulo": "El enlace que copia el armador de formularios servía un 404",
+   "pr": 225
+  },
+  {
+   "hash": "898a900",
+   "fecha": "2026-09-17T14:49:54-06:00",
+   "titulo": "Los servidores MCP se declaran en .mcp.json, dentro del repositorio",
+   "pr": 224
+  },
+  {
+   "hash": "997791a",
+   "fecha": "2026-09-17T14:41:41-06:00",
+   "titulo": "CLAUDE.md: las respuestas de la conversación también van en español",
+   "pr": 223
+  },
+  {
+   "hash": "f377027",
+   "fecha": "2026-09-17T14:41:07-06:00",
+   "titulo": "4×4 en Modo Adaptado: primero qué hay en el tablero, y la ayuda plegada",
+   "pr": 222
+  },
+  {
+   "hash": "7088075",
+   "fecha": "2026-09-17T14:06:19-06:00",
+   "titulo": "El Enter que contesta por el cuadro de comandos también pasa a la siguiente",
+   "pr": 221
+  },
+  {
+   "hash": "621f4f2",
+   "fecha": "2026-09-17T13:27:23-06:00",
+   "titulo": "Modo Adaptado: todo ejercicio se puede contestar escribiendo, sin tocar el tablero",
+   "pr": 220
+  },
+  {
+   "hash": "c74d0e5",
+   "fecha": "2026-09-17T12:49:46-06:00",
+   "titulo": "Cursos: quitar los videos, volver a la plataforma desde el material y no repetir el temario",
+   "pr": 219
+  },
+  {
+   "hash": "b7d2302",
+   "fecha": "2026-09-17T11:19:51-06:00",
+   "titulo": "Los cursos de Academia, recorribles con lector de pantalla",
+   "pr": 218
+  },
+  {
+   "hash": "8e9dce9",
+   "fecha": "2026-09-17T09:06:51-06:00",
+   "titulo": "Administración por fichas de grupo; los PDF con respuestas, solo admin",
+   "pr": 217
+  },
+  {
+   "hash": "6fc42c1",
+   "fecha": "2026-09-17T08:46:53-06:00",
+   "titulo": "Entrenamiento en tres grupos, con cada acceso en su propio encabezado",
+   "pr": 216
+  },
+  {
+   "hash": "f7ae5c8",
+   "fecha": "2026-09-17T08:32:20-06:00",
+   "titulo": "Administración: atajos por grupos, cuentas que aguantan muchas, e inscripciones",
+   "pr": 215
+  },
+  {
+   "hash": "0033ce0",
+   "fecha": "2026-09-17T07:58:51-06:00",
+   "titulo": "El panel, por grupos; el registro de clases, filtrado y por meses",
+   "pr": 214
+  },
+  {
+   "hash": "7364b49",
+   "fecha": "2026-09-17T07:21:05-06:00",
+   "titulo": "El diagnóstico de nivel, visible: en Google y en el panel",
+   "pr": 213
+  },
+  {
+   "hash": "49f33df",
+   "fecha": "2026-09-17T07:06:04-06:00",
+   "titulo": "La tarjeta de Aprende seguía diciendo 56 preguntas y 8 áreas",
+   "pr": 212
+  },
+  {
+   "hash": "934aa91",
+   "fecha": "2026-09-17T02:43:40-06:00",
+   "titulo": "Las 225 preguntas de Oscar, la novena área y la escala de Elo",
+   "pr": 211
+  },
+  {
+   "hash": "02cb2c3",
+   "fecha": "2026-09-16T23:28:04-06:00",
+   "titulo": "Racha táctica: aceptar cualquier jaque mate válido, no solo el guardado",
+   "pr": 210
+  },
+  {
+   "hash": "40b2baa",
+   "fecha": "2026-09-16T22:27:10-06:00",
+   "titulo": "El libro del banco del diagnóstico",
+   "pr": 209
+  },
+  {
+   "hash": "8a4dcf3",
+   "fecha": "2026-09-16T21:46:56-06:00",
+   "titulo": "El profesor también se sienta a jugar",
+   "pr": 208
+  },
+  {
+   "hash": "d5ceabd",
+   "fecha": "2026-09-16T20:38:30-06:00",
+   "titulo": "Anotar cómo quedaron el www y el correo del dominio",
+   "pr": 207
+  },
+  {
+   "hash": "14470b4",
+   "fecha": "2026-09-16T17:52:15-06:00",
+   "titulo": "www.ajedrez-integral.com manda al dominio sin www",
+   "pr": 206
+  },
+  {
+   "hash": "b59a5a3",
+   "fecha": "2026-09-16T16:20:11-06:00",
+   "titulo": "El cartel de instalar la app se muestra una sola vez",
+   "pr": 205
+  },
+  {
+   "hash": "d90d8b4",
+   "fecha": "2026-09-16T15:32:50-06:00",
+   "titulo": "Transcribir las grabaciones sin que el audio salga de la computadora",
+   "pr": 204
+  },
+  {
+   "hash": "5483590",
+   "fecha": "2026-09-16T15:03:57-06:00",
+   "titulo": "Reportes: también de las clases dadas fuera de la plataforma",
+   "pr": 202
+  },
+  {
+   "hash": "85dbe4d",
+   "fecha": "2026-09-16T14:40:15-06:00",
+   "titulo": "El informe también sale en formato adaptado",
+   "pr": 201
+  },
+  {
+   "hash": "266d659",
+   "fecha": "2026-09-16T14:31:45-06:00",
+   "titulo": "Reportes de actividades: el informe de clase en Word y PDF",
+   "pr": 200
+  },
+  {
+   "hash": "9b09470",
+   "fecha": "2026-09-16T13:11:51-06:00",
+   "titulo": "Arrastrar piezas con el dedo movía la página, no la pieza",
+   "pr": 199
+  },
+  {
+   "hash": "888f277",
+   "fecha": "2026-09-16T13:04:00-06:00",
+   "titulo": "Piezas: sumar 3 temas de color en modo inverso",
+   "pr": 198
+  },
+  {
+   "hash": "100545e",
+   "fecha": "2026-09-16T13:03:16-06:00",
+   "titulo": "Cuadro de comandos de Cursos: nombrar piezas y casillas como en Adaptado",
+   "pr": 197
+  },
+  {
+   "hash": "2cc424d",
+   "fecha": "2026-09-16T10:53:22-06:00",
+   "titulo": "Colores del tablero: sumar Morado claro y negro (modo normal)",
+   "pr": 195
+  },
+  {
+   "hash": "f2db3d9",
+   "fecha": "2026-09-16T10:36:57-06:00",
+   "titulo": "La portada pesaba 7,9 MB: lo del bot se baja al jugar, no al entrar",
+   "pr": 194
+  },
+  {
+   "hash": "f17f7f5",
+   "fecha": "2026-09-16T10:34:26-06:00",
+   "titulo": "Voz: disponible en modo normal, en toda la plataforma",
+   "pr": 193
+  },
+  {
+   "hash": "54471cb",
+   "fecha": "2026-09-16T10:11:54-06:00",
+   "titulo": "Avisos push en el celular: los manda el sitio, no la tienda",
+   "pr": 192
+  },
+  {
+   "hash": "25a6273",
+   "fecha": "2026-09-16T09:35:13-06:00",
+   "titulo": "Colores del tablero: sumar Morado oscuro y negro (modo normal)",
+   "pr": 191
+  },
+  {
+   "hash": "497ae67",
+   "fecha": "2026-09-16T09:30:49-06:00",
+   "titulo": "Agregar estilo y color de piezas elegibles (modo normal y adaptado)",
+   "pr": 190
+  },
+  {
+   "hash": "80742e2",
+   "fecha": "2026-09-16T08:49:46-06:00",
+   "titulo": "El sitio se instala como app: manifest, iconos y service worker",
+   "pr": 189
+  },
+  {
+   "hash": "5d6c394",
+   "fecha": "2026-09-16T08:26:26-06:00",
+   "titulo": "Configuraciones: sumar los temas de tablero Morado y Negro (modo normal)",
+   "pr": 188
+  },
+  {
+   "hash": "40b5c68",
+   "fecha": "2026-09-16T00:14:37-06:00",
+   "titulo": "Material de estudio en cada lección de cada curso, también accesible",
+   "pr": 187
+  },
+  {
+   "hash": "4d50215",
+   "fecha": "2026-09-16T00:12:34-06:00",
+   "titulo": "Cursos: cuadro de comandos para jugar por teclado en los tableros interactivos",
+   "pr": 186
+  },
+  {
+   "hash": "d9d68f5",
+   "fecha": "2026-09-15T23:53:05-06:00",
+   "titulo": "Modo adaptado completo en Juegos: Estándar y Niebla de Guerra",
+   "pr": 185
+  },
+  {
+   "hash": "89209e5",
+   "fecha": "2026-09-15T23:08:08-06:00",
+   "titulo": "Aperturas: arreglar la hoja de estilos y el tema oscuro de la página",
+   "pr": 184
+  },
+  {
+   "hash": "3fe7c27",
+   "fecha": "2026-09-15T22:56:18-06:00",
+   "titulo": "Aperturas y celadas: memorizarlas jugando, con repaso espaciado",
+   "pr": 183
+  },
+  {
+   "hash": "f4257ae",
+   "fecha": "2026-09-15T22:41:47-06:00",
+   "titulo": "Cobros de la Academia: mensualidades, pagos y avisos de morosidad",
+   "pr": 182
+  },
+  {
+   "hash": "a19ecf7",
+   "fecha": "2026-09-15T20:55:04-06:00",
+   "titulo": "Para quien administra, el contenido está todo abierto",
+   "pr": 181
+  },
+  {
+   "hash": "e6fca33",
+   "fecha": "2026-09-15T19:54:16-06:00",
+   "titulo": "Informes a la casa: el sitio los manda solo, por correo",
+   "pr": 180
+  },
+  {
+   "hash": "3e4b77d",
+   "fecha": "2026-09-15T19:17:27-06:00",
+   "titulo": "Permitir al profesor leer un PDF en clase y reconocer sus diagramas para pasarlos al tablero",
+   "pr": 179
+  },
+  {
+   "hash": "42aea44",
+   "fecha": "2026-09-15T18:46:41-06:00",
+   "titulo": "Coordinación: el rol nuevo y los formularios de inscripción",
+   "pr": 178
+  },
+  {
+   "hash": "87ae0ed",
+   "fecha": "2026-09-15T18:45:18-06:00",
+   "titulo": "Permitir al profesor dar un curso como lección en la clase en vivo",
+   "pr": 177
+  },
+  {
+   "hash": "02a2ba0",
+   "fecha": "2026-09-15T18:35:27-06:00",
+   "titulo": "Permitir al profesor desbloquear manualmente lecciones de un curso a un alumno",
+   "pr": 176
+  },
+  {
+   "hash": "61ba350",
+   "fecha": "2026-09-15T18:25:42-06:00",
+   "titulo": "Quitar tarjeta Ciegos del panel Academia y mostrar el FEN en vivo al editar el tablero",
+   "pr": 175
+  },
+  {
+   "hash": "9d879d1",
+   "fecha": "2026-09-15T17:40:52-06:00",
+   "titulo": "Un alumno puede tener varios profesores",
+   "pr": 174
+  },
+  {
+   "hash": "bb61985",
+   "fecha": "2026-09-15T15:55:21-06:00",
+   "titulo": "Examen de arbitraje: que administración pueda enviar las respuestas por correo",
+   "pr": 173
+  },
+  {
+   "hash": "61c03fc",
+   "fecha": "2026-09-15T15:47:31-06:00",
+   "titulo": "Informes: la cuenta la hace la base, no el navegador",
+   "pr": 171
+  },
+  {
+   "hash": "220d91a",
+   "fecha": "2026-09-15T15:30:13-06:00",
+   "titulo": "Ajedrez de abrazos: que un abrazo entre piezas del mismo tipo se note",
+   "pr": 172
+  },
+  {
+   "hash": "f946ed0",
+   "fecha": "2026-09-15T15:12:00-06:00",
+   "titulo": "Nueva variante en Juegos: Ajedrez Vampiro (al capturar, te transformas en la pieza)",
+   "pr": 170
+  },
+  {
+   "hash": "81a0360",
+   "fecha": "2026-09-15T14:43:00-06:00",
+   "titulo": "Modo Adaptado: 3 temas de tablero negro y morado (claro, medio y oscuro)",
+   "pr": 169
+  },
+  {
+   "hash": "92db566",
+   "fecha": "2026-09-15T13:51:41-06:00",
+   "titulo": "Base de jugadores: análisis deportivo con picos, proyección a 6 meses y recomendación de descanso",
+   "pr": 168
+  },
+  {
+   "hash": "a526f43",
+   "fecha": "2026-09-15T13:11:48-06:00",
+   "titulo": "Base de jugadores: filtrar torneos por cálculo de elo y ver el rendimiento general",
+   "pr": 167
+  },
+  {
+   "hash": "b875257",
+   "fecha": "2026-09-15T13:01:31-06:00",
+   "titulo": "Cada profesor con sus alumnos: asignación en lote y cupo de invitaciones",
+   "pr": 166
+  },
+  {
+   "hash": "39fbd46",
+   "fecha": "2026-09-15T12:05:54-06:00",
+   "titulo": "Panel de admin: buscar el historial de un jugador en chess-results.com",
+   "pr": 165
+  },
+  {
+   "hash": "cbda05e",
+   "fecha": "2026-09-15T11:30:26-06:00",
+   "titulo": "El CSS va compilado: 400 KB de JavaScript menos en cada visita",
+   "pr": 164
+  },
+  {
+   "hash": "632b201",
+   "fecha": "2026-09-15T11:00:08-06:00",
+   "titulo": "El sitio entero pasa a tutear: 2.012 formas de voseo convertidas",
+   "pr": 163
+  },
+  {
+   "hash": "589b29f",
+   "fecha": "2026-09-15T10:23:31-06:00",
+   "titulo": "El catálogo de cursos: diagramas de verdad, filtro por nivel y un solo enlace",
+   "pr": 162
+  },
+  {
+   "hash": "2806414",
+   "fecha": "2026-09-15T10:00:39-06:00",
+   "titulo": "Metadatos: que el enlace se vea al compartirlo y la página se encuentre",
+   "pr": 161
+  },
+  {
+   "hash": "0f7ecff",
+   "fecha": "2026-09-15T09:31:30-06:00",
+   "titulo": "El encabezado deja de taparle el contenido a las 71 páginas",
+   "pr": 160
+  },
+  {
+   "hash": "49dfe63",
+   "fecha": "2026-09-15T08:38:32-06:00",
+   "titulo": "Retar en línea: ver quién está conectado e invitarlo a jugar",
+   "pr": 159
+  },
+  {
+   "hash": "2a02315",
+   "fecha": "2026-09-15T08:05:48-06:00",
+   "titulo": "El bot de Oscar: practicar cualquier modalidad sin rival",
+   "pr": 158
+  },
+  {
+   "hash": "bf4f4e1",
+   "fecha": "2026-09-15T07:54:19-06:00",
+   "titulo": "Juego nuevo: Confites del caballo",
+   "pr": 157
+  },
+  {
+   "hash": "d6c0d14",
+   "fecha": "2026-09-15T07:46:07-06:00",
+   "titulo": "Novedades de septiembre: cursos en dos caras, Elo y diagnóstico público, tres juegos nuevos",
+   "pr": 156
+  },
+  {
+   "hash": "dff59a3",
+   "fecha": "2026-09-15T01:17:27-06:00",
+   "titulo": "Nuevo juego: Ilumina el Tablero — 24 niveles progresivos",
+   "pr": 155
+  },
+  {
+   "hash": "f39d36e",
+   "fecha": "2026-09-15T00:48:48-06:00",
+   "titulo": "Informes: los exámenes de arbitraje del público, con filtro por estado",
+   "pr": 154
+  },
+  {
+   "hash": "31e4416",
+   "fecha": "2026-09-15T00:33:21-06:00",
+   "titulo": "Examen de arbitraje abierto al público, con retroalimentación del profesor",
+   "pr": 153
+  },
+  {
+   "hash": "3642b4d",
+   "fecha": "2026-09-15T00:25:58-06:00",
+   "titulo": "TV: Ajedrez para 4 con su tablero real, en su propio espacio",
+   "pr": 152
+  },
+  {
+   "hash": "32ca1a5",
+   "fecha": "2026-09-15T00:11:55-06:00",
+   "titulo": "Cuadernillo de arbitraje: de 4,2 MB a 1,3 MB",
+   "pr": 151
+  },
+  {
+   "hash": "2f55b78",
+   "fecha": "2026-09-14T23:45:39-06:00",
+   "titulo": "Examen de arbitraje: la fuente exacta al final de cada respuesta",
+   "pr": 150
+  },
+  {
+   "hash": "d50ae0d",
+   "fecha": "2026-09-14T23:39:29-06:00",
+   "titulo": "Cuadernillo de arbitraje: logo en la tapa, marca de agua y vocabulario latino",
+   "pr": 149
+  },
+  {
+   "hash": "0b17554",
+   "fecha": "2026-09-14T23:21:11-06:00",
+   "titulo": "Niebla oculta el PGN hasta el final, aviso de turno, y TV en vivo",
+   "pr": 148
+  },
+  {
+   "hash": "941dce6",
+   "fecha": "2026-09-14T23:15:19-06:00",
+   "titulo": "Cuadernillo de arbitraje: el archivo no dice con qué se armó",
+   "pr": 147
+  },
+  {
+   "hash": "2564e5f",
+   "fecha": "2026-09-14T23:13:20-06:00",
+   "titulo": "Cuadernillo de arbitraje: tapa de libro",
+   "pr": 146
+  },
+  {
+   "hash": "2c6c0fa",
+   "fecha": "2026-09-14T23:07:06-06:00",
+   "titulo": "Cuadernillo de arbitraje: protegido y firmado en el pie de página",
+   "pr": 145
+  },
+  {
+   "hash": "57b403d",
+   "fecha": "2026-09-14T22:56:31-06:00",
+   "titulo": "Examen de arbitraje: 200 preguntas, 50 minutos y el banco en PDF",
+   "pr": 144
+  },
+  {
+   "hash": "0bba178",
+   "fecha": "2026-09-14T21:08:34-06:00",
+   "titulo": "Examen de arbitraje: banco de reglas FIDE con nivel estimado",
+   "pr": 143
+  },
+  {
+   "hash": "17afaac",
+   "fecha": "2026-09-14T20:13:42-06:00",
+   "titulo": "Racha táctica: el récord se compara solo dentro del propio grupo",
+   "pr": 142
+  },
+  {
+   "hash": "235e925",
+   "fecha": "2026-09-14T17:40:14-06:00",
+   "titulo": "Tiempo activo en ejercicios, sumado al tiempo en clase, filtrable por grupo",
+   "pr": 141
+  },
+  {
+   "hash": "7ec70ed",
+   "fecha": "2026-09-14T16:40:50-06:00",
+   "titulo": "Sistema de torneos: inscripción, rondas automáticas y salón de la fama",
+   "pr": 140
+  },
+  {
+   "hash": "4d3ca83",
+   "fecha": "2026-09-14T16:14:05-06:00",
+   "titulo": "Estrategia en el final: tableros interactivos, con las posiciones verificadas con motor",
+   "pr": 139
+  },
+  {
+   "hash": "a0b22cc",
+   "fecha": "2026-09-14T16:02:03-06:00",
+   "titulo": "Nuevo juego: Niebla de Guerra (3 de 3)",
+   "pr": 138
+  },
+  {
+   "hash": "4ea08c8",
+   "fecha": "2026-09-14T15:46:58-06:00",
+   "titulo": "Nuevo juego: Duelo Simultáneo (2 de 3)",
+   "pr": 137
+  },
+  {
+   "hash": "9378038",
+   "fecha": "2026-09-14T15:29:09-06:00",
+   "titulo": "Curso nuevo: Estrategia en el final",
+   "pr": 136
+  },
+  {
+   "hash": "0ea4470",
+   "fecha": "2026-09-14T15:20:20-06:00",
+   "titulo": "Nuevo juego: Ajedrez de Cartas (1 de 3)",
+   "pr": 135
+  },
+  {
+   "hash": "76d8eef",
+   "fecha": "2026-09-14T14:47:34-06:00",
+   "titulo": "Que las preguntas midan: sin la pista del largo y diciendo cuántas jugadas se piden",
+   "pr": 134
+  },
+  {
+   "hash": "47afb3e",
+   "fecha": "2026-09-14T14:15:44-06:00",
+   "titulo": "Header: separar en dos franjas para descargar la fila de navegación",
+   "pr": 133
+  },
+  {
+   "hash": "d2ad804",
+   "fecha": "2026-09-14T14:11:39-06:00",
+   "titulo": "El nivel del diagnóstico se mide por escalones de dificultad, no por porcentaje",
+   "pr": 132
+  },
+  {
+   "hash": "00a0ce5",
+   "fecha": "2026-09-14T13:47:34-06:00",
+   "titulo": "El cuadernillo del diagnóstico es material docente: marca de agua y sin enlace para el alumno",
+   "pr": 131
+  },
+  {
+   "hash": "a9d7ab1",
+   "fecha": "2026-09-14T13:33:20-06:00",
+   "titulo": "Diagnóstico: que no se pierda ningún resultado y más variedad de táctica",
+   "pr": 130
+  },
+  {
+   "hash": "aef5af4",
+   "fecha": "2026-09-14T12:46:32-06:00",
+   "titulo": "Ejercicios: coordenadas en el tablero, para saber hacia dónde avanza la posición",
+   "pr": 129
+  },
+  {
+   "hash": "7415839",
+   "fecha": "2026-09-14T12:29:59-06:00",
+   "titulo": "Diagnóstico: cada pregunta acepta \"no lo sé\", para medir sin adivinanzas",
+   "pr": 128
+  },
+  {
+   "hash": "69841da",
+   "fecha": "2026-09-14T11:30:28-06:00",
+   "titulo": "El progreso de los ejercicios se guarda en la cuenta, no en el aparato",
+   "pr": 127
+  },
+  {
+   "hash": "cf732a0",
+   "fecha": "2026-09-14T11:25:07-06:00",
+   "titulo": "Diagnóstico: corregir pregunta con dos respuestas válidas y ampliar a 56 ítems",
+   "pr": 126
+  },
+  {
+   "hash": "3c40768",
+   "fecha": "2026-09-14T10:31:29-06:00",
+   "titulo": "Cursos \"Partidas modelo del ajedrez moderno\" y \"Desequilibrios de material\": 105 partidas comentadas, visor con adivinar la jugada, cuestionarios y exámenes",
+   "pr": 125
+  },
+  {
+   "hash": "e0f7a9a",
+   "fecha": "2026-09-14T08:44:19-06:00",
+   "titulo": "Informes: resumen y gráficos de los diagnósticos de cada alumno asignado",
+   "pr": 123
+  },
+  {
+   "hash": "cb3ea12",
+   "fecha": "2026-09-14T08:23:47-06:00",
+   "titulo": "Diagnóstico: versión imprimible en PDF, descargable desde la propia prueba",
+   "pr": 122
+  },
+  {
+   "hash": "e4ac37c",
+   "fecha": "2026-09-14T08:20:20-06:00",
+   "titulo": "Diagnóstico: barajar las opciones de cada pregunta",
+   "pr": 121
+  },
+  {
+   "hash": "be027b5",
+   "fecha": "2026-09-14T08:11:44-06:00",
+   "titulo": "Diagnóstico de nivel en Aprende, con informe y plan de entrenamiento para el profesor",
+   "pr": 119
+  },
+  {
+   "hash": "c4cab76",
+   "fecha": "2026-09-14T08:08:47-06:00",
+   "titulo": "4x4: reordenar Intermedio, Avanzado y Especialista por dificultad real",
+   "pr": 120
+  },
+  {
+   "hash": "f6fa937",
+   "fecha": "2026-09-14T08:05:58-06:00",
+   "titulo": "Multi-profesor: equipos/subgrupos y cada profesor con sus propios alumnos",
+   "pr": 118
+  },
+  {
+   "hash": "26da9b3",
+   "fecha": "2026-09-14T07:08:40-06:00",
+   "titulo": "Cursos: quitar el bloqueo de servidor, dejarlo solo informativo por sesión",
+   "pr": 117
+  },
+  {
+   "hash": "32826d8",
+   "fecha": "2026-09-14T06:10:40-06:00",
+   "titulo": "Cursos: temario público, contenido de las lecciones solo para Academia",
+   "pr": 116
+  },
+  {
+   "hash": "21b833b",
+   "fecha": "2026-09-14T05:59:33-06:00",
+   "titulo": "Concentración pasa a Juegos, con cinco niveles y ejercicios sin fin",
+   "pr": 115
+  },
+  {
+   "hash": "9779aab",
+   "fecha": "2026-09-14T05:55:37-06:00",
+   "titulo": "Quitar \"Cursos\" de la navegación general del sitio",
+   "pr": 114
+  },
+  {
+   "hash": "c6ec50c",
+   "fecha": "2026-09-13T23:37:04-06:00",
+   "titulo": "Ajedrez para 4 jugadores (FFA y Equipos) en Juegos",
+   "pr": 113
+  },
+  {
+   "hash": "cae10b8",
+   "fecha": "2026-09-13T23:24:51-06:00",
+   "titulo": "Aprende: nueva ficha \"Concentración\" con el juego del objeto perdido",
+   "pr": 112
+  },
+  {
+   "hash": "ef6ff9c",
+   "fecha": "2026-09-13T22:37:24-06:00",
+   "titulo": "Reordenar y unificar la estructura de todo el sitio",
+   "pr": 111
+  },
+  {
+   "hash": "4e93149",
+   "fecha": "2026-09-13T14:52:11-06:00",
+   "titulo": "Lector de planilla: usar Google Cloud Vision en vez de Tesseract.js",
+   "pr": 110
+  },
+  {
+   "hash": "1ad7c84",
+   "fecha": "2026-09-13T14:31:07-06:00",
+   "titulo": "Lector de planilla: forzar la lectura siempre, sin filtro de largo",
+   "pr": 109
+  },
+  {
+   "hash": "4f0f4ca",
+   "fecha": "2026-09-13T14:16:00-06:00",
+   "titulo": "Lector de planilla: no preguntar salvo duda real",
+   "pr": 108
+  },
+  {
+   "hash": "52068c9",
+   "fecha": "2026-09-13T13:51:23-06:00",
+   "titulo": "Lector de planilla: adjuntar una foto ya tomada, no solo la cámara",
+   "pr": 107
+  },
+  {
+   "hash": "ca1689f",
+   "fecha": "2026-09-13T13:08:09-06:00",
+   "titulo": "Lector de planilla: fotografiar/escanear la planilla y convertirla en PGN",
+   "pr": 106
+  },
+  {
+   "hash": "fd7e2b4",
+   "fecha": "2026-09-13T12:50:02-06:00",
+   "titulo": "Coordenadas, Modo Adaptado: anunciar solo el nombre de la casilla",
+   "pr": 105
+  },
+  {
+   "hash": "4cc03b1",
+   "fecha": "2026-09-13T12:46:22-06:00",
+   "titulo": "Coordenadas, Modo Adaptado: anunciar la pregunta completa",
+   "pr": 104
+  },
+  {
+   "hash": "1b57d04",
+   "fecha": "2026-09-13T12:38:23-06:00",
+   "titulo": "Temas de color de tablero: elegibles en Configuración",
+   "pr": 103
+  },
+  {
+   "hash": "501d10e",
+   "fecha": "2026-09-13T12:03:48-06:00",
+   "titulo": "Contraste alto de Windows: que no toque nada del sitio",
+   "pr": 102
+  },
+  {
+   "hash": "48f4e56",
+   "fecha": "2026-09-13T11:51:56-06:00",
+   "titulo": "4x4: Anterior/Reiniciar/Siguiente justo debajo del tablero",
+   "pr": 101
+  },
+  {
+   "hash": "45f2d56",
+   "fecha": "2026-09-13T11:43:11-06:00",
+   "titulo": "Sobre mí: actualizar títulos nacionales de 58 a 61",
+   "pr": 100
+  },
+  {
+   "hash": "1a9945a",
+   "fecha": "2026-09-13T08:30:48-06:00",
+   "titulo": "4x4: Anterior cruza de categoría + Piezas antes de las indicaciones",
+   "pr": 99
+  },
+  {
+   "hash": "6cbb326",
+   "fecha": "2026-09-13T08:12:16-06:00",
+   "titulo": "4x4: el peón captura solo hacia arriba, como si fuera blanco",
+   "pr": 98
+  },
+  {
+   "hash": "50c912f",
+   "fecha": "2026-09-12T22:47:23-06:00",
+   "titulo": "Cursos abiertos: sin inicio de sesión ni llave para ver las lecciones y descargar los recursos",
+   "pr": 97
+  },
+  {
+   "hash": "bbb3d6f",
+   "fecha": "2026-09-12T22:29:29-06:00",
+   "titulo": "Cursos: sin botón de inscripción; el contenido completo se abre con la sesión de Academia",
+   "pr": 96
+  },
+  {
+   "hash": "e413917",
+   "fecha": "2026-09-12T22:19:20-06:00",
+   "titulo": "Curso \"Los 100 finales que hay que conocer\": base de datos, 24 lecciones, práctica contra el motor y recursos",
+   "pr": 94
+  },
+  {
+   "hash": "dd57b0a",
+   "fecha": "2026-09-12T22:19:09-06:00",
+   "titulo": "Sobre Oscar: registro actualizado con el CV 2026 (58 títulos nacionales, 28 atletas, recorridos corregidos)",
+   "pr": 95
+  },
+  {
+   "hash": "cdbe4cd",
+   "fecha": "2026-09-12T11:11:05-06:00",
+   "titulo": "Entreno 4×4: encabezado \"Piezas\" para llegar directo al tablero + más contraste en modo adaptado",
+   "pr": 93
+  },
+  {
+   "hash": "f04f685",
+   "fecha": "2026-09-12T10:44:05-06:00",
+   "titulo": "Modo Adaptado: compatibilidad con el contraste alto del sistema operativo",
+   "pr": 92
+  },
+  {
+   "hash": "9cc4016",
+   "fecha": "2026-09-12T10:19:30-06:00",
+   "titulo": "Preguntar a la clase: legibilidad, turno/orientación y aviso de calificación; Juegos: el reloj espera a que ambos estén listos",
+   "pr": 91
+  },
+  {
+   "hash": "be5f2fb",
+   "fecha": "2026-09-12T09:34:23-06:00",
+   "titulo": "Informes: filtrar por alumno y por tema/actividad + Racha táctica vuelve a Academia",
+   "pr": 90
+  },
+  {
+   "hash": "e51f6f0",
+   "fecha": "2026-09-12T13:32:55+00:00",
+   "titulo": "Ejercicios por tema: 100 por tema desde la base de Supabase, sin enlaces a Lichess, con línea de progreso",
+   "pr": null
+  },
+  {
+   "hash": "1cae47e",
+   "fecha": "2026-09-12T13:32:55+00:00",
+   "titulo": "Entreno/Desafíos: los 90 desafíos pedagógicos con base de datos propia",
+   "pr": null
+  },
+  {
+   "hash": "52e4a62",
+   "fecha": "2026-09-12T06:32:30-06:00",
+   "titulo": "Sesión: el motor de Analizar reintenta solo + cascada de Táctica por tema",
+   "pr": 89
+  },
+  {
+   "hash": "83597d8",
+   "fecha": "2026-09-12T05:57:56-06:00",
+   "titulo": "Nueva página 'Sobre Oscar': trayectoria y logros del entrenador",
+   "pr": 88
+  },
+  {
+   "hash": "3a7e3a0",
+   "fecha": "2026-09-12T03:06:08-06:00",
+   "titulo": "Auditoría del sitio: corregir enlaces de descarga rotos y recuperar 'Caja de Compartir'",
+   "pr": 87
+  },
+  {
+   "hash": "9d6d7f4",
+   "fecha": "2026-09-12T01:06:40-06:00",
+   "titulo": "Renombrar 'Demuestra tu nivel' a '¡Te reto!'",
+   "pr": 86
+  },
+  {
+   "hash": "cf33320",
+   "fecha": "2026-09-12T07:01:29+00:00",
+   "titulo": "Entreno: ficha \"Ejercicios por tema\" con los temas de Lichess y base de respaldo propia",
+   "pr": null
+  },
+  {
+   "hash": "fdfb0b7",
+   "fecha": "2026-09-12T00:59:10-06:00",
+   "titulo": "Nueva página pública: 'Demuestra tu nivel' — Racha táctica sin cuenta, con ranking",
+   "pr": 85
+  },
+  {
+   "hash": "17cf496",
+   "fecha": "2026-09-12T00:45:34-06:00",
+   "titulo": "Racha táctica: 10 segundos por jugada y muchos más ejercicios",
+   "pr": 84
+  },
+  {
+   "hash": "6a99df8",
+   "fecha": "2026-09-12T00:32:32-06:00",
+   "titulo": "Juegos: 'Racha táctica' — ejercicios aleatorios en 3 segundos, con logro público",
+   "pr": 83
+  },
+  {
+   "hash": "80a033f",
+   "fecha": "2026-09-12T00:11:30-06:00",
+   "titulo": "Preguntar a la clase: distinguir 'calculando' de 'el motor falló'",
+   "pr": 82
+  },
+  {
+   "hash": "ad0e8ff",
+   "fecha": "2026-09-12T00:01:03-06:00",
+   "titulo": "Preguntar a la clase: agregar reintentar cuando el motor no responde",
+   "pr": 81
+  },
+  {
+   "hash": "e32727f",
+   "fecha": "2026-09-11T23:53:16-06:00",
+   "titulo": "Juegos: asignar tiempo (reloj) a los jugadores de una partida",
+   "pr": 80
+  },
+  {
+   "hash": "0703c59",
+   "fecha": "2026-09-12T05:19:51+00:00",
+   "titulo": "Quita un .pyc que había quedado versionado por accidente",
+   "pr": null
+  },
+  {
+   "hash": "e9da872",
+   "fecha": "2026-09-12T05:19:51+00:00",
+   "titulo": "Entreno 4x4: dos niveles nuevos, Maestro y Gran Maestro (100 ejercicios cada uno)",
+   "pr": null
+  },
+  {
+   "hash": "fdbe976",
+   "fecha": "2026-09-11T23:12:06-06:00",
+   "titulo": "Chat privado: la lista de alumnos solo muestra a los conectados a la clase",
+   "pr": 79
+  },
+  {
+   "hash": "ceb2fd2",
+   "fecha": "2026-09-11T23:06:07-06:00",
+   "titulo": "Motor: recuperarse solo cuando una posición editada lo hace fallar",
+   "pr": 78
+  },
+  {
+   "hash": "43b69d8",
+   "fecha": "2026-09-11T22:46:40-06:00",
+   "titulo": "Modo Speech: elegir con cuál voz instalada leer, en Configuración",
+   "pr": 77
+  },
+  {
+   "hash": "ec65dad",
+   "fecha": "2026-09-11T22:38:28-06:00",
+   "titulo": "Entreno/4x4: decir la posición completa junto con la cantidad de piezas + tecla Z",
+   "pr": 76
+  },
+  {
+   "hash": "d788b56",
+   "fecha": "2026-09-11T22:29:26-06:00",
+   "titulo": "Entreno/4x4: aceptar la jugada en notación algebraica, no solo origen-destino",
+   "pr": 75
+  },
+  {
+   "hash": "6b82d13",
+   "fecha": "2026-09-11T22:05:22-06:00",
+   "titulo": "Inicio: las tarjetas de \"Artículos recientes\" ahora se pueden abrir",
+   "pr": 74
+  },
+  {
+   "hash": "8a23877",
+   "fecha": "2026-09-11T21:41:19-06:00",
+   "titulo": "Todos los tableros: mover piezas también arrastrando, no solo clic-clic",
+   "pr": 73
+  },
+  {
+   "hash": "6b08d9d",
+   "fecha": "2026-09-11T21:18:00-06:00",
+   "titulo": "Entreno/Mates: agregar el panel para escribir la jugada en Modo Adaptado",
+   "pr": 72
+  },
+  {
+   "hash": "d81f8a7",
+   "fecha": "2026-09-11T21:02:42-06:00",
+   "titulo": "Navegación principal identificada como región para lectores de pantalla",
+   "pr": 71
+  },
+  {
+   "hash": "bef5e37",
+   "fecha": "2026-09-11T20:48:56-06:00",
+   "titulo": "Modo adaptado: la ayuda usa encabezados por nivel, no un bloque corrido",
+   "pr": 70
+  },
+  {
+   "hash": "185831e",
+   "fecha": "2026-09-11T20:36:42-06:00",
+   "titulo": "Modo adaptado: foco en \"Siguiente\" al terminar + instrucciones sin repetirse",
+   "pr": 69
+  },
+  {
+   "hash": "b8770b2",
+   "fecha": "2026-09-11T20:16:43-06:00",
+   "titulo": "Modo adaptado: casillas de alto contraste (blanco/magenta) en los tableros visibles",
+   "pr": 68
+  },
+  {
+   "hash": "7142cb8",
+   "fecha": "2026-09-11T19:46:36-06:00",
+   "titulo": "Recuadro de comandos: no perder el foco al jugar + Modo Speech",
+   "pr": 67
+  },
+  {
+   "hash": "b58a10d",
+   "fecha": "2026-09-12T01:04:56+00:00",
+   "titulo": "Entreno 4x4: 247 ejercicios nuevos, cada categoría llega a 200 (800 en total)",
+   "pr": null
+  },
+  {
+   "hash": "b1b6c52",
+   "fecha": "2026-09-11T18:29:34-06:00",
+   "titulo": "Motor de Clases: valida posiciones editadas + un solo Worker compartido",
+   "pr": 66
+  },
+  {
+   "hash": "866cc27",
+   "fecha": "2026-09-11T18:03:59-06:00",
+   "titulo": "Marca de agua del logo de Oscar Angulo Cubero en el PDF de instrucciones",
+   "pr": 65
+  },
+  {
+   "hash": "aee0381",
+   "fecha": "2026-09-11T17:24:33-06:00",
+   "titulo": "PDF de instrucciones adaptadas + envío junto al correo de inscripción",
+   "pr": 64
+  },
+  {
+   "hash": "d6d2cfa",
+   "fecha": "2026-09-11T16:57:58-06:00",
+   "titulo": "Encabezados en todo lo adaptado: navegación más fácil por lector de pantalla",
+   "pr": 63
+  },
+  {
+   "hash": "c356206",
+   "fecha": "2026-09-11T15:42:02-06:00",
+   "titulo": "Modo Adaptado en todo el sitio: interruptor visual/adaptado + detección automática",
+   "pr": 62
+  },
+  {
+   "hash": "79b4dc2",
+   "fecha": "2026-09-11T15:23:26-06:00",
+   "titulo": "Botones de inscripción a WhatsApp, Torneos del panel a TV, ícono de Ciegos",
+   "pr": 61
+  },
+  {
+   "hash": "6f9eb8c",
+   "fecha": "2026-09-11T15:12:11-06:00",
+   "titulo": "Entreno: nueva tarjeta \"Táctica\" con 148 posiciones por tema",
+   "pr": 60
+  },
+  {
+   "hash": "c51e644",
+   "fecha": "2026-09-11T14:59:13-06:00",
+   "titulo": "Entreno: nueva tarjeta \"Mates\" con 2455 posiciones (mate en 1/2/3)",
+   "pr": 59
+  },
+  {
+   "hash": "422e183",
+   "fecha": "2026-09-11T19:30:37+00:00",
+   "titulo": "Entreno 4x4: corrige facil-012, quita 6 repetidos, reubica 16 y reordena con dificultad mixta",
+   "pr": null
+  },
+  {
+   "hash": "2f4eb98",
+   "fecha": "2026-09-11T13:29:38-06:00",
+   "titulo": "Mejoras de celular/tablet: flechas por touch + animación 3D más liviana",
+   "pr": 58
+  },
+  {
+   "hash": "69995ad",
+   "fecha": "2026-09-11T19:08:40+00:00",
+   "titulo": "Entreno 4x4: corrige especialista-086 (Rey, no Alfil) confirmado con la app",
+   "pr": null
+  },
+  {
+   "hash": "04f81cd",
+   "fecha": "2026-09-11T13:03:43-06:00",
+   "titulo": "Agregar módulo de Juegos con Crazyhouse (nueva tarjeta en el panel)",
+   "pr": 57
+  },
+  {
+   "hash": "b13c573",
+   "fecha": "2026-09-11T18:53:21+00:00",
+   "titulo": "Entreno 4x4: corrige 5 piezas ambiguas de Avanzado confirmadas con la app",
+   "pr": null
+  },
+  {
+   "hash": "53d93d6",
+   "fecha": "2026-09-11T12:38:45-06:00",
+   "titulo": "Artículos: corrige h1 negra en los diagramas de ejemplo + marketing de",
+   "pr": 56
+  },
+  {
+   "hash": "0b7aefe",
+   "fecha": "2026-09-11T18:38:29+00:00",
+   "titulo": "Entreno 4x4: Intermedio, Avanzado y Especialista jugables (426 ejercicios)",
+   "pr": null
+  },
+  {
+   "hash": "e8f9f33",
+   "fecha": "2026-09-11T12:33:22-06:00",
+   "titulo": "Nuevo artículo: La oposición en finales de ajedrez",
+   "pr": 55
+  },
+  {
+   "hash": "8a34b7f",
+   "fecha": "2026-09-11T12:23:50-06:00",
+   "titulo": "Sesión en vivo: tableros de práctica bajo el tablero, partidas guardadas como",
+   "pr": 54
+  },
+  {
+   "hash": "f3f2c48",
+   "fecha": "2026-09-11T10:01:50-06:00",
+   "titulo": "Sesión en vivo: arregla el chat (bug real), motor más robusto, editor flotante,",
+   "pr": 53
+  },
+  {
+   "hash": "aec205d",
+   "fecha": "2026-09-11T09:25:31-06:00",
+   "titulo": "Configuración: vista previa de temas de tablero + piezas Pokémon más temáticas",
+   "pr": 52
+  },
+  {
+   "hash": "00325ac",
+   "fecha": "2026-09-11T09:13:01-06:00",
+   "titulo": "Sesión en vivo: chat en burbujas, editor arriba, motor siempre visible, tableros de práctica más chicos; artículos: piezas bien proporcionadas; Configuración: temas de tablero",
+   "pr": 51
+  },
+  {
+   "hash": "2f117db",
+   "fecha": "2026-09-11T08:45:05-06:00",
+   "titulo": "Entreno 4x4: corregir facil-012 (Dama+Torre, no Rey+Peón+Dama+Torre) y recalibrar dificultad",
+   "pr": 50
+  },
+  {
+   "hash": "63152ba",
+   "fecha": "2026-09-11T08:24:17-06:00",
+   "titulo": "Sesión en vivo: levantar la mano, chat privado con el profesor y editor visual del tablero",
+   "pr": 49
+  },
+  {
+   "hash": "c3e104a",
+   "fecha": "2026-09-11T07:53:37-06:00",
+   "titulo": "Sesión en vivo: reorganizar la barra lateral del profesor en pestañas",
+   "pr": 48
+  },
+  {
+   "hash": "5d928d1",
+   "fecha": "2026-09-11T07:30:06-06:00",
+   "titulo": "Reemplazar foto del avatar por una foto real de Oscar",
+   "pr": 47
+  },
+  {
+   "hash": "3ec37a3",
+   "fecha": "2026-09-11T07:26:58-06:00",
+   "titulo": "Entreno 4x4: script reusable para reordenar por dificultad",
+   "pr": 46
+  },
+  {
+   "hash": "f80f73a",
+   "fecha": "2026-09-11T07:23:13-06:00",
+   "titulo": "Entreno 4x4: reordenar los 133 ejercicios de Fácil por dificultad real",
+   "pr": 45
+  },
+  {
+   "hash": "57ab4e0",
+   "fecha": "2026-09-11T02:00:20-06:00",
+   "titulo": "Entrenamiento: nueva sección Desafíos (interceptar, coronar, capturar)",
+   "pr": 44
+  },
+  {
+   "hash": "e228a75",
+   "fecha": "2026-09-11T00:04:26-06:00",
+   "titulo": "Entrenamiento: nueva sección Practicar (series de mates y tácticas)",
+   "pr": 43
+  },
+  {
+   "hash": "88d921e",
+   "fecha": "2026-09-10T23:32:34-06:00",
+   "titulo": "Rediseño de marketing del inicio: propuesta de valor, cómo funciona, FAQ",
+   "pr": 42
+  },
+  {
+   "hash": "c95a30e",
+   "fecha": "2026-09-10T23:18:03-06:00",
+   "titulo": "Temario público, sin contraseña en Entrenamiento, quitar Cursos recientes del inicio",
+   "pr": 41
+  },
+  {
+   "hash": "598d034",
+   "fecha": "2026-09-10T23:04:12-06:00",
+   "titulo": "Academia: botón de Cursos en el lugar de Robot Ciego, quitar Cursos del inicio",
+   "pr": 40
+  },
+  {
+   "hash": "ce8ce08",
+   "fecha": "2026-09-10T22:28:17-06:00",
+   "titulo": "9 ajustes: ejemplos de artículos, edición de tablero, informe y academia",
+   "pr": 39
+  },
+  {
+   "hash": "3530400",
+   "fecha": "2026-09-10T20:32:50-06:00",
+   "titulo": "4x4 Fácil #12: agregar rey y peón que faltaban en los datos del ejercicio",
+   "pr": 38
+  },
+  {
+   "hash": "76b372f",
+   "fecha": "2026-09-10T20:23:39-06:00",
+   "titulo": "Aprender: fix Enter en modo adaptado + notación de columnas en toda Entrenamiento",
+   "pr": 37
+  },
+  {
+   "hash": "81e0263",
+   "fecha": "2026-09-10T19:36:22-06:00",
+   "titulo": "Entrenamiento: adaptar todo al diseño general de Clases",
+   "pr": 36
+  },
+  {
+   "hash": "6d068ca",
+   "fecha": "2026-09-10T19:17:50-06:00",
+   "titulo": "Ciegos: explicar el panel de jugadas + Coordenadas ahora pregunta el color",
+   "pr": 35
+  },
+  {
+   "hash": "72e3dd4",
+   "fecha": "2026-09-10T19:04:28-06:00",
+   "titulo": "Entrenamiento: sesión obligatoria + sección Ciegos adaptada para lector de pantalla",
+   "pr": 34
+  },
+  {
+   "hash": "8bf73e5",
+   "fecha": "2026-09-10T18:40:31-06:00",
+   "titulo": "Coordenadas: modos 3s/10s por casilla + registro de avances de Entrenamiento",
+   "pr": 33
+  },
+  {
+   "hash": "070a3e3",
+   "fecha": "2026-09-10T18:27:31-06:00",
+   "titulo": "Entrenamiento: nuevo juego de Coordenadas (como lichess.org/training/coordinate)",
+   "pr": 32
+  },
+  {
+   "hash": "0ec4e88",
+   "fecha": "2026-09-10T18:22:06-06:00",
+   "titulo": "Entreno: hub de entrada con botones 4x4 y Aprender + renombrar a Entrenamiento",
+   "pr": 31
+  },
+  {
+   "hash": "2f8b9fa",
+   "fecha": "2026-09-10T18:08:34-06:00",
+   "titulo": "Entreno: nueva sección 'Aprende' interactiva (como lichess.org/learn)",
+   "pr": 30
+  },
+  {
+   "hash": "646755c",
+   "fecha": "2026-09-10T17:52:06-06:00",
+   "titulo": "Panel de Administración: control de usuarios, roles y accesos",
+   "pr": 29
+  },
+  {
+   "hash": "c5d9476",
+   "fecha": "2026-09-10T17:31:11-06:00",
+   "titulo": "TV: tablero propio para las partidas en vivo (deja de depender del iframe)",
+   "pr": 28
+  },
+  {
+   "hash": "2a1050c",
+   "fecha": "2026-09-10T15:04:26-06:00",
+   "titulo": "TV: tablero solo (sin espacio extra), deja de congelarse, y detecta streamers",
+   "pr": 27
+  },
+  {
+   "hash": "fdcad35",
+   "fecha": "2026-09-10T14:49:24-06:00",
+   "titulo": "TV: tableros en vivo a 16:9 y arreglo de tableros congelados",
+   "pr": 26
+  },
+  {
+   "hash": "09c3d83",
+   "fecha": "2026-09-10T14:36:00-06:00",
+   "titulo": "TV: partidas en vivo del torneo (1-10 tableros) + arregla el recuadro negro de Lichess TV",
+   "pr": 25
+  },
+  {
+   "hash": "c7d8023",
+   "fecha": "2026-09-10T12:55:12-06:00",
+   "titulo": "Seguridad: las respuestas del Worker (login de cursos, 403) ahora llevan las",
+   "pr": 24
+  },
+  {
+   "hash": "582d972",
+   "fecha": "2026-09-10T11:19:42-06:00",
+   "titulo": "TV: video de comentaristas + rediseño tipo transmisión en vivo",
+   "pr": 23
+  },
+  {
+   "hash": "a6fcfcd",
+   "fecha": "2026-09-10T10:51:36-06:00",
+   "titulo": "Nueva página TV: torneos por equipos de Lichess en vivo",
+   "pr": 22
+  },
+  {
+   "hash": "0398fa7",
+   "fecha": "2026-09-10T10:35:06-06:00",
+   "titulo": "Clases: tablero de \"¿qué jugarías?\" más grande, tableros del profesor proporcionales",
+   "pr": 21
+  },
+  {
+   "hash": "ce5dd38",
+   "fecha": "2026-09-10T10:09:13-06:00",
+   "titulo": "Practicar contra el motor: agrandar el tablero del alumno",
+   "pr": 20
+  },
+  {
+   "hash": "a68ec73",
+   "fecha": "2026-09-10T10:04:41-06:00",
+   "titulo": "Fix: piezas de la grilla del profesor aún grandes + posición vieja al asignar otra práctica",
+   "pr": 19
+  },
+  {
+   "hash": "380ea09",
+   "fecha": "2026-09-10T09:43:05-06:00",
+   "titulo": "Fix: tablero del alumno vacío en Practicar + piezas gigantes en la grilla del profesor",
+   "pr": 18
+  },
+  {
+   "hash": "89db5b7",
+   "fecha": "2026-09-10T09:42:16-06:00",
+   "titulo": "Fix: la pantalla de bloqueo de cursos se mostraba como error del navegador",
+   "pr": 17
+  },
+  {
+   "hash": "87d26b9",
+   "fecha": "2026-09-10T07:44:05-06:00",
+   "titulo": "Fix: el bloqueo de cursos no se aplicaba en producción (faltaba run_worker_first)",
+   "pr": null
+  },
+  {
+   "hash": "f204108",
+   "fecha": "2026-09-10T07:07:49-06:00",
+   "titulo": "Practicar contra el motor: el profesor lanza una ronda, los alumnos juegan Stockfish",
+   "pr": null
+  },
+  {
+   "hash": "e54c3b6",
+   "fecha": "2026-09-10T06:30:20-06:00",
+   "titulo": "Bloquear la página completa del curso (temario incluido) sin contraseña",
+   "pr": null
+  },
+  {
+   "hash": "29a29bf",
+   "fecha": "2026-09-10T04:03:56-06:00",
+   "titulo": "Agregar video, presentación y PDF de ejercicios a cada lección (protegidos de verdad)",
+   "pr": null
+  },
+  {
+   "hash": "2c6be9a",
+   "fecha": "2026-09-10T00:09:50-06:00",
+   "titulo": "Cursos: contenido completo de las 90 lecciones, con botón \"Llevar curso\"",
+   "pr": 12
+  },
+  {
+   "hash": "8b65e60",
+   "fecha": "2026-09-09T23:56:36-06:00",
+   "titulo": "Cursos: temario desglosado por curso, enlazado desde el catálogo",
+   "pr": 11
+  },
+  {
+   "hash": "4d64d20",
+   "fecha": "2026-09-09T23:40:47-06:00",
+   "titulo": "Accesibilidad: sección de Artículos utilizable con lector de pantalla",
+   "pr": 10
+  },
+  {
+   "hash": "22150b9",
+   "fecha": "2026-09-09T23:19:01-06:00",
+   "titulo": "Tablero: colores, girar/coordenadas, ocultar piezas, edición libre; asistencia real",
+   "pr": 9
+  },
+  {
+   "hash": "f4c0a44",
+   "fecha": "2026-09-09T22:44:49-06:00",
+   "titulo": "Panel: cierre de clase redirige al alumno, asistencia, borrar clase y fuentes",
+   "pr": 8
+  },
+  {
+   "hash": "1d21453",
+   "fecha": "2026-09-09T22:25:26-06:00",
+   "titulo": "Panel de Clases: hub, registro de clases y artículos con contenido",
+   "pr": 7
+  },
+  {
+   "hash": "a8978a3",
+   "fecha": "2026-09-09T21:34:14-06:00",
+   "titulo": "Seguridad: cabeceras HTTP (CSP y afines) para todo el sitio",
+   "pr": 6
+  },
+  {
+   "hash": "b16e4a0",
+   "fecha": "2026-09-09T20:45:45-06:00",
+   "titulo": "Clases: pregunta como overlay, feedback privado, árbol de variantes/sub-variantes",
+   "pr": 5
+  },
+  {
+   "hash": "c1abf9a",
+   "fecha": "2026-09-09T20:26:23-06:00",
+   "titulo": "Seguridad crítica + historial navegable/variantes + preguntar a la clase",
+   "pr": 4
+  },
+  {
+   "hash": "1f41b06",
+   "fecha": "2026-09-09T20:05:07-06:00",
+   "titulo": "Clases: deshacer, partidas guardadas, invitación por correo, motor con variantes",
+   "pr": 3
+  },
+  {
+   "hash": "41cfe9d",
+   "fecha": "2026-09-09T19:37:27-06:00",
+   "titulo": "Clases: flechas, motor de análisis, ceder control y ver alumnos conectados",
+   "pr": 2
+  },
+  {
+   "hash": "d645db5",
+   "fecha": "2026-09-09T18:44:47-06:00",
+   "titulo": "Agregar página Clases con tablero interactivo en vivo y login",
+   "pr": 1
+  },
+  {
+   "hash": "0c0d9e9",
+   "fecha": "2026-09-09T22:10:16+00:00",
+   "titulo": "Entreno: corrige que la grilla de la categoría anterior seguía visible",
+   "pr": null
+  },
+  {
+   "hash": "01abb27",
+   "fecha": "2026-09-09T21:20:08+00:00",
+   "titulo": "Entreno: mejoras de accesibilidad y pulido de interacción",
+   "pr": null
+  },
+  {
+   "hash": "8f246fd",
+   "fecha": "2026-09-09T17:09:24+00:00",
+   "titulo": "Corrige 8 ejercicios de Solo Chess (Facil) con piezas mal transcritas",
+   "pr": null
+  },
+  {
+   "hash": "af6fe21",
+   "fecha": "2026-09-09T16:33:08+00:00",
+   "titulo": "Corregir facil-001: faltaba un alfil y la Dama estaba mal transcrita",
+   "pr": null
+  },
+  {
+   "hash": "7a98a8f",
+   "fecha": "2026-09-09T16:11:37+00:00",
+   "titulo": "Entreno: mismas condiciones de accesibilidad que la página Tablero",
+   "pr": null
+  },
+  {
+   "hash": "09c88a5",
+   "fecha": "2026-09-09T15:52:50+00:00",
+   "titulo": "Solo Chess: vista de 1 ejercicio a la vez, corrección de datos y accesibilidad para ciegos",
+   "pr": null
+  },
+  {
+   "hash": "7d1083b",
+   "fecha": "2026-09-09T12:06:34+00:00",
+   "titulo": "Convertir los 133 ejercicios Fácil de Entreno en tableros 4x4 jugables",
+   "pr": null
+  },
+  {
+   "hash": "eb13102",
+   "fecha": "2026-09-09T10:42:40+00:00",
+   "titulo": "Crear página nueva \"Entreno\" con ejercicios de ajedrez en solitario",
+   "pr": null
+  },
+  {
+   "hash": "91eef5a",
+   "fecha": "2026-09-09T05:36:24+00:00",
+   "titulo": "Sumar las nuevas partidas de chess.com al libro de aperturas",
+   "pr": null
+  },
+  {
+   "hash": "60d6712",
+   "fecha": "2026-09-09T05:02:37+00:00",
+   "titulo": "Blindar 'Analizar mis jugadas' para que nunca quede bloqueado si el análisis falla",
+   "pr": null
+  },
+  {
+   "hash": "760c4cb",
+   "fecha": "2026-09-09T04:45:15+00:00",
+   "titulo": "Encabezado en el tablero, dificultad Difícil por defecto, análisis accesible y envío directo por correo",
+   "pr": null
+  },
+  {
+   "hash": "6332d44",
+   "fecha": "2026-09-09T04:24:38+00:00",
+   "titulo": "Modo adaptado: reordenar el interruptor, quitar reiniciar, encabezados y nuevo dictado de posición",
+   "pr": null
+  },
+  {
+   "hash": "6d9e793",
+   "fecha": "2026-09-09T03:50:38+00:00",
+   "titulo": "Agregar modo adaptado (lector de pantalla) con más comandos y navegación por teclado, quitar el contador visible de partidas",
+   "pr": null
+  },
+  {
+   "hash": "7450736",
+   "fecha": "2026-09-09T03:00:11+00:00",
+   "titulo": "Agregar comandos de voz L (repetir última jugada) y T (leer posición) en el recuadro de jugadas",
+   "pr": null
+  },
+  {
+   "hash": "037f884",
+   "fecha": "2026-09-09T02:24:19+00:00",
+   "titulo": "Mejora accesibilidad del tablero: repetir jugadas y recuadro para escribir la jugada",
+   "pr": null
+  },
+  {
+   "hash": "f798b5a",
+   "fecha": "2026-09-09T01:54:00+00:00",
+   "titulo": "Agrega captura de leads por correo, rendirse, Modo Desafio, logros y modal de fin de partida",
+   "pr": null
+  },
+  {
+   "hash": "e64fdc5",
+   "fecha": "2026-09-09T00:47:55+00:00",
+   "titulo": "Cambiar el marcador Ganadas/Tablas/Perdidas al punto de vista de Oscar",
+   "pr": null
+  },
+  {
+   "hash": "018367c",
+   "fecha": "2026-09-09T00:43:37+00:00",
+   "titulo": "Mostrar sólo la última jugada de origen (no el historial completo)",
+   "pr": null
+  },
+  {
+   "hash": "75fce9e",
+   "fecha": "2026-09-09T00:40:38+00:00",
+   "titulo": "Quitar la modalidad (bullet/blitz) del texto de origen de las jugadas",
+   "pr": null
+  },
+  {
+   "hash": "37f149b",
+   "fecha": "2026-09-09T00:27:09+00:00",
+   "titulo": "Agregar valor pedagógico: evaluación en vivo, análisis de partida, origen real de las jugadas — y corregir un fallo silencioso del libro de aperturas",
+   "pr": null
+  },
+  {
+   "hash": "bf39881",
+   "fecha": "2026-09-09T00:03:17+00:00",
+   "titulo": "Corregir bot debil (motor alojado en el propio sitio) y piezas blancas invisibles en modo claro",
+   "pr": null
+  },
+  {
+   "hash": "4c137d8",
+   "fecha": "2026-09-08T21:34:11+00:00",
+   "titulo": "Quitar los elo visibles, nuevo texto del tablero, modo oscuro/claro en todo el sitio y tablero accesible con lector de pantalla",
+   "pr": null
+  },
+  {
+   "hash": "91d0e5a",
+   "fecha": "2026-09-08T20:59:26+00:00",
+   "titulo": "Tablero jugable desde el inicio, mejor copy y foto más llamativa",
+   "pr": null
+  },
+  {
+   "hash": "27e4a84",
+   "fecha": "2026-09-08T20:48:03+00:00",
+   "titulo": "Contador de partidas, foto de Oscar y \"jugar contra mí\" en el inicio",
+   "pr": null
+  },
+  {
+   "hash": "ffbd37e",
+   "fecha": "2026-09-08T20:25:28+00:00",
+   "titulo": "Casillas parejas, elegir color y libro más fiel a tus jugadas frecuentes",
+   "pr": null
+  },
+  {
+   "hash": "909997a",
+   "fecha": "2026-09-08T19:12:05+00:00",
+   "titulo": "Bot de ajedrez con las partidas reales de Oscar (libro + Stockfish)",
+   "pr": null
+  },
+  {
+   "hash": "69bb7bc",
+   "fecha": "2026-09-08T12:37:56-06:00",
+   "titulo": "Update tablero.html",
+   "pr": null
+  },
+  {
+   "hash": "4874381",
+   "fecha": "2026-09-08T07:53:28-06:00",
+   "titulo": "Update inscripcion.html",
+   "pr": null
+  },
+  {
+   "hash": "e19ddde",
+   "fecha": "2026-09-08T07:47:50-06:00",
+   "titulo": "Integrate Cloudflare Turnstile and update form fields",
+   "pr": null
+  },
+  {
+   "hash": "e4ae060",
+   "fecha": "2026-09-07T23:17:23-06:00",
+   "titulo": "Update error message for duplicate registration",
+   "pr": null
+  },
+  {
+   "hash": "2a7a49e",
+   "fecha": "2026-09-07T22:48:34-06:00",
+   "titulo": "Update inscripcion.html",
+   "pr": null
+  },
+  {
+   "hash": "9cf95ee",
+   "fecha": "2026-09-07T22:17:16-06:00",
+   "titulo": "Update inscripcion.html with new form structure",
+   "pr": null
+  },
+  {
+   "hash": "6a1951b",
+   "fecha": "2026-09-07T21:44:22-06:00",
+   "titulo": "Enhance success message and email validation feedback",
+   "pr": null
+  },
+  {
+   "hash": "b59aa5a",
+   "fecha": "2026-09-07T21:28:18-06:00",
+   "titulo": "Update greeting from 'Hello' to 'Goodbye'",
+   "pr": null
+  },
+  {
+   "hash": "ac75972",
+   "fecha": "2026-09-06T23:57:15-06:00",
+   "titulo": "Update inscripcion.html",
+   "pr": null
+  },
+  {
+   "hash": "6de570c",
+   "fecha": "2026-09-06T23:49:09-06:00",
+   "titulo": "Enhance form with dynamic institution selection",
+   "pr": null
+  },
+  {
+   "hash": "316e8b4",
+   "fecha": "2026-09-06T23:42:49-06:00",
+   "titulo": "Revise comments and header icon in inscripcion.html",
+   "pr": null
+  },
+  {
+   "hash": "d8cc74f",
+   "fecha": "2026-09-06T23:40:23-06:00",
+   "titulo": "Update greeting from 'Hello' to 'Goodbye'",
+   "pr": null
+  },
+  {
+   "hash": "d31ace4",
+   "fecha": "2026-09-06T23:34:46-06:00",
+   "titulo": "Update inscripcion.html",
+   "pr": null
+  },
+  {
+   "hash": "46a5f63",
+   "fecha": "2026-09-06T23:25:20-06:00",
+   "titulo": "Update input names and remove contact section",
+   "pr": null
+  },
+  {
+   "hash": "f16dcfb",
+   "fecha": "2026-09-06T23:16:21-06:00",
+   "titulo": "Refactor styles and improve accessibility in inscripcion.html",
+   "pr": null
+  },
+  {
+   "hash": "50ae06a",
+   "fecha": "2026-09-06T23:14:52-06:00",
+   "titulo": "Update email validation messages for players and guardians",
+   "pr": null
+  },
+  {
+   "hash": "b1a4718",
+   "fecha": "2026-09-06T23:11:00-06:00",
+   "titulo": "Refactor form fields for player registration",
+   "pr": null
+  },
+  {
+   "hash": "90f515d",
+   "fecha": "2026-09-06T23:01:52-06:00",
+   "titulo": "Rename input fields for better clarity",
+   "pr": null
+  },
+  {
+   "hash": "4d4861b",
+   "fecha": "2026-09-06T22:55:54-06:00",
+   "titulo": "Update inscripcion.html",
+   "pr": null
+  },
+  {
+   "hash": "749a00e",
+   "fecha": "2026-09-06T22:53:37-06:00",
+   "titulo": "Refactor styling and colors in inscripcion.html",
+   "pr": null
+  },
+  {
+   "hash": "07f75c4",
+   "fecha": "2026-09-06T22:40:26-06:00",
+   "titulo": "Rename input fields for first and second last names",
+   "pr": null
+  },
+  {
+   "hash": "969349c",
+   "fecha": "2026-09-06T22:36:15-06:00",
+   "titulo": "Rename 'segundoApellido' to 'apellido2' in form",
+   "pr": null
+  },
+  {
+   "hash": "b4bffcf",
+   "fecha": "2026-09-06T22:34:06-06:00",
+   "titulo": "Rename input fields for first surname in HTML",
+   "pr": null
+  },
+  {
+   "hash": "15287d2",
+   "fecha": "2026-09-06T22:24:11-06:00",
+   "titulo": "Revise event title and update layout",
+   "pr": null
+  },
+  {
+   "hash": "c426e85",
+   "fecha": "2026-09-06T22:22:17-06:00",
+   "titulo": "Update inscripcion.html",
+   "pr": null
+  },
+  {
+   "hash": "a662791",
+   "fecha": "2026-09-06T22:20:29-06:00",
+   "titulo": "Update title and form structure in inscripcion.html",
+   "pr": null
+  },
+  {
+   "hash": "103ea57",
+   "fecha": "2026-09-06T22:17:31-06:00",
+   "titulo": "Update inscripcion.html",
+   "pr": null
+  },
+  {
+   "hash": "c3a7021",
+   "fecha": "2026-09-06T22:14:06-06:00",
+   "titulo": "Update title and styles in inscripcion.html",
+   "pr": null
+  },
+  {
+   "hash": "465b27f",
+   "fecha": "2026-09-06T22:10:37-06:00",
+   "titulo": "Update tournament details and enhance form structure",
+   "pr": null
+  },
+  {
+   "hash": "1eef13c",
+   "fecha": "2026-09-06T22:07:36-06:00",
+   "titulo": "Change greeting from 'Hello World' to 'Goodbye World'",
+   "pr": null
+  },
+  {
+   "hash": "4eb353d",
+   "fecha": "2026-09-06T21:53:13-06:00",
+   "titulo": "Update print statement from 'Hello' to 'Goodbye'",
+   "pr": null
+  },
+  {
+   "hash": "64ffeae",
+   "fecha": "2026-09-06T21:52:05-06:00",
+   "titulo": "Update fmt.Println message from 'Hello' to 'Goodbye'",
+   "pr": null
+  },
+  {
+   "hash": "32af5c3",
+   "fecha": "2026-09-06T21:51:10-06:00",
+   "titulo": "Update text and alert messages in inscripcion.html",
+   "pr": null
+  },
+  {
+   "hash": "42a0368",
+   "fecha": "2026-09-06T21:48:25-06:00",
+   "titulo": "Update title and form labels in inscripcion.html",
+   "pr": null
+  },
+  {
+   "hash": "ce5a43e",
+   "fecha": "2026-09-06T21:46:19-06:00",
+   "titulo": "Clarify data source for auto-completion in form",
+   "pr": null
+  },
+  {
+   "hash": "2cd487e",
+   "fecha": "2026-09-06T21:43:19-06:00",
+   "titulo": "Update text and labels in inscripcion.html",
+   "pr": null
+  },
+  {
+   "hash": "ddfce82",
+   "fecha": "2026-09-06T21:40:57-06:00",
+   "titulo": "Refactor inscripcion.html for clarity and updates",
+   "pr": null
+  },
+  {
+   "hash": "a78cbb5",
+   "fecha": "2026-09-06T21:36:55-06:00",
+   "titulo": "Refactor inscription form and improve styles",
+   "pr": null
+  },
+  {
+   "hash": "2b76436",
+   "fecha": "2026-09-06T21:32:24-06:00",
+   "titulo": "Revise inscription form instructions and styles",
+   "pr": null
+  },
+  {
+   "hash": "aaee833",
+   "fecha": "2026-09-06T21:30:35-06:00",
+   "titulo": "Update inscripcion.html",
+   "pr": null
+  },
+  {
+   "hash": "23cbc2d",
+   "fecha": "2026-09-06T21:28:35-06:00",
+   "titulo": "Modify inscription form for better user input",
+   "pr": null
+  },
+  {
+   "hash": "7c26cdd",
+   "fecha": "2026-09-06T21:25:43-06:00",
+   "titulo": "Refactor inscripcion.html for clarity and usability",
+   "pr": null
+  },
+  {
+   "hash": "d97d1f6",
+   "fecha": "2026-09-06T21:22:12-06:00",
+   "titulo": "Enhance inscription form with TSE autocompletion",
+   "pr": null
+  },
+  {
+   "hash": "31c2e2b",
+   "fecha": "2026-09-06T21:18:41-06:00",
+   "titulo": "Refactor color definitions in Tailwind config",
+   "pr": null
+  },
+  {
+   "hash": "7d64194",
+   "fecha": "2026-09-06T21:15:55-06:00",
+   "titulo": "Revise inscription form layout and validation",
+   "pr": null
+  },
+  {
+   "hash": "49c9262",
+   "fecha": "2026-09-06T21:14:02-06:00",
+   "titulo": "Update inscripcion.html",
+   "pr": null
+  },
+  {
+   "hash": "65c639c",
+   "fecha": "2026-09-06T21:12:33-06:00",
+   "titulo": "Update inscripcion.html",
+   "pr": null
+  },
+  {
+   "hash": "134304e",
+   "fecha": "2026-09-06T21:11:43-06:00",
+   "titulo": "Fix missing newline at end of inscripcion.html",
+   "pr": null
+  },
+  {
+   "hash": "deefecf",
+   "fecha": "2026-09-06T21:10:19-06:00",
+   "titulo": "Refactor inscripcion.html for styling and validation",
+   "pr": null
+  },
+  {
+   "hash": "997a851",
+   "fecha": "2026-09-06T21:09:17-06:00",
+   "titulo": "Update event title and form fields for chess tournament",
+   "pr": null
+  },
+  {
+   "hash": "0e5cce1",
+   "fecha": "2026-09-06T21:07:36-06:00",
+   "titulo": "Update inscripcion.html",
+   "pr": null
+  },
+  {
+   "hash": "b673229",
+   "fecha": "2026-09-06T21:04:09-06:00",
+   "titulo": "Revamp inscripcion.html with new styles and features",
+   "pr": null
+  },
+  {
+   "hash": "3adb02b",
+   "fecha": "2026-09-06T21:02:47-06:00",
+   "titulo": "Update title and form structure in inscripcion.html",
+   "pr": null
+  },
+  {
+   "hash": "b69be16",
+   "fecha": "2026-09-06T21:01:17-06:00",
+   "titulo": "Update title and enhance form styles",
+   "pr": null
+  },
+  {
+   "hash": "59104af",
+   "fecha": "2026-09-06T20:43:37-06:00",
+   "titulo": "Refactor inscripcion.html for improved structure",
+   "pr": null
+  },
+  {
+   "hash": "dd4ce3e",
+   "fecha": "2026-09-06T20:42:14-06:00",
+   "titulo": "Refactor form validation and submission logic",
+   "pr": null
+  },
+  {
+   "hash": "4f2ea6d",
+   "fecha": "2026-09-06T20:38:29-06:00",
+   "titulo": "Refactor cedula input event listener for clarity",
+   "pr": null
+  },
+  {
+   "hash": "fee5b05",
+   "fecha": "2026-09-06T20:37:13-06:00",
+   "titulo": "Update inscripcion.html",
+   "pr": null
+  },
+  {
+   "hash": "6a67134",
+   "fecha": "2026-09-06T20:34:27-06:00",
+   "titulo": "Update event title and improve form layout",
+   "pr": null
+  },
+  {
+   "hash": "12a6e1c",
+   "fecha": "2026-09-06T20:31:36-06:00",
+   "titulo": "Refactor comments and clean up input fields",
+   "pr": null
+  },
+  {
+   "hash": "7bac665",
+   "fecha": "2026-09-06T20:29:39-06:00",
+   "titulo": "Refactor name construction for player compatibility",
+   "pr": null
+  },
+  {
+   "hash": "c9ceef6",
+   "fecha": "2026-09-06T20:27:34-06:00",
+   "titulo": "Update title and labels for event registration",
+   "pr": null
+  },
+  {
+   "hash": "5643576",
+   "fecha": "2026-09-06T19:36:40-06:00",
+   "titulo": "Update inscripcion.html",
+   "pr": null
+  },
+  {
+   "hash": "e7daca9",
+   "fecha": "2026-09-06T19:32:20-06:00",
+   "titulo": "Update inscripcion.html",
+   "pr": null
+  },
+  {
+   "hash": "50977c2",
+   "fecha": "2026-09-06T19:22:52-06:00",
+   "titulo": "Update WORKER_URL for inscripcion.html",
+   "pr": null
+  },
+  {
+   "hash": "173ce92",
+   "fecha": "2026-09-06T19:10:25-06:00",
+   "titulo": "Update WORKER_URL to new subdomain",
+   "pr": null
+  },
+  {
+   "hash": "906bfb5",
+   "fecha": "2026-09-06T19:00:59-06:00",
+   "titulo": "Update inscription form description and placeholder",
+   "pr": null
+  },
+  {
+   "hash": "f07ee81",
+   "fecha": "2026-09-06T18:59:29-06:00",
+   "titulo": "Modify fetch request and enhance error handling",
+   "pr": null
+  },
+  {
+   "hash": "948839a",
+   "fecha": "2026-09-06T17:58:14-06:00",
+   "titulo": "Enhance inscription form and mobile menu",
+   "pr": null
+  },
+  {
+   "hash": "c128ac3",
+   "fecha": "2026-09-06T17:49:20-06:00",
+   "titulo": "Update inscripcion.html",
+   "pr": null
+  },
+  {
+   "hash": "597d772",
+   "fecha": "2026-09-06T17:45:33-06:00",
+   "titulo": "Update inscripcion.html",
+   "pr": null
+  },
+  {
+   "hash": "00d18e3",
+   "fecha": "2026-09-06T17:42:59-06:00",
+   "titulo": "Update inscripcion.html",
+   "pr": null
+  },
+  {
+   "hash": "b1984c4",
+   "fecha": "2026-09-06T17:39:18-06:00",
+   "titulo": "Update inscripcion.html",
+   "pr": null
+  },
+  {
+   "hash": "f94e28c",
+   "fecha": "2026-09-06T16:34:27-06:00",
+   "titulo": "Change header text from 'Inscribete' to 'Para Inscribirse'",
+   "pr": null
+  },
+  {
+   "hash": "b1663fe",
+   "fecha": "2026-09-06T16:33:17-06:00",
+   "titulo": "Change 'Inscribe' to 'Inscribete' in HTML",
+   "pr": null
+  },
+  {
+   "hash": "80ee09c",
+   "fecha": "2026-09-06T16:28:39-06:00",
+   "titulo": "Update inscription form header and description",
+   "pr": null
+  },
+  {
+   "hash": "b6a5b9d",
+   "fecha": "2026-09-06T15:39:15-06:00",
+   "titulo": "Cambio en el sitio",
+   "pr": null
+  },
+  {
+   "hash": "9a32e05",
+   "fecha": "2026-09-06T16:53:01+00:00",
+   "titulo": "Initial commit from Lee",
+   "pr": null
+  }
+ ]
+}

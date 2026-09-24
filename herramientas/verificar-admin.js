@@ -208,7 +208,7 @@ async function pruebaAtajos(browser) {
     })));
 
   igual("los grupos de atajos, en su orden", grupos.map((g) => g.titulo),
-    ["Resultados", "Formularios", "Bases de datos", "Acceso a la plataforma", "Venta de materiales", "Reportes"]);
+    ["Resultados", "Formularios", "Bases de datos", "Acceso a la plataforma", "Venta de materiales", "Reportes", "La plataforma"]);
   /* Cada grupo se busca POR NOMBRE y no por su posición: con índices, sumar un
      grupo renumeraba media docena de comprobaciones que no tienen nada que ver
      con el orden, y había que corregirlas a mano una por una. Es la misma
@@ -223,6 +223,7 @@ async function pruebaAtajos(browser) {
   igual("Acceso a la plataforma", atajos("Acceso a la plataforma"), ["accesos.html", "precios.html"]);
   igual("Venta de materiales", atajos("Venta de materiales"), ["tienda.html"]);
   igual("Reportes", atajos("Reportes"), ["reportes.html", "supervision.html", "tablero-academias.html", "cobros.html"]);
+  igual("La plataforma", atajos("La plataforma"), ["novedades.html"]);
   igual("los informes de toda la plataforma siguen aparte y de primeros",
     await page.evaluate(() => {
       const a = document.querySelector('#app a[href="informes.html"]');
