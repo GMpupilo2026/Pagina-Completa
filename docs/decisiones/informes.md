@@ -594,10 +594,16 @@ alumno: todas quedan por debajo de 0,4 s. La que seguía pagando por fila era
 `formulario_respuestas` (~3 ms por respuesta, crece con cada inscripción): su
 permiso depende solo del formulario, así que ahora se arma el conjunto de
 formularios visibles una vez (`formulario_respuestas_rls_por_formulario`, cero
-diferencias en las 129 cuentas, de 357 ms a 10 ms). Quedan con función por
-fila tablas que hoy son chicas —la mayor, `profiles`, con 129 filas y ~0,2 s—;
-`profiles` es la que habría que rehacer primero si la cantidad de cuentas se
-multiplica.
+diferencias en las 129 cuentas, de 357 ms a 10 ms). `profiles` se rehízo igual
+(`profiles_rls_conjunto_una_vez`): sus cinco vías —ser la propia cuenta, quien
+administra, profesor de, mi profesor, compañero y coordinación— se arman como
+conjuntos, y la de coordinación con `interno.bajo_mi_coordinacion_conjunto()`,
+el inverso exacto de `bajo_mi_coordinacion()`: **si se cambia una de las dos,
+se cambian las dos.** Cada pieza se comparó pareja por pareja (129 × 129, más
+sin sesión) y después la vista completa de cada cuenta con la RLS de verdad:
+cero diferencias. Leer `profiles` pasó de ~200 ms a menos de 10 ms, y con eso
+`informes_inactivos()` bajó a 27 ms y `mis_clases()` a 14 ms. Quedan con
+función por fila solo tablas chicas que no crecen con cada alumno.
 
 ## Los informes que llegan a la casa
 
