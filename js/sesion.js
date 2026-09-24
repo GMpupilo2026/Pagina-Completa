@@ -1,0 +1,4026 @@
+/* La clase en vivo (sesion.html): todo su código.
+
+   Vivía escrito dentro de la página, en un solo <script> de 237 KB. Se mudó
+   acá tal cual, sin tocar una línea, por dos razones:
+     · el navegador lo guarda en caché aparte: quien vuelve a la clase ya no lo
+       baja entero cada vez junto con el HTML;
+     · es el primer paso para sacar 'unsafe-inline' de la CSP (_headers), que
+       hoy deja correr cualquier <script> escrito en una página.
+
+   Es un script clásico (no un módulo), cargado en el mismo lugar donde estaba
+   el bloque: corre en el mismo orden y sus `let`/`const` de arriba siguen
+   siendo globales, como antes. Ver «El código de las páginas sale del HTML»
+   en docs/decisiones/sitio-e-infraestructura.md. */
+
+        const EDGE_FUNCTION_URL = `${window.SUPABASE_URL}/functions/v1/create-student`;
+        // Cada profesor tiene su propio tablero, su propia clase, sus propias
+        // preguntas y su propia práctica — completamente independientes de los de
+        // cualquier otro profesor, para que dos puedan dar clase al mismo tiempo sin
+        // pisarse. boardOwnerId es el id de ESE profesor: el propio (isTeacher) o,
+        // cuando quien mira es un alumno, el de la clase que eligió — puede tener
+        // varios profesores, y lo resuelve js/clase-elegida.js.
+        // myGameStateId es el id numérico de la fila de game_state de ese profesor
+        // (ya no existe una fila única global con id=1).
+        let boardOwnerId = null;
+        let myGameStateId = null;
+        function presenceChannelName() { return "clases-presence:" + boardOwnerId; }
+        let profile = null;
+        let session = null;
+        let board = null;
+        /* Llevar el foco a algo que puede no verse todavía. Al cargar la página, la
+           pregunta abierta se pinta ANTES de destapar #app, y el navegador no le da
+           el foco a lo que está escondido: no falla nada, el foco simplemente se
+           queda donde estaba y quien usa lector de pantalla no se entera de la
+           pregunta. Se espera a que se vea, un par de segundos como mucho. */
+        function enfocarCuandoSeVea(el, intentos) {
+            if (!el) return;
+            intentos = intentos === undefined ? 40 : intentos;
+            if (el.checkVisibility ? el.checkVisibility() : el.offsetParent !== null) { el.focus(); return; }
+            if (intentos > 0) setTimeout(() => enfocarCuandoSeVea(el, intentos - 1), 50);
+        }
+
+        // El recuadro del Modo Adaptado de cada tablero (js/clase-adaptada.js).
+        let claseAcc = null, preguntaAcc = null, practicaAcc = null;
+        let primerEstadoCargado = false;
+        let isTeacher = false;
+        let activePlayerId = null;
+        // Con qué color puede mover activePlayerId: "w", "b" o "both" (los dos). Solo
+        // importa mientras activePlayerId no sea null — el profesor siempre puede mover
+        // cualquier color. Permite, por ejemplo, que un alumno juegue con blancas contra
+        // el profesor en vivo delante de toda la clase, sin poder tocar las piezas negras.
+        let activePlayerColor = "both";
+        let presenceChannel = null;
+        let engineEnabled = false;
+        let engineRequestId = 0;
+
+        function setStatus(text) {
+            document.getElementById("status-banner").textContent = text;
+        }
+
+        function updateTurnIndicator() {
+            const turn = board.game.turn() === "w" ? "Blancas" : "Negras";
+            let text = `Turno: ${turn}`;
+            if (board.game.in_checkmate && board.game.in_checkmate()) text = `Jaque mate — ganan ${turn === "Blancas" ? "Negras" : "Blancas"}`;
+            else if (board.game.in_check && board.game.in_check()) text += " · ¡Jaque!";
+            else if (board.game.in_draw && board.game.in_draw()) text = "Tablas";
+            document.getElementById("turn-indicator").textContent = text;
+        }
+
+        function canMoveNow() {
+            if (isTeacher) return true;
+            if (activePlayerId !== profile.id) return false;
+            return activePlayerColor === "both" || activePlayerColor === board.game.turn();
+        }
+
+        function updateUndoButton() {
+            const btn = document.getElementById("undo-move-btn");
+            btn.classList.toggle("hidden", !canMoveNow() || board.isViewingHistory());
+        }
+
+        // ---------- Pestañas del profesor (Controles/Preguntar/Practicar/Alumnos/Motor) ----------
+        // Un solo panel visible a la vez, para no obligar a hacer scroll por una barra
+        // lateral con los 5 a la vez. Se recuerda la última pestaña abierta en este navegador.
+        const TEACHER_TAB_KEY = "sesion_teacher_tab_v1";
+        /* El orden manda dos cosas: el de los botones de arriba y, sobre todo, CUÁL SE
+           ABRE la primera vez (TEACHER_TABS[0]). Para quien entra por primera vez eso
+           es "Mi plan": lo que va a dar. Después se recuerda la última que usó. */
+        const TEACHER_TABS = ["plan", "tactica", "preguntar", "practicar", "alumnos", "controles"];
+        const TEACHER_TAB_ACTIVE = "teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-accent-500 text-brand-900";
+        const TEACHER_TAB_INACTIVE = "teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200";
+
+        function activateTeacherTab(tab) {
+            if (!TEACHER_TABS.includes(tab)) tab = TEACHER_TABS[0];
+            document.querySelectorAll(".teacher-tab-btn").forEach((btn) => {
+                const active = btn.dataset.tab === tab;
+                btn.className = active ? TEACHER_TAB_ACTIVE : TEACHER_TAB_INACTIVE;
+                btn.setAttribute("aria-selected", active ? "true" : "false");
+            });
+            document.querySelectorAll("[data-tab-panel]").forEach((panel) => {
+                panel.classList.toggle("hidden", panel.dataset.tabPanel !== tab);
+            });
+            try { localStorage.setItem(TEACHER_TAB_KEY, tab); } catch (e) {}
+        }
+
+        document.querySelectorAll(".teacher-tab-btn").forEach((btn) => {
+            btn.addEventListener("click", () => {
+                activateTeacherTab(btn.dataset.tab);
+                if (btn.dataset.tab === "tactica") ensureTacticsLoaded();
+            });
+        });
+
+        /* ---------- El modo sencillo ----------
+           Catorce controles delante, con la clase mirando, es demasiado para la
+           primera clase. En modo sencillo se ve lo que hace falta para darla: el
+           tablero (el grupo «El tablero — lo ve toda la clase»), el motor, «Mi
+           plan», «Alumnos» e «Invitar». Táctica, Preguntar, Practicar y el grupo
+           «Tu material» quedan detrás de «Ver todas las herramientas».
+
+           Arranca en modo sencillo SOLO quien lleva menos de tres clases dadas: a
+           quien ya da clases no se le mueve nada de lugar. Tres y no una porque
+           la clase se registra al empezar (ver abrirClaseSiHaceFalta): con «ninguna»,
+           recargar la página a mitad de la primera clase le cambiaría la pantalla
+           en plena clase. Lo que uno elija con el botón se recuerda en el aparato
+           (localStorage), como la pestaña abierta, y desde ahí manda sobre la
+           cuenta de clases. */
+        const MODO_SENCILLO_KEY = "sesion_modo_sencillo_v1";
+        const CLASES_PARA_TODAS_LAS_HERRAMIENTAS = 3;
+        const TABS_AVANZADAS = ["tactica", "preguntar", "practicar"];
+        let modoSencillo = false;
+
+        function aplicarModoSencillo(activo) {
+            modoSencillo = activo;
+            document.getElementById("toolbar-material").hidden = activo;
+            // La línea que separa los dos grupos no separa nada si el de arriba no está.
+            ["border-t", "pt-3"].forEach((c) => document.getElementById("toolbar-tablero").classList.toggle(c, !activo));
+            TABS_AVANZADAS.forEach((t) => { document.getElementById("teacher-tab-" + t).hidden = activo; });
+            // Si la pestaña que estaba abierta se escondió, se vuelve a «Mi plan».
+            const abierta = document.querySelector('.teacher-tab-btn[aria-selected="true"]');
+            if (activo && abierta && TABS_AVANZADAS.includes(abierta.dataset.tab)) activateTeacherTab(TEACHER_TABS[0]);
+            document.getElementById("modo-sencillo-btn").textContent = activo
+                ? "🧰 Ver todas las herramientas" : "🪶 Volver al modo sencillo";
+            document.getElementById("modo-sencillo-nota").textContent = activo
+                ? "Modo sencillo: el tablero, tu plan y tus alumnos. Táctica, Preguntar, Practicar y tu material están a un clic."
+                : "";
+        }
+
+        async function arrancarModoSencillo() {
+            let guardado = null;
+            try { guardado = localStorage.getItem(MODO_SENCILLO_KEY); } catch (e) {}
+            if (guardado === "1" || guardado === "0") { aplicarModoSencillo(guardado === "1"); return; }
+            // Sin preferencia: ¿cuántas clases lleva? Se cuenta en la base, sin
+            // bajarse ninguna fila. Si no se puede saber, todas las herramientas.
+            const { count, error } = await sb.from("class_sessions")
+                .select("id", { count: "exact", head: true }).eq("created_by", session.user.id);
+            aplicarModoSencillo(!error && typeof count === "number" && count < CLASES_PARA_TODAS_LAS_HERRAMIENTAS);
+        }
+
+        document.getElementById("modo-sencillo-btn").addEventListener("click", () => {
+            aplicarModoSencillo(!modoSencillo);
+            try { localStorage.setItem(MODO_SENCILLO_KEY, modoSencillo ? "1" : "0"); } catch (e) {}
+        });
+
+        // ---------- Historial, variantes y sub-variantes ----------
+        // navegar hacia atrás, explorar líneas alternativas y encadenarlas en sub-variantes,
+        // todo sin tocar el tablero en vivo de nadie más hasta que se pulsa "Jugar desde aquí".
+        let variantNodes = [];
+
+        async function loadVariantTree() {
+            const { data, error } = await sb.from("variant_nodes").select("*").eq("teacher_id", boardOwnerId).order("created_at");
+            if (error) { console.error(error); return; }
+            variantNodes = data || [];
+            renderMoveList();
+        }
+
+        function subscribeVariants() {
+            sb.channel("variant-nodes-changes:" + boardOwnerId)
+                .on("postgres_changes", { event: "*", schema: "public", table: "variant_nodes", filter: "teacher_id=eq." + boardOwnerId }, () => loadVariantTree())
+                .subscribe();
+        }
+
+        async function clearVariantTree() {
+            await sb.from("variant_nodes").delete().eq("teacher_id", boardOwnerId);
+        }
+
+        function topVariantsAtPly(ply) {
+            return variantNodes.filter((v) => v.parent_id === null && v.root_ply === ply);
+        }
+
+        function variantChildrenOf(nodeId) {
+            return variantNodes.filter((v) => v.parent_id === nodeId);
+        }
+
+        function renderVariantNode(node, pathSoFar) {
+            const fullPath = pathSoFar.concat([node.san]);
+            const li = document.createElement("li");
+            li.className = "ml-3 border-l-2 border-accent-400/40 pl-2 mt-0.5";
+            const btn = document.createElement("button");
+            btn.type = "button";
+            const ctx = board.getVariantContext();
+            const isCurrent = board.isViewingHistory() && ctx && ctx.parentNodeId === node.id;
+            btn.className = "px-1 rounded hover:bg-brand-100 dark:hover:bg-brand-800 transition-colors italic text-accent-600 dark:text-accent-400" +
+                (isCurrent ? " bg-accent-500/30 font-bold not-italic" : "");
+            btn.textContent = node.san;
+            btn.addEventListener("click", () => { board.viewVariantNode(node, fullPath); renderMoveList(); });
+            li.appendChild(btn);
+            const children = variantChildrenOf(node.id);
+            if (children.length) {
+                const ul = document.createElement("ul");
+                ul.className = "space-y-0.5";
+                children.forEach((child) => ul.appendChild(renderVariantNode(child, fullPath)));
+                li.appendChild(ul);
+            }
+            return li;
+        }
+
+        function appendVariantsAtPly(listEl, ply, mainlineMoves) {
+            const roots = topVariantsAtPly(ply);
+            if (!roots.length) return;
+            const treeLi = document.createElement("li");
+            treeLi.className = "w-full basis-full";
+            const ul = document.createElement("ul");
+            ul.className = "space-y-0.5 mt-0.5";
+            const basePath = mainlineMoves.slice(0, ply);
+            roots.forEach((node) => ul.appendChild(renderVariantNode(node, basePath)));
+            treeLi.appendChild(ul);
+            listEl.appendChild(treeLi);
+        }
+
+        function makeMoveButton(san, ply) {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            const ctx = board.getVariantContext();
+            const isCurrent = board.isViewingHistory() && ctx && ctx.parentNodeId === null && board.viewPath.length === ply;
+            btn.className = "px-1 rounded hover:bg-brand-100 dark:hover:bg-brand-800 transition-colors" +
+                (isCurrent ? " bg-accent-500/30 font-bold text-brand-800 dark:text-white" : "");
+            btn.textContent = san;
+            btn.addEventListener("click", () => { board.viewMainAt(ply); renderMoveList(); });
+            return btn;
+        }
+
+        function renderMoveList() {
+            const moves = board.moves();
+            const listEl = document.getElementById("move-list");
+            const emptyEl = document.getElementById("move-list-empty");
+            if (!moves.length) {
+                listEl.classList.add("hidden");
+                listEl.classList.remove("flex");
+                emptyEl.classList.remove("hidden");
+                listEl.innerHTML = "";
+            } else {
+                emptyEl.classList.add("hidden");
+                listEl.classList.remove("hidden");
+                listEl.classList.add("flex");
+                listEl.innerHTML = "";
+                appendVariantsAtPly(listEl, 0, moves);
+                for (let i = 0; i < moves.length; i += 2) {
+                    const group = document.createElement("li");
+                    group.className = "flex items-center gap-1";
+                    const numSpan = document.createElement("span");
+                    numSpan.className = "text-brand-450 dark:text-brand-350";
+                    numSpan.textContent = (i / 2 + 1) + ".";
+                    group.appendChild(numSpan);
+                    group.appendChild(makeMoveButton(moves[i], i + 1));
+                    if (moves[i + 1]) group.appendChild(makeMoveButton(moves[i + 1], i + 2));
+                    listEl.appendChild(group);
+                    appendVariantsAtPly(listEl, i + 1, moves);
+                    if (moves[i + 1]) appendVariantsAtPly(listEl, i + 2, moves);
+                }
+            }
+            updateHistoryControls();
+        }
+
+        function updateHistoryControls() {
+            const viewing = board.isViewingHistory();
+            const controls = document.getElementById("history-controls");
+            controls.classList.toggle("hidden", !viewing);
+            controls.classList.toggle("flex", viewing);
+            document.getElementById("history-fork-btn").classList.toggle("hidden", !(viewing && canMoveNow()));
+            updateUndoButton();
+        }
+
+        document.getElementById("history-live-btn").addEventListener("click", () => {
+            board.viewLive();
+            renderMoveList();
+        });
+
+        document.getElementById("history-fork-btn").addEventListener("click", async () => {
+            if (!canMoveNow() || !board.isViewingHistory()) return;
+            const discardedMain = board.forkToView();
+            if (discardedMain && discardedMain.length) {
+                // Archiva la línea en vivo ANTERIOR completa en "Partidas guardadas" para no
+                // perderla: "devolver la jugada sin borrarla, para crear variantes".
+                const tempGame = new Chess();
+                discardedMain.forEach((m) => tempGame.move(m));
+                await sb.from("saved_games").insert({
+                    pgn: pgnFromMoves(discardedMain),
+                    fen_final: tempGame.fen(),
+                    move_count: discardedMain.length,
+                    title: "Línea anterior (reemplazada por una variante)",
+                    created_by: session.user.id,
+                });
+            }
+            board.setMarks([], []);
+            await pushBoardState();
+            await clearVariantTree(); // las variantes quedaban ancladas a la línea anterior
+            updateTurnIndicator();
+            renderMoveList();
+            if (isTeacher) updateEngineEval();
+            setStatus(discardedMain && discardedMain.length
+                ? "Se guardó la línea anterior en \"Partidas guardadas\" — ahora estás jugando esta variante en vivo."
+                : "Ya puedes jugar desde aquí.");
+        });
+
+        // ---------- Estado compartido del tablero (posición, flechas, control cedido) ----------
+        function applyGameStateRow(row) {
+            // Lo que había ANTES, leído del propio tablero: así la jugada que acaba de
+            // hacer este mismo navegador vuelve como eco idéntico y no se anuncia dos veces.
+            // En modo libre el tablero del profesor es la posición que está armando,
+            // no la de la clase: compararla con lo que llega anunciaría cambios falsos.
+            const editando = isTeacher && board.freeMode;
+            const antes = primerEstadoCargado && !editando ? { inicio: board.startFen || "", jugadas: board.moves() } : null;
+            primerEstadoCargado = true;
+            // Mientras el profesor arma una posición a mano, el eco de Realtime (una
+            // flecha, un cambio de control) no puede borrarle lo que lleva armado:
+            // "Aplicar" la transmite y "Cancelar" vuelve a leer el estado de la base.
+            if (!editando) board.loadMoves(row.moves || [], row.start_fen);
+            board.setMarks(row.arrows || [], row.circles || []);
+            // Ocultar piezas es una herramienta del profesor sobre el tablero de LOS ALUMNOS:
+            // en su propio tablero el profesor siempre las ve, aunque la columna esté en true.
+            const ocultabaAntes = board.piecesHidden;
+            board.setPiecesHidden(!isTeacher && !!row.pieces_hidden);
+            lastPiecesHidden = !!row.pieces_hidden;
+            if (claseAcc) {
+                if (!editando) claseAcc.anunciarCambio(antes, { inicio: row.start_fen || "", jugadas: row.moves || [] });
+                if (!isTeacher && ocultabaAntes !== board.piecesHidden) {
+                    claseAcc.decir(board.piecesHidden
+                        ? "Tu profe ocultó las piezas: ahora hay que ver el tablero de memoria."
+                        : "Tu profe volvió a mostrar las piezas. Escribe \"posición\" para oírla.");
+                }
+            }
+            activePlayerId = row.active_player_id || null;
+            activePlayerColor = row.active_player_color || "both";
+            updateTurnIndicator();
+            updateAccessForRole();
+            renderMoveList();
+            renderStudentsList();
+            updateHideBoardBtn();
+            if (isTeacher) updateEngineEval();
+            // La lección del curso ya NO viaja por game_state: es del profesor y solo él la
+            // ve (ver abrirLeccionLocal). Lo único que queda por hacer con esas dos columnas
+            // es dejarlas en null la primera vez, para que a nadie que siga con la página
+            // anterior cargada le quede una lección abierta de cuando sí se compartían.
+            if (isTeacher && (row.shown_curso || row.shown_leccion)) limpiarLeccionCompartida();
+        }
+
+        // Se llama como mucho una vez por carga: el update dispara su propio eco de Realtime,
+        // y sin la marca ese eco volvería a entrar aquí con la fila vieja en el camino.
+        let limpiandoLeccionCompartida = false;
+        async function limpiarLeccionCompartida() {
+            if (limpiandoLeccionCompartida) return;
+            limpiandoLeccionCompartida = true;
+            await sb.from("game_state").update({ shown_curso: null, shown_leccion: null }).eq("id", myGameStateId);
+        }
+
+        function updateAccessForRole() {
+            if (isTeacher) return;
+            const hasControl = activePlayerId === profile.id;
+            const colorLabel = activePlayerColor === "w" ? "blancas" : activePlayerColor === "b" ? "negras" : null;
+            const myColorTurn = !hasControl || activePlayerColor === "both" || activePlayerColor === board.game.turn();
+            board.setInteractive(hasControl && myColorTurn);
+            let text = "Bienvenido a la clase. Verás el tablero moverse en vivo mientras el profesor juega.";
+            if (hasControl) {
+                text = colorLabel
+                    ? ("¡El profesor te dio el control con " + colorLabel + "! " + (myColorTurn ? "Ya puedes mover." : "Espera a que le toque a tu color."))
+                    : "¡El profesor te dio el control del tablero! Ya puedes mover piezas.";
+            }
+            setStatus(text);
+        }
+
+        // ---------- Tener un curso a mano mientras se da la clase (solo el profesor) ----------
+        // La lección se abre SOLO en la pantalla del profesor — es material suyo para dar la
+        // clase, como el PDF, no algo que la clase reciba: el temario entero delante lo
+        // adelanta al alumno y le regala las respuestas de los ejercicios de la lección. Lo
+        // que la clase sí recibe es cada posición que el profesor decide mandarle al tablero
+        // con el botón de su diagrama (ver vigilarPosicionesDeLaLeccion).
+        //
+        // Antes esto se sincronizaba por game_state.shown_curso/shown_leccion y lo veían
+        // todos; esas dos columnas quedaron sin uso (no se borran de la tabla: una columna
+        // de más no molesta a nadie y quitarla obligaría a una migración para nada).
+        //
+        // El contenido no viaja por Supabase: se pide directo a cursos/protegido/<curso>.html,
+        // igual que hace js/curso-academia.js con el panel de Academia. ----------
+        const CLASS_LESSON_CATALOG = [
+            { slug: "fundamentos-del-ajedrez", titulo: "Fundamentos del Ajedrez" },
+            { slug: "aperturas-y-defensas", titulo: "Aperturas y Defensas" },
+            { slug: "calculo-y-visualizacion", titulo: "Cálculo y Visualización" },
+            { slug: "estrategia-y-tactica", titulo: "Estrategia y Táctica" },
+            { slug: "desequilibrios-de-material", titulo: "Desequilibrios de material" },
+            { slug: "finales-practicos", titulo: "Finales Prácticos" },
+            { slug: "el-mapa-de-los-finales", titulo: "El mapa de los finales" },
+            { slug: "estrategia-en-el-final", titulo: "Estrategia en el final" },
+            { slug: "partidas-modelo", titulo: "Partidas modelo del ajedrez moderno" },
+            { slug: "preparacion-para-torneos", titulo: "Preparación para Torneos" },
+        ];
+        const leccionesPorCurso = {}; // slug -> [{titulo}, ...] en caché, una vez pedidas
+
+        // Un <details> de nivel superior (con su propio <summary>) es una lección; se
+        // ignoran los que están anidados dentro de otro <details> (por ejemplo, alguna
+        // aclaración interna de un cuestionario) — mismo filtro que usa curso-academia.js.
+        function detallesDeLeccion(root) {
+            return Array.from(root.querySelectorAll("details")).filter((d) =>
+                !(d.parentElement && d.parentElement.closest("details")) && d.querySelector(":scope > summary")
+            );
+        }
+
+        async function fetchLeccionesDeCurso(slug) {
+            if (leccionesPorCurso[slug]) return leccionesPorCurso[slug];
+            if (window.SesionCursos) SesionCursos.guardar(session); // la cookie que mira worker.js
+            const r = await fetch("cursos/protegido/" + slug + ".html", { credentials: "same-origin" });
+            if (!r.ok) throw new Error("no_content");
+            const html = await r.text();
+            const temp = document.createElement("div");
+            temp.innerHTML = html;
+            const detalles = detallesDeLeccion(temp);
+            const lecciones = detalles.map((d) => (d.querySelector(":scope > summary").textContent || "").replace(/\s+/g, " ").trim());
+            leccionesPorCurso[slug] = lecciones;
+            return lecciones;
+        }
+
+        // Se llama desde init() una vez que isTeacher ya quedó resuelto (ver más abajo). Vivía
+        // como "if (isTeacher) {...}" a nivel superior del script, y por eso nunca se ejecutaba:
+        // ese código corre al analizar el <script>, antes de que init() — que es quien recién
+        // consulta la sesión y el perfil — llegue a fijar isTeacher. Con isTeacher siempre en su
+        // valor inicial (false), el botón "📚 Curso" no tenía ningún oyente de clic: no pasaba
+        // nada al presionarlo, para cualquier profesor, siempre.
+        function setupTeacherLessonTools() {
+            const cursoSelect = document.getElementById("lesson-curso-select");
+            const leccionSelect = document.getElementById("lesson-leccion-select");
+            const panelMsg = document.getElementById("lesson-picker-msg");
+            CLASS_LESSON_CATALOG.forEach((c) => {
+                const opt = document.createElement("option"); opt.value = c.slug; opt.textContent = c.titulo;
+                cursoSelect.appendChild(opt);
+            });
+
+            async function refreshLeccionOptions() {
+                leccionSelect.innerHTML = '<option value="">Cargando…</option>';
+                panelMsg.textContent = "";
+                try {
+                    const lecciones = await fetchLeccionesDeCurso(cursoSelect.value);
+                    leccionSelect.innerHTML = "";
+                    lecciones.forEach((titulo, i) => {
+                        const opt = document.createElement("option"); opt.value = String(i + 1); opt.textContent = titulo;
+                        leccionSelect.appendChild(opt);
+                    });
+                } catch (e) {
+                    leccionSelect.innerHTML = "";
+                    panelMsg.textContent = "No se pudo cargar el temario de este curso.";
+                }
+            }
+
+            cursoSelect.addEventListener("change", refreshLeccionOptions);
+
+            document.getElementById("toggle-lesson-btn").addEventListener("click", () => {
+                const panel = document.getElementById("lesson-picker-panel");
+                const active = panel.classList.contains("hidden");
+                panel.classList.toggle("hidden", !active);
+                document.getElementById("board-edit-panel").classList.add("hidden"); // no los dos a la vez
+                document.getElementById("pdf-panel").classList.add("hidden");
+                document.getElementById("archivos-panel").classList.add("hidden");
+                if (active && leccionSelect.options.length === 0) refreshLeccionOptions();
+            });
+            document.getElementById("lesson-picker-close-btn").addEventListener("click", () => {
+                document.getElementById("lesson-picker-panel").classList.add("hidden");
+            });
+
+            document.getElementById("lesson-show-btn").addEventListener("click", () => {
+                const slug = cursoSelect.value, n = parseInt(leccionSelect.value, 10);
+                if (!slug || !n) { panelMsg.textContent = "Elige un curso y un tema."; return; }
+                panelMsg.textContent = "";
+                abrirLeccionLocal(slug, n);
+            });
+            document.getElementById("lesson-hide-btn").addEventListener("click", cerrarLeccionLocal);
+            document.getElementById("class-lesson-hide-btn").addEventListener("click", cerrarLeccionLocal);
+
+            // ---------- Leer un PDF en clase + reconocer sus diagramas (ver js/pdf-diagramas.js) ----------
+            // El módulo hace todo el trabajo de PDF/reconocimiento; acá solo se le indica qué
+            // hacer con el FEN que arma: mandarlo al editor de tablero YA EXISTENTE (mismo
+            // flujo de "✏️ Editar" con su paleta y su botón "Aplicar posición"), en vez de
+            // reimplementar una segunda forma de aplicar una posición.
+            if (window.PdfDiagramas) {
+                window.PdfDiagramas.init({
+                    onFenReady: (fen) => {
+                        if (!board.freeMode) document.getElementById("toggle-free-mode-btn").click();
+                        const ok = board.loadFreeModeFen(fen);
+                        if (ok) {
+                            syncEditPanelFromPosition();
+                            setStatus("Diagrama cargado en el editor: revisa la posición, el turno y los enroques antes de aplicar.");
+                        } else {
+                            setStatus("No se pudo cargar el diagrama reconocido.");
+                        }
+                    },
+                });
+            }
+        }
+
+        // ---------- Jalar al tablero un PGN subido en Archivos (solo el profesor) ----------
+        // Misma tabla "archivos_pgn" de partidas.html: se listan solo las del propio
+        // profesor (la RLS ya aísla por profesor_id, pero acá además no tiene sentido
+        // ofrecer el archivo de otro). Las tres acciones —Cargar, Preguntar, Practicar—
+        // mandan la posición de SALIDA del PGN, nunca la final: "Cargar" pasaba antes por
+        // board.loadMoves() con la línea entera, y eso dejaba a la clase viendo de una
+        // el desenlace del ejercicio (jaque mate incluido) apenas se elegía el archivo, sin
+        // haber jugado ni una jugada delante de nadie. Ahora las tres pasan por
+        // aplicarPosicionEnClase(), como cualquier otra puerta que pone una posición en el
+        // tablero: la clase arranca de la posición inicial, sin variantes de una línea
+        // anterior colgando, y la línea se juega en vivo desde ahí, jugada por jugada, con
+        // el mismo mecanismo de cualquier partida (onMove → pushBoardState()).
+        let archivosPanelCargados = false;
+
+        /* ---------- "Ver todas las posiciones": Archivos y Táctica ----------
+           Las dos listas de material del profesor —los PGN que subió en Archivos y los
+           ejercicios de Táctica— traen la posición de cada fila escondida detrás de su
+           propio "👁 Vista previa", y el rótulo de la fila no dice NADA de ella:
+           "Position 4, 1 Move" o "3. ELO 1397" no distinguen un mate en dos de un final
+           de torre. Así que para encontrar cuál dar había que abrir y cerrar de a una,
+           con la clase delante — que es justo lo que se pidió poder dejar de hacer.
+
+           El interruptor las destapa todas, y con él encendido cada fila NACE destapada:
+           al cambiar de tema, de dificultad o de carpeta no hay que volver a apretarlo,
+           que es lo que hace que sirva para buscar. Se recuerda en el APARATO
+           (localStorage), como el tema o la clase elegida: es de cómo se está mirando la
+           lista, no de quién mira. Y abrirlas una por una se sigue pudiendo, porque el
+           interruptor decide con qué estado nace cada fila y no le impone el suyo
+           después: con todas destapadas se puede cerrar la que estorba, y al revés.
+
+           Cada lista recuerda lo suyo, con su propia clave: son de tamaños muy distintos
+           —cientos de archivos contra treinta y pico de ejercicios— y encender en una no
+           tiene por qué encender en la otra.
+
+           EL TABLERO SE DIBUJA CUANDO LA FILA ENTRA EN PANTALLA, no al destaparla ni
+           todas de golpe, y esas son las dos fallas que este observador evita:
+
+           - Dibujar las 34 de una tanda de táctica —o los cientos de PGN de un profesor—
+             en el mismo cuadro son miles de casillas de una vez: el panel se queda
+             congelado unos segundos en medio de la clase, sin dar ningún error.
+           - Y el tamaño de la pieza se mide sobre la casilla YA renderizada (ver
+             renderTacticsPreviewBoard y sizePieces de js/article-example-board.js), así
+             que dentro de una carpeta cerrada —un <details>— esa medida es CERO y el
+             tablero saldría con las piezas del tamaño que no era. Con el observador, lo
+             que está guardado en una carpeta se dibuja al abrirla, ya medible. */
+        function crearVistaPreviaLote(clave) {
+            const dibujos = new WeakMap(); // recuadro → la función que pinta su tablero
+            let filas = [];                // las de la lista que se está mirando
+            let controles = [];            // repintar el rótulo del interruptor
+            let observador = null;
+
+            function encendido() {
+                try { return localStorage.getItem(clave) === "1"; } catch (e) { return false; }
+            }
+            function guardar(v) {
+                // En modo privado esto puede fallar: la lista funciona igual, solo que no
+                // se acuerda de cómo quedó.
+                try { if (v) localStorage.setItem(clave, "1"); else localStorage.removeItem(clave); } catch (e) {}
+            }
+            function dibujar(wrap) {
+                if (wrap.dataset.rendered) return;
+                const pintar = dibujos.get(wrap);
+                if (!pintar) return;
+                wrap.dataset.rendered = "1";
+                pintar(wrap);
+            }
+            function mirar(wrap) {
+                if (wrap.dataset.rendered) return;
+                // Sin IntersectionObserver se dibuja y ya: tarda más, pero no deja a nadie
+                // con un recuadro destapado y vacío.
+                if (typeof IntersectionObserver !== "function") { dibujar(wrap); return; }
+                if (!observador) {
+                    observador = new IntersectionObserver((entradas) => {
+                        entradas.forEach((e) => {
+                            if (!e.isIntersecting) return;
+                            observador.unobserve(e.target);
+                            dibujar(e.target);
+                        });
+                    }, { rootMargin: "300px" }); // un poco antes de que asome, para que no se vea aparecer
+                }
+                observador.observe(wrap);
+            }
+            function abrir(fila, abierta) {
+                fila.wrap.classList.toggle("hidden", !abierta);
+                fila.btn.textContent = abierta ? "🙈 Ocultar" : "👁 Vista previa";
+                fila.btn.setAttribute("aria-expanded", String(abierta));
+                if (abierta) mirar(fila.wrap);
+            }
+
+            return {
+                /* Al repintar la lista —otro tema, otra dificultad, recargar los archivos—
+                   las filas de antes cuelgan de nodos que ya no están en la página:
+                   dejarlas registradas haría que el interruptor destapara tableros que no
+                   se ven y que el observador siguiera mirando lo que se fue. */
+                reiniciar() {
+                    if (observador) { observador.disconnect(); observador = null; }
+                    filas = [];
+                    controles = [];
+                },
+                registrar(wrap, btn, pintar) {
+                    dibujos.set(wrap, pintar);
+                    const fila = { wrap: wrap, btn: btn };
+                    filas.push(fila);
+                    btn.setAttribute("aria-expanded", "false");
+                    btn.addEventListener("click", () => abrir(fila, wrap.classList.contains("hidden")));
+                    if (encendido()) abrir(fila, true);
+                },
+                /* El interruptor de la lista. Dice lo que va a pasar al apretarlo —no el
+                   estado en que está— igual que el "🙈 Ocultar" de cada fila. */
+                control() {
+                    const btn = document.createElement("button");
+                    btn.type = "button";
+                    const pintarse = () => {
+                        const v = encendido();
+                        btn.textContent = v ? "🙈 Ocultar las posiciones" : "👁 Ver todas las posiciones";
+                        btn.title = v
+                            ? "Volver a esconder las posiciones y abrirlas una por una"
+                            : "Destapar la posición de todas las filas de esta lista, para buscar a ojo la que vas a dar";
+                        btn.className = "shrink-0 text-xs font-semibold px-2 py-1 rounded-lg transition-colors " + (v
+                            ? "bg-accent-500 hover:bg-accent-600 text-brand-900"
+                            : "bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200");
+                    };
+                    btn.addEventListener("click", () => {
+                        const v = !encendido();
+                        guardar(v);
+                        controles.forEach((f) => f());
+                        filas.forEach((fila) => abrir(fila, v));
+                    });
+                    controles.push(pintarse);
+                    pintarse();
+                    return btn;
+                },
+            };
+        }
+
+        const vistaPreviaArchivos = crearVistaPreviaLote("sesion_vista_previa_archivos_v1");
+        const vistaPreviaTactica = crearVistaPreviaLote("sesion_vista_previa_tactica_v1");
+
+
+        // La posición de SALIDA del PGN (antes de sus jugadas), no la final: es la que
+        // identifica al ejercicio ("de qué posición se trata") y la que usan las tres
+        // acciones —Cargar, Preguntar, Practicar— para mandar la clase a la misma línea de
+        // salida. No se guarda en la fila (solo fen_final vive en la base, ver
+        // partidas.html): sale del propio PGN, que ya se tiene en memoria.
+        function archivoStartFen(a) {
+            const game = new Chess();
+            if (!game.load_pgn(a.pgn, { sloppy: true })) return null;
+            const headers = typeof game.header === "function" ? game.header() : {};
+            return headers.FEN || new Chess().fen();
+        }
+
+        function renderArchivoPanelItem(a) {
+            const li = document.createElement("li");
+            li.className = "bg-brand-50 dark:bg-brand-950 rounded-lg px-3 py-2";
+            const info = document.createElement("div");
+            info.className = "min-w-0";
+            const title = document.createElement("p");
+            title.className = "text-sm font-semibold text-brand-800 dark:text-white truncate";
+            title.textContent = a.titulo;
+            const meta = document.createElement("p");
+            meta.className = "text-xs text-brand-450 dark:text-brand-350";
+            meta.textContent = a.move_count + " jugadas · " + a.nombre_archivo;
+            info.append(title, meta);
+            li.appendChild(info);
+
+            // Mismo patrón que la lista de Táctica: vista previa opcional (el tablero se
+            // dibuja recién al destaparla, porque su tamaño se mide sobre la casilla ya
+            // renderizada) y tres acciones — cargar la línea completa, preguntarla o
+            // mandarla a practicar contra el motor.
+            const actions = document.createElement("div");
+            actions.className = "flex items-center flex-wrap gap-1.5 mt-2";
+            const previewBtn = document.createElement("button");
+            previewBtn.type = "button";
+            previewBtn.className = "text-xs font-semibold px-2 py-1 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors";
+            previewBtn.textContent = "👁 Vista previa";
+            const loadBtn = document.createElement("button");
+            loadBtn.type = "button";
+            loadBtn.className = "text-xs font-semibold px-2 py-1 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors";
+            loadBtn.textContent = "📥 Cargar";
+            loadBtn.title = "Cargar la posición inicial de esta línea en el tablero, para jugarla en vivo con la clase";
+            const askBtn = document.createElement("button");
+            askBtn.type = "button";
+            askBtn.className = "text-xs font-semibold px-2 py-1 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors";
+            askBtn.textContent = "❓ Preguntar";
+            askBtn.title = "Enviar la posición de salida a la clase como pregunta";
+            const practiceBtn = document.createElement("button");
+            practiceBtn.type = "button";
+            practiceBtn.className = "text-xs font-semibold px-2 py-1 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors";
+            practiceBtn.textContent = "🎯 Practicar";
+            practiceBtn.title = "Que los alumnos practiquen esta posición contra el motor";
+            actions.append(previewBtn, loadBtn, askBtn, practiceBtn);
+            li.appendChild(actions);
+
+            const previewWrap = document.createElement("div");
+            previewWrap.className = "hidden mt-2";
+            li.appendChild(previewWrap);
+
+            // Destaparla y dibujarla lo lleva el lote: así esta fila hace lo mismo
+            // apretando su propio botón que cuando se destapan todas de una, y el
+            // tablero se dibuja recién cuando la fila entra en pantalla —dentro de una
+            // carpeta cerrada la casilla mide cero y la pieza saldría de otro tamaño—.
+            vistaPreviaArchivos.registrar(previewWrap, previewBtn, () => {
+                const fen = archivoStartFen(a);
+                if (fen) renderTacticsPreviewBoard(previewWrap, fen);
+                else previewWrap.textContent = "Ese PGN no se pudo interpretar.";
+            });
+            loadBtn.addEventListener("click", () => cargarArchivoEnClase(a));
+            askBtn.addEventListener("click", () => askArchivoExercise(a));
+            practiceBtn.addEventListener("click", () => practicarArchivoExercise(a));
+            return li;
+        }
+
+        function renderArchivoPanelGrupo(nombre, lista) {
+            const det = document.createElement("details");
+            det.className = "border border-brand-200 dark:border-brand-700 rounded-lg overflow-hidden";
+            det.open = !nombre; // "Sin carpeta" arranca abierta; las que tienen nombre, cerradas
+            const summary = document.createElement("summary");
+            summary.className = "cursor-pointer text-xs font-semibold text-brand-700 dark:text-brand-200 px-3 py-2 marker:text-accent-600";
+            summary.textContent = (nombre ? "📁 " + nombre : "🗂️ Sin carpeta") + " (" + lista.length + ")";
+            det.appendChild(summary);
+            const ul = document.createElement("ul");
+            ul.className = "space-y-2 px-2 pb-2";
+            lista.forEach((a) => ul.appendChild(renderArchivoPanelItem(a)));
+            det.appendChild(ul);
+            return det;
+        }
+
+        // Las carpetas se ordenan en partidas.html; acá solo se agrupa lo que ya
+        // quedó puesto, para que la lista se pueda recorrer aunque sean muchos PGN.
+        async function refreshArchivosPanel() {
+            const wrap = document.getElementById("archivos-panel-list");
+            const emptyEl = document.getElementById("archivos-panel-empty");
+            const msgEl = document.getElementById("archivos-panel-msg");
+            const toolsEl = document.getElementById("archivos-panel-tools");
+            msgEl.textContent = "";
+            wrap.innerHTML = "";
+            toolsEl.innerHTML = "";
+            toolsEl.className = "";   // vacío no deja margen: la lista arranca pegada al aviso
+            vistaPreviaArchivos.reiniciar();
+            const { data, error } = await sb.from("archivos_pgn").select("*")
+                .eq("profesor_id", session.user.id).order("created_at", { ascending: false });
+            if (error) { msgEl.textContent = "No se pudo cargar tu lista de archivos."; return; }
+            const archivos = data || [];
+            emptyEl.classList.toggle("hidden", archivos.length > 0);
+            // Sin archivos no se ofrece el interruptor: un control que no cambia nada.
+            if (archivos.length) {
+                const cuenta = document.createElement("p");
+                cuenta.className = "text-xs text-brand-450 dark:text-brand-350 min-w-0 truncate";
+                cuenta.textContent = archivos.length + (archivos.length === 1 ? " archivo" : " archivos");
+                toolsEl.className = "flex items-center justify-between gap-2 mb-2";
+                toolsEl.append(cuenta, vistaPreviaArchivos.control());
+            }
+
+            const porCarpeta = new Map(); // "" = sin carpeta
+            archivos.forEach((a) => {
+                const clave = a.carpeta || "";
+                if (!porCarpeta.has(clave)) porCarpeta.set(clave, []);
+                porCarpeta.get(clave).push(a);
+            });
+            const nombresCarpetas = [...porCarpeta.keys()].filter((c) => c !== "").sort((a, b) => a.localeCompare(b, "es"));
+            nombresCarpetas.forEach((nombre) => wrap.appendChild(renderArchivoPanelGrupo(nombre, porCarpeta.get(nombre))));
+            if (porCarpeta.has("")) wrap.appendChild(renderArchivoPanelGrupo(null, porCarpeta.get("")));
+
+            archivosPanelCargados = true;
+        }
+
+        async function cargarArchivoEnClase(a) {
+            const msgEl = document.getElementById("archivos-panel-msg");
+            const fen = archivoStartFen(a);
+            if (!fen) { msgEl.textContent = "Ese PGN no se pudo interpretar."; return; }
+            const aviso = "Se cargó \"" + a.titulo + "\" en el tablero, desde su posición inicial — juega la línea en vivo con la clase.";
+            if (!(await aplicarPosicionEnClase(fen, aviso))) return;
+            document.getElementById("archivos-panel").classList.add("hidden");
+        }
+
+        // Envía la posición de SALIDA del PGN como pregunta — mismo mecanismo que
+        // askTacticsExercise() más abajo (misma tabla game_state, misma tabla questions),
+        // solo que la posición viene de un archivo subido en Archivos y no del banco de
+        // Táctica. expectedPlies sale del propio move_count del archivo, con el mismo
+        // tope de 6 que usa Táctica: sin tope, un PGN de 40 jugadas dejaría el campo de
+        // "jugadas esperadas" con un número que nadie va a escribir de memoria.
+        async function askArchivoExercise(a) {
+            const msgEl = document.getElementById("archivos-panel-msg");
+            const fen = archivoStartFen(a);
+            if (!fen) { msgEl.textContent = "Ese PGN no se pudo interpretar."; return; }
+            const expectedPlies = Math.max(1, Math.min(6, Math.ceil((a.move_count || 1) / 2)));
+            if (!(await aplicarPosicionEnClase(fen))) return;
+            document.getElementById("question-plies-input").value = expectedPlies;
+            await sb.from("questions").update({ closed_at: new Date().toISOString() }).eq("created_by", boardOwnerId).is("closed_at", null);
+            const { data, error } = await sb.from("questions").insert({ fen, created_by: session.user.id, expected_plies: expectedPlies }).select().single();
+            if (error) { console.error(error); setStatus("No se pudo crear la pregunta: " + error.message); return; }
+            document.getElementById("archivos-panel").classList.add("hidden");
+            activateTeacherTab("preguntar");
+            setStatus("Se envió \"" + a.titulo + "\" a la clase como pregunta.");
+            computeEngineAnswer(data.id, fen, expectedPlies); // en segundo plano, no bloquea la pregunta
+        }
+
+        // Manda la posición de salida a practicar contra el motor — mismo insert que
+        // start-practice-btn (misma tabla practice_sessions), pero con el fen del archivo
+        // en vez de board.fen(): por eso pasa antes por aplicarPosicionEnClase(), que deja
+        // el tablero de la clase mostrando la MISMA posición que los alumnos van a jugar.
+        async function practicarArchivoExercise(a) {
+            const msgEl = document.getElementById("archivos-panel-msg");
+            const fen = archivoStartFen(a);
+            if (!fen) { msgEl.textContent = "Ese PGN no se pudo interpretar."; return; }
+            if (!(await aplicarPosicionEnClase(fen))) return;
+            if (typeof PracticeEngine !== "undefined") PracticeEngine.preload();
+            await sb.from("practice_sessions").update({ ended_at: new Date().toISOString() }).eq("created_by", boardOwnerId).is("ended_at", null);
+            const { error } = await sb.from("practice_sessions").insert({
+                fen, level: selectedPracticeLevel, created_by: session.user.id,
+            });
+            if (error) { console.error(error); setStatus("No se pudo iniciar la práctica: " + error.message); return; }
+            document.getElementById("archivos-panel").classList.add("hidden");
+            activateTeacherTab("practicar");
+            setStatus("Práctica iniciada desde \"" + a.titulo + "\": los alumnos ya pueden jugar contra el motor.");
+        }
+
+        function setupArchivosTools() {
+            document.getElementById("toggle-archivos-btn").addEventListener("click", () => {
+                const panel = document.getElementById("archivos-panel");
+                const active = panel.classList.contains("hidden");
+                panel.classList.toggle("hidden", !active);
+                document.getElementById("board-edit-panel").classList.add("hidden");
+                document.getElementById("lesson-picker-panel").classList.add("hidden");
+                document.getElementById("pdf-panel").classList.add("hidden");
+                if (active && !archivosPanelCargados) refreshArchivosPanel();
+            });
+            document.getElementById("archivos-panel-close-btn").addEventListener("click", () => {
+                document.getElementById("archivos-panel").classList.add("hidden");
+            });
+        }
+
+        // Abre la lección en la pantalla del profesor y en ninguna otra: no toca Supabase,
+        // así que no hay nada que un alumno pueda recibir. Solo el profesor tiene el botón
+        // que llega hasta aquí, y el panel vive dentro de su columna del tablero.
+        function cerrarLeccionLocal() {
+            if (observadorDeLeccion) { observadorDeLeccion.disconnect(); observadorDeLeccion = null; }
+            const bodyEl = document.getElementById("class-lesson-body");
+            bodyEl.innerHTML = "";
+            delete bodyEl.dataset.course;
+            document.getElementById("class-lesson-msg").textContent = "";
+            document.getElementById("class-lesson-panel").classList.add("hidden");
+        }
+
+        let observadorDeLeccion = null;
+        async function abrirLeccionLocal(slug, n) {
+            if (!isTeacher) return;
+            cerrarLeccionLocal();
+            const panel = document.getElementById("class-lesson-panel");
+            const titleEl = document.getElementById("class-lesson-title");
+            const msgEl = document.getElementById("class-lesson-msg");
+            const bodyEl = document.getElementById("class-lesson-body");
+            const catalogEntry = CLASS_LESSON_CATALOG.find((c) => c.slug === slug);
+            panel.classList.remove("hidden");
+            document.getElementById("class-lesson-hide-btn").classList.remove("hidden");
+            titleEl.textContent = "📚 " + (catalogEntry ? catalogEntry.titulo : slug);
+            msgEl.textContent = "Cargando…";
+            try {
+                if (window.SesionCursos) SesionCursos.guardar(session); // la cookie que mira worker.js
+                const r = await fetch("cursos/protegido/" + slug + ".html", { credentials: "same-origin" });
+                if (!r.ok) throw new Error("no_content");
+                const html = await r.text();
+                const temp = document.createElement("div");
+                temp.innerHTML = html;
+                const detalles = detallesDeLeccion(temp);
+                const leccion = detalles[n - 1];
+                if (!leccion) throw new Error("sin_leccion");
+                leccion.open = true;
+                bodyEl.dataset.course = slug;
+                bodyEl.appendChild(leccion);
+                if (window.Finales100) window.Finales100.init(bodyEl);
+                if (window.CursoPartidas) window.CursoPartidas.init(bodyEl);
+                document.dispatchEvent(new CustomEvent("curso:contenido", { detail: { body: bodyEl, curso: slug } }));
+                vigilarPosicionesDeLaLeccion(bodyEl);
+                msgEl.textContent = "";
+            } catch (e) {
+                msgEl.textContent = "No se pudo cargar esta lección.";
+            }
+        }
+
+        // ---------- El botón que lleva una posición del curso al tablero de la clase ----------
+        // Los visores del curso se construyen cuando se ven (los <details> cerrados esperan a
+        // abrirse: el curso tiene más de 300 diagramas y construirlos todos de golpe frenaría
+        // el celular), así que no alcanza con recorrer la lección una vez al inyectarla — el
+        // botón se pone sobre lo que vaya apareciendo. Es el mismo patrón que ya usan
+        // js/coordenadas-tablero.js y js/board-drag.js.
+        //
+        // El FEN NO se vuelve a sacar del archivo de datos: se lee del data-fen-actual que el
+        // propio visor publica (ver publicarFen en js/finales-100.js y js/curso-partidas.js),
+        // que es la posición que el profesor tiene delante — recorriendo la línea casi nunca
+        // está en la primera, y mandar la inicial cuando él está explicando la jugada 12 es
+        // exactamente el fallo que no avisa: se transmite una posición, solo que la que no era.
+        //
+        // Los diagramas FIJOS (.cp-static: un dibujo con su pie, sin línea que recorrer) no
+        // tienen visor que publique nada, así que traen su FEN escrita en el propio HTML, en
+        // el mismo data-fen-actual. Sin ella eran lo único de la lección que el profesor no
+        // podía enseñarle a la clase, y eso no daba ningún error: simplemente no había botón.
+        const VISORES_CON_POSICION = ".f100-viewer, .cp-viewer, .cp-static[data-fen-actual]";
+        function lugarDelBoton(visor) {
+            const head = visor.querySelector(".f100-head, .cp-head");
+            if (head) return head;
+            if (!visor.classList.contains("cp-static")) return null;
+            // El diagrama fijo es una rejilla de dos columnas (dibujo | pie): el botón va
+            // DEBAJO del pie, en la misma columna, y no como tercer hijo, que caería en una
+            // fila nueva debajo del dibujo.
+            let texto = visor.querySelector(".cp-static-texto");
+            if (!texto) {
+                const pie = visor.querySelector(":scope > p");
+                if (!pie) return null;
+                texto = document.createElement("div");
+                texto.className = "cp-static-texto space-y-2";
+                pie.replaceWith(texto);
+                texto.appendChild(pie);
+            }
+            return texto;
+        }
+        function ponerBotonDePosicion(visor) {
+            if (visor.querySelector(".lesson-send-btn")) return;
+            const head = lugarDelBoton(visor);
+            if (!head) return;
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "lesson-send-btn text-xs font-semibold px-2 py-1 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors";
+            btn.textContent = "📥 Al tablero de la clase";
+            btn.title = "Transmitir a todos los alumnos la posición que estás viendo en este diagrama";
+            btn.addEventListener("click", async () => {
+                // El aviso va en el propio panel de la lección y no solo en la franja de
+                // estado de arriba: para llegar a este botón hay que estar con la lección
+                // delante, o sea con la franja fuera de la pantalla. Hay posiciones de curso
+                // que son ilustraciones y no partidas —una tiene un peón y un solo rey— y no
+                // se pueden poner en un tablero en vivo: decir por qué es lo único que evita
+                // que parezca que el botón no hace nada.
+                const leccionMsg = document.getElementById("class-lesson-msg");
+                const fen = visor.dataset.fenActual;
+                leccionMsg.textContent = "";
+                if (!fen) { leccionMsg.textContent = "Este diagrama todavía no tiene una posición que mandar."; return; }
+                const motivo = motivoPosicionInvalida(fen);
+                if (motivo) { leccionMsg.textContent = "No se puede llevar al tablero: " + motivo; return; }
+                const ok = await aplicarPosicionEnClase(fen, "Posición del curso enviada: ya la ven todos los alumnos.");
+                if (ok) { btn.textContent = "✅ Enviada"; setTimeout(() => { btn.textContent = "📥 Al tablero de la clase"; }, 2000); }
+            });
+            head.appendChild(btn);
+        }
+        function vigilarPosicionesDeLaLeccion(bodyEl) {
+            const repasar = () => bodyEl.querySelectorAll(VISORES_CON_POSICION).forEach(ponerBotonDePosicion);
+            repasar();
+            // Recorrer la línea de un diagrama reescribe su tablero entero en cada jugada, o
+            // sea decenas de mutaciones por clic: el repaso se agrupa en un solo cuadro de
+            // animación en vez de correr una vez por mutación.
+            let pendiente = false;
+            observadorDeLeccion = new MutationObserver(() => {
+                if (pendiente) return;
+                pendiente = true;
+                requestAnimationFrame(() => { pendiente = false; repasar(); });
+            });
+            observadorDeLeccion.observe(bodyEl, { childList: true, subtree: true });
+        }
+
+        // ---------- Poner una posición en el tablero de la clase ----------
+        // Tres puertas distintas llegan aquí: "✅ Aplicar posición" del editor, el botón
+        // de cada diagrama del curso que el profesor tiene abierto y el de la vista previa
+        // de Táctica. Las tres tienen que escribir EXACTAMENTE lo mismo — si cada una
+        // armara su propio update, la que se olvidara de limpiar las variantes o de
+        // quitarle el control al alumno dejaría la clase con un resto de la posición
+        // anterior, y eso no da ningún error: simplemente el tablero no se comporta igual
+        // según por dónde entró la posición.
+
+        // chess.js carga sin quejarse posiciones que no pueden existir en una partida real,
+        // y algunas de ellas rompen a Stockfish para el resto de la sesión (ver la nota en
+        // js/shared-engine.js). Devuelve el motivo por el que no se puede transmitir, o
+        // null si la posición está bien.
+        /* La validación vive en js/posicion-valida.js: la comparte el armador de
+           planes, que hace la misma pregunta ANTES de guardar. Acá queda el
+           nombre de siempre, que usan las cuatro puertas de esta página.
+
+           Va como `function` y no como `const`: la primera de esas puertas está
+           escrita más ARRIBA en el archivo, y un `const` no existe hasta que se
+           evalúa su línea — es el mismo "Cannot access before initialization"
+           que dejó a 4x4.html colgada en "Comprobando tu sesión…". */
+        function motivoPosicionInvalida(fen) { return PosicionValida.motivo(fen); }
+
+        async function aplicarPosicionEnClase(fen, aviso) {
+            const motivo = motivoPosicionInvalida(fen);
+            if (motivo) { setStatus(motivo); return false; }
+            board.loadMoves([], fen);
+            const { error } = await sb.from("game_state").update({
+                fen, moves: [], start_fen: fen, last_move: null,
+                arrows: [], circles: [], active_player_id: null, active_player_color: "both",
+                updated_by: session.user.id, updated_at: new Date().toISOString(),
+            }).eq("id", myGameStateId);
+            if (error) { console.error(error); setStatus("No se pudo transmitir la posición: " + error.message); return false; }
+            /* Segundo disparador de "esto ya es una clase": el profesor mandó una
+               posición al tablero de todos. Va DESPUÉS de que la posición se haya
+               transmitido de verdad — abrir la clase por un intento que falló
+               dejaría una clase registrada que nadie dio. Las tres puertas del
+               sitio pasan por esta función, así que alcanza con engancharlo acá. */
+            abrirClaseSiHaceFalta();
+            await clearVariantTree();
+            // No hay que esperar a que llegue el eco de Realtime del propio cambio para
+            // refrescar el motor de análisis: eso dependía de un viaje de ida y vuelta a
+            // Supabase (con las ~8 suscripciones de Realtime abiertas en esta página, en una
+            // red de aula puede tardar o perderse) y mientras tanto el panel se quedaba
+            // mostrando la evaluación de la posición anterior. El tablero del profesor ya
+            // tiene la posición nueva aplicada localmente, así que se le pide aquí.
+            if (isTeacher) updateEngineEval();
+            if (aviso) setStatus(aviso);
+            return true;
+        }
+
+        async function pushBoardState(extraFields) {
+            const moves = board.moves();
+            const { error } = await sb.from("game_state").update(Object.assign({
+                fen: board.fen(),
+                moves,
+                start_fen: board.startFen,
+                last_move: moves.length ? moves[moves.length - 1] : null,
+                arrows: [],
+                circles: [],
+                updated_by: session.user.id,
+                updated_at: new Date().toISOString(),
+            }, extraFields || {})).eq("id", myGameStateId);
+            if (error) {
+                console.error(error);
+                setStatus("No se pudo guardar el cambio: " + error.message);
+            }
+        }
+
+        async function pushMarksToServer(marks) {
+            const { error } = await sb.from("game_state").update({ arrows: marks.arrows, circles: marks.circles }).eq("id", myGameStateId);
+            if (error) console.error(error);
+        }
+
+        // Cada profesor tiene su propia fila en game_state (owner_id). La primera vez
+        // que un profesor entra a dar clase todavía no existe — se crea aquí, con la
+        // posición inicial por defecto. Un alumno nunca la crea: si su profesor
+        // asignado aún no dio ninguna clase, simplemente no hay tablero que mostrar.
+        async function loadGameState() {
+            const { data, error } = await sb.from("game_state").select("*").eq("owner_id", boardOwnerId).maybeSingle();
+            if (error) { setStatus("No se pudo cargar el tablero: " + error.message); return; }
+            if (data) { myGameStateId = data.id; applyGameStateRow(data); return; }
+            if (!isTeacher) { setStatus("Tu profesor todavía no ha abierto su tablero de clase."); return; }
+            const { data: created, error: createError } = await sb.from("game_state").insert({ owner_id: boardOwnerId }).select().single();
+            if (createError) { setStatus("No se pudo crear tu tablero: " + createError.message); return; }
+            myGameStateId = created.id;
+            applyGameStateRow(created);
+        }
+
+        function subscribeRealtime() {
+            sb.channel("game_state-changes:" + boardOwnerId)
+                .on("postgres_changes", { event: "UPDATE", schema: "public", table: "game_state", filter: "owner_id=eq." + boardOwnerId }, (payload) => {
+                    applyGameStateRow(payload.new);
+                })
+                .subscribe();
+        }
+
+        // ---------- Registro de clases: asistencia, tiempo real conectado y cierre en vivo ----------
+        let currentOpenSessionId = null;
+
+        async function markAttendance(sessionId) {
+            if (isTeacher) return;
+            const { error } = await sb.from("class_attendance").upsert(
+                { session_id: sessionId, student_id: profile.id },
+                { onConflict: "session_id,student_id", ignoreDuplicates: true }
+            );
+            if (error) console.error(error);
+        }
+
+        // Tiempo en clase EXACTO: no se estima desde que entró hasta que cerró la clase, sino
+        // que se abre una fila al conectarse y se va "tocando" (left_at) cada pocos segundos
+        // mientras la pestaña sigue abierta — así left_at siempre refleja, con unos segundos de
+        // margen, el último momento realmente conectado, sin depender de que el navegador
+        // avise al cerrarse.
+        let presenceLogId = null;
+        let presenceHeartbeatTimer = null;
+
+        async function startPresenceLog(sessionId) {
+            if (isTeacher || !sessionId || presenceLogId) return;
+            const { data, error } = await sb.from("class_presence_log")
+                .insert({ session_id: sessionId, student_id: profile.id })
+                .select().single();
+            if (error) { console.error(error); return; }
+            presenceLogId = data.id;
+            if (presenceHeartbeatTimer) clearInterval(presenceHeartbeatTimer);
+            presenceHeartbeatTimer = setInterval(touchPresenceLog, 20000);
+        }
+
+        async function touchPresenceLog() {
+            if (!presenceLogId) return;
+            await sb.from("class_presence_log").update({ left_at: new Date().toISOString() }).eq("id", presenceLogId);
+        }
+
+        async function stopPresenceLog() {
+            if (presenceHeartbeatTimer) { clearInterval(presenceHeartbeatTimer); presenceHeartbeatTimer = null; }
+            if (presenceLogId) {
+                await touchPresenceLog();
+                presenceLogId = null;
+            }
+        }
+
+        /* ---- Que la clase quede registrada sin acordarse de nada -----------
+         *
+         * La asistencia, los minutos en clase, el informe a la casa y el reporte
+         * de actividades cuelgan TODOS de que exista una fila abierta en
+         * `class_sessions`. Y esa fila la abría un botón que vive en el panel
+         * (`clases.html`), mientras que la clase se da acá: el profesor entra
+         * directo desde el grid, da su clase entera con la pizarra y las
+         * preguntas, y sin esa fila no se registró nada. No da ningún error —
+         * simplemente esa clase no existió, y eso no se puede reconstruir
+         * después.
+         *
+         * Así que se abre SOLA, y no al entrar sino al primer acto de clase de
+         * verdad: que se conecte un alumno, o que el profesor transmita una
+         * posición. Abrirla con solo entrar dejaría una clase fantasma cada vez
+         * que se asoma a preparar algo; con estos dos disparadores no hay que
+         * acordarse de nada y tampoco se inventan clases que no pasaron.
+         *
+         * Que no se abran dos lo impide un índice único parcial de la base
+         * (`class_sessions_una_abierta_por_profesor`), no la bandera de acá: dos
+         * pestañas, o los dos disparadores a la vez, se saltan cualquier
+         * comprobación previa. La bandera solo evita el pedido de más.
+         */
+        let abriendoClase = false;
+
+        /* Cerrar la clase tiene que SIGNIFICAR cerrarla, y eso lo garantiza que
+         * NADIE más que el profesor la pueda abrir.
+         *
+         * Antes el aviso de presencia la reabría: los alumnos no cierran su
+         * pestaña en el mismo segundo en que el profesor confirma el cierre, así
+         * que el aviso siguiente los encontraba conectados y abría una clase
+         * NUEVA un minuto después de la que se acababa de cerrar. La franja
+         * volvía sola a verde y el profesor —que ya terminó y se va— dejaba esa
+         * fila abierta para siempre.
+         *
+         * Lo caro venía al día siguiente, y es lo que se ve como "la clase no
+         * queda registrada": el índice `class_sessions_una_abierta_por_profesor`
+         * impide una segunda fila abierta, así que la clase de mañana no abre
+         * ninguna — se cuelga de la fantasma que quedó, con su fecha y su hora de
+         * hace un día. Ningún error en ninguna parte.
+         *
+         * Ya no hay con qué reabrirla sin querer: las dos puertas que quedan son
+         * deliberadas del profesor —mandar una posición, o el botón «Abrir la
+         * clase»— y por eso tampoco hace falta acordarse de quién estaba
+         * conectado al cerrar. */
+
+        async function abrirClaseSiHaceFalta() {
+            if (!isTeacher || currentOpenSessionId || abriendoClase) return;
+            abriendoClase = true;
+            const { data, error } = await sb.from("class_sessions")
+                .insert({ created_by: profile.id }).select().maybeSingle();
+            abriendoClase = false;
+            if (error) {
+                // 23505 es el índice único: alguien más (la otra pestaña, el otro
+                // disparador) ya la abrió. No es un fallo — es justo lo que el
+                // índice tiene que hacer. Se busca la que quedó.
+                if (error.code === "23505") { await checkOpenClassSession(); return; }
+                setStatus("No se pudo abrir la clase: " + error.message
+                    + " — la asistencia de tus alumnos no se está registrando.");
+                return;
+            }
+            if (data) currentOpenSessionId = data.id;
+            pintarEstadoDeClase();
+        }
+
+        async function cerrarClaseDesdeAqui() {
+            if (!isTeacher || !currentOpenSessionId) return;
+            const btn = document.getElementById("clase-cerrar-btn");
+            const campos = document.getElementById("clase-cerrar-campos");
+            // El primer toque destapa el título y la nota; el segundo cierra. Así
+            // no se cierra de un clic accidental en medio de la clase y, de paso,
+            // se le pide lo único que hace falta para que el registro sirva.
+            if (campos.classList.contains("hidden")) {
+                campos.classList.remove("hidden");
+                btn.textContent = "Confirmar y cerrar";
+                document.getElementById("clase-titulo").focus();
+                return;
+            }
+            const titulo = document.getElementById("clase-titulo").value.trim();
+            const notas = document.getElementById("clase-notas").value.trim();
+            btn.disabled = true;
+            // Se pide de vuelta la fila para saber si el cierre PASÓ de verdad. Sin el
+            // select, un update que no toca ninguna fila —el id quedó viejo porque la
+            // cerraron desde el panel o desde otra pestaña— devuelve `error: null` y la
+            // pantalla decía "cerrada" con el título y la nota tirados a la basura. Es la
+            // falla callada de siempre, y acá se lleva justo lo que el registro necesita
+            // para servir después.
+            const { data, error } = await sb.from("class_sessions").update({
+                ended_at: new Date().toISOString(),
+                title: titulo || null,
+                notes: notas || null,
+            }).eq("id", currentOpenSessionId).select();
+            btn.disabled = false;
+            if (error) { setStatus("No se pudo cerrar la clase: " + error.message); return; }
+            if (!data || !data.length) {
+                setStatus("Esta clase ya estaba cerrada, así que el nombre y la nota no se guardaron."
+                    + " Puedes escribirlos en el registro de clases del panel.");
+                currentOpenSessionId = null;
+                pintarEstadoDeClase();
+                return;
+            }
+            currentOpenSessionId = null;
+            document.getElementById("clase-titulo").value = "";
+            document.getElementById("clase-notas").value = "";
+            pintarEstadoDeClase();
+            setStatus("✅ Clase cerrada y guardada en el registro"
+                + (titulo ? ' como "' + titulo + '"' : "") + ".");
+        }
+
+        /* Lo que se ve tiene que decir la VERDAD sobre si se está registrando,
+           con todas las letras y no solo con un color: un punto gris no le dice
+           a un entrenador nuevo que la asistencia de sus alumnos se está
+           perdiendo. */
+        function pintarEstadoDeClase() {
+            if (!isTeacher) return;
+            const caja = document.getElementById("clase-estado");
+            const texto = document.getElementById("clase-estado-texto");
+            const abrir = document.getElementById("clase-abrir-btn");
+            const cerrar = document.getElementById("clase-cerrar-btn");
+            const campos = document.getElementById("clase-cerrar-campos");
+            caja.classList.remove("hidden");
+
+            if (currentOpenSessionId) {
+                caja.className = "mb-6 rounded-xl px-5 py-3 flex items-center justify-between gap-3 flex-wrap bg-green-50 dark:bg-green-950/30";
+                texto.className = "text-sm font-semibold text-green-700 dark:text-green-400";
+                texto.textContent = "🔴 Clase en curso: se está registrando la asistencia y el tiempo de tus alumnos.";
+                abrir.classList.add("hidden");
+                cerrar.classList.remove("hidden");
+            } else {
+                caja.className = "mb-6 rounded-xl px-5 py-3 flex items-center justify-between gap-3 flex-wrap bg-brand-100 dark:bg-brand-900";
+                texto.className = "text-sm font-semibold text-brand-600 dark:text-brand-300";
+                /* Dice la CONSECUENCIA, no el mecanismo: mientras la clase no
+                   esté abierta, sus alumnos no pueden entrar —lo hace cumplir la
+                   RLS, no esta pantalla— y no se registra ni la asistencia ni el
+                   tiempo. Un "todavía no hay clase abierta" a secas no le dice a
+                   un entrenador nuevo que la clase que está por dar no la va a
+                   ver nadie. */
+                texto.textContent = "⚪ La clase todavía no está abierta: tus alumnos no pueden entrar"
+                    + " y no se está registrando nada. Se abre con este botón o en cuanto mandes"
+                    + " una posición al tablero.";
+                abrir.classList.remove("hidden");
+                cerrar.classList.add("hidden");
+                campos.classList.add("hidden");
+                cerrar.textContent = "Cerrar la clase";
+            }
+        }
+
+        async function checkOpenClassSession() {
+            const { data } = await sb.from("class_sessions").select("*").eq("created_by", boardOwnerId).is("ended_at", null).order("started_at", { ascending: false }).limit(1);
+            const openSession = (data && data[0]) || null;
+            currentOpenSessionId = openSession ? openSession.id : null;
+            if (openSession) {
+                await markAttendance(openSession.id);
+                await startPresenceLog(openSession.id);
+            }
+            pintarEstadoDeClase();
+        }
+
+        function conectarControlesDeClase() {
+            if (!isTeacher) return;
+            document.getElementById("clase-abrir-btn").addEventListener("click", abrirClaseSiHaceFalta);
+            document.getElementById("clase-cerrar-btn").addEventListener("click", cerrarClaseDesdeAqui);
+        }
+
+        function subscribeClassSessions() {
+            sb.channel("class_sessions-sesion:" + boardOwnerId)
+                .on("postgres_changes", { event: "*", schema: "public", table: "class_sessions", filter: "created_by=eq." + boardOwnerId }, (payload) => {
+                    if (payload.eventType === "INSERT" && !payload.new.ended_at) {
+                        currentOpenSessionId = payload.new.id;
+                        markAttendance(payload.new.id);
+                        startPresenceLog(payload.new.id);
+                        pintarEstadoDeClase();
+                    } else if (payload.eventType === "UPDATE" && payload.new.ended_at && payload.new.id === currentOpenSessionId) {
+                        // El profesor cerró la clase: registramos el último instante conectado
+                        // y devolvemos al alumno al panel.
+                        if (!isTeacher) {
+                            stopPresenceLog().finally(() => { window.location.href = "clases.html"; });
+                        } else {
+                            // La pudo cerrar desde el panel, o desde otra pestaña:
+                            // la franja de acá tiene que decir la verdad igual.
+                            currentOpenSessionId = null;
+                            pintarEstadoDeClase();
+                        }
+                    }
+                })
+                .subscribe();
+        }
+
+        function initBoardForRole() {
+            const container = document.getElementById("chessboard");
+            board = new ClasesBoard(container, {
+                interactive: isTeacher,
+                allowArrows: isTeacher,
+                externalCoords: true,
+                onFreeModeChange: () => updateLiveFenDisplay(),
+                onMove: () => {
+                    pushBoardState();
+                    // Con el control y un solo color, después de su jugada ya no le toca:
+                    // sin esto podía mover también por el otro lado antes de que volviera el eco.
+                    if (!isTeacher) updateAccessForRole();
+                    if (claseAcc) claseAcc.actualizar();
+                    updateTurnIndicator();
+                    renderMoveList();
+                    if (isTeacher) updateEngineEval();
+                },
+                onMarksChange: (marks) => pushMarksToServer(marks),
+                onVariantMove: async (san, fullPath, context) => {
+                    const fen = board.viewGame.fen();
+                    const { data, error } = await sb.from("variant_nodes").insert({
+                        parent_id: context.parentNodeId, root_ply: context.rootPly, san, fen,
+                        created_by: session.user.id, teacher_id: boardOwnerId,
+                    }).select().single();
+                    if (error) { console.error(error); setStatus("No se pudo guardar la variante: " + error.message); return; }
+                    board.setVariantParent(data.id);
+                    await loadVariantTree();
+                },
+            });
+            claseAcc = window.ClaseAdaptada ? ClaseAdaptada.montar(document.getElementById("clase-cmd"), () => board, {
+                etiqueta: isTeacher
+                    ? "Escribe tu jugada o una pregunta sobre la posición"
+                    : "Pregúntale a la posición, o escribe tu jugada cuando tu profe te dé el control",
+                porQueNoPuedes: () => {
+                    if (activePlayerId !== profile.id) return "Ahora mueve tu profe. Cuando te dé el control vas a oírlo, y ahí mismo escribes tu jugada acá. Mientras tanto puedes preguntar: \"posición\", \"caballos\" o \"qué hay en e4\".";
+                    return "Todavía no le toca a tu color. Espera la jugada del otro lado.";
+                },
+            }) : null;
+            if (isTeacher) {
+                document.getElementById("arrows-hint").classList.remove("hidden");
+                initMarksColorPicker();
+            }
+            const moveNav = document.getElementById("move-nav");
+            moveNav.classList.toggle("hidden", !isTeacher);
+            moveNav.classList.toggle("flex", isTeacher);
+            document.getElementById("moves-panel").classList.toggle("hidden", !isTeacher);
+            applyBoardViewPrefs();
+        }
+
+        // ---------- Preferencias de vista del tablero: girar y coordenadas ----------
+        // Son personales del navegador (no se sincronizan): cada quien elige cómo mirar SU pantalla.
+        const FLIP_KEY = "clasesBoardFlipped_v1";
+        const COORDS_KEY = "clasesBoardCoords_v1";
+
+        function applyBoardViewPrefs() {
+            let flipped = false, coords = false;
+            try { flipped = localStorage.getItem(FLIP_KEY) === "1"; } catch (e) {}
+            try { coords = localStorage.getItem(COORDS_KEY) === "1"; } catch (e) {}
+            board.setFlipped(flipped);
+            board.setShowCoords(coords);
+            document.getElementById("show-coords-btn").setAttribute("aria-pressed", coords ? "true" : "false");
+            document.getElementById("show-coords-btn").classList.toggle("bg-accent-500", coords);
+            document.getElementById("show-coords-btn").classList.toggle("text-brand-900", coords);
+        }
+
+        document.getElementById("flip-board-btn").addEventListener("click", () => {
+            const flipped = !board.flipped;
+            try { localStorage.setItem(FLIP_KEY, flipped ? "1" : "0"); } catch (e) {}
+            board.setFlipped(flipped);
+        });
+
+        document.getElementById("show-coords-btn").addEventListener("click", () => {
+            const coords = !board.showCoords;
+            try { localStorage.setItem(COORDS_KEY, coords ? "1" : "0"); } catch (e) {}
+            board.setShowCoords(coords);
+            document.getElementById("show-coords-btn").setAttribute("aria-pressed", coords ? "true" : "false");
+            document.getElementById("show-coords-btn").classList.toggle("bg-accent-500", coords);
+            document.getElementById("show-coords-btn").classList.toggle("text-brand-900", coords);
+        });
+
+        // ---------- Color de las flechas y círculos de pizarra ----------
+        // También personal del navegador, como girar y coordenadas: no es de la clase, es de
+        // con qué color prefiere dibujar ESTE profesor. Los botones se arman leyendo
+        // ClasesBoard.MARK_COLORS (js/clases-board.js), no una lista copiada acá: los cinco
+        // hex viven en un solo lugar.
+        const MARK_COLOR_KEY = "clasesBoardMarkColor_v1";
+        const MARK_COLOR_LABELS = { naranja: "Naranja", azul: "Azul", verde: "Verde", rojo: "Rojo", negro: "Negro" };
+
+        function initMarksColorPicker() {
+            const wrap = document.getElementById("marks-color-picker");
+            let current = ClasesBoard.DEFAULT_MARK_COLOR;
+            try {
+                const saved = localStorage.getItem(MARK_COLOR_KEY);
+                if (saved && ClasesBoard.MARK_COLORS[saved]) current = saved;
+            } catch (e) {}
+            board.setMarkColor(current);
+
+            function pintarSeleccion(key) {
+                wrap.querySelectorAll("button").forEach((b) => {
+                    const elegido = b.dataset.colorKey === key;
+                    b.setAttribute("aria-pressed", elegido ? "true" : "false");
+                    b.classList.toggle("border-brand-800", elegido);
+                    b.classList.toggle("dark:border-white", elegido);
+                    b.classList.toggle("scale-110", elegido);
+                    b.classList.toggle("border-transparent", !elegido);
+                });
+            }
+
+            Object.keys(ClasesBoard.MARK_COLORS).forEach((key) => {
+                const btn = document.createElement("button");
+                btn.type = "button";
+                btn.dataset.colorKey = key;
+                btn.title = "Dibujar en " + MARK_COLOR_LABELS[key];
+                btn.setAttribute("aria-label", MARK_COLOR_LABELS[key]);
+                btn.className = "w-6 h-6 rounded-full border-2 transition-transform";
+                btn.style.backgroundColor = ClasesBoard.MARK_COLORS[key];
+                btn.addEventListener("click", () => {
+                    board.setMarkColor(key);
+                    try { localStorage.setItem(MARK_COLOR_KEY, key); } catch (e) {}
+                    pintarSeleccion(key);
+                });
+                wrap.appendChild(btn);
+            });
+            pintarSeleccion(current);
+            wrap.classList.remove("hidden");
+            wrap.classList.add("flex");
+        }
+
+        // ---------- Navegar entre jugadas (solo profesor) ----------
+        function currentViewedPly() {
+            return board.isViewingHistory() ? board.viewPath.length : board.moves().length;
+        }
+
+        function stepToPly(ply) {
+            const total = board.moves().length;
+            board.viewMainAt(Math.max(0, Math.min(ply, total)));
+            renderMoveList();
+        }
+
+        document.getElementById("move-nav-first").addEventListener("click", () => stepToPly(0));
+        document.getElementById("move-nav-prev").addEventListener("click", () => stepToPly(currentViewedPly() - 1));
+        document.getElementById("move-nav-next").addEventListener("click", () => stepToPly(currentViewedPly() + 1));
+        document.getElementById("move-nav-last").addEventListener("click", () => stepToPly(board.moves().length));
+
+        // ---------- Ocultar piezas a los alumnos (solo profesor) ----------
+        function updateHideBoardBtn() {
+            if (!isTeacher) return;
+            const btn = document.getElementById("toggle-hide-btn");
+            const hidden = !!lastPiecesHidden;
+            btn.textContent = hidden ? "👁️ Mostrar" : "🙈 Ocultar";
+            btn.title = hidden ? "Mostrar piezas a los alumnos" : "Ocultar piezas a los alumnos";
+        }
+        let lastPiecesHidden = false;
+
+        document.getElementById("toggle-hide-btn").addEventListener("click", async () => {
+            lastPiecesHidden = !lastPiecesHidden;
+            updateHideBoardBtn();
+            const { error } = await sb.from("game_state").update({ pieces_hidden: lastPiecesHidden }).eq("id", myGameStateId);
+            if (error) { console.error(error); setStatus("No se pudo cambiar la visibilidad de las piezas: " + error.message); }
+        });
+
+        // ---------- Editor visual del tablero: paleta de piezas, vaciar/posición inicial,
+        // turno y enroques, o FEN/PGN (solo profesor) ----------
+        // Sin color acá a propósito: lo pone renderEditToolButtons() según data-color de
+        // cada botón (piece-white/piece-black, ver el comentario del HTML de la paleta) —
+        // con un color fijo para las dos filas, la de negras se llenaba en modo oscuro con
+        // el mismo claro que blancas y un rey negro macizo terminaba viéndose más blanco
+        // que el hueco de al lado.
+        const EDIT_PIECE_INACTIVE = "edit-piece-btn w-9 h-9 flex items-center justify-center text-2xl rounded-lg border transition-colors bg-white dark:bg-brand-800 border-brand-200 dark:border-brand-700 hover:border-accent-500";
+        const EDIT_PIECE_ACTIVE = "edit-piece-btn w-9 h-9 flex items-center justify-center text-2xl rounded-lg border-2 border-accent-500 bg-accent-500/20 transition-colors";
+        const EDIT_TRASH_INACTIVE = "w-9 h-9 flex items-center justify-center text-lg rounded-lg border transition-colors bg-white dark:bg-brand-800 border-brand-200 dark:border-brand-700 hover:border-red-400";
+        const EDIT_TRASH_ACTIVE = "w-9 h-9 flex items-center justify-center text-lg rounded-lg border-2 border-red-500 bg-red-500/20 transition-colors";
+        const EDIT_TURN_ACTIVE = "edit-turn-btn text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors bg-accent-500 text-brand-900";
+        const EDIT_TURN_INACTIVE = "edit-turn-btn text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200";
+
+        let editTool = null; // null, {color,type} o "trash" — refleja board._freeModeTool
+        let editTurn = "w";
+
+        function renderEditToolButtons() {
+            document.querySelectorAll(".edit-piece-btn").forEach((btn) => {
+                const isActive = editTool && editTool !== "trash" && editTool.color === btn.dataset.color && editTool.type === btn.dataset.type;
+                const base = isActive ? EDIT_PIECE_ACTIVE : EDIT_PIECE_INACTIVE;
+                btn.className = base + (btn.dataset.color === "w" ? " piece-white" : " piece-black");
+            });
+            const trashBtn = document.getElementById("edit-trash-btn");
+            trashBtn.className = editTool === "trash" ? EDIT_TRASH_ACTIVE : EDIT_TRASH_INACTIVE;
+        }
+
+        function setEditTool(tool) {
+            const isSame = tool === "trash" ? editTool === "trash" : (editTool && editTool !== "trash" && tool && editTool.color === tool.color && editTool.type === tool.type);
+            editTool = isSame ? null : tool;
+            board.setFreeModeTool(editTool);
+            renderEditToolButtons();
+        }
+
+        document.querySelectorAll(".edit-piece-btn").forEach((btn) => {
+            btn.addEventListener("click", () => setEditTool({ color: btn.dataset.color, type: btn.dataset.type }));
+        });
+        document.getElementById("edit-trash-btn").addEventListener("click", () => setEditTool("trash"));
+
+        function setEditTurn(turn) {
+            editTurn = turn;
+            document.getElementById("edit-turn-w").className = turn === "w" ? EDIT_TURN_ACTIVE : EDIT_TURN_INACTIVE;
+            document.getElementById("edit-turn-b").className = turn === "b" ? EDIT_TURN_ACTIVE : EDIT_TURN_INACTIVE;
+            updateLiveFenDisplay();
+        }
+        document.getElementById("edit-turn-w").addEventListener("click", () => setEditTurn("w"));
+        document.getElementById("edit-turn-b").addEventListener("click", () => setEditTurn("b"));
+        ["edit-castle-wk", "edit-castle-wq", "edit-castle-bk", "edit-castle-bq"].forEach((id) => {
+            document.getElementById(id).addEventListener("change", updateLiveFenDisplay);
+        });
+
+        document.getElementById("edit-clear-btn").addEventListener("click", () => {
+            board.clearBoard();
+            setEditTool(null);
+        });
+        document.getElementById("edit-initial-btn").addEventListener("click", () => {
+            board.setInitialPosition();
+            setEditTool(null);
+            syncEditPanelFromPosition();
+        });
+
+        // Lee la posición actual del tablero (mientras se edita) y ajusta el selector de
+        // turno y las casillas de enroque para que reflejen lo que ya hay, en vez de
+        // arrancar siempre en "blancas, todos los enroques".
+        function syncEditPanelFromPosition() {
+            const parts = board.fen().split(" ");
+            setEditTurn(parts[1] === "b" ? "b" : "w");
+            const castling = parts[2] || "-";
+            document.getElementById("edit-castle-wk").checked = castling.includes("K");
+            document.getElementById("edit-castle-wq").checked = castling.includes("Q");
+            document.getElementById("edit-castle-bk").checked = castling.includes("k");
+            document.getElementById("edit-castle-bq").checked = castling.includes("q");
+            updateLiveFenDisplay();
+        }
+
+        // Arma el FEN candidato (posición actual del tablero + turno/enroques ya elegidos
+        // en el panel, igual que hace free-mode-apply-btn) y lo muestra en el campo de solo
+        // lectura — así el profesor ve hacia dónde va la posición mientras la arma, sin
+        // esperar a aplicarla. No valida nada (esa validación solo corre al aplicar).
+        function updateLiveFenDisplay() {
+            const field = document.getElementById("edit-current-fen");
+            if (!field) return;
+            const parts = board.fen().split(" ");
+            parts[1] = editTurn;
+            let castling = "";
+            if (document.getElementById("edit-castle-wk").checked) castling += "K";
+            if (document.getElementById("edit-castle-wq").checked) castling += "Q";
+            if (document.getElementById("edit-castle-bk").checked) castling += "k";
+            if (document.getElementById("edit-castle-bq").checked) castling += "q";
+            parts[2] = castling || "-";
+            parts[3] = "-";
+            field.value = parts[0] + " " + parts[1] + " " + parts[2] + " " + parts[3] + " 0 1";
+        }
+
+        document.getElementById("edit-current-fen-copy-btn").addEventListener("click", async () => {
+            const field = document.getElementById("edit-current-fen");
+            const btn = document.getElementById("edit-current-fen-copy-btn");
+            try {
+                await navigator.clipboard.writeText(field.value);
+            } catch (e) {
+                field.select();
+                document.execCommand("copy");
+            }
+            const original = btn.textContent;
+            btn.textContent = "✅ Copiado";
+            setTimeout(() => { btn.textContent = original; }, 1500);
+        });
+
+        // ---------- Panel flotante del editor de tablero: arrastrable desde el título ----------
+        // Es una herramienta temporal (se abre, se usa un momento, se cierra), así que flota por
+        // encima de la página en vez de empujar el tablero hacia abajo, y se puede arrastrar a un
+        // lado si tapa algo que el profesor necesita ver.
+        function resetBoardEditPanelPosition() {
+            const panel = document.getElementById("board-edit-panel");
+            panel.style.top = "88px";
+            panel.style.right = "16px";
+            panel.style.left = "auto";
+        }
+        (function setupBoardEditDrag() {
+            const panel = document.getElementById("board-edit-panel");
+            const handle = document.getElementById("board-edit-header");
+            let dragging = false, offsetX = 0, offsetY = 0;
+            function clamp(x, y) {
+                const maxX = Math.max(8, window.innerWidth - panel.offsetWidth - 8);
+                const maxY = Math.max(8, window.innerHeight - panel.offsetHeight - 8);
+                return { x: Math.min(Math.max(8, x), maxX), y: Math.min(Math.max(8, y), maxY) };
+            }
+            function start(e) {
+                dragging = true;
+                const rect = panel.getBoundingClientRect();
+                const p = e.touches ? e.touches[0] : e;
+                offsetX = p.clientX - rect.left;
+                offsetY = p.clientY - rect.top;
+                e.preventDefault();
+            }
+            function move(e) {
+                if (!dragging) return;
+                const p = e.touches ? e.touches[0] : e;
+                const { x, y } = clamp(p.clientX - offsetX, p.clientY - offsetY);
+                panel.style.left = x + "px";
+                panel.style.top = y + "px";
+                panel.style.right = "auto";
+                e.preventDefault();
+            }
+            function stop() { dragging = false; }
+            handle.addEventListener("mousedown", start);
+            handle.addEventListener("touchstart", start, { passive: false });
+            window.addEventListener("mousemove", move);
+            window.addEventListener("touchmove", move, { passive: false });
+            window.addEventListener("mouseup", stop);
+            window.addEventListener("touchend", stop);
+        })();
+
+        document.getElementById("toggle-free-mode-btn").addEventListener("click", () => {
+            const active = !board.freeMode;
+            // Salir con este mismo botón es descartar la edición, igual que
+            // «Cancelar»: mientras se editaba, los cambios que llegaban de la
+            // base se ignoraban, así que sin volver a leerla el tablero se
+            // quedaría con la posición armada a mano — y la próxima jugada la
+            // transmitiría sin pasar por la validación de «Aplicar».
+            if (!active) { document.getElementById("free-mode-cancel-btn").click(); return; }
+            board.setFreeMode(active);
+            setEditTool(null);
+            if (active) resetBoardEditPanelPosition();
+            document.getElementById("board-edit-panel").classList.toggle("hidden", !active);
+            if (active) {
+                document.getElementById("lesson-picker-panel").classList.add("hidden"); // no los dos a la vez
+                document.getElementById("pdf-panel").classList.add("hidden");
+                document.getElementById("archivos-panel").classList.add("hidden");
+            }
+            document.getElementById("free-mode-load-msg").textContent = "";
+            const freeModeBtn = document.getElementById("toggle-free-mode-btn");
+            freeModeBtn.textContent = active ? "🔒 Editando…" : "✏️ Editar";
+            freeModeBtn.title = active ? "Editando posición…" : "Editar el tablero (mover piezas libremente o cargar FEN/PGN)";
+            if (active) syncEditPanelFromPosition();
+            setStatus(active
+                ? "Editando el tablero: toca una pieza de la paleta y luego el tablero para colocarla, o carga una posición por FEN o PGN. Los alumnos siguen viendo la posición anterior hasta que apliques los cambios."
+                : "");
+        });
+
+        document.getElementById("board-edit-close-btn").addEventListener("click", () => {
+            document.getElementById("free-mode-cancel-btn").click();
+        });
+
+        document.getElementById("free-mode-fen-load-btn").addEventListener("click", () => {
+            const input = document.getElementById("free-mode-fen-input");
+            const msg = document.getElementById("free-mode-load-msg");
+            const ok = board.loadFreeModeFen(input.value);
+            msg.textContent = ok ? "" : "Ese FEN no es válido — revísalo e intenta de nuevo.";
+            if (ok) { input.value = ""; syncEditPanelFromPosition(); }
+        });
+
+        document.getElementById("free-mode-pgn-load-btn").addEventListener("click", () => {
+            const input = document.getElementById("free-mode-pgn-input");
+            const msg = document.getElementById("free-mode-load-msg");
+            const ok = board.loadFreeModePgn(input.value);
+            msg.textContent = ok ? "" : "Ese PGN no se pudo interpretar — revísalo e intenta de nuevo.";
+            if (ok) { input.value = ""; syncEditPanelFromPosition(); }
+        });
+
+        document.getElementById("free-mode-apply-btn").addEventListener("click", async () => {
+            // El turno y los enroques se eligen aparte (paleta/checkboxes), así que se
+            // reescriben esos dos campos del FEN antes de validar y aplicar la posición.
+            const parts = board.fen().split(" ");
+            parts[1] = editTurn;
+            let castling = "";
+            if (document.getElementById("edit-castle-wk").checked) castling += "K";
+            if (document.getElementById("edit-castle-wq").checked) castling += "Q";
+            if (document.getElementById("edit-castle-bk").checked) castling += "k";
+            if (document.getElementById("edit-castle-bq").checked) castling += "q";
+            parts[2] = castling || "-";
+            parts[3] = "-"; // sin al paso: no tiene sentido conservarlo en una posición armada a mano
+            const candidateFen = parts[0] + " " + parts[1] + " " + parts[2] + " " + parts[3] + " 0 1";
+            const msg = document.getElementById("free-mode-load-msg");
+            // Las tres posiciones imposibles que chess.js carga igual, sin avisar, y que aquí
+            // son fáciles de armar sin querer con la paleta — sin rey, con peones coronados
+            // en la última fila, o con el rey que no le toca mover en jaque: se responden en
+            // el propio panel del editor, que es donde está mirando quien las armó.
+            const motivo = motivoPosicionInvalida(candidateFen);
+            if (motivo) { msg.textContent = motivo; return; }
+            if (!board.loadFreeModeFen(candidateFen)) {
+                msg.textContent = "Esa posición no es válida (revisa que haya un solo rey de cada color, por ejemplo).";
+                return;
+            }
+            msg.textContent = "";
+            const finalFen = board.fen();
+            board.setFreeMode(false);
+            setEditTool(null);
+            document.getElementById("board-edit-panel").classList.add("hidden");
+            document.getElementById("toggle-free-mode-btn").textContent = "✏️ Editar";
+            document.getElementById("toggle-free-mode-btn").title = "Editar el tablero (mover piezas libremente o cargar FEN/PGN)";
+            await aplicarPosicionEnClase(finalFen, "Posición aplicada: ya se transmitió a todos los alumnos.");
+        });
+
+        document.getElementById("free-mode-cancel-btn").addEventListener("click", async () => {
+            board.setFreeMode(false);
+            setEditTool(null);
+            document.getElementById("board-edit-panel").classList.add("hidden");
+            document.getElementById("free-mode-load-msg").textContent = "";
+            document.getElementById("toggle-free-mode-btn").textContent = "✏️ Editar";
+            document.getElementById("toggle-free-mode-btn").title = "Editar el tablero (mover piezas libremente o cargar FEN/PGN)";
+            await loadGameState();
+            setStatus("Edición descartada: se restauró la posición real de la clase.");
+        });
+
+        document.getElementById("undo-move-btn").addEventListener("click", async () => {
+            if (!canMoveNow() || board.isViewingHistory()) return;
+            const undone = board.undo();
+            if (!undone) return;
+            await pushBoardState();
+            updateTurnIndicator();
+            renderMoveList();
+            if (isTeacher) updateEngineEval();
+        });
+
+        // ---------- Presencia: quién está conectado ahora mismo, y quién pide la palabra ----------
+        const onlineStudents = new Map(); // id -> {email, full_name, hand_raised}
+
+        function renderStudentsList() {
+            if (!isTeacher) return;
+            const listEl = document.getElementById("students-list");
+            const badge = document.getElementById("hand-raised-badge");
+            const entries = Array.from(onlineStudents.entries());
+            if (badge) badge.classList.toggle("hidden", !entries.some(([, info]) => info.hand_raised));
+            if (entries.length === 0) {
+                listEl.innerHTML = '<li class="text-brand-450 dark:text-brand-350">Nadie conectado todavía…</li>';
+                return;
+            }
+            // Quienes piden la palabra aparecen primero, para que el profesor los vea sin buscar.
+            entries.sort((a, b) => (b[1].hand_raised ? 1 : 0) - (a[1].hand_raised ? 1 : 0));
+            listEl.innerHTML = "";
+            for (const [studentId, info] of entries) {
+                const hasControl = activePlayerId === studentId;
+                const li = document.createElement("li");
+                li.className = "flex items-center justify-between gap-2 flex-wrap" + (info.hand_raised ? " bg-accent-500/10 rounded-lg px-2 py-1 -mx-2" : "");
+                const label = document.createElement("span");
+                label.className = "flex items-center gap-2 text-brand-700 dark:text-brand-200 truncate";
+                const dot = document.createElement("span");
+                dot.className = "w-2 h-2 rounded-full bg-green-500 shrink-0";
+                dot.title = "En vivo";
+                label.appendChild(dot);
+                if (info.hand_raised) {
+                    const handIcon = document.createElement("span");
+                    handIcon.className = "shrink-0";
+                    handIcon.textContent = "🖐️";
+                    handIcon.title = "Pidiendo la palabra";
+                    label.appendChild(handIcon);
+                }
+                const name = document.createElement("span");
+                name.className = "truncate";
+                // Nunca innerHTML aquí: full_name/email vienen de datos que el propio usuario
+                // controla (presence.track), textContent los trata siempre como texto plano.
+                name.textContent = info.full_name || info.email;
+                label.appendChild(name);
+                const actions = document.createElement("span");
+                actions.className = "flex items-center gap-1 shrink-0";
+                if (info.hand_raised) {
+                    const lowerBtn = document.createElement("button");
+                    lowerBtn.type = "button";
+                    lowerBtn.className = "text-xs font-semibold px-2 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors";
+                    lowerBtn.textContent = "✋ Bajar";
+                    lowerBtn.title = "Bajarle la mano a este alumno";
+                    lowerBtn.addEventListener("click", () => lowerStudentHand(studentId));
+                    actions.appendChild(lowerBtn);
+                }
+                // La bitácora de ESTE alumno, sin salir de la clase.
+                const notasBtn = document.createElement("button");
+                notasBtn.type = "button";
+                notasBtn.className = "shrink-0 text-xs font-semibold px-2 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+                notasBtn.textContent = "📝";
+                notasBtn.title = "Anotar algo de este alumno (solo lo ves tú)";
+                notasBtn.setAttribute("aria-label", "Bitácora de " + (info.full_name || info.email));
+                notasBtn.addEventListener("click", () => abrirNotasEnClase(studentId, info.full_name || info.email));
+                actions.appendChild(notasBtn);
+
+                // Con qué color puede mover: se elige ANTES de dar el control (para dárselo
+                // ya con el color correcto) y también se puede cambiar mientras ya lo tiene
+                // (por ejemplo, para pasar de "solo blancas" a "ambos colores" a mitad de la
+                // demostración), sin tener que quitarle y volver a darle el control.
+                const colorSelect = document.createElement("select");
+                colorSelect.className = "shrink-0 text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-1 py-1.5 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500";
+                colorSelect.title = "Con qué color puede mover este alumno";
+                colorSelect.innerHTML =
+                    '<option value="both">♟️ Ambos colores</option>' +
+                    '<option value="w">⚪ Solo blancas</option>' +
+                    '<option value="b">⚫ Solo negras</option>';
+                colorSelect.value = hasControl ? activePlayerColor : "both";
+                colorSelect.addEventListener("change", () => {
+                    if (hasControl) setActivePlayer(studentId, colorSelect.value);
+                });
+                actions.appendChild(colorSelect);
+
+                const btn = document.createElement("button");
+                btn.type = "button";
+                btn.className = hasControl
+                    ? "shrink-0 text-xs font-semibold px-3 py-1.5 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors"
+                    : "shrink-0 text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors";
+                btn.textContent = hasControl ? "Quitar control" : "Dar control";
+                btn.addEventListener("click", () => setActivePlayer(hasControl ? null : studentId, colorSelect.value));
+                actions.appendChild(btn);
+                li.appendChild(label);
+                li.appendChild(actions);
+                listEl.appendChild(li);
+            }
+        }
+
+        /* ---------- El plan de clase ----------
+
+           Lo que el profesor preparó en planes.html, aquí al lado del tablero.
+           Ningún renglón hace nada nuevo: cada uno entra por la puerta que esta
+           página ya tenía —`aplicarPosicionEnClase()` para las posiciones y
+           `abrirLeccionLocal()` para las lecciones—, que es lo que garantiza que
+           una posición del plan y una del editor dejen la clase exactamente
+           igual. Si cada botón armara su propio `update`, el que se olvidara de
+           limpiar las variantes dejaría un resto de la posición anterior, y eso
+           no da ningún error.
+
+           Las NOTAS del plan no se transmiten: son su chuleta, como el PDF. */
+        let planesDelProfesor = [];
+        let itemsDelPlan = [];
+
+        async function cargarPlanesEnClase() {
+            if (!isTeacher) return;
+            const select = document.getElementById("plan-select");
+            /* Los propios y los que le comparten sus colegas. Van en la MISMA
+               lista porque a la hora de dar la clase los dos se dan igual —
+               lo que cambia es quién los puede editar, y eso es en el armador.
+               Se piden por separado: un plan compartido no sale del `select`
+               por profesor_id, y su autor no se puede leer de `profiles`. */
+            let compartidos = [];
+            try {
+                planesDelProfesor = await PlanClase.listarPlanes(sb, session.user.id);
+            } catch (e) {
+                document.getElementById("plan-msg").textContent = "No se pudieron cargar tus planes: " + e.message;
+                return;
+            }
+            try {
+                compartidos = await PlanClase.planesCompartidosConmigo(sb);
+            } catch (e) {
+                // Que no lleguen los compartidos no puede dejar sin plan a quien
+                // sí tiene los suyos, en medio de la clase.
+                compartidos = [];
+                document.getElementById("plan-msg").textContent = "No se pudieron cargar los planes compartidos: " + e.message;
+            }
+            planesDelProfesor = planesDelProfesor.concat(compartidos);
+
+            select.innerHTML = "";
+            const vacio = document.createElement("option");
+            vacio.value = "";
+            vacio.textContent = planesDelProfesor.length ? "— Elige un plan —" : "Todavía no has armado ninguno";
+            select.appendChild(vacio);
+            const grupo = (nombre, lista) => {
+                if (!lista.length) return;
+                const g = document.createElement("optgroup");
+                g.label = nombre;
+                lista.forEach((pl) => {
+                    const o = document.createElement("option");
+                    o.value = pl.id;
+                    o.textContent = PlanClase.tituloVisible(pl.titulo) + (pl.autor ? " · " + pl.autor : "");
+                    g.appendChild(o);
+                });
+                select.appendChild(g);
+            };
+            grupo("Tus planes", planesDelProfesor.filter((pl) => pl.profesor_id === session.user.id));
+            grupo("Compartidos contigo", compartidos);
+            /* Cuál estaba dando se recuerda en ESTE aparato, como el tema o la
+               clase elegida: si se recarga la página en medio de la clase —que
+               pasa— no hay que volver a buscarlo en la lista. */
+            const recordado = localStorage.getItem("plan_en_clase");
+            if (recordado && planesDelProfesor.some((pl) => pl.id === recordado)) {
+                select.value = recordado;
+                await abrirPlanEnClase(recordado);
+            }
+        }
+
+        async function abrirPlanEnClase(planId) {
+            const lista = document.getElementById("plan-items");
+            const notasEl = document.getElementById("plan-notas");
+            const msg = document.getElementById("plan-msg");
+            lista.innerHTML = "";
+            notasEl.classList.add("hidden");
+            msg.textContent = "";
+            itemsDelPlan = [];
+            if (!planId) { localStorage.removeItem("plan_en_clase"); return; }
+            localStorage.setItem("plan_en_clase", planId);
+
+            const plan = planesDelProfesor.find((pl) => pl.id === planId);
+            if (plan && plan.notas) {
+                notasEl.textContent = plan.notas;
+                notasEl.classList.remove("hidden");
+            }
+            try {
+                itemsDelPlan = await PlanClase.itemsDe(sb, planId);
+            } catch (e) {
+                msg.textContent = "No se pudieron cargar los renglones: " + e.message;
+                return;
+            }
+            if (!itemsDelPlan.length) {
+                msg.textContent = "Este plan todavía está vacío.";
+                return;
+            }
+            itemsDelPlan.forEach((it) => lista.appendChild(pintarRenglonDelPlan(it)));
+        }
+
+        function pintarRenglonDelPlan(item) {
+            const li = document.createElement("li");
+            li.dataset.planItem = item.id;
+            li.className = "bg-brand-50 dark:bg-brand-950 rounded-lg px-3 py-2";
+
+            const titulo = document.createElement("p");
+            titulo.className = "font-semibold text-brand-700 dark:text-brand-200 break-words";
+            titulo.textContent = PlanClase.resumen(item);
+            li.appendChild(titulo);
+
+            const detalle = item.pregunta || item.nota;
+            if (detalle) {
+                const d = document.createElement("p");
+                d.className = "text-xs text-brand-500 dark:text-brand-300 mt-0.5 break-words whitespace-pre-wrap";
+                d.textContent = detalle;
+                li.appendChild(d);
+            }
+
+            const acciones = document.createElement("div");
+            acciones.className = "flex items-center gap-1.5 flex-wrap mt-1.5";
+            const clases = "text-xs font-semibold px-2 py-1 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+
+            if (item.tipo === "posicion") {
+                const alTablero = document.createElement("button");
+                alTablero.type = "button";
+                alTablero.className = clases;
+                alTablero.textContent = "📥 Al tablero";
+                alTablero.title = "Transmitir esta posición a toda la clase";
+                alTablero.addEventListener("click", async () => {
+                    await aplicarPosicionEnClase(item.fen, "Posición del plan enviada: ya la ven todos los alumnos.");
+                });
+                acciones.appendChild(alTablero);
+
+                if (item.pregunta) {
+                    const preguntar = document.createElement("button");
+                    preguntar.type = "button";
+                    preguntar.className = clases;
+                    preguntar.textContent = "❓ Preguntar";
+                    preguntar.title = "Abrir la pregunta con esta posición (el enunciado se lo dices tú)";
+                    preguntar.addEventListener("click", () => preguntarDelPlan(item));
+                    acciones.appendChild(preguntar);
+                }
+            } else if (item.tipo === "leccion") {
+                const abrir = document.createElement("button");
+                abrir.type = "button";
+                abrir.className = clases;
+                abrir.textContent = "📖 Abrir la lección";
+                abrir.title = "Abrirla solo en tu pantalla, como el PDF";
+                abrir.addEventListener("click", () => abrirLeccionLocal(item.curso, item.leccion));
+                acciones.appendChild(abrir);
+            }
+
+            if (acciones.childElementCount) li.appendChild(acciones);
+            return li;
+        }
+
+        /* Mismo mecanismo que Táctica y que los archivos PGN: se aplica la
+           posición y se abre una pregunta sobre ella.
+
+           `expected_plies` va en 1 y no sale del plan a propósito: el caso de
+           todos los días es "¿cuál es la jugada?", y un campo más que llenar al
+           armar el plan se queda sin llenar. Si hace falta otra cantidad, el
+           panel de Preguntar la cambia como siempre. */
+        async function preguntarDelPlan(item) {
+            if (!(await aplicarPosicionEnClase(item.fen))) return;
+            document.getElementById("question-plies-input").value = 1;
+            await sb.from("questions").update({ closed_at: new Date().toISOString() })
+                .eq("created_by", boardOwnerId).is("closed_at", null);
+            const { data, error } = await sb.from("questions")
+                .insert({ fen: item.fen, created_by: session.user.id, expected_plies: 1 })
+                .select().single();
+            if (error) { console.error(error); setStatus("No se pudo crear la pregunta: " + error.message); return; }
+            activateTeacherTab("preguntar");
+            setStatus("Pregunta abierta desde el plan: " + item.titulo);
+            computeEngineAnswer(data.id, item.fen, 1); // en segundo plano
+        }
+
+        document.getElementById("plan-select").addEventListener("change", (e) => {
+            abrirPlanEnClase(e.target.value);
+        });
+
+        /* La bitácora, abierta desde el renglón del alumno. El panel se monta
+           entero cada vez: son pocas notas (las últimas cinco) y así no hay que
+           acordarse de limpiar lo del alumno anterior — que es justo el descuido
+           que dejaría al profesor escribiendo sobre quien no era. */
+        function abrirNotasEnClase(studentId, nombre) {
+            if (!isTeacher) return;
+            const caja = document.getElementById("notas-en-clase");
+            document.getElementById("notas-en-clase-titulo").textContent = "📝 Bitácora de " + nombre;
+            caja.classList.remove("hidden");
+            NotasAlumno.montarPanel(document.getElementById("notas-en-clase-body"), {
+                sb,
+                alumnoId: studentId,
+                profesorId: profile.id,
+                compacto: true,
+            });
+        }
+
+        document.getElementById("notas-en-clase-cerrar").addEventListener("click", () => {
+            document.getElementById("notas-en-clase").classList.add("hidden");
+        });
+
+        async function setActivePlayer(studentId, color) {
+            const { error } = await sb.from("game_state").update({
+                active_player_id: studentId,
+                active_player_color: studentId ? (color || "both") : "both",
+            }).eq("id", myGameStateId);
+            if (error) {
+                console.error(error);
+                setStatus("No se pudo actualizar el control del tablero: " + error.message);
+            }
+        }
+
+        // ---------- Levantar la mano (solo alumnos) ----------
+        // Vive en la misma presencia (sin tabla nueva): cada quien solo puede anunciar su
+        // propia mano. Para que el profesor pueda "bajarla" de vuelta (tras atender al
+        // alumno) se usa un mensaje broadcast en el mismo canal, que el alumno escucha y
+        // aplica sobre su propia presencia.
+        let handRaised = false;
+
+        function updateRaiseHandBtn() {
+            const btn = document.getElementById("raise-hand-btn");
+            if (!btn) return;
+            btn.textContent = handRaised ? "✋ Bajar la mano" : "🖐️ Levantar la mano";
+            btn.setAttribute("aria-pressed", handRaised ? "true" : "false");
+            btn.classList.toggle("bg-accent-500", handRaised);
+            btn.classList.toggle("hover:bg-accent-600", handRaised);
+            btn.classList.toggle("text-brand-900", handRaised);
+            btn.classList.toggle("bg-brand-100", !handRaised);
+            btn.classList.toggle("hover:bg-brand-200", !handRaised);
+            btn.classList.toggle("dark:bg-brand-800", !handRaised);
+            btn.classList.toggle("dark:hover:bg-brand-700", !handRaised);
+            btn.classList.toggle("text-brand-700", !handRaised);
+            btn.classList.toggle("dark:text-brand-200", !handRaised);
+        }
+
+        async function setHandRaised(value) {
+            handRaised = !!value;
+            updateRaiseHandBtn();
+            if (!presenceChannel) return;
+            await presenceChannel.track({
+                email: profile.email,
+                full_name: profile.full_name || "",
+                role: profile.role,
+                online_at: new Date().toISOString(),
+                hand_raised: handRaised,
+            });
+        }
+
+        function lowerStudentHand(studentId) {
+            if (!presenceChannel) return;
+            presenceChannel.send({ type: "broadcast", event: "lower_hand", payload: { studentId } });
+        }
+
+        const raiseHandBtn = document.getElementById("raise-hand-btn");
+        if (raiseHandBtn) raiseHandBtn.addEventListener("click", () => setHandRaised(!handRaised));
+
+        function subscribePresence() {
+            presenceChannel = sb.channel(presenceChannelName(), { config: { presence: { key: profile.id } } });
+            presenceChannel.on("presence", { event: "sync" }, () => {
+                const state = presenceChannel.presenceState();
+                onlineStudents.clear();
+                for (const key of Object.keys(state)) {
+                    const meta = state[key][0];
+                    if (meta && meta.role === "alumno") {
+                        onlineStudents.set(key, { email: meta.email, full_name: meta.full_name, hand_raised: !!meta.hand_raised });
+                    }
+                }
+                renderStudentsList();
+                // La lista de "con quién chatear" solo muestra alumnos conectados ahora
+                // mismo a la clase (ver renderChatStudentOptions) — cada vez que cambia
+                // quién está conectado, se refresca también esa lista.
+                if (isTeacher) renderChatStudentOptions();
+                /* Acá vivía el primer disparador de "esto ya es una clase": que
+                   se conectara un alumno. Se fue cuando la clase pasó a abrirla
+                   SOLO el profesor —ver «La sesión en vivo se abre cuando el
+                   profesor la abre»—, y no por limpieza: sin clase abierta la
+                   RLS no le entrega el tablero al alumno, así que no puede
+                   conectarse, y el único que llegaba a dispararlo era el rastro
+                   de la clase recién cerrada. Reabrir por ahí dejaba una clase
+                   fantasma que crecía sola hasta el día siguiente. */
+            });
+            presenceChannel.on("broadcast", { event: "lower_hand" }, (msg) => {
+                if (!isTeacher && handRaised && msg.payload && msg.payload.studentId === profile.id) {
+                    setHandRaised(false);
+                }
+            });
+            presenceChannel.subscribe(async (status) => {
+                if (status === "SUBSCRIBED") {
+                    await presenceChannel.track({
+                        email: profile.email,
+                        full_name: profile.full_name || "",
+                        role: profile.role,
+                        online_at: new Date().toISOString(),
+                    });
+                }
+            });
+        }
+
+        // ---------- Motor de análisis (solo profesor) ----------
+        function scoreToWhiteCp(score, turnAtEval) {
+            if (!score) return null;
+            const value = score.type === "mate"
+                ? (score.value > 0 ? 100000 - score.value : -100000 - score.value)
+                : score.value;
+            return turnAtEval === "w" ? value : -value;
+        }
+
+        function evalToBarPercent(whiteCp) {
+            const k = 0.0035;
+            const pct = 50 + 50 * (2 / (1 + Math.exp(-k * whiteCp)) - 1);
+            return Math.max(2, Math.min(98, pct));
+        }
+
+        function formatScore(score, turnAtEval) {
+            if (score.type === "mate") {
+                const mateIn = Math.abs(score.value);
+                const favorsMover = score.value > 0;
+                return "Mate en " + mateIn + (favorsMover ? "" : " (en contra)");
+            }
+            const whiteCp = scoreToWhiteCp(score, turnAtEval);
+            return (whiteCp >= 0 ? "+" : "") + (whiteCp / 100).toFixed(1);
+        }
+
+        async function updateEngineEval() {
+            if (!engineEnabled || typeof ClasesEngine === "undefined") return;
+            const myRequestId = ++engineRequestId;
+            const fen = board.fen();
+            const turnAtEval = board.game.turn();
+            const multiPv = parseInt(document.getElementById("engine-multipv").value, 10) || 1;
+            const linesEl = document.getElementById("engine-lines");
+            const retryBtn = document.getElementById("engine-retry-btn");
+            retryBtn.classList.add("hidden");
+            linesEl.innerHTML = '<li class="text-brand-300">Calculando…</li>';
+
+            // Una posición armada a mano puede hacer que Stockfish falle una vez (ver la nota
+            // en js/shared-engine.js): el mismo Worker recién levantado por ese fallo suele
+            // responder bien de inmediato a la siguiente consulta, así que — igual que ya
+            // hacían requestEngineReply() (Practicar) y computeEngineAnswer() (Preguntar) —
+            // se reintenta un par de veces antes de mostrarle un error al profesor. Antes,
+            // Analizar era el único de los tres que se rendía a la primera.
+            let results = [];
+            for (let attempt = 0; attempt < 3; attempt++) {
+                results = await ClasesEngine.analyze(fen, multiPv, 700 + multiPv * 150);
+                if (myRequestId !== engineRequestId) return; // la posición ya cambió mientras calculaba
+                if (results.length) break;
+                if (attempt < 2) linesEl.innerHTML = '<li class="text-brand-300">Calculando… (reintentando)</li>';
+            }
+
+            if (!results.length) {
+                // getLastError() distingue "no llegó a cargar" (worker/wasm falló o tardó
+                // demasiado) de "cargó pero no encontró nada" — antes ambos casos se veían
+                // igual ("No disponible") y no había forma de saber si valía la pena reintentar.
+                const reason = ClasesEngine.getLastError && ClasesEngine.getLastError();
+                linesEl.innerHTML = '<li class="text-red-500 dark:text-red-400">' + (reason || "No disponible") + "</li>";
+                document.getElementById("engine-eval-bar").style.width = "50%";
+                retryBtn.classList.remove("hidden");
+                return;
+            }
+
+            const best = results[0];
+            const whiteCp = scoreToWhiteCp(best, turnAtEval);
+            if (whiteCp !== null) document.getElementById("engine-eval-bar").style.width = evalToBarPercent(whiteCp) + "%";
+
+            linesEl.innerHTML = "";
+            for (const line of results) {
+                const sans = ClasesEngine.pvToSan(fen, line.pvUci, 6);
+                const li = document.createElement("li");
+                li.innerHTML = '<span class="font-semibold text-brand-800 dark:text-white">' + line.multipv + ') ' +
+                    formatScore(line, turnAtEval) + '</span> — ' + (sans.join(" ") || "—");
+                linesEl.appendChild(li);
+            }
+        }
+
+        document.getElementById("engine-toggle-btn").addEventListener("click", async (e) => {
+            engineEnabled = !engineEnabled;
+            const btn = e.currentTarget;
+            const output = document.getElementById("engine-output");
+            const status = document.getElementById("engine-status");
+            if (engineEnabled) {
+                btn.textContent = "Desactivar";
+                output.classList.remove("hidden");
+                status.textContent = "Cargando el motor (puede tardar unos segundos la primera vez)…";
+                await updateEngineEval();
+                status.textContent = "Solo lo ves tú — los alumnos nunca ven la evaluación.";
+            } else {
+                btn.textContent = "Activar";
+                output.classList.add("hidden");
+                status.textContent = "Solo lo ves tú — los alumnos nunca ven la evaluación.";
+            }
+        });
+
+        document.getElementById("engine-multipv").addEventListener("change", () => { if (engineEnabled) updateEngineEval(); });
+        document.getElementById("engine-retry-btn").addEventListener("click", () => { if (engineEnabled) updateEngineEval(); });
+
+        // ---------- Partidas guardadas (PGN) ----------
+        function pgnFromMoves(moves) {
+            const g = new Chess();
+            const today = new Date().toISOString().slice(0, 10).replace(/-/g, ".");
+            if (g.header) g.header("Event", "Clase de Ajedrez Integral", "Date", today, "White", "Profesor", "Black", "Alumnos", "Result", "*");
+            for (const san of moves) g.move(san);
+            return g.pgn();
+        }
+
+        function downloadText(filename, text) {
+            const blob = new Blob([text], { type: "application/x-chess-pgn" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
+
+        // La lista completa de partidas guardadas (con descargar/eliminar) vive en
+        // partidas.html — aquí ya no hace falta duplicarla: "💾 Guardar PGN" en la barra
+        // del profesor guarda la fila (para que siga apareciendo ahí) y descarga el PGN
+        // al toque, en un solo clic.
+
+        // ---------- Chat privado con el profesor ----------
+        // Cada fila pertenece a la conversación de un alumno (student_id), la haya escrito
+        // el alumno o el profesor respondiéndole. Un alumno solo ve su propia conversación;
+        // el profesor elige con cuál alumno está hablando en cada momento (chatStudentId).
+        // Nadie ve la conversación de otro — ni siquiera otro alumno.
+        let chatStudentId = null; // solo lo usa el profesor
+        const chatStudents = []; // [{id, full_name, email}], para el selector del profesor
+        const chatUnseen = new Set(); // ids de alumnos con mensajes nuevos en un chat que el profesor no tiene abierto
+
+        function currentChatThreadId() {
+            return isTeacher ? chatStudentId : profile.id;
+        }
+
+        function renderChatMessages(messages) {
+            const listEl = document.getElementById("chat-messages");
+            if (!messages.length) {
+                listEl.innerHTML = '<li class="text-brand-450 dark:text-brand-350 text-center py-2">Todavía no hay mensajes…</li>';
+                return;
+            }
+            // Solo hace auto-scroll si ya se estaba viendo el final: así no se interrumpe a
+            // quien subió a leer mensajes anteriores cuando llega uno nuevo.
+            const wasNearBottom = listEl.scrollHeight - listEl.scrollTop - listEl.clientHeight < 40;
+            listEl.innerHTML = "";
+            for (const m of messages) {
+                const isFromTeacher = !!m.profiles && (m.profiles.role === "profesor" || m.profiles.is_admin === true);
+                const isOwn = m.sender_id === profile.id;
+                // Recuadro de chat estilo mensajería: los mensajes propios a la derecha, los
+                // del otro lado de la conversación a la izquierda — sin importar el rol de
+                // quien está mirando (para el alumno "propio" es él mismo; para el profesor,
+                // sus propias respuestas).
+                const row = document.createElement("li");
+                row.className = "flex " + (isOwn ? "justify-end" : "justify-start");
+                const bubble = document.createElement("div");
+                bubble.className = "max-w-[85%] rounded-2xl px-3 py-2 " +
+                    (isOwn
+                        ? "bg-accent-500 text-brand-900 rounded-br-sm"
+                        : (isFromTeacher
+                            ? "bg-accent-500/15 border border-accent-500/30 text-brand-700 dark:text-brand-200 rounded-bl-sm"
+                            : "bg-brand-100 dark:bg-brand-800 text-brand-700 dark:text-brand-200 rounded-bl-sm"));
+                const header = document.createElement("div");
+                header.className = "flex items-center gap-1.5 mb-0.5";
+                const name = document.createElement("span");
+                name.className = "font-semibold text-xs truncate " + (isOwn ? "text-brand-900" : (isFromTeacher ? "text-accent-600 dark:text-accent-400" : "text-brand-700 dark:text-brand-200"));
+                // Nunca innerHTML: full_name/email/body vienen de otros usuarios.
+                name.textContent = isOwn ? "Tú" : ((m.profiles && (m.profiles.full_name || m.profiles.email)) || "Alguien");
+                header.appendChild(name);
+                if (isFromTeacher && !isOwn) {
+                    const roleBadge = document.createElement("span");
+                    roleBadge.className = "text-[10px] font-bold uppercase tracking-wide text-accent-600 dark:text-accent-400 shrink-0";
+                    roleBadge.textContent = "Profesor";
+                    header.appendChild(roleBadge);
+                }
+                const time = document.createElement("span");
+                time.className = "text-[10px] ml-auto shrink-0 " + (isOwn ? "text-brand-900/60" : "text-brand-450 dark:text-brand-350");
+                time.textContent = new Date(m.created_at).toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" });
+                header.appendChild(time);
+                const body = document.createElement("p");
+                body.className = "text-sm break-words " + (isOwn ? "text-brand-900" : "");
+                body.textContent = m.body;
+                bubble.appendChild(header);
+                bubble.appendChild(body);
+                row.appendChild(bubble);
+                listEl.appendChild(row);
+            }
+            if (wasNearBottom) listEl.scrollTop = listEl.scrollHeight;
+        }
+
+        async function loadChatMessages() {
+            const threadId = currentChatThreadId();
+            if (!threadId) { renderChatMessages([]); return; }
+            // "profiles!class_chat_messages_sender_id_fkey": la tabla tiene DOS relaciones
+            // con profiles (sender_id y student_id), así que hay que decirle a PostgREST
+            // cuál usar — sin esto la consulta fallaba (ambigua) y el chat nunca cargaba.
+            const { data, error } = await sb.from("class_chat_messages")
+                .select("*, profiles!class_chat_messages_sender_id_fkey(full_name, email, role, is_admin)")
+                .eq("student_id", threadId)
+                .order("created_at", { ascending: false })
+                .limit(150);
+            if (error) { console.error(error); return; }
+            renderChatMessages((data || []).slice().reverse());
+        }
+
+        // ---------- Selector de alumno (solo profesor) ----------
+        function renderChatStudentOptions() {
+            const select = document.getElementById("chat-student-select");
+            const prevValue = select.value;
+            select.innerHTML = "";
+            // Solo alumnos conectados ahora mismo a la clase (ver onlineStudents, la misma
+            // lista de presencia de "Alumnos conectados") — con muchos alumnos registrados
+            // en la Academia, no tiene sentido buscar entre todos para hablar con quien SÍ
+            // está en esta clase ahora. Excepción: si ya se estaba viendo la conversación
+            // con alguien que justo se desconectó, se lo deja igual (marcado aparte) para
+            // no perder de golpe esa conversación abierta.
+            const visible = chatStudents.filter((s) => onlineStudents.has(s.id) || s.id === chatStudentId);
+            for (const s of visible) {
+                const opt = document.createElement("option");
+                opt.value = s.id;
+                const online = onlineStudents.has(s.id);
+                opt.textContent = (chatUnseen.has(s.id) ? "🔴 " : "") + (s.full_name || s.email) + (online ? "" : " (desconectado)");
+                select.appendChild(opt);
+            }
+            if (prevValue && visible.some((s) => s.id === prevValue)) select.value = prevValue;
+            const anyToShow = visible.length > 0;
+            document.getElementById("chat-no-students").classList.toggle("hidden", anyToShow);
+            document.getElementById("chat-no-students").textContent = chatStudents.length
+                ? "Ningún alumno está conectado a la clase ahora mismo."
+                : "Todavía no hay alumnos registrados.";
+            document.getElementById("chat-form").classList.toggle("hidden", !anyToShow);
+        }
+
+        async function loadChatStudents() {
+            // Los alumnos de ESTE profesor. Ya no basta con mirar una columna:
+            // la relación vive en profile_teachers (un alumno puede tener varios).
+            const { data, error } = await sb.rpc("alumnos_del_profesor", { p_profesor: boardOwnerId });
+            if (error) { console.error(error); return; }
+            chatStudents.length = 0;
+            chatStudents.push(...(data || []));
+            if (!chatStudentId || !chatStudents.some((s) => s.id === chatStudentId)) {
+                // Por defecto, empezar la conversación con el primer alumno CONECTADO — no
+                // tiene sentido abrir de entrada el chat de alguien que ni siquiera está en
+                // la clase ahora mismo.
+                const firstOnline = chatStudents.find((s) => onlineStudents.has(s.id));
+                chatStudentId = firstOnline ? firstOnline.id : null;
+            }
+            renderChatStudentOptions();
+            document.getElementById("chat-student-select").value = chatStudentId || "";
+            await loadChatMessages();
+        }
+
+        document.getElementById("chat-student-select").addEventListener("change", async (e) => {
+            chatStudentId = e.target.value || null;
+            chatUnseen.delete(chatStudentId);
+            renderChatStudentOptions();
+            await loadChatMessages();
+        });
+
+        function subscribeChat() {
+            sb.channel("class-chat-messages-changes")
+                .on("postgres_changes", { event: "*", schema: "public", table: "class_chat_messages" }, (payload) => {
+                    const affectedStudentId = (payload.new && payload.new.student_id) || (payload.old && payload.old.student_id);
+                    if (affectedStudentId === currentChatThreadId()) {
+                        loadChatMessages();
+                    } else if (isTeacher && affectedStudentId && payload.eventType === "INSERT") {
+                        // Mensaje nuevo en la conversación de otro alumno: se marca en el
+                        // selector en vez de interrumpir la conversación que se está viendo.
+                        chatUnseen.add(affectedStudentId);
+                        renderChatStudentOptions();
+                        const student = chatStudents.find((s) => s.id === affectedStudentId);
+                        setStatus("💬 Nuevo mensaje de " + (student ? (student.full_name || student.email) : "un alumno") + " en su chat privado.");
+                    }
+                })
+                .subscribe();
+        }
+
+        document.getElementById("chat-form").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const threadId = currentChatThreadId();
+            if (!threadId) return;
+            const input = document.getElementById("chat-input");
+            const body = input.value.trim();
+            if (!body) return;
+            input.value = "";
+            const { error } = await sb.from("class_chat_messages").insert({ sender_id: profile.id, student_id: threadId, body });
+            if (error) { console.error(error); setStatus("No se pudo enviar el mensaje: " + error.message); }
+        });
+
+        // Vaciar borra el hilo ENTERO de ese alumno, sus mensajes incluidos: eso es lo que
+        // la RLS le permite al profesor (class_chat_messages_delete) y es lo que hace falta
+        // — un "vaciar" que dejara los mensajes del alumno no vaciaría nada.
+        //
+        // La lista se vuelve a cargar acá mismo y no se espera al aviso de Realtime. Durante
+        // un tiempo eso fue justamente lo que falló: el DELETE llegaba sin `student_id` (la
+        // replica identity por omisión solo manda la clave primaria), así que no coincidía
+        // con ningún hilo y la pantalla se quedaba igual — el profesor confirmaba y los
+        // mensajes seguían ahí, como si no se le permitiera. Ya se arregló en la base
+        // (replica identity full, que es lo que vacía también la pantalla del ALUMNO), pero
+        // la pantalla de quien acaba de apretar el botón no tiene por qué depender de que
+        // un aviso dé la vuelta: se recarga y se dice con todas las letras que se vació.
+        document.getElementById("clear-chat-btn").addEventListener("click", async () => {
+            const threadId = currentChatThreadId();
+            if (!threadId) return;
+            if (!(await Avisos.confirmar("Se borran también los mensajes del alumno y no se puede deshacer.", { titulo: "¿Vaciar esta conversación?", aceptar: "Vaciar", peligro: true }))) return;
+            const btn = document.getElementById("clear-chat-btn");
+            btn.disabled = true;
+            const { error } = await sb.from("class_chat_messages").delete().eq("student_id", threadId);
+            btn.disabled = false;
+            if (error) { console.error(error); setStatus("No se pudo vaciar la conversación: " + error.message); return; }
+            await loadChatMessages();
+            setStatus("💬 Conversación vaciada.");
+        });
+
+        // Un solo botón hace las dos cosas: guarda la partida (queda también en la página
+        // Partidas guardadas, por si se necesita después) y descarga el PGN de una vez —
+        // antes había que guardarla aquí y después ir a buscarla en otra lista aparte
+        // solo para descargarla.
+        document.getElementById("save-game-btn").addEventListener("click", async () => {
+            const moves = board.moves();
+            if (!moves.length) { setStatus("No hay jugadas todavía para guardar."); return; }
+            const pgn = pgnFromMoves(moves);
+            const { error } = await sb.from("saved_games").insert({
+                pgn, fen_final: board.fen(), move_count: moves.length, created_by: session.user.id,
+            });
+            if (error) { console.error(error); setStatus("No se pudo guardar la partida: " + error.message); return; }
+            downloadText("clase-" + new Date().toISOString().slice(0, 10) + ".pgn", pgn);
+            setStatus("Partida guardada y PGN descargado.");
+        });
+
+        // ---------- Preguntar a la clase: "¿qué jugarías?" ----------
+        let questionBoard = null;
+        let currentQuestion = null;
+        let myAnswer = null;
+        // id de la pregunta que el alumno cerró con la ✖ (ver question-close-btn): sigue
+        // abierta del lado del profesor, así que no se descarta como currentQuestion — solo
+        // se deja de imponer el overlay hasta que el alumno la vuelva a abrir.
+        let questionCardDismissedFor = null;
+        // id de la pregunta para la que hay un cálculo de computeEngineAnswer() en curso
+        // ahora mismo (o null si ninguno) — evita que "Reintentar" dispare una segunda
+        // consulta al motor mientras la primera todavía está pensando.
+        let computingAnswerFor = null;
+        // El motor responde entre jugada y jugada del alumno (ver expected_plies arriba):
+        // questionMovesDone cuenta cuántas veces YA movió el alumno en este intento;
+        // questionStudentColor es el bando con el que juega (el que le toca mover en el
+        // FEN de la pregunta); questionEngineBusy evita pedirle dos jugadas a la vez.
+        let questionMovesDone = 0;
+        let questionStudentColor = "w";
+        let questionEngineBusy = false;
+        let questionEngineLastFailed = false;
+
+        function subscribeQuestions() {
+            sb.channel("questions-changes:" + boardOwnerId)
+                .on("postgres_changes", { event: "*", schema: "public", table: "questions", filter: "created_by=eq." + boardOwnerId }, () => loadCurrentQuestion())
+                .subscribe();
+            if (isTeacher) {
+                sb.channel("question-answers-changes")
+                    .on("postgres_changes", { event: "*", schema: "public", table: "question_answers" }, () => {
+                        if (currentQuestion) loadAnswersFor(currentQuestion.id);
+                    })
+                    .subscribe();
+            } else {
+                // Feedback privado: solo llegan eventos de la PROPIA fila del alumno (RLS ya
+                // lo garantiza), así que marcar ✅/❌ nunca lo ven los demás alumnos.
+                sb.channel("my-answer-feedback")
+                    .on("postgres_changes", { event: "UPDATE", schema: "public", table: "question_answers", filter: "student_id=eq." + profile.id }, (payload) => {
+                        if (currentQuestion && payload.new.question_id === currentQuestion.id) {
+                            myAnswer = payload.new;
+                            updateAnswerFeedbackUI();
+                            maybeShowGradingToast(payload.new);
+                        }
+                    })
+                    .subscribe();
+            }
+        }
+
+        async function loadCurrentQuestion() {
+            const { data, error } = await sb.from("questions").select("*").eq("created_by", boardOwnerId).order("created_at", { ascending: false }).limit(1).maybeSingle();
+            if (error) { console.error(error); return; }
+            currentQuestion = data || null;
+            if (isTeacher) renderTeacherQuestionPanel();
+            else await renderStudentQuestionCard();
+        }
+
+        function renderTeacherQuestionPanel() {
+            const activeEl = document.getElementById("active-question");
+            if (!currentQuestion || currentQuestion.closed_at) {
+                activeEl.classList.add("hidden");
+                return;
+            }
+            activeEl.classList.remove("hidden");
+            renderEngineReferenceAnswer(null);
+            loadEngineAnswerFor(currentQuestion.id);
+            loadAnswersFor(currentQuestion.id);
+        }
+
+        async function loadAnswersFor(questionId) {
+            const { data, error } = await sb.from("question_answers")
+                .select("*, profiles(full_name, email)")
+                .eq("question_id", questionId)
+                .order("created_at");
+            if (error) { console.error(error); return; }
+            renderAnswersList(data || []);
+        }
+
+        function renderAnswersList(answers) {
+            const listEl = document.getElementById("answers-list");
+            if (!answers.length) {
+                listEl.innerHTML = '<li class="text-brand-450 dark:text-brand-350">Todavía nadie respondió…</li>';
+                return;
+            }
+            listEl.innerHTML = "";
+            for (const a of answers) {
+                // Nombre en su propia línea (a todo el ancho, sin truncar) y la jugada con los
+                // botones de calificar en la línea de abajo: antes iba todo en una sola línea
+                // con "truncate", y un nombre largo ("Daniel Campos Morales") se comía la
+                // jugada entera o quedaba cortado a la mitad — ver captura del profesor.
+                const li = document.createElement("li");
+                li.className = "border-b border-brand-50 dark:border-brand-800/60 last:border-0 pb-2";
+                const nameEl = document.createElement("p");
+                nameEl.className = "text-brand-700 dark:text-brand-200 font-medium break-words";
+                const displayName = (a.profiles && (a.profiles.full_name || a.profiles.email)) || "Alumno";
+                nameEl.textContent = displayName; // textContent: nunca innerHTML con datos de otros usuarios
+                const row = document.createElement("div");
+                row.className = "flex items-center justify-between gap-2 mt-0.5";
+                const movesEl = document.createElement("span");
+                movesEl.className = "text-brand-500 dark:text-brand-300 font-mono text-xs break-words";
+                movesEl.textContent = (a.moves || []).join(" ") || "—";
+                const actions = document.createElement("span");
+                actions.className = "flex items-center gap-1 shrink-0";
+                const correctBtn = document.createElement("button");
+                correctBtn.type = "button";
+                correctBtn.textContent = "✅";
+                correctBtn.title = "Marcar correcta (el alumno lo ve solo él, en privado)";
+                correctBtn.className = "px-1.5 py-0.5 rounded transition-colors " + (a.is_correct === true ? "bg-green-500/30" : "hover:bg-brand-100 dark:hover:bg-brand-800");
+                correctBtn.addEventListener("click", () => setAnswerCorrect(a.id, true));
+                const wrongBtn = document.createElement("button");
+                wrongBtn.type = "button";
+                wrongBtn.textContent = "❌";
+                wrongBtn.title = "Marcar a revisar (el alumno lo ve solo él, en privado)";
+                wrongBtn.className = "px-1.5 py-0.5 rounded transition-colors " + (a.is_correct === false ? "bg-red-500/30" : "hover:bg-brand-100 dark:hover:bg-brand-800");
+                wrongBtn.addEventListener("click", () => setAnswerCorrect(a.id, false));
+                actions.appendChild(correctBtn);
+                actions.appendChild(wrongBtn);
+                row.appendChild(movesEl);
+                row.appendChild(actions);
+                li.appendChild(nameEl);
+                li.appendChild(row);
+                listEl.appendChild(li);
+            }
+        }
+
+        async function setAnswerCorrect(answerId, value) {
+            const { error } = await sb.from("question_answers").update({ is_correct: value }).eq("id", answerId);
+            if (error) console.error(error);
+        }
+
+        // ---------- Respuesta de referencia del motor (privada, solo el profesor) ----------
+        // opts.computing = true cuando se acaba de lanzar un cálculo (le da unos segundos de
+        // margen antes de ofrecer "Reintentar", para no mostrar ese botón como si ya hubiera
+        // fallado cuando en realidad Stockfish sigue pensando). Sin ese flag (por ejemplo al
+        // abrir el panel de una pregunta que ya estaba activa, o cuando el cálculo realmente
+        // falló) el botón aparece de una — antes esto se quedaba mostrando "Calculando…" para
+        // siempre sin ninguna forma de reintentar, que es justo el "el bot no contesta" que
+        // reportó el profesor al asignar una posición editada.
+        function renderEngineReferenceAnswer(answer, opts) {
+            const el = document.getElementById("engine-reference-answer");
+            const retryBtn = document.getElementById("engine-reference-retry-btn");
+            if (!el) return;
+            if (!answer) {
+                // "Calculando…" y "no se pudo calcular" mostraban el MISMO texto — la única
+                // diferencia era un botón chico que aparecía debajo, fácil de no notar en medio
+                // de una clase. Para el profesor eso se veía exactamente igual de trabado antes
+                // y después de que el cálculo fallara, aunque el botón de reintentar sí
+                // funcionara por detrás. Ahora el texto también cambia, para que quede claro
+                // que ya falló y que el botón de abajo es la salida, no un adorno.
+                const computing = !!(opts && opts.computing);
+                el.textContent = computing
+                    ? "Calculando la mejor respuesta del motor…"
+                    : "El motor no pudo calcular la respuesta — toca \"Reintentar\" para volver a intentarlo.";
+                if (retryBtn) retryBtn.classList.toggle("hidden", computing);
+                return;
+            }
+            const scoreText = answer.score.type === "mate"
+                ? "mate en " + Math.abs(answer.score.value)
+                : (answer.score.value >= 0 ? "+" : "") + (answer.score.value / 100).toFixed(1);
+            el.textContent = "Mejor respuesta del motor: " + answer.moves.join(" ") + " (" + scoreText + ")";
+            if (retryBtn) retryBtn.classList.add("hidden");
+        }
+
+        async function loadEngineAnswerFor(questionId) {
+            const { data } = await sb.from("question_engine_answers").select("answer").eq("question_id", questionId).maybeSingle();
+            renderEngineReferenceAnswer(data ? data.answer : null);
+        }
+
+        async function computeEngineAnswer(questionId, fen, expectedPlies) {
+            if (typeof ClasesEngine === "undefined") return;
+            computingAnswerFor = questionId;
+            if (currentQuestion && currentQuestion.id === questionId) renderEngineReferenceAnswer(null, { computing: true });
+            try {
+                // "Su mejor nivel": una sola línea, con más tiempo de cálculo que el panel de
+                // análisis normal, ya que aquí se hace una sola vez por pregunta.
+                // expectedPlies es cuántas veces mueve EL ALUMNO (el motor responde entre cada
+                // una, menos después de la última): la línea de referencia tiene entonces
+                // 2*expectedPlies-1 medias-jugadas en total (alumno, motor, alumno, motor…,
+                // alumno), no expectedPlies — así la comparación es contra la MISMA cantidad de
+                // jugadas que el alumno en verdad hace.
+                const totalPlies = expectedPlies * 2 - 1;
+                const results = await ClasesEngine.analyze(fen, 1, 4000);
+                if (computingAnswerFor === questionId) computingAnswerFor = null;
+                if (!results.length) {
+                    // El motor no encontró nada (posición editada rara, o el Worker se cayó y
+                    // se está recuperando — ver js/shared-engine.js): antes esto se quedaba en
+                    // "Calculando…" sin salida; ahora se muestra el botón de reintentar.
+                    if (currentQuestion && currentQuestion.id === questionId) renderEngineReferenceAnswer(null);
+                    return;
+                }
+                const sans = ClasesEngine.pvToSan(fen, results[0].pvUci, totalPlies);
+                const answer = { moves: sans, score: { type: results[0].type, value: results[0].value } };
+                // Sigue siendo insert (no upsert): la política RLS de esta tabla solo permite
+                // INSERT al profesor, no UPDATE (ver auditoría de RLS), y el botón de
+                // reintentar ya evita pedir un segundo cálculo mientras el primero sigue en
+                // curso — así que en el uso normal nunca hay una fila previa con la que chocar.
+                const { error: saveError } = await sb.from("question_engine_answers").insert({ question_id: questionId, answer });
+                if (saveError) { console.error(saveError); if (currentQuestion && currentQuestion.id === questionId) renderEngineReferenceAnswer(null); return; }
+                if (currentQuestion && currentQuestion.id === questionId) renderEngineReferenceAnswer(answer);
+            } catch (e) {
+                console.error(e);
+                if (computingAnswerFor === questionId) computingAnswerFor = null;
+                if (currentQuestion && currentQuestion.id === questionId) renderEngineReferenceAnswer(null);
+            }
+        }
+
+        document.getElementById("engine-reference-retry-btn").addEventListener("click", () => {
+            if (!currentQuestion || currentQuestion.closed_at) return;
+            if (computingAnswerFor === currentQuestion.id) return; // ya hay un cálculo en curso para esta pregunta
+            computeEngineAnswer(currentQuestion.id, currentQuestion.fen, currentQuestion.expected_plies);
+        });
+
+        document.getElementById("ask-question-btn").addEventListener("click", async () => {
+            const expectedPlies = Math.max(1, Math.min(6, parseInt(document.getElementById("question-plies-input").value, 10) || 1));
+            const fen = board.fen();
+            // A diferencia de "Aplicar posición", este botón no pasa por
+            // aplicarPosicionEnClase() (no toca game_state: la pregunta es sobre la
+            // posición YA visible, no una nueva) — así que si el tablero se quedó a
+            // mitad de una edición (✏️ Armar posición sin aplicar ni cancelar), board.fen()
+            // puede ser justo una de las posiciones que rompen al motor para el resto de
+            // la sesión (ver js/shared-engine.js). Se valida acá con la misma regla.
+            const motivo = motivoPosicionInvalida(fen);
+            if (motivo) { setStatus(motivo); return; }
+            await sb.from("questions").update({ closed_at: new Date().toISOString() }).eq("created_by", boardOwnerId).is("closed_at", null);
+            const { data, error } = await sb.from("questions").insert({ fen, created_by: session.user.id, expected_plies: expectedPlies }).select().single();
+            if (error) { console.error(error); setStatus("No se pudo crear la pregunta: " + error.message); return; }
+            setStatus("Pregunta enviada a la clase.");
+            computeEngineAnswer(data.id, fen, expectedPlies); // en segundo plano, no bloquea la pregunta
+        });
+
+        document.getElementById("close-question-btn").addEventListener("click", async () => {
+            if (!currentQuestion) return;
+            await sb.from("questions").update({ closed_at: new Date().toISOString() }).eq("id", currentQuestion.id);
+        });
+
+        // ---------- Táctica por tema (cascada grupo → tema → dificultad → ejercicio) ----------
+        // Reutiliza la misma base de datos de Entrenamiento (entreno/data/temas.json: 74 temas
+        // de lichess.org/training/themes, ~3600 ejercicios verificados con python-chess) para
+        // que el profesor pueda elegir un ejercicio concreto y preguntárselo a la clase con un
+        // clic, sin salir de la sesión en vivo — "Preguntar" hace exactamente lo mismo que el
+        // botón de la pestaña Preguntar (transmite la posición y crea la pregunta), solo que
+        // la posición viene de esta base en vez del tablero armado a mano.
+        let tacticsData = null; // { groups, themes: {key: [puzzleId,...]}, puzzles: {id: {fen,solution,rating,mate,...}} }
+        let tacticsLoadPromise = null;
+        let tacticsView = { level: "groups" }; // groups | themes | difficulty | exercises
+
+        function ensureTacticsLoaded() {
+            if (tacticsData || tacticsLoadPromise) return tacticsLoadPromise;
+            tacticsLoadPromise = fetch("entreno/data/temas.json")
+                .then((r) => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+                .then((data) => { tacticsData = data; renderTacticsView(); })
+                .catch((e) => {
+                    console.error(e);
+                    tacticsLoadPromise = null;
+                    document.getElementById("tactics-body").innerHTML =
+                        '<p class="text-sm text-red-500 dark:text-red-400">No se pudo cargar la base de ejercicios. Recarga la página e inténtalo de nuevo.</p>';
+                });
+            return tacticsLoadPromise;
+        }
+
+        const TACTICS_DIFF_LABELS = ["🟢 Fácil", "🟡 Media", "🔴 Difícil"];
+
+        // Cada tema ya viene ordenado de fácil a difícil por rating (ver
+        // entreno/data/construir_temas.py) — repartirlo en tercios da tres tandas de
+        // dificultad creciente sin tener que volver a ordenar nada aquí.
+        function tacticsThemeBuckets(themeKey) {
+            const ids = tacticsData.themes[themeKey] || [];
+            const third = Math.ceil(ids.length / 3) || 1;
+            return [ids.slice(0, third), ids.slice(third, third * 2), ids.slice(third * 2)].filter((b) => b.length);
+        }
+
+        function tacticsBackBtn(label, onClick) {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "text-xs font-semibold text-accent-600 dark:text-accent-400 hover:underline";
+            btn.textContent = label;
+            btn.addEventListener("click", onClick);
+            return btn;
+        }
+
+        function renderTacticsView() {
+            const body = document.getElementById("tactics-body");
+            if (!tacticsData) { body.innerHTML = '<p class="text-sm text-brand-450 dark:text-brand-350">Cargando temas…</p>'; return; }
+            body.innerHTML = "";
+            // La cascada repinta el cuerpo entero en cada paso: las filas de la vista
+            // anterior ya no están en la página.
+            vistaPreviaTactica.reiniciar();
+
+            if (tacticsView.level === "themes" || tacticsView.level === "difficulty" || tacticsView.level === "exercises") {
+                const group = tacticsData.groups.find((g) => g.id === tacticsView.groupId);
+                if (tacticsView.level === "themes") {
+                    body.appendChild(tacticsBackBtn("‹ Grupos", () => { tacticsView = { level: "groups" }; renderTacticsView(); }));
+                } else if (tacticsView.level === "difficulty") {
+                    body.appendChild(tacticsBackBtn("‹ " + (group ? group.title : "Temas"), () => { tacticsView = { level: "themes", groupId: tacticsView.groupId }; renderTacticsView(); }));
+                } else {
+                    body.appendChild(tacticsBackBtn("‹ " + tacticsView.themeName, () => { tacticsView = Object.assign({}, tacticsView, { level: "difficulty" }); renderTacticsView(); }));
+                }
+            }
+
+            if (tacticsView.level === "groups") {
+                const list = document.createElement("div");
+                list.className = "space-y-1.5";
+                tacticsData.groups.forEach((group) => {
+                    const n = group.themes.filter((t) => (tacticsData.themes[t.key] || []).length).length;
+                    if (!n) return; // grupo sin ningún tema con ejercicios en la base local
+                    const btn = document.createElement("button");
+                    btn.type = "button";
+                    btn.className = "w-full text-left text-sm font-semibold px-3 py-2.5 rounded-lg bg-brand-50 hover:bg-brand-100 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white flex items-center justify-between gap-2 transition-colors";
+                    btn.innerHTML = "<span>" + group.title + "</span><span class=\"text-brand-450 dark:text-brand-350 font-normal shrink-0\">" + n + (n === 1 ? " tema ›" : " temas ›") + "</span>";
+                    btn.addEventListener("click", () => { tacticsView = { level: "themes", groupId: group.id }; renderTacticsView(); });
+                    list.appendChild(btn);
+                });
+                body.appendChild(list);
+                return;
+            }
+
+            if (tacticsView.level === "themes") {
+                const group = tacticsData.groups.find((g) => g.id === tacticsView.groupId);
+                const title = document.createElement("p");
+                title.className = "font-semibold text-brand-800 dark:text-white text-sm mt-2 mb-2";
+                title.textContent = group ? group.title : "";
+                body.appendChild(title);
+                const list = document.createElement("div");
+                list.className = "space-y-1.5";
+                (group ? group.themes : []).forEach((theme) => {
+                    const available = (tacticsData.themes[theme.key] || []).length;
+                    if (!available) return;
+                    const btn = document.createElement("button");
+                    btn.type = "button";
+                    btn.className = "w-full text-left text-sm px-3 py-2.5 rounded-lg bg-brand-50 hover:bg-brand-100 dark:bg-brand-800 dark:hover:bg-brand-700 transition-colors";
+                    btn.innerHTML = '<span class="font-semibold text-brand-800 dark:text-white">' + theme.name + "</span>" +
+                        '<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">' + theme.desc + "</span>" +
+                        '<span class="block text-xs text-accent-700 dark:text-accent-400 mt-1">' + available + " ejercicios ›</span>";
+                    btn.addEventListener("click", () => { tacticsView = { level: "difficulty", groupId: group.id, themeKey: theme.key, themeName: theme.name }; renderTacticsView(); });
+                    list.appendChild(btn);
+                });
+                body.appendChild(list);
+                return;
+            }
+
+            if (tacticsView.level === "difficulty") {
+                const title = document.createElement("p");
+                title.className = "font-semibold text-brand-800 dark:text-white text-sm mt-2 mb-2";
+                title.textContent = tacticsView.themeName;
+                body.appendChild(title);
+                const list = document.createElement("div");
+                list.className = "space-y-1.5";
+                tacticsThemeBuckets(tacticsView.themeKey).forEach((ids, i) => {
+                    const ratings = ids.map((id) => tacticsData.puzzles[id].rating);
+                    const btn = document.createElement("button");
+                    btn.type = "button";
+                    btn.className = "w-full text-left text-sm font-semibold px-3 py-2.5 rounded-lg bg-brand-50 hover:bg-brand-100 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white flex items-center justify-between gap-2 transition-colors";
+                    btn.innerHTML = "<span>" + TACTICS_DIFF_LABELS[i] + "</span><span class=\"text-brand-450 dark:text-brand-350 font-normal shrink-0\">ELO " + Math.min.apply(null, ratings) + "–" + Math.max.apply(null, ratings) + " · " + ids.length + " ›</span>";
+                    btn.addEventListener("click", () => { tacticsView = Object.assign({}, tacticsView, { level: "exercises", diffIndex: i }); renderTacticsView(); });
+                    list.appendChild(btn);
+                });
+                body.appendChild(list);
+                return;
+            }
+
+            if (tacticsView.level === "exercises") {
+                const ids = tacticsThemeBuckets(tacticsView.themeKey)[tacticsView.diffIndex] || [];
+                // Cuántos son y el interruptor para verlos todos de una: el rótulo de
+                // cada fila ("3. ELO 1397") no dice nada de la posición, así que elegir
+                // cuál dar es mirarlas.
+                const barra = document.createElement("div");
+                barra.className = "flex items-center justify-between gap-2 mt-2";
+                const cuenta = document.createElement("p");
+                cuenta.className = "text-xs text-brand-450 dark:text-brand-350 min-w-0 truncate";
+                cuenta.textContent = ids.length + (ids.length === 1 ? " ejercicio" : " ejercicios");
+                barra.append(cuenta, vistaPreviaTactica.control());
+                body.appendChild(barra);
+                const list = document.createElement("ul");
+                list.className = "space-y-2 mt-2 max-h-96 overflow-y-auto pr-1";
+                ids.forEach((id, i) => {
+                    const ex = tacticsData.puzzles[id];
+                    const li = document.createElement("li");
+                    li.className = "bg-brand-50 dark:bg-brand-800 rounded-lg p-2.5";
+                    // El rótulo ARRIBA y los botones DEBAJO, como en el panel de Archivos y
+                    // en el del plan de clase. Estaban en una misma fila (justify-between,
+                    // con el grupo de botones en shrink-0), y en esta columna de 320px los
+                    // tres botones no caben: con shrink-0 el grupo crece hasta su
+                    // ancho de contenido en vez de envolverse —el flex-wrap no llega a
+                    // aplicarse nunca—, así que el último quedaba cortado contra el borde del
+                    // panel y "ELO 1397" se partía en tres renglones para hacerle sitio. No
+                    // daba ningún error: la lista se pinta entera y no se puede apretar el
+                    // botón que se salió.
+                    const label = document.createElement("p");
+                    label.className = "text-sm font-semibold text-brand-700 dark:text-brand-200";
+                    label.textContent = (i + 1) + ". " + (ex.mate ? "Mate en " + Math.ceil(ex.solution.length / 2) : "ELO " + ex.rating);
+                    li.appendChild(label);
+                    const actions = document.createElement("div");
+                    actions.className = "flex items-center flex-wrap gap-1.5 mt-2";
+                    const previewBtn = document.createElement("button");
+                    previewBtn.type = "button";
+                    previewBtn.className = "text-xs font-semibold px-2 py-1 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-700 dark:hover:bg-brand-600 text-brand-700 dark:text-brand-200 transition-colors";
+                    previewBtn.textContent = "👁 Vista previa";
+                    // "Al tablero" transmite SOLO la posición, sin abrir ninguna pregunta: es para
+                    // explicar el ejercicio en el tablero de todos, que no es lo mismo que
+                    // ponérselo a resolver. Con un solo botón había que preguntar para poder
+                    // enseñarlo, y entonces el alumno ya está contestando mientras se explica.
+                    const sendBtn = document.createElement("button");
+                    sendBtn.type = "button";
+                    sendBtn.className = "text-xs font-semibold px-2 py-1 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-700 dark:hover:bg-brand-600 text-brand-700 dark:text-brand-200 transition-colors";
+                    sendBtn.textContent = "📥 Al tablero";
+                    sendBtn.title = "Poner esta posición en el tablero de la clase, sin preguntar nada";
+                    const askBtn = document.createElement("button");
+                    askBtn.type = "button";
+                    askBtn.className = "text-xs font-semibold px-2 py-1 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors";
+                    askBtn.textContent = "❓ Preguntar";
+                    actions.append(previewBtn, sendBtn, askBtn);
+                    li.appendChild(actions);
+                    const previewWrap = document.createElement("div");
+                    previewWrap.className = "hidden mt-2";
+                    li.appendChild(previewWrap);
+                    // Igual que en Archivos: destaparla y dibujarla lo lleva el lote, así
+                    // esta fila hace lo mismo con su botón que cuando se destapan todas.
+                    vistaPreviaTactica.registrar(previewWrap, previewBtn, () => {
+                        renderTacticsPreviewBoard(previewWrap, ex.fen);
+                    });
+                    sendBtn.addEventListener("click", async () => {
+                        const ok = await aplicarPosicionEnClase(ex.fen, "Posición del ejercicio enviada: ya la ven todos los alumnos.");
+                        if (ok) { sendBtn.textContent = "✅ Enviada"; setTimeout(() => { sendBtn.textContent = "📥 Al tablero"; }, 2000); }
+                    });
+                    askBtn.addEventListener("click", () => askTacticsExercise(ex));
+                    list.appendChild(li);
+                });
+                body.appendChild(list);
+                return;
+            }
+        }
+
+        // Mini-tablero de solo lectura para la vista previa. Lo dibuja el MISMO diagrama de
+        // ejemplo que usan los artículos (js/article-example-board.js): acá estaba copiado, y
+        // la copia ya se había separado del original por donde se separan siempre — dibujaba
+        // las piezas con el font-size fijo de 24px del CSS, pensado para un tablero grande,
+        // dentro de casillas de 22px, así que la pieza se salía de su casilla y el tablero
+        // "no se veía bien"; y no entendía el juego de piezas ilustrado, así que a quien lo
+        // tuviera elegido le salían aquí las de texto. El original mide la casilla ya
+        // renderizada y ajusta la pieza a ella, de modo que se ve igual a cualquier ancho.
+        function renderTacticsPreviewBoard(container, fen) {
+            container.innerHTML = "";
+            let previewGame;
+            try { previewGame = new Chess(fen); } catch (e) { previewGame = null; }
+            if (!previewGame || !window.ExampleBoard) { container.textContent = "No se pudo mostrar la posición."; return; }
+            const boardEl = document.createElement("div");
+            boardEl.className = "example-board max-w-[260px]";
+            container.appendChild(boardEl);
+            window.ExampleBoard.render(boardEl, previewGame);
+            // De quién es la jugada: sin esto hay que deducirlo de la posición, y el ejercicio
+            // no se entiende hasta que ya se mandó a la clase.
+            const turno = document.createElement("p");
+            turno.className = "text-xs text-brand-450 dark:text-brand-350 mt-2 max-w-[260px] text-center";
+            turno.textContent = previewGame.turn() === "w" ? "Juegan blancas" : "Juegan negras";
+            container.appendChild(turno);
+        }
+
+        // Transmite la posición del ejercicio elegido a toda la clase y la pregunta de
+        // inmediato — mismo mecanismo que ask-question-btn de más arriba (misma tabla
+        // game_state, misma tabla questions), solo que la posición viene de la base de
+        // Táctica en vez del tablero armado a mano. El número de jugadas esperadas del
+        // alumno se calcula de la propia solución del ejercicio (cuenta solo las jugadas
+        // que le tocan a quien mueve, no las respuestas intercaladas del rival).
+        async function askTacticsExercise(ex) {
+            const fen = ex.fen;
+            const expectedPlies = Math.max(1, Math.min(6, Math.ceil((ex.solution || [""]).length / 2)));
+            if (!(await aplicarPosicionEnClase(fen))) return;
+            document.getElementById("question-plies-input").value = expectedPlies;
+            await sb.from("questions").update({ closed_at: new Date().toISOString() }).eq("created_by", boardOwnerId).is("closed_at", null);
+            const { data, error } = await sb.from("questions").insert({ fen, created_by: session.user.id, expected_plies: expectedPlies }).select().single();
+            if (error) { console.error(error); setStatus("No se pudo crear la pregunta: " + error.message); return; }
+            activateTeacherTab("preguntar");
+            setStatus("Ejercicio de táctica enviado a la clase como pregunta.");
+            computeEngineAnswer(data.id, fen, expectedPlies); // en segundo plano, no bloquea la pregunta
+        }
+
+        // ---------- Aviso de calificación (sobrevive a que la pregunta ya esté cerrada) ----------
+        // El profesor casi siempre califica DESPUÉS de cerrar la pregunta (revisa la lista con
+        // calma, con la clase ya siguiendo adelante) — si el aviso solo viviera dentro de
+        // question-card, quedaría calificado en silencio: ese overlay ya está oculto para
+        // entonces. lastToastKey evita repetir el mismo aviso si llega el mismo evento dos veces.
+        let lastToastKey = null;
+        function maybeShowGradingToast(answer) {
+            if (!answer || answer.is_correct === null || answer.is_correct === undefined) return;
+            const key = answer.id + ":" + answer.is_correct;
+            if (key === lastToastKey) return;
+            lastToastKey = key;
+            showAnswerFeedbackToast(answer);
+        }
+
+        function showAnswerFeedbackToast(answer) {
+            const toast = document.getElementById("answer-feedback-toast");
+            const text = document.getElementById("answer-feedback-text");
+            const retryBtn = document.getElementById("answer-feedback-retry-btn");
+            const stillOpen = !!(currentQuestion && currentQuestion.id === answer.question_id && !currentQuestion.closed_at);
+            if (answer.is_correct === true) {
+                toast.className = "fixed bottom-4 left-1/2 -translate-x-1/2 z-[70] w-[min(92vw,420px)] rounded-xl shadow-2xl p-4 text-center bg-green-500 text-white";
+                text.textContent = "✅ ¡Muy bien! Tu respuesta fue correcta.";
+                retryBtn.classList.add("hidden");
+            } else {
+                toast.className = "fixed bottom-4 left-1/2 -translate-x-1/2 z-[70] w-[min(92vw,420px)] rounded-xl shadow-2xl p-4 text-center bg-red-500 text-white";
+                text.textContent = stillOpen ? "❌ Esa no era la jugada correcta — vuelve a intentarlo." : "❌ Esa no era la jugada correcta.";
+                retryBtn.classList.toggle("hidden", !stillOpen);
+            }
+            toast.classList.remove("hidden");
+        }
+
+        document.getElementById("answer-feedback-dismiss-btn").addEventListener("click", () => {
+            document.getElementById("answer-feedback-toast").classList.add("hidden");
+        });
+
+        document.getElementById("answer-feedback-retry-btn").addEventListener("click", () => {
+            document.getElementById("answer-feedback-toast").classList.add("hidden");
+            document.getElementById("question-retry-btn").click(); // mismo flujo que "Cambiar respuesta"
+        });
+
+        // ---------- Tarjeta de pregunta del alumno (overlay sobre el tablero) ----------
+        function updateAnswerFeedbackUI() {
+            if (!myAnswer) return;
+            const movesText = (myAnswer.moves || []).join(" ");
+            let text = "Tu respuesta: " + movesText + " ✓ enviada";
+            if (myAnswer.is_correct === true) text = "Tu respuesta: " + movesText + " — ✅ ¡Correcto!";
+            else if (myAnswer.is_correct === false) text = "Tu respuesta: " + movesText + " — ❌ Revisa de nuevo";
+            document.getElementById("question-status-text").textContent = text;
+        }
+
+        // Refleja en pantalla de quién es el turno: mientras responde una pregunta ya
+        // enviada (myAnswer truthy) esta función no toca nada, el feedback final manda.
+        function updateQuestionCardStatus() {
+            if (!currentQuestion || myAnswer) return;
+            const remaining = currentQuestion.expected_plies - questionMovesDone;
+            const myTurn = questionBoard.game.turn() === questionStudentColor;
+            questionBoard.setInteractive(myTurn && !questionEngineBusy);
+            document.getElementById("question-undo-btn").classList.toggle("hidden", !(myTurn && questionMovesDone > 0 && !questionEngineBusy));
+            const stuck = questionEngineLastFailed && !myTurn && !questionEngineBusy;
+            document.getElementById("question-retry-engine-btn").classList.toggle("hidden", !stuck);
+            if (questionEngineBusy) {
+                document.getElementById("question-status-text").textContent = "El motor está pensando…";
+            } else if (stuck) {
+                document.getElementById("question-status-text").textContent = "El motor no respondió — toca \"Pedir jugada del motor\" para intentarlo de nuevo.";
+            } else if (myTurn) {
+                document.getElementById("question-status-text").textContent = remaining > 1
+                    ? ("Tu turno — te quedan " + remaining + " jugadas.")
+                    : "Tu turno — esta es tu última jugada.";
+            }
+        }
+
+        // Le pide al motor su respuesta a la jugada del alumno y la aplica (con reintentos,
+        // igual que requestEngineReply() en Practicar contra el motor — un solo hiccup
+        // transitorio no debería dejar al alumno esperando para siempre). Usa PracticeEngine
+        // a máxima fuerza (corre en el navegador de CADA alumno, no en el del profesor) en
+        // vez de ClasesEngine, que es solo para el panel de análisis del profesor.
+        async function requestQuestionEngineReply() {
+            if (questionEngineBusy) return;
+            if (!currentQuestion || currentQuestion.closed_at || myAnswer) return;
+            if (questionBoard.game.turn() === questionStudentColor) return; // ya le toca al alumno
+
+            questionEngineBusy = true;
+            questionEngineLastFailed = false;
+            updateQuestionCardStatus();
+            /* Mientras el motor piensa el profe puede plantear OTRA pregunta: la
+               jugada que vuelva es de la posición vieja, y si resultara legal en
+               la nueva movería una pieza que no corresponde. Se ata a la pregunta
+               y a la posición con que se pidió. */
+            const preguntaPedida = currentQuestion.id;
+            let fenPedida = null;
+            let uci = null;
+            for (let attempt = 0; attempt < 3 && !uci; attempt++) {
+                fenPedida = questionBoard.fen();
+                uci = typeof PracticeEngine !== "undefined" ? await PracticeEngine.getMove(fenPedida, "max") : null;
+                if (!currentQuestion || currentQuestion.closed_at || myAnswer) { questionEngineBusy = false; return; }
+                if (currentQuestion.id !== preguntaPedida || questionBoard.fen() !== fenPedida) {
+                    questionEngineBusy = false;
+                    updateQuestionCardStatus();
+                    requestQuestionEngineReply();
+                    return;
+                }
+            }
+            questionEngineBusy = false;
+
+            if (uci) {
+                const move = questionBoard.game.move({
+                    from: uci.slice(0, 2), to: uci.slice(2, 4),
+                    promotion: uci.length > 4 ? uci.slice(4, 5) : "q",
+                });
+                if (move) {
+                    questionBoard.render();
+                    if (preguntaAcc) {
+                        preguntaAcc.actualizar();
+                        preguntaAcc.decir("El motor jugó " + ClaseAdaptada.hablarJugada(move.san) + ". Te toca.");
+                    }
+                }
+            } else {
+                questionEngineLastFailed = true;
+            }
+            updateQuestionCardStatus();
+        }
+
+        async function submitQuestionAnswer() {
+            const moves = questionBoard.moves();
+            const { error } = await sb.from("question_answers").upsert({
+                question_id: currentQuestion.id, student_id: profile.id, moves, resulting_fen: questionBoard.fen(),
+            }, { onConflict: "question_id,student_id" });
+            if (error) { console.error(error); setStatus("No se pudo enviar tu respuesta: " + error.message); return; }
+            myAnswer = { moves, resulting_fen: questionBoard.fen(), is_correct: null };
+            questionBoard.setInteractive(false);
+            document.getElementById("question-undo-btn").classList.add("hidden");
+            document.getElementById("question-retry-engine-btn").classList.add("hidden");
+            document.getElementById("question-retry-btn").classList.remove("hidden");
+            updateAnswerFeedbackUI();
+        }
+
+        // Se llama cada vez que el alumno mueve en el tablero de la pregunta. Si esa era su
+        // última jugada permitida, se envía la respuesta de una vez (ya no hace falta un
+        // botón "Enviar respuesta" aparte); si no, le toca responder al motor.
+        async function onQuestionStudentMove() {
+            if (preguntaAcc) preguntaAcc.actualizar();
+            questionMovesDone++;
+            if (questionMovesDone >= currentQuestion.expected_plies) {
+                await submitQuestionAnswer();
+                return;
+            }
+            updateQuestionCardStatus();
+            await requestQuestionEngineReply();
+        }
+
+        async function renderStudentQuestionCard() {
+            const card = document.getElementById("question-card");
+            const reopenBtn = document.getElementById("question-reopen-btn");
+            // Al cerrar la pregunta, el cuadro desaparece por completo (no se queda mostrando
+            // "pregunta cerrada").
+            if (!currentQuestion || currentQuestion.closed_at) {
+                card.classList.add("hidden");
+                reopenBtn.classList.add("hidden");
+                questionCardDismissedFor = null;
+                return;
+            }
+            // El alumno cerró este mismo overlay con la ✖: sigue siendo la pregunta vigente
+            // (no se cierra del lado del profesor), así que no se le vuelve a imponer encima
+            // — solo se le deja el botón flotante para volver cuando quiera.
+            if (questionCardDismissedFor === currentQuestion.id) {
+                card.classList.add("hidden");
+                reopenBtn.classList.remove("hidden");
+                return;
+            }
+            reopenBtn.classList.add("hidden");
+            const recienAbierta = card.classList.contains("hidden");
+            card.classList.remove("hidden");
+            document.getElementById("answer-feedback-toast").classList.add("hidden"); // aviso de una pregunta anterior, si quedó abierto
+            document.getElementById("question-prompt-text").textContent = currentQuestion.prompt;
+            document.getElementById("question-plies-hint").textContent = currentQuestion.expected_plies > 1
+                ? ("Mueve " + currentQuestion.expected_plies + " veces — el motor responde entre cada una de tus jugadas.")
+                : "Indica tu mejor jugada.";
+
+            const { data: existing } = await sb.from("question_answers").select("*")
+                .eq("question_id", currentQuestion.id).eq("student_id", profile.id).maybeSingle();
+            myAnswer = existing || null;
+
+            if (!questionBoard) {
+                questionBoard = new ClasesBoard(document.getElementById("question-board"), {
+                    interactive: false,
+                    allowArrows: false,
+                    // Las coordenadas de afuera, igual que en el tablero principal: acá el
+                    // alumno está buscando la jugada solo, sin nadie señalándole la casilla.
+                    externalCoords: true,
+                    onMove: () => onQuestionStudentMove(),
+                });
+                preguntaAcc = window.ClaseAdaptada ? ClaseAdaptada.montar(document.getElementById("question-cmd"), () => questionBoard, {
+                    etiqueta: "Escribe tu jugada, o una pregunta sobre la posición",
+                    porQueNoPuedes: () => myAnswer
+                        ? "Ya enviaste tu respuesta. Si quieres cambiarla, usa el botón «Cambiar respuesta»."
+                        : (questionEngineBusy ? "El motor está pensando su respuesta: espera un momento." : "Ahora no te toca mover."),
+                }) : null;
+            }
+            // El bando del alumno es el que le toca mover en la posición de la pregunta —
+            // el motor siempre juega el otro bando, respondiendo entre jugada y jugada. El
+            // tablero se orienta con las piezas del alumno abajo (como en cualquier tablero
+            // real) y se avisa con qué color juega, en vez de dejarlo adivinar mirando el FEN.
+            questionStudentColor = currentQuestion.fen.split(" ")[1] === "b" ? "b" : "w";
+            questionMovesDone = 0;
+            questionEngineLastFailed = false;
+            questionBoard.setFlipped(questionStudentColor === "b");
+            document.getElementById("question-color-hint").textContent = questionStudentColor === "b"
+                ? "Te toca jugar con ⚫ Negras"
+                : "Te toca jugar con ⚪ Blancas";
+            questionBoard.loadFen(currentQuestion.fen);
+            if (preguntaAcc) preguntaAcc.actualizar();
+            // El foco va a la pregunta en cuanto aparece: sin eso, quien usa lector de
+            // pantalla se queda donde estaba —debajo de un overlay que no ve— y no se
+            // entera de que el profesor le preguntó algo.
+            if (recienAbierta) enfocarCuandoSeVea(document.getElementById("question-titulo"));
+
+            const retryBtn = document.getElementById("question-retry-btn");
+            if (myAnswer) {
+                questionBoard.setInteractive(false);
+                retryBtn.classList.remove("hidden");
+                document.getElementById("question-undo-btn").classList.add("hidden");
+                document.getElementById("question-retry-engine-btn").classList.add("hidden");
+                updateAnswerFeedbackUI();
+            } else {
+                retryBtn.classList.add("hidden");
+                questionBoard.setInteractive(true);
+                updateQuestionCardStatus();
+            }
+        }
+
+        // Deshace la última jugada del alumno: como el motor ya respondió entre medio, hay
+        // que deshacer también esa respuesta del motor para volver al turno del alumno.
+        document.getElementById("question-undo-btn").addEventListener("click", () => {
+            if (!questionBoard || questionEngineBusy) return;
+            questionBoard.undo(); // la respuesta del motor
+            const undoneStudentMove = questionBoard.undo(); // la jugada propia anterior
+            if (undoneStudentMove) questionMovesDone = Math.max(0, questionMovesDone - 1);
+            questionEngineLastFailed = false;
+            updateQuestionCardStatus();
+        });
+
+        document.getElementById("question-retry-engine-btn").addEventListener("click", () => {
+            requestQuestionEngineReply();
+        });
+
+        document.getElementById("question-retry-btn").addEventListener("click", () => {
+            if (!currentQuestion || currentQuestion.closed_at) return;
+            questionBoard.loadFen(currentQuestion.fen);
+            if (preguntaAcc) preguntaAcc.actualizar();
+            questionMovesDone = 0;
+            questionEngineLastFailed = false;
+            myAnswer = null;
+            questionBoard.setInteractive(true);
+            document.getElementById("question-retry-btn").classList.add("hidden");
+            updateQuestionCardStatus();
+        });
+
+        document.getElementById("question-close-btn").addEventListener("click", () => {
+            if (!currentQuestion) return;
+            questionCardDismissedFor = currentQuestion.id;
+            renderStudentQuestionCard();
+        });
+        document.getElementById("question-reopen-btn").addEventListener("click", () => {
+            questionCardDismissedFor = null;
+            renderStudentQuestionCard();
+        });
+
+        // ---------- Practicar contra el motor ----------
+        // El profesor lanza una ronda desde la posición ACTUAL del tablero (una foto fija,
+        // no sigue los cambios posteriores del tablero en vivo). Cada alumno juega su propia
+        // partida real contra Stockfish (js/practice-engine.js, corriendo en SU navegador,
+        // no en el del profesor), con el color que le toque mover en esa posición. El
+        // profesor ve todas las partidas de los alumnos abajo, con una barra de evaluación
+        // por cada una (calculada también por el navegador de cada alumno, para no tener que
+        // correr un motor por alumno del lado del profesor).
+        let selectedPracticeLevel = "1500";
+        let latestPracticeSession = null; // última fila de practice_sessions (activa o ya cerrada)
+        let myPracticeGame = null; // fila propia en practice_games (solo alumno)
+        let practiceBoard = null; // tablero del alumno (overlay)
+        let practiceEngineBusy = false; // el motor está calculando su respuesta
+        // id de la ronda que el alumno cerró con la ✖ (ver practice-close-btn): la ronda
+        // sigue activa del lado del profesor, así que no se toca ninguna fila — solo se deja
+        // de imponer el overlay hasta que el alumno la vuelva a abrir.
+        let practiceCardDismissedFor = null;
+        const practiceStudentBoards = {}; // profesor: student_id -> {el, nameEl, barEl, statusEl, board}
+
+        const PRACTICE_LEVEL_ACTIVE = "practice-level-btn text-xs font-semibold px-2 py-2 rounded-lg transition-colors bg-accent-500 text-brand-900";
+        const PRACTICE_LEVEL_INACTIVE = "practice-level-btn text-xs font-semibold px-2 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200";
+
+        document.querySelectorAll(".practice-level-btn").forEach((btn) => {
+            btn.addEventListener("click", () => {
+                selectedPracticeLevel = btn.dataset.level;
+                document.querySelectorAll(".practice-level-btn").forEach((b) => {
+                    const active = b === btn;
+                    b.className = active ? PRACTICE_LEVEL_ACTIVE : PRACTICE_LEVEL_INACTIVE;
+                    b.setAttribute("aria-pressed", active ? "true" : "false");
+                });
+            });
+        });
+
+        function practiceLevelLabel(level) {
+            return (typeof PracticeEngine !== "undefined" && PracticeEngine.LEVELS[level] && PracticeEngine.LEVELS[level].label) || level;
+        }
+
+        function practiceStatusLabel(status) {
+            if (status === "checkmate_win") return "🏆 Ganó por jaque mate";
+            if (status === "checkmate_loss") return "💀 Perdió por jaque mate";
+            if (status === "draw") return "🤝 Tablas";
+            if (status === "resigned") return "🏳️ Se rindió";
+            return "Jugando…";
+        }
+
+        // "Jugando…" / "Ganó por jaque mate" + cuántos intentos lleva en esta ronda (solo le
+        // interesa al profesor, que es quien puede estar viendo muchos tableros a la vez).
+        function practiceStatusLabelWithAttempts(row) {
+            const attempts = row.attempts || 1;
+            return practiceStatusLabel(row.status) + " · intento " + attempts;
+        }
+
+        // Resultado desde el punto de vista del alumno, justo después de aplicar una jugada
+        // (suya o del motor) sobre `g`. Se llama con el turno YA pasado al otro lado.
+        function practiceResultForStudent(g, studentColor) {
+            if (g.in_checkmate && g.in_checkmate()) {
+                const matedColor = g.turn(); // a quien le toca mover es quien está mate
+                return matedColor === studentColor ? "checkmate_loss" : "checkmate_win";
+            }
+            if (g.in_draw && g.in_draw()) return "draw"; // in_draw() ya cubre ahogado, material insuficiente, etc.
+            return "playing";
+        }
+
+        function subscribePractice() {
+            sb.channel("practice-sessions-changes:" + boardOwnerId)
+                .on("postgres_changes", { event: "*", schema: "public", table: "practice_sessions", filter: "created_by=eq." + boardOwnerId }, (payload) => {
+                    applyPracticeSessionUpdate(payload.new || payload.old);
+                })
+                .subscribe();
+            if (isTeacher) {
+                sb.channel("practice-games-changes:" + boardOwnerId)
+                    .on("postgres_changes", { event: "*", schema: "public", table: "practice_games" }, (payload) => {
+                        const row = (payload.new && payload.new.session_id) ? payload.new : payload.old;
+                        if (!latestPracticeSession || !row || row.session_id !== latestPracticeSession.id) return;
+                        loadPracticeGamesForSession(latestPracticeSession.id);
+                    })
+                    .subscribe();
+            }
+        }
+
+        // Carga inicial al entrar a la página: sí hace falta preguntarle a la base de datos
+        // cuál es la ronda más reciente (no hay ningún evento de Realtime del que partir).
+        // Para los cambios en vivo mientras la página ya está abierta, ver
+        // applyPracticeSessionUpdate() más abajo: usa la fila que trae el propio evento en
+        // vez de volver a consultar "la más reciente", que si dos consultas se cruzan en la
+        // red puede resolver desordenado.
+        async function loadCurrentPractice() {
+            const { data, error } = await sb.from("practice_sessions").select("*").eq("created_by", boardOwnerId).order("created_at", { ascending: false }).limit(1).maybeSingle();
+            if (error) { console.error(error); return; }
+            latestPracticeSession = data || null;
+            if (isTeacher) renderTeacherPracticePanel();
+            else await renderStudentPracticeCard();
+        }
+
+        // Al arrancar una ronda nueva, el profesor primero cierra la anterior (UPDATE en
+        // practice_sessions, ended_at) y luego crea la siguiente (INSERT): dos cambios
+        // separados, que Realtime siempre entrega en ese mismo orden (el orden real en que
+        // ocurrieron los cambios en la base). Por eso esta función toma la fila directo del
+        // evento en vez de volver a preguntar "cuál es la más reciente" — esa segunda
+        // consulta, al viajar por la red por separado de la otra, sí podía resolver
+        // desordenada (la del cierre llegando después que la del inicio) y dejar a un alumno
+        // viendo la posición de la ronda ya terminada en vez de la nueva. Tomando la fila del
+        // evento no hay ninguna consulta aparte que pueda cruzarse por la red: cada alumno
+        // procesa primero el cierre (oculta su tablero) y después, ya sí, el inicio de la
+        // ronda nueva — siempre en ese orden.
+        function applyPracticeSessionUpdate(row) {
+            if (!row) return;
+            latestPracticeSession = row;
+            if (isTeacher) renderTeacherPracticePanel();
+            else renderStudentPracticeCard();
+        }
+
+        // ---------- Panel del profesor ----------
+        function renderTeacherPracticePanel() {
+            const active = !!(latestPracticeSession && !latestPracticeSession.ended_at);
+            document.getElementById("practice-start-controls").classList.toggle("hidden", active);
+            document.getElementById("practice-active-controls").classList.toggle("hidden", !active);
+            document.getElementById("practice-boards-section").classList.toggle("hidden", !active);
+            if (active) {
+                document.getElementById("practice-active-level").textContent = practiceLevelLabel(latestPracticeSession.level);
+                loadPracticeGamesForSession(latestPracticeSession.id);
+            } else {
+                document.getElementById("practice-boards-grid").innerHTML = "";
+                Object.keys(practiceStudentBoards).forEach((k) => delete practiceStudentBoards[k]);
+            }
+        }
+
+        function upsertPracticeStudentBoard(row) {
+            const grid = document.getElementById("practice-boards-grid");
+            let entry = practiceStudentBoards[row.student_id];
+            if (!entry) {
+                const wrap = document.createElement("div");
+                wrap.className = "bg-white dark:bg-brand-900 rounded-xl shadow-md p-3";
+                wrap.innerHTML =
+                    // De qué color juega va FUERA del nombre y sin encogerse: el tablero se
+                    // gira según su color, así que es lo que dice cómo leerlo — y iba pegado
+                    // al final de un nombre que se trunca, o sea que con un nombre largo
+                    // (que es el caso de todos los días) se perdía siempre.
+                    '<div class="flex items-baseline gap-1 mb-1">' +
+                        '<p class="practice-mini-name text-xs font-semibold text-brand-700 dark:text-brand-200 truncate min-w-0"></p>' +
+                        '<span class="practice-mini-color text-[11px] text-brand-450 dark:text-brand-350 shrink-0"></span>' +
+                    "</div>" +
+                    '<div class="practice-mini-board grid grid-cols-8 grid-rows-[repeat(8,minmax(0,1fr))] w-full aspect-square rounded-lg overflow-hidden shadow border-2 border-brand-700 select-none mb-2"></div>' +
+                    // Quién va ganando, como en cualquier tablero: lo blanco es de las
+                    // blancas y lo oscuro de las negras. El relleno blanco iba SIN borde
+                    // sobre una tarjeta blanca, así que la mitad de las blancas era
+                    // invisible y la barra se leía al revés — se veía "lo que falta".
+                    '<div class="practice-mini-eval h-2 w-full rounded-full overflow-hidden bg-brand-800 border border-brand-300 dark:border-brand-700 flex mb-1.5" role="img">' +
+                        '<div class="practice-mini-bar bg-white h-full transition-all duration-500 ease-out" style="width:50%"></div>' +
+                    "</div>" +
+                    '<p class="practice-mini-status text-[11px] text-brand-450 dark:text-brand-350"></p>';
+                grid.appendChild(wrap);
+                entry = {
+                    el: wrap,
+                    nameEl: wrap.querySelector(".practice-mini-name"),
+                    colorEl: wrap.querySelector(".practice-mini-color"),
+                    evalEl: wrap.querySelector(".practice-mini-eval"),
+                    barEl: wrap.querySelector(".practice-mini-bar"),
+                    statusEl: wrap.querySelector(".practice-mini-status"),
+                    board: new ClasesBoard(wrap.querySelector(".practice-mini-board"), { interactive: false, allowArrows: false, compact: true }),
+                };
+                practiceStudentBoards[row.student_id] = entry;
+            }
+            const displayName = (row.profiles && (row.profiles.full_name || row.profiles.email)) || "Alumno";
+            entry.nameEl.textContent = displayName;
+            entry.nameEl.title = displayName;
+            entry.colorEl.textContent = row.student_color === "w" ? "· blancas" : "· negras";
+            entry.board.setFlipped(row.student_color === "b");
+            entry.board.loadMoves(row.moves || [], latestPracticeSession.fen);
+            // eval_cp queda en null justo al reintentar (partida recién reiniciada): la barra
+            // vuelve al centro en vez de quedarse con el valor de la partida anterior.
+            const hayEval = row.eval_cp !== null && row.eval_cp !== undefined;
+            entry.barEl.style.width = (hayEval ? evalToBarPercent(row.eval_cp) : 50) + "%";
+            // Una barra es una imagen: sin nombre, quien usa lector de pantalla oye "imagen"
+            // y nada más. Va en palabras porque el color nunca dice nada solo.
+            entry.evalEl.setAttribute("aria-label", !hayEval ? "Todavía sin evaluar"
+                : Math.abs(row.eval_cp) < 50 ? "La partida va pareja"
+                : "Va mejor " + (row.eval_cp > 0 ? "el blanco" : "el negro"));
+            entry.statusEl.textContent = practiceStatusLabelWithAttempts(row);
+        }
+
+        // Tableros siempre del MISMO tamaño, sin importar cuántos alumnos estén jugando:
+        // antes cada uno ocupaba 1/N del ancho de la fila, así que con 1-2 alumnos se veían
+        // enormes — y, peor, todos cambiaban de tamaño en el momento en que un alumno más se
+        // conectaba, justo mientras el profesor los está mirando.
+        //
+        // Pero el tope estaba en 160px, o sea casillas de 16px y piezas de 10: ahí no se
+        // distingue ni la figura ni de qué color es. 190 es lo más chico donde la pieza
+        // dibujada se reconoce de un vistazo (medido en pantalla, no a ojo) y siguen
+        // entrando tres por fila en la columna del profesor. El `min(…, 100%)` es para que
+        // en una pantalla más angosta que una tarjeta se encoja en vez de desbordarse.
+        function updatePracticeBoardsGridColumns() {
+            const grid = document.getElementById("practice-boards-grid");
+            grid.style.gridTemplateColumns = "repeat(auto-fill, minmax(min(190px, 100%), 190px))";
+            grid.style.justifyContent = "center";
+        }
+
+        async function loadPracticeGamesForSession(sessionId) {
+            const { data, error } = await sb.from("practice_games").select("*, profiles(full_name, email)").eq("session_id", sessionId).order("created_at");
+            if (error) { console.error(error); return; }
+            // La ronda pudo cerrarse (o cambiar) mientras esta consulta estaba en vuelo.
+            if (!latestPracticeSession || latestPracticeSession.id !== sessionId) return;
+            const rows = data || [];
+            const seen = new Set();
+            for (const row of rows) {
+                seen.add(row.student_id);
+                upsertPracticeStudentBoard(row);
+            }
+            // Por si alguna fila se borró manualmente: quita su tarjeta de la grilla.
+            Object.keys(practiceStudentBoards).forEach((studentId) => {
+                if (!seen.has(studentId)) {
+                    practiceStudentBoards[studentId].el.remove();
+                    delete practiceStudentBoards[studentId];
+                }
+            });
+            updatePracticeBoardsGridColumns(rows.length);
+            document.getElementById("practice-boards-hint").textContent = rows.length
+                ? rows.length + (rows.length === 1 ? " alumno jugando" : " alumnos jugando")
+                : "Esperando a que los alumnos empiecen a jugar…";
+        }
+
+        document.getElementById("start-practice-btn").addEventListener("click", async () => {
+            // Mismo motivo que en "Preguntar": este botón tampoco pasa por
+            // aplicarPosicionEnClase() (la práctica arranca de la posición YA visible, no
+            // manda una nueva), así que board.fen() no está garantizado si el editor se
+            // quedó abierto a mitad de una edición — y esa es justo la puerta por la que
+            // "el bot" (Stockfish, en el navegador de cada alumno) se rompe para el resto
+            // de la sesión (ver js/shared-engine.js).
+            const motivoPractica = motivoPosicionInvalida(board.fen());
+            if (motivoPractica) { setStatus(motivoPractica); return; }
+            if (typeof PracticeEngine !== "undefined") PracticeEngine.preload();
+            // Solo puede haber una ronda activa a la vez: cierra cualquier anterior sin cerrar.
+            await sb.from("practice_sessions").update({ ended_at: new Date().toISOString() }).eq("created_by", boardOwnerId).is("ended_at", null);
+            const { error } = await sb.from("practice_sessions").insert({
+                fen: board.fen(), level: selectedPracticeLevel, created_by: session.user.id,
+            });
+            if (error) { console.error(error); setStatus("No se pudo iniciar la práctica: " + error.message); return; }
+            setStatus("Práctica iniciada: los alumnos ya pueden jugar contra el motor.");
+        });
+
+        document.getElementById("end-practice-btn").addEventListener("click", async () => {
+            if (!latestPracticeSession || latestPracticeSession.ended_at) return;
+            const { error } = await sb.from("practice_sessions").update({ ended_at: new Date().toISOString() }).eq("id", latestPracticeSession.id);
+            if (error) { console.error(error); return; }
+            setStatus("Práctica terminada.");
+        });
+
+        // ---------- Tarjeta del alumno: partida real contra el motor (overlay sobre el tablero) ----------
+        // Al arrancar una ronda, el profesor primero cierra la anterior (UPDATE) y luego crea
+        // la nueva (INSERT): son dos cambios en practice_sessions, así que a veces le llegan al
+        // alumno casi juntos y renderStudentPracticeCard() se dispara dos veces casi a la vez.
+        // Esta cola evita que ambas corran en paralelo (la segunda espera a que la primera
+        // termine, y para entonces ya encuentra la fila creada por la primera).
+        let practiceCardRenderBusy = Promise.resolve();
+        function renderStudentPracticeCard() {
+            const run = practiceCardRenderBusy.then(renderStudentPracticeCardNow, renderStudentPracticeCardNow);
+            practiceCardRenderBusy = run.catch(() => {});
+            return run;
+        }
+
+        // De qué ronda ya se abrió el overlay: el foco se lleva a la práctica solo la
+        // primera vez que aparece, no en cada repintado (le robaría el foco al recuadro).
+        let practiceCardAbiertaPara = null;
+        async function renderStudentPracticeCardNow() {
+            const card = document.getElementById("practice-card");
+            const reopenBtn = document.getElementById("practice-reopen-btn");
+            if (!latestPracticeSession || latestPracticeSession.ended_at) {
+                card.classList.add("hidden");
+                reopenBtn.classList.add("hidden");
+                practiceCardDismissedFor = null;
+                myPracticeGame = null;
+                return;
+            }
+            // El alumno cerró este mismo overlay con la ✖: la ronda sigue activa (la partida
+            // contra el motor continúa por debajo, ver más abajo), solo se deja de imponer el
+            // overlay encima de lo que esté mirando — el botón flotante lo deja volver cuando
+            // quiera.
+            const dismissed = practiceCardDismissedFor === latestPracticeSession.id;
+            card.classList.toggle("hidden", dismissed);
+            reopenBtn.classList.toggle("hidden", !dismissed);
+            document.getElementById("practice-card-level").textContent = practiceLevelLabel(latestPracticeSession.level);
+            if (typeof PracticeEngine !== "undefined") PracticeEngine.preload();
+
+            // ¿Ya tengo una partida en esta ronda? (por ejemplo, si recargué la página a mitad,
+            // o si ya la creó una llamada anterior a esta misma función).
+            const { data: existing, error } = await sb.from("practice_games").select("*")
+                .eq("session_id", latestPracticeSession.id).eq("student_id", profile.id).maybeSingle();
+            if (error) { console.error(error); return; }
+
+            if (existing) {
+                myPracticeGame = existing;
+            } else {
+                const studentColor = latestPracticeSession.fen.split(" ")[1] === "b" ? "b" : "w";
+                const { data: created, error: insertError } = await sb.from("practice_games").insert({
+                    session_id: latestPracticeSession.id, student_id: profile.id, student_color: studentColor,
+                    fen: latestPracticeSession.fen, moves: [],
+                }).select().single();
+                if (insertError) {
+                    // La cola de arriba ya cubre el caso normal, pero por si acaso llegó otro
+                    // evento fuera de esa cola (o de otra pestaña): en vez de fallar, se
+                    // vuelve a pedir la fila — si el error fue justamente "ya existe", ahí está.
+                    const { data: retryExisting } = await sb.from("practice_games").select("*")
+                        .eq("session_id", latestPracticeSession.id).eq("student_id", profile.id).maybeSingle();
+                    if (!retryExisting) { console.error(insertError); return; }
+                    myPracticeGame = retryExisting;
+                } else {
+                    myPracticeGame = created;
+                }
+            }
+
+            document.getElementById("practice-card-color").textContent = myPracticeGame.student_color === "w" ? "blancas" : "negras";
+
+            if (!practiceBoard) {
+                practiceBoard = new ClasesBoard(document.getElementById("practice-board"), {
+                    interactive: false,
+                    allowArrows: false,
+                    externalCoords: true,
+                    onMove: (fen, san, moves) => onPracticeStudentMove(fen, moves),
+                });
+                practicaAcc = window.ClaseAdaptada ? ClaseAdaptada.montar(document.getElementById("practice-cmd"), () => practiceBoard, {
+                    etiqueta: "Escribe tu jugada, o una pregunta sobre la posición",
+                    porQueNoPuedes: () => !myPracticeGame || myPracticeGame.status !== "playing"
+                        ? "Esta partida ya terminó. Usa «Reintentar» para empezarla de nuevo."
+                        : "El motor está pensando su jugada: espera un momento.",
+                }) : null;
+            }
+            const practicaRecienAbierta = practiceCardAbiertaPara !== latestPracticeSession.id && !dismissed;
+            if (!dismissed) practiceCardAbiertaPara = latestPracticeSession.id;
+            practiceBoard.setFlipped(myPracticeGame.student_color === "b");
+            practiceBoard.loadMoves(myPracticeGame.moves || [], latestPracticeSession.fen);
+            if (practicaAcc) practicaAcc.actualizar();
+            if (practicaRecienAbierta) enfocarCuandoSeVea(document.getElementById("practice-titulo"));
+            updatePracticeCardInteractivity();
+            // Recuperación automática: si al entrar (o recargar la página a mitad de una
+            // partida) resulta que le toca mover al motor y no al alumno, es que se había
+            // quedado esperando una respuesta que nunca llegó — se la vuelve a pedir sin
+            // que el alumno tenga que hacer nada.
+            requestEngineReply(myPracticeGame.id, myPracticeGame.attempts || 1);
+        }
+
+        function updatePracticeCardInteractivity() {
+            const statusEl = document.getElementById("practice-card-status");
+            const resignBtn = document.getElementById("practice-resign-btn");
+            const retryBtn = document.getElementById("practice-retry-btn");
+            const retryEngineBtn = document.getElementById("practice-retry-engine-btn");
+            if (!myPracticeGame || myPracticeGame.status !== "playing") {
+                if (practiceBoard) practiceBoard.setInteractive(false);
+                statusEl.textContent = myPracticeGame ? practiceStatusLabel(myPracticeGame.status) : "";
+                resignBtn.classList.add("hidden");
+                retryEngineBtn.classList.add("hidden");
+                retryBtn.classList.toggle("hidden", !myPracticeGame);
+                return;
+            }
+            resignBtn.classList.remove("hidden");
+            retryBtn.classList.add("hidden");
+            const myTurn = practiceBoard.game.turn() === myPracticeGame.student_color;
+            practiceBoard.setInteractive(myTurn && !practiceEngineBusy);
+            // Si la última consulta al motor no devolvió jugada (ver requestEngineReply), se
+            // ofrece un botón para pedirla de nuevo sin tener que reiniciar toda la partida.
+            const stuck = practiceEngineLastFailed && !myTurn && !practiceEngineBusy;
+            retryEngineBtn.classList.toggle("hidden", !stuck);
+            statusEl.textContent = practiceEngineBusy
+                ? "El motor está pensando…"
+                : (myTurn ? "Es tu turno." : (stuck ? "El motor no respondió — toca \"Pedir jugada del motor\" para intentarlo de nuevo." : "Esperando la jugada del motor…"));
+        }
+
+        async function savePracticeGameRow(patch) {
+            if (!myPracticeGame) return;
+            const { error } = await sb.from("practice_games").update(patch).eq("id", myPracticeGame.id);
+            if (error) { console.error(error); return; }
+            myPracticeGame = Object.assign({}, myPracticeGame, patch);
+        }
+
+        // gameIdAtMove/attemptsAtMove: por si mientras el motor pensaba el alumno se rindió o
+        // reintentó la ronda (misma fila de practice_games, mismo id — el reintento no crea
+        // una fila nueva, solo la resetea — así que comparar solo el id no alcanza para
+        // detectar un reintento de por medio; attempts sí cambia con cada reintento).
+        async function updatePracticeGameEval(fen, gameIdAtMove, attemptsAtMove) {
+            if (typeof PracticeEngine === "undefined" || !myPracticeGame) return;
+            const turnAtEval = fen.split(" ")[1];
+            const score = await PracticeEngine.evaluate(fen);
+            if (!score || !myPracticeGame) return;
+            if (myPracticeGame.id !== gameIdAtMove || myPracticeGame.attempts !== attemptsAtMove) return;
+            await savePracticeGameRow({ eval_cp: scoreToWhiteCp(score, turnAtEval) });
+        }
+
+        // true si la última consulta al motor se quedó sin jugada (timeout interno de
+        // practice-engine.js, worker que no contestó, etc.) — ver requestEngineReply().
+        // Antes, si esto pasaba una sola vez, el alumno se quedaba viendo "Esperando la
+        // jugada del motor…" para siempre, sin ninguna forma de salir de ahí más que
+        // rendirse o reiniciar toda la partida.
+        let practiceEngineLastFailed = false;
+
+        // Le pide al motor la respuesta a la posición actual y la aplica. Reintenta un par
+        // de veces antes de rendirse (el motor corre en un Worker de este mismo navegador:
+        // un solo hiccup transitorio no debería dejar al alumno esperando para siempre) y,
+        // si de plano no contesta, lo deja en claro en pantalla con un botón para reintentar
+        // (ver updatePracticeCardInteractivity). Se llama tanto justo después de la jugada
+        // del alumno como al recargar la página a mitad de una espera (ver
+        // renderStudentPracticeCardNow) — por eso vuelve a leer el turno actual en vez de
+        // asumir que ya le toca al motor.
+        async function requestEngineReply(gameIdAtMove, attemptsAtMove) {
+            if (practiceEngineBusy) return; // ya hay una consulta en curso, no duplicarla
+            if (!myPracticeGame || myPracticeGame.id !== gameIdAtMove || myPracticeGame.attempts !== attemptsAtMove || myPracticeGame.status !== "playing") return;
+            if (practiceBoard.game.turn() === myPracticeGame.student_color) return; // ya le toca al alumno
+
+            practiceEngineBusy = true;
+            practiceEngineLastFailed = false;
+            updatePracticeCardInteractivity();
+            const levelAtRequest = latestPracticeSession ? latestPracticeSession.level : "1500";
+            let uci = null;
+            for (let attempt = 0; attempt < 3 && !uci; attempt++) {
+                const fen = practiceBoard.game.fen();
+                uci = typeof PracticeEngine !== "undefined" ? await PracticeEngine.getMove(fen, levelAtRequest) : null;
+                // Mientras el motor pensaba pudo cerrarse esta ronda, el profesor pudo lanzar
+                // una nueva, o el propio alumno pudo rendirse o reintentar esta misma partida:
+                // en cualquiera de esos casos, no seguir insistiendo con datos ya viejos.
+                if (!myPracticeGame || myPracticeGame.id !== gameIdAtMove || myPracticeGame.attempts !== attemptsAtMove || myPracticeGame.status !== "playing") {
+                    /* La ronda nueva se pintó con el motor ocupado —el tablero
+                       quieto y «el motor está pensando»— y su propio pedido
+                       salió de inmediato por ese mismo `busy`. Sin repintar y
+                       sin volver a pedir, al alumno le tocaría mover en un
+                       tablero que no responde nunca. */
+                    practiceEngineBusy = false;
+                    updatePracticeCardInteractivity();
+                    if (myPracticeGame && myPracticeGame.status === "playing") {
+                        requestEngineReply(myPracticeGame.id, myPracticeGame.attempts);
+                    }
+                    return;
+                }
+            }
+            practiceEngineBusy = false;
+
+            if (uci) {
+                const move = practiceBoard.game.move({
+                    from: uci.slice(0, 2), to: uci.slice(2, 4),
+                    promotion: uci.length > 4 ? uci.slice(4, 5) : "q",
+                });
+                if (move) {
+                    practiceBoard.render();
+                    if (practicaAcc) {
+                        practicaAcc.actualizar();
+                        practicaAcc.decir("El motor jugó " + ClaseAdaptada.hablarJugada(move.san) + ". "
+                            + (practiceBoard.game.game_over() ? "" : "Te toca."));
+                    }
+                    const newFen = practiceBoard.game.fen();
+                    const newMoves = practiceBoard.game.history();
+                    const newStatus = practiceResultForStudent(practiceBoard.game, myPracticeGame.student_color);
+                    await savePracticeGameRow({ fen: newFen, moves: newMoves, status: newStatus });
+                    updatePracticeGameEval(newFen, gameIdAtMove, attemptsAtMove);
+                }
+            } else {
+                practiceEngineLastFailed = true;
+            }
+            updatePracticeCardInteractivity();
+        }
+
+        async function onPracticeStudentMove(fen, moves) {
+            if (!myPracticeGame) return;
+            if (practicaAcc) practicaAcc.actualizar();
+            const gameIdAtMove = myPracticeGame.id;
+            const attemptsAtMove = myPracticeGame.attempts || 1;
+            practiceBoard.setInteractive(false);
+            const status = practiceResultForStudent(practiceBoard.game, myPracticeGame.student_color);
+            await savePracticeGameRow({ fen, moves, status });
+            updatePracticeGameEval(fen, gameIdAtMove, attemptsAtMove); // en segundo plano, no bloquea la jugada del motor
+            if (status !== "playing") { updatePracticeCardInteractivity(); return; }
+            await requestEngineReply(gameIdAtMove, attemptsAtMove);
+        }
+
+        // El alumno se rinde a mitad de partida (incluso mientras el motor está "pensando" su
+        // respuesta: el guard de arriba en onPracticeStudentMove evita que esa jugada, ya
+        // obsoleta, se aplique después). No cuenta como un intento nuevo — solo termina el
+        // actual, para eso está "Reintentar".
+        async function resignPracticeGame() {
+            if (!myPracticeGame || myPracticeGame.status !== "playing") return;
+            if (practiceBoard) practiceBoard.setInteractive(false);
+            await savePracticeGameRow({ status: "resigned" });
+            updatePracticeCardInteractivity();
+        }
+
+        // Reinicia la MISMA ronda desde la posición con la que arrancó (no crea una fila
+        // nueva: reutiliza la fila de practice_games, así el profesor sigue viendo un solo
+        // tablero por alumno) y suma un intento — el profesor ve ese número en su grilla.
+        async function retryPracticeGame() {
+            if (!myPracticeGame || !latestPracticeSession || latestPracticeSession.ended_at) return;
+            await savePracticeGameRow({
+                fen: latestPracticeSession.fen, moves: [], status: "playing",
+                eval_cp: null, attempts: (myPracticeGame.attempts || 1) + 1,
+            });
+            practiceBoard.loadMoves([], latestPracticeSession.fen);
+            updatePracticeCardInteractivity();
+        }
+
+        document.getElementById("practice-resign-btn").addEventListener("click", resignPracticeGame);
+        document.getElementById("practice-retry-btn").addEventListener("click", retryPracticeGame);
+        document.getElementById("practice-retry-engine-btn").addEventListener("click", () => {
+            if (!myPracticeGame) return;
+            requestEngineReply(myPracticeGame.id, myPracticeGame.attempts || 1);
+        });
+
+        document.getElementById("practice-close-btn").addEventListener("click", () => {
+            if (!latestPracticeSession) return;
+            practiceCardDismissedFor = latestPracticeSession.id;
+            renderStudentPracticeCard();
+        });
+        document.getElementById("practice-reopen-btn").addEventListener("click", () => {
+            practiceCardDismissedFor = null;
+            practiceCardAbiertaPara = null;   // que el foco vuelva a la práctica al reabrirla
+            renderStudentPracticeCard();
+        });
+
+        // ---------- La clase todavía no empezó ----------
+        // Lo que devolvió mis_clases(): un renglón por profesor, con si tiene
+        // clase abierta ahora. Se guarda porque lo usan las dos pantallas —la
+        // de espera y el selector de arriba— y pedirlo dos veces sería la misma
+        // consulta para el mismo dato.
+        let clasesDelAlumno = [];
+
+        function mostrarSinClase() {
+            const mia = clasesDelAlumno.find((c) => c.profesor_id === boardOwnerId);
+            const nombre = (mia && mia.profesor) || "Tu profe";
+            // Con varios profesores, que OTRO tenga clase abierta es el dato que
+            // hace falta: si no, el alumno se queda esperando a quien hoy no va a
+            // abrir mientras su otra clase ya empezó, y eso no se adivina.
+            const otra = clasesDelAlumno.find((c) => c.clase_abierta && c.profesor_id !== boardOwnerId);
+            document.getElementById("sin-clase-texto").textContent = otra
+                ? nombre + " todavía no ha abierto la clase, pero " + otra.profesor + " sí tiene una en curso ahora mismo."
+                : nombre + " todavía no ha abierto la clase. Cuando la abra vas a entrar directo al tablero.";
+            // El selector es el mismo de arriba y solo aparece con dos o más
+            // profesores; acá es además la forma de pasarse a la clase que sí
+            // está abierta.
+            ClaseElegida.montarSelector(document.getElementById("sin-clase-selector"), clasesDelAlumno, boardOwnerId);
+            document.getElementById("loading").classList.add("hidden");
+            document.getElementById("sin-clase").classList.remove("hidden");
+        }
+
+        /* Un canal por profesor, no solo por el que está mirando: la clase la
+           puede abrir cualquiera de ellos, y con un canal filtrado por
+           boardOwnerId el alumno se quedaría en esta pantalla hasta que
+           recargara — sin que nada fallara. */
+        function esperarLaClase() {
+            const ids = [...new Set(clasesDelAlumno.map((c) => c.profesor_id).filter(Boolean))];
+            ids.forEach((id) => {
+                sb.channel("clase-abre:" + id)
+                    .on("postgres_changes", { event: "*", schema: "public", table: "class_sessions", filter: "created_by=eq." + id }, async (payload) => {
+                        const abrio = payload.new && !payload.new.ended_at;
+                        // La suya y abierta: se entra. Recargar y no montar acá
+                        // es la misma decisión que cambiar de clase — todo
+                        // cuelga de boardOwnerId y montarlo a mano dejaría la
+                        // mitad sin suscribir.
+                        if (abrio && id === boardOwnerId) { window.location.reload(); return; }
+                        const { clases } = await ClaseElegida.resolver();
+                        if (clases && clases.length) clasesDelAlumno = clases;
+                        mostrarSinClase();
+                    })
+                    .subscribe();
+            });
+        }
+
+        // ---------- Arranque ----------
+        async function init() {
+            const { data } = await sb.auth.getSession();
+            session = data.session;
+            if (!session) { window.location.href = "login.html"; return; }
+
+            const { data: profileData, error: profileError } = await sb.from("profiles").select("*").eq("id", session.user.id).single();
+            if (profileError || !profileData) { setStatus("No se pudo cargar tu perfil."); return; }
+            profile = profileData;
+            isTeacher = profile.role === "profesor" || profile.is_admin === true;
+            if (isTeacher) {
+                boardOwnerId = profile.id;
+            } else {
+                // Con más de un profesor, el alumno elige a cuál clase entra.
+                const { clases, elegida } = await ClaseElegida.resolver();
+                boardOwnerId = elegida;
+                clasesDelAlumno = clases;
+            }
+            if (!boardOwnerId) {
+                setStatus("Todavía no tienes un profesor asignado — pídele a la persona administradora que te asigne uno.");
+                document.getElementById("loading").classList.add("hidden");
+                return;
+            }
+
+            /* La sesión en vivo empieza cuando el profesor ABRE la clase.
+               Sin clase abierta la RLS no le entrega al alumno ni el tablero ni
+               las variantes (ver la migración
+               `sesion_en_vivo_solo_con_clase_abierta`), así que seguir adelante
+               solo conseguiría pintarle una pantalla vacía: el candado se vería
+               como una página rota. Y la clase ya no se abre sola cuando entra
+               un alumno — justamente para que «hay clase» signifique algo. */
+            if (!isTeacher) {
+                const mia = clasesDelAlumno.find((c) => c.profesor_id === boardOwnerId);
+                if (!mia || !mia.clase_abierta) { mostrarSinClase(); esperarLaClase(); return; }
+                ClaseElegida.montarSelector(document.getElementById("selector-clase-wrap"), clasesDelAlumno, boardOwnerId);
+            }
+
+            const badge = document.getElementById("role-badge");
+            badge.textContent = isTeacher ? "Profesor" : "Alumno";
+            badge.classList.add(isTeacher ? "bg-accent-500" : "bg-brand-600", isTeacher ? "text-brand-900" : "text-white");
+
+            if (isTeacher) {
+                document.getElementById("teacher-toolbar").classList.remove("hidden");
+                document.getElementById("modo-sencillo-fila").classList.remove("hidden");
+                document.getElementById("engine-panel").classList.remove("hidden");
+                document.getElementById("teacher-tabs-wrap").classList.remove("hidden");
+                document.getElementById("clear-chat-btn").classList.remove("hidden");
+                document.getElementById("chat-student-picker").classList.remove("hidden");
+                let savedTab = TEACHER_TABS[0];
+                try { savedTab = localStorage.getItem(TEACHER_TAB_KEY) || savedTab; } catch (e) {}
+                activateTeacherTab(savedTab);
+                await arrancarModoSencillo();
+                cargarCupoInvitaciones();
+                cargarPlanesEnClase();
+                setupTeacherLessonTools();
+                setupArchivosTools();
+            } else {
+                document.getElementById("student-panel").classList.remove("hidden");
+                document.getElementById("raise-hand-btn").classList.remove("hidden");
+            }
+            setStatus(isTeacher
+                ? "Mueve el tablero: cada jugada se transmite en vivo a todos los alumnos conectados."
+                : "Bienvenido a la clase. Verás el tablero moverse en vivo mientras el profesor juega.");
+
+            initBoardForRole();
+            await loadGameState();
+            subscribeRealtime();
+            subscribePresence();
+            await checkOpenClassSession();
+            subscribeClassSessions();
+            conectarControlesDeClase();
+            await loadVariantTree();
+            subscribeVariants();
+            await loadCurrentQuestion();
+            subscribeQuestions();
+            await loadCurrentPractice();
+            subscribePractice();
+            if (isTeacher) { await loadChatStudents(); } else { await loadChatMessages(); }
+            subscribeChat();
+
+            document.getElementById("loading").classList.add("hidden");
+            document.getElementById("app").classList.remove("hidden");
+        }
+
+        document.getElementById("logout-btn").addEventListener("click", async () => {
+            if (presenceChannel) await presenceChannel.untrack();
+            await stopPresenceLog();
+            await sb.auth.signOut();
+            window.location.href = "index.html";
+        });
+
+        // Salir por las migas o por el logo cierra antes la asistencia del
+        // alumno, para que el registro diga a qué hora se fue de verdad.
+        document.querySelectorAll("#migas a, #marca-enlace").forEach((enlace) => {
+            enlace.addEventListener("click", async (e) => {
+                if (!presenceLogId) return; // nada que cerrar (profesor, o todavía sin clase abierta)
+                e.preventDefault();
+                await stopPresenceLog();
+                window.location.href = enlace.href;
+            });
+        });
+
+        document.getElementById("reset-board-btn").addEventListener("click", async () => {
+            board.reset();
+            board.setMarks([], []);
+            await pushBoardState();
+            await clearVariantTree();
+            cerrarLeccionLocal(); // reiniciar el tablero también suelta el curso que estaba abierto en el panel del profesor
+            updateTurnIndicator();
+            renderMoveList();
+            if (isTeacher) updateEngineEval();
+        });
+
+        document.getElementById("clear-marks-btn").addEventListener("click", () => board.clearMarks());
+
+        /* Cuántos alumnos nuevos puede invitar este profesor. El tope lo pone quien
+         * administra (profiles.invitaciones_max) y el descuento lo hace la función
+         * create-student al invitar: esto es solo para que el profesor lo sepa
+         * antes de escribir el correo, no es lo que manda. */
+        let cupoRestante = null;   // null = sin tope (quien administra)
+
+        function pintarCupo(restantes) {
+            cupoRestante = restantes;
+            const el = document.getElementById("create-student-cupo");
+            const btn = document.getElementById("create-student-btn");
+            if (!el) return;
+            if (restantes === null) { el.textContent = ""; return; }
+            if (restantes <= 0) {
+                el.textContent = "No te quedan invitaciones. Pídele más a la persona administradora.";
+                el.className = "text-xs font-semibold text-accent-700 dark:text-accent-400";
+                if (btn) btn.disabled = true;
+            } else {
+                el.textContent = restantes === 1 ? "Te queda 1 invitación." : `Te quedan ${restantes} invitaciones.`;
+                el.className = "text-xs text-brand-450 dark:text-brand-350";
+                if (btn) btn.disabled = false;
+            }
+        }
+
+        async function cargarCupoInvitaciones() {
+            try {
+                const { data } = await sb.from("profiles")
+                    .select("is_admin, invitaciones_max, invitaciones_usadas")
+                    .eq("id", session.user.id).single();
+                if (!data) return;
+                if (data.is_admin) { pintarCupo(null); return; }
+                pintarCupo(Math.max((data.invitaciones_max || 0) - (data.invitaciones_usadas || 0), 0));
+            } catch (e) { /* si no se puede leer, el servidor igual lo hace cumplir */ }
+        }
+
+        /* Qué se ve y qué se pide según haya correo propio o no. El campo del
+           correo se apaga en vez de esconderse: así se ve que sigue ahí y que
+           lo que cambió es que ya no hace falta. */
+        function pintarModoAlumno() {
+            const sinCorreo = document.getElementById("student-sin-correo").checked;
+            const correo = document.getElementById("student-email");
+            const usuario = document.getElementById("student-usuario");
+            correo.disabled = sinCorreo;
+            correo.required = !sinCorreo;
+            correo.classList.toggle("opacity-50", sinCorreo);
+            document.getElementById("student-casa").classList.toggle("hidden", !sinCorreo);
+            document.getElementById("student-usuario-dominio").textContent = "@" + UsuarioAlumno.DOMINIO;
+            // Se propone desde el nombre, pero lo escrito a mano no se pisa.
+            if (sinCorreo && !usuario.dataset.tocado) {
+                usuario.value = baseDeUsuarioEnPantalla(document.getElementById("student-name").value);
+            }
+        }
+
+        /* La misma regla que `baseDeUsuario()` de la Edge Function: primer
+           nombre y primer apellido, sin tildes. Acá solo PROPONE lo que se ve;
+           quien decide es el servidor, que además desempata si ya está tomado.
+           Que las dos coincidan lo comprueba verificar-alumno-sin-correo.js. */
+        function baseDeUsuarioEnPantalla(nombre) {
+            const pedazos = String(nombre || "")
+                .normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ñ/gi, "n")
+                .toLowerCase().replace(/[^a-z0-9\s]/g, " ").trim().split(/\s+/).filter(Boolean);
+            if (!pedazos.length) return "";
+            const apellido = pedazos.length >= 4 ? pedazos[2] : pedazos[1];
+            return [pedazos[0], apellido].filter(Boolean).join(".").slice(0, 40);
+        }
+
+        document.getElementById("student-sin-correo").addEventListener("change", pintarModoAlumno);
+        document.getElementById("student-name").addEventListener("input", () => {
+            if (!document.getElementById("student-usuario").dataset.tocado) pintarModoAlumno();
+        });
+        document.getElementById("student-usuario").addEventListener("input", (e) => {
+            e.target.dataset.tocado = "1";
+        });
+        pintarModoAlumno();
+
+        document.getElementById("create-student-form").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const msg = document.getElementById("create-student-msg");
+            const btn = document.getElementById("create-student-btn");
+            msg.textContent = "";
+            btn.disabled = true; btn.textContent = "Enviando...";
+
+            const email = document.getElementById("student-email").value.trim();
+            const full_name = document.getElementById("student-name").value.trim();
+            const sinCorreo = document.getElementById("student-sin-correo").checked;
+            const encargadoEmail = document.getElementById("student-encargado-correo").value.trim();
+            const encargadoNombre = document.getElementById("student-encargado-nombre").value.trim();
+            const usuario = document.getElementById("student-usuario").value.trim();
+
+            // Sin buzón propio, el correo de la casa es la ÚNICA forma de
+            // mandar el enlace: sin él la cuenta queda creada y muda.
+            if (sinCorreo && (!full_name || !encargadoEmail || !usuario)) {
+                msg.textContent = !full_name
+                    ? "Para armarle un usuario hace falta el nombre del alumno."
+                    : (!usuario ? "Falta el usuario con el que va a entrar."
+                                : "Falta el correo de la casa: es a donde va el enlace para crear la contraseña.");
+                msg.className = "text-xs text-red-600 dark:text-red-400";
+                btn.disabled = false; btn.textContent = "Enviar invitación";
+                return;
+            }
+
+            try {
+                const res = await fetch(EDGE_FUNCTION_URL, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${session.access_token}`,
+                        "apikey": window.SUPABASE_ANON_KEY,
+                    },
+                    body: JSON.stringify({
+                        email: sinCorreo ? "" : email,
+                        full_name,
+                        sin_correo: sinCorreo,
+                        usuario: sinCorreo ? usuario : "",
+                        encargado_email: sinCorreo ? encargadoEmail : "",
+                        encargado_nombre: sinCorreo ? encargadoNombre : "",
+                    }),
+                });
+                const result = await res.json();
+                if (!res.ok) throw new Error(result.error || "Error desconocido");
+                // Con qué entra lo dice el servidor: el usuario pudo salir con
+                // un número al final si ya estaba tomado.
+                const entra = result.usuario || result.email;
+                if (result.correo_enviado === false) {
+                    msg.textContent = `La cuenta quedó creada (entra con ${entra}), pero el correo NO salió. ` +
+                        "Vuelve a intentarlo más tarde o dile que entre con «¿Olvidaste tu contraseña?» en la pantalla de acceso.";
+                    msg.className = "text-xs font-semibold text-accent-700 dark:text-accent-400";
+                } else if (result.sin_correo) {
+                    // El usuario es el dato nuevo y hay que enseñarlo: no es un
+                    // correo y nadie lo adivina. Y el correo salió a la casa, no
+                    // al alumno — quien invitó tiene que poder decírselo.
+                    msg.textContent = `Listo: entra con ${entra}. El enlace para crear la contraseña salió a ` +
+                        `${result.correo_destino || encargadoEmail}, no al alumno — ese usuario no recibe correo.`;
+                    msg.className = "text-xs text-green-600 dark:text-green-400";
+                } else {
+                    msg.textContent = `Invitación enviada a ${entra}. Recibirá un correo para crear su contraseña, con los pasos para entrar.`;
+                    msg.className = "text-xs text-green-600 dark:text-green-400";
+                }
+                document.getElementById("create-student-form").reset();
+                // reset() limpia los campos pero no la marca de "lo puso a
+                // mano" ni vuelve a pintar el modo: sin esto, la invitación
+                // siguiente arranca con los bloques abiertos de la anterior y
+                // el usuario del alumno de antes todavía escrito.
+                delete document.getElementById("student-usuario").dataset.tocado;
+                pintarModoAlumno();
+                // El servidor devuelve cuántas quedan: así el número de la pantalla
+                // es el que de verdad tiene la base, no una cuenta del navegador.
+                if (!result.ilimitado && typeof result.restantes === "number") {
+                    pintarCupo(result.restantes);
+                }
+            } catch (err) {
+                msg.textContent = err.message;
+                msg.className = "text-xs text-red-600 dark:text-red-400";
+                // El servidor es el que manda: si dice que no queda cupo, se
+                // vuelve a leer para que la pantalla diga lo mismo que la base.
+                if (/invitaciones/i.test(err.message)) cargarCupoInvitaciones();
+            } finally {
+                btn.textContent = "Enviar invitación";
+                // Se vuelve a habilitar solo si de verdad queda cupo: si no, el
+                // botón tiene que quedarse apagado después de la última invitación.
+                btn.disabled = cupoRestante !== null && cupoRestante <= 0;
+            }
+        });
+
+        // Modal de cambio de contraseña
+        const pwModal = document.getElementById("pw-modal");
+        document.getElementById("change-pw-btn").addEventListener("click", () => pwModal.classList.remove("hidden"));
+        document.getElementById("pw-cancel-btn").addEventListener("click", () => pwModal.classList.add("hidden"));
+        document.getElementById("pw-save-btn").addEventListener("click", async () => {
+            const pwMsg = document.getElementById("pw-msg");
+            const newPassword = document.getElementById("new-password").value;
+            if (newPassword.length < 8) {
+                pwMsg.textContent = "La contraseña debe tener al menos 8 caracteres.";
+                pwMsg.className = "text-xs text-red-600 dark:text-red-400 mb-3";
+                return;
+            }
+            const { error } = await sb.auth.updateUser({ password: newPassword });
+            if (error) {
+                pwMsg.textContent = error.message;
+                pwMsg.className = "text-xs text-red-600 dark:text-red-400 mb-3";
+                return;
+            }
+            pwMsg.textContent = "Contraseña actualizada.";
+            pwMsg.className = "text-xs text-green-600 dark:text-green-400 mb-3";
+            setTimeout(() => { pwModal.classList.add("hidden"); document.getElementById("new-password").value = ""; }, 1200);
+        });
+
+        init();
+    

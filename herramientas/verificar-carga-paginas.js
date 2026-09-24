@@ -78,5 +78,42 @@ else bien("ninguna página carga dos veces el mismo script");
 if (fuentesQueFrenan.length) mal("la hoja de Google Fonts frena el pintado en: " + fuentesQueFrenan.slice(0, 8).join(", ") + (fuentesQueFrenan.length > 8 ? "…" : ""));
 else bien("la hoja de Google Fonts no frena el pintado en ninguna");
 
+/* ---- El código de las páginas sale del HTML ----
+   Un <script> escrito dentro de la página se vuelve a bajar entero con cada
+   visita (no se guarda en caché aparte) y obliga a dejar 'unsafe-inline' en la
+   CSP. Se mudan a js/ de a uno, sin tocar el código (ver «El código de las
+   páginas sale del HTML» en docs/decisiones/sitio-e-infraestructura.md).
+   PENDIENTES son las que todavía traen un bloque de más de 20 KB: la lista
+   solo se achica. Una página nueva no entra, y una que ya se mudó sale. */
+const LIMITE_EN_LINEA_KB = 20;
+const PENDIENTES = new Set([
+  "informes.html", "clases.html", "admin.html", "cobros.html", "entreno/4x4.html",
+  "formularios.html", "configuracion.html", "academias.html", "entreno/diagnostico.html",
+  "juegos.html", "bot.html", "admin-jugador.html", "coordinacion.html", "examenes.html",
+  "tv.html", "torneo.html", "asistencia.html", "entreno/aprender.html", "arbitraje.html",
+  "entreno/desafios.html", "accesos.html", "tareas.html", "variante.html", "entreno/temas.html",
+  "reportes.html", "entreno/practicas.html", "planes.html", "partidas.html", "niebla.html",
+  "entreno/mates.html", "lector-planilla.html", "cuatro-jugadores.html", "inscripcion.html",
+  "entreno/aperturas.html",
+]);
+const grandesNuevos = [], yaMudadas = [];
+for (const archivo of paginas(raiz)) {
+  const rel = path.relative(raiz, archivo).split(path.sep).join("/");
+  const html = fs.readFileSync(archivo, "utf8");
+  let mayor = 0;
+  for (const m of html.matchAll(/<script(?![^>]*\bsrc=)([^>]*)>([\s\S]*?)<\/script>/g)) {
+    if (/json/.test(m[1])) continue;   // datos (ld+json), no código
+    mayor = Math.max(mayor, Buffer.byteLength(m[2]));
+  }
+  const grande = mayor > LIMITE_EN_LINEA_KB * 1024;
+  if (grande && !PENDIENTES.has(rel)) grandesNuevos.push(rel + " (" + Math.round(mayor / 1024) + " KB)");
+  if (!grande && PENDIENTES.has(rel)) yaMudadas.push(rel);
+}
+console.log("\n=== El código de las páginas sale del HTML (" + PENDIENTES.size + " pendientes) ===");
+if (grandesNuevos.length) mal("un <script> de más de " + LIMITE_EN_LINEA_KB + " KB escrito en la página (va a un archivo de js/):\n      " + grandesNuevos.join("\n      "));
+else bien("ninguna página fuera de la lista trae un <script> de más de " + LIMITE_EN_LINEA_KB + " KB escrito adentro");
+if (yaMudadas.length) mal("ya no tienen un bloque grande, sácalas de PENDIENTES: " + yaMudadas.join(", "));
+else bien("la lista de pendientes está al día");
+
 console.log(fallos ? "\n" + fallos + " comprobación(es) fallaron" : "\nTodo bien.");
 process.exit(fallos ? 1 : 0);

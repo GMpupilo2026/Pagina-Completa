@@ -139,6 +139,9 @@ y hace otra cosa. Estas reglas existen por eso.
   `js/`; lo que se genera tiene su script en `herramientas/` y no se edita a
   mano (el CSS, el catálogo de cursos, el sitemap, los PDF, las cabeceras).
 - Al usar una clase de Tailwind que no estaba en ningún lado: `npm run css`.
+- El código de una página va en un archivo de `js/`, no en un `<script>` escrito
+  dentro (ver «El código de las páginas sale del HTML»):
+  `verificar-carga-paginas.js` no deja pasar uno nuevo de más de 20 KB.
 - Una página nueva de la Academia (que exige sesión) va en `PAGINAS` de
   `herramientas/academia-cabecera.py`, y se corre. Con tablero:
   `herramientas/tablero-cabecera.py`. Toda página: `pwa-cabecera.py` y
