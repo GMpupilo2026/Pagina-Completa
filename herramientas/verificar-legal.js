@@ -156,6 +156,28 @@ async function elegirPlan(ctx) {
   await page.close();
 }
 
+async function proveedores(ctx) {
+  console.log("\n=== privacidad.html: la lista de proveedores ===");
+  // Va plegada, pero tiene que seguir ahí: la ley obliga a decir quién recibe
+  // los datos. Plegada no es borrada.
+  const t = leer("privacidad.html");
+  const plegado = (t.match(/<details id="proveedores"[\s\S]*?<\/details>/) || [""])[0];
+  igual("los siete proveedores siguen nombrados dentro de la lista plegada",
+    ["Supabase", "Cloudflare", "Resend", "Google", "Anthropic", "Meet", "Hacienda"].filter((x) => !plegado.includes(x)), []);
+  const page = await ctx.newPage();
+  await page.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
+  await page.route("**/fonts.gstatic.com/**", (r) => r.abort());
+  await page.goto(BASE + "/privacidad.html", { waitUntil: "load" });
+  const visible = () => page.evaluate(() => document.querySelector("#proveedores ul").checkVisibility());
+  igual("al abrir la página la lista no se ve", await visible(), false);
+  igual("el aviso del envío al extranjero sí se ve sin abrir nada",
+    await page.evaluate(() => [...document.querySelectorAll("p")].some((p) => /transferencia internacional/.test(p.textContent) && p.checkVisibility())), true);
+  await page.focus("#proveedores summary");
+  await page.keyboard.press("Enter");
+  igual("con el teclado se abre y la lista se ve", await visible(), true);
+  await page.close();
+}
+
 (async () => {
   paginasLegales();
   enlacesEnTodoElSitio();
@@ -163,6 +185,7 @@ async function elegirPlan(ctx) {
   const ctx = await browser.newContext({ serviceWorkers: "block" });
   await unirse(ctx);
   await elegirPlan(ctx);
+  await proveedores(ctx);
   await browser.close();
   console.log(fallos ? `\n${fallos} fallas` : "\nTodo bien: lo legal está en su lugar.");
   process.exit(fallos ? 1 : 0);
