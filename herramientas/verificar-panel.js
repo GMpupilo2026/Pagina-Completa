@@ -494,7 +494,7 @@ async function pruebaAdmin(browser) {
      de probar el lector para saber cuándo vuelve, y sin la guía, que es suya. */
   igual("y coordinando no aparece «Mis pagos» sino Cobros, en Herramientas",
     grupo(grupos, "Herramientas").tiles.map((t) => t.enlace),
-    ["lector-planilla.html", "tienda.html", "partidas.html", "supervision.html", "academias.html", "planes.html", "asistencia.html",
+    ["lector-planilla.html", "tienda.html", "partidas.html", "supervision.html", "academias.html", "tablero-academias.html", "planes.html", "asistencia.html",
      "informe-mensual.html", "subgrupos.html",
      "guia-del-profesor-accesible.html",
      "coordinacion.html", "solicitudes.html", "formularios.html", "cobros.html"]);
