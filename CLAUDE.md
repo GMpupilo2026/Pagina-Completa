@@ -179,7 +179,7 @@ el archivo de cada tema dice cuál corresponde a cada pieza.
 
 | Tema | Qué hay | Verificadores |
 |---|---|---|
-| [`sitio-e-infraestructura`](docs/decisiones/sitio-e-infraestructura.md) | El sitio: dominio y correo, PWA, CSS compilado, librerías propias, carga, metadatos, encabezado, migas y «?» de la guía, avisos propios, punto de restauración | worker, pwa, css, vendor, carga-tablero, metadatos, notificaciones, avisos, ayuda, punto-restauracion |
+| [`sitio-e-infraestructura`](docs/decisiones/sitio-e-infraestructura.md) | El sitio: dominio y correo, PWA, CSS compilado, librerías propias, carga, metadatos, encabezado, migas y «?» de la guía, avisos propios, pantallas de carga y listas vacías, punto de restauración | worker, pwa, css, vendor, carga-tablero, metadatos, notificaciones, avisos, ayuda, estados, punto-restauracion |
 | [`permisos-y-roles`](docs/decisiones/permisos-y-roles.md) | Varios profesores, equipos, subgrupos, coordinación, supervisor, academias (marca, IA, tablero), roles, funciones de trigger, texto ajeno | varios-profesores, subgrupos, coordinacion, supervisor, academias, informe-mensual, mejorar-informe, tablero-academias |
 | [`cuentas-y-formularios`](docs/decisiones/cuentas-y-formularios.md) | Formularios de inscripción y adjuntos, alta de cuentas, alumno sin correo, invitación y bienvenida | formularios, inscripcion-adjuntos, alumno-sin-correo, bienvenida, admin |
 | [`clase-en-vivo`](docs/decisiones/clase-en-vivo.md) | `sesion.html`: material del profesor, videollamada, abrir/cerrar y registrar la clase, ficha presencial y horario, chat, coordenadas, miniaturas, Táctica y Archivos, la clase con lector de pantalla | clase-registrada, sesion-orden, sesion-curso, videollamada, asistencia, chat-clase, clase-adaptada, panel |

@@ -699,6 +699,50 @@ adentro), en el celular parecían un error del sistema, el botón decía siempre
   página que llama a `Avisos` cargue el archivo, y prueba en el navegador el
   comportamiento de arriba con el contraste medido.
 
+## Las pantallas de carga y las listas vacías
+
+**Toda pantalla de carga (`#loading`) tiene la misma forma**:
+
+```html
+<div id="loading" role="status" class="min-h-[50vh] flex flex-col items-center justify-center gap-3 …">
+  <span aria-hidden="true" class="… animate-spin motion-reduce:animate-none"></span>
+  <p class="text-sm">Cargando…</p>
+</div>
+```
+
+Había cinco formas escritas a mano (`pt-16`, `py-20`, `py-24`,
+`min-h-[calc(100vh-5rem)]`, con y sin `<p>`), y en 45 páginas. Una página nueva
+se copiaba de cualquiera.
+
+- `role="status"`: el lector de pantalla dice que está cargando. La ruedita va
+  con `aria-hidden`, porque es adorno, y se queda **quieta** para quien pidió
+  menos movimiento (`motion-reduce:animate-none`).
+- El texto va en su `<p>` y cada página conserva el suyo («Comprobando tu
+  sesión…», «Cargando tu panel…»). Cuando algo falla, la página escribe el
+  error con `loading.textContent = …`. Eso reemplaza también la ruedita, y está
+  bien: un error no tiene que seguir girando.
+- `clases.html` la lleva en `#loading-spinner`, porque su `#loading` también
+  contiene la pantalla de error.
+
+**Las listas vacías de trabajo dicen qué hacer**, nombrando el botón tal como
+se llama en la pantalla, entre comillas latinas. Un «Todavía no hay nada» a
+secas deja a la persona delante de una caja vacía sin saber si está rota. Por
+ejemplo: «Todavía no le has mandado ninguna tarea a nadie. Arma la primera
+arriba, en «Asignar una tarea».» Las demás ya lo hacían (Cobros, los encargados
+de Informes, Juegos, Torneos).
+
+Lo comprueba `herramientas/verificar-estados.js`:
+
+- que las 45 pantallas de carga tengan la forma compartida;
+- que las listas vacías de tareas, exámenes, planes, horario y archivos nombren
+  su botón, y que ese botón exista;
+- en la pantalla, que la ruedita gire, que con «reducir movimiento» se quede
+  quieta y que el texto tenga contraste AA en claro y en oscuro.
+
+Al agregar una pantalla de carga, se copia la de arriba. Al agregar una lista
+vacía de trabajo, se escribe su paso siguiente y se suma a `VACIAS` del
+verificador.
+
 ## El punto de restauración: la base no vivía en ninguna parte
 
 `RESTAURAR.md` es el documento operativo —qué hacer si algo falla— y esto es
