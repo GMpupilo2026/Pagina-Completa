@@ -1024,6 +1024,30 @@ async function pruebaClaseGrande(browser) {
   await page.selectOption("#topic-filter", "");
   await page.waitForFunction(() => !document.getElementById("teacher-report").classList.contains("hidden"));
 
+  /* El selector de temas, ordenado en bloques, y las preguntas de siempre
+     encima: cada pregunta deja puesto el tema que la contesta. */
+  console.log("-- El selector en bloques y las preguntas de siempre");
+  igual("el selector va en bloques, y a un profesor no le queda el del público",
+    await page.evaluate(() => [...document.querySelectorAll("#topic-filter optgroup")].map((g) => g.label)),
+    ["Cómo van tus alumnos", "Lo que entrenaron, tema por tema"]);
+  igual("ningún tema se perdió al agruparlos", await page.evaluate(() =>
+    [...document.querySelectorAll("#topic-filter option")].map((o) => o.value).sort().join(",")),
+    ["", "4x4", "aprender", "asignaciones", "asistencia", "concentracion", "coordenadas", "cursos", "diagnostico", "inactivos", "mates", "practicar", "tactica"].sort().join(","));
+  const preguntas = () => page.evaluate(() => [...document.querySelectorAll("#preguntas-rapidas button")]
+    .filter((b) => b.checkVisibility()).map((b) => b.textContent + (b.getAttribute("aria-pressed") === "true" ? " [marcada]" : "")));
+  igual("se ven las cuatro preguntas, ninguna marcada", await preguntas(),
+    ["¿Quién no está entrenando?", "¿Quién viene a clase?", "¿Cómo contestan en clase?", "¿Qué nivel tiene cada uno?"]);
+  await page.click('#preguntas-rapidas button[data-tema="inactivos"]');
+  await page.waitForFunction(() => !document.getElementById("topic-report").classList.contains("hidden"));
+  igual("«¿Quién no está entrenando?» deja puesto su tema", await page.inputValue("#topic-filter"), "inactivos");
+  igual("y queda marcada, dicho con aria-pressed", await preguntas(),
+    ["¿Quién no está entrenando? [marcada]", "¿Quién viene a clase?", "¿Cómo contestan en clase?", "¿Qué nivel tiene cada uno?"]);
+  await page.selectOption("#topic-filter", "asistencia");
+  igual("cambiar el tema en el selector mueve la marca", (await preguntas())[1], "¿Quién viene a clase? [marcada]");
+  await page.selectOption("#topic-filter", "");
+  await page.waitForFunction(() => !document.getElementById("teacher-report").classList.contains("hidden"));
+  igual("con el resumen general, ninguna marcada", (await preguntas()).filter((t) => t.includes("[marcada]")), []);
+
   /* «Nivel por alumno» corta igual que el índice: con cuarenta diagnósticos era
      una pared de barras antes de llegar a lo que de verdad se mira, que es el
      promedio del grupo. Se mide el display que CALCULA el navegador. */
@@ -1104,6 +1128,9 @@ async function pruebaPdfVisitante(browser) {
     },
   }, "prof-1");
 
+  igual("a administración sí le queda el bloque del público en el selector",
+    await page.evaluate(() => [...document.querySelectorAll("#topic-filter optgroup")].map((g) => g.label)),
+    ["Cómo van tus alumnos", "Lo que entrenaron, tema por tema", "Visitantes del sitio (sin cuenta)"]);
   igual("al abrir Informes no se baja el generador de PDF", await page.evaluate(() =>
     typeof window.ReportePDF + " " + typeof window.DiagnosticoVisitantePDF), "undefined undefined");
   await page.evaluate(() => document.getElementById("diagnosticos-visitantes").closest("details").querySelector("summary").click());

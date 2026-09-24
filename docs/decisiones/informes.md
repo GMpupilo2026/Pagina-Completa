@@ -250,6 +250,41 @@ se cae.
   encabezado, en vez de dar por buena la existencia del nodo: un panel plegado
   que no abre se ve igual que uno que no está.
 
+### Las preguntas de siempre, y el selector en bloques
+
+El filtro «Tema o actividad» era una lista corrida de quince opciones. Ahí
+estaba todo mezclado: el seguimiento semanal («Sin entrenar», «Asistencia»),
+cada ejercicio de Entrenamiento y los datos del público, que ni siquiera son
+alumnos. Quien quería saber «¿quién no está entrenando?» tenía que adivinar que
+eso se llama «😴 Sin entrenar (4 días)» y buscarlo entre las quince.
+
+- **El selector va en tres `<optgroup>`**: «Cómo van tus alumnos» (sin
+  entrenar, asistencia, asignaciones, diagnóstico, cursos), «Lo que
+  entrenaron, tema por tema» (mates, táctica, 4×4…) y «Visitantes del sitio
+  (sin cuenta)». Los valores no cambiaron, así que los enlaces
+  `informes.html?tema=…` del panel y de administración siguen llevando al
+  mismo lugar.
+- **El bloque del público se quita entero** para quien no administra, con su
+  `<optgroup>` y no solo sus opciones: un rótulo vacío se pinta igual y no
+  lleva a nada.
+- **Encima van cuatro «preguntas de siempre»**: «¿Quién no está entrenando?»,
+  «¿Quién viene a clase?», «¿Cómo contestan en clase?» y «¿Qué nivel tiene
+  cada uno?». Cada una **es un tema del filtro y nada más**: lo deja puesto y
+  suelta al alumno elegido, porque la pregunta es del grupo. No hay un informe
+  aparte que se pueda desordenar del filtro.
+  - Se arman **desde el propio `<select>`**: si un tema no está (porque esa
+    persona no lo tiene), su pregunta no se pinta.
+  - La que está contestada queda marcada, con `aria-pressed` y con el botón
+    relleno. No es solo un cambio de color: cambia el relleno, y el lector de
+    pantalla dice «presionado». Cambiar el tema en el selector mueve la marca.
+  - Se parecen a los botones de la franja de «Lo que pide actuar», pero no son
+    lo mismo. La franja sale solo cuando hay algo que atender y trae el número
+    («😴 3 sin entrenar»). Las preguntas están siempre, que es cuando uno viene
+    a preguntar aunque todo esté al día.
+- Lo prueba `verificar-informes.js`: los bloques (y que a un profesor no le
+  quede el del público), que no se perdió ningún tema, las cuatro preguntas a
+  la vista, y que la marca siga al tema.
+
 ### Un total solo sube: «Cómo viene» es lo que dice si mejora
 
 Todos los números de Informes eran **acumulados desde siempre**, y eso no

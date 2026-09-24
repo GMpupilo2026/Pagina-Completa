@@ -55,6 +55,17 @@
                  tema/actividad puntual (ver cuánto ha hecho cada alumno en ese apartado), en
                  vez del resumen agregado de siempre. Se combinan datos ya cargados una sola
                  vez (ver fetchTeacherData) — cambiar de filtro no vuelve a consultar la base. -->
+            <!-- Las preguntas de todas las semanas, a un toque: cada una deja
+                 puesto el tema del filtro que la contesta. El filtro sigue ahí,
+                 con todo; esto es la puerta para quien no sabe que «¿quién no
+                 está entrenando?» se llama «Sin entrenar (4 días)» en una lista
+                 de quince (ver «Las preguntas de siempre» en
+                 docs/decisiones/informes.md). -->
+            <div id="preguntas-rapidas" hidden class="mb-4">
+                <p id="preguntas-rapidas-titulo" class="text-xs font-semibold text-brand-500 dark:text-brand-300 mb-2">Preguntas de siempre</p>
+                <div class="flex flex-wrap gap-2" role="group" aria-labelledby="preguntas-rapidas-titulo"></div>
+            </div>
+
             <div id="teacher-filters" class="hidden flex flex-col sm:flex-row gap-3 mb-6">
                 <div class="flex-1">
                     <label for="student-filter" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Alumno</label>
@@ -72,20 +83,31 @@
                     <label for="topic-filter" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Tema o actividad</label>
                     <select id="topic-filter" class="w-full bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
                         <option value="">Todo (resumen general)</option>
-                        <option value="inactivos">😴 Sin entrenar (4 días)</option>
-                        <option value="asignaciones">🚩 Asignaciones (Preguntar a la clase)</option>
-                        <option value="asistencia">🏫 Asistencia y tiempo en la plataforma</option>
-                        <option value="4x4">🧩 4×4</option>
-                        <option value="aprender">🎓 Lecciones (Aprender)</option>
-                        <option value="coordenadas">⚡ Coordenadas</option>
-                        <option value="practicar">🏆 Practicar</option>
-                        <option value="mates">♚ Mates</option>
-                        <option value="tactica">⚔️ Táctica</option>
-                        <option value="concentracion">🧠 Concentración</option>
-                        <option value="diagnostico">🧭 Diagnóstico de nivel</option>
-                        <option value="cursos">🏛️ Cursos — temas estudiados</option>
-                        <option value="diagnostico-publico">🌐 Diagnósticos de nivel (público)</option>
-                        <option value="arbitraje">⚖️ Exámenes de arbitraje (público)</option>
+                        <!-- En tres bloques y no en una lista corrida de quince:
+                             el seguimiento (lo que se mira cada semana), lo que
+                             entrenaron tema por tema, y lo del público, que no son
+                             alumnos de nadie y solo ve quien administra (ver
+                             quitarLoDeFueraSiNoEsAdmin). -->
+                        <optgroup label="Cómo van tus alumnos">
+                            <option value="inactivos">😴 Sin entrenar (4 días)</option>
+                            <option value="asistencia">🏫 Asistencia y tiempo en la plataforma</option>
+                            <option value="asignaciones">🚩 Asignaciones (Preguntar a la clase)</option>
+                            <option value="diagnostico">🧭 Diagnóstico de nivel</option>
+                            <option value="cursos">🏛️ Cursos — temas estudiados</option>
+                        </optgroup>
+                        <optgroup label="Lo que entrenaron, tema por tema">
+                            <option value="mates">♚ Mates</option>
+                            <option value="tactica">⚔️ Táctica</option>
+                            <option value="4x4">🧩 4×4</option>
+                            <option value="aprender">🎓 Lecciones (Aprender)</option>
+                            <option value="coordenadas">⚡ Coordenadas</option>
+                            <option value="practicar">🏆 Practicar</option>
+                            <option value="concentracion">🧠 Concentración</option>
+                        </optgroup>
+                        <optgroup id="temas-publico" label="Visitantes del sitio (sin cuenta)">
+                            <option value="diagnostico-publico">🌐 Diagnósticos de nivel (público)</option>
+                            <option value="arbitraje">⚖️ Exámenes de arbitraje (público)</option>
+                        </optgroup>
                     </select>
                 </div>
             </div>
@@ -1031,10 +1053,10 @@
                 const caja = panel && panel.closest("details");
                 if (caja) caja.remove();
             });
-            ["arbitraje", "diagnostico-publico"].forEach((tema) => {
-                const opcion = document.querySelector(`#topic-filter option[value="${tema}"]`);
-                if (opcion) opcion.remove();
-            });
+            // Con su bloque entero: un <optgroup> vacío se pinta igual, como un
+            // rótulo que no lleva a nada.
+            const publico = document.getElementById("temas-publico");
+            if (publico) publico.remove();
         }
 
         function hideAllReportPanels() {
@@ -2012,10 +2034,49 @@
         // importar el tema elegido — por eso se deshabilita el segundo filtro mientras haya
         // uno elegido); sin alumno, el tema puntual manda; sin ninguno de los dos, el
         // resumen general de siempre.
+        /* Las preguntas de siempre. Cada una es un tema del filtro y nada más:
+           no hay un informe aparte que se pueda desordenar del filtro. Se
+           arman desde el propio <select>, así que una pregunta cuyo tema no
+           está (el de alguien sin ese permiso) no se pinta. */
+        const PREGUNTAS_RAPIDAS = [
+            ["inactivos", "¿Quién no está entrenando?"],
+            ["asistencia", "¿Quién viene a clase?"],
+            ["asignaciones", "¿Cómo contestan en clase?"],
+            ["diagnostico", "¿Qué nivel tiene cada uno?"],
+        ];
+        function pintarPreguntasRapidas() {
+            const caja = document.querySelector("#preguntas-rapidas > div");
+            caja.innerHTML = "";
+            const selector = document.getElementById("topic-filter");
+            PREGUNTAS_RAPIDAS.forEach(([tema, texto]) => {
+                if (![...selector.options].some((o) => o.value === tema)) return;
+                const b = document.createElement("button");
+                b.type = "button";
+                b.dataset.tema = tema;
+                b.textContent = texto;
+                b.className = "px-3 py-1.5 rounded-full text-sm font-semibold border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 "
+                    + "border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 text-brand-700 dark:text-brand-200 hover:border-accent-500 "
+                    + "aria-pressed:bg-accent-500 aria-pressed:border-accent-500 aria-pressed:text-brand-900";
+                b.setAttribute("aria-pressed", "false");
+                b.addEventListener("click", () => {
+                    // La pregunta es de todo el grupo: suelta al alumno elegido.
+                    document.getElementById("student-filter").value = "";
+                    selector.value = tema;
+                    applyTeacherFilters();
+                });
+                caja.appendChild(b);
+            });
+            document.getElementById("preguntas-rapidas").hidden = !caja.children.length;
+        }
+
         async function applyTeacherFilters() {
             const studentId = document.getElementById("student-filter").value;
             const topic = document.getElementById("topic-filter").value;
             document.getElementById("topic-filter").disabled = !!studentId;
+            // La pregunta que está contestada queda marcada (y lo dice: aria-pressed).
+            document.querySelectorAll("#preguntas-rapidas button").forEach((b) => {
+                b.setAttribute("aria-pressed", String(!studentId && b.dataset.tema === topic));
+            });
             hideAllReportPanels();
             if (studentId) await renderStudentDetail(studentId);
             else if (topic) renderTopicReport(topic);
@@ -3136,6 +3197,7 @@ function areasFlojasArbitraje(fila) {
                 quitarLoDeFueraSiNoEsAdmin();
                 populateStudentFilter();
                 populateGroupFilter();
+                pintarPreguntasRapidas();
                 document.getElementById("teacher-filters").classList.remove("hidden");
                 // Permite enlazar directo a un tema, p. ej. informes.html?tema=diagnostico
                 // desde el panel de administración.
