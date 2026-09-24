@@ -2149,6 +2149,27 @@ simplemente no aparece.
   `academias.html`. `verificar-mejorar-informe.js` falla si se separan.
 - La sección de IA de `academias.html` **se arma con JavaScript solo para quien
   administra**: al supervisor no le llega ni el marcado.
+- **Al 80 % del tope, y otra vez al agotarlo, le llega un aviso al celular a
+  quien administra.** Sin eso el botón desaparecía en silencio y quien se
+  enteraba era el profesor, a mitad de un informe. Lo manda el trigger
+  `ia_uso_avisa_tope` (`avisar_tope_ia()`), que corre con cada llamada que
+  anota la Edge Function: el gasto ya está ahí, así que no hace falta ningún
+  cron ni tocar la función. Una llamada fallida (costo 0) no dispara nada.
+  - **Sale una sola vez por academia, mes, umbral y TOPE**: lo garantiza la
+    clave primaria de `avisos_ia_tope`, no un `if`. Que el tope esté en la
+    clave es a propósito: si quien administra lo sube, el aviso del 80 % se
+    vuelve a armar sobre el tope nuevo — un aviso que ya salió con el tope viejo
+    no dice nada del nuevo.
+  - Llegar de golpe al 100 % anota también el 80 %, para que no llegue después
+    un «vas por el 80 %» sobre un presupuesto ya agotado.
+  - El aviso va dentro de un bloque que atrapa el error: un push que falla no
+    puede deshacer el registro del gasto, que es lo que hace cumplir el tope.
+  - La tabla no tiene ninguna política ni permiso para `anon` ni
+    `authenticated`, y la función no la puede llamar nadie con sesión.
+  - Comprobado en una transacción revertida con un tope de US$1: a 0,50 no sale
+    nada; a 0,85 sale el del 80 %; a 0,95 nada más; a 1,05 el del 100 %; a 1,15
+    nada; al subir el tope a 1,40 vuelve a salir el del 80 %; una llamada
+    fallida no dispara nada. Tres avisos encolados, ni uno de más.
 
 Comprobado impersonando roles en SQL (revertido), 13 casos: sin configuración el
 botón no va; el profesor no puede configurar, lee 0 filas de configuración, no
