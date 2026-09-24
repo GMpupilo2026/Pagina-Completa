@@ -147,7 +147,7 @@
                         <button type="button" id="pack-comprar" class="mt-7 inline-flex items-center gap-2 bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-8 py-4 rounded-xl text-lg transition-colors shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
                             <span aria-hidden="true">🚀</span> Pedir el sistema completo
                         </button>
-                        <p class="text-brand-450 dark:text-brand-350 text-xs mt-4">Se coordina por WhatsApp y se paga por SINPE Móvil o transferencia. La entrega es por correo, el mismo día.</p>
+                        <p class="text-brand-450 dark:text-brand-350 text-xs mt-4">Se coordina por WhatsApp y se paga por SINPE Móvil o transferencia. La entrega es por correo, el mismo día. Al ser material digital, una vez entregado no se devuelve; si un archivo llega dañado o no es el que pediste, te lo reponemos (<a href="terminos.html#tienda" target="_blank" rel="noopener" class="underline hover:text-accent-600">condiciones de compra</a>).</p>
                     </div>
                 </div>
             </section>
@@ -186,7 +186,7 @@
                         <li class="text-center">
                             <p class="w-10 h-10 mx-auto rounded-full bg-accent-500 text-brand-900 font-bold flex items-center justify-center">3</p>
                             <p class="font-semibold text-brand-800 dark:text-white mt-3">Te llega el material</p>
-                            <p class="text-sm text-brand-500 dark:text-brand-300 mt-1">Por correo, el mismo día. Se descarga, se imprime y se usa — es tuyo.</p>
+                            <p class="text-sm text-brand-500 dark:text-brand-300 mt-1">Por correo, el mismo día. Se descarga, se imprime y se usa — es tuyo. Una vez entregado no se devuelve, pero si llega dañado o no es el que pediste, te lo reponemos.</p>
                         </li>
                     </ol>
                     <p id="sin-whatsapp" class="hidden mt-8 text-sm text-center rounded-xl bg-accent-50 dark:bg-brand-800 border border-accent-500 px-4 py-3 text-brand-700 dark:text-brand-100">
@@ -211,7 +211,7 @@
         </div>
     </div>
 
-    <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
+    <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p><!-- legal: inicio --><p class="mt-2"><a href="privacidad.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Política de privacidad</a> <span aria-hidden="true">·</span> <a href="terminos.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Términos y condiciones</a></p><!-- legal: fin --></div></footer>
 
     <script src="js/main.js"></script>
     <script>
@@ -244,6 +244,7 @@
            la selección. Escrito dos veces, el día que cambie el precio uno de
            los dos mensajes iría a pedir otra cosa que la que la pantalla
            enseña — y de eso se entera quien ya mandó el mensaje. */
+        const CONDICIONES_TIENDA = "https://ajedrez-integral.com/terminos.html#tienda";
         function pedir(titulo, lineas, total) {
             if (!waBase) {
                 document.getElementById("sin-whatsapp").classList.remove("hidden");
@@ -253,6 +254,10 @@
             const cuerpo = ["Hola, quiero pedir de la tienda de Ajedrez Integral:", "", titulo]
                 .concat(lineas.map((l) => "· " + l))
                 .concat(["", "Total: " + T.moneda(total)])
+                /* La aceptación de las condiciones va escrita en el mismo mensaje:
+                   así queda por escrito, con fecha, antes del pago (ver «Las
+                   páginas legales» en docs/decisiones/legal.md). */
+                .concat(["", "Leí y acepto las condiciones de compra del material digital (una vez entregado no se devuelve): " + CONDICIONES_TIENDA])
                 .join("\n");
             window.open(waBase + "?text=" + encodeURIComponent(cuerpo), "_blank", "noopener");
         }

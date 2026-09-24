@@ -81,7 +81,7 @@ PRESENTE = {
 # Imperativo con el pronombre pegado: el voseo no lleva tilde, el tuteo sí.
 ENCLITICOS = {
     "actualizalo": "actualízalo", "bloquealo": "bloquéalo", "comprobalo": "compruébalo",
-    "convertila": "conviértela", "dejalo": "déjalo", "dejanos": "déjanos",
+    "contanos": "cuéntanos", "convertila": "conviértela", "dejalo": "déjalo", "dejanos": "déjanos",
     "encontrala": "encuéntrala", "fijate": "fíjate", "hacelo": "hazlo",
     "jugala": "juégala", "jugalos": "juégalos", "marcala": "márcala",
     "reducile": "redúcele", "usalo": "úsalo",
@@ -110,7 +110,7 @@ así aquí allí ahí allá acá está están estás esté estés japonés portu
 demás porqué comité subcomité josé café caché también según razón bebé qué holandés
 aperturasmás
 elistá andrés valdés josué prevé noé carné
-empecé aprendí entendí tomé repasé jugué estudié olvidé
+empecé aprendí entendí leí tomé repasé jugué estudié olvidé
 cortés descortés
 encontré revisé recargué creé comprometí revelé
 quizá
