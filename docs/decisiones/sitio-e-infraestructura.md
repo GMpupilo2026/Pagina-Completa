@@ -525,6 +525,16 @@ donde se comparte esto, y sin `og:image` el enlace sale pelado.
   herramientas/og-imagen.js`, con playwright). Va en JPEG y no en PNG porque es
   un degradado: el mismo dibujo pesa 490 KB en PNG y 91 en JPEG, y WhatsApp
   descarta las previsualizaciones pesadas.
+- `img/redes/` tiene las imágenes de las redes: la portada de Facebook
+  (`portada-facebook.png`, 1640×624) y la publicación de Instagram
+  (`instagram.png`, 1080×1350, 4:5). **Tampoco se editan a mano**: las genera
+  `herramientas/imagenes-redes.js`, con la misma paleta y el logo, y el diseño
+  común está una sola vez. Cada red recorta lo que se sube —Facebook, en el
+  celular, deja solo el centro 16:9 de la portada; Instagram, en la cuadrícula
+  del perfil, el centro 3:4 de la publicación—, así que el script **falla si
+  algo del contenido se sale de la franja que siempre se ve**. Van en PNG porque
+  las dos recomprimen lo que se sube y un JPEG recomprimido ensucia las letras.
+  No las pide ninguna página, así que `img/redes/` está en `.assetsignore`.
 - **Las páginas que piden sesión llevan `noindex`** y no llevan `canonical`: no
   tiene sentido indexar una pantalla de acceso, y así no compiten con las
   públicas. Lo mismo `cursos/academia/`, que es el espejo del catálogo dentro de
