@@ -61,12 +61,12 @@
             </div>
 
             <div id="elegir" class="hidden">
-                <h1 class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white mb-1 text-center">Elige tu plan, <span id="saludo-nombre"></span></h1>
-                <p class="text-brand-500 dark:text-brand-300 text-sm text-center mb-8">Elige un plan y te contactamos para coordinar el pago y arrancar. Todavía no se cobra nada acá.</p>
+                <h1 id="elegir-titulo" class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white mb-1 text-center">Elige tu plan, <span id="saludo-nombre"></span></h1>
+                <p id="elegir-sub" class="text-brand-500 dark:text-brand-300 text-sm text-center mb-8">Elige un plan y te contactamos para coordinar el pago y arrancar. Todavía no se cobra nada acá.</p>
 
                 <!-- Elegir un plan es contratar: los términos (con la política de
                      cancelación) se aceptan acá, antes del botón, y no después. -->
-                <div class="max-w-2xl mx-auto mb-8 bg-white dark:bg-brand-900 rounded-2xl shadow p-5 text-sm text-brand-600 dark:text-brand-300">
+                <div id="terminos-caja" class="max-w-2xl mx-auto mb-8 bg-white dark:bg-brand-900 rounded-2xl shadow p-5 text-sm text-brand-600 dark:text-brand-300">
                     <p>Los precios están en colones y son finales. Puedes cancelar cuando quieras, y <strong>si lo pides dentro de los ocho días hábiles siguientes a tu pago, te devolvemos el monto completo</strong>.</p>
                     <div class="flex items-start gap-3 mt-4">
                         <input type="checkbox" id="acepto-terminos" class="mt-1 h-4 w-4 shrink-0 rounded border-brand-300 text-accent-500 focus:ring-accent-400">
@@ -101,6 +101,18 @@
                 </div>
 
                 <p id="elegir-error" role="alert" class="text-sm text-red-600 dark:text-red-400 text-center hidden"></p>
+
+                <!-- Sin sesión (o sin el enlace del correo) los planes se ven igual,
+                     sin botón de elegir: verlos es público, elegirlos va con la
+                     cuenta de quien pidió entrar (ver «Elegir un plan pide sesión»
+                     en docs/decisiones/cuentas-y-formularios.md). -->
+                <div id="solo-ver" class="hidden max-w-2xl mx-auto mt-2 bg-white dark:bg-brand-900 rounded-2xl shadow p-6 text-center">
+                    <p id="solo-ver-texto" class="text-sm text-brand-600 dark:text-brand-300 mb-4"></p>
+                    <div class="flex flex-wrap justify-center gap-3">
+                        <a id="solo-ver-login" href="login.html?next=elegir-plan.html" class="hidden inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-5 py-2.5 rounded-lg transition-colors">Inicia sesión para elegir tu plan</a>
+                        <a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20informaci%C3%B3n%20sobre%20los%20planes%20de%20Ajedrez%20Integral." target="_blank" rel="noopener" class="inline-block border border-brand-300 dark:border-brand-600 hover:border-accent-500 text-brand-800 dark:text-white font-semibold px-5 py-2.5 rounded-lg transition-colors">💬 Escríbenos por WhatsApp</a>
+                    </div>
+                </div>
             </div>
         </div>
     </main>
@@ -114,7 +126,15 @@
         if (window.PreciosAcceso) {
             document.getElementById("precio-plataforma").textContent = PreciosAcceso.formato(PreciosAcceso.INDIVIDUAL);
         }
-        const solicitudId = new URLSearchParams(window.location.search).get("s");
+        /* El enlace del correo trae la solicitud (?s=). Se guarda en la pestaña
+           para no perderla al pasar por el login, que solo sabe volver a una
+           página .html, sin parámetros. */
+        const CLAVE_SOLICITUD = "elegir_plan_solicitud";
+        let solicitudId = new URLSearchParams(window.location.search).get("s");
+        try {
+            if (solicitudId) sessionStorage.setItem(CLAVE_SOLICITUD, solicitudId);
+            else solicitudId = sessionStorage.getItem(CLAVE_SOLICITUD);
+        } catch (e) {}
 
         function mostrar(id) {
             ["cargando", "invalido", "ya-elegido", "elegir"].forEach((otro) => {
@@ -124,10 +144,30 @@
 
         const NOMBRE_PLAN = { plataforma: "Acceso a la plataforma", grupal: "Clase grupal", individual: "Clase individual" };
 
+        // Los planes, sin nada que elegir: sin sesión, o sin el enlace del correo.
+        function soloVer(texto, conLogin) {
+            document.getElementById("elegir-titulo").textContent = "Los planes de Ajedrez Integral";
+            document.getElementById("elegir-sub").textContent = "Los precios están en colones y son finales.";
+            document.getElementById("terminos-caja").classList.add("hidden");
+            document.querySelectorAll(".plan-btn").forEach((b) => b.classList.add("hidden"));
+            document.getElementById("solo-ver-texto").textContent = texto;
+            document.getElementById("solo-ver-login").classList.toggle("hidden", !conLogin);
+            document.getElementById("solo-ver").classList.remove("hidden");
+            mostrar("elegir");
+        }
+
         async function cargar() {
+            let session = null;
+            try { session = (await sb.auth.getSession()).data.session; } catch (e) {}
+            if (!session) {
+                soloVer(solicitudId
+                    ? "Para elegir tu plan, inicia sesión con la cuenta del correo al que te llegó el enlace. ¿No tienes cuenta? Escríbenos y lo coordinamos."
+                    : "¿Te interesa alguno? Escríbenos y lo coordinamos. Si te llegó un enlace por correo para elegir tu plan, ábrelo desde ahí.",
+                    !!solicitudId);
+                return;
+            }
             if (!solicitudId) {
-                document.getElementById("invalido-detalle").textContent = "Falta el enlace completo que te mandamos por correo.";
-                mostrar("invalido");
+                soloVer("Para elegir un plan hace falta el enlace que te mandamos por correo. Si no lo tienes, escríbenos.", false);
                 return;
             }
 
@@ -135,7 +175,9 @@
             const fila = Array.isArray(data) ? data[0] : data;
 
             if (error || !fila || !fila.estado) {
-                document.getElementById("invalido-detalle").textContent = "No encontramos esa solicitud.";
+                // La base solo la devuelve a la cuenta del correo de la solicitud.
+                document.getElementById("invalido-detalle").textContent =
+                    "No encontramos esa solicitud en tu cuenta. Entra con la cuenta del correo al que te llegó el enlace.";
                 mostrar("invalido");
                 return;
             }
@@ -189,6 +231,7 @@
                     return;
                 }
 
+                try { sessionStorage.removeItem(CLAVE_SOLICITUD); } catch (e) {}
                 document.getElementById("ya-elegido-detalle").textContent =
                     `Elegiste "${NOMBRE_PLAN[btn.dataset.plan]}". Te vamos a contactar para coordinar el pago.`;
                 mostrar("ya-elegido");

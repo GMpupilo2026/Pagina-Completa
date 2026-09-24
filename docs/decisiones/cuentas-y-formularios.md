@@ -164,6 +164,39 @@ subieron, que un `.exe` no se suba, que reintentar no suba dos veces, y del
 otro lado que la foto **se vea de verdad** (`naturalWidth`), el nombre de
 descarga, y que uno que no se pudo bajar lo diga.
 
+### Elegir un plan pide sesión, la de quien pidió entrar
+
+A quien se le rechaza la solicitud de la Academia gratuita (`unirse.html` →
+`solicitudes.html`) le llega un correo con `elegir-plan.html?s=<id>` para
+escoger un plan pago. Hasta `elegir_plan_con_sesion` bastaba el enlace; ahora,
+por decisión del dueño del sitio, **elegir va con la cuenta** —elegir un plan es
+contratar— y **ver los planes es público**.
+
+- **La base lo exige.** `solicitud_para_elegir_plan()` y `elegir_plan()` ya no
+  las puede llamar `anon`, y las dos comparan **el correo de la solicitud con
+  el de la cuenta** (`auth.users.email`, sin distinguir mayúsculas). Solo
+  exigir sesión dejaba que cualquiera con el enlace eligiera por otra persona.
+  Con otra cuenta, la solicitud no aparece: la página no dice de quién es un
+  enlace. Comprobado impersonando `anon`, otra cuenta y la dueña, en una
+  transacción que se deshizo: `42501`, 0 filas y «Inicia sesión con la
+  cuenta…», y la dueña elige una vez (la segunda se rechaza).
+- **Sin sesión la página enseña los planes**, los mismos tres con sus precios,
+  sin botón de elegir ni casilla de términos, y dos salidas: «Inicia sesión para
+  elegir tu plan» (solo si vino con el enlace) y WhatsApp. **Sin el enlace del
+  correo** también los enseña, así la página sirve para mostrarlos.
+- **El login solo sabe volver a un `.html` sin parámetros**, así que la
+  solicitud se guarda en la pestaña (`sessionStorage`,
+  `elegir_plan_solicitud`) antes de ir y se recupera al volver; se borra al
+  elegir.
+- **Quien no tiene cuenta** —la mayoría de los rechazados— sigue por WhatsApp:
+  la página lo dice y lo ofrece. El correo del rechazo (`sendInvitacionPlan`
+  en `admin-manage-users`) todavía dice solo «elige un plan»; la página explica
+  el resto.
+- `verificar-legal.js` lo prueba en el navegador: sin sesión se ven los tres
+  planes sin botones, con login y WhatsApp, y no se llama a la base; con sesión
+  y de vuelta del login (la solicitud en la pestaña, no en la dirección), se
+  elige como antes, con la solicitud correcta.
+
 ### Los envíos sin cuenta pasan por un freno
 
 Tres funciones las puede llamar cualquiera con la clave pública del HTML, y
