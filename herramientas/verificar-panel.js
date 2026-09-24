@@ -122,6 +122,8 @@ window.__consultas = [];
         let d = filas2;
         const total = anotado.total !== undefined ? anotado.total : filas2.length;
         if (unica) d = filas2.length ? filas2[0] : null;
+        // { head: true } es contar sin traer ninguna fila, como PostgREST.
+        if (anotado.head) d = null;
         return Promise.resolve({ data: d, error: null, count: anotado.count ? total : null }).then(res, rej);
       },
     };
@@ -180,11 +182,18 @@ window.__consultas = [];
 
        Un solo profesor en mis_clases: el selector de clase no aparece, que es
        lo correcto. */
-    rpc: (n, args) => n === "mis_funciones_coordinacion"
-      ? Promise.resolve({ data: (window.__misFunciones || ["formularios","altas","solicitudes","cuentas","acceso","roles","cobros","equipos","subgrupos"]), error: null })
-      : constructor(n, n === "mis_clases"
-      ? (DATOS.mis_clases || [MI_CLASE()])
-      : (DATOS.rpc && DATOS.rpc[n]) || [], args),
+    rpc: (n, args, opciones) => {
+      if (n === "mis_funciones_coordinacion") {
+        return Promise.resolve({ data: (window.__misFunciones || ["formularios","altas","solicitudes","cuentas","acceso","roles","cobros","equipos","subgrupos"]), error: null });
+      }
+      const c = constructor(n, n === "mis_clases"
+        ? (DATOS.mis_clases || [MI_CLASE()])
+        : (DATOS.rpc && DATOS.rpc[n]) || [], args);
+      // sb.rpc(nombre, args, { count: "exact", head: true }): cuenta sin traer filas.
+      if (opciones && opciones.count) c.select(null, { count: opciones.count });
+      if (opciones && opciones.head) window.__consultas[window.__consultas.length - 1].head = true;
+      return c;
+    },
     channel: () => ({ on() { return this; }, subscribe() { return this; }, track() { return Promise.resolve(); }, presenceState: () => ({}) }),
     removeChannel: () => {},
   };
@@ -485,33 +494,53 @@ async function pruebaTextosPorRol(browser) {
 }
 
 async function pruebaAdmin(browser) {
-  console.log("\n=== La grilla, vista por administración ===");
-  const { page, ctx } = await panel(browser, [ADMIN], "u-admin");
+  console.log("\n=== El panel de quien administra: no da clase ===");
+  const { page, ctx, errores } = await panel(browser, [ADMIN], "u-admin", null, {
+    rpc: {
+      mi_gente: [{ id: "x", total: 312 }],
+      informes_inactivos: [{ id: "a1" }, { id: "a2" }, { id: "a3" }],
+    },
+  });
   const grupos = await page.evaluate(LEER_GRILLA);
-  igual("Administración encabeza «Tu cuenta»", grupo(grupos, "Tu cuenta").tiles[0].enlace, "admin.html");
-  igual("quien coordina no ve «Mis pagos» en Tu cuenta",
-    grupo(grupos, "Tu cuenta").tiles.map((t) => t.etiqueta), ["Administración", "Informes", "Configuración"]);
-  igual("y llega a los cobros una sola vez, por la página entera",
-    grupos.flatMap((g) => g.tiles).filter((t) => t.enlace === "cobros.html").map((t) => t.etiqueta),
-    ["Cobros de la Academia"]);
-  /* La otra mitad de `soloAdmin`: a administración SÍ se le pintan el lector de
-     planilla y la guía del profesor. Escondérselos también la dejaría sin forma
-     de probar el lector para saber cuándo vuelve, y sin la guía, que es suya. */
-  igual("y coordinando no aparece «Mis pagos» sino Cobros, en Herramientas",
-    grupo(grupos, "Herramientas").tiles.map((t) => t.enlace),
-    ["lector-planilla.html", "tienda.html", "novedades.html", "partidas.html", "supervision.html", "academias.html", "tablero-academias.html", "planes.html", "asistencia.html",
-     "informe-mensual.html", "subgrupos.html",
-     "guia-del-profesor-accesible.html",
-     "coordinacion.html", "solicitudes.html", "formularios.html", "cobros.html"]);
-  /* La otra mitad de que los diagnósticos sean solo de administración: que a
-     administración SÍ se le pinten. Escondérselos también los dejaría sin
-     ninguna puerta desde el panel, que es lo contrario de lo que se pidió — y
-     el de arbitraje le lleva a SU página, la que trae la revisión de los
-     exámenes del público y el detalle pregunta por pregunta. */
-  igual("a administración los dos diagnósticos sí se le pintan",
-    grupo(grupos, "Mide tu nivel").tiles.map((t) => t.enlace),
-    ["entreno/diagnostico.html", "arbitraje.html"]);
+  /* Quien administra se encarga de que toda la empresa vaya bien: su panel es
+     el suyo, escrito entero en ADMIN_GROUPS, y no el de un profesor recortado. */
+  igual("sus grupos, en su orden", grupos.map((g) => g.titulo),
+    ["Cómo va la plataforma", "Cuentas y personas", "Cobros y accesos", "Resultados de las pruebas", "Revisar el contenido", "Tu cuenta"]);
+  const enlaces = grupos.flatMap((g) => g.tiles).map((t) => t.enlace);
+  igual("nada de dar clase: ni sesión en vivo, ni tareas, ni exámenes, ni planes, ni asistencia, ni informe mensual, ni subgrupos, ni archivos, ni juegos, ni torneos",
+    ["sesion.html", "tareas.html", "examenes.html", "planes.html", "asistencia.html", "informe-mensual.html",
+     "subgrupos.html", "partidas.html", "juegos.html", "torneos.html"].filter((x) => enlaces.includes(x)), []);
+  igual("y sí lo de supervisar y administrar",
+    ["informes.html", "supervision.html", "tablero-academias.html", "novedades.html", "admin.html", "academias.html", "coordinacion.html", "cobros.html", "solicitudes.html"]
+      .filter((x) => !enlaces.includes(x)), []);
+  igual("cada destino una sola vez", enlaces.length, new Set(enlaces).size);
+  const visible = (id) => page.evaluate((i) => document.getElementById(i).checkVisibility(), id);
+  igual("no se le pinta el estado de la clase (no inicia clases)", await visible("session-status-card"), false);
+  igual("ni «Tu semana», que es la de un profesor con sus alumnos y sus tareas", await visible("progreso-profe"), false);
+  igual("ni el registro de clases", await visible("registro-clases"), false);
+  igual("ni la franja del primer paso de quien da clase", await visible("pendientes-aviso"), false);
+  igual("en su lugar, el resumen de toda la plataforma",
+    [await visible("progreso-supervisor"), await page.textContent("#progreso-supervisor-titulo")], [true, "Toda la plataforma"]);
+  igual("con los números de todos: estudiantes, profesores y sin entrenar",
+    await page.evaluate(() => ["sup-alumnos", "sup-profes", "sup-inactivos"].map((i) => document.getElementById(i).textContent)),
+    ["312", "312", "3"]);
+  igual("los que no entrenan se CUENTAN en la base, sin bajarse la lista",
+    await page.evaluate(() => window.__consultas.filter((c) => c.tabla === "informes_inactivos").map((c) => [c.count, !!c.head])),
+    [[true, true]]);
+  igual("el saludo dice para qué es el panel", await page.textContent("#panel-subtitulo"), "Desde aquí ves cómo va toda la plataforma.");
+  igual("sin errores en la página", errores, []);
   await ctx.close();
+
+  /* «Ver como: profesor» sigue mostrándole el panel de quien da clase: es para
+     lo que existe ese selector, y la forma de revisar lo que ven los profesores. */
+  const comoProfe = await panel(browser, [ADMIN], "u-admin");
+  await comoProfe.page.evaluate(() => { localStorage.setItem("modo_vista_admin_v1", "profesor"); });
+  await comoProfe.page.reload({ waitUntil: "networkidle" });
+  await comoProfe.page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
+  const deProfe = (await comoProfe.page.evaluate(LEER_GRILLA)).flatMap((g) => g.tiles).map((t) => t.enlace);
+  igual("mirando «como profesor», vuelve el panel de quien da clase",
+    ["sesion.html", "tareas.html", "planes.html"].every((x) => deProfe.includes(x)), true);
+  await comoProfe.ctx.close();
 }
 
 /* El buscador del panel. Lo que importa: que deje a la vista SOLO lo que
@@ -563,7 +592,7 @@ async function pruebaBuscador(browser) {
     await page.evaluate(VISIBLES), ["Cobros de la Academia"]);
   igual("los grupos sin nada que mostrar no se ven",
     await page.evaluate(() => Array.from(document.querySelectorAll("#tile-grid > section"))
-      .filter((s) => s.checkVisibility()).map((s) => s.querySelector("h2").textContent)), ["Herramientas"]);
+      .filter((s) => s.checkVisibility()).map((s) => s.querySelector("h2").textContent)), ["Cobros y accesos"]);
   igual("el resultado se anuncia", await page.textContent("#buscar-panel-estado"),
     "1 acceso con «pagos». Enter abre «Cobros de la Academia».");
   igual("y el anuncio va en role=status", await page.getAttribute("#buscar-panel-estado", "role"), "status");
@@ -571,13 +600,8 @@ async function pruebaBuscador(browser) {
   await buscar(page, "CONTRASENA");
   igual("sin tilde y en mayúscula, «contraseña» encuentra Configuración", await page.evaluate(VISIBLES), ["Configuración"]);
 
-  await buscar(page, "diagnostico arbitraje");
-  igual("todas las palabras tienen que estar", await page.evaluate(VISIBLES), ["Diagnóstico de arbitraje"]);
-
-  await buscar(page, "videollamada");
-  cierto("«videollamada» deja Sesión en vivo con su botón al lado",
-    await page.evaluate(() => document.querySelector("#sesion-wrap > *").checkVisibility()
-      && document.getElementById("videollamada-wrap").style.display !== "none"));
+  await buscar(page, "diagnosticos publico");
+  igual("todas las palabras tienen que estar", await page.evaluate(VISIBLES), ["Diagnósticos del público"]);
 
   await buscar(page, "xilofono");
   igual("sin resultados no queda ninguna tarjeta", await page.evaluate(VISIBLES), []);
@@ -615,6 +639,14 @@ async function pruebaBuscador(browser) {
   igual("y lo suyo sí", await alumna.page.evaluate(VISIBLES), ["Tareas"]);
   igual("sin errores en la página de la alumna", alumna.errores, []);
   await alumna.ctx.close();
+
+  // Del lado de quien da clase: la videollamada va con su tarjeta.
+  const profe = await panel(browser, [PROFE], "u-profe");
+  await buscar(profe.page, "videollamada");
+  cierto("«videollamada» deja Sesión en vivo con su botón al lado",
+    await profe.page.evaluate(() => document.querySelector("#sesion-wrap > *").checkVisibility()
+      && document.getElementById("videollamada-wrap").style.display !== "none"));
+  await profe.ctx.close();
 }
 
 /* El supervisor de su academia le apagó los cobros y las solicitudes: esas dos
@@ -1380,11 +1412,10 @@ async function pruebaPrimerPasoProfesor(browser) {
   igual("ni un botón que no lleva a ningún lado", v.ctaVisible, "false");
   igual("y nunca en rojo: esto no se venció", v.rojo, "false");
 
-  // La misma situación, pero quien administra SÍ puede resolverla ahí mismo.
+  // Quien administra no da clase: el camino de quien da clase no es suyo.
   v = await leer({ alumnos: 0, activos_7d: 0, con_diagnostico: 0, con_plan: 0,
                    tareas_puestas: 0, clases_dadas: 0 }, "u-admin");
-  igual("a quien administra sí se le ofrece el panel donde se asignan", v.destino, "admin.html");
-  igual("con su botón", v.ctaVisible, "true");
+  igual("a quien administra no se le pinta el primer paso de quien da clase", v.display, "none");
 
   /* 2. Sin diagnóstico no hay plan que armar: es el primer cuello de verdad, y
      el mensaje NO puede ser «0 de 0 tienen plan», que no le pide nada a nadie. */

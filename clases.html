@@ -98,7 +98,7 @@
                     <div id="avatar" aria-hidden="true" class="w-14 h-14 rounded-full bg-gradient-to-br from-brand-600 to-brand-800 text-white flex items-center justify-center font-serif text-xl font-bold shrink-0"></div>
                     <div>
                         <h1 id="panel-titulo" tabindex="-1" class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white focus:outline-none">¡Bienvenido, <span id="welcome-name">alumno</span>! <span aria-hidden="true">👋</span></h1>
-                        <p class="text-brand-500 dark:text-brand-300 text-sm mt-0.5">Este es tu panel de Clases. Elige a dónde quieres ir.</p>
+                        <p id="panel-subtitulo" class="text-brand-500 dark:text-brand-300 text-sm mt-0.5">Este es tu panel de Clases. Elige a dónde quieres ir.</p>
                     </div>
                 </div>
                 <div class="flex items-center gap-3">
@@ -325,7 +325,7 @@
                  acotados por mis_supervisados()), no de contar filas acá. -->
             <div id="progreso-supervisor" hidden class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-10">
                 <div class="flex items-center justify-between flex-wrap gap-2 mb-4">
-                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white">A tu cargo</h2>
+                    <h2 id="progreso-supervisor-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white">A tu cargo</h2>
                     <a href="informes.html" class="text-sm text-accent-700 dark:text-accent-400 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded">Ver el informe completo →</a>
                 </div>
                 <div class="grid grid-cols-3 gap-4 text-center">
@@ -491,50 +491,12 @@
                 { photo: "img/oscar-avatar.jpg", label: "Juega contra mí", desc: "Practica contra Oscar, nuestro motor", href: "tablero.html" },
                 { emoji: "🏅", label: "Logros", desc: "Tu racha de días entrenando y las medallas que has ganado", descProfe: "El catálogo de medallas y cómo se gana la racha de días", href: "logros.html" },
             ] },
-            /* Acá viven los dos diagnósticos y nada más: lo que uno hace por
-               su cuenta, cuando quiere, para saber dónde está parado. Se
-               llamaba "Evaluaciones" y tenía dentro los exámenes — pero un
-               examen te lo pone otra persona, con fecha y con nota, así que
-               se fue arriba con las tareas, que es lo que de verdad se le
-               parece. El rótulo lo dice en dos palabras y sin repetir el
-               nombre de sus dos tarjetas, que ya se llaman "Diagnóstico".
-
-               ESTE GRUPO ES SOLO DE ADMINISTRACIÓN, y lo quita del panel
-               diagnosticosSoloParaAdministracion() para todos los demás — ver
-               ahí por qué. Se queda escrito acá, con las dos tarjetas
-               completas, porque quitarlo de la lista dejaría el grupo definido
-               en el `if` de un rol y el panel volvería a repartirse a pedazos.
-               El destino del arbitraje lo reapunta init(): administración va a
-               arbitraje.html, con la revisión de los exámenes del público y el
-               detalle pregunta por pregunta. Una sola tarjeta y no dos, para no
-               repetir el nombre en el panel — ya pasó una vez con "Torneos". */
-            { title: "Mide tu nivel", tiles: [
-                { emoji: "🧭", label: "Diagnóstico de nivel", desc: "63 preguntas en nueve áreas: tu nivel estimado y por dónde empezar", href: "entreno/diagnostico.html" },
-                { emoji: "⚖️", label: "Diagnóstico de arbitraje", desc: "Reglamento FIDE: 40 preguntas y tu nivel estimado de arbitraje", descProfe: "Reglamento FIDE: hazlo, revisa los del público y responde", href: "nivel-de-arbitraje.html" },
-            ] },
+            /* «Mide tu nivel» (los dos diagnósticos) y las tarjetas que eran
+               solo de administración —lector de planilla, tienda,
+               actualizaciones, guía del profesor— ya no viven acá: quien
+               administra tiene su propio panel (ADMIN_GROUPS) y las encuentra
+               ahí. Al equipo docente y al alumnado nunca se les pintaban. */
             { title: "Herramientas", tiles: [
-                /* El lector de planilla TODAVÍA NO FUNCIONA, así que no se
-                   ofrece: ni al alumnado ni a quien da clase. Estaba solo
-                   apagado para el alumnado (`mantenimientoAlumno`), o sea que
-                   a la profesora le salía como un acceso normal y la llevaba a
-                   una página que no hace lo que promete — que es peor que no
-                   tenerla, porque el fallo lo descubre delante de la clase.
-                   `soloAdmin` lo deja donde hace falta: a la vista de quien
-                   administra, que es quien tiene que poder probarlo para saber
-                   cuándo vuelve. El día que funcione, se borra esa palabra. */
-                { emoji: "📝", label: "Lector de planilla", desc: "Fotografía tu planilla de partida y conviértela en PGN", href: "lector-planilla.html", soloAdmin: true },
-                /* La tienda de materiales TODAVÍA NO ESTÁ ABIERTA: `soloAdmin`
-                   la deja a la vista de quien decide cuándo abre y de nadie
-                   más. No va `mantenimientoAlumno`, que dice "esto vuelve" y
-                   se la seguiría enseñando al equipo docente — acá lo que hay
-                   que decir es que todavía no es de nadie. El día que abra, se
-                   cambia esa palabra por el público que toque. */
-                { emoji: "🛒", label: "Tienda de materiales", desc: "El catálogo de venta: los cursos, los libros y el sistema completo para entrenadores", href: "tienda.html", soloAdmin: true },
-                /* Todo lo que se le ha hecho a la plataforma, sacado de la
-                   historia del código. Es de quien administra (la página lo
-                   vuelve a comprobar); está también en admin.html › La
-                   plataforma. */
-                { emoji: "🗂️", label: "Actualizaciones", desc: "Todo lo que se le ha hecho a la plataforma desde el primer día", href: "novedades.html", soloAdmin: true },
                 { emoji: "📂", label: "Archivos", desc: "Sube tus PGN completos y revisa las partidas guardadas en clase — llévalos al tablero en vivo", href: "partidas.html", mantenimientoAlumno: true },
             ] },
             { title: "Tu cuenta", tiles: [
@@ -595,6 +557,85 @@
             ] },
         ];
 
+        /* ---------- El panel de quien ADMINISTRA ----------
+           Quien administra NO DA CLASE: se encarga de que toda la empresa vaya
+           bien y funcione bien. Antes le salía el panel de un profesor —iniciar
+           clase, «Tu semana» con sus tareas, el registro de clases, la sesión en
+           vivo, planes, asistencia presencial, informe mensual, subgrupos—,
+           todo sobre una cuenta que no tiene alumnos propios. Como a quien
+           supervisa, no se le recorta el panel de siempre tarjeta por tarjeta:
+           se le pinta el suyo, entero, acá.
+
+           Lo de dar clase lo sigue pudiendo MIRAR: «Ver como: profesor» (js/
+           modo-vista.js) le pinta el panel de un profesor, que es para lo que
+           existe ese selector. Y lo que ya veía de los profesores lo sigue
+           viendo: Informes, Supervisión y el Tablero por academia muestran a
+           todos, con el alcance que le da la base.
+
+           «Revisar el contenido» está porque su trabajo es que todo funcione:
+           son las páginas que el alumnado usa, para abrirlas y comprobarlas. */
+        const ADMIN_GROUPS = [
+            { title: "Cómo va la plataforma", tiles: [
+                { emoji: "📊", label: "Informes", desc: "El progreso de todos los alumnos, tema por tema, y los informes a la casa", href: "informes.html" },
+                { emoji: "🧑‍🏫", label: "Supervisión de profesores", desc: "Qué hizo cada profesor en el mes —clases, tareas, exámenes— y su informe mensual", href: "supervision.html" },
+                { emoji: "📈", label: "Tablero por academia", desc: "Clases, alumnos, informes, gasto de IA y cobros de cada academia", href: "tablero-academias.html" },
+                { emoji: "📄", label: "Reportes de actividades", desc: "El informe de lo que pasó en clase en un periodo, en Word y PDF", href: "reportes.html" },
+                { emoji: "🗂️", label: "Actualizaciones", desc: "Todo lo que se le ha hecho a la plataforma desde el primer día", href: "novedades.html" },
+            ] },
+            { title: "Cuentas y personas", tiles: [
+                { emoji: "👑", label: "Administración", desc: "Cuentas, roles, profesores, supervisores y equipos", href: "admin.html" },
+                { emoji: "🏫", label: "Academias", desc: "Crea las academias, ponles supervisor y reparte a su gente", href: "academias.html" },
+                { emoji: "🧭", label: "Coordinación", desc: "Los profesores y sus alumnos: quién es quién, cómo entra y cómo se ordena", href: "coordinacion.html" },
+                { emoji: "📝", label: "Solicitudes de la Academia", desc: "Quien pidió unirse: aprobar crea la cuenta, rechazar invita a un plan pago", href: "solicitudes.html" },
+                { emoji: "📋", label: "Formularios de inscripción", desc: "Arma un formulario, compártelo por enlace y baja las respuestas", href: "formularios.html" },
+            ] },
+            { title: "Cobros y accesos", tiles: [
+                { emoji: "💳", label: "Cobros de la Academia", desc: "Mensualidades, pagos y morosidad. Los recordatorios salen solos", href: "cobros.html" },
+                { emoji: "🎟️", label: "Accesos y cupos", desc: "Los paquetes de acceso y los cupos de cada academia", href: "accesos.html" },
+                { emoji: "🛒", label: "Tienda de materiales", desc: "El catálogo de venta: todavía no está abierta al público", href: "tienda.html" },
+            ] },
+            { title: "Resultados de las pruebas", tiles: [
+                { emoji: "🧭", label: "Diagnósticos de nivel", desc: "El nivel medido de cada alumno y dónde está floja cada clase", href: "informes.html?tema=diagnostico" },
+                { emoji: "🌐", label: "Diagnósticos del público", desc: "Quién hizo el diagnóstico sin cuenta: contactos para invitar a la Academia", href: "informes.html?tema=diagnostico-publico" },
+                { emoji: "⚖️", label: "Exámenes de arbitraje", desc: "Los del público: revísalos y respóndeles", href: "arbitraje.html" },
+            ] },
+            { title: "Revisar el contenido", tiles: [
+                { emoji: "🏛️", label: "Cursos", desc: "Los cursos de la Academia y el temario de cada uno", href: "cursos/academia/index.html" },
+                { emoji: "🏋️", label: "Entrenamiento", desc: "Los ejercicios y lecciones que usa el alumnado", href: "entreno/index.html" },
+                { emoji: "📚", label: "Estudio", desc: "Las fichas de aperturas, defensas y temas tácticos", href: "entreno/estudio.html" },
+                { emoji: "📖", label: "Artículos", desc: "Lecturas técnicas y pedagógicas", href: "articulos.html" },
+                { emoji: "📺", label: "TV en vivo", desc: "Las partidas de la Academia en directo", href: "tv.html" },
+                { emoji: "📘", label: "Guía del profesor", desc: "Todo lo que la plataforma deja hacer y cómo se hace", href: "guia-del-profesor-accesible.html" },
+                { emoji: "📝", label: "Lector de planilla", desc: "Todavía en prueba: fotografía una planilla y conviértela en PGN", href: "lector-planilla.html" },
+            ] },
+            { title: "Tu cuenta", tiles: [
+                { emoji: "⚙️", label: "Configuración", desc: "Tu perfil y contraseña", href: "configuracion.html" },
+            ] },
+        ];
+
+        /* El resumen de arriba, el de toda la plataforma: los mismos tres números
+           que ve quien supervisa (estudiantes, profesores, sin entrenar), pero de
+           todos. Se cuentan en la base: mi_gente() trae el total en cada fila y
+           informes_inactivos() se cuenta con `head` —sin bajarse la lista—,
+           porque PostgREST corta a mil filas sin avisar. */
+        async function cargarPanelAdmin() {
+            document.getElementById("progreso-supervisor-titulo").textContent = "Toda la plataforma";
+            const conteo = async (rol) => {
+                const { data } = await sb.rpc("mi_gente", { p_busqueda: null, p_rol: rol, p_limite: 1, p_desde: 0 });
+                return data && data.length ? Number(data[0].total) : 0;
+            };
+            const [nAlumnos, nProfes, inacRes] = await Promise.all([
+                conteo("alumno"), conteo("profesor"),
+                sb.rpc("informes_inactivos", { p_dias: 4 }, { count: "exact", head: true }),
+            ]);
+            document.getElementById("sup-alumnos").textContent = String(nAlumnos);
+            document.getElementById("sup-profes").textContent = String(nProfes);
+            const inac = document.getElementById("sup-inactivos");
+            const inactivos = inacRes.error ? null : Number(inacRes.count || 0);
+            inac.textContent = inactivos === null ? "—" : String(inactivos);
+            inac.className = "text-2xl font-bold " + (inactivos > 0 ? "text-red-600 dark:text-red-400" : "text-brand-800 dark:text-white");
+        }
+
         /* Quien supervisa y nada más: si además administra, manda su panel de
            administración (salvo que esté mirando "como supervisor"). */
         function esSupervisorSolo() { return !!(profile && profile.es_supervisor && !profile.is_admin); }
@@ -639,51 +680,6 @@
            acá, en vez de repetir el `||` y que a la cuarta se le olvide la
            mitad. */
         function esEquipoDocente() { return isTeacher || profile.is_admin; }
-
-        /* Los dos diagnósticos son SOLO de administración.
-
-           Estaban para todo el mundo, y eso era regalar las dos pruebas con
-           las que el sitio ubica el nivel de alguien: el banco de las 301
-           preguntas y el de las 200 de reglamento son archivos estáticos, así
-           que cuanta más gente las resuelve por su cuenta, menos miden. El
-           diagnóstico se aplica, no se practica — quien lo necesita lo recibe
-           de quien le da clase, y el de nivel sigue abierto al público sin
-           cuenta en entreno/diagnostico.html, que es una puerta de entrada al
-           sitio y otra cosa.
-
-           Se quita el GRUPO entero, no sus dos tarjetas: un encabezado sin
-           nada debajo es la misma sección muerta que ya se quitó de
-           "Herramientas" para el alumnado. Va sobre la lista ya armada y en un
-           solo lugar, como apagarEnMantenimiento(), y DESPUÉS de que init()
-           le reapunte el destino al arbitraje: así quien administra lo
-           conserva con el suyo. */
-        function diagnosticosSoloParaAdministracion() {
-            if (profile.is_admin) return;
-            const i = TILE_GROUPS.findIndex((g) => g.title === "Mide tu nivel");
-            if (i >= 0) TILE_GROUPS.splice(i, 1);
-        }
-
-        /* Lo que hoy SOLO se le ofrece a quien administra, marcado tile por
-           tile con `soloAdmin`. Es distinto de `mantenimientoAlumno`, y
-           confundirlos es lo que dejó al lector de planilla a la vista de la
-           profesora: aquello APAGA un acceso para el alumnado y se lo deja
-           entero al equipo docente; esto lo QUITA para todos menos
-           administración.
-
-           Se quita, no se apaga: una tarjeta gris dice «esto vuelve», y acá lo
-           que se quiere decir es que no es suyo. Y se quita de verdad, no con
-           una clase — un enlace invisible pero presente sigue siendo una parada
-           de tabulador.
-
-           Va sobre la lista ya armada, como sus dos hermanas, para que alcance
-           igual a los tiles que init() agrega después (la guía del profesor se
-           suma dentro del `if` del equipo docente y cae acá lo mismo). Un grupo
-           que se quede sin ningún acceso utilizable no se pinta: eso ya lo hace
-           renderTiles(). */
-        function soloParaAdministracion() {
-            if (profile.is_admin) return;
-            TILE_GROUPS.forEach((g) => { g.tiles = g.tiles.filter((t) => !t.soloAdmin); });
-        }
 
         function apagarEnMantenimiento() {
             if (esEquipoDocente()) return;
@@ -2244,37 +2240,9 @@
                 : esSupervisorSolo() ? "🧭 Supervisor" : (isTeacher ? "Profesor" : "Alumno");
             badge.classList.add(isTeacher ? "bg-accent-500" : "bg-brand-600", isTeacher ? "text-brand-900" : "text-white");
 
-            // Solo la persona administradora ve este acceso — el panel en sí vuelve a
-            // comprobarlo (no basta con no mostrar el botón aquí).
-            if (profile.is_admin) {
-                TILE_GROUPS.find((g) => g.title === "Tu cuenta").tiles.unshift(
-                    { emoji: "👑", label: "Administración", desc: "Cuentas, roles y accesos", href: "admin.html" }
-                );
-                /* Quien administra ve a TODOS los profesores con su actividad
-                   del mes y sus informes: lo mismo que un supervisor, con el
-                   alcance de siempre. */
-                TILE_GROUPS.find((g) => g.title === "Herramientas").tiles.push(
-                    { emoji: "🧑‍🏫", label: "Supervisión de profesores", desc: "Qué hizo cada profesor en el mes y su informe mensual", href: "supervision.html" },
-                    /* El negocio se reparte en academias: cada una con su
-                       supervisor, su gente y su nombre en los correos. */
-                    { emoji: "🏫", label: "Academias", desc: "Crea las academias, ponles supervisor y reparte a su gente", href: "academias.html" },
-                    /* El negocio se mide por academia: una fila por cada una. */
-                    { emoji: "📊", label: "Tablero por academia", desc: "Clases, alumnos, informes, gasto de IA y cobros de cada academia", href: "tablero-academias.html" }
-                );
-            }
-
             // Herramientas del equipo docente: no se le muestran al alumnado
             // (y la propia página vuelve a comprobar el perfil).
             if (isTeacher || profile.is_admin) {
-                /* La tarjeta del diagnóstico de arbitraje ya está para todo el
-                   mundo; al equipo docente se le cambia el destino a la página
-                   con la revisión y el detalle pregunta por pregunta. Se busca
-                   por su destino y no por su posición, para que reordenar el
-                   grupo no la deje sin cambiar. */
-                const medirNivel = TILE_GROUPS.find((g) => g.title === "Mide tu nivel");
-                const arbitraje = medirNivel && medirNivel.tiles.find((t) => t.href === "nivel-de-arbitraje.html");
-                if (arbitraje) arbitraje.href = "arbitraje.html";   // el texto va en su descProfe, como el resto
-
                 /* Preparar la clase antes de darla. Es solo del equipo docente,
                    así que no lleva `desc` de alumno: se suma acá en vez de vivir
                    en la lista con un descProfe. */
@@ -2296,15 +2264,7 @@
                        Administración —esos dan permisos— ni el grupo de cada
                        alumno: son de quien las arma y solo sirven para filtrar
                        y para mandar una tarea a varios de una vez. */
-                    { emoji: "👥", label: "Mis subgrupos", desc: "Arma tus propias listas de alumnos para filtrar Informes y mandarles tareas de una vez", href: "subgrupos.html" },
-                    /* La guía apunta a la versión accesible y no al PDF a
-                       propósito: es una página que abre en cualquier aparato,
-                       trae el contenido completo y desde ahí se bajan el manual
-                       y la presentación. Con el PDF de destino, quien entra
-                       desde el celular se baja un archivo para leer lo que
-                       podía leer ahí mismo, y la versión accesible quedaría de
-                       repuesto en vez de ser la puerta. */
-                    { emoji: "📘", label: "Guía del profesor", desc: "Todo lo que la plataforma te deja hacer y cómo se hace — en página, en manual y en diapositivas", href: "guia-del-profesor-accesible.html", soloAdmin: true }
+                    { emoji: "👥", label: "Mis subgrupos", desc: "Arma tus propias listas de alumnos para filtrar Informes y mandarles tareas de una vez", href: "subgrupos.html" }
                 );
             }
 
@@ -2343,6 +2303,26 @@
                camino, no el derecho a ver lo suyo. Volver a ofrecerla es
                agregar la tarjeta otra vez acá. */
 
+            /* Quien administra tampoco da clase: su panel es el de ADMIN_GROUPS,
+               con el resumen de toda la plataforma, y nada de la clase en vivo,
+               de «Tu semana» ni del registro de clases. Mirando «como profesor»
+               `profile.is_admin` viene en false y cae en el panel docente, que
+               es justamente lo que quiere revisar. */
+            if (profile.is_admin) {
+                document.getElementById("panel-subtitulo").textContent = "Desde aquí ves cómo va toda la plataforma.";
+                TILE_GROUPS.splice(0, TILE_GROUPS.length, ...ADMIN_GROUPS);
+                renderTiles();
+                document.getElementById("registro-clases").hidden = true;
+                document.getElementById("progreso-supervisor").hidden = false;
+                await cargarPanelAdmin();
+                document.getElementById("loading").classList.add("hidden");
+                document.getElementById("app").classList.remove("hidden");
+                if (!document.activeElement || document.activeElement === document.body) {
+                    document.getElementById("panel-titulo").focus({ preventScroll: true });
+                }
+                return;
+            }
+
             /* Quien supervisa no recorre el panel del equipo docente: se le
                pinta el suyo, entero, y nada de la clase en vivo ni del
                registro de clases — no da clase. */
@@ -2365,8 +2345,6 @@
             // docente.
             textosDelEquipoDocente();
             apagarEnMantenimiento();
-            soloParaAdministracion();
-            diagnosticosSoloParaAdministracion();
             renderTiles();
             // El equipo docente no pasa por mis_clases() —esos son SUS
             // profesores, no sus alumnos—, así que su sala se pide aparte.

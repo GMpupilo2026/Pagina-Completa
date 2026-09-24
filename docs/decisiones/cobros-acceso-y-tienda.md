@@ -597,11 +597,11 @@ ajedrez?»— son la forma en que se presenta el paquete completo.
 poder revisarla antes de abrirla, no para vender todavía. El candado es
 `is_admin` a secas y **no `soy_coordinador()`**: esto no es una herramienta de
 coordinación, es una página de venta que todavía no es de nadie, y quien decide
-cuándo abre es quien administra. En el panel el tile va con **`soloAdmin`, no
-con `mantenimientoAlumno`**: aquella palabra dice «esto vuelve» y se la seguiría
+cuándo abre es quien administra. En el panel la tarjeta vive **solo en el panel
+de administración (`ADMIN_GROUPS` de `clases.html`)**, no con
+`mantenimientoAlumno`: aquella palabra dice «esto vuelve» y se la seguiría
 enseñando al equipo docente, y lo que hay que decir acá es que todavía no es
-suya. El día que abra, se cambia esa palabra por el público que toque y no hace
-falta tocar nada más.
+suya. El día que abra, se suma la tarjeta al grupo del público que toque.
 
 ### El catálogo es la única fuente, y el precio está escrito UNA vez
 

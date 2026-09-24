@@ -3,7 +3,7 @@
  * de ESTA página (guia-del-profesor-accesible.html#cap-N).
  *
  * Por ahora es solo de administración, igual que la tarjeta «Guía del
- * profesor» del panel (`soloAdmin` en clases.html): la guía todavía no se le
+ * profesor» del panel (solo en ADMIN_GROUPS de clases.html): la guía todavía no se le
  * ofrece al equipo docente. El enlace llega en el HTML ESCONDIDO —lo pone
  * herramientas/academia-cabecera.py, que es quien sabe qué capítulo toca— y
  * este archivo lo destapa solo si quien mira administra y está en su propia

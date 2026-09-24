@@ -164,6 +164,12 @@ lista, y el resto se acomoda solo.
   lector de planilla y la "Guía del profesor" son los dos `soloAdmin`. Se
   quitan y no se apagan porque una tarjeta gris dice "esto vuelve", y acá lo
   que hay que decir es que no es suyo.
+  - **Ya no existe.** Desde que quien administra tiene su propio panel
+    (`ADMIN_GROUPS`, ver «El panel de quien administra no es el de un
+    profesor»), lo que era `soloAdmin` —lector de planilla, tienda,
+    actualizaciones, guía del profesor— y el grupo «Mide tu nivel» viven ahí.
+    En el panel docente no hace falta quitarlos: no están. Lo que sea solo de
+    administración se agrega a `ADMIN_GROUPS` y a nada más.
 
 ### Arriba va lo que vence, no otro directorio de lugares
 
@@ -677,6 +683,53 @@ ninguna tarjeta se llama así.
   bloque queda exactamente como estaba.
 - Lo prueba `pruebaBuscador` en `verificar-panel.js`, midiendo con
   `checkVisibility()` qué tarjetas quedan a la vista.
+
+### El panel de quien administra no es el de un profesor
+
+Quien administra **no da clase**: se encarga de que toda la empresa vaya bien y
+funcione bien. Aun así, su panel era el de un profesor con cosas encima:
+«Iniciar clase», «Tu semana» con sus alumnos y sus tareas, el registro de
+clases, la sesión en vivo con su videollamada, «Lo que le pones a tus
+alumnos», planes de clase, asistencia presencial, informe mensual, subgrupos y
+el primer paso «Todavía no tienes alumnos». Todo eso sobre una cuenta que no
+tiene alumnos propios. Lo pidió el dueño del sitio: quitarle todo lo de dar
+clase.
+
+- **Se le pinta OTRO panel, escrito entero en `ADMIN_GROUPS`**, igual que a
+  quien supervisa (`SUPERVISOR_GROUPS`). No se le recorta el del profesor
+  tarjeta por tarjeta: con cada tarjeta nueva del profesor habría que acordarse
+  de quitársela, y la que se olvide aparece. Los grupos son seis: «Cómo va la
+  plataforma», «Cuentas y personas», «Cobros y accesos», «Resultados de las
+  pruebas», «Revisar el contenido» y «Tu cuenta».
+- **Arriba va el resumen de toda la plataforma**: estudiantes, profesores y
+  quiénes llevan 4 días sin entrenar. Es la misma tarjeta de quien supervisa,
+  con el título «Toda la plataforma». Los números se cuentan en la base:
+  `mi_gente()` trae el total, y `informes_inactivos()` se cuenta con
+  `{ count: "exact", head: true }`, sin bajarse la lista.
+- **Nada de la clase**: no se pide el estado de la clase, no se carga el
+  registro, no se suscribe a las sesiones ni se piden la videollamada ni
+  `panel_profesor()`. El `if (profile.is_admin)` corta antes de todo eso.
+- **«Revisar el contenido» sí está**: cursos, entrenamiento, estudio,
+  artículos, TV en vivo, la guía del profesor y el lector de planilla. Su
+  trabajo es que todo funcione, y esas son las páginas que usa el alumnado,
+  para abrirlas y comprobarlas.
+- **Lo de dar clase lo sigue pudiendo revisar con «Ver como: profesor»**
+  (`js/modo-vista.js`). Ahí `profile.is_admin` viene en `false` y se pinta el
+  panel docente completo, que es para lo que existe el selector.
+- Lo que ya veía de los profesores lo sigue viendo. Informes, Supervisión y el
+  Tablero por academia muestran a todos: eso es supervisar, no dar clase. La
+  regla de `CLAUDE.md` quedó así: lo que un profesor ve de sus alumnos,
+  administración lo ve de todos, pero su panel no trae herramientas de dar
+  clase.
+- Lo prueba `pruebaAdmin` en `verificar-panel.js`:
+  - los grupos, en su orden;
+  - que no quede ningún destino de dar clase (sesión, tareas, exámenes,
+    planes, asistencia, informe mensual, subgrupos, archivos, juegos, torneos);
+  - que sí estén los de supervisar y administrar;
+  - que no se vean el estado de la clase, «Tu semana», el registro ni el
+    primer paso;
+  - que el conteo de inactivos vaya con `head`;
+  - y que «Ver como: profesor» devuelva el panel docente.
 
 ## La burbuja de "quién está conectado"
 
