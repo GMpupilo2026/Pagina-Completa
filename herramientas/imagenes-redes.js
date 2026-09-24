@@ -14,6 +14,9 @@
  *  - Facebook muestra la portada a 820×312 en la computadora (esto es el doble,
  *    para pantallas de alta densidad) y en el celular la recorta a 16:9 por el
  *    centro: se pierden unos 270 px de cada costado.
+ *    Además, la foto de perfil de la página va ENCIMA de la portada (en el
+ *    celular, un círculo centrado sobre la mitad de abajo): esas zonas van en
+ *    `tapado`, y el script también falla si un texto cae debajo.
  *  - Instagram muestra la publicación 4:5 entera en el inicio, pero en la
  *    cuadrícula del perfil la recorta a 3:4 por el centro: unos 34 px de cada
  *    costado.
@@ -74,16 +77,29 @@ const IMAGENES = [
     {
         archivo: "portada-facebook.png", ancho: 1640, alto: 624,
         seguro: { ancho: Math.round(624 * 16 / 9), alto: 624 },   // 1109×624
+        // Lo que Facebook pone ENCIMA de la portada. En el celular, la foto de
+        // perfil de la página es un círculo centrado que tapa la mitad de abajo
+        // (medido en una captura real: centro a 86 % de la altura, radio del
+        // 39 %, con 24 px de margen). En la computadora va abajo a la izquierda.
+        tapado: [
+            { circulo: { x: 820, y: 536, r: 270 } },
+            { rect: { x: 0, y: 440, ancho: 560, alto: 184 } },
+        ],
         css: `
           .lienzo { --casilla: 52px; --casilla2: 104px; }
-          .contenido { width: 1109px; display: flex; align-items: center; gap: 56px;
-                       padding: 0 40px; margin-top: -6px; }
-          .logo { width: 330px; }
-          .nombre { font-size: 88px; }
-          .lema { margin-top: 22px; font-size: 40px; }
-          .sitio { margin-top: 30px; padding: 12px 26px; font-size: 34px; }
-          .nota { margin-top: 20px; font-size: 25px; }`,
-        cuerpo: `${LOGO}<div>${NOMBRE}${LEMA}${SITIO}${NOTA}</div>`,
+          .contenido { width: 1109px; height: 624px; }
+          .arriba { position: absolute; top: 26px; left: 0; right: 0; text-align: center; }
+          .nombre { font-size: 84px; }
+          .lema { margin-top: 12px; font-size: 38px; }
+          .sitio { margin-top: 18px; padding: 8px 26px; font-size: 32px; }
+          .lado { position: absolute; top: 300px; width: 250px; font-size: 27px; line-height: 1.35; }
+          .lado b { display: block; color: #fff; font-size: 30px; }
+          .izq { left: 20px; text-align: right; }
+          .der { right: 20px; text-align: left; }`,
+        cuerpo: `<div class="arriba">${NOMBRE}
+                   <div class="lema">Clases de ajedrez <em>en vivo</em>, no solo videos</div>${SITIO}</div>
+                 <div class="nota lado izq"><b>Oscar Angulo</b>Entrenador FIDE</div>
+                 <div class="nota lado der"><b>Costa Rica</b>Escuelas, colegios y familias</div>`,
     },
     {
         archivo: "instagram.png", ancho: 1080, alto: 1350,
@@ -123,6 +139,23 @@ const IMAGENES = [
                                 || r.top < arr || r.bottom > arr + s.alto)
                 .map(([n]) => n);
         }, img.seguro);
+        // …ni debajo de lo que la red le pone encima (la foto de perfil).
+        const tapados = await pagina.evaluate((zonas) => {
+            const choca = (r, z) => {
+                if (z.rect) return r.left < z.rect.x + z.rect.ancho && r.right > z.rect.x
+                                && r.top < z.rect.y + z.rect.alto && r.bottom > z.rect.y;
+                const { x, y, r: radio } = z.circulo;   // el punto del rectángulo más cercano al centro
+                const cx = Math.max(r.left, Math.min(x, r.right)), cy = Math.max(r.top, Math.min(y, r.bottom));
+                return (cx - x) ** 2 + (cy - y) ** 2 < radio ** 2;
+            };
+            // Solo lo que lleva texto o imagen: una caja vacía puede pasar por detrás.
+            return [...document.querySelectorAll(".contenido *")]
+                .filter((el) => el.tagName === "IMG" || [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim()))
+                .flatMap((el) => [...el.getClientRects()].map((r) => [el.className || el.tagName, r]))
+                .filter(([, r]) => zonas.some((z) => choca(r, z)))
+                .map(([n]) => n);
+        }, img.tapado || []);
+        fuera.push(...tapados.map((n) => `${n} (queda bajo la foto de perfil)`));
         if (fuera.length) {
             console.error(`${img.archivo}: se sale de la franja que siempre se ve:`, fuera.join(", "));
             error = true;
