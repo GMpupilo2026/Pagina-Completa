@@ -826,6 +826,12 @@ adentro), en el celular parecían un error del sistema, el botón decía siempre
   «Cancelar»**: un Enter apurado no borra nada. Escape siempre cancela, y al
   cerrar el foco vuelve al botón que abrió el diálogo.
 - **De a un diálogo por vez**: si se piden dos seguidos, el segundo espera.
+- **Con un diálogo abierto, los mensajes van adentro de él.** Un diálogo modal
+  deja inerte todo lo de afuera: un mensaje que saliera en la página se veía
+  detrás, oscurecido, y su «Deshacer» no se podía tocar. Ahora la zona de
+  mensajes se muda al diálogo modal que esté abierto (también los que ya
+  estaban a la vista cuando se abre), y al cerrarse vuelven a la página con su
+  tiempo y su botón intactos.
 - **Un mensaje de error no se va solo.** Un error que desaparece mientras uno lo
   lee es un error que no se leyó. Los de «listo» sí se van, y mientras el mouse
   o el foco están encima no se van: nadie tiene que alcanzar «Deshacer» contra

@@ -234,6 +234,26 @@ async function pruebaAvisos(browser) {
   await page.click("[data-avisos-aceptar]");
   igual("el formulario devuelve cada campo por su nombre", await page.evaluate(() => window.__r), { monto: "12500", metodo: "efectivo" });
 
+  // Con un diálogo abierto, los mensajes se ven y se tocan: afuera quedarían
+  // detrás del diálogo, inertes.
+  await page.evaluate(() => {
+    window.__deshecho2 = 0;
+    Avisos.avisar("Ya estaba a la vista.");
+    window.__r = Avisos.confirmar("¿Seguir?", { aceptar: "Seguir" });
+    Avisos.avisar("PGN eliminado.", { deshacer: () => { window.__deshecho2 += 1; } });
+  });
+  cierto("con un diálogo abierto, los mensajes van adentro de él",
+    await page.evaluate(() => document.querySelectorAll("dialog[data-avisos] .avisos-mensaje").length === 2));
+  cierto("y se ven de verdad", await page.evaluate(() =>
+    [...document.querySelectorAll(".avisos-mensaje")].every((m) => m.checkVisibility())));
+  await page.click("[data-avisos-deshacer]", { timeout: 3000 });
+  igual("su «Deshacer» se puede tocar con el diálogo abierto", await page.evaluate(() => window.__deshecho2), 1);
+  await page.click("[data-avisos-aceptar]");
+  await page.waitForFunction(() => !document.querySelector("dialog[data-avisos]"));
+  igual("al cerrar el diálogo, el que quedaba vuelve a la página",
+    await page.evaluate(() => [...document.querySelectorAll(".avisos-mensaje")].map((m) => !m.closest("dialog") && m.checkVisibility())), [true]);
+  await page.evaluate(() => document.querySelectorAll(".avisos-mensaje").forEach((m) => m.remove()));
+
   // Alerta: un solo botón.
   await page.evaluate(() => { window.__fin = false; Avisos.alerta("Esto queda anotado.", { titulo: "Saliste del examen" }).then(() => { window.__fin = true; }); });
   igual("la alerta no ofrece cancelar", await page.locator("[data-avisos-cancelar]").count(), 0);

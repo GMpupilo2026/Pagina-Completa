@@ -63,14 +63,40 @@
 
   // ------------------------------------------------------------- mensajes
   let zona = null;
+
+  /* Dónde van los mensajes: en la página, o DENTRO del diálogo modal que esté
+     abierto. Un diálogo modal deja inerte todo lo de afuera, así que un
+     mensaje que saliera en la página mientras el diálogo está abierto se
+     vería detrás, oscurecido, y su «Deshacer» no se podría tocar. */
+  function duenoDeLosMensajes() {
+    const modales = [...document.querySelectorAll("dialog")].filter((d) => d.matches(":modal"));
+    return modales.length ? modales[modales.length - 1] : document.body;
+  }
+
   function zonaDeMensajes() {
-    if (zona && document.body.contains(zona)) return zona;
-    zona = el("div", "fixed top-3 inset-x-0 z-[80] flex flex-col items-center gap-2 px-4 pointer-events-none");
-    zona.id = "avisos-zona";
-    zona.setAttribute("role", "region");
-    zona.setAttribute("aria-label", "Avisos");
-    document.body.appendChild(zona);
+    const dueno = duenoDeLosMensajes();
+    if (zona && zona.parentNode === dueno) return zona;
+    const nueva = el("div", "fixed top-3 inset-x-0 z-[80] flex flex-col items-center gap-2 px-4 pointer-events-none");
+    nueva.id = "avisos-zona";
+    nueva.setAttribute("role", "region");
+    nueva.setAttribute("aria-label", "Avisos");
+    dueno.appendChild(nueva);
+    // Los que ya estaban a la vista se mudan con la zona: no se pierde ninguno.
+    if (zona) { [...zona.children].forEach((m) => nueva.appendChild(m)); zona.remove(); }
+    zona = nueva;
     return zona;
+  }
+
+  /* Al cerrarse un diálogo, los mensajes que salieron adentro vuelven a la
+     página, con su tiempo y su «Deshacer» intactos. */
+  function devolverMensajes(dialogo) {
+    if (!zona || !dialogo.contains(zona)) return;
+    const quedan = [...zona.children];
+    zona.remove();
+    zona = null;
+    if (!quedan.length) return;
+    const caja = zonaDeMensajes();
+    quedan.forEach((m) => caja.appendChild(m));
   }
 
   function avisar(texto, opciones) {
@@ -226,6 +252,7 @@
         const ok = d.returnValue === "aceptar";
         const valores = {};
         entradas.forEach((i) => { valores[i.name] = i.value; });
+        devolverMensajes(d);
         d.remove();
         if (antes && typeof antes.focus === "function" && document.contains(antes)) antes.focus();
         resolver(ok ? valores : null);
@@ -234,6 +261,8 @@
       document.body.appendChild(d);
       d.returnValue = "";
       d.showModal();
+      // Si había mensajes a la vista, se mudan adentro: afuera quedarían inertes.
+      if (zona && zona.children.length) zonaDeMensajes();
       // Dónde arranca el foco: en el primer campo si hay que escribir; si no,
       // en «Cancelar» cuando lo que sigue no tiene vuelta atrás.
       const primero = entradas[0] || (conf.peligro && cancelar) || aceptar;
