@@ -22,6 +22,7 @@
  *       node herramientas/verificar-informe-mensual.js
  */
 const { chromium } = require("./lib/playwright-con-sesion");
+const { mensajesVisibles } = require("./lib/avisos-prueba.js");
 
 const CHROME = process.env.CHROME_PATH || "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
 const BASE = process.env.BASE_URL || "http://localhost:8777";
@@ -169,7 +170,7 @@ async function pruebaProfesor(browser) {
   await page.fill("#resumen", "poco");
   await page.click("#enviar"); await page.click("#enviar");
   igual("un resumen corto no viaja", (await llamadas(page, "guardar_informe_mensual")).length, 0);
-  igual("y se dice por qué", await seVe(page, "#aviso"), "sí");
+  igual("y se dice por qué, en un mensaje que se ve", /Escribe un resumen/.test(await mensajesVisibles(page)), true);
 
   await page.fill("#resumen", "Di clases de finales de torre a los dos grupos del martes.");
   await page.fill("#logros", "Dos alumnos subieron de nivel.");

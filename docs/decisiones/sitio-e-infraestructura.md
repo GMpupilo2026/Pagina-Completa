@@ -850,9 +850,19 @@ adentro), en el celular parecían un error del sistema, el botón decía siempre
   preguntan: sus políticas de insert exigen `profesor_id = auth.uid()` y
   `creado_por = auth.uid()`, y no se podrían devolver tal cual.
   `verificar-informes.js` comprueba las dos ramas.
-- Las páginas que ya tenían su franja `#aviso` propia (cobros, coordinación,
-  subgrupos…) la conservan: es un mensaje dentro de la página, no una ventana
-  del navegador.
+- **Una sola forma de avisar.** Ocho páginas (academias, accesos, asistencia,
+  cobros, coordinación, informe mensual, subgrupos y supervisión) tenían su
+  franja `#aviso` propia, arriba del contenido: quien había bajado a una fila
+  del final apretaba «Guardar» y el «listo» o el error salían donde no los
+  veía, cada página con sus colores y su tiempo (cobros la escondía a los 6
+  segundos, las demás nunca). Ahora su `avisar(texto, malo)` llama a
+  `Avisos.avisar` y la franja no existe. Se quedan dos, que no son mensajes
+  sino el estado de la página: la de `tablero-academias.html` y la de
+  `novedades.html` dicen que la página no se pudo cargar y ocupan el lugar del
+  contenido. Tampoco son esto las regiones `#aviso` de Sonar y de Confites:
+  narran la partida. Los verificadores leen los mensajes con
+  `mensajesVisibles(page)` de `herramientas/lib/avisos-prueba.js`, que mide
+  con `checkVisibility()`.
 - Se carga con `<script src="js/avisos.js"></script>` en el `<head>`, **sin
   `defer`**: los scripts de cada página van al final del `<body>` sin `defer`
   y corren ANTES que uno diferido, así que un aviso pedido mientras la página

@@ -22,6 +22,7 @@
     </script>
     <script src="js/vendor/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
+    <script src="js/avisos.js"></script>
     <script src="js/adaptive-mode.js"></script>
     <script src="js/precios-acceso.js"></script>
 <!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/pwa.js" defer></script><!-- app: fin --><!-- tema: inicio --><script>(function(){try{var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');var f=localStorage.getItem('plataforma_tema_fuente_v1');if(!f||!/^[A-Za-z0-9 ]{2,32}$/.test(f))return;var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family='+f.replace(/ /g,'+')+':wght@400;500;600;700&display=swap';document.head.appendChild(l);}catch(e){}})();</script><!-- tema: fin --></head>
@@ -46,7 +47,6 @@
             <p id="intro" class="text-brand-500 dark:text-brand-300 mt-1"></p>
             <p class="text-sm mt-2"><a href="precios.html" class="font-semibold text-accent-700 dark:text-accent-400 underline">Ver la tabla de precios</a></p>
 
-            <p id="aviso" role="status" aria-live="polite" class="text-sm mt-4 min-h-[1.25rem]"></p>
 
             <!-- ===== ¿Se exige? =====
                  Es el interruptor que decide si todo lo de abajo le cierra la
@@ -178,11 +178,10 @@
         function sinTildes(s) {
             return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
         }
-        function avisar(texto, error) {
-            const el = $("aviso");
-            el.textContent = texto;
-            el.className = "text-sm mt-4 min-h-[1.25rem] " + (error ? "text-red-700 dark:text-red-400" : "text-green-700 dark:text-green-400");
-        }
+        /* Los mensajes salen por js/avisos.js, como en todo el sitio: arriba, se
+           ven aunque uno haya bajado en la página, y los de error no se van solos
+           (ver «Los avisos son de la página, no del navegador»). */
+        function avisar(texto, error) { Avisos.avisar(texto, { tipo: error ? "error" : "ok" }); }
 
         /* PostgREST corta la respuesta sin avisar: se pide de mil en mil. */
         async function traerTodo(armar) {

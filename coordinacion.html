@@ -25,6 +25,7 @@
     </script>
     <script src="js/vendor/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
+    <script src="js/avisos.js"></script>
     <script src="js/equipo-volcar.js"></script>
     <script src="js/funciones-coordinacion.js"></script>
     <script src="js/adaptive-mode.js"></script>
@@ -51,7 +52,6 @@
             <!-- Un coordinador sin profesores vinculados no ve casi nada, y sin
                  esta franja no tendría forma de saber por qué. -->
             <p id="sin-profesores" hidden class="mb-6 rounded-xl px-4 py-3 text-sm bg-accent-50 dark:bg-brand-900 text-brand-700 dark:text-brand-200"></p>
-            <p id="aviso" class="hidden mb-6 rounded-xl px-4 py-3 text-sm"></p>
 
             <div id="tarjetas" class="grid gap-4 sm:grid-cols-3 mb-8"></div>
 
@@ -144,14 +144,10 @@ function el(tag, clase, texto) {
     return n;
 }
 
-function avisar(texto, malo) {
-    const a = document.getElementById("aviso");
-    a.textContent = texto;
-    a.className = "mb-6 rounded-xl px-4 py-3 text-sm " + (malo
-        ? "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300"
-        : "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300");
-    a.classList.remove("hidden");
-}
+/* Los mensajes salen por js/avisos.js, como en todo el sitio: arriba, se
+   ven aunque uno haya bajado en la página, y los de error no se van solos
+   (ver «Los avisos son de la página, no del navegador»). */
+function avisar(texto, malo) { Avisos.avisar(texto, { tipo: malo ? "error" : "ok" }); }
 
 const nombreDe = (u) => u.full_name || u.email || "Sin nombre";
 

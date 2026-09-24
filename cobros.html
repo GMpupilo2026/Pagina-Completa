@@ -87,7 +87,6 @@
                 <button type="button" id="generar-btn" class="bg-brand-700 hover:bg-brand-800 text-white font-semibold px-4 py-2.5 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">⚙️ Emitir los que falten</button>
             </div>
 
-            <p id="aviso" class="hidden mb-6 rounded-xl px-4 py-3 text-sm"></p>
 
             <!-- Tarjetas -->
             <div id="tarjetas" class="mb-8 space-y-4"></div>
@@ -409,15 +408,10 @@ function el(tag, clase, texto) {
     if (texto != null) n.textContent = texto;
     return n;
 }
-function avisar(texto, malo) {
-    const a = document.getElementById("aviso");
-    a.textContent = texto;
-    a.className = "mb-6 rounded-xl px-4 py-3 text-sm " + (malo
-        ? "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200"
-        : "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200");
-    a.classList.remove("hidden");
-    if (!malo) setTimeout(() => a.classList.add("hidden"), 6000);
-}
+/* Los mensajes salen por js/avisos.js, como en todo el sitio: arriba, se
+   ven aunque uno haya bajado en la página, y los de error no se van solos
+   (ver «Los avisos son de la página, no del navegador»). */
+function avisar(texto, malo) { Avisos.avisar(texto, { tipo: malo ? "error" : "ok" }); }
 function nombreDe(id) {
     const a = alumnos.find((x) => x.id === id);
     return a ? (a.full_name || a.email || "Sin nombre") : "Alumno";

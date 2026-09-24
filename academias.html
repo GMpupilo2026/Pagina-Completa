@@ -23,6 +23,7 @@
     </script>
     <script src="js/vendor/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
+    <script src="js/avisos.js"></script>
     <script src="js/marca-academia.js"></script>
     <script src="js/adaptive-mode.js"></script>
     <script src="js/funciones-coordinacion.js"></script>
@@ -44,7 +45,6 @@
             <h1 id="titulo" tabindex="-1" class="font-serif text-3xl sm:text-4xl font-bold text-brand-800 dark:text-white focus:outline-none"><span aria-hidden="true">🏫</span> Academias</h1>
             <p id="intro" class="text-brand-500 dark:text-brand-300 mt-1 mb-6"></p>
 
-            <p id="aviso" role="status" class="hidden mb-6 rounded-xl px-4 py-3 text-sm"></p>
 
             <!-- Quien administra: la lista de academias y la de crear una. -->
             <section id="vista-lista" hidden aria-labelledby="h-lista">
@@ -230,14 +230,10 @@ function el(tag, clase, texto) {
     if (texto != null) n.textContent = texto;
     return n;
 }
-function avisar(texto, malo) {
-    const a = document.getElementById("aviso");
-    a.textContent = texto;
-    a.className = "mb-6 rounded-xl px-4 py-3 text-sm " + (malo
-        ? "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300"
-        : "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300");
-    a.classList.remove("hidden");
-}
+/* Los mensajes salen por js/avisos.js, como en todo el sitio: arriba, se
+   ven aunque uno haya bajado en la página, y los de error no se van solos
+   (ver «Los avisos son de la página, no del navegador»). */
+function avisar(texto, malo) { Avisos.avisar(texto, { tipo: malo ? "error" : "ok" }); }
 function sinTildes(s) { return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase(); }
 function nombreDe(p) { return (p.full_name || p.nombre || "").trim() || String(p.email || p.correo || "").split("@")[0] || "Sin nombre"; }
 function coincide(p, q) {
@@ -966,7 +962,6 @@ document.getElementById("sumar-grupo-btn").addEventListener("click", () => {
 document.getElementById("volver").addEventListener("click", async () => {
     abierta = null;
     ponerTitulo("Academias");
-    document.getElementById("aviso").classList.add("hidden");
     await cargarAcademias();
     await pintarLista();
     document.getElementById("titulo").focus();

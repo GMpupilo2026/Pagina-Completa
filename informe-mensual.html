@@ -25,6 +25,7 @@
     </script>
     <script src="js/vendor/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
+    <script src="js/avisos.js"></script>
     <script src="js/mejorar-informe.js"></script>
     <script src="js/adaptive-mode.js"></script>
     <script src="js/actividad-profesor.js"></script>
@@ -50,7 +51,6 @@
             <p class="text-brand-500 dark:text-brand-300 mt-1 mb-2">Una vez al mes le cuentas a tu supervisión qué hiciste. Los números se llenan solos con lo que pasó en la plataforma; tú escribes lo que los números no dicen.</p>
             <p id="destino" class="text-sm text-brand-600 dark:text-brand-300 mb-6"></p>
 
-            <p id="aviso" role="status" class="hidden mb-6 rounded-xl px-4 py-3 text-sm"></p>
 
             <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4 mb-6 flex flex-wrap items-end gap-3">
                 <div>
@@ -126,14 +126,10 @@ let informes = [];          // los propios, de todos los meses
 let mes = null;             // "AAAA-MM-01"
 let confirmandoEnvio = false;
 
-function avisar(texto, malo) {
-    const a = document.getElementById("aviso");
-    a.textContent = texto;
-    a.className = "mb-6 rounded-xl px-4 py-3 text-sm " + (malo
-        ? "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300"
-        : "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300");
-    a.classList.remove("hidden");
-}
+/* Los mensajes salen por js/avisos.js, como en todo el sitio: arriba, se
+   ven aunque uno haya bajado en la página, y los de error no se van solos
+   (ver «Los avisos son de la página, no del navegador»). */
+function avisar(texto, malo) { Avisos.avisar(texto, { tipo: malo ? "error" : "ok" }); }
 
 function informeDelMes() { return informes.find((i) => i.periodo === mes) || null; }
 

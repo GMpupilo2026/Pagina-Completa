@@ -20,7 +20,7 @@
    Uso:  python3 -m http.server 8777    (desde la raíz del sitio)
          node herramientas/verificar-asistencia.js                          */
 const { chromium } = require("./lib/playwright-con-sesion");
-const { contestarAvisos } = require("./lib/avisos-prueba.js");
+const { contestarAvisos, mensajesVisibles } = require("./lib/avisos-prueba.js");
 
 const CHROME = process.env.CHROME_PATH || "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
 const BASE = process.env.BASE_URL || "http://localhost:8777";
@@ -404,8 +404,8 @@ async function pruebaFicha(browser) {
   igual("una tardanza más larga que la clase no se manda",
     await page.evaluate(() => window.__llamadas.filter((l) => l.rpc === "guardar_clase_presencial").length), 0);
   cierto("y se dice de quién es",
-    /Bruno Mena/.test(await page.textContent("#aviso")),
-    "salió: " + await page.textContent("#aviso"));
+    /Bruno Mena/.test(await mensajesVisibles(page)),
+    "salió: " + await mensajesVisibles(page));
   // Y se deja la ficha como estaba para la prueba siguiente.
   await page.locator(".tarde-min").nth(1).fill("");
   await page.locator(".alumno-chk").nth(1).uncheck();
@@ -420,8 +420,8 @@ async function pruebaFicha(browser) {
   await page.click("#guardar");
   await page.waitForTimeout(300);
   cierto("una duración imposible la rechaza la PÁGINA, en español",
-    /entre 5 y 600 minutos/.test(await page.textContent("#aviso")),
-    "salió: " + await page.textContent("#aviso"));
+    /entre 5 y 600 minutos/.test(await mensajesVisibles(page)),
+    "salió: " + await mensajesVisibles(page));
   igual("y no se manda nada",
     await page.evaluate(() => window.__llamadas.filter((l) => l.rpc === "guardar_clase_presencial").length), 0);
   await page.fill("#minutos", "60");
@@ -565,8 +565,8 @@ async function pruebaHorario(browser) {
     await page.evaluate(() => [...document.querySelectorAll(".alumno-chk:checked")].map((c) => c.value)),
     ["u-bruno", "u-cami"]);
   cierto("el aviso dice cuántos quedaron marcados y que hay que revisar",
-    /los 2 alumnos de grupo 7b: desmarca a quien no llegó/.test(await page.textContent("#aviso")),
-    "salió: " + await page.textContent("#aviso"));
+    /los 2 alumnos de grupo 7b: desmarca a quien no llegó/.test(await mensajesVisibles(page)),
+    "salió: " + await mensajesVisibles(page));
 
   // Guardar manda la hora local como el instante que fue.
   await page.click("#guardar");
