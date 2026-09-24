@@ -91,16 +91,44 @@ Cada formulario público que manda datos pide aceptar la Política de privacidad
   da ningún error. Por eso se prueba en el navegador (`verificar-legal.js` y
   `verificar-formularios.js`), no por el HTML.
 
+## El consentimiento queda guardado
+
+Desde `20260924214817_consentimiento_guardado` la aceptación **queda en la base**,
+en la misma fila del envío: qué versión se aceptó y a qué hora (la del
+servidor, `now()`, no la del navegador). La ley pone en el responsable la
+carga de probar el consentimiento, y una casilla marcada en una pantalla no
+prueba nada.
+
+| Función | Página | Guarda |
+|---|---|---|
+| `solicitar_academia` | `unirse.html` | `solicitudes_academia.privacidad_version` y `privacidad_aceptada_en` |
+| `responder_formulario` | `formulario.html` | `formulario_respuestas.privacidad_version` y `privacidad_aceptada_en` |
+| `elegir_plan` | `elegir-plan.html` | `solicitudes_academia.terminos_version` y `terminos_aceptados_en` (y la privacidad, si la solicitud no la tenía) |
+
+- **Lo exige la base, no la pantalla.** Sin una versión válida, las tres
+  funciones rechazan el envío antes de escribir nada. La casilla de la página
+  es la cortesía; el `if` que importa es el de la función.
+- **La versión es la fecha de «Última actualización»** de la página
+  (AAAA-MM-DD) y vive en **una sola copia**, `js/legal-version.js`.
+  `verificar-legal.js` comprueba que coincida con la fecha impresa en cada
+  página. **Al cambiar una página legal se cambian las dos cosas**: si no,
+  la base guarda que la gente aceptó un texto que ya no es el publicado.
+- La base **no compara** con la versión vigente, solo exige una fecha real y
+  que no sea del futuro (`interno.version_legal_valida`). Compararla sería
+  una segunda copia de `js/legal-version.js` dentro de la base, y el día que
+  alguien cambiara una sin la otra se rechazarían todos los envíos.
+- Las filas anteriores al 24 de setiembre de 2026 quedan en null: se
+  enviaron antes de que existieran las páginas legales.
+- `verificar-legal.js` lee la **última migración** de cada función (la que
+  vale en la base) y comprueba que reciba la versión, la exija antes de
+  escribir y la guarde. Una migración futura que vuelva a crear la función
+  copiando una versión vieja borraría la exigencia sin ningún error.
+- La inscripción a torneos (`inscripcion.html`) va a la otra base (la de
+  colegios), cuya función `smart-function` ya guardaba `acepto_datos`.
+
 ## Lo que falta
 
-- **El consentimiento no queda guardado en la base.** Hoy lo exige la pantalla,
-  pero ninguna fila dice quién aceptó, cuándo ni qué versión. La ley pone en el
-  responsable la carga de probar el consentimiento: lo correcto es que
-  `solicitar_academia`, `responder_formulario` y `elegir_plan` reciban y guarden
-  la aceptación con su fecha y la versión de la política.
 - Falta la **dirección exacta** del domicilio.
-- El recibo de `cobros` es **interno**: si el responsable está inscrito en
-  Hacienda, no sustituye el comprobante electrónico.
-- Todo esto necesita la **revisión de un abogado**. En particular, la Ley 7472
-  dice que los derechos del consumidor son irrenunciables, así que la cláusula
-  de no devolver el material digital entregado tiene que confirmarla.
+- La revisión del abogado ya se hizo (setiembre de 2026). Si cambia una
+  promesa de las páginas (un plazo, un reembolso, la cláusula del material
+  digital), conviene que la vuelva a ver.

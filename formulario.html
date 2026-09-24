@@ -25,6 +25,7 @@
     </script>
     <script src="js/vendor/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
+    <script src="js/legal-version.js"></script>
     <script src="js/adaptive-mode.js"></script>
     <script src="js/adjuntos.js"></script>
     <script src="js/marca-academia.js"></script>
@@ -276,7 +277,11 @@ document.getElementById("formulario").addEventListener("submit", async (e) => {
         return;
     }
     msg.textContent = "Enviando…";
-    const { data, error } = await sb.rpc("responder_formulario", { p_slug: slug, p_respuestas: respuestas });
+    const { data, error } = await sb.rpc("responder_formulario", {
+        p_slug: slug, p_respuestas: respuestas,
+        // Qué versión de la política aceptó: la base la guarda con la hora.
+        p_version_privacidad: window.LegalVersion.PRIVACIDAD,
+    });
     if (error || !data || !data.ok) {
         msg.textContent = (data && data.error) || (error && error.message) || "No se pudo enviar. Vuelve a intentarlo.";
         msg.className = "text-sm text-red-600 dark:text-red-400";
