@@ -584,6 +584,21 @@ Se cambiaron las nueve políticas de SELECT de `training_progress`,
 crece no llama a una función por fila con `student_id`: usa `student_id in
 (select …)`.**
 
+**Lo que arrastraba lo mismo en otras páginas.** Revisando los registros de
+ese día: el panel de la Academia (`panel_profesor()`, en `clases.html`) se
+había caído 16 veces por timeout con cuentas de coordinación, y
+`tareas_con_avance()` una vez; las dos leen esas mismas tablas y bajaron solas
+con el arreglo (el panel, de más de 8 s a ~1 s). Después se midió cada tabla de
+más de 20 filas impersonando a coordinación, supervisión, administración y un
+alumno: todas quedan por debajo de 0,4 s. La que seguía pagando por fila era
+`formulario_respuestas` (~3 ms por respuesta, crece con cada inscripción): su
+permiso depende solo del formulario, así que ahora se arma el conjunto de
+formularios visibles una vez (`formulario_respuestas_rls_por_formulario`, cero
+diferencias en las 129 cuentas, de 357 ms a 10 ms). Quedan con función por
+fila tablas que hoy son chicas —la mayor, `profiles`, con 129 filas y ~0,2 s—;
+`profiles` es la que habría que rehacer primero si la cantidad de cuentas se
+multiplica.
+
 ## Los informes que llegan a la casa
 
 En Informes, mirando a UN alumno, está "📧 Informes a la casa": a qué correos se
