@@ -83,8 +83,17 @@ function pruebaEstatica() {
   cierto("y son de verdad muchos (si esto da pocos, el barrido está roto)", conAyuda >= 40, "encontró " + conAyuda);
   const informes = fs.readFileSync(path.join(RAIZ, "informes.html"), "utf8");
   cierto("Informes lleva al capítulo «Informes»", /guia-del-profesor-accesible\.html#cap-\d+"[^>]*capítulo «Informes»/.test(informes));
-  const subgrupos = fs.readFileSync(path.join(RAIZ, "subgrupos.html"), "utf8");
-  cierto("una página que la guía no explica (Subgrupos) no lleva «?»", !subgrupos.includes('id="ayuda-guia"'));
+  // Las páginas de supervisión y de la clase del aula tuvieron su capítulo
+  // después: si una se queda sin «?», el mapa de academia-cabecera.py la perdió.
+  const capituloDe = (rel) => (fs.readFileSync(path.join(RAIZ, rel), "utf8")
+    .match(/<a id="ayuda-guia"[^>]*aria-label="Ayuda: capítulo «([^»]+)»/) || [])[1] || null;
+  igual("cada página del equipo docente lleva a su capítulo",
+    ["subgrupos.html", "asistencia.html", "informe-mensual.html", "supervision.html", "academias.html",
+     "tablero-academias.html", "accesos.html"].map((r) => r + " → " + capituloDe(r)),
+    ["subgrupos.html → Tareas", "asistencia.html → La clase en vivo", "informe-mensual.html → Supervisión y academias",
+     "supervision.html → Supervisión y academias", "academias.html → Supervisión y academias",
+     "tablero-academias.html → Supervisión y academias", "accesos.html → Administración"]);
+  cierto("una página que la guía no explica (Novedades) no lleva «?»", capituloDe("novedades.html") === null);
 }
 
 /* Un cliente de Supabase de mentira que solo sabe quién es y si administra:

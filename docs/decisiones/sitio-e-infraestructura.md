@@ -761,12 +761,18 @@ capítulo «Los cursos de la Academia».
   `guia-profesores.js` escribe las anclas. Reordenar la guía no deja un «?»
   apuntando al capítulo de al lado, y un `id` que no existe hace fallar el
   script.
-- **Solo llevan «?» las páginas que la guía de verdad explica.** Subgrupos,
-  asistencia presencial, el informe mensual, supervisión, academias, accesos y
-  la tienda no llevan, porque la guía todavía no las cuenta. Un «?» que lleva a
-  un capítulo que no habla de la página es peor que no tenerlo: quien lo abre
-  lee el capítulo entero buscando algo que no está. Cuando la guía sume una
-  página, se agrega a `AYUDA_GUIA`.
+- **Solo llevan «?» las páginas que la guía de verdad explica.** Un «?» que
+  lleva a un capítulo que no habla de la página es peor que no tenerlo: quien
+  lo abre lee el capítulo entero buscando algo que no está. Por eso, antes de
+  sumar una página a `AYUDA_GUIA`, se le escribe su apartado. Así entraron
+  después la asistencia presencial y el horario (en «La clase en vivo»), los
+  subgrupos (en «Tareas»), los cupos de acceso (en «Administración») y un
+  capítulo nuevo, «Supervisión y academias», con el informe mensual,
+  supervisión, academias y el tablero por academia. Cada apartado se escribió
+  leyendo la página y su decisión, no de memoria. Siguen sin «?» Novedades, la
+  tienda (todavía cerrada), Sonar y la vista de jugador de administración.
+  `verificar-ayuda.js` comprueba que cada una de esas siete páginas lleve a SU
+  capítulo.
 - Se abre en otra pestaña, para no perder lo que se estaba haciendo, y el
   nombre accesible lo dice: «Ayuda: capítulo «Informes» de la guía del
   profesor (se abre en otra pestaña)».
