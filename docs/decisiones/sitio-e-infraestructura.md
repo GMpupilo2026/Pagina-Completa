@@ -506,6 +506,38 @@ como Cloudflare y los orígenes de terceros simulados con 600 ms:
   No se tocó: los scripts de sesión del propio `<head>` lo usan al cargar, y
   diferirlo es cambiar el orden de arranque de cada página, no una línea.
 
+### El código de las páginas sale del HTML
+
+Las pantallas grandes traían todo su código escrito dentro, en un `<script>`
+de la página: `sesion.html` 237 KB, `informes.html` 183, `clases.html` 131.
+Eso tiene dos costos que no dan ningún error:
+
+- **Se baja entero en cada visita.** Un archivo de `js/` el navegador lo guarda
+  en caché y solo pregunta si cambió; el código escrito en el HTML viaja con
+  la página, cada vez.
+- **Obliga a dejar `'unsafe-inline'` en la CSP** (`_headers`), que es lo que
+  deja correr cualquier `<script>` escrito en una página, incluido uno que
+  alguien lograra colar. Sacarlo es la meta; para eso no puede quedar código
+  escrito en ninguna página.
+
+**Se muda tal cual, de a una página**: el bloque pasa a `js/<pagina>.js` byte
+por byte (con una cabecera que dice de dónde salió) y en su lugar queda un
+`<script src>` **en la misma posición**. Un script clásico externo corre en el
+mismo orden que el escrito en la página y sus `let`/`const` de arriba siguen
+siendo globales, así que no cambia nada de lo que hace. Antes de mudar uno se
+revisa que no use `document.currentScript` ni tenga un `</script>` escrito, y
+después se recompila el CSS (`npm run css`): **tiene que quedar idéntico**, porque
+el compilador ya mira los `.js` de hasta 350 KB.
+
+- `sesion.html` fue la primera: de 330 KB a 91 KB de HTML, y `js/sesion.js`.
+- `verificar-carga-paginas.js` lleva la lista `PENDIENTES` de las que todavía
+  traen un bloque de más de 20 KB (34 al empezar). **La lista solo se achica**:
+  una página nueva con un bloque grande falla, y una que ya se mudó y sigue en
+  la lista también.
+- Quedan para después las piezas chicas que ponen los generadores en el
+  `<head>` (la guardia de sesión, el tema, el modo oscuro) y el `onload` de la
+  hoja de fuentes: son lo último antes de poder sacar `'unsafe-inline'`.
+
 ### Sin sesión, al login antes de bajar nada
 
 Cada página de la Academia decide que no hay sesión en su propio script, **al
