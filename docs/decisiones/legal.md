@@ -18,8 +18,8 @@ sitemap). Salieron de una revisión contra la ley costarricense:
 - **Ley 6683** (derechos de autor), para el material de los cursos y la tienda.
 
 El responsable es **Oscar Angulo Cubero, cédula 1-1399-0053**, persona física
-con el nombre comercial Ajedrez Integral. La dirección publicada es solo «San
-José, Costa Rica».
+con el nombre comercial Ajedrez Integral. El domicilio es «San José, Costa
+Rica», así, sin más detalle: lo decidió el dueño del sitio.
 
 **Lo que dicen estas páginas es un compromiso**, no texto de relleno. Antes de
 cambiar algo en el sitio, revisar si contradice lo que ya prometen:
@@ -126,9 +126,8 @@ prueba nada.
 - La inscripción a torneos (`inscripcion.html`) va a la otra base (la de
   colegios), cuya función `smart-function` ya guardaba `acepto_datos`.
 
-## Lo que falta
+## La revisión
 
-- Falta la **dirección exacta** del domicilio.
-- La revisión del abogado ya se hizo (setiembre de 2026). Si cambia una
-  promesa de las páginas (un plazo, un reembolso, la cláusula del material
-  digital), conviene que la vuelva a ver.
+La revisión del abogado ya se hizo (setiembre de 2026). Si cambia una
+promesa de las páginas (un plazo, un reembolso, la cláusula del material
+digital), conviene que la vuelva a ver.
