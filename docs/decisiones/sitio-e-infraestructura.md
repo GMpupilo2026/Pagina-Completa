@@ -602,6 +602,45 @@ ninguno. El único camino de salida seguro era saber que el logo lleva al panel.
   encabezado, cada paso existe, el primero es el panel, y en la pantalla se ven,
   no desbordan a 360 px y pasan AA en claro y en oscuro.
 
+### El «?» de la guía, solo para administración
+
+Al lado del botón de tema, las páginas de la Academia que la guía del profesor
+explica llevan un «?». Lleva al capítulo de la guía que habla de esa página:
+Informes al capítulo «Informes», Niebla al capítulo «Jugar», un curso al
+capítulo «Los cursos de la Academia».
+
+- **Por ahora es solo de administración**, igual que la tarjeta «📘 Guía del
+  profesor» del panel (`soloAdmin`). Lo decidió el dueño del sitio: la guía
+  todavía no se le ofrece al equipo docente. El enlace llega en el HTML
+  **escondido** (clase `hidden`), y `js/ayuda-guia.js` lo destapa solo si
+  quien mira administra y está en su propia vista. Mirando «como estudiante» o
+  «como profesor» (`js/modo-vista.js`) no aparece, porque ese rol no lo tiene.
+  El día que la guía sea del equipo docente, se cambia la condición de ese
+  archivo y la de la tarjeta, las dos juntas.
+- La guía no se protege con esto: es una página pública. Lo que se decide es a
+  quién se le **ofrece**.
+- **El capítulo va por su `id`** de `herramientas/guia/contenido.json`
+  (`AYUDA_GUIA` en `academia-cabecera.py`), no por su número. El número del
+  ancla (`#cap-N`) se calcula al generar, con el mismo orden con que
+  `guia-profesores.js` escribe las anclas. Reordenar la guía no deja un «?»
+  apuntando al capítulo de al lado, y un `id` que no existe hace fallar el
+  script.
+- **Solo llevan «?» las páginas que la guía de verdad explica.** Subgrupos,
+  asistencia presencial, el informe mensual, supervisión, academias, accesos y
+  la tienda no llevan, porque la guía todavía no las cuenta. Un «?» que lleva a
+  un capítulo que no habla de la página es peor que no tenerlo: quien lo abre
+  lee el capítulo entero buscando algo que no está. Cuando la guía sume una
+  página, se agrega a `AYUDA_GUIA`.
+- Se abre en otra pestaña, para no perder lo que se estaba haciendo, y el
+  nombre accesible lo dice: «Ayuda: capítulo «Informes» de la guía del
+  profesor (se abre en otra pestaña)».
+- Lo comprueba `herramientas/verificar-ayuda.js`:
+  - que cada ancla exista en la guía y sea el capítulo que dice su nombre;
+  - que llegue escondido;
+  - que lo vea administración y no un profesor, ni administración mirando
+    «como estudiante»;
+  - el contraste contra el encabezado.
+
 ## Los avisos son de la página, no del navegador
 
 `alert()`, `confirm()` y `prompt()` quedaron **prohibidos en todo el sitio**. En

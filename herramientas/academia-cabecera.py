@@ -39,6 +39,7 @@ sí llevan las suyas.
 
     python3 herramientas/academia-cabecera.py
 """
+import json
 import os
 import re
 import sys
@@ -147,6 +148,102 @@ def pie(ruta):
             '</div></footer>')
 
 
+# El «?» del encabezado: el capítulo de la guía del profesor que habla de
+# cada página. Va por el `id` del capítulo en herramientas/guia/contenido.json
+# y no por su número: reordenar la guía no deja un «?» apuntando al capítulo
+# de al lado. El número del ancla (#cap-N) se calcula acá, con el mismo orden
+# con que herramientas/guia-profesores.js las escribe.
+#
+# SOLO van las páginas que la guía de verdad explica. Un «?» que lleva a un
+# capítulo que no habla de esa página es peor que no tenerlo: quien lo abre
+# lee todo el capítulo buscando algo que no está. Por eso subgrupos,
+# asistencia presencial, el informe mensual, supervisión, academias, accesos,
+# la tienda y otras no llevan: la guía todavía no las cuenta.
+#
+# Por ahora el «?» es solo de administración (lo destapa js/ayuda-guia.js),
+# igual que la tarjeta «Guía del profesor» del panel.
+AYUDA_GUIA = {
+    "clases.html": "empezar", "configuracion.html": "empezar",
+    "sesion.html": "clase-en-vivo",
+    "planes.html": "planes",
+    "tareas.html": "tareas",
+    "examenes.html": "examenes", "examen.html": "examenes",
+    "informes.html": "informes",
+    "logros.html": "entrenamiento", "racha-tactica.html": "entrenamiento",
+    "concentracion.html": "entrenamiento", "ilumina-tablero.html": "entrenamiento",
+    "arbitraje.html": "evaluaciones",
+    "juegos.html": "juegos", "torneos.html": "juegos", "torneo.html": "juegos",
+    "estandar.html": "juegos", "niebla.html": "juegos", "crazyhouse.html": "juegos",
+    "cartas.html": "juegos", "duelo.html": "juegos", "cuatro-jugadores.html": "juegos",
+    "variante.html": "juegos",
+    "partidas.html": "archivos", "lector-planilla.html": "archivos",
+    "ciegos.html": "accesibilidad",
+    "coordinacion.html": "coordinacion", "formularios.html": "coordinacion",
+    "cobros.html": "coordinacion", "reportes.html": "coordinacion",
+    "admin.html": "administracion", "inscripciones.html": "administracion",
+}
+AYUDA_CARPETAS = {"entreno/": "entrenamiento", "cursos/academia/": "cursos"}
+AYUDA_INICIO = "<!-- ayuda: inicio -->"
+AYUDA_FIN = "<!-- ayuda: fin -->"
+
+
+def capitulos_de_la_guia():
+    ruta = os.path.join(RAIZ, "herramientas", "guia", "contenido.json")
+    caps = json.load(open(ruta, encoding="utf-8"))["capitulos"]
+    return {c["id"]: (i + 1, c["titulo"]) for i, c in enumerate(caps)}
+
+
+CAPITULOS = None
+
+
+def capitulo_de_ayuda(ruta):
+    """(número, título) del capítulo de la guía para esta página, o None."""
+    global CAPITULOS
+    if CAPITULOS is None:
+        CAPITULOS = capitulos_de_la_guia()
+    cap = AYUDA_GUIA.get(ruta)
+    if cap is None:
+        cap = next((c for pre, c in AYUDA_CARPETAS.items() if ruta.startswith(pre)), None)
+    if cap is None:
+        return None
+    if cap not in CAPITULOS:
+        raise SystemExit(f"❌ {ruta}: el capítulo «{cap}» no está en herramientas/guia/contenido.json.")
+    return CAPITULOS[cap]
+
+
+def enlace_de_ayuda(ruta):
+    cap = capitulo_de_ayuda(ruta)
+    if not cap:
+        return ""
+    numero, titulo = cap
+    arriba = "../" * ruta.count("/")
+    t = titulo.replace("&", "&amp;").replace('"', "&quot;").replace("<", "&lt;")
+    # Llega escondido (clase `hidden`): js/ayuda-guia.js lo destapa solo para
+    # quien administra. Se abre en otra pestaña para no perder lo que se
+    # estaba haciendo, y lo dice.
+    return (f'<a id="ayuda-guia" href="{arriba}guia-del-profesor-accesible.html#cap-{numero}" target="_blank" rel="noopener" '
+            'class="hidden text-white font-bold text-lg w-9 h-9 items-center justify-center rounded-lg border border-white/40 hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" '
+            f'aria-label="Ayuda: capítulo «{t}» de la guía del profesor (se abre en otra pestaña)" title="Guía del profesor: {t}">'
+            '<span aria-hidden="true">?</span></a>')
+
+
+def poner_ayuda(ruta, s):
+    i = s.find(AYUDA_INICIO)
+    if i >= 0:
+        j = s.find(AYUDA_FIN, i)
+        s = s[:i] + s[j + len(AYUDA_FIN):]
+    if not capitulo_de_ayuda(ruta):
+        return s
+    cierre = s.rfind("</body>")
+    if cierre < 0:
+        print(f"⚠️  {ruta}: no tiene </body>, se queda sin el «?».")
+        return s
+    arriba = "../" * ruta.count("/")
+    return (s[:cierre] + AYUDA_INICIO
+            + f'<script src="{arriba}js/ayuda-guia.js" defer></script>'
+            + AYUDA_FIN + s[cierre:])
+
+
 def cabecera(ruta):
     # Rutas absolutas dentro del dominio, como ya hace pwa-cabecera.py, para
     # no tener que contar "../" según la carpeta.
@@ -160,9 +257,12 @@ def cabecera(ruta):
         '<span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span>'
         '<span class="sr-only"> — panel de la Academia</span>'
         '</a>'
+        '<div class="flex items-center gap-2">'
+        + enlace_de_ayuda(ruta) +
         '<button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">'
         '<span id="theme-icon" aria-hidden="true">☀️</span>'
         '</button>'
+        '</div>'
         '</div></nav></header>'
     )
 
@@ -504,6 +604,7 @@ def procesar(ruta):
     s = poner_tiempo(ruta, s)
     s = poner_modo_vista(ruta, s)
     s = poner_marca(ruta, s)
+    s = poner_ayuda(ruta, s)
 
     if s != original:
         open(ruta_abs, "w", encoding="utf-8").write(s)
