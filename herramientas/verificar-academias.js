@@ -21,6 +21,7 @@
  */
 const fs = require("fs");
 const path = require("path");
+const { mensajesVisibles } = require("./lib/avisos-prueba.js");
 
 const RAIZ = path.join(__dirname, "..");
 let fallos = 0;
@@ -257,7 +258,7 @@ async function pruebaDesdeGrupo(browser) {
   igual("viaja el nombre escrito, el supervisor y SOLO la gente marcada",
     [c[0].p_nombre, c[0].p_supervisor, ordenado(c[0].p_personas)], ["Academia San José", "prof", ordenado(["prof", "a1", "a2", "a3"])]);
   igual("queda abierta la academia recién creada", await page.$eval("#titulo", (h) => h.textContent.trim()), "🏫 Academia San José");
-  igual("el aviso dice con cuántas personas nació", await page.$eval("#aviso", (a) => a.textContent), "Academia «Academia San José» creada con 4 personas.");
+  igual("el aviso dice con cuántas personas nació", await mensajesVisibles(page), "Academia «Academia San José» creada con 4 personas.");
   igual("sin errores en la página", errores, []);
   await page.close();
 }

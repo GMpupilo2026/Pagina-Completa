@@ -21,7 +21,7 @@
    Uso:  python3 -m http.server 8777    (desde la raíz del sitio)
          node herramientas/verificar-coordinacion.js                         */
 const { chromium } = require("./lib/playwright-con-sesion");
-const { contestarAvisos } = require("./lib/avisos-prueba.js");
+const { contestarAvisos, mensajesVisibles } = require("./lib/avisos-prueba.js");
 
 const CHROME = process.env.CHROME_PATH || "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
 const BASE = process.env.BASE_URL || "http://localhost:8777";
@@ -295,7 +295,7 @@ async function pruebaPanel(browser) {
     envio && { cuerpo: envio.funcion, es: /reenviar-acceso/.test(envio.url) },
     { cuerpo: { alumno_id: "u-luis" }, es: true });
   igual("y dice a qué bandeja salió — que es el dato que hace falta para avisarle a la familia",
-    /mama@x\.cr/.test(await page.evaluate(() => document.getElementById("aviso").textContent)), "true");
+    /mama@x\.cr/.test(await mensajesVisibles(page)), "true");
 
   // Buscar: lo pregunta la base.
   await page.evaluate(() => { window.__rpc = []; });
@@ -393,7 +393,7 @@ async function pruebaFicha(browser) {
     Array.from(document.querySelectorAll("#lista button")).find((b) => b.textContent === "Cambiar el correo").click();
   });
   await page.waitForFunction(() => window.__llamadas.some((l) => l.funcion && l.funcion.sin_correo === true), { timeout: 10000 });
-  await page.waitForFunction(() => document.getElementById("aviso").textContent.indexOf("ana.rojas2") !== -1, { timeout: 10000 });
+  await page.waitForFunction(() => [...document.querySelectorAll(".avisos-mensaje")].some((m) => m.checkVisibility() && m.textContent.indexOf("ana.rojas2") !== -1), { timeout: 10000 });
   igual("y se enseña el usuario que devolvió el servidor, no el que se propuso",
     await page.evaluate(() => Array.from(document.querySelectorAll("#lista input")).some((i) => i.value === "ana.rojas2")), "true");
 

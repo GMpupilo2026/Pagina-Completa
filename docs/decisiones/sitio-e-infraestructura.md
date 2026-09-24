@@ -761,12 +761,18 @@ capítulo «Los cursos de la Academia».
   `guia-profesores.js` escribe las anclas. Reordenar la guía no deja un «?»
   apuntando al capítulo de al lado, y un `id` que no existe hace fallar el
   script.
-- **Solo llevan «?» las páginas que la guía de verdad explica.** Subgrupos,
-  asistencia presencial, el informe mensual, supervisión, academias, accesos y
-  la tienda no llevan, porque la guía todavía no las cuenta. Un «?» que lleva a
-  un capítulo que no habla de la página es peor que no tenerlo: quien lo abre
-  lee el capítulo entero buscando algo que no está. Cuando la guía sume una
-  página, se agrega a `AYUDA_GUIA`.
+- **Solo llevan «?» las páginas que la guía de verdad explica.** Un «?» que
+  lleva a un capítulo que no habla de la página es peor que no tenerlo: quien
+  lo abre lee el capítulo entero buscando algo que no está. Por eso, antes de
+  sumar una página a `AYUDA_GUIA`, se le escribe su apartado. Así entraron
+  después la asistencia presencial y el horario (en «La clase en vivo»), los
+  subgrupos (en «Tareas»), los cupos de acceso (en «Administración») y un
+  capítulo nuevo, «Supervisión y academias», con el informe mensual,
+  supervisión, academias y el tablero por academia. Cada apartado se escribió
+  leyendo la página y su decisión, no de memoria. Siguen sin «?» Novedades, la
+  tienda (todavía cerrada), Sonar y la vista de jugador de administración.
+  `verificar-ayuda.js` comprueba que cada una de esas siete páginas lleve a SU
+  capítulo.
 - Se abre en otra pestaña, para no perder lo que se estaba haciendo, y el
   nombre accesible lo dice: «Ayuda: capítulo «Informes» de la guía del
   profesor (se abre en otra pestaña)».
@@ -826,23 +832,43 @@ adentro), en el celular parecían un error del sistema, el botón decía siempre
   «Cancelar»**: un Enter apurado no borra nada. Escape siempre cancela, y al
   cerrar el foco vuelve al botón que abrió el diálogo.
 - **De a un diálogo por vez**: si se piden dos seguidos, el segundo espera.
+- **Con un diálogo abierto, los mensajes van adentro de él.** Un diálogo modal
+  deja inerte todo lo de afuera: un mensaje que saliera en la página se veía
+  detrás, oscurecido, y su «Deshacer» no se podía tocar. Ahora la zona de
+  mensajes se muda al diálogo modal que esté abierto (también los que ya
+  estaban a la vista cuando se abre), y al cerrarse vuelven a la página con su
+  tiempo y su botón intactos.
 - **Un mensaje de error no se va solo.** Un error que desaparece mientras uno lo
   lee es un error que no se leyó. Los de «listo» sí se van, y mientras el mouse
   o el foco están encima no se van: nadie tiene que alcanzar «Deshacer» contra
   el reloj.
 - **«Deshacer» en vez de preguntar, solo donde deshacer es de verdad
-  devolver la fila.** Hoy es borrar un PGN propio en Archivos: se borra, y
-  «Deshacer» lo vuelve a insertar igual (mismo id, carpeta y fecha), porque de
-  esa fila no cuelga nada. Donde algo cuelga en cascada (una tarea y sus
+  devolver la fila.** Hoy son dos: borrar un PGN propio en Archivos (se
+  borra, y «Deshacer» lo vuelve a insertar igual: mismo id, carpeta y fecha) y
+  quitar un encargado que uno mismo apuntó en Informes (vuelve con su id,
+  frecuencia, hora, día y último envío, así el próximo informe sale cuando
+  tocaba). De esas filas no cuelga nada, y quitar un encargado no manda correo. Donde algo cuelga en cascada (una tarea y sus
   renglones, un examen y sus respuestas) o hay un correo que ya salió, se sigue
   preguntando antes: reinsertar la fila no devolvería lo que se borró con ella
   ni desmandaría el correo. Cualquier otro «Deshacer» nuevo tiene que pasar la
   misma prueba antes de reemplazar una confirmación. El PGN de OTRO profesor (lo que borra
-  quien administra) también se pregunta: la política de insert exige
-  `profesor_id = auth.uid()` y no se podría devolver.
-- Las páginas que ya tenían su franja `#aviso` propia (cobros, coordinación,
-  subgrupos…) la conservan: es un mensaje dentro de la página, no una ventana
-  del navegador.
+  quien administra) y el encargado que apuntó otra persona también se
+  preguntan: sus políticas de insert exigen `profesor_id = auth.uid()` y
+  `creado_por = auth.uid()`, y no se podrían devolver tal cual.
+  `verificar-informes.js` comprueba las dos ramas.
+- **Una sola forma de avisar.** Ocho páginas (academias, accesos, asistencia,
+  cobros, coordinación, informe mensual, subgrupos y supervisión) tenían su
+  franja `#aviso` propia, arriba del contenido: quien había bajado a una fila
+  del final apretaba «Guardar» y el «listo» o el error salían donde no los
+  veía, cada página con sus colores y su tiempo (cobros la escondía a los 6
+  segundos, las demás nunca). Ahora su `avisar(texto, malo)` llama a
+  `Avisos.avisar` y la franja no existe. Se quedan dos, que no son mensajes
+  sino el estado de la página: la de `tablero-academias.html` y la de
+  `novedades.html` dicen que la página no se pudo cargar y ocupan el lugar del
+  contenido. Tampoco son esto las regiones `#aviso` de Sonar y de Confites:
+  narran la partida. Los verificadores leen los mensajes con
+  `mensajesVisibles(page)` de `herramientas/lib/avisos-prueba.js`, que mide
+  con `checkVisibility()`.
 - Se carga con `<script src="js/avisos.js"></script>` en el `<head>`, **sin
   `defer`**: los scripts de cada página van al final del `<body>` sin `defer`
   y corren ANTES que uno diferido, así que un aviso pedido mientras la página

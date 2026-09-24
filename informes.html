@@ -44,7 +44,7 @@
 
     <div id="loading" role="status" class="min-h-[50vh] flex flex-col items-center justify-center gap-3 px-4 text-center text-brand-500 dark:text-brand-300"><span aria-hidden="true" class="w-8 h-8 rounded-full border-4 border-brand-200 dark:border-brand-700 border-t-accent-500 animate-spin motion-reduce:animate-none"></span><p class="text-sm">Cargando…</p></div>
 
-    <div id="app" class="hidden pt-20 pb-16">
+    <div id="app" class="hidden pt-10 pb-16">
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <h1 class="font-serif text-3xl font-bold text-brand-800 dark:text-white mb-1">Informes <span aria-hidden="true">📊</span></h1>
             <p class="text-brand-500 dark:text-brand-300 mb-6" id="subtitle">Tu actividad y progreso en las clases.</p>
@@ -1730,11 +1730,29 @@
                 quitar.type = "button"; quitar.textContent = "✕";
                 quitar.setAttribute("aria-label", "Quitar a " + (e.nombre || e.email));
                 quitar.className = "text-brand-500 dark:text-brand-300 hover:text-red-600 px-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded";
+                /* Quitar el encargado que uno mismo apuntó no se pregunta: se
+                   quita y el mensaje ofrece «Deshacer», que lo vuelve a
+                   insertar tal cual (mismo id, frecuencia, hora, día y último
+                   envío, así el próximo informe sale cuando tocaba). De esa
+                   fila no cuelga nada y quitarla no manda ningún correo. La
+                   política de insert exige creado_por = auth.uid(): el que
+                   apuntó OTRA persona no se podría devolver igual, así que ahí
+                   se pregunta antes, como siempre. */
                 quitar.addEventListener("click", async () => {
-                    if (!(await Avisos.confirmar(`Deja de recibir los informes de ${nombreAlumno}.`, { titulo: `¿Quitar a ${e.email}?`, aceptar: "Quitar", peligro: true }))) return;
+                    const mio = e.creado_por === profile.id;
+                    if (!mio && !(await Avisos.confirmar(`Deja de recibir los informes de ${nombreAlumno}. Lo apuntó otra persona, así que no se puede deshacer.`, { titulo: `¿Quitar a ${e.email}?`, aceptar: "Quitar", peligro: true }))) return;
                     const { error } = await sb.from("encargados").delete().eq("id", e.id);
                     if (error) { Avisos.avisar("No se pudo quitar: " + error.message, { tipo: "error" }); return; }
                     renderEncargados(studentId, nombreAlumno);
+                    const fila = Object.assign({}, e);
+                    Avisos.avisar(`${e.email} ya no recibe los informes de ${nombreAlumno}.`, !mio ? {} : {
+                        deshacer: async () => {
+                            const { error: eVolver } = await sb.from("encargados").insert(fila);
+                            if (eVolver) throw eVolver;
+                            Avisos.avisar(`${e.email} vuelve a recibir los informes.`);
+                            if (encargadoAlumno && encargadoAlumno.id === studentId) renderEncargados(studentId, nombreAlumno);
+                        },
+                    });
                 });
 
                 const partes = [quien, frec, hora];

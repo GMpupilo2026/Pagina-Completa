@@ -192,6 +192,10 @@ AYUDA_GUIA = {
     "coordinacion.html": "coordinacion", "formularios.html": "coordinacion",
     "cobros.html": "coordinacion", "reportes.html": "coordinacion",
     "admin.html": "administracion", "inscripciones.html": "administracion",
+    "accesos.html": "administracion",
+    "asistencia.html": "clase-en-vivo", "subgrupos.html": "tareas",
+    "informe-mensual.html": "supervision", "supervision.html": "supervision",
+    "academias.html": "supervision", "tablero-academias.html": "supervision",
 }
 AYUDA_CARPETAS = {"entreno/": "entrenamiento", "cursos/academia/": "cursos"}
 AYUDA_INICIO = "<!-- ayuda: inicio -->"

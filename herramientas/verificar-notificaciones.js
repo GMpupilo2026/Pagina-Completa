@@ -224,10 +224,24 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
     await p.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso() }));
 
     // Se apunta cuándo se pide el permiso, que es lo que más se hace mal.
+    /* Y el permiso del navegador también es de mentira, como el servicio de
+       push de abajo. En Linux, Chromium solo lo concede si hay un servicio de
+       notificaciones del sistema detrás: el runner del CI lo tiene y la
+       máquina de las sesiones no, y ahí `Notification.permission` salía
+       "denied" aunque se le diera con grantPermissions(). La página hacía lo
+       correcto —decía «bloqueados»— y la prueba fallaba sin nada roto. Lo que
+       se comprueba es la PÁGINA: que no pida el permiso al cargar, que lo
+       pida una vez al apretar, y qué hace después. Arranca en "default",
+       como un aparato que nunca contestó, y dice que sí al pedírselo. */
     await p.addInitScript(() => {
       window.__pedidos = 0;
-      const real = Notification.requestPermission.bind(Notification);
-      Notification.requestPermission = function () { window.__pedidos += 1; return real(); };
+      let permiso = "default";
+      Object.defineProperty(Notification, "permission", { get: () => permiso, configurable: true });
+      Notification.requestPermission = function () {
+        window.__pedidos += 1;
+        permiso = "granted";
+        return Promise.resolve(permiso);
+      };
     });
 
     // Un servicio de push de mentira. Chromium sin cabeza no tiene ninguno

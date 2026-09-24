@@ -57,4 +57,14 @@ async function instalarAvisos(page) {
   await page.addInitScript(contestarAvisos);
 }
 
-module.exports = { instalarAvisos, contestarAvisos };
+/* El texto de los mensajes que se VEN ahora mismo (sin el ✕ ni «Deshacer»),
+   uno por renglón. Se mide con checkVisibility(): un mensaje que está en el
+   DOM pero no se ve no cuenta. No hace falta instalar nada antes. */
+async function mensajesVisibles(page) {
+  return page.evaluate(() => [...document.querySelectorAll(".avisos-mensaje")]
+    .filter((m) => m.checkVisibility())
+    .map((m) => m.querySelector("p").textContent.trim())
+    .join("\n"));
+}
+
+module.exports = { instalarAvisos, contestarAvisos, mensajesVisibles };

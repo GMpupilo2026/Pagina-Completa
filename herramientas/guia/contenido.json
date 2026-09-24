@@ -224,6 +224,36 @@
           "ojo": [
             "El chat es continuo: con dos profesores, los dos ven y escriben en el mismo hilo con ese alumno."
           ]
+        },
+        {
+          "titulo": "La clase del aula también cuenta",
+          "donde": "clases.html › Herramientas › Asistencia presencial",
+          "intro": "La clase que das en el aula se registra en una ficha, y desde ahí entra sola a Informes, al informe que llega a la casa y a tu informe mensual.",
+          "pasos": [
+            "«Una clase nueva»: el día, la hora de inicio, cuánto duró y qué se hizo.",
+            "Marca a quiénes llegaron. A quien llegó tarde, escríbele a su derecha los minutos: en blanco es a tiempo.",
+            "«Guardar la ficha». Se puede corregir después, y lo corregido queda exactamente como lo dejas."
+          ],
+          "ojo": [
+            "Sin ficha, para la plataforma esa clase no existió: el alumno que solo va presencial sale como si no entrenara nunca.",
+            "Una ficha del futuro o de más de 600 minutos se rechaza: es un error de dedo que le metería días de «tiempo en clase» a cada asistente.",
+            "Desmarcar a quien no llegó le quita la asistencia y también los minutos."
+          ]
+        },
+        {
+          "titulo": "Tu horario: la ficha que se llena sola",
+          "donde": "asistencia.html › Tu horario",
+          "intro": "Si pones tu horario («martes 15:00, 90 min, grupo 7B»), la ficha llega ya llena y la que falta se te pide.",
+          "pasos": [
+            "«➕ Agregar una clase a tu horario»: día, hora, duración y con quiénes (un grupo o uno de tus subgrupos).",
+            "«Pasar lista» llena la ficha con la última vez que tocaba esa clase y marca a todos los del grupo: desmarca a quien no llegó.",
+            "Si una clase del aula terminó hace más de una hora y no tiene ficha, te llega un aviso que abre la ficha de ESE día."
+          ],
+          "ojo": [
+            "Los alumnos nacen marcados a propósito: lo peligroso es guardar sin mirar. Revisa antes de «Guardar la ficha».",
+            "Quitar una clase del horario no borra su historia: los meses pasados siguen contando las clases que sí estaban programadas.",
+            "Tu informe mensual dice «Clases de su horario dadas: 7 de 8». Sin horario, dice «Sin horario»."
+          ]
         }
       ]
     },
@@ -348,6 +378,21 @@
           "ojo": [
             "Lo mismo aparece en Informes, dentro del bloque «📋 Tareas y exámenes» de cada alumno, y en el correo que le llega a la casa.",
             "Marcar un renglón de tres no da la tarea por hecha."
+          ]
+        },
+        {
+          "titulo": "Subgrupos: tus propias listas",
+          "donde": "clases.html › Herramientas › Mis subgrupos",
+          "intro": "Un subgrupo es una lista tuya («los del martes», «los que van al torneo») para no marcar alumno por alumno cada vez.",
+          "pasos": [
+            "Escribe el nombre y «Crear».",
+            "Marca quiénes están y «Guardar quiénes están».",
+            "En Tareas y en Exámenes, elegir el subgrupo marca a los suyos y desmarca al resto. En Informes aparece en el mismo selector que los grupos."
+          ],
+          "ojo": [
+            "Un subgrupo NO da permisos: solo puede tener a alumnos que ya son tuyos. Para que un colega vea a un grupo de alumnos hace falta un equipo, que arma administración o coordinación.",
+            "Si a alguien del subgrupo lo reasignaron, ya no se marca: la pantalla dice cuántos quedaron marcados de verdad.",
+            "Quien coordina te los puede dejar armados, y siguen siendo tuyos."
           ]
         }
       ]
@@ -1036,6 +1081,72 @@
       ]
     },
     {
+      "id": "supervision",
+      "titulo": "Supervisión y academias",
+      "resumen": "Cada profesor le cuenta su mes a su supervisión, y el negocio se lee por academia.",
+      "laminas": [
+        {
+          "titulo": "El informe mensual del profesor",
+          "donde": "clases.html › Herramientas › Informe mensual",
+          "intro": "Los números del mes salen solos: clases en línea y presenciales, tareas, exámenes, alumnos que entrenaron. Tú escribes lo que los números no dicen.",
+          "pasos": [
+            "Elige el mes y revisa «Tus números del mes» y «El detalle del mes» (clase por clase y estudiante por estudiante).",
+            "Escribe el resumen, los logros, las dificultades y el plan para el mes que viene. «Guardar borrador» lo guarda sin mandarlo.",
+            "«Enviar a supervisión» pide un segundo toque en el mismo botón. Arriba dice a quién le llega."
+          ],
+          "ojo": [
+            "Un informe enviado ya no se cambia, y los números que viajan son los del momento de enviarlo.",
+            "Un borrador no lo ve nadie más que tú.",
+            "Si tienes supervisión y no lo mandas, los días 1 y 3 del mes siguiente te llega un recordatorio, y el día 5 tu supervisión recibe la lista de los que faltan."
+          ]
+        },
+        {
+          "titulo": "Leer los informes de tus profesores",
+          "donde": "clases.html › Supervisión de profesores",
+          "intro": "Una fila por profesor con lo que hizo en el mes y el estado de su informe, escrito: «⏳ Sin enviar», «📨 sin leer» o «✅ leído».",
+          "pasos": [
+            "Elige el mes.",
+            "«Leer su informe» abre lo que escribió y los números que mandó.",
+            "«Guardar comentario» le llega al profesor como aviso; si no hay nada que decir, «Marcar como leído»."
+          ],
+          "ojo": [
+            "Lo que el profesor no ha enviado se lee con los números de hoy; lo enviado, con la foto que mandó.",
+            "El detalle por estudiante solo trae a los alumnos que supervisas, y dice cuántos quedan fuera.",
+            "Quien administra ve a todos los profesores."
+          ]
+        },
+        {
+          "titulo": "Academias",
+          "donde": "clases.html › Academias",
+          "intro": "Cada academia tiene un solo supervisor, su gente y su nombre en los correos que les llegan a las familias.",
+          "pasos": [
+            "«Crear una academia desde un grupo»: eliges el grupo y ves, ANTES de crearla, quién va a entrar. El botón dice cuántas personas.",
+            "Dentro de la academia: sus datos (WhatsApp y el correo donde llegan las respuestas), su marca (logo y color) y quién está.",
+            "«Qué puede hacer cada coordinador»: el supervisor apaga lo que un coordinador de su academia no debe hacer."
+          ],
+          "ojo": [
+            "Un profesor o un alumno pueden estar en varias academias. El supervisor alcanza a los miembros de la suya, no a todos los alumnos de sus profesores.",
+            "Un alumno nuevo entra solo a la academia de su profesor si ese profesor está en una sola.",
+            "Crear, borrar y elegir el supervisor es de administración. El supervisor cuida los datos y la gente de su academia."
+          ]
+        },
+        {
+          "titulo": "El tablero por academia",
+          "donde": "clases.html › Tablero por academia",
+          "intro": "Una fila por academia con las cifras del mes: clases y horas, cuántas del horario se dieron, alumnos que entrenaron, informes enviados y cobros pendientes.",
+          "pasos": [
+            "Elige el mes.",
+            "Lo que pide actuar va escrito en la celda: «⚠ 2 sin enviar», «⚠ 1 sin dar», «⚠ 2 vencidos»."
+          ],
+          "ojo": [
+            "Quien está en dos academias cuenta en las dos, por eso la última fila se llama «Suma de las filas» y puede dar más que la plataforma entera.",
+            "Los cobros van por moneda y son los pendientes de hoy, no los del mes.",
+            "El supervisor ve solo su academia, y sin el gasto de IA."
+          ]
+        }
+      ]
+    },
+    {
       "id": "administracion",
       "titulo": "Administración",
       "resumen": "Cuentas, profesores, equipos y cupos. Es la mitad que decide quién ve a quién.",
@@ -1124,6 +1235,21 @@
           "ojo": [
             "Son cédulas, fechas de nacimiento y teléfonos de personas menores de edad: esa tabla no la puede leer nadie desde el navegador, ni con sesión.",
             "Quién puede abrirla lo decide la misma regla que los cobros: coordinación o administración."
+          ]
+        },
+        {
+          "titulo": "Accesos y cupos",
+          "donde": "clases.html › Cobros y accesos › Accesos y cupos",
+          "intro": "El acceso de un alumno a la Academia es un cupo de un paquete. Una cuenta individual es un paquete de 1 cupo.",
+          "pasos": [
+            "«Nuevo paquete»: nombre, titular (quién reparte los cupos: una academia o un profesor), cupos, fechas y precio.",
+            "En cada paquete se suman alumnos, de a uno o un grupo entero.",
+            "«¿Se exige el acceso?» es el interruptor: con él apagado nadie queda fuera, así que los paquetes se pueden armar antes."
+          ],
+          "ojo": [
+            "Encender el interruptor pide dos toques, y el botón dice cuántos alumnos quedarían fuera.",
+            "Lo que no cabe en los cupos lo rechaza la base, con los dos números.",
+            "El supervisor de la academia titular reparte sus cupos entre los miembros de su academia; no cambia los cupos ni las fechas."
           ]
         }
       ]

@@ -689,7 +689,8 @@ de arbitraje).
 - `encargados` (alumno, nombre, correo, frecuencia, activo, último envío). La
   persona encargada **no tiene cuenta en el sitio ni la necesita**: solo un
   correo. Los maneja cualquiera de los profesores del alumno, y quien
-  administra.
+  administra. Quitar uno que apuntaste tú no pregunta: ofrece «Deshacer» (ver
+  «Los avisos son de la página, no del navegador»).
 - **La frecuencia es las dos cosas a la vez**: cada cuánto se manda Y qué
   periodo cubre. El informe semanal cuenta la semana, no todo lo que lleva
   hecho. Por eso `informe_de_alumno(alumno, desde, hasta)` es una función
