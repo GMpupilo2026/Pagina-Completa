@@ -13,6 +13,30 @@ las cabeceras de seguridad. Se edita el HTML/JS directamente; lo único que se
   repo. El título del squash lleva el `(#NN)` del PR, como el resto del
   historial.
 - Si el PR de la rama ya se mergeó, la siguiente tarea arranca de `main` al día.
+- **No se mergea con el CI en rojo.** Mergear sin preguntar solo es seguro
+  porque «Verificar» (abajo) corre todas las comprobaciones antes.
+
+## El CI: todas las comprobaciones, en cada PR
+
+`.github/workflows/verificar.yml` corre `herramientas/verificar-todo.js` en
+cada PR contra `main`: un trabajo sin navegador y cuatro tandas en paralelo con
+navegador. Antes los más de setenta verificadores corrían solo si alguien se
+acordaba del que tocaba, y un verificador que no corre no da ningún error:
+`verificar-alumno-sin-correo.js` estuvo roto en `main` sin que nadie lo viera.
+
+- **`package.json` y `package-lock.json` se commitean** y fijan las versiones
+  (chess.js 0.10.3, playwright, tailwindcss 3, supabase-js igual al de
+  `js/vendor/`). `npm install` las deja todas; ya no hace falta instalarlas de a
+  una como dicen las cabeceras viejas. `.assetsignore` los saca del despliegue.
+- **La lista de verificadores no está escrita en ningún lado**: el corredor lee
+  `herramientas/verificar-*.{js,py}`, y decide si necesita navegador por el
+  `require("playwright")`. Un verificador nuevo entra al CI solo. Si necesita
+  correr algo ANTES (un generador) o encadenar otro DESPUÉS, va en `ANTES` o
+  `DESPUES` del corredor.
+- En la máquina: `npm run verificar` (todos; levanta el sitio en el 8777 si no
+  está), `npm run verificar:rapido` (sin navegador), o
+  `node herramientas/verificar-todo.js panel tareas` para unos pocos. Los de
+  Python necesitan `pip install pypdf cryptography python-docx`.
 
 ## Los servidores MCP van en `.mcp.json`, no en la máquina
 

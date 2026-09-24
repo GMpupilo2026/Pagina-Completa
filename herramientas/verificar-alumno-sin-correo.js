@@ -331,7 +331,11 @@ window.SUPABASE_ANON_KEY = "anon-de-mentira";
   window.sb = {
     auth: { getSession: () => Promise.resolve({ data: { session: { user: { id: ${JSON.stringify(usuarioId)} }, access_token: "t" } } }) },
     from: (t) => constructor(t, DATOS.tablas[t] !== undefined ? DATOS.tablas[t] : []),
-    rpc: (n) => constructor("rpc:" + n, DATOS.rpc[n] !== undefined ? DATOS.rpc[n] : []),
+    /* Quien coordina sin academia recibe TODAS sus funciones. Con el [] de
+       siempre, la página lo lee como «le quitaron todas» y no pinta nada: era
+       el doble el que estaba incompleto, no la página (ver CLAUDE.md). */
+    rpc: (n) => constructor("rpc:" + n, DATOS.rpc[n] !== undefined ? DATOS.rpc[n]
+      : n === "mis_funciones_coordinacion" ? ["formularios","altas","solicitudes","cuentas","acceso","roles","cobros","equipos","subgrupos"] : []),
     channel: () => ({ on() { return this; }, subscribe() { return this; } }),
   };
 })();

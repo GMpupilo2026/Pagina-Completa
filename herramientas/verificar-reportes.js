@@ -484,7 +484,8 @@ async function probarTranscripcion(navegador) {
   await navegador.close();
 
   // Los archivos se revisan por fuera, con pypdf y zipfile: ver
-  // herramientas/verificar-reportes.py, que este script llama al terminar.
+  // herramientas/verificar-reportes.py. Este script NO lo llama: lo encadena
+  // verificar-todo.js leyendo la carpeta de la línea de abajo.
   fs.writeFileSync(path.join(carpeta, "donde.txt"), carpeta);
   console.log("\nLos dos archivos quedaron en: " + carpeta);
   console.log(fallos ? "\n" + fallos + " fallo(s)" : "\nLa página, bien.");

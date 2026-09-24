@@ -1,0 +1,64 @@
+# Corre las comprobaciones de herramientas/ en cada PR contra main.
+#
+# Son más de setenta, y hasta ahora solo corrían si alguien se acordaba de
+# correr la que tocaba. Un verificador que no corre no da ningún error: la
+# página rota se mergea igual. Ver «El CI» en CLAUDE.md.
+name: Verificar
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verificar-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  rapido:
+    name: Sin navegador
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: npm ci
+      - run: pip install pypdf cryptography python-docx
+      - run: node herramientas/verificar-todo.js --sin-navegador --paralelo=2
+
+  navegador:
+    name: Con navegador (${{ matrix.parte }}/4)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        parte: [1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: npm ci
+      - run: pip install pypdf cryptography python-docx
+      - run: npx playwright install --with-deps chromium
+      # Muchos verificadores traen de respaldo la ruta del Chromium de las
+      # sesiones de Claude Code (/opt/pw-browsers/…), que acá no existe; todos
+      # leen CHROME_PATH primero.
+      - run: echo "CHROME_PATH=$(node -e 'console.log(require("playwright").chromium.executablePath())')" >> "$GITHUB_ENV"
+      - run: node herramientas/verificar-todo.js --solo-navegador --parte=${{ matrix.parte }}/4
