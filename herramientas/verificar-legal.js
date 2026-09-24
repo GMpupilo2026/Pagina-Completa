@@ -110,22 +110,23 @@ function enlacesEnTodoElSitio() {
   }
 }
 
-function sbFalso(respuestas) {
+function sbFalso(respuestas, sesion) {
   return `window.__rpc = [];
 window.sb = {
   rpc: (n, a) => { window.__rpc.push({ n: n, a: a }); return Promise.resolve({ data: (${JSON.stringify(respuestas)})[n], error: null }); },
-  auth: { getSession: () => Promise.resolve({ data: { session: null } }), onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }) },
+  auth: { getSession: () => Promise.resolve({ data: { session: ${JSON.stringify(sesion || null)} } }), onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }) },
 };`;
 }
 
-async function abrir(ctx, ruta, respuestas) {
+async function abrir(ctx, ruta, respuestas, sesion, antes) {
   const page = await ctx.newPage();
+  if (antes) await page.addInitScript(antes);
   const errores = [];
   page.on("pageerror", (e) => errores.push(String(e)));
   await page.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await page.route("**/fonts.gstatic.com/**", (r) => r.abort());
   await page.route("**/js/vendor/supabase.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
-  await page.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: sbFalso(respuestas) }));
+  await page.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: sbFalso(respuestas, sesion) }));
   await page.goto(BASE + ruta, { waitUntil: "networkidle" });
   return { page, errores };
 }
@@ -154,10 +155,35 @@ async function unirse(ctx) {
 
 async function elegirPlan(ctx) {
   console.log("\n=== elegir-plan.html ===");
-  const { page, errores } = await abrir(ctx, "/elegir-plan.html?s=abc", {
-    solicitud_para_elegir_plan: [{ estado: "contactada", nombre: "Ana Rojas", plan_elegido: null }],
+  // Sin sesión se ven los planes, y nada más: elegir va con la cuenta del
+  // correo de la solicitud (la base lo exige; ver elegir_plan_con_sesion).
+  {
+    const { page, errores } = await abrir(ctx, "/elegir-plan.html?s=abc", {
+      solicitud_para_elegir_plan: [{ estado: "rechazada", nombre: "Ana Rojas", plan_elegido: null }],
+    });
+    await page.waitForSelector("#elegir:not(.hidden)");
+    igual("sin sesión se ven los tres planes, sin botón de elegir ni casilla",
+      await page.evaluate(() => [
+        document.querySelectorAll("#elegir h2").length,
+        [...document.querySelectorAll(".plan-btn")].filter((b) => b.checkVisibility()).length,
+        document.getElementById("terminos-caja").checkVisibility()]), [3, 0, false]);
+    igual("y ofrece iniciar sesión (volviendo a esta página) y escribir por WhatsApp",
+      await page.evaluate(() => [
+        document.getElementById("solo-ver-login").checkVisibility() && document.getElementById("solo-ver-login").getAttribute("href"),
+        !![...document.querySelectorAll("#solo-ver a")].find((a) => a.checkVisibility() && /wa\.me\/506/.test(a.href))]),
+      ["login.html?next=elegir-plan.html", true]);
+    igual("guarda la solicitud para no perderla en el login", await page.evaluate(() => sessionStorage.getItem("elegir_plan_solicitud")), "abc");
+    igual("sin sesión no le pregunta nada a la base", await page.evaluate(() => window.__rpc.length), 0);
+    igual("sin errores en la página", errores, []);
+    await page.close();
+  }
+  // Con sesión, de vuelta del login: la dirección ya no trae ?s=, la
+  // solicitud sale de lo que la pestaña guardó antes de ir al login.
+  const { page, errores } = await abrir(ctx, "/elegir-plan.html", {
+    solicitud_para_elegir_plan: [{ estado: "rechazada", nombre: "Ana Rojas", plan_elegido: null }],
     elegir_plan: { ok: true },
-  });
+  }, { access_token: "x", user: { id: "u-ana", email: "ana@x.cr" } },
+  () => sessionStorage.setItem("elegir_plan_solicitud", "abc"));
   await page.waitForSelector("#elegir:not(.hidden)");
   igual("antes de los botones dice la política de reembolso",
     await page.evaluate(() => /ocho días hábiles/.test(document.getElementById("elegir").textContent)), true);
@@ -172,6 +198,8 @@ async function elegirPlan(ctx) {
   igual("aceptados, se guarda el plan elegido",
     await page.evaluate(() => window.__rpc.filter((r) => r.n === "elegir_plan").map((r) => [r.a.p_plan, r.a.p_version_terminos, r.a.p_version_privacidad])),
     [["grupal", JSON.parse(VERSIONES).TERMINOS, JSON.parse(VERSIONES).PRIVACIDAD]]);
+  igual("con la solicitud que traía el enlace, aunque el login la haya dejado fuera de la dirección",
+    await page.evaluate(() => window.__rpc.filter((r) => r.n === "elegir_plan").map((r) => r.a.p_id)), ["abc"]);
   igual("sin errores en la página", errores, []);
   await page.close();
 }

@@ -1418,15 +1418,20 @@ cada coordinación, y `es_del_equipo_docente(<uuid>)` decía quién da clase. La
 migración `quitar_a_anon_las_funciones_internas` las revoca de `public, anon` y
 se las devuelve a `authenticated` y `service_role`. **Las que usa una política
 con el rol `public` NO se tocaron** (`bajo_mi_coordinacion`,
-`es_del_equipo_docente`, `equipo_docente`, `soy_dueno_del_plan`,
+`es_del_equipo_docente`, `soy_dueno_del_plan`,
 `plan_compartido_conmigo`, `estoy_inscrito_en`): una política `to public` se
 evalúa también para `anon`, y sin el execute la consulta de una página pública
 tronaría con un error de permisos en vez de dar «0 filas». Esas se arreglan
 moviéndolas fuera de `public` o reescribiendo la política `to authenticated`,
-que es un cambio aparte. Las que quedan a propósito para `anon` son las de las
-páginas sin sesión: `formulario_publico`, `responder_formulario`,
-`formulario_acepta_adjuntos`, `registrar_arbitraje_publico`,
-`solicitar_academia`, `solicitud_para_elegir_plan` y `elegir_plan`.
+que es un cambio aparte. (`equipo_docente()` sí se cerró, en
+`equipo_docente_solo_con_sesion`: ninguna política la usa —la de
+`plan_compartidos` usa `es_del_equipo_docente()`, que se parece en el nombre—,
+solo `js/plan-clase.js`, en páginas con sesión.) Las que quedan a propósito para
+`anon` son las de las páginas sin sesión: `formulario_publico`,
+`responder_formulario`, `formulario_acepta_adjuntos`,
+`registrar_arbitraje_publico` y `solicitar_academia`.
+`solicitud_para_elegir_plan` y `elegir_plan` ya no: ver «Elegir un plan pide
+sesión» en `cuentas-y-formularios.md`.
 
 ### Lo que queda pendiente y NO se puede hacer desde acá
 

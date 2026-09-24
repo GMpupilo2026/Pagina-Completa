@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20260924214817
+# al-dia-con: 20260924220248
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -803,7 +803,7 @@ funcion  devolver_invitacion(p_profesor uuid)  definer  anon=false  auth=false
 funcion  disparar_informes_encargados()  definer  anon=false  auth=false
 funcion  disparar_recordatorios_cobro()  definer  anon=false  auth=false
 funcion  disparar_recordatorios_programados()  definer  anon=false  auth=false
-funcion  elegir_plan(p_id uuid, p_plan text, p_version_terminos text, p_version_privacidad text)  definer  anon=true  auth=true
+funcion  elegir_plan(p_id uuid, p_plan text, p_version_terminos text, p_version_privacidad text)  definer  anon=false  auth=true
 funcion  equipo_bajo_mi_coordinacion(p_equipo uuid)  definer  anon=false  auth=true
 funcion  equipo_docente()  definer  anon=false  auth=true
 funcion  equipo_lo_cree_yo(p_equipo uuid)  definer  anon=false  auth=true
@@ -919,7 +919,7 @@ funcion  set_profesores_del_coordinador(p_coordinador uuid, p_profesores uuid[])
 funcion  set_student_elo(p_student uuid, p_elo integer, p_tipo text)  definer  anon=false  auth=true
 funcion  sincronizar_profesor_principal()  definer  anon=false  auth=false
 funcion  solicitar_academia(p_nombre text, p_email text, p_telefono text, p_edad_nivel text, p_mensaje text, p_version_privacidad text)  definer  anon=true  auth=true
-funcion  solicitud_para_elegir_plan(p_id uuid)  definer  anon=true  auth=true
+funcion  solicitud_para_elegir_plan(p_id uuid)  definer  anon=false  auth=true
 funcion  soy_admin()  definer  anon=true  auth=true
 funcion  soy_coordinador()  definer  anon=false  auth=true
 funcion  soy_de_la_academia(p_academia uuid)  definer  anon=true  auth=true
