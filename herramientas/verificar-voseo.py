@@ -64,7 +64,7 @@ IMPERATIVOS = {
 }
 
 PRESENTE = {
-    "aceptás": "aceptas", "adivinás": "adivinas", "autoimponés": "autoimpones",
+    "aceptás": "aceptas", "transformás": "transformas", "adivinás": "adivinas", "autoimponés": "autoimpones",
     "comprendés": "comprendes", "creás": "creas", "defendés": "defiendes",
     "dejás": "dejas", "dudás": "dudas", "ganás": "ganas", "jugás": "juegas",
     "llegás": "llegas", "navegás": "navegas", "pensás": "piensas",
@@ -233,4 +233,7 @@ def main():
     print("\nSi alguna no es voseo (un nombre propio, un futuro), agrégala a BLANCA.")
     return 1
 
-sys.exit(main())
+# Solo al correrlo directo: herramientas/novedades-generar.js lo importa para
+# usar arreglar() sobre los títulos, sin barrer el sitio.
+if __name__ == "__main__":
+    sys.exit(main())

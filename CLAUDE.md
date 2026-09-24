@@ -9320,6 +9320,31 @@ los subgrupos —con el dueño de cada subgrupo escrito—, que **un grupo que n
 cabe en el tope no se mande** y se diga con su número, y que el que sí cabe se
 sume al que ya estaba en vez de reemplazarlo.
 
+### «Actualizaciones»: lo que se le ha hecho al sitio, sin escribirlo a mano
+
+`novedades.html` (ficha «🗂️ Actualizaciones» en el grupo «La plataforma» de
+`admin.html`, solo `is_admin`) es la lista de todos los cambios que entraron a
+`main` desde el primer commit, agrupados por día, con buscador sin tildes y el
+número de cada PR enlazado.
+
+- **Sale de la historia de git, no de una bitácora aparte.** Una bitácora
+  escrita a mano se queda atrás a la primera tanda que se olvide de anotarse, y
+  nadie se entera. La arma `node herramientas/novedades-generar.js` en
+  `data/novedades.json` (con `--first-parent` y la fecha en que el cambio
+  ENTRÓ a `main`); en una copia superficial pide antes `git fetch --unshallow
+  origin main`. **Al terminar una tanda, volver a correrlo** — el propio PR
+  que lo corre no sale todavía, sale en el siguiente.
+- **Solo títulos, nunca el cuerpo.** El archivo queda servido como cualquier
+  otro y los cuerpos de los PR explican el modelo de permisos por dentro, que
+  es justo lo que `.assetsignore` saca del despliegue.
+- Los títulos se pasan por el mismo corrector de `verificar-voseo.py` (que por
+  eso ahora se puede importar sin que barra el sitio): se pintan en el sitio,
+  y alguno viejo traía voseo. La historia de git no se toca.
+- `node herramientas/verificar-novedades.js` comprueba el archivo (sin hashes
+  repetidos, sin «Merge pull request», en orden) y la página: un grupo por día,
+  el título ajeno literal, el buscador sin tildes y que a quien no administra
+  no se le pinte.
+
 ## Las inscripciones a torneos en línea
 
 `inscripciones.html` muestra lo que llegó por `inscripcion.html`, el formulario
