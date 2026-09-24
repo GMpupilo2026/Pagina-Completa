@@ -525,6 +525,14 @@ donde se comparte esto, y sin `og:image` el enlace sale pelado.
   herramientas/og-imagen.js`, con playwright). Va en JPEG y no en PNG porque es
   un degradado: el mismo dibujo pesa 490 KB en PNG y 91 en JPEG, y WhatsApp
   descarta las previsualizaciones pesadas.
+- `img/redes/portada-facebook.png` (1640×624) es la portada de la página de
+  Facebook. **Tampoco se edita a mano**: la genera
+  `herramientas/portada-facebook.js`, con la misma paleta y el logo. Facebook la
+  muestra a 820×312 en la computadora y en el celular la recorta a 16:9 por el
+  centro (se pierden unos 270 px de cada costado), así que el script **falla si
+  algo del contenido se sale de esa franja central**. Va en PNG porque Facebook
+  recomprime lo que se sube y un JPEG recomprimido ensucia las letras. No la
+  pide ninguna página, así que `img/redes/` está en `.assetsignore`.
 - **Las páginas que piden sesión llevan `noindex`** y no llevan `canonical`: no
   tiene sentido indexar una pantalla de acceso, y así no compiten con las
   públicas. Lo mismo `cursos/academia/`, que es el espejo del catálogo dentro de
