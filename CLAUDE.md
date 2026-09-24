@@ -207,5 +207,5 @@ el archivo de cada tema dice cuál corresponde a cada pieza.
 | [`paneles`](docs/decisiones/paneles.md) | Panel de la Academia (`clases.html`), primeros pasos, burbuja de conectados, `admin.html`, inscripciones a torneos | panel, camino-entrenador, plan-recursos, burbuja, admin |
 | [`tableros-y-apariencia`](docs/decisiones/tableros-y-apariencia.md) | Coordenadas, colores de casilla, el tablero elegido en todo el sitio, tema de la plataforma, contraste, arrastre táctil | tablero-preferido, temas-plataforma, arrastre-tactil, css |
 | [`accesibilidad`](docs/decisiones/accesibilidad.md) | Tableros con teclado y lector de pantalla (Entreno y Juegos), cuadro de comandos, Modo Adaptado | entreno-accesible, juegos-accesible, cuadro-comandos |
-| [`legal`](docs/decisiones/legal.md) | Política de privacidad y términos (Ley 8968, Ley 7472), los enlaces en todos los pies, el consentimiento antes de mandar datos, lo que falta | legal, formularios |
+| [`legal`](docs/decisiones/legal.md) | Política de privacidad y términos (Ley 8968, Ley 7472), los enlaces en todos los pies, el consentimiento antes de mandar datos y guardado en la base | legal, formularios |
 | [`idioma`](docs/decisiones/idioma.md) | Tuteo, vocabulario, la tabla de `verificar-voseo.py` | voseo |
