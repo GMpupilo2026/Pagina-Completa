@@ -39,6 +39,7 @@ sí llevan las suyas.
 
     python3 herramientas/academia-cabecera.py
 """
+import importlib.util
 import json
 import os
 import re
@@ -140,11 +141,21 @@ ATRIBUCION_EXTRA = {
 }
 
 
+# Los enlaces a la Política de privacidad y a los Términos los pone
+# legal-pie.py en todos los pies del sitio; como este script reescribe el pie
+# entero, se los pide a él en vez de escribirlos otra vez acá.
+_spec_legal = importlib.util.spec_from_file_location(
+    "legal_pie", os.path.join(os.path.dirname(os.path.abspath(__file__)), "legal-pie.py"))
+_legal = importlib.util.module_from_spec(_spec_legal)
+_spec_legal.loader.exec_module(_legal)
+
+
 def pie(ruta):
     extra = ATRIBUCION_EXTRA.get(ruta, "")
     return ('<footer class="bg-brand-900 text-brand-300 py-8">'
             '<div class="max-w-7xl mx-auto px-4 text-center text-sm">'
             f'<p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.{extra}</p>'
+            f'{_legal.enlaces(ruta)}'
             '</div></footer>')
 
 

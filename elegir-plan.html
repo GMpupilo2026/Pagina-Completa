@@ -63,6 +63,21 @@
                 <h1 class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white mb-1 text-center">Elige tu plan, <span id="saludo-nombre"></span></h1>
                 <p class="text-brand-500 dark:text-brand-300 text-sm text-center mb-8">Elige un plan y te contactamos para coordinar el pago y arrancar. Todavía no se cobra nada acá.</p>
 
+                <!-- Elegir un plan es contratar: los términos (con la política de
+                     cancelación) se aceptan acá, antes del botón, y no después. -->
+                <div class="max-w-2xl mx-auto mb-8 bg-white dark:bg-brand-900 rounded-2xl shadow p-5 text-sm text-brand-600 dark:text-brand-300">
+                    <p>Los precios están en colones y son finales. Puedes cancelar cuando quieras, y <strong>si lo pides dentro de los ocho días hábiles siguientes a tu pago, te devolvemos el monto completo</strong>.</p>
+                    <div class="flex items-start gap-3 mt-4">
+                        <input type="checkbox" id="acepto-terminos" class="mt-1 h-4 w-4 shrink-0 rounded border-brand-300 text-accent-500 focus:ring-accent-400">
+                        <label for="acepto-terminos">
+                            Leí y acepto los
+                            <a href="terminos.html" target="_blank" rel="noopener" class="underline font-semibold hover:text-accent-600">Términos y condiciones</a>,
+                            incluida la política de cancelación y reembolsos, y la
+                            <a href="privacidad.html" target="_blank" rel="noopener" class="underline font-semibold hover:text-accent-600">Política de privacidad</a>.
+                        </label>
+                    </div>
+                </div>
+
                 <div class="grid md:grid-cols-3 gap-4 mb-6">
                     <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-lg p-6 flex flex-col">
                         <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Acceso a la plataforma</h2>
@@ -84,7 +99,7 @@
                     </div>
                 </div>
 
-                <p id="elegir-error" class="text-sm text-red-600 dark:text-red-400 text-center hidden"></p>
+                <p id="elegir-error" role="alert" class="text-sm text-red-600 dark:text-red-400 text-center hidden"></p>
             </div>
         </div>
     </main>
@@ -146,7 +161,15 @@
 
         document.querySelectorAll(".plan-btn").forEach((btn) => {
             btn.addEventListener("click", async () => {
-                document.getElementById("elegir-error").classList.add("hidden");
+                const errorEl = document.getElementById("elegir-error");
+                errorEl.classList.add("hidden");
+                const acepto = document.getElementById("acepto-terminos");
+                if (!acepto.checked) {
+                    errorEl.textContent = "Antes de elegir, marca la casilla de los Términos y condiciones.";
+                    errorEl.classList.remove("hidden");
+                    acepto.focus();
+                    return;
+                }
                 document.querySelectorAll(".plan-btn").forEach((b) => (b.disabled = true));
                 btn.textContent = "Guardando…";
 

@@ -115,6 +115,9 @@ y hace otra cosa. Estas reglas existen por eso.
   se manda la UNIÓN con lo que ya estaba. Mandar solo lo nuevo vacía el resto.
 - Lo que no puede pasar dos veces lo garantiza un índice único, no un `if`.
 - Horas y días se cuentan en hora de Costa Rica (`America/Costa_Rica`).
+- Un formulario que pide datos personales lleva su casilla de consentimiento
+  con enlace a `privacidad.html`, y un servicio nuevo que reciba datos va en la
+  lista de proveedores de esa página (ver «Las páginas legales»).
 - Todo texto que escribe una persona (nombres, notas, mensajes) va por
   `textContent` o escapado (`escVis`), también dentro de atributos.
 - **Nunca `alert()`, `confirm()` ni `prompt()`**: `js/avisos.js`
@@ -204,4 +207,5 @@ el archivo de cada tema dice cuál corresponde a cada pieza.
 | [`paneles`](docs/decisiones/paneles.md) | Panel de la Academia (`clases.html`), primeros pasos, burbuja de conectados, `admin.html`, inscripciones a torneos | panel, camino-entrenador, plan-recursos, burbuja, admin |
 | [`tableros-y-apariencia`](docs/decisiones/tableros-y-apariencia.md) | Coordenadas, colores de casilla, el tablero elegido en todo el sitio, tema de la plataforma, contraste, arrastre táctil | tablero-preferido, temas-plataforma, arrastre-tactil, css |
 | [`accesibilidad`](docs/decisiones/accesibilidad.md) | Tableros con teclado y lector de pantalla (Entreno y Juegos), cuadro de comandos, Modo Adaptado | entreno-accesible, juegos-accesible, cuadro-comandos |
+| [`legal`](docs/decisiones/legal.md) | Política de privacidad y términos (Ley 8968, Ley 7472), los enlaces en todos los pies, el consentimiento antes de mandar datos, lo que falta | legal, formularios |
 | [`idioma`](docs/decisiones/idioma.md) | Tuteo, vocabulario, la tabla de `verificar-voseo.py` | voseo |

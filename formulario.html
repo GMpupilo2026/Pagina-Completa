@@ -108,6 +108,18 @@
                 Los campos con <span class="text-red-600 dark:text-red-400">*</span> son obligatorios.
             </p>
 
+            <!-- Consentimiento (Ley 8968, art. 5). Lo comprueba el submit de abajo,
+                 no el navegador: el formulario es novalidate. -->
+            <div class="flex items-start gap-3 mt-4">
+                <input type="checkbox" id="acepto-datos" class="mt-1 h-4 w-4 shrink-0 rounded border-brand-300 text-accent-500 focus:ring-accent-400">
+                <label for="acepto-datos" class="text-xs text-brand-600 dark:text-brand-300">
+                    Acepto que estos datos se usen para organizar esta actividad, según la
+                    <a href="privacidad.html" target="_blank" rel="noopener" class="underline font-semibold hover:text-accent-600">Política de privacidad</a>.
+                    Si inscribo a una persona menor de edad, soy su madre, padre o persona encargada, o cuento con su autorización.
+                    <span class="text-red-600 dark:text-red-400">*</span>
+                </label>
+            </div>
+
             <div class="flex flex-wrap items-center gap-3 mt-4">
                 <button type="submit" id="enviar" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-6 py-3 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Enviar la inscripción</button>
                 <span id="msg" class="text-sm" role="alert" aria-live="assertive"></span>
@@ -123,7 +135,7 @@
                 <div><h3 class="text-white font-semibold mb-4">Recursos</h3><ul class="space-y-2 text-sm"><li><a href="entreno/diagnostico.html" class="hover:text-accent-400 transition-colors">Diagnóstico de nivel gratis</a></li><li><a href="bot.html" class="hover:text-accent-400 transition-colors">Jugar contra el bot</a></li><li><a href="sobre-oscar.html" class="hover:text-accent-400 transition-colors">Sobre Oscar</a></li><li><a href="inscripcion.html" class="hover:text-accent-400 transition-colors">Torneos en línea</a></li></ul></div>
                 <div><h3 class="text-white font-semibold mb-4">Contacto</h3><ul class="space-y-2 text-sm"><li>📧 info@ajedrezintegral.com</li><li><a href="https://wa.me/50683092291" target="_blank" rel="noopener" class="hover:text-accent-400 transition-colors">💬 +506 8309-2291 (WhatsApp)</a></li><li>📍 Educación a distancia</li></ul></div>
             </div>
-            <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-300"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div>
+            <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-300"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p><!-- legal: inicio --><p class="mt-2"><a href="privacidad.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Política de privacidad</a> <span aria-hidden="true">·</span> <a href="terminos.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Términos y condiciones</a></p><!-- legal: fin --></div>
         </div>
     </footer>
     <script src="js/main.js"></script>
@@ -240,6 +252,13 @@ document.getElementById("formulario").addEventListener("submit", async (e) => {
             return;
         }
         if (!vacio(v) && !esAdjunto(c)) respuestas[c.id] = v;
+    }
+    const acepto = document.getElementById("acepto-datos");
+    if (!acepto.checked) {
+        msg.textContent = "Falta aceptar el uso de los datos (la casilla de la Política de privacidad).";
+        msg.className = "text-sm text-red-600 dark:text-red-400";
+        acepto.focus();
+        return;
     }
 
     btn.disabled = true;

@@ -488,6 +488,15 @@ async function pruebaPublica(browser) {
   await page.selectOption("#campo-3", "En línea");
   await page.check("#campo-4 input[value='Sábado']");
   await page.check("#campo-6");
+  // Con todo lleno pero sin aceptar la Política de privacidad (Ley 8968,
+  // art. 5), tampoco se manda: el consentimiento va antes que los datos.
+  await page.click("#enviar");
+  igual("sin aceptar el uso de los datos, avisa y no manda nada",
+    await page.evaluate(() => document.getElementById("msg").textContent + " · llamadas: " +
+      window.__rpc.filter((r) => r.nombre === "responder_formulario").length + " · foco: " +
+      document.activeElement.id),
+    "Falta aceptar el uso de los datos (la casilla de la Política de privacidad). · llamadas: 0 · foco: acepto-datos");
+  await page.check("#acepto-datos");
   await page.click("#enviar");
   await page.waitForSelector("#listo:not(.hidden)");
   const envio = await page.evaluate(() => window.__rpc.find((r) => r.nombre === "responder_formulario").args);
@@ -520,6 +529,8 @@ async function pruebaImagenes(browser) {
     tablas: {},
   }, null));
   await page.waitForSelector("#formulario:not(.hidden)", { timeout: 20000 });
+  // Estas pruebas son de los adjuntos: el consentimiento ya se probó arriba.
+  await page.check("#acepto-datos");
   igual("la pregunta de imagen es un selector de archivos de imagen",
     await page.evaluate(() => { const i = document.getElementById("campo-1"); return [i.type, i.accept, i.multiple]; }),
     ["file", "image/*", true]);

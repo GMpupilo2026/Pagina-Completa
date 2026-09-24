@@ -62,7 +62,7 @@
                 <div class="bg-brand-50 dark:bg-brand-800 border border-brand-100 dark:border-brand-700 rounded-lg px-4 py-3 mb-6 text-sm text-brand-600 dark:text-brand-300">
                     ¿Quieres saber tu nivel antes de escribirnos?
                     <a href="entreno/diagnostico.html" target="_blank" rel="noopener" class="text-accent-500 hover:text-accent-600 font-semibold underline">Haz el Diagnóstico de nivel gratis</a>
-                    y contanos el resultado en el mensaje.
+                    y cuéntanos el resultado en el mensaje.
                 </div>
 
                 <form id="unirse-form" class="space-y-4">
@@ -91,7 +91,7 @@
                         <label for="mensaje" class="block text-sm font-medium text-brand-600 dark:text-brand-300 mb-1">Mensaje</label>
                         <textarea id="mensaje" rows="3" maxlength="2000"
                             class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500"
-                            placeholder="Contanos por qué quieres unirte, o el resultado de tu diagnóstico"></textarea>
+                            placeholder="Cuéntanos por qué quieres unirte, o el resultado de tu diagnóstico"></textarea>
                     </div>
 
                     <!-- Honeypot: invisible para una persona, un formulario automático sí lo
@@ -101,6 +101,18 @@
                     <div class="sr-only" aria-hidden="true">
                         <label for="sitio-web">No completar este campo</label>
                         <input id="sitio-web" type="text" tabindex="-1" autocomplete="off">
+                    </div>
+
+                    <!-- Consentimiento (Ley 8968, art. 5): el aviso va donde se piden los
+                         datos. El enlace abre en otra pestaña para no perder lo escrito. -->
+                    <div class="flex items-start gap-3">
+                        <input id="acepto-datos" type="checkbox" required
+                            class="mt-1 h-4 w-4 shrink-0 rounded border-brand-300 text-accent-500 focus:ring-accent-500">
+                        <label for="acepto-datos" class="text-xs text-brand-600 dark:text-brand-300">
+                            Acepto que Ajedrez Integral use estos datos para responder mi solicitud y coordinar el inicio, según su
+                            <a href="privacidad.html" target="_blank" rel="noopener" class="underline font-semibold hover:text-accent-600">Política de privacidad</a>.
+                            Si la persona interesada es menor de edad, soy su madre, padre o persona encargada. *
+                        </label>
                     </div>
 
                     <p id="error-msg" class="text-sm text-red-600 dark:text-red-400 hidden"></p>
