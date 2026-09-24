@@ -1,6 +1,18 @@
 {
  "cambios": [
   {
+   "hash": "0b932e1",
+   "fecha": "2026-09-23T23:36:16-06:00",
+   "titulo": "Avisos propios, migas de pan, buscador del panel, selector de Informes y «?» de la guía",
+   "pr": 412
+  },
+  {
+   "hash": "503d5b5",
+   "fecha": "2026-09-23T23:02:59-06:00",
+   "titulo": "Panel: la ficha «Actualizaciones» también en Herramientas",
+   "pr": 413
+  },
+  {
    "hash": "a9faa19",
    "fecha": "2026-09-23T22:32:09-06:00",
    "titulo": "RLS: formulario_respuestas y profiles arman el conjunto una vez, no fila por fila",

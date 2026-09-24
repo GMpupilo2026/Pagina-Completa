@@ -78,7 +78,11 @@ y hace otra cosa. Estas reglas existen por eso.
   qué puede hacer adentro con `coordinador_puede()`. **Nunca** mirando
   `profile_teachers`, `equipo_*` o `profiles.teacher_id` directo.
 - **Todo lo que se hace para los profesores se hace también para quien
-  administra** (`is_admin`), con el alcance que ya le da la base.
+  administra** (`is_admin`), con el alcance que ya le da la base: lo que un
+  profesor VE de sus alumnos, administración lo ve de todos. **Pero quien
+  administra no da clase**: su panel no trae herramientas de dar clase (ver
+  «El panel de quien administra no es el de un profesor»). Lo de dar clase lo
+  revisa con «Ver como: profesor».
 - En una política de una tabla que crece, el permiso no se pregunta fila por
   fila (`soy_profesor_de(student_id)`): se arma el conjunto una vez,
   `student_id in (select interno.alumnos_de(auth.uid()))`. Fila por fila, el

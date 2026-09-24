@@ -610,7 +610,7 @@ Informes al capítulo «Informes», Niebla al capítulo «Jugar», un curso al
 capítulo «Los cursos de la Academia».
 
 - **Por ahora es solo de administración**, igual que la tarjeta «📘 Guía del
-  profesor» del panel (`soloAdmin`). Lo decidió el dueño del sitio: la guía
+  profesor» del panel (solo en `ADMIN_GROUPS`). Lo decidió el dueño del sitio: la guía
   todavía no se le ofrece al equipo docente. El enlace llega en el HTML
   **escondido** (clase `hidden`), y `js/ayuda-guia.js` lo destapa solo si
   quien mira administra y está en su propia vista. Mirando «como estudiante» o
