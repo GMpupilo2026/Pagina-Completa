@@ -721,6 +721,11 @@ clase.
   regla de `CLAUDE.md` quedó así: lo que un profesor ve de sus alumnos,
   administración lo ve de todos, pero su panel no trae herramientas de dar
   clase.
+- **La burbuja de «alumnos en línea» SÍ se queda** en el panel de quien
+  administra. Se consideró quitarla, porque muestra a los alumnos conectados
+  como en el panel de un profesor, pero el dueño del sitio decidió dejarla. Ver
+  quién está conectado también es supervisar. No se quita al limpiar lo de dar
+  clase.
 - Lo prueba `pruebaAdmin` en `verificar-panel.js`:
   - los grupos, en su orden;
   - que no quede ningún destino de dar clase (sesión, tareas, exámenes,
