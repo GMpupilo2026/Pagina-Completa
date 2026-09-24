@@ -25,6 +25,7 @@
    Uso:  python3 -m http.server 8777    (desde la raíz del sitio)
          node herramientas/verificar-examenes.js                            */
 const { chromium } = require("playwright");
+const { contestarAvisos } = require("./lib/avisos-prueba.js");
 const fs = require("fs");
 const path = require("path");
 
@@ -388,7 +389,7 @@ async function main() {
   {
     const ctx = await contexto(navegador, clienteFalso(ALUMNA, EXAMEN));
     const p = await ctx.newPage();
-    await p.addInitScript(() => { window.alert = () => {}; });
+    await p.addInitScript(contestarAvisos);
     await p.goto(`${BASE}/examen.html?id=ex-1`, { waitUntil: "networkidle" });
     await p.waitForSelector("#antesala:not(.hidden)", { timeout: 10000 });
     await p.click("#empezar-btn");

@@ -329,6 +329,159 @@ def poner_marca(ruta, s):
             + MARCA_FIN + s[cierre:])
 
 
+# Las migas de pan ("Academia › Juegos › Niebla de Guerra"): el camino de
+# vuelta, igual en todas las páginas de la Academia. Antes cada página se
+# escribía el suyo a mano, y había de todo: "← 🏛️ Academia", "Volver al
+# panel", "← Panel", "← Volver al panel de Clases", un botón en sesion.html,
+# un enlace suelto dentro de la barra de Entrenamiento… y en varias no había
+# ninguno: el único camino de salida era saber que el logo lleva al panel.
+#
+# Van en una franja justo DEBAJO del encabezado y fuera de él: el encabezado
+# es `sticky` y cada renglón que se le suma se come pantalla en todas las
+# páginas con tablero; la franja se va con el scroll como cualquier otro
+# contenido. Van alineadas con el logo (el mismo max-w-7xl del encabezado),
+# no con el contenido de cada página, que tiene anchos distintos.
+#
+# PADRE dice de qué página cuelga cada una: el camino se arma subiendo hasta
+# clases.html. Es el lugar desde donde se llega de verdad (el panel, Juegos,
+# Administración), no la carpeta. clases.html no lleva migas: es la raíz.
+# Una página nueva de la lista PAGINAS que no esté acá hace fallar el script,
+# para que nadie la agregue sin decir de dónde cuelga.
+MIGAS_INICIO = "<!-- migas: inicio -->"
+MIGAS_FIN = "<!-- migas: fin -->"
+
+NOMBRE_Y_PADRE = {
+    "clases.html": ("Academia", None),
+    "admin.html": ("Administración", "clases.html"),
+    "admin-jugador.html": ("Base de datos de jugadores", "admin.html"),
+    "inscripciones.html": ("Inscripciones a torneos", "admin.html"),
+    "novedades.html": ("Actualizaciones", "admin.html"),
+    "arbitraje.html": ("Examen de arbitraje", "clases.html"),
+    "asistencia.html": ("Asistencia presencial", "clases.html"),
+    "ciegos.html": ("Ciegos", "clases.html"),
+    "cobros.html": ("Cobros", "clases.html"),
+    "configuracion.html": ("Configuración", "clases.html"),
+    "formularios.html": ("Formularios de inscripción", "clases.html"),
+    "informes.html": ("Informes", "clases.html"),
+    "juegos.html": ("Juegos", "clases.html"),
+    "lector-planilla.html": ("Lector de planilla", "clases.html"),
+    "logros.html": ("Logros", "clases.html"),
+    "partidas.html": ("Archivos", "clases.html"),
+    "examenes.html": ("Exámenes", "clases.html"),
+    "examen.html": ("Examen", "examenes.html"),
+    "planes.html": ("Planes de clase", "clases.html"),
+    "racha-tactica.html": ("Racha táctica", "clases.html"),
+    "reportes.html": ("Reportes de actividades", "clases.html"),
+    "sesion.html": ("Sesión en vivo", "clases.html"),
+    "coordinacion.html": ("Coordinación", "clases.html"),
+    "subgrupos.html": ("Subgrupos", "clases.html"),
+    "tareas.html": ("Tareas", "clases.html"),
+    "informe-mensual.html": ("Informe mensual", "clases.html"),
+    "supervision.html": ("Supervisión", "clases.html"),
+    "academias.html": ("Academias", "clases.html"),
+    "tablero-academias.html": ("Tablero por academia", "clases.html"),
+    "tienda.html": ("Tienda", "clases.html"),
+    "accesos.html": ("Accesos y cupos", "clases.html"),
+    "torneos.html": ("Torneos", "clases.html"),
+    "torneo.html": ("Torneo", "torneos.html"),
+    "cartas.html": ("Ajedrez de Cartas", "juegos.html"),
+    "concentracion.html": ("Concentración", "juegos.html"),
+    "crazyhouse.html": ("Crazyhouse", "juegos.html"),
+    "cuatro-jugadores.html": ("Ajedrez para 4", "juegos.html"),
+    "duelo.html": ("Duelo Simultáneo", "juegos.html"),
+    "estandar.html": ("Ajedrez Estándar", "juegos.html"),
+    "ilumina-tablero.html": ("Ilumina el Tablero", "juegos.html"),
+    "niebla.html": ("Niebla de Guerra", "juegos.html"),
+    "variante.html": ("Partida", "juegos.html"),
+    "sonar.html": ("El Sonar", "juegos.html"),
+    "entreno/index.html": ("Entrenamiento", "clases.html"),
+    "entreno/estudio.html": ("Estudio", "clases.html"),
+    "entreno/4x4.html": ("4×4", "entreno/index.html"),
+    "entreno/aprender.html": ("Aprende", "entreno/index.html"),
+    "entreno/coordenadas.html": ("Coordenadas", "entreno/index.html"),
+    "entreno/desafios.html": ("Desafíos", "entreno/index.html"),
+    "entreno/mates.html": ("Mates", "entreno/index.html"),
+    "entreno/practicas.html": ("Practicar", "entreno/index.html"),
+    "entreno/temas.html": ("Ejercicios por tema", "entreno/index.html"),
+    "entreno/visualizacion.html": ("Visualización", "entreno/index.html"),
+    "entreno/aperturas.html": ("Aperturas y celadas", "entreno/index.html"),
+    "entreno/precision-posicional.html": ("Precisión posicional", "entreno/index.html"),
+    "cursos/academia/index.html": ("Mis cursos", "clases.html"),
+}
+
+TITULO_CURSO_RE = re.compile(r"<title>Academia · ([^<]+?) — Ajedrez Integral</title>")
+
+
+def nombre_y_padre(ruta):
+    if ruta in NOMBRE_Y_PADRE:
+        return NOMBRE_Y_PADRE[ruta]
+    # Un curso nuevo no hace falta anotarlo: su nombre sale de su <title>
+    # (lo escribe herramientas/cursos, con la forma "Academia · X — …").
+    if ruta.startswith("cursos/academia/"):
+        s = open(os.path.join(RAIZ, ruta), encoding="utf-8").read()
+        m = TITULO_CURSO_RE.search(s)
+        if m:
+            return (m.group(1).strip(), "cursos/academia/index.html")
+    raise SystemExit(f"❌ {ruta}: no está en NOMBRE_Y_PADRE de academia-cabecera.py — "
+                     "agrégala diciendo de qué página cuelga.")
+
+
+def camino(ruta):
+    """De la raíz a la página: [(ruta, nombre), …]."""
+    pasos = []
+    actual = ruta
+    while actual:
+        nombre, padre = nombre_y_padre(actual)
+        pasos.append((actual, nombre))
+        if len(pasos) > 8:
+            raise SystemExit(f"❌ {ruta}: NOMBRE_Y_PADRE da vueltas en círculo.")
+        actual = padre
+    return list(reversed(pasos))
+
+
+def escapar(t):
+    return (t.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+             .replace('"', "&quot;"))
+
+
+def migas(ruta):
+    pasos = camino(ruta)
+    desde = os.path.dirname(ruta)
+    partes = []
+    for i, (destino, nombre) in enumerate(pasos):
+        sep = '' if i == 0 else '<span aria-hidden="true" class="text-brand-400">›</span>'
+        icono = '<span aria-hidden="true">🏛️ </span>' if destino == "clases.html" else ''
+        if destino == ruta:
+            partes.append(f'<li class="flex items-center gap-2">{sep}'
+                          f'<span aria-current="page" class="font-semibold text-white">{icono}{escapar(nombre)}</span></li>')
+        else:
+            href = os.path.relpath(destino, desde or ".")
+            partes.append(f'<li class="flex items-center gap-2">{sep}'
+                          f'<a href="{href}" class="text-brand-200 underline underline-offset-2 hover:text-accent-400 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">{icono}{escapar(nombre)}</a></li>')
+    return (MIGAS_INICIO
+            + '<div class="bg-brand-900">'
+            + '<nav id="migas" aria-label="Estás en" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 text-sm">'
+            + '<ol class="flex flex-wrap items-center gap-x-2 gap-y-1">'
+            + "".join(partes)
+            + '</ol></nav></div>'
+            + MIGAS_FIN)
+
+
+def poner_migas(ruta, s):
+    i = s.find(MIGAS_INICIO)
+    if i >= 0:
+        j = s.find(MIGAS_FIN, i)
+        s = s[:i] + s[j + len(MIGAS_FIN):]
+    if ruta == "clases.html":
+        return s
+    fin_header = s.find("</header>", s.find('<header id="header"'))
+    if fin_header < 0:
+        print(f"⚠️  {ruta}: no encontré el encabezado, se queda sin migas.")
+        return s
+    corte = fin_header + len("</header>")
+    return s[:corte] + migas(ruta) + s[corte:]
+
+
 def procesar(ruta):
     ruta_abs = os.path.join(RAIZ, ruta)
     s = open(ruta_abs, encoding="utf-8").read()
@@ -344,6 +497,7 @@ def procesar(ruta):
         print(f"⚠️  {ruta}: no encontré un <footer>…</footer> único, no se tocó.")
         return False
 
+    s = poner_migas(ruta, s)
     s = poner_burbuja(ruta, s)
     s = poner_juego_aviso(ruta, s)
     s = poner_acceso(ruta, s)

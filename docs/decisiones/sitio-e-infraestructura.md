@@ -556,6 +556,110 @@ que estaba haciendo, y de ahí a irse por donde no corresponde hay un clic.
   pie completos, porque ahí sí hace falta poder llegar a cualquier parte del
   sitio y la invitación a inscribirse tiene sentido.
 
+### Las migas de pan: el camino de vuelta, igual en todas
+
+Debajo del encabezado de la Academia va una franja con el camino: «🏛️
+Academia › Juegos › Niebla de Guerra». Antes cada página se escribía su propio
+enlace para volver, y había de todo: «← 🏛️ Academia», «Volver al panel»,
+«← Panel», «← Volver al panel de Clases», un botón en `sesion.html`, dos enlaces
+sueltos en la barra de cada ejercicio de Entrenamiento… y varias páginas sin
+ninguno. El único camino de salida seguro era saber que el logo lleva al panel.
+
+- **Las pone `herramientas/academia-cabecera.py`**, con la misma lista
+  `PAGINAS`: una página nueva de la Academia las recibe al correr el script.
+  `NOMBRE_Y_PADRE` dice cómo se llama cada página y **de cuál cuelga**. El
+  camino se arma subiendo hasta `clases.html`, que es la raíz y no lleva migas.
+  El padre es desde donde se llega de verdad (Niebla cuelga de Juegos, el
+  examen de Exámenes, Actualizaciones de Administración), no la carpeta. Una
+  página de `PAGINAS` que no esté en `NOMBRE_Y_PADRE` **hace fallar el
+  script**, para que nadie la agregue sin decir de dónde cuelga. Los cursos de
+  `cursos/academia/` no hace falta anotarlos: su nombre sale del `<title>`.
+- **Van FUERA del encabezado, no adentro.** El encabezado es `sticky`: cada
+  renglón que se le suma se come pantalla en todas las páginas con tablero. La
+  franja se va con el scroll como cualquier otro contenido. Se alinea con el
+  logo (el `max-w-7xl` del encabezado), no con el contenido de cada página,
+  que tiene anchos distintos.
+- **Se quitaron los «←» sueltos que llevaban al mismo lugar.** Un destino no
+  va dos veces. Se quedaron los botones de los estados de error y de acceso
+  denegado («← Volver a la Academia» debajo de «Esta página no es para tu
+  cuenta»): ahí el botón ES lo que se le ofrece a quien no puede seguir. También
+  se quedaron los «volver» de adentro de una herramienta («← Todos los
+  niveles», «← Todas las lecciones»), que no salen de la página.
+- **El «← Mis cursos · Panel de Academia» de los cursos salía de un
+  generador** (`herramientas/curso-generar-formacion.py`): se quitó de ahí
+  también, o volvía al regenerar.
+- **Dos páginas tocan sus migas desde su propio código**, y ninguna más debería:
+  - `sesion.html`: salir de la clase por las migas o por el logo cierra antes
+    el registro de asistencia del alumno (`stopPresenceLog()`), igual que lo
+    hacía su botón «← Academia». Si no, el registro diría que el alumno siguió
+    en la clase hasta que se venció la conexión.
+  - `subgrupos.html`: cuando quien coordina abre los subgrupos de un profesor,
+    le agrega el paso «Coordinación», que es de donde vino.
+- Los enlaces van **subrayados** (el color no va solo) y el paso actual va con
+  `aria-current="page"`, sin enlace. El `<nav>` se llama «Estás en».
+- Lo comprueba `herramientas/verificar-avisos.js`: todas las páginas con el
+  encabezado de la Academia tienen un solo bloque de migas justo debajo del
+  encabezado, cada paso existe, el primero es el panel, y en la pantalla se ven,
+  no desbordan a 360 px y pasan AA en claro y en oscuro.
+
+## Los avisos son de la página, no del navegador
+
+`alert()`, `confirm()` y `prompt()` quedaron **prohibidos en todo el sitio**. En
+su lugar va `js/avisos.js`:
+
+| Antes | Ahora | Para qué |
+|---|---|---|
+| `alert("Listo")` | `Avisos.avisar(texto)` | Un mensaje arriba que se va solo a los 6 s |
+| `alert("No se pudo…")` | `Avisos.avisar(texto, { tipo: "error" })` | No se va solo: se cierra con ✕ |
+| `alert()` que hay que leer sí o sí | `await Avisos.alerta(texto, { titulo })` | El aviso de salida de un examen, el usuario de una cuenta nueva |
+| `if (!confirm(…)) return` | `if (!(await Avisos.confirmar(texto, { titulo, aceptar, peligro }))) return` | La función tiene que ser `async` |
+| `prompt()` | `await Avisos.pedir(texto, { etiqueta, valor })` | Devuelve `null` si se cancela, como `prompt()` |
+| varios `prompt()` seguidos | `await Avisos.formulario({ titulo, campos })` | El pago de un cobro: monto, método (una lista, ya no se escribe) y comprobante |
+
+Por qué se cambió: había más de cien en veinte páginas. No seguían el modo
+oscuro ni el tema, congelaban la página entera (con el reloj de una partida
+adentro), en el celular parecían un error del sistema, el botón decía siempre
+«Aceptar» y no dejaban ofrecer «Deshacer».
+
+- **El botón dice lo que va a pasar** («Eliminar», «Rendirme», «Mandar
+  ahora»), nunca «Aceptar». Así se entiende sin leer la pregunta. La pregunta
+  va en `titulo` y la consecuencia en el texto.
+- **Con `peligro: true`** el botón va en rojo y **el foco arranca en
+  «Cancelar»**: un Enter apurado no borra nada. Escape siempre cancela, y al
+  cerrar el foco vuelve al botón que abrió el diálogo.
+- **De a un diálogo por vez**: si se piden dos seguidos, el segundo espera.
+- **Un mensaje de error no se va solo.** Un error que desaparece mientras uno lo
+  lee es un error que no se leyó. Los de «listo» sí se van, y mientras el mouse
+  o el foco están encima no se van: nadie tiene que alcanzar «Deshacer» contra
+  el reloj.
+- **«Deshacer» en vez de preguntar, solo donde deshacer es de verdad
+  devolver la fila.** Hoy es borrar un PGN propio en Archivos: se borra, y
+  «Deshacer» lo vuelve a insertar igual (mismo id, carpeta y fecha), porque de
+  esa fila no cuelga nada. Donde algo cuelga en cascada (una tarea y sus
+  renglones, un examen y sus respuestas) o hay un correo que ya salió, se sigue
+  preguntando antes: reinsertar la fila no devolvería lo que se borró con ella
+  ni desmandaría el correo. Cualquier otro «Deshacer» nuevo tiene que pasar la
+  misma prueba antes de reemplazar una confirmación. El PGN de OTRO profesor (lo que borra
+  quien administra) también se pregunta: la política de insert exige
+  `profesor_id = auth.uid()` y no se podría devolver.
+- Las páginas que ya tenían su franja `#aviso` propia (cobros, coordinación,
+  subgrupos…) la conservan: es un mensaje dentro de la página, no una ventana
+  del navegador.
+- Se carga con `<script src="js/avisos.js"></script>` en el `<head>`, **sin
+  `defer`**: los scripts de cada página van al final del `<body>` sin `defer`
+  y corren ANTES que uno diferido, así que un aviso pedido mientras la página
+  arranca encontraría `Avisos` sin definir.
+- **Los verificadores contestan los diálogos apretando sus botones**, con
+  `herramientas/lib/avisos-prueba.js` (`contestarAvisos` como init script o
+  dentro del cliente falso). Lo que la página mostró queda en
+  `window.__avisos`, y lo que hay que escribir se prepara en
+  `window.__respuestas`. Ya no sirve `page.on("dialog")` ni pisar
+  `window.confirm`.
+- `herramientas/verificar-avisos.js` barre **todo** el sitio buscando un
+  `alert(`/`confirm(`/`prompt(` nuevo (sin contar comentarios), revisa que toda
+  página que llama a `Avisos` cargue el archivo, y prueba en el navegador el
+  comportamiento de arriba con el contraste medido.
+
 ## El punto de restauración: la base no vivía en ninguna parte
 
 `RESTAURAR.md` es el documento operativo —qué hacer si algo falla— y esto es

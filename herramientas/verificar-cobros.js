@@ -16,6 +16,7 @@
    Uso:  python3 -m http.server 8777    (desde la raíz del sitio)
          node herramientas/verificar-cobros.js                                */
 const { chromium } = require("playwright");
+const { contestarAvisos } = require("./lib/avisos-prueba.js");
 
 const CHROME = process.env.CHROME_PATH || "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
 const BASE = process.env.BASE_URL || "http://localhost:8777";
@@ -173,11 +174,9 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
     }
     return fetchReal.apply(this, arguments);
   };
-  // Los prompt() de registrar un pago, en orden, y el confirm() de dar de baja.
-  window.__respuestas = [];
-  window.prompt = () => (window.__respuestas.length ? window.__respuestas.shift() : null);
-  window.confirm = () => true;
-  window.alert = () => {};
+  // El formulario de registrar un pago, la razón de anular y el «Dar de baja»:
+  // los contesta herramientas/lib/avisos-prueba.js con lo que haya en __respuestas.
+  (${contestarAvisos})();
 })();
 `;
 }
@@ -359,7 +358,7 @@ async function pruebaCoordinacion(browser) {
   // -------- registrar un pago parcial
   await page.click('[data-ficha="cobros"]');
   await abrirMeses();
-  await page.evaluate(() => { window.__llamadas = []; window.__respuestas = ["5000", "transferencia", "REF-99"]; });
+  await page.evaluate(() => { window.__llamadas = []; window.__respuestas = [{ monto: "5000", metodo: "transferencia", referencia: "REF-99" }]; });
   await page.locator("#cobros-lista .cobro-fila").nth(1).locator("button").first().click();
   await page.waitForTimeout(300);
   const pago = await page.evaluate(() => window.__llamadas.find((l) => l.tabla === "pagos" && l.verbo === "insert"));
@@ -368,14 +367,18 @@ async function pruebaCoordinacion(browser) {
     { cobro_id: "c-2", monto: 5000, metodo: "transferencia", referencia: "REF-99" });
 
   // Un monto que no es número no se manda.
-  await page.evaluate(() => { window.__llamadas = []; window.__respuestas = ["nada", "sinpe", ""]; });
+  await page.evaluate(() => { window.__llamadas = []; window.__respuestas = [{ monto: "nada", metodo: "sinpe", referencia: "" }]; });
   await page.locator("#cobros-lista .cobro-fila").nth(1).locator("button").first().click();
   await page.waitForTimeout(300);
   igual("un monto que no es número no se manda",
     await page.evaluate(() => window.__llamadas.filter((l) => l.tabla === "pagos").length), 0);
 
-  // Un método inventado tampoco.
-  await page.evaluate(() => { window.__llamadas = []; window.__respuestas = ["5000", "bitcoin", ""]; });
+  // El método ya no se escribe: se elige de una lista que solo tiene los que existen.
+  igual("el formulario del pago ofrece los cinco métodos, y nada más",
+    await page.evaluate(() => window.__avisos.filter((a) => a.includes("Registrar un pago")).pop()
+      .includes("SINPE Móvil Transferencia Efectivo Tarjeta Otro")), "true");
+  // Y si igual llegara uno inventado (desde la consola), tampoco se manda.
+  await page.evaluate(() => { window.__llamadas = []; window.__respuestas = [{ monto: "5000", metodo: "bitcoin", referencia: "" }]; });
   await page.locator("#cobros-lista .cobro-fila").nth(1).locator("button").first().click();
   await page.waitForTimeout(300);
   igual("un método desconocido no se manda",

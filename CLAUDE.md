@@ -111,6 +111,9 @@ y hace otra cosa. Estas reglas existen por eso.
 - Horas y días se cuentan en hora de Costa Rica (`America/Costa_Rica`).
 - Todo texto que escribe una persona (nombres, notas, mensajes) va por
   `textContent` o escapado (`escVis`), también dentro de atributos.
+- **Nunca `alert()`, `confirm()` ni `prompt()`**: `js/avisos.js`
+  (`Avisos.avisar`, `Avisos.confirmar`…). El botón dice lo que hace, no
+  «Aceptar» (ver «Los avisos son de la página, no del navegador»).
 
 **Contenido**
 - **Ninguna posición de ajedrez se inventa.** Sale de un banco ya verificado o
@@ -131,6 +134,8 @@ y hace otra cosa. Estas reglas existen por eso.
   `herramientas/academia-cabecera.py`, y se corre. Con tablero:
   `herramientas/tablero-cabecera.py`. Toda página: `pwa-cabecera.py` y
   `tema-cabecera.py`.
+  Las migas de pan salen de ahí mismo: la página nueva va también en
+  `NOMBRE_Y_PADRE`, diciendo de cuál cuelga.
 - El worker publica **todo el directorio**: lo que no deba verse va en
   `.assetsignore` (ahí están `CLAUDE.md`, `docs/`, `supabase/`, `herramientas/`…).
 - Cada migración aplicada y cada Edge Function desplegada se guardan en
@@ -170,7 +175,7 @@ el archivo de cada tema dice cuál corresponde a cada pieza.
 
 | Tema | Qué hay | Verificadores |
 |---|---|---|
-| [`sitio-e-infraestructura`](docs/decisiones/sitio-e-infraestructura.md) | El sitio: dominio y correo, PWA, CSS compilado, librerías propias, carga, metadatos, encabezado, punto de restauración | worker, pwa, css, vendor, carga-tablero, metadatos, notificaciones, punto-restauracion |
+| [`sitio-e-infraestructura`](docs/decisiones/sitio-e-infraestructura.md) | El sitio: dominio y correo, PWA, CSS compilado, librerías propias, carga, metadatos, encabezado y migas, avisos propios, punto de restauración | worker, pwa, css, vendor, carga-tablero, metadatos, notificaciones, avisos, punto-restauracion |
 | [`permisos-y-roles`](docs/decisiones/permisos-y-roles.md) | Varios profesores, equipos, subgrupos, coordinación, supervisor, academias (marca, IA, tablero), roles, funciones de trigger, texto ajeno | varios-profesores, subgrupos, coordinacion, supervisor, academias, informe-mensual, mejorar-informe, tablero-academias |
 | [`cuentas-y-formularios`](docs/decisiones/cuentas-y-formularios.md) | Formularios de inscripción y adjuntos, alta de cuentas, alumno sin correo, invitación y bienvenida | formularios, inscripcion-adjuntos, alumno-sin-correo, bienvenida, admin |
 | [`clase-en-vivo`](docs/decisiones/clase-en-vivo.md) | `sesion.html`: material del profesor, videollamada, abrir/cerrar y registrar la clase, ficha presencial y horario, chat, coordenadas, miniaturas, Táctica y Archivos, la clase con lector de pantalla | clase-registrada, sesion-orden, sesion-curso, videollamada, asistencia, chat-clase, clase-adaptada, panel |

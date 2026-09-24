@@ -27,6 +27,7 @@
  *       npm install playwright chess.js@0.10.3
  *       node herramientas/verificar-chat-clase.js                            */
 const { chromium } = require("playwright");
+const { contestarAvisos } = require("./lib/avisos-prueba.js");
 const { clienteFalso, abrir, igual, CHROME, fallos } = require("./verificar-clase-registrada.js");
 
 const CLASE_ABIERTA = { id: "s-1", title: null, created_by: "u-profe",
@@ -77,8 +78,8 @@ async function prueba(browser) {
     return [t.includes("final de torre"), t.includes("próxima clase"), t.includes("Gracias")].join(",");
   }), "true,true,true");
 
-  // Confirmar: el aviso es del navegador, así que se acepta desde acá.
-  page.on("dialog", (d) => d.accept());
+  // Las confirmaciones son de js/avisos.js: se aprietan como una persona.
+  await page.evaluate(contestarAvisos);
   await page.click("#clear-chat-btn");
   await page.waitForFunction(() =>
     window.__deletes.some((d) => d.tabla === "class_chat_messages"), null, { timeout: 10000 });

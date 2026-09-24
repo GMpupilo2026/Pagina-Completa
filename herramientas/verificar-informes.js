@@ -17,6 +17,7 @@
          node herramientas/verificar-informes.js
    Necesita playwright instalado.  */
 const { chromium } = require("playwright");
+const { contestarAvisos } = require("./lib/avisos-prueba.js");
 
 const CHROME = process.env.CHROME_PATH || "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
 
@@ -588,7 +589,8 @@ async function pruebaProfesor(browser) {
       fila: { student_id: "a-1", nombre: "Papá de Ana", email: "papa@x.cr", frecuencia: "mensual",
               hora_envio: 7, dia_semana: null, creado_por: "prof-1" } });
 
-  page.on("dialog", (d) => d.accept());
+  // Las confirmaciones son de js/avisos.js: se aprietan como una persona.
+  await page.evaluate(contestarAvisos);
   await page.evaluate(() => {
     window.__funcion.length = 0;
     [...document.querySelectorAll("#encargados-lista button")].find((b) => b.textContent === "Enviar ahora").click();
@@ -1014,7 +1016,6 @@ async function pruebaClaseGrande(browser) {
     [...document.querySelectorAll("#topic-report-body > div")].map((d) => d.querySelector("span").textContent.trim())),
     ["Sofía Núñez · 7A", "Alumna 02 · 7B", "Alumna 03 · 7A"]);
   await page.evaluate(() => { window.__funcion.length = 0; });
-  page.once("dialog", (d) => d.accept());
   await page.click("#topic-report-body > div:first-child button");
   await page.waitForFunction(() => window.__funcion.length > 0);
   igual("«invitar a practicar» le pide a la función ese alumno", await page.evaluate(() => window.__funcion[0]),

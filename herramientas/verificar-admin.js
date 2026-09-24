@@ -32,6 +32,7 @@
    Uso:  python3 -m http.server 8777    (desde la raíz del sitio)
          node herramientas/verificar-admin.js                                 */
 const { chromium } = require("playwright");
+const { contestarAvisos } = require("./lib/avisos-prueba.js");
 const fs = require("fs");
 const path = require("path");
 
@@ -300,7 +301,8 @@ async function pruebaFichasDeGrupo(browser) {
      de todos los años ("todo 7° B también al profesor nuevo"). Va en modo
      "agregar": suma, no reemplaza — quitarle un profesor a alguien sin querer
      es el error caro acá. */
-  page.on("dialog", (d) => d.accept());
+  // Las confirmaciones son de js/avisos.js: se aprietan como una persona.
+  await page.evaluate(contestarAvisos);
   await page.selectOption("#grupos-fichas article:first-of-type select", PROFE.id);
   const lote = await esperarLlamada("assign_bulk");
   igual("la ficha manda a todo el grupo, no a una página de él", lote.target_ids.length, "401");
