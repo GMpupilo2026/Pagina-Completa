@@ -79,6 +79,11 @@ y hace otra cosa. Estas reglas existen por eso.
   `profile_teachers`, `equipo_*` o `profiles.teacher_id` directo.
 - **Todo lo que se hace para los profesores se hace también para quien
   administra** (`is_admin`), con el alcance que ya le da la base.
+- En una política de una tabla que crece, el permiso no se pregunta fila por
+  fila (`soy_profesor_de(student_id)`): se arma el conjunto una vez,
+  `student_id in (select interno.alumnos_de(auth.uid()))`. Fila por fila, el
+  informe se cayó por statement timeout con 7000 filas (ver «La RLS de las
+  tablas de actividad arma el conjunto UNA vez»).
 - Las tablas que reparten permisos (`profile_teachers`, `equipos`,
   `coordinador_profesores`, `paquetes_acceso`…) no tienen política de
   escritura: las escriben funciones que validan.

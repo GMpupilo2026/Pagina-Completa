@@ -546,6 +546,44 @@ en el insert.
   anotado: es el mismo síntoma de siempre, un campo que se ve en cero sin
   que nada avise por qué.
 
+### La RLS de las tablas de actividad arma el conjunto UNA vez, no fila por fila
+
+El 23 de setiembre de 2026 un profesor que también supervisa abrió Informes y
+recibió «canceling statement due to statement timeout». Caían
+`informes_resumen_alumnos()` e `informes_inactivos()`, que son `SECURITY
+INVOKER` (ver arriba) y por eso pasan por la RLS de `training_progress`. Esa
+política llamaba a `soy_profesor_de(student_id)` y a
+`supervisado_por_mi(student_id)` **una vez por cada fila**: son `SECURITY
+DEFINER` con `SET`, así que Postgres no las puede meter dentro de la consulta,
+y cada llamada cuesta cerca de un milisegundo. Con 6860 filas, solo contar lo
+que veía ese profesor tardaba 8,5 s: más que el tope de 8 s. No hacía falta una
+tabla grande: bastaba con que creciera `training_progress`, que crece todos los
+días.
+
+La regla no cambió: se dice al revés. En vez de preguntar en cada fila «¿soy
+profesor de este alumno?», se arma una sola vez el conjunto de alumnos de quien
+mira y cada fila se busca en él (Postgres lo vuelve un *hashed subplan*):
+
+- `soy_profesor_de(s)` ⇔ `s in (select interno.alumnos_de(auth.uid()))`
+- `supervisado_por_mi(s)` ⇔ `s in (select interno.supervisados_por_mi())`
+
+`interno.supervisados_por_mi()` es el inverso **exacto** de
+`supervisado_por_mi()` (las mismas tres vías de `supervisores_de()`, recorridas
+desde el supervisor). No se usó `mis_supervisados()` porque esa suma además los
+alumnos propios, y la política de supervisor tenía que dejar ver lo mismo que
+antes, ni una fila más. Antes de aplicarlo se comparó, impersonando a cada una
+de las 129 cuentas contra cada una de las 129, que las dos formas contestaran
+igual (108 parejas supervisadas): cero diferencias. `training_progress` pasó de
+8,5 s a 25 ms con las mismas 385 filas, y el informe entero de ese profesor, a
+menos de medio segundo.
+
+Se cambiaron las nueve políticas de SELECT de `training_progress`,
+`training_state`, `platform_activity_log`, `class_attendance`,
+`class_presence_log` y `question_answers` que tenían ese patrón (migración
+`rls_actividad_conjunto_una_vez`). **Una política nueva sobre una tabla que
+crece no llama a una función por fila con `student_id`: usa `student_id in
+(select …)`.**
+
 ## Los informes que llegan a la casa
 
 En Informes, mirando a UN alumno, está "📧 Informes a la casa": a qué correos se
