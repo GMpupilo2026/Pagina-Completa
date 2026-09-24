@@ -1,11 +1,10 @@
 entreno/data/temas_fuente.json
 
-# Lo que deja `npm install` para compilar el CSS o correr las comprobaciones.
-# El sitio no se construye con npm —se edita el HTML/JS directamente— así que
-# esto es andamio de cada quien, no del repositorio.
+# Lo que deja `npm install`. El sitio no se construye con npm —se edita el
+# HTML/JS directamente—; package.json y su lock SÍ se commitean porque fijan
+# las versiones de las comprobaciones y el CI las instala con `npm ci`. Del
+# despliegue los saca .assetsignore.
 node_modules/
-package.json
-package-lock.json
 
 # Lo que deja Python al importar un módulo de al lado (herramientas/, entreno/data/).
 __pycache__/

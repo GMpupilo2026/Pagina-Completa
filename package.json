@@ -1,0 +1,17 @@
+{
+  "name": "ajedrez-integral",
+  "private": true,
+  "description": "Andamio de desarrollo: compilar el CSS y correr las comprobaciones de herramientas/. El sitio no se construye con npm.",
+  "scripts": {
+    "servir": "python3 -m http.server 8777",
+    "css": "node herramientas/css-construir.js",
+    "verificar": "node herramientas/verificar-todo.js",
+    "verificar:rapido": "node herramientas/verificar-todo.js --sin-navegador"
+  },
+  "devDependencies": {
+    "@supabase/supabase-js": "2.116.0",
+    "chess.js": "0.10.3",
+    "playwright": "1.56.1",
+    "tailwindcss": "3.4.19"
+  }
+}

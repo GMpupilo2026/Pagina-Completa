@@ -203,7 +203,11 @@ function mal(t) { console.log("  ✗ " + t); fallos += 1; }
 function bien(t) { console.log("  ✓ " + t); }
 
 async function panel(browser, perfiles, quien, opciones, datos) {
-  const ctx = await browser.newContext(opciones || {});
+  /* Sin service worker: al recargar (cambiar de modo de vista recarga) es él
+     quien sirve los archivos, y lo que pide no pasa por las rutas del contexto,
+     así que volvía el js/supabase-client.js de verdad —sin sesión— y la página
+     se iba a login.html. La misma piedra que ya documentó verificar-reportes.js. */
+  const ctx = await browser.newContext(Object.assign({ serviceWorkers: "block" }, opciones || {}));
   // Lo que el supervisor de su academia le dejó a un coordinador.
   if (datos && datos.misFunciones) await ctx.addInitScript((f) => { window.__misFunciones = f; }, datos.misFunciones);
   await ctx.route("**/cdn.jsdelivr.net/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
