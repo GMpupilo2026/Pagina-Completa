@@ -68,6 +68,8 @@ function pruebaModulo() {
   igual("con 9 alumnos se cobra el paquete de 10, que sale más barato", P.cotizar(9).cobrados, 10);
   igual("con 25, el paquete 25 exacto", [P.cotizar(25).tramo.id, P.cotizar(25).total], ["p25", 25 * 2100]);
   igual("el ciclo lectivo son los meses cobrados", P.cotizar(10).ciclo, P.cotizar(10).total * P.MESES_COBRADOS_CICLO);
+  igual("el año de una cuenta sale de su precio mensual", P.anual(P.INDIVIDUAL), P.INDIVIDUAL * P.MESES_COBRADOS_CICLO);
+  igual("el año por alumno del paquete 25", P.cotizar(25).porAlumnoAnual, 2100 * P.MESES_COBRADOS_CICLO);
   igual("el formato es el de acá, con punto de miles", P.formato(122500), "₡122.500");
 
   const desdes = P.TRAMOS.map((t) => t.desde);

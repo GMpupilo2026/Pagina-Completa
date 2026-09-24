@@ -36,9 +36,15 @@
   /* Una cuenta de profesor de más, por encima de las que trae el paquete. */
   const PROFESOR_EXTRA = 3500;
 
-  /* El ciclo lectivo: se usan 12 meses y se pagan 10. */
+  /* El pago anual (el ciclo lectivo): se usan 12 meses y se pagan 10. El
+     precio anual no se escribe en ninguna tabla: sale de acá, así que si
+     cambia el mensual, cambia solo. */
   const MESES_CICLO = 12;
   const MESES_COBRADOS_CICLO = 10;
+
+  function anual(precioMensual) {
+    return Math.round(Number(precioMensual) || 0) * MESES_COBRADOS_CICLO;
+  }
 
   function formato(n) {
     const entero = Math.round(Number(n) || 0);
@@ -57,7 +63,8 @@
         mejor = { tramo: t, alumnos: n, cobrados, porAlumno: t.precio, total };
       }
     }
-    mejor.ciclo = mejor.total * MESES_COBRADOS_CICLO;
+    mejor.ciclo = anual(mejor.total);
+    mejor.porAlumnoAnual = anual(mejor.porAlumno);
     return mejor;
   }
 
@@ -67,6 +74,6 @@
 
   global.PreciosAcceso = {
     MONEDA, INDIVIDUAL, TRAMOS, PROFESOR_EXTRA, MESES_CICLO, MESES_COBRADOS_CICLO,
-    formato, cotizar, tramo,
+    formato, cotizar, tramo, anual,
   };
 })(typeof window !== "undefined" ? window : globalThis);

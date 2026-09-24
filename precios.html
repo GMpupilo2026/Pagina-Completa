@@ -90,7 +90,7 @@
                     <h2 id="t-individual" class="font-serif text-2xl font-bold text-brand-800 dark:text-white">Una cuenta</h2>
                     <p class="text-brand-500 dark:text-brand-300 text-sm mt-1">Para una familia que quiere que su hijo entrene por su cuenta.</p>
                     <p class="mt-5"><span id="precio-individual" class="font-serif text-4xl font-bold text-accent-700 dark:text-accent-400"></span> <span class="text-brand-500 dark:text-brand-300">al mes</span></p>
-                    <p class="text-sm text-brand-600 dark:text-brand-300 mt-1">O <strong id="precio-individual-ciclo"></strong> por el ciclo lectivo: <span class="meses-ciclo"></span> meses de uso y pagas <span class="meses-cobrados"></span>.</p>
+                    <p class="text-sm text-brand-600 dark:text-brand-300 mt-1">O <strong id="precio-individual-ciclo"></strong> al año: <span class="meses-ciclo"></span> meses de uso y pagas <span class="meses-cobrados"></span>.</p>
                     <ul class="mt-5 space-y-2 text-sm flex-1">
                         <li class="flex gap-2"><span class="text-accent-700 dark:text-accent-400 font-bold" aria-hidden="true">✓</span>Diagnóstico de nivel y plan de entrenamiento de cuatro semanas</li>
                         <li class="flex gap-2"><span class="text-accent-700 dark:text-accent-400 font-bold" aria-hidden="true">✓</span>Ejercicios por tema, mates, aperturas, finales y cursos completos</li>
@@ -125,6 +125,8 @@
                                 <th scope="col" class="py-3 pr-4">Alumnos</th>
                                 <th scope="col" class="py-3 pr-4">Por alumno al mes</th>
                                 <th scope="col" class="py-3 pr-4">Total al mes, desde</th>
+                                <th scope="col" class="py-3 pr-4">Por alumno al año</th>
+                                <th scope="col" class="py-3 pr-4">Total al año, desde</th>
                                 <th scope="col" class="py-3 pr-4">Profesores incluidos</th>
                                 <th scope="col" class="py-3">Coordinación</th>
                             </tr>
@@ -133,8 +135,8 @@
                     </table>
                 </div>
                 <ul class="mt-6 space-y-2 text-sm text-brand-600 dark:text-brand-300">
-                    <li>• Cada profesor de más cuesta <strong id="precio-profesor-extra"></strong> al mes.</li>
-                    <li>• Pagando el ciclo lectivo completo, se usan <span class="meses-ciclo"></span> meses y se pagan <span class="meses-cobrados"></span>.</li>
+                    <li>• Cada profesor de más cuesta <strong id="precio-profesor-extra"></strong> al mes, o <strong id="precio-profesor-extra-anual"></strong> al año.</li>
+                    <li>• Pagando el año completo (el ciclo lectivo), se usan <span class="meses-ciclo"></span> meses y se pagan <span class="meses-cobrados"></span>: dos meses de regalo.</li>
                     <li>• Si tu cantidad queda justo debajo de un paquete, te cobramos el paquete si sale más barato. Por ejemplo, con 9 alumnos pagas el de 10.</li>
                     <li>• Colegios de 300 alumnos o más: el precio se conversa, con capacitación para el equipo docente incluida.</li>
                     <li>• Se paga por SINPE Móvil, transferencia o efectivo.</li>
@@ -204,8 +206,9 @@
         const $ = (id) => document.getElementById(id);
 
         $("precio-individual").textContent = f(P.INDIVIDUAL);
-        $("precio-individual-ciclo").textContent = f(P.INDIVIDUAL * P.MESES_COBRADOS_CICLO);
+        $("precio-individual-ciclo").textContent = f(P.anual(P.INDIVIDUAL));
         $("precio-profesor-extra").textContent = f(P.PROFESOR_EXTRA);
+        $("precio-profesor-extra-anual").textContent = f(P.anual(P.PROFESOR_EXTRA));
         document.querySelectorAll(".meses-ciclo").forEach((e) => { e.textContent = P.MESES_CICLO; });
         document.querySelectorAll(".meses-cobrados").forEach((e) => { e.textContent = P.MESES_COBRADOS_CICLO; });
 
@@ -219,13 +222,15 @@
                 t.convenio ? t.desde + " o más" : sig ? (t.desde === sig.desde - 1 ? String(t.desde) : t.desde + " a " + (sig.desde - 1)) : t.desde + " o más",
                 (t.convenio ? "desde " : "") + f(t.precio),
                 (t.convenio ? "desde " : "") + f(t.desde * t.precio),
+                (t.convenio ? "desde " : "") + f(P.anual(t.precio)),
+                (t.convenio ? "desde " : "") + f(P.anual(t.desde * t.precio)),
                 t.profesores == null ? "Los que hagan falta" : t.profesores === 0 ? "—" : String(t.profesores),
                 t.coordinacion ? "Incluida" : "—",
             ];
             celdas.forEach((c, j) => {
                 const td = document.createElement(j === 0 ? "th" : "td");
                 if (j === 0) td.scope = "row";
-                td.className = "py-3 pr-4 " + (j === 0 ? "font-semibold text-brand-800 dark:text-white" : "");
+                td.className = "py-3 pr-4 " + (j === 0 ? "font-semibold text-brand-800 dark:text-white whitespace-nowrap" : "");
                 td.textContent = c;
                 tr.append(td);
             });
@@ -247,7 +252,7 @@
                 (c.cobrados > n ? `. Con ${n} te sale más barato pagar ${c.cobrados}.` : ".");
             const ciclo = document.createElement("p");
             ciclo.className = "text-sm text-brand-600 dark:text-brand-300 mt-1";
-            ciclo.textContent = `Por el ciclo lectivo: ${f(c.ciclo)} (${P.MESES_CICLO} meses, pagas ${P.MESES_COBRADOS_CICLO}).`;
+            ciclo.textContent = `Al año: ${c.tramo.convenio ? "desde " : ""}${f(c.ciclo)}, o sea ${f(c.porAlumnoAnual)} por alumno (${P.MESES_CICLO} meses de uso, pagas ${P.MESES_COBRADOS_CICLO}).`;
             res.append(total, det, ciclo);
         }
         $("calc-n").addEventListener("input", calcular);

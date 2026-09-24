@@ -277,7 +277,7 @@
             const n = Number($("f-cupos").value);
             if (!n || n < 1) { $("f-sugerido").textContent = ""; return; }
             const c = P.cotizar(n);
-            let t = `Sugerido: ${P.formato(c.total)} al mes (${c.tramo.nombre}, ${P.formato(c.porAlumno)} por alumno).`;
+            let t = `Sugerido: ${P.formato(c.total)} al mes o ${P.formato(c.ciclo)} al año (${c.tramo.nombre}, ${P.formato(c.porAlumno)} por alumno al mes).`;
             if (c.cobrados > n) t += ` Con ${n} conviene cobrar ${c.cobrados}: sale más barato que ${n} sueltos.`;
             if (c.tramo.convenio) t += " Es precio de convenio: se conversa.";
             $("f-sugerido").textContent = t;
