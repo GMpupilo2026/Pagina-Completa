@@ -362,6 +362,20 @@ copiar cuatro datos a mano de una pantalla a otra, dos veces por alumno.
 - El cupo sigue siendo el de siempre (`profiles.invitaciones_max`): quien
   administra no tiene tope, un profesor sin invitaciones asignadas recibe el
   mismo aviso que en la Academia.
+- **Quien administra da de alta aunque su rol no sea `profesor`.**
+  `consumir_invitacion()` pedía `role = 'profesor'` antes de mirar `is_admin`,
+  y la cuenta de administración tiene `role = 'admin'`: el botón estaba en
+  pantalla y la respuesta era «Solo el profesor puede invitar alumnos», en las
+  dos puertas (`inscribir-alumno` y `create-student`). Ahora `is_admin` pasa
+  sin tope, con cualquier rol. El supervisor ya pasaba —es una marca encima de
+  `role = 'profesor'`— y gasta su cupo como cualquiera.
+- **Pero quien administra no da clase**, así que a esa cuenta no se le asigna
+  el alumno en `profile_teachers`: queda sin profesor, las dos funciones lo
+  dicen con `asignado: false`, el diálogo no promete «queda asignado a tu
+  clase» y el aviso final dice que falta asignárselo en Administración (que ya
+  avisa de los alumnos sin profesor). El supervisor sí queda asignado: es por
+  esa asignación que el alumno entra a su academia
+  (`profile_teachers_suma_a_la_academia`) y él lo alcanza.
 
 ## El alumno que no tiene correo propio
 

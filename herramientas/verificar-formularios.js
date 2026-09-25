@@ -360,6 +360,10 @@ async function pruebaAlta(page) {
   igual("y al abrirlo se ve",
     await page.evaluate(() => getComputedStyle(document.getElementById("alta-fondo")).display), "block");
 
+  igual("a un profesor sí se le dice que queda en su clase",
+    await page.evaluate(() => document.getElementById("alta-asignado").textContent),
+    "queda asignado a tu clase");
+
   igual("el diálogo abre con cada dato en su lugar",
     await page.evaluate(() => [
       document.getElementById("alta-alumno-nombre").value,
@@ -404,6 +408,50 @@ async function pruebaAlta(page) {
       const celda = f.children[f.children.length - 1];
       return celda.querySelector("button") ? "SIGUE EL BOTÓN" : celda.textContent.split(" el ")[0].trim();
     }), "✅ Creada");
+}
+
+/* Quien administra da de alta aunque su rol no sea `profesor` (la cuenta de
+   administración tiene role = 'admin'), pero no da clase: el alumno no se le
+   asigna. Lo que decide eso son las Edge Functions (`asignado: false`); esto
+   comprueba que la pantalla no prometa «queda asignado a tu clase» y que el
+   aviso final diga que quedó sin profesor. */
+async function pruebaAdministracion(browser) {
+  console.log("\n=== Quien administra sin ser profesor ===");
+
+  const { page, errores } = await abrir(browser, "/formularios.html", clienteFalso({
+    rpc: { informes_resumen_alumnos: [] },
+    tablas: {
+      profiles: [{ id: "u-admin", role: "admin", is_admin: true, es_coordinador: false, full_name: "Oscar" }],
+      formularios: [], formulario_respuestas: [],
+    },
+  }, "u-admin"));
+  await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
+  igual("administración ve el botón «Alumno nuevo»",
+    await page.evaluate(() => document.getElementById("alumno-nuevo-btn").checkVisibility()), true);
+
+  await page.click("#alumno-nuevo-btn");
+  await page.waitForSelector("#alta-fondo:not(.hidden)");
+  igual("el diálogo no le promete asignarlo a su clase",
+    await page.evaluate(() => document.getElementById("alta-asignado").textContent),
+    "queda sin profesor hasta que se lo asignes en Administración");
+
+  await page.evaluate(() => {
+    window.__avisos = [];
+    Avisos.avisar = (t) => { window.__avisos.push(t); };
+    window.__edgeRespuesta = { ok: true, user_id: "u-nuevo", email: "ana@x.cr", usuario: "ana@x.cr",
+      sin_correo: false, encargado_guardado: false, asignado: false, correo_enviado: true };
+  });
+  await page.fill("#alta-alumno-nombre", "Ana Rojas");
+  await page.fill("#alta-alumno-correo", "ana@x.cr");
+  await page.click("#alta-enviar");
+  await page.waitForFunction(() => window.__avisos.length > 0);
+  igual("llama a create-student",
+    await page.evaluate(() => window.__edge[0].url.replace(/^.*\/functions/, "/functions")),
+    "/functions/v1/create-student");
+  igual("el aviso dice que quedó sin profesor",
+    await page.evaluate(() => /Quedó sin profesor: asígnaselo en Administración\./.test(window.__avisos[0])), true);
+  errores.forEach((e) => { console.log("  ✗ error de la página: " + e); fallos += 1; });
+  await page.close();
 }
 
 /* Compartir un formulario con otro coordinador. Lo que hace cumplir quién
@@ -666,6 +714,7 @@ async function pruebaImagenes(browser) {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
     await pruebaArmador(browser);
+    await pruebaAdministracion(browser);
     await pruebaCompartir(browser);
     await pruebaPublica(browser);
     await pruebaImagenes(browser);

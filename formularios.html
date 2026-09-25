@@ -168,7 +168,7 @@
                 <div id="alta-caja" role="dialog" aria-modal="true" aria-labelledby="alta-titulo"
                      class="bg-white dark:bg-brand-900 rounded-2xl shadow-xl max-w-lg mx-auto my-8 p-6">
                     <h2 id="alta-titulo" class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-1">Crear la cuenta del alumno</h2>
-                    <p class="text-sm text-brand-500 dark:text-brand-300 mb-5">Se le manda un correo para que <strong>cree su contraseña</strong>, con los pasos para entrar a la plataforma; queda asignado a tu clase y la persona encargada queda apuntada para los informes a la casa. Revisa que cada dato esté en su lugar.</p>
+                    <p class="text-sm text-brand-500 dark:text-brand-300 mb-5">Se le manda un correo para que <strong>cree su contraseña</strong>, con los pasos para entrar a la plataforma; <span id="alta-asignado">queda asignado a tu clase</span> y la persona encargada queda apuntada para los informes a la casa. Revisa que cada dato esté en su lugar.</p>
 
                     <div class="space-y-3">
                         <div>
@@ -1132,8 +1132,12 @@ async function enviarAlta() {
             pintarRespuestas();
         }
         cerrarAlta();
-        const encargado = out.encargado_guardado
-            ? " La persona encargada quedó apuntada para los informes a la casa." : "";
+        // Quien administra sin dar clase no queda como su profesor: el alumno
+        // queda sin nadie, y sin profesor no sale en los informes de nadie.
+        const encargado = (out.encargado_guardado
+            ? " La persona encargada quedó apuntada para los informes a la casa." : "") +
+            (out.asignado === false
+            ? " Quedó sin profesor: asígnaselo en Administración." : "");
         // Con qué entra de verdad lo dice el servidor, no la pantalla: el
         // usuario pudo salir con un número al final si ya estaba tomado, y
         // quien da de alta tiene que ver el que de verdad quedó.
@@ -1260,6 +1264,12 @@ async function init() {
         return;
     }
     document.getElementById("alumno-nuevo-btn").hidden = !FuncionesCoordinacion.puede("altas");
+    // Quien administra sin rol de profesor no da clase: el alumno no se le
+    // asigna (las Edge Functions lo deciden igual), así que no se le promete.
+    if (perfil.role !== "profesor") {
+        document.getElementById("alta-asignado").textContent =
+            "queda sin profesor hasta que se lo asignes en Administración";
+    }
     if (perfil.is_admin) {
         document.getElementById("subtitulo").textContent =
             "Arma un formulario, compártelo por enlace y baja las respuestas en Excel. Como administras, ves todos los formularios de la plataforma.";
