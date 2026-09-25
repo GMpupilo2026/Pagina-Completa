@@ -10,7 +10,15 @@
  *     larga, se acierta la mitad de la prueba sin saber ajedrez (pasó: lo era
  *     en 91 de 96 ítems);
  *   - que el banco alcance para la cuota de DiagnosticoPrueba.FORMA en todas
- *     las áreas y todos los escalones de dificultad.
+ *     las áreas y todos los escalones de dificultad;
+ *   - que cada ítem tenga su dificultad en puntos (`elo`) y que su escalón
+ *     (`peso`) sea el que le toca a esa dificultad: el nivel se calcula con
+ *     `elo`, y un `peso` desalineado armaría pruebas con otra forma;
+ *   - las preguntas de opción cuyas opciones son jugadas: en las de
+ *     `legalidad` (¿cuál es legal?), que la marcada sea la ÚNICA legal; en las
+ *     de `ahogado` (¿cuál NO ahoga?), que las cuatro sean legales y solo la
+ *     marcada no ahogue; en las
+ *     de Lichess, que las cuatro sean jugadas legales de la posición.
  *
  * Cómo se corre (chess.js no es parte del sitio, se instala aparte):
  *
@@ -32,7 +40,9 @@ try {
 }
 
 global.window = {};
+eval(fs.readFileSync(path.join(RAIZ, "js/plan-entrenamiento.js"), "utf8"));
 eval(fs.readFileSync(path.join(RAIZ, "js/diagnostico-items.js"), "utf8"));
+const PE = global.window.PlanEntrenamiento;
 const ITEMS = global.window.DIAGNOSTICO_ITEMS;
 const PRUEBA = global.window.DiagnosticoPrueba;
 
@@ -80,6 +90,12 @@ function mateProm(enunciado) {
   return m ? CUANTAS[m[1].toLowerCase()] : null;
 }
 
+/* Las opciones van en notación castellana (R, D, T, A, C); chess.js la quiere en inglés. */
+const LETRA = { R: "K", D: "Q", T: "R", A: "B", C: "N" };
+function sanIngles(s) {
+  return s.replace(/^[RDTAC]/, (c) => LETRA[c]).replace(/=([DTAC])/, (_, c) => "=" + LETRA[c]);
+}
+
 /* ---------- recorrido ---------- */
 const vistos = {};
 ITEMS.forEach((i) => {
@@ -111,6 +127,26 @@ ITEMS.forEach((i) => {
     }
   }
 
+  if (typeof i.elo !== "number") mal(i.id, "le falta la dificultad en puntos (`elo`)");
+  else if (PE.escalonDeElo(i.elo) !== i.peso) mal(i.id, `con elo ${i.elo} le toca el escalón ${PE.escalonDeElo(i.elo)} y dice ${i.peso}`);
+
+  if (i.tipo === "opcion_tablero" && i.ahogado) {
+    (i.opciones || []).forEach((o, n) => {
+      const g = new Chess(i.fen);
+      if (!g.move(sanIngles(o))) return mal(i.id, `«${o}» no es legal`);
+      if (g.in_stalemate() === (n === i.correcta)) mal(i.id, `«${o}» ${n === i.correcta ? "ahoga y es la marcada" : "no ahoga y no es la marcada"}`);
+    });
+  }
+
+  if (i.tipo === "opcion_tablero" && (i.legalidad || i.lichess)) {
+    const legal = (i.opciones || []).map((o) => !!new Chess(i.fen).move(sanIngles(o)));
+    if (i.legalidad) {
+      legal.forEach((l, n) => { if (l !== (n === i.correcta)) mal(i.id, `«${i.opciones[n]}» ${l ? "es legal y no es la marcada" : "no es legal y es la marcada"}`); });
+    } else {
+      legal.forEach((l, n) => { if (!l) mal(i.id, `la opción «${i.opciones[n]}» no es una jugada legal`); });
+    }
+  }
+
   if (i.tipo === "opcion" || i.tipo === "opcion_tablero") {
     if (!Array.isArray(i.opciones) || i.opciones.length < 3) mal(i.id, "faltan opciones");
     else if (typeof i.correcta !== "number" || !i.opciones[i.correcta]) mal(i.id, "`correcta` fuera de rango");
@@ -127,7 +163,7 @@ ITEMS.forEach((i) => {
 PRUEBA.AREAS.forEach((area) => {
   [1, 2, 3, 4, 5].forEach((peso) => {
     const hay = ITEMS.filter((i) => i.area === area && i.peso === peso).length;
-    const falta = PRUEBA.FORMA[peso];
+    const falta = PRUEBA.cuota(area, peso);
     if (hay < falta) fallos.push(`${area}: hacen falta ${falta} ítems de peso ${peso} y hay ${hay}`);
   });
 });

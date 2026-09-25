@@ -157,7 +157,7 @@ function pregunta(item, n) {
       <p class="enunciado">${esc(item.enunciado)}</p>
       ${lado}
       <p class="explica"><strong>Por qué.</strong> ${esc(item.explica)}</p>
-      ${item.prueba ? `<p class="fuente">Comprobado con chess.js: ${esc(item.prueba)}</p>` : ""}
+      ${item.prueba ? `<p class="fuente">Cómo se comprobó: ${esc(item.prueba)}</p>` : ""}
     </section>`;
 }
 
@@ -189,7 +189,6 @@ const indice = PE.AREAS.map((area) => {
 
 /* ---------- escala de niveles ---------- */
 const escala = PE.NIVELES.map((niv) => `<tr>
-    <td class="estrellas">${niv.escalon ? "★".repeat(niv.escalon) + "☆".repeat(5 - niv.escalon) : "—"}</td>
     <td><strong>${esc(niv.etiqueta)}</strong></td>
     <td class="rango">${esc(niv.rango)}</td>
     <td>${esc(niv.descripcion)}</td>
@@ -202,7 +201,10 @@ for (let i = 0; i < respuestas.length; i += 3) {
     `<td class="resp"><span class="rnum">${r.n}</span> ${esc(r.corta)}</td>`).join("") + "</tr>");
 }
 
-const REPARTO = PE.ESCALONES.map((p) => PRUEBA.FORMA[p]).join("+");
+const REPARTO = PRUEBA.AREAS.map((a) => {
+  const n = PE.ESCALONES.reduce((s, p) => s + PRUEBA.cuota(a, p), 0);
+  return `${PE.AREA_POR_ID[a].nombre.toLowerCase()} ${n}`;
+}).join(", ");
 
 const html = `<!doctype html><html lang="es"><head><meta charset="utf-8">
 <title>Libro del diagnóstico · cuerpo</title>
@@ -270,20 +272,22 @@ const html = `<!doctype html><html lang="es"><head><meta charset="utf-8">
   </div>
   <div class="nota">
     <strong>La prueba sortea, el banco no cambia.</strong> Cada diagnóstico toma
-    ${PRUEBA.TOTAL} preguntas de estas ${BANCO.length} —${REPARTO} por área, o sea
+    ${PRUEBA.TOTAL} preguntas de estas ${BANCO.length} —${REPARTO}, cada área con
     una cuota fija de cada escalón— y vale ${PRUEBA.PUNTOS} puntos. Así, dos
     diagnósticos del mismo alumno se comparan aunque las preguntas hayan sido
     otras.
   </div>
-  <p><strong>El nivel sale de los escalones, no del porcentaje.</strong> El escalón
-  de una pregunta (de 1 a 5) es cuánto pesa. El nivel estimado es el escalón más
-  alto superado —60% de aciertos ahí, y el promedio de los anteriores también—,
-  con un tope por área: si un área queda por debajo del 30% no pasa de Avanzado,
-  y por debajo del 50% no pasa de Experto. Nadie con los finales en blanco es
-  maestro. Con el porcentaje a secas, un jugador de 1400 y uno de 2300 sacaban
-  los dos «Experto».</p>
+  <p><strong>Cada pregunta tiene su dificultad en puntos Elo</strong>: la fuerza
+  con la que se acierta la mitad de las veces. Las de tablero salen del rating
+  del ejercicio en Lichess; las demás, de las respuestas de los diagnósticos ya
+  rendidos, cruzadas con el Elo que declaró cada persona. La fuerza del alumno es
+  la que mejor explica cuáles resolvió y cuáles no, con la misma curva del Elo,
+  y el nivel es el tramo de Elo de esa fuerza. Resolver una difícil de mover en el
+  tablero pesa mucho más que acertar una fácil de opción, donde también se acierta
+  al azar. El escalón de cada pregunta (de 1 a 5) es el tramo de su dificultad:
+  menos de 1100, 1100 a 1399, 1400 a 1699, 1700 a 1999 y 2000 o más.</p>
   <table>
-    <tr><th>Escalón</th><th>Nivel estimado</th><th>Elo aprox.</th><th>Qué significa</th></tr>
+    <tr><th>Nivel estimado</th><th>Fuerza en Elo</th><th>Qué significa</th></tr>
     ${escala}
   </table>
   <div class="nota" style="margin-top:5mm">
@@ -461,7 +465,7 @@ function accesible() {
             ${pos}
             ${cuerpo}
             <p class="explica"><strong>Por qué.</strong> ${esc(item.explica)}</p>
-            ${item.prueba ? `<p class="comprobado"><strong>Comprobado con chess.js:</strong> ${esc(item.prueba)}</p>` : ""}
+            ${item.prueba ? `<p class="comprobado"><strong>Cómo se comprobó:</strong> ${esc(item.prueba)}</p>` : ""}
           </article>`;
         }).join("");
     }).join("");

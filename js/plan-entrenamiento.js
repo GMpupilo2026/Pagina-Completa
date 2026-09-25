@@ -275,11 +275,17 @@ window.PlanEntrenamiento = (function () {
      (lecturaElo): un Elo por encima de la prueba señala huecos que se compensan
      con experiencia; por debajo, falta rodaje de torneo. El alumno o su profesor
      pueden ir ajustando el Elo y el análisis se recalcula. */
+  /* `peso` es cómo se mezclaba el Elo con la prueba hasta la versión 4 (se
+     conserva para calificar esos resultados igual que entonces). `desvio` es
+     lo que se usa desde la versión 5: cuánto puede errar ese Elo como medida
+     de la fuerza de hoy, en puntos. Un FIDE sale de decenas de partidas lentas
+     contra rivales medidos; uno en línea, de otro ritmo y otra población (y a
+     menudo inflado respecto al FIDE), así que dice bastante menos. */
   const ELO_TIPOS = [
-    { id: 'fide',     etiqueta: 'FIDE',                         peso: 0.6 },
-    { id: 'nacional', etiqueta: 'Federación nacional',          peso: 0.5 },
-    { id: 'online',   etiqueta: 'En línea (Lichess, Chess.com)', peso: 0.4 },
-    { id: 'estimado', etiqueta: 'Estimado por el profesor',     peso: 0.35 },
+    { id: 'fide',     etiqueta: 'FIDE',                         peso: 0.6,  desvio: 100 },
+    { id: 'nacional', etiqueta: 'Federación nacional',          peso: 0.5,  desvio: 150 },
+    { id: 'online',   etiqueta: 'En línea (Lichess, Chess.com)', peso: 0.4,  desvio: 250 },
+    { id: 'estimado', etiqueta: 'Estimado por el profesor',     peso: 0.35, desvio: 200 },
   ];
   const ELO_TIPO_POR_ID = {};
   ELO_TIPOS.forEach((t) => { ELO_TIPO_POR_ID[t.id] = t; });
@@ -310,16 +316,157 @@ window.PlanEntrenamiento = (function () {
     const n = typeof v === 'number' ? v : parseInt(v, 10);
     return Number.isFinite(n) && n >= ELO_MIN && n <= ELO_MAX ? Math.round(n) : null;
   }
-  function lecturaElo(declarado, estimado, tipo) {
+  function lecturaElo(declarado, estimado, tipo, error) {
     const dif = declarado - estimado;
     const origen = ELO_TIPO_POR_ID[tipo] ? ELO_TIPO_POR_ID[tipo].etiqueta : 'declarado';
-    if (Math.abs(dif) < 150) {
+    // Con el margen de la prueba (versión 5), «coinciden» es estar dentro de él.
+    if (Math.abs(dif) < Math.max(150, error || 0)) {
       return { clave: 'coherente', dif, texto: `El Elo (${declarado}, ${origen}) y la prueba (≈${estimado}) cuentan lo mismo: la estimación es sólida y el plan puede seguirse tal cual.` };
     }
     if (dif > 0) {
       return { clave: 'prueba_baja', dif, texto: `El Elo (${declarado}, ${origen}) está ${dif} puntos por encima de lo que muestra la prueba (≈${estimado}). Suele significar que en torneo compensa con experiencia, ritmo y lucha, pero tiene huecos concretos en las áreas flojas; cerrarlos es lo que permite el siguiente salto de rating.` };
     }
     return { clave: 'prueba_alta', dif, texto: `La prueba (≈${estimado}) muestra ${-dif} puntos más de fuerza que el Elo (${declarado}, ${origen}). Sabe más de lo que rinde: falta rodaje de torneo, manejo del reloj y calma en la partida real. Conviene sumar partidas largas y torneos al plan.${tipo === 'online' ? '' : ' Si el Elo es antiguo o de pocas partidas, también puede estar quedado.'}` };
+  }
+
+  /* ===== Medición en escala Elo (diagnósticos de la versión 5 en adelante) =====
+
+     Qué se cambió y por qué. Con los escalones, la prueba dejó de distinguir a
+     nadie por encima de unos 1450 puntos: en los 80 diagnósticos rendidos hasta
+     septiembre de 2026, un 1463 sacó 92 %, un 1527 93 %, un 2033 93 % y un
+     2100 98 %, y todos los que pasaron del 80 % acertaron prácticamente TODAS
+     las preguntas del banco (ver docs/decisiones/entrenamiento.md). Contar
+     escalones no arregla eso: si las preguntas más difíciles las resuelve
+     cualquiera de 1450, no hay escalera que mida 1800.
+
+     Ahora cada pregunta tiene su dificultad en puntos Elo (`item.elo`): la
+     fuerza con la que se acierta la mitad de las veces. Las de tablero salen
+     del rating de Lichess del ejercicio; las demás, de las respuestas reales
+     (herramientas/diagnostico-calibrar.js). Con eso, la fuerza del alumno es la
+     que mejor explica sus aciertos y fallos, con la misma curva del Elo:
+
+        P(acierto) = azar + (1 − azar) / (1 + 10^((dificultad − fuerza) / 400))
+
+     `azar` es lo que se acierta sin saber: 0,2 en las de opción (hay cuatro y
+     «No lo sé»; quien no sabe y marca igual acierta a veces) y 0 en las de
+     mover en el tablero, donde no hay nada que adivinar. Así acertar una
+     pregunta difícil de mover pesa mucho más que acertar una de opción, que es
+     lo que corresponde.
+
+     La cuenta es por grilla (de 100 a 3300, de 5 en 5): media y desvío de la
+     fuerza dados los aciertos. Se le pone un punto de partida muy amplio
+     (1500 ± 800) solo para que quien acierta todo o nada tenga un número finito;
+     con 60 preguntas casi no pesa. El desvío es el margen que se muestra
+     («≈1720 ± 110»): cuánto puede errar la prueba, dicho en voz alta. */
+  const ESCALA_ELO = 400;
+  const PARTIDA = { media: 1500, desvio: 800 };
+  /* Los cortes de los escalones en puntos: un ítem de dificultad 1550 es del
+     escalón 3. Los usan el banco (qué `peso` le toca a cada pregunta) y el
+     generador de ítems de Lichess. */
+  const ESCALON_ELO = [1100, 1400, 1700, 2000];
+  function escalonDeElo(elo) {
+    let e = 1;
+    ESCALON_ELO.forEach((c) => { if (elo >= c) e += 1; });
+    return e;
+  }
+  function azarDe(item) {
+    return item && (item.tipo === 'opcion' || item.tipo === 'opcion_tablero') ? 0.2 : 0;
+  }
+  function probabilidad(fuerza, dificultad, azar) {
+    return azar + (1 - azar) / (1 + Math.pow(10, (dificultad - fuerza) / ESCALA_ELO));
+  }
+  /* `items`: los de la prueba (con `elo`); `respuestas`: { id: true|false }.
+     Lo que no se contestó no cuenta; «No lo sé» cuenta como fallo, que es lo
+     que es para la medición (y a la vez la más honesta: sin azar). */
+  function medir(items, respuestas, partida) {
+    const p0 = partida || PARTIDA;
+    const datos = (items || []).filter((i) => typeof i.elo === 'number' && respuestas && i.id in respuestas)
+      .map((i) => ({ b: i.elo, c: azarDe(i), ok: !!respuestas[i.id] }));
+    const grilla = [];
+    let max = -Infinity;
+    for (let t = 100; t <= 3300; t += 5) {
+      let lp = -0.5 * Math.pow((t - p0.media) / p0.desvio, 2);
+      datos.forEach((d) => {
+        const p = probabilidad(t, d.b, d.c);
+        lp += Math.log(d.ok ? p : 1 - p);
+      });
+      grilla.push([t, lp]);
+      if (lp > max) max = lp;
+    }
+    let s = 0, m = 0, m2 = 0;
+    grilla.forEach(([t, lp]) => { const w = Math.exp(lp - max); s += w; m += w * t; m2 += w * t * t; });
+    const media = m / s;
+    const desvio = Math.sqrt(Math.max(0, m2 / s - media * media));
+    /* Lo que cabía esperar en cada área con esa fuerza (en % de puntos): con
+       preguntas difíciles, un 50 % en un área puede ser lo normal para un
+       2000. Un hueco es sacar MUCHO menos que eso (ver topePorHuecos). */
+    const esperado = {};
+    const suma = {};
+    (items || []).filter((i) => typeof i.elo === 'number' && respuestas && i.id in respuestas).forEach((i) => {
+      const a = suma[i.area] || (suma[i.area] = { p: 0, e: 0 });
+      a.p += i.peso;
+      a.e += i.peso * probabilidad(media, i.elo, azarDe(i));
+    });
+    Object.keys(suma).forEach((k) => { esperado[k] = Math.round((suma[k].e / suma[k].p) * 100); });
+    return { elo: Math.round(media), error: Math.round(desvio), preguntas: datos.length, modelo: 'elo-400', esperado };
+  }
+  /* El tope por áreas de la versión 5. La idea es la de siempre —nadie con
+     los finales en blanco es «muy avanzado»—, pero ya no se puede medir con
+     el porcentaje a secas: con la mitad de la prueba difícil, un jugador de
+     2000 saca 50 % en un área sin tener ningún hueco, y el tope de antes
+     (menos de 50 % → como mucho Avanzado) lo bajaba sin razón. Ahora un hueco
+     es quedar muy por debajo de lo esperable para su propia fuerza: 45 puntos
+     o más por debajo → como mucho Avanzado; 60 o más → como mucho Intermedio.
+     Los márgenes son anchos a propósito: un área tiene de cinco a nueve
+     preguntas y el azar solo mueve su porcentaje ±20 puntos; con estos
+     márgenes, a alguien sin huecos casi nunca le toca un tope por mala suerte
+     (comprobado con simulaciones: ver docs/decisiones/entrenamiento.md). */
+  /* La «nota» de un área: lo que decide su banda (a trabajar / en camino /
+     firme, con los cortes de siempre en 60 y 80) y el orden del plan.
+     - Hasta la versión 4 es el porcentaje, como siempre.
+     - Desde la 5, el porcentaje ya no sirve para eso: con la mitad de la prueba
+       difícil, un 1500 saca 30 % en casi todas las áreas sin tener ningún
+       hueco, y todas saldrían «a trabajar». Además las áreas no tienen el mismo
+       reparto de preguntas difíciles, así que ordenar por porcentaje mandaría
+       siempre al plan las que más preguntas duras tienen (táctica, cálculo), no
+       las flojas de ese alumno. La nota es entonces 70 + (porcentaje −
+       esperado): lo esperable para su fuerza queda en 70 («en camino»), diez
+       puntos por debajo ya es «a trabajar» y diez por encima, «firme». Un 80 %
+       o más sigue siendo firme, sea lo que sea que se esperara. */
+  function notaDeArea(porcentaje, esperado) {
+    if (typeof esperado !== 'number') return porcentaje;
+    const nota = Math.max(0, Math.min(100, Math.round(70 + porcentaje - esperado)));
+    return porcentaje >= 80 ? Math.max(80, nota) : nota;
+  }
+  const BANDAS_AREA = [
+    { clave: 'firme', desde: 80, etiqueta: 'firme' },
+    { clave: 'camino', desde: 60, etiqueta: 'en camino' },
+    { clave: 'trabajar', desde: 0, etiqueta: 'a trabajar' },
+  ];
+  function bandaDeNota(nota) { return BANDAS_AREA.find((b) => nota >= b.desde); }
+
+  function topePorHuecos(porArea, esperado) {
+    let tope = NIVELES.length - 1;
+    (porArea || []).forEach((a) => {
+      if (!esperado || typeof esperado[a.id] !== 'number' || !a.total) return;
+      const falta = esperado[a.id] - a.porcentaje;
+      if (falta >= 60) tope = Math.min(tope, 2);
+      else if (falta >= 45) tope = Math.min(tope, 3);
+    });
+    return tope;
+  }
+  /* Junta la prueba con el Elo declarado: dos mediciones de lo mismo, cada una
+     con su margen, pesan según lo precisas que son. Un FIDE (± 100) y una
+     prueba bien contestada (± 110) pesan casi igual; un Elo en línea (± 250)
+     pesa bastante menos que la prueba. */
+  function combinar(prueba, errorPrueba, declarado, tipo) {
+    const t = ELO_TIPO_POR_ID[tipo] || ELO_TIPO_POR_ID.estimado;
+    const wp = 1 / Math.pow(Math.max(40, errorPrueba), 2);
+    const we = 1 / Math.pow(t.desvio, 2);
+    return {
+      elo: Math.round((wp * prueba + we * declarado) / (wp + we)),
+      error: Math.round(Math.sqrt(1 / (wp + we))),
+    };
   }
 
   /* Resultados por escalón de dificultad, que es de donde sale el nivel.
@@ -382,7 +529,7 @@ window.PlanEntrenamiento = (function () {
       const porcentaje = d.peso ? Math.round((d.logrado / d.peso) * 100) : 0;
       return {
         id: a.id, nombre: a.nombre, emoji: a.emoji, mide: a.mide,
-        porcentaje, aciertos: d.aciertos || 0, total: d.total || 0,
+        porcentaje, nota: porcentaje, aciertos: d.aciertos || 0, total: d.total || 0,
         // Cuántas dijo no saber: un hueco que enseñar, distinto de un error que corregir.
         nosabe: d.nosabe || 0,
       };
@@ -394,12 +541,52 @@ window.PlanEntrenamiento = (function () {
     /* Con `dificultad` (pruebas nuevas) el nivel sale de los escalones; sin
        ella —resultados de antes, medidos con otra prueba— se sigue usando el
        porcentaje, que es lo único que hay y es como se calificaron entonces. */
+    const medicion = detalle && detalle.medicion && typeof detalle.medicion.elo === 'number' ? detalle.medicion : null;
+    const perfil = (detalle && detalle.perfil) || {};
+    const declarado = eloValido(perfil.elo);
+    /* Versión 5 en adelante: el nivel sale de la fuerza medida en puntos
+       (ver «Medición en escala Elo»), no de los escalones. Los escalones se
+       siguen calculando porque son la mejor forma de mostrar hasta dónde
+       llegó, pero ya no deciden. */
+    if (medicion) {
+      porArea.forEach((a) => {
+        if (medicion.esperado && typeof medicion.esperado[a.id] === 'number') {
+          a.esperado = medicion.esperado[a.id];
+          a.nota = notaDeArea(a.porcentaje, a.esperado);
+        }
+      });
+      const porNota = porArea.slice().sort((a, b) => a.nota - b.nota);
+      const escalones = porEscalon(detalle.dificultad);
+      const tope = topePorHuecos(porArea, medicion.esperado);
+      const conTope = (e) => NIVELES[Math.min(NIVELES.indexOf(nivelDeElo(e)), tope)];
+      const estimado = medicion.elo;
+      let elo = { declarado: null, tipo: null, estimado, error: medicion.error, combinado: estimado, errorCombinado: medicion.error, lectura: null };
+      if (declarado) {
+        const tipo = ELO_TIPO_POR_ID[perfil.elo_tipo] ? perfil.elo_tipo : 'estimado';
+        const c = combinar(estimado, medicion.error, declarado, tipo);
+        elo = { declarado, tipo, tipoEtiqueta: ELO_TIPO_POR_ID[tipo].etiqueta, estimado, error: medicion.error,
+                combinado: c.elo, errorCombinado: c.error, lectura: lecturaElo(declarado, estimado, tipo, medicion.error) };
+      }
+      /* «Hasta qué escalón llega»: el último cuyo centro queda por debajo de la
+         fuerza medida (centros: 950, 1250, 1550, 1850 y 2150). */
+      let alcanzado = 0;
+      [950, 1250, 1550, 1850, 2150].forEach((c, i) => { if (estimado >= c) alcanzado = i + 1; });
+      return {
+        porArea, porcentaje, modelo: 'elo',
+        nivel: conTope(elo.combinado), nivelPrueba: conTope(estimado), elo,
+        escalones, escalonAlcanzado: alcanzado, topeAreas: tope,
+        aciertos: porArea.reduce((s, a) => s + a.aciertos, 0),
+        total: porArea.reduce((s, a) => s + a.total, 0),
+        nosabe: porArea.reduce((s, a) => s + a.nosabe, 0),
+        debilidades: porNota.filter((a) => a.nota < 60).slice(0, 3),
+        fortalezas: porNota.slice().reverse().filter((a) => a.nota >= 80),
+        perfil, fecha: (detalle && detalle.fecha) || null,
+      };
+    }
     const conEscalones = detalle && detalle.dificultad
       ? nivelPorEscalones(detalle.dificultad, porArea)
       : { escalones: porEscalon(null), alcanzado: null, nivel: nivelDe(porcentaje) };
     // Elo: el declarado en el perfil (si lo hay) frente al que sugiere la prueba.
-    const perfil = (detalle && detalle.perfil) || {};
-    const declarado = eloValido(perfil.elo);
     const estimado = eloEstimado(conEscalones.nivel, porcentaje);
     let nivel = conEscalones.nivel;
     let elo = { declarado: null, tipo: null, estimado, combinado: estimado, lectura: null };
@@ -437,6 +624,8 @@ window.PlanEntrenamiento = (function () {
     basico: '20 minutos al día, 5 días por semana',
     intermedio: '30 minutos al día, 5 días por semana',
     avanzado: '40 minutos al día, 5 días por semana',
+    muy_avanzado: '1 hora al día, 6 días por semana',
+    // Claves de niveles viejos, para los resultados guardados con ellos.
     experto: '1 hora al día, 6 días por semana',
   };
 
@@ -446,10 +635,13 @@ window.PlanEntrenamiento = (function () {
      Si no hay debilidades claras, el plan se ordena igual por las áreas más
      bajas: siempre hay una que va última. */
   function generarPlan(resumen) {
-    const ordenadas = resumen.porArea.slice().sort((a, b) => a.porcentaje - b.porcentaje);
+    // Se ordena por la nota del área (ver notaDeArea): en los diagnósticos
+    // viejos es el porcentaje; en los nuevos, cuánto rinde respecto de su fuerza.
+    const nota = (a) => (typeof a.nota === 'number' ? a.nota : a.porcentaje);
+    const ordenadas = resumen.porArea.slice().sort((a, b) => nota(a) - nota(b));
     // Solo entran al plan las áreas que de verdad tienen margen: dedicarle una
     // semana a algo que ya está al 100% es tiempo que no se le da a lo flojo.
-    const candidatas = ordenadas.filter((a) => a.porcentaje < 85);
+    const candidatas = ordenadas.filter((a) => nota(a) < 85);
     const focos = candidatas.slice(0, 3).map((a) => AREA_POR_ID[a.id]);
     const fuertes = resumen.fortalezas.map((a) => AREA_POR_ID[a.id]);
 
@@ -459,10 +651,16 @@ window.PlanEntrenamiento = (function () {
         numero: i + 1,
         area: area.id,
         titulo: `Semana ${i + 1} · ${area.emoji} ${area.nombre}`,
-        porque: dato.porcentaje < 60
-          ? `${dato.porcentaje}% en el diagnóstico. ${area.flojo}`
-          : `${dato.porcentaje}% en el diagnóstico: es de lo más bajo que tiene, y afinarlo sostiene todo lo demás.`,
-        objetivo: `Subir ${area.nombre.toLowerCase()} por encima del ${Math.min(95, Math.max(70, dato.porcentaje + 20))}% en la próxima medición.`,
+        porque: typeof dato.esperado === 'number'
+          ? (nota(dato) < 60
+            ? `${dato.porcentaje}% en el diagnóstico, cuando con su fuerza cabía esperar un ${dato.esperado}%. ${area.flojo}`
+            : `${dato.porcentaje}% en el diagnóstico (con su fuerza cabía esperar un ${dato.esperado}%): es de lo más bajo que tiene, y afinarlo sostiene todo lo demás.`)
+          : dato.porcentaje < 60
+            ? `${dato.porcentaje}% en el diagnóstico. ${area.flojo}`
+            : `${dato.porcentaje}% en el diagnóstico: es de lo más bajo que tiene, y afinarlo sostiene todo lo demás.`,
+        objetivo: typeof dato.esperado === 'number'
+          ? `Que ${area.nombre.toLowerCase()} deje de ser lo más flojo: en la próxima medición, al menos el ${Math.min(95, Math.max(dato.porcentaje + 10, dato.esperado + 10))}% en esa área.`
+          : `Subir ${area.nombre.toLowerCase()} por encima del ${Math.min(95, Math.max(70, dato.porcentaje + 20))}% en la próxima medición.`,
         tareas: area.tareas.slice(),
         recursos: area.recursos.slice(),
       };
@@ -558,5 +756,6 @@ window.PlanEntrenamiento = (function () {
   function enlace(href, base) { return (base || '') + href; }
 
   return { AREAS, AREA_POR_ID, NIVELES, ESCALONES, nivelDe, nivelPorEscalones, porEscalon, resumir, generarPlan, enlace,
+           ESCALON_ELO, escalonDeElo, azarDe, probabilidad, medir, combinar, notaDeArea, BANDAS_AREA, bandaDeNota,
            ELO_TIPOS, ELO_TIPO_POR_ID, ELO_MIN, ELO_MAX, nivelDeElo, eloDeNivel, eloEstimado, eloValido, lecturaElo };
 })();

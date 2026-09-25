@@ -5,14 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="../img/favicon.svg">
     <title>Diagnóstico de nivel — Ajedrez Integral</title>
-    <meta name="description" content="Diagnóstico completo de ajedrez: 63 preguntas y posiciones en cinco escalones de dificultad, que miden nueve áreas del juego y devuelven un plan de estudio.">
+    <meta name="description" content="Diagnóstico completo de ajedrez: 60 preguntas y posiciones para resolver, de cinco escalones de dificultad, que miden nueve áreas del juego, estiman tu fuerza en puntos Elo y devuelven un plan de estudio.">
     <link rel="canonical" href="https://ajedrez-integral.com/entreno/diagnostico.html">
     <!-- Para cuando alguien pega el enlace en WhatsApp, que es por donde se comparte esto. -->
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Ajedrez Integral">
     <meta property="og:locale" content="es_CR">
     <meta property="og:title" content="Diagnóstico de nivel — Ajedrez Integral">
-    <meta property="og:description" content="Diagnóstico completo de ajedrez: 63 preguntas y posiciones en cinco escalones de dificultad, que miden nueve áreas del juego y devuelven un plan de estudio.">
+    <meta property="og:description" content="Diagnóstico completo de ajedrez: 60 preguntas y posiciones para resolver, de cinco escalones de dificultad, que miden nueve áreas del juego, estiman tu fuerza en puntos Elo y devuelven un plan de estudio.">
     <meta property="og:url" content="https://ajedrez-integral.com/entreno/diagnostico.html">
     <meta property="og:image" content="https://ajedrez-integral.com/img/og-ajedrez-integral.jpg">
     <meta property="og:image:width" content="1200">
@@ -94,7 +94,7 @@
             <section id="intro-view">
                 <a href="aprender.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors mb-3">← 🎓 Aprende</a>
                 <h1 class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white mb-1"><span aria-hidden="true">🧭</span> Diagnóstico de nivel</h1>
-                <p class="text-brand-500 dark:text-brand-300 text-sm mb-6">63 preguntas y posiciones que miden nueve áreas del juego, de las reglas a los finales, en cinco escalones de dificultad: de lo que se aprende el primer día a lo que resuelve alguien de competencia. Se sortean de un banco más grande, así que si lo repites dentro de unas semanas no te van a tocar las mismas. Tu nivel es el escalón más alto que superes, no cuántas preguntas aciertes. No se aprueba ni se reprueba: sirve para armarte un plan.</p>
+                <p class="text-brand-500 dark:text-brand-300 text-sm mb-6">60 preguntas y posiciones que miden nueve áreas del juego, de las reglas a los finales, en cinco escalones de dificultad: de lo que se aprende el primer día a lo que resuelve alguien de más de 2000. Muchas son para resolver en el tablero, y la mitad son difíciles de verdad: es normal no saber varias. Se sortean de un banco más grande, así que si lo repites dentro de unas semanas no te van a tocar las mismas. Cada pregunta tiene su dificultad medida en puntos, así que no cuenta cuántas aciertes sino cuáles: resolver una difícil vale mucho más que acertar una fácil. No se aprueba ni se reprueba: sirve para armarte un plan.</p>
 
                 <div id="previo" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6"></div>
 
@@ -147,7 +147,7 @@
                          conteste; este es para estudiar y corregir, y trae las 118 preguntas. -->
                     <a href="../libro-de-diagnostico.pdf" id="libro-docente" class="hidden border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-5 py-3 rounded-xl text-sm hover:border-accent-500 transition-colors">📕 Descargar el libro del banco (PDF)</a>
                 </div>
-                <p id="pdf-docente-nota" class="hidden text-xs text-brand-450 dark:text-brand-350 mt-2">Solo para administración, los dos con marca de agua y sin entregar a nadie más. El <strong>cuadernillo</strong> es una prueba de 63 ejercicios con sus diagramas y su hoja de corrección. El <strong>libro</strong> es el banco entero —301 preguntas por área y por escalón, con la respuesta, el porqué y cómo se comprobó cada posición—; hay también una <a href="../libro-de-diagnostico-accesible.html" class="underline">versión para lector de pantalla</a>.</p>
+                <p id="pdf-docente-nota" class="hidden text-xs text-brand-450 dark:text-brand-350 mt-2">Solo para administración, los dos con marca de agua y sin entregar a nadie más. El <strong>cuadernillo</strong> es una prueba de 60 ejercicios con sus diagramas, su hoja de corrección y la tabla de puntos a fuerza estimada. El <strong>libro</strong> es el banco entero —583 preguntas por área y por escalón, con la respuesta, el porqué y cómo se comprobó cada posición—; hay también una <a href="../libro-de-diagnostico-accesible.html" class="underline">versión para lector de pantalla</a>.</p>
             </section>
 
             <!-- ---------- Prueba ---------- -->
@@ -287,10 +287,13 @@ const PENDIENTE_KEY = 'diagnostico_pendiente_v1';
      3 — la prueba tiene escalones de dificultad 4 y 5 (preguntas duras).
      4 — se suma la novena área (Maestría): 63 ítems en vez de 56, y otro
          puntaje. Un resultado nuevo ya no se compara con uno de antes.
+     5 — 60 ítems, la mitad de escalones 4 y 5, muchos de resolver en el
+         tablero; el nivel sale de la fuerza medida en puntos Elo
+         (PlanEntrenamiento.medir), no de los escalones.
    Una prueba empezada con una versión anterior no se puede continuar: los
    ejercicios ya no son los mismos y el resultado mezclaría dos mediciones
    distintas. Se descarta y se avisa en la portada. */
-const VERSION = 4;
+const VERSION = 5;
 
 /* "No lo sé todavía" es una respuesta más, no un botón de saltar: vale cero
    puntos igual que fallar, pero se guarda aparte. Para el profesor no es lo
@@ -416,7 +419,7 @@ function pintarPerfil() {
         ${PE.ELO_TIPOS.map((t) => `<option value="${t.id}"${t.id === tipoActual ? ' selected' : ''}>${t.etiqueta}</option>`).join('')}
       </select>
     </div>
-    <p class="text-xs text-brand-450 dark:text-brand-350 mt-1">${perfilCuenta && perfilCuenta.elo ? `Registrado en tu perfil: ${perfilCuenta.elo}. Si cambió, corregilo acá y queda actualizado.` : sesionActual ? 'Con tu Elo, el diagnóstico compara lo que sabes con lo que rindes en partida y ajusta el nivel y el plan. Queda guardado en tu perfil (Configuración).' : 'Con tu Elo, el diagnóstico compara lo que sabes con lo que rindes en partida y ajusta el nivel estimado.'}</p>`;
+    <p class="text-xs text-brand-450 dark:text-brand-350 mt-1">${perfilCuenta && perfilCuenta.elo ? `Registrado en tu perfil: ${perfilCuenta.elo}. Si cambió, corrígelo aquí y queda actualizado.` : sesionActual ? 'Con tu Elo, el diagnóstico compara lo que sabes con lo que rindes en partida y ajusta el nivel y el plan. Queda guardado en tu perfil (Configuración).' : 'Con tu Elo, el diagnóstico compara lo que sabes con lo que rindes en partida y ajusta el nivel estimado.'}</p>`;
   box.appendChild(g);
   const inp = g.querySelector('#perfil-elo'), sel = g.querySelector('#perfil-elo-tipo');
   const guardarElo = () => {
@@ -862,6 +865,11 @@ function construirDetalle() {
   });
   const respuestas = {};
   Object.keys(estado.respuestas).forEach((id) => { respuestas[id] = !!estado.respuestas[id].ok; });
+  /* La fuerza medida SOLO por la prueba, con su margen. Se guarda hecha
+     porque Informes no carga el banco; el Elo declarado se le suma después, en
+     PlanEntrenamiento.resumir(), así que si el profesor corrige el Elo del
+     alumno el nivel se recalcula sin rehacer la prueba. */
+  const medicion = PE.medir(ITEMS, respuestas);
   return {
     version: VERSION,
     fecha: new Date().toISOString(),
@@ -871,6 +879,7 @@ function construirDetalle() {
     dificultad,
     respuestas,
     nosabe,
+    medicion,
   };
 }
 
@@ -954,7 +963,9 @@ function pintarEscalones(resumen) {
   const alcanzado = resumen.escalonAlcanzado;
   caja.innerHTML = `
     <p class="text-sm font-semibold text-brand-700 dark:text-brand-200 mb-1">Hasta dónde llegaste</p>
-    <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">La prueba tiene cinco escalones de dificultad. Tu nivel es el más alto que superaste (60% de aciertos o más), no la suma de respuestas buenas: así no cuenta lo mismo acertar lo fácil que resolver lo difícil.</p>
+    <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">${resumen.modelo === 'elo'
+      ? `Cada pregunta tiene su dificultad en puntos Elo, y tu fuerza es la que mejor explica cuáles resolviste y cuáles no: ≈${resumen.elo.estimado} ± ${resumen.elo.error} según la prueba. Resolver una difícil de mover en el tablero pesa mucho más que acertar una fácil de opción, donde también se acierta al azar.`
+      : 'La prueba tiene cinco escalones de dificultad. Tu nivel es el más alto que superaste (60% de aciertos o más), no la suma de respuestas buenas: así no cuenta lo mismo acertar lo fácil que resolver lo difícil.'}</p>
     <div class="space-y-1.5">
       ${escalones.map((e) => `
         <div class="flex items-center gap-2 text-sm">
@@ -963,7 +974,7 @@ function pintarEscalones(resumen) {
             <div class="h-full ${e.peso <= alcanzado ? 'bg-green-500' : 'bg-brand-300 dark:bg-brand-700'}" style="width:${e.porcentaje}%"></div>
           </div>
           <span class="w-28 shrink-0 text-right text-brand-500 dark:text-brand-300">${e.aciertos}/${e.total} · ${e.porcentaje}%</span>
-          <span class="w-24 shrink-0 text-xs ${e.peso <= alcanzado ? 'text-green-600 dark:text-green-400' : 'text-brand-450 dark:text-brand-350'}">${e.peso <= alcanzado ? 'superado' : 'todavía no'}</span>
+          <span class="w-24 shrink-0 text-xs ${e.peso <= alcanzado ? 'text-green-600 dark:text-green-400' : 'text-brand-450 dark:text-brand-350'}">${e.peso <= alcanzado ? (resumen.modelo === 'elo' ? 'a tu alcance' : 'superado') : 'todavía no'}</span>
         </div>`).join('')}
     </div>
     <p class="text-xs text-brand-450 dark:text-brand-350 mt-3">${alcanzado >= 5
@@ -990,26 +1001,30 @@ function mostrarResultado(detalle, reciente) {
     ` · fuerza estimada ${resumen.nivel.rango} (estimación para orientar el estudio, no un rating oficial).`;
   let eloEl = document.getElementById('result-elo');
   if (!eloEl) { eloEl = document.createElement('p'); eloEl.id = 'result-elo'; eloEl.className = 'text-xs mt-2 opacity-90'; document.getElementById('result-score').insertAdjacentElement('afterend', eloEl); }
+  const margen = (v, e) => e ? `≈${v} ± ${e}` : `≈${v}`;
   eloEl.textContent = resumen.elo && resumen.elo.declarado
-    ? `Elo: ${resumen.elo.lectura.texto} Nivel calculado combinando tu Elo con la prueba (≈${resumen.elo.combinado}).`
-    : `Sin Elo registrado: el nivel sale solo de la prueba (≈${resumen.elo.estimado}).${sesionActual ? ' Si tienes rating, agregalo en Configuración › Perfil y el próximo diagnóstico lo tendrá en cuenta.' : ''}`;
+    ? `Elo: ${resumen.elo.lectura.texto} Nivel calculado combinando tu Elo con la prueba (${margen(resumen.elo.combinado, resumen.elo.errorCombinado)}).`
+    : `Sin Elo registrado: el nivel sale solo de la prueba (${margen(resumen.elo.estimado, resumen.elo.error)}).${sesionActual ? ' Si tienes rating, agrégalo en Configuración › Perfil y el próximo diagnóstico lo tendrá en cuenta.' : ''}`;
   pintarEscalones(resumen);
 
   const areasBox = document.getElementById('result-areas');
   areasBox.innerHTML = '';
   resumen.porArea.forEach((a) => {
-    const color = a.porcentaje >= 80 ? 'bg-green-500' : a.porcentaje >= 60 ? 'bg-accent-500' : 'bg-red-500';
+    // La banda sale de la nota del área (PlanEntrenamiento.notaDeArea): en esta
+    // prueba, lo que cuenta es cómo rinde el área respecto de tu fuerza.
+    const nota = typeof a.nota === 'number' ? a.nota : a.porcentaje;
+    const color = nota >= 80 ? 'bg-green-500' : nota >= 60 ? 'bg-accent-500' : 'bg-red-500';
     const fila = document.createElement('div');
     fila.className = 'bg-white dark:bg-brand-900 rounded-xl shadow-md p-4';
     fila.innerHTML = `
       <div class="flex items-center justify-between gap-3 mb-1">
         <p class="font-semibold text-brand-800 dark:text-white text-sm">${a.emoji} ${a.nombre}</p>
-        <p class="text-sm text-brand-500 dark:text-brand-300">${a.aciertos}/${a.total} · ${a.porcentaje}%${a.nosabe ? ` · 🤔 ${a.nosabe}` : ''}</p>
+        <p class="text-sm text-brand-500 dark:text-brand-300">${a.aciertos}/${a.total} · ${a.porcentaje}% · ${PE.bandaDeNota(nota).etiqueta}${a.nosabe ? ` · 🤔 ${a.nosabe}` : ''}</p>
       </div>
       <div class="w-full h-2 bg-brand-100 dark:bg-brand-800 rounded-full overflow-hidden mb-2">
         <div class="h-full ${color}" style="width:${a.porcentaje}%"></div>
       </div>
-      <p class="text-xs text-brand-450 dark:text-brand-350">${a.mide}</p>`;
+      <p class="text-xs text-brand-450 dark:text-brand-350">${typeof a.esperado === 'number' ? `Con tu fuerza, lo esperable era un ${a.esperado}%. ` : ''}${a.mide}</p>`;
     areasBox.appendChild(fila);
   });
 
@@ -1066,7 +1081,7 @@ document.getElementById('repeat-btn').addEventListener('click', () => { borrarEs
 /* SOLO administración, no todo el equipo docente.
  *
  * Estos dos PDF traen las respuestas y la hoja de corrección: el cuadernillo es
- * la prueba que el alumno va a contestar y el libro es el banco entero, las 301
+ * la prueba que el alumno va a contestar y el libro es el banco entero, las 583
  * preguntas con su respuesta marcada. Cuanta más gente los tenga bajados, más
  * fácil es que terminen circulando y que el diagnóstico deje de medir nada.
  * Quien dé clase y los necesite se los pide a quien administra.

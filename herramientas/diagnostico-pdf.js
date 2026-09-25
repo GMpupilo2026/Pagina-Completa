@@ -139,6 +139,27 @@ function respuestaCorrecta(item) {
 }
 
 const TOTAL_PUNTOS = ITEMS.reduce((s, i) => s + i.peso, 0);
+/* En papel no se puede hacer la cuenta de PlanEntrenamiento.medir(), así que
+   se usa la curva de la prueba: para cada fuerza, cuántos puntos se esperan en
+   ESTA forma (cada ejercicio aporta su peso por la probabilidad de acertarlo).
+   Invertida, da la fuerza que corresponde a cada total. Es la aproximación de
+   siempre de los tests en papel, y por eso se calcula para la forma sorteada y
+   no para la prueba en general. */
+function puntosEsperados(fuerza) {
+  return ITEMS.reduce((s, i) => s + i.peso * PE.probabilidad(fuerza, i.elo, PE.azarDe(i)), 0);
+}
+const TABLA_FUERZA = (() => {
+  const filas = [];
+  for (let c = 700; c <= 2300; c += 100) {
+    const desde = c === 700 ? 0 : Math.ceil(puntosEsperados(c - 50));
+    const hasta = c === 2300 ? TOTAL_PUNTOS : Math.ceil(puntosEsperados(c + 50)) - 1;
+    if (hasta < desde) continue;
+    const nivel = PE.nivelDeElo(c);
+    filas.push({ desde, hasta, fuerza: c === 700 ? "700 o menos" : c === 2300 ? "2300 o más" : "≈ " + c, nivel,
+      primera: !filas.length || filas[filas.length - 1].nivel !== nivel });
+  }
+  return filas;
+})();
 const porArea = {};
 ITEMS.forEach((i, idx) => { (porArea[i.area] = porArea[i.area] || []).push({ item: i, n: idx + 1 }); });
 
@@ -206,14 +227,14 @@ const html = `<!DOCTYPE html><html lang="es"><head><meta charset="utf-8">
 <div class="portada">
   <p class="marca">Ajedrez Integral · Academia</p>
   <h1>Diagnóstico de nivel</h1>
-  <p style="font-size:12pt; max-width:130mm; color:#334e68;">Prueba de 56 ejercicios que mide ocho áreas del juego —de las reglas a los finales— en cinco escalones de dificultad, y devuelve un nivel estimado y un plan de estudio de cuatro semanas.</p>
+  <p style="font-size:12pt; max-width:130mm; color:#334e68;">Prueba de ${ITEMS.length} ejercicios que mide ${PE.AREAS.length} áreas del juego —de las reglas a los finales— en cinco escalones de dificultad, y devuelve una fuerza estimada en puntos Elo, un nivel y un plan de estudio de cuatro semanas.</p>
   <p class="apagado" style="max-width:130mm; margin-top:6mm;">Versión imprimible de la prueba que los alumnos hacen en línea en Entrenamiento › Aprende › Asignaciones. Las ${ITEMS.length} posiciones y respuestas salen del mismo banco de ${BANCO.length} ejercicios del sitio, verificadas con motor. En línea las preguntas se sortean cada vez; este cuadernillo es una de esas formas, con el mismo reparto por áreas y los mismos ${TOTAL_PUNTOS} puntos.</p>
   <p class="apagado" style="max-width:130mm; margin-top:4mm; font-weight:700; color:#334e68;">Material docente: incluye las respuestas y la hoja de corrección. No se le entrega al alumno.</p>
   <div class="datos">
     <div>Alumno: <span class="raya larga"></span></div>
     <div>Fecha: <span class="raya"></span> &nbsp;&nbsp; Grupo: <span class="raya"></span></div>
     <div>Aplicó: <span class="raya larga"></span></div>
-    <div style="margin-top:9mm;">Resultado: <span class="raya corta"></span> / ${TOTAL_PUNTOS} puntos &nbsp;&nbsp; Porcentaje: <span class="raya corta"></span> &nbsp;&nbsp; Nivel: <span class="raya"></span></div>
+    <div style="margin-top:9mm;">Resultado: <span class="raya corta"></span> / ${TOTAL_PUNTOS} puntos &nbsp;&nbsp; Fuerza estimada: <span class="raya corta"></span> &nbsp;&nbsp; Nivel: <span class="raya"></span></div>
   </div>
 </div>
 
@@ -221,8 +242,8 @@ const html = `<!DOCTYPE html><html lang="es"><head><meta charset="utf-8">
   <h2>Cómo se aplica</h2>
   <div class="aviso"><strong>Si no lo sabe, que lo diga.</strong> Cada ejercicio tiene la casilla "No lo sé todavía": vale lo mismo que fallar (cero puntos) pero se cuenta aparte, y cambia el plan. Un error es algo mal aprendido que hay que corregir; un "no lo sé" es un hueco que hay que enseñar. Conviene decírselo al alumno antes de empezar: adivinar infla el resultado y le devuelve un plan que no le sirve.</div>
   <div class="aviso"><strong>Sin ayuda y sin mover piezas.</strong> El alumno responde de corrido, sin decirle si acierta: la corrección se hace al final, entre los dos. En todas las posiciones juegan las blancas salvo que el ejercicio diga lo contrario, y el tablero se mira siempre desde el lado blanco.</div>
-  <p><strong>Tiempo:</strong> unos 20 minutos. No es una prueba de velocidad; si un alumno se traba en un ejercicio, que lo deje en blanco y siga.</p>
-  <p><strong>Puntuación:</strong> cada ejercicio vale 1, 2 o 3 puntos según su dificultad (las estrellas junto al enunciado). El total de la prueba son ${TOTAL_PUNTOS} puntos. Lo que importa no es el total, sino el porcentaje de cada área: ahí está lo que hay que estudiar.</p>
+  <p><strong>Tiempo:</strong> entre 45 y 60 minutos. La mitad de los ejercicios son difíciles de verdad (escalones 4 y 5): es normal no resolver varios. No es una prueba de velocidad; si un alumno se traba en un ejercicio, que lo deje en blanco y siga.</p>
+  <p><strong>Puntuación:</strong> cada ejercicio vale de 1 a 5 puntos según su dificultad (las estrellas junto al enunciado). El total de la prueba son ${TOTAL_PUNTOS} puntos. El total da la fuerza estimada (tabla de la hoja de resultado); el porcentaje de cada área dice qué hay que estudiar.</p>
   <p><strong>Qué mide cada área:</strong></p>
   <table class="datos-tabla" style="margin-top:6px;">
     <tr><th>Área</th><th>Qué mide</th><th class="num">Puntos</th></tr>
@@ -254,19 +275,13 @@ ${PE.AREAS.map((a, i) => `<div class="pagina">
     <tr><td><strong>Total</strong></td><td class="num"></td><td class="num">${TOTAL_PUNTOS}</td><td class="num"></td><td></td></tr>
   </table>
 
-  <h3>Aciertos por escalón de dificultad</h3>
-  <p class="apagado">Aquí sale el nivel. Cuenta los aciertos de cada escalón (las estrellas que lleva cada ejercicio) y saca su porcentaje.</p>
+  <h3>Fuerza estimada y nivel</h3>
+  <p class="apagado">En línea, la fuerza sale de cuáles ejercicios resolvió, cada uno con su dificultad medida en puntos Elo. En papel se aproxima con el total de puntos: para ESTA forma de la prueba, la tabla dice qué fuerza hace esperable cada total. Un área muy por debajo de las demás es un hueco que las otras no compensan: si en un área sacó menos de la mitad de su porcentaje total, el nivel no pasa de Avanzado; si sacó menos de un cuarto, no pasa de Intermedio.</p>
   <table class="datos-tabla" style="margin-top:6px;">
-    <tr><th>Escalón</th><th class="num">Ejercicios</th><th class="num">Acertó</th><th class="num">%</th><th>¿Superado? (60% o más)</th></tr>
-    ${[1, 2, 3, 4, 5].map((w) => `<tr><td><strong>${"★".repeat(w)}</strong></td><td class="num">${ITEMS.filter((i) => i.peso === w).length}</td><td class="num"></td><td class="num"></td><td><span class="casilla-resp"></span> sí &nbsp; <span class="casilla-resp"></span> no</td></tr>`).join("")}
+    <tr><th>Puntos logrados</th><th>Fuerza estimada</th><th>Nivel</th><th>Qué toca</th></tr>
+    ${TABLA_FUERZA.map((f) => `<tr><td class="num">${f.desde} a ${f.hasta}</td><td>${f.fuerza}</td><td><strong>${f.nivel.etiqueta}</strong></td><td style="font-size:8.5pt;">${f.primera ? f.nivel.descripcion : ""}</td></tr>`).join("")}
   </table>
-
-  <h3>Nivel estimado</h3>
-  <div class="aviso">El nivel es <strong>el escalón más alto superado</strong> —60% de aciertos o más en ese escalón, y el promedio de los anteriores también en 60%—, no el porcentaje total de la prueba. Contar solo aciertos hace que quien responde bien todo lo fácil salga con nota de experto sin haber resuelto nada difícil.</div>
-  <table class="datos-tabla">
-    <tr><th>Escalón alcanzado</th><th>Nivel</th><th>Fuerza orientativa</th><th>Qué toca</th></tr>
-    ${PE.NIVELES.map((n) => `<tr><td>${n.escalon === 0 ? "ninguno" : "hasta " + "★".repeat(n.escalon)}</td><td><strong>${n.etiqueta}</strong></td><td>${n.rango}</td><td style="font-size:9pt;">${n.descripcion}</td></tr>`).join("")}
-  </table>
+  <p class="apagado" style="font-size:8.5pt;">Si el alumno tiene Elo, la fuerza de la prueba y su Elo se promedian: el FIDE pesa más o menos lo mismo que la prueba; uno en línea, bastante menos.</p>
 </div>
 
 <div class="pagina">
