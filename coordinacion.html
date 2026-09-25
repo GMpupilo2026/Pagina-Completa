@@ -594,7 +594,9 @@ let avisoDelLote = new Map();           // id de equipo -> qué pasó al volcar
    pantalla empezaría a no ofrecer alumnos que sí puede repartir, y eso no da
    ningún error. */
 async function traerGente(rol) {
-    const trozo = 500;
+    // 200 es el tope que pone `mi_gente` por página: con un trozo más grande,
+    // `desde` saltaría filas que nunca llegaron.
+    const trozo = 200;
     let desde = 0, todo = [], total = null;
     for (;;) {
         const { data, error } = await sb.rpc("mi_gente",

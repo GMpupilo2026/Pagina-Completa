@@ -360,6 +360,8 @@ async function pruebaAlta(page) {
   igual("y al abrirlo se ve",
     await page.evaluate(() => getComputedStyle(document.getElementById("alta-fondo")).display), "block");
 
+  igual("quien solo coordina no elige profesor",
+    await page.evaluate(() => document.getElementById("alta-profesor").checkVisibility()), false);
   igual("a un profesor sí se le dice que queda en su clase",
     await page.evaluate(() => document.getElementById("alta-asignado").textContent),
     "queda asignado a tu clase");
@@ -419,7 +421,14 @@ async function pruebaAdministracion(browser) {
   console.log("\n=== Quien administra sin ser profesor ===");
 
   const { page, errores } = await abrir(browser, "/formularios.html", clienteFalso({
-    rpc: { informes_resumen_alumnos: [] },
+    rpc: {
+      informes_resumen_alumnos: [],
+      // Lo que la base le da a administración: todos los profesores.
+      mi_gente: [
+        { id: "p-zoe", full_name: "Zoe Mora", email: "zoe@x.cr", role: "profesor", total: 2 },
+        { id: "p-beto", full_name: "Beto Solís", email: "beto@x.cr", role: "profesor", total: 2 },
+      ],
+    },
     tablas: {
       profiles: [{ id: "u-admin", role: "admin", is_admin: true, es_coordinador: false, full_name: "Oscar" }],
       formularios: [], formulario_respuestas: [],
@@ -441,6 +450,14 @@ async function pruebaAdministracion(browser) {
     window.__edgeRespuesta = { ok: true, user_id: "u-nuevo", email: "ana@x.cr", usuario: "ana@x.cr",
       sin_correo: false, encargado_guardado: false, asignado: false, correo_enviado: true };
   });
+  igual("puede elegir el profesor, y la lista viene de la base",
+    await page.evaluate(() => [document.getElementById("alta-profesor").checkVisibility(),
+      [...document.getElementById("alta-profesor").options].map((o) => o.textContent)]),
+    [true, ["— Sin profesor por ahora —", "Beto Solís", "Zoe Mora"]]);
+  igual("pide la lista entera de profesores, de a 200",
+    await page.evaluate(() => window.__rpc.filter((r) => r.nombre === "mi_gente").map((r) => [r.args.p_rol, r.args.p_limite, r.args.p_desde])),
+    [["profesor", 200, 0]]);
+
   await page.fill("#alta-alumno-nombre", "Ana Rojas");
   await page.fill("#alta-alumno-correo", "ana@x.cr");
   await page.click("#alta-enviar");
@@ -448,8 +465,63 @@ async function pruebaAdministracion(browser) {
   igual("llama a create-student",
     await page.evaluate(() => window.__edge[0].url.replace(/^.*\/functions/, "/functions")),
     "/functions/v1/create-student");
+  igual("sin elegir, no manda profesor",
+    await page.evaluate(() => "profesor_id" in window.__edge[0].cuerpo), false);
   igual("el aviso dice que quedó sin profesor",
     await page.evaluate(() => /Quedó sin profesor: asígnaselo en Administración\./.test(window.__avisos[0])), true);
+
+  // Eligiendo a una profesora: viaja su id y el aviso dice en qué clase quedó.
+  await page.click("#alumno-nuevo-btn");
+  await page.waitForSelector("#alta-fondo:not(.hidden)");
+  igual("al volver a abrir, la elección arranca en blanco",
+    await page.evaluate(() => document.getElementById("alta-profesor").value), "");
+  await page.selectOption("#alta-profesor", "p-zoe");
+  igual("el diálogo dice en qué clase queda",
+    await page.evaluate(() => document.getElementById("alta-asignado").textContent), "queda en la clase de Zoe Mora");
+  await page.evaluate(() => {
+    window.__edgeRespuesta = Object.assign({}, window.__edgeRespuesta, { asignado: true, profesor_id: "p-zoe" });
+  });
+  await page.fill("#alta-alumno-nombre", "Luis Rojas");
+  await page.fill("#alta-alumno-correo", "luis@x.cr");
+  await page.click("#alta-enviar");
+  await page.waitForFunction(() => window.__avisos.length > 1);
+  igual("manda el profesor elegido",
+    await page.evaluate(() => window.__edge[1].cuerpo.profesor_id), "p-zoe");
+  igual("y el aviso lo dice",
+    await page.evaluate(() => /Quedó en la clase de Zoe Mora\./.test(window.__avisos[1])), true);
+  errores.forEach((e) => { console.log("  ✗ error de la página: " + e); fallos += 1; });
+  await page.close();
+}
+
+/* Quien supervisa también elige, entre los suyos, y la primera opción es él
+   mismo: sin elegir, el alumno queda en su clase como siempre. Un profesor que
+   no supervisa no ve el selector. */
+async function pruebaSupervisor(browser) {
+  console.log("\n=== Quien supervisa elige entre sus profesores ===");
+  const { page, errores } = await abrir(browser, "/formularios.html", clienteFalso({
+    rpc: {
+      informes_resumen_alumnos: [],
+      // mi_gente también lo trae a él mismo: no se ofrece dos veces.
+      mi_gente: [
+        { id: "u-sup", full_name: "Sara Vega", email: "sara@x.cr", role: "profesor", total: 2 },
+        { id: "p-zoe", full_name: "Zoe Mora", email: "zoe@x.cr", role: "profesor", total: 2 },
+      ],
+    },
+    tablas: {
+      profiles: [{ id: "u-sup", role: "profesor", is_admin: false, es_supervisor: true, es_coordinador: true, full_name: "Sara Vega" }],
+      formularios: [], formulario_respuestas: [],
+    },
+  }, "u-sup"));
+  await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
+  await page.click("#alumno-nuevo-btn");
+  await page.waitForSelector("#alta-fondo:not(.hidden)");
+  await page.waitForFunction(() => document.getElementById("alta-profesor").options.length > 0);
+  igual("ve el selector, con ella misma primero",
+    await page.evaluate(() => [document.getElementById("alta-profesor").checkVisibility(),
+      [...document.getElementById("alta-profesor").options].map((o) => o.textContent)]),
+    [true, ["Yo (Sara Vega)", "Zoe Mora"]]);
+  igual("sin elegir, queda en su clase",
+    await page.evaluate(() => document.getElementById("alta-asignado").textContent), "queda asignado a tu clase");
   errores.forEach((e) => { console.log("  ✗ error de la página: " + e); fallos += 1; });
   await page.close();
 }
@@ -715,6 +787,7 @@ async function pruebaImagenes(browser) {
   try {
     await pruebaArmador(browser);
     await pruebaAdministracion(browser);
+    await pruebaSupervisor(browser);
     await pruebaCompartir(browser);
     await pruebaPublica(browser);
     await pruebaImagenes(browser);

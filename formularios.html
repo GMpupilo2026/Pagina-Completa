@@ -230,6 +230,16 @@
                                 <input id="alta-grupo" type="text" maxlength="60" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
                             </div>
                         </div>
+
+                        <!-- Solo para quien administra o supervisa: de quién queda
+                             alumno. Quien lo decide de verdad es la Edge Function
+                             (profesor-elegido.ts), que rechaza a un profesor fuera
+                             de su alcance antes de gastar la invitación. -->
+                        <div id="alta-profesor-fila" class="hidden">
+                            <label for="alta-profesor" class="block text-xs font-semibold text-brand-700 dark:text-brand-200 mb-1">Profesor del alumno</label>
+                            <select id="alta-profesor" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
+                            <p class="text-xs text-brand-450 dark:text-brand-350 mt-1">Queda en su clase: lo ve en su panel y en sus informes.</p>
+                        </div>
                     </div>
 
                     <p id="alta-msg" class="text-sm mt-4" aria-live="polite"></p>
@@ -955,6 +965,8 @@ function abrirAlta(r, boton) {
     document.getElementById("alta-sin-correo").checked = !dato("alumno_correo");
     document.getElementById("alta-usuario-dominio").textContent = "@" + UsuarioAlumno.DOMINIO;
     pintarModoAlta();
+    document.getElementById("alta-profesor").value = "";
+    pintarAsignado();
     const msg = document.getElementById("alta-msg");
     msg.textContent = "";
     msg.className = "text-sm mt-4";
@@ -984,12 +996,70 @@ function abrirAltaManual() {
     document.getElementById("alta-sin-correo").checked = false;
     document.getElementById("alta-usuario-dominio").textContent = "@" + UsuarioAlumno.DOMINIO;
     pintarModoAlta();
+    document.getElementById("alta-profesor").value = "";
+    pintarAsignado();
     const msg = document.getElementById("alta-msg");
     msg.textContent = "";
     msg.className = "text-sm mt-4";
     document.getElementById("alta-enviar").disabled = false;
     document.getElementById("alta-fondo").classList.remove("hidden");
     document.getElementById("alta-alumno-nombre").focus();
+}
+
+/* De quién queda alumno, dicho arriba en el diálogo. Sin elegir, de quien lo
+   da de alta si da clase; quien administra sin ser profesor no da clase, y
+   entonces queda sin profesor (lo deciden igual las Edge Functions). */
+function pintarAsignado() {
+    const sel = document.getElementById("alta-profesor");
+    const elegido = sel.value ? sel.options[sel.selectedIndex].textContent : "";
+    document.getElementById("alta-asignado").textContent = elegido
+        ? "queda en la clase de " + elegido
+        : perfil.role === "profesor"
+            ? "queda asignado a tu clase"
+            : "queda sin profesor hasta que se lo asignes en Administración";
+}
+
+/* Los profesores que puede elegir quien administra (todos) o supervisa (los
+   suyos): los que le da `mi_gente`, que filtra la base. Viene de a 200 como
+   mucho por página, así que se pide hasta el final: con un límite a ojo, un
+   profesor se quedaría fuera del selector sin que nada falle. */
+async function cargarProfesoresAlta() {
+    if (!(perfil.is_admin || perfil.es_supervisor)) return;
+    const trozo = 200;
+    let desde = 0, todo = [], total = null;
+    try {
+        for (;;) {
+            const { data, error } = await sb.rpc("mi_gente",
+                { p_busqueda: null, p_rol: "profesor", p_limite: trozo, p_desde: desde });
+            if (error) throw error;
+            const filas = data || [];
+            if (total === null) total = filas.length ? Number(filas[0].total) : 0;
+            todo = todo.concat(filas);
+            desde += trozo;
+            if (!filas.length || todo.length >= total) break;
+        }
+    } catch (err) {
+        return; // Sin la lista no se ofrece: queda lo de siempre.
+    }
+    const nombre = (p) => (p.full_name || "").trim() || p.email || "Sin nombre";
+    const otros = todo.filter((p) => p.id !== perfil.id)
+        .sort((a, b) => nombre(a).localeCompare(nombre(b), "es"));
+    if (!otros.length) return;
+    const sel = document.getElementById("alta-profesor");
+    sel.textContent = "";
+    const primera = document.createElement("option");
+    primera.value = "";
+    primera.textContent = perfil.role === "profesor"
+        ? "Yo (" + ((perfil.full_name || "").trim() || "mi clase") + ")"
+        : "— Sin profesor por ahora —";
+    sel.appendChild(primera);
+    otros.forEach((p) => {
+        const o = document.createElement("option");
+        o.value = p.id;
+        o.textContent = nombre(p);
+        sel.appendChild(o);
+    });
+    document.getElementById("alta-profesor-fila").classList.remove("hidden");
 }
 
 /* Qué se ve y qué se pide según haya correo propio o no. Es UNA sola función
@@ -1057,6 +1127,9 @@ async function enviarAlta() {
     const encargadoCorreo = v("alta-encargado-correo");
     const frecuencia = document.getElementById("alta-frecuencia").value;
     const grupo = v("alta-grupo");
+    const profesorElegido = document.getElementById("alta-profesor").value;
+    const profesorNombre = profesorElegido
+        ? document.getElementById("alta-profesor").selectedOptions[0].textContent : "";
 
     // Las dos puertas —"Crear cuenta" de una respuesta e "＋ Alumno nuevo"—
     // validan y avisan igual; lo único que cambia es a qué función se manda
@@ -1081,6 +1154,9 @@ async function enviarAlta() {
         frecuencia,
         grupo,
     };
+
+    // Solo viaja si se eligió a alguien: sin él, la función decide como siempre.
+    if (profesorElegido) cuerpo.profesor_id = profesorElegido;
 
     const fallar = (texto, campo) => {
         msg.textContent = texto;
@@ -1137,7 +1213,9 @@ async function enviarAlta() {
         const encargado = (out.encargado_guardado
             ? " La persona encargada quedó apuntada para los informes a la casa." : "") +
             (out.asignado === false
-            ? " Quedó sin profesor: asígnaselo en Administración." : "");
+            ? " Quedó sin profesor: asígnaselo en Administración."
+            : profesorElegido && out.profesor_id === profesorElegido
+            ? ` Quedó en la clase de ${profesorNombre}.` : "");
         // Con qué entra de verdad lo dice el servidor, no la pantalla: el
         // usuario pudo salir con un número al final si ya estaba tomado, y
         // quien da de alta tiene que ver el que de verdad quedó.
@@ -1206,6 +1284,7 @@ function bajarCsv() {
 // ------------------------------------------------------------------ arranque
 document.getElementById("nuevo-btn").addEventListener("click", () => abrirEditor(null));
 document.getElementById("alumno-nuevo-btn").addEventListener("click", abrirAltaManual);
+document.getElementById("alta-profesor").addEventListener("change", pintarAsignado);
 document.getElementById("volver-btn").addEventListener("click", () => mostrar("vista-lista"));
 document.getElementById("volver-btn-2").addEventListener("click", () => mostrar("vista-lista"));
 document.getElementById("guardar-btn").addEventListener("click", guardar);
@@ -1264,12 +1343,8 @@ async function init() {
         return;
     }
     document.getElementById("alumno-nuevo-btn").hidden = !FuncionesCoordinacion.puede("altas");
-    // Quien administra sin rol de profesor no da clase: el alumno no se le
-    // asigna (las Edge Functions lo deciden igual), así que no se le promete.
-    if (perfil.role !== "profesor") {
-        document.getElementById("alta-asignado").textContent =
-            "queda sin profesor hasta que se lo asignes en Administración";
-    }
+    pintarAsignado();
+    cargarProfesoresAlta();
     if (perfil.is_admin) {
         document.getElementById("subtitulo").textContent =
             "Arma un formulario, compártelo por enlace y baja las respuestas en Excel. Como administras, ves todos los formularios de la plataforma.";
