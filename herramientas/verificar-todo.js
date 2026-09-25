@@ -187,8 +187,13 @@ async function asegurarSitio() {
 
   const malos = resultados.filter((r) => r.codigo !== 0);
   for (const r of malos) {
-    const cola = r.salida.trimEnd().split("\n").slice(-40).join("\n");
-    console.log("\n──────── " + r.v.archivo + " (salida " + r.codigo + ") ────────\n" + cola);
+    const lineas = r.salida.trimEnd().split("\n");
+    const cola = lineas.slice(-40).join("\n");
+    // Las líneas que dicen QUÉ falló, aunque queden antes de las últimas 40:
+    // con solo la cola, un fallo temprano de un verificador largo no se veía.
+    const marcadas = lineas.slice(0, -40).filter((l) => /✗|FALLA/.test(l));
+    const antes = marcadas.length ? "(fallos antes del final)\n" + marcadas.join("\n") + "\n…\n" : "";
+    console.log("\n──────── " + r.v.archivo + " (salida " + r.codigo + ") ────────\n" + antes + cola);
   }
   console.log("\n" + (malos.length
     ? malos.length + " de " + resultados.length + " fallaron: " + malos.map((r) => r.v.nombre).join(", ")

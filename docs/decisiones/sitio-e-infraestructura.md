@@ -622,11 +622,13 @@ el compilador ya mira los `.js` de hasta 350 KB.
   página: su código mudado tuvo que entrar a esa lista (`INSCRIPCION`), o las
   clases que pone el script se habrían quedado sin estilo sin que nada avisara.
   Luego las diez de juegos (juegos, bot, tv, torneo, arbitraje, variante,
-  partidas, niebla, lector de planillas y cuatro jugadores).
+  partidas, niebla, lector de planillas y cuatro jugadores). Y por último las
+  ocho de `entreno/`, que van a `js/entreno-<pagina>.js` (la página las carga
+  con `../js/`). Con eso no queda ninguna página con un bloque de más de 20 KB.
 - `verificar-carga-paginas.js` lleva la lista `PENDIENTES` de las que todavía
-  traen un bloque de más de 20 KB (34 al empezar). **La lista solo se achica**:
-  una página nueva con un bloque grande falla, y una que ya se mudó y sigue en
-  la lista también.
+  traen un bloque de más de 20 KB: eran 34 al empezar y **ya está vacía**. La
+  lista solo se achica, así que una página nueva con un bloque grande falla:
+  su código va a `js/` desde el primer día.
 - Quedan para después las piezas chicas que ponen los generadores en el
   `<head>` (la guardia de sesión, el tema, el modo oscuro) y el `onload` de la
   hoja de fuentes: son lo último antes de poder sacar `'unsafe-inline'`.
