@@ -643,8 +643,9 @@ async function pruebaPdfSoloAdmin(browser) {
   /* informes.html los nombra en el texto de "todavía nadie ha hecho el
      diagnóstico". Ahí también tienen que salir solo para administración, y es
      el caso que se escapa: no es un enlace en el HTML, se arma con JavaScript
-     dentro de un template. */
-  const informes = fs.readFileSync(path.join(RAIZ, "informes.html"), "utf8");
+     dentro de un template. Se lee con su código mudado a js/: leyendo solo el
+     .html, desde que el código salió de la página, esto no encontraba nada. */
+  const informes = require("./lib/codigo-de-pagina").leer("informes.html");
   const trozo = informes.slice(Math.max(0, informes.indexOf("diagnostico-de-nivel.pdf") - 600), informes.indexOf("libro-de-diagnostico.pdf"));
   igual("en informes.html los dos PDF van detrás de un is_admin",
     /is_admin\s*\?/.test(trozo), "true");

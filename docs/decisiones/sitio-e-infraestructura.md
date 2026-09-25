@@ -589,6 +589,11 @@ el compilador ya mira los `.js` de hasta 350 KB.
   template literal de varias líneas cambiaría de contenido), deja el
   `<script src>` en su lugar y comprueba que el archivo termine con el bloque
   original. Un `<!--` dentro de un string que arma HTML no es problema.
+- **Los verificadores que leen el código de una página** tienen que leerlo con
+  `herramientas/lib/codigo-de-pagina.js` (el `.html` más su código mudado), no
+  con `readFileSync` del `.html`: al mudar `informes.html`,
+  `verificar-admin.js` dejó de encontrar lo que buscaba y el CI salió en rojo.
+  Uno escrito de otra forma habría pasado sin comprobar nada.
 - `sesion.html` fue la primera: de 330 KB a 91 KB de HTML, y `js/sesion.js`.
   `informes.html`, de 227 KB a 42 KB, y `js/informes.js`.
 - `verificar-carga-paginas.js` lleva la lista `PENDIENTES` de las que todavía

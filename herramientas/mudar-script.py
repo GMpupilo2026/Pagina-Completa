@@ -16,9 +16,14 @@ el mismo en las 34 páginas y no dependa de hacerlo con cuidado a mano:
      globales, como el escrito en la página.
   5. Comprueba que el archivo termine exactamente con el bloque original.
 
-Después hay que: sacar la página de PENDIENTES en verificar-carga-paginas.js,
-correr `npm run css` (el CSS tiene que quedar idéntico) y los verificadores
-de la página.
+Después hay que:
+  · sacar la página de PENDIENTES en verificar-carga-paginas.js;
+  · correr `npm run css` (el CSS tiene que quedar idéntico);
+  · buscar los verificadores que LEEN el .html buscando código
+    (grep 'readFileSync(.*"<pagina>"' herramientas/) y pasarlos a
+    lib/codigo-de-pagina.js: leyendo solo el .html dejan de encontrarlo;
+  · correr TODOS los verificadores (npm run verificar), no solo los de la
+    página: el que leía el código de informes.html era verificar-admin.js.
 
     python3 herramientas/mudar-script.py informes.html js/informes.js
 """
