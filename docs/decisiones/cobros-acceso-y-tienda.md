@@ -557,8 +557,8 @@ nada.
 
 ### Los precios están escritos UNA vez
 
-`js/precios-acceso.js`: una cuenta a ₡6.900 (el precio que ya ofrecía
-`elegir-plan.html`, que ahora lo lee de ahí) y cinco tramos por cantidad
+`js/precios-acceso.js`: una cuenta a ₡3.000 al mes (`elegir-plan.html` lo lee
+de ahí) y cinco tramos por cantidad
 (10, 25, 50, 100 y colegio desde 300), más el profesor extra y el ciclo lectivo
 (12 meses, se pagan 10). Lo leen `precios.html`, `accesos.html` (que propone el
 precio al armar un paquete) y `elegir-plan.html`.
@@ -566,10 +566,8 @@ precio al armar un paquete) y `elegir-plan.html`.
 - **El total se CALCULA, eligiendo el tramo más barato para esa cantidad**
   (`cotizar()`): sin eso, 9 alumnos costaban más que 10, y se le cobraría de
   más a quien no hizo la cuenta.
-- **`precios.html` no tiene ni un «₡» escrito**, y lleva `noindex`: es la tabla
-  que se le enseña a una academia o a un colegio, y publicar precios en un
-  buscador es una decisión que todavía no se tomó. Abrirla es quitar esa línea y
-  correr `sitemap.py`.
+- **`precios.html` no tiene ni un «₡» escrito.** Ya está abierta a los
+  buscadores y en el sitemap: todos los «Inscríbete» del sitio llevan ahí.
 - Los cupos de profesor de cada tramo son **informativos**: la base solo cuenta
   cupos de alumno.
 
@@ -586,6 +584,74 @@ interruptor pida dos toques, que al titular no se le pinte el formulario, y que
 el control tape con el acceso vencido, no tape con el vigente y **no tape si la
 consulta falla**. Está probado que falla de verdad: haciendo que el grupo se
 mande solo, saltan 3 comprobaciones.
+
+## La prueba gratis de 3 días
+
+`prueba-gratis.html` deja entrar a la Academia **sin correo y sin tarjeta**:
+nombre y contraseña, y adentro. A las 72 horas se cierra sola. Lo pidió el
+dueño del sitio para que quien duda pruebe antes de pagar; se ofrece en
+`precios.html` (arriba, en «Pruébalo gratis», en las preguntas y en el cierre).
+
+**Sin correo, la cuenta es la de un alumno sin buzón.** La Edge Function
+`prueba-gratis` le arma un usuario del dominio `alumno.ajedrez-integral.com`
+con `usuarioLibre()` —la misma regla de las dos puertas de alta, numerando si
+el nombre ya está: `sofia.munoz2`— y la página inicia la sesión y le enseña el
+usuario **que devolvió el servidor**, sin el dominio, para que lo anote. No se
+guarda en ningún lado el usuario adivinado en la pantalla: no hay una tercera
+copia de la regla.
+
+**El corte lo hace la base, y NO depende del interruptor.** `pruebas_gratis`
+guarda `vence` (`now() + 3 days`), y `acceso_vigente()` pregunta por la prueba
+**antes** que por `acceso_config.exigido`: con el interruptor apagado, una
+cuenta de alumno normal entra sin límite, y la de prueba no. Al vencer se le
+cierran las políticas restrictivas, los tres triggers y el candado de los
+cursos en el worker —todo lo que ya preguntaba `acceso_vigente()`—, sin que
+nada tenga que correr el tercer día. Con un **paquete vigente** vuelve a
+entrar: comprar es meterla en un paquete, con el mismo usuario y su progreso.
+`mi_acceso()` dice `prueba` (con `vence` y `horas`) o `prueba_vencida`, y
+`js/acceso-vigente.js` avisa en el panel cuánto le queda y, al vencer, tapa
+con «Tu prueba gratis terminó» y dos salidas: los precios y el WhatsApp.
+
+- **Una cuenta sin su fila de prueba sería acceso gratis para siempre**
+  (mientras el interruptor esté apagado). Por eso la función la crea
+  **bloqueada** (`ban_duration`), guarda el vencimiento con
+  `prueba_gratis_activar()` y solo entonces la desbloquea. Si la activación
+  falla, la borra; si hasta el borrado falla, queda bloqueada, nunca abierta.
+- **`prueba_gratis_activar()` y `prueba_gratis_frenar()` solo las llama la
+  service role.** `activar` exige las versiones legales aceptadas
+  (`version_legal_valida`) y rechaza una cuenta que no se creó en los últimos
+  10 minutos: no sirve para ponerle fecha de corte a un alumno que ya existía.
+  La fila no tiene política de escritura; el alumno ve la suya y administración
+  todas.
+- **El freno es el de los envíos sin cuenta**, con un tipo nuevo, `prueba`: 3
+  por hora por IP y 40 por hora en total. `interno.frenar_envio_publico()`
+  ganó el parámetro `p_ip` porque desde una Edge Function `request.headers`
+  trae la IP de la función, no la de la persona. Es chico a propósito: una
+  prueba es de una persona que decide si compra; un grupo se arma con un
+  paquete.
+- **La contraseña no se puede recuperar por correo**, porque no hay correo ni
+  persona encargada. La página lo dice al pedirla, y los Términos (`#prueba`)
+  dicen que se escribe por WhatsApp.
+- Queda una puerta que no se cierra: alguien puede abrir otra prueba con otro
+  nombre al terminar la primera (el freno lo hace lento, no imposible). Pedir
+  un correo o un teléfono lo cerraría, y es justo lo que se pidió no pedir.
+
+Comprobado impersonando roles en SQL, en una transacción revertida y con el
+interruptor apagado: durante la prueba `acceso_vigente()` da true y el alumno
+escribe su tiempo; con `vence` en el pasado da false y el insert de
+`platform_activity_log` se rechaza con 42501; `authenticated` no puede llamar
+al freno ni insertarse una prueba más larga, `anon` no puede activar y
+`activar` rechaza a un alumno viejo. Y la función desplegada, llamada de
+verdad: creó `zeta.verificacion` con 3 días, sin bloqueo, entró con su
+contraseña y rechazó una contraseña corta (la cuenta se borró después).
+
+**Al tocar la prueba, `acceso_vigente()`, `mi_acceso()` o el freno, correr
+`node herramientas/verificar-prueba-gratis.js`.** Lee `supabase/` (que la
+última `acceso_vigente()` pregunte por la prueba antes que por el interruptor,
+los permisos, y el orden freno → crear bloqueada → activar → desbloquear de la
+función) y prueba en el navegador la página y el aviso. Está probado que falla
+de verdad: con la pregunta por la prueba después del interruptor, y con el
+desbloqueo antes de activar, salta.
 
 ## La tienda de materiales: montada, con precio, y todavía cerrada
 

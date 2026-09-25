@@ -152,7 +152,7 @@ supabase functions deploy <nombre>
 
 `supabase/esquema/funciones-desplegadas.txt` dice cuáles son y —lo que importa—
 **cuál va con `verify_jwt` en false**: `informes-encargados`,
-`cobros-recordatorios`, `notificar` y `recuperar-acceso`. Desplegar una de esas
+`cobros-recordatorios`, `notificar`, `recuperar-acceso` y `prueba-gratis`. Desplegar una de esas
 con la verificación puesta la deja rechazando a su propio disparador, y eso no
 da ningún error: simplemente dejan de llegar los informes.
 

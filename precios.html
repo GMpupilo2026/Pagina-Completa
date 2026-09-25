@@ -87,6 +87,7 @@
                 <p class="text-brand-100 text-base sm:text-lg mt-4 max-w-2xl mx-auto">Una cuenta por <strong class="text-white" id="precio-hero"></strong> al mes, o paquetes para tu academia, escuela o colegio. Entre más alumnos, menos cuesta cada uno.</p>
                 <div class="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
                     <a id="hero-cuenta" href="#t-individual" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold rounded-xl transition-colors shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 px-7 py-3.5 text-base inline-flex items-center justify-center gap-2"><span aria-hidden="true">♟️</span> Quiero una cuenta</a>
+                    <a id="hero-prueba" href="prueba-gratis.html" class="bg-white hover:bg-brand-50 text-brand-900 font-bold px-7 py-3.5 rounded-xl text-base transition-colors inline-flex items-center justify-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2"><span aria-hidden="true">🎁</span> Pruébala 3 días gratis</a>
                     <a href="#calc-n" class="bg-white/10 hover:bg-white/20 border border-white/25 text-white font-semibold px-7 py-3.5 rounded-xl text-base transition-colors inline-flex items-center justify-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🧮</span> Calcular para mi grupo</a>
                 </div>
                 <ul class="mt-8 flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-brand-100">
@@ -139,11 +140,15 @@
              Las dos puertas son de verdad gratis y sin cuenta: el diagnóstico
              (entreno/diagnostico.html) y el tablero contra el profe. -->
         <section class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-12" aria-labelledby="t-prueba">
-            <div class="rounded-2xl border-2 border-dashed border-accent-500/60 p-6 sm:p-8 grid md:grid-cols-3 gap-6 items-center">
-                <div>
+            <div class="rounded-2xl border-2 border-dashed border-accent-500/60 p-6 sm:p-8 grid md:grid-cols-3 gap-6 items-stretch">
+                <div class="md:col-span-3">
                     <h2 id="t-prueba" class="font-serif text-2xl font-bold text-brand-800 dark:text-white">¿No estás seguro? Pruébalo gratis</h2>
-                    <p class="text-sm text-brand-600 dark:text-brand-300 mt-2">Sin cuenta y sin pagar nada.</p>
+                    <p class="text-sm text-brand-600 dark:text-brand-300 mt-2">Sin correo, sin tarjeta y sin pagar nada.</p>
                 </div>
+                <a id="prueba-academia" href="prueba-gratis.html" class="block rounded-xl bg-accent-500 hover:bg-accent-600 text-brand-900 shadow-md p-5 hover:shadow-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">
+                    <span class="font-bold"><span aria-hidden="true">🎁</span> La Academia, 3 días gratis</span>
+                    <span class="block text-sm mt-1">Solo tu nombre y una contraseña. Entras ya, y a los 3 días se cierra sola: no se cobra nada.</span>
+                </a>
                 <a href="entreno/diagnostico.html" class="block rounded-xl bg-white dark:bg-brand-900 shadow-md p-5 hover:shadow-lg transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
                     <span class="font-semibold text-brand-800 dark:text-white"><span aria-hidden="true">🧭</span> Diagnóstico de nivel</span>
                     <span class="block text-sm text-brand-600 dark:text-brand-300 mt-1">Unos 20 minutos para saber en qué nivel está y qué le conviene reforzar.</span>
@@ -267,6 +272,10 @@
             <h2 id="t-faq" class="font-serif text-2xl sm:text-3xl font-bold text-brand-800 dark:text-white text-center">Preguntas frecuentes</h2>
             <div class="mt-8 space-y-3">
                 <details class="bg-white dark:bg-brand-900 rounded-xl shadow-sm px-5 py-4">
+                    <summary class="cursor-pointer font-semibold text-brand-800 dark:text-white">¿Puedo probar antes de pagar?</summary>
+                    <p class="mt-2 text-sm text-brand-600 dark:text-brand-300">Sí: <a href="prueba-gratis.html" class="underline font-semibold">3 días gratis de la Academia</a>, sin correo y sin tarjeta. Escribes tu nombre y una contraseña, y entras. A las 72 horas la prueba se cierra sola y no se cobra nada; si te gusta, sigues con la misma cuenta y el mismo progreso.</p>
+                </details>
+                <details class="bg-white dark:bg-brand-900 rounded-xl shadow-sm px-5 py-4">
                     <summary class="cursor-pointer font-semibold text-brand-800 dark:text-white">¿Qué pasa si no le gusta?</summary>
                     <p class="mt-2 text-sm text-brand-600 dark:text-brand-300">Si cancelas dentro de los ocho días hábiles siguientes a tu pago, te devolvemos el monto completo. No hay cobros automáticos: cada pago lo haces tú, así que no se te vuelve a cobrar nada. Detalle en los <a href="terminos.html#cancelacion" class="underline font-semibold">Términos y condiciones</a>.</p>
                 </details>
@@ -303,6 +312,7 @@
                 <h2 id="t-cierre" class="font-serif text-2xl sm:text-3xl font-bold">Empieza hoy por <span id="precio-cierre"></span> al mes</h2>
                 <p class="text-brand-100 mt-3">Nos escribes, pagas por SINPE o transferencia y la cuenta queda activa. Si en ocho días hábiles cambias de idea, te devolvemos todo.</p>
                 <a id="cierre-pagar" href="#formas-de-pago" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold rounded-xl transition-colors shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 mt-7 px-8 py-4 text-lg inline-flex items-center gap-2"><span aria-hidden="true">💬</span> Quiero mi cuenta</a>
+                <p class="mt-4 text-sm text-brand-100">¿Todavía no te decides? <a id="cierre-prueba" href="prueba-gratis.html" class="font-semibold text-white underline hover:text-accent-400">Pruébala 3 días gratis</a>.</p>
             </div>
         </section>
     </main>

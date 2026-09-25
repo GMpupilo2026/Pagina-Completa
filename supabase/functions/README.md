@@ -41,6 +41,14 @@ casos. Al desplegarla hay que dejar esa casilla desmarcada — con `verify_jwt`
 en true, el olvido de contraseña de los alumnos sin buzón deja de funcionar y
 la página no lo nota: sigue diciendo que el correo salió.
 
+## `prueba-gratis` también va con `verify_jwt` en **false**
+
+Quien empieza la prueba gratis todavía no tiene cuenta. A cambio pasa por el
+freno de los envíos sin cuenta (3 pruebas por hora por IP, 40 en total) y crea
+la cuenta **bloqueada**: solo la abre después de que la base guardó cuándo
+vence. Con `verify_jwt` en true, el botón «Empezar mi prueba gratis» contesta
+que no se pudo, siempre.
+
 ## Los secretos
 
 No están aquí ni pueden estarlo: viven en los secretos del proyecto de
