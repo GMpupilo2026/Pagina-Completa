@@ -80,6 +80,7 @@ Cada formulario público que manda datos pide aceptar la Política de privacidad
 |---|---|---|
 | `unirse.html` | `#acepto-datos`, `required` | el navegador (el form no es `novalidate`) |
 | `formulario.html` | `#acepto-datos` | el `submit`, porque el form es `novalidate` |
+| `encuesta-curso.html` | `#acepto-datos` | el `submit` (form `novalidate`), que lo pone en el resumen de lo que falta |
 | `inscripcion.html` | `#aceptoDatos`, `required` (ya estaba; ahora enlaza la política) | el navegador |
 | `elegir-plan.html` | `#acepto-terminos` (Términos + privacidad) | el clic de cada botón de plan |
 
@@ -103,6 +104,7 @@ prueba nada.
 |---|---|---|
 | `solicitar_academia` | `unirse.html` | `solicitudes_academia.privacidad_version` y `privacidad_aceptada_en` |
 | `responder_formulario` | `formulario.html` | `formulario_respuestas.privacidad_version` y `privacidad_aceptada_en` |
+| `responder_encuesta_curso` | `encuesta-curso.html` | `encuesta_curso_respuestas.privacidad_version` y `privacidad_aceptada_en` |
 | `elegir_plan` | `elegir-plan.html` | `solicitudes_academia.terminos_version` y `terminos_aceptados_en` (y la privacidad, si la solicitud no la tenía) |
 
 - **Lo exige la base, no la pantalla.** Sin una versión válida, las tres

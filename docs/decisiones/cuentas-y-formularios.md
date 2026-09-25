@@ -208,9 +208,10 @@ contratar— y **ver los planes es público**.
 
 ### Los envíos sin cuenta pasan por un freno
 
-Tres funciones las puede llamar cualquiera con la clave pública del HTML, y
+Cuatro funciones las puede llamar cualquiera con la clave pública del HTML, y
 cada llamada es una fila nueva: `responder_formulario` (`formulario.html`),
-`registrar_arbitraje_publico` (`nivel-de-arbitraje.html`) y
+`registrar_arbitraje_publico` (`nivel-de-arbitraje.html`), `responder_encuesta_curso`
+(`encuesta-curso.html`) y
 `solicitar_academia` (`unirse.html`). Hasta la migración
 `freno_envios_publicos` nada paraba a un script: podía llenar miles de
 respuestas o solicitudes en un minuto, y no daba ningún error, simplemente
@@ -230,6 +231,7 @@ aparecían.
   | Formulario | 40 | — | 300 por formulario |
   | Arbitraje | 40 | 10 | 200 |
   | Solicitud de academia | 5 | 3 por día | 30 |
+  | Encuesta anónima de un curso | 40 | — | 300 por encuesta |
 
   **El de IP es generoso a propósito**: un colegio entero sale a internet por
   UNA IP, y una clase haciendo el examen de arbitraje o una reunión de padres
@@ -431,6 +433,59 @@ resultados están en `satisfaccion.html`.
   confusas»), y el estado de cada profesor va en palabras («⚠️ A revisar» si el
   promedio es menor que 3 o alguien dice que se va).
 - Al tocar esto, correr `node herramientas/verificar-encuesta-profesor.js`.
+
+### La encuesta anónima de un curso
+
+Para cursos de gente que empezó sabiendo 0 de ajedrez —el primero, de
+personas ciegas—. Quien administra crea una encuesta por curso en
+`encuestas-curso.html` y comparte su enlace, `encuesta-curso.html?e=<slug>`.
+Pregunta si siguen yendo o lo dejaron (y por qué), cómo enseñó el profesor
+(si empezó de lo más básico, si describía el tablero con palabras, el ritmo,
+si resolvía dudas, si guió paso a paso, si el material funcionó con el lector
+de pantalla), hasta dónde aprendieron, si fue lo bastante básico, si lo
+recomendarían y qué esperaban frente a lo que encontraron.
+
+- **Sin iniciar sesión**, como `formulario.html`: el público no toca las
+  tablas; lee con `encuesta_curso_publica()` (solo el curso, el nombre del
+  profesor y si está abierta) y escribe con `responder_encuesta_curso()`, las
+  dos `SECURITY DEFINER`. Pasa por el freno (tipo `encuesta`) y exige la
+  versión de la Política de privacidad, como las otras tres.
+- **Anónima de verdad, en la base**: la fila no tiene columna de persona, la
+  función no guarda `auth.uid()` aunque haya sesión (comprobado impersonando a
+  una alumna con sesión), y de la fecha solo queda el **día**: la hora exacta
+  ayudaría a adivinar quién fue en un grupo chico. La IP la ve solo el freno,
+  que la borra a los dos días y nunca la junta con la respuesta.
+- **Las lee solo quien administra** (`soy_admin()`); las cuentas las hace
+  `resumen_encuesta_curso()` (INVOKER). Comprobado impersonando: `anon` y una
+  alumna no leen nada, una alumna no puede crear encuestas, una encuesta
+  cerrada rechaza respuestas, y una nota 7, un motivo inventado o una pregunta
+  sin contestar se rechazan con su nombre.
+- **«No sé o no llegué a verlo»** en cada frase sobre la forma de enseñar:
+  quien dejó el curso al principio no vio el ritmo de todo el curso, y sin esa
+  salida contestaría cualquier cosa. Viaja como `null` y no entra en el
+  promedio; la tabla dice cuántos contestaron cada frase.
+- **Hecha para lector de pantalla**, y comprobado en el navegador
+  (`verificar-encuesta-curso.js`):
+  - cada pregunta de opciones es un `<fieldset>` cuya `<legend>` dice el número
+    y la pregunta entera («Pregunta 3 de 14. …»), y cada parte lleva su `<h2>`
+    para saltar con la tecla H;
+  - las opciones son radios y casillas de verdad con su texto completo, y la
+    escala dice número y palabra («1, Nada de acuerdo»);
+  - si falta algo al enviar, un resumen **recibe el foco y se lleva a la
+    vista** (con el desplazamiento suave del sitio, `focus()` solo lo dejaba
+    fuera de la pantalla), dice cuántas faltan y trae un enlace a cada una; la
+    leyenda de la pregunta que falta también lo dice, porque es lo que se lee
+    al llegar a ella;
+  - al terminar, el foco va al «¡Gracias!»: sin eso, quien no ve la pantalla no
+    se entera de que el envío salió;
+  - el encabezado es mínimo (logo y tema): el menú del sitio público eran diez
+    paradas de Tab antes de la primera pregunta.
+- Las preguntas viven en `js/encuesta-curso-preguntas.js`, la única copia que
+  leen las dos pantallas; cada `clave` y cada `valor` es lo que valida la base.
+- Al tocar esto, correr `node herramientas/verificar-encuesta-curso.js`,
+  `verificar-envios-publicos.js` (que ahora comprueba también que el freno
+  conozca el tipo de cada envío: uno desconocido tumba el envío entero) y
+  `verificar-legal.js`.
 
 ## El alumno que no tiene correo propio
 

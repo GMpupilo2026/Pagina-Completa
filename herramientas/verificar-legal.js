@@ -219,6 +219,7 @@ function laBaseLoExige() {
   const casos = [
     ["solicitar_academia", "p_version_privacidad", /privacidad_version/],
     ["responder_formulario", "p_version_privacidad", /privacidad_version/],
+    ["responder_encuesta_curso", "p_version_privacidad", /privacidad_version/],
     ["elegir_plan", "p_version_terminos", /terminos_version\s*=\s*p_version_terminos/],
   ];
   for (const [fn, param, guarda] of casos) {
