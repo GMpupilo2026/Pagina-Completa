@@ -37,16 +37,21 @@
          * distinta.
          */
         const ATAJOS = [
+            /* Todos los formularios en un solo lugar, y primero: los que se
+               arman, los que llegan de afuera y la encuesta de satisfacción.
+               La misma lista está en el grupo «Formularios» de ADMIN_GROUPS
+               (js/clases.js). */
+            { titulo: "Formularios", cards: [
+                { emoji: "⭐", label: "Satisfacción con los profesores", desc: "Qué opina el alumnado de cada profesor y quién dice que se va", href: "satisfaccion.html" },
+                { emoji: "📋", label: "Formularios de inscripción", desc: "Ármalos, compártelos por enlace y baja las respuestas", href: "formularios.html" },
+                { emoji: "📝", label: "Solicitudes de la Academia", desc: "Aprobar o rechazar pedidos de ingreso", href: "solicitudes.html" },
+                { emoji: "🏅", label: "Inscripciones a torneos en línea", desc: "Las respuestas del formulario de inscripcion.html", href: "inscripciones.html" },
+            ] },
             { titulo: "Resultados", cards: [
                 { emoji: "🧭", label: "Diagnóstico de nivel", desc: "De los alumnos de la Academia", href: "informes.html?tema=diagnostico" },
                 { emoji: "⚖️", label: "Examen de arbitraje", desc: "Del equipo docente, con su detalle", href: "arbitraje.html" },
                 { emoji: "🌐", label: "Diagnóstico de nivel público", desc: "Visitantes sin cuenta: contactos para invitar", href: "informes.html?tema=diagnostico-publico" },
                 { emoji: "🌐", label: "Examen de arbitraje público", desc: "Quiénes lo hicieron y a quién falta responder", href: "informes.html?tema=arbitraje" },
-            ] },
-            { titulo: "Formularios", cards: [
-                { emoji: "📋", label: "Formularios de inscripción", desc: "Ármalos, compártelos por enlace y baja las respuestas", href: "formularios.html" },
-                { emoji: "🏅", label: "Resultados del formulario de torneos en línea", desc: "Las inscripciones de inscripcion.html", href: "inscripciones.html" },
-                { emoji: "📝", label: "Solicitudes de la Academia", desc: "Aprobar o rechazar pedidos de ingreso", href: "solicitudes.html" },
             ] },
             { titulo: "Bases de datos", cards: [
                 { emoji: "🔎", label: "Jugadores de chess-results", desc: "Busca a una persona y su historial de torneos", href: "admin-jugador.html" },

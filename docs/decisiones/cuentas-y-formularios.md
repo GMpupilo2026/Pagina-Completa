@@ -389,6 +389,49 @@ copiar cuatro datos a mano de una pantalla a otra, dos veces por alumno.
   Comprobado impersonando a un supervisor en SQL: su profesor da `true`, uno
   de otra academia `false`.
 
+### La encuesta de satisfacción con el profesor
+
+Quien administra quería saber si sus profesores lo están haciendo bien y si el
+alumnado está contento o se va. Una vez al mes, cada alumno contesta, **por
+cada uno de sus profesores**, seis preguntas del 1 al 5 —si le entiende, si ha
+aprendido, si las clases son claras o confusas, si son creativas, si le ayuda
+a resolver, si le gustan—, si piensa seguir (sí, no sé, no) y un comentario
+opcional. Contesta en `encuesta-profesor.html` (tarjeta «¿Cómo van tus
+clases?» en su panel, o el enlace que se copia desde los resultados); los
+resultados están en `satisfaccion.html`.
+
+- **No es un formulario del armador** (`formularios`): esos se contestan sin
+  cuenta y el profesor se escribiría a mano, así que una respuesta podría
+  bajarle el promedio a quien no era. Acá la respuesta queda pegada al
+  profesor de verdad: la tabla es `encuestas_profesor` y la escribe **solo**
+  `responder_encuesta_profesor()` (`SECURITY DEFINER`, sin política de
+  escritura), que exige `es_mi_profesor()` —envuelto en `coalesce`—, las seis
+  notas del 1 al 5 y pone ella el mes en hora de Costa Rica.
+- **Una por alumno, profesor y mes**, con índice único. Contestar otra vez en
+  el mismo mes la corrige (`on conflict do update`), y la pantalla le enseña al
+  alumno lo que ya mandó: si no, cree que no quedó.
+- **Quién lee**: el alumno lo suyo; `soy_admin()`, todo; quien supervisa, lo de
+  `interno.supervisados_por_mi()` (el conjunto se arma una vez). **El profesor
+  calificado no ve nada**, y la encuesta se lo dice al alumno: sin eso no
+  contesta con sinceridad. Comprobado impersonando en SQL (en una transacción
+  que se deshizo): la alumna califica a su profesor y corrige; a quien no es su
+  profesor, «Solo puedes calificar a tus propios profesores»; una nota 9 se
+  rechaza; el insert directo da `permission denied`; el profesor calificado y
+  otro alumno ven 0 filas; administración, todas; un supervisor ve las de su
+  profesor y 0 de uno ajeno; `anon` no lee ni contesta.
+- **Las cuentas las hace la base**: `resumen_satisfaccion()` y
+  `respuestas_satisfaccion()` son `SECURITY INVOKER`, así que cuentan solo lo
+  que la RLS le deja ver a quien pregunta. La lista de quienes se van y el CSV
+  se piden con `range()`, de mil en mil.
+- **Todas las preguntas van en el mismo sentido** (1 lo peor, 5 lo mejor),
+  también la de «claras o confusas»: así un promedio bajo siempre dice lo
+  mismo. Las preguntas viven en `js/encuesta-preguntas.js`, la única copia que
+  leen las dos pantallas; la `clave` de cada una es la columna y no se cambia.
+- **Nada va solo en color**: cada opción lleva su número escrito («1 · Muy
+  confusas»), y el estado de cada profesor va en palabras («⚠️ A revisar» si el
+  promedio es menor que 3 o alguien dice que se va).
+- Al tocar esto, correr `node herramientas/verificar-encuesta-profesor.js`.
+
 ## El alumno que no tiene correo propio
 
 Una familia con dos hijos pequeños tiene **un solo correo** —el de la mamá o el

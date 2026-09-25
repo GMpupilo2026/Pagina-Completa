@@ -209,7 +209,7 @@ async function pruebaAtajos(browser) {
     })));
 
   igual("los grupos de atajos, en su orden", grupos.map((g) => g.titulo),
-    ["Resultados", "Formularios", "Bases de datos", "Acceso a la plataforma", "Venta de materiales", "Reportes", "La plataforma"]);
+    ["Formularios", "Resultados", "Bases de datos", "Acceso a la plataforma", "Venta de materiales", "Reportes", "La plataforma"]);
   /* Cada grupo se busca POR NOMBRE y no por su posición: con índices, sumar un
      grupo renumeraba media docena de comprobaciones que no tienen nada que ver
      con el orden, y había que corregirlas a mano una por una. Es la misma
@@ -219,7 +219,7 @@ async function pruebaAtajos(browser) {
   igual("Resultados: los dos diagnósticos y los dos exámenes", atajos("Resultados"),
     ["informes.html?tema=diagnostico", "arbitraje.html",
      "informes.html?tema=diagnostico-publico", "informes.html?tema=arbitraje"]);
-  igual("Formularios", atajos("Formularios"), ["formularios.html", "inscripciones.html", "solicitudes.html"]);
+  igual("Formularios: todos juntos, con la encuesta de satisfacción", atajos("Formularios"), ["satisfaccion.html", "formularios.html", "solicitudes.html", "inscripciones.html"]);
   igual("Bases de datos", atajos("Bases de datos"), ["admin-jugador.html"]);
   igual("Acceso a la plataforma", atajos("Acceso a la plataforma"), ["accesos.html", "precios.html", "prueba-gratis.html"]);
   igual("Venta de materiales", atajos("Venta de materiales"), ["tienda.html"]);

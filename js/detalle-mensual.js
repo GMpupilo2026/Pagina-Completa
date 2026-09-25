@@ -153,5 +153,5 @@ window.DetalleMensual = (function () {
                                 a.minutos_clase || 0, a.veces_tarde || 0, a.minutos_tarde || 0, a.ejercicios || 0]))));
     }
 
-    return { pintar, duracion, dondeDe };
+    return { pintar, duracion, dondeDe, csv };
 })();

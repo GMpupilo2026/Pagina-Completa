@@ -128,6 +128,7 @@
             ] },
             { title: "Tus profesores", tiles: [
                 { emoji: "🧑‍🏫", label: "Supervisión de profesores", desc: "Qué hizo cada profesor en el mes —clases, tareas, exámenes— y su informe mensual", href: "supervision.html" },
+                { emoji: "⭐", label: "Satisfacción del alumnado", desc: "Qué opinan los estudiantes de cada profesor y quién dice que se va", href: "satisfaccion.html" },
                 /* Su academia: quién está, su número y su correo, y qué puede
                    hacer cada coordinador. */
                 { emoji: "🏫", label: "Tu academia", desc: "Quién está en tu academia, sus datos de contacto y qué puede hacer cada coordinador", href: "academias.html" },
@@ -190,8 +191,17 @@
                 { emoji: "👑", label: "Administración", desc: "Cuentas, roles, profesores, supervisores y equipos", href: "admin.html" },
                 { emoji: "🏫", label: "Academias", desc: "Crea las academias, ponles supervisor y reparte a su gente", href: "academias.html" },
                 { emoji: "🧭", label: "Coordinación", desc: "Los profesores y sus alumnos: quién es quién, cómo entra y cómo se ordena", href: "coordinacion.html" },
-                { emoji: "📝", label: "Solicitudes de la Academia", desc: "Quien pidió unirse: aprobar crea la cuenta, rechazar invita a un plan pago", href: "solicitudes.html" },
+            ] },
+            /* Todos los formularios juntos: los que se arman, los que llegan
+               de afuera (torneo en línea, pedir ingreso) y la encuesta de
+               satisfacción. Antes estaban repartidos entre «Cuentas y
+               personas» y el panel de Administración. La misma lista, en el
+               mismo orden, es el grupo «Formularios» de ATAJOS en js/admin.js. */
+            { title: "Formularios", tiles: [
+                { emoji: "⭐", label: "Satisfacción con los profesores", desc: "Qué opina el alumnado de cada profesor y quién dice que se va", href: "satisfaccion.html" },
                 { emoji: "📋", label: "Formularios de inscripción", desc: "Arma un formulario, compártelo por enlace y baja las respuestas", href: "formularios.html" },
+                { emoji: "📝", label: "Solicitudes de la Academia", desc: "Quien pidió unirse: aprobar crea la cuenta, rechazar invita a un plan pago", href: "solicitudes.html" },
+                { emoji: "🏅", label: "Inscripciones a torneos en línea", desc: "Las respuestas del formulario de inscripcion.html", href: "inscripciones.html" },
             ] },
             { title: "Cobros y accesos", tiles: [
                 { emoji: "💳", label: "Cobros de la Academia", desc: "Mensualidades, pagos y morosidad. Los recordatorios salen solos", href: "cobros.html" },
@@ -714,6 +724,8 @@
             "coordinacion.html": "cuentas usuarios profesores alumnos",
             "solicitudes.html": "aprobar nuevos unirse inscripciones",
             "formularios.html": "inscripcion inscripciones enlace respuestas",
+            "satisfaccion.html": "encuesta satisfaccion opinion calificar profesores alumnos contentos se van",
+            "encuesta-profesor.html": "encuesta opinion calificar profesor",
             "cobros.html": "pagos pago mensualidad mensualidades dinero morosos morosidad recibos",
             "reportes.html": "word pdf actividades periodo",
             "accesos.html": "cupos paquetes acceso",
@@ -2058,6 +2070,14 @@
                     const herr = TILE_GROUPS.find((g) => g.title === "Herramientas");
                     herr.tiles = herr.tiles.filter((t) => FuncionesCoordinacion.permiteDestino(t.href));
                 }
+            }
+            /* La encuesta de satisfacción: el alumno califica a su profesor una
+               vez al mes. Solo al alumnado —el equipo docente no tiene a quién
+               calificar— y la base vuelve a comprobar que sea SU profesor. */
+            if (!isTeacher && profile.role === "alumno") {
+                TILE_GROUPS.find((g) => g.title === "Tu cuenta").tiles.push(
+                    { emoji: "⭐", label: "¿Cómo van tus clases?", desc: "Una encuesta corta sobre tu profesor: la lee la Academia, no tu profesor", href: "encuesta-profesor.html" }
+                );
             }
             /* LOS COBROS NO SE LE OFRECEN A NADIE MÁS QUE A COORDINACIÓN.
                Aquí vivía «Mis pagos» para el alumnado. Se fue del panel entero,
