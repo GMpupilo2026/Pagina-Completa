@@ -53,7 +53,7 @@
                     <div id="lote-compartir" class="hidden bg-brand-50 dark:bg-brand-950 rounded-xl p-3 mb-4">
                         <p class="text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-2"><span id="lote-cuantos"></span> marcados</p>
                         <div class="grid gap-2">
-                            <button type="button" id="lote-todos-btn" class="text-left text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">🤝 Compartir con todo el equipo docente</button>
+                            <button type="button" id="lote-todos-btn" class="text-left text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">🤝 Compartir con todo el equipo docente de tu academia</button>
                             <div class="flex items-center gap-2 flex-wrap">
                                 <label for="lote-agregar" class="sr-only">Compartir con un profesor</label>
                                 <select id="lote-agregar" class="flex-1 min-w-0 bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
@@ -106,7 +106,7 @@
 
                         <label class="flex items-start gap-2 text-sm text-brand-700 dark:text-brand-200 mb-3 cursor-pointer">
                             <input type="checkbox" id="c-todos" class="mt-0.5 w-4 h-4 accent-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
-                            <span>Con <strong>todo el equipo docente</strong><span class="block text-xs font-normal text-brand-450 dark:text-brand-350">También con quien entre después. Si lo marcas, no hace falta ir nombrando a nadie.</span></span>
+                            <span>Con <strong>todo el equipo docente de tu academia</strong><span class="block text-xs font-normal text-brand-450 dark:text-brand-350">También con quien entre después. Nunca le llega a otra academia. Si lo marcas, no hace falta ir nombrando a nadie.</span></span>
                         </label>
 
                         <div id="c-elegidos-bloque">
@@ -423,7 +423,7 @@ async function compartirLoteConTodos() {
             planes = planes.map((p) => (p.id === id ? actualizado : p));
             if (planAbierto && planAbierto.id === id) { planAbierto = actualizado; pintarCompartir(); }
         }
-        $("lote-msg").textContent = "Listo: " + ids.length + (ids.length === 1 ? " plan lo ve" : " planes los ve") + " ahora todo el equipo docente.";
+        $("lote-msg").textContent = "Listo: " + ids.length + (ids.length === 1 ? " plan lo ve" : " planes los ve") + " ahora todo el equipo docente de tu academia.";
     } catch (err) {
         $("lote-msg").textContent = "No se pudo compartir: " + err.message;
     }
@@ -629,7 +629,7 @@ async function cambiarCompartidoTodos() {
             await PlanClase.actualizarPlan(sb, planAbierto.id, { compartido_todos: valor }));
         planes = planes.map((p) => (p.id === planAbierto.id ? planAbierto : p));
         $("c-msg").textContent = valor
-            ? "Lo ve todo el equipo docente."
+            ? "Lo ve todo el equipo docente de tu academia."
             : "Ya no lo ve todo el equipo. Sigue compartido con quien elegiste.";
         pintarCompartir();
     } catch (err) {

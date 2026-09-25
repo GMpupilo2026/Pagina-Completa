@@ -77,6 +77,11 @@ y hace otra cosa. Estas reglas existen por eso.
   «¿sobre quién alcanza esta coordinación?» con `bajo_mi_coordinacion()`, y
   qué puede hacer adentro con `coordinador_puede()`. **Nunca** mirando
   `profile_teachers`, `equipo_*` o `profiles.teacher_id` directo.
+- **Las academias son privadas**: nada de la gente de una academia le llega a
+  otra, salvo Juegos (retar). Toda lista o vía que no pase por una relación
+  directa (compañeros, colegas, «compartir con todos», rankings) se acota con
+  `interno.comparten_academia()` / `gente_de_mis_academias()` (ver «Las
+  academias son privadas»).
 - **Todo lo que se hace para los profesores se hace también para quien
   administra** (`is_admin`), con el alcance que ya le da la base: lo que un
   profesor VE de sus alumnos, administración lo ve de todos. **Pero quien
