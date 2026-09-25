@@ -93,7 +93,8 @@ function pruebaEstatica() {
   let usan = 0;
   for (const rel of archivos.filter((r) => r.endsWith(".html"))) {
     const s = fs.readFileSync(path.join(RAIZ, rel), "utf8");
-    if (!/\bAvisos\./.test(sinComentarios(s))) continue;
+    // El uso se busca también en su código mudado a js/; la etiqueta, en el HTML.
+    if (!/\bAvisos\./.test(sinComentarios(require("./lib/codigo-de-pagina").leer(rel)))) continue;
     usan += 1;
     const arriba = "../".repeat(rel.split("/").length - 1);
     const etiqueta = new RegExp(`<script src="${arriba.replace(/\./g, "\\.")}js/avisos\\.js"\\s*></script>`);

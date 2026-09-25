@@ -629,7 +629,8 @@ async function pruebaPdfSoloAdmin(browser) {
   })(RAIZ);
   const sueltos = [];
   paginas.forEach((f) => {
-    const txt = fs.readFileSync(f, "utf8");
+    // Con su código mudado a js/: un enlace armado ahí también cuenta.
+    const txt = require("./lib/codigo-de-pagina").leer(path.relative(RAIZ, f));
     pdfs.forEach((pdf) => {
       if (!new RegExp('href="[^"]*' + pdf.replace(/\./g, "\\.") + '"').test(txt)) return;
       const rel = path.relative(RAIZ, f);

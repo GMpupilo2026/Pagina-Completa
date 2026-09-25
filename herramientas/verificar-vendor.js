@@ -35,7 +35,9 @@ function paginas(dir, acc = []) {
   }
   return acc;
 }
-const todas = paginas(raiz).map((a) => ({ a, rel: path.relative(raiz, a), html: fs.readFileSync(a, "utf8") }));
+// El HTML más su código mudado a js/ (lib/codigo-de-pagina.js): una ruta que
+// pide el script resuelve contra la página, igual que una escrita en ella.
+const todas = paginas(raiz).map((a) => ({ a, rel: path.relative(raiz, a), html: require("./lib/codigo-de-pagina").leer(path.relative(raiz, a)) }));
 const escaparRe = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 for (const lib of LIBRERIAS) {

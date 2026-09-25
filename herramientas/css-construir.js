@@ -53,6 +53,10 @@ const PALETA = { brand: variables("brand"), accent: variables("accent") };
 // Va con los hex escritos y NO con variables, a propósito: es una página
 // pública, sin sesión, a la que no le llega ningún tema — quien la abre todavía
 // no es alumno de nadie.
+// La página y su código, que desde «El código de las páginas sale del HTML»
+// vive en js/inscripcion.js: sin él, las clases que pone el script se
+// quedarían sin CSS sin que nada avisara.
+const INSCRIPCION = ["inscripcion.html", "js/inscripcion.js"];
 const PALETA_INSCRIPCION = {
     brand: { 50:"#f0fdf4", 100:"#dcfce7", 200:"#bbf7d0", 300:"#86efac", 400:"#4ade80",
              500:"#22c55e", 600:"#16a34a", 700:"#15803d", 800:"#166534",
@@ -327,9 +331,9 @@ function compilar(nombre, paleta, archivos, extra) {
 
 if (require.main === module) {
     fs.mkdirSync(CSS, { recursive: true });
-    compilar("tailwind", PALETA, contenido(["inscripcion.html"]), cssDeTemas());
+    compilar("tailwind", PALETA, contenido(INSCRIPCION), cssDeTemas());
     compilar("tailwind-inscripcion", PALETA_INSCRIPCION,
-        [path.join(RAIZ, "inscripcion.html")]);
+        INSCRIPCION.map((rel) => path.join(RAIZ, rel)));
 } else {
     // herramientas/verificar-temas-plataforma.js arma el bloque con ESTA
     // función y no con una copia: comprobar una copia no comprobaría nada.

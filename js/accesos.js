@@ -1,0 +1,588 @@
+/* El código de accesos.html.
+
+   Vivía escrito dentro de la página, en un <script> de 31 KB. Se mudó acá
+   tal cual, sin tocar una línea (herramientas/mudar-script.py): así el
+   navegador lo guarda en caché aparte, y es un paso hacia sacar
+   'unsafe-inline' de la CSP. Es un script clásico cargado en el mismo lugar
+   donde estaba el bloque: corre en el mismo orden y sus let/const de arriba
+   siguen siendo globales. Ver «El código de las páginas sale del HTML» en
+   docs/decisiones/sitio-e-infraestructura.md. */
+
+    (function () {
+        "use strict";
+        const P = window.PreciosAcceso;
+        const $ = (id) => document.getElementById(id);
+
+        let yo = null, esAdmin = false;
+        let paquetes = [];
+        let miembros = new Map();      // paquete → Set de alumnos
+        let alumnos = [];              // los que quien mira puede ver
+        let porId = new Map();
+        let profes = [];
+        let academias = [];            // las que se pueden poner de titular (administración)
+        const miembrosAcad = new Map(); // academia → Set de sus alumnos, para quien la supervisa
+        let resumen = null;
+        let editando = null;           // id del paquete en edición
+        let precioTocado = false;      // si el precio se escribió a mano, no se pisa
+        const abiertos = new Set();    // qué listas de alumnos quedaron abiertas
+        const mensajes = new Map();    // el aviso de cada paquete sobrevive al repintado
+        const confirmar = new Map();   // segundo toque pendiente, por botón
+
+        function hoy() {
+            return new Date().toLocaleDateString("en-CA", { timeZone: "America/Costa_Rica" });
+        }
+        function sumarMeses(iso, meses) {
+            const [y, m, d] = iso.split("-").map(Number);
+            const f = new Date(Date.UTC(y, m - 1 + meses, d));
+            f.setUTCDate(f.getUTCDate() - 1);   // "un mes" desde el 1 vale hasta el último día del mes
+            return f.toISOString().slice(0, 10);
+        }
+        function fecha(iso) {
+            const [y, m, d] = String(iso).split("-").map(Number);
+            return new Date(y, m - 1, d).toLocaleDateString("es-CR", { day: "numeric", month: "long", year: "numeric" });
+        }
+        function diasEntre(a, b) {
+            return Math.round((Date.parse(b + "T00:00:00Z") - Date.parse(a + "T00:00:00Z")) / 86400000);
+        }
+        function dinero(n, moneda) {
+            if (n == null) return "";
+            return moneda === "USD" ? "US$" + Number(n).toLocaleString("en-US") : P.formato(n);
+        }
+        function nombreDe(id) {
+            const a = porId.get(id);
+            return a ? (a.full_name || a.email || "Sin nombre") : null;
+        }
+        function sinTildes(s) {
+            return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+        }
+        /* Los mensajes salen por js/avisos.js, como en todo el sitio: arriba, se
+           ven aunque uno haya bajado en la página, y los de error no se van solos
+           (ver «Los avisos son de la página, no del navegador»). */
+        function avisar(texto, error) { Avisos.avisar(texto, { tipo: error ? "error" : "ok" }); }
+
+        /* PostgREST corta la respuesta sin avisar: se pide de mil en mil. */
+        async function traerTodo(armar) {
+            const todo = [];
+            for (let i = 0; ; i += 1000) {
+                const { data, error } = await armar().range(i, i + 999);
+                if (error) throw error;
+                todo.push(...(data || []));
+                if (!data || data.length < 1000) return todo;
+            }
+        }
+
+        async function cargar() {
+            const r = await sb.rpc("paquetes_con_uso");
+            if (r.error) throw r.error;
+            paquetes = r.data || [];
+            const filas = await traerTodo(() => sb.from("paquete_alumnos").select("paquete_id, alumno_id"));
+            miembros = new Map(paquetes.map((p) => [p.id, new Set()]));
+            filas.forEach((f) => { if (miembros.has(f.paquete_id)) miembros.get(f.paquete_id).add(f.alumno_id); });
+            alumnos = await traerTodo(() => sb.from("profiles").select("id, full_name, email, grupo").eq("role", "alumno").order("full_name"));
+            /* Un paquete de academia lo reparte su supervisor, y solo entre los
+               alumnos MIEMBROS de esa academia (lo que la base acepta). Sin
+               esta lista el selector le ofrecería a todos los que ve, y la
+               base rechazaría al que no es miembro. */
+            miembrosAcad.clear();
+            const mias = [...new Set(paquetes.filter((p) => p.academia_id && p.academia_supervisor_id === yo.id).map((p) => p.academia_id))];
+            if (mias.length) {
+                const ms = await traerTodo(() => sb.from("academia_miembros").select("academia_id, persona_id").in("academia_id", mias));
+                mias.forEach((a) => miembrosAcad.set(a, new Set()));
+                ms.forEach((m) => miembrosAcad.get(m.academia_id).add(m.persona_id));
+            }
+            porId = new Map(alumnos.map((a) => [a.id, a]));
+            if (esAdmin) {
+                const rr = await sb.rpc("acceso_resumen");
+                resumen = rr.error ? null : rr.data;
+            }
+        }
+
+        // ---------------------------------------------------- ¿se exige?
+        function pintarExigir() {
+            if (!esAdmin) return;
+            $("zona-exigir").classList.remove("hidden");
+            const r = resumen || {};
+            const exigido = !!r.exigido;
+            $("exigir-estado").innerHTML = "";
+            const b = document.createElement("strong");
+            b.textContent = exigido
+                ? "Sí: quien no esté en un paquete vigente no puede entrar a los ejercicios ni a las clases."
+                : "Todavía no: todos los alumnos entran, estén o no en un paquete.";
+            $("exigir-estado").append(b);
+            const nums = [
+                ["Alumnos", r.alumnos], ["Con acceso vigente", r.con_acceso],
+                ["Con el paquete vencido", r.vencidos], ["Sin ningún paquete", r.sin_paquete],
+            ];
+            $("exigir-numeros").innerHTML = "";
+            nums.forEach(([t, n]) => {
+                const li = document.createElement("li");
+                li.className = "rounded-xl bg-brand-50 dark:bg-brand-950 p-3";
+                const v = document.createElement("span");
+                v.className = "block font-serif text-2xl font-bold text-brand-800 dark:text-white";
+                v.textContent = n == null ? "—" : n;
+                li.append(v, document.createTextNode(t));
+                $("exigir-numeros").append(li);
+            });
+            const fuera = (r.vencidos || 0) + (r.sin_paquete || 0);
+            const btn = $("exigir-btn");
+            const armado = confirmar.get("exigir");
+            if (exigido) {
+                btn.textContent = armado ? "Sí, dejar de exigir" : "Dejar de exigir";
+                btn.className = "mt-4 font-semibold px-4 py-2 rounded-lg text-sm transition-colors bg-brand-100 dark:bg-brand-800 hover:bg-brand-200 dark:hover:bg-brand-700";
+                $("exigir-nota").textContent = armado ? "Todos los alumnos vuelven a entrar, paguen o no." : "";
+            } else {
+                btn.textContent = armado ? `Sí, exigirlo: ${fuera} alumnos quedan fuera` : "Empezar a exigir el acceso";
+                btn.className = "mt-4 font-semibold px-4 py-2 rounded-lg text-sm transition-colors " +
+                    (armado ? "bg-red-600 hover:bg-red-700 text-white" : "bg-accent-500 hover:bg-accent-600 text-brand-900");
+                $("exigir-nota").textContent = armado
+                    ? `Al confirmar, ${fuera} ${fuera === 1 ? "alumno deja" : "alumnos dejan"} de poder entrar hasta que se les ponga en un paquete. Su progreso no se borra.`
+                    : "Conviene armar primero los paquetes: mientras esto esté apagado, nadie nota nada.";
+            }
+        }
+        $("exigir-btn").addEventListener("click", async () => {
+            if (!confirmar.get("exigir")) { confirmar.set("exigir", true); pintarExigir(); return; }
+            confirmar.delete("exigir");
+            const quiero = !(resumen && resumen.exigido);
+            const { error } = await sb.rpc("acceso_set_exigido", { p_exigido: quiero });
+            if (error) { avisar(error.message || "No se pudo cambiar.", true); pintarExigir(); return; }
+            await recargar(quiero ? "Listo: desde ahora se exige el acceso." : "Listo: ya no se exige el acceso.");
+            $("exigir-btn").focus();
+        });
+
+        // ---------------------------------------------------- el formulario
+        function sugerir() {
+            const n = Number($("f-cupos").value);
+            if (!n || n < 1) { $("f-sugerido").textContent = ""; return; }
+            const c = P.cotizar(n);
+            let t = `Sugerido: ${P.formato(c.total)} al mes o ${P.formato(c.ciclo)} al año (${c.tramo.nombre}, ${P.formato(c.porAlumno)} por alumno al mes).`;
+            if (c.cobrados > n) t += ` Con ${n} conviene cobrar ${c.cobrados}: sale más barato que ${n} sueltos.`;
+            if (c.tramo.convenio) t += " Es precio de convenio: se conversa.";
+            $("f-sugerido").textContent = t;
+            if (!precioTocado && $("f-moneda").value === "CRC") $("f-precio").value = c.total;
+        }
+        function pintarForm() {
+            if (!esAdmin) return;
+            $("zona-form").classList.remove("hidden");
+            const sel = $("f-titular");
+            const actual = sel.value;
+            sel.innerHTML = '<option value="">— Solo administración —</option>';
+            /* Una academia o un profesor, nunca los dos: por eso van en el
+               MISMO selector, cada uno en su grupo. El valor lleva el prefijo
+               para que un id no se lea como el otro. */
+            if (academias.length) {
+                const ga = document.createElement("optgroup");
+                ga.label = "Una academia (la reparte su supervisor)";
+                academias.forEach((a) => {
+                    const o = document.createElement("option");
+                    o.value = "a:" + a.id;
+                    o.textContent = a.nombre + (a.supervisor ? " · " + a.supervisor : " · sin supervisor");
+                    ga.append(o);
+                });
+                sel.append(ga);
+            }
+            const gp = document.createElement("optgroup");
+            gp.label = "Un profesor (reparte entre sus alumnos)";
+            profes.forEach((p) => {
+                const o = document.createElement("option");
+                o.value = "p:" + p.id;
+                o.textContent = (p.full_name || p.email) + (p.role === "admin" ? " (administración)" : "");
+                gp.append(o);
+            });
+            sel.append(gp);
+            sel.value = actual;
+            const tr = $("f-tramos");
+            tr.innerHTML = "";
+            P.TRAMOS.forEach((t) => {
+                const b = document.createElement("button");
+                b.type = "button";
+                b.className = "text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 dark:bg-brand-800 hover:bg-brand-200 dark:hover:bg-brand-700";
+                b.textContent = t.nombre + " (" + t.desde + ")";
+                b.addEventListener("click", () => { $("f-cupos").value = t.desde; sugerir(); });
+                tr.append(b);
+            });
+        }
+        function limpiarForm() {
+            editando = null;
+            precioTocado = false;
+            $("form").reset();
+            $("f-cupos").value = 10;
+            $("f-desde").value = hoy();
+            $("f-hasta").value = sumarMeses(hoy(), 1);
+            $("t-form").textContent = "Nuevo paquete";
+            $("f-guardar").textContent = "Crear paquete";
+            $("f-cancelar").classList.add("hidden");
+            sugerir();
+        }
+        $("f-cupos").addEventListener("input", sugerir);
+        $("f-moneda").addEventListener("change", sugerir);
+        $("f-precio").addEventListener("input", () => { precioTocado = true; });
+        document.querySelectorAll(".f-plazo").forEach((b) => b.addEventListener("click", () => {
+            $("f-hasta").value = sumarMeses($("f-desde").value || hoy(), Number(b.dataset.meses));
+        }));
+        $("f-cancelar").addEventListener("click", () => { limpiarForm(); $("f-msg").textContent = ""; });
+
+        $("form").addEventListener("submit", async (ev) => {
+            ev.preventDefault();
+            const msg = $("f-msg");
+            msg.className = "text-sm text-red-700 dark:text-red-400";
+            const nombre = $("f-nombre").value.trim();
+            const cupos = Number($("f-cupos").value);
+            const desde = $("f-desde").value || hoy();
+            const hasta = $("f-hasta").value;
+            const precioTxt = $("f-precio").value.trim();
+            if (!nombre) { msg.textContent = "Ponle un nombre al paquete."; $("f-nombre").focus(); return; }
+            if (!Number.isInteger(cupos) || cupos < 1 || cupos > 5000) { msg.textContent = "Los cupos van de 1 a 5000."; $("f-cupos").focus(); return; }
+            if (!hasta) { msg.textContent = "Falta hasta cuándo vale."; $("f-hasta").focus(); return; }
+            if (hasta < desde) { msg.textContent = "La fecha final es anterior a la de inicio."; $("f-hasta").focus(); return; }
+            if (editando) {
+                const usados = (miembros.get(editando) || new Set()).size;
+                if (cupos < usados) { msg.textContent = `Ese paquete ya tiene ${usados} alumnos: quita alumnos antes de bajarle los cupos a ${cupos}.`; return; }
+            }
+            const tit = $("f-titular").value;
+            $("f-guardar").disabled = true;
+            const { error } = await sb.rpc("paquete_guardar", {
+                p_id: editando, p_nombre: nombre,
+                p_titular: tit.startsWith("p:") ? tit.slice(2) : null,
+                p_academia: tit.startsWith("a:") ? tit.slice(2) : null,
+                p_cupos: cupos,
+                p_desde: desde, p_hasta: hasta, p_precio: precioTxt === "" ? null : Number(precioTxt),
+                p_moneda: $("f-moneda").value, p_notas: $("f-notas").value.trim() || null,
+            });
+            $("f-guardar").disabled = false;
+            if (error) { msg.textContent = error.message || "No se pudo guardar."; return; }
+            const frase = editando ? `Se guardaron los cambios de «${nombre}».` : `Se creó «${nombre}». Ahora ponle sus alumnos abajo.`;
+            msg.textContent = "";
+            limpiarForm();
+            await recargar(frase);
+        });
+
+        function editar(p) {
+            editando = p.id;
+            precioTocado = true;
+            $("f-nombre").value = p.nombre;
+            $("f-titular").value = p.academia_id ? "a:" + p.academia_id : p.titular_id ? "p:" + p.titular_id : "";
+            $("f-cupos").value = p.cupos;
+            $("f-desde").value = p.vigente_desde;
+            $("f-hasta").value = p.vigente_hasta;
+            $("f-precio").value = p.precio_mensual == null ? "" : Number(p.precio_mensual);
+            $("f-moneda").value = p.moneda || "CRC";
+            $("f-notas").value = p.notas || "";
+            $("t-form").textContent = "Editar «" + p.nombre + "»";
+            $("f-guardar").textContent = "Guardar cambios";
+            $("f-cancelar").classList.remove("hidden");
+            sugerir();
+            $("zona-form").scrollIntoView({ behavior: "smooth", block: "start" });
+            $("f-nombre").focus();
+        }
+
+        // ---------------------------------------------------- la lista
+        function estadoDe(p) {
+            const h = hoy();
+            if (p.vigente_desde > h) return { texto: `Empieza el ${fecha(p.vigente_desde)}`, clase: "text-brand-600 dark:text-brand-300" };
+            if (p.vigente_hasta < h) return { texto: `Vencido el ${fecha(p.vigente_hasta)}`, clase: "text-red-700 dark:text-red-400" };
+            const d = diasEntre(h, p.vigente_hasta);
+            const falta = d === 0 ? "vence hoy" : d === 1 ? "vence mañana" : `faltan ${d} días`;
+            return { texto: `Vigente hasta el ${fecha(p.vigente_hasta)} · ${falta}`, clase: d <= 7 ? "text-accent-700 dark:text-accent-400" : "text-green-700 dark:text-green-400" };
+        }
+
+        function puedeRepartir(p) {
+            return esAdmin || p.titular_id === yo.id || (!!p.academia_id && p.academia_supervisor_id === yo.id);
+        }
+
+        async function mandarAlumnos(p, lista, frase) {
+            if (lista.length > p.cupos) {
+                mensajes.set(p.id, { texto: `No caben: el paquete tiene ${p.cupos} cupos y quedarían ${lista.length} alumnos. Súbele los cupos o quita a alguien.`, error: true });
+                render();
+                return;
+            }
+            const { data, error } = await sb.rpc("paquete_set_alumnos", { p_id: p.id, p_alumnos: lista });
+            if (error) { mensajes.set(p.id, { texto: error.message || "No se pudo guardar.", error: true }); render(); return; }
+            mensajes.set(p.id, { texto: frase + (data && data.total != null ? ` Van ${data.total} de ${data.cupos}.` : ""), error: false });
+            abiertos.add(p.id);
+            await recargar();
+        }
+
+        function tarjeta(p) {
+            const li = document.createElement("li");
+            li.className = "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5";
+            li.dataset.paquete = p.id;
+            const set = miembros.get(p.id) || new Set();
+
+            const cab = document.createElement("div");
+            cab.className = "flex flex-wrap items-start justify-between gap-3";
+            const izq = document.createElement("div");
+            const h = document.createElement("h3");
+            h.className = "font-serif text-lg font-bold text-brand-800 dark:text-white";
+            h.textContent = p.nombre;
+            const est = estadoDe(p);
+            const e = document.createElement("p");
+            e.className = "text-sm font-semibold " + est.clase;
+            e.textContent = est.texto;
+            const t = document.createElement("p");
+            t.className = "text-sm text-brand-500 dark:text-brand-300";
+            t.textContent = (p.academia_id
+                    ? "Academia: " + (p.academia_nombre || "—") + " · la reparte " + (p.academia_supervisor_nombre || "su supervisor") + " entre sus alumnos"
+                    : p.titular_id ? "Titular: " + (p.titular_nombre || "—") : "Sin titular: lo reparte administración")
+                + (p.precio_mensual != null ? " · " + dinero(p.precio_mensual, p.moneda) + " al mes" : "");
+            izq.append(h, e, t);
+            if (p.notas && esAdmin) {
+                const n = document.createElement("p");
+                n.className = "text-xs text-brand-450 dark:text-brand-350 mt-1";
+                n.textContent = p.notas;
+                izq.append(n);
+            }
+            cab.append(izq);
+
+            if (esAdmin) {
+                const acc = document.createElement("div");
+                acc.className = "flex gap-2";
+                const ed = document.createElement("button");
+                ed.type = "button";
+                ed.className = "text-sm font-semibold px-3 py-1.5 rounded-lg bg-brand-100 dark:bg-brand-800 hover:bg-brand-200 dark:hover:bg-brand-700";
+                ed.textContent = "Editar";
+                ed.addEventListener("click", () => editar(p));
+                const bo = document.createElement("button");
+                bo.type = "button";
+                const clave = "borrar:" + p.id;
+                const armado = confirmar.get(clave);
+                bo.className = "text-sm font-semibold px-3 py-1.5 rounded-lg " + (armado ? "bg-red-600 hover:bg-red-700 text-white" : "bg-brand-100 dark:bg-brand-800 hover:bg-brand-200 dark:hover:bg-brand-700");
+                bo.textContent = armado ? `Sí, borrar (${set.size} alumnos pierden este acceso)` : "Borrar";
+                bo.addEventListener("click", async () => {
+                    if (!confirmar.get(clave)) { confirmar.set(clave, true); render(); focoEn(p.id, "[data-borrar]"); return; }
+                    confirmar.delete(clave);
+                    const { error } = await sb.rpc("paquete_borrar", { p_id: p.id });
+                    if (error) { avisar(error.message || "No se pudo borrar.", true); return; }
+                    await recargar(`Se borró «${p.nombre}».`);
+                });
+                bo.dataset.borrar = "1";
+                acc.append(ed, bo);
+                cab.append(acc);
+            }
+            li.append(cab);
+
+            // cupos
+            const uso = document.createElement("div");
+            uso.className = "mt-3";
+            const txt = document.createElement("p");
+            txt.className = "text-sm";
+            txt.textContent = `${set.size} de ${p.cupos} cupos usados`;
+            const barra = document.createElement("div");
+            barra.className = "mt-1 h-2 rounded-full bg-brand-100 dark:bg-brand-800 overflow-hidden";
+            barra.setAttribute("role", "progressbar");
+            barra.setAttribute("aria-valuemin", "0");
+            barra.setAttribute("aria-valuemax", String(p.cupos));
+            barra.setAttribute("aria-valuenow", String(set.size));
+            barra.setAttribute("aria-label", "Cupos usados");
+            const lleno = document.createElement("div");
+            lleno.className = "h-full bg-accent-500";
+            lleno.style.width = Math.min(100, Math.round((set.size / p.cupos) * 100)) + "%";
+            barra.append(lleno);
+            uso.append(txt, barra);
+            li.append(uso);
+
+            const m = mensajes.get(p.id);
+            const msg = document.createElement("p");
+            msg.className = "text-sm mt-2 min-h-[1.25rem] " + (m && m.error ? "text-red-700 dark:text-red-400" : "text-green-700 dark:text-green-400");
+            msg.setAttribute("role", "status");
+            msg.dataset.msg = "1";
+            msg.textContent = m ? m.texto : "";
+            li.append(msg);
+
+            // alumnos
+            const det = document.createElement("details");
+            det.className = "mt-2";
+            det.open = abiertos.has(p.id);
+            det.addEventListener("toggle", () => { if (det.open) abiertos.add(p.id); else abiertos.delete(p.id); });
+            const sum = document.createElement("summary");
+            sum.className = "cursor-pointer text-sm font-semibold text-accent-700 dark:text-accent-400";
+            sum.textContent = `Sus alumnos (${set.size})`;
+            det.append(sum);
+
+            const ul = document.createElement("ul");
+            ul.className = "flex flex-wrap gap-2 mt-3";
+            const ordenados = [...set].sort((a, b) => (nombreDe(a) || "~").localeCompare(nombreDe(b) || "~", "es"));
+            ordenados.forEach((id) => {
+                const tag = document.createElement("li");
+                tag.className = "inline-flex items-center gap-1 rounded-full bg-brand-100 dark:bg-brand-800 pl-3 pr-1 py-1 text-sm";
+                const nom = nombreDe(id);
+                const s = document.createElement("span");
+                s.textContent = nom || "Alumno fuera de tu lista";
+                tag.append(s);
+                // Solo se ofrece quitar a quien se ve: al que no, la base lo conserva igual.
+                if (puedeRepartir(p) && nom) {
+                    const x = document.createElement("button");
+                    x.type = "button";
+                    x.className = "w-6 h-6 rounded-full hover:bg-brand-200 dark:hover:bg-brand-700";
+                    x.setAttribute("aria-label", "Quitar a " + nom + " del paquete");
+                    x.textContent = "✕";
+                    x.addEventListener("click", () => mandarAlumnos(p, [...set].filter((y) => y !== id), `Se quitó a ${nom}.`));
+                    tag.append(x);
+                } else {
+                    s.className = "pr-2";
+                }
+                ul.append(tag);
+            });
+            if (!set.size) {
+                const vacio = document.createElement("li");
+                vacio.className = "text-sm text-brand-500 dark:text-brand-300";
+                vacio.textContent = "Todavía no tiene alumnos.";
+                ul.append(vacio);
+            }
+            det.append(ul);
+
+            if (puedeRepartir(p)) det.append(controlesSumar(p, set));
+            li.append(det);
+            return li;
+        }
+
+        /* A quién se le puede ofrecer entrar a este paquete: administración a
+           todos; el titular profesor a los alumnos que ve (los suyos); el
+           supervisor de la academia titular, solo a sus miembros. */
+        function candidatos(p) {
+            if (esAdmin || !p.academia_id) return alumnos;
+            const m = miembrosAcad.get(p.academia_id) || new Set();
+            return alumnos.filter((a) => m.has(a.id));
+        }
+
+        function controlesSumar(p, set) {
+            const pool = candidatos(p);
+            const caja = document.createElement("div");
+            caja.className = "grid sm:grid-cols-2 gap-3 mt-4";
+
+            // uno por uno, con buscador
+            const uno = document.createElement("div");
+            const lb = document.createElement("label");
+            lb.className = "block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1";
+            lb.htmlFor = "buscar-" + p.id;
+            lb.textContent = "Sumar un alumno";
+            const bus = document.createElement("input");
+            bus.type = "search";
+            bus.id = "buscar-" + p.id;
+            bus.placeholder = "Busca por nombre o correo";
+            bus.className = "w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none";
+            const sel = document.createElement("select");
+            sel.className = "w-full mt-2 px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none";
+            sel.setAttribute("aria-label", "Alumno para sumar");
+            function llenar() {
+                const q = sinTildes(bus.value.trim());
+                sel.innerHTML = "";
+                const libres = pool.filter((a) => !set.has(a.id) &&
+                    (!q || sinTildes(a.full_name).includes(q) || sinTildes(a.email).includes(q)));
+                const o0 = document.createElement("option");
+                o0.value = "";
+                o0.textContent = libres.length ? `— ${libres.length} para elegir —` : "— nadie coincide —";
+                sel.append(o0);
+                libres.slice(0, 200).forEach((a) => {
+                    const o = document.createElement("option");
+                    o.value = a.id;
+                    o.textContent = (a.full_name || a.email) + (a.grupo ? " · " + a.grupo : "");
+                    sel.append(o);
+                });
+            }
+            bus.addEventListener("input", llenar);
+            llenar();
+            const bt = document.createElement("button");
+            bt.type = "button";
+            bt.className = "mt-2 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm";
+            bt.textContent = "Sumar";
+            bt.dataset.sumar = "1";
+            bt.addEventListener("click", () => {
+                if (!sel.value) return;
+                mandarAlumnos(p, [...set, sel.value], `Entró ${nombreDe(sel.value)}.`);
+            });
+            uno.append(lb, bus, sel, bt);
+
+            // un grupo entero: se manda la UNIÓN, nunca solo el grupo
+            const gr = document.createElement("div");
+            const lg = document.createElement("label");
+            lg.className = "block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1";
+            lg.htmlFor = "grupo-" + p.id;
+            lg.textContent = "Sumar un grupo entero";
+            const sg = document.createElement("select");
+            sg.id = "grupo-" + p.id;
+            sg.className = "w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none";
+            const cuenta = new Map();
+            pool.forEach((a) => { if (a.grupo) cuenta.set(a.grupo, (cuenta.get(a.grupo) || 0) + 1); });
+            const og = document.createElement("option");
+            og.value = "";
+            og.textContent = cuenta.size ? "— elige un grupo —" : "— no hay grupos —";
+            sg.append(og);
+            [...cuenta.keys()].sort((a, b) => a.localeCompare(b, "es")).forEach((g) => {
+                const o = document.createElement("option");
+                o.value = g;
+                o.textContent = `${g} (${cuenta.get(g)})`;
+                sg.append(o);
+            });
+            const bg = document.createElement("button");
+            bg.type = "button";
+            bg.className = "mt-2 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm";
+            bg.textContent = "Sumar el grupo";
+            bg.dataset.grupo = "1";
+            bg.addEventListener("click", () => {
+                if (!sg.value) return;
+                const nuevos = pool.filter((a) => a.grupo === sg.value && !set.has(a.id)).map((a) => a.id);
+                if (!nuevos.length) { mensajes.set(p.id, { texto: `Todo ${sg.value} ya estaba en el paquete.`, error: false }); render(); return; }
+                mandarAlumnos(p, [...set, ...nuevos], `Entraron ${nuevos.length} de ${sg.value}.`);
+            });
+            gr.append(lg, sg, bg);
+
+            caja.append(uno, gr);
+            return caja;
+        }
+
+        function focoEn(paquete, sel) {
+            const li = document.querySelector(`#lista li[data-paquete="${paquete}"]`);
+            const el = li && li.querySelector(sel);
+            if (el) el.focus();
+        }
+
+        function render() {
+            pintarExigir();
+            const ul = $("lista");
+            ul.innerHTML = "";
+            $("lista-vacia").classList.toggle("hidden", paquetes.length > 0);
+            paquetes.forEach((p) => ul.append(tarjeta(p)));
+        }
+
+        async function recargar(frase) {
+            try {
+                await cargar();
+                if (frase) avisar(frase, false);
+            } catch (e) {
+                avisar("No se pudo volver a leer la lista: " + (e.message || e), true);
+            }
+            render();
+        }
+
+        async function init() {
+            const { data: { session } } = await sb.auth.getSession();
+            if (!session) { location.href = "login.html"; return; }
+            const { data: perfil } = await sb.from("profiles").select("id, full_name, role, is_admin").eq("id", session.user.id).single();
+            yo = perfil || { id: session.user.id };
+            esAdmin = !!(perfil && perfil.is_admin);
+            try {
+                if (esAdmin) {
+                    profes = await traerTodo(() => sb.from("profiles").select("id, full_name, email, role").in("role", ["profesor", "admin"]).order("full_name"));
+                    const ra = await sb.from("academias").select("id, nombre, supervisor_id").order("nombre");
+                    const quien = new Map(profes.map((x) => [x.id, x.full_name || x.email]));
+                    academias = (ra.data || []).map((a) => ({ id: a.id, nombre: a.nombre, supervisor: quien.get(a.supervisor_id) || "" }));
+                }
+                await cargar();
+            } catch (e) {
+                $("loading").textContent = "No se pudo cargar: " + (e.message || e);
+                return;
+            }
+            $("loading").classList.add("hidden");
+            if (!esAdmin && paquetes.length === 0) { $("denegado").classList.remove("hidden"); return; }
+            $("intro").textContent = esAdmin
+                ? "Arma los paquetes, ponles sus alumnos y decide desde cuándo se exige el acceso."
+                : paquetes.some((p) => p.academia_id && p.academia_supervisor_id === yo.id)
+                    ? "Los cupos que compró tu academia: repártelos entre sus alumnos."
+                    : "Los paquetes de los que eres titular: reparte sus cupos entre tus alumnos.";
+            $("app").classList.remove("hidden");
+            if (esAdmin) { pintarForm(); limpiarForm(); }
+            render();
+        }
+        init();
+    })();
+    
