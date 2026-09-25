@@ -234,7 +234,12 @@ async function pruebaCoordinacion(browser) {
   // recibos de corrido no se encuentra ninguno.
   const meses = await page.evaluate(() =>
     [...document.querySelectorAll("#cobros-lista > details")].map((d) => d.open));
-  igual("un bloque por mes, solo el primero abierto", meses, [true, false, false]);
+  // Cuántos meses hay sale de las MISMAS filas: sus fechas cuelgan de hoy, así
+  // que según el día del mes caen en dos meses o en tres. Con el número escrito
+  // a mano la prueba se pudría sola con el almanaque (falló un 25 de setiembre).
+  const nMeses = new Set(COBROS.map((c) => c.vence.slice(0, 7))).size;
+  igual("los cobros de prueba caen en más de un mes", nMeses > 1, "true");
+  igual("un bloque por mes, solo el primero abierto", meses, [true, ...Array(nMeses - 1).fill(false)]);
   igual("y el encabezado del mes dice cuánto queda sin pagar",
     /sin pagar/.test(await page.evaluate(() => document.querySelector("#cobros-lista summary").textContent)), "true");
 

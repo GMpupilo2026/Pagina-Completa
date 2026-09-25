@@ -129,7 +129,7 @@ export function avisoHtml(o: {
 
     <p style="margin:16px 0 0;padding:16px;background:#f0f4f8;border-radius:10px;font-size:14px;color:#243b53;line-height:1.7">
       <strong>Cómo pagar</strong><br>
-      Por SINPE Móvil, transferencia o en efectivo en clase. Cuando lo hagas, mándanos el
+      Por SINPE Móvil o transferencia bancaria. Cuando lo hagas, mándanos el
       comprobante ${porDonde} y lo registramos.
     </p>
 
