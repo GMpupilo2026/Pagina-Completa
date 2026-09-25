@@ -29,6 +29,7 @@
     <script src="js/equipo-volcar.js"></script>
     <script src="js/funciones-coordinacion.js"></script>
     <script src="js/usuario-alumno.js"></script>
+    <script src="js/contrasena-alumno.js"></script>
     <script src="js/adaptive-mode.js"></script>
 
 
@@ -341,35 +342,11 @@ function montarFicha(u, caja, lineaNombre) {
         caja.appendChild(correo);
 
         // ------------------------------------ su contraseña, si entra con usuario
-        /* Un niño pequeño no abre el correo de la casa para crear su
-           contraseña: se la pone quien coordina y se la da en la clase. Solo
-           existe para quien entra con usuario de la Academia —la contraseña de
-           un correo de verdad es de esa persona— y aparece en cuanto se le da
-           uno, sin tener que cerrar la ficha. */
-        const clave = seccion("Su contraseña");
-        const campoClave = campo("Contraseña nueva", "", "text");
-        campoClave.input.setAttribute("autocomplete", "off");
-        campoClave.input.setAttribute("autocapitalize", "none");
-        campoClave.input.setAttribute("autocorrect", "off");
-        campoClave.input.setAttribute("spellcheck", "false");
-        clave.appendChild(campoClave.caja);
-        clave.appendChild(el("p", "text-xs text-brand-450 dark:text-brand-350 mt-2",
-            "Al menos 8 caracteres. Se ve mientras la escribes porque es para dársela al alumno "
-            + "junto con su usuario; la que tenía deja de servir."));
-        const botonesClave = el("div", "flex flex-wrap gap-2 mt-3");
-        const proponer = el("button", "border border-brand-200 dark:border-brand-700 hover:border-accent-400 px-4 py-2 rounded-lg text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "Proponer una fácil");
-        proponer.type = "button";
-        proponer.addEventListener("click", () => { campoClave.input.value = claveFacil(); campoClave.input.focus(); });
-        const botonClave = el("button", "bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "Poner esta contraseña");
-        botonClave.type = "button";
-        botonClave.addEventListener("click", () => ponerClave(u, campoClave.input, botonClave));
-        botonesClave.append(proponer, botonClave);
-        clave.appendChild(botonesClave);
-        const pintarClave = () => { clave.hidden = !UsuarioAlumno.esInterno(u.email); };
-        pintarClave();
-        caja.appendChild(clave);
+        /* La pone quien coordina y se la da en la clase. Aparece en cuanto se
+           le da un usuario, sin cerrar la ficha. Ver js/contrasena-alumno.js. */
+        const clave = ContrasenaAlumno.montar(caja, { alumnoId: u.id, nombre: nombreDe(u), usuario: () => u.email });
 
-        botonCorreo.addEventListener("click", () => guardarCorreo(u, actual.input, marca, botonCorreo, pintarClave));
+        botonCorreo.addEventListener("click", () => guardarCorreo(u, actual.input, marca, botonCorreo, clave.pintar));
 
         // ------------------------------------------------ sus profesores
         const profes = seccion("Sus profesores");
@@ -517,40 +494,6 @@ async function guardarCorreo(u, input, marca, boton, alCambiar) {
     }
     boton.disabled = false;
     boton.textContent = "Cambiar el correo";
-}
-
-/* Una que un niño pueda escribir y recordar: una palabra del ajedrez y tres
-   números («caballo482»). Los números salen de crypto, no de Math.random. Se
-   propone, no se impone: quien coordina la puede cambiar antes de ponerla. */
-const PALABRAS_CLAVE = ["torre", "alfil", "caballo", "dama", "jaque", "enroque", "tablero", "peon", "reina", "casilla"];
-function claveFacil() {
-    const n = new Uint32Array(2);
-    crypto.getRandomValues(n);
-    const palabra = PALABRAS_CLAVE[n[0] % PALABRAS_CLAVE.length];
-    return palabra + String(n[1] % 1000).padStart(3, "0") + (palabra.length < 5 ? String(n[1] % 10) : "");
-}
-
-/* La pone `correos-alumno`, que ya decide qué alumnos son de quien llama y
-   rechaza a quien tiene correo propio: la pantalla solo esconde el botón. */
-async function ponerClave(u, input, boton) {
-    const valor = input.value;
-    if (valor.length < 8) {
-        avisar("La contraseña tiene que tener al menos 8 caracteres.", true);
-        input.focus();
-        return;
-    }
-    boton.disabled = true;
-    boton.textContent = "Poniéndola…";
-    try {
-        const datos = await llamarCorreos({ action: "contrasena", alumno_id: u.id, contrasena: valor });
-        avisar("Listo. " + nombreDe(u) + " entra con el usuario «"
-            + UsuarioAlumno.soloUsuario(datos.usuario || u.email) + "» y la contraseña «" + valor + "».");
-        input.value = "";
-    } catch (err) {
-        avisar("No se pudo poner: " + err.message, true);
-    }
-    boton.disabled = false;
-    boton.textContent = "Poner esta contraseña";
 }
 
 async function llamarCorreos(cuerpo) {

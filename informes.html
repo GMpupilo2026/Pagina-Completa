@@ -36,6 +36,8 @@
 
 <!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/pwa.js" defer></script><!-- app: fin --><!-- tema: inicio --><script>(function(){try{var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');var f=localStorage.getItem('plataforma_tema_fuente_v1');if(!f||!/^[A-Za-z0-9 ]{2,32}$/.test(f))return;var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family='+f.replace(/ /g,'+')+':wght@400;500;600;700&display=swap';document.head.appendChild(l);}catch(e){}})();</script><!-- tema: fin -->
     <script src="js/avisos.js"></script>
+    <script src="js/usuario-alumno.js"></script>
+    <script src="js/contrasena-alumno.js"></script>
 </head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
@@ -208,17 +210,21 @@
                 <div id="diagnostico-body" class="mt-4"></div>
             </details>
 
-            <!-- Reenviar el enlace para crear o cambiar la contraseña. Solo para quien
-                 coordina o administra (se muestra u oculta desde el script, según
-                 profile.es_coordinador/is_admin) y solo mirando a UN alumno: es de él. -->
+            <!-- Reenviar el enlace para crear o cambiar la contraseña (solo quien
+                 coordina o administra) y ponerle la contraseña a un alumno que entra
+                 con usuario de la Academia (también su profesor). Se muestra u oculta
+                 desde el script, y solo mirando a UN alumno: es de él. -->
             <details id="acceso-report" class="group hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
                 <summary class="cursor-pointer list-none flex items-center justify-between gap-4">
                     <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white inline"><span aria-hidden="true">🔑</span> Acceso a la cuenta</h2>
                     <span class="text-accent-700 dark:text-accent-400 group-open:rotate-45 transition-transform text-xl leading-none shrink-0" aria-hidden="true">+</span>
                 </summary>
+                <div id="acceso-enlace">
                 <p id="acceso-info" class="text-xs text-brand-450 dark:text-brand-350 mt-4 mb-4"></p>
                 <button type="button" id="acceso-reenviar" class="bg-brand-100 dark:bg-brand-800 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2 rounded-lg text-sm hover:bg-brand-200 dark:hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Reenviar enlace para restablecer la contraseña</button>
                 <p id="acceso-msg" class="text-sm mt-3" aria-live="polite"></p>
+                </div>
+                <div id="acceso-clave"></div>
             </details>
 
             <!-- A quién de la casa se le manda el informe de este alumno y cada cuánto.
@@ -1516,8 +1522,24 @@
 
         function renderAcceso(studentId, nombreAlumno) {
             const card = document.getElementById("acceso-report");
-            if (!esCoordinadorOAdmin()) { card.classList.add("hidden"); return; }
+            const alumno = teacherData.resumenPorAlumno[studentId] || {};
+            const coordina = esCoordinadorOAdmin();
+            /* A un alumno que entra con usuario de la Academia también su
+               profesor le puede poner la contraseña: es quien lo tiene en la
+               clase y se la puede dar. correos-alumno vuelve a comprobar que
+               sea su profesor (soy_profesor_de) y que de verdad tenga usuario. */
+            const conUsuario = UsuarioAlumno.esInterno(alumno.email);
+            const clave = document.getElementById("acceso-clave");
+            clave.innerHTML = "";
+            if (conUsuario) {
+                ContrasenaAlumno.montar(clave, { alumnoId: studentId, nombre: nombreAlumno, usuario: () => alumno.email });
+            }
+            if (!coordina && !conUsuario) { card.classList.add("hidden"); return; }
             card.classList.remove("hidden");
+            // Reenviar el enlace sigue siendo de coordinación (reenviar-acceso
+            // pide la función «acceso»): al profesor se le vería y fallaría.
+            document.getElementById("acceso-enlace").hidden = !coordina;
+            if (!coordina) return;
             document.getElementById("acceso-info").textContent =
                 `Por si la familia dice que el correo de bienvenida nunca llegó o que ya no encuentra ` +
                 `la contraseña: le vuelve a mandar el enlace para crear una nueva.`;
