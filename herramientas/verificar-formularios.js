@@ -265,10 +265,43 @@ async function pruebaArmador(browser) {
       return f.children[7].textContent;
     }), "No");
 
+  await pruebaBuscador(page);
   await pruebaAlta(page);
 
   errores.forEach((e) => { console.log("  ✗ error de la página: " + e); fallos += 1; });
   await page.close();
+}
+
+/* El buscador de las respuestas: filtra la tabla sin tildes ni mayúsculas, con
+   todas las palabras, y dice cuántas quedan. Lo que se mide son las filas que
+   se ven, no la función de filtrar. Al final se vacía: pruebaAlta cuenta con
+   las dos filas en su lugar. */
+async function pruebaBuscador(page) {
+  console.log("\n=== Buscar en las respuestas ===");
+  const nombresVisibles = () => page.evaluate(() =>
+    [...document.querySelectorAll("#respuestas-cuerpo tr")]
+      .filter((tr) => tr.checkVisibility()).map((tr) => tr.children[1] ? tr.children[1].textContent : tr.textContent));
+  const cuenta = () => page.evaluate(() => document.getElementById("buscar-respuestas-cuenta").textContent);
+
+  igual("el buscador se ve", await page.evaluate(() => document.getElementById("buscar-respuestas").checkVisibility()), true);
+  igual("sin buscar no dice ningún conteo", await cuenta(), "");
+
+  await page.fill("#buscar-respuestas", "BRUNO");
+  igual("encuentra por nombre, sin importar mayúsculas", await nombresVisibles(), ["Bruno Mena"]);
+  igual("y dice cuántas quedan", await cuenta(), "1 de 2 respuestas");
+
+  await page.fill("#buscar-respuestas", "sabado");
+  igual("sin tildes encuentra lo que las lleva, y busca en cualquier pregunta", await nombresVisibles(), ["Ana Rojas"]);
+
+  await page.fill("#buscar-respuestas", "rojas linea");
+  igual("con varias palabras tienen que estar todas",
+    await nombresVisibles(), ["Ninguna respuesta coincide con esa búsqueda."]);
+
+  await page.fill("#buscar-respuestas", "cuenta creada");
+  igual("encuentra también por si ya tiene cuenta", await nombresVisibles(), ["Bruno Mena"]);
+
+  await page.fill("#buscar-respuestas", "");
+  igual("al vaciarlo vuelven todas", await nombresVisibles(), ["Ana Rojas", "Bruno Mena"]);
 }
 
 /* Crear la cuenta desde una respuesta. Es lo único de esta página que le manda
