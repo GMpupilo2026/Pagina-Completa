@@ -66,6 +66,9 @@ const LEER = () => ({
   barra: document.getElementById("modo-vista-barra") && document.getElementById("modo-vista-barra").checkVisibility()
     ? document.getElementById("modo-vista-barra").textContent : null,
   rpcs: window.__consultas.map((c) => c.tabla + (c.args ? " " + JSON.stringify(c.args) : "")),
+  // De quién se preguntó si tiene la clase abierta.
+  clases: window.__consultas.filter((c) => c.tabla === "class_sessions").map((c) => c.eq.created_by),
+  mirar: document.getElementById("mirar-clase") ? document.getElementById("mirar-clase").getAttribute("href") : null,
   alumnos: document.getElementById("profe-alumnos").textContent,
   registro: document.getElementById("registro-clases").checkVisibility(),
   sesion: document.getElementById("session-status-card").checkVisibility(),
@@ -119,7 +122,8 @@ async function pruebaCoordinadora(browser) {
   igual("sin estado de la clase en vivo", g.sesion, false);
   igual("la franja dice de quién es el panel", /panel de Carla Mora \(coordinación\)/.test(g.barra || ""), true);
   igual("y que lo que se guarde va con tu cuenta", /se hace con tu cuenta/.test(g.barra || ""), true);
-  igual("no se pidió ninguna clase en vivo", g.rpcs.some((r) => r.startsWith("class_sessions")), false);
+  igual("de clases solo se pregunta si ELLA tiene una abierta", g.clases, ["u-coord"]);
+  igual("sin clase abierta, no se ofrece mirarla", g.mirar, null);
   igual("sin errores en consola", errores, []);
   // Volver a la vista propia la borra.
   await Promise.all([
@@ -130,6 +134,21 @@ async function pruebaCoordinadora(browser) {
   const g2 = await page.evaluate(LEER);
   igual("«Volver a mi vista» vuelve al panel de supervisor", g2.badge, "🧭 Supervisor");
   igual("y deja de estar guardada", g2.guardada, null);
+  await ctx.close();
+}
+
+/* Si la persona está dando clase, su panel ofrece mirarla en vivo
+   (sesion.html?observar=<id>; lo comprueba verificar-clase-supervisor.js). */
+async function pruebaMirarClase(browser) {
+  console.log("\n=== Mirando a un profesor que está dando clase ===");
+  const karina = { id: "u-profe", nombre: "Karina Rojas", es_coordinador: false };
+  const datos = Object.assign({}, DATOS, { clase_abierta: true,
+    rpc: Object.assign({}, DATOS.rpc, { personas_para_ver_como: PERSONAS.concat([karina]) }) });
+  const { page, ctx, errores } = await panel(browser, [SUP], SUP.id, CON_PERSONA(karina, SUP.id), datos);
+  await page.waitForSelector("#mirar-clase", { timeout: 10000 });
+  const g = await page.evaluate(LEER);
+  igual("ofrece mirar SU clase en vivo", g.mirar, "sesion.html?observar=u-profe");
+  igual("sin errores en consola", errores, []);
   await ctx.close();
 }
 
@@ -215,6 +234,7 @@ async function pruebaAdmin(browser) {
   try {
     await pruebaSelector(browser);
     await pruebaCoordinadora(browser);
+    await pruebaMirarClase(browser);
     await pruebaGuardas(browser);
     await pruebaEnlace(browser);
     await pruebaAdmin(browser);

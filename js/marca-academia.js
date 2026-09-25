@@ -4,6 +4,9 @@
  * Quién la ve lo decide public.mi_marca_academia(): quien es de UNA sola
  * academia (miembro o supervisor). Con dos o más se ve Ajedrez Integral, la
  * misma decisión que el remitente de los correos: no hay forma de saber cuál.
+ * La excepción es quien SUPERVISA dos o más: las ve de una en una (la
+ * «academia activa») y lleva la marca de la que tiene abierta, con la franja
+ * para cambiarla (montarSelectorAcademia).
  *
  * El color pinta el FONDO del encabezado, con el nombre en blanco encima. La
  * base solo acepta colores que den 4.5 de contraste contra el blanco
@@ -133,12 +136,64 @@
     var antes = guardada(uid);
     if (antes) aplicar(antes);
 
-    var res = await sb.rpc("mi_marca_academia");
-    if (res.error) return;
-    var fila = Array.isArray(res.data) ? res.data[0] : res.data;
-    var marca = fila && fila.nombre ? fila : null;
-    guardar(uid, marca);
-    if (marca || antes) aplicar(marca);
+    var pedidos = await Promise.all([sb.rpc("mi_marca_academia"), sb.rpc("mis_academias_supervisadas")]);
+    var res = pedidos[0];
+    if (!res.error) {
+      var fila = Array.isArray(res.data) ? res.data[0] : res.data;
+      var marca = fila && fila.nombre ? fila : null;
+      guardar(uid, marca);
+      if (marca || antes) aplicar(marca);
+    }
+    var sup = pedidos[1];
+    if (!sup.error && Array.isArray(sup.data) && sup.data.length > 1) montarSelectorAcademia(sb, uid, sup.data);
+  }
+
+  /* Quien supervisa DOS o más academias las ve de una en una: la «academia
+     activa». Quien la acota es la base (interno.academia_activa(): sus
+     supervisados, su RLS y sus cuentas salen solo de esa academia); esta
+     franja dice cuál es y deja cambiarla. Sin elegir, la base toma la
+     primera por nombre, así que nunca hay un «todas juntas» que las mezcle. */
+  function montarSelectorAcademia(sb, uid, academias) {
+    if (document.getElementById("academia-activa-barra")) return;
+    var activa = academias.find(function (a) { return a.activa; }) || academias[0];
+    var barra = document.createElement("div");
+    barra.id = "academia-activa-barra";
+    barra.setAttribute("role", "region");
+    barra.setAttribute("aria-label", "Academia que estás viendo");
+    barra.className = "bg-brand-100 dark:bg-brand-900 border-b border-brand-200 dark:border-brand-700 text-sm text-brand-800 dark:text-brand-100 px-4 py-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-2";
+    var texto = document.createElement("p");
+    texto.textContent = "🏫 Estás viendo solo " + (activa.nombre || "esta academia")
+      + ": sus profesores, sus alumnos, sus cobros y sus informes.";
+    var etiqueta = document.createElement("label");
+    etiqueta.setAttribute("for", "academia-activa-sel");
+    etiqueta.className = "font-semibold";
+    etiqueta.textContent = "Cambiar de academia:";
+    var sel = document.createElement("select");
+    sel.id = "academia-activa-sel";
+    sel.className = "px-2 py-1 rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-sm text-brand-800 dark:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+    academias.forEach(function (a) {
+      var o = document.createElement("option");
+      o.value = a.id;
+      o.textContent = a.nombre || "Sin nombre";
+      sel.appendChild(o);
+    });
+    sel.value = activa.id;
+    sel.addEventListener("change", async function () {
+      sel.disabled = true;
+      var r = await sb.rpc("elegir_academia_activa", { p_academia: sel.value });
+      if (r.error) {
+        sel.disabled = false;
+        sel.value = activa.id;
+        if (window.Avisos) window.Avisos.avisar("No se pudo cambiar de academia: " + r.error.message, { tipo: "error" });
+        return;
+      }
+      // La marca guardada era la de la otra academia: se vuelve a pedir.
+      guardar(uid, undefined);
+      location.reload();
+    });
+    barra.append(texto, etiqueta, sel);
+    var main = document.querySelector("main") || document.body;
+    main.parentNode.insertBefore(barra, main);
   }
 
   function arrancar() {
@@ -147,7 +202,7 @@
     });
   }
 
-  var api = { contrasteConBlanco: contrasteConBlanco, urlDelLogo: urlDelLogo, aplicar: aplicar, BUCKET: BUCKET };
+  var api = { contrasteConBlanco: contrasteConBlanco, urlDelLogo: urlDelLogo, aplicar: aplicar, montarSelectorAcademia: montarSelectorAcademia, BUCKET: BUCKET };
   if (typeof window !== "undefined") {
     window.MarcaAcademia = api;
     if (typeof document !== "undefined" && !window.__marcaAcademiaSinArranque) {

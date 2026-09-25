@@ -79,6 +79,9 @@
 let session = null;
 let mes = null;
 let filas = [];
+// Los profesores con la clase abierta ahora: la RLS de class_sessions solo le
+// entrega a quien supervisa las de su gente.
+let enClase = new Set();
 
 function el(tag, clase, texto) {
     const n = document.createElement(tag);
@@ -101,6 +104,8 @@ function estadoInforme(f) {
 }
 
 async function cargar() {
+    const abiertas = await sb.from("class_sessions").select("created_by").is("ended_at", null);
+    enClase = new Set(((abiertas && abiertas.data) || []).map((c) => c.created_by));
     const { data, error } = await sb.rpc("resumen_profesores_supervisados", { p_periodo: mes });
     // Una lista que no se pudo leer y una vacía se ven igual: se dice.
     if (error) { avisar("No se pudieron cargar tus profesores: " + error.message, true); filas = []; return false; }
@@ -144,6 +149,14 @@ function tarjeta(f) {
     ver.href = "clases.html?ver_como=" + encodeURIComponent(f.id);
     ver.dataset.verComo = f.id;
     const der = el("div", "flex flex-wrap items-center gap-3");
+    /* En clase ahora: se puede mirar en vivo (sesion.html?observar=<id>). Va
+       escrito, no solo con el punto rojo. */
+    if (enClase.has(f.id)) {
+        const vivo = el("a", "text-xs font-semibold px-3 py-1 rounded-full bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300 underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "🔴 En clase ahora · Mirar la clase");
+        vivo.href = "sesion.html?observar=" + encodeURIComponent(f.id);
+        vivo.dataset.observar = f.id;
+        der.appendChild(vivo);
+    }
     der.append(ver, chip);
     cab.append(t, der);
     li.appendChild(cab);

@@ -61,14 +61,17 @@ window.__rpc = [];
   const YO = ${JSON.stringify(yo)};
   function resolver(data) { return { then(res, rej) { return Promise.resolve({ data: data, error: null }).then(res, rej); } }; }
   function tabla(nombre) {
-    let cond = [], unica = false;
+    let cond = [], nulos = [], unica = false;
     const b = {
       select() { return b; }, order() { return b; }, limit() { return b; },
       eq(c, v) { cond.push([c, v]); return b; },
+      // .is("ended_at", null): las clases abiertas (supervision.html).
+      is(c, v) { if (v === null) nulos.push(c); return b; },
       maybeSingle() { unica = true; return b; },
       then(res, rej) {
         let d = nombre === "profiles" ? [YO] : (D.tablas[nombre] || []);
         cond.forEach(([c, v]) => { d = d.filter((f) => f[c] === v); });
+        nulos.forEach((c) => { d = d.filter((f) => f[c] === null || f[c] === undefined); });
         if (unica) d = d.length ? d[0] : null;
         return Promise.resolve({ data: d, error: null }).then(res, rej);
       },
@@ -233,7 +236,10 @@ async function pruebaSupervisor(browser) {
   const datos = { tablas: { informes_profesor: [{
       id: "inf-9", profesor_id: "p-1", periodo: "2026-09-01", resumen: "Clases de finales en los dos grupos.",
       logros: "Subieron dos.", dificultades: "", proximo_mes: "Torneo interno.", datos: FOTO,
-      enviado_at: "2026-09-02T15:00:00Z", leido_at: null, comentario: "" }] },
+      enviado_at: "2026-09-02T15:00:00Z", leido_at: null, comentario: "" }],
+      // Karina da clase ahora; la de Luis ya terminó.
+      class_sessions: [{ id: "c-1", created_by: "p-1", ended_at: null },
+                       { id: "c-2", created_by: "p-2", ended_at: "2026-09-20T15:00:00Z" }] },
     rpc: { resumen_profesores_supervisados: [
       { id: "p-1", nombre: "Karina <b>Rojas</b>", grupo: "SJ", actividad: EN_VIVO,
         informe_id: "inf-9", enviado_at: "2026-09-02T15:00:00Z", leido_at: null, comentado: false },
@@ -251,6 +257,9 @@ async function pruebaSupervisor(browser) {
         ["Karina <b>Rojas</b>", 0]);
   igual("el resumen del mes cuenta bien",
         (await page.$eval("#resumen", (p) => p.textContent)).startsWith("2 profesores · 1 enviaron"), true);
+  igual("quien da clase ahora se puede mirar en vivo (y lo dice escrito)",
+        await page.$$eval("#lista a[data-observar]", (as) => as.map((a) => [a.dataset.observar, a.getAttribute("href"), a.textContent])),
+        [["p-1", "sesion.html?observar=p-1", "🔴 En clase ahora · Mirar la clase"]]);
   igual("a quien no mandó no se le ofrece leer nada",
         await page.$$eval('#lista li[data-profesor="p-2"] > button', (b) => b.length), 0);
 

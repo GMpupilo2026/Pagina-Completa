@@ -43,6 +43,13 @@
         let claseAcc = null, preguntaAcc = null, practicaAcc = null;
         let primerEstadoCargado = false;
         let isTeacher = false;
+        /* Quien supervisa (o administra) mirando la clase de un profesor:
+           sesion.html?observar=<id>. Solo mira: ni mueve, ni contesta, ni marca
+           asistencia, ni cuenta como alumno. Lo que puede leer lo decide la RLS
+           (game_state_select_supervisor y compañía: solo con la clase abierta y
+           solo de un profesor que supervisa). */
+        let esObservador = false;
+        let nombreObservado = "";
         let activePlayerId = null;
         // Con qué color puede mover activePlayerId: "w", "b" o "both" (los dos). Solo
         // importa mientras activePlayerId no sea null — el profesor siempre puede mover
@@ -1061,7 +1068,7 @@
         let currentOpenSessionId = null;
 
         async function markAttendance(sessionId) {
-            if (isTeacher) return;
+            if (isTeacher || esObservador) return;
             const { error } = await sb.from("class_attendance").upsert(
                 { session_id: sessionId, student_id: profile.id },
                 { onConflict: "session_id,student_id", ignoreDuplicates: true }
@@ -1078,7 +1085,7 @@
         let presenceHeartbeatTimer = null;
 
         async function startPresenceLog(sessionId) {
-            if (isTeacher || !sessionId || presenceLogId) return;
+            if (isTeacher || esObservador || !sessionId || presenceLogId) return;
             const { data, error } = await sb.from("class_presence_log")
                 .insert({ session_id: sessionId, student_id: profile.id })
                 .select().single();
@@ -1275,7 +1282,9 @@
                     } else if (payload.eventType === "UPDATE" && payload.new.ended_at && payload.new.id === currentOpenSessionId) {
                         // El profesor cerró la clase: registramos el último instante conectado
                         // y devolvemos al alumno al panel.
-                        if (!isTeacher) {
+                        if (esObservador) {
+                            window.location.href = "supervision.html";
+                        } else if (!isTeacher) {
                             stopPresenceLog().finally(() => { window.location.href = "clases.html"; });
                         } else {
                             // La pudo cerrar desde el panel, o desde otra pestaña:
@@ -2055,13 +2064,17 @@
             presenceChannel.on("presence", { event: "sync" }, () => {
                 const state = presenceChannel.presenceState();
                 onlineStudents.clear();
+                const mirando = [];
                 for (const key of Object.keys(state)) {
                     const meta = state[key][0];
                     if (meta && meta.role === "alumno") {
                         onlineStudents.set(key, { email: meta.email, full_name: meta.full_name, hand_raised: !!meta.hand_raised });
+                    } else if (meta && meta.role === "supervision") {
+                        mirando.push(meta.full_name || "Alguien de supervisión");
                     }
                 }
                 renderStudentsList();
+                pintarObservadores(mirando);
                 // La lista de "con quién chatear" solo muestra alumnos conectados ahora
                 // mismo a la clase (ver renderChatStudentOptions) — cada vez que cambia
                 // quién está conectado, se refresca también esa lista.
@@ -2085,11 +2098,32 @@
                     await presenceChannel.track({
                         email: profile.email,
                         full_name: profile.full_name || "",
-                        role: profile.role,
+                        // Quien observa entra como "supervision": no es alumno,
+                        // así que no aparece en la lista de alumnos ni en el
+                        // chat, y el profesor ve que está mirando.
+                        role: esObservador ? "supervision" : profile.role,
                         online_at: new Date().toISOString(),
                     });
                 }
             });
+        }
+
+        /* Al profesor: quién de supervisión está mirando. A quien observa:
+           cuántos alumnos hay conectados y quiénes. */
+        function pintarObservadores(mirando) {
+            if (isTeacher) {
+                const el = document.getElementById("observadores");
+                if (!el) return;
+                el.hidden = !mirando.length;
+                el.textContent = mirando.length
+                    ? "👁 " + mirando.join(", ") + (mirando.length === 1 ? " (supervisión) está mirando la clase." : " (supervisión) están mirando la clase.")
+                    : "";
+            } else if (esObservador) {
+                const nombres = Array.from(onlineStudents.values()).map((i) => i.full_name || i.email || "Alumno");
+                document.getElementById("observador-conectados").textContent = nombres.length
+                    ? "Conectados ahora (" + nombres.length + "): " + nombres.join(", ") + "."
+                    : "Todavía no hay alumnos conectados.";
+            }
         }
 
         // ---------- Motor de análisis (solo profesor) ----------
@@ -3722,6 +3756,54 @@
         }
 
         // ---------- Arranque ----------
+        /* Antes de montar nada: ¿ese profesor tiene la clase abierta y quien
+           mira lo supervisa? Las dos cosas las contesta la RLS —class_sessions
+           le entrega a quien supervisa las clases de su gente, y el tablero
+           solo con la clase abierta—; acá se dice en palabras en vez de pintar
+           un tablero vacío. Devuelve false si no hay nada que mirar. */
+        async function prepararObservador() {
+            const [perfilRes, claseRes, salasRes] = await Promise.all([
+                sb.from("profiles").select("full_name, email").eq("id", boardOwnerId).maybeSingle(),
+                sb.from("class_sessions").select("id").eq("created_by", boardOwnerId).is("ended_at", null).limit(1),
+                sb.from("profesor_videollamada").select("grupo, enlace").eq("profesor_id", boardOwnerId),
+            ]);
+            const p = perfilRes && perfilRes.data;
+            nombreObservado = (p && (p.full_name || p.email)) || "este profesor";
+            const abierta = claseRes && claseRes.data && claseRes.data.length;
+            if (!abierta) {
+                document.querySelector("#sin-clase h1").textContent = "No hay clase en este momento";
+                document.getElementById("sin-clase-texto").textContent = p
+                    ? nombreObservado + " no tiene la clase abierta ahora. Cuando la abra, vas a poder mirarla desde Supervisión."
+                    : "No supervisas a esa persona, o no tiene la clase abierta ahora.";
+                const volver = document.querySelector("#sin-clase a[href]");
+                volver.href = "supervision.html";
+                volver.textContent = "← Volver a Supervisión";
+                document.querySelector("#sin-clase p.text-sm").hidden = true;
+                document.getElementById("loading").classList.add("hidden");
+                document.getElementById("sin-clase").classList.remove("hidden");
+                return false;
+            }
+            document.getElementById("observador-texto").textContent =
+                "Clase de " + nombreObservado + ". Solo miras: no mueves el tablero, no contestas y no cuentas como alumno. "
+                + nombreObservado + " ve que estás mirando.";
+            // Las salas de videollamada de su clase, si tiene (la RLS solo las
+            // entrega con la clase abierta).
+            const caja = document.getElementById("observador-llamadas");
+            ((salasRes && salasRes.data) || [])
+                .filter((x) => window.Videollamada ? Videollamada.esSeguro(x.enlace) : /^https:\/\//.test(x.enlace || ""))
+                .forEach((x) => {
+                    const a = document.createElement("a");
+                    a.href = x.enlace;
+                    a.target = "_blank";
+                    a.rel = "noopener noreferrer";
+                    a.className = "inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm text-center transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+                    a.textContent = "📹 Entrar a la videollamada" + (x.grupo ? " (" + x.grupo + ")" : "");
+                    caja.appendChild(a);
+                });
+            pintarObservadores([]);
+            return true;
+        }
+
         async function init() {
             const { data } = await sb.auth.getSession();
             session = data.session;
@@ -3731,7 +3813,13 @@
             if (profileError || !profileData) { setStatus("No se pudo cargar tu perfil."); return; }
             profile = profileData;
             isTeacher = profile.role === "profesor" || profile.is_admin === true;
-            if (isTeacher) {
+            const observar = new URLSearchParams(location.search).get("observar");
+            if (observar && observar !== profile.id && (profile.es_supervisor || profile.is_admin)) {
+                esObservador = true;
+                isTeacher = false;
+                boardOwnerId = observar;
+                if (!(await prepararObservador())) return;
+            } else if (isTeacher) {
                 boardOwnerId = profile.id;
             } else {
                 // Con más de un profesor, el alumno elige a cuál clase entra.
@@ -3752,14 +3840,14 @@
                solo conseguiría pintarle una pantalla vacía: el candado se vería
                como una página rota. Y la clase ya no se abre sola cuando entra
                un alumno — justamente para que «hay clase» signifique algo. */
-            if (!isTeacher) {
+            if (!isTeacher && !esObservador) {
                 const mia = clasesDelAlumno.find((c) => c.profesor_id === boardOwnerId);
                 if (!mia || !mia.clase_abierta) { mostrarSinClase(); esperarLaClase(); return; }
                 ClaseElegida.montarSelector(document.getElementById("selector-clase-wrap"), clasesDelAlumno, boardOwnerId);
             }
 
             const badge = document.getElementById("role-badge");
-            badge.textContent = isTeacher ? "Profesor" : "Alumno";
+            badge.textContent = esObservador ? "👁 Supervisión" : isTeacher ? "Profesor" : "Alumno";
             badge.classList.add(isTeacher ? "bg-accent-500" : "bg-brand-600", isTeacher ? "text-brand-900" : "text-white");
 
             if (isTeacher) {
@@ -3777,11 +3865,15 @@
                 cargarPlanesEnClase();
                 setupTeacherLessonTools();
                 setupArchivosTools();
+            } else if (esObservador) {
+                document.getElementById("observador-panel").classList.remove("hidden");
             } else {
                 document.getElementById("student-panel").classList.remove("hidden");
                 document.getElementById("raise-hand-btn").classList.remove("hidden");
             }
-            setStatus(isTeacher
+            setStatus(esObservador
+                ? "Estás mirando la clase de " + nombreObservado + " en vivo. El tablero se mueve solo con cada jugada."
+                : isTeacher
                 ? "Mueve el tablero: cada jugada se transmite en vivo a todos los alumnos conectados."
                 : "Bienvenido a la clase. Verás el tablero moverse en vivo mientras el profesor juega.");
 
@@ -3794,6 +3886,14 @@
             conectarControlesDeClase();
             await loadVariantTree();
             subscribeVariants();
+            /* Quien observa ve el tablero, las variantes y quién está
+               conectado; las preguntas, la práctica y el chat son entre el
+               profesor y cada alumno. */
+            if (esObservador) {
+                document.getElementById("loading").classList.add("hidden");
+                document.getElementById("app").classList.remove("hidden");
+                return;
+            }
             await loadCurrentQuestion();
             subscribeQuestions();
             await loadCurrentPractice();

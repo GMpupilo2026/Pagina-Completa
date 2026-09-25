@@ -2535,6 +2535,18 @@
                 document.getElementById("registro-clases").hidden = true;
                 document.getElementById("progreso-profe").hidden = false;
                 await cargarPanelProfe();
+                /* Si está dando clase ahora, se puede mirar en vivo
+                   (sesion.html?observar=<id>, solo lectura). */
+                const { data: abierta } = await sb.from("class_sessions").select("id")
+                    .eq("created_by", profile._persona.id).is("ended_at", null).limit(1);
+                if (abierta && abierta.length) {
+                    const vivo = document.createElement("a");
+                    vivo.id = "mirar-clase";
+                    vivo.href = "sesion.html?observar=" + encodeURIComponent(profile._persona.id);
+                    vivo.className = "block mt-2 font-semibold text-red-700 dark:text-red-300 underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded";
+                    vivo.textContent = "🔴 Está dando clase ahora: mirar la clase en vivo";
+                    document.getElementById("profe-clases").appendChild(vivo);
+                }
                 document.getElementById("loading").classList.add("hidden");
                 document.getElementById("app").classList.remove("hidden");
                 if (!document.activeElement || document.activeElement === document.body) {

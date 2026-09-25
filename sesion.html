@@ -66,6 +66,9 @@
                  directo a esta página desde el grid y no pasa por el panel, así
                  que un control que vive allá es un control que no existe. Solo
                  para quien da clase. -->
+            <!-- Al profesor se le dice quién de supervisión está mirando su
+                 clase: mirar sin que el otro lo sepa no es supervisar. -->
+            <p id="observadores" hidden class="mb-3 rounded-xl px-5 py-2 text-sm font-semibold bg-accent-50 dark:bg-brand-900 text-brand-800 dark:text-brand-100" aria-live="polite"></p>
             <div id="clase-estado" class="hidden mb-6 rounded-xl px-5 py-3 flex items-center justify-between gap-3 flex-wrap">
                 <p id="clase-estado-texto" class="text-sm font-semibold" aria-live="polite"></p>
                 <div class="flex items-center gap-2 flex-wrap">
@@ -677,6 +680,19 @@
                                 <div id="notas-en-clase-body"></div>
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Quien SUPERVISA mirando la clase de uno de sus profesores
+                         (sesion.html?observar=<id>): solo mira. No mueve el
+                         tablero, no contesta, no marca asistencia ni cuenta
+                         como alumno; el profesor ve que está mirando. Ver
+                         «La clase en vivo, vista por quien supervisa». -->
+                    <div id="observador-panel" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
+                        <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-2"><span aria-hidden="true">👁 </span>Estás mirando la clase</h2>
+                        <p id="observador-texto" class="text-sm text-brand-600 dark:text-brand-300 mb-3"></p>
+                        <p id="observador-conectados" class="text-sm text-brand-700 dark:text-brand-200 mb-3" aria-live="polite"></p>
+                        <div id="observador-llamadas" class="flex flex-col gap-2 mb-3"></div>
+                        <a href="supervision.html" class="text-sm font-semibold text-accent-700 dark:text-accent-400 underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded">← Volver a Supervisión</a>
                     </div>
 
                     <div id="student-panel" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-5 text-center">

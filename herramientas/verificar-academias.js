@@ -178,8 +178,10 @@ async function pruebaAdmin(browser) {
   console.log("\nQuien administra crea academias y reparte gente");
   const { page, errores } = await abrir(browser, "/academias.html", datosBase(), ADMIN, "#vista-lista:not([hidden])");
   igual("se ve la academia con su supervisor", await page.$eval("#lista", (u) => u.textContent.includes("Supervisa Marta Solano")), true);
-  igual("el supervisor ocupado se ofrece apagado para otra academia",
-    await page.$eval('#n-supervisor option[value="sup"]', (o) => o.disabled), true);
+  /* Un supervisor puede tener varias academias (las ve de una en una): el que
+     ya tiene una se ofrece igual, diciendo cuál tiene. */
+  igual("el supervisor que ya tiene una academia se ofrece para otra, y dice cuál",
+    await page.$eval('#n-supervisor option[value="sup"]', (o) => [o.disabled, o.textContent]), [false, "Marta Solano (también supervisa Los Reyes)"]);
 
   await page.fill("#n-nombre", "Santa Ana");
   await page.click('#form-nueva button[type="submit"]');
@@ -238,7 +240,8 @@ async function pruebaDesdeGrupo(browser) {
   igual("dice a cuántos del grupo da clase y en qué academia ya está",
     await page.$eval("#g-docentes", (d) => d.textContent.includes("da clase a 2 alumnos del grupo") && d.textContent.includes("ya está en Los Reyes")), true);
   igual("avisa que uno de los alumnos queda en dos academias", await page.$eval("#g-alumnos-otra", (p) => p.textContent.startsWith("1 ya está en otra academia")), true);
-  igual("el supervisor que ya tiene academia no se ofrece", await page.$('#g-supervisor option[value="sup"]'), null);
+  igual("el supervisor que ya tiene academia se ofrece diciendo cuál",
+    await page.$eval('#g-supervisor option[value="sup"]', (o) => o.textContent), "Marta Solano (también supervisa Los Reyes)");
   igual("el profesor del grupo se ofrece diciendo que se lo marca", await page.$eval('#g-supervisor option[value="prof"]', (o) => o.textContent), "Karina Rojas (se marca como supervisor)");
   igual("el botón cuenta a los cinco", await page.$eval("#g-crear", (b) => b.textContent), "Crear la academia con 5 personas");
 
@@ -402,6 +405,47 @@ async function pruebaMarca(browser) {
   await sinMarca.page.close();
 }
 
+/* Un supervisor con DOS academias las ve de una en una: entra a la activa
+   (la que dice la base), la franja de arriba dice cuál es, y cambiarla manda
+   ESA academia a elegir_academia_activa() y recarga. Con una sola, ninguna
+   franja. Que la separación sea de verdad lo hace la base (la academia activa
+   acota supervisados_por_mi, mis_supervisados y supervisado_por_mi):
+   comprobado impersonando roles en SQL. */
+async function pruebaVariasAcademias(browser) {
+  console.log("\nUn supervisor con dos academias las ve por separado");
+  const dos = datosBase({
+    tablas: Object.assign(datosBase().tablas, {
+      academias: [{ id: "ac1", nombre: "Los Reyes", supervisor_id: "sup", whatsapp: null, correo_respuestas: null },
+                  { id: "ac2", nombre: "Santa <b>Ana</b>", supervisor_id: "sup", whatsapp: null, correo_respuestas: null }],
+    }),
+    rpc: { mis_academias_supervisadas: [{ id: "ac1", nombre: "Los Reyes", activa: false },
+                                        { id: "ac2", nombre: "Santa <b>Ana</b>", activa: true }] },
+  });
+  const { page, errores } = await abrir(browser, "/academias.html", dos, SUP, "#vista-academia:not([hidden])");
+  igual("entra a la academia activa, no a la primera", await page.$eval("#titulo", (h) => h.textContent.trim()), "🏫 Santa <b>Ana</b>");
+  await page.waitForSelector("#academia-activa-barra", { timeout: 10000 });
+  igual("la franja dice cuál está viendo, literal",
+    await page.$eval("#academia-activa-barra p", (p) => [p.textContent.startsWith("🏫 Estás viendo solo Santa <b>Ana</b>:"), p.querySelectorAll("b").length]), [true, 0]);
+  igual("el selector tiene las dos, con la activa elegida",
+    await page.$eval("#academia-activa-sel", (s) => [s.value, [...s.options].map((o) => o.value)]), ["ac2", ["ac1", "ac2"]]);
+  igual("el selector tiene su etiqueta", await page.$eval('label[for="academia-activa-sel"]', (l) => l.textContent), "Cambiar de academia:");
+  const anotadas = [];
+  await page.exposeFunction("__anotar", (n, a) => { anotadas.push([n, a]); });
+  await page.evaluate(() => { const r = window.sb.rpc.bind(window.sb); window.sb.rpc = (n, a) => { window.__anotar(n, a || null); return r(n, a); }; });
+  await Promise.all([
+    page.waitForNavigation({ waitUntil: "networkidle" }),
+    page.selectOption("#academia-activa-sel", "ac1"),
+  ]);
+  igual("cambiar manda ESA academia y recarga", anotadas.filter(([n]) => n === "elegir_academia_activa"), [["elegir_academia_activa", { p_academia: "ac1" }]]);
+  igual("sin errores en la página", errores, []);
+  await page.close();
+
+  const una = await abrir(browser, "/academias.html", datosBase(), SUP, "#vista-academia:not([hidden])");
+  await una.page.waitForTimeout(300);
+  igual("con una sola academia no hay franja", await una.page.$("#academia-activa-barra"), null);
+  await una.page.close();
+}
+
 async function pruebaFormularioConMarca(browser) {
   console.log("\nLos formularios con la marca de la academia");
   const datos = datosBase({ tablas: Object.assign(datosBase().tablas, {
@@ -486,6 +530,7 @@ async function pruebaIA(browser) {
     await pruebaSinAcceso(browser);
     await pruebaFuncionesApagadas(browser);
     await pruebaMarca(browser);
+    await pruebaVariasAcademias(browser);
     await pruebaFormularioConMarca(browser);
     await pruebaIA(browser);
   } catch (e) {
