@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20260925025417
+# al-dia-con: 20260925031558
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -910,7 +910,6 @@ funcion  proteger_tareas_alumno()  definer  anon=false  auth=false
 funcion  proteger_tiempos_de_presencia()  definer  anon=false  auth=false
 funcion  proteger_torneo()  invoker  anon=false  auth=false
 funcion  prueba_gratis_activar(p_alumno uuid, p_nombre text, p_ip text, p_privacidad text, p_terminos text)  definer  anon=false  auth=false
-funcion  prueba_gratis_frenar(p_ip text)  definer  anon=false  auth=false
 funcion  puede_marcar_academia(p_nombre text)  definer  anon=true  auth=true
 funcion  puede_ver_equipo(p_equipo uuid)  definer  anon=false  auth=true
 funcion  puede_ver_paquete(p_paquete uuid)  definer  anon=false  auth=true

@@ -221,7 +221,7 @@ async function pruebaAtajos(browser) {
      "informes.html?tema=diagnostico-publico", "informes.html?tema=arbitraje"]);
   igual("Formularios", atajos("Formularios"), ["formularios.html", "inscripciones.html", "solicitudes.html"]);
   igual("Bases de datos", atajos("Bases de datos"), ["admin-jugador.html"]);
-  igual("Acceso a la plataforma", atajos("Acceso a la plataforma"), ["accesos.html", "precios.html"]);
+  igual("Acceso a la plataforma", atajos("Acceso a la plataforma"), ["accesos.html", "precios.html", "prueba-gratis.html"]);
   igual("Venta de materiales", atajos("Venta de materiales"), ["tienda.html"]);
   igual("Reportes", atajos("Reportes"), ["reportes.html", "supervision.html", "tablero-academias.html", "cobros.html"]);
   igual("La plataforma", atajos("La plataforma"), ["novedades.html"]);

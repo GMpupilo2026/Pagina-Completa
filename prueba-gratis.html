@@ -5,13 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="img/favicon.svg">
     <title>Prueba la Academia 3 días gratis — Ajedrez Integral</title>
-    <meta name="description" content="Entra a la Academia de Ajedrez Integral 3 días gratis, sin correo y sin tarjeta: solo tu nombre y una contraseña.">
+    <meta name="description" content="Prueba la Academia de Ajedrez Integral 3 días gratis, sin correo y sin tarjeta: pídela por WhatsApp.">
     <link rel="canonical" href="https://ajedrez-integral.com/prueba-gratis.html">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Ajedrez Integral">
     <meta property="og:locale" content="es_CR">
     <meta property="og:title" content="Prueba la Academia 3 días gratis — Ajedrez Integral">
-    <meta property="og:description" content="Entra a la Academia de Ajedrez Integral 3 días gratis, sin correo y sin tarjeta: solo tu nombre y una contraseña.">
+    <meta property="og:description" content="Prueba la Academia de Ajedrez Integral 3 días gratis, sin correo y sin tarjeta: pídela por WhatsApp.">
     <meta property="og:url" content="https://ajedrez-integral.com/prueba-gratis.html">
     <meta property="og:image" content="https://ajedrez-integral.com/img/og-ajedrez-integral.jpg">
     <meta property="og:image:width" content="1200">
@@ -50,10 +50,11 @@
 
     <main id="main-content" class="flex-1 flex items-center justify-center px-4 py-12">
         <div class="w-full max-w-lg">
-            <div id="prueba-form-card" class="bg-white dark:bg-brand-900 rounded-2xl shadow-xl p-8">
+            <!-- Lo que ve todo el mundo: la prueba se pide por WhatsApp. -->
+            <div id="prueba-publico" class="bg-white dark:bg-brand-900 rounded-2xl shadow-xl p-8">
                 <p class="text-center text-4xl mb-2" aria-hidden="true">🎁</p>
                 <h1 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-1 text-center">Prueba la Academia 3 días gratis</h1>
-                <p class="text-brand-600 dark:text-brand-300 text-sm text-center mb-5">Sin correo y sin tarjeta: solo tu nombre y una contraseña. Entras ya mismo.</p>
+                <p class="text-brand-600 dark:text-brand-300 text-sm text-center mb-5">Sin correo y sin tarjeta. Pídela por WhatsApp y te mandamos tu usuario y tu contraseña.</p>
 
                 <ul class="text-sm text-brand-700 dark:text-brand-200 space-y-1.5 mb-6 bg-brand-50 dark:bg-brand-800 border border-brand-100 dark:border-brand-700 rounded-lg px-4 py-3">
                     <li><span aria-hidden="true">✅</span> Entrenamiento, cursos y juegos de la Academia, completos.</li>
@@ -62,30 +63,38 @@
                     <li><span aria-hidden="true">✅</span> Si te gusta, sigues con la misma cuenta y el mismo progreso.</li>
                 </ul>
 
+                <a id="prueba-pedir" href="https://wa.me/50683092291?text=Hola%20Oscar%2C%20me%20interesa%20la%20prueba%20gratis%20de%203%20d%C3%ADas%20de%20la%20Academia%20de%20Ajedrez%20Integral." target="_blank" rel="noopener"
+                    class="w-full bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-3 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2 flex items-center justify-center gap-2"><span aria-hidden="true">💬</span> Pedir mi prueba por WhatsApp</a>
+                <p class="text-xs text-brand-500 dark:text-brand-300 mt-3 text-center">Al usar la cuenta aceptas los <a href="terminos.html#prueba" class="underline font-semibold hover:text-accent-600">Términos</a> y la <a href="privacidad.html" class="underline font-semibold hover:text-accent-600">Política de privacidad</a>.</p>
+
+                <p class="text-center text-sm text-brand-600 dark:text-brand-300 mt-5">¿Ya tienes cuenta? <a href="login.html" class="font-semibold underline hover:text-accent-600">Inicia sesión</a></p>
+            </div>
+
+            <!-- Lo que ve quien administra: crear la cuenta de prueba de quien la pidió. -->
+            <div id="prueba-admin" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-xl p-8">
+                <p class="text-center text-4xl mb-2" aria-hidden="true">🎁</p>
+                <h1 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-1 text-center">Crear una prueba gratis de 3 días</h1>
+                <p class="text-brand-600 dark:text-brand-300 text-sm text-center mb-6">Para quien la pidió por WhatsApp. La cuenta no lleva correo y se cierra sola a las 72 horas.</p>
+
                 <form id="prueba-form" class="space-y-4" novalidate>
                     <div>
-                        <label for="prueba-nombre" class="block text-sm font-medium text-brand-600 dark:text-brand-300 mb-1">Tu nombre y apellido *</label>
-                        <input id="prueba-nombre" type="text" required maxlength="80" autocomplete="name"
-                            aria-describedby="prueba-nombre-ayuda"
-                            class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
-                        <p id="prueba-nombre-ayuda" class="text-xs text-brand-500 dark:text-brand-300 mt-1">Con tu nombre armamos tu usuario para entrar.</p>
+                        <label for="prueba-nombre" class="block text-sm font-medium text-brand-600 dark:text-brand-300 mb-1">Nombre y apellido de quien va a usar la cuenta *</label>
+                        <input id="prueba-nombre" type="text" required maxlength="80" autocomplete="off" aria-describedby="prueba-nombre-ayuda" class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
+                        <p id="prueba-nombre-ayuda" class="text-xs text-brand-500 dark:text-brand-300 mt-1">Con el nombre se arma el usuario para entrar.</p>
                     </div>
                     <div>
-                        <label for="prueba-clave" class="block text-sm font-medium text-brand-600 dark:text-brand-300 mb-1">Inventa una contraseña *</label>
-                        <div class="flex gap-2">
-                            <input id="prueba-clave" type="password" required minlength="8" maxlength="72" autocomplete="new-password"
-                                aria-describedby="prueba-clave-ayuda"
-                                class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
-                            <button type="button" id="prueba-ver-clave" aria-pressed="false" aria-controls="prueba-clave"
-                                class="shrink-0 text-sm font-semibold px-3 rounded-lg border border-brand-200 dark:border-brand-700 text-brand-700 dark:text-brand-200 hover:bg-brand-50 dark:hover:bg-brand-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500">Mostrar</button>
-                        </div>
-                        <p id="prueba-clave-ayuda" class="text-xs text-brand-500 dark:text-brand-300 mt-1">Mínimo 8 caracteres. Anótala: como no hay correo, no te podemos mandar un enlace para cambiarla.</p>
+                        <label for="prueba-telefono" class="block text-sm font-medium text-brand-600 dark:text-brand-300 mb-1">Su WhatsApp</label>
+                        <input id="prueba-telefono" type="tel" maxlength="20" autocomplete="off" inputmode="tel" placeholder="8888-8888" aria-describedby="prueba-telefono-ayuda" class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
+                        <p id="prueba-telefono-ayuda" class="text-xs text-brand-500 dark:text-brand-300 mt-1">Opcional: sirve para mandarle el acceso de un toque. No se guarda.</p>
                     </div>
-
-                    <!-- Honeypot: una persona no lo ve; un formulario automático lo llena. -->
-                    <div class="sr-only" aria-hidden="true">
-                        <label for="prueba-sitio-web">No completar este campo</label>
-                        <input id="prueba-sitio-web" type="text" tabindex="-1" autocomplete="off">
+                    <div>
+                        <label for="prueba-clave" class="block text-sm font-medium text-brand-600 dark:text-brand-300 mb-1">Contraseña *</label>
+                        <div class="flex gap-2">
+                            <input id="prueba-clave" type="text" required minlength="8" maxlength="72" autocomplete="off" spellcheck="false" aria-describedby="prueba-clave-ayuda" class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500 font-mono">
+                            <button type="button" id="prueba-otra-clave"
+                                class="shrink-0 text-sm font-semibold px-3 rounded-lg border border-brand-200 dark:border-brand-700 text-brand-700 dark:text-brand-200 hover:bg-brand-50 dark:hover:bg-brand-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500">Otra</button>
+                        </div>
+                        <p id="prueba-clave-ayuda" class="text-xs text-brand-500 dark:text-brand-300 mt-1">Ya viene una armada; puedes cambiarla. Mínimo 8 caracteres.</p>
                     </div>
 
                     <!-- Consentimiento (Ley 8968, art. 5): la base guarda qué versión se aceptó. -->
@@ -93,30 +102,29 @@
                         <input id="prueba-acepto" type="checkbox" required
                             class="mt-1 h-4 w-4 shrink-0 rounded border-brand-300 text-accent-500 focus:ring-accent-500">
                         <label for="prueba-acepto" class="text-xs text-brand-600 dark:text-brand-300">
-                            Acepto los <a href="terminos.html#prueba" target="_blank" rel="noopener" class="underline font-semibold hover:text-accent-600">Términos</a>
-                            y que Ajedrez Integral guarde mi nombre y mi actividad en la plataforma según su
-                            <a href="privacidad.html" target="_blank" rel="noopener" class="underline font-semibold hover:text-accent-600">Política de privacidad</a>.
-                            Si quien va a usar la cuenta es menor de edad, soy su madre, padre o persona encargada. *
+                            La persona (o, si es menor de edad, su madre, padre o persona encargada) conoce y acepta los
+                            <a href="terminos.html#prueba" target="_blank" rel="noopener" class="underline font-semibold hover:text-accent-600">Términos</a> y la
+                            <a href="privacidad.html" target="_blank" rel="noopener" class="underline font-semibold hover:text-accent-600">Política de privacidad</a>:
+                            van en el mensaje con el acceso. *
                         </label>
                     </div>
 
                     <p id="prueba-error" class="text-sm text-red-700 dark:text-red-300 hidden" role="alert"></p>
 
-                    <button type="submit" id="prueba-enviar" class="w-full bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-3 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2">Empezar mi prueba gratis</button>
+                    <button type="submit" id="prueba-enviar" class="w-full bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-3 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2">Crear la prueba</button>
                 </form>
-
-                <p class="text-center text-sm text-brand-600 dark:text-brand-300 mt-5">¿Ya tienes cuenta? <a href="login.html" class="font-semibold underline hover:text-accent-600">Inicia sesión</a></p>
             </div>
 
             <div id="prueba-lista" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-xl p-8 text-center">
-                <p class="text-4xl mb-3" aria-hidden="true">🎉</p>
-                <h1 id="prueba-lista-titulo" tabindex="-1" class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-2">¡Tu prueba empezó!</h1>
-                <p class="text-sm text-brand-600 dark:text-brand-300">Tu usuario para entrar es:</p>
-                <p id="prueba-usuario" class="font-mono text-2xl font-bold text-brand-800 dark:text-white my-3 break-all"></p>
-                <p class="text-sm text-brand-600 dark:text-brand-300">Anótalo junto con tu contraseña: es lo que escribes en <a href="login.html" class="underline font-semibold hover:text-accent-600">Iniciar sesión</a> para volver a entrar.</p>
-                <p class="text-sm text-brand-700 dark:text-brand-200 mt-4 bg-brand-50 dark:bg-brand-800 rounded-lg px-4 py-3">Tu prueba dura hasta el <strong id="prueba-vence"></strong>.</p>
-                <p id="prueba-sin-sesion" class="hidden text-sm text-brand-600 dark:text-brand-300 mt-3">Entra con tu usuario y tu contraseña desde Iniciar sesión.</p>
-                <a id="prueba-entrar" href="clases.html" class="inline-block mt-6 bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-6 py-3 rounded-lg transition-colors">Entrar a la Academia →</a>
+                <p class="text-4xl mb-3" aria-hidden="true">✅</p>
+                <h1 id="prueba-lista-titulo" tabindex="-1" class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-4">Prueba creada</h1>
+                <dl class="text-left text-sm bg-brand-50 dark:bg-brand-800 rounded-lg px-4 py-3 space-y-1">
+                    <div><dt class="inline text-brand-600 dark:text-brand-300">Usuario:</dt> <dd id="prueba-usuario" class="inline font-mono font-bold text-brand-800 dark:text-white break-all"></dd></div>
+                    <div><dt class="inline text-brand-600 dark:text-brand-300">Contraseña:</dt> <dd id="prueba-clave-lista" class="inline font-mono font-bold text-brand-800 dark:text-white break-all"></dd></div>
+                    <div><dt class="inline text-brand-600 dark:text-brand-300">Dura hasta el:</dt> <dd id="prueba-vence" class="inline font-semibold text-brand-800 dark:text-white"></dd></div>
+                </dl>
+                <a id="prueba-mandar" href="#" target="_blank" rel="noopener" class="mt-6 bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-6 py-3 rounded-lg transition-colors flex items-center justify-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2"><span aria-hidden="true">💬</span> Mandarle el acceso por WhatsApp</a>
+                <button type="button" id="prueba-otra" class="mt-3 text-sm font-semibold underline text-brand-700 dark:text-brand-200 hover:text-accent-600">Crear otra prueba</button>
             </div>
 
             <p class="text-center mt-6">
@@ -128,7 +136,6 @@
     <script src="js/vendor/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
     <script src="js/legal-version.js"></script>
-    <script src="js/usuario-alumno.js"></script>
     <script src="js/main.js"></script>
     <script src="js/prueba-gratis.js"></script>
 </body>
