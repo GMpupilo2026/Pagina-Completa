@@ -19,5 +19,6 @@ inscribir-alumno               true         de la respuesta del formulario a la 
 mejorar-informe                true         el botón «Mejorar informe» (Claude, con tope por academia)
 notificar                      false        los avisos push (VAPID y aes128gcm a mano)
 ocr-scoresheet                 true         el lector de planilla, contra Google Vision
+prueba-gratis                  false        la prueba gratis de 3 dias: cuenta sin correo, con freno por IP
 recuperar-acceso               false        el olvido de contrasena de un usuario sin buzon
 reenviar-acceso                true         reenvia el acceso a una cuenta
