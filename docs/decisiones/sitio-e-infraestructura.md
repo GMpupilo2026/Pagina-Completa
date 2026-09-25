@@ -596,7 +596,8 @@ el compilador ya mira los `.js` de hasta 350 KB.
   Uno escrito de otra forma habría pasado sin comprobar nada.
 - `sesion.html` fue la primera: de 330 KB a 91 KB de HTML, y `js/sesion.js`.
   `informes.html`, de 227 KB a 42 KB, y `js/informes.js`. `clases.html`, de
-  178 KB a 38 KB, y `js/clases.js`.
+  178 KB a 38 KB, y `js/clases.js`. `admin.html`, de 134 KB a 35 KB, y
+  `js/admin.js`.
 - `verificar-carga-paginas.js` lleva la lista `PENDIENTES` de las que todavía
   traen un bloque de más de 20 KB (34 al empezar). **La lista solo se achica**:
   una página nueva con un bloque grande falla, y una que ya se mudó y sigue en
