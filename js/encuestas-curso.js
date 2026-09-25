@@ -27,9 +27,14 @@
         return b;
     }
 
-    /* El enlace se arma desde la carpeta de la página, no cortando el .html:
-       Cloudflare sirve la página con extensión y sin ella. */
-    function enlace(slug) { return new URL("encuesta-curso.html?e=" + encodeURIComponent(slug), location.href).href; }
+    /* El enlace que se comparte NO lleva la marca del sitio: va por la
+       dirección de Cloudflare del mismo worker (orange-water-b162), que sirve
+       exactamente los mismos archivos que ajedrez-integral.com. Se pidió así:
+       la encuesta se manda fuera de la Academia. Si algún día se apaga el
+       subdominio workers.dev en Cloudflare, estos enlaces dejan de abrir:
+       ver «La encuesta anónima de un curso». */
+    const DIRECCION_SIN_MARCA = "https://orange-water-b162.gmpupilo.workers.dev/";
+    function enlace(slug) { return DIRECCION_SIN_MARCA + "encuesta-curso.html?e=" + encodeURIComponent(slug); }
 
     function slugDe(curso) {
         const base = curso.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()

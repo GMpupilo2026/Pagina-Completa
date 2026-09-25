@@ -275,7 +275,7 @@
         const e = (data || [])[0];
         if (!e) { sinEncuesta("No encontramos esta encuesta. Revisa que el enlace esté completo."); return; }
         if (!e.abierta) { sinEncuesta("Esta encuesta ya cerró y no está recibiendo respuestas. ¡Gracias de todos modos!"); return; }
-        document.title = "Encuesta anónima: " + e.curso + " — Ajedrez Integral";
+        document.title = "Encuesta anónima: " + e.curso;
         document.getElementById("titulo").textContent = "Encuesta anónima del curso «" + e.curso + "»";
         document.getElementById("subtitulo").textContent = e.profesor
             ? "Sobre las clases con " + e.profesor + ". Tu opinión nos ayuda a enseñar mejor a quienes empiezan de cero."

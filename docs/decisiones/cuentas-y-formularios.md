@@ -478,8 +478,19 @@ recomendarían y qué esperaban frente a lo que encontraron.
     al llegar a ella;
   - al terminar, el foco va al «¡Gracias!»: sin eso, quien no ve la pantalla no
     se entera de que el envío salió;
-  - el encabezado es mínimo (logo y tema): el menú del sitio público eran diez
-    paradas de Tab antes de la primera pregunta.
+  - no tiene encabezado ni pie: se llega directo al título, sin paradas de Tab
+    antes de la primera pregunta.
+- **Sin la marca del sitio.** Se pidió así: la encuesta se manda fuera de la
+  Academia. La página no lleva encabezado, pie ni «Ajedrez Integral» en el
+  título, y el enlace que copia `encuestas-curso.html` usa la dirección de
+  Cloudflare del mismo worker, `https://orange-water-b162.gmpupilo.workers.dev/`
+  (constante `DIRECCION_SIN_MARCA` de `js/encuestas-curso.js`), que sirve los
+  mismos archivos que ajedrez-integral.com. **Si se apaga el subdominio
+  workers.dev en Cloudflare, esos enlaces dejan de abrir sin ningún error en
+  el sitio.** La marca solo aparece si alguien abre la Política de privacidad
+  desde la casilla de aceptar, que tiene que estar (Ley 8968).
+  `verificar-encuesta-curso.js` comprueba que no haya encabezado, pie ni la
+  marca en la página y en el título, y el enlace que se copia.
 - Las preguntas viven en `js/encuesta-curso-preguntas.js`, la única copia que
   leen las dos pantallas; cada `clave` y cada `valor` es lo que valida la base.
 - Al tocar esto, correr `node herramientas/verificar-encuesta-curso.js`,
