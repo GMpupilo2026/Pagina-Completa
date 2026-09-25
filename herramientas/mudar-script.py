@@ -33,12 +33,37 @@ import sys
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BLOQUE = re.compile(r'<script(?![^>]*\bsrc=)([^>]*)>(.*?)</script>', re.S)
+ETIQUETA = re.compile(r'<!--|<script\b[^>]*>', re.S)
+
+
+def bloques_de(s):
+    """Los <script> escritos en la página, recorriéndola en orden: un
+    «<script» dentro de un comentario HTML no es un bloque (inscripcion.html
+    tiene uno que dice «ni en un <script src>»), y un «<!--» dentro de un
+    script no abre ningún comentario. Con la regex suelta, la mudanza habría
+    empezado en medio del comentario."""
+    i = 0
+    while True:
+        m = ETIQUETA.search(s, i)
+        if not m:
+            return
+        if m.group(0) == "<!--":
+            fin = s.find("-->", m.end())
+            i = len(s) if fin < 0 else fin + 3
+            continue
+        cierre = s.find("</script>", m.end())
+        if cierre < 0:
+            return
+        b = BLOQUE.match(s, m.start())
+        if b and b.end() == cierre + len("</script>"):
+            yield b
+        i = cierre + len("</script>")
 
 
 def main(pagina, destino):
     ruta = os.path.join(RAIZ, pagina)
     s = open(ruta, encoding="utf-8").read()
-    bloques = [m for m in BLOQUE.finditer(s) if "json" not in m.group(1)]
+    bloques = [m for m in bloques_de(s) if "json" not in m.group(1)]
     if not bloques:
         sys.exit(f"{pagina}: no tiene ningún <script> escrito adentro.")
     m = max(bloques, key=lambda b: len(b.group(2)))

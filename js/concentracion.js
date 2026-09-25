@@ -1,0 +1,409 @@
+/* El código de concentracion.html.
+
+   Vivía escrito dentro de la página, en un <script> de 17 KB. Se mudó acá
+   tal cual, sin tocar una línea (herramientas/mudar-script.py): así el
+   navegador lo guarda en caché aparte, y es un paso hacia sacar
+   'unsafe-inline' de la CSP. Es un script clásico cargado en el mismo lugar
+   donde estaba el bloque: corre en el mismo orden y sus let/const de arriba
+   siguen siendo globales. Ver «El código de las páginas sale del HTML» en
+   docs/decisiones/sitio-e-infraestructura.md. */
+
+/* ===== Concentración — El juego del objeto perdido =====
+ *
+ * Cada ejercicio tiene tres fases: MIRAR (los objetos están a la vista, con
+ * una cuenta atrás o el botón "ya me los aprendí"), OJOS (el tablero se tapa y
+ * se retiran uno o dos objetos al azar) y ADIVINAR (se destapa y el niño elige
+ * cuál falta entre los objetos que había).
+ *
+ * Los objetos no son una posición de ajedrez (pueden faltar reyes, o haber dos
+ * damas), así que aquí no entra chess.js ni ningún FEN: el tablero se dibuja a
+ * mano y cada ejercicio se arma al azar a partir del nivel — objetos distintos
+ * entre sí (dos iguales harían imposible decir cuál falta) sobre casillas
+ * distintas. Por eso los ejercicios no se acaban: cada intento es uno nuevo.
+ *
+ * El progreso se guarda dos veces: en localStorage (para desbloquear niveles
+ * aunque no haya conexión) y en Supabase vía EntrenoProgress, con la actividad
+ * "concentracion", para que el profesor lo vea en Informes.
+ */
+const NIVELES = [
+  { id:1, nombre:'Nivel 1 · Primeros pasos',      objetos:4, segundos:12, ejercicios:5, quitar:1 },
+  { id:2, nombre:'Nivel 2 · Calentando',          objetos:5, segundos:11, ejercicios:5, quitar:1 },
+  { id:3, nombre:'Nivel 3 · Ojo fino',            objetos:6, segundos:10, ejercicios:6, quitar:1 },
+  { id:4, nombre:'Nivel 4 · Memoria de campeón',  objetos:7, segundos:9,  ejercicios:6, quitar:1 },
+  { id:5, nombre:'Nivel 5 · Doble desafío',       objetos:8, segundos:8,  ejercicios:6, quitar:2 },
+];
+
+const FILES = ['a','b','c','d','e','f','g','h'];
+const GLYPH = {
+  w: { p:'♙', n:'♘', b:'♗', r:'♖', q:'♕', k:'♔' },
+  b: { p:'♟', n:'♞', b:'♝', r:'♜', q:'♛', k:'♚' },
+};
+const OBJ_BASE = { p:'peón', n:'caballo', b:'alfil', r:'torre', q:'dama', k:'rey' };
+const OBJ_FEMENINO = { r:true, q:true };
+const TIPOS = ['p','n','b','r','q','k'];
+const TAPA_MS = 1600;
+const PROGRESO_KEY = 'concentracion_objeto_perdido_v1';
+
+function objetoNombre(obj, conArticulo){
+  const fem = !!OBJ_FEMENINO[obj.tipo];
+  const color = obj.color === 'w' ? (fem ? 'blanca' : 'blanco') : (fem ? 'negra' : 'negro');
+  return `${conArticulo ? (fem ? 'la ' : 'el ') : ''}${OBJ_BASE[obj.tipo]} ${color}`;
+}
+function casillaHablada(square){
+  return window.BlindNotation ? window.BlindNotation.squareSpoken(square) : square;
+}
+function esCasillaClara(square){
+  const file = square.charCodeAt(0) - 97;
+  const rank = parseInt(square[1], 10) - 1;
+  return (file + rank) % 2 === 1;
+}
+function barajar(lista){
+  const copia = lista.slice();
+  for(let i = copia.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [copia[i], copia[j]] = [copia[j], copia[i]];
+  }
+  return copia;
+}
+
+/* ---------------- Progreso ---------------- */
+function leerProgreso(){
+  try{ return JSON.parse(localStorage.getItem(PROGRESO_KEY) || '{}'); }catch(e){ return {}; }
+}
+function ejerciciosHechos(nivelId){ return leerProgreso()[nivelId] || 0; }
+function guardarEjercicio(nivelId, hechos){
+  const progreso = leerProgreso();
+  progreso[nivelId] = Math.max(progreso[nivelId] || 0, hechos);
+  try{ localStorage.setItem(PROGRESO_KEY, JSON.stringify(progreso)); }catch(e){}
+}
+function nivelCompleto(nivel){ return ejerciciosHechos(nivel.id) >= nivel.ejercicios; }
+function nivelDesbloqueado(nivel){
+  // Quien administra ve los niveles todos abiertos (js/acceso-admin.js); para
+  // el alumno cada uno sigue abriéndose al terminar el anterior.
+  if(window.AccesoAdmin && window.AccesoAdmin.esAdmin()) return true;
+  const idx = NIVELES.findIndex((n) => n.id === nivel.id);
+  return idx <= 0 || nivelCompleto(NIVELES[idx - 1]);
+}
+
+/* ---------------- Modo adaptado ---------------- */
+const BLIND_MODE_KEY = 'oscarBlindMode_v1';
+let blindMode = false;
+try{ blindMode = localStorage.getItem(BLIND_MODE_KEY) === '1'; }catch(e){}
+if(new URLSearchParams(window.location.search).get('modo') === 'ciego'){
+  blindMode = true;
+  try{ localStorage.setItem(BLIND_MODE_KEY, '1'); }catch(e){}
+}
+const refreshSpeechToggle = window.BlindNotation
+  ? window.BlindNotation.setupSpeechToggle('speech-toggle-btn', () => true)
+  : null;
+
+function aplicarModo(){
+  const normalBtn = document.getElementById('mode-normal-btn');
+  const blindBtn = document.getElementById('mode-blind-btn');
+  normalBtn.setAttribute('aria-pressed', blindMode ? 'false' : 'true');
+  blindBtn.setAttribute('aria-pressed', blindMode ? 'true' : 'false');
+  normalBtn.className = 'px-3 py-1.5 transition-colors ' + (blindMode
+    ? 'bg-white dark:bg-brand-900 text-brand-500 dark:text-brand-300'
+    : 'bg-accent-500 text-brand-900 font-semibold');
+  blindBtn.className = 'px-3 py-1.5 border-l border-brand-200 dark:border-brand-700 transition-colors ' + (blindMode
+    ? 'bg-accent-500 text-brand-900 font-semibold'
+    : 'bg-white dark:bg-brand-900 text-brand-500 dark:text-brand-300');
+  document.getElementById('board-wrap').style.display = blindMode ? 'none' : '';
+  const lista = document.getElementById('lista');
+  lista.classList.toggle('hidden', !(blindMode && lista.innerHTML));
+  if(refreshSpeechToggle) refreshSpeechToggle();
+}
+function cambiarModo(valor){
+  blindMode = !!valor;
+  try{ localStorage.setItem(BLIND_MODE_KEY, blindMode ? '1' : '0'); }catch(e){}
+  aplicarModo();
+}
+document.getElementById('mode-normal-btn').addEventListener('click', () => cambiarModo(false));
+document.getElementById('mode-blind-btn').addEventListener('click', () => cambiarModo(true));
+
+/* ---------------- Vista de niveles ---------------- */
+function pintarNiveles(){
+  const grid = document.getElementById('levels-grid');
+  grid.innerHTML = '';
+  NIVELES.forEach((nivel) => {
+    const hechos = Math.min(ejerciciosHechos(nivel.id), nivel.ejercicios);
+    const abierto = nivelDesbloqueado(nivel);
+    const completo = nivelCompleto(nivel);
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.disabled = !abierto;
+    btn.className = 'text-left bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 transition-all ' +
+      (abierto ? 'hover:shadow-lg hover:-translate-y-0.5' : 'opacity-50 cursor-not-allowed');
+    btn.innerHTML =
+      `<div class="flex items-center gap-3 mb-2">
+        <span class="text-2xl" aria-hidden="true">${completo ? '✅' : (abierto ? '🧠' : '🔒')}</span>
+        <h3 class="font-serif font-bold text-brand-800 dark:text-white">${nivel.nombre}</h3>
+      </div>
+      <p class="text-xs text-brand-500 dark:text-brand-300">${nivel.objetos} objetos · ${nivel.segundos} segundos para mirar · ${nivel.quitar === 1 ? 'falta 1 objeto' : `faltan ${nivel.quitar} objetos`}</p>
+      <p class="text-xs text-brand-450 dark:text-brand-350 mt-1">${abierto ? `${hechos}/${nivel.ejercicios} ejercicios` : 'Termina el nivel anterior para abrirlo'}</p>`;
+    if(abierto) btn.addEventListener('click', () => abrirNivel(nivel));
+    grid.appendChild(btn);
+  });
+}
+
+function mostrarNiveles(){
+  pararTemporizadores();
+  document.getElementById('game-view').classList.add('hidden');
+  document.getElementById('levels-view').classList.remove('hidden');
+  pintarNiveles();
+}
+
+/* ---------------- El juego ---------------- */
+let nivelActual = null;
+let ejercicioIdx = 0;       // 0..nivel.ejercicios-1
+let objetos = [];           // los objetos de este ejercicio
+let faltantes = [];         // los que se retiran
+let encontrados = 0;
+let temporizadores = [];
+
+function pararTemporizadores(){
+  temporizadores.forEach((t) => { clearTimeout(t); clearInterval(t); });
+  temporizadores = [];
+}
+
+function setStatus(texto, cls){
+  const el = document.getElementById('status');
+  el.textContent = texto;
+  el.className = 'text-center text-sm mt-4 min-h-[1.5em] ' + (cls || 'text-brand-600 dark:text-brand-300');
+  if(window.BlindNotation) window.BlindNotation.speak(texto);
+}
+
+// Arma un ejercicio nuevo: N objetos distintos entre sí, en casillas distintas.
+function generarObjetos(cuantos){
+  const clases = barajar(
+    TIPOS.flatMap((tipo) => [{ color:'w', tipo }, { color:'b', tipo }])
+  ).slice(0, cuantos);
+  const casillas = barajar(
+    FILES.flatMap((f) => [1,2,3,4,5,6,7,8].map((r) => f + r))
+  ).slice(0, cuantos);
+  return clases.map((c, i) => ({ ...c, sq: casillas[i] }));
+}
+
+function pintarTablero(visibles){
+  const board = document.getElementById('board');
+  board.innerHTML = '';
+  for(let rank = 8; rank >= 1; rank--){
+    for(const f of FILES){
+      const square = f + rank;
+      const casilla = document.createElement('div');
+      // El nombre de la casilla lo usa js/coordenadas-tablero.js para rotular el borde.
+      casilla.dataset.square = square;
+      casilla.className = 'flex items-center justify-center select-none w-full h-full text-3xl sm:text-4xl md:text-5xl ' +
+        (esCasillaClara(square) ? 'bg-brand-100' : 'bg-brand-500');
+      const obj = visibles.find((o) => o.sq === square);
+      if(obj){
+        const span = document.createElement('span');
+        if (window.PiezaPreferida) PiezaPreferida.pintar(span, obj.tipo, obj.color);
+        else {
+          span.className = obj.color === 'w' ? 'piece-white' : 'piece-black';
+          span.textContent = GLYPH[obj.color][obj.tipo];
+        }
+        span.setAttribute('aria-hidden', 'true');
+        casilla.appendChild(span);
+      }
+      board.appendChild(casilla);
+    }
+  }
+}
+
+function pintarLista(visibles, titulo){
+  const el = document.getElementById('lista');
+  el.innerHTML = `<p class="font-semibold text-brand-800 dark:text-white mb-1">${titulo}</p>` +
+    visibles.map((o) => `<p>${objetoNombre(o, true)} en ${casillaHablada(o.sq)}.</p>`).join('');
+  el.classList.toggle('hidden', !blindMode);
+}
+function listaHablada(visibles){
+  return visibles.map((o) => `${objetoNombre(o, true)} en ${casillaHablada(o.sq)}`).join('; ');
+}
+
+function pintarContador(){
+  document.getElementById('level-counter').textContent =
+    `Ejercicio ${ejercicioIdx + 1} de ${nivelActual.ejercicios}`;
+}
+
+function fijarBarra(porcentaje, animar){
+  const barra = document.getElementById('timer-bar');
+  barra.style.transitionDuration = animar ? '1000ms' : '0ms';
+  barra.style.width = porcentaje + '%';
+}
+
+function abrirNivel(nivel){
+  nivelActual = nivel;
+  ejercicioIdx = Math.min(ejerciciosHechos(nivel.id), nivel.ejercicios - 1);
+  document.getElementById('levels-view').classList.add('hidden');
+  document.getElementById('game-view').classList.remove('hidden');
+  document.getElementById('level-title').textContent = nivel.nombre;
+  document.getElementById('level-subtitle').textContent =
+    `${nivel.objetos} objetos · ${nivel.segundos} segundos para mirar · ${nivel.quitar === 1 ? 'se retira 1 objeto' : `se retiran ${nivel.quitar} objetos`}`;
+  faseMirar();
+}
+
+function faseMirar(){
+  pararTemporizadores();
+  document.getElementById('next-level-btn').classList.add('hidden');
+  document.getElementById('options').classList.add('hidden');
+  document.getElementById('cover').classList.add('hidden');
+  document.getElementById('ready-btn').classList.remove('hidden');
+  pintarContador();
+
+  objetos = generarObjetos(nivelActual.objetos);
+  faltantes = [];
+  encontrados = 0;
+  pintarTablero(objetos);
+  pintarLista(objetos, `Mira bien estos ${objetos.length} objetos`);
+
+  const encabezado = `Ejercicio ${ejercicioIdx + 1} de ${nivelActual.ejercicios}. Mira bien los ${objetos.length} objetos`;
+
+  // En modo adaptado no hay cuenta atrás: los objetos se dicen en voz alta y el
+  // niño avanza con el botón cuando se los sepa. Una cuenta atrás hablada
+  // cortaría la lectura de la lista, que es justo lo que hay que memorizar.
+  if(blindMode){
+    fijarBarra(0, false);
+    setStatus(`${encabezado}: ${listaHablada(objetos)}. Cuando te los sepas, pulsa "Ya me los aprendí".`);
+    return;
+  }
+
+  let quedan = nivelActual.segundos;
+  fijarBarra(100, false);
+  const decir = () => setStatus(`${encabezado} — te quedan ${quedan} segundo${quedan === 1 ? '' : 's'}.`);
+  decir();
+  temporizadores.push(setInterval(() => {
+    quedan--;
+    fijarBarra(Math.max(0, (quedan / nivelActual.segundos) * 100), true);
+    if(quedan <= 0){ faseOjos(); return; }
+    decir();
+  }, 1000));
+}
+
+function faseOjos(){
+  pararTemporizadores();
+  fijarBarra(0, false);
+  document.getElementById('ready-btn').classList.add('hidden');
+  document.getElementById('cover').classList.remove('hidden');
+  document.getElementById('lista').classList.add('hidden');
+  setStatus(nivelActual.quitar === 1
+    ? 'Cierra los ojos… estoy quitando un objeto.'
+    : `Cierra los ojos… estoy quitando ${nivelActual.quitar} objetos.`);
+  temporizadores.push(setTimeout(faseAdivinar, TAPA_MS));
+}
+
+function faseAdivinar(){
+  pararTemporizadores();
+  faltantes = barajar(objetos).slice(0, nivelActual.quitar);
+  const quedan = objetos.filter((o) => !faltantes.includes(o));
+  document.getElementById('cover').classList.add('hidden');
+  pintarTablero(quedan);
+  pintarLista(quedan, 'Esto es lo que queda sobre el tablero');
+  pintarOpciones();
+  const pregunta = nivelActual.quitar === 1 ? '¿Cuál objeto falta?' : `Faltan ${nivelActual.quitar} objetos — ¿cuáles?`;
+  setStatus(blindMode
+    ? `¡Abre los ojos! Sobre el tablero quedan: ${listaHablada(quedan)}. ${pregunta}`
+    : `¡Abre los ojos! ${pregunta}`);
+}
+
+function pintarOpciones(){
+  const box = document.getElementById('options');
+  box.innerHTML = '';
+  objetos.forEach((obj) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'inline-flex items-center gap-2 bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 rounded-xl px-4 py-2.5 text-sm text-brand-700 dark:text-brand-200 hover:border-accent-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors';
+    btn.innerHTML = (window.PiezaPreferida
+      ? PiezaPreferida.html(obj.tipo, obj.color, { clase: 'text-2xl leading-none', oculta: true })
+      : `<span class="text-2xl leading-none ${obj.color === 'w' ? 'piece-white' : 'piece-black'}" aria-hidden="true">${GLYPH[obj.color][obj.tipo]}</span>`) + ` ${objetoNombre(obj, true)}`;
+    btn.addEventListener('click', () => responder(obj, btn));
+    box.appendChild(btn);
+  });
+  box.classList.remove('hidden');
+  box.classList.add('flex');
+  // En modo adaptado el foco cae directo en la primera opción — sin esto habría
+  // que ir a buscar los botones a mano en cada ejercicio.
+  if(blindMode){
+    const primera = box.querySelector('button');
+    if(primera) primera.focus();
+  }
+}
+
+function responder(obj, btn){
+  if(!faltantes.length) return;
+  const conMayuscula = (texto) => texto.charAt(0).toUpperCase() + texto.slice(1);
+  if(!faltantes.includes(obj)){
+    btn.disabled = true;
+    setStatus(`${conMayuscula(objetoNombre(obj, true))} sigue en el tablero, en ${casillaHablada(obj.sq)}. Mira otra vez.`, 'text-center text-sm mt-4 text-red-500 font-semibold');
+    return;
+  }
+  btn.disabled = true;
+  encontrados++;
+  if(encontrados < faltantes.length){
+    setStatus(`✅ Sí, faltaba ${objetoNombre(obj, true)}. Te queda ${faltantes.length - encontrados} por encontrar.`, 'text-center text-sm mt-4 text-green-600 dark:text-green-400 font-semibold');
+    return;
+  }
+  terminarEjercicio();
+}
+
+function terminarEjercicio(){
+  document.getElementById('options').classList.add('hidden');
+  document.getElementById('options').classList.remove('flex');
+  const hechos = ejercicioIdx + 1;
+  guardarEjercicio(nivelActual.id, hechos);
+  EntrenoProgress.log('concentracion', {
+    juego: 'objeto-perdido', nivel: nivelActual.id, ejercicio: hechos, objetos: nivelActual.objetos,
+  });
+
+  if(hechos >= nivelActual.ejercicios){
+    const siguiente = NIVELES[NIVELES.findIndex((n) => n.id === nivelActual.id) + 1];
+    setStatus(`🎉 ¡Nivel completo! Resolviste los ${nivelActual.ejercicios} ejercicios de ${nivelActual.nombre}.`, 'text-center text-sm mt-4 text-green-600 dark:text-green-400 font-semibold');
+    const next = document.getElementById('next-level-btn');
+    if(siguiente){
+      next.textContent = `${siguiente.nombre} →`;
+      next.classList.remove('hidden');
+      next.onclick = () => abrirNivel(siguiente);
+      if(blindMode) next.focus();
+    }
+    pintarNiveles();
+    return;
+  }
+
+  ejercicioIdx = hechos;
+  setStatus('✅ ¡Muy bien! Vamos con el siguiente ejercicio…', 'text-center text-sm mt-4 text-green-600 dark:text-green-400 font-semibold');
+  temporizadores.push(setTimeout(faseMirar, 1600));
+}
+
+document.getElementById('ready-btn').addEventListener('click', faseOjos);
+document.getElementById('back-to-levels').addEventListener('click', mostrarNiveles);
+document.getElementById('restart-btn').addEventListener('click', () => { ejercicioIdx = 0; faseMirar(); });
+
+/* ---------------- Arranque ---------------- */
+// Juegos exige sesión iniciada (Academia): así el progreso queda guardado y
+// visible para el profesor en Informes.
+async function init(){
+  let sesion = null;
+  try{
+    const { data } = await sb.auth.getSession();
+    sesion = data && data.session;
+  }catch(e){ sesion = null; }
+  if(!sesion){
+    document.getElementById('loading').textContent = 'Necesitas iniciar sesión para jugar. Redirigiendo…';
+    window.location.href = 'login.html?next=' + encodeURIComponent('concentracion.html');
+    return;
+  }
+  await EntrenoProgress.init();
+  // Los niveles hechos viajan con la cuenta, no con el aparato.
+  await ProgresoUsuario.init();
+  if(window.AccesoAdmin) await window.AccesoAdmin.init();
+  aplicarModo();
+  mostrarNiveles();
+  document.getElementById('loading').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+}
+init();
+    
+/* Coordenadas del tablero (js/coordenadas-tablero.js): la letra de columna abajo
+   y el número de fila a la izquierda, para que se entienda hacia dónde avanza la
+   posición. Se repintan solas cada vez que la página redibuja el tablero. */
+if (window.Coordenadas) Coordenadas.aplicar(document.getElementById('board'));

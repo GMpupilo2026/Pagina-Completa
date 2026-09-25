@@ -84,19 +84,48 @@ else bien("la hoja de Google Fonts no frena el pintado en ninguna");
    visita (no se guarda en caché aparte) y obliga a dejar 'unsafe-inline' en la
    CSP. Se mudan a js/ de a uno, sin tocar el código (ver «El código de las
    páginas sale del HTML» en docs/decisiones/sitio-e-infraestructura.md).
-   PENDIENTES eran las que todavía traían un bloque de más de 20 KB; empezó
-   con 34 y ya no queda ninguna. Queda vacía a propósito: la lista solo se
-   achica, así que una página nueva con un bloque grande no entra. */
-const LIMITE_EN_LINEA_KB = 20;
-const PENDIENTES = new Set([]);
+   Primero fueron las de más de 20 KB (34, ya no queda ninguna); después el
+   límite bajó a 2 KB, y PENDIENTES son las que todavía traen un bloque de ese
+   tamaño. La lista solo se achica: una página nueva con un bloque grande no
+   entra, y una que ya se mudó sale. */
+const LIMITE_EN_LINEA_KB = 2;
+const PENDIENTES = new Set([
+  "tienda.html", "subgrupos.html", "inscripciones.html", "supervision.html",
+  "tablero-academias.html", "solicitudes.html", "formulario.html", "bienvenida.html",
+  "informe-mensual.html", "inscripcion.html", "novedades.html", "precios.html",
+  "elegir-plan.html", "campeones.html", "cursos.html", "login.html",
+]);
+
+/* Los <script> escritos en la página, recorriéndola en orden: un «<script»
+   dentro de un comentario HTML no es un bloque (inscripcion.html tiene uno que
+   dice «ni en un <script src>»), y un «<!--» dentro de un script no abre
+   ningún comentario. Lo mismo que bloques_de() de herramientas/mudar-script.py. */
+function bloquesEscritos(html) {
+  const lista = [];
+  const etiqueta = /<!--|<script\b[^>]*>/g;
+  let m;
+  while ((m = etiqueta.exec(html))) {
+    if (m[0] === "<!--") {
+      const fin = html.indexOf("-->", etiqueta.lastIndex);
+      if (fin < 0) break;
+      etiqueta.lastIndex = fin + 3;
+      continue;
+    }
+    const cierre = html.indexOf("</script>", etiqueta.lastIndex);
+    if (cierre < 0) break;
+    if (!/\bsrc=/.test(m[0])) lista.push({ atributos: m[0], codigo: html.slice(etiqueta.lastIndex, cierre) });
+    etiqueta.lastIndex = cierre + 9;
+  }
+  return lista;
+}
 const grandesNuevos = [], yaMudadas = [];
 for (const archivo of paginas(raiz)) {
   const rel = path.relative(raiz, archivo).split(path.sep).join("/");
   const html = fs.readFileSync(archivo, "utf8");
   let mayor = 0;
-  for (const m of html.matchAll(/<script(?![^>]*\bsrc=)([^>]*)>([\s\S]*?)<\/script>/g)) {
-    if (/json/.test(m[1])) continue;   // datos (ld+json), no código
-    mayor = Math.max(mayor, Buffer.byteLength(m[2]));
+  for (const b of bloquesEscritos(html)) {
+    if (/json/.test(b.atributos)) continue;   // datos (ld+json), no código
+    mayor = Math.max(mayor, Buffer.byteLength(b.codigo));
   }
   const grande = mayor > LIMITE_EN_LINEA_KB * 1024;
   if (grande && !PENDIENTES.has(rel)) grandesNuevos.push(rel + " (" + Math.round(mayor / 1024) + " KB)");
