@@ -34,9 +34,14 @@
 
   let permitidas = null;
 
-  async function cargar(sb) {
+  /* Con `personaId`, las de ESE coordinador (quien supervisa mirando su
+     panel con «Ver como», js/modo-vista.js): la base pregunta antes si lo
+     supervisa. */
+  async function cargar(sb, personaId) {
     try {
-      const { data, error } = await sb.rpc("mis_funciones_coordinacion");
+      const { data, error } = personaId
+        ? await sb.rpc("funciones_coordinador_de", { p_persona: personaId })
+        : await sb.rpc("mis_funciones_coordinacion");
       if (error || !Array.isArray(data)) throw error || new Error("sin datos");
       permitidas = new Set(data);
     } catch (e) {

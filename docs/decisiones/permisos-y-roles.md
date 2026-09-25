@@ -701,6 +701,62 @@ tres modos con su franja y el contenido cerrado, que un modo guardado no afecte
 a quien no administra, y que sumar un grupo a un supervisor mande la UNIÓN.
 Está probado que falla de verdad: mandando solo el grupo, salta.
 
+### «Ver como» una persona: el supervisor revisa a sus profesores y coordinadores
+
+Los modos de arriba cambian la pantalla y dejan los datos de quien mira. Para
+REVISAR a alguien eso no alcanza: quien supervisa necesita el panel de Karina
+con los números de Karina. Por eso el selector «Ver como» del panel
+(`clases.html`) ofrece además, agrupados en «Coordinadores» y «Profesores», a
+las personas del equipo docente que uno supervisa —a quien administra, a todo
+el equipo docente— y `supervision.html` trae «👁 Ver su panel» en cada
+profesor (`clases.html?ver_como=<id>`).
+
+- **No se entra a su cuenta.** Entrar daría también sus permisos de ESCRITURA,
+  y lo que se pide es mirar. La sesión sigue siendo la de quien mira; lo que
+  cambia es que las pantallas piden SUS datos, explícitamente con su id, a
+  cuatro funciones `SECURITY DEFINER` de solo lectura que preguntan arriba
+  `supervisado_por_mi(persona) or is_admin` (envuelto en `coalesce(..., false)`):
+  `personas_para_ver_como()` (a quién se puede mirar: profesores y
+  coordinadores, nunca otro supervisor ni la cuenta master),
+  `panel_profesor_de()` (los números de «Su semana», los de `panel_profesor()`
+  escritos con `interno.alumnos_de()` porque acá la RLS no es la suya),
+  `funciones_coordinador_de()` (las tarjetas de coordinación que ESA persona
+  tiene, la misma cuenta que `coordinador_puede()`) y
+  `alumnos_de_para_ver_como()` (en Informes, los alumnos de esa persona
+  cortados por lo que uno supervisa: un profesor puede estar en dos
+  academias).
+- **`profile.id` sigue siendo el de quien mira**, a propósito: lo que una
+  página escriba con él se escribe a su nombre (y la base rechaza lo que no le
+  toca), nunca al de la persona. `ModoVista.perfilVisto()` pone
+  `profile._persona` y el rol de esa persona; los datos se piden con
+  `_persona.id` y con nada más.
+- **Nada de dar clase**: ni estado de la clase en vivo ni registro de clases —
+  abrir una clase desde ahí la abriría a nombre de quien mira—, y tampoco el
+  «primer paso» del profesor, que le habla a él.
+- **La persona se guarda con el id de quien la eligió**
+  (`ver_como_persona_v1`, con `de`): en una computadora compartida no le deja a
+  la siguiente cuenta mirando a nadie. Si ya no está en la lista de la base (le
+  quitaron esa supervisión), el panel vuelve solo a la vista propia en vez de
+  pintar uno que la base se niega a llenar. Elegir un modo de rol la quita: son
+  dos formas de mirar y no se suman.
+- La franja de arriba lo dice: «Estás viendo el panel de Karina Rojas
+  (profesor). Sus números y sus alumnos en Informes son los suyos; lo que abras
+  o guardes se hace con tu cuenta.»
+- Comprobado impersonando roles en SQL (revertido): la supervisora ve a su
+  coordinadora con 49 alumnos, 3 clases y sus 7 funciones (le quitaron roles y
+  cobros), y 46 alumnos en Informes (los de su academia); otro profesor, un
+  alumno y una llamada sin usuario no reciben lista y las tres funciones los
+  rechazan; con un profesor que no supervisa, también; quien administra lo ve.
+
+**Al tocarlo, correr `node herramientas/verificar-todo.js ver-como supervisor
+informes`.** `verificar-ver-como.js` comprueba que la lista salga de la base, que
+los números y las funciones se pidan con el id de ESA persona (y nunca a
+`panel_profesor()`), que no se pinte nada de dar clase, que la franja lo diga,
+que una persona de otra cuenta, o que ya no está a su cargo, no cambie nada, y el
+enlace `?ver_como=`; `verificar-informes.js`, que Informes pida los alumnos de
+esa persona. Está probado que fallan de verdad: pidiendo con el id de quien mira,
+saltan.
+
 ### Academias: la unidad del negocio
 
 El negocio se reparte en **academias**. Cada una tiene **un solo supervisor**
