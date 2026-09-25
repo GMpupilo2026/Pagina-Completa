@@ -362,6 +362,32 @@ copiar cuatro datos a mano de una pantalla a otra, dos veces por alumno.
 - El cupo sigue siendo el de siempre (`profiles.invitaciones_max`): quien
   administra no tiene tope, un profesor sin invitaciones asignadas recibe el
   mismo aviso que en la Academia.
+- **Quien administra da de alta aunque su rol no sea `profesor`.**
+  `consumir_invitacion()` pedía `role = 'profesor'` antes de mirar `is_admin`,
+  y la cuenta de administración tiene `role = 'admin'`: el botón estaba en
+  pantalla y la respuesta era «Solo el profesor puede invitar alumnos», en las
+  dos puertas (`inscribir-alumno` y `create-student`). Ahora `is_admin` pasa
+  sin tope, con cualquier rol. El supervisor ya pasaba —es una marca encima de
+  `role = 'profesor'`— y gasta su cupo como cualquiera.
+- **Pero quien administra no da clase**, así que a esa cuenta no se le asigna
+  el alumno en `profile_teachers`: queda sin profesor, las dos funciones lo
+  dicen con `asignado: false`, el diálogo no promete «queda asignado a tu
+  clase» y el aviso final dice que falta asignárselo en Administración (que ya
+  avisa de los alumnos sin profesor). El supervisor sí queda asignado: es por
+  esa asignación que el alumno entra a su academia
+  (`profile_teachers_suma_a_la_academia`) y él lo alcanza.
+- **Quien administra o supervisa elige el profesor** en el mismo diálogo
+  («Profesor del alumno»). La lista sale de `mi_gente(p_rol => 'profesor')`,
+  pedida de a 200 hasta el final (es el tope por página de `mi_gente`); la
+  primera opción es «Yo (…)» para el supervisor y «— Sin profesor por ahora —»
+  para administración. `profesor_id` solo viaja si se eligió a alguien.
+  Lo decide `_compartido/profesor-elegido.ts`, que usan las dos funciones:
+  elegir pide `is_admin` o `es_supervisor`, y el elegido tiene que ser
+  `role = 'profesor'` y dar `bajo_mi_coordinacion()` con el JWT de quien pide
+  (administración, a todos; el supervisor, a los suyos). Se rechaza **antes**
+  de gastar el cupo. El cupo que se gasta sigue siendo el de quien da de alta.
+  Comprobado impersonando a un supervisor en SQL: su profesor da `true`, uno
+  de otra academia `false`.
 
 ## El alumno que no tiene correo propio
 

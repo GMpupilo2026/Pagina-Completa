@@ -1,8 +1,12 @@
 // Edge Function: create-student
-// Permite que un usuario con rol "profesor" invite alumnos por correo. El
-// alumno queda asignado automáticamente a ESE profesor — cada profesor ve y
-// gestiona a los alumnos que él mismo invitó, o que la persona administradora
-// le haya asignado desde el panel de Administración.
+// Permite que un usuario con rol "profesor" —o quien administra, aunque su rol
+// no sea ese— invite alumnos por correo. El alumno queda asignado
+// automáticamente a ESE profesor — cada profesor ve y gestiona a los alumnos
+// que él mismo invitó, o que la persona administradora le haya asignado desde
+// el panel de Administración. Quien administra o supervisa puede elegir el
+// profesor (`profesor_id`, ver profesor-elegido.ts); quien administra sin ser
+// profesor y sin elegir no da clase, y el alumno queda sin profesor
+// (`asignado: false`).
 //
 // La asignación se escribe en profile_teachers, que es la tabla que hace
 // cumplir la RLS: UN ALUMNO PUEDE TENER VARIOS PROFESORES. profiles.teacher_id
@@ -34,6 +38,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { invitarConBienvenida } from "./invitacion-email.ts";
 import { esCorreoInterno, usuarioLibre } from "./usuario-alumno.ts";
+import { profesorElegido } from "./profesor-elegido.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -79,19 +84,20 @@ Deno.serve(async (req) => {
 
   const { data: profile, error: profileError } = await callerClient
     .from("profiles")
-    .select("role, is_admin")
+    .select("role, is_admin, es_supervisor")
     .eq("id", userData.user.id)
     .single();
 
-  // Lo de profesores vale igual para quien administra, que además no tiene tope.
+  // Lo de profesores vale igual para quien administra, que además no tiene tope
+  // y no necesita el rol de profesor (su rol puede ser 'admin').
   if (profileError || !(profile?.role === "profesor" || profile?.is_admin)) {
-    return json({ error: "Solo el profesor puede invitar alumnos" }, 403);
+    return json({ error: "Solo quien da clase o administra puede crear cuentas de alumno" }, 403);
   }
 
   let body: {
     email?: string; full_name?: string;
     sin_correo?: boolean; encargado_email?: string; encargado_nombre?: string;
-    usuario?: string; grupo?: string; frecuencia?: string;
+    usuario?: string; grupo?: string; frecuencia?: string; profesor_id?: string;
   };
   try {
     body = await req.json();
@@ -150,6 +156,15 @@ Deno.serve(async (req) => {
   // Cliente admin (service role) para gastar el cupo e invitar al usuario.
   const adminClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
+  // Quien administra o supervisa puede elegir de quién es alumno. Se valida
+  // antes de gastar el cupo.
+  const elegido = await profesorElegido(
+    callerClient, adminClient, profile, userData.user.id,
+    typeof body.profesor_id === "string" ? body.profesor_id.trim().slice(0, 40) : null,
+  );
+  if (elegido.error) return json({ error: elegido.error }, 403);
+  const profesorId = elegido.id;
+
   // Un correo que ya es de una cuenta no se vuelve a invitar. GoTrue solo
   // rechaza a un usuario YA CONFIRMADO: con uno invitado que todavía no abrió
   // su correo, devuelve ese mismo usuario, y más abajo quedaría asignado a quien
@@ -186,7 +201,7 @@ Deno.serve(async (req) => {
         sin_cupo: true, max, usadas: cupo.usadas ?? 0,
       }, 403);
     }
-    return json({ error: "Solo el profesor puede invitar alumnos" }, 403);
+    return json({ error: "Solo quien da clase o administra puede crear cuentas de alumno" }, 403);
   }
 
   // Sin correo propio se le arma un usuario libre. El propuesto desde la
@@ -226,11 +241,13 @@ Deno.serve(async (req) => {
   if (Object.keys(cambiosPerfil).length) {
     await adminClient.from("profiles").update(cambiosPerfil).eq("id", invitacion.user.id);
   }
-  // Queda asignado a quien lo invitó. El profesor principal lo pone solo el
-  // trigger de profile_teachers.
-  await adminClient.from("profile_teachers")
-    .upsert({ student_id: invitacion.user.id, teacher_id: userData.user.id },
-            { onConflict: "student_id,teacher_id" });
+  // Queda asignado al profesor elegido, o a quien lo invitó si da clase. El
+  // profesor principal lo pone solo el trigger de profile_teachers.
+  if (profesorId) {
+    await adminClient.from("profile_teachers")
+      .upsert({ student_id: invitacion.user.id, teacher_id: profesorId },
+              { onConflict: "student_id,teacher_id" });
+  }
 
   // Con un alumno sin buzón, la persona encargada no es un extra: es la ÚNICA
   // forma de escribirle a esa familia, y ya se validó arriba como obligatoria.
@@ -268,6 +285,9 @@ Deno.serve(async (req) => {
     // A qué bandeja salió el correo: con un alumno sin buzón no es la suya.
     correo_destino: invitacion.destino,
     encargado_guardado: encargadoGuardado,
+    // A quién quedó asignado; sin nadie, está sin profesor.
+    asignado: !!profesorId,
+    profesor_id: profesorId,
     // La cuenta pudo quedar creada y el correo no salir: quien invitó tiene que
     // poder enterarse en el momento, no cuando el alumno no aparezca.
     correo_enviado: invitacion.correoEnviado,

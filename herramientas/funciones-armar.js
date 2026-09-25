@@ -38,8 +38,8 @@ const FUNCIONES = {
   // más. Va en esta lista igual, para que se despliegue con el resto y no
   // haya que acordarse de subirla aparte.
   "admin-manage-users": ["usuario-alumno.ts"],
-  "create-student": ["invitacion-email.ts", "usuario-alumno.ts"],
-  "inscribir-alumno": ["invitacion-email.ts", "usuario-alumno.ts"],
+  "create-student": ["invitacion-email.ts", "usuario-alumno.ts", "profesor-elegido.ts"],
+  "inscribir-alumno": ["invitacion-email.ts", "usuario-alumno.ts", "profesor-elegido.ts"],
   "recuperar-acceso": ["usuario-alumno.ts", "recuperacion-email.ts"],
   "reenviar-acceso": ["usuario-alumno.ts", "recuperacion-email.ts"],
   "correos-alumno": ["usuario-alumno.ts"],
