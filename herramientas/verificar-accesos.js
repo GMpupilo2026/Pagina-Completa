@@ -200,6 +200,22 @@ async function pruebaPrecios(browser) {
     msj.includes("25 alumnos") && msj.includes(c25.tramo.nombre) && msj.includes(P.formato(c25.total)) && msj.includes(P.formato(c25.ciclo)), msj);
   cierto("debajo dice las formas de pago", /SINPE/.test(pagar.opciones) && /transferencia/.test(pagar.opciones), pagar.opciones);
   cierto("el botón no está dentro de la región viva (no se relee en cada tecla)", pagar.enRegionViva === false);
+  // «Quiero mi cuenta» (la tarjeta y el cierre): el WhatsApp de Oscar con la
+  // cuenta sola y sus dos precios, que salen del módulo.
+  const cuenta = await page.evaluate(() => ["cuenta-pagar", "cierre-pagar"].map((id) => {
+    const a = document.getElementById(id);
+    return a && { href: a.getAttribute("href"), nueva: a.target, seVe: a.checkVisibility() };
+  }));
+  cuenta.forEach((c, i) => {
+    const m = decodeURIComponent(String((c && c.href) || "").split("?text=")[1] || "");
+    cierto(`«Quiero mi cuenta» ${i ? "del cierre" : "de la tarjeta"} abre el WhatsApp con la cuenta sola`,
+      c && c.seVe && c.nueva === "_blank" && /^https:\/\/wa\.me\/506\d{8}\?text=/.test(c.href) &&
+        m.includes(P.formato(P.INDIVIDUAL)) && m.includes(P.formato(P.anual(P.INDIVIDUAL))), JSON.stringify(c) + " " + m);
+  });
+  igual("lo que cuesta al día sale del precio mensual", await page.textContent("#precio-individual-dia"), P.formato(Math.round(P.INDIVIDUAL / 30)));
+  igual("la portada y el cierre dicen el precio del módulo",
+    await page.evaluate(() => [document.getElementById("precio-hero").textContent, document.getElementById("precio-cierre").textContent]),
+    [P.formato(P.INDIVIDUAL), P.formato(P.INDIVIDUAL)]);
   await page.fill("#calc-n", "");
   cierto("sin cantidad no queda un botón con el total viejo",
     await page.evaluate(() => !document.getElementById("calc-pagar")));
