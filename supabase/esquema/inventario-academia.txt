@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20260925022001
+# al-dia-con: 20260925025417
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -860,10 +860,13 @@ funcion  informes_resumen_alumnos()  invoker  anon=false  auth=true
 funcion  informes_totales()  invoker  anon=false  auth=true
 funcion  iniciar_examen(p_examen uuid)  definer  anon=false  auth=true
 funcion  interno.academia_activa()  definer  anon=false  auth=true
+funcion  interno.academias_de(p_persona uuid)  definer  anon=false  auth=true
 funcion  interno.alumnos_de(p_profesor uuid)  definer  anon=false  auth=true
 funcion  interno.bajo_mi_coordinacion_conjunto()  definer  anon=false  auth=true
 funcion  interno.clases_que_superviso()  definer  anon=false  auth=true
+funcion  interno.comparten_academia(p_a uuid, p_b uuid)  definer  anon=false  auth=true
 funcion  interno.frenar_envio_publico(p_tipo text, p_ambito text, p_correo text, p_ip text)  invoker  anon=false  auth=false
+funcion  interno.gente_de_mis_academias()  definer  anon=false  auth=true
 funcion  interno.profesores_de(p_alumno uuid)  definer  anon=false  auth=true
 funcion  interno.supervisados_por_mi()  definer  anon=false  auth=true
 funcion  interno.version_legal_valida(p text)  invoker  anon=false  auth=false

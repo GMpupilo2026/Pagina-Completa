@@ -1175,6 +1175,78 @@ de verdad: pintándole la columna de IA al supervisor, saltan 2.
 con su supervisor y las funciones del coordinador, su marca, «Mejorar informe» y
 el detalle del informe mensual (ver «El detalle del informe mensual» más arriba).
 
+#### Las academias son privadas: nada cruza de una a otra, salvo Juegos
+
+**Nadie ve nada de la gente de otra academia**, en ninguna pantalla. La única
+excepción es Juegos: el canal de presencia de `juegos.html` y el reto son
+globales a propósito, para poder retar a cualquiera.
+
+Lo que se ve por una relación **directa** (mi alumno, mi profesor, lo que
+coordino o superviso) ya estaba acotado por academia. Lo que se escapaba eran
+las vías **laterales**, que no pasan por esa relación. Medido impersonando a
+cada una de las 137 cuentas en SQL (revertido), antes del cambio:
+
+- **Compañeros**: el alumno de un profesor veía a TODOS los alumnos de ese
+  profesor, también los de otra academia. En total, 1924 filas de `profiles`
+  de otras academias entre los 130 alumnos (~15 cada uno). Salía por
+  `profiles_select` y por `es_companero()`, que usan también `game_rooms`, la
+  burbuja y la racha táctica.
+- **`equipo_docente()`**: todo profesor recibía nombre y correo de todos los
+  profesores de la plataforma (22 ajenos entre los 6). Es la lista de «Compartir
+  este plan».
+- **`coordinadores_disponibles()`**: igual, con los coordinadores (la lista de
+  compartir un formulario).
+- **Los planes «con todo el equipo docente»** los veían los profesores de todas
+  las academias, y se podía compartir un plan o un formulario con alguien de
+  otra.
+- **`puzzle_rush_scores`** se leía entera: 3764 rachas ajenas entre los alumnos.
+
+**La regla es UNA, `interno.comparten_academia(a, b)`**: dos personas comparten
+academia si están en una misma (como miembro o como su supervisor), o si
+**ninguna de las dos es de ninguna** —la gente que maneja directamente Ajedrez
+Integral es también un grupo aparte—. Quien administra comparte con todos, y a
+quien administra lo ven todos (los 53 planes de la plataforma son suyos y
+siguen llegando a todo profesor). Para las políticas está el mismo permiso como
+conjunto, `interno.gente_de_mis_academias()` (ver «La RLS de las tablas de
+actividad arma el conjunto UNA vez»): si se cambia una, se cambian las dos.
+
+- **Se aplica a las vías laterales, no a las directas.** Un profesor sigue
+  viendo a su alumno aunque la academia de uno y otro no coincidan: cortar eso
+  dejaría a un profesor sin su alumno en plena clase, que es peor que lo que
+  protege. Esos casos son datos por ordenar en `academias.html`, no un permiso:
+  al aplicar el cambio eran 19 alumnos **sin academia** con un profesor de
+  ADAPZ o de CCDR San José, y 1 alumno de ADAPZ con un profesor de CCDR. Se
+  consultan con la consulta de abajo.
+- `profiles_select`: la rama de compañeros exige además
+  `id in (select interno.gente_de_mis_academias())`. `es_companero()` exige
+  `comparten_academia()`.
+- `equipo_docente()` y `coordinadores_disponibles()` devuelven solo la gente de
+  mis academias (y a quien administra).
+- `planes_clase_select` y `planes_compartidos_conmigo()`: lo compartido (con
+  todos o con uno) solo si el autor es de mi academia. Las políticas de
+  inserción de `plan_compartidos` y `formulario_compartidos` exigen
+  `comparten_academia()` con quien lo recibe: la lista ya no lo ofrece, y la
+  consola tampoco lo puede hacer.
+- `puzzle_rush_scores`: solo la racha de quien uno ya puede ver en `profiles`
+  (un subselect que pasa por SU política: la misma regla, sin escribirla dos
+  veces).
+
+Comprobado impersonando las 137 cuentas (revertido), después del cambio: 0
+perfiles ajenos que no vengan de una relación directa, 0 colegas ajenos en
+`equipo_docente()` y 0 rachas ajenas fuera de esas mismas relaciones; quien
+administra sigue viendo las 137 cuentas y cada uno sigue viendo su propia
+racha. `pintarEnLinea()` de Juegos no pasa por nada de esto: sigue ofreciendo
+retar a cualquiera conectado.
+
+Los alumnos y profesores con la relación directa cruzada, para ordenarlos:
+
+```sql
+select pr.id profesor, al alumno
+  from profiles pr cross join lateral interno.alumnos_de(pr.id) al
+ where not coalesce(pr.is_admin, false)
+   and not interno.comparten_academia(pr.id, al);
+```
+
 ### `role = 'admin'`: la cuenta master no es alumna de nadie
 
 `role` solo valía 'profesor' o 'alumno', así que quien administra estaba
