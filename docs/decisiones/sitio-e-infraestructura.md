@@ -602,7 +602,11 @@ el compilador ya mira los `.js` de hasta 350 KB.
   fallan: dejan de mirar la página. Se pasaron a `codigo-de-pagina.js`, y cada
   uno se rompió a propósito en un `js/<pagina>.js` para ver que salta. Los que
   barren el `.html` buscando **marcado** (la pantalla de carga, el «?», las
-  migas, el tema) se quedan como están.
+  migas, el tema) se quedan como están. Con las de juegos, lo mismo en
+  `verificar-reloj-y-repeticion.js` («el reloj no se calcula con la hora de la
+  computadora») y `verificar-ritmos.js` («no tiene su propia lista de
+  ritmos»): una comprobación de que algo NO está es la primera que pasa sin
+  mirar.
 - `codigo-de-pagina.js` reconoce el código de una página por la **primera
   línea** del archivo (`/* El código de <pagina>.`): mirando toda la cabecera
   se llevaba `js/precios-acceso.js` como código de `precios.html`, porque la
@@ -617,6 +621,8 @@ el compilador ya mira los `.js` de hasta 350 KB.
   (`tailwind-inscripcion.css`), que `css-construir.js` arma mirando solo esa
   página: su código mudado tuvo que entrar a esa lista (`INSCRIPCION`), o las
   clases que pone el script se habrían quedado sin estilo sin que nada avisara.
+  Luego las diez de juegos (juegos, bot, tv, torneo, arbitraje, variante,
+  partidas, niebla, lector de planillas y cuatro jugadores).
 - `verificar-carga-paginas.js` lleva la lista `PENDIENTES` de las que todavía
   traen un bloque de más de 20 KB (34 al empezar). **La lista solo se achica**:
   una página nueva con un bloque grande falla, y una que ya se mudó y sigue en

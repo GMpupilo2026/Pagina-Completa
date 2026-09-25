@@ -31,7 +31,7 @@ const TIENE_TABLERO = /piece-white|PiezaPreferida|js\/[a-z0-9-]*board\.js|tabler
 // sus miniaturas) y los de Abrazos/Camaleón, con piezas fusionadas.
 const EXCEPTUADOS = new Set([
   "js/fourplayer-board.js", "js/clases-board.js", "js/variantes-board.js", "js/ilumina-board.js",
-  "js/configuracion.js", "entreno/4x4.html", "tv.html", "js/pieza-preferida.js",
+  "js/configuracion.js", "entreno/4x4.html", "js/tv.js", "js/pieza-preferida.js",
 ]);
 
 let fallos = 0;

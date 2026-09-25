@@ -1,0 +1,685 @@
+/* El código de juegos.html.
+
+   Vivía escrito dentro de la página, en un <script> de 42 KB. Se mudó acá
+   tal cual, sin tocar una línea (herramientas/mudar-script.py): así el
+   navegador lo guarda en caché aparte, y es un paso hacia sacar
+   'unsafe-inline' de la CSP. Es un script clásico cargado en el mismo lugar
+   donde estaba el bloque: corre en el mismo orden y sus let/const de arriba
+   siguen siendo globales. Ver «El código de las páginas sale del HTML» en
+   docs/decisiones/sitio-e-infraestructura.md. */
+
+        let session = null, profile = null, isTeacher = false;
+        const playerNames = {};
+
+        // Modalidades disponibles: solo Crazyhouse por ahora, el resto se ve
+        // "Próximamente" — un mismo lugar para agregar la siguiente cuando
+        // exista, igual que las tarjetas del panel de Clases.
+        const VARIANTS = [
+            { id: "estandar", emoji: "⚔️", label: "Ajedrez Estándar", desc: "Ajedrez clásico, de toda la vida, en tiempo real — sin ninguna variante encima." },
+            { id: "crazyhouse", emoji: "♞", label: "Crazyhouse", desc: "Las piezas que capturas pasan a tu reserva: puedes soltarlas de vuelta en el tablero como propias." },
+            { id: "cartas", emoji: "🃏", label: "Ajedrez de Cartas", desc: "Ajedrez de toda la vida más una mano de cartas de un solo uso: refuerzos, congelar al rival, escudos, un salto de rey y más." },
+            { id: "duelo", emoji: "⚡", label: "Duelo Simultáneo", desc: "Los dos jugadores eligen su jugada en secreto y a la vez, desde la misma posición. Se revelan juntas: si apuntan a la misma casilla, chocan; si uno escapaba de donde el otro atacaba, escapa de verdad." },
+            { id: "niebla", emoji: "🌫️", label: "Niebla de Guerra", desc: "Ajedrez de siempre, pero el tablero está cubierto: solo ves las casillas que tus propias piezas alcanzan a atacar o defender. Hay que deducir dónde está el rival — sin dejar de ver tu propio alcance." },
+            { id: "abrazos", emoji: "🤗", label: "Ajedrez de abrazos", desc: "Nadie captura: al llegar a la casilla de una pieza rival, las dos se abrazan y forman una unidad tuya que mueve como cualquiera de sus piezas. Gana quien abraza al rey rival. Reacciones en cadena garantizadas." },
+            { id: "camaleon", emoji: "🦎", label: "Camaleón", desc: "Cada pieza mueve como la pieza que empieza en su columna: en a y h como torre, en b y g como caballo, en c y f como alfil, en d como dama y en e como rey. Los peones, como peones. Jaque mate de siempre." },
+            { id: "vampiro", emoji: "🧛", label: "Ajedrez Vampiro", desc: "Ajedrez de siempre, pero al capturar una pieza rival te transformas en ella (conservando tu color): un caballo que captura una dama se vuelve dama. El rey nunca se transforma. Jaque mate de siempre." },
+            { id: "ciegas", emoji: "🙈", label: "A ciegas", desc: "Ajedrez normal sin ver las piezas: escribes tu jugada en un panel, la del rival aparece 10 segundos y desaparece. Cinco oportunidades de ver la planilla 20 segundos." },
+            { id: "4ffa", emoji: "♟️", label: "4 jugadores · Todos contra todos", desc: "4 personas, un solo tablero en cruz. Suma puntos por capturas y jaque mate — no hace falta ser el último en pie para ganar." },
+            { id: "4teams", emoji: "🤝", label: "4 jugadores · Equipos", desc: "2 parejas (los que quedan frente a frente en el tablero): gana el primer equipo que da jaque mate a un rival. No se puede capturar al compañero." },
+            { id: "kingofthehill", emoji: "⛰️", label: "Rey de la colina", desc: "Próximamente", disabled: true },
+            { id: "threecheck", emoji: "🎯", label: "Tres jaques", desc: "Próximamente", disabled: true },
+        ];
+        const SEATS = ["red", "blue", "yellow", "green"];
+        const SEAT_LABEL = { red: "🔴 Rojo", blue: "🔵 Azul", yellow: "🟡 Amarillo", green: "🟢 Verde" };
+
+        // Tiempo asignado a cada jugador (reloj tipo Fischer: minutos + segundos que se
+        // suman después de cada jugada). "Sin límite" es como se jugó siempre — el
+        // reloj es opcional. La lista vive en js/ritmos.js, la misma de los torneos.
+        const timeControlLabel = Ritmos.etiqueta;
+        let ritmoPartida = null, ritmoReto = null;
+
+        function populateTimeControlSelect() {
+            ritmoPartida = Ritmos.montar(document.getElementById("time-control-select"));
+        }
+
+        function setStatus(text) {
+            const el = document.getElementById("status-banner");
+            el.textContent = text;
+            el.classList.toggle("hidden", !text);
+        }
+
+        function fmtDateTime(iso) {
+            return new Date(iso).toLocaleString("es-CR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+        }
+
+        function resultLabel(row) {
+            if (row.status !== "finished") return "";
+            if (row._table === "fourplayer_games") {
+                const r = row.result || {};
+                if (r.reason === "draw") return "🤝 Tablas";
+                if (r.winners && r.winners.length) return "🏆 Ganó " + r.winners.map((s) => SEAT_LABEL[s]).join(" + ");
+                return "Terminada";
+            }
+            if (row.result === "draw") return "🤝 Tablas";
+            if (row.result === "white") return "🏆 Ganó " + (playerNames[row.white_id] || "blancas");
+            if (row.result === "black") return "🏆 Ganó " + (playerNames[row.black_id] || "negras");
+            return "Terminada";
+        }
+
+        // ---------- Mis partidas en curso ----------
+        /* La usan los DOS, alumno y profesor. Desde que el profesor se sienta a
+           jugar —contra un alumno suyo, o emparejado en su propio torneo—
+           necesita entrar a su partida igual que cualquiera: verla pasar en la
+           lista de supervisión de abajo no es lo mismo que tener el botón. */
+        async function renderMisPartidas() {
+            const { data: myRooms } = await sb.from("game_rooms")
+                .select("*")
+                .or("white_id.eq." + profile.id + ",black_id.eq." + profile.id)
+                .order("created_at", { ascending: false })
+                .limit(10);
+            const { data: my4pGames } = await sb.from("fourplayer_games")
+                .select("*")
+                .or(SEATS.map((s) => "seats->" + s + "->>player_id.eq." + profile.id).join(","))
+                .order("created_at", { ascending: false })
+                .limit(10);
+
+            const activeEl = document.getElementById("my-active-games");
+            activeEl.innerHTML = "";
+            const active = (myRooms || []).filter((r) => r.status === "playing").map((r) => Object.assign({ _table: "game_rooms" }, r));
+            const active4p = (my4pGames || []).filter((r) => r.status === "playing").map((r) => Object.assign({ _table: "fourplayer_games" }, r));
+            if (active.length || active4p.length) {
+                const ids = new Set();
+                active.forEach((r) => { ids.add(r.white_id); ids.add(r.black_id); });
+                active4p.forEach((r) => SEATS.forEach((s) => { if (r.seats[s].player_id) ids.add(r.seats[s].player_id); }));
+                const { data: players } = await sb.rpc("nombres_de_jugadores", { p_ids: Array.from(ids) });
+                (players || []).forEach((p) => { playerNames[p.id] = p.nombre; });
+
+                active.forEach((r) => {
+                    const myColor = r.white_id === profile.id ? "w" : "b";
+                    const rivalId = myColor === "w" ? r.black_id : r.white_id;
+                    const card = document.createElement("a");
+                    card.href = pageFor2pVariant(r.variant) + "?room=" + r.id;
+                    card.className = "block bg-white dark:bg-brand-900 rounded-xl shadow-md p-4 hover:shadow-lg transition-shadow";
+                    card.innerHTML =
+                        '<p class="text-xs text-accent-700 dark:text-accent-400 font-semibold uppercase mb-1">' + variantLabel(r.variant) + ' · en curso</p>' +
+                        '<h2 class="font-semibold text-brand-800 dark:text-white">Contra ' + escapeHtml(playerNames[rivalId] || "tu rival") + '</h2>' +
+                        '<p class="text-xs text-brand-450 dark:text-brand-350 mt-1">Juegas con ' + (myColor === "w" ? "blancas ⚪" : "negras ⚫") + ' — toca para continuar →</p>';
+                    activeEl.appendChild(card);
+                });
+                active4p.forEach((r) => {
+                    const mySeat = SEATS.find((s) => r.seats[s].player_id === profile.id);
+                    const others = SEATS.filter((s) => s !== mySeat).map((s) => escapeHtml(playerNames[r.seats[s].player_id] || "?")).join(", ");
+                    const card = document.createElement("a");
+                    card.href = "cuatro-jugadores.html?room=" + r.id;
+                    card.className = "block bg-white dark:bg-brand-900 rounded-xl shadow-md p-4 hover:shadow-lg transition-shadow";
+                    card.innerHTML =
+                        '<p class="text-xs text-accent-700 dark:text-accent-400 font-semibold uppercase mb-1">' + variantLabel(r.mode === "teams" ? "4teams" : "4ffa") + ' · en curso</p>' +
+                        '<h2 class="font-semibold text-brand-800 dark:text-white">Contra ' + others + '</h2>' +
+                        '<p class="text-xs text-brand-450 dark:text-brand-350 mt-1">Juegas con ' + SEAT_LABEL[mySeat] + ' — toca para continuar →</p>';
+                    activeEl.appendChild(card);
+                });
+            } else if (!isTeacher) {
+                // Al profesor sin partidas propias no se le dice nada: lo suyo
+                // empieza en el panel de abajo. El aviso de "espera a que te
+                // asignen" es para el alumno y solo para él.
+                const p = document.createElement("p");
+                p.className = "text-sm text-brand-450 dark:text-brand-350 bg-white dark:bg-brand-900 rounded-xl p-4";
+                p.textContent = "Todavía no tienes ninguna partida asignada. Espera a que tu profesor te asigne un rival.";
+                activeEl.appendChild(p);
+            }
+        }
+
+        // ---------- Vista del alumno ----------
+        async function renderStudentView() {
+            document.getElementById("student-view").classList.remove("hidden");
+            const grid = document.getElementById("variant-grid");
+            grid.innerHTML = "";
+            VARIANTS.forEach((v) => {
+                const card = document.createElement("div");
+                card.className = "bg-white dark:bg-brand-900 rounded-xl shadow-md p-4 " + (v.disabled ? "opacity-60" : "");
+                card.innerHTML =
+                    '<span class="text-3xl block mb-2" aria-hidden="true">' + v.emoji + '</span>' +
+                    '<h3 class="font-semibold text-brand-800 dark:text-white mb-1">' + v.label + '</h3>' +
+                    '<p class="text-xs text-brand-450 dark:text-brand-350">' + v.desc + '</p>';
+                grid.appendChild(card);
+            });
+        }
+
+        function variantLabel(id) {
+            const v = VARIANTS.find((x) => x.id === id);
+            return v ? v.emoji + " " + v.label : id;
+        }
+
+        // La posición de salida de cada modalidad. Vive acá y no en dos lugares
+        // porque la usan el formulario del profesor y también aceptar un reto: si
+        // se duplicara, una partida creada por un camino y otra por el otro
+        // podrían arrancar distinto.
+        function estadoInicial(variant) {
+            const fila = {};
+            if (variant === "cartas") fila.cartas_state = CartasChess.Game.iniciar().toJSON();
+            if (variant === "duelo") fila.duelo_state = new DueloSimultaneo.Game().toJSON();
+            // El fen por defecto de game_rooms trae el sufijo "[]" de Crazyhouse
+            // (la bandeja de reserva) — Niebla de Guerra y Ajedrez Estándar son
+            // ajedrez normal, sin reserva, así que necesitan el fen estándar explícito.
+            if (variant === "niebla" || variant === "estandar") fila.fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+            // Las variantes de variante.html guardan su propia posición inicial (Abrazos y
+            // Camaleón no usan el FEN de Crazyhouse); A ciegas lleva la cuenta de desbloqueos.
+            if (window.Variantes && (variant === "abrazos" || variant === "camaleon" || variant === "ciegas" || variant === "vampiro")) {
+                fila.fen = Variantes.inicio(variant);
+                if (variant === "ciegas") fila.variant_state = { w_unlocks: 5, b_unlocks: 5 };
+            }
+            return fila;
+        }
+
+        // Cada variante de 2 jugadores comparte la tabla game_rooms, pero cada una
+        // vive en su propia página — aquí se decide a cuál ir según row.variant.
+        function pageFor2pVariant(variant) {
+            if (variant === "estandar") return "estandar.html";
+            if (variant === "cartas") return "cartas.html";
+            if (variant === "duelo") return "duelo.html";
+            if (variant === "niebla") return "niebla.html";
+            if (variant === "abrazos" || variant === "camaleon" || variant === "ciegas" || variant === "vampiro") return "variante.html";
+            return "crazyhouse.html";
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement("div");
+            div.textContent = text;
+            return div.innerHTML.replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+        }
+
+        // ---------- Vista del profesor ----------
+        let allStudents = [];
+
+        /* Los selectores llevan a los alumnos Y al propio profesor: desde que se
+           puede sentar a jugar, es un jugador más. La lista de alumnos la acota
+           la RLS de `profiles`, no este `.eq()`: cada profesor recibe los suyos.
+
+           "Yo" va en su propio <optgroup> y AL FINAL, no arriba. Si fuera la
+           primera opción, el caso de todos los días —armar una partida entre dos
+           alumnos— arrancaría con el profesor puesto de blancas y habría que
+           sacarlo a mano cada vez. Así los índices de la preselección siguen
+           cayendo donde caían. */
+        async function loadPlayersIntoSelects() {
+            const { data } = await sb.from("profiles").select("id, full_name, email").eq("role", "alumno").order("full_name");
+            allStudents = data || [];
+            const whiteSelect = document.getElementById("white-select");
+            const blackSelect = document.getElementById("black-select");
+            const seatSelects = SEATS.map((s) => document.getElementById("seat-" + s + "-select"));
+            [whiteSelect, blackSelect, ...seatSelects].forEach((sel) => {
+                sel.innerHTML = "";
+                if (allStudents.length) {
+                    const grupo = document.createElement("optgroup");
+                    grupo.label = "Mis alumnos";
+                    allStudents.forEach((s) => {
+                        const opt = document.createElement("option");
+                        opt.value = s.id;
+                        opt.textContent = s.full_name || s.email;
+                        grupo.appendChild(opt);
+                    });
+                    sel.appendChild(grupo);
+                }
+                const mio = document.createElement("optgroup");
+                mio.label = "Yo";
+                const opt = document.createElement("option");
+                opt.value = profile.id;
+                opt.textContent = nombreVisible(profile);
+                mio.appendChild(opt);
+                sel.appendChild(mio);
+            });
+            // Con dos alumnos o más, el caso de siempre: los dos primeros. Con uno
+            // solo, el rival natural soy yo — antes quedaban las dos casillas en
+            // el mismo alumno y el formulario se quejaba sin razón aparente.
+            if (allStudents.length > 1) blackSelect.selectedIndex = 1;
+            else blackSelect.value = profile.id;
+            // Preseleccionar 4 jugadores distintos si hay suficientes, para que
+            // solo haya que cambiar los que hagan falta.
+            seatSelects.forEach((sel, i) => { if (allStudents.length > i) sel.selectedIndex = i; });
+        }
+
+        function updateVariantFieldsVisibility() {
+            const variant = document.getElementById("variant-select").value;
+            const is4p = variant === "4ffa" || variant === "4teams";
+            document.getElementById("fields-2p").classList.toggle("hidden", is4p);
+            document.getElementById("fields-4p").classList.toggle("hidden", !is4p);
+            document.getElementById("fields-4p-hint").textContent = variant === "4teams"
+                ? "En Equipos, los que quedan frente a frente en el tablero son compañeros: 🔴 Rojo + 🟡 Amarillo vs. 🔵 Azul + 🟢 Verde."
+                : "Todos contra todos: el orden de turno es Rojo → Azul → Amarillo → Verde.";
+        }
+        document.getElementById("variant-select").addEventListener("change", updateVariantFieldsVisibility);
+
+        function renderRoomCard(row, container) {
+            const is4p = row._table === "fourplayer_games";
+            const card = document.createElement("div");
+            card.className = "bg-white dark:bg-brand-900 rounded-xl shadow-md p-4 flex items-center justify-between gap-3 flex-wrap";
+            const info = document.createElement("div");
+            const playersLine = is4p
+                ? SEATS.map((s) => SEAT_LABEL[s] + " " + escapeHtml(playerNames[row.seats[s].player_id] || "?")).join(" · ")
+                : escapeHtml(playerNames[row.white_id] || "?") + ' ⚪ vs ⚫ ' + escapeHtml(playerNames[row.black_id] || "?");
+            const variantId = is4p ? (row.mode === "teams" ? "4teams" : "4ffa") : row.variant;
+            info.innerHTML =
+                '<p class="text-xs text-accent-700 dark:text-accent-400 font-semibold uppercase mb-1">' + variantLabel(variantId) + ' · ⏱️ ' + timeControlLabel(row.initial_seconds, row.increment_seconds) + '</p>' +
+                '<h3 class="font-semibold text-brand-800 dark:text-white text-sm">' + playersLine + '</h3>' +
+                '<p class="text-xs text-brand-450 dark:text-brand-350 mt-1">' + fmtDateTime(row.created_at) + (row.status === "finished" ? " · " + resultLabel(row) : "") + '</p>';
+            const actions = document.createElement("div");
+            actions.className = "flex items-center gap-2 shrink-0";
+            // Si el profesor es uno de los jugadores no viene a mirar: viene a
+            // jugar. Mismo enlace, otro nombre y otro color — un "Ver" sobre la
+            // partida propia se pasa por alto.
+            const juegoYo = is4p
+                ? SEATS.some((sc) => row.seats[sc] && row.seats[sc].player_id === profile.id)
+                : (row.white_id === profile.id || row.black_id === profile.id);
+            const viewBtn = document.createElement("a");
+            viewBtn.href = (is4p ? "cuatro-jugadores.html" : pageFor2pVariant(row.variant)) + "?room=" + row.id;
+            viewBtn.className = juegoYo
+                ? "text-xs font-semibold px-3 py-1.5 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors"
+                : "text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors";
+            viewBtn.textContent = juegoYo ? "♟️ Jugar" : "👀 Ver";
+            actions.appendChild(viewBtn);
+            if (row.status === "playing") {
+                const endBtn = document.createElement("button");
+                endBtn.type = "button";
+                endBtn.className = "text-xs font-semibold px-3 py-1.5 rounded-lg bg-red-100 hover:bg-red-200 dark:bg-red-900/40 dark:hover:bg-red-900/60 text-red-700 dark:text-red-300 transition-colors";
+                endBtn.textContent = "Terminar";
+                endBtn.addEventListener("click", async () => {
+                    if (!(await Avisos.confirmar("Queda terminada sin ganador.", { titulo: "¿Terminar esta partida?", aceptar: "Terminar" }))) return;
+                    if (is4p) {
+                        const g = FourPlayerChess.Game.fromJSON(row.board);
+                        g.forceEnd();
+                        const newSeats = JSON.parse(JSON.stringify(row.seats));
+                        if (g.result && g.result.bonusPoints) Object.keys(g.result.bonusPoints).forEach((s) => { newSeats[s].score = (newSeats[s].score || 0) + g.result.bonusPoints[s]; });
+                        await sb.from("fourplayer_games").update({ status: "finished", result: g.result, board: g.toJSON(), seats: newSeats, updated_at: new Date().toISOString() }).eq("id", row.id);
+                    } else {
+                        await sb.from("game_rooms").update({ status: "finished", updated_at: new Date().toISOString() }).eq("id", row.id);
+                    }
+                    await loadRooms();
+                });
+                actions.appendChild(endBtn);
+            }
+            const delBtn = document.createElement("button");
+            delBtn.type = "button";
+            delBtn.className = "text-xs text-red-600 dark:text-red-400 hover:underline";
+            delBtn.textContent = "Eliminar";
+            delBtn.addEventListener("click", async () => {
+                if (!(await Avisos.confirmar("Se borra por completo. No se puede deshacer.", { titulo: "¿Eliminar esta partida?", aceptar: "Eliminar", peligro: true }))) return;
+                await sb.from(is4p ? "fourplayer_games" : "game_rooms").delete().eq("id", row.id);
+                await loadRooms();
+            });
+            actions.appendChild(delBtn);
+            card.append(info, actions);
+            container.appendChild(card);
+        }
+
+        async function loadRooms() {
+            const [{ data: rooms, error }, { data: games4p, error: error4p }] = await Promise.all([
+                sb.from("game_rooms").select("*").order("created_at", { ascending: false }).limit(100),
+                sb.from("fourplayer_games").select("*").order("created_at", { ascending: false }).limit(100),
+            ]);
+            if (error) console.error(error);
+            if (error4p) console.error(error4p);
+            const ids = new Set();
+            (rooms || []).forEach((r) => { ids.add(r.white_id); ids.add(r.black_id); });
+            (games4p || []).forEach((r) => SEATS.forEach((s) => { if (r.seats[s].player_id) ids.add(r.seats[s].player_id); }));
+            if (ids.size) {
+                const { data: players } = await sb.rpc("nombres_de_jugadores", { p_ids: Array.from(ids) });
+                (players || []).forEach((p) => { playerNames[p.id] = p.nombre; });
+            }
+
+            const all = (rooms || []).map((r) => Object.assign({ _table: "game_rooms" }, r))
+                .concat((games4p || []).map((r) => Object.assign({ _table: "fourplayer_games" }, r)))
+                .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+            const ongoing = all.filter((r) => r.status === "playing");
+            const finished = all.filter((r) => r.status === "finished");
+
+            const ongoingEl = document.getElementById("ongoing-list");
+            ongoingEl.innerHTML = "";
+            if (!ongoing.length) ongoingEl.innerHTML = '<p class="text-brand-450 dark:text-brand-350 text-sm">Todavía no hay partidas en curso.</p>';
+            else ongoing.forEach((r) => renderRoomCard(r, ongoingEl));
+
+            const finishedEl = document.getElementById("finished-list");
+            finishedEl.innerHTML = "";
+            if (!finished.length) finishedEl.innerHTML = '<p class="text-brand-450 dark:text-brand-350 text-sm">Todavía no hay partidas terminadas.</p>';
+            else finished.forEach((r) => renderRoomCard(r, finishedEl));
+        }
+
+        function subscribeRoomsList() {
+            sb.channel("game-rooms-list-changes")
+                .on("postgres_changes", { event: "*", schema: "public", table: "game_rooms" }, () => loadRooms())
+                .subscribe();
+            sb.channel("fourplayer-games-list-changes")
+                .on("postgres_changes", { event: "*", schema: "public", table: "fourplayer_games" }, () => loadRooms())
+                .subscribe();
+        }
+
+        document.getElementById("create-room-form").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const msg = document.getElementById("create-room-msg");
+            const fail = (text) => { msg.textContent = text; msg.className = "text-xs text-red-600 dark:text-red-400 min-h-[1em]"; };
+            const variant = document.getElementById("variant-select").value;
+            const timeControl = ritmoPartida.leer();
+            if (timeControl.error) { fail(timeControl.error); return; }
+
+            if (variant === "4ffa" || variant === "4teams") {
+                const ids = SEATS.map((s) => document.getElementById("seat-" + s + "-select").value);
+                if (ids.some((id) => !id)) return fail("Elige un jugador para cada uno de los 4 asientos.");
+                if (new Set(ids).size !== 4) return fail("Elige 4 jugadores distintos.");
+                const mode = variant === "4teams" ? "teams" : "ffa";
+                const engineGame = new FourPlayerChess.Game(mode);
+                const seats = {};
+                SEATS.forEach((s, i) => { seats[s] = { player_id: ids[i], ready: false, score: 0, time_left: timeControl.initial }; });
+                const { error } = await sb.from("fourplayer_games").insert({
+                    mode: mode, seats: seats, turn: "red", board: engineGame.toJSON(), moves: [],
+                    initial_seconds: timeControl.initial, increment_seconds: timeControl.increment,
+                    created_by: session.user.id,
+                });
+                if (error) { console.error(error); return fail("No se pudo crear la partida: " + error.message); }
+            } else {
+                const whiteId = document.getElementById("white-select").value;
+                const blackId = document.getElementById("black-select").value;
+                if (!whiteId || !blackId) return fail("Elige un jugador para cada color.");
+                if (whiteId === blackId) return fail("Elige dos jugadores distintos.");
+                const fila = {
+                    variant: variant, white_id: whiteId, black_id: blackId, created_by: session.user.id,
+                    initial_seconds: timeControl.initial, increment_seconds: timeControl.increment,
+                    // El reloj de ambos arranca completo, pero SIN empezar a correr todavía
+                    // (clock_updated_at se deja sin poner) — recién arranca cuando los dos
+                    // jugadores entran y se marcan listos (ver crazyhouse.html/cartas.html),
+                    // no desde que el profesor crea la partida.
+                    white_time_left: timeControl.initial, black_time_left: timeControl.initial,
+                };
+                Object.assign(fila, estadoInicial(variant));
+                const { error } = await sb.from("game_rooms").insert(fila);
+                if (error) { console.error(error); return fail("No se pudo crear la partida: " + error.message); }
+            }
+            msg.textContent = "¡Partida creada!";
+            msg.className = "text-xs text-green-600 dark:text-green-400 min-h-[1em]";
+            await loadRooms();
+        });
+
+        async function renderTeacherView() {
+            document.getElementById("teacher-view").classList.remove("hidden");
+            populateTimeControlSelect();
+            await loadPlayersIntoSelects();
+            updateVariantFieldsVisibility();
+            // Los topes bajan en uno porque el profesor cuenta como jugador: con
+            // un solo alumno ya hay partida, y con tres ya se puede armar una de
+            // cuatro.
+            if (!allStudents.length) {
+                setStatus("Todavía no tienes ningún alumno asignado, así que no hay con quién armar una partida.");
+            } else if (allStudents.length < 3) {
+                setStatus("Con menos de 3 alumnos no vas a poder armar partidas de 4 jugadores, aunque te cuentes a ti mismo.");
+            }
+            await loadRooms();
+            subscribeRoomsList();
+        }
+
+        /* ================= Retar a quien está en línea =================
+         *
+         * Presencia: un canal de Realtime donde cada quien se anuncia mientras tiene
+         * abierta esta página. No hay tabla de "conectados": si cierras la pestaña,
+         * desapareces solo.
+         *
+         * El reto sí es una fila en `desafios`, porque tiene que sobrevivir al segundo
+         * que tarda el otro en contestar y porque quien lo recibe se entera por
+         * Realtime aunque no estuviera mirando. Al aceptar, la partida NO se crea con
+         * un insert: un alumno no puede crear partidas (la política game_rooms_insert
+         * exige profesor, y sigue igual). La crea la función aceptar_desafio(), que
+         * comprueba que el desafío existe, que está pendiente y que quien acepta es
+         * quien lo recibió, y sortea los colores.
+         */
+        const CANAL_PRESENCIA = "juegos-en-linea";
+        let canalPresencia = null, canalDesafios = null;
+        let gente = [];              // quién está conectado, sin contarme
+        let retosPendientes = [];    // los que me llegaron y no he respondido
+        let retosEnviados = {};      // id de reto -> {boton, timeoutId}: los míos, mientras espero respuesta
+
+        const nombreVisible = (p) => p.full_name || p.email || "Alguien";
+
+        /* Con quién puedo jugar: cualquiera de la Academia, que es la misma
+           regla que aplica la base (public.pueden_jugar_entre_si). Acá es solo
+           para no mostrar un botón que va a fallar; quien manda es la base.
+
+           Antes había que compartir profesor, y eso dejaba la lista vacía casi
+           siempre: un alumno que quiere jugar AHORA no tiene por qué esperar a
+           que alguien de su propia clase esté conectado. Retarse es lo único
+           que comparte toda la Academia — ver y gestionar alumnos sigue
+           acotado a quien es su profesor, y armar una partida desde el
+           formulario de abajo también (public.puedo_armar_partida_con). */
+        function puedoJugarCon(otro) {
+            return !!otro && !!otro.id && otro.id !== profile.id;
+        }
+
+        function prepararSelectoresDeReto() {
+            const mod = document.getElementById("reto-modalidad");
+            mod.innerHTML = "";
+            VARIANTS.filter((v) => !v.disabled && v.id.indexOf("4") !== 0).forEach((v) => {
+                const o = document.createElement("option");
+                o.value = v.id; o.textContent = v.emoji + " " + v.label;
+                mod.appendChild(o);
+            });
+            if (!ritmoReto) ritmoReto = Ritmos.montar(document.getElementById("reto-tiempo"), { valor: "10+0" });
+        }
+
+        async function iniciarPresencia() {
+            prepararSelectoresDeReto();
+            document.getElementById("en-linea-caja").classList.remove("hidden");
+
+            /* En el canal de presencia va lo justo para pintar la fila y
+               apretar "Retar": el id, el nombre y si da clase. Antes iba
+               también la lista de profesores de cada quien, que servía para
+               decidir si eran compañeros — ahora no hace falta y, de paso, era
+               repartirle a toda la página con quién estudia cada alumno. */
+            canalPresencia = sb.channel(CANAL_PRESENCIA, { config: { presence: { key: profile.id } } });
+            canalPresencia.on("presence", { event: "sync" }, () => {
+                const estado = canalPresencia.presenceState();
+                const vistos = {};
+                Object.keys(estado).forEach((k) => {
+                    (estado[k] || []).forEach((p) => { if (p && p.id) vistos[p.id] = p; });
+                });
+                gente = Object.values(vistos).filter((p) => p.id !== profile.id);
+                pintarEnLinea();
+            });
+            canalPresencia.subscribe(async (estado) => {
+                if (estado !== "SUBSCRIBED") return;
+                await canalPresencia.track({
+                    id: profile.id, nombre: nombreVisible(profile),
+                    is_admin: !!profile.is_admin, role: profile.role,
+                });
+            });
+        }
+
+        function pintarEnLinea() {
+            const lista = document.getElementById("en-linea-lista");
+            const cuenta = document.getElementById("en-linea-cuenta");
+            const disponibles = gente.filter(puedoJugarCon);
+            cuenta.textContent = disponibles.length ? disponibles.length + (disponibles.length === 1 ? " persona" : " personas") : "";
+            lista.innerHTML = "";
+            if (!disponibles.length) {
+                lista.innerHTML = '<p class="text-sm text-brand-450 dark:text-brand-350">Ahora mismo no hay nadie más en esta página. Si quieres jugar ya, está <a href="bot.html" class="underline">el bot de Oscar</a>.</p>';
+                return;
+            }
+            disponibles.forEach((p) => {
+                const fila = document.createElement("div");
+                fila.className = "flex items-center justify-between gap-3 border border-brand-100 dark:border-brand-800 rounded-xl px-3 py-2";
+                const quien = document.createElement("p");
+                quien.className = "text-sm font-medium text-brand-700 dark:text-brand-200";
+                quien.textContent = "🟢 " + p.nombre + (p.role === "profesor" ? " · profe" : "");
+                const boton = document.createElement("button");
+                boton.type = "button";
+                boton.dataset.retar = p.id;
+                boton.className = "bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-1.5 rounded-lg text-sm transition-colors";
+                boton.textContent = "Retar";
+                boton.addEventListener("click", () => retar(p, boton));
+                fila.append(quien, boton);
+                lista.appendChild(fila);
+            });
+        }
+
+        async function retar(quien, boton) {
+            const modalidad = document.getElementById("reto-modalidad").value;
+            const tc = ritmoReto.leer();
+            if (tc.error) { Avisos.avisar(tc.error, { tipo: "error" }); return; }
+            boton.disabled = true;
+            boton.textContent = "Enviado…";
+            const { data, error } = await sb.from("desafios").insert({
+                de_id: profile.id, para_id: quien.id, modalidad: modalidad,
+                initial_seconds: tc.initial, increment_seconds: tc.increment,
+            }).select("id").single();
+            if (error || !data) {
+                boton.disabled = false; boton.textContent = "Retar";
+                Avisos.avisar("No se pudo enviar el reto: " + (error ? error.message : "intenta de nuevo"), { tipo: "error" });
+                return;
+            }
+            boton.textContent = "Esperando…";
+            // Si tarda en contestar, el botón se libera solo a los 20s; si
+            // contesta antes (sobre todo si rechaza), reactivarBoton() de
+            // escucharDesafios() ya lo habrá liberado y este timeout no
+            // encuentra nada que hacer.
+            const timeoutId = setTimeout(() => { reactivarBoton(data.id); }, 20000);
+            retosEnviados[data.id] = { boton: boton, timeoutId: timeoutId };
+        }
+
+        // Libera el botón "Retar" de un reto mío, sea porque contestaron o
+        // porque se cumplió el plazo de espera. Sin esto, rechazar un reto
+        // de inmediato igual dejaba a quien retó viendo "Esperando…" el
+        // resto de los 20 segundos, sin ninguna razón para seguir esperando.
+        function reactivarBoton(retoId) {
+            const pendiente = retosEnviados[retoId];
+            if (!pendiente) return;
+            clearTimeout(pendiente.timeoutId);
+            pendiente.boton.disabled = false;
+            pendiente.boton.textContent = "Retar";
+            delete retosEnviados[retoId];
+        }
+
+        /* Los retos que me llegan y la respuesta al mío: las dos cosas por Realtime. */
+        function escucharDesafios() {
+            canalDesafios = sb.channel("desafios:" + profile.id)
+                .on("postgres_changes",
+                    { event: "INSERT", schema: "public", table: "desafios", filter: "para_id=eq." + profile.id },
+                    (msg) => { if (msg.new && msg.new.estado === "pendiente") mostrarReto(msg.new); })
+                .on("postgres_changes",
+                    { event: "UPDATE", schema: "public", table: "desafios", filter: "de_id=eq." + profile.id },
+                    (msg) => {
+                        if (!msg.new) return;
+                        if (msg.new.estado === "aceptado" && msg.new.room_id) { reactivarBoton(msg.new.id); irALaPartida(msg.new); }
+                        if (msg.new.estado === "rechazado") {
+                            reactivarBoton(msg.new.id);
+                            avisoArriba(msg.new.motivo_rechazo
+                                ? "Por ahora no — " + msg.new.motivo_rechazo
+                                : "Tu reto no fue aceptado esta vez.");
+                        }
+                    })
+                .subscribe();
+            // Por si llegó uno mientras la página estaba cerrada.
+            cargarRetosPendientes();
+        }
+
+        async function cargarRetosPendientes() {
+            const { data } = await sb.from("desafios").select("*")
+                .eq("para_id", profile.id).eq("estado", "pendiente")
+                .order("created_at", { ascending: false }).limit(5);
+            (data || []).forEach(mostrarReto);
+        }
+
+        async function mostrarReto(reto) {
+            if (retosPendientes.some((r) => r.id === reto.id)) return;
+            retosPendientes.push(reto);
+            let nombre = playerNames[reto.de_id];
+            if (!nombre) {
+                const { data } = await sb.rpc("nombres_de_jugadores", { p_ids: [reto.de_id] });
+                nombre = (data && data[0]) ? data[0].nombre : "Alguien";
+                playerNames[reto.de_id] = nombre;
+            }
+            const tc = { label: Ritmos.etiqueta(reto.initial_seconds, reto.increment_seconds) };
+            const caja = document.createElement("div");
+            caja.dataset.reto = reto.id;
+            caja.className = "bg-accent-50 dark:bg-brand-800 border-l-4 border-accent-500 rounded-r-xl px-4 py-3";
+            const motivoId = "motivo-reto-" + reto.id;
+            caja.innerHTML =
+                '<p class="font-serif font-bold text-brand-800 dark:text-white mb-1">⚔️ ' + escapeHtml(nombre) + ' te reta</p>' +
+                '<p class="text-sm text-brand-700 dark:text-brand-200 mb-3">' + escapeHtml(variantLabel(reto.modalidad)) +
+                (tc ? " · " + escapeHtml(tc.label) : "") + '</p>' +
+                '<label for="' + motivoId + '" class="block text-xs text-brand-450 dark:text-brand-350 mb-1">Si dices que no, puedes contarle por qué (opcional)</label>' +
+                '<input type="text" id="' + motivoId + '" maxlength="140" placeholder="Ej. Estoy estudiando" ' +
+                'class="w-full mb-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 px-3 py-1.5 text-sm text-brand-700 dark:text-brand-200" />' +
+                '<div class="flex flex-wrap gap-2">' +
+                '<button type="button" data-aceptar="' + reto.id + '" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-1.5 rounded-lg text-sm transition-colors">Aceptar y jugar</button>' +
+                '<button type="button" data-rechazar="' + reto.id + '" class="border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-4 py-1.5 rounded-lg text-sm hover:border-red-400 transition-colors">Ahora no</button>' +
+                '</div>';
+            caja.querySelector("[data-aceptar]").addEventListener("click", () => aceptar(reto, caja));
+            caja.querySelector("[data-rechazar]").addEventListener("click", () => rechazar(reto, caja));
+            document.getElementById("retos-recibidos").appendChild(caja);
+        }
+
+        async function aceptar(reto, caja) {
+            caja.querySelectorAll("button").forEach((b) => { b.disabled = true; });
+            const inicial = estadoInicial(reto.modalidad);
+            const { data, error } = await sb.rpc("aceptar_desafio", {
+                p_desafio: reto.id,
+                p_fen: inicial.fen || null,
+                p_cartas: inicial.cartas_state || null,
+                p_duelo: inicial.duelo_state || null,
+                p_variant: inicial.variant_state || null,
+            });
+            if (error || !data) {
+                caja.querySelectorAll("button").forEach((b) => { b.disabled = false; });
+                Avisos.avisar("No se pudo empezar la partida: " + (error ? error.message : "el reto ya no está disponible"), { tipo: "error" });
+                return;
+            }
+            irALaPartida({ modalidad: reto.modalidad, room_id: data });
+        }
+
+        async function rechazar(reto, caja) {
+            const inputMotivo = caja.querySelector("input[id^='motivo-reto-']");
+            const motivo = inputMotivo ? inputMotivo.value.trim().slice(0, 140) : "";
+            await sb.from("desafios").update({
+                estado: "rechazado",
+                motivo_rechazo: motivo || null,
+                respondido_at: new Date().toISOString(),
+            }).eq("id", reto.id);
+            retosPendientes = retosPendientes.filter((r) => r.id !== reto.id);
+            caja.remove();
+        }
+
+        function irALaPartida(reto) {
+            window.location.href = pageFor2pVariant(reto.modalidad) + "?room=" + reto.room_id;
+        }
+
+        function avisoArriba(texto) {
+            const banner = document.getElementById("status-banner");
+            banner.textContent = texto;
+            banner.classList.remove("hidden");
+            setTimeout(() => banner.classList.add("hidden"), 6000);
+        }
+
+        async function init() {
+            const { data } = await sb.auth.getSession();
+            session = data.session;
+            if (!session) { window.location.href = "login.html"; return; }
+            const { data: profileData, error: profileError } = await sb.from("profiles").select("*").eq("id", session.user.id).single();
+            if (profileError || !profileData) { document.getElementById("loading").textContent = "No se pudo cargar tu perfil."; return; }
+            profile = profileData;
+            // Quien administra ve esta página como profesor, igual que en Informes:
+            // lo que se hace para el profesor se hace para administración.
+            isTeacher = profile.role === "profesor" || !!profile.is_admin;
+            document.getElementById("subtitle").textContent = isTeacher
+                ? "Arma partidas entre tus alumnos —o contra ti mismo— y sigue su avance."
+                : "Otras formas de jugar ajedrez, además de la partida clásica. Tu profesor te asigna el rival.";
+
+            await renderMisPartidas();
+            if (isTeacher) await renderTeacherView();
+            else await renderStudentView();
+            // El aviso de partida asignada (js/juego-aviso.js) se autoarranca solo
+            // en todas las páginas de la Academia — ver herramientas/academia-cabecera.py.
+
+            // Quién está en línea y los retos: para todos, alumnos y profesores.
+            await iniciarPresencia();
+            escucharDesafios();
+
+            document.getElementById("loading").classList.add("hidden");
+            document.getElementById("app").classList.remove("hidden");
+        }
+        init();
+    

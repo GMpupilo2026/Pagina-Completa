@@ -88,11 +88,9 @@ else bien("la hoja de Google Fonts no frena el pintado en ninguna");
    solo se achica. Una página nueva no entra, y una que ya se mudó sale. */
 const LIMITE_EN_LINEA_KB = 20;
 const PENDIENTES = new Set([
-  "entreno/4x4.html", "entreno/diagnostico.html", "juegos.html", "bot.html", "tv.html",
-  "torneo.html", "entreno/aprender.html", "arbitraje.html", "entreno/desafios.html",
-  "variante.html", "entreno/temas.html", "entreno/practicas.html", "partidas.html",
-  "niebla.html", "entreno/mates.html", "lector-planilla.html", "cuatro-jugadores.html",
-  "entreno/aperturas.html",
+  "entreno/4x4.html", "entreno/diagnostico.html", "entreno/aprender.html",
+  "entreno/desafios.html", "entreno/temas.html", "entreno/practicas.html",
+  "entreno/mates.html", "entreno/aperturas.html",
 ]);
 const grandesNuevos = [], yaMudadas = [];
 for (const archivo of paginas(raiz)) {
