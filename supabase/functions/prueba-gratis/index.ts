@@ -1,11 +1,17 @@
 // Edge Function: prueba-gratis
 //
-// Tres días de la Academia sin dar un correo. Quien quiere probar escribe su
-// nombre y una contraseña en prueba-gratis.html; esta función le arma una
-// cuenta de alumno con un USUARIO del dominio sin buzón (el mismo de los
-// alumnos sin correo, ver usuario-alumno.ts) y la marca como prueba. La
-// página inicia la sesión con ese usuario y esa contraseña, y le enseña el
-// usuario para que pueda volver a entrar.
+// Tres días de la Academia sin correo. La prueba se PIDE por WhatsApp
+// (prueba-gratis.html y precios.html abren el chat con el mensaje de interés
+// ya escrito) y la CREA quien administra, desde esa misma página: nombre y
+// contraseña. Esta función arma una cuenta de alumno con un USUARIO del
+// dominio sin buzón (el mismo de los alumnos sin correo, ver
+// usuario-alumno.ts) y la marca como prueba.
+//
+// SOLO LA LLAMA QUIEN ADMINISTRA
+// Que la prueba pase por una persona es la decisión del dueño del sitio: así
+// sabe quién la pidió y le escribe. Por eso va con `verify_jwt` en true y,
+// además, se comprueba `is_admin` del perfil: una sesión de alumno no crea
+// pruebas aunque llame directo.
 //
 // EL CORTE LO HACE LA BASE, NO ESTA FUNCIÓN
 // `prueba_gratis_activar()` guarda la fila de `pruebas_gratis` con su
@@ -19,11 +25,6 @@
 // sin límite. Por eso la cuenta nace BLOQUEADA (ban) y solo se desbloquea
 // después de que la base guardó su vencimiento. Si la activación falla, la
 // cuenta se borra; y si hasta el borrado falla, queda bloqueada: nunca abierta.
-//
-// ES PÚBLICA (`verify_jwt` en false), CON FRENO
-// Quien prueba no tiene cuenta todavía. Cada llamada es una cuenta nueva, así
-// que pasa primero por `interno.frenar_envio_publico('prueba', …)` con la IP
-// de la petición (3 por hora por IP, 40 por hora en total).
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { DOMINIO_ALUMNO, usuarioLibre } from "./usuario-alumno.ts";
@@ -45,17 +46,19 @@ function json(body: unknown, status = 200) {
   });
 }
 
-// La IP de quien pide, no la de la función: es la que cuenta el freno.
-function ipDe(req: Request): string | null {
-  const ip = req.headers.get("cf-connecting-ip") ||
-    req.headers.get("x-real-ip") ||
-    (req.headers.get("x-forwarded-for") || "").split(",")[0];
-  return (ip || "").trim().slice(0, 64) || null;
-}
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "Método no permitido" }, 405);
+
+  // Solo quien administra: se mira la sesión y el perfil, no lo que diga el
+  // navegador.
+  const jwt = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
+  if (!jwt) return json({ error: "Falta la sesión." }, 401);
+  const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+  const { data: quien, error: quienError } = await admin.auth.getUser(jwt);
+  if (quienError || !quien?.user) return json({ error: "La sesión no es válida." }, 401);
+  const { data: perfil } = await admin.from("profiles").select("is_admin").eq("id", quien.user.id).maybeSingle();
+  if (!perfil?.is_admin) return json({ error: "Solo quien administra crea pruebas gratis." }, 403);
 
   let body: { nombre?: string; contrasena?: string; privacidad_version?: string; terminos_version?: string };
   try {
@@ -70,22 +73,14 @@ Deno.serve(async (req) => {
   const terminos = String(body.terminos_version ?? "");
 
   if ((nombre.match(/\p{L}/gu) || []).length < 2) {
-    return json({ error: "Escribe tu nombre (con eso armamos tu usuario)." }, 400);
+    return json({ error: "Escribe el nombre: con él se arma el usuario." }, 400);
   }
   if (contrasena.length < 8 || contrasena.length > 72) {
     return json({ error: "La contraseña tiene que tener entre 8 y 72 caracteres." }, 400);
   }
   if (!privacidad || !terminos) {
-    return json({ error: "Para empezar la prueba hace falta aceptar la Política de privacidad y los Términos." }, 400);
+    return json({ error: "Falta que la persona acepte la Política de privacidad y los Términos." }, 400);
   }
-
-  const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
-  const ip = ipDe(req);
-
-  // El freno va ANTES de crear nada: una prueba frenada no deja rastro.
-  const { data: freno, error: frenoError } = await admin.rpc("prueba_gratis_frenar", { p_ip: ip });
-  if (frenoError) return json({ error: "No se pudo empezar la prueba. Intenta de nuevo en un momento." }, 500);
-  if (freno) return json({ error: freno }, 429);
 
   const tomado = async (correo: string) => {
     const { data } = await admin.from("profiles").select("id").ilike("email", correo).maybeSingle();
@@ -103,27 +98,27 @@ Deno.serve(async (req) => {
     user_metadata: { full_name: nombre, prueba_gratis: true },
   });
   if (crearError || !creado?.user) {
-    return json({ error: "No se pudo crear la cuenta de prueba. Intenta de nuevo en un momento." }, 500);
+    return json({ error: "No se pudo crear la prueba. Intenta de nuevo en un momento." }, 500);
   }
   const id = creado.user.id;
 
   const { data: vence, error: activarError } = await admin.rpc("prueba_gratis_activar", {
-    p_alumno: id, p_nombre: nombre, p_ip: ip, p_privacidad: privacidad, p_terminos: terminos,
+    p_alumno: id, p_nombre: nombre, p_ip: null, p_privacidad: privacidad, p_terminos: terminos,
   });
   if (activarError || !vence) {
     await admin.auth.admin.deleteUser(id);
     const legal = activarError?.code === "22023";
     return json({
       error: legal
-        ? "Para empezar la prueba hace falta aceptar la Política de privacidad y los Términos."
-        : "No se pudo empezar la prueba. Intenta de nuevo en un momento.",
+        ? "Falta que la persona acepte la Política de privacidad y los Términos."
+        : "No se pudo crear la prueba. Intenta de nuevo en un momento.",
     }, legal ? 400 : 500);
   }
 
   const { error: abrirError } = await admin.auth.admin.updateUserById(id, { ban_duration: "none" });
   if (abrirError) {
     await admin.auth.admin.deleteUser(id);
-    return json({ error: "No se pudo empezar la prueba. Intenta de nuevo en un momento." }, 500);
+    return json({ error: "No se pudo crear la prueba. Intenta de nuevo en un momento." }, 500);
   }
 
   // El usuario se enseña SIN el dominio: es lo que se escribe para entrar.

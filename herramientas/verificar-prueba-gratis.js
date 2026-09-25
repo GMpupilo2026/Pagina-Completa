@@ -11,13 +11,16 @@
  *    interruptor apagado nunca se llega a ella. Mismo resultado.
  *  - La Edge Function crea la cuenta abierta y la activación falla: una cuenta
  *    sin fila de prueba es una cuenta normal. Por eso nace bloqueada.
- *  - Crear la cuenta antes del freno: un script llena la base de cuentas.
+ *  - La función deja de preguntar si quien llama administra: cualquiera con
+ *    una sesión (o sin ella) se abre pruebas, y la de pedirla por WhatsApp
+ *    se vuelve decorativa.
  *
  * Esas cuatro se miran leyendo supabase/ (sin red ni base). Lo que decide la
  * base se comprobó además impersonando roles en SQL (ver «La prueba gratis de
  * 3 días» en docs/decisiones/cobros-acceso-y-tienda.md). En el navegador se
- * mira lo que manda y pinta la pantalla: prueba-gratis.html con la función
- * de mentira, y el aviso de js/acceso-vigente.js durante y después.
+ * mira lo que manda y pinta la pantalla: prueba-gratis.html (la cara pública
+ * que la pide por WhatsApp y la de administración que la crea, con la
+ * función de mentira), precios.html y el aviso de js/acceso-vigente.js.
  *
  *   python3 -m http.server 8777     (desde la raíz del sitio)
  *   node herramientas/verificar-prueba-gratis.js
@@ -80,7 +83,7 @@ function pruebaBase() {
   cierto("mi_acceso() sale de acceso_vigente() (no pueden contradecirse)", !!mi && /public\.acceso_vigente\(\)/.test(mi.cuerpo));
   cierto("y dice «prueba» y «prueba_vencida»", !!mi && /'prueba'/.test(mi.cuerpo) && /'prueba_vencida'/.test(mi.cuerpo));
 
-  for (const [fn, firma] of [["public.prueba_gratis_activar", "uuid, text, text, text, text"], ["public.prueba_gratis_frenar", "text"]]) {
+  for (const [fn, firma] of [["public.prueba_gratis_activar", "uuid, text, text, text, text"]]) {
     const d = ultimaDefinicion(fn);
     const revoca = d && new RegExp("revoke\\s+execute\\s+on\\s+function\\s+" + fn.replace(".", "\\.") +
       "\\(" + firma.replace(/, /g, ",\\s*") + "\\)\\s+from\\s+public,\\s*anon,\\s*authenticated", "i").test(d.sql);
@@ -89,19 +92,18 @@ function pruebaBase() {
   const act = ultimaDefinicion("public.prueba_gratis_activar");
   cierto("prueba_gratis_activar() exige la versión legal aceptada", !!act && /version_legal_valida/.test(act.cuerpo));
   cierto("y solo marca una cuenta recién creada (no le pone corte a un alumno viejo)", !!act && /created_at\s*>\s*now\(\)/.test(act.cuerpo));
-  const fr = ultimaDefinicion("interno.frenar_envio_publico");
-  cierto("el freno conoce el tipo «prueba»", !!fr && /when\s+'prueba'/.test(fr.cuerpo));
 }
 
 function pruebaFuncion() {
   console.log("\n=== La Edge Function (supabase/functions/prueba-gratis) ===");
   const ts = leer("supabase/functions/prueba-gratis/index.ts");
   const pos = (re) => ts.search(re);
-  const freno = pos(/rpc\("prueba_gratis_frenar"/);
+  const esAdmin = pos(/if\s*\(!perfil\?\.is_admin\)\s*return/);
   const crear = pos(/auth\.admin\.createUser\(/);
   const activar = pos(/rpc\("prueba_gratis_activar"/);
   const abrir = pos(/updateUserById\([^)]*ban_duration:\s*"none"/);
-  cierto("pasa por el freno ANTES de crear la cuenta", freno >= 0 && crear > freno);
+  cierto("solo quien administra: mira la sesión y el perfil ANTES de crear nada",
+    /auth\.getUser\(jwt\)/.test(ts) && esAdmin >= 0 && crear > esAdmin);
   cierto("la cuenta nace bloqueada (ban_duration al crearla)", /createUser\(\{[\s\S]*?ban_duration:\s*"\d+h"[\s\S]*?\}\)/.test(ts));
   cierto("y se desbloquea solo DESPUÉS de guardar el vencimiento", activar > crear && abrir > activar);
   cierto("si la activación falla, la cuenta se borra", /activarError[\s\S]{0,120}deleteUser\(id\)/.test(ts));
@@ -170,7 +172,7 @@ async function abrir(browser, pagina, cfg, funcion) {
   await page.route("**/fonts.gstatic.com/**", (r) => r.abort());
   await page.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso(cfg) }));
   await page.route("https://falso.supabase.co/functions/v1/prueba-gratis", (r) => {
-    pedidos.push(JSON.parse(r.request().postData() || "{}"));
+    pedidos.push({ body: JSON.parse(r.request().postData() || "{}"), auth: r.request().headers()["authorization"] || null });
     const [status, body] = funcion || [200, {}];
     r.fulfill({ status, contentType: "application/json", body: JSON.stringify(body) });
   });
@@ -183,9 +185,29 @@ async function pruebaPagina(browser) {
   console.log("\n=== prueba-gratis.html ===");
   const VENCE = "2026-09-28T02:23:54.354561+00:00";
   {
-    const { page, errores, pedidos } = await abrir(browser, "prueba-gratis.html", {},
+    const { page, errores, pedidos } = await abrir(browser, "prueba-gratis.html", {});
+    const pedir = await page.getAttribute("#prueba-pedir", "href");
+    cierto("sin sesión: el botón pide la prueba por WhatsApp, con el mensaje de interés",
+      await vis(page, "#prueba-pedir") && /^https:\/\/wa\.me\/506\d{8}\?text=/.test(pedir) &&
+        /prueba gratis de 3 días/.test(decodeURIComponent(pedir.split("?text=")[1])), pedir);
+    igual("y no hay formulario para crearla", await vis(page, "#prueba-form"), false);
+    cierto("sin errores en la página", errores.length === 0 && pedidos.length === 0, errores.join(" | "));
+    await page.close();
+  }
+  {
+    const { page } = await abrir(browser, "prueba-gratis.html", { yo: "u-ana", rpc: { soy_admin: false } });
+    igual("con sesión de alumno tampoco se ve el formulario", [await vis(page, "#prueba-publico"), await vis(page, "#prueba-form")], [true, false]);
+    await page.close();
+  }
+  {
+    const { page, errores, pedidos } = await abrir(browser, "prueba-gratis.html", { yo: "u-admin", rpc: { soy_admin: true } },
       [200, { ok: true, usuario: "sofia.munoz2", correo: "sofia.munoz2@alumno.ajedrez-integral.com", vence: VENCE }]);
-    igual("no pide correo: no hay ningún campo de correo", await page.evaluate(() => document.querySelectorAll('#prueba-form input[type="email"], #prueba-form input[autocomplete="email"]').length), 0);
+    igual("quien administra ve el formulario (y no la cara pública)", [await vis(page, "#prueba-form"), await vis(page, "#prueba-publico")], [true, false]);
+    const clave = await page.inputValue("#prueba-clave");
+    cierto("la contraseña ya viene armada, de 8 o más", clave.length >= 8, clave);
+    const otras = new Set();
+    for (let i = 0; i < 5; i++) { await page.click("#prueba-otra-clave"); otras.add(await page.inputValue("#prueba-clave")); }
+    cierto("«Otra» arma contraseñas distintas", otras.size > 1, [...otras].join(" "));
 
     await page.click("#prueba-enviar");
     cierto("sin nombre no se manda nada y se dice por qué", pedidos.length === 0 && await vis(page, "#prueba-error"));
@@ -193,49 +215,53 @@ async function pruebaPagina(browser) {
     await page.fill("#prueba-clave", "corta");
     await page.click("#prueba-enviar");
     cierto("con la contraseña corta tampoco", pedidos.length === 0 && /8 caracteres/.test(await page.textContent("#prueba-error")));
-    await page.fill("#prueba-clave", "clave-segura-1");
+    await page.fill("#prueba-clave", "torrealfil42");
     await page.click("#prueba-enviar");
-    cierto("ni sin aceptar los Términos y la Política", pedidos.length === 0 && /aceptas/.test(await page.textContent("#prueba-error")));
+    cierto("ni sin marcar que la persona acepta los Términos y la Política", pedidos.length === 0 && /acepta/.test(await page.textContent("#prueba-error")));
 
+    await page.fill("#prueba-telefono", "8888-1234");
     await page.check("#prueba-acepto");
-    await page.click("#prueba-ver-clave");
-    igual("«Mostrar» enseña la contraseña y dice que está apretado",
-      await page.evaluate(() => [document.getElementById("prueba-clave").type, document.getElementById("prueba-ver-clave").getAttribute("aria-pressed")]),
-      ["text", "true"]);
     await page.click("#prueba-enviar");
     await page.waitForSelector("#prueba-lista:not(.hidden)");
     const legal = await page.evaluate(() => window.LegalVersion);
-    igual("manda nombre, contraseña y las versiones legales aceptadas", pedidos[0],
-      { nombre: "Sofía Muñoz Pérez", contrasena: "clave-segura-1", privacidad_version: legal.PRIVACIDAD, terminos_version: legal.TERMINOS });
-    igual("inicia la sesión con el usuario que devolvió el SERVIDOR", await page.evaluate(() => window.__login),
-      [{ email: "sofia.munoz2@alumno.ajedrez-integral.com", password: "clave-segura-1" }]);
-    igual("y lo enseña sin el dominio", (await page.textContent("#prueba-usuario")).trim(), "sofia.munoz2");
-    cierto("dice hasta cuándo dura, en hora de Costa Rica", /27 de septiembre/.test(await page.textContent("#prueba-vence")), await page.textContent("#prueba-vence"));
-    igual("el formulario se va y se ve la tarjeta de listo", [await vis(page, "#prueba-form-card"), await vis(page, "#prueba-lista")], [false, true]);
-    igual("el botón lleva a la Academia", await page.getAttribute("#prueba-entrar", "href"), "clases.html");
+    igual("manda nombre, contraseña y las versiones legales", pedidos[0].body,
+      { nombre: "Sofía Muñoz Pérez", contrasena: "torrealfil42", privacidad_version: legal.PRIVACIDAD, terminos_version: legal.TERMINOS });
+    igual("con la sesión de quien administra", pedidos[0].auth, "Bearer t");
+    igual("no inicia sesión con la cuenta nueva (quien administra sigue en la suya)", await page.evaluate(() => window.__login.length), 0);
+    igual("enseña el usuario que devolvió el SERVIDOR y la contraseña",
+      [(await page.textContent("#prueba-usuario")).trim(), (await page.textContent("#prueba-clave-lista")).trim()], ["sofia.munoz2", "torrealfil42"]);
+    cierto("y hasta cuándo dura, en hora de Costa Rica", /27 de septiembre/.test(await page.textContent("#prueba-vence")), await page.textContent("#prueba-vence"));
+    const mandar = await page.getAttribute("#prueba-mandar", "href");
+    const texto = decodeURIComponent(mandar.split("?text=")[1] || "");
+    cierto("«Mandarle el acceso» abre SU WhatsApp, con el 506 delante", mandar.startsWith("https://wa.me/50688881234?text="), mandar);
+    cierto("con el usuario, la contraseña, el enlace para entrar y los Términos",
+      texto.includes("Usuario: sofia.munoz2") && texto.includes("Contraseña: torrealfil42") &&
+        texto.includes("login.html") && texto.includes("terminos.html#prueba") && texto.includes("privacidad.html"), texto);
     igual("el foco va al título", await page.evaluate(() => document.activeElement && document.activeElement.id), "prueba-lista-titulo");
+    await page.click("#prueba-otra");
+    igual("«Crear otra prueba» vuelve al formulario vacío", [await vis(page, "#prueba-form"), await page.inputValue("#prueba-nombre")], [true, ""]);
     cierto("sin errores en la página", errores.length === 0, errores.join(" | "));
     await page.close();
   }
   {
-    const { page, pedidos } = await abrir(browser, "prueba-gratis.html", {},
-      [429, { error: "Llegaron demasiados envíos seguidos desde tu conexión. Espera un rato e intenta de nuevo." }]);
+    const { page, pedidos } = await abrir(browser, "prueba-gratis.html", { yo: "u-admin", rpc: { soy_admin: true } },
+      [403, { error: "Solo quien administra crea pruebas gratis." }]);
     await page.fill("#prueba-nombre", "Ana Rojas");
-    await page.fill("#prueba-clave", "clave-segura-1");
     await page.check("#prueba-acepto");
     await page.click("#prueba-enviar");
     await page.waitForFunction(() => !document.getElementById("prueba-enviar").disabled);
-    cierto("el freno del servidor se enseña tal cual", pedidos.length === 1 && /demasiados envíos/.test(await page.textContent("#prueba-error")));
-    igual("y no se intenta iniciar sesión", await page.evaluate(() => window.__login.length), 0);
+    cierto("el rechazo del servidor se enseña tal cual", pedidos.length === 1 && /Solo quien administra/.test(await page.textContent("#prueba-error")));
     await page.close();
   }
   {
     const { page } = await abrir(browser, "precios.html", {});
-    const enlaces = await page.evaluate(() => ["hero-prueba", "prueba-academia", "cierre-prueba"].map((id) => {
+    const enlaces = await page.evaluate(() => ["hero-prueba", "prueba-academia", "faq-prueba", "cierre-prueba"].map((id) => {
       const a = document.getElementById(id);
-      return a && a.checkVisibility() ? a.getAttribute("href") : null;
+      return a ? { href: a.getAttribute("href"), nueva: a.target } : null;
     }));
-    igual("precios.html la ofrece arriba, en «Pruébalo gratis» y en el cierre", enlaces, ["prueba-gratis.html", "prueba-gratis.html", "prueba-gratis.html"]);
+    cierto("precios.html pide la prueba por WhatsApp en los cuatro lugares, con el mensaje de interés",
+      enlaces.every((e) => e && e.nueva === "_blank" && /^https:\/\/wa\.me\/506\d{8}\?text=/.test(e.href) &&
+        /prueba gratis de 3 días/.test(decodeURIComponent(e.href.split("?text=")[1]))), JSON.stringify(enlaces));
     await page.close();
   }
 }

@@ -41,13 +41,12 @@ casos. Al desplegarla hay que dejar esa casilla desmarcada — con `verify_jwt`
 en true, el olvido de contraseña de los alumnos sin buzón deja de funcionar y
 la página no lo nota: sigue diciendo que el correo salió.
 
-## `prueba-gratis` también va con `verify_jwt` en **false**
+## `prueba-gratis` va con `verify_jwt` en **true**, y solo para administración
 
-Quien empieza la prueba gratis todavía no tiene cuenta. A cambio pasa por el
-freno de los envíos sin cuenta (3 pruebas por hora por IP, 40 en total) y crea
-la cuenta **bloqueada**: solo la abre después de que la base guardó cuándo
-vence. Con `verify_jwt` en true, el botón «Empezar mi prueba gratis» contesta
-que no se pudo, siempre.
+La prueba gratis se pide por WhatsApp y la crea quien administra desde
+`prueba-gratis.html`. La función, además de la sesión, mira `is_admin` del
+perfil: una sesión de alumno no se abre pruebas llamándola directo. Crea la
+cuenta **bloqueada** y solo la abre después de que la base guardó cuándo vence.
 
 ## Los secretos
 
