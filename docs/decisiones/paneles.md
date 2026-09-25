@@ -931,6 +931,15 @@ una lista con cuatro grupos: **Resultados** (los dos diagnósticos y los dos
 exámenes, el de la Academia y el del público), **Formularios**, **Bases de
 datos** y **Reportes**.
 
+**Todos los formularios van juntos y primero**, en el grupo **Formularios**:
+la encuesta de satisfacción con los profesores, el armador de formularios de
+inscripción, las solicitudes de la Academia y las inscripciones a torneos en
+línea. Antes estaban repartidos (en el panel de quien administra, las
+solicitudes y el armador vivían dentro de «Cuentas y personas»). El panel de la
+Academia de quien administra (`ADMIN_GROUPS` de `js/clases.js`) tiene el mismo
+grupo, con las mismas cuatro tarjetas en el mismo orden: son dos listas, y
+cada una dice dónde está la otra.
+
 - Las tarjetas son **más chicas** que las del panel de la Academia a propósito:
   acá son atajos de quien ya sabe lo que busca, no la puerta de entrada de un
   alumno.

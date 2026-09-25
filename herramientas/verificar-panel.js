@@ -341,9 +341,11 @@ async function pruebaAlumna(browser) {
   /* «Mis pagos» ya no está en el panel de nadie: las mensualidades son cosa de
      la casa, no de quien entra a entrenar. La página sigue enseñándole sus
      recibos a quien entre por la dirección — lo que se quitó es el camino. */
-  igual("Tu cuenta, en su orden",
+  /* La encuesta de satisfacción es SOLO del alumnado: el equipo docente no
+     tiene a quién calificar (la prueba del profesor, más abajo, lo dice). */
+  igual("Tu cuenta, en su orden, con la encuesta sobre su profesor",
     grupo(grupos, "Tu cuenta").tiles.map((t) => t.etiqueta),
-    ["Informes", "Configuración"]);
+    ["Informes", "Configuración", "¿Cómo van tus clases?"]);
   igual("y a la alumna no se le ofrecen los cobros por ninguna parte",
     grupos.flatMap((g) => g.tiles).filter((t) => /cobros\.html/.test(t.enlace || "")).length, "0");
   igual("«Cerrar sesión» no está dos veces: en el grid ya no",
@@ -504,7 +506,11 @@ async function pruebaAdmin(browser) {
   /* Quien administra se encarga de que toda la empresa vaya bien: su panel es
      el suyo, escrito entero en ADMIN_GROUPS, y no el de un profesor recortado. */
   igual("sus grupos, en su orden", grupos.map((g) => g.titulo),
-    ["Cómo va la plataforma", "Cuentas y personas", "Cobros y accesos", "Resultados de las pruebas", "Revisar el contenido", "Tu cuenta"]);
+    ["Cómo va la plataforma", "Cuentas y personas", "Formularios", "Cobros y accesos", "Resultados de las pruebas", "Revisar el contenido", "Tu cuenta"]);
+  /* Todos los formularios juntos, los mismos cuatro de admin.html. */
+  igual("Formularios: todos juntos, con la encuesta de satisfacción",
+    grupos.find((g) => g.titulo === "Formularios").tiles.map((t) => t.enlace),
+    ["satisfaccion.html", "formularios.html", "solicitudes.html", "inscripciones.html"]);
   const enlaces = grupos.flatMap((g) => g.tiles).map((t) => t.enlace);
   igual("nada de dar clase: ni sesión en vivo, ni tareas, ni exámenes, ni planes, ni asistencia, ni informe mensual, ni subgrupos, ni archivos, ni juegos, ni torneos",
     ["sesion.html", "tareas.html", "examenes.html", "planes.html", "asistencia.html", "informe-mensual.html",
