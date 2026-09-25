@@ -36,13 +36,15 @@ window.EncuestaCursoPreguntas = (function () {
        ritmo de todo el curso: sin esa salida, contestaría cualquier cosa. */
     const ESCALA = ["Nada de acuerdo", "Poco de acuerdo", "Más o menos", "Bastante de acuerdo", "Totalmente de acuerdo"];
     const NO_SE = "No sé o no llegué a verlo";
+    // Todas empiezan con «El profesor…»: así, al escucharlas una tras otra
+    // con el lector de pantalla, queda claro de quién habla cada frase.
     const METODOLOGIA = [
         { clave: "desde_cero", corto: "Desde cero", texto: "El profesor empezó desde lo más básico, sin dar nada por sabido." },
-        { clave: "describe", corto: "Describe con palabras", texto: "Describía el tablero y las jugadas con palabras (las casillas y sus coordenadas), de forma que podías seguirlas sin verlas." },
-        { clave: "ritmo", corto: "Ritmo", texto: "El ritmo de las clases fue adecuado para alguien que empezaba de cero." },
-        { clave: "dudas", corto: "Resuelve dudas", texto: "Te daba tiempo para preguntar y resolvía tus dudas." },
-        { clave: "guia", corto: "Guía paso a paso", texto: "Te guió paso a paso en tu aprendizaje." },
-        { clave: "accesible", corto: "Accesible", texto: "Los materiales y la plataforma funcionaron bien con tu lector de pantalla o tu forma de usar la computadora." },
+        { clave: "describe", corto: "Describe con palabras", texto: "El profesor describía el tablero y las jugadas con palabras (las casillas y sus coordenadas), de forma que podías seguirlas sin verlas." },
+        { clave: "ritmo", corto: "Ritmo", texto: "El profesor llevó las clases a un ritmo adecuado para alguien que empezaba de cero." },
+        { clave: "dudas", corto: "Resuelve dudas", texto: "El profesor te daba tiempo para preguntar y resolvía tus dudas." },
+        { clave: "guia", corto: "Guía paso a paso", texto: "El profesor te guió paso a paso en tu aprendizaje." },
+        { clave: "accesible", corto: "Accesible", texto: "El profesor usó materiales que funcionaron bien con tu lector de pantalla o tu forma de usar la computadora." },
     ];
 
     const APRENDIZAJE = [
