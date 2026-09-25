@@ -36,12 +36,19 @@ function igual(nombre, hallado, esperado) {
   const registros = [];
   await ctx.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await ctx.route("**/fonts.gstatic.com/**", (r) => r.abort());
-  // Turnstile de mentira: deja el token donde lo deja el de verdad.
+  // Turnstile de mentira: deja el token donde lo deja el de verdad, y cuando lo
+  // deja el de verdad: con la página ya leída. Es un script async, así que
+  // puede correr antes de que exista el formulario; el que buscaba los
+  // .cf-turnstile de una pasaba solo porque Supabase frenaba el <head>.
   await ctx.route("**/challenges.cloudflare.com/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript",
     body: `window.turnstile = { reset() {} };
-      document.querySelectorAll('.cf-turnstile').forEach((d) => {
-        const i = document.createElement('input'); i.type = 'hidden'; i.name = 'cf-turnstile-response'; i.value = 'tok'; d.appendChild(i);
-      });` }));
+      function ponerToken() {
+        document.querySelectorAll('.cf-turnstile').forEach((d) => {
+          const i = document.createElement('input'); i.type = 'hidden'; i.name = 'cf-turnstile-response'; i.value = 'tok'; d.appendChild(i);
+        });
+      }
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ponerToken);
+      else ponerToken();` }));
   await ctx.route("**/prcfbzvshnusisczlpxl.supabase.co/rest/v1/**", (r) => r.fulfill({ status: 200, contentType: "application/json", body: "[]" }));
   await ctx.route("**/prcfbzvshnusisczlpxl.supabase.co/storage/v1/object/**", async (r) => {
     const u = new URL(r.request().url());

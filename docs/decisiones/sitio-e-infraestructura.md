@@ -500,11 +500,64 @@ como Cloudflare y los orígenes de terceros simulados con 600 ms:
   mientras que el local comparte los 1,6 Mbps con los otros 26 scripts de esa
   página. En un celular las dos descargas pasan por la misma radio, y la de
   cdnjs además paga la conexión.
-- **Lo que queda es Supabase**: `js/vendor/supabase.js` (213 KB, ~55 KB
-  comprimido) va síncrono en el `<head>` de 92 páginas, y ahí se lleva casi todo
-  lo que falta en la Academia (`clases.html`, Entrenamiento, Juegos: ~1,1 s).
-  No se tocó: los scripts de sesión del propio `<head>` lo usan al cargar, y
-  diferirlo es cambiar el orden de arranque de cada página, no una línea.
+- Quedaba Supabase, que se llevaba casi todo lo que faltaba en la Academia:
+  ver la sección que sigue.
+
+### Supabase va al final del `<body>`
+
+`js/vendor/supabase.js` (213 KB, ~55 KB comprimido) iba síncrono en el
+`<head>` de 69 páginas —toda la Academia, el login, Unirse—, y detrás de él
+entre 2 y 25 scripts más: su cliente, lo que lo usa y los módulos del tablero.
+Nada se pintaba hasta que llegaban y corrían todos. Ahora van **justo antes
+del primer script del `<body>`**, en el mismo orden que tenían.
+
+- **En el `<head>` se quedan solo los que cambian la pantalla al cargar**:
+  `adaptive-mode.js` (pone la clase del Modo Adaptado), `temas-plataforma.js`
+  y los tres del tablero que ponen colores y estilo de pieza. Sacarlos sería
+  pintar primero con los colores de otra persona. Ninguno depende de lo que se
+  movió. La guardia de sesión tampoco se movió: lee `localStorage`, no
+  necesita la librería.
+- **Todo lo que usa `sb` arranca cuando la página ya se leyó** (`async`, o
+  `DOMContentLoaded`); se revisaron uno por uno. Y lo que está en el `<body>`
+  lo encuentra igual, porque va antes que cualquier script del `<body>`.
+- **Supabase tiene que seguir corriendo PRIMERO entre los movidos.** La primera
+  versión movía solo Supabase y lo que lo usa, y dejaba el resto en el
+  `<head>`: el primer pintado mejoró, pero el cliente quedaba listo **hasta
+  medio segundo después** (`sesion.html`), porque ahora corría detrás de los
+  motores y el tablero. O sea, se veía antes pero los datos llegaban después.
+  Moviendo todo el bloque con su orden, las dos cosas mejoran.
+- **Los tres módulos del tablero que no pintan** (`board-themes`,
+  `chess-piece-svg`, `pieza-preferida`) los pone ahora `tablero-cabecera.py`
+  en su propio bloque `<!-- tablero-js -->` del `<body>`, en todas las páginas
+  con tablero. Si se movieran a mano, la próxima corrida del generador los
+  devolvía al `<head>`.
+- **Nunca dentro de un bloque generado**: un script insertado entre
+  `<!-- x: inicio -->` y `<!-- x: fin -->` lo borra el generador de ese bloque
+  la próxima vez que se corre, sin avisar. Pasó en la primera prueba de este
+  cambio: Supabase desapareció de las páginas con tablero.
+
+Se comprobó cargando las 84 páginas tocadas con una sesión de prueba, antes y
+después, y comparando los errores de JavaScript: los mismos (y con el cliente
+cargado antes que la librería, a propósito, la prueba sí salta). Primer
+pintado y cliente listo (FCP / `window.sb`), misma red que arriba:
+
+| Página | Primer pintado | Cliente listo | Fin de lectura |
+|---|---|---|---|
+| `sesion.html` | 1,95 → 0,77 s | 1,43 → 1,51 s | 2,16 → 2,08 s |
+| `clases.html` | 1,10 → 0,74 s | 1,02 → 1,00 s | 1,40 → 1,28 s |
+| `juegos.html` | 1,22 → 0,77 s | 1,11 → 1,16 s | 1,45 → 1,31 s |
+| `torneo.html` | 1,34 → 0,68 s | 1,21 → 1,33 s | 1,68 → 1,52 s |
+| `informes.html` | 1,30 → 0,78 s | 1,17 → 1,23 s | 1,44 → 1,36 s |
+| `entreno/aprender.html` | 1,13 → 0,68 s | 1,02 → 1,34 s | 1,62 → 1,67 s |
+| `racha-tactica.html` | 1,23 → 0,68 s | 1,11 → 1,52 s | 2,02 → 2,04 s |
+| `login.html` | 1,06 → 0,71 s | 1,01 → 0,99 s | 1,39 → 1,28 s |
+
+- **«Cliente listo» empeora en algunas, y no es lo que importa.** Antes la
+  librería corría antes de leer el `<body>`, pero nadie pedía datos con ella
+  hasta el script de la página, que está al final: ese arranca con el «fin de
+  lectura» (`DOMContentLoaded`), que quedó igual o antes (lo peor, +0,05 s).
+  Lo que se corrió es que ahora el navegador pinta antes de llegar ahí, y ese
+  pintado ocupa el procesador.
 
 ### El código de las páginas sale del HTML
 
@@ -568,7 +621,7 @@ volvían: `login.html` sin `next`.
 
 **Al agregar un script o una página, correr
 `node herramientas/verificar-carga-paginas.js`** (sin navegador): que ningún
-script de más de 150 KB vaya síncrono en el `<head>` (salvo Supabase), que
+script de más de 150 KB vaya síncrono en el `<head>` (tampoco Supabase), que
 ninguna página cargue dos veces el mismo script y que la hoja de fuentes no
 frene el pintado. `verificar-vendor.js` vigila además que nadie vuelva a pedir
 chess.js a un CDN.

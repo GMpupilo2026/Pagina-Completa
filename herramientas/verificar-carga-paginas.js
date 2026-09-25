@@ -13,8 +13,10 @@
  *    Ahí el navegador no puede pintar nada hasta bajarlo y ejecutarlo. Los
  *    bancos de preguntas y de ejercicios los usa el script del final de la
  *    página, así que van justo antes de él; lo que se usa solo a veces (pdf.js
- *    en la clase en vivo) se pide cuando se usa. La única excepción es la
- *    librería de Supabase: la usan los scripts de sesión del propio <head>.
+ *    en la clase en vivo) se pide cuando se usa. Tampoco la librería de
+ *    Supabase: va con su cliente y lo que depende de él justo antes del primer
+ *    script del <body>. La guardia de sesión del <head> no la necesita (lee
+ *    localStorage), y lo que sí la usa arranca cuando la página ya se leyó.
  * 2. Ninguna página carga dos veces el mismo script. No es solo peso: main.js
  *    cargado dos veces le pone dos manejadores a cada botón, y el menú del
  *    celular y el del modo oscuro se abren y se cierran en el mismo clic.
@@ -28,7 +30,6 @@ const path = require("path");
 
 const raiz = path.join(__dirname, "..");
 const LIMITE_KB = 150;
-const PERMITIDOS_EN_HEAD = new Set(["js/vendor/supabase.js"]);
 let fallos = 0;
 const mal = (m) => { console.log("  ✗ " + m); fallos += 1; };
 const bien = (m) => console.log("  ✓ " + m);
@@ -58,7 +59,7 @@ for (const archivo of paginas(raiz)) {
     const destino = path.relative(raiz, path.resolve(path.dirname(archivo), src.split("?")[0]));
     vistos.set(destino, (vistos.get(destino) || 0) + 1);
     const diferido = /\b(defer|async)\b/.test(attrs) || /type="module"/.test(attrs);
-    if (diferido || m.index > finHead || PERMITIDOS_EN_HEAD.has(destino)) continue;
+    if (diferido || m.index > finHead) continue;
     const f = path.join(raiz, destino);
     if (!fs.existsSync(f)) continue;
     const kb = Math.round(fs.statSync(f).size / 1024);
@@ -72,7 +73,7 @@ for (const archivo of paginas(raiz)) {
 
 console.log("=== Lo que frena el primer pintado (" + revisadas + " páginas) ===");
 if (pesados.length) mal("scripts de más de " + LIMITE_KB + " KB síncronos en el <head>:\n      " + pesados.join("\n      "));
-else bien("ningún script de más de " + LIMITE_KB + " KB se pide síncrono en el <head> (salvo Supabase)");
+else bien("ningún script de más de " + LIMITE_KB + " KB se pide síncrono en el <head>");
 if (dobles.length) mal("scripts cargados dos veces:\n      " + dobles.join("\n      "));
 else bien("ninguna página carga dos veces el mismo script");
 if (fuentesQueFrenan.length) mal("la hoja de Google Fonts frena el pintado en: " + fuentesQueFrenan.slice(0, 8).join(", ") + (fuentesQueFrenan.length > 8 ? "…" : ""));
