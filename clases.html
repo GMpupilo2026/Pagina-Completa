@@ -97,8 +97,10 @@
                 <div class="flex items-center gap-3">
                     <span id="role-badge" class="text-xs font-bold uppercase tracking-wide px-3 py-1.5 rounded-full"></span>
                     <span id="selector-clase-wrap" class="hidden items-center gap-2"></span>
-                    <!-- Solo para quien administra: mirar la plataforma como la ve
-                         cada rol, sin entrar a la cuenta de nadie (js/modo-vista.js). -->
+                    <!-- Para quien administra: mirar la plataforma como la ve
+                         cada rol. Para quien supervisa (y quien administra):
+                         mirar el panel de uno de sus profesores o coordinadores.
+                         Sin entrar a la cuenta de nadie (js/modo-vista.js). -->
                     <span id="modo-vista-wrap" hidden class="inline-flex items-center gap-2"></span>
                     <button id="change-pw-btn" type="button" aria-haspopup="dialog" class="text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors">Contraseña</button>
                     <button id="logout-btn" class="text-sm font-semibold text-brand-600 dark:text-brand-300 hover:text-accent-500 transition-colors">Cerrar sesión</button>
@@ -1841,7 +1843,12 @@
         // distintos que entrenaron" desde el navegador pediría bajarse
         // training_progress y cruzar el techo de PostgREST en silencio.
         async function cargarPanelProfe() {
-            const { data, error } = await sb.rpc("panel_profesor");
+            /* Mirando a otra persona («Ver como», js/modo-vista.js), los de
+               ella: panel_profesor_de() pregunta antes si quien llama la
+               supervisa. */
+            const { data, error } = profile._persona
+                ? await sb.rpc("panel_profesor_de", { p_profesor: profile._persona.id })
+                : await sb.rpc("panel_profesor");
             const fila = (data && data[0]) || null;
             if (error || !fila) return;   // deja los guiones puestos
 
@@ -1860,11 +1867,14 @@
             venc.className = "text-2xl font-bold " + (fila.tareas_vencidas > 0 ? "text-red-600 dark:text-red-400" : "text-brand-800 dark:text-white");
 
             const clases = fila.clases_30d || 0;
+            const lleva = profile._persona ? "Lleva" : "Llevas";
             document.getElementById("profe-clases").textContent = clases === 1
-                ? "Llevas 1 clase dada en los últimos 30 días."
-                : `Llevas ${clases} clases dadas en los últimos 30 días.`;
+                ? `${lleva} 1 clase dada en los últimos 30 días.`
+                : `${lleva} ${clases} clases dadas en los últimos 30 días.`;
 
-            primerPasoDelProfesor(fila);
+            // El primer paso le habla al profesor («asigna tu primera tarea»):
+            // a quien lo está revisando no le toca hacerlo.
+            if (!profile._persona) primerPasoDelProfesor(fila);
         }
 
         /* ---------- Por dónde empezar, del lado del que da clase ----------
@@ -2335,14 +2345,45 @@
                abajo `profile` es el del rol que se está mirando; el selector
                sale con la cuenta real. */
             profile = window.ModoVista ? ModoVista.perfilVisto(profileData) : profileData;
-            if (profileData.is_admin && window.ModoVista) {
+            /* Y quien supervisa (o administra) puede mirar el panel de UNO de
+               sus profesores o coordinadores, con sus números: «Ver como» una
+               persona. La lista la da la base (personas_para_ver_como); si la
+               persona guardada ya no está en ella —le quitaron esa
+               supervisión—, se vuelve a la vista propia en vez de pintar un
+               panel que la base se niega a llenar. */
+            if (window.ModoVista && (profileData.is_admin || profileData.es_supervisor)) {
                 const wrap = document.getElementById("modo-vista-wrap");
-                const lbl = document.createElement("label");
-                lbl.setAttribute("for", "modo-vista-panel");
-                lbl.className = "text-xs font-semibold text-brand-500 dark:text-brand-300";
-                lbl.textContent = "Ver como:";
-                wrap.append(lbl, ModoVista.selectorModos("modo-vista-panel"));
-                wrap.hidden = false;
+                if (profileData.is_admin) {
+                    const lbl = document.createElement("label");
+                    lbl.setAttribute("for", "modo-vista-panel");
+                    lbl.className = "text-xs font-semibold text-brand-500 dark:text-brand-300";
+                    lbl.textContent = "Ver como:";
+                    wrap.append(lbl, ModoVista.selectorModos("modo-vista-panel"));
+                }
+                const selPersona = await ModoVista.selectorPersonas(sb, profileData.id, "ver-como-persona");
+                /* clases.html?ver_como=<id>: así entra «Ver su panel» de
+                   supervision.html. Solo si está en la lista que dio la base. */
+                const pedida = new URLSearchParams(location.search).get("ver_como");
+                const deLista = pedida && selPersona && selPersona._personas.find((x) => x.id === pedida);
+                if (deLista) {
+                    ModoVista.fijarPersona(deLista, profileData.id);
+                    location.replace("clases.html");
+                    return;
+                }
+                const guardada = ModoVista.personaDe(profileData);
+                if (guardada && !(selPersona && selPersona._personas.some((x) => x.id === guardada.id))) {
+                    ModoVista.fijarPersona(null);
+                    location.reload();
+                    return;
+                }
+                if (selPersona) {
+                    const lblP = document.createElement("label");
+                    lblP.setAttribute("for", "ver-como-persona");
+                    lblP.className = "text-xs font-semibold text-brand-500 dark:text-brand-300";
+                    lblP.textContent = profileData.is_admin ? "Panel de:" : "Ver como:";
+                    wrap.append(lblP, selPersona);
+                }
+                wrap.hidden = !wrap.children.length;
             }
             // Novedades de la plataforma: solo para quien administra, y no
             // bloquea el resto del panel mientras se resuelve.
@@ -2368,7 +2409,12 @@
             document.getElementById("avatar").textContent = displayName.trim().charAt(0).toUpperCase();
             const badge = document.getElementById("role-badge");
             badge.textContent = profile.is_admin ? "👑 Administrador"
+                : profile._persona ? (profile.es_coordinador ? "👁 Coordinación" : "👁 Profesor")
                 : esSupervisorSolo() ? "🧭 Supervisor" : (isTeacher ? "Profesor" : "Alumno");
+            if (profile._persona) {
+                document.getElementById("panel-subtitulo").textContent =
+                    "Así ve " + (profile.full_name || "esta persona") + " su panel: sus tarjetas y los números de su semana.";
+            }
             badge.classList.add(isTeacher ? "bg-accent-500" : "bg-brand-600", isTeacher ? "text-brand-900" : "text-white");
 
             // Herramientas del equipo docente: no se le muestran al alumnado
@@ -2416,7 +2462,7 @@
                    base lo rechazaría igual, pero el fallo lo descubriría quien
                    entró. Quien administra o supervisa tiene todas. */
                 if (profile.es_coordinador && !profile.is_admin && !profile.es_supervisor && window.FuncionesCoordinacion) {
-                    await FuncionesCoordinacion.cargar(sb);
+                    await FuncionesCoordinacion.cargar(sb, profile._persona ? profile._persona.id : null);
                     const herr = TILE_GROUPS.find((g) => g.title === "Herramientas");
                     herr.tiles = herr.tiles.filter((t) => FuncionesCoordinacion.permiteDestino(t.href));
                 }
@@ -2479,6 +2525,24 @@
             textosDelEquipoDocente();
             apagarEnMantenimiento();
             renderTiles();
+
+            /* Mirando el panel de otra persona: sus tarjetas y «Tu semana» con
+               SUS números, y nada de la clase en vivo ni del registro de
+               clases — abrir una clase desde acá la abriría a nombre de quien
+               mira, que no da clase. */
+            if (profile._persona) {
+                document.querySelector("#progreso-profe h2").textContent = "Su semana";
+                document.getElementById("registro-clases").hidden = true;
+                document.getElementById("progreso-profe").hidden = false;
+                await cargarPanelProfe();
+                document.getElementById("loading").classList.add("hidden");
+                document.getElementById("app").classList.remove("hidden");
+                if (!document.activeElement || document.activeElement === document.body) {
+                    document.getElementById("panel-titulo").focus({ preventScroll: true });
+                }
+                abrirBusquedaPedida();
+                return;
+            }
             // El equipo docente no pasa por mis_clases() —esos son SUS
             // profesores, no sus alumnos—, así que su sala se pide aparte.
             if (esEquipoDocente()) refrescarVideollamada();

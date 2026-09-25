@@ -762,6 +762,7 @@ funcion  acceso_set_exigido(p_exigido boolean)  definer  anon=false  auth=true
 funcion  acceso_vigente()  definer  anon=false  auth=true
 funcion  aceptar_desafio(p_desafio uuid, p_fen text, p_cartas jsonb, p_duelo jsonb, p_variant jsonb)  definer  anon=false  auth=true
 funcion  actividad_profesor(p_profesor uuid, p_periodo date)  definer  anon=false  auth=true
+funcion  alumnos_de_para_ver_como(p_profesor uuid)  definer  anon=false  auth=true
 funcion  alumnos_del_profesor(p_profesor uuid)  invoker  anon=false  auth=true
 funcion  alumnos_del_profesor_con_nombre(p_profesor uuid)  invoker  anon=true  auth=true
 funcion  avisar_clase_abierta()  definer  anon=false  auth=false
@@ -824,6 +825,7 @@ funcion  formulario_compartido_conmigo(p_formulario uuid)  definer  anon=false  
 funcion  formulario_publico(p_slug text)  definer  anon=true  auth=true
 funcion  formularios_academia_propia()  definer  anon=false  auth=false
 funcion  funciones_coordinacion()  invoker  anon=true  auth=true
+funcion  funciones_coordinador_de(p_persona uuid)  definer  anon=false  auth=true
 funcion  generar_cobros(p_hasta date)  definer  anon=false  auth=true
 funcion  gente_de_mi_coordinacion()  definer  anon=false  auth=true
 funcion  grupo_para_academia(p_grupo text)  definer  anon=false  auth=true
@@ -872,10 +874,12 @@ funcion  my_profile()  definer  anon=false  auth=true
 funcion  nombres_de_jugadores(p_ids uuid[])  definer  anon=false  auth=true
 funcion  ocurrencias_horario(p_profesor uuid, p_desde date, p_hasta date)  invoker  anon=false  auth=false
 funcion  panel_profesor()  invoker  anon=false  auth=true
+funcion  panel_profesor_de(p_profesor uuid)  definer  anon=false  auth=true
 funcion  paquete_borrar(p_id uuid)  definer  anon=false  auth=true
 funcion  paquete_guardar(p_id uuid, p_nombre text, p_titular uuid, p_academia uuid, p_cupos integer, p_desde date, p_hasta date, p_precio numeric, p_moneda text, p_notas text)  definer  anon=false  auth=true
 funcion  paquete_set_alumnos(p_id uuid, p_alumnos uuid[])  definer  anon=false  auth=true
 funcion  paquetes_con_uso()  invoker  anon=false  auth=true
+funcion  personas_para_ver_como()  definer  anon=false  auth=true
 funcion  plan_compartido_conmigo(p_plan uuid)  definer  anon=true  auth=true
 funcion  planes_compartidos_conmigo()  definer  anon=false  auth=true
 funcion  profesores_del_coordinador(p_coordinador uuid)  definer  anon=false  auth=true

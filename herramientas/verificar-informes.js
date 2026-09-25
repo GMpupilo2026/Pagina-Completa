@@ -169,7 +169,15 @@ window.__funcion = [];
   window.sb = {
     auth: { getSession: () => Promise.resolve({ data: { session: { user: { id: ${JSON.stringify(usuarioId)} }, access_token: "t" } } }) },
     from: (t) => constructor(DATOS.tablas[t] !== undefined ? DATOS.tablas[t] : [], "from:" + t),
-    rpc: (n) => constructor(DATOS.rpc[n] !== undefined ? DATOS.rpc[n] : [], "rpc:" + n),
+    /* Con qué argumentos se llamó cada función: «Ver como» una persona pide
+       los alumnos de ESA persona, y un doble que no lo anotara daría por
+       buena una página que pide los de otra. */
+    rpc: (n, args) => {
+      (window.__rpcArgs = window.__rpcArgs || []).push([n, args || null]);
+      const porArgs = DATOS.rpcPorArgs && DATOS.rpcPorArgs[n];
+      if (porArgs) return constructor(porArgs[JSON.stringify(args || null)] || [], "rpc:" + n);
+      return constructor(DATOS.rpc[n] !== undefined ? DATOS.rpc[n] : [], "rpc:" + n);
+    },
   };
 })();
 `;
@@ -245,8 +253,10 @@ function igual(nombre, hallado, esperado) {
   }
 }
 
-async function abrir(browser, datos, usuarioId, ruta) {
+async function abrir(browser, datos, usuarioId, ruta, almacen) {
   const page = await browser.newPage();
+  // Lo que la prueba quiere que ya esté guardado en el aparato (localStorage).
+  if (almacen) await page.addInitScript((a) => { Object.entries(a).forEach(([k, v]) => localStorage.setItem(k, v)); }, almacen);
   const errores = [];
   page.on("pageerror", (e) => errores.push(String(e)));
   page.on("console", (m) => { if (m.type() === "error") errores.push("console: " + m.text()); });
@@ -1145,6 +1155,42 @@ async function pruebaClaseGrande(browser) {
    Los flujos de contenido de js/reporte-pdf.js van sin comprimir, así que se
    pueden leer sin ninguna librería: cada página dice «/Marca Do» si lleva la
    marca, y el texto va entre paréntesis en WinAnsi (o sea, en latin1). */
+/* «Ver como» una persona (js/modo-vista.js): la supervisora mirando a Karina
+   ve en Informes los alumnos de KARINA que ella supervisa —los que devuelve
+   alumnos_de_para_ver_como() con el id de Karina—, no todos los suyos. */
+async function pruebaVerComoPersona(browser) {
+  console.log("\n=== Informes mirando como una persona ===");
+  const datos = {
+    rpc: { informes_resumen_alumnos: [ANA, BRUNO, CARLA], informes_totales: { clases_cerradas: 0, preguntas: 0, partidas: 0 },
+           mis_supervisados: ["a-1", "a-2", "a-3"] },
+    rpcPorArgs: { alumnos_de_para_ver_como: { [JSON.stringify({ p_profesor: "u-karina" })]: ["a-1", "a-3"] } },
+    tablas: { profiles: [{ id: "u-sup", role: "profesor", is_admin: false, es_supervisor: true, full_name: "Marta", email: "m@x.cr" }],
+              training_plans: [], diagnosticos_publicos: [], arbitrajes_publicos: [] },
+  };
+  const almacen = { ver_como_persona_v1: JSON.stringify({ id: "u-karina", nombre: "Karina Rojas", es_coordinador: false, de: "u-sup" }) };
+  const r = await abrir(browser, datos, "u-sup", "/informes.html", almacen);
+  const v = await r.page.evaluate(() => ({
+    args: (window.__rpcArgs || []).filter(([n]) => n === "alumnos_de_para_ver_como").map(([, a]) => JSON.stringify(a)),
+    alumnos: [...document.querySelectorAll("#student-filter option")].map((o) => o.value).filter(Boolean),
+    subtitulo: document.getElementById("subtitle").textContent,
+  }));
+  igual("pide los alumnos de Karina, con su id", v.args.join(" "), JSON.stringify({ p_profesor: "u-karina" }));
+  igual("en la lista quedan solo los suyos (no Bruno)", v.alumnos.join(","), "a-1,a-3");
+  igual("el subtítulo dice de quién son", /Karina Rojas/.test(v.subtitulo), true);
+  igual("sin errores", r.errores.join(" | "), "");
+  await r.page.close();
+  // La misma persona guardada por OTRA cuenta no le cambia nada a esta.
+  const otra = { ver_como_persona_v1: JSON.stringify({ id: "u-karina", nombre: "Karina Rojas", es_coordinador: false, de: "u-otra" }) };
+  const r2 = await abrir(browser, datos, "u-sup", "/informes.html", otra);
+  const v2 = await r2.page.evaluate(() => ({
+    args: (window.__rpcArgs || []).filter(([n]) => n === "alumnos_de_para_ver_como").length,
+    alumnos: [...document.querySelectorAll("#student-filter option")].map((o) => o.value).filter(Boolean),
+  }));
+  igual("guardada por otra cuenta: no pide los de Karina", v2.args, 0);
+  igual("guardada por otra cuenta: sus supervisados de siempre", v2.alumnos.join(","), "a-1,a-2,a-3");
+  await r2.page.close();
+}
+
 /* informes.html?alumno=<id>: así llega el buscador del panel. Abre el informe
    de ese alumno si está en la lista de quien mira; si no, el resumen. */
 async function pruebaAlumnoPorEnlace(browser) {
@@ -1271,6 +1317,7 @@ async function pruebaContrasenaProfesor(browser) {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
     pruebaVeredicto();
+    await pruebaVerComoPersona(browser);
     await pruebaProfesor(browser);
     await pruebaClaseGrande(browser);
     await pruebaAlumno(browser);

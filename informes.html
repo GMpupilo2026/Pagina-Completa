@@ -784,7 +784,17 @@
                con sus estudiantes a cargo y nada más, que es lo que viene a
                mirar. La lista la da mis_supervisados(), no la página. */
             let alumnosDelInforme = alumnos, inactivosDelInforme = inactivosRes?.data || [];
-            if (profile.es_supervisor && !profile.is_admin) {
+            /* Mirando como uno de sus profesores («Ver como», js/modo-vista.js):
+               los alumnos de ESE profesor que quien mira puede leer. La lista
+               la corta la base (alumnos_de_para_ver_como), que antes pregunta
+               si lo supervisa. */
+            if (profile._persona) {
+                const { data: ids, error: errP } = await sb.rpc("alumnos_de_para_ver_como", { p_profesor: profile._persona.id });
+                if (errP) throw errP;
+                const suyos = new Set((ids || []).map((x) => (typeof x === "string" ? x : x.alumnos_de_para_ver_como)));
+                alumnosDelInforme = alumnos.filter((a) => suyos.has(a.id));
+                inactivosDelInforme = inactivosDelInforme.filter((a) => suyos.has(a.id));
+            } else if (profile.es_supervisor && !profile.is_admin) {
                 const { data: ids, error: errSup } = await sb.rpc("mis_supervisados");
                 if (errSup) throw errSup;
                 const aCargo = new Set((ids || []).map((x) => (typeof x === "string" ? x : x.mis_supervisados)));
@@ -1397,7 +1407,7 @@
             document.getElementById("notas-report").classList.remove("hidden");
             /* Quien supervisa no escribe en la bitácora: lee la de todos los
                profesores del alumno, con el nombre de quien escribió cada nota. */
-            if (profile.es_supervisor && !profile.is_admin) {
+            if ((profile.es_supervisor && !profile.is_admin) || profile._persona) {
                 document.getElementById("notas-sub").textContent =
                     "Lo que anotaron sus profesores, con el nombre de quien escribió cada nota. Es de solo lectura: escribir y compartir sigue siendo de cada profesor.";
                 NotasAlumno.montarLectura(document.getElementById("notas-body"), {
@@ -3200,7 +3210,9 @@ function areasFlojasArbitraje(fila) {
             // no le devuelve el resto (RLS sobre profiles y sobre cada tabla de
             // actividad). Se dice en pantalla para que no parezca que faltan datos.
             document.getElementById("subtitle").textContent = isTeacher
-                ? (profile.is_admin
+                ? (profile._persona
+                    ? "Los alumnos de " + (profile.full_name || "esta persona") + " que tienes a tu cargo: lo que ve en su informe."
+                    : profile.is_admin
                     ? "Panorama general de toda la plataforma: asistencia, participación y precisión, de todos los alumnos."
                     : profile.es_supervisor
                     ? "Tus estudiantes a cargo: qué están haciendo, cuánto tiempo le dedican y cómo les va, tema por tema."
@@ -3226,7 +3238,9 @@ function areasFlojasArbitraje(fila) {
                 if (!profile.is_admin && !(teacherData.students || []).length) {
                     const aviso = document.createElement("p");
                     aviso.className = "max-w-3xl mb-6 rounded-xl bg-accent-50 dark:bg-brand-800 border-l-4 border-accent-500 px-4 py-3 text-sm text-brand-700 dark:text-brand-200";
-                    aviso.textContent = profile.es_supervisor
+                    aviso.textContent = profile._persona
+                        ? "No tiene alumnos a tu cargo, así que no hay nada que mostrar."
+                        : profile.es_supervisor
                         ? "Todavía no tienes estudiantes a tu cargo, así que no hay nada que mostrar. Quien administra te los asigna desde el panel de Administración › Supervisores."
                         : "Todavía no tienes alumnos asignados, así que no hay nada que mostrar. Pídele a la persona administradora que te asigne alumnos desde el panel de Administración, o invita a los tuyos desde la Academia.";
                     const cont = document.getElementById("teacher-filters");
