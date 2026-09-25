@@ -8,8 +8,9 @@
  * informes.html) o, peor, pasa sin comprobar nada.
  *
  * leer("informes.html") devuelve el HTML seguido del código mudado: los
- * archivos que la página carga con <script src> y que empiezan diciendo que
- * son su código (la cabecera que escribe herramientas/mudar-script.py).
+ * archivos que la página carga con <script src> y cuya primera línea dice que
+ * son su código (la cabecera que escribe herramientas/mudar-script.py, o la
+ * de js/sesion.js, que se mudó antes a mano).
  */
 const fs = require("fs");
 const path = require("path");
@@ -25,8 +26,11 @@ function leer(pagina) {
     const js = path.resolve(path.dirname(ruta), m[1].split("?")[0]);
     if (!fs.existsSync(js)) continue;
     const texto = fs.readFileSync(js, "utf8");
-    const cabecera = texto.slice(0, 300);
-    if (cabecera.includes("El código de " + pagina) || cabecera.includes("(" + pagina + ")")) partes.push(texto);
+    // Solo la PRIMERA línea, y diciendo que es su código: un módulo compartido
+    // que en su cabecera nombra las páginas que lo usan (js/precios-acceso.js
+    // nombra precios.html) no es el código de ninguna.
+    const primera = texto.slice(0, texto.indexOf("\n"));
+    if (primera === "/* El código de " + pagina + "." || primera.includes("(" + pagina + "): todo su código")) partes.push(texto);
   }
   return partes.join("\n");
 }

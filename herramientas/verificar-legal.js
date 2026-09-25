@@ -89,7 +89,7 @@ function enlacesEnTodoElSitio() {
         continue;
       }
       if (!r.endsWith(".html")) continue;
-      const html = leer(r);
+      const html = require("./lib/codigo-de-pagina").leer(r);
       if (/@ajedrezintegral\.com/i.test(html)) correoAjeno.push(r);
       for (const m of html.matchAll(/href="([^"]*(?:privacidad|terminos)\.html)(?:#([^"]*))?"/g)) {
         cuantos += 1;

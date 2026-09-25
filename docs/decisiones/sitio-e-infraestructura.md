@@ -594,6 +594,19 @@ el compilador ya mira los `.js` de hasta 350 KB.
   con `readFileSync` del `.html`: al mudar `informes.html`,
   `verificar-admin.js` dejó de encontrar lo que buscaba y el CI salió en rojo.
   Uno escrito de otra forma habría pasado sin comprobar nada.
+  Con las trece de gestión aparecieron los que no se encuentran buscando el
+  nombre de la página: los que **barren todos los `.html`** buscando código
+  (`alert`, «quien usa `Avisos` carga el módulo», las rutas a `js/vendor/`,
+  los enlaces legales, los PDF de administración) o la tienen en una lista de
+  excepciones (`EXCEPTUADOS` de `verificar-tablero-preferido.js`). Esos no
+  fallan: dejan de mirar la página. Se pasaron a `codigo-de-pagina.js`, y cada
+  uno se rompió a propósito en un `js/<pagina>.js` para ver que salta. Los que
+  barren el `.html` buscando **marcado** (la pantalla de carga, el «?», las
+  migas, el tema) se quedan como están.
+- `codigo-de-pagina.js` reconoce el código de una página por la **primera
+  línea** del archivo (`/* El código de <pagina>.`): mirando toda la cabecera
+  se llevaba `js/precios-acceso.js` como código de `precios.html`, porque la
+  nombra, y `verificar-accesos.js` le encontraba los «₡» del módulo.
 - `sesion.html` fue la primera: de 330 KB a 91 KB de HTML, y `js/sesion.js`.
   `informes.html`, de 227 KB a 42 KB, y `js/informes.js`. `clases.html`, de
   178 KB a 38 KB, y `js/clases.js`. `admin.html`, de 134 KB a 35 KB, y

@@ -40,13 +40,13 @@ function pruebaListas() {
   const fn = leer("supabase", "functions", "mejorar-informe", "index.ts");
   const bloque = (fn.match(/const PRECIOS[\s\S]*?\n};/) || [""])[0];
   const conPrecio = [...bloque.matchAll(/"([a-z0-9-]+)":\s*\[/g)].map((m) => m[1]);
-  const pagina = leer("academias.html");
+  const pagina = require("./lib/codigo-de-pagina").leer("academias.html");
   const enPantalla = [...(pagina.match(/const MODELOS_IA = \[[\s\S]*?\];/) || [""])[0].matchAll(/id: "([^"]*)"/g)].map((m) => m[1]).filter(Boolean);
   igual("la pantalla ofrece exactamente los que acepta la base", enPantalla, enBase);
   igual("todos tienen su precio en la función", enBase.filter((m) => !conPrecio.includes(m)), []);
   igual("la función no llama a ningún modelo que la base no acepte (salvo el respaldo de Opus)",
     conPrecio.filter((m) => !enBase.includes(m) && m !== "claude-opus-4-8"), []);
-  const alProfe = ["asistencia.html", "informe-mensual.html", "js/mejorar-informe.js"].map((f) => [f, leer(f)]);
+  const alProfe = ["asistencia.html", "informe-mensual.html", "js/mejorar-informe.js"].map((f) => [f, f.endsWith(".html") ? require("./lib/codigo-de-pagina").leer(f) : leer(f)]);
   igual("ninguna pantalla del profesor nombra un modelo ni un tope",
     alProfe.filter(([, t]) => /claude-|tope_mensual|ia_resumen_mes|academia_ia/.test(t)).map(([f]) => f), []);
   igual("la función nunca guarda el texto (solo anota el uso)", /from\("(class_sessions|informes_profesor)"\)/.test(fn), false);

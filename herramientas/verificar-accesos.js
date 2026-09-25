@@ -77,7 +77,7 @@ function pruebaModulo() {
 
   // Ningún precio escrito a mano en las páginas nuevas.
   for (const f of ["precios.html", "accesos.html"]) {
-    const s = fs.readFileSync(path.join(RAIZ, f), "utf8");
+    const s = require("./lib/codigo-de-pagina").leer(f);
     cierto(`${f} no tiene ni un «₡» escrito: todos salen del módulo`, !s.includes("₡"));
   }
   const ep = fs.readFileSync(path.join(RAIZ, "elegir-plan.html"), "utf8");
