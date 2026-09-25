@@ -597,7 +597,13 @@ el compilador ya mira los `.js` de hasta 350 KB.
 - `sesion.html` fue la primera: de 330 KB a 91 KB de HTML, y `js/sesion.js`.
   `informes.html`, de 227 KB a 42 KB, y `js/informes.js`. `clases.html`, de
   178 KB a 38 KB, y `js/clases.js`. `admin.html`, de 134 KB a 35 KB, y
-  `js/admin.js`.
+  `js/admin.js`. Después, en grupo, las trece de gestión (cobros, formularios,
+  configuración, academias, jugadores, coordinación, exámenes, asistencia,
+  accesos, tareas, reportes, planes e inscripción), cada una a su
+  `js/<pagina>.js`. `inscripcion.html` tiene su propio CSS
+  (`tailwind-inscripcion.css`), que `css-construir.js` arma mirando solo esa
+  página: su código mudado tuvo que entrar a esa lista (`INSCRIPCION`), o las
+  clases que pone el script se habrían quedado sin estilo sin que nada avisara.
 - `verificar-carga-paginas.js` lleva la lista `PENDIENTES` de las que todavía
   traen un bloque de más de 20 KB (34 al empezar). **La lista solo se achica**:
   una página nueva con un bloque grande falla, y una que ya se mudó y sigue en

@@ -1,0 +1,704 @@
+/* El código de admin-jugador.html.
+
+   Vivía escrito dentro de la página, en un <script> de 42 KB. Se mudó acá
+   tal cual, sin tocar una línea (herramientas/mudar-script.py): así el
+   navegador lo guarda en caché aparte, y es un paso hacia sacar
+   'unsafe-inline' de la CSP. Es un script clásico cargado en el mismo lugar
+   donde estaba el bloque: corre en el mismo orden y sus let/const de arriba
+   siguen siendo globales. Ver «El código de las páginas sale del HTML» en
+   docs/decisiones/sitio-e-infraestructura.md. */
+
+        let session = null;
+        const FUNCTION_URL = `${window.SUPABASE_URL}/functions/v1/chess-results-proxy`;
+        const fichasCache = {};
+        let ultimaBusqueda = { grupos: [], sinFide: [], apellido: "" };
+
+        function claveTorneo(tnr, snr) { return tnr + "-" + snr; }
+        function escapeHtml(s) {
+            return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+        }
+
+        async function callChessResults(action, payload) {
+            const res = await fetch(FUNCTION_URL, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${session.access_token}`,
+                    "apikey": window.SUPABASE_ANON_KEY,
+                },
+                body: JSON.stringify({ action, ...payload }),
+            });
+            const result = await res.json().catch(() => ({}));
+            if (!res.ok || result.error) throw new Error(result.error || "Error desconocido");
+            return result;
+        }
+
+        // ---------------------------------------------------------------
+        // Agrupar por Código FIDE (lo único estable entre torneos). Las
+        // filas con FIDE-ID "0" se listan aparte, SIN mezclarlas con ningún
+        // grupo, porque un nombre igual no siempre es la misma persona.
+        // ---------------------------------------------------------------
+        function agruparPorJugador(filas) {
+            const porFide = new Map();
+            const sinFide = [];
+            filas.forEach((f) => {
+                if (f.fideId && f.fideId !== "0") {
+                    if (!porFide.has(f.fideId)) porFide.set(f.fideId, { fideId: f.fideId, club: f.club, fed: f.fed, filas: [] });
+                    porFide.get(f.fideId).filas.push(f);
+                } else {
+                    sinFide.push(f);
+                }
+            });
+            const grupos = [...porFide.values()];
+            grupos.forEach((g) => g.filas.sort((a, b) => (b.fechaFinal || "").localeCompare(a.fechaFinal || "")));
+            grupos.sort((a, b) => b.filas.length - a.filas.length);
+            sinFide.sort((a, b) => (b.fechaFinal || "").localeCompare(a.fechaFinal || ""));
+            return { grupos, sinFide };
+        }
+
+        // ---------------------------------------------------------------
+        // Carga masiva de fichas (torneo-jugador) con concurrencia limitada,
+        // para no saturar chess-results.com ni la función.
+        // ---------------------------------------------------------------
+        async function cargarEnParalelo(items, worker, concurrencia, onProgreso) {
+            let indice = 0;
+            let completados = 0;
+            async function siguiente() {
+                while (indice < items.length) {
+                    const i = indice++;
+                    await worker(items[i]);
+                    completados++;
+                    if (onProgreso) onProgreso(completados, items.length);
+                }
+            }
+            await Promise.all(Array.from({ length: Math.min(concurrencia, items.length) }, siguiente));
+        }
+
+        function grupoEstaCargado(grupo) {
+            return grupo.filas.every((f) => !f.tnr || !f.snr || fichasCache[claveTorneo(f.tnr, f.snr)]);
+        }
+
+        function textoBadgeElo(ficha) {
+            if (!ficha) return "";
+            const nac = !!ficha.tieneEloNacional;
+            const inter = !!ficha.tieneEloInternacional;
+            if (nac && inter) return "🏅 Elo nacional + internacional";
+            if (nac) return "🏅 Elo nacional";
+            if (inter) return "🏅 Elo internacional";
+            return "— Sin elo";
+        }
+
+        function actualizarBadgeElo(wrap, ficha) {
+            const badge = wrap.querySelector(".elo-badge");
+            if (badge) badge.textContent = ficha ? " · " + textoBadgeElo(ficha) : "";
+        }
+
+        function torneoCoincideFiltroElo(ficha, filtro) {
+            if (filtro === "todos") return true;
+            if (!ficha) return false;
+            if (filtro === "sin") return !ficha.tieneEloNacional && !ficha.tieneEloInternacional;
+            if (filtro === "nacional") return !!ficha.tieneEloNacional;
+            if (filtro === "internacional") return !!ficha.tieneEloInternacional;
+            return true;
+        }
+
+        // ---------------------------------------------------------------
+        // Análisis de rendimiento general, filtrable por período.
+        // ---------------------------------------------------------------
+        const MESES_ES = ["", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+
+        function anioMesDeFecha(fechaFinal) {
+            if (!fechaFinal) return null;
+            const partes = fechaFinal.split("/");
+            if (partes.length < 2) return null;
+            return { anio: partes[0], mes: partes[1] };
+        }
+
+        function aniosYMesesDisponibles(grupo) {
+            const porAnio = new Map();
+            grupo.filas.forEach((f) => {
+                const am = anioMesDeFecha(f.fechaFinal);
+                if (!am) return;
+                if (!porAnio.has(am.anio)) porAnio.set(am.anio, new Set());
+                porAnio.get(am.anio).add(am.mes);
+            });
+            return porAnio;
+        }
+
+        function cumplePeriodo(fechaFinal, periodo, anio, mes) {
+            if (periodo === "todo") return true;
+            const am = anioMesDeFecha(fechaFinal);
+            if (!am) return false;
+            if (periodo === "anio") return am.anio === anio;
+            if (periodo === "mes") return am.anio === anio && am.mes === mes;
+            return true;
+        }
+
+        // "nacional" y "fide" aíslan cada sistema de calificación (no son
+        // comparables entre sí); "ambos" los junta. Los torneos sin ningún
+        // cálculo de elo quedan afuera a propósito: el objetivo es medir
+        // rendimiento calificado, no cualquier resultado.
+        function coincideTipoElo(ficha, tipoElo) {
+            if (!ficha) return false;
+            if (tipoElo === "nacional") return !!ficha.tieneEloNacional;
+            if (tipoElo === "fide") return !!ficha.tieneEloInternacional;
+            return !!ficha.tieneEloNacional || !!ficha.tieneEloInternacional;
+        }
+
+        function fechaADias(fechaFinal) {
+            const partes = (fechaFinal || "").split("/").map(Number);
+            if (partes.length < 3 || partes.some((p) => isNaN(p))) return null;
+            return Date.UTC(partes[0], partes[1] - 1, partes[2]) / 86400000;
+        }
+
+        // Serie cronológica de torneos ya cargados que además tienen el tipo
+        // de elo pedido y una Performance numérica real — la base de todo el
+        // análisis de rendimiento.
+        function serieDeRendimiento(grupo, periodo, anio, mes, tipoElo) {
+            const enPeriodo = grupo.filas.filter((f) => cumplePeriodo(f.fechaFinal, periodo, anio, mes));
+            const serie = enPeriodo
+                .map((f) => {
+                    const ficha = f.tnr && f.snr ? fichasCache[claveTorneo(f.tnr, f.snr)] : null;
+                    const perf = ficha && ficha.resumen ? parseFloat(ficha.resumen["Performance"]) : NaN;
+                    return { fila: f, ficha, perf };
+                })
+                .filter(({ ficha, perf }) => !isNaN(perf) && coincideTipoElo(ficha, tipoElo))
+                .map(({ fila, perf }) => ({ fecha: fila.fechaFinal, dias: fechaADias(fila.fechaFinal), performance: perf }))
+                .filter((s) => s.dias != null)
+                .sort((a, b) => a.dias - b.dias);
+            return { serie, totalEnPeriodo: enPeriodo.length };
+        }
+
+        function calcularStatsBasicas(serie) {
+            if (!serie.length) return null;
+            let mejor = serie[0], peor = serie[0], suma = 0;
+            serie.forEach((s) => {
+                suma += s.performance;
+                if (s.performance > mejor.performance) mejor = s;
+                if (s.performance < peor.performance) peor = s;
+            });
+            return { total: serie.length, promedio: suma / serie.length, mejor, peor };
+        }
+
+        // Media móvil de "ventana" torneos seguidos, para no confundir un
+        // resultado suelto y aislado con un pico o valle real de rendimiento.
+        function calcularPicos(serie, ventana) {
+            if (serie.length < 2) return null;
+            const w = Math.min(ventana, serie.length);
+            let alto = null, bajo = null;
+            for (let i = 0; i <= serie.length - w; i++) {
+                const trozo = serie.slice(i, i + w);
+                const promedio = trozo.reduce((a, s) => a + s.performance, 0) / w;
+                const info = { promedio, desde: trozo[0].fecha, hasta: trozo[w - 1].fecha };
+                if (!alto || promedio > alto.promedio) alto = info;
+                if (!bajo || promedio < bajo.promedio) bajo = info;
+            }
+            return { alto, bajo, ventana: w };
+        }
+
+        // Regresión lineal simple (performance en función de los días) sobre
+        // los torneos más recientes, para estimar la tendencia actual.
+        function calcularTendencia(serie) {
+            if (serie.length < 3) return null;
+            const recientes = serie.slice(-Math.min(12, serie.length));
+            const dias0 = recientes[0].dias;
+            const xs = recientes.map((s) => s.dias - dias0);
+            const ys = recientes.map((s) => s.performance);
+            const n = xs.length;
+            const sumX = xs.reduce((a, b) => a + b, 0);
+            const sumY = ys.reduce((a, b) => a + b, 0);
+            const sumXY = xs.reduce((a, x, i) => a + x * ys[i], 0);
+            const sumXX = xs.reduce((a, x) => a + x * x, 0);
+            const denom = n * sumXX - sumX * sumX;
+            const pendientePorDia = denom === 0 ? 0 : (n * sumXY - sumX * sumY) / denom;
+            return { pendientePorMes: pendientePorDia * 30, ultimoValor: ys[n - 1] };
+        }
+
+        // Torneos jugados en los últimos 90 días, como medida simple de la
+        // carga de competencia actual.
+        function calcularCargaActual(serie) {
+            const hoyDias = Date.now() / 86400000;
+            const ultimos90 = serie.filter((s) => s.dias >= hoyDias - 90);
+            return { torneosUltimos3Meses: ultimos90.length, torneosPorMes: ultimos90.length / 3 };
+        }
+
+        function proyectarSeisMeses(tendencia, carga) {
+            if (!tendencia) return null;
+            return {
+                puntos: [1, 3, 6].map((meses) => ({ meses, performance: Math.round(tendencia.ultimoValor + tendencia.pendientePorMes * meses) })),
+                torneosEstimados: Math.round(carga.torneosPorMes * 6),
+                pendientePorMes: tendencia.pendientePorMes,
+            };
+        }
+
+        // Heurística simple para orientar "¿juego el próximo torneo o
+        // descanso?": cruza la tendencia reciente de rendimiento con la carga
+        // de torneos de los últimos 3 meses. Es una estimación estadística a
+        // partir del historial de torneos, no un diagnóstico — la decisión
+        // final es del jugador y del profesor.
+        function generarRecomendacion(tendencia, carga, stats) {
+            if (!tendencia || !stats || stats.total < 4) {
+                return { tipo: "neutral", texto: "Todavía no hay suficientes torneos con ese tipo de elo (se necesitan al menos 4) para una recomendación confiable." };
+            }
+            const bajando = tendencia.pendientePorMes <= -15;
+            const cargaAlta = carga.torneosPorMes >= 1.5;
+            const cargaBaja = carga.torneosPorMes < 0.5;
+
+            if (bajando && cargaAlta) {
+                return { tipo: "descansar", texto: `El rendimiento viene bajando (≈ ${Math.round(tendencia.pendientePorMes)} pts/mes) con una carga alta de competencia (${carga.torneosUltimos3Meses} torneo(s) en los últimos 3 meses). Mejor descansar antes de anotarse al próximo torneo.` };
+            }
+            if (bajando && cargaBaja) {
+                return { tipo: "precaucion", texto: `El rendimiento venía bajando, pero hace tiempo no compite (${carga.torneosUltimos3Meses} torneo(s) en los últimos 3 meses), así que puede estar recuperado. Se puede jugar, pero conviene evaluar cómo se siente antes de confirmar.` };
+            }
+            if (bajando) {
+                return { tipo: "precaucion", texto: `El rendimiento viene bajando levemente (≈ ${Math.round(tendencia.pendientePorMes)} pts/mes). La carga de competencia no es excesiva, pero conviene estar atento antes de sumar otro torneo.` };
+            }
+            return { tipo: "jugar", texto: `El rendimiento se mantiene estable o en alza (≈ ${tendencia.pendientePorMes >= 0 ? "+" : ""}${Math.round(tendencia.pendientePorMes)} pts/mes) y la carga de competencia es razonable (${carga.torneosUltimos3Meses} torneo(s) en los últimos 3 meses). Recomendado jugar el próximo torneo.` };
+        }
+
+        function renderAnalisisCompleto(datos) {
+            const { totalEnPeriodo, stats, picos, tendencia, carga, proyeccion, recomendacion } = datos;
+            const fmt1 = (n) => (n == null ? "-" : Math.round(n * 10) / 10);
+            const fmt0 = (n) => (n == null ? "-" : Math.round(n));
+
+            if (!stats) {
+                return `<p class="text-sm text-brand-450 dark:text-brand-350">No hay torneos con Performance y con el tipo de elo elegido en ese período.</p>`;
+            }
+
+            const notaCobertura = stats.total < totalEnPeriodo
+                ? `<p class="text-xs text-brand-450 dark:text-brand-350 mt-2">Se usaron ${stats.total} de ${totalEnPeriodo} torneo(s) del período: el resto no tiene el tipo de elo elegido, no se cargó su ficha o no trae Performance.</p>`
+                : "";
+
+            const basicoHtml = `
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div><p class="text-xs text-brand-450 dark:text-brand-350">Torneos</p><p class="text-xl font-bold text-brand-800 dark:text-white">${stats.total}</p></div>
+                    <div><p class="text-xs text-brand-450 dark:text-brand-350">Performance promedio</p><p class="text-xl font-bold text-brand-800 dark:text-white">${fmt1(stats.promedio)}</p></div>
+                    <div><p class="text-xs text-brand-450 dark:text-brand-350">Mejor performance</p><p class="text-xl font-bold text-green-600 dark:text-green-400">${fmt0(stats.mejor.performance)}</p><p class="text-xs text-brand-450 dark:text-brand-350">${escapeHtml(stats.mejor.fecha)}</p></div>
+                    <div><p class="text-xs text-brand-450 dark:text-brand-350">Peor performance</p><p class="text-xl font-bold text-red-600 dark:text-red-400">${fmt0(stats.peor.performance)}</p><p class="text-xs text-brand-450 dark:text-brand-350">${escapeHtml(stats.peor.fecha)}</p></div>
+                </div>
+                ${notaCobertura}
+            `;
+
+            const picosHtml = !picos
+                ? `<p class="text-xs text-brand-450 dark:text-brand-350">Hacen falta al menos 2 torneos (con ese tipo de elo) para estimar picos de rendimiento.</p>`
+                : `
+                    <div class="grid sm:grid-cols-2 gap-3">
+                        <div class="bg-white dark:bg-brand-900 rounded-lg p-3">
+                            <p class="text-xs text-brand-450 dark:text-brand-350">📈 Momento más alto${picos.ventana > 1 ? ` (promedio de ${picos.ventana} torneos seguidos)` : ""}</p>
+                            <p class="text-lg font-bold text-green-600 dark:text-green-400">${fmt0(picos.alto.promedio)}</p>
+                            <p class="text-xs text-brand-450 dark:text-brand-350">${escapeHtml(picos.alto.desde)}${picos.alto.desde !== picos.alto.hasta ? " – " + escapeHtml(picos.alto.hasta) : ""}</p>
+                        </div>
+                        <div class="bg-white dark:bg-brand-900 rounded-lg p-3">
+                            <p class="text-xs text-brand-450 dark:text-brand-350">📉 Momento más bajo${picos.ventana > 1 ? ` (promedio de ${picos.ventana} torneos seguidos)` : ""}</p>
+                            <p class="text-lg font-bold text-red-600 dark:text-red-400">${fmt0(picos.bajo.promedio)}</p>
+                            <p class="text-xs text-brand-450 dark:text-brand-350">${escapeHtml(picos.bajo.desde)}${picos.bajo.desde !== picos.bajo.hasta ? " – " + escapeHtml(picos.bajo.hasta) : ""}</p>
+                        </div>
+                    </div>`;
+
+            const flechaTendencia = !tendencia ? "" : tendencia.pendientePorMes > 5 ? "↗️" : tendencia.pendientePorMes < -5 ? "↘️" : "➡️";
+            const proyeccionHtml = !proyeccion
+                ? `<p class="text-xs text-brand-450 dark:text-brand-350">Hacen falta al menos 3 torneos recientes (con ese tipo de elo) para proyectar una tendencia.</p>`
+                : `
+                    <p class="text-sm text-brand-700 dark:text-brand-200 mb-2">${flechaTendencia} Tendencia reciente: ${proyeccion.pendientePorMes >= 0 ? "+" : ""}${fmt0(proyeccion.pendientePorMes)} pts/mes · ritmo actual: ${fmt1(carga.torneosPorMes)} torneo(s)/mes (${carga.torneosUltimos3Meses} en los últimos 3 meses).</p>
+                    <div class="grid grid-cols-3 gap-2">
+                        ${proyeccion.puntos.map((p) => `<div class="bg-white dark:bg-brand-900 rounded-lg p-2 text-center"><p class="text-xs text-brand-450 dark:text-brand-350">en ${p.meses} mes${p.meses > 1 ? "es" : ""}</p><p class="font-bold text-brand-800 dark:text-white">${p.performance}</p></div>`).join("")}
+                    </div>
+                    <p class="text-xs text-brand-450 dark:text-brand-350 mt-2">A este ritmo, se estiman ${proyeccion.torneosEstimados} torneo(s) más (con ese tipo de elo) en los próximos 6 meses.</p>
+                `;
+
+            const estiloRecomendacion = {
+                jugar: "bg-green-50 dark:bg-green-900/30 text-green-800 dark:text-green-200 border-green-200 dark:border-green-800",
+                descansar: "bg-red-50 dark:bg-red-900/30 text-red-800 dark:text-red-200 border-red-200 dark:border-red-800",
+                precaucion: "bg-amber-50 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 border-amber-200 dark:border-amber-800",
+                neutral: "bg-brand-50 dark:bg-brand-900/40 text-brand-600 dark:text-brand-300 border-brand-200 dark:border-brand-700",
+            };
+            const tituloRecomendacion = { jugar: "✅ Recomendado jugar", descansar: "🛑 Mejor descansar", precaucion: "⚠️ Jugar con precaución", neutral: "ℹ️ Sin recomendación" };
+            const recomendacionHtml = `
+                <div class="border rounded-lg p-3 text-sm ${estiloRecomendacion[recomendacion.tipo]}">
+                    <p class="font-semibold mb-1">${tituloRecomendacion[recomendacion.tipo]}</p>
+                    <p>${escapeHtml(recomendacion.texto)}</p>
+                </div>`;
+
+            return `
+                ${basicoHtml}
+                <div class="border-t border-brand-100 dark:border-brand-800 pt-3 mt-3">
+                    <h5 class="text-xs font-bold uppercase tracking-wide text-brand-500 dark:text-brand-300 mb-2">Picos de rendimiento</h5>
+                    ${picosHtml}
+                </div>
+                <div class="border-t border-brand-100 dark:border-brand-800 pt-3 mt-3">
+                    <h5 class="text-xs font-bold uppercase tracking-wide text-brand-500 dark:text-brand-300 mb-2">Proyección a 6 meses</h5>
+                    ${proyeccionHtml}
+                </div>
+                <div class="border-t border-brand-100 dark:border-brand-800 pt-3 mt-3">
+                    <h5 class="text-xs font-bold uppercase tracking-wide text-brand-500 dark:text-brand-300 mb-2">¿Jugar el próximo torneo o descansar?</h5>
+                    ${recomendacionHtml}
+                    <p class="text-xs text-brand-450 dark:text-brand-350 mt-2">Estimación estadística a partir del historial de torneos cargado — no reemplaza cómo se siente el jugador ni otros factores (salud, estudio, descanso real).</p>
+                </div>
+            `;
+        }
+
+        function filaTorneoHtml(fila) {
+            const wrap = document.createElement("div");
+            wrap.className = "border border-brand-100 dark:border-brand-800 rounded-xl p-4";
+            if (fila.tnr && fila.snr) wrap.dataset.claveTorneo = claveTorneo(fila.tnr, fila.snr);
+            wrap.innerHTML = `
+                <div class="flex justify-between items-start gap-3 flex-wrap">
+                    <div class="min-w-0">
+                        <p class="font-semibold text-brand-800 dark:text-white text-sm truncate">
+                            <a href="${escapeHtml(fila.torneoUrl)}" target="_blank" rel="noopener" class="hover:underline">${escapeHtml(fila.torneoNombre || "(sin nombre)")}</a>
+                        </p>
+                        <p class="text-xs text-brand-450 dark:text-brand-350 mt-0.5">${escapeHtml(fila.fechaFinal || "?")} · ${escapeHtml(fila.club || "sin club")} · ${escapeHtml(fila.fed || "?")}<span class="elo-badge"></span></p>
+                        <p class="text-xs text-brand-450 dark:text-brand-350">Puesto ${escapeHtml(fila.puesto || "?")} de ${escapeHtml(fila.participantes || "?")} · ${escapeHtml(fila.rondas || "?")} rondas</p>
+                    </div>
+                    <button type="button" class="ver-rondas-btn shrink-0 text-xs font-semibold text-brand-500 dark:text-brand-300 hover:text-accent-500 hover:underline">Ver rondas</button>
+                </div>
+                <div class="rondas-detalle hidden mt-3 border-t border-brand-100 dark:border-brand-800 pt-3 text-xs"></div>
+            `;
+            const btn = wrap.querySelector(".ver-rondas-btn");
+            const detalle = wrap.querySelector(".rondas-detalle");
+            const clave = fila.tnr && fila.snr ? claveTorneo(fila.tnr, fila.snr) : null;
+            if (clave && fichasCache[clave]) actualizarBadgeElo(wrap, fichasCache[clave]);
+            btn.addEventListener("click", async () => {
+                if (!detalle.classList.contains("hidden")) { detalle.classList.add("hidden"); return; }
+                if (!fila.tnr || !fila.snr) { detalle.innerHTML = "<p class='text-red-600 dark:text-red-400'>Esta fila no trae enlace directo al torneo.</p>"; detalle.classList.remove("hidden"); return; }
+                detalle.innerHTML = "<p class='text-brand-450 dark:text-brand-350'>Cargando…</p>";
+                detalle.classList.remove("hidden");
+                try {
+                    let ficha = fichasCache[clave];
+                    if (!ficha) {
+                        ficha = await callChessResults("torneo-jugador", { tnr: fila.tnr, snr: fila.snr });
+                        fichasCache[clave] = ficha;
+                    }
+                    actualizarBadgeElo(wrap, ficha);
+                    detalle.innerHTML = renderFichaTorneo(ficha);
+                } catch (err) {
+                    detalle.innerHTML = "<p class='text-red-600 dark:text-red-400'>No se pudo cargar: " + escapeHtml(err.message) + "</p>";
+                }
+            });
+            return wrap;
+        }
+
+        function renderFichaTorneo(ficha) {
+            const r = ficha.resumen || {};
+            const resumenHtml = `
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+                    <div><p class="text-brand-450 dark:text-brand-350">Elo</p><p class="font-semibold text-brand-800 dark:text-white">${escapeHtml(r["Elo"] || "-")}</p></div>
+                    <div><p class="text-brand-450 dark:text-brand-350">Performance</p><p class="font-semibold text-brand-800 dark:text-white">${escapeHtml(r["Performance"] || "-")}</p></div>
+                    <div><p class="text-brand-450 dark:text-brand-350">Puntos</p><p class="font-semibold text-brand-800 dark:text-white">${escapeHtml(r["Puntos"] || "-")}</p></div>
+                    <div><p class="text-brand-450 dark:text-brand-350">Puesto</p><p class="font-semibold text-brand-800 dark:text-white">${escapeHtml(r["Puesto"] || "-")}</p></div>
+                </div>`;
+            if (!ficha.rondas || !ficha.rondas.length) {
+                return resumenHtml + "<p class='text-brand-450 dark:text-brand-350'>chess-results.com no mostró el detalle ronda a ronda para este torneo.</p>";
+            }
+            const filas = ficha.rondas.map((rd) => `
+                <tr class="border-b border-brand-50 dark:border-brand-800/60">
+                    <td class="py-1 pr-2">${escapeHtml(rd.ronda)}</td>
+                    <td class="py-1 pr-2">${rd.color === "blancas" ? "⚪" : rd.color === "negras" ? "⚫" : "?"}</td>
+                    <td class="py-1 pr-2">${rd.tituloRival ? escapeHtml(rd.tituloRival) + " " : ""}${escapeHtml(rd.nombreRival)}</td>
+                    <td class="py-1 pr-2">${escapeHtml(rd.eloRival)}</td>
+                    <td class="py-1 pr-2">${escapeHtml(rd.fedRival)}</td>
+                    <td class="py-1 font-semibold">${escapeHtml(rd.resultado)}</td>
+                </tr>`).join("");
+            return resumenHtml + `
+                <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="text-brand-450 dark:text-brand-350"><tr><th class="pb-1 pr-2">Rd</th><th class="pb-1 pr-2">Color</th><th class="pb-1 pr-2">Rival</th><th class="pb-1 pr-2">Elo</th><th class="pb-1 pr-2">Fed</th><th class="pb-1">Res.</th></tr></thead>
+                    <tbody>${filas}</tbody>
+                </table>
+                </div>`;
+        }
+
+        function renderGrupo(grupo) {
+            const card = document.createElement("div");
+            card.className = "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6";
+            const primerNombre = grupo.filas[0].nombreMostrado;
+            const yaCargado = grupoEstaCargado(grupo);
+            card.innerHTML = `
+                <h3 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">${escapeHtml(primerNombre)}</h3>
+                <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">Código FIDE ${escapeHtml(grupo.fideId)} · ${escapeHtml(grupo.club || "sin club registrado")} · ${escapeHtml(grupo.fed)} · ${grupo.filas.length} torneo(s) encontrado(s)</p>
+
+                <div class="flex items-center justify-between flex-wrap gap-2 mb-4 pb-4 border-b border-brand-100 dark:border-brand-800">
+                    <button type="button" class="cargar-todo-btn bg-brand-100 dark:bg-brand-800 hover:bg-brand-200 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2 rounded-lg text-xs transition-colors">
+                        ${yaCargado ? "🔄 Volver a cargar todo" : "📊 Cargar todo y analizar"}
+                    </button>
+                    <p class="carga-progreso text-xs text-brand-450 dark:text-brand-350"></p>
+                </div>
+
+                <div class="filtro-elo flex items-center gap-2 mb-4 flex-wrap ${yaCargado ? "" : "opacity-50"}">
+                    <label class="text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide">Filtrar por cálculo de elo</label>
+                    <select class="filtro-elo-select text-xs px-2 py-1.5 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700" ${yaCargado ? "" : "disabled"}>
+                        <option value="todos">Todos</option>
+                        <option value="sin">Sin elo</option>
+                        <option value="nacional">Con elo nacional</option>
+                        <option value="internacional">Con elo internacional</option>
+                    </select>
+                </div>
+
+                <div class="analisis-panel ${yaCargado ? "" : "hidden"} bg-brand-50 dark:bg-brand-950/60 rounded-xl p-4 mb-4">
+                    <div class="flex items-center justify-between flex-wrap gap-2 mb-1">
+                        <h4 class="font-serif text-sm font-bold text-brand-800 dark:text-white">📈 Análisis de rendimiento general</h4>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <select class="analisis-periodo-select text-xs px-2 py-1.5 rounded-lg bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700">
+                                <option value="todo">Todo</option>
+                                <option value="anio">Por año</option>
+                                <option value="mes">Por mes</option>
+                            </select>
+                            <select class="analisis-anio-select hidden text-xs px-2 py-1.5 rounded-lg bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700"></select>
+                            <select class="analisis-mes-select hidden text-xs px-2 py-1.5 rounded-lg bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700"></select>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 flex-wrap mb-3">
+                        <label class="text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide">Elo a usar en el cálculo</label>
+                        <select class="analisis-tipoelo-select text-xs px-2 py-1.5 rounded-lg bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700">
+                            <option value="ambos">Nacional + FIDE</option>
+                            <option value="nacional">Solo elo nacional</option>
+                            <option value="fide">Solo elo FIDE (internacional)</option>
+                        </select>
+                    </div>
+                    <div class="analisis-resultado"></div>
+                </div>
+
+                <div class="space-y-2 torneos-list"></div>
+            `;
+            const list = card.querySelector(".torneos-list");
+            grupo.filas.forEach((fila) => list.appendChild(filaTorneoHtml(fila)));
+
+            const btnCargarTodo = card.querySelector(".cargar-todo-btn");
+            const progresoEl = card.querySelector(".carga-progreso");
+            const filtroWrap = card.querySelector(".filtro-elo");
+            const filtroSelect = card.querySelector(".filtro-elo-select");
+            const analisisPanel = card.querySelector(".analisis-panel");
+            const periodoSelect = card.querySelector(".analisis-periodo-select");
+            const anioSelect = card.querySelector(".analisis-anio-select");
+            const mesSelect = card.querySelector(".analisis-mes-select");
+            const tipoEloSelect = card.querySelector(".analisis-tipoelo-select");
+            const resultadoEl = card.querySelector(".analisis-resultado");
+
+            function aplicarFiltro() {
+                const filtro = filtroSelect.value;
+                list.querySelectorAll(":scope > div").forEach((wrap) => {
+                    const clave = wrap.dataset.claveTorneo;
+                    const ficha = clave ? fichasCache[clave] : null;
+                    wrap.classList.toggle("hidden", !torneoCoincideFiltroElo(ficha, filtro));
+                });
+            }
+
+            function poblarSelectoresPeriodo() {
+                const disponibles = aniosYMesesDisponibles(grupo);
+                const anios = [...disponibles.keys()].sort().reverse();
+                anioSelect.innerHTML = anios.map((a) => `<option value="${a}">${a}</option>`).join("");
+                actualizarMesesDelAnio();
+            }
+
+            function actualizarMesesDelAnio() {
+                const disponibles = aniosYMesesDisponibles(grupo);
+                const meses = [...(disponibles.get(anioSelect.value) || [])].sort();
+                mesSelect.innerHTML = meses.map((m) => `<option value="${m}">${MESES_ES[parseInt(m, 10)] || m}</option>`).join("");
+            }
+
+            function actualizarAnalisis() {
+                const periodo = periodoSelect.value;
+                anioSelect.classList.toggle("hidden", periodo === "todo");
+                mesSelect.classList.toggle("hidden", periodo !== "mes");
+                const tipoElo = tipoEloSelect.value;
+
+                const { serie: seriePeriodo, totalEnPeriodo } = serieDeRendimiento(grupo, periodo, anioSelect.value, mesSelect.value, tipoElo);
+                const stats = calcularStatsBasicas(seriePeriodo);
+
+                // Picos, tendencia, carga y proyección siempre miran todo el
+                // historial (con el tipo de elo elegido): tiene sentido medir
+                // "cuándo estuvo en su pico" o "cuál es la carga actual" sobre
+                // la carrera completa, no solo sobre el período seleccionado.
+                const { serie: serieCompleta } = serieDeRendimiento(grupo, "todo", null, null, tipoElo);
+                const picos = calcularPicos(serieCompleta, 3);
+                const tendencia = calcularTendencia(serieCompleta);
+                const carga = calcularCargaActual(serieCompleta);
+                const proyeccion = proyectarSeisMeses(tendencia, carga);
+                const recomendacion = generarRecomendacion(tendencia, carga, calcularStatsBasicas(serieCompleta));
+
+                resultadoEl.innerHTML = renderAnalisisCompleto({ totalEnPeriodo, stats, picos, tendencia, carga, proyeccion, recomendacion });
+            }
+
+            periodoSelect.addEventListener("change", () => {
+                if (periodoSelect.value !== "todo" && !anioSelect.options.length) poblarSelectoresPeriodo();
+                actualizarAnalisis();
+            });
+            anioSelect.addEventListener("change", () => { actualizarMesesDelAnio(); actualizarAnalisis(); });
+            mesSelect.addEventListener("change", actualizarAnalisis);
+            tipoEloSelect.addEventListener("change", actualizarAnalisis);
+            filtroSelect.addEventListener("change", aplicarFiltro);
+
+            btnCargarTodo.addEventListener("click", async () => {
+                btnCargarTodo.disabled = true;
+                const pendientes = grupo.filas.filter((f) => f.tnr && f.snr && !fichasCache[claveTorneo(f.tnr, f.snr)]);
+                if (!pendientes.length) {
+                    progresoEl.textContent = "Ya estaban todos los torneos cargados.";
+                } else {
+                    progresoEl.textContent = `Cargando 0/${pendientes.length} torneos…`;
+                    await cargarEnParalelo(
+                        pendientes,
+                        async (fila) => {
+                            try {
+                                const ficha = await callChessResults("torneo-jugador", { tnr: fila.tnr, snr: fila.snr });
+                                fichasCache[claveTorneo(fila.tnr, fila.snr)] = ficha;
+                                const wrap = list.querySelector(`[data-clave-torneo="${claveTorneo(fila.tnr, fila.snr)}"]`);
+                                if (wrap) actualizarBadgeElo(wrap, ficha);
+                            } catch (err) { /* se cuenta como pendiente pero no bloquea el resto */ }
+                        },
+                        4,
+                        (hechos, total) => { progresoEl.textContent = `Cargando ${hechos}/${total} torneos…`; }
+                    );
+                    progresoEl.textContent = `✅ Análisis actualizado (${grupo.filas.length} torneo(s)).`;
+                }
+                filtroWrap.classList.remove("opacity-50");
+                filtroSelect.disabled = false;
+                analisisPanel.classList.remove("hidden");
+                if (!anioSelect.options.length) poblarSelectoresPeriodo();
+                actualizarAnalisis();
+                aplicarFiltro();
+                btnCargarTodo.textContent = "🔄 Volver a cargar todo";
+                btnCargarTodo.disabled = false;
+            });
+
+            if (yaCargado) {
+                poblarSelectoresPeriodo();
+                actualizarAnalisis();
+                aplicarFiltro();
+            }
+
+            return card;
+        }
+
+        function renderResultados(grupos, sinFide) {
+            const gruposEl = document.getElementById("grupos-container");
+            const sinFideEl = document.getElementById("sinfide-container");
+            gruposEl.innerHTML = "";
+            sinFideEl.innerHTML = "";
+
+            grupos.forEach((g) => gruposEl.appendChild(renderGrupo(g)));
+
+            if (sinFide.length) {
+                const wrap = document.createElement("div");
+                wrap.className = "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6";
+                wrap.innerHTML = `
+                    <h3 class="font-serif text-base font-bold text-amber-600 dark:text-amber-400 mb-1">⚠️ Coincidencias sin Código FIDE confirmado</h3>
+                    <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">
+                        Estas filas comparten el nombre buscado, pero chess-results.com no tiene su Código FIDE registrado en ese torneo —
+                        no se puede saber sin revisarlas a mano si son la misma persona u otra con el mismo nombre.
+                    </p>
+                    <div class="space-y-2 torneos-list"></div>`;
+                const list = wrap.querySelector(".torneos-list");
+                sinFide.forEach((fila) => list.appendChild(filaTorneoHtml(fila)));
+                sinFideEl.appendChild(wrap);
+                sinFideEl.classList.remove("hidden");
+            }
+        }
+
+        // ---------------------------------------------------------------
+        // Descarga en CSV: el resumen de torneos de cada grupo + el detalle
+        // ronda a ronda de cualquier torneo ya expandido en pantalla.
+        // ---------------------------------------------------------------
+        function csvEscape(v) {
+            const s = String(v == null ? "" : v);
+            return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+        }
+
+        function construirCsv() {
+            const lineas = [];
+            const agregarTabla = (encabezados, filas) => {
+                lineas.push(encabezados.map(csvEscape).join(","));
+                filas.forEach((f) => lineas.push(f.map(csvEscape).join(",")));
+                lineas.push("");
+            };
+
+            [...ultimaBusqueda.grupos, { fideId: "(sin confirmar)", filas: ultimaBusqueda.sinFide }]
+                .filter((g) => g.filas.length)
+                .forEach((g) => {
+                    lineas.push("Jugador: " + (g.filas[0].nombreMostrado || "") + " — Código FIDE " + g.fideId);
+                    agregarTabla(
+                        ["Fecha final", "Torneo", "Club", "Federación", "Puesto", "Rondas", "Participantes", "URL torneo"],
+                        g.filas.map((f) => [f.fechaFinal, f.torneoNombre, f.club, f.fed, f.puesto, f.rondas, f.participantes, f.torneoUrl])
+                    );
+                    g.filas.forEach((f) => {
+                        const ficha = fichasCache[claveTorneo(f.tnr, f.snr)];
+                        if (ficha && ficha.rondas && ficha.rondas.length) {
+                            lineas.push("  Ronda a ronda — " + f.torneoNombre);
+                            agregarTabla(
+                                ["Ronda", "Color", "Rival", "Elo rival", "Fed rival", "Resultado"],
+                                ficha.rondas.map((r) => [r.ronda, r.color, (r.tituloRival ? r.tituloRival + " " : "") + r.nombreRival, r.eloRival, r.fedRival, r.resultado])
+                            );
+                        }
+                    });
+                });
+            return lineas.join("\n");
+        }
+
+        document.getElementById("download-btn").addEventListener("click", () => {
+            const csv = "﻿" + construirCsv();
+            const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            const nombreArchivo = (ultimaBusqueda.apellido || "jugador").replace(/[^a-z0-9]+/gi, "_");
+            a.href = url;
+            a.download = "chess-results_" + nombreArchivo + ".csv";
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+        });
+
+        document.getElementById("search-form").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const apellido = document.getElementById("f-apellido").value.trim();
+            const nombre = document.getElementById("f-nombre").value.trim();
+            const fideId = document.getElementById("f-fideid").value.trim();
+            const msg = document.getElementById("search-msg");
+            const btn = document.getElementById("search-btn");
+            if (!apellido) { msg.textContent = "El apellido es requerido."; msg.className = "text-xs mt-2 text-red-600 dark:text-red-400"; return; }
+
+            msg.textContent = "";
+            btn.disabled = true;
+            btn.textContent = "Buscando en chess-results.com…";
+            document.getElementById("results").classList.add("hidden");
+            document.getElementById("empty-msg").classList.add("hidden");
+
+            try {
+                const data = await callChessResults("search", { apellido, nombre, fideId });
+                const { grupos, sinFide } = agruparPorJugador(data.filas || []);
+                ultimaBusqueda = { grupos, sinFide, apellido };
+
+                if (!grupos.length && !sinFide.length) {
+                    document.getElementById("empty-msg").classList.remove("hidden");
+                } else {
+                    document.getElementById("results-summary").textContent =
+                        grupos.length + " jugador(es) identificado(s) por Código FIDE" + (sinFide.length ? ", " + sinFide.length + " torneo(s) sin FIDE-ID confirmado" : "") + ".";
+                    renderResultados(grupos, sinFide);
+                    document.getElementById("results").classList.remove("hidden");
+                }
+            } catch (err) {
+                msg.textContent = err.message || "No se pudo consultar chess-results.com.";
+                msg.className = "text-xs mt-2 text-red-600 dark:text-red-400";
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "Buscar";
+            }
+        });
+
+        async function init() {
+            const { data } = await sb.auth.getSession();
+            session = data.session;
+            if (!session) { window.location.href = "login.html"; return; }
+
+            const { data: profile, error } = await sb.from("profiles").select("is_admin").eq("id", session.user.id).single();
+            document.getElementById("loading").classList.add("hidden");
+
+            if (error || !profile?.is_admin) {
+                document.getElementById("denied").classList.remove("hidden");
+                return;
+            }
+
+            document.getElementById("app").classList.remove("hidden");
+        }
+
+        init();
+    

@@ -88,13 +88,10 @@ else bien("la hoja de Google Fonts no frena el pintado en ninguna");
    solo se achica. Una página nueva no entra, y una que ya se mudó sale. */
 const LIMITE_EN_LINEA_KB = 20;
 const PENDIENTES = new Set([
-  "cobros.html", "entreno/4x4.html",
-  "formularios.html", "configuracion.html", "academias.html", "entreno/diagnostico.html",
-  "juegos.html", "bot.html", "admin-jugador.html", "coordinacion.html", "examenes.html",
-  "tv.html", "torneo.html", "asistencia.html", "entreno/aprender.html", "arbitraje.html",
-  "entreno/desafios.html", "accesos.html", "tareas.html", "variante.html", "entreno/temas.html",
-  "reportes.html", "entreno/practicas.html", "planes.html", "partidas.html", "niebla.html",
-  "entreno/mates.html", "lector-planilla.html", "cuatro-jugadores.html", "inscripcion.html",
+  "entreno/4x4.html", "entreno/diagnostico.html", "juegos.html", "bot.html", "tv.html",
+  "torneo.html", "entreno/aprender.html", "arbitraje.html", "entreno/desafios.html",
+  "variante.html", "entreno/temas.html", "entreno/practicas.html", "partidas.html",
+  "niebla.html", "entreno/mates.html", "lector-planilla.html", "cuatro-jugadores.html",
   "entreno/aperturas.html",
 ]);
 const grandesNuevos = [], yaMudadas = [];
