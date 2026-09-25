@@ -47,6 +47,7 @@
             <p class="text-xs text-brand-450 dark:text-brand-350 mb-8 bg-white dark:bg-brand-900 rounded-xl p-3">
                 Un subgrupo <strong>no le da acceso a nadie</strong>: solo ordena a los alumnos que ya son tuyos, y solo lo ves tú.
                 Quien administra sigue decidiendo quién es alumno de quién.
+                Si eres entrenador de un equipo, aquí también tienes un subgrupo con su gente, que se mantiene solo.
             </p>
 
 
@@ -81,6 +82,9 @@
  *   · Un subgrupo NO DA NI UN PERMISO. Por eso lo puede armar un profesor solo,
  *     sin pedirle nada a nadie, y por eso solo puede contener a quien YA es
  *     suyo (lo exige la política de insert de subgrupo_alumnos).
+ *   · Cada entrenador de un equipo tiene además un subgrupo con la gente de
+ *     ese equipo (`equipo_id` no nulo). Lo mantiene la base y aquí es de solo
+ *     lectura: ver `tarjetaDeEquipo()`.
  *
  * La lista de alumnos sale de `informes_resumen_alumnos()`, la misma que usan
  * Informes y Cobros: quién aparece lo decide la RLS y no hay ni un filtro de
@@ -146,6 +150,7 @@ function pintar() {
     document.getElementById("vacio").classList.toggle("hidden", subgrupos.length > 0);
 
     subgrupos.forEach((s) => {
+        if (s.equipo_id) { caja.appendChild(tarjetaDeEquipo(s)); return; }
         const tarjeta = el("div", "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4");
 
         const fila = el("div", "flex flex-wrap items-center justify-between gap-3");
@@ -191,6 +196,52 @@ function pintar() {
         if (abierto === s.id) tarjeta.appendChild(panelAlumnos(s));
         caja.appendChild(tarjeta);
     });
+}
+
+/* El subgrupo de un equipo lo arma la base (migración
+   equipo_se_ve_como_subgrupo): sigue al equipo solo, así que acá no se
+   renombra, no se borra ni se le cambia la gente —la base tampoco lo deja—.
+   Ofrecer esos botones sería ofrecer algo que no pasa. Se puede mirar quiénes
+   están, que es para lo que sirve. */
+function tarjetaDeEquipo(s) {
+    const tarjeta = el("div", "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4");
+    tarjeta.dataset.equipo = s.equipo_id;
+    const fila = el("div", "flex flex-wrap items-center justify-between gap-3");
+    const izq = el("div", "flex-1 min-w-[12rem] px-2");
+    const titulo = el("p", "font-semibold text-brand-800 dark:text-white py-1");
+    titulo.appendChild(el("span", null, s.nombre + " "));
+    titulo.appendChild(el("span", "ml-1 align-middle text-xs font-semibold rounded-full px-2 py-0.5 bg-brand-100 dark:bg-brand-800 text-brand-700 dark:text-brand-200", "Equipo"));
+    izq.appendChild(titulo);
+    izq.appendChild(el("p", "text-xs text-brand-450 dark:text-brand-350",
+        (s.cuantos === 1 ? "1 alumno" : s.cuantos + " alumnos") +
+        " · se arma solo con la gente del equipo; los cambios se hacen en el equipo"));
+    fila.appendChild(izq);
+
+    const btnAbrir = el("button", "bg-brand-700 hover:bg-brand-800 text-white font-semibold px-3 py-1.5 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400",
+        abierto === s.id ? "Cerrar" : "👥 Quiénes están");
+    btnAbrir.type = "button";
+    btnAbrir.setAttribute("aria-expanded", abierto === s.id ? "true" : "false");
+    btnAbrir.addEventListener("click", () => { abierto = abierto === s.id ? null : s.id; pintar(); });
+    fila.appendChild(btnAbrir);
+    tarjeta.appendChild(fila);
+
+    if (abierto === s.id) {
+        const panel = el("div", "mt-4 pt-4 border-t border-brand-100 dark:border-brand-800");
+        const porId = new Map(alumnos.map((a) => [a.id, a]));
+        const nombres = (s.alumnos || []).map((id) => porId.get(id))
+            .map((a) => (a ? nombreDe(a) + (a.grupo ? " · " + a.grupo : "") : "Alguien que no está en tu lista"))
+            .sort((a, b) => a.localeCompare(b, "es"));
+        if (!nombres.length) {
+            panel.appendChild(el("p", "text-sm text-brand-450 dark:text-brand-350", "El equipo todavía no tiene alumnos."));
+        } else {
+            const lista = el("ul", "max-h-64 overflow-y-auto border border-brand-200 dark:border-brand-700 rounded-lg p-2 bg-brand-50 dark:bg-brand-950 grid sm:grid-cols-2 gap-1");
+            // Los nombres los escribe una persona: siempre por textContent.
+            nombres.forEach((n) => lista.appendChild(el("li", "text-sm text-brand-700 dark:text-brand-200 px-1 py-0.5", n)));
+            panel.appendChild(lista);
+        }
+        tarjeta.appendChild(panel);
+    }
+    return tarjeta;
 }
 
 function panelAlumnos(s) {
