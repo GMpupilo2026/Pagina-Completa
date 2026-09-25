@@ -206,6 +206,36 @@ Deno.serve(async (req) => {
     return json({ ok: true, cambiado: nuevo, ...(await retrato(admin, alumnoId, quedo)) });
   }
 
+  // --------------------------------- la contraseña de un usuario sin buzón
+  // Un niño de cinco años no abre el correo de la mamá para crear su
+  // contraseña: se la pone quien coordina y se la da en la clase, junto con su
+  // usuario. SOLO para cuentas con usuario de la academia: la contraseña de
+  // quien tiene correo propio es de esa persona, y para olvidos ya tiene su
+  // enlace. Y solo con la función de «cuentas»: la de cobros entra a esta
+  // función por la ficha de contacto, no para abrir cuentas ajenas.
+  if (accion === "contrasena") {
+    if (!cuentas) return json({ error: "Poner contraseñas no está entre tus funciones de coordinación" }, 403);
+    if (alumno.role !== "alumno" || !esCorreoInterno(String(alumno.email ?? ""))) {
+      return json({
+        error: "Solo se le pone contraseña a un alumno que entra con usuario de la Academia. " +
+               "Quien tiene correo propio la crea con el enlace de «Reenviar acceso».",
+      }, 400);
+    }
+    const clave = String(body.contrasena ?? "");
+    // Lo mismo que pide bienvenida.html: ocho como mínimo. El tope es el de
+    // bcrypt, que corta en silencio lo que pase de 72 bytes.
+    if (clave.length < 8) return json({ error: "La contraseña tiene que tener al menos 8 caracteres" }, 400);
+    if (new TextEncoder().encode(clave).length > 72) return json({ error: "Esa contraseña es demasiado larga" }, 400);
+    if (clave.trim() !== clave) return json({ error: "La contraseña no puede empezar ni terminar con espacios" }, 400);
+
+    // email_confirm: una cuenta invitada que nunca abrió su enlace queda sin
+    // confirmar, y sin confirmar GoTrue no la deja entrar ni con la contraseña
+    // buena («Email not confirmed»). Ese enlace se mandó a otro buzón.
+    const { error } = await admin.auth.admin.updateUserById(alumnoId, { password: clave, email_confirm: true });
+    if (error) return json({ error: "No se pudo poner la contraseña: " + error.message }, 400);
+    return json({ ok: true, usuario: alumno.email });
+  }
+
   // ------------------------------------------ a dónde va el informe a casa
   if (accion === "encargado_guardar") {
     const email = String(body.email ?? "").trim().toLowerCase();

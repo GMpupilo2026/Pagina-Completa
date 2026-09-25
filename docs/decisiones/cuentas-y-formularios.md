@@ -506,6 +506,37 @@ los avisos de cobro.
   cuenta acá, y son menores de edad. **Tampoco dice a qué correo lo mandó**: ese
   dato es de la familia.
 
+### La contraseña también se le puede asignar
+
+Con lo de arriba el niño tiene usuario, pero la contraseña la crea quien abre el
+enlace que salió al correo de la casa. Con los más pequeños eso no pasa: la
+mamá no lo abre, o lo abre y no sabe qué poner, y el niño llega a la clase sin
+poder entrar. Así que en la ficha de `coordinacion.html` (también para quien
+administra) sale **«Su contraseña»**, y quien coordina se la pone y se la da en
+la clase junto con su usuario.
+
+- **Solo aparece si entra con usuario de la Academia**, y la acción
+  `contrasena` de `correos-alumno` lo vuelve a comprobar: la contraseña de quien
+  tiene correo propio es de esa persona, y para olvidos ya tiene su enlace. La
+  sección aparece en cuanto se le da el usuario, sin cerrar la ficha.
+- Pide la función de **«cuentas»**, no la de cobros: a `correos-alumno` también
+  entra la ficha de contacto de Cobros, y eso no es para abrir cuentas ajenas.
+- **Ocho caracteres como mínimo**, lo mismo que pide `bienvenida.html`.
+  «Proponer una fácil» arma una palabra del ajedrez y tres números
+  (`caballo482`), que un niño puede escribir y recordar; los números salen de
+  `crypto`.
+- Se pone con `email_confirm: true`: una cuenta invitada que nunca abrió su
+  enlace está sin confirmar, y así GoTrue no la deja entrar ni con la contraseña
+  buena.
+- El campo es de texto, no de contraseña, a propósito: es para dictársela al
+  alumno. El aviso del final dice el usuario **sin el dominio** y la contraseña.
+
+De paso: el «Reenviar acceso» de `admin.html` iba por `resetPasswordForEmail`,
+que con un usuario de la Academia manda el enlace a la dirección muerta y la
+pantalla decía «enviado». Ahora esas cuentas van por `reenviar-acceso` (al
+correo de la casa), y `admin-manage-users` rechaza el caso por si alguien lo
+llama directo.
+
 ### Las dos puertas de alta
 
 Las dos —`formularios.html` (el diálogo "Crear cuenta") y `sesion.html`

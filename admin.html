@@ -28,6 +28,7 @@
     <script src="js/modo-vista.js"></script>
     <script src="js/adaptive-mode.js"></script>
     <script src="js/equipo-volcar.js"></script>
+    <script src="js/usuario-alumno.js"></script>
 
 
 <!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/pwa.js" defer></script><!-- app: fin --><!-- tema: inicio --><script>(function(){try{var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');var f=localStorage.getItem('plataforma_tema_fuente_v1');if(!f||!/^[A-Za-z0-9 ]{2,32}$/.test(f))return;var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family='+f.replace(/ /g,'+')+':wght@400;500;600;700&display=swap';document.head.appendChild(l);}catch(e){}})();</script><!-- tema: fin -->
@@ -819,6 +820,26 @@
                 resetBtn.textContent = "Reenviar acceso";
                 resetBtn.addEventListener("click", async () => {
                     try {
+                        /* Un alumno con usuario de la Academia no tiene buzón:
+                           el enlace va al correo de su casa, y eso lo sabe
+                           hacer `reenviar-acceso` (correo_de_contacto()).
+                           Por el camino de siempre salía a la dirección
+                           muerta y la pantalla decía «enviado». */
+                        if (UsuarioAlumno.esInterno(u.email)) {
+                            const res = await fetch(`${window.SUPABASE_URL}/functions/v1/reenviar-acceso`, {
+                                method: "POST",
+                                headers: {
+                                    "Content-Type": "application/json",
+                                    "Authorization": `Bearer ${session.access_token}`,
+                                    "apikey": window.SUPABASE_ANON_KEY,
+                                },
+                                body: JSON.stringify({ alumno_id: u.id }),
+                            });
+                            const datos = await res.json().catch(() => ({}));
+                            if (!res.ok || datos.error) throw new Error(datos.error || `El servidor respondió ${res.status}`);
+                            Avisos.avisar(`Le salió el enlace para crear su contraseña a ${datos.correo_destino || "el correo de su casa"}.`);
+                            return;
+                        }
                         const result = await callAdmin("reset_password", { target_id: u.id });
                         Avisos.avisar(`Correo de acceso enviado a ${result.email}.`);
                     } catch (err) {
