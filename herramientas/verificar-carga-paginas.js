@@ -84,14 +84,11 @@ else bien("la hoja de Google Fonts no frena el pintado en ninguna");
    visita (no se guarda en caché aparte) y obliga a dejar 'unsafe-inline' en la
    CSP. Se mudan a js/ de a uno, sin tocar el código (ver «El código de las
    páginas sale del HTML» en docs/decisiones/sitio-e-infraestructura.md).
-   PENDIENTES son las que todavía traen un bloque de más de 20 KB: la lista
-   solo se achica. Una página nueva no entra, y una que ya se mudó sale. */
+   PENDIENTES eran las que todavía traían un bloque de más de 20 KB; empezó
+   con 34 y ya no queda ninguna. Queda vacía a propósito: la lista solo se
+   achica, así que una página nueva con un bloque grande no entra. */
 const LIMITE_EN_LINEA_KB = 20;
-const PENDIENTES = new Set([
-  "entreno/4x4.html", "entreno/diagnostico.html", "entreno/aprender.html",
-  "entreno/desafios.html", "entreno/temas.html", "entreno/practicas.html",
-  "entreno/mates.html", "entreno/aperturas.html",
-]);
+const PENDIENTES = new Set([]);
 const grandesNuevos = [], yaMudadas = [];
 for (const archivo of paginas(raiz)) {
   const rel = path.relative(raiz, archivo).split(path.sep).join("/");

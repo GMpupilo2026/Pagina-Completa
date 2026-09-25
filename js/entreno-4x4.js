@@ -1,0 +1,1243 @@
+/* El código de entreno/4x4.html.
+
+   Vivía escrito dentro de la página, en un <script> de 53 KB. Se mudó acá
+   tal cual, sin tocar una línea (herramientas/mudar-script.py): así el
+   navegador lo guarda en caché aparte, y es un paso hacia sacar
+   'unsafe-inline' de la CSP. Es un script clásico cargado en el mismo lugar
+   donde estaba el bloque: corre en el mismo orden y sus let/const de arriba
+   siguen siendo globales. Ver «El código de las páginas sale del HTML» en
+   docs/decisiones/sitio-e-infraestructura.md. */
+
+const gate = document.getElementById('gate');
+const app = document.getElementById('app');
+const gateChecking = document.getElementById('gate-checking');
+
+const NEXT_PATH = 'entreno/4x4.html';
+
+async function unlock(){
+  gate.classList.add('hidden');
+  app.classList.remove('hidden');
+  EntrenoProgress.init();
+  // El progreso vive en la cuenta: se baja y se funde con el de este aparato
+  // ANTES de pintar, para seguir donde se quedó aunque sea otro dispositivo.
+  await ProgresoUsuario.init();
+  initApp();
+}
+
+/* ---------------- APP ---------------- */
+let EXERCISES = [];
+let PUZZLES = {facil:[], intermedio:[], avanzado:[], especialista:[], maestro:[], granmaestro:[]};
+let currentCategory = 'FACIL';
+let currentList = [];
+let currentIndex = 0;
+
+const CATEGORY_ORDER = ['FACIL','INTERMEDIO','AVANZADO','ESPECIALISTA','MAESTRO','GRANMAESTRO'];
+const CATEGORY_LABEL = {FACIL:'Fácil', INTERMEDIO:'Intermedio', AVANZADO:'Avanzado', ESPECIALISTA:'Especialista', MAESTRO:'Maestro', GRANMAESTRO:'Gran Maestro'};
+const CATEGORY_VAR = {FACIL:'--facil', INTERMEDIO:'--intermedio', AVANZADO:'--avanzado', ESPECIALISTA:'--especialista', MAESTRO:'--maestro', GRANMAESTRO:'--granmaestro'};
+const CATEGORY_KEY = {FACIL:'facil', INTERMEDIO:'intermedio', AVANZADO:'avanzado', ESPECIALISTA:'especialista', MAESTRO:'maestro', GRANMAESTRO:'granmaestro'};
+
+let appInitialized = false;
+
+async function initApp(){
+  if(appInitialized) return;
+  appInitialized = true;
+  const loadError = document.getElementById('load-error');
+  try{
+    const [res, res2] = await Promise.all([
+      fetch('data/exercises.json'),
+      fetch('data/puzzles.json').catch(() => null)
+    ]);
+    if(!res.ok) throw new Error('exercises.json: ' + res.status);
+    EXERCISES = await res.json();
+    if(res2 && res2.ok){
+      try{ PUZZLES = await res2.json(); }catch(e){}
+    }
+    if(loadError) loadError.hidden = true;
+    buildTabs();
+    showCategory('FACIL');
+  }catch(err){
+    appInitialized = false;
+    if(loadError) loadError.hidden = false;
+    document.getElementById('solo-panel').hidden = true;
+    document.getElementById('solo-complete').hidden = true;
+    document.getElementById('grid').hidden = true;
+  }
+}
+const loadErrorRetryBtn = document.getElementById('load-error-retry');
+if(loadErrorRetryBtn) loadErrorRetryBtn.addEventListener('click', initApp);
+
+/* ---------------- PROGRESO (localStorage) ----------------
+   Un ejercicio #N de una categoría con tablero jugable solo se puede
+   abrir si el #N-1 de esa misma categoría ya fue resuelto (el #1
+   siempre está disponible). El progreso se guarda en localStorage
+   para que persista entre visitas. Además, mientras no se resuelve
+   el ejercicio actual, los siguientes ni siquiera se muestran: solo
+   se ve un ejercicio a la vez, cada vez más grande y sin distraerse
+   con el resto. */
+function getSolvedSet(){
+  try{
+    return JSON.parse(localStorage.getItem('entreno_solved') || '{}');
+  }catch(e){ return {}; }
+}
+function markSolved(puzzleId){
+  const solved = getSolvedSet();
+  solved[puzzleId] = true;
+  localStorage.setItem('entreno_solved', JSON.stringify(solved));
+}
+function isSolved(puzzleId){
+  return !!getSolvedSet()[puzzleId];
+}
+function puzzleForExercise(ex){
+  const list = PUZZLES[CATEGORY_KEY[ex.category]] || [];
+  return list.find(p => p.number === ex.number) || null;
+}
+/* La categoría jugable anterior a `cat` en CATEGORY_ORDER (o null si `cat` es la
+   primera, o si ninguna de las anteriores tiene ejercicios jugables todavía —
+   ver `hasPuzzles` en showCategory). Se usa para que "Anterior" pueda cruzar de
+   categoría: es solo para VER un ejercicio ya visto, no importa si esa
+   categoría anterior está resuelta del todo o no. */
+function previousPlayableCategory(cat){
+  const idx = CATEGORY_ORDER.indexOf(cat);
+  for(let i = idx - 1; i >= 0; i--){
+    const prevCat = CATEGORY_ORDER[i];
+    const list = EXERCISES.filter(e => e.category === prevCat).sort((a,b) => a.number - b.number);
+    if(list.length && puzzleForExercise(list[0])) return { cat: prevCat, list };
+  }
+  return null;
+}
+function isUnlocked(ex, list){
+  const puz = puzzleForExercise(ex);
+  if(!puz) return true; /* sin datos jugables: no aplica bloqueo, se ve como imagen */
+  if(ex.number <= 1) return true;
+  const prevEx = list.find(e => e.number === ex.number - 1);
+  if(!prevEx) return true;
+  const prevPuz = puzzleForExercise(prevEx);
+  if(!prevPuz) return true;
+  return isSolved(prevPuz.id);
+}
+function countSolved(list){
+  let n = 0;
+  list.forEach(ex => {
+    const puz = puzzleForExercise(ex);
+    if(puz && isSolved(puz.id)) n++;
+  });
+  return n;
+}
+/* Índice (en `list`) del primer ejercicio jugable todavía sin resolver.
+   Si ya están todos resueltos, devuelve list.length. */
+function firstUnsolvedIndex(list){
+  for(let i=0;i<list.length;i++){
+    const puz = puzzleForExercise(list[i]);
+    if(puz && !isSolved(puz.id)) return i;
+  }
+  return list.length;
+}
+
+function buildTabs(){
+  const tabs = document.getElementById('tabs');
+  tabs.innerHTML = '';
+  CATEGORY_ORDER.forEach(cat => {
+    const count = EXERCISES.filter(e => e.category === cat).length;
+    const btn = document.createElement('button');
+    btn.className = 'tab' + (cat === currentCategory ? ' active' : '');
+    btn.setAttribute('aria-selected', cat === currentCategory ? 'true' : 'false');
+    btn.style.setProperty('--tab-color', `var(${CATEGORY_VAR[cat]})`);
+    btn.innerHTML = `${CATEGORY_LABEL[cat]} <span class="n">${count}</span>`;
+    btn.addEventListener('click', () => showCategory(cat));
+    tabs.appendChild(btn);
+  });
+}
+
+function setActiveTab(cat){
+  document.querySelectorAll('.tab').forEach((btn,i) => {
+    const active = CATEGORY_ORDER[i] === cat;
+    btn.classList.toggle('active', active);
+    btn.setAttribute('aria-selected', active ? 'true' : 'false');
+  });
+}
+
+function showCategory(cat){
+  currentCategory = cat;
+  setActiveTab(cat);
+  currentList = EXERCISES.filter(e => e.category === cat).sort((a,b) => a.number - b.number);
+  document.getElementById('visible-count').textContent = currentList.length;
+
+  const hasPuzzles = currentList.length > 0 && !!puzzleForExercise(currentList[0]);
+  const soloPanel = document.getElementById('solo-panel');
+  const soloComplete = document.getElementById('solo-complete');
+  const grid = document.getElementById('grid');
+
+  if(hasPuzzles){
+    grid.hidden = true;
+    const idx = firstUnsolvedIndex(currentList);
+    if(idx >= currentList.length){
+      soloPanel.hidden = true;
+      soloComplete.hidden = false;
+      document.getElementById('solo-complete-text').textContent =
+        `Resolviste los ${currentList.length} ejercicios de ${CATEGORY_LABEL[cat]}. ¡Muy bien!`;
+    } else {
+      soloComplete.hidden = true;
+      soloPanel.hidden = false;
+      boardCategory = cat;
+      boardExList = currentList;
+      loadPuzzleAt(idx);
+    }
+  } else {
+    soloPanel.hidden = true;
+    soloComplete.hidden = true;
+    grid.hidden = false;
+    renderGrid();
+  }
+}
+
+function renderGrid(){
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  currentList.forEach((ex, idx) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.setAttribute('role','button');
+    card.setAttribute('tabindex','0');
+    card.setAttribute('aria-label', `${ex.categoryLabel}, ejercicio ${ex.number}`);
+    card.innerHTML = `<span class="badge">#${ex.number}</span><img src="${ex.image}" loading="lazy" alt="">`;
+    const open = () => openLightbox(idx);
+    card.addEventListener('click', open);
+    card.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); open(); }
+    });
+    grid.appendChild(card);
+  });
+}
+
+/* ---------------- LIGHTBOX ---------------- */
+const lightbox = document.getElementById('lightbox');
+const lbImg = document.getElementById('lb-img');
+const lbCaption = document.getElementById('lb-caption');
+
+function openLightbox(idx){
+  currentIndex = idx;
+  renderLightbox();
+  lightbox.classList.add('open');
+}
+function renderLightbox(){
+  const ex = currentList[currentIndex];
+  lbImg.src = ex.image;
+  lbImg.alt = `${ex.categoryLabel} ${ex.number}`;
+  lbCaption.textContent = `${ex.categoryLabel} · #${ex.number}`;
+}
+function closeLightbox(){ lightbox.classList.remove('open'); }
+document.getElementById('lb-close').addEventListener('click', closeLightbox);
+lightbox.addEventListener('click', (e) => { if(e.target === lightbox) closeLightbox(); });
+document.getElementById('lb-prev').addEventListener('click', () => {
+  currentIndex = (currentIndex - 1 + currentList.length) % currentList.length;
+  renderLightbox();
+});
+document.getElementById('lb-next').addEventListener('click', () => {
+  currentIndex = (currentIndex + 1) % currentList.length;
+  renderLightbox();
+});
+document.addEventListener('keydown', (e) => {
+  if(!lightbox.classList.contains('open')) return;
+  if(e.key === 'ArrowLeft') document.getElementById('lb-prev').click();
+  if(e.key === 'ArrowRight') document.getElementById('lb-next').click();
+  if(e.key === 'Escape') closeLightbox();
+});
+
+/* ---------------- SOLO CHESS: motor de juego ----------------
+   Reglas (confirmadas en el video de referencia "Solo Chess"):
+   - Las piezas se mueven como en ajedrez normal.
+   - Todo movimiento DEBE ser una captura (no hay movimientos "libres").
+   - No existe la regla de jaque.
+   - Se gana al quedar con una sola pieza sobre el tablero (la última atacante). */
+const PIECE_GLYPH = {P:'&#9823;', N:'&#9822;', B:'&#9821;', R:'&#9820;', Q:'&#9819;', K:'&#9818;'};
+const PIECE_NAME = {P:'Peón', N:'Caballo', B:'Alfil', R:'Torre', Q:'Dama', K:'Rey'};
+// Letra de pieza en notación algebraica EN ESPAÑOL (T/A/C/D/R), para el cuadro de
+// comandos — no confundir con las letras de PIECE_NAME arriba, que son en inglés
+// (las mismas que usa chess.js) y que el comando "p" ya usaba para "dónde está esa
+// pieza" antes de esto (p K, p Q, p R...). Ambos conviven porque nunca se escriben
+// juntos: "p" siempre pide una letra sola después de un espacio, una jugada
+// algebraica nunca lleva espacio.
+const SPANISH_PIECE_LETTER = {T:'R', A:'B', C:'N', D:'Q', R:'K'};
+const DIRS_ROOK = [[-1,0],[1,0],[0,-1],[0,1]];
+const DIRS_BISHOP = [[-1,-1],[-1,1],[1,-1],[1,1]];
+const DIRS_QUEEN = DIRS_ROOK.concat(DIRS_BISHOP);
+const KNIGHT_DELTAS = [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
+// El peón no tiene bando en este modo, pero SÍ tiene un sentido fijo: captura
+// solo hacia "arriba" (fila menor, como si fuera blanco), nunca hacia abajo
+// ni al costado — igual que un peón real, que tampoco puede retroceder.
+// Antes capturaba en las 4 diagonales (DIRS_BISHOP completo), lo que producía
+// posiciones que, jugadas como un peón de ajedrez de verdad, no tenían
+// solución real (ver entreno/data/reorder_por_dificultad.py y
+// generar_ejercicios.py, que aplican la misma regla al generar y validar
+// los ejercicios).
+const DIRS_PAWN = [[-1,-1],[-1,1]];
+
+function boardKey(r,c){ return r + ',' + c; }
+
+function slideTargets(r,c,dirs,board){
+  const out = [];
+  dirs.forEach(([dr,dc]) => {
+    let nr=r+dr, nc=c+dc;
+    while(nr>=0 && nr<4 && nc>=0 && nc<4){
+      if(board[boardKey(nr,nc)]){ out.push([nr,nc]); break; }
+      nr+=dr; nc+=dc;
+    }
+  });
+  return out;
+}
+
+function captureTargets(piece, r, c, board){
+  switch(piece){
+    case 'N':
+      return KNIGHT_DELTAS.map(([dr,dc]) => [r+dr,c+dc])
+        .filter(([nr,nc]) => nr>=0&&nr<4&&nc>=0&&nc<4&&board[boardKey(nr,nc)]);
+    case 'B': return slideTargets(r,c,DIRS_BISHOP,board);
+    case 'R': return slideTargets(r,c,DIRS_ROOK,board);
+    case 'Q': return slideTargets(r,c,DIRS_QUEEN,board);
+    case 'K':
+      return DIRS_QUEEN.map(([dr,dc]) => [r+dr,c+dc])
+        .filter(([nr,nc]) => nr>=0&&nr<4&&nc>=0&&nc<4&&board[boardKey(nr,nc)]);
+    case 'P':
+      return DIRS_PAWN.map(([dr,dc]) => [r+dr,c+dc])
+        .filter(([nr,nc]) => nr>=0&&nr<4&&nc>=0&&nc<4&&board[boardKey(nr,nc)]);
+    default: return [];
+  }
+}
+
+/* ---------------- Modo normal / Modo adaptado (lector de pantalla) ----------------
+   Mismo interruptor y misma clave de localStorage que la página Tablero
+   (oscarBlindMode_v1): activarlo una vez vale para todo el sitio. En modo normal el
+   tablero se navega igual (flechas + Intro/espacio) pero el panel de comandos de
+   texto y los atajos de una sola letra quedan ocultos/inactivos, para no chocar con
+   lo que alguien más espera del teclado ni ensuciar la pantalla de quien no los usa. */
+const BLIND_MODE_KEY = 'oscarBlindMode_v1';
+let blindMode = false;
+try{ blindMode = localStorage.getItem(BLIND_MODE_KEY) === '1'; }catch(e){}
+// El hub de Ciegos enlaza aquí con "?modo=ciego" (igual que Tablero): preselecciona
+// el modo adaptado sin que haya que tocar el interruptor a mano.
+if(new URLSearchParams(window.location.search).get('modo') === 'ciego'){
+  blindMode = true;
+  try{ localStorage.setItem(BLIND_MODE_KEY, '1'); }catch(e){}
+}
+
+/* Y al revés: si el modo se enciende desde otra pestaña o desde el botón de la
+   cabecera, esta página se entera en el momento. Sin esto quedaba media página
+   en un modo y media en el otro hasta recargar. Volver a llamar a
+   setBlindMode() es seguro: AdaptiveMode no vuelve a disparar el evento cuando
+   el modo ya es el que pide. */
+document.addEventListener('adaptivemode:change', (e) => {
+  const on = !!(e.detail && e.detail.activo);
+  if(on !== blindMode) setBlindMode(on);
+});
+const modeNormalBtn = document.getElementById('mode-normal-btn');
+const modeBlindBtn = document.getElementById('mode-blind-btn');
+const a11yPanel = document.getElementById('a11y-panel');
+
+// Botón "🗣️ Voz": el navegador lee en voz alta cada anuncio (además de lo que ya
+// lee un lector de pantalla real), para quien no tiene uno activado. Ver
+// js/blind-notation.js para el porqué es un complemento aparte, apagado por defecto.
+const refreshSpeechToggle = window.BlindNotation
+  ? window.BlindNotation.setupSpeechToggle('speech-toggle-btn', () => true)
+  : null;
+
+function applyBlindModeUI(){
+  if(a11yPanel) a11yPanel.hidden = !blindMode;
+  // La posición escrita y la ayuda plegada son del Modo Adaptado: quien ve el
+  // tablero ya tiene la posición delante, y un bloque de texto repitiéndola
+  // sería ruido. Van con `hidden`, no con sr-only: dentro llevan un <details>
+  // que recibe el foco del teclado, y una parada de tabulador invisible es
+  // peor que no tener el bloque.
+  const posEl = document.getElementById('position-readout');
+  if(posEl) posEl.hidden = !blindMode;
+  const ayuda = document.getElementById('ayuda-detalles');
+  if(ayuda) ayuda.hidden = !blindMode;
+  if(refreshSpeechToggle) refreshSpeechToggle();
+  if(modeNormalBtn){
+    modeNormalBtn.setAttribute('aria-pressed', blindMode ? 'false' : 'true');
+    modeNormalBtn.classList.toggle('active', !blindMode);
+  }
+  if(modeBlindBtn){
+    modeBlindBtn.setAttribute('aria-pressed', blindMode ? 'true' : 'false');
+    modeBlindBtn.classList.toggle('active', blindMode);
+  }
+  if(blindMode) announceHelpFirstTimeIfNeeded();
+}
+function setBlindMode(value){
+  blindMode = !!value;
+  /* La preferencia se guarda por js/adaptive-mode.js y no escribiendo la clave
+     a mano: además de guardarla, enciende la clase `adaptive-mode` del <html>
+     —de la que cuelgan el recuadro donde se escribe la jugada, los atajos del
+     tablero y el contraste alto— y avisa al resto de la página. Escrito a mano,
+     el botón se marcaba como activado y la mitad del modo no llegaba hasta
+     recargar, sin dar ningún error. */
+  if(window.AdaptiveMode) window.AdaptiveMode.set(blindMode);
+  else try{ localStorage.setItem(BLIND_MODE_KEY, blindMode ? '1' : '0'); }catch(e){}
+  applyBlindModeUI();
+  // Los aria-label de las casillas (pieceDescription) dependen de blindMode
+  // para decidir si usan la notación de columnas adaptada o el nombre real —
+  // hay que volver a dibujar el tablero para que el cambio de modo se note
+  // también ahí, no solo en la posición leída y los anuncios nuevos.
+  renderBoard();
+  if(blindMode) renderPositionReadout();
+}
+if(modeNormalBtn) modeNormalBtn.addEventListener('click', () => setBlindMode(false));
+if(modeBlindBtn) modeBlindBtn.addEventListener('click', () => setBlindMode(true));
+applyBlindModeUI();
+
+/* ---------------- Nombres de casilla estilo ajedrez (a1-d4) ----------------
+   Igual que en la página Tablero (a-h, 1-8) pero para un tablero de 4x4: columnas
+   a-d de izquierda a derecha, filas 1-4 de abajo hacia arriba (fila visual de
+   arriba = "4"). Se usan en los aria-label, los anuncios y los comandos de texto. */
+const COLS4 = ['a','b','c','d'];
+function squareName(r,c){ return COLS4[c] + (4 - r); }
+function squareToRC(sq){
+  const m = /^([a-dA-D])([1-4])$/.exec((sq || '').trim());
+  if(!m) return null;
+  return [4 - parseInt(m[2],10), COLS4.indexOf(m[1].toLowerCase())];
+}
+// squareName() sigue devolviendo el nombre real ("a1"): lo usan data-square
+// y las búsquedas por selector, y no debe cambiar. Para todo lo que SE DICE en
+// voz (aria-label, announce, cmdAnnounce) se usa esta versión, que en Modo
+// Adaptado convierte la columna a su nombre fonético (js/blind-notation.js).
+function squareSpokenStr(name){
+  return (blindMode && window.BlindNotation) ? window.BlindNotation.squareSpoken(name) : name;
+}
+function squareSpokenRC(r,c){ return squareSpokenStr(squareName(r,c)); }
+
+let boardState = {};       // {"r,c": pieceType}
+let selectedCell = null;   // [r,c] | null
+let focusedCell = [0,0];   // celda con el foco de teclado (roving tabindex)
+let boardCategory = null;  // 'FACIL' etc.
+let boardExList = [];      // lista de ejercicios de la categoría actual
+let boardExIndex = 0;      // índice dentro de boardExList
+let captureLog = [];       // capturas hechas en el intento actual: {fromSq,toSq,movedType,capturedType}
+let captureReviewIndex = null; // índice de "repaso" de capturas (shift+A/shift+D), solo narra
+
+/* `hablado` existe porque la voz y las regiones vivas no se reparten igual el texto.
+   El lector de pantalla lee DOS regiones —este anuncio y la lectura de la posición de
+   arriba—, así que la posición no puede ir en las dos o se oye dos veces. La voz del
+   navegador, en cambio, es una sola y `BlindNotation.speak()` CANCELA lo anterior al
+   empezar lo siguiente: dos llamadas seguidas se comen la primera. Por eso la voz
+   recibe todo junto en una sola frase, y las regiones se lo reparten. */
+function announce(text, hablado){
+  if(window.BlindNotation) window.BlindNotation.speak(hablado === undefined ? text : hablado);
+  const el = document.getElementById('board-announcer');
+  el.textContent = '';
+  /* pequeño retardo para que los lectores de pantalla noten el cambio
+     incluso si el texto es idéntico al anterior */
+  window.setTimeout(() => { el.textContent = text; }, 30);
+}
+
+/* `prefijo` es lo que se quiera decir ANTES del ejercicio ("Ejercicio reiniciado.").
+   Va por parámetro y no con un announce() aparte después: la voz del navegador cancela
+   lo anterior al empezar lo siguiente, así que un segundo anuncio se comía la posición
+   entera — al reiniciar solo se oía "Ejercicio reiniciado." y nunca qué había quedado
+   en el tablero, que es justo lo que hace falta para volver a empezar. */
+function loadPuzzleAt(exIndex, prefijo){
+  selectedCell = null;
+  focusedCell = [0,0];
+  captureLog = [];
+  captureReviewIndex = null;
+  document.getElementById('win-overlay').classList.remove('open');
+  boardExIndex = exIndex;
+  const ex = boardExList[exIndex];
+  const puz = puzzleForExercise(ex);
+  boardState = {};
+  puz.pieces.forEach(p => { boardState[boardKey(p.row,p.col)] = p.type; });
+
+  const solvedCount = countSolved(boardExList);
+  document.getElementById('solo-progress-text').textContent =
+    `${ex.categoryLabel} — Ejercicio ${ex.number} de ${boardExList.length}`;
+  document.getElementById('solo-solved-text').textContent = `${solvedCount} resueltos`;
+  document.getElementById('solo-progress-fill').style.width = `${Math.round(100*solvedCount/boardExList.length)}%`;
+
+  setStatus('Mueve una pieza para capturar otra. Gana al dejar 1 sola pieza.');
+  renderBoard();
+  updatePuzzleNavButtons();
+  // Al empezar el ejercicio hay que saber dónde está cada pieza, no solo cuántas
+  // quedan. Lo dice la lectura de arriba (#position-readout, región viva), que es
+  // la que el foco tiene al lado; este anuncio se queda SOLO con el número de
+  // ejercicio. Antes los dos decían la posición entera y se oía dos veces seguidas.
+  const cabecera = (prefijo ? prefijo + ' ' : '') + `Ejercicio ${ex.number} de ${boardExList.length}, ${ex.categoryLabel}.`;
+  renderPositionReadout();
+  announce(cabecera, `${cabecera} ${spokenPositionText()}`);
+  // En modo adaptado, el foco cae en "Piezas" (justo antes del tablero) en vez de
+  // quedarse en el botón que se acaba de tocar (Siguiente/Anterior/Reiniciar, que en
+  // el HTML quedan DESPUÉS del tablero) — así se llega directo, sin tener que ir a
+  // buscarlo con Tab, y ya desde ahí las flechas funcionan (ver el keydown de abajo).
+  if(blindMode) document.getElementById('piezas-heading').focus();
+}
+
+function setStatus(text){ document.getElementById('board-status').textContent = text; }
+
+function pieceDescription(r,c){
+  const piece = boardState[boardKey(r,c)];
+  return squareSpokenRC(r,c) + ', ' + (piece ? PIECE_NAME[piece] : 'vacío');
+}
+
+function renderBoard(){
+  const el = document.getElementById('board4');
+  el.innerHTML = '';
+  let legalTargets = [];
+  if(selectedCell){
+    const [sr,sc] = selectedCell;
+    legalTargets = captureTargets(boardState[boardKey(sr,sc)], sr, sc, boardState);
+  }
+  for(let r=0;r<4;r++){
+    for(let c=0;c<4;c++){
+      const sq = document.createElement('button');
+      const light = (r+c) % 2 === 0;
+      sq.type = 'button';
+      // En modo adaptado usa el par de colores de alto contraste elegido en
+      // Configuración (ver js/board-color-themes.js), en vez de los tonos de marca
+      // habituales del modo normal.
+      sq.className = 'sq ' + (blindMode ? (light ? 'light-adaptive' : 'dark-adaptive') : (light ? 'light' : 'dark'));
+      sq.setAttribute('data-square', squareName(r,c));
+      const piece = boardState[boardKey(r,c)];
+      const isSelected = !!(selectedCell && selectedCell[0]===r && selectedCell[1]===c);
+      const isTarget = legalTargets.some(([tr,tc]) => tr===r && tc===c);
+      if(piece){
+        sq.innerHTML = `<span class="piece" aria-hidden="true">${PIECE_GLYPH[piece]}</span>`;
+      }
+      if(isSelected) sq.classList.add('selected');
+      if(isTarget) sq.classList.add('target-capture');
+
+      let label = pieceDescription(r,c);
+      if(isSelected) label += ', seleccionada';
+      else if(isTarget) label += ', puedes capturar aquí';
+      sq.setAttribute('aria-label', label);
+
+      const isFocusCell = focusedCell[0]===r && focusedCell[1]===c;
+      sq.tabIndex = isFocusCell ? 0 : -1;
+
+      sq.addEventListener('click', () => { focusedCell=[r,c]; onSquareClick(r,c); });
+      sq.addEventListener('focus', () => { focusedCell = [r,c]; });
+      el.appendChild(sq);
+    }
+  }
+}
+
+function focusSquare(r,c){
+  focusedCell = [r,c];
+  const el = document.getElementById('board4');
+  const cell = el.querySelector('[data-square="' + squareName(r,c) + '"]');
+  if(cell){
+    el.querySelectorAll('.sq').forEach(s => s.tabIndex = -1);
+    cell.tabIndex = 0;
+    cell.focus();
+  }
+}
+
+// Con el foco en "Piezas" (ver loadPuzzleAt), cualquier flecha entra de una al
+// tablero en la casilla que estaba enfocada — sin esto, tocar una flecha ahí no
+// hace nada y haría falta un Tab más para llegar al tablero.
+document.getElementById('piezas-heading').addEventListener('keydown', (e) => {
+  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)){
+    e.preventDefault();
+    focusSquare(focusedCell[0], focusedCell[1]);
+  }
+});
+
+document.getElementById('board4').addEventListener('keydown', (e) => {
+  const [r,c] = focusedCell;
+  let nr=r, nc=c;
+  if(e.key === 'ArrowUp') nr = Math.max(0, r-1);
+  else if(e.key === 'ArrowDown') nr = Math.min(3, r+1);
+  else if(e.key === 'ArrowLeft') nc = Math.max(0, c-1);
+  else if(e.key === 'ArrowRight') nc = Math.min(3, c+1);
+  else if(e.key === 'Home') nc = 0;
+  else if(e.key === 'End') nc = 3;
+  else if(e.key === 'Enter' || e.key === ' '){
+    e.preventDefault();
+    onSquareClick(r,c);
+    return;
+  } else {
+    if(blindMode) handleBoardShortcutKey(e,r,c);
+    return;
+  }
+  e.preventDefault();
+  if(nr!==r || nc!==c){
+    focusSquare(nr,nc);
+    announce(pieceDescription(nr,nc));
+  }
+});
+
+function performCapture(r,c){
+  // Si la captura vino del recuadro de comandos (modo adaptado), el foco debe
+  // quedarse ahí — focusSquare() más abajo, en cambio, es lo correcto cuando la
+  // captura vino de un clic/tecla en el propio tablero (sigue la pieza que se
+  // movió). renderBoard() reconstruye todas las casillas: ese cambio tan grande
+  // del DOM es justo lo que hace que algunos lectores de pantalla salgan solos
+  // del "modo formulario" del recuadro si no se restaura el foco después.
+  const cmdInputEl = document.getElementById('cmd-input');
+  const cameFromInput = cmdInputEl && document.activeElement === cmdInputEl;
+  const [sr,sc] = selectedCell;
+  const key = boardKey(r,c);
+  const movingPiece = boardState[boardKey(sr,sc)];
+  const capturedPiece = boardState[key];
+  delete boardState[boardKey(sr,sc)];
+  boardState[key] = movingPiece;
+  selectedCell = null;
+  captureLog.push({fromSq: squareName(sr,sc), toSq: squareName(r,c), movedType: movingPiece, capturedType: capturedPiece});
+  captureReviewIndex = null;
+  renderBoard();
+  if(cameFromInput) cmdInputEl.focus();
+  else focusSquare(r,c);
+  // Después de cada captura se dice la posición completa, no solo cuántas piezas
+  // quedan: así no hace falta pulsar aparte "Z" para saber dónde quedó cada una.
+  // La posición la dice la lectura de arriba y NO este anuncio: son dos regiones
+  // vivas, y si las dos la llevaran se oiría dos veces seguidas.
+  const dicho = `${PIECE_NAME[movingPiece]} captura ${PIECE_NAME[capturedPiece]} en ${squareSpokenRC(r,c)}.`;
+  renderPositionReadout();
+  announce(dicho, `${dicho} ${spokenPositionText()}`);
+  checkWin();
+}
+
+function onSquareClick(r,c){
+  const key = boardKey(r,c);
+  const piece = boardState[key];
+  if(selectedCell){
+    const [sr,sc] = selectedCell;
+    if(sr===r && sc===c){
+      selectedCell = null;
+      renderBoard();
+      focusSquare(r,c);
+      announce('Selección cancelada.');
+      return;
+    }
+    const legal = captureTargets(boardState[boardKey(sr,sc)], sr, sc, boardState);
+    if(legal.some(([tr,tc]) => tr===r && tc===c)){
+      performCapture(r,c);
+      return;
+    }
+    if(piece){
+      selectedCell = [r,c];
+      renderBoard();
+      focusSquare(r,c);
+      const targets = captureTargets(piece, r, c, boardState);
+      announce(`${PIECE_NAME[piece]} seleccionado en ${squareSpokenRC(r,c)}. ${targets.length} captura${targets.length===1?'':'s'} posible${targets.length===1?'':'s'}.`);
+      return;
+    }
+    selectedCell = null;
+    renderBoard();
+    focusSquare(r,c);
+    announce('Esa casilla está vacía y no es una captura válida. Selección cancelada.');
+    return;
+  }
+  if(piece){
+    selectedCell = [r,c];
+    renderBoard();
+    focusSquare(r,c);
+    const targets = captureTargets(piece, r, c, boardState);
+    announce(`${PIECE_NAME[piece]} seleccionado en ${squareSpokenRC(r,c)}. ${targets.length} captura${targets.length===1?'':'s'} posible${targets.length===1?'':'s'}.`);
+  }
+}
+
+// Arrastrar y soltar piezas (además del clic-clic de siempre): ver js/board-drag.js.
+// Este tablero no usa casillas algebraicas como estado interno (usa [fila,columna]),
+// pero sí las expone en data-square (squareName) — así que el puente es solo convertir
+// esa casilla de vuelta a [r,c] con squareToRC() antes de llamar a lo de siempre.
+if(typeof enableBoardDrag !== 'undefined'){
+  enableBoardDrag(document.getElementById('board4'), {
+    isDraggable: (square) => {
+      const rc = squareToRC(square);
+      return !!(rc && boardState[boardKey(rc[0], rc[1])]);
+    },
+    isSelected: (square) => {
+      if(!selectedCell) return false;
+      const rc = squareToRC(square);
+      return !!(rc && selectedCell[0] === rc[0] && selectedCell[1] === rc[1]);
+    },
+    onSquareClick: (square) => {
+      const rc = squareToRC(square);
+      if(rc) onSquareClick(rc[0], rc[1]);
+    },
+  });
+}
+
+function checkWin(){
+  const remaining = Object.keys(boardState).length;
+  if(remaining <= 1){
+    const ex = boardExList[boardExIndex];
+    const puz = puzzleForExercise(ex);
+    markSolved(puz.id);
+    EntrenoProgress.log('4x4', { puzzle_id: puz.id, category: ex.category, number: ex.number });
+    setStatus('¡Resuelto!');
+    document.getElementById('win-overlay').classList.add('open');
+    updatePuzzleNavButtons(); // antes de decidir el foco: hace falta saber si "Siguiente" tiene a dónde ir
+    const winNextBtn = document.getElementById('win-next');
+    // En modo adaptado, el foco cae directo en "Siguiente" para poder pasar de ejercicio
+    // con solo presionar Enter, en vez de tener que ir a buscar el botón a mano. Si no
+    // hay otro ejercicio después (winNextBtn.disabled), se queda en "Reintentar" — un
+    // botón deshabilitado nunca debería quedarse con el foco.
+    if(blindMode && !winNextBtn.disabled) winNextBtn.focus();
+    else document.getElementById('win-retry').focus();
+    announce('¡Muy bien! Nivel completado.');
+    return;
+  }
+  const anyMove = Object.keys(boardState).some(k => {
+    const [r,c] = k.split(',').map(Number);
+    return captureTargets(boardState[k], r, c, boardState).length > 0;
+  });
+  if(!anyMove){
+    setStatus('No quedan capturas posibles. Pulsa "Reiniciar" para intentarlo de nuevo.');
+    announce('No quedan capturas posibles. Pulsa Reiniciar para intentarlo de nuevo.');
+  }
+}
+
+function updatePuzzleNavButtons(){
+  const prevBtn = document.getElementById('board-prev-puzzle');
+  const nextBtn = document.getElementById('board-next-puzzle');
+  const winNextBtn = document.getElementById('win-next');
+  // "Anterior" no se limita a la categoría actual: si ya es el primer ejercicio
+  // de la categoría, sigue habilitado mientras haya una categoría anterior para
+  // cruzar a su último ejercicio (ver el click de board-prev-puzzle más abajo).
+  prevBtn.disabled = boardExIndex <= 0 && !previousPlayableCategory(currentCategory);
+  const ex = boardExList[boardExIndex];
+  const puz = puzzleForExercise(ex);
+  const solvedNow = puz && isSolved(puz.id);
+  const hasNext = boardExIndex < boardExList.length - 1;
+  nextBtn.disabled = !hasNext || !solvedNow;
+  winNextBtn.disabled = !hasNext;
+}
+
+/* ---------------- Modo Adaptado: comandos de texto, dictado de posición y atajos
+   de teclado extra en el tablero enfocado — igual que en la página Tablero, adaptado
+   a un tablero de 4x4 de un solo "bando" donde toda jugada es una captura. ---------- */
+// `hablar` en false escribe el aviso pero no lo dice: sirve cuando la voz ya lo dijo
+// dentro de otra frase (ver loadPuzzleAt) y repetirlo cancelaría aquella.
+function cmdAnnounce(text, hablar){
+  if(hablar !== false && blindMode && window.BlindNotation) window.BlindNotation.speak(text);
+  const el = document.getElementById('cmd-status');
+  if(!el) return;
+  el.textContent = '';
+  window.setTimeout(() => { el.textContent = text; }, 50);
+}
+
+function joinSpanishList(items){
+  if(!items.length) return '';
+  if(items.length === 1) return items[0];
+  return items.slice(0,-1).join(', ') + ' y ' + items[items.length-1];
+}
+
+const PIECE_NAME_PLURAL = {P:'Peones', N:'Caballos', B:'Alfiles', R:'Torres', Q:'Damas', K:'Reyes'};
+const POSITION_ORDER = ['K','Q','R','B','N','P'];
+
+function piecesByType(){
+  const byType = {K:[], Q:[], R:[], B:[], N:[], P:[]};
+  Object.keys(boardState).forEach(key => {
+    const [r,c] = key.split(',').map(Number);
+    byType[boardState[key]].push(squareSpokenRC(r,c));
+  });
+  Object.keys(byType).forEach(t => byType[t].sort());
+  return byType;
+}
+
+// ---------- Comando "T" / tecla "Z" (dice la posición): dónde está cada pieza que queda ----------
+// Versión en texto plano de la posición, para hablarla con Modo Speech (BlindNotation)
+// donde haga falta — el propio #position-readout (aria-live) ya se lo anuncia solo a
+// quien usa un lector de pantalla real, pero eso no habla nada por sí mismo.
+function spokenPositionText(){
+  const byType = piecesByType();
+  const remaining = Object.keys(boardState).length;
+  const parts = [`${remaining} pieza${remaining===1?'':'s'} en el tablero.`];
+  POSITION_ORDER.forEach(t => {
+    if(byType[t].length) parts.push(`${byType[t].length===1 ? PIECE_NAME[t] : PIECE_NAME_PLURAL[t]}: ${joinSpanishList(byType[t])}.`);
+  });
+  return parts.join(' ');
+}
+function renderPositionReadout(){
+  const el = document.getElementById('position-readout');
+  if(!el) return;
+  const byType = piecesByType();
+  const remaining = Object.keys(boardState).length;
+  let html = `<p>${remaining} pieza${remaining===1?'':'s'} en el tablero.</p>`;
+  const lines = [];
+  POSITION_ORDER.forEach(t => {
+    if(byType[t].length) lines.push(`${byType[t].length===1 ? PIECE_NAME[t] : PIECE_NAME_PLURAL[t]}: ${joinSpanishList(byType[t])}`);
+  });
+  html += lines.length ? lines.map(l => `<p>${l}</p>`).join('') : '<p>Sin piezas.</p>';
+  // Se vacía primero y se repuebla con un pequeño retraso, igual que cmdAnnounce, para
+  // que repetir el comando "T" vuelva a anunciarse aunque la posición no haya cambiado.
+  el.innerHTML = '';
+  window.setTimeout(() => { el.innerHTML = html; }, 50);
+}
+// Comando "T" del recuadro de jugada y tecla "Z" con el tablero enfocado: ambos hacen
+// exactamente lo mismo, solo cambia cómo se llega — ver handleBoardShortcutKey().
+function announcePosition(){
+  renderPositionReadout();
+  if(blindMode && window.BlindNotation) window.BlindNotation.speak(spokenPositionText());
+}
+
+// ---------- Comando "p <letra>": dónde están las piezas de un tipo ----------
+function announcePieceType(letter){
+  const type = letter.toUpperCase();
+  if(!PIECE_NAME[type]){
+    cmdAnnounce(`No entendí "${letter}" como tipo de pieza. Usa K, Q, R, B, N o P.`);
+    return;
+  }
+  const squares = piecesByType()[type];
+  if(!squares.length){
+    cmdAnnounce(`No quedan ${PIECE_NAME_PLURAL[type].toLowerCase()} en el tablero.`);
+    return;
+  }
+  const label = squares.length === 1 ? PIECE_NAME[type] : PIECE_NAME_PLURAL[type];
+  cmdAnnounce(`${label}: ${joinSpanishList(squares)}.`);
+}
+
+// ---------- Comando "s <columna|fila>": piezas de una fila o columna ----------
+function announceLine(token){
+  const t = token.toLowerCase();
+  const cells = [];
+  let label;
+  if(/^[a-d]$/.test(t)){
+    label = 'Columna ' + t;
+    const c = COLS4.indexOf(t);
+    for(let r=0;r<4;r++) cells.push([r,c]);
+  } else if(/^[1-4]$/.test(t)){
+    label = 'Fila ' + t;
+    const r = 4 - parseInt(t,10);
+    for(let c=0;c<4;c++) cells.push([r,c]);
+  } else {
+    cmdAnnounce(`No entendí "${token}". Usa una letra de columna (a-d) o un número de fila (1-4).`);
+    return;
+  }
+  const found = cells.filter(([r,c]) => boardState[boardKey(r,c)])
+    .map(([r,c]) => `${PIECE_NAME[boardState[boardKey(r,c)]]} en ${squareSpokenRC(r,c)}`);
+  cmdAnnounce(found.length ? `${label}: ${found.join(', ')}.` : `${label}: sin piezas.`);
+}
+
+// ---------- Atajos del tablero enfocado: "o", "c"/"l", "m", "x"… ----------
+function describeCellContents(r,c){
+  return squareSpokenRC(r,c) + ': ' + (boardState[boardKey(r,c)] ? PIECE_NAME[boardState[boardKey(r,c)]] : 'vacía');
+}
+function announceCurrentSquare(r,c){
+  cmdAnnounce('Casilla ' + describeCellContents(r,c) + '.');
+}
+
+function describeCapture(entry, idx){
+  return `Captura ${idx+1}: ${PIECE_NAME[entry.movedType]} de ${squareSpokenStr(entry.fromSq)} a ${squareSpokenStr(entry.toSq)}, captura ${PIECE_NAME[entry.capturedType]}.`;
+}
+function announceLastCapture(){
+  if(!captureLog.length){ cmdAnnounce('Todavía no hiciste ninguna captura en este ejercicio.'); return; }
+  cmdAnnounce(describeCapture(captureLog[captureLog.length-1], captureLog.length-1));
+}
+
+function cellOffset(r,c,dc,dr){
+  const nr = r+dr, nc = c+dc;
+  if(nr<0 || nr>3 || nc<0 || nc>3) return null;
+  return [nr,nc];
+}
+const RAY_DIRS = [
+  [0,-1,'arriba'], [0,1,'abajo'], [-1,0,'izquierda'], [1,0,'derecha'],
+  [-1,-1,'arriba-izquierda'], [1,-1,'arriba-derecha'], [-1,1,'abajo-izquierda'], [1,1,'abajo-derecha'],
+];
+function announceSurroundings(r,c,mode){
+  if(mode === 'rays'){
+    const parts = [];
+    RAY_DIRS.forEach(([dc,dr,name]) => {
+      let cell = cellOffset(r,c,dc,dr);
+      let found = null;
+      while(cell){
+        if(boardState[boardKey(cell[0],cell[1])]){ found = cell; break; }
+        cell = cellOffset(cell[0],cell[1],dc,dr);
+      }
+      if(found) parts.push(`${name}: ${PIECE_NAME[boardState[boardKey(found[0],found[1])]]} en ${squareSpokenRC(found[0],found[1])}`);
+    });
+    cmdAnnounce(parts.length ? `Piezas más cercanas desde ${squareSpokenRC(r,c)} — ${parts.join('; ')}.` : `No hay piezas en ninguna dirección desde ${squareSpokenRC(r,c)}.`);
+    return;
+  }
+  const dirs = mode === 'ring' ? RAY_DIRS : RAY_DIRS.slice(0,4);
+  const parts = [];
+  dirs.forEach(([dc,dr]) => {
+    const cell = cellOffset(r,c,dc,dr);
+    if(cell) parts.push(describeCellContents(cell[0],cell[1]));
+  });
+  cmdAnnounce(parts.length ? `Alrededor de ${squareSpokenRC(r,c)} — ${parts.join('; ')}.` : `${squareSpokenRC(r,c)} no tiene casillas vecinas en el tablero.`);
+}
+
+// "k q r b n p": mueve el foco a la siguiente pieza de ese tipo; mayúscula invierte el orden.
+function findNextPieceSquare(type, fromRC, forward){
+  const squares = [];
+  for(let r=0;r<4;r++) for(let c=0;c<4;c++) squares.push([r,c]);
+  const idx = squares.findIndex(([r,c]) => r===fromRC[0] && c===fromRC[1]);
+  const n = squares.length;
+  if(idx === -1) return null;
+  for(let step=1; step<=n; step++){
+    const i = forward ? (idx+step)%n : (idx-step+n)%n;
+    const [r,c] = squares[i];
+    if(boardState[boardKey(r,c)] === type) return [r,c];
+  }
+  return null;
+}
+
+// "shift+a"/"shift+d": repasa las capturas hechas hacia atrás/adelante narrándolas,
+// sin cambiar el tablero (solo lectura, para repasar el intento).
+function stepCaptureReview(direction){
+  if(!captureLog.length){ cmdAnnounce('Todavía no hiciste ninguna captura en este ejercicio.'); return; }
+  if(captureReviewIndex === null) captureReviewIndex = captureLog.length - 1;
+  captureReviewIndex = Math.max(0, Math.min(captureLog.length-1, captureReviewIndex + direction));
+  cmdAnnounce(describeCapture(captureLog[captureReviewIndex], captureReviewIndex) + ` (captura ${captureReviewIndex+1} de ${captureLog.length})`);
+}
+
+// Despacha los atajos de una sola tecla del tablero enfocado (solo en Modo Adaptado).
+// Ignora combinaciones con Ctrl/Meta para no chocar con atajos del navegador.
+function handleBoardShortcutKey(e, r, c){
+  if(e.ctrlKey || e.metaKey) return;
+  const k = e.key;
+  if(k.length !== 1) return;
+  const lower = k.toLowerCase();
+
+  if(!e.shiftKey && !e.altKey && lower === 'i'){
+    e.preventDefault();
+    const inp = document.getElementById('cmd-input');
+    if(inp) inp.focus();
+    return;
+  }
+  if(!e.shiftKey && !e.altKey && lower === 'o'){
+    e.preventDefault();
+    announceCurrentSquare(r,c);
+    return;
+  }
+  if(!e.shiftKey && !e.altKey && lower === 'z'){
+    e.preventDefault();
+    announcePosition();
+    return;
+  }
+  if(!e.shiftKey && !e.altKey && (lower === 'c' || lower === 'l')){
+    e.preventDefault();
+    announceLastCapture();
+    return;
+  }
+  if(!e.altKey && lower === 'm'){
+    e.preventDefault();
+    const piece = boardState[boardKey(r,c)];
+    if(!piece){ cmdAnnounce(`La casilla ${squareSpokenRC(r,c)} está vacía.`); return; }
+    const targets = captureTargets(piece, r, c, boardState);
+    if(!targets.length){ cmdAnnounce(`${PIECE_NAME[piece]} en ${squareSpokenRC(r,c)} no tiene capturas posibles ahora mismo.`); return; }
+    cmdAnnounce(`${PIECE_NAME[piece]} en ${squareSpokenRC(r,c)} puede capturar en: ${joinSpanishList(targets.map(([tr,tc]) => squareSpokenRC(tr,tc)))}.`);
+    return;
+  }
+  if(!e.altKey && lower === 'x'){
+    e.preventDefault();
+    announceSurroundings(r,c, k === 'X' ? 'ring' : 'adjacent');
+    return;
+  }
+  if(e.altKey && !e.shiftKey && lower === 'x'){
+    e.preventDefault();
+    announceSurroundings(r,c,'rays');
+    return;
+  }
+  if(e.shiftKey && !e.altKey && (lower === 'a' || lower === 'd')){
+    e.preventDefault();
+    stepCaptureReview(lower === 'a' ? -1 : 1);
+    return;
+  }
+  if(!e.altKey && 'kqrbnp'.indexOf(lower) !== -1){
+    e.preventDefault();
+    const forward = k === lower; // minúscula = adelante, mayúscula = invierte el orden
+    const next = findNextPieceSquare(lower.toUpperCase(), [r,c], forward);
+    if(next){
+      focusSquare(next[0], next[1]);
+      cmdAnnounce(PIECE_NAME[boardState[boardKey(next[0],next[1])]] + ' en ' + squareSpokenRC(next[0],next[1]) + '.');
+    } else {
+      cmdAnnounce(`No hay ${PIECE_NAME_PLURAL[lower.toUpperCase()].toLowerCase()} en el tablero.`);
+    }
+    return;
+  }
+  if(!e.shiftKey && !e.altKey && e.code && e.code.indexOf('Digit') === 0){
+    const digit = e.code.slice(5);
+    if(digit >= '1' && digit <= '4'){
+      e.preventDefault();
+      const nr = 4 - Number(digit);
+      if(nr !== r){ focusSquare(nr,c); announceCurrentSquare(nr,c); }
+    }
+    return;
+  }
+  if(e.shiftKey && !e.altKey && e.code && e.code.indexOf('Digit') === 0){
+    const digit = e.code.slice(5);
+    if(digit >= '1' && digit <= '4'){
+      e.preventDefault();
+      const nc = Number(digit) - 1;
+      if(nc !== c){ focusSquare(r,nc); announceCurrentSquare(r,nc); }
+    }
+    return;
+  }
+}
+
+// ---------- Comando "ayuda" (recuadro de jugada): recuerda cómo escribir jugadas y
+// comandos. Es la única fuente de estas instrucciones — el párrafo visible que había
+// antes junto al recuadro (#cmd-help) se anunciaba completo cada vez que el foco volvía
+// ahí (con aria-describedby), es decir, después de CADA jugada. Ahora se anuncia una
+// sola vez (ver announceHelpFirstTimeIfNeeded) y queda disponible bajo demanda con este
+// comando, sin repetirse sola.
+//
+// Además, en vez de un solo bloque de texto corrido, se arma con encabezados reales
+// (h2 > h3, uno por sección) — igual que renderPositionReadout() ya hace con "Piezas >
+// Blancas/Negras" — para poder saltar directo con las teclas de encabezado del lector
+// de pantalla a la sección que hace falta, sin tener que escuchar de nuevo lo que ya no
+// hace falta repetir. ----------
+const HELP_SECTIONS = [
+  {
+    title: 'Cómo se juega',
+    text:
+      'Tablero de 4 filas por 4 columnas, en solitario. Las columnas se llaman a, b, c, d y las filas ' +
+      '1 a 4 (por ejemplo, a1). Con el tablero enfocado, las flechas mueven entre casillas; Intro o espacio ' +
+      'sobre una casilla con pieza la selecciona y anuncia dónde puede capturar, y otra vez Intro o espacio ' +
+      'sobre una de esas casillas hace la captura. Cada movimiento tiene que ser una captura y no existe la ' +
+      'regla de jaque. El peón siempre captura hacia arriba (como si fuera blanco), nunca hacia abajo ni al ' +
+      'costado. Ganas el ejercicio al dejar una sola pieza sobre el tablero.',
+  },
+  {
+    title: 'Cómo escribir una jugada',
+    text:
+      'Casilla de origen y de destino, por ejemplo "a1 b2" o "a1xb2" (columnas a-d, filas 1-4). ' +
+      'También en notación algebraica, solo con la casilla de destino: T=Torre, A=Alfil, C=Caballo, D=Dama, R=Rey ' +
+      '(sin letra es Peón) — por ejemplo "Ta3" o "Txa3" (la "x" es opcional: toda jugada aquí es una captura). ' +
+      'Si hay más de una pieza de ese tipo que puede capturar ahí, se pide la casilla de origen y destino en su lugar. ' +
+      'El peón siempre captura hacia arriba (como si fuera blanco): nunca hacia abajo ni al costado.',
+  },
+  {
+    title: 'Comandos',
+    text:
+      'L o last (última captura), T (posición completa), b o board seguido de una casilla (ir ahí, por ejemplo a1), ' +
+      'p seguido de una letra K, Q, R, B, N o P (dónde está esa pieza), s seguido de una columna a-d o fila 1-4 ' +
+      '(piezas en esa línea), reiniciar (empezar de nuevo este ejercicio), ayuda (esta lista).',
+  },
+  {
+    title: 'Atajos con el tablero enfocado',
+    text:
+      'i (ir al recuadro de jugada), o (casilla actual), z (posición completa, en voz — igual que el comando T), ' +
+      'c o l (última captura), m (capturas posibles), ' +
+      'flechas (moverse), k q r b n p (saltar a la siguiente pieza de ese tipo; mayúscula invierte el orden), ' +
+      'números 1-4 (ir a esa fila), shift+1-4 (ir a esa columna), x, shift+x o alt+x (piezas alrededor), ' +
+      'shift+a y shift+d (repasar capturas anteriores/siguientes).',
+  },
+];
+
+/* El cuerpo de la ayuda. `abrir` lo pide el comando "ayuda" y la primera vez que se
+   enciende el modo: sin eso el texto queda dentro de un <details> cerrado, o sea fuera
+   del árbol de accesibilidad, y la región viva no anunciaría nada. El vaciar y
+   repoblar con un retraso es el mismo truco de renderPositionReadout(): pedir "ayuda"
+   dos veces seguidas tiene que volver a leerla aunque el texto sea el mismo. */
+function renderHelpReadout(abrir){
+  const el = document.getElementById('cmd-help');
+  if(!el) return;
+  const detalles = document.getElementById('ayuda-detalles');
+  let html = '';
+  HELP_SECTIONS.forEach((section) => {
+    html += `<h3>${section.title}</h3><p>${section.text}</p>`;
+  });
+  if(!abrir){ el.innerHTML = html; return; }
+  if(detalles) detalles.open = true;
+  el.innerHTML = '';
+  window.setTimeout(() => { el.innerHTML = html; }, 50);
+}
+
+function announceHelp(){
+  renderHelpReadout(true);
+  // Para quien tiene el Modo Speech activado (ver js/blind-notation.js), se lee todo
+  // seguido en voz — la navegación sección por sección es cosa del lector de pantalla
+  // real, que sí puede saltar entre los encabezados de arriba.
+  if(window.BlindNotation){
+    window.BlindNotation.speak('Ayuda. ' + HELP_SECTIONS.map((s) => s.title + '. ' + s.text).join(' '));
+  }
+}
+
+// La ayuda se escribe apenas se puede, aunque esté plegada: si solo se escribiera al
+// pedirla con el comando, abrir el desplegable a mano mostraría una caja vacía. Va acá
+// y no junto a applyBlindModeUI() porque HELP_SECTIONS es un `const` de más abajo: allá
+// arriba todavía está en su zona muerta y la llamada tiraba la página entera.
+renderHelpReadout(false);
+
+/* La primera vez que alguien activa el modo adaptado EN ESTE NAVEGADOR se dice UNA
+   línea: dónde se contesta y cómo pedir el resto. Antes se leían las instrucciones
+   enteras —cuatro secciones— y eso es justo lo que no se quiere de entrada: quien
+   llega a un ejercicio quiere saber qué hay en el tablero y contestarlo, no escuchar
+   el manual. El manual sigue estando, plegado y a un encabezado de distancia, y el
+   comando "ayuda" lo abre y lo lee. */
+const HELP_SHOWN_KEY = 'oscarMoveHelpShown4x4_v1';
+function announceHelpFirstTimeIfNeeded(){
+  let shown = false;
+  try{ shown = localStorage.getItem(HELP_SHOWN_KEY) === '1'; }catch(e){}
+  if(shown) return;
+  try{ localStorage.setItem(HELP_SHOWN_KEY, '1'); }catch(e){}
+  window.setTimeout(() => {
+    announce('Modo adaptado. Escribe tu jugada en el recuadro de abajo. Escribe "ayuda" para las reglas, los comandos y los atajos.');
+  }, 400);
+}
+
+function handleCmdFormSubmit(e){
+  e.preventDefault();
+  const input = document.getElementById('cmd-input');
+  if(!input) return;
+  const raw = input.value;
+  const trimmed = raw.trim();
+  if(!trimmed) return;
+  const upper = trimmed.toUpperCase();
+
+  if(upper === 'L' || upper === 'LAST'){ input.value=''; announceLastCapture(); return; }
+  if(upper === 'T'){ input.value=''; announcePosition(); return; }
+  if(upper === 'AYUDA' || upper === 'HELP' || upper === '?'){ input.value=''; announceHelp(); return; }
+  if(upper === 'REINICIAR' || upper === 'RESET'){
+    input.value = '';
+    loadPuzzleAt(boardExIndex, 'Ejercicio reiniciado.');
+    cmdAnnounce('Ejercicio reiniciado.', false);
+    return;
+  }
+
+  const tokens = trimmed.split(/\s+/);
+  const cmd0 = tokens[0].toUpperCase();
+  if(cmd0 === 'B' || cmd0 === 'BOARD'){
+    input.value = '';
+    const targetRaw = tokens[1];
+    const rc = targetRaw ? squareToRC(targetRaw) : null;
+    if(!rc){ cmdAnnounce(`Casilla inválida: "${targetRaw || ''}".`); return; }
+    focusSquare(rc[0], rc[1]);
+    announceCurrentSquare(rc[0], rc[1]);
+    return;
+  }
+  if(cmd0 === 'P' && tokens.length >= 2 && /^[a-zA-Z]$/.test(tokens[1])){
+    input.value = '';
+    announcePieceType(tokens[1]);
+    return;
+  }
+  if(cmd0 === 'S' && tokens.length >= 2 && /^[a-d1-4]$/i.test(tokens[1])){
+    input.value = '';
+    announceLine(tokens[1]);
+    return;
+  }
+
+  // Jugada escrita: casilla de origen y de destino ("a1 b2", "a1xb2", "a1-b2").
+  const moveMatch = /^([a-dA-D][1-4])\s*[x\-,]?\s*([a-dA-D][1-4])$/.exec(trimmed);
+  if(moveMatch){
+    input.value = '';
+    const fromRC = squareToRC(moveMatch[1]);
+    const toRC = squareToRC(moveMatch[2]);
+    const piece = boardState[boardKey(fromRC[0],fromRC[1])];
+    if(!piece){ cmdAnnounce(`La casilla ${squareSpokenStr(moveMatch[1].toLowerCase())} está vacía.`); return; }
+    const legal = captureTargets(piece, fromRC[0], fromRC[1], boardState);
+    if(!legal.some(([tr,tc]) => tr===toRC[0] && tc===toRC[1])){
+      cmdAnnounce(`${PIECE_NAME[piece]} en ${squareSpokenStr(moveMatch[1].toLowerCase())} no puede capturar en ${squareSpokenStr(moveMatch[2].toLowerCase())}.`);
+      return;
+    }
+    selectedCell = fromRC;
+    focusedCell = fromRC;
+    performCapture(toRC[0], toRC[1]);
+    return;
+  }
+
+  // Jugada en notación algebraica (más fluida: sin escribir la casilla de origen).
+  // Pieza en español (T=Torre, A=Alfil, C=Caballo, D=Dama, R=Rey; sin letra = Peón)
+  // + casilla de destino, con una "x" opcional antes — por ejemplo "Ta3" o "Txa3".
+  // Como en este tablero TODA jugada es una captura, la "x" es solo decorativa: no
+  // hace falta escribirla para que la jugada se reconozca.
+  const algMatch = /^([TADCRtadcr])?[xX]?([a-dA-D][1-4])$/.exec(trimmed);
+  if(algMatch){
+    input.value = '';
+    const letter = algMatch[1] ? algMatch[1].toUpperCase() : null;
+    const type = letter ? SPANISH_PIECE_LETTER[letter] : 'P';
+    const toRC = squareToRC(algMatch[2]);
+    const destSpoken = squareSpokenStr(algMatch[2].toLowerCase());
+    const candidates = Object.keys(boardState)
+      .filter((key) => boardState[key] === type)
+      .map((key) => key.split(',').map(Number))
+      .filter(([r,c]) => captureTargets(boardState[boardKey(r,c)], r, c, boardState).some(([tr,tc]) => tr===toRC[0] && tc===toRC[1]));
+    if(!candidates.length){
+      cmdAnnounce(`No hay ninguna pieza de tipo ${PIECE_NAME[type]} que pueda capturar en ${destSpoken}.`);
+      return;
+    }
+    if(candidates.length > 1){
+      const spokenFroms = candidates.map(([r,c]) => squareSpokenRC(r,c)).join(', ');
+      const exampleFrom = squareName(candidates[0][0], candidates[0][1]);
+      cmdAnnounce(
+        `Hay más de una pieza de tipo ${PIECE_NAME[type]} que puede capturar en ${destSpoken} (${spokenFroms}). ` +
+        `Escribe la casilla de origen y destino, por ejemplo "${exampleFrom} ${algMatch[2].toLowerCase()}".`
+      );
+      return;
+    }
+    const [fromR, fromC] = candidates[0];
+    selectedCell = [fromR, fromC];
+    focusedCell = [fromR, fromC];
+    performCapture(toRC[0], toRC[1]);
+    return;
+  }
+
+  cmdAnnounce(`No se entendió "${trimmed}". Escribe "ayuda" para ver los comandos.`);
+}
+
+function speakableCaptureList(){
+  if(!captureLog.length) return 'Todavía no hiciste ninguna captura en este ejercicio.';
+  return captureLog.map((entry,i) => describeCapture(entry,i)).join(' ');
+}
+function announceCaptureHistory(){
+  const el = document.getElementById('repeat-captures-status');
+  if(!el) return;
+  const text = speakableCaptureList();
+  el.textContent = '';
+  window.setTimeout(() => { el.textContent = text; }, 50);
+}
+
+const cmdFormEl = document.getElementById('cmd-form');
+if(cmdFormEl) cmdFormEl.addEventListener('submit', handleCmdFormSubmit);
+const repeatCapturesBtn = document.getElementById('repeat-captures-btn');
+if(repeatCapturesBtn) repeatCapturesBtn.addEventListener('click', announceCaptureHistory);
+
+document.getElementById('board-reset').addEventListener('click', () => {
+  loadPuzzleAt(boardExIndex, 'Ejercicio reiniciado.');
+});
+document.getElementById('win-retry').addEventListener('click', () => loadPuzzleAt(boardExIndex));
+document.getElementById('board-prev-puzzle').addEventListener('click', () => {
+  if(boardExIndex > 0){
+    loadPuzzleAt(boardExIndex - 1);
+    return;
+  }
+  // Primer ejercicio de la categoría: cruzar a la categoría anterior y mostrar
+  // su último ejercicio (solo para ver — no hace falta tenerla resuelta).
+  const prev = previousPlayableCategory(currentCategory);
+  if(!prev) return;
+  currentCategory = prev.cat;
+  setActiveTab(prev.cat);
+  boardExList = prev.list;
+  loadPuzzleAt(prev.list.length - 1);
+});
+document.getElementById('board-next-puzzle').addEventListener('click', () => {
+  if(boardExIndex < boardExList.length - 1) loadPuzzleAt(boardExIndex + 1);
+});
+document.getElementById('win-next').addEventListener('click', () => {
+  /* Al resolver, el ejercicio siguiente recién queda desbloqueado: se
+     vuelve a montar la categoría para que, si era el último, aparezca
+     la pantalla de "completado". */
+  showCategory(currentCategory);
+});
+
+// Entrenamiento exige sesión iniciada en el sitio (Academia) — así el
+// progreso de cada quien queda guardado y visible para el profesor en
+// Informes.
+//
+// Se llama hasta el final del script, ya que unlock()/initApp() dependen
+// de variables (como appInitialized) que solo existen una vez que el resto
+// del script ya se ejecutó.
+async function requireLoginThenGate(){
+  let hasSession = false;
+  try {
+    const { data } = await sb.auth.getSession();
+    hasSession = !!(data && data.session);
+  } catch (e) {
+    hasSession = false;
+  }
+  if(!hasSession){
+    gateChecking.textContent = 'Necesitas iniciar sesión en el sitio para entrar a Entrenamiento. Redirigiendo a iniciar sesión…';
+    window.location.href = '../login.html?next=' + encodeURIComponent(NEXT_PATH);
+    return;
+  }
+  gateChecking.classList.add('hidden');
+  unlock();
+}
+
+requireLoginThenGate();
+
+/* Coordenadas del tablero (js/coordenadas-tablero.js): la letra de columna abajo
+   y el número de fila a la izquierda, para que se entienda hacia dónde avanza la
+   posición. Se repintan solas cada vez que la página redibuja el tablero. */
+if (window.Coordenadas) Coordenadas.aplicar(document.getElementById('board4'));
