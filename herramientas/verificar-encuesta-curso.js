@@ -126,6 +126,9 @@ async function pruebaPublica(browser) {
   igual("la escala dice el número y la palabra, y tiene «No sé»",
     await page.evaluate(() => [...document.querySelectorAll('#q-ritmo label')].map((l) => l.textContent)),
     ["1, Nada de acuerdo", "2, Poco de acuerdo", "3, Más o menos", "4, Bastante de acuerdo", "5, Totalmente de acuerdo", "No sé o no llegué a verlo"]);
+  igual("las seis frases de la forma de enseñar empiezan con «El profesor»",
+    await page.evaluate(() => [...document.querySelectorAll("#form section:nth-of-type(2) fieldset legend")].map((l) => /^Pregunta \d+ de 14\. El profesor /.test(l.textContent))),
+    [true, true, true, true, true, true]);
   igual("nada con tabindex positivo (rompe el orden del teclado)", await page.evaluate(() => document.querySelectorAll('[tabindex]:not([tabindex="-1"]):not([tabindex="0"])').length), 0);
 
   // Enviar vacía: no viaja nada, el resumen toma el foco y dice cuántas faltan.
