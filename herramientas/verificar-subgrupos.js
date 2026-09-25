@@ -8,6 +8,9 @@
       grupos y deja SOLO a los suyos.
    4. Tareas y Exámenes: elegir un subgrupo marca a los suyos y desmarca al
       resto.
+   5. El subgrupo de un equipo (lo arma la base para cada entrenador): se ve,
+      pero no se ofrece renombrarlo, borrarlo ni cambiarle la gente, y sí
+      sirve para marcar en Tareas.
 
    Existe porque todo lo de acá se rompe callado. Un "guardar" que mandara la
    lista entera borraría y reinsertaría a todo el mundo, y un filtro que no
@@ -266,6 +269,50 @@ async function pruebaFiltroInformes(browser) {
   await page.close();
 }
 
+/* El subgrupo de un equipo lo mantiene la base (los triggers de
+   equipo_se_ve_como_subgrupo) y sus políticas no dejan tocarlo a mano. Si la
+   pantalla ofreciera renombrarlo o marcar casillas, el botón no haría nada:
+   el update vuelve con 0 filas y sin error, y la página diría «Listo». */
+const DE_EQUIPO = { id: "sg-eq", nombre: "Sub-12", alumnos: ["u-bruno", "u-cami"], cuantos: 2, equipo_id: "eq-1" };
+const CON_EQUIPO = `mis_subgrupos: ${JSON.stringify([...SUBGRUPOS, DE_EQUIPO])},`;
+
+async function pruebaEquipo(browser) {
+  console.log("\n=== El subgrupo de un equipo ===");
+  const { page, errores } = await abrir(browser, "subgrupos.html", PROFE, CON_EQUIPO);
+  await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
+
+  const tarjeta = page.locator('#lista [data-equipo="eq-1"]');
+  igual("se ve, con su nombre y que es de un equipo",
+    (await tarjeta.locator("p").first().textContent()).replace(/\s+/g, " ").trim(), "Sub-12 Equipo");
+  igual("no se ofrece renombrarlo", await tarjeta.locator("input").count(), 0);
+  igual("ni borrarlo", await tarjeta.locator("button", { hasText: "Borrar" }).count(), 0);
+  igual("los propios siguen editables",
+    await page.evaluate(() => document.querySelectorAll("#lista input[type=text]").length), 2);
+
+  await tarjeta.locator("button", { hasText: "Quiénes están" }).click();
+  await page.waitForTimeout(200);
+  igual("abierto, dice quiénes están",
+    await tarjeta.locator("li").allTextContents(), ["Bruno Mena · 7B", "Camila Ñúñez · 7B"]);
+  igual("sin casillas", await tarjeta.locator("input[type=checkbox]").count(), 0);
+  igual("ni botón de guardar", await tarjeta.locator("button", { hasText: "Guardar" }).count(), 0);
+  igual("y el botón dice que está abierto",
+    await tarjeta.locator("button").first().getAttribute("aria-expanded"), "true");
+
+  if (errores.length) { console.log("  ✗ errores en la página: " + errores.join(" | ")); fallos += 1; }
+  await page.close();
+
+  console.log("\n=== El subgrupo de un equipo en Tareas ===");
+  const t = await abrir(browser, "tareas.html", PROFE, CON_EQUIPO);
+  await t.page.waitForSelector("#subgrupo-marcar", { timeout: 20000 });
+  await t.page.selectOption("#subgrupo-marcar", "sg-eq");
+  await t.page.waitForTimeout(200);
+  igual("elegirlo marca a la gente del equipo",
+    await t.page.evaluate(() => [...document.querySelectorAll(".alumno-check")].map((c) => c.checked)),
+    [false, true, true]);
+  if (t.errores.length) { console.log("  ✗ errores en la página: " + t.errores.join(" | ")); fallos += 1; }
+  await t.page.close();
+}
+
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
@@ -274,6 +321,7 @@ async function pruebaFiltroInformes(browser) {
     await pruebaMarcar(browser, "tareas.html");
     await pruebaMarcar(browser, "examenes.html");
     await pruebaFiltroInformes(browser);
+    await pruebaEquipo(browser);
   } finally {
     await browser.close();
   }
