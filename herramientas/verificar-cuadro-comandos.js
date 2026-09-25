@@ -507,6 +507,10 @@ async function pruebaFueraDelModo(browser) {
   igual("el cuadro se monta igual (el modo se enciende sin repintar)", r.montado, "true");
   igual("pero no se ve", r.display, "none");
   igual("y su campo no recibe el foco de nadie", r.inputVisible, "false");
+  // La prueba se sortea: la pregunta puede ser de casilla o de jugada, que no
+  // tienen opciones, y entonces no habría letras que mirar (pasaba en una de
+  // cada trece corridas, más o menos). Se avanza hasta una de opciones.
+  igual("hay una pregunta de opciones para mirar", await irHasta(page, "opcion"), "true");
   igual("las letras de las opciones están siempre, no solo en Adaptado",
     await page.evaluate(() => {
       const b = [...document.querySelectorAll("#q-options button")].find((x) => x.id !== "no-se-btn");
