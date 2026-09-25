@@ -415,7 +415,7 @@ async function pruebaDiagnostico(browser) {
   await ctx.close();
 }
 
-/* Las preguntas de casilla son 2 de las 301 del banco: una prueba sorteada al
+/* Las preguntas de casilla son 2 de las 583 del banco: una prueba sorteada al
    azar casi nunca trae una, y dejarlo al azar es dejar ese camino sin probar
    —que es como no tenerlo—. Se siembra el estado guardado con esos dos ítems:
    la página los toma al retomar la prueba, que es un camino suyo de verdad y no
@@ -430,7 +430,7 @@ async function pruebaCasilla(browser) {
   await ctx.addInitScript(() => {
     localStorage.setItem("oscarBlindMode_v1", "1");
     localStorage.setItem("diagnostico_estado_v1", JSON.stringify({
-      version: 4,
+      version: 5,
       estado: { perfil: {}, idx: 0, respuestas: {}, items: ["fin_oposicion", "cal_jaque_doble"] },
     }));
   });

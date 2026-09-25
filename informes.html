@@ -2183,11 +2183,14 @@
 
         function barrasAreasHTML(resumen) {
             return resumen.porArea.map((a) => {
-                const color = a.porcentaje >= 80 ? "bg-green-500" : a.porcentaje >= 60 ? "bg-accent-500" : "bg-red-500";
+                // La banda sale de la nota (PlanEntrenamiento.notaDeArea): en los
+                // diagnósticos nuevos, cómo rinde el área respecto de su fuerza.
+                const nota = typeof a.nota === "number" ? a.nota : a.porcentaje;
+                const color = nota >= 80 ? "bg-green-500" : nota >= 60 ? "bg-accent-500" : "bg-red-500";
                 return `<div>
                     <div class="flex items-center justify-between gap-3 text-sm mb-1">
                         <span class="font-medium text-brand-700 dark:text-brand-200">${a.emoji} ${a.nombre}</span>
-                        <span class="text-brand-500 dark:text-brand-300">${a.aciertos}/${a.total} · ${a.porcentaje}%${a.nosabe ? ` · 🤔 ${a.nosabe}` : ""}</span>
+                        <span class="text-brand-500 dark:text-brand-300">${a.aciertos}/${a.total} · ${a.porcentaje}%${typeof a.esperado === "number" ? ` (esperable ${a.esperado}%)` : ""} · ${PE.bandaDeNota(nota).etiqueta}${a.nosabe ? ` · 🤔 ${a.nosabe}` : ""}</span>
                     </div>
                     <div class="w-full h-2 bg-brand-100 dark:bg-brand-800 rounded-full overflow-hidden"><div class="h-full ${color}" style="width:${a.porcentaje}%"></div></div>
                 </div>`;
@@ -2206,10 +2209,12 @@
 
         function eloLineaHTML(resumen, propio) {
             const e = resumen.elo || {};
+            // Desde la versión 5 la prueba trae su margen de error («≈1720 ± 110»).
+            const m = (v, err) => err ? `≈${v} ± ${err}` : `≈${v}`;
             if (e.declarado) {
-                return `<p class="text-xs text-brand-600 dark:text-brand-300 mt-2"><strong>Elo ${e.declarado}</strong> (${e.tipoEtiqueta}) · la prueba sugiere ≈${e.estimado} · nivel calculado con ambos (≈${e.combinado}). ${e.lectura.texto}</p>`;
+                return `<p class="text-xs text-brand-600 dark:text-brand-300 mt-2"><strong>Elo ${e.declarado}</strong> (${e.tipoEtiqueta}) · la prueba sugiere ${m(e.estimado, e.error)} · nivel calculado con ambos (${m(e.combinado, e.errorCombinado)}). ${e.lectura.texto}</p>`;
             }
-            return `<p class="text-xs text-brand-450 dark:text-brand-350 mt-2">Sin Elo registrado: el nivel sale solo de la prueba (≈${e.estimado}).${propio ? ' <a href="configuracion.html" class="text-accent-700 dark:text-accent-400 hover:underline">Agrega tu Elo en Configuración</a> y el análisis lo tendrá en cuenta.' : ''}</p>`;
+            return `<p class="text-xs text-brand-450 dark:text-brand-350 mt-2">Sin Elo registrado: el nivel sale solo de la prueba (${m(e.estimado, e.error)}).${propio ? ' <a href="configuracion.html" class="text-accent-700 dark:text-accent-400 hover:underline">Agrega tu Elo en Configuración</a> y el análisis lo tendrá en cuenta.' : ''}</p>`;
         }
 
         // Elo del alumno, editable por su profesor o un administrador (función
@@ -2276,7 +2281,9 @@
             if (!escalones.length || resumen.escalonAlcanzado === null || resumen.escalonAlcanzado === undefined) return "";
             const alcanzado = resumen.escalonAlcanzado;
             return `<div class="mt-3 pt-3 border-t border-brand-100 dark:border-brand-700">
-                <p class="text-xs text-brand-500 dark:text-brand-300 mb-2">Escalones de dificultad superados: <strong class="text-brand-700 dark:text-brand-200">${alcanzado} de 5</strong>. El nivel es el escalón más alto con 60% de aciertos o más, no la suma de respuestas correctas.</p>
+                <p class="text-xs text-brand-500 dark:text-brand-300 mb-2">${resumen.modelo === "elo"
+                    ? `Escalones a su alcance: <strong class="text-brand-700 dark:text-brand-200">${alcanzado} de 5</strong>. El nivel sale de la fuerza medida en puntos (≈${resumen.elo.estimado} ± ${resumen.elo.error}): cada pregunta tiene su dificultad, y resolver una difícil de tablero pesa mucho más que acertar una fácil de opción.`
+                    : `Escalones de dificultad superados: <strong class="text-brand-700 dark:text-brand-200">${alcanzado} de 5</strong>. El nivel es el escalón más alto con 60% de aciertos o más, no la suma de respuestas correctas.`}</p>
                 <div class="space-y-1">
                     ${escalones.map((e) => `
                         <div class="flex items-center gap-2 text-xs">
@@ -2285,7 +2292,7 @@
                                 <div class="h-full ${e.peso <= alcanzado ? "bg-green-500" : "bg-brand-300 dark:bg-brand-600"}" style="width:${e.porcentaje}%"></div>
                             </div>
                             <span class="w-24 shrink-0 text-right text-brand-500 dark:text-brand-300">${e.aciertos}/${e.total} · ${e.porcentaje}%</span>
-                            <span class="w-20 shrink-0 ${e.peso <= alcanzado ? "text-green-600 dark:text-green-400" : "text-brand-450 dark:text-brand-350"}">${e.peso <= alcanzado ? "superado" : "todavía no"}</span>
+                            <span class="w-20 shrink-0 ${e.peso <= alcanzado ? "text-green-600 dark:text-green-400" : "text-brand-450 dark:text-brand-350"}">${e.peso <= alcanzado ? (resumen.modelo === "elo" ? "a su alcance" : "superado") : "todavía no"}</span>
                         </div>`).join("")}
                 </div>
             </div>`;
@@ -2446,7 +2453,7 @@
         function sinDiagnosticoHTML(nombre, esProfesor) {
             return esProfesor
                 ? `<p class="text-sm text-brand-500 dark:text-brand-300">${escVis(nombre)} todavía no ha hecho el diagnóstico de nivel. Está en Entrenamiento › Aprende › Asignaciones y toma unos 20 minutos; en cuanto lo entregue, aquí aparece su informe y su plan.</p>`
-                : `<p class="text-sm text-brand-500 dark:text-brand-300 mb-3">Todavía no has hecho el diagnóstico de nivel. Son 63 preguntas y posiciones en cinco escalones de dificultad: al terminar sabrás tu nivel estimado y qué estudiar primero.</p>
+                : `<p class="text-sm text-brand-500 dark:text-brand-300 mb-3">Todavía no has hecho el diagnóstico de nivel. Son 60 preguntas y posiciones en cinco escalones de dificultad: al terminar sabrás tu fuerza estimada en puntos Elo, tu nivel y qué estudiar primero.</p>
                    <a href="entreno/diagnostico.html" class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors">Hacer el diagnóstico →</a>`;
         }
 
@@ -2595,11 +2602,15 @@
            Resumen y gráficos de los diagnósticos de todos los alumnos asignados
            (para un administrador, de todos los alumnos que ve).
 
-           Sobre el color: las barras usan las tres bandas pedagógicas —menos de
-           60% a trabajar, 60-79% en camino, 80% o más firme—. Verde y ámbar no se
-           distinguen con daltonismo (se comprobó: ΔE 5.7 en deutan), así que el
-           color NUNCA va solo: cada barra lleva su porcentaje y el nombre de su
-           banda en texto, y hay leyenda. */
+           Sobre el color: las barras de las áreas usan las tres bandas
+           pedagógicas —menos de 60 a trabajar, 60-79 en camino, 80 o más firme—
+           sobre la NOTA del área (PlanEntrenamiento.notaDeArea): el porcentaje en
+           los diagnósticos viejos y, en los de 60 preguntas, el rendimiento
+           respecto de lo esperable para la fuerza de cada alumno. Verde y ámbar no
+           se distinguen con daltonismo (se comprobó: ΔE 5.7 en deutan), así que
+           el color NUNCA va solo: cada barra lleva su valor y el nombre de su
+           banda en texto, y hay leyenda. La barra de «Nivel por alumno» es una
+           magnitud (la fuerza), no un juicio, y va de un solo color. */
         const BANDAS = [
             { desde: 80, clase: "bg-green-600", etiqueta: "firme" },
             { desde: 60, clase: "bg-accent-500", etiqueta: "en camino" },
@@ -2609,16 +2620,16 @@
 
         // Barra horizontal: pista recesiva, marca de 10px con el extremo redondeado
         // y pegada a la línea de base, y el valor siempre en texto al lado.
-        function barraHTML(pct, titulo) {
+        function barraHTML(pct, titulo, clase) {
             const banda = bandaDe(pct);
             return `<div class="w-full h-2.5 bg-brand-100 dark:bg-brand-800 rounded-sm overflow-hidden" title="${escVis(titulo)}">
-                <div class="h-full ${banda.clase} rounded-r" style="width:${Math.max(pct, 1)}%"></div>
+                <div class="h-full ${clase || banda.clase} rounded-r" style="width:${Math.max(pct, 1)}%"></div>
             </div>`;
         }
 
         function leyendaBandasHTML() {
             return `<p class="text-xs text-brand-450 dark:text-brand-350 mt-4">
-                ${BANDAS.slice().reverse().map((b) => `<span class="inline-flex items-center gap-1 mr-3"><span class="inline-block w-2.5 h-2.5 rounded-sm ${b.clase}"></span>${b.etiqueta} (${b.desde === 0 ? "menos de 60" : b.desde === 60 ? "60 a 79" : "80 o más"}%)</span>`).join("")}
+                ${BANDAS.slice().reverse().map((b) => `<span class="inline-flex items-center gap-1 mr-3"><span class="inline-block w-2.5 h-2.5 rounded-sm ${b.clase}"></span>${b.etiqueta} (${b.desde === 0 ? "menos de 60" : b.desde === 60 ? "60 a 79" : "80 o más"})</span>`).join("")}
             </p>`;
         }
 
@@ -2639,7 +2650,9 @@
                     pendientes.push({ id: s.id, nombre, aMedias });
                 }
             });
-            conDiagnostico.sort((a, b) => b.resumen.porcentaje - a.resumen.porcentaje);
+            // Por fuerza estimada y no por porcentaje: un 60 % de la prueba nueva
+            // (con la mitad difícil) vale mucho más que un 60 % de la vieja.
+            conDiagnostico.sort((a, b) => (b.resumen.elo.combinado - a.resumen.elo.combinado) || (b.resumen.porcentaje - a.resumen.porcentaje));
             return { conDiagnostico, pendientes };
         }
 
@@ -3038,10 +3051,15 @@ function areasFlojasArbitraje(fila) {
 
             // Promedio de la clase por área y promedio general.
             const promedioPorArea = PE.AREAS.map((a) => {
-                const valores = conDiagnostico.map((d) => d.resumen.porArea.find((x) => x.id === a.id).porcentaje);
+                // La nota, no el porcentaje (ver PlanEntrenamiento.notaDeArea):
+                // en los diagnósticos viejos es lo mismo; en los nuevos, compara
+                // cada área con lo esperable para la fuerza de ese alumno.
+                const valores = conDiagnostico.map((d) => d.resumen.porArea.find((x) => x.id === a.id).nota);
                 return { id: a.id, nombre: a.nombre, emoji: a.emoji, promedio: Math.round(valores.reduce((s, v) => s + v, 0) / valores.length) };
             }).sort((x, y) => x.promedio - y.promedio);
-            const promedioGeneral = Math.round(conDiagnostico.reduce((s, d) => s + d.resumen.porcentaje, 0) / conDiagnostico.length);
+            // Fuerza media y no porcentaje medio: los porcentajes de la prueba
+            // vieja y de la nueva (con la mitad difícil) no se pueden promediar.
+            const fuerzaMedia = Math.round(conDiagnostico.reduce((s, d) => s + d.resumen.elo.combinado, 0) / conDiagnostico.length);
             /* La etiqueta del grupo sale del nivel de cada alumno, no del
                porcentaje promedio: desde que el nivel se mide por escalones, un
                promedio de porcentajes ya no se traduce a un nivel. */
@@ -3060,14 +3078,14 @@ function areasFlojasArbitraje(fila) {
             contenedor.innerHTML = `
                 <div class="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
                     ${tile(`${conDiagnostico.length}/${total}`, "alumnos con diagnóstico hecho", pendientes.length ? `${pendientes.length} pendiente${pendientes.length === 1 ? "" : "s"}` : "todos al día")}
-                    ${tile(`${promedioGeneral}%`, "promedio del grupo", `nivel medio: ${nivelPromedio.etiqueta}`)}
-                    ${tile(`${masFloja.emoji} ${masFloja.promedio}%`, "área más floja del grupo", masFloja.nombre)}
+                    ${tile(`≈${fuerzaMedia}`, "fuerza media del grupo", `nivel medio: ${nivelPromedio.etiqueta}`)}
+                    ${tile(`${masFloja.emoji} ${masFloja.promedio}`, "área más floja del grupo", masFloja.nombre)}
                 </div>
 
                 ${bloqueCompartirPlanes(conDiagnostico)}
 
                 <h3 class="font-serif font-bold text-brand-800 dark:text-white mb-1">Nivel por alumno</h3>
-                <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">Porcentaje del diagnóstico completo, de mayor a menor. Toca un nombre para abrir su informe y su plan.</p>
+                <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">Fuerza estimada por el diagnóstico (en los nuevos, junto con su Elo), de mayor a menor; la barra va de 400 a 2400. Toca un nombre para abrir su informe y su plan.</p>
                 <!-- Los tres primeros y el resto detrás del botón, como el índice de
                      la clase: con cuarenta diagnósticos esto era una pared de barras
                      y lo que se viene a ver de un vistazo son los de arriba. Se
@@ -3081,29 +3099,29 @@ function areasFlojasArbitraje(fila) {
                         <div data-nivel-fila${i < NIVELES_A_LA_VISTA ? "" : ' class="hidden"'}>
                             <div class="flex items-baseline justify-between gap-3 text-sm mb-1">
                                 <button type="button" data-alumno="${d.id}" class="font-medium text-brand-700 dark:text-brand-200 hover:text-accent-600 dark:hover:text-accent-400 transition-colors text-left">${escVis(d.nombre)}</button>
-                                <span class="text-brand-500 dark:text-brand-300 whitespace-nowrap">${d.resumen.porcentaje}% · ${d.resumen.nivel.etiqueta}${d.elo ? ` · Elo ${d.elo}` : ""}</span>
+                                <span class="text-brand-500 dark:text-brand-300 whitespace-nowrap">≈${d.resumen.elo.combinado} · ${d.resumen.nivel.etiqueta}${d.elo ? ` · Elo ${d.elo}` : ""}</span>
                             </div>
-                            ${barraHTML(d.resumen.porcentaje, `${d.nombre}: ${d.resumen.porcentaje}% (${bandaDe(d.resumen.porcentaje).etiqueta})`)}
+                            ${barraHTML(Math.max(0, Math.min(100, Math.round((d.resumen.elo.combinado - 400) / 20))), `${d.nombre}: fuerza estimada ≈${d.resumen.elo.combinado}`, "bg-brand-500 dark:bg-brand-400")}
                         </div>`).join("")}
                 </div>
                 ${conDiagnostico.length > NIVELES_A_LA_VISTA ? `<button type="button" id="niveles-mas" class="mt-3 border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-4 py-2 rounded-lg text-sm hover:border-accent-500 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Ver más alumnos (faltan ${conDiagnostico.length - NIVELES_A_LA_VISTA})</button>` : ""}
-                ${leyendaBandasHTML()}
 
                 <!-- Las nueve áreas van SIEMPRE completas y sin plegar: es lo que
                      contesta "¿qué doy la clase que viene?", y son nueve renglones,
                      no una lista que crezca con la clase. -->
                 <h3 class="font-serif font-bold text-brand-800 dark:text-white mt-7 mb-1">Dónde se debe mejorar</h3>
-                <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">Promedio del grupo en cada área, de la más floja a la más firme: por arriba se elige qué trabajar en clase.</p>
+                <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">Promedio del grupo en cada área, de la más floja a la más firme: por arriba se elige qué trabajar en clase. En los diagnósticos de 60 preguntas cada área se compara con lo esperable para la fuerza de cada alumno (70 es rendir lo esperable), porque la mitad de la prueba es difícil y el porcentaje solo ya no dice si hay un hueco.</p>
                 <div class="space-y-2.5">
                     ${promedioPorArea.map((a) => `
                         <div>
                             <div class="flex items-baseline justify-between gap-3 text-sm mb-1">
                                 <span class="font-medium text-brand-700 dark:text-brand-200">${a.emoji} ${a.nombre}</span>
-                                <span class="text-brand-500 dark:text-brand-300 whitespace-nowrap">${a.promedio}% · ${bandaDe(a.promedio).etiqueta}</span>
+                                <span class="text-brand-500 dark:text-brand-300 whitespace-nowrap">${a.promedio} · ${bandaDe(a.promedio).etiqueta}</span>
                             </div>
-                            ${barraHTML(a.promedio, `${a.nombre}: promedio ${a.promedio}%`)}
+                            ${barraHTML(a.promedio, `${a.nombre}: promedio ${a.promedio}`)}
                         </div>`).join("")}
                 </div>
+                ${leyendaBandasHTML()}
 
                 <details class="group mt-7">
                 <summary class="cursor-pointer list-none flex items-center justify-between gap-4">
@@ -3119,12 +3137,12 @@ function areasFlojasArbitraje(fila) {
                                 <span class="text-xs text-brand-450 dark:text-brand-350 whitespace-nowrap">${d.resumen.nivel.etiqueta} · ${fmtFecha(d.fecha)}</span>
                             </div>
                             <div class="flex items-end gap-[2px] h-16" role="img" aria-label="Perfil por área de ${escVis(d.nombre)}: ${d.resumen.porArea.map((a) => `${a.nombre} ${a.porcentaje}%`).join(", ")}">
-                                ${d.resumen.porArea.map((a) => `<div class="flex-1 ${bandaDe(a.porcentaje).clase} rounded-t" style="height:${Math.max(a.porcentaje, 3)}%" title="${a.emoji} ${a.nombre}: ${a.porcentaje}% (${bandaDe(a.porcentaje).etiqueta})"></div>`).join("")}
+                                ${d.resumen.porArea.map((a) => `<div class="flex-1 ${bandaDe(a.nota).clase} rounded-t" style="height:${Math.max(a.nota, 3)}%" title="${a.emoji} ${a.nombre}: ${a.porcentaje}% (${bandaDe(a.nota).etiqueta})"></div>`).join("")}
                             </div>
                             <div class="flex gap-[2px] mt-1">
                                 ${d.resumen.porArea.map((a) => `<span class="flex-1 text-center text-[10px] text-brand-450 dark:text-brand-350" title="${a.nombre}">${a.emoji}</span>`).join("")}
                             </div>
-                            <p class="text-[11px] text-brand-450 dark:text-brand-350 mt-2">Más floja: ${d.resumen.porArea.slice().sort((x, y) => x.porcentaje - y.porcentaje)[0].nombre.toLowerCase()}.</p>
+                            <p class="text-[11px] text-brand-450 dark:text-brand-350 mt-2">Más floja: ${d.resumen.porArea.slice().sort((x, y) => x.nota - y.nota)[0].nombre.toLowerCase()}.</p>
                         </div>`).join("")}
                 </div>
                 </details>

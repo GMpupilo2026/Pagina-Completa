@@ -743,7 +743,7 @@
         {
           "titulo": "El diagnóstico de nivel",
           "donde": "clases.html › Evaluaciones › Diagnóstico de nivel",
-          "intro": "63 preguntas en nueve áreas. Devuelve un nivel estimado, un Elo aproximado y un plan de entrenamiento de 4 semanas.",
+          "intro": "60 preguntas en nueve áreas, la mitad difíciles y muchas para resolver en el tablero. Devuelve la fuerza estimada en puntos Elo (con su margen), un nivel y un plan de entrenamiento de 4 semanas.",
           "pasos": [
             "El alumno lo hace desde su panel y el resultado te llega a Informes.",
             "En Informes ves su perfil de nueve áreas y dónde está flojo.",
@@ -776,7 +776,7 @@
           "intro": "Hay tres PDF con las respuestas y la hoja de corrección. Son SOLO de administración, y por una razón.",
           "pasos": [
             "El cuadernillo del diagnóstico: una forma de la prueba, sorteada, para contestar en papel.",
-            "El libro del diagnóstico: el banco entero, 301 preguntas con su respuesta y su porqué.",
+            "El libro del diagnóstico: el banco entero, 583 preguntas con su respuesta y su porqué.",
             "El examen de arbitraje: las 200 preguntas con su artículo."
           ],
           "ojo": [

@@ -1,10 +1,25 @@
 /* ===== Ajedrez Integral — Banco de ítems del diagnóstico de nivel =====
  *
- * Banco de ítems repartidos en las 8 áreas de js/plan-entrenamiento.js, con
- * tres niveles de dificultad (peso 1, 2 y 3). Hay más ítems de los que se
- * preguntan: cada prueba sortea 7 por área (56 en total, 109 puntos) con
- * DiagnosticoPrueba.armar(), al final de este archivo. Se mezclan dos formas
- * de preguntar, porque miden cosas distintas:
+ * Banco de ítems repartidos en las 9 áreas de js/plan-entrenamiento.js, con
+ * cinco escalones de dificultad (`peso`, de 1 a 5). Hay muchos más ítems de
+ * los que se preguntan: cada prueba sortea 60 con DiagnosticoPrueba.armar(),
+ * al final de este archivo, con la cuota fija de FORMA.
+ *
+ * Cada ítem tiene su dificultad en puntos Elo (`elo`): la fuerza con la que se
+ * acierta la mitad de las veces. De ahí sale la medición (PlanEntrenamiento.
+ * medir) y de ahí sale también el escalón: `peso` es el tramo de `elo` según
+ * PlanEntrenamiento.ESCALON_ELO. `eloBase` es el punto de partida de esa
+ * dificultad antes de mirar respuestas (el rating de Lichess en las de
+ * tablero; lo que se suponía de su escalón en las demás), y `elo` es lo que
+ * quedó después de calibrar con los diagnósticos reales. Ninguno de los dos
+ * se edita a mano en los ítems viejos: los escribe
+ * herramientas/diagnostico-calibrar.js.
+ *
+ * Los ítems del bloque LICHESS los genera herramientas/diagnostico-lichess.js
+ * desde la base abierta de ejercicios de Lichess, verificados con Stockfish;
+ * tampoco se editan a mano.
+ *
+ * Se mezclan dos formas de preguntar, porque miden cosas distintas:
  *   - "opcion": lo que el alumno SABE (conceptos, reglas, criterios), a veces
  *     con una posición al lado para que el concepto no sea abstracto.
  *   - "jugada" y "casilla": lo que el alumno SABE HACER sobre el tablero.
@@ -33,7 +48,7 @@
 window.DIAGNOSTICO_ITEMS = [
   /* ---------------- Reglas y movimientos ---------------- */
   {
-    id: 'reg_caballo', area: 'reglas', peso: 1, tipo: 'opcion',
+    id: 'reg_caballo', area: 'reglas', peso: 1, elo: 790, eloBase: 700, tipo: 'opcion',
     enunciado: '¿Cómo se mueve el caballo?',
     opciones: [
       'En forma de L: dos casillas en una dirección y una perpendicular.',
@@ -45,7 +60,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'El caballo es la única pieza que salta: por eso es tan útil en posiciones cerradas.',
   },
   {
-    id: 'reg_ahogado', area: 'reglas', peso: 2, tipo: 'opcion_tablero',
+    id: 'reg_ahogado', area: 'reglas', peso: 1, elo: 680, eloBase: 950, tipo: 'opcion_tablero',
     enunciado: 'Juegan las negras y no tienen ninguna jugada legal, pero su rey NO está en jaque. ¿Qué pasa?',
     fen: '7k/5Q2/6K1/8/8/8/8/8 b - - 0 1',
     opciones: ['Es tablas por ahogado (rey ahogado).', 'Es jaque mate y ganan las blancas.', 'Las negras pierden por no poder mover.', 'Se repite la jugada anterior.'],
@@ -54,7 +69,7 @@ window.DIAGNOSTICO_ITEMS = [
     prueba: 'in_stalemate() === true',
   },
   {
-    id: 'reg_enroque', area: 'reglas', peso: 2, tipo: 'jugada',
+    id: 'reg_enroque', area: 'reglas', peso: 1, elo: 760, eloBase: 950, tipo: 'jugada',
     enunciado: 'Enroca corto con las blancas.',
     fen: 'r1bqk2r/pppp1ppp/2n2n2/2b1p3/2B1P3/2N2N2/PPPP1PPP/R1BQK2R w KQkq - 6 5',
     solucion: { from: 'e1', to: 'g1' },
@@ -62,7 +77,7 @@ window.DIAGNOSTICO_ITEMS = [
     prueba: 'la jugada es legal y su bandera incluye el enroque corto (k)',
   },
   {
-    id: 'reg_al_paso', area: 'reglas', peso: 3, tipo: 'jugada',
+    id: 'reg_al_paso', area: 'reglas', peso: 1, elo: 730, eloBase: 1200, tipo: 'jugada',
     enunciado: 'Las negras acaban de jugar …d7-d5. Captura al paso.',
     fen: '4k3/8/8/3pP3/8/8/8/4K3 w - d6 0 2',
     solucion: { from: 'e5', to: 'd6' },
@@ -70,14 +85,14 @@ window.DIAGNOSTICO_ITEMS = [
     prueba: 'la jugada es legal y su bandera incluye la captura al paso (e)',
   },
   {
-    id: 'reg_casillas', area: 'reglas', peso: 1, tipo: 'opcion',
+    id: 'reg_casillas', area: 'reglas', peso: 1, elo: 580, eloBase: 700, tipo: 'opcion',
     enunciado: '¿Cuántas casillas tiene un tablero de ajedrez?',
     opciones: ['60', '64', '72', '81'],
     correcta: 1,
     explica: 'El tablero es una cuadrícula de 8×8 = 64 casillas: 32 claras y 32 oscuras.',
   },
   {
-    id: 'reg_torre_recorrido', area: 'reglas', peso: 1, tipo: 'opcion',
+    id: 'reg_torre_recorrido', area: 'reglas', peso: 1, elo: 640, eloBase: 700, tipo: 'opcion',
     enunciado: '¿Cómo se mueve la torre?',
     opciones: [
       'En línea recta por su fila o su columna, sin límite de casillas.',
@@ -89,7 +104,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'La torre se detiene en la primera pieza que encuentra en su camino: no puede saltar, a diferencia del caballo.',
   },
   {
-    id: 'reg_promocion', area: 'reglas', peso: 2, tipo: 'opcion',
+    id: 'reg_promocion', area: 'reglas', peso: 1, elo: 660, eloBase: 950, tipo: 'opcion',
     enunciado: 'Un peón que llega a la última fila puede coronar en…',
     opciones: [
       'En dama, torre, alfil o caballo: nunca en rey ni en peón.',
@@ -103,7 +118,7 @@ window.DIAGNOSTICO_ITEMS = [
 
   /* ---------------- Valor del material ---------------- */
   {
-    id: 'mat_valores', area: 'material', peso: 1, tipo: 'opcion',
+    id: 'mat_valores', area: 'material', peso: 1, elo: 870, eloBase: 700, tipo: 'opcion',
     enunciado: 'Sin contar al rey, ¿cuál es el orden correcto de menor a mayor valor?',
     opciones: [
       'Peón, caballo y alfil, torre, dama.',
@@ -115,7 +130,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'La escala de siempre: peón 1, caballo y alfil 3, torre 5, dama 9. Son guías, no leyes: la posición manda.',
   },
   {
-    id: 'mat_dama_gratis', area: 'material', peso: 1, tipo: 'jugada',
+    id: 'mat_dama_gratis', area: 'material', peso: 1, elo: 450, eloBase: 700, tipo: 'jugada',
     enunciado: 'Las negras dejaron algo sin defender. Cóbralo.',
     fen: '6k1/8/8/3q4/8/3R4/6PP/6K1 w - - 0 1',
     solucion: { from: 'd3', to: 'd5' },
@@ -123,7 +138,7 @@ window.DIAGNOSTICO_ITEMS = [
     prueba: 'captura una pieza de 3 puntos o más y después no existe ninguna recaptura legal',
   },
   {
-    id: 'mat_torre_gratis', area: 'material', peso: 2, tipo: 'jugada',
+    id: 'mat_torre_gratis', area: 'material', peso: 1, elo: 680, eloBase: 950, tipo: 'jugada',
     enunciado: 'Gana material con una sola jugada.',
     fen: 'r5k1/5ppp/8/8/4B3/8/5PPP/6K1 w - - 0 1',
     solucion: { from: 'e4', to: 'a8' },
@@ -131,7 +146,7 @@ window.DIAGNOSTICO_ITEMS = [
     prueba: 'captura una pieza de 3 puntos o más y después no existe ninguna recaptura legal',
   },
   {
-    id: 'mat_cambio', area: 'material', peso: 2, tipo: 'opcion',
+    id: 'mat_cambio', area: 'material', peso: 1, elo: 820, eloBase: 950, tipo: 'opcion',
     enunciado: 'Puedes cambiar tu alfil por una torre rival. ¿Qué es eso y conviene?',
     opciones: [
       'Es ganar la calidad, dos puntos de ventaja: suele convenir.',
@@ -143,14 +158,14 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Torre (5) por alfil o caballo (3) se llama "ganar la calidad". Conviene salvo que la posición diga lo contrario.',
   },
   {
-    id: 'mat_dama_valor', area: 'material', peso: 1, tipo: 'opcion',
+    id: 'mat_dama_valor', area: 'material', peso: 1, elo: 680, eloBase: 700, tipo: 'opcion',
     enunciado: '¿Cuál es el valor aproximado de la dama?',
     opciones: ['5', '7', '9', '13'],
     correcta: 2,
     explica: 'La dama vale aproximadamente 9 peones: es la pieza más poderosa del tablero.',
   },
   {
-    id: 'mat_dos_torres_vs_dama', area: 'material', peso: 2, tipo: 'opcion',
+    id: 'mat_dos_torres_vs_dama', area: 'material', peso: 2, elo: 1170, eloBase: 950, tipo: 'opcion',
     enunciado: '¿Qué suele valer más: dos torres o una dama?',
     opciones: [
       'Dos torres, diez puntos contra nueve, según la posición.',
@@ -162,7 +177,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Como referencia de valores, dos torres superan ligeramente a una dama, pero la coordinación de las piezas pesa tanto como la suma de puntos.',
   },
   {
-    id: 'mat_pareja_alfiles', area: 'material', peso: 3, tipo: 'opcion',
+    id: 'mat_pareja_alfiles', area: 'material', peso: 1, elo: 970, eloBase: 1200, tipo: 'opcion',
     enunciado: '¿Por qué se considera valiosa la "pareja de alfiles" en posiciones abiertas?',
     opciones: [
       'Porque entre los dos cubren casillas de los dos colores.',
@@ -176,7 +191,7 @@ window.DIAGNOSTICO_ITEMS = [
 
   /* ---------------- Principios de apertura ---------------- */
   {
-    id: 'ap_prioridad', area: 'apertura', peso: 1, tipo: 'opcion',
+    id: 'ap_prioridad', area: 'apertura', peso: 1, elo: 590, eloBase: 700, tipo: 'opcion',
     enunciado: 'En las primeras jugadas, ¿cuál es el orden de prioridades?',
     opciones: [
       'Ocupar el centro, desarrollar las piezas menores y enrocar.',
@@ -188,7 +203,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Centro, desarrollo y rey seguro: con eso solo, una apertura ya está bien jugada.',
   },
   {
-    id: 'ap_dama_temprano', area: 'apertura', peso: 2, tipo: 'opcion',
+    id: 'ap_dama_temprano', area: 'apertura', peso: 1, elo: 810, eloBase: 950, tipo: 'opcion',
     enunciado: '¿Por qué no conviene sacar la dama en las primeras jugadas?',
     opciones: [
       'Porque el rival gana tiempo atacándola mientras desarrolla.',
@@ -200,7 +215,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Cada jaque o ataque a tu dama es una jugada de desarrollo gratis para el rival.',
   },
   {
-    id: 'ap_pieza_repetida', area: 'apertura', peso: 2, tipo: 'opcion',
+    id: 'ap_pieza_repetida', area: 'apertura', peso: 1, elo: 850, eloBase: 950, tipo: 'opcion',
     enunciado: 'En la apertura, mover varias veces la misma pieza sin necesidad…',
     opciones: [
       'Pierde tiempo: el rival saca piezas nuevas mientras repites.',
@@ -212,7 +227,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'La apertura es una carrera por sacar piezas: cada repetición te deja una pieza menos en juego.',
   },
   {
-    id: 'ap_desarrollo', area: 'apertura', peso: 3, tipo: 'jugada',
+    id: 'ap_desarrollo', area: 'apertura', peso: 1, elo: 890, eloBase: 1200, tipo: 'jugada',
     enunciado: 'Tu rey sigue en el centro con la posición abierta. Pon el rey a salvo.',
     fen: 'r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4',
     solucion: { from: 'e1', to: 'g1' },
@@ -220,7 +235,7 @@ window.DIAGNOSTICO_ITEMS = [
     prueba: 'la jugada es legal y su bandera incluye el enroque corto (k)',
   },
   {
-    id: 'ap_espanola', area: 'apertura', peso: 1, tipo: 'opcion',
+    id: 'ap_espanola', area: 'apertura', peso: 2, elo: 1150, eloBase: 700, tipo: 'opcion',
     enunciado: '1.e4 e5 2.Cf3 Cc6 3.Ab5 corresponde a la apertura…',
     opciones: [
       'Española',
@@ -232,14 +247,14 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Esa secuencia es la Apertura Española o Ruy López, una de las más antiguas y estudiadas del ajedrez.',
   },
   {
-    id: 'ap_siciliana', area: 'apertura', peso: 2, tipo: 'opcion',
+    id: 'ap_siciliana', area: 'apertura', peso: 2, elo: 1240, eloBase: 950, tipo: 'opcion',
     enunciado: '1.e4 c5 corresponde a la Defensa…',
     opciones: ['Siciliana', 'Caro-Kann', 'Francesa', 'Pirc'],
     correcta: 0,
     explica: '1.e4 c5 es la Defensa Siciliana: la respuesta más popular y combativa contra 1.e4.',
   },
   {
-    id: 'ap_gambito', area: 'apertura', peso: 3, tipo: 'opcion',
+    id: 'ap_gambito', area: 'apertura', peso: 2, elo: 1250, eloBase: 1200, tipo: 'opcion',
     enunciado: '¿Cuál es la idea principal detrás de un gambito?',
     opciones: [
       'Sacrificar material a cambio de desarrollo o de iniciativa.',
@@ -253,7 +268,7 @@ window.DIAGNOSTICO_ITEMS = [
 
   /* ---------------- Táctica ---------------- */
   {
-    id: 'tac_horquilla', area: 'tactica', peso: 1, tipo: 'jugada',
+    id: 'tac_horquilla', area: 'tactica', peso: 1, elo: 740, eloBase: 700, tipo: 'jugada',
     enunciado: 'Encuentra la horquilla de caballo que ataca al rey y a la dama a la vez.',
     fen: '7k/8/3q4/6N1/8/8/8/K7 w - - 0 1',
     solucion: { from: 'g5', to: 'f7' },
@@ -261,7 +276,7 @@ window.DIAGNOSTICO_ITEMS = [
     prueba: 'tras la jugada el caballo ataca a la vez al rey y a la dama negros',
   },
   {
-    id: 'tac_clavada', area: 'tactica', peso: 2, tipo: 'opcion',
+    id: 'tac_clavada', area: 'tactica', peso: 1, elo: 990, eloBase: 950, tipo: 'opcion',
     enunciado: '¿Qué es una clavada?',
     opciones: [
       'Una pieza no se puede mover sin dejar expuesta a otra mejor.',
@@ -273,7 +288,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Contra una pieza clavada, la receta es atacarla otra vez: no se puede mover para escapar.',
   },
   {
-    id: 'tac_descubierto', area: 'tactica', peso: 3, tipo: 'jugada',
+    id: 'tac_descubierto', area: 'tactica', peso: 1, elo: 880, eloBase: 1200, tipo: 'jugada',
     enunciado: 'Mueve el caballo de manera que descubras jaque y de paso ataques la dama negra.',
     fen: '4k3/1q6/8/8/4N3/8/8/4R1K1 w - - 0 1',
     solucion: { from: 'e4', to: 'c5' },
@@ -282,7 +297,7 @@ window.DIAGNOSTICO_ITEMS = [
     prueba: 'las 8 jugadas legales del caballo descubren jaque de la torre (cualquier salto lo hace); de esas 8, se comprobó cuáles además atacan la casilla b7: solo Cc5+ y Cd6+ lo hacen (las otras seis — Cc3+, Cd2+, Cf2+, Cg3+, Cg5+, Cf6+ — dan jaque pero no atacan la dama). Verificado contra las 19 jugadas legales totales de la posición (también las de la torre y el rey), no solo las del caballo.',
   },
   {
-    id: 'tac_revisar', area: 'tactica', peso: 2, tipo: 'opcion',
+    id: 'tac_revisar', area: 'tactica', peso: 1, elo: 950, eloBase: 950, tipo: 'opcion',
     enunciado: 'Tu rival acaba de mover. ¿Qué es lo primero que hay que mirar?',
     opciones: [
       'Qué amenaza esa jugada: jaques, capturas y ataques dobles.',
@@ -294,7 +309,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Jaques, capturas y amenazas — en ese orden, primero las del rival y luego las tuyas. Es la rutina que evita casi todos los descuidos.',
   },
   {
-    id: 'tac_horquilla2', area: 'tactica', peso: 2, tipo: 'jugada',
+    id: 'tac_horquilla2', area: 'tactica', peso: 1, elo: 780, eloBase: 950, tipo: 'jugada',
     enunciado: 'Da jaque con el caballo de manera que además ataques la torre negra.',
     fen: 'r3k3/8/8/1N6/8/8/8/4K3 w - - 0 1',
     solucion: { from: 'b5', to: 'c7' },
@@ -302,7 +317,7 @@ window.DIAGNOSTICO_ITEMS = [
     prueba: 'de las 11 jugadas legales de la posición (6 del caballo — Ca7, Cc7, Cd6, Cd4, Cc3, Ca3 — y 5 del rey), solo Cc7 y Cd6 dan jaque; de esas dos, solo Cc7 ataca además la torre de a8.',
   },
   {
-    id: 'tac_rayosx', area: 'tactica', peso: 3, tipo: 'opcion',
+    id: 'tac_rayosx', area: 'tactica', peso: 1, elo: 1040, eloBase: 1200, tipo: 'opcion',
     enunciado: '¿Qué es un "rayo X" (o clavada relativa) en ajedrez?',
     opciones: [
       'Cuando una pieza ataca a través de otra a lo que hay detrás.',
@@ -314,7 +329,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'El rayo X es una línea de ataque que atraviesa una pieza para llegar a otra detrás, parecido a la clavada pero visto desde el otro lado.',
   },
   {
-    id: 'tac_desviacion', area: 'tactica', peso: 2, tipo: 'opcion',
+    id: 'tac_desviacion', area: 'tactica', peso: 2, elo: 1180, eloBase: 950, tipo: 'opcion',
     enunciado: '¿Cómo se llama la táctica que obliga a una pieza defensora a abandonar la casilla que protegía?',
     opciones: [
       'Desviación, o eliminación del defensor.',
@@ -328,7 +343,7 @@ window.DIAGNOSTICO_ITEMS = [
 
   /* ---------------- Mates y seguridad del rey ---------------- */
   {
-    id: 'mate_pasillo', area: 'mate', peso: 1, tipo: 'jugada',
+    id: 'mate_pasillo', area: 'mate', peso: 1, elo: 450, eloBase: 700, tipo: 'jugada',
     enunciado: 'Da jaque mate en una jugada.',
     fen: '6k1/5ppp/8/8/8/8/8/R5K1 w - - 0 1',
     solucion: { from: 'a1', to: 'a8' },
@@ -336,7 +351,7 @@ window.DIAGNOSTICO_ITEMS = [
     prueba: 'es mate y es el único mate en 1 de la posición',
   },
   {
-    id: 'mate_dama', area: 'mate', peso: 2, tipo: 'jugada',
+    id: 'mate_dama', area: 'mate', peso: 1, elo: 700, eloBase: 950, tipo: 'jugada',
     enunciado: 'Da jaque mate en una jugada con la dama.',
     fen: '6k1/8/6K1/8/8/8/8/7Q w - - 0 1',
     solucion: { from: 'h1', to: 'a8' },
@@ -344,7 +359,7 @@ window.DIAGNOSTICO_ITEMS = [
     prueba: 'es mate y es el único mate en 1 de la posición',
   },
   {
-    id: 'mate_caballo', area: 'mate', peso: 3, tipo: 'jugada',
+    id: 'mate_caballo', area: 'mate', peso: 1, elo: 880, eloBase: 1200, tipo: 'jugada',
     enunciado: 'Da jaque mate en una jugada.',
     fen: '6rk/6pp/8/6N1/8/8/8/6K1 w - - 0 1',
     solucion: { from: 'g5', to: 'f7' },
@@ -352,7 +367,7 @@ window.DIAGNOSTICO_ITEMS = [
     prueba: 'es mate y es el único mate en 1 de la posición',
   },
   {
-    id: 'mate_ventana', area: 'mate', peso: 2, tipo: 'opcion',
+    id: 'mate_ventana', area: 'mate', peso: 1, elo: 1050, eloBase: 950, tipo: 'opcion',
     enunciado: 'Tu rey está enrocado corto y tus peones f, g y h siguen en su casilla. ¿Qué medida de seguridad conviene tomar con tiempo?',
     opciones: [
       'Hacer una ventanita, por ejemplo h2-h3, contra el pasillo.',
@@ -364,7 +379,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Una casilla de escape cuesta un tiempo y evita el mate del pasillo, que es de los finales más frecuentes en torneos escolares.',
   },
   {
-    id: 'mate_definicion', area: 'mate', peso: 1, tipo: 'opcion',
+    id: 'mate_definicion', area: 'mate', peso: 1, elo: 650, eloBase: 700, tipo: 'opcion',
     enunciado: '¿Qué significa exactamente "jaque mate"?',
     opciones: [
       'El rey está en jaque y no hay jugada legal que lo libre.',
@@ -376,7 +391,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'El rey nunca llega a ser capturado: la partida termina en el instante en que un jaque no tiene ninguna respuesta legal.',
   },
   {
-    id: 'mate_sofocado', area: 'mate', peso: 3, tipo: 'opcion',
+    id: 'mate_sofocado', area: 'mate', peso: 2, elo: 1240, eloBase: 1200, tipo: 'opcion',
     enunciado: '¿Cómo se llama el mate en el que el rey está completamente rodeado por sus propias piezas y un caballo da el jaque final?',
     opciones: [
       'Mate de la coz (smothered mate).',
@@ -388,7 +403,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'En el mate de la coz el rey queda bloqueado por sus propias piezas y un caballo rival —que no se puede capturar ni bloquear— le da el jaque final.',
   },
   {
-    id: 'mate_escalera', area: 'mate', peso: 2, tipo: 'opcion',
+    id: 'mate_escalera', area: 'mate', peso: 1, elo: 900, eloBase: 950, tipo: 'opcion',
     enunciado: '¿Cómo se llama la técnica de dar jaque mate con dos torres (o dama y torre), empujando al rey rival fila a fila hacia el borde del tablero?',
     opciones: [
       'Mate de la escalera.',
@@ -402,7 +417,7 @@ window.DIAGNOSTICO_ITEMS = [
 
   /* ---------------- Finales ---------------- */
   {
-    id: 'fin_cuadrado', area: 'finales', peso: 1, tipo: 'opcion_tablero',
+    id: 'fin_cuadrado', area: 'finales', peso: 1, elo: 1000, eloBase: 700, tipo: 'opcion_tablero',
     enunciado: 'Juegan las negras. Según la regla del cuadrado, ¿alcanza el rey negro al peón blanco?',
     fen: '8/8/8/2P5/8/8/8/5k1K b - - 0 1',
     opciones: ['No: el peón corona antes.', 'Sí: lo alcanza justo a tiempo.', 'Depende de dónde esté el rey blanco.', 'Solo si el peón avanza de a una casilla.'],
@@ -411,7 +426,7 @@ window.DIAGNOSTICO_ITEMS = [
     prueba: 'regla del cuadrado calculada sobre la FEN (distancia del rey a la casilla de coronación contra la del peón)',
   },
   {
-    id: 'fin_oposicion', area: 'finales', peso: 2, tipo: 'casilla',
+    id: 'fin_oposicion', area: 'finales', peso: 1, elo: 990, eloBase: 950, tipo: 'casilla',
     enunciado: 'Haz clic en la casilla a la que debe ir el rey blanco para tomar la oposición.',
     fen: '8/8/4k3/8/8/4K3/8/8 w - - 0 1',
     solucion: 'e4',
@@ -419,7 +434,7 @@ window.DIAGNOSTICO_ITEMS = [
     prueba: 'la jugada Re4 es legal y deja los reyes enfrentados a dos casillas en la misma columna, con las negras en turno',
   },
   {
-    id: 'fin_promocion', area: 'finales', peso: 2, tipo: 'jugada',
+    id: 'fin_promocion', area: 'finales', peso: 1, elo: 700, eloBase: 950, tipo: 'jugada',
     enunciado: 'Corona el peón.',
     fen: '8/1P6/8/8/8/5k2/8/7K w - - 0 1',
     solucion: { from: 'b7', to: 'b8', promotion: 'q' },
@@ -427,7 +442,7 @@ window.DIAGNOSTICO_ITEMS = [
     prueba: 'la jugada es legal, corona (bandera p) y la pieza nueva es dama',
   },
   {
-    id: 'fin_torre_peon', area: 'finales', peso: 3, tipo: 'opcion',
+    id: 'fin_torre_peon', area: 'finales', peso: 3, elo: 1620, eloBase: 1200, tipo: 'opcion',
     enunciado: 'En un final de torre y peón contra torre, ¿qué es la posición de Philidor?',
     opciones: [
       'La defensa: torre en la tercera fila y jaques por detrás.',
@@ -439,7 +454,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Philidor defiende (tablas) y Lucena gana (el puente). Saber cuál es cuál salva y gana muchos medios puntos.',
   },
   {
-    id: 'fin_rey_activo', area: 'finales', peso: 1, tipo: 'opcion',
+    id: 'fin_rey_activo', area: 'finales', peso: 2, elo: 1360, eloBase: 700, tipo: 'opcion',
     enunciado: 'En los finales, ¿qué suele ser más importante que en la apertura?',
     opciones: [
       'La actividad del rey, que ya puede salir al centro.',
@@ -451,7 +466,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Con menos piezas en el tablero, el rey deja de estar en peligro constante y se convierte en pieza activa clave, sobre todo en finales de peones.',
   },
   {
-    id: 'fin_peon_pasado', area: 'finales', peso: 1, tipo: 'opcion',
+    id: 'fin_peon_pasado', area: 'finales', peso: 3, elo: 1530, eloBase: 700, tipo: 'opcion',
     enunciado: 'Un "peón pasado" es aquel que…',
     opciones: [
       'El que no tiene peones rivales delante ni al lado.',
@@ -463,7 +478,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Un peón pasado no puede ser detenido por ningún peón rival en su camino a coronar, lo que lo hace muy valioso en los finales.',
   },
   {
-    id: 'fin_alfiles_distinto_color', area: 'finales', peso: 3, tipo: 'opcion',
+    id: 'fin_alfiles_distinto_color', area: 'finales', peso: 2, elo: 1110, eloBase: 1200, tipo: 'opcion',
     enunciado: '¿Qué hace especialmente difícil de ganar un final de alfiles de distinto color, incluso con material de más?',
     opciones: [
       'Que el alfil rival bloquea las casillas clave y nadie lo echa.',
@@ -477,7 +492,7 @@ window.DIAGNOSTICO_ITEMS = [
 
   /* ---------------- Estrategia y planes ---------------- */
   {
-    id: 'est_columna', area: 'estrategia', peso: 2, tipo: 'jugada',
+    id: 'est_columna', area: 'estrategia', peso: 1, elo: 630, eloBase: 950, tipo: 'jugada',
     enunciado: 'Coloca la torre en la única columna abierta del tablero.',
     fen: '6k1/ppp1pppp/8/8/8/8/PPP1PPPP/R5K1 w - - 0 1',
     solucion: { from: 'a1', to: 'd1' },
@@ -485,7 +500,7 @@ window.DIAGNOSTICO_ITEMS = [
     prueba: 'tras la jugada la torre está en una columna sin ningún peón de ninguno de los dos bandos',
   },
   {
-    id: 'est_centro', area: 'estrategia', peso: 1, tipo: 'opcion',
+    id: 'est_centro', area: 'estrategia', peso: 1, elo: 530, eloBase: 700, tipo: 'opcion',
     enunciado: '¿Por qué importa tanto el centro del tablero?',
     opciones: [
       'Porque desde ahí las piezas llegan a muchas más casillas.',
@@ -497,7 +512,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Un caballo en el centro domina 8 casillas; en una esquina, solo 2.',
   },
   {
-    id: 'est_pasado', area: 'estrategia', peso: 3, tipo: 'opcion',
+    id: 'est_pasado', area: 'estrategia', peso: 3, elo: 1520, eloBase: 1200, tipo: 'opcion',
     enunciado: '¿Qué es un peón pasado y por qué es fuerte?',
     opciones: [
       'Uno sin peones rivales delante ni al lado: cuesta frenarlo.',
@@ -509,7 +524,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'En los finales, un peón pasado y lejano suele valer más que un peón de más en el mismo flanco.',
   },
   {
-    id: 'est_caballo_puesto', area: 'estrategia', peso: 2, tipo: 'opcion',
+    id: 'est_caballo_puesto', area: 'estrategia', peso: 2, elo: 1100, eloBase: 950, tipo: 'opcion',
     enunciado: 'Un caballo llega a una casilla avanzada donde ningún peón rival puede echarlo. ¿Qué has conseguido?',
     opciones: [
       'Un puesto avanzado: pieza fuerte y estable en campo rival.',
@@ -521,7 +536,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Un caballo bien puesto en la quinta o sexta fila, apoyado por un peón, puede valer más que una torre.',
   },
   {
-    id: 'est_peon_aislado', area: 'estrategia', peso: 2, tipo: 'opcion',
+    id: 'est_peon_aislado', area: 'estrategia', peso: 2, elo: 1310, eloBase: 950, tipo: 'opcion',
     enunciado: '¿Qué es un "peón aislado"?',
     opciones: [
       'Un peón sin peones propios en las columnas vecinas.',
@@ -533,7 +548,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Al no tener peones vecinos que lo respalden, el peón aislado suele necesitar protección constante de las piezas, aunque también da movilidad a cambio.',
   },
   {
-    id: 'est_alfil_malo', area: 'estrategia', peso: 2, tipo: 'opcion',
+    id: 'est_alfil_malo', area: 'estrategia', peso: 1, elo: 1060, eloBase: 950, tipo: 'opcion',
     enunciado: '¿Por qué se dice que un alfil es "malo" en ciertas estructuras de peones?',
     opciones: [
       'Porque sus propios peones le tapan las diagonales.',
@@ -545,7 +560,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Un "alfil malo" queda encerrado por sus propios peones, colocados en casillas del mismo color que el alfil, lo que reduce mucho su actividad.',
   },
   {
-    id: 'est_mayoria_flanco', area: 'estrategia', peso: 3, tipo: 'opcion',
+    id: 'est_mayoria_flanco', area: 'estrategia', peso: 2, elo: 1110, eloBase: 1200, tipo: 'opcion',
     enunciado: 'En estructuras de peones, ¿qué es una "mayoría de peones" en un flanco?',
     opciones: [
       'Tener más peones que el rival en ese sector.',
@@ -559,7 +574,7 @@ window.DIAGNOSTICO_ITEMS = [
 
   /* ---------------- Cálculo y visualización ---------------- */
   {
-    id: 'cal_casilla_color', area: 'calculo', peso: 1, tipo: 'opcion',
+    id: 'cal_casilla_color', area: 'calculo', peso: 2, elo: 1120, eloBase: 700, tipo: 'opcion',
     enunciado: 'Sin mirar el tablero: ¿de qué color es la casilla f5?',
     opciones: [
       'Es blanca.',
@@ -572,7 +587,7 @@ window.DIAGNOSTICO_ITEMS = [
     prueba: 'color de casilla calculado con la fórmula habitual (columna + fila)',
   },
   {
-    id: 'cal_conteo', area: 'calculo', peso: 2, tipo: 'opcion',
+    id: 'cal_conteo', area: 'calculo', peso: 2, elo: 1280, eloBase: 950, tipo: 'opcion',
     enunciado: 'Una casilla está defendida dos veces y atacada dos veces por ti. ¿Qué hay que contar antes de capturar ahí?',
     opciones: [
       'El valor de las piezas que entran, en orden.',
@@ -584,7 +599,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Capturar de a poco y en orden equivocado regala material. Cuenta la secuencia completa antes de la primera captura.',
   },
   {
-    id: 'cal_jaque_doble', area: 'calculo', peso: 2, tipo: 'casilla',
+    id: 'cal_jaque_doble', area: 'calculo', peso: 1, elo: 850, eloBase: 950, tipo: 'casilla',
     enunciado: 'Haz clic en la casilla desde la que tu caballo daría jaque al rey negro y atacaría la torre a la vez.',
     fen: '3k4/6r1/8/8/3N4/8/8/7K w - - 0 1',
     solucion: 'e6',
@@ -592,7 +607,7 @@ window.DIAGNOSTICO_ITEMS = [
     prueba: 'el salto es legal y desde esa casilla el caballo ataca al rey y a la torre negros',
   },
   {
-    id: 'cal_intermedia', area: 'calculo', peso: 3, tipo: 'opcion',
+    id: 'cal_intermedia', area: 'calculo', peso: 2, elo: 1330, eloBase: 1200, tipo: 'opcion',
     enunciado: '¿Qué es una jugada intermedia (zwischenzug)?',
     opciones: [
       'Meter un jaque o una amenaza antes de recapturar.',
@@ -604,7 +619,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Al calcular, pregúntate siempre: "¿puedo meter un jaque útil antes de recapturar?". Ahí aparecen medio punto y muchas piezas.',
   },
   {
-    id: 'cal_torre_bloqueo', area: 'calculo', peso: 1, tipo: 'opcion',
+    id: 'cal_torre_bloqueo', area: 'calculo', peso: 1, elo: 610, eloBase: 700, tipo: 'opcion',
     enunciado: '¿Puede una torre saltar por encima de otras piezas?',
     opciones: [
       'No: se detiene en la primera pieza del camino.',
@@ -616,7 +631,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Salvo el caballo, ninguna pieza salta por encima de otra: la torre se detiene en la primera pieza que encuentra en su línea de movimiento.',
   },
   {
-    id: 'cal_orden_capturas', area: 'calculo', peso: 2, tipo: 'opcion',
+    id: 'cal_orden_capturas', area: 'calculo', peso: 1, elo: 990, eloBase: 950, tipo: 'opcion',
     enunciado: 'Al calcular una serie de capturas en una misma casilla, ¿qué principio general conviene seguir?',
     opciones: [
       'Capturar primero con la pieza de menor valor.',
@@ -628,7 +643,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'La regla práctica es "capturar de menor a mayor valor": si la secuencia de cambios se corta a mitad de camino, no arriesgaste tu pieza más valiosa de entrada.',
   },
   {
-    id: 'cal_jaques_primero', area: 'calculo', peso: 3, tipo: 'opcion',
+    id: 'cal_jaques_primero', area: 'calculo', peso: 2, elo: 1310, eloBase: 1200, tipo: 'opcion',
     enunciado: 'En el cálculo de variantes forzadas (jaques, capturas, amenazas), ¿por qué conviene analizar primero los jaques?',
     opciones: [
       'Porque limitan mucho las respuestas del rival.',
@@ -659,7 +674,7 @@ window.DIAGNOSTICO_ITEMS = [
 
   /* ---------------- Táctica (ampliación) ---------------- */
   {
-    id: 'tac_doble_ataque', area: 'tactica', peso: 1, tipo: 'opcion',
+    id: 'tac_doble_ataque', area: 'tactica', peso: 1, elo: 610, eloBase: 700, tipo: 'opcion',
     enunciado: '¿Cómo se llama la jugada que ataca dos piezas rivales al mismo tiempo?',
     opciones: [
       'Ataque doble, u horquilla si es de caballo.',
@@ -671,7 +686,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'El ataque doble gana material porque el rival alcanza a salvar una sola de las dos piezas. Es la táctica más común de todas: vale la pena buscarla en cada jugada.',
   },
   {
-    id: 'tac_descubierta', area: 'tactica', peso: 1, tipo: 'opcion',
+    id: 'tac_descubierta', area: 'tactica', peso: 2, elo: 1230, eloBase: 700, tipo: 'opcion',
     enunciado: 'Mueves una pieza y, al quitarse de en medio, la que estaba detrás ataca algo importante. ¿Cómo se llama eso?',
     opciones: [
       'Ataque a la descubierta: atacan dos piezas.',
@@ -683,7 +698,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'En la descubierta la pieza que se mueve queda libre para hacer cualquier cosa (incluso ponerse donde la pueden capturar), porque el rival tiene que atender el ataque de la pieza de atrás.',
   },
   {
-    id: 'tac_colgada', area: 'tactica', peso: 1, tipo: 'opcion',
+    id: 'tac_colgada', area: 'tactica', peso: 1, elo: 710, eloBase: 700, tipo: 'opcion',
     enunciado: 'En el ajedrez de club se dice que una pieza está "colgada". ¿Qué quiere decir?',
     opciones: [
       'Que está sin defensa: nadie la recaptura.',
@@ -695,7 +710,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Antes de cada jugada conviene revisar las piezas colgadas —las tuyas y las del rival—: la mitad de las tácticas de una partida de club salen de ahí.',
   },
   {
-    id: 'tac_clavada_tablero', area: 'tactica', peso: 1, tipo: 'jugada',
+    id: 'tac_clavada_tablero', area: 'tactica', peso: 1, elo: 520, eloBase: 700, tipo: 'jugada',
     enunciado: 'Clava el caballo negro contra su rey: juega la jugada de alfil tras la cual ese caballo no se puede mover.',
     fen: '4k3/8/2n5/8/8/8/8/4KB2 w - - 0 1',
     solucion: { from: 'f1', to: 'b5' },
@@ -703,7 +718,7 @@ window.DIAGNOSTICO_ITEMS = [
     prueba: 'tras Ab5 el caballo negro no tiene ninguna jugada legal (clavada absoluta) y es la única jugada del alfil que lo consigue',
   },
   {
-    id: 'tac_enfilada', area: 'tactica', peso: 2, tipo: 'opcion',
+    id: 'tac_enfilada', area: 'tactica', peso: 2, elo: 1290, eloBase: 950, tipo: 'opcion',
     enunciado: '¿Qué es una enfilada (en inglés, skewer)?',
     opciones: [
       'Como una clavada al revés: la valiosa está adelante.',
@@ -715,7 +730,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Clavada y enfilada son la misma línea de ataque, cambiando el orden: en la clavada la pieza valiosa está atrás; en la enfilada, adelante, y se gana lo que queda detrás.',
   },
   {
-    id: 'tac_enfilada_tablero', area: 'tactica', peso: 2, tipo: 'jugada',
+    id: 'tac_enfilada_tablero', area: 'tactica', peso: 1, elo: 820, eloBase: 950, tipo: 'jugada',
     enunciado: 'Gana la dama negra con una enfilada: da jaque de manera que, al moverse el rey, la torre se coma la dama.',
     fen: '8/8/8/2k4q/8/8/8/R5K1 w - - 0 1',
     solucion: { from: 'a1', to: 'a5' },
@@ -723,7 +738,7 @@ window.DIAGNOSTICO_ITEMS = [
     prueba: 'Ta5+ da jaque, las negras solo tienen jugadas de rey (la dama no puede interponerse) y tras cualquiera de ellas Txh5 es legal y la torre no queda al alcance del rey',
   },
   {
-    id: 'tac_jaque_doble', area: 'tactica', peso: 2, tipo: 'opcion',
+    id: 'tac_jaque_doble', area: 'tactica', peso: 1, elo: 850, eloBase: 950, tipo: 'opcion',
     enunciado: 'El rey recibe jaque de dos piezas a la vez (jaque doble). ¿Qué puede hacer el rival?',
     opciones: [
       'Solo mover el rey: no hay forma de tapar los dos.',
@@ -735,7 +750,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Por eso el jaque doble es tan fuerte: como el rey está obligado a moverse, la pieza que lo da puede quedar atacada sin que importe.',
   },
   {
-    id: 'tac_doble_jaque_tablero', area: 'tactica', peso: 3, tipo: 'jugada',
+    id: 'tac_doble_jaque_tablero', area: 'tactica', peso: 1, elo: 790, eloBase: 1200, tipo: 'jugada',
     enunciado: 'Da jaque doble: mueve el caballo de modo que el rey negro quede en jaque del caballo y de la torre al mismo tiempo.',
     fen: '2k5/8/8/8/2N5/8/8/2R3K1 w - - 0 1',
     solucion: { from: 'c4', to: 'b6' },
@@ -744,7 +759,7 @@ window.DIAGNOSTICO_ITEMS = [
     prueba: 'tras Cb6+ y tras Cd6+ el rey negro queda atacado por dos piezas (caballo y torre); las demás jugadas del caballo dan un solo jaque',
   },
   {
-    id: 'tac_atraccion', area: 'tactica', peso: 2, tipo: 'opcion',
+    id: 'tac_atraccion', area: 'tactica', peso: 1, elo: 870, eloBase: 950, tipo: 'opcion',
     enunciado: '¿En qué consiste la táctica de atracción (o señuelo)?',
     opciones: [
       'Sacrificar algo para atraer una pieza a una casilla mala.',
@@ -756,7 +771,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Atracción y desviación son primas: una arrastra a la pieza adonde te conviene, la otra la saca de donde estorbaba. En las dos, el sacrificio se paga con la táctica que viene después.',
   },
   {
-    id: 'tac_pieza_atrapada', area: 'tactica', peso: 2, tipo: 'opcion',
+    id: 'tac_pieza_atrapada', area: 'tactica', peso: 1, elo: 870, eloBase: 950, tipo: 'opcion',
     enunciado: 'Tu rival metió la dama a comer un peón lejos de sus piezas. ¿Qué idea vale la pena buscar?',
     opciones: [
       'Atraparla: quitarle una por una las casillas de salida.',
@@ -768,7 +783,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Una pieza atrapada es material ganado aunque la captura llegue tres jugadas después: primero se le cierran las salidas y al final se cobra.',
   },
   {
-    id: 'tac_perpetuo', area: 'tactica', peso: 2, tipo: 'opcion',
+    id: 'tac_perpetuo', area: 'tactica', peso: 2, elo: 1100, eloBase: 950, tipo: 'opcion',
     enunciado: 'Vas perdiendo por una pieza, pero puedes dar jaque una y otra vez sin que el rey rival se escape. ¿Qué resultado buscas?',
     opciones: [
       'Tablas por jaque perpetuo.',
@@ -780,7 +795,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'El jaque perpetuo es el salvavidas de las posiciones perdidas: si el rey rival no puede salir de la red de jaques, la partida termina en tablas por repetición.',
   },
   {
-    id: 'tac_sobrecarga', area: 'tactica', peso: 3, tipo: 'opcion',
+    id: 'tac_sobrecarga', area: 'tactica', peso: 2, elo: 1320, eloBase: 1200, tipo: 'opcion',
     enunciado: 'Una torre rival es la única que defiende dos cosas a la vez. ¿Cómo se llama esa debilidad y cómo se aprovecha?',
     opciones: [
       'Sobrecarga: se ataca una cosa y suelta la otra.',
@@ -792,7 +807,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'La pregunta que la descubre es siempre la misma: "¿qué defiende esta pieza?". Si la respuesta son dos cosas, hay táctica.',
   },
   {
-    id: 'tac_interferencia', area: 'tactica', peso: 3, tipo: 'opcion',
+    id: 'tac_interferencia', area: 'tactica', peso: 3, elo: 1540, eloBase: 1200, tipo: 'opcion',
     enunciado: '¿Qué es una interferencia (obstrucción)?',
     opciones: [
       'Cortar con una pieza la línea por la que el rival defiende.',
@@ -804,7 +819,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'La defensa no siempre se puede mover ni desviar: a veces basta con cortarle la línea. Por eso la interferencia suele venir con un sacrificio en la casilla justa.',
   },
   {
-    id: 'tac_despeje', area: 'tactica', peso: 3, tipo: 'opcion',
+    id: 'tac_despeje', area: 'tactica', peso: 2, elo: 1180, eloBase: 1200, tipo: 'opcion',
     enunciado: 'Tu propia pieza está tapando la línea por la que tu dama daría mate. ¿Cuál es la idea?',
     opciones: [
       'Despejar la línea: mover esa pieza con amenaza.',
@@ -816,7 +831,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'El despeje de línea (o de casilla) gana tiempo: la pieza que estorba se va haciendo daño, y detrás de ella ya viene la amenaza de verdad.',
   },
   {
-    id: 'tac_molino', area: 'tactica', peso: 3, tipo: 'opcion',
+    id: 'tac_molino', area: 'tactica', peso: 2, elo: 1220, eloBase: 1200, tipo: 'opcion',
     enunciado: '¿Qué es el "molino", una de las tácticas más vistosas del ajedrez?',
     opciones: [
       'Jaques a la descubierta con torre y alfil, uno tras otro.',
@@ -828,7 +843,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Funciona porque el rival nunca puede hacer nada: entre jaque y jaque descubierto solo alcanza a mover el rey, mientras la torre cobra todo lo que hay en su camino.',
   },
   {
-    id: 'tac_socavar', area: 'tactica', peso: 3, tipo: 'opcion',
+    id: 'tac_socavar', area: 'tactica', peso: 1, elo: 1010, eloBase: 1200, tipo: 'opcion',
     enunciado: 'Una pieza rival bien puesta está sostenida por un peón. ¿Qué significa "socavar" esa posición?',
     opciones: [
       'Atacar o cambiar el peón que la sostiene.',
@@ -840,7 +855,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Contra una pieza bien plantada casi nunca sirve atacarla de frente: se le quita el piso, que suele ser un peón.',
   },
   {
-    id: 'tac_desesperada', area: 'tactica', peso: 3, tipo: 'opcion',
+    id: 'tac_desesperada', area: 'tactica', peso: 1, elo: 1080, eloBase: 1200, tipo: 'opcion',
     enunciado: 'Tu alfil está perdido, no hay forma de salvarlo. ¿Qué conviene hacer con él?',
     opciones: [
       'Venderlo caro: que se lleve algo antes de caer.',
@@ -854,7 +869,7 @@ window.DIAGNOSTICO_ITEMS = [
 
   /* ---------------- Jaque mate (ampliación) ---------------- */
   {
-    id: 'mate_jaque_no_es_mate', area: 'mate', peso: 1, tipo: 'opcion',
+    id: 'mate_jaque_no_es_mate', area: 'mate', peso: 1, elo: 570, eloBase: 700, tipo: 'opcion',
     enunciado: 'Le das jaque al rey rival. ¿Qué tres formas tiene de salir del jaque?',
     opciones: [
       'Mover el rey, capturar a quien da jaque o tapar.',
@@ -866,7 +881,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Mate es justo cuando ninguna de esas tres salidas existe. Repasarlas en orden —mover, capturar, tapar— es la forma de no cantar mate donde no lo hay.',
   },
   {
-    id: 'mate_escalera_tablero', area: 'mate', peso: 2, tipo: 'jugada',
+    id: 'mate_escalera_tablero', area: 'mate', peso: 1, elo: 760, eloBase: 950, tipo: 'jugada',
     enunciado: 'Da jaque mate en una jugada con las dos torres.',
     fen: '7k/1R6/R7/8/8/8/8/6K1 w - - 0 1',
     solucion: { from: 'a6', to: 'a8' },
@@ -874,7 +889,7 @@ window.DIAGNOSTICO_ITEMS = [
     prueba: 'Ta8 es mate y es el único mate en 1 de la posición',
   },
   {
-    id: 'mate_tecnica_torre', area: 'mate', peso: 2, tipo: 'opcion',
+    id: 'mate_tecnica_torre', area: 'mate', peso: 1, elo: 710, eloBase: 950, tipo: 'opcion',
     enunciado: 'Te queda rey y torre contra rey solo. ¿Cuál es el plan para dar mate?',
     opciones: [
       'Empujar al rey al borde con la torre y acercar el propio.',
@@ -886,7 +901,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'La torre sola no da mate: hace falta el rey propio para quitarle las casillas de escape. Sin plan, la partida se va a tablas por las 50 jugadas.',
   },
   {
-    id: 'mate_ahogado_cuidado', area: 'mate', peso: 2, tipo: 'opcion',
+    id: 'mate_ahogado_cuidado', area: 'mate', peso: 1, elo: 1030, eloBase: 950, tipo: 'opcion',
     enunciado: 'Vas ganando con dama de más contra rey solo. ¿Cuál es el descuido más común?',
     opciones: [
       'Dejarlo sin jaque y sin jugada legal: es ahogado.',
@@ -898,7 +913,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Con dama de ventaja, antes de cada jugada hay que preguntarse: "¿le queda alguna jugada legal?". Si no le queda y no está en jaque, la partida se acabó en tablas.',
   },
   {
-    id: 'mate_arabe', area: 'mate', peso: 3, tipo: 'opcion',
+    id: 'mate_arabe', area: 'mate', peso: 2, elo: 1220, eloBase: 1200, tipo: 'opcion',
     enunciado: '¿Qué piezas trabajan juntas en el llamado mate árabe?',
     opciones: [
       'Torre y caballo, contra el rey en la esquina.',
@@ -910,7 +925,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Torre y caballo se entienden muy bien alrededor del rey enrocado: vale la pena reconocer el patrón, porque aparece en cientos de finales de ataque.',
   },
   {
-    id: 'mate_anastasia', area: 'mate', peso: 3, tipo: 'opcion',
+    id: 'mate_anastasia', area: 'mate', peso: 3, elo: 1460, eloBase: 1200, tipo: 'opcion',
     enunciado: 'En el mate de Anastasia, ¿qué hace el caballo?',
     opciones: [
       'Se planta en e7 y le quita al rey las casillas de g.',
@@ -924,7 +939,7 @@ window.DIAGNOSTICO_ITEMS = [
 
   /* ---------------- Cálculo y visualización (ampliación) ---------------- */
   {
-    id: 'cal_diagonal', area: 'calculo', peso: 1, tipo: 'opcion',
+    id: 'cal_diagonal', area: 'calculo', peso: 1, elo: 840, eloBase: 700, tipo: 'opcion',
     enunciado: 'Sin mirar el tablero: ¿un alfil que está en e4 puede llegar en una jugada a a8 (si el camino está libre)?',
     opciones: [
       'Sí: e4, d5, c6, b7 y a8 van en diagonal.',
@@ -937,7 +952,7 @@ window.DIAGNOSTICO_ITEMS = [
     prueba: 'e4 y a8 están en la misma diagonal (misma suma de columna y fila)',
   },
   {
-    id: 'cal_candidatas', area: 'calculo', peso: 2, tipo: 'opcion',
+    id: 'cal_candidatas', area: 'calculo', peso: 1, elo: 1060, eloBase: 950, tipo: 'opcion',
     enunciado: 'Antes de calcular a fondo, ¿qué conviene hacer primero?',
     opciones: [
       'Elegir dos o tres jugadas candidatas y calcularlas.',
@@ -949,7 +964,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Sin lista de candidatas se calcula mucho y se elige mal: casi siempre la buena era la que nunca se miró.',
   },
   {
-    id: 'cal_respuesta_rival', area: 'calculo', peso: 2, tipo: 'opcion',
+    id: 'cal_respuesta_rival', area: 'calculo', peso: 2, elo: 1290, eloBase: 950, tipo: 'opcion',
     enunciado: '¿Cuál es el error más caro al calcular una variante?',
     opciones: [
       'Darle al rival la respuesta que a uno le conviene.',
@@ -961,7 +976,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'En cada jugada del rival hay que buscar su mejor defensa, no la que deja lucir la combinación. Si la variante aguanta eso, sirve.',
   },
   {
-    id: 'cal_posicion_tranquila', area: 'calculo', peso: 3, tipo: 'opcion',
+    id: 'cal_posicion_tranquila', area: 'calculo', peso: 2, elo: 1300, eloBase: 1200, tipo: 'opcion',
     enunciado: '¿Hasta dónde hay que calcular una variante de capturas?',
     opciones: [
       'Hasta una posición tranquila, sin capturas pendientes.',
@@ -977,7 +992,7 @@ window.DIAGNOSTICO_ITEMS = [
      cuota de todas las áreas (reglas y material necesitaban un segundo ítem de
      peso 3; estrategia, un segundo de peso 1). */
   {
-    id: 'reg_jaque_obligado', area: 'reglas', peso: 3, tipo: 'opcion',
+    id: 'reg_jaque_obligado', area: 'reglas', peso: 1, elo: 1050, eloBase: 1200, tipo: 'opcion',
     enunciado: 'Tu rey está en jaque y tienes una jugada que gana la dama rival, pero no te saca del jaque. ¿Qué puedes hacer?',
     opciones: [
       'Nada: en jaque solo valen las jugadas que lo resuelven.',
@@ -989,7 +1004,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'El jaque es obligatorio de atender: mover el rey, capturar a quien lo da o interponer algo. Cualquier otra jugada, por buena que sea, no existe.',
   },
   {
-    id: 'mat_cambiar_ganando', area: 'material', peso: 3, tipo: 'opcion',
+    id: 'mat_cambiar_ganando', area: 'material', peso: 2, elo: 1260, eloBase: 1200, tipo: 'opcion',
     enunciado: 'Vas ganando una pieza. ¿Qué criterio de cambios te conviene?',
     opciones: [
       'Cambiar piezas, no peones: la ventaja pesa más.',
@@ -1001,7 +1016,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Es la regla práctica que convierte ventajas en puntos: con pieza de más, cada cambio de piezas acerca el final ganado; los peones, en cambio, hacen falta para coronar.',
   },
   {
-    id: 'est_rey_final', area: 'estrategia', peso: 1, tipo: 'opcion',
+    id: 'est_rey_final', area: 'estrategia', peso: 1, elo: 1040, eloBase: 700, tipo: 'opcion',
     enunciado: 'En el final, ¿qué pasa con el rey?',
     opciones: [
       'Se vuelve una pieza fuerte: hay que activarlo.',
@@ -1026,7 +1041,7 @@ window.DIAGNOSTICO_ITEMS = [
 
   /* ---------------- Reglas (escalones 4 y 5) ---------------- */
   {
-    id: 'reg_enroque_torre_atacada', area: 'reglas', peso: 4, tipo: 'opcion',
+    id: 'reg_enroque_torre_atacada', area: 'reglas', peso: 3, elo: 1430, eloBase: 1450, tipo: 'opcion',
     enunciado: 'Enroque largo: la casilla b1, por la que pasa la torre, está atacada por un alfil negro. Las casillas del rey (e1, d1, c1) están todas libres de ataque. ¿Se puede enrocar?',
     opciones: [
       'Sí: la regla mira solo las casillas del rey.',
@@ -1038,7 +1053,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'El reglamento habla del rey: no puede estar en jaque, ni pasar ni terminar en casilla atacada. La torre puede cruzar b1 atacada sin problema — es la diferencia que más se discute en torneos escolares.',
   },
   {
-    id: 'reg_repeticion', area: 'reglas', peso: 4, tipo: 'opcion',
+    id: 'reg_repeticion', area: 'reglas', peso: 3, elo: 1690, eloBase: 1450, tipo: 'opcion',
     enunciado: 'Para reclamar tablas por repetición, ¿qué es exactamente lo que tiene que repetirse tres veces?',
     opciones: [
       'La posición, con el mismo turno y los mismos derechos.',
@@ -1050,7 +1065,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Son posiciones, no jugadas, y tienen que ser idénticas en todo: mismo turno, mismos enroques posibles y misma posibilidad de captura al paso. Por eso a veces "la misma posición" no cuenta.',
   },
   {
-    id: 'reg_tiempo_sin_material', area: 'reglas', peso: 5, tipo: 'opcion',
+    id: 'reg_tiempo_sin_material', area: 'reglas', peso: 3, elo: 1540, eloBase: 1700, tipo: 'opcion',
     enunciado: 'A tu rival se le cae la bandera (se le acaba el tiempo). A ti te queda solo el rey. ¿Cuál es el resultado?',
     opciones: [
       'Tablas: sin material para dar mate no se gana por tiempo.',
@@ -1062,7 +1077,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Es el artículo del reglamento que más partidas de torneo decide mal cuando no se conoce: sin material para dar mate ni siquiera con la peor defensa posible, la caída de bandera es empate.',
   },
   {
-    id: 'reg_enroque_toque', area: 'reglas', peso: 5, tipo: 'opcion',
+    id: 'reg_enroque_toque', area: 'reglas', peso: 2, elo: 1190, eloBase: 1700, tipo: 'opcion',
     enunciado: 'En torneo, con pieza tocada: quieres enrocar y tocas primero la torre. ¿Qué pasa?',
     opciones: [
       'Solo puedes mover la torre: el enroque se toca del rey.',
@@ -1076,7 +1091,7 @@ window.DIAGNOSTICO_ITEMS = [
 
   /* ---------------- Valor del material (escalones 4 y 5) ---------------- */
   {
-    id: 'mat_calidad_sacrificio', area: 'material', peso: 4, tipo: 'opcion',
+    id: 'mat_calidad_sacrificio', area: 'material', peso: 2, elo: 1230, eloBase: 1450, tipo: 'opcion',
     enunciado: 'Sacrificar la calidad (dar torre por alfil o caballo). ¿Cuándo suele valer la pena?',
     opciones: [
       'Cuando a cambio queda algo permanente: casillas o estructura.',
@@ -1088,7 +1103,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'La calidad se entrega por ventajas que no se van: casillas, estructura, seguridad del rey. Si lo que se obtiene se puede deshacer en tres jugadas, el sacrificio no era.',
   },
   {
-    id: 'mat_dos_menores_vs_torre', area: 'material', peso: 4, tipo: 'opcion',
+    id: 'mat_dos_menores_vs_torre', area: 'material', peso: 3, elo: 1430, eloBase: 1450, tipo: 'opcion',
     enunciado: 'Dos piezas menores contra torre y peón, con damas y varias piezas todavía en el tablero. ¿Qué prefieres?',
     opciones: [
       'Las dos menores: con el tablero lleno coordinan mejor.',
@@ -1100,7 +1115,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'La tabla de valores es una guía de principiante: en el medio juego dos menores activas valen más que torre y peón, y la relación se da vuelta cuando se cambian piezas y se abren columnas.',
   },
   {
-    id: 'mat_pareja_alfiles_contra', area: 'material', peso: 5, tipo: 'opcion',
+    id: 'mat_pareja_alfiles_contra', area: 'material', peso: 3, elo: 1440, eloBase: 1700, tipo: 'opcion',
     enunciado: 'Tu rival tiene la pareja de alfiles y tú alfil y caballo. ¿Cuál es el plan correcto?',
     opciones: [
       'Cerrar la posición y cambiar uno de los dos alfiles.',
@@ -1112,7 +1127,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'La pareja vale por el trabajo conjunto en posiciones abiertas. Trabar los peones y cambiar uno de los dos la desarma: es la receta de Steinitz para el lado que no la tiene.',
   },
   {
-    id: 'mat_dos_torres_vs_dama_fuerte', area: 'material', peso: 5, tipo: 'opcion',
+    id: 'mat_dos_torres_vs_dama_fuerte', area: 'material', peso: 3, elo: 1460, eloBase: 1700, tipo: 'opcion',
     enunciado: 'Dos torres contra dama, con peones en los dos flancos. ¿Cuándo pelea mejor la dama?',
     opciones: [
       'Cuando hay peones sueltos que cobrar y el rey al aire.',
@@ -1126,7 +1141,7 @@ window.DIAGNOSTICO_ITEMS = [
 
   /* ---------------- Apertura (escalones 4 y 5) ---------------- */
   {
-    id: 'ap_carlsbad', area: 'apertura', peso: 4, tipo: 'opcion',
+    id: 'ap_carlsbad', area: 'apertura', peso: 3, elo: 1610, eloBase: 1450, tipo: 'opcion',
     enunciado: 'Estructura Carlsbad (peones blancos en c3, d4, e3 y negros en c6, d5, e6, con el cambio ya hecho en d5). ¿Cuál es el plan clásico de las blancas?',
     opciones: [
       'El ataque de minorías: b4-b5 y cambio en c6.',
@@ -1138,7 +1153,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Dos peones atacando a tres: el cambio en c6 deja un peón atrasado en columna semiabierta. Es el plan más enseñado del Gambito de Dama y se juega igual en 1900 y hoy.',
   },
   {
-    id: 'ap_peon_aislado', area: 'apertura', peso: 4, tipo: 'opcion',
+    id: 'ap_peon_aislado', area: 'apertura', peso: 3, elo: 1650, eloBase: 1450, tipo: 'opcion',
     enunciado: 'Juegas contra un peón dama aislado del rival (su peón en d4, sin peones en c ni e). ¿Cuál es la estrategia correcta?',
     opciones: [
       'Cambiar piezas y bloquear la casilla de adelante.',
@@ -1150,7 +1165,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'El peón aislado da actividad en el medio juego y es una debilidad en el final: quien lo sufre cambia piezas y bloquea; quien lo tiene evita los cambios y busca la ruptura d4-d5.',
   },
   {
-    id: 'ap_orden_jugadas', area: 'apertura', peso: 5, tipo: 'opcion',
+    id: 'ap_orden_jugadas', area: 'apertura', peso: 2, elo: 1120, eloBase: 1700, tipo: 'opcion',
     enunciado: '¿Por qué los jugadores fuertes cuidan tanto el orden de jugadas en la apertura?',
     opciones: [
       'Porque transponiendo se elige a qué variante entrar.',
@@ -1162,7 +1177,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'La misma posición se llega por caminos distintos, y en el camino cada bando tiene desvíos. Elegir el orden es elegir qué desvíos le dejas al rival.',
   },
   {
-    id: 'ap_najdorf_a6', area: 'apertura', peso: 5, tipo: 'opcion',
+    id: 'ap_najdorf_a6', area: 'apertura', peso: 3, elo: 1510, eloBase: 1700, tipo: 'opcion',
     enunciado: 'Siciliana Najdorf (1.e4 c5 2.Cf3 d6 3.d4 cxd4 4.Cxd4 Cf6 5.Cc3 a6). ¿Para qué juegan las negras ...a6?',
     opciones: [
       'Le quita b5 a las blancas y prepara ...e5.',
@@ -1176,7 +1191,7 @@ window.DIAGNOSTICO_ITEMS = [
 
   /* ---------------- Táctica (escalones 4 y 5) ---------------- */
   {
-    id: 'tac_sacrificio_f7', area: 'tactica', peso: 4, tipo: 'jugada',
+    id: 'tac_sacrificio_f7', area: 'tactica', peso: 1, elo: 760, eloBase: 1450, tipo: 'jugada',
     enunciado: 'Encuentra el golpe que fuerza el mate en dos. Juega solo ese golpe.',
     fen: '6k1/5ppp/6Q1/5R2/8/8/8/6K1 w - - 0 1',
     solucion: { from: 'g6', to: 'f7' },
@@ -1184,7 +1199,7 @@ window.DIAGNOSTICO_ITEMS = [
     prueba: 'Dxf7+ fuerza mate en 2 y es la única jugada que lo hace (búsqueda exhaustiva sobre todas las respuestas negras)',
   },
   {
-    id: 'tac_orden_amenazas', area: 'tactica', peso: 4, tipo: 'opcion',
+    id: 'tac_orden_amenazas', area: 'tactica', peso: 1, elo: 960, eloBase: 1450, tipo: 'opcion',
     enunciado: 'Tu rival amenaza mate en una jugada y tú puedes ganar una torre. ¿Qué manda?',
     opciones: [
       'Parar el mate, salvo que ganar la torre lo pare también.',
@@ -1196,7 +1211,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Lo forzado va antes que lo bueno. La excepción vale la pena buscarla siempre: una jugada que gana material Y para el mate es la que hay que encontrar.',
   },
   {
-    id: 'tac_senales_combinacion', area: 'tactica', peso: 5, tipo: 'opcion',
+    id: 'tac_senales_combinacion', area: 'tactica', peso: 3, elo: 1510, eloBase: 1700, tipo: 'opcion',
     enunciado: '¿Qué señales avisan de que en una posición probablemente HAY una combinación?',
     opciones: [
       'Rey con pocas casillas, piezas sin defensa o clavadas.',
@@ -1208,7 +1223,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Las combinaciones no aparecen de la nada: viven de elementos concretos. Cuando hay dos o tres de esos elementos juntos, vale la pena gastar tiempo buscando; cuando no hay ninguno, casi nunca hay nada.',
   },
   {
-    id: 'tac_defensa_activa', area: 'tactica', peso: 5, tipo: 'opcion',
+    id: 'tac_defensa_activa', area: 'tactica', peso: 2, elo: 1100, eloBase: 1700, tipo: 'opcion',
     enunciado: 'Estás bajo ataque y aguantando. ¿Cuál es el criterio de defensa que más partidas salva?',
     opciones: [
       'Buscar el contragolpe o cambiar la pieza atacante.',
@@ -1222,7 +1237,7 @@ window.DIAGNOSTICO_ITEMS = [
 
   /* ---------------- Jaque mate (escalones 4 y 5) ---------------- */
   {
-    id: 'mate_dos_jugadas', area: 'mate', peso: 4, tipo: 'jugada',
+    id: 'mate_dos_jugadas', area: 'mate', peso: 3, elo: 1440, eloBase: 1450, tipo: 'jugada',
     enunciado: 'Mate en dos jugadas: juega solo la primera, la que lo fuerza. Aviso: no es jaque.',
     fen: '6k1/5ppp/8/5N1Q/8/8/8/6K1 w - - 0 1',
     solucion: { from: 'h5', to: 'g5' },
@@ -1230,7 +1245,7 @@ window.DIAGNOSTICO_ITEMS = [
     prueba: 'Dg5 fuerza mate en 2, no hay mate en 1 en la posición y ninguna otra jugada fuerza mate en 2',
   },
   {
-    id: 'mate_tres_jugadas', area: 'mate', peso: 5, tipo: 'jugada',
+    id: 'mate_tres_jugadas', area: 'mate', peso: 1, elo: 1070, eloBase: 1700, tipo: 'jugada',
     enunciado: 'Mate en tres jugadas: juega solo la primera. Tampoco es jaque.',
     fen: '6k1/5p1p/6p1/8/8/7Q/8/4R1K1 w - - 0 1',
     solucion: { from: 'h3', to: 'h6' },
@@ -1238,7 +1253,7 @@ window.DIAGNOSTICO_ITEMS = [
     prueba: 'Dh6 fuerza mate en 3, no hay mate en 1 ni en 2 en la posición y ninguna otra jugada fuerza mate en 3',
   },
   {
-    id: 'mate_enroques_opuestos', area: 'mate', peso: 4, tipo: 'opcion',
+    id: 'mate_enroques_opuestos', area: 'mate', peso: 3, elo: 1530, eloBase: 1450, tipo: 'opcion',
     enunciado: 'Partida con enroques opuestos (uno enrocó corto y el otro largo). ¿Qué decide el ataque?',
     opciones: [
       'La velocidad: gana quien abre una línea primero.',
@@ -1250,7 +1265,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Con enroques opuestos los peones propios ya no defienden al rey: son la artillería. Contar tiempos —cuántas jugadas me faltan a mí y cuántas a él— es literalmente la evaluación de la posición.',
   },
   {
-    id: 'mate_boden', area: 'mate', peso: 5, tipo: 'opcion',
+    id: 'mate_boden', area: 'mate', peso: 3, elo: 1670, eloBase: 1700, tipo: 'opcion',
     enunciado: '¿Qué piezas dan el mate de Boden y contra qué rey?',
     opciones: [
       'Dos alfiles cruzados, contra un rey que enrocó largo.',
@@ -1264,7 +1279,7 @@ window.DIAGNOSTICO_ITEMS = [
 
   /* ---------------- Finales (escalones 4 y 5) ---------------- */
   {
-    id: 'fin_lucena', area: 'finales', peso: 4, tipo: 'opcion',
+    id: 'fin_lucena', area: 'finales', peso: 2, elo: 1340, eloBase: 1450, tipo: 'opcion',
     enunciado: 'Posición de Lucena: tienes rey, torre y un peón en séptima; tu rey está delante del peón y el rey rival está cortado a dos columnas. ¿Cómo se gana?',
     opciones: [
       'Construyendo el puente: la torre a la cuarta fila.',
@@ -1276,7 +1291,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Es la técnica de torres que más puntos vale: sin el puente, el mismo final es tablas. La torre en cuarta fila es la jugada que se aprende y ya no se olvida.',
   },
   {
-    id: 'fin_torre_detras_pasado', area: 'finales', peso: 4, tipo: 'opcion',
+    id: 'fin_torre_detras_pasado', area: 'finales', peso: 3, elo: 1590, eloBase: 1450, tipo: 'opcion',
     enunciado: 'Final de torres con un peón pasado. ¿Dónde va la torre, según la regla de Tarrasch?',
     opciones: [
       'Detrás del peón pasado, la del que empuja y la que frena.',
@@ -1288,7 +1303,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Detrás, la torre que apoya gana casillas a medida que el peón avanza, y la que frena no pierde ninguna. Delante, el bloqueo condena a la torre a mirar la partida desde ahí.',
   },
   {
-    id: 'fin_philidor', area: 'finales', peso: 5, tipo: 'opcion',
+    id: 'fin_philidor', area: 'finales', peso: 3, elo: 1520, eloBase: 1700, tipo: 'opcion',
     enunciado: 'Defiendes con rey y torre contra rey, torre y un peón que todavía no llegó a tu tercera fila. ¿Cuál es la defensa de Philidor?',
     opciones: [
       'Torre en la tercera fila y después jaques por detrás.',
@@ -1300,7 +1315,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Son dos etapas y en ese orden: la tercera fila frena al rey, y cuando el peón avanza pierde el escudo, por eso los jaques desde atrás ya no se pueden tapar. Es la defensa que salva medio punto en cada torneo.',
   },
   {
-    id: 'fin_triangulacion', area: 'finales', peso: 5, tipo: 'opcion',
+    id: 'fin_triangulacion', area: 'finales', peso: 3, elo: 1620, eloBase: 1700, tipo: 'opcion',
     enunciado: 'En un final de reyes y peones, ¿para qué sirve triangular con el rey?',
     opciones: [
       'Para perder un tiempo y devolverle el turno al rival.',
@@ -1314,7 +1329,7 @@ window.DIAGNOSTICO_ITEMS = [
 
   /* ---------------- Estrategia (escalones 4 y 5) ---------------- */
   {
-    id: 'est_profilaxis', area: 'estrategia', peso: 4, tipo: 'opcion',
+    id: 'est_profilaxis', area: 'estrategia', peso: 2, elo: 1370, eloBase: 1450, tipo: 'opcion',
     enunciado: '¿En qué consiste jugar con profilaxis?',
     opciones: [
       'Preguntarse qué quiere el rival y quitárselo.',
@@ -1326,7 +1341,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'La pregunta de Petrosian: "si me tocara mover a mí dos veces, ¿qué haría él?". Quitarle esa jugada suele valer más que adelantar el propio plan una casilla.',
   },
   {
-    id: 'est_dos_debilidades', area: 'estrategia', peso: 4, tipo: 'opcion',
+    id: 'est_dos_debilidades', area: 'estrategia', peso: 4, elo: 1890, eloBase: 1450, tipo: 'opcion',
     enunciado: '¿Qué dice el principio de las dos debilidades?',
     opciones: [
       'Que hace falta una segunda debilidad, en el otro flanco.',
@@ -1338,7 +1353,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Es cómo se convierte una ventaja chica en punto entero: se fija la primera debilidad, se lleva el juego al otro flanco y la defensa se parte. Sin la segunda, casi todo se aguanta.',
   },
   {
-    id: 'est_espacio_cambios', area: 'estrategia', peso: 5, tipo: 'opcion',
+    id: 'est_espacio_cambios', area: 'estrategia', peso: 2, elo: 1290, eloBase: 1700, tipo: 'opcion',
     enunciado: 'Tienes menos espacio que tu rival. ¿Qué conviene hacer?',
     opciones: [
       'Cambiar piezas: las que quedan tienen más aire.',
@@ -1350,7 +1365,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Con poco espacio el problema no son las piezas del rival: son las propias, que se estorban. El que tiene más espacio evita los cambios por la misma razón.',
   },
   {
-    id: 'est_plan_desde_estructura', area: 'estrategia', peso: 5, tipo: 'opcion',
+    id: 'est_plan_desde_estructura', area: 'estrategia', peso: 2, elo: 1350, eloBase: 1700, tipo: 'opcion',
     enunciado: 'Llegas a una posición que no conoces y no sabes qué hacer. ¿De dónde sale el plan?',
     opciones: [
       'De la estructura de peones: rupturas y casillas débiles.',
@@ -1364,7 +1379,7 @@ window.DIAGNOSTICO_ITEMS = [
 
   /* ---------------- Cálculo (escalones 4 y 5) ---------------- */
   {
-    id: 'cal_posicion_critica', area: 'calculo', peso: 4, tipo: 'opcion',
+    id: 'cal_posicion_critica', area: 'calculo', peso: 2, elo: 1370, eloBase: 1450, tipo: 'opcion',
     enunciado: 'En una partida lenta, ¿dónde hay que gastar el tiempo de reflexión?',
     opciones: [
       'En las posiciones críticas, donde la partida se define.',
@@ -1376,7 +1391,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Reconocer la posición crítica —una ruptura, un cambio que no vuelve atrás, el momento de atacar— y ahí pensar veinte minutos es lo que separa a quien administra bien el reloj.',
   },
   {
-    id: 'cal_comparar_finales', area: 'calculo', peso: 4, tipo: 'opcion',
+    id: 'cal_comparar_finales', area: 'calculo', peso: 2, elo: 1250, eloBase: 1450, tipo: 'opcion',
     enunciado: 'Dos jugadas te parecen buenas y no llegas a calcularlas hasta el final. ¿Cómo decides?',
     opciones: [
       'Comparando las posiciones a las que llevan las dos.',
@@ -1388,7 +1403,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'El cálculo termina en una evaluación, no en un número: cuando no se ve el final de la variante, se compara la posición que queda. Calcular sin evaluar no sirve de nada.',
   },
   {
-    id: 'cal_jugadas_silenciosas', area: 'calculo', peso: 5, tipo: 'opcion',
+    id: 'cal_jugadas_silenciosas', area: 'calculo', peso: 2, elo: 1330, eloBase: 1700, tipo: 'opcion',
     enunciado: '¿Qué tipo de jugada es la que más se escapa cuando uno calcula?',
     opciones: [
       'Las silenciosas: ni jaque ni captura, y las del rival.',
@@ -1400,7 +1415,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'El cálculo se apoya en lo forzado, y ahí la vista funciona sola. Las combinaciones que uno no ve casi siempre terminan en una jugada callada — propia o del rival.',
   },
   {
-    id: 'cal_orden_del_arbol', area: 'calculo', peso: 5, tipo: 'opcion',
+    id: 'cal_orden_del_arbol', area: 'calculo', peso: 3, elo: 1580, eloBase: 1700, tipo: 'opcion',
     enunciado: 'Al calcular una variante larga, ¿qué hace un jugador fuerte para no perderse?',
     opciones: [
       'Recorre una rama entera y vuelve a la posición inicial.',
@@ -1434,7 +1449,7 @@ window.DIAGNOSTICO_ITEMS = [
 
   /* ---------------- Reglas y movimientos ---------------- */
   {
-    id: 'reg_forma_l', area: 'reglas', peso: 1, tipo: 'opcion',
+    id: 'reg_forma_l', area: 'reglas', peso: 1, elo: 530, eloBase: 700, tipo: 'opcion',
     enunciado: '¿Qué pieza se mueve siempre en forma de «L»?',
     opciones: [
       'El caballo',
@@ -1446,7 +1461,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'El caballo es la única que se mueve en «L» —dos casillas en una dirección y una perpendicular— y la única que salta por encima de las demás.',
   },
   {
-    id: 'reg_h1_clara', area: 'reglas', peso: 1, tipo: 'opcion',
+    id: 'reg_h1_clara', area: 'reglas', peso: 1, elo: 680, eloBase: 700, tipo: 'opcion',
     enunciado: 'En la posición inicial, ¿de qué color es la casilla h1 y qué regla lo resume?',
     opciones: [
       'Clara: «casilla clara a la derecha»',
@@ -1458,7 +1473,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: '«Casilla clara a la derecha»: vista desde las blancas, la esquina de abajo a la derecha del tablero siempre es clara. Si sale oscura, el tablero está mal puesto.',
   },
   {
-    id: 'reg_notacion_enroque', area: 'reglas', peso: 1, tipo: 'opcion',
+    id: 'reg_notacion_enroque', area: 'reglas', peso: 1, elo: 650, eloBase: 700, tipo: 'opcion',
     enunciado: '¿Cómo se anota en notación algebraica el enroque corto?',
     opciones: [
       'O-O',
@@ -1470,7 +1485,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'El enroque corto se anota O-O, con la letra O; el largo, O-O-O. Se escriben con letra, no con el número cero.',
   },
   {
-    id: 'reg_al_paso_cuando', area: 'reglas', peso: 2, tipo: 'opcion',
+    id: 'reg_al_paso_cuando', area: 'reglas', peso: 2, elo: 1260, eloBase: 950, tipo: 'opcion',
     enunciado: 'Un peón blanco en e5 puede capturar «al paso» a un peón negro que…',
     opciones: [
       'Acaba de avanzar dos casillas, de d7 a d5',
@@ -1482,7 +1497,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'La captura al paso solo es legal en la jugada inmediatamente siguiente al avance doble del peón rival. Si se deja pasar un turno, el derecho se pierde.',
   },
   {
-    id: 'reg_ahogado_resultado', area: 'reglas', peso: 2, tipo: 'opcion',
+    id: 'reg_ahogado_resultado', area: 'reglas', peso: 1, elo: 790, eloBase: 950, tipo: 'opcion',
     enunciado: 'Si el jugador en turno no tiene el rey en jaque, pero no le queda ninguna jugada legal, la partida es…',
     opciones: [
       'Tablas por ahogado',
@@ -1494,7 +1509,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Esa situación se llama ahogado (stalemate) y el resultado son tablas, no una derrota. Con ventaja aplastante hay que vigilarla: es la forma más común de dejar escapar una partida ganada.',
   },
   {
-    id: 'reg_enroque_condicion_falsa', area: 'reglas', peso: 3, tipo: 'opcion',
+    id: 'reg_enroque_condicion_falsa', area: 'reglas', peso: 1, elo: 1060, eloBase: 1200, tipo: 'opcion',
     enunciado: '¿Cuál de estas condiciones NO hace falta para poder enrocar?',
     opciones: [
       'Que al rival le queden menos de cinco minutos',
@@ -1506,7 +1521,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'El reloj del rival no tiene nada que ver con la legalidad del enroque. Las tres condiciones reales son las otras: que ni el rey ni esa torre se hayan movido, que no haya piezas entre medio, y que el rey no esté en jaque ni pase ni termine en casilla atacada.',
   },
   {
-    id: 'reg_enroque_largo_torre', area: 'reglas', peso: 2, tipo: 'opcion',
+    id: 'reg_enroque_largo_torre', area: 'reglas', peso: 2, elo: 1240, eloBase: 950, tipo: 'opcion',
     enunciado: '¿Qué torre participa en el enroque largo?',
     opciones: [
       'La torre de la columna «a»',
@@ -1518,7 +1533,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'El enroque largo (O-O-O) lleva el rey hacia el flanco de dama y usa la torre de la columna «a»; el corto (O-O) usa la de la columna «h». Se llama largo porque la torre recorre una casilla más.',
   },
   {
-    id: 'reg_triple_repeticion', area: 'reglas', peso: 2, tipo: 'opcion',
+    id: 'reg_triple_repeticion', area: 'reglas', peso: 1, elo: 690, eloBase: 950, tipo: 'opcion',
     enunciado: 'Si la misma posición se repite tres veces, con el mismo jugador en turno y los mismos derechos (enroque, al paso), ¿qué puede reclamar un jugador?',
     opciones: [
       'Tablas por triple repetición',
@@ -1530,7 +1545,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'La repetición no tiene que ser en jugadas seguidas, y da derecho a reclamar tablas sin importar quién esté mejor en el tablero. Ojo: se reclama, no se declara sola.',
   },
   {
-    id: 'reg_50_jugadas', area: 'reglas', peso: 3, tipo: 'opcion',
+    id: 'reg_50_jugadas', area: 'reglas', peso: 1, elo: 1070, eloBase: 1200, tipo: 'opcion',
     enunciado: '¿Qué dice la «regla de las 50 jugadas»?',
     opciones: [
       'Sin captura ni jugada de peón en 50, hay tablas',
@@ -1542,7 +1557,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Si pasan 50 jugadas seguidas de cada bando sin ninguna captura y sin mover ningún peón, cualquiera de los dos puede reclamar tablas. Existe para que una posición sin progreso no se estire para siempre.',
   },
   {
-    id: 'reg_material_insuficiente', area: 'reglas', peso: 3, tipo: 'opcion',
+    id: 'reg_material_insuficiente', area: 'reglas', peso: 1, elo: 890, eloBase: 1200, tipo: 'opcion',
     enunciado: '¿Cuál de estos finales es tablas automáticas por material insuficiente para dar mate?',
     opciones: [
       'Rey y alfil contra rey solo',
@@ -1554,7 +1569,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Con rey y un alfil —o rey y un caballo— no existe ninguna red de mate posible contra el rey solo, así que la partida es tablas de inmediato. Con dos torres, con dama o con dos alfiles sí se da mate.',
   },
   {
-    id: 'reg_pieza_tocada', area: 'reglas', peso: 2, tipo: 'opcion',
+    id: 'reg_pieza_tocada', area: 'reglas', peso: 1, elo: 670, eloBase: 950, tipo: 'opcion',
     enunciado: 'En una partida con la regla de «pieza tocada, pieza jugada», si tocas una pieza propia con intención de moverla…',
     opciones: [
       'Tienes que moverla si tiene alguna jugada legal',
@@ -1566,7 +1581,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'La regla de torneo obliga a mover la pieza que se tocó, siempre que tenga alguna jugada legal. Por eso, para acomodar una pieza torcida sin comprometerse, primero hay que avisar «compongo».',
   },
   {
-    id: 'reg_compongo', area: 'reglas', peso: 2, tipo: 'opcion',
+    id: 'reg_compongo', area: 'reglas', peso: 1, elo: 760, eloBase: 950, tipo: 'opcion',
     enunciado: '¿Para qué sirve decir «compongo» (j\'adoube) antes de tocar una pieza?',
     opciones: [
       'Para acomodarla sin quedar obligado a moverla',
@@ -1578,7 +1593,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Avisa al rival de que vas a enderezar una pieza mal colocada en su casilla, y que eso no cuenta como haberla tocado para moverla. Hay que decirlo ANTES de tocarla, nunca después.',
   },
   {
-    id: 'reg_cuantas_piezas', area: 'reglas', peso: 1, tipo: 'opcion',
+    id: 'reg_cuantas_piezas', area: 'reglas', peso: 1, elo: 510, eloBase: 700, tipo: 'opcion',
     enunciado: '¿Cuántas piezas tiene cada jugador al empezar la partida, contando los peones?',
     opciones: [
       '16',
@@ -1590,7 +1605,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Cada bando empieza con 16: un rey, una dama, dos torres, dos alfiles, dos caballos y ocho peones. Entre los dos, 32 piezas en 64 casillas: justo la mitad del tablero ocupada.',
   },
   {
-    id: 'reg_peon_captura', area: 'reglas', peso: 1, tipo: 'opcion',
+    id: 'reg_peon_captura', area: 'reglas', peso: 1, elo: 670, eloBase: 700, tipo: 'opcion',
     enunciado: '¿Cómo captura un peón a una pieza rival?',
     opciones: [
       'En diagonal, una casilla hacia adelante',
@@ -1602,7 +1617,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'El peón avanza recto pero captura en diagonal, y esa diferencia explica media estrategia de peones: una pieza justo enfrente lo bloquea sin estar en peligro, y en cambio no está a salvo en las dos diagonales.',
   },
   {
-    id: 'reg_peon_primer_salto', area: 'reglas', peso: 1, tipo: 'opcion',
+    id: 'reg_peon_primer_salto', area: 'reglas', peso: 1, elo: 650, eloBase: 700, tipo: 'opcion',
     enunciado: 'Un peón que todavía no se ha movido, ¿cuántas casillas puede avanzar en su primera jugada?',
     opciones: [
       'Una o dos, a elección',
@@ -1614,7 +1629,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Solo en su primer movimiento el peón puede elegir entre una casilla y dos; de ahí en adelante avanza de una en una. Y ese avance doble es justamente el que habilita la captura al paso del rival.',
   },
   {
-    id: 'reg_caida_bandera', area: 'reglas', peso: 4, tipo: 'opcion',
+    id: 'reg_caida_bandera', area: 'reglas', peso: 1, elo: 1010, eloBase: 1450, tipo: 'opcion',
     enunciado: 'Si a un jugador se le acaba el tiempo en el reloj, ¿qué pasa normalmente?',
     opciones: [
       'Pierde, salvo que el rival no pueda dar mate nunca',
@@ -1626,7 +1641,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Quedarse sin tiempo pierde la partida, con una excepción: si al rival no le queda material con el que dar mate en ninguna secuencia posible —por ejemplo, si solo le queda el rey—, el resultado son tablas.',
   },
   {
-    id: 'reg_jaque_perpetuo', area: 'reglas', peso: 3, tipo: 'opcion',
+    id: 'reg_jaque_perpetuo', area: 'reglas', peso: 1, elo: 1040, eloBase: 1200, tipo: 'opcion',
     enunciado: '¿Qué es el «jaque perpetuo» como recurso defensivo?',
     opciones: [
       'Jaques seguidos que el rival no puede evitar',
@@ -1638,7 +1653,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Cuando un bando está perdido, a veces puede salvarse dando jaques sin parar: si el rey rival no tiene forma de escapar de esa cadena, la posición se repite y la partida termina en tablas.',
   },
   {
-    id: 'reg_columnas_filas', area: 'reglas', peso: 1, tipo: 'opcion',
+    id: 'reg_columnas_filas', area: 'reglas', peso: 2, elo: 1180, eloBase: 700, tipo: 'opcion',
     enunciado: 'En la notación algebraica, ¿cómo se nombran las columnas y las filas del tablero?',
     opciones: [
       'Columnas con letras y filas con números',
@@ -1650,7 +1665,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Cada casilla se nombra por su columna (letra, de la «a» a la «h») y su fila (número, del 1 al 8): e4 es la columna «e», fila 4. Siempre en ese orden, primero la letra.',
   },
   {
-    id: 'reg_dama_su_color', area: 'reglas', peso: 2, tipo: 'opcion',
+    id: 'reg_dama_su_color', area: 'reglas', peso: 1, elo: 820, eloBase: 950, tipo: 'opcion',
     enunciado: 'Regla mnemotécnica clásica sobre dónde empieza cada dama: «la dama se coloca…»',
     opciones: [
       '…en su color: la blanca en clara, la negra en oscura',
@@ -1662,7 +1677,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: '«La dama se viste de su color»: la blanca empieza en d1, que es casilla clara, y la negra en d8, que es oscura. Es la forma más rápida de comprobar que el tablero y las piezas están bien puestos.',
   },
   {
-    id: 'reg_notacion_captura', area: 'reglas', peso: 1, tipo: 'opcion',
+    id: 'reg_notacion_captura', area: 'reglas', peso: 1, elo: 560, eloBase: 700, tipo: 'opcion',
     enunciado: 'En notación algebraica, ¿qué indica la letra «x» dentro de una jugada, por ejemplo «Axf6»?',
     opciones: [
       'Que esa jugada es una captura',
@@ -1674,7 +1689,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'La «x» marca siempre una captura: «Axf6» quiere decir que el alfil capturó una pieza rival en f6. El jaque se anota con «+» y la coronación con «=», que son otros signos.',
   },
   {
-    id: 'reg_varias_damas', area: 'reglas', peso: 3, tipo: 'opcion',
+    id: 'reg_varias_damas', area: 'reglas', peso: 1, elo: 700, eloBase: 1200, tipo: 'opcion',
     enunciado: '¿Puede un jugador llegar a tener más de una dama al mismo tiempo en el tablero?',
     opciones: [
       'Sí: coronando un peón mientras conserva la suya',
@@ -1686,7 +1701,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Coronar no reemplaza a la dama original: si todavía la tienes en el tablero y coronas otro peón, terminas con dos damas, y coronando más, con tres o cuatro. No hay ningún tope en el reglamento.',
   },
   {
-    id: 'reg_tablas_acuerdo', area: 'reglas', peso: 2, tipo: 'opcion',
+    id: 'reg_tablas_acuerdo', area: 'reglas', peso: 2, elo: 1230, eloBase: 950, tipo: 'opcion',
     enunciado: '¿Cómo se pueden acordar tablas entre los dos jugadores, sin que se dé ninguna de las otras reglas de tablas?',
     opciones: [
       'Uno las ofrece y el otro las acepta',
@@ -1698,7 +1713,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'En cualquier momento un jugador puede ofrecer tablas —lo correcto es hacerlo después de mover y antes de apretar el reloj— y, si el rival acepta, la partida termina ahí por acuerdo mutuo.',
   },
   {
-    id: 'reg_alfil_diagonal', area: 'reglas', peso: 1, tipo: 'opcion',
+    id: 'reg_alfil_diagonal', area: 'reglas', peso: 1, elo: 610, eloBase: 700, tipo: 'opcion',
     enunciado: 'Un alfil se mueve siempre…',
     opciones: [
       'En diagonal, tantas casillas como estén libres',
@@ -1712,7 +1727,7 @@ window.DIAGNOSTICO_ITEMS = [
 
   /* ---------------- Valor del material ---------------- */
   {
-    id: 'mat_valor_peon', area: 'material', peso: 1, tipo: 'opcion',
+    id: 'mat_valor_peon', area: 'material', peso: 1, elo: 650, eloBase: 700, tipo: 'opcion',
     enunciado: '¿Cuál es el valor aproximado de un peón?',
     opciones: [
       '1',
@@ -1724,7 +1739,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'El peón es la unidad con la que se mide todo lo demás: vale 1 punto.',
   },
   {
-    id: 'mat_valor_caballo', area: 'material', peso: 1, tipo: 'opcion',
+    id: 'mat_valor_caballo', area: 'material', peso: 1, elo: 610, eloBase: 700, tipo: 'opcion',
     enunciado: '¿Cuál es el valor aproximado de un caballo?',
     opciones: [
       '1',
@@ -1736,7 +1751,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Caballo y alfil valen unos 3 peones cada uno. Son las llamadas piezas menores.',
   },
   {
-    id: 'mat_valor_torre', area: 'material', peso: 1, tipo: 'opcion',
+    id: 'mat_valor_torre', area: 'material', peso: 1, elo: 640, eloBase: 700, tipo: 'opcion',
     enunciado: '¿Cuál es el valor aproximado de una torre?',
     opciones: [
       '1',
@@ -1748,7 +1763,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'La torre vale unos 5 peones: dos peones más que una pieza menor, y esa diferencia es lo que se llama «la calidad».',
   },
   {
-    id: 'mat_valor_alfil', area: 'material', peso: 1, tipo: 'opcion',
+    id: 'mat_valor_alfil', area: 'material', peso: 1, elo: 700, eloBase: 700, tipo: 'opcion',
     enunciado: '¿Cuál es el valor aproximado de un alfil?',
     opciones: [
       '1',
@@ -1760,7 +1775,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'El alfil vale unos 3 peones, igual que el caballo, aunque su fuerza real depende mucho de si la posición está abierta o cerrada.',
   },
   {
-    id: 'mat_calidad_cambio', area: 'material', peso: 2, tipo: 'opcion',
+    id: 'mat_calidad_cambio', area: 'material', peso: 1, elo: 830, eloBase: 950, tipo: 'opcion',
     enunciado: 'Si cambias tu torre (5 puntos) por el alfil (3 puntos) del rival, ¿qué acabas de hacer?',
     opciones: [
       'Un mal cambio: perdiste la calidad',
@@ -1772,7 +1787,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Cambiar una torre por una pieza menor se llama «perder la calidad»: cediste unos 2 puntos de material. A veces compensa —si a cambio consigues una posición mucho mejor—, pero por sí solo es una pérdida.',
   },
   {
-    id: 'mat_valor_rey', area: 'material', peso: 2, tipo: 'opcion',
+    id: 'mat_valor_rey', area: 'material', peso: 1, elo: 1000, eloBase: 950, tipo: 'opcion',
     enunciado: '¿Qué valor en puntos se le asigna al rey en las tablas de valores de material?',
     opciones: [
       'Ninguno: no se puede capturar ni cambiar',
@@ -1784,7 +1799,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Al rey no se le da valor de cambio porque nunca puede capturarse ni entregarse: la partida termina antes. Eso no quiere decir que sea débil — en los finales es una pieza atacante de primera.',
   },
   {
-    id: 'mat_piezas_menores', area: 'material', peso: 1, tipo: 'opcion',
+    id: 'mat_piezas_menores', area: 'material', peso: 1, elo: 790, eloBase: 700, tipo: 'opcion',
     enunciado: '¿Cómo se llama, en conjunto, a los alfiles y los caballos?',
     opciones: [
       'Piezas menores',
@@ -1796,7 +1811,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Se agrupan como piezas menores por su valor parecido, unos 3 puntos. Torres y dama son las piezas mayores o pesadas.',
   },
   {
-    id: 'mat_piezas_mayores', area: 'material', peso: 1, tipo: 'opcion',
+    id: 'mat_piezas_mayores', area: 'material', peso: 1, elo: 670, eloBase: 700, tipo: 'opcion',
     enunciado: '¿Cómo se llama, en conjunto, a las torres y la dama?',
     opciones: [
       'Piezas mayores, o pesadas',
@@ -1808,7 +1823,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Torres y dama son las piezas mayores —también llamadas pesadas—: tienen más valor y mucho más alcance que alfiles y caballos.',
   },
   {
-    id: 'mat_sacrificio', area: 'material', peso: 2, tipo: 'opcion',
+    id: 'mat_sacrificio', area: 'material', peso: 1, elo: 680, eloBase: 950, tipo: 'opcion',
     enunciado: '¿Qué es un «sacrificio» en ajedrez?',
     opciones: [
       'Entregar material a cambio de otra ventaja',
@@ -1820,7 +1835,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Lo que define al sacrificio es que es deliberado: se entrega material porque lo que se recibe a cambio —un ataque, la iniciativa, un mate forzado— vale más que los puntos cedidos. Perder una pieza por descuido no es sacrificar.',
   },
   {
-    id: 'mat_calidad_definicion', area: 'material', peso: 3, tipo: 'opcion',
+    id: 'mat_calidad_definicion', area: 'material', peso: 3, elo: 1560, eloBase: 1200, tipo: 'opcion',
     enunciado: 'En ajedrez, ¿a qué se le llama exactamente «la calidad»?',
     opciones: [
       'A la diferencia entre torre y pieza menor',
@@ -1832,7 +1847,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: '«La calidad» es concretamente la diferencia de valor entre una torre (5) y una pieza menor (3). Ganar la calidad es cambiar tu pieza menor por una torre rival; perderla es lo contrario.',
   },
   {
-    id: 'mat_peon_de_mas', area: 'material', peso: 2, tipo: 'opcion',
+    id: 'mat_peon_de_mas', area: 'material', peso: 1, elo: 1000, eloBase: 950, tipo: 'opcion',
     enunciado: 'En un final con el resto del material igualado, ¿qué suele significar tener un peón de más?',
     opciones: [
       'Una ventaja real, pero hay que saber jugarla',
@@ -1844,7 +1859,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Un peón de más es una ventaja genuina, sobre todo en finales, pero no gana sola: convertirla en punto entero exige técnica. Por eso los finales se estudian.',
   },
   {
-    id: 'mat_ganando_cambiar', area: 'material', peso: 3, tipo: 'opcion',
+    id: 'mat_ganando_cambiar', area: 'material', peso: 1, elo: 930, eloBase: 1200, tipo: 'opcion',
     enunciado: 'Si vas ganando en material, ¿qué principio práctico suele convenir?',
     opciones: [
       'Cambiar piezas para simplificar hacia el final',
@@ -1856,7 +1871,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Con material de más conviene cambiar piezas y conservar peones: menos piezas rivales significan menos contrajuego, y los peones son los que coronan. La regla corta es «cambia piezas, no peones».',
   },
   {
-    id: 'mat_perdiendo_complicar', area: 'material', peso: 3, tipo: 'opcion',
+    id: 'mat_perdiendo_complicar', area: 'material', peso: 1, elo: 1060, eloBase: 1200, tipo: 'opcion',
     enunciado: 'Si vas perdiendo en material, ¿qué principio práctico suele convenir?',
     opciones: [
       'Evitar los cambios y buscar complicaciones',
@@ -1868,7 +1883,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Con material de menos, simplificar es entregarse: cuantas más piezas queden, más posibilidades hay de que el rival se equivoque. Es el reverso exacto del principio anterior.',
   },
   {
-    id: 'mat_caballo_cerrada', area: 'material', peso: 3, tipo: 'opcion',
+    id: 'mat_caballo_cerrada', area: 'material', peso: 2, elo: 1220, eloBase: 1200, tipo: 'opcion',
     enunciado: '¿En qué tipo de posición suelen rendir mejor los caballos que los alfiles?',
     opciones: [
       'En posiciones cerradas, con los peones trabados',
@@ -1880,7 +1895,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'El caballo salta por encima de los peones, así que una posición trabada no lo estorba. El alfil necesita diagonales despejadas: encerrado detrás de sus propios peones vale mucho menos de lo que dice la tabla.',
   },
   {
-    id: 'mat_tres_menores', area: 'material', peso: 4, tipo: 'opcion',
+    id: 'mat_tres_menores', area: 'material', peso: 2, elo: 1280, eloBase: 1450, tipo: 'opcion',
     enunciado: 'En valor aproximado, ¿a qué suelen equivaler tres piezas menores?',
     opciones: [
       'A una dama, más o menos: 3+3+3 son 9',
@@ -1892,7 +1907,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Tres menores suman unos 9 puntos, el valor de una dama. En la práctica suelen ser mejores que la dama si tienen casillas donde apoyarse: tres piezas coordinadas atacan más cosas a la vez que una sola.',
   },
   {
-    id: 'mat_torre_y_peon', area: 'material', peso: 4, tipo: 'opcion',
+    id: 'mat_torre_y_peon', area: 'material', peso: 1, elo: 1090, eloBase: 1450, tipo: 'opcion',
     enunciado: 'En puntos, ¿a qué equivale aproximadamente una torre junto con un peón?',
     opciones: [
       'A dos piezas menores: 5+1 contra 3+3',
@@ -1904,7 +1919,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Torre más peón son 6 puntos, y dos piezas menores también. Es un desequilibrio clásico y ninguno de los dos lados está objetivamente mejor: depende de si la posición es abierta (mejor la torre) o cerrada (mejores las menores).',
   },
   {
-    id: 'mat_un_peon_decide', area: 'material', peso: 4, tipo: 'opcion',
+    id: 'mat_un_peon_decide', area: 'material', peso: 2, elo: 1370, eloBase: 1450, tipo: 'opcion',
     enunciado: 'Entre jugadores de nivel parecido, ¿qué ventaja de material suele bastar para ganar con buena técnica?',
     opciones: [
       'Un solo peón, bien jugado, ya puede decidir',
@@ -1916,7 +1931,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Entre jugadores fuertes, un peón de ventaja bien manejado suele alcanzar. Por eso en el ajedrez de alto nivel se pelea cada peón como si fuera una pieza.',
   },
   {
-    id: 'mat_pieza_atrapada', area: 'material', peso: 2, tipo: 'opcion',
+    id: 'mat_pieza_atrapada', area: 'material', peso: 2, elo: 1140, eloBase: 950, tipo: 'opcion',
     enunciado: '¿Qué significa que una pieza esté «atrapada»?',
     opciones: [
       'Que no tiene casilla segura y va a caer',
@@ -1928,7 +1943,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Una pieza atrapada todavía se puede mover, pero todas sus casillas de salida están controladas: se pierde igual. Cazar una pieza atrapada es una de las formas más limpias de ganar material.',
   },
   {
-    id: 'mat_pieza_colgada', area: 'material', peso: 2, tipo: 'opcion',
+    id: 'mat_pieza_colgada', area: 'material', peso: 1, elo: 820, eloBase: 950, tipo: 'opcion',
     enunciado: '¿A qué se le llama que una pieza esté «colgada»?',
     opciones: [
       'A que está sin defensa y se puede tomar',
@@ -1940,7 +1955,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Una pieza colgada está desprotegida: si el rival la toma, no hay recaptura y el material se pierde gratis. Revisar las piezas colgadas —las propias y las del rival— antes de cada jugada evita la mitad de las derrotas.',
   },
   {
-    id: 'mat_contar_material', area: 'material', peso: 1, tipo: 'opcion',
+    id: 'mat_contar_material', area: 'material', peso: 1, elo: 800, eloBase: 700, tipo: 'opcion',
     enunciado: 'Para saber rápido quién va ganando en material durante una partida, ¿qué conviene hacer?',
     opciones: [
       'Sumar los valores de cada bando y comparar',
@@ -1952,7 +1967,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Sumar los valores aproximados de cada bando —peón 1, menor 3, torre 5, dama 9— y comparar los dos totales da una idea rápida y confiable de quién está mejor.',
   },
   {
-    id: 'mat_caballo_vs_peon', area: 'material', peso: 1, tipo: 'opcion',
+    id: 'mat_caballo_vs_peon', area: 'material', peso: 1, elo: 570, eloBase: 700, tipo: 'opcion',
     enunciado: 'En la inmensa mayoría de posiciones, ¿qué vale más: un caballo o un peón?',
     opciones: [
       'El caballo, con claridad: 3 contra 1',
@@ -1964,7 +1979,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'El caballo vale unos 3 puntos y el peón 1. Por eso entregar un caballo para ganar «solo» un peón casi nunca compensa, salvo que a cambio se consiga algo grande.',
   },
   {
-    id: 'mat_alcance_mayores', area: 'material', peso: 3, tipo: 'opcion',
+    id: 'mat_alcance_mayores', area: 'material', peso: 1, elo: 980, eloBase: 1200, tipo: 'opcion',
     enunciado: '¿Por qué torres y dama se consideran especialmente peligrosas al atacar al rey rival?',
     opciones: [
       'Por su alcance: atacan desde lejos',
@@ -1978,7 +1993,7 @@ window.DIAGNOSTICO_ITEMS = [
 
   /* ---------------- Principios de apertura ---------------- */
   {
-    id: 'ap_principios', area: 'apertura', peso: 1, tipo: 'opcion',
+    id: 'ap_principios', area: 'apertura', peso: 1, elo: 610, eloBase: 700, tipo: 'opcion',
     enunciado: 'En la apertura, ¿cuál de estos es un principio básico recomendado?',
     opciones: [
       'Controlar el centro y desarrollar las menores',
@@ -1990,7 +2005,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Los tres principios clásicos son: controlar el centro, desarrollar rápido las piezas menores y poner el rey a salvo con el enroque. Casi todo lo demás de la apertura sale de ahí.',
   },
   {
-    id: 'ap_gambito_dama', area: 'apertura', peso: 1, tipo: 'opcion',
+    id: 'ap_gambito_dama', area: 'apertura', peso: 1, elo: 1090, eloBase: 700, tipo: 'opcion',
     enunciado: '1.d4 d5 2.c4 es el…',
     opciones: [
       'Gambito de Dama',
@@ -2002,7 +2017,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Las blancas ofrecen el peón de c4 para desviar el peón de d5 y quedarse con el centro. Se llama gambito aunque el peón casi siempre se recupera.',
   },
   {
-    id: 'ap_francesa', area: 'apertura', peso: 1, tipo: 'opcion',
+    id: 'ap_francesa', area: 'apertura', peso: 2, elo: 1130, eloBase: 700, tipo: 'opcion',
     enunciado: '1.e4 e6 corresponde a la Defensa…',
     opciones: [
       'Francesa',
@@ -2014,7 +2029,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Prepara …d5 con una estructura sólida y contrajuego típico en el flanco de dama. Su punto flojo conocido es el alfil de casillas claras, que queda encerrado detrás de los peones.',
   },
   {
-    id: 'ap_italiana', area: 'apertura', peso: 2, tipo: 'opcion',
+    id: 'ap_italiana', area: 'apertura', peso: 1, elo: 960, eloBase: 950, tipo: 'opcion',
     enunciado: '1.e4 e5 2.Cf3 Cc6 3.Ac4 corresponde a la apertura…',
     opciones: [
       'Italiana (Giuoco Piano)',
@@ -2026,7 +2041,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Cuando el alfil va a c4 en vez de b5, es la Italiana: el alfil apunta directo a f7, que es la casilla más débil del bando negro al empezar la partida.',
   },
   {
-    id: 'ap_escocesa', area: 'apertura', peso: 2, tipo: 'opcion',
+    id: 'ap_escocesa', area: 'apertura', peso: 2, elo: 1320, eloBase: 950, tipo: 'opcion',
     enunciado: '1.e4 e5 2.Cf3 Cc6 3.d4 corresponde a la apertura…',
     opciones: [
       'Escocesa',
@@ -2038,7 +2053,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Abrir el centro con d4 en la tercera jugada es la seña de la Escocesa: cambia el centro enseguida y lleva a posiciones abiertas, con menos teoría que la Española.',
   },
   {
-    id: 'ap_caro_kann', area: 'apertura', peso: 2, tipo: 'opcion',
+    id: 'ap_caro_kann', area: 'apertura', peso: 3, elo: 1400, eloBase: 950, tipo: 'opcion',
     enunciado: '1.e4 c6 corresponde a la Defensa…',
     opciones: [
       'Caro-Kann',
@@ -2050,7 +2065,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Prepara …d5 igual que la Francesa, pero sin encerrar el alfil de casillas claras: por eso tiene fama de sólida. Ese alfil suele salir a f5 antes de cerrar la cadena de peones.',
   },
   {
-    id: 'ap_pirc', area: 'apertura', peso: 3, tipo: 'opcion',
+    id: 'ap_pirc', area: 'apertura', peso: 3, elo: 1620, eloBase: 1200, tipo: 'opcion',
     enunciado: '1.e4 d6, seguido normalmente de …Cf6, …g6 y …Ag7, corresponde a la Defensa…',
     opciones: [
       'Pirc',
@@ -2062,7 +2077,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Es una defensa hipermoderna: deja que las blancas ocupen el centro con peones y lo contraataca después con las piezas, apoyándose en el alfil fianchettado en g7.',
   },
   {
-    id: 'ap_escandinava', area: 'apertura', peso: 2, tipo: 'opcion',
+    id: 'ap_escandinava', area: 'apertura', peso: 2, elo: 1340, eloBase: 950, tipo: 'opcion',
     enunciado: '1.e4 d5 corresponde a la Defensa…',
     opciones: [
       'Escandinava',
@@ -2074,7 +2089,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Las negras cambian el peón central de inmediato y suelen recapturar con la dama. El precio es que esa dama queda expuesta a Cc3, que gana un tiempo.',
   },
   {
-    id: 'ap_alekhine', area: 'apertura', peso: 3, tipo: 'opcion',
+    id: 'ap_alekhine', area: 'apertura', peso: 3, elo: 1600, eloBase: 1200, tipo: 'opcion',
     enunciado: '1.e4 Cf6 corresponde a la Defensa…',
     opciones: [
       'Alekhine',
@@ -2086,7 +2101,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'El caballo se ofrece de blanco a propósito: provoca que los peones blancos avancen y después ataca esa cadena adelantada. Es la defensa hipermoderna más provocadora.',
   },
   {
-    id: 'ap_reti', area: 'apertura', peso: 4, tipo: 'opcion',
+    id: 'ap_reti', area: 'apertura', peso: 2, elo: 1390, eloBase: 1450, tipo: 'opcion',
     enunciado: '1.Cf3, sin definir todavía el destino de los peones centrales, suele llamarse Apertura…',
     opciones: [
       'Réti',
@@ -2098,7 +2113,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Deja para más adelante qué van a hacer los peones centrales y a menudo fianchetta un alfil. Es de las que más transponen: puede terminar en una Inglesa, en un Gambito de Dama o en un sistema propio.',
   },
   {
-    id: 'ap_inglesa', area: 'apertura', peso: 2, tipo: 'opcion',
+    id: 'ap_inglesa', area: 'apertura', peso: 3, elo: 1490, eloBase: 950, tipo: 'opcion',
     enunciado: '1.c4 corresponde a la Apertura…',
     opciones: [
       'Inglesa',
@@ -2110,7 +2125,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Ataca el centro desde el flanco de dama sin ocuparlo con un peón central. Es la tercera primera jugada más jugada, detrás de 1.e4 y 1.d4.',
   },
   {
-    id: 'ap_india_rey', area: 'apertura', peso: 3, tipo: 'opcion',
+    id: 'ap_india_rey', area: 'apertura', peso: 2, elo: 1390, eloBase: 1200, tipo: 'opcion',
     enunciado: '1.d4 Cf6 2.c4 g6, con la idea de seguir …Ag7, corresponde a la Defensa…',
     opciones: [
       'India de Rey',
@@ -2122,7 +2137,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Deja que las blancas ocupen el centro y lo contraataca después con …e5 o …c5, con el alfil de g7 apuntando a la diagonal larga. Es una defensa de contraataque, no de igualar rápido.',
   },
   {
-    id: 'ap_nimzoindia', area: 'apertura', peso: 4, tipo: 'opcion',
+    id: 'ap_nimzoindia', area: 'apertura', peso: 3, elo: 1620, eloBase: 1450, tipo: 'opcion',
     enunciado: '1.d4 Cf6 2.c4 e6 3.Cc3 Ab4 corresponde a la Defensa…',
     opciones: [
       'Nimzoindia',
@@ -2134,7 +2149,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Clavar el caballo de c3 con el alfil en b4, en vez de jugar …d5, es su seña de identidad. La idea es cambiar ese alfil por el caballo y dejarle a las blancas los peones doblados.',
   },
   {
-    id: 'ap_holandesa', area: 'apertura', peso: 3, tipo: 'opcion',
+    id: 'ap_holandesa', area: 'apertura', peso: 3, elo: 1540, eloBase: 1200, tipo: 'opcion',
     enunciado: '1.d4 f5 corresponde a la Defensa…',
     opciones: [
       'Holandesa',
@@ -2146,7 +2161,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Las negras pelean por e4 desde el flanco de rey. El costo está a la vista: el peón de f ya no cubre al rey, así que es una defensa de doble filo.',
   },
   {
-    id: 'ap_sistema_londres', area: 'apertura', peso: 3, tipo: 'opcion',
+    id: 'ap_sistema_londres', area: 'apertura', peso: 2, elo: 1230, eloBase: 1200, tipo: 'opcion',
     enunciado: 'El «Sistema Londres» se caracteriza porque las blancas…',
     opciones: [
       'Arman siempre la misma estructura, juegue lo que juegue el rival',
@@ -2158,7 +2173,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Es un «sistema» y no una apertura teórica: el peón a d4, el alfil a f4 y el resto casi siempre en las mismas casillas. Por eso es tan popular entre quienes no quieren estudiar teoría, aunque a cambio pide menos ventaja.',
   },
   {
-    id: 'ap_fianchetto', area: 'apertura', peso: 2, tipo: 'opcion',
+    id: 'ap_fianchetto', area: 'apertura', peso: 2, elo: 1220, eloBase: 950, tipo: 'opcion',
     enunciado: '¿Qué es un «fianchetto»?',
     opciones: [
       'Poner el alfil en la diagonal larga, tras su peón',
@@ -2170,7 +2185,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Se avanza el peón de b o de g una casilla y el alfil se pone detrás, en b2/g2 o en b7/g7, mirando toda la diagonal larga. Es la jugada típica de las defensas hipermodernas.',
   },
   {
-    id: 'ap_gambito_rey', area: 'apertura', peso: 2, tipo: 'opcion',
+    id: 'ap_gambito_rey', area: 'apertura', peso: 2, elo: 1340, eloBase: 950, tipo: 'opcion',
     enunciado: '1.e4 e5 2.f4 es el…',
     opciones: [
       'Gambito de Rey',
@@ -2182,7 +2197,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Las blancas ofrecen el peón de f para abrir esa columna y atacar rápido. Fue la apertura de moda del siglo XIX y hoy casi no se ve en alto nivel: debilita demasiado al propio rey.',
   },
   {
-    id: 'ap_enrocar_antes', area: 'apertura', peso: 2, tipo: 'opcion',
+    id: 'ap_enrocar_antes', area: 'apertura', peso: 1, elo: 980, eloBase: 950, tipo: 'opcion',
     enunciado: '¿Por qué suele convenir enrocar antes de abrir demasiado el centro?',
     opciones: [
       'Para sacar al rey antes de que se abran líneas',
@@ -2194,7 +2209,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Un centro abierto son columnas y diagonales por las que llegan las piezas rivales, y el rey en el centro está justo en medio de todas. Enrocar primero lo pone fuera de esa zona.',
   },
   {
-    id: 'ap_dos_veces_misma', area: 'apertura', peso: 2, tipo: 'opcion',
+    id: 'ap_dos_veces_misma', area: 'apertura', peso: 1, elo: 880, eloBase: 950, tipo: 'opcion',
     enunciado: 'En la apertura, ¿por qué se recomienda no mover dos veces la misma pieza sin una buena razón?',
     opciones: [
       'Porque cada jugada repetida es un tiempo regalado',
@@ -2206,7 +2221,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Cada jugada de apertura que no saca una pieza nueva es un «tiempo» que el rival usa para adelantarse en desarrollo. Con dos o tres tiempos de ventaja ya se puede empezar un ataque.',
   },
   {
-    id: 'ap_ideas_vs_memoria', area: 'apertura', peso: 3, tipo: 'opcion',
+    id: 'ap_ideas_vs_memoria', area: 'apertura', peso: 2, elo: 1130, eloBase: 1200, tipo: 'opcion',
     enunciado: 'Para un jugador principiante o intermedio, ¿qué suele ser más útil que memorizar largas variantes de apertura?',
     opciones: [
       'Entender las ideas y los planes de su apertura',
@@ -2218,7 +2233,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Entender qué casillas hay que controlar y qué plan sigue la apertura sirve también cuando el rival se sale de la teoría — que en estos niveles pasa en la jugada 4. La memoria pura se cae ahí mismo.',
   },
   {
-    id: 'ap_transposicion', area: 'apertura', peso: 4, tipo: 'opcion',
+    id: 'ap_transposicion', area: 'apertura', peso: 3, elo: 1480, eloBase: 1450, tipo: 'opcion',
     enunciado: '¿Qué es una «transposición» de aperturas?',
     opciones: [
       'Llegar a la misma posición por otro orden de jugadas',
@@ -2232,7 +2247,7 @@ window.DIAGNOSTICO_ITEMS = [
 
   /* ---------------- Táctica ---------------- */
   {
-    id: 'tac_horquilla_nombre', area: 'tactica', peso: 1, tipo: 'opcion',
+    id: 'tac_horquilla_nombre', area: 'tactica', peso: 1, elo: 660, eloBase: 700, tipo: 'opcion',
     enunciado: '¿Cómo se llama la táctica en la que una pieza ataca a dos piezas rivales a la vez?',
     opciones: [
       'Horquilla (o tenedor)',
@@ -2244,7 +2259,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Es un ataque doble hecho por una sola pieza. El caballo es el rey de la horquilla porque ataca casillas que ninguna otra pieza defiende de la misma forma.',
   },
   {
-    id: 'tac_clavada_nombre', area: 'tactica', peso: 1, tipo: 'opcion',
+    id: 'tac_clavada_nombre', area: 'tactica', peso: 1, elo: 720, eloBase: 700, tipo: 'opcion',
     enunciado: '¿Cómo se llama la táctica en la que una pieza no puede moverse porque detrás de ella, en la misma línea, está su rey u otra pieza más valiosa?',
     opciones: [
       'Clavada',
@@ -2256,7 +2271,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'La pieza clavada queda inmovilizada —o castigada si se mueve— porque al apartarse deja expuesto lo que tenía detrás. Solo clavan las piezas de línea: alfil, torre y dama.',
   },
   {
-    id: 'tac_descubierto_que_es', area: 'tactica', peso: 2, tipo: 'opcion',
+    id: 'tac_descubierto_que_es', area: 'tactica', peso: 1, elo: 940, eloBase: 950, tipo: 'opcion',
     enunciado: 'En un «ataque descubierto», ¿qué ocurre?',
     opciones: [
       'Una pieza se aparta y descubre el ataque de otra',
@@ -2268,7 +2283,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'La pieza que se mueve abre la línea de otra que estaba detrás, y esa segunda ataca sin haberse movido. Es doblemente peligroso porque la pieza que se aparta puede ir a hacer daño por su cuenta.',
   },
   {
-    id: 'tac_horquilla_familiar', area: 'tactica', peso: 2, tipo: 'opcion_tablero',
+    id: 'tac_horquilla_familiar', area: 'tactica', peso: 1, elo: 900, eloBase: 950, tipo: 'opcion_tablero',
     enunciado: 'Juegan las blancas. ¿Cuál de estas jugadas del caballo gana material con una horquilla?',
     fen: 'r3k3/8/8/1N6/8/8/8/4K3 w - - 0 1',
     opciones: [
@@ -2282,7 +2297,7 @@ window.DIAGNOSTICO_ITEMS = [
     prueba: 'Cc7 es legal, da jaque y desde c7 el caballo ataca a8',
   },
   {
-    id: 'tac_pasillo_tablero', area: 'tactica', peso: 2, tipo: 'opcion_tablero',
+    id: 'tac_pasillo_tablero', area: 'tactica', peso: 1, elo: 770, eloBase: 950, tipo: 'opcion_tablero',
     enunciado: 'Juegan las blancas. ¿Cuál de estas jugadas de la torre da jaque mate?',
     fen: '6k1/5ppp/8/8/8/8/8/4R1K1 w - - 0 1',
     opciones: [
@@ -2296,7 +2311,7 @@ window.DIAGNOSTICO_ITEMS = [
     prueba: 'Te8 es legal y es jaque mate',
   },
   {
-    id: 'tac_ataque_doble', area: 'tactica', peso: 2, tipo: 'opcion',
+    id: 'tac_ataque_doble', area: 'tactica', peso: 1, elo: 910, eloBase: 950, tipo: 'opcion',
     enunciado: '¿Cómo se le llama, en general, a cualquier jugada que amenaza dos objetivos rivales al mismo tiempo?',
     opciones: [
       'Ataque doble',
@@ -2308,7 +2323,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'La horquilla es el caso más conocido, pero el término general abarca cualquier jugada que cree dos amenazas a la vez, sea con una sola pieza o mediante una descubierta. El rival solo puede parar una.',
   },
   {
-    id: 'tac_clavada_absoluta', area: 'tactica', peso: 2, tipo: 'opcion',
+    id: 'tac_clavada_absoluta', area: 'tactica', peso: 2, elo: 1100, eloBase: 950, tipo: 'opcion',
     enunciado: '¿Cómo se llama la clavada en la que la pieza clavada NO se puede mover de ninguna manera, porque detrás está el propio rey?',
     opciones: [
       'Clavada absoluta',
@@ -2320,7 +2335,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Mover esa pieza dejaría al rey en jaque, y eso es ilegal: la pieza queda completamente quieta. Una pieza en clavada absoluta tampoco defiende de verdad, aunque parezca que sí.',
   },
   {
-    id: 'tac_clavada_relativa', area: 'tactica', peso: 3, tipo: 'opcion',
+    id: 'tac_clavada_relativa', area: 'tactica', peso: 2, elo: 1250, eloBase: 1200, tipo: 'opcion',
     enunciado: '¿Cómo se llama la clavada en la que sí es legal mover la pieza clavada, pero conviene no hacerlo porque detrás hay algo más valioso que no es el rey?',
     opciones: [
       'Clavada relativa',
@@ -2332,7 +2347,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Acá mover es legal, solo que sale caro: se expone la pieza de atrás. A veces vale la pena romper la clavada igual, si lo que se gana supera lo que se entrega.',
   },
   {
-    id: 'tac_jaque_descubierto', area: 'tactica', peso: 2, tipo: 'opcion',
+    id: 'tac_jaque_descubierto', area: 'tactica', peso: 1, elo: 1040, eloBase: 950, tipo: 'opcion',
     enunciado: 'Cuando un ataque descubierto además da jaque al rey rival, ¿cómo se llama esa jugada?',
     opciones: [
       'Jaque descubierto',
@@ -2344,7 +2359,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Es el caso particular en que la pieza de atrás apunta al rey. Lo temible es que la pieza que se aparta puede irse a capturar donde quiera: el rival está obligado a atender el jaque.',
   },
   {
-    id: 'tac_zwischenzug', area: 'tactica', peso: 4, tipo: 'opcion',
+    id: 'tac_zwischenzug', area: 'tactica', peso: 3, elo: 1470, eloBase: 1450, tipo: 'opcion',
     enunciado: '¿Qué es una «jugada intermedia» (zwischenzug)?',
     opciones: [
       'Una jugada fuerte metida antes de la esperada',
@@ -2356,7 +2371,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'En vez de recapturar en el acto, como el rival da por hecho, se intercala otra jugada más fuerte —normalmente un jaque o una amenaza mayor— y recién después se completa el cambio. Es de lo que más se pasa por alto al calcular.',
   },
   {
-    id: 'tac_combinacion', area: 'tactica', peso: 2, tipo: 'opcion',
+    id: 'tac_combinacion', area: 'tactica', peso: 2, elo: 1290, eloBase: 950, tipo: 'opcion',
     enunciado: 'En ajedrez, ¿qué es una «combinación»?',
     opciones: [
       'Una serie forzada de jugadas con un fin concreto',
@@ -2368,7 +2383,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Lo que la define es que es forzada: el rival casi no tiene alternativas. Suele incluir un sacrificio y termina en ganancia clara de material o en mate.',
   },
   {
-    id: 'tac_f7_debil', area: 'tactica', peso: 2, tipo: 'opcion',
+    id: 'tac_f7_debil', area: 'tactica', peso: 2, elo: 1210, eloBase: 950, tipo: 'opcion',
     enunciado: 'En las primeras jugadas, ¿por qué la casilla f7 (f2 para las blancas) suele ser objetivo de ataques tempranos?',
     opciones: [
       'Porque al empezar solo la defiende el rey',
@@ -2380,7 +2395,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Antes de enrocar, f7 tiene un solo defensor: el propio rey. Por eso tantas combinaciones de apertura apuntan ahí, desde el mate pastor hasta el sacrificio de caballo en f7.',
   },
   {
-    id: 'tac_mate_pastor', area: 'tactica', peso: 1, tipo: 'opcion',
+    id: 'tac_mate_pastor', area: 'tactica', peso: 1, elo: 950, eloBase: 700, tipo: 'opcion',
     enunciado: '¿Cómo se llama el intento de mate rápido que ataca f7 combinando la dama y el alfil desde la apertura?',
     opciones: [
       'Mate pastor',
@@ -2392,7 +2407,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Aprovecha que f7 está poco defendida al principio. Se para fácil —basta con defender f7 y desarrollar—, y quien lo intenta y falla queda con la dama fuera de juego.',
   },
   {
-    id: 'tac_trampa_apertura', area: 'tactica', peso: 2, tipo: 'opcion',
+    id: 'tac_trampa_apertura', area: 'tactica', peso: 1, elo: 1060, eloBase: 950, tipo: 'opcion',
     enunciado: '¿Qué es una «trampa de apertura»?',
     opciones: [
       'Jugadas que castigan una respuesta natural pero mala',
@@ -2404,7 +2419,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Aprovechan que ciertas jugadas parecen lógicas y esconden un error táctico. Sirven para ganar rápido, pero apoyarse solo en ellas no enseña a jugar: el rival que no cae deja una posición normal.',
   },
   {
-    id: 'tac_sacrificio_griego', area: 'tactica', peso: 4, tipo: 'opcion',
+    id: 'tac_sacrificio_griego', area: 'tactica', peso: 2, elo: 1190, eloBase: 1450, tipo: 'opcion',
     enunciado: '¿Cómo se conoce el clásico sacrificio de alfil en h7 (o h2), capturando el peón que cubre al rey enrocado?',
     opciones: [
       'El sacrificio griego',
@@ -2416,7 +2431,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'El alfil se entrega en h7 para sacar al rey de su refugio; después suele venir Cg5+ y la dama entra al ataque. No siempre funciona: hay que comprobar antes que las piezas del ataque lleguen a tiempo.',
   },
   {
-    id: 'tac_atacar_clavada', area: 'tactica', peso: 3, tipo: 'opcion',
+    id: 'tac_atacar_clavada', area: 'tactica', peso: 1, elo: 900, eloBase: 1200, tipo: 'opcion',
     enunciado: 'Si el rival tiene una pieza clavada que no es el rey, ¿qué principio táctico conviene seguir?',
     opciones: [
       'Atacarla más veces de las que la puede defender',
@@ -2428,7 +2443,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'La pieza clavada no puede huir sin exponer lo que tiene detrás, así que es un blanco quieto: se le suman atacantes hasta que el defensor no da abasto. Un peón que la ataque suele ser lo más eficaz.',
   },
   {
-    id: 'tac_ahogado_recurso', area: 'tactica', peso: 3, tipo: 'opcion',
+    id: 'tac_ahogado_recurso', area: 'tactica', peso: 2, elo: 1190, eloBase: 1200, tipo: 'opcion',
     enunciado: 'Si vas claramente perdiendo, ¿qué recurso táctico defensivo puede salvar la partida?',
     opciones: [
       'Buscar el ahogado del rey rival, que da tablas',
@@ -2440,7 +2455,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Aun en posiciones perdidas se puede maniobrar hacia una trampa de ahogado: dejar al rey rival sin ninguna jugada legal y sin estar en jaque. Medio punto de la nada.',
   },
   {
-    id: 'tac_tactica_vs_estrategia', area: 'tactica', peso: 2, tipo: 'opcion',
+    id: 'tac_tactica_vs_estrategia', area: 'tactica', peso: 1, elo: 900, eloBase: 950, tipo: 'opcion',
     enunciado: '¿Qué es una «táctica» en ajedrez, a diferencia de la «estrategia»?',
     opciones: [
       'Jugadas forzadas y cortas para ganar algo concreto',
@@ -2454,7 +2469,7 @@ window.DIAGNOSTICO_ITEMS = [
 
   /* ---------------- Mates y seguridad del rey ---------------- */
   {
-    id: 'mate_rey_captura_defendida', area: 'mate', peso: 1, tipo: 'opcion',
+    id: 'mate_rey_captura_defendida', area: 'mate', peso: 1, elo: 650, eloBase: 700, tipo: 'opcion',
     enunciado: '¿Puede un rey capturar una pieza rival que está defendida por otra pieza?',
     opciones: [
       'No: quedaría en jaque tras la captura',
@@ -2466,7 +2481,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'El rey nunca puede ir a una casilla atacada, así que capturar una pieza defendida sería ilegal. De ahí sale media técnica de mate: basta con que la pieza que da jaque esté defendida.',
   },
   {
-    id: 'mate_pasillo_cuando', area: 'mate', peso: 2, tipo: 'opcion',
+    id: 'mate_pasillo_cuando', area: 'mate', peso: 1, elo: 720, eloBase: 950, tipo: 'opcion',
     enunciado: 'El «mate del pasillo» ocurre típicamente cuando…',
     opciones: [
       'Sus propios peones encierran al rey en la última fila',
@@ -2478,7 +2493,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'El rey enrocado queda atrapado detrás de sus tres peones, y una torre o la dama entran a la última fila con jaque. No hay dónde ir, ni quién capture o bloquee.',
   },
   {
-    id: 'mate_pasillo_torre_a', area: 'mate', peso: 2, tipo: 'opcion_tablero',
+    id: 'mate_pasillo_torre_a', area: 'mate', peso: 1, elo: 840, eloBase: 950, tipo: 'opcion_tablero',
     enunciado: 'Juegan las blancas. ¿Cuál de estas jugadas de la torre da jaque mate?',
     fen: '6k1/5ppp/8/8/8/8/8/R5K1 w - - 0 1',
     opciones: [
@@ -2492,7 +2507,7 @@ window.DIAGNOSTICO_ITEMS = [
     prueba: 'Ta8 es legal y es jaque mate',
   },
   {
-    id: 'mate_coz_cuando', area: 'mate', peso: 3, tipo: 'opcion',
+    id: 'mate_coz_cuando', area: 'mate', peso: 2, elo: 1310, eloBase: 1200, tipo: 'opcion',
     enunciado: 'El «mate de la coz» suele darse cuando…',
     opciones: [
       'Un caballo da jaque de cerca y nadie puede huir',
@@ -2504,7 +2519,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'El caballo da el jaque final desde muy cerca, y el rey no lo puede capturar porque está defendido o porque sus propias piezas le tapan todas las salidas. Es el mate más vistoso del ajedrez.',
   },
   {
-    id: 'mate_tecnica_torre_franja', area: 'mate', peso: 3, tipo: 'opcion',
+    id: 'mate_tecnica_torre_franja', area: 'mate', peso: 1, elo: 940, eloBase: 1200, tipo: 'opcion',
     enunciado: 'En el final de rey y torre contra rey solo, ¿cuál es la técnica básica para forzar el mate?',
     opciones: [
       'Encerrarlo en una franja cada vez más chica',
@@ -2516,7 +2531,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'La torre le corta una fila o una columna y el propio rey se acerca a empujarlo; la franja se achica hasta el borde. Sin el rey propio, la torre sola no da mate nunca.',
   },
   {
-    id: 'mate_dama_ahogado', area: 'mate', peso: 3, tipo: 'opcion',
+    id: 'mate_dama_ahogado', area: 'mate', peso: 1, elo: 1040, eloBase: 1200, tipo: 'opcion',
     enunciado: 'En el final de rey y dama contra rey solo, ¿qué error hay que evitar con más cuidado?',
     opciones: [
       'Ahogar al rey rival sin querer, y dar tablas',
@@ -2528,7 +2543,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Con dama de sobra, el único peligro real es apretar tanto que el rey rival quede sin jaque y sin jugada legal. La regla práctica: antes de cada jugada, comprobar que le queda al menos una casilla.',
   },
   {
-    id: 'mate_legal', area: 'mate', peso: 4, tipo: 'opcion',
+    id: 'mate_legal', area: 'mate', peso: 2, elo: 1290, eloBase: 1450, tipo: 'opcion',
     enunciado: 'El «mate de Légal» es una trampa clásica de apertura en la que las blancas…',
     opciones: [
       'Entregan la dama porque ya tienen el mate listo',
@@ -2540,7 +2555,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Se entrega la dama a propósito porque unas jugadas después hay mate forzado con caballo y alfil. Es la trampa que enseña que el material no manda cuando hay mate.',
   },
   {
-    id: 'mate_opera', area: 'mate', peso: 4, tipo: 'opcion',
+    id: 'mate_opera', area: 'mate', peso: 3, elo: 1560, eloBase: 1450, tipo: 'opcion',
     enunciado: 'El «mate de la Ópera», famoso por una partida de Paul Morphy, combina típicamente…',
     opciones: [
       'Dama y otra pieza rematando por la última fila',
@@ -2552,7 +2567,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Morphy remató con dama y torre mientras el rival tenía las piezas sin desarrollar, estorbando su propia defensa. Es la partida que mejor enseña para qué sirve desarrollar.',
   },
   {
-    id: 'mate_objetivo_final', area: 'mate', peso: 1, tipo: 'opcion',
+    id: 'mate_objetivo_final', area: 'mate', peso: 1, elo: 470, eloBase: 700, tipo: 'opcion',
     enunciado: '¿Cuál es el objetivo final de cualquier partida de ajedrez?',
     opciones: [
       'Dar jaque mate al rey rival',
@@ -2564,7 +2579,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Muchas partidas terminan por abandono, por tablas o por tiempo, pero el objetivo formal sigue siendo uno solo: el jaque mate. Todo lo demás son caminos hacia eso.',
   },
   {
-    id: 'mate_patrones_memoria', area: 'mate', peso: 2, tipo: 'opcion',
+    id: 'mate_patrones_memoria', area: 'mate', peso: 1, elo: 720, eloBase: 950, tipo: 'opcion',
     enunciado: '¿Por qué conviene memorizar los patrones de mate típicos?',
     opciones: [
       'Para reconocerlos rápido en vez de calcular de cero',
@@ -2576,7 +2591,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Quien ya vio el patrón no calcula: lo reconoce y va directo a la jugada que lo completa. Es la diferencia entre encontrar el mate en dos segundos o no encontrarlo.',
   },
   {
-    id: 'mate_rey_al_borde', area: 'mate', peso: 2, tipo: 'opcion',
+    id: 'mate_rey_al_borde', area: 'mate', peso: 1, elo: 750, eloBase: 950, tipo: 'opcion',
     enunciado: 'En casi todos los mates con poco material, ¿dónde suele terminar acorralado el rey rival?',
     opciones: [
       'En el borde o una esquina del tablero',
@@ -2588,7 +2603,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'En el centro el rey tiene ocho casillas; en el borde, cinco; en una esquina, tres. Por eso toda la técnica de mate consiste en empujarlo hacia afuera.',
   },
   {
-    id: 'mate_evitar_ahogado', area: 'mate', peso: 2, tipo: 'opcion',
+    id: 'mate_evitar_ahogado', area: 'mate', peso: 1, elo: 840, eloBase: 950, tipo: 'opcion',
     enunciado: 'Al dar mate con mucho material de ventaja, ¿qué error común hay que evitar con cuidado?',
     opciones: [
       'Dejarlo sin jaque y sin jugadas: es ahogado',
@@ -2600,7 +2615,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Con ventaja aplastante es fácil encerrar al rey rival por descuido, y el ahogado convierte una victoria segura en medio punto. Es la forma más dolorosa de no ganar una partida ganada.',
   },
   {
-    id: 'mate_dos_torres_cuidado', area: 'mate', peso: 3, tipo: 'opcion',
+    id: 'mate_dos_torres_cuidado', area: 'mate', peso: 1, elo: 1000, eloBase: 1200, tipo: 'opcion',
     enunciado: 'Al dar mate con dos torres contra el rey solo, ¿qué cuidado hay que tener con la torre que da el jaque final?',
     opciones: [
       'Que quede fuera del alcance del rey rival',
@@ -2612,7 +2627,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Si la torre que da jaque queda pegada al rey y sin defensa, el rey la captura y no hay mate. Con dos torres alcanza con darle jaque desde lejos, alternando filas.',
   },
   {
-    id: 'mate_rey_participa', area: 'mate', peso: 2, tipo: 'opcion',
+    id: 'mate_rey_participa', area: 'mate', peso: 1, elo: 1020, eloBase: 950, tipo: 'opcion',
     enunciado: 'En los finales de mate con poco material, ¿qué pieza propia hay que acercar para completar el mate?',
     opciones: [
       'El propio rey, que tiene que participar',
@@ -2624,7 +2639,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Salvo con dama o con dos torres, casi todos los mates básicos necesitan al rey propio empujando. Es el cambio de mentalidad del final: el rey deja de esconderse y sale a trabajar.',
   },
   {
-    id: 'mate_antes_que_material', area: 'mate', peso: 2, tipo: 'opcion',
+    id: 'mate_antes_que_material', area: 'mate', peso: 1, elo: 780, eloBase: 950, tipo: 'opcion',
     enunciado: '¿Por qué dar jaque mate es preferible a seguir ganando material, cuando las dos cosas están disponibles?',
     opciones: [
       'Porque el mate termina la partida ahí mismo',
@@ -2636,7 +2651,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'El resultado no depende de cuánto material se junte sino de si hay mate. Quedarse acumulando piezas con el mate a la vista es la forma más común de dejar escapar una partida ganada.',
   },
   {
-    id: 'mate_luft', area: 'mate', peso: 2, tipo: 'opcion',
+    id: 'mate_luft', area: 'mate', peso: 1, elo: 870, eloBase: 950, tipo: 'opcion',
     enunciado: '¿Cómo se puede prevenir un futuro mate del pasillo antes de que sea un problema?',
     opciones: [
       'Haciendo un respiradero: adelantar un peón del rey',
@@ -2648,7 +2663,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Se llama «luft» —aire, en alemán—: se adelanta h3 o g3 para que el rey tenga por dónde salir. Cuesta un tiempo y evita perder la partida de un jaque.',
   },
   {
-    id: 'mate_dos_alfiles_esquina', area: 'mate', peso: 4, tipo: 'opcion',
+    id: 'mate_dos_alfiles_esquina', area: 'mate', peso: 2, elo: 1210, eloBase: 1450, tipo: 'opcion',
     enunciado: 'Al forzar mate con rey y dos alfiles contra rey solo, ¿en qué esquina se puede completar el mate?',
     opciones: [
       'En cualquiera: cubren casillas de los dos colores',
@@ -2660,7 +2675,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Entre los dos alfiles controlan casillas claras y oscuras, así que ninguna esquina es segura para el rey. Es más fácil de lo que parece: hay que llevarlo al borde con el rey propio y cerrar las diagonales.',
   },
   {
-    id: 'mate_alfil_caballo_esquina', area: 'mate', peso: 5, tipo: 'opcion',
+    id: 'mate_alfil_caballo_esquina', area: 'mate', peso: 2, elo: 1220, eloBase: 1700, tipo: 'opcion',
     enunciado: 'El final de rey, alfil y caballo contra rey solo tiene una particularidad conocida: el mate solo se puede forzar…',
     opciones: [
       'En la esquina del color de casillas del alfil',
@@ -2672,7 +2687,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'El alfil solo controla un color, así que en la esquina del color contrario el rey defensor se escapa. Hay que empujarlo hasta la esquina correcta, y eso puede llevar más de treinta jugadas: es el mate básico más difícil.',
   },
   {
-    id: 'mate_basicos_cuales', area: 'mate', peso: 3, tipo: 'opcion',
+    id: 'mate_basicos_cuales', area: 'mate', peso: 1, elo: 1090, eloBase: 1200, tipo: 'opcion',
     enunciado: '¿Cuáles son los finales de mate «básicos» que conviene dominar de memoria desde el principio?',
     opciones: [
       'Dama contra rey, torre contra rey y dos alfiles',
@@ -2686,7 +2701,7 @@ window.DIAGNOSTICO_ITEMS = [
 
   /* ---------------- Finales ---------------- */
   {
-    id: 'fin_oposicion_concepto', area: 'finales', peso: 2, tipo: 'opcion',
+    id: 'fin_oposicion_concepto', area: 'finales', peso: 2, elo: 1190, eloBase: 950, tipo: 'opcion',
     enunciado: 'En un final de rey y peón contra rey, el concepto de «oposición» significa que…',
     opciones: [
       'Con una casilla de por medio, gana quien NO mueve',
@@ -2698,7 +2713,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Cuando los reyes quedan frente a frente con una casilla vacía en medio, el que tiene que mover es el que pierde terreno: está obligado a apartarse. Por eso en los finales de peones vale más el turno que la posición.',
   },
   {
-    id: 'fin_oposicion_tablero', area: 'finales', peso: 3, tipo: 'opcion_tablero',
+    id: 'fin_oposicion_tablero', area: 'finales', peso: 2, elo: 1350, eloBase: 1200, tipo: 'opcion_tablero',
     enunciado: 'Juegan las blancas, con los reyes enfrentados y una casilla de por medio. ¿Quién tiene la oposición?',
     fen: '4k3/8/4K3/8/8/8/8/8 w - - 0 1',
     opciones: [
@@ -2712,7 +2727,7 @@ window.DIAGNOSTICO_ITEMS = [
     prueba: 'posición legal, reyes en e6 y e8 con turno de las blancas',
   },
   {
-    id: 'fin_cuadrado_para_que', area: 'finales', peso: 2, tipo: 'opcion',
+    id: 'fin_cuadrado_para_que', area: 'finales', peso: 1, elo: 740, eloBase: 950, tipo: 'opcion',
     enunciado: 'La «regla del cuadrado» sirve para saber rápidamente si…',
     opciones: [
       'El rey alcanza a tiempo a un peón pasado',
@@ -2724,7 +2739,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Se dibuja mentalmente el cuadrado que va del peón a su casilla de coronación: si el rey defensor puede entrar en él, lo alcanza. Ahorra calcular la carrera jugada por jugada.',
   },
   {
-    id: 'fin_zugzwang', area: 'finales', peso: 3, tipo: 'opcion',
+    id: 'fin_zugzwang', area: 'finales', peso: 2, elo: 1350, eloBase: 1200, tipo: 'opcion',
     enunciado: '¿Qué es el «zugzwang» en ajedrez?',
     opciones: [
       'Estar obligado a mover y que toda jugada empeore',
@@ -2736,7 +2751,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Lo ideal sería pasar el turno, pero las reglas obligan a jugar y cualquier jugada estropea la posición. Es la idea que sostiene casi todos los finales de peones.',
   },
   {
-    id: 'fin_casillas_correspondientes', area: 'finales', peso: 5, tipo: 'opcion',
+    id: 'fin_casillas_correspondientes', area: 'finales', peso: 3, elo: 1470, eloBase: 1700, tipo: 'opcion',
     enunciado: 'En finales de rey y peones más complejos, ¿qué son las «casillas correspondientes»?',
     opciones: [
       'Pares de casillas que los reyes deben ocuparse mutuamente',
@@ -2748,7 +2763,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Es la oposición llevada más lejos: a cada casilla del rey atacante le corresponde una del defensor, y quien no llega a la suya cae en zugzwang. Se usa cuando la oposición directa no alcanza para decidir.',
   },
   {
-    id: 'fin_pasado_protegido', area: 'finales', peso: 3, tipo: 'opcion',
+    id: 'fin_pasado_protegido', area: 'finales', peso: 2, elo: 1210, eloBase: 1200, tipo: 'opcion',
     enunciado: '¿Por qué un «peón pasado protegido», defendido por otro peón propio, es especialmente fuerte?',
     opciones: [
       'Porque el rey no lo puede tomar, y avanza apoyado',
@@ -2760,7 +2775,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'El rey rival no puede capturarlo sin perder algo a cambio, así que queda clavado vigilándolo. En un final de peones, un pasado protegido suele valer la partida.',
   },
   {
-    id: 'fin_pasados_conectados', area: 'finales', peso: 3, tipo: 'opcion',
+    id: 'fin_pasados_conectados', area: 'finales', peso: 2, elo: 1190, eloBase: 1200, tipo: 'opcion',
     enunciado: '¿Por qué dos peones pasados y conectados son especialmente peligrosos en un final?',
     opciones: [
       'Porque se cubren entre ellos y no se frena a los dos',
@@ -2772,7 +2787,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Uno defiende al otro mientras avanzan, así que el rey rival no puede pararlos solo: si se ocupa de uno, el otro sigue. Dos peones conectados en la sexta fila valen más que una torre.',
   },
   {
-    id: 'fin_peon_torre_alfil_malo', area: 'finales', peso: 5, tipo: 'opcion',
+    id: 'fin_peon_torre_alfil_malo', area: 'finales', peso: 3, elo: 1640, eloBase: 1700, tipo: 'opcion',
     enunciado: 'Con un peón de la columna «a» o «h» y un alfil del color contrario a la casilla de coronación, ¿qué suele pasar?',
     opciones: [
       'Tablas si el rey defensor llega a esa esquina',
@@ -2784,7 +2799,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'El alfil no controla la casilla de coronación y el rey defensor se mete en la esquina: no hay forma de sacarlo. Es tablas aunque el atacante tenga varios peones de más, y por eso conviene saberlo antes de cambiar hacia ese final.',
   },
   {
-    id: 'fin_rey_delante_peon', area: 'finales', peso: 3, tipo: 'opcion',
+    id: 'fin_rey_delante_peon', area: 'finales', peso: 1, elo: 1090, eloBase: 1200, tipo: 'opcion',
     enunciado: 'Como principio general en finales de rey y peón, ¿dónde conviene tener al propio rey respecto a su peón pasado?',
     opciones: [
       'Delante, abriéndole el camino a la coronación',
@@ -2796,7 +2811,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'El rey va adelante despejando el camino y ganando la oposición; el peón lo sigue. Un peón que avanza solo, con el rey detrás, casi siempre se frena.',
   },
   {
-    id: 'fin_teoricos_por_que', area: 'finales', peso: 3, tipo: 'opcion',
+    id: 'fin_teoricos_por_que', area: 'finales', peso: 2, elo: 1230, eloBase: 1200, tipo: 'opcion',
     enunciado: '¿Por qué conviene estudiar los «finales teóricos», las posiciones ya analizadas al detalle?',
     opciones: [
       'Porque tienen técnica exacta y resultado conocido',
@@ -2808,7 +2823,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Su resultado ya está establecido y la técnica es conocida: se reconocen y se ejecutan, sin calcular bajo presión. Son pocas posiciones y aparecen una y otra vez.',
   },
   {
-    id: 'fin_pasado_alejado', area: 'finales', peso: 4, tipo: 'opcion',
+    id: 'fin_pasado_alejado', area: 'finales', peso: 4, elo: 1710, eloBase: 1450, tipo: 'opcion',
     enunciado: '¿Por qué un «peón pasado alejado» suele ser una ventaja decisiva en finales de peones?',
     opciones: [
       'Porque distrae al rey rival lejos de lo importante',
@@ -2820,7 +2835,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'El rey defensor tiene que ir a buscarlo, y mientras tanto el otro flanco queda solo: el rey atacante se come todo lo que quedó sin defensa. Se gana ahí, no con el peón alejado.',
   },
   {
-    id: 'fin_cuadrado_excepcion', area: 'finales', peso: 4, tipo: 'opcion',
+    id: 'fin_cuadrado_excepcion', area: 'finales', peso: 3, elo: 1660, eloBase: 1450, tipo: 'opcion',
     enunciado: 'La «regla del cuadrado» tiene una excepción importante: hay que agrandar el cuadrado si…',
     opciones: [
       'El peón no se movió y puede avanzar dos casillas',
@@ -2832,7 +2847,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Un peón en su casilla inicial recorre dos casillas de un salto, así que el cuadrado se cuenta desde la casilla a la que puede llegar, no desde donde está. Olvidarlo hace perder carreras que parecían ganadas.',
   },
   {
-    id: 'fin_alfiles_mismo_color', area: 'finales', peso: 4, tipo: 'opcion',
+    id: 'fin_alfiles_mismo_color', area: 'finales', peso: 2, elo: 1390, eloBase: 1450, tipo: 'opcion',
     enunciado: 'A diferencia del final de alfiles de distinto color, en un final de alfiles del MISMO color con un peón de ventaja…',
     opciones: [
       'Suele ser bastante más fácil convertir la ventaja',
@@ -2844,7 +2859,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Los dos alfiles controlan las mismas casillas, así que no existe el bloqueo permanente que salva los finales de distinto color. Un peón de más suele alcanzar para ganar.',
   },
   {
-    id: 'fin_torres_frecuentes', area: 'finales', peso: 3, tipo: 'opcion',
+    id: 'fin_torres_frecuentes', area: 'finales', peso: 1, elo: 1090, eloBase: 1200, tipo: 'opcion',
     enunciado: '¿Por qué se dice que los finales de torres son los más frecuentes en la práctica?',
     opciones: [
       'Porque las torres suelen ser las últimas en cambiarse',
@@ -2856,7 +2871,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Las torres entran en juego más tarde y se cambian después que las piezas menores, así que una parte enorme de las partidas llega a un final con torres. Es el final que más rinde estudiar.',
   },
   {
-    id: 'fin_rey_lejos', area: 'finales', peso: 2, tipo: 'opcion',
+    id: 'fin_rey_lejos', area: 'finales', peso: 1, elo: 920, eloBase: 950, tipo: 'opcion',
     enunciado: 'Si el rey defensor queda muy lejos del flanco donde el rival tiene un peón pasado, ¿qué puede pasar?',
     opciones: [
       'Que el peón corone sin que el rey llegue a tiempo',
@@ -2868,7 +2883,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Si el rey no entra en el cuadrado del peón, no lo alcanza y no hay nada que hacer. Por eso en los finales la posición del rey importa más que casi cualquier otra cosa.',
   },
   {
-    id: 'fin_tiempo_vale_mas', area: 'finales', peso: 3, tipo: 'opcion',
+    id: 'fin_tiempo_vale_mas', area: 'finales', peso: 1, elo: 950, eloBase: 1200, tipo: 'opcion',
     enunciado: 'En un final ajustado, ¿por qué cada jugada suele valer mucho más que en la apertura?',
     opciones: [
       'Porque hay menos piezas y casi ningún margen de error',
@@ -2880,7 +2895,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Con pocas piezas no hay con qué compensar una jugada perdida: un solo tiempo decide entre ganar, empatar o perder. En la apertura un tiempo se recupera; en el final, no.',
   },
   {
-    id: 'fin_rey_pasivo_error', area: 'finales', peso: 2, tipo: 'opcion',
+    id: 'fin_rey_pasivo_error', area: 'finales', peso: 2, elo: 1390, eloBase: 950, tipo: 'opcion',
     enunciado: '¿Cuál es un error común de jugadores principiantes en los finales?',
     opciones: [
       'Dejar el rey escondido en vez de activarlo',
@@ -2892,7 +2907,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Después de toda una partida cuidando al rey, cuesta cambiar el chip: en el final ya casi no hay con qué atacarlo y tiene que salir a pelear como una pieza más. Un rey pasivo en un final es como jugar con una pieza menos.',
   },
   {
-    id: 'fin_convertir_ventaja', area: 'finales', peso: 3, tipo: 'opcion',
+    id: 'fin_convertir_ventaja', area: 'finales', peso: 2, elo: 1200, eloBase: 1200, tipo: 'opcion',
     enunciado: '¿Qué significa «convertir una ventaja» en un final?',
     opciones: [
       'Llevar esa ventaja hasta la victoria, con técnica',
@@ -2906,7 +2921,7 @@ window.DIAGNOSTICO_ITEMS = [
 
   /* ---------------- Estrategia y planes ---------------- */
   {
-    id: 'est_controlar_centro', area: 'estrategia', peso: 1, tipo: 'opcion',
+    id: 'est_controlar_centro', area: 'estrategia', peso: 1, elo: 620, eloBase: 700, tipo: 'opcion',
     enunciado: '¿Qué significa «controlar el centro» en ajedrez?',
     opciones: [
       'Dominar d4, d5, e4 y e5 con piezas y peones',
@@ -2918,7 +2933,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Desde el centro las piezas llegan a los dos flancos, así que quien lo domina mueve sus piezas de un lado al otro más rápido que el rival. Controlar no siempre es ocupar: también se controla a distancia.',
   },
   {
-    id: 'est_columna_abierta', area: 'estrategia', peso: 1, tipo: 'opcion',
+    id: 'est_columna_abierta', area: 'estrategia', peso: 1, elo: 770, eloBase: 700, tipo: 'opcion',
     enunciado: 'Una «columna abierta» es una columna…',
     opciones: [
       'Sin peones de ningún color, ideal para las torres',
@@ -2930,7 +2945,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Sin peones que la tapen, la torre ve la columna entera y se vuelve una pieza de verdad. Pelear por la columna abierta —y doblar torres en ella— es uno de los planes más comunes del medio juego.',
   },
   {
-    id: 'est_desequilibrio_material', area: 'estrategia', peso: 4, tipo: 'opcion',
+    id: 'est_desequilibrio_material', area: 'estrategia', peso: 3, elo: 1660, eloBase: 1450, tipo: 'opcion',
     enunciado: '¿A qué se llama «desequilibrio material» cuando se busca a propósito?',
     opciones: [
       'Cambiar piezas de distinto tipo pero valor parecido',
@@ -2942,7 +2957,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Por ejemplo, dos piezas menores contra torre y peón: los puntos dan casi igual, pero la posición que sale favorece a un estilo de juego o al otro. Se busca a propósito para llevar la partida al terreno que uno conoce.',
   },
   {
-    id: 'est_peones_doblados', area: 'estrategia', peso: 2, tipo: 'opcion',
+    id: 'est_peones_doblados', area: 'estrategia', peso: 1, elo: 1020, eloBase: 950, tipo: 'opcion',
     enunciado: '¿Qué son los «peones doblados»?',
     opciones: [
       'Dos peones propios en la misma columna',
@@ -2954,7 +2969,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Quedan uno delante del otro y no se pueden defender entre ellos, además de controlar menos casillas que si estuvieran separados. No siempre son malos: a cambio suelen abrir una columna para la torre.',
   },
   {
-    id: 'est_peon_retrasado', area: 'estrategia', peso: 3, tipo: 'opcion',
+    id: 'est_peon_retrasado', area: 'estrategia', peso: 2, elo: 1100, eloBase: 1200, tipo: 'opcion',
     enunciado: '¿Qué es un «peón retrasado»?',
     opciones: [
       'Uno que quedó atrás y no puede avanzar seguro',
@@ -2966,7 +2981,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Sus vecinos ya avanzaron y no lo pueden proteger, y la casilla de adelante la controla el rival: queda clavado y es un blanco fijo, sobre todo si está en una columna abierta.',
   },
   {
-    id: 'est_base_cadena', area: 'estrategia', peso: 3, tipo: 'opcion',
+    id: 'est_base_cadena', area: 'estrategia', peso: 1, elo: 1030, eloBase: 1200, tipo: 'opcion',
     enunciado: 'En una cadena de peones, ¿cuál es el punto más débil para atacar?',
     opciones: [
       'La base: el de más atrás, que nadie defiende',
@@ -2978,7 +2993,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Todos los peones de la cadena están defendidos por el de atrás, menos el último: ese es el único que hay que atacar con piezas. Es el principio que ordena media estrategia de la Defensa Francesa.',
   },
   {
-    id: 'est_ventaja_espacio', area: 'estrategia', peso: 2, tipo: 'opcion',
+    id: 'est_ventaja_espacio', area: 'estrategia', peso: 1, elo: 1020, eloBase: 950, tipo: 'opcion',
     enunciado: '¿Qué significa tener «ventaja de espacio» en una posición?',
     opciones: [
       'Controlar más casillas y dejar al rival apretado',
@@ -2990,7 +3005,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Más casillas controladas es más lugar donde poner las piezas propias, y menos para las del rival, que empiezan a estorbarse entre ellas. Quien tiene menos espacio busca cambios; quien tiene más, los evita.',
   },
   {
-    id: 'est_jugar_con_plan', area: 'estrategia', peso: 2, tipo: 'opcion',
+    id: 'est_jugar_con_plan', area: 'estrategia', peso: 2, elo: 1160, eloBase: 950, tipo: 'opcion',
     enunciado: '¿Por qué se dice que hay que «jugar con un plan», en vez de mover pieza por pieza sin conexión?',
     opciones: [
       'Porque la posición misma sugiere qué hacer',
@@ -3002,7 +3017,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'La estructura de peones, el espacio y las piezas que quedan dicen qué se puede intentar. Un plan conecta varias jugadas hacia lo mismo; sin él, cada jugada deshace lo que hizo la anterior.',
   },
   {
-    id: 'est_peones_alma', area: 'estrategia', peso: 3, tipo: 'opcion',
+    id: 'est_peones_alma', area: 'estrategia', peso: 1, elo: 1090, eloBase: 1200, tipo: 'opcion',
     enunciado: 'La frase clásica «los peones son el alma del ajedrez», de Philidor, quiere decir que…',
     opciones: [
       'La estructura de peones decide qué planes hay',
@@ -3014,7 +3029,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Los peones casi no retroceden, así que la forma que toman es casi permanente y define el resto de la partida: dónde atacar, qué pieza sirve y cuál estorba. Por eso un avance de peón se piensa dos veces.',
   },
   {
-    id: 'est_cambiar_alfil_malo', area: 'estrategia', peso: 3, tipo: 'opcion',
+    id: 'est_cambiar_alfil_malo', area: 'estrategia', peso: 2, elo: 1370, eloBase: 1200, tipo: 'opcion',
     enunciado: 'Si tienes un «alfil malo», encerrado por tus propios peones, ¿qué suele convenir?',
     opciones: [
       'Cambiarlo por una pieza rival en cuanto se pueda',
@@ -3026,7 +3041,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Un alfil encerrado aporta poco y ocupa espacio propio. Cambiarlo por una pieza activa del rival —aunque sea «alfil por caballo»— suele mejorar la posición más que cualquier maniobra.',
   },
   {
-    id: 'est_torre_septima', area: 'estrategia', peso: 3, tipo: 'opcion',
+    id: 'est_torre_septima', area: 'estrategia', peso: 2, elo: 1170, eloBase: 1200, tipo: 'opcion',
     enunciado: '¿Por qué una torre en la séptima fila suele ser muy fuerte?',
     opciones: [
       'Porque ataca los peones que aún no avanzaron',
@@ -3038,7 +3053,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Los peones del rival siguen en su fila inicial, así que la torre los ataca todos de un tirón y de paso encierra al rey contra el borde. Dos torres en la séptima suelen valer más que una pieza de ventaja.',
   },
   {
-    id: 'est_peones_colgantes', area: 'estrategia', peso: 4, tipo: 'opcion',
+    id: 'est_peones_colgantes', area: 'estrategia', peso: 2, elo: 1300, eloBase: 1450, tipo: 'opcion',
     enunciado: '¿Qué son los «peones colgantes»?',
     opciones: [
       'Dos peones propios juntos, sin otros que los apoyen',
@@ -3050,7 +3065,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Son fuerza y debilidad a la vez: dan espacio y movilidad mientras avanzan juntos, pero como ningún peón los defiende, son blanco fijo si se los logra frenar. Todo depende de si pueden avanzar o no.',
   },
   {
-    id: 'est_iniciativa', area: 'estrategia', peso: 2, tipo: 'opcion',
+    id: 'est_iniciativa', area: 'estrategia', peso: 2, elo: 1130, eloBase: 950, tipo: 'opcion',
     enunciado: '¿Qué significa tener la «iniciativa» en una partida?',
     opciones: [
       'Amenazar sin parar y obligar al rival a responder',
@@ -3062,7 +3077,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Quien la tiene marca el ritmo: el rival gasta todas sus jugadas defendiéndose y nunca llega a su propio plan. La iniciativa se puede perder en una jugada, y por eso a veces se paga material por conservarla.',
   },
   {
-    id: 'est_tempo', area: 'estrategia', peso: 2, tipo: 'opcion',
+    id: 'est_tempo', area: 'estrategia', peso: 1, elo: 1080, eloBase: 950, tipo: 'opcion',
     enunciado: 'En términos de apertura y estrategia, ¿qué es un «tiempo» (tempo)?',
     opciones: [
       'Cada jugada aprovechada para mejorar algo',
@@ -3074,7 +3089,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Cada jugada cuesta un tiempo: si desarrolla o mejora la posición, está bien gastada; si repite o deshace, se perdió. Ganar tiempos atacando algo mientras uno se desarrolla es la forma más barata de sacar ventaja.',
   },
   {
-    id: 'est_ataque_minoria', area: 'estrategia', peso: 5, tipo: 'opcion',
+    id: 'est_ataque_minoria', area: 'estrategia', peso: 3, elo: 1640, eloBase: 1700, tipo: 'opcion',
     enunciado: '¿En qué consiste el «ataque de minoría»?',
     opciones: [
       'Avanzar los pocos peones de un flanco para dejarle una debilidad',
@@ -3086,7 +3101,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Se avanzan dos peones contra tres, no para coronar sino para cambiarlos y que al rival le quede un peón aislado o retrasado en esa zona. Es el plan típico del Gambito de Dama con estructura Carlsbad.',
   },
   {
-    id: 'est_casillas_debiles', area: 'estrategia', peso: 4, tipo: 'opcion',
+    id: 'est_casillas_debiles', area: 'estrategia', peso: 2, elo: 1180, eloBase: 1450, tipo: 'opcion',
     enunciado: '¿A qué se le llama un «complejo de casillas débiles»?',
     opciones: [
       'A un grupo de casillas de un color que ya nadie cubre',
@@ -3098,7 +3113,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Al cambiarse, por ejemplo, el alfil de casillas claras, todas las claras cerca del rey quedan sin quien las controle, y ahí se instalan las piezas rivales. Un alfil que se cambia no se recupera: esa debilidad es para toda la partida.',
   },
   {
-    id: 'est_pareja_alfiles_abierta', area: 'estrategia', peso: 3, tipo: 'opcion',
+    id: 'est_pareja_alfiles_abierta', area: 'estrategia', peso: 1, elo: 980, eloBase: 1200, tipo: 'opcion',
     enunciado: 'Si tienes la pareja de alfiles contra alfil y caballo, ¿qué tipo de posición te conviene buscar?',
     opciones: [
       'Abierta, con las diagonales largas despejadas',
@@ -3110,7 +3125,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Los dos alfiles cubren casillas de los dos colores y barren el tablero cuando hay diagonales libres. Con la posición cerrada, en cambio, el caballo salta y ellos miran una pared de peones.',
   },
   {
-    id: 'est_enroques_opuestos', area: 'estrategia', peso: 4, tipo: 'opcion',
+    id: 'est_enroques_opuestos', area: 'estrategia', peso: 2, elo: 1310, eloBase: 1450, tipo: 'opcion',
     enunciado: 'Si las blancas enrocan corto y las negras largo, ¿qué estrategia se vuelve muy fuerte para los dos bandos?',
     opciones: [
       'Avanzar los peones contra el rey del rival',
@@ -3122,7 +3137,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Como el propio rey está en el otro flanco, avanzar esos peones no lo debilita: es ataque puro y sin costo. Se convierte en una carrera, y ahí cada tiempo vale una pieza.',
   },
   {
-    id: 'est_cambiar_bajo_presion', area: 'estrategia', peso: 3, tipo: 'opcion',
+    id: 'est_cambiar_bajo_presion', area: 'estrategia', peso: 2, elo: 1270, eloBase: 1200, tipo: 'opcion',
     enunciado: 'Si tu posición está bajo mucha presión, aunque el material siga igualado, ¿qué recurso suele aliviar la defensa?',
     opciones: [
       'Cambiar piezas para simplificar y bajar el peligro',
@@ -3134,7 +3149,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Un ataque necesita piezas: cada una que se cambia le quita fuerza, aunque no se gane material. Por eso quien defiende busca cambios y quien ataca los evita.',
   },
   {
-    id: 'est_evaluar_posicion', area: 'estrategia', peso: 2, tipo: 'opcion',
+    id: 'est_evaluar_posicion', area: 'estrategia', peso: 1, elo: 750, eloBase: 950, tipo: 'opcion',
     enunciado: 'Al evaluar una posición en el medio juego, ¿qué conviene mirar además del material?',
     opciones: [
       'Rey, actividad de las piezas, peones y espacio',
@@ -3148,7 +3163,7 @@ window.DIAGNOSTICO_ITEMS = [
 
   /* ---------------- Cálculo y visualización ---------------- */
   {
-    id: 'cal_que_es_calcular', area: 'calculo', peso: 1, tipo: 'opcion',
+    id: 'cal_que_es_calcular', area: 'calculo', peso: 1, elo: 880, eloBase: 700, tipo: 'opcion',
     enunciado: 'En ajedrez, ¿qué significa exactamente «calcular»?',
     opciones: [
       'Ver en la cabeza jugadas futuras y sus consecuencias',
@@ -3160,7 +3175,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Es seguir una secuencia concreta —mi jugada, su respuesta, mi jugada— sin tocar las piezas, y saber cómo queda el tablero al final. No es adivinar: es verificar.',
   },
   {
-    id: 'cal_cambio_igual', area: 'calculo', peso: 1, tipo: 'opcion',
+    id: 'cal_cambio_igual', area: 'calculo', peso: 2, elo: 1250, eloBase: 700, tipo: 'opcion',
     enunciado: 'Si cambias tu alfil por el caballo del rival, y no hay ninguna otra captura, ¿qué pasó con el material?',
     opciones: [
       'Sigue igualado: los dos perdieron una menor',
@@ -3172,7 +3187,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Alfil y caballo valen lo mismo en la tabla, así que el balance no se mueve. Lo que sí cambia es el tipo de posición que queda, y eso puede favorecer a uno de los dos.',
   },
   {
-    id: 'cal_contar_atacantes', area: 'calculo', peso: 2, tipo: 'opcion',
+    id: 'cal_contar_atacantes', area: 'calculo', peso: 1, elo: 1000, eloBase: 950, tipo: 'opcion',
     enunciado: 'Antes de lanzar una serie de capturas en una casilla, ¿qué es fundamental contar primero?',
     opciones: [
       'Cuántos atacan, cuántos defienden y qué vale cada uno',
@@ -3184,7 +3199,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'No alcanza con contar cabezas: importa el orden de valor. Tres atacantes contra dos defensores puede ser mal negocio si los atacantes son la dama y las torres.',
   },
   {
-    id: 'cal_arbol_variantes', area: 'calculo', peso: 3, tipo: 'opcion',
+    id: 'cal_arbol_variantes', area: 'calculo', peso: 2, elo: 1290, eloBase: 1200, tipo: 'opcion',
     enunciado: '¿Qué es un «árbol de variantes» al calcular una posición?',
     opciones: [
       'Las líneas que se abren según responda el rival',
@@ -3196,7 +3211,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Cada jugada candidata abre ramas según lo que conteste el rival, y cada rama abre otras. Calcular bien es podar ese árbol: mirar pocas ramas, pero las que importan.',
   },
   {
-    id: 'cal_precision_vs_profundidad', area: 'calculo', peso: 4, tipo: 'opcion',
+    id: 'cal_precision_vs_profundidad', area: 'calculo', peso: 2, elo: 1360, eloBase: 1450, tipo: 'opcion',
     enunciado: 'Sobre «cuántas jugadas hay que calcular por delante», ¿qué es más importante que ver muy lejos?',
     opciones: [
       'Ver con precisión hasta donde haga falta',
@@ -3208,7 +3223,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Tres jugadas bien calculadas valen más que ocho a medias: un error a la segunda jugada invalida todo lo que viene después. Se calcula hasta que la posición se aquieta, no hasta un número fijo.',
   },
   {
-    id: 'cal_a_ciegas', area: 'calculo', peso: 3, tipo: 'opcion',
+    id: 'cal_a_ciegas', area: 'calculo', peso: 1, elo: 950, eloBase: 1200, tipo: 'opcion',
     enunciado: '¿Para qué sirve practicar cálculo «a ciegas», visualizando sin mover las piezas?',
     opciones: [
       'Para entrenar a ver el tablero futuro en la cabeza',
@@ -3220,7 +3235,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Obliga a construir la imagen de la posición futura sin apoyarse en lo que se ve. Es exactamente la habilidad que falla cuando una combinación «se veía bien» y no funcionaba.',
   },
   {
-    id: 'cal_amenaza_rival', area: 'calculo', peso: 2, tipo: 'opcion',
+    id: 'cal_amenaza_rival', area: 'calculo', peso: 1, elo: 780, eloBase: 950, tipo: 'opcion',
     enunciado: 'Antes de decidir una jugada, ¿qué conviene revisar además de las propias ideas?',
     opciones: [
       'Qué amenaza el rival con lo que acaba de jugar',
@@ -3232,7 +3247,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'La pregunta que más partidas salva es «¿para qué jugó eso?». Ejecutar el propio plan sin mirar la amenaza del rival es la causa número uno de las derrotas por descuido.',
   },
   {
-    id: 'cal_recaptura_cual', area: 'calculo', peso: 3, tipo: 'opcion',
+    id: 'cal_recaptura_cual', area: 'calculo', peso: 2, elo: 1310, eloBase: 1200, tipo: 'opcion',
     enunciado: 'Después de una captura, ¿qué conviene comprobar antes de dar por obvia la recaptura?',
     opciones: [
       'Todas las piezas que pueden recapturar ahí',
@@ -3244,7 +3259,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Muchas veces hay dos o tres piezas que pueden recapturar, y la elección cambia todo: con cuál se recaptura decide si la columna queda abierta, si el peón queda doblado o si la pieza queda mal puesta.',
   },
   {
-    id: 'cal_legalidad', area: 'calculo', peso: 3, tipo: 'opcion',
+    id: 'cal_legalidad', area: 'calculo', peso: 2, elo: 1140, eloBase: 1200, tipo: 'opcion',
     enunciado: 'Después de calcular una combinación prometedora, ¿qué último paso no hay que saltarse?',
     opciones: [
       'Comprobar que cada jugada de la línea es legal',
@@ -3256,7 +3271,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Es facilísimo calcular moviendo una pieza que en realidad está clavada, o dejando al propio rey en jaque. Antes de confiar en la combinación, se repasa que cada jugada exista de verdad.',
   },
   {
-    id: 'cal_espejismo', area: 'calculo', peso: 4, tipo: 'opcion',
+    id: 'cal_espejismo', area: 'calculo', peso: 3, elo: 1440, eloBase: 1450, tipo: 'opcion',
     enunciado: '¿Qué es un «espejismo táctico» al calcular una combinación?',
     opciones: [
       'Una línea que parece ganar hasta que aparece la defensa',
@@ -3268,7 +3283,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'La combinación se ve preciosa y falla por una jugada que está una más adelante. Por eso hay que buscar activamente la mejor defensa del rival, no la que uno espera que juegue.',
   },
   {
-    id: 'cal_forzadas_faciles', area: 'calculo', peso: 3, tipo: 'opcion',
+    id: 'cal_forzadas_faciles', area: 'calculo', peso: 3, elo: 1490, eloBase: 1200, tipo: 'opcion',
     enunciado: '¿Por qué las líneas «forzadas» son más fáciles de calcular que las libres?',
     opciones: [
       'Porque hay menos ramas que revisar',
@@ -3280,7 +3295,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Si el rival tiene una sola respuesta razonable, el árbol es una línea recta y se puede calcular muy profundo. Por eso conviene empezar mirando jaques y capturas: son lo más forzado que hay.',
   },
   {
-    id: 'cal_evaluar_final', area: 'calculo', peso: 4, tipo: 'opcion',
+    id: 'cal_evaluar_final', area: 'calculo', peso: 2, elo: 1220, eloBase: 1450, tipo: 'opcion',
     enunciado: 'Al terminar de calcular una secuencia larga, ¿qué es tan importante como ver las jugadas?',
     opciones: [
       'Ver cómo queda la posición final y si conviene',
@@ -3292,7 +3307,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Se puede calcular ocho jugadas sin un error y equivocarse igual, si la posición del final no era tan buena como parecía. Calcular y evaluar son dos habilidades distintas y las dos hacen falta.',
   },
   {
-    id: 'cal_amenaza_de_mate', area: 'calculo', peso: 2, tipo: 'opcion',
+    id: 'cal_amenaza_de_mate', area: 'calculo', peso: 1, elo: 810, eloBase: 950, tipo: 'opcion',
     enunciado: 'Si el rival amenaza dar mate en su jugada siguiente, ¿qué prioridad tiene atender esa amenaza?',
     opciones: [
       'Máxima: antes que cualquier plan propio',
@@ -3304,7 +3319,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'El mate termina la partida, así que anula cualquier otra cuenta. Aunque estés ganando una torre del otro lado del tablero, primero se para el mate — aunque cueste material.',
   },
   {
-    id: 'cal_poco_tiempo', area: 'calculo', peso: 3, tipo: 'opcion',
+    id: 'cal_poco_tiempo', area: 'calculo', peso: 2, elo: 1220, eloBase: 1200, tipo: 'opcion',
     enunciado: 'Con poco tiempo en el reloj, ¿qué conviene priorizar al calcular?',
     opciones: [
       'Las líneas forzadas y seguras, que se verifican',
@@ -3316,7 +3331,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Una combinación especulativa necesita tiempo para comprobarse, y con la bandera cerca no lo hay. Con apuro se juega lo que se puede verificar rápido, aunque sea menos ambicioso.',
   },
   {
-    id: 'cal_ver_vs_calcular', area: 'calculo', peso: 3, tipo: 'opcion',
+    id: 'cal_ver_vs_calcular', area: 'calculo', peso: 1, elo: 930, eloBase: 1200, tipo: 'opcion',
     enunciado: '¿Cuál es la diferencia entre «ver» una idea táctica y «calcularla»?',
     opciones: [
       'Verla es notarla; calcularla es comprobar que sirve',
@@ -3328,7 +3343,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Reconocer el patrón es el chispazo; calcular es el trabajo de confirmar que en esta posición concreta funciona. Muchos errores vienen de jugar el chispazo sin hacer el trabajo.',
   },
   {
-    id: 'cal_precision_finales', area: 'calculo', peso: 4, tipo: 'opcion',
+    id: 'cal_precision_finales', area: 'calculo', peso: 2, elo: 1140, eloBase: 1450, tipo: 'opcion',
     enunciado: '¿Por qué el cálculo en los finales suele pedir más precisión que en el medio juego?',
     opciones: [
       'Porque un solo tiempo cambia el resultado',
@@ -3340,7 +3355,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Con pocas piezas no hay con qué compensar un error: la diferencia entre ganar y empatar suele ser una casilla o un turno. En el medio juego un error se disimula; en el final, no.',
   },
   {
-    id: 'cal_entrenar_puzles', area: 'calculo', peso: 1, tipo: 'opcion',
+    id: 'cal_entrenar_puzles', area: 'calculo', peso: 1, elo: 850, eloBase: 700, tipo: 'opcion',
     enunciado: '¿Cuál es una de las formas más efectivas de entrenar la capacidad de cálculo?',
     opciones: [
       'Resolver ejercicios tácticos con regularidad',
@@ -3354,7 +3369,7 @@ window.DIAGNOSTICO_ITEMS = [
 
   /* ---------------- Maestría ---------------- */
   {
-    id: 'mae_titulos_fide', area: 'maestria', peso: 1, tipo: 'opcion',
+    id: 'mae_titulos_fide', area: 'maestria', peso: 1, elo: 930, eloBase: 700, tipo: 'opcion',
     enunciado: 'Entre los títulos oficiales de la FIDE, ¿cuál es el de mayor jerarquía?',
     opciones: [
       'Gran Maestro (GM)',
@@ -3366,7 +3381,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'De mayor a menor: Gran Maestro, Maestro Internacional, Maestro FIDE y Candidato a Maestro. Se consiguen con normas en torneos y un Elo mínimo, y una vez otorgados no se pierden.',
   },
   {
-    id: 'mae_pgn', area: 'maestria', peso: 1, tipo: 'opcion',
+    id: 'mae_pgn', area: 'maestria', peso: 1, elo: 610, eloBase: 700, tipo: 'opcion',
     enunciado: '¿Qué es el formato PGN, usado para guardar partidas de ajedrez?',
     opciones: [
       'Un archivo de texto con las jugadas y los datos',
@@ -3378,7 +3393,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'PGN quiere decir Portable Game Notation: texto plano con las jugadas más los datos de la partida (jugadores, fecha, resultado). Lo abre cualquier programa, y por eso es el formato en que se comparten partidas.',
   },
   {
-    id: 'mae_round_robin', area: 'maestria', peso: 1, tipo: 'opcion',
+    id: 'mae_round_robin', area: 'maestria', peso: 2, elo: 1330, eloBase: 700, tipo: 'opcion',
     enunciado: '¿Cómo se llama el formato de torneo en el que cada jugador enfrenta a todos los demás?',
     opciones: [
       'Todos contra todos (round robin)',
@@ -3390,7 +3405,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Cada participante juega contra cada uno de los demás, una o dos veces. Es el formato más justo, pero solo sirve para grupos chicos: con 30 jugadores harían falta 29 rondas.',
   },
   {
-    id: 'mae_capablanca', area: 'maestria', peso: 1, tipo: 'opcion',
+    id: 'mae_capablanca', area: 'maestria', peso: 1, elo: 810, eloBase: 700, tipo: 'opcion',
     enunciado: 'El excampeón mundial cubano José Raúl Capablanca es especialmente recordado por…',
     opciones: [
       'Su técnica clarísima y precisa en los finales',
@@ -3402,7 +3417,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Su juego parecía fácil: cambiaba a finales que sabía ganar y los ganaba sin aspavientos. Sus finales se siguen usando como material de enseñanza casi un siglo después.',
   },
   {
-    id: 'mae_deep_blue', area: 'maestria', peso: 1, tipo: 'opcion',
+    id: 'mae_deep_blue', area: 'maestria', peso: 2, elo: 1360, eloBase: 700, tipo: 'opcion',
     enunciado: '¿Qué ocurrió en el famoso enfrentamiento entre Garry Kaspárov y la computadora Deep Blue en 1997?',
     opciones: [
       'Ganó Deep Blue, y fue un hito histórico',
@@ -3414,7 +3429,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'La máquina de IBM venció al campeón del mundo en un match a seis partidas. Fue la primera vez que una computadora le ganaba un match al mejor jugador humano del momento.',
   },
   {
-    id: 'mae_incremento', area: 'maestria', peso: 2, tipo: 'opcion',
+    id: 'mae_incremento', area: 'maestria', peso: 1, elo: 920, eloBase: 950, tipo: 'opcion',
     enunciado: 'En un reloj con «incremento» —por ejemplo 90 minutos + 30 segundos—, ¿qué significa ese segundo número?',
     opciones: [
       'Se suman esos segundos después de cada jugada',
@@ -3426,7 +3441,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Cada vez que el jugador completa una jugada, el reloj le devuelve esos segundos. Existe para que nadie pierda una posición ganada por no tener tiempo material de mover las piezas.',
   },
   {
-    id: 'mae_suizo', area: 'maestria', peso: 2, tipo: 'opcion',
+    id: 'mae_suizo', area: 'maestria', peso: 2, elo: 1360, eloBase: 950, tipo: 'opcion',
     enunciado: '¿Cómo funciona el «sistema suizo» en un torneo?',
     opciones: [
       'Empareja por puntaje parecido, sin eliminar a nadie',
@@ -3438,7 +3453,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'En cada ronda se enfrentan los que llevan puntaje parecido, y nadie queda fuera: todos juegan todas las rondas. Es lo que permite correr un torneo de 200 personas en nueve rondas.',
   },
   {
-    id: 'mae_evaluacion_motor', area: 'maestria', peso: 2, tipo: 'opcion',
+    id: 'mae_evaluacion_motor', area: 'maestria', peso: 1, elo: 1050, eloBase: 950, tipo: 'opcion',
     enunciado: 'Cuando un motor de ajedrez muestra «+1.5» para las blancas, ¿qué quiere decir?',
     opciones: [
       'Que llevan ventaja de algo más de un peón',
@@ -3450,7 +3465,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Los motores miden en «peones»: +1.5 es una ventaja de peón y medio. No garantiza ganar — con +1.5 se pierden partidas todos los días —, es una estimación de cuánto mejor está una posición.',
   },
   {
-    id: 'mae_partida_del_siglo', area: 'maestria', peso: 2, tipo: 'opcion',
+    id: 'mae_partida_del_siglo', area: 'maestria', peso: 3, elo: 1420, eloBase: 950, tipo: 'opcion',
     enunciado: '¿Por qué se conoce como «la Partida del Siglo» a Donald Byrne contra Bobby Fischer, de 1956?',
     opciones: [
       'Porque Fischer, con 13 años, sacrificó la dama',
@@ -3462,7 +3477,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Fischer tenía trece años y entregó la dama contra un maestro adulto, con una combinación que se veía muchas jugadas más adelante. Es la partida con la que se le presentó al mundo.',
   },
   {
-    id: 'mae_ajedrez960', area: 'maestria', peso: 2, tipo: 'opcion',
+    id: 'mae_ajedrez960', area: 'maestria', peso: 2, elo: 1240, eloBase: 950, tipo: 'opcion',
     enunciado: '¿En qué consiste el «Ajedrez960» (Fischer Random), inventado por Bobby Fischer?',
     opciones: [
       'La fila de piezas se sortea antes de empezar',
@@ -3474,7 +3489,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Las piezas de la primera fila se ordenan al azar entre 960 posiciones válidas —los peones no se mueven de sitio—, así que la teoría memorizada no sirve y hay que pensar desde la jugada 1. Era justo lo que a Fischer le molestaba del ajedrez de su época.',
   },
   {
-    id: 'mae_elo_que_mide', area: 'maestria', peso: 3, tipo: 'opcion',
+    id: 'mae_elo_que_mide', area: 'maestria', peso: 1, elo: 940, eloBase: 1200, tipo: 'opcion',
     enunciado: '¿Qué mide, en términos generales, el sistema de puntuación Elo?',
     opciones: [
       'La fuerza estimada a partir de los resultados',
@@ -3486,7 +3501,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Es un número que sale de contra quién se jugó y cómo terminó. Ganarle a alguien mucho más fuerte suma bastante; ganarle a alguien mucho más débil, casi nada.',
   },
   {
-    id: 'mae_libro_aperturas', area: 'maestria', peso: 3, tipo: 'opcion',
+    id: 'mae_libro_aperturas', area: 'maestria', peso: 2, elo: 1110, eloBase: 1200, tipo: 'opcion',
     enunciado: '¿Qué es el «libro de aperturas» que usan los motores y las bases de datos?',
     opciones: [
       'Jugadas de apertura ya conocidas, guardadas aparte',
@@ -3498,7 +3513,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Son líneas ya analizadas que el motor consulta en vez de calcular: al principio de la partida hay demasiadas opciones y poco que decidir. Cuando se sale del libro, empieza a pensar.',
   },
   {
-    id: 'mae_partida_inmortal', area: 'maestria', peso: 3, tipo: 'opcion',
+    id: 'mae_partida_inmortal', area: 'maestria', peso: 3, elo: 1470, eloBase: 1200, tipo: 'opcion',
     enunciado: '¿Por qué se conoce como «la Partida Inmortal» a Anderssen contra Kieseritzky, de 1851?',
     opciones: [
       'Porque Anderssen dio mate tras entregar casi todo',
@@ -3510,7 +3525,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Anderssen sacrificó las dos torres, un alfil y la dama, y dio mate con las tres piezas menores que le quedaban. Es la partida romántica por excelencia: hoy se sabe que la defensa negra no fue la mejor, y no le quita nada.',
   },
   {
-    id: 'mae_valores_relativos', area: 'maestria', peso: 3, tipo: 'opcion',
+    id: 'mae_valores_relativos', area: 'maestria', peso: 2, elo: 1210, eloBase: 1200, tipo: 'opcion',
     enunciado: 'Los valores de las piezas (peón 1, menor 3, torre 5, dama 9) son útiles, pero ¿qué hay que recordar en niveles avanzados?',
     opciones: [
       'Que son una guía: la posición puede cambiarlo todo',
@@ -3522,7 +3537,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Un caballo instalado en una casilla fuerte puede valer más que una torre pasiva. Los números sirven para decidir rápido en un cambio, no para evaluar una posición.',
   },
   {
-    id: 'mae_jugada_ilegal', area: 'maestria', peso: 3, tipo: 'opcion',
+    id: 'mae_jugada_ilegal', area: 'maestria', peso: 1, elo: 1030, eloBase: 1200, tipo: 'opcion',
     enunciado: 'Según las reglas actuales de la FIDE, si alguien hace una jugada ilegal por primera vez en una partida con árbitro, ¿qué suele pasar?',
     opciones: [
       'Se corrige la posición y el rival gana tiempo',
@@ -3534,7 +3549,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Se restablece la posición y se le añade tiempo al rival. La derrota directa queda para la reincidencia, y en partidas rápidas la sanción es más dura: conviene leer el reglamento del torneo antes de jugarlo.',
   },
   {
-    id: 'mae_fortaleza', area: 'maestria', peso: 4, tipo: 'opcion',
+    id: 'mae_fortaleza', area: 'maestria', peso: 3, elo: 1490, eloBase: 1450, tipo: 'opcion',
     enunciado: 'En finales con mucha diferencia de material, ¿qué es una «fortaleza»?',
     opciones: [
       'Una defensa que da tablas porque no hay cómo abrirla',
@@ -3546,7 +3561,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'El bando con menos material se encierra en una estructura que el rival no puede abrir, y por mucho que tenga de más no progresa. Es tablas con una pieza de menos, y por eso hay que reconocerla antes de entrar en ella — o antes de dejar que el rival la arme.',
   },
   {
-    id: 'mae_buchholz', area: 'maestria', peso: 4, tipo: 'opcion',
+    id: 'mae_buchholz', area: 'maestria', peso: 3, elo: 1670, eloBase: 1450, tipo: 'opcion',
     enunciado: 'En un torneo suizo, si dos jugadores empatan en puntos, ¿qué se suele usar para desempatarlos?',
     opciones: [
       'Un desempate como el Buchholz, por los rivales',
@@ -3558,7 +3573,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'El Buchholz suma los puntos que hicieron los rivales que uno enfrentó: premia a quien sacó los mismos puntos contra gente más fuerte. Se conocen antes de empezar y están en el reglamento del torneo.',
   },
   {
-    id: 'mae_gambito_evans', area: 'maestria', peso: 4, tipo: 'opcion',
+    id: 'mae_gambito_evans', area: 'maestria', peso: 3, elo: 1510, eloBase: 1450, tipo: 'opcion',
     enunciado: '1.e4 e5 2.Cf3 Cc6 3.Ac4 Ac5 4.b4 es el…',
     opciones: [
       'Gambito Evans',
@@ -3570,7 +3585,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Dentro de la Italiana, las blancas ofrecen el peón de b para desviar al alfil y ganar tiempo para armar el centro con c3 y d4. Es una de las aperturas más agresivas del repertorio clásico.',
   },
   {
-    id: 'mae_tablebases', area: 'maestria', peso: 4, tipo: 'opcion',
+    id: 'mae_tablebases', area: 'maestria', peso: 4, elo: 1700, eloBase: 1450, tipo: 'opcion',
     enunciado: '¿Qué son las «tablas de finales» (endgame tablebases) generadas por computadora?',
     opciones: [
       'El resultado exacto de cada posición con pocas piezas',
@@ -3582,7 +3597,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Para posiciones de hasta siete piezas, están todas calculadas: se sabe el resultado con juego perfecto y la mejor jugada. Descubrieron mates forzados de más de quinientas jugadas que ningún humano habría encontrado.',
   },
   {
-    id: 'mae_finales_torre_precision', area: 'maestria', peso: 4, tipo: 'opcion',
+    id: 'mae_finales_torre_precision', area: 'maestria', peso: 2, elo: 1250, eloBase: 1450, tipo: 'opcion',
     enunciado: '¿Por qué hasta los grandes maestros cometen errores en finales de torre que parecen sencillos?',
     opciones: [
       'Porque piden una precisión extrema: un tiempo decide',
@@ -3594,7 +3609,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Son los finales más frecuentes y de los más difíciles: una casilla de diferencia en la torre convierte una victoria en tablas. De ahí el dicho de que todos los finales de torre son tablas — que tampoco es cierto, pero explica la fama.',
   },
   {
-    id: 'mae_zugzwang_reciproco', area: 'maestria', peso: 5, tipo: 'opcion',
+    id: 'mae_zugzwang_reciproco', area: 'maestria', peso: 3, elo: 1440, eloBase: 1700, tipo: 'opcion',
     enunciado: '¿Qué es un «zugzwang recíproco» o mutuo?',
     opciones: [
       'Una posición donde pierde el que tenga que mover',
@@ -3606,7 +3621,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Está tan ajustada que el turno es una desgracia para quien lo tenga, sea quien sea. Es la base de las casillas correspondientes y de casi todos los estudios finos de finales de peones.',
   },
   {
-    id: 'mae_elo_200', area: 'maestria', peso: 5, tipo: 'opcion',
+    id: 'mae_elo_200', area: 'maestria', peso: 4, elo: 1730, eloBase: 1700, tipo: 'opcion',
     enunciado: 'En el sistema Elo, si alguien tiene unos 200 puntos más que su rival, ¿qué porcentaje de los puntos en juego suele sacarle a la larga?',
     opciones: [
       'Alrededor del 75% de los puntos',
@@ -3618,7 +3633,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'La fórmula predice un 75% con 200 puntos de diferencia: de cuatro partidas, tres. Cualquier partida suelta puede terminar como sea, y ahí está la gracia de jugar contra alguien más fuerte.',
   },
   {
-    id: 'mae_berlinesa', area: 'maestria', peso: 5, tipo: 'opcion',
+    id: 'mae_berlinesa', area: 'maestria', peso: 4, elo: 1820, eloBase: 1700, tipo: 'opcion',
     enunciado: '1.e4 e5 2.Cf3 Cc6 3.Ab5 Cf6, dentro de la Española, corresponde a la Defensa…',
     opciones: [
       'Berlinesa',
@@ -3630,7 +3645,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Tiene fama de sólida hasta el aburrimiento. Kramnik la usó para sacarle el título a Kaspárov en 2000 sin perder una partida, y desde entonces no se fue más de la élite.',
   },
   {
-    id: 'mae_teoria_juegos', area: 'maestria', peso: 5, tipo: 'opcion',
+    id: 'mae_teoria_juegos', area: 'maestria', peso: 4, elo: 1860, eloBase: 1700, tipo: 'opcion',
     enunciado: 'Desde la teoría de juegos, ¿qué se sabe sobre el resultado del ajedrez jugado a la perfección por los dos bandos?',
     opciones: [
       'Que tiene un resultado fijo, pero no se sabe cuál',
@@ -3642,7 +3657,7 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Es un juego finito, sin azar y con información perfecta, así que el teorema de Zermelo garantiza que el resultado existe. Pero hay más posiciones que átomos en el universo observable, y por eso nadie sabe cuál es.',
   },
   {
-    id: 'mae_motores_preparacion', area: 'maestria', peso: 5, tipo: 'opcion',
+    id: 'mae_motores_preparacion', area: 'maestria', peso: 2, elo: 1320, eloBase: 1700, tipo: 'opcion',
     enunciado: 'En el ajedrez de élite actual, ¿qué papel cumplen los motores en la preparación de aperturas?',
     opciones: [
       'Sirven para analizar líneas larguísimas de antemano',
@@ -3653,6 +3668,2372 @@ window.DIAGNOSTICO_ITEMS = [
     correcta: 0,
     explica: 'Se preparan variantes concretas hasta la jugada veinte o más, en casa y con el motor. Por eso en la élite hay partidas donde la primera jugada pensada de verdad llega pasada la jugada 20.',
   },
+  /* ---------- Preguntas difíciles de verdad (versión 5) ----------
+     Las de «¿cuál es legal?» llevan `legalidad: true`: las opciones son
+     jugadas y verificar-diagnostico.js comprueba con chess.js que la marcada
+     es la ÚNICA legal. Cada distractora parece normal y falla por una regla
+     concreta, que es justo lo que se quiere medir. */
+  {
+    id: 'reg_legal_enroque_largo', area: 'reglas', peso: 3, elo: 1600, eloBase: 1600, tipo: 'opcion_tablero', legalidad: true,
+    enunciado: 'Juegan las blancas. Solo una de estas jugadas es legal: ¿cuál?',
+    fen: '4k3/ppp2ppp/b7/8/1b6/2N5/PPP2PPP/R3K2R w KQ - 0 12',
+    opciones: ['O-O-O', 'O-O', 'Cd5', 'Rf1'],
+    correcta: 0,
+    explica: 'El alfil de a6 controla f1: el rey no puede pasar por ahí, así que O-O y Rf1 son ilegales. Cd5 tampoco: el caballo está clavado contra el rey por el alfil de b4. El enroque largo sí vale: el rey pasa por d1 y llega a c1, que no están atacadas (que la torre cruce b1 da igual).',
+    prueba: 'chess.js: de las cuatro, solo O-O-O es legal',
+  },
+  {
+    id: 'reg_legal_al_paso_fila', area: 'reglas', peso: 5, elo: 2000, eloBase: 2000, tipo: 'opcion_tablero', legalidad: true,
+    enunciado: 'Las negras acaban de jugar …c7-c5. Juegan las blancas. Solo una de estas jugadas es legal: ¿cuál?',
+    fen: '1n5k/8/8/KPp4r/8/8/8/8 w - c6 0 40',
+    opciones: ['b6', 'bxc6', 'Ra6', 'Rb4'],
+    correcta: 0,
+    explica: 'La trampa es bxc6 al paso: al capturar se van de la quinta fila los DOS peones (el blanco y el negro), y la torre de h5 queda dando jaque al rey de a5. Por eso es ilegal, aunque la captura al paso esté disponible. Ra6 lo controla el caballo de b8 y Rb4 el peón de c5. Queda b6, que no destapa nada.',
+    prueba: 'chess.js: de las cuatro, solo b6 es legal (bxc6 a.p. deja al rey en jaque de la torre de h5)',
+  },
+  {
+    id: 'reg_legal_jaque_doble', area: 'reglas', peso: 3, elo: 1500, eloBase: 1500, tipo: 'opcion_tablero', legalidad: true,
+    enunciado: 'El rey blanco recibe jaque del caballo de h3 y del alfil de c5 a la vez. Solo una de estas jugadas es legal: ¿cuál?',
+    fen: '5rk1/ppp3pp/8/2b5/8/7n/6PP/4R1K1 w - - 0 25',
+    opciones: ['Rh1', 'gxh3', 'Te3', 'Rf1'],
+    correcta: 0,
+    explica: 'Contra un jaque doble no sirve capturar ni tapar: gxh3 deja el jaque del alfil y Te3 deja el del caballo. Solo el rey puede moverse, y no a f1, que la controla la torre de f8. Queda Rh1.',
+    prueba: 'chess.js: la posición tiene una sola jugada legal, Rh1',
+  },
+  {
+    id: 'reg_legal_clavada_linea', area: 'reglas', peso: 4, elo: 1700, eloBase: 1700, tipo: 'opcion_tablero', legalidad: true,
+    enunciado: 'Juegan las blancas. Solo una de estas jugadas es legal: ¿cuál?',
+    fen: '4r1k1/5ppp/8/8/1b2R3/7b/PP1N1P1P/4K3 w - - 0 30',
+    opciones: ['Te6', 'Tf4', 'Cf3', 'Rf1'],
+    correcta: 0,
+    explica: 'La torre de e4 está clavada por la de e8, pero una pieza clavada SÍ puede moverse a lo largo de la línea de la clavada: Te6 es legal. Tf4 la saca de la columna y destapa al rey. El caballo de d2 está clavado por el alfil de b4 y no tiene casilla en esa diagonal, y f1 la controla el alfil de h3.',
+    prueba: 'chess.js: de las cuatro, solo Te6 es legal',
+  },
+  {
+    id: 'reg_dos_caballos_sigue', area: 'reglas', peso: 4, elo: 1750, eloBase: 1750, tipo: 'opcion',
+    enunciado: 'Quedan rey y dos caballos contra rey solo. Según el reglamento de la FIDE, ¿qué pasa con la partida?',
+    opciones: [
+      'Sigue: el mate no se fuerza, pero es posible',
+      'Tablas en el acto por material insuficiente',
+      'Tablas solo si el rey débil está en el centro',
+      'Gana el de los caballos si da mate en 50 jugadas',
+    ],
+    correcta: 0,
+    explica: 'La partida termina en tablas solo si NINGUNA serie de jugadas legales puede llevar al mate (Leyes, art. 5.2.2). Con dos caballos hay posiciones de mate —si el defensor se equivoca—, así que la partida sigue. Lo que no se puede es forzarlo: con buena defensa, es tablas por las 50 jugadas o por acuerdo.',
+  },
+  {
+    id: 'fin_alfil_caballo_33', area: 'finales', peso: 4, elo: 1900, eloBase: 1900, tipo: 'opcion',
+    enunciado: 'Rey, alfil y caballo contra rey solo, con la mejor defensa. ¿Alcanza la regla de las 50 jugadas para dar mate?',
+    opciones: [
+      'Sí: desde cualquier posición bastan 33 jugadas',
+      'No: en el peor caso hacen falta unas 60 jugadas',
+      'Solo si el rey débil ya está en una esquina',
+      'No: con buena defensa es tablas teórico',
+    ],
+    correcta: 0,
+    explica: 'Las bases de finales lo zanjaron: el mate más largo, desde la peor posición, es en 33 jugadas. Lo que confunde es la esquina: el mate se da en una esquina del color del alfil, y llevar al rey de la otra esquina a esa (con la maniobra en W del caballo) es lo que hay que saber hacer.',
+  },
+  {
+    id: 'fin_dos_caballos_peon', area: 'finales', peso: 5, elo: 2150, eloBase: 2150, tipo: 'opcion',
+    enunciado: 'Rey y dos caballos contra rey y un peón negro bloqueado lejos. ¿Por qué ESTE final a veces se gana y el de dos caballos contra rey solo no?',
+    opciones: [
+      'El peón le da jugadas al negro: ya no hay ahogado',
+      'Porque el peón negro se puede capturar y coronar',
+      'Porque con peón ya no hay material insuficiente',
+      'No es cierto: los dos finales son siempre tablas',
+    ],
+    correcta: 0,
+    explica: 'Con rey solo, el defensor se salva porque al acorralarlo aparece el ahogado. Con un peón que todavía puede mover, el negro tiene jugadas de sobra, no hay ahogado y un caballo puede ir a dar el mate mientras el otro sujeta el peón (la línea de Troitzky dice hasta dónde puede estar avanzado).',
+  },
+  {
+    id: 'reg_legal_al_paso_jaque', area: 'reglas', peso: 5, elo: 2050, eloBase: 2050, tipo: 'opcion_tablero', legalidad: true,
+    enunciado: 'Las negras acaban de jugar …d7-d5, y ese peón le da jaque al rey blanco. Solo una de estas jugadas es legal: ¿cuál?',
+    fen: '5r2/8/2p5/3pP3/4K3/8/5b2/k7 w - d6 0 50',
+    opciones: ['exd6', 'Rxd5', 'Re3', 'Rf4'],
+    correcta: 0,
+    explica: 'La captura al paso también sirve para salir del jaque: exd6 se come al peón que da jaque. Parece ilegal porque el peón blanco no «ataca» d5, pero la regla es la de siempre: justo después del avance doble, se captura como si hubiera avanzado una sola casilla. Rxd5 no, porque el peón de c6 lo defiende; e3 la controla el alfil de f2 y f4 la torre de f8.',
+    prueba: 'chess.js: el rey está en jaque y de las cuatro solo exd6 (al paso) es legal',
+  },
+  {
+    id: 'reg_legal_enroque_torre_atacada', area: 'reglas', peso: 4, elo: 1700, eloBase: 1700, tipo: 'opcion_tablero', legalidad: true,
+    enunciado: 'Juegan las blancas. Solo una de estas jugadas es legal: ¿cuál?',
+    fen: 'r3k2r/ppp2pp1/8/8/1b4b1/8/PPPB1PP1/R3K2R w KQkq - 0 14',
+    opciones: ['O-O', 'O-O-O', 'Ad3', 'Re2'],
+    correcta: 0,
+    explica: 'La torre de h1 está atacada por la de h8, y aun así se puede enrocar corto: la regla mira solo al rey (que no esté en jaque y que no pase ni llegue a una casilla atacada). El largo no, porque el rey pasaría por d1, que controla el alfil de g4. El alfil de d2 está clavado por el de b4, y e2 también la controla el de g4.',
+    prueba: 'chess.js: de las cuatro, solo O-O es legal',
+  },
+  {
+    id: 'reg_no_ahoga_dama', area: 'reglas', peso: 3, elo: 1500, eloBase: 1500, tipo: 'opcion_tablero', ahogado: true,
+    enunciado: 'Dama y rey contra rey. Juegan las blancas. ¿Cuál de estas jugadas NO ahoga al rey negro?',
+    fen: '7k/8/6K1/8/8/8/Q7/8 w - - 0 1',
+    opciones: ['Da7', 'Df7', 'De6', 'Rh6'],
+    correcta: 0,
+    explica: 'Df7 es el ahogado famoso, pero De6 también ahoga: la dama controla g8 desde lejos y el rey de g6 cubre g7 y h7. Rh6 deja al rey negro sin g8 (lo sigue viendo la dama desde a2) y tampoco tiene otra casilla. Da7 parece igual de encerradora, pero deja libre g8: el negro juega …Rg8 y después viene Dg7 mate.',
+    prueba: 'chess.js: las cuatro son legales; Df7, De6 y Rh6 ahogan, Da7 no',
+  },
+  {
+    id: 'reg_75_jugadas', area: 'reglas', peso: 4, elo: 1850, eloBase: 1850, tipo: 'opcion',
+    enunciado: 'Se juegan 75 jugadas seguidas de cada bando sin ninguna captura ni movimiento de peón, y la última no es mate. Según las Leyes de la FIDE, ¿qué pasa?',
+    opciones: [
+      'El árbitro declara tablas aunque nadie lo pida',
+      'Nada: solo son tablas si un jugador las reclama',
+      'Tablas, pero solo si quedan menos de 7 piezas',
+      'Gana quien tenga más material en el tablero',
+    ],
+    correcta: 0,
+    explica: 'Con 50 jugadas, las tablas hay que reclamarlas; con 75 son automáticas (Leyes, art. 9.6.2), igual que la quíntuple repetición. La confusión típica es aplicar a las 75 lo que vale para las 50.',
+  },
+  /* LICHESS-INICIO: generado por herramientas/diagnostico-lichess.js — no se edita a mano. */
+  {
+    id: 'mat_lx_0G3dE_op', area: 'material', peso: 1, elo: 965, eloBase: 965, tipo: 'opcion_tablero', lichess: '0G3dE', rating: 1515,
+    enunciado: 'Las negras acaban de jugar …Tc2. Juegan las blancas. Solo una de estas jugadas gana: ¿cuál?',
+    fen: '3r1k2/1p3pp1/p6p/3N1Q2/4nP2/P5qP/1Pr3P1/3RR1K1 w - - 4 32',
+    opciones: ['Dxe4', 'Dxf7+', 'Txe4', 'De6'],
+    correcta: 0,
+    explica: 'Hay algo sin defender, y hay que verlo antes que el rival. La línea: 32.Dxe4 Txg2+ 33.Dxg2. Las otras tientan, pero fallan: Dxf7+? se contesta con 32…Rxf7 y las blancas reciben mate; Txe4? se contesta con 32…Dxg2# y las blancas reciben mate; De6? se contesta con 32…Dxg2# y las blancas reciben mate.',
+    prueba: 'Ejercicio 0G3dE de la base abierta de Lichess (CC0), rating 1515. Stockfish 16 a profundidad 18: Dxe4 es la mejor (+5,5) y la segunda queda en -5,3; las otras tres opciones quedan en recibe mate en 9, recibe mate en 1, recibe mate en 1 (profundidad 14).',
+  },
+  {
+    id: 'mat_lx_1Aqtu_op', area: 'material', peso: 1, elo: 922, eloBase: 922, tipo: 'opcion_tablero', lichess: '1Aqtu', rating: 1472,
+    enunciado: 'Las negras acaban de jugar …Db6. Juegan las blancas. Solo una de estas jugadas gana: ¿cuál?',
+    fen: 'r1b2rk1/pp3ppp/1qpb4/3pN3/2nP1BPP/8/PPP1QPB1/1K1R3R w - - 3 16',
+    opciones: ['Cxc4', 'Dxc4', 'Cxc6', 'Cxf7'],
+    correcta: 0,
+    explica: 'Es un ataque a la descubierta: al moverse una pieza, se destapa otra. La línea: 16.Cxc4 dxc4 17.Axd6. Las otras tientan, pero fallan: Dxc4? se contesta con 16…Axe5 y las negras quedan mejor; Cxc6? se contesta con 16…Dxb2# y las blancas reciben mate; Cxf7? se contesta con 16…Dxb2# y las blancas reciben mate.',
+    prueba: 'Ejercicio 1Aqtu de la base abierta de Lichess (CC0), rating 1472. Stockfish 16 a profundidad 18: Cxc4 es la mejor (+4,7) y la segunda queda en -0,7; las otras tres opciones quedan en -4,4, recibe mate en 1, recibe mate en 1 (profundidad 14).',
+  },
+  {
+    id: 'mat_lx_1IhQd', area: 'material', peso: 1, elo: 928, eloBase: 928, tipo: 'jugada', lichess: '1IhQd', rating: 1328,
+    enunciado: 'Las negras acaban de jugar …Axe2. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: 'r3k3/3q1pb1/p1pp1p2/2p1p3/4P2N/P2P2Q1/1PP1bP2/R3K3 w Qq - 0 18',
+    solucion: { from: 'g3', to: 'g7' },
+    explica: 'Hay una jugada intermedia: antes de lo obvio, algo más fuerte. La línea: 18.Dxg7 O-O-O 19.Rxe2.',
+    prueba: 'Ejercicio 1IhQd de la base abierta de Lichess (CC0), rating 1328. Stockfish 16 a profundidad 18: Dxg7 es la mejor (+4,0) y la segunda queda en +0,4.',
+  },
+  {
+    id: 'mat_lx_1NHsB_op', area: 'material', peso: 1, elo: 833, eloBase: 833, tipo: 'opcion_tablero', lichess: '1NHsB', rating: 1383,
+    enunciado: 'Las negras acaban de jugar …Ag4. Juegan las blancas. Solo una de estas jugadas gana: ¿cuál?',
+    fen: 'r3r1k1/1p3ppp/pPp2n2/3p2q1/1P4b1/P3PB2/1B3PP1/R2Q1RK1 w - - 2 19',
+    opciones: ['Axf6', 'Axg4', 'Axd5', 'Ac3'],
+    correcta: 0,
+    explica: 'Se captura al defensor y lo que defendía queda colgado. La línea: 19.Axf6 Dxf6 20.Axg4. Las otras tientan, pero fallan: Axg4? se contesta con 19…Cxg4 y las negras quedan mejor; Axd5? se contesta con 19…Cxd5 y las negras quedan mejor; Ac3? se contesta con 19…Axf3 y las negras quedan mejor.',
+    prueba: 'Ejercicio 1NHsB de la base abierta de Lichess (CC0), rating 1383. Stockfish 16 a profundidad 18: Axf6 es la mejor (+3,4) y la segunda queda en -1,7; las otras tres opciones quedan en -1,9, -5,5, -2,9 (profundidad 14).',
+  },
+  {
+    id: 'mat_lx_1a4Su', area: 'material', peso: 1, elo: 945, eloBase: 945, tipo: 'jugada', lichess: '1a4Su', rating: 1345,
+    enunciado: 'Las negras acaban de jugar …c5. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: 'r6r/4kp1p/p2ppqpQ/2pp2N1/3P4/4P3/PPP1K1PP/7R w - - 0 18',
+    solucion: { from: 'h1', to: 'f1' },
+    explica: 'Una pieza rival queda atrapada, sin casilla adonde ir. La línea: 18.Tf1 Dxf1+ 19.Rxf1.',
+    prueba: 'Ejercicio 1a4Su de la base abierta de Lichess (CC0), rating 1345. Stockfish 16 a profundidad 18: Tf1 es la mejor (+4,4) y la segunda queda en -1,5.',
+  },
+  {
+    id: 'mat_lx_1cZ0z_op', area: 'material', peso: 1, elo: 1007, eloBase: 1007, tipo: 'opcion_tablero', lichess: '1cZ0z', rating: 1557,
+    enunciado: 'Las negras acaban de jugar …h4. Juegan las blancas. Solo una de estas jugadas gana: ¿cuál?',
+    fen: 'r4rk1/2pn1pp1/p7/1pbPpP2/6qp/1QP3N1/P2B2PP/4RR1K w - - 0 21',
+    opciones: ['Te4', 'Txe5', 'Ce4', 'Dxb5'],
+    correcta: 0,
+    explica: 'Una pieza rival queda atrapada, sin casilla adonde ir. La línea: 21.Te4 Cf6 22.Txg4. Las otras tientan, pero fallan: Txe5? se contesta con 21…Cxe5 y las negras quedan mejor; Ce4? se contesta con 21…Ae7 y la ventaja se esfuma; Dxb5? se contesta con 21…axb5 y las negras quedan mejor.',
+    prueba: 'Ejercicio 1cZ0z de la base abierta de Lichess (CC0), rating 1557. Stockfish 16 a profundidad 18: Te4 es la mejor (+4,5) y la segunda queda en +0,8; las otras tres opciones quedan en -5,7, +0,8, -6,3 (profundidad 14).',
+  },
+  {
+    id: 'mat_lx_2QcC0', area: 'material', peso: 1, elo: 1053, eloBase: 1053, tipo: 'jugada', lichess: '2QcC0', rating: 1453,
+    enunciado: 'Las negras acaban de jugar …Txe5. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '6k1/5q2/1pp4p/3br1p1/2n2p2/P1QR4/2P1BBPP/6K1 w - - 0 31',
+    solucion: { from: 'd3', to: 'd5' },
+    explica: 'Es un ataque a la descubierta: al moverse una pieza, se destapa otra. La línea: 31.Txd5 Txd5 32.Axc4.',
+    prueba: 'Ejercicio 2QcC0 de la base abierta de Lichess (CC0), rating 1453. Stockfish 16 a profundidad 18: Txd5 es la mejor (+3,3) y la segunda queda en -1,0.',
+  },
+  {
+    id: 'mat_lx_2Td3q', area: 'material', peso: 1, elo: 1015, eloBase: 1015, tipo: 'jugada', lichess: '2Td3q', rating: 1415,
+    enunciado: 'Las negras acaban de jugar …Ce4. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: 'r1b2r1k/2q3pp/p1p5/1pb2pB1/4n3/3BP2P/PPQ1NP2/1K1R3R w - - 4 19',
+    solucion: { from: 'd3', to: 'e4' },
+    explica: 'Se captura al defensor y lo que defendía queda colgado. La línea: 19.Axe4 fxe4 20.Dxc5.',
+    prueba: 'Ejercicio 2Td3q de la base abierta de Lichess (CC0), rating 1415. Stockfish 16 a profundidad 18: Axe4 es la mejor (+4,3) y la segunda queda en -0,0.',
+  },
+  {
+    id: 'mat_lx_01sqg', area: 'material', peso: 2, elo: 1190, eloBase: 1190, tipo: 'jugada', lichess: '01sqg', rating: 1590,
+    enunciado: 'Las negras acaban de jugar …Cd5. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '4rr1k/pp4pp/2p1B3/2bnpP1q/8/2NP1R2/PPPB2QP/4K3 w - - 7 21',
+    solucion: { from: 'f3', to: 'h3' },
+    explica: 'Una pieza rival queda atrapada, sin casilla adonde ir. La línea: 21.Th3 Af2+ 22.Rxf2 Dxh3 23.Dxh3.',
+    prueba: 'Ejercicio 01sqg de la base abierta de Lichess (CC0), rating 1590. Stockfish 16 a profundidad 18: Th3 es la mejor (+4,1) y la segunda queda en -1,1.',
+  },
+  {
+    id: 'mat_lx_07CGX', area: 'material', peso: 2, elo: 1246, eloBase: 1246, tipo: 'jugada', lichess: '07CGX', rating: 1646,
+    enunciado: 'Las negras acaban de jugar …Rb6. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '2r5/3K3p/1k1P2p1/R4p2/1P6/2p3P1/7r/8 w - - 4 37',
+    solucion: { from: 'd7', to: 'c8' },
+    explica: 'Hay algo sin defender, y hay que verlo antes que el rival. La línea: 37.Rxc8 c2 38.Tc5 c1=A 39.Txc1.',
+    prueba: 'Ejercicio 07CGX de la base abierta de Lichess (CC0), rating 1646. Stockfish 16 a profundidad 18: Rxc8 es la mejor (+4,3) y la segunda queda en -6,7.',
+  },
+  {
+    id: 'mat_lx_0ZgWo', area: 'material', peso: 2, elo: 1145, eloBase: 1145, tipo: 'jugada', lichess: '0ZgWo', rating: 1545,
+    enunciado: 'Las negras acaban de jugar …Re5. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '8/8/8/3pk1p1/8/4K1P1/8/1B2n3 w - - 14 51',
+    solucion: { from: 'e3', to: 'f2' },
+    explica: 'Una pieza rival queda atrapada, sin casilla adonde ir. La línea: 51.Rf2 Cf3 52.Rxf3.',
+    prueba: 'Ejercicio 0ZgWo de la base abierta de Lichess (CC0), rating 1545. Stockfish 16 a profundidad 18: Rf2 es la mejor (+4,2) y la segunda queda en -0,1.',
+  },
+  {
+    id: 'mat_lx_0c1Kn', area: 'material', peso: 2, elo: 1369, eloBase: 1369, tipo: 'jugada', lichess: '0c1Kn', rating: 1769,
+    enunciado: 'Las negras acaban de jugar …b5. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: 'rnbq3r/2k1nBb1/p2p4/1ppP2B1/Q1N1P3/2P5/PP5p/R4R1K w - b6 0 17',
+    solucion: { from: 'a4', to: 'a5' },
+    explica: 'Es una desviación: se aleja al defensor de lo que defendía. La línea: 17.Da5+ Rb7 18.Dxd8 Txd8 19.Axe7.',
+    prueba: 'Ejercicio 0c1Kn de la base abierta de Lichess (CC0), rating 1769. Stockfish 16 a profundidad 18: Da5+ es la mejor (+3,9) y la segunda queda en -2,1.',
+  },
+  {
+    id: 'mat_lx_1jxRo_op', area: 'material', peso: 2, elo: 1387, eloBase: 1387, tipo: 'opcion_tablero', lichess: '1jxRo', rating: 1937,
+    enunciado: 'Las negras acaban de jugar …f6. Juegan las blancas y están en apuros. Solo una de estas jugadas salva la partida: ¿cuál?',
+    fen: 'r1b2rk1/pp2p2p/2n2pp1/q1pnN1B1/8/3P2P1/PQ1N1PBP/4K2R w K - 0 15',
+    opciones: ['Axd5+', 'Cxc6', 'Axf6', 'Cxg6'],
+    correcta: 0,
+    explica: 'Todo gira en torno a una clavada: la pieza clavada no puede defender. La línea: 15.Axd5+ Rg7 16.Cxc6. Las otras tientan, pero fallan: Cxc6? se contesta con 15…bxc6 y las negras quedan mejor; Axf6? se contesta con 15…Cxf6 y las negras quedan mejor; Cxg6? se contesta con 15…Cdb4 y las negras quedan mejor.',
+    prueba: 'Ejercicio 1jxRo de la base abierta de Lichess (CC0), rating 1937. Stockfish 16 a profundidad 18: Axd5+ es la mejor (+1,7) y la segunda queda en -3,3; las otras tres opciones quedan en -3,2, -5,4, -4,7 (profundidad 14).',
+  },
+  {
+    id: 'mat_lx_3DeOk_op', area: 'material', peso: 2, elo: 1375, eloBase: 1375, tipo: 'opcion_tablero', lichess: '3DeOk', rating: 1925,
+    enunciado: 'Las negras acaban de jugar …Cgxe5. Juegan las blancas. Solo una de estas jugadas gana: ¿cuál?',
+    fen: 'r1bqr1k1/pppnppbp/6p1/4n1N1/2B5/2N5/PPP1QPPP/R1B2RK1 w - - 0 11',
+    opciones: ['Axf7+', 'Cxf7', 'Dxe5', 'Ae6'],
+    correcta: 0,
+    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 11.Axf7+ Cxf7 12.Ce6 Cf8 13.Cxd8. Las otras tientan, pero fallan: Cxf7? se contesta con 11…Cxf7 y las negras quedan mejor; Dxe5? se contesta con 11…Cxe5 y las negras quedan mejor; Ae6? se contesta con 11…Cc5 y la ventaja se esfuma.',
+    prueba: 'Ejercicio 3DeOk de la base abierta de Lichess (CC0), rating 1925. Stockfish 16 a profundidad 18: Axf7+ es la mejor (+3,8) y la segunda queda en +0,3; las otras tres opciones quedan en -2,5, -5,8, +0,1 (profundidad 14).',
+  },
+  {
+    id: 'mat_lx_04crN', area: 'material', peso: 3, elo: 1518, eloBase: 1518, tipo: 'jugada', lichess: '04crN', rating: 1918,
+    enunciado: 'Las negras acaban de jugar …Dxe3+. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: 'r4rk1/pb3p1p/1p2p1p1/3p1P2/6P1/1P1Bq2P/PBPK2Q1/5R2 w - - 0 23',
+    solucion: { from: 'd2', to: 'e3' },
+    explica: 'Hay algo sin defender, y hay que verlo antes que el rival. La línea: 23.Rxe3 d4+ 24.Rf2 Axg2 25.Rxg2.',
+    prueba: 'Ejercicio 04crN de la base abierta de Lichess (CC0), rating 1918. Stockfish 16 a profundidad 18: Rxe3 es la mejor (+4,0) y la segunda queda en -1,4.',
+  },
+  {
+    id: 'mat_lx_0Ryjs_op', area: 'material', peso: 3, elo: 1603, eloBase: 1603, tipo: 'opcion_tablero', lichess: '0Ryjs', rating: 2153,
+    enunciado: 'Las negras acaban de jugar …c6. Juegan las blancas. Solo una de estas jugadas gana: ¿cuál?',
+    fen: 'r2qkbnr/4pppp/p1pp4/1p1B4/3nP1b1/3P1N2/PPP2PPP/RNBQK2R w KQkq - 0 8',
+    opciones: ['Cxd4', 'Axc6+', 'Axf7+', 'Ce5'],
+    correcta: 0,
+    explica: 'Es un ataque a la descubierta: al moverse una pieza, se destapa otra. La línea: 8.Cxd4 cxd5 9.Dxg4. Las otras tientan, pero fallan: Axc6+? se contesta con 8…Cxc6 y las negras quedan mejor; Axf7+? se contesta con 8…Rxf7 y las negras quedan mejor; Ce5? se contesta con 8…dxe5 y las negras quedan mejor.',
+    prueba: 'Ejercicio 0Ryjs de la base abierta de Lichess (CC0), rating 2153. Stockfish 16 a profundidad 18: Cxd4 es la mejor (+5,0) y la segunda queda en -0,2; las otras tres opciones quedan en -4,1, -2,1, -4,7 (profundidad 14).',
+  },
+  {
+    id: 'mat_lx_2BEXB', area: 'material', peso: 3, elo: 1457, eloBase: 1457, tipo: 'jugada', lichess: '2BEXB', rating: 1857,
+    enunciado: 'Las negras acaban de jugar …Dxg4. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: 'rn3rk1/1p4bp/p3N1p1/2pP1p2/2P3q1/3Q2P1/PP5P/R4RK1 w - - 0 20',
+    solucion: { from: 'f1', to: 'f4' },
+    explica: 'Una pieza rival queda atrapada, sin casilla adonde ir. La línea: 20.Tf4 Dh5 21.Th4 Dxh4 22.gxh4.',
+    prueba: 'Ejercicio 2BEXB de la base abierta de Lichess (CC0), rating 1857. Stockfish 16 a profundidad 18: Tf4 es la mejor (+3,4) y la segunda queda en -0,5.',
+  },
+  {
+    id: 'mat_lx_2Eocm', area: 'material', peso: 3, elo: 1494, eloBase: 1494, tipo: 'jugada', lichess: '2Eocm', rating: 1894,
+    enunciado: 'Las negras acaban de jugar …gxf6. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: 'r4n1k/1b5p/1p3p2/p7/n7/PK3N2/2PR2PP/5R2 w - - 0 33',
+    solucion: { from: 'b3', to: 'a4' },
+    explica: 'Hay algo sin defender, y hay que verlo antes que el rival. La línea: 33.Rxa4 b5+ 34.Rb3.',
+    prueba: 'Ejercicio 2Eocm de la base abierta de Lichess (CC0), rating 1894. Stockfish 16 a profundidad 18: Rxa4 es la mejor (+3,4) y la segunda queda en -1,1.',
+  },
+  {
+    id: 'mat_lx_2YUQN', area: 'material', peso: 3, elo: 1472, eloBase: 1472, tipo: 'jugada', lichess: '2YUQN', rating: 1872,
+    enunciado: 'Las negras acaban de jugar …exd4. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: 'r3k1nr/ppp2ppp/8/2b2b2/3pN3/3BB3/PPP2PPP/R3K2R w KQkq - 0 10',
+    solucion: { from: 'e4', to: 'c5' },
+    explica: 'Hay una jugada intermedia: antes de lo obvio, algo más fuerte. La línea: 10.Cxc5 Axd3 11.Axd4.',
+    prueba: 'Ejercicio 2YUQN de la base abierta de Lichess (CC0), rating 1872. Stockfish 16 a profundidad 18: Cxc5 es la mejor (+4,4) y la segunda queda en +0,2.',
+  },
+  {
+    id: 'mat_lx_0IObO_op', area: 'material', peso: 4, elo: 1764, eloBase: 1764, tipo: 'opcion_tablero', lichess: '0IObO', rating: 2314,
+    enunciado: 'Las negras acaban de jugar …Dg4. Juegan las blancas y están en apuros. Solo una de estas jugadas salva la partida: ¿cuál?',
+    fen: '5rk1/1pp2pp1/1p1p3p/1r2p2n/RPP1P1qB/3P1N1b/5PP1/3Q1RK1 w - - 1 19',
+    opciones: ['Ag3', 'cxb5', 'g3', 'Ag5'],
+    correcta: 0,
+    explica: 'Una pieza rival queda atrapada, sin casilla adonde ir. La línea: 19.Ag3 Cxg3 20.fxg3 Txb4 21.Txb4. Las otras tientan, pero fallan: cxb5? se contesta con 19…Dxg2# y las blancas reciben mate; g3? se contesta con 19…Axf1 y las negras quedan mejor; Ag5? se contesta con 19…Dxg2# y las blancas reciben mate.',
+    prueba: 'Ejercicio 0IObO de la base abierta de Lichess (CC0), rating 2314. Stockfish 16 a profundidad 18: Ag3 es la mejor (+2,2) y la segunda queda en -3,6; las otras tres opciones quedan en recibe mate en 1, -2,6, recibe mate en 1 (profundidad 14).',
+  },
+  {
+    id: 'mat_lx_0LZhu_op', area: 'material', peso: 4, elo: 1888, eloBase: 1888, tipo: 'opcion_tablero', lichess: '0LZhu', rating: 2438,
+    enunciado: 'Las negras acaban de jugar …Txg5. Juegan las blancas. Solo una de estas jugadas gana: ¿cuál?',
+    fen: '4r1k1/pp2q1pp/2nbp3/3p1pr1/2PP4/7P/PPQBRPP1/4R1K1 w - - 0 21',
+    opciones: ['Txe6', 'Axg5', 'cxd5', 'Dxf5'],
+    correcta: 0,
+    explica: 'Se captura al defensor y lo que defendía queda colgado. La línea: 21.Txe6 Dxe6 22.Txe6 Txe6 23.cxd5. Las otras tientan, pero fallan: Axg5? se contesta con 21…Dxg5 y las negras quedan mejor; cxd5? se contesta con 21…Cxd4 y las negras quedan mejor; Dxf5? se contesta con 21…Txf5 y las negras quedan mejor.',
+    prueba: 'Ejercicio 0LZhu de la base abierta de Lichess (CC0), rating 2438. Stockfish 16 a profundidad 18: Txe6 es la mejor (+4,4) y la segunda queda en -2,3; las otras tres opciones quedan en -2,1, -4,4, -8,2 (profundidad 14).',
+  },
+  {
+    id: 'mat_lx_0PdD5', area: 'material', peso: 4, elo: 1811, eloBase: 1811, tipo: 'jugada', lichess: '0PdD5', rating: 2211,
+    enunciado: 'Las negras acaban de jugar …Tae8. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '4rrk1/p1p2ppp/1p1p4/2nP1PPq/2P2R2/2P3Q1/P5BP/4R1K1 w - - 5 24',
+    solucion: { from: 'e1', to: 'e8' },
+    explica: 'Una pieza rival queda atrapada, sin casilla adonde ir. La línea: 24.Txe8 Txe8 25.Af3 Te3 26.Axh5.',
+    prueba: 'Ejercicio 0PdD5 de la base abierta de Lichess (CC0), rating 2211. Stockfish 16 a profundidad 18: Txe8 es la mejor (+4,7) y la segunda queda en -1,4.',
+  },
+  {
+    id: 'mat_lx_1mUlv_op', area: 'material', peso: 4, elo: 1975, eloBase: 1975, tipo: 'opcion_tablero', lichess: '1mUlv', rating: 2525,
+    enunciado: 'Las negras acaban de jugar …Txd2. Juegan las blancas y están en apuros. Solo una de estas jugadas salva la partida: ¿cuál?',
+    fen: '2r3k1/pp3ppp/2N1p3/8/1n2N3/8/PPPr1PPP/2K1R3 w - - 0 18',
+    opciones: ['Cxb4', 'Cxd2', 'Rxd2', 'Ce7+'],
+    correcta: 0,
+    explica: 'Hay algo sin defender, y hay que verlo antes que el rival. La línea: 18.Cxb4 Td4 19.a3. Las otras tientan, pero fallan: Cxd2? se contesta con 18…Txc6 y las negras quedan mejor; Rxd2? se contesta con 18…Txc6 y la ventaja se esfuma; Ce7+? se contesta con 18…Rf8 y la ventaja se esfuma.',
+    prueba: 'Ejercicio 1mUlv de la base abierta de Lichess (CC0), rating 2525. Stockfish 16 a profundidad 18: Cxb4 es la mejor (+2,9) y la segunda queda en +0,0; las otras tres opciones quedan en -1,6, +0,1, -1,3 (profundidad 14).',
+  },
+  {
+    id: 'mat_lx_1okom', area: 'material', peso: 4, elo: 1817, eloBase: 1817, tipo: 'jugada', lichess: '1okom', rating: 2217,
+    enunciado: 'Las negras acaban de jugar …Da3. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '3r1rk1/p5bp/5n2/3Np3/1P2Pp2/q7/4QNPP/2R2R1K w - - 1 30',
+    solucion: { from: 'c1', to: 'a1' },
+    explica: 'Es un despeje: la pieza se aparta para abrirle la línea o la casilla a otra. La línea: 30.Ta1 Db3 31.Tfb1 Dxb1+ 32.Txb1.',
+    prueba: 'Ejercicio 1okom de la base abierta de Lichess (CC0), rating 2217. Stockfish 16 a profundidad 18: Ta1 es la mejor (+5,0) y la segunda queda en +0,9.',
+  },
+  {
+    id: 'mat_lx_2z50D', area: 'material', peso: 4, elo: 1772, eloBase: 1772, tipo: 'jugada', lichess: '2z50D', rating: 2172,
+    enunciado: 'Las negras acaban de jugar …a5. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '2r3k1/1b3pbp/4p1p1/pp1pP3/qB1n4/P3Q1NP/BP3PP1/2R3K1 w - - 0 25',
+    solucion: { from: 'c1', to: 'c8' },
+    explica: 'Una pieza rival queda atrapada, sin casilla adonde ir. La línea: 25.Txc8+ Axc8 26.b3 Cxb3 27.Axb3.',
+    prueba: 'Ejercicio 2z50D de la base abierta de Lichess (CC0), rating 2172. Stockfish 16 a profundidad 18: Txc8+ es la mejor (+4,6) y la segunda queda en -0,5.',
+  },
+  {
+    id: 'mat_lx_3HtEb', area: 'material', peso: 4, elo: 1720, eloBase: 1720, tipo: 'jugada', lichess: '3HtEb', rating: 2120,
+    enunciado: 'Las negras acaban de jugar …Axh2+. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: 'r4rk1/p4ppp/b1p1pn2/q7/3P4/P1N5/1P1BNPPb/R2QR1K1 w - - 0 15',
+    solucion: { from: 'g1', to: 'h2' },
+    explica: 'Hay algo sin defender, y hay que verlo antes que el rival. La línea: 15.Rxh2 Dh5+ 16.Rg1 Cg4 17.Af4.',
+    prueba: 'Ejercicio 3HtEb de la base abierta de Lichess (CC0), rating 2120. Stockfish 16 a profundidad 18: Rxh2 es la mejor (+3,4) y la segunda queda en -4,7.',
+  },
+  {
+    id: 'mat_lx_1J6tA', area: 'material', peso: 5, elo: 2043, eloBase: 2043, tipo: 'jugada', lichess: '1J6tA', rating: 2443,
+    enunciado: 'Las negras acaban de jugar …Axc3. Juegan las blancas y están en apuros: encuentra la única jugada que no pierde.',
+    fen: 'r3k2r/pppqn2N/2npp1pQ/8/4P3/2b4P/PP3PP1/R1B2RK1 w kq - 0 15',
+    solucion: { from: 'b2', to: 'c3' },
+    explica: 'Una pieza rival queda atrapada, sin casilla adonde ir. La línea: 15.bxc3 O-O-O 16.Cf6 Txh6 17.Axh6.',
+    prueba: 'Ejercicio 1J6tA de la base abierta de Lichess (CC0), rating 2443. Stockfish 16 a profundidad 18: bxc3 es la mejor (+2,6) y la segunda queda en -4,0.',
+  },
+  {
+    id: 'mat_lx_1YUgt', area: 'material', peso: 5, elo: 2085, eloBase: 2085, tipo: 'jugada', lichess: '1YUgt', rating: 2485,
+    enunciado: 'Las negras acaban de jugar …Rd2. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '8/7p/6p1/p2n4/2p1K1PP/8/3k1P2/3B4 w - - 5 52',
+    solucion: { from: 'e4', to: 'd5' },
+    explica: 'Hay algo sin defender, y hay que verlo antes que el rival. La línea: 52.Rxd5 c3 53.Rc4 Rxd1 54.Rxc3.',
+    prueba: 'Ejercicio 1YUgt de la base abierta de Lichess (CC0), rating 2485. Stockfish 16 a profundidad 18: Rxd5 es la mejor (+3,6) y la segunda queda en -6,0.',
+  },
+  {
+    id: 'mat_lx_26wFx', area: 'material', peso: 5, elo: 2059, eloBase: 2059, tipo: 'jugada', lichess: '26wFx', rating: 2459,
+    enunciado: 'Las negras acaban de jugar …Re7. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: 'r6r/1pqbkpp1/p2Np1p1/4n3/8/P4N2/1PP3PP/R2Q1RK1 w - - 2 17',
+    solucion: { from: 'f3', to: 'e5' },
+    explica: 'Hay algo sin defender, y hay que verlo antes que el rival. La línea: 17.Cxe5 Dc5+ 18.Tf2 Dxe5 19.Txf7+.',
+    prueba: 'Ejercicio 26wFx de la base abierta de Lichess (CC0), rating 2459. Stockfish 16 a profundidad 18: Cxe5 es la mejor (+5,4) y la segunda queda en -1,9.',
+  },
+  {
+    id: 'mat_lx_29HMp', area: 'material', peso: 5, elo: 2094, eloBase: 2094, tipo: 'jugada', lichess: '29HMp', rating: 2494,
+    enunciado: 'Las negras acaban de jugar …Dxd4. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '5k2/7p/2p1pB2/6K1/1ppq1PP1/7P/8/8 w - - 0 36',
+    solucion: { from: 'f6', to: 'd4' },
+    explica: 'Hay algo sin defender, y hay que verlo antes que el rival. La línea: 36.Axd4 Rf7 37.Ac5 b3 38.Ad4.',
+    prueba: 'Ejercicio 29HMp de la base abierta de Lichess (CC0), rating 2494. Stockfish 16 a profundidad 18: Axd4 es la mejor (+4,0) y la segunda queda en -11,5.',
+  },
+  {
+    id: 'mat_lx_29VNo', area: 'material', peso: 5, elo: 2006, eloBase: 2006, tipo: 'jugada', lichess: '29VNo', rating: 2406,
+    enunciado: 'Las negras acaban de jugar …f5. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '1r6/4q3/Q1p1k2b/3bpp1p/P7/5PB1/2P2PB1/5RK1 w - - 0 31',
+    solucion: { from: 'c2', to: 'c4' },
+    explica: 'Todo gira en torno a una clavada: la pieza clavada no puede defender. La línea: 31.c4 Axf3 32.Axf3.',
+    prueba: 'Ejercicio 29VNo de la base abierta de Lichess (CC0), rating 2406. Stockfish 16 a profundidad 18: c4 es la mejor (+4,5) y la segunda queda en +1,1.',
+  },
+  {
+    id: 'mat_lx_2GFce', area: 'material', peso: 5, elo: 2095, eloBase: 2095, tipo: 'jugada', lichess: '2GFce', rating: 2495,
+    enunciado: 'Las negras acaban de jugar …Rh2. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '6R1/8/4p3/2n5/3K4/7p/7k/8 w - - 3 46',
+    solucion: { from: 'd4', to: 'c5' },
+    explica: 'Es un ataque a la descubierta: al moverse una pieza, se destapa otra. La línea: 46.Rxc5 e5 47.Rd5 Rh1 48.Re4.',
+    prueba: 'Ejercicio 2GFce de la base abierta de Lichess (CC0), rating 2495. Stockfish 16 a profundidad 18: Rxc5 es la mejor (+4,9) y la segunda queda en +0,1.',
+  },
+  {
+    id: 'mat_lx_2lhs2', area: 'material', peso: 5, elo: 2002, eloBase: 2002, tipo: 'jugada', lichess: '2lhs2', rating: 2402,
+    enunciado: 'Las negras acaban de jugar …f5. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '2bk4/1B6/P7/1N2pp2/2p1P3/2K5/5b2/8 w - - 0 48',
+    solucion: { from: 'b7', to: 'c8' },
+    explica: 'Se captura al defensor y lo que defendía queda colgado. La línea: 48.Axc8 Rxc8 49.exf5.',
+    prueba: 'Ejercicio 2lhs2 de la base abierta de Lichess (CC0), rating 2402. Stockfish 16 a profundidad 18: Axc8 es la mejor (+3,1) y la segunda queda en +0,0.',
+  },
+  {
+    id: 'mat_lx_35Hma', area: 'material', peso: 5, elo: 2015, eloBase: 2015, tipo: 'jugada', lichess: '35Hma', rating: 2415,
+    enunciado: 'Las negras acaban de jugar …Cf3+. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: 'rnbqr2k/pp3Qpp/3p4/6B1/8/2P2n2/P5PP/RN3RK1 w - - 4 19',
+    solucion: { from: 'f1', to: 'f3' },
+    explica: 'Hay algo sin defender, y hay que verlo antes que el rival. La línea: 19.Txf3 Ae6 20.Dxe6 Txe6 21.Axd8.',
+    prueba: 'Ejercicio 35Hma de la base abierta de Lichess (CC0), rating 2415. Stockfish 16 a profundidad 18: Txf3 es la mejor (+4,0) y la segunda queda en 0,0.',
+  },
+  {
+    id: 'ap_lx_04jOM', area: 'apertura', peso: 1, elo: 765, eloBase: 765, tipo: 'jugada', lichess: '04jOM', rating: 1165,
+    enunciado: 'Las negras acaban de jugar …Ag4. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: 'r2q1rk1/1p2bppp/p1np1n2/3Np3/4P1b1/1N4P1/PPPB1PBP/R2QR1K1 w - - 6 13',
+    solucion: { from: 'd5', to: 'f6' },
+    explica: 'La línea: 13.Cxf6+ Axf6 14.Dxg4.',
+    prueba: 'Ejercicio 04jOM de la base abierta de Lichess (CC0), rating 1165. Stockfish 16 a profundidad 18: Cxf6+ es la mejor (+5,6) y la segunda queda en +0,3.',
+  },
+  {
+    id: 'ap_lx_0NtVg_op', area: 'apertura', peso: 1, elo: 883, eloBase: 883, tipo: 'opcion_tablero', lichess: '0NtVg', rating: 1433,
+    enunciado: 'Las negras acaban de jugar …Ad6. Juegan las blancas. Solo una de estas jugadas gana: ¿cuál?',
+    fen: 'rn1qk1nr/pp3ppp/3bp3/2pp4/6b1/P1P1PN2/1P1PBPPP/RNBQK2R w KQkq - 1 6',
+    opciones: ['Da4+', 'Ab5+', 'a4', 'Dc2'],
+    correcta: 0,
+    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 6.Da4+ Cc6 7.Dxg4. Las otras tientan, pero fallan: Ab5+? se contesta con 6…Cd7 y la ventaja se esfuma; a4? se contesta con 6…e5 y la ventaja se esfuma; Dc2? se contesta con 6…Cc6 y la ventaja se esfuma.',
+    prueba: 'Ejercicio 0NtVg de la base abierta de Lichess (CC0), rating 1433. Stockfish 16 a profundidad 18: Da4+ es la mejor (+4,0) y la segunda queda en -0,1; las otras tres opciones quedan en -0,9, -0,5, -0,5 (profundidad 14).',
+  },
+  {
+    id: 'ap_lx_1HuJS_op', area: 'apertura', peso: 1, elo: 912, eloBase: 912, tipo: 'opcion_tablero', lichess: '1HuJS', rating: 1462,
+    enunciado: 'Las negras acaban de jugar …c5. Juegan las blancas. Solo una de estas jugadas gana: ¿cuál?',
+    fen: 'r1b1k2r/pp1pqpp1/3b1n1p/2p1n3/3N4/6B1/PPP1QPPP/RN2KB1R w KQkq c6 0 10',
+    opciones: ['Cf5', 'Axe5', 'Dxe5', 'Cb3'],
+    correcta: 0,
+    explica: ' La línea: 10.Cf5 Cd3+ 11.cxd3. Las otras tientan, pero fallan: Axe5? se contesta con 10…Dxe5 y las negras quedan mejor; Dxe5? se contesta con 10…Axe5 y las negras quedan mejor; Cb3? se contesta con 10…O-O y la ventaja se esfuma.',
+    prueba: 'Ejercicio 1HuJS de la base abierta de Lichess (CC0), rating 1462. Stockfish 16 a profundidad 18: Cf5 es la mejor (+4,4) y la segunda queda en -1,1; las otras tres opciones quedan en -2,2, -7,7, -1,2 (profundidad 14).',
+  },
+  {
+    id: 'ap_lx_1QqfL_op', area: 'apertura', peso: 1, elo: 1095, eloBase: 1095, tipo: 'opcion_tablero', lichess: '1QqfL', rating: 1645,
+    enunciado: 'Las negras acaban de jugar …De7. Juegan las blancas. Solo una de estas jugadas gana: ¿cuál?',
+    fen: 'rn2k2r/pp2q1pp/2pbQn2/8/3P4/2PB4/PP3PPP/R1B2RK1 w kq - 1 15',
+    opciones: ['Dc8+', 'Dxe7+', 'Dxf6', 'Dxd6'],
+    correcta: 0,
+    explica: ' La línea: 15.Dc8+ Dd8 16.Te1+. Las otras tientan, pero fallan: Dxe7+? se contesta con 15…Axe7 y la ventaja se esfuma; Dxf6? se contesta con 15…Dxf6 y las negras quedan mejor; Dxd6? se contesta con 15…Dxd6 y las negras quedan mejor.',
+    prueba: 'Ejercicio 1QqfL de la base abierta de Lichess (CC0), rating 1645. Stockfish 16 a profundidad 18: Dc8+ es la mejor (+3,9) y la segunda queda en 0,0; las otras tres opciones quedan en -1,2, -5,1, -4,4 (profundidad 14).',
+  },
+  {
+    id: 'ap_lx_1cKbE', area: 'apertura', peso: 1, elo: 681, eloBase: 681, tipo: 'jugada', lichess: '1cKbE', rating: 1081,
+    enunciado: 'Las negras acaban de jugar …dxe6. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: 'rnbqkb1r/7p/p1p1pnp1/1p6/4P3/1P6/PBP2PPP/RN1QK1NR w KQkq - 0 9',
+    solucion: { from: 'd1', to: 'd8' },
+    explica: 'Es una atracción: se arrastra a una pieza (a menudo el rey) a una casilla fatal. La línea: 9.Dxd8+ Rxd8 10.Axf6+.',
+    prueba: 'Ejercicio 1cKbE de la base abierta de Lichess (CC0), rating 1081. Stockfish 16 a profundidad 18: Dxd8+ es la mejor (+6,3) y la segunda queda en -2,6.',
+  },
+  {
+    id: 'ap_lx_2D56V', area: 'apertura', peso: 1, elo: 1025, eloBase: 1025, tipo: 'jugada', lichess: '2D56V', rating: 1425,
+    enunciado: 'Las negras acaban de jugar …Df6. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: 'rn2kb1r/pbpp1ppp/1p2pq2/4N3/3P4/2PB4/P1P2P1P/R1BQK1R1 w Qkq - 4 10',
+    solucion: { from: 'c1', to: 'g5' },
+    explica: 'Una pieza rival queda atrapada, sin casilla adonde ir. La línea: 10.Ag5 Dxg5 11.Txg5.',
+    prueba: 'Ejercicio 2D56V de la base abierta de Lichess (CC0), rating 1425. Stockfish 16 a profundidad 18: Ag5 es la mejor (+4,5) y la segunda queda en -0,3.',
+  },
+  {
+    id: 'ap_lx_2TU5M', area: 'apertura', peso: 1, elo: 675, eloBase: 675, tipo: 'jugada', lichess: '2TU5M', rating: 1075,
+    enunciado: 'Las negras acaban de jugar …Ab4. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: 'r1bqk2r/ppp3pp/5nn1/4ppN1/1b6/2N5/PPP1QPPP/R1B1KB1R w KQkq - 2 10',
+    solucion: { from: 'e2', to: 'b5' },
+    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 10.Db5+ Ad7 11.Dxb4.',
+    prueba: 'Ejercicio 2TU5M de la base abierta de Lichess (CC0), rating 1075. Stockfish 16 a profundidad 18: Db5+ es la mejor (+3,3) y la segunda queda en -1,6.',
+  },
+  {
+    id: 'ap_lx_0u6Bb', area: 'apertura', peso: 2, elo: 1230, eloBase: 1230, tipo: 'jugada', lichess: '0u6Bb', rating: 1630,
+    enunciado: 'Las negras acaban de jugar …dxc6. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: 'r1b2rk1/pp2nppp/1qp5/2b1p3/4P3/1PPQB3/P2N1PPP/R3KB1R w KQ - 0 11',
+    solucion: { from: 'd2', to: 'c4' },
+    explica: 'La línea: 11.Cc4 Axe3 12.Cxb6.',
+    prueba: 'Ejercicio 0u6Bb de la base abierta de Lichess (CC0), rating 1630. Stockfish 16 a profundidad 18: Cc4 es la mejor (+3,0) y la segunda queda en +0,1.',
+  },
+  {
+    id: 'ap_lx_1bfbG', area: 'apertura', peso: 2, elo: 1338, eloBase: 1338, tipo: 'jugada', lichess: '1bfbG', rating: 1738,
+    enunciado: 'Las negras acaban de jugar …d5. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: 'r1bqk2r/ppp1n3/6np/3p2NQ/4p3/2P5/PPP3PP/R1B2RK1 w kq d6 0 13',
+    solucion: { from: 'g5', to: 'f7' },
+    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 13.Cf7 Ag4 14.Dxg4.',
+    prueba: 'Ejercicio 1bfbG de la base abierta de Lichess (CC0), rating 1738. Stockfish 16 a profundidad 18: Cf7 es la mejor (+3,1) y la segunda queda en -3,8.',
+  },
+  {
+    id: 'ap_lx_2LaX0_op', area: 'apertura', peso: 2, elo: 1236, eloBase: 1236, tipo: 'opcion_tablero', lichess: '2LaX0', rating: 1786,
+    enunciado: 'Las negras acaban de jugar …Cxd4. Juegan las blancas y están en apuros. Solo una de estas jugadas salva la partida: ¿cuál?',
+    fen: 'r2qr1k1/ppp3pn/3p3p/2b5/3n4/4NN1P/PPQ2PP1/R1B1K2R w KQ - 0 16',
+    opciones: ['Cxd4', 'Dxh7+', 'Dxc5', 'Dc4+'],
+    correcta: 0,
+    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 16.Cxd4 Axd4 17.Dc4+ d5 18.Dxd4. Las otras tientan, pero fallan: Dxh7+? se contesta con 16…Rxh7 y las negras quedan mejor; Dxc5? se contesta con 16…dxc5 y las negras quedan mejor; Dc4+? se contesta con 16…Ce6 y la ventaja se esfuma.',
+    prueba: 'Ejercicio 2LaX0 de la base abierta de Lichess (CC0), rating 1786. Stockfish 16 a profundidad 18: Cxd4 es la mejor (+2,6) y la segunda queda en -1,4; las otras tres opciones quedan en -6,3, -7,0, -1,4 (profundidad 14).',
+  },
+  {
+    id: 'ap_lx_2oK2z', area: 'apertura', peso: 2, elo: 1282, eloBase: 1282, tipo: 'jugada', lichess: '2oK2z', rating: 1682,
+    enunciado: 'Las negras acaban de jugar …Aa6. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: 'rn1qk2r/p1p1ppbp/bp1p1np1/8/3P1B2/2PBPN2/PP3PPP/RN1Q1RK1 w kq - 1 8',
+    solucion: { from: 'd3', to: 'a6' },
+    explica: 'La línea: 8.Axa6 Cxa6 9.Da4+.',
+    prueba: 'Ejercicio 2oK2z de la base abierta de Lichess (CC0), rating 1682. Stockfish 16 a profundidad 18: Axa6 es la mejor (+5,1) y la segunda queda en +0,7.',
+  },
+  {
+    id: 'ap_lx_31wDu_op', area: 'apertura', peso: 2, elo: 1399, eloBase: 1399, tipo: 'opcion_tablero', lichess: '31wDu', rating: 1949,
+    enunciado: 'Las negras acaban de jugar …Db6. Juegan las blancas. Solo una de estas jugadas gana: ¿cuál?',
+    fen: 'r3kb1r/pp2pppp/1q3n2/3p4/3n1Pb1/5N2/PPP1B1PP/RNBQ1RK1 w kq - 2 9',
+    opciones: ['Dxd4', 'Cxd4', 'Ab5+', 'Dd2'],
+    correcta: 0,
+    explica: ' La línea: 9.Dxd4 Dxd4+ 10.Cxd4 Axe2 11.Cxe2. Las otras tientan, pero fallan: Cxd4? se contesta con 9…Axe2 y la ventaja se esfuma; Ab5+? se contesta con 9…Cxb5+ y las negras quedan mejor; Dd2? se contesta con 9…Cxf3+ y las negras quedan mejor.',
+    prueba: 'Ejercicio 31wDu de la base abierta de Lichess (CC0), rating 1949. Stockfish 16 a profundidad 18: Dxd4 es la mejor (+3,7) y la segunda queda en -0,5; las otras tres opciones quedan en -0,9, -6,4, -10,1 (profundidad 14).',
+  },
+  {
+    id: 'ap_lx_334ib', area: 'apertura', peso: 2, elo: 1167, eloBase: 1167, tipo: 'jugada', lichess: '334ib', rating: 1567,
+    enunciado: 'Las negras acaban de jugar …Cxf4. Juegan las blancas y dan mate en dos. ¿Cuál es la primera jugada? (Se responde con una sola jugada.)',
+    fen: 'rn2k2r/ppp1ppbp/6p1/3NP3/5nb1/5N2/PPP2PPP/3RKB1R w Kkq - 0 10',
+    solucion: { from: 'd5', to: 'c7' },
+    explica: 'El golpe va a la última fila, donde el rey no tiene salida. La línea: 10.Cxc7+ Rf8 11.Td8#.',
+    prueba: 'Ejercicio 334ib de la base abierta de Lichess (CC0), rating 1567. Stockfish 16 a profundidad 18: Cxc7+ es la mejor (mate en 2) y la segunda queda en -0,7.',
+  },
+  {
+    id: 'ap_lx_017u3', area: 'apertura', peso: 3, elo: 1489, eloBase: 1489, tipo: 'jugada', lichess: '017u3', rating: 1889,
+    enunciado: 'Las negras acaban de jugar …O-O. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: 'r2q1rk1/4bppp/p3bn2/1p2N3/5B2/2N5/PP3PPP/R2QR1K1 w - - 2 20',
+    solucion: { from: 'e5', to: 'c6' },
+    explica: 'Es una enfilada: la pieza de adelante se va y cae la de atrás. La línea: 20.Cc6 De8 21.Cxe7+ Dxe7 22.Ad6.',
+    prueba: 'Ejercicio 017u3 de la base abierta de Lichess (CC0), rating 1889. Stockfish 16 a profundidad 18: Cc6 es la mejor (+3,9) y la segunda queda en +0,2.',
+  },
+  {
+    id: 'ap_lx_01xmi', area: 'apertura', peso: 3, elo: 1558, eloBase: 1558, tipo: 'jugada', lichess: '01xmi', rating: 1958,
+    enunciado: 'Las negras acaban de jugar …Cg6. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: 'r1bqk2r/pp3ppp/4p1n1/2bnP3/8/3B1N2/PP2QPPP/RNB2RK1 w kq - 2 11',
+    solucion: { from: 'd3', to: 'g6' },
+    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 11.Axg6 fxg6 12.Db5+ Ad7 13.Dxc5.',
+    prueba: 'Ejercicio 01xmi de la base abierta de Lichess (CC0), rating 1958. Stockfish 16 a profundidad 18: Axg6 es la mejor (+4,3) y la segunda queda en +0,6.',
+  },
+  {
+    id: 'ap_lx_0542a', area: 'apertura', peso: 3, elo: 1609, eloBase: 1609, tipo: 'jugada', lichess: '0542a', rating: 2009,
+    enunciado: 'Las negras acaban de jugar …Re6. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: 'r1bq2nr/pppp2pp/4k3/2b1N3/3nPp2/8/PPP3PP/RNBQK2R w KQ - 2 8',
+    solucion: { from: 'd1', to: 'g4' },
+    explica: 'Hay un sacrificio: se entrega material para ganar más. La línea: 8.Dg4+ Rxe5 9.Axf4+.',
+    prueba: 'Ejercicio 0542a de la base abierta de Lichess (CC0), rating 2009. Stockfish 16 a profundidad 18: Dg4+ es la mejor (+4,1) y la segunda queda en -1,5.',
+  },
+  {
+    id: 'ap_lx_14SMV', area: 'apertura', peso: 3, elo: 1538, eloBase: 1538, tipo: 'jugada', lichess: '14SMV', rating: 1938,
+    enunciado: 'Las negras acaban de jugar …d6. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: 'rn1q1rk1/p4ppp/3p1n2/2pbB3/1p6/1P1B4/P2N1PPP/R2QR1K1 w - - 0 15',
+    solucion: { from: 'e5', to: 'f6' },
+    explica: 'La línea: 15.Axf6 Dxf6 16.Dh5 Dh6 17.Dxd5.',
+    prueba: 'Ejercicio 14SMV de la base abierta de Lichess (CC0), rating 1938. Stockfish 16 a profundidad 18: Axf6 es la mejor (+4,1) y la segunda queda en -0,5.',
+  },
+  {
+    id: 'ap_lx_2QEpc_op', area: 'apertura', peso: 3, elo: 1556, eloBase: 1556, tipo: 'opcion_tablero', lichess: '2QEpc', rating: 2106,
+    enunciado: 'Las negras acaban de jugar …Cxe5. Juegan las blancas. Solo una de estas jugadas gana: ¿cuál?',
+    fen: 'r1bq1rk1/1p3ppp/p2P1b2/2p1n3/4BB2/2P5/PPP2PPP/R2QR1K1 w - - 0 14',
+    opciones: ['Axe5', 'Axh7+', 'Axb7', 'Ag3'],
+    correcta: 0,
+    explica: ' La línea: 14.Axe5 Axe5 15.Dh5 f5 16.Ad5+. Las otras tientan, pero fallan: Axh7+? se contesta con 14…Rxh7 y la ventaja se esfuma; Axb7? se contesta con 14…Axb7 y las negras quedan mejor; Ag3? se contesta con 14…g6 y la ventaja se esfuma.',
+    prueba: 'Ejercicio 2QEpc de la base abierta de Lichess (CC0), rating 2106. Stockfish 16 a profundidad 18: Axe5 es la mejor (+3,2) y la segunda queda en -1,3; las otras tres opciones quedan en -1,4, -2,5, -1,4 (profundidad 14).',
+  },
+  {
+    id: 'ap_lx_2u2hC_op', area: 'apertura', peso: 3, elo: 1460, eloBase: 1460, tipo: 'opcion_tablero', lichess: '2u2hC', rating: 2010,
+    enunciado: 'Las negras acaban de jugar …Ab4. Juegan las blancas. Solo una de estas jugadas gana: ¿cuál?',
+    fen: 'r1bqk1nr/pp3ppp/2n1p3/8/1b2N3/2B5/PPP2PPP/R2QKBNR w KQkq - 3 8',
+    opciones: ['Dxd8+', 'Dd7+', 'Axb4', 'Cd6+'],
+    correcta: 0,
+    explica: 'Es un ataque a la descubierta: al moverse una pieza, se destapa otra. La línea: 8.Dxd8+ Rxd8 9.O-O-O+. Las otras tientan, pero fallan: Dd7+? se contesta con 8…Axd7 y las negras quedan mejor; Axb4? se contesta con 8…Dxd1+ y la ventaja se esfuma; Cd6+? se contesta con 8…Dxd6 y las negras quedan mejor.',
+    prueba: 'Ejercicio 2u2hC de la base abierta de Lichess (CC0), rating 2010. Stockfish 16 a profundidad 18: Dxd8+ es la mejor (+5,3) y la segunda queda en +0,6; las otras tres opciones quedan en -7,1, +0,2, -2,4 (profundidad 14).',
+  },
+  {
+    id: 'ap_lx_03Idr_op', area: 'apertura', peso: 4, elo: 1932, eloBase: 1932, tipo: 'opcion_tablero', lichess: '03Idr', rating: 2482,
+    enunciado: 'Las negras acaban de jugar …Dg4. Juegan las blancas. Solo una de estas jugadas gana: ¿cuál?',
+    fen: 'r1b2k1r/p1bp2p1/1pn4p/2p5/4N1qN/1Q6/PP3PPP/R1B1R1K1 w - - 4 16',
+    opciones: ['Cg5', 'Cxc5', 'Cg6+', 'Df7+'],
+    correcta: 0,
+    explica: 'La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. La línea: 16.Cg5 Axh2+ 17.Rh1. Las otras tientan, pero fallan: Cxc5? se contesta con 16…bxc5 y las negras quedan mejor; Cg6+? se contesta con 16…Dxg6 y las negras quedan mejor; Df7+? se contesta con 16…Rxf7 y las negras quedan mejor.',
+    prueba: 'Ejercicio 03Idr de la base abierta de Lichess (CC0), rating 2482. Stockfish 16 a profundidad 18: Cg5 es la mejor (+6,8) y la segunda queda en +1,1; las otras tres opciones quedan en -1,6, -4,4, -8,3 (profundidad 14).',
+  },
+  {
+    id: 'ap_lx_1QRiD_op', area: 'apertura', peso: 4, elo: 1738, eloBase: 1738, tipo: 'opcion_tablero', lichess: '1QRiD', rating: 2288,
+    enunciado: 'Las negras acaban de jugar …Ca5. Juegan las blancas y están en apuros. Solo una de estas jugadas salva la partida: ¿cuál?',
+    fen: 'r1b1k1nr/ppp2p1p/3p1q1b/n7/2BPPB2/2P1Q3/PP4PP/RN3RK1 w kq - 6 11',
+    opciones: ['Axf7+', 'Ab5+', 'Axh6', 'Axd6'],
+    correcta: 0,
+    explica: 'Es un ataque a la descubierta: al moverse una pieza, se destapa otra. La línea: 11.Axf7+ Dxf7 12.Axh6 Cxh6 13.Txf7. Las otras tientan, pero fallan: Ab5+? se contesta con 11…Cc6 y la ventaja se esfuma; Axh6? se contesta con 11…Cxc4 y las negras quedan mejor; Axd6? se contesta con 11…Axe3+ y las negras quedan mejor.',
+    prueba: 'Ejercicio 1QRiD de la base abierta de Lichess (CC0), rating 2288. Stockfish 16 a profundidad 18: Axf7+ es la mejor (+2,5) y la segunda queda en -0,8; las otras tres opciones quedan en -1,0, -2,5, -9,3 (profundidad 14).',
+  },
+  {
+    id: 'ap_lx_1ee4K', area: 'apertura', peso: 4, elo: 1856, eloBase: 1856, tipo: 'jugada', lichess: '1ee4K', rating: 2256,
+    enunciado: 'Las negras acaban de jugar …b6. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: 'r1bq1rk1/p3ppbp/1p3np1/3nN3/3P4/1BN5/PP3PPP/R1BQ1RK1 w - - 0 12',
+    solucion: { from: 'c3', to: 'd5' },
+    explica: 'La línea: 12.Cxd5 Cxd5 13.Cc6 Dd7 14.Axd5.',
+    prueba: 'Ejercicio 1ee4K de la base abierta de Lichess (CC0), rating 2256. Stockfish 16 a profundidad 18: Cxd5 es la mejor (+4,2) y la segunda queda en +0,4.',
+  },
+  {
+    id: 'ap_lx_2DeLB', area: 'apertura', peso: 4, elo: 1750, eloBase: 1750, tipo: 'jugada', lichess: '2DeLB', rating: 2150,
+    enunciado: 'Las negras acaban de jugar …Da5+. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: 'rn2kbnr/pp2pppp/2p5/q2p1b2/3P1B2/3BP3/PPP2PPP/RNQ1K1NR w KQkq - 5 6',
+    solucion: { from: 'b2', to: 'b4' },
+    explica: 'Es una atracción: se arrastra a una pieza (a menudo el rey) a una casilla fatal. La línea: 6.b4 Dxb4+ 7.c3 Da5 8.Axf5.',
+    prueba: 'Ejercicio 2DeLB de la base abierta de Lichess (CC0), rating 2150. Stockfish 16 a profundidad 18: b4 es la mejor (+4,5) y la segunda queda en +0,1.',
+  },
+  {
+    id: 'ap_lx_2Knif_op', area: 'apertura', peso: 4, elo: 1873, eloBase: 1873, tipo: 'opcion_tablero', lichess: '2Knif', rating: 2423,
+    enunciado: 'Las negras acaban de jugar …Dxf6. Juegan las blancas. Solo una de estas jugadas gana: ¿cuál?',
+    fen: 'rn2kb1r/pbp2ppp/1p2pq2/8/3P4/3B1N2/PPP3PP/R1BQK2R w KQkq - 0 9',
+    opciones: ['Ag5', 'Ab5+', 'Axh7', 'Cg5'],
+    correcta: 0,
+    explica: 'Es una jugada defensiva precisa: la única que sostiene la posición. La línea: 9.Ag5 Axf3 10.Dd2. Las otras tientan, pero fallan: Ab5+? se contesta con 9…Ac6 y la ventaja se esfuma; Axh7? se contesta con 9…Axf3 y las negras quedan mejor; Cg5? se contesta con 9…Cd7 y la ventaja se esfuma.',
+    prueba: 'Ejercicio 2Knif de la base abierta de Lichess (CC0), rating 2423. Stockfish 16 a profundidad 18: Ag5 es la mejor (+3,8) y la segunda queda en +0,4; las otras tres opciones quedan en -0,3, -5,8, -0,5 (profundidad 14).',
+  },
+  {
+    id: 'ap_lx_2UMX6', area: 'apertura', peso: 4, elo: 1939, eloBase: 1939, tipo: 'jugada', lichess: '2UMX6', rating: 2339,
+    enunciado: 'Las negras acaban de jugar …Axe5. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '2rqr1k1/pb3p1p/1p4p1/3pb3/3Bn3/2N2Q1P/PP3PP1/1BRR2K1 w - - 0 19',
+    solucion: { from: 'd4', to: 'e5' },
+    explica: 'La línea: 19.Axe5 Txe5 20.Axe4 Txe4 21.Cxe4.',
+    prueba: 'Ejercicio 2UMX6 de la base abierta de Lichess (CC0), rating 2339. Stockfish 16 a profundidad 18: Axe5 es la mejor (+3,6) y la segunda queda en -0,5.',
+  },
+  {
+    id: 'ap_lx_3Q032', area: 'apertura', peso: 4, elo: 1948, eloBase: 1948, tipo: 'jugada', lichess: '3Q032', rating: 2348,
+    enunciado: 'Las negras acaban de jugar …Axe4. Juegan las blancas y están en apuros: encuentra la única jugada que no pierde.',
+    fen: 'r3rnk1/1pq1bpp1/p2p3p/4p2B/4b3/P5B1/1P3PPP/1QR2RK1 w - - 0 21',
+    solucion: { from: 'h5', to: 'f7' },
+    explica: 'Todo gira en torno a una clavada: la pieza clavada no puede defender. La línea: 21.Axf7+ Rxf7 22.Da2+ Ce6 23.Txc7.',
+    prueba: 'Ejercicio 3Q032 de la base abierta de Lichess (CC0), rating 2348. Stockfish 16 a profundidad 18: Axf7+ es la mejor (+2,8) y la segunda queda en -0,9.',
+  },
+  {
+    id: 'ap_lx_01pVq', area: 'apertura', peso: 5, elo: 2107, eloBase: 2107, tipo: 'jugada', lichess: '01pVq', rating: 2507,
+    enunciado: 'Las negras acaban de jugar …Cc5. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: 'r1b2rk1/pp2bpp1/1qpp1n1p/2n1p3/1P2P3/P1NP1N2/1BP1BPPP/R2Q1RK1 w - - 1 12',
+    solucion: { from: 'b4', to: 'c5' },
+    explica: 'La línea: 12.bxc5 Dxb2 13.Dd2.',
+    prueba: 'Ejercicio 01pVq de la base abierta de Lichess (CC0), rating 2507. Stockfish 16 a profundidad 18: bxc5 es la mejor (+3,8) y la segunda queda en +0,1.',
+  },
+  {
+    id: 'ap_lx_03q1Y', area: 'apertura', peso: 5, elo: 2170, eloBase: 2170, tipo: 'jugada', lichess: '03q1Y', rating: 2570,
+    enunciado: 'Las negras acaban de jugar …Dxb2. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: 'r1b1kb1r/pp1ppppp/2n2n2/8/3P1B2/5N2/PqPN1PPP/R2QKB1R w KQkq - 0 7',
+    solucion: { from: 'd2', to: 'c4' },
+    explica: 'Es una jugada defensiva precisa: la única que sostiene la posición. La línea: 7.Cc4 Db4+ 8.c3 Dxc3+ 9.Ad2.',
+    prueba: 'Ejercicio 03q1Y de la base abierta de Lichess (CC0), rating 2570. Stockfish 16 a profundidad 18: Cc4 es la mejor (+4,7) y la segunda queda en +0,4.',
+  },
+  {
+    id: 'ap_lx_07wvy', area: 'apertura', peso: 5, elo: 2050, eloBase: 2050, tipo: 'jugada', lichess: '07wvy', rating: 2450,
+    enunciado: 'Las negras acaban de jugar …Axc3+. Juegan las blancas y están en apuros: encuentra la única jugada que no pierde.',
+    fen: 'rnb2rk1/pppp2pp/5q2/3Np3/2P3n1/2bBP1P1/PP2QP1P/R1B1K2R w KQ - 0 13',
+    solucion: { from: 'b2', to: 'c3' },
+    explica: 'La línea: 13.bxc3 Dxf2+ 14.Dxf2 Cxf2 15.O-O.',
+    prueba: 'Ejercicio 07wvy de la base abierta de Lichess (CC0), rating 2450. Stockfish 16 a profundidad 18: bxc3 es la mejor (+2,6) y la segunda queda en -1,8.',
+  },
+  {
+    id: 'ap_lx_0QiQF', area: 'apertura', peso: 5, elo: 2086, eloBase: 2086, tipo: 'jugada', lichess: '0QiQF', rating: 2486,
+    enunciado: 'Las negras acaban de jugar …d6. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: 'rnb1kb1r/pp2pppp/3p1n2/8/3P1B2/5N2/PqPN1PPP/R2QKB1R w KQkq - 0 7',
+    solucion: { from: 'd2', to: 'c4' },
+    explica: 'Es una jugada defensiva precisa: la única que sostiene la posición. La línea: 7.Cc4 Db4+ 8.c3 Dxc3+ 9.Ad2.',
+    prueba: 'Ejercicio 0QiQF de la base abierta de Lichess (CC0), rating 2486. Stockfish 16 a profundidad 18: Cc4 es la mejor (+5,0) y la segunda queda en +0,5.',
+  },
+  {
+    id: 'ap_lx_1PwuR', area: 'apertura', peso: 5, elo: 2008, eloBase: 2008, tipo: 'jugada', lichess: '1PwuR', rating: 2408,
+    enunciado: 'Las negras acaban de jugar …exf5. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: 'rnbq1rk1/pp2b1p1/2p3P1/3p1pn1/2P5/1P2P3/PBQP1P2/RN2KB1R w KQ - 0 13',
+    solucion: { from: 'c2', to: 'd1' },
+    explica: 'La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. La línea: 13.Dd1 Tf6 14.Dh5 Txg6 15.Dxg6.',
+    prueba: 'Ejercicio 1PwuR de la base abierta de Lichess (CC0), rating 2408. Stockfish 16 a profundidad 18: Dd1 es la mejor (+3,8) y la segunda queda en -0,6.',
+  },
+  {
+    id: 'ap_lx_1TlKN', area: 'apertura', peso: 5, elo: 2158, eloBase: 2158, tipo: 'jugada', lichess: '1TlKN', rating: 2558,
+    enunciado: 'Las negras acaban de jugar …Dh4. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: 'rn2kb1r/pbpp2pp/1p2p3/8/2P1n2q/2NB4/PP3PPP/R1BQK1NR w KQkq - 2 8',
+    solucion: { from: 'd3', to: 'e4' },
+    explica: 'La línea: 8.Axe4 Axe4 9.g3.',
+    prueba: 'Ejercicio 1TlKN de la base abierta de Lichess (CC0), rating 2558. Stockfish 16 a profundidad 18: Axe4 es la mejor (+3,0) y la segunda queda en -0,6.',
+  },
+  {
+    id: 'ap_lx_1sJ7K', area: 'apertura', peso: 5, elo: 2077, eloBase: 2077, tipo: 'jugada', lichess: '1sJ7K', rating: 2477,
+    enunciado: 'Las negras acaban de jugar …dxe5. Juegan las blancas y están en apuros: encuentra la única jugada que no pierde.',
+    fen: 'r1b1qn1r/2pk2bp/p3p3/1p1Npp1Q/8/P7/1PP3PP/R1B2RK1 w - - 0 19',
+    solucion: { from: 'd5', to: 'b6' },
+    explica: 'Hay un sacrificio: se entrega material para ganar más. La línea: 19.Cb6+ cxb6 20.Td1+ Re7 21.Ag5+.',
+    prueba: 'Ejercicio 1sJ7K de la base abierta de Lichess (CC0), rating 2477. Stockfish 16 a profundidad 18: Cb6+ es la mejor (+2,3) y la segunda queda en -1,0.',
+  },
+  {
+    id: 'ap_lx_230Kr', area: 'apertura', peso: 5, elo: 2206, eloBase: 2206, tipo: 'jugada', lichess: '230Kr', rating: 2606,
+    enunciado: 'Las negras acaban de jugar …Cxe4. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: 'rnbq1rk1/pp2bpp1/3p3p/4p3/2B1n2B/2N2N2/PPP2PPP/R2QK2R w KQ - 0 10',
+    solucion: { from: 'h4', to: 'e7' },
+    explica: 'La línea: 10.Axe7 Cxc3 11.Dxd6 Dxd6 12.Axd6.',
+    prueba: 'Ejercicio 230Kr de la base abierta de Lichess (CC0), rating 2606. Stockfish 16 a profundidad 18: Axe7 es la mejor (+4,0) y la segunda queda en +0,2.',
+  },
+  {
+    id: 'tac_lx_0dqXx_op', area: 'tactica', peso: 1, elo: 765, eloBase: 765, tipo: 'opcion_tablero', lichess: '0dqXx', rating: 1315,
+    enunciado: 'Las negras acaban de jugar …De7. Juegan las blancas. ¿Cuál de estas jugadas fuerza el mate en dos?',
+    fen: '1r3r1k/2p1qBpp/p2p1b2/1p3R1Q/4P3/3PB2P/2P3P1/6K1 w - - 3 31',
+    opciones: ['Dxh7+', 'Txf6', 'Txb5', 'Dg6'],
+    correcta: 0,
+    explica: 'Es una atracción: se arrastra a una pieza (a menudo el rey) a una casilla fatal. La línea: 31.Dxh7+ Rxh7 32.Th5#. Las otras tientan, pero fallan: Txf6? se contesta con 31…Dxf6 y las negras quedan mejor; Txb5? se contesta con 31…Txb5 y las negras quedan mejor; Dg6? se contesta con 31…hxg6 y las negras quedan mejor.',
+    prueba: 'Ejercicio 0dqXx de la base abierta de Lichess (CC0), rating 1315. Stockfish 16 a profundidad 18: Dxh7+ es la mejor (mate en 2) y la segunda queda en -0,4; las otras tres opciones quedan en -5,1, -6,7, -7,5 (profundidad 14).',
+  },
+  {
+    id: 'tac_lx_0fTYd', area: 'tactica', peso: 1, elo: 1052, eloBase: 1052, tipo: 'jugada', lichess: '0fTYd', rating: 1452,
+    enunciado: 'Las negras acaban de jugar …Tg8+. Juegan las blancas y dan mate en dos. ¿Cuál es la primera jugada? (Se responde con una sola jugada.)',
+    fen: '6rk/3PP3/4Q1K1/2p2p2/3b1P1q/7P/P5P1/8 w - - 1 42',
+    solucion: { from: 'e6', to: 'g8' },
+    explica: 'Es una atracción: se arrastra a una pieza (a menudo el rey) a una casilla fatal. La línea: 42.Dxg8+ Rxg8 43.e8=D#.',
+    prueba: 'Ejercicio 0fTYd de la base abierta de Lichess (CC0), rating 1452. Stockfish 16 a profundidad 18: Dxg8+ es la mejor (mate en 2) y la segunda queda en recibe mate en 2.',
+  },
+  {
+    id: 'tac_lx_2EuT5', area: 'tactica', peso: 1, elo: 1074, eloBase: 1074, tipo: 'jugada', lichess: '2EuT5', rating: 1474,
+    enunciado: 'Las negras acaban de jugar …Cc2. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '2r1r2k/1p4bp/3N2p1/p3P3/5P2/P2p1qP1/BPnB3P/1K1R3R w - - 3 30',
+    solucion: { from: 'd6', to: 'f7' },
+    explica: 'Es un ataque a la descubierta: al moverse una pieza, se destapa otra. La línea: 30.Cf7+ Rg8 31.Cg5+.',
+    prueba: 'Ejercicio 2EuT5 de la base abierta de Lichess (CC0), rating 1474. Stockfish 16 a profundidad 18: Cf7+ es la mejor (+5,7) y la segunda queda en -2,4.',
+  },
+  {
+    id: 'tac_lx_2HPFh', area: 'tactica', peso: 1, elo: 881, eloBase: 881, tipo: 'jugada', lichess: '2HPFh', rating: 1281,
+    enunciado: 'Las negras acaban de jugar …Dxe5. Juegan las blancas y dan mate en dos. ¿Cuál es la primera jugada? (Se responde con una sola jugada.)',
+    fen: 'r1b3kr/5Rpp/p2Np1n1/2p1q3/2Pp4/1P6/P5PP/R4QK1 w - - 0 20',
+    solucion: { from: 'f7', to: 'f8' },
+    explica: 'Es un despeje: la pieza se aparta para abrirle la línea o la casilla a otra. La línea: 20.Tf8+ Cxf8 21.Df7#.',
+    prueba: 'Ejercicio 2HPFh de la base abierta de Lichess (CC0), rating 1281. Stockfish 16 a profundidad 18: Tf8+ es la mejor (mate en 2) y la segunda queda en +0,4.',
+  },
+  {
+    id: 'tac_lx_2ga5J_op', area: 'tactica', peso: 1, elo: 577, eloBase: 577, tipo: 'opcion_tablero', lichess: '2ga5J', rating: 1127,
+    enunciado: 'Las negras acaban de jugar …Rxh8. Juegan las blancas. ¿Cuál de estas jugadas fuerza el mate en dos?',
+    fen: 'r1b2r1k/pp4p1/3q2P1/2b3B1/2n1Q3/4PN2/PP3PP1/2K5 w - - 0 22',
+    opciones: ['Dh4+', 'Dxc4', 'Dxb7', 'Ah4'],
+    correcta: 0,
+    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 22.Dh4+ Rg8 23.Dh7#. Las otras tientan, pero fallan: Dxc4? se contesta con 22…Dxg6 y las negras quedan mejor; Dxb7? se contesta con 22…Axb7 y las negras quedan mejor; Ah4? se contesta con 22…Txf3 y las negras quedan mejor.',
+    prueba: 'Ejercicio 2ga5J de la base abierta de Lichess (CC0), rating 1127. Stockfish 16 a profundidad 18: Dh4+ es la mejor (mate en 2) y la segunda queda en -5,3; las otras tres opciones quedan en -6,6, -13,4, -9,1 (profundidad 14).',
+  },
+  {
+    id: 'tac_lx_3EYzt', area: 'tactica', peso: 1, elo: 974, eloBase: 974, tipo: 'jugada', lichess: '3EYzt', rating: 1374,
+    enunciado: 'Las negras acaban de jugar …Da3. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: 'r4rk1/2p2pp1/p6p/1p6/3n4/qB4Q1/P1P2P2/1R2R1K1 w - - 4 27',
+    solucion: { from: 'b3', to: 'f7' },
+    explica: 'Es un ataque a la descubierta: al moverse una pieza, se destapa otra. La línea: 27.Axf7+ Txf7 28.Dxa3.',
+    prueba: 'Ejercicio 3EYzt de la base abierta de Lichess (CC0), rating 1374. Stockfish 16 a profundidad 18: Axf7+ es la mejor (+3,1) y la segunda queda en -4,3.',
+  },
+  {
+    id: 'tac_lx_13NMM', area: 'tactica', peso: 2, elo: 1271, eloBase: 1271, tipo: 'jugada', lichess: '13NMM', rating: 1671,
+    enunciado: 'Las negras acaban de jugar …Ac7. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: 'r4rk1/p1b2p2/2p1b3/1p4q1/4R3/1BP2Q2/PP3PP1/4R1K1 w - - 4 28',
+    solucion: { from: 'b3', to: 'e6' },
+    explica: 'Todo gira en torno a una clavada: la pieza clavada no puede defender. La línea: 28.Axe6 fxe6 29.Tg4 Txf3 30.Txg5+.',
+    prueba: 'Ejercicio 13NMM de la base abierta de Lichess (CC0), rating 1671. Stockfish 16 a profundidad 18: Axe6 es la mejor (+4,0) y la segunda queda en -1,6.',
+  },
+  {
+    id: 'tac_lx_1qsIY', area: 'tactica', peso: 2, elo: 1359, eloBase: 1359, tipo: 'jugada', lichess: '1qsIY', rating: 1759,
+    enunciado: 'Las negras acaban de jugar …O-O. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: 'rn3rk1/3b1ppp/p3pn2/1p1q4/4N3/2PB1Q2/PP3PPP/R4RK1 w - - 2 16',
+    solucion: { from: 'e4', to: 'f6' },
+    explica: 'Es un despeje: la pieza se aparta para abrirle la línea o la casilla a otra. La línea: 16.Cxf6+ gxf6 17.Ae4.',
+    prueba: 'Ejercicio 1qsIY de la base abierta de Lichess (CC0), rating 1759. Stockfish 16 a profundidad 18: Cxf6+ es la mejor (+3,6) y la segunda queda en 0,0.',
+  },
+  {
+    id: 'tac_lx_1tTpw_op', area: 'tactica', peso: 2, elo: 1206, eloBase: 1206, tipo: 'opcion_tablero', lichess: '1tTpw', rating: 1756,
+    enunciado: 'Las negras acaban de jugar …Df3. Juegan las blancas. ¿Cuál de estas jugadas fuerza el mate en dos?',
+    fen: '3r1r1k/p3R3/1pp4B/3p4/3P4/5q2/PPP2P2/2K4R w - - 1 28',
+    opciones: ['Ag7+', 'Axf8+', 'Ag5+', 'Af4+'],
+    correcta: 0,
+    explica: 'Es un jaque doble: el rey tiene que moverse y no alcanza a tapar nada. La línea: 28.Ag7+ Rg8 29.Th8#. Las otras tientan, pero fallan: Axf8+? se contesta con 28…Dxh1+ y las negras quedan mejor; Ag5+? se contesta con 28…Dxh1+ y las negras quedan mejor; Af4+? se contesta con 28…Dxh1+ y las negras quedan mejor.',
+    prueba: 'Ejercicio 1tTpw de la base abierta de Lichess (CC0), rating 1756. Stockfish 16 a profundidad 18: Ag7+ es la mejor (mate en 2) y la segunda queda en -1,5; las otras tres opciones quedan en -5,1, -6,9, -7,6 (profundidad 14).',
+  },
+  {
+    id: 'tac_lx_22dD9_op', area: 'tactica', peso: 2, elo: 1124, eloBase: 1124, tipo: 'opcion_tablero', lichess: '22dD9', rating: 1674,
+    enunciado: 'Las negras acaban de jugar …Ag4. Juegan las blancas y están en apuros. Solo una de estas jugadas salva la partida: ¿cuál?',
+    fen: '3r1rk1/p4p2/2p3p1/4b1q1/2BpRNbp/1P3QP1/P4P2/1R4K1 w - - 2 28',
+    opciones: ['Txe5', 'Axf7+', 'Txd4', 'Dxg4'],
+    correcta: 0,
+    explica: 'Es una desviación: se aleja al defensor de lo que defendía. La línea: 28.Txe5 Dxe5 29.Dxg4. Las otras tientan, pero fallan: Axf7+? se contesta con 28…Txf7 y las negras quedan mejor; Txd4? se contesta con 28…Axf3 y las negras quedan mejor; Dxg4? se contesta con 28…Dxg4 y las negras quedan mejor.',
+    prueba: 'Ejercicio 22dD9 de la base abierta de Lichess (CC0), rating 1674. Stockfish 16 a profundidad 18: Txe5 es la mejor (+2,5) y la segunda queda en -3,0; las otras tres opciones quedan en -4,8, -8,6, -6,4 (profundidad 14).',
+  },
+  {
+    id: 'tac_lx_28HAG', area: 'tactica', peso: 2, elo: 1307, eloBase: 1307, tipo: 'jugada', lichess: '28HAG', rating: 1707,
+    enunciado: 'Las negras acaban de jugar …Axg3. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '2b2k2/5P2/p5q1/1p1p4/2rnp2B/6b1/PP4Q1/4NRK1 w - - 0 37',
+    solucion: { from: 'h4', to: 'e7' },
+    explica: 'Es una atracción: se arrastra a una pieza (a menudo el rey) a una casilla fatal. La línea: 37.Ae7+ Rxe7 38.f8=D+.',
+    prueba: 'Ejercicio 28HAG de la base abierta de Lichess (CC0), rating 1707. Stockfish 16 a profundidad 18: Ae7+ es la mejor (+5,5) y la segunda queda en -3,2.',
+  },
+  {
+    id: 'tac_lx_2cbP6', area: 'tactica', peso: 2, elo: 1212, eloBase: 1212, tipo: 'jugada', lichess: '2cbP6', rating: 1612,
+    enunciado: 'Las negras acaban de jugar …b6. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '2rk2nr/p4ppp/1p1bp3/3pq3/8/1Q2B1P1/PP3P1P/RN3RK1 w - - 0 16',
+    solucion: { from: 'e3', to: 'f4' },
+    explica: 'Es una enfilada: la pieza de adelante se va y cae la de atrás. La línea: 16.Af4 Df6 17.Axd6.',
+    prueba: 'Ejercicio 2cbP6 de la base abierta de Lichess (CC0), rating 1612. Stockfish 16 a profundidad 18: Af4 es la mejor (+3,5) y la segunda queda en +0,0.',
+  },
+  {
+    id: 'tac_lx_2vJeB_op', area: 'tactica', peso: 2, elo: 1361, eloBase: 1361, tipo: 'opcion_tablero', lichess: '2vJeB', rating: 1911,
+    enunciado: 'Las negras acaban de jugar …Cf6. Juegan las blancas y están en apuros. Solo una de estas jugadas salva la partida: ¿cuál?',
+    fen: 'r2q1rk1/pp3pp1/2p2n1p/3p4/3PpQB1/7P/PPP2P1P/2KR2R1 w - - 5 17',
+    opciones: ['Af5', 'Dxf6', 'Ac8', 'Df5'],
+    correcta: 0,
+    explica: 'Todo gira en torno a una clavada: la pieza clavada no puede defender. La línea: 17.Af5 Te8 18.Dxh6. Las otras tientan, pero fallan: Dxf6? se contesta con 17…Dxf6 y las negras quedan mejor; Ac8? se contesta con 17…Txc8 y las negras quedan mejor; Df5? se contesta con 17…Dd6 y las negras quedan mejor.',
+    prueba: 'Ejercicio 2vJeB de la base abierta de Lichess (CC0), rating 1911. Stockfish 16 a profundidad 18: Af5 es la mejor (+2,1) y la segunda queda en -2,0; las otras tres opciones quedan en -6,5, -2,4, -3,1 (profundidad 14).',
+  },
+  {
+    id: 'tac_lx_05mps', area: 'tactica', peso: 3, elo: 1575, eloBase: 1575, tipo: 'jugada', lichess: '05mps', rating: 1975,
+    enunciado: 'Las negras acaban de jugar …fxg5. Juegan las blancas y están en apuros: encuentra la única jugada que no pierde.',
+    fen: 'r5k1/1pp2q2/pb2r3/nP2p1pp/P3R3/2Pn1NP1/Q2N1PKP/3R4 w - - 0 24',
+    solucion: { from: 'f3', to: 'g5' },
+    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 24.Cxg5 Dxf2+ 25.Rh1.',
+    prueba: 'Ejercicio 05mps de la base abierta de Lichess (CC0), rating 1975. Stockfish 16 a profundidad 18: Cxg5 es la mejor (+2,5) y la segunda queda en -2,3.',
+  },
+  {
+    id: 'tac_lx_08gCM', area: 'tactica', peso: 3, elo: 1425, eloBase: 1425, tipo: 'jugada', lichess: '08gCM', rating: 1825,
+    enunciado: 'Las negras acaban de jugar …Tf7. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: 'r5k1/pp2prb1/2np2p1/3Q2B1/4P3/1N6/PPP1Bq2/2K4R w - - 1 20',
+    solucion: { from: 'h1', to: 'f1' },
+    explica: 'Todo gira en torno a una clavada: la pieza clavada no puede defender. La línea: 20.Tf1 Dxf1+ 21.Axf1.',
+    prueba: 'Ejercicio 08gCM de la base abierta de Lichess (CC0), rating 1825. Stockfish 16 a profundidad 18: Tf1 es la mejor (+3,3) y la segunda queda en -2,0.',
+  },
+  {
+    id: 'tac_lx_0DjI8_op', area: 'tactica', peso: 3, elo: 1539, eloBase: 1539, tipo: 'opcion_tablero', lichess: '0DjI8', rating: 2089,
+    enunciado: 'Las negras acaban de jugar …Re7. Juegan las blancas. Solo una de estas jugadas gana: ¿cuál?',
+    fen: 'r1bq1r2/p2nk1b1/1p1pB1p1/2nPp1P1/4Pp1Q/2N5/PP3P2/R1B1K1NR w KQ - 4 18',
+    opciones: ['Dh7', 'Dxf4', 'Axd7', 'Dh5'],
+    correcta: 0,
+    explica: 'Todo gira en torno a una clavada: la pieza clavada no puede defender. La línea: 18.Dh7 Tf7 19.Dxg6. Las otras tientan, pero fallan: Dxf4? se contesta con 18…exf4 y las negras quedan mejor; Axd7? se contesta con 18…Axd7 y las negras quedan mejor; Dh5? se contesta con 18…gxh5 y las negras quedan mejor.',
+    prueba: 'Ejercicio 0DjI8 de la base abierta de Lichess (CC0), rating 2089. Stockfish 16 a profundidad 18: Dh7 es la mejor (+3,4) y la segunda queda en +0,6; las otras tres opciones quedan en -6,8, -2,4, -7,7 (profundidad 14).',
+  },
+  {
+    id: 'tac_lx_0qA4z', area: 'tactica', peso: 3, elo: 1676, eloBase: 1676, tipo: 'jugada', lichess: '0qA4z', rating: 2076,
+    enunciado: 'Las negras acaban de jugar …Df4. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: 'r4rk1/pp2bpp1/4nn1p/3p1Q2/5q1B/2NB3P/PP3PP1/3R1RK1 w - - 8 18',
+    solucion: { from: 'c3', to: 'd5' },
+    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 18.Cxd5 Dxf5 19.Cxe7+.',
+    prueba: 'Ejercicio 0qA4z de la base abierta de Lichess (CC0), rating 2076. Stockfish 16 a profundidad 18: Cxd5 es la mejor (+5,8) y la segunda queda en +0,0.',
+  },
+  {
+    id: 'tac_lx_10Ksv_op', area: 'tactica', peso: 3, elo: 1638, eloBase: 1638, tipo: 'opcion_tablero', lichess: '10Ksv', rating: 2188,
+    enunciado: 'Las negras acaban de jugar …Cd5. Juegan las blancas y están en apuros. Solo una de estas jugadas salva la partida: ¿cuál?',
+    fen: 'r1b2r1k/pp4pp/2p5/2qn1pB1/4p2Q/1BP5/P1P2PPP/1K1RR3 w - - 6 20',
+    opciones: ['Txd5', 'Axd5', 'Dxh7+', 'Txe4'],
+    correcta: 0,
+    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 20.Txd5 cxd5 21.Ae7 Dxc3 22.Te3. Las otras tientan, pero fallan: Axd5? se contesta con 20…cxd5 y la ventaja se esfuma; Dxh7+? se contesta con 20…Rxh7 y las negras quedan mejor; Txe4? se contesta con 20…fxe4 y las negras quedan mejor.',
+    prueba: 'Ejercicio 10Ksv de la base abierta de Lichess (CC0), rating 2188. Stockfish 16 a profundidad 18: Txd5 es la mejor (+3,0) y la segunda queda en -0,5; las otras tres opciones quedan en -0,6, -7,5, -4,9 (profundidad 14).',
+  },
+  {
+    id: 'tac_lx_2Bpop', area: 'tactica', peso: 3, elo: 1519, eloBase: 1519, tipo: 'jugada', lichess: '2Bpop', rating: 1919,
+    enunciado: 'Las negras acaban de jugar …Df6. Juegan las blancas y están en apuros: encuentra la única jugada que no pierde.',
+    fen: '3r4/ppp2pkp/5qp1/3P1r1n/3Q4/2NR4/PPP3P1/2KR4 w - - 2 23',
+    solucion: { from: 'g2', to: 'g4' },
+    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 23.g4 Dxd4 24.Txd4 Te5 25.gxh5.',
+    prueba: 'Ejercicio 2Bpop de la base abierta de Lichess (CC0), rating 1919. Stockfish 16 a profundidad 18: g4 es la mejor (+1,8) y la segunda queda en -0,8.',
+  },
+  {
+    id: 'tac_lx_3BYv5_op', area: 'tactica', peso: 3, elo: 1636, eloBase: 1636, tipo: 'opcion_tablero', lichess: '3BYv5', rating: 2186,
+    enunciado: 'Las negras acaban de jugar …Th8. Juegan las blancas. Solo una de estas jugadas gana: ¿cuál?',
+    fen: '7r/pp2ppk1/q3b1B1/8/3pP2Q/1P1P2P1/P1rB1R1P/7K w - - 1 27',
+    opciones: ['Dxe7', 'Dxh8+', 'Df6+', 'Dh6+'],
+    correcta: 0,
+    explica: 'Todo gira en torno a una clavada: la pieza clavada no puede defender. La línea: 27.Dxe7 Txd2 28.Df6+. Las otras tientan, pero fallan: Dxh8+? se contesta con 27…Rxh8 y las negras quedan mejor; Df6+? se contesta con 27…exf6 y las negras quedan mejor; Dh6+? se contesta con 27…Txh6 y las negras quedan mejor.',
+    prueba: 'Ejercicio 3BYv5 de la base abierta de Lichess (CC0), rating 2186. Stockfish 16 a profundidad 18: Dxe7 es la mejor (+5,8) y la segunda queda en -1,8; las otras tres opciones quedan en -6,5, -9,2, -7,2 (profundidad 14).',
+  },
+  {
+    id: 'tac_lx_01jRL', area: 'tactica', peso: 4, elo: 1841, eloBase: 1841, tipo: 'jugada', lichess: '01jRL', rating: 2241,
+    enunciado: 'Las negras acaban de jugar …Ae5. Juegan las blancas y están en apuros: encuentra la única jugada que no pierde.',
+    fen: 'r5k1/4p3/p2qN1p1/1p1Pb2p/1Pp3b1/Q1N3P1/P4rBP/4R2K w - - 4 31',
+    solucion: { from: 'c3', to: 'e4' },
+    explica: 'Es un ataque a la descubierta: al moverse una pieza, se destapa otra. La línea: 31.Ce4 Db6 32.Cxf2 Dxf2 33.Txe5.',
+    prueba: 'Ejercicio 01jRL de la base abierta de Lichess (CC0), rating 2241. Stockfish 16 a profundidad 18: Ce4 es la mejor (+2,4) y la segunda queda en -3,5.',
+  },
+  {
+    id: 'tac_lx_10tYs', area: 'tactica', peso: 4, elo: 1983, eloBase: 1983, tipo: 'jugada', lichess: '10tYs', rating: 2383,
+    enunciado: 'Las negras acaban de jugar …Ch6. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: 'r4r2/1ppb1pkn/p2p1qpn/3P3p/2P1PN1P/2NB4/PP3QP1/4RRK1 w - - 3 19',
+    solucion: { from: 'e4', to: 'e5' },
+    explica: 'Es un ataque a la descubierta: al moverse una pieza, se destapa otra. La línea: 19.e5 dxe5 20.Cxh5+ gxh5 21.Dg3+.',
+    prueba: 'Ejercicio 10tYs de la base abierta de Lichess (CC0), rating 2383. Stockfish 16 a profundidad 18: e5 es la mejor (+3,3) y la segunda queda en -0,1.',
+  },
+  {
+    id: 'tac_lx_1PXGg_op', area: 'tactica', peso: 4, elo: 1909, eloBase: 1909, tipo: 'opcion_tablero', lichess: '1PXGg', rating: 2459,
+    enunciado: 'Las negras acaban de jugar …Re7. Juegan las blancas y están en apuros. Solo una de estas jugadas salva la partida: ¿cuál?',
+    fen: '7r/4kpp1/2B1p2p/qp2P3/1bpB1P2/r7/1Q3P1P/2R3K1 w - - 5 27',
+    opciones: ['Ab6', 'Dxb4+', 'Ac5+', 'Dxa3'],
+    correcta: 0,
+    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 27.Ab6 c3 28.Axa5 cxb2 29.Axb4+. Las otras tientan, pero fallan: Dxb4+? se contesta con 27…Dxb4 y las negras quedan mejor; Ac5+? se contesta con 27…Axc5 y las negras quedan mejor; Dxa3? se contesta con 27…Axa3 y las negras quedan mejor.',
+    prueba: 'Ejercicio 1PXGg de la base abierta de Lichess (CC0), rating 2459. Stockfish 16 a profundidad 18: Ab6 es la mejor (+1,3) y la segunda queda en -2,4; las otras tres opciones quedan en -7,1, -5,7, -6,2 (profundidad 14).',
+  },
+  {
+    id: 'tac_lx_1PboK', area: 'tactica', peso: 4, elo: 1790, eloBase: 1790, tipo: 'jugada', lichess: '1PboK', rating: 2190,
+    enunciado: 'Las negras acaban de jugar …Th8. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: 'r6r/1p4b1/2p1q1kp/4Pp1N/p2P1Q1R/P4PP1/1P4P1/6K1 w - - 7 32',
+    solucion: { from: 'g3', to: 'g4' },
+    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 32.g4 Taf8 33.gxf5+ Dxf5 34.Tg4+.',
+    prueba: 'Ejercicio 1PboK de la base abierta de Lichess (CC0), rating 2190. Stockfish 16 a profundidad 18: g4 es la mejor (+4,0) y la segunda queda en -0,3.',
+  },
+  {
+    id: 'tac_lx_1lVgR_op', area: 'tactica', peso: 4, elo: 1860, eloBase: 1860, tipo: 'opcion_tablero', lichess: '1lVgR', rating: 2410,
+    enunciado: 'Las negras acaban de jugar …Tec6. Juegan las blancas. Solo una de estas jugadas gana: ¿cuál?',
+    fen: '6k1/pp5p/1qr3pB/3p1p2/1P1Rn3/P1r5/5PPP/3QR1K1 w - - 4 30',
+    opciones: ['Tdxe4', 'Texe4', 'Txd5', 'Td3'],
+    correcta: 0,
+    explica: 'Es un ataque a la descubierta: al moverse una pieza, se destapa otra. La línea: 30.Tdxe4 fxe4 31.Dxd5+. Las otras tientan, pero fallan: Texe4? se contesta con 30…fxe4 y la ventaja se esfuma; Txd5? se contesta con 30…Dxf2+ y la ventaja se esfuma; Td3? se contesta con 30…Dxf2+ y las negras quedan mejor.',
+    prueba: 'Ejercicio 1lVgR de la base abierta de Lichess (CC0), rating 2410. Stockfish 16 a profundidad 18: Tdxe4 es la mejor (+6,7) y la segunda queda en +1,0; las otras tres opciones quedan en -0,4, -0,3, -6,9 (profundidad 14).',
+  },
+  {
+    id: 'tac_lx_2SWaz', area: 'tactica', peso: 4, elo: 1788, eloBase: 1788, tipo: 'jugada', lichess: '2SWaz', rating: 2188,
+    enunciado: 'Las negras acaban de jugar …Dxd5. Juegan las blancas y fuerzan el mate. ¿Cuál es la primera jugada? (Se responde con una sola jugada.)',
+    fen: '2r2rk1/pp1n1ppp/8/3q4/8/2B1P3/PP2Q3/2K3R1 w - - 0 24',
+    solucion: { from: 'g1', to: 'g7' },
+    explica: 'Es un jaque doble: el rey tiene que moverse y no alcanza a tapar nada. La línea: 24.Txg7+ Rh8 25.Tg8+ Rxg8 26.Dg4+.',
+    prueba: 'Ejercicio 2SWaz de la base abierta de Lichess (CC0), rating 2188. Stockfish 16 a profundidad 18: Txg7+ es la mejor (mate en 4) y la segunda queda en -6,1.',
+  },
+  {
+    id: 'tac_lx_0hdec', area: 'tactica', peso: 5, elo: 2004, eloBase: 2004, tipo: 'jugada', lichess: '0hdec', rating: 2404,
+    enunciado: 'Las negras acaban de jugar …Ce3. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '4rrk1/p5pp/2qb4/2p1p3/1p1pN3/1P1PnRPP/PBP3Q1/4R1K1 w - - 2 25',
+    solucion: { from: 'f3', to: 'e3' },
+    explica: 'Es un ataque a la descubierta: al moverse una pieza, se destapa otra. La línea: 25.Tfxe3 dxe3 26.Cf6+ Txf6 27.Dxc6.',
+    prueba: 'Ejercicio 0hdec de la base abierta de Lichess (CC0), rating 2404. Stockfish 16 a profundidad 18: Tfxe3 es la mejor (+4,4) y la segunda queda en -0,7.',
+  },
+  {
+    id: 'tac_lx_16v61', area: 'tactica', peso: 5, elo: 2187, eloBase: 2187, tipo: 'jugada', lichess: '16v61', rating: 2587,
+    enunciado: 'Las negras acaban de jugar …Tae8. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '4rr1k/pp2Nppp/2p2n2/q3nQ2/7R/1B2P3/PP3PPP/5RK1 w - - 8 21',
+    solucion: { from: 'b3', to: 'c2' },
+    explica: 'Es una atracción: se arrastra a una pieza (a menudo el rey) a una casilla fatal. La línea: 21.Ac2 Txe7 22.Txh7+ Rg8 23.Txg7+.',
+    prueba: 'Ejercicio 16v61 de la base abierta de Lichess (CC0), rating 2587. Stockfish 16 a profundidad 18: Ac2 es la mejor (+4,9) y la segunda queda en -1,5.',
+  },
+  {
+    id: 'tac_lx_1CwSd', area: 'tactica', peso: 5, elo: 2073, eloBase: 2073, tipo: 'jugada', lichess: '1CwSd', rating: 2473,
+    enunciado: 'Las negras acaban de jugar …Taa3. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '8/4n3/p2pPk2/2p2Pp1/2P1P3/rr1BK3/8/4R2R w - - 4 39',
+    solucion: { from: 'e4', to: 'e5' },
+    explica: 'Es un ataque a la descubierta: al moverse una pieza, se destapa otra. La línea: 39.e5+ Rxe5 40.Rd2+.',
+    prueba: 'Ejercicio 1CwSd de la base abierta de Lichess (CC0), rating 2473. Stockfish 16 a profundidad 18: e5+ es la mejor (+4,3) y la segunda queda en +0,6.',
+  },
+  {
+    id: 'tac_lx_1Jl6y', area: 'tactica', peso: 5, elo: 2148, eloBase: 2148, tipo: 'jugada', lichess: '1Jl6y', rating: 2548,
+    enunciado: 'Las negras acaban de jugar …De8. Juegan las blancas y están en apuros: encuentra la única jugada que no pierde.',
+    fen: '4qr2/3b3k/3p1pp1/p2P4/Pr4pN/3Q2R1/1P4PP/5R1K w - - 3 31',
+    solucion: { from: 'g3', to: 'e3' },
+    explica: 'Todo gira en torno a una clavada: la pieza clavada no puede defender. La línea: 31.Te3 Df7 32.Te7 Dxe7 33.Cxg6.',
+    prueba: 'Ejercicio 1Jl6y de la base abierta de Lichess (CC0), rating 2548. Stockfish 16 a profundidad 18: Te3 es la mejor (+2,6) y la segunda queda en -0,9.',
+  },
+  {
+    id: 'tac_lx_1roH4', area: 'tactica', peso: 5, elo: 2084, eloBase: 2084, tipo: 'jugada', lichess: '1roH4', rating: 2484,
+    enunciado: 'Las negras acaban de jugar …Td4. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '2r3k1/R4p1p/2b1p1p1/8/2Br1q2/3P3Q/5PPP/4R1K1 w - - 2 31',
+    solucion: { from: 'a7', to: 'f7' },
+    explica: 'Todo gira en torno a una clavada: la pieza clavada no puede defender. La línea: 31.Txf7 Dxf7 32.Axe6.',
+    prueba: 'Ejercicio 1roH4 de la base abierta de Lichess (CC0), rating 2484. Stockfish 16 a profundidad 18: Txf7 es la mejor (+4,6) y la segunda queda en +0,3.',
+  },
+  {
+    id: 'tac_lx_2zsOO', area: 'tactica', peso: 5, elo: 2040, eloBase: 2040, tipo: 'jugada', lichess: '2zsOO', rating: 2440,
+    enunciado: 'Las negras acaban de jugar …Rf6. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '8/p1p5/2qbNkp1/8/3P2R1/2p1QP2/PPK5/7r w - - 2 41',
+    solucion: { from: 'g4', to: 'g6' },
+    explica: 'Es una atracción: se arrastra a una pieza (a menudo el rey) a una casilla fatal. La línea: 41.Txg6+ Rxg6 42.Dg5+ Rf7 43.Cd8+.',
+    prueba: 'Ejercicio 2zsOO de la base abierta de Lichess (CC0), rating 2440. Stockfish 16 a profundidad 18: Txg6+ es la mejor (+5,4) y la segunda queda en +0,3.',
+  },
+  {
+    id: 'tac_lx_3OYlI', area: 'tactica', peso: 5, elo: 2053, eloBase: 2053, tipo: 'jugada', lichess: '3OYlI', rating: 2453,
+    enunciado: 'Las negras acaban de jugar …Axf6. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '1r4k1/p3Q3/b1p2bpp/4P3/q7/5N2/6P1/2K4R w - - 0 27',
+    solucion: { from: 'e7', to: 'e6' },
+    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 27.De6+ Rf8 28.Dxf6+ Re8 29.Dh8+.',
+    prueba: 'Ejercicio 3OYlI de la base abierta de Lichess (CC0), rating 2453. Stockfish 16 a profundidad 18: De6+ es la mejor (+4,1) y la segunda queda en recibe mate en 9.',
+  },
+  {
+    id: 'tac_lx_3TlmP', area: 'tactica', peso: 5, elo: 2111, eloBase: 2111, tipo: 'jugada', lichess: '3TlmP', rating: 2511,
+    enunciado: 'Las negras acaban de jugar …Rh4. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '5r2/2pq1p2/1r1p1np1/1p2p3/p3P2k/2PP3P/PP1QRP1K/R7 w - - 2 26',
+    solucion: { from: 'd2', to: 'h6' },
+    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 26.Dh6+ Ch5 27.Te3 Th8 28.Dxh8.',
+    prueba: 'Ejercicio 3TlmP de la base abierta de Lichess (CC0), rating 2511. Stockfish 16 a profundidad 18: Dh6+ es la mejor (+4,4) y la segunda queda en -0,1.',
+  },
+  {
+    id: 'mate_lx_0cVOh_op', area: 'mate', peso: 1, elo: 1021, eloBase: 1021, tipo: 'opcion_tablero', lichess: '0cVOh', rating: 1571,
+    enunciado: 'Las negras acaban de jugar …Rg6. Juegan las blancas. ¿Cuál de estas jugadas fuerza el mate en dos?',
+    fen: 'r1B1R3/pb3p1p/2p2pk1/q4N2/3P4/2p5/P1P2PPP/1KbR4 w - - 4 26',
+    opciones: ['Tg8+', 'Txc1', 'Axb7', 'Rxc1'],
+    correcta: 0,
+    explica: 'Es mate en dos: la primera jugada no deja defensa. La línea: 26.Tg8+ Rh5 27.g4#. Las otras tientan, pero fallan: Txc1? se contesta con 26…Db4+ y las blancas reciben mate; Axb7? se contesta con 26…Db4+ y las blancas reciben mate; Rxc1? se contesta con 26…Da3+ y las blancas reciben mate.',
+    prueba: 'Ejercicio 0cVOh de la base abierta de Lichess (CC0), rating 1571. Stockfish 16 a profundidad 18: Tg8+ es la mejor (mate en 2) y la segunda queda en -5,3; las otras tres opciones quedan en recibe mate en 2, recibe mate en 2, recibe mate en 2 (profundidad 14).',
+  },
+  {
+    id: 'mate_lx_14sLk', area: 'mate', peso: 1, elo: 760, eloBase: 760, tipo: 'jugada', lichess: '14sLk', rating: 1160,
+    enunciado: 'Las negras acaban de jugar …Dg7. Juegan las blancas y dan mate en dos. ¿Cuál es la primera jugada? (Se responde con una sola jugada.)',
+    fen: 'r1b1Rnk1/6q1/p2p1bQp/1p1P2pB/5p2/2N5/PPP2PPP/6K1 w - - 2 25',
+    solucion: { from: 'e8', to: 'f8' },
+    explica: 'Todo gira en torno a una clavada: la pieza clavada no puede defender. La línea: 25.Txf8+ Rxf8 26.De8#.',
+    prueba: 'Ejercicio 14sLk de la base abierta de Lichess (CC0), rating 1160. Stockfish 16 a profundidad 18: Txf8+ es la mejor (mate en 2) y la segunda queda en -3,2.',
+  },
+  {
+    id: 'mate_lx_1f8IX_op', area: 'mate', peso: 1, elo: 960, eloBase: 960, tipo: 'opcion_tablero', lichess: '1f8IX', rating: 1510,
+    enunciado: 'Las negras acaban de jugar …e5. Juegan las blancas. ¿Cuál de estas jugadas fuerza el mate en dos?',
+    fen: '8/5pp1/6p1/3pp1P1/1r1Pk1rP/R5P1/1P1R1K2/8 w - - 0 43',
+    opciones: ['Te3+', 'Te2+', 'Ta7', 'dxe5'],
+    correcta: 0,
+    explica: 'Es mate en dos: la primera jugada no deja defensa. La línea: 43.Te3+ Rf5 44.Txe5#. Las otras tientan, pero fallan: Te2+? se contesta con 43…Rxd4 y la ventaja se esfuma; Ta7? se contesta con 43…Txd4 y la ventaja se esfuma; dxe5? se contesta con 43…Rxe5 y la ventaja se esfuma.',
+    prueba: 'Ejercicio 1f8IX de la base abierta de Lichess (CC0), rating 1510. Stockfish 16 a profundidad 18: Te3+ es la mejor (mate en 2) y la segunda queda en +0,5; las otras tres opciones quedan en +0,0, +0,3, 0,0 (profundidad 14).',
+  },
+  {
+    id: 'mate_lx_1tnvH_op', area: 'mate', peso: 1, elo: 859, eloBase: 859, tipo: 'opcion_tablero', lichess: '1tnvH', rating: 1409,
+    enunciado: 'Las negras acaban de jugar …Rh6. Juegan las blancas. ¿Cuál de estas jugadas fuerza el mate en dos?',
+    fen: '8/R3N3/5p1k/p5p1/r2b2P1/7r/4K3/8 w - - 1 52',
+    opciones: ['Cf5+', 'Cg8+', 'Txa5', 'Cc8'],
+    correcta: 0,
+    explica: 'Es mate en dos: la primera jugada no deja defensa. La línea: 52.Cf5+ Rg6 53.Tg7#. Las otras tientan, pero fallan: Cg8+? se contesta con 52…Rg6 y las negras quedan mejor; Txa5? se contesta con 52…Txa5 y las negras quedan mejor; Cc8? se contesta con 52…Ta2+ y las blancas reciben mate.',
+    prueba: 'Ejercicio 1tnvH de la base abierta de Lichess (CC0), rating 1409. Stockfish 16 a profundidad 18: Cf5+ es la mejor (mate en 2) y la segunda queda en -35,8; las otras tres opciones quedan en -11,3, -39,2, recibe mate en 2 (profundidad 14).',
+  },
+  {
+    id: 'mate_lx_2MKgQ', area: 'mate', peso: 1, elo: 1024, eloBase: 1024, tipo: 'jugada', lichess: '2MKgQ', rating: 1424,
+    enunciado: 'Las negras acaban de jugar …Txf7. Juegan las blancas y dan mate en dos. ¿Cuál es la primera jugada? (Se responde con una sola jugada.)',
+    fen: '6k1/p1R2r1q/5Q2/p2p4/3n4/7P/6P1/6K1 w - - 0 41',
+    solucion: { from: 'c7', to: 'c8' },
+    explica: 'Es mate en dos: la primera jugada no deja defensa. La línea: 41.Tc8+ Tf8 42.Txf8#.',
+    prueba: 'Ejercicio 2MKgQ de la base abierta de Lichess (CC0), rating 1424. Stockfish 16 a profundidad 18: Tc8+ es la mejor (mate en 2) y la segunda queda en +0,1.',
+  },
+  {
+    id: 'mate_lx_2MZiP', area: 'mate', peso: 1, elo: 770, eloBase: 770, tipo: 'jugada', lichess: '2MZiP', rating: 1170,
+    enunciado: 'Las negras acaban de jugar …Txh3. Juegan las blancas y dan mate en dos. ¿Cuál es la primera jugada? (Se responde con una sola jugada.)',
+    fen: '4r1k1/p1R2pp1/1p6/3p3Q/1P1P1PK1/P6r/6P1/4q3 w - - 0 42',
+    solucion: { from: 'h5', to: 'f7' },
+    explica: 'Es mate en dos: la primera jugada no deja defensa. La línea: 42.Dxf7+ Rh8 43.Dxg7#.',
+    prueba: 'Ejercicio 2MZiP de la base abierta de Lichess (CC0), rating 1170. Stockfish 16 a profundidad 18: Dxf7+ es la mejor (mate en 2) y la segunda queda en -1,4.',
+  },
+  {
+    id: 'mate_lx_2P74l_op', area: 'mate', peso: 1, elo: 499, eloBase: 499, tipo: 'opcion_tablero', lichess: '2P74l', rating: 1049,
+    enunciado: 'Las negras acaban de jugar …Cd6. Juegan las blancas. ¿Cuál de estas jugadas fuerza el mate en dos?',
+    fen: 'r1b2r1k/pp2N1pp/3n4/2p1p3/q1BpP1P1/1R3P2/P1P4P/1R3QK1 w - - 2 27',
+    opciones: ['Cg6+', 'Cxc8', 'Cg8', 'Cf5'],
+    correcta: 0,
+    explica: 'Hay un sacrificio: se entrega material para ganar más. La línea: 27.Cg6+ hxg6 28.Dh3#. Las otras tientan, pero fallan: Cxc8? se contesta con 27…Taxc8 y las negras quedan mejor; Cg8? se contesta con 27…Dxc4 y las negras quedan mejor; Cf5? se contesta con 27…Cxc4 y las negras quedan mejor.',
+    prueba: 'Ejercicio 2P74l de la base abierta de Lichess (CC0), rating 1049. Stockfish 16 a profundidad 18: Cg6+ es la mejor (mate en 2) y la segunda queda en -1,1; las otras tres opciones quedan en -3,3, -5,6, -5,1 (profundidad 14).',
+  },
+  {
+    id: 'mate_lx_2lXP4', area: 'mate', peso: 1, elo: 718, eloBase: 718, tipo: 'jugada', lichess: '2lXP4', rating: 1118,
+    enunciado: 'Las negras acaban de jugar …Tg8. Juegan las blancas y dan mate en dos. ¿Cuál es la primera jugada? (Se responde con una sola jugada.)',
+    fen: '6r1/7k/p3pQ1p/4Bb2/5P2/3p1KPp/P2R4/2q5 w - - 6 43',
+    solucion: { from: 'f6', to: 'f7' },
+    explica: 'Es mate en dos: la primera jugada no deja defensa. La línea: 43.Df7+ Tg7 44.Dxg7#.',
+    prueba: 'Ejercicio 2lXP4 de la base abierta de Lichess (CC0), rating 1118. Stockfish 16 a profundidad 18: Df7+ es la mejor (mate en 2) y la segunda queda en 0,0.',
+  },
+  {
+    id: 'mate_lx_0yMvZ', area: 'mate', peso: 2, elo: 1261, eloBase: 1261, tipo: 'jugada', lichess: '0yMvZ', rating: 1661,
+    enunciado: 'Las negras acaban de jugar …Ah3. Juegan las blancas y dan mate en dos. ¿Cuál es la primera jugada? (Se responde con una sola jugada.)',
+    fen: '2r1kb1r/4p1pp/p3N3/1p2N3/5B2/5P1b/P1P4P/3RK3 w k - 4 22',
+    solucion: { from: 'd1', to: 'd8' },
+    explica: 'Hay un sacrificio: se entrega material para ganar más. La línea: 22.Td8+ Txd8 23.Cc7#.',
+    prueba: 'Ejercicio 0yMvZ de la base abierta de Lichess (CC0), rating 1661. Stockfish 16 a profundidad 18: Td8+ es la mejor (mate en 2) y la segunda queda en -4,1.',
+  },
+  {
+    id: 'mate_lx_1Dx9L', area: 'mate', peso: 2, elo: 1321, eloBase: 1321, tipo: 'jugada', lichess: '1Dx9L', rating: 1721,
+    enunciado: 'Las negras acaban de jugar …Af6. Juegan las blancas y dan mate en dos. ¿Cuál es la primera jugada? (Se responde con una sola jugada.)',
+    fen: 'r1b4k/1pQ3pp/p4bq1/8/3P4/2P3P1/PP1N2PP/5RK1 w - - 1 25',
+    solucion: { from: 'c7', to: 'd8' },
+    explica: 'El golpe va a la última fila, donde el rey no tiene salida. La línea: 25.Dd8+ Axd8 26.Tf8#.',
+    prueba: 'Ejercicio 1Dx9L de la base abierta de Lichess (CC0), rating 1721. Stockfish 16 a profundidad 18: Dd8+ es la mejor (mate en 2) y la segunda queda en +0,1.',
+  },
+  {
+    id: 'mate_lx_1RuLR', area: 'mate', peso: 2, elo: 1194, eloBase: 1194, tipo: 'jugada', lichess: '1RuLR', rating: 1594,
+    enunciado: 'Las negras acaban de jugar …Ac5. Juegan las blancas y dan mate en dos. ¿Cuál es la primera jugada? (Se responde con una sola jugada.)',
+    fen: '1r1q2k1/R5pp/4p3/2bp4/1ppNn3/4B2P/1PP3P1/5QK1 w - - 1 25',
+    solucion: { from: 'f1', to: 'f7' },
+    explica: 'Es mate en dos: la primera jugada no deja defensa. La línea: 25.Df7+ Rh8 26.Dxg7#.',
+    prueba: 'Ejercicio 1RuLR de la base abierta de Lichess (CC0), rating 1594. Stockfish 16 a profundidad 18: Df7+ es la mejor (mate en 2) y la segunda queda en -1,7.',
+  },
+  {
+    id: 'mate_lx_1lwcs_op', area: 'mate', peso: 2, elo: 1375, eloBase: 1375, tipo: 'opcion_tablero', lichess: '1lwcs', rating: 1925,
+    enunciado: 'Las negras acaban de jugar …Rd7. Juegan las blancas. ¿Cuál de estas jugadas fuerza el mate en dos?',
+    fen: '7R/1p1knp2/1Q1p4/1K2p3/P3P3/1P6/2qb1P2/8 w - - 5 36',
+    opciones: ['Td8+', 'Dxb7+', 'Dd8+', 'Dxd6+'],
+    correcta: 0,
+    explica: 'Es mate en dos: la primera jugada no deja defensa. La línea: 36.Td8+ Re6 37.Dxd6#. Las otras tientan, pero fallan: Dxb7+? se contesta con 36…Re6 y la ventaja se esfuma; Dd8+? se contesta con 36…Re6 y las negras quedan mejor; Dxd6+? se contesta con 36…Rxd6 y las blancas reciben mate.',
+    prueba: 'Ejercicio 1lwcs de la base abierta de Lichess (CC0), rating 1925. Stockfish 16 a profundidad 18: Td8+ es la mejor (mate en 2) y la segunda queda en 0,0; las otras tres opciones quedan en -0,0, -7,9, recibe mate en 6 (profundidad 14).',
+  },
+  {
+    id: 'mate_lx_2K5bx_op', area: 'mate', peso: 2, elo: 1251, eloBase: 1251, tipo: 'opcion_tablero', lichess: '2K5bx', rating: 1801,
+    enunciado: 'Las negras acaban de jugar …Cf6. Juegan las blancas. ¿Cuál de estas jugadas fuerza el mate en dos?',
+    fen: 'rn1q1b1r/ppp1pkp1/3ppnp1/8/3P2Q1/3B3P/PPP2P2/RNB1K2R w KQ - 2 14',
+    opciones: ['Axg6+', 'Dxg6+', 'Dxe6+', 'Ac4'],
+    correcta: 0,
+    explica: 'Es una desviación: se aleja al defensor de lo que defendía. La línea: 14.Axg6+ Rg8 15.Dxe6#. Las otras tientan, pero fallan: Dxg6+? se contesta con 14…Rg8 y la ventaja se esfuma; Dxe6+? se contesta con 14…Rxe6 y las negras quedan mejor; Ac4? se contesta con 14…Cxg4 y las negras quedan mejor.',
+    prueba: 'Ejercicio 2K5bx de la base abierta de Lichess (CC0), rating 1801. Stockfish 16 a profundidad 18: Axg6+ es la mejor (mate en 2) y la segunda queda en +1,3; las otras tres opciones quedan en +1,1, -6,6, -7,3 (profundidad 14).',
+  },
+  {
+    id: 'mate_lx_2Qrb9', area: 'mate', peso: 2, elo: 1202, eloBase: 1202, tipo: 'jugada', lichess: '2Qrb9', rating: 1602,
+    enunciado: 'Las negras acaban de jugar …b2. Juegan las blancas y dan mate en dos. ¿Cuál es la primera jugada? (Se responde con una sola jugada.)',
+    fen: 'r7/6p1/3R3p/8/r1p2P2/4R1P1/pp2K1P1/2k5 w - - 0 53',
+    solucion: { from: 'e3', to: 'c3' },
+    explica: 'Es mate en dos: la primera jugada no deja defensa. La línea: 53.Tc3+ Rb1 54.Td1#.',
+    prueba: 'Ejercicio 2Qrb9 de la base abierta de Lichess (CC0), rating 1602. Stockfish 16 a profundidad 18: Tc3+ es la mejor (mate en 2) y la segunda queda en 0,0.',
+  },
+  {
+    id: 'mate_lx_055jM_op', area: 'mate', peso: 3, elo: 1585, eloBase: 1585, tipo: 'opcion_tablero', lichess: '055jM', rating: 2135,
+    enunciado: 'Las negras acaban de jugar …Axa1. Juegan las blancas. ¿Cuál de estas jugadas fuerza el mate en dos?',
+    fen: 'r4k1r/ppqb2pp/4p1B1/3pP3/8/3Q2B1/P1P2PP1/bN3K1R w - - 0 18',
+    opciones: ['Df3+', 'Df5+', 'Da3+', 'Dxd5'],
+    correcta: 0,
+    explica: 'Es mate en dos: la primera jugada no deja defensa. La línea: 18.Df3+ Re7 19.Ah4#. Las otras tientan, pero fallan: Df5+? se contesta con 18…exf5 y las negras quedan mejor; Da3+? se contesta con 18…Rg8 y las negras quedan mejor; Dxd5? se contesta con 18…exd5 y las negras quedan mejor.',
+    prueba: 'Ejercicio 055jM de la base abierta de Lichess (CC0), rating 2135. Stockfish 16 a profundidad 18: Df3+ es la mejor (mate en 2) y la segunda queda en -1,6; las otras tres opciones quedan en -9,5, -2,8, -8,1 (profundidad 14).',
+  },
+  {
+    id: 'mate_lx_1m6zN', area: 'mate', peso: 3, elo: 1634, eloBase: 1634, tipo: 'jugada', lichess: '1m6zN', rating: 2034,
+    enunciado: 'Las negras acaban de jugar …Rh6. Juegan las blancas y dan mate en dos. ¿Cuál es la primera jugada? (Se responde con una sola jugada.)',
+    fen: '3b3r/8/1p1N3k/2p1p2p/8/1PP3R1/r3p1P1/5RK1 w - - 2 39',
+    solucion: { from: 'd6', to: 'f5' },
+    explica: 'Es mate en dos: la primera jugada no deja defensa. La línea: 39.Cf5+ Rh7 40.Tg7#.',
+    prueba: 'Ejercicio 1m6zN de la base abierta de Lichess (CC0), rating 2034. Stockfish 16 a profundidad 18: Cf5+ es la mejor (mate en 2) y la segunda queda en -0,6.',
+  },
+  {
+    id: 'mate_lx_2Euae_op', area: 'mate', peso: 3, elo: 1649, eloBase: 1649, tipo: 'opcion_tablero', lichess: '2Euae', rating: 2199,
+    enunciado: 'Las negras acaban de jugar …Cd8. Juegan las blancas. ¿Cuál de estas jugadas fuerza el mate en dos?',
+    fen: 'r2n1k1r/ppp3pp/1b1pQn2/4p3/2BqP3/3P4/PPP3PP/R1BK1R2 w - - 2 14',
+    opciones: ['Txf6+', 'Dxf6+', 'Dxd6+', 'De7+'],
+    correcta: 0,
+    explica: 'Hay un sacrificio: se entrega material para ganar más. La línea: 14.Txf6+ gxf6 15.Ah6#. Las otras tientan, pero fallan: Dxf6+? se contesta con 14…gxf6 y las negras quedan mejor; Dxd6+? se contesta con 14…Dxd6 y las negras quedan mejor; De7+? se contesta con 14…Rxe7 y las negras quedan mejor.',
+    prueba: 'Ejercicio 2Euae de la base abierta de Lichess (CC0), rating 2199. Stockfish 16 a profundidad 18: Txf6+ es la mejor (mate en 2) y la segunda queda en +0,9; las otras tres opciones quedan en -5,2, -7,8, -8,7 (profundidad 14).',
+  },
+  {
+    id: 'mate_lx_2MajI', area: 'mate', peso: 3, elo: 1598, eloBase: 1598, tipo: 'jugada', lichess: '2MajI', rating: 1998,
+    enunciado: 'Las negras acaban de jugar …g5. Juegan las blancas y dan mate en dos. ¿Cuál es la primera jugada? (Se responde con una sola jugada.)',
+    fen: '3Q3R/pp3pqp/2p1r2k/3b2p1/2r2P2/2P1R3/P4P1P/6K1 w - - 0 30',
+    solucion: { from: 'e3', to: 'h3' },
+    explica: 'Es mate en dos: la primera jugada no deja defensa. La línea: 30.Th3+ Rg6 31.Dxg5#.',
+    prueba: 'Ejercicio 2MajI de la base abierta de Lichess (CC0), rating 1998. Stockfish 16 a profundidad 18: Th3+ es la mejor (mate en 2) y la segunda queda en -3,9.',
+  },
+  {
+    id: 'mate_lx_2mdbl', area: 'mate', peso: 3, elo: 1649, eloBase: 1649, tipo: 'jugada', lichess: '2mdbl', rating: 2049,
+    enunciado: 'Las negras acaban de jugar …Rf6. Juegan las blancas y dan mate en dos. ¿Cuál es la primera jugada? (Se responde con una sola jugada.)',
+    fen: 'r4r2/pp3p2/2p1qk2/3p1N1Q/2PPn3/1P5P/P4PP1/2R3K1 w - - 3 27',
+    solucion: { from: 'h5', to: 'h6' },
+    explica: 'Hay un sacrificio: se entrega material para ganar más. La línea: 27.Dh6+ Rxf5 28.g4#.',
+    prueba: 'Ejercicio 2mdbl de la base abierta de Lichess (CC0), rating 2049. Stockfish 16 a profundidad 18: Dh6+ es la mejor (mate en 2) y la segunda queda en -2,5.',
+  },
+  {
+    id: 'mate_lx_34HJc', area: 'mate', peso: 3, elo: 1447, eloBase: 1447, tipo: 'jugada', lichess: '34HJc', rating: 1847,
+    enunciado: 'Las negras acaban de jugar …Dd1. Juegan las blancas y dan mate en dos. ¿Cuál es la primera jugada? (Se responde con una sola jugada.)',
+    fen: '6k1/p3pp1p/1p1p3P/3Pb2Q/4Pp2/1P1n1K2/P3N1P1/3q4 w - - 4 35',
+    solucion: { from: 'h5', to: 'g4' },
+    explica: 'Es mate en dos: la primera jugada no deja defensa. La línea: 35.Dg4+ Ag7 36.Dxg7#.',
+    prueba: 'Ejercicio 34HJc de la base abierta de Lichess (CC0), rating 1847. Stockfish 16 a profundidad 18: Dg4+ es la mejor (mate en 2) y la segunda queda en -11,2.',
+  },
+  {
+    id: 'mate_lx_12lYH_op', area: 'mate', peso: 4, elo: 1898, eloBase: 1898, tipo: 'opcion_tablero', lichess: '12lYH', rating: 2448,
+    enunciado: 'Las negras acaban de jugar …Rd3. Juegan las blancas. ¿Cuál de estas jugadas fuerza el mate en dos?',
+    fen: 'r6r/p1R3pp/4p3/P3Q3/3P4/1pPk4/1P4qP/R3K3 w Q - 6 25',
+    opciones: ['O-O-O+', 'Td1+', 'Df5+', 'Dg3+'],
+    correcta: 0,
+    explica: 'Es un ataque a la descubierta: al moverse una pieza, se destapa otra. La línea: 25.O-O-O+ Dd2+ 26.Txd2#. Las otras tientan, pero fallan: Td1+? se contesta con 25…Rc2 y las negras quedan mejor; Df5+? se contesta con 25…exf5 y las negras quedan mejor; Dg3+? se contesta con 25…Dxg3+ y las negras quedan mejor.',
+    prueba: 'Ejercicio 12lYH de la base abierta de Lichess (CC0), rating 2448. Stockfish 16 a profundidad 18: O-O-O+ es la mejor (mate en 2) y la segunda queda en -0,1; las otras tres opciones quedan en -3,3, -6,2, -2,5 (profundidad 14).',
+  },
+  {
+    id: 'mate_lx_1ELAm_op', area: 'mate', peso: 4, elo: 1876, eloBase: 1876, tipo: 'opcion_tablero', lichess: '1ELAm', rating: 2426,
+    enunciado: 'Las negras acaban de jugar …Rxg6. Juegan las blancas. ¿Cuál de estas jugadas fuerza el mate?',
+    fen: 'r1bq1r2/1p2pp2/3p2k1/8/p1PbP3/P1N1B3/1PKnB3/3R3R w - - 0 20',
+    opciones: ['Th6+', 'Txd2', 'Thg1+', 'Tdg1+'],
+    correcta: 0,
+    explica: 'Fuerza el mate: la primera jugada no deja defensa. La línea: 20.Th6+ Rg7 21.Tg1+ Ag4 22.Txg4#. Las otras tientan, pero fallan: Txd2? se contesta con 20…Axe3 y las negras quedan mejor; Thg1+? se contesta con 20…Rf6 y la ventaja se esfuma; Tdg1+? se contesta con 20…Rf6 y la ventaja se esfuma.',
+    prueba: 'Ejercicio 1ELAm de la base abierta de Lichess (CC0), rating 2426. Stockfish 16 a profundidad 18: Th6+ es la mejor (mate en 3) y la segunda queda en +0,7; las otras tres opciones quedan en -4,5, +0,1, +0,2 (profundidad 14).',
+  },
+  {
+    id: 'mate_lx_1UXGB', area: 'mate', peso: 4, elo: 1871, eloBase: 1871, tipo: 'jugada', lichess: '1UXGB', rating: 2271,
+    enunciado: 'Las negras acaban de jugar …Rf8. Juegan las blancas y dan mate en dos. ¿Cuál es la primera jugada? (Se responde con una sola jugada.)',
+    fen: '3rqk2/3rN2p/p3Q3/2P1B3/1P6/P3p3/6PP/6K1 w - - 2 32',
+    solucion: { from: 'e6', to: 'h6' },
+    explica: 'Hay un sacrificio: se entrega material para ganar más. La línea: 32.Dh6+ Rxe7 33.Df6#.',
+    prueba: 'Ejercicio 1UXGB de la base abierta de Lichess (CC0), rating 2271. Stockfish 16 a profundidad 18: Dh6+ es la mejor (mate en 2) y la segunda queda en -3,4.',
+  },
+  {
+    id: 'mate_lx_1iHp2', area: 'mate', peso: 4, elo: 1765, eloBase: 1765, tipo: 'jugada', lichess: '1iHp2', rating: 2165,
+    enunciado: 'Las negras acaban de jugar …Af6. Juegan las blancas y dan mate en dos. ¿Cuál es la primera jugada? (Se responde con una sola jugada.)',
+    fen: 'r1b4r/pp3Rpp/3p1b2/2kp4/Q7/4P3/PqP3PP/3R2K1 w - - 4 19',
+    solucion: { from: 'a4', to: 'a5' },
+    explica: 'Es mate en dos: la primera jugada no deja defensa. La línea: 19.Da5+ Db5 20.Tc7#.',
+    prueba: 'Ejercicio 1iHp2 de la base abierta de Lichess (CC0), rating 2165. Stockfish 16 a profundidad 18: Da5+ es la mejor (mate en 2) y la segunda queda en 0,0.',
+  },
+  {
+    id: 'mate_lx_2Hjze', area: 'mate', peso: 4, elo: 1948, eloBase: 1948, tipo: 'jugada', lichess: '2Hjze', rating: 2348,
+    enunciado: 'Las negras acaban de jugar …Ta7. Juegan las blancas y dan mate en dos. ¿Cuál es la primera jugada? (Se responde con una sola jugada.)',
+    fen: '2r5/r2p3p/b4pp1/1p1Rp3/p1k1P3/P3KP2/6PP/1R6 w - - 1 29',
+    solucion: { from: 'e3', to: 'd2' },
+    explica: 'Es mate en dos: la primera jugada no deja defensa. La línea: 29.Rd2 b4 30.Txb4#.',
+    prueba: 'Ejercicio 2Hjze de la base abierta de Lichess (CC0), rating 2348. Stockfish 16 a profundidad 18: Rd2 es la mejor (mate en 2) y la segunda queda en 0,0.',
+  },
+  {
+    id: 'mate_lx_3SR7J', area: 'mate', peso: 4, elo: 1826, eloBase: 1826, tipo: 'jugada', lichess: '3SR7J', rating: 2226,
+    enunciado: 'Las negras acaban de jugar …Dg3. Juegan las blancas y dan mate en dos. ¿Cuál es la primera jugada? (Se responde con una sola jugada.)',
+    fen: 'r7/1p1n1Qpk/2p2nNp/7P/2BP4/2P3q1/Pp4P1/4R1K1 w - - 1 27',
+    solucion: { from: 'f7', to: 'g7' },
+    explica: 'Es una atracción: se arrastra a una pieza (a menudo el rey) a una casilla fatal. La línea: 27.Dxg7+ Rxg7 28.Te7#.',
+    prueba: 'Ejercicio 3SR7J de la base abierta de Lichess (CC0), rating 2226. Stockfish 16 a profundidad 18: Dxg7+ es la mejor (mate en 2) y la segunda queda en -3,7.',
+  },
+  {
+    id: 'mate_lx_16JJO', area: 'mate', peso: 5, elo: 2004, eloBase: 2004, tipo: 'jugada', lichess: '16JJO', rating: 2404,
+    enunciado: 'Las negras acaban de jugar …Rf8. Juegan las blancas y fuerzan el mate. ¿Cuál es la primera jugada? (Se responde con una sola jugada.)',
+    fen: '1r3kr1/R2n2N1/2p1Q2p/3p4/8/2q1P2P/6PK/8 w - - 3 30',
+    solucion: { from: 'e6', to: 'd6' },
+    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 30.Dd6+ Rxg7 31.Txd7+ Rh8 32.Dxh6#.',
+    prueba: 'Ejercicio 16JJO de la base abierta de Lichess (CC0), rating 2404. Stockfish 16 a profundidad 18: Dd6+ es la mejor (mate en 3) y la segunda queda en +0,1.',
+  },
+  {
+    id: 'mate_lx_1Jile', area: 'mate', peso: 5, elo: 2014, eloBase: 2014, tipo: 'jugada', lichess: '1Jile', rating: 2414,
+    enunciado: 'Las negras acaban de jugar …d5. Juegan las blancas y dan mate en dos. ¿Cuál es la primera jugada? (Se responde con una sola jugada.)',
+    fen: 'r2q2kr/pp1nb1pp/5n2/3p2Q1/2B5/4P3/PB1P2PP/R4RK1 w - - 0 18',
+    solucion: { from: 'g5', to: 'd5' },
+    explica: 'Hay un sacrificio: se entrega material para ganar más. La línea: 18.Dxd5+ Cxd5 19.Axd5#.',
+    prueba: 'Ejercicio 1Jile de la base abierta de Lichess (CC0), rating 2414. Stockfish 16 a profundidad 18: Dxd5+ es la mejor (mate en 2) y la segunda queda en +1,2.',
+  },
+  {
+    id: 'mate_lx_1WbmU', area: 'mate', peso: 5, elo: 2131, eloBase: 2131, tipo: 'jugada', lichess: '1WbmU', rating: 2531,
+    enunciado: 'Las negras acaban de jugar …Axa1. Juegan las blancas y fuerzan el mate. ¿Cuál es la primera jugada? (Se responde con una sola jugada.)',
+    fen: '4r2r/1k4p1/1pb1qp2/4p2p/1Q5P/6P1/3B3K/bR6 w - - 0 37',
+    solucion: { from: 'b4', to: 'b6' },
+    explica: 'La línea: 37.Dxb6+ Rc8 38.Db8+ Rd7 39.Tb7+.',
+    prueba: 'Ejercicio 1WbmU de la base abierta de Lichess (CC0), rating 2531. Stockfish 16 a profundidad 18: Dxb6+ es la mejor (mate en 6) y la segunda queda en -10,3.',
+  },
+  {
+    id: 'mate_lx_25AB3', area: 'mate', peso: 5, elo: 2046, eloBase: 2046, tipo: 'jugada', lichess: '25AB3', rating: 2446,
+    enunciado: 'Las negras acaban de jugar …Cb6. Juegan las blancas y fuerzan el mate. ¿Cuál es la primera jugada? (Se responde con una sola jugada.)',
+    fen: 'r1bq1r2/1pp1N1bk/1n2Q1pp/p4p2/2B5/5N2/PPP2PPP/R3K2R w KQ - 3 17',
+    solucion: { from: 'f3', to: 'g5' },
+    explica: 'Hay un sacrificio: se entrega material para ganar más. La línea: 17.Cg5+ hxg5 18.Dxg6+ Rh8 19.Dh5+.',
+    prueba: 'Ejercicio 25AB3 de la base abierta de Lichess (CC0), rating 2446. Stockfish 16 a profundidad 18: Cg5+ es la mejor (mate en 4) y la segunda queda en -1,8.',
+  },
+  {
+    id: 'mate_lx_2GWtd', area: 'mate', peso: 5, elo: 2037, eloBase: 2037, tipo: 'jugada', lichess: '2GWtd', rating: 2437,
+    enunciado: 'Las negras acaban de jugar …gxh6. Juegan las blancas y fuerzan el mate. ¿Cuál es la primera jugada? (Se responde con una sola jugada.)',
+    fen: 'r6k/p2qrR1p/1p2n2p/2bpP3/6Q1/2B5/1P4PP/5R1K w - - 0 29',
+    solucion: { from: 'g4', to: 'g7' },
+    explica: 'El golpe va a la última fila, donde el rey no tiene salida. La línea: 29.Dg7+ Cxg7 30.Tf8+ Txf8 31.Txf8#.',
+    prueba: 'Ejercicio 2GWtd de la base abierta de Lichess (CC0), rating 2437. Stockfish 16 a profundidad 18: Dg7+ es la mejor (mate en 3) y la segunda queda en -3,3.',
+  },
+  {
+    id: 'mate_lx_2VR9J', area: 'mate', peso: 5, elo: 2093, eloBase: 2093, tipo: 'jugada', lichess: '2VR9J', rating: 2493,
+    enunciado: 'Las negras acaban de jugar …Tae8. Juegan las blancas y fuerzan el mate. ¿Cuál es la primera jugada? (Se responde con una sola jugada.)',
+    fen: '4rr2/p1q2ppk/2p4p/1p2bR2/4Q3/7R/PPP3PP/6K1 w - - 1 24',
+    solucion: { from: 'h3', to: 'h6' },
+    explica: 'Es una atracción: se arrastra a una pieza (a menudo el rey) a una casilla fatal. La línea: 24.Txh6+ Rg8 25.Th8+ Rxh8 26.Th5+.',
+    prueba: 'Ejercicio 2VR9J de la base abierta de Lichess (CC0), rating 2493. Stockfish 16 a profundidad 18: Txh6+ es la mejor (mate en 4) y la segunda queda en -3,1.',
+  },
+  {
+    id: 'mate_lx_2afa4', area: 'mate', peso: 5, elo: 2097, eloBase: 2097, tipo: 'jugada', lichess: '2afa4', rating: 2497,
+    enunciado: 'Las negras acaban de jugar …Tb2. Juegan las blancas y fuerzan el mate. ¿Cuál es la primera jugada? (Se responde con una sola jugada.)',
+    fen: '3r2k1/2q1bpp1/2p1p3/p2nP1PQ/4NP2/2PB4/Pr1B2K1/R7 w - - 1 26',
+    solucion: { from: 'h5', to: 'h7' },
+    explica: 'Es un jaque doble: el rey tiene que moverse y no alcanza a tapar nada. La línea: 26.Dh7+ Rxh7 27.Cf6+ Rh8 28.Th1#.',
+    prueba: 'Ejercicio 2afa4 de la base abierta de Lichess (CC0), rating 2497. Stockfish 16 a profundidad 18: Dh7+ es la mejor (mate en 3) y la segunda queda en 0,0.',
+  },
+  {
+    id: 'mate_lx_2e5hC', area: 'mate', peso: 5, elo: 2020, eloBase: 2020, tipo: 'jugada', lichess: '2e5hC', rating: 2420,
+    enunciado: 'Las negras acaban de jugar …Rh5. Juegan las blancas y dan mate en dos. ¿Cuál es la primera jugada? (Se responde con una sola jugada.)',
+    fen: '8/1R6/5K2/7k/8/p5P1/rp6/8 w - - 2 62',
+    solucion: { from: 'b7', to: 'b4' },
+    explica: 'Es mate en dos: la primera jugada no deja defensa. La línea: 62.Tb4 b1=D 63.Th4#.',
+    prueba: 'Ejercicio 2e5hC de la base abierta de Lichess (CC0), rating 2420. Stockfish 16 a profundidad 18: Tb4 es la mejor (mate en 2) y la segunda queda en -0,0.',
+  },
+  {
+    id: 'fin_lx_0MoLE', area: 'finales', peso: 1, elo: 737, eloBase: 737, tipo: 'jugada', lichess: '0MoLE', rating: 1137,
+    enunciado: 'Las negras acaban de jugar …Re7. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '8/p1b1k2p/2p3p1/2n1P3/2B5/4K2P/PB6/8 w - - 2 37',
+    solucion: { from: 'b2', to: 'a3' },
+    explica: 'Todo gira en torno a una clavada: la pieza clavada no puede defender. La línea: 37.Aa3 Axe5 38.Axc5+.',
+    prueba: 'Ejercicio 0MoLE de la base abierta de Lichess (CC0), rating 1137. Stockfish 16 a profundidad 18: Aa3 es la mejor (+4,7) y la segunda queda en +0,1.',
+  },
+  {
+    id: 'fin_lx_0NyDh_op', area: 'finales', peso: 1, elo: 835, eloBase: 835, tipo: 'opcion_tablero', lichess: '0NyDh', rating: 1385,
+    enunciado: 'Las negras acaban de jugar …Ae6. Juegan las blancas. Solo una de estas jugadas gana: ¿cuál?',
+    fen: '6k1/1p3ppp/2n1b3/p2N4/2B1p3/PN2b3/1P4PP/5K2 w - - 4 28',
+    opciones: ['Cxe3', 'Ce7+', 'Cf6+', 'Cxa5'],
+    correcta: 0,
+    explica: 'Hay algo sin defender, y hay que verlo antes que el rival. La línea: 28.Cxe3 Axc4+ 29.Cxc4. Las otras tientan, pero fallan: Ce7+? se contesta con 28…Cxe7 y las negras quedan mejor; Cf6+? se contesta con 28…gxf6 y las negras quedan mejor; Cxa5? se contesta con 28…Cxa5 y las negras quedan mejor.',
+    prueba: 'Ejercicio 0NyDh de la base abierta de Lichess (CC0), rating 1385. Stockfish 16 a profundidad 18: Cxe3 es la mejor (+4,6) y la segunda queda en -3,1; las otras tres opciones quedan en -5,3, -6,1, -5,2 (profundidad 14).',
+  },
+  {
+    id: 'fin_lx_0RquG', area: 'finales', peso: 1, elo: 1086, eloBase: 1086, tipo: 'jugada', lichess: '0RquG', rating: 1486,
+    enunciado: 'Las negras acaban de jugar …Ab5. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '6k1/rB3pq1/p3p2p/1b4p1/8/4PQP1/P6P/3R2K1 w - - 3 33',
+    solucion: { from: 'd1', to: 'd8' },
+    explica: 'Es una desviación: se aleja al defensor de lo que defendía. La línea: 33.Td8+ Rh7 34.Ae4+ f5 35.Axf5+.',
+    prueba: 'Ejercicio 0RquG de la base abierta de Lichess (CC0), rating 1486. Stockfish 16 a profundidad 18: Td8+ es la mejor (+4,4) y la segunda queda en -1,6.',
+  },
+  {
+    id: 'fin_lx_1Gm3s', area: 'finales', peso: 1, elo: 749, eloBase: 749, tipo: 'jugada', lichess: '1Gm3s', rating: 1149,
+    enunciado: 'Las negras acaban de jugar …Rf7. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '8/1p3kpp/p1p1r1r1/3p4/3PpP2/1P2P1RP/P4P1K/6R1 w - - 8 29',
+    solucion: { from: 'f4', to: 'f5' },
+    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 29.f5 Td6 30.fxg6+.',
+    prueba: 'Ejercicio 1Gm3s de la base abierta de Lichess (CC0), rating 1149. Stockfish 16 a profundidad 18: f5 es la mejor (+5,6) y la segunda queda en +0,5.',
+  },
+  {
+    id: 'fin_lx_2gqYH', area: 'finales', peso: 1, elo: 1051, eloBase: 1051, tipo: 'jugada', lichess: '2gqYH', rating: 1451,
+    enunciado: 'Las negras acaban de jugar …Ae7. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '8/4bpk1/1p2p3/6p1/2P1Q3/5NPK/5r2/5n2 w - - 2 46',
+    solucion: { from: 'e4', to: 'd4' },
+    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 46.Dd4+ f6 47.Dxf2.',
+    prueba: 'Ejercicio 2gqYH de la base abierta de Lichess (CC0), rating 1451. Stockfish 16 a profundidad 18: Dd4+ es la mejor (+4,8) y la segunda queda en -0,9.',
+  },
+  {
+    id: 'fin_lx_2pNHZ_op', area: 'finales', peso: 1, elo: 944, eloBase: 944, tipo: 'opcion_tablero', lichess: '2pNHZ', rating: 1494,
+    enunciado: 'Las negras acaban de jugar …Txg1. Juegan las blancas. Solo una de estas jugadas gana: ¿cuál?',
+    fen: '1r4k1/5pp1/4p3/5q2/3P4/2P1B1Qp/P4P1K/6r1 w - - 0 33',
+    opciones: ['Dxb8+', 'Dxg1', 'Dxg7+', 'Rxg1'],
+    correcta: 0,
+    explica: 'Hay una jugada intermedia: antes de lo obvio, algo más fuerte. La línea: 33.Dxb8+ Rh7 34.Rxg1. Las otras tientan, pero fallan: Dxg1? se contesta con 33…Tb1 y las negras quedan mejor; Dxg7+? se contesta con 33…Txg7 y las blancas reciben mate; Rxg1? se contesta con 33…Tb1+ y las negras quedan mejor.',
+    prueba: 'Ejercicio 2pNHZ de la base abierta de Lichess (CC0), rating 1494. Stockfish 16 a profundidad 18: Dxb8+ es la mejor (+3,9) y la segunda queda en -5,6; las otras tres opciones quedan en -5,2, recibe mate en 4, -7,2 (profundidad 14).',
+  },
+  {
+    id: 'fin_lx_3U9GH_op', area: 'finales', peso: 1, elo: 1077, eloBase: 1077, tipo: 'opcion_tablero', lichess: '3U9GH', rating: 1627,
+    enunciado: 'Las negras acaban de jugar …Td6. Juegan las blancas. Solo una de estas jugadas gana: ¿cuál?',
+    fen: '1r4k1/5p2/1pRr2pp/p1b5/4B3/1P4P1/4KP1P/2R5 w - - 2 33',
+    opciones: ['T1xc5', 'T6xc5', 'Txd6', 'Tc8+'],
+    correcta: 0,
+    explica: 'Se captura al defensor y lo que defendía queda colgado. La línea: 33.T1xc5 bxc5 34.Txd6. Las otras tientan, pero fallan: T6xc5? se contesta con 33…bxc5 y las negras quedan mejor; Txd6? se contesta con 33…Axd6 y la ventaja se esfuma; Tc8+? se contesta con 33…Txc8 y las negras quedan mejor.',
+    prueba: 'Ejercicio 3U9GH de la base abierta de Lichess (CC0), rating 1627. Stockfish 16 a profundidad 18: T1xc5 es la mejor (+4,2) y la segunda queda en -0,2; las otras tres opciones quedan en -5,0, -0,4, -6,5 (profundidad 14).',
+  },
+  {
+    id: 'fin_lx_1FSjx_op', area: 'finales', peso: 2, elo: 1264, eloBase: 1264, tipo: 'opcion_tablero', lichess: '1FSjx', rating: 1814,
+    enunciado: 'Las negras acaban de jugar …Ta8. Juegan las blancas y están en apuros. Solo una de estas jugadas salva la partida: ¿cuál?',
+    fen: 'r7/5kp1/Bb2p2q/3pPp2/5P1p/5R1P/P5PK/2Q5 w - - 1 32',
+    opciones: ['Dc6', 'Dc7+', 'Db2', 'Da3'],
+    correcta: 0,
+    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 32.Dc6 Txa6 33.Db7+. Las otras tientan, pero fallan: Dc7+? se contesta con 32…Axc7 y las negras quedan mejor; Db2? se contesta con 32…Txa6 y las negras quedan mejor; Da3? se contesta con 32…Ta7 y la ventaja se esfuma.',
+    prueba: 'Ejercicio 1FSjx de la base abierta de Lichess (CC0), rating 1814. Stockfish 16 a profundidad 18: Dc6 es la mejor (+2,7) y la segunda queda en +0,1; las otras tres opciones quedan en -7,1, -2,7, -0,5 (profundidad 14).',
+  },
+  {
+    id: 'fin_lx_1m5dh', area: 'finales', peso: 2, elo: 1215, eloBase: 1215, tipo: 'jugada', lichess: '1m5dh', rating: 1615,
+    enunciado: 'Las negras acaban de jugar …b3. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '1r6/R7/4k3/8/8/1p1N4/PKP1r3/8 w - - 0 53',
+    solucion: { from: 'd3', to: 'f4' },
+    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 53.Cf4+ Re5 54.Cxe2.',
+    prueba: 'Ejercicio 1m5dh de la base abierta de Lichess (CC0), rating 1615. Stockfish 16 a profundidad 18: Cf4+ es la mejor (+3,8) y la segunda queda en +0,1.',
+  },
+  {
+    id: 'fin_lx_26M9C', area: 'finales', peso: 2, elo: 1290, eloBase: 1290, tipo: 'jugada', lichess: '26M9C', rating: 1690,
+    enunciado: 'Las negras acaban de jugar …fxe5. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '8/pb1r1k2/p6R/P1P1p2p/1P5P/2P1K3/8/8 w - - 0 36',
+    solucion: { from: 'c5', to: 'c6' },
+    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 36.c6 Axc6 37.Txc6.',
+    prueba: 'Ejercicio 26M9C de la base abierta de Lichess (CC0), rating 1690. Stockfish 16 a profundidad 18: c6 es la mejor (+4,4) y la segunda queda en 0,0.',
+  },
+  {
+    id: 'fin_lx_2k8PU', area: 'finales', peso: 2, elo: 1387, eloBase: 1387, tipo: 'jugada', lichess: '2k8PU', rating: 1787,
+    enunciado: 'Las negras acaban de jugar …Rc4. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '8/3R4/5Pp1/Q1r1p3/Ppkp2K1/8/1Pq5/8 w - - 3 40',
+    solucion: { from: 'a5', to: 'c5' },
+    explica: 'Es una enfilada: la pieza de adelante se va y cae la de atrás. La línea: 40.Dxc5+ Rxc5 41.Tc7+ Rd6 42.Txc2.',
+    prueba: 'Ejercicio 2k8PU de la base abierta de Lichess (CC0), rating 1787. Stockfish 16 a profundidad 18: Dxc5+ es la mejor (+6,2) y la segunda queda en -1,9.',
+  },
+  {
+    id: 'fin_lx_3ATUi', area: 'finales', peso: 2, elo: 1195, eloBase: 1195, tipo: 'jugada', lichess: '3ATUi', rating: 1595,
+    enunciado: 'Las negras acaban de jugar …Dc6. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '1b2k3/6pp/pBq1bp2/2p1p3/2P1P3/3Q3P/P3BPP1/6K1 w - - 10 35',
+    solucion: { from: 'd3', to: 'd8' },
+    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 35.Dd8+ Rf7 36.Dxb8.',
+    prueba: 'Ejercicio 3ATUi de la base abierta de Lichess (CC0), rating 1595. Stockfish 16 a profundidad 18: Dd8+ es la mejor (+4,6) y la segunda queda en +0,3.',
+  },
+  {
+    id: 'fin_lx_3BUDK_op', area: 'finales', peso: 2, elo: 1108, eloBase: 1108, tipo: 'opcion_tablero', lichess: '3BUDK', rating: 1658,
+    enunciado: 'Las negras acaban de jugar …Txf2. Juegan las blancas. Solo una de estas jugadas gana: ¿cuál?',
+    fen: '7r/p3b2p/5pk1/2pN4/8/5P2/P4rPP/2R3K1 w - - 0 27',
+    opciones: ['Cxe7+', 'Rxf2', 'Cf4+', 'Cxf6'],
+    correcta: 0,
+    explica: 'Hay una jugada intermedia: antes de lo obvio, algo más fuerte. La línea: 27.Cxe7+ Rf7 28.Rxf2 Rxe7 29.Txc5. Las otras tientan, pero fallan: Rxf2? se contesta con 27…Ad6 y la ventaja se esfuma; Cf4+? se contesta con 27…Rf5 y las negras quedan mejor; Cxf6? se contesta con 27…Txa2 y las negras quedan mejor.',
+    prueba: 'Ejercicio 3BUDK de la base abierta de Lichess (CC0), rating 1658. Stockfish 16 a profundidad 18: Cxe7+ es la mejor (+3,1) y la segunda queda en +0,2; las otras tres opciones quedan en +0,1, -4,0, -5,0 (profundidad 14).',
+  },
+  {
+    id: 'fin_lx_0TPv5', area: 'finales', peso: 3, elo: 1424, eloBase: 1424, tipo: 'jugada', lichess: '0TPv5', rating: 1824,
+    enunciado: 'Las negras acaban de jugar …De1. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '8/3R3p/8/4k1pB/1N2pp2/7P/6PK/4q3 w - - 2 43',
+    solucion: { from: 'b4', to: 'd3' },
+    explica: 'Es una enfilada: la pieza de adelante se va y cae la de atrás. La línea: 43.Cd3+ exd3 44.Te7+ Rd6 45.Txe1.',
+    prueba: 'Ejercicio 0TPv5 de la base abierta de Lichess (CC0), rating 1824. Stockfish 16 a profundidad 18: Cd3+ es la mejor (+5,4) y la segunda queda en 0,0.',
+  },
+  {
+    id: 'fin_lx_0uDCQ', area: 'finales', peso: 3, elo: 1411, eloBase: 1411, tipo: 'jugada', lichess: '0uDCQ', rating: 1811,
+    enunciado: 'Las negras acaban de jugar …Dh3. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '2r2k2/2p2p1p/1p1pr3/p7/2Q1NR2/P5Pq/1PP2P1P/6K1 w - - 10 26',
+    solucion: { from: 'f4', to: 'f7' },
+    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 26.Txf7+ Rxf7 27.Cg5+ Re7 28.Cxh3.',
+    prueba: 'Ejercicio 0uDCQ de la base abierta de Lichess (CC0), rating 1811. Stockfish 16 a profundidad 18: Txf7+ es la mejor (+5,6) y la segunda queda en 0,0.',
+  },
+  {
+    id: 'fin_lx_16pA1_op', area: 'finales', peso: 3, elo: 1541, eloBase: 1541, tipo: 'opcion_tablero', lichess: '16pA1', rating: 2091,
+    enunciado: 'Las negras acaban de jugar …Txe7. Juegan las blancas. Solo una de estas jugadas gana: ¿cuál?',
+    fen: '2b4k/4r1q1/p2R3p/1p2N3/5ppP/1P6/1PP2PP1/2K1R3 w - - 0 27',
+    opciones: ['Cg6+', 'Txh6+', 'Cf7+', 'Cxg4'],
+    correcta: 0,
+    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 27.Cg6+ Dxg6 28.Td8+ Rg7 29.Txe7+. Las otras tientan, pero fallan: Txh6+? se contesta con 27…Dxh6 y las negras quedan mejor; Cf7+? se contesta con 27…Dxf7 y las negras quedan mejor; Cxg4? se contesta con 27…Txe1+ y las negras quedan mejor.',
+    prueba: 'Ejercicio 16pA1 de la base abierta de Lichess (CC0), rating 2091. Stockfish 16 a profundidad 18: Cg6+ es la mejor (+5,0) y la segunda queda en -4,3; las otras tres opciones quedan en -5,4, -5,6, -5,9 (profundidad 14).',
+  },
+  {
+    id: 'fin_lx_1Hu70_op', area: 'finales', peso: 3, elo: 1595, eloBase: 1595, tipo: 'opcion_tablero', lichess: '1Hu70', rating: 2145,
+    enunciado: 'Las negras acaban de jugar …Td5. Juegan las blancas. Solo una de estas jugadas gana: ¿cuál?',
+    fen: 'k6r/ppq5/4p2p/1QNr1p2/5P2/1PP3P1/2K5/6R1 w - - 3 34',
+    opciones: ['Cxe6', 'Dxb7+', 'Cxb7', 'De8+'],
+    correcta: 0,
+    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 34.Cxe6 Dxf4 35.gxf4 Txb5 36.Cc7+. Las otras tientan, pero fallan: Dxb7+? se contesta con 34…Dxb7 y las negras quedan mejor; Cxb7? se contesta con 34…Txb5 y las negras quedan mejor; De8+? se contesta con 34…Txe8 y las negras quedan mejor.',
+    prueba: 'Ejercicio 1Hu70 de la base abierta de Lichess (CC0), rating 2145. Stockfish 16 a profundidad 18: Cxe6 es la mejor (+4,1) y la segunda queda en -4,2; las otras tres opciones quedan en -5,3, -7,3, -7,7 (profundidad 14).',
+  },
+  {
+    id: 'fin_lx_36NtG', area: 'finales', peso: 3, elo: 1695, eloBase: 1695, tipo: 'jugada', lichess: '36NtG', rating: 2095,
+    enunciado: 'Las negras acaban de jugar …Df6. Juegan las blancas y están en apuros: encuentra la única jugada que no pierde.',
+    fen: '8/1r4k1/RP3qnp/3p2p1/3PppQ1/2B5/1P4P1/6K1 w - - 1 41',
+    solucion: { from: 'g4', to: 'c8' },
+    explica: 'El peón avanzado decide: hay que empujarlo o aprovecharlo a tiempo. La línea: 41.Dc8 Tf7 42.b7 Dxa6 43.b8=D.',
+    prueba: 'Ejercicio 36NtG de la base abierta de Lichess (CC0), rating 2095. Stockfish 16 a profundidad 18: Dc8 es la mejor (+2,6) y la segunda queda en -1,6.',
+  },
+  {
+    id: 'fin_lx_3NkU1', area: 'finales', peso: 3, elo: 1629, eloBase: 1629, tipo: 'jugada', lichess: '3NkU1', rating: 2029,
+    enunciado: 'Las negras acaban de jugar …fxg3. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '8/pp4k1/2p1Qb1p/4p3/P3p3/2P1P1pP/1P1q1NP1/7K w - - 0 31',
+    solucion: { from: 'e6', to: 'f6' },
+    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 31.Dxf6+ Rxf6 32.Cxe4+ Rg6 33.Cxd2.',
+    prueba: 'Ejercicio 3NkU1 de la base abierta de Lichess (CC0), rating 2029. Stockfish 16 a profundidad 18: Dxf6+ es la mejor (+5,0) y la segunda queda en +0,5.',
+  },
+  {
+    id: 'fin_lx_05n2Y_op', area: 'finales', peso: 4, elo: 1852, eloBase: 1852, tipo: 'opcion_tablero', lichess: '05n2Y', rating: 2402,
+    enunciado: 'Las negras acaban de jugar …a4. Juegan las blancas. Solo una de estas jugadas gana: ¿cuál?',
+    fen: 'r7/1p4kp/1N3pp1/2p5/p7/2P5/5PPP/5NK1 w - - 0 30',
+    opciones: ['Cxa8', 'Cxa4', 'Cc8', 'Cd7'],
+    correcta: 0,
+    explica: 'Hay algo sin defender, y hay que verlo antes que el rival. La línea: 30.Cxa8 a3 31.Ce3 a2 32.Cc2. Las otras tientan, pero fallan: Cxa4? se contesta con 30…Txa4 y las negras quedan mejor; Cc8? se contesta con 30…Txc8 y las negras quedan mejor; Cd7? se contesta con 30…a3 y las negras quedan mejor.',
+    prueba: 'Ejercicio 05n2Y de la base abierta de Lichess (CC0), rating 2402. Stockfish 16 a profundidad 18: Cxa8 es la mejor (+4,6) y la segunda queda en -4,7; las otras tres opciones quedan en -5,5, -6,4, -5,3 (profundidad 14).',
+  },
+  {
+    id: 'fin_lx_2ofuz_op', area: 'finales', peso: 4, elo: 1844, eloBase: 1844, tipo: 'opcion_tablero', lichess: '2ofuz', rating: 2394,
+    enunciado: 'Las negras acaban de jugar …Ad6. Juegan las blancas. Solo una de estas jugadas gana: ¿cuál?',
+    fen: 'r5k1/pp1q2p1/2pbp2p/4B3/P3P1Q1/3P3P/1PP5/5R1K w - - 1 22',
+    opciones: ['Axg7', 'Dxg7+', 'Axd6', 'Dxe6+'],
+    correcta: 0,
+    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 22.Axg7 Dxg7 23.Dxe6+ Rh8 24.Dxd6. Las otras tientan, pero fallan: Dxg7+? se contesta con 22…Dxg7 y las negras quedan mejor; Axd6? se contesta con 22…Dxd6 y la ventaja se esfuma; Dxe6+? se contesta con 22…Dxe6 y las negras quedan mejor.',
+    prueba: 'Ejercicio 2ofuz de la base abierta de Lichess (CC0), rating 2394. Stockfish 16 a profundidad 18: Axg7 es la mejor (+4,2) y la segunda queda en +0,1; las otras tres opciones quedan en -3,9, +0,0, -6,0 (profundidad 14).',
+  },
+  {
+    id: 'fin_lx_2rvJA', area: 'finales', peso: 4, elo: 1951, eloBase: 1951, tipo: 'jugada', lichess: '2rvJA', rating: 2351,
+    enunciado: 'Las negras acaban de jugar …Ta5. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '8/5R2/kp6/r1p5/2P5/1P6/1K6/8 w - - 33 71',
+    solucion: { from: 'f7', to: 'c7' },
+    explica: 'Es un zugzwang: al rival le toca mover y cualquier jugada lo empeora. La línea: 71.Tc7 b5 72.Tc6+ Rb7 73.Txc5.',
+    prueba: 'Ejercicio 2rvJA de la base abierta de Lichess (CC0), rating 2351. Stockfish 16 a profundidad 18: Tc7 es la mejor (+5,1) y la segunda queda en +0,1.',
+  },
+  {
+    id: 'fin_lx_3DSzB_op', area: 'finales', peso: 4, elo: 1866, eloBase: 1866, tipo: 'opcion_tablero', lichess: '3DSzB', rating: 2416,
+    enunciado: 'Las negras acaban de jugar …Ad4. Juegan las blancas. Solo una de estas jugadas gana: ¿cuál?',
+    fen: '7k/2q4p/p2N2p1/1p1Qp3/3b4/PP4P1/1P3r1P/3R3K w - - 3 31',
+    opciones: ['Da8+', 'Dxe5+', 'Dxd4', 'Dg8+'],
+    correcta: 0,
+    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 31.Da8+ Rg7 32.Ce8+ Rf7 33.Cxc7. Las otras tientan, pero fallan: Dxe5+? se contesta con 31…Axe5 y las negras quedan mejor; Dxd4? se contesta con 31…exd4 y las negras quedan mejor; Dg8+? se contesta con 31…Rxg8 y las blancas reciben mate.',
+    prueba: 'Ejercicio 3DSzB de la base abierta de Lichess (CC0), rating 2416. Stockfish 16 a profundidad 18: Da8+ es la mejor (+6,7) y la segunda queda en 0,0; las otras tres opciones quedan en -7,6, -6,5, recibe mate en 8 (profundidad 14).',
+  },
+  {
+    id: 'fin_lx_3FO7m', area: 'finales', peso: 4, elo: 1920, eloBase: 1920, tipo: 'jugada', lichess: '3FO7m', rating: 2320,
+    enunciado: 'Las negras acaban de jugar …Txd1. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '7k/1p4p1/p6p/5p1q/1P2p3/P3R1P1/2Q2PKP/3r4 w - - 0 43',
+    solucion: { from: 'g3', to: 'g4' },
+    explica: 'La línea: 43.g4 Dxg4+ 44.Tg3 Dh5 45.Dc8+.',
+    prueba: 'Ejercicio 3FO7m de la base abierta de Lichess (CC0), rating 2320. Stockfish 16 a profundidad 18: g4 es la mejor (+3,0) y la segunda queda en 0,0.',
+  },
+  {
+    id: 'fin_lx_3QLw3', area: 'finales', peso: 4, elo: 1768, eloBase: 1768, tipo: 'jugada', lichess: '3QLw3', rating: 2168,
+    enunciado: 'Las negras acaban de jugar …Dc3. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '5rk1/6pp/3PR3/2p1Qp2/1p6/2q4P/6P1/7K w - - 1 40',
+    solucion: { from: 'd6', to: 'd7' },
+    explica: 'Es una interferencia: una pieza se mete entre la defensora y lo que defiende. La línea: 40.d7 Dxe5 41.Txe5 Rf7 42.Txf5+.',
+    prueba: 'Ejercicio 3QLw3 de la base abierta de Lichess (CC0), rating 2168. Stockfish 16 a profundidad 18: d7 es la mejor (+3,8) y la segunda queda en -0,0.',
+  },
+  {
+    id: 'fin_lx_3SLR7', area: 'finales', peso: 4, elo: 1910, eloBase: 1910, tipo: 'jugada', lichess: '3SLR7', rating: 2310,
+    enunciado: 'Las negras acaban de jugar …Dd5. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: 'Q7/8/7p/3q4/4kP2/6K1/4bP1P/8 w - - 1 46',
+    solucion: { from: 'a8', to: 'e8' },
+    explica: 'Es una desviación: se aleja al defensor de lo que defendía. La línea: 46.De8+ Rd3 47.De3+ Rc2 48.Dxe2+.',
+    prueba: 'Ejercicio 3SLR7 de la base abierta de Lichess (CC0), rating 2310. Stockfish 16 a profundidad 18: De8+ es la mejor (+4,1) y la segunda queda en 0,0.',
+  },
+  {
+    id: 'fin_lx_0Ajqd', area: 'finales', peso: 5, elo: 2046, eloBase: 2046, tipo: 'jugada', lichess: '0Ajqd', rating: 2446,
+    enunciado: 'Las negras acaban de jugar …Axa4. Juegan las blancas y están en apuros: encuentra la única jugada que no pierde.',
+    fen: '8/1p5p/6p1/pP6/b2pkP2/3N2PP/4K3/8 w - - 0 45',
+    solucion: { from: 'd3', to: 'c5' },
+    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 45.Cc5+ Rd5 46.Cxa4 Rc4 47.g4.',
+    prueba: 'Ejercicio 0Ajqd de la base abierta de Lichess (CC0), rating 2446. Stockfish 16 a profundidad 18: Cc5+ es la mejor (+2,6) y la segunda queda en -5,0.',
+  },
+  {
+    id: 'fin_lx_0DFJR', area: 'finales', peso: 5, elo: 2022, eloBase: 2022, tipo: 'jugada', lichess: '0DFJR', rating: 2422,
+    enunciado: 'Las negras acaban de jugar …Txc3+. Juegan las blancas y están en apuros: encuentra la única jugada que no pierde.',
+    fen: '8/7p/3k1p2/4pPp1/3p2P1/pKrR1P2/P6P/8 w - - 0 38',
+    solucion: { from: 'd3', to: 'c3' },
+    explica: 'La línea: 38.Txc3 dxc3 39.Rxa3 c2 40.Rb2.',
+    prueba: 'Ejercicio 0DFJR de la base abierta de Lichess (CC0), rating 2422. Stockfish 16 a profundidad 18: Txc3 es la mejor (0,0) y la segunda queda en -8,3.',
+  },
+  {
+    id: 'fin_lx_0suZN', area: 'finales', peso: 5, elo: 2060, eloBase: 2060, tipo: 'jugada', lichess: '0suZN', rating: 2460,
+    enunciado: 'Las negras acaban de jugar …f6. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '2r2bR1/4k1B1/p3ppp1/1p6/7Q/P1P2q2/1P6/1K6 w - - 0 32',
+    solucion: { from: 'g7', to: 'f8' },
+    explica: 'Es una desviación: se aleja al defensor de lo que defendía. La línea: 32.Axf8+ Txf8 33.Db4+ Rd7 34.Txf8.',
+    prueba: 'Ejercicio 0suZN de la base abierta de Lichess (CC0), rating 2460. Stockfish 16 a profundidad 18: Axf8+ es la mejor (+4,5) y la segunda queda en +0,5.',
+  },
+  {
+    id: 'fin_lx_0u2n2', area: 'finales', peso: 5, elo: 2039, eloBase: 2039, tipo: 'jugada', lichess: '0u2n2', rating: 2439,
+    enunciado: 'Las negras acaban de jugar …Td8. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '3r1k2/2q1pp2/p5p1/1p4P1/8/4Q3/PPPR4/2K5 w - - 1 29',
+    solucion: { from: 'e3', to: 'c3' },
+    explica: 'Es una desviación: se aleja al defensor de lo que defendía. La línea: 29.Dc3 Dxc3 30.Txd8+ Rg7 31.bxc3.',
+    prueba: 'Ejercicio 0u2n2 de la base abierta de Lichess (CC0), rating 2439. Stockfish 16 a profundidad 18: Dc3 es la mejor (+4,8) y la segunda queda en -1,3.',
+  },
+  {
+    id: 'fin_lx_1QK7T', area: 'finales', peso: 5, elo: 2086, eloBase: 2086, tipo: 'jugada', lichess: '1QK7T', rating: 2486,
+    enunciado: 'Las negras acaban de jugar …Ca5. Juegan las blancas y están en apuros: encuentra la única jugada que no pierde.',
+    fen: '8/6k1/5p2/n3pPp1/1p1pK1P1/pPpP3P/P1P1B3/8 w - - 2 37',
+    solucion: { from: 'e2', to: 'd1' },
+    explica: 'La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. La línea: 37.Ad1 Rf7 38.Rd5 Re7 39.Rc5.',
+    prueba: 'Ejercicio 1QK7T de la base abierta de Lichess (CC0), rating 2486. Stockfish 16 a profundidad 18: Ad1 es la mejor (+2,3) y la segunda queda en -4,5.',
+  },
+  {
+    id: 'fin_lx_2UKsJ', area: 'finales', peso: 5, elo: 2058, eloBase: 2058, tipo: 'jugada', lichess: '2UKsJ', rating: 2458,
+    enunciado: 'Las negras acaban de jugar …a4. Juegan las blancas y están en apuros: encuentra la única jugada que no pierde.',
+    fen: '6B1/7p/6p1/2k2pK1/pp6/5P2/P7/8 w - - 0 42',
+    solucion: { from: 'g8', to: 'h7' },
+    explica: 'La línea: 42.Axh7 b3 43.axb3 axb3 44.Axg6.',
+    prueba: 'Ejercicio 2UKsJ de la base abierta de Lichess (CC0), rating 2458. Stockfish 16 a profundidad 18: Axh7 es la mejor (+2,4) y la segunda queda en -0,4.',
+  },
+  {
+    id: 'fin_lx_2iDvb', area: 'finales', peso: 5, elo: 2140, eloBase: 2140, tipo: 'jugada', lichess: '2iDvb', rating: 2540,
+    enunciado: 'Las negras acaban de jugar …Td7. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '8/2kr1p2/2p1pP2/1b2P1N1/p5P1/P3K3/2B5/8 w - - 1 44',
+    solucion: { from: 'g5', to: 'f7' },
+    explica: 'La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. La línea: 44.Cxf7 Txf7 45.g5 c5 46.g6.',
+    prueba: 'Ejercicio 2iDvb de la base abierta de Lichess (CC0), rating 2540. Stockfish 16 a profundidad 18: Cxf7 es la mejor (+4,6) y la segunda queda en 0,0.',
+  },
+  {
+    id: 'fin_lx_2l12a', area: 'finales', peso: 5, elo: 2025, eloBase: 2025, tipo: 'jugada', lichess: '2l12a', rating: 2425,
+    enunciado: 'Las negras acaban de jugar …Cc3+. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '8/1k4p1/5p1p/1P1K1P2/6P1/2n1N3/8/8 w - - 2 60',
+    solucion: { from: 'd5', to: 'e6' },
+    explica: 'Es una jugada defensiva precisa: la única que sostiene la posición. La línea: 60.Re6 Ce2 61.Rf7 h5 62.gxh5.',
+    prueba: 'Ejercicio 2l12a de la base abierta de Lichess (CC0), rating 2425. Stockfish 16 a profundidad 18: Re6 es la mejor (+3,0) y la segunda queda en +0,1.',
+  },
+  {
+    id: 'est_lx_07WiO', area: 'estrategia', peso: 1, elo: 957, eloBase: 957, tipo: 'jugada', lichess: '07WiO', rating: 1357,
+    enunciado: 'Las negras acaban de jugar …Dxe4+. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: 'r1b2rk1/ppp3pp/2np1b2/3Np3/2P1q3/4PN1P/PPK1B1P1/3R1Q1R w - - 0 16',
+    solucion: { from: 'e2', to: 'd3' },
+    explica: 'Es una jugada defensiva precisa: la única que sostiene la posición. La línea: 16.Ad3 Cb4+ 17.Cxb4.',
+    prueba: 'Ejercicio 07WiO de la base abierta de Lichess (CC0), rating 1357. Stockfish 16 a profundidad 18: Ad3 es la mejor (+3,9) y la segunda queda en -1,2.',
+  },
+  {
+    id: 'est_lx_09IR3_op', area: 'estrategia', peso: 1, elo: 1072, eloBase: 1072, tipo: 'opcion_tablero', lichess: '09IR3', rating: 1622,
+    enunciado: 'Las negras acaban de jugar …Ch6. Juegan las blancas. Solo una de estas jugadas gana: ¿cuál?',
+    fen: 'r1b1k2r/pppp1ppp/7n/4P3/8/2Q5/P1P1KPPP/RNq2B1R w kq - 4 12',
+    opciones: ['Cd2', 'Ca3', 'Dxc7', 'Dd2'],
+    correcta: 0,
+    explica: 'Una pieza rival queda atrapada, sin casilla adonde ir. La línea: 12.Cd2 Dxa1 13.Dxa1. Las otras tientan, pero fallan: Ca3? se contesta con 12…Df4 y la ventaja se esfuma; Dxc7? se contesta con 12…b6 y las negras quedan mejor; Dd2? se contesta con 12…Db2 y las negras quedan mejor.',
+    prueba: 'Ejercicio 09IR3 de la base abierta de Lichess (CC0), rating 1622. Stockfish 16 a profundidad 18: Cd2 es la mejor (+5,1) y la segunda queda en -0,6; las otras tres opciones quedan en -0,9, -2,5, -1,8 (profundidad 14).',
+  },
+  {
+    id: 'est_lx_0H6RT_op', area: 'estrategia', peso: 1, elo: 895, eloBase: 895, tipo: 'opcion_tablero', lichess: '0H6RT', rating: 1445,
+    enunciado: 'Las negras acaban de jugar …Rf5. Juegan las blancas. Solo una de estas jugadas gana: ¿cuál?',
+    fen: '8/8/1p5K/p1p2kp1/2P2p2/1P5P/1P4P1/8 w - - 1 48',
+    opciones: ['Rh5', 'g4+', 'Rg7', 'Rh7'],
+    correcta: 0,
+    explica: 'Es un zugzwang: al rival le toca mover y cualquier jugada lo empeora. La línea: 48.Rh5 f3 49.gxf3. Las otras tientan, pero fallan: g4+? se contesta con 48…fxg3 y las negras quedan mejor; Rg7? se contesta con 48…g4 y la ventaja se esfuma; Rh7? se contesta con 48…g4 y las negras quedan mejor.',
+    prueba: 'Ejercicio 0H6RT de la base abierta de Lichess (CC0), rating 1445. Stockfish 16 a profundidad 18: Rh5 es la mejor (+3,9) y la segunda queda en 0,0; las otras tres opciones quedan en -6,2, 0,0, -4,6 (profundidad 14).',
+  },
+  {
+    id: 'est_lx_23t1E_op', area: 'estrategia', peso: 1, elo: 899, eloBase: 899, tipo: 'opcion_tablero', lichess: '23t1E', rating: 1449,
+    enunciado: 'Las negras acaban de jugar …Rd7. Juegan las blancas. Solo una de estas jugadas gana: ¿cuál?',
+    fen: '8/3k1p1p/1P1r4/2K5/2P5/8/7P/8 w - - 2 47',
+    opciones: ['b7', 'h3', 'h4', 'Rb5'],
+    correcta: 0,
+    explica: 'Es una jugada defensiva precisa: la única que sostiene la posición. La línea: 47.b7 Tc6+ 48.Rb5 Txc4 49.b8=D. Las otras tientan, pero fallan: h3? se contesta con 47…Td3 y las negras quedan mejor; h4? se contesta con 47…Td1 y las negras quedan mejor; Rb5? se contesta con 47…Td2 y las negras quedan mejor.',
+    prueba: 'Ejercicio 23t1E de la base abierta de Lichess (CC0), rating 1449. Stockfish 16 a profundidad 18: b7 es la mejor (+3,6) y la segunda queda en -6,5; las otras tres opciones quedan en -6,0, -6,0, -5,8 (profundidad 14).',
+  },
+  {
+    id: 'est_lx_2LfVH', area: 'estrategia', peso: 1, elo: 1045, eloBase: 1045, tipo: 'jugada', lichess: '2LfVH', rating: 1445,
+    enunciado: 'Las negras acaban de jugar …Tc4. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '8/8/8/3kp2R/1Pr5/1K6/8/8 w - - 9 61',
+    solucion: { from: 'h5', to: 'e5' },
+    explica: 'Es una desviación: se aleja al defensor de lo que defendía. La línea: 61.Txe5+ Rxe5 62.Rxc4 Rd6 63.Rb5.',
+    prueba: 'Ejercicio 2LfVH de la base abierta de Lichess (CC0), rating 1445. Stockfish 16 a profundidad 18: Txe5+ es la mejor (+35,7) y la segunda queda en +0,1.',
+  },
+  {
+    id: 'est_lx_2i6ps_op', area: 'estrategia', peso: 1, elo: 1016, eloBase: 1016, tipo: 'opcion_tablero', lichess: '2i6ps', rating: 1566,
+    enunciado: 'Las negras acaban de jugar …a5. Juegan las blancas y están en apuros. Solo una de estas jugadas salva la partida: ¿cuál?',
+    fen: '6k1/2p3p1/1p1qbp1p/pQ2p3/2P5/P2P3P/4BPP1/6K1 w - a6 0 26',
+    opciones: ['De8+', 'Dxb6', 'Dxe5', 'Dxa5'],
+    correcta: 0,
+    explica: 'La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. La línea: 26.De8+ Rh7 27.Ah5 Dxd3 28.Dxe6. Las otras tientan, pero fallan: Dxb6? se contesta con 26…Dxb6 y las negras quedan mejor; Dxe5? se contesta con 26…Dxe5 y las negras quedan mejor; Dxa5? se contesta con 26…bxa5 y las negras quedan mejor.',
+    prueba: 'Ejercicio 2i6ps de la base abierta de Lichess (CC0), rating 1566. Stockfish 16 a profundidad 18: De8+ es la mejor (+1,4) y la segunda queda en -1,6; las otras tres opciones quedan en -5,7, -5,9, -5,9 (profundidad 14).',
+  },
+  {
+    id: 'est_lx_2toXG', area: 'estrategia', peso: 1, elo: 876, eloBase: 876, tipo: 'jugada', lichess: '2toXG', rating: 1276,
+    enunciado: 'Las negras acaban de jugar …Re6. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '8/5p2/1p2kp1p/pP4p1/P2P2P1/3K1P1P/8/8 w - - 1 32',
+    solucion: { from: 'd3', to: 'e4' },
+    explica: 'Es un zugzwang: al rival le toca mover y cualquier jugada lo empeora. La línea: 32.Re4 f5+ 33.gxf5+.',
+    prueba: 'Ejercicio 2toXG de la base abierta de Lichess (CC0), rating 1276. Stockfish 16 a profundidad 18: Re4 es la mejor (+3,3) y la segunda queda en +0,7.',
+  },
+  {
+    id: 'est_lx_3JFKd', area: 'estrategia', peso: 1, elo: 987, eloBase: 987, tipo: 'jugada', lichess: '3JFKd', rating: 1387,
+    enunciado: 'Las negras acaban de jugar …Txb2. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '6k1/2p2pp1/Pp6/2p5/8/8/1r4P1/2R3K1 w - - 0 35',
+    solucion: { from: 'c1', to: 'a1' },
+    explica: 'La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. La línea: 35.Ta1 Te2 36.a7.',
+    prueba: 'Ejercicio 3JFKd de la base abierta de Lichess (CC0), rating 1387. Stockfish 16 a profundidad 18: Ta1 es la mejor (+5,1) y la segunda queda en -5,0.',
+  },
+  {
+    id: 'est_lx_0Bfdf', area: 'estrategia', peso: 2, elo: 1239, eloBase: 1239, tipo: 'jugada', lichess: '0Bfdf', rating: 1639,
+    enunciado: 'Las negras acaban de jugar …hxg3. Juegan las blancas y están en apuros: encuentra la única jugada que no pierde.',
+    fen: '1k4rr/1p2q3/np1Np3/1N2p3/2P1P3/P2P2p1/6PP/3Q1RK1 w - - 0 28',
+    solucion: { from: 'f1', to: 'f7' },
+    explica: 'Es una jugada defensiva precisa: la única que sostiene la posición. La línea: 28.Tf7 gxh2+ 29.Rh1 Dxf7 30.Cxf7.',
+    prueba: 'Ejercicio 0Bfdf de la base abierta de Lichess (CC0), rating 1639. Stockfish 16 a profundidad 18: Tf7 es la mejor (+2,9) y la segunda queda en -1,3.',
+  },
+  {
+    id: 'est_lx_1k4Ah', area: 'estrategia', peso: 2, elo: 1392, eloBase: 1392, tipo: 'jugada', lichess: '1k4Ah', rating: 1792,
+    enunciado: 'Las negras acaban de jugar …Rh6. Juegan las blancas y están en apuros: encuentra la única jugada que no pierde.',
+    fen: '6q1/R5p1/5p1k/7p/pr3P2/6QP/6PK/8 w - - 1 47',
+    solucion: { from: 'f4', to: 'f5' },
+    explica: 'La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. La línea: 47.f5 Db8 48.Tc7 Dxc7 49.Dxc7.',
+    prueba: 'Ejercicio 1k4Ah de la base abierta de Lichess (CC0), rating 1792. Stockfish 16 a profundidad 18: f5 es la mejor (+2,4) y la segunda queda en -0,4.',
+  },
+  {
+    id: 'est_lx_1o1T9', area: 'estrategia', peso: 2, elo: 1386, eloBase: 1386, tipo: 'jugada', lichess: '1o1T9', rating: 1786,
+    enunciado: 'Las negras acaban de jugar …Rc4. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '4b3/1p6/p4p2/P3pP2/1Pk3PP/4K3/8/8 w - - 1 43',
+    solucion: { from: 'h4', to: 'h5' },
+    explica: 'La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. La línea: 43.h5 Af7 44.h6 Ag8 45.g5.',
+    prueba: 'Ejercicio 1o1T9 de la base abierta de Lichess (CC0), rating 1786. Stockfish 16 a profundidad 18: h5 es la mejor (+4,1) y la segunda queda en -0,9.',
+  },
+  {
+    id: 'est_lx_1wipw_op', area: 'estrategia', peso: 2, elo: 1290, eloBase: 1290, tipo: 'opcion_tablero', lichess: '1wipw', rating: 1840,
+    enunciado: 'Las negras acaban de jugar …Axe6. Juegan las blancas. Solo una de estas jugadas gana: ¿cuál?',
+    fen: '4k3/8/4bK2/6p1/1P6/8/5N1p/8 w - - 0 82',
+    opciones: ['Rxe6', 'Rxg5', 'Rg7', 'Rg6'],
+    correcta: 0,
+    explica: 'Hay algo sin defender, y hay que verlo antes que el rival. La línea: 82.Rxe6 g4 83.Ch1 g3 84.Cxg3. Las otras tientan, pero fallan: Rxg5? se contesta con 82…h1=T y la ventaja se esfuma; Rg7? se contesta con 82…g4 y las negras quedan mejor; Rg6? se contesta con 82…g4 y las negras quedan mejor.',
+    prueba: 'Ejercicio 1wipw de la base abierta de Lichess (CC0), rating 1840. Stockfish 16 a profundidad 18: Rxe6 es la mejor (+4,9) y la segunda queda en -0,0; las otras tres opciones quedan en 0,0, -5,8, -5,4 (profundidad 14).',
+  },
+  {
+    id: 'est_lx_27mU0_op', area: 'estrategia', peso: 2, elo: 1270, eloBase: 1270, tipo: 'opcion_tablero', lichess: '27mU0', rating: 1820,
+    enunciado: 'Las negras acaban de jugar …Cb3. Juegan las blancas y están en apuros. Solo una de estas jugadas salva la partida: ¿cuál?',
+    fen: 'r4rk1/pb3ppp/1pq5/2b3B1/2p1P1Q1/1nP5/1P3NPP/1B2RR1K w - - 4 22',
+    opciones: ['e5', 'g3', 'h3', 'h4'],
+    correcta: 0,
+    explica: 'La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. La línea: 22.e5 Dxg2+ 23.Dxg2 Axg2+ 24.Rxg2. Las otras tientan, pero fallan: g3? se contesta con 22…f5 y las negras quedan mejor; h3? se contesta con 22…f6 y la ventaja se esfuma; h4? se contesta con 22…f6 y la ventaja se esfuma.',
+    prueba: 'Ejercicio 27mU0 de la base abierta de Lichess (CC0), rating 1820. Stockfish 16 a profundidad 18: e5 es la mejor (+2,5) y la segunda queda en 0,0; las otras tres opciones quedan en -2,9, -1,2, -1,3 (profundidad 14).',
+  },
+  {
+    id: 'est_lx_2gmjt', area: 'estrategia', peso: 2, elo: 1251, eloBase: 1251, tipo: 'jugada', lichess: '2gmjt', rating: 1651,
+    enunciado: 'Las negras acaban de jugar …Te6. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '8/4R3/4r3/2p1kp2/2P1p1p1/2K1P1P1/5P2/8 w - - 10 54',
+    solucion: { from: 'e7', to: 'e6' },
+    explica: 'Es una jugada defensiva precisa: la única que sostiene la posición. La línea: 54.Txe6+ Rxe6 55.Rb3 Rd7 56.Ra4.',
+    prueba: 'Ejercicio 2gmjt de la base abierta de Lichess (CC0), rating 1651. Stockfish 16 a profundidad 18: Txe6+ es la mejor (+5,5) y la segunda queda en +0,1.',
+  },
+  {
+    id: 'est_lx_0CJYV', area: 'estrategia', peso: 3, elo: 1605, eloBase: 1605, tipo: 'jugada', lichess: '0CJYV', rating: 2005,
+    enunciado: 'Las negras acaban de jugar …Tc1. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: 'q7/4P2k/3P2p1/1p2Rp1p/pB3P1P/P5P1/5P1K/2r5 w - - 3 43',
+    solucion: { from: 'b4', to: 'e1' },
+    explica: 'La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. La línea: 43.Ae1 De8 44.d7 Dxd7 45.e8=D.',
+    prueba: 'Ejercicio 0CJYV de la base abierta de Lichess (CC0), rating 2005. Stockfish 16 a profundidad 18: Ae1 es la mejor (+5,2) y la segunda queda en -3,9.',
+  },
+  {
+    id: 'est_lx_1QUsQ', area: 'estrategia', peso: 3, elo: 1623, eloBase: 1623, tipo: 'jugada', lichess: '1QUsQ', rating: 2023,
+    enunciado: 'Las negras acaban de jugar …Axe6. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '3r3r/pp3kpp/1q1Bbn2/2p5/1n6/8/PPP1QPPP/2KRR3 w - - 0 18',
+    solucion: { from: 'e2', to: 'e6' },
+    explica: 'Es una jugada defensiva precisa: la única que sostiene la posición. La línea: 18.Dxe6+ Rg6 19.Te3.',
+    prueba: 'Ejercicio 1QUsQ de la base abierta de Lichess (CC0), rating 2023. Stockfish 16 a profundidad 18: Dxe6+ es la mejor (+4,6) y la segunda queda en -6,0.',
+  },
+  {
+    id: 'est_lx_1nT8v', area: 'estrategia', peso: 3, elo: 1582, eloBase: 1582, tipo: 'jugada', lichess: '1nT8v', rating: 1982,
+    enunciado: 'Las negras acaban de jugar …Df3+. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '7k/p2nb2p/2p3p1/2Pp1b2/1Q1PpPpP/1NN1PqP1/P4BK1/8 w - - 17 41',
+    solucion: { from: 'g2', to: 'g1' },
+    explica: 'Una pieza rival queda atrapada, sin casilla adonde ir. La línea: 41.Rg1 Axh4 42.Cd2 Axg3 43.Cxf3.',
+    prueba: 'Ejercicio 1nT8v de la base abierta de Lichess (CC0), rating 1982. Stockfish 16 a profundidad 18: Rg1 es la mejor (+4,3) y la segunda queda en -0,7.',
+  },
+  {
+    id: 'est_lx_2uvbN', area: 'estrategia', peso: 3, elo: 1455, eloBase: 1455, tipo: 'jugada', lichess: '2uvbN', rating: 1855,
+    enunciado: 'Las negras acaban de jugar …f4. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: 'r1b2rk1/ppp3pp/2n5/4q1N1/5p2/1P1Bp3/P1P3PP/R2Q1RK1 w - - 0 16',
+    solucion: { from: 'd3', to: 'h7' },
+    explica: 'Es una jugada defensiva precisa: la única que sostiene la posición. La línea: 16.Axh7+ Rh8 17.Dh5.',
+    prueba: 'Ejercicio 2uvbN de la base abierta de Lichess (CC0), rating 1855. Stockfish 16 a profundidad 18: Axh7+ es la mejor (+4,3) y la segunda queda en -2,1.',
+  },
+  {
+    id: 'est_lx_2wlcJ_op', area: 'estrategia', peso: 3, elo: 1585, eloBase: 1585, tipo: 'opcion_tablero', lichess: '2wlcJ', rating: 2135,
+    enunciado: 'Las negras acaban de jugar …Dc5+. Juegan las blancas y están en apuros. Solo una de estas jugadas salva la partida: ¿cuál?',
+    fen: 'r4rk1/p3npb1/3N1n1p/2q1B1p1/4P3/1PP2Q2/P5PP/3R1RK1 w - - 1 24',
+    opciones: ['Ad4', 'Td4', 'Rh1', 'Df2'],
+    correcta: 0,
+    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 24.Ad4 Dxd6 25.e5 Dc7 26.exf6. Las otras tientan, pero fallan: Td4? se contesta con 24…Dxe5 y las negras quedan mejor; Rh1? se contesta con 24…Dxe5 y las negras quedan mejor; Df2? se contesta con 24…Dxe5 y las negras quedan mejor.',
+    prueba: 'Ejercicio 2wlcJ de la base abierta de Lichess (CC0), rating 2135. Stockfish 16 a profundidad 18: Ad4 es la mejor (+1,9) y la segunda queda en -5,6; las otras tres opciones quedan en -5,7, -5,9, -5,9 (profundidad 14).',
+  },
+  {
+    id: 'est_lx_0ASzV_op', area: 'estrategia', peso: 4, elo: 1739, eloBase: 1739, tipo: 'opcion_tablero', lichess: '0ASzV', rating: 2289,
+    enunciado: 'Las negras acaban de jugar …Dxc3. Juegan las blancas y están en apuros. Solo una de estas jugadas salva la partida: ¿cuál?',
+    fen: 'rnb1kb1r/pp2pppp/3p4/8/8/2qB1N2/P2N1PPP/R2QK2R w KQkq - 0 11',
+    opciones: ['Tc1', 'Ab5+', 'Da4+', 'Axh7'],
+    correcta: 0,
+    explica: 'Es una enfilada: la pieza de adelante se va y cae la de atrás. La línea: 11.Tc1 Dxd3 12.Txc8+ Rd7 13.Dc1. Las otras tientan, pero fallan: Ab5+? se contesta con 11…Cc6 y la ventaja se esfuma; Da4+? se contesta con 11…Ad7 y las negras quedan mejor; Axh7? se contesta con 11…Cc6 y las negras quedan mejor.',
+    prueba: 'Ejercicio 0ASzV de la base abierta de Lichess (CC0), rating 2289. Stockfish 16 a profundidad 18: Tc1 es la mejor (+2,8) y la segunda queda en -1,7; las otras tres opciones quedan en -1,4, -5,0, -2,4 (profundidad 14).',
+  },
+  {
+    id: 'est_lx_0iPPK_op', area: 'estrategia', peso: 4, elo: 1895, eloBase: 1895, tipo: 'opcion_tablero', lichess: '0iPPK', rating: 2445,
+    enunciado: 'Las negras acaban de jugar …Dxb5. Juegan las blancas y están en apuros. Solo una de estas jugadas salva la partida: ¿cuál?',
+    fen: 'r1b2k1r/3pb1pn/1p2p2p/pq2Pp1B/5P2/6Q1/PPP3PP/R1B2RK1 w - - 0 17',
+    opciones: ['Dg6', 'Dxg7+', 'Ag6', 'Dg4'],
+    correcta: 0,
+    explica: 'Es una jugada defensiva precisa: la única que sostiene la posición. La línea: 17.Dg6 Ac5+ 18.Ae3 Axe3+ 19.Rh1. Las otras tientan, pero fallan: Dxg7+? se contesta con 17…Rxg7 y las negras quedan mejor; Ag6? se contesta con 17…Rg8 y las negras quedan mejor; Dg4? se contesta con 17…Ac5+ y las negras quedan mejor.',
+    prueba: 'Ejercicio 0iPPK de la base abierta de Lichess (CC0), rating 2445. Stockfish 16 a profundidad 18: Dg6 es la mejor (+2,1) y la segunda queda en -1,5; las otras tres opciones quedan en -8,6, -3,8, -10,2 (profundidad 14).',
+  },
+  {
+    id: 'est_lx_0tWIu', area: 'estrategia', peso: 4, elo: 1742, eloBase: 1742, tipo: 'jugada', lichess: '0tWIu', rating: 2142,
+    enunciado: 'Las negras acaban de jugar …Txb4. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '8/8/1k6/1p6/pr6/P1PK4/8/8 w - - 0 70',
+    solucion: { from: 'c3', to: 'b4' },
+    explica: 'Es un zugzwang: al rival le toca mover y cualquier jugada lo empeora. La línea: 70.cxb4 Rc6 71.Re4 Rd6 72.Rd4.',
+    prueba: 'Ejercicio 0tWIu de la base abierta de Lichess (CC0), rating 2142. Stockfish 16 a profundidad 18: cxb4 es la mejor (+7,5) y la segunda queda en -6,4.',
+  },
+  {
+    id: 'est_lx_1KoGF', area: 'estrategia', peso: 4, elo: 1912, eloBase: 1912, tipo: 'jugada', lichess: '1KoGF', rating: 2312,
+    enunciado: 'Las negras acaban de jugar …Dh5+. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '2r1k1r1/pQ3p1p/4p2p/P1p3bq/3p4/1N6/1PP2PP1/R2KR3 w - - 2 24',
+    solucion: { from: 'g2', to: 'g4' },
+    explica: 'Es una jugada defensiva precisa: la única que sostiene la posición. La línea: 24.g4 Dxg4+ 25.f3 Df5 26.Dxc8+.',
+    prueba: 'Ejercicio 1KoGF de la base abierta de Lichess (CC0), rating 2312. Stockfish 16 a profundidad 18: g4 es la mejor (+3,4) y la segunda queda en -0,2.',
+  },
+  {
+    id: 'est_lx_2Che7', area: 'estrategia', peso: 4, elo: 1957, eloBase: 1957, tipo: 'jugada', lichess: '2Che7', rating: 2357,
+    enunciado: 'Las negras acaban de jugar …g6. Juegan las blancas y están en apuros: encuentra la única jugada que no pierde.',
+    fen: '1rbq3r/p1Np1k2/1p1B2p1/1P2RpPp/5P2/8/1PP2K2/3R4 w - - 0 24',
+    solucion: { from: 'd1', to: 'e1' },
+    explica: 'La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. La línea: 24.Tde1 Ab7 25.Te7+ Dxe7 26.Txe7+.',
+    prueba: 'Ejercicio 2Che7 de la base abierta de Lichess (CC0), rating 2357. Stockfish 16 a profundidad 18: Tde1 es la mejor (+2,2) y la segunda queda en -2,9.',
+  },
+  {
+    id: 'est_lx_3HNAP', area: 'estrategia', peso: 4, elo: 1795, eloBase: 1795, tipo: 'jugada', lichess: '3HNAP', rating: 2195,
+    enunciado: 'Las negras acaban de jugar …b4+. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '8/8/7p/p2k2p1/1p3pP1/PPK2P1P/8/8 w - - 0 43',
+    solucion: { from: 'a3', to: 'b4' },
+    explica: 'Es un zugzwang: al rival le toca mover y cualquier jugada lo empeora. La línea: 43.axb4 axb4+ 44.Rd3 Rc5 45.Re4.',
+    prueba: 'Ejercicio 3HNAP de la base abierta de Lichess (CC0), rating 2195. Stockfish 16 a profundidad 18: axb4 es la mejor (+3,4) y la segunda queda en -6,3.',
+  },
+  {
+    id: 'est_lx_0MHxO', area: 'estrategia', peso: 5, elo: 2024, eloBase: 2024, tipo: 'jugada', lichess: '0MHxO', rating: 2424,
+    enunciado: 'Las negras acaban de jugar …f5. Juegan las blancas y están en apuros: encuentra la única jugada que no pierde.',
+    fen: '8/6pp/p7/P1k2p2/2Pp4/3K1P1P/6P1/8 w - - 0 35',
+    solucion: { from: 'f3', to: 'f4' },
+    explica: 'La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. La línea: 35.f4 h6 36.g4 g6 37.g5.',
+    prueba: 'Ejercicio 0MHxO de la base abierta de Lichess (CC0), rating 2424. Stockfish 16 a profundidad 18: f4 es la mejor (+2,7) y la segunda queda en -4,5.',
+  },
+  {
+    id: 'est_lx_0UBYz', area: 'estrategia', peso: 5, elo: 2064, eloBase: 2064, tipo: 'jugada', lichess: '0UBYz', rating: 2464,
+    enunciado: 'Las negras acaban de jugar …a5. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '8/8/6pp/p2k4/1p1p1PPP/1P1K4/P7/8 w - - 0 38',
+    solucion: { from: 'h4', to: 'h5' },
+    explica: 'Es un zugzwang: al rival le toca mover y cualquier jugada lo empeora. La línea: 38.h5 gxh5 39.gxh5 Rc5 40.Re4.',
+    prueba: 'Ejercicio 0UBYz de la base abierta de Lichess (CC0), rating 2464. Stockfish 16 a profundidad 18: h5 es la mejor (+4,5) y la segunda queda en 0,0.',
+  },
+  {
+    id: 'est_lx_16uUz', area: 'estrategia', peso: 5, elo: 2019, eloBase: 2019, tipo: 'jugada', lichess: '16uUz', rating: 2419,
+    enunciado: 'Las negras acaban de jugar …Dxd4+. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: 'r1b1r1k1/pp3pp1/8/b6Q/3qB2R/2P3P1/PP1K1PP1/R7 w - - 0 20',
+    solucion: { from: 'd2', to: 'c1' },
+    explica: 'Es una jugada defensiva precisa: la única que sostiene la posición. La línea: 20.Rc1 g6 21.Dh7+ Rf8 22.cxd4.',
+    prueba: 'Ejercicio 16uUz de la base abierta de Lichess (CC0), rating 2419. Stockfish 16 a profundidad 18: Rc1 es la mejor (+7,0) y la segunda queda en 0,0.',
+  },
+  {
+    id: 'est_lx_1Kchr', area: 'estrategia', peso: 5, elo: 2031, eloBase: 2031, tipo: 'jugada', lichess: '1Kchr', rating: 2431,
+    enunciado: 'Las negras acaban de jugar …Axd5. Juegan las blancas y están en apuros: encuentra la única jugada que no pierde.',
+    fen: '3r2k1/pp3pbp/6p1/q2bp3/3n4/1B1Q1NBP/PP3PP1/2R3K1 w - - 0 23',
+    solucion: { from: 'f3', to: 'd4' },
+    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 23.Cxd4 exd4 24.Ac7 Tc8 25.Axa5.',
+    prueba: 'Ejercicio 1Kchr de la base abierta de Lichess (CC0), rating 2431. Stockfish 16 a profundidad 18: Cxd4 es la mejor (+2,1) y la segunda queda en -1,7.',
+  },
+  {
+    id: 'est_lx_2Urcw', area: 'estrategia', peso: 5, elo: 2222, eloBase: 2222, tipo: 'jugada', lichess: '2Urcw', rating: 2622,
+    enunciado: 'Las negras acaban de jugar …Dxa3. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '2k3r1/p4p1p/1P1R1B2/4R3/1P6/q5P1/5K2/8 w - - 0 36',
+    solucion: { from: 'e5', to: 'c5' },
+    explica: 'Es una jugada defensiva precisa: la única que sostiene la posición. La línea: 36.Tc5+ Rb7 37.Tc7+ Rb8 38.Ae5.',
+    prueba: 'Ejercicio 2Urcw de la base abierta de Lichess (CC0), rating 2622. Stockfish 16 a profundidad 18: Tc5+ es la mejor (+3,9) y la segunda queda en -0,2.',
+  },
+  {
+    id: 'est_lx_2bbYX', area: 'estrategia', peso: 5, elo: 2194, eloBase: 2194, tipo: 'jugada', lichess: '2bbYX', rating: 2594,
+    enunciado: 'Las negras acaban de jugar …Ab6+. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: 'r4k2/7R/1b2b1R1/1p3p2/8/5P1P/6P1/6K1 w - - 1 41',
+    solucion: { from: 'g1', to: 'h2' },
+    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 41.Rh2 Ag8 42.Tf6+ Re8 43.Tg7.',
+    prueba: 'Ejercicio 2bbYX de la base abierta de Lichess (CC0), rating 2594. Stockfish 16 a profundidad 18: Rh2 es la mejor (+3,6) y la segunda queda en -1,7.',
+  },
+  {
+    id: 'est_lx_2fAAb_op', area: 'estrategia', peso: 5, elo: 2000, eloBase: 2000, tipo: 'opcion_tablero', lichess: '2fAAb', rating: 2550,
+    enunciado: 'Las negras acaban de jugar …Axc2. Juegan las blancas y están en apuros. Solo una de estas jugadas salva la partida: ¿cuál?',
+    fen: 'r4rk1/pp3pB1/1qp4p/2b5/4R3/P5P1/1Pb2PBP/3Q2K1 w - - 0 25',
+    opciones: ['Dg4', 'Dxc2', 'Axf8', 'Dd2'],
+    correcta: 0,
+    explica: 'Es un ataque a la descubierta: al moverse una pieza, se destapa otra. La línea: 25.Dg4 Axe4 26.Axe4 f5 27.Dg6. Las otras tientan, pero fallan: Dxc2? se contesta con 25…Rxg7 y la ventaja se esfuma; Axf8? se contesta con 25…Axf2+ y las negras quedan mejor; Dd2? se contesta con 25…Axe4 y las negras quedan mejor.',
+    prueba: 'Ejercicio 2fAAb de la base abierta de Lichess (CC0), rating 2550. Stockfish 16 a profundidad 18: Dg4 es la mejor (+1,9) y la segunda queda en -2,3; las otras tres opciones quedan en -1,4, -7,4, -5,0 (profundidad 14).',
+  },
+  {
+    id: 'est_lx_2kiPW', area: 'estrategia', peso: 5, elo: 2073, eloBase: 2073, tipo: 'jugada', lichess: '2kiPW', rating: 2473,
+    enunciado: 'Las negras acaban de jugar …h6. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '6r1/4k1p1/7p/4KP2/2P5/8/8/6R1 w - - 0 44',
+    solucion: { from: 'g1', to: 'g7' },
+    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 44.Txg7+ Txg7 45.f6+ Rf7 46.fxg7.',
+    prueba: 'Ejercicio 2kiPW de la base abierta de Lichess (CC0), rating 2473. Stockfish 16 a profundidad 18: Txg7+ es la mejor (+7,0) y la segunda queda en +0,1.',
+  },
+  {
+    id: 'est_lx_31VMI', area: 'estrategia', peso: 5, elo: 2000, eloBase: 2000, tipo: 'jugada', lichess: '31VMI', rating: 2400,
+    enunciado: 'Las negras acaban de jugar …Cxf2. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '4r1k1/1p3ppp/p7/2bP4/8/3N4/PPr2nPP/R1B2RK1 w - - 0 23',
+    solucion: { from: 'd3', to: 'c5' },
+    explica: 'Es una jugada defensiva precisa: la única que sostiene la posición. La línea: 23.Cxc5 Tee2 24.Af4.',
+    prueba: 'Ejercicio 31VMI de la base abierta de Lichess (CC0), rating 2400. Stockfish 16 a profundidad 18: Cxc5 es la mejor (+3,4) y la segunda queda en -4,1.',
+  },
+  {
+    id: 'cal_lx_0IVo3_op', area: 'calculo', peso: 1, elo: 433, eloBase: 433, tipo: 'opcion_tablero', lichess: '0IVo3', rating: 983,
+    enunciado: 'Las negras acaban de jugar …cxd2. Juegan las blancas y están en apuros. Solo una de estas jugadas salva la partida: ¿cuál?',
+    fen: '3r1rk1/2q1b1pp/4pn2/1Q6/1p6/4P1P1/3p1PBP/1RR3K1 w - - 0 28',
+    opciones: ['Txc7', 'Txb4', 'Td1', 'Tf1'],
+    correcta: 0,
+    explica: 'Hay algo sin defender, y hay que verlo antes que el rival. La línea: 28.Txc7 d1=T+ 29.Txd1 Txd1+ 30.Af1. Las otras tientan, pero fallan: Txb4? se contesta con 28…dxc1=D+ y las negras quedan mejor; Td1? se contesta con 28…Dc2 y las negras quedan mejor; Tf1? se contesta con 28…Rh8 y las negras quedan mejor.',
+    prueba: 'Ejercicio 0IVo3 de la base abierta de Lichess (CC0), rating 983. Stockfish 16 a profundidad 18: Txc7 es la mejor (+2,6) y la segunda queda en -5,8; las otras tres opciones quedan en -13,5, -6,1, -6,1 (profundidad 14).',
+  },
+  {
+    id: 'cal_lx_0JHet_op', area: 'calculo', peso: 1, elo: 1080, eloBase: 1080, tipo: 'opcion_tablero', lichess: '0JHet', rating: 1630,
+    enunciado: 'Las negras acaban de jugar …Dc5. Juegan las blancas y están en apuros. Solo una de estas jugadas salva la partida: ¿cuál?',
+    fen: '2r2rk1/1p3p1p/p5pb/n1qBp3/3pP3/P2Q2PP/1P3PN1/R4RK1 w - - 4 23',
+    opciones: ['b4', 'Axf7+', 'Axb7', 'Dxa6'],
+    correcta: 0,
+    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 23.b4 Dc3 24.Dxc3 dxc3 25.bxa5. Las otras tientan, pero fallan: Axf7+? se contesta con 23…Txf7 y las negras quedan mejor; Axb7? se contesta con 23…Cxb7 y las negras quedan mejor; Dxa6? se contesta con 23…bxa6 y las negras quedan mejor.',
+    prueba: 'Ejercicio 0JHet de la base abierta de Lichess (CC0), rating 1630. Stockfish 16 a profundidad 18: b4 es la mejor (+2,0) y la segunda queda en -0,9; las otras tres opciones quedan en -4,9, -5,6, -7,1 (profundidad 14).',
+  },
+  {
+    id: 'cal_lx_1FlQw', area: 'calculo', peso: 1, elo: 885, eloBase: 885, tipo: 'jugada', lichess: '1FlQw', rating: 1285,
+    enunciado: 'Las negras acaban de jugar …Txd1. Juegan las blancas y fuerzan el mate. ¿Cuál es la primera jugada? (Se responde con una sola jugada.)',
+    fen: '4r1k1/p4ppp/8/2q5/8/1Q6/PP4PP/3r1R1K w - - 0 22',
+    solucion: { from: 'b3', to: 'f7' },
+    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 22.Dxf7+ Rh8 23.Dxe8+ Df8 24.Dxf8#.',
+    prueba: 'Ejercicio 1FlQw de la base abierta de Lichess (CC0), rating 1285. Stockfish 16 a profundidad 18: Dxf7+ es la mejor (mate en 3) y la segunda queda en +0,1.',
+  },
+  {
+    id: 'cal_lx_1dUup_op', area: 'calculo', peso: 1, elo: 816, eloBase: 816, tipo: 'opcion_tablero', lichess: '1dUup', rating: 1366,
+    enunciado: 'Las negras acaban de jugar …Rxf7. Juegan las blancas. Solo una de estas jugadas gana: ¿cuál?',
+    fen: '4r3/1q3kbp/1p1Q1np1/pNr5/P1P1p3/1P6/5PPP/2R2RK1 w - - 0 26',
+    opciones: ['Dxc5', 'Dxf6+', 'Dc7+', 'Dd7+'],
+    correcta: 0,
+    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 26.Dxc5 bxc5 27.Cd6+ Rg8 28.Cxb7. Las otras tientan, pero fallan: Dxf6+? se contesta con 26…Rxf6 y las negras quedan mejor; Dc7+? se contesta con 26…Dxc7 y las negras quedan mejor; Dd7+? se contesta con 26…Dxd7 y las negras quedan mejor.',
+    prueba: 'Ejercicio 1dUup de la base abierta de Lichess (CC0), rating 1366. Stockfish 16 a profundidad 18: Dxc5 es la mejor (+3,6) y la segunda queda en -3,4; las otras tres opciones quedan en -5,1, -6,5, -6,4 (profundidad 14).',
+  },
+  {
+    id: 'cal_lx_1gc7t', area: 'calculo', peso: 1, elo: 892, eloBase: 892, tipo: 'jugada', lichess: '1gc7t', rating: 1292,
+    enunciado: 'Las negras acaban de jugar …Txf5. Juegan las blancas y fuerzan el mate. ¿Cuál es la primera jugada? (Se responde con una sola jugada.)',
+    fen: '6k1/2p2pp1/p2b4/1pp2rBQ/2q5/7P/PP2R1K1/8 w - - 0 36',
+    solucion: { from: 'e2', to: 'e8' },
+    explica: 'Es una atracción: se arrastra a una pieza (a menudo el rey) a una casilla fatal. La línea: 36.Te8+ Af8 37.Txf8+ Rxf8 38.Dh8#.',
+    prueba: 'Ejercicio 1gc7t de la base abierta de Lichess (CC0), rating 1292. Stockfish 16 a profundidad 18: Te8+ es la mejor (mate en 3) y la segunda queda en -6,2.',
+  },
+  {
+    id: 'cal_lx_2WCyn', area: 'calculo', peso: 1, elo: 1043, eloBase: 1043, tipo: 'jugada', lichess: '2WCyn', rating: 1443,
+    enunciado: 'Las negras acaban de jugar …Df3+. Juegan las blancas y están en apuros: encuentra la única jugada que no pierde.',
+    fen: 'r1b2k2/6bQ/p3p1BP/1p1pP3/8/5qB1/8/1N5K w - - 1 33',
+    solucion: { from: 'h1', to: 'h2' },
+    explica: 'Una pieza rival queda atrapada, sin casilla adonde ir. La línea: 33.Rh2 Ta7 34.hxg7+ Txg7 35.Dh8+.',
+    prueba: 'Ejercicio 2WCyn de la base abierta de Lichess (CC0), rating 1443. Stockfish 16 a profundidad 18: Rh2 es la mejor (+2,4) y la segunda queda en -8,0.',
+  },
+  {
+    id: 'cal_lx_2WvX1_op', area: 'calculo', peso: 1, elo: 969, eloBase: 969, tipo: 'opcion_tablero', lichess: '2WvX1', rating: 1519,
+    enunciado: 'Las negras acaban de jugar …Dh6. Juegan las blancas y están en apuros. Solo una de estas jugadas salva la partida: ¿cuál?',
+    fen: '2r2rk1/1p3ppp/p2p3q/2b1pP2/4P1P1/2N3PN/PPn3BK/R4Q2 w - - 2 19',
+    opciones: ['g5', 'Dxa6', 'f6', 'a3'],
+    correcta: 0,
+    explica: 'Una pieza rival queda atrapada, sin casilla adonde ir. La línea: 19.g5 Dh5 20.Af3 Dxf3 21.Dxf3. Las otras tientan, pero fallan: Dxa6? se contesta con 19…bxa6 y las negras quedan mejor; f6? se contesta con 19…Dxf6 y las negras quedan mejor; a3? se contesta con 19…f6 y las negras quedan mejor.',
+    prueba: 'Ejercicio 2WvX1 de la base abierta de Lichess (CC0), rating 1519. Stockfish 16 a profundidad 18: g5 es la mejor (+2,8) y la segunda queda en -3,0; las otras tres opciones quedan en -10,0, -4,7, -3,9 (profundidad 14).',
+  },
+  {
+    id: 'cal_lx_2XstJ', area: 'calculo', peso: 1, elo: 796, eloBase: 796, tipo: 'jugada', lichess: '2XstJ', rating: 1196,
+    enunciado: 'Las negras acaban de jugar …Cf6. Juegan las blancas y están en apuros: encuentra la única jugada que no pierde.',
+    fen: '2k4r/pp3ppp/3rpn2/4qb2/8/2N5/PP2BPPP/R1Q1K2R w KQ - 2 15',
+    solucion: { from: 'c3', to: 'b5' },
+    explica: 'Es un ataque a la descubierta: al moverse una pieza, se destapa otra. La línea: 15.Cb5+ Tc6 16.Cxa7+ Rd7 17.Cxc6.',
+    prueba: 'Ejercicio 2XstJ de la base abierta de Lichess (CC0), rating 1196. Stockfish 16 a profundidad 18: Cb5+ es la mejor (+2,6) y la segunda queda en -0,9.',
+  },
+  {
+    id: 'cal_lx_0a1yP', area: 'calculo', peso: 2, elo: 1370, eloBase: 1370, tipo: 'jugada', lichess: '0a1yP', rating: 1770,
+    enunciado: 'Las negras acaban de jugar …Txf4. Juegan las blancas y están en apuros: encuentra la única jugada que no pierde.',
+    fen: 'r4qk1/pp2n3/3p4/3P2pp/2B1pr1P/6Q1/PPP3KP/5R2 w - - 0 28',
+    solucion: { from: 'g3', to: 'g5' },
+    explica: 'La línea: 28.Dxg5+ Dg7 29.Dxg7+ Rxg7 30.Txf4.',
+    prueba: 'Ejercicio 0a1yP de la base abierta de Lichess (CC0), rating 1770. Stockfish 16 a profundidad 18: Dxg5+ es la mejor (+2,1) y la segunda queda en -5,9.',
+  },
+  {
+    id: 'cal_lx_2BNXi', area: 'calculo', peso: 2, elo: 1302, eloBase: 1302, tipo: 'jugada', lichess: '2BNXi', rating: 1702,
+    enunciado: 'Las negras acaban de jugar …Rh8. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: 'r6k/pp2pr1p/3p1p1Q/2p2NR1/4P3/1P1P4/P1P1nq2/6RK w - - 1 31',
+    solucion: { from: 'g5', to: 'g7' },
+    explica: 'La línea: 31.Tg7 Dxg1+ 32.Txg1 Cxg1 33.Rxg1.',
+    prueba: 'Ejercicio 2BNXi de la base abierta de Lichess (CC0), rating 1702. Stockfish 16 a profundidad 18: Tg7 es la mejor (+3,7) y la segunda queda en +0,3.',
+  },
+  {
+    id: 'cal_lx_3F8sW', area: 'calculo', peso: 2, elo: 1380, eloBase: 1380, tipo: 'jugada', lichess: '3F8sW', rating: 1780,
+    enunciado: 'Las negras acaban de jugar …Cxc3. Juegan las blancas y fuerzan el mate. ¿Cuál es la primera jugada? (Se responde con una sola jugada.)',
+    fen: 'r1b2rk1/pp3ppp/8/1q2p3/6nP/1Nn2Q2/PPP3P1/2KR1R2 w - - 0 20',
+    solucion: { from: 'f3', to: 'f7' },
+    explica: 'Hay un sacrificio: se entrega material para ganar más. La línea: 20.Dxf7+ Txf7 21.Td8+ De8 22.Txe8+.',
+    prueba: 'Ejercicio 3F8sW de la base abierta de Lichess (CC0), rating 1780. Stockfish 16 a profundidad 18: Dxf7+ es la mejor (mate en 4) y la segunda queda en -5,7.',
+  },
+  {
+    id: 'cal_lx_3SbfG_op', area: 'calculo', peso: 2, elo: 1321, eloBase: 1321, tipo: 'opcion_tablero', lichess: '3SbfG', rating: 1871,
+    enunciado: 'Las negras acaban de jugar …Cxe4. Juegan las blancas. ¿Cuál de estas jugadas fuerza el mate?',
+    fen: '2r2rk1/1pq2p1p/p2p1Bp1/3p3Q/P1P1n3/1P4R1/5PPP/R5K1 w - - 0 21',
+    opciones: ['Dxh7+', 'Dxg6+', 'Txg6+', 'Dxd5'],
+    correcta: 0,
+    explica: 'Es una atracción: se arrastra a una pieza (a menudo el rey) a una casilla fatal. La línea: 21.Dxh7+ Rxh7 22.Th3+ Rg8 23.Th8#. Las otras tientan, pero fallan: Dxg6+? se contesta con 21…fxg6 y las negras quedan mejor; Txg6+? se contesta con 21…fxg6 y las negras quedan mejor; Dxd5? se contesta con 21…Cxf6 y las negras quedan mejor.',
+    prueba: 'Ejercicio 3SbfG de la base abierta de Lichess (CC0), rating 1871. Stockfish 16 a profundidad 18: Dxh7+ es la mejor (mate en 3) y la segunda queda en -1,7; las otras tres opciones quedan en -7,2, -5,6, -4,8 (profundidad 14).',
+  },
+  {
+    id: 'cal_lx_3UDPm', area: 'calculo', peso: 2, elo: 1254, eloBase: 1254, tipo: 'jugada', lichess: '3UDPm', rating: 1654,
+    enunciado: 'Las negras acaban de jugar …Db6. Juegan las blancas y están en apuros: encuentra la única jugada que no pierde.',
+    fen: 'rn3rk1/pp1b1pbp/1q1p1np1/1B4B1/P2Q4/2N1P2P/1PP2PP1/R3K2R w KQ - 3 12',
+    solucion: { from: 'g5', to: 'f6' },
+    explica: 'La línea: 12.Axf6 Dxd4 13.Axd4 Axd4 14.exd4.',
+    prueba: 'Ejercicio 3UDPm de la base abierta de Lichess (CC0), rating 1654. Stockfish 16 a profundidad 18: Axf6 es la mejor (+2,6) y la segunda queda en -2,9.',
+  },
+  {
+    id: 'cal_lx_02JQH', area: 'calculo', peso: 3, elo: 1420, eloBase: 1420, tipo: 'jugada', lichess: '02JQH', rating: 1820,
+    enunciado: 'Las negras acaban de jugar …Dxh4. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: 'rn1b1rk1/6p1/3p4/2pPpp1Q/Np5q/1P1B4/P4P2/1K1R2R1 w - - 0 24',
+    solucion: { from: 'g1', to: 'g7' },
+    explica: 'Es una atracción: se arrastra a una pieza (a menudo el rey) a una casilla fatal. La línea: 24.Txg7+ Rxg7 25.Tg1+ Dg5 26.Txg5+.',
+    prueba: 'Ejercicio 02JQH de la base abierta de Lichess (CC0), rating 1820. Stockfish 16 a profundidad 18: Txg7+ es la mejor (+5,9) y la segunda queda en +0,8.',
+  },
+  {
+    id: 'cal_lx_1E5At', area: 'calculo', peso: 3, elo: 1511, eloBase: 1511, tipo: 'jugada', lichess: '1E5At', rating: 1911,
+    enunciado: 'Las negras acaban de jugar …Dd5. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '1rk5/p2r3p/6p1/Q2qNb2/8/8/PP3PPP/4R1K1 w - - 8 28',
+    solucion: { from: 'e1', to: 'c1' },
+    explica: 'Es una desviación: se aleja al defensor de lo que defendía. La línea: 28.Tc1+ Rb7 29.Tc7+ Txc7 30.Dxd5+.',
+    prueba: 'Ejercicio 1E5At de la base abierta de Lichess (CC0), rating 1911. Stockfish 16 a profundidad 18: Tc1+ es la mejor (+4,1) y la segunda queda en -1,9.',
+  },
+  {
+    id: 'cal_lx_1u2s7_op', area: 'calculo', peso: 3, elo: 1481, eloBase: 1481, tipo: 'opcion_tablero', lichess: '1u2s7', rating: 2031,
+    enunciado: 'Las negras acaban de jugar …De2. Juegan las blancas. ¿Cuál de estas jugadas fuerza el mate?',
+    fen: '4r1k1/3n1p1p/2p1p3/3p3N/p4RPQ/P6P/2r1q1B1/7K w - - 1 31',
+    opciones: ['Dg5+', 'Cf6+', 'Dg3', 'Txf7'],
+    correcta: 0,
+    explica: 'Es una atracción: se arrastra a una pieza (a menudo el rey) a una casilla fatal. La línea: 31.Dg5+ Rf8 32.Txf7+ Rxf7 33.Dg7#. Las otras tientan, pero fallan: Cf6+? se contesta con 31…Cxf6 y las negras quedan mejor; Dg3? se contesta con 31…Tb8 y las negras quedan mejor; Txf7? se contesta con 31…Dxg2# y las blancas reciben mate.',
+    prueba: 'Ejercicio 1u2s7 de la base abierta de Lichess (CC0), rating 2031. Stockfish 16 a profundidad 18: Dg5+ es la mejor (mate en 3) y la segunda queda en -5,5; las otras tres opciones quedan en -7,8, -5,8, recibe mate en 1 (profundidad 14).',
+  },
+  {
+    id: 'cal_lx_1zNWM', area: 'calculo', peso: 3, elo: 1431, eloBase: 1431, tipo: 'jugada', lichess: '1zNWM', rating: 1831,
+    enunciado: 'Las negras acaban de jugar …Taxc8. Juegan las blancas y fuerzan el mate. ¿Cuál es la primera jugada? (Se responde con una sola jugada.)',
+    fen: '2r2r1k/1p4Rp/1p3p2/8/1PQ5/8/1B1PnP1q/4K3 w - - 0 29',
+    solucion: { from: 'g7', to: 'g8' },
+    explica: 'Todo gira en torno a una clavada: la pieza clavada no puede defender. La línea: 29.Tg8+ Txg8 30.Axf6+ Tg7 31.Dxc8#.',
+    prueba: 'Ejercicio 1zNWM de la base abierta de Lichess (CC0), rating 1831. Stockfish 16 a profundidad 18: Tg8+ es la mejor (mate en 3) y la segunda queda en -5,7.',
+  },
+  {
+    id: 'cal_lx_2EKNR', area: 'calculo', peso: 3, elo: 1637, eloBase: 1637, tipo: 'jugada', lichess: '2EKNR', rating: 2037,
+    enunciado: 'Las negras acaban de jugar …Dg4. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: 'r1b2rk1/p5bp/2p3p1/1p1nP1B1/6qQ/1B6/PPP2PPP/3RR1K1 w - - 4 19',
+    solucion: { from: 'd1', to: 'd5' },
+    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 19.Txd5 cxd5 20.Axd5+ Rh8 21.Axa8.',
+    prueba: 'Ejercicio 2EKNR de la base abierta de Lichess (CC0), rating 2037. Stockfish 16 a profundidad 18: Txd5 es la mejor (+4,0) y la segunda queda en -1,5.',
+  },
+  {
+    id: 'cal_lx_2qSxY_op', area: 'calculo', peso: 3, elo: 1671, eloBase: 1671, tipo: 'opcion_tablero', lichess: '2qSxY', rating: 2221,
+    enunciado: 'Las negras acaban de jugar …Axg5. Juegan las blancas. Solo una de estas jugadas gana: ¿cuál?',
+    fen: 'r2q1r2/ppp2ppk/1nn5/3pP1bb/3P1B2/2P5/PP4PP/RN1Q1RK1 w - - 0 14',
+    opciones: ['Dxh5+', 'Dd3+', 'Dc2+', 'Axg5'],
+    correcta: 0,
+    explica: 'Es un despeje: la pieza se aparta para abrirle la línea o la casilla a otra. La línea: 14.Dxh5+ Ah6 15.Axh6 gxh6 16.Tf6. Las otras tientan, pero fallan: Dd3+? se contesta con 14…Rg8 y las negras quedan mejor; Dc2+? se contesta con 14…f5 y las negras quedan mejor; Axg5? se contesta con 14…Dxg5 y las negras quedan mejor.',
+    prueba: 'Ejercicio 2qSxY de la base abierta de Lichess (CC0), rating 2221. Stockfish 16 a profundidad 18: Dxh5+ es la mejor (+4,6) y la segunda queda en -5,8; las otras tres opciones quedan en -5,4, -6,3, -6,5 (profundidad 14).',
+  },
+  {
+    id: 'cal_lx_2tL7Q_op', area: 'calculo', peso: 3, elo: 1555, eloBase: 1555, tipo: 'opcion_tablero', lichess: '2tL7Q', rating: 2105,
+    enunciado: 'Las negras acaban de jugar …Ccxd4. Juegan las blancas. Solo una de estas jugadas gana: ¿cuál?',
+    fen: '3r1rk1/pp1qppbp/3pn1p1/8/2Pn3P/1P4PB/PB3P1K/RN1Q1R2 w - - 0 17',
+    opciones: ['Axd4', 'Dxd4', 'Axe6', 'Aa3'],
+    correcta: 0,
+    explica: 'Se captura al defensor y lo que defendía queda colgado. La línea: 17.Axd4 Axd4 18.Axe6 Dxe6 19.Dxd4. Las otras tientan, pero fallan: Dxd4? se contesta con 17…Cxd4 y las negras quedan mejor; Axe6? se contesta con 17…Cxe6 y la ventaja se esfuma; Aa3? se contesta con 17…Cc6 y las negras quedan mejor.',
+    prueba: 'Ejercicio 2tL7Q de la base abierta de Lichess (CC0), rating 2105. Stockfish 16 a profundidad 18: Axd4 es la mejor (+3,6) y la segunda queda en -0,7; las otras tres opciones quedan en -4,7, -0,8, -3,0 (profundidad 14).',
+  },
+  {
+    id: 'cal_lx_1LzUH', area: 'calculo', peso: 4, elo: 1867, eloBase: 1867, tipo: 'jugada', lichess: '1LzUH', rating: 2267,
+    enunciado: 'Las negras acaban de jugar …Ac3. Juegan las blancas y están en apuros: encuentra la única jugada que no pierde.',
+    fen: '2rqr1k1/pp3pp1/7p/2n2N2/8/P1b4P/R1B2PP1/3QR1K1 w - - 8 26',
+    solucion: { from: 'e1', to: 'e8' },
+    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 26.Txe8+ Dxe8 27.Cd6 De6 28.Cxc8.',
+    prueba: 'Ejercicio 1LzUH de la base abierta de Lichess (CC0), rating 2267. Stockfish 16 a profundidad 18: Txe8+ es la mejor (+2,6) y la segunda queda en -1,3.',
+  },
+  {
+    id: 'cal_lx_1Xj5T', area: 'calculo', peso: 4, elo: 1815, eloBase: 1815, tipo: 'jugada', lichess: '1Xj5T', rating: 2215,
+    enunciado: 'Las negras acaban de jugar …Txe7. Juegan las blancas y fuerzan el mate. ¿Cuál es la primera jugada? (Se responde con una sola jugada.)',
+    fen: '2nrk3/p2br2p/1pp3q1/2Q5/5P2/B1P4P/P5P1/4R2K w - - 0 26',
+    solucion: { from: 'e1', to: 'e7' },
+    explica: 'Es un jaque doble: el rey tiene que moverse y no alcanza a tapar nada. La línea: 26.Txe7+ Rf8 27.Te8+ Rxe8 28.Df8#.',
+    prueba: 'Ejercicio 1Xj5T de la base abierta de Lichess (CC0), rating 2215. Stockfish 16 a profundidad 18: Txe7+ es la mejor (mate en 3) y la segunda queda en -2,9.',
+  },
+  {
+    id: 'cal_lx_1v0jB', area: 'calculo', peso: 4, elo: 1723, eloBase: 1723, tipo: 'jugada', lichess: '1v0jB', rating: 2123,
+    enunciado: 'Las negras acaban de jugar …fxe6. Juegan las blancas y fuerzan el mate. ¿Cuál es la primera jugada? (Se responde con una sola jugada.)',
+    fen: 'r2q1rk1/1p2b1p1/p1n1p3/6P1/1P1P4/2P2Q2/P4PP1/R3K2R w KQ - 0 18',
+    solucion: { from: 'h1', to: 'h8' },
+    explica: 'Es una atracción: se arrastra a una pieza (a menudo el rey) a una casilla fatal. La línea: 18.Th8+ Rxh8 19.Dh5+ Rg8 20.g6.',
+    prueba: 'Ejercicio 1v0jB de la base abierta de Lichess (CC0), rating 2123. Stockfish 16 a profundidad 18: Th8+ es la mejor (mate en 5) y la segunda queda en -4,7.',
+  },
+  {
+    id: 'cal_lx_2J2T7_op', area: 'calculo', peso: 4, elo: 1854, eloBase: 1854, tipo: 'opcion_tablero', lichess: '2J2T7', rating: 2404,
+    enunciado: 'Las negras acaban de jugar …Axb5. Juegan las blancas. ¿Cuál de estas jugadas fuerza el mate?',
+    fen: '1k1r3r/6pp/Rp3p2/1b2p2n/2NnB3/4B3/5PPP/4K2R w K - 0 25',
+    opciones: ['Ta8+', 'Txb6+', 'Axd4', 'Ta1'],
+    correcta: 0,
+    explica: 'Es una desviación: se aleja al defensor de lo que defendía. La línea: 25.Ta8+ Rc7 26.Ta7+ Rc8 27.Cxb6+. Las otras tientan, pero fallan: Txb6+? se contesta con 25…Rc8 y la ventaja se esfuma; Axd4? se contesta con 25…Axa6 y las negras quedan mejor; Ta1? se contesta con 25…Axc4 y las negras quedan mejor.',
+    prueba: 'Ejercicio 2J2T7 de la base abierta de Lichess (CC0), rating 2404. Stockfish 16 a profundidad 18: Ta8+ es la mejor (mate en 4) y la segunda queda en +0,7; las otras tres opciones quedan en +1,0, -4,4, -4,8 (profundidad 14).',
+  },
+  {
+    id: 'cal_lx_3FXGw_op', area: 'calculo', peso: 4, elo: 1898, eloBase: 1898, tipo: 'opcion_tablero', lichess: '3FXGw', rating: 2448,
+    enunciado: 'Las negras acaban de jugar …Txc3. Juegan las blancas. Solo una de estas jugadas gana: ¿cuál?',
+    fen: '2r2k2/2q3p1/p3b3/1p3pQ1/1n1Bp3/1Pr3PP/P2R4/1K1BR3 w - - 0 36',
+    opciones: ['Axg7+', 'Axc3', 'Dxg7+', 'Dxf5+'],
+    correcta: 0,
+    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 36.Axg7+ Dxg7 37.Td8+ Txd8 38.Dxd8+. Las otras tientan, pero fallan: Axc3? se contesta con 36…Dxc3 y la ventaja se esfuma; Dxg7+? se contesta con 36…Dxg7 y las negras quedan mejor; Dxf5+? se contesta con 36…Axf5 y las negras quedan mejor.',
+    prueba: 'Ejercicio 3FXGw de la base abierta de Lichess (CC0), rating 2448. Stockfish 16 a profundidad 18: Axg7+ es la mejor (+5,6) y la segunda queda en 0,0; las otras tres opciones quedan en +0,5, -5,4, -12,5 (profundidad 14).',
+  },
+  {
+    id: 'cal_lx_3K5oC', area: 'calculo', peso: 4, elo: 1882, eloBase: 1882, tipo: 'jugada', lichess: '3K5oC', rating: 2282,
+    enunciado: 'Las negras acaban de jugar …Axf4. Juegan las blancas y fuerzan el mate. ¿Cuál es la primera jugada? (Se responde con una sola jugada.)',
+    fen: '2nr3r/1k6/4P1p1/RN1p1pP1/3P1bb1/8/6PP/1R4K1 w - - 0 36',
+    solucion: { from: 'b5', to: 'd6' },
+    explica: 'Es un jaque doble: el rey tiene que moverse y no alcanza a tapar nada. La línea: 36.Cd6+ Rc7 37.Tb7+ Rxd6 38.Ta6+.',
+    prueba: 'Ejercicio 3K5oC de la base abierta de Lichess (CC0), rating 2282. Stockfish 16 a profundidad 18: Cd6+ es la mejor (mate en 4) y la segunda queda en -2,1.',
+  },
+  {
+    id: 'cal_lx_0NG4f', area: 'calculo', peso: 5, elo: 2084, eloBase: 2084, tipo: 'jugada', lichess: '0NG4f', rating: 2484,
+    enunciado: 'Las negras acaban de jugar …Tac8. Juegan las blancas y están en apuros: encuentra la única jugada que no pierde.',
+    fen: '2r2rk1/1bq2pbp/2n1p3/1BN2p2/3p4/P4N2/4QPPP/2R1R1K1 w - - 3 27',
+    solucion: { from: 'c5', to: 'b7' },
+    explica: 'Es una enfilada: la pieza de adelante se va y cae la de atrás. La línea: 27.Cxb7 Dxb7 28.Aa6 Da8 29.Axc8.',
+    prueba: 'Ejercicio 0NG4f de la base abierta de Lichess (CC0), rating 2484. Stockfish 16 a profundidad 18: Cxb7 es la mejor (+1,9) y la segunda queda en -0,9.',
+  },
+  {
+    id: 'cal_lx_0cfMM', area: 'calculo', peso: 5, elo: 2041, eloBase: 2041, tipo: 'jugada', lichess: '0cfMM', rating: 2441,
+    enunciado: 'Las negras acaban de jugar …fxe4. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: 'r2q1rk1/pp5p/3p2p1/2pP4/3bpB2/3P3Q/P5PP/1R3R1K w - - 0 18',
+    solucion: { from: 'b1', to: 'b7' },
+    explica: 'Es una atracción: se arrastra a una pieza (a menudo el rey) a una casilla fatal. La línea: 18.Txb7 Ag7 19.Txg7+ Rxg7 20.Ah6+.',
+    prueba: 'Ejercicio 0cfMM de la base abierta de Lichess (CC0), rating 2441. Stockfish 16 a profundidad 18: Txb7 es la mejor (+4,5) y la segunda queda en -0,0.',
+  },
+  {
+    id: 'cal_lx_1TTCO', area: 'calculo', peso: 5, elo: 2099, eloBase: 2099, tipo: 'jugada', lichess: '1TTCO', rating: 2499,
+    enunciado: 'Las negras acaban de jugar …De7. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: 'r6k/4qppB/b3p2p/1p1nN3/1PpPQ3/6P1/5P1P/4R1K1 w - - 1 26',
+    solucion: { from: 'h7', to: 'g6' },
+    explica: 'Es una desviación: se aleja al defensor de lo que defendía. La línea: 26.Ag6 f5 27.Axf5 exf5 28.Dxd5.',
+    prueba: 'Ejercicio 1TTCO de la base abierta de Lichess (CC0), rating 2499. Stockfish 16 a profundidad 18: Ag6 es la mejor (+3,3) y la segunda queda en -2,6.',
+  },
+  {
+    id: 'cal_lx_1oEQg', area: 'calculo', peso: 5, elo: 2004, eloBase: 2004, tipo: 'jugada', lichess: '1oEQg', rating: 2404,
+    enunciado: 'Las negras acaban de jugar …exf5. Juegan las blancas y están en apuros: encuentra la única jugada que no pierde.',
+    fen: 'r6r/pp4k1/2p3p1/5p1p/3P1Pn1/3B1KPR/qP2Q3/7R w - - 0 31',
+    solucion: { from: 'd3', to: 'c4' },
+    explica: 'La línea: 31.Ac4 The8 32.Axa2 Txe2 33.Rxe2.',
+    prueba: 'Ejercicio 1oEQg de la base abierta de Lichess (CC0), rating 2404. Stockfish 16 a profundidad 18: Ac4 es la mejor (+2,4) y la segunda queda en -4,2.',
+  },
+  {
+    id: 'cal_lx_28aus', area: 'calculo', peso: 5, elo: 2100, eloBase: 2100, tipo: 'jugada', lichess: '28aus', rating: 2500,
+    enunciado: 'Las negras acaban de jugar …Cd7. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: 'r1b2rk1/1pqn1ppp/p3p3/8/1b1N4/2NBQ3/PPP2PPP/3R1RK1 w - - 3 13',
+    solucion: { from: 'd4', to: 'e6' },
+    explica: 'La línea: 13.Cxe6 fxe6 14.Dxe6+ Rh8 15.De4.',
+    prueba: 'Ejercicio 28aus de la base abierta de Lichess (CC0), rating 2500. Stockfish 16 a profundidad 18: Cxe6 es la mejor (+3,5) y la segunda queda en -0,2.',
+  },
+  {
+    id: 'cal_lx_3620L', area: 'calculo', peso: 5, elo: 2047, eloBase: 2047, tipo: 'jugada', lichess: '3620L', rating: 2447,
+    enunciado: 'Las negras acaban de jugar …Rg8. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '2r3k1/2q2prN/1n4pQ/p2Pp3/1pp1b3/8/B4PPP/3R2K1 w - - 1 33',
+    solucion: { from: 'h7', to: 'f6' },
+    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 33.Cf6+ Rf8 34.d6 Dxd6 35.Txd6.',
+    prueba: 'Ejercicio 3620L de la base abierta de Lichess (CC0), rating 2447. Stockfish 16 a profundidad 18: Cf6+ es la mejor (+4,9) y la segunda queda en -7,0.',
+  },
+  {
+    id: 'cal_lx_392QQ', area: 'calculo', peso: 5, elo: 2101, eloBase: 2101, tipo: 'jugada', lichess: '392QQ', rating: 2501,
+    enunciado: 'Las negras acaban de jugar …Txe5. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '4r1k1/3q1ppp/1pp2n2/p3r3/P2P4/2PQ3P/3B2P1/4RRK1 w - - 0 25',
+    solucion: { from: 'e1', to: 'e5' },
+    explica: 'Todo gira en torno a una clavada: la pieza clavada no puede defender. La línea: 25.Txe5 Txe5 26.Dg3 Te8 27.Txf6.',
+    prueba: 'Ejercicio 392QQ de la base abierta de Lichess (CC0), rating 2501. Stockfish 16 a profundidad 18: Txe5 es la mejor (+4,2) y la segunda queda en -0,8.',
+  },
+  {
+    id: 'mae_lx_06s9Z', area: 'maestria', peso: 1, elo: 841, eloBase: 841, tipo: 'jugada', lichess: '06s9Z', rating: 1241,
+    enunciado: 'Las negras acaban de jugar …Re6. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '8/p4p2/4kb2/P6P/7r/5RK1/6P1/8 w - - 6 57',
+    solucion: { from: 'f3', to: 'f6' },
+    explica: 'La línea: 57.Txf6+ Rxf6 58.Rxh4.',
+    prueba: 'Ejercicio 06s9Z de la base abierta de Lichess (CC0), rating 1241. Stockfish 16 a profundidad 18: Txf6+ es la mejor (+6,3) y la segunda queda en -2,7.',
+  },
+  {
+    id: 'mae_lx_0K5pu', area: 'maestria', peso: 1, elo: 1097, eloBase: 1097, tipo: 'jugada', lichess: '0K5pu', rating: 1497,
+    enunciado: 'Las negras acaban de jugar …Ce4. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: 'r7/1p2q1pk/p5p1/8/P1Q1n2P/4PN2/6P1/5RK1 w - - 1 31',
+    solucion: { from: 'c4', to: 'e4' },
+    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 31.Dxe4 Dxe4 32.Cg5+ Rh6 33.Cxe4.',
+    prueba: 'Ejercicio 0K5pu de la base abierta de Lichess (CC0), rating 1497. Stockfish 16 a profundidad 18: Dxe4 es la mejor (+4,6) y la segunda queda en +0,2.',
+  },
+  {
+    id: 'mae_lx_0Kgj5', area: 'maestria', peso: 1, elo: 757, eloBase: 757, tipo: 'jugada', lichess: '0Kgj5', rating: 1157,
+    enunciado: 'Las negras acaban de jugar …Ac6. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '8/p6p/1pbk2p1/3B1p2/1P1K3P/P5P1/1P6/8 w - - 1 37',
+    solucion: { from: 'd5', to: 'c6' },
+    explica: 'La línea: 37.Axc6 Rxc6 38.Re5.',
+    prueba: 'Ejercicio 0Kgj5 de la base abierta de Lichess (CC0), rating 1157. Stockfish 16 a profundidad 18: Axc6 es la mejor (+3,5) y la segunda queda en -0,2.',
+  },
+  {
+    id: 'mae_lx_0mwPX_op', area: 'maestria', peso: 1, elo: 740, eloBase: 740, tipo: 'opcion_tablero', lichess: '0mwPX', rating: 1290,
+    enunciado: 'Las negras acaban de jugar …Ce5. Juegan las blancas. Solo una de estas jugadas gana: ¿cuál?',
+    fen: 'r4rk1/pppb2pp/3b4/1B1Pnp2/2P1p3/6Pq/PBPNQP1P/R4RK1 w - - 1 16',
+    opciones: ['Axe5', 'Axd7', 'Aa3', 'Ac3'],
+    correcta: 0,
+    explica: 'Se captura al defensor y lo que defendía queda colgado. La línea: 16.Axe5 Axe5 17.Axd7. Las otras tientan, pero fallan: Axd7? se contesta con 16…Cxd7 y la ventaja se esfuma; Aa3? se contesta con 16…Axa3 y las negras quedan mejor; Ac3? se contesta con 16…Axb5 y las negras quedan mejor.',
+    prueba: 'Ejercicio 0mwPX de la base abierta de Lichess (CC0), rating 1290. Stockfish 16 a profundidad 18: Axe5 es la mejor (+3,4) y la segunda queda en -0,9; las otras tres opciones quedan en -1,0, -5,4, -2,7 (profundidad 14).',
+  },
+  {
+    id: 'mae_lx_0vCBk_op', area: 'maestria', peso: 1, elo: 876, eloBase: 876, tipo: 'opcion_tablero', lichess: '0vCBk', rating: 1426,
+    enunciado: 'Las negras acaban de jugar …Rf3. Juegan las blancas. Solo una de estas jugadas gana: ¿cuál?',
+    fen: '8/1R4p1/7p/8/4r3/3K1kP1/8/8 w - - 11 67',
+    opciones: ['Tf7+', 'Txg7', 'Tb1', 'Tb8'],
+    correcta: 0,
+    explica: 'Es una desviación: se aleja al defensor de lo que defendía. La línea: 67.Tf7+ Rg4 68.Rxe4. Las otras tientan, pero fallan: Txg7? se contesta con 67…Te3+ y la ventaja se esfuma; Tb1? se contesta con 67…Tg4 y las negras quedan mejor; Tb8? se contesta con 67…Te6 y las negras quedan mejor.',
+    prueba: 'Ejercicio 0vCBk de la base abierta de Lichess (CC0), rating 1426. Stockfish 16 a profundidad 18: Tf7+ es la mejor (+5,1) y la segunda queda en 0,0; las otras tres opciones quedan en 0,0, -4,8, -4,9 (profundidad 14).',
+  },
+  {
+    id: 'mae_lx_19wrU_op', area: 'maestria', peso: 1, elo: 1002, eloBase: 1002, tipo: 'opcion_tablero', lichess: '19wrU', rating: 1552,
+    enunciado: 'Las negras acaban de jugar …Txg2. Juegan las blancas. Solo una de estas jugadas gana: ¿cuál?',
+    fen: '8/8/7p/3R4/4Pp2/5P1K/6r1/6k1 w - - 0 54',
+    opciones: ['Td1+', 'Tf5', 'Td6', 'Td7'],
+    correcta: 0,
+    explica: ' La línea: 54.Td1+ Rf2 55.Td2+ Rxf3 56.Txg2. Las otras tientan, pero fallan: Tf5? se contesta con 54…Tg3+ y la ventaja se esfuma; Td6? se contesta con 54…Tg3+ y la ventaja se esfuma; Td7? se contesta con 54…Tg3+ y la ventaja se esfuma.',
+    prueba: 'Ejercicio 19wrU de la base abierta de Lichess (CC0), rating 1552. Stockfish 16 a profundidad 18: Td1+ es la mejor (+5,3) y la segunda queda en +0,3; las otras tres opciones quedan en +0,4, 0,0, 0,0 (profundidad 14).',
+  },
+  {
+    id: 'mae_lx_22L3m', area: 'maestria', peso: 1, elo: 573, eloBase: 573, tipo: 'jugada', lichess: '22L3m', rating: 973,
+    enunciado: 'Las negras acaban de jugar …g5. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '6k1/5p2/p1n2B1p/Pp2p1p1/1b2N3/8/1r3PPP/2R2K2 w - - 0 38',
+    solucion: { from: 'c1', to: 'c6' },
+    explica: 'Hay algo sin defender, y hay que verlo antes que el rival. La línea: 38.Txc6 Tb1+ 39.Re2.',
+    prueba: 'Ejercicio 22L3m de la base abierta de Lichess (CC0), rating 973. Stockfish 16 a profundidad 18: Txc6 es la mejor (+4,0) y la segunda queda en 0,0.',
+  },
+  {
+    id: 'mae_lx_2USlI_op', area: 'maestria', peso: 1, elo: 1078, eloBase: 1078, tipo: 'opcion_tablero', lichess: '2USlI', rating: 1628,
+    enunciado: 'Las negras acaban de jugar …Ag5. Juegan las blancas. Solo una de estas jugadas gana: ¿cuál?',
+    fen: '3r4/pR6/6pk/5pb1/r7/4N1PK/P3RP2/8 w - - 1 36',
+    opciones: ['Cxf5+', 'Cg4+', 'Th7+', 'Cf1'],
+    correcta: 0,
+    explica: 'Es un despeje: la pieza se aparta para abrirle la línea o la casilla a otra. La línea: 36.Cxf5+ gxf5 37.Te6+. Las otras tientan, pero fallan: Cg4+? se contesta con 36…fxg4+ y las negras quedan mejor; Th7+? se contesta con 36…Rxh7 y las negras quedan mejor; Cf1? se contesta con 36…Tg8 y la ventaja se esfuma.',
+    prueba: 'Ejercicio 2USlI de la base abierta de Lichess (CC0), rating 1628. Stockfish 16 a profundidad 18: Cxf5+ es la mejor (+3,1) y la segunda queda en +0,7; las otras tres opciones quedan en -4,5, -5,3, 0,0 (profundidad 14).',
+  },
+  {
+    id: 'mae_lx_1kz0U', area: 'maestria', peso: 2, elo: 1192, eloBase: 1192, tipo: 'jugada', lichess: '1kz0U', rating: 1592,
+    enunciado: 'Las negras acaban de jugar …Dd7. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '1br2rk1/1p1q1ppp/p1n5/3p1N2/4nB2/2P3PP/PP3P2/RN1Q1RK1 w - - 3 16',
+    solucion: { from: 'd1', to: 'g4' },
+    explica: 'La línea: 16.Dg4 Dxf5 17.Dxf5.',
+    prueba: 'Ejercicio 1kz0U de la base abierta de Lichess (CC0), rating 1592. Stockfish 16 a profundidad 18: Dg4 es la mejor (+4,7) y la segunda queda en -1,8.',
+  },
+  {
+    id: 'mae_lx_1nPXn_op', area: 'maestria', peso: 2, elo: 1331, eloBase: 1331, tipo: 'opcion_tablero', lichess: '1nPXn', rating: 1881,
+    enunciado: 'Las negras acaban de jugar …De6. Juegan las blancas. Solo una de estas jugadas gana: ¿cuál?',
+    fen: '6k1/5p2/2p1qQp1/4P2p/7P/6P1/5PK1/8 w - - 1 54',
+    opciones: ['Dxe6', 'Dxf7+', 'Dxg6+', 'Dd8+'],
+    correcta: 0,
+    explica: 'Es una jugada defensiva precisa: la única que sostiene la posición. La línea: 54.Dxe6 fxe6 55.Rf3. Las otras tientan, pero fallan: Dxf7+? se contesta con 54…Rxf7 y las negras quedan mejor; Dxg6+? se contesta con 54…Dxg6 y las negras quedan mejor; Dd8+? se contesta con 54…Rh7 y la ventaja se esfuma.',
+    prueba: 'Ejercicio 1nPXn de la base abierta de Lichess (CC0), rating 1881. Stockfish 16 a profundidad 18: Dxe6 es la mejor (+4,7) y la segunda queda en 0,0; las otras tres opciones quedan en -5,9, -5,8, -0,1 (profundidad 14).',
+  },
+  {
+    id: 'mae_lx_1ujnN', area: 'maestria', peso: 2, elo: 1352, eloBase: 1352, tipo: 'jugada', lichess: '1ujnN', rating: 1752,
+    enunciado: 'Las negras acaban de jugar …Tc3+. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '8/1B5k/P5p1/8/P7/2r1K3/8/8 w - - 6 50',
+    solucion: { from: 'e3', to: 'd4' },
+    explica: 'Es una jugada defensiva precisa: la única que sostiene la posición. La línea: 50.Rd4 Ta3 51.Ac6.',
+    prueba: 'Ejercicio 1ujnN de la base abierta de Lichess (CC0), rating 1752. Stockfish 16 a profundidad 18: Rd4 es la mejor (+4,7) y la segunda queda en 0,0.',
+  },
+  {
+    id: 'mae_lx_25SLb', area: 'maestria', peso: 2, elo: 1253, eloBase: 1253, tipo: 'jugada', lichess: '25SLb', rating: 1653,
+    enunciado: 'Las negras acaban de jugar …Rf7. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '2R5/2P2k2/2r5/6p1/5p2/4p2P/4K1P1/8 w - - 15 53',
+    solucion: { from: 'c8', to: 'h8' },
+    explica: 'Es una enfilada: la pieza de adelante se va y cae la de atrás. La línea: 53.Th8 Txc7 54.Th7+ Rg6 55.Txc7.',
+    prueba: 'Ejercicio 25SLb de la base abierta de Lichess (CC0), rating 1653. Stockfish 16 a profundidad 18: Th8 es la mejor (+4,7) y la segunda queda en +0,1.',
+  },
+  {
+    id: 'mae_lx_2Edlc_op', area: 'maestria', peso: 2, elo: 1393, eloBase: 1393, tipo: 'opcion_tablero', lichess: '2Edlc', rating: 1943,
+    enunciado: 'Las negras acaban de jugar …Dd5+. Juegan las blancas. Solo una de estas jugadas gana: ¿cuál?',
+    fen: 'r4rk1/1pR3pb/4pn1p/p2qQ3/P7/1P1p2P1/1B1N2KP/4R3 w - - 2 25',
+    opciones: ['Dxd5', 'De4', 'Rg1', 'Rh3'],
+    correcta: 0,
+    explica: 'Es un despeje: la pieza se aparta para abrirle la línea o la casilla a otra. La línea: 25.Dxd5 exd5 26.Tee7 Rh8 27.Txg7. Las otras tientan, pero fallan: De4? se contesta con 25…Axe4+ y las negras quedan mejor; Rg1? se contesta con 25…Tac8 y las negras quedan mejor; Rh3? se contesta con 25…Af5+ y las negras quedan mejor.',
+    prueba: 'Ejercicio 2Edlc de la base abierta de Lichess (CC0), rating 1943. Stockfish 16 a profundidad 18: Dxd5 es la mejor (+3,9) y la segunda queda en -1,9; las otras tres opciones quedan en -7,6, -2,0, -3,7 (profundidad 14).',
+  },
+  {
+    id: 'mae_lx_3NG6R', area: 'maestria', peso: 2, elo: 1149, eloBase: 1149, tipo: 'jugada', lichess: '3NG6R', rating: 1549,
+    enunciado: 'Las negras acaban de jugar …Cxb4. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '2q5/4k1N1/p4p2/Pp1Q2p1/1np3P1/4PP2/5K1P/8 w - - 0 39',
+    solucion: { from: 'g7', to: 'f5' },
+    explica: 'La línea: 39.Cf5+ Dxf5 40.Dxf5.',
+    prueba: 'Ejercicio 3NG6R de la base abierta de Lichess (CC0), rating 1549. Stockfish 16 a profundidad 18: Cf5+ es la mejor (+5,2) y la segunda queda en 0,0.',
+  },
+  {
+    id: 'mae_lx_00p5I', area: 'maestria', peso: 3, elo: 1608, eloBase: 1608, tipo: 'jugada', lichess: '00p5I', rating: 2008,
+    enunciado: 'Las negras acaban de jugar …Th6. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '2r5/1b4k1/2q1p1pr/2p5/1p1pR1QP/pP1P1PP1/P1P5/4R1K1 w - - 1 31',
+    solucion: { from: 'e4', to: 'e6' },
+    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 31.Txe6 Dxf3 32.Te7+ Rf8 33.Tf1.',
+    prueba: 'Ejercicio 00p5I de la base abierta de Lichess (CC0), rating 2008. Stockfish 16 a profundidad 18: Txe6 es la mejor (+3,6) y la segunda queda en -1,3.',
+  },
+  {
+    id: 'mae_lx_1Kjt0', area: 'maestria', peso: 3, elo: 1434, eloBase: 1434, tipo: 'jugada', lichess: '1Kjt0', rating: 1834,
+    enunciado: 'Las negras acaban de jugar …Df6. Juegan las blancas y están en apuros: encuentra la única jugada que no pierde.',
+    fen: '5B2/2p1Rp1p/2k2q2/2p2B2/2P5/7P/4nPPK/8 w - - 6 31',
+    solucion: { from: 'f5', to: 'd7' },
+    explica: 'La línea: 31.Ad7+ Rb6 32.Txe2.',
+    prueba: 'Ejercicio 1Kjt0 de la base abierta de Lichess (CC0), rating 1834. Stockfish 16 a profundidad 18: Ad7+ es la mejor (+2,6) y la segunda queda en -2,0.',
+  },
+  {
+    id: 'mae_lx_2Vmi9', area: 'maestria', peso: 3, elo: 1556, eloBase: 1556, tipo: 'jugada', lichess: '2Vmi9', rating: 1956,
+    enunciado: 'Las negras acaban de jugar …De5. Juegan las blancas y están en apuros: encuentra la única jugada que no pierde.',
+    fen: '5rk1/1p1b1pbp/1n4p1/4q3/p2NN2Q/4P3/B4PPP/5RK1 w - - 2 26',
+    solucion: { from: 'e4', to: 'g5' },
+    explica: 'Todo gira en torno a una clavada: la pieza clavada no puede defender. La línea: 26.Cg5 h5 27.Cxf7 Txf7 28.Dd8+.',
+    prueba: 'Ejercicio 2Vmi9 de la base abierta de Lichess (CC0), rating 1956. Stockfish 16 a profundidad 18: Cg5 es la mejor (+2,3) y la segunda queda en -0,2.',
+  },
+  {
+    id: 'mae_lx_2Yerm_op', area: 'maestria', peso: 3, elo: 1592, eloBase: 1592, tipo: 'opcion_tablero', lichess: '2Yerm', rating: 2142,
+    enunciado: 'Las negras acaban de jugar …Re4. Juegan las blancas. Solo una de estas jugadas gana: ¿cuál?',
+    fen: '8/n7/8/7R/1P2kP2/6P1/6K1/r7 w - - 1 52',
+    opciones: ['Ta5', 'Te5+', 'Th1', 'Th6'],
+    correcta: 0,
+    explica: ' La línea: 52.Ta5 Txa5 53.bxa5. Las otras tientan, pero fallan: Te5+? se contesta con 52…Rd4 y la ventaja se esfuma; Th1? se contesta con 52…Ta2+ y la ventaja se esfuma; Th6? se contesta con 52…Cb5 y la ventaja se esfuma.',
+    prueba: 'Ejercicio 2Yerm de la base abierta de Lichess (CC0), rating 2142. Stockfish 16 a profundidad 18: Ta5 es la mejor (+4,6) y la segunda queda en +0,5; las otras tres opciones quedan en +0,8, +0,1, +0,1 (profundidad 14).',
+  },
+  {
+    id: 'mae_lx_3U1Y7', area: 'maestria', peso: 3, elo: 1531, eloBase: 1531, tipo: 'jugada', lichess: '3U1Y7', rating: 1931,
+    enunciado: 'Las negras acaban de jugar …Ah1. Juegan las blancas y están en apuros: encuentra la única jugada que no pierde.',
+    fen: 'R1n1Q3/1q4k1/1p3b1p/1P4p1/2pp4/3r2P1/5P1P/R3B1Kb w - - 4 33',
+    solucion: { from: 'a1', to: 'a7' },
+    explica: 'Todo gira en torno a una clavada: la pieza clavada no puede defender. La línea: 33.T1a7 Dxa7 34.Txa7+.',
+    prueba: 'Ejercicio 3U1Y7 de la base abierta de Lichess (CC0), rating 1931. Stockfish 16 a profundidad 18: T1a7 es la mejor (+1,9) y la segunda queda en -0,7.',
+  },
+  {
+    id: 'mae_lx_0Tbmu', area: 'maestria', peso: 4, elo: 1832, eloBase: 1832, tipo: 'jugada', lichess: '0Tbmu', rating: 2232,
+    enunciado: 'Las negras acaban de jugar …a3. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '8/5R2/7k/1p1p4/1r3pK1/p4N2/8/8 w - - 0 58',
+    solucion: { from: 'g4', to: 'f5' },
+    explica: 'La línea: 58.Rf5 Te4 59.Cg5 Te5+ 60.Rxe5.',
+    prueba: 'Ejercicio 0Tbmu de la base abierta de Lichess (CC0), rating 2232. Stockfish 16 a profundidad 18: Rf5 es la mejor (+4,8) y la segunda queda en -5,0.',
+  },
+  {
+    id: 'mae_lx_0lLtd_op', area: 'maestria', peso: 4, elo: 1847, eloBase: 1847, tipo: 'opcion_tablero', lichess: '0lLtd', rating: 2397,
+    enunciado: 'Las negras acaban de jugar …h5. Juegan las blancas. Solo una de estas jugadas gana: ¿cuál?',
+    fen: '8/8/3k4/4pPpp/1pK3P1/8/7P/8 w - h6 0 36',
+    opciones: ['gxh5', 'Rxb4', 'h3', 'f6'],
+    correcta: 0,
+    explica: ' La línea: 36.gxh5 e4 37.Rxb4. Las otras tientan, pero fallan: Rxb4? se contesta con 36…hxg4 y las negras quedan mejor; h3? se contesta con 36…hxg4 y la ventaja se esfuma; f6? se contesta con 36…hxg4 y las negras quedan mejor.',
+    prueba: 'Ejercicio 0lLtd de la base abierta de Lichess (CC0), rating 2397. Stockfish 16 a profundidad 18: gxh5 es la mejor (+4,8) y la segunda queda en +0,1; las otras tres opciones quedan en -2,9, +0,2, -6,5 (profundidad 14).',
+  },
+  {
+    id: 'mae_lx_0oD99', area: 'maestria', peso: 4, elo: 1992, eloBase: 1992, tipo: 'jugada', lichess: '0oD99', rating: 2392,
+    enunciado: 'Las negras acaban de jugar …Axd5. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '8/p7/3p4/1Ppb4/4k3/P1P5/2K5/5B2 w - - 0 48',
+    solucion: { from: 'f1', to: 'g2' },
+    explica: 'La línea: 48.Ag2+ Re5 49.Axd5 Rxd5 50.Rb3.',
+    prueba: 'Ejercicio 0oD99 de la base abierta de Lichess (CC0), rating 2392. Stockfish 16 a profundidad 18: Ag2+ es la mejor (+3,8) y la segunda queda en +0,1.',
+  },
+  {
+    id: 'mae_lx_0rr3Z', area: 'maestria', peso: 4, elo: 1841, eloBase: 1841, tipo: 'jugada', lichess: '0rr3Z', rating: 2241,
+    enunciado: 'Las negras acaban de jugar …Txa3. Juegan las blancas y están en apuros: encuentra la única jugada que no pierde.',
+    fen: '8/3pbkpp/1pp2n2/8/5P2/r1BbPKP1/3P3P/R1R5 w - - 0 25',
+    solucion: { from: 'c3', to: 'f6' },
+    explica: 'La línea: 25.Axf6 Txa1 26.Axa1.',
+    prueba: 'Ejercicio 0rr3Z de la base abierta de Lichess (CC0), rating 2241. Stockfish 16 a profundidad 18: Axf6 es la mejor (+2,5) y la segunda queda en -3,3.',
+  },
+  {
+    id: 'mae_lx_0s8fY_op', area: 'maestria', peso: 4, elo: 1879, eloBase: 1879, tipo: 'opcion_tablero', lichess: '0s8fY', rating: 2429,
+    enunciado: 'Las negras acaban de jugar …e3. Juegan las blancas. Solo una de estas jugadas gana: ¿cuál?',
+    fen: '3R3Q/p3kpr1/2q1p3/5pr1/8/4p1P1/P4P1P/3R2K1 w - - 0 34',
+    opciones: ['T1d7+', 'T8d7+', 'Dxg7', 'Te8+'],
+    correcta: 0,
+    explica: 'Hay un sacrificio: se entrega material para ganar más. La línea: 34.T1d7+ Dxd7 35.Df8+ Rf6 36.Txd7. Las otras tientan, pero fallan: T8d7+? se contesta con 34…Rf6 y la ventaja se esfuma; Dxg7? se contesta con 34…exf2+ y las negras quedan mejor; Te8+? se contesta con 34…Dxe8 y las negras quedan mejor.',
+    prueba: 'Ejercicio 0s8fY de la base abierta de Lichess (CC0), rating 2429. Stockfish 16 a profundidad 18: T1d7+ es la mejor (+4,4) y la segunda queda en 0,0; las otras tres opciones quedan en 0,0, -5,5, -4,6 (profundidad 14).',
+  },
+  {
+    id: 'mae_lx_1XmhE', area: 'maestria', peso: 4, elo: 1757, eloBase: 1757, tipo: 'jugada', lichess: '1XmhE', rating: 2157,
+    enunciado: 'Las negras acaban de jugar …Af6. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '2rr4/p3kpp1/4pb1p/8/2B1Q3/q3P1P1/5P1P/2RR2K1 w - - 6 32',
+    solucion: { from: 'e4', to: 'b7' },
+    explica: 'Es un ataque a la descubierta: al moverse una pieza, se destapa otra. La línea: 32.Db7+ Rf8 33.Axe6 fxe6 34.Txc8.',
+    prueba: 'Ejercicio 1XmhE de la base abierta de Lichess (CC0), rating 2157. Stockfish 16 a profundidad 18: Db7+ es la mejor (+5,4) y la segunda queda en -0,2.',
+  },
+  {
+    id: 'mae_lx_3HXeX_op', area: 'maestria', peso: 4, elo: 1850, eloBase: 1850, tipo: 'opcion_tablero', lichess: '3HXeX', rating: 2400,
+    enunciado: 'Las negras acaban de jugar …Tc3. Juegan las blancas y están en apuros. Solo una de estas jugadas salva la partida: ¿cuál?',
+    fen: '5rk1/3n1pp1/p2p1b2/1p1P4/8/1Nr3QP/PPq5/K1B3RR w - - 4 25',
+    opciones: ['bxc3', 'Dxc3', 'Dxg7+', 'Dxd6'],
+    correcta: 0,
+    explica: 'Hay un sacrificio: se entrega material para ganar más. La línea: 25.bxc3 Axc3+ 26.Dxc3 Dxc3+ 27.Ab2. Las otras tientan, pero fallan: Dxc3? se contesta con 25…Axc3 y las negras quedan mejor; Dxg7+? se contesta con 25…Axg7 y las negras quedan mejor; Dxd6? se contesta con 25…Tc7 y la ventaja se esfuma.',
+    prueba: 'Ejercicio 3HXeX de la base abierta de Lichess (CC0), rating 2400. Stockfish 16 a profundidad 18: bxc3 es la mejor (+2,3) y la segunda queda en -1,1; las otras tres opciones quedan en -3,8, -5,6, -0,6 (profundidad 14).',
+  },
+  {
+    id: 'mae_lx_05MpP', area: 'maestria', peso: 5, elo: 2014, eloBase: 2014, tipo: 'jugada', lichess: '05MpP', rating: 2414,
+    enunciado: 'Las negras acaban de jugar …Ag5. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '8/1p6/p1p1p1k1/P3P1b1/2K2BP1/2P5/8/8 w - - 1 35',
+    solucion: { from: 'f4', to: 'g5' },
+    explica: 'La línea: 35.Axg5 Rxg5 36.Rc5 Rxg4 37.Rb6.',
+    prueba: 'Ejercicio 05MpP de la base abierta de Lichess (CC0), rating 2414. Stockfish 16 a profundidad 18: Axg5 es la mejor (+4,3) y la segunda queda en -0,1.',
+  },
+  {
+    id: 'mae_lx_1S102', area: 'maestria', peso: 5, elo: 2201, eloBase: 2201, tipo: 'jugada', lichess: '1S102', rating: 2601,
+    enunciado: 'Las negras acaban de jugar …g5. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '8/k7/Pp2pp1p/1K4p1/3P2PP/6P1/8/8 w - g6 0 43',
+    solucion: { from: 'h4', to: 'h5' },
+    explica: 'Es un zugzwang: al rival le toca mover y cualquier jugada lo empeora. La línea: 43.h5 f5 44.d5 f4 45.gxf4.',
+    prueba: 'Ejercicio 1S102 de la base abierta de Lichess (CC0), rating 2601. Stockfish 16 a profundidad 18: h5 es la mejor (+3,5) y la segunda queda en -3,0.',
+  },
+  {
+    id: 'mae_lx_2CPeH', area: 'maestria', peso: 5, elo: 2189, eloBase: 2189, tipo: 'jugada', lichess: '2CPeH', rating: 2589,
+    enunciado: 'Las negras acaban de jugar …Re8. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '4k3/8/4q2p/1R1bN3/3P3p/5P2/1B3K1P/8 w - - 1 40',
+    solucion: { from: 'b5', to: 'b8' },
+    explica: 'Todo gira en torno a una clavada: la pieza clavada no puede defender. La línea: 40.Tb8+ Re7 41.Aa3+ Rf6 42.Tb6.',
+    prueba: 'Ejercicio 2CPeH de la base abierta de Lichess (CC0), rating 2589. Stockfish 16 a profundidad 18: Tb8+ es la mejor (+5,6) y la segunda queda en 0,0.',
+  },
+  {
+    id: 'mae_lx_2PhzE', area: 'maestria', peso: 5, elo: 2184, eloBase: 2184, tipo: 'jugada', lichess: '2PhzE', rating: 2584,
+    enunciado: 'Las negras acaban de jugar …Cxg3. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: 'r6k/1q3r1p/3b1P1B/3Pp3/4B3/Pp4nQ/1PpK4/6R1 w - - 0 39',
+    solucion: { from: 'h3', to: 'g3' },
+    explica: 'La línea: 39.Dxg3 Ab4+ 40.Rc1.',
+    prueba: 'Ejercicio 2PhzE de la base abierta de Lichess (CC0), rating 2584. Stockfish 16 a profundidad 18: Dxg3 es la mejor (+6,0) y la segunda queda en -0,1.',
+  },
+  {
+    id: 'mae_lx_2VkqE', area: 'maestria', peso: 5, elo: 2006, eloBase: 2006, tipo: 'jugada', lichess: '2VkqE', rating: 2406,
+    enunciado: 'Las negras acaban de jugar …Txc1. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '5q1k/pQ4R1/5rn1/1P2p3/P3P1p1/1N4n1/6B1/2rR2K1 w - - 0 35',
+    solucion: { from: 'g7', to: 'h7' },
+    explica: 'Hay una jugada intermedia: antes de lo obvio, algo más fuerte. La línea: 35.Th7+ Rg8 36.Cxc1.',
+    prueba: 'Ejercicio 2VkqE de la base abierta de Lichess (CC0), rating 2406. Stockfish 16 a profundidad 18: Th7+ es la mejor (+6,1) y la segunda queda en +0,5.',
+  },
+  {
+    id: 'mae_lx_2XQ65', area: 'maestria', peso: 5, elo: 2102, eloBase: 2102, tipo: 'jugada', lichess: '2XQ65', rating: 2502,
+    enunciado: 'Las negras acaban de jugar …a5. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '5rk1/5p1p/1p3Pp1/p1p5/5Q2/2q4P/5PPK/3R4 w - a6 0 26',
+    solucion: { from: 'f4', to: 'd6' },
+    explica: 'La línea: 26.Dd6 Dxf6 27.Dxf6.',
+    prueba: 'Ejercicio 2XQ65 de la base abierta de Lichess (CC0), rating 2502. Stockfish 16 a profundidad 18: Dd6 es la mejor (+4,9) y la segunda queda en 0,0.',
+  },
+  {
+    id: 'mae_lx_2lE9c', area: 'maestria', peso: 5, elo: 2048, eloBase: 2048, tipo: 'jugada', lichess: '2lE9c', rating: 2448,
+    enunciado: 'Las negras acaban de jugar …Tcd8. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: '3rrb1k/1p3Q2/p2P3p/8/P5PP/3n4/1Pq3B1/3R1R1K w - - 1 29',
+    solucion: { from: 'd6', to: 'd7' },
+    explica: 'El peón avanzado decide: hay que empujarlo o aprovecharlo a tiempo. La línea: 29.d7 Cf2+ 30.Dxf2 Dxf2 31.Txf2.',
+    prueba: 'Ejercicio 2lE9c de la base abierta de Lichess (CC0), rating 2448. Stockfish 16 a profundidad 18: d7 es la mejor (+3,0) y la segunda queda en 0,0.',
+  },
+  {
+    id: 'mae_lx_3JCVt', area: 'maestria', peso: 5, elo: 2039, eloBase: 2039, tipo: 'jugada', lichess: '3JCVt', rating: 2439,
+    enunciado: 'Las negras acaban de jugar …Ad6. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
+    fen: 'r1bqk2r/pp3p1p/3b1pp1/3P4/3Q4/2Np1N2/PP3PPP/R4RK1 w kq - 2 13',
+    solucion: { from: 'c3', to: 'e4' },
+    explica: 'La línea: 13.Ce4 O-O 14.Cxf6+.',
+    prueba: 'Ejercicio 3JCVt de la base abierta de Lichess (CC0), rating 2439. Stockfish 16 a profundidad 18: Ce4 es la mejor (+3,1) y la segunda queda en +0,0.',
+  },
+  /* LICHESS-FIN */
 ];
 
 /* ===== Cómo se arma cada prueba =====
@@ -3662,25 +6043,47 @@ window.DIAGNOSTICO_ITEMS = [
  * con las mismas preguntas de memoria (mediríamos memoria, no ajedrez) y dos
  * alumnos sentados juntos tampoco resuelven exactamente lo mismo.
  *
- * Lo que NO cambia es la forma de la prueba: 7 ítems por área, con el mismo
- * reparto de dificultad (peso 1, 2 y 3) de siempre — 56 preguntas y 109
- * puntos. Por eso dos diagnósticos se pueden comparar entre sí aunque las
- * preguntas hayan sido otras: valen lo mismo y miden lo mismo.
+ * Lo que NO cambia es la forma de la prueba: 60 preguntas con la cuota fija
+ * de FORMA (cuántas de cada área y de cada escalón). Por eso dos diagnósticos
+ * se pueden comparar entre sí aunque las preguntas hayan sido otras.
  *
- *   DiagnosticoPrueba.armar()            → los 56 ítems de una prueba nueva
+ *   DiagnosticoPrueba.armar()            → los 60 ítems de una prueba nueva
  *   DiagnosticoPrueba.armar(ids)         → los mismos, respetando ítems ya contestados
  *   DiagnosticoPrueba.porIds(ids)        → recupera una prueba guardada
  */
 window.DiagnosticoPrueba = (function () {
   "use strict";
 
-  /* Cuántos ítems de cada peso lleva cada área. Es igual en las nueve, y esa es
-     la clave de la medición: como cada área aporta un ítem de peso 4 y uno de
-     peso 5, la prueba entera tiene nueve preguntas de cada escalón difícil, que
-     es lo que permite decir "hasta dónde llega" en vez de "cuántas acertó".
-     Antes el techo era el peso 3 —contenido de club— y por eso un jugador de
-     1400 y uno de 2300 sacaban los dos la misma nota. */
-  const FORMA = { 1: 1, 2: 2, 3: 2, 4: 1, 5: 1 };
+  /* Cuántos ítems de cada escalón (1 a 5) lleva cada área: 60 en total.
+
+     Hasta la versión 4 eran 7 por área (63) con el reparto 1+2+2+1+1, y la
+     mitad de la prueba era de escalones 1 a 3. Los diagnósticos rendidos
+     mostraron el problema: por encima de unos 1450 puntos todo el mundo
+     acertaba casi todo, y la prueba no distinguía un 1500 de un 2100. Ahora:
+
+     - La mitad de la prueba (30 de 60) es de escalones 4 y 5, que es donde
+       están los cortes entre Intermedio, Avanzado y Muy avanzado (1600, 1800 y
+       2000). Lo fácil sigue estando —ocho preguntas de escalón 1 y diez de
+       escalón 2—, que es lo que ubica a quien empieza.
+     - Las áreas que se resuelven en el tablero (táctica, mates, finales,
+       cálculo) llevan más preguntas que las de concepto (reglas, maestría):
+       resolver una posición dice más de la fuerza de alguien que saber cómo se
+       llama una defensa. Cálculo no lleva escalón 1: no hay cálculo fácil que
+       mida algo.
+
+     Los escalones de cada ítem (`peso`) salen de su dificultad en puntos
+     (`elo`), con los cortes de PlanEntrenamiento.ESCALON_ELO. */
+  const FORMA = {
+    reglas:     { 1: 1, 2: 1, 3: 1, 4: 1, 5: 1 },
+    material:   { 1: 1, 2: 1, 3: 1, 4: 2, 5: 1 },
+    apertura:   { 1: 1, 2: 1, 3: 1, 4: 2, 5: 1 },
+    tactica:    { 1: 1, 2: 1, 3: 2, 4: 2, 5: 3 },
+    mate:       { 1: 1, 2: 1, 3: 2, 4: 2, 5: 2 },
+    finales:    { 1: 1, 2: 1, 3: 2, 4: 2, 5: 2 },
+    estrategia: { 1: 1, 2: 1, 3: 1, 4: 1, 5: 2 },
+    calculo:    { 1: 0, 2: 2, 3: 1, 4: 2, 5: 2 },
+    maestria:   { 1: 1, 2: 1, 3: 1, 4: 1, 5: 1 },
+  };
   /* Las áreas salen de js/plan-entrenamiento.js y no de una lista escrita acá:
      al sumar la novena (Maestría) esta lista se habría quedado en ocho sin que
      nada fallara — la prueba simplemente no habría preguntado nada de esa área
@@ -3692,8 +6095,9 @@ window.DiagnosticoPrueba = (function () {
   const porId = {};
   BANCO.forEach((i) => { porId[i.id] = i; });
 
-  const TOTAL = AREAS.length * PESOS.reduce((t, w) => t + FORMA[w], 0);
-  const PUNTOS = AREAS.length * PESOS.reduce((t, w) => t + FORMA[w] * w, 0);
+  const cuota = (area, peso) => (FORMA[area] || {})[peso] || 0;
+  const TOTAL = AREAS.reduce((t, a) => t + PESOS.reduce((u, w) => u + cuota(a, w), 0), 0);
+  const PUNTOS = AREAS.reduce((t, a) => t + PESOS.reduce((u, w) => u + cuota(a, w) * w, 0), 0);
 
   /* Azar con semilla: la misma semilla arma siempre la misma prueba, que es lo
      que permite regenerar el cuadernillo imprimible igual una y otra vez. */
@@ -3734,7 +6138,7 @@ window.DiagnosticoPrueba = (function () {
     AREAS.forEach((area) => {
       const delArea = BANCO.filter((i) => i.area === area && !usados[i.id]);
       const falta = {};
-      PESOS.forEach((w) => { falta[w] = FORMA[w]; });
+      PESOS.forEach((w) => { falta[w] = cuota(area, w); });
       yaEstan.filter((i) => i.area === area).forEach((i) => {
         if (falta[i.peso] > 0) falta[i.peso] -= 1;
       });
@@ -3766,5 +6170,5 @@ window.DiagnosticoPrueba = (function () {
     return yaEstan.concat(elegidos);
   }
 
-  return { FORMA, AREAS, TOTAL, PUNTOS, armar, porIds };
+  return { FORMA, AREAS, TOTAL, PUNTOS, cuota, armar, porIds };
 })();

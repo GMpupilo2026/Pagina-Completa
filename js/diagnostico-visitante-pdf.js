@@ -78,14 +78,21 @@ window.DiagnosticoVisitantePDF = (function () {
         ". Fuerza estimada: " + resumen.nivel.rango + ".",
     });
     const e = resumen.elo || {};
+    const margen = (err) => (err ? " (más o menos " + err + ")" : "");
     bloques.push({
       tipo: "parrafo",
       texto: e.declarado
-        ? "Elo declarado: " + e.declarado + " (" + e.tipoEtiqueta + "). La prueba sugiere cerca de " + e.estimado +
-          ", y el nivel se calculó con los dos (cerca de " + e.combinado + "). " + sinEmoji(e.lectura && e.lectura.texto)
-        : "Sin Elo declarado: el nivel sale solo de la prueba (cerca de " + e.estimado + ").",
+        ? "Elo declarado: " + e.declarado + " (" + e.tipoEtiqueta + "). La prueba sugiere cerca de " + e.estimado + margen(e.error) +
+          ", y el nivel se calculó con los dos (cerca de " + e.combinado + margen(e.errorCombinado) + "). " + sinEmoji(e.lectura && e.lectura.texto)
+        : "Sin Elo declarado: el nivel sale solo de la prueba (cerca de " + e.estimado + margen(e.error) + ").",
     });
-    if (resumen.escalonAlcanzado !== null && resumen.escalonAlcanzado !== undefined) {
+    if (resumen.modelo === "elo") {
+      bloques.push({
+        tipo: "parrafo",
+        texto: "Cada pregunta tiene su dificultad medida en puntos Elo, y la fuerza estimada es la que mejor explica " +
+          "cuáles resolvió y cuáles no: resolver una difícil de tablero pesa mucho más que acertar una fácil de opción.",
+      });
+    } else if (resumen.escalonAlcanzado !== null && resumen.escalonAlcanzado !== undefined) {
       bloques.push({
         tipo: "parrafo",
         texto: "Escalones de dificultad superados: " + resumen.escalonAlcanzado + " de 5. El nivel es el escalón " +

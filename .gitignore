@@ -20,3 +20,6 @@ respaldos/
 # El video promocional se regenera con herramientas/video-promo.js
 promo/
 .wrangler/
+
+# Caché del análisis de Stockfish de herramientas/diagnostico-lichess.js.
+herramientas/.cache-lichess.json

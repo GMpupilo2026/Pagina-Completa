@@ -546,13 +546,16 @@ volver a verificarlas con chess.js: cada ítem dice en `prueba` qué debe cumpli
 
 - **El banco es más grande que la prueba**: cada diagnóstico sortea sus
   preguntas con `DiagnosticoPrueba.armar()` (al final de
-  `js/diagnostico-items.js`). Lo que nunca cambia es la forma: 7 ítems por
-  área, el mismo reparto de dificultad y 180 puntos, para que dos diagnósticos
-  del mismo alumno se puedan comparar aunque las preguntas hayan sido otras.
+  `js/diagnostico-items.js`). Lo que nunca cambia es la forma: desde la versión
+  5, 60 ítems con la cuota fija de `FORMA` por área y por escalón (199 puntos),
+  para que dos diagnósticos del mismo alumno se puedan comparar aunque las
+  preguntas hayan sido otras (ver «Versión 5: 60 preguntas y la fuerza en
+  puntos Elo»).
   Los ids de la prueba quedan guardados en el estado (para retomarla) y en el
   resultado (`detalle.items`, para que la corrección repase esas preguntas y no
   otras).
-- **El nivel sale de los escalones de dificultad, no del porcentaje.** El
+- **Hasta la versión 4, el nivel salía de los escalones de dificultad** (desde
+  la 5 sale de la fuerza en puntos: ver «Versión 5»). El
   `peso` de cada ítem (1 a 5) es su escalón, y cada prueba lleva 1+2+2+1+1 por
   área (cuota en `FORMA`): ocho preguntas de cada escalón difícil en la prueba
   entera. El nivel estimado es **el escalón más alto superado** —60% de
@@ -659,7 +662,7 @@ que encontró el de `informes.html`.
 
 `libro-de-diagnostico.pdf` es **otra cosa** que `diagnostico-de-nivel.pdf`, y
 conviene no confundirlos: aquel es UNA forma de la prueba, sorteada, para que el
-alumno la conteste en papel; este es el **banco entero** —las 301 preguntas, área
+alumno la conteste en papel; este es el **banco entero** —todas las preguntas (583 desde la versión 5), área
 por área y escalón por escalón, con la respuesta marcada, el porqué y cómo se
 comprobó cada posición—, para estudiar y para corregir. Uno se reparte, el otro
 no. Lo genera `herramientas/diagnostico-libro.js`.
@@ -837,6 +840,126 @@ la caja de partidas. Se inserta buscando el diagnóstico **por su destino**
 lado. De paso, la ficha de `tv.html` pasó a llamarse **"📺 TV en vivo"**: se
 llamaba "Torneos" igual que la de `torneos.html`, así que el panel tenía dos
 tarjetas con el mismo nombre y destinos distintos.
+
+### Versión 5: 60 preguntas y la fuerza en puntos Elo
+
+#### Lo que dijeron los diagnósticos rendidos
+
+Antes de tocar nada se miraron los 80 diagnósticos guardados hasta el 25 de
+septiembre de 2026 (`training_progress` y `diagnosticos_publicos`), 22 de ellos
+con Elo declarado. La prueba de escalones **no distinguía a nadie por encima de
+unos 1450**: un 1463 sacó 92 %, un 1527 93 %, un 1634 95 %, un 2033 93 % y un
+2100 98 %; un 1200 en línea sacó 98 %. Pregunta por pregunta fue peor: **todos
+los que pasaron del 80 % acertaron prácticamente todas las preguntas del
+banco**, incluidas las de escalón 5. El techo de la prueba estaba en contenido
+de club, y ninguna regla de escalones mide 1800 con preguntas que resuelve
+cualquiera de 1450.
+
+#### Qué cambió
+
+- **Cada pregunta tiene su dificultad en puntos Elo** (`elo`): la fuerza con la
+  que se acierta la mitad de las veces. La fuerza del alumno es la que mejor
+  explica cuáles resolvió y cuáles no, con la curva del Elo
+  (`PlanEntrenamiento.medir()`), y el nivel es el tramo de Elo de esa fuerza. El
+  resultado trae su margen («≈1720 ± 110»). Acertar por azar está contemplado:
+  0,2 en las de opción, 0 en las de mover. Lo guarda la página ya calculado en
+  `detalle.medicion`, porque Informes no carga el banco; el Elo declarado se le
+  suma después en `resumir()`, así que si el profesor corrige el Elo, el nivel
+  se recalcula sin rehacer la prueba.
+- **El Elo declarado se suma según lo preciso que es**: FIDE ± 100, nacional
+  ± 150, en línea ± 250, estimado por el profesor ± 200 (`desvio` en
+  `ELO_TIPOS`). Prueba y Elo pesan según sus márgenes.
+- **271 preguntas nuevas de resolver en el diagrama**, de la base de Lichess
+  (343 mil ejercicios, CC0, tabla «Ejercicios Lichess»): 191 de mover y 80 de
+  opción. Su dificultad sale del rating del ejercicio (menos 400 las de mover,
+  menos 550 las de opción). Las genera `herramientas/diagnostico-lichess.js`,
+  que pasa cada una por **Stockfish** y solo deja las que tienen **una única
+  jugada buena** (si gana, la segunda no gana; si salva, la segunda pierde).
+  Van en el bloque `LICHESS-INICIO`/`LICHESS-FIN` del banco y **no se editan a
+  mano**.
+- **Las opciones incorrectas tientan y fallan por algo.** En las de opción de
+  Lichess, las tres malas son las que un jugador de verdad consideraría
+  —jaques, capturas, la misma pieza o la misma casilla que la solución, la
+  segunda idea del motor— y cada una queda refutada por el motor; la
+  explicación cuenta la refutación («Dxh7+? se contesta con …Rxh7 y la ventaja
+  se esfuma»). En reglas se agregaron posiciones de «¿cuál es legal?» donde cada
+  trampa falla por una regla concreta: el al paso que destapa al rey en la
+  quinta fila, el enroque con la torre atacada (que SÍ vale), la pieza clavada
+  que sí se mueve a lo largo de la clavada, el jaque doble. Llevan
+  `legalidad: true` (o `ahogado: true` en «¿cuál NO ahoga?») y
+  `verificar-diagnostico.js` comprueba con chess.js que la marcada es la única
+  que cumple.
+- **La dificultad de las 301 preguntas viejas se calibró con las respuestas
+  reales** (`herramientas/diagnostico-calibrar.js`): las fuerzas de las
+  personas y las dificultades de las preguntas se ajustan por turnos, con el
+  Elo declarado como ancla de la escala. `eloBase` es el punto de partida y no
+  se toca nunca (volver a calibrar con más datos parte siempre de ahí; si no,
+  los mismos datos se contarían dos veces); `elo` y `peso` los reescribe el
+  script. 216 preguntas cambiaron de escalón, casi todas hacia abajo: la
+  mayoría de las «difíciles» resultaron de 1100 a 1400. Los datos de las
+  personas se exportan fuera del repositorio y no se commitean.
+- **La forma: 60 preguntas, la mitad de escalones 4 y 5.** Los escalones son
+  tramos de dificultad (menos de 1100, 1100-1399, 1400-1699, 1700-1999, 2000 o
+  más: `ESCALON_ELO`). Táctica, mates, finales y cálculo llevan más preguntas
+  que reglas y maestría (ver `FORMA`): resolver una posición dice más de la
+  fuerza que saber cómo se llama una defensa. Unas 40 de las 60 son de tablero.
+- **Las áreas se juzgan contra lo esperable para su fuerza.** Con la mitad de
+  la prueba difícil, un 1500 saca 30 % en casi todas las áreas sin tener ningún
+  hueco. La banda de un área (a trabajar / en camino / firme) y el orden del plan
+  salen de la **nota** (`notaDeArea`): 70 + (porcentaje − esperado). Sin esto,
+  el plan habría mandado siempre a táctica y cálculo, que son las áreas con más
+  preguntas duras, en vez de a lo flojo de cada alumno. En los resultados viejos
+  la nota es el porcentaje, como siempre.
+- **El tope por áreas ahora es relativo** (`topePorHuecos`): un área 45 puntos
+  por debajo de lo esperable deja el nivel en Avanzado como mucho; 60, en
+  Intermedio. El tope de antes (menos de 50 % → Avanzado) habría bajado a
+  cualquier 2000 con un área difícil.
+- **En Informes**, «Nivel por alumno» ordena y dibuja la fuerza estimada (los
+  porcentajes de la prueba vieja y la nueva no se pueden comparar) y «Dónde se
+  debe mejorar» promedia la nota de cada área.
+- **En papel** no se puede hacer la cuenta de `medir()`, así que el
+  cuadernillo trae una tabla de puntos logrados → fuerza estimada, calculada
+  para ESA forma de la prueba con la curva esperada de puntos.
+
+`VERSION` subió a 5: una prueba empezada con la 4 se descarta con aviso, y los
+resultados viejos se siguen leyendo con su regla de entonces (escalones), sin
+volver a etiquetarlos.
+
+#### Qué tan bien mide (y lo que no se sabe todavía)
+
+- **Simulación** con las dificultades calibradas: jugadores de fuerza conocida,
+  pruebas sorteadas, respuestas según el modelo. En el centro de cada nivel, la
+  prueba nueva acierta el nivel el 77-100 % de las veces (88 % en total), con un
+  error típico de 60 a 90 puntos entre 1300 y 2200. La prueba vieja, con su
+  regla de escalones y las mismas dificultades, acertaba el 22 %: mandaba a
+  «Avanzado» o «Muy avanzado» a cualquiera de 1300 a 1900. Un 2100 con los
+  finales de 1300 sale con el nivel topado el 84 % de las veces, y alguien sin
+  huecos casi nunca (0-5 %).
+- **Contra el Elo declarado**, con las preguntas viejas calibradas, la fuerza
+  medida correlaciona 0,68 (el porcentaje, 0,70): con esas preguntas no se podía
+  hacer mejor, y por encima de 1600 el margen se iba a ± 150-200 porque no había
+  preguntas difíciles. Es una cota optimista (mismas personas con que se
+  calibró).
+- **Lo que falta saber**: el descuento de 400/550 del rating de Lichess es una
+  suposición razonable (el rating de ejercicios de Lichess corre por encima del
+  Elo FIDE, y aquí se pide solo la primera jugada y sin reloj), no una medida.
+  En cuanto haya diagnósticos de la versión 5 con Elo declarado, hay que correr
+  `diagnostico-calibrar.js`: ajusta esas dificultades igual que ajustó las de
+  las viejas.
+
+#### Cómo se rehace
+
+- Preguntas de Lichess: exportar candidatos (la consulta está en la cabecera
+  del script) y `STOCKFISH=/usr/games/stockfish node
+  herramientas/diagnostico-lichess.js candidatos.json`. El análisis del motor
+  queda en `herramientas/.cache-lichess.json` (ignorado por git).
+- Calibración: exportar las respuestas (consulta en la cabecera) FUERA del
+  repositorio y `node herramientas/diagnostico-calibrar.js respuestas.json`.
+  Imprime cuánto se movió cada pregunta y la correlación con el Elo declarado.
+- Después de cualquiera de los dos: `node herramientas/verificar-diagnostico.js`
+  y volver a generar `diagnostico-pdf.js` y `diagnostico-libro.js` (que
+  necesitan pypdf; si el `cryptography` del sistema falla, en un entorno
+  virtual).
 
 ## Examen de arbitraje (reglamento FIDE)
 
