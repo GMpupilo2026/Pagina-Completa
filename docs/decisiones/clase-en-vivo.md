@@ -334,6 +334,46 @@ presencia otras 3, y quitando el candado de la tarjeta 3 en la otra.
   sin ese método la página muere con un TypeError que la prueba cuenta como
   fallo suyo — era el doble el que estaba incompleto.
 
+### La clase en vivo, vista por quien supervisa
+
+Quien supervisa puede **mirar la clase de uno de sus profesores mientras la da**:
+`sesion.html?observar=<id>`. Se llega desde «🔴 En clase ahora · Mirar la
+clase» en `supervision.html` (sale solo junto a quien tiene la clase abierta) y
+desde el panel «Ver como» de ese profesor. Quien administra también puede.
+
+- **Lo que puede leer lo decide la RLS**: `game_state_select_supervisor`,
+  `variant_nodes_select_supervisor` y `profesor_videollamada_select_supervisor`
+  dejan leer el tablero, las variantes y el enlace de la videollamada del
+  profesor **solo mientras tiene la clase abierta** y solo si lo supervisa (en
+  su academia activa, si tiene varias). El conjunto se arma una vez,
+  `interno.clases_que_superviso()`. Cerrada la clase, 0 filas. **Ninguna
+  política de escritura cambió.**
+- **Solo mira.** No mueve el tablero (no es interactivo), no marca asistencia
+  ni tiempo en clase, no abre ni cierra la clase, no contesta preguntas, no
+  entra a la práctica ni al chat (esos son entre el profesor y cada alumno).
+  Una supervisora anotada como alumna ensuciaría justo los registros que
+  después revisa.
+- **Entra a la presencia como `supervision`, no como alumna**: no aparece en la
+  lista de alumnos del profesor ni en su chat. Ve quién está conectado.
+- **El profesor ve que lo están mirando**: «👁 Marta Solano (supervisión) está
+  mirando la clase.», arriba de la franja de la clase. Mirar sin que el otro lo
+  sepa no es supervisar.
+- La videollamada sale como enlace solo si es `https`.
+- Sin clase abierta, lo dice en palabras («Karina Rojas no tiene la clase
+  abierta ahora») y lleva de vuelta a Supervisión; al cerrarse la clase,
+  vuelve sola a Supervisión.
+- Un alumno con `?observar=` en la dirección sigue siendo alumno: el modo solo
+  se enciende con `es_supervisor` o `is_admin`, y la RLS decide igual.
+- Comprobado impersonando roles en SQL (revertido): con la clase abierta la
+  supervisora ve el tablero de su profesor (1 fila) y no el de un profesor de
+  otra academia (0); cerrada la clase, 0; otro profesor y una llamada sin
+  usuario, 0.
+
+**Al tocarlo, correr `node herramientas/verificar-todo.js clase-supervisor
+clase-registrada informe-mensual ver-como`.** `verificar-clase-supervisor.js`
+comprueba todo lo de arriba desde el navegador; está probado que falla de
+verdad: dejando que marque asistencia o que entre como alumna, saltan.
+
 ### La clase se registra sola, porque el botón vivía en la página que no era
 
 Todo lo que el sitio sabe de una clase —la asistencia, los minutos en clase, el

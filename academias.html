@@ -282,11 +282,17 @@ function llenarSupervisores(select, actual) {
     const nadie = el("option", null, "— sin supervisor todavía —");
     nadie.value = "";
     select.appendChild(nadie);
-    const ocupados = new Set(academias.filter((a) => a.id !== (abierta && abierta.id)).map((a) => a.supervisor_id).filter(Boolean));
+    /* Un supervisor puede tener varias academias (las ve de una en una, ver
+       «Un supervisor, varias academias»): se ofrecen todos, y se dice cuáles
+       ya tiene para que no sea una sorpresa. */
+    const otras = new Map();
+    academias.filter((a) => a.id !== (abierta && abierta.id) && a.supervisor_id).forEach((a) => {
+        if (!otras.has(a.supervisor_id)) otras.set(a.supervisor_id, []);
+        otras.get(a.supervisor_id).push(a.nombre);
+    });
     supervisores.forEach((s) => {
-        const o = el("option", null, nombreDe(s) + (ocupados.has(s.id) ? " (ya supervisa otra)" : ""));
+        const o = el("option", null, nombreDe(s) + (otras.has(s.id) ? " (también supervisa " + otras.get(s.id).join(", ") + ")" : ""));
         o.value = s.id;
-        o.disabled = ocupados.has(s.id) && s.id !== actual;
         select.appendChild(o);
     });
     select.value = actual || "";
@@ -526,25 +532,31 @@ function gPintar() {
         : "";
 
     // El supervisor: los que ya supervisan y no tienen academia, y los profesores
-    // del grupo (a esos se los marca al crear). Quien ya supervisa otra no se ofrece.
+    // del grupo (a esos se los marca al crear). Quien ya supervisa otra también
+    // se ofrece: puede tener varias, y se dice cuáles.
     const sup = document.getElementById("g-supervisor");
-    const ocupados = new Set(academias.map((a) => a.supervisor_id).filter(Boolean));
+    const otras = new Map();
+    academias.filter((a) => a.supervisor_id).forEach((a) => {
+        if (!otras.has(a.supervisor_id)) otras.set(a.supervisor_id, []);
+        otras.get(a.supervisor_id).push(a.nombre);
+    });
+    const yaTiene = (id) => (otras.has(id) ? " (también supervisa " + otras.get(id).join(", ") + ")" : "");
     sup.replaceChildren();
     const nadie = el("option", null, "— sin supervisor todavía —");
     nadie.value = "";
     sup.appendChild(nadie);
-    const delGrupo = docentes.filter((p) => p.rol === "profesor" && !ocupados.has(p.id));
+    const delGrupo = docentes.filter((p) => p.rol === "profesor");
     if (delGrupo.length) {
         const og = el("optgroup");
         og.label = "Del equipo de este grupo";
-        delGrupo.forEach((p) => { const o = el("option", null, nombreDe(p) + (p.es_supervisor ? "" : " (se marca como supervisor)")); o.value = p.id; og.appendChild(o); });
+        delGrupo.forEach((p) => { const o = el("option", null, nombreDe(p) + (p.es_supervisor ? yaTiene(p.id) : " (se marca como supervisor)")); o.value = p.id; og.appendChild(o); });
         sup.appendChild(og);
     }
-    const libres = supervisores.filter((s) => !ocupados.has(s.id) && !delGrupo.some((p) => p.id === s.id));
+    const libres = supervisores.filter((s) => !delGrupo.some((p) => p.id === s.id));
     if (libres.length) {
         const og = el("optgroup");
-        og.label = "Otros supervisores sin academia";
-        libres.forEach((s) => { const o = el("option", null, nombreDe(s)); o.value = s.id; og.appendChild(o); });
+        og.label = "Otros supervisores";
+        libres.forEach((s) => { const o = el("option", null, nombreDe(s) + yaTiene(s.id)); o.value = s.id; og.appendChild(o); });
         sup.appendChild(og);
     }
     gActualizarBoton();
@@ -1043,8 +1055,13 @@ async function init() {
         return;
     }
 
-    // Quien supervisa: su academia, directo.
-    const suya = academias.find((a) => a.supervisor_id === session.user.id);
+    /* Quien supervisa: su academia, directo. Con varias, la que tiene
+       abierta (la «academia activa», la misma que acota todo lo demás); se
+       cambia en la franja de arriba (js/marca-academia.js). */
+    const { data: suyas } = await sb.rpc("mis_academias_supervisadas");
+    const activa = (suyas || []).find((a) => a.activa);
+    const suya = (activa && academias.find((a) => a.id === activa.id))
+        || academias.find((a) => a.supervisor_id === session.user.id);
     document.getElementById("app").classList.remove("hidden");
     if (!suya) {
         document.getElementById("intro").textContent = "Todavía no tienes una academia a tu cargo. La crea y te la asigna quien administra.";

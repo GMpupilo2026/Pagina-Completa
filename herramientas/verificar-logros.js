@@ -214,10 +214,11 @@ async function abrir(browser, ruta, sesion, stats, opts) {
     igual("no se muestra el aviso de error", await page.evaluate(() => getComputedStyle(document.getElementById("sin-sesion-aviso")).display), "none");
     igual("se pidió progreso_dias_y_racha por RPC, no se bajó ninguna tabla entera",
       // mi_acceso es el candado de acceso (js/acceso-vigente.js, en toda página de
-      // la Academia desde #378) y mi_marca_academia el logo y el color de la
-      // academia (js/marca-academia.js, igual en todas): ninguna es una cuenta de
-      // progreso, así que no cuentan acá.
-      await page.evaluate(() => window.__rpcPedidos.filter((n) => n !== "mi_acceso" && n !== "mi_marca_academia")), ["progreso_dias_y_racha"]);
+      // la Academia desde #378), y mi_marca_academia y mis_academias_supervisadas
+      // el logo de la academia y la franja de la academia activa de quien
+      // supervisa varias (js/marca-academia.js, igual en todas): ninguna es una
+      // cuenta de progreso, así que no cuentan acá.
+      await page.evaluate(() => window.__rpcPedidos.filter((n) => !["mi_acceso", "mi_marca_academia", "mis_academias_supervisadas"].includes(n))), ["progreso_dias_y_racha"]);
 
     console.log("\n=== Los logros: la página pinta lo que el catálogo calcula ===");
     const esperado = await page.evaluate((stats) => window.LogrosCatalogo.conEstado(stats), STATS);

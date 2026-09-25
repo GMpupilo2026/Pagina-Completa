@@ -164,6 +164,11 @@ window.__deletes = [];
   // mientras los alumnos de la clase que se acaba de cerrar todavía no cierran su
   // pestaña. Es distinto de que entre alguien que no estaba.
   window.__avisoDePresencia = function () { oyentes.presence.forEach((f) => f()); };
+  // Alguien de supervisión se pone a mirar la clase (sesion.html?observar=).
+  window.__entraSupervision = function () {
+    estado["u-sup"] = [{ email: "marta@x.cr", full_name: "Marta Solano", role: "supervision", online_at: new Date().toISOString() }];
+    oyentes.presence.forEach((f) => f());
+  };
   window.__entraOtroAlumno = function () {
     estado["u-beto"] = [{ email: "beto@x.cr", full_name: "Beto Mora", role: "alumno", online_at: new Date().toISOString() }];
     oyentes.presence.forEach((f) => f());
@@ -204,7 +209,8 @@ window.__deletes = [];
         return this;
       },
       subscribe(cb) { if (cb) cb("SUBSCRIBED"); return this; },
-      track() { return Promise.resolve(); },
+      // Lo que cada uno anuncia de sí mismo al conectarse: con qué rol entra.
+      track(meta) { (window.__tracks = window.__tracks || []).push(meta); return Promise.resolve(); },
       untrack() { return Promise.resolve(); },
       send() { return Promise.resolve(); },
       presenceState: () => estado,
@@ -247,7 +253,7 @@ async function abrir(browser, quien, claseAbierta, semilla, opciones) {
   const errores = [];
   page.on("pageerror", (e) => errores.push(String(e)));
   page.on("console", (m) => { if (m.type() === "error") errores.push("console: " + m.text()); });
-  await page.goto(BASE + "/sesion.html", { waitUntil: "domcontentloaded" });
+  await page.goto(BASE + ((opciones && opciones.ruta) || "/sesion.html"), { waitUntil: "domcontentloaded" });
   /* O la sesión, o la pantalla de espera: desde que la clase la abre el
      profesor, un alumno sin clase abierta NO monta #app — y esperarlo a secas
      dejaría la prueba colgada treinta segundos por algo que es lo correcto. */

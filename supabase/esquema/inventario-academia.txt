@@ -71,6 +71,7 @@ tabla  saved_games  rls=true
 tabla  solicitudes_academia  rls=true
 tabla  subgrupo_alumnos  rls=true
 tabla  subgrupos  rls=true
+tabla  supervisor_academia_activa  rls=true
 tabla  supervisor_cuentas  rls=true
 tabla  suscripciones  rls=true
 tabla  tarea_items  rls=true
@@ -643,6 +644,9 @@ columna  subgrupos.created_at  timestamp with time zone
 columna  subgrupos.id  uuid
 columna  subgrupos.nombre  text
 columna  subgrupos.profesor_id  uuid
+columna  supervisor_academia_activa.academia_id  uuid
+columna  supervisor_academia_activa.elegida_at  timestamp with time zone
+columna  supervisor_academia_activa.supervisor_id  uuid
 columna  supervisor_cuentas.created_at  timestamp with time zone
 columna  supervisor_cuentas.persona_id  uuid
 columna  supervisor_cuentas.supervisor_id  uuid
@@ -812,6 +816,7 @@ funcion  devolver_invitacion(p_profesor uuid)  definer  anon=false  auth=false
 funcion  disparar_informes_encargados()  definer  anon=false  auth=false
 funcion  disparar_recordatorios_cobro()  definer  anon=false  auth=false
 funcion  disparar_recordatorios_programados()  definer  anon=false  auth=false
+funcion  elegir_academia_activa(p_academia uuid)  definer  anon=false  auth=true
 funcion  elegir_plan(p_id uuid, p_plan text, p_version_terminos text, p_version_privacidad text)  definer  anon=false  auth=true
 funcion  equipo_bajo_mi_coordinacion(p_equipo uuid)  definer  anon=false  auth=true
 funcion  equipo_docente()  definer  anon=false  auth=true
@@ -854,9 +859,11 @@ funcion  informes_inactivos(p_dias integer)  invoker  anon=true  auth=true
 funcion  informes_resumen_alumnos()  invoker  anon=false  auth=true
 funcion  informes_totales()  invoker  anon=false  auth=true
 funcion  iniciar_examen(p_examen uuid)  definer  anon=false  auth=true
+funcion  interno.academia_activa()  definer  anon=false  auth=true
 funcion  interno.academias_de(p_persona uuid)  definer  anon=false  auth=true
 funcion  interno.alumnos_de(p_profesor uuid)  definer  anon=false  auth=true
 funcion  interno.bajo_mi_coordinacion_conjunto()  definer  anon=false  auth=true
+funcion  interno.clases_que_superviso()  definer  anon=false  auth=true
 funcion  interno.comparten_academia(p_a uuid, p_b uuid)  definer  anon=false  auth=true
 funcion  interno.frenar_envio_publico(p_tipo text, p_ambito text, p_correo text, p_ip text)  invoker  anon=false  auth=false
 funcion  interno.gente_de_mis_academias()  definer  anon=false  auth=true
@@ -876,6 +883,7 @@ funcion  mi_grupo()  definer  anon=false  auth=true
 funcion  mi_marca_academia()  definer  anon=false  auth=true
 funcion  minutos_minimos_por_ejercicio(p_grupo text)  invoker  anon=false  auth=true
 funcion  minutos_por_tramos(p_tramos tramo_crudo[])  invoker  anon=true  auth=true
+funcion  mis_academias_supervisadas()  definer  anon=false  auth=true
 funcion  mis_clases()  invoker  anon=false  auth=true
 funcion  mis_funciones_coordinacion()  definer  anon=false  auth=true
 funcion  mis_subgrupos()  invoker  anon=true  auth=true
@@ -1061,6 +1069,7 @@ politica  game_rooms  game_rooms_update  UPDATE
 politica  game_state  game_state_exige_acceso_sel  SELECT  restrictiva
 politica  game_state  game_state_insert  INSERT
 politica  game_state  game_state_select  SELECT
+politica  game_state  game_state_select_supervisor  SELECT
 politica  game_state  game_state_update  UPDATE
 politica  horario_clases  horario_clases_delete  DELETE
 politica  horario_clases  horario_clases_insert  INSERT
@@ -1109,6 +1118,7 @@ politica  practice_sessions  practice_sessions_update  UPDATE
 politica  profesor_videollamada  profesor_videollamada_delete  DELETE
 politica  profesor_videollamada  profesor_videollamada_insert  INSERT
 politica  profesor_videollamada  profesor_videollamada_select  SELECT
+politica  profesor_videollamada  profesor_videollamada_select_supervisor  SELECT
 politica  profesor_videollamada  profesor_videollamada_update  UPDATE
 politica  profile_teachers  profile_teachers_select  SELECT
 politica  profiles  profiles_select  SELECT
@@ -1203,6 +1213,7 @@ politica  variant_nodes  variant_nodes_delete  DELETE
 politica  variant_nodes  variant_nodes_exige_acceso_sel  SELECT  restrictiva
 politica  variant_nodes  variant_nodes_insert  INSERT
 politica  variant_nodes  variant_nodes_select  SELECT
+politica  variant_nodes  variant_nodes_select_supervisor  SELECT
 trigger  ajustes_academia  ajustes_academia_protegido
 trigger  class_presence_log  class_presence_log_protege_tiempos
 trigger  class_sessions  class_sessions_avisa_push
@@ -1241,7 +1252,7 @@ indice  academia_miembros  academia_miembros_pkey
 indice  academias  academias_created_by_fk
 indice  academias  academias_nombre_unico
 indice  academias  academias_pkey
-indice  academias  academias_un_supervisor
+indice  academias  academias_supervisor
 indice  acceso_config  acceso_config_cambiado_por_fk
 indice  acceso_config  acceso_config_pkey
 indice  actualizaciones_plataforma  actualizaciones_plataforma_created_at_idx
@@ -1414,6 +1425,8 @@ indice  subgrupo_alumnos  subgrupo_alumnos_pkey
 indice  subgrupo_alumnos  subgrupo_alumnos_por_alumno
 indice  subgrupos  subgrupos_pkey
 indice  subgrupos  subgrupos_uno_por_nombre
+indice  supervisor_academia_activa  supervisor_academia_activa_academia
+indice  supervisor_academia_activa  supervisor_academia_activa_pkey
 indice  supervisor_cuentas  supervisor_cuentas_persona
 indice  supervisor_cuentas  supervisor_cuentas_pkey
 indice  suscripciones  suscripciones_creado_por_fk

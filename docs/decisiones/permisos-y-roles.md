@@ -732,7 +732,9 @@ profesor (`clases.html?ver_como=<id>`).
   `_persona.id` y con nada más.
 - **Nada de dar clase**: ni estado de la clase en vivo ni registro de clases —
   abrir una clase desde ahí la abriría a nombre de quien mira—, y tampoco el
-  «primer paso» del profesor, que le habla a él.
+  «primer paso» del profesor, que le habla a él. Lo que sí ofrece, si está
+  dando clase en ese momento, es **mirarla** en vivo, de solo lectura (ver «La
+  clase en vivo, vista por quien supervisa»).
 - **La persona se guarda con el id de quien la eligió**
   (`ver_como_persona_v1`, con `de`): en una computadora compartida no le deja a
   la siguiente cuenta mirando a nadie. Si ya no está en la lista de la base (le
@@ -761,15 +763,18 @@ saltan.
 
 El negocio se reparte en **academias**. Cada una tiene **un solo supervisor**
 —su jefe—, su gente y su nombre en los correos que les llegan a las familias.
-Un profesor, un coordinador o un alumno pueden estar en **varias** academias.
+Un profesor, un coordinador o un alumno pueden estar en **varias** academias, y
+un supervisor también puede tener varias (ver «Un supervisor, varias
+academias: se ven de una en una»).
 Se maneja en `academias.html` (tarjeta «🏫 Academias» en Herramientas para quien
 administra, «🏫 Tu academia» en el grupo «Tus profesores» del panel del
 supervisor).
 
 - **`public.academias`** (nombre, `supervisor_id`, `whatsapp`,
-  `correo_respuestas`) y **`public.academia_miembros`** (academia, persona). El
-  «un supervisor por academia» lo hace cumplir el índice único
-  `academias_un_supervisor`, no la pantalla. **Ninguna de las tres tablas tiene
+  `correo_respuestas`) y **`public.academia_miembros`** (academia, persona). Que
+  cada academia tenga UN supervisor lo da la columna `supervisor_id`; el índice
+  `academias_un_supervisor`, que además impedía que una persona supervisara dos,
+  se quitó en `supervisor_varias_academias_y_clase_en_vivo`. **Ninguna de las tres tablas tiene
   política de escritura**: escriben `academia_guardar()` y `academia_borrar()`
   (solo administración), `academia_guardar_contacto()` (el supervisor pone el
   WhatsApp y el correo de SU academia), `academia_set_miembros()` y
@@ -793,6 +798,57 @@ supervisor).
   forma de saber a cuál, y lo decide quien administra.
 - **La lista de gente se manda SIEMPRE completa**, con el cambio encima (la
   regla de `set_teachers`): mandar solo lo nuevo vaciaría la academia.
+
+#### Un supervisor, varias academias: se ven de una en una
+
+Una misma persona puede supervisar dos academias (dos sedes, dos colegios).
+Lo que no puede pasar es que las vea **mezcladas**: los alumnos de las dos en
+el mismo informe, los cobros de las dos en la misma lista, «sin entrenar»
+sumando gente de las dos. Por eso quien supervisa dos o más mira **siempre
+una**: su **academia activa**.
+
+- **La separación la hace la BASE.** `interno.academia_activa()` devuelve la
+  academia abierta de quien llama —la que eligió en
+  `public.supervisor_academia_activa` (sin políticas; la escribe
+  `elegir_academia_activa()`, que exige `supervisa_academia()`), o la primera
+  por nombre si no eligió— y NULL si supervisa menos de dos. Las tres
+  preguntas de la supervisión —`interno.supervisados_por_mi()`,
+  `mis_supervisados()` y `supervisado_por_mi()`— contestan, con una academia
+  activa, **solo con la gente de esa academia**. Todo lo que cuelga de ahí
+  queda separado sin tocar una política: la RLS de `profiles` y de las tablas
+  de actividad, Informes, cobros, cuentas (`bajo_mi_coordinacion`), la
+  supervisión de profesores, el detalle del informe mensual, «Ver como» y la
+  clase en vivo.
+- **No existe un «todas juntas».** Con dos o más academias la activa nunca es
+  NULL: si la elegida deja de ser suya, se cae a la primera por nombre. Un modo
+  «todas» es justo el que mezcla.
+- **Con UNA academia (o ninguna) no cambia nada**: la activa es NULL y las tres
+  funciones contestan como siempre (también las cuentas de
+  `supervisor_cuentas` y sus propios alumnos). Comprobado en la base: las dos
+  supervisoras reales ven exactamente los mismos ids antes y después
+  (misma huella).
+- **`supervisores_de()` NO se acota, a propósito**: dice a quién le llega el
+  informe mensual, los recordatorios y la respuesta de las familias, y eso no
+  puede depender de qué academia tenga abierta su supervisor ese día.
+- **En pantalla**, en toda página de la Academia, `js/marca-academia.js` pinta
+  debajo del encabezado la franja «🏫 Estás viendo solo ADAPZ: sus profesores,
+  sus alumnos, sus cobros y sus informes», con el selector «Cambiar de
+  academia»; cambiar llama a `elegir_academia_activa()` y recarga. El
+  encabezado lleva la marca de la academia activa (`mi_marca_academia()`), y
+  `academias.html` abre esa. Quien administra puede darle a un supervisor una
+  segunda academia: en los selectores se ofrece con «(también supervisa …)».
+- Comprobado impersonando roles en SQL (revertido): con ADAPZ y CCDR San José a
+  la misma supervisora, en ADAPZ ve 55 personas, a una de CCDR la da por no
+  supervisada, lleva la marca de ADAPZ y ve el tablero del profesor de ADAPZ y
+  no el de CCDR; al cambiar a CCDR, 53 personas, al revés en todo, y la
+  supervisión de profesores y «Ver como» cambian con ella. Elegir una academia
+  ajena, o un profesor cualquiera eligiendo, se rechaza.
+
+**Al tocarlo, correr `node herramientas/verificar-todo.js academias`**: que
+entre a la academia activa y no a la primera, que la franja lo diga (con el
+nombre literal), que cambiar mande ESA academia a `elegir_academia_activa()` y
+recargue, y que con una sola no haya franja. Está probado que falla de verdad:
+abriendo la primera o mandando la que ya estaba, saltan.
 
 #### Crear una academia desde un grupo, de una vez
 
