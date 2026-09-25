@@ -625,6 +625,17 @@ el compilador ya mira los `.js` de hasta 350 KB.
   partidas, niebla, lector de planillas y cuatro jugadores). Y por último las
   ocho de `entreno/`, que van a `js/entreno-<pagina>.js` (la página las carga
   con `../js/`). Con eso no queda ninguna página con un bloque de más de 20 KB.
+  Después el límite bajó a **2 KB** (34 páginas más, 432 KB): primero las 18
+  de juegos y ejercicios (te-reto, visualización, crazyhouse, cartas,
+  coordenadas, estándar, nivel de arbitraje, Sonar, concentración, duelo,
+  examen, racha táctica, precisión posicional, Confites, ilumina, torneos,
+  Estudio y logros —esta a `js/logros-pagina.js`, porque `js/logros.js` es
+  el módulo compartido—).
+- `mudar-script.py` y `verificar-carga-paginas.js` recorren el HTML en orden
+  para encontrar los bloques: un `<script` escrito dentro de un comentario
+  HTML no es un bloque. `inscripcion.html` tiene uno («ni en un
+  `<script src>`»), y con la regex suelta la mudanza habría empezado en medio
+  del comentario.
 - `verificar-carga-paginas.js` lleva la lista `PENDIENTES` de las que todavía
   traen un bloque de más de 20 KB: eran 34 al empezar y **ya está vacía**. La
   lista solo se achica, así que una página nueva con un bloque grande falla:
