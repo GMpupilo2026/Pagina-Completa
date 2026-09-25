@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20260925012053
+# al-dia-con: 20260925022001
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -58,6 +58,7 @@ tabla  practice_sessions  rls=true
 tabla  profesor_videollamada  rls=true
 tabla  profile_teachers  rls=true
 tabla  profiles  rls=true
+tabla  pruebas_gratis  rls=true
 tabla  public_streak_leaderboard  rls=true
 tabla  public_tournament_champions  rls=true
 tabla  push_suscripciones  rls=true
@@ -558,6 +559,13 @@ columna  profiles.is_admin  boolean
 columna  profiles.role  text
 columna  profiles.teacher_id  uuid
 columna  profiles.ultima_vista_actualizaciones  timestamp with time zone
+columna  pruebas_gratis.aceptado_en  timestamp with time zone
+columna  pruebas_gratis.alumno_id  uuid
+columna  pruebas_gratis.empieza  timestamp with time zone
+columna  pruebas_gratis.ip  text
+columna  pruebas_gratis.privacidad_version  text
+columna  pruebas_gratis.terminos_version  text
+columna  pruebas_gratis.vence  timestamp with time zone
 columna  public_streak_leaderboard.best_streak  integer
 columna  public_streak_leaderboard.created_at  timestamp with time zone
 columna  public_streak_leaderboard.display_name  text
@@ -846,7 +854,7 @@ funcion  informes_totales()  invoker  anon=false  auth=true
 funcion  iniciar_examen(p_examen uuid)  definer  anon=false  auth=true
 funcion  interno.alumnos_de(p_profesor uuid)  definer  anon=false  auth=true
 funcion  interno.bajo_mi_coordinacion_conjunto()  definer  anon=false  auth=true
-funcion  interno.frenar_envio_publico(p_tipo text, p_ambito text, p_correo text)  invoker  anon=false  auth=false
+funcion  interno.frenar_envio_publico(p_tipo text, p_ambito text, p_correo text, p_ip text)  invoker  anon=false  auth=false
 funcion  interno.profesores_de(p_alumno uuid)  definer  anon=false  auth=true
 funcion  interno.supervisados_por_mi()  definer  anon=false  auth=true
 funcion  interno.version_legal_valida(p text)  invoker  anon=false  auth=false
@@ -894,6 +902,8 @@ funcion  proteger_tarea_items_alumno()  definer  anon=false  auth=false
 funcion  proteger_tareas_alumno()  definer  anon=false  auth=false
 funcion  proteger_tiempos_de_presencia()  definer  anon=false  auth=false
 funcion  proteger_torneo()  invoker  anon=false  auth=false
+funcion  prueba_gratis_activar(p_alumno uuid, p_nombre text, p_ip text, p_privacidad text, p_terminos text)  definer  anon=false  auth=false
+funcion  prueba_gratis_frenar(p_ip text)  definer  anon=false  auth=false
 funcion  puede_marcar_academia(p_nombre text)  definer  anon=true  auth=true
 funcion  puede_ver_equipo(p_equipo uuid)  definer  anon=false  auth=true
 funcion  puede_ver_paquete(p_paquete uuid)  definer  anon=false  auth=true
@@ -1096,6 +1106,7 @@ politica  profesor_videollamada  profesor_videollamada_update  UPDATE
 politica  profile_teachers  profile_teachers_select  SELECT
 politica  profiles  profiles_select  SELECT
 politica  profiles  profiles_update_own  UPDATE
+politica  pruebas_gratis  pruebas_gratis_ver  SELECT
 politica  public_streak_leaderboard  public_streak_leaderboard_insert_all  INSERT
 politica  public_streak_leaderboard  public_streak_leaderboard_select_all  SELECT
 politica  public_tournament_champions  public_tournament_champions_insert  INSERT
@@ -1371,6 +1382,7 @@ indice  profiles  profiles_grupo_idx
 indice  profiles  profiles_pkey
 indice  profiles  profiles_single_admin_idx
 indice  profiles  profiles_teacher_id_idx
+indice  pruebas_gratis  pruebas_gratis_pkey
 indice  public_streak_leaderboard  public_streak_leaderboard_best_streak_idx
 indice  public_streak_leaderboard  public_streak_leaderboard_pkey
 indice  public_tournament_champions  public_tournament_champions_pkey
@@ -1968,6 +1980,7 @@ grant  profiles  authenticated  SELECT
 grant  profiles  authenticated  TRIGGER
 grant  profiles  authenticated  TRUNCATE
 grant  profiles  authenticated  UPDATE
+grant  pruebas_gratis  authenticated  SELECT
 grant  public_streak_leaderboard  anon  DELETE
 grant  public_streak_leaderboard  anon  INSERT
 grant  public_streak_leaderboard  anon  REFERENCES

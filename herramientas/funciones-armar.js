@@ -49,6 +49,8 @@ const FUNCIONES = {
   "informes-encargados": ["contacto-academia.ts", "remitente-academia.ts", "marca-correo.ts"],
   "cobros-recordatorios": ["usuario-alumno.ts", "contacto-academia.ts", "remitente-academia.ts", "marca-correo.ts"],
   "mejorar-informe": [],
+  // Pública (verify_jwt en false): ver su cabecera.
+  "prueba-gratis": ["usuario-alumno.ts"],
 };
 
 function armar(nombre) {
