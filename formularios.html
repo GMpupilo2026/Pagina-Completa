@@ -146,6 +146,10 @@
                     <h2 id="respuestas-titulo" class="font-serif text-2xl font-bold text-brand-800 dark:text-white"></h2>
                     <button type="button" id="csv-btn" class="bg-brand-700 hover:bg-brand-600 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">⬇️ Bajar en Excel (CSV)</button>
                 </div>
+                <div class="flex flex-wrap items-center gap-3 mb-3">
+                    <input id="buscar-respuestas" type="search" autocomplete="off" spellcheck="false" placeholder="🔍 Buscar en las respuestas…" aria-label="Buscar en las respuestas" class="w-full sm:w-80 bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                    <p id="buscar-respuestas-cuenta" class="text-sm text-brand-500 dark:text-brand-300" aria-live="polite"></p>
+                </div>
                 <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4 overflow-x-auto">
                     <table class="w-full text-sm">
                         <thead><tr id="respuestas-cabecera" class="text-left text-brand-450 dark:text-brand-350 uppercase text-xs border-b border-brand-100 dark:border-brand-800"></tr></thead>
@@ -795,12 +799,31 @@ async function verRespuestas(f) {
         .order("created_at", { ascending: false }).order("id"));
     if (error) { Avisos.avisar("No se pudieron cargar: " + error.message, { tipo: "error" }); return; }
     respuestasActuales = { formulario: f, filas: data || [], papeles: papelesDe(f.campos) };
+    document.getElementById("buscar-respuestas").value = "";
     pintarRespuestas();
     mostrar("vista-respuestas");
 }
 
+/* El buscador mira todo lo que se ve en la fila (fecha, cada respuesta y si
+   ya tiene cuenta), sin tildes ni mayúsculas. Con varias palabras tienen que
+   estar todas: «rojas sub-14» encuentra a quien se llama Rojas Y va en Sub-14.
+   Solo filtra la tabla: el CSV sigue bajando todas las respuestas. */
+function textoDeRespuesta(r, campos) {
+    return sinTildes([
+        new Date(r.created_at).toLocaleDateString("es-CR", { day: "2-digit", month: "short", year: "numeric" }),
+        r.cuenta_id ? "cuenta creada" : "sin cuenta",
+    ].concat((campos || []).map((c) => valorLegible(r.respuestas[c.id], c))).join(" "));
+}
+
 function pintarRespuestas() {
-    const { formulario: f, filas } = respuestasActuales;
+    const { formulario: f, filas: todas } = respuestasActuales;
+    const palabras = sinTildes(document.getElementById("buscar-respuestas").value).split(/\s+/).filter(Boolean);
+    const filas = palabras.length
+        ? todas.filter((r) => { const t = textoDeRespuesta(r, f.campos); return palabras.every((p) => t.includes(p)); })
+        : todas;
+    document.getElementById("buscar-respuestas-cuenta").textContent = palabras.length && todas.length
+        ? `${filas.length} de ${todas.length} respuesta${todas.length === 1 ? "" : "s"}`
+        : "";
     const cabecera = document.getElementById("respuestas-cabecera");
     const cuerpo = document.getElementById("respuestas-cuerpo");
     cabecera.innerHTML = "";
@@ -820,7 +843,9 @@ function pintarRespuestas() {
         const td = document.createElement("td");
         td.colSpan = columnas.length;
         td.className = "py-4 text-brand-450 dark:text-brand-350";
-        td.textContent = "Todavía no ha contestado nadie. Compártelo desde la lista de formularios, con «Copiar enlace».";
+        td.textContent = todas.length
+            ? "Ninguna respuesta coincide con esa búsqueda."
+            : "Todavía no ha contestado nadie. Compártelo desde la lista de formularios, con «Copiar enlace».";
         tr.appendChild(td); cuerpo.appendChild(tr);
         return;
     }
@@ -1181,6 +1206,7 @@ document.getElementById("volver-btn").addEventListener("click", () => mostrar("v
 document.getElementById("volver-btn-2").addEventListener("click", () => mostrar("vista-lista"));
 document.getElementById("guardar-btn").addEventListener("click", guardar);
 document.getElementById("csv-btn").addEventListener("click", bajarCsv);
+document.getElementById("buscar-respuestas").addEventListener("input", pintarRespuestas);
 document.getElementById("alta-enviar").addEventListener("click", enviarAlta);
 document.getElementById("alta-cancelar").addEventListener("click", cerrarAlta);
 document.getElementById("alta-sin-correo").addEventListener("change", pintarModoAlta);
