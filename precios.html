@@ -116,6 +116,9 @@
                     <label for="calc-n" class="block text-sm text-brand-600 dark:text-brand-300 mt-4">¿Cuántos alumnos?</label>
                     <input id="calc-n" type="number" min="1" max="5000" step="1" value="25" class="mt-1 w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-lg focus:ring-2 focus:ring-accent-500 outline-none">
                     <div id="calc-res" role="status" aria-live="polite" class="mt-5 flex-1"></div>
+                    <!-- Fuera de la región viva a propósito: si no, cada número que se
+                         escribe volvería a leer el botón y sus opciones. -->
+                    <div id="calc-pagar-caja"></div>
                 </div>
             </div>
         </section>
@@ -279,7 +282,7 @@
             const n = Math.floor(Number($("calc-n").value));
             const res = $("calc-res");
             res.innerHTML = "";
-            if (!n || n < 1) { res.textContent = "Escribe cuántos alumnos son."; return; }
+            if (!n || n < 1) { res.textContent = "Escribe cuántos alumnos son."; $("calc-pagar-caja").replaceChildren(); return; }
             const c = P.cotizar(n);
             const total = document.createElement("p");
             total.innerHTML = '<span class="font-serif text-4xl font-bold text-accent-700 dark:text-accent-400"></span> <span class="text-brand-500 dark:text-brand-300">al mes</span>';
@@ -291,7 +294,29 @@
             const ciclo = document.createElement("p");
             ciclo.className = "text-sm text-brand-600 dark:text-brand-300 mt-1";
             ciclo.textContent = `Al año: ${c.tramo.convenio ? "desde " : ""}${f(c.ciclo)}, o sea ${f(c.porAlumnoAnual)} por alumno (${P.MESES_CICLO} meses de uso, pagas ${P.MESES_COBRADOS_CICLO}).`;
+            // Pagar: abre el WhatsApp de Oscar con lo que se está viendo ya
+            // escrito, para que no haya que volver a contar cuántos son ni
+            // cuánto sale. El número se lee del botón de abajo (#cta-wa), que
+            // es donde ya está escrito: una segunda copia se quedaría vieja.
+            const wa = ($("cta-wa").getAttribute("href") || "").split("?")[0];
+            const conv = c.tramo.convenio ? "desde " : "";
+            const mensaje = `Hola Oscar, quiero pagar el acceso a la Academia para ${n} ${n === 1 ? "alumno" : "alumnos"}` +
+                ` (${c.tramo.nombre}): ${conv}${f(c.total)} al mes o ${conv}${f(c.ciclo)} al año.` +
+                " ¿Me pasas los datos para pagar por SINPE Móvil o transferencia?";
+            const pagar = document.createElement("a");
+            pagar.id = "calc-pagar";
+            pagar.href = wa + "?text=" + encodeURIComponent(mensaje);
+            pagar.target = "_blank";
+            pagar.rel = "noopener";
+            pagar.className = "mt-5 flex items-center justify-center gap-2 w-full bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-6 py-3 rounded-xl transition-colors shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2";
+            pagar.innerHTML = '<span aria-hidden="true">💬</span> <span>Pagar</span>';
+            pagar.setAttribute("aria-describedby", "calc-pagar-opciones");
+            const opciones = document.createElement("p");
+            opciones.id = "calc-pagar-opciones";
+            opciones.className = "text-xs text-brand-500 dark:text-brand-300 mt-2 text-center";
+            opciones.innerHTML = 'Por SINPE Móvil o transferencia bancaria. Te abre WhatsApp con Oscar y te pasa los datos. <a href="#formas-de-pago" class="underline font-semibold">Cómo se paga</a>';
             res.append(total, det, ciclo);
+            $("calc-pagar-caja").replaceChildren(pagar, opciones);
         }
         $("calc-n").addEventListener("input", calcular);
         calcular();

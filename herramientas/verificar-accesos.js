@@ -177,6 +177,32 @@ async function pruebaPrecios(browser) {
   const res = await page.textContent("#calc-res");
   cierto("la calculadora con 9 alumnos dice el total del paquete de 10 y lo explica",
     res.includes(P.formato(P.cotizar(9).total)) && res.includes("pagar 10"), res);
+
+  // El botón de pagar: abre el WhatsApp de Oscar con lo que la calculadora
+  // enseña ya escrito. Un mensaje con otro total, o sin el número del país,
+  // no da ningún error: el chat se abre igual y dice otra cosa.
+  await page.fill("#calc-n", "25");
+  const pagar = await page.evaluate(() => {
+    const a = document.getElementById("calc-pagar");
+    const o = document.getElementById("calc-pagar-opciones");
+    return a && {
+      href: a.getAttribute("href"), texto: a.textContent.trim(), nueva: a.target,
+      seVe: a.checkVisibility(), opciones: o ? o.textContent : "",
+      enRegionViva: !!a.closest("[aria-live]"),
+    };
+  }) || {};
+  const c25 = P.cotizar(25);
+  cierto("hay un botón «Pagar» y se ve", pagar.seVe && /Pagar/.test(pagar.texto), JSON.stringify(pagar));
+  cierto("abre el WhatsApp de Oscar con el código de país, en otra pestaña",
+    /^https:\/\/wa\.me\/506\d{8}\?text=/.test(pagar.href || "") && pagar.nueva === "_blank", pagar.href);
+  const msj = decodeURIComponent(String(pagar.href || "").split("?text=")[1] || "");
+  cierto("el mensaje lleva los alumnos, el paquete y los dos totales de la pantalla",
+    msj.includes("25 alumnos") && msj.includes(c25.tramo.nombre) && msj.includes(P.formato(c25.total)) && msj.includes(P.formato(c25.ciclo)), msj);
+  cierto("debajo dice las formas de pago", /SINPE/.test(pagar.opciones) && /transferencia/.test(pagar.opciones), pagar.opciones);
+  cierto("el botón no está dentro de la región viva (no se relee en cada tecla)", pagar.enRegionViva === false);
+  await page.fill("#calc-n", "");
+  cierto("sin cantidad no queda un botón con el total viejo",
+    await page.evaluate(() => !document.getElementById("calc-pagar")));
   cierto("sin errores en la página", errores.length === 0, errores.join(" | "));
   await page.close();
 }
