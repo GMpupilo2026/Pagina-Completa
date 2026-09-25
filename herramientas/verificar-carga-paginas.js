@@ -89,12 +89,7 @@ else bien("la hoja de Google Fonts no frena el pintado en ninguna");
    tamaño. La lista solo se achica: una página nueva con un bloque grande no
    entra, y una que ya se mudó sale. */
 const LIMITE_EN_LINEA_KB = 2;
-const PENDIENTES = new Set([
-  "tienda.html", "subgrupos.html", "inscripciones.html", "supervision.html",
-  "tablero-academias.html", "solicitudes.html", "formulario.html", "bienvenida.html",
-  "informe-mensual.html", "inscripcion.html", "novedades.html", "precios.html",
-  "elegir-plan.html", "campeones.html", "cursos.html", "login.html",
-]);
+const PENDIENTES = new Set([]);
 
 /* Los <script> escritos en la página, recorriéndola en orden: un «<script»
    dentro de un comentario HTML no es un bloque (inscripcion.html tiene uno que

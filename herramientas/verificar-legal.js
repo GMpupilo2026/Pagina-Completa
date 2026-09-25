@@ -105,12 +105,12 @@ function enlacesEnTodoElSitio() {
   igual("ninguna página da un correo de otro dominio (ajedrezintegral.com, sin guion, no es nuestro)",
     correoAjeno, []);
 
-  const tienda = leer("tienda.html");
+  const tienda = require("./lib/codigo-de-pagina").leer("tienda.html");
   igual("el pedido de la tienda deja escrita la aceptación de las condiciones",
     [/CONDICIONES_TIENDA = "https:\/\/ajedrez-integral\.com\/terminos\.html#tienda"/.test(tienda),
      /Leí y acepto las condiciones de compra[^"]*" \+ CONDICIONES_TIENDA/.test(tienda)], [true, true]);
   for (const r of ["login.html", "bienvenida.html", "precios.html"]) {
-    igual(r + ": enlaza los Términos", /href="terminos\.html/.test(leer(r)), true);
+    igual(r + ": enlaza los Términos", /href="terminos\.html/.test(require("./lib/codigo-de-pagina").leer(r)), true);
   }
 }
 

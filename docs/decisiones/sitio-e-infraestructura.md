@@ -630,14 +630,21 @@ el compilador ya mira los `.js` de hasta 350 KB.
   coordenadas, estándar, nivel de arbitraje, Sonar, concentración, duelo,
   examen, racha táctica, precisión posicional, Confites, ilumina, torneos,
   Estudio y logros —esta a `js/logros-pagina.js`, porque `js/logros.js` es
-  el módulo compartido—).
+  el módulo compartido—). Y después las 16 de gestión y páginas públicas
+  (tienda, subgrupos, inscripciones, supervisión, tablero de academias,
+  solicitudes, formulario, bienvenida, informe mensual, novedades, precios,
+  elegir plan, campeones, cursos, login e inscripción). `inscripcion.html`
+  tenía dos bloques: el fondo 3D va a `js/inscripcion-fondo.js` y el cliente
+  de su base a `js/inscripcion-datos.js`, y los dos entraron a `INSCRIPCION`
+  de `css-construir.js`. Con eso no queda ninguna página con un bloque de más
+  de 2 KB escrito adentro.
 - `mudar-script.py` y `verificar-carga-paginas.js` recorren el HTML en orden
   para encontrar los bloques: un `<script` escrito dentro de un comentario
   HTML no es un bloque. `inscripcion.html` tiene uno («ni en un
   `<script src>`»), y con la regex suelta la mudanza habría empezado en medio
   del comentario.
 - `verificar-carga-paginas.js` lleva la lista `PENDIENTES` de las que todavía
-  traen un bloque de más de 20 KB: eran 34 al empezar y **ya está vacía**. La
+  traen un bloque de más de 2 KB (el límite empezó en 20): **ya está vacía**. La
   lista solo se achica, así que una página nueva con un bloque grande falla:
   su código va a `js/` desde el primer día.
 - Quedan para después las piezas chicas que ponen los generadores en el
