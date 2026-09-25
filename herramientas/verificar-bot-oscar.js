@@ -60,7 +60,7 @@ const comprobar = (cond, msg) => (cond ? ok(msg) : falla(msg));
    Por marcas y no por número de línea: el archivo se edita y los números se
    mueven. Y de bot.html y no de una copia: comprobar una copia del evaluador
    no comprobaría nada. */
-const HTML = fs.readFileSync(path.join(RAIZ, "bot.html"), "utf8");
+const HTML = require("./lib/codigo-de-pagina").leer("bot.html");
 function tramo(desde, hasta) {
   const a = HTML.indexOf(desde);
   const b = HTML.indexOf(hasta, a);

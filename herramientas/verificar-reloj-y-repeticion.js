@@ -70,12 +70,12 @@ ok(Repeticion.veces(Zh.START_FEN, zh2, conZh, g2.fen()) === 1, "Crazyhouse: una 
 console.log("\nLas páginas de partida");
 const PAGINAS = ["estandar.html", "niebla.html", "crazyhouse.html", "cartas.html", "variante.html", "cuatro-jugadores.html"];
 for (const p of PAGINAS) {
-  const s = fs.readFileSync(path.join(RAIZ, p), "utf8");
+  const s = require("./lib/codigo-de-pagina").leer(p);
   ok(!/Date\.now\(\)\s*-\s*new Date\(room\.clock_updated_at\)/.test(s), p + ": el reloj no se calcula con la hora de la computadora");
   ok(s.includes('src="js/reloj-servidor.js"') && s.includes("RelojServidor.iniciar(sb)"), p + ": carga y arranca js/reloj-servidor.js");
 }
 for (const p of ["estandar.html", "niebla.html", "crazyhouse.html"]) {
-  const s = fs.readFileSync(path.join(RAIZ, p), "utf8");
+  const s = require("./lib/codigo-de-pagina").leer(p);
   ok(s.includes('src="js/repeticion.js"') && /esTripleRepeticion\(newMoves, info\.fen\)/.test(s), p + ": al mover se mira la triple repetición");
   ok(s.includes("Tablas por triple repetición."), p + ": el final dice por qué fueron tablas");
 }

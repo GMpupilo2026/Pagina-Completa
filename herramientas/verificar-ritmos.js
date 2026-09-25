@@ -48,7 +48,7 @@ igual("sin límite", R.etiqueta(null, 0), "Sin límite");
 /* Ninguna página vuelve a tener su propia lista: con dos copias, una partida
    amistosa podía ser 3+0 y un torneo no. */
 ["torneos.html", "torneo.html", "juegos.html"].forEach((p) => {
-  const s = fs.readFileSync(path.join(RAIZ, p), "utf8");
+  const s = require("./lib/codigo-de-pagina").leer(p);
   igual(p + " no tiene su propia lista de ritmos", /TIME_CONTROLS\s*=/.test(s), false);
   igual(p + " carga js/ritmos.js", s.includes('src="js/ritmos.js"'), true);
 });
