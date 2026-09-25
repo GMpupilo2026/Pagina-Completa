@@ -582,7 +582,20 @@ revisa que no use `document.currentScript` ni tenga un `</script>` escrito, y
 después se recompila el CSS (`npm run css`): **tiene que quedar idéntico**, porque
 el compilador ya mira los `.js` de hasta 350 KB.
 
+- **La mudanza la hace `herramientas/mudar-script.py <página> js/<destino>.js`**,
+  siempre igual: toma el bloque más grande, se niega si usa
+  `document.currentScript`, es `type="module"`, trae atributos o tiene un
+  `</script` escrito adentro, copia el bloque byte por byte (sin reindentar: un
+  template literal de varias líneas cambiaría de contenido), deja el
+  `<script src>` en su lugar y comprueba que el archivo termine con el bloque
+  original. Un `<!--` dentro de un string que arma HTML no es problema.
+- **Los verificadores que leen el código de una página** tienen que leerlo con
+  `herramientas/lib/codigo-de-pagina.js` (el `.html` más su código mudado), no
+  con `readFileSync` del `.html`: al mudar `informes.html`,
+  `verificar-admin.js` dejó de encontrar lo que buscaba y el CI salió en rojo.
+  Uno escrito de otra forma habría pasado sin comprobar nada.
 - `sesion.html` fue la primera: de 330 KB a 91 KB de HTML, y `js/sesion.js`.
+  `informes.html`, de 227 KB a 42 KB, y `js/informes.js`.
 - `verificar-carga-paginas.js` lleva la lista `PENDIENTES` de las que todavía
   traen un bloque de más de 20 KB (34 al empezar). **La lista solo se achica**:
   una página nueva con un bloque grande falla, y una que ya se mudó y sigue en
