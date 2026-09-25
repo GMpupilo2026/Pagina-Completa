@@ -129,6 +129,11 @@ async function pruebaPublica(browser) {
   igual("las seis frases de la forma de enseñar empiezan con «El profesor»",
     await page.evaluate(() => [...document.querySelectorAll("#form section:nth-of-type(2) fieldset legend")].map((l) => /^Pregunta \d+ de 14\. El profesor /.test(l.textContent))),
     [true, true, true, true, true, true]);
+  // Se manda fuera de la Academia: ni encabezado, ni pie, ni la marca del sitio
+  // en lo que se ve o se lee (el título de la pestaña también se lee).
+  igual("sin encabezado ni pie", await page.evaluate(() => document.querySelectorAll("header, footer").length), 0);
+  igual("sin la marca del sitio en la página ni en el título",
+    await page.evaluate(() => /ajedrez[\s-]*integral/i.test(document.body.innerText + " " + document.title)), false);
   igual("nada con tabindex positivo (rompe el orden del teclado)", await page.evaluate(() => document.querySelectorAll('[tabindex]:not([tabindex="-1"]):not([tabindex="0"])').length), 0);
 
   // Enviar vacía: no viaja nada, el resumen toma el foco y dice cuántas faltan.
@@ -249,7 +254,7 @@ async function pruebaAdmin(browser) {
   const { page, errores, ctx } = await abrir(browser, "/encuestas-curso.html", datos, ADMIN, "#lista article");
 
   igual("una tarjeta por encuesta, con el nombre como texto", await page.evaluate(() => [...document.querySelectorAll("#lista h3")].map((h) => h.textContent)), [XSS, "Otro curso"]);
-  igual("el enlace para compartir", await page.evaluate(() => document.querySelector("#lista code").textContent), BASE + "/encuesta-curso.html?e=desde-cero-sabado-ab12cd");
+  igual("el enlace para compartir, sin la marca del sitio", await page.evaluate(() => document.querySelector("#lista code").textContent), "https://orange-water-b162.gmpupilo.workers.dev/encuesta-curso.html?e=desde-cero-sabado-ab12cd");
   igual("abierta y cerrada, escrito", await page.evaluate(() => [...document.querySelectorAll("#lista article")].map((a) => a.querySelector("span").textContent)),
     ["🟢 Abierta: recibe respuestas", "⏸️ Cerrada: no recibe respuestas"]);
 
