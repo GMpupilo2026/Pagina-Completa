@@ -3,8 +3,8 @@
  *
  * No necesita navegador, ni red, ni la base: lee supabase/migraciones/.
  *
- * responder_formulario, registrar_arbitraje_publico y solicitar_academia las
- * puede llamar cualquiera con la clave pública del HTML, y cada llamada es una
+ * responder_formulario, registrar_arbitraje_publico, solicitar_academia y
+ * responder_encuesta_curso (la encuesta anónima de un curso) las puede llamar cualquiera con la clave pública del HTML, y cada llamada es una
  * fila nueva. Desde 20260924122318_freno_envios_publicos llaman a
  * interno.frenar_envio_publico() antes de insertar. Se pierde callado: basta
  * con que una migración futura vuelva a crear una de las tres copiando su
@@ -19,12 +19,22 @@ const fs = require("fs");
 const path = require("path");
 
 const DIR = path.join(__dirname, "..", "supabase", "migraciones");
-const FUNCIONES = ["responder_formulario", "registrar_arbitraje_publico", "solicitar_academia"];
+const FUNCIONES = ["responder_formulario", "registrar_arbitraje_publico", "solicitar_academia", "responder_encuesta_curso"];
 let fallos = 0;
 const mal = (m) => { console.log("  ✗ " + m); fallos += 1; };
 const bien = (m) => console.log("  ✓ " + m);
 
 const archivos = fs.readdirSync(DIR).filter((f) => f.endsWith(".sql")).sort();
+
+/* Los tipos que conoce la ÚLTIMA versión del freno. Un tipo que no está ahí
+   no frena nada: el freno levanta «tipo de envío desconocido» y el envío
+   entero se cae, para todo el mundo. */
+let tiposDelFreno = null;
+for (const f of archivos) {
+  const sql = fs.readFileSync(path.join(DIR, f), "utf8");
+  const m = sql.match(/create\s+(or\s+replace\s+)?function\s+interno\.frenar_envio_publico\s*\([\s\S]*?\$function\$([\s\S]*?)\$function\$/i);
+  if (m) tiposDelFreno = [...m[2].matchAll(/when\s+'([a-z_]+)'\s+then/gi)].map((x) => x[1]);
+}
 
 console.log("=== Freno de los envíos sin cuenta ===");
 for (const fn of FUNCIONES) {
@@ -52,7 +62,10 @@ for (const fn of FUNCIONES) {
   else if (insert >= 0 && freno > insert) mal(`${fn} (${ultima}): llama al freno DESPUÉS del insert`);
   else if (!/freno\s+is\s+not\s+null/i.test(cuerpo)) mal(`${fn} (${ultima}): llama al freno pero no mira lo que devuelve`);
   else bien(`${fn}: pasa por el freno antes de guardar (${ultima})`);
+  const tipo = (cuerpo.match(/interno\.frenar_envio_publico\s*\(\s*'([a-z_]+)'/i) || [])[1];
+  if (freno >= 0 && tipo && tiposDelFreno && !tiposDelFreno.includes(tipo)) mal(`${fn}: usa el tipo '${tipo}', que el freno no conoce (${tiposDelFreno.join(", ")})`);
+  else if (freno >= 0 && tipo) bien(`${fn}: el freno conoce su tipo '${tipo}'`);
 }
 
-console.log(fallos ? "\n" + fallos + " comprobación(es) fallaron" : "\nTodo bien: los tres envíos sin cuenta pasan por el freno.");
+console.log(fallos ? "\n" + fallos + " comprobación(es) fallaron" : "\nTodo bien: los envíos sin cuenta pasan por el freno.");
 process.exit(fallos ? 1 : 0);

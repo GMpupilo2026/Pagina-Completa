@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20260925124407
+# al-dia-con: 20260925133107
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -27,6 +27,8 @@ tabla  datos_facturacion  rls=true
 tabla  desafios  rls=true
 tabla  diagnosticos_publicos  rls=true
 tabla  encargados  rls=true
+tabla  encuesta_curso_respuestas  rls=true
+tabla  encuestas_curso  rls=true
 tabla  encuestas_profesor  rls=true
 tabla  equipo_alumnos  rls=true
 tabla  equipo_entrenadores  rls=true
@@ -274,6 +276,33 @@ columna  encargados.id  uuid
 columna  encargados.nombre  text
 columna  encargados.student_id  uuid
 columna  encargados.ultimo_envio_at  timestamp with time zone
+columna  encuesta_curso_respuestas.accesible  smallint
+columna  encuesta_curso_respuestas.aprendizaje  text
+columna  encuesta_curso_respuestas.asistencia  text
+columna  encuesta_curso_respuestas.comentario  text
+columna  encuesta_curso_respuestas.describe  smallint
+columna  encuesta_curso_respuestas.desde_cero  smallint
+columna  encuesta_curso_respuestas.dudas  smallint
+columna  encuesta_curso_respuestas.encuesta_id  uuid
+columna  encuesta_curso_respuestas.expectativas  text
+columna  encuesta_curso_respuestas.fecha  date
+columna  encuesta_curso_respuestas.guia  smallint
+columna  encuesta_curso_respuestas.id  uuid
+columna  encuesta_curso_respuestas.motivo_otro  text
+columna  encuesta_curso_respuestas.motivos  text[]
+columna  encuesta_curso_respuestas.privacidad_aceptada_en  timestamp with time zone
+columna  encuesta_curso_respuestas.privacidad_version  text
+columna  encuesta_curso_respuestas.realidad  text
+columna  encuesta_curso_respuestas.recomendaria  text
+columna  encuesta_curso_respuestas.ritmo  smallint
+columna  encuesta_curso_respuestas.suficiente  text
+columna  encuestas_curso.abierta  boolean
+columna  encuestas_curso.creado_por  uuid
+columna  encuestas_curso.created_at  timestamp with time zone
+columna  encuestas_curso.curso  text
+columna  encuestas_curso.id  uuid
+columna  encuestas_curso.profesor_id  uuid
+columna  encuestas_curso.slug  text
 columna  encuestas_profesor.alumno_id  uuid
 columna  encuestas_profesor.aprende  smallint
 columna  encuestas_profesor.claridad  smallint
@@ -834,6 +863,7 @@ funcion  disparar_recordatorios_cobro()  definer  anon=false  auth=false
 funcion  disparar_recordatorios_programados()  definer  anon=false  auth=false
 funcion  elegir_academia_activa(p_academia uuid)  definer  anon=false  auth=true
 funcion  elegir_plan(p_id uuid, p_plan text, p_version_terminos text, p_version_privacidad text)  definer  anon=false  auth=true
+funcion  encuesta_curso_publica(p_slug text)  definer  anon=true  auth=true
 funcion  encuesta_mis_profesores()  invoker  anon=false  auth=true
 funcion  equipo_alumno_subgrupo()  definer  anon=false  auth=false
 funcion  equipo_bajo_mi_coordinacion(p_equipo uuid)  definer  anon=false  auth=true
@@ -951,10 +981,12 @@ funcion  recordar_informes_mensuales(p_hoy date)  definer  anon=false  auth=fals
 funcion  registrar_arbitraje_publico(p_nombre text, p_email text, p_porcentaje integer, p_nivel text, p_detalle jsonb)  definer  anon=true  auth=true
 funcion  registrar_salida_examen(p_examen uuid, p_segundos integer)  definer  anon=false  auth=true
 funcion  reporte_actividades(p_desde date, p_hasta date)  invoker  anon=false  auth=true
+funcion  responder_encuesta_curso(p_slug text, p_respuestas jsonb, p_version_privacidad text)  definer  anon=true  auth=true
 funcion  responder_encuesta_profesor(p_profesor uuid, p_explica integer, p_aprende integer, p_claridad integer, p_creatividad integer, p_resuelve integer, p_contento integer, p_seguir text, p_comentario text)  definer  anon=false  auth=true
 funcion  responder_examen(p_item uuid, p_respuesta jsonb, p_segundos integer)  definer  anon=false  auth=true
 funcion  responder_formulario(p_slug text, p_respuestas jsonb, p_version_privacidad text)  definer  anon=true  auth=true
 funcion  respuestas_satisfaccion(p_desde date, p_hasta date, p_profesor uuid, p_solo_se_van boolean)  invoker  anon=false  auth=true
+funcion  resumen_encuesta_curso(p_encuesta uuid)  invoker  anon=false  auth=true
 funcion  resumen_profesores_supervisados(p_periodo date)  definer  anon=false  auth=true
 funcion  resumen_satisfaccion(p_desde date, p_hasta date)  invoker  anon=false  auth=true
 funcion  resumen_tareas_examenes(p_alumno uuid, p_desde timestamp with time zone, p_hasta timestamp with time zone)  definer  anon=false  auth=true
@@ -1058,6 +1090,8 @@ politica  encargados  encargados_insert  INSERT
 politica  encargados  encargados_select  SELECT
 politica  encargados  encargados_select_supervisor  SELECT
 politica  encargados  encargados_update  UPDATE
+politica  encuesta_curso_respuestas  encuesta_curso_respuestas_ver  SELECT
+politica  encuestas_curso  encuestas_curso_admin  ALL
 politica  encuestas_profesor  encuestas_profesor_ver  SELECT
 politica  equipo_alumnos  equipo_alumnos_select  SELECT
 politica  equipo_entrenadores  equipo_entrenadores_select  SELECT
@@ -1339,6 +1373,10 @@ indice  encargados  encargados_pendientes_idx
 indice  encargados  encargados_pkey
 indice  encargados  encargados_sin_repetir
 indice  encargados  encargados_student_idx
+indice  encuesta_curso_respuestas  encuesta_curso_respuestas_encuesta
+indice  encuesta_curso_respuestas  encuesta_curso_respuestas_pkey
+indice  encuestas_curso  encuestas_curso_pkey
+indice  encuestas_curso  encuestas_curso_slug_key
 indice  encuestas_profesor  encuestas_profesor_periodo
 indice  encuestas_profesor  encuestas_profesor_pkey
 indice  encuestas_profesor  encuestas_profesor_profesor
@@ -1755,6 +1793,11 @@ grant  encargados  authenticated  SELECT
 grant  encargados  authenticated  TRIGGER
 grant  encargados  authenticated  TRUNCATE
 grant  encargados  authenticated  UPDATE
+grant  encuesta_curso_respuestas  authenticated  SELECT
+grant  encuestas_curso  authenticated  DELETE
+grant  encuestas_curso  authenticated  INSERT
+grant  encuestas_curso  authenticated  SELECT
+grant  encuestas_curso  authenticated  UPDATE
 grant  encuestas_profesor  authenticated  SELECT
 grant  equipo_alumnos  anon  DELETE
 grant  equipo_alumnos  anon  INSERT

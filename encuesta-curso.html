@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/favicon.svg">
+    <title>Encuesta anónima del curso — Ajedrez Integral</title>
+    <meta name="description" content="Encuesta anónima y accesible con lector de pantalla sobre un curso de ajedrez desde cero.">
+    <meta name="robots" content="noindex">
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <link rel="stylesheet" href="css/styles.css">
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('theme');
+                if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+            } catch (e) {}
+        })();
+    </script>
+    <script src="js/adaptive-mode.js"></script>
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/pwa.js" defer></script><!-- app: fin --><!-- tema: inicio --><script>(function(){try{var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');var f=localStorage.getItem('plataforma_tema_fuente_v1');if(!f||!/^[A-Za-z0-9 ]{2,32}$/.test(f))return;var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family='+f.replace(/ /g,'+')+':wght@400;500;600;700&display=swap';document.head.appendChild(l);}catch(e){}})();</script><!-- tema: fin --></head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <!-- Un encabezado mínimo, a propósito: quien usa lector de pantalla recorre
+         con Tab todo lo que haya antes de la primera pregunta, y el menú del
+         sitio público eran diez paradas más. -->
+    <header id="header" class="bg-brand-800 shadow-lg">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 flex items-center justify-between min-h-[4rem] py-2">
+            <a href="index.html" class="flex items-center gap-2 text-white rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span class="text-3xl" aria-hidden="true">♟️</span><span class="font-serif text-xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
+            <button id="theme-toggle" class="text-white text-lg w-11 h-11 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                <span id="theme-icon" aria-hidden="true">☀️</span>
+            </button>
+        </div>
+    </header>
+
+    <main id="main-content" class="max-w-3xl mx-auto px-4 sm:px-6 py-10 text-lg leading-relaxed">
+        <p id="estado" role="status" class="text-brand-600 dark:text-brand-300">Cargando la encuesta…</p>
+
+        <div id="app" hidden>
+            <h1 id="titulo" tabindex="-1" class="font-serif text-3xl sm:text-4xl font-bold text-brand-800 dark:text-white focus:outline-none"></h1>
+            <p id="subtitulo" class="mt-2 text-brand-600 dark:text-brand-300"></p>
+
+            <section aria-labelledby="como-titulo" class="mt-6 bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
+                <h2 id="como-titulo" class="font-serif text-xl font-bold text-brand-800 dark:text-white">Antes de empezar</h2>
+                <ul class="mt-3 space-y-2 list-disc pl-6">
+                    <li><strong>Es anónima.</strong> No te pedimos nombre ni correo, y no guardamos quién contestó. Si quieres seguir en el anonimato, no escribas tu nombre en los comentarios.</li>
+                    <li>Son 14 preguntas en 4 partes y toman unos 5 minutos. Las de escribir y la pregunta 2 son opcionales; el resto hay que contestarlas.</li>
+                    <li>Cada pregunta de opciones es un grupo: con las flechas eliges una opción y con Tab pasas a la siguiente pregunta. No hay tiempo límite.</li>
+                    <li>Si algo falta al enviar, te decimos cuáles preguntas son y te llevamos a la primera.</li>
+                </ul>
+            </section>
+
+            <!-- Aparece solo si al enviar falta algo. Recibe el foco: el lector
+                 de pantalla lo lee entero, y cada enlace lleva a su pregunta. -->
+            <div id="errores" hidden tabindex="-1" class="mt-6 rounded-2xl border-4 border-red-700 dark:border-red-300 bg-white dark:bg-brand-900 p-5 focus:outline-none focus-visible:ring-4 focus-visible:ring-accent-400">
+                <h2 id="errores-titulo" class="font-serif text-xl font-bold text-red-700 dark:text-red-300"></h2>
+                <ul id="errores-lista" class="mt-3 space-y-2 list-disc pl-6"></ul>
+            </div>
+
+            <form id="form" novalidate class="mt-6 space-y-8"></form>
+
+            <section id="gracias" hidden class="mt-6 bg-white dark:bg-brand-900 rounded-2xl shadow-md p-6 md:p-8">
+                <h2 id="gracias-titulo" tabindex="-1" class="font-serif text-2xl font-bold text-brand-800 dark:text-white focus:outline-none">¡Gracias! Tu respuesta quedó guardada.</h2>
+                <p class="mt-3">Se guardó de forma anónima: nadie puede saber que fuiste tú. Lo que nos contaste nos ayuda a enseñar mejor a quienes empiezan de cero.</p>
+                <p class="mt-3">Ya puedes cerrar esta página.</p>
+            </section>
+        </div>
+    </main>
+
+    <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p><!-- legal: inicio --><p class="mt-2"><a href="privacidad.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Política de privacidad</a> <span aria-hidden="true">·</span> <a href="terminos.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Términos y condiciones</a></p><!-- legal: fin --></div></footer>
+    <script src="js/vendor/supabase.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/legal-version.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/encuesta-curso-preguntas.js"></script>
+    <script src="js/encuesta-curso.js"></script>
+</body>
+</html>

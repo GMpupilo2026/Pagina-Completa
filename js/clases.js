@@ -199,6 +199,7 @@
                mismo orden, es el grupo «Formularios» de ATAJOS en js/admin.js. */
             { title: "Formularios", tiles: [
                 { emoji: "⭐", label: "Satisfacción con los profesores", desc: "Qué opina el alumnado de cada profesor y quién dice que se va", href: "satisfaccion.html" },
+                { emoji: "🦯", label: "Encuestas anónimas de cursos", desc: "Sin iniciar sesión y accesibles con lector de pantalla: deserción, forma de enseñar y expectativas", href: "encuestas-curso.html" },
                 { emoji: "📋", label: "Formularios de inscripción", desc: "Arma un formulario, compártelo por enlace y baja las respuestas", href: "formularios.html" },
                 { emoji: "📝", label: "Solicitudes de la Academia", desc: "Quien pidió unirse: aprobar crea la cuenta, rechazar invita a un plan pago", href: "solicitudes.html" },
                 { emoji: "🏅", label: "Inscripciones a torneos en línea", desc: "Las respuestas del formulario de inscripcion.html", href: "inscripciones.html" },
@@ -726,6 +727,7 @@
             "formularios.html": "inscripcion inscripciones enlace respuestas",
             "satisfaccion.html": "encuesta satisfaccion opinion calificar profesores alumnos contentos se van",
             "encuesta-profesor.html": "encuesta opinion calificar profesor",
+            "encuestas-curso.html": "encuesta anonima curso ciegos accesible desercion expectativas",
             "cobros.html": "pagos pago mensualidad mensualidades dinero morosos morosidad recibos",
             "reportes.html": "word pdf actividades periodo",
             "accesos.html": "cupos paquetes acceso",

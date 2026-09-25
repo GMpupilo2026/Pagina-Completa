@@ -510,7 +510,7 @@ async function pruebaAdmin(browser) {
   /* Todos los formularios juntos, los mismos cuatro de admin.html. */
   igual("Formularios: todos juntos, con la encuesta de satisfacción",
     grupos.find((g) => g.titulo === "Formularios").tiles.map((t) => t.enlace),
-    ["satisfaccion.html", "formularios.html", "solicitudes.html", "inscripciones.html"]);
+    ["satisfaccion.html", "encuestas-curso.html", "formularios.html", "solicitudes.html", "inscripciones.html"]);
   const enlaces = grupos.flatMap((g) => g.tiles).map((t) => t.enlace);
   igual("nada de dar clase: ni sesión en vivo, ni tareas, ni exámenes, ni planes, ni asistencia, ni informe mensual, ni subgrupos, ni archivos, ni juegos, ni torneos",
     ["sesion.html", "tareas.html", "examenes.html", "planes.html", "asistencia.html", "informe-mensual.html",

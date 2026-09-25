@@ -43,6 +43,7 @@
                (js/clases.js). */
             { titulo: "Formularios", cards: [
                 { emoji: "⭐", label: "Satisfacción con los profesores", desc: "Qué opina el alumnado de cada profesor y quién dice que se va", href: "satisfaccion.html" },
+                { emoji: "🦯", label: "Encuestas anónimas de cursos", desc: "Sin iniciar sesión y accesibles con lector de pantalla: deserción, forma de enseñar y expectativas", href: "encuestas-curso.html" },
                 { emoji: "📋", label: "Formularios de inscripción", desc: "Ármalos, compártelos por enlace y baja las respuestas", href: "formularios.html" },
                 { emoji: "📝", label: "Solicitudes de la Academia", desc: "Aprobar o rechazar pedidos de ingreso", href: "solicitudes.html" },
                 { emoji: "🏅", label: "Inscripciones a torneos en línea", desc: "Las respuestas del formulario de inscripcion.html", href: "inscripciones.html" },
