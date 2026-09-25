@@ -484,7 +484,7 @@ async function pruebaInscripciones(browser) {
   // Se miran solo las líneas de CÓDIGO: los comentarios de la página nombran
   // `sb.from("inscripciones")` justamente para decir que no está, y buscarlo a
   // secas daba por rota una página correcta.
-  const html = fs.readFileSync(path.join(RAIZ, "inscripciones.html"), "utf8")
+  const html = require("./lib/codigo-de-pagina").leer("inscripciones.html")
     .replace(/\/\*[\s\S]*?\*\//g, " ").replace(/^\s*\/\/.*$/gm, " ");
   if (/sb\s*\.\s*from\s*\(\s*["']inscripciones["']/.test(html)) {
     mal("la página lee la tabla directo: eso son datos de menores y esa tabla no se abre");
