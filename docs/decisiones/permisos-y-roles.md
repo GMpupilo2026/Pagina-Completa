@@ -289,7 +289,7 @@ las otras dos es el error caro:
 |---|---|---|---|
 | `profiles.grupo` | quien administra | una | no |
 | **equipos** | quien administra **o quien coordina, sobre su gente** | varias | **SÍ** |
-| **subgrupos** | **cada profesor, solo** | varias | **no** |
+| **subgrupos** | **cada profesor, solo** (y la base, el de cada equipo del que es entrenador) | varias | **no** |
 
 **Cuando alguien pide «asignarle profesores a un subgrupo» está pidiendo un
 equipo.** Un subgrupo no da permisos por diseño, y eso es lo que permite que
@@ -320,6 +320,54 @@ sí es una llave, y por eso los equipos siguen siendo de administración.
 - `public.mis_subgrupos()` devuelve **el arreglo de ids** de cada uno, no las
   filas sueltas: quien la llama ya tiene cargada su lista de alumnos, así que
   con los ids le basta para cruzar sin una segunda consulta por subgrupo.
+
+#### Cada entrenador de un equipo tiene el subgrupo de ese equipo
+
+Un equipo da los permisos, pero no aparecía en ninguna de las pantallas donde
+el profesor elige «a quiénes»: el filtro de Informes, el selector de Tareas y
+Exámenes, el «con quiénes» del Horario. Todas miran los subgrupos. Por eso, al
+sumar a alguien como entrenador de un equipo, **la base le crea un subgrupo con
+los alumnos del equipo** (migración `equipo_se_ve_como_subgrupo`), marcado con
+`subgrupos.equipo_id`, y ese subgrupo **sigue al equipo** con tres triggers:
+
+| pasa en el equipo | pasa en el subgrupo de cada entrenador |
+|---|---|
+| entra o sale un alumno (`equipo_alumnos`) | entra o sale de ese subgrupo |
+| entra un entrenador (`equipo_entrenadores`) | se le crea el suyo, ya lleno |
+| sale un entrenador | se borra el suyo |
+| se renombra el equipo | se renombra el subgrupo |
+| se borra el equipo | se borran todos (`on delete cascade`) |
+
+- **Es una copia de otras filas, así que nadie la escribe a mano.** Las
+  políticas de `subgrupos` y `subgrupo_alumnos` exigen `equipo_id is null` para
+  crear, renombrar, borrar y cambiar gente; los triggers son `SECURITY DEFINER`
+  con `row_security off` y no pasan por ellas. Si el profesor pudiera editarlo,
+  el siguiente cambio del equipo le desharía lo suyo sin avisar. Lo que se
+  quiera cambiar se cambia en el equipo, que es donde viven los permisos.
+- **Por qué una copia y no leer el equipo al vuelo:** `horario_clases.subgrupo_id`
+  es una clave foránea a `subgrupos`. Un subgrupo «virtual» armado en
+  `mis_subgrupos()` no se podría elegir en el Horario; uno de verdad sirve en
+  las cuatro pantallas sin tocarlas.
+- **El subgrupo sigue sin dar ni un permiso.** Lo que da acceso es el equipo,
+  igual que antes; esto solo lo pone donde el profesor lo busca.
+- **Un solo subgrupo por (profesor, equipo)**: lo garantiza el índice único
+  parcial `subgrupos_uno_por_equipo`, no un `if`.
+- **El nombre es el del equipo**, salvo que el profesor ya tenga uno propio que
+  se llame igual (el índice único de nombres es por profesor y sin mayúsculas):
+  entonces «Equipo X», y si también existe, «Equipo X (3)». Lo decide
+  `interno.nombre_libre_de_subgrupo()`. **Nunca se le cambia el nombre a uno
+  suyo** para hacer lugar.
+- `mis_subgrupos()` y `subgrupos_de()` devuelven además `equipo_id`. En
+  `subgrupos.html` la tarjeta de un subgrupo de equipo dice «Equipo», deja ver
+  quiénes están y no ofrece renombrar, borrar ni casillas: el update volvería
+  con 0 filas y sin error, y la página diría «Listo».
+- Comprobado en una transacción revertida, impersonando al entrenador: se
+  crean los de los equipos que ya había (5 de 5, idénticos a su equipo); un
+  alumno que entra o sale del equipo entra o sale del subgrupo; renombrar el
+  equipo lo renombra, y con un subgrupo propio del mismo nombre queda «Equipo
+  …»; a mano, renombrar, borrar y quitar gente cambian 0 filas, meter gente y
+  crear uno con `equipo_id` se rechazan, y crear uno propio sigue entrando;
+  quitar al entrenador borra su subgrupo.
 
 #### Dónde se usan
 

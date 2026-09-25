@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20260925031558
+# al-dia-con: 20260925040819
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -641,6 +641,7 @@ columna  subgrupo_alumnos.alumno_id  uuid
 columna  subgrupo_alumnos.created_at  timestamp with time zone
 columna  subgrupo_alumnos.subgrupo_id  uuid
 columna  subgrupos.created_at  timestamp with time zone
+columna  subgrupos.equipo_id  uuid
 columna  subgrupos.id  uuid
 columna  subgrupos.nombre  text
 columna  subgrupos.profesor_id  uuid
@@ -818,9 +819,12 @@ funcion  disparar_recordatorios_cobro()  definer  anon=false  auth=false
 funcion  disparar_recordatorios_programados()  definer  anon=false  auth=false
 funcion  elegir_academia_activa(p_academia uuid)  definer  anon=false  auth=true
 funcion  elegir_plan(p_id uuid, p_plan text, p_version_terminos text, p_version_privacidad text)  definer  anon=false  auth=true
+funcion  equipo_alumno_subgrupo()  definer  anon=false  auth=false
 funcion  equipo_bajo_mi_coordinacion(p_equipo uuid)  definer  anon=false  auth=true
 funcion  equipo_docente()  definer  anon=false  auth=true
+funcion  equipo_entrenador_subgrupo()  definer  anon=false  auth=false
 funcion  equipo_lo_cree_yo(p_equipo uuid)  definer  anon=false  auth=true
+funcion  equipo_renombra_subgrupos()  definer  anon=false  auth=false
 funcion  es_companero(p_otro uuid)  definer  anon=false  auth=true
 funcion  es_coordinador_de(p_persona uuid)  definer  anon=false  auth=true
 funcion  es_correo_interno(p_email text)  invoker  anon=true  auth=true
@@ -867,7 +871,9 @@ funcion  interno.clases_que_superviso()  definer  anon=false  auth=true
 funcion  interno.comparten_academia(p_a uuid, p_b uuid)  definer  anon=false  auth=true
 funcion  interno.frenar_envio_publico(p_tipo text, p_ambito text, p_correo text, p_ip text)  invoker  anon=false  auth=false
 funcion  interno.gente_de_mis_academias()  definer  anon=false  auth=true
+funcion  interno.nombre_libre_de_subgrupo(p_profesor uuid, p_base text, p_excepto uuid)  definer  anon=false  auth=false
 funcion  interno.profesores_de(p_alumno uuid)  definer  anon=false  auth=true
+funcion  interno.subgrupo_del_equipo_al_dia(p_equipo uuid, p_profesor uuid)  definer  anon=false  auth=false
 funcion  interno.supervisados_por_mi()  definer  anon=false  auth=true
 funcion  interno.version_legal_valida(p text)  invoker  anon=false  auth=false
 funcion  json_seguro(p_texto text)  invoker  anon=false  auth=true
@@ -886,7 +892,7 @@ funcion  minutos_por_tramos(p_tramos tramo_crudo[])  invoker  anon=true  auth=tr
 funcion  mis_academias_supervisadas()  definer  anon=false  auth=true
 funcion  mis_clases()  invoker  anon=false  auth=true
 funcion  mis_funciones_coordinacion()  definer  anon=false  auth=true
-funcion  mis_subgrupos()  invoker  anon=true  auth=true
+funcion  mis_subgrupos()  invoker  anon=false  auth=true
 funcion  mis_supervisados()  definer  anon=false  auth=true
 funcion  mis_supervisores()  definer  anon=false  auth=true
 funcion  my_profile()  definer  anon=false  auth=true
@@ -954,7 +960,7 @@ funcion  soy_profesor_de_alguno(p_alumnos uuid[])  definer  anon=false  auth=tru
 funcion  soy_profesor_de_todos(p_alumnos uuid[])  definer  anon=false  auth=true
 funcion  soy_supervisor()  definer  anon=false  auth=true
 funcion  subgrupos_a_la_vista()  invoker  anon=false  auth=true
-funcion  subgrupos_de(p_profesor uuid)  invoker  anon=true  auth=true
+funcion  subgrupos_de(p_profesor uuid)  invoker  anon=false  auth=true
 funcion  supervisa_academia(p_academia uuid)  definer  anon=true  auth=true
 funcion  supervisado_por_mi(p_persona uuid)  definer  anon=false  auth=true
 funcion  supervisores_de(p_persona uuid)  definer  anon=false  auth=true
@@ -1218,6 +1224,9 @@ trigger  class_presence_log  class_presence_log_protege_tiempos
 trigger  class_sessions  class_sessions_avisa_push
 trigger  cobros_contacto  cobros_contacto_protegido
 trigger  desafios  desafios_avisa_push
+trigger  equipo_alumnos  equipo_alumnos_subgrupo
+trigger  equipo_entrenadores  equipo_entrenadores_subgrupo
+trigger  equipos  equipos_renombra_subgrupos
 trigger  examen_respuestas  examen_respuestas_exige_acceso
 trigger  examenes  avisar_examen_asignado
 trigger  examenes  avisar_examen_reabierto
@@ -1423,6 +1432,8 @@ indice  solicitudes_academia  solicitudes_academia_revisado_por_fk
 indice  subgrupo_alumnos  subgrupo_alumnos_pkey
 indice  subgrupo_alumnos  subgrupo_alumnos_por_alumno
 indice  subgrupos  subgrupos_pkey
+indice  subgrupos  subgrupos_por_equipo
+indice  subgrupos  subgrupos_uno_por_equipo
 indice  subgrupos  subgrupos_uno_por_nombre
 indice  supervisor_academia_activa  supervisor_academia_activa_academia
 indice  supervisor_academia_activa  supervisor_academia_activa_pkey
