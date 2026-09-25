@@ -51,6 +51,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { invitarConBienvenida } from "./invitacion-email.ts";
 import { esCorreoInterno, usuarioLibre } from "./usuario-alumno.ts";
+import { profesorElegido } from "./profesor-elegido.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -154,6 +155,14 @@ Deno.serve(async (req) => {
     return json({ error: "Dar de alta cuentas no está entre tus funciones de coordinación" }, 403);
   }
 
+  // Quien administra o supervisa puede elegir de quién es alumno (se valida
+  // abajo, antes de gastar el cupo). Sin elegir, queda de quien lo da de alta
+  // si da clase; quien administra sin ser profesor no da clase, y entonces
+  // queda sin profesor (ver profesor-elegido.ts).
+  const { data: yo } = await callerClient
+    .from("profiles").select("role, is_admin, es_supervisor").eq("id", quienInvita).maybeSingle();
+  const profesorPedido = texto(body.profesor_id, 40);
+
   // La RLS decide si este formulario es suyo: si no lo es, no hay fila.
   const { data: respuesta, error: respuestaError } = await callerClient
     .from("formulario_respuestas")
@@ -165,6 +174,10 @@ Deno.serve(async (req) => {
   if (!respuesta) return json({ error: "Esa respuesta no es de un formulario tuyo" }, 403);
 
   const adminClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+
+  const elegido = await profesorElegido(callerClient, adminClient, yo, quienInvita, profesorPedido);
+  if (elegido.error) return json({ error: elegido.error }, 403);
+  const profesorId = elegido.id;
 
   // ---- 1. La cuenta del alumno ----
   // SOLO se reusa la cuenta que ESTA MISMA respuesta ya creó: eso es apretar el
@@ -228,7 +241,7 @@ Deno.serve(async (req) => {
           sin_cupo: true, max, usadas: cupo.usadas ?? 0,
         }, 403);
       }
-      return json({ error: "Solo el profesor puede invitar alumnos" }, 403);
+      return json({ error: "Solo quien da clase o administra puede crear cuentas de alumno" }, 403);
     }
     restantes = cupo.ilimitado ? null : cupo.restantes;
     ilimitado = !!cupo.ilimitado;
@@ -280,11 +293,16 @@ Deno.serve(async (req) => {
     await adminClient.from("profiles").update(cambios).eq("id", alumnoId);
   }
 
-  // ---- 3. Queda asignado a quien lo dio de alta ----
-  // El profesor principal lo pone solo el trigger de profile_teachers.
-  const { error: asignarError } = await adminClient.from("profile_teachers")
-    .upsert({ student_id: alumnoId, teacher_id: quienInvita },
-            { onConflict: "student_id,teacher_id" });
+  // ---- 3. Queda asignado al profesor elegido, o a quien lo dio de alta ----
+  // El profesor principal lo pone solo el trigger de profile_teachers. Quien
+  // administra sin ser profesor y sin elegir a nadie no se asigna: la
+  // respuesta dice `asignado: false` y la pantalla avisa que falta ponerle
+  // profesor.
+  const { error: asignarError } = profesorId
+    ? await adminClient.from("profile_teachers")
+        .upsert({ student_id: alumnoId, teacher_id: profesorId },
+                { onConflict: "student_id,teacher_id" })
+    : { error: null };
   if (asignarError) {
     return json({
       error: "La cuenta quedó creada, pero no se pudo asignar a tu clase: " + asignarError.message,
@@ -343,6 +361,9 @@ Deno.serve(async (req) => {
     correo_destino: correoDestino,
     ya_tenia_cuenta: yaTeniaCuenta,
     encargado_guardado: encargadoGuardado,
+    // A quién quedó asignado; sin nadie, está sin profesor.
+    asignado: !!profesorId,
+    profesor_id: profesorId,
     // La cuenta pudo quedar creada y el correo no salir: se dice, en vez de
     // dejar una cuenta muda de la que nadie se entera.
     correo_enviado: correoEnviado,

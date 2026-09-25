@@ -160,14 +160,18 @@ veía bien, solo que no era el suyo. Eran tres fallas distintas:
   cargar, cada uno cae en el glifo de siempre.
 - **La mitad de las páginas no cargaba los módulos de preferencias**, así que
   aunque pintaran bien no tenían qué leer. `python3
-  herramientas/tablero-cabecera.py` pone los seis (`board-themes`,
-  `board-color-themes`, `piece-color-themes`, `piece-style-themes`,
-  `chess-piece-svg`, `pieza-preferida`) justo después de
-  `js/adaptive-mode.js`, en el `<head>`: los de color tienen que correr ANTES
-  de que se pinte la primera casilla. Qué páginas llevan tablero lo decide
-  leyendo el HTML, no una lista a mano, así que **al agregar una página con
-  tablero basta con volver a correrlo**. Solo agrega los que falten y se puede
-  correr todas las veces que se quiera (marcas `<!-- tablero: inicio -->`).
+  herramientas/tablero-cabecera.py` pone los seis, en dos lugares. Los tres
+  que pintan al cargar (`board-color-themes`, `piece-color-themes`,
+  `piece-style-themes`) van justo después de `js/adaptive-mode.js`, en el
+  `<head>`: tienen que correr ANTES de que se pinte la primera casilla. Los
+  otros tres (`board-themes`, `chess-piece-svg`, `pieza-preferida`) solo los
+  usa el script de la página, y van justo antes del primer script del
+  `<body>`: en el `<head>` frenaban el primer pintado (ver «Supabase va al
+  final del `<body>`»). Qué páginas llevan tablero lo decide leyendo el HTML,
+  no una lista a mano, así que **al agregar una página con tablero basta con
+  volver a correrlo**. Solo agrega los que falten y se puede correr todas las
+  veces que se quiera (marcas `<!-- tablero: inicio -->` y
+  `<!-- tablero-js: inicio -->`).
 - **El Modo Adaptado le cambiaba los colores.** Tiene su propia lista de
   casillas y de piezas, y ese modo **se enciende solo** —con el primer Tab o
   por el contraste del sistema—, así que el tablero que alguien se había

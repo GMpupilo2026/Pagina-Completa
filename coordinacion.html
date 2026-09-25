@@ -23,13 +23,6 @@
             } catch (e) {}
         })();
     </script>
-    <script src="js/vendor/supabase.js"></script>
-    <script src="js/supabase-client.js"></script>
-    <script src="js/avisos.js"></script>
-    <script src="js/equipo-volcar.js"></script>
-    <script src="js/funciones-coordinacion.js"></script>
-    <script src="js/usuario-alumno.js"></script>
-    <script src="js/contrasena-alumno.js"></script>
     <script src="js/adaptive-mode.js"></script>
 
 
@@ -110,6 +103,13 @@
     </main>
 
     <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p><!-- legal: inicio --><p class="mt-2"><a href="privacidad.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Política de privacidad</a> <span aria-hidden="true">·</span> <a href="terminos.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Términos y condiciones</a></p><!-- legal: fin --></div></footer>
+    <script src="js/vendor/supabase.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/avisos.js"></script>
+    <script src="js/equipo-volcar.js"></script>
+    <script src="js/funciones-coordinacion.js"></script>
+    <script src="js/usuario-alumno.js"></script>
+    <script src="js/contrasena-alumno.js"></script>
     <script>
 /* Coordinación: las cuentas que alcanza quien coordina.
  *
@@ -594,7 +594,9 @@ let avisoDelLote = new Map();           // id de equipo -> qué pasó al volcar
    pantalla empezaría a no ofrecer alumnos que sí puede repartir, y eso no da
    ningún error. */
 async function traerGente(rol) {
-    const trozo = 500;
+    // 200 es el tope que pone `mi_gente` por página: con un trozo más grande,
+    // `desde` saltaría filas que nunca llegaron.
+    const trozo = 200;
     let desde = 0, todo = [], total = null;
     for (;;) {
         const { data, error } = await sb.rpc("mi_gente",

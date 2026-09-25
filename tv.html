@@ -28,16 +28,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
     <link rel="stylesheet" href="css/styles.css">
     <script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark');}}catch(e){}})();</script>
-    <script src="js/vendor/supabase.js"></script>
-    <script src="js/supabase-client.js"></script>
     <script src="js/adaptive-mode.js"></script>
     <!-- tablero: inicio -->
-    <script src="js/board-themes.js"></script>
     <script src="js/board-color-themes.js"></script>
     <script src="js/piece-color-themes.js"></script>
     <script src="js/piece-style-themes.js"></script>
-    <script src="js/chess-piece-svg.js"></script>
-    <script src="js/pieza-preferida.js"></script>
     <!-- tablero: fin -->
 
 
@@ -226,6 +221,13 @@
     </footer>
     <!-- Para dibujar nosotros mismos el tablero de cada partida en vivo del torneo (ver
          más abajo por qué: el iframe embed/game de Lichess no se estaba actualizando). -->
+    <!-- tablero-js: inicio -->
+    <script src="js/board-themes.js"></script>
+    <script src="js/chess-piece-svg.js"></script>
+    <script src="js/pieza-preferida.js"></script>
+    <!-- tablero-js: fin -->
+    <script src="js/vendor/supabase.js"></script>
+    <script src="js/supabase-client.js"></script>
     <script src="js/vendor/chess.js"></script>
     <script src="js/fourplayer-engine.js"></script>
     <script src="js/fourplayer-board.js"></script>

@@ -82,9 +82,18 @@
     <main id="main-content">
         <section class="bg-gradient-to-br from-brand-900 via-brand-800 to-brand-950 text-white">
             <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-20 text-center">
-                <p class="text-accent-400 font-semibold tracking-wide uppercase text-xs sm:text-sm">Acceso a la plataforma</p>
-                <h1 class="font-serif text-3xl sm:text-5xl font-bold mt-2">Precios de la Academia</h1>
-                <p class="text-brand-100 text-base sm:text-lg mt-4 max-w-2xl mx-auto">Una cuenta para tu hijo o paquetes para tu academia, escuela o colegio. Entre más alumnos, menos cuesta cada uno.</p>
+                <p class="text-accent-400 font-semibold tracking-wide uppercase text-xs sm:text-sm">Precios de la Academia</p>
+                <h1 class="font-serif text-3xl sm:text-5xl font-bold mt-2">Que tu hijo entrene ajedrez todos los días, con un plan hecho para su nivel</h1>
+                <p class="text-brand-100 text-base sm:text-lg mt-4 max-w-2xl mx-auto">Una cuenta por <strong class="text-white" id="precio-hero"></strong> al mes, o paquetes para tu academia, escuela o colegio. Entre más alumnos, menos cuesta cada uno.</p>
+                <div class="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
+                    <a id="hero-cuenta" href="#t-individual" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold rounded-xl transition-colors shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 px-7 py-3.5 text-base inline-flex items-center justify-center gap-2"><span aria-hidden="true">♟️</span> Quiero una cuenta</a>
+                    <a href="#calc-n" class="bg-white/10 hover:bg-white/20 border border-white/25 text-white font-semibold px-7 py-3.5 rounded-xl text-base transition-colors inline-flex items-center justify-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🧮</span> Calcular para mi grupo</a>
+                </div>
+                <ul class="mt-8 flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-brand-100">
+                    <li><span aria-hidden="true">🏅</span> Con <a href="sobre-oscar.html" class="underline hover:text-accent-400">Oscar Angulo</a>, Maestro Nacional y Entrenador FIDE</li>
+                    <li><span aria-hidden="true">↩️</span> Si cambias de idea en 8 días hábiles, te devolvemos todo</li>
+                    <li><span aria-hidden="true">📱</span> En la computadora o en el celular</li>
+                </ul>
             </div>
         </section>
 
@@ -99,7 +108,8 @@
                     <h2 id="t-individual" class="font-serif text-2xl font-bold text-brand-800 dark:text-white">Una cuenta</h2>
                     <p class="text-brand-500 dark:text-brand-300 text-sm mt-1">Para una familia que quiere que su hijo entrene por su cuenta.</p>
                     <p class="mt-5"><span id="precio-individual" class="font-serif text-4xl font-bold text-accent-700 dark:text-accent-400"></span> <span class="text-brand-500 dark:text-brand-300">al mes</span></p>
-                    <p class="text-sm text-brand-600 dark:text-brand-300 mt-1">O <strong id="precio-individual-ciclo"></strong> al año: <span class="meses-ciclo"></span> meses de uso y pagas <span class="meses-cobrados"></span>.</p>
+                    <p class="text-sm text-brand-600 dark:text-brand-300 mt-1">Son <strong id="precio-individual-dia"></strong> al día.</p>
+                    <p class="text-sm mt-3 rounded-lg bg-accent-50 dark:bg-brand-800 border border-accent-500/40 px-3 py-2 text-brand-700 dark:text-brand-100"><span aria-hidden="true">🎁</span> <strong>Pagando el año:</strong> <strong id="precio-individual-ciclo"></strong>. Usas <span class="meses-ciclo"></span> meses y pagas <span class="meses-cobrados"></span>: dos meses de regalo.</p>
                     <ul class="mt-5 space-y-2 text-sm flex-1">
                         <li class="flex gap-2"><span class="text-accent-700 dark:text-accent-400 font-bold" aria-hidden="true">✓</span>Diagnóstico de nivel y plan de entrenamiento de cuatro semanas</li>
                         <li class="flex gap-2"><span class="text-accent-700 dark:text-accent-400 font-bold" aria-hidden="true">✓</span>Ejercicios por tema, mates, aperturas, finales y cursos completos</li>
@@ -107,7 +117,9 @@
                         <li class="flex gap-2"><span class="text-accent-700 dark:text-accent-400 font-bold" aria-hidden="true">✓</span>Informe que llega a la casa: si está practicando y cómo viene</li>
                         <li class="flex gap-2"><span class="text-accent-700 dark:text-accent-400 font-bold" aria-hidden="true">✓</span>Modo Adaptado para estudiantes con baja visión o ciegos</li>
                     </ul>
-                    <p class="text-xs text-brand-450 dark:text-brand-350 mt-5">Las clases en vivo se pagan aparte, con la mensualidad de la Academia, y ya traen la plataforma incluida.</p>
+                    <a id="cuenta-pagar" href="#formas-de-pago" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold rounded-xl transition-colors shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 mt-6 px-6 py-3 flex items-center justify-center gap-2"><span aria-hidden="true">💬</span> <span>Quiero mi cuenta</span></a>
+                    <p class="text-xs text-brand-500 dark:text-brand-300 mt-2 text-center">Te abre WhatsApp con Oscar. Pagas por SINPE Móvil o transferencia.</p>
+                    <p class="text-xs text-brand-450 dark:text-brand-350 mt-4">Las clases en vivo se pagan aparte, con la mensualidad de la Academia, y ya traen la plataforma incluida.</p>
                 </div>
 
                 <!-- ===== Cuánto sale ===== -->
@@ -120,6 +132,26 @@
                          escribe volvería a leer el botón y sus opciones. -->
                     <div id="calc-pagar-caja"></div>
                 </div>
+            </div>
+        </section>
+
+        <!-- ===== Pruébalo antes de pagar =====
+             Las dos puertas son de verdad gratis y sin cuenta: el diagnóstico
+             (entreno/diagnostico.html) y el tablero contra el profe. -->
+        <section class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-12" aria-labelledby="t-prueba">
+            <div class="rounded-2xl border-2 border-dashed border-accent-500/60 p-6 sm:p-8 grid md:grid-cols-3 gap-6 items-center">
+                <div>
+                    <h2 id="t-prueba" class="font-serif text-2xl font-bold text-brand-800 dark:text-white">¿No estás seguro? Pruébalo gratis</h2>
+                    <p class="text-sm text-brand-600 dark:text-brand-300 mt-2">Sin cuenta y sin pagar nada.</p>
+                </div>
+                <a href="entreno/diagnostico.html" class="block rounded-xl bg-white dark:bg-brand-900 shadow-md p-5 hover:shadow-lg transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                    <span class="font-semibold text-brand-800 dark:text-white"><span aria-hidden="true">🧭</span> Diagnóstico de nivel</span>
+                    <span class="block text-sm text-brand-600 dark:text-brand-300 mt-1">Unos 20 minutos para saber en qué nivel está y qué le conviene reforzar.</span>
+                </a>
+                <a href="tablero.html" class="block rounded-xl bg-white dark:bg-brand-900 shadow-md p-5 hover:shadow-lg transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                    <span class="font-semibold text-brand-800 dark:text-white"><span aria-hidden="true">♟️</span> Juega contra el profe</span>
+                    <span class="block text-sm text-brand-600 dark:text-brand-300 mt-1">Una partida contra el motor de Oscar, para sentir el nivel.</span>
+                </a>
             </div>
         </section>
 
@@ -226,6 +258,53 @@
                 </a>
             </div>
         </section>
+
+        <!-- ===== Preguntas frecuentes =====
+             Cada respuesta es algo que la plataforma de verdad hace: si algún día
+             deja de ser cierto, se corrige acá. Nada de testimonios ni cifras
+             que no se puedan comprobar. -->
+        <section class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pb-12" aria-labelledby="t-faq">
+            <h2 id="t-faq" class="font-serif text-2xl sm:text-3xl font-bold text-brand-800 dark:text-white text-center">Preguntas frecuentes</h2>
+            <div class="mt-8 space-y-3">
+                <details class="bg-white dark:bg-brand-900 rounded-xl shadow-sm px-5 py-4">
+                    <summary class="cursor-pointer font-semibold text-brand-800 dark:text-white">¿Qué pasa si no le gusta?</summary>
+                    <p class="mt-2 text-sm text-brand-600 dark:text-brand-300">Si cancelas dentro de los ocho días hábiles siguientes a tu pago, te devolvemos el monto completo. No hay cobros automáticos: cada pago lo haces tú, así que no se te vuelve a cobrar nada. Detalle en los <a href="terminos.html#cancelacion" class="underline font-semibold">Términos y condiciones</a>.</p>
+                </details>
+                <details class="bg-white dark:bg-brand-900 rounded-xl shadow-sm px-5 py-4">
+                    <summary class="cursor-pointer font-semibold text-brand-800 dark:text-white">¿Hay que instalar algo?</summary>
+                    <p class="mt-2 text-sm text-brand-600 dark:text-brand-300">No. Se entra desde el navegador, en la computadora o en el celular. Si quieres, en el celular se puede instalar como una app para tenerla a un toque.</p>
+                </details>
+                <details class="bg-white dark:bg-brand-900 rounded-xl shadow-sm px-5 py-4">
+                    <summary class="cursor-pointer font-semibold text-brand-800 dark:text-white">Mi hijo no tiene correo, ¿puede tener cuenta?</summary>
+                    <p class="mt-2 text-sm text-brand-600 dark:text-brand-300">Sí. Le damos un usuario para entrar, y todo lo que la Academia manda —la bienvenida y los informes— llega al correo de la mamá o el papá. Dos hermanos pueden tener cada uno su cuenta con un solo correo de la casa.</p>
+                </details>
+                <details class="bg-white dark:bg-brand-900 rounded-xl shadow-sm px-5 py-4">
+                    <summary class="cursor-pointer font-semibold text-brand-800 dark:text-white">¿Cómo sé si de verdad está practicando?</summary>
+                    <p class="mt-2 text-sm text-brand-600 dark:text-brand-300">Te llega un informe al correo, cada semana o cada mes como prefieras, que dice cuántos días practicó, en qué trabajó y cómo viene.</p>
+                </details>
+                <details class="bg-white dark:bg-brand-900 rounded-xl shadow-sm px-5 py-4">
+                    <summary class="cursor-pointer font-semibold text-brand-800 dark:text-white">¿Y si dejo de pagar un mes?</summary>
+                    <p class="mt-2 text-sm text-brand-600 dark:text-brand-300">La cuenta se pausa, pero su progreso no se pierde: queda guardado y al renovar sigue donde iba.</p>
+                </details>
+                <details class="bg-white dark:bg-brand-900 rounded-xl shadow-sm px-5 py-4">
+                    <summary class="cursor-pointer font-semibold text-brand-800 dark:text-white">¿Sirve si ya juega bien, o si apenas empieza?</summary>
+                    <p class="mt-2 text-sm text-brand-600 dark:text-brand-300">Para los dos. El diagnóstico de nivel ubica dónde está y el plan de entrenamiento arranca desde ahí: quien empieza aprende las reglas y los mates básicos, y quien ya compite trabaja finales, estrategia y cálculo.</p>
+                </details>
+                <details class="bg-white dark:bg-brand-900 rounded-xl shadow-sm px-5 py-4">
+                    <summary class="cursor-pointer font-semibold text-brand-800 dark:text-white">¿Incluye las clases en vivo?</summary>
+                    <p class="mt-2 text-sm text-brand-600 dark:text-brand-300">No: la cuenta es la plataforma para entrenar por tu cuenta. Las clases en vivo se pagan aparte, con la mensualidad de la Academia, y esa mensualidad ya trae la plataforma incluida.</p>
+                </details>
+            </div>
+        </section>
+
+        <!-- ===== El cierre ===== -->
+        <section class="bg-gradient-to-br from-brand-900 via-brand-800 to-brand-950 text-white" aria-labelledby="t-cierre">
+            <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-14 text-center">
+                <h2 id="t-cierre" class="font-serif text-2xl sm:text-3xl font-bold">Empieza hoy por <span id="precio-cierre"></span> al mes</h2>
+                <p class="text-brand-100 mt-3">Nos escribes, pagas por SINPE o transferencia y la cuenta queda activa. Si en ocho días hábiles cambias de idea, te devolvemos todo.</p>
+                <a id="cierre-pagar" href="#formas-de-pago" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold rounded-xl transition-colors shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 mt-7 px-8 py-4 text-lg inline-flex items-center gap-2"><span aria-hidden="true">💬</span> Quiero mi cuenta</a>
+            </div>
+        </section>
     </main>
     <footer class="bg-brand-900 text-brand-300 pt-16 pb-8">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -248,6 +327,17 @@
 
         $("precio-individual").textContent = f(P.INDIVIDUAL);
         $("precio-individual-ciclo").textContent = f(P.anual(P.INDIVIDUAL));
+        $("precio-hero").textContent = f(P.INDIVIDUAL);
+        $("precio-cierre").textContent = f(P.INDIVIDUAL);
+        $("precio-individual-dia").textContent = f(Math.round(P.INDIVIDUAL / 30));
+
+        // «Quiero mi cuenta»: el WhatsApp de Oscar con la cuenta sola ya
+        // escrita. El número se lee de #cta-wa, donde ya está: una sola copia.
+        const waBase = ($("cta-wa").getAttribute("href") || "").split("?")[0];
+        const waCuenta = waBase + "?text=" + encodeURIComponent(
+            `Hola Oscar, quiero una cuenta de la Academia: ${f(P.INDIVIDUAL)} al mes o ${f(P.anual(P.INDIVIDUAL))} al año.` +
+            " ¿Me pasas los datos para pagar por SINPE Móvil o transferencia?");
+        ["cuenta-pagar", "cierre-pagar"].forEach((id) => { const a = $(id); a.href = waCuenta; a.target = "_blank"; a.rel = "noopener"; });
         $("precio-profesor-extra").textContent = f(P.PROFESOR_EXTRA);
         $("precio-profesor-extra-anual").textContent = f(P.anual(P.PROFESOR_EXTRA));
         document.querySelectorAll(".meses-ciclo").forEach((e) => { e.textContent = P.MESES_CICLO; });
