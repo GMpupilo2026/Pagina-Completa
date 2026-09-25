@@ -335,6 +335,7 @@
     <script src="js/supabase-client.js"></script>
     <script src="js/modo-vista.js"></script>
     <script src="js/equipo-volcar.js"></script>
+    <script src="js/usuario-alumno.js"></script>
     <script src="js/avisos.js"></script>
     <script src="js/main.js"></script>
     <script>
@@ -819,6 +820,26 @@
                 resetBtn.textContent = "Reenviar acceso";
                 resetBtn.addEventListener("click", async () => {
                     try {
+                        /* Un alumno con usuario de la Academia no tiene buzón:
+                           el enlace va al correo de su casa, y eso lo sabe
+                           hacer `reenviar-acceso` (correo_de_contacto()).
+                           Por el camino de siempre salía a la dirección
+                           muerta y la pantalla decía «enviado». */
+                        if (UsuarioAlumno.esInterno(u.email)) {
+                            const res = await fetch(`${window.SUPABASE_URL}/functions/v1/reenviar-acceso`, {
+                                method: "POST",
+                                headers: {
+                                    "Content-Type": "application/json",
+                                    "Authorization": `Bearer ${session.access_token}`,
+                                    "apikey": window.SUPABASE_ANON_KEY,
+                                },
+                                body: JSON.stringify({ alumno_id: u.id }),
+                            });
+                            const datos = await res.json().catch(() => ({}));
+                            if (!res.ok || datos.error) throw new Error(datos.error || `El servidor respondió ${res.status}`);
+                            Avisos.avisar(`Le salió el enlace para crear su contraseña a ${datos.correo_destino || "el correo de su casa"}.`);
+                            return;
+                        }
                         const result = await callAdmin("reset_password", { target_id: u.id });
                         Avisos.avisar(`Correo de acceso enviado a ${result.email}.`);
                     } catch (err) {

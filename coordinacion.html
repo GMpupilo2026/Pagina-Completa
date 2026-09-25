@@ -108,6 +108,8 @@
     <script src="js/avisos.js"></script>
     <script src="js/equipo-volcar.js"></script>
     <script src="js/funciones-coordinacion.js"></script>
+    <script src="js/usuario-alumno.js"></script>
+    <script src="js/contrasena-alumno.js"></script>
     <script>
 /* Coordinación: las cuentas que alcanza quien coordina.
  *
@@ -336,9 +338,15 @@ function montarFicha(u, caja, lineaNombre) {
 
         const botonCorreo = el("button", "mt-3 border border-brand-200 dark:border-brand-700 hover:border-accent-400 px-4 py-2 rounded-lg text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "Cambiar el correo");
         botonCorreo.type = "button";
-        botonCorreo.addEventListener("click", () => guardarCorreo(u, actual.input, marca, botonCorreo));
         correo.appendChild(botonCorreo);
         caja.appendChild(correo);
+
+        // ------------------------------------ su contraseña, si entra con usuario
+        /* La pone quien coordina y se la da en la clase. Aparece en cuanto se
+           le da un usuario, sin cerrar la ficha. Ver js/contrasena-alumno.js. */
+        const clave = ContrasenaAlumno.montar(caja, { alumnoId: u.id, nombre: nombreDe(u), usuario: () => u.email });
+
+        botonCorreo.addEventListener("click", () => guardarCorreo(u, actual.input, marca, botonCorreo, clave.pintar));
 
         // ------------------------------------------------ sus profesores
         const profes = seccion("Sus profesores");
@@ -459,7 +467,7 @@ async function mandarProfesores(u, lista, tags, selector) {
    tiene buzón, y la relectura de la fila —el trigger de identidad revierte
    esa columna sin decir nada—. Escribirlo otra vez acá sería una segunda
    versión que se separa a la primera corrección. */
-async function guardarCorreo(u, input, marca, boton) {
+async function guardarCorreo(u, input, marca, boton, alCambiar) {
     boton.disabled = true;
     boton.textContent = "Cambiando…";
     try {
@@ -479,6 +487,7 @@ async function guardarCorreo(u, input, marca, boton) {
             u.email = datos.cambiado || u.email;
             input.value = u.email;
             avisar("Ahora entra con " + u.email + ".");
+            if (alCambiar) alCambiar();
         }
     } catch (err) {
         avisar("No se pudo cambiar: " + err.message, true);

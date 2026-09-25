@@ -152,6 +152,12 @@ window.__funcion = [];
   // La Edge Function de los informes a la casa se atiende acá.
   const fetchReal = window.fetch;
   window.fetch = function (url, opciones) {
+    if (String(url).indexOf("/functions/v1/correos-alumno") !== -1) {
+      const cuerpo = JSON.parse((opciones && opciones.body) || "{}");
+      window.__funcion.push(Object.assign({ url: String(url) }, cuerpo));
+      return Promise.resolve(new Response(JSON.stringify({ ok: true, usuario: "tito.vargas@alumno.ajedrez-integral.com" }),
+        { status: 200, headers: { "Content-Type": "application/json" } }));
+    }
     if (String(url).indexOf("/functions/v1/informes-encargados") !== -1) {
       const cuerpo = JSON.parse((opciones && opciones.body) || "{}");
       window.__funcion.push(cuerpo);
@@ -1217,6 +1223,50 @@ async function pruebaPdfVisitante(browser) {
   await page.close();
 }
 
+/* A un alumno que entra con usuario de la Academia también su profesor le pone
+   la contraseña: es quien lo tiene en la clase. Un profesor que NO coordina ve
+   solo eso de la tarjeta «Acceso a la cuenta» —reenviar el enlace sigue siendo
+   de coordinación— y a un alumno con correo propio no se le ofrece nada. */
+async function pruebaContrasenaProfesor(browser) {
+  console.log("\n=== La contraseña que pone el profesor ===");
+  const TITO = Object.assign({}, BRUNO, { id: "a-9", full_name: "Tito Vargas", email: "tito.vargas@alumno.ajedrez-integral.com" });
+  const { page, errores } = await abrir(browser, {
+    rpc: {
+      informes_resumen_alumnos: [ANA, TITO],
+      informes_totales: { clases_cerradas: 4, preguntas: 10, partidas: 2 },
+    },
+    tablas: {
+      profiles: [{ id: "prof-2", role: "profesor", is_admin: false, es_coordinador: false, full_name: "Luis", email: "luis@x.cr" }],
+    },
+  }, "prof-2");
+  const visible = (sel) => page.evaluate((s) => { const e = document.querySelector(s); return !!e && e.checkVisibility(); }, sel);
+
+  await page.selectOption("#student-filter", "a-1");
+  await page.waitForFunction(() => !document.getElementById("student-report").classList.contains("hidden"));
+  igual("con correo propio, el profesor no ve «Acceso a la cuenta»", await visible("#acceso-report"), false);
+
+  await page.selectOption("#student-filter", "a-9");
+  await page.waitForFunction(() => !document.getElementById("acceso-report").classList.contains("hidden"));
+  await page.evaluate(() => { document.getElementById("acceso-report").open = true; });
+  igual("con usuario de la Academia, sí: con «Su contraseña»",
+    await page.evaluate(() => [...document.querySelectorAll("#acceso-clave h3")].some((h) => h.textContent === "Su contraseña" && h.checkVisibility())), true);
+  igual("pero sin «Reenviar enlace», que es de coordinación", await visible("#acceso-reenviar"), false);
+
+  await page.evaluate(() => { window.__funcion.length = 0; });
+  await page.fill("#acceso-clave input", "caballo482");
+  await page.click("#acceso-clave button:text-is('Poner esta contraseña')");
+  await page.waitForFunction(() => window.__funcion.some((f) => f.action === "contrasena"));
+  const envio = await page.evaluate(() => window.__funcion.find((f) => f.action === "contrasena"));
+  igual("la pone correos-alumno, con ESE alumno y lo escrito",
+    [envio.url.indexOf("correos-alumno") !== -1, envio.alumno_id, envio.contrasena], [true, "a-9", "caballo482"]);
+  await page.waitForFunction(() => [...document.querySelectorAll(".avisos-mensaje")].some((m) => m.checkVisibility() && m.textContent.indexOf("«tito.vargas»") !== -1), { timeout: 10000 });
+  igual("y el aviso dice el usuario sin dominio y la contraseña",
+    await page.evaluate(() => [...document.querySelectorAll(".avisos-mensaje")].some((m) => m.textContent.indexOf("«caballo482»") !== -1 && m.textContent.indexOf("@") === -1)), true);
+
+  if (errores.length) { console.log("  ✗ errores en la página: " + errores.join(" | ")); fallos += 1; }
+  await page.close();
+}
+
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
@@ -1228,6 +1278,7 @@ async function pruebaPdfVisitante(browser) {
     await pruebaNombreAjeno(browser);
     await pruebaPdfVisitante(browser);
     await pruebaAlumnoPorEnlace(browser);
+    await pruebaContrasenaProfesor(browser);
   } finally {
     await browser.close();
   }

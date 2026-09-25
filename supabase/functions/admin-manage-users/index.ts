@@ -74,6 +74,7 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { sendInstruccionesAdaptadas, sendInvitacionPlan } from "./instrucciones-email.ts";
+import { esCorreoInterno } from "./usuario-alumno.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -450,6 +451,12 @@ Deno.serve(async (req) => {
     const { data: targetUser, error: getUserError } = await adminClient.auth.admin.getUserById(targetId);
     if (getUserError || !targetUser?.user?.email) {
       return json({ error: "No se encontró esa cuenta" }, 404);
+    }
+    // Un usuario de la academia no tiene buzón: el enlace saldría a la nada y
+    // esto diría «enviado». Ese caso lo atiende `reenviar-acceso`, que lo
+    // manda al correo de la casa.
+    if (esCorreoInterno(targetUser.user.email)) {
+      return json({ error: "Esa cuenta entra con usuario de la Academia: el enlace va al correo de su casa, por «reenviar-acceso»." }, 400);
     }
     const { error } = await adminClient.auth.resetPasswordForEmail(targetUser.user.email, {
       redirectTo: `${SITE_URL}/clases.html`,
