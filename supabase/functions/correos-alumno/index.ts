@@ -28,6 +28,10 @@
 // no se la devuelve, ese alumno no es suyo. Es la misma regla de
 // `reenviar-acceso` y del "Enviar ahora" de Informes a la casa — una regla
 // menos escrita dos veces.
+//
+// LA EXCEPCIÓN ES `contrasena`: ponerle la contraseña a un alumno que entra
+// con usuario de la Academia también lo puede su profesor (`soy_profesor_de()`),
+// que es quien se la da en la clase.
 
 import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2";
 import { esCorreoInterno, usuarioLibre } from "./usuario-alumno.ts";
@@ -104,9 +108,6 @@ Deno.serve(async (req) => {
     comoQuienLlama.rpc("coordinador_puede", { p_funcion: "cuentas" }),
     comoQuienLlama.rpc("coordinador_puede", { p_funcion: "cobros" }),
   ]);
-  if (!cuentas && !cobros) {
-    return json({ error: "Corregir correos no está entre tus funciones de coordinación" }, 403);
-  }
 
   let body: Record<string, unknown>;
   try { body = await req.json(); } catch { return json({ error: "Cuerpo JSON inválido" }, 400); }
@@ -114,6 +115,16 @@ Deno.serve(async (req) => {
   const accion = String(body.action ?? "");
   const alumnoId = String(body.alumno_id ?? "").trim();
   if (!alumnoId) return json({ error: "Falta el alumno" }, 400);
+
+  // Ponerle la contraseña a un alumno con usuario también lo hace su
+  // profesor: es quien lo tiene en la clase y se la da. Todo lo demás de acá
+  // sigue siendo solo de coordinación.
+  const suProfesor = accion === "contrasena" && !cuentas
+    ? (await comoQuienLlama.rpc("soy_profesor_de", { p_alumno: alumnoId })).data === true
+    : false;
+  if (!cuentas && !cobros && !suProfesor) {
+    return json({ error: "Corregir correos no está entre tus funciones de coordinación" }, 403);
+  }
 
   // La RLS decide si este alumno es suyo: quien administra ve a cualquiera,
   // quien coordina solo a los que tiene asignados. Sin fila no hay permiso.
@@ -204,6 +215,37 @@ Deno.serve(async (req) => {
       return json({ error: "El correo no quedó guardado en el perfil. No se cambió nada." }, 500);
     }
     return json({ ok: true, cambiado: nuevo, ...(await retrato(admin, alumnoId, quedo)) });
+  }
+
+  // --------------------------------- la contraseña de un usuario sin buzón
+  // Un niño de cinco años no abre el correo de la mamá para crear su
+  // contraseña: se la pone su profesor o quien coordina y se la da en la
+  // clase, junto con su usuario. SOLO para cuentas con usuario de la academia:
+  // la contraseña de quien tiene correo propio es de esa persona, y para
+  // olvidos ya tiene su enlace. Y con la función de «cuentas» o siendo su
+  // profesor: la de cobros entra a esta función por la ficha de contacto, no
+  // para abrir cuentas ajenas.
+  if (accion === "contrasena") {
+    if (!cuentas && !suProfesor) return json({ error: "Solo su profesor o quien coordina cuentas le puede poner la contraseña" }, 403);
+    if (alumno.role !== "alumno" || !esCorreoInterno(String(alumno.email ?? ""))) {
+      return json({
+        error: "Solo se le pone contraseña a un alumno que entra con usuario de la Academia. " +
+               "Quien tiene correo propio la crea con el enlace de «Reenviar acceso».",
+      }, 400);
+    }
+    const clave = String(body.contrasena ?? "");
+    // Lo mismo que pide bienvenida.html: ocho como mínimo. El tope es el de
+    // bcrypt, que corta en silencio lo que pase de 72 bytes.
+    if (clave.length < 8) return json({ error: "La contraseña tiene que tener al menos 8 caracteres" }, 400);
+    if (new TextEncoder().encode(clave).length > 72) return json({ error: "Esa contraseña es demasiado larga" }, 400);
+    if (clave.trim() !== clave) return json({ error: "La contraseña no puede empezar ni terminar con espacios" }, 400);
+
+    // email_confirm: una cuenta invitada que nunca abrió su enlace queda sin
+    // confirmar, y sin confirmar GoTrue no la deja entrar ni con la contraseña
+    // buena («Email not confirmed»). Ese enlace se mandó a otro buzón.
+    const { error } = await admin.auth.admin.updateUserById(alumnoId, { password: clave, email_confirm: true });
+    if (error) return json({ error: "No se pudo poner la contraseña: " + error.message }, 400);
+    return json({ ok: true, usuario: alumno.email });
   }
 
   // ------------------------------------------ a dónde va el informe a casa

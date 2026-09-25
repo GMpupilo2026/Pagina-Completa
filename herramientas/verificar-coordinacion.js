@@ -177,7 +177,10 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
          porque el usuario lo desempata el servidor. */
       let respuesta = { ok: true, correo_destino: "mama@x.cr" };
       if (String(url).indexOf("correos-alumno") !== -1 && cuerpo.action === "cuenta") {
-        respuesta = { ok: true, cambiado: cuerpo.sin_correo ? "ana.rojas2" : String(cuerpo.email || "").toLowerCase() };
+        respuesta = { ok: true, cambiado: cuerpo.sin_correo ? "ana.rojas2@alumno.ajedrez-integral.com" : String(cuerpo.email || "").toLowerCase() };
+      }
+      if (String(url).indexOf("correos-alumno") !== -1 && cuerpo.action === "contrasena") {
+        respuesta = { ok: true, usuario: "ana.rojas2@alumno.ajedrez-integral.com" };
       }
       return Promise.resolve(new Response(JSON.stringify(respuesta),
         { status: 200, headers: { "Content-Type": "application/json" } }));
@@ -334,6 +337,14 @@ async function pruebaFicha(browser) {
   await abrirFicha("ana@x.cr");
   await page.waitForFunction(() => document.querySelectorAll("#lista input[type=checkbox]").length > 0, { timeout: 10000 });
 
+  /* La contraseña se pone solo a quien entra con usuario de la Academia: la
+     de un correo de verdad es de esa persona. */
+  const seccionClave = () => page.evaluate(() => {
+    const h = Array.from(document.querySelectorAll("#lista h3")).find((x) => x.textContent === "Su contraseña");
+    return !!h && h.checkVisibility();
+  });
+  igual("con correo propio no se ofrece ponerle contraseña", await seccionClave(), "false");
+
   igual("la ficha dice con qué entra y deja corregirlo",
     await page.evaluate(() => {
       const c = Array.from(document.querySelectorAll("#lista input")).find((i) => i.value === "ana@x.cr");
@@ -395,7 +406,38 @@ async function pruebaFicha(browser) {
   await page.waitForFunction(() => window.__llamadas.some((l) => l.funcion && l.funcion.sin_correo === true), { timeout: 10000 });
   await page.waitForFunction(() => [...document.querySelectorAll(".avisos-mensaje")].some((m) => m.checkVisibility() && m.textContent.indexOf("ana.rojas2") !== -1), { timeout: 10000 });
   igual("y se enseña el usuario que devolvió el servidor, no el que se propuso",
-    await page.evaluate(() => Array.from(document.querySelectorAll("#lista input")).some((i) => i.value === "ana.rojas2")), "true");
+    await page.evaluate(() => Array.from(document.querySelectorAll("#lista input")).some((i) => i.value.indexOf("ana.rojas2@") === 0)), "true");
+
+  // ----------------------------------- la contraseña que se le asigna
+  /* Un niño pequeño no abre el correo de la casa: quien coordina le pone la
+     contraseña y se la da en la clase con su usuario. */
+  igual("en cuanto entra con usuario, aparece «Su contraseña» sin cerrar la ficha", await seccionClave(), "true");
+  const CAMPO_CLAVE = 'Array.from(document.querySelectorAll("#lista label"))'
+    + '.find((l) => l.textContent.indexOf("Contraseña nueva") === 0).querySelector("input")';
+  const boton = (texto) => page.evaluate((t) => {
+    Array.from(document.querySelectorAll("#lista button")).find((b) => b.textContent === t).click();
+  }, texto);
+
+  await page.evaluate(() => { window.__llamadas = []; });
+  await page.evaluate(CAMPO_CLAVE + '.value = "rey1"');
+  await boton("Poner esta contraseña");
+  await page.waitForFunction(() => [...document.querySelectorAll(".avisos-mensaje")].some((m) => m.checkVisibility() && m.textContent.indexOf("al menos 8") !== -1), { timeout: 10000 });
+  igual("una de menos de 8 no llega ni a salir",
+    await page.evaluate(() => window.__llamadas.filter((l) => l.funcion.action === "contrasena").length), "0");
+
+  await boton("Proponer una fácil");
+  const propuesta = await page.evaluate(CAMPO_CLAVE + ".value");
+  igual("«Proponer una fácil» da una palabra y números, de 8 o más",
+    /^[a-z]+[0-9]{3,4}$/.test(propuesta) && propuesta.length >= 8, "true");
+
+  await boton("Poner esta contraseña");
+  await page.waitForFunction(() => window.__llamadas.some((l) => l.funcion.action === "contrasena"), { timeout: 10000 });
+  const cla = await page.evaluate(() => window.__llamadas.find((l) => l.funcion.action === "contrasena"));
+  igual("la pone correos-alumno, con ESE alumno y lo escrito",
+    [cla.url.indexOf("correos-alumno") !== -1, cla.funcion.alumno_id, cla.funcion.contrasena], [true, "u-ana", propuesta]);
+  await page.waitForFunction(() => [...document.querySelectorAll(".avisos-mensaje")].some((m) => m.checkVisibility() && m.textContent.indexOf("«ana.rojas2»") !== -1), { timeout: 10000 });
+  igual("el aviso dice el usuario sin el dominio y la contraseña, para dársela",
+    await page.evaluate((p) => [...document.querySelectorAll(".avisos-mensaje")].some((m) => m.textContent.indexOf("«" + p + "»") !== -1 && m.textContent.indexOf("@") === -1), propuesta), "true");
 
   // --------------------------------------------------- sus profesores
   igual("se ven TODOS sus profesores, no solo los que coordina",

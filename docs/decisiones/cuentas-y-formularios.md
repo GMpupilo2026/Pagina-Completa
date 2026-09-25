@@ -506,6 +506,45 @@ los avisos de cobro.
   cuenta acá, y son menores de edad. **Tampoco dice a qué correo lo mandó**: ese
   dato es de la familia.
 
+### La contraseña también se le puede asignar
+
+Con lo de arriba el niño tiene usuario, pero la contraseña la crea quien abre el
+enlace que salió al correo de la casa. Con los más pequeños eso no pasa: la
+mamá no lo abre, o lo abre y no sabe qué poner, y el niño llega a la clase sin
+poder entrar. Así que sale **«Su contraseña»** en dos lugares: la ficha de
+`coordinacion.html` (también para quien administra) y la tarjeta «Acceso a la
+cuenta» de `informes.html`, que es por donde **su profesor** mira a cada alumno.
+Quien lo tiene en la clase se la pone y se la da junto con su usuario. El
+control es uno solo, `js/contrasena-alumno.js`, y lo usan las dos páginas.
+
+- **Solo aparece si entra con usuario de la Academia**, y la acción
+  `contrasena` de `correos-alumno` lo vuelve a comprobar: la contraseña de quien
+  tiene correo propio es de esa persona, y para olvidos ya tiene su enlace. La
+  sección aparece en cuanto se le da el usuario, sin cerrar la ficha.
+- Lo puede **su profesor** (`soy_profesor_de()`) o quien tiene la función de
+  **«cuentas»**; la de cobros no: a `correos-alumno` también entra la ficha de
+  contacto de Cobros, y eso no es para abrir cuentas ajenas. El resto de
+  `correos-alumno` sigue siendo solo de coordinación.
+- En `informes.html`, un profesor que no coordina ve de «Acceso a la cuenta»
+  solo la contraseña, y solo con un alumno que entra con usuario: «Reenviar
+  enlace» es de coordinación (`reenviar-acceso` pide la función «acceso») y se
+  le vería y fallaría.
+- **Ocho caracteres como mínimo**, lo mismo que pide `bienvenida.html`.
+  «Proponer una fácil» arma una palabra del ajedrez y tres números
+  (`caballo482`), que un niño puede escribir y recordar; los números salen de
+  `crypto`.
+- Se pone con `email_confirm: true`: una cuenta invitada que nunca abrió su
+  enlace está sin confirmar, y así GoTrue no la deja entrar ni con la contraseña
+  buena.
+- El campo es de texto, no de contraseña, a propósito: es para dictársela al
+  alumno. El aviso del final dice el usuario **sin el dominio** y la contraseña.
+
+De paso: el «Reenviar acceso» de `admin.html` iba por `resetPasswordForEmail`,
+que con un usuario de la Academia manda el enlace a la dirección muerta y la
+pantalla decía «enviado». Ahora esas cuentas van por `reenviar-acceso` (al
+correo de la casa), y `admin-manage-users` rechaza el caso por si alguien lo
+llama directo.
+
 ### Las dos puertas de alta
 
 Las dos —`formularios.html` (el diálogo "Crear cuenta") y `sesion.html`
