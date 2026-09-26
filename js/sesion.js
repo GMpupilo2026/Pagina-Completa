@@ -91,7 +91,7 @@
         /* El orden manda dos cosas: el de los botones de arriba y, sobre todo, CUÁL SE
            ABRE la primera vez (TEACHER_TABS[0]). Para quien entra por primera vez eso
            es "Mi plan": lo que va a dar. Después se recuerda la última que usó. */
-        const TEACHER_TABS = ["plan", "tactica", "preguntar", "practicar", "alumnos", "controles"];
+        const TEACHER_TABS = ["plan", "tactica", "tipos", "preguntar", "practicar", "alumnos", "controles"];
         const TEACHER_TAB_ACTIVE = "teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-accent-500 text-brand-900";
         const TEACHER_TAB_INACTIVE = "teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200";
 
@@ -106,6 +106,7 @@
                 panel.classList.toggle("hidden", panel.dataset.tabPanel !== tab);
             });
             try { localStorage.setItem(TEACHER_TAB_KEY, tab); } catch (e) {}
+            if (tab === "tipos") ensureTiposLoaded();
         }
 
         document.querySelectorAll(".teacher-tab-btn").forEach((btn) => {
@@ -131,7 +132,7 @@
            cuenta de clases. */
         const MODO_SENCILLO_KEY = "sesion_modo_sencillo_v1";
         const CLASES_PARA_TODAS_LAS_HERRAMIENTAS = 3;
-        const TABS_AVANZADAS = ["tactica", "preguntar", "practicar"];
+        const TABS_AVANZADAS = ["tactica", "tipos", "preguntar", "practicar"];
         let modoSencillo = false;
 
         function aplicarModoSencillo(activo) {
@@ -146,7 +147,7 @@
             document.getElementById("modo-sencillo-btn").textContent = activo
                 ? "🧰 Ver todas las herramientas" : "🪶 Volver al modo sencillo";
             document.getElementById("modo-sencillo-nota").textContent = activo
-                ? "Modo sencillo: el tablero, tu plan y tus alumnos. Táctica, Preguntar, Practicar y tu material están a un clic."
+                ? "Modo sencillo: el tablero, tu plan y tus alumnos. Táctica, Entrenamientos, Preguntar, Practicar y tu material están a un clic."
                 : "";
         }
 
@@ -2926,6 +2927,261 @@
             activateTeacherTab("preguntar");
             setStatus("Ejercicio de táctica enviado a la clase como pregunta.");
             computeEngineAnswer(data.id, fen, expectedPlies); // en segundo plano, no bloquea la pregunta
+        }
+
+        // ---------- Tipos de entrenamiento (cascada tipo → nivel → ejercicio) ----------
+        // Los mismos seis de entreno/tipos.html, con las mismas posiciones
+        // (entreno/data/tipos.json) y el mismo catálogo (js/tipos-catalogo.js): el
+        // profesor los jala a la clase sin salir de la sesión. Toda posición entra por
+        // aplicarPosicionEnClase(), como Táctica y Archivos. Lo que es la RESPUESTA
+        // (la opción buena del Detective, la amenaza, qué candidatas pierden, el número
+        // del motor) va en «🔎 Respuesta», que se abre solo en esta pantalla: la clase
+        // no ve nada de este panel. Ver «Los Tipos de entrenamiento, en la clase» en
+        // docs/decisiones/clase-en-vivo.md.
+        let tiposData = null;
+        let tiposLoadPromise = null;
+        let tiposView = { tipo: null, nivel: null };
+        const vistaPreviaTipos = crearVistaPreviaLote("sesion_vista_previa_tipos_v1");
+        let fotoTimer = null;
+
+        function ensureTiposLoaded() {
+            if (tiposData || tiposLoadPromise) return tiposLoadPromise;
+            tiposLoadPromise = fetch("entreno/data/tipos.json")
+                .then((r) => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+                .then((data) => { tiposData = data; renderTiposView(); })
+                .catch((e) => {
+                    console.error(e);
+                    tiposLoadPromise = null;
+                    document.getElementById("tipos-body").innerHTML =
+                        '<p class="text-sm text-red-500 dark:text-red-400">No se pudieron cargar los entrenamientos. Recarga la página e inténtalo de nuevo.</p>';
+                });
+            return tiposLoadPromise;
+        }
+
+        const TIPOS_BTN = "text-xs font-semibold px-2 py-1 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-700 dark:hover:bg-brand-600 text-brand-700 dark:text-brand-200 transition-colors";
+        const TIPOS_BTN_ACCION = "text-xs font-semibold px-2 py-1 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors";
+        function tiposBoton(texto, cls, fn, titulo) {
+            const b = document.createElement("button");
+            b.type = "button";
+            b.className = cls || TIPOS_BTN;
+            b.textContent = texto;
+            if (titulo) b.title = titulo;
+            b.addEventListener("click", fn);
+            return b;
+        }
+        function tiposLista(items) {
+            const ul = document.createElement("ul");
+            ul.className = "list-disc pl-5 space-y-1";
+            items.forEach((t) => { const li = document.createElement("li"); li.textContent = t; ul.appendChild(li); });
+            return ul;
+        }
+
+        /* El rótulo de cada fila: algo que distinga una de otra sin destaparla. */
+        function tiposRotulo(tipo, item, i) {
+            const R = window.TiposReglas;
+            const n = (i + 1) + ". ";
+            if (tipo === "detective") return n + "Juegan " + (item.fen.split(" ")[1] === "w" ? "blancas" : "negras") + ", en jaque";
+            if (tipo === "amenaza") return n + (item.mate ? "Amenaza mate en " + item.mate : "ELO " + item.rating);
+            if (tipo === "descarte") return n + item.candidatas.length + " candidatas: " + item.candidatas.map((c) => c.sanEs).join(", ");
+            if (tipo === "balanza") return n + "Material " + (item.material === 0 ? "igual" : (item.material > 0 ? "+" : "−") + Math.abs(item.material));
+            if (tipo === "fotografia") return n + item.piezas + " piezas";
+            if (tipo === "con-lo-justo") return n + "Mate en " + item.minimo + " (mínimo exacto)";
+            return n + (R ? "" : "");
+        }
+
+        /* La respuesta, solo para el profesor. */
+        function tiposRespuesta(tipo, item) {
+            const R = window.TiposReglas;
+            const caja = document.createElement("div");
+            caja.className = "text-xs text-brand-700 dark:text-brand-200 bg-white dark:bg-brand-900 rounded-lg p-2 mt-2 space-y-1";
+            const p = (t) => { const x = document.createElement("p"); x.textContent = t; caja.appendChild(x); };
+            if (tipo === "detective") {
+                const turno = item.fen.split(" ")[1];
+                p("¿Cuál fue la última jugada de las " + (turno === "w" ? "negras" : "blancas") + "? Opciones:");
+                caja.appendChild(tiposLista(item.opciones.map((op) => (R.claveRetro(op) === item.correcta ? "✓ " : "✗ ") + R.etiquetaRetro(op)
+                    + (R.claveRetro(op) === item.correcta ? " — la de la partida (" + item.jugada + ")" : " — " + R.explicacionRetro(op.motivo, turno)))));
+            } else if (tipo === "amenaza") {
+                p("La amenaza: " + item.amenazaEs + (item.mate ? " (mate en " + item.mate + ")" : "") + ". " + (item.motivo || ""));
+                if (item.linea) p("La línea: " + item.linea + ".");
+                p("Con «Preguntar», el tablero queda con el turno del rival: cada alumno mueve por él.");
+            } else if (tipo === "descarte") {
+                const yo = item.fen.split(" ")[1];
+                caja.appendChild(tiposLista(item.candidatas.map((c) => c.sanEs + ": " + (c.pierde
+                    ? "PIERDE" + (c.mateEn ? " (recibe mate en " + c.mateEn + ")" : " (" + R.numeroBalanza(c.eval / 100 * (yo === "w" ? 1 : -1)) + ")") + (c.refuta ? " — " + c.refuta : "")
+                    : "aguanta (" + R.numeroBalanza(c.eval / 100 * (yo === "w" ? 1 : -1)) + ")"))));
+            } else if (tipo === "balanza") {
+                p("El motor: " + (item.mate ? "mate en " + Math.abs(item.mate) + " para las " + (item.mate > 0 ? "blancas" : "negras") : R.numeroBalanza(item.eval) + " — " + R.veredictoBalanza(item.eval)) + ".");
+                p("Material: " + (item.material === 0 ? "igual" : (item.material > 0 ? "+" + item.material + " blancas" : "+" + (-item.material) + " negras")) + ".");
+                if (item.linea) p("Lo que ve el motor: " + item.linea + ".");
+            } else if (tipo === "fotografia") {
+                if (item.preguntas) caja.appendChild(tiposLista(item.preguntas.map((q) => q.texto + " → " + q.correcta)));
+                else p("Pídeles que la reconstruyan en papel o que la dicten pieza por pieza.");
+            } else if (tipo === "con-lo-justo") {
+                p("Se gana en " + item.minimo + " jugadas contra la mejor defensa (cálculo exacto). Con «Practicar», el motor defiende el rey en el navegador de cada alumno.");
+            }
+            return caja;
+        }
+
+        /* Fotografía en la clase: se ve unos segundos y las piezas desaparecen de
+           todos los tableros (la misma columna pieces_hidden del botón 🙈 Ocultar). */
+        async function tiposFotografia(item, segundos, btn) {
+            if (fotoTimer) { clearTimeout(fotoTimer); fotoTimer = null; }
+            if (!(await aplicarPosicionEnClase(item.fen))) return;
+            lastPiecesHidden = false;
+            updateHideBoardBtn();
+            await sb.from("game_state").update({ pieces_hidden: false }).eq("id", myGameStateId);
+            setStatus("📸 La clase ve la posición: " + segundos + " segundos.");
+            btn.textContent = "⏳ " + segundos + " s…";
+            fotoTimer = setTimeout(async () => {
+                fotoTimer = null;
+                lastPiecesHidden = true;
+                updateHideBoardBtn();
+                const { error } = await sb.from("game_state").update({ pieces_hidden: true }).eq("id", myGameStateId);
+                if (error) { console.error(error); setStatus("No se pudieron ocultar las piezas: " + error.message); return; }
+                btn.textContent = "📸 Mostrar " + segundos + " s y ocultar";
+                setStatus("📸 Piezas ocultas: que la reconstruyan. «👁️ Mostrar» las vuelve a poner.");
+            }, segundos * 1000);
+        }
+
+        async function tiposPreguntar(fen, aviso) {
+            if (!(await aplicarPosicionEnClase(fen))) return;
+            document.getElementById("question-plies-input").value = 1;
+            await sb.from("questions").update({ closed_at: new Date().toISOString() }).eq("created_by", boardOwnerId).is("closed_at", null);
+            const { data, error } = await sb.from("questions").insert({ fen, created_by: session.user.id, expected_plies: 1 }).select().single();
+            if (error) { console.error(error); setStatus("No se pudo crear la pregunta: " + error.message); return; }
+            activateTeacherTab("preguntar");
+            setStatus(aviso);
+            computeEngineAnswer(data.id, fen, 1);
+        }
+
+        async function tiposPracticar(fen) {
+            if (!(await aplicarPosicionEnClase(fen))) return;
+            if (typeof PracticeEngine !== "undefined") PracticeEngine.preload();
+            await sb.from("practice_sessions").update({ ended_at: new Date().toISOString() }).eq("created_by", boardOwnerId).is("ended_at", null);
+            // Nivel máximo: el rey solo tiene que defenderse lo mejor posible.
+            const { error } = await sb.from("practice_sessions").insert({ fen, level: "max", created_by: session.user.id });
+            if (error) { console.error(error); setStatus("No se pudo iniciar la práctica: " + error.message); return; }
+            activateTeacherTab("practicar");
+            setStatus("Con lo justo: cada alumno juega el final contra el motor. Que den mate.");
+        }
+
+        function renderTiposView() {
+            const body = document.getElementById("tipos-body");
+            const C = window.TiposCatalogo;
+            if (!tiposData || !C) { body.innerHTML = '<p class="text-sm text-brand-450 dark:text-brand-350">Cargando…</p>'; return; }
+            body.innerHTML = "";
+            vistaPreviaTipos.reiniciar();
+            const lista = document.createElement("div");
+            lista.className = "space-y-1.5";
+
+            if (!tiposView.tipo) {
+                C.TIPOS.forEach((t) => {
+                    const btn = document.createElement("button");
+                    btn.type = "button";
+                    btn.className = "w-full text-left text-sm px-3 py-2.5 rounded-lg bg-brand-50 hover:bg-brand-100 dark:bg-brand-800 dark:hover:bg-brand-700 transition-colors";
+                    const t1 = document.createElement("span"); t1.className = "font-semibold text-brand-800 dark:text-white";
+                    const ico = document.createElement("span"); ico.setAttribute("aria-hidden", "true"); ico.textContent = t.emoji + " ";
+                    t1.append(ico, t.nombre);
+                    const t2 = document.createElement("span"); t2.className = "block text-xs text-brand-450 dark:text-brand-350 mt-0.5"; t2.textContent = t.pregunta;
+                    btn.append(t1, t2);
+                    btn.addEventListener("click", () => { tiposView = { tipo: t.id, nivel: null }; renderTiposView(); });
+                    lista.appendChild(btn);
+                });
+                body.appendChild(lista);
+                return;
+            }
+            const t = C.tipo(tiposView.tipo);
+            if (!tiposView.nivel) {
+                body.appendChild(tacticsBackBtn("‹ Tipos", () => { tiposView = { tipo: null, nivel: null }; renderTiposView(); }));
+                const tit = document.createElement("p");
+                tit.className = "font-semibold text-brand-800 dark:text-white text-sm mt-2";
+                tit.textContent = t.nombre;
+                const clase = document.createElement("p");
+                clase.className = "text-xs text-brand-450 dark:text-brand-350 mb-2";
+                clase.textContent = t.clase;
+                body.append(tit, clase);
+                t.niveles.forEach((n) => {
+                    const cuantos = (tiposData[t.id] || []).filter((x) => x.nivel === n.n).length;
+                    if (!cuantos) return;
+                    const btn = document.createElement("button");
+                    btn.type = "button";
+                    btn.className = "w-full text-left text-sm px-3 py-2.5 rounded-lg bg-brand-50 hover:bg-brand-100 dark:bg-brand-800 dark:hover:bg-brand-700 transition-colors";
+                    const a = document.createElement("span"); a.className = "font-semibold text-brand-800 dark:text-white"; a.textContent = "Nivel " + n.n + " — " + n.titulo;
+                    const b = document.createElement("span"); b.className = "block text-xs text-brand-450 dark:text-brand-350 mt-0.5"; b.textContent = n.desc + " · " + cuantos + " ›";
+                    btn.append(a, b);
+                    btn.addEventListener("click", () => { tiposView = { tipo: t.id, nivel: n.n }; renderTiposView(); });
+                    lista.appendChild(btn);
+                });
+                body.appendChild(lista);
+                return;
+            }
+            const nivel = C.nivel(t.id, tiposView.nivel);
+            body.appendChild(tacticsBackBtn("‹ " + t.nombre, () => { tiposView = { tipo: t.id, nivel: null }; renderTiposView(); }));
+            const items = (tiposData[t.id] || []).filter((x) => x.nivel === nivel.n);
+            const barra = document.createElement("div");
+            barra.className = "flex items-center justify-between gap-2 mt-2";
+            const cuenta = document.createElement("p");
+            cuenta.className = "text-xs text-brand-450 dark:text-brand-350 min-w-0 truncate";
+            cuenta.textContent = items.length + " ejercicios";
+            barra.append(cuenta, vistaPreviaTipos.control());
+            body.appendChild(barra);
+            const ul = document.createElement("ul");
+            ul.className = "space-y-2 mt-2 max-h-96 overflow-y-auto pr-1";
+            items.forEach((item, i) => {
+                const li = document.createElement("li");
+                li.className = "bg-brand-50 dark:bg-brand-800 rounded-lg p-2.5";
+                li.dataset.tipoItem = item.id;
+                const label = document.createElement("p");
+                label.className = "text-sm font-semibold text-brand-700 dark:text-brand-200";
+                label.textContent = tiposRotulo(t.id, item, i);
+                li.appendChild(label);
+                const acciones = document.createElement("div");
+                acciones.className = "flex items-center flex-wrap gap-1.5 mt-2";
+                const previewBtn = tiposBoton("👁 Vista previa", TIPOS_BTN, () => {});
+                acciones.appendChild(previewBtn);
+                if (t.id === "fotografia") {
+                    const seg = nivel.segundos || 8;
+                    const fb = tiposBoton("📸 Mostrar " + seg + " s y ocultar", TIPOS_BTN_ACCION, () => tiposFotografia(item, seg, fb), "La clase ve la posición y después las piezas desaparecen de todos los tableros");
+                    acciones.appendChild(fb);
+                } else {
+                    // Amenaza: al tablero va la posición del alumno (le toca a él).
+                    const envio = tiposBoton("📥 Al tablero", TIPOS_BTN, async () => {
+                        const ok = await aplicarPosicionEnClase(item.fen, "«" + t.nombre + "»: ya la ven todos los alumnos.");
+                        if (ok) { envio.textContent = "✅ Enviada"; setTimeout(() => { envio.textContent = "📥 Al tablero"; }, 2000); }
+                    }, "Poner esta posición en el tablero de la clase, sin preguntar nada");
+                    acciones.appendChild(envio);
+                }
+                if (t.id === "amenaza") acciones.appendChild(tiposBoton("❓ Preguntar", TIPOS_BTN_ACCION, () => tiposPreguntar(item.fenRival, "Pregunta abierta: cada alumno hace la jugada que amenaza el rival."), "Abre la pregunta con el turno del rival: la respuesta correcta es su amenaza"));
+                if (t.id === "descarte") acciones.appendChild(tiposBoton("❓ Preguntar", TIPOS_BTN_ACCION, () => tiposPreguntar(item.fen, "Pregunta abierta: ¿qué jugarías? Después comenten cuáles de las candidatas pierden."), "Abre la pregunta «¿qué jugarías?» con esta posición"));
+                if (t.id === "con-lo-justo") acciones.appendChild(tiposBoton("🎯 Practicar", TIPOS_BTN_ACCION, () => tiposPracticar(item.fen), "Cada alumno juega el final contra el motor"));
+                const respBtn = tiposBoton("🔎 Respuesta", TIPOS_BTN, () => {
+                    const abierta = !respWrap.classList.contains("hidden");
+                    if (!abierta && !respWrap.firstChild) respWrap.appendChild(tiposRespuesta(t.id, item));
+                    respWrap.classList.toggle("hidden", abierta);
+                    respBtn.setAttribute("aria-expanded", abierta ? "false" : "true");
+                    respBtn.textContent = abierta ? "🔎 Respuesta" : "🙈 Ocultar respuesta";
+                }, "Solo la ves tú");
+                respBtn.setAttribute("aria-expanded", "false");
+                acciones.appendChild(respBtn);
+                li.appendChild(acciones);
+                const previewWrap = document.createElement("div");
+                previewWrap.className = "hidden mt-2";
+                const respWrap = document.createElement("div");
+                respWrap.className = "hidden";
+                // La respuesta ARRIBA de la vista previa: la lista tiene su propio
+                // scroll, y debajo de un tablero quedaba fuera de la vista.
+                li.append(respWrap, previewWrap);
+                vistaPreviaTipos.registrar(previewWrap, previewBtn, () => renderTacticsPreviewBoard(previewWrap, item.fen));
+                ul.appendChild(li);
+            });
+            body.appendChild(ul);
+            const abrir = document.createElement("a");
+            abrir.href = "entreno/tipos.html#" + t.id;
+            abrir.target = "_blank";
+            abrir.rel = "noopener";
+            abrir.className = "inline-block mt-3 text-xs font-semibold text-accent-700 dark:text-accent-400 underline";
+            abrir.textContent = "Abrir la ficha de «" + t.nombre + "» (otra pestaña)";
+            body.appendChild(abrir);
         }
 
         // ---------- Aviso de calificación (sobrevive a que la pregunta ya esté cerrada) ----------

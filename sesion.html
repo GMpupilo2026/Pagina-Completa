@@ -537,6 +537,7 @@
                         <div id="teacher-tabs" class="flex flex-wrap gap-1.5 mb-4" role="tablist" aria-label="Herramientas del profesor">
                             <button type="button" id="teacher-tab-plan" class="teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" data-tab="plan" role="tab" aria-selected="false" aria-controls="plan-panel">📋 Mi plan</button>
                             <button type="button" id="teacher-tab-tactica" class="teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" data-tab="tactica" role="tab" aria-selected="false" aria-controls="tactics-panel">🧩 Táctica</button>
+                            <button type="button" id="teacher-tab-tipos" class="teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" data-tab="tipos" role="tab" aria-selected="false" aria-controls="tipos-panel">🧠 Entrenamientos</button>
                             <button type="button" id="teacher-tab-preguntar" class="teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" data-tab="preguntar" role="tab" aria-selected="false" aria-controls="question-panel">❓ Preguntar</button>
                             <button type="button" id="teacher-tab-practicar" class="teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" data-tab="practicar" role="tab" aria-selected="false" aria-controls="practice-panel">🎯 Practicar</button>
                             <button type="button" id="teacher-tab-alumnos" class="teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" data-tab="alumnos" role="tab" aria-selected="false" aria-controls="students-panel">👥 Alumnos<span id="hand-raised-badge" class="hidden ml-1 inline-block w-2 h-2 rounded-full bg-red-500 align-middle" title="Alguien pidió la palabra"></span></button>
@@ -646,6 +647,15 @@
                             <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-2"><span aria-hidden="true">🧩</span> Táctica por tema</h2>
                             <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">Elige un tema y una dificultad. Con <strong>Preguntar</strong> el ejercicio se transmite a todos como una pregunta nueva; con <strong>Al tablero</strong>, solo la posición, para explicarla tú.</p>
                             <div id="tactics-body"><p class="text-sm text-brand-450 dark:text-brand-350">Cargando temas…</p></div>
+                        </div>
+
+                        <!-- Tipos de entrenamiento (solo profesor): los seis de
+                             entreno/tipos.html, cascada tipo → nivel → ejercicio. La
+                             respuesta de cada uno se abre solo acá. -->
+                        <div id="tipos-panel" data-tab-panel="tipos" role="tabpanel" aria-labelledby="teacher-tab-tipos" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
+                            <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-2"><span aria-hidden="true">🧠</span> Tipos de entrenamiento</h2>
+                            <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">El Detective, ¿qué quiere el rival?, Descarte, la balanza, Fotografía y Con lo justo. Con <strong>Al tablero</strong> la posición le llega a todos; <strong>🔎 Respuesta</strong> solo la ves tú.</p>
+                            <div id="tipos-body"><p class="text-sm text-brand-450 dark:text-brand-350">Cargando…</p></div>
                         </div>
 
                         <!-- El plan de clase (solo profesor): lo que preparó en
@@ -763,6 +773,8 @@
     <script src="js/finales-100.js"></script>
     <script src="js/curso-partidas.js"></script>
     <script src="js/article-example-board.js"></script>
+    <script src="js/tipos-catalogo.js"></script>
+    <script src="js/tipos-reglas.js"></script>
     <script src="js/pdf-diagramas.js"></script>
     <script src="js/avisos.js"></script>
     <script src="js/main.js"></script>

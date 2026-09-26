@@ -76,6 +76,7 @@ export const SECCIONES: Record<string, { nombre: string; emoji: string; unidad?:
   "estudio":              { nombre: "Estudio (fichas)",      emoji: "📚" },
   "precision-posicional": { nombre: "Precisión posicional",  emoji: "🧭" },
   "sonar":                { nombre: "El Sonar",              emoji: "🔊" },
+  "tipos":                { nombre: "Tipos de entrenamiento", emoji: "🧠" },
   "racha":                { nombre: "Racha táctica",         emoji: "⚔️" },
   "bot":                  { nombre: "El bot de Oscar",       emoji: "🤖" },
   "logros":               { nombre: "Logros",                emoji: "🏅" },

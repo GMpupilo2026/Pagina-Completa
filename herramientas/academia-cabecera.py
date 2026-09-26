@@ -72,7 +72,7 @@ PAGINAS = [
     "entreno/desafios.html", "entreno/estudio.html", "entreno/index.html",
     "entreno/mates.html", "entreno/practicas.html", "entreno/temas.html",
     "entreno/visualizacion.html", "entreno/aperturas.html",
-    "entreno/precision-posicional.html",
+    "entreno/precision-posicional.html", "entreno/tipos.html",
     "sonar.html",
     "cursos/academia/aperturas-y-defensas.html",
     "cursos/academia/arbitro-nacional.html",
@@ -139,6 +139,7 @@ SIN_ACCESO = {"cobros.html", "configuracion.html"}
 ATRIBUCION_EXTRA = {
     "entreno/temas.html": " Ejercicios tomados de la base abierta de Lichess (licencia CC0).",
     "entreno/visualizacion.html": " Ejercicios tomados de la base abierta de Lichess (licencia CC0).",
+    "entreno/tipos.html": " Posiciones tomadas de la base abierta de Lichess (licencia CC0).",
 }
 
 
@@ -579,6 +580,7 @@ NOMBRE_Y_PADRE = {
     "entreno/visualizacion.html": ("Visualización", "entreno/index.html"),
     "entreno/aperturas.html": ("Aperturas y celadas", "entreno/index.html"),
     "entreno/precision-posicional.html": ("Precisión posicional", "entreno/index.html"),
+    "entreno/tipos.html": ("Tipos de entrenamiento", "entreno/index.html"),
     "cursos/academia/index.html": ("Mis cursos", "clases.html"),
 }
 
