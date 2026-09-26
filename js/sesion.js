@@ -3929,6 +3929,8 @@
                 }
             }
             practiceEngineBusy = false;
+            // Tres intentos sin respuesta: el bot mueve igual (ver jugadaDeRespaldo).
+            if (!uci && typeof PracticeEngine !== "undefined") uci = PracticeEngine.jugadaDeRespaldo(practiceBoard.game.fen());
 
             if (uci) {
                 const move = practiceBoard.game.move({

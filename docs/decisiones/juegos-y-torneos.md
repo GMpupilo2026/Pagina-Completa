@@ -122,6 +122,31 @@ las de equivalencia.
   pasaría a comparar el evaluador contra la nada y daría verde sin comprobar
   nada. Es la misma trampa que ya documentaron los dobles de Supabase.
 
+## Con mate en uno en contra, Stockfish no miraba el reloj
+
+El bot con Stockfish (el de Oscar en `tablero.html`, la práctica contra el
+motor y «¿Qué jugarías?» en `sesion.html`, y los cursos) se quedaba «pensando»
+justo cuando el alumno tenía el mate en la mano, y el alumno no podía
+terminar la partida. Stockfish mira el reloj cada ~1000 nodos; en una posición
+en que le dan mate en uno recorre unos cientos por profundidad, así que nunca
+lo mira y `go movetime` no lo para: sigue hasta la profundidad 245. En una
+computadora tardaba 3 s en vez de 0,7; en un celular pasaba del timeout, la
+consulta volvía vacía y en `sesion.js` se reintentaba tres veces hasta decir
+que el motor no respondía.
+
+- Los tres motores (`js/chess-bot.js`, `js/practice-engine.js`,
+  `js/clases-engine.js`) mandan `go movetime N depth 40`
+  (`PROFUNDIDAD_MAXIMA`). En una posición normal el tiempo se acaba mucho antes
+  de la profundidad 40, así que la fuerza no cambia; con mate a la vista corta
+  en medio segundo.
+- Y si igual el motor no contesta, el bot mueve con
+  `PracticeEngine.jugadaDeRespaldo(fen)` (mate o captura si hay; si no, una
+  legal cualquiera) en vez de congelar la partida. El bot de Oscar ya tenía su
+  heurístico de respaldo.
+- `verificar-bot-mate-en-uno.js` mide el tiempo con mate en uno en contra en
+  los tres niveles de práctica y las tres dificultades del bot de Oscar. Sin el
+  tope de profundidad saltan cuatro comprobaciones.
+
 ## Las partidas de un torneo se pueden VER, y el candado lo pone la base
 
 Durante una ronda, las partidas eran invisibles. El único acceso a un cruce en

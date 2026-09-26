@@ -75,7 +75,7 @@
       return new Promise((resolve) => {
         pendingResolve = resolve;
         engine.postMessage("position fen " + fen);
-        engine.postMessage("go movetime " + movetimeMs);
+        engine.postMessage("go movetime " + movetimeMs + " depth " + SharedEngine.PROFUNDIDAD_MAXIMA);
         setTimeout(() => {
           if (pendingResolve === resolve) {
             pendingResolve = null;
