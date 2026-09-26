@@ -12,6 +12,9 @@
  *     demuestra jugada por jugada.
  *   - Descarte: toda candidata es legal, hay de las dos clases, y las que
  *     «pierden» quedan 2,5 peones o más por debajo de la peor que «aguanta».
+ *   - Siete diferencias: A y B difieren EXACTAMENTE en las casillas del
+ *     cambio, el golpe es legal en las dos, lo que el motor dijo (gana en A,
+ *     ya no en B) cumple los cortes y la refutación es legal en B.
  *   - La balanza: el material guardado es el de la posición y cada una cumple
  *     el criterio de su nivel.
  *   - Fotografía: la cantidad de piezas es la de la posición y cae en el rango
@@ -160,6 +163,40 @@ DATOS.descarte.forEach((x) => {
   const r = R.corregirDescarte(x, pierden.map((c) => c.san));
   ok("tachar justo las que pierden es perfecto (" + x.id + ")", r.perfecto);
   ok("no tachar nada no lo es (" + x.id + ")", !R.corregirDescarte(x, []).perfecto);
+});
+
+/* ---------- Siete diferencias ---------- */
+titulo("Siete diferencias");
+const TIPO_DIF = { 1: ["quitar"], 2: ["peon"], 3: ["mover"], 4: ["quitar", "peon", "mover"] };
+DATOS.diferencias.forEach((x) => {
+  ok("A es legal (" + x.id + ")", !!legal(x.fenA), x.fenA);
+  ok("A y B comparten turno, enroques y contadores (" + x.id + ")", x.fenA.split(" ").slice(1).join(" ") === x.fen.split(" ").slice(1).join(" "), x.fenA + " | " + x.fen);
+  ok("el tipo de cambio es el de su nivel (" + x.id + ")", TIPO_DIF[x.nivel].includes(x.cambio.tipo), x.cambio.tipo);
+  // las dos posiciones difieren EXACTAMENTE en las casillas del cambio
+  const A = R.tablero(x.fenA), B = R.tablero(x.fen);
+  const distintas = [];
+  for (let i = 0; i < 64; i++) {
+    const a = A[i] ? A[i].c + A[i].t : "", b = B[i] ? B[i].c + B[i].t : "";
+    if (a !== b) distintas.push(R.sq(i));
+  }
+  ok("A y B difieren solo donde dice el cambio (" + x.id + ")", distintas.sort().join() === x.cambio.casillas.slice().sort().join(), distintas.join() + " contra " + x.cambio.casillas.join());
+  const pa = A[R.idx(x.cambio.de)];
+  ok("la pieza del cambio está en A donde dice (" + x.id + ")", pa && pa.c + pa.t === x.cambio.pieza);
+  if (x.cambio.a) {
+    const pb = B[R.idx(x.cambio.a)];
+    ok("y en B donde dice (" + x.id + ")", pb && pb.c + pb.t === x.cambio.pieza && !B[R.idx(x.cambio.de)]);
+  } else ok("en B falta (" + x.id + ")", !B[R.idx(x.cambio.de)]);
+  ok("el texto nombra las casillas (" + x.id + ")", x.texto.includes(x.cambio.de) && (!x.cambio.a || x.texto.includes(x.cambio.a)), x.texto);
+  const gA = new Chess(x.fenA), gB = new Chess(x.fen);
+  ok("el golpe es legal en A (" + x.id + ")", !!gA.move(x.golpe));
+  ok("y en B (" + x.id + ")", !!gB.move(x.golpe));
+  ok("su castellano (" + x.id + ")", R.sanEs(x.golpe) === x.golpeEs);
+  if (x.mateA === 1) ok("en A promete mate en 1 y es mate (" + x.id + ")", gA.in_checkmate());
+  ok("en B el golpe no da mate (" + x.id + ")", !gB.in_checkmate());
+  ok("en A gana: mate o 2 peones (" + x.id + ")", (x.mateA && x.mateA > 0) || x.evalA >= 200, x.evalA);
+  ok("en B ya no: +0,8 o menos (" + x.id + ")", (x.mateB !== null && x.mateB < 0) || (x.mateB === null && x.evalB <= 80), x.evalB + " " + x.mateB);
+  (x.salvan || []).forEach((san) => ok("la refutación es legal en B tras el golpe: " + san + " (" + x.id + ")", !!new Chess(gB.fen()).move(san)));
+  ok("B no se repite con otra posición del banco (" + x.id + ")", DATOS.diferencias.filter((y) => y.fen === x.fen).length === 1);
 });
 
 /* ---------- 4. La balanza ---------- */

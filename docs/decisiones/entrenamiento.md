@@ -1226,10 +1226,11 @@ comprobaciones.
 ## Los Tipos de entrenamiento
 
 `entreno/tipos.html` (grupo y tarjeta **"🧠 Tipos de entrenamiento"** del hub)
-es una ficha con seis entrenamientos que no son «encuentra la mejor jugada»,
+es una ficha con siete entrenamientos que no son «encuentra la mejor jugada»,
 cada uno con sus niveles: **El Detective** (¿qué jugada se acaba de hacer?,
 análisis retrógrado), **¿Qué quiere el rival?** (profilaxis: hacer la jugada
-que amenaza el rival), **Descarte** (tachar las candidatas que pierden), **La
+que amenaza el rival), **Descarte** (tachar las candidatas que pierden),
+**Siete diferencias** (qué detalle hace que el mismo golpe ya no funcione), **La
 balanza** (poner la aguja de −5 a +5 contra el motor), **Fotografía** (memorizar
 una posición y reconstruirla) y **Con lo justo** (dar mate con rey y una o dos
 piezas contra el rey solo). Una sola página con tres vistas según el `#`:
@@ -1270,6 +1271,22 @@ enlace del profesor llevan a donde tienen que llevar.
   y no entra ninguna de la zona gris del medio, que no se podría corregir sin
   discutir. Entre las que pierden se prefieren capturas y jaques: son las que
   tientan.
+- **Siete diferencias** son dos posiciones: A, la de un ejercicio real, donde
+  el golpe gana, y B, la misma con UNA sola cosa cambiada (una pieza menos, un
+  peón una casilla más allá o más acá, una pieza en la casilla de al lado), donde
+  el mismo golpe ya no gana. Stockfish lo confirma en las dos: en A es la mejor
+  jugada y gana (mate o 2 peones); en B, jugado igual, queda en +0,8 o menos. Los
+  cambios se prueban cerca de la casilla del golpe, nunca sobre la pieza que lo
+  da ni sobre un rey. El nivel 4 son líneas largas donde el rival contesta en B
+  lo mismo que en A: la diferencia muerde más adelante. **A y B comparten todo
+  menos el cambio**: turno, contadores y derechos de enroque (solo los que valen
+  en las dos). La primera versión le dejaba a A sus enroques y a B ninguno, y
+  eso era una segunda diferencia escondida que el alumno no podía ver en el
+  tablero; el verificador exige ahora que el resto de la FEN sea idéntico. Se
+  contesta tocando la casilla o escribiéndola, y si en B hay pocas defensas que
+  refutan el golpe (tres o menos, analizadas en todas las respuestas), se pide
+  además la refutación. En B el golpe se nombra sin «+» ni «#»: ahí ya no es
+  ese mate.
 - **La balanza** guarda la evaluación a profundidad 18 y solo si a
   profundidad 12 decía casi lo mismo. Los niveles salen de comparar esa
   evaluación con el material: el material decide; parejo o leve; material
@@ -1322,4 +1339,6 @@ todo lo que cada banco promete y recalcula las tablas de finales; el segundo
 juega cada tipo en un navegador (Con lo justo, escribiendo cada jugada que
 elige la tabla exacta) y mide lo que se ve, no las clases. Está probado que
 fallan de verdad: cambiando la opción buena de un Detective, un mínimo, un
-material y una respuesta de Fotografía saltan 7 comprobaciones.
+material y una respuesta de Fotografía saltan 7 comprobaciones; en Siete
+diferencias, cambiando una casilla del cambio, una evaluación de B o los
+enroques de B saltan las 3 que corresponden.

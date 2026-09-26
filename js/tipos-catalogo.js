@@ -54,6 +54,19 @@
       ],
     },
     {
+      id: "diferencias", emoji: "🔍", nombre: "Siete diferencias",
+      pregunta: "¿Qué detalle hace que el golpe ya no funcione?",
+      entrena: "Comprobar las condiciones de una táctica antes de jugarla de memoria: el mismo golpe gana o pierde por un solo detalle.",
+      como: "Ves dos posiciones casi iguales. En A el golpe gana; en B, jugado igual, ya no. Encuentra la casilla que cambió y, si puedes, la respuesta del rival que lo refuta en B.",
+      clase: "Pon A en el tablero y que resuelvan el golpe; después pon B y pregunta por qué ya no sirve. Con «Preguntar la refutación» cada alumno busca cómo se defiende el rival en B.",
+      niveles: [
+        { n: 1, titulo: "Falta una pieza", desc: "En B hay una pieza menos." },
+        { n: 2, titulo: "Un peón de más o de menos", desc: "En B un peón está una casilla más adelante o más atrás." },
+        { n: 3, titulo: "Una pieza corrida", desc: "En B una pieza está en la casilla de al lado." },
+        { n: 4, titulo: "Se nota después", desc: "Líneas largas: el rival contesta igual, y la diferencia muerde más adelante." },
+      ],
+    },
+    {
       id: "balanza", emoji: "⚖️", nombre: "La balanza",
       pregunta: "¿Quién está mejor, y por cuánto?",
       entrena: "El juicio: evaluar una posición sin calcularla entera, más allá de contar peones.",

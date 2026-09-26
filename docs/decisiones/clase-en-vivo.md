@@ -1028,7 +1028,7 @@ golpe saltan 3 comprobaciones, sin la persistencia 1 y cruzando las posiciones 8
 
 ### Los Tipos de entrenamiento, en la clase
 
-La pestaña **"🧠 Entrenamientos"** del profesor lista los seis Tipos de
+La pestaña **"🧠 Entrenamientos"** del profesor lista los siete Tipos de
 entrenamiento de `entreno/tipos.html` (ver «Los Tipos de entrenamiento» en
 entrenamiento.md) en cascada tipo → nivel → ejercicio, con las mismas
 posiciones (`entreno/data/tipos.json`) y el mismo catálogo
@@ -1048,6 +1048,8 @@ como Táctica.
   posición del RIVAL (la respuesta correcta es su amenaza, y la referencia del
   motor la encuentra); Descarte «Preguntar» es «¿qué jugarías?»; Con lo justo
   «Practicar» arranca `practice_sessions` con el final y el motor al máximo;
+  Siete diferencias tiene «📥 A al tablero» y «📥 B al tablero», y
+  «❓ Preguntar la refutación» abre la pregunta con B DESPUÉS del golpe;
   Fotografía «📸 Mostrar N s y ocultar» pone la posición, la muestra y a los N
   segundos pone `pieces_hidden` —la misma columna del botón 🙈 Ocultar—, así
   que las piezas desaparecen de todos los tableros de verdad.

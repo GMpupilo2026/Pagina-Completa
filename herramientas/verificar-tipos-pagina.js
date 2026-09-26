@@ -1,9 +1,9 @@
 /* Comprueba entreno/tipos.html en un navegador de verdad: la ficha de los
- * Tipos de entrenamiento y los seis juegos, JUGADOS de punta a punta.
+ * Tipos de entrenamiento y los siete juegos, JUGADOS de punta a punta.
  *
  * Los bancos los comprueba herramientas/verificar-tipos.js sin navegador.
  * Esto es lo que solo se rompe mirando la pantalla:
- *   - sin sesión manda a iniciar sesión; con sesión, la ficha trae los seis
+ *   - sin sesión manda a iniciar sesión; con sesión, la ficha trae los siete
  *     tipos, cada uno con su encabezado y su enlace;
  *   - cada juego pinta LA posición de su ejercicio (se compara casilla por
  *     casilla contra la FEN del banco, no contra la página);
@@ -132,7 +132,7 @@ async function main() {
       enlace: li.querySelector("h2 a").getAttribute("href"),
       visible: li.checkVisibility(),
     })));
-    ok("seis fichas", fichas.length === 6, fichas.length);
+    ok("siete fichas", fichas.length === 7, fichas.length);
     ok("cada una con su encabezado y su enlace", fichas.every((f) => f.titulo && /^#[a-z-]+$/.test(f.enlace) && f.visible), JSON.stringify(fichas));
     ok("un solo h1", (await page.$$eval("#vista-fichas h1", (h) => h.length)) === 1);
     await page.click('#fichas li:first-child h2 a');
@@ -203,6 +203,39 @@ async function main() {
     ok("tres estrellas guardadas", (await estrellas(page))["descarte:" + item.id] === 3);
     const notas = await page.$$eval("#controles label", (ls) => ls.map((l) => l.textContent));
     ok("cada candidata dice si pierde o aguanta", notas.every((n) => /Pierde|Aguanta/.test(n)), notas.join(" | "));
+    ok("sin errores en consola", !errores.length, errores.join(" | "));
+    await ctx.close();
+  }
+
+  console.log("\n=== Siete diferencias ===");
+  {
+    const item = DATOS.diferencias.find((x) => x.nivel === 2 && x.salvan);
+    const { page, ctx, errores } = await abrir(browser, true, "#diferencias/2/" + item.id);
+    await page.waitForSelector("#vista-juego:not(.hidden) #tablero-a [data-square]");
+    await mismaPosicion(page, item.fen, "el tablero B pinta la posición B");
+    const vistoA = await page.$$eval("#tablero-a [data-square]", (cs) => cs.filter((c) => { const s = c.querySelector(".tp-pieza"); return s && s.checkVisibility(); }).map((c) => c.dataset.square).sort().join(","));
+    ok("el tablero A pinta la posición A", vistoA === ocupadasDe(item.fenA), vistoA);
+    ok("A se ve", await page.$eval("#tablero-a-caja", (e) => e.checkVisibility()));
+    // una casilla igual en las dos
+    const igual = ["a1", "h8", "d4", "e5", "b2"].find((s) => !item.cambio.casillas.includes(s));
+    await page.fill("#jugada-input", igual);
+    await page.press("#jugada-input", "Enter");
+    const t1 = await esperarEstado(page, /son iguales/);
+    ok("una casilla igual se rechaza", /son iguales/.test(t1), t1);
+    await page.click('#tablero [data-square="' + item.cambio.casillas[0] + '"]');
+    const t2 = await esperarEstado(page, /Ahí está/);
+    ok("la casilla del cambio es la buena", /Ahí está/.test(t2), t2);
+    // la refutación, escrita en castellano
+    const despues = new Chess(item.fen); despues.move(item.golpe);
+    await mismaPosicion(page, despues.fen(), "B después del golpe, para buscar la defensa");
+    await page.fill("#jugada-input", R.sanEs(item.salvan[0]));
+    await page.press("#jugada-input", "Enter");
+    const t3 = await esperarEstado(page, /refuta el golpe/);
+    ok("la refutación cuenta", /refuta el golpe/.test(t3), t3);
+    ok("dos estrellas (un error)", (await estrellas(page))["diferencias:" + item.id] === 2, JSON.stringify(await estrellas(page)));
+    const expl = await page.$eval("#explicacion", (e) => e.checkVisibility() ? e.textContent : "");
+    ok("la explicación dice qué cambió", expl.includes(item.texto), expl);
+    await page.screenshot({ path: "/tmp/tipos-diferencias.png", fullPage: true }).catch(() => {});
     ok("sin errores en consola", !errores.length, errores.join(" | "));
     await ctx.close();
   }
