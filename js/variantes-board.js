@@ -33,6 +33,7 @@
     constructor(boardEl, opts) {
       opts = opts || {};
       this.boardEl = boardEl;
+      if (window.Coordenadas) Coordenadas.aplicar(boardEl);   // letras y números por fuera (js/coordenadas-tablero.js)
       this.engine = opts.engine;
       this.myColor = opts.myColor || "w";
       this.flipped = this.myColor === "b";

@@ -135,8 +135,7 @@ function pintar() {
     b.classList.toggle("tesoro", recogido && !aqui);
     b.classList.toggle("pisada", !!l && !aqui && !recogido);
     b.classList.toggle("puede", legales.indexOf(sq) !== -1);
-    // El texto de la casilla se reemplaza, no las etiquetas de coordenadas.
-    [...b.childNodes].forEach((n) => { if (!(n.classList && n.classList.contains("coord-etiqueta"))) n.remove(); });
+    b.replaceChildren();
     let marca = "";
     if (aqui) marca = glifo;
     else if (recogido) marca = "💎";

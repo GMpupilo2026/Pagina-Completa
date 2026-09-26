@@ -47,6 +47,7 @@
     constructor(boardEl, topPocketEl, bottomPocketEl, opts) {
       opts = opts || {};
       this.boardEl = boardEl;
+      if (window.Coordenadas) Coordenadas.aplicar(boardEl);   // letras y números por fuera (js/coordenadas-tablero.js)
       this.topPocketEl = topPocketEl;
       this.bottomPocketEl = bottomPocketEl;
       this.interactive = !!opts.interactive;

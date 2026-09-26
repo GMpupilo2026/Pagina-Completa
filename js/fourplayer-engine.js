@@ -72,6 +72,14 @@
   function sq(c, r) {
     return c + "," + r;
   }
+  // El nombre que se VE: columnas a–n de izquierda a derecha y filas 1–14
+  // desde el lado de Rojo, como en cualquier tablero de cuatro ("d1" es la
+  // torre de Rojo). La casilla por dentro sigue siendo "3,0": eso es lo que
+  // viaja por la red y lo que guarda la partida.
+  function nombre(s) {
+    const { c, r } = parseSq(s);
+    return "abcdefghijklmn"[c] + (r + 1);
+  }
   function parseSq(s) {
     const parts = s.split(",");
     return { c: parseInt(parts[0], 10), r: parseInt(parts[1], 10) };
@@ -568,5 +576,5 @@
     }
   }
 
-  window.FourPlayerChess = { Game, SEATS, TURN_ORDER, TEAMMATE, isOnBoard, sq, parseSq, localRank, SEAT_INFO, PIECE_VALUE };
+  window.FourPlayerChess = { Game, SEATS, TURN_ORDER, TEAMMATE, isOnBoard, sq, parseSq, nombre, localRank, SEAT_INFO, PIECE_VALUE };
 })();
