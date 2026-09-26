@@ -698,6 +698,25 @@ ningún atributo `on…` ni `href="javascript:"`, y ningún archivo de `js/` que
 arme HTML con `onclick="…"` (un `innerHTML` así también es JavaScript en
 línea). `mudar-script.py` no muda esos cuatro: son de los generadores.
 
+**La CSP ya no tiene `'unsafe-inline'` en `script-src`.** Autoriza esos cuatro
+por su hash, que escribe `node herramientas/csp-hashes.js` en `_headers`.
+Ojo con el orden: en cuanto la CSP lleva un solo hash, el navegador **ignora**
+`'unsafe-inline'`, así que no se podía poner el primero antes de que no quedara
+ningún otro script en línea. Si un generador cambia su bloque, cambia su hash:
+`verificar-csp.js` falla (y dice que se corra `csp-hashes.js`) antes de que la
+página llegue a producción con su bloque bloqueado. `style-src` sigue con
+`'unsafe-inline'`: hay 64 atributos `style="…"`, y un estilo inyectado no
+ejecuta código.
+
+`verificar-csp-navegador.js` abre las más de 300 páginas con la CSP exacta de
+`_headers` (el sitio local no manda las cabeceras: se le pone a cada página
+interceptando la respuesta) y falla con cualquier violación de `script-src`.
+Antes comprueba que un `<script>` metido en la página **no** corra: si
+corriera, la CSP no se estaría aplicando y todo lo demás pasaría sin mirar.
+También prueba, con la CSP puesta, que la guardia manda al login sin sesión,
+que el modo oscuro se pone y que la hoja de fuentes se aplica al llegar. Roto a
+propósito (sin el hash del modo oscuro): las 115 páginas que lo llevan saltan.
+
 ### Sin sesión, al login antes de bajar nada
 
 Cada página de la Academia decide que no hay sesión en su propio script, **al

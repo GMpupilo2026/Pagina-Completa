@@ -18,7 +18,9 @@
  *   · que ninguna etiqueta lleve un atributo on… (onclick, onload…), ni un
  *     enlace un href="javascript:…";
  *   · que el código de js/ no arme HTML con atributos on… (un innerHTML con
- *     onclick="…" es JavaScript en línea igual, y la CSP también lo frena).
+ *     onclick="…" es JavaScript en línea igual, y la CSP también lo frena);
+ *   · que script-src en _headers no tenga 'unsafe-inline' y autorice por su
+ *     hash exactamente esos bloques (los escribe herramientas/csp-hashes.js).
  */
 const fs = require("fs");
 const path = require("path");
@@ -119,6 +121,23 @@ for (const f of fs.readdirSync(path.join(RAIZ, "js"))) {
 }
 if (armados.length) mal("HTML armado con atributos on… (la CSP también los frena):\n      " + armados.slice(0, 10).join("\n      "));
 else bien("ningún archivo de js/ arma HTML con atributos on…");
+
+console.log("\n=== La CSP de _headers ===");
+{
+  const { hashesDeLasPaginas, scriptSrc, BLOQUES } = require("./csp-hashes");
+  const fuentes = scriptSrc(fs.readFileSync(path.join(RAIZ, "_headers"), "utf8")) || [];
+  if (!fuentes.length) mal("no encontré script-src en la CSP de _headers");
+  if (fuentes.includes("'unsafe-inline'")) mal("script-src tiene 'unsafe-inline': cualquier <script> que alguien lograra meter en una página correría");
+  else bien("script-src no tiene 'unsafe-inline'");
+  const vistos = hashesDeLasPaginas();
+  const deseados = BLOQUES.map((b) => [...vistos[b]][0]).filter(Boolean);
+  const puestos = fuentes.filter((f) => /^'sha256-/.test(f));
+  const faltan = deseados.filter((h) => !puestos.includes(h));
+  const sobran = puestos.filter((h) => !deseados.includes(h));
+  if (faltan.length) mal("script-src no autoriza " + faltan.length + " de los bloques en línea (quedarían bloqueados en TODAS las páginas que los llevan). Corre: node herramientas/csp-hashes.js");
+  else bien("script-src autoriza por su hash los " + deseados.length + " bloques en línea");
+  if (sobran.length) mal("script-src autoriza hashes que ya no son de ningún bloque: " + sobran.join(" ") + ". Corre: node herramientas/csp-hashes.js");
+}
 
 console.log(fallos ? "\n" + fallos + " comprobación(es) fallaron" : "\nTodo bien.");
 process.exit(fallos ? 1 : 0);
