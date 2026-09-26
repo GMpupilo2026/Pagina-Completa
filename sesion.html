@@ -306,6 +306,9 @@
                     <div id="clase-cmd" class="max-w-[560px] mx-auto"></div>
 
                     <p id="turn-indicator" class="text-center text-brand-500 dark:text-brand-300 text-sm mt-4"></p>
+                    <!-- Solo quien sigue la clase: qué jugada anterior o qué variante está
+                         mostrando el profe (game_state.vista, ver pintarVistaDelProfe). -->
+                    <p id="vista-profe" hidden class="max-w-[560px] mx-auto mt-2 rounded-xl bg-brand-100 dark:bg-brand-900 px-4 py-2 text-center text-sm text-brand-600 dark:text-brand-300"></p>
                     <p id="arrows-hint" class="hidden text-center text-brand-450 dark:text-brand-350 text-xs mt-1">Clic derecho + arrastrar dibuja una flecha (repetirla en el mismo color la borra) · clic derecho sobre una casilla la marca con un círculo · elige el color abajo</p>
                     <!-- Color con el que se dibujan las PRÓXIMAS flechas/círculos (ver
                          js/clases-board.js#MARK_COLORS y setMarkColor). Los botones los arma
@@ -344,14 +347,15 @@
                         <div id="practice-boards-grid" class="grid gap-3"></div>
                     </div>
 
-                    <!-- Jugadas: se pueden recorrer hacia atrás sin afectar el tablero en vivo de nadie más.
-                         Solo para el profesor — al alumno este apartado le distrae y no lo puede usar de
-                         todos modos (navegar el historial es una herramienta del profesor). -->
+                    <!-- Jugadas: se pueden recorrer hacia atrás sin tocar la partida. Lo que el profesor
+                         mira, los alumnos lo ven en su tablero (game_state.vista). Solo para el profesor —
+                         al alumno este apartado le distrae y no lo puede usar de todos modos (navegar el
+                         historial es una herramienta del profesor). -->
                     <div id="moves-panel" class="hidden mt-4 bg-white dark:bg-brand-900 rounded-xl shadow-md p-4">
                         <div class="flex items-center justify-between gap-2 mb-2">
                             <h2 class="font-serif font-bold text-brand-800 dark:text-white text-sm">Jugadas</h2>
                             <div id="history-controls" class="hidden items-center gap-2">
-                                <span class="text-xs text-brand-450 dark:text-brand-350">Viendo una jugada anterior</span>
+                                <span class="text-xs text-brand-450 dark:text-brand-350">Viendo una jugada anterior · la clase ve lo mismo</span>
                                 <button id="history-fork-btn" class="hidden text-xs font-semibold px-2 py-1 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors">Jugar desde aquí</button>
                                 <button id="history-live-btn" class="text-xs font-semibold px-2 py-1 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors">Volver al final</button>
                             </div>
