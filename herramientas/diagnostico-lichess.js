@@ -48,7 +48,7 @@
  */
 const fs = require("fs");
 const path = require("path");
-const { spawn } = require("child_process");
+const { Motor: MotorUci } = require("./lib/motor-uci");
 const { Chess } = require("chess.js");
 
 const RAIZ = path.join(__dirname, "..");
@@ -74,62 +74,7 @@ function escalon(elo) {
 
 const PREFIJO = { reglas: "reg", material: "mat", apertura: "ap", tactica: "tac", mate: "mate", finales: "fin", estrategia: "est", calculo: "cal", maestria: "mae" };
 
-/* ---------- motor ---------- */
-class Motor {
-  constructor() {
-    this.p = spawn(MOTOR);
-    this.buf = "";
-    this.esperando = null;
-    this.lineas = [];
-    this.p.stdout.on("data", (d) => {
-      this.buf += d.toString();
-      let i;
-      while ((i = this.buf.indexOf("\n")) >= 0) {
-        const l = this.buf.slice(0, i).trim();
-        this.buf = this.buf.slice(i + 1);
-        this.lineas.push(l);
-        if (this.esperando && this.esperando.fin(l)) {
-          const r = this.esperando;
-          this.esperando = null;
-          r.ok(this.lineas.splice(0));
-        }
-      }
-    });
-    this.enviar("uci");
-    this.enviar("setoption name Hash value 128");
-    this.enviar("setoption name Threads value 1");
-  }
-  enviar(c) { this.p.stdin.write(c + "\n"); }
-  pedir(cmds, fin) {
-    return new Promise((ok) => {
-      this.lineas = [];
-      this.esperando = { fin, ok };
-      cmds.forEach((c) => this.enviar(c));
-    });
-  }
-  /* MultiPV: devuelve [{uci, score (cp, mate = ±100000-n), pv}] ordenado. */
-  async analizar(fen, multipv, profundidad, searchmoves) {
-    this.enviar(`setoption name MultiPV value ${multipv}`);
-    const lineas = await this.pedir([
-      "ucinewgame", `position fen ${fen}`,
-      `go depth ${profundidad}${searchmoves ? " searchmoves " + searchmoves.join(" ") : ""}`,
-    ], (l) => l.startsWith("bestmove"));
-    const porPv = {};
-    lineas.forEach((l) => {
-      if (!l.startsWith("info") || !/ depth (\d+)/.test(l) || !/ pv /.test(l)) return;
-      const prof = +/ depth (\d+)/.exec(l)[1];
-      if (prof !== profundidad) return;
-      const n = +((/ multipv (\d+)/.exec(l) || [0, 1])[1]);
-      const m = / score (cp|mate) (-?\d+)/.exec(l);
-      if (!m) return;
-      const v = m[1] === "cp" ? +m[2] : (+m[2] > 0 ? 100000 - +m[2] : -100000 - +m[2]);
-      const pv = l.split(" pv ")[1].split(" ");
-      porPv[n] = { uci: pv[0], score: v, pv, mate: m[1] === "mate" ? +m[2] : null };
-    });
-    return Object.keys(porPv).sort((a, b) => a - b).map((k) => porPv[k]);
-  }
-  cerrar() { this.enviar("quit"); }
-}
+/* ---------- motor: herramientas/lib/motor-uci.js ---------- */
 
 /* ---------- notación en castellano ---------- */
 const LETRA = { K: "R", Q: "D", R: "T", B: "A", N: "C" };
@@ -361,7 +306,7 @@ async function main() {
   // Un motor por procesador: cada uno toma la siguiente candidata pendiente.
   const pendientes = cand.filter((c) => !cache[c[2]]);
   let hechos = 0;
-  const motores = Array.from({ length: Math.max(1, require("os").cpus().length) }, () => new Motor());
+  const motores = Array.from({ length: Math.max(1, require("os").cpus().length) }, () => new MotorUci(MOTOR));
   await Promise.all(motores.map(async (motor) => {
     while (pendientes.length) {
       const c = pendientes.shift();

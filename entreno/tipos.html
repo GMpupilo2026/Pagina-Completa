@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"><!-- guardia: inicio --><script>(function(){try{if(window.sb||localStorage.getItem("sb-bgtijpimpcokxatxxbki-auth-token"))return;}catch(e){return;}try{window.stop()}catch(e){}location.replace("../login.html?next="+encodeURIComponent("entreno/tipos.html"));})();</script><!-- guardia: fin -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="../img/favicon.svg">
+<title>Tipos de entrenamiento — Entreno — Ajedrez Integral</title>
+<meta name="description" content="Seis entrenamientos distintos, con niveles: el Detective, ¿qué quiere el rival?, Descarte, la balanza, Fotografía y Con lo justo.">
+<meta name="robots" content="noindex">
+    <!-- Tailwind compilado: lo genera herramientas/css-construir.js.
+         Antes venía del CDN, que baja ~400 KB de JavaScript y compila el CSS
+         dentro del navegador en cada visita. -->
+    <link rel="stylesheet" href="../css/tailwind.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="../css/styles.css">
+<script>
+    (function () {
+        try {
+            var t = localStorage.getItem('theme');
+            if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+        } catch (e) {}
+    })();
+</script>
+<script src="../js/tarea-en-curso.js" defer></script>
+<style>
+  /* Tipos de entrenamiento. Los colores salen de las variables del tema del
+     sitio (--c-brand-*, --c-accent-*); las casillas, de las del tablero
+     elegido (--sq-light / --sq-dark), y las piezas las pinta PiezaPreferida
+     con el juego de piezas elegido. */
+  .tp-tablero{display:grid; grid-template-columns:repeat(8,minmax(0,1fr)); grid-template-rows:repeat(8,minmax(0,1fr));
+    width:100%; max-width:420px; aspect-ratio:1/1; margin:0 auto; border:2px solid rgb(var(--c-brand-700)); position:relative;}
+  .tp-tablero .sq{position:relative; display:flex; align-items:center; justify-content:center; min-height:0; min-width:0;
+    font-size:min(7vw,34px); line-height:1; border:0; padding:0; margin:0; cursor:default; user-select:none;}
+  .tp-tablero button.sq{cursor:pointer;}
+  .tp-tablero .sq.light{background:var(--sq-light, #f0d9b5);}
+  .tp-tablero .sq.dark{background:var(--sq-dark, #b58863);}
+  .tp-tablero .sq > span{pointer-events:none;}
+  .tp-tablero .sq.sel{box-shadow:inset 0 0 0 4px rgb(var(--c-accent-500));}
+  .tp-tablero .sq.destino::after{content:""; position:absolute; width:26%; height:26%; border-radius:50%; background:rgba(16,42,67,.35);}
+  .tp-tablero .sq.ultima{box-shadow:inset 0 0 0 4px rgba(222,145,29,.75);}
+  /* Marcas de la corrección de Fotografía: el color nunca va solo, cada una
+     lleva su signo escrito en la esquina (✓ bien, ✗ mal, + sobra, − falta). */
+  .tp-tablero .sq[data-marca]::before{content:attr(data-marca); position:absolute; top:1px; right:3px; font:700 12px/1 Inter,sans-serif;
+    color:#102a43; background:rgba(255,255,255,.85); border-radius:3px; padding:1px 3px;}
+  .tp-tablero .sq.m-bien{box-shadow:inset 0 0 0 3px #2f7a3d;}
+  .tp-tablero .sq.m-mal{box-shadow:inset 0 0 0 3px #b3261e;}
+  .tp-tablero.oculto .sq > span{visibility:hidden;}
+  .tp-tablero:focus-within{outline:none;}
+  .tp-tablero .sq:focus-visible{outline:3px solid rgb(var(--c-accent-500)); outline-offset:-3px; z-index:1;}
+  .tp-paleta button[aria-pressed="true"]{box-shadow:0 0 0 3px rgb(var(--c-accent-500));}
+  .tp-aguja{width:100%; accent-color:rgb(var(--c-accent-500));}
+  .tp-estrellas{letter-spacing:2px;}
+  @media (prefers-reduced-motion: reduce){ .tp-anim{transition:none !important;} }
+</style>
+
+    <script src="../js/piece-color-themes.js"></script>
+    <script src="../js/piece-style-themes.js"></script>
+    <script src="../js/board-color-themes.js"></script>
+    <script src="../js/adaptive-mode.js"></script>
+
+
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="../js/pwa.js" defer></script><!-- app: fin --><!-- tema: inicio --><script>(function(){try{var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');var f=localStorage.getItem('plataforma_tema_fuente_v1');if(!f||!/^[A-Za-z0-9 ]{2,32}$/.test(f))return;var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family='+f.replace(/ /g,'+')+':wght@400;500;600;700&display=swap';document.head.appendChild(l);}catch(e){}})();</script><!-- tema: fin --></head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a id="marca-enlace" href="../clases.html" class="flex items-center gap-2 text-white min-w-0"><span class="text-3xl" aria-hidden="true">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><div class="flex items-center gap-2"><a id="ayuda-guia" href="../guia-del-profesor-accesible.html#cap-8" target="_blank" rel="noopener" class="hidden text-white font-bold text-lg w-9 h-9 items-center justify-center rounded-lg border border-white/40 hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Ayuda: capítulo «Entrenamiento» de la guía del profesor (se abre en otra pestaña)" title="Guía del profesor: Entrenamiento"><span aria-hidden="true">?</span></a><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></div></nav></header><!-- migas: inicio --><div class="bg-brand-900"><nav id="migas" aria-label="Estás en" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 text-sm"><ol class="flex flex-wrap items-center gap-x-2 gap-y-1"><li class="flex items-center gap-2"><a href="../clases.html" class="text-brand-200 underline underline-offset-2 hover:text-accent-400 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🏛️ </span>Academia</a></li><li class="flex items-center gap-2"><span aria-hidden="true" class="text-brand-400">›</span><a href="index.html" class="text-brand-200 underline underline-offset-2 hover:text-accent-400 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Entrenamiento</a></li><li class="flex items-center gap-2"><span aria-hidden="true" class="text-brand-400">›</span><span aria-current="page" class="font-semibold text-white">Tipos de entrenamiento</span></li></ol></nav></div><!-- migas: fin -->
+
+<!-- ===== GATE: exige sesión de Academia ===== -->
+<div id="gate" class="min-h-[calc(100vh-5rem)] flex items-center justify-center px-4">
+    <div class="w-full max-w-sm text-center">
+        <p class="text-5xl mb-4" aria-hidden="true">🧠</p>
+        <h1 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-2">Tipos de entrenamiento</h1>
+        <p id="gate-checking" class="text-brand-500 dark:text-brand-300 mb-4">Comprobando tu sesión…</p>
+    </div>
+</div>
+
+<!-- ===== MAIN APP =====
+     Tres vistas en la misma página, según el #: sin nada, las seis fichas;
+     #detective, los niveles de ese tipo; #detective/2, el juego del nivel 2.
+     Así el botón «atrás» del navegador y el enlace que manda el profesor
+     funcionan igual. Ver «Los Tipos de entrenamiento» en
+     docs/decisiones/entrenamiento.md. -->
+<main id="app" class="hidden pt-8 pb-16">
+  <div id="main-content" class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+
+    <!-- ---------- Las fichas ---------- -->
+    <section id="vista-fichas" aria-labelledby="titulo-fichas">
+      <div class="text-center mb-8">
+        <h1 id="titulo-fichas" class="font-serif text-3xl md:text-4xl font-bold text-brand-800 dark:text-white mb-2">Tipos de entrenamiento <span aria-hidden="true">🧠</span></h1>
+        <p class="text-brand-500 dark:text-brand-300 max-w-2xl mx-auto">Seis formas distintas de entrenar, cada una con sus niveles. No son ejercicios de «encuentra la mejor jugada»: cada una entrena una habilidad que casi nunca se practica sola.</p>
+      </div>
+      <ul id="fichas" class="grid gap-5 md:grid-cols-2 list-none p-0 m-0"></ul>
+    </section>
+
+    <!-- ---------- Los niveles de un tipo ---------- -->
+    <section id="vista-tipo" class="hidden" aria-labelledby="titulo-tipo">
+      <p class="mb-3"><a href="#" class="text-sm text-brand-500 dark:text-brand-300 underline underline-offset-2 hover:text-accent-700 dark:hover:text-accent-400 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500">← Todos los tipos</a></p>
+      <h1 id="titulo-tipo" class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white mb-1"></h1>
+      <p id="tipo-pregunta" class="text-brand-600 dark:text-brand-300 font-semibold mb-2"></p>
+      <p id="tipo-como" class="text-sm text-brand-500 dark:text-brand-300 mb-5 max-w-3xl"></p>
+      <ul id="niveles" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 list-none p-0 m-0"></ul>
+    </section>
+
+    <!-- ---------- El juego ---------- -->
+    <section id="vista-juego" class="hidden" aria-labelledby="titulo-juego">
+      <p class="mb-3"><a id="volver-tipo" href="#" class="text-sm text-brand-500 dark:text-brand-300 underline underline-offset-2 hover:text-accent-700 dark:hover:text-accent-400 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500">← Niveles</a></p>
+      <div class="flex flex-wrap items-baseline justify-between gap-2 mb-1">
+        <h1 id="titulo-juego" class="font-serif text-xl md:text-2xl font-bold text-brand-800 dark:text-white"></h1>
+        <p id="juego-progreso" class="text-sm text-brand-500 dark:text-brand-300"></p>
+      </div>
+      <p id="juego-desc" class="text-sm text-brand-500 dark:text-brand-300 mb-4"></p>
+
+      <div class="grid gap-6 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)] items-start">
+        <div>
+          <p id="juego-turno" class="text-center text-sm text-brand-600 dark:text-brand-300 mb-2"></p>
+          <div id="tablero" class="tp-tablero" aria-label="Tablero del ejercicio"></div>
+          <p id="lectura" class="hidden mt-3 text-sm text-brand-600 dark:text-brand-300 bg-white dark:bg-brand-900 rounded-lg p-3"></p>
+        </div>
+        <div>
+          <h2 id="juego-enunciado" class="font-semibold text-brand-800 dark:text-white mb-3"></h2>
+          <div id="controles"></div>
+          <form id="jugada-form" class="hidden mt-4 flex flex-wrap gap-2 items-end">
+            <label for="jugada-input" id="jugada-label" class="w-full text-sm text-brand-600 dark:text-brand-300">Escribe la jugada</label>
+            <input id="jugada-input" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Cf3, Dxh7+, 0-0" class="flex-1 min-w-0 bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-brand-800 dark:text-brand-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500">
+            <button type="submit" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Jugar</button>
+          </form>
+          <p id="estado" role="status" class="mt-4 text-sm min-h-[1.5em] text-brand-700 dark:text-brand-200"></p>
+          <div id="explicacion" class="hidden mt-3 text-sm bg-white dark:bg-brand-900 rounded-lg p-4 text-brand-700 dark:text-brand-200"></div>
+          <div class="mt-5 flex flex-wrap gap-2">
+            <button type="button" id="btn-anterior" class="text-sm font-semibold px-4 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">← Anterior</button>
+            <button type="button" id="btn-otra-vez" class="text-sm font-semibold px-4 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">↺ Otra vez</button>
+            <button type="button" id="btn-siguiente" class="text-sm font-semibold px-4 py-2 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Siguiente →</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados. Posiciones tomadas de la base abierta de Lichess (licencia CC0).</p><!-- legal: inicio --><p class="mt-2"><a href="../privacidad.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Política de privacidad</a> <span aria-hidden="true">·</span> <a href="../terminos.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Términos y condiciones</a></p><!-- legal: fin --></div></footer>
+<!-- tablero-js: inicio -->
+<script src="../js/board-themes.js"></script>
+<script src="../js/chess-piece-svg.js"></script>
+<script src="../js/pieza-preferida.js"></script>
+<!-- tablero-js: fin -->
+<script src="../js/vendor/supabase.js"></script>
+<script src="../js/supabase-client.js"></script>
+<script src="../js/tiempo-plataforma.js" data-activity="tipos"></script>
+<script src="../js/main.js"></script>
+<script src="../js/coordenadas-tablero.js"></script>
+<script src="../js/vendor/chess.js"></script>
+<script src="../js/tablero-accesible.js"></script>
+<script src="../js/blind-notation.js"></script>
+<script src="../js/chess-move-parser.js"></script>
+<script src="../js/progreso-usuario.js"></script>
+<script src="../js/tipos-catalogo.js"></script>
+<script src="../js/tipos-reglas.js"></script>
+<script src="../js/entreno-tipos.js"></script>
+<!-- burbuja: inicio --><script src="../js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="../js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- acceso: inicio --><script src="../js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="../js/modo-vista.js" defer></script><!-- modo-vista: fin --><!-- marca: inicio --><script src="../js/marca-academia.js" defer></script><!-- marca: fin --><!-- ayuda: inicio --><script src="../js/ayuda-guia.js" defer></script><!-- ayuda: fin --><!-- atajo: inicio --><script src="../js/atajo-buscar.js" data-arriba="../" defer></script><!-- atajo: fin --></body>
+</html>

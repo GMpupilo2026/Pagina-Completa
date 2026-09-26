@@ -1026,6 +1026,38 @@ viera lo que entra por ahí dejaría la galería en blanco), que al cambiar de t
 una siga funcionando. Está probado que falla de verdad: dibujándolas todas de
 golpe saltan 3 comprobaciones, sin la persistencia 1 y cruzando las posiciones 8.
 
+### Los Tipos de entrenamiento, en la clase
+
+La pestaña **"🧠 Entrenamientos"** del profesor lista los seis Tipos de
+entrenamiento de `entreno/tipos.html` (ver «Los Tipos de entrenamiento» en
+entrenamiento.md) en cascada tipo → nivel → ejercicio, con las mismas
+posiciones (`entreno/data/tipos.json`) y el mismo catálogo
+(`js/tipos-catalogo.js`). Es de las «avanzadas»: en modo sencillo se esconde,
+como Táctica.
+
+- **Toda posición entra por `aplicarPosicionEnClase()`**, como Táctica y
+  Archivos. Cada fila trae «👁 Vista previa» (el mismo lote de
+  `crearVistaPreviaLote()`, con su propia clave) y «📥 Al tablero».
+- **Lo que es la respuesta no viaja.** La opción buena del Detective, la
+  amenaza, qué candidatas pierden, el número del motor o el mínimo del final
+  van en «🔎 Respuesta», que se abre solo en la pantalla del profesor (con
+  `aria-expanded`) y ARRIBA de la vista previa: la lista tiene su propio
+  scroll, y debajo de un tablero quedaba fuera de la vista.
+- **Cada tipo usa la herramienta de la clase que ya existe**, no una nueva:
+  ¿Qué quiere el rival? «Preguntar» abre la pregunta de siempre con la
+  posición del RIVAL (la respuesta correcta es su amenaza, y la referencia del
+  motor la encuentra); Descarte «Preguntar» es «¿qué jugarías?»; Con lo justo
+  «Practicar» arranca `practice_sessions` con el final y el motor al máximo;
+  Fotografía «📸 Mostrar N s y ocultar» pone la posición, la muestra y a los N
+  segundos pone `pieces_hidden` —la misma columna del botón 🙈 Ocultar—, así
+  que las piezas desaparecen de todos los tableros de verdad.
+
+**Al tocarlo, correr `node herramientas/verificar-sesion-curso.js`**
+(prueba «Tipos de entrenamiento en la clase»): que los botones quepan en el
+panel, que cada uno mande la posición que es, que la respuesta no llegue a la
+base, que la práctica arranque con el final y que Fotografía mande primero la
+posición, después `pieces_hidden=false` y a los segundos `true`.
+
 ## La clase en vivo, sin ver la pantalla (y lo que quedaba de la Academia)
 
 Se recorrió la Academia como la recorre una persona ciega —Modo Adaptado
