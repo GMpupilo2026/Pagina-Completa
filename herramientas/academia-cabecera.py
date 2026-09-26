@@ -374,12 +374,23 @@ def poner_guardia(ruta, s):
     if not m:
         print(f"⚠️  {ruta}: no tiene <meta charset>, se queda sin guardia de sesión.")
         return s
-    arriba = "../" * ruta.count("/")
-    guardia = (GUARDIA_INICIO + "<script>(function(){try{if(window.sb||localStorage.getItem("
-               + json.dumps("sb-" + proyecto_supabase() + "-auth-token") + "))return;}catch(e){return;}"
-               + "try{window.stop()}catch(e){}location.replace(" + json.dumps(arriba + "login.html?next=") + "+encodeURIComponent("
-               + json.dumps(ruta) + "));})();</script>" + GUARDIA_FIN)
-    return s[:m.end()] + guardia + s[m.end():]
+    return s[:m.end()] + guardia() + s[m.end():]
+
+
+def guardia():
+    """La misma en todas las páginas, byte por byte: así la CSP la autoriza por
+    su hash una sola vez (ver cabecera-en-linea.py). Por eso no lleva escrita
+    su página: la saca de la dirección. Cloudflare sirve las páginas sin
+    `.html` (/entreno/estudio) y las carpetas con la barra (/entreno/), y el
+    login solo acepta un `next` que termine en .html, así que se le devuelve
+    la extensión. El login va con ruta absoluta por lo mismo: una relativa
+    cambiaría con la profundidad de la carpeta."""
+    return (GUARDIA_INICIO + "<script>(function(){try{if(window.sb||localStorage.getItem("
+            + json.dumps("sb-" + proyecto_supabase() + "-auth-token") + "))return;}catch(e){return;}"
+            + "try{window.stop()}catch(e){}"
+            + "var p=location.pathname.replace(/^\\/+/,'');"
+            + "if(!p||/\\/$/.test(p))p+='index.html';else if(!/\\.html$/.test(p))p+='.html';"
+            + "location.replace('/login.html?next='+encodeURIComponent(p));})();</script>" + GUARDIA_FIN)
 
 
 def poner_acceso(ruta, s):

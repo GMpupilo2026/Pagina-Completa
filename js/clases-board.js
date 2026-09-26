@@ -508,6 +508,22 @@
       this._setViewPath(fullPath, { parentNodeId: node.id, rootPly: node.root_ply });
     }
 
+    // Muestra la posición que está mirando el profesor (game_state.vista) en el
+    // tablero de quien lo sigue: {path, parent, root}, o null para la posición en
+    // vivo. Un camino que ya no cabe en la partida (datos viejos) se descarta.
+    showView(vista) {
+      if (!vista || !Array.isArray(vista.path)) { this.viewLive(); return; }
+      this._setViewPath(vista.path, { parentNodeId: vista.parent || null, rootPly: vista.root || 0 });
+    }
+
+    // Lo contrario de showView(): lo que se está mirando ahora, listo para
+    // guardarlo en game_state.vista (null = la posición en vivo).
+    currentView() {
+      if (!this.isViewingHistory()) return null;
+      const ctx = this._variantContext || { parentNodeId: null, rootPly: this.viewPath.length };
+      return { path: this.viewPath.slice(), parent: ctx.parentNodeId, root: ctx.rootPly };
+    }
+
     // Vuelve a mostrar la posición actual en vivo.
     viewLive() {
       this.viewGame = null;
@@ -831,7 +847,17 @@
       if (this.selected) {
         const move = g.moves({ square: this.selected, verbose: true }).find((m) => m.to === square);
         if (move) {
-          this.jugar({ from: this.selected, to: square, promotion: "q" });
+          const from = this.selected;
+          if (window.Coronacion && move.flags.indexOf("p") !== -1) {
+            // El peón corona: la pieza la elige quien juega (js/coronacion.js).
+            this.selected = null;
+            this.render();
+            window.Coronacion.pedir(g.turn(), (elegida) => {
+              if (elegida) this.jugar({ from, to: square, promotion: elegida });
+            });
+            return;
+          }
+          this.jugar({ from, to: square, promotion: move.promotion });
           return;
         }
       }

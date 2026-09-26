@@ -289,7 +289,10 @@ function blindHandleMoveGuess(raw){
     setStatus(`${window.BlindNotation.squareSpoken(from)} a ${window.BlindNotation.squareSpoken(to)} no es una jugada legal.`, 'bad');
     return;
   }
-  const moveResult = game.move({ from, to, promotion: 'q' });
+  moverPreguntandoCoronacion(from, to, blindResolverJugada);
+}
+
+function blindResolverJugada(moveResult){
   if(!moveResult) return;
   renderPositionReadout();
   const correct = currentLesson.anyLegalMove ||
@@ -566,21 +569,35 @@ function onSquareClick(square, btn){
       }
       return;
     }
-    const moveResult = game.move({ from: selectedSquare, to: square, promotion: 'q' });
+    const from = selectedSquare;
     selectedSquare = null;
     drawBoard();
-    if(!moveResult) return; // no debería pasar: ya se validó con .moves()
-
-    const correct = currentLesson.anyLegalMove ||
-      (currentLesson.solution && moveResult.from === currentLesson.solution.from && moveResult.to === currentLesson.solution.to);
-
-    if(correct){
-      finishLesson();
-    } else {
-      setStatus('Esa jugada es legal, pero no es la que buscamos. Intenta de nuevo.', 'bad');
-      setTimeout(() => { resetLesson(); }, 900);
-    }
+    moverPreguntandoCoronacion(from, square, (moveResult) => { drawBoard(); if(moveResult) resolverJugada(moveResult); });
   }
+}
+
+function resolverJugada(moveResult){
+  const correct = currentLesson.anyLegalMove ||
+    (currentLesson.solution && moveResult.from === currentLesson.solution.from && moveResult.to === currentLesson.solution.to);
+
+  if(correct){
+    finishLesson();
+  } else {
+    setStatus('Esa jugada es legal, pero no es la que buscamos. Intenta de nuevo.', 'bad');
+    setTimeout(() => { resetLesson(); }, 900);
+  }
+}
+
+/* Hace la jugada; si el peón corona, primero pregunta en qué pieza
+   (js/coronacion.js). alHacer(jugada) no se llama si se cancela. */
+function moverPreguntandoCoronacion(from, to, alHacer){
+  if(window.Coronacion && Coronacion.hayQueElegir(game, from, to)){
+    Coronacion.pedir(game.turn(), (elegida) => {
+      if(elegida && !lessonLocked) alHacer(game.move({ from, to, promotion: elegida }));
+    });
+    return;
+  }
+  alHacer(game.move({ from, to }));
 }
 
 // Arrastrar y soltar piezas (además del clic-clic de siempre): ver js/board-drag.js.

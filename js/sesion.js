@@ -65,11 +65,14 @@
         }
 
         function updateTurnIndicator() {
-            const turn = board.game.turn() === "w" ? "Blancas" : "Negras";
+            // El turno de la posición que se VE: si el profe está mostrando una
+            // jugada anterior o una variante, es el de esa, no el de la partida.
+            const g = board.viewGame || board.game;
+            const turn = g.turn() === "w" ? "Blancas" : "Negras";
             let text = `Turno: ${turn}`;
-            if (board.game.in_checkmate && board.game.in_checkmate()) text = `Jaque mate — ganan ${turn === "Blancas" ? "Negras" : "Blancas"}`;
-            else if (board.game.in_check && board.game.in_check()) text += " · ¡Jaque!";
-            else if (board.game.in_draw && board.game.in_draw()) text = "Tablas";
+            if (g.in_checkmate && g.in_checkmate()) text = `Jaque mate — ganan ${turn === "Blancas" ? "Negras" : "Blancas"}`;
+            else if (g.in_check && g.in_check()) text += " · ¡Jaque!";
+            else if (g.in_draw && g.in_draw()) text = "Tablas";
             document.getElementById("turn-indicator").textContent = text;
         }
 
@@ -169,7 +172,8 @@
 
         // ---------- Historial, variantes y sub-variantes ----------
         // navegar hacia atrás, explorar líneas alternativas y encadenarlas en sub-variantes,
-        // todo sin tocar el tablero en vivo de nadie más hasta que se pulsa "Jugar desde aquí".
+        // todo sin tocar la partida hasta que se pulsa "Jugar desde aquí". Los alumnos ven
+        // en su tablero lo que el profesor mira (ver transmitirVista).
         let variantNodes = [];
 
         async function loadVariantTree() {
@@ -208,7 +212,7 @@
             btn.className = "px-1 rounded hover:bg-brand-100 dark:hover:bg-brand-800 transition-colors italic text-accent-600 dark:text-accent-400" +
                 (isCurrent ? " bg-accent-500/30 font-bold not-italic" : "");
             btn.textContent = node.san;
-            btn.addEventListener("click", () => { board.viewVariantNode(node, fullPath); renderMoveList(); });
+            btn.addEventListener("click", () => { board.viewVariantNode(node, fullPath); renderMoveList(); transmitirVista(); });
             li.appendChild(btn);
             const children = variantChildrenOf(node.id);
             if (children.length) {
@@ -241,7 +245,7 @@
             btn.className = "px-1 rounded hover:bg-brand-100 dark:hover:bg-brand-800 transition-colors" +
                 (isCurrent ? " bg-accent-500/30 font-bold text-brand-800 dark:text-white" : "");
             btn.textContent = san;
-            btn.addEventListener("click", () => { board.viewMainAt(ply); renderMoveList(); });
+            btn.addEventListener("click", () => { board.viewMainAt(ply); renderMoveList(); transmitirVista(); });
             return btn;
         }
 
@@ -289,7 +293,72 @@
         document.getElementById("history-live-btn").addEventListener("click", () => {
             board.viewLive();
             renderMoveList();
+            transmitirVista();
         });
+
+        /* ---------- Los alumnos ven lo que mira el profesor ----------
+           Cuando el profesor se devuelve a una jugada anterior o recorre una
+           variante, eso no cambia la partida (sigue en game_state.moves), pero la
+           clase tiene que verlo: si no, el profe explica una posición y los alumnos
+           miran otra. Lo que mira se guarda en game_state.vista ({path, parent,
+           root}, o null = la posición en vivo) y cada tablero que sigue la clase lo
+           muestra. Va en la base y no en un mensaje suelto de Realtime para que
+           quien entra tarde, recarga o supervisa vea lo mismo. Solo el profesor la
+           cambia (el trigger protect_game_state_teacher_columns se la revierte a
+           cualquier otro). Ver «Los alumnos siguen lo que mira el profesor» en
+           docs/decisiones/clase-en-vivo.md. */
+        let ultimaVistaEnviada = null;
+        async function transmitirVista() {
+            if (!isTeacher || !myGameStateId) return;
+            const vista = board.currentView();
+            const clave = JSON.stringify(vista);
+            if (clave === ultimaVistaEnviada) return;
+            ultimaVistaEnviada = clave;
+            const { error } = await sb.from("game_state").update({ vista }).eq("id", myGameStateId);
+            if (error) { console.error(error); ultimaVistaEnviada = null; }
+        }
+
+        // "12. Nf3 Nc6 13. e4", o "12… Nc6 13. e4" si arranca con negras.
+        function numerarJugadas(path, desde) {
+            let numero = 1, turno = "w";
+            try {
+                const partes = (board.startFen || "").split(" ");
+                if (partes[1] === "b") turno = "b";
+                if (parseInt(partes[5], 10) > 0) numero = parseInt(partes[5], 10);
+            } catch (e) {}
+            const textos = [];
+            path.forEach((san, i) => {
+                if (i >= desde) {
+                    if (turno === "w") textos.push(numero + ". " + san);
+                    else textos.push(i === desde ? numero + "… " + san : san);
+                }
+                if (turno === "b") numero++;
+                turno = turno === "w" ? "b" : "w";
+            });
+            return textos.join(" ");
+        }
+
+        // Qué está mostrando el profe, dicho para el alumno (null = la posición en vivo).
+        function describirVista(vista) {
+            if (!vista || !Array.isArray(vista.path)) return null;
+            const principal = board.moves();
+            const root = Math.max(0, Math.min(vista.root || 0, vista.path.length));
+            const esVariante = vista.path.length > root || vista.path.some((san, i) => principal[i] !== san);
+            if (!esVariante) {
+                return vista.path.length
+                    ? "Tu profe volvió a una jugada anterior: " + numerarJugadas(vista.path, vista.path.length - 1) + "."
+                    : "Tu profe volvió a la posición de salida.";
+            }
+            return "Tu profe está mostrando una variante: " + numerarJugadas(vista.path, root) + ".";
+        }
+
+        function pintarVistaDelProfe() {
+            const el = document.getElementById("vista-profe");
+            if (!el) return;
+            const texto = isTeacher ? null : describirVista(board.currentView());
+            el.textContent = texto ? texto + " La partida sigue guardada: cuando vuelva al final, la verás de nuevo." : "";
+            el.hidden = !texto;
+        }
 
         document.getElementById("history-fork-btn").addEventListener("click", async () => {
             if (!canMoveNow() || !board.isViewingHistory()) return;
@@ -330,7 +399,18 @@
             // Mientras el profesor arma una posición a mano, el eco de Realtime (una
             // flecha, un cambio de control) no puede borrarle lo que lleva armado:
             // "Aplicar" la transmite y "Cancelar" vuelve a leer el estado de la base.
+            const primeraVez = !antes && !editando;
+            const vistaAntes = JSON.stringify(board.currentView());
             if (!editando) board.loadMoves(row.moves || [], row.start_fen);
+            /* Quien sigue la clase ve lo que mira el profe. El profe, en cambio, ya
+               tiene su vista en el tablero: solo la retoma al cargar la página (la
+               suya propia de antes de recargar), no con cada eco. */
+            if (!isTeacher && !editando) board.showView(row.vista || null);
+            else if (isTeacher && primeraVez && row.vista) {
+                board.showView(row.vista);
+                ultimaVistaEnviada = JSON.stringify(board.currentView());
+            }
+            const vistaCambio = JSON.stringify(board.currentView()) !== vistaAntes;
             board.setMarks(row.arrows || [], row.circles || []);
             // Ocultar piezas es una herramienta del profesor sobre el tablero de LOS ALUMNOS:
             // en su propio tablero el profesor siempre las ve, aunque la columna esté en true.
@@ -339,6 +419,10 @@
             lastPiecesHidden = !!row.pieces_hidden;
             if (claseAcc) {
                 if (!editando) claseAcc.anunciarCambio(antes, { inicio: row.start_fen || "", jugadas: row.moves || [] });
+                if (!isTeacher && antes && vistaCambio) {
+                    claseAcc.decir((describirVista(board.currentView()) || "Tu profe volvió a la posición de la partida.")
+                        + " Escribe \"posición\" para oírla.");
+                }
                 if (!isTeacher && ocultabaAntes !== board.piecesHidden) {
                     claseAcc.decir(board.piecesHidden
                         ? "Tu profe ocultó las piezas: ahora hay que ver el tablero de memoria."
@@ -350,6 +434,7 @@
             updateTurnIndicator();
             updateAccessForRole();
             renderMoveList();
+            pintarVistaDelProfe();
             renderStudentsList();
             updateHideBoardBtn();
             if (isTeacher) updateEngineEval();
@@ -374,12 +459,16 @@
             const hasControl = activePlayerId === profile.id;
             const colorLabel = activePlayerColor === "w" ? "blancas" : activePlayerColor === "b" ? "negras" : null;
             const myColorTurn = !hasControl || activePlayerColor === "both" || activePlayerColor === board.game.turn();
-            board.setInteractive(hasControl && myColorTurn);
+            // Mientras el profe muestra otra posición, una jugada del alumno sería
+            // sobre la que ve y no sobre la partida: se espera a que vuelva.
+            const profeMuestraOtra = board.isViewingHistory();
+            board.setInteractive(hasControl && myColorTurn && !profeMuestraOtra);
             let text = "Bienvenido a la clase. Verás el tablero moverse en vivo mientras el profesor juega.";
             if (hasControl) {
                 text = colorLabel
                     ? ("¡El profesor te dio el control con " + colorLabel + "! " + (myColorTurn ? "Ya puedes mover." : "Espera a que le toque a tu color."))
                     : "¡El profesor te dio el control del tablero! Ya puedes mover piezas.";
+                if (profeMuestraOtra) text = "Tienes el control, pero tu profe está mostrando otra posición: cuando vuelva a la partida, vas a poder mover.";
             }
             setStatus(text);
         }
@@ -995,8 +1084,10 @@
             const motivo = motivoPosicionInvalida(fen);
             if (motivo) { setStatus(motivo); return false; }
             board.loadMoves([], fen);
+            board.viewLive();
+            ultimaVistaEnviada = "null";
             const { error } = await sb.from("game_state").update({
-                fen, moves: [], start_fen: fen, last_move: null,
+                fen, moves: [], start_fen: fen, last_move: null, vista: null,
                 arrows: [], circles: [], active_player_id: null, active_player_color: "both",
                 updated_by: session.user.id, updated_at: new Date().toISOString(),
             }).eq("id", myGameStateId);
@@ -1028,9 +1119,13 @@
                 last_move: moves.length ? moves[moves.length - 1] : null,
                 arrows: [],
                 circles: [],
+                // Jugar en la partida (o «Jugar desde aquí») es mirar la posición
+                // en vivo. A un alumno con el control el trigger se la deja como estaba.
+                vista: null,
                 updated_by: session.user.id,
                 updated_at: new Date().toISOString(),
             }, extraFields || {})).eq("id", myGameStateId);
+            if (isTeacher) ultimaVistaEnviada = "null";
             if (error) {
                 console.error(error);
                 setStatus("No se pudo guardar el cambio: " + error.message);
@@ -1318,12 +1413,15 @@
                 onMarksChange: (marks) => pushMarksToServer(marks),
                 onVariantMove: async (san, fullPath, context) => {
                     const fen = board.viewGame.fen();
+                    // La clase ve la jugada de la variante ya, sin esperar a la base.
+                    transmitirVista();
                     const { data, error } = await sb.from("variant_nodes").insert({
                         parent_id: context.parentNodeId, root_ply: context.rootPly, san, fen,
                         created_by: session.user.id, teacher_id: boardOwnerId,
                     }).select().single();
                     if (error) { console.error(error); setStatus("No se pudo guardar la variante: " + error.message); return; }
                     board.setVariantParent(data.id);
+                    transmitirVista();
                     await loadVariantTree();
                 },
             });
@@ -1435,11 +1533,44 @@
             const total = board.moves().length;
             board.viewMainAt(Math.max(0, Math.min(ply, total)));
             renderMoveList();
+            transmitirVista();
+        }
+
+        /* ◀ y ▶ dentro de una variante se quedan en ELLA: ◀ vuelve a la jugada
+           anterior de la variante (y de la primera, a la línea principal de donde
+           nace) y ▶ sigue por su continuación. Antes ◀ saltaba siempre a la línea
+           principal, y para retomar la variante había que buscarla en la lista. */
+        function nodoQueSeVe() {
+            const ctx = board.isViewingHistory() ? board.getVariantContext() : null;
+            if (!ctx || ctx.parentNodeId === null) return null;
+            return variantNodes.find((v) => v.id === ctx.parentNodeId) || null;
+        }
+
+        function stepBack() {
+            const nodo = nodoQueSeVe();
+            if (!nodo) { stepToPly(currentViewedPly() - 1); return; }
+            const path = board.viewPath.slice(0, -1);
+            const padre = nodo.parent_id !== null ? variantNodes.find((v) => v.id === nodo.parent_id) : null;
+            if (padre) board.viewVariantNode(padre, path);
+            else board.viewMainAt(nodo.root_ply);
+            renderMoveList();
+            transmitirVista();
+        }
+
+        function stepForward() {
+            if (!board.isViewingHistory()) return;
+            const ctx = board.getVariantContext();
+            if (!ctx || ctx.parentNodeId === null) { stepToPly(currentViewedPly() + 1); return; }
+            const hijo = variantChildrenOf(ctx.parentNodeId)[0];
+            if (!hijo) return;
+            board.viewVariantNode(hijo, board.viewPath.concat([hijo.san]));
+            renderMoveList();
+            transmitirVista();
         }
 
         document.getElementById("move-nav-first").addEventListener("click", () => stepToPly(0));
-        document.getElementById("move-nav-prev").addEventListener("click", () => stepToPly(currentViewedPly() - 1));
-        document.getElementById("move-nav-next").addEventListener("click", () => stepToPly(currentViewedPly() + 1));
+        document.getElementById("move-nav-prev").addEventListener("click", stepBack);
+        document.getElementById("move-nav-next").addEventListener("click", stepForward);
         document.getElementById("move-nav-last").addEventListener("click", () => stepToPly(board.moves().length));
 
         // ---------- Ocultar piezas a los alumnos (solo profesor) ----------
@@ -4310,6 +4441,7 @@
 
         document.getElementById("reset-board-btn").addEventListener("click", async () => {
             board.reset();
+            board.viewLive(); // la clase vuelve a la partida (vista null): el profe también
             board.setMarks([], []);
             await pushBoardState();
             await clearVariantTree();
