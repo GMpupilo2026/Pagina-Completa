@@ -919,8 +919,53 @@ las 2 del cliente recortado.
 
 ## El panel de Administración
 
-`admin.html` es de quien administra y tiene dos mitades: los atajos de arriba y
-la lista de cuentas.
+`admin.html` es de quien administra. Lo que hace está en las secciones de
+abajo (atajos, cuentas, profesores…); cómo se reparte en la pantalla, en «El
+panel de Administración, por secciones».
+
+### El panel de Administración, por secciones
+
+Era **una sola página larguísima**: el botón de Informes, «Ver como», los
+atajos, cinco tarjetas plegadas (crear cuenta, novedades, profesores,
+supervisores, equipos) y al final la lista de cuentas. Para llegar a Equipos
+había que saber que estaba ahí y bajar; lo plegado no se encontraba. Se pidió
+algo «más sencillo de usar», con la forma de un tablero: menú a la izquierda y
+tarjetas.
+
+- **Un menú a la izquierda y UNA sección a la vista**: Inicio, Cuentas, Crear
+  cuenta, Profesores, Supervisores, Equipos, Novedades y Herramientas (los
+  atajos de siempre). En el celular el menú es una tira de arriba que se
+  desliza. Cada sección es un `<section data-seccion>` y la muestra `irA()` de
+  `js/admin.js`; **los ids de adentro no cambiaron**, así que todo el resto del
+  código siguió igual. Ya no hay `<details>`: una sección no se pliega.
+- **La dirección lleva la sección** (`admin.html#equipos`): atrás/adelante del
+  navegador y un enlace guardado llevan a la misma.
+- **«Inicio» dice cómo está la plataforma de un vistazo**: cuántas cuentas,
+  estudiantes, profesores y **cuántos alumnos sin profesor** (resaltado, porque
+  esos no salen en los informes de nadie). **Cada número lleva a esas
+  cuentas**, con el filtro puesto: un número que no lleva a nadie obliga a ir a
+  buscarlos. Se cuentan sobre la lista entera que ya se pedía de mil en mil;
+  contarlos aparte habría sido un segundo lugar donde cortarse a las mil.
+  Debajo, Informes de toda la plataforma (sigue siendo la puerta grande y va
+  antes que los atajos), «Lo de todos los días» —crear cuenta, buscar,
+  solicitudes, cobros, supervisión y accesos, que también siguen en su lugar de
+  siempre— y «Ver como».
+- **El buscador de cuentas está arriba, en todas las secciones**: buscar a
+  alguien es lo que más se hace acá. Escribir lleva a Cuentas. Si se viene de
+  otra sección, **se quita el filtro de rol** que hubiera quedado puesto: no se
+  ve desde ahí, y seguiría escondiendo gente sin que se note.
+- El número de alumnos sin profesor va también **en el menú**, junto a
+  «Profesores», y no solo dentro de esa sección: antes iba en el encabezado de
+  la tarjeta plegada justamente para que plegarla no lo escondiera.
+- **Los colores son los del sitio** (el azul de la marca y el ámbar de los
+  botones), no los de la imagen de referencia: son los que ya tienen el
+  contraste medido y los que cambian con el tema de la plataforma.
+- `verificar-admin.js` mide con `checkVisibility()` que al entrar se vea solo
+  Inicio, que los números salgan de las 1205 cuentas de prueba (con 1000 se
+  habría vuelto a pedir de un solo tiro), que cada número lleve a sus cuentas,
+  que buscar desde otra sección lleve a Cuentas sin el filtro viejo y que
+  `#supervisores` abra Supervisores. Las pruebas que tocan una sección van
+  primero a ella con el menú, como una persona.
 
 ### Los atajos, por grupos
 

@@ -203,7 +203,7 @@ async function pruebaAtajos(browser) {
 
   const grupos = await page.evaluate(() =>
     Array.from(document.querySelectorAll("#atajos section")).map((s) => ({
-      titulo: s.querySelector("h2").textContent,
+      titulo: s.querySelector("h3").textContent,
       enlaces: Array.from(s.querySelectorAll("a")).map((a) => a.getAttribute("href")),
       etiquetas: Array.from(s.querySelectorAll("a span span:first-child")).map((n) => n.textContent),
     })));
@@ -246,6 +246,73 @@ async function pruebaAtajos(browser) {
     if (tema && !temas.includes(tema)) rotos.push(href + " (informes.html no tiene ese tema)");
   }));
   igual("todos los atajos llevan a algo que existe", rotos.join(" | ") || "ninguno roto", "ninguno roto");
+
+  igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+}
+
+/* Ir a una sección del panel como una persona: con el menú de la izquierda. */
+async function irA(page, seccion) {
+  await page.click('.admin-nav[data-ir="' + seccion + '"]');
+  await page.waitForFunction((s) => {
+    const sec = document.querySelector('[data-seccion="' + s + '"]');
+    return sec && sec.checkVisibility();
+  }, seccion, { timeout: 5000 });
+}
+
+/* ====================== admin.html · las secciones ======================
+   El panel muestra UNA sección a la vez. Lo que se rompe callado: que dos se
+   vean juntas (vuelve la página larguísima), que un número de «Inicio» diga
+   una cosa y lleve a otra, o que la dirección con #sección no abra esa. Lo
+   que se ve se MIDE con checkVisibility(), no con el atributo. */
+async function pruebaSecciones(browser) {
+  console.log("\n=== Las secciones del panel ===");
+  const { page, ctx, errores } = await abrir(browser, "/admin.html", ADMIN);
+  await page.goto(BASE + "/admin.html", { waitUntil: "networkidle" });
+  await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
+  const visibles = () => page.evaluate(() =>
+    Array.from(document.querySelectorAll("[data-seccion]")).filter((s) => s.checkVisibility()).map((s) => s.dataset.seccion));
+
+  igual("al entrar se ve SOLO «Inicio»", await visibles(), ["inicio"]);
+  igual("y el menú lo marca como la página actual",
+    await page.getAttribute('.admin-nav[aria-current="page"]', "data-ir"), "inicio");
+  igual("el saludo lleva el nombre de quien entra",
+    /^(Buenos días|Buenas tardes|Buenas noches), Oscar$/.test(await page.textContent("#admin-saludo")), true);
+
+  /* Los números salen de la lista entera (1205, pedida de mil en mil), no del
+     primer pedazo: con 1000 acá, algo se volvió a pedir de un solo tiro. */
+  const numeros = await page.evaluate(() =>
+    Array.from(document.querySelectorAll("#inicio-numeros button span.min-w-0")).map((b) => b.innerText.replace(/\s+/g, " ").trim()));
+  igual("los números de Inicio, con la lista entera",
+    numeros, ["1 205 cuentas en total", "1 203 estudiantes", "1 profesor", "3 sin profesor asignado"]);
+  igual("el menú avisa de los sin profesor, con el número",
+    await page.evaluate(() => { const b = document.getElementById("nav-sin-profesor"); return b.checkVisibility() ? b.textContent : "no se ve"; }), "3");
+
+  // Cada número lleva a ESAS cuentas.
+  await page.click("#inicio-numeros li:nth-child(4) button");
+  await page.waitForFunction(() => /3 cuentas/.test(document.getElementById("users-summary").textContent), { timeout: 10000 });
+  igual("«sin profesor» lleva a Cuentas con ese filtro",
+    [await visibles(), await page.evaluate(() => document.getElementById("role-filter").value)],
+    [["cuentas"], "sin-profesor"]);
+  igual("y la dirección dice dónde se está", await page.evaluate(() => location.hash), "#cuentas");
+
+  await page.goBack();
+  await page.waitForFunction(() => document.querySelector('[data-seccion="inicio"]').checkVisibility(), { timeout: 5000 });
+  bien("«Atrás» del navegador vuelve a Inicio");
+
+  // El buscador está arriba en todas: escribir lleva a Cuentas.
+  // Y el filtro «sin profesor» de recién quedó puesto, escondido: si siguiera
+  // mandando, Ana (que tiene profesora) no saldría y no se sabría por qué.
+  await irA(page, "equipos");
+  igual("el menú cambia de sección", await visibles(), ["equipos"]);
+  await page.fill("#user-search", "ramirez");
+  await page.waitForFunction(() => /1 cuenta/.test(document.getElementById("users-summary").textContent), { timeout: 10000 });
+  igual("buscar desde otra sección lleva a Cuentas con lo encontrado", await visibles(), ["cuentas"]);
+
+  // Una dirección con #sección abre esa.
+  await page.goto(BASE + "/admin.html#supervisores", { waitUntil: "networkidle" });
+  await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
+  igual("admin.html#supervisores abre Supervisores", await visibles(), ["supervisores"]);
 
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
@@ -303,6 +370,7 @@ async function pruebaFichasDeGrupo(browser) {
      es el error caro acá. */
   // Las confirmaciones son de js/avisos.js: se aprietan como una persona.
   await page.evaluate(contestarAvisos);
+  await irA(page, "cuentas");
   await page.selectOption("#grupos-fichas article:first-of-type select", PROFE.id);
   const lote = await esperarLlamada("assign_bulk");
   igual("la ficha manda a todo el grupo, no a una página de él", lote.target_ids.length, "401");
@@ -326,6 +394,7 @@ async function pruebaCuentasDeUnGrupo(browser) {
     (await resumen()).trim(), "1205 cuentas en 2 grupos. Abre uno para ver las suyas.");
 
   // Abrir 7B: 401 alumnos, de 50 en 50.
+  await irA(page, "cuentas");
   await page.click("#grupos-fichas article:first-of-type button");
   await page.waitForFunction(() => !document.getElementById("users-panel").hidden, { timeout: 10000 });
   igual("se abre con su nombre a la vista", await page.textContent("#users-panel-title"), "7B");
@@ -383,11 +452,10 @@ async function pruebaBuscarEntreGrupos(browser) {
   await page.waitForFunction(() => /3 cuentas/.test(document.getElementById("users-summary").textContent), { timeout: 10000 });
   bien("filtrar por «Sin profesor asignado» deja los 3 que no tienen — esos no salen en los informes de nadie");
 
-  // El aviso de arriba los deja a la vista de un clic. Vive dentro de la
-  // tarjeta "Profesores", que ahora arranca cerrada (<details>): hay que
-  // abrirla antes de poder hacerle clic al botón.
+  // El aviso de arriba los deja a la vista de un clic. Vive en la sección
+  // «Profesores»: hay que ir a ella, y el botón tiene que traer de vuelta.
   await page.selectOption("#role-filter", "");
-  await page.evaluate(() => { document.getElementById("sin-profesor-aviso").closest("details").open = true; });
+  await irA(page, "profesores");
   await page.click("#sin-profesor-aviso button");
   await page.waitForFunction(() => /3 cuentas/.test(document.getElementById("users-summary").textContent), { timeout: 10000 });
   igual("y el aviso de «alumnos sin profesor» los deja a la vista de un clic",
@@ -404,6 +472,7 @@ async function pruebaElNombreNoSeCorta(browser) {
   await page.goto(BASE + "/admin.html", { waitUntil: "networkidle" });
   await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
   // Hay que abrir un grupo: al entrar se ven las fichas, no las cuentas.
+  await irA(page, "cuentas");
   await page.click("#grupos-fichas article:first-of-type button");
   await page.waitForFunction(() => document.querySelectorAll("#users-body input[type=text]").length > 0, { timeout: 10000 });
 
@@ -763,6 +832,7 @@ async function pruebaVolcarEnUnEquipo(browser) {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
     await pruebaAtajos(browser);
+    await pruebaSecciones(browser);
     await pruebaFichasDeGrupo(browser);
     await pruebaVolcarEnUnEquipo(browser);
     await pruebaCuentasDeUnGrupo(browser);
