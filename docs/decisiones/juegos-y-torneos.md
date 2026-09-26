@@ -302,6 +302,28 @@ el control.
   ronda no se puede borrar desde el navegador (no tiene política de delete),
   pero una sala sí: si falla alguna, se borran las creadas y no se abre nada.
 
+### Empezar y generar una ronda, una sola vez
+
+«Generar ronda» fallaba en cada clic con `duplicate key value violates unique
+constraint "tournament_rounds_tournament_id_round_number_key"`, sin salida. Lo
+que pasó (leído en los registros de la base): «Empezar torneo» corrió **dos
+veces** —un segundo clic mientras se armaba la ronda 1, porque la página no se
+repinta hasta que todo termina— y la segunda vez dejó `current_round` en 0 con
+la ronda 1 ya creada. Desde ahí la página pedía siempre la ronda 1. Les pasó a
+dos torneos en curso; la migración `torneo_no_retrocede_de_ronda` los reparó.
+
+- **Un botón que arma algo no corre dos veces**: `unaVez()` en `js/torneo.js`
+  apaga el botón y descarta el segundo clic hasta que termina.
+- **Empezar es condicional** (`.eq("status", "registration").select("id")`): si
+  ya había empezado, lo dice y no toca nada.
+- **El número de la ronda se cuenta también con las rondas que existen**
+  (`rondaActual()`, y `generateRound()` las vuelve a pedir antes): si
+  `current_round` se queda atrás, la ronda siguiente sigue siendo la correcta.
+- **Y la base lo garantiza**: `proteger_torneo()` no deja bajar
+  `current_round` ni volver a `'registration'` un torneo que ya empezó, a nadie
+  (tampoco a quien organiza). Comprobado impersonando al organizador: volver a
+  empezarlo y bajarle la ronda quedan revertidos.
+
 **Al tocar `torneo.html`, `js/cartas-board.js` o el arranque de cualquiera de las
 páginas de partida, correr `node herramientas/verificar-torneo-en-vivo.js`** (con
 el sitio en localhost:8777, playwright y `npm install chess.js@0.10.3`). Comprueba
