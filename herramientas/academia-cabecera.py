@@ -97,16 +97,14 @@ BURBUJA_FIN = "<!-- burbuja: fin -->"
 JUEGO_AVISO_INICIO = "<!-- juego-aviso: inicio -->"
 JUEGO_AVISO_FIN = "<!-- juego-aviso: fin -->"
 
-# Dos páginas de la Academia se quedan SIN burbuja, y por razones distintas:
+# Tres páginas de la Academia se quedan SIN burbuja, y por razones distintas:
 #
-#   - sesion.html ya tiene el chat de la clase y su lista de alumnos
-#     conectados, en un panel hecho para eso. La burbuja encima sería el
-#     mismo destino dos veces —el error que el panel ya cometió con
-#     "Torneos"— y encima de un tablero.
+#   - sesion.html ya tiene su lista de alumnos conectados, en un panel hecho
+#     para eso. La burbuja encima sería el mismo destino dos veces —el error
+#     que el panel ya cometió con "Torneos"— y encima de un tablero.
 #   - examen.html es un examen con reloj, una sola oportunidad por pregunta
 #     y pantalla completa. Un panel que se despliega ahí es justo la
-#     distracción que el antitrampa viene a evitar, y el mensaje sigue
-#     estando cuando termine.
+#     distracción que el antitrampa viene a evitar.
 #   - tienda.html es un catálogo de venta, y la burbuja le tapaba LITERALMENTE
 #     el botón de pedido: la barra de la selección va fija abajo y la burbuja
 #     flota en esa misma esquina, así que "Pedir por WhatsApp" quedaba debajo
@@ -121,7 +119,7 @@ SIN_BURBUJA = {"sesion.html", "examen.html", "tienda.html"}
 # viene a evitar. En sesion.html sí va: ahí también hay alumnos, y "el profesor
 # te asignó una partida en Juegos" no tiene nada que ver con la clase en vivo
 # que ya ocupa esa pantalla — la única razón por la que sesion.html no lleva
-# burbuja es que YA tiene su propio chat, y eso no aplica acá.
+# burbuja es que YA tiene su propia lista de conectados, y eso no aplica acá.
 SIN_JUEGO_AVISO = {"examen.html"}
 
 # El control del acceso (js/acceso-vigente.js) va en todas menos dos, y las dos
