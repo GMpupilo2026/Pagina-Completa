@@ -257,14 +257,24 @@
             const mv = CuadroComandos.jugadaPedida(copia, texto);
             if (!mv) { api.decir('"' + texto + '" no es una jugada legal en esta posición. Revísala e inténtalo de nuevo.'); return; }
             api.limpiar().decir("");
-            attemptMove(mv.from, mv.to);
+            attemptMove(mv.from, mv.to, mv.promotion);
         }
 
-        function attemptMove(from, to) {
-            const isCorrect = (from + to) === currentSolution.slice(0, 4);
-            const move = game.move({ from, to, promotion: "q" });
+        function attemptMove(from, to, promotion) {
+            // Si el peón corona y todavía no se dijo en qué, se pregunta (js/coronacion.js).
+            if (!promotion && window.Coronacion && Coronacion.hayQueElegir(game, from, to)) {
+                selected = null;
+                renderBoard();
+                Coronacion.pedir(game.turn(), (elegida) => {
+                    if (elegida && running && !resultLocked) attemptMove(from, to, elegida);
+                });
+                return;
+            }
+            const move = game.move({ from, to, promotion });
             selected = null;
             if (!move) { renderBoard(); return; }
+            const isCorrect = (from + to) === currentSolution.slice(0, 4) &&
+                (currentSolution.length < 5 || currentSolution[4] === move.promotion);
             if (isCorrect) onCorrect(); else onFail("wrong");
         }
 

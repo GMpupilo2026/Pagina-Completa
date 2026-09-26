@@ -557,3 +557,42 @@ que está sobre un degradado, porque contra un degradado no hay un número únic
   Había 38 casos de `text-brand-300 dark:text-brand-600`, que es el par al
   revés: el tono claro sobre fondo claro (1.95) y el oscuro sobre fondo oscuro
   (1.93). Los dos ilegibles, en las dos pantallas.
+
+## Coronar: la pieza la elige quien juega
+
+Un peón que llega a la última fila se convierte en dama, torre, alfil o
+caballo, y **la elección es de quien juega, en todos los tableros**. Varios
+tableros mandaban `promotion: "q"` fijo: la clase en vivo, los torneos y las
+partidas (`js/clases-board.js`), el bot, el tablero del examen
+(`js/tablero-pregunta.js`), Racha táctica, ¡Te reto!, el diagnóstico,
+Aprender, Prácticas y Tipos de entrenamiento. El peón se volvía dama sin
+preguntar. No daba ningún error: solo que la subpromoción —a veces la única
+jugada que gana, o la única que no ahoga— no se podía jugar, y en los
+ejercicios que la piden la respuesta correcta era imposible.
+
+- **La pregunta es una sola**, `js/coronacion.js`: `Coronacion.pedir(color,
+  alElegir)` abre un `<dialog>` modal con las cuatro piezas (dibujadas como
+  las eligió el alumno, con `PiezaPreferida`, y **con el nombre escrito**: la
+  figura nunca va sola). El foco arranca en la dama, las flechas pasan de una
+  a otra y Enter elige; Escape o «Cancelar» devuelven `null` y la jugada no se
+  hace. `Coronacion.hayQueElegir(juego, desde, hasta)` dice si hace falta
+  preguntar.
+- Lo pone `herramientas/tablero-cabecera.py` en toda página con tablero. Las
+  que arman el tablero entero desde su `js/` (Racha táctica, ¡Te reto!, el
+  diagnóstico, Aprender, Prácticas) no dejaban rastro en el HTML y el script
+  no las veía: van nombradas en `TIENE_TABLERO`.
+- Los tableros de las variantes (`niebla-board`, `crazyhouse-board`,
+  `cartas-board`, `duelo-board`, `variantes-board`, `fourplayer-board`) ya
+  preguntaban por `onPromotionNeeded`; el bot se lo pasaba contestando
+  `cb("q")`. Ahora le pasa `Coronacion.pedir`.
+- **Una jugada ESCRITA no pregunta**: si dice la pieza (`e8=C`) se juega esa,
+  y si no la dice, dama, que es lo que se entiende al escribir `e8`
+  (`js/comandos-tablero.js`).
+- Donde la solución guardada corona (Racha táctica, ¡Te reto!, el diagnóstico),
+  la pieza cuenta: coronar dama cuando la solución es caballo ya no es un
+  acierto.
+
+`verificar-coronacion.js` barre `js/` buscando una jugada con la dama escrita a
+mano, mira que cada página con esos tableros cargue el módulo, y en el
+navegador prueba el diálogo (teclado, Escape, foco, contraste en claro y
+oscuro) y que el tablero del examen juegue `a8=C` cuando se elige el caballo.

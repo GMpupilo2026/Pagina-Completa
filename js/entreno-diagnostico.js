@@ -556,12 +556,27 @@ function clicEnCasilla(square) {
     document.getElementById('q-hint').textContent = pistaDeJugada();
     return;
   }
-  const intento = juego.move({ from: origenElegido, to: square, promotion: 'q' });
+  if (window.Coronacion && Coronacion.hayQueElegir(juego, origenElegido, square)) {
+    // El peón corona: la pieza la elige el alumno (a veces la respuesta es una subpromoción).
+    const desde = origenElegido;
+    origenElegido = null;
+    Coronacion.pedir(juego.turn(), (elegida) => {
+      if (elegida) responderJugada(juego, juego.move({ from: desde, to: square, promotion: elegida }));
+      else { pintarTablero(juego); document.getElementById('q-hint').textContent = pistaDeJugada(); }
+    });
+    return;
+  }
+  const intento = juego.move({ from: origenElegido, to: square });
   if (!intento) {
     // Si hay otra pieza propia, se cambia de pieza en vez de no hacer nada.
     if (pieza && pieza.color === juego.turn()) { origenElegido = null; clicEnCasilla(square); }
     return;
   }
+  responderJugada(juego, intento);
+}
+
+function responderJugada(juego, intento) {
+  if (!intento) return;
   seleccion = { from: intento.from, to: intento.to, promotion: intento.promotion, san: intento.san };
   pintarTablero(juego, [intento.from, intento.to]);
   document.getElementById('q-hint').textContent =

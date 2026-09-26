@@ -206,6 +206,12 @@
       if (tab.sel && tab.destinos.indexOf(s) >= 0) {
         const m = juego.moves({ verbose: true }).find((x) => x.from === tab.sel && x.to === s);
         tab.sel = null; tab.destinos = [];
+        if (m && m.promotion && window.Coronacion) {
+          // El peón corona: la pieza la elige el alumno (js/coronacion.js).
+          pintar();
+          Coronacion.pedir(juego.turn(), (elegida) => { if (elegida) alMover({ from: m.from, to: m.to, promotion: elegida }); });
+          return;
+        }
         if (m) { alMover({ from: m.from, to: m.to, promotion: m.promotion ? "q" : undefined }); return; }
       }
       if (p && p.color === juego.turn()) {

@@ -659,6 +659,13 @@ function empezar() {
     if (ad.turno() !== miColor) setTimeout(turnoDelBot, 500);
 }
 
+// El peón que corona se vuelve la pieza que elija quien juega (js/coronacion.js).
+// El tablero la llama como (from, to, cb): cb(pieza) juega, cb(null) cancela.
+function elegirCoronacion(from, to, cb) {
+    if (!window.Coronacion) { cb("q"); return; }
+    Coronacion.pedir(miColor, cb);
+}
+
 function montarTablero(m) {
     const el = $("board");
     el.innerHTML = "";
@@ -668,8 +675,8 @@ function montarTablero(m) {
         onMove: alMover,
         // El tablero llama a esto como (from, to, cb), no (info, cb) — pasarle
         // menos parámetros de los que espera deja `cb` apuntando a la casilla
-        // de destino en vez de al callback, y `cb("q")` truena.
-        onPromotionNeeded: (from, to, cb) => cb("q"),
+        // de destino en vez de al callback, y `cb(pieza)` truena.
+        onPromotionNeeded: elegirCoronacion,
     };
     if (m.tablero === "niebla") {
         board = new NieblaBoard(el, Object.assign({ spectator: !!m.spectator }, comun));
@@ -859,7 +866,7 @@ function empezarDuelo() {
     board = new DueloBoard(el, {
         interactive: true,
         myColor: miColor,
-        onPromotionNeeded: (from, to, cb) => cb("q"),
+        onPromotionNeeded: elegirCoronacion,
         onStagedChange: actualizarDuelo,
     });
     pintarHistorial();
