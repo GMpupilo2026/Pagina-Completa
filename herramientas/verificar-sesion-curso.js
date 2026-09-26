@@ -36,7 +36,8 @@
       botón mande la posición del ejercicio SIN abrir ninguna pregunta.
 
    5. QUE LOS TIPOS DE ENTRENAMIENTO LLEGUEN BIEN A LA CLASE: cada botón manda
-      la posición que es (la del rival al preguntar la amenaza), la respuesta
+      la posición que es (la del rival al preguntar la amenaza; A o B en Siete
+      diferencias, y B tras el golpe al preguntar la refutación), la respuesta
       no viaja, Con lo justo arranca la práctica con su final y Fotografía
       oculta de verdad las piezas a los segundos.
 
@@ -489,7 +490,7 @@ async function pruebaTipos(browser) {
   const { page, ctx, errores } = await abrir(browser, [PROFE, ALUMNA], "u-profe");
   await page.click("#teacher-tab-tipos");
   await page.waitForSelector("#tipos-body button", { timeout: 30000 });
-  igual("los seis tipos", await page.$$eval("#tipos-body > div > button", (b) => b.length), 6);
+  igual("los siete tipos", await page.$$eval("#tipos-body > div > button", (b) => b.length), 7);
 
   async function abrirNivel(nombreTipo, nivel) {
     // Preguntar y Practicar se van a su pestaña: se vuelve a la de Entrenamientos
@@ -538,6 +539,31 @@ async function pruebaTipos(browser) {
   const preg = await page.evaluate(() => (window.__inserts.find((i) => i.tabla === "questions") || {}).fila);
   igual("Amenaza: la pregunta va con la posición del rival", preg.fen, ame.fenRival);
   igual("y una sola jugada", preg.expected_plies, 1);
+
+  // Siete diferencias: A y B tienen cada una su botón, y la refutación se
+  // pregunta con B DESPUÉS del golpe.
+  await abrirNivel("Siete diferencias", 1);
+  const difs = DATOS.diferencias.filter((x) => x.nivel === 1);
+  const k = difs.findIndex((x) => x.salvan);
+  const dif = difs[k];
+  const filaDif = page.locator("#tipos-body li").nth(k);
+  const fueraDif = await page.evaluate(() => {
+    const caja = document.getElementById("tipos-panel").getBoundingClientRect();
+    return Array.from(document.querySelectorAll("#tipos-body li button")).filter((x) => x.getBoundingClientRect().right > caja.right + 0.5).length;
+  });
+  igual("Siete diferencias: sus cuatro botones caben en el panel", fueraDif, 0);
+  for (const [boton, fen] of [["A al tablero", dif.fenA], ["B al tablero", dif.fen]]) {
+    await page.evaluate(() => { window.__updates = []; });
+    await filaDif.getByRole("button", { name: boton }).click();
+    await page.waitForFunction(() => window.__updates.some((u) => u.tabla === "game_state"));
+    igual("Siete diferencias: «" + boton + "» manda su posición", await page.evaluate(() => window.__updates.find((u) => u.tabla === "game_state").campos.fen), fen);
+  }
+  await page.evaluate(() => { window.__updates = []; window.__inserts = []; });
+  await filaDif.getByRole("button", { name: "Preguntar la refutación" }).click();
+  await page.waitForFunction(() => window.__inserts.some((i) => i.tabla === "questions"));
+  const { Chess } = require("chess.js");
+  const trasGolpe = new Chess(dif.fen); trasGolpe.move(dif.golpe);
+  igual("y la refutación se pregunta con B después del golpe", await page.evaluate(() => window.__inserts.find((i) => i.tabla === "questions").fila.fen), trasGolpe.fen());
 
   // Con lo justo: «Practicar» arranca la práctica contra el motor con ESE final.
   await abrirNivel("Con lo justo", 2);

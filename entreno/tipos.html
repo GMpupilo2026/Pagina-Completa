@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="../img/favicon.svg">
 <title>Tipos de entrenamiento — Entreno — Ajedrez Integral</title>
-<meta name="description" content="Seis entrenamientos distintos, con niveles: el Detective, ¿qué quiere el rival?, Descarte, la balanza, Fotografía y Con lo justo.">
+<meta name="description" content="Siete entrenamientos distintos, con niveles: el Detective, ¿qué quiere el rival?, Descarte, Siete diferencias, la balanza, Fotografía y Con lo justo.">
 <meta name="robots" content="noindex">
     <!-- Tailwind compilado: lo genera herramientas/css-construir.js.
          Antes venía del CDN, que baja ~400 KB de JavaScript y compila el CSS
@@ -49,6 +49,8 @@
   .tp-tablero.oculto .sq > span{visibility:hidden;}
   .tp-tablero:focus-within{outline:none;}
   .tp-tablero .sq:focus-visible{outline:3px solid rgb(var(--c-accent-500)); outline-offset:-3px; z-index:1;}
+  .tp-tablero.tp-mini{max-width:260px;}
+  .tp-tablero.tp-mini .sq{font-size:min(4.5vw,22px);}
   .tp-paleta button[aria-pressed="true"]{box-shadow:0 0 0 3px rgb(var(--c-accent-500));}
   .tp-aguja{width:100%; accent-color:rgb(var(--c-accent-500));}
   .tp-estrellas{letter-spacing:2px;}
@@ -76,7 +78,7 @@
 </div>
 
 <!-- ===== MAIN APP =====
-     Tres vistas en la misma página, según el #: sin nada, las seis fichas;
+     Tres vistas en la misma página, según el #: sin nada, las siete fichas;
      #detective, los niveles de ese tipo; #detective/2, el juego del nivel 2.
      Así el botón «atrás» del navegador y el enlace que manda el profesor
      funcionan igual. Ver «Los Tipos de entrenamiento» en
@@ -88,7 +90,7 @@
     <section id="vista-fichas" aria-labelledby="titulo-fichas">
       <div class="text-center mb-8">
         <h1 id="titulo-fichas" class="font-serif text-3xl md:text-4xl font-bold text-brand-800 dark:text-white mb-2">Tipos de entrenamiento <span aria-hidden="true">🧠</span></h1>
-        <p class="text-brand-500 dark:text-brand-300 max-w-2xl mx-auto">Seis formas distintas de entrenar, cada una con sus niveles. No son ejercicios de «encuentra la mejor jugada»: cada una entrena una habilidad que casi nunca se practica sola.</p>
+        <p class="text-brand-500 dark:text-brand-300 max-w-2xl mx-auto">Siete formas distintas de entrenar, cada una con sus niveles. No son ejercicios de «encuentra la mejor jugada»: cada una entrena una habilidad que casi nunca se practica sola.</p>
       </div>
       <ul id="fichas" class="grid gap-5 md:grid-cols-2 list-none p-0 m-0"></ul>
     </section>
@@ -113,6 +115,12 @@
 
       <div class="grid gap-6 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)] items-start">
         <div>
+          <!-- Siete diferencias: la posición A, fija y más chica, arriba de la B. -->
+          <div id="tablero-a-caja" class="hidden mb-5">
+            <p id="tablero-a-titulo" class="text-center text-sm font-semibold text-brand-700 dark:text-brand-200 mb-2"></p>
+            <div id="tablero-a" class="tp-tablero tp-mini"></div>
+            <p id="lectura-a" class="hidden mt-2 text-sm text-brand-600 dark:text-brand-300 bg-white dark:bg-brand-900 rounded-lg p-3"></p>
+          </div>
           <p id="juego-turno" class="text-center text-sm text-brand-600 dark:text-brand-300 mb-2"></p>
           <div id="tablero" class="tp-tablero" aria-label="Tablero del ejercicio"></div>
           <p id="lectura" class="hidden mt-3 text-sm text-brand-600 dark:text-brand-300 bg-white dark:bg-brand-900 rounded-lg p-3"></p>

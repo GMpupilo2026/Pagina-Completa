@@ -372,7 +372,7 @@
   }
 
   const TiposReglas = {
-    tablero, colocacion, sq, idx, sanEs, otro, NOMBRE, COLOR,
+    tablero, colocacion, sq, idx, sanEs, otro, NOMBRE, COLOR, materialPosible,
     retro, candidatasRetro, etiquetaRetro, claveRetro, explicacionRetro,
     amenazaAcertada, corregirDescarte,
     puntosBalanza, veredictoBalanza, numeroBalanza, recortar,

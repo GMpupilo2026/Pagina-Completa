@@ -2930,7 +2930,7 @@
         }
 
         // ---------- Tipos de entrenamiento (cascada tipo → nivel → ejercicio) ----------
-        // Los mismos seis de entreno/tipos.html, con las mismas posiciones
+        // Los mismos siete de entreno/tipos.html, con las mismas posiciones
         // (entreno/data/tipos.json) y el mismo catálogo (js/tipos-catalogo.js): el
         // profesor los jala a la clase sin salir de la sesión. Toda posición entra por
         // aplicarPosicionEnClase(), como Táctica y Archivos. Lo que es la RESPUESTA
@@ -2982,6 +2982,7 @@
             const n = (i + 1) + ". ";
             if (tipo === "detective") return n + "Juegan " + (item.fen.split(" ")[1] === "w" ? "blancas" : "negras") + ", en jaque";
             if (tipo === "amenaza") return n + (item.mate ? "Amenaza mate en " + item.mate : "ELO " + item.rating);
+            if (tipo === "diferencias") return n + "Golpe " + item.golpeEs + " · ELO " + item.rating;
             if (tipo === "descarte") return n + item.candidatas.length + " candidatas: " + item.candidatas.map((c) => c.sanEs).join(", ");
             if (tipo === "balanza") return n + "Material " + (item.material === 0 ? "igual" : (item.material > 0 ? "+" : "−") + Math.abs(item.material));
             if (tipo === "fotografia") return n + item.piezas + " piezas";
@@ -3009,6 +3010,12 @@
                 caja.appendChild(tiposLista(item.candidatas.map((c) => c.sanEs + ": " + (c.pierde
                     ? "PIERDE" + (c.mateEn ? " (recibe mate en " + c.mateEn + ")" : " (" + R.numeroBalanza(c.eval / 100 * (yo === "w" ? 1 : -1)) + ")") + (c.refuta ? " — " + c.refuta : "")
                     : "aguanta (" + R.numeroBalanza(c.eval / 100 * (yo === "w" ? 1 : -1)) + ")"))));
+            } else if (tipo === "diferencias") {
+                const q = (v, m) => m ? (m > 0 ? "mate en " + m : "recibe mate en " + (-m)) : R.numeroBalanza(v / 100);
+                p("La diferencia: " + item.texto + " (casillas " + item.cambio.casillas.join(" y ") + ").");
+                const bando = item.fen.split(" ")[1] === "w" ? "blancas" : "negras";
+                p("En A, " + item.golpeEs + " queda " + q(item.evalA, item.mateA) + " para las " + bando + "; en B, " + item.golpeEs.replace(/[+#]$/, "") + " queda " + q(item.evalB, item.mateB) + ": " + item.lineaB + ".");
+                if (item.salvan) p("La refutación en B: " + item.salvan.map(R.sanEs).join(" o ") + ".");
             } else if (tipo === "balanza") {
                 p("El motor: " + (item.mate ? "mate en " + Math.abs(item.mate) + " para las " + (item.mate > 0 ? "blancas" : "negras") : R.numeroBalanza(item.eval) + " — " + R.veredictoBalanza(item.eval)) + ".");
                 p("Material: " + (item.material === 0 ? "igual" : (item.material > 0 ? "+" + item.material + " blancas" : "+" + (-item.material) + " negras")) + ".");
@@ -3144,14 +3151,29 @@
                     const fb = tiposBoton("📸 Mostrar " + seg + " s y ocultar", TIPOS_BTN_ACCION, () => tiposFotografia(item, seg, fb), "La clase ve la posición y después las piezas desaparecen de todos los tableros");
                     acciones.appendChild(fb);
                 } else {
+                    // Siete diferencias tiene dos posiciones: A (el golpe gana) y
+                    // B (casi igual, y ya no). Cada una con su botón.
+                    if (t.id === "diferencias") {
+                        const envioA = tiposBoton("📥 A al tablero", TIPOS_BTN, async () => {
+                            const ok = await aplicarPosicionEnClase(item.fenA, "Posición A: aquí " + item.golpeEs + " gana.");
+                            if (ok) { envioA.textContent = "✅ Enviada"; setTimeout(() => { envioA.textContent = "📥 A al tablero"; }, 2000); }
+                        }, "La posición donde el golpe gana");
+                        acciones.appendChild(envioA);
+                    }
+                    const rotuloEnvio = t.id === "diferencias" ? "📥 B al tablero" : "📥 Al tablero";
                     // Amenaza: al tablero va la posición del alumno (le toca a él).
-                    const envio = tiposBoton("📥 Al tablero", TIPOS_BTN, async () => {
+                    const envio = tiposBoton(rotuloEnvio, TIPOS_BTN, async () => {
                         const ok = await aplicarPosicionEnClase(item.fen, "«" + t.nombre + "»: ya la ven todos los alumnos.");
-                        if (ok) { envio.textContent = "✅ Enviada"; setTimeout(() => { envio.textContent = "📥 Al tablero"; }, 2000); }
+                        if (ok) { envio.textContent = "✅ Enviada"; setTimeout(() => { envio.textContent = rotuloEnvio; }, 2000); }
                     }, "Poner esta posición en el tablero de la clase, sin preguntar nada");
                     acciones.appendChild(envio);
                 }
                 if (t.id === "amenaza") acciones.appendChild(tiposBoton("❓ Preguntar", TIPOS_BTN_ACCION, () => tiposPreguntar(item.fenRival, "Pregunta abierta: cada alumno hace la jugada que amenaza el rival."), "Abre la pregunta con el turno del rival: la respuesta correcta es su amenaza"));
+                if (t.id === "diferencias" && item.salvan) acciones.appendChild(tiposBoton("❓ Preguntar la refutación", TIPOS_BTN_ACCION, () => {
+                    const g = new Chess(item.fen);
+                    g.move(item.golpe);
+                    tiposPreguntar(g.fen(), "Pregunta abierta: en B, tras " + item.golpeEs.replace(/[+#]$/, "") + ", ¿cómo se defiende el rival?");
+                }, "Abre la pregunta con B después del golpe: cada alumno busca la defensa"));
                 if (t.id === "descarte") acciones.appendChild(tiposBoton("❓ Preguntar", TIPOS_BTN_ACCION, () => tiposPreguntar(item.fen, "Pregunta abierta: ¿qué jugarías? Después comenten cuáles de las candidatas pierden."), "Abre la pregunta «¿qué jugarías?» con esta posición"));
                 if (t.id === "con-lo-justo") acciones.appendChild(tiposBoton("🎯 Practicar", TIPOS_BTN_ACCION, () => tiposPracticar(item.fen), "Cada alumno juega el final contra el motor"));
                 const respBtn = tiposBoton("🔎 Respuesta", TIPOS_BTN, () => {

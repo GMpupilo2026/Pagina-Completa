@@ -466,6 +466,136 @@ function generarConLoJusto() {
   return out;
 }
 
+/* =====================================================================
+ * 7. Siete diferencias: el detalle que cambia todo
+ *
+ * A es la posición de un ejercicio real, donde el golpe gana. B es A con UNA
+ * sola cosa cambiada —una pieza menos, un peón una casilla más allá, una
+ * pieza en la casilla de al lado—, y en B el mismo golpe ya no gana. Stockfish
+ * lo confirma en las dos: en A es la mejor jugada y gana (mate o 2 peones), y
+ * en B, jugado igual, queda en +0,8 o menos. La diferencia está en el tablero,
+ * no se inventa: se busca probando cambios cerca de donde pasa el golpe.
+ * ===================================================================== */
+const DIF_NIVELES = { 1: "quitar", 2: "peon", 3: "mover", 4: "larga" };
+function cambiosPosibles(fenA, t, tipo) {
+  const tab = R.tablero(fenA);
+  const cerca = (i) => Math.max(Math.abs((i & 7) - (R.idx(t.to) & 7)), Math.abs((i >> 3) - (R.idx(t.to) >> 3)));
+  const casillas = [];
+  tab.forEach((p, i) => { if (p) casillas.push(i); });
+  casillas.sort((a, b) => cerca(a) - cerca(b) || a - b);
+  const out = [];
+  const intocable = (i) => R.sq(i) === t.from || R.sq(i) === t.to || tab[i].t === "k";
+  for (const i of casillas) {
+    const p = tab[i];
+    if (tipo === "quitar") {
+      if (intocable(i)) continue;
+      const B = tab.slice(); B[i] = null;
+      out.push({ B, cambio: { tipo: "quitar", casillas: [R.sq(i)], pieza: p.c + p.t, de: R.sq(i) } });
+    } else if (tipo === "peon") {
+      if (p.t !== "p" || R.sq(i) === t.from) continue;
+      [8, -8].forEach((d) => {
+        const j = i + d;
+        if (j < 8 || j >= 56 || tab[j]) return;
+        const B = tab.slice(); B[j] = p; B[i] = null;
+        out.push({ B, cambio: { tipo: "peon", casillas: [R.sq(i), R.sq(j)], pieza: p.c + p.t, de: R.sq(i), a: R.sq(j) } });
+      });
+    } else if (tipo === "mover") {
+      if (p.t === "p" || intocable(i)) continue;
+      [1, -1, 8, -8, 9, -9, 7, -7].forEach((d) => {
+        const j = i + d;
+        if (j < 0 || j >= 64 || Math.abs((j & 7) - (i & 7)) > 1 || tab[j]) return;
+        const B = tab.slice(); B[j] = p; B[i] = null;
+        out.push({ B, cambio: { tipo: "mover", casillas: [R.sq(i), R.sq(j)], pieza: p.c + p.t, de: R.sq(i), a: R.sq(j) } });
+      });
+    }
+  }
+  return out;
+}
+function textoCambio(c) {
+  const nombre = (pc) => R.NOMBRE[pc[1]] + (pc[0] === "w" ? (["q", "r"].includes(pc[1]) ? " blanca" : " blanco") : (["q", "r"].includes(pc[1]) ? " negra" : " negro"));
+  if (c.tipo === "quitar") return "En B falta " + (["q", "r"].includes(c.pieza[1]) ? "la " : "el ") + nombre(c.pieza) + " de " + c.de + ".";
+  return "En B " + (["q", "r"].includes(c.pieza[1]) ? "la " : "el ") + nombre(c.pieza) + " está en " + c.a + " y no en " + c.de + ".";
+}
+async function generarDiferencias() {
+  const out = [];
+  const usados = new Set();
+  for (const n of [1, 2, 3, 4]) {
+    const largas = n === 4;
+    const pool = PUZZLES.filter((pz) => !usados.has(pz.id) && (largas ? pz.solution.length >= 5 : pz.solution.length <= 3));
+    let elegidos = [];
+    for (let k = 0; k < pool.length && elegidos.length < POR_NIVEL; k += 24) {
+      const lote = pool.slice(k, k + 24);
+      const hechos = await enParalelo(lote, async (pz) => {
+        const fenA0 = conTurno(pz.fen, new Chess(pz.fen).turn());
+        const gA = new Chess(fenA0);
+        if (gA.in_check()) return null;
+        const t = new Chess(fenA0).move(pz.solution[0]);
+        if (!t) return null;
+        const turno = gA.turn();
+        const [, , enroquesA, , , jugadaN] = fenA0.split(" ");
+        /* A y B comparten TODO menos el cambio: turno, contadores y derechos de
+           enroque. Un derecho que A tiene y B no sería una segunda diferencia
+           escondida (en A se podría enrocar y en B no), así que se dejan solo los
+           que valen en las dos: rey y torre en su casilla de siempre. */
+        const enroques = (tabA, tabB) => {
+          const vale = { K: ["e1", "h1", "w"], Q: ["e1", "a1", "w"], k: ["e8", "h8", "b"], q: ["e8", "a8", "b"] };
+          const r = (enroquesA === "-" ? "" : enroquesA).split("").filter((c) => [tabA, tabB].every((tb) => {
+            const [kk, rr, c2] = vale[c];
+            const K = tb[R.idx(kk)], T = tb[R.idx(rr)];
+            return K && K.t === "k" && K.c === c2 && T && T.t === "r" && T.c === c2;
+          })).join("");
+          return r || "-";
+        };
+        const armarFen = (tb, enr) => R.colocacion(tb) + " " + turno + " " + enr + " - 0 " + (jugadaN || "1");
+        const tipos = largas ? ["quitar", "mover", "peon"] : [DIF_NIVELES[n]];
+        for (const tipo of tipos) {
+          for (const v of cambiosPosibles(fenA0, t, tipo).slice(0, 6)) {
+            if (!materialOk(v.B)) continue;
+            const enr = enroques(R.tablero(fenA0), v.B);
+            const fenA = armarFen(R.tablero(fenA0), enr);
+            const fenB = armarFen(v.B, enr);
+            const gB = new Chess();
+            if (!gB.load(fenB) || gB.in_check() || gB.game_over()) continue;
+            const gOtro = new Chess(); gOtro.load(R.colocacion(v.B) + " " + R.otro(turno) + " - - 0 1");
+            if (gOtro.in_check()) continue;
+            const mB = new Chess(fenB).move(t.san);
+            if (!mB) continue;
+            const [a] = await analizar(fenA, 1, 16);
+            if (!a || sanDeUci(fenA, a.uci) !== t.san) continue;
+            if (!((a.mate !== null && a.mate > 0) || a.score >= 200)) continue;
+            const [b] = await analizar(fenB, 1, 14, [t.from + t.to + (t.promotion || "")]);
+            if (!b) continue;
+            const sigueGanando = (b.mate !== null && b.mate > 0) || b.score > 80;
+            if (sigueGanando) continue;
+            const despuesB = (() => { const g = new Chess(fenB); g.move(t.san); return g.fen(); })();
+            // largas: el rival contesta en B lo mismo que en A (la línea arranca
+            // igual y la diferencia se nota más adelante)
+            if (largas && (!b.pv[1] || sanDeUci(despuesB, b.pv[1]) !== pz.solution[1])) continue;
+            // la refutación: qué respuestas salvan en B (si son pocas, se pregunta)
+            const res = await analizar(despuesB, Math.min(40, new Chess(despuesB).moves().length), 12);
+            const salvan = res.filter((x) => (x.mate !== null && x.mate > 0) || (x.mate === null && x.score >= -100)).map((x) => sanDeUci(despuesB, x.uci));
+            return {
+              id: "dif-" + n + "-" + pz.id, nivel: n, fenA, fen: fenB,
+              golpe: t.san, golpeEs: R.sanEs(t.san),
+              evalA: a.mate ? null : a.score, mateA: a.mate || null,
+              evalB: b.mate ? null : b.score, mateB: b.mate || null,
+              cambio: v.cambio, texto: textoCambio(v.cambio),
+              lineaB: lineaEs(fenB, b.pv, 4),
+              salvan: salvan.length && salvan.length <= 3 ? salvan : null,
+              rating: pz.rating, partida: pz.game || null,
+            };
+          }
+        }
+        return null;
+      });
+      hechos.filter(Boolean).forEach((x) => { if (elegidos.length < POR_NIVEL) { elegidos.push(x); usados.add(x.id.split("-")[2]); } });
+    }
+    out.push(...elegidos);
+  }
+  return out;
+}
+function materialOk(tab) { return R.materialPosible(tab, "w") && R.materialPosible(tab, "b"); }
+
 /* ---------- todo junto ---------- */
 (async () => {
   console.log("Detective…");
@@ -475,6 +605,8 @@ function generarConLoJusto() {
   console.log("Descarte…");
   const paraBalanza = [];
   const descarte = await generarDescarte(paraBalanza);
+  console.log("Siete diferencias…");
+  const diferencias = await generarDiferencias();
   console.log("La balanza…");
   const balanza = await generarBalanza(paraBalanza);
   console.log("Fotografía…");
@@ -485,7 +617,7 @@ function generarConLoJusto() {
   MOTORES.forEach((m) => m.cerrar());
   const datos = {
     fuente: "Posiciones de partidas reales de la base abierta de Lichess (CC0) y de js/aperturas-lineas.js; finales sorteados con su distancia exacta al mate. Generado por herramientas/tipos-generar.js: no se edita a mano.",
-    detective, amenaza, descarte, balanza, fotografia, "con-lo-justo": conLoJusto,
+    detective, amenaza, descarte, diferencias, balanza, fotografia, "con-lo-justo": conLoJusto,
   };
   fs.writeFileSync(SALIDA, JSON.stringify(datos) + "\n");
   const cuenta = (l) => l.reduce((m, x) => { m[x.nivel] = (m[x.nivel] || 0) + 1; return m; }, {});

@@ -1,5 +1,5 @@
 /* El código de entreno/tipos.html: la ficha de los Tipos de entrenamiento y
- * los seis juegos.
+ * los siete juegos.
  *
  * Qué es cada tipo y sus niveles: js/tipos-catalogo.js. Las reglas (qué es
  * posible, cómo se corrige, cómo se defiende el rey): js/tipos-reglas.js. Las
@@ -156,6 +156,36 @@
   function tablero(fen, opciones) {
     Object.assign(tab, { fen, orientacion: "w", clic: null, marcas: {}, sel: null, destinos: [], ultima: null, oculto: false, juego: null, piezasLibres: null }, opciones || {});
     pintar();
+  }
+  /* Un tablero fijo, solo para mirar (la posición A de Siete diferencias). Se
+     lee entero: la imagen lleva la posición dicha en su nombre accesible. */
+  function tableroFijo(elId, fen, orientacion, marcas) {
+    const t = $(elId);
+    t.innerHTML = "";
+    const tabF = R.tablero(fen);
+    const filas = orientacion === "w" ? [8, 7, 6, 5, 4, 3, 2, 1] : [1, 2, 3, 4, 5, 6, 7, 8];
+    const cols = orientacion === "w" ? [0, 1, 2, 3, 4, 5, 6, 7] : [7, 6, 5, 4, 3, 2, 1, 0];
+    filas.forEach((r) => cols.forEach((f) => {
+      const s = "abcdefgh"[f] + r;
+      const celda = document.createElement("div");
+      celda.className = "sq " + ((f + r) % 2 === 1 ? "light" : "dark");
+      celda.dataset.square = s;
+      const m = marcas && marcas[s];
+      if (m) { celda.classList.add(m.cls); celda.dataset.marca = m.signo; }
+      const p = tabF[R.idx(s)];
+      if (p) {
+        const span = document.createElement("span");
+        span.setAttribute("aria-hidden", "true");
+        if (window.PiezaPreferida) PiezaPreferida.pintar(span, p.t, p.c);
+        else span.textContent = p.t;
+        span.classList.add("tp-pieza");
+        celda.appendChild(span);
+      }
+      t.appendChild(celda);
+    }));
+    t.setAttribute("role", "img");
+    t.setAttribute("aria-label", window.BlindNotation ? BlindNotation.positionSentence(new Chess(fen)) : fen);
+    if (window.Coordenadas) Coordenadas.aplicar(t);
   }
   function leerPosicion(fen) {
     const p = $("lectura");
@@ -317,6 +347,8 @@
     explicar(null);
     pedirJugada("", null);
     leerPosicion(null);
+    $("tablero-a-caja").classList.add("hidden");
+    $("lectura-a").classList.add("hidden");
     $("estado").textContent = "";
     if (!item) { estado("Este nivel no tiene ejercicios."); return; }
     const e = estrellasDe(partida.tipo, item.id);
@@ -484,7 +516,78 @@
     }));
   };
 
-  /* ---------- 4. La balanza ---------- */
+  /* ---------- 4. Siete diferencias ---------- */
+  JUEGOS.diferencias = function (item) {
+    const turno = item.fen.split(" ")[1], rival = R.otro(turno);
+    const quien = (v, mate) => mate ? (mate > 0 ? "mate en " + mate : "recibe mate en " + (-mate)) : R.numeroBalanza(v / 100);
+    // En B el golpe ya no es mate ni jaque de la misma forma: se nombra sin + ni #.
+    const golpe = item.golpeEs.replace(/[+#]$/, "");
+    let errores = 0, hecho = false;
+    $("tablero-a-caja").classList.remove("hidden");
+    $("tablero-a-titulo").textContent = "A: aquí " + item.golpeEs + " gana";
+    tableroFijo("tablero-a", item.fenA, turno);
+    if (adaptado()) { $("lectura-a").textContent = "Posición A: " + $("tablero-a").getAttribute("aria-label"); $("lectura-a").classList.remove("hidden"); }
+    $("juego-turno").textContent = "B: casi igual, y aquí " + golpe + " ya no gana. Juegan las " + COLOR[turno] + " en las dos.";
+    $("juego-enunciado").textContent = "¿Qué casilla es distinta en B? Tócala en el tablero B o escríbela.";
+    const elegir = (s) => {
+      if (hecho) return;
+      s = String(s || "").trim().toLowerCase();
+      if (!/^[a-h][1-8]$/.test(s)) { estado("Escribe una casilla, por ejemplo e4."); return; }
+      if (item.cambio.casillas.indexOf(s) < 0) {
+        errores++;
+        tab.marcas[s] = { cls: "m-mal", signo: "✗", dicho: "igual en las dos" };
+        pintar();
+        estado("✗ En " + s + " las dos posiciones son iguales. Busca otra vez.");
+        return;
+      }
+      hecho = true;
+      const marcas = {};
+      item.cambio.casillas.forEach((c) => { marcas[c] = { cls: "m-bien", signo: "✓", dicho: "aquí está la diferencia" }; });
+      tableroFijo("tablero-a", item.fenA, turno, marcas);
+      Object.assign(tab.marcas, marcas);
+      const n = Math.max(1, 3 - errores);
+      if (!item.salvan) return cerrar(n, "✓ ¡Ahí está! " + item.texto);
+      // Segundo paso: cómo se defiende el rival en B.
+      const g = new Chess(item.fen);
+      g.move(item.golpe);
+      const juego = new Chess(g.fen());
+      tablero(juego.fen(), { orientacion: turno, marcas, juego, clic: moverConClic(juego, refutar) });
+      estado("✓ ¡Ahí está! " + item.texto + " Ahora: en B, tras " + golpe + ", ¿cómo se defiende el rival?");
+      $("juego-enunciado").textContent = "Haz la jugada de las " + COLOR[rival] + " que refuta " + golpe + " en B.";
+      pedirJugada("O escribe la jugada de las " + COLOR[rival], (txt) => {
+        const m = jugadaEscrita(new Chess(g.fen()), txt);
+        if (!m) { estado("No entendí «" + txt + "» como una jugada de las " + COLOR[rival] + "."); return; }
+        $("jugada-input").value = "";
+        refutar({ from: m.from, to: m.to, promotion: m.promotion });
+      });
+      $("controles").innerHTML = "";
+      $("controles").appendChild(boton("No sé: ver la respuesta", BTN_SEGUNDO, () => cerrar(Math.max(1, n - 1), "La refutación era " + item.salvan.map(R.sanEs).join(" o ") + ".")));
+      function refutar(mov) {
+        const h = new Chess(g.fen());
+        const m = h.move(mov);
+        if (!m) { estado("Esa jugada no es legal para las " + COLOR[rival] + "."); return; }
+        if (item.salvan.indexOf(m.san) >= 0) cerrar(n, "✓ ¡Eso es! " + R.sanEs(m.san) + " refuta el golpe en B.");
+        else cerrar(Math.max(1, n - 1), "✗ " + R.sanEs(m.san) + " no alcanza. La refutación era " + item.salvan.map(R.sanEs).join(" o ") + ".");
+      }
+    };
+    function cerrar(n, texto) {
+      pedirJugada("", null);
+      $("controles").innerHTML = "";
+      tab.clic = null;
+      pintar();
+      estado(texto + " " + textoEstrellas(n));
+      explicar([
+        item.texto,
+        "En A, " + item.golpeEs + " queda " + quien(item.evalA, item.mateA) + " para las " + COLOR[turno] + ".",
+        "En B, " + golpe + " queda " + quien(item.evalB, item.mateB) + " para las " + COLOR[turno] + ": " + item.lineaB + ".",
+      ]);
+      terminar(item, n);
+    }
+    tablero(item.fen, { orientacion: turno, clic: elegir });
+    pedirJugada("O escribe la casilla (por ejemplo, e4)", (txt) => { $("jugada-input").value = ""; elegir(txt); });
+  };
+
+  /* ---------- 5. La balanza ---------- */
   JUEGOS.balanza = function (item) {
     tablero(item.fen, { orientacion: "w" });
     const turno = item.fen.split(" ")[1];
@@ -524,7 +627,7 @@
     }));
   };
 
-  /* ---------- 5. Fotografía ---------- */
+  /* ---------- 6. Fotografía ---------- */
   JUEGOS.fotografia = function (item) {
     const n = C.nivel("fotografia", item.nivel);
     let quedan = n.segundos, reloj = null;
@@ -662,7 +765,7 @@
     }
   };
 
-  /* ---------- 6. Con lo justo ---------- */
+  /* ---------- 7. Con lo justo ---------- */
   JUEGOS["con-lo-justo"] = function (item) {
     const juego = new Chess(item.fen);
     let jugadas = 0, hecho = false, ocupado = false;
