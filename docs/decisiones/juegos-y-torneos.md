@@ -122,6 +122,31 @@ las de equivalencia.
   pasaría a comparar el evaluador contra la nada y daría verde sin comprobar
   nada. Es la misma trampa que ya documentaron los dobles de Supabase.
 
+## Con mate en uno en contra, Stockfish no miraba el reloj
+
+El bot con Stockfish (el de Oscar en `tablero.html`, la práctica contra el
+motor y «¿Qué jugarías?» en `sesion.html`, y los cursos) se quedaba «pensando»
+justo cuando el alumno tenía el mate en la mano, y el alumno no podía
+terminar la partida. Stockfish mira el reloj cada ~1000 nodos; en una posición
+en que le dan mate en uno recorre unos cientos por profundidad, así que nunca
+lo mira y `go movetime` no lo para: sigue hasta la profundidad 245. En una
+computadora tardaba 3 s en vez de 0,7; en un celular pasaba del timeout, la
+consulta volvía vacía y en `sesion.js` se reintentaba tres veces hasta decir
+que el motor no respondía.
+
+- Los tres motores (`js/chess-bot.js`, `js/practice-engine.js`,
+  `js/clases-engine.js`) mandan `go movetime N depth 40`
+  (`PROFUNDIDAD_MAXIMA`). En una posición normal el tiempo se acaba mucho antes
+  de la profundidad 40, así que la fuerza no cambia; con mate a la vista corta
+  en medio segundo.
+- Y si igual el motor no contesta, el bot mueve con
+  `PracticeEngine.jugadaDeRespaldo(fen)` (mate o captura si hay; si no, una
+  legal cualquiera) en vez de congelar la partida. El bot de Oscar ya tenía su
+  heurístico de respaldo.
+- `verificar-bot-mate-en-uno.js` mide el tiempo con mate en uno en contra en
+  los tres niveles de práctica y las tres dificultades del bot de Oscar. Sin el
+  tope de profundidad saltan cuatro comprobaciones.
+
 ## Las partidas de un torneo se pueden VER, y el candado lo pone la base
 
 Durante una ronda, las partidas eran invisibles. El único acceso a un cruce en
@@ -301,6 +326,28 @@ el control.
   completa sin esos dos jugadores y en eliminación la llave se corría. Una
   ronda no se puede borrar desde el navegador (no tiene política de delete),
   pero una sala sí: si falla alguna, se borran las creadas y no se abre nada.
+
+### Empezar y generar una ronda, una sola vez
+
+«Generar ronda» fallaba en cada clic con `duplicate key value violates unique
+constraint "tournament_rounds_tournament_id_round_number_key"`, sin salida. Lo
+que pasó (leído en los registros de la base): «Empezar torneo» corrió **dos
+veces** —un segundo clic mientras se armaba la ronda 1, porque la página no se
+repinta hasta que todo termina— y la segunda vez dejó `current_round` en 0 con
+la ronda 1 ya creada. Desde ahí la página pedía siempre la ronda 1. Les pasó a
+dos torneos en curso; la migración `torneo_no_retrocede_de_ronda` los reparó.
+
+- **Un botón que arma algo no corre dos veces**: `unaVez()` en `js/torneo.js`
+  apaga el botón y descarta el segundo clic hasta que termina.
+- **Empezar es condicional** (`.eq("status", "registration").select("id")`): si
+  ya había empezado, lo dice y no toca nada.
+- **El número de la ronda se cuenta también con las rondas que existen**
+  (`rondaActual()`, y `generateRound()` las vuelve a pedir antes): si
+  `current_round` se queda atrás, la ronda siguiente sigue siendo la correcta.
+- **Y la base lo garantiza**: `proteger_torneo()` no deja bajar
+  `current_round` ni volver a `'registration'` un torneo que ya empezó, a nadie
+  (tampoco a quien organiza). Comprobado impersonando al organizador: volver a
+  empezarlo y bajarle la ronda quedan revertidos.
 
 **Al tocar `torneo.html`, `js/cartas-board.js` o el arranque de cualquiera de las
 páginas de partida, correr `node herramientas/verificar-torneo-en-vivo.js`** (con

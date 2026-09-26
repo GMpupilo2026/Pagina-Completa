@@ -8,15 +8,13 @@
       Supabase lo escucha y lo escribe cualquiera con sesión: no pasa por la
       RLS. Si la lista pintara lo que le llega, un intruso saldría en la
       burbuja del profesor con el nombre que él mismo eligiera, y la pantalla
-      se vería perfecta — el fallo aparecería recién al mandarle un mensaje
-      que la base rechaza, sin que nadie entienda por qué. El nombre que se
-      pinta sale de `profiles`, donde la RLS solo le devuelve sus alumnos.
-   2. QUE EL MENSAJE VAYA AL HILO CORRECTO. Un `student_id` equivocado deja el
-      mensaje en la conversación de otro alumno: se manda, se guarda, y el que
-      tenía que leerlo nunca se entera.
-   3. QUE AL ALUMNO NO LE ESTORBE. Sin mensajes no se le pinta nada — se mide
-      lo que calcula el navegador, no la clase, que es la lección que dejó el
-      cartel de instalar la app.
+      se vería perfecta. El nombre que se pinta sale de `profiles`, donde la
+      RLS solo le devuelve sus alumnos.
+   2. QUE NO HAYA CHAT. La burbuja solo dice quién está conectado: ni campo
+      para escribir ni consultas a `class_chat_messages`.
+   3. QUE AL ALUMNO NO LE ESTORBE. No se le pinta nada — se mide lo que
+      calcula el navegador, no la clase, que es la lección que dejó el cartel
+      de instalar la app.
    4. QUE EL ALUMNO SE ANUNCIE A TODOS SUS PROFESORES, no solo al principal:
       con dos, al segundo la burbuja le diría "0 alumnos en línea" para
       siempre y no fallaría nada.
@@ -124,19 +122,6 @@ window.__canales = {};
     return "ok";
   };
 
-  /* Un mensaje nuevo que llega por Realtime. */
-  window.__mensajeNuevo = function (fila) {
-    CHAT = CHAT.concat([fila]);
-    Object.keys(window.__canales).forEach((n) => {
-      window.__canales[n].cambios.forEach((x) => {
-        const f = x.opciones && x.opciones.filter;
-        if (f && f.indexOf("student_id=eq.") === 0 && f.slice(14) !== fila.student_id) return;
-        x.cb({ new: fila, eventType: "INSERT" });
-      });
-    });
-    return "ok";
-  };
-
   window.sb = {
     auth: { getSession: () => Promise.resolve({ data: { session: { user: { id: YO }, access_token: "t" } } }),
             signOut: () => Promise.resolve({}) },
@@ -182,13 +167,12 @@ const LEER = () => {
     titulo: panel ? (panel.querySelector("#burbuja-titulo") || {}).textContent : null,
     filas: Array.from(document.querySelectorAll("#burbuja-cuerpo [data-alumno]"))
       .map((f) => ({ id: f.dataset.alumno, texto: f.innerText.replace(/\s+/g, " ").trim() })),
-    mensajes: Array.from(document.querySelectorAll("#burbuja-cuerpo .max-w-\\[85\\%\\]"))
-      .map((m) => m.innerText.replace(/\s+/g, " ").trim()),
+    hayCampo: !!document.querySelector("#burbuja-en-linea input, #burbuja-en-linea textarea, #burbuja-en-linea form"),
   };
 };
 
-const ENVIOS = () => window.__consultas.filter((c) => c.tabla === "class_chat_messages" && c.insert)
-  .map((c) => c.insert);
+/* Ni una consulta al chat: la burbuja ya no lo tiene. */
+const CONSULTAS_CHAT = () => window.__consultas.filter((c) => c.tabla === "class_chat_messages").length;
 
 async function pruebaProfesor(browser) {
   console.log("\n=== La burbuja de quien da clase ===");
@@ -237,28 +221,17 @@ async function pruebaProfesor(browser) {
   igual("dice en qué página anda cada uno",
     v.filas.filter((f) => /Mates|4×4/.test(f.texto)).length, "2");
 
-  // Se le escribe a Ana.
-  await p.click('#burbuja-cuerpo [data-alumno="u-ana"]');
-  await p.waitForTimeout(300);
-  igual("el hilo se abre con su nombre", (await p.evaluate(LEER)).titulo, "Ana Rojas");
-  await p.fill("#burbuja-texto", "¿Cómo vas con los finales?");
-  await p.click('#burbuja-form button[type="submit"]');
-  await p.waitForTimeout(400);
-  igual("el mensaje se manda al hilo de ESE alumno y firmado por quien escribe",
-    await p.evaluate(ENVIOS),
-    [{ sender_id: "u-profe", student_id: "u-ana", body: "¿Cómo vas con los finales?" }]);
-  igual("y se ve en la conversación",
-    (await p.evaluate(LEER)).mensajes.join(" | "), "Tú ¿Cómo vas con los finales?");
+  igual("no hay ningún campo para escribir", v.hayCampo, "false");
+  igual("las filas no son botones (no abren nada)",
+    await p.evaluate(() => document.querySelectorAll("#burbuja-cuerpo button").length), "0");
+  igual("no se consulta el chat", await p.evaluate(CONSULTAS_CHAT), "0");
 
-  /* Le contesta Sofía, que es OTRO hilo: no puede pisar la conversación
-     abierta, pero sí tiene que avisar. */
-  await p.evaluate(() => window.__mensajeNuevo({
-    id: "mx", student_id: "u-sofia", sender_id: "u-sofia", body: "Profe, no entendí", created_at: new Date().toISOString(),
-  }));
-  await p.waitForTimeout(400);
-  v = await p.evaluate(LEER);
-  igual("el mensaje de otro alumno avisa sin cambiar de conversación", v.titulo, "Ana Rojas");
-  igual("…y se cuenta como sin leer", /1 sin leer/.test(v.etiqueta), "true");
+  // Escape cierra y devuelve el foco al botón.
+  await p.keyboard.press("Escape");
+  await p.waitForTimeout(200);
+  igual("Escape cierra el panel", (await p.evaluate(LEER)).panelVisible, "false");
+  igual("…y el foco vuelve al botón",
+    await p.evaluate(() => document.activeElement && document.activeElement.id), "burbuja-boton");
 
   await r.ctx.close();
 }
@@ -270,10 +243,9 @@ async function pruebaAlumna(browser) {
     { profesor_id: "u-profe2", profesor: "Laura Mena", es_principal: false, clase_abierta: false },
   ];
 
-  // 1. Sin mensajes, nada que estorbe.
   let r = await abrir(browser, { yo: "u-ana", perfiles: [ANA, PROFE, OTRA_PROFE], clases: DOS_PROFES, chat: [] });
   let v = await r.page.evaluate(LEER);
-  igual("sin mensajes no se le pinta ningún botón", v.botonVisible, "false");
+  igual("a la alumna no se le pinta nada", [v.hayBurbuja, v.botonVisible].join("|"), "false|false");
 
   /* El error fácil: anunciarse solo al profesor principal. Al segundo la
      burbuja le diría "0 alumnos en línea" para siempre y no fallaría nada. */
@@ -286,27 +258,7 @@ async function pruebaAlumna(browser) {
       const t = (window.__canales["academia-en-linea:u-profe2"].tracks || [])[0] || {};
       return [t.id, !!t.pagina, t.email === undefined].join("|");
     }), "u-ana|true|true");
-
-  // 2. Le llega un mensaje de su profe: ahí sí se le pinta.
-  await r.page.evaluate(() => window.__mensajeNuevo({
-    id: "m9", student_id: "u-ana", sender_id: "u-profe", body: "Nos vemos a las 3", created_at: new Date().toISOString(),
-  }));
-  await r.page.waitForTimeout(400);
-  v = await r.page.evaluate(LEER);
-  igual("con un mensaje sin leer sí se le pinta", v.botonVisible, "true");
-  igual("…y dice de quién es", v.etiqueta, "🟢 1 mensaje de tu profe");
-
-  await r.page.click("#burbuja-boton");
-  await r.page.waitForTimeout(300);
-  v = await r.page.evaluate(LEER);
-  igual("al abrirlo ve el mensaje", v.mensajes.join(" | "), "Karina Rojas Nos vemos a las 3");
-  igual("y no se le ofrece elegir con quién hablar", v.filas.length, "0");
-
-  await r.page.fill("#burbuja-texto", "Ahí estaré");
-  await r.page.click('#burbuja-form button[type="submit"]');
-  await r.page.waitForTimeout(400);
-  igual("contesta en SU propio hilo", await r.page.evaluate(ENVIOS),
-    [{ sender_id: "u-ana", student_id: "u-ana", body: "Ahí estaré" }]);
+  igual("no se consulta el chat", await r.page.evaluate(CONSULTAS_CHAT), "0");
   await r.ctx.close();
 
   // 3. Un alumno sin ningún profesor no tiene a quién anunciarse.

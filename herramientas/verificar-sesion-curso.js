@@ -35,6 +35,12 @@
       renderizada y el tamaño real de la pieza, no la clase ni el CSS. Y que su
       botón mande la posición del ejercicio SIN abrir ninguna pregunta.
 
+   5. QUE LOS TIPOS DE ENTRENAMIENTO LLEGUEN BIEN A LA CLASE: cada botón manda
+      la posición que es (la del rival al preguntar la amenaza; A o B en Siete
+      diferencias, y B tras el golpe al preguntar la refutación), la respuesta
+      no viaja, Con lo justo arranca la práctica con su final y Fotografía
+      oculta de verdad las piezas a los segundos.
+
    Uso:  python3 -m http.server 8777    (desde la raíz del sitio)
          npm install playwright chess.js@0.10.3
          node herramientas/verificar-sesion-curso.js                          */
@@ -468,6 +474,135 @@ async function pruebaTactica(browser) {
   }));
   igual("«Preguntar» sigue transmitiendo la posición", preguntado.fens, [fenDelEjercicio]);
   igual("y abre la pregunta con esa misma posición", preguntado.pregunta.fen, fenDelEjercicio);
+
+  igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+}
+
+/* Los Tipos de entrenamiento, jalados desde la clase. Lo que se rompe callado:
+   que un botón mande la posición que no era (la del alumno en vez de la del
+   rival al preguntar la amenaza), que la RESPUESTA viaje a la clase, que la
+   práctica de Con lo justo no arranque con esa posición, o que Fotografía no
+   oculte de verdad las piezas en los tableros de los alumnos. */
+async function pruebaTipos(browser) {
+  console.log("\n=== Tipos de entrenamiento en la clase ===");
+  const DATOS = JSON.parse(fs.readFileSync(path.join(RAIZ, "entreno/data/tipos.json"), "utf8"));
+  const { page, ctx, errores } = await abrir(browser, [PROFE, ALUMNA], "u-profe");
+  await page.click("#teacher-tab-tipos");
+  await page.waitForSelector("#tipos-body button", { timeout: 30000 });
+  igual("los catorce tipos", await page.$$eval("#tipos-body > div > button", (b) => b.length), 14);
+
+  async function abrirNivel(nombreTipo, nivel) {
+    // Preguntar y Practicar se van a su pestaña: se vuelve a la de Entrenamientos
+    await page.click("#teacher-tab-tipos");
+    await page.evaluate(() => { tiposView = { tipo: null, nivel: null }; renderTiposView(); });
+    await page.locator("#tipos-body button", { hasText: nombreTipo }).first().click();
+    await page.locator("#tipos-body button", { hasText: "Nivel " + nivel + " —" }).first().click();
+    await page.waitForSelector("#tipos-body li");
+  }
+
+  // El Detective: «Al tablero» manda SU posición, sin pregunta; la respuesta, solo acá.
+  await abrirNivel("El Detective", 1);
+  const det = DATOS.detective.filter((x) => x.nivel === 1)[0];
+  const desborde = await page.evaluate(() => {
+    const caja = document.getElementById("tipos-panel").getBoundingClientRect();
+    const bs = Array.from(document.querySelectorAll("#tipos-body li button"));
+    return { total: bs.length, fuera: bs.filter((b) => b.getBoundingClientRect().right > caja.right + 0.5).length };
+  });
+  igual("los botones de cada ejercicio caben en el panel (" + desborde.total + ")", desborde.fuera, 0);
+  const fila = page.locator("#tipos-body li").first();
+  await page.evaluate(() => { window.__updates = []; window.__inserts = []; });
+  await fila.getByRole("button", { name: "Al tablero" }).click();
+  await page.waitForFunction(() => window.__updates.some((u) => u.tabla === "game_state"));
+  let mandado = await page.evaluate(() => ({
+    fens: window.__updates.filter((u) => u.tabla === "game_state").map((u) => u.campos.fen),
+    preguntas: window.__inserts.filter((i) => i.tabla === "questions").length,
+    todo: JSON.stringify(window.__updates) + JSON.stringify(window.__inserts),
+  }));
+  igual("Detective: «Al tablero» manda la posición del ejercicio", mandado.fens, [det.fen]);
+  igual("y no abre ninguna pregunta", mandado.preguntas, 0);
+  const resp = fila.getByRole("button", { name: "Respuesta" });
+  igual("la respuesta empieza cerrada", await resp.getAttribute("aria-expanded"), "false");
+  await resp.click();
+  const textoResp = await fila.locator("div.space-y-1").first().textContent();
+  if (!/✓/.test(textoResp) || !textoResp.includes(det.jugada)) mal("la respuesta no dice cuál es la buena: " + textoResp);
+  else bien("la respuesta marca la buena y dice qué se jugó (" + det.jugada + ")");
+  igual("y dice que está abierta", await resp.getAttribute("aria-expanded"), "true");
+  if (mandado.todo.includes(det.jugada)) mal("la respuesta viajó a la base"); else bien("la respuesta no viaja a la clase");
+
+  // ¿Qué quiere el rival?: «Preguntar» abre la pregunta con el turno del RIVAL.
+  await abrirNivel("¿Qué quiere el rival?", 2);
+  const ame = DATOS.amenaza.filter((x) => x.nivel === 2)[0];
+  await page.evaluate(() => { window.__updates = []; window.__inserts = []; });
+  await page.locator("#tipos-body li").first().getByRole("button", { name: "Preguntar" }).click();
+  await page.waitForFunction(() => window.__inserts.some((i) => i.tabla === "questions"));
+  const preg = await page.evaluate(() => (window.__inserts.find((i) => i.tabla === "questions") || {}).fila);
+  igual("Amenaza: la pregunta va con la posición del rival", preg.fen, ame.fenRival);
+  igual("y una sola jugada", preg.expected_plies, 1);
+
+  // Siete diferencias: A y B tienen cada una su botón, y la refutación se
+  // pregunta con B DESPUÉS del golpe.
+  await abrirNivel("Siete diferencias", 1);
+  const difs = DATOS.diferencias.filter((x) => x.nivel === 1);
+  const k = difs.findIndex((x) => x.salvan);
+  const dif = difs[k];
+  const filaDif = page.locator("#tipos-body li").nth(k);
+  const fueraDif = await page.evaluate(() => {
+    const caja = document.getElementById("tipos-panel").getBoundingClientRect();
+    return Array.from(document.querySelectorAll("#tipos-body li button")).filter((x) => x.getBoundingClientRect().right > caja.right + 0.5).length;
+  });
+  igual("Siete diferencias: sus cuatro botones caben en el panel", fueraDif, 0);
+  for (const [boton, fen] of [["A al tablero", dif.fenA], ["B al tablero", dif.fen]]) {
+    await page.evaluate(() => { window.__updates = []; });
+    await filaDif.getByRole("button", { name: boton }).click();
+    await page.waitForFunction(() => window.__updates.some((u) => u.tabla === "game_state"));
+    igual("Siete diferencias: «" + boton + "» manda su posición", await page.evaluate(() => window.__updates.find((u) => u.tabla === "game_state").campos.fen), fen);
+  }
+  await page.evaluate(() => { window.__updates = []; window.__inserts = []; });
+  await filaDif.getByRole("button", { name: "Preguntar la refutación" }).click();
+  await page.waitForFunction(() => window.__inserts.some((i) => i.tabla === "questions"));
+  const { Chess } = require("chess.js");
+  const trasGolpe = new Chess(dif.fen); trasGolpe.move(dif.golpe);
+  igual("y la refutación se pregunta con B después del golpe", await page.evaluate(() => window.__inserts.find((i) => i.tabla === "questions").fila.fen), trasGolpe.fen());
+
+  // Con lo justo: «Practicar» arranca la práctica contra el motor con ESE final.
+  await abrirNivel("Con lo justo", 2);
+  const fin = DATOS["con-lo-justo"].filter((x) => x.nivel === 2)[0];
+  await page.evaluate(() => { window.__updates = []; window.__inserts = []; });
+  await page.locator("#tipos-body li").first().getByRole("button", { name: "Practicar" }).click();
+  await page.waitForFunction(() => window.__inserts.some((i) => i.tabla === "practice_sessions"));
+  const prac = await page.evaluate(() => (window.__inserts.find((i) => i.tabla === "practice_sessions") || {}).fila);
+  igual("Con lo justo: la práctica arranca con el final", prac.fen, fin.fen);
+  igual("con el motor al máximo", prac.level, "max");
+
+  // Rey y peón, nivel 4: «Practicar» arranca la práctica con esa posición.
+  await abrirNivel("Rey y peón", 4);
+  const peon = DATOS.peones.filter((x) => x.nivel === 4)[0];
+  await page.evaluate(() => { window.__inserts = []; });
+  await page.locator("#tipos-body li").first().getByRole("button", { name: "Practicar" }).click();
+  await page.waitForFunction(() => window.__inserts.some((i) => i.tabla === "practice_sessions"));
+  igual("Rey y peón: la práctica arranca con esa posición", await page.evaluate(() => window.__inserts.find((i) => i.tabla === "practice_sessions").fila.fen), peon.fen);
+
+  // El maestro: las partidas se piden al servidor (detrás del candado) y
+  // «Preguntar» abre la primera posición del tramo.
+  await abrirNivel("Adivina la jugada del maestro", 1);
+  const maestro = JSON.parse(fs.readFileSync(path.join(RAIZ, "cursos/protegido/data/tipos-maestro.json"), "utf8")).maestro.filter((x) => x.nivel === 1)[0];
+  await page.waitForSelector("#tipos-body li");
+  await page.evaluate(() => { window.__inserts = []; });
+  await page.locator("#tipos-body li").first().getByRole("button", { name: "Preguntar" }).click();
+  await page.waitForFunction(() => window.__inserts.some((i) => i.tabla === "questions"));
+  igual("Maestro: la pregunta va con la primera posición del tramo", await page.evaluate(() => window.__inserts.find((i) => i.tabla === "questions").fila.fen), maestro.posiciones[0].fen);
+
+  // Fotografía: se ve unos segundos y las piezas se ocultan en todos los tableros.
+  await abrirNivel("Fotografía", 5);
+  const foto = DATOS.fotografia.filter((x) => x.nivel === 5)[0];
+  await page.evaluate(() => { window.__updates = []; window.__inserts = []; });
+  await page.locator("#tipos-body li").first().getByRole("button", { name: /Mostrar 5 s y ocultar/ }).click();
+  await page.waitForFunction(() => window.__updates.some((u) => u.campos.pieces_hidden === true), null, { timeout: 12000 }).catch(() => {});
+  const pasos = await page.evaluate(() => window.__updates.filter((u) => u.tabla === "game_state").map((u) => u.campos.fen ? "fen" : "pieces_hidden=" + u.campos.pieces_hidden));
+  igual("Fotografía: primero la posición, se muestra y después se oculta", pasos, ["fen", "pieces_hidden=false", "pieces_hidden=true"]);
+  const fenFoto = await page.evaluate(() => window.__updates.find((u) => u.campos.fen).campos.fen);
+  igual("con la posición del ejercicio", fenFoto, foto.fen);
 
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
@@ -953,6 +1088,7 @@ async function pruebaVistaPreviaEnLote(browser) {
     await pruebaLeccionDelProfesor(browser);
     await pruebaDiagramaFijo(browser);
     await pruebaTactica(browser);
+    await pruebaTipos(browser);
     await pruebaCoordenadasDelAlumno(browser);
     await pruebaMiniaturas(browser);
     await pruebaVistaPreviaEnLote(browser);

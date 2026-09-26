@@ -91,7 +91,6 @@ function pintar() {
     else { texto = "🍬"; etiqueta += "confite sin recoger"; }
     if (destinos.indexOf(s) !== -1) etiqueta += ", salto posible";
 
-    // Las etiquetas de coordenadas son <span> dentro de la casilla: se conservan.
     [...c.childNodes].forEach((n) => { if (n.nodeType === Node.TEXT_NODE) n.remove(); });
     if (texto) c.insertBefore(document.createTextNode(texto), c.firstChild);
     c.setAttribute("aria-label", etiqueta);

@@ -62,6 +62,7 @@
     constructor(boardEl, myHandEl, rivalHandEl, opts) {
       opts = opts || {};
       this.boardEl = boardEl;
+      if (window.Coordenadas) Coordenadas.aplicar(boardEl);   // letras y números por fuera (js/coordenadas-tablero.js)
       this.myHandEl = myHandEl;
       this.rivalHandEl = rivalHandEl;
       this.interactive = !!opts.interactive;

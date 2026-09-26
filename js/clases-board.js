@@ -198,6 +198,9 @@
       // miniaturas de supervisión sí se quedan sin ellas: son de mirar de lejos y a ese
       // tamaño las letras no se leerían.
       if (opts.externalCoords) this._setupExternalCoords();
+      // Los demás tableros grandes (Partidas, el lector de planillas) las llevan
+      // igual por fuera, con el ayudante común de todo el sitio.
+      else if (!opts.compact && window.Coordenadas) Coordenadas.aplicar(this.el);
 
       // Arrastrar y soltar piezas (además del clic-clic de siempre): ver js/board-drag.js.
       // shouldStartDrag descarta el toque (no el mouse) cuando este tablero puede dibujar

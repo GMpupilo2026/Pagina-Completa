@@ -5,7 +5,8 @@ El alumno elige en Configuración el color de las casillas, el color de las
 piezas, el estilo (símbolo o dibujo) y el tema divertido. Eso vive en cinco
 módulos —board-themes, board-color-themes, piece-color-themes,
 piece-style-themes y chess-piece-svg— más js/pieza-preferida.js, que es la
-única respuesta a «¿cómo se pinta esta pieza?».
+única respuesta a «¿cómo se pinta esta pieza?». Y js/coordenadas-tablero.js,
+que escribe las letras y los números por fuera de todos los tableros.
 
 Hasta ahora cada página cargaba los que se le ocurrió a quien la escribió:
 Mates los tenía, Aprender y el diagnóstico no, los artículos traían el color
@@ -20,7 +21,7 @@ nueva entra sola. Van en dos lugares:
   (board-color-themes, piece-color-themes, piece-style-themes) van justo
   después de js/adaptive-mode.js, en el <head>: tienen que correr ANTES de que
   se pinte la primera casilla.
-- Los otros tres no pintan nada al cargar: los usa el script de la página. Van
+- Los demás no pintan nada al cargar: los usa el script de la página. Van
   justo antes del primer script del <body>, porque en el <head> la página no
   se ve hasta bajarlos (ver «Lo que frena el primer pintado»).
 
@@ -43,6 +44,7 @@ MODULOS = [
     "piece-style-themes",
     "chess-piece-svg",
     "pieza-preferida",
+    "coordenadas-tablero",
 ]
 TIENE_TABLERO = re.compile(
     r"piece-white|PiezaPreferida|js/[a-z0-9-]*board\.js|tablero-pregunta\.js"

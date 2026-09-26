@@ -81,7 +81,7 @@
             caja.innerHTML = "";
             ATAJOS.forEach((grupo) => {
                 const sec = document.createElement("section");
-                const h = document.createElement("h2");
+                const h = document.createElement("h3");
                 h.className = "text-xs font-bold uppercase tracking-wide text-brand-450 dark:text-brand-350 mb-2";
                 h.textContent = grupo.titulo;
                 const grid = document.createElement("div");
@@ -109,6 +109,144 @@
                 sec.append(h, grid);
                 caja.appendChild(sec);
             });
+        }
+
+        /* ================= Las secciones del panel =================
+         *
+         * Era una sola página larga: atajos, cuatro tarjetas plegadas y la lista
+         * de cuentas, una debajo de la otra. Ahora el menú de la izquierda
+         * muestra UNA sección, y la dirección lleva su nombre (admin.html#equipos)
+         * para que atrás/adelante y un enlace guardado lleven a la misma.
+         * Todo lo que ya estaba sigue con sus mismos ids: solo cambia qué se ve.
+         */
+        const SECCIONES = ["inicio", "cuentas", "crear", "profesores", "supervisores", "equipos", "novedades", "herramientas"];
+
+        function seccionDelEnlace() {
+            const h = location.hash.replace("#", "");
+            return SECCIONES.includes(h) ? h : null;
+        }
+
+        let seccionActual = null;
+
+        function irA(nombre, opciones) {
+            if (!SECCIONES.includes(nombre)) return;
+            seccionActual = nombre;
+            document.querySelectorAll("[data-seccion]").forEach((sec) => {
+                sec.hidden = sec.dataset.seccion !== nombre;
+            });
+            document.querySelectorAll(".admin-nav").forEach((a) => {
+                const activa = a.dataset.ir === nombre;
+                if (activa) a.setAttribute("aria-current", "page");
+                else a.removeAttribute("aria-current");
+                a.classList.toggle("bg-accent-500", activa);
+                a.classList.toggle("text-brand-900", activa);
+                a.classList.toggle("hover:bg-brand-800", !activa);
+                a.classList.toggle("text-brand-100", !activa);
+            });
+            if (!(opciones && opciones.sinHistoria) && location.hash !== "#" + nombre) {
+                history.pushState(null, "", "#" + nombre);
+            }
+        }
+
+        document.querySelectorAll("[data-ir]").forEach((a) => a.addEventListener("click", (e) => {
+            e.preventDefault();
+            irA(a.dataset.ir);
+            window.scrollTo({ top: 0 });
+        }));
+        window.addEventListener("popstate", () => irA(seccionDelEnlace() || "inicio", { sinHistoria: true }));
+
+        // «Buenos días / buenas tardes / buenas noches», en hora de Costa Rica.
+        function pintarSaludo(nombre) {
+            const ahora = new Date();
+            const hora = Number(new Intl.DateTimeFormat("es-CR", { hour: "numeric", hourCycle: "h23", timeZone: "America/Costa_Rica" }).format(ahora));
+            const saludo = hora < 12 ? "Buenos días" : hora < 19 ? "Buenas tardes" : "Buenas noches";
+            const primero = String(nombre || "").trim().split(/\s+/)[0];
+            document.getElementById("admin-saludo").textContent = primero ? saludo + ", " + primero : saludo;
+            const fecha = new Intl.DateTimeFormat("es-CR", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "America/Costa_Rica" }).format(ahora);
+            document.getElementById("admin-fecha").textContent = fecha.charAt(0).toUpperCase() + fecha.slice(1);
+        }
+
+        /* Lo de todos los días, en «Inicio»: las cuatro o cinco cosas a las que
+           se entra casi siempre. Las que son de este panel cambian de sección;
+           las demás son páginas. Todas siguen también en su lugar de siempre. */
+        const RAPIDOS = [
+            { emoji: "➕", label: "Crear cuenta", ir: "crear" },
+            { emoji: "👥", label: "Buscar cuentas", ir: "cuentas" },
+            { emoji: "📝", label: "Solicitudes", href: "solicitudes.html" },
+            { emoji: "💳", label: "Cobros", href: "cobros.html" },
+            { emoji: "🧑‍🏫", label: "Supervisión", href: "supervision.html" },
+            { emoji: "🎟️", label: "Accesos", href: "accesos.html" },
+        ];
+
+        function pintarRapidos() {
+            const caja = document.getElementById("inicio-rapidos");
+            caja.innerHTML = "";
+            RAPIDOS.forEach((r) => {
+                const a = document.createElement("a");
+                a.href = r.href || "#" + r.ir;
+                a.className = "flex flex-col items-start justify-between gap-6 min-h-[6.5rem] rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 p-4 shadow-sm hover:border-accent-500 hover:shadow-md transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+                const icono = document.createElement("span");
+                icono.className = "text-2xl";
+                icono.setAttribute("aria-hidden", "true");
+                icono.textContent = r.emoji;
+                const label = document.createElement("span");
+                label.className = "text-sm font-semibold text-brand-800 dark:text-white leading-tight";
+                label.textContent = r.label;
+                a.append(icono, label);
+                if (r.ir) a.addEventListener("click", (e) => { e.preventDefault(); irA(r.ir); window.scrollTo({ top: 0 }); });
+                caja.appendChild(a);
+            });
+        }
+
+        /* Los números de arriba de «Inicio». Cada uno abre «Cuentas» con ese
+           filtro puesto: un número que no lleva a nadie obliga a ir a buscarlos. */
+        function pintarInicio() {
+            const alumnos = allUsers.filter((u) => u.role === "alumno");
+            const sueltos = alumnos.filter((u) => !profesoresDe(u.id).length).length;
+            const profes = allUsers.filter((u) => u.role === "profesor").length;
+            const numeros = [
+                { emoji: "👥", valor: allUsers.length, label: allUsers.length === 1 ? "cuenta en total" : "cuentas en total", filtro: "" },
+                { emoji: "🎒", valor: alumnos.length, label: alumnos.length === 1 ? "estudiante" : "estudiantes", filtro: "alumno" },
+                { emoji: "🎓", valor: profes, label: profes === 1 ? "profesor" : "profesores", filtro: "profesor" },
+                { emoji: "⚠️", valor: sueltos, label: "sin profesor asignado", filtro: "sin-profesor", alerta: sueltos > 0 },
+            ];
+            const lista = document.getElementById("inicio-numeros");
+            lista.innerHTML = "";
+            numeros.forEach((n) => {
+                const li = document.createElement("li");
+                const b = document.createElement("button");
+                b.type = "button";
+                b.className = "w-full h-full text-left flex items-center gap-3 rounded-2xl p-4 shadow-sm transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 "
+                    + (n.alerta
+                        ? "bg-accent-50 dark:bg-brand-800 border-2 border-accent-500 hover:shadow-md"
+                        : "bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 hover:border-accent-500 hover:shadow-md");
+                const icono = document.createElement("span");
+                icono.className = "text-2xl shrink-0";
+                icono.setAttribute("aria-hidden", "true");
+                icono.textContent = n.emoji;
+                const texto = document.createElement("span");
+                texto.className = "min-w-0";
+                const valor = document.createElement("span");
+                valor.className = "block text-2xl font-bold text-brand-800 dark:text-white leading-none";
+                valor.textContent = n.valor.toLocaleString("es-CR");
+                const label = document.createElement("span");
+                label.className = "block text-xs text-brand-500 dark:text-brand-300 mt-1";
+                label.textContent = n.label;
+                texto.append(valor, label);
+                b.append(icono, texto);
+                b.addEventListener("click", () => {
+                    irA("cuentas");
+                    grupoAbierto = null;
+                    document.getElementById("user-search").value = "";
+                    document.getElementById("role-filter").value = n.filtro;
+                    refiltrarCuentas();
+                });
+                li.appendChild(b);
+                lista.appendChild(li);
+            });
+            document.getElementById("admin-cuantas").textContent = allUsers.length
+                ? allUsers.length.toLocaleString("es-CR") + (allUsers.length === 1 ? " cuenta" : " cuentas")
+                : "";
         }
 
         function fmtDate(iso) {
@@ -678,6 +816,7 @@
         }
 
         function abrirGrupo(clave) {
+            irA("cuentas");
             grupoAbierto = clave;
             cuentasMostradas = CUENTAS_POR_PAGINA;
             document.getElementById("user-search").value = "";
@@ -1178,6 +1317,11 @@
             const badge = document.getElementById("profesores-badge");
             badge.classList.toggle("hidden", sueltos === 0);
             badge.textContent = sueltos ? "⚠️ " + sueltos + " sin profesor" : "";
+            // Y en el menú, con el número: se ve desde cualquier sección.
+            const enMenu = document.getElementById("nav-sin-profesor");
+            enMenu.classList.toggle("hidden", sueltos === 0);
+            enMenu.textContent = sueltos ? String(sueltos) : "";
+            enMenu.title = sueltos ? sueltos + " sin profesor" : "";
             const aviso = document.getElementById("sin-profesor-aviso");
             aviso.classList.toggle("hidden", sueltos === 0);
             if (sueltos) {
@@ -1191,6 +1335,7 @@
                 ver.className = "font-semibold underline hover:text-accent-700 dark:hover:text-accent-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded";
                 ver.textContent = sueltos === 1 ? "Ver cuál es" : "Ver cuáles son";
                 ver.addEventListener("click", () => {
+                    irA("cuentas");
                     grupoAbierto = null;
                     document.getElementById("user-search").value = "";
                     document.getElementById("role-filter").value = "sin-profesor";
@@ -1630,6 +1775,7 @@
             renderEquipos();
             pintarCuentas();
             pintarBarraDeLote();
+            pintarInicio();
         }
 
         document.getElementById("asignar-btn").addEventListener("click", asignarLote);
@@ -1642,7 +1788,15 @@
         // La búsqueda con un respiro: repintar 50 filas con sus campos editables
         // en cada tecla se siente pesado.
         let buscarTimer = null;
-        document.getElementById("user-search").addEventListener("input", () => {
+        document.getElementById("user-search").addEventListener("input", (e) => {
+            // El buscador está arriba, en todas las secciones: escribir lleva a
+            // «Cuentas», que es donde sale lo encontrado.
+            // Viniendo de otra sección, el filtro de rol que quedó puesto no se
+            // ve: se quita, para que no esconda a nadie sin que se note.
+            if (e.target.value.trim() && seccionActual !== "cuentas") {
+                document.getElementById("role-filter").value = "";
+                irA("cuentas");
+            }
             clearTimeout(buscarTimer);
             buscarTimer = setTimeout(refiltrarCuentas, 200);
         });
@@ -1691,7 +1845,7 @@
             if (!session) { window.location.href = "login.html"; return; }
             currentUserId = session.user.id;
 
-            const { data: profile, error } = await sb.from("profiles").select("is_admin").eq("id", currentUserId).single();
+            const { data: profile, error } = await sb.from("profiles").select("is_admin, full_name").eq("id", currentUserId).single();
             document.getElementById("loading").classList.add("hidden");
 
             if (error || !profile?.is_admin) {
@@ -1700,6 +1854,8 @@
             }
 
             renderAtajos();
+            pintarRapidos();
+            pintarSaludo(profile.full_name);
             // Entrar a un modo de vista lleva al panel, que es donde se nota.
             document.querySelectorAll("[data-modo-vista]").forEach((b) => b.addEventListener("click", () => {
                 if (window.ModoVista) ModoVista.fijar(b.dataset.modoVista);
@@ -1710,6 +1866,7 @@
             await loadSupervisores();
             await loadActualizaciones();
             document.getElementById("app").classList.remove("hidden");
+            irA(seccionDelEnlace() || "inicio", { sinHistoria: true });
         }
 
         init();

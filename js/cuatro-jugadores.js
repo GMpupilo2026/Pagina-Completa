@@ -185,7 +185,7 @@
             listEl.innerHTML = "";
             moves.forEach((m, i) => {
                 const li = document.createElement("li");
-                li.textContent = (i + 1) + ". " + SEAT_LABEL[m.seat].slice(2, 3) + " " + m.from + "→" + m.to + (m.capture ? "x" : "") + (m.promotion ? "=D" : "") + (m.castle ? " (enroque)" : "");
+                li.textContent = (i + 1) + ". " + SEAT_LABEL[m.seat].slice(2, 3) + " " + FourPlayerChess.nombre(m.from) + "→" + FourPlayerChess.nombre(m.to) + (m.capture ? "x" : "") + (m.promotion ? "=D" : "") + (m.castle ? " (enroque)" : "");
                 listEl.appendChild(li);
             });
         }

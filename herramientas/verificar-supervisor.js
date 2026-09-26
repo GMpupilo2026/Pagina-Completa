@@ -212,8 +212,8 @@ async function pruebaAdminSupervisores(browser) {
   page.on("pageerror", (e) => errores.push(String(e)));
   await page.goto(BASE + "/admin.html", { waitUntil: "networkidle" });
   await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
-  // La tarjeta va plegada, como Profesores y Equipos: se abre tocando su encabezado.
-  await page.click("summary:has(h2:text-is('Supervisores'))");
+  // Supervisores es una sección del panel: se llega con el menú de la izquierda.
+  await page.click('.admin-nav[data-ir="supervisores"]');
   const tarjetas = await page.$$eval("#sup-lista h3", (hs) => hs.map((h) => h.textContent));
   igual("se lista a la supervisora", tarjetas, ["Marta Solano"]);
   const candidatos = await page.$$eval("#sup-nuevo option", (os) => os.map((o) => o.value).filter(Boolean));

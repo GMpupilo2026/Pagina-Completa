@@ -23,3 +23,6 @@ promo/
 
 # Caché del análisis de Stockfish de herramientas/diagnostico-lichess.js.
 herramientas/.cache-lichess.json
+
+# Caché del análisis de Stockfish de herramientas/tipos-generar.js.
+herramientas/.cache-tipos.json

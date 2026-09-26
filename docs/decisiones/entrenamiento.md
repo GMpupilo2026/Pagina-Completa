@@ -121,11 +121,13 @@ falló.
   Ilumina el tablero, Aperturas y celadas, Visualización) manden de verdad su
   fila a `training_progress` al terminar un ejercicio.
 
-## El hub de Entrenamiento y sus tres grupos
+## El hub de Entrenamiento y sus grupos
 
-`entreno/index.html` reparte los ocho accesos en **Fundamentos** (Mates,
-Aprender, Coordenadas, Desafíos), **Practicar** (Ejercicios por tema, Practicar)
-y **Entreno** (Aperturas y celadas, 4×4).
+`entreno/index.html` reparte los accesos en **Fundamentos** (Mates,
+Aprender, Coordenadas, Desafíos), **Practicar** (Ejercicios por tema, Practicar,
+Precisión posicional), **Entreno** (Aperturas y celadas, 4×4, Visualización) y
+**Tipos de entrenamiento** (una sola tarjeta que abre su ficha, ver «Los Tipos
+de entrenamiento»).
 
 - **Cada acceso es un encabezado de verdad (`<h3>`), no un `<span>`**, y eso es
   el punto, no un detalle de maqueta: quien usa lector de pantalla se mueve
@@ -181,7 +183,7 @@ playwright y `npm install chess.js@0.10.3`). Cuenta los 148 ejercicios uno por
 uno contra `tactica.json` —uno que se pierda por el camino no da ningún error,
 el grupo simplemente tiene menos— y comprueba con chess.js que cada solución
 siga siendo jugable y que el mate prometido sea mate. Después, en un navegador:
-los tres grupos con lo suyo, que cada acceso sea un encabezado, que no se salte
+los cuatro grupos con lo suyo, que cada acceso sea un encabezado, que no se salte
 ningún nivel, que el clic en la esquina de la tarjeta siga abriendo su enlace,
 que `tactica.html` redirija, que el progreso se herede y que un ejercicio de
 táctica se apunte como `tactica`.
@@ -1220,3 +1222,234 @@ pantalla, y mira qué dice la región viva, qué recuerda cada casilla, que el
 tablero sea una sola parada de tabulador y que se guarden las estrellas. Está
 probado que falla de verdad: haciendo que el sonar sume uno, saltan cinco
 comprobaciones.
+
+## La Batalla naval de ajedrez
+
+`batalla-naval.html` (tarjeta en Juegos y sección propia en `ciegos.html`) es la
+batalla naval de siempre con piezas de ajedrez por barcos. La computadora
+esconde su flota y se dispara a una casilla: si había una pieza se hunde y se
+dice cuál era; si era agua, el disparo dice **cuántas piezas de la flota apuntan
+a esa casilla**. Con eso se deduce dónde están, como en el buscaminas, y se
+aprende la geometría de cada pieza. Es hermano de El Sonar y se hizo igual:
+nadie ve lo escondido, así que se juega igual con la pantalla o sin ella.
+
+Tres niveles de práctica con estrellas (torre, alfil y caballo; se suma la
+dama; flota completa de siete) y un cuarto, **el duelo**, donde uno también
+tiene flota y la computadora le dispara.
+
+- **Cada pieza cuenta como si estuviera sola en el tablero**, y la cuenta es de
+  la flota ENTERA, también de las hundidas. Se probó pensar en piezas que se
+  tapan entre sí, como en una partida: la deducción se vuelve un rompecabezas de
+  bloqueos que no enseña nada de la pieza, y contar solo las que siguen a flote
+  hace que un número dicho antes cambie en silencio y el historial mienta. Así,
+  un número no cambia nunca y se le restan las hundidas, que se ven.
+- **Las reglas viven en `js/batalla-naval-motor.js`**, sin DOM. «Esta pieza
+  apunta a esa casilla» se compara con chess.js en las 4032 parejas de casillas
+  de cada pieza (rey negro en la casilla, ¿está en jaque?). Leer una casilla
+  escrita («eva 4») es `SonarMotor.leerCasilla`: una sola copia.
+- **`conocimiento()` es lo que se sabe desde afuera**, solo con los disparos:
+  dos reglas seguras (a una casilla con agua que ya no le falta nadie no le
+  apunta ninguna pieza a flote; si le faltan todas, todas le apuntan). Es la
+  pista, es lo único que usa la computadora del duelo para dispararte —el
+  verificador mueve tu flota escondida y comprueba que dispara igual— y es lo
+  que usa el jugador que deduce del verificador.
+- **Las estrellas salen de ese jugador**: en 300 partidas por nivel, la mediana
+  queda por debajo de las tres estrellas (`estrellas3`). La computadora del
+  duelo elige al azar entre las casillas casi tan buenas como la mejor
+  (`HOLGURA_COMPU`): quien deduce bien le gana unas dos de cada tres veces.
+- **Cada casilla escribe su propio nombre** (`data-etiqueta-propia`): el de
+  `js/tablero-accesible.js` diría «vacía» en una casilla sin disparar, y eso
+  sería mentira, porque puede esconder una pieza. El tablero de tu flota es
+  solo un dibujo (`aria-hidden`); lo mismo va escrito debajo y «mi flota» lo
+  dice entero.
+- Los colores de agua, hundida y tu pieza se midieron contra su propio fondo
+  (van en el `<style>` de la página) y nunca van solos: el número o la pieza
+  van encima y en el nombre de la casilla. El agua segura de la pista es un aro
+  de dos colores, para verse sobre la casilla clara y la oscura de cualquier
+  tema.
+- El progreso son `batalla_estrellas_v1` (`maxPorClave`), `batalla_mejor_v1`
+  (`minPorClave`) y `batalla_victorias_v1` (`maxNumero`), en CLAVES de
+  `js/progreso-usuario.js`. No escribe en `training_progress` (el CHECK de
+  actividades); el tiempo sí, con `data-activity="batalla-naval"`.
+
+**Al tocar el motor o la página, correr `node herramientas/verificar-batalla-naval.js`**
+(`--sin-navegador` corre solo las reglas). Está probado que falla de verdad:
+haciendo que un disparo al agua sume uno, saltan nueve comprobaciones.
+
+## Los Tipos de entrenamiento
+
+`entreno/tipos.html` (grupo y tarjeta **"🧠 Tipos de entrenamiento"** del hub)
+es una ficha con catorce entrenamientos que no son «encuentra la mejor jugada»,
+cada uno con sus niveles: **El Detective** (¿qué jugada se acaba de hacer?,
+análisis retrógrado), **¿Qué quiere el rival?** (profilaxis: hacer la jugada
+que amenaza el rival), **Descarte** (tachar las candidatas que pierden),
+**Siete diferencias** (qué detalle hace que el mismo golpe ya no funcione), **La
+balanza** (poner la aguja de −5 a +5 contra el motor), **Fotografía** (memorizar
+una posición y reconstruirla) y **Con lo justo** (dar mate con rey y una o dos
+piezas contra el rey solo). Una sola página con tres vistas según el `#`:
+`#` la ficha, `#detective` los niveles, `#detective/2` el juego (y
+`#detective/2/<id>` un ejercicio concreto), así el «atrás» del navegador y un
+enlace del profesor llevan a donde tienen que llevar.
+
+- **Tres archivos, tres cosas.** `js/tipos-catalogo.js` dice qué es cada tipo y
+  sus niveles (lo leen la ficha, la clase en vivo y el verificador);
+  `js/tipos-reglas.js` son las reglas sin DOM (qué jugada anterior es posible,
+  cómo se corrige cada uno, cómo se defiende el rey), que corren igual en el
+  navegador y en Node; `js/entreno-tipos.js` solo pinta. Las posiciones están
+  en `entreno/data/tipos.json`, que **no se edita a mano**: lo arma
+  `herramientas/tipos-generar.js`.
+- **Ninguna posición se inventa.** Las de los cinco primeros salen de partidas
+  reales (el banco de Lichess de «Ejercicios por tema» y las líneas de
+  `js/aperturas-lineas.js`); los finales de Con lo justo se sortean, pero su
+  número se calcula exacto (abajo).
+- **El Detective no promete una respuesta única «porque sí»**: `retro()` arma
+  cada posición anterior posible —con o sin una pieza capturada en la casilla
+  de llegada, con coronación, enroque o al paso— y pide que sea legal (el rey
+  del que mueve ahora no podía estar en jaque cuando le tocaba al otro) y que la
+  jugada lleve exactamente a lo que se ve. La buena tiene que ser posible y cada
+  una de las otras imposible, con el motivo que dice su explicación. Por eso
+  todas las posiciones tienen un rey en jaque: sin jaque casi cualquier jugada
+  anterior es posible y la pregunta no tendría respuesta. Niveles: la pieza que
+  da jaque se movió; dos opciones de la misma pieza (desde una ya daba jaque);
+  a la descubierta; coronación, enroque, al paso y jaque doble.
+- **¿Qué quiere el rival?** usa la posición del ejercicio con el turno
+  cambiado (la «jugada nula»): el alumno ve su lado del tablero y mueve por el
+  rival. Stockfish confirmó al generar que la amenaza es la mejor jugada del
+  rival, que gana (mate o dos peones) y que la segunda no gana; el mate en 2
+  además lo demuestra chess.js en el verificador. Solo cuenta la amenaza (o
+  cualquier mate cuando se promete mate en 1).
+- **Descarte** parte de la misma posición: ahora el alumno tiene que
+  defenderse. Cada candidata se analizó sola, más hondo: «pierde» es 2,5 peones
+  o más por debajo de la mejor que aguanta, «aguanta» es quedar a menos de 0,6,
+  y no entra ninguna de la zona gris del medio, que no se podría corregir sin
+  discutir. Entre las que pierden se prefieren capturas y jaques: son las que
+  tientan.
+- **Siete diferencias** son dos posiciones: A, la de un ejercicio real, donde
+  el golpe gana, y B, la misma con UNA sola cosa cambiada (una pieza menos, un
+  peón una casilla más allá o más acá, una pieza en la casilla de al lado), donde
+  el mismo golpe ya no gana. Stockfish lo confirma en las dos: en A es la mejor
+  jugada y gana (mate o 2 peones); en B, jugado igual, queda en +0,8 o menos. Los
+  cambios se prueban cerca de la casilla del golpe, nunca sobre la pieza que lo
+  da ni sobre un rey. El nivel 4 son líneas largas donde el rival contesta en B
+  lo mismo que en A: la diferencia muerde más adelante. **A y B comparten todo
+  menos el cambio**: turno, contadores y derechos de enroque (solo los que valen
+  en las dos). La primera versión le dejaba a A sus enroques y a B ninguno, y
+  eso era una segunda diferencia escondida que el alumno no podía ver en el
+  tablero; el verificador exige ahora que el resto de la FEN sea idéntico. Se
+  contesta tocando la casilla o escribiéndola, y si en B hay pocas defensas que
+  refutan el golpe (tres o menos, analizadas en todas las respuestas), se pide
+  además la refutación. En B el golpe se nombra sin «+» ni «#»: ahí ya no es
+  ese mate.
+- **La balanza** guarda la evaluación a profundidad 18 y solo si a
+  profundidad 12 decía casi lo mismo. Los niveles salen de comparar esa
+  evaluación con el material: el material decide; parejo o leve; material
+  igual y un bando mucho mejor; y quien tiene más material no es quien está
+  mejor. Del lado equivocado nunca hay estrellas, aunque la distancia sea
+  corta.
+- **Fotografía esconde de verdad**: al reconstruir, el tablero no tiene piezas
+  y la lectura escrita del Modo Adaptado desaparece (sería soplar). Se
+  reconstruye tocando casillas con una paleta o **escribiendo** «Rg1 Tf1 a2»
+  por color, que es como la contesta quien no ve el tablero. Las marcas de la
+  corrección llevan su signo escrito (✓ − ✗ +), el color no va solo.
+- **Con lo justo: el mínimo es exacto, no «lo que dijo el motor».**
+  Stockfish no sirve para contar jugadas hasta el mate: a una posición de rey y
+  torre le dio «mate en 20», y el máximo teórico de ese final es 16. Así que
+  `herramientas/lib/finales-dtm.js` resuelve la tabla ENTERA hacia atrás
+  (análisis retrógrado, como las tablas de finales), capturas del rey negro
+  incluidas (si se come una de las dos torres, sigue la tabla de rey y torre;
+  si queda una pieza menor sola, tablas). Da los máximos conocidos de cada final
+  (dama 10, torre 16, dos torres 7, dos alfiles 19, alfil y caballo 33), y eso
+  lo comprueba el verificador cada vez. La primera versión daba 34 en alfil y
+  caballo: el rey negro «tapaba» la línea del alfil hacia la casilla a la que
+  se estaba moviendo, así que se comía piezas defendidas. Las tablas de cuatro
+  piezas tardan unos 25 s cada una: no caben en el navegador, así que ahí el
+  rey se defiende con una heurística (`defensaRey()`: se come lo que esté
+  suelto, mira su jugada y la respuesta blanca, y huye del
+  borde y de las esquinas del color del alfil). Por eso la página dice «contra
+  la mejor defensa: mate en N» y se puede dar antes.
+- **Lo escrito va en castellano primero.** `ChessMoveParser` prueba antes el
+  texto tal cual, en inglés, y «Rc3» en inglés es la TORRE: con rey y torre,
+  quien escribía «Rc3» queriendo mover el rey movía la torre (lo descubrió el
+  verificador, que juega el final escribiendo). `jugadaEscrita()` traduce
+  primero R D T A C al inglés y, si así no es legal, prueba lo demás.
+- **El avance vive en la cuenta**: `tipos_estrellas_v1` («tipo:id» → mejores
+  estrellas, `maxPorClave`) y `tipos_mejor_v1` (final → menos jugadas,
+  `minPorClave`). Un ejercicio cuenta como resuelto con una estrella. **No
+  escribe en `training_progress`** (el CHECK de actividades, como Confites y el
+  Sonar); el tiempo sí, con `data-activity="tipos"`. Esa sección está en las
+  dos tablas de nombres (`js/tiempo-secciones.js` y la de
+  `informes-encargados`); la función del correo tiene que volver a
+  desplegarse para que el correo a la casa la nombre.
+
+### Los tipos 8 a 14
+
+El Barrido, Intercambios, Constrúyela tú, Rey y peón, Adivina la jugada del
+maestro, ¿Qué apertura es? y la Ruta segura. Sus reglas viven en
+`js/tipos-reglas-mas.js` y **son la definición del ejercicio**: el generador
+arma el banco con ellas, la página corrige con ellas y el verificador las
+vuelve a correr sobre cada ejercicio. La página los juega en
+`js/entreno-tipos-mas.js`, con las piezas comunes que expone
+`js/entreno-tipos.js` (`window.TiposUI`); los que necesitan cargar algo antes
+de jugar lo hacen en `PREPARAR[tipo]`.
+
+- **El Barrido** pide la lista COMPLETA, no la mejor jugada. Las clases no se
+  pisan: un jaque que captura es jaque; una captura sin jaque, captura; y una
+  amenaza es una jugada tranquila tras la cual el bando que movió ataca una
+  pieza rival (no el rey) que antes no atacaba así: sin defensa, o de más valor
+  que su atacante más barato. Descubiertas incluidas. Anotar no mueve nada: el
+  tablero sirve para tocar la jugada, y el verificador comprueba que ninguna
+  pieza se movió.
+- **Intercambios** es la cadena de capturas en UNA casilla, con la regla de
+  siempre: cada bando captura con su pieza más barata que pueda capturar
+  LEGALMENTE (una clavada no puede) y sigue solo mientras le conviene. Los
+  niveles salen de la cadena misma: corta, larga, con una pieza que entra
+  desde atrás (rayos X) o con una que ataca y no puede capturar (clavada). Sin
+  coronaciones ni capturas al paso, que cambiarían el valor en medio.
+- **Constrúyela tú** acepta cualquier casilla que cumpla: se comprueba jugando,
+  no contra una lista. La lista (`soluciones`) está para el profesor y el
+  verificador, que la recalcula casilla por casilla. La posición que queda
+  tiene que poder existir: el bando que no mueve no puede estar en jaque, ni un
+  bando tener más material del posible. En «Quita el mate» tampoco vale dar
+  jaque, que taparía el mate por la vía fácil.
+- **Rey y peón** se corrige contra la tabla ENTERA del final, resuelta en
+  `herramientas/lib/kpk.js` (coronar con dama o con torre, lo que sirva; tablas
+  si el rey negro se come la pieza nueva o queda ahogado). Da los números
+  conocidos de este final —124.960 posiciones ganadas de 163.328 con blancas
+  al mover, 97.604 de 168.024 con negras— y el verificador los exige. La tabla
+  viaja a la página como un bit por posición (`entreno/data/kpk.json`, 64 KB) y
+  se carga solo al entrar a este tipo. La «única jugada» es única de verdad:
+  el verificador cuenta las que ganan.
+- **Adivina la jugada del maestro** usa las partidas del curso «Partidas
+  modelo», que están **detrás del candado de los cursos**. Por eso su banco se
+  escribe en `cursos/protegido/data/tipos-maestro.json` (lo sirve el worker
+  solo con el acceso vigente) y al banco público va únicamente el índice (id y
+  nivel, para contar el avance). Quien no tiene el acceso vigente recibe un
+  «no» del servidor y la página lo dice; el verificador comprueba que el
+  índice público no traiga ni una posición. Cada jugada se compara contra la
+  partida del curso, y «buena» es la que el motor da a menos de 0,3 de la
+  mejor.
+- **¿Qué apertura es?** sale de `js/aperturas-lineas.js`. En el nivel 1 solo
+  entran posiciones que pertenecen a UNA apertura; en el 3 las jugadas vienen
+  con dos del mismo bando cambiadas de lugar, y el verificador exige que
+  lleguen a la misma posición y que el orden sea de verdad otro. En ese nivel
+  el tablero no se muestra hasta contestar.
+- **La ruta segura** mueve UNA pieza sin capturar y sin pisar nunca una
+  casilla atacada por el rival (tampoco la de llegada; pasar por encima de una
+  casilla atacada, en una jugada larga, sí se puede). Lo atacado se cuenta sin
+  la pieza que viaja, porque ella no tapa nada. El mínimo es el camino más
+  corto exacto.
+
+**Al tocar los bancos, las reglas o la página, correr**:
+
+    node herramientas/tipos-generar.js          # solo si cambian los bancos (necesita Stockfish)
+    node herramientas/verificar-tipos.js        # los bancos y las reglas, sin navegador (~1 min)
+    node herramientas/verificar-tipos-pagina.js # la página, jugada de punta a punta
+
+El primero de los verificadores vuelve a comprobar con las reglas de la página
+todo lo que cada banco promete y recalcula las tablas de finales; el segundo
+juega cada tipo en un navegador (Con lo justo, escribiendo cada jugada que
+elige la tabla exacta) y mide lo que se ve, no las clases. Está probado que
+fallan de verdad: cambiando la opción buena de un Detective, un mínimo, un
+material y una respuesta de Fotografía saltan 7 comprobaciones; en Siete
+diferencias, cambiando una casilla del cambio, una evaluación de B o los
+enroques de B saltan las 3 que corresponden.

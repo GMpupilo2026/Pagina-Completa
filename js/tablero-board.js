@@ -409,6 +409,7 @@
     forceFocusRestore = false;
 
     boardEl.innerHTML = "";
+    if (window.Coordenadas) Coordenadas.aplicar(boardEl);   // letras y números por fuera (js/coordenadas-tablero.js)
     const squares = boardSquaresInOrder();
     if (!focusSquare || squares.indexOf(focusSquare) === -1) {
       focusSquare = squares[0];

@@ -57,6 +57,7 @@
     constructor(boardEl, opts) {
       opts = opts || {};
       this.boardEl = boardEl;
+      if (window.Coordenadas) Coordenadas.aplicar(boardEl);   // letras y números por fuera (js/coordenadas-tablero.js)
       this.mySeat = opts.mySeat || null;
       this.interactive = !!opts.interactive;
       this.onMove = opts.onMove || function () {};
@@ -166,6 +167,7 @@
           if (this.selected === square) cls += "outline outline-4 -outline-offset-4 outline-accent-500 ";
           btn.className = cls;
           btn.setAttribute("data-square", square);
+          btn.dataset.coordenada = FPC.nombre(square);   // lo que escribe js/coordenadas-tablero.js
 
           const piece = this.game.board[square];
           if (piece) {
@@ -177,9 +179,9 @@
             span.setAttribute("aria-hidden", "true");
             btn.appendChild(span);
             const label = (piece.dead ? "pieza eliminada de " : SEAT_LABEL[piece.seat] + " ") + PIECE_NAME[piece.type];
-            btn.setAttribute("aria-label", "Casilla " + square + ": " + label);
+            btn.setAttribute("aria-label", "Casilla " + FPC.nombre(square) + ": " + label);
           } else {
-            btn.setAttribute("aria-label", "Casilla " + square + ": vacía");
+            btn.setAttribute("aria-label", "Casilla " + FPC.nombre(square) + ": vacía");
           }
 
           if (legalTargets.indexOf(square) !== -1) {

@@ -86,6 +86,29 @@
             await loadAll();
         }
 
+        /* La ronda en la que va el torneo. Se cuenta también con las rondas que
+           existen, no solo con `current_round`: si esa columna se quedó atrás, la
+           ronda «siguiente» ya existía y la base la rechazaba por repetida
+           («duplicate key … tournament_rounds_tournament_id_round_number_key»)
+           en cada clic, sin salida. Ver «Empezar y generar una ronda, una sola
+           vez» en docs/decisiones/juegos-y-torneos.md. */
+        function rondaActual() {
+            const ultima = rounds.length ? rounds[rounds.length - 1].round_number : 0;
+            return Math.max(tournament.current_round || 0, ultima);
+        }
+
+        // Mientras se empieza el torneo o se arma una ronda, el segundo clic no
+        // hace nada: la página no se repinta hasta que todo termina, y el botón
+        // seguía ahí.
+        let ocupado = false;
+        async function unaVez(boton, tarea) {
+            if (ocupado) return;
+            ocupado = true;
+            if (boton) boton.disabled = true;
+            try { await tarea(); }
+            finally { ocupado = false; if (boton) boton.disabled = false; render(); }
+        }
+
         async function startTournament() {
             if (registrations.length < 2) { Avisos.avisar("Hacen falta al menos 2 inscritos.", { tipo: "error" }); return; }
             const players = registrations.map((r) => r.player_id);
@@ -96,11 +119,18 @@
             } else {
                 totalRounds = TorneoEngine.suggestedTotalRounds(tournament.format, players.length);
             }
-            const { error } = await sb.from("tournaments").update({
+            // Solo si sigue en inscripción: empezarlo otra vez devolvía
+            // current_round a 0 con la ronda 1 ya creada.
+            const { data: empezado, error } = await sb.from("tournaments").update({
                 status: "in_progress", total_rounds: totalRounds, current_round: 0,
                 started_at: new Date().toISOString(), updated_at: new Date().toISOString(),
-            }).eq("id", tournament.id);
+            }).eq("id", tournament.id).eq("status", "registration").select("id");
             if (error) { Avisos.avisar("No se pudo empezar el torneo: " + error.message, { tipo: "error" }); return; }
+            if (!empezado || !empezado.length) {
+                Avisos.avisar("Este torneo ya había empezado.", { tipo: "info" });
+                await loadAll();
+                return;
+            }
             tournament.status = "in_progress";
             tournament.total_rounds = totalRounds;
             tournament.current_round = 0;
@@ -113,7 +143,18 @@
         }
 
         async function generateRound() {
-            const nextRoundNumber = tournament.current_round + 1;
+            // Las rondas se vuelven a pedir: puede haber otra pestaña del mismo
+            // torneo abierta, y la lista de esta puede venir atrasada.
+            const { data: rondasHoy } = await sb.from("tournament_rounds").select("*").eq("tournament_id", tournament.id).order("round_number", { ascending: true });
+            if (rondasHoy) rounds = rondasHoy;
+            const nextRoundNumber = rondaActual() + 1;
+            if (nextRoundNumber > (tournament.total_rounds || 0)) { await loadAll(); return; }
+            const anterior = rounds.find((r) => r.round_number === nextRoundNumber - 1);
+            if (anterior && anterior.status !== "finished") {
+                Avisos.avisar("La ronda " + anterior.round_number + " todavía no termina.", { tipo: "error" });
+                await loadAll();
+                return;
+            }
             const players = registrations.map((r) => r.player_id);
             let pairings;
             if (tournament.format === "round_robin") {
@@ -181,7 +222,8 @@
                 Avisos.avisar("La ronda quedó con " + erroresDeCruce.length + " cruce(s) sin guardar:\n" + erroresDeCruce.join("\n"), { tipo: "error" });
             }
 
-            await sb.from("tournaments").update({ current_round: nextRoundNumber, updated_at: new Date().toISOString() }).eq("id", tournament.id);
+            const { error: errorDelTorneo } = await sb.from("tournaments").update({ current_round: nextRoundNumber, updated_at: new Date().toISOString() }).eq("id", tournament.id);
+            if (errorDelTorneo) console.error(errorDelTorneo);   // la ronda ya existe: rondaActual() la cuenta igual
             tournament.current_round = nextRoundNumber;
             await TorneoSync.maybeFinishRound(sb, roundRow.id); // por si la ronda generada salió toda de byes
             await loadAll();
@@ -281,7 +323,7 @@
 
             document.getElementById("owner-start-panel").classList.toggle("hidden", !isOwner);
             if (isOwner) {
-                document.getElementById("start-btn").disabled = registrations.length < 2;
+                document.getElementById("start-btn").disabled = registrations.length < 2 || ocupado;
                 const roundsField = document.getElementById("rounds-field");
                 roundsField.classList.toggle("hidden", tournament.format !== "swiss");
                 if (tournament.format === "swiss" && !roundsField.dataset.filled) {
@@ -452,9 +494,9 @@
             const isManagerHere = isOwner && tournament.status === "in_progress";
             genBtn.classList.toggle("hidden", !isManagerHere);
             if (isManagerHere) {
-                const canGenerate = (!lastRound || lastRound.status === "finished") && tournament.current_round < (tournament.total_rounds || 0);
-                genBtn.disabled = !canGenerate;
-                genBtn.textContent = lastRound ? ("Generar ronda " + (tournament.current_round + 1)) : "Generar ronda 1";
+                const canGenerate = (!lastRound || lastRound.status === "finished") && rondaActual() < (tournament.total_rounds || 0);
+                genBtn.disabled = !canGenerate || ocupado;
+                genBtn.textContent = "Generar ronda " + (rondaActual() + 1);
             }
         }
 
@@ -482,9 +524,9 @@
         }
 
         document.getElementById("self-register-btn").addEventListener("click", () => amIRegistered ? withdraw() : register());
-        document.getElementById("start-btn").addEventListener("click", startTournament);
+        document.getElementById("start-btn").addEventListener("click", (e) => unaVez(e.currentTarget, startTournament));
         document.getElementById("ritmo-guardar").addEventListener("click", guardarRitmo);
-        document.getElementById("generate-round-btn").addEventListener("click", generateRound);
+        document.getElementById("generate-round-btn").addEventListener("click", (e) => unaVez(e.currentTarget, generateRound));
 
         async function loadAll() {
             const { data: t, error } = await sb.from("tournaments").select("*").eq("id", TOURNEY_ID).maybeSingle();
