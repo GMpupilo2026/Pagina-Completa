@@ -61,6 +61,14 @@ window.LogrosCatalogo = (function () {
     { id: "dias_30", categoria: "dias", nivel: "plata", emoji: "📅", nombre: "Un mes de práctica", descripcion: "30 días distintos con al menos 5 ejercicios.", meta: 30, valor: (s) => s.dias_activos },
     { id: "dias_100", categoria: "dias", nivel: "oro", emoji: "📅", nombre: "Cien días de práctica", descripcion: "100 días distintos con al menos 5 ejercicios.", meta: 100, valor: (s) => s.dias_activos },
 
+    // ---------------- Trofeos de la clase en vivo (se acumulan de clase en clase) ----------------
+    { id: "trofeos_1", categoria: "trofeos", nivel: "bronce", emoji: "🏆", nombre: "Tu primer trofeo", descripcion: "Ganaste tu primer trofeo en clase.", meta: 1, valor: (s) => s.trofeos },
+    { id: "trofeos_10", categoria: "trofeos", nivel: "bronce", emoji: "🏆", nombre: "Vitrina en marcha", descripcion: "Juntaste 10 trofeos en clase.", meta: 10, valor: (s) => s.trofeos },
+    { id: "trofeos_25", categoria: "trofeos", nivel: "plata", emoji: "🏆", nombre: "Estante lleno", descripcion: "Juntaste 25 trofeos en clase.", meta: 25, valor: (s) => s.trofeos },
+    { id: "trofeos_50", categoria: "trofeos", nivel: "plata", emoji: "🏆", nombre: "Medio centenar", descripcion: "Juntaste 50 trofeos en clase.", meta: 50, valor: (s) => s.trofeos },
+    { id: "trofeos_100", categoria: "trofeos", nivel: "oro", emoji: "🏆", nombre: "Cien trofeos", descripcion: "Juntaste 100 trofeos en clase.", meta: 100, valor: (s) => s.trofeos },
+    { id: "trofeos_250", categoria: "trofeos", nivel: "diamante", emoji: "🏆", nombre: "Sala de trofeos", descripcion: "Juntaste 250 trofeos en clase.", meta: 250, valor: (s) => s.trofeos },
+
     // ---------------- Por tipo de ejercicio ----------------
     { id: "mates_1", categoria: "mates", nivel: "bronce", emoji: "♚", nombre: "Tu primer mate", descripcion: "Resolviste tu primer ejercicio de Mates.", meta: 1, valor: (s) => porActividad(s, "mates") },
     { id: "mates_50", categoria: "mates", nivel: "plata", emoji: "♚", nombre: "Cazamates", descripcion: "50 ejercicios de Mates resueltos.", meta: 50, valor: (s) => porActividad(s, "mates") },

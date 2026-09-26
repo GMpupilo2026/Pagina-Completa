@@ -121,6 +121,53 @@ falló.
   Ilumina el tablero, Aperturas y celadas, Visualización) manden de verdad su
   fila a `training_progress` al terminar un ejercicio.
 
+## Los trofeos de la clase
+
+En la clase en vivo (`sesion.html`) el profesor pregunta «¿qué jugarías?» y
+marca ✅ o ❌ cada respuesta. **Cada respuesta marcada ✅ es un trofeo**, y los
+trofeos se acumulan de clase en clase: el alumno ve su total en la clase
+(`#mis-trofeos`, en su panel) y en `logros.html` («Tus trofeos de clase» y la
+categoría de medallas «Trofeos de clase»: 1, 10, 25, 50, 100 y 250).
+
+- **El total es respuestas correctas + ajustes del profesor.** Lo calcula
+  `public.trofeos_de(p_alumno default auth.uid())` y devuelve `por_clase`,
+  `ajustes` y `total` (nunca menos de cero).
+- **Las respuestas correctas no se guardan como trofeos: se cuentan**
+  (`question_answers.is_correct = true`). Si el profesor cambia un ✅ por ❌, el
+  trofeo se va solo; una tabla de «trofeos ganados» habría quedado con uno de
+  más sin que nada fallara.
+- **El profesor ajusta a mano** con el botón 🏆 del renglón del alumno
+  (pestaña Alumnos): +1, −1, +5 o una cantidad escrita (−100 a 100) con un
+  motivo que el alumno ve. Cada ajuste es una fila de `trofeos_ajustes` (quién,
+  cuánto, por qué y cuándo), no un total sobreescrito: así el alumno ve de
+  dónde salió cada trofeo y un ajuste no borra otro.
+- **Quién ajusta lo decide la base**: `ajustar_trofeos()` (`SECURITY DEFINER`)
+  exige `soy_profesor_de(alumno)` o `soy_admin()`, nunca a uno mismo, y rechaza
+  quitar más de lo que tiene (con un candado por alumno para que dos profesores
+  a la vez no lo dejen en negativo). La tabla no tiene política de escritura.
+  La leen el alumno, sus profesores (el conjunto `interno.alumnos_de()` armado
+  una vez), quien administra y quien supervisa a sus profesores.
+- **`trofeos_de()` es `SECURITY DEFINER` a propósito**: con INVOKER cada
+  profesor contaría solo las respuestas a SUS preguntas (la RLS de
+  `question_answers`) y un alumno con dos profesores tendría dos totales. El
+  permiso se pregunta explícito, con el `coalesce(..., false)` de siempre.
+- **El contador del alumno se vuelve a pedir** cada vez que Realtime avisa que
+  le calificaron una respuesta (de cualquier pregunta, no solo la abierta) o
+  que el profesor le agregó un ajuste (`trofeos_ajustes` está en la
+  publicación de Realtime). Nunca se suma en el navegador.
+- El módulo es `js/trofeos.js` (una sola copia para la clase y Logros). En
+  Logros, `Logros.cargar()` pide `trofeos_de` a la par de la racha; si falla,
+  cuenta cero y no tumba la racha.
+- Se probó con SQL de verdad, impersonando roles dentro de una transacción que
+  se deshace: el profesor ve 9 y con +3 queda en 12; quitar 100 se rechaza; la
+  alumna ve lo suyo y no puede sumarse ni insertar directo; alguien ajeno no ve
+  ni el total ni las filas; sin `auth.uid()` se rechaza.
+- **Verificadores**: `verificar-trofeos.js` (el panel del profesor manda el
+  alumno y la cantidad correctos, lo que no se puede no llega a la base, y la
+  alumna ve su total crecer y bajar solo) y `verificar-logros.js` (el total, su
+  desglose, los ajustes escapados y las medallas). El doble de
+  `verificar-clase-registrada.js` cuenta los trofeos igual que la base.
+
 ## El hub de Entrenamiento y sus grupos
 
 `entreno/index.html` reparte los accesos en **Fundamentos** (Mates,

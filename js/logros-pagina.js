@@ -22,6 +22,7 @@
             ejercicios: "Ejercicios resueltos",
             variedad: "Variedad",
             dias: "Días de práctica",
+            trofeos: "Trofeos de clase",
             mates: "Mates",
             "4x4": "4×4",
             temas: "Ejercicios por tema",
@@ -137,6 +138,11 @@
             document.getElementById("sin-sesion-aviso").classList.toggle("hidden", !error);
             pintarRacha(stats);
             pintarLogros(logros);
+            // El detalle de los trofeos: de dónde sale el total y los ajustes
+            // del profesor (js/trofeos.js). La medalla ya salió de stats.trofeos.
+            const { data } = await sb.auth.getSession();
+            const yo = data && data.session ? data.session.user.id : null;
+            if (window.Trofeos) Trofeos.montarLectura(document.getElementById("trofeos-body"), { sb, alumnoId: yo });
         }
 
         // Igual que Entrenamiento: exige sesión iniciada en el sitio, porque

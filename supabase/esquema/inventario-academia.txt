@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20260926191715
+# al-dia-con: 20260926195531
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -86,6 +86,7 @@ tabla  tournaments  rls=true
 tabla  training_plans  rls=true
 tabla  training_progress  rls=true
 tabla  training_state  rls=true
+tabla  trofeos_ajustes  rls=true
 tabla  tv_settings  rls=true
 tabla  variant_nodes  rls=true
 columna  Ejercicios Lichess.DailyDate  text
@@ -446,6 +447,7 @@ columna  game_state.shown_leccion  integer
 columna  game_state.start_fen  text
 columna  game_state.updated_at  timestamp with time zone
 columna  game_state.updated_by  uuid
+columna  game_state.vista  jsonb
 columna  horario_clases.created_at  timestamp with time zone
 columna  horario_clases.desde  date
 columna  horario_clases.dia_semana  integer
@@ -790,6 +792,12 @@ columna  training_state.key  text
 columna  training_state.student_id  uuid
 columna  training_state.updated_at  timestamp with time zone
 columna  training_state.value  jsonb
+columna  trofeos_ajustes.alumno_id  uuid
+columna  trofeos_ajustes.cantidad  integer
+columna  trofeos_ajustes.creado_por  uuid
+columna  trofeos_ajustes.created_at  timestamp with time zone
+columna  trofeos_ajustes.id  uuid
+columna  trofeos_ajustes.motivo  text
 columna  tv_settings.games_count  integer
 columna  tv_settings.id  boolean
 columna  tv_settings.lichess_tournament_id  text
@@ -819,6 +827,7 @@ funcion  acceso_set_exigido(p_exigido boolean)  definer  anon=false  auth=true
 funcion  acceso_vigente()  definer  anon=false  auth=true
 funcion  aceptar_desafio(p_desafio uuid, p_fen text, p_cartas jsonb, p_duelo jsonb, p_variant jsonb)  definer  anon=false  auth=true
 funcion  actividad_profesor(p_profesor uuid, p_periodo date)  definer  anon=false  auth=true
+funcion  ajustar_trofeos(p_alumno uuid, p_cantidad integer, p_motivo text)  definer  anon=false  auth=true
 funcion  alumnos_de_para_ver_como(p_profesor uuid)  definer  anon=false  auth=true
 funcion  alumnos_del_profesor(p_profesor uuid)  invoker  anon=false  auth=true
 funcion  alumnos_del_profesor_con_nombre(p_profesor uuid)  invoker  anon=true  auth=true
@@ -1018,6 +1027,7 @@ funcion  supervisores_de(p_persona uuid)  definer  anon=false  auth=true
 funcion  tablero_academias(p_periodo date)  definer  anon=false  auth=true
 funcion  tareas_con_avance(p_alumno uuid, p_profesor uuid, p_pendientes boolean, p_limite integer)  invoker  anon=true  auth=true
 funcion  tiempo_por_seccion(p_alumno uuid, p_desde timestamp with time zone, p_hasta timestamp with time zone)  invoker  anon=false  auth=true
+funcion  trofeos_de(p_alumno uuid)  definer  anon=false  auth=true
 funcion  uuid_seguro(p_texto text)  invoker  anon=false  auth=true
 funcion  validar_marca_training_progress()  definer  anon=false  auth=false
 politica  Ejercicios Lichess  Ejercicios Lichess: lectura publica  SELECT
@@ -1266,6 +1276,7 @@ politica  training_state  training_state_select_own  SELECT
 politica  training_state  training_state_select_supervisor  SELECT
 politica  training_state  training_state_select_teacher  SELECT
 politica  training_state  training_state_update_own  UPDATE
+politica  trofeos_ajustes  trofeos_ajustes_ver  SELECT
 politica  tv_settings  tv_settings_select_public  SELECT
 politica  tv_settings  tv_settings_update_profesor  UPDATE
 politica  variant_nodes  variant_nodes_delete  DELETE
@@ -1533,6 +1544,8 @@ indice  training_plans  training_plans_teacher_id_fk
 indice  training_progress  training_progress_pkey
 indice  training_progress  training_progress_student_idx
 indice  training_state  training_state_pkey
+indice  trofeos_ajustes  trofeos_ajustes_alumno
+indice  trofeos_ajustes  trofeos_ajustes_pkey
 indice  tv_settings  tv_settings_pkey
 indice  tv_settings  tv_settings_updated_by_fk
 indice  variant_nodes  variant_nodes_created_by_fk
@@ -1558,6 +1571,7 @@ realtime  practice_sessions
 realtime  question_answers
 realtime  questions
 realtime  saved_games
+realtime  trofeos_ajustes
 realtime  tv_settings
 realtime  variant_nodes
 cron  avisar-fichas-faltantes  10 * * * *
@@ -2349,6 +2363,7 @@ grant  training_state  authenticated  SELECT
 grant  training_state  authenticated  TRIGGER
 grant  training_state  authenticated  TRUNCATE
 grant  training_state  authenticated  UPDATE
+grant  trofeos_ajustes  authenticated  SELECT
 grant  tv_settings  anon  DELETE
 grant  tv_settings  anon  INSERT
 grant  tv_settings  anon  REFERENCES

@@ -1773,6 +1773,15 @@
                 notasBtn.setAttribute("aria-label", "Bitácora de " + (info.full_name || info.email));
                 notasBtn.addEventListener("click", () => abrirNotasEnClase(studentId, info.full_name || info.email));
                 actions.appendChild(notasBtn);
+                // Sus trofeos: sumar por un buen trabajo o quitar uno contado de más.
+                const trofeosBtn = document.createElement("button");
+                trofeosBtn.type = "button";
+                trofeosBtn.className = notasBtn.className;
+                trofeosBtn.textContent = "🏆";
+                trofeosBtn.title = "Sumar o quitar trofeos a este alumno";
+                trofeosBtn.setAttribute("aria-label", "Trofeos de " + (info.full_name || info.email));
+                trofeosBtn.addEventListener("click", () => abrirTrofeosEnClase(studentId, info.full_name || info.email));
+                actions.appendChild(trofeosBtn);
 
                 // Con qué color puede mover: se elige ANTES de dar el control (para dárselo
                 // ya con el color correcto) y también se puede cambiar mientras ya lo tiene
@@ -2004,6 +2013,42 @@
         document.getElementById("notas-en-clase-cerrar").addEventListener("click", () => {
             document.getElementById("notas-en-clase").classList.add("hidden");
         });
+
+        /* Los trofeos del alumno, desde su renglón. Mismo criterio que la
+           bitácora: el panel se arma entero cada vez, para no ajustarle a uno
+           mirando el total del anterior. Quién puede ajustar lo decide
+           ajustar_trofeos() en la base, no este botón. */
+        function abrirTrofeosEnClase(studentId, nombre) {
+            if (!isTeacher) return;
+            const caja = document.getElementById("trofeos-en-clase");
+            document.getElementById("trofeos-en-clase-titulo").textContent = "🏆 Trofeos de " + nombre;
+            caja.classList.remove("hidden");
+            Trofeos.montarPanel(document.getElementById("trofeos-en-clase-body"), { sb, alumnoId: studentId });
+        }
+
+        document.getElementById("trofeos-en-clase-cerrar").addEventListener("click", () => {
+            document.getElementById("trofeos-en-clase").classList.add("hidden");
+        });
+
+        // ---------- Los trofeos del alumno (se acumulan de clase en clase) ----------
+        // Uno por cada respuesta marcada ✅ más los ajustes del profesor; la
+        // cuenta la hace trofeos_de() en la base. Se vuelve a pedir cada vez que
+        // el profesor califica o ajusta: así un ✅ cambiado a ❌ también resta.
+        async function cargarMisTrofeos() {
+            if (isTeacher || esObservador || !window.Trofeos) return;
+            const t = await Trofeos.cargar(sb);
+            const totalEl = document.getElementById("mis-trofeos-total");
+            const detalleEl = document.getElementById("mis-trofeos-detalle");
+            if (!t) {
+                totalEl.textContent = "🏆 —";
+                detalleEl.textContent = "No se pudieron cargar tus trofeos.";
+                return;
+            }
+            totalEl.textContent = "🏆 " + Trofeos.texto(t.total);
+            detalleEl.textContent = t.total
+                ? "Se suman de clase en clase: uno por cada respuesta correcta" + (t.ajustes ? ", más los que ajustó tu profesor." : ".")
+                : "Cada respuesta que tu profesor marque correcta te da un trofeo.";
+        }
 
         async function setActivePlayer(studentId, color) {
             const { error } = await sb.from("game_state").update({
@@ -2490,8 +2535,19 @@
             } else {
                 // Feedback privado: solo llegan eventos de la PROPIA fila del alumno (RLS ya
                 // lo garantiza), así que marcar ✅/❌ nunca lo ven los demás alumnos.
+                // El profesor sumó o quitó trofeos a mano.
+                sb.channel("mis-trofeos")
+                    .on("postgres_changes", { event: "INSERT", schema: "public", table: "trofeos_ajustes", filter: "alumno_id=eq." + profile.id }, (payload) => {
+                        cargarMisTrofeos();
+                        const n = payload.new && payload.new.cantidad;
+                        if (n) setStatus((n > 0 ? "🏆 Tu profesor te sumó " : "Tu profesor te quitó ") + Trofeos.texto(Math.abs(n))
+                            + (payload.new.motivo ? ": " + payload.new.motivo : "."));
+                    })
+                    .subscribe();
                 sb.channel("my-answer-feedback")
                     .on("postgres_changes", { event: "UPDATE", schema: "public", table: "question_answers", filter: "student_id=eq." + profile.id }, (payload) => {
+                        // Cualquier calificación, también de una pregunta vieja, mueve los trofeos.
+                        cargarMisTrofeos();
                         if (currentQuestion && payload.new.question_id === currentQuestion.id) {
                             myAnswer = payload.new;
                             updateAnswerFeedbackUI();
@@ -3251,7 +3307,7 @@
             const stillOpen = !!(currentQuestion && currentQuestion.id === answer.question_id && !currentQuestion.closed_at);
             if (answer.is_correct === true) {
                 toast.className = "fixed bottom-4 left-1/2 -translate-x-1/2 z-[70] w-[min(92vw,420px)] rounded-xl shadow-2xl p-4 text-center bg-green-500 text-white";
-                text.textContent = "✅ ¡Muy bien! Tu respuesta fue correcta.";
+                text.textContent = "✅ ¡Muy bien! Tu respuesta fue correcta. 🏆 +1 trofeo.";
                 retryBtn.classList.add("hidden");
             } else {
                 toast.className = "fixed bottom-4 left-1/2 -translate-x-1/2 z-[70] w-[min(92vw,420px)] rounded-xl shadow-2xl p-4 text-center bg-red-500 text-white";
@@ -4172,6 +4228,7 @@
             } else {
                 document.getElementById("student-panel").classList.remove("hidden");
                 document.getElementById("raise-hand-btn").classList.remove("hidden");
+                cargarMisTrofeos();
             }
             setStatus(esObservador
                 ? "Estás mirando la clase de " + nombreObservado + " en vivo. El tablero se mueve solo con cada jugada."

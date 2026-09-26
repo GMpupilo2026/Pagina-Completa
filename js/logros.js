@@ -32,6 +32,9 @@ window.Logros = (function () {
     hoy_ejercicios: 0,
     primer_dia: null,
     por_actividad: {},
+    // Los trofeos de la clase en vivo (public.trofeos_de, ver js/trofeos.js):
+    // se suman de clase en clase y el profesor los puede ajustar.
+    trofeos: 0,
   };
 
   function vacio(sesion, error) {
@@ -54,11 +57,17 @@ window.Logros = (function () {
     }
     if (!sesion) return vacio(false, false);
     try {
+      // Los trofeos van aparte y no tumban la racha si fallan: se piden a la
+      // par y, sin respuesta, cuentan cero.
+      const trofeosP = Promise.resolve(sb.rpc("trofeos_de"))
+        .then((r) => (r && !r.error && r.data && r.data[0] ? r.data[0].total || 0 : 0))
+        .catch(() => 0);
       const { data, error } = await sb.rpc("progreso_dias_y_racha");
       if (error) throw error;
       const fila = (data && data[0]) || {};
       const stats = Object.assign({}, STATS_VACIAS, fila, {
         por_actividad: fila.por_actividad || {},
+        trofeos: await trofeosP,
       });
       return { stats: stats, logros: window.LogrosCatalogo.conEstado(stats), sesion: true, error: false };
     } catch (e) {
