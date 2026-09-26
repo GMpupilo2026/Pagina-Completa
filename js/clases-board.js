@@ -831,7 +831,17 @@
       if (this.selected) {
         const move = g.moves({ square: this.selected, verbose: true }).find((m) => m.to === square);
         if (move) {
-          this.jugar({ from: this.selected, to: square, promotion: "q" });
+          const from = this.selected;
+          if (window.Coronacion && move.flags.indexOf("p") !== -1) {
+            // El peón corona: la pieza la elige quien juega (js/coronacion.js).
+            this.selected = null;
+            this.render();
+            window.Coronacion.pedir(g.turn(), (elegida) => {
+              if (elegida) this.jugar({ from, to: square, promotion: elegida });
+            });
+            return;
+          }
+          this.jugar({ from, to: square, promotion: move.promotion });
           return;
         }
       }

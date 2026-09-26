@@ -427,8 +427,20 @@ function onSquareClick(square, btn){
     } else { selectedSquare = null; drawBoard(); }
     return;
   }
-  const moveResult = game.move({ from: selectedSquare, to: square, promotion: 'q' });
+  const from = selectedSquare;
   selectedSquare = null;
+  if(window.Coronacion && Coronacion.hayQueElegir(game, from, square)){
+    // El peón corona: la pieza la elige el alumno (js/coronacion.js).
+    drawBoard();
+    Coronacion.pedir(game.turn(), (elegida) => {
+      if(!elegida) return;
+      const r = game.move({ from, to: square, promotion: elegida });
+      drawBoard();
+      if(r) handleMoveResult(r);
+    });
+    return;
+  }
+  const moveResult = game.move({ from, to: square });
   drawBoard();
   if(!moveResult) return;
   handleMoveResult(moveResult);
@@ -521,7 +533,7 @@ function giveHint(){
     document.getElementById('hint-btn').textContent = '💡 Ver solución';
   } else {
     resetStreak();
-    const moveResult = game.move({ from: round.from, to: round.to, promotion: 'q' });
+    const moveResult = game.move({ from: round.from, to: round.to, promotion: round.promotion || 'q' });
     drawBoard();
     renderPositionReadout();
     setStatus(`Solución: ${moveResult ? moveResult.san : round.from + '-' + round.to}.`);

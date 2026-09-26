@@ -6,7 +6,8 @@ piezas, el estilo (símbolo o dibujo) y el tema divertido. Eso vive en cinco
 módulos —board-themes, board-color-themes, piece-color-themes,
 piece-style-themes y chess-piece-svg— más js/pieza-preferida.js, que es la
 única respuesta a «¿cómo se pinta esta pieza?». Y js/coordenadas-tablero.js,
-que escribe las letras y los números por fuera de todos los tableros.
+que escribe las letras y los números por fuera de todos los tableros. Y
+js/coronacion.js, que pregunta en qué pieza corona el peón.
 
 Hasta ahora cada página cargaba los que se le ocurrió a quien la escribió:
 Mates los tenía, Aprender y el diagnóstico no, los artículos traían el color
@@ -45,10 +46,13 @@ MODULOS = [
     "chess-piece-svg",
     "pieza-preferida",
     "coordenadas-tablero",
+    "coronacion",
 ]
 TIENE_TABLERO = re.compile(
     r"piece-white|PiezaPreferida|js/[a-z0-9-]*board\.js|tablero-pregunta\.js"
     r"|ficha-render\.js|finales-100\.js|curso-partidas\.js"
+    # Los que arman su tablero entero desde su js/ y no dejan rastro en el HTML.
+    r"|js/(?:racha-tactica|te-reto|entreno-diagnostico|entreno-practicas|entreno-aprender)\.js"
 )
 # Los que tienen que correr antes de que se pinte la primera casilla.
 EN_HEAD = {"board-color-themes", "piece-color-themes", "piece-style-themes"}
