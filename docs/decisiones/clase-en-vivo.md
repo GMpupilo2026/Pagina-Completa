@@ -202,6 +202,54 @@ lector de pantalla a un sitio que no era), que abrir una herramienta propia **no
 escriba en `game_state`** —que es justo lo que promete el rótulo «solo lo ves
 tú»— y que a la alumna no se le pinte nada de esto.
 
+### Los alumnos siguen lo que mira el profesor
+
+El profesor puede devolverse en la partida y recorrer variantes sin tocarla
+(`board.viewMainAt`, `viewVariantNode`; jugar desde ahí crea una variante en
+`variant_nodes`). Eso quedaba **solo en su pantalla**: el profe explicaba la
+jugada 12 y los alumnos seguían mirando la 20, y para enseñarles una variante
+tenía que jugarla de nuevo en vivo y perder la partida. No daba ningún error:
+cada tablero simplemente mostraba otra cosa.
+
+- **Lo que mira el profesor se guarda en `game_state.vista`**: `null` es la
+  posición en vivo; si no, `{path, parent, root}` —las jugadas desde el inicio,
+  el nodo de `variant_nodes` donde está (o `null` en la línea principal) y la
+  jugada de donde nace la variante—. Cada tablero que sigue la clase (alumnos y
+  quien supervisa) la muestra con `board.showView()`.
+- **Va en la base y no en un mensaje suelto de Realtime**: quien entra tarde,
+  recarga o supervisa tiene que ver lo mismo que los demás, y un broadcast solo
+  le llega a quien ya estaba conectado.
+- **Solo el profesor la cambia**: `protect_game_state_teacher_columns` le
+  devuelve la de antes a cualquier otro, igual que las flechas y el control.
+  Comprobado impersonando roles: la alumna con el control cambia la fila y la
+  vista queda como estaba; el profesor la cambia; una forma que no es
+  `{path: [...]}` la rechaza el CHECK `game_state_vista_forma`.
+- **Jugar en la partida es volver a ella**: `pushBoardState` manda `vista: null`
+  (también «Jugar desde aquí») y `aplicarPosicionEnClase` también. La página
+  solo manda la vista cuando cambia (`transmitirVista` recuerda la última), así
+  que los ecos de Realtime no rebotan.
+- **El alumno ve escrito qué es** (`#vista-profe`): «Tu profe volvió a una
+  jugada anterior: 12. Nf3» o «Tu profe está mostrando una variante: 12… Nf6
+  13. Bc4», y que la partida sigue guardada. Con el Modo Adaptado se le dice en
+  voz. El turno que se muestra es el de la posición que ve.
+- **Un alumno con el control no mueve mientras el profe muestra otra
+  posición**: su jugada sería sobre la que ve y no sobre la partida. Se le dice
+  que espere a que el profe vuelva.
+- **◀ y ▶ dentro de una variante se quedan en ella**: ◀ va a la jugada anterior
+  de la variante (y de la primera, a la línea principal de donde nace) y ▶ sigue
+  por su continuación. Antes ◀ saltaba siempre a la línea principal, y para
+  retomar la variante había que buscarla en la lista: justo lo que hace falta
+  para ir acumulando variantes sin volver a jugar la posición.
+- Al recargar, el profesor retoma su propia vista (la que quedó guardada), en
+  vez de dejar a la clase mirando algo que él ya no ve.
+
+**Al tocar la navegación de jugadas, las variantes o `applyGameStateRow`, correr
+`node herramientas/verificar-clase-vista.js`.** Reusa el doble de
+`verificar-clase-registrada.js`: comprueba lo que manda el profesor con ◀ ▶ ⏮ ⏭,
+al crear y extender una variante y al jugar en vivo, y lo que se PINTA en el
+tablero de la alumna (las casillas, por su `aria-label`), con su aviso escrito y
+sin poder mover mientras el profe muestra otra cosa.
+
 ### El modo sencillo de la clase en vivo
 
 Aun ordenada, la pantalla del profesor tiene catorce controles delante, y la
