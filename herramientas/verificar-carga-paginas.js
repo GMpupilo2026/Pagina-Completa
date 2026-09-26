@@ -67,7 +67,10 @@ for (const archivo of paginas(raiz)) {
   }
   for (const [src, n] of vistos) if (n > 1) dobles.push(rel + " → " + src + " ×" + n);
   for (const m of html.matchAll(/<link\b[^>]*fonts\.googleapis\.com\/css2[^>]*>/g)) {
-    if (!/media="print"/.test(m[0]) || !/onload="this\.media='all'"/.test(m[0])) fuentesQueFrenan.push(rel);
+    // media="print" no frena el pintado; el bloque «fuentes» que va justo
+    // después la pasa a "all" cuando llega (herramientas/cabecera-en-linea.py).
+    const despues = html.slice(m.index + m[0].length, m.index + m[0].length + 30);
+    if (!/media="print"/.test(m[0]) || !/\bid="fuentes"/.test(m[0]) || !despues.startsWith("<!-- fuentes: inicio -->")) fuentesQueFrenan.push(rel);
   }
 }
 

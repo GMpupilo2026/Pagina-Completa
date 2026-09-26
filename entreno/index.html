@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8"><!-- guardia: inicio --><script>(function(){try{if(window.sb||localStorage.getItem("sb-bgtijpimpcokxatxxbki-auth-token"))return;}catch(e){return;}try{window.stop()}catch(e){}location.replace("../login.html?next="+encodeURIComponent("entreno/index.html"));})();</script><!-- guardia: fin -->
+    <meta charset="UTF-8"><!-- guardia: inicio --><script>(function(){try{if(window.sb||localStorage.getItem("sb-bgtijpimpcokxatxxbki-auth-token"))return;}catch(e){return;}try{window.stop()}catch(e){}var p=location.pathname.replace(/^\/+/,'');if(!p||/\/$/.test(p))p+='index.html';else if(!/\.html$/.test(p))p+='.html';location.replace('/login.html?next='+encodeURIComponent(p));})();</script><!-- guardia: fin -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="../img/favicon.svg">
     <title>Entrenamiento — Ajedrez Integral</title>
@@ -13,16 +13,9 @@
     <link rel="stylesheet" href="../css/tailwind.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <link id="fuentes" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@700&display=swap" rel="stylesheet" media="print"><!-- fuentes: inicio --><script>(function(l){if(!l)return;function a(){l.media='all';}if(l.sheet)a();else l.addEventListener('load',a);})(document.getElementById('fuentes'));</script><!-- fuentes: fin -->
     <link rel="stylesheet" href="../css/styles.css">
-    <script>
-        (function () {
-            try {
-                var t = localStorage.getItem('theme');
-                if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
-            } catch (e) {}
-        })();
-    </script>
+    <!-- oscuro: inicio --><script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');}catch(e){}})();</script><!-- oscuro: fin -->
     <script src="../js/adaptive-mode.js"></script>
 
 
@@ -150,55 +143,6 @@
     <script src="../js/supabase-client.js"></script>
     <script src="../js/progreso-usuario.js"></script>
     <script src="../js/main.js"></script>
-    <script>
-const gate = document.getElementById('gate');
-const app = document.getElementById('app');
-const gateChecking = document.getElementById('gate-checking');
-
-const NEXT_PATH = 'entreno/index.html';
-
-async function unlock(){
-  gate.classList.add('hidden');
-  app.classList.remove('hidden');
-  // Los contadores salen del progreso de la cuenta, no solo de este aparato.
-  await ProgresoUsuario.init();
-  showTemasProgress();
-}
-
-// Línea de progreso de "Ejercicios por tema": temas.html guarda el total y los
-// resueltos en localStorage cada vez que se abre o se resuelve algo.
-function showTemasProgress(){
-  try {
-    const total = parseInt(localStorage.getItem('entreno_temas_total') || '0', 10);
-    const done = parseInt(localStorage.getItem('entreno_temas_done') || '0', 10);
-    if(!total) return;
-    const pct = Math.round(100 * done / total);
-    document.getElementById('temas-progress-fill').style.width = pct + '%';
-    document.getElementById('temas-progress-text').textContent = `${done} resueltos · faltan ${total - done} (${pct} %)`;
-    document.getElementById('temas-progress').classList.remove('hidden');
-  } catch (e) {}
-}
-
-// Entrenamiento exige sesión iniciada en el sitio (Academia) — así el
-// progreso de cada quien queda guardado y visible para el profesor en
-// Informes.
-async function requireLoginThenGate(){
-  let hasSession = false;
-  try {
-    const { data } = await sb.auth.getSession();
-    hasSession = !!(data && data.session);
-  } catch (e) {
-    hasSession = false;
-  }
-  if(!hasSession){
-    gateChecking.textContent = 'Necesitas iniciar sesión en el sitio para entrar a Entrenamiento. Redirigiendo a iniciar sesión…';
-    window.location.href = '../login.html?next=' + encodeURIComponent(NEXT_PATH);
-    return;
-  }
-  unlock();
-}
-
-requireLoginThenGate();
-    </script>
+    <script src="../js/entreno-index.js"></script>
 <!-- burbuja: inicio --><script src="../js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="../js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- acceso: inicio --><script src="../js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="../js/modo-vista.js" defer></script><!-- modo-vista: fin --><!-- marca: inicio --><script src="../js/marca-academia.js" defer></script><!-- marca: fin --><!-- ayuda: inicio --><script src="../js/ayuda-guia.js" defer></script><!-- ayuda: fin --><!-- atajo: inicio --><script src="../js/atajo-buscar.js" data-arriba="../" defer></script><!-- atajo: fin --></body>
 </html>

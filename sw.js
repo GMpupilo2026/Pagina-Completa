@@ -20,12 +20,13 @@
  *     teléfono sería dejarlos ahí después de cerrar sesión;
  *   - las respuestas que no vengan bien (un 404 o un 500 no se guardan).
  */
-const VERSION = "ai-2026-09-2";
+const VERSION = "ai-2026-09-3";
 const CACHE = "ajedrez-integral-" + VERSION;
 
 /* El mínimo para que la app abra sin red y explique qué pasa. */
 const CASCARON = [
   "/offline.html",
+  "/js/offline.js",
   "/css/tailwind.css",
   "/css/styles.css",
   "/js/main.js",

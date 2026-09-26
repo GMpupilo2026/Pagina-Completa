@@ -63,7 +63,11 @@ def bloques_de(s):
 def main(pagina, destino):
     ruta = os.path.join(RAIZ, pagina)
     s = open(ruta, encoding="utf-8").read()
-    bloques = [m for m in bloques_de(s) if "json" not in m.group(1)]
+    # Los bloques que pone un generador (van justo después de su marca
+    # <!-- nombre: inicio -->) no son el código de la página: son iguales en
+    # todas y la CSP los autoriza por su hash. No se mudan.
+    bloques = [m for m in bloques_de(s) if "json" not in m.group(1)
+               and not re.search(r": inicio -->\s*$", s[:m.start()])]
     if not bloques:
         sys.exit(f"{pagina}: no tiene ningún <script> escrito adentro.")
     m = max(bloques, key=lambda b: len(b.group(2)))

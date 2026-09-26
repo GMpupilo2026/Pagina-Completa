@@ -22,18 +22,9 @@
     <link rel="stylesheet" href="css/tailwind.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <link id="fuentes" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@700&display=swap" rel="stylesheet" media="print"><!-- fuentes: inicio --><script>(function(l){if(!l)return;function a(){l.media='all';}if(l.sheet)a();else l.addEventListener('load',a);})(document.getElementById('fuentes'));</script><!-- fuentes: fin -->
     <link rel="stylesheet" href="css/styles.css">
-    <script>
-        (function () {
-            try {
-                var t = localStorage.getItem('theme');
-                if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                    document.documentElement.classList.add('dark');
-                }
-            } catch (e) {}
-        })();
-    </script>
+    <!-- oscuro: inicio --><script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');}catch(e){}})();</script><!-- oscuro: fin -->
     <script src="js/adaptive-mode.js"></script>
 
 
@@ -135,47 +126,6 @@
     <script src="js/supabase-client.js"></script>
     <script src="js/legal-version.js"></script>
     <script src="js/main.js"></script>
-    <script>
-        const form = document.getElementById("unirse-form");
-        const errorMsg = document.getElementById("error-msg");
-        const submitBtn = document.getElementById("submit-btn");
-
-        form.addEventListener("submit", async (e) => {
-            e.preventDefault();
-            errorMsg.classList.add("hidden");
-
-            // El honeypot no debería tener nada escrito: si lo tiene, es un bot.
-            // Se responde igual que un envío exitoso para no darle pistas.
-            if (document.getElementById("sitio-web").value.trim()) {
-                document.getElementById("form-card").classList.add("hidden");
-                document.getElementById("success-card").classList.remove("hidden");
-                return;
-            }
-
-            submitBtn.disabled = true;
-            submitBtn.textContent = "Enviando...";
-
-            const { data, error } = await sb.rpc("solicitar_academia", {
-                p_nombre: document.getElementById("nombre").value.trim(),
-                p_email: document.getElementById("email").value.trim(),
-                p_telefono: document.getElementById("telefono").value.trim() || null,
-                p_edad_nivel: document.getElementById("edad-nivel").value.trim() || null,
-                p_mensaje: document.getElementById("mensaje").value.trim() || null,
-                // Qué versión de la política aceptó: la base la guarda con la hora.
-                p_version_privacidad: window.LegalVersion.PRIVACIDAD,
-            });
-
-            if (error || !data?.ok) {
-                errorMsg.textContent = data?.error || "No se pudo enviar la solicitud. Intenta de nuevo.";
-                errorMsg.classList.remove("hidden");
-                submitBtn.disabled = false;
-                submitBtn.textContent = "Enviar solicitud";
-                return;
-            }
-
-            document.getElementById("form-card").classList.add("hidden");
-            document.getElementById("success-card").classList.remove("hidden");
-        });
-    </script>
+    <script src="js/unirse.js"></script>
 </body>
 </html>
