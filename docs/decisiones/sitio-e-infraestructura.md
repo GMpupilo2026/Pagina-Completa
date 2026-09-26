@@ -780,6 +780,18 @@ ocupa su espacio solo, se pega al hacer scroll y no hay nada que descontar.
   exactamente a donde la barra lo tapa.
 - Las alturas del encabezado son `min-h-*`, nunca `h-*`: con altura fija, en
   modo adaptado el contenido se sale de la caja en vez de empujarla.
+- **Al encogerse, el encabezado usa dos umbrales, no uno** (`js/main.js`: se
+  encoge pasando de 80px de scroll y se agranda bajando de 20px). Estar en el
+  flujo tiene un precio: cuando `.scrolled` le quita 24px, todo lo de abajo
+  sube 24px y el navegador corrige el scroll para que el contenido no se mueva
+  (*scroll anchoring*), así que `scrollY` baja 24px. Con un solo umbral en 30,
+  cualquier scroll quieto entre 31 y ~54px lo devolvía debajo del umbral, se
+  agrandaba, volvía a pasarlo… unas 60 veces por segundo: el encabezado
+  temblaba y se veía doble (lo reportaron en `sesion.html`, pero pasaba en
+  todo el sitio). El hueco entre los dos umbrales tiene que ser más grande
+  que lo que cambia la altura, también en modo adaptado.
+  `verificar-encabezado-scroll.js` deja el scroll quieto en cada posición y
+  mira que la clase no cambie sola.
 - Lo que quiere ocupar la pantalla entera resta la barra en vez de sumarle
   padding: `min-h-[calc(100vh-5rem)]`, no `pt-20 min-h-screen` (que daba una
   página más alta que la pantalla).
