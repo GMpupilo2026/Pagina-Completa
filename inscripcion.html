@@ -288,43 +288,7 @@
 
     <!-- Script para Modo Oscuro / Claro -->
     <script src="js/vendor/supabase.js"></script>
-    <script>
-        const themeToggleBtn = document.getElementById('theme-toggle');
-        const themeIcon = document.getElementById('theme-icon');
-        const themeText = document.getElementById('theme-text');
-        const htmlElement = document.documentElement;
-
-        function updateThemeUI(isDark) {
-            if (isDark) {
-                themeIcon.textContent = '🌙';
-                themeText.textContent = 'Modo Oscuro';
-            } else {
-                themeIcon.textContent = '☀️';
-                themeText.textContent = 'Modo Claro';
-            }
-        }
-
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme === 'light') {
-            htmlElement.classList.remove('dark');
-            updateThemeUI(false);
-        } else {
-            htmlElement.classList.add('dark');
-            updateThemeUI(true);
-        }
-
-        themeToggleBtn.addEventListener('click', () => {
-            if (htmlElement.classList.contains('dark')) {
-                htmlElement.classList.remove('dark');
-                localStorage.setItem('theme', 'light');
-                updateThemeUI(false);
-            } else {
-                htmlElement.classList.add('dark');
-                localStorage.setItem('theme', 'dark');
-                updateThemeUI(true);
-            }
-        });
-    </script>
+    <script src="js/inscripcion-tema.js"></script>
 
     <!-- Script 3D para Piezas de Ajedrez Animadas. three.js (589 KB) no va en
          el <head> ni en un <script src>: lo pide cargarFondo3D() cuando la

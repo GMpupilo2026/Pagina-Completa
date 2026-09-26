@@ -145,12 +145,14 @@ y hace otra cosa. Estas reglas existen por eso.
   mano (el CSS, el catálogo de cursos, el sitemap, los PDF, las cabeceras).
 - Al usar una clase de Tailwind que no estaba en ningún lado: `npm run css`.
 - El código de una página va en un archivo de `js/`, no en un `<script>` escrito
-  dentro (ver «El código de las páginas sale del HTML»):
-  `verificar-carga-paginas.js` no deja pasar uno nuevo de más de 20 KB.
+  dentro, y ningún atributo `on…` (ver «El código de las páginas sale del
+  HTML»): `verificar-csp.js` solo deja pasar los cuatro bloques de los
+  generadores (guardia, tema, modo oscuro, fuentes), iguales en todas las
+  páginas.
 - Una página nueva de la Academia (que exige sesión) va en `PAGINAS` de
   `herramientas/academia-cabecera.py`, y se corre. Con tablero:
-  `herramientas/tablero-cabecera.py`. Toda página: `pwa-cabecera.py` y
-  `tema-cabecera.py`.
+  `herramientas/tablero-cabecera.py`. Toda página: `pwa-cabecera.py`,
+  `tema-cabecera.py` y `cabecera-en-linea.py`.
   Las migas de pan salen de ahí mismo: la página nueva va también en
   `NOMBRE_Y_PADRE`, diciendo de cuál cuelga.
 - El worker publica **todo el directorio**: lo que no deba verse va en
@@ -202,7 +204,7 @@ el archivo de cada tema dice cuál corresponde a cada pieza.
 
 | Tema | Qué hay | Verificadores |
 |---|---|---|
-| [`sitio-e-infraestructura`](docs/decisiones/sitio-e-infraestructura.md) | El sitio: dominio y correo, PWA, CSS compilado, librerías propias, carga y primer pintado, metadatos, encabezado, migas, «?» de la guía y Ctrl + K, avisos propios, pantallas de carga y listas vacías, punto de restauración | worker, pwa, css, vendor, carga-tablero, carga-paginas, guardia-sesion, metadatos, notificaciones, avisos, ayuda, atajo, estados, punto-restauracion |
+| [`sitio-e-infraestructura`](docs/decisiones/sitio-e-infraestructura.md) | El sitio: dominio y correo, PWA, CSS compilado, librerías propias, carga y primer pintado, metadatos, encabezado, migas, «?» de la guía y Ctrl + K, avisos propios, pantallas de carga y listas vacías, punto de restauración | worker, pwa, css, vendor, carga-tablero, carga-paginas, csp, guardia-sesion, metadatos, notificaciones, avisos, ayuda, atajo, estados, punto-restauracion |
 | [`permisos-y-roles`](docs/decisiones/permisos-y-roles.md) | Varios profesores, equipos, subgrupos, coordinación, supervisor y «Ver como» una persona, academias (marca, IA, tablero, un supervisor con varias), roles, funciones de trigger, texto ajeno | varios-profesores, subgrupos, coordinacion, supervisor, ver-como, academias, informe-mensual, mejorar-informe, tablero-academias |
 | [`cuentas-y-formularios`](docs/decisiones/cuentas-y-formularios.md) | Formularios de inscripción y adjuntos, freno de los envíos sin cuenta, encuesta de satisfacción con el profesor, encuesta anónima y accesible de un curso, alta de cuentas, alumno sin correo, invitación y bienvenida | formularios, envios-publicos, inscripcion-adjuntos, encuesta-profesor, encuesta-curso, alumno-sin-correo, bienvenida, admin |
 | [`clase-en-vivo`](docs/decisiones/clase-en-vivo.md) | `sesion.html`: material del profesor, la clase vista por quien supervisa, videollamada, abrir/cerrar y registrar la clase, ficha presencial y horario, chat, coordenadas, miniaturas, Táctica y Archivos, la clase con lector de pantalla | clase-registrada, clase-supervisor, sesion-orden, sesion-curso, videollamada, asistencia, chat-clase, clase-adaptada, panel |

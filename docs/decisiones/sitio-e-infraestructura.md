@@ -647,9 +647,56 @@ el compilador ya mira los `.js` de hasta 350 KB.
   traen un bloque de más de 2 KB (el límite empezó en 20): **ya está vacía**. La
   lista solo se achica, así que una página nueva con un bloque grande falla:
   su código va a `js/` desde el primer día.
-- Quedan para después las piezas chicas que ponen los generadores en el
-  `<head>` (la guardia de sesión, el tema, el modo oscuro) y el `onload` de la
-  hoja de fuentes: son lo último antes de poder sacar `'unsafe-inline'`.
+- Después se mudaron los nueve bloques chicos que quedaban (unirse,
+  artículos, entreno/index y entreno/tactica, ciegos, offline, la red de
+  seguridad de la invitación de `clases.html`, el enlace del correo de
+  `bienvenida.html` y el botón de tema de `inscripcion.html`). `offline.html`
+  lo sirve el service worker sin red: `js/offline.js` entró a su `CASCARON`
+  y `VERSION` subió, o sin conexión la página habría salido sin su código.
+
+#### Cuatro scripts en línea, iguales en todas las páginas
+
+Lo que tiene que correr ANTES del primer pintado sigue escrito en la página:
+un `<script src>` más en el `<head>` de cien páginas frena el pintado de
+todas para tres líneas (ver `tema-cabecera.py`). Son cuatro, y los pone cada
+uno su generador, detrás de su marca:
+
+| Bloque | Qué hace | Lo pone |
+|---|---|---|
+| `guardia` | sin ninguna sesión guardada, al login antes de bajar nada | `academia-cabecera.py` |
+| `oscuro` | la clase `dark` según lo guardado o el sistema | `cabecera-en-linea.py` |
+| `fuentes` | pasa la hoja de Google Fonts de `print` a `all` al llegar | `cabecera-en-linea.py` |
+| `tema` | el tema de plataforma (`data-tema`) | `tema-cabecera.py` |
+
+**Cada uno es idéntico, byte por byte, en todas las páginas**: es lo que deja
+autorizarlos en la CSP por su hash y sacar `'unsafe-inline'` de `script-src`.
+Una versión distinta en una sola página quedaría bloqueada ahí, callada. Para
+eso:
+
+- La **guardia** ya no lleva escrita su página: la saca de
+  `location.pathname`. Cloudflare sirve las páginas sin `.html`
+  (`/entreno/estudio`) y las carpetas con barra (`/entreno/`), y el login solo
+  acepta un `next` que termine en `.html`, así que se le devuelve la extensión
+  (y `index.html` a una carpeta). El login va con ruta absoluta
+  (`/login.html`), porque una relativa cambiaba con la profundidad.
+  `verificar-guardia-sesion.js` ya no busca el nombre de la página escrito:
+  **corre** la guardia con la dirección de cada una, con y sin `.html`, y
+  mira adónde manda.
+- El **modo oscuro** estaba escrito a mano en 115 páginas en cuatro formatos
+  que hacían lo mismo. `cabecera-en-linea.py` reconoce esos cuatro y los
+  cambia por el mismo bloque; uno que no sea exactamente uno de ellos no lo
+  toca, porque sería código distinto.
+- Las **fuentes** tenían `onload="this.media='all'"` en el `<link>`: un
+  atributo `on…` es JavaScript en línea que ningún hash autoriza. Queda el
+  `<link id="fuentes" media="print">` y, justo después, el bloque: si la hoja
+  ya llegó la aplica, y si no, al llegar. Probado con la hoja respondiendo al
+  instante y con 1,5 s de demora.
+
+`verificar-csp.js` lo sostiene: ningún `<script>` escrito en una página que no
+sea uno de esos cuatro detrás de su marca, cada uno con una sola versión,
+ningún atributo `on…` ni `href="javascript:"`, y ningún archivo de `js/` que
+arme HTML con `onclick="…"` (un `innerHTML` así también es JavaScript en
+línea). `mudar-script.py` no muda esos cuatro: son de los generadores.
 
 ### Sin sesión, al login antes de bajar nada
 

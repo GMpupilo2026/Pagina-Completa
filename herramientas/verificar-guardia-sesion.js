@@ -14,7 +14,11 @@
  *   · que tenga la guardia UNA vez, justo después de <meta charset>;
  *   · que busque la clave sb-<proyecto>-auth-token del proyecto de
  *     js/supabase-client.js;
- *   · que vuelva a SU página (next=<ruta>) por una ruta al login que llegue;
+ *   · que sea la MISMA en todas, byte por byte (la CSP la autoriza por su
+ *     hash una sola vez: una distinta quedaría bloqueada);
+ *   · que vuelva a SU página: se corre la guardia con la dirección de cada
+ *     una —con .html, sin él como la sirve Cloudflare, y la carpeta con barra
+ *     para un index.html— y el login tiene que recibir en `next` esa página;
  *   · que detenga la carga antes de navegar (window.stop()) y se aparte si ya
  *     hay un window.sb.
  */
@@ -39,6 +43,19 @@ console.log("=== La guardia de sesión de las páginas de la Academia ===");
 if (!PAGINAS.length) mal("no encontré la lista PAGINAS en academia-cabecera.py");
 if (!proyecto) mal("no encontré SUPABASE_URL en js/supabase-client.js");
 let con = 0;
+const distintas = new Set();
+
+/* Corre la guardia como la correría el navegador en `direccion`, sin ninguna
+   sesión guardada, y devuelve adónde manda. */
+function correr(bloque, direccion) {
+  const codigo = bloque.replace(/^[\s\S]*?<script>/, "").replace(/<\/script>[\s\S]*$/, "");
+  let fue = null;
+  const ventana = { stop() {} };
+  const location = { pathname: direccion, replace(u) { fue = u; } };
+  const localStorage = { getItem: () => null };
+  new Function("window", "location", "localStorage", codigo)(ventana, location, localStorage);
+  return fue;
+}
 for (const ruta of PAGINAS) {
   const archivo = path.join(raiz, ruta);
   if (!fs.existsSync(archivo)) continue;
@@ -54,12 +71,17 @@ for (const ruta of PAGINAS) {
   if (!g.includes(`"sb-${proyecto}-auth-token"`)) mal(`${ruta}: la guardia no busca la sesión de este proyecto (sb-${proyecto}-auth-token)`);
   if (!g.includes("window.sb||")) mal(`${ruta}: la guardia no se aparta si ya hay un window.sb`);
   if (!/window\.stop\(\)[\s\S]*location\.replace/.test(g)) mal(`${ruta}: la guardia no detiene la carga antes de navegar`);
-  const login = (g.match(/location\.replace\("([^"]*)login\.html\?next="/) || [])[1];
-  if (login === undefined) mal(`${ruta}: la guardia no manda a login.html?next=`);
-  else if (path.resolve(path.dirname(archivo), login + "login.html") !== path.join(raiz, "login.html")) mal(`${ruta}: la ruta al login no llega (${login}login.html)`);
-  if (!g.includes(`encodeURIComponent(${JSON.stringify(ruta)})`)) mal(`${ruta}: la guardia no vuelve a su propia página`);
+  distintas.add(g);
+  const esperado = "/login.html?next=" + encodeURIComponent(ruta);
+  const direcciones = ["/" + ruta, "/" + ruta.replace(/\.html$/, "")];
+  if (/(^|\/)index\.html$/.test(ruta)) direcciones.push("/" + ruta.replace(/index\.html$/, ""));
+  for (const d of direcciones) {
+    const fue = correr(g, d);
+    if (fue !== esperado) mal(`${ruta}: desde ${d} la guardia manda a ${fue}, y tenía que mandar a ${esperado}`);
+  }
   con += 1;
 }
-if (!fallos) console.log(`  ✓ ${con} páginas con su guardia, ${SIN_GUARDIA.size} sin ella a propósito`);
+if (distintas.size > 1) mal(`hay ${distintas.size} guardias distintas: tiene que ser una sola (corre python3 herramientas/academia-cabecera.py)`);
+if (!fallos) console.log(`  ✓ ${con} páginas con su guardia —una sola, igual en todas—, ${SIN_GUARDIA.size} sin ella a propósito`);
 console.log(fallos ? "\n" + fallos + " comprobación(es) fallaron" : "\nTodo bien.");
 process.exit(fallos ? 1 : 0);
