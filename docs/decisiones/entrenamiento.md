@@ -1226,7 +1226,7 @@ comprobaciones.
 ## Los Tipos de entrenamiento
 
 `entreno/tipos.html` (grupo y tarjeta **"🧠 Tipos de entrenamiento"** del hub)
-es una ficha con siete entrenamientos que no son «encuentra la mejor jugada»,
+es una ficha con catorce entrenamientos que no son «encuentra la mejor jugada»,
 cada uno con sus niveles: **El Detective** (¿qué jugada se acaba de hacer?,
 análisis retrógrado), **¿Qué quiere el rival?** (profilaxis: hacer la jugada
 que amenaza el rival), **Descarte** (tachar las candidatas que pierden),
@@ -1327,6 +1327,64 @@ enlace del profesor llevan a donde tienen que llevar.
   dos tablas de nombres (`js/tiempo-secciones.js` y la de
   `informes-encargados`); la función del correo tiene que volver a
   desplegarse para que el correo a la casa la nombre.
+
+### Los tipos 8 a 14
+
+El Barrido, Intercambios, Constrúyela tú, Rey y peón, Adivina la jugada del
+maestro, ¿Qué apertura es? y la Ruta segura. Sus reglas viven en
+`js/tipos-reglas-mas.js` y **son la definición del ejercicio**: el generador
+arma el banco con ellas, la página corrige con ellas y el verificador las
+vuelve a correr sobre cada ejercicio. La página los juega en
+`js/entreno-tipos-mas.js`, con las piezas comunes que expone
+`js/entreno-tipos.js` (`window.TiposUI`); los que necesitan cargar algo antes
+de jugar lo hacen en `PREPARAR[tipo]`.
+
+- **El Barrido** pide la lista COMPLETA, no la mejor jugada. Las clases no se
+  pisan: un jaque que captura es jaque; una captura sin jaque, captura; y una
+  amenaza es una jugada tranquila tras la cual el bando que movió ataca una
+  pieza rival (no el rey) que antes no atacaba así: sin defensa, o de más valor
+  que su atacante más barato. Descubiertas incluidas. Anotar no mueve nada: el
+  tablero sirve para tocar la jugada, y el verificador comprueba que ninguna
+  pieza se movió.
+- **Intercambios** es la cadena de capturas en UNA casilla, con la regla de
+  siempre: cada bando captura con su pieza más barata que pueda capturar
+  LEGALMENTE (una clavada no puede) y sigue solo mientras le conviene. Los
+  niveles salen de la cadena misma: corta, larga, con una pieza que entra
+  desde atrás (rayos X) o con una que ataca y no puede capturar (clavada). Sin
+  coronaciones ni capturas al paso, que cambiarían el valor en medio.
+- **Constrúyela tú** acepta cualquier casilla que cumpla: se comprueba jugando,
+  no contra una lista. La lista (`soluciones`) está para el profesor y el
+  verificador, que la recalcula casilla por casilla. La posición que queda
+  tiene que poder existir: el bando que no mueve no puede estar en jaque, ni un
+  bando tener más material del posible. En «Quita el mate» tampoco vale dar
+  jaque, que taparía el mate por la vía fácil.
+- **Rey y peón** se corrige contra la tabla ENTERA del final, resuelta en
+  `herramientas/lib/kpk.js` (coronar con dama o con torre, lo que sirva; tablas
+  si el rey negro se come la pieza nueva o queda ahogado). Da los números
+  conocidos de este final —124.960 posiciones ganadas de 163.328 con blancas
+  al mover, 97.604 de 168.024 con negras— y el verificador los exige. La tabla
+  viaja a la página como un bit por posición (`entreno/data/kpk.json`, 64 KB) y
+  se carga solo al entrar a este tipo. La «única jugada» es única de verdad:
+  el verificador cuenta las que ganan.
+- **Adivina la jugada del maestro** usa las partidas del curso «Partidas
+  modelo», que están **detrás del candado de los cursos**. Por eso su banco se
+  escribe en `cursos/protegido/data/tipos-maestro.json` (lo sirve el worker
+  solo con el acceso vigente) y al banco público va únicamente el índice (id y
+  nivel, para contar el avance). Quien no tiene el acceso vigente recibe un
+  «no» del servidor y la página lo dice; el verificador comprueba que el
+  índice público no traiga ni una posición. Cada jugada se compara contra la
+  partida del curso, y «buena» es la que el motor da a menos de 0,3 de la
+  mejor.
+- **¿Qué apertura es?** sale de `js/aperturas-lineas.js`. En el nivel 1 solo
+  entran posiciones que pertenecen a UNA apertura; en el 3 las jugadas vienen
+  con dos del mismo bando cambiadas de lugar, y el verificador exige que
+  lleguen a la misma posición y que el orden sea de verdad otro. En ese nivel
+  el tablero no se muestra hasta contestar.
+- **La ruta segura** mueve UNA pieza sin capturar y sin pisar nunca una
+  casilla atacada por el rival (tampoco la de llegada; pasar por encima de una
+  casilla atacada, en una jugada larga, sí se puede). Lo atacado se cuenta sin
+  la pieza que viaja, porque ella no tapa nada. El mínimo es el camino más
+  corto exacto.
 
 **Al tocar los bancos, las reglas o la página, correr**:
 

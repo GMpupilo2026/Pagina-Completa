@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="../img/favicon.svg">
 <title>Tipos de entrenamiento — Entreno — Ajedrez Integral</title>
-<meta name="description" content="Siete entrenamientos distintos, con niveles: el Detective, ¿qué quiere el rival?, Descarte, Siete diferencias, la balanza, Fotografía y Con lo justo.">
+<meta name="description" content="Catorce entrenamientos distintos, con niveles: el Detective, el Barrido, Constrúyela tú, Rey y peón, Adivina la jugada del maestro, la ruta segura y más.">
 <meta name="robots" content="noindex">
     <!-- Tailwind compilado: lo genera herramientas/css-construir.js.
          Antes venía del CDN, que baja ~400 KB de JavaScript y compila el CSS
@@ -78,7 +78,7 @@
 </div>
 
 <!-- ===== MAIN APP =====
-     Tres vistas en la misma página, según el #: sin nada, las siete fichas;
+     Tres vistas en la misma página, según el #: sin nada, las catorce fichas;
      #detective, los niveles de ese tipo; #detective/2, el juego del nivel 2.
      Así el botón «atrás» del navegador y el enlace que manda el profesor
      funcionan igual. Ver «Los Tipos de entrenamiento» en
@@ -90,7 +90,7 @@
     <section id="vista-fichas" aria-labelledby="titulo-fichas">
       <div class="text-center mb-8">
         <h1 id="titulo-fichas" class="font-serif text-3xl md:text-4xl font-bold text-brand-800 dark:text-white mb-2">Tipos de entrenamiento <span aria-hidden="true">🧠</span></h1>
-        <p class="text-brand-500 dark:text-brand-300 max-w-2xl mx-auto">Siete formas distintas de entrenar, cada una con sus niveles. No son ejercicios de «encuentra la mejor jugada»: cada una entrena una habilidad que casi nunca se practica sola.</p>
+        <p class="text-brand-500 dark:text-brand-300 max-w-2xl mx-auto">Catorce formas distintas de entrenar, cada una con sus niveles. No son ejercicios de «encuentra la mejor jugada»: cada una entrena una habilidad que casi nunca se practica sola.</p>
       </div>
       <ul id="fichas" class="grid gap-5 md:grid-cols-2 list-none p-0 m-0"></ul>
     </section>
@@ -146,7 +146,7 @@
   </div>
 </main>
 
-<footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados. Posiciones tomadas de la base abierta de Lichess (licencia CC0).</p><!-- legal: inicio --><p class="mt-2"><a href="../privacidad.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Política de privacidad</a> <span aria-hidden="true">·</span> <a href="../terminos.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Términos y condiciones</a></p><!-- legal: fin --></div></footer>
+<footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados. Posiciones tomadas de la base abierta de Lichess (licencia CC0) y de partidas de maestros.</p><!-- legal: inicio --><p class="mt-2"><a href="../privacidad.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Política de privacidad</a> <span aria-hidden="true">·</span> <a href="../terminos.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Términos y condiciones</a></p><!-- legal: fin --></div></footer>
 <!-- tablero-js: inicio -->
 <script src="../js/board-themes.js"></script>
 <script src="../js/chess-piece-svg.js"></script>
@@ -164,6 +164,8 @@
 <script src="../js/progreso-usuario.js"></script>
 <script src="../js/tipos-catalogo.js"></script>
 <script src="../js/tipos-reglas.js"></script>
+<script src="../js/tipos-reglas-mas.js"></script>
 <script src="../js/entreno-tipos.js"></script>
+<script src="../js/entreno-tipos-mas.js"></script>
 <!-- burbuja: inicio --><script src="../js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="../js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- acceso: inicio --><script src="../js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="../js/modo-vista.js" defer></script><!-- modo-vista: fin --><!-- marca: inicio --><script src="../js/marca-academia.js" defer></script><!-- marca: fin --><!-- ayuda: inicio --><script src="../js/ayuda-guia.js" defer></script><!-- ayuda: fin --><!-- atajo: inicio --><script src="../js/atajo-buscar.js" data-arriba="../" defer></script><!-- atajo: fin --></body>
 </html>

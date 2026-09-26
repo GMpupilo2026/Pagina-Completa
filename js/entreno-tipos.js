@@ -1,5 +1,5 @@
 /* El código de entreno/tipos.html: la ficha de los Tipos de entrenamiento y
- * los siete juegos.
+ * los siete primeros juegos (los otros siete, en js/entreno-tipos-mas.js).
  *
  * Qué es cada tipo y sus niveles: js/tipos-catalogo.js. Las reglas (qué es
  * posible, cómo se corrige, cómo se defiende el rey): js/tipos-reglas.js. Las
@@ -372,6 +372,7 @@
 
   /* ============================================================ los juegos */
   const JUEGOS = {};
+  const PREPARAR = {};
 
   /* ---------- 1. El Detective ---------- */
   JUEGOS.detective = function (item) {
@@ -818,7 +819,17 @@
     const [tipo, nivel, item] = h.split("/");
     if (tipo && C.tipo(tipo) && nivel && C.nivel(tipo, nivel)) {
       mostrar("vista-juego");
-      abrirJuego(tipo, nivel, item);
+      // Algunos tipos cargan algo aparte antes de jugar (las partidas del
+      // maestro, detrás del candado de los cursos; la tabla de rey y peón).
+      const prep = PREPARAR[tipo] ? PREPARAR[tipo]() : Promise.resolve();
+      $("controles").innerHTML = "";
+      $("juego-enunciado").textContent = "";
+      prep.then(() => abrirJuego(tipo, nivel, item), (e) => {
+        console.error(e);
+        $("titulo-juego").textContent = C.tipo(tipo).nombre;
+        $("juego-desc").textContent = "";
+        estado(e && e.mensaje ? e.mensaje : "No se pudo cargar este tipo de entrenamiento. Intenta recargar la página.");
+      });
     } else if (tipo && C.tipo(tipo)) {
       if (limpiarJuego) { limpiarJuego(); limpiarJuego = null; }
       mostrar("vista-tipo");
@@ -861,5 +872,13 @@
   }
   // Para los verificadores: qué posición está pintada ahora.
   window.TiposEntreno = { datos: () => DATOS, fen: () => tab.fen };
+  /* Las piezas de la página que usan los juegos de js/entreno-tipos-mas.js
+     (tipos 8 a 14): el mismo tablero, los mismos avisos, las mismas estrellas. */
+  window.TiposUI = {
+    JUEGOS, PREPARAR, $, el, boton, estado, explicar, textoEstrellas, terminar,
+    tablero, pintar, tab: () => tab, tableroFijo, leerPosicion, adaptado,
+    pedirJugada, jugadaEscrita, moverConClic, COLOR, BTN_PRIMARIO, BTN_SEGUNDO,
+    datos: () => DATOS, ponerDatos: (k, v) => { DATOS[k] = v; }, alLimpiar: (fn) => { limpiarJuego = fn; },
+  };
   requireLoginThenGate();
 })();
