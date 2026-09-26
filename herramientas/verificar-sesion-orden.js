@@ -52,7 +52,7 @@ const GRUPOS = [
 
 // El orden de la clase: qué voy a dar, qué le pongo delante, qué le pido, a
 // quién se lo doy, y al final lo que no se hace dando clase.
-const PESTANAS = ["plan", "tactica", "preguntar", "practicar", "alumnos", "controles"];
+const PESTANAS = ["plan", "tactica", "tipos", "preguntar", "practicar", "alumnos", "controles"];
 
 async function pruebaProfesor(browser) {
   console.log("\n=== La pantalla del profesor se puede recorrer ===");
@@ -160,12 +160,12 @@ async function pruebaModoSencillo(browser) {
   igual("«Tu material» queda guardado", await seVe(r.page, "#toolbar-material"), false);
   igual("pero el tablero de la clase sigue a mano", await seVe(r.page, "#reset-board-btn"), true);
   igual("y el motor también", await seVe(r.page, "#engine-panel"), true);
-  igual("se dice qué está guardado y dónde", /Táctica, Preguntar, Practicar y tu material/.test(await r.page.textContent("#modo-sencillo-nota")), true);
+  igual("se dice qué está guardado y dónde", /Táctica, Entrenamientos, Preguntar, Practicar y tu material/.test(await r.page.textContent("#modo-sencillo-nota")), true);
   igual("y el botón dice lo que hace", await r.page.textContent("#modo-sencillo-btn"), "🧰 Ver todas las herramientas");
 
   await r.page.click("#modo-sencillo-btn");
-  igual("«Ver todas las herramientas» devuelve las seis pestañas",
-    (await pestanas(r.page)).join(","), "plan,tactica,preguntar,practicar,alumnos,controles");
+  igual("«Ver todas las herramientas» devuelve las siete pestañas",
+    (await pestanas(r.page)).join(","), "plan,tactica,tipos,preguntar,practicar,alumnos,controles");
   igual("y «Tu material»", await seVe(r.page, "#toolbar-material"), true);
   igual("la nota se va", await r.page.textContent("#modo-sencillo-nota"), "");
   igual("y queda anotado en el aparato", await r.page.evaluate(() => localStorage.getItem("sesion_modo_sencillo_v1")), "0");
@@ -185,7 +185,7 @@ async function pruebaModoSencillo(browser) {
   r = await abrir(browser, "u-profe", CLASE_ABIERTA, { class_sessions: [CLASE_ABIERTA, VIEJA(1), VIEJA(2)] }, { modoSencillo: null });
   await r.page.waitForSelector("#teacher-toolbar:not(.hidden)", { timeout: 10000 });
   await r.page.waitForFunction(() => document.getElementById("modo-sencillo-btn").textContent !== "");
-  igual("con tres clases dadas, todas las herramientas", (await pestanas(r.page)).length, 6);
+  igual("con tres clases dadas, todas las herramientas", (await pestanas(r.page)).length, 7);
   igual("y el botón ofrece el modo sencillo", await r.page.textContent("#modo-sencillo-btn"), "🪶 Volver al modo sencillo");
   await r.ctx.close();
 
