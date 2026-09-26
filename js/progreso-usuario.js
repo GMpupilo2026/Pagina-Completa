@@ -155,6 +155,9 @@ window.ProgresoUsuario = (function () {
     { clave: "confites_best_limpio",             fusion: "maxNumero" },
     { clave: "sonar_estrellas_v1",               fusion: "maxPorClave" },   // El Sonar: nivel → estrellas
     { clave: "sonar_mejor_v1",                   fusion: "minPorClave" },   // nivel → menos jugadas
+    { clave: "batalla_estrellas_v1",             fusion: "maxPorClave" },   // Batalla naval: nivel → estrellas
+    { clave: "batalla_mejor_v1",                 fusion: "minPorClave" },   // nivel → menos disparos
+    { clave: "batalla_victorias_v1",             fusion: "maxNumero" },     // duelos ganados
     { clave: "aperturas_srs_v1",                 fusion: "srsPorLinea" },  // Aperturas y celadas
     { clave: "aperturas_vistas_v1",              fusion: "maxNumero" },
     { clave: "entreno_visualizacion_solved",     fusion: "unionObjeto" },   // Visualización
