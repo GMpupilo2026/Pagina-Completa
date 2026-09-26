@@ -23,6 +23,12 @@
  *     herramientas/lib/finales-dtm.js (tarda un minuto: son las tablas de 4
  *     piezas) y tiene que dar exactamente el mínimo que dice la página.
  *
+ *   - Los tipos 8 a 14 (Barrido, Intercambios, Constrúyela tú, Rey y peón,
+ *     el maestro, ¿Qué apertura es?, la Ruta segura): se vuelve a correr la
+ *     regla de js/tipos-reglas-mas.js y tiene que dar lo mismo que el banco;
+ *     la tabla de rey y peón se recalcula entera y se compara bit a bit, y
+ *     las jugadas del maestro se comparan con la partida del curso.
+ *
  * El motor no se vuelve a correr acá (en el CI no hay Stockfish): lo que dijo
  * se comprobó al generar, en herramientas/tipos-generar.js.
  *
@@ -67,7 +73,8 @@ C.TIPOS.forEach((t) => {
     ok(t.id + ": nivel declarado en el catálogo (" + x.id + ")", !!C.nivel(t.id, x.nivel));
     ok("id repetido: " + x.id, !ids.has(t.id + ":" + x.id));
     ids.add(t.id + ":" + x.id);
-    ok(t.id + ": FEN legal (" + x.id + ")", !!legal(x.fen), x.fen);
+    // el maestro trae solo el índice en el banco público (sus posiciones, abajo)
+    if (t.id !== "maestro") ok(t.id + ": FEN legal (" + x.id + ")", !!legal(x.fen), x.fen);
   });
 });
 console.log("  " + ids.size + " ejercicios en " + C.TIPOS.length + " tipos");
@@ -281,6 +288,153 @@ DATOS["con-lo-justo"].forEach((x) => {
   ok("el rey negro se come la torre suelta", d && d.to === "d2", d && d.san);
   const d2 = R.defensaRey(Chess, "8/8/8/8/8/8/1k6/K7 b - - 0 1");
   ok("y siempre devuelve una jugada legal", d2 && new Chess("8/8/8/8/8/8/1k6/K7 b - - 0 1").move(d2.san));
+}
+
+/* =====================================================================
+ * 8 a 14: se vuelve a correr la regla de js/tipos-reglas-mas.js sobre cada
+ * ejercicio y tiene que dar exactamente lo que dice el banco.
+ * ===================================================================== */
+const M = require("../js/tipos-reglas-mas.js");
+const KPK = require("./lib/kpk.js");
+
+titulo("El Barrido");
+const RANGO_BARRIDO = { 1: [0, 14], 2: [0, 22], 3: [0, 22], 4: [24, 32] };
+DATOS.barrido.forEach((x) => {
+  const r = M.barrido(Chess, x.fen);
+  x.pide.forEach((c) => ok("«" + c + "» es la lista completa (" + x.id + ")", JSON.stringify(r[c].slice().sort()) === JSON.stringify(x.respuestas[c].slice().sort()), r[c].join() + " contra " + x.respuestas[c].join()));
+  const np = R.tablero(x.fen).filter(Boolean).length;
+  ok("piezas del nivel (" + x.id + ")", np >= RANGO_BARRIDO[x.nivel][0] && np <= RANGO_BARRIDO[x.nivel][1], np);
+  ok("hay algo que encontrar (" + x.id + ")", x.pide.some((c) => x.respuestas[c].length));
+  if (x.nivel >= 3) ok("pide amenazas y hay (" + x.id + ")", x.pide.includes("amenazas") && x.respuestas.amenazas.length > 0);
+});
+{
+  // la definición, en tres casos hechos a mano: jaque que captura es jaque,
+  // captura sin jaque es captura, y una amenaza es tranquila y nueva
+  const r = M.barrido(Chess, "4k3/8/8/3p4/8/8/3R4/4K3 w - - 0 1");
+  ok("barrido: Te2+ es jaque, Txd5 es captura", r.jaques.includes("Re2+") && r.capturas.includes("Rxd5") && !r.jaques.includes("Rxd5"), JSON.stringify(r));
+  const a = M.barrido(Chess, "4k3/8/8/8/8/2n5/8/R3K3 w - - 0 1");
+  ok("barrido: Ta3 amenaza el caballo suelto de c3", a.amenazas.includes("Ra3"), JSON.stringify(a));
+  ok("barrido: Tb1 no amenaza nada", !a.amenazas.includes("Rb1"));
+}
+
+titulo("Intercambios");
+DATOS.intercambios.forEach((x) => {
+  const r = M.intercambio(Chess, x.fen, x.casilla);
+  ok("el resultado es el que dice (" + x.id + ")", r && r.valor === x.valor, r && r.valor + " contra " + x.valor);
+  ok("la línea que conviene (" + x.id + ")", r && JSON.stringify(r.jugadas) === JSON.stringify(x.jugadas));
+  ok("sin coronaciones ni al paso (" + x.id + ")", r && !r.corona && !r.alPaso);
+  const clase = r.clavada ? 4 : r.rayos ? 3 : r.pasos.length >= 4 ? 2 : 1;
+  ok("el nivel es el de su tipo de cambio (" + x.id + ")", clase === x.nivel, "da " + clase);
+  const buena = x.nivel <= 2 ? (x.valor > 0 ? "gana" : x.valor < 0 ? "pierde" : "igual") : String(x.valor);
+  ok("la respuesta está una sola vez entre las opciones (" + x.id + ")", x.opciones.filter((o) => o === buena).length === 1, x.opciones.join());
+  ok("sin opciones repetidas (" + x.id + ")", new Set(x.opciones).size === x.opciones.length);
+});
+{
+  const r = M.intercambio(Chess, "4k3/4r3/3p4/4n3/8/5N2/8/4R1K1 w - - 0 1", "e5");
+  ok("intercambio: Cxe5 dxe5 y se para (queda igual)", r.valor === 0 && r.jugadas.join() === "Nxe5,dxe5", JSON.stringify(r));
+  const s = M.intercambio(Chess, "4k3/8/8/4p3/8/8/4Q3/4R1K1 w - - 0 1", "e5");
+  ok("intercambio: un peón sin defensa se gana (+1)", s.rayos === false && s.valor === 1, JSON.stringify(s));
+}
+
+titulo("Constrúyela tú");
+DATOS.construye.forEach((x) => {
+  const sol = M.solucionesConstruye(Chess, x);
+  ok("las casillas que sirven son las que dice (" + x.id + ")", JSON.stringify(sol) === JSON.stringify(x.soluciones), sol.join() + " contra " + x.soluciones.join());
+  ok("hay al menos una (" + x.id + ")", sol.length >= 1);
+  const OBJ = { 1: "mate-ya", 2: "horquilla", 3: "clavada", 4: "mate-en-1", 5: "quitar-mate" };
+  ok("el objetivo es el del nivel (" + x.id + ")", OBJ[x.nivel] === x.objetivo);
+  const g = new Chess(); ok("la base es legal (" + x.id + ")", g.load(x.fen));
+  if (x.objetivo === "mate-en-1") ok("sin la pieza no hay mate en 1 (" + x.id + ")", !M.tieneMateEn1(new Chess(x.fen)));
+  if (x.objetivo === "quitar-mate") ok("sin la pieza SÍ hay mate en 1 (" + x.id + ")", M.tieneMateEn1(new Chess(x.fen)));
+  if (x.objetivo === "mate-ya") ok("sin la pieza no es mate (" + x.id + ")", !new Chess(x.fen).in_checkmate());
+});
+
+titulo("Rey y peón (recalcula la tabla entera)");
+{
+  const t = KPK.resolver();
+  let w = 0, vw = 0, b = 0, vb = 0;
+  for (let i = 0; i < t.W.length; i++) { if (t.validaW[i]) { vw++; if (t.W[i]) w++; } if (t.validaB[i]) { vb++; if (t.B[i]) b++; } }
+  ok("blancas al mover: 124.960 ganadas de 163.328 (lo conocido de este final)", w === 124960 && vw === 163328, w + "/" + vw);
+  ok("negras al mover: 97.604 ganadas de 168.024", b === 97604 && vb === 168024, b + "/" + vb);
+  const bits = KPK.bits(t);
+  const publicado = M.bitsDeBase64(JSON.parse(fs.readFileSync(path.join(RAIZ, "entreno/data/kpk.json"), "utf8")).bits);
+  let distintos = 0;
+  for (let i = 0; i < bits.length; i++) if (bits[i] !== publicado[i]) distintos++;
+  ok("entreno/data/kpk.json es la tabla recalculada, byte por byte", distintos === 0 && bits.length === publicado.length, distintos + " bytes distintos");
+  DATOS.peones.forEach((x) => {
+    ok("gana o tablas, según la tabla (" + x.id + ")", M.kpkGana(publicado, x.fen) === x.gana);
+    if (x.nivel >= 3) ok("juegan las blancas y ganan (" + x.id + ")", x.fen.split(" ")[1] === "w" && x.gana);
+    if (x.nivel === 3) {
+      const g = new Chess(x.fen);
+      const ganan = g.moves({ verbose: true }).filter((m) => { g.move(m); const v = !m.promotion && M.kpkGana(publicado, g.fen()); g.undo(); return v; });
+      ok("una sola jugada gana, y es la que dice (" + x.id + ")", ganan.length === 1 && ganan[0].san === x.jugada, ganan.map((m) => m.san).join());
+    }
+  });
+  const cuenta = (n, v) => DATOS.peones.filter((x) => x.nivel === n && x.gana === v).length;
+  ok("en los niveles 1 y 2 hay de las dos respuestas", [1, 2].every((n) => cuenta(n, true) >= 5 && cuenta(n, false) >= 5));
+}
+
+titulo("Adivina la jugada del maestro");
+{
+  const archivo = path.join(RAIZ, "cursos/protegido/data/tipos-maestro.json");
+  const completo = JSON.parse(fs.readFileSync(archivo, "utf8")).maestro;
+  const curso = JSON.parse(fs.readFileSync(path.join(RAIZ, "cursos/protegido/data/partidas-modelo.json"), "utf8")).partidas;
+  // al banco público solo va el índice: nada de posiciones ni jugadas
+  ok("el banco público del maestro trae solo ids y niveles", DATOS.maestro.every((x) => Object.keys(x).sort().join() === "id,nivel"));
+  ok("el índice público es el del archivo protegido", JSON.stringify(DATOS.maestro) === JSON.stringify(completo.map((x) => ({ id: x.id, nivel: x.nivel }))));
+  ok("el archivo del maestro está detrás del candado (cursos/protegido/)", /cursos\/protegido\//.test(archivo.replace(/\\/g, "/")));
+  completo.forEach((x) => {
+    const p = curso[x.partida];
+    ok("la partida existe en el curso (" + x.id + ")", !!p);
+    if (!p) return;
+    x.posiciones.forEach((pos) => {
+      // la posición y la jugada son las de la partida, tal cual
+      const k = p.moves.findIndex((m, i) => (i === 0 ? p.start_fen : p.moves[i - 1].fen) === pos.fen && m.san === pos.jugada);
+      ok("posición y jugada son las de la partida (" + x.id + " " + pos.n + ")", k >= 0);
+      ok("la jugada es del bando que se juega (" + x.id + ")", pos.fen.split(" ")[1] === x.lado);
+      ok("la respuesta del rival es la de la partida (" + x.id + " " + pos.n + ")", k >= 0 && (p.moves[k + 1] ? p.moves[k + 1].san : null) === pos.respuesta);
+      pos.buenas.forEach((b) => ok("las buenas son legales y distintas de la del maestro (" + x.id + ")", b !== pos.jugada && !!new Chess(pos.fen).move(b)));
+    });
+  });
+}
+
+titulo("¿Qué apertura es?");
+{
+  const { LINEAS } = require("../js/aperturas-lineas.js");
+  DATOS.apertura.forEach((x) => {
+    const g = new Chess();
+    const jugadas = x.orden || x.jugadas;
+    ok("las jugadas son legales (" + x.id + ")", jugadas.every((j) => !!g.move(j)));
+    ok("y llevan a la posición (" + x.id + ")", g.fen().split(" ").slice(0, 2).join(" ") === x.fen.split(" ").slice(0, 2).join(" "));
+    ok("la respuesta está una sola vez entre las opciones (" + x.id + ")", x.opciones.filter((o) => o === x.correcta).length === 1);
+    ok("sin opciones repetidas (" + x.id + ")", new Set(x.opciones).size === x.opciones.length);
+    if (x.nivel === 3) {
+      const h = new Chess();
+      ok("en otro orden también son legales (" + x.id + ")", x.jugadas.every((j) => !!h.move(j)));
+      ok("y llegan a lo mismo (" + x.id + ")", h.fen().split(" ").slice(0, 2).join(" ") === g.fen().split(" ").slice(0, 2).join(" "));
+      ok("el orden es de verdad otro (" + x.id + ")", x.jugadas.join() !== x.orden.join());
+    }
+    if (x.nivel === 1) {
+      // ninguna línea de otra apertura pasa por esta misma posición
+      const otras = LINEAS.filter((l) => l.apertura !== x.correcta).filter((l) => {
+        const h = new Chess(); return l.jugadas.slice(0, x.jugadas.length).every((j) => !!h.move(j)) && h.fen() === x.fen;
+      });
+      ok("la posición es solo de esa apertura (" + x.id + ")", !otras.length, otras.map((l) => l.id).join());
+    }
+  });
+}
+
+titulo("La ruta segura");
+DATOS.ruta.forEach((x) => {
+  const r = M.rutaMinima(x.fen, x.desde, x.hasta);
+  ok("el mínimo es el que dice (" + x.id + ")", r && r.n === x.minimo, r && r.n);
+  let actual = x.desde, bien = true;
+  x.camino.forEach((s) => { if (!M.pasoValido(x.fen, x.desde, actual, s).ok) bien = false; actual = s; });
+  ok("el camino de ejemplo es válido paso a paso (" + x.id + ")", bien && actual === x.hasta && x.camino.length === x.minimo);
+});
+{
+  ok("ruta: la torre de a1 a h8 rodea a su propio rey", JSON.stringify(M.rutaMinima("4k3/8/8/8/8/8/8/R3K3 w - - 0 1", "a1", "h8")) === JSON.stringify({ n: 3, camino: ["a2", "h2", "h8"] }));
+  ok("ruta: no se puede terminar en una casilla atacada", M.rutaMinima("4k3/8/8/8/8/8/8/R3K3 w - - 0 1", "a1", "d8") === null);
 }
 
 console.log("\n" + (fallos ? "✗ " + fallos + " de " + pruebas + " comprobaciones fallaron." : "✓ Las " + pruebas + " comprobaciones pasaron."));

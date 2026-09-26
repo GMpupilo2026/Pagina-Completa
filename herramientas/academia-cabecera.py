@@ -139,7 +139,7 @@ SIN_ACCESO = {"cobros.html", "configuracion.html"}
 ATRIBUCION_EXTRA = {
     "entreno/temas.html": " Ejercicios tomados de la base abierta de Lichess (licencia CC0).",
     "entreno/visualizacion.html": " Ejercicios tomados de la base abierta de Lichess (licencia CC0).",
-    "entreno/tipos.html": " Posiciones tomadas de la base abierta de Lichess (licencia CC0).",
+    "entreno/tipos.html": " Posiciones tomadas de la base abierta de Lichess (licencia CC0) y de partidas de maestros.",
 }
 
 

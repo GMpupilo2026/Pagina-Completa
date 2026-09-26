@@ -490,7 +490,7 @@ async function pruebaTipos(browser) {
   const { page, ctx, errores } = await abrir(browser, [PROFE, ALUMNA], "u-profe");
   await page.click("#teacher-tab-tipos");
   await page.waitForSelector("#tipos-body button", { timeout: 30000 });
-  igual("los siete tipos", await page.$$eval("#tipos-body > div > button", (b) => b.length), 7);
+  igual("los catorce tipos", await page.$$eval("#tipos-body > div > button", (b) => b.length), 14);
 
   async function abrirNivel(nombreTipo, nivel) {
     // Preguntar y Practicar se van a su pestaña: se vuelve a la de Entrenamientos
@@ -574,6 +574,24 @@ async function pruebaTipos(browser) {
   const prac = await page.evaluate(() => (window.__inserts.find((i) => i.tabla === "practice_sessions") || {}).fila);
   igual("Con lo justo: la práctica arranca con el final", prac.fen, fin.fen);
   igual("con el motor al máximo", prac.level, "max");
+
+  // Rey y peón, nivel 4: «Practicar» arranca la práctica con esa posición.
+  await abrirNivel("Rey y peón", 4);
+  const peon = DATOS.peones.filter((x) => x.nivel === 4)[0];
+  await page.evaluate(() => { window.__inserts = []; });
+  await page.locator("#tipos-body li").first().getByRole("button", { name: "Practicar" }).click();
+  await page.waitForFunction(() => window.__inserts.some((i) => i.tabla === "practice_sessions"));
+  igual("Rey y peón: la práctica arranca con esa posición", await page.evaluate(() => window.__inserts.find((i) => i.tabla === "practice_sessions").fila.fen), peon.fen);
+
+  // El maestro: las partidas se piden al servidor (detrás del candado) y
+  // «Preguntar» abre la primera posición del tramo.
+  await abrirNivel("Adivina la jugada del maestro", 1);
+  const maestro = JSON.parse(fs.readFileSync(path.join(RAIZ, "cursos/protegido/data/tipos-maestro.json"), "utf8")).maestro.filter((x) => x.nivel === 1)[0];
+  await page.waitForSelector("#tipos-body li");
+  await page.evaluate(() => { window.__inserts = []; });
+  await page.locator("#tipos-body li").first().getByRole("button", { name: "Preguntar" }).click();
+  await page.waitForFunction(() => window.__inserts.some((i) => i.tabla === "questions"));
+  igual("Maestro: la pregunta va con la primera posición del tramo", await page.evaluate(() => window.__inserts.find((i) => i.tabla === "questions").fila.fen), maestro.posiciones[0].fen);
 
   // Fotografía: se ve unos segundos y las piezas se ocultan en todos los tableros.
   await abrirNivel("Fotografía", 5);

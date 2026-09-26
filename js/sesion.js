@@ -2930,7 +2930,7 @@
         }
 
         // ---------- Tipos de entrenamiento (cascada tipo → nivel → ejercicio) ----------
-        // Los mismos siete de entreno/tipos.html, con las mismas posiciones
+        // Los mismos catorce de entreno/tipos.html, con las mismas posiciones
         // (entreno/data/tipos.json) y el mismo catálogo (js/tipos-catalogo.js): el
         // profesor los jala a la clase sin salir de la sesión. Toda posición entra por
         // aplicarPosicionEnClase(), como Táctica y Archivos. Lo que es la RESPUESTA
@@ -2943,6 +2943,9 @@
         let tiposView = { tipo: null, nivel: null };
         const vistaPreviaTipos = crearVistaPreviaLote("sesion_vista_previa_tipos_v1");
         let fotoTimer = null;
+        let tiposMaestroCargado = false;
+        // La posición de un ejercicio: la suya, o la primera de su tramo (maestro).
+        const tiposFen = (item) => item.fen || (item.posiciones && item.posiciones[0].fen);
 
         function ensureTiposLoaded() {
             if (tiposData || tiposLoadPromise) return tiposLoadPromise;
@@ -2987,7 +2990,8 @@
             if (tipo === "balanza") return n + "Material " + (item.material === 0 ? "igual" : (item.material > 0 ? "+" : "−") + Math.abs(item.material));
             if (tipo === "fotografia") return n + item.piezas + " piezas";
             if (tipo === "con-lo-justo") return n + "Mate en " + item.minimo + " (mínimo exacto)";
-            return n + (R ? "" : "");
+            // los tipos 8 a 14 traen su rótulo escrito (sin delatar la respuesta)
+            return n + (item.resumen || "");
         }
 
         /* La respuesta, solo para el profesor. */
@@ -3025,6 +3029,9 @@
                 else p("Pídeles que la reconstruyan en papel o que la dicten pieza por pieza.");
             } else if (tipo === "con-lo-justo") {
                 p("Se gana en " + item.minimo + " jugadas contra la mejor defensa (cálculo exacto). Con «Practicar», el motor defiende el rey en el navegador de cada alumno.");
+            } else if (Array.isArray(item.respuesta)) {
+                // los tipos 8 a 14 traen su respuesta escrita por el generador
+                item.respuesta.forEach(p);
             }
             return caja;
         }
@@ -3124,6 +3131,20 @@
             }
             const nivel = C.nivel(t.id, tiposView.nivel);
             body.appendChild(tacticsBackBtn("‹ " + t.nombre, () => { tiposView = { tipo: t.id, nivel: null }; renderTiposView(); }));
+            /* Las partidas del maestro están detrás del candado de los cursos:
+               el banco público solo trae el índice, y el resto se le pide al
+               servidor con la sesión del profesor. */
+            if (t.id === "maestro" && !tiposMaestroCargado) {
+                const aviso = document.createElement("p");
+                aviso.className = "text-sm text-brand-450 dark:text-brand-350 mt-2";
+                aviso.textContent = "Cargando las partidas…";
+                body.appendChild(aviso);
+                fetch("cursos/protegido/data/tipos-maestro.json", { credentials: "same-origin" })
+                    .then((r) => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+                    .then((d) => { tiposData.maestro = d.maestro; tiposMaestroCargado = true; renderTiposView(); })
+                    .catch((e) => { console.error(e); aviso.textContent = "No se pudieron cargar las partidas del curso «Partidas modelo» (hace falta el acceso vigente)."; });
+                return;
+            }
             const items = (tiposData[t.id] || []).filter((x) => x.nivel === nivel.n);
             const barra = document.createElement("div");
             barra.className = "flex items-center justify-between gap-2 mt-2";
@@ -3163,7 +3184,7 @@
                     const rotuloEnvio = t.id === "diferencias" ? "📥 B al tablero" : "📥 Al tablero";
                     // Amenaza: al tablero va la posición del alumno (le toca a él).
                     const envio = tiposBoton(rotuloEnvio, TIPOS_BTN, async () => {
-                        const ok = await aplicarPosicionEnClase(item.fen, "«" + t.nombre + "»: ya la ven todos los alumnos.");
+                        const ok = await aplicarPosicionEnClase(tiposFen(item), "«" + t.nombre + "»: ya la ven todos los alumnos.");
                         if (ok) { envio.textContent = "✅ Enviada"; setTimeout(() => { envio.textContent = rotuloEnvio; }, 2000); }
                     }, "Poner esta posición en el tablero de la clase, sin preguntar nada");
                     acciones.appendChild(envio);
@@ -3175,6 +3196,9 @@
                     tiposPreguntar(g.fen(), "Pregunta abierta: en B, tras " + item.golpeEs.replace(/[+#]$/, "") + ", ¿cómo se defiende el rival?");
                 }, "Abre la pregunta con B después del golpe: cada alumno busca la defensa"));
                 if (t.id === "descarte") acciones.appendChild(tiposBoton("❓ Preguntar", TIPOS_BTN_ACCION, () => tiposPreguntar(item.fen, "Pregunta abierta: ¿qué jugarías? Después comenten cuáles de las candidatas pierden."), "Abre la pregunta «¿qué jugarías?» con esta posición"));
+                if (t.id === "peones" && item.nivel === 3) acciones.appendChild(tiposBoton("❓ Preguntar", TIPOS_BTN_ACCION, () => tiposPreguntar(item.fen, "Pregunta abierta: ¿cuál es la única jugada que gana?"), "Cada alumno busca la única jugada que gana"));
+                if (t.id === "peones" && item.nivel === 4) acciones.appendChild(tiposBoton("🎯 Practicar", TIPOS_BTN_ACCION, () => tiposPracticar(item.fen), "Cada alumno lo juega contra el motor hasta coronar"));
+                if (t.id === "maestro") acciones.appendChild(tiposBoton("❓ Preguntar", TIPOS_BTN_ACCION, () => tiposPreguntar(tiposFen(item), "Pregunta abierta: ¿qué jugarías aquí? Después miren la jugada del maestro."), "Abre la pregunta con la primera posición del tramo"));
                 if (t.id === "con-lo-justo") acciones.appendChild(tiposBoton("🎯 Practicar", TIPOS_BTN_ACCION, () => tiposPracticar(item.fen), "Cada alumno juega el final contra el motor"));
                 const respBtn = tiposBoton("🔎 Respuesta", TIPOS_BTN, () => {
                     const abierta = !respWrap.classList.contains("hidden");
@@ -3193,7 +3217,7 @@
                 // La respuesta ARRIBA de la vista previa: la lista tiene su propio
                 // scroll, y debajo de un tablero quedaba fuera de la vista.
                 li.append(respWrap, previewWrap);
-                vistaPreviaTipos.registrar(previewWrap, previewBtn, () => renderTacticsPreviewBoard(previewWrap, item.fen));
+                vistaPreviaTipos.registrar(previewWrap, previewBtn, () => renderTacticsPreviewBoard(previewWrap, tiposFen(item)));
                 ul.appendChild(li);
             });
             body.appendChild(ul);
