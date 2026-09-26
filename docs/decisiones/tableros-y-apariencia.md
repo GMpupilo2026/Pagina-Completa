@@ -6,19 +6,67 @@ están en `CLAUDE.md`.
 
 ## Coordenadas en los tableros
 
-`js/coordenadas-tablero.js` rotula cualquier tablero: la letra de columna en la
-fila de abajo y el número de fila en la columna izquierda, dentro de las casillas
-del borde (no cambia la maqueta). Está en todos los tableros de ejercicios:
-Aprende, 4×4, Mates, Ejercicios por tema (incluida la táctica, que se mudó ahí
-dentro), Practicar, Desafíos, el diagnóstico, Concentración, Racha táctica y
-¡Te reto!
+**Todos los tableros del sitio llevan las coordenadas por fuera**: las letras
+debajo y los números a la izquierda, como un tablero de madera y como la clase
+en vivo. Antes iban dentro de las casillas del borde (tapaban la pieza que
+estuviera ahí) y solo en los ejercicios; los juegos, la portada, el bot, los
+artículos y Partidas no tenían ninguna.
 
-- Se llama una vez por página: `Coordenadas.aplicar(document.getElementById('board'))`.
-  Un observador repinta las etiquetas cada vez que la página redibuja el tablero.
-- Requisito: cada casilla debe llevar su nombre en `data-square`. Lee ese nombre,
-  no la posición, así que funciona con el tablero girado y con el 4×4.
-- Las etiquetas son `<span class="coord-etiqueta">` dentro de la casilla: si algún
-  código cuenta `span` dentro del tablero, tiene que excluirlas.
+- Lo hace `js/coordenadas-tablero.js`, una sola copia: `Coordenadas.aplicar(tablero)`.
+  **Lo llama cada dibujante de tablero**, no cada página (`cartas-board`,
+  `crazyhouse-board`, `duelo-board`, `niebla-board`, `variantes-board`,
+  `fourplayer-board`, `tablero-board`, `clases-board`, `article-example-board`
+  y los de Entrenamiento), y **lo carga `herramientas/tablero-cabecera.py`** en
+  toda página con tablero, junto con las preferencias de tablero: la página
+  nueva entra sola. `index.html` y `tablero.html` (todo `defer`) lo llevan a
+  mano, antes de `tablero-board.js`.
+- **No toca el tablero.** Las etiquetas van en una capa aparte (`.coord-marco`),
+  hermana del tablero, que se coloca midiendo en la pantalla dónde quedó cada
+  casilla. Así ningún código que cuente las casillas o los hijos del tablero ve
+  nada nuevo, y ni el arrastre ni el clic cambian. Un observador la recoloca
+  cuando la página redibuja el tablero, cambia de tamaño, se esconde o cambia
+  de tema.
+- **Lee el nombre de la casilla, no su posición** (`data-square`, o
+  `data-coordenada` si el nombre interno es otro): con el tablero girado se lee
+  h…a y 1…8. En cada columna toma la casilla de más abajo y en cada fila la de
+  más a la izquierda, así que sirve para el 4×4 y para el de cuatro jugadores,
+  que no tiene esquinas (ahí la letra va debajo de la última casilla de su
+  columna). Y escribe lo que **cambia** a lo largo del borde: visto desde un
+  costado, el de cuatro lleva los números abajo y las letras al costado.
+- **El color se mide, no se hereda.** Heredado, sobre la tarjeta oscura de la
+  portada (dentro de una sección de texto oscuro) salía gris sobre gris. Se
+  mezclan los fondos de los ancestros —un degradado cuenta como el promedio de
+  sus colores— y se elige entre brand-700 y brand-100 el que más contrasta
+  (8,6:1 contra blanco, 11,2:1 contra el azul noche); si ninguno llega a 4,5:1,
+  negro o blanco puros.
+- **Necesita aire**: a la izquierda del tablero no se toca nada (correrlo
+  cambiaría la maqueta, y casi siempre ya hay relleno), y abajo se le da al
+  tablero el margen que haga falta (18 px) si no lo tiene, porque las letras
+  quedaban montadas sobre el borde de su tarjeta. Un tablero `absolute` no se
+  toca: con margen se achataría.
+- **El de cuatro jugadores se nombra a–n y 1–14** desde el lado de Rojo
+  (`FourPlayerChess.nombre`). Por dentro la casilla sigue siendo `"3,0"` (es lo
+  que viaja por la red); lo que se ve —las coordenadas, la lista de jugadas y
+  lo que dice el lector de pantalla— dice `d1`.
+- **Sin coordenadas, a propósito**: el juego de Coordenadas (la gracia es
+  adivinar la casilla), las miniaturas de supervisión y de torneo
+  (`ClasesBoard` con `compact`: a ese tamaño no se leen), Ilumina (no es un
+  tablero de ajedrez sino una figura de casillas sueltas) y los tableros de la
+  clase en vivo que ya las ponen por su cuenta (`externalCoords`). Los visores
+  SVG de los cursos las dibujan dentro del propio SVG.
+- `verificar-coordenadas-fuera.js` lo mide: quién carga y quién llama, que a1
+  sea oscura, que cada letra quede centrada en su columna y cada número a la
+  altura de su fila sin pisar ninguna casilla, girado, el de cuatro desde dos
+  asientos, el contraste en la portada y en modo oscuro, y que sigan al tablero
+  al redibujarse y se escondan con él.
+
+### a1 es oscura
+
+En Tipos de entrenamiento el tablero salía con los colores al revés (a1
+clara) y no fallaba nada: la cuenta era `(columna + fila) % 2 === 1 ? clara`
+con la fila contada desde 1. Con la columna desde 0 y la fila desde 1, clara es
+`=== 0`; con las dos desde 0, es `=== 1`. Mezclar las dos bases invierte las 64
+casillas. `verificar-coordenadas-fuera.js` mira el color de a1, h1, a8, e4 y d4.
 
 ## Colores de casilla para el celular: la pieza tiene que verse sobre las DOS casillas
 

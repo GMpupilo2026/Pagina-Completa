@@ -29,6 +29,7 @@
         const light = (f + (rank - 1)) % 2 === 1;
         const sq = document.createElement("div");
         sq.className = "example-sq " + (light ? "example-sq-light" : "example-sq-dark");
+        sq.dataset.square = square;   // de aquí lee js/coordenadas-tablero.js
         const piece = game.get(square);
         if (piece) {
           const span = document.createElement("span");
@@ -48,6 +49,7 @@
       }
     }
     sizePieces(el);
+    if (window.Coordenadas) Coordenadas.aplicar(el);   // letras y números por fuera
   }
 
   // El tamaño de pieza NO se fija en CSS con vw (min(6vw,28px) queda atado al ancho de

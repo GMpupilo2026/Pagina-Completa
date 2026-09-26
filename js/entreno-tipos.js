@@ -119,7 +119,7 @@
       const s = "abcdefgh"[f] + r;
       const celda = document.createElement(tab.clic ? "button" : "div");
       if (tab.clic) { celda.type = "button"; celda.addEventListener("click", () => tab.clic(s)); }
-      celda.className = "sq " + ((f + r) % 2 === 1 ? "light" : "dark");
+      celda.className = "sq " + ((f + r) % 2 === 0 ? "light" : "dark");
       celda.dataset.square = s;
       if (tab.sel === s) celda.classList.add("sel");
       if (tab.destinos.indexOf(s) >= 0) celda.classList.add("destino");
@@ -168,7 +168,7 @@
     filas.forEach((r) => cols.forEach((f) => {
       const s = "abcdefgh"[f] + r;
       const celda = document.createElement("div");
-      celda.className = "sq " + ((f + r) % 2 === 1 ? "light" : "dark");
+      celda.className = "sq " + ((f + r) % 2 === 0 ? "light" : "dark");
       celda.dataset.square = s;
       const m = marcas && marcas[s];
       if (m) { celda.classList.add(m.cls); celda.dataset.marca = m.signo; }
