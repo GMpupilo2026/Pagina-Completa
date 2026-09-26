@@ -32,6 +32,21 @@ const STATS = {
   por_actividad: { mates: 60, "4x4": 50, temas: 3, confites: 1 },
 };
 
+// Los trofeos de la clase (public.trofeos_de, js/trofeos.js): 9 por
+// respuestas correctas y 3 que sumó el profesor. El motivo del ajuste lleva
+// HTML a propósito: lo escribe una persona y tiene que verse como texto.
+const TROFEOS = { por_clase: 9, ajustes: 3, total: 12 };
+// Los premios (public.premios_de_alumno): el mismo total de trofeos y 7
+// insignias. El motivo de la última también lleva HTML: lo escribe el profe.
+const PREMIOS = { trofeos_periodo: 12, trofeos_total: 12, insignias_periodo: 7, insignias_total: 7,
+  insignias: [
+    { tipo: "buen_estudiante", nombre: "Estrella de buen estudiante", emoji: "⭐", periodo: 5, total: 5 },
+    { tipo: "buena_respuesta", nombre: "Buena respuesta", emoji: "💡", periodo: 2, total: 2 },
+  ],
+  ultimas: [{ id: "i1", tipo: "buena_respuesta", nombre: "Buena respuesta", emoji: "💡",
+    motivo: "<i>Vio</i> el mate", fecha: "2026-09-21T15:00:00Z" }] };
+const AJUSTES = [{ id: "a1", cantidad: 3, motivo: "<b>Buen</b> trabajo", created_at: "2026-09-20T15:00:00Z" }];
+
 function clienteFalso(sesion, stats) {
   return `
 (function () {
@@ -40,11 +55,13 @@ function clienteFalso(sesion, stats) {
     auth: {
       getSession: () => Promise.resolve(${sesion ? '{ data: { session: { user: { id: "u-ana" }, access_token: "t" } } }' : "{ data: { session: null } }"}),
     },
-    from: () => ({ select() { return this; }, eq() { return this; },
-                   then(r) { return Promise.resolve({ data: [], error: null }).then(r); } }),
+    from: (t) => ({ select() { return this; }, eq() { return this; }, order() { return this; }, limit() { return this; },
+                   then(r) { return Promise.resolve({ data: t === "trofeos_ajustes" ? ${JSON.stringify(stats ? AJUSTES : [])} : [], error: null }).then(r); } }),
     rpc: (nombre) => {
       window.__rpcPedidos.push(nombre);
-      const filas = nombre === "progreso_dias_y_racha" ? ${JSON.stringify(stats ? [stats] : [])} : [];
+      const filas = nombre === "progreso_dias_y_racha" ? ${JSON.stringify(stats ? [stats] : [])}
+        : nombre === "trofeos_de" ? ${JSON.stringify(stats ? [TROFEOS] : [])}
+        : nombre === "premios_de_alumno" ? ${JSON.stringify(stats ? { premios: PREMIOS } : null)} : [];
       return { then(r) { return Promise.resolve({ data: filas, error: null }).then(r); } };
     },
   };
@@ -218,10 +235,12 @@ async function abrir(browser, ruta, sesion, stats, opts) {
       // el logo de la academia y la franja de la academia activa de quien
       // supervisa varias (js/marca-academia.js, igual en todas): ninguna es una
       // cuenta de progreso, así que no cuentan acá.
-      await page.evaluate(() => window.__rpcPedidos.filter((n) => !["mi_acceso", "mi_marca_academia", "mis_academias_supervisadas"].includes(n))), ["progreso_dias_y_racha"]);
+      // trofeos_de es la cuenta de los trofeos de la clase, también en la base.
+      await page.evaluate(() => Array.from(new Set(window.__rpcPedidos.filter((n) => !["mi_acceso", "mi_marca_academia", "mis_academias_supervisadas"].includes(n)))).sort()),
+      ["premios_de_alumno", "progreso_dias_y_racha", "trofeos_de"]);
 
     console.log("\n=== Los logros: la página pinta lo que el catálogo calcula ===");
-    const esperado = await page.evaluate((stats) => window.LogrosCatalogo.conEstado(stats), STATS);
+    const esperado = await page.evaluate((stats) => window.LogrosCatalogo.conEstado(stats), Object.assign({}, STATS, { trofeos: PREMIOS.trofeos_total, insignias: PREMIOS.insignias_total }));
     const pintado = await page.evaluate(() =>
       Array.from(document.querySelectorAll("#logros-grid li")).map((li) => ({
         conseguido: li.textContent.includes("Conseguido ✔"),
@@ -237,6 +256,25 @@ async function abrir(browser, ruta, sesion, stats, opts) {
     igual("racha (2/8): solo llegó a los 3 y a los 7 días", cabeceras[0], "Racha de días (2/8)");
     igual("confites (1/1): su primera ronda ya cuenta", cabeceras.find((t) => t.startsWith("Confites")), "Confites del caballo (1/1)");
     igual("mates (2/3): tiene 60, así que le falta el de 200", cabeceras.find((t) => t.startsWith("Mates")), "Mates (2/3)");
+    igual("trofeos (2/6): con 12 tiene el de 1 y el de 10", cabeceras.find((t) => t.startsWith("Trofeos")), "Trofeos de clase (2/6)");
+    igual("insignias (2/5): con 7 tiene la de 1 y la de 5", cabeceras.find((t) => t.startsWith("Insignias")), "Insignias de clase (2/5)");
+
+    console.log("\n=== Los trofeos de clase: el total, de dónde sale y los ajustes ===");
+    await page.waitForFunction(() => document.querySelector("#trofeos-body [data-trofeos-total]"), { timeout: 10000 });
+    igual("el total de trofeos (respuestas + ajustes)",
+      await page.evaluate(() => document.querySelector("#trofeos-body [data-trofeos-total]").textContent), "🏆 12 trofeos");
+    igual("dice de dónde sale: 9 por respuestas y +3 del profesor",
+      await page.evaluate(() => document.getElementById("trofeos-body").textContent.includes("9 trofeos por respuestas correctas en clase, +3 ajustados por tu profesor")), "true");
+    igual("las insignias: el total y cuántas de cada una, con el nombre escrito",
+      await page.evaluate(() => {
+        const c = document.querySelector("#trofeos-body [data-insignias]");
+        return c ? [c.querySelector("p").textContent, Array.from(c.querySelectorAll("ul:first-of-type li")).map((li) => li.textContent)] : null;
+      }), ["🏅 7 insignias", ["⭐ Estrella de buen estudiante × 5", "💡 Buena respuesta × 2"]]);
+    igual("el motivo de la insignia también va como texto",
+      await page.evaluate(() => [document.querySelector("#trofeos-body i") === null,
+        document.getElementById("trofeos-body").textContent.includes("Buena respuesta — <i>Vio</i> el mate")]), [true, true]);
+    igual("el motivo del ajuste se ve como texto, no como HTML",
+      await page.evaluate(() => [document.querySelector("#trofeos-body b") === null, document.getElementById("trofeos-body").textContent.includes("<b>Buen</b> trabajo")]), [true, true]);
 
     // Un logro ya conseguido no debe verse "bloqueado": ni con 🔒 ni apagado.
     const primeraRacha = await page.evaluate(() => document.querySelector("#logros-grid li"));
@@ -253,6 +291,12 @@ async function abrir(browser, ruta, sesion, stats, opts) {
       await page2.waitForFunction(() => document.getElementById("racha-actual").textContent !== "—", { timeout: 10000 });
       igual("sin fila del RPC, la racha se ve en 0 y no rompe la página",
         await page2.evaluate(() => document.getElementById("racha-actual").textContent), "0");
+      await page2.waitForFunction(() => document.querySelector("#trofeos-body [data-trofeos-total]"), { timeout: 10000 });
+      igual("sin trofeos, se ve 0 y se explica cómo se ganan",
+        await page2.evaluate(() => [document.querySelector("#trofeos-body [data-trofeos-total]").textContent,
+          document.getElementById("trofeos-body").textContent.includes("te da uno")]), ["🏆 0 trofeos", true]);
+      igual("y sin insignias también lo explica, sin romperse",
+        await page2.evaluate(() => /0 insignias|No se pudieron cargar las insignias/.test(document.getElementById("trofeos-body").textContent)), "true");
       igual("y ningún logro sale conseguido",
         await page2.evaluate(() => document.getElementById("logros-grid").textContent.includes("Conseguido ✔")), "false");
       errores2.forEach((e) => { console.log("  ✗ error de la página: " + e); fallos += 1; });

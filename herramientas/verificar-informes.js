@@ -195,6 +195,12 @@ const SECCIONES_ANA = [
   { seccion: "bot", minutos: 0.3, ejercicios: 0 },
 ];
 
+/* Los premios de la clase, tal como los devuelve public.premios_de_alumno():
+   trofeos (respuestas ✅ + ajustes) e insignias que el profe da a mano. */
+const PREMIOS_ANA = { premios: { trofeos_periodo: 9, trofeos_total: 9, insignias_periodo: 3, insignias_total: 3,
+  insignias: [{ tipo: "buen_comentario", nombre: "Buen comentario", emoji: "💬", periodo: 3, total: 3 }],
+  ultimas: [{ id: "i1", tipo: "buen_comentario", nombre: "Buen comentario", emoji: "💬", motivo: "Preguntó por qué no Cxe5", fecha: "2026-09-20T15:00:00Z" }] } };
+
 /* Tareas y exámenes, tal como los devuelve public.resumen_tareas_examenes().
    Lleva una vencida de cada cosa a propósito: es el único renglón de ese bloque
    que pide hacer algo hoy, y el que se pinta en rojo. */
@@ -337,6 +343,8 @@ async function pruebaProfesor(browser) {
       resumen_tareas_examenes: DEBERES,
       evolucion_alumno: CURVA,
       tiempo_por_seccion: SECCIONES_ANA,
+      premios_de_alumno: PREMIOS_ANA,
+      trofeos_de: [{ por_clase: 9, ajustes: 0, total: 9 }],
     },
     tablas: {
       profiles: [{ id: "prof-1", role: "profesor", is_admin: true, full_name: "Oscar", email: "o@x.cr" }],
@@ -581,6 +589,15 @@ async function pruebaProfesor(browser) {
     [window.__consultas.filter((c) => c.etiqueta === "rpc:resumen_tareas_examenes").length,
      window.__consultas.filter((c) => c === "from:tareas" || c === "from:examenes" || c === "from:tarea_items").length].join(",")),
     "1,0");
+
+  console.log("-- Trofeos e insignias");
+  await page.waitForFunction(() => document.querySelector("#premios-body [data-insignias]"), null, { timeout: 8000 });
+  igual("el bloque de premios se ve", await page.evaluate(() => document.getElementById("premios-report").checkVisibility()), "true");
+  igual("con los trofeos y las insignias del alumno, en la voz de quien mira", await page.evaluate(() =>
+    document.getElementById("premios-body").innerText.replace(/\s+/g, " ").trim()),
+    "🏆 9 trofeos 9 trofeos por respuestas correctas en clase. 🏅 3 insignias 💬 Buen comentario × 3 Las últimas 💬 Buen comentario — Preguntó por qué no Cxe5 20 sept");
+  igual("los pide para ESE alumno", await page.evaluate(() =>
+    window.__consultas.filter((c) => c.etiqueta === "rpc:premios_de_alumno").length > 0), "true");
 
   console.log("-- Informes a la casa");
   /* Este panel y el de «Acceso a la cuenta» van PLEGADOS: son de administración

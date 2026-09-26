@@ -35,6 +35,11 @@ export const PERIODOS: Record<Frecuencia, { dias: number; titulo: string; asunto
   anual:   { dias: 365, titulo: "del año",      asunto: "Informe del año",    esperados: 60 },
 };
 
+// "3 trofeos esta semana": el periodo dicho como se dice en la casa.
+const ESTE_PERIODO: Record<Frecuencia, string> = {
+  diario: "hoy", semanal: "esta semana", mensual: "este mes", anual: "este año",
+};
+
 // Cómo se llama cada actividad cuando se la cuenta alguien de la casa.
 const ACTIVIDADES: Record<string, { nombre: string; unidad: string; emoji: string }> = {
   "4x4":           { nombre: "Ejercicios 4×4",        unidad: "resueltos",   emoji: "🧩" },
@@ -349,6 +354,44 @@ export function informeHtml(
       </p>` : ""}
     </div>` : "";
 
+  /* ---- Sus premios en clase ----
+     Los trofeos (una respuesta correcta en clase = uno, más los que el profe
+     ajusta) y las insignias que el profe da a mano: «Estrella de buen
+     estudiante», «Buena respuesta»… Es lo que más motiva que se lea en la
+     casa. El motivo lo escribe el profe a mano, así que va rotulado «De su
+     profe» y entre comillas, como la nota del plan. Salen de
+     public.premios_de_alumno() (dentro de
+     informe_de_alumno()): los nombres de las insignias vienen de la base, no
+     de una copia acá. Sin premios en el periodo, el bloque no aparece. */
+  const premios = (d.premios ?? {}) as Record<string, any>;
+  const insigniasPeriodo = Array.isArray(premios.insignias)
+    ? (premios.insignias as Array<Record<string, any>>).filter((x) => Number(x.periodo) > 0) : [];
+  const conMotivo = Array.isArray(premios.ultimas)
+    ? (premios.ultimas as Array<Record<string, any>>).filter((u) => String(u.motivo || "").trim()).slice(0, 3) : [];
+  const trofeosPeriodo = Number(premios.trofeos_periodo) || 0;
+  const estePeriodo = ESTE_PERIODO[frecuencia] ?? "en este periodo";
+  const bloquePremios = (trofeosPeriodo > 0 || insigniasPeriodo.length) ? `
+    <div style="margin:0 0 20px;padding:16px;background:#fffbeb;border:1px solid #f0c75e;border-radius:10px">
+      <p style="margin:0 0 10px;font-size:13px;font-weight:700;color:#243b53">🏆 Sus premios en clase</p>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px">
+        ${trofeosPeriodo > 0 ? `<tr>
+          <td style="padding:6px 0;color:#243b53">🏆 Trofeos por resolver bien en clase</td>
+          <td style="padding:6px 0;text-align:right;color:#102a43;font-weight:600;white-space:nowrap">${plural(trofeosPeriodo, "trofeo", "trofeos")} ${estePeriodo}</td>
+        </tr>` : ""}
+        ${insigniasPeriodo.map((x) => `<tr>
+          <td style="padding:6px 0;color:#243b53">${escapar(x.emoji)} ${escapar(x.nombre)}</td>
+          <td style="padding:6px 0;text-align:right;color:#102a43;font-weight:600;white-space:nowrap">${Number(x.periodo) === 1 ? "1 vez" : `${Number(x.periodo)} veces`}</td>
+        </tr>`).join("")}
+      </table>
+      ${conMotivo.map((u) => `
+      <p style="margin:8px 0 0;font-size:13px;color:#243b53;line-height:1.5">
+        ${escapar(u.emoji)} <strong>De su profe:</strong> «${escapar(u.motivo)}»
+      </p>`).join("")}
+      <p style="margin:10px 0 0;font-size:12px;color:#55708a;line-height:1.5">
+        En total lleva ${plural(Number(premios.trofeos_total) || 0, "trofeo", "trofeos")} y ${plural(Number(premios.insignias_total) || 0, "insignia", "insignias")} en la Academia.
+      </p>
+    </div>` : "";
+
   const bloque = (titulo: string, filas: string[]) => filas.length ? `
     <p style="margin:0 0 6px;font-size:13px;font-weight:700;color:#243b53">${titulo}</p>
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;margin-bottom:20px">${filas.join("")}</table>` : "";
@@ -384,6 +427,8 @@ export function informeHtml(
         ${tarjeta(precision, "precisión en clase")}
       </tr>
     </table>` : ""}
+
+    ${bloquePremios}
 
     ${bloque("Sus tareas", filasTareas)}
     ${bloque("Sus exámenes", filasExamenes)}

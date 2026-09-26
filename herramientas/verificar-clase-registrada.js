@@ -145,7 +145,12 @@ window.__deletes = [];
     variant_nodes: [], questions: [], question_answers: [], question_engine_answers: [],
     class_attendance: [], class_presence_log: [], practice_sessions: [], practice_games: [],
     class_chat_messages: [], saved_games: [], archivos_pgn: [], planes_clase: [], plan_items: [],
-    notas_alumno: [],
+    notas_alumno: [], trofeos_ajustes: [], insignias: [],
+    // El catálogo es de la base (insignias_tipos): dos de muestra alcanzan.
+    insignias_tipos: [
+      { tipo: "buen_estudiante", nombre: "Estrella de buen estudiante", emoji: "⭐", descripcion: "Por su actitud.", orden: 1 },
+      { tipo: "buena_respuesta", nombre: "Buena respuesta", emoji: "💡", descripcion: "Por resolver bien.", orden: 2 },
+    ],
   };
   for (const t of Object.keys(SEMILLA)) TABLAS[t] = SEMILLA[t].slice();
 
@@ -190,12 +195,61 @@ window.__deletes = [];
        Y la columna se llama "profesor", no "profesor_nombre": con el nombre
        equivocado la pantalla de espera diría «Tu profe» y la prueba daría por
        bueno algo que en producción no se ve así. */
-    rpc: (n) => constructor(n, n === "mis_clases"
+    /* Los trofeos se CUENTAN como en la base (trofeos_de): respuestas
+       marcadas correctas de ese alumno más la suma de sus ajustes. Y
+       ajustar_trofeos agrega el ajuste de verdad a la tabla, para que la
+       cuenta siguiente lo vea. Cada llamada queda anotada en __rpcs. */
+    rpc: (n, args) => {
+      (window.__rpcs = window.__rpcs || []).push({ n: n, args: args || {} });
+      /* Las insignias, como en la base: otorgar_insignia agrega la fila,
+         quitar_insignia la borra y premios_de_alumno las cuenta por tipo. */
+      if (n === "otorgar_insignia") {
+        const fila = { id: "ins-" + (TABLAS.insignias.length + 1), alumno_id: args.p_alumno, tipo: args.p_tipo,
+          motivo: args.p_motivo || "", otorgada_por: ${JSON.stringify(quien)}, created_at: new Date().toISOString() };
+        TABLAS.insignias.push(fila);
+        return constructor(n, [fila]);
+      }
+      if (n === "quitar_insignia") {
+        const i = TABLAS.insignias.findIndex((r) => r.id === args.p_id);
+        if (i >= 0) TABLAS.insignias.splice(i, 1);
+        return constructor(n, [true]);
+      }
+      if (n === "premios_de_alumno") {
+        const alumno = args.p_alumno;
+        const porClase = TABLAS.question_answers.filter((r) => r.student_id === alumno && r.is_correct === true).length;
+        const ajustes = TABLAS.trofeos_ajustes.filter((r) => r.alumno_id === alumno).reduce((a, r) => a + r.cantidad, 0);
+        const suyas = TABLAS.insignias.filter((r) => r.alumno_id === alumno);
+        const porTipo = TABLAS.insignias_tipos.map((t) => {
+          const k = suyas.filter((r) => r.tipo === t.tipo).length;
+          return { tipo: t.tipo, nombre: t.nombre, emoji: t.emoji, periodo: k, total: k };
+        }).filter((x) => x.total > 0);
+        const ultimas = suyas.slice().reverse().slice(0, 5).map((r) => {
+          const t = TABLAS.insignias_tipos.find((x) => x.tipo === r.tipo) || {};
+          return { id: r.id, tipo: r.tipo, nombre: t.nombre, emoji: t.emoji, motivo: r.motivo, fecha: r.created_at };
+        });
+        const total = Math.max(0, porClase + ajustes);
+        // Devuelve un objeto (jsonb), no una lista de filas: como PostgREST.
+        const premios = { trofeos_periodo: total, trofeos_total: total, insignias_periodo: suyas.length,
+          insignias_total: suyas.length, insignias: porTipo, ultimas: ultimas };
+        return { then(res, rej) { return Promise.resolve({ data: { premios: premios }, error: null }).then(res, rej); } };
+      }
+      if (n === "trofeos_de" || n === "ajustar_trofeos") {
+        const alumno = (args && args.p_alumno) || ${JSON.stringify(quien)};
+        if (n === "ajustar_trofeos") {
+          TABLAS.trofeos_ajustes.push({ id: "aj-" + TABLAS.trofeos_ajustes.length, alumno_id: alumno,
+            cantidad: args.p_cantidad, motivo: args.p_motivo || "", created_at: new Date().toISOString() });
+        }
+        const porClase = TABLAS.question_answers.filter((r) => r.student_id === alumno && r.is_correct === true).length;
+        const ajustes = TABLAS.trofeos_ajustes.filter((r) => r.alumno_id === alumno).reduce((a, r) => a + r.cantidad, 0);
+        return constructor(n, [{ por_clase: porClase, ajustes: ajustes, total: Math.max(0, porClase + ajustes) }]);
+      }
+      return constructor(n, n === "mis_clases"
       ? [{ profesor_id: "u-profe", profesor: "Karina Rojas", es_principal: true,
            clase_abierta: SESIONES.some((c) => c.created_by === "u-profe" && !c.ended_at) }]
       : n === "alumnos_del_profesor"
       ? [{ id: "u-ana", full_name: "Ana Rojas", email: "ana@x.cr" }]
-      : []),
+      : []);
+    },
     channel: (nombre) => ({
       on(tipo, ev, f) {
         if (tipo === "presence") oyentes.presence.push(typeof ev === "function" ? ev : f);

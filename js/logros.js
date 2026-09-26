@@ -32,6 +32,11 @@ window.Logros = (function () {
     hoy_ejercicios: 0,
     primer_dia: null,
     por_actividad: {},
+    // Los premios de la clase en vivo (public.premios_de_alumno, ver
+    // js/trofeos.js): los trofeos se suman de clase en clase y el profesor
+    // los ajusta; las insignias las da él a mano.
+    trofeos: 0,
+    insignias: 0,
   };
 
   function vacio(sesion, error) {
@@ -54,12 +59,20 @@ window.Logros = (function () {
     }
     if (!sesion) return vacio(false, false);
     try {
+      // Los premios van aparte y no tumban la racha si fallan: se piden a la
+      // par y, sin respuesta, cuentan cero.
+      const premiosP = Promise.resolve(sb.rpc("premios_de_alumno", { p_alumno: sesion.user.id }))
+        .then((r) => (r && !r.error && r.data && r.data.premios ? r.data.premios : {}))
+        .catch(() => ({}));
       const { data, error } = await sb.rpc("progreso_dias_y_racha");
       if (error) throw error;
       const fila = (data && data[0]) || {};
       const stats = Object.assign({}, STATS_VACIAS, fila, {
         por_actividad: fila.por_actividad || {},
       });
+      const premios = await premiosP;
+      stats.trofeos = Number(premios.trofeos_total) || 0;
+      stats.insignias = Number(premios.insignias_total) || 0;
       return { stats: stats, logros: window.LogrosCatalogo.conEstado(stats), sesion: true, error: false };
     } catch (e) {
       console.warn("No se pudo cargar tu racha y tus logros:", e && e.message ? e.message : e);

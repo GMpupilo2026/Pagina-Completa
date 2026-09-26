@@ -287,6 +287,7 @@
             renderTiempo(profile.id, true, "");
             renderEvolucion(profile.id, true, "");
             renderDeberes(profile.id, true);
+            renderPremios(profile.id, true);
             renderNotasDelAlumno(profile.id);
             renderDiagnosticoAlumno(entreno, planCompartido);
 
@@ -646,6 +647,7 @@
             document.getElementById("acceso-report").classList.add("hidden");
             document.getElementById("encargados-report").classList.add("hidden");
             document.getElementById("deberes-report").classList.add("hidden");
+            document.getElementById("premios-report").classList.add("hidden");
             document.getElementById("tiempo-report").classList.add("hidden");
             document.getElementById("evolucion-report").classList.add("hidden");
             document.getElementById("notas-report").classList.add("hidden");
@@ -817,6 +819,7 @@
             renderEvolucion(studentId, false, name);
             renderDiagnosticoProfesor(studentId, name, entreno);
             renderDeberes(studentId, false);
+            renderPremios(studentId, false);
             renderAcceso(studentId, name);
             renderNotas(studentId);
             renderEncargados(studentId, name);
@@ -989,6 +992,20 @@
                 document.getElementById("notas-alumno-body"), { sb, alumnoId: studentId });
             // Sin ninguna nota compartida el bloque ni aparece.
             document.getElementById("notas-alumno-report").classList.toggle("hidden", cuantas === 0);
+        }
+
+        /* Trofeos e insignias de la clase en vivo (js/trofeos.js). Se pinta con
+           la misma lectura que Logros, en la voz de quien mira. */
+        async function renderPremios(studentId, propio) {
+            const caja = document.getElementById("premios-report");
+            if (!window.Trofeos) return;
+            if (propio) {
+                document.getElementById("premios-sub").textContent = "Lo que ganaste en las clases en vivo, desde siempre.";
+            }
+            caja.classList.remove("hidden");
+            await Trofeos.montarLectura(document.getElementById("premios-body"), {
+                sb, alumnoId: studentId, quien: propio ? "alumno" : "profesor",
+            });
         }
 
         async function renderDeberes(studentId, propio) {

@@ -121,6 +121,109 @@ falló.
   Ilumina el tablero, Aperturas y celadas, Visualización) manden de verdad su
   fila a `training_progress` al terminar un ejercicio.
 
+## Los trofeos de la clase
+
+En la clase en vivo (`sesion.html`) el profesor pregunta «¿qué jugarías?» y
+marca ✅ o ❌ cada respuesta. **Cada respuesta marcada ✅ es un trofeo**, y los
+trofeos se acumulan de clase en clase: el alumno ve su total en la clase
+(`#mis-trofeos`, en su panel) y en `logros.html` («Tus trofeos de clase» y la
+categoría de medallas «Trofeos de clase»: 1, 10, 25, 50, 100 y 250).
+
+- **El total es respuestas correctas + ajustes del profesor.** Lo calcula
+  `public.trofeos_de(p_alumno default auth.uid())` y devuelve `por_clase`,
+  `ajustes` y `total` (nunca menos de cero).
+- **Las respuestas correctas no se guardan como trofeos: se cuentan**
+  (`question_answers.is_correct = true`). Si el profesor cambia un ✅ por ❌, el
+  trofeo se va solo; una tabla de «trofeos ganados» habría quedado con uno de
+  más sin que nada fallara.
+- **El profesor ajusta a mano** con el botón 🏆 del renglón del alumno
+  (pestaña Alumnos): +1, −1, +5 o una cantidad escrita (−100 a 100) con un
+  motivo que el alumno ve. Cada ajuste es una fila de `trofeos_ajustes` (quién,
+  cuánto, por qué y cuándo), no un total sobreescrito: así el alumno ve de
+  dónde salió cada trofeo y un ajuste no borra otro.
+- **Quién ajusta lo decide la base**: `ajustar_trofeos()` (`SECURITY DEFINER`)
+  exige `soy_profesor_de(alumno)` o `soy_admin()`, nunca a uno mismo, y rechaza
+  quitar más de lo que tiene (con un candado por alumno para que dos profesores
+  a la vez no lo dejen en negativo). La tabla no tiene política de escritura.
+  La leen el alumno, sus profesores (el conjunto `interno.alumnos_de()` armado
+  una vez), quien administra y quien supervisa a sus profesores.
+- **`trofeos_de()` es `SECURITY DEFINER` a propósito**: con INVOKER cada
+  profesor contaría solo las respuestas a SUS preguntas (la RLS de
+  `question_answers`) y un alumno con dos profesores tendría dos totales. El
+  permiso se pregunta explícito, con el `coalesce(..., false)` de siempre.
+- **El contador del alumno se vuelve a pedir** cada vez que Realtime avisa que
+  le calificaron una respuesta (de cualquier pregunta, no solo la abierta) o
+  que el profesor le agregó un ajuste (`trofeos_ajustes` está en la
+  publicación de Realtime). Nunca se suma en el navegador.
+- El módulo es `js/trofeos.js` (una sola copia para la clase y Logros). En
+  Logros, `Logros.cargar()` pide `trofeos_de` a la par de la racha; si falla,
+  cuenta cero y no tumba la racha.
+- Se probó con SQL de verdad, impersonando roles dentro de una transacción que
+  se deshace: el profesor ve 9 y con +3 queda en 12; quitar 100 se rechaza; la
+  alumna ve lo suyo y no puede sumarse ni insertar directo; alguien ajeno no ve
+  ni el total ni las filas; sin `auth.uid()` se rechaza.
+- **Verificadores**: `verificar-trofeos.js` (el panel del profesor manda el
+  alumno y la cantidad correctos, lo que no se puede no llega a la base, y la
+  alumna ve su total crecer y bajar solo) y `verificar-logros.js` (el total, su
+  desglose, los ajustes escapados y las medallas). El doble de
+  `verificar-clase-registrada.js` cuenta los trofeos igual que la base.
+
+## Las insignias de la clase
+
+Además de los trofeos, el profesor premia **a mano** lo que no da trofeo: un
+buen comentario, un ejercicio de la pizarra bien resuelto, la actitud. Son
+insignias, y se dan desde el mismo botón 🏆 del renglón del alumno en
+`sesion.html` («Dar una insignia»), con un motivo opcional que ven el alumno y
+su casa. Hay seis: ⭐ Estrella de buen estudiante, 💡 Buena respuesta,
+💬 Buen comentario, 💪 Gran esfuerzo, 🤝 Buen compañerismo y 🎨 Idea creativa.
+
+- **El catálogo vive en la base** (`insignias_tipos`), no en el código: lo
+  leen la clase, Logros, Informes y el correo a la casa, que es una Edge
+  Function en TypeScript y no puede importar un módulo del navegador. Dos
+  copias del nombre de una insignia se irían separando. Para agregar una, se
+  inserta una fila: la página y el correo la toman solos.
+- **Cada insignia es una fila** de `insignias` (quién, cuál, por qué, cuándo,
+  quién la dio). Las da `otorgar_insignia()` —su profesor o quien administra,
+  nunca a uno mismo— y las quita `quitar_insignia()` —solo quien la dio, o
+  quien administra—, que es el «Deshacer» que aparece al lado del aviso por si
+  el toque fue equivocado. Ninguna de las dos tablas tiene política de
+  escritura. La lectura sigue la misma RLS que `trofeos_ajustes`.
+- **`premios_de_alumno(alumno, desde, hasta)` cuenta todo junto**: trofeos del
+  periodo y del total, insignias por tipo (periodo y total) y las últimas cinco
+  del periodo con su motivo. Es `SECURITY DEFINER` con el criterio de
+  `resumen_tareas_examenes()`: `auth.uid()` nulo es la tanda de `pg_cron` (a
+  `anon` se le revoca el `execute`), así la tanda, la vista previa del
+  profesor y el propio alumno ven exactamente lo mismo.
+- **Llega al correo a la casa** porque `informe_de_alumno()` termina en
+  `|| public.premios_de_alumno(p_alumno, p_desde, p_hasta)`, igual que las
+  tareas. La migración no copió la función a mano: la reescribió a partir de
+  `pg_get_functiondef()` cambiando solo la cola, y falla si la cola ya no es la
+  esperada. En el correo sale el bloque **«🏆 Sus premios en clase»**: trofeos
+  del periodo («4 trofeos esta semana»), cada insignia del periodo con cuántas
+  veces, los motivos rotulados «De su profe» (escapados: los escribe una
+  persona) y cuántos lleva en total. **Sin premios en el periodo, no aparece**
+  —la misma regla que el plan—.
+- **En la clase**, el alumno ve sus insignias bajo su contador de trofeos, y
+  cuando le dan una se le celebra con el aviso flotante en dorado («⭐ ¡Tu profe
+  te dio la insignia…!»), por Realtime (`insignias` está en la publicación).
+- **En Logros**, una categoría de medallas «Insignias de clase» (1, 5, 15, 30 y
+  60) y la lista de las suyas en «Tus trofeos e insignias de clase».
+  `Logros.cargar()` pide `premios_de_alumno` en vez de `trofeos_de`.
+- **En Informes**, el bloque «🏆 Trofeos e insignias» del informe de cada alumno
+  (lo ven el profesor, quien administra, quien supervisa y el propio alumno).
+- Probado con SQL de verdad impersonando roles: el profesor da dos, un tipo
+  inventado se rechaza, otro profesor del mismo alumno no puede quitar la que
+  no dio, el alumno ve las suyas pero no puede darse ni quitar, alguien ajeno
+  no ve nada, y la tanda (sin `auth.uid()`) recibe los premios dentro de
+  `informe_de_alumno()`.
+- **Verificadores**: `verificar-trofeos.js` (dar, el motivo, deshacer, la
+  celebración del alumno), `verificar-logros.js` (medallas y lista, motivo
+  escapado), `verificar-informes.js` (el bloque del informe) y
+  `verificar-informe-casa.js` (el bloque del correo: cuenta el periodo y no el
+  total, «1 vez», motivo escapado, y que no salga vacío). Cambiar
+  `informe-html.ts` pide desplegar `informes-encargados` (ver «Los informes
+  que llegan a la casa»).
+
 ## El hub de Entrenamiento y sus grupos
 
 `entreno/index.html` reparte los accesos en **Fundamentos** (Mates,
