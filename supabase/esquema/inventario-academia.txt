@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20260926195531
+# al-dia-con: 20260926202544
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -46,6 +46,8 @@ tabla  horario_clases  rls=true
 tabla  ia_uso  rls=true
 tabla  informes_profesor  rls=true
 tabla  informes_profesor_detalle  rls=true
+tabla  insignias  rls=true
+tabla  insignias_tipos  rls=true
 tabla  interno.envios_publicos  rls=true
 tabla  notas_alumno  rls=true
 tabla  pagos  rls=true
@@ -491,6 +493,17 @@ columna  informes_profesor.updated_at  timestamp with time zone
 columna  informes_profesor_detalle.created_at  timestamp with time zone
 columna  informes_profesor_detalle.detalle  jsonb
 columna  informes_profesor_detalle.informe_id  uuid
+columna  insignias.alumno_id  uuid
+columna  insignias.created_at  timestamp with time zone
+columna  insignias.id  uuid
+columna  insignias.motivo  text
+columna  insignias.otorgada_por  uuid
+columna  insignias.tipo  text
+columna  insignias_tipos.descripcion  text
+columna  insignias_tipos.emoji  text
+columna  insignias_tipos.nombre  text
+columna  insignias_tipos.orden  smallint
+columna  insignias_tipos.tipo  text
 columna  interno.envios_publicos.ambito  text
 columna  interno.envios_publicos.correo  text
 columna  interno.envios_publicos.creado  timestamp with time zone
@@ -953,6 +966,7 @@ funcion  mis_supervisores()  definer  anon=false  auth=true
 funcion  my_profile()  definer  anon=false  auth=true
 funcion  nombres_de_jugadores(p_ids uuid[])  definer  anon=false  auth=true
 funcion  ocurrencias_horario(p_profesor uuid, p_desde date, p_hasta date)  invoker  anon=false  auth=false
+funcion  otorgar_insignia(p_alumno uuid, p_tipo text, p_motivo text)  definer  anon=false  auth=true
 funcion  panel_profesor()  invoker  anon=false  auth=true
 funcion  panel_profesor_de(p_profesor uuid)  definer  anon=false  auth=true
 funcion  paquete_borrar(p_id uuid)  definer  anon=false  auth=true
@@ -962,6 +976,7 @@ funcion  paquetes_con_uso()  invoker  anon=false  auth=true
 funcion  personas_para_ver_como()  definer  anon=false  auth=true
 funcion  plan_compartido_conmigo(p_plan uuid)  definer  anon=true  auth=true
 funcion  planes_compartidos_conmigo()  definer  anon=false  auth=true
+funcion  premios_de_alumno(p_alumno uuid, p_desde timestamp with time zone, p_hasta timestamp with time zone)  definer  anon=false  auth=true
 funcion  profesores_del_coordinador(p_coordinador uuid)  definer  anon=false  auth=true
 funcion  profile_teachers_suma_a_la_academia()  definer  anon=false  auth=false
 funcion  progreso_dias_y_racha(alumno uuid)  invoker  anon=true  auth=true
@@ -986,6 +1001,7 @@ funcion  pueden_jugar_entre_si(a uuid, b uuid)  definer  anon=false  auth=true
 funcion  puedo_armar_partida_con(p_jugadores uuid[])  definer  anon=false  auth=true
 funcion  push_llaves_guardar(p_publica text, p_privada text)  definer  anon=false  auth=false
 funcion  push_llaves_leer()  definer  anon=false  auth=false
+funcion  quitar_insignia(p_id uuid)  definer  anon=false  auth=true
 funcion  recordar_informes_mensuales(p_hoy date)  definer  anon=false  auth=false
 funcion  registrar_arbitraje_publico(p_nombre text, p_email text, p_porcentaje integer, p_nivel text, p_detalle jsonb)  definer  anon=true  auth=true
 funcion  registrar_salida_examen(p_examen uuid, p_segundos integer)  definer  anon=false  auth=true
@@ -1146,6 +1162,8 @@ politica  horario_clases  horario_clases_select  SELECT
 politica  horario_clases  horario_clases_update  UPDATE
 politica  ia_uso  ia_uso_select  SELECT
 politica  informes_profesor  informes_profesor_select  SELECT
+politica  insignias  insignias_ver  SELECT
+politica  insignias_tipos  insignias_tipos_ver  SELECT
 politica  notas_alumno  notas_alumno_delete  DELETE
 politica  notas_alumno  notas_alumno_insert  INSERT
 politica  notas_alumno  notas_alumno_select_alumno  SELECT
@@ -1440,6 +1458,9 @@ indice  informes_profesor  informes_profesor_leido_por_fk
 indice  informes_profesor  informes_profesor_pkey
 indice  informes_profesor  informes_profesor_profesor_id_periodo_key
 indice  informes_profesor_detalle  informes_profesor_detalle_pkey
+indice  insignias  insignias_alumno
+indice  insignias  insignias_pkey
+indice  insignias_tipos  insignias_tipos_pkey
 indice  interno.envios_publicos  envios_publicos_correo
 indice  interno.envios_publicos  envios_publicos_creado
 indice  interno.envios_publicos  envios_publicos_ip
@@ -1566,6 +1587,7 @@ realtime  desafios
 realtime  fourplayer_games
 realtime  game_rooms
 realtime  game_state
+realtime  insignias
 realtime  practice_games
 realtime  practice_sessions
 realtime  question_answers
@@ -1972,6 +1994,8 @@ grant  informes_profesor  authenticated  REFERENCES
 grant  informes_profesor  authenticated  SELECT
 grant  informes_profesor  authenticated  TRIGGER
 grant  informes_profesor  authenticated  TRUNCATE
+grant  insignias  authenticated  SELECT
+grant  insignias_tipos  authenticated  SELECT
 grant  notas_alumno  authenticated  DELETE
 grant  notas_alumno  authenticated  INSERT
 grant  notas_alumno  authenticated  REFERENCES

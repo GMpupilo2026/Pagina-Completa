@@ -51,12 +51,12 @@ async function pruebaProfesor(browser) {
   const { page, ctx, errores } = await abrir(browser, "u-profe", CLASE_ABIERTA, SEMILLA);
   await page.evaluate(() => window.__entraAlumno());
   await page.click("#teacher-tab-alumnos");
-  const boton = page.locator('#students-list button[aria-label="Trofeos de Ana Rojas"]');
+  const boton = page.locator('#students-list button[aria-label="Trofeos e insignias de Ana Rojas"]');
   await boton.waitFor({ timeout: 8000 });
   igual("el panel de trofeos arranca cerrado", await seVe(page, "#trofeos-en-clase"), "no");
   await boton.click();
   igual("el 🏆 del renglón lo abre", await seVe(page, "#trofeos-en-clase"), "sí");
-  igual("con el nombre de Ana", await page.textContent("#trofeos-en-clase-titulo"), "🏆 Trofeos de Ana Rojas");
+  igual("con el nombre de Ana", await page.textContent("#trofeos-en-clase-titulo"), "🏆 Trofeos e insignias de Ana Rojas");
   await page.waitForFunction(() => /trofeo/.test((document.querySelector("#trofeos-en-clase-body [data-trofeos-total]") || {}).textContent || ""), null, { timeout: 5000 });
   igual("su total cuenta solo las respuestas correctas (2 de 3)", await totalPanel(page), "🏆 2 trofeos");
 
@@ -90,6 +90,29 @@ async function pruebaProfesor(browser) {
       await page.evaluate(() => document.querySelector("#trofeos-en-clase-body [aria-live]").textContent.startsWith("Guardando") ? "no" : "sí"), "sí");
   }
 
+  console.log("\n=== El profesor le da una insignia, y la puede deshacer ===");
+  const dar = page.locator('#trofeos-en-clase-body button[aria-label="Dar la insignia «Buena respuesta»"]');
+  await dar.waitFor({ timeout: 5000 });
+  igual("hay un botón por cada insignia del catálogo de la base",
+    await page.locator('#trofeos-en-clase-body button[aria-label^="Dar la insignia"]').count(), 2);
+  await page.fill('#trofeos-en-clase-body input[placeholder^="Por ejemplo: explicó"]', "Vio el jaque doble antes que nadie");
+  await dar.click();
+  await page.waitForFunction(() => (window.__rpcs || []).some((r) => r.n === "otorgar_insignia"), null, { timeout: 5000 });
+  igual("manda otorgar_insignia con Ana, el tipo y el motivo",
+    JSON.stringify((await page.evaluate(() => window.__rpcs.filter((r) => r.n === "otorgar_insignia")))[0].args),
+    JSON.stringify({ p_alumno: "u-ana", p_tipo: "buena_respuesta", p_motivo: "Vio el jaque doble antes que nadie" }));
+  await page.waitForFunction(() => /Ya tiene 1 insignia/.test(document.getElementById("trofeos-en-clase-body").textContent), null, { timeout: 5000 })
+    .catch(() => {});
+  igual("el panel dice cuántas tiene, con su nombre escrito",
+    await page.evaluate(() => /Ya tiene 1 insignia.*Buena respuesta × 1/.test(document.getElementById("trofeos-en-clase-body").textContent)), "true");
+  await page.click('#trofeos-en-clase-body button[aria-label="Deshacer la insignia «Buena respuesta»"]');
+  await page.waitForFunction(() => (window.__rpcs || []).some((r) => r.n === "quitar_insignia"), null, { timeout: 5000 });
+  igual("Deshacer quita ESA insignia", JSON.stringify((await page.evaluate(() => window.__rpcs.filter((r) => r.n === "quitar_insignia")))[0].args),
+    JSON.stringify({ p_id: "ins-1" }));
+  await page.waitForFunction(() => !/Ya tiene/.test(document.getElementById("trofeos-en-clase-body").textContent), null, { timeout: 5000 })
+    .catch(() => {});
+  igual("y deja de contarla", await page.evaluate(() => /Ya tiene/.test(document.getElementById("trofeos-en-clase-body").textContent)), "false");
+
   await page.click("#trofeos-en-clase-cerrar");
   igual("✖ Cerrar lo cierra", await seVe(page, "#trofeos-en-clase"), "no");
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
@@ -119,6 +142,20 @@ async function pruebaAlumna(browser) {
   await page.waitForFunction(() => document.getElementById("mis-trofeos-total").textContent === "🏆 4 trofeos", null, { timeout: 5000 })
     .catch(() => {});
   igual("un ✅ cambiado a ❌ resta el trofeo", await page.textContent("#mis-trofeos-total"), "🏆 4 trofeos");
+
+  console.log("\n=== La alumna recibe una insignia en vivo ===");
+  await page.evaluate(async () => {
+    const { data } = await sb.rpc("otorgar_insignia", { p_alumno: "u-ana", p_tipo: "buen_estudiante", p_motivo: "Atenta toda la clase" });
+    window.__cambioEnBase("insignias", data[0], "INSERT");
+  });
+  await page.waitForFunction(() => !document.getElementById("answer-feedback-toast").classList.contains("hidden"), null, { timeout: 5000 })
+    .catch(() => {});
+  igual("se le celebra con el aviso flotante", await seVe(page, "#answer-feedback-toast"), "sí");
+  igual("que dice cuál insignia y por qué", await page.textContent("#answer-feedback-text"),
+    "⭐ ¡Tu profe te dio la insignia «Estrella de buen estudiante»! Atenta toda la clase");
+  await page.waitForFunction(() => /Estrella de buen estudiante/.test(document.getElementById("mis-insignias").textContent), null, { timeout: 5000 })
+    .catch(() => {});
+  igual("y queda en su panel, con el nombre escrito", await page.textContent("#mis-insignias"), "⭐ Estrella de buen estudiante × 1");
 
   igual("no ve el panel de ajustar", await seVe(page, "#trofeos-en-clase"), "no");
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");

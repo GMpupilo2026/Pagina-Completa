@@ -1778,8 +1778,8 @@
                 trofeosBtn.type = "button";
                 trofeosBtn.className = notasBtn.className;
                 trofeosBtn.textContent = "🏆";
-                trofeosBtn.title = "Sumar o quitar trofeos a este alumno";
-                trofeosBtn.setAttribute("aria-label", "Trofeos de " + (info.full_name || info.email));
+                trofeosBtn.title = "Trofeos e insignias: sumar, quitar o darle una insignia";
+                trofeosBtn.setAttribute("aria-label", "Trofeos e insignias de " + (info.full_name || info.email));
                 trofeosBtn.addEventListener("click", () => abrirTrofeosEnClase(studentId, info.full_name || info.email));
                 actions.appendChild(trofeosBtn);
 
@@ -2021,7 +2021,7 @@
         function abrirTrofeosEnClase(studentId, nombre) {
             if (!isTeacher) return;
             const caja = document.getElementById("trofeos-en-clase");
-            document.getElementById("trofeos-en-clase-titulo").textContent = "🏆 Trofeos de " + nombre;
+            document.getElementById("trofeos-en-clase-titulo").textContent = "🏆 Trofeos e insignias de " + nombre;
             caja.classList.remove("hidden");
             Trofeos.montarPanel(document.getElementById("trofeos-en-clase-body"), { sb, alumnoId: studentId });
         }
@@ -2036,7 +2036,10 @@
         // el profesor califica o ajusta: así un ✅ cambiado a ❌ también resta.
         async function cargarMisTrofeos() {
             if (isTeacher || esObservador || !window.Trofeos) return;
-            const t = await Trofeos.cargar(sb);
+            const [t, p] = await Promise.all([Trofeos.cargar(sb), Trofeos.premios(sb, profile.id)]);
+            const insEl = document.getElementById("mis-insignias");
+            insEl.innerHTML = "";
+            if (p && p.insignias_total) insEl.appendChild(Trofeos.chipsInsignias(p.insignias, "total"));
             const totalEl = document.getElementById("mis-trofeos-total");
             const detalleEl = document.getElementById("mis-trofeos-detalle");
             if (!t) {
@@ -2535,6 +2538,18 @@
             } else {
                 // Feedback privado: solo llegan eventos de la PROPIA fila del alumno (RLS ya
                 // lo garantiza), así que marcar ✅/❌ nunca lo ven los demás alumnos.
+                // El profesor le dio una insignia: se celebra con el mismo aviso
+                // flotante de las respuestas, en dorado, y con el motivo.
+                sb.channel("mis-insignias")
+                    .on("postgres_changes", { event: "INSERT", schema: "public", table: "insignias", filter: "alumno_id=eq." + profile.id }, async (payload) => {
+                        cargarMisTrofeos();
+                        const fila = payload.new || {};
+                        const tipos = await Trofeos.tiposInsignias(sb);
+                        const tipo = tipos.find((x) => x.tipo === fila.tipo);
+                        if (!tipo) return;
+                        mostrarInsigniaGanada(tipo, fila.motivo);
+                    })
+                    .subscribe();
                 // El profesor sumó o quitó trofeos a mano.
                 sb.channel("mis-trofeos")
                     .on("postgres_changes", { event: "INSERT", schema: "public", table: "trofeos_ajustes", filter: "alumno_id=eq." + profile.id }, (payload) => {
@@ -3314,6 +3329,15 @@
                 text.textContent = stillOpen ? "❌ Esa no era la jugada correcta — vuelve a intentarlo." : "❌ Esa no era la jugada correcta.";
                 retryBtn.classList.toggle("hidden", !stillOpen);
             }
+            toast.classList.remove("hidden");
+        }
+
+        function mostrarInsigniaGanada(tipo, motivo) {
+            const toast = document.getElementById("answer-feedback-toast");
+            toast.className = "fixed bottom-4 left-1/2 -translate-x-1/2 z-[70] w-[min(92vw,420px)] rounded-xl shadow-2xl p-4 text-center bg-accent-500 text-brand-900";
+            document.getElementById("answer-feedback-text").textContent = tipo.emoji + " ¡Tu profe te dio la insignia «" + tipo.nombre + "»!"
+                + (motivo ? " " + motivo : "");
+            document.getElementById("answer-feedback-retry-btn").classList.add("hidden");
             toast.classList.remove("hidden");
         }
 

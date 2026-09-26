@@ -185,6 +185,16 @@
                 <div id="deberes-body"></div>
             </div>
 
+            <!-- Los premios de la clase: los trofeos (una respuesta ✅ = uno, más
+                 los ajustes del profesor) y las insignias que da a mano. Los
+                 cuenta public.premios_de_alumno(), la misma que suma el informe
+                 que llega a la casa. -->
+            <div id="premios-report" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
+                <h2 id="premios-title" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1"><span aria-hidden="true">🏆</span> Trofeos e insignias</h2>
+                <p id="premios-sub" class="text-xs text-brand-450 dark:text-brand-350 mb-4">Lo que ganó en las clases en vivo, desde siempre. Las insignias se dan con el botón 🏆 de su renglón, en la clase.</p>
+                <div id="premios-body"></div>
+            </div>
+
             <div id="student-report" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
                 <h2 id="student-report-title" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-4"><span aria-hidden="true">🚩</span> Tus últimas asignaciones</h2>
                 <ul id="student-history" class="space-y-2 text-sm"></ul>
@@ -439,6 +449,7 @@
     <script src="js/plan-entrenamiento.js"></script>
     <script src="js/arbitraje-nivel.js"></script>
     <script src="js/notas-alumno.js"></script>
+    <script src="js/trofeos.js"></script>
     <script src="js/evolucion-alumno.js"></script>
     <script src="js/tiempo-secciones.js"></script>
     <script src="js/avisos.js"></script>

@@ -168,6 +168,62 @@ categoría de medallas «Trofeos de clase»: 1, 10, 25, 50, 100 y 250).
   desglose, los ajustes escapados y las medallas). El doble de
   `verificar-clase-registrada.js` cuenta los trofeos igual que la base.
 
+## Las insignias de la clase
+
+Además de los trofeos, el profesor premia **a mano** lo que no da trofeo: un
+buen comentario, un ejercicio de la pizarra bien resuelto, la actitud. Son
+insignias, y se dan desde el mismo botón 🏆 del renglón del alumno en
+`sesion.html` («Dar una insignia»), con un motivo opcional que ven el alumno y
+su casa. Hay seis: ⭐ Estrella de buen estudiante, 💡 Buena respuesta,
+💬 Buen comentario, 💪 Gran esfuerzo, 🤝 Buen compañerismo y 🎨 Idea creativa.
+
+- **El catálogo vive en la base** (`insignias_tipos`), no en el código: lo
+  leen la clase, Logros, Informes y el correo a la casa, que es una Edge
+  Function en TypeScript y no puede importar un módulo del navegador. Dos
+  copias del nombre de una insignia se irían separando. Para agregar una, se
+  inserta una fila: la página y el correo la toman solos.
+- **Cada insignia es una fila** de `insignias` (quién, cuál, por qué, cuándo,
+  quién la dio). Las da `otorgar_insignia()` —su profesor o quien administra,
+  nunca a uno mismo— y las quita `quitar_insignia()` —solo quien la dio, o
+  quien administra—, que es el «Deshacer» que aparece al lado del aviso por si
+  el toque fue equivocado. Ninguna de las dos tablas tiene política de
+  escritura. La lectura sigue la misma RLS que `trofeos_ajustes`.
+- **`premios_de_alumno(alumno, desde, hasta)` cuenta todo junto**: trofeos del
+  periodo y del total, insignias por tipo (periodo y total) y las últimas cinco
+  del periodo con su motivo. Es `SECURITY DEFINER` con el criterio de
+  `resumen_tareas_examenes()`: `auth.uid()` nulo es la tanda de `pg_cron` (a
+  `anon` se le revoca el `execute`), así la tanda, la vista previa del
+  profesor y el propio alumno ven exactamente lo mismo.
+- **Llega al correo a la casa** porque `informe_de_alumno()` termina en
+  `|| public.premios_de_alumno(p_alumno, p_desde, p_hasta)`, igual que las
+  tareas. La migración no copió la función a mano: la reescribió a partir de
+  `pg_get_functiondef()` cambiando solo la cola, y falla si la cola ya no es la
+  esperada. En el correo sale el bloque **«🏆 Sus premios en clase»**: trofeos
+  del periodo («4 trofeos esta semana»), cada insignia del periodo con cuántas
+  veces, los motivos rotulados «De su profe» (escapados: los escribe una
+  persona) y cuántos lleva en total. **Sin premios en el periodo, no aparece**
+  —la misma regla que el plan—.
+- **En la clase**, el alumno ve sus insignias bajo su contador de trofeos, y
+  cuando le dan una se le celebra con el aviso flotante en dorado («⭐ ¡Tu profe
+  te dio la insignia…!»), por Realtime (`insignias` está en la publicación).
+- **En Logros**, una categoría de medallas «Insignias de clase» (1, 5, 15, 30 y
+  60) y la lista de las suyas en «Tus trofeos e insignias de clase».
+  `Logros.cargar()` pide `premios_de_alumno` en vez de `trofeos_de`.
+- **En Informes**, el bloque «🏆 Trofeos e insignias» del informe de cada alumno
+  (lo ven el profesor, quien administra, quien supervisa y el propio alumno).
+- Probado con SQL de verdad impersonando roles: el profesor da dos, un tipo
+  inventado se rechaza, otro profesor del mismo alumno no puede quitar la que
+  no dio, el alumno ve las suyas pero no puede darse ni quitar, alguien ajeno
+  no ve nada, y la tanda (sin `auth.uid()`) recibe los premios dentro de
+  `informe_de_alumno()`.
+- **Verificadores**: `verificar-trofeos.js` (dar, el motivo, deshacer, la
+  celebración del alumno), `verificar-logros.js` (medallas y lista, motivo
+  escapado), `verificar-informes.js` (el bloque del informe) y
+  `verificar-informe-casa.js` (el bloque del correo: cuenta el periodo y no el
+  total, «1 vez», motivo escapado, y que no salga vacío). Cambiar
+  `informe-html.ts` pide desplegar `informes-encargados` (ver «Los informes
+  que llegan a la casa»).
+
 ## El hub de Entrenamiento y sus grupos
 
 `entreno/index.html` reparte los accesos en **Fundamentos** (Mates,

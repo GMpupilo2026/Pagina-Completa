@@ -23,6 +23,7 @@
             variedad: "Variedad",
             dias: "Días de práctica",
             trofeos: "Trofeos de clase",
+            insignias: "Insignias de clase",
             mates: "Mates",
             "4x4": "4×4",
             temas: "Ejercicios por tema",
