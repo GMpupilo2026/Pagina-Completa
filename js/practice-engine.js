@@ -80,7 +80,7 @@
           engine.postMessage("setoption name UCI_LimitStrength value false");
         }
         engine.postMessage("position fen " + fen);
-        engine.postMessage("go movetime " + movetimeMs);
+        engine.postMessage("go movetime " + movetimeMs + " depth " + SharedEngine.PROFUNDIDAD_MAXIMA);
         setTimeout(() => {
           if (pendingResolve === resolve) {
             pendingResolve = null;
@@ -115,5 +115,26 @@
     } catch (e) {}
   }
 
-  window.PracticeEngine = { LEVELS, getMove, evaluate, preload };
+  // Si el motor de plano no contesta (se cayó, no cargó), el bot igual tiene que
+  // mover: una partida que se queda esperando no deja que el alumno la termine,
+  // y eso duele más justo cuando tiene el mate en la mano. Una jugada legal
+  // cualquiera (mate o captura si hay) es mejor que un tablero congelado.
+  // Necesita chess.js, que ya cargan todas las páginas que juegan contra el motor.
+  const VALOR = { p: 1, n: 3, b: 3, r: 5, q: 9 };
+  function jugadaDeRespaldo(fen) {
+    if (typeof Chess === "undefined") return null;
+    let jugadas;
+    try { jugadas = new Chess(fen).moves({ verbose: true }); } catch (e) { return null; }
+    if (!jugadas.length) return null;
+    let mejor = null, mejorPuntos = -Infinity;
+    for (const m of jugadas) {
+      let puntos = Math.random();
+      if (m.captured) puntos += (VALOR[m.captured] || 0) * 2;
+      if (m.san.indexOf("#") !== -1) puntos += 1000;
+      if (puntos > mejorPuntos) { mejorPuntos = puntos; mejor = m; }
+    }
+    return mejor.from + mejor.to + (mejor.promotion || "");
+  }
+
+  window.PracticeEngine = { LEVELS, getMove, evaluate, preload, jugadaDeRespaldo };
 })();

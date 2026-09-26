@@ -55,6 +55,15 @@ const OscarBot = (function () {
   // sea honesta e independiente de la dificultad elegida por el visitante.
   const EVAL_MOVETIME = 450;
 
+  // «go movetime» SOLO no alcanza: Stockfish mira el reloj cada ~1000 nodos, y en
+  // una posición en que le dan mate en uno recorre tan pocos (unos cientos por
+  // profundidad) que nunca lo mira y sigue profundizando hasta 245 — segundos en
+  // una computadora, mucho más que el timeout en un celular. El bot quedaba
+  // «pensando» y el alumno no podía terminar con el mate. El tope de profundidad
+  // corta esa búsqueda enseguida; en una posición normal la hora llega antes.
+  // Misma cifra en js/shared-engine.js.
+  const PROFUNDIDAD_MAXIMA = 40;
+
   let engine = null;
   let engineInitPromise = null;
 
@@ -284,7 +293,7 @@ const OscarBot = (function () {
           engine.postMessage("setoption name UCI_LimitStrength value false");
         }
         engine.postMessage("position fen " + fen);
-        engine.postMessage("go movetime " + movetimeMs);
+        engine.postMessage("go movetime " + movetimeMs + " depth " + PROFUNDIDAD_MAXIMA);
         setTimeout(() => {
           if (pendingResolve === resolve) {
             pendingResolve = null;

@@ -138,5 +138,14 @@
     return run;
   }
 
-  window.SharedEngine = { ensureEngine, runTask, setMessageHandler, discardEngine };
+  // «go movetime» SOLO no alcanza: Stockfish mira el reloj cada ~1000 nodos, y en
+  // una posición en que le dan mate en uno recorre tan pocos (unos cientos por
+  // profundidad) que nunca lo mira y sigue profundizando hasta 245 — segundos en
+  // una computadora, mucho más que el timeout en un celular. El bot quedaba
+  // «pensando» y el alumno no podía terminar con el mate. El tope de profundidad
+  // corta esa búsqueda enseguida; en una posición normal la hora llega antes.
+  // Misma cifra en js/chess-bot.js, que no usa este archivo.
+  const PROFUNDIDAD_MAXIMA = 40;
+
+  window.SharedEngine = { ensureEngine, runTask, setMessageHandler, discardEngine, PROFUNDIDAD_MAXIMA };
 })();

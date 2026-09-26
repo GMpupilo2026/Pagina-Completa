@@ -357,6 +357,7 @@
       thinking = true; pst.textContent = "El motor piensa…";
       let uci = null;
       try { uci = await PracticeEngine.getMove(game.fen(), levelKey()); } catch (e) { uci = null; }
+      if (!uci) uci = PracticeEngine.jugadaDeRespaldo(game.fen());
       thinking = false;
       if (state.mode !== "practicar") return;
       if (!uci) { renderPractice("El motor no respondió. Prueba de nuevo o recarga la página."); return; }
