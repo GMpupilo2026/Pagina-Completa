@@ -1,17 +1,3 @@
--- Un torneo no retrocede de ronda ni vuelve a inscripción.
---
--- «Empezar torneo» corría dos veces con un segundo clic mientras se armaba la
--- ronda 1 (la página no se repinta hasta terminar), y la segunda vez dejaba
--- current_round en 0 con la ronda 1 ya creada. Desde ahí cada «Generar ronda»
--- pedía la ronda 1 otra vez y la base la rechazaba por repetida
--- (tournament_rounds_tournament_id_round_number_key), en cada clic, sin salida.
--- Pasó en dos torneos en curso.
---
--- La página ya no empieza dos veces (update condicional a status =
--- 'registration') y cuenta la ronda también por las rondas que existen, pero lo
--- que no puede pasar lo pone la base: current_round nunca baja y un torneo que
--- ya empezó no vuelve a 'registration'. Se revierte en silencio, como el resto
--- de proteger_torneo(), y vale también para quien organiza.
 create or replace function public.proteger_torneo()
  returns trigger
  language plpgsql
@@ -45,7 +31,6 @@ $function$;
 
 revoke execute on function public.proteger_torneo() from public, anon, authenticated;
 
--- Los torneos que quedaron trabados: current_round vuelve a la última ronda creada.
 update public.tournaments t
    set current_round = r.ultima
   from (select tournament_id, max(round_number) as ultima
