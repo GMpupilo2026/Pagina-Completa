@@ -1223,6 +1223,59 @@ tablero sea una sola parada de tabulador y que se guarden las estrellas. Está
 probado que falla de verdad: haciendo que el sonar sume uno, saltan cinco
 comprobaciones.
 
+## La Batalla naval de ajedrez
+
+`batalla-naval.html` (tarjeta en Juegos y sección propia en `ciegos.html`) es la
+batalla naval de siempre con piezas de ajedrez por barcos. La computadora
+esconde su flota y se dispara a una casilla: si había una pieza se hunde y se
+dice cuál era; si era agua, el disparo dice **cuántas piezas de la flota apuntan
+a esa casilla**. Con eso se deduce dónde están, como en el buscaminas, y se
+aprende la geometría de cada pieza. Es hermano de El Sonar y se hizo igual:
+nadie ve lo escondido, así que se juega igual con la pantalla o sin ella.
+
+Tres niveles de práctica con estrellas (torre, alfil y caballo; se suma la
+dama; flota completa de siete) y un cuarto, **el duelo**, donde uno también
+tiene flota y la computadora le dispara.
+
+- **Cada pieza cuenta como si estuviera sola en el tablero**, y la cuenta es de
+  la flota ENTERA, también de las hundidas. Se probó pensar en piezas que se
+  tapan entre sí, como en una partida: la deducción se vuelve un rompecabezas de
+  bloqueos que no enseña nada de la pieza, y contar solo las que siguen a flote
+  hace que un número dicho antes cambie en silencio y el historial mienta. Así,
+  un número no cambia nunca y se le restan las hundidas, que se ven.
+- **Las reglas viven en `js/batalla-naval-motor.js`**, sin DOM. «Esta pieza
+  apunta a esa casilla» se compara con chess.js en las 4032 parejas de casillas
+  de cada pieza (rey negro en la casilla, ¿está en jaque?). Leer una casilla
+  escrita («eva 4») es `SonarMotor.leerCasilla`: una sola copia.
+- **`conocimiento()` es lo que se sabe desde afuera**, solo con los disparos:
+  dos reglas seguras (a una casilla con agua que ya no le falta nadie no le
+  apunta ninguna pieza a flote; si le faltan todas, todas le apuntan). Es la
+  pista, es lo único que usa la computadora del duelo para dispararte —el
+  verificador mueve tu flota escondida y comprueba que dispara igual— y es lo
+  que usa el jugador que deduce del verificador.
+- **Las estrellas salen de ese jugador**: en 300 partidas por nivel, la mediana
+  queda por debajo de las tres estrellas (`estrellas3`). La computadora del
+  duelo elige al azar entre las casillas casi tan buenas como la mejor
+  (`HOLGURA_COMPU`): quien deduce bien le gana unas dos de cada tres veces.
+- **Cada casilla escribe su propio nombre** (`data-etiqueta-propia`): el de
+  `js/tablero-accesible.js` diría «vacía» en una casilla sin disparar, y eso
+  sería mentira, porque puede esconder una pieza. El tablero de tu flota es
+  solo un dibujo (`aria-hidden`); lo mismo va escrito debajo y «mi flota» lo
+  dice entero.
+- Los colores de agua, hundida y tu pieza se midieron contra su propio fondo
+  (van en el `<style>` de la página) y nunca van solos: el número o la pieza
+  van encima y en el nombre de la casilla. El agua segura de la pista es un aro
+  de dos colores, para verse sobre la casilla clara y la oscura de cualquier
+  tema.
+- El progreso son `batalla_estrellas_v1` (`maxPorClave`), `batalla_mejor_v1`
+  (`minPorClave`) y `batalla_victorias_v1` (`maxNumero`), en CLAVES de
+  `js/progreso-usuario.js`. No escribe en `training_progress` (el CHECK de
+  actividades); el tiempo sí, con `data-activity="batalla-naval"`.
+
+**Al tocar el motor o la página, correr `node herramientas/verificar-batalla-naval.js`**
+(`--sin-navegador` corre solo las reglas). Está probado que falla de verdad:
+haciendo que un disparo al agua sume uno, saltan nueve comprobaciones.
+
 ## Los Tipos de entrenamiento
 
 `entreno/tipos.html` (grupo y tarjeta **"🧠 Tipos de entrenamiento"** del hub)
