@@ -165,6 +165,28 @@
   // Lo mismo que exige la base para salas_torneo.video_url.
   const URL_VIDEO = /^https:\/\/((www|m)\.)?(youtube\.com|youtu\.be|twitch\.tv)\/[^\s"<>]*$/;
 
+  // Quién juega la quiniela de la sala, con su correo (para avisarle a quien
+  // gane). quiniela_tabla() es SECURITY INVOKER: lo deja ver la RLS, que solo
+  // abre estas tablas a quien administra.
+  async function cargarParticipantes(sala) {
+    const caja = $("sala-quiniela-gente");
+    const cuerpo = $("sala-quiniela-filas");
+    cuerpo.innerHTML = "";
+    caja.classList.add("hidden");
+    if (!sala || !sala.id) return;
+    const { data, error } = await sb.rpc("quiniela_tabla", { p_sala: sala.id });
+    if (error) { console.error(error); return; }
+    const filas = data || [];
+    if (!filas.length) return;
+    $("sala-quiniela-gente-titulo").textContent = "Participantes (" + filas.length + ")";
+    filas.forEach((f) => {
+      const tr = el("tr", "border-t border-brand-100 dark:border-brand-800");
+      [String(f.puesto), f.nombre, f.correo, f.aciertos + " de " + f.resueltos].forEach((t, i) => tr.appendChild(el("td", "px-2 py-1.5" + (i === 3 ? " text-right" : ""), t)));
+      cuerpo.appendChild(tr);
+    });
+    caja.classList.remove("hidden");
+  }
+
   // Debajo del campo del comentarista: si el enlace sirve, y de qué es.
   function decirVideo() {
     const texto = $("sala-video").value.trim();
@@ -258,6 +280,7 @@
     $("sala-lichess-caja").classList.toggle("hidden", !lichess);
     $("sala-pizarras-caja").classList.toggle("hidden", !lichess);
     $("sala-video-caja").classList.toggle("hidden", !lichess);
+    $("sala-quiniela-caja").classList.toggle("hidden", !lichess);
     $("sala-enlaces-ayuda").textContent = lichess
       ? "Opcional: botones de más debajo de «Entrar a la sala», por ejemplo «Verlo directo en Lichess»."
       : "Al menos uno: cada botón abre su transmisión en otra pestaña (por ejemplo «Partida masculina» y «Partida femenina»).";
@@ -276,6 +299,7 @@
       enlaces: valoresDe("enlaces"),
       pizarras: valoresDe("pizarras"),
       video_url: $("sala-video").value.trim(),
+      quiniela: $("sala-quiniela").checked,
       visible: $("sala-visible").checked,
     };
   }
@@ -304,6 +328,8 @@
     llenar("enlaces", sala ? sala.enlaces : []);
     llenar("pizarras", sala ? sala.pizarras : []);
     $("sala-video").value = sala && sala.video_url ? sala.video_url : "";
+    $("sala-quiniela").checked = !!(sala && sala.quiniela);
+    cargarParticipantes(sala);
     decirVideo();
     $("sala-msg").textContent = "";
     $("sala-editor").classList.remove("hidden");
@@ -376,7 +402,8 @@
       clave: sala.clave, nombre: sala.nombre, descripcion: sala.descripcion, emoji: sala.emoji,
       tipo: sala.tipo, lichess_id: sala.tipo === "lichess" ? sala.lichess_id : null,
       enlaces: sala.enlaces, pizarras: sala.tipo === "lichess" ? sala.pizarras : [],
-      video_url: sala.tipo === "lichess" && sala.video_url ? sala.video_url : null, visible: sala.visible,
+      video_url: sala.tipo === "lichess" && sala.video_url ? sala.video_url : null,
+      quiniela: sala.tipo === "lichess" && sala.quiniela, visible: sala.visible,
     };
     $("sala-guardar").disabled = true;
     let r;

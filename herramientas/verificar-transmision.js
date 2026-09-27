@@ -255,7 +255,9 @@ async function main() {
     const antes = await p.textContent('#cine-blancas [data-reloj]');
     await p.waitForTimeout(2300);
     const despues = await p.textContent('#cine-blancas [data-reloj]');
-    igual("y el de quien juega corre solo (" + antes + " → " + despues + ")", antes.startsWith("14:1") && despues < antes, true);
+    // En segundos: al leerlo por primera vez ya pudo haber corrido uno (14:10 → 14:09).
+    const seg = (t) => { const [m, s] = t.split(":").map(Number); return m * 60 + s; };
+    igual("y el de quien juega corre solo (" + antes + " → " + despues + ")", seg(antes) <= 850 && seg(antes) >= 845 && seg(despues) < seg(antes), true);
     await p.waitForTimeout(5600);
     igual("si la transmisión se corta, se vuelve a abrir sola", pedidosVivo.filter((r) => r === "R3cccccc").length >= 2, true);
     await p.close();

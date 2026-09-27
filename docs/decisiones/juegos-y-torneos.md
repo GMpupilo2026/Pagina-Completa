@@ -963,3 +963,53 @@ la grande. Se carga en el editor de `admin.html#torneos`.
 - `verificar-transmision.js` comprueba el reproductor de YouTube y el de
   Twitch (dirección y título) y que sin video no haya nada; `verificar-salas-
   torneo.js`, el campo del editor. Sin pintar el comentarista, salta.
+
+## La quiniela de resultados
+
+Quien administra la enciende por sala (casilla «Quiniela de resultados
+abierta» en `admin.html#torneos`, `salas_torneo.quiniela`). En la sala de cine
+aparece «🎯 Quiniela de resultados»: cualquiera, sin cuenta, se anota con su
+nombre y su correo, pronostica cada partida transmitida (ganan blancas,
+tablas, ganan negras) y ve la tabla de aciertos. Migración
+`20260927060617_quiniela_de_resultados`, Edge Function `quiniela`,
+`js/quiniela.js`.
+
+- **Las partidas las copia de Lichess la Edge Function** (`quiniela_partidas`),
+  como mucho una vez cada 45 segundos por sala y solo cuando alguien mira o
+  pronostica: no hay tanda de pg_cron que mantener. Antes de guardar un
+  pronóstico vuelve a copiar si hace falta, así una partida que ya empezó se
+  cierra aunque la página no lo sepa.
+- **Cuándo se cierra una partida lo decide la base**
+  (`quiniela_cerrada()`, usada por `quiniela_pronosticar()`): al llegar la hora
+  de su ronda (`startsAt` de Lichess), si ya tiene jugadas o si ya tiene
+  resultado. La página muestra lo mismo, pero no decide.
+- **La tabla de aciertos se calcula, no se guarda** (`quiniela_tabla()`): un
+  punto por acierto, y con los mismos puntos se comparte el puesto. Las
+  medallas, solo a quien tiene aciertos.
+- **Nadie lee estas tablas desde el navegador**: ni `anon` ni `authenticated`
+  tienen permiso, salvo quien administra (política con `soy_admin()`), que ve
+  nombre, correo y aciertos en el editor para poder avisarle a quien gane.
+  `quiniela_unirse`, `quiniela_pronosticar` y `quiniela_yo` solo las ejecuta
+  el service role. La tabla pública la arma la función **sin el correo**.
+- **Sin cuenta, con código.** Al anotarse la función devuelve un código al
+  azar que se guarda en el navegador (`localStorage`, `quiniela_v1:<clave>`);
+  en la base va solo su sha256. Con él se cambian los pronósticos. Un correo
+  se anota una vez por sala (índice único): desde otro aparato no se puede
+  «volver a entrar» con el mismo correo, a propósito, porque sin un correo de
+  confirmación cualquiera podría entrar con el correo de otra persona.
+- **El freno de envíos sin cuenta** tiene un tipo nuevo, `quiniela`: 40 por IP
+  y por hora (el público de un torneo sale por la red del lugar), 5 por correo
+  al día y 500 por sala y por hora. La función le pasa la IP de quien se
+  anota. El freno va **antes** de mirar si el correo ya está: probar correos
+  de a uno para saber quién juega también gasta cupo.
+- **El consentimiento**: casilla con enlace a la política, y la base guarda la
+  versión aceptada y la hora (`interno.version_legal_valida`). La política de
+  privacidad dice qué se guarda, que el correo no se publica y que los datos
+  viven mientras exista la sala (al borrarla se borran con ella).
+- Al pronosticar, el botón se desactiva mientras guarda y **pierde el foco**;
+  por eso se anota a cuál volver (`volverA`). Lo encontró el verificador.
+- Probado en SQL impersonando roles (anónimo, alumno y admin, en una
+  transacción deshecha) y de punta a punta contra Lichess llamando a la
+  función desde la base. `verificar-quiniela.js` prueba la página y el editor
+  con un doble de la función que aplica las mismas reglas y mensajes; sin la
+  casilla de la privacidad, salta.

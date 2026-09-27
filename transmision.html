@@ -173,6 +173,65 @@
                     </div>
                 </div>
 
+                <!-- La quiniela de resultados, si administración la encendió en esta
+                     sala (js/quiniela.js; los datos, en la Edge Function quiniela). -->
+                <section id="quiniela" class="hidden mt-14" aria-labelledby="quiniela-titulo">
+                    <div class="text-center mb-6">
+                        <p class="text-accent-400 font-semibold uppercase tracking-widest text-xs">Juega con nosotros</p>
+                        <h2 id="quiniela-titulo" class="font-serif text-2xl sm:text-3xl font-bold text-white mt-1"><span aria-hidden="true">🎯 </span>Quiniela de resultados</h2>
+                        <p class="text-brand-200 text-sm mt-2 max-w-2xl mx-auto">Pronostica cómo termina cada partida antes de que empiece su ronda. Cada acierto suma un punto en la tabla.</p>
+                    </div>
+                    <div class="grid lg:grid-cols-[minmax(0,1fr)_22rem] gap-8 items-start">
+                        <div>
+                            <form id="quiniela-unirse" class="hidden cine-comentarista p-5 sm:p-6" novalidate aria-labelledby="quiniela-unirse-titulo">
+                                <h3 id="quiniela-unirse-titulo" class="font-serif text-lg font-bold text-white mb-1">Anótate para participar</h3>
+                                <p class="text-brand-200 text-sm mb-4">Solo tu nombre y tu correo. En la tabla se ve tu nombre; el correo no se publica y sirve para avisarte si ganas.</p>
+                                <div class="grid sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label for="quiniela-nombre" class="block text-xs font-semibold text-brand-200 uppercase tracking-wide mb-1">Nombre</label>
+                                        <input id="quiniela-nombre" type="text" maxlength="60" autocomplete="name" class="w-full px-3 py-2 rounded-lg bg-brand-950 border border-brand-700 text-white text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                                    </div>
+                                    <div>
+                                        <label for="quiniela-correo" class="block text-xs font-semibold text-brand-200 uppercase tracking-wide mb-1">Correo</label>
+                                        <input id="quiniela-correo" type="email" maxlength="200" autocomplete="email" inputmode="email" class="w-full px-3 py-2 rounded-lg bg-brand-950 border border-brand-700 text-white text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                                    </div>
+                                </div>
+                                <div class="flex items-start gap-2 mt-4">
+                                    <input type="checkbox" id="quiniela-acepto" class="mt-1 h-4 w-4 shrink-0 rounded border-brand-500 text-accent-500 focus:ring-accent-400">
+                                    <label for="quiniela-acepto" class="text-xs text-brand-200">Acepto que Ajedrez Integral guarde mi nombre, mi correo y mis pronósticos para esta quiniela, como dice la <a href="privacidad.html" target="_blank" rel="noopener" class="underline font-semibold text-accent-400 hover:text-white">Política de privacidad<span class="sr-only"> (se abre en otra pestaña)</span></a>.</label>
+                                </div>
+                                <button type="submit" id="quiniela-entrar" class="mt-4 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-950">Entrar a la quiniela</button>
+                                <p id="quiniela-unirse-msg" role="status" class="text-sm mt-3 text-brand-100"></p>
+                            </form>
+                            <div id="quiniela-mia" class="hidden">
+                                <p id="quiniela-quien" class="text-brand-100 text-sm mb-4"></p>
+                                <div id="quiniela-rondas" class="space-y-6"></div>
+                                <p id="quiniela-msg" role="status" class="text-sm mt-4 text-brand-100"></p>
+                            </div>
+                            <p id="quiniela-cargando" class="text-brand-200 text-sm">Cargando la quiniela…</p>
+                        </div>
+                        <section class="pizarra" aria-labelledby="quiniela-tabla-titulo">
+                            <h3 id="quiniela-tabla-titulo" class="font-serif text-xl font-bold text-center mb-1">Tabla de aciertos</h3>
+                            <p class="pizarra-tenue text-xs text-center mb-4">1 punto por acierto · con los mismos puntos se comparte el puesto</p>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-sm">
+                                    <caption class="sr-only">Tabla de aciertos de la quiniela: puesto, nombre, aciertos y partidas ya resueltas de sus pronósticos</caption>
+                                    <thead>
+                                        <tr class="pizarra-linea text-left">
+                                            <th scope="col" class="py-2 pr-2 font-semibold">#</th>
+                                            <th scope="col" class="py-2 pr-2 font-semibold">Nombre</th>
+                                            <th scope="col" class="py-2 pr-2 font-semibold text-right">Aciertos</th>
+                                            <th scope="col" class="py-2 font-semibold text-right"><abbr title="Pronósticos de partidas que ya terminaron">De</abbr></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="quiniela-tabla"></tbody>
+                                </table>
+                            </div>
+                            <p id="quiniela-tabla-vacia" class="hidden text-center text-sm mt-3">Todavía no se anotó nadie. ¡Sé la primera persona!</p>
+                        </section>
+                    </div>
+                </section>
+
                 <p class="text-center text-brand-200 text-xs mt-10"><span id="cine-actualizado"></span> Datos de <a id="cine-lichess" href="#" target="_blank" rel="noopener" class="underline underline-offset-2 hover:text-accent-400 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">la transmisión en Lichess<span class="sr-only"> (se abre en otra pestaña)</span></a>.</p>
             </div>
         </div>
@@ -200,8 +259,10 @@
     <script src="js/supabase-client.js"></script>
     <script src="js/salas-torneo.js"></script>
     <script src="js/video-embebido.js"></script>
+    <script src="js/legal-version.js"></script>
     <script src="js/vendor/chess.js"></script>
     <script src="js/main.js"></script>
+    <script src="js/quiniela.js"></script>
     <script src="js/transmision.js"></script>
 </body>
 </html>

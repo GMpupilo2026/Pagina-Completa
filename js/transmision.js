@@ -859,6 +859,7 @@
         $("cine-titulo").textContent = torneo.nombre;
         document.title = torneo.nombre + " — Ajedrez Integral";
         pintarComentarista(sala);
+        if (window.Quiniela) Quiniela.iniciar(sala);
         $("cine-lichess").href = torneo.enlace;
         let datos;
         try {
