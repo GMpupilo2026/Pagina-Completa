@@ -727,3 +727,39 @@ separe posiciones, que ante lo que no entiende no declare tablas, que ninguna
 página calcule el reloj con `Date.now()` a secas, y que el desfase se mida
 contra un servidor que va siete segundos por delante. Está probado que falla de
 verdad: quitando el recorte de la captura al paso, salta.
+
+## La sala de cine de las transmisiones
+
+`torneos-en-vivo.html` (el enlace «Torneos» junto a «¡Te reto!» y «TV en
+vivo») tiene una ficha por torneo transmitido. Un torneo que se transmite por
+Lichess (una transmisión, «broadcast») entra a `transmision.html?torneo=<clave>`:
+la partida elegida en la pantalla grande entre dos telones, las demás mesas de
+la ronda debajo y, al lado, la pizarra de posiciones. El código está en
+`js/transmision.js` y los torneos en su lista `TORNEOS` (clave → id de la
+transmisión, que es lo último de `lichess.org/broadcast/<nombre>/<id>`).
+Una ficha sin enlace todavía va apagada (ver «Un acceso apagado no es un enlace
+gris»).
+
+- **Todo sale de la API pública de Lichess**, sin cuenta ni base propia:
+  `/api/broadcast/<id>` trae el torneo y sus rondas, y cada ronda se pide en su
+  dirección con `/api` delante (la que Lichess da en `url`). La ronda trae cada
+  partida con su FEN, así que no hace falta chess.js en la página: solo se lee
+  la parte de las piezas. La CSP ya dejaba `connect-src https://lichess.org`.
+- **La pizarra se suma acá, ronda por ronda**: 1 por ganar, ½ por tablas. No se
+  inventa un desempate: con los mismos puntos se comparte el puesto (1, 2, 2,
+  4). Y dice de cuántas rondas sale («Suma de X de Y rondas»): si una ronda no
+  cargó, la pizarra no muestra puntos de menos sin avisar.
+- **Solo se refresca la ronda que se está viendo, y solo si sigue en juego**,
+  cada 20 s; con la pestaña escondida no se le pide nada a Lichess.
+- **El tablero es el que eligió cada quien**: casillas con `--sq-light/--sq-dark`
+  y la pieza por `PiezaPreferida` (la página está en `tablero-cabecera.py`).
+  El grande lleva coordenadas; las miniaturas no (a ese tamaño no se leen).
+- **La sala está siempre a oscuras**, en modo claro y en oscuro. Los colores de
+  texto se midieron contra esos fondos fijos. La última jugada se marca en
+  dorado y además va escrita debajo («última jugada e2–e4»); quien usa lector
+  de pantalla tiene la posición en palabras.
+- `verificar-transmision.js` lo comprueba con un doble de Lichess cuyas
+  posiciones salen de jugar las jugadas con chess.js: la posición y la última
+  jugada, la pizarra con empates, cambiar de mesa y de ronda, que el resultado
+  nuevo llegue solo, el contraste y el aviso con Lichess caído. Rompiendo la
+  regla del puesto compartido, salta.

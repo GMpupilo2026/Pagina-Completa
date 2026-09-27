@@ -4,16 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="img/favicon.svg">
-    <title>Torneos en vivo — Ajedrez Integral</title>
-    <meta name="description" content="Los torneos de ajedrez que transmitimos en vivo: CENFOTEC, UTN y los que vienen. Entra a cada uno y mira sus partidas en directo.">
-    <link rel="canonical" href="https://ajedrez-integral.com/torneos-en-vivo.html">
+    <title>Sala de transmisión — Ajedrez Integral</title>
+    <meta name="description" content="La sala de cine de Ajedrez Integral: las partidas de los torneos transmitidos, en vivo en la pantalla grande, y la pizarra con las posiciones.">
+    <link rel="canonical" href="https://ajedrez-integral.com/transmision.html">
     <!-- Para cuando alguien pega el enlace en WhatsApp, que es por donde se comparte esto. -->
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Ajedrez Integral">
     <meta property="og:locale" content="es_CR">
-    <meta property="og:title" content="Torneos en vivo — Ajedrez Integral">
-    <meta property="og:description" content="Los torneos de ajedrez que transmitimos en vivo: CENFOTEC, UTN y los que vienen. Entra a cada uno y mira sus partidas en directo.">
-    <meta property="og:url" content="https://ajedrez-integral.com/torneos-en-vivo.html">
+    <meta property="og:title" content="Sala de transmisión — Ajedrez Integral">
+    <meta property="og:description" content="La sala de cine de Ajedrez Integral: las partidas de los torneos transmitidos, en vivo en la pantalla grande, y la pizarra con las posiciones.">
+    <meta property="og:url" content="https://ajedrez-integral.com/transmision.html">
     <meta property="og:image" content="https://ajedrez-integral.com/img/og-ajedrez-integral.jpg">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
@@ -46,7 +46,7 @@
                 <span class="text-brand-700" aria-hidden="true">&middot;</span>
                 <a href="tv.html" class="hover:text-accent-400">TV en vivo</a>
                 <span class="text-brand-700" aria-hidden="true">&middot;</span>
-                <a href="torneos-en-vivo.html" class="hover:text-accent-400 text-accent-400" aria-current="page">Torneos</a>
+                <a href="torneos-en-vivo.html" class="hover:text-accent-400 text-accent-400">Torneos</a>
             </div>
         </div>
         <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
@@ -80,45 +80,87 @@
                 <li><a href="clases.html" class="block py-2 hover:text-accent-400">Academia</a></li>
                 <li><a href="te-reto.html" class="block py-2 hover:text-accent-400">🏆 ¡Te reto!</a></li>
                 <li><a href="tv.html" class="block py-2 hover:text-accent-400">TV en vivo</a></li>
-                <li><a href="torneos-en-vivo.html" class="block py-2 text-accent-400" aria-current="page">Torneos</a></li>
+                <li><a href="torneos-en-vivo.html" class="block py-2 text-accent-400">Torneos</a></li>
                 <li><a href="precios.html" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">💬 Inscríbete</a></li>
             </ul>
         </div>
     </header>
 
-    <main id="main-content" class="pt-8 pb-16">
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-10">
-                <span class="text-accent-700 dark:text-accent-400 font-semibold uppercase tracking-wide text-sm">En vivo</span>
-                <h1 class="font-serif text-3xl md:text-4xl font-bold text-brand-800 dark:text-white mt-2"><span aria-hidden="true">🏆</span> Torneos</h1>
-                <p class="text-brand-500 dark:text-brand-300 mt-4 max-w-2xl mx-auto">Los torneos que transmitimos en vivo. Entra al de tu interés y mira sus partidas en directo, tablero por tablero.</p>
+    <main id="main-content" class="cine-sala text-brand-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-16">
+            <p class="text-sm mb-4"><a href="torneos-en-vivo.html" class="text-brand-200 underline underline-offset-2 hover:text-accent-400 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">← Todos los torneos</a></p>
+
+            <!-- La marquesina: el nombre del torneo entre bombillos, como la entrada
+                 de un cine. Los bombillos son adorno (CSS) y se quedan quietos para
+                 quien pidió menos movimiento. -->
+            <header class="cine-marquesina text-center px-4 py-6 sm:py-8 mb-6">
+                <p class="text-accent-400 font-semibold uppercase tracking-widest text-xs sm:text-sm">En cartelera · transmisión en vivo</p>
+                <h1 id="cine-titulo" class="font-serif text-2xl sm:text-4xl font-bold text-white mt-2">Sala de transmisión</h1>
+                <p id="cine-sub" class="text-brand-200 text-sm mt-2"></p>
+            </header>
+
+            <div id="loading" role="status" class="min-h-[50vh] flex flex-col items-center justify-center gap-3 px-4 text-center text-brand-200"><span aria-hidden="true" class="w-8 h-8 rounded-full border-4 border-brand-700 border-t-accent-500 animate-spin motion-reduce:animate-none"></span><p class="text-sm">Encendiendo el proyector…</p></div>
+
+            <div id="cine-error" class="hidden max-w-xl mx-auto text-center bg-brand-900 border border-brand-700 rounded-2xl p-6">
+                <p class="text-4xl mb-3" aria-hidden="true">🎞️</p>
+                <p id="cine-error-texto" class="text-brand-100"></p>
+                <a id="cine-error-enlace" href="#" target="_blank" rel="noopener" class="inline-block mt-4 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-900">Ver la transmisión en Lichess<span class="sr-only"> (se abre en otra pestaña)</span> ↗</a>
             </div>
 
-            <!-- Una ficha por torneo. Para agregar otro, se copia un <li> entero.
-                 Un torneo transmitido por Lichess entra a la sala de cine
-                 (transmision.html?torneo=<clave>): su clave y el id de la
-                 transmisión van en TORNEOS de js/transmision.js.
-                 Mientras el torneo no tenga su enlace, la ficha va «apagada»: un
-                 <span> con aria-disabled y tabindex="0", sin href (no promete un
-                 destino que no abre, pero se alcanza con Tab y dice por qué está
-                 cerrada; ver «Un acceso apagado no es un enlace gris»). -->
-            <ul class="grid sm:grid-cols-2 gap-6" aria-label="Torneos transmitidos">
-                <li class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-6 flex flex-col">
-                    <p class="text-4xl mb-3" aria-hidden="true">🎓</p>
-                    <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white">Desafío Mentes Maestras CENFOTEC 2026</h2>
-                    <p class="text-brand-500 dark:text-brand-300 mt-2 mb-5 flex-1">Las partidas del torneo de la Universidad CENFOTEC, en vivo en la pantalla grande, con la pizarra de posiciones al lado.</p>
-                    <a href="transmision.html?torneo=cenfotec" class="block text-center bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2.5 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Entrar a la sala<span class="sr-only"> del torneo CENFOTEC</span> →</a>
-                    <a href="https://lichess.org/broadcast/desafio-mentes-maestras-cenfotec-2026/s7NfNv6H" target="_blank" rel="noopener" class="block text-center text-sm text-brand-500 dark:text-brand-300 underline underline-offset-2 hover:text-accent-700 dark:hover:text-accent-400 mt-3 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">o verlo directo en Lichess<span class="sr-only"> (se abre en otra pestaña)</span> ↗</a>
-                </li>
-                <li class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-6 flex flex-col">
-                    <p class="text-4xl mb-3" aria-hidden="true">🎓</p>
-                    <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white">Torneo UTN</h2>
-                    <p class="text-brand-500 dark:text-brand-300 mt-2 mb-5 flex-1">Las partidas del torneo de la Universidad Técnica Nacional, transmitidas en vivo.</p>
-                    <span role="link" aria-disabled="true" tabindex="0" class="block text-center bg-brand-100 dark:bg-brand-800 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2.5 rounded-lg cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Transmisión: próximamente<span class="sr-only"> (el enlace del torneo UTN todavía no está disponible)</span></span>
-                </li>
-            </ul>
+            <div id="cine-contenido" class="hidden">
+                <!-- Las funciones: una por ronda. -->
+                <nav aria-label="Rondas del torneo" class="mb-6">
+                    <ul id="cine-rondas" class="flex flex-wrap justify-center gap-2"></ul>
+                </nav>
 
-            <p class="text-center text-brand-500 dark:text-brand-300 text-sm mt-10">¿Quieres ver también las partidas de la Academia? Están en <a href="tv.html" class="underline underline-offset-2 hover:text-accent-700 dark:hover:text-accent-400">TV en vivo</a>.</p>
+                <div class="grid lg:grid-cols-[minmax(0,1fr)_22rem] gap-8 items-start">
+                    <!-- La pantalla grande, entre los dos telones. -->
+                    <section aria-labelledby="cine-pantalla-titulo">
+                        <h2 id="cine-pantalla-titulo" class="sr-only">Partida en la pantalla grande</h2>
+                        <div class="cine-escenario">
+                            <div class="cine-telon cine-telon-izq" aria-hidden="true"></div>
+                            <div class="cine-pantalla">
+                                <div class="cine-jugador" id="cine-negras"></div>
+                                <div id="cine-tablero-marco" class="cine-tablero-marco">
+                                    <div id="cine-tablero" class="cine-tablero" role="img"></div>
+                                </div>
+                                <div class="cine-jugador" id="cine-blancas"></div>
+                            </div>
+                            <div class="cine-telon cine-telon-der" aria-hidden="true"></div>
+                        </div>
+                        <p id="cine-detalle" class="text-center text-brand-200 text-sm mt-4"></p>
+                        <p id="cine-posicion" class="sr-only"></p>
+                        <p id="cine-sin-partidas" class="hidden text-center text-brand-200 mt-4"></p>
+
+                        <!-- Las demás partidas de la ronda: se elige cuál pasa a la pantalla grande. -->
+                        <h3 class="font-serif text-lg font-bold text-white mt-10 mb-3 text-center"><span aria-hidden="true">🎬</span> Todas las partidas de la ronda</h3>
+                        <ul id="cine-cartelera" class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3"></ul>
+                    </section>
+
+                    <!-- La pizarra con las posiciones. -->
+                    <section aria-labelledby="pizarra-titulo" class="pizarra">
+                        <h2 id="pizarra-titulo" class="font-serif text-xl font-bold text-center mb-1">Pizarra de posiciones</h2>
+                        <p id="pizarra-nota" class="pizarra-tenue text-xs text-center mb-4"></p>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <caption class="sr-only">Posiciones del torneo: puesto, jugador, puntos y partidas jugadas</caption>
+                                <thead>
+                                    <tr class="pizarra-linea text-left">
+                                        <th scope="col" class="py-2 pr-2 font-semibold">#</th>
+                                        <th scope="col" class="py-2 pr-2 font-semibold">Jugador</th>
+                                        <th scope="col" class="py-2 pr-2 font-semibold text-right">Pts</th>
+                                        <th scope="col" class="py-2 font-semibold text-right"><abbr title="Partidas jugadas">PJ</abbr></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pizarra-cuerpo"></tbody>
+                            </table>
+                        </div>
+                        <p id="pizarra-vacia" class="hidden text-center text-sm mt-3">Todavía no terminó ninguna partida: la pizarra se llena con el primer resultado.</p>
+                    </section>
+                </div>
+
+                <p class="text-center text-brand-200 text-xs mt-10"><span id="cine-actualizado"></span> Datos de <a id="cine-lichess" href="#" target="_blank" rel="noopener" class="underline underline-offset-2 hover:text-accent-400 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">la transmisión en Lichess<span class="sr-only"> (se abre en otra pestaña)</span></a>.</p>
+            </div>
         </div>
     </main>
 
@@ -141,5 +183,6 @@
     <script src="js/coronacion.js"></script>
     <!-- tablero-js: fin -->
     <script src="js/main.js"></script>
+    <script src="js/transmision.js"></script>
 </body>
 </html>

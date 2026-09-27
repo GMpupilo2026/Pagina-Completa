@@ -52,7 +52,7 @@ TIENE_TABLERO = re.compile(
     r"piece-white|PiezaPreferida|js/[a-z0-9-]*board\.js|tablero-pregunta\.js"
     r"|ficha-render\.js|finales-100\.js|curso-partidas\.js"
     # Los que arman su tablero entero desde su js/ y no dejan rastro en el HTML.
-    r"|js/(?:racha-tactica|te-reto|entreno-diagnostico|entreno-practicas|entreno-aprender)\.js"
+    r"|js/(?:racha-tactica|te-reto|entreno-diagnostico|entreno-practicas|entreno-aprender|transmision)\.js"
 )
 # Los que tienen que correr antes de que se pinte la primera casilla.
 EN_HEAD = {"board-color-themes", "piece-color-themes", "piece-style-themes"}
