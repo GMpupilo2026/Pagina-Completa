@@ -44,13 +44,21 @@
 
                El rótulo NO repite los nombres de las dos tarjetas: dice lo que
                las dos tienen en común y que no se deduce de ellas —que te las
-               pone alguien más y traen fecha—, que es lo que las separa de un
-               diagnóstico, que uno hace cuando le parece. Por
+               pone alguien más—. El diagnóstico también: no se hace cuando a
+               uno le parece, lo pide el profesor para ubicarte. Por
                eso lleva `titleProfe`, igual que los tiles llevan `descProfe`:
                del otro lado del escritorio la misma pareja es lo que MANDAS. */
             { title: "Lo que te pone tu profesor", titleProfe: "Lo que le pones a tus alumnos", tiles: [
                 { emoji: "📋", label: "Tareas", desc: "Con fecha límite, y se llenan solas con lo que entrenas", descProfe: "Pide cantidades y la tarea se llena sola con lo que entrenan", href: "tareas.html" },
                 { emoji: "📝", label: "Exámenes", desc: "Con nota y reloj: una sola oportunidad por pregunta", descProfe: "Con nota y reloj, y el informe pregunta por pregunta de cada uno", href: "examenes.html" },
+                /* El diagnóstico entra acá y no en un grupo propio: no se
+                   practica, se APLICA —es tu profesor quien te lo pide para
+                   ubicarte—, y lo que sale de él es el plan que te arma. A
+                   quien da clase la misma tarjeta lo lleva al RESULTADO de sus
+                   alumnos (`hrefProfe`), no a la prueba: el banco es el mismo
+                   que el de ellos, y resolverla por su cuenta no le sirve de
+                   nada. El de arbitraje sigue siendo solo de administración. */
+                { emoji: "🧭", label: "Diagnóstico de nivel", desc: "La prueba que ubica tu nivel y arma tu plan de entrenamiento", descProfe: "El nivel de cada alumno y dónde está floja la clase", href: "entreno/diagnostico.html", hrefProfe: "informes.html?tema=diagnostico" },
             ] },
             /* "Aprender" va antes que "Jugar y competir": esto es una academia,
                y lo primero que se ofrece al entrar es lo que se viene a hacer.
@@ -95,7 +103,9 @@
                 { photo: "img/oscar-avatar.jpg", label: "Juega contra mí", desc: "Practica contra Oscar, nuestro motor", href: "tablero.html" },
                 { emoji: "🏅", label: "Logros", desc: "Tu racha de días entrenando y las medallas que has ganado", descProfe: "El catálogo de medallas y cómo se gana la racha de días", href: "logros.html" },
             ] },
-            /* «Mide tu nivel» (los dos diagnósticos) y las tarjetas que eran
+            /* «Mide tu nivel» (los dos diagnósticos) ya no existe: el de
+               nivel está en «Lo que te pone tu profesor» y el de arbitraje
+               es solo de administración. Las tarjetas que eran
                solo de administración —lector de planilla, tienda,
                actualizaciones, guía del profesor— ya no viven acá: quien
                administra tiene su propio panel (ADMIN_GROUPS) y las encuentra
@@ -327,6 +337,7 @@
             if (!esEquipoDocente()) return;
             TILE_GROUPS.forEach((g) => g.tiles.forEach((t) => {
                 if (t.descProfe) t.desc = t.descProfe;
+                if (t.hrefProfe) t.href = t.hrefProfe;
             }));
         }
 

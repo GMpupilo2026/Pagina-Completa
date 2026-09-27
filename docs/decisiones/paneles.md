@@ -64,11 +64,10 @@ lista, y el resto se acomoda solo.
   nombre estaba largo para distinguirlo de la otra tarjeta que se llamaba
   igual, y esa otra es hoy "TV en vivo". El día que vuelva a haber dos, el que
   se renombra es el nuevo.
-- **"Mide tu nivel" es lo que uno hace por su cuenta**, y se llamaba
-  "Evaluaciones" con los exámenes adentro. Un examen te lo pone otra persona,
-  con fecha y con nota; un diagnóstico lo hace uno cuando quiere, para saber
-  dónde está parado. Ahí quedan los dos diagnósticos y nada más — y **el grupo
-  entero es SOLO de administración**, ver abajo.
+- **"Mide tu nivel" ya no existe.** Se llamaba "Evaluaciones" con los
+  exámenes adentro, y después quedó con los dos diagnósticos y SOLO para
+  administración (ver abajo). Hoy el de nivel vive en **"Lo que te pone tu
+  profesor"**, ver «El diagnóstico de nivel es de lo que te pone tu profesor».
 - **Un grupo del que no queda ni un acceso utilizable no se pinta.** A la
   alumna, "Herramientas" le salía como un encabezado y dos cuadros grises —sus
   dos accesos están en mantenimiento—: una sección entera de la página que no
@@ -77,31 +76,26 @@ lista, y el resto se acomoda solo.
   queda**, y con su razón escrita: ahí uno vino por otra cosa y de paso se
   entera de que eso vuelve. No se esconde con una clase: no se pinta — un
   enlace invisible pero presente sigue siendo una parada de tabulador.
-- **Los dos diagnósticos son SOLO de administración.** Estaban para todo el
-  mundo, y eso era regalar las dos pruebas con las que el sitio ubica el nivel
-  de alguien: los bancos —301 preguntas y 200 de reglamento— son archivos
-  estáticos, así que cuanta más gente las resuelve por su cuenta, menos miden.
-  Un diagnóstico se APLICA, no se practica.
-  - Lo quita `diagnosticosSoloParaAdministracion()`, sobre la lista ya armada y
-    en un solo lugar, igual que `apagarEnMantenimiento()`. Se quita el **grupo
-    entero** y no sus dos tarjetas: un encabezado sin nada debajo es la misma
-    sección muerta que ya se quitó de "Herramientas" para el alumnado.
-  - Va **después** del `if` que le reapunta el destino al arbitraje, así quien
-    administra lo conserva apuntando a `arbitraje.html` —la página con la
-    revisión de los exámenes del público y el detalle pregunta por pregunta— y
-    no a la versión pública. Y el grupo se queda **escrito en `TILE_GROUPS`**
-    con sus dos tarjetas: definirlo dentro del `if` de un rol volvería a
-    repartir el panel a pedazos.
-  - **El diagnóstico de nivel sigue abierto al público sin cuenta** en
-    `entreno/diagnostico.html`, que es una puerta de entrada al sitio y otra
-    cosa: lo que se quitó es el camino desde el panel de quien ya está adentro.
-    Lo mismo `nivel-de-arbitraje.html`, que es pública y enlazada desde la
-    portada.
-  - La comprobación que importa no es que el grupo no salga en la lista: es que
-    **no quede ni un enlace a esas dos páginas en la grilla**, escondido o no —
-    un enlace invisible pero presente sigue siendo una parada de tabulador.
-    `verificar-panel.js` lo mira con las tres caras, y a administración le pide
-    lo contrario: que SÍ se le pinten los dos, o se quedaría sin ninguna puerta.
+- **El diagnóstico de nivel es de lo que te pone tu profesor.** Durante un
+  tiempo los dos diagnósticos fueron SOLO de administración —«un diagnóstico se
+  APLICA, no se practica»—, y el alumno solo llegaba al de nivel por el primer
+  paso de la franja de arriba, que se apaga en cuanto lo rinde. Justamente
+  porque se aplica, su lugar es al lado de Tareas y Exámenes: te lo pide otra
+  persona para ubicarte, y lo que sale de ahí es el plan que te arma.
+  - **Al alumno** la tarjeta lo lleva a `entreno/diagnostico.html`, que de por
+    sí está abierta al público sin cuenta: no se regala nada que no estuviera.
+  - **A quien da clase** la misma tarjeta lo lleva al **resultado** de sus
+    alumnos (`informes.html?tema=diagnostico`), no a la prueba: el banco es el
+    mismo que el de ellos y resolverla por su cuenta no le sirve. Lo hace
+    `hrefProfe`, que `textosDelEquipoDocente()` aplica igual que `descProfe`.
+  - **El de arbitraje sigue siendo SOLO de administración**: está en su panel
+    («Resultados de las pruebas») y en ningún otro. `nivel-de-arbitraje.html`
+    sigue pública y enlazada desde la portada, que es otra cosa.
+  - `verificar-panel.js` pide que al alumnado el diagnóstico le salga **una
+    sola vez** (en ese grupo), que a la profesora la tarjeta vaya al informe y
+    que en la grilla de ninguno de los dos quede ni un enlace a
+    `arbitraje` —ni escondido: un enlace invisible pero presente sigue siendo
+    una parada de tabulador—.
 - **Un acceso apagado no es un enlace gris.** `renderTileCard()` le pone un
   `<div>` con `aria-disabled`, sin `href`: no promete un destino que no va a
   abrir. **Pero SÍ recibe el foco** (`tabindex="0"`, `role="link"`), y eso se
