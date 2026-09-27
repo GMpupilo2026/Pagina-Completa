@@ -280,6 +280,7 @@
     $("sala-lichess-caja").classList.toggle("hidden", !lichess);
     $("sala-pizarras-caja").classList.toggle("hidden", !lichess);
     $("sala-video-caja").classList.toggle("hidden", !lichess);
+    $("sala-tema-caja").classList.toggle("hidden", !lichess);
     $("sala-quiniela-caja").classList.toggle("hidden", !lichess);
     $("sala-enlaces-ayuda").textContent = lichess
       ? "Opcional: botones de más debajo de «Entrar a la sala», por ejemplo «Verlo directo en Lichess»."
@@ -299,6 +300,7 @@
       enlaces: valoresDe("enlaces"),
       pizarras: valoresDe("pizarras"),
       video_url: $("sala-video").value.trim(),
+      tema: $("sala-tema").value || EscenariosSala.POR_OMISION,
       quiniela: $("sala-quiniela").checked,
       visible: $("sala-visible").checked,
     };
@@ -328,6 +330,7 @@
     llenar("enlaces", sala ? sala.enlaces : []);
     llenar("pizarras", sala ? sala.pizarras : []);
     $("sala-video").value = sala && sala.video_url ? sala.video_url : "";
+    $("sala-tema").value = sala && EscenariosSala.porId(sala.tema) ? sala.tema : EscenariosSala.POR_OMISION;
     $("sala-quiniela").checked = !!(sala && sala.quiniela);
     cargarParticipantes(sala);
     decirVideo();
@@ -403,6 +406,7 @@
       tipo: sala.tipo, lichess_id: sala.tipo === "lichess" ? sala.lichess_id : null,
       enlaces: sala.enlaces, pizarras: sala.tipo === "lichess" ? sala.pizarras : [],
       video_url: sala.tipo === "lichess" && sala.video_url ? sala.video_url : null,
+      tema: EscenariosSala.porId(sala.tema) ? sala.tema : EscenariosSala.POR_OMISION,
       quiniela: sala.tipo === "lichess" && sala.quiniela, visible: sala.visible,
     };
     $("sala-guardar").disabled = true;
@@ -471,6 +475,11 @@
   function iniciar() {
     if (iniciado) return;
     iniciado = true;
+    EscenariosSala.LISTA.forEach((e) => {
+      const o = el("option", "", e.emoji + " " + e.nombre + " — " + e.descripcion);
+      o.value = e.id;
+      $("sala-tema").appendChild(o);
+    });
     $("sala-nueva").addEventListener("click", () => {
       if ($("sala-editor").classList.contains("hidden") || editando) abrirEditor(null);
       else cerrarEditor();

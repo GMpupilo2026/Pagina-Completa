@@ -1013,3 +1013,42 @@ tablas, ganan negras) y ve la tabla de aciertos. Migración
   función desde la base. `verificar-quiniela.js` prueba la página y el editor
   con un doble de la función que aplica las mismas reglas y mensajes; sin la
   casilla de la privacidad, salta.
+
+## Los ambientes de la sala
+
+La sala de las transmisiones se puede ver de siete maneras: 🎬 sala de cine
+(la de siempre), 🎭 teatro, 🏛️ salón de actos, 🏟️ estadio, 🕰️ club clásico,
+🔭 planetario y 🕹️ arcade. Cambian el fondo, la marquesina, los telones (que
+en el estadio son la gradería, en el club las bibliotecas y en el planetario
+nebulosas), la pantalla, la pizarra (pizarra blanca en el salón, programa de
+mano en el teatro, marcador de luces en el estadio, tabla de récords en el
+arcade…), el antetítulo y el nombre de la pizarra. Migración
+`20260927081958_ambiente_de_la_sala`, `js/escenarios-sala.js`.
+
+- **Quien administra elige con cuál abre cada sala** («Ambiente de la sala»
+  en el editor, `salas_torneo.tema`, `cine` por omisión). **Quien mira lo
+  puede cambiar** con el selector «Ambiente» de arriba a la derecha; su
+  elección se queda en su navegador y para esa sala
+  (`localStorage`, `sala_ambiente_v1:<clave>`), como el tablero preferido: es
+  de dónde se mira. Si el navegador no deja guardar, se cambia igual.
+- **Un ambiente es un juego de variables** `--esc-*` sobre
+  `.cine-sala[data-escenario="…"]` en `css/styles.css`; las clases de la sala
+  no cambian y el JavaScript solo pone el atributo. Un ambiente nuevo va en
+  tres lados: la lista de `js/escenarios-sala.js` (la única, la usan la sala y
+  administración), su bloque en el CSS y la restricción de
+  `salas_torneo.tema` (una migración). `verificar-escenarios-sala.js`
+  comprueba que los tres digan lo mismo.
+- **El contraste se mide en los siete.** La sala tiene texto blanco,
+  `brand-100/200` y `accent-400` encima: por eso el fondo, la marquesina, la
+  pantalla y las cajas son oscuros en todos. La pizarra es la única que puede
+  ser clara, y trae sus propios colores de texto, de puntos y del anillo de
+  foco (el ámbar no se ve sobre blanco). El verificador lee los colores que
+  calculó el navegador y mide cada texto contra cada fondo, con la luz del
+  ambiente y un 10 % de blanco más por los adornos; el peor par da 4.74 (el
+  `brand-200` en el estadio). Con el tema de la plataforma no cambia nada: sus
+  colores tienen la misma luminancia (ver `js/temas-plataforma.js`).
+- **`montar()` corre apenas se carga el script**, no en `DOMContentLoaded`:
+  la sala puede llegar de la base antes, y montar le pisaba el ambiente de
+  administración con el cine. Lo encontró el verificador.
+- El enlace «Ver en chess-results» de la pizarra dejó de ponerse blanco al
+  pasar el mouse (`hover:text-white`): sobre una pizarra clara desaparecía.
