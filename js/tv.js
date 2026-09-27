@@ -23,37 +23,10 @@
                 return parts[parts.length - 1] || null;
             }
 
-            // Reconoce enlaces de YouTube y Twitch (los dos que suelen usar los canales de
-            // ajedrez para comentar torneos en vivo) y arma su URL de embed. Cualquier otro
-            // enlace no se puede embeber de forma segura sin saber de qué servicio es, así que
-            // se marca como "unknown" y la página solo ofrece un botón para abrirlo aparte.
+            // YouTube o Twitch → la dirección de su reproductor: js/video-embebido.js,
+            // la misma que usa el comentarista de la sala de cine.
             function parseVideoEmbed(raw) {
-                const trimmed = (raw || "").trim();
-                if (!trimmed) return null;
-                let u;
-                try { u = new URL(trimmed); } catch (e) { return { kind: "unknown", embedUrl: null, url: trimmed }; }
-                const host = u.hostname.replace(/^www\.|^m\./, "");
-
-                if (host === "youtube.com" || host === "youtu.be") {
-                    let id = null;
-                    if (host === "youtu.be") id = u.pathname.slice(1);
-                    else if (u.pathname === "/watch") id = u.searchParams.get("v");
-                    else if (u.pathname.startsWith("/live/") || u.pathname.startsWith("/embed/")) id = u.pathname.split("/")[2];
-                    if (id) return { kind: "youtube", embedUrl: "https://www.youtube-nocookie.com/embed/" + encodeURIComponent(id) };
-                }
-
-                if (host === "twitch.tv") {
-                    const parent = window.location.hostname;
-                    const parts = u.pathname.split("/").filter(Boolean);
-                    if (parts[0] === "videos" && parts[1]) {
-                        return { kind: "twitch", embedUrl: "https://player.twitch.tv/?video=" + encodeURIComponent(parts[1]) + "&parent=" + parent + "&autoplay=false" };
-                    }
-                    if (parts[0]) {
-                        return { kind: "twitch", embedUrl: "https://player.twitch.tv/?channel=" + encodeURIComponent(parts[0]) + "&parent=" + parent + "&autoplay=false" };
-                    }
-                }
-
-                return { kind: "unknown", embedUrl: null, url: trimmed };
+                return VideoEmbebido.leer(raw);
             }
 
             // El video de comentaristas solo se muestra si el profesor puso un enlace

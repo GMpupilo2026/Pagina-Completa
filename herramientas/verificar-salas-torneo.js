@@ -186,7 +186,28 @@ async function editor(browser) {
   igual("al volver a editarla, están", await page.$$eval("#sala-pizarras [data-campo=texto]", (i) => i.map((x) => x.value)), ["Femenino", "Masculino"]);
   await page.check('input[name="sala-tipo"][value="enlaces"]');
   igual("una sala de enlaces no las ofrece", await page.$eval("#sala-pizarras-caja", (e) => e.checkVisibility()), false);
+  igual("ni el comentarista", await page.$eval("#sala-video-caja", (e) => e.checkVisibility()), false);
   await page.click("#sala-cancelar");
+
+  console.log("\n=== El comentarista en video ===");
+  await page.click('#salas-admin li[data-sala="copa-nacional-2026"] button[aria-label^="Editar"]');
+  await escribir(page, "#sala-video", "https://vimeo.com/12345");
+  igual("un enlace que no es de YouTube ni Twitch lo dice al escribirlo", await page.textContent("#sala-video-estado"), "Ese enlace no es de un video de YouTube ni de un canal de Twitch.");
+  const antesVideo = (await escrituras(page)).length;
+  await page.click("#sala-guardar");
+  igual("y no se manda", [await mensaje(page), (await escrituras(page)).length === antesVideo],
+    ["El comentarista tiene que ser un enlace de YouTube o de Twitch (por ejemplo https://www.youtube.com/watch?v=… o https://www.twitch.tv/nombre-del-canal).", true]);
+  await escribir(page, "#sala-video", "https://youtu.be/abcDEF12345");
+  igual("uno de YouTube sí", await page.textContent("#sala-video-estado"), "✓ Video de YouTube: se va a ver en la sala.");
+  await page.click("#sala-guardar");
+  await page.waitForFunction(() => document.getElementById("sala-editor").classList.contains("hidden"));
+  igual("se guarda tal cual", (await escrituras(page)).pop().datos.video_url, "https://youtu.be/abcDEF12345");
+  await page.click('#salas-admin li[data-sala="copa-nacional-2026"] button[aria-label^="Editar"]');
+  igual("al volver a editarla, está", await page.inputValue("#sala-video"), "https://youtu.be/abcDEF12345");
+  await escribir(page, "#sala-video", "");
+  await page.click("#sala-guardar");
+  await page.waitForFunction(() => document.getElementById("sala-editor").classList.contains("hidden"));
+  igual("y borrarlo lo quita", (await escrituras(page)).pop().datos.video_url, null);
 
   console.log("\n=== Lo que la base rechaza ===");
   await page.click("#sala-nueva");

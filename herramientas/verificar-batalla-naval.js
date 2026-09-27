@@ -284,7 +284,11 @@ async function navegador() {
 
     console.log("\n— La pista y el teclado —");
     await escribir(page, "nivel 2");
-    await escribir(page, "a1");
+    // Un disparo al agua, no a «a1» a ciegas: con la flota al azar, a veces la
+    // dama estaba justo ahí, se hundía y la pista empezaba por la torre (falló
+    // así en el CI del PR #486, «La torre puede estar en 63 casillas»).
+    const agua2 = await page.evaluate(() => B.TODAS.find((s) => !B.piezaEn(partida.mar, s)));
+    await escribir(page, agua2);
     const pista = await escribir(page, "pista");
     cierto("la pista dice dónde puede estar cada pieza", /^Pista\. La dama puede estar en/.test(pista), pista.slice(0, 90));
     const seguras = await page.evaluate(() => BatallaNavalMotor.conocimiento(partida.mar).seguras);

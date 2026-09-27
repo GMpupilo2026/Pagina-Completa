@@ -403,6 +403,11 @@
                                     <ul id="sala-pizarras" class="space-y-2" aria-labelledby="sala-pizarras-titulo"></ul>
                                     <button type="button" id="sala-pizarra-mas" class="mt-2 text-sm font-semibold text-accent-700 dark:text-accent-400 underline underline-offset-2 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">+ Agregar una pizarra</button>
                                 </div>
+                                <div id="sala-video-caja">
+                                    <label for="sala-video" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Comentarista en video</label>
+                                    <input id="sala-video" type="url" inputmode="url" maxlength="300" placeholder="https://www.youtube.com/watch?v=… o https://www.twitch.tv/…" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none" aria-describedby="sala-video-estado" autocapitalize="off" spellcheck="false">
+                                    <p id="sala-video-estado" role="status" class="text-xs mt-1 text-brand-500 dark:text-brand-300">Opcional. Un enlace de YouTube o de Twitch: se ve en la sala, al lado de la pizarra.</p>
+                                </div>
                                 <label class="flex items-center gap-2 text-sm text-brand-800 dark:text-white"><input id="sala-visible" type="checkbox" checked> Publicada: se ve en Torneos</label>
                             </div>
                             <div>
@@ -449,6 +454,7 @@
     <script src="js/avisos.js"></script>
     <script src="js/main.js"></script>
     <script src="js/salas-torneo.js"></script>
+    <script src="js/video-embebido.js"></script>
     <script src="js/admin-salas-torneo.js"></script>
     <script src="js/admin.js"></script>
 <!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- ayuda: inicio --><script src="js/ayuda-guia.js" defer></script><!-- ayuda: fin --><!-- atajo: inicio --><script src="js/atajo-buscar.js" data-arriba="" defer></script><!-- atajo: fin --></body>

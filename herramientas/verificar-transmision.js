@@ -148,6 +148,7 @@ async function main() {
   igual("el reloj se lee (543 s = 9:03)", (await page.textContent("#cine-blancas")).includes("9:03"), true);
   igual("la posición en palabras para el lector de pantalla", (await page.textContent("#cine-posicion")).startsWith("Blancas: rey en e1, dama en d1"), true);
   igual("el tablero grande lleva coordenadas y las miniaturas no", await page.$$eval(".coord-marco", (m) => m.length), 1);
+  igual("sin video en la sala, no hay comentarista", await page.$eval("#cine-comentarista", (e) => e.checkVisibility()), false);
 
   console.log("\n=== La pizarra ===");
   igual("mismos puntos, mismo puesto", await pizarra(page), ["1 Beto 2½ 3", "2 Caro 1 3", "2 Dani 1 2", "4 Ana ½ 2"]);
@@ -213,6 +214,29 @@ async function main() {
     igual("«" + clave + "»: dice que no está abierta", await p.textContent("#cine-error-texto"), "Esta sala no existe o todavía no está abierta.");
     igual("«" + clave + "»: y ofrece la lista de torneos", await p.getAttribute("#cine-error-enlace", "href"), "torneos-en-vivo.html");
     await p.close();
+  }
+
+  console.log("\n=== El comentarista en video ===");
+  {
+    const conVideo = { ...SALAS[0], id: "s-11", clave: "con-video", video_url: "https://www.youtube.com/watch?v=abcDEF12345" };
+    const conTwitch = { ...SALAS[0], id: "s-12", clave: "con-twitch", video_url: "https://www.twitch.tv/canal_de_prueba" };
+    const ctx3 = await browser.newContext({ serviceWorkers: "block", viewport: { width: 1280, height: 900 } });
+    await ctx3.route("**/js/supabase-client.js", (r) =>
+      r.fulfill({ status: 200, contentType: "application/javascript", body: dobleSalas({ salas: SALAS.concat([conVideo, conTwitch]) }) }));
+    // Los reproductores no se bajan de verdad: solo importa qué se pide.
+    await ctx3.route(/youtube-nocookie\.com|player\.twitch\.tv/, (r) => r.fulfill({ status: 200, contentType: "text/html", body: "<p>video</p>" }));
+    for (const [clave, src, titulo] of [
+      ["con-video", "https://www.youtube-nocookie.com/embed/abcDEF12345", "Comentarista en vivo de Desafío Mentes Maestras CENFOTEC 2026 (YouTube)"],
+      ["con-twitch", "https://player.twitch.tv/?channel=canal_de_prueba&parent=localhost&autoplay=false", "Comentarista en vivo de Desafío Mentes Maestras CENFOTEC 2026 (Twitch)"]]) {
+      const p = await ctx3.newPage();
+      await ponerDoble(p);
+      await p.goto(BASE + "/transmision.html?torneo=" + clave);
+      await p.waitForSelector("#cine-comentarista iframe", { state: "attached" });
+      igual("«" + clave + "»: el reproductor, visible y con su título", [await p.$eval("#cine-comentarista", (e) => e.checkVisibility()),
+        await p.getAttribute("#cine-comentarista iframe", "src"), await p.getAttribute("#cine-comentarista iframe", "title")], [true, src, titulo]);
+      await p.close();
+    }
+    await ctx3.close();
   }
 
   console.log("\n=== En vivo: la transmisión continua ===");

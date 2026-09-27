@@ -936,3 +936,30 @@ vista:
   vacía se sigue pidiendo, la partida sin `fen` y el seguir a la ronda en curso
   (y no hacerlo si se eligió a mano). Sin la transmisión y sin volver a pedir
   la ronda vacía, saltan ocho.
+
+## El comentarista en video
+
+Una sala de Lichess puede llevar el video de quien comenta el torneo en vivo
+(`salas_torneo.video_url`, migración `20260927054551`): va en la columna de la
+derecha, arriba de la pizarra, como una pantalla chica con el mismo marco que
+la grande. Se carga en el editor de `admin.html#torneos`.
+
+- **Solo YouTube y Twitch**, y lo exige la base (un `check` con los dos
+  dominios, que rechaza también `youtube.com.otro-sitio.com`): son los dos que
+  la CSP deja incrustar (`frame-src`), y son los que usan los canales de
+  ajedrez para comentar. El editor lo dice mientras se escribe («✓ Video de
+  YouTube: se va a ver en la sala» o que no sirve) y no manda uno que no sirva.
+- **Una sola copia de cómo se incrusta**: `js/video-embebido.js`
+  (`VideoEmbebido.leer`), que salió de `js/tv.js`, donde la TV ya lo hacía.
+  YouTube va por `youtube-nocookie.com` (su modo de privacidad mejorada) y
+  Twitch con `parent=` igual al sitio de la página, que Twitch exige.
+- El `<iframe>` lleva título («Comentarista en vivo de <sala> (YouTube)»), que
+  es lo que anuncia un lector de pantalla.
+- **La política de privacidad nombra Twitch** desde el 27 de setiembre de 2026:
+  su reproductor se carga desde Twitch, que recibe la dirección IP. La TV ya lo
+  incrustaba y no lo decía.
+- Con el comentarista arriba, la pizarra dejó de ser `sticky` en computadora:
+  una columna pegada más alta que la ventana deja su final fuera de alcance.
+- `verificar-transmision.js` comprueba el reproductor de YouTube y el de
+  Twitch (dirección y título) y que sin video no haya nada; `verificar-salas-
+  torneo.js`, el campo del editor. Sin pintar el comentarista, salta.

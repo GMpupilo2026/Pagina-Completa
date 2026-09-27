@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20260927050207
+# al-dia-con: 20260927054551
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -691,6 +691,7 @@ columna  salas_torneo.pizarras  jsonb
 columna  salas_torneo.tipo  text
 columna  salas_torneo.updated_at  timestamp with time zone
 columna  salas_torneo.updated_by  uuid
+columna  salas_torneo.video_url  text
 columna  salas_torneo.visible  boolean
 columna  saved_games.created_at  timestamp with time zone
 columna  saved_games.created_by  uuid

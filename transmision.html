@@ -137,6 +137,16 @@
                         <ul id="cine-cartelera" class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3"></ul>
                     </section>
 
+                    <div class="space-y-6">
+                    <!-- El comentarista en video (YouTube o Twitch), si la sala tiene uno. -->
+                    <section id="cine-comentarista" class="hidden cine-comentarista" aria-labelledby="cine-comentarista-titulo">
+                        <h2 id="cine-comentarista-titulo" class="font-serif text-lg font-bold text-white mb-3 flex items-center justify-between gap-2">
+                            <span>Comentarista</span>
+                            <span class="cine-envivo text-accent-400 font-sans">en vivo</span>
+                        </h2>
+                        <div id="cine-comentarista-video" class="aspect-video w-full bg-black rounded-lg overflow-hidden"></div>
+                    </section>
+
                     <!-- La pizarra con las posiciones. -->
                     <section aria-labelledby="pizarra-titulo" class="pizarra">
                         <h2 id="pizarra-titulo" class="font-serif text-xl font-bold text-center mb-1">Pizarra de posiciones</h2>
@@ -160,6 +170,7 @@
                         <p id="pizarra-vacia" class="hidden text-center text-sm mt-3">Todavía no terminó ninguna partida: la pizarra se llena con el primer resultado.</p>
                         <p id="pizarra-fuente" class="hidden pizarra-tenue text-xs text-center mt-4"></p>
                     </section>
+                    </div>
                 </div>
 
                 <p class="text-center text-brand-200 text-xs mt-10"><span id="cine-actualizado"></span> Datos de <a id="cine-lichess" href="#" target="_blank" rel="noopener" class="underline underline-offset-2 hover:text-accent-400 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">la transmisión en Lichess<span class="sr-only"> (se abre en otra pestaña)</span></a>.</p>
@@ -188,6 +199,7 @@
     <script src="js/vendor/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
     <script src="js/salas-torneo.js"></script>
+    <script src="js/video-embebido.js"></script>
     <script src="js/vendor/chess.js"></script>
     <script src="js/main.js"></script>
     <script src="js/transmision.js"></script>
