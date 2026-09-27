@@ -2,10 +2,10 @@
  * por Lichess (una transmisión o «broadcast»), con la partida elegida en la
  * pantalla grande, las demás de la ronda debajo y la pizarra de posiciones.
  *
- * Los torneos que se pueden ver acá son los de TORNEOS (la ficha de
- * torneos-en-vivo.html enlaza a transmision.html?torneo=<clave>). Para sumar
- * uno, se agrega su línea con el id de la transmisión: es lo último de su
- * dirección, lichess.org/broadcast/<nombre>/<id>.
+ * Qué torneo muestra lo dice la sala (tabla salas_torneo, que edita quien
+ * administra en admin.html#torneos): torneos-en-vivo.html enlaza a
+ * transmision.html?torneo=<clave>, y la sala de esa clave trae el id de la
+ * transmisión de Lichess.
  *
  * Todo sale de la API pública de Lichess, sin cuenta:
  *   /api/broadcast/<id>                  el torneo y sus rondas
@@ -13,27 +13,28 @@
  * La pizarra se arma sumando los resultados de todas las rondas: un punto por
  * ganar, medio por tablas. No se inventa ningún desempate: con los mismos
  * puntos se comparte el puesto.
+ *
+ * SALVO que la sala traiga pizarras de chess-results: una transmisión puede
+ * llevar solo algunas mesas (la de UTN trae dos), y sumar esas no es la tabla
+ * del torneo. Entonces la pizarra muestra las posiciones oficiales, que lee la
+ * Edge Function pizarra-torneo (chess-results no deja que el navegador le
+ * pida nada), con una pestaña por pizarra. Ver «Las posiciones oficiales
+ * vienen de chess-results» en docs/decisiones/juegos-y-torneos.md.
  */
 (function () {
     "use strict";
 
-    const TORNEOS = {
-        cenfotec: {
-            id: "s7NfNv6H",
-            nombre: "Desafío Mentes Maestras CENFOTEC 2026",
-            enlace: "https://lichess.org/broadcast/desafio-mentes-maestras-cenfotec-2026/s7NfNv6H",
-        },
-    };
     const LICHESS = "https://lichess.org";
     const CADA_MS = 20000;          // cada cuánto se refresca la ronda en curso
+    const PIZARRA_MS = 90000;       // y la pizarra de chess-results (la función guarda 90 s)
     const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
     const NOMBRE_PIEZA = { k: "rey", q: "dama", r: "torre", b: "alfil", n: "caballo", p: "peón" };
     const ORDEN_PIEZA = "kqrbnp";
 
     const $ = (id) => document.getElementById(id);
 
-    const clave = new URLSearchParams(location.search).get("torneo") || Object.keys(TORNEOS)[0];
-    const torneo = TORNEOS[clave] || TORNEOS[Object.keys(TORNEOS)[0]];
+    const clave = new URLSearchParams(location.search).get("torneo");
+    let torneo = null;   // { id, nombre, enlace } de la sala elegida
 
     const estado = {
         tour: null,
@@ -42,6 +43,11 @@
         rondaElegida: null,
         partidaElegida: null,   // id de la partida en la pantalla grande
         temporizador: null,
+        sala: null,
+        oficiales: null,        // lo que devolvió pizarra-torneo, o null mientras carga
+        oficialError: null,
+        pestana: 0,
+        temporizadorPizarra: null,
     };
 
     // ---- Lichess -------------------------------------------------------------
@@ -360,6 +366,7 @@
     }
 
     function pintarPizarra() {
+        if (estado.sala && (estado.sala.pizarras || []).length) { pintarOficial(); return; }
         const filas = posiciones();
         const cuerpo = $("pizarra-cuerpo");
         cuerpo.innerHTML = "";
@@ -384,6 +391,137 @@
             celda(String(f.jugadas), "py-2 text-right pizarra-tenue");
             cuerpo.appendChild(tr);
         });
+    }
+
+    // ---- La pizarra oficial (chess-results) --------------------------------------
+
+    async function cargarOficial() {
+        try {
+            const { data, error } = await sb.functions.invoke("pizarra-torneo", { body: { clave: estado.sala.clave } });
+            if (error) throw error;
+            estado.oficiales = Array.isArray(data && data.pizarras) ? data.pizarras : [];
+            estado.oficialError = null;
+        } catch (e) {
+            console.error(e);
+            estado.oficialError = "No pudimos leer las posiciones de chess-results ahora mismo. Se vuelve a intentar sola en un rato.";
+        }
+        pintarOficial();
+    }
+
+    function programarPizarra() {
+        clearTimeout(estado.temporizadorPizarra);
+        estado.temporizadorPizarra = setTimeout(async () => {
+            if (!document.hidden) await cargarOficial();
+            programarPizarra();
+        }, PIZARRA_MS);
+    }
+
+    function hora(iso) {
+        const d = new Date(iso);
+        return isNaN(d) ? "" : d.toLocaleTimeString("es-CR", { timeZone: "America/Costa_Rica", hour: "numeric", minute: "2-digit" });
+    }
+
+    function pintarOficial() {
+        const pizarrasSala = estado.sala.pizarras || [];
+        const cuerpo = $("pizarra-cuerpo");
+        const nota = $("pizarra-nota");
+        const vacia = $("pizarra-vacia");
+        const fuente = $("pizarra-fuente");
+        $("pizarra-col4").textContent = "Elo";
+        $("pizarra-leyenda").textContent = "Posiciones oficiales del torneo: puesto, jugador, puntos y Elo";
+        cuerpo.innerHTML = "";
+
+        // Las pestañas: una por pizarra, si hay más de una.
+        const pestanas = $("pizarra-pestanas");
+        pestanas.innerHTML = "";
+        pestanas.classList.toggle("hidden", pizarrasSala.length < 2);
+        if (estado.pestana >= pizarrasSala.length) estado.pestana = 0;
+        pizarrasSala.forEach((p, i) => {
+            const b = document.createElement("button");
+            b.type = "button";
+            b.className = "pizarra-pestana px-3 py-1 rounded-full text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+            b.textContent = p.titulo;
+            b.setAttribute("aria-pressed", String(i === estado.pestana));
+            b.addEventListener("click", () => { estado.pestana = i; pintarOficial(); pestanas.querySelectorAll("button")[i].focus(); });
+            pestanas.appendChild(b);
+        });
+
+        if (!estado.oficiales) {
+            nota.textContent = estado.oficialError || "Cargando las posiciones de chess-results…";
+            vacia.classList.add("hidden");
+            fuente.classList.add("hidden");
+            return;
+        }
+        const titulo = (pizarrasSala[estado.pestana] || {}).titulo;
+        const p = estado.oficiales.find((x) => x.titulo === titulo) || estado.oficiales[estado.pestana];
+        if (!p || p.error) {
+            nota.textContent = (p && p.error) || "Esta pizarra no se pudo leer.";
+            vacia.classList.add("hidden");
+            fuente.classList.add("hidden");
+            return;
+        }
+        nota.textContent = (p.ronda || "Posiciones") + " · posiciones oficiales de chess-results" +
+            (estado.oficialError ? " · " + estado.oficialError : "");
+        const filas = Array.isArray(p.filas) ? p.filas : [];
+        vacia.textContent = "chess-results todavía no publicó las posiciones de este torneo.";
+        vacia.classList.toggle("hidden", filas.length > 0);
+        // Medallas solo cuando ya hay puntos: en la ronda 0 todos tienen 0.
+        const hayPuntos = filas.some((f) => f.puntos && f.puntos !== "0");
+        filas.forEach((f) => {
+            const tr = document.createElement("tr");
+            tr.className = "pizarra-linea";
+            const puesto = document.createElement("td");
+            puesto.className = "py-2 pr-2 whitespace-nowrap align-top";
+            const n = Number(f.puesto);
+            puesto.textContent = (hayPuntos && n >= 1 && n <= 3 ? ["🥇", "🥈", "🥉"][n - 1] + " " : "") + f.puesto;
+            tr.appendChild(puesto);
+            const th = document.createElement("th");
+            th.scope = "row";
+            th.className = "py-2 pr-2 text-left align-top";
+            const nombre = document.createElement("span");
+            nombre.className = "font-semibold block";
+            nombre.textContent = (f.titulo ? f.titulo + " " : "") + f.nombre;
+            th.appendChild(nombre);
+            if (f.club) {
+                const club = document.createElement("span");
+                club.className = "pizarra-tenue text-xs font-normal block";
+                club.textContent = f.club;
+                th.appendChild(club);
+            }
+            tr.appendChild(th);
+            const pts = document.createElement("td");
+            pts.className = "py-2 pr-2 text-right font-bold pizarra-puntos align-top";
+            pts.textContent = f.puntos;
+            tr.appendChild(pts);
+            const elo = document.createElement("td");
+            elo.className = "py-2 text-right pizarra-tenue align-top";
+            elo.textContent = f.elo && f.elo !== "0" ? f.elo : "–";
+            tr.appendChild(elo);
+            cuerpo.appendChild(tr);
+        });
+
+        fuente.innerHTML = "";
+        if (Array.isArray(p.desempates) && p.desempates.length) {
+            fuente.appendChild(document.createTextNode("Desempates, en orden: " + p.desempates.join(", ") + ". "));
+        }
+        if (p.viejo && p.leido_en) {
+            fuente.appendChild(document.createTextNode("Sin conexión con chess-results: es lo último que se leyó, a las " + hora(p.leido_en) + ". "));
+        }
+        if (p.url) {
+            const a = document.createElement("a");
+            a.href = p.url;
+            a.target = "_blank";
+            a.rel = "noopener";
+            a.className = "underline underline-offset-2 hover:text-white rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+            a.textContent = "Ver en chess-results";
+            const sr = document.createElement("span");
+            sr.className = "sr-only";
+            sr.textContent = " (se abre en otra pestaña)";
+            a.appendChild(sr);
+            a.appendChild(document.createTextNode(" ↗"));
+            fuente.appendChild(a);
+        }
+        fuente.classList.remove("hidden");
     }
 
     // ---- El ciclo ----------------------------------------------------------------
@@ -432,15 +570,47 @@
         programar();
     }
 
+    // Con enlace a Lichess si se sabe cuál es; si no (la sala no existe), a
+    // la lista de torneos.
     function mostrarError(texto) {
         $("loading").classList.add("hidden");
         $("cine-error-texto").textContent = texto;
-        $("cine-error-enlace").href = torneo.enlace;
+        const a = $("cine-error-enlace");
+        if (torneo && torneo.enlace) {
+            a.href = torneo.enlace;
+        } else {
+            a.href = "torneos-en-vivo.html";
+            a.removeAttribute("target");
+            a.textContent = "Ver todos los torneos";
+        }
         $("cine-error").classList.remove("hidden");
     }
 
+    // La sala de la clave, o la primera sala de Lichess visible si no se dijo cuál.
+    async function buscarSala() {
+        if (clave) return SalasTorneo.porClave(clave);
+        return (await SalasTorneo.listar()).find((s) => s.visible && s.tipo === "lichess") || null;
+    }
+
     async function arrancar() {
+        let sala;
+        try {
+            sala = await buscarSala();
+        } catch (e) {
+            console.error(e);
+            mostrarError("No pudimos cargar esta sala ahora mismo. Vuelve a intentarlo en un rato.");
+            return;
+        }
+        if (!sala || sala.tipo !== "lichess" || !sala.lichess_id) {
+            mostrarError("Esta sala no existe o todavía no está abierta.");
+            return;
+        }
+        estado.sala = sala;
+        if ((sala.pizarras || []).length) { cargarOficial().then(programarPizarra); }
+        const aLichess = (Array.isArray(sala.enlaces) ? sala.enlaces : []).find((e) => /^https:\/\/lichess\.org\//.test(e.url));
+        torneo = { id: sala.lichess_id, nombre: sala.nombre, enlace: aLichess ? aLichess.url : "https://lichess.org/broadcast/-/" + sala.lichess_id };
         $("cine-titulo").textContent = torneo.nombre;
+        document.title = torneo.nombre + " — Ajedrez Integral";
         $("cine-lichess").href = torneo.enlace;
         let datos;
         try {
@@ -451,11 +621,11 @@
             return;
         }
         estado.tour = datos.tour || {};
-        estado.rondas = Array.isArray(datos.rounds) ? datos.rounds : [];
-        if (estado.tour.name) {
-            $("cine-titulo").textContent = estado.tour.name;
-            document.title = estado.tour.name + " — Ajedrez Integral";
+        if (estado.tour.url && /^https:\/\/lichess\.org\//.test(estado.tour.url)) {
+            torneo.enlace = estado.tour.url;
+            $("cine-lichess").href = torneo.enlace;
         }
+        estado.rondas = Array.isArray(datos.rounds) ? datos.rounds : [];
         const n = estado.rondas.length;
         $("cine-sub").textContent = n ? n + (n === 1 ? " ronda" : " rondas") : "";
         if (!n) {
@@ -475,7 +645,7 @@
     document.addEventListener("visibilitychange", () => { if (!document.hidden && estado.rondaElegida) refrescar(); });
 
     // Para el verificador.
-    window.Transmision = { TORNEOS, posiciones, piezasDeFen, resultado };
+    window.Transmision = { posiciones, piezasDeFen, resultado };
 
     arrancar();
 })();

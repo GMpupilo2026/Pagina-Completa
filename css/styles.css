@@ -730,3 +730,8 @@ footer li > a {
 .pizarra-puntos { color: #ffe08a; }
 .pizarra-linea { border-bottom: 1px dashed rgb(244 241 232 / 0.25); }
 .pizarra th { font-weight: 600; }
+/* Las pestañas de la pizarra (femenino, masculino…): tiza sobre la pizarra,
+   y la elegida al revés, pizarra sobre tiza. */
+.pizarra-pestana { color: #f4f1e8; border: 1px dashed rgb(244 241 232 / 0.6); background: transparent; }
+.pizarra-pestana:hover { border-style: solid; }
+.pizarra-pestana[aria-pressed="true"] { background: #f4f1e8; color: #1d3a2c; border-style: solid; }

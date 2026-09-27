@@ -1,7 +1,9 @@
 /* Comprueba la sala de cine de las transmisiones (transmision.html,
    js/transmision.js) sin tocar Lichess: un doble contesta la API de las
-   transmisiones con un torneo de tres rondas. Ver «La sala de cine de las
-   transmisiones» en docs/decisiones/juegos-y-torneos.md.
+   transmisiones con un torneo de tres rondas, y otro doble (el de
+   lib/doble-salas-torneo.js) hace de la tabla salas_torneo, de donde la sala
+   saca qué torneo mostrar. Ver «La sala de cine de las transmisiones» en
+   docs/decisiones/juegos-y-torneos.md.
 
    Lo que se rompe callado acá: una pizarra que suma mal (o que no deja
    compartir el puesto), una ronda que se refresca y no repinta, y un tablero
@@ -11,13 +13,12 @@
    Uso:  python3 -m http.server 8777    (desde la raíz del sitio)
          node herramientas/verificar-transmision.js                    */
 const fs = require("fs");
-const path = require("path");
 const { chromium } = require("playwright");
 const { Chess } = require("chess.js");
+const { dobleSalas, SALAS } = require("./lib/doble-salas-torneo");
 
 const CHROME = process.env.CHROME_PATH || "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
 const BASE = process.env.BASE_URL || "http://localhost:8777";
-const RAIZ = path.join(__dirname, "..");
 
 let fallos = 0;
 function igual(nombre, hallado, esperado) {
@@ -91,18 +92,10 @@ const pizarra = (page) => page.$$eval("#pizarra-cuerpo tr", (trs) => trs.map((tr
   [...tr.children].map((td) => td.textContent.replace(/[🥇🥈🥉]\s*/u, "").trim()).join(" ")));
 
 async function main() {
-  console.log("\n=== La ficha lleva a la sala ===");
-  const fichas = fs.readFileSync(path.join(RAIZ, "torneos-en-vivo.html"), "utf8");
-  igual("la ficha de CENFOTEC entra a la sala", fichas.includes('href="transmision.html?torneo=cenfotec"'), true);
-  igual("UTN lleva sus dos salas de idchess, que se abren aparte", [
-    /href="https:\/\/media\.idchess\.com\/en\/tournaments\/kYfhVJ\/utn-2026\/[^"]+" target="_blank" rel="noopener"[^>]*>Partida masculina/.test(fichas),
-    /href="https:\/\/media\.idchess\.com\/en\/tournaments\/b0fhVJ\/utn-2026\/[^"]+" target="_blank" rel="noopener"[^>]*>Partida femenina/.test(fichas),
-    fichas.includes("Transmisión: próximamente")], [true, true, false]);
-  const js = fs.readFileSync(path.join(RAIZ, "js/transmision.js"), "utf8");
-  igual("la clave cenfotec apunta a su transmisión", /cenfotec:\s*\{\s*id:\s*"s7NfNv6H"/.test(js), true);
-
   const browser = await chromium.launch({ executablePath: fs.existsSync(CHROME) ? CHROME : undefined });
   const ctx = await browser.newContext({ serviceWorkers: "block", viewport: { width: 1280, height: 900 } });
+  await ctx.route("**/js/supabase-client.js", (r) =>
+    r.fulfill({ status: 200, contentType: "application/javascript", body: dobleSalas({ salas: SALAS }) }));
 
   console.log("\n=== La sala, con la ronda en curso ===");
   let terminada = false;
@@ -114,7 +107,7 @@ async function main() {
   await page.waitForSelector("#cine-contenido:not(.hidden)");
   await page.waitForFunction(() => document.querySelectorAll("#cine-tablero .cine-sq").length === 64);
   igual("la pantalla de carga se va", await page.$eval("#loading", (e) => e.checkVisibility()), false);
-  igual("el título es el del torneo", await page.textContent("#cine-titulo"), "Desafío de prueba");
+  igual("el título es el que le puso administración a la sala", await page.textContent("#cine-titulo"), "Desafío Mentes Maestras CENFOTEC 2026");
   igual("una función por ronda", await page.$$eval("#cine-rondas button", (b) => b.map((x) => x.textContent)), ["Ronda 1", "Ronda 2", "Ronda 3en vivo"]);
   igual("arranca en la ronda que marca Lichess", await page.$$eval("#cine-rondas button", (b) => b.map((x) => x.getAttribute("aria-pressed"))), ["false", "false", "true"]);
 
@@ -185,6 +178,73 @@ async function main() {
   igual("se ve el aviso", await caida.$eval("#cine-error", (e) => e.checkVisibility()), true);
   igual("y ofrece la transmisión en Lichess", await caida.getAttribute("#cine-error-enlace", "href"), "https://lichess.org/broadcast/desafio-mentes-maestras-cenfotec-2026/s7NfNv6H");
   igual("la pantalla de carga no se queda girando", await caida.$eval("#loading", (e) => e.checkVisibility()), false);
+
+  console.log("\n=== Una sala que no existe, o que no es de Lichess ===");
+  for (const clave of ["no-existe", "utn", "copa-secreta"]) {
+    const p = await ctx.newPage();
+    await ponerDoble(p);
+    await p.goto(BASE + "/transmision.html?torneo=" + clave);
+    await p.waitForSelector("#cine-error:not(.hidden)");
+    igual("«" + clave + "»: dice que no está abierta", await p.textContent("#cine-error-texto"), "Esta sala no existe o todavía no está abierta.");
+    igual("«" + clave + "»: y ofrece la lista de torneos", await p.getAttribute("#cine-error-enlace", "href"), "torneos-en-vivo.html");
+    await p.close();
+  }
+
+  console.log("\n=== Con pizarras de chess-results: las posiciones oficiales ===");
+  // Una sala de Lichess cuyas posiciones vienen de chess-results (como UTN,
+  // que transmite solo dos mesas). Los nombres son inventados.
+  const conPizarras = { id: "s-9", clave: "universitario", nombre: "Universitario de prueba", descripcion: "", emoji: "🎓",
+    tipo: "lichess", lichess_id: ID, visible: true, orden: 9, enlaces: [],
+    pizarras: [{ titulo: "Femenino", url: "https://s1.chess-results.com/tnr1.aspx" }, { titulo: "Masculino", url: "https://s3.chess-results.com/tnr2.aspx" }] };
+  const OFICIAL = { universitario: { pizarras: [
+    { titulo: "Femenino", url: "https://s1.chess-results.com/tnr1.aspx?lan=2&art=1&turdet=YES", ronda: "Clasificación después de la ronda 2",
+      desempates: ["Direct Encounter", "Buchholz Tie-Break Variable"], leido_en: "2026-09-27T16:05:00Z",
+      filas: [{ puesto: "1", titulo: "WIM", nombre: "Mora, Ana", club: "UCR", elo: "1900", puntos: "2", desempates: ["0", "3"] },
+              { puesto: "2", titulo: "", nombre: "Vega, Bea", club: "TEC", elo: "0", puntos: "1½", desempates: ["0", "2"] }] },
+    { titulo: "Masculino", url: "https://s3.chess-results.com/tnr2.aspx?lan=2&art=1&turdet=YES", ronda: "Clasificación después de la ronda 0",
+      desempates: [], viejo: true, leido_en: "2026-09-27T16:05:00Z",
+      filas: [{ puesto: "1", titulo: "", nombre: "Solís, Carlos", club: "UNA", elo: "2000", puntos: "0", desempates: [] }] },
+  ] } };
+  const ctx2 = await browser.newContext({ serviceWorkers: "block", viewport: { width: 1280, height: 900 } });
+  await ctx2.route("**/js/supabase-client.js", (r) =>
+    r.fulfill({ status: 200, contentType: "application/javascript", body: dobleSalas({ salas: SALAS.concat([conPizarras, { ...conPizarras, id: "s-10", clave: "sin-conexion" }]), oficial: OFICIAL }) }));
+  const oficial = await ctx2.newPage();
+  const erroresOficial = [];
+  oficial.on("pageerror", (e) => erroresOficial.push(e.message));
+  await ponerDoble(oficial);
+  await oficial.goto(BASE + "/transmision.html?torneo=universitario");
+  await oficial.waitForFunction(() => document.querySelectorAll("#pizarra-cuerpo tr").length === 2);
+  const filasOficiales = () => oficial.$$eval("#pizarra-cuerpo tr", (trs) => trs.map((tr) => tr.innerText.replace(/\s+/g, " ").trim()));
+  igual("la pide a la función con la clave de la sala", await oficial.evaluate(() => window.__pedidosPizarra[0]), "universitario");
+  igual("muestra las posiciones oficiales, no la suma de las mesas", await filasOficiales(), ["🥇 1 WIM Mora, Ana UCR 2 1900", "🥈 2 Vega, Bea TEC 1½ –"]);
+  igual("la cuarta columna es el Elo", await oficial.textContent("#pizarra-col4"), "Elo");
+  igual("dice de dónde sale y después de qué ronda", await oficial.textContent("#pizarra-nota"), "Clasificación después de la ronda 2 · posiciones oficiales de chess-results");
+  igual("una pestaña por pizarra, la primera elegida", await oficial.$$eval("#pizarra-pestanas button", (b) => b.map((x) => x.textContent + ":" + x.getAttribute("aria-pressed"))), ["Femenino:true", "Masculino:false"]);
+  igual("las pestañas se ven", await oficial.$eval("#pizarra-pestanas", (e) => e.checkVisibility()), true);
+  igual("los desempates y el enlace a chess-results", [await oficial.$eval("#pizarra-fuente", (e) => e.textContent.startsWith("Desempates, en orden: Direct Encounter, Buchholz Tie-Break Variable.")), await oficial.getAttribute("#pizarra-fuente a", "href")],
+    [true, "https://s1.chess-results.com/tnr1.aspx?lan=2&art=1&turdet=YES"]);
+  await oficial.click("#pizarra-pestanas button:nth-child(2)");
+  igual("la otra pestaña: sin medallas mientras todos tienen 0", await filasOficiales(), ["1 Solís, Carlos UNA 0 2000"]);
+  igual("y avisa si es lo último que se pudo leer", (await oficial.textContent("#pizarra-fuente")).includes("Sin conexión con chess-results: es lo último que se leyó, a las 10:05"), true);
+  igual("el foco se queda en la pestaña", await oficial.evaluate(() => document.activeElement.textContent), "Masculino");
+  const contrastePestana = await oficial.evaluate(() => {
+    const rgb = (t) => (t.match(/[\d.]+/g) || []).slice(0, 3).map(Number);
+    const lum = (c) => { const v = c.map((x) => { x /= 255; return x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4; }); return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]; };
+    const r = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((m, n) => n - m); return (x + 0.05) / (y + 0.05); };
+    const [sin, con] = [...document.querySelectorAll("#pizarra-pestanas button")].sort((a) => a.getAttribute("aria-pressed") === "true" ? 1 : -1);
+    return [r(rgb(getComputedStyle(sin).color), [29, 58, 44]), r(rgb(getComputedStyle(con).color), rgb(getComputedStyle(con).backgroundColor))].map((x) => Math.round(x * 10) / 10);
+  });
+  igual("las pestañas llegan a 4,5:1 (" + contrastePestana.join(" y ") + ")", contrastePestana.every((x) => x >= 4.5), true);
+  igual("sin errores de JavaScript", erroresOficial, []);
+  await oficial.close();
+
+  const caidaOficial = await ctx2.newPage();
+  await ponerDoble(caidaOficial);
+  await caidaOficial.goto(BASE + "/transmision.html?torneo=sin-conexion");
+  await caidaOficial.waitForFunction(() => document.getElementById("pizarra-nota").textContent.startsWith("No pudimos"));
+  igual("si la función falla lo dice, sin inventar una suma", [await caidaOficial.textContent("#pizarra-nota"), await caidaOficial.$$eval("#pizarra-cuerpo tr", (t) => t.length)],
+    ["No pudimos leer las posiciones de chess-results ahora mismo. Se vuelve a intentar sola en un rato.", 0]);
+  await ctx2.close();
 
   await browser.close();
   console.log(fallos ? "\n" + fallos + " falla(s)." : "\nTodo bien.");

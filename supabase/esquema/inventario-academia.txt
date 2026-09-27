@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20260926202544
+# al-dia-con: 20260927050207
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -53,6 +53,7 @@ tabla  notas_alumno  rls=true
 tabla  pagos  rls=true
 tabla  paquete_alumnos  rls=true
 tabla  paquetes_acceso  rls=true
+tabla  pizarras_cache  rls=true
 tabla  plan_compartidos  rls=true
 tabla  plan_items  rls=true
 tabla  planes_clase  rls=true
@@ -72,6 +73,7 @@ tabla  question_answers  rls=true
 tabla  question_engine_answers  rls=true
 tabla  questions  rls=true
 tabla  recordatorios_informe  rls=true
+tabla  salas_torneo  rls=true
 tabla  saved_games  rls=true
 tabla  solicitudes_academia  rls=true
 tabla  subgrupo_alumnos  rls=true
@@ -542,6 +544,9 @@ columna  paquetes_acceso.precio_mensual  numeric(12,2)
 columna  paquetes_acceso.titular_id  uuid
 columna  paquetes_acceso.vigente_desde  date
 columna  paquetes_acceso.vigente_hasta  date
+columna  pizarras_cache.datos  jsonb
+columna  pizarras_cache.leido_en  timestamp with time zone
+columna  pizarras_cache.url  text
 columna  plan_compartidos.created_at  timestamp with time zone
 columna  plan_compartidos.plan_id  uuid
 columna  plan_compartidos.profesor_id  uuid
@@ -673,6 +678,20 @@ columna  recordatorios_informe.enviado_at  timestamp with time zone
 columna  recordatorios_informe.periodo  date
 columna  recordatorios_informe.persona_id  uuid
 columna  recordatorios_informe.tipo  text
+columna  salas_torneo.clave  text
+columna  salas_torneo.created_at  timestamp with time zone
+columna  salas_torneo.descripcion  text
+columna  salas_torneo.emoji  text
+columna  salas_torneo.enlaces  jsonb
+columna  salas_torneo.id  uuid
+columna  salas_torneo.lichess_id  text
+columna  salas_torneo.nombre  text
+columna  salas_torneo.orden  integer
+columna  salas_torneo.pizarras  jsonb
+columna  salas_torneo.tipo  text
+columna  salas_torneo.updated_at  timestamp with time zone
+columna  salas_torneo.updated_by  uuid
+columna  salas_torneo.visible  boolean
 columna  saved_games.created_at  timestamp with time zone
 columna  saved_games.created_by  uuid
 columna  saved_games.fen_final  text
@@ -937,10 +956,13 @@ funcion  interno.alumnos_de(p_profesor uuid)  definer  anon=false  auth=true
 funcion  interno.bajo_mi_coordinacion_conjunto()  definer  anon=false  auth=true
 funcion  interno.clases_que_superviso()  definer  anon=false  auth=true
 funcion  interno.comparten_academia(p_a uuid, p_b uuid)  definer  anon=false  auth=true
+funcion  interno.enlaces_de_sala_validos(p jsonb)  invoker  anon=true  auth=true
 funcion  interno.frenar_envio_publico(p_tipo text, p_ambito text, p_correo text, p_ip text)  invoker  anon=false  auth=false
 funcion  interno.gente_de_mis_academias()  definer  anon=false  auth=true
 funcion  interno.nombre_libre_de_subgrupo(p_profesor uuid, p_base text, p_excepto uuid)  definer  anon=false  auth=false
+funcion  interno.pizarras_de_sala_validas(p jsonb)  invoker  anon=true  auth=true
 funcion  interno.profesores_de(p_alumno uuid)  definer  anon=false  auth=true
+funcion  interno.salas_torneo_sello()  invoker  anon=false  auth=false
 funcion  interno.subgrupo_del_equipo_al_dia(p_equipo uuid, p_profesor uuid)  definer  anon=false  auth=false
 funcion  interno.supervisados_por_mi()  definer  anon=false  auth=true
 funcion  interno.version_legal_valida(p text)  invoker  anon=false  auth=false
@@ -1237,6 +1259,10 @@ politica  questions  questions_exige_acceso_sel  SELECT  restrictiva
 politica  questions  questions_insert  INSERT
 politica  questions  questions_select  SELECT
 politica  questions  questions_update  UPDATE
+politica  salas_torneo  salas_torneo_borrar  DELETE
+politica  salas_torneo  salas_torneo_crear  INSERT
+politica  salas_torneo  salas_torneo_editar  UPDATE
+politica  salas_torneo  salas_torneo_ver  SELECT
 politica  saved_games  saved_games_delete  DELETE
 politica  saved_games  saved_games_insert  INSERT
 politica  saved_games  saved_games_select  SELECT
@@ -1328,6 +1354,7 @@ trigger  profile_teachers  profile_teachers_sincroniza_principal
 trigger  profile_teachers  profile_teachers_suma_a_la_academia
 trigger  profiles  protect_profiles_identity_columns_trigger
 trigger  question_answers  protect_answer_grading_trigger
+trigger  salas_torneo  salas_torneo_sello
 trigger  tarea_items  proteger_tarea_items_alumno
 trigger  tareas  tareas_avisa_push
 trigger  tareas  tareas_protege_alumno
@@ -1478,6 +1505,7 @@ indice  paquetes_acceso  paquetes_acceso_academia_idx
 indice  paquetes_acceso  paquetes_acceso_creado_por_fk
 indice  paquetes_acceso  paquetes_acceso_pkey
 indice  paquetes_acceso  paquetes_acceso_titular_idx
+indice  pizarras_cache  pizarras_cache_pkey
 indice  plan_compartidos  plan_compartidos_pkey
 indice  plan_compartidos  plan_compartidos_profesor_idx
 indice  plan_items  plan_items_pkey
@@ -1519,6 +1547,8 @@ indice  questions  questions_created_by_fk
 indice  questions  questions_pkey
 indice  recordatorios_informe  recordatorios_informe_persona_id_fk
 indice  recordatorios_informe  recordatorios_informe_pkey
+indice  salas_torneo  salas_torneo_clave_key
+indice  salas_torneo  salas_torneo_pkey
 indice  saved_games  saved_games_created_by_fk
 indice  saved_games  saved_games_pkey
 indice  solicitudes_academia  solicitudes_academia_pkey
@@ -2208,6 +2238,11 @@ grant  questions  authenticated  SELECT
 grant  questions  authenticated  TRIGGER
 grant  questions  authenticated  TRUNCATE
 grant  questions  authenticated  UPDATE
+grant  salas_torneo  anon  SELECT
+grant  salas_torneo  authenticated  DELETE
+grant  salas_torneo  authenticated  INSERT
+grant  salas_torneo  authenticated  SELECT
+grant  salas_torneo  authenticated  UPDATE
 grant  saved_games  anon  DELETE
 grant  saved_games  anon  INSERT
 grant  saved_games  anon  REFERENCES
