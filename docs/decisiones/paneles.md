@@ -53,8 +53,10 @@ lista, y el resto se acomoda solo.
   repasarlo (Estudio), después el curso completo y al final la lectura: Cursos
   estaba primero y es lo más largo de los cuatro, así que quien entra a
   practicar veinte minutos tenía delante lo que menos se parece a eso. En
-  "Jugar y competir" va primero donde se juega contra otra persona (Juegos),
-  después el torneo, y de último lo que se MIRA —TV en vivo no es jugar, es ver
+  "Jugar y competir" va primero donde se juega contra otra persona (Juegos, y
+  Competir, que es retar a quien está en línea y las listas de partidas; ver
+  «Competir: retar y las listas de partidas tienen su propia página» en
+  `juegos-y-torneos.md`), después el torneo, y de último lo que se MIRA —TV en vivo no es jugar, es ver
   jugar—, con el bot y las medallas detrás.
 - **Un mismo destino no va dos veces en el panel.** "Racha táctica" salió de
   "Jugar y competir" porque ya es lo PRIMERO que hay dentro de `juegos.html`,

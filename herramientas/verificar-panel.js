@@ -313,7 +313,7 @@ async function pruebaAlumna(browser) {
      de juegos.html, y un mismo destino dos veces en el panel es el error que ya
      se cometió con «Torneos». */
   igual("Jugar y competir", grupo(grupos, "Jugar y competir").tiles.map((t) => t.enlace),
-    ["juegos.html", "torneos.html", "tv.html", "tablero.html", "logros.html"]);
+    ["juegos.html", "competir.html", "torneos.html", "tv.html", "tablero.html", "logros.html"]);
   igual("y la racha táctica no se ofrece dos veces: en el panel ya no",
     grupos.flatMap((g) => g.tiles).filter((t) => t.enlace === "racha-tactica.html").length, "0");
   /* Dentro de Aprender, el orden es el del trabajo de todos los días: lo que se
@@ -514,7 +514,7 @@ async function pruebaAdmin(browser) {
   const enlaces = grupos.flatMap((g) => g.tiles).map((t) => t.enlace);
   igual("nada de dar clase: ni sesión en vivo, ni tareas, ni exámenes, ni planes, ni asistencia, ni informe mensual, ni subgrupos, ni archivos, ni juegos, ni torneos",
     ["sesion.html", "tareas.html", "examenes.html", "planes.html", "asistencia.html", "informe-mensual.html",
-     "subgrupos.html", "partidas.html", "juegos.html", "torneos.html"].filter((x) => enlaces.includes(x)), []);
+     "subgrupos.html", "partidas.html", "juegos.html", "competir.html", "torneos.html"].filter((x) => enlaces.includes(x)), []);
   igual("y sí lo de supervisar y administrar",
     ["informes.html", "supervision.html", "tablero-academias.html", "novedades.html", "admin.html", "academias.html", "coordinacion.html", "cobros.html", "solicitudes.html"]
       .filter((x) => !enlaces.includes(x)), []);
