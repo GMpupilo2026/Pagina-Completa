@@ -98,7 +98,9 @@
                  Un torneo transmitido por Lichess entra a la sala de cine
                  (transmision.html?torneo=<clave>): su clave y el id de la
                  transmisión van en TORNEOS de js/transmision.js.
-                 Mientras el torneo no tenga su enlace, la ficha va «apagada»: un
+                 Uno que se transmite en otro lado (UTN va en idchess, que no
+                 tiene API pública conocida) enlaza directo a su transmisión.
+                 Mientras un torneo no tenga su enlace, la ficha va «apagada»: un
                  <span> con aria-disabled y tabindex="0", sin href (no promete un
                  destino que no abre, pero se alcanza con Tab y dice por qué está
                  cerrada; ver «Un acceso apagado no es un enlace gris»). -->
@@ -112,9 +114,12 @@
                 </li>
                 <li class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-6 flex flex-col">
                     <p class="text-4xl mb-3" aria-hidden="true">🎓</p>
-                    <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white">Torneo UTN</h2>
-                    <p class="text-brand-500 dark:text-brand-300 mt-2 mb-5 flex-1">Las partidas del torneo de la Universidad Técnica Nacional, transmitidas en vivo.</p>
-                    <span role="link" aria-disabled="true" tabindex="0" class="block text-center bg-brand-100 dark:bg-brand-800 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2.5 rounded-lg cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Transmisión: próximamente<span class="sr-only"> (el enlace del torneo UTN todavía no está disponible)</span></span>
+                    <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white">Torneo UTN 2026</h2>
+                    <p class="text-brand-500 dark:text-brand-300 mt-2 mb-5 flex-1">Las partidas del torneo de la Universidad Técnica Nacional, en vivo. Se transmite en idchess, en dos salas: la masculina y la femenina.</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <a href="https://media.idchess.com/en/tournaments/kYfhVJ/utn-2026/desk/eyJpZCI6OTY1OTU2LCJwYXNzd29yZCI6bnVsbH0=" target="_blank" rel="noopener" class="block text-center bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2.5 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Partida masculina<span class="sr-only"> del torneo UTN (se abre en otra pestaña en idchess)</span> ↗</a>
+                        <a href="https://media.idchess.com/en/tournaments/b0fhVJ/utn-2026/desk/eyJpZCI6OTY1OTYxLCJwYXNzd29yZCI6bnVsbH0=" target="_blank" rel="noopener" class="block text-center bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2.5 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Partida femenina<span class="sr-only"> del torneo UTN (se abre en otra pestaña en idchess)</span> ↗</a>
+                    </div>
                 </li>
             </ul>
 

@@ -94,6 +94,10 @@ async function main() {
   console.log("\n=== La ficha lleva a la sala ===");
   const fichas = fs.readFileSync(path.join(RAIZ, "torneos-en-vivo.html"), "utf8");
   igual("la ficha de CENFOTEC entra a la sala", fichas.includes('href="transmision.html?torneo=cenfotec"'), true);
+  igual("UTN lleva sus dos salas de idchess, que se abren aparte", [
+    /href="https:\/\/media\.idchess\.com\/en\/tournaments\/kYfhVJ\/utn-2026\/[^"]+" target="_blank" rel="noopener"[^>]*>Partida masculina/.test(fichas),
+    /href="https:\/\/media\.idchess\.com\/en\/tournaments\/b0fhVJ\/utn-2026\/[^"]+" target="_blank" rel="noopener"[^>]*>Partida femenina/.test(fichas),
+    fichas.includes("Transmisión: próximamente")], [true, true, false]);
   const js = fs.readFileSync(path.join(RAIZ, "js/transmision.js"), "utf8");
   igual("la clave cenfotec apunta a su transmisión", /cenfotec:\s*\{\s*id:\s*"s7NfNv6H"/.test(js), true);
 
