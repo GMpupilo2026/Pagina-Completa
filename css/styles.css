@@ -605,31 +605,78 @@ footer li > a {
   padding-block: 4px;
 }
 
-/* ===== La sala de cine de las transmisiones (transmision.html, js/transmision.js) =====
-   Siempre a oscuras, en modo claro y en oscuro: es una sala de cine. Los colores
-   de texto se midieron contra estos fondos (AA); los telones y los bombillos son
-   adorno y van con aria-hidden. */
+/* ===== La sala de las transmisiones (transmision.html, js/transmision.js) =====
+   Siempre a oscuras, en modo claro y en oscuro: es una sala. Tiene AMBIENTES
+   (js/escenarios-sala.js): cine, teatro, salón de actos, estadio, club,
+   planetario y arcade. Cada uno es un juego de variables --esc-* sobre
+   .cine-sala[data-escenario]; las clases de la sala no cambian. Los colores de
+   texto se midieron contra estos fondos (AA) en los siete, y lo comprueba
+   herramientas/verificar-escenarios-sala.js: los fondos de la sala, la
+   marquesina, la pantalla y las cajas son oscuros en todos, porque encima va
+   texto blanco, brand-100/200 y accent-400. La pizarra es la única que puede ser
+   clara (pizarra blanca, programa de mano, tarjeta del club): trae sus propios
+   colores de texto. Telones, bombillos y estrellas son adorno (aria-hidden). */
 .cine-sala {
+  --esc-fondo: #0b1422;
+  --esc-fondo-2: #070d17;
+  --esc-luz: rgb(240 180 41 / 0.10);
+  --esc-luz-forma: ellipse at 50% 0%;
+  --esc-decor: linear-gradient(transparent, transparent);
+  --esc-marq: #1b2433;
+  --esc-marq-2: #121a27;
+  --esc-marq-borde: 2px solid #b8860b;
+  --esc-marq-radio: 1rem;
+  --esc-marq-brillo: rgb(240 180 41 / 0.18);
+  --esc-bombillo: #ffd66b;
+  --esc-bombillos: block;
+  --esc-telon:
+    linear-gradient(90deg, rgb(0 0 0 / 0.35), transparent 30%, rgb(0 0 0 / 0.25) 70%, transparent),
+    repeating-linear-gradient(90deg, #6d0f1c 0 7px, #8e1628 7px 12px, #5a0c17 12px 16px);
+  --esc-telon-radio: 0.75rem 0.75rem 0.25rem 0.25rem;
+  --esc-pantalla: #0f1724;
+  --esc-pantalla-borde: #2a3547;
+  --esc-pantalla-brillo: rgb(200 220 255 / 0.12);
+  --esc-pantalla-radio: 0.75rem;
+  --esc-reloj: #070d17;
+  --esc-reloj-texto: #f4f1e8;
+  --esc-acento: #f0b429;
+  --esc-acento-texto: #0b1422;
+  --esc-ultima: rgb(240 180 41 / 0.42);
+  --esc-realce: #b8860b;
+  --esc-caja: #111a28;
+  --esc-caja-texto: #d9e2ec;
+  --esc-caja-borde: #2a3547;
+  --esc-pizarra: #1d3a2c;
+  --esc-pizarra-luz: rgb(255 255 255 / 0.06);
+  --esc-pizarra-marco: 10px solid #7a5230;
+  --esc-pizarra-radio: 0.75rem;
+  --esc-pizarra-texto: #f4f1e8;
+  --esc-pizarra-tenue: #cfdccf;
+  --esc-pizarra-puntos: #ffe08a;
+  --esc-pizarra-linea: 1px dashed rgb(244 241 232 / 0.25);
+  --esc-pizarra-foco: #f0b429;
   background:
-    radial-gradient(ellipse at 50% 0%, rgb(240 180 41 / 0.10), transparent 55%),
-    linear-gradient(#0b1422, #070d17);
+    var(--esc-decor),
+    radial-gradient(var(--esc-luz-forma), var(--esc-luz), transparent 55%),
+    linear-gradient(var(--esc-fondo), var(--esc-fondo-2));
   min-height: 70vh;
 }
 .cine-marquesina {
   position: relative;
-  background: linear-gradient(#1b2433, #121a27);
-  border: 2px solid #b8860b;
-  border-radius: 1rem;
-  box-shadow: 0 0 40px rgb(240 180 41 / 0.18), inset 0 0 30px rgb(0 0 0 / 0.5);
+  background: linear-gradient(var(--esc-marq), var(--esc-marq-2));
+  border: var(--esc-marq-borde);
+  border-radius: var(--esc-marq-radio);
+  box-shadow: 0 0 40px var(--esc-marq-brillo), inset 0 0 30px rgb(0 0 0 / 0.5);
 }
 .cine-marquesina::before,
 .cine-marquesina::after {
   content: "";
+  display: var(--esc-bombillos);
   position: absolute;
   left: 14px;
   right: 14px;
   height: 8px;
-  background: radial-gradient(circle, #ffd66b 0 2.5px, rgb(255 214 107 / 0.25) 3px, transparent 4px) 0 0 / 18px 8px repeat-x;
+  background: radial-gradient(circle, var(--esc-bombillo) 0 2.5px, transparent 4px) 0 0 / 18px 8px repeat-x;
   animation: cine-bombillos 1.6s steps(2, jump-none) infinite;
 }
 .cine-marquesina::before { top: 6px; }
@@ -638,6 +685,14 @@ footer li > a {
 @media (prefers-reduced-motion: reduce) {
   .cine-marquesina::before, .cine-marquesina::after, .cine-envivo::before { animation: none; }
 }
+
+/* El selector de ambiente, arriba a la derecha. */
+.cine-ambiente {
+  background: var(--esc-caja);
+  color: var(--esc-caja-texto);
+  border: 1px solid var(--esc-caja-borde);
+}
+.cine-ambiente:hover { border-color: var(--esc-realce); }
 
 .cine-escenario {
   display: grid;
@@ -648,22 +703,21 @@ footer li > a {
   .cine-escenario { grid-template-columns: 2.5rem minmax(0, 1fr) 2.5rem; }
 }
 .cine-telon {
-  border-radius: 0.75rem 0.75rem 0.25rem 0.25rem;
-  background:
-    linear-gradient(90deg, rgb(0 0 0 / 0.35), transparent 30%, rgb(0 0 0 / 0.25) 70%, transparent),
-    repeating-linear-gradient(90deg, #6d0f1c 0 7px, #8e1628 7px 12px, #5a0c17 12px 16px);
+  border-radius: var(--esc-telon-radio);
+  background: var(--esc-telon);
   box-shadow: inset 0 -20px 30px rgb(0 0 0 / 0.45);
 }
+.cine-telon-der { transform: scaleX(-1); }
 .cine-telon-izq { margin-right: -0.5rem; }
 .cine-telon-der { margin-left: -0.5rem; }
 .cine-pantalla {
   position: relative;
   z-index: 1;
-  background: #0f1724;
-  border: 1px solid #2a3547;
-  border-radius: 0.75rem;
+  background: var(--esc-pantalla);
+  border: 1px solid var(--esc-pantalla-borde);
+  border-radius: var(--esc-pantalla-radio);
   padding: 0.75rem;
-  box-shadow: 0 0 70px rgb(200 220 255 / 0.12), 0 20px 50px rgb(0 0 0 / 0.6);
+  box-shadow: 0 0 70px var(--esc-pantalla-brillo), 0 20px 50px rgb(0 0 0 / 0.6);
 }
 @media (min-width: 640px) { .cine-pantalla { padding: 1rem 1.25rem; } }
 .cine-jugador {
@@ -675,13 +729,13 @@ footer li > a {
   font-size: 0.95rem;
 }
 .cine-reloj {
-  background: #070d17;
-  border: 1px solid #2a3547;
-  color: #f4f1e8;
+  background: var(--esc-reloj);
+  border: 1px solid var(--esc-pantalla-borde);
+  color: var(--esc-reloj-texto);
   border-radius: 0.375rem;
   padding: 0.1rem 0.5rem;
 }
-.cine-juega { color: #0b1422; background: #f0b429; border-radius: 9999px; padding: 0.05rem 0.5rem; }
+.cine-juega { color: var(--esc-acento-texto); background: var(--esc-acento); border-radius: 9999px; padding: 0.05rem 0.5rem; }
 .cine-tablero-marco { max-width: 38rem; margin: 0 auto; padding: 0 0 18px 18px; }
 .cine-tablero {
   display: grid;
@@ -691,55 +745,321 @@ footer li > a {
   aspect-ratio: 1 / 1;
   border-radius: 0.25rem;
   overflow: hidden;
-  box-shadow: 0 0 0 3px #2a3547;
+  box-shadow: 0 0 0 3px var(--esc-pantalla-borde);
   line-height: 1;
 }
 .cine-sq { display: flex; align-items: center; justify-content: center; position: relative; }
 .cine-sq-clara { background: var(--sq-light, #f0f4f8); }
 .cine-sq-oscura { background: var(--sq-dark, #486581); }
-/* La última jugada: una capa dorada encima del color de casilla que eligió cada
-   quien, y además escrita debajo de la pantalla («última jugada e2–e4»). */
-.cine-sq-ultima::after { content: ""; position: absolute; inset: 0; background: rgb(240 180 41 / 0.42); pointer-events: none; }
+/* La última jugada: una capa del color del ambiente encima del color de casilla
+   que eligió cada quien, y además escrita debajo de la pantalla («última
+   jugada e2–e4»). */
+.cine-sq-ultima::after { content: ""; position: absolute; inset: 0; background: var(--esc-ultima); pointer-events: none; }
 .cine-sq > span { position: relative; z-index: 1; }
-.cine-tablero-mini { box-shadow: 0 0 0 2px #2a3547; }
+.cine-tablero-mini { box-shadow: 0 0 0 2px var(--esc-pantalla-borde); }
 
-.cine-miniatura { background: #111a28; border: 1px solid #2a3547; transition: border-color 0.15s, transform 0.15s; }
-.cine-miniatura:hover { border-color: #b8860b; }
-.cine-miniatura[aria-pressed="true"] { border-color: #f0b429; box-shadow: 0 0 0 2px #f0b429, 0 0 24px rgb(240 180 41 / 0.25); }
+.cine-miniatura { background: var(--esc-caja); border: 1px solid var(--esc-caja-borde); transition: border-color 0.15s, transform 0.15s; }
+.cine-miniatura:hover { border-color: var(--esc-realce); }
+.cine-miniatura[aria-pressed="true"] { border-color: var(--esc-acento); box-shadow: 0 0 0 2px var(--esc-acento), 0 0 24px var(--esc-marq-brillo); }
 @media (prefers-reduced-motion: no-preference) { .cine-miniatura:hover { transform: translateY(-2px); } }
 
-.cine-ronda { background: #111a28; color: #d9e2ec; border: 1px solid #2a3547; }
-.cine-ronda:hover { border-color: #b8860b; }
-.cine-ronda[aria-pressed="true"] { background: #f0b429; color: #0b1422; border-color: #f0b429; }
+.cine-ronda { background: var(--esc-caja); color: var(--esc-caja-texto); border: 1px solid var(--esc-caja-borde); }
+.cine-ronda:hover { border-color: var(--esc-realce); }
+.cine-ronda[aria-pressed="true"] { background: var(--esc-acento); color: var(--esc-acento-texto); border-color: var(--esc-acento); }
 .cine-envivo { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; }
 .cine-envivo::before { content: ""; width: 0.5rem; height: 0.5rem; border-radius: 9999px; background: #ef4444; animation: cine-bombillos 1s steps(2, jump-none) infinite; }
 
-/* La pizarra: verde de tiza con marco de madera. */
+/* La pizarra: en el cine, verde de tiza con marco de madera. */
 .pizarra {
   background:
-    radial-gradient(ellipse at 30% 20%, rgb(255 255 255 / 0.06), transparent 60%),
-    #1d3a2c;
-  color: #f4f1e8;
-  border: 10px solid #7a5230;
-  border-radius: 0.75rem;
-  box-shadow: inset 0 0 40px rgb(0 0 0 / 0.45), 0 18px 40px rgb(0 0 0 / 0.5);
+    radial-gradient(ellipse at 30% 20%, var(--esc-pizarra-luz), transparent 60%),
+    var(--esc-pizarra);
+  color: var(--esc-pizarra-texto);
+  border: var(--esc-pizarra-marco);
+  border-radius: var(--esc-pizarra-radio);
+  box-shadow: inset 0 0 40px rgb(0 0 0 / 0.30), 0 18px 40px rgb(0 0 0 / 0.5);
   padding: 1.25rem 1rem 1.5rem;
 }
-.pizarra-tenue { color: #cfdccf; }
-.pizarra-puntos { color: #ffe08a; }
-.pizarra-linea { border-bottom: 1px dashed rgb(244 241 232 / 0.25); }
+.pizarra-tenue { color: var(--esc-pizarra-tenue); }
+.pizarra-puntos { color: var(--esc-pizarra-puntos); }
+.pizarra-linea { border-bottom: var(--esc-pizarra-linea); }
 .pizarra th { font-weight: 600; }
+/* Sobre una pizarra clara, el anillo ámbar del foco no se ve: dentro de la
+   pizarra el foco va del color que el ambiente midió contra ella. */
+.cine-sala .pizarra :focus-visible { --tw-ring-color: var(--esc-pizarra-foco); outline-color: var(--esc-pizarra-foco); }
 /* Las pestañas de la pizarra (femenino, masculino…): tiza sobre la pizarra,
    y la elegida al revés, pizarra sobre tiza. */
-.pizarra-pestana { color: #f4f1e8; border: 1px dashed rgb(244 241 232 / 0.6); background: transparent; }
+.pizarra-pestana { color: var(--esc-pizarra-texto); border: 1px dashed currentColor; background: transparent; }
 .pizarra-pestana:hover { border-style: solid; }
-.pizarra-pestana[aria-pressed="true"] { background: #f4f1e8; color: #1d3a2c; border-style: solid; }
+.pizarra-pestana[aria-pressed="true"] { background: var(--esc-pizarra-texto); color: var(--esc-pizarra); border-color: var(--esc-pizarra-texto); border-style: solid; }
 /* El comentarista: una pantalla chica, con el mismo marco que la grande. */
 .cine-comentarista {
-  background: #0f1724;
-  border: 1px solid #2a3547;
-  border-radius: 0.75rem;
+  background: var(--esc-pantalla);
+  border: 1px solid var(--esc-pantalla-borde);
+  border-radius: var(--esc-pantalla-radio);
   padding: 0.75rem 0.75rem 0.9rem;
-  box-shadow: 0 0 40px rgb(200 220 255 / 0.08), 0 14px 34px rgb(0 0 0 / 0.5);
+  box-shadow: 0 0 40px var(--esc-pantalla-brillo), 0 14px 34px rgb(0 0 0 / 0.5);
 }
 .cine-comentarista iframe { display: block; width: 100%; height: 100%; border: 0; }
+
+/* ----- Los otros seis ambientes: solo cambian las variables (y algún adorno). */
+
+/* Teatro: terciopelo vino, proscenio dorado, un foco desde arriba y el
+   programa de mano en papel crema. */
+.cine-sala[data-escenario="teatro"] {
+  --esc-fondo: #1a0b10;
+  --esc-fondo-2: #0e0508;
+  --esc-luz: rgb(255 236 200 / 0.10);
+  --esc-luz-forma: ellipse 45% 70% at 50% 0%;
+  --esc-marq: #2a1017;
+  --esc-marq-2: #1a0a0f;
+  --esc-marq-borde: 4px double #c9a227;
+  --esc-marq-radio: 50% 50% 0.75rem 0.75rem / 2.5rem 2.5rem 0.75rem 0.75rem;
+  --esc-marq-brillo: rgb(201 162 39 / 0.22);
+  --esc-bombillo: #ffe7a3;
+  --esc-telon:
+    linear-gradient(to top, #c9a227 0 5px, #8a6d1f 5px 7px, transparent 7px),
+    linear-gradient(90deg, rgb(0 0 0 / 0.45), transparent 35%, rgb(0 0 0 / 0.3) 75%, transparent),
+    repeating-linear-gradient(90deg, #7a0f1f 0 9px, #a01c30 9px 15px, #5e0a17 15px 20px);
+  --esc-telon-radio: 0.25rem;
+  --esc-pantalla: #1a0d12;
+  --esc-pantalla-borde: #5c2a35;
+  --esc-pantalla-brillo: rgb(255 236 200 / 0.10);
+  --esc-reloj: #0e0508;
+  --esc-acento: #e8c15a;
+  --esc-acento-texto: #1a0b10;
+  --esc-ultima: rgb(232 193 90 / 0.45);
+  --esc-realce: #c9a227;
+  --esc-caja: #24121a;
+  --esc-caja-texto: #f1e4e8;
+  --esc-caja-borde: #5c2a35;
+  --esc-pizarra: #f4ecd8;
+  --esc-pizarra-luz: rgb(255 255 255 / 0.5);
+  --esc-pizarra-marco: 6px double #8a6d1f;
+  --esc-pizarra-radio: 0.25rem;
+  --esc-pizarra-texto: #2a1a12;
+  --esc-pizarra-tenue: #5e4a3a;
+  --esc-pizarra-puntos: #8b1a2b;
+  --esc-pizarra-linea: 1px solid rgb(42 26 18 / 0.2);
+  --esc-pizarra-foco: #8b1a2b;
+}
+.cine-sala[data-escenario="teatro"] .pizarra :is(h2, h3) { font-style: italic; }
+
+/* Salón de actos: paneles de madera, telón azul y pizarra blanca de marcador. */
+.cine-sala[data-escenario="salon"] {
+  --esc-fondo: #0f1b2d;
+  --esc-fondo-2: #0a1320;
+  --esc-luz: rgb(255 255 255 / 0.05);
+  --esc-decor: repeating-linear-gradient(90deg, rgb(255 255 255 / 0.025) 0 2px, transparent 2px 140px);
+  --esc-marq: #16263d;
+  --esc-marq-2: #0f1b2d;
+  --esc-marq-borde: 1px solid #55708a;
+  --esc-marq-radio: 0.5rem;
+  --esc-marq-brillo: rgb(124 196 255 / 0.10);
+  --esc-bombillos: none;
+  --esc-telon:
+    linear-gradient(90deg, rgb(0 0 0 / 0.35), transparent 30%, rgb(0 0 0 / 0.25) 70%, transparent),
+    repeating-linear-gradient(90deg, #1e3a6e 0 8px, #2b4f8f 8px 13px, #16305c 13px 18px);
+  --esc-pantalla: #0d1826;
+  --esc-pantalla-borde: #2d4466;
+  --esc-pantalla-brillo: rgb(124 196 255 / 0.10);
+  --esc-reloj: #0a1320;
+  --esc-acento: #7cc4ff;
+  --esc-acento-texto: #0a1320;
+  --esc-ultima: rgb(124 196 255 / 0.45);
+  --esc-realce: #4a90d9;
+  --esc-caja: #132238;
+  --esc-caja-texto: #dbe7f5;
+  --esc-caja-borde: #2d4466;
+  --esc-pizarra: #f5f7fa;
+  --esc-pizarra-luz: rgb(255 255 255 / 0.8);
+  --esc-pizarra-marco: 8px solid #9aa5b1;
+  --esc-pizarra-radio: 0.375rem;
+  --esc-pizarra-texto: #1f2933;
+  --esc-pizarra-tenue: #52606d;
+  --esc-pizarra-puntos: #1d4ed8;
+  --esc-pizarra-linea: 1px solid rgb(31 41 51 / 0.15);
+  --esc-pizarra-foco: #1d4ed8;
+}
+.cine-sala[data-escenario="salon"] .pizarra :is(h2, h3) { font-family: Inter, sans-serif; }
+
+/* Estadio de noche: reflectores, gradería llena y el marcador de LED. */
+.cine-sala[data-escenario="estadio"] {
+  --esc-fondo: #0a1020;
+  --esc-fondo-2: #0b2615;
+  --esc-luz: rgb(255 255 255 / 0.10);
+  --esc-luz-forma: circle at 50% -10%;
+  --esc-decor:
+    radial-gradient(circle at 8% 0%, rgb(255 255 255 / 0.10), transparent 25%),
+    radial-gradient(circle at 92% 0%, rgb(255 255 255 / 0.10), transparent 25%),
+    linear-gradient(transparent 75%, rgb(255 255 255 / 0.02) 75%),
+    repeating-linear-gradient(90deg, rgb(255 255 255 / 0.02) 0 80px, transparent 80px 160px);
+  --esc-marq: #050505;
+  --esc-marq-2: #0b0f14;
+  --esc-marq-borde: 6px solid #2f3b4a;
+  --esc-marq-radio: 0.5rem;
+  --esc-marq-brillo: rgb(57 211 83 / 0.18);
+  --esc-bombillo: #39d353;
+  --esc-telon:
+    radial-gradient(circle, #e74c3c 0 1.6px, transparent 2px) 0 0 / 8px 8px,
+    radial-gradient(circle, #f1c40f 0 1.6px, transparent 2px) 4px 4px / 8px 8px,
+    radial-gradient(circle, #3498db 0 1.6px, transparent 2px) 2px 6px / 8px 8px,
+    linear-gradient(#1a2233, #111821);
+  --esc-telon-radio: 0.25rem;
+  --esc-pantalla: #0b0f14;
+  --esc-pantalla-borde: #2f3b4a;
+  --esc-pantalla-brillo: rgb(255 255 255 / 0.10);
+  --esc-reloj: #050505;
+  --esc-reloj-texto: #ffb000;
+  --esc-acento: #ffb000;
+  --esc-acento-texto: #0b0f14;
+  --esc-ultima: rgb(255 176 0 / 0.42);
+  --esc-realce: #d18f00;
+  --esc-caja: #111821;
+  --esc-caja-texto: #e5ecf3;
+  --esc-caja-borde: #2f3b4a;
+  --esc-pizarra: #050505;
+  --esc-pizarra-luz: rgb(255 176 0 / 0.05);
+  --esc-pizarra-marco: 8px solid #2f3b4a;
+  --esc-pizarra-radio: 0.5rem;
+  --esc-pizarra-texto: #f5f5f5;
+  --esc-pizarra-tenue: #b8c2cc;
+  --esc-pizarra-puntos: #ffb000;
+  --esc-pizarra-linea: 1px solid rgb(255 176 0 / 0.25);
+  --esc-pizarra-foco: #ffb000;
+}
+.cine-sala[data-escenario="estadio"] .pizarra { font-family: ui-monospace, "Cascadia Mono", "Courier New", monospace; }
+.cine-sala[data-escenario="estadio"] .pizarra :is(h2, h3) { font-family: inherit; text-transform: uppercase; letter-spacing: 0.08em; }
+.cine-sala[data-escenario="estadio"] .cine-reloj { font-family: ui-monospace, "Courier New", monospace; }
+
+/* Club clásico: madera oscura, bibliotecas a los lados, lámpara cálida y la
+   tabla del club en cartulina. */
+.cine-sala[data-escenario="club"] {
+  --esc-fondo: #1a120c;
+  --esc-fondo-2: #0f0a06;
+  --esc-luz: rgb(255 200 120 / 0.08);
+  --esc-decor: repeating-linear-gradient(0deg, rgb(255 255 255 / 0.015) 0 1px, transparent 1px 6px);
+  --esc-marq: #2b1d12;
+  --esc-marq-2: #1d130b;
+  --esc-marq-borde: 4px double #b08d57;
+  --esc-marq-radio: 0.4rem;
+  --esc-marq-brillo: rgb(255 200 120 / 0.14);
+  --esc-bombillos: none;
+  --esc-telon:
+    repeating-linear-gradient(180deg, transparent 0 44px, #3b2716 44px 52px),
+    repeating-linear-gradient(90deg, #6b2d1f 0 6px, #2f4a2a 6px 11px, #7a5a1e 11px 15px, #1f3550 15px 21px, #4a1f2d 21px 26px, #3b2716 26px 28px);
+  --esc-telon-radio: 0.25rem;
+  --esc-pantalla: #14100b;
+  --esc-pantalla-borde: #4a3520;
+  --esc-pantalla-brillo: rgb(255 200 120 / 0.10);
+  --esc-reloj: #0f0a06;
+  --esc-acento: #d8b26a;
+  --esc-acento-texto: #1a120c;
+  --esc-ultima: rgb(216 178 106 / 0.45);
+  --esc-realce: #b08d57;
+  --esc-caja: #22170f;
+  --esc-caja-texto: #efe3cf;
+  --esc-caja-borde: #4a3520;
+  --esc-pizarra: #f3ead3;
+  --esc-pizarra-luz: rgb(255 255 255 / 0.45);
+  --esc-pizarra-marco: 10px solid #5a3a1f;
+  --esc-pizarra-radio: 0.25rem;
+  --esc-pizarra-texto: #2b1d0e;
+  --esc-pizarra-tenue: #5c4630;
+  --esc-pizarra-puntos: #7a1f1f;
+  --esc-pizarra-linea: 1px solid rgb(43 29 14 / 0.2);
+  --esc-pizarra-foco: #7a1f1f;
+}
+
+/* Planetario: cúpula, cielo estrellado y nebulosas en lugar de telones. */
+.cine-sala[data-escenario="planetario"] {
+  --esc-fondo: #070b1f;
+  --esc-fondo-2: #02030a;
+  --esc-luz: rgb(120 140 255 / 0.12);
+  --esc-decor:
+    radial-gradient(1px 1px at 20px 30px, #fff, transparent),
+    radial-gradient(1px 1px at 90px 120px, #cfd8ff, transparent),
+    radial-gradient(1.5px 1.5px at 160px 60px, #fff, transparent),
+    radial-gradient(1px 1px at 220px 170px, #ffe7a3, transparent),
+    radial-gradient(1px 1px at 60px 200px, #fff, transparent);
+  --esc-marq: #0e1433;
+  --esc-marq-2: #080c22;
+  --esc-marq-borde: 1px solid #6c7cff;
+  --esc-marq-radio: 50% 50% 1rem 1rem / 4rem 4rem 1rem 1rem;
+  --esc-marq-brillo: rgb(108 124 255 / 0.35);
+  --esc-bombillo: #cfd8ff;
+  --esc-telon:
+    radial-gradient(circle at 50% 30%, #5b3fa8, transparent 60%),
+    radial-gradient(circle at 40% 80%, #1f6fb2, transparent 55%),
+    #0b0f2a;
+  --esc-telon-radio: 9999px;
+  --esc-pantalla: #0c1230;
+  --esc-pantalla-borde: #34408a;
+  --esc-pantalla-brillo: rgb(108 124 255 / 0.25);
+  --esc-pantalla-radio: 1.25rem;
+  --esc-reloj: #070b1f;
+  --esc-acento: #a5b4ff;
+  --esc-acento-texto: #070b1f;
+  --esc-ultima: rgb(165 180 255 / 0.45);
+  --esc-realce: #6c7cff;
+  --esc-caja: #0f1636;
+  --esc-caja-texto: #e0e6ff;
+  --esc-caja-borde: #34408a;
+  --esc-pizarra: #0d1335;
+  --esc-pizarra-luz: rgb(165 180 255 / 0.10);
+  --esc-pizarra-marco: 2px solid #34408a;
+  --esc-pizarra-radio: 1.25rem;
+  --esc-pizarra-texto: #eef1ff;
+  --esc-pizarra-tenue: #b9c2ee;
+  --esc-pizarra-puntos: #ffd98a;
+  --esc-pizarra-linea: 1px solid rgb(185 194 238 / 0.2);
+  --esc-pizarra-foco: #a5b4ff;
+  background-size: 250px 250px, 250px 250px, 250px 250px, 250px 250px, 250px 250px, auto, auto;
+}
+.cine-sala[data-escenario="planetario"] .cine-marquesina::before,
+.cine-sala[data-escenario="planetario"] .cine-marquesina::after { background-size: 46px 8px; }
+
+/* Arcade: neón fucsia y celeste, rejilla en el piso y los «high scores». */
+.cine-sala[data-escenario="arcade"] {
+  --esc-fondo: #12002a;
+  --esc-fondo-2: #05000f;
+  --esc-luz: rgb(255 0 200 / 0.10);
+  --esc-decor:
+    linear-gradient(transparent 70%, rgb(255 43 214 / 0.06) 70%),
+    repeating-linear-gradient(90deg, rgb(255 43 214 / 0.07) 0 1px, transparent 1px 48px),
+    repeating-linear-gradient(0deg, rgb(34 230 255 / 0.05) 0 1px, transparent 1px 48px);
+  --esc-marq: #1a0038;
+  --esc-marq-2: #0d001f;
+  --esc-marq-borde: 2px solid #ff2bd6;
+  --esc-marq-radio: 0.25rem;
+  --esc-marq-brillo: rgb(255 43 214 / 0.45);
+  --esc-bombillo: #22e6ff;
+  --esc-telon: repeating-linear-gradient(180deg, #ff2bd6 0 3px, #1a0038 3px 14px, #22e6ff 14px 17px, #1a0038 17px 28px);
+  --esc-telon-radio: 0.25rem;
+  --esc-pantalla: #0a0018;
+  --esc-pantalla-borde: #22e6ff;
+  --esc-pantalla-brillo: rgb(34 230 255 / 0.25);
+  --esc-pantalla-radio: 0.25rem;
+  --esc-reloj: #05000f;
+  --esc-reloj-texto: #39ff14;
+  --esc-acento: #22e6ff;
+  --esc-acento-texto: #05000f;
+  --esc-ultima: rgb(255 43 214 / 0.40);
+  --esc-realce: #ff2bd6;
+  --esc-caja: #1a0833;
+  --esc-caja-texto: #f0e6ff;
+  --esc-caja-borde: #4b1d7a;
+  --esc-pizarra: #000000;
+  --esc-pizarra-luz: rgb(255 43 214 / 0.08);
+  --esc-pizarra-marco: 3px solid #ff2bd6;
+  --esc-pizarra-radio: 0.25rem;
+  --esc-pizarra-texto: #f0e6ff;
+  --esc-pizarra-tenue: #c4b5fd;
+  --esc-pizarra-puntos: #39ff14;
+  --esc-pizarra-linea: 1px dashed rgb(255 43 214 / 0.4);
+  --esc-pizarra-foco: #22e6ff;
+}
+.cine-sala[data-escenario="arcade"] .pizarra,
+.cine-sala[data-escenario="arcade"] .cine-reloj { font-family: ui-monospace, "Courier New", monospace; }
+.cine-sala[data-escenario="arcade"] .pizarra :is(h2, h3) { font-family: inherit; text-transform: uppercase; letter-spacing: 0.1em; }
+.cine-sala[data-escenario="arcade"] .cine-marquesina h1 { text-shadow: 0 0 12px rgb(255 43 214 / 0.8); }

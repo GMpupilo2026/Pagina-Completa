@@ -209,6 +209,20 @@ async function editor(browser) {
   await page.waitForFunction(() => document.getElementById("sala-editor").classList.contains("hidden"));
   igual("y borrarlo lo quita", (await escrituras(page)).pop().datos.video_url, null);
 
+  console.log("\n=== El ambiente de la sala ===");
+  await page.click('#salas-admin li[data-sala="copa-nacional-2026"] button[aria-label^="Editar"]');
+  igual("ofrece los siete ambientes", await page.$$eval("#sala-tema option", (o) => o.map((x) => x.value)), ["cine", "teatro", "salon", "estadio", "club", "planetario", "arcade"]);
+  igual("una sala sin ambiente elegido abre como cine", await page.inputValue("#sala-tema"), "cine");
+  await page.selectOption("#sala-tema", "estadio");
+  await page.click("#sala-guardar");
+  await page.waitForFunction(() => document.getElementById("sala-editor").classList.contains("hidden"));
+  igual("se guarda el elegido", (await escrituras(page)).pop().datos.tema, "estadio");
+  await page.click('#salas-admin li[data-sala="copa-nacional-2026"] button[aria-label^="Editar"]');
+  igual("al volver a editarla, está", await page.inputValue("#sala-tema"), "estadio");
+  await page.check('input[name="sala-tipo"][value="enlaces"]');
+  igual("una sala de enlaces no lo ofrece (no tiene sala)", await page.$eval("#sala-tema-caja", (e) => e.checkVisibility()), false);
+  await page.click("#sala-cancelar");
+
   console.log("\n=== Lo que la base rechaza ===");
   await page.click("#sala-nueva");
   await escribir(page, "#sala-nombre", "Otra");

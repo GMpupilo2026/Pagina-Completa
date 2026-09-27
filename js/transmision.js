@@ -594,7 +594,7 @@
             a.href = p.url;
             a.target = "_blank";
             a.rel = "noopener";
-            a.className = "underline underline-offset-2 hover:text-white rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+            a.className = "underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
             a.textContent = "Ver en chess-results";
             const sr = document.createElement("span");
             sr.className = "sr-only";
@@ -858,6 +858,7 @@
         torneo = { id: sala.lichess_id, nombre: sala.nombre, enlace: aLichess ? aLichess.url : "https://lichess.org/broadcast/-/" + sala.lichess_id };
         $("cine-titulo").textContent = torneo.nombre;
         document.title = torneo.nombre + " — Ajedrez Integral";
+        if (window.EscenariosSala) EscenariosSala.deLaSala(sala);
         pintarComentarista(sala);
         if (window.Quiniela) Quiniela.iniciar(sala);
         $("cine-lichess").href = torneo.enlace;

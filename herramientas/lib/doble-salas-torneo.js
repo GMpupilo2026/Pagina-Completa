@@ -97,6 +97,9 @@ function dobleSalas(opciones) {
     if (!Array.isArray(e) || e.length > 6) return "enlaces";
     if (s.tipo === "enlaces" && !e.length) return "enlaces_con_alguno";
     if (s.video_url != null && (s.video_url.length > 300 || !/^https:\\/\\/((www|m)\\.)?(youtube\\.com|youtu\\.be|twitch\\.tv)\\/[^\\s"<>]*$/.test(s.video_url))) return "video_url";
+    // La misma lista que la restricción de salas_torneo.tema (escrita aparte a
+    // propósito: si js/escenarios-sala.js suma uno y la base no, esto lo rechaza).
+    if (s.tema != null && !["cine", "teatro", "salon", "estadio", "club", "planetario", "arcade"].includes(s.tema)) return "tema";
     const pz = s.pizarras || [];
     if (!Array.isArray(pz) || pz.length > 4) return "pizarras";
     for (const x of pz) {
@@ -149,7 +152,7 @@ function dobleSalas(opciones) {
     }
     if (q.op === "insert") {
       if (!ADMIN) return error("42501", "new row violates row-level security policy");
-      const nuevas = (Array.isArray(q.datos) ? q.datos : [q.datos]).map((d) => ({ visible: true, orden: 0, descripcion: "", emoji: "🏆", enlaces: [], pizarras: [], video_url: null, quiniela: false, lichess_id: null, ...d, id: "s-" + (serie++) }));
+      const nuevas = (Array.isArray(q.datos) ? q.datos : [q.datos]).map((d) => ({ visible: true, orden: 0, descripcion: "", emoji: "🏆", enlaces: [], pizarras: [], video_url: null, quiniela: false, tema: "cine", lichess_id: null, ...d, id: "s-" + (serie++) }));
       for (const n of nuevas) {
         const p = problema(n); if (p) return error("23514", "check " + p);
         if (salas.some((s) => s.clave === n.clave)) return error("23505", "duplicate key salas_torneo_clave_key");
