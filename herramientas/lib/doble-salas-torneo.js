@@ -44,6 +44,7 @@ function dobleSalas(opciones) {
     const e = s.enlaces || [];
     if (!Array.isArray(e) || e.length > 6) return "enlaces";
     if (s.tipo === "enlaces" && !e.length) return "enlaces_con_alguno";
+    if (s.video_url != null && (s.video_url.length > 300 || !/^https:\\/\\/((www|m)\\.)?(youtube\\.com|youtu\\.be|twitch\\.tv)\\/[^\\s"<>]*$/.test(s.video_url))) return "video_url";
     const pz = s.pizarras || [];
     if (!Array.isArray(pz) || pz.length > 4) return "pizarras";
     for (const x of pz) {
@@ -92,7 +93,7 @@ function dobleSalas(opciones) {
     }
     if (q.op === "insert") {
       if (!ADMIN) return error("42501", "new row violates row-level security policy");
-      const nuevas = (Array.isArray(q.datos) ? q.datos : [q.datos]).map((d) => ({ visible: true, orden: 0, descripcion: "", emoji: "🏆", enlaces: [], pizarras: [], lichess_id: null, ...d, id: "s-" + (serie++) }));
+      const nuevas = (Array.isArray(q.datos) ? q.datos : [q.datos]).map((d) => ({ visible: true, orden: 0, descripcion: "", emoji: "🏆", enlaces: [], pizarras: [], video_url: null, lichess_id: null, ...d, id: "s-" + (serie++) }));
       for (const n of nuevas) {
         const p = problema(n); if (p) return error("23514", "check " + p);
         if (salas.some((s) => s.clave === n.clave)) return error("23505", "duplicate key salas_torneo_clave_key");

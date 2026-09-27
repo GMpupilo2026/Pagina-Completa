@@ -3,7 +3,8 @@
  * pantalla grande, las demás de la ronda debajo y la pizarra de posiciones.
  *
  * Qué torneo muestra lo dice la sala (tabla salas_torneo, que edita quien
- * administra en admin.html#torneos): torneos-en-vivo.html enlaza a
+ * administra en admin.html#torneos), y también si lleva comentarista en video
+ * (ver «El comentarista en video»): torneos-en-vivo.html enlaza a
  * transmision.html?torneo=<clave>, y la sala de esa clave trae el id de la
  * transmisión de Lichess.
  *
@@ -814,6 +815,24 @@
         $("cine-error").classList.remove("hidden");
     }
 
+    // El comentarista en video, si la sala tiene uno de YouTube o Twitch (la
+    // base no deja guardar otro). El reproductor lo arma js/video-embebido.js.
+    function pintarComentarista(sala) {
+        const v = window.VideoEmbebido ? VideoEmbebido.leer(sala.video_url) : null;
+        const caja = $("cine-comentarista");
+        const lugar = $("cine-comentarista-video");
+        lugar.innerHTML = "";
+        if (!v || !v.embedUrl) { caja.classList.add("hidden"); return; }
+        const marco = document.createElement("iframe");
+        marco.src = v.embedUrl;
+        marco.title = "Comentarista en vivo de " + sala.nombre + (v.kind === "twitch" ? " (Twitch)" : " (YouTube)");
+        marco.allow = "autoplay; encrypted-media; picture-in-picture; fullscreen";
+        marco.allowFullscreen = true;
+        marco.loading = "lazy";
+        lugar.appendChild(marco);
+        caja.classList.remove("hidden");
+    }
+
     // La sala de la clave, o la primera sala de Lichess visible si no se dijo cuál.
     async function buscarSala() {
         if (clave) return SalasTorneo.porClave(clave);
@@ -839,6 +858,7 @@
         torneo = { id: sala.lichess_id, nombre: sala.nombre, enlace: aLichess ? aLichess.url : "https://lichess.org/broadcast/-/" + sala.lichess_id };
         $("cine-titulo").textContent = torneo.nombre;
         document.title = torneo.nombre + " — Ajedrez Integral";
+        pintarComentarista(sala);
         $("cine-lichess").href = torneo.enlace;
         let datos;
         try {

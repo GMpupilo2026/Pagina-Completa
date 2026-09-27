@@ -162,6 +162,20 @@
     pizarras: { ul: "sala-pizarras", mas: "sala-pizarra-mas", max: 4, campo: "titulo", largo: 40,
       etiqueta: "Título de la pizarra", direccion: "Dirección en chess-results", quitar: "Quitar la pizarra", ejemplo: "https://chess-results.com/tnr123456.aspx" },
   };
+  // Lo mismo que exige la base para salas_torneo.video_url.
+  const URL_VIDEO = /^https:\/\/((www|m)\.)?(youtube\.com|youtu\.be|twitch\.tv)\/[^\s"<>]*$/;
+
+  // Debajo del campo del comentarista: si el enlace sirve, y de qué es.
+  function decirVideo() {
+    const texto = $("sala-video").value.trim();
+    const estado = $("sala-video-estado");
+    if (!texto) { estado.textContent = "Opcional. Un enlace de YouTube o de Twitch: se ve en la sala, al lado de la pizarra."; return; }
+    const v = VideoEmbebido.leer(texto);
+    estado.textContent = v && v.embedUrl && URL_VIDEO.test(texto)
+      ? "✓ Video de " + (v.kind === "twitch" ? "Twitch" : "YouTube") + ": se va a ver en la sala."
+      : "Ese enlace no es de un video de YouTube ni de un canal de Twitch.";
+  }
+
   // Lo mismo que interno.pizarras_de_sala_validas en la base.
   const URL_CHESS_RESULTS = /^https:\/\/(s[0-9]{1,2}\.)?chess-results\.com\/tnr[0-9]{1,9}\.aspx(\?[^\s"<>]*)?$/;
 
@@ -243,6 +257,7 @@
     const lichess = tipoElegido() === "lichess";
     $("sala-lichess-caja").classList.toggle("hidden", !lichess);
     $("sala-pizarras-caja").classList.toggle("hidden", !lichess);
+    $("sala-video-caja").classList.toggle("hidden", !lichess);
     $("sala-enlaces-ayuda").textContent = lichess
       ? "Opcional: botones de más debajo de «Entrar a la sala», por ejemplo «Verlo directo en Lichess»."
       : "Al menos uno: cada botón abre su transmisión en otra pestaña (por ejemplo «Partida masculina» y «Partida femenina»).";
@@ -260,6 +275,7 @@
       lichess_id: lichess && lichess.es === "torneo" ? lichess.id : (lichessComprobado ? lichessComprobado.id : null),
       enlaces: valoresDe("enlaces"),
       pizarras: valoresDe("pizarras"),
+      video_url: $("sala-video").value.trim(),
       visible: $("sala-visible").checked,
     };
   }
@@ -287,6 +303,8 @@
     $("sala-visible").checked = sala ? sala.visible : true;
     llenar("enlaces", sala ? sala.enlaces : []);
     llenar("pizarras", sala ? sala.pizarras : []);
+    $("sala-video").value = sala && sala.video_url ? sala.video_url : "";
+    decirVideo();
     $("sala-msg").textContent = "";
     $("sala-editor").classList.remove("hidden");
     $("sala-nueva").setAttribute("aria-expanded", "true");
@@ -325,6 +343,12 @@
         return [campo(enlaces[i], "url"), "La dirección del botón " + (i + 1) + " tiene que empezar con https:// y no llevar espacios."];
       }
     }
+    if (sala.tipo === "lichess" && sala.video_url) {
+      const v = VideoEmbebido.leer(sala.video_url);
+      if (!v || !v.embedUrl || !URL_VIDEO.test(sala.video_url) || sala.video_url.length > 300) {
+        return ["sala-video", "El comentarista tiene que ser un enlace de YouTube o de Twitch (por ejemplo https://www.youtube.com/watch?v=… o https://www.twitch.tv/nombre-del-canal)."];
+      }
+    }
     if (sala.tipo === "lichess") {
       const pizarras = filasCon("pizarras");
       for (let i = 0; i < pizarras.length; i++) {
@@ -351,7 +375,8 @@
     const fila = {
       clave: sala.clave, nombre: sala.nombre, descripcion: sala.descripcion, emoji: sala.emoji,
       tipo: sala.tipo, lichess_id: sala.tipo === "lichess" ? sala.lichess_id : null,
-      enlaces: sala.enlaces, pizarras: sala.tipo === "lichess" ? sala.pizarras : [], visible: sala.visible,
+      enlaces: sala.enlaces, pizarras: sala.tipo === "lichess" ? sala.pizarras : [],
+      video_url: sala.tipo === "lichess" && sala.video_url ? sala.video_url : null, visible: sala.visible,
     };
     $("sala-guardar").disabled = true;
     let r;
@@ -439,6 +464,7 @@
     // «Guardar la sala», el clic cae en otro lado.
     $("sala-lichess-comprobar").addEventListener("click", comprobarLichess);
     document.querySelectorAll('input[name="sala-tipo"]').forEach((r) => r.addEventListener("change", pintarTipo));
+    $("sala-video").addEventListener("input", decirVideo);
     cargar();
   }
 
