@@ -308,12 +308,12 @@ async function pruebaAlumna(browser) {
      bloqueada y no tiene ninguno — eso tiene su propia prueba más abajo. */
   igual("«Clase en vivo» lleva un solo acceso, y es la sesión en vivo",
     grupos[0].tiles.map((t) => t.etiqueta), ["Sesión en vivo"]);
-  /* Primero donde se juega contra otra persona, después el torneo, y de último
-     lo que se MIRA. Y «Racha táctica» NO está: ya es lo primero que hay dentro
-     de juegos.html, y un mismo destino dos veces en el panel es el error que ya
-     se cometió con «Torneos». */
+  /* Primero donde se juega contra otra persona, después el torneo y el bot.
+     TV en vivo y Logros se fueron a «Tu cuenta». Y «Racha táctica» NO está: ya
+     es lo primero que hay dentro de juegos.html, y un mismo destino dos veces
+     en el panel es el error que ya se cometió con «Torneos». */
   igual("Jugar y competir", grupo(grupos, "Jugar y competir").tiles.map((t) => t.enlace),
-    ["juegos.html", "torneos.html", "tv.html", "tablero.html", "logros.html"]);
+    ["juegos.html", "torneos.html", "tablero.html"]);
   igual("y la racha táctica no se ofrece dos veces: en el panel ya no",
     grupos.flatMap((g) => g.tiles).filter((t) => t.enlace === "racha-tactica.html").length, "0");
   /* Dentro de Aprender, el orden es el del trabajo de todos los días: lo que se
@@ -345,7 +345,7 @@ async function pruebaAlumna(browser) {
      tiene a quién calificar (la prueba del profesor, más abajo, lo dice). */
   igual("Tu cuenta, en su orden, con la encuesta sobre su profesor",
     grupo(grupos, "Tu cuenta").tiles.map((t) => t.etiqueta),
-    ["Informes", "Configuración", "¿Cómo van tus clases?"]);
+    ["Configuración", "Informes", "Logros", "TV en vivo", "¿Cómo van tus clases?"]);
   igual("y a la alumna no se le ofrecen los cobros por ninguna parte",
     grupos.flatMap((g) => g.tiles).filter((t) => /cobros\.html/.test(t.enlace || "")).length, "0");
   igual("«Cerrar sesión» no está dos veces: en el grid ya no",
@@ -424,7 +424,7 @@ async function pruebaProfesora(browser) {
      ofrecía "lo que se te ha cobrado" sobre una cuenta a la que no se le cobra
      nada. Y como no coordina, tampoco le toca la página entera de Cobros. */
   igual("a quien da clase no se le ofrece su propio recibo",
-    grupo(grupos, "Tu cuenta").tiles.map((t) => t.etiqueta), ["Informes", "Configuración"]);
+    grupo(grupos, "Tu cuenta").tiles.map((t) => t.etiqueta), ["Configuración", "Informes", "Logros", "TV en vivo"]);
   igual("y sin coordinar, cobros.html no le aparece por ningún lado",
     grupos.flatMap((g) => g.tiles).filter((t) => t.enlace === "cobros.html").length, "0");
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");

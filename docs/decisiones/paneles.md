@@ -54,8 +54,11 @@ lista, y el resto se acomoda solo.
   estaba primero y es lo más largo de los cuatro, así que quien entra a
   practicar veinte minutos tenía delante lo que menos se parece a eso. En
   "Jugar y competir" va primero donde se juega contra otra persona (Juegos),
-  después el torneo, y de último lo que se MIRA —TV en vivo no es jugar, es ver
-  jugar—, con el bot y las medallas detrás.
+  después el torneo y al final el bot.
+- **"TV en vivo" y "Logros" están en "Tu cuenta"**, que va en este orden:
+  Configuración, Informes, Logros, TV en vivo y, solo al alumnado, "¿Cómo van
+  tus clases?". Lo pidió así el dueño de la Academia; antes las dos estaban al
+  final de "Jugar y competir".
 - **Un mismo destino no va dos veces en el panel.** "Racha táctica" salió de
   "Jugar y competir" porque ya es lo PRIMERO que hay dentro de `juegos.html`,
   en una franja a todo el ancho: el segundo camino no se usa y de paso ensancha

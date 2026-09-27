@@ -72,9 +72,8 @@
                 { emoji: "📖", label: "Artículos", desc: "Lecturas técnicas y pedagógicas", href: "articulos.html" },
             ] },
             /* Primero donde se juega de verdad contra otra persona, después el
-               torneo, y de último lo que se MIRA — TV en vivo no es jugar, es
-               ver jugar. Detrás van las dos que cuelgan de eso: el bot y las
-               medallas.
+               torneo, y al final el bot. «TV en vivo» y «Logros» ya no viven
+               acá: están en «Tu cuenta» (ver el grupo, más abajo).
 
                «Racha táctica» se fue de acá porque ya es lo PRIMERO que hay
                dentro de juegos.html, en una franja ámbar a todo el ancho. Un
@@ -91,9 +90,7 @@
             { title: "Jugar y competir", tiles: [
                 { emoji: "🎲", label: "Juegos", desc: "Crazyhouse y otras modalidades — tu profesor te asigna el rival", descProfe: "Crazyhouse y otras modalidades — arma las partidas de tus alumnos", href: "juegos.html" },
                 { emoji: "🥇", label: "Torneos", desc: "Inscríbete y compite en los torneos que arma tu profesor", descProfe: "Arma torneos para tus alumnos, con sus rondas y su tabla", href: "torneos.html" },
-                { emoji: "📺", label: "TV en vivo", desc: "Las partidas de la Academia en directo, con su tabla de posiciones", href: "tv.html" },
                 { photo: "img/oscar-avatar.jpg", label: "Juega contra mí", desc: "Practica contra Oscar, nuestro motor", href: "tablero.html" },
-                { emoji: "🏅", label: "Logros", desc: "Tu racha de días entrenando y las medallas que has ganado", descProfe: "El catálogo de medallas y cómo se gana la racha de días", href: "logros.html" },
             ] },
             /* «Mide tu nivel» (los dos diagnósticos) y las tarjetas que eran
                solo de administración —lector de planilla, tienda,
@@ -103,9 +100,14 @@
             { title: "Herramientas", tiles: [
                 { emoji: "📂", label: "Archivos", desc: "Sube tus PGN completos y revisa las partidas guardadas en clase — llévalos al tablero en vivo", href: "partidas.html", mantenimientoAlumno: true },
             ] },
+            /* El orden lo pidió el dueño de la Academia: Configuración,
+               Informes, Logros, TV en vivo y, al alumnado, «¿Cómo van tus
+               clases?» de última (se agrega más abajo, solo a su panel). */
             { title: "Tu cuenta", tiles: [
-                { emoji: "📊", label: "Informes", desc: "Tu progreso y estadísticas", descProfe: "El progreso de tus alumnos y los informes a la casa", href: "informes.html" },
                 { emoji: "⚙️", label: "Configuración", desc: "Tu perfil y contraseña", href: "configuracion.html" },
+                { emoji: "📊", label: "Informes", desc: "Tu progreso y estadísticas", descProfe: "El progreso de tus alumnos y los informes a la casa", href: "informes.html" },
+                { emoji: "🏅", label: "Logros", desc: "Tu racha de días entrenando y las medallas que has ganado", descProfe: "El catálogo de medallas y cómo se gana la racha de días", href: "logros.html" },
+                { emoji: "📺", label: "TV en vivo", desc: "Las partidas de la Academia en directo, con su tabla de posiciones", href: "tv.html" },
             ] },
         ];
 
