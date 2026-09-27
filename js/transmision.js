@@ -7,6 +7,16 @@
  * transmision.html?torneo=<clave>, y la sala de esa clave trae el id de la
  * transmisión de Lichess.
  *
+ * EN VIVO: la ronda elegida se escucha por la transmisión continua de Lichess
+ * (/api/stream/broadcast/round/<id>.pgn), que manda el PGN de cada partida en
+ * el momento en que cambia: cada jugada llega al instante, y el reloj de quien
+ * juega corre segundo a segundo en la pantalla. Si esa conexión se corta, se
+ * vuelve a abrir sola. Además, cada CADA_MS se vuelve a pedir la ronda entera
+ * (por si aparece una mesa nueva o se perdió algo) y cada TORNEO_MS el torneo,
+ * para enterarse de que empezó otra ronda: si la persona no eligió una ronda a
+ * mano, la sala pasa sola a la que está en curso. Ver «La sala se actualiza
+ * sola, jugada por jugada» en docs/decisiones/juegos-y-torneos.md.
+ *
  * Todo sale de la API pública de Lichess, sin cuenta:
  *   /api/broadcast/<id>                  el torneo y sus rondas
  *   /api/broadcast/<torneo>/<ronda>/<id> las partidas de una ronda, con su FEN
@@ -25,7 +35,11 @@
     "use strict";
 
     const LICHESS = "https://lichess.org";
-    const CADA_MS = 20000;          // cada cuánto se refresca la ronda en curso
+    const CADA_MS = 20000;          // respaldo: cada cuánto se vuelve a pedir la ronda entera
+    const TORNEO_MS = 60000;        // cada cuánto se vuelve a pedir el torneo (rondas nuevas)
+    const REINTENTO_MS = 5000;      // cuánto se espera para reabrir la transmisión continua
+    // Una partida que todavía no empezó viene de Lichess SIN «fen»: es la inicial.
+    const POSICION_INICIAL = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     const PIZARRA_MS = 90000;       // y la pizarra de chess-results (la función guarda 90 s)
     const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
     const NOMBRE_PIEZA = { k: "rey", q: "dama", r: "torre", b: "alfil", n: "caballo", p: "peón" };
@@ -48,12 +62,18 @@
         oficialError: null,
         pestana: 0,
         temporizadorPizarra: null,
+        temporizadorTorneo: null,
+        aMano: false,           // si la persona eligió la ronda (entonces no se la cambia sola)
+        vivo: null,             // { ctrl, ronda } de la transmisión continua abierta
+        vivoConectado: false,
+        vivoReintento: null,
+        pintado: 0,             // requestAnimationFrame pendiente
     };
 
     // ---- Lichess -------------------------------------------------------------
 
     async function pedir(url) {
-        const res = await fetch(url, { headers: { Accept: "application/json" } });
+        const res = await fetch(url, { headers: { Accept: "application/json" }, cache: "no-store" });
         if (!res.ok) throw new Error("Lichess respondió " + res.status + " a " + url);
         return res.json();
     }
@@ -69,9 +89,28 @@
             encodeURIComponent(ronda.slug || "-") + "/" + encodeURIComponent(ronda.id);
     }
 
+    // Cuántas medias jugadas lleva una posición (para no volver atrás con un
+    // dato más viejo que lo que ya trajo la transmisión continua).
+    function medias(fen) {
+        const p = String(fen || POSICION_INICIAL).split(" ");
+        const n = Number(p[5]) || 1;
+        return (n - 1) * 2 + (p[1] === "b" ? 1 : 0);
+    }
+
+    // La ronda entera, pedida de nuevo. Una partida que la transmisión continua
+    // ya trajo más adelantada no se pisa con esta, que puede venir atrasada.
     async function cargarRonda(ronda) {
         const datos = await pedir(urlDatosRonda(ronda));
-        estado.partidasPorRonda[ronda.id] = Array.isArray(datos.games) ? datos.games : [];
+        const nuevas = Array.isArray(datos.games) ? datos.games : [];
+        const viejas = estado.partidasPorRonda[ronda.id] || [];
+        const ahora = Date.now();
+        estado.partidasPorRonda[ronda.id] = nuevas.map((g) => {
+            const antes = viejas.find((v) => v.id === g.id);
+            if (antes && medias(antes.fen) > medias(g.fen) && !resultado(g.status)) return antes;
+            // thinkTime: segundos desde la última jugada, para que el reloj corra.
+            g._desde = typeof g.thinkTime === "number" ? ahora - g.thinkTime * 1000 : (antes && antes._desde) || ahora;
+            return g;
+        });
         return estado.partidasPorRonda[ronda.id];
     }
 
@@ -91,7 +130,7 @@
     // Solo hace falta la parte de las piezas de la FEN: no se juega nada acá.
     function piezasDeFen(fen) {
         const piezas = {};
-        const filas = String(fen || "").split(" ")[0].split("/");
+        const filas = String(fen || POSICION_INICIAL).split(" ")[0].split("/");
         if (filas.length !== 8) return piezas;
         filas.forEach((fila, i) => {
             const rank = 8 - i;
@@ -109,7 +148,7 @@
     }
 
     function turnoDeFen(fen) {
-        const t = String(fen || "").split(" ")[1];
+        const t = String(fen || POSICION_INICIAL).split(" ")[1];
         return t === "b" ? "b" : "w";
     }
 
@@ -216,16 +255,39 @@
             t.textContent = "Juega";
             der.appendChild(t);
         }
-        const r = reloj(j && j.clock);
+        const r = reloj(relojAhora(j, partida, juega));
         if (r) {
             const c = document.createElement("span");
             c.className = "cine-reloj font-mono";
+            c.dataset.reloj = color;
             c.textContent = r;
             c.setAttribute("aria-label", "Reloj: " + r);
             der.appendChild(c);
         }
         el.appendChild(der);
     }
+
+    // El reloj de quien juega corre desde su última jugada (_desde); el del otro
+    // está quieto. Antes de la primera jugada no corre ninguno: no se sabe
+    // cuándo se echó a andar el reloj de las blancas.
+    function relojAhora(j, partida, juega) {
+        const cs = j && j.clock;
+        if (typeof cs !== "number") return cs;
+        if (!juega || !partida || !partida._desde || medias(partida.fen) === 0) return cs;
+        return Math.max(0, cs - Math.floor((Date.now() - partida._desde) / 10));
+    }
+
+    // Cada segundo, solo el número del reloj que corre (no se redibuja nada más).
+    function actualizarRelojes() {
+        const g = partidasDeLaRonda().find((p) => p.id === estado.partidaElegida);
+        if (!g || resultado(g.status)) return;
+        const turno = turnoDeFen(g.fen);
+        const span = document.querySelector('#cine-' + (turno === "w" ? "blancas" : "negras") + ' [data-reloj]');
+        const j = (g.players || [])[turno === "w" ? 0 : 1];
+        const r = reloj(relojAhora(j, g, true));
+        if (span && r && span.textContent !== r) span.textContent = r;
+    }
+    setInterval(actualizarRelojes, 1000);
 
     // ---- Pantalla grande y cartelera -------------------------------------------
 
@@ -267,8 +329,22 @@
         $("cine-posicion").textContent = describirPosicion(g.fen);
     }
 
+    // Lo que tiene el foco adentro de una lista que se redibuja con cada jugada:
+    // se anota antes y se devuelve después, si no quien navega con Tab lo
+    // pierde en cada jugada.
+    function focoEn(contenedor, dato) {
+        const a = document.activeElement;
+        return a && contenedor.contains(a) ? a.dataset[dato] : null;
+    }
+    function devolverFoco(contenedor, dato, valor) {
+        if (!valor) return;
+        const b = [...contenedor.querySelectorAll("button")].find((x) => x.dataset[dato] === valor);
+        if (b) b.focus();
+    }
+
     function pintarCartelera() {
         const lista = $("cine-cartelera");
+        const enfocada = focoEn(lista, "partida");
         lista.innerHTML = "";
         partidasDeLaRonda().forEach((g, i) => {
             const [w, b] = g.players || [];
@@ -278,6 +354,7 @@
             btn.type = "button";
             btn.className = "cine-miniatura w-full text-left rounded-xl p-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
             const elegida = g.id === estado.partidaElegida;
+            btn.dataset.partida = g.id;
             btn.setAttribute("aria-pressed", String(elegida));
             const mini = document.createElement("div");
             mini.className = "cine-tablero cine-tablero-mini";
@@ -308,10 +385,12 @@
             lista.appendChild(li);
             dibujarTablero(mini, g.fen, g.lastMove, { miniatura: true });
         });
+        devolverFoco(lista, "partida", enfocada);
     }
 
     function pintarRondas() {
         const ul = $("cine-rondas");
+        const enfocada = focoEn(ul, "ronda");
         ul.innerHTML = "";
         estado.rondas.forEach((r) => {
             const li = document.createElement("li");
@@ -319,18 +398,20 @@
             btn.type = "button";
             const elegida = estado.rondaElegida && r.id === estado.rondaElegida.id;
             btn.className = "cine-ronda px-4 py-2 rounded-full text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-950";
+            btn.dataset.ronda = r.id;
             btn.setAttribute("aria-pressed", String(!!elegida));
             btn.textContent = r.name || "Ronda";
-            if (r.ongoing) {
+            if (rondaJugandose(r)) {
                 const vivo = document.createElement("span");
                 vivo.className = "cine-envivo ml-2";
                 vivo.textContent = "en vivo";
                 btn.appendChild(vivo);
             }
-            btn.addEventListener("click", () => elegirRonda(r));
+            btn.addEventListener("click", () => { estado.aMano = true; elegirRonda(r); });
             li.appendChild(btn);
             ul.appendChild(li);
         });
+        devolverFoco(ul, "ronda", enfocada);
     }
 
     // ---- La pizarra ------------------------------------------------------------
@@ -534,14 +615,36 @@
         pintarRondas();
         pintarPantalla();
         pintarCartelera();
-        pintarPizarra();
-        $("cine-actualizado").textContent = "Actualizado a las " + horaDeAhora() + " ·";
+        // La pizarra oficial (chess-results) no depende de las jugadas: se pinta
+        // cuando llega (cargarOficial), y así no se le roba el foco a sus pestañas.
+        if (!(estado.sala && (estado.sala.pizarras || []).length)) pintarPizarra();
+        $("cine-actualizado").textContent = estado.vivoConectado
+            ? "En vivo: cada jugada llega al instante ·"
+            : "Actualizado a las " + horaDeAhora() + " ·";
     }
 
+    // Muchas jugadas juntas (al conectarse llegan todas las partidas) se pintan
+    // una sola vez, en el siguiente cuadro.
+    function pintarPronto() {
+        if (estado.pintado) return;
+        estado.pintado = requestAnimationFrame(() => { estado.pintado = 0; pintarTodo(); });
+    }
+
+    // Una ronda se sigue pidiendo mientras no hayan terminado todas sus
+    // partidas; una ronda sin partidas todavía (no empezó) también: si no, la
+    // sala abierta antes de la hora no se enteraba nunca de que empezó.
     function rondaEnCurso(r) {
         if (!r) return false;
         if (r.ongoing) return true;
-        return (estado.partidasPorRonda[r.id] || []).some((g) => !resultado(g.status));
+        const partidas = estado.partidasPorRonda[r.id] || [];
+        if (!partidas.length) return !r.finished;
+        return partidas.some((g) => !resultado(g.status));
+    }
+
+    // «En vivo» en el botón de la ronda: ya se está jugando (no solo pareada).
+    function rondaJugandose(r) {
+        if (r.ongoing) return true;
+        return (estado.partidasPorRonda[r.id] || []).some((g) => !resultado(g.status) && medias(g.fen) > 0);
     }
 
     function programar() {
@@ -549,24 +652,149 @@
         estado.temporizador = setTimeout(refrescar, CADA_MS);
     }
 
-    // Solo se vuelve a pedir la ronda que se está viendo si sigue en juego; una
+    // El respaldo: la ronda entera cada CADA_MS, mientras siga en curso. Una
     // pestaña escondida no le pide nada a Lichess.
     async function refrescar() {
-        if (document.hidden) { programar(); return; }
+        clearTimeout(estado.temporizador);
         const r = estado.rondaElegida;
-        if (rondaEnCurso(r)) {
+        if (!document.hidden && rondaEnCurso(r)) {
             try { await cargarRonda(r); pintarTodo(); } catch (e) { console.error(e); }
+            if (!estado.vivo) abrirVivo(r);
         }
         programar();
+    }
+
+    // ---- La transmisión continua -------------------------------------------------
+
+    function cerrarVivo() {
+        clearTimeout(estado.vivoReintento);
+        if (estado.vivo) estado.vivo.ctrl.abort();
+        estado.vivo = null;
+        estado.vivoConectado = false;
+    }
+
+    // Lichess manda el PGN de cada partida que cambia; entre una y otra, dos
+    // renglones vacíos (el PGN de una partida tiene uno solo, entre la
+    // cabecera y las jugadas).
+    function abrirVivo(r) {
+        cerrarVivo();
+        if (!r || !rondaEnCurso(r) || typeof Chess === "undefined") return;
+        const ctrl = new AbortController();
+        estado.vivo = { ctrl, ronda: r.id };
+        (async () => {
+            try {
+                const res = await fetch(LICHESS + "/api/stream/broadcast/round/" + encodeURIComponent(r.id) + ".pgn",
+                    { signal: ctrl.signal, cache: "no-store" });
+                if (!res.ok || !res.body) throw new Error("Lichess respondió " + res.status + " a la transmisión continua");
+                estado.vivoConectado = true;
+                pintarPronto();
+                const lector = res.body.getReader();
+                const texto = new TextDecoder();
+                let resto = "";
+                for (;;) {
+                    const { value, done } = await lector.read();
+                    if (done) break;
+                    resto += texto.decode(value, { stream: true }).replace(/\r\n/g, "\n");
+                    let corte;
+                    while ((corte = resto.search(/\n\n\n/)) >= 0) {
+                        recibirPgn(r.id, resto.slice(0, corte));
+                        resto = resto.slice(corte).replace(/^\n+/, "");
+                    }
+                }
+                if (resto.trim()) recibirPgn(r.id, resto);
+            } catch (e) {
+                if (ctrl.signal.aborted) return;
+                console.error(e);
+            }
+            if (ctrl.signal.aborted || !estado.vivo || estado.vivo.ctrl !== ctrl) return;
+            // Se cortó (o Lichess la cerró): se vuelve a abrir mientras la ronda
+            // siga en curso. Hasta entonces, el respaldo de CADA_MS.
+            estado.vivo = null;
+            estado.vivoConectado = false;
+            pintarPronto();
+            estado.vivoReintento = setTimeout(() => {
+                if (estado.rondaElegida && estado.rondaElegida.id === r.id && !document.hidden) abrirVivo(r);
+            }, REINTENTO_MS);
+        })();
+    }
+
+    // Una partida que llegó por la transmisión continua: se reproduce su PGN con
+    // chess.js (así la posición es de verdad legal) y se actualiza en su lugar.
+    function recibirPgn(rondaId, pgn) {
+        if (!pgn.trim()) return;
+        const cab = {};
+        pgn.replace(/^\[(\w+) "((?:[^"\\]|\\.)*)"\]\s*$/gm, (_, k, v) => { cab[k] = v; return ""; });
+        const id = ((cab.GameURL || "").match(/\/([A-Za-z0-9]{8})\/?$/) || [])[1];
+        if (!id) return;
+        const juego = new Chess();
+        if (!juego.load_pgn(pgn, { sloppy: true })) { console.error("PGN que no se pudo leer:", id); return; }
+        const historia = juego.history({ verbose: true });
+        const ultima = historia[historia.length - 1];
+        const jugadas = pgn.replace(/^\[.*\]\s*$/gm, "");
+        const relojes = [...jugadas.matchAll(/\[%clk (\d+):(\d+):(\d+(?:\.\d+)?)\]/g)]
+            .map((m) => Math.round((Number(m[1]) * 3600 + Number(m[2]) * 60 + Number(m[3])) * 100));
+        const res = { "1-0": "1-0", "0-1": "0-1", "1/2-1/2": "½-½", "½-½": "½-½" }[cab.Result] || "*";
+
+        const lista = estado.partidasPorRonda[rondaId] || (estado.partidasPorRonda[rondaId] = []);
+        let g = lista.find((x) => x.id === id);
+        if (!g) {
+            const jugador = (lado) => ({
+                name: cab[lado] || "", title: cab[lado + "Title"] || undefined,
+                rating: Number(cab[lado + "Elo"]) || undefined,
+            });
+            g = { id, players: [jugador("White"), jugador("Black")], status: "*" };
+            lista.push(g);
+        }
+        const fen = juego.fen();
+        if (medias(g.fen) > historia.length && res === "*") return;   // llegó atrasada
+        if (medias(g.fen) !== historia.length || !g._desde) g._desde = Date.now();
+        g.fen = fen;
+        g.lastMove = ultima ? ultima.from + ultima.to : undefined;
+        g.status = res;
+        g.check = juego.in_checkmate() ? "#" : juego.in_check() ? "+" : undefined;
+        // Un [%clk] por jugada: los de índice par son de las blancas.
+        if (relojes.length === historia.length && relojes.length) {
+            const [w, b] = g.players || [];
+            const blancas = relojes.filter((_, i) => i % 2 === 0), negras = relojes.filter((_, i) => i % 2 === 1);
+            if (w && blancas.length) w.clock = blancas[blancas.length - 1];
+            if (b && negras.length) b.clock = negras[negras.length - 1];
+        }
+        if (estado.rondaElegida && estado.rondaElegida.id === rondaId) pintarPronto();
+    }
+
+    // ---- El torneo, cada TORNEO_MS: rondas nuevas y cuál está en curso ---------
+
+    async function refrescarTorneo() {
+        clearTimeout(estado.temporizadorTorneo);
+        if (!document.hidden) {
+            try {
+                const datos = await pedir(LICHESS + "/api/broadcast/" + encodeURIComponent(torneo.id));
+                if (Array.isArray(datos.rounds) && datos.rounds.length) {
+                    estado.rondas = datos.rounds;
+                    const actual = estado.rondas.find((r) => estado.rondaElegida && r.id === estado.rondaElegida.id);
+                    if (actual) estado.rondaElegida = actual;
+                    const ahora = rondaInicial(datos);
+                    // Sin haber elegido a mano, la sala sigue a la ronda en curso.
+                    if (!estado.aMano && ahora && estado.rondaElegida && ahora.id !== estado.rondaElegida.id) {
+                        await elegirRonda(ahora);
+                    } else {
+                        pintarTodo();
+                    }
+                }
+            } catch (e) { console.error(e); }
+        }
+        estado.temporizadorTorneo = setTimeout(refrescarTorneo, TORNEO_MS);
     }
 
     async function elegirRonda(r) {
         estado.rondaElegida = r;
         estado.partidaElegida = null;
+        cerrarVivo();
         if (!estado.partidasPorRonda[r.id] || rondaEnCurso(r)) {
             try { await cargarRonda(r); } catch (e) { console.error(e); estado.partidasPorRonda[r.id] = estado.partidasPorRonda[r.id] || []; }
         }
         pintarTodo();
+        abrirVivo(r);
         programar();
     }
 
@@ -638,14 +866,19 @@
         $("loading").classList.add("hidden");
         $("cine-contenido").classList.remove("hidden");
         await elegirRonda(rondaInicial(datos));
+        estado.temporizadorTorneo = setTimeout(refrescarTorneo, TORNEO_MS);
     }
 
     // Con la ventana cambiando de ancho, la pieza se vuelve a medir.
     window.addEventListener("resize", () => document.querySelectorAll(".cine-tablero").forEach(ajustarPiezas));
-    document.addEventListener("visibilitychange", () => { if (!document.hidden && estado.rondaElegida) refrescar(); });
+    document.addEventListener("visibilitychange", () => {
+        if (document.hidden || !estado.rondaElegida) return;
+        refrescar();
+        if (!estado.vivo) abrirVivo(estado.rondaElegida);
+    });
 
     // Para el verificador.
-    window.Transmision = { posiciones, piezasDeFen, resultado };
+    window.Transmision = { posiciones, piezasDeFen, resultado, recibirPgn, refrescarTorneo };
 
     arrancar();
 })();
