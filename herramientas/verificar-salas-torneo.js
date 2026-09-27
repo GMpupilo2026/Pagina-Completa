@@ -161,7 +161,32 @@ async function editor(browser) {
   await page.click("#sala-guardar");
   await page.waitForFunction(() => document.getElementById("sala-editor").classList.contains("hidden"));
   const ins2 = (await escrituras(page)).pop();
-  igual("se guarda con el id del TORNEO, oculta", [ins2.datos.tipo, ins2.datos.lichess_id, ins2.datos.visible], ["lichess", "Qwer5678", false]);
+  igual("se guarda con el id del TORNEO, oculta, sin pizarras", [ins2.datos.tipo, ins2.datos.lichess_id, ins2.datos.visible, ins2.datos.pizarras], ["lichess", "Qwer5678", false, []]);
+
+  console.log("\n=== Las pizarras de chess-results ===");
+  await page.click('#salas-admin li[data-sala="copa-nacional-2026"] button[aria-label^="Editar"]');
+  igual("en una sala de Lichess se ofrecen", await page.$eval("#sala-pizarras-caja", (e) => e.checkVisibility()), true);
+  await page.click("#sala-pizarra-mas");
+  await page.click("#sala-pizarra-mas");
+  await escribir(page, "#sala-pizarras li:nth-child(1) [data-campo=texto]", "Femenino");
+  await escribir(page, "#sala-pizarras li:nth-child(1) [data-campo=url]", "https://s1.chess-results.com/tnr1498221.aspx?lan=2&SNode=S0");
+  await escribir(page, "#sala-pizarras li:nth-child(2) [data-campo=texto]", "Masculino");
+  await escribir(page, "#sala-pizarras li:nth-child(2) [data-campo=url]", "https://chess-results.com.otro-sitio.com/tnr1498218.aspx");
+  await page.click("#sala-guardar");
+  igual("una dirección que no es de chess-results no se manda", [await mensaje(page), (await escrituras(page)).length],
+    ["La dirección de la pizarra 2 tiene que ser la de un torneo de chess-results (https://…chess-results.com/tnr….aspx).", 2]);
+  igual("y el foco va a esa dirección", await page.evaluate(() => document.activeElement.id.startsWith("sala-pizarras-url")), true);
+  await escribir(page, "#sala-pizarras li:nth-child(2) [data-campo=url]", "https://s3.chess-results.com/tnr1498218.aspx?lan=2&art=0&turdet=YES&flag=30&SNode=S0");
+  await page.click("#sala-guardar");
+  await page.waitForFunction(() => document.getElementById("sala-editor").classList.contains("hidden"));
+  igual("se guardan las dos, tal cual", (await escrituras(page)).pop().datos.pizarras, [
+    { titulo: "Femenino", url: "https://s1.chess-results.com/tnr1498221.aspx?lan=2&SNode=S0" },
+    { titulo: "Masculino", url: "https://s3.chess-results.com/tnr1498218.aspx?lan=2&art=0&turdet=YES&flag=30&SNode=S0" }]);
+  await page.click('#salas-admin li[data-sala="copa-nacional-2026"] button[aria-label^="Editar"]');
+  igual("al volver a editarla, están", await page.$$eval("#sala-pizarras [data-campo=texto]", (i) => i.map((x) => x.value)), ["Femenino", "Masculino"]);
+  await page.check('input[name="sala-tipo"][value="enlaces"]');
+  igual("una sala de enlaces no las ofrece", await page.$eval("#sala-pizarras-caja", (e) => e.checkVisibility()), false);
+  await page.click("#sala-cancelar");
 
   console.log("\n=== Lo que la base rechaza ===");
   await page.click("#sala-nueva");

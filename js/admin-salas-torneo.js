@@ -13,7 +13,6 @@
 (function () {
   "use strict";
 
-  const MAX_ENLACES = 6;
   const $ = (id) => document.getElementById(id);
 
   let salas = [];
@@ -155,56 +154,95 @@
 
   // ---------------------------------------------------------------- el editor
 
-  function filaEnlace(enlace) {
+  /* Dos listas de pares con la misma forma: los botones de enlaces (texto y
+   * dirección) y las pizarras de chess-results (título y dirección). */
+  const LISTAS = {
+    enlaces: { ul: "sala-enlaces", mas: "sala-enlace-mas", max: 6, campo: "texto", largo: 60,
+      etiqueta: "Texto del botón", direccion: "Dirección del botón", quitar: "Quitar el botón", ejemplo: "https://…" },
+    pizarras: { ul: "sala-pizarras", mas: "sala-pizarra-mas", max: 4, campo: "titulo", largo: 40,
+      etiqueta: "Título de la pizarra", direccion: "Dirección en chess-results", quitar: "Quitar la pizarra", ejemplo: "https://chess-results.com/tnr123456.aspx" },
+  };
+  // Lo mismo que interno.pizarras_de_sala_validas en la base.
+  const URL_CHESS_RESULTS = /^https:\/\/(s[0-9]{1,2}\.)?chess-results\.com\/tnr[0-9]{1,9}\.aspx(\?[^\s"<>]*)?$/;
+
+  let serieFilas = 0;
+  function fila(lista, datos) {
+    const L = LISTAS[lista];
     const li = el("li", "grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)_auto] gap-2 items-end rounded-lg sm:rounded-none border sm:border-0 border-brand-100 dark:border-brand-800 p-2 sm:p-0");
-    const n = document.querySelectorAll("#sala-enlaces li").length + 1;
+    const clase = "w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none";
+    serieFilas += 1;
     const c1 = el("div");
-    const l1 = el("label", "block text-xs text-brand-500 dark:text-brand-300 mb-1", "Texto del botón " + n);
-    const t = el("input", "w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none");
-    t.type = "text"; t.maxLength = 60; t.value = enlace.texto || ""; t.dataset.campo = "texto";
-    t.id = "sala-enlace-texto-" + n + "-" + Date.now();
+    const l1 = el("label", "block text-xs text-brand-500 dark:text-brand-300 mb-1");
+    const t = el("input", clase);
+    t.type = "text"; t.maxLength = L.largo; t.value = datos[L.campo] || ""; t.dataset.campo = "texto";
+    t.id = L.ul + "-texto-" + serieFilas;
     l1.htmlFor = t.id;
     c1.appendChild(l1); c1.appendChild(t);
     const c2 = el("div");
-    const l2 = el("label", "block text-xs text-brand-500 dark:text-brand-300 mb-1", "Dirección del botón " + n);
-    const u = el("input", "w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none");
-    u.type = "url"; u.inputMode = "url"; u.maxLength = 500; u.placeholder = "https://…"; u.value = enlace.url || ""; u.dataset.campo = "url";
-    u.id = "sala-enlace-url-" + n + "-" + Date.now();
+    const l2 = el("label", "block text-xs text-brand-500 dark:text-brand-300 mb-1");
+    const u = el("input", clase);
+    u.type = "url"; u.inputMode = "url"; u.maxLength = 500; u.placeholder = L.ejemplo; u.value = datos.url || ""; u.dataset.campo = "url";
+    u.id = L.ul + "-url-" + serieFilas;
     u.autocapitalize = "off"; u.spellcheck = false;
     l2.htmlFor = u.id;
     c2.appendChild(l2); c2.appendChild(u);
-    const quitar = boton("Quitar", "Quitar el botón " + n);
+    const quitar = boton("Quitar");
     quitar.addEventListener("click", () => {
       li.remove();
-      renumerar();
+      renumerar(lista);
       pintarPrevia();
-      $("sala-enlace-mas").focus();
+      $(L.mas).focus();
     });
     li.appendChild(c1); li.appendChild(c2); li.appendChild(quitar);
     [t, u].forEach((i) => i.addEventListener("input", pintarPrevia));
     return li;
   }
 
-  function renumerar() {
-    document.querySelectorAll("#sala-enlaces li").forEach((li, i) => {
+  function renumerar(lista) {
+    const L = LISTAS[lista];
+    const filas = document.querySelectorAll("#" + L.ul + " li");
+    filas.forEach((li, i) => {
       const [l1, l2] = li.querySelectorAll("label");
-      l1.textContent = "Texto del botón " + (i + 1);
-      l2.textContent = "Dirección del botón " + (i + 1);
-      li.querySelector("button").setAttribute("aria-label", "Quitar el botón " + (i + 1));
+      l1.textContent = L.etiqueta + " " + (i + 1);
+      l2.textContent = L.direccion + " " + (i + 1);
+      li.querySelector("button").setAttribute("aria-label", L.quitar + " " + (i + 1));
     });
-    $("sala-enlace-mas").classList.toggle("hidden", document.querySelectorAll("#sala-enlaces li").length >= MAX_ENLACES);
+    $(L.mas).classList.toggle("hidden", filas.length >= L.max);
   }
 
-  function enlacesDelFormulario() {
-    return [...document.querySelectorAll("#sala-enlaces li")].map((li) => ({
-      texto: li.querySelector('[data-campo="texto"]').value.trim(),
-      url: li.querySelector('[data-campo="url"]').value.trim(),
-    })).filter((e) => e.texto || e.url);
+  // Las filas con algo escrito (las del todo vacías no cuentan), cada una con
+  // su <li>, para poder llevar el foco a la que tiene el problema.
+  function filasCon(lista) {
+    const L = LISTAS[lista];
+    return [...document.querySelectorAll("#" + L.ul + " li")].map((li) => ({
+      li,
+      valor: { [L.campo]: li.querySelector('[data-campo="texto"]').value.trim(), url: li.querySelector('[data-campo="url"]').value.trim() },
+    })).filter((f) => f.valor[L.campo] || f.valor.url);
+  }
+
+  function valoresDe(lista) { return filasCon(lista).map((f) => f.valor); }
+
+  function llenar(lista, valores) {
+    const L = LISTAS[lista];
+    $(L.ul).innerHTML = "";
+    (valores || []).forEach((v) => $(L.ul).appendChild(fila(lista, v)));
+    renumerar(lista);
+  }
+
+  function agregar(lista) {
+    const L = LISTAS[lista];
+    if (document.querySelectorAll("#" + L.ul + " li").length >= L.max) return;
+    const li = fila(lista, {});
+    $(L.ul).appendChild(li);
+    renumerar(lista);
+    li.querySelector("input").focus();
+    pintarPrevia();
   }
 
   function pintarTipo() {
     const lichess = tipoElegido() === "lichess";
     $("sala-lichess-caja").classList.toggle("hidden", !lichess);
+    $("sala-pizarras-caja").classList.toggle("hidden", !lichess);
     $("sala-enlaces-ayuda").textContent = lichess
       ? "Opcional: botones de más debajo de «Entrar a la sala», por ejemplo «Verlo directo en Lichess»."
       : "Al menos uno: cada botón abre su transmisión en otra pestaña (por ejemplo «Partida masculina» y «Partida femenina»).";
@@ -220,7 +258,8 @@
       emoji: $("sala-emoji").value.trim() || "🏆",
       tipo: tipoElegido(),
       lichess_id: lichess && lichess.es === "torneo" ? lichess.id : (lichessComprobado ? lichessComprobado.id : null),
-      enlaces: enlacesDelFormulario(),
+      enlaces: valoresDe("enlaces"),
+      pizarras: valoresDe("pizarras"),
       visible: $("sala-visible").checked,
     };
   }
@@ -246,9 +285,8 @@
     $("sala-lichess-estado").textContent = sala && sala.lichess_id ? "Transmisión " + sala.lichess_id + "." : "";
     document.querySelectorAll('input[name="sala-tipo"]').forEach((r) => { r.checked = r.value === (sala ? sala.tipo : "lichess"); });
     $("sala-visible").checked = sala ? sala.visible : true;
-    $("sala-enlaces").innerHTML = "";
-    (sala ? sala.enlaces || [] : []).forEach((e) => $("sala-enlaces").appendChild(filaEnlace(e)));
-    renumerar();
+    llenar("enlaces", sala ? sala.enlaces : []);
+    llenar("pizarras", sala ? sala.pizarras : []);
     $("sala-msg").textContent = "";
     $("sala-editor").classList.remove("hidden");
     $("sala-nueva").setAttribute("aria-expanded", "true");
@@ -278,14 +316,23 @@
       return ["sala-lichess", "Pega la dirección de la transmisión de Lichess (lichess.org/broadcast/…) y usa «Comprobar en Lichess»."];
     }
     if (sala.tipo === "enlaces" && !sala.enlaces.length) return ["sala-enlace-mas", "Agrega al menos un botón con su dirección."];
-    if (sala.enlaces.length > MAX_ENLACES) return ["sala-enlace-mas", "Son " + MAX_ENLACES + " botones como máximo."];
-    const filas = [...document.querySelectorAll("#sala-enlaces li")];
-    for (let i = 0; i < sala.enlaces.length; i++) {
-      const e = sala.enlaces[i];
-      const fila = filas.find((li) => li.querySelector('[data-campo="url"]').value.trim() === e.url && li.querySelector('[data-campo="texto"]').value.trim() === e.texto);
-      if (!e.texto) return [fila && fila.querySelector('[data-campo="texto"]').id, "Al botón " + (i + 1) + " le falta el texto."];
+    const campo = (f, cual) => f.li.querySelector('[data-campo="' + cual + '"]').id;
+    const enlaces = filasCon("enlaces");
+    for (let i = 0; i < enlaces.length; i++) {
+      const e = enlaces[i].valor;
+      if (!e.texto) return [campo(enlaces[i], "texto"), "Al botón " + (i + 1) + " le falta el texto."];
       if (!/^https:\/\/[A-Za-z0-9.-]+(:[0-9]+)?(\/[^\s"<>]*)?$/.test(e.url)) {
-        return [fila && fila.querySelector('[data-campo="url"]').id, "La dirección del botón " + (i + 1) + " tiene que empezar con https:// y no llevar espacios."];
+        return [campo(enlaces[i], "url"), "La dirección del botón " + (i + 1) + " tiene que empezar con https:// y no llevar espacios."];
+      }
+    }
+    if (sala.tipo === "lichess") {
+      const pizarras = filasCon("pizarras");
+      for (let i = 0; i < pizarras.length; i++) {
+        const p = pizarras[i].valor;
+        if (!p.titulo) return [campo(pizarras[i], "texto"), "A la pizarra " + (i + 1) + " le falta el título (por ejemplo «Femenino»)."];
+        if (!URL_CHESS_RESULTS.test(p.url) || p.url.length > 400) {
+          return [campo(pizarras[i], "url"), "La dirección de la pizarra " + (i + 1) + " tiene que ser la de un torneo de chess-results (https://…chess-results.com/tnr….aspx)."];
+        }
       }
     }
     return null;
@@ -304,7 +351,7 @@
     const fila = {
       clave: sala.clave, nombre: sala.nombre, descripcion: sala.descripcion, emoji: sala.emoji,
       tipo: sala.tipo, lichess_id: sala.tipo === "lichess" ? sala.lichess_id : null,
-      enlaces: sala.enlaces, visible: sala.visible,
+      enlaces: sala.enlaces, pizarras: sala.tipo === "lichess" ? sala.pizarras : [], visible: sala.visible,
     };
     $("sala-guardar").disabled = true;
     let r;
@@ -378,14 +425,8 @@
     });
     $("sala-cancelar").addEventListener("click", () => { cerrarEditor(); $("sala-nueva").focus(); });
     $("sala-editor").addEventListener("submit", guardar);
-    $("sala-enlace-mas").addEventListener("click", () => {
-      if (document.querySelectorAll("#sala-enlaces li").length >= MAX_ENLACES) return;
-      const li = filaEnlace({});
-      $("sala-enlaces").appendChild(li);
-      renumerar();
-      li.querySelector("input").focus();
-      pintarPrevia();
-    });
+    $("sala-enlace-mas").addEventListener("click", () => agregar("enlaces"));
+    $("sala-pizarra-mas").addEventListener("click", () => agregar("pizarras"));
     $("sala-nombre").addEventListener("input", () => {
       if (!claveTocada) $("sala-clave").value = claveDe($("sala-nombre").value);
       pintarPrevia();

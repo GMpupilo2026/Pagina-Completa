@@ -51,6 +51,8 @@ const FUNCIONES = {
   "mejorar-informe": [],
   // Pública (verify_jwt en false): ver su cabecera.
   "prueba-gratis": ["usuario-alumno.ts"],
+  // La pizarra de la sala de cine: lee chess-results. Ver su cabecera.
+  "pizarra-torneo": [],
 };
 
 function armar(nombre) {

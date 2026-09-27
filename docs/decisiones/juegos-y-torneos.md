@@ -805,7 +805,9 @@ en **`admin.html#torneos`** (`js/admin-salas-torneo.js`). Migración
   sala de cine (`transmision.html?torneo=<clave>`) y lleva el id de la
   transmisión. `enlaces`: cualquier otra (UTN va en idchess, que no tiene API
   pública conocida), con uno a seis botones que la abren en otra pestaña. Las
-  de Lichess pueden llevar botones de más («Verlo directo en Lichess»).
+  de Lichess pueden llevar botones de más («Verlo directo en Lichess») y
+  pizarras de chess-results (ver «Las posiciones oficiales vienen de
+  chess-results»).
 - **Una sola ficha.** `js/salas-torneo.js` la pinta, y la usan la página
   pública y la vista previa del editor (dentro de una caja `inert`: se ve pero
   no se sigue). Lo que se ve en la vista previa es lo que se va a ver.
@@ -841,3 +843,57 @@ en **`admin.html#torneos`** (`js/admin-salas-torneo.js`). Migración
   ronda de Lichess, editar, ocultar, reordenar, borrar con su confirmación, el
   contraste y el permiso perdido a mitad de camino. Quitando la comprobación
   de «no se guardó», salta.
+
+## Las posiciones oficiales vienen de chess-results
+
+Una transmisión de Lichess puede traer solo algunas mesas: la del
+Interuniversitario UTN-CONARE 2026 trae dos, de un torneo femenino de 10 y un
+absoluto de 27. Sumar esas dos mesas daría una «tabla de posiciones» que no es
+la del torneo, y se vería perfecta. Las posiciones oficiales están en
+chess-results.com, así que una sala de Lichess puede llevar **pizarras**
+(`salas_torneo.pizarras`, migración `20260927050207`): el título de la pestaña
+(«Femenino», «Masculino») y la dirección del torneo en chess-results. Con
+pizarras, la sala de cine muestra esas posiciones, una pestaña por pizarra; sin
+pizarras, sigue sumando las partidas (ver «La sala de cine de las
+transmisiones»).
+
+- **chess-results no tiene API ni manda CORS**, así que el navegador no le
+  puede pedir nada. Las lee la Edge Function **`pizarra-torneo`**
+  (`verify_jwt` en true: la llama la página pública con la clave anónima).
+- **No es un proxy abierto.** Recibe la clave de una sala, no una dirección, y
+  solo lee las pizarras de esa sala si está visible. Y la base exige que sean
+  direcciones de chess-results (`interno.pizarras_de_sala_validas()`, que
+  rechaza también `chess-results.com.otro-sitio.com`); la función lo vuelve a
+  comprobar antes de pedir.
+- **Caché de 90 segundos** en `pizarras_cache`, que solo lee el service role
+  (ni anon ni authenticated tienen permiso): cien personas mirando la sala no
+  son cien pedidos a chess-results. Si chess-results no contesta, se devuelve
+  lo último que se leyó y la pizarra lo dice («Sin conexión con chess-results:
+  es lo último que se leyó, a las…»). Si no hay nada guardado, dice que no se
+  pudo leer: **nunca cae en sumar las mesas de Lichess**, que sería una tabla
+  equivocada con cara de buena.
+- **Qué se lee:** `art=1` (la clasificación después de la última ronda) con
+  `turdet=YES` (si no, un torneo de más de dos semanas pide tocar «Mostrar
+  detalles») y `zeilen=99999` (todas las filas). La dirección que cargó
+  administración puede ser cualquier página de ese torneo: se toma solo el
+  servidor y el número (`tnr…`).
+- **Las columnas se leen por el nombre del encabezado**, nunca por posición.
+  Comprobado con las páginas reales, pedidas desde la base con `pg_net` (desde
+  la sesión de Claude Code no hay salida a chess-results): el UTN-CONARE no
+  trae columna «Pts.» — los puntos son el «Des 1», y lo dice la «Anotación» de
+  abajo («Desempate 1: points (game-points)») —, y el absoluto trae además
+  `n`, `w` y `we` al final. El título (WIM, FM…) va en la columna sin nombre
+  antes de «Nombre». Los puntos llegan como «1,5» y se muestran «1½».
+- `pg_net` con cabeceras propias (`User-Agent`, `Accept-Language`) recibió
+  **400 Bad Request** de chess-results; sin ellas, 200. La función sí manda un
+  `User-Agent` de navegador, igual que `chess-results-proxy`, y funciona:
+  probado de punta a punta llamándola desde la base con la clave anónima.
+- Las medallas de la pizarra salen **solo cuando ya hay puntos**: en la ronda 0
+  todos tienen 0, y el orden es el de la lista inicial, no un podio.
+- `verificar-pizarra-chess-results.js` (sin navegador) saca `leerClasificacion()`
+  y `direcciones()` de la función, les quita los tipos con el propio Node y los
+  prueba contra HTML con la forma real y nombres inventados, en la forma de hoy
+  y en la vieja (clases sin «n», columna «Pts.»). Tomando los puntos de otra
+  columna, salta. `verificar-transmision.js` prueba la pizarra oficial en la
+  sala (pestañas, medallas, lo viejo, la función caída) y
+  `verificar-salas-torneo.js` el editor.

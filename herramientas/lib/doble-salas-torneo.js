@@ -12,8 +12,11 @@
  * Lo que la página escribe queda en window.__escrituras, y
  * window.__quitarAdmin() le quita el permiso a la cuenta a mitad de camino.
  *
- *   dobleSalas({ salas, admin, falla })  → el texto del script
+ *   dobleSalas({ salas, admin, falla, oficial })  → el texto del script
  *     falla: true hace que leer salas_torneo dé error.
+ *     oficial: lo que contesta la Edge Function pizarra-torneo, por clave
+ *       ({ utn: { pizarras: [...] } }); una clave sin respuesta da error,
+ *       como la función caída.
  * Cualquier otra tabla contesta vacío (el panel de admin lee varias al
  * arrancar); profiles contesta la cuenta de quien mira.
  */
@@ -25,6 +28,8 @@ function dobleSalas(opciones) {
   const FALLA = ${JSON.stringify(!!o.falla)};
   const USUARIO = ADMIN ? { id: "u-admin", is_admin: true, full_name: "Quien Administra", email: "admin@x.cr", role: "profesor" } : null;
   let salas = ${JSON.stringify(o.salas || [])};
+  const OFICIAL = ${JSON.stringify(o.oficial || {})};
+  window.__pedidosPizarra = [];
   let serie = 100;
   window.__escrituras = [];
 
@@ -39,6 +44,12 @@ function dobleSalas(opciones) {
     const e = s.enlaces || [];
     if (!Array.isArray(e) || e.length > 6) return "enlaces";
     if (s.tipo === "enlaces" && !e.length) return "enlaces_con_alguno";
+    const pz = s.pizarras || [];
+    if (!Array.isArray(pz) || pz.length > 4) return "pizarras";
+    for (const x of pz) {
+      if (!x || typeof x !== "object" || Object.keys(x).length !== 2) return "pizarra";
+      if (!/^\\S.{0,39}$/.test(x.titulo || "") || !/^https:\\/\\/(s[0-9]{1,2}\\.)?chess-results\\.com\\/tnr[0-9]{1,9}\\.aspx(\\?[^\\s"<>]*)?$/.test(x.url || "") || x.url.length > 400) return "pizarra";
+    }
     for (const x of e) {
       if (!x || typeof x !== "object" || Object.keys(x).length !== 2) return "enlace";
       if (!/^\\S.{0,59}$/.test(x.texto || "") || !URL_OK.test(x.url || "") || x.url.length > 500) return "enlace";
@@ -81,7 +92,7 @@ function dobleSalas(opciones) {
     }
     if (q.op === "insert") {
       if (!ADMIN) return error("42501", "new row violates row-level security policy");
-      const nuevas = (Array.isArray(q.datos) ? q.datos : [q.datos]).map((d) => ({ visible: true, orden: 0, descripcion: "", emoji: "🏆", enlaces: [], lichess_id: null, ...d, id: "s-" + (serie++) }));
+      const nuevas = (Array.isArray(q.datos) ? q.datos : [q.datos]).map((d) => ({ visible: true, orden: 0, descripcion: "", emoji: "🏆", enlaces: [], pizarras: [], lichess_id: null, ...d, id: "s-" + (serie++) }));
       for (const n of nuevas) {
         const p = problema(n); if (p) return error("23514", "check " + p);
         if (salas.some((s) => s.clave === n.clave)) return error("23505", "duplicate key salas_torneo_clave_key");
@@ -126,7 +137,14 @@ function dobleSalas(opciones) {
     rpc: (n) => consulta("rpc:" + n),
     channel: () => ({ on() { return this; }, subscribe() { return this; } }),
     removeChannel: () => {},
-    functions: { invoke: () => Promise.resolve({ data: null, error: null }) },
+    functions: {
+      invoke: (nombre, opciones) => {
+        const clave = opciones && opciones.body && opciones.body.clave;
+        window.__pedidosPizarra.push(clave);
+        if (nombre !== "pizarra-torneo" || !OFICIAL[clave]) return Promise.resolve({ data: null, error: { message: "función caída de prueba" } });
+        return Promise.resolve({ data: OFICIAL[clave], error: null });
+      },
+    },
   };
 })();
 `;
@@ -135,12 +153,12 @@ function dobleSalas(opciones) {
 // Las salas con las que arrancan las pruebas: las dos de verdad y una oculta.
 const SALAS = [
   { id: "s-1", clave: "cenfotec", nombre: "Desafío Mentes Maestras CENFOTEC 2026", descripcion: "Las partidas del torneo de CENFOTEC.",
-    emoji: "🎓", tipo: "lichess", lichess_id: "s7NfNv6H", visible: true, orden: 1,
+    emoji: "🎓", tipo: "lichess", lichess_id: "s7NfNv6H", visible: true, orden: 1, pizarras: [],
     enlaces: [{ texto: "Verlo directo en Lichess", url: "https://lichess.org/broadcast/desafio-mentes-maestras-cenfotec-2026/s7NfNv6H" }] },
-  { id: "s-2", clave: "utn", nombre: "Torneo UTN 2026", descripcion: "Se transmite en idchess.", emoji: "🎓", tipo: "enlaces", lichess_id: null, visible: true, orden: 2,
+  { id: "s-2", clave: "utn", nombre: "Torneo UTN 2026", descripcion: "Se transmite en idchess.", emoji: "🎓", tipo: "enlaces", lichess_id: null, visible: true, orden: 2, pizarras: [],
     enlaces: [{ texto: "Partida masculina", url: "https://media.idchess.com/en/tournaments/kYfhVJ/utn-2026/desk/eyJpZCI6OTY1OTU2LCJwYXNzd29yZCI6bnVsbH0=" },
               { texto: "Partida femenina", url: "https://media.idchess.com/en/tournaments/b0fhVJ/utn-2026/desk/eyJpZCI6OTY1OTYxLCJwYXNzd29yZCI6bnVsbH0=" }] },
-  { id: "s-3", clave: "copa-secreta", nombre: "Copa en preparación", descripcion: "", emoji: "🏆", tipo: "lichess", lichess_id: "Abcd1234", visible: false, orden: 3, enlaces: [] },
+  { id: "s-3", clave: "copa-secreta", nombre: "Copa en preparación", descripcion: "", emoji: "🏆", tipo: "lichess", lichess_id: "Abcd1234", visible: false, orden: 3, enlaces: [], pizarras: [] },
 ];
 
 module.exports = { dobleSalas, SALAS };

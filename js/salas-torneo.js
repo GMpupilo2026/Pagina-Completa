@@ -17,7 +17,7 @@
 (function () {
   "use strict";
 
-  const COLUMNAS = "id, clave, nombre, descripcion, emoji, tipo, lichess_id, enlaces, visible, orden";
+  const COLUMNAS = "id, clave, nombre, descripcion, emoji, tipo, lichess_id, enlaces, pizarras, visible, orden";
 
   async function listar() {
     const { data, error } = await sb.from("salas_torneo").select(COLUMNAS)

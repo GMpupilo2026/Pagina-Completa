@@ -141,21 +141,24 @@
                     <section aria-labelledby="pizarra-titulo" class="pizarra">
                         <h2 id="pizarra-titulo" class="font-serif text-xl font-bold text-center mb-1">Pizarra de posiciones</h2>
                         <p id="pizarra-nota" class="pizarra-tenue text-xs text-center mb-4"></p>
+                        <!-- Con pizarras de chess-results (femenino, masculino…), una pestaña por cada una. -->
+                        <div id="pizarra-pestanas" class="hidden flex flex-wrap justify-center gap-2 mb-4" role="group" aria-label="Qué tabla de posiciones ver"></div>
                         <div class="overflow-x-auto">
                             <table class="w-full text-sm">
-                                <caption class="sr-only">Posiciones del torneo: puesto, jugador, puntos y partidas jugadas</caption>
+                                <caption id="pizarra-leyenda" class="sr-only">Posiciones del torneo: puesto, jugador, puntos y partidas jugadas</caption>
                                 <thead>
                                     <tr class="pizarra-linea text-left">
                                         <th scope="col" class="py-2 pr-2 font-semibold">#</th>
                                         <th scope="col" class="py-2 pr-2 font-semibold">Jugador</th>
                                         <th scope="col" class="py-2 pr-2 font-semibold text-right">Pts</th>
-                                        <th scope="col" class="py-2 font-semibold text-right"><abbr title="Partidas jugadas">PJ</abbr></th>
+                                        <th id="pizarra-col4" scope="col" class="py-2 font-semibold text-right"><abbr title="Partidas jugadas">PJ</abbr></th>
                                     </tr>
                                 </thead>
                                 <tbody id="pizarra-cuerpo"></tbody>
                             </table>
                         </div>
                         <p id="pizarra-vacia" class="hidden text-center text-sm mt-3">Todavía no terminó ninguna partida: la pizarra se llena con el primer resultado.</p>
+                        <p id="pizarra-fuente" class="hidden pizarra-tenue text-xs text-center mt-4"></p>
                     </section>
                 </div>
 
