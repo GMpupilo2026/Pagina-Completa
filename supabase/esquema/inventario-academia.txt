@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20260927054551
+# al-dia-con: 20260927060617
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -72,6 +72,9 @@ tabla  puzzle_rush_scores  rls=true
 tabla  question_answers  rls=true
 tabla  question_engine_answers  rls=true
 tabla  questions  rls=true
+tabla  quiniela_participantes  rls=true
+tabla  quiniela_partidas  rls=true
+tabla  quiniela_pronosticos  rls=true
 tabla  recordatorios_informe  rls=true
 tabla  salas_torneo  rls=true
 tabla  saved_games  rls=true
@@ -674,6 +677,31 @@ columna  questions.expected_plies  integer
 columna  questions.fen  text
 columna  questions.id  uuid
 columna  questions.prompt  text
+columna  quiniela_participantes.correo  text
+columna  quiniela_participantes.created_at  timestamp with time zone
+columna  quiniela_participantes.id  uuid
+columna  quiniela_participantes.nombre  text
+columna  quiniela_participantes.privacidad_aceptada_en  timestamp with time zone
+columna  quiniela_participantes.privacidad_version  text
+columna  quiniela_participantes.sala_id  uuid
+columna  quiniela_participantes.token_hash  text
+columna  quiniela_partidas.actualizado_en  timestamp with time zone
+columna  quiniela_partidas.blancas  text
+columna  quiniela_partidas.cierra_en  timestamp with time zone
+columna  quiniela_partidas.empezada  boolean
+columna  quiniela_partidas.mesa  integer
+columna  quiniela_partidas.negras  text
+columna  quiniela_partidas.partida_id  text
+columna  quiniela_partidas.resultado  text
+columna  quiniela_partidas.ronda_id  text
+columna  quiniela_partidas.ronda_nombre  text
+columna  quiniela_partidas.ronda_orden  integer
+columna  quiniela_partidas.sala_id  uuid
+columna  quiniela_pronosticos.actualizado_en  timestamp with time zone
+columna  quiniela_pronosticos.participante_id  uuid
+columna  quiniela_pronosticos.partida_id  text
+columna  quiniela_pronosticos.pronostico  text
+columna  quiniela_pronosticos.sala_id  uuid
 columna  recordatorios_informe.enviado_at  timestamp with time zone
 columna  recordatorios_informe.periodo  date
 columna  recordatorios_informe.persona_id  uuid
@@ -688,6 +716,8 @@ columna  salas_torneo.lichess_id  text
 columna  salas_torneo.nombre  text
 columna  salas_torneo.orden  integer
 columna  salas_torneo.pizarras  jsonb
+columna  salas_torneo.quiniela  boolean
+columna  salas_torneo.quiniela_sincronizada_en  timestamp with time zone
 columna  salas_torneo.tipo  text
 columna  salas_torneo.updated_at  timestamp with time zone
 columna  salas_torneo.updated_by  uuid
@@ -1024,6 +1054,11 @@ funcion  pueden_jugar_entre_si(a uuid, b uuid)  definer  anon=false  auth=true
 funcion  puedo_armar_partida_con(p_jugadores uuid[])  definer  anon=false  auth=true
 funcion  push_llaves_guardar(p_publica text, p_privada text)  definer  anon=false  auth=false
 funcion  push_llaves_leer()  definer  anon=false  auth=false
+funcion  quiniela_cerrada(p_empezada boolean, p_resultado text, p_cierra_en timestamp with time zone)  invoker  anon=true  auth=true
+funcion  quiniela_pronosticar(p_sala uuid, p_token text, p_partida text, p_pronostico text)  definer  anon=false  auth=false
+funcion  quiniela_tabla(p_sala uuid)  invoker  anon=false  auth=true
+funcion  quiniela_unirse(p_sala uuid, p_nombre text, p_correo text, p_privacidad text, p_ip text)  definer  anon=false  auth=false
+funcion  quiniela_yo(p_sala uuid, p_token text)  definer  anon=false  auth=false
 funcion  quitar_insignia(p_id uuid)  definer  anon=false  auth=true
 funcion  recordar_informes_mensuales(p_hoy date)  definer  anon=false  auth=false
 funcion  registrar_arbitraje_publico(p_nombre text, p_email text, p_porcentaje integer, p_nivel text, p_detalle jsonb)  definer  anon=true  auth=true
@@ -1260,6 +1295,9 @@ politica  questions  questions_exige_acceso_sel  SELECT  restrictiva
 politica  questions  questions_insert  INSERT
 politica  questions  questions_select  SELECT
 politica  questions  questions_update  UPDATE
+politica  quiniela_participantes  quiniela_participantes_admin  SELECT
+politica  quiniela_partidas  quiniela_partidas_admin  SELECT
+politica  quiniela_pronosticos  quiniela_pronosticos_admin  SELECT
 politica  salas_torneo  salas_torneo_borrar  DELETE
 politica  salas_torneo  salas_torneo_crear  INSERT
 politica  salas_torneo  salas_torneo_editar  UPDATE
@@ -1546,6 +1584,12 @@ indice  question_answers  question_answers_student_idx
 indice  question_engine_answers  question_engine_answers_pkey
 indice  questions  questions_created_by_fk
 indice  questions  questions_pkey
+indice  quiniela_participantes  quiniela_participantes_pkey
+indice  quiniela_participantes  quiniela_participantes_token_hash_key
+indice  quiniela_participantes  quiniela_participantes_un_correo_por_sala
+indice  quiniela_partidas  quiniela_partidas_pkey
+indice  quiniela_pronosticos  quiniela_pronosticos_pkey
+indice  quiniela_pronosticos  quiniela_pronosticos_sala
 indice  recordatorios_informe  recordatorios_informe_persona_id_fk
 indice  recordatorios_informe  recordatorios_informe_pkey
 indice  salas_torneo  salas_torneo_clave_key
@@ -2239,6 +2283,9 @@ grant  questions  authenticated  SELECT
 grant  questions  authenticated  TRIGGER
 grant  questions  authenticated  TRUNCATE
 grant  questions  authenticated  UPDATE
+grant  quiniela_participantes  authenticated  SELECT
+grant  quiniela_partidas  authenticated  SELECT
+grant  quiniela_pronosticos  authenticated  SELECT
 grant  salas_torneo  anon  SELECT
 grant  salas_torneo  authenticated  DELETE
 grant  salas_torneo  authenticated  INSERT

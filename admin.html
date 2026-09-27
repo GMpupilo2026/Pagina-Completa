@@ -408,6 +408,19 @@
                                     <input id="sala-video" type="url" inputmode="url" maxlength="300" placeholder="https://www.youtube.com/watch?v=… o https://www.twitch.tv/…" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none" aria-describedby="sala-video-estado" autocapitalize="off" spellcheck="false">
                                     <p id="sala-video-estado" role="status" class="text-xs mt-1 text-brand-500 dark:text-brand-300">Opcional. Un enlace de YouTube o de Twitch: se ve en la sala, al lado de la pizarra.</p>
                                 </div>
+                                <div id="sala-quiniela-caja">
+                                    <label class="flex items-center gap-2 text-sm text-brand-800 dark:text-white"><input id="sala-quiniela" type="checkbox"> Quiniela de resultados abierta</label>
+                                    <p class="text-xs text-brand-450 dark:text-brand-350 mt-1">Quien entra a la sala se anota con su nombre y su correo y pronostica cada partida antes de que empiece su ronda. La tabla de aciertos se arma sola con los resultados de Lichess.</p>
+                                    <div id="sala-quiniela-gente" class="hidden mt-3">
+                                        <p id="sala-quiniela-gente-titulo" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Participantes</p>
+                                        <div class="overflow-x-auto max-h-64 overflow-y-auto rounded-lg border border-brand-100 dark:border-brand-800">
+                                            <table class="w-full text-xs" aria-labelledby="sala-quiniela-gente-titulo">
+                                                <thead class="bg-brand-50 dark:bg-brand-950"><tr class="text-left text-brand-500 dark:text-brand-300"><th scope="col" class="px-2 py-1.5">#</th><th scope="col" class="px-2 py-1.5">Nombre</th><th scope="col" class="px-2 py-1.5">Correo</th><th scope="col" class="px-2 py-1.5 text-right">Aciertos</th></tr></thead>
+                                                <tbody id="sala-quiniela-filas" class="text-brand-800 dark:text-brand-100"></tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
                                 <label class="flex items-center gap-2 text-sm text-brand-800 dark:text-white"><input id="sala-visible" type="checkbox" checked> Publicada: se ve en Torneos</label>
                             </div>
                             <div>

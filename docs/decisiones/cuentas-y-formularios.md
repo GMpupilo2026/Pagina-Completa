@@ -232,6 +232,7 @@ aparecían.
   | Arbitraje | 40 | 10 | 200 |
   | Solicitud de academia | 5 | 3 por día | 30 |
   | Encuesta anónima de un curso | 40 | — | 300 por encuesta |
+  | Quiniela de una sala de torneo | 40 | 5 por día | 500 por sala |
 
   **El de IP es generoso a propósito**: un colegio entero sale a internet por
   UNA IP, y una clase haciendo el examen de arbitraje o una reunión de padres

@@ -14,6 +14,13 @@
  *
  *   dobleSalas({ salas, admin, falla, oficial })  → el texto del script
  *     falla: true hace que leer salas_torneo dé error.
+ *     quiniela: { rondas, participantes } — la Edge Function quiniela, con
+ *       las mismas reglas y mensajes que la base (quiniela_unirse,
+ *       quiniela_pronosticar): correo repetido, consentimiento, partida
+ *       cerrada. Lo que la página le pide queda en window.__quiniela.
+ *       participantes: [{ nombre, correo, token, pronosticos: {partida: «1-0»} }]
+ *       rondas: [{ id, nombre, cierra_en, partidas: [{ id, mesa, blancas,
+ *       negras, resultado, cerrada }] }]
  *     oficial: lo que contesta la Edge Function pizarra-torneo, por clave
  *       ({ utn: { pizarras: [...] } }); una clave sin respuesta da error,
  *       como la función caída.
@@ -29,6 +36,51 @@ function dobleSalas(opciones) {
   const USUARIO = ADMIN ? { id: "u-admin", is_admin: true, full_name: "Quien Administra", email: "admin@x.cr", role: "profesor" } : null;
   let salas = ${JSON.stringify(o.salas || [])};
   const OFICIAL = ${JSON.stringify(o.oficial || {})};
+  const Q = ${JSON.stringify(o.quiniela || null)};
+  window.__quiniela = [];
+  let serieToken = 1;
+  function tablaQuiniela() {
+    const resultados = {};
+    Q.rondas.forEach((r) => r.partidas.forEach((p) => { resultados[p.id] = p.resultado; }));
+    const filas = Q.participantes.map((x) => {
+      const ps = Object.entries(x.pronosticos || {});
+      return { nombre: x.nombre, correo: x.correo,
+        aciertos: ps.filter(([id, v]) => resultados[id] && resultados[id] === v).length,
+        resueltos: ps.filter(([id]) => resultados[id]).length, pronosticos: ps.length };
+    }).sort((a, b) => b.aciertos - a.aciertos || a.nombre.localeCompare(b.nombre));
+    filas.forEach((f, i) => { f.puesto = i > 0 && f.aciertos === filas[i - 1].aciertos ? filas[i - 1].puesto : i + 1; });
+    return filas;
+  }
+  function quiniela(b) {
+    window.__quiniela.push(JSON.parse(JSON.stringify(b)));
+    const yo = Q.participantes.find((x) => x.token && x.token === b.token);
+    if (b.accion === "estado") {
+      return { rondas: Q.rondas, yo: yo ? { nombre: yo.nombre, pronosticos: Object.assign({}, yo.pronosticos) } : null,
+        // Como la Edge Function: la tabla pública va sin correo.
+        tabla: tablaQuiniela().map((f) => ({ puesto: f.puesto, nombre: f.nombre, aciertos: f.aciertos, resueltos: f.resueltos, pronosticos: f.pronosticos })) };
+    }
+    if (b.accion === "unirse") {
+      const nombre = String(b.nombre || "").trim(), correo = String(b.correo || "").trim().toLowerCase();
+      if (nombre.length < 2 || nombre.length > 60) return { error: "Escribe tu nombre (de 2 a 60 letras)." };
+      if (!/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(correo)) return { error: "Revisa el correo: tiene que ser como nombre@ejemplo.com." };
+      if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(b.privacidad || "")) return { error: "Para participar tienes que aceptar la Política de privacidad." };
+      if (Q.participantes.some((x) => x.correo.toLowerCase() === correo)) return { error: "Ese correo ya está anotado en esta quiniela. Tus pronósticos se cambian desde el navegador donde te anotaste." };
+      const token = "token-de-prueba-" + (serieToken++);
+      Q.participantes.push({ nombre, correo, token, pronosticos: {} });
+      return { token, nombre };
+    }
+    if (b.accion === "pronosticar") {
+      if (!yo) return { error: "No te encontramos en esta quiniela. Anótate de nuevo con tu nombre y tu correo." };
+      if (!["1-0", "½-½", "0-1"].includes(b.pronostico)) return { error: "Ese pronóstico no existe." };
+      let partida = null;
+      Q.rondas.forEach((r) => r.partidas.forEach((p) => { if (p.id === b.partida) partida = p; }));
+      if (!partida) return { error: "Esa partida no es de esta sala." };
+      if (partida.cerrada || partida.resultado) return { error: "Esa partida ya empezó: los pronósticos se cerraron." };
+      yo.pronosticos[b.partida] = b.pronostico;
+      return { ok: true };
+    }
+    return { error: "Acción desconocida." };
+  }
   window.__pedidosPizarra = [];
   let serie = 100;
   window.__escrituras = [];
@@ -81,6 +133,10 @@ function dobleSalas(opciones) {
   function pasa(fila, filtros) { return filtros.every(([c, v]) => String(fila[c]) === String(v)); }
 
   function resolver(q) {
+    if (q.tabla === "rpc:quiniela_tabla") {
+      // SECURITY INVOKER con RLS de solo admin: sin admin, vacía.
+      return { data: ADMIN && Q ? tablaQuiniela() : [], error: null };
+    }
     if (q.tabla === "profiles") {
       const filas = USUARIO ? [USUARIO].filter((f) => pasa(f, q.filtros)) : [];
       return { data: q.unica ? (filas[0] || null) : filas, error: null };
@@ -93,7 +149,7 @@ function dobleSalas(opciones) {
     }
     if (q.op === "insert") {
       if (!ADMIN) return error("42501", "new row violates row-level security policy");
-      const nuevas = (Array.isArray(q.datos) ? q.datos : [q.datos]).map((d) => ({ visible: true, orden: 0, descripcion: "", emoji: "🏆", enlaces: [], pizarras: [], video_url: null, lichess_id: null, ...d, id: "s-" + (serie++) }));
+      const nuevas = (Array.isArray(q.datos) ? q.datos : [q.datos]).map((d) => ({ visible: true, orden: 0, descripcion: "", emoji: "🏆", enlaces: [], pizarras: [], video_url: null, quiniela: false, lichess_id: null, ...d, id: "s-" + (serie++) }));
       for (const n of nuevas) {
         const p = problema(n); if (p) return error("23514", "check " + p);
         if (salas.some((s) => s.clave === n.clave)) return error("23505", "duplicate key salas_torneo_clave_key");
@@ -142,6 +198,10 @@ function dobleSalas(opciones) {
       invoke: (nombre, opciones) => {
         const clave = opciones && opciones.body && opciones.body.clave;
         window.__pedidosPizarra.push(clave);
+        if (nombre === "quiniela") {
+          if (!Q) return Promise.resolve({ data: null, error: { message: "sin quiniela", context: { json: () => Promise.resolve({ error: "La quiniela de esta sala no está abierta." }) } } });
+          return Promise.resolve({ data: quiniela(opciones.body), error: null });
+        }
         if (nombre !== "pizarra-torneo" || !OFICIAL[clave]) return Promise.resolve({ data: null, error: { message: "función caída de prueba" } });
         return Promise.resolve({ data: OFICIAL[clave], error: null });
       },
