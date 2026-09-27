@@ -300,9 +300,11 @@ async function pruebaAlumna(browser) {
      el lado del alumno —te lo pone otra persona y vence—, y estaban partidos
      entre "Aprender" y "Evaluaciones". El rótulo dice lo que las dos tienen en
      común, que es lo que no se deduce de sus nombres. */
-  igual("lo que te ponen con fecha va junto, y de segundo",
+  /* Y el diagnóstico de nivel va con ellas: no se practica, lo pide el
+     profesor para ubicarte. */
+  igual("lo que te ponen va junto, y de segundo, con el diagnóstico al final",
     grupo(grupos, "Lo que te pone tu profesor").tiles.map((t) => t.enlace),
-    ["tareas.html", "examenes.html"]);
+    ["tareas.html", "examenes.html", "entreno/diagnostico.html"]);
   /* Por índice a propósito: que vaya PRIMERA es el punto. Y se mira la
      etiqueta y no el href, porque sin clase abierta esa tarjeta está
      bloqueada y no tiene ninguno — eso tiene su propia prueba más abajo. */
@@ -323,18 +325,18 @@ async function pruebaAlumna(browser) {
     grupo(grupos, "Aprender").tiles.map((t) => t.enlace),
     ["entreno/index.html", "entreno/estudio.html", "cursos/academia/index.html",
      "articulos.html"]);
-  /* Los dos diagnósticos son SOLO de administración: son las dos pruebas con
-     las que el sitio ubica el nivel de alguien, y sus bancos son archivos
-     estáticos — cuanta más gente las resuelve por su cuenta, menos miden. Y no
-     alcanza con que el grupo no salga en la lista de arriba: lo que importa es
-     que no quede ni un enlace a esas dos páginas en la grilla, escondido o no. */
-  igual("a la alumna no se le ofrece ningún diagnóstico",
+  /* El diagnóstico de nivel se le ofrece UNA vez, en «Lo que te pone tu
+     profesor». El de arbitraje sigue siendo SOLO de administración: su banco
+     es un archivo estático y cuanta más gente lo resuelve por su cuenta, menos
+     mide. No alcanza con que no salga en la lista: no puede quedar ni un
+     enlace a esa página en la grilla, escondido o no. */
+  igual("a la alumna el diagnóstico de nivel le sale una sola vez, y el de arbitraje nunca",
     grupos.flatMap((g) => g.tiles)
       .filter((t) => /diagnostico|arbitraje/i.test((t.enlace || "") + " " + (t.etiqueta || "")))
-      .map((t) => t.enlace), []);
-  igual("y tampoco escondido en la página",
+      .map((t) => t.enlace), ["entreno/diagnostico.html"]);
+  igual("y el de arbitraje tampoco escondido en la página",
     await page.evaluate(() => document.querySelectorAll(
-      "#tile-grid [href*='diagnostico'], #tile-grid [href*='arbitraje']").length), "0");
+      "#tile-grid [href*='arbitraje']").length), "0");
   /* "Cerrar sesión" salió del grid: ya está en la cabecera, que es donde se
      busca, y era la única ACCIÓN entre un grid de lugares a los que ir. Un
      destino repetido en el panel ya había dado problemas con "Torneos". */
@@ -385,13 +387,15 @@ async function pruebaProfesora(browser) {
   const { page, ctx, errores } = await panel(browser, [PROFE], "u-profe");
   const grupos = await page.evaluate(LEER_GRILLA);
 
-  /* Tampoco a quien da clase: los diagnósticos son de administración y ya. A
-     ella se los aplica administración, no los resuelve por su cuenta — y su
-     banco es el mismo que el de sus alumnos. */
-  igual("a la profesora tampoco se le ofrece ningún diagnóstico",
-    grupos.flatMap((g) => g.tiles)
-      .filter((t) => /diagnostico|arbitraje/i.test((t.enlace || "") + " " + (t.etiqueta || "")))
-      .map((t) => t.enlace), []);
+  /* A quien da clase, la tarjeta del diagnóstico la lleva al RESULTADO de sus
+     alumnos, no a la prueba: el banco es el mismo que el de ellos y
+     resolverla por su cuenta no le sirve. Ni una puerta a las dos pruebas. */
+  igual("a la profesora el diagnóstico la lleva al resultado de sus alumnos",
+    grupo(grupos, "Lo que le pones a tus alumnos").tiles.map((t) => t.enlace),
+    ["tareas.html", "examenes.html", "informes.html?tema=diagnostico"]);
+  igual("y no se le ofrece ninguna de las dos pruebas",
+    await page.evaluate(() => document.querySelectorAll(
+      "#tile-grid [href*='entreno/diagnostico'], #tile-grid [href*='arbitraje']").length), "0");
   /* El rótulo del grupo tiene dos públicos, igual que la descripción de un
      tile: del otro lado del escritorio, lo que te ponen es lo que mandas. */
   igual("y el grupo con fecha le habla de sus alumnos, no de su profesor",
