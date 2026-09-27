@@ -57,35 +57,60 @@ const rondas = [
 // a Dani en la ronda 3, Ana sube al 2 y Caro y Dani comparten el 3.
 function partidasDe(rondaId, ronda3Terminada) {
   if (rondaId === "R1aaaaaa") return [
-    partida("g1", "Ana", "Beto", ["f3", "e5", "g4", "Qh4#"], "0-1"),   // gana Beto
-    partida("g2", "Caro", "Dani", ["e4", "e5"], "½-½"),
+    partida("partida1", "Ana", "Beto", ["f3", "e5", "g4", "Qh4#"], "0-1"),   // gana Beto
+    partida("partida2", "Caro", "Dani", ["e4", "e5"], "½-½"),
   ];
   if (rondaId === "R2bbbbbb") return [
-    partida("g3", "Ana", "Caro", ["d4", "d5"], "½-½"),
-    partida("g4", "Dani", "Beto", ["c4", "c5"], "1/2-1/2"),
+    partida("partida3", "Ana", "Caro", ["d4", "d5"], "½-½"),
+    partida("partida4", "Dani", "Beto", ["c4", "c5"], "1/2-1/2"),
   ];
   return [
-    partida("g5", "Ana", "Dani", ["e4", "e5", "Nf3"], ronda3Terminada ? "1-0" : "*"),
-    partida("g6", "Beto", "Caro", ["e4", "e5", "Bc4", "Nc6", "Qh5", "Nf6", "Qxf7#"], "1-0"),
+    partida("partida5", "Ana", "Dani", ["e4", "e5", "Nf3"], ronda3Terminada ? "1-0" : "*"),
+    partida("partida6", "Beto", "Caro", ["e4", "e5", "Bc4", "Nc6", "Qh5", "Nf6", "Qxf7#"], "1-0"),
   ];
 }
 
+// opciones: caido, terminada() (la ronda 3 ya terminó), torneo() (rondas y
+// defaultRoundId distintos), partidas(ronda) (otras partidas), vivo(ronda) (el
+// PGN que manda la transmisión continua; sin esto contesta 404) y pedidosVivo
+// (se anota cada vez que la página la abre).
 async function ponerDoble(page, opciones) {
   const o = opciones || {};
+  const cors = { "Access-Control-Allow-Origin": "*" };
   await page.route("https://lichess.org/**", async (route) => {
     const url = route.request().url();
     if (o.caido) return route.fulfill({ status: 503, body: "caído" });
     if (url === "https://lichess.org/api/broadcast/" + ID) {
-      return route.fulfill({ contentType: "application/json", headers: { "Access-Control-Allow-Origin": "*" },
-        body: JSON.stringify({ tour: TOUR, rounds: rondas, defaultRoundId: "R3cccccc" }) });
+      const t = o.torneo ? o.torneo() : { rounds: rondas, defaultRoundId: "R3cccccc" };
+      return route.fulfill({ contentType: "application/json", headers: cors, body: JSON.stringify({ tour: TOUR, ...t }) });
+    }
+    const vivo = url.match(/^https:\/\/lichess\.org\/api\/stream\/broadcast\/round\/([^/.]+)\.pgn$/);
+    if (vivo) {
+      if (o.pedidosVivo) o.pedidosVivo.push(vivo[1]);
+      if (!o.vivo) return route.fulfill({ status: 404, headers: cors, body: "" });
+      return route.fulfill({ contentType: "application/x-chess-pgn", headers: cors, body: o.vivo(vivo[1]) });
     }
     const m = url.match(/^https:\/\/lichess\.org\/api\/broadcast\/[^/]+\/[^/]+\/([^/?]+)$/);
     if (m) {
-      return route.fulfill({ contentType: "application/json", headers: { "Access-Control-Allow-Origin": "*" },
-        body: JSON.stringify({ round: rondas.find((r) => r.id === m[1]), tour: TOUR, games: partidasDe(m[1], o.terminada && o.terminada()) }) });
+      const games = o.partidas && o.partidas(m[1]) || partidasDe(m[1], o.terminada && o.terminada());
+      return route.fulfill({ contentType: "application/json", headers: cors,
+        body: JSON.stringify({ round: rondas.find((r) => r.id === m[1]), tour: TOUR, games }) });
     }
     return route.fulfill({ status: 404, body: "" });
   });
+}
+
+// El PGN de una partida como lo manda Lichess: cabecera con GameURL, y cada
+// jugada con su reloj. Las jugadas se comprueban con chess.js.
+function pgnDe(id, blancas, negras, jugadas, relojes, resultadoPgn) {
+  const g = new Chess();
+  let texto = "";
+  jugadas.forEach((san, i) => {
+    if (!g.move(san)) throw new Error("Jugada ilegal en el PGN de prueba: " + san);
+    texto += (i % 2 === 0 ? (i / 2 + 1) + ". " : (Math.floor(i / 2) + 1) + "... ") + san + " { [%clk " + relojes[i] + "] } ";
+  });
+  return '[Event "Prueba"]\n[White "' + blancas + '"]\n[Black "' + negras + '"]\n[Result "' + (resultadoPgn || "*") + '"]\n' +
+    '[GameURL "https://lichess.org/broadcast/desafio-de-prueba/ronda-3/R3cccccc/' + id + '"]\n\n' + texto + (resultadoPgn || "*") + "\n\n\n";
 }
 
 const pizarra = (page) => page.$$eval("#pizarra-cuerpo tr", (trs) => trs.map((tr) =>
@@ -187,6 +212,58 @@ async function main() {
     await p.waitForSelector("#cine-error:not(.hidden)");
     igual("«" + clave + "»: dice que no está abierta", await p.textContent("#cine-error-texto"), "Esta sala no existe o todavía no está abierta.");
     igual("«" + clave + "»: y ofrece la lista de torneos", await p.getAttribute("#cine-error-enlace", "href"), "torneos-en-vivo.html");
+    await p.close();
+  }
+
+  console.log("\n=== En vivo: la transmisión continua ===");
+  {
+    const pedidosVivo = [];
+    const p = await ctx.newPage();
+    await ponerDoble(p, { pedidosVivo, vivo: (r) => r === "R3cccccc"
+      ? pgnDe("partida5", "Ana", "Dani", ["e4", "e5", "Nf3", "Nc6", "Bb5", "a6"], ["0:14:50", "0:14:40", "0:14:30", "0:14:20", "0:14:10", "0:14:00"])
+      : "" });
+    await p.goto(BASE + "/transmision.html?torneo=cenfotec");
+    await p.waitForFunction(() => document.getElementById("cine-detalle").textContent.includes("a7–a6"), null, { timeout: 8000 }).catch(() => {});
+    igual("la jugada llega por la transmisión continua, sin esperar", await p.textContent("#cine-detalle"), "En juego · mueven las blancas · última jugada a7–a6");
+    igual("con la posición de verdad (alfil en b5, peón en a6)", await p.$$eval('#cine-tablero [data-square="b5"] span, #cine-tablero [data-square="a6"] span', (s) => s.length), 2);
+    igual("se abrió la de la ronda elegida", pedidosVivo[0], "R3cccccc");
+    igual("el reloj de las negras quedó en su último [%clk]", (await p.textContent("#cine-negras")).includes("14:00"), true);
+    const antes = await p.textContent('#cine-blancas [data-reloj]');
+    await p.waitForTimeout(2300);
+    const despues = await p.textContent('#cine-blancas [data-reloj]');
+    igual("y el de quien juega corre solo (" + antes + " → " + despues + ")", antes.startsWith("14:1") && despues < antes, true);
+    await p.waitForTimeout(5600);
+    igual("si la transmisión se corta, se vuelve a abrir sola", pedidosVivo.filter((r) => r === "R3cccccc").length >= 2, true);
+    await p.close();
+  }
+
+  console.log("\n=== Abierta antes de que empiece, y siguiendo a la ronda en curso ===");
+  {
+    let empezo = false, actual = "R3cccccc";
+    const cuarta = { id: "R4dddddd", name: "Ronda 4", slug: "ronda-4", url: "https://lichess.org/broadcast/" + TOUR.slug + "/ronda-4/R4dddddd" };
+    const p = await ctx.newPage();
+    await ponerDoble(p, {
+      torneo: () => ({ rounds: rondas.concat([cuarta]), defaultRoundId: actual }),
+      // La ronda 4 sin parear y después pareada: partidas SIN «fen», como las
+      // manda Lichess antes de la primera jugada.
+      partidas: (r) => r === "R4dddddd" ? (empezo ? [{ id: "partida7", players: [{ name: "Caro" }, { name: "Ana" }], status: "*" }] : []) : null,
+    });
+    await p.goto(BASE + "/transmision.html?torneo=cenfotec");
+    await p.waitForFunction(() => document.querySelectorAll("#cine-tablero .cine-sq").length === 64);
+    actual = "R4dddddd";
+    await p.evaluate(() => window.Transmision.refrescarTorneo());
+    await p.waitForFunction(() => document.querySelector('#cine-rondas button[aria-pressed="true"]').textContent.startsWith("Ronda 4"));
+    igual("sin elegir a mano, la sala pasa sola a la ronda en curso", await p.textContent('#cine-rondas button[aria-pressed="true"]'), "Ronda 4");
+    igual("que todavía no empieza, y lo dice", await p.$eval("#cine-sin-partidas", (e) => e.checkVisibility() && e.textContent), "Esta ronda todavía no empieza: las partidas aparecen aquí apenas arranquen.");
+    empezo = true;
+    await p.evaluate(() => document.dispatchEvent(new Event("visibilitychange")));
+    await p.waitForFunction(() => document.querySelectorAll("#cine-cartelera button").length === 1, null, { timeout: 5000 }).catch(() => {});
+    igual("una ronda vacía se sigue pidiendo: la mesa aparece sola", await p.$$eval("#cine-cartelera button", (b) => b.length), 1);
+    igual("una partida sin jugadas se ve en la posición inicial", await p.$$eval("#cine-tablero .cine-sq", (sq) => [sq.filter((x) => x.querySelector("span")).length, !!sq.find((x) => x.dataset.square === "e2").querySelector("span")]), [32, true]);
+    await p.click('#cine-rondas button[data-ronda="R3cccccc"]');
+    await p.evaluate(() => window.Transmision.refrescarTorneo());
+    await p.waitForTimeout(300);
+    igual("pero si la persona eligió una ronda, no se la cambia", await p.textContent('#cine-rondas button[aria-pressed="true"]'), "Ronda 3en vivo");
     await p.close();
   }
 

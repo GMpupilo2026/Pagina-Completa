@@ -897,3 +897,42 @@ transmisiones»).
   columna, salta. `verificar-transmision.js` prueba la pizarra oficial en la
   sala (pestañas, medallas, lo viejo, la función caída) y
   `verificar-salas-torneo.js` el editor.
+
+## La sala se actualiza sola, jugada por jugada
+
+«No se actualiza en vivo», y era cierto por tres lados, ninguno con error a la
+vista:
+
+- **La sala abierta antes de la hora no se enteraba nunca de que empezaba.**
+  Solo volvía a pedir la ronda si al abrirla ya estaba «en curso», y el torneo
+  de Lichess, que es el que dice qué ronda es la de ahora, se pedía una sola
+  vez. Ahora una ronda sin partidas todavía se sigue pidiendo (salvo que ya
+  haya terminado), y el torneo se vuelve a pedir cada minuto: si la persona no
+  eligió una ronda a mano, la sala pasa sola a la que está en curso; si eligió
+  una, no se la cambia.
+- **Una partida sin jugadas viene de Lichess sin `fen`** (comprobado con la
+  ronda 1 del UTN-CONARE, pareada antes de empezar), y el tablero salía vacío.
+  Sin `fen` es la posición inicial.
+- **Cada 20 segundos no es «en vivo».** Lichess tiene una transmisión continua
+  por ronda, `/api/stream/broadcast/round/<id>.pgn`, que manda el PGN de cada
+  partida en el momento en que cambia (con `[%clk]` en cada jugada y un
+  `GameURL` que termina en el id de la partida). La sala la escucha con
+  `fetch` y un lector del cuerpo: cada jugada llega al instante. El PGN se
+  reproduce con chess.js (`js/vendor/chess.js`), así que la posición es legal
+  de verdad; entre una partida y otra vienen dos renglones vacíos. Si la
+  conexión se corta, se vuelve a abrir a los 5 segundos mientras la ronda siga
+  en curso. Pedir la ronda entera cada 20 segundos queda de respaldo (una mesa
+  nueva, algo perdido), y **no pisa** una partida que la transmisión ya trajo
+  más adelantada: se comparan las medias jugadas de las dos posiciones.
+- **El reloj de quien juega corre** segundo a segundo, desde su última jugada
+  (el `thinkTime` de la ronda o el momento en que llegó la jugada). Antes de la
+  primera jugada no corre ninguno: no se sabe cuándo se echó a andar.
+- Con cada jugada se redibujan las mesas y los botones de las rondas: **el
+  foco se anota antes y se devuelve después**, si no quien navega con Tab lo
+  perdía en cada jugada. La pizarra de chess-results no se redibuja con las
+  jugadas (no depende de ellas), por lo mismo con sus pestañas.
+- `verificar-transmision.js` lo prueba con la transmisión continua doblada: la
+  jugada llega sin esperar, el reloj corre, se reabre al cortarse, la ronda
+  vacía se sigue pidiendo, la partida sin `fen` y el seguir a la ronda en curso
+  (y no hacerlo si se eligió a mano). Sin la transmisión y sin volver a pedir
+  la ronda vacía, saltan ocho.
