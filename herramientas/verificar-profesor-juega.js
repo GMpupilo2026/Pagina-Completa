@@ -5,8 +5,10 @@
       final y en su propio grupo, para no cambiar el caso de todos los días
       (una partida entre dos alumnos, que tiene que seguir saliendo preseleccionada).
    2. juegos.html — la partida propia del profesor le aparece arriba, igual que
-      al alumno, y en la lista de supervisión su botón dice "Jugar", no "Ver".
+      al alumno; y en la lista de competir.html su botón dice "Jugar", no "Ver"
+      (al alumno esa lista le llega sin Terminar ni Eliminar).
    3. juegos.html — el alumno no pierde nada de lo que tenía.
+   3b. competir.html — retar a quien está en línea es de toda la Academia.
    4. torneos.html y torneo.html — el botón de inscribirse aparece también para
       quien organiza. Antes se le escondía, y esa era toda la razón por la que
       un profesor no podía jugar su propio torneo.
@@ -236,8 +238,16 @@ async function pruebaPartidaPropia(browser) {
   igual("el bloque de sus partidas se ve", arriba.visible, "true");
   igual("con una sola tarjeta (la suya, no la de los alumnos)", arriba.tarjetas, 1);
   igual("y dice contra quién", /Contra Ana Rojas/.test(arriba.texto), "true");
+  igual("Juegos ya no trae la lista de partidas: se mudó a Competir",
+    String(!!(await page.$("#ongoing-list")) || !!(await page.$("#en-linea-caja"))), "false");
+  await ctx.close();
 
-  const botones = await page.evaluate(() => {
+  /* «Partidas en curso» vive en competir.html desde que Competir tiene su
+     propia tarjeta en el panel. */
+  console.log("\n=== competir.html · en la lista, su partida dice Jugar ===");
+  const c = await pagina(browser, "/competir.html",
+    clienteFalso(DATOS_JUEGOS(3, [PARTIDA_MIA, PARTIDA_AJENA]), "u-profe"));
+  const botones = await c.page.evaluate(() => {
     const filas = Array.from(document.querySelectorAll("#ongoing-list > div"));
     return filas.map((f) => ({ quienes: f.querySelector("h3").textContent, boton: f.querySelector("a").textContent }));
   });
@@ -245,7 +255,22 @@ async function pruebaPartidaPropia(browser) {
   const ajena = botones.find((b) => b.quienes.indexOf("Karina") === -1);
   igual("en su partida el botón dice Jugar", mia && mia.boton, "♟️ Jugar");
   igual("en la de los alumnos sigue diciendo Ver", ajena && ajena.boton, "👀 Ver");
-  await ctx.close();
+  igual("y quien arma las partidas las puede terminar", String(await c.page.$$eval("#ongoing-list button", (bs) => bs.some((b) => b.textContent === "Terminar"))), "true");
+  igual("sin errores en consola", c.errores.join(" | ") || "ninguno", "ninguno");
+  await c.ctx.close();
+
+  /* Al alumno la misma lista le llega sin Terminar ni Eliminar: no arma
+     partidas, y la base tampoco lo dejaría. */
+  const a = await pagina(browser, "/competir.html",
+    clienteFalso(DATOS_JUEGOS(3, [PARTIDA_MIA]), "u-ana"));
+  const alumno = await a.page.evaluate(() => ({
+    filas: document.querySelectorAll("#ongoing-list > div").length,
+    botones: Array.from(document.querySelectorAll("#ongoing-list button, #finished-list button")).map((b) => b.textContent),
+  }));
+  igual("el alumno ve su partida en la lista", alumno.filas, 1);
+  igual("sin botones de Terminar ni Eliminar", alumno.botones.join(",") || "ninguno", "ninguno");
+  igual("sin errores en consola", a.errores.join(" | ") || "ninguno", "ninguno");
+  await a.ctx.close();
 }
 
 async function pruebaAlumnoIntacto(browser) {
@@ -283,14 +308,14 @@ async function pruebaAlumnoSinPartidas(browser) {
    poder retarlo. Lo que se mide es la LISTA PINTADA, con su botón, no una
    variable de la página. */
 async function pruebaEnLineaAbierto(browser) {
-  console.log("\n=== juegos.html · el espacio de juegos es de toda la Academia ===");
+  console.log("\n=== competir.html · retar es de toda la Academia ===");
   const datos = DATOS_JUEGOS(3, []);
   datos._enLinea = [
     { id: "u-ana",   nombre: "Ana Rojas",  is_admin: false, role: "alumno" },
     { id: "u-bruno", nombre: "Bruno Mena", is_admin: false, role: "alumno" },
     { id: "u-profe", nombre: "Karina Rojas", is_admin: false, role: "profesor" },
   ];
-  const { page, ctx, errores } = await pagina(browser, "/juegos.html", clienteFalso(datos, "u-ana"));
+  const { page, ctx, errores } = await pagina(browser, "/competir.html", clienteFalso(datos, "u-ana"));
   await page.waitForFunction(() => document.querySelectorAll("#en-linea-lista [data-retar]").length > 0, { timeout: 10000 });
   const v = await page.evaluate(() => ({
     quienes: Array.from(document.querySelectorAll("#en-linea-lista [data-retar]")).map((b) => b.dataset.retar),

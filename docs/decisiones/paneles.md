@@ -53,8 +53,10 @@ lista, y el resto se acomoda solo.
   repasarlo (Estudio), después el curso completo y al final la lectura: Cursos
   estaba primero y es lo más largo de los cuatro, así que quien entra a
   practicar veinte minutos tenía delante lo que menos se parece a eso. En
-  "Jugar y competir" va primero donde se juega contra otra persona (Juegos),
-  después el torneo y al final el bot.
+  "Jugar y competir" va primero donde se juega contra otra persona (Juegos, y
+  Competir, que es retar a quien está en línea y las listas de partidas; ver
+  «Competir: retar y las listas de partidas tienen su propia página» en
+  `juegos-y-torneos.md`), después el torneo y al final el bot.
 - **"TV en vivo" y "Logros" están en "Tu cuenta"**, que va en este orden:
   Configuración, Informes, Logros, TV en vivo y, solo al alumnado, "¿Cómo van
   tus clases?". Lo pidió así el dueño de la Academia; antes las dos estaban al

@@ -396,9 +396,39 @@ persona del pretérito— fueron a `BLANCA`, junto a las que ya estaban por lo m
 Y el verbo `entrar` se sumó a la tabla, que es la regla de siempre: **la tabla se
 completa cuando algo se escapa**.
 
+## Competir: retar y las listas de partidas tienen su propia página
+
+«🟢 En línea ahora», «Partidas en curso» y «Partidas terminadas» vivían en
+`juegos.html`, debajo de los juegos para uno solo y del formulario del
+profesor. Se mudaron a `competir.html`, con su tarjeta «⚔️ Competir» en el
+grupo «Jugar y competir» del panel, justo después de Juegos. Juegos quedó para
+conocer las modalidades, los juegos para uno solo, armar partidas y la tarjeta
+de la partida propia; Competir, para jugar contra otra persona y seguir esas
+partidas.
+
+- **Lo que usan las dos páginas está una sola vez**, en `js/juegos-comun.js`:
+  el catálogo de modalidades (`VARIANTS`), `estadoInicial()`,
+  `pageFor2pVariant()`, `variantLabel()`, `escapeHtml()` y `nombreVisible()`.
+  El formulario del profesor y aceptar un reto crean partidas: con dos copias
+  de `estadoInicial()`, una partida podía arrancar distinta según el camino.
+- **Las listas son de todos**, no solo del profesor como antes: a cada quien le
+  llegan las partidas que la RLS de `game_rooms`/`fourplayer_games` le deja ver.
+  «Terminar» y «Eliminar» se pintan solo a quien arma partidas (profesor o
+  administración); al alumno la base tampoco lo dejaría.
+- **Los retos que me llegan van en Competir**, encima de todo: el canal de
+  presencia (`juegos-en-linea`) solo anuncia a quien tiene esa página abierta,
+  así que solo desde ahí se puede retar y recibir un reto.
+- Juegos conserva una tarjeta a Competir, para quien buscaba ahí lo que se fue,
+  y al crear una partida el aviso dice que se sigue en Competir, con su enlace.
+- `node herramientas/verificar-todo.js profesor-juega panel` lo comprueba: que
+  Juegos ya no traiga las listas, que en Competir la partida propia diga
+  «Jugar», que el alumno no vea «Terminar» y que retar siga siendo de toda la
+  Academia.
+
 ## Retar a quien está en línea
 
-En `juegos.html`, debajo de las tarjetas, está "🟢 En línea ahora": quién más
+En `competir.html` (antes en `juegos.html`; ver «Competir: retar y las listas
+de partidas tienen su propia página») está "🟢 En línea ahora": quién más
 tiene abierta la página en este momento y un botón para retarlo a la modalidad y
 el reloj que uno elija. Si acepta, la partida nace sola y a los dos los manda a
 la página de la modalidad. Hasta ahora las partidas entre personas solo las

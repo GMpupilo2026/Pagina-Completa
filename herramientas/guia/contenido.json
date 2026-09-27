@@ -798,11 +798,11 @@
           "pasos": [
             "«Asignar rivales»: elige blancas y negras de tu lista.",
             "Elige la modalidad y el control de tiempo.",
-            "«Partidas en curso» te deja verlas todas mientras se juegan."
+            "En «Competir», «Partidas en curso» te deja verlas todas mientras se juegan, y «Partidas terminadas», las que ya acabaron."
           ],
           "ojo": [
             "Tú también puedes jugar: apareces al final de los selectores, en tu propio grupo, para que el caso de todos los días —dos alumnos— siga saliendo de una.",
-            "Tu propia partida sale en la lista con «♟️ Jugar» y no con «👀 Ver»."
+            "Tu propia partida sale en la lista de Competir con «♟️ Jugar» y no con «👀 Ver»."
           ],
           "captura": "juegos"
         },
@@ -820,7 +820,7 @@
         },
         {
           "titulo": "Retos entre alumnos",
-          "donde": "juegos.html › 🟢 En línea ahora",
+          "donde": "clases.html › Jugar y competir › Competir › 🟢 En línea ahora",
           "intro": "Quién tiene la página abierta en este momento y un botón para retarlo. Si acepta, la partida nace sola.",
           "pasos": [
             "El alumno ve la lista, elige modalidad y reloj, y reta.",
@@ -828,7 +828,7 @@
             "Puede aceptar, o rechazar con un motivo escrito."
           ],
           "ojo": [
-            "Solo se ve y se puede retar a gente de la propia clase. Un alumno recién llegado, sin profesor asignado, no ve a nadie: le sale el bot mientras tanto.",
+            "Se puede retar a cualquiera de la Academia que tenga Competir abierto, aunque no sea de la misma clase. Si no hay nadie, la página ofrece el bot de Oscar.",
             "Tú también sales en esa lista, rotulado como profe."
           ]
         },
