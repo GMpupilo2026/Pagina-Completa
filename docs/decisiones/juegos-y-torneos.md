@@ -765,10 +765,8 @@ vivo») tiene una ficha por torneo transmitido. Un torneo que se transmite por
 Lichess (una transmisión, «broadcast») entra a `transmision.html?torneo=<clave>`:
 la partida elegida en la pantalla grande entre dos telones, las demás mesas de
 la ronda debajo y, al lado, la pizarra de posiciones. El código está en
-`js/transmision.js` y los torneos en su lista `TORNEOS` (clave → id de la
-transmisión, que es lo último de `lichess.org/broadcast/<nombre>/<id>`).
-Una ficha sin enlace todavía va apagada (ver «Un acceso apagado no es un enlace
-gris»).
+`js/transmision.js`; qué torneo muestra lo dice la sala de esa clave en la
+tabla `salas_torneo` (ver «Las salas de torneos se editan en administración»).
 
 - **Todo sale de la API pública de Lichess**, sin cuenta ni base propia:
   `/api/broadcast/<id>` trae el torneo y sus rondas, y cada ronda se pide en su
@@ -793,3 +791,53 @@ gris»).
   jugada, la pizarra con empates, cambiar de mesa y de ronda, que el resultado
   nuevo llegue solo, el contraste y el aviso con Lichess caído. Rompiendo la
   regla del puesto compartido, salta.
+
+## Las salas de torneos se editan en administración
+
+Las fichas de Torneos (`torneos-en-vivo.html`) y el torneo de cada sala de
+cine estaban escritos en el código: el HTML y una lista en `js/transmision.js`.
+Cada sala nueva era un cambio de código. Ahora viven en la tabla
+**`salas_torneo`** y las crea, edita, ordena, oculta y borra quien administra,
+en **`admin.html#torneos`** (`js/admin-salas-torneo.js`). Migración
+`20260927043856_salas_de_torneos_transmitidos`.
+
+- **Dos tipos de sala.** `lichess`: una transmisión de Lichess, que entra a la
+  sala de cine (`transmision.html?torneo=<clave>`) y lleva el id de la
+  transmisión. `enlaces`: cualquier otra (UTN va en idchess, que no tiene API
+  pública conocida), con uno a seis botones que la abren en otra pestaña. Las
+  de Lichess pueden llevar botones de más («Verlo directo en Lichess»).
+- **Una sola ficha.** `js/salas-torneo.js` la pinta, y la usan la página
+  pública y la vista previa del editor (dentro de una caja `inert`: se ve pero
+  no se sigue). Lo que se ve en la vista previa es lo que se va a ver.
+- **Quién lee y quién escribe lo decide la RLS.** Las visibles las lee
+  cualquiera, anónimo incluido; las ocultas, solo quien administra (así se
+  prepara una sala antes de publicarla). Escribir: solo `soy_admin()`. No es
+  una tabla que reparte permisos, así que se escribe directo con políticas,
+  como `tv_settings`. `updated_at`/`updated_by` los pone un trigger, no el
+  navegador. Comprobado impersonando roles en SQL: anónimo y alumno no
+  insertan, y su update y su delete no tocan ninguna fila.
+- **Los enlaces se validan en la base**, con `interno.enlaces_de_sala_validos()`
+  en un `check`: solo `https://`, sin espacios ni comillas, texto de 1 a 60,
+  seis como máximo. Un «javascript:» en una página pública no puede depender
+  de que el formulario lo haya revisado. El formulario valida lo mismo antes de
+  mandar, para decirlo en palabras y llevar el foco al campo; la dirección
+  repetida (`23505`) también se explica.
+- **Un update que la RLS no deja pasar no da error: no toca ninguna fila.** El
+  editor pide `.select("id")` y, si no vuelve ninguna, dice «No se guardó: tu
+  cuenta no tiene permiso» en vez de «guardada».
+- **La dirección de UNA ronda de Lichess se guarda con su torneo.**
+  `lichess.org/broadcast/<torneo>/<id>` es el torneo;
+  `…/<torneo>/<ronda>/<id>` es una ronda, y «Comprobar en Lichess» le pregunta
+  de qué torneo es: la sala muestra el torneo entero, con todas sus rondas.
+- **La comprobación va con su botón, no al salir del campo.** Probado: el texto
+  del resultado corre el formulario, y si llega justo cuando se aprieta
+  «Guardar la sala», el clic cae en otro lado y no se guarda nada, sin error.
+- La dirección de la sala se arma sola con el nombre (sin tildes, con guiones)
+  hasta que se escribe a mano; editar el nombre de una sala que ya existe no le
+  cambia la dirección, que es la que ya se compartió.
+- `verificar-salas-torneo.js` lo prueba con `lib/doble-salas-torneo.js`, un
+  doble que aplica la RLS y los `check` de la tabla (también lo usa
+  `verificar-transmision.js`): las fichas, los dos tipos, los rechazos, la
+  ronda de Lichess, editar, ocultar, reordenar, borrar con su confirmación, el
+  contraste y el permiso perdido a mitad de camino. Quitando la comprobación
+  de «no se guardó», salta.

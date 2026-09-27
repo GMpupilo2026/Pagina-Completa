@@ -2,10 +2,10 @@
  * por Lichess (una transmisión o «broadcast»), con la partida elegida en la
  * pantalla grande, las demás de la ronda debajo y la pizarra de posiciones.
  *
- * Los torneos que se pueden ver acá son los de TORNEOS (la ficha de
- * torneos-en-vivo.html enlaza a transmision.html?torneo=<clave>). Para sumar
- * uno, se agrega su línea con el id de la transmisión: es lo último de su
- * dirección, lichess.org/broadcast/<nombre>/<id>.
+ * Qué torneo muestra lo dice la sala (tabla salas_torneo, que edita quien
+ * administra en admin.html#torneos): torneos-en-vivo.html enlaza a
+ * transmision.html?torneo=<clave>, y la sala de esa clave trae el id de la
+ * transmisión de Lichess.
  *
  * Todo sale de la API pública de Lichess, sin cuenta:
  *   /api/broadcast/<id>                  el torneo y sus rondas
@@ -17,13 +17,6 @@
 (function () {
     "use strict";
 
-    const TORNEOS = {
-        cenfotec: {
-            id: "s7NfNv6H",
-            nombre: "Desafío Mentes Maestras CENFOTEC 2026",
-            enlace: "https://lichess.org/broadcast/desafio-mentes-maestras-cenfotec-2026/s7NfNv6H",
-        },
-    };
     const LICHESS = "https://lichess.org";
     const CADA_MS = 20000;          // cada cuánto se refresca la ronda en curso
     const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
@@ -32,8 +25,8 @@
 
     const $ = (id) => document.getElementById(id);
 
-    const clave = new URLSearchParams(location.search).get("torneo") || Object.keys(TORNEOS)[0];
-    const torneo = TORNEOS[clave] || TORNEOS[Object.keys(TORNEOS)[0]];
+    const clave = new URLSearchParams(location.search).get("torneo");
+    let torneo = null;   // { id, nombre, enlace } de la sala elegida
 
     const estado = {
         tour: null,
@@ -432,15 +425,45 @@
         programar();
     }
 
+    // Con enlace a Lichess si se sabe cuál es; si no (la sala no existe), a
+    // la lista de torneos.
     function mostrarError(texto) {
         $("loading").classList.add("hidden");
         $("cine-error-texto").textContent = texto;
-        $("cine-error-enlace").href = torneo.enlace;
+        const a = $("cine-error-enlace");
+        if (torneo && torneo.enlace) {
+            a.href = torneo.enlace;
+        } else {
+            a.href = "torneos-en-vivo.html";
+            a.removeAttribute("target");
+            a.textContent = "Ver todos los torneos";
+        }
         $("cine-error").classList.remove("hidden");
     }
 
+    // La sala de la clave, o la primera sala de Lichess visible si no se dijo cuál.
+    async function buscarSala() {
+        if (clave) return SalasTorneo.porClave(clave);
+        return (await SalasTorneo.listar()).find((s) => s.visible && s.tipo === "lichess") || null;
+    }
+
     async function arrancar() {
+        let sala;
+        try {
+            sala = await buscarSala();
+        } catch (e) {
+            console.error(e);
+            mostrarError("No pudimos cargar esta sala ahora mismo. Vuelve a intentarlo en un rato.");
+            return;
+        }
+        if (!sala || sala.tipo !== "lichess" || !sala.lichess_id) {
+            mostrarError("Esta sala no existe o todavía no está abierta.");
+            return;
+        }
+        const aLichess = (Array.isArray(sala.enlaces) ? sala.enlaces : []).find((e) => /^https:\/\/lichess\.org\//.test(e.url));
+        torneo = { id: sala.lichess_id, nombre: sala.nombre, enlace: aLichess ? aLichess.url : "https://lichess.org/broadcast/-/" + sala.lichess_id };
         $("cine-titulo").textContent = torneo.nombre;
+        document.title = torneo.nombre + " — Ajedrez Integral";
         $("cine-lichess").href = torneo.enlace;
         let datos;
         try {
@@ -451,11 +474,11 @@
             return;
         }
         estado.tour = datos.tour || {};
-        estado.rondas = Array.isArray(datos.rounds) ? datos.rounds : [];
-        if (estado.tour.name) {
-            $("cine-titulo").textContent = estado.tour.name;
-            document.title = estado.tour.name + " — Ajedrez Integral";
+        if (estado.tour.url && /^https:\/\/lichess\.org\//.test(estado.tour.url)) {
+            torneo.enlace = estado.tour.url;
+            $("cine-lichess").href = torneo.enlace;
         }
+        estado.rondas = Array.isArray(datos.rounds) ? datos.rounds : [];
         const n = estado.rondas.length;
         $("cine-sub").textContent = n ? n + (n === 1 ? " ronda" : " rondas") : "";
         if (!n) {
@@ -475,7 +498,7 @@
     document.addEventListener("visibilitychange", () => { if (!document.hidden && estado.rondaElegida) refrescar(); });
 
     // Para el verificador.
-    window.Transmision = { TORNEOS, posiciones, piezasDeFen, resultado };
+    window.Transmision = { posiciones, piezasDeFen, resultado };
 
     arrancar();
 })();

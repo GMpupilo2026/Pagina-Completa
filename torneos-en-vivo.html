@@ -29,11 +29,6 @@
     <link rel="stylesheet" href="css/styles.css">
     <!-- oscuro: inicio --><script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');}catch(e){}})();</script><!-- oscuro: fin -->
     <script src="js/adaptive-mode.js"></script>
-    <!-- tablero: inicio -->
-    <script src="js/board-color-themes.js"></script>
-    <script src="js/piece-color-themes.js"></script>
-    <script src="js/piece-style-themes.js"></script>
-    <!-- tablero: fin -->
 
 
 <!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/pwa.js" defer></script><!-- app: fin --><!-- tema: inicio --><script>(function(){try{var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');var f=localStorage.getItem('plataforma_tema_fuente_v1');if(!f||!/^[A-Za-z0-9 ]{2,32}$/.test(f))return;var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family='+f.replace(/ /g,'+')+':wght@400;500;600;700&display=swap';document.head.appendChild(l);}catch(e){}})();</script><!-- tema: fin --></head>
@@ -94,34 +89,12 @@
                 <p class="text-brand-500 dark:text-brand-300 mt-4 max-w-2xl mx-auto">Los torneos que transmitimos en vivo. Entra al de tu interés y mira sus partidas en directo, tablero por tablero.</p>
             </div>
 
-            <!-- Una ficha por torneo. Para agregar otro, se copia un <li> entero.
-                 Un torneo transmitido por Lichess entra a la sala de cine
-                 (transmision.html?torneo=<clave>): su clave y el id de la
-                 transmisión van en TORNEOS de js/transmision.js.
-                 Uno que se transmite en otro lado (UTN va en idchess, que no
-                 tiene API pública conocida) enlaza directo a su transmisión.
-                 Mientras un torneo no tenga su enlace, la ficha va «apagada»: un
-                 <span> con aria-disabled y tabindex="0", sin href (no promete un
-                 destino que no abre, pero se alcanza con Tab y dice por qué está
-                 cerrada; ver «Un acceso apagado no es un enlace gris»). -->
-            <ul class="grid sm:grid-cols-2 gap-6" aria-label="Torneos transmitidos">
-                <li class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-6 flex flex-col">
-                    <p class="text-4xl mb-3" aria-hidden="true">🎓</p>
-                    <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white">Desafío Mentes Maestras CENFOTEC 2026</h2>
-                    <p class="text-brand-500 dark:text-brand-300 mt-2 mb-5 flex-1">Las partidas del torneo de la Universidad CENFOTEC, en vivo en la pantalla grande, con la pizarra de posiciones al lado.</p>
-                    <a href="transmision.html?torneo=cenfotec" class="block text-center bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2.5 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Entrar a la sala<span class="sr-only"> del torneo CENFOTEC</span> →</a>
-                    <a href="https://lichess.org/broadcast/desafio-mentes-maestras-cenfotec-2026/s7NfNv6H" target="_blank" rel="noopener" class="block text-center text-sm text-brand-500 dark:text-brand-300 underline underline-offset-2 hover:text-accent-700 dark:hover:text-accent-400 mt-3 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">o verlo directo en Lichess<span class="sr-only"> (se abre en otra pestaña)</span> ↗</a>
-                </li>
-                <li class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-6 flex flex-col">
-                    <p class="text-4xl mb-3" aria-hidden="true">🎓</p>
-                    <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white">Torneo UTN 2026</h2>
-                    <p class="text-brand-500 dark:text-brand-300 mt-2 mb-5 flex-1">Las partidas del torneo de la Universidad Técnica Nacional, en vivo. Se transmite en idchess, en dos salas: la masculina y la femenina.</p>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <a href="https://media.idchess.com/en/tournaments/kYfhVJ/utn-2026/desk/eyJpZCI6OTY1OTU2LCJwYXNzd29yZCI6bnVsbH0=" target="_blank" rel="noopener" class="block text-center bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2.5 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Partida masculina<span class="sr-only"> del torneo UTN (se abre en otra pestaña en idchess)</span> ↗</a>
-                        <a href="https://media.idchess.com/en/tournaments/b0fhVJ/utn-2026/desk/eyJpZCI6OTY1OTYxLCJwYXNzd29yZCI6bnVsbH0=" target="_blank" rel="noopener" class="block text-center bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2.5 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Partida femenina<span class="sr-only"> del torneo UTN (se abre en otra pestaña en idchess)</span> ↗</a>
-                    </div>
-                </li>
-            </ul>
+            <!-- Las fichas salen de la tabla salas_torneo, que edita quien
+                 administra en admin.html#torneos (js/salas-torneo.js las pinta,
+                 igual que la vista previa del editor). -->
+            <div id="loading" role="status" class="min-h-[30vh] flex flex-col items-center justify-center gap-3 px-4 text-center text-brand-500 dark:text-brand-300"><span aria-hidden="true" class="w-8 h-8 rounded-full border-4 border-brand-200 dark:border-brand-700 border-t-accent-500 animate-spin motion-reduce:animate-none"></span><p class="text-sm">Cargando los torneos…</p></div>
+            <ul id="salas-lista" class="hidden grid sm:grid-cols-2 gap-6" aria-label="Torneos transmitidos"></ul>
+            <p id="salas-vacio" class="hidden text-center text-brand-500 dark:text-brand-300 py-10">Por ahora no hay ningún torneo en transmisión. Vuelve pronto <span aria-hidden="true">👀</span></p>
 
             <p class="text-center text-brand-500 dark:text-brand-300 text-sm mt-10">¿Quieres ver también las partidas de la Academia? Están en <a href="tv.html" class="underline underline-offset-2 hover:text-accent-700 dark:hover:text-accent-400">TV en vivo</a>.</p>
         </div>
@@ -138,13 +111,10 @@
             <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-300"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p><!-- legal: inicio --><p class="mt-2"><a href="privacidad.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Política de privacidad</a> <span aria-hidden="true">·</span> <a href="terminos.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Términos y condiciones</a></p><!-- legal: fin --></div>
         </div>
     </footer>
-    <!-- tablero-js: inicio -->
-    <script src="js/board-themes.js"></script>
-    <script src="js/chess-piece-svg.js"></script>
-    <script src="js/pieza-preferida.js"></script>
-    <script src="js/coordenadas-tablero.js"></script>
-    <script src="js/coronacion.js"></script>
-    <!-- tablero-js: fin -->
+    <script src="js/vendor/supabase.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/salas-torneo.js"></script>
     <script src="js/main.js"></script>
+    <script src="js/torneos-en-vivo.js"></script>
 </body>
 </html>

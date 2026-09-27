@@ -119,7 +119,7 @@
          * para que atrás/adelante y un enlace guardado lleven a la misma.
          * Todo lo que ya estaba sigue con sus mismos ids: solo cambia qué se ve.
          */
-        const SECCIONES = ["inicio", "cuentas", "crear", "profesores", "supervisores", "equipos", "novedades", "herramientas"];
+        const SECCIONES = ["inicio", "cuentas", "crear", "profesores", "supervisores", "equipos", "novedades", "torneos", "herramientas"];
 
         function seccionDelEnlace() {
             const h = location.hash.replace("#", "");
@@ -1865,6 +1865,9 @@
             await loadEquipos();
             await loadSupervisores();
             await loadActualizaciones();
+            // Las salas de torneos (js/admin-salas-torneo.js): no se espera, así
+            // una Lichess lenta no demora el resto del panel.
+            if (window.AdminSalasTorneo) AdminSalasTorneo.iniciar();
             document.getElementById("app").classList.remove("hidden");
             irA(seccionDelEnlace() || "inicio", { sinHistoria: true });
         }
