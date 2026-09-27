@@ -227,8 +227,8 @@ su casa. Hay seis: ⭐ Estrella de buen estudiante, 💡 Buena respuesta,
 ## El hub de Entrenamiento y sus grupos
 
 `entreno/index.html` reparte los accesos en **Fundamentos** (Mates,
-Aprender, Coordenadas, Desafíos), **Practicar** (Ejercicios por tema, Practicar,
-Precisión posicional), **Entreno** (Aperturas y celadas, 4×4, Visualización) y
+Aprender, Coordenadas, Desafíos), **Practicar** (Ejercicios por tema, Practicar), **Entreno** (Aperturas y
+celadas, 4×4, Visualización, Precisión posicional) y
 **Tipos de entrenamiento** (una sola tarjeta que abre su ficha, ver «Los Tipos
 de entrenamiento»).
 
@@ -535,7 +535,7 @@ con la página.
 ## El Evaluador de precisión posicional: elegir el plan, no la táctica
 
 `entreno/precision-posicional.html` (tarjeta **"🧭 Precisión posicional"** en
-el grupo "Practicar" del hub de Entrenamiento) es un banco de 96 posiciones
+el grupo "Entreno" del hub de Entrenamiento) es un banco de 96 posiciones
 —12 por cada una de 8 áreas— con una pregunta de opción múltiple por posición.
 **Ninguna tiene una jugada que gane material o dé mate de inmediato**: lo que
 se pide es el plan correcto a largo plazo — mejorar la pieza peor colocada,

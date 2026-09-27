@@ -25,7 +25,7 @@ const BASE = process.env.BASE || "http://localhost:8777";
 // ven en su pantalla de carga) y las de curso, que inyectan HTML traído aparte.
 const PAGINAS = [
     "/index.html", "/cursos.html", "/articulos.html", "/sobre-oscar.html", "/tablero.html",
-    "/te-reto.html", "/campeones.html", "/tv.html", "/nivel-de-arbitraje.html", "/login.html",
+    "/te-reto.html", "/campeones.html", "/tv.html", "/torneos-en-vivo.html", "/nivel-de-arbitraje.html", "/login.html",
     "/bienvenida.html",
     "/juegos.html", "/competir.html", "/bot.html", "/confites.html", "/ilumina-tablero.html", "/clases.html",
     "/admin.html", "/admin-jugador.html", "/admin-jugador.html", "/informes.html", "/sesion.html", "/arbitraje.html", "/configuracion.html",

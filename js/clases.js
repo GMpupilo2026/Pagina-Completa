@@ -44,13 +44,21 @@
 
                El rótulo NO repite los nombres de las dos tarjetas: dice lo que
                las dos tienen en común y que no se deduce de ellas —que te las
-               pone alguien más y traen fecha—, que es lo que las separa de un
-               diagnóstico, que uno hace cuando le parece. Por
+               pone alguien más—. El diagnóstico también: no se hace cuando a
+               uno le parece, lo pide el profesor para ubicarte. Por
                eso lleva `titleProfe`, igual que los tiles llevan `descProfe`:
                del otro lado del escritorio la misma pareja es lo que MANDAS. */
             { title: "Lo que te pone tu profesor", titleProfe: "Lo que le pones a tus alumnos", tiles: [
                 { emoji: "📋", label: "Tareas", desc: "Con fecha límite, y se llenan solas con lo que entrenas", descProfe: "Pide cantidades y la tarea se llena sola con lo que entrenan", href: "tareas.html" },
                 { emoji: "📝", label: "Exámenes", desc: "Con nota y reloj: una sola oportunidad por pregunta", descProfe: "Con nota y reloj, y el informe pregunta por pregunta de cada uno", href: "examenes.html" },
+                /* El diagnóstico entra acá y no en un grupo propio: no se
+                   practica, se APLICA —es tu profesor quien te lo pide para
+                   ubicarte—, y lo que sale de él es el plan que te arma. A
+                   quien da clase la misma tarjeta lo lleva al RESULTADO de sus
+                   alumnos (`hrefProfe`), no a la prueba: el banco es el mismo
+                   que el de ellos, y resolverla por su cuenta no le sirve de
+                   nada. El de arbitraje sigue siendo solo de administración. */
+                { emoji: "🧭", label: "Diagnóstico de nivel", desc: "La prueba que ubica tu nivel y arma tu plan de entrenamiento", descProfe: "El nivel de cada alumno y dónde está floja la clase", href: "entreno/diagnostico.html", hrefProfe: "informes.html?tema=diagnostico" },
             ] },
             /* "Aprender" va antes que "Jugar y competir": esto es una academia,
                y lo primero que se ofrece al entrar es lo que se viene a hacer.
@@ -72,9 +80,8 @@
                 { emoji: "📖", label: "Artículos", desc: "Lecturas técnicas y pedagógicas", href: "articulos.html" },
             ] },
             /* Primero donde se juega de verdad contra otra persona, después el
-               torneo, y de último lo que se MIRA — TV en vivo no es jugar, es
-               ver jugar. Detrás van las dos que cuelgan de eso: el bot y las
-               medallas.
+               torneo, y al final el bot. «TV en vivo» y «Logros» ya no viven
+               acá: están en «Tu cuenta» (ver el grupo, más abajo).
 
                «Racha táctica» se fue de acá porque ya es lo PRIMERO que hay
                dentro de juegos.html, en una franja ámbar a todo el ancho. Un
@@ -98,11 +105,11 @@
                 { emoji: "🎲", label: "Juegos", desc: "Crazyhouse y otras modalidades — tu profesor te asigna el rival", descProfe: "Crazyhouse y otras modalidades — arma las partidas de tus alumnos", href: "juegos.html" },
                 { emoji: "⚔️", label: "Competir", desc: "Reta a quien esté en línea ahora y sigue tus partidas en curso y terminadas", descProfe: "Reta a quien esté en línea y sigue las partidas de tus alumnos, en curso y terminadas", href: "competir.html" },
                 { emoji: "🥇", label: "Torneos", desc: "Inscríbete y compite en los torneos que arma tu profesor", descProfe: "Arma torneos para tus alumnos, con sus rondas y su tabla", href: "torneos.html" },
-                { emoji: "📺", label: "TV en vivo", desc: "Las partidas de la Academia en directo, con su tabla de posiciones", href: "tv.html" },
                 { photo: "img/oscar-avatar.jpg", label: "Juega contra mí", desc: "Practica contra Oscar, nuestro motor", href: "tablero.html" },
-                { emoji: "🏅", label: "Logros", desc: "Tu racha de días entrenando y las medallas que has ganado", descProfe: "El catálogo de medallas y cómo se gana la racha de días", href: "logros.html" },
             ] },
-            /* «Mide tu nivel» (los dos diagnósticos) y las tarjetas que eran
+            /* «Mide tu nivel» (los dos diagnósticos) ya no existe: el de
+               nivel está en «Lo que te pone tu profesor» y el de arbitraje
+               es solo de administración. Las tarjetas que eran
                solo de administración —lector de planilla, tienda,
                actualizaciones, guía del profesor— ya no viven acá: quien
                administra tiene su propio panel (ADMIN_GROUPS) y las encuentra
@@ -110,9 +117,14 @@
             { title: "Herramientas", tiles: [
                 { emoji: "📂", label: "Archivos", desc: "Sube tus PGN completos y revisa las partidas guardadas en clase — llévalos al tablero en vivo", href: "partidas.html", mantenimientoAlumno: true },
             ] },
+            /* El orden lo pidió el dueño de la Academia: Configuración,
+               Informes, Logros, TV en vivo y, al alumnado, «¿Cómo van tus
+               clases?» de última (se agrega más abajo, solo a su panel). */
             { title: "Tu cuenta", tiles: [
-                { emoji: "📊", label: "Informes", desc: "Tu progreso y estadísticas", descProfe: "El progreso de tus alumnos y los informes a la casa", href: "informes.html" },
                 { emoji: "⚙️", label: "Configuración", desc: "Tu perfil y contraseña", href: "configuracion.html" },
+                { emoji: "📊", label: "Informes", desc: "Tu progreso y estadísticas", descProfe: "El progreso de tus alumnos y los informes a la casa", href: "informes.html" },
+                { emoji: "🏅", label: "Logros", desc: "Tu racha de días entrenando y las medallas que has ganado", descProfe: "El catálogo de medallas y cómo se gana la racha de días", href: "logros.html" },
+                { emoji: "📺", label: "TV en vivo", desc: "Las partidas de la Academia en directo, con su tabla de posiciones", href: "tv.html" },
             ] },
         ];
 
@@ -334,6 +346,7 @@
             if (!esEquipoDocente()) return;
             TILE_GROUPS.forEach((g) => g.tiles.forEach((t) => {
                 if (t.descProfe) t.desc = t.descProfe;
+                if (t.hrefProfe) t.href = t.hrefProfe;
             }));
         }
 
