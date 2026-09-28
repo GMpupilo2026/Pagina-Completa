@@ -54,7 +54,7 @@
         </div>
         <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
             <div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2">
-                <a href="index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
+                <a href="index.html" class="flex items-center gap-2 text-white"><img src="/img/logo-marca.png" alt="" width="78" height="48" class="h-10 md:h-12 w-auto shrink-0"><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
                 <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
                     <li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
                     <li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li>
@@ -128,12 +128,20 @@
             </div>
         </div>
     </section>
-    <section class="bg-brand-700 py-8">
-        <div class="max-w-7xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-            <div><p class="text-3xl md:text-4xl font-bold text-accent-400">+500</p><p class="text-brand-200 text-sm mt-1">Estudiantes activos</p></div>
-            <div><p class="text-3xl md:text-4xl font-bold text-accent-400">+30</p><p class="text-brand-200 text-sm mt-1">Escuelas y colegios</p></div>
-            <div><p class="text-3xl md:text-4xl font-bold text-accent-400">+120</p><p class="text-brand-200 text-sm mt-1">Artículos y tutoriales</p></div>
-            <div><p class="text-3xl md:text-4xl font-bold text-accent-400">18 años</p><p class="text-brand-200 text-sm mt-1">Enseñando ajedrez</p></div>
+    <!-- Las cifras salen de las inscripciones reales a los torneos en línea:
+         js/cifras-portada.js las pide en cada visita a cifras_torneos() (base
+         de Colegios), que devuelve solo los cuatro totales. Las escritas acá
+         son las del día en que se armó la sección: si la consulta falla, queda
+         un piso que es cierto, porque las inscripciones no bajan. -->
+    <section class="bg-brand-700 py-8" aria-labelledby="cifras-titulo">
+        <div class="max-w-7xl mx-auto px-4">
+            <h2 id="cifras-titulo" class="text-center text-brand-200 text-xs font-semibold uppercase tracking-wide mb-5">Inscripciones a nuestros torneos en línea</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+                <div><p class="text-3xl md:text-4xl font-bold text-accent-400" data-cifra="estudiantes">105</p><p class="text-brand-200 text-sm mt-1">Estudiantes inscritos</p></div>
+                <div><p class="text-3xl md:text-4xl font-bold text-accent-400" data-cifra="centros">23</p><p class="text-brand-200 text-sm mt-1">Escuelas y colegios</p></div>
+                <div><p class="text-3xl md:text-4xl font-bold text-accent-400" data-cifra="provincias">6</p><p class="text-brand-200 text-sm mt-1">Provincias</p></div>
+                <div><p class="text-3xl md:text-4xl font-bold text-accent-400" data-cifra="cantones">16</p><p class="text-brand-200 text-sm mt-1">Cantones</p></div>
+            </div>
         </div>
     </section>
     <!-- Los íconos son SVG de trazo (mismo grosor y tamaño en los seis), no
@@ -371,7 +379,7 @@
     <footer class="bg-brand-900 text-brand-300 pt-16 pb-8">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid md:grid-cols-4 gap-8 mb-12">
-                <div><a href="index.html" class="flex items-center gap-2 text-white mb-4"><span class="text-2xl">♟️</span><span class="font-serif text-lg font-bold">Ajedrez Integral</span></a><p class="text-sm text-brand-300">Plataforma educativa de ajedrez para escuelas, colegios y familias. Aprende, practica y compite.</p></div>
+                <div><a href="index.html" class="flex items-center gap-2 text-white mb-4"><img src="/img/logo-marca.png" alt="" width="78" height="48" class="h-9 w-auto shrink-0"><span class="font-serif text-lg font-bold">Ajedrez Integral</span></a><p class="text-sm text-brand-300">Plataforma educativa de ajedrez para escuelas, colegios y familias. Aprende, practica y compite.</p></div>
                 <div><h3 class="text-white font-semibold mb-4">Navegación</h3><ul class="space-y-2 text-sm"><li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li><li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li><li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li><li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li><li><a href="clases.html" class="hover:text-accent-400 transition-colors">Academia</a></li><li><a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a></li><li><a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a></li><li><a href="torneos-en-vivo.html" class="hover:text-accent-400 transition-colors">Torneos</a></li></ul></div>
                 <div><h3 class="text-white font-semibold mb-4">Recursos</h3><ul class="space-y-2 text-sm"><li><a href="entreno/diagnostico.html" class="hover:text-accent-400 transition-colors">Diagnóstico de nivel gratis</a></li><li><a href="bot.html" class="hover:text-accent-400 transition-colors">Jugar contra el bot</a></li><li><a href="sobre-oscar.html" class="hover:text-accent-400 transition-colors">Sobre Oscar</a></li><li><a href="inscripcion.html" class="hover:text-accent-400 transition-colors">Torneos en línea</a></li></ul></div>
                 <div><h3 class="text-white font-semibold mb-4">Contacto</h3><ul class="space-y-2 text-sm"><li><a href="mailto:info@ajedrez-integral.com" class="hover:text-accent-400 transition-colors">info@ajedrez-integral.com</a></li><li><a href="https://wa.me/50683092291" target="_blank" rel="noopener" class="hover:text-accent-400 transition-colors">+506 8309-2291 (WhatsApp)</a></li><li>Clases en línea desde Costa Rica</li></ul></div>
@@ -386,5 +394,6 @@
     <script defer src="js/coordenadas-tablero.js"></script>
     <script defer src="js/tablero-board.js"></script>
     <script defer src="js/main.js"></script>
+    <script defer src="js/cifras-portada.js"></script>
 </body>
 </html>

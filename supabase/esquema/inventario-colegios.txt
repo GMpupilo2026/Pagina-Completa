@@ -78,6 +78,7 @@ columna  inscripciones_export.tipo_centro  text
 columna  inscripciones_export.usuario  text
 columna  inscripciones_export.zona  text
 vista  inscripciones_export
+funcion  cifras_torneos()
 funcion  quitar_tildes(input text)
 politica  Coles  Enable read access for all users  SELECT
 indice  chess_leads  chess_leads_pkey

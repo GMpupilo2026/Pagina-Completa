@@ -1119,3 +1119,30 @@ toda la razón de que esta página esté armada distinto al resto del sitio.
 - **Si algún día hay que cambiar quién puede ver esto**, se cambia
   `soy_coordinador()` en la Academia y se cambia solo; la función no tiene
   ninguna regla propia que actualizar.
+
+## Las cifras de la portada
+
+Las cuatro cifras de `index.html` (estudiantes, escuelas y colegios, provincias
+y cantones) salen de las inscripciones reales a los torneos en línea. Antes eran
+números escritos a mano («+500 estudiantes», «+120 artículos» cuando había 7) y
+no los respaldaba nada.
+
+- **La tabla sigue cerrada.** Las trae `public.cifras_torneos()`, en la base de
+  Colegios, que es `SECURITY DEFINER` y **devuelve cuatro números y nada más**:
+  ni una fila, ni un nombre, ni cuántos hay por colegio. Por eso, y solo por
+  eso, se le dio execute a `anon`: la portada se abre sin cuenta, con la clave
+  pública de ese proyecto. Comprobado impersonando `anon` en SQL: la función
+  contesta y `select … from inscripciones` sigue dando error de permisos.
+- **Las personas se cuentan por cédula** (solo los dígitos), no por fila:
+  quien se inscribe dos veces es un estudiante. Centros, provincias y cantones,
+  sin distinguir mayúsculas ni espacios de más.
+- **Se actualizan solas**: `js/cifras-portada.js` las pide en cada visita, así
+  que un inscrito nuevo aparece en la siguiente carga. No hay Realtime a
+  propósito: suscribirse exigiría que `anon` pudiera leer la tabla.
+- **El HTML trae escritas las del día en que se armó la sección.** Si la
+  consulta falla (sin conexión, la base caída), quedan esas, que siguen siendo
+  ciertas porque las inscripciones no bajan. Un cero o una respuesta rara no
+  pisa la cifra escrita.
+- `verificar-cifras-portada.js` lo comprueba con la base doblada: que las
+  cifras se reemplacen, que con la consulta caída queden las del HTML y que la
+  llamada vaya a la función y no a la tabla.
