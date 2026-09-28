@@ -379,6 +379,42 @@ verdad: contra el código de antes saltan **16 comprobaciones**.
   de a8 a h1 y chess.js de a1 a h8, así que un `JSON.stringify` a secas falla por
   el orden de las claves y no por la posición.
 
+### Siete rondas
+
+Se pidió revisar si un torneo ya se puede jugar **hasta 7 rondas**. Se puede, y
+se podía: la base no pone tope (`total_rounds` es un entero suelto) y el campo
+del Suizo acepta de 1 a 20. Pero la prueba de un torneo entero de 7 rondas sacó
+dos cosas que con 3 rondas no se notaban, y las dos estaban en el motor
+(`js/torneo-engine.js`), no en la página:
+
+- **El Suizo repetía rivales que se podían evitar.** Era voraz: al primero sin
+  pareja le daba el primero de abajo con quien no hubiera jugado, sin volver
+  atrás, y eso podía dejar a los últimos sin nadie nuevo. Con 7 rondas y 16
+  jugadores había casi dos cruces repetidos por torneo; en la página, con 10,
+  una pareja se enfrentó **tres veces**. Ahora busca con retroceso y solo
+  repite rival si ningún emparejamiento lo evita, y los menos posibles. El
+  bye también entra en la búsqueda: si con el candidato natural los demás no se
+  pueden emparejar sin repetir, se prueba con el siguiente (nunca uno que ya
+  tuvo bye mientras haya otro). Tiene tope de pasos, y con 200 jugadores las 7
+  rondas se arman en milisegundos.
+- **Los colores no se repartían.** En el Suizo llevaba blancas siempre el de
+  más arriba: el puntero podía jugar las 7 con blancas. En todos contra todos
+  la regla `(ronda + tablero) % 2` parecía pareja y no lo era: con 8, uno jugaba
+  las 7 con blancas y otro 6 de 7 con negras. El Suizo ahora cuida que nadie
+  pase de 2 de diferencia ni juegue 3 seguidas con el mismo color, **después**
+  de no repetir rival (el mismo orden del reglamento FIDE: en 1280 torneos
+  simulados pasa una vez, en la última ronda). Todos contra todos usa las
+  **tablas de Berger**, las de FIDE: una de diferencia como mucho y nunca tres
+  seguidas.
+
+Lo comprueba `node herramientas/verificar-torneo-rondas.js`: el motor solo, con
+7 rondas y de 2 a 128 jugadores (Suizo, todos contra todos de 7 y 8, eliminación
+de 65 a 128, que pide 7), y la página de punta a punta —un Suizo de 10 con 7
+rondas escritas en el campo y un todos contra todos de 8— hasta cerrar el
+torneo con su campeón, sin ofrecer una ronda 8. Para recargar entre ronda y
+ronda, el doble guarda lo escrito en `sessionStorage`. Contra el motor de antes
+saltan **8 comprobaciones**.
+
 ### El verificador de voseo no miraba la mitad del sitio
 
 Se descubrió acá, de rebote: `torneo.html` decía «Vuelve a Torneos y **entrá**
