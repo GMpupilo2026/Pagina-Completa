@@ -153,6 +153,10 @@ window.__deletes = [];
     ],
   };
   for (const t of Object.keys(SEMILLA)) TABLAS[t] = SEMILLA[t].slice();
+  TABLAS.preguntas_clave = TABLAS.preguntas_clave || [];
+  // Para que una prueba cambie la base «desde otra pantalla» (el profe muestra
+  // los resultados) y después avise con __cambioEnBase, como haría Realtime.
+  window.__tablas = TABLAS;
 
   // El canal de presencia se puede empujar desde la prueba: __entraAlumno()
   // hace lo que haría Realtime cuando alguien se conecta a la clase.
@@ -246,6 +250,36 @@ window.__deletes = [];
       /* Lo que hizo cada alumno en una clase, contado de las MISMAS tablas
          como en la base: sin trigger en el doble, las preguntas y prácticas
          sembradas traen su class_session_id. */
+      /* Las preguntas de opciones, como en la base: la pregunta en questions y
+         la correcta aparte (preguntas_clave), que el alumno no lee. */
+      if (n === "hacer_pregunta_de_opciones") {
+        TABLAS.questions.forEach((q) => { if (q.created_by === ${JSON.stringify(quien)} && !q.closed_at) q.closed_at = new Date().toISOString(); });
+        const q = { id: "qo-" + (TABLAS.questions.length + 1), fen: args.p_fen, prompt: args.p_prompt, created_by: ${JSON.stringify(quien)},
+          expected_plies: 1, tipo: "opciones", opciones: args.p_opciones, tiempo_limite: args.p_tiempo_limite,
+          resultados_visibles: false, created_at: new Date().toISOString(), closed_at: null };
+        TABLAS.questions.push(q);
+        if (args.p_correcta !== null && args.p_correcta !== undefined) TABLAS.preguntas_clave.push({ question_id: q.id, correcta: args.p_correcta });
+        return constructor(n, [q]);
+      }
+      /* Lo que contestó el grupo, sin nombres: quien la hizo lo ve siempre; los
+         alumnos, solo con resultados_visibles. */
+      if (n === "resultados_de_la_pregunta") {
+        const q = TABLAS.questions.find((x) => x.id === args.p_pregunta);
+        if (!q || !(q.created_by === ${JSON.stringify(quien)} || q.resultados_visibles)) return constructor(n, []);
+        const resp = TABLAS.question_answers.filter((a) => a.question_id === q.id);
+        const clave = (TABLAS.preguntas_clave.find((k) => k.question_id === q.id) || {}).correcta;
+        let filas;
+        if (q.tipo === "opciones") {
+          filas = q.opciones.map((_, i) => ({ respuesta: String(i), cuantos: resp.filter((a) => a.opcion === i).length,
+            es_correcta: clave === undefined ? null : clave === i }));
+        } else {
+          const cuenta = {};
+          resp.forEach((a) => { const m = (a.moves || [])[0]; if (m) cuenta[m] = (cuenta[m] || 0) + 1; });
+          filas = Object.keys(cuenta).map((k) => ({ respuesta: k, cuantos: cuenta[k], es_correcta: null }))
+            .sort((a, b) => b.cuantos - a.cuantos || a.respuesta.localeCompare(b.respuesta));
+        }
+        return constructor(n, filas);
+      }
       if (n === "resumen_de_la_clase") {
         const pq = TABLAS.questions.filter((q) => q.class_session_id === args.p_clase).map((q) => q.id);
         const ps = TABLAS.practice_sessions.filter((q) => q.class_session_id === args.p_clase).map((q) => q.id);

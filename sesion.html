@@ -399,10 +399,17 @@
                             <p id="question-color-hint" class="text-sm font-semibold text-brand-700 dark:text-brand-200 mb-1"></p>
                             <p id="question-plies-hint" class="text-xs text-brand-500 dark:text-brand-300 mb-1"></p>
                             <p id="question-status-text" role="status" class="text-xs text-brand-450 dark:text-brand-350 mb-3">Mueve las piezas que jugarías.</p>
-                            <div class="flex justify-center">
+                            <!-- La cuenta regresiva: el texto cambia cada segundo, así que NO es una región
+                                 viva (el lector lo leería sin parar). Lo que se dice en voz va aparte, a los
+                                 10 segundos y al terminar. -->
+                            <p id="question-tiempo-alumno" hidden class="text-sm font-bold text-brand-800 dark:text-white mb-2"></p>
+                            <p id="question-tiempo-aviso" class="sr-only" aria-live="assertive"></p>
+                            <div id="question-opciones" hidden class="grid gap-2 mb-3" role="group" aria-label="Opciones para contestar"></div>
+                            <div id="question-board-caja" class="flex justify-center">
                                 <div id="question-board" class="grid grid-cols-8 grid-rows-[repeat(8,minmax(0,1fr))] w-full max-w-[min(92vw,560px)] aspect-square rounded-lg overflow-hidden shadow-lg border-4 border-brand-700 select-none"></div>
                             </div>
                             <div id="question-cmd" class="text-left"></div>
+                            <div id="question-resultados-alumno" hidden class="mt-3 rounded-lg bg-brand-50 dark:bg-brand-800/50 px-3 py-2 text-sm text-left text-brand-700 dark:text-brand-200" aria-live="polite"></div>
                             <div class="flex justify-center gap-2 mt-3">
                                 <button id="question-undo-btn" class="hidden text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors">↶ Deshacer</button>
                                 <button id="question-retry-engine-btn" class="hidden text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors">🔁 Pedir jugada del motor</button>
@@ -616,15 +623,52 @@
                             <label for="question-plies-input" class="text-xs text-brand-500 dark:text-brand-300">Jugadas del estudiante:</label>
                             <input id="question-plies-input" type="number" min="1" max="6" value="1" class="w-16 text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500">
                         </div>
-                        <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">Ej.: con 2, el alumno mueve, el motor responde, y el alumno mueve una vez más — así hasta completar sus jugadas.</p>
+                        <p class="text-xs text-brand-450 dark:text-brand-350 mb-2">Ej.: con 2, el alumno mueve, el motor responde, y el alumno mueve una vez más — así hasta completar sus jugadas.</p>
+                        <!-- Vale para todas las preguntas que se abran desde esta página (también las de
+                             Táctica, el plan y los archivos): el plazo lo cobra la base, no esta pantalla. -->
+                        <div class="flex items-center gap-2 mb-3">
+                            <label for="question-tiempo" class="text-xs text-brand-500 dark:text-brand-300">Tiempo para contestar:</label>
+                            <select id="question-tiempo" class="text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500"></select>
+                        </div>
                         <button id="ask-question-btn" class="w-full bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2 rounded-lg text-sm transition-colors mb-3">❓ Preguntar: ¿qué jugarías?</button>
+                        <details id="otras-preguntas" class="mb-3 rounded-lg border border-brand-100 dark:border-brand-800">
+                            <summary class="cursor-pointer px-3 py-2 text-xs font-semibold text-brand-700 dark:text-brand-200">Otras preguntas: quién está mejor, con opciones, ¿lo entendiste?</summary>
+                            <div class="px-3 pb-3 space-y-3">
+                                <div>
+                                    <label for="quien-mejor-correcta" class="block text-xs text-brand-500 dark:text-brand-300 mb-1">Respuesta correcta de «¿quién está mejor?»</label>
+                                    <select id="quien-mejor-correcta" class="w-full text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500 mb-1.5">
+                                        <option value="">Sin respuesta correcta</option>
+                                        <option value="0">Mejor las blancas</option>
+                                        <option value="1">Están iguales</option>
+                                        <option value="2">Mejor las negras</option>
+                                    </select>
+                                    <button id="ask-quien-mejor-btn" type="button" class="w-full text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors"><span aria-hidden="true">⚖️ </span>Preguntar: ¿quién está mejor?</button>
+                                </div>
+                                <fieldset class="border-t border-brand-100 dark:border-brand-800 pt-2">
+                                    <legend class="text-xs font-semibold text-brand-700 dark:text-brand-200">Una pregunta con tus opciones</legend>
+                                    <label for="opciones-prompt" class="sr-only">La pregunta</label>
+                                    <input id="opciones-prompt" type="text" maxlength="200" placeholder="Ej. ¿Cuál es el plan de las blancas?" class="w-full text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500 mt-1 mb-1.5">
+                                    <div id="opciones-filas" class="space-y-1"></div>
+                                    <p class="text-xs text-brand-450 dark:text-brand-350 mt-1">Escribe al menos dos. Marca la correcta si la hay: entonces la plataforma califica sola.</p>
+                                    <button id="ask-opciones-btn" type="button" class="w-full mt-1.5 text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors"><span aria-hidden="true">✍️ </span>Preguntar con estas opciones</button>
+                                </fieldset>
+                                <div class="border-t border-brand-100 dark:border-brand-800 pt-2">
+                                    <button id="ask-termometro-btn" type="button" class="w-full text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors"><span aria-hidden="true">🌡️ </span>Preguntar: ¿lo entendiste?</button>
+                                    <p class="text-xs text-brand-450 dark:text-brand-350 mt-1">Para saber si seguir o repetir. No tiene respuesta correcta y la clase no ve quién contestó qué.</p>
+                                </div>
+                            </div>
+                        </details>
                         <div id="active-question" class="hidden">
                             <div class="flex items-center justify-between mb-2">
-                                <p class="text-xs text-brand-500 dark:text-brand-300">Pregunta activa</p>
+                                <p class="text-xs text-brand-500 dark:text-brand-300">Pregunta activa <span id="question-tiempo-profe" class="font-semibold text-brand-700 dark:text-brand-200"></span></p>
                                 <button id="close-question-btn" class="text-xs font-semibold text-red-600 dark:text-red-400 hover:underline">Cerrar pregunta</button>
                             </div>
                             <p id="engine-reference-answer" class="text-xs text-brand-450 dark:text-brand-350 mb-1 italic">Calculando la mejor respuesta del motor…</p>
                             <button id="engine-reference-retry-btn" type="button" class="hidden text-xs font-semibold text-accent-700 dark:text-accent-400 hover:underline mb-2">🔁 Reintentar cálculo del motor</button>
+                            <!-- Lo que contestó el grupo, sin nombres (resultados_de_la_pregunta). El botón se
+                                 lo muestra a la clase: ven lo mismo, sin saber quién eligió qué. -->
+                            <div id="question-resultados-profe" class="mb-2 rounded-lg bg-brand-50 dark:bg-brand-800/50 px-3 py-2 text-xs text-brand-700 dark:text-brand-200"></div>
+                            <button id="mostrar-resultados-btn" type="button" aria-pressed="false" class="w-full mb-3 text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors"></button>
                             <ul id="answers-list" class="space-y-1.5 text-sm">
                                 <li class="text-brand-450 dark:text-brand-350">Todavía nadie respondió…</li>
                             </ul>
@@ -808,6 +852,7 @@
     <script src="js/posicion-valida.js"></script>
     <script src="js/pgn-clase.js"></script>
     <script src="js/resumen-clase.js"></script>
+    <script src="js/pregunta-clase.js"></script>
     <script src="js/plan-clase.js"></script>
     <script src="js/notas-alumno.js"></script>
     <script src="js/trofeos.js"></script>

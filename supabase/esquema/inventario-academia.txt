@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20260928225348
+# al-dia-con: 20260928231046
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -61,6 +61,7 @@ tabla  planes_cobro  rls=true
 tabla  platform_activity_log  rls=true
 tabla  practice_games  rls=true
 tabla  practice_sessions  rls=true
+tabla  preguntas_clave  rls=true
 tabla  preparacion_rivales_profesores  rls=true
 tabla  preparaciones_rival  rls=true
 tabla  profesor_videollamada  rls=true
@@ -608,6 +609,8 @@ columna  practice_sessions.ended_at  timestamp with time zone
 columna  practice_sessions.fen  text
 columna  practice_sessions.id  uuid
 columna  practice_sessions.level  text
+columna  preguntas_clave.correcta  integer
+columna  preguntas_clave.question_id  uuid
 columna  preparacion_rivales_profesores.activado_por  uuid
 columna  preparacion_rivales_profesores.created_at  timestamp with time zone
 columna  preparacion_rivales_profesores.profesor_id  uuid
@@ -676,6 +679,7 @@ columna  question_answers.created_at  timestamp with time zone
 columna  question_answers.id  uuid
 columna  question_answers.is_correct  boolean
 columna  question_answers.moves  jsonb
+columna  question_answers.opcion  integer
 columna  question_answers.question_id  uuid
 columna  question_answers.resulting_fen  text
 columna  question_answers.student_id  uuid
@@ -690,7 +694,11 @@ columna  questions.created_by  uuid
 columna  questions.expected_plies  integer
 columna  questions.fen  text
 columna  questions.id  uuid
+columna  questions.opciones  jsonb
 columna  questions.prompt  text
+columna  questions.resultados_visibles  boolean
+columna  questions.tiempo_limite  integer
+columna  questions.tipo  text
 columna  quiniela_participantes.correo  text
 columna  quiniela_participantes.created_at  timestamp with time zone
 columna  quiniela_participantes.id  uuid
@@ -985,6 +993,7 @@ funcion  grupo_para_academia(p_grupo text)  definer  anon=false  auth=true
 funcion  grupos_de_mis_alumnos()  invoker  anon=false  auth=true
 funcion  guardar_clase_presencial(p_titulo text, p_inicio timestamp with time zone, p_minutos integer, p_notas text, p_alumnos uuid[], p_id uuid, p_tarde jsonb)  invoker  anon=false  auth=true
 funcion  guardar_informe_mensual(p_periodo date, p_resumen text, p_logros text, p_dificultades text, p_proximo text, p_enviar boolean)  definer  anon=false  auth=true
+funcion  hacer_pregunta_de_opciones(p_fen text, p_prompt text, p_opciones jsonb, p_correcta integer, p_tiempo_limite integer)  invoker  anon=false  auth=true
 funcion  handle_new_user()  definer  anon=false  auth=false
 funcion  hora_servidor_ms()  invoker  anon=false  auth=true
 funcion  ia_disponible()  definer  anon=false  auth=true
@@ -1090,7 +1099,9 @@ funcion  responder_encuesta_curso(p_slug text, p_respuestas jsonb, p_version_pri
 funcion  responder_encuesta_profesor(p_profesor uuid, p_explica integer, p_aprende integer, p_claridad integer, p_creatividad integer, p_resuelve integer, p_contento integer, p_seguir text, p_comentario text)  definer  anon=false  auth=true
 funcion  responder_examen(p_item uuid, p_respuesta jsonb, p_segundos integer)  definer  anon=false  auth=true
 funcion  responder_formulario(p_slug text, p_respuestas jsonb, p_version_privacidad text)  definer  anon=true  auth=true
+funcion  respuesta_calificar_y_plazo()  definer  anon=false  auth=false
 funcion  respuestas_satisfaccion(p_desde date, p_hasta date, p_profesor uuid, p_solo_se_van boolean)  invoker  anon=false  auth=true
+funcion  resultados_de_la_pregunta(p_pregunta uuid)  definer  anon=false  auth=true
 funcion  resumen_de_la_clase(p_clase uuid)  invoker  anon=false  auth=true
 funcion  resumen_encuesta_curso(p_encuesta uuid)  invoker  anon=false  auth=true
 funcion  resumen_profesores_supervisados(p_periodo date)  definer  anon=false  auth=true
@@ -1283,6 +1294,7 @@ politica  practice_sessions  practice_sessions_exige_acceso_sel  SELECT  restric
 politica  practice_sessions  practice_sessions_insert  INSERT
 politica  practice_sessions  practice_sessions_select  SELECT
 politica  practice_sessions  practice_sessions_update  UPDATE
+politica  preguntas_clave  preguntas_clave_de_quien_pregunta  ALL
 politica  preparacion_rivales_profesores  preparacion_rivales_profesores_ver  SELECT
 politica  preparaciones_rival  preparaciones_rival_borrar  DELETE
 politica  preparaciones_rival  preparaciones_rival_guardar  INSERT
@@ -1421,6 +1433,7 @@ trigger  profile_teachers  profile_teachers_sincroniza_principal
 trigger  profile_teachers  profile_teachers_suma_a_la_academia
 trigger  profiles  protect_profiles_identity_columns_trigger
 trigger  question_answers  protect_answer_grading_trigger
+trigger  question_answers  respuesta_calificar_y_plazo_trigger
 trigger  questions  questions_ligar_a_la_clase
 trigger  salas_torneo  salas_torneo_sello
 trigger  tarea_items  proteger_tarea_items_alumno
@@ -1596,6 +1609,7 @@ indice  practice_games  practice_games_student_id_fk
 indice  practice_sessions  practice_sessions_class_session_idx
 indice  practice_sessions  practice_sessions_created_by_fk
 indice  practice_sessions  practice_sessions_pkey
+indice  preguntas_clave  preguntas_clave_pkey
 indice  preparacion_rivales_profesores  preparacion_rivales_profesores_activado_por_idx
 indice  preparacion_rivales_profesores  preparacion_rivales_profesores_pkey
 indice  preparaciones_rival  preparaciones_rival_pkey
@@ -2205,6 +2219,13 @@ grant  practice_sessions  authenticated  SELECT
 grant  practice_sessions  authenticated  TRIGGER
 grant  practice_sessions  authenticated  TRUNCATE
 grant  practice_sessions  authenticated  UPDATE
+grant  preguntas_clave  authenticated  DELETE
+grant  preguntas_clave  authenticated  INSERT
+grant  preguntas_clave  authenticated  REFERENCES
+grant  preguntas_clave  authenticated  SELECT
+grant  preguntas_clave  authenticated  TRIGGER
+grant  preguntas_clave  authenticated  TRUNCATE
+grant  preguntas_clave  authenticated  UPDATE
 grant  preparacion_rivales_profesores  authenticated  SELECT
 grant  preparaciones_rival  authenticated  DELETE
 grant  preparaciones_rival  authenticated  INSERT

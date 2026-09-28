@@ -303,6 +303,62 @@ herramientas/verificar-todo.js clase-pgn`.** Prueba el armador sin navegador
 doble de `verificar-clase-registrada.js`. Está probado que falla de verdad: con
 la posición estándar de antes y sin variantes saltan dos comprobaciones.
 
+### Preguntar con tiempo, con opciones y mostrar lo que contestó la clase
+
+«¿Qué jugarías?» era la única pregunta: sin reloj, sin forma de preguntar una
+opinión («¿quién está mejor?», «¿cuál es el plan?») ni de saber si la clase
+entendió, y lo que contestaba el grupo lo veía solo el profe, alumno por alumno.
+Lo que manda está en la base (migración
+`preguntas_con_tiempo_opciones_y_resultados`), comprobado impersonando roles.
+
+- **El tiempo para contestar lo cobra la base.** `questions.tiempo_limite`
+  (10 a 900 s) y el trigger `respuesta_calificar_y_plazo` rechaza la respuesta
+  que llega después, con 5 s de gracia por la red. La cuenta regresiva de la
+  pantalla es solo el aviso: una que viviera solo ahí se salta desde la
+  consola. Al alumno se le dice en voz a los 10 s y al terminar, desde una
+  región viva aparte: el texto que cambia cada segundo no lo es, o el lector
+  lo leería sin parar.
+- **Una sola puerta crea las de «¿qué jugarías?»**: `crearPregunta()`. Había
+  cinco inserts (el botón, Táctica, el plan, los archivos y los Tipos), y el
+  tiempo elegido tenía que viajar en todos: el que se olvidara dejaría esa
+  pregunta sin reloj, sin ningún error.
+- **Las de opciones** (`tipo = 'opciones'`, de 2 a 6) sirven para «¿quién está
+  mejor?», una pregunta con opciones propias y el termómetro «¿lo entendiste?».
+  **La correcta NO va en `questions`**, que los alumnos leen: va en
+  `preguntas_clave`, que solo lee quien la hizo. Con clave, la base califica
+  sola; el termómetro no tiene clave. Se crean con
+  `hacer_pregunta_de_opciones()` (SECURITY INVOKER), en UNA transacción: con
+  dos inserts sueltos, un alumno rápido contestaría entre los dos y quedaría
+  sin calificar. Las opciones propias se renumeran si queda una vacía en medio.
+- **El termómetro no muestra tablero** y le dice al alumno que nadie ve quién
+  eligió qué: para que conteste con sinceridad.
+- **Lo que contestó el grupo, sin nombres**: `resultados_de_la_pregunta()`
+  (SECURITY DEFINER, con su permiso envuelto en `coalesce`) cuenta cuántos
+  eligieron cada opción o cada primera jugada. El profe lo ve siempre; sus
+  alumnos, solo cuando él aprieta «📊 Mostrar las respuestas a la clase»
+  (`resultados_visibles`, con `aria-pressed`). El alumno lo ve escrito
+  («Bb5: 2 alumnos (67 %)») y, en una de jugada, con una flecha por respuesta
+  en su tablero. Las barras acompañan: el dato va escrito al lado.
+- **Refrescar los resultados no le borra la jugada al alumno.** Cada respuesta
+  nueva hace que el profe «toque» la pregunta (una vez por segundo como mucho)
+  y el cambio llega por Realtime; si es la MISMA pregunta sin cerrarse, solo
+  se repintan los resultados. Volver a armar la tarjeta le reiniciaba el
+  tablero a quien iba por la mitad de una respuesta de dos jugadas.
+- **El hueco que había**: `protect_answer_grading` corre solo en UPDATE, así
+  que un alumno podía INSERTAR su respuesta ya marcada como correcta —y los
+  trofeos se cuentan de las correctas—. El trigger nuevo le quita la nota en
+  el INSERT a quien no hizo la pregunta. Corre DESPUÉS del viejo (los
+  triggers van por nombre), así que en un UPDATE aquel ya devolvió la nota de
+  antes y este la recalcula si es de opciones.
+
+**Al tocar las preguntas, correr `node herramientas/verificar-todo.js
+clase-preguntas`.** Su doble (el de `verificar-clase-registrada.js`) conoce
+`hacer_pregunta_de_opciones` y `resultados_de_la_pregunta`, y expone sus tablas
+en `window.__tablas` para que la prueba cambie la base «desde la pantalla del
+profe» y avise con `__cambioEnBase`. Está probado que falla de verdad: sin el
+tiempo en `crearPregunta` saltan dos comprobaciones, y rearmando la tarjeta en
+cada aviso salta la de «no se le borró lo que llevaba jugado».
+
 ### El modo sencillo de la clase en vivo
 
 Aun ordenada, la pantalla del profesor tiene catorce controles delante, y la
