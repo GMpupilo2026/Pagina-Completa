@@ -29,7 +29,6 @@ const GLYPH = {
   w: { p:'♙', n:'♘', b:'♗', r:'♖', q:'♕', k:'♔' },
   b: { p:'♟', n:'♞', b:'♝', r:'♜', q:'♛', k:'♚' },
 };
-const PIECE_NAME = { p:'peón', n:'caballo', b:'alfil', r:'torre', q:'dama', k:'rey' };
 // Un grupo sin icono se pinta con un punto pelado, así que al sumar uno nuevo
 // hay que sumarlo acá también: el de táctica es el mismo ⚔️ que tenía su página.
 const GROUP_ICON = { tactica:'⚔️', recommended:'🎲', phases:'⏳', motifs:'🎯', advanced:'🧠', mates:'♚', mateThemes:'👑', specialMoves:'✨', goals:'🏁', lengths:'📏', origin:'🏛️' };
@@ -249,25 +248,8 @@ function pintarSelectorDesde(){
     : '';
 }
 
-function getStreak(){
-  try{ return parseInt(localStorage.getItem('entreno_temas_streak') || '0', 10) || 0; }catch(e){ return 0; }
-}
-function getBestStreak(){
-  try{ return parseInt(localStorage.getItem('entreno_temas_best') || '0', 10) || 0; }catch(e){ return 0; }
-}
-function setStreak(n){
-  localStorage.setItem('entreno_temas_streak', String(n));
-  const best = Math.max(getBestStreak(), n);
-  localStorage.setItem('entreno_temas_best', String(best));
-  document.getElementById('streak-count').textContent = n;
-  document.getElementById('streak-best').textContent = best;
-}
-function bumpStreak(){
-  setStreak(getStreak() + 1);
-  const bar = document.getElementById('streak-bar');
-  bar.classList.remove('pulse'); void bar.offsetWidth; bar.classList.add('pulse');
-}
-function resetStreak(){ setStreak(0); }
+// La racha (js/ejercicio-tablero.js): la misma en todas las páginas de ejercicios.
+const { getStreak, getBestStreak, setStreak, bumpStreak, resetStreak } = EjercicioTablero.racha('entreno_temas');
 
 /* ---------------- Vista de temas ---------------- */
 function normalize(s){ return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); }
@@ -410,7 +392,6 @@ function updateProgressBar(){
 }
 
 /* ---------------- Tablero ---------------- */
-const FILES = ['a','b','c','d','e','f','g','h'];
 function isLightSquare(square){
   const file = square.charCodeAt(0) - 97;
   const rank = parseInt(square[1], 10) - 1;
@@ -421,39 +402,35 @@ function drawBoard(){
   refrescarComandos();
   const board = document.getElementById('board');
   board.innerHTML = '';
-  const ranks = orientation === 'w' ? [8,7,6,5,4,3,2,1] : [1,2,3,4,5,6,7,8];
-  const files = orientation === 'w' ? [0,1,2,3,4,5,6,7] : [7,6,5,4,3,2,1,0];
-  ranks.forEach((rank) => {
-    files.forEach((f) => {
-      const square = FILES[f] + rank;
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'sq ' + (isLightSquare(square) ? 'light' : 'dark');
-      btn.dataset.square = square;
-      const piece = game.get(square);
-      if(piece){
-        const span = document.createElement('span');
-        if (window.PiezaPreferida) PiezaPreferida.pintar(span, piece.type, piece.color);
-        else {
-          span.className = piece.color === 'w' ? 'piece-white' : 'piece-black';
-          span.textContent = GLYPH[piece.color][piece.type];
-        }
-        span.setAttribute('aria-hidden', 'true');
-        btn.appendChild(span);
+  // Desde el bando que juega (js/ejercicio-tablero.js, el mismo orden en Mates).
+  EjercicioTablero.casillas(orientation).forEach((square) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'sq ' + (isLightSquare(square) ? 'light' : 'dark');
+    btn.dataset.square = square;
+    const piece = game.get(square);
+    if(piece){
+      const span = document.createElement('span');
+      if (window.PiezaPreferida) PiezaPreferida.pintar(span, piece.type, piece.color);
+      else {
+        span.className = piece.color === 'w' ? 'piece-white' : 'piece-black';
+        span.textContent = GLYPH[piece.color][piece.type];
       }
-      /* Qué dice cada casilla lo escribe js/tablero-accesible.js, no esta
-         página: ahí las columnas van habladas ("eva 4", que no se confunde con
-         "bella 4" al oírlas) y los nombres de las piezas salen de la misma
-         tabla que el resto del sitio. Acá solo se declara el ESTADO, que es lo
-         único que esta página sabe y aquel no. */
-      if(square === selectedSquare){ btn.classList.add('selected'); btn.dataset.estado = 'seleccionada'; }
-      if(lastMove && (square === lastMove.from || square === lastMove.to)){
-        btn.classList.add('last');
-        btn.dataset.estado = (btn.dataset.estado ? btn.dataset.estado + ', ' : '') + 'de la última jugada';
-      }
-      btn.addEventListener('click', () => onSquareClick(square, btn));
-      board.appendChild(btn);
-    });
+      span.setAttribute('aria-hidden', 'true');
+      btn.appendChild(span);
+    }
+    /* Qué dice cada casilla lo escribe js/tablero-accesible.js, no esta
+       página: ahí las columnas van habladas ("eva 4", que no se confunde con
+       "bella 4" al oírlas) y los nombres de las piezas salen de la misma
+       tabla que el resto del sitio. Acá solo se declara el ESTADO, que es lo
+       único que esta página sabe y aquel no. */
+    if(square === selectedSquare){ btn.classList.add('selected'); btn.dataset.estado = 'seleccionada'; }
+    if(lastMove && (square === lastMove.from || square === lastMove.to)){
+      btn.classList.add('last');
+      btn.dataset.estado = (btn.dataset.estado ? btn.dataset.estado + ', ' : '') + 'de la última jugada';
+    }
+    btn.addEventListener('click', () => onSquareClick(square, btn));
+    board.appendChild(btn);
   });
   montarTeclado();
 }
@@ -596,11 +573,8 @@ function onSquareClick(square, btn){
   }
   const from = selectedSquare;
   selectedSquare = null;
-  if(candidates.length > 1 && candidates[0].flags.includes('p')){
-    askPromotion((choice) => playMove(from, square, choice));
-  } else {
-    playMove(from, square, candidates[0].promotion || undefined);
-  }
+  // En qué pieza corona: el diálogo de todo el sitio (js/coronacion.js).
+  EjercicioTablero.jugarCoronando(game, from, square, (pieza) => playMove(from, square, pieza));
 }
 
 if(typeof enableBoardDrag !== 'undefined'){
@@ -615,40 +589,21 @@ if(typeof enableBoardDrag !== 'undefined'){
   });
 }
 
-function askPromotion(callback){
-  const modal = document.getElementById('promo-modal');
-  const opts = document.getElementById('promo-opts');
-  opts.innerHTML = '';
-  const turn = game.turn();
-  ['q','r','b','n'].forEach((type) => {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'promo-btn';
-    btn.setAttribute('aria-label', PIECE_NAME[type]);
-    btn.innerHTML = window.PiezaPreferida ? PiezaPreferida.html(type, turn, { oculta: true }) : `<span class="${turn === 'w' ? 'piece-white' : 'piece-black'}" aria-hidden="true">${GLYPH[turn][type]}</span>`;
-    btn.addEventListener('click', () => { modal.style.display = 'none'; callback(type); });
-    opts.appendChild(btn);
-  });
-  modal.style.display = 'flex';
-}
-
 function playMove(from, to, promotion){
   const puzzle = currentPuzzle();
   const moveResult = game.move({ from, to, promotion: promotion || 'q' });
   if(!moveResult){ drawBoard(); return; }
 
   const expected = puzzle.solution[solutionStep];
-  if(moveResult.san !== expected){
-    // Cualquier jugada que dé mate también cuenta como correcta.
-    if(!game.in_checkmate()){
-      game.undo();
-      drawBoard();
-      missedThisPuzzle = true;
-      resetStreak();
-      flashWrong(document.querySelector('[data-square="' + to + '"]'));
-      setStatus(`${moveResult.san} es legal, pero no es la jugada de la solución.`, 'bad');
-      return;
-    }
+  // La de la solución o cualquier jugada que dé mate (js/ejercicio-tablero.js).
+  if(!EjercicioTablero.esAcierto(game, moveResult, expected)){
+    game.undo();
+    drawBoard();
+    missedThisPuzzle = true;
+    resetStreak();
+    flashWrong(document.querySelector('[data-square="' + to + '"]'));
+    setStatus(`${moveResult.san} es legal, pero no es la jugada de la solución.`, 'bad');
+    return;
   }
   lastMove = { from, to };
   drawBoard();

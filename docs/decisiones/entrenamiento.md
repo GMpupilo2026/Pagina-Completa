@@ -339,6 +339,35 @@ navegador.
 - El doble de Supabase de los verificadores de Entrenamiento es uno solo:
   `herramientas/lib/doble-entreno.js`.
 
+### Una sola copia: js/ejercicio-tablero.js
+
+Los errores de la sección anterior eran, casi todos, diferencias entre copias
+del mismo código en cinco páginas. Lo que comparten Temas, Mates, Practicar,
+Desafíos y Visualización vive ahora en `js/ejercicio-tablero.js`:
+
+- **La racha** (`EjercicioTablero.racha(prefijo)`): guarda en
+  `<prefijo>_streak` y `<prefijo>_best` y pinta `#streak-count`,
+  `#streak-best` y `#streak-bar`. Las páginas siguen llamando `getStreak()`,
+  `setStreak()`… (se sacan del módulo con una desestructuración), así que nada
+  más cambió de nombre. **Desafíos tiene ahora su propia racha**
+  (`entreno_desafios_*`, en `CLAVES`): antes escribía en la de Practicar, y
+  fallar en una cortaba la racha de la otra. Su mejor marca arranca de cero.
+- **El orden del tablero** (`casillas(orientacion)`): desde el bando que juega.
+- **Qué es un acierto** (`esAcierto(juego, jugada, esperada)`): la jugada de
+  la solución o cualquiera que dé mate. Practicar sigue comparando origen y
+  destino (sus series no guardan la jugada en notación), más el mate.
+- **La coronación** (`jugarCoronando`): el diálogo de todo el sitio,
+  `js/coronacion.js`, que dice el nombre de cada pieza. Temas, Mates y
+  Desafíos tenían cada una su propio `#promo-modal` (el de Mates sin nombres
+  para el lector de pantalla); se fueron los tres. `tablero-cabecera.py` pone
+  `coronacion.js` en toda página que cargue el módulo, y
+  `verificar-coronacion.js` comprueba que ninguna de las tres vuelva a tener un
+  diálogo propio.
+
+Lo que todavía es de cada página: dibujar el tablero (cada una marca estados
+distintos: la última jugada, la pista, el origen elegido), las pistas y el
+flujo de cada ejercicio. Unificar eso es el paso siguiente, no este.
+
 ## El plan del diagnóstico que ve el alumno
 
 `entreno/diagnostico.html` pinta el plan **entero**, las cuatro semanas con su

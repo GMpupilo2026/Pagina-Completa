@@ -173,6 +173,44 @@ async function visualizacion(browser) {
   await ctx.close();
 }
 
+async function moduloComun(browser) {
+  console.log("\n=== El módulo común de ejercicios (js/ejercicio-tablero.js) ===");
+  {
+    const { page, ctx, errores } = await abrir(browser, "/entreno/mates.html");
+    await page.waitForFunction(() => PUZZLES.mate1.length > 0, { timeout: 20000 });
+    igual("el orden del tablero: desde blancas empieza en a8, desde negras en h1",
+      await page.evaluate(() => [EjercicioTablero.casillas("w")[0], EjercicioTablero.casillas("b")[0], EjercicioTablero.casillas("b").length]),
+      ["a8", "h1", 64]);
+    // mate1-0019: el mate es fxg8=C#, una subpromoción. Se elige en el mismo
+    // diálogo de todo el sitio (js/coronacion.js), que dice el nombre de cada pieza.
+    await page.evaluate(() => {
+      currentCategory = "mate1";
+      currentIndex = PUZZLES.mate1.findIndex((p) => p.id === "mate1-0019");
+      loadPuzzle();
+    });
+    await clic(page, "f7"); await clic(page, "g8");
+    const d = page.locator("dialog.coronacion-dialogo");
+    igual("coronar abre el diálogo común", await d.isVisible(), "true");
+    await d.getByRole("button", { name: /Caballo/ }).click();
+    igual("y el caballo da el mate", await estado(page), "✅ ¡Jaque mate!");
+    sinErrores(errores, "mates, coronación");
+    await ctx.close();
+  }
+  {
+    // Desafíos tiene su propia racha: antes escribía en la de Practicar.
+    const { page, ctx, errores } = await abrir(browser, "/entreno/desafios.html");
+    await page.waitForFunction(() => SETS.length > 0, { timeout: 20000 });
+    const r = await page.evaluate(() => {
+      localStorage.setItem("entreno_practicas_streak", "9");
+      setStreak(2);
+      return [localStorage.getItem("entreno_desafios_streak"), localStorage.getItem("entreno_practicas_streak"), getStreak()];
+    });
+    igual("la racha de Desafíos no toca la de Practicar", r, ["2", "9", 2]);
+    sinErrores(errores, "desafíos, racha propia");
+    await ctx.close();
+  }
+}
+
 const SEMANAS = [1, 2, 3, 4].map((n) => ({
   titulo: `Semana ${n}`, porque: "porque sí", objetivo: `Meta ${n}`, tareas: ["una tarea"],
   recursos: [{ texto: "Temas", href: "entreno/temas.html?tema=fork" }, { texto: "malo", href: "javascript:alert(1)" }],
@@ -239,6 +277,7 @@ async function diagnostico(browser) {
     await aprender(browser);
     await visualizacion(browser);
     await diagnostico(browser);
+    await moduloComun(browser);
   } catch (e) {
     console.log("  ✗ " + (e && e.stack || e));
     fallos += 1;

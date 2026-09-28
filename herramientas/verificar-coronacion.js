@@ -50,7 +50,11 @@ function sinComentarios(s) {
 const TABLEROS = [
   "clases-board", "tablero-pregunta", "racha-tactica", "te-reto", "entreno-diagnostico",
   "entreno-aprender", "entreno-practicas", "entreno-tipos", "bot",
+  // El módulo común de ejercicios: Temas, Mates y Desafíos coronan por acá.
+  "ejercicio-tablero",
 ];
+// Los que coronan con EjercicioTablero.jugarCoronando (que llama a Coronacion.pedir).
+const POR_EL_MODULO = ["entreno-temas", "entreno-mates", "entreno-desafios"];
 
 function pruebaEstatica() {
   console.log("\n=== Ninguna jugada corona en dama sin preguntar ===");
@@ -72,6 +76,11 @@ function pruebaEstatica() {
   for (const t of TABLEROS) {
     const s = sinComentarios(fs.readFileSync(path.join(dir, t + ".js"), "utf8"));
     cierto("js/" + t + ".js pregunta con Coronacion.pedir", /Coronacion\.pedir\(/.test(s));
+  }
+  for (const t of POR_EL_MODULO) {
+    const s = sinComentarios(fs.readFileSync(path.join(dir, t + ".js"), "utf8"));
+    cierto("js/" + t + ".js corona con EjercicioTablero.jugarCoronando, sin un diálogo propio",
+      /EjercicioTablero\.jugarCoronando\(/.test(s) && !/function askPromotion/.test(s));
   }
 
   const paginas = require("child_process")

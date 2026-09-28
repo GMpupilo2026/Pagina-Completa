@@ -101,25 +101,8 @@ function firstUnsolvedIndex(nivelId){
   return idx === -1 ? 0 : idx;
 }
 
-function getStreak(){
-  try{ return parseInt(localStorage.getItem('entreno_visualizacion_streak') || '0', 10) || 0; }catch(e){ return 0; }
-}
-function getBestStreak(){
-  try{ return parseInt(localStorage.getItem('entreno_visualizacion_best') || '0', 10) || 0; }catch(e){ return 0; }
-}
-function setStreak(n){
-  localStorage.setItem('entreno_visualizacion_streak', String(n));
-  const best = Math.max(getBestStreak(), n);
-  localStorage.setItem('entreno_visualizacion_best', String(best));
-  document.getElementById('streak-count').textContent = n;
-  document.getElementById('streak-best').textContent = best;
-}
-function bumpStreak(){
-  setStreak(getStreak() + 1);
-  const bar = document.getElementById('streak-bar');
-  bar.classList.remove('pulse'); void bar.offsetWidth; bar.classList.add('pulse');
-}
-function resetStreak(){ setStreak(0); }
+// La racha (js/ejercicio-tablero.js): la misma en todas las páginas de ejercicios.
+const { getStreak, getBestStreak, setStreak, bumpStreak, resetStreak } = EjercicioTablero.racha('entreno_visualizacion');
 
 /* ---------------- Vista de niveles ---------------- */
 function buildLevels(){
@@ -361,16 +344,14 @@ function jugarEscribiendo(texto){
     return;
   }
   const expected = puzzle.solution[solutionStep];
-  if(mv.san !== expected){
-    // Cualquier jugada que dé mate también cuenta como correcta.
-    if(!game.in_checkmate()){
-      game.undo();
-      missedThisPuzzle = true;
-      resetStreak();
-      flashWrongInput();
-      setStatus(`${mv.san} es legal, pero no es la jugada de la línea. Vuelve a calcular desde donde ibas.`, 'bad');
-      return;
-    }
+  // La de la línea o cualquier jugada que dé mate (js/ejercicio-tablero.js).
+  if(!EjercicioTablero.esAcierto(game, mv, expected)){
+    game.undo();
+    missedThisPuzzle = true;
+    resetStreak();
+    flashWrongInput();
+    setStatus(`${mv.san} es legal, pero no es la jugada de la línea. Vuelve a calcular desde donde ibas.`, 'bad');
+    return;
   }
   document.getElementById('answer-input').value = '';
   logJugadaPropia(mv.san);
