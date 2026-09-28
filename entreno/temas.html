@@ -135,6 +135,9 @@
 
   .turn-banner{max-width:420px; margin:14px auto 0; text-align:center; font-size:0.95rem; color:var(--text-muted);}
   .turn-banner b{color:var(--text);}
+  .nivel-desde{max-width:420px; margin:10px auto 0; display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:8px; font-size:0.85rem; color:var(--text-muted);}
+  .nivel-desde select{background:var(--bg-panel); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:.3rem .5rem; font:inherit;}
+  .nivel-desde-pista{flex-basis:100%; text-align:center; margin:0; font-size:0.78rem;}
   .puzzle-meta{max-width:420px; margin:6px auto 0; text-align:center; font-size:0.8rem; color:var(--text-muted);}
   .puzzle-meta a{color:var(--text-muted);}
 
@@ -240,6 +243,13 @@
       </div>
       <div id="progress-label" class="progress-label"></div>
       <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+      <!-- Desde qué dificultad arranca el tema (js/entreno-temas.js, «Desde qué
+           dificultad»). Solo sale en los temas que traen rating. -->
+      <div class="nivel-desde" id="nivel-desde-caja">
+        <label for="nivel-desde">Dificultad</label>
+        <select id="nivel-desde" aria-describedby="nivel-desde-pista"></select>
+        <p id="nivel-desde-pista" class="nivel-desde-pista"></p>
+      </div>
 
       <div id="play-area">
         <p class="turn-banner" id="turn-banner"></p>

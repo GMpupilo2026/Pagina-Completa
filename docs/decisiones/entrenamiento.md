@@ -260,6 +260,45 @@ navegador, página por página.
   explica por qué y pasa a la siguiente; la lección solo se completa sin
   fallar ninguna.
 
+## Cada ejercicio a la altura del alumno
+
+`node herramientas/verificar-todo.js entreno-nivel` lo comprueba en un
+navegador. Si esto se rompe, no da ningún error: la página sigue andando, solo
+que el alumno de 1800 vuelve a empezar en los de 1000.
+
+- **Ejercicios por tema arranca cada tema cerca del nivel del alumno.** Los
+  temas de Lichess vienen ordenados por rating (ataque doble va de 1047 a
+  1978) y la página arrancaba siempre en el primero sin resolver. Ahora
+  arranca en el primero sin resolver cuyo rating llegue a «desde», que se
+  elige en un selector debajo de la barra de progreso. «Desde» sale, en este
+  orden:
+  1. `?desde=<rating>` en el enlace.
+  2. Lo que eligió el alumno (`entreno_temas_desde`, del aparato).
+  3. Su nivel **menos 300**: el Elo del último diagnóstico (el resultado
+     guardado trae `elo`) o, si no hay, el de su perfil. Se resta porque el
+     rating de un ejercicio de Lichess no es un Elo FIDE: a igual fuerza, el de
+     Lichess suele ser más alto, así que quedarse corto es lo seguro.
+  4. Desde el más fácil.
+  Los temas sin rating (táctica de la casa) no muestran el selector y no se
+  filtran.
+- **«Saltar» y el paso al siguiente van al próximo SIN resolver** a esa
+  altura. Antes avanzaban uno y caían en ejercicios ya hechos. Las tareas
+  («resuelve 10 de ataque doble») siguen dando ejercicios nuevos: solo se
+  saltan los que ya estaban resueltos.
+- **Cada ejercicio de Temas y de Mates guarda cómo salió**:
+  `EntrenoProgress.comoSalio()` pone `limpio`, `con_error` y `con_pista` en el
+  `detail` de `training_progress`. Va en el detalle y no como actividad nueva,
+  así que el CHECK de la tabla no cambia y las filas viejas siguen valiendo.
+  Es lo que falta para medir la precisión por tema, que antes no se podía:
+  solo quedaba «resuelto».
+- **La Racha táctica sube la dificultad con la racha.** Antes sorteaba entre
+  los 4446 ejercicios (de 399 a 1791) sin mirar el rating: a uno le tocaba un
+  1791 de entrada y a otro un 399 en el trigésimo, con el mismo reloj, y el
+  récord del grupo comparaba rachas que no se parecían. Ahora el ejercicio
+  número n se sortea cerca de `500 + 60 × n` (la ventana se abre si arriba
+  quedan pocos), y dentro de una racha no se repite ninguno. Los récords
+  guardados antes de este cambio son de la racha al azar.
+
 ## El plan del diagnóstico que ve el alumno
 
 `entreno/diagnostico.html` pinta el plan **entero**, las cuatro semanas con su

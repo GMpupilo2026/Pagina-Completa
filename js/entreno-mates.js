@@ -470,7 +470,8 @@ function finishPuzzle(){
   setStatus('✅ ¡Jaque mate!', 'ok');
   if(!alreadySolved){
     markSolved(puzzle.id);
-    EntrenoProgress.log('mates', { puzzle_id: puzzle.id, category: puzzle.category });
+    EntrenoProgress.log('mates', { puzzle_id: puzzle.id, category: puzzle.category,
+      ...EntrenoProgress.comoSalio(missedThisPuzzle, usedHintThisPuzzle) });
   }
   updateProgressBar();
   buildTabs();
