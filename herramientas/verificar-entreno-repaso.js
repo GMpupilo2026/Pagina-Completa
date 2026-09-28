@@ -9,9 +9,10 @@
      registrar el ejercicio en training_progress (ya contó la primera vez).
    - Tres repasos limpios seguidos lo sacan de la cola, con una marca y no un
      borrado (la cola se funde entre aparatos sumando fichas).
-   - El hub dice qué toca hoy: repasos de Temas, líneas de Aperturas vencidas
-     (no las nuevas) y el diagnóstico si falta o tiene más de cuatro semanas.
-     Sin nada pendiente, el bloque no sale.
+   - El hub dice qué toca hoy: la semana del plan del diagnóstico (primero,
+     con a dónde ir y cuánto lleva ahí), repasos de Temas, líneas de Aperturas
+     vencidas (no las nuevas) y el diagnóstico si falta o tiene más de cuatro
+     semanas. Sin nada pendiente, el bloque no sale.
 
    Nada de esto da un error si se rompe: el ejercicio fallado simplemente no
    vuelve nunca, que es lo que pasaba antes.
@@ -166,6 +167,57 @@ async function hub(browser) {
     await page.waitForFunction(() => document.querySelectorAll("#hoy-lista a").length > 0, { timeout: 10000 });
     igual("con un diagnóstico de hace 40 días, pide repetirlo",
       await page.evaluate(() => document.querySelector("#hoy-lista a").textContent.includes("Repetir el diagnóstico")), "true");
+    await ctx.close();
+  }
+  /* La semana del plan. El diagnóstico se guarda como lo deja
+     entreno/diagnostico.html ({ fecha, detalle: { areas, fecha } }), y lo
+     esperado se lee de PlanEntrenamiento, no se escribe a mano. */
+  {
+    const g = { window: {} };
+    new Function("window", require("fs").readFileSync(require("path").join(__dirname, "..", "js", "plan-entrenamiento.js"), "utf8"))(g.window);
+    const PE = g.window.PlanEntrenamiento;
+    const areas = {};
+    PE.AREAS.forEach((a) => { areas[a.id] = { peso: 100, logrado: a.id === "tactica" ? 20 : 95, aciertos: 0, total: 7, nosabe: 0 }; });
+    const hace = (dias) => new Date(Date.now() - dias * 86400000).toISOString();
+    const guardado = (fecha) => JSON.stringify({ fecha, detalle: { fecha, areas, perfil: {} } });
+    const plan = PE.generarPlan(PE.resumir({ fecha: hace(2), areas, perfil: {} }));
+    const recurso = PE.recursoPrincipal(plan.semanas[0]);
+
+    let { page, ctx, errores } = await abrir(browser, "/entreno/index.html",
+      { "rpc:avance_del_plan": [{ clave: PE.claveDeAvance(recurso.href), hechos: 3 }] },
+      Object.assign({}, local, { diagnostico_resultado_v1: guardado(hace(2)) }));
+    await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
+    await page.waitForFunction(() => document.querySelectorAll("#hoy-lista a").length > 0, { timeout: 10000 });
+    let items = await page.evaluate(() => Array.from(document.querySelectorAll("#hoy-lista a")).map((a) => [a.textContent.replace("→", "").trim(), a.getAttribute("href")]));
+    igual("el plan va primero, con su semana, a dónde ir y cuánto lleva", items[0],
+      [`📅Tu plan, semana 1 de ${plan.semanas.length} · Táctica: ${recurso.texto} (✓ 3 hechos)`, "../" + recurso.href]);
+    igual("y sigue sin pasar de tres cosas", items.length, "3");
+    sinErrores(errores, "hub con plan");
+    await ctx.close();
+
+    // La última semana manda a repetir el diagnóstico: sin «✓ 1 hecho», que
+    // contaría el mismo diagnóstico del que salió el plan.
+    const ultima = plan.semanas.length;
+    ({ page, ctx } = await abrir(browser, "/entreno/index.html",
+      { "rpc:avance_del_plan": [{ clave: "actividad:diagnostico", hechos: 1 }] },
+      { diagnostico_resultado_v1: guardado(hace(7 * (ultima - 1) + 1)) }));
+    await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
+    await page.waitForFunction(() => document.querySelectorAll("#hoy-lista a").length > 0, { timeout: 10000 });
+    items = await page.evaluate(() => Array.from(document.querySelectorAll("#hoy-lista a")).map((a) => a.textContent.replace("→", "").trim()));
+    igual("la última semana pide repetir el diagnóstico, sin contar el que ya hizo",
+      items[0], `📅Tu plan, semana ${ultima} de ${ultima} · Juntar todo y volver a medir: Repetir el diagnóstico`);
+    await ctx.close();
+
+    // El plan que compartió el profesor manda sobre el recalculado.
+    ({ page, ctx } = await abrir(browser, "/entreno/index.html",
+      { training_plans: [{ student_id: "u-ana", shared: true, nota: "", plan: { diagnostico_fecha: hace(2), generado: { semanas: [
+        { titulo: "Semana 1 · 👑 Mates", recursos: [{ texto: "Mates en uno", href: "entreno/mates.html?cat=mate1" }] }] } } }] },
+      { diagnostico_resultado_v1: guardado(hace(2)) }));
+    await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
+    await page.waitForFunction(() => document.querySelectorAll("#hoy-lista a").length > 0, { timeout: 10000 });
+    items = await page.evaluate(() => Array.from(document.querySelectorAll("#hoy-lista a")).map((a) => [a.textContent.replace("→", "").trim(), a.getAttribute("href")]));
+    igual("con el plan del profe, sale el suyo", items[0],
+      ["📅Tu plan, semana 1 de 1 · Mates: Mates en uno (todavía nada)", "../entreno/mates.html?cat=mate1"]);
     await ctx.close();
   }
   {
