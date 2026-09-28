@@ -43,12 +43,23 @@
 
   // Ruta relativa a ESTE archivo (no a la página): así el motor también funciona desde
   // páginas en subcarpetas (cursos/los-100-finales.html) y no sólo desde la raíz.
+  //
+  // Qué motor: Stockfish 16 en todo el sitio. Una página puede pedir otro de
+  // js/vendor/stockfish/ con data-motor en su <script> (preparacion-rivales.html
+  // pide Stockfish 19 lite). No se cambia para todos a la vez: el nivel del bot
+  // «Juega contra mí» (OSCAR_ELO_CALIB) está calibrado con el 16, y otro motor
+  // le movería la fuerza sin que nadie se entere. Ver «La preparación de
+  // rivales» en docs/decisiones/paneles.md.
+  const MOTOR_POR_DEFECTO = "stockfish-nnue-16-single.js";
   const STOCKFISH_URL = (function () {
+    let motor = MOTOR_POR_DEFECTO;
     try {
+      const pedido = document.currentScript && document.currentScript.dataset.motor;
+      if (pedido && /^stockfish-[a-z0-9.-]+\.js$/.test(pedido)) motor = pedido;
       const me = document.currentScript && document.currentScript.src;
-      if (me) return new URL("vendor/stockfish/stockfish-nnue-16-single.js", me).href;
+      if (me) return new URL("vendor/stockfish/" + motor, me).href;
     } catch (e) {}
-    return "js/vendor/stockfish/stockfish-nnue-16-single.js";
+    return "js/vendor/stockfish/" + motor;
   })();
 
   let engine = null;
@@ -147,5 +158,5 @@
   // Misma cifra en js/chess-bot.js, que no usa este archivo.
   const PROFUNDIDAD_MAXIMA = 40;
 
-  window.SharedEngine = { ensureEngine, runTask, setMessageHandler, discardEngine, PROFUNDIDAD_MAXIMA };
+  window.SharedEngine = { ensureEngine, runTask, setMessageHandler, discardEngine, PROFUNDIDAD_MAXIMA, URL: STOCKFISH_URL };
 })();

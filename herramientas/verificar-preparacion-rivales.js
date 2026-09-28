@@ -273,7 +273,7 @@ async function pruebaConPermiso(browser) {
   });
   cierto("Stockfish marca su 4.Dh4 (" + errorMotor + ")", /Dh4/.test(errorMotor) && /\+0,20 → −0,80/.test(errorMotor));
   cierto("y el FODA lo trae en Oportunidades", await page.evaluate(() => /suele jugar Dh4/.test(document.getElementById("resultado-cuerpo").textContent)));
-  igual("el estado dice cuánto revisó", /Listo: Stockfish 16, profundidad 14, \d+ de \d+ jugadas revisadas\./.test(await page.textContent("#motor-estado")), true);
+  igual("el estado dice cuánto revisó", /Listo: Stockfish 19 lite, profundidad 18, \d+ de \d+ jugadas revisadas\./.test(await page.textContent("#motor-estado")), true);
 
   // Guardar: va el resultado (con la revisión), no el PGN.
   await page.click("#guardar");
@@ -395,14 +395,82 @@ function pruebaCsp() {
   igual("connect-src tiene los dos", ["https://lichess.org", "https://api.chess.com"].filter((x) => !connect.includes(x)), []);
 }
 
+/* El motor de verdad: Stockfish 19 lite, solo en esta página.
+   Los archivos son los del paquete de npm `stockfish` 19.0.0 (de Nathan Rugg,
+   el que usa Chess.com), sin tocar: se comparan por su huella. Y el resto del
+   sitio sigue con Stockfish 16, porque el bot está calibrado con ese. */
+const HUELLAS_SF19 = {
+  "js/vendor/stockfish/stockfish-19-lite-single.js": "d3344124ab067fb0b90ee77873bb8e9fbf5fc01bc525fe714b0f942581e889e6",
+  "js/vendor/stockfish/stockfish-19-lite-single.wasm": "57ac2d72312aba346760e3f173f687a8c211208e97a87268436f7f0e10bb5387",
+};
+
+function pruebaArchivosDelMotor() {
+  console.log("\n=== Stockfish 19 lite: los archivos y quién lo usa ===");
+  const fs = require("fs"), path = require("path"), crypto = require("crypto");
+  const raiz = path.join(__dirname, "..");
+  for (const [f, h] of Object.entries(HUELLAS_SF19)) {
+    const ruta = path.join(raiz, f);
+    const hallada = fs.existsSync(ruta) ? crypto.createHash("sha256").update(fs.readFileSync(ruta)).digest("hex") : "no existe";
+    igual(f + " es el de npm, sin tocar", hallada, h);
+  }
+  // Solo esta página pide otro motor; las demás, el de siempre.
+  const conMotor = [];
+  (function recorrer(dir) {
+    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (["node_modules", ".git", "herramientas"].includes(e.name)) continue;
+      const p = path.join(dir, e.name);
+      if (e.isDirectory()) recorrer(p);
+      else if (e.name.endsWith(".html") && /data-motor=/.test(fs.readFileSync(p, "utf8"))) conMotor.push(path.relative(raiz, p));
+    }
+  })(raiz);
+  igual("solo preparacion-rivales.html pide otro motor", conMotor, ["preparacion-rivales.html"]);
+  const compartido = fs.readFileSync(path.join(raiz, "js/shared-engine.js"), "utf8");
+  cierto("el motor por defecto sigue siendo Stockfish 16", /MOTOR_POR_DEFECTO = "stockfish-nnue-16-single\.js"/.test(compartido));
+}
+
+// En un navegador de verdad: la página carga el 19 y contesta.
+async function pruebaMotorDeVerdad(browser) {
+  console.log("\n=== Stockfish 19 lite, corriendo en la página ===");
+  const ctx = await browser.newContext({ serviceWorkers: "block" });
+  await ctx.route("**/fonts.gstatic.com/**", (r) => r.abort());
+  await ctx.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso(true) }));
+  const page = await ctx.newPage();
+  const errores = [];
+  page.on("pageerror", (e) => errores.push(String(e)));
+  await page.goto(BASE + "/preparacion-rivales.html", { waitUntil: "networkidle" });
+  const r = await page.evaluate(async () => {
+    const motor = await SharedEngine.ensureEngine();
+    if (!motor) return { url: SharedEngine.URL, error: "no cargó" };
+    const lineas = [];
+    return new Promise((res) => {
+      const t = setTimeout(() => res({ url: SharedEngine.URL, error: "sin respuesta", lineas }), 30000);
+      SharedEngine.setMessageHandler((ev) => {
+        const l = String(ev.data);
+        lineas.push(l);
+        if (l.startsWith("bestmove")) { clearTimeout(t); res({ url: SharedEngine.URL, nombre: lineas.find((x) => x.startsWith("id name")), mejor: l.split(" ")[1] }); }
+      });
+      motor.postMessage("uci");
+      motor.postMessage("position fen r1bqkbnr/pp1ppppp/2n5/8/3Q4/2N5/PPP1PPPP/R1B1KBNR w KQkq - 1 4");
+      motor.postMessage("go depth 12");
+    });
+  });
+  igual("la página carga el motor 19 lite", String(r.url).replace(/^.*\/js\//, "js/"), "js/vendor/stockfish/stockfish-19-lite-single.js");
+  igual("y el motor se presenta como Stockfish 19", r.nombre, "id name Stockfish 19 Lite WASM");
+  cierto("y contesta una jugada legal (" + r.mejor + ")", !!A.fenDe([]) && /^[a-h][1-8][a-h][1-8][qrbn]?$/.test(String(r.mejor)));
+  igual("sin errores en la página", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+}
+
 (async () => {
   pruebaAnalisis();
   pruebaCsp();
+  pruebaArchivosDelMotor();
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
     await pruebaSinPermiso(browser);
     await pruebaConPermiso(browser);
     await pruebaDescarga(browser);
+    await pruebaMotorDeVerdad(browser);
   } finally {
     await browser.close();
   }
