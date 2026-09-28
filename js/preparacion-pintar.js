@@ -195,7 +195,7 @@
     if (r.conBlancas.plan.length) {
       b.appendChild(el("p", "text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mt-4 mb-2", "El plan"));
       b.appendChild(listaPlan(r.conBlancas.plan, 0));
-      b.appendChild(botonPgn("conBlancas", "Bajar el plan con blancas (PGN)"));
+      b.appendChild(accionesPlan("conBlancas", "con blancas"));
     } else {
       b.appendChild(el("p", "text-sm text-brand-500 dark:text-brand-300", "No hay suficientes partidas suyas con negras para recomendar algo."));
     }
@@ -216,7 +216,7 @@
     if (r.conNegras.plan.length) {
       n.appendChild(el("p", "text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mt-4 mb-2", "El plan"));
       n.appendChild(listaPlan(r.conNegras.plan, 0));
-      n.appendChild(botonPgn("conNegras", "Bajar el plan con negras (PGN)"));
+      n.appendChild(accionesPlan("conNegras", "con negras"));
     } else {
       n.appendChild(el("p", "text-sm text-brand-500 dark:text-brand-300", "No hay suficientes partidas suyas con blancas para recomendar algo."));
     }
@@ -377,13 +377,32 @@
     return b;
   }
 
-  function botonPgn(lado, texto) {
-    const b = el("button", "mt-4 px-3 py-1.5 rounded-lg text-xs font-semibold bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", texto);
+  function botonPlan(texto, dato, alTocar) {
+    const b = el("button", "px-3 py-1.5 rounded-lg text-xs font-semibold bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", texto);
     b.type = "button";
-    b.dataset.pgn = lado;
-    b.addEventListener("click", () => { if (opcionesActuales.alBajarPgn) opcionesActuales.alBajarPgn(lado); });
+    b.dataset[dato[0]] = dato[1];
+    b.addEventListener("click", () => alTocar(b));
     return b;
   }
 
-  window.PreparacionPintar = { cuerpo: pintarCuerpo, el, tabla, jugada, fecha };
+  // Lo que se hace con un plan: bajarlo, mandárselo a un alumno (con su tarea)
+  // y guardarlo en Archivos, que es de donde lo toma la clase en vivo. Cada
+  // botón aparece solo si la página dio con qué hacerlo.
+  function accionesPlan(lado, nombre) {
+    const o = opcionesActuales;
+    const fila = el("div", "mt-4 flex flex-wrap gap-2");
+    if (o.alBajarPgn) fila.appendChild(botonPlan("Bajar el plan " + nombre + " (PGN)", ["pgn", lado], () => o.alBajarPgn(lado)));
+    if (o.alMandar) fila.appendChild(botonPlan("Mandárselo a un alumno", ["mandar", lado], (b) => o.alMandar(lado, b)));
+    if (o.alArchivar) fila.appendChild(botonPlan("Guardar en Archivos (para la clase)", ["archivar", lado], (b) => o.alArchivar(lado, b)));
+    return fila;
+  }
+
+  /* Solo el plan, para la página del alumno (js/plan-rival.js): la misma lista
+     de jugadas que ve el profesor, con cada jugada abriendo el tablero. */
+  function pintarSoloPlan(nodos, opciones) {
+    opcionesActuales = opciones || {};
+    return listaPlan(nodos, 0);
+  }
+
+  window.PreparacionPintar = { cuerpo: pintarCuerpo, plan: pintarSoloPlan, el, tabla, jugada, fecha };
 })();

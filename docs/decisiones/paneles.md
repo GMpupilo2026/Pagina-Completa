@@ -1316,6 +1316,92 @@ Stockfish, y comprueba la posición, la jugada contada, la nota, la evaluación
 del doble del motor, los botones, lo escrito, las flechas, el foco al cerrar y
 que una jugada ilegal corte la línea.
 
+### Mandar el plan al alumno y a la clase: etapa 4
+
+Debajo de cada plan de «Qué jugarle» van tres botones: bajarlo en PGN,
+**«Mandárselo a un alumno»** y **«Guardar en Archivos (para la clase)»**.
+
+**Al alumno le llega SOLO EL PLAN.** El análisis entero (FODA, repertorio,
+dónde rinde menos, la revisión de Stockfish) sigue en `preparaciones_rival`, que
+el alumno no ve nunca. Lo que viaja es `planDelAlumno()`
+(`js/preparacion-lineas.js`): el árbol de jugadas de un lado, con sus números, y
+lo que dijo Stockfish **de esas jugadas** y de ninguna otra.
+
+- **Por qué una tabla aparte, `planes_rival_alumno`, y no abrirle al alumno la
+  fila del análisis:** la RLS es por fila, no por pedazo de un `jsonb`. Una
+  política que dejara al alumno leer «la parte del plan» de
+  `preparaciones_rival` le dejaría leer la fila entera. Así que el plan se
+  **copia**. Es una foto, como el acta de un examen: si el profesor vuelve a
+  analizar al rival, el alumno sigue con el plan que le mandaron.
+- **Quién ve un plan mandado:** el alumno a quien se lo mandaron, el profesor que
+  lo mandó y quien administra.
+- **Quién manda:** quien tiene la preparación activa (`puedo_preparar_rivales()`),
+  y solo a **sus** alumnos (`soy_profesor_de()`); quien administra, a cualquier
+  alumno, con el mismo alcance que ya tiene en Tareas.
+- **Nadie lo edita** (no hay política de `update`): para corregirlo se manda
+  otro. Lo borran quien lo mandó y quien administra.
+- **Mandar es UNA llamada**, `mandar_plan_rival()`, `SECURITY INVOKER`: por
+  cada alumno, el plan y su tarea (con `crear_tarea()`, la misma de
+  `tareas.html`). La tarea tiene un solo renglón `completar` que abre
+  `plan-rival.html?id=…`. Partido en dos, si la tarea fallaba quedaba un plan
+  que no le avisó nadie, o una tarea que apunta a un plan que no existe. El aviso
+  al celular sale solo, del trigger de las tareas.
+- La lista de alumnos es la de `profiles` que la RLS le deja ver al profesor,
+  con el mismo selector de subgrupos de Tareas y Exámenes
+  (`js/subgrupos-marcar.js`). **Quién es alumno de quién lo decide la base, no
+  la lista**: a una cuenta ajena, la función contesta «no es alumno tuyo».
+- Comprobado impersonando roles en SQL, 21 casos:
+  - un profesor sin la función activa no puede mandar;
+  - con ella, no puede mandar a un alumno ajeno (ni con la función ni con un
+    insert directo) ni a nombre de otro profesor;
+  - el alumno ve su plan y ningún análisis; no inserta, no borra y no edita;
+  - otro alumno no ve nada;
+  - quien administra ve todo y manda a cualquier alumno, pero no a un profesor;
+  - `anon` no lee la tabla ni ejecuta la función;
+  - un plan vacío o una fecha vencida se rechazan.
+
+**`plan-rival.html` es la página del alumno.**
+- Muestra el plan con la misma lista de jugadas del profesor
+  (`PreparacionPintar.plan()`) y el tablero de la etapa 3, que arranca en la
+  línea principal. También deja bajar el plan en PGN y trae la nota del profe.
+- Sin `?id=`, lista los planes que le mandaron.
+- Lleva `js/tarea-en-curso.js`, así que al entrar desde la tarea se ve la
+  franja con lo que falta.
+- **No carga Stockfish.** Lo que dijo el motor de cada jugada ya viene en su
+  nota, y bajar un motor de varios megas en el celular del alumno para eso no se
+  justifica.
+
+**A la clase se llega por Archivos.** «Guardar en Archivos» guarda **cada
+línea del plan como su propio PGN** en `archivos_pgn` (los mismos de
+`partidas.html`), en la carpeta «Preparación: <rival>». Así aparece sola en el
+panel 📁 Archivos de `sesion.html`, sin tocar la clase en vivo.
+- Va una fila por línea y no el plan entero porque la clase carga una partida a
+  la vez. El título de cada fila dice la línea («Con negras · 1.e4 e6 2.d4 d5
+  3.Cc3 Cf6»), y el PGN lleva las notas de cada jugada como comentarios.
+- **Guardarlo otra vez reemplaza** lo de antes, después de preguntarlo: se
+  inserta lo nuevo y DESPUÉS se borra lo viejo, así un error a medio camino no
+  deja la carpeta vacía.
+- Cada línea en PGN sale de `lineaAPgn()`, que arma un plan de una sola rama y
+  se lo pasa a `planAPgn()`. Así no hay una segunda forma de escribir el PGN.
+
+El verificador comprueba, sin navegador:
+- que lo que se manda sea solo el plan y el motor de sus jugadas, sin perder
+  ninguna;
+- que cada línea en PGN la lea chess.js y llegue a su última jugada.
+
+Y en la página:
+- los tres botones;
+- la caja de mandar: foco, solo cuentas de alumno, la fecha puesta y el aviso
+  si no hay nadie marcado;
+- la llamada única, sin nada del análisis;
+- una fila de Archivos por línea, con su PGN, su jugada final y su carpeta, y
+  que guardar otra vez reemplace;
+- la página del alumno: el plan, el tablero, la nota, el PGN, la lista y un plan
+  que no está.
+
+Comprobado que falla al colar el FODA en lo que se manda y al no borrar las
+líneas viejas.
+
 ## Las inscripciones a torneos en línea
 
 `inscripciones.html` muestra lo que llegó por `inscripcion.html`, el formulario

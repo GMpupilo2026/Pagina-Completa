@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20260928193854
+# al-dia-con: 20260928224815
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -58,6 +58,7 @@ tabla  plan_compartidos  rls=true
 tabla  plan_items  rls=true
 tabla  planes_clase  rls=true
 tabla  planes_cobro  rls=true
+tabla  planes_rival_alumno  rls=true
 tabla  platform_activity_log  rls=true
 tabla  practice_games  rls=true
 tabla  practice_sessions  rls=true
@@ -445,6 +446,7 @@ columna  game_state.active_player_color  text
 columna  game_state.active_player_id  uuid
 columna  game_state.arrows  jsonb
 columna  game_state.circles  jsonb
+columna  game_state.comentarios  jsonb
 columna  game_state.fen  text
 columna  game_state.id  integer
 columna  game_state.last_move  text
@@ -583,6 +585,14 @@ columna  planes_cobro.monto  numeric(12,2)
 columna  planes_cobro.nombre  text
 columna  planes_cobro.periodicidad  text
 columna  planes_cobro.personalizado  boolean
+columna  planes_rival_alumno.alumno_id  uuid
+columna  planes_rival_alumno.created_at  timestamp with time zone
+columna  planes_rival_alumno.id  uuid
+columna  planes_rival_alumno.lado  text
+columna  planes_rival_alumno.nota  text
+columna  planes_rival_alumno.plan  jsonb
+columna  planes_rival_alumno.profesor_id  uuid
+columna  planes_rival_alumno.rival  text
 columna  platform_activity_log.activity  text
 columna  platform_activity_log.id  uuid
 columna  platform_activity_log.joined_at  timestamp with time zone
@@ -1015,6 +1025,7 @@ funcion  interno.supervisados_por_mi()  definer  anon=false  auth=true
 funcion  interno.version_legal_valida(p text)  invoker  anon=false  auth=false
 funcion  json_seguro(p_texto text)  invoker  anon=false  auth=true
 funcion  jugadores_de_asientos(p_asientos jsonb)  invoker  anon=false  auth=true
+funcion  mandar_plan_rival(p_alumnos uuid[], p_rival text, p_lado text, p_plan jsonb, p_nota text, p_vence timestamp with time zone)  invoker  anon=false  auth=true
 funcion  marca_de_alumno(p_alumno uuid)  definer  anon=false  auth=false
 funcion  marcar_coordinador(p_profesor uuid, p_valor boolean)  definer  anon=false  auth=true
 funcion  marcar_supervisor(p_persona uuid, p_valor boolean)  definer  anon=false  auth=true
@@ -1261,6 +1272,9 @@ politica  planes_clase  planes_clase_select  SELECT
 politica  planes_clase  planes_clase_update  UPDATE
 politica  planes_cobro  planes_escribe_coordinacion  ALL
 politica  planes_cobro  planes_lee_coordinacion  SELECT
+politica  planes_rival_alumno  planes_rival_alumno_borrar  DELETE
+politica  planes_rival_alumno  planes_rival_alumno_mandar  INSERT
+politica  planes_rival_alumno  planes_rival_alumno_ver  SELECT
 politica  platform_activity_log  platform_activity_log_exige_acceso_ins  INSERT  restrictiva
 politica  platform_activity_log  platform_activity_log_exige_acceso_upd  UPDATE  restrictiva
 politica  platform_activity_log  platform_activity_log_insert_own  INSERT
@@ -1579,6 +1593,9 @@ indice  planes_clase  planes_clase_pkey
 indice  planes_clase  planes_clase_profesor_idx
 indice  planes_cobro  planes_cobro_creado_por_fk
 indice  planes_cobro  planes_cobro_pkey
+indice  planes_rival_alumno  planes_rival_alumno_alumno_idx
+indice  planes_rival_alumno  planes_rival_alumno_pkey
+indice  planes_rival_alumno  planes_rival_alumno_profesor_idx
 indice  platform_activity_log  platform_activity_log_pkey
 indice  platform_activity_log  platform_activity_log_student_idx
 indice  practice_games  practice_games_pkey
@@ -2153,6 +2170,9 @@ grant  planes_cobro  authenticated  SELECT
 grant  planes_cobro  authenticated  TRIGGER
 grant  planes_cobro  authenticated  TRUNCATE
 grant  planes_cobro  authenticated  UPDATE
+grant  planes_rival_alumno  authenticated  DELETE
+grant  planes_rival_alumno  authenticated  INSERT
+grant  planes_rival_alumno  authenticated  SELECT
 grant  platform_activity_log  anon  DELETE
 grant  platform_activity_log  anon  INSERT
 grant  platform_activity_log  anon  REFERENCES
