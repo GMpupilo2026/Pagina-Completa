@@ -21,6 +21,7 @@ async function unlock(){
   // ANTES de pintar, para seguir donde se quedó aunque sea otro dispositivo.
   await ProgresoUsuario.init();
   heredarTactica();
+  await leerNivelDeLaCuenta();
   loadDataThenStart();
 }
 
@@ -98,9 +99,108 @@ function solvedCountFor(theme){
   return idsOf(theme).filter((id) => s[id]).length;
 }
 function firstUnsolvedIndex(theme){
+  return siguienteIndice(theme, 0);
+}
+
+/* ---------------- Desde qué dificultad ----------------
+   Cada tema de Lichess viene ordenado por rating de menor a mayor (ataque
+   doble va de 1047 a 1978), y la página arrancaba siempre en el primero sin
+   resolver: un alumno de 1800 que el plan del diagnóstico mandaba a "ataque
+   doble" tenía que pasar unos sesenta ejercicios triviales antes de llegar a
+   algo que le sirviera. Ahora el tema arranca en el primero sin resolver cuyo
+   rating llegue a `nivelDesde`.
+
+   De dónde sale `nivelDesde`, en este orden:
+   1. `?desde=<rating>` en el enlace (lo que manda una tarea o el plan).
+   2. Lo que el alumno eligió en el selector (entreno_temas_desde).
+   3. Su nivel: el Elo del último diagnóstico o el que declaró en su perfil,
+      MENOS 300 — para calentar un poco por debajo y no arrancar en su techo.
+      El rating de un ejercicio de Lichess no es un Elo FIDE (a igual fuerza,
+      el de Lichess suele ser más alto), así que quedarse corto es lo seguro.
+   4. Nada: desde el más fácil, como siempre.
+   Los ejercicios SIN rating (los de táctica de la casa) no se filtran nunca. */
+const CLAVE_DESDE = 'entreno_temas_desde';
+const DESDE_OPCIONES = [0, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2200];
+let nivelDesde = 0;
+let nivelDeLaCuenta = null; // Elo del alumno, si se conoce
+
+async function leerNivelDeLaCuenta(){
+  try{
+    const r = JSON.parse(localStorage.getItem('diagnostico_resultado_v1') || 'null');
+    if(r && typeof r.elo === 'number') { nivelDeLaCuenta = r.elo; return; }
+  }catch(e){}
+  try{
+    const { data: ses } = await sb.auth.getSession();
+    const uid = ses && ses.session && ses.session.user && ses.session.user.id;
+    if(!uid) return;
+    const { data } = await sb.from('profiles').select('elo').eq('id', uid).maybeSingle();
+    if(data && typeof data.elo === 'number' && data.elo > 0) nivelDeLaCuenta = data.elo;
+  }catch(e){}
+}
+
+/* El escalón del selector que queda justo por debajo de un rating. */
+function escalonDe(rating){
+  let r = 0;
+  DESDE_OPCIONES.forEach((o) => { if(o <= rating) r = o; });
+  return r;
+}
+
+function elegirNivelDesde(){
+  const pedido = parseInt(new URLSearchParams(location.search).get('desde') || '', 10);
+  if(pedido > 0) return escalonDe(pedido);
+  let guardado = null;
+  try{ guardado = localStorage.getItem(CLAVE_DESDE); }catch(e){}
+  if(guardado !== null && !isNaN(parseInt(guardado, 10))) return escalonDe(parseInt(guardado, 10));
+  if(nivelDeLaCuenta) return escalonDe(nivelDeLaCuenta - 300);
+  return 0;
+}
+
+function temaConRating(theme){
+  return idsOf(theme).some((id) => DATA.puzzles[id] && typeof DATA.puzzles[id].rating === 'number');
+}
+
+/* El próximo ejercicio para hacer, empezando a buscar en `desde` (índice):
+   primero uno sin resolver y a la altura de nivelDesde; si ya no queda
+   ninguno de esos más adelante, se vuelve a buscar desde el principio; y si
+   todos los que llegan al nivel están resueltos, cualquiera sin resolver.
+   Antes, "Siguiente" y "Saltar" avanzaban uno y caían en ejercicios ya
+   resueltos, que no suman nada. */
+function siguienteIndice(theme, desde){
+  const ids = idsOf(theme);
   const s = getSolved();
-  const idx = idsOf(theme).findIndex((id) => !s[id]);
-  return idx === -1 ? 0 : idx;
+  const sirve = (id) => {
+    if(s[id]) return false;
+    const r = DATA.puzzles[id] && DATA.puzzles[id].rating;
+    return typeof r !== 'number' || r >= nivelDesde;
+  };
+  const buscar = (cond) => {
+    for(let i = desde; i < ids.length; i++) if(cond(ids[i])) return i;
+    for(let i = 0; i < Math.min(desde, ids.length); i++) if(cond(ids[i])) return i;
+    return -1;
+  };
+  let i = buscar(sirve);
+  if(i === -1) i = buscar((id) => !s[id]);
+  return i === -1 ? 0 : i;
+}
+
+function pintarSelectorDesde(){
+  const caja = document.getElementById('nivel-desde-caja');
+  const sel = document.getElementById('nivel-desde');
+  if(!sel.options.length){
+    DESDE_OPCIONES.forEach((o) => {
+      const op = document.createElement('option');
+      op.value = String(o);
+      op.textContent = o === 0 ? 'Desde el más fácil' : `Desde ${o}`;
+      sel.appendChild(op);
+    });
+  }
+  sel.value = String(nivelDesde);
+  // Un tema sin rating (los de táctica de la casa) no tiene nada que elegir.
+  caja.style.display = currentTheme && temaConRating(currentTheme) ? '' : 'none';
+  const pista = document.getElementById('nivel-desde-pista');
+  pista.textContent = nivelDeLaCuenta
+    ? `Con tu nivel (≈${nivelDeLaCuenta}), te conviene empezar desde ${escalonDe(nivelDeLaCuenta - 300) || 'el más fácil'}.`
+    : '';
 }
 
 function getStreak(){
@@ -233,6 +333,7 @@ function openTheme(key){
   document.getElementById('themes-view').style.display = 'none';
   document.getElementById('play-view').style.display = 'block';
   try{ localStorage.setItem('entreno_temas_last', key); }catch(e){}
+  pintarSelectorDesde();
   if(solvedCountFor(key) >= idsOf(key).length){
     currentIndex = 0;
     finishTheme();
@@ -541,13 +642,17 @@ function finishPuzzle(){
        qué. Así que cada ejercicio se apunta bajo la actividad que le
        corresponde, que es lo mismo que se apuntaba antes de mudarlos. */
     const actividad = TEMAS_DE_TACTICA.has(currentTheme) ? 'tactica' : 'temas';
-    EntrenoProgress.log(actividad, { puzzle_id: id, theme: currentTheme, rating: puzzle.rating ?? null });
+    // `limpio` (sin error ni pista) va en el detalle: sin eso, lo único que
+    // quedaba era "resuelto", y uno sacado con "Ver solución" contaba igual
+    // que uno limpio. Con esto se puede medir la precisión por tema.
+    EntrenoProgress.log(actividad, { puzzle_id: id, theme: currentTheme, rating: puzzle.rating ?? null,
+      ...EntrenoProgress.comoSalio(missedThisPuzzle, usedHintThisPuzzle) });
   }
   updateProgressBar();
   updateOverall();
   setTimeout(() => {
-    if(currentIndex < idsOf(currentTheme).length - 1){
-      currentIndex++;
+    if(solvedCountFor(currentTheme) < idsOf(currentTheme).length){
+      currentIndex = siguienteIndice(currentTheme, currentIndex + 1);
       loadPuzzle();
     } else {
       finishTheme();
@@ -596,11 +701,16 @@ document.getElementById('hint-btn').addEventListener('click', giveHint);
 document.getElementById('retry-btn').addEventListener('click', loadPuzzle);
 document.getElementById('skip-btn').addEventListener('click', () => {
   resetStreak();
-  if(currentIndex < idsOf(currentTheme).length - 1){
-    currentIndex++;
-  } else {
-    currentIndex = 0;
-  }
+  // El siguiente sin resolver (a la altura elegida), no el de al lado: ese
+  // podía estar ya hecho. Si el único que queda es este, vuelve a salir este.
+  currentIndex = siguienteIndice(currentTheme, currentIndex + 1);
+  loadPuzzle();
+});
+document.getElementById('nivel-desde').addEventListener('change', (e) => {
+  nivelDesde = parseInt(e.target.value, 10) || 0;
+  try{ localStorage.setItem(CLAVE_DESDE, String(nivelDesde)); }catch(err){}
+  if(solvedCountFor(currentTheme) >= idsOf(currentTheme).length) return;
+  currentIndex = siguienteIndice(currentTheme, 0);
   loadPuzzle();
 });
 document.getElementById('celebration-replay-btn').addEventListener('click', () => {
@@ -622,6 +732,7 @@ function initApp(){
   // doble"): tiene que caer DENTRO del tema, no en la lista de ochenta, que
   // es justo lo que esa tarea viene a evitar. Manda sobre el hash y sobre lo
   // último que se estuvo haciendo — lo pidió el profe hoy.
+  nivelDesde = elegirNivelDesde();
   const pedido = new URLSearchParams(location.search).get('tema');
   const fromHash = (location.hash || '').replace('#', '');
   const wanted = (pedido && DATA.themes[pedido] ? pedido : null)

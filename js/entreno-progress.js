@@ -59,5 +59,13 @@ window.EntrenoProgress = (function () {
     return faltas >= 2 ? 1 : faltas === 1 ? 2 : 3;
   }
 
-  return { init, log, estrellasDeLaRonda, hasSession: () => !!userId };
+  /* Cómo salió un ejercicio, para el `detail` de training_progress. Va en el
+     detalle y no como actividad nueva: el CHECK de la tabla no cambia, y las
+     filas viejas (sin estos campos) siguen valiendo. `limpio` es sin error y
+     sin pista: lo que de verdad dice que el motivo se domina. */
+  function comoSalio(conError, conPista) {
+    return { limpio: !conError && !conPista, con_error: !!conError, con_pista: !!conPista };
+  }
+
+  return { init, log, estrellasDeLaRonda, comoSalio, hasSession: () => !!userId };
 })();

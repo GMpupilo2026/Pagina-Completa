@@ -662,6 +662,9 @@ async function terminar() {
   try {
     localStorage.setItem(RESULTADO_KEY, JSON.stringify({
       fecha: detalle.fecha, porcentaje: resumen.porcentaje, nivel: resumen.nivel.etiqueta, detalle,
+      // La fuerza en puntos, lista para leer sin cargar el banco de preguntas:
+      // Ejercicios por tema arranca cada tema cerca de este número.
+      elo: resumen.elo && typeof resumen.elo.combinado === 'number' ? resumen.elo.combinado : null,
     }));
   } catch (e) {}
 
