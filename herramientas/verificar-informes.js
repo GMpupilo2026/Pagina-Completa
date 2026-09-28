@@ -342,6 +342,9 @@ async function pruebaProfesor(browser) {
       informes_resumen_alumnos: [ANA, BRUNO, CARLA],
       informes_cursos_alumnos: CURSOS_ANA,
       informes_entreno_modulos: [MODULOS_ANA, { student_id: "a-2", temas: 8, con_como_salio: 0, limpios: 0 }],
+      // Lo hecho desde el diagnóstico en cada lugar al que manda el plan: el
+      // plan siempre termina mandando a repetir el diagnóstico.
+      avance_del_plan: [{ clave: "actividad:diagnostico", hechos: 1 }],
       informes_diagnosticos_alumnos: [
         { student_id: "a-1", detalle: DIAGNOSTICO, fecha: "2026-09-10T12:00:00Z", a_medias_pregunta: null, a_medias_fecha: null },
         { student_id: "a-2", detalle: null, fecha: null, a_medias_pregunta: 13, a_medias_fecha: "2026-09-11T12:00:00Z" },
@@ -465,6 +468,19 @@ async function pruebaProfesor(browser) {
   igual("Asistencia", await tarjeta(page, "Asistencia (75%)"), "3/4");
   igual("Tiempo total en la plataforma", await tarjeta(page, "Tiempo total en la plataforma"), "1 h 35 min");
   igual("Temas de cursos estudiados", await tarjeta(page, "Temas de cursos estudiados"), "3");
+  // El plan dice, al lado de cada enlace, cuánto se hizo ahí desde el
+  // diagnóstico; los recursos que no dejan rastro (una ficha, una página de
+  // juego) no llevan número, y lo que no se tocó dice «todavía nada».
+  await page.waitForFunction(() => document.querySelector("#plan-cuerpo .plan-avance"), { timeout: 5000 });
+  igual("el plan marca lo hecho desde el diagnóstico", await page.evaluate(() => {
+    const a = document.querySelector('#plan-cuerpo a[data-clave="actividad:diagnostico"]');
+    return a && a.nextElementSibling ? a.nextElementSibling.textContent : null;
+  }), " (✓ 1 hecho)");
+  igual("y lo que no se tocó dice «todavía nada»", await page.evaluate(() =>
+    [...document.querySelectorAll("#plan-cuerpo a[data-clave]")].filter((a) => a.dataset.clave !== "actividad:diagnostico")
+      .every((a) => a.nextElementSibling && a.nextElementSibling.textContent === " (todavía nada)")), "true");
+  igual("los recursos sin rastro no llevan número", await page.evaluate(() =>
+    [...document.querySelectorAll("#plan-cuerpo a:not([data-clave])")].every((a) => !(a.nextElementSibling && a.nextElementSibling.classList.contains("plan-avance")))), "true");
   igual("historial (quince como mucho)", await page.evaluate(() => document.querySelectorAll("#student-history li").length), 3);
   // Se comprueban los hechos, no el texto entero de la tarjeta: ahí conviven
   // otros controles (desbloquear temas) que van creciendo y no son de esta

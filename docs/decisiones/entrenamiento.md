@@ -346,6 +346,21 @@ meta. Antes pintaba solo las tres primeras y sin la meta: con tres áreas
 flojas se caía la cuarta, «Juntar todo y volver a medir», la que manda a
 repetir el diagnóstico.
 
+**Cada enlace del plan dice cuánto se hizo ahí desde el diagnóstico**
+(«(✓ 12 hechos)», «(todavía nada)»), en esta página y en Informes, con la misma
+función (`PlanEntrenamiento.marcarAvance`). Antes el plan era texto quieto y
+nadie sabía si se estaba siguiendo. La cuenta la hace `avance_del_plan(alumno,
+desde)` en la base (migración `20260928132719`, `SECURITY INVOKER`: la RLS de
+`training_progress` decide, y preguntar por otro alumno da cero filas), porque
+un alumno activo pasa de mil filas en un mes y PostgREST corta a mil sin
+avisar. Cada recurso se traduce a una clave (`PlanEntrenamiento.claveDeAvance`):
+`tema:<clave>`, `mates:<categoría>`, `curso:<slug>` o `actividad:<nombre>`.
+Lo que no deja rastro en `training_progress` (una ficha de Estudio, una página
+de juego) no tiene clave y **no lleva número**: un «0» diría que no hizo nada,
+y no se sabe. «Desde» es la fecha del diagnóstico del que salió el plan
+(`diagnostico_fecha` si es el que compartió el profesor). La prueban
+`verificar-entreno-arreglos.js` (esta página) y `verificar-informes.js`.
+
 Si el profesor ya revisó el diagnóstico y le **compartió** su plan desde
 Informes (`training_plans`, que la política solo le devuelve al alumno cuando
 está compartido), se ve ese, con su nota, y no uno recalculado aparte. Vale

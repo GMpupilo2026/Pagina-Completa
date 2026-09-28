@@ -755,7 +755,52 @@ window.PlanEntrenamiento = (function () {
   // que viven en una carpeta (entreno/) les anteponen su prefijo.
   function enlace(href, base) { return (base || '') + href; }
 
+  /* Qué se cuenta de un recurso para saber si el plan se está siguiendo: la
+     clave con que avance_del_plan() (en la base) agrupa lo que hizo el alumno
+     desde el diagnóstico. Un recurso que no deja rastro en training_progress
+     (una ficha de Estudio, una página de juego) no tiene clave: se muestra sin
+     número, en vez de un «0» que diría que no hizo nada. */
+  const ACTIVIDAD_DE_PAGINA = {
+    'entreno/practicas.html': 'practicar', 'entreno/aprender.html': 'aprender',
+    'entreno/coordenadas.html': 'coordenadas', 'entreno/aperturas.html': 'aperturas',
+    'entreno/4x4.html': '4x4', 'entreno/visualizacion.html': 'visualizacion',
+    'entreno/diagnostico.html': 'diagnostico',
+  };
+  function claveDeAvance(href) {
+    const [ruta, consulta] = String(href || '').split('?');
+    const q = new URLSearchParams(consulta || '');
+    if (ruta === 'entreno/temas.html' && q.get('tema')) return 'tema:' + q.get('tema');
+    if (ruta === 'entreno/mates.html' && q.get('cat')) return 'mates:' + q.get('cat');
+    if (ACTIVIDAD_DE_PAGINA[ruta]) return 'actividad:' + ACTIVIDAD_DE_PAGINA[ruta];
+    const curso = ruta.match(/^cursos\/([a-z0-9-]+)\.html$/);
+    if (curso) return 'curso:' + curso[1];
+    return null;
+  }
+  /* Las filas de avance_del_plan() → { clave: hechos }. */
+  function avancePorClave(filas) {
+    const r = {};
+    (filas || []).forEach((f) => { if (f && f.clave) r[f.clave] = f.hechos || 0; });
+    return r;
+  }
+
+  /* Pone, al lado de cada enlace del plan que lleva `data-clave`, cuánto hizo
+     el alumno ahí desde el diagnóstico. Lo usan la página del diagnóstico y
+     Informes, así el plan dice lo mismo en los dos lados. Todo por
+     textContent. Se puede llamar dos veces: reemplaza lo que había. */
+  function marcarAvance(contenedor, avance) {
+    if (!contenedor || !avance) return;
+    contenedor.querySelectorAll('.plan-avance').forEach((n) => n.remove());
+    contenedor.querySelectorAll('a[data-clave]').forEach((a) => {
+      const n = avance[a.dataset.clave] || 0;
+      const marca = document.createElement('span');
+      marca.className = 'plan-avance ' + (n ? 'text-green-700 dark:text-green-400' : 'text-brand-450 dark:text-brand-350');
+      marca.textContent = n ? ` (✓ ${n} ${n === 1 ? 'hecho' : 'hechos'})` : ' (todavía nada)';
+      a.insertAdjacentElement('afterend', marca);
+    });
+  }
+
   return { AREAS, AREA_POR_ID, NIVELES, ESCALONES, nivelDe, nivelPorEscalones, porEscalon, resumir, generarPlan, enlace,
+           claveDeAvance, avancePorClave, marcarAvance,
            ESCALON_ELO, escalonDeElo, azarDe, probabilidad, medir, combinar, notaDeArea, BANDAS_AREA, bandaDeNota,
            ELO_TIPOS, ELO_TIPO_POR_ID, ELO_MIN, ELO_MAX, nivelDeElo, eloDeNivel, eloEstimado, eloValido, lecturaElo };
 })();

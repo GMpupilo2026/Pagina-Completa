@@ -794,6 +794,8 @@ function pintarPlan(plan, resumen, nota) {
       if (enlaces.childNodes.length) enlaces.appendChild(document.createTextNode(' · '));
       const a = el('a', 'text-accent-700 dark:text-accent-400 hover:underline', r.texto);
       a.href = PE.enlace(r.href, '../');
+      const clave = PE.claveDeAvance(r.href);
+      if (clave) a.dataset.clave = clave;
       enlaces.appendChild(a);
     });
     caja.appendChild(enlaces);
@@ -811,6 +813,24 @@ function pintarPlan(plan, resumen, nota) {
    el diagnóstico del que salió o uno anterior; si el alumno hizo uno NUEVO
    después, ese plan quedó viejo y se muestra el recalculado. */
 let turnoDelPlan = 0;
+
+/* Cuánto hizo el alumno, desde el diagnóstico, en cada lugar al que manda el
+   plan (avance_del_plan() cuenta en la base). Antes el plan era texto quieto y
+   nadie sabía si se estaba siguiendo. Se guarda la última respuesta para
+   volver a marcar si el plan se repinta (el del profesor llega después). */
+let avanceDelPlan = null, avanceDesde = null;
+async function pintarAvance(desde) {
+  if (!sesionActual) return;
+  const box = document.getElementById('result-plan');
+  if (avanceDelPlan && avanceDesde === desde) PE.marcarAvance(box, avanceDelPlan);
+  try {
+    const { data, error } = await sb.rpc('avance_del_plan', { p_alumno: sesionActual.user.id, p_desde: desde || null });
+    if (error) return;
+    avanceDelPlan = PE.avancePorClave(data);
+    avanceDesde = desde;
+    PE.marcarAvance(document.getElementById('result-plan'), avanceDelPlan);
+  } catch (e) {}
+}
 async function planDelProfesor(detalle) {
   try {
     const { data } = await sb.from('training_plans').select('plan, nota, shared')
@@ -875,13 +895,14 @@ function mostrarResultado(detalle, reciente) {
   });
 
   pintarPlan(plan, resumen);
+  pintarAvance(detalle.fecha);
   // Si el profesor ya revisó ESTE diagnóstico y le compartió su plan (el que
   // edita en Informes), el alumno ve ese y no uno recalculado aparte. La
   // respuesta llega después: si mientras tanto se abrió otro resultado, no se
   // le pinta encima.
   const turno = ++turnoDelPlan;
   if (sesionActual) planDelProfesor(detalle).then((compartido) => {
-    if (compartido && turno === turnoDelPlan) pintarPlan(compartido.plan, resumen, compartido.nota);
+    if (compartido && turno === turnoDelPlan) { pintarPlan(compartido.plan, resumen, compartido.nota); pintarAvance(detalle.fecha); }
   });
 
   const review = document.getElementById('result-review');
