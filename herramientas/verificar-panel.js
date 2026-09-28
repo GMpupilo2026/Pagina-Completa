@@ -186,6 +186,12 @@ window.__consultas = [];
       if (n === "mis_funciones_coordinacion") {
         return Promise.resolve({ data: (window.__misFunciones || ["formularios","altas","solicitudes","cuentas","acceso","roles","cobros","equipos","subgrupos"]), error: null });
       }
+      /* Un RPC que devuelve un valor suelto (un booleano, como
+         puedo_preparar_rivales) y no filas: se contesta tal cual. */
+      if (DATOS.rpc && DATOS.rpc[n] !== undefined && !Array.isArray(DATOS.rpc[n])) {
+        window.__consultas.push({ tabla: n, args: args || null });
+        return Promise.resolve({ data: DATOS.rpc[n], error: null });
+      }
       const c = constructor(n, n === "mis_clases"
         ? (DATOS.mis_clases || [MI_CLASE()])
         : (DATOS.rpc && DATOS.rpc[n]) || [], args);
@@ -433,6 +439,24 @@ async function pruebaProfesora(browser) {
     grupos.flatMap((g) => g.tiles).filter((t) => t.enlace === "cobros.html").length, "0");
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
+}
+
+/* La preparación de rivales la activa administración profesor por profesor
+   (admin.html#preparacion): la tarjeta sale solo si la base dice que sí. La
+   base contesta con un booleano, no con filas. */
+async function pruebaPreparacionRivales(browser) {
+  console.log("\n=== La tarjeta de «Preparación de rivales» ===");
+  let r = await panel(browser, [PROFE], "u-profe", null, { rpc: { puedo_preparar_rivales: true } });
+  let grupos = await r.page.evaluate(LEER_GRILLA);
+  igual("con la función activa, sale en Herramientas",
+    grupo(grupos, "Herramientas").tiles.map((t) => t.enlace).filter((x) => x === "preparacion-rivales.html"), ["preparacion-rivales.html"]);
+  igual("sin errores en consola", r.errores.join(" | ") || "ninguno", "ninguno");
+  await r.ctx.close();
+  r = await panel(browser, [PROFE], "u-profe", null, { rpc: { puedo_preparar_rivales: false } });
+  grupos = await r.page.evaluate(LEER_GRILLA);
+  igual("sin activar, no sale por ningún lado",
+    await r.page.evaluate(() => document.querySelectorAll("#tile-grid [href='preparacion-rivales.html']").length), "0");
+  await r.ctx.close();
 }
 
 /* El panel estaba escrito para el alumno de punta a punta, y a quien da clase
@@ -1925,6 +1949,7 @@ if (require.main !== module) return;
     await pruebaProgresoAlumna(browser);
     await pruebaSemanaProfesora(browser);
     await pruebaProfesora(browser);
+    await pruebaPreparacionRivales(browser);
     await pruebaTextosPorRol(browser);
     await pruebaAdmin(browser);
     await pruebaBuscador(browser);

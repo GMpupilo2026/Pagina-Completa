@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20260928140053
+# al-dia-con: 20260928193854
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -61,6 +61,8 @@ tabla  planes_cobro  rls=true
 tabla  platform_activity_log  rls=true
 tabla  practice_games  rls=true
 tabla  practice_sessions  rls=true
+tabla  preparacion_rivales_profesores  rls=true
+tabla  preparaciones_rival  rls=true
 tabla  profesor_videollamada  rls=true
 tabla  profile_teachers  rls=true
 tabla  profiles  rls=true
@@ -604,6 +606,15 @@ columna  practice_sessions.ended_at  timestamp with time zone
 columna  practice_sessions.fen  text
 columna  practice_sessions.id  uuid
 columna  practice_sessions.level  text
+columna  preparacion_rivales_profesores.activado_por  uuid
+columna  preparacion_rivales_profesores.created_at  timestamp with time zone
+columna  preparacion_rivales_profesores.profesor_id  uuid
+columna  preparaciones_rival.analisis  jsonb
+columna  preparaciones_rival.created_at  timestamp with time zone
+columna  preparaciones_rival.id  uuid
+columna  preparaciones_rival.partidas  integer
+columna  preparaciones_rival.profesor_id  uuid
+columna  preparaciones_rival.rival  text
 columna  profesor_videollamada.actualizado_at  timestamp with time zone
 columna  profesor_videollamada.enlace  text
 columna  profesor_videollamada.grupo  text
@@ -890,6 +901,7 @@ funcion  acceso_resumen()  definer  anon=false  auth=true
 funcion  acceso_set_exigido(p_exigido boolean)  definer  anon=false  auth=true
 funcion  acceso_vigente()  definer  anon=false  auth=true
 funcion  aceptar_desafio(p_desafio uuid, p_fen text, p_cartas jsonb, p_duelo jsonb, p_variant jsonb)  definer  anon=false  auth=true
+funcion  activar_preparacion_rivales(p_profesor uuid, p_activa boolean)  definer  anon=false  auth=true
 funcion  actividad_profesor(p_profesor uuid, p_periodo date)  definer  anon=false  auth=true
 funcion  ajustar_trofeos(p_alumno uuid, p_cantidad integer, p_motivo text)  definer  anon=false  auth=true
 funcion  alumnos_de_para_ver_como(p_profesor uuid)  definer  anon=false  auth=true
@@ -1056,6 +1068,7 @@ funcion  puede_ver_equipo(p_equipo uuid)  definer  anon=false  auth=true
 funcion  puede_ver_paquete(p_paquete uuid)  definer  anon=false  auth=true
 funcion  pueden_jugar_entre_si(a uuid, b uuid)  definer  anon=false  auth=true
 funcion  puedo_armar_partida_con(p_jugadores uuid[])  definer  anon=false  auth=true
+funcion  puedo_preparar_rivales()  definer  anon=false  auth=true
 funcion  push_llaves_guardar(p_publica text, p_privada text)  definer  anon=false  auth=false
 funcion  push_llaves_leer()  definer  anon=false  auth=false
 funcion  quiniela_cerrada(p_empezada boolean, p_resultado text, p_cierra_en timestamp with time zone)  invoker  anon=true  auth=true
@@ -1264,6 +1277,10 @@ politica  practice_sessions  practice_sessions_exige_acceso_sel  SELECT  restric
 politica  practice_sessions  practice_sessions_insert  INSERT
 politica  practice_sessions  practice_sessions_select  SELECT
 politica  practice_sessions  practice_sessions_update  UPDATE
+politica  preparacion_rivales_profesores  preparacion_rivales_profesores_ver  SELECT
+politica  preparaciones_rival  preparaciones_rival_borrar  DELETE
+politica  preparaciones_rival  preparaciones_rival_guardar  INSERT
+politica  preparaciones_rival  preparaciones_rival_ver  SELECT
 politica  profesor_videollamada  profesor_videollamada_delete  DELETE
 politica  profesor_videollamada  profesor_videollamada_insert  INSERT
 politica  profesor_videollamada  profesor_videollamada_select  SELECT
@@ -1570,6 +1587,10 @@ indice  practice_games  practice_games_session_id_student_id_key
 indice  practice_games  practice_games_student_id_fk
 indice  practice_sessions  practice_sessions_created_by_fk
 indice  practice_sessions  practice_sessions_pkey
+indice  preparacion_rivales_profesores  preparacion_rivales_profesores_activado_por_idx
+indice  preparacion_rivales_profesores  preparacion_rivales_profesores_pkey
+indice  preparaciones_rival  preparaciones_rival_pkey
+indice  preparaciones_rival  preparaciones_rival_profesor_idx
 indice  profesor_videollamada  profesor_videollamada_pkey
 indice  profile_teachers  profile_teachers_pkey
 indice  profile_teachers  profile_teachers_teacher_idx
@@ -2174,6 +2195,10 @@ grant  practice_sessions  authenticated  SELECT
 grant  practice_sessions  authenticated  TRIGGER
 grant  practice_sessions  authenticated  TRUNCATE
 grant  practice_sessions  authenticated  UPDATE
+grant  preparacion_rivales_profesores  authenticated  SELECT
+grant  preparaciones_rival  authenticated  DELETE
+grant  preparaciones_rival  authenticated  INSERT
+grant  preparaciones_rival  authenticated  SELECT
 grant  profesor_videollamada  authenticated  DELETE
 grant  profesor_videollamada  authenticated  INSERT
 grant  profesor_videollamada  authenticated  REFERENCES

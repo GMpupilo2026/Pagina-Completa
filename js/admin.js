@@ -119,7 +119,7 @@
          * para que atrás/adelante y un enlace guardado lleven a la misma.
          * Todo lo que ya estaba sigue con sus mismos ids: solo cambia qué se ve.
          */
-        const SECCIONES = ["inicio", "cuentas", "crear", "profesores", "supervisores", "equipos", "novedades", "torneos", "herramientas"];
+        const SECCIONES = ["inicio", "cuentas", "crear", "profesores", "supervisores", "equipos", "novedades", "torneos", "preparacion", "herramientas"];
 
         function seccionDelEnlace() {
             const h = location.hash.replace("#", "");
@@ -1776,6 +1776,7 @@
             pintarCuentas();
             pintarBarraDeLote();
             pintarInicio();
+            if (window.AdminPreparacion) AdminPreparacion.pintar();
         }
 
         document.getElementById("asignar-btn").addEventListener("click", asignarLote);
@@ -1868,6 +1869,9 @@
             // Las salas de torneos (js/admin-salas-torneo.js): no se espera, así
             // una Lichess lenta no demora el resto del panel.
             if (window.AdminSalasTorneo) AdminSalasTorneo.iniciar();
+            // A qué profesores se les activa la preparación de rivales
+            // (js/admin-preparacion.js). Recibe la lista ya cargada.
+            if (window.AdminPreparacion) AdminPreparacion.iniciar(() => allUsers);
             document.getElementById("app").classList.remove("hidden");
             irA(seccionDelEnlace() || "inicio", { sinHistoria: true });
         }

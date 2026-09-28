@@ -2070,6 +2070,25 @@
                        y para mandar una tarea a varios de una vez. */
                     { emoji: "👥", label: "Mis subgrupos", desc: "Arma tus propias listas de alumnos para filtrar Informes y mandarles tareas de una vez", href: "subgrupos.html" }
                 );
+                /* Preparación de rivales: solo si administración se la activó
+                   (admin.html#preparacion). Mirando el panel de otra persona se
+                   pregunta por ESA persona, no por quien mira. La página y la
+                   RLS lo vuelven a comprobar. */
+                try {
+                    let puedePreparar = false;
+                    if (profile._persona) {
+                        const { data } = await sb.from("preparacion_rivales_profesores").select("profesor_id").eq("profesor_id", profile._persona.id);
+                        puedePreparar = !!(data && data.length);
+                    } else {
+                        const { data } = await sb.rpc("puedo_preparar_rivales");
+                        puedePreparar = data === true;
+                    }
+                    if (puedePreparar) {
+                        TILE_GROUPS.find((g) => g.title === "Herramientas").tiles.push(
+                            { emoji: "🔭", label: "Preparación de rivales", desc: "Carga un PGN de un rival y arma su FODA y qué jugarle, revisado con Stockfish", href: "preparacion-rivales.html" }
+                        );
+                    }
+                } catch (e) { console.error(e); }
             }
 
             // Coordinación: armar formularios de inscripción a torneos. La
