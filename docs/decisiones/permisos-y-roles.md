@@ -1056,6 +1056,26 @@ inventada; el alumno ve la marca de su academia y no puede cambiarla, y en dos
 academias no ve ninguna; el coordinador pone en su formulario la marca de su
 academia y no la de otra; y el formulario se ve con la marca sin cuenta.
 
+#### El logo del login
+
+`login.html` muestra el logo completo de Ajedrez Integral (el gris en modo
+claro, el crema en oscuro). Pero quien es de una academia espera ver la suya,
+y el login no puede saberlo: todavía nadie inició sesión.
+
+- **Se usa la marca que quedó guardada** (`academia_marca_v1`) de la última
+  cuenta que entró en ese aparato. Cerrar sesión no la borra, y
+  `pintarLogin()` en `js/marca-academia.js` **no mira el uid** a propósito:
+  quien entra al login no tiene uno todavía.
+- Si esa cuenta no era de una academia, si la academia no tiene logo o si el
+  logo no carga, queda el de Ajedrez Integral que trae la página.
+- El logo va sobre blanco en los dos modos, como en el encabezado: el de una
+  academia puede ser oscuro y perderse en la tarjeta del modo oscuro.
+- **Consecuencia aceptada** (la decidió el dueño del sitio): en una computadora
+  compartida, el login muestra el logo de la academia de quien entró antes. Lo
+  único que dice es de qué academia era esa cuenta; ni su nombre ni su correo.
+- `verificar-logo-login.js` cubre los casos: sin marca guardada, con marca y
+  logo, marca sin logo, logo roto, y que un nombre con HTML no se ejecute.
+
 #### «Mejorar informe»: la IA por academia, y solo quien administra la ve
 
 Quien da clase tiene un botón **«✨ Mejorar informe»** debajo de «Qué se hizo en

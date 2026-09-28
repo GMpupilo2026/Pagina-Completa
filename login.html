@@ -39,9 +39,14 @@
                 <!-- El logo completo de la marca, con la cinta (a este tamaño sí se
                      lee). Dos archivos porque la tarjeta cambia de color: el gris
                      sobre el blanco del modo claro y el crema sobre el azul del
-                     oscuro. Los arma herramientas/logo-encabezado.py. -->
+                     oscuro. Los arma herramientas/logo-encabezado.py.
+                     Si la última cuenta que entró en este aparato era de una
+                     academia con logo, js/marca-academia.js (pintarLogin) pone
+                     ese en su lugar. -->
+                <div id="logo-login">
                 <img src="/img/logo-completo-claro.png" alt="Oscar Angulo Cubero, profesional de ajedrez" width="160" height="121" class="block dark:hidden w-40 h-auto mx-auto mb-5">
                 <img src="/img/logo-completo-oscuro.png" alt="Oscar Angulo Cubero, profesional de ajedrez" width="160" height="121" class="hidden dark:block w-40 h-auto mx-auto mb-5">
+                </div>
                 <h1 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-1 text-center">Acceso a Clases</h1>
                 <p class="text-brand-500 dark:text-brand-300 text-sm text-center mb-6">Inicia sesión con la cuenta que te dio tu profesor.</p>
 
@@ -93,6 +98,7 @@
 
     <script src="js/vendor/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
+    <script src="js/marca-academia.js"></script>
     <script src="js/main.js"></script>
     <script src="js/usuario-alumno.js"></script>
     <script src="js/login.js"></script>
