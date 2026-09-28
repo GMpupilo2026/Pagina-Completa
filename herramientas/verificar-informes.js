@@ -322,6 +322,12 @@ function pruebaVeredicto() {
     "Nada en las últimas 4 semanas; antes llevaba 20 ejercicios.");
 }
 
+// Lo que cuenta informes_entreno_modulos() (Temas, Visualización, Tipos,
+// Aperturas y Precisión posicional), que antes no se mostraba en ningún lado.
+const MODULOS_ANA = { student_id: "a-1", visualizacion: 4, temas: 30, con_como_salio: 10, limpios: 7,
+  tipos_ejercicios: 5, tipos_estrellas: 12, aperturas_empezadas: 3, aperturas_firmes: 1,
+  precision_rondas: 2, precision_ultima: 75, precision_fecha: "2026-09-20T12:00:00Z" };
+
 async function pruebaProfesor(browser) {
   console.log("\n=== Vista del profesor ===");
   // 1005 exámenes obligan a pedir dos páginas de mil. Si se quedara con la
@@ -335,6 +341,7 @@ async function pruebaProfesor(browser) {
     rpc: {
       informes_resumen_alumnos: [ANA, BRUNO, CARLA],
       informes_cursos_alumnos: CURSOS_ANA,
+      informes_entreno_modulos: [MODULOS_ANA, { student_id: "a-2", temas: 8, con_como_salio: 0, limpios: 0 }],
       informes_diagnosticos_alumnos: [
         { student_id: "a-1", detalle: DIAGNOSTICO, fecha: "2026-09-10T12:00:00Z", a_medias_pregunta: null, a_medias_fecha: null },
         { student_id: "a-2", detalle: null, fecha: null, a_medias_pregunta: 13, a_medias_fecha: "2026-09-11T12:00:00Z" },
@@ -419,18 +426,20 @@ async function pruebaProfesor(browser) {
     [await page.inputValue("#student-filter"), await page.textContent("#student-report-title")].join(" | "),
     "a-1 | 🚩 Últimas asignaciones de Ana Rojas");
 
-  /* Dieciséis números de golpe no los lee nadie: las ocho de segunda fila nacen
-     escondidas. Se mide el display que calcula el navegador, no la clase. */
+  /* Veintiún números de golpe no los lee nadie: los trece de segunda fila nacen
+     escondidos (las ocho de siempre más las cinco de los módulos que se sumaron:
+     Temas, Visualización, Tipos, Aperturas y Precisión). Se mide el display que
+     calcula el navegador, no la clase. */
   const escondidas = () => page.evaluate(() =>
     [...document.querySelectorAll("#stat-cards [data-extra]")]
       .filter((d) => getComputedStyle(d).display === "none").length);
-  igual("las ocho secundarias nacen escondidas", await escondidas(), 8);
+  igual("las trece secundarias nacen escondidas", await escondidas(), 13);
   igual("y las que se miran siguen a la vista", await page.evaluate(() =>
     [...document.querySelectorAll("#stat-cards > div")].filter((d) => getComputedStyle(d).display !== "none").length), 8);
   await page.click("#stat-cards-ver");
   igual("el botón las destapa todas", await escondidas(), 0);
   await page.click("#stat-cards-ver");
-  igual("y las vuelve a guardar", await escondidas(), 8);
+  igual("y las vuelve a guardar", await escondidas(), 13);
   await page.selectOption("#student-filter", "");
   await page.waitForFunction(() => !document.getElementById("teacher-report").classList.contains("hidden"));
 
@@ -683,6 +692,20 @@ async function pruebaProfesor(browser) {
   igual("tema 4×4, de mayor a menor", await page.evaluate(() =>
     [...document.querySelectorAll("#topic-report-body > div")].map((d) => d.textContent.replace(/\s+/g, " ").trim()).join(" // ")),
     "Ana Rojas12 ejercicios // Bruno Mena3 ejercicios // Carla Soto—");
+  // Los módulos que el profesor no veía: de mayor a menor, y con cuántos salieron
+  // limpios cuando el ejercicio ya lo guarda (Bruno todavía no tiene ninguno así).
+  await page.selectOption("#topic-filter", "temas");
+  igual("tema Ejercicios por tema", await page.evaluate(() =>
+    [...document.querySelectorAll("#topic-report-body > div")].map((d) => d.textContent.replace(/\s+/g, " ").trim()).join(" // ")),
+    "Ana Rojas30 ejercicios · 70 % sin error ni pista // Bruno Mena8 ejercicios // Carla Soto—");
+  await page.selectOption("#topic-filter", "aperturas");
+  igual("tema Aperturas", await page.evaluate(() =>
+    document.querySelector("#topic-report-body > div").textContent.replace(/\s+/g, " ").trim()),
+    "Ana Rojas3 líneas · 1 firmes");
+  await page.selectOption("#topic-filter", "precision");
+  igual("tema Precisión posicional", await page.evaluate(() =>
+    document.querySelector("#topic-report-body > div").textContent.replace(/\s+/g, " ").trim()),
+    "Ana Rojas75 % en la última · 2 rondas");
   await page.selectOption("#topic-filter", "diagnostico");
   await page.waitForFunction(() => document.getElementById("topic-report-body").textContent.includes("Ana Rojas"));
   igual("diagnósticos: hecho, a medias y sin empezar", await page.evaluate(() => {
@@ -700,6 +723,7 @@ async function pruebaAlumno(browser) {
     rpc: {
       informes_resumen_alumnos: [ANA],
       informes_cursos_alumnos: [CURSOS_ANA[0]],
+      informes_entreno_modulos: [MODULOS_ANA],
       informes_diagnosticos_alumnos: [{ student_id: "a-1", detalle: DIAGNOSTICO, fecha: "2026-09-10T12:00:00Z", a_medias_pregunta: null, a_medias_fecha: null }],
       informes_totales: { clases_cerradas: 4, preguntas: 10, partidas: 2 },
       resumen_tareas_examenes: DEBERES,
@@ -728,6 +752,11 @@ async function pruebaAlumno(browser) {
   igual("Ejercicios 4×4 resueltos", await tarjeta(page, "Ejercicios 4×4 resueltos"), "12");
   igual("Mates resueltos", await tarjeta(page, "Mates resueltos (1·2·3 en 1/2/3)"), "6");
   igual("Temas de cursos estudiados", await tarjeta(page, "Temas de cursos estudiados"), "3");
+  igual("Ejercicios por tema, con cuántos limpios", await tarjeta(page, "Ejercicios por tema resueltos (70 % sin error ni pista)"), "30");
+  igual("Visualización", await tarjeta(page, "Ejercicios de Visualización resueltos"), "4");
+  igual("Tipos de entrenamiento", await tarjeta(page, "Tipos de entrenamiento: ejercicios con estrellas"), "5 (12⭐)");
+  igual("Aperturas", await tarjeta(page, "Líneas de Aperturas estudiadas"), "3 (1 firmes)");
+  igual("Precisión posicional", await tarjeta(page, "Precisión posicional"), "75 % en la última · 2 rondas");
   igual("historial", await page.evaluate(() => document.querySelectorAll("#student-history li").length), 2);
   igual("filtros de profesor escondidos",
     await page.evaluate(() => document.getElementById("teacher-filters").classList.contains("hidden")), "true");
@@ -1096,7 +1125,7 @@ async function pruebaClaseGrande(browser) {
     ["Cómo van tus alumnos", "Lo que entrenaron, tema por tema"]);
   igual("ningún tema se perdió al agruparlos", await page.evaluate(() =>
     [...document.querySelectorAll("#topic-filter option")].map((o) => o.value).sort().join(",")),
-    ["", "4x4", "aprender", "asignaciones", "asistencia", "concentracion", "coordenadas", "cursos", "diagnostico", "inactivos", "mates", "practicar", "tactica"].sort().join(","));
+    ["", "4x4", "aprender", "aperturas", "asignaciones", "asistencia", "concentracion", "coordenadas", "cursos", "diagnostico", "inactivos", "mates", "practicar", "precision", "tactica", "temas", "tipos", "visualizacion"].sort().join(","));
   const preguntas = () => page.evaluate(() => [...document.querySelectorAll("#preguntas-rapidas button")]
     .filter((b) => b.checkVisibility()).map((b) => b.textContent + (b.getAttribute("aria-pressed") === "true" ? " [marcada]" : "")));
   igual("se ven las cuatro preguntas, ninguna marcada", await preguntas(),

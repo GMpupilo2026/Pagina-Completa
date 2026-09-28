@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20260928050117
+# al-dia-con: 20260928130332
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -978,6 +978,7 @@ funcion  ia_resumen_mes(p_dia date)  definer  anon=false  auth=true
 funcion  informe_de_alumno(p_alumno uuid, p_desde timestamp with time zone, p_hasta timestamp with time zone)  invoker  anon=false  auth=true
 funcion  informes_cursos_alumnos()  invoker  anon=false  auth=true
 funcion  informes_diagnosticos_alumnos()  invoker  anon=false  auth=true
+funcion  informes_entreno_modulos()  invoker  anon=false  auth=true
 funcion  informes_inactivos(p_dias integer)  invoker  anon=true  auth=true
 funcion  informes_resumen_alumnos()  invoker  anon=false  auth=true
 funcion  informes_totales()  invoker  anon=false  auth=true
