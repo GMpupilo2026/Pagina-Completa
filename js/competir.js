@@ -105,7 +105,10 @@
 
         async function loadRooms() {
             const [{ data: rooms, error }, { data: games4p, error: error4p }] = await Promise.all([
-                sb.from("game_rooms").select("*").order("created_at", { ascending: false }).limit(100),
+                // Solo lo que pinta la tarjeta: `moves`, `fen` y los estados de cada
+                // modalidad crecen con cada jugada y aquí no se usan. La de cuatro
+                // va entera porque «Terminar» necesita su `board`.
+                sb.from("game_rooms").select("id, variant, status, result, white_id, black_id, initial_seconds, increment_seconds, created_at").order("created_at", { ascending: false }).limit(100),
                 sb.from("fourplayer_games").select("*").order("created_at", { ascending: false }).limit(100),
             ]);
             if (error) console.error(error);
@@ -136,13 +139,35 @@
             else finished.forEach((r) => renderRoomCard(r, finishedEl));
         }
 
+        /* Las listas solo cambian cuando una partida nace, termina o se borra.
+           Antes se escuchaba TODO cambio, y cada jugada de cualquier partida
+           actualiza su fila: con cada movida, todas las pantallas de Competir
+           abiertas volvían a pedir las dos listas enteras a la vez (ver «Realtime
+           escucha solo lo que la pantalla muestra»). Ahora el UPDATE se filtra a
+           `status=eq.finished` (la única actualización que cambia una tarjeta:
+           «playing» es el estado con que nacen), y las recargas que llegan
+           juntas se juntan en una, que espera si la pestaña está escondida. */
+        let recargaPendiente = null;
+        function programarRecarga() {
+            if (recargaPendiente) return;
+            recargaPendiente = setTimeout(function recargar() {
+                if (document.hidden) {
+                    document.addEventListener("visibilitychange", recargar, { once: true });
+                    return;
+                }
+                recargaPendiente = null;
+                loadRooms();
+            }, 1000);
+        }
+
         function subscribeRoomsList() {
-            sb.channel("game-rooms-list-changes")
-                .on("postgres_changes", { event: "*", schema: "public", table: "game_rooms" }, () => loadRooms())
-                .subscribe();
-            sb.channel("fourplayer-games-list-changes")
-                .on("postgres_changes", { event: "*", schema: "public", table: "fourplayer_games" }, () => loadRooms())
-                .subscribe();
+            const canal = sb.channel("game-rooms-list-changes");
+            for (const table of ["game_rooms", "fourplayer_games"]) {
+                canal.on("postgres_changes", { event: "INSERT", schema: "public", table }, programarRecarga);
+                canal.on("postgres_changes", { event: "UPDATE", schema: "public", table, filter: "status=eq.finished" }, programarRecarga);
+                canal.on("postgres_changes", { event: "DELETE", schema: "public", table }, programarRecarga);
+            }
+            canal.subscribe();
         }
 
         /* ================= Retar a quien está en línea =================
@@ -207,7 +232,7 @@
                     (estado[k] || []).forEach((p) => { if (p && p.id) vistos[p.id] = p; });
                 });
                 gente = Object.values(vistos).filter((p) => p.id !== profile.id);
-                pintarEnLinea();
+                pintarEnLineaPronto();
             });
             canalPresencia.subscribe(async (estado) => {
                 if (estado !== "SUBSCRIBED") return;
@@ -216,6 +241,16 @@
                     is_admin: !!profile.is_admin, role: profile.role,
                 });
             });
+        }
+
+        /* El canal es de toda la Academia (retarse es lo único que se comparte),
+           así que cada entrada o salida de cualquiera dispara un «sync» en todas
+           las pantallas. Con mucha gente llegan varios por segundo: se pinta a
+           lo sumo uno cada medio segundo, con el último estado. */
+        let pintadoPendiente = null;
+        function pintarEnLineaPronto() {
+            if (pintadoPendiente) return;
+            pintadoPendiente = setTimeout(() => { pintadoPendiente = null; pintarEnLinea(); }, 500);
         }
 
         function pintarEnLinea() {

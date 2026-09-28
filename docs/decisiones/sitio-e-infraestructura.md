@@ -1227,3 +1227,72 @@ callado de siempre: se lee bien, y el día que hace falta no está.
 
 El comando queda escrito en `RESTAURAR.md` para correrlo desde una máquina con
 permiso de escribir etiquetas.
+
+## Realtime escucha solo lo que la pantalla muestra
+
+Pregunta del dueño del sitio: «¿aguanta 10 mil usuarios?». Las páginas sí, porque
+las sirve Cloudflare. Lo que no aguantaba era el Realtime de Supabase: **Realtime
+revisa la RLS de cada cambio una vez por cada persona que lo escucha, en un solo
+hilo** (así lo dice su documentación: subir de máquina casi no lo mejora). Una
+escucha sin filtro funciona perfecto con diez personas: la página descarta lo que
+no es suyo y no da ningún error. Con mil, cada cambio se convierte en mil
+lecturas.
+
+- **El chat de la clase** (`subscribeChat()` en `js/sesion.js`) escuchaba todos
+  los mensajes de todas las clases. Ahora el alumno filtra `student_id=eq.<yo>`
+  y quien da clase `student_id=in.(<sus alumnos>)`, en tandas de 100 porque
+  Realtime no acepta más valores en un `in`. **El DELETE va aparte y sin filtro**:
+  Realtime no filtra borrados. Son raros (solo «Vaciar esta conversación») y el
+  callback ya descarta los ajenos.
+- **Las listas de Competir** (`js/competir.js`) escuchaban todo cambio de
+  `game_rooms` y `fourplayer_games`, y cada jugada actualiza su fila: con cada
+  movida de cualquier partida, todas las pantallas de Competir volvían a pedir
+  las dos listas enteras (con `select("*")`, las jugadas incluidas). Ahora
+  escuchan el INSERT, el DELETE y solo el UPDATE con `status=eq.finished`, que es
+  la única actualización que cambia una tarjeta (las partidas nacen `playing` y
+  el `check` solo admite esos dos estados). Las recargas se juntan en una por
+  segundo y esperan si la pestaña está escondida, y `game_rooms` pide solo las
+  columnas de la tarjeta.
+- **El aviso de partida nueva** (`js/juego-aviso.js`, en todas las páginas de la
+  Academia) escuchaba todas las partidas que nacían en la plataforma. Ahora son
+  dos escuchas, `white_id` y `black_id`, porque un filtro mira una sola columna.
+  La de cuatro jugadores se deja sin filtro: los asientos son un jsonb.
+- **El canal de presencia de Competir (`juegos-en-linea`) sigue siendo uno solo
+  para toda la Academia**, porque retarse es justo lo único que se comparte
+  entre academias (ver «Retar a quien está en línea»). Partirlo cambiaría a
+  quién se puede retar, y eso lo decide el dueño del sitio, no el rendimiento.
+  Lo que sí se hizo: la lista se pinta a lo sumo una vez cada medio segundo,
+  porque con mucha gente llegan varios `sync` por segundo.
+- **Quedan sin filtro, anotadas con su porqué**, las escuchas que abren pocas
+  pantallas (la TV, el panel de partidas guardadas, el lado del profesor en
+  preguntas y práctica) y `torneo.js` sobre `game_rooms`, que no lleva
+  `tournament_id`. Esa es la siguiente candidata si los torneos crecen: acotarla
+  con `id=in.(<mesas de la ronda>)`.
+
+`verificar-realtime-filtros.js` (sin navegador) recorre `js/` y falla ante
+cualquier `postgres_changes` sin `filter` que no sea DELETE ni esté en su lista
+de excepciones, y también ante una excepción que ya no se usa. Está probado que
+falla de verdad: quitándole el filtro al chat, salta en las dos escuchas.
+
+## Lo que marcó el asesor de rendimiento
+
+Del asesor de rendimiento de Supabase (28 de setiembre de 2026, 143 cuentas):
+
+- **Seis claves foráneas sin índice** (`encuestas_curso`, `insignias`,
+  `salas_torneo`, `trofeos_ajustes`): se agregaron, con el sufijo `_fk` de las
+  demás. Sin índice, borrar un perfil recorre cada una de esas tablas entera.
+- **`Ejercicios Lichess` no tenía clave primaria.** Se le puso `PuzzleId`, el id
+  de Lichess (comprobado antes: 343 161 filas, ninguna nula, todas distintas).
+- **Las 45 «políticas permisivas múltiples» NO se juntaron, a propósito.**
+  Postgres ya combina con `OR` las políticas permisivas de una misma tabla y
+  acción en una sola condición: escribirlas juntas a mano da el mismo plan. El
+  aviso es de estilo, no de velocidad. En cambio, reescribir 25 tablas de
+  permisos (varias con roles distintos, `public` en una y `authenticated` en la
+  otra, o una `ALL` que habría que partir) es exactamente el tipo de cambio que
+  abre o cierra algo sin dar ningún error. Lo que sí pesa es **cómo** pregunta
+  cada política (el conjunto una vez, no fila por fila: ver «La RLS de las
+  tablas de actividad arma el conjunto UNA vez»), y eso ya está hecho en las
+  tablas que crecen.
+- **Los 31 «índices sin usar» tampoco se borraron**: el proyecto tiene menos de
+  un mes y sus estadísticas de uso son de un puñado de personas. Un índice que
+  hoy nadie usa puede ser el que sostiene un informe con mil alumnos.
