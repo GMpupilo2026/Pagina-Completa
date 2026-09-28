@@ -330,6 +330,12 @@ navegador.
   falta o tiene más de cuatro semanas, que es lo que pide la última semana del
   plan. Todo sale del progreso que ProgresoUsuario ya bajó de la cuenta. Sin
   nada pendiente, el bloque no sale.
+- **Mates tiene la misma cola** (`entreno_mates_repaso_v1`, también en
+  `CLAVES`): una pestaña más, «🔁 Repasar fallados», que solo aparece si hoy
+  toca alguno, y `mates.html?repaso=1` para abrirla directo. El hub la cuenta
+  aparte («Repasar N mates que te costaron»). «Hoy te toca» muestra como mucho
+  tres cosas, en este orden: repasos de Temas, de Mates, de Aperturas y el
+  diagnóstico; lo que no entra aparece cuando se despeja alguna de las otras.
 - El doble de Supabase de los verificadores de Entrenamiento es uno solo:
   `herramientas/lib/doble-entreno.js`.
 

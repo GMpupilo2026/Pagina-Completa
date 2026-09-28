@@ -29,11 +29,33 @@ const GLYPH = {
 };
 
 const CATEGORY_ORDER = ['mate1', 'mate2', 'mate3'];
-const CATEGORY_LABEL = { mate1: '🎯 Mate en 1', mate2: '⚔️ Mate en 2', mate3: '🏆 Mate en 3' };
-const CATEGORY_VAR = { mate1: '--mate1', mate2: '--mate2', mate3: '--mate3' };
+const CATEGORY_LABEL = { mate1: '🎯 Mate en 1', mate2: '⚔️ Mate en 2', mate3: '🏆 Mate en 3', __repaso: '🔁 Repasar fallados' };
+const CATEGORY_VAR = { mate1: '--mate1', mate2: '--mate2', mate3: '--mate3', __repaso: '--brass' };
 const CATEGORY_PLIES = { mate1: 1, mate2: 3, mate3: 5 }; // jugadas totales (blancas+negras) hasta el mate
 
 let PUZZLES = { mate1: [], mate2: [], mate3: [] };
+
+/* ---------------- Repasar fallados ----------------
+   Lo que se resolvió con error o con pista entra a la cola de repaso espaciado
+   (js/repaso-fallados.js, la misma de Ejercicios por tema) y vuelve cuando
+   toca, en una pestaña más: «🔁 Repasar», que solo aparece si hoy toca alguno.
+   Mientras se repasa, currentCategory es REPASO y PUZZLES[REPASO] es la lista
+   de hoy, fija: lo que se vuelve a fallar queda para la próxima. */
+const REPASO = '__repaso';
+const CLAVE_REPASO = window.RepasoFallados ? RepasoFallados.CLAVES.mates : null;
+const PUZZLE_POR_ID = {};
+function pendientesDeRepaso(){
+  if(!window.RepasoFallados) return [];
+  return RepasoFallados.pendientes(CLAVE_REPASO, (id) => !!PUZZLE_POR_ID[id]);
+}
+function abrirRepaso(){
+  const ids = pendientesDeRepaso();
+  if(!ids.length) return;
+  PUZZLES[REPASO] = ids.map((id) => PUZZLE_POR_ID[id]);
+  currentCategory = REPASO;
+  currentIndex = 0;
+  loadPuzzle();
+}
 
 /* ---------------- Modo normal / modo adaptado (lector de pantalla) ---------------- */
 const BLIND_MODE_KEY = 'oscarBlindMode_v1';
@@ -132,7 +154,7 @@ async function loadPuzzlesThenStart(){
     const res = await fetch('data/mates.json');
     if(!res.ok) throw new Error('mates.json: ' + res.status);
     const all = await res.json();
-    all.forEach((p) => { if(PUZZLES[p.category]) PUZZLES[p.category].push(p); });
+    all.forEach((p) => { if(PUZZLES[p.category]) { PUZZLES[p.category].push(p); PUZZLE_POR_ID[p.id] = p; } });
   } catch (e) {
     document.getElementById('main-content').innerHTML =
       '<p class="text-center text-brand-450 dark:text-brand-350 py-10">No se pudo cargar la base de mates. Intenta recargar la página.</p>';
@@ -199,6 +221,7 @@ function currentPuzzle(){ return PUZZLES[currentCategory][currentIndex]; }
 // al cambiar de pestaña: si ya está 100% resuelta muestra la celebración en vez de
 // reiniciar silenciosamente desde la posición 0.
 function openCategory(cat){
+  if(cat === REPASO){ abrirRepaso(); return; }
   currentCategory = cat;
   if(solvedCountFor(cat) >= PUZZLES[cat].length){
     currentIndex = 0;
@@ -223,9 +246,26 @@ function buildTabs(){
     btn.addEventListener('click', () => openCategory(cat));
     tabs.appendChild(btn);
   });
+  // La pestaña del repaso: solo si hoy toca alguno (o si se está repasando).
+  const pendientes = pendientesDeRepaso().length;
+  if(pendientes || currentCategory === REPASO){
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'tab' + (currentCategory === REPASO ? ' active' : '');
+    btn.style.setProperty('--tab-color', `var(${CATEGORY_VAR[REPASO]})`);
+    btn.innerHTML = `${CATEGORY_LABEL[REPASO]} <span class="n">${pendientes} para hoy</span>`;
+    btn.addEventListener('click', () => openCategory(REPASO));
+    tabs.appendChild(btn);
+  }
 }
 
 function updateProgressBar(){
+  if(currentCategory === REPASO){
+    const total = PUZZLES[REPASO].length;
+    document.getElementById('progress-fill').style.width = (total ? Math.round(100 * currentIndex / total) : 0) + '%';
+    document.getElementById('progress-label').textContent = `Repaso · posición ${Math.min(currentIndex + 1, total)} de ${total}`;
+    return;
+  }
   const total = PUZZLES[currentCategory].length;
   const done = solvedCountFor(currentCategory);
   document.getElementById('progress-fill').style.width = (total ? Math.round(100 * done / total) : 0) + '%';
@@ -468,6 +508,10 @@ function finishPuzzle(){
   const alreadySolved = isSolved(puzzle.id);
   if(!missedThisPuzzle && !usedHintThisPuzzle) bumpStreak(); else resetStreak();
   setStatus('✅ ¡Jaque mate!', 'ok');
+  // La cola de repaso: lo que costó entra, lo que se repasa se reprograma. Lo
+  // limpio a la primera no entra nunca. Repasar no vuelve a registrar nada:
+  // lo que está en la cola ya se resolvió (y contó) una vez.
+  if(window.RepasoFallados) RepasoFallados.anotar(CLAVE_REPASO, puzzle.id, missedThisPuzzle, usedHintThisPuzzle, { category: puzzle.category });
   if(!alreadySolved){
     markSolved(puzzle.id);
     EntrenoProgress.log('mates', { puzzle_id: puzzle.id, category: puzzle.category,
@@ -490,9 +534,14 @@ function finishCategory(){
   document.getElementById('celebration').style.display = 'block';
   buildTabs();
   const total = PUZZLES[currentCategory].length;
-  const statsText = `Resolviste las ${total} posiciones de ${CATEGORY_LABEL[currentCategory].replace(/^\S+\s/, '')}.`;
+  const enRepaso = currentCategory === REPASO;
+  document.getElementById('celebration-title').textContent = enRepaso ? '¡Repaso terminado!' : '¡Categoría completa!';
+  document.getElementById('celebration-replay-btn').style.display = enRepaso ? 'none' : '';
+  const statsText = enRepaso
+    ? `Repasaste ${total} ${total === 1 ? 'posición' : 'posiciones'}. Las que salieron limpias vuelven más adelante.`
+    : `Resolviste las ${total} posiciones de ${CATEGORY_LABEL[currentCategory].replace(/^\S+\s/, '')}.`;
   document.getElementById('celebration-stats').textContent = statsText;
-  if(window.BlindNotation) window.BlindNotation.speak('¡Categoría completa! ' + statsText);
+  if(window.BlindNotation) window.BlindNotation.speak(document.getElementById('celebration-title').textContent + ' ' + statsText);
   if(blindMode){
     // El foco cae directo en el botón de reinicio — así, en modo adaptado, basta con
     // presionar Enter para seguir en vez de tener que ir a buscar el botón a mano.
@@ -531,6 +580,12 @@ document.getElementById('hint-btn').addEventListener('click', giveHint);
 document.getElementById('retry-btn').addEventListener('click', loadPuzzle);
 document.getElementById('skip-btn').addEventListener('click', () => {
   resetStreak();
+  // Saltar en el repaso no lo reprograma: sigue pendiente para la próxima.
+  if(currentCategory === REPASO){
+    if(currentIndex < PUZZLES[REPASO].length - 1){ currentIndex++; loadPuzzle(); }
+    else { currentIndex = PUZZLES[REPASO].length; finishCategory(); }
+    return;
+  }
   if(currentIndex < PUZZLES[currentCategory].length - 1){
     currentIndex++;
   } else {
@@ -556,6 +611,8 @@ function initApp(){
   const pedida = new URLSearchParams(location.search).get('cat');
   const startCategory = (pedida && PUZZLES[pedida] && PUZZLES[pedida].length) ? pedida
     : (CATEGORY_ORDER.find((c) => solvedCountFor(c) < PUZZLES[c].length) || 'mate1');
+  // ?repaso=1 es el enlace de «Hoy te toca» del hub: abre la cola directo.
+  if(new URLSearchParams(location.search).has('repaso') && pendientesDeRepaso().length){ abrirRepaso(); return; }
   openCategory(startCategory);
 }
 
