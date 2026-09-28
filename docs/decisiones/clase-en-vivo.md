@@ -579,6 +579,45 @@ que ya no existe. Lo reusan `verificar-sesion-orden.js` y
 `verificar-chat-clase.js`, y acepta **filas de arranque** para sembrar una tabla
 (los mensajes de una conversación, por ejemplo).
 
+#### Al cerrar se ve lo que hizo cada alumno
+
+Las preguntas («¿Qué jugarías?») y las prácticas contra el motor **no tenían
+clase**: lo que contestó cada alumno quedaba guardado, pero no había forma de
+decir «en la clase del martes Ana contestó 4 de 5». No daba ningún error: esos
+datos simplemente no llegaban a ningún lado.
+
+- **La liga la pone un trigger, no la página**: `ligar_a_la_clase_abierta`
+  (BEFORE INSERT en `questions` y `practice_sessions`) les pone la clase
+  abierta de quien las crea. En `sesion.js` hay cinco lugares que crean una
+  pregunta y cuatro que abren una práctica, y el que se olvidara de mandar la
+  clase la dejaría fuera sin avisar. Sin clase abierta queda en null: una
+  pregunta de preparación no es de ninguna clase. Es SECURITY INVOKER (el
+  profesor ya puede leer sus clases) y no se le deja ejecutar a nadie.
+- **La cuenta la hace la base**: `resumen_de_la_clase(p_clase)`, SECURITY
+  INVOKER, así que la RLS decide quién ve qué. Comprobado impersonando: el
+  profesor ve a los suyos, otro profesor recibe cero filas y la alumna solo la
+  suya. Entran los que asistieron **y** los que contestaron sin quedar en la
+  asistencia: nadie que hizo algo se pierde.
+- **No se guarda**: se deriva de las respuestas y el profesor puede seguir
+  calificando después, así que una foto al cerrar quedaría vieja. Se calcula
+  cada vez.
+- **Se ve al primer toque de «Cerrar la clase»**, junto al título y la nota:
+  es el momento en que todavía se pueden calificar las respuestas que faltan,
+  y el titular dice cuántas quedan («Queda 1 respuesta sin calificar»).
+  Calificar una con el cierre abierto lo vuelve a contar.
+- **En el registro del panel**, cada clase en línea tiene «Qué hicieron», que
+  lo pide **al abrirlo** (con `aria-expanded`): una llamada por clase para
+  cien clases sería pedir cien veces algo que casi nunca se mira.
+- Lo pinta `js/resumen-clase.js` (una sola copia para las dos pantallas), todo
+  **escrito** —«2 de 3 contestadas: 1 bien, 1 sin calificar», «1 partida: 1
+  ganada»— y en una tabla con sus `scope`, porque lo copia quien arma el
+  informe.
+
+**Al tocar esto, correr `node herramientas/verificar-todo.js clase-resumen
+panel`.** El doble de `verificar-clase-registrada.js` cuenta
+`resumen_de_la_clase` de sus propias tablas, como la base. Está probado que
+falla de verdad: sin pedir el resumen al cerrar, se cae.
+
 ### La clase presencial también se registra, y es una `class_sessions` MÁS
 
 La clase del aula no existía para el sitio. El profesor daba su clase

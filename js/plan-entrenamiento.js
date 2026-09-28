@@ -799,8 +799,105 @@ window.PlanEntrenamiento = (function () {
     });
   }
 
+  /* Los recursos son rutas del propio sitio ("entreno/temas.html?tema=fork");
+     algo con esquema (javascript:, https:) o que empiece con // no sale de
+     este repositorio y no se pinta. Lo que el profesor reescribe a mano en
+     Informes pasa por acá antes de volverse un enlace. */
+  function recursoSeguro(r) {
+    return !!r && typeof r.href === 'string' && !/^[a-z][a-z0-9+.-]*:/i.test(r.href) && !r.href.startsWith('//');
+  }
+
+  /* El plan que el profesor armó en Informes y le compartió al alumno
+     (training_plans; la política solo lo devuelve si está compartido). Vale
+     para el diagnóstico del que salió o uno anterior; si el alumno hizo uno
+     NUEVO después, ese plan quedó viejo y vale el recalculado (null). */
+  async function planCompartido(sb, alumnoId, detalle) {
+    try {
+      const { data } = await sb.from('training_plans').select('plan, nota, shared')
+        .eq('student_id', alumnoId).maybeSingle();
+      const generado = data && data.shared && data.plan && data.plan.generado;
+      if (!generado || !Array.isArray(generado.semanas)) return null;
+      const delPlan = Date.parse(data.plan.diagnostico_fecha || '');
+      const deEste = Date.parse((detalle && detalle.fecha) || '');
+      // Un minuto de margen: la fecha del detalle la pone el navegador y la del
+      // plan es el created_at de la fila, que pone la base un instante después.
+      if (!isNaN(delPlan) && !isNaN(deEste) && deEste > delPlan + 60000) return null;
+      return { plan: generado, nota: data.nota || '' };
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /* ¿En qué semana del plan está hoy? La semana 1 empieza el día del
+     diagnóstico y cada una dura siete días de calendario, contados en hora de
+     Costa Rica (una prueba del domingo a las 11 p. m. no adelanta el lunes a
+     la semana 2). Pasada la última semana el plan terminó y devuelve null: ahí
+     lo que toca es repetir el diagnóstico, y eso ya lo pide «Hoy te toca». */
+  function diaCR(t) {
+    return Date.parse(new Date(t).toLocaleDateString('en-CA', { timeZone: 'America/Costa_Rica' }));
+  }
+  function semanaVigente(plan, desde, ahora) {
+    if (!plan || !Array.isArray(plan.semanas) || !plan.semanas.length) return null;
+    const t = Date.parse(desde || '');
+    if (isNaN(t)) return null;
+    const dias = Math.round((diaCR(ahora || Date.now()) - diaCR(t)) / 86400000);
+    if (isNaN(dias) || dias < 0) return null;
+    const i = Math.floor(dias / 7);
+    if (i >= plan.semanas.length) return null;
+    return { semana: plan.semanas[i], numero: i + 1, total: plan.semanas.length };
+  }
+
+  /* A dónde se manda al alumno esta semana: el primer recurso cuyo trabajo
+     CUENTA (deja filas en training_progress), para que el número de «hechos»
+     suba y al día siguiente se vea el avance. La portada de un curso es un
+     temario —mandar ahí deja al alumno leyendo un índice—, así que solo se
+     ofrece si la semana no trae nada mejor (la de partidas, por ejemplo). */
+  function recursoPrincipal(semana) {
+    const validos = ((semana && semana.recursos) || []).filter(recursoSeguro);
+    return validos.find((r) => {
+      const c = claveDeAvance(r.href);
+      return c && !c.startsWith('curso:');
+    }) || validos[0] || null;
+  }
+
+  /* Lo que el plan pide hoy, listo para pintar: la semana, a dónde ir y
+     cuánto hizo ahí desde el diagnóstico. Lo usan «Hoy te toca»
+     (entreno/index.html) y la franja del panel (clases.html), así los dos
+     dicen lo mismo que la página del diagnóstico. `detalle` es el que guarda
+     entreno/diagnostico.html. null si no hay plan vigente. */
+  async function hoyDelPlan(sb, alumnoId, detalle, ahora) {
+    if (!detalle || !detalle.areas || !Object.keys(detalle.areas).length) return null;
+    const compartido = await planCompartido(sb, alumnoId, detalle);
+    let plan = compartido && compartido.plan;
+    if (!plan) {
+      try { plan = generarPlan(resumir(detalle)); } catch (e) { return null; }
+    }
+    const vigente = semanaVigente(plan, detalle.fecha, ahora);
+    if (!vigente) return null;
+    const recurso = recursoPrincipal(vigente.semana);
+    if (!recurso) return null;
+    const titulo = String(vigente.semana.titulo || '');
+    // «Semana 2 · ⚔️ Táctica» → «Táctica»: el emoji no va dentro de una frase
+    // (el lector de pantalla lo lee en voz alta, «espadas cruzadas»).
+    const foco = (titulo.split(' · ').slice(1).join(' · ') || titulo).replace(/^[^\p{L}\p{N}]+/u, '');
+
+    /* Cuánto hizo ahí. Sin clave (una ficha, una página de juego) no hay
+       número: un «0» diría que no hizo nada, y no se sabe. El diagnóstico
+       tampoco lleva: contaría el mismo diagnóstico del que salió el plan. */
+    let hechos = null;
+    const clave = claveDeAvance(recurso.href);
+    if (clave && clave !== 'actividad:diagnostico') {
+      try {
+        const { data, error } = await sb.rpc('avance_del_plan', { p_alumno: alumnoId, p_desde: detalle.fecha || null });
+        if (!error) hechos = avancePorClave(data)[clave] || 0;
+      } catch (e) {}
+    }
+    return { numero: vigente.numero, total: vigente.total, foco, recurso, hechos, delProfesor: !!compartido };
+  }
+
   return { AREAS, AREA_POR_ID, NIVELES, ESCALONES, nivelDe, nivelPorEscalones, porEscalon, resumir, generarPlan, enlace,
            claveDeAvance, avancePorClave, marcarAvance,
+           recursoSeguro, planCompartido, semanaVigente, recursoPrincipal, hoyDelPlan,
            ESCALON_ELO, escalonDeElo, azarDe, probabilidad, medir, combinar, notaDeArea, BANDAS_AREA, bandaDeNota,
            ELO_TIPOS, ELO_TIPO_POR_ID, ELO_MIN, ELO_MAX, nivelDeElo, eloDeNivel, eloEstimado, eloValido, lecturaElo };
 })();

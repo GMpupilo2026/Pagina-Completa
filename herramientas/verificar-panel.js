@@ -158,6 +158,8 @@ window.__consultas = [];
       : []).concat(CLASES),
     puzzle_rush_scores: DATOS.puzzle_rush_scores || [],
     training_progress: [],
+    // El plan que el profesor le compartió (la RLS solo lo devuelve compartido).
+    training_plans: DATOS.training_plans || [],
     /* La sala de videollamada del profesor. Al equipo docente se la sirve esta
        tabla (es SUYA); al alumnado le llega por mis_clases(), que es donde la
        RLS decide si se la entrega. */
@@ -768,6 +770,33 @@ async function pruebaCoordinadorRecortado(browser) {
   await ctx.close();
 }
 
+/* «Qué hicieron» en cada clase del registro: lo que contestó cada alumno
+   (resumen_de_la_clase, js/resumen-clase.js). Se pide al abrirlo y de ESA
+   clase, no con la lista: una llamada por clase para cien clases sería pedir
+   cien veces algo que casi nunca se mira. */
+async function pruebaRegistroResumen(browser) {
+  console.log("\n=== Qué hicieron en una clase del registro ===");
+  const { page, ctx, errores } = await panel(browser, [PROFE], "u-profe", null, { rpc: { resumen_de_la_clase: [
+    { student_id: "u-ana", nombre: "Ana Rojas", preguntas: 3, respondidas: 2, correctas: 2, incorrectas: 0, sin_calificar: 0,
+      practicas: 0, ganadas: 0, tablas: 0, perdidas: 0 }] } });
+  await page.waitForSelector("#sessions-log tbody tr", { timeout: 10000 });
+  const pedidas = () => page.evaluate(() => window.__consultas.filter((c) => c.tabla === "resumen_de_la_clase").map((c) => c.args && c.args.p_clase));
+  igual("con la lista no se pide ningún resumen", JSON.stringify(await pedidas()), "[]");
+  const btn = page.locator("#sessions-log tbody tr").first().getByRole("button", { name: "Qué hicieron" });
+  igual("el botón dice que está cerrado", await btn.getAttribute("aria-expanded"), "false");
+  await btn.click();
+  await page.waitForFunction(() => /contestadas/.test(document.getElementById("sessions-log").textContent), null, { timeout: 5000 });
+  igual("pide el de ESA clase", JSON.stringify(await pedidas()), JSON.stringify(["c-0"]));
+  igual("y dice que está abierto", await btn.getAttribute("aria-expanded"), "true");
+  igual("lo pinta escrito", await page.evaluate(() =>
+    [...document.querySelectorAll("#sessions-log tbody td table tbody tr")].map((tr) => [...tr.children].map((c) => c.textContent).join(" | ")).join()),
+    "Ana Rojas | 2 de 3 contestadas: 2 bien | —");
+  await btn.click();
+  igual("se vuelve a cerrar", await page.evaluate(() => /contestadas/.test(document.getElementById("sessions-log").textContent)), "false");
+  igual("sin errores en la página", errores, []);
+  await ctx.close();
+}
+
 async function pruebaRegistro(browser) {
   console.log("\n=== El registro de clases ===");
   const { page, ctx, errores } = await panel(browser, [PROFE], "u-profe");
@@ -1181,6 +1210,18 @@ const AREAS_DEL_BANCO = (() => {
   return g.window.PlanEntrenamiento.AREAS.map((a) => a.id);
 })();
 
+/* La semana 1 del plan que sale de un diagnóstico, y a dónde manda: leído de
+   PlanEntrenamiento, la misma cuenta que hace la página. */
+function SEMANA_1_DEL_PLAN(detalle) {
+  const g = { window: {} };
+  new Function("window", require("fs").readFileSync(
+    require("path").join(__dirname, "..", "js", "plan-entrenamiento.js"), "utf8"))(g.window);
+  const PE = g.window.PlanEntrenamiento;
+  const plan = PE.generarPlan(PE.resumir(detalle));
+  const recurso = PE.recursoPrincipal(plan.semanas[0]);
+  return { total: plan.semanas.length, recurso, clave: PE.claveDeAvance(recurso.href) };
+}
+
 function diagnosticoCon(porcentajes) {
   const areas = {};
   for (const id of AREAS_DEL_BANCO) {
@@ -1272,15 +1313,77 @@ async function pruebaPrimerPaso(browser) {
   igual("sin errores en consola", r.errores.join(" | ") || "ninguno", "ninguno");
   await r.ctx.close();
 
-  // --- Ya arrancó: no hay nada que guiar, y el panel se calla ---
+  /* --- Ya arrancó: lo que sigue guiando es la semana de su plan ---
+     Los peldaños de arriba se apagaban con el primer ejercicio y el panel se
+     quedaba callado justo donde se corta el camino (un tercio de los que
+     hicieron el diagnóstico no volvió a entrenar). El enlace esperado no se
+     escribe a mano: sale del plan de verdad, como PRIMER_RECURSO. */
+  const semana1 = SEMANA_1_DEL_PLAN(diagnosticoCon({ mate: 30 }));
   r = await panel(browser, [ALUMNA, PROFE], "u-ana", {}, {
     rpc: {
       informes_resumen_alumnos: RESUMEN_ANA, progreso_dias_y_racha: RACHA_ANA,
       informes_diagnosticos_alumnos: [{ student_id: "u-ana", fecha: new Date().toISOString(),
         detalle: diagnosticoCon({ mate: 30 }), a_medias_pregunta: null, a_medias_fecha: null }],
+      avance_del_plan: [{ clave: semana1.clave, hechos: 4 }],
     },
   });
-  igual("a quien ya resolvió ejercicios no se le repite el paso uno",
+  v = await leer(r.page);
+  igual("a quien ya arrancó, la franja le muestra su plan", v.display !== "none", "true");
+  igual("con la semana en que va, contada desde el diagnóstico",
+    v.titulo, `Tu plan · semana 1 de ${semana1.total}`);
+  igual("y lleva a donde el trabajo cuenta, con su recorte", v.enlace, semana1.recurso.href);
+  igual("el botón nombra lo que va a abrir", v.cta, semana1.recurso.texto + " →");
+  igual("dice cuánto lleva ahí (el número sale de avance_del_plan)", v.texto.includes("Llevas 4 hechos"), "true");
+  igual("no se pinta en rojo: es su plan, no una entrega vencida", v.rojo, "false");
+  igual("el emoji no va dentro de la frase", /\p{Extended_Pictographic}/u.test(v.texto), "false");
+  igual("sin errores en consola", r.errores.join(" | ") || "ninguno", "ninguno");
+  await r.ctx.close();
+
+  /* --- El plan que compartió el profesor manda sobre el recalculado --- */
+  const hace = (dias) => new Date(Date.now() - dias * 86400000).toISOString();
+  r = await panel(browser, [ALUMNA, PROFE], "u-ana", {}, {
+    rpc: {
+      informes_resumen_alumnos: RESUMEN_ANA, progreso_dias_y_racha: RACHA_ANA,
+      informes_diagnosticos_alumnos: [{ student_id: "u-ana", fecha: hace(9),
+        detalle: diagnosticoCon({ mate: 30 }), a_medias_pregunta: null, a_medias_fecha: null }],
+    },
+    training_plans: [{ student_id: "u-ana", shared: true, nota: "", plan: { diagnostico_fecha: hace(9), generado: { semanas: [
+      { titulo: "Semana 1 · 👑 Mates", recursos: [{ texto: "Mates en uno", href: "entreno/mates.html?cat=mate1" }] },
+      { titulo: "Semana 2 · 🏁 Finales", recursos: [
+        { texto: "Curso de finales", href: "cursos/finales-basicos.html" },
+        { texto: "Ejercicios de final de peones", href: "entreno/temas.html?tema=pawnEndgame" }] },
+    ] } } }],
+  });
+  v = await leer(r.page);
+  igual("con el plan del profe, a los 9 días va en SU semana 2", v.titulo, "Tu plan · semana 2 de 2");
+  igual("y prefiere lo que cuenta antes que la portada de un curso", v.enlace, "entreno/temas.html?tema=pawnEndgame");
+  igual("y dice que es el plan que le compartió su profe", v.texto.includes("te compartió tu profe"), "true");
+  igual("sin nada hecho ahí, lo dice (y no calla)", v.texto.includes("Todavía no has hecho nada ahí"), "true");
+  await r.ctx.close();
+
+  /* --- Un recurso con esquema no se vuelve enlace, ni en la franja --- */
+  r = await panel(browser, [ALUMNA, PROFE], "u-ana", {}, {
+    rpc: {
+      informes_resumen_alumnos: RESUMEN_ANA, progreso_dias_y_racha: RACHA_ANA,
+      informes_diagnosticos_alumnos: [{ student_id: "u-ana", fecha: hace(1),
+        detalle: diagnosticoCon({ mate: 30 }), a_medias_pregunta: null, a_medias_fecha: null }],
+    },
+    training_plans: [{ student_id: "u-ana", shared: true, nota: "", plan: { diagnostico_fecha: hace(1), generado: { semanas: [
+      { titulo: "Semana 1 · Mates", recursos: [{ texto: "Mates", href: "javascript:alert(1)" }] }] } } }],
+  });
+  igual("un plan del profe con javascript: no pinta la franja",
+    await r.page.evaluate(() => getComputedStyle(document.getElementById("pendientes-aviso")).display), "none");
+  await r.ctx.close();
+
+  // --- Con el plan ya terminado (más de cuatro semanas), el panel se calla ---
+  r = await panel(browser, [ALUMNA, PROFE], "u-ana", {}, {
+    rpc: {
+      informes_resumen_alumnos: RESUMEN_ANA, progreso_dias_y_racha: RACHA_ANA,
+      informes_diagnosticos_alumnos: [{ student_id: "u-ana", fecha: hace(40),
+        detalle: diagnosticoCon({ mate: 30 }), a_medias_pregunta: null, a_medias_fecha: null }],
+    },
+  });
+  igual("a quien ya resolvió ejercicios y terminó su plan no se le repite nada",
     await r.page.evaluate(() => getComputedStyle(document.getElementById("pendientes-aviso")).display), "none");
   await r.ctx.close();
 
@@ -1956,6 +2059,7 @@ if (require.main !== module) return;
     await pruebaPersonas(browser);
     await pruebaCoordinadorRecortado(browser);
     await pruebaRegistro(browser);
+    await pruebaRegistroResumen(browser);
     await pruebaPantalla(browser);
   } finally {
     await browser.close();

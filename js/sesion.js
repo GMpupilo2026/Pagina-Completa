@@ -1394,6 +1394,7 @@
                 campos.classList.remove("hidden");
                 btn.textContent = "Confirmar y cerrar";
                 document.getElementById("clase-titulo").focus();
+                pintarResumenDeLaClase(currentOpenSessionId);
                 return;
             }
             const titulo = document.getElementById("clase-titulo").value.trim();
@@ -1425,6 +1426,16 @@
             pintarEstadoDeClase();
             setStatus("✅ Clase cerrada y guardada en el registro"
                 + (titulo ? ' como "' + titulo + '"' : "") + ".");
+        }
+
+        // Lo que contestó cada alumno en esta clase, antes de cerrarla.
+        async function pintarResumenDeLaClase(claseId) {
+            const caja = document.getElementById("clase-resumen");
+            if (!caja || !claseId) return;
+            caja.textContent = "Contando lo que hizo cada alumno en esta clase…";
+            const { filas, error } = await ResumenClase.cargar(sb, claseId);
+            if (error) { console.error(error); caja.textContent = "No se pudo contar lo que hizo cada alumno: " + error.message; return; }
+            ResumenClase.pintar(caja, filas);
         }
 
         /* Lo que se ve tiene que decir la VERDAD sobre si se está registrando,
@@ -2928,6 +2939,8 @@
         async function setAnswerCorrect(answerId, value) {
             const { error } = await sb.from("question_answers").update({ is_correct: value }).eq("id", answerId);
             if (error) console.error(error);
+            // Si está cerrando la clase, el resumen de arriba tiene que contar esta nota.
+            if (!document.getElementById("clase-cerrar-campos").classList.contains("hidden")) pintarResumenDeLaClase(currentOpenSessionId);
         }
 
         // ---------- Respuesta de referencia del motor (privada, solo el profesor) ----------

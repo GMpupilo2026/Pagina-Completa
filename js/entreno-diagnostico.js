@@ -790,7 +790,7 @@ function pintarPlan(plan, resumen, nota) {
     (semana.recursos || []).forEach((r) => {
       // Los recursos son rutas del propio sitio ("entreno/temas.html?tema=fork");
       // algo con esquema (javascript:, https:) no sale de este repositorio.
-      if (!r || typeof r.href !== 'string' || /^[a-z][a-z0-9+.-]*:/i.test(r.href) || r.href.startsWith('//')) return;
+      if (!PE.recursoSeguro(r)) return;
       if (enlaces.childNodes.length) enlaces.appendChild(document.createTextNode(' · '));
       const a = el('a', 'text-accent-700 dark:text-accent-400 hover:underline', r.texto);
       a.href = PE.enlace(r.href, '../');
@@ -831,21 +831,10 @@ async function pintarAvance(desde) {
     PE.marcarAvance(document.getElementById('result-plan'), avanceDelPlan);
   } catch (e) {}
 }
-async function planDelProfesor(detalle) {
-  try {
-    const { data } = await sb.from('training_plans').select('plan, nota, shared')
-      .eq('student_id', sesionActual.user.id).maybeSingle();
-    const generado = data && data.shared && data.plan && data.plan.generado;
-    if (!generado || !Array.isArray(generado.semanas)) return null;
-    const delPlan = Date.parse(data.plan.diagnostico_fecha || '');
-    const deEste = Date.parse(detalle.fecha || '');
-    // Un minuto de margen: la fecha del detalle la pone el navegador y la del
-    // plan es el created_at de la fila, que pone la base un instante después.
-    if (!isNaN(delPlan) && !isNaN(deEste) && deEste > delPlan + 60000) return null;
-    return { plan: generado, nota: data.nota || '' };
-  } catch (e) {
-    return null;
-  }
+// La regla de cuándo vale el plan del profesor vive en PlanEntrenamiento: la
+// usan también «Hoy te toca» y el panel, y las tres tienen que coincidir.
+function planDelProfesor(detalle) {
+  return PE.planCompartido(sb, sesionActual.user.id, detalle);
 }
 
 function mostrarResultado(detalle, reciente) {

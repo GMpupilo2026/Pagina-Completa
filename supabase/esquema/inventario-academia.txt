@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20260928224815
+# al-dia-con: 20260928225348
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -610,6 +610,7 @@ columna  practice_games.status  text
 columna  practice_games.student_color  text
 columna  practice_games.student_id  uuid
 columna  practice_games.updated_at  timestamp with time zone
+columna  practice_sessions.class_session_id  uuid
 columna  practice_sessions.created_at  timestamp with time zone
 columna  practice_sessions.created_by  uuid
 columna  practice_sessions.ended_at  timestamp with time zone
@@ -691,6 +692,7 @@ columna  question_answers.updated_at  timestamp with time zone
 columna  question_engine_answers.answer  jsonb
 columna  question_engine_answers.computed_at  timestamp with time zone
 columna  question_engine_answers.question_id  uuid
+columna  questions.class_session_id  uuid
 columna  questions.closed_at  timestamp with time zone
 columna  questions.created_at  timestamp with time zone
 columna  questions.created_by  uuid
@@ -1025,6 +1027,7 @@ funcion  interno.supervisados_por_mi()  definer  anon=false  auth=true
 funcion  interno.version_legal_valida(p text)  invoker  anon=false  auth=false
 funcion  json_seguro(p_texto text)  invoker  anon=false  auth=true
 funcion  jugadores_de_asientos(p_asientos jsonb)  invoker  anon=false  auth=true
+funcion  ligar_a_la_clase_abierta()  invoker  anon=false  auth=false
 funcion  mandar_plan_rival(p_alumnos uuid[], p_rival text, p_lado text, p_plan jsonb, p_nota text, p_vence timestamp with time zone)  invoker  anon=false  auth=true
 funcion  marca_de_alumno(p_alumno uuid)  definer  anon=false  auth=false
 funcion  marcar_coordinador(p_profesor uuid, p_valor boolean)  definer  anon=false  auth=true
@@ -1097,6 +1100,7 @@ funcion  responder_encuesta_profesor(p_profesor uuid, p_explica integer, p_apren
 funcion  responder_examen(p_item uuid, p_respuesta jsonb, p_segundos integer)  definer  anon=false  auth=true
 funcion  responder_formulario(p_slug text, p_respuestas jsonb, p_version_privacidad text)  definer  anon=true  auth=true
 funcion  respuestas_satisfaccion(p_desde date, p_hasta date, p_profesor uuid, p_solo_se_van boolean)  invoker  anon=false  auth=true
+funcion  resumen_de_la_clase(p_clase uuid)  invoker  anon=false  auth=true
 funcion  resumen_encuesta_curso(p_encuesta uuid)  invoker  anon=false  auth=true
 funcion  resumen_profesores_supervisados(p_periodo date)  definer  anon=false  auth=true
 funcion  resumen_satisfaccion(p_desde date, p_hasta date)  invoker  anon=false  auth=true
@@ -1423,11 +1427,13 @@ trigger  ia_uso  ia_uso_avisa_tope
 trigger  notas_alumno  notas_alumno_proteger
 trigger  planes_clase  planes_clase_proteger
 trigger  platform_activity_log  platform_activity_log_protege_tiempos
+trigger  practice_sessions  practice_sessions_ligar_a_la_clase
 trigger  profesor_videollamada  profesor_videollamada_protege
 trigger  profile_teachers  profile_teachers_sincroniza_principal
 trigger  profile_teachers  profile_teachers_suma_a_la_academia
 trigger  profiles  protect_profiles_identity_columns_trigger
 trigger  question_answers  protect_answer_grading_trigger
+trigger  questions  questions_ligar_a_la_clase
 trigger  salas_torneo  salas_torneo_sello
 trigger  tarea_items  proteger_tarea_items_alumno
 trigger  tareas  tareas_avisa_push
@@ -1602,6 +1608,7 @@ indice  practice_games  practice_games_pkey
 indice  practice_games  practice_games_session_id_idx
 indice  practice_games  practice_games_session_id_student_id_key
 indice  practice_games  practice_games_student_id_fk
+indice  practice_sessions  practice_sessions_class_session_idx
 indice  practice_sessions  practice_sessions_created_by_fk
 indice  practice_sessions  practice_sessions_pkey
 indice  preparacion_rivales_profesores  preparacion_rivales_profesores_activado_por_idx
@@ -1629,6 +1636,7 @@ indice  question_answers  question_answers_pkey
 indice  question_answers  question_answers_question_id_student_id_key
 indice  question_answers  question_answers_student_idx
 indice  question_engine_answers  question_engine_answers_pkey
+indice  questions  questions_class_session_idx
 indice  questions  questions_created_by_fk
 indice  questions  questions_pkey
 indice  quiniela_participantes  quiniela_participantes_pkey

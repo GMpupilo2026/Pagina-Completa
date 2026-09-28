@@ -279,6 +279,23 @@ calculan de lo que ya hay. El panel pinta el primero que no esté cumplido:
 - **Nunca se pinta en rojo** y tiene su propio título («Empieza por acá»): decir
   «tienes 1 pendiente» sobre una sugerencia sería mentir.
 
+#### La semana del plan, para quien ya arrancó
+
+Los tres peldaños se apagan con el primer ejercicio y ahí el panel se quedaba
+callado, que en los datos es justo donde se corta el camino: de los alumnos que
+hicieron el diagnóstico, un tercio no volvió a entrenar y otro tercio lo dejó a
+los uno o dos días. Ahora, a quien ya arrancó y tiene un plan vigente, la misma
+franja le dice **«Tu plan · semana 2 de 4»**, qué toca esa semana, cuánto lleva
+ahí desde el diagnóstico y el botón a donde el trabajo cuenta.
+
+- **No es un cartel que se repite igual**: cambia de semana en semana y el
+  número sube con lo que hace. Se apaga solo cuando el plan termina.
+- **Lo que vence sigue mandando**: esto vive dentro de `mostrarPrimerPaso()`,
+  que solo corre cuando no hay tareas ni exámenes que pintar.
+- La cuenta es `PlanEntrenamiento.hoyDelPlan()`, la misma de «Hoy te toca»,
+  y respeta el plan que el profesor compartió (ver «La semana del plan, en el
+  hub y en el panel» en entrenamiento.md). Nunca en rojo.
+
 #### El destino tiene que ser una página cuyo trabajo CUENTE
 
 Es lo único de todo esto que se rompe callado. **Cinco de las nueve áreas tienen
