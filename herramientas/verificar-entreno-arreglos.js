@@ -31,8 +31,8 @@ function igual(nombre, hallado, esperado) {
    training_plans devuelve la fila que se le pase (la política real solo la da
    si shared), y se espera a que la página abra la aplicación. */
 const doble = require("./lib/doble-entreno");
-async function abrir(browser, ruta, planes) {
-  const r = await doble.abrir(browser, ruta, planes ? { training_plans: planes } : {});
+async function abrir(browser, ruta, planes, extra) {
+  const r = await doble.abrir(browser, ruta, Object.assign(planes ? { training_plans: planes } : {}, extra || {}));
   await r.page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
   return r;
 }
@@ -193,6 +193,22 @@ async function diagnostico(browser) {
     igual("y el del sitio va con ../ delante",
       await page.evaluate(() => document.querySelector("#result-plan a").getAttribute("href")), "../entreno/temas.html?tema=fork");
     sinErrores(errores, "diagnóstico");
+    await ctx.close();
+  }
+  {
+    // Lo hecho desde el diagnóstico, al lado de cada enlace (avance_del_plan()).
+    const RECURSOS = [{ texto: "Temas", href: "entreno/temas.html?tema=fork" },
+      { texto: "Mates", href: "entreno/mates.html?cat=mate2" }, { texto: "Tablero", href: "tablero.html" }];
+    const CON_RECURSOS = Object.assign({}, PLAN, { semanas: [Object.assign({}, SEMANAS[0], { recursos: RECURSOS })] });
+    const { page, ctx, errores } = await abrir(browser, "/entreno/diagnostico.html", null,
+      { "rpc:avance_del_plan": [{ clave: "tema:fork", hechos: 12 }, { clave: "actividad:4x4", hechos: 3 }] });
+    await page.waitForFunction(() => sesionActual !== null, { timeout: 10000 });
+    await page.evaluate(async ([plan, resumen]) => { pintarPlan(plan, resumen); await pintarAvance("2026-09-01T00:00:00Z"); }, [CON_RECURSOS, RESUMEN]);
+    const marcas = await page.evaluate(() => [...document.querySelectorAll("#result-plan a")].map((a) =>
+      a.textContent + (a.nextElementSibling && a.nextElementSibling.classList.contains("plan-avance") ? a.nextElementSibling.textContent : "")));
+    igual("cada enlace dice lo hecho desde el diagnóstico; el que no deja rastro, nada",
+      marcas, ["Temas (✓ 12 hechos)", "Mates (todavía nada)", "Tablero"]);
+    sinErrores(errores, "diagnóstico con avance");
     await ctx.close();
   }
   {

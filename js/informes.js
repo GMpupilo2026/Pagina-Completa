@@ -1944,6 +1944,31 @@
         // el nombre del alumno en esta página. Los recursos (título y enlace de
         // cada semana) NO se editan a mano y siguen saliendo tal cual del
         // repositorio, verificados contra el material real.
+        /* El avance del plan: cuánto hizo el alumno, desde el diagnóstico del
+           que salió, en cada lugar al que manda un recurso (avance_del_plan()
+           cuenta en la base; PlanEntrenamiento.marcarAvance lo pone al lado de
+           cada enlace, igual que en la página del diagnóstico). Se guarda la
+           última respuesta para volver a marcar cuando el plan se repinta
+           (editar, recalcular). */
+        let avancePlan = { clave: null, datos: null };
+        async function marcarAvanceDelPlan(contenedor, alumnoId, desde) {
+            const clave = alumnoId + "|" + (desde || "");
+            if (avancePlan.clave !== clave) {
+                avancePlan = { clave, datos: null };
+                try {
+                    const { data, error } = await sb.rpc("avance_del_plan", { p_alumno: alumnoId, p_desde: desde || null });
+                    if (error || avancePlan.clave !== clave) return;
+                    avancePlan.datos = PE.avancePorClave(data);
+                } catch (e) { return; }
+            }
+            if (avancePlan.datos) PE.marcarAvance(contenedor, avancePlan.datos);
+        }
+        function pintarPlanCuerpo(plan) {
+            const cuerpo = document.getElementById("plan-cuerpo");
+            cuerpo.innerHTML = planHTML(plan);
+            if (avancePlan.datos) PE.marcarAvance(cuerpo, avancePlan.datos);
+        }
+
         function planHTML(plan) {
             return `<p class="text-sm text-brand-600 dark:text-brand-300 mb-1"><strong>Rutina sugerida:</strong> ${escVis(plan.rutina)}.</p>
                 <p class="text-sm text-brand-600 dark:text-brand-300 mb-1"><strong>Prioridad:</strong> ${plan.prioridad.map(escVis).join(" → ")}.</p>
@@ -1954,7 +1979,7 @@
                         <p class="text-xs text-brand-450 dark:text-brand-350 mb-1">${escVis(s.porque)}</p>
                         <p class="text-xs text-brand-500 dark:text-brand-300 mb-2"><strong>Meta:</strong> ${escVis(s.objetivo)}</p>
                         <ul class="list-disc pl-5 space-y-1 text-sm text-brand-600 dark:text-brand-300">${s.tareas.map((x) => `<li>${escVis(x)}</li>`).join("")}</ul>
-                        <p class="text-xs mt-2">${s.recursos.map((r) => `<a href="${r.href}" class="text-accent-700 dark:text-accent-400 hover:underline">${escVis(r.texto)}</a>`).join(" · ")}</p>
+                        <p class="text-xs mt-2">${s.recursos.map((r) => { const c = PE.claveDeAvance(r.href); return `<a href="${r.href}"${c ? ` data-clave="${escVis(c)}"` : ""} class="text-accent-700 dark:text-accent-400 hover:underline">${escVis(r.texto)}</a>`; }).join(" · ")}</p>
                     </div>`).join("")}</div>
                 <p class="text-xs text-brand-450 dark:text-brand-350 mt-3">${escVis(plan.medicion)}</p>`;
         }
@@ -2076,13 +2101,13 @@
             document.getElementById("plan-editar").classList.add("hidden");
             document.getElementById("plan-recalcular").classList.add("hidden");
             document.getElementById("pe-cancelar").addEventListener("click", () => {
-                document.getElementById("plan-cuerpo").innerHTML = planHTML(plan);
+                pintarPlanCuerpo(plan);
                 document.getElementById("plan-editar").classList.remove("hidden");
                 document.getElementById("plan-recalcular").classList.remove("hidden");
             });
             document.getElementById("pe-aplicar").addEventListener("click", () => {
                 leerEdicionPlan(plan);
-                document.getElementById("plan-cuerpo").innerHTML = planHTML(plan);
+                pintarPlanCuerpo(plan);
                 document.getElementById("plan-editar").classList.remove("hidden");
                 document.getElementById("plan-recalcular").classList.remove("hidden");
                 document.getElementById("plan-estado").textContent = "Cambios aplicados: falta guardar o compartir para que queden.";
@@ -2165,12 +2190,13 @@
                 </div>`;
 
             conectarEloEditor(student);
+            marcarAvanceDelPlan(document.getElementById("plan-cuerpo"), studentId, entreno.diagnostico.created_at);
             document.getElementById("plan-editar").addEventListener("click", () => activarEdicionPlan(plan));
             document.getElementById("plan-recalcular").addEventListener("click", async () => {
                 if (!(await Avisos.confirmar("Se pierden los ajustes que hiciste a mano.", { titulo: "¿Volver al plan que calcula el diagnóstico?", aceptar: "Recalcular", peligro: true }))) return;
                 Object.assign(plan, PE.generarPlan(resumen));
                 plan.editado = null;
-                document.getElementById("plan-cuerpo").innerHTML = planHTML(plan);
+                pintarPlanCuerpo(plan);
                 document.getElementById("plan-estado").textContent = "Recalculado desde el diagnóstico: falta guardar o compartir para que quede así.";
             });
             const guardar = (compartir) => guardarPlan(studentId, plan, entreno.diagnostico, compartir);
@@ -2234,6 +2260,7 @@
                     ${planHTML(plan)}`
                   : `<p class="text-sm text-brand-500 dark:text-brand-300">Tu profesor todavía no te ha compartido un plan. Mientras tanto, lo más flojo del diagnóstico es ${resumen.debilidades.length ? resumen.debilidades.map((d) => d.nombre.toLowerCase()).join(", ") : "nada en particular: sigue con tu ritmo"} — por ahí conviene empezar.</p>
                      <p class="text-xs text-brand-450 dark:text-brand-350 mt-2"><a href="entreno/diagnostico.html" class="text-accent-700 dark:text-accent-400 hover:underline">Ver el detalle completo de tu diagnóstico</a></p>`}`;
+            if (plan) marcarAvanceDelPlan(body, profile.id, (planCompartido.plan && planCompartido.plan.diagnostico_fecha) || entreno.diagnostico.created_at);
         }
 
 

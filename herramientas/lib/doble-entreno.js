@@ -5,6 +5,7 @@
  * - Cada insert queda anotado en window.__inserts ({ tabla, rows }).
  * - Cada tabla devuelve las filas que se le pasen en `tablas`, filtradas de
  *   verdad en el RESOLVER: .eq() solo anota el filtro.
+ * - sb.rpc("x") devuelve lo que traiga tablas["rpc:x"] (lista vacía si no).
  *
  * abrir(browser, ruta, tablas, local) abre la página en un contexto nuevo
  * (con serviceWorkers: "block"), con `local` ya puesto en localStorage antes de
@@ -45,7 +46,8 @@ function clienteFalso(tablas) {
       onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
     },
     from: consulta,
-    rpc: () => ({ then(r) { return Promise.resolve({ data: [], error: null }).then(r); } }),
+    // Una función de la base devuelve lo que traiga tablas["rpc:<nombre>"].
+    rpc: (n) => ({ then(r) { return Promise.resolve({ data: TABLAS["rpc:" + n] || [], error: null }).then(r); } }),
     channel: () => ({ on() { return this; }, subscribe() { return this; } }),
     removeChannel() {},
   };
