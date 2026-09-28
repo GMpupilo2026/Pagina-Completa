@@ -40,6 +40,9 @@ function cosasDeHoy(){
     const n = RepasoFallados.pendientes(RepasoFallados.CLAVES.temas).length;
     if (n) cosas.push({ icono: '🔁', href: 'temas.html?repaso=1',
       texto: n === 1 ? 'Repasar 1 ejercicio que te costó' : `Repasar ${n} ejercicios que te costaron` });
+    const m = RepasoFallados.pendientes(RepasoFallados.CLAVES.mates).length;
+    if (m) cosas.push({ icono: '♚', href: 'mates.html?repaso=1',
+      texto: m === 1 ? 'Repasar 1 mate que te costó' : `Repasar ${m} mates que te costaron` });
   }
 
   // Líneas de Aperturas ya empezadas cuyo repaso venció (las nuevas no cuentan:

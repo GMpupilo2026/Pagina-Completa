@@ -73,6 +73,31 @@
             return div;
         }
 
+        /* Ejercicios por tema, Visualización, Tipos, Aperturas y Precisión
+           posicional: lo que informes_entreno_modulos() cuenta y antes no se
+           mostraba en ningún lado (el profesor solo veía los minutos). Una sola
+           copia para la vista del alumno y la del profesor. */
+        function porcentajeLimpio(e) {
+            return e.conComoSalio ? Math.round(100 * e.limpios / e.conComoSalio) : null;
+        }
+        function tarjetaDeTemas(e) {
+            const pct = porcentajeLimpio(e);
+            return statCard("🗂️", e.temas, "Ejercicios por tema resueltos" + (pct === null ? "" : ` (${pct} % sin error ni pista)`), true);
+        }
+        function textoPrecision(e) {
+            if (!e.precisionRondas) return "—";
+            return (e.precisionUltima === null ? "" : e.precisionUltima + " % en la última") +
+                ` · ${e.precisionRondas} ${e.precisionRondas === 1 ? "ronda" : "rondas"}`;
+        }
+        function tarjetasDeModulos(e) {
+            return [
+                statCard("👁️", e.visualizacion, "Ejercicios de Visualización resueltos", true),
+                statCard("🧩", `${e.tiposEjercicios} (${e.tiposEstrellas}⭐)`, "Tipos de entrenamiento: ejercicios con estrellas", true),
+                statCard("📖", `${e.aperturasEmpezadas} (${e.aperturasFirmes} firmes)`, "Líneas de Aperturas estudiadas", true),
+                statCard("🎯", textoPrecision(e), "Precisión posicional", true),
+            ];
+        }
+
         // Le pone nombre a los números que ya vienen contados de la base: ejercicios
         // 4x4 y lecciones de Aprender distintos (una misma actividad repetida cuenta una
         // vez), la mejor marca de Coordenadas, las series de Practicar con sus estrellas,
@@ -99,9 +124,23 @@
             btn.textContent = "Ver todos los números ▾";
         }
 
-        function entrenoDeFila(fila, cursos, diagnostico) {
+        function entrenoDeFila(fila, cursos, diagnostico, modulos) {
             const f = fila || {};
+            // Los módulos que no cuenta informes_resumen_alumnos() salen de
+            // informes_entreno_modulos() (ver tarjetasDeModulos).
+            const m = modulos || {};
             return {
+                temas: m.temas || 0,
+                conComoSalio: m.con_como_salio || 0,
+                limpios: m.limpios || 0,
+                visualizacion: m.visualizacion || 0,
+                tiposEjercicios: m.tipos_ejercicios || 0,
+                tiposEstrellas: m.tipos_estrellas || 0,
+                aperturasEmpezadas: m.aperturas_empezadas || 0,
+                aperturasFirmes: m.aperturas_firmes || 0,
+                precisionRondas: m.precision_rondas || 0,
+                precisionUltima: typeof m.precision_ultima === "number" ? m.precision_ultima : null,
+                precisionFecha: m.precision_fecha || null,
                 puzzles: f.puzzles || 0,
                 lessons: f.lecciones || 0,
                 bestCoord: f.mejor_coord || 0,
@@ -128,15 +167,17 @@
         // compañeros—, así que su vista busca SU renglón por id y nunca toma el primero.
         // Por eso sirven para las dos vistas sin escribir la cuenta dos veces.
         async function cargarResumen() {
-            const [alumnos, cursos, diagnosticos] = await Promise.all([
+            const [alumnos, cursos, diagnosticos, modulos] = await Promise.all([
                 traerTodo(() => sb.rpc("informes_resumen_alumnos")),
                 traerTodo(() => sb.rpc("informes_cursos_alumnos")),
                 traerTodo(() => sb.rpc("informes_diagnosticos_alumnos")),
+                traerTodo(() => sb.rpc("informes_entreno_modulos")),
             ]);
-            const cursosPorAlumno = {}, diagnosticoPorAlumno = {};
+            const cursosPorAlumno = {}, diagnosticoPorAlumno = {}, modulosPorAlumno = {};
             cursos.forEach((c) => { (cursosPorAlumno[c.student_id] = cursosPorAlumno[c.student_id] || []).push(c); });
             diagnosticos.forEach((d) => { diagnosticoPorAlumno[d.student_id] = d; });
-            return { alumnos, cursosPorAlumno, diagnosticoPorAlumno };
+            modulos.forEach((m) => { modulosPorAlumno[m.student_id] = m; });
+            return { alumnos, cursosPorAlumno, diagnosticoPorAlumno, modulosPorAlumno };
         }
 
         // Tarjeta "Cursos": una barra por curso con los temas estudiados sobre el total y
@@ -238,9 +279,9 @@
         async function loadStudentReport() {
             // Las mismas tres consultas que usa el profesor: la RLS hace que a un alumno
             // le devuelvan únicamente su propio renglón.
-            const { alumnos, cursosPorAlumno, diagnosticoPorAlumno } = await cargarResumen();
+            const { alumnos, cursosPorAlumno, diagnosticoPorAlumno, modulosPorAlumno } = await cargarResumen();
             const fila = alumnos.find((a) => a.id === profile.id) || {};
-            const entreno = entrenoDeFila(fila, cursosPorAlumno[profile.id], diagnosticoPorAlumno[profile.id]);
+            const entreno = entrenoDeFila(fila, cursosPorAlumno[profile.id], diagnosticoPorAlumno[profile.id], modulosPorAlumno[profile.id]);
 
             const respondidas = fila.respuestas || 0;
             const correct = fila.correctas || 0;
@@ -271,6 +312,7 @@
                 statCard("🎓", entreno.lessons, "Lecciones de Aprender completadas"),
                 statCard("♚", entreno.matesTotal, `Mates resueltos (${entreno.mate1}·${entreno.mate2}·${entreno.mate3} en 1/2/3)`),
                 statCard("⚔️", entreno.tacticaTotal, "Posiciones de Táctica resueltas"),
+                tarjetaDeTemas(entreno),
                 statCard("🏛️", entreno.cursosTemas, "Temas de cursos estudiados"),
                 statCard("🚩", respondidas, "Asignaciones respondidas", true),
                 statCard("✅", correct, "Correctas", true),
@@ -279,7 +321,8 @@
                 statCard("⏱️", fmtDuration(exerciseMinutesStudent), "Tiempo en ejercicios", true),
                 statCard("⚡", entreno.bestCoord, "Mejor puntuación en Coordenadas", true),
                 statCard("🏆", `${entreno.practiceCompleted} (${entreno.practiceStars}⭐)`, "Series de Practicar completadas", true),
-                statCard("🧠", entreno.concentracionTotal, "Ejercicios de Concentración resueltos", true)
+                statCard("🧠", entreno.concentracionTotal, "Ejercicios de Concentración resueltos", true),
+                ...tarjetasDeModulos(entreno)
             );
             mostrarBotonDeNumeros();
 
@@ -316,7 +359,7 @@
         let teacherData = null;
 
         async function fetchTeacherData() {
-            const [{ alumnos, cursosPorAlumno, diagnosticoPorAlumno }, totalesRes, planes, visitantes, arbitrajes, subgruposRes, inactivosRes] = await Promise.all([
+            const [{ alumnos, cursosPorAlumno, diagnosticoPorAlumno, modulosPorAlumno }, totalesRes, planes, visitantes, arbitrajes, subgruposRes, inactivosRes] = await Promise.all([
                 cargarResumen(),
                 sb.rpc("informes_totales").maybeSingle(),
                 traerTodo(() => sb.from("training_plans").select("*").order("student_id")),
@@ -369,7 +412,7 @@
             alumnosDelInforme.forEach((a) => { resumenPorAlumno[a.id] = a; });
             teacherData = {
                 totales, closedSessions: totales.clases_cerradas,
-                students: alumnosDelInforme, resumenPorAlumno, cursosPorAlumno, diagnosticoPorAlumno,
+                students: alumnosDelInforme, resumenPorAlumno, cursosPorAlumno, diagnosticoPorAlumno, modulosPorAlumno,
                 plansByStudent, visitantes, arbitrajes,
                 subgrupos: subgruposRes?.data || [],
                 inactivos: inactivosDelInforme,
@@ -380,7 +423,8 @@
         function entrenoDeAlumno(id) {
             return entrenoDeFila(teacherData.resumenPorAlumno[id],
                                  teacherData.cursosPorAlumno[id],
-                                 teacherData.diagnosticoPorAlumno[id]);
+                                 teacherData.diagnosticoPorAlumno[id],
+                                 teacherData.modulosPorAlumno[id]);
         }
 
         function populateStudentFilter() {
@@ -802,6 +846,7 @@
                 statCard("🎓", entreno.lessons, "Lecciones de Aprender completadas"),
                 statCard("♚", entreno.matesTotal, `Mates resueltos (${entreno.mate1}·${entreno.mate2}·${entreno.mate3} en 1/2/3)`),
                 statCard("⚔️", entreno.tacticaTotal, "Posiciones de Táctica resueltas"),
+                tarjetaDeTemas(entreno),
                 statCard("🏛️", entreno.cursosTemas, "Temas de cursos estudiados"),
                 statCard("🚩", respondidas, "Asignaciones respondidas", true),
                 statCard("✅", correct, "Correctas", true),
@@ -810,7 +855,8 @@
                 statCard("⏱️", fmtDuration(exerciseMinutesDetail), "Tiempo en ejercicios", true),
                 statCard("⚡", entreno.bestCoord, "Mejor puntuación en Coordenadas", true),
                 statCard("🏆", `${entreno.practiceCompleted} (${entreno.practiceStars}⭐)`, "Series de Practicar completadas", true),
-                statCard("🧠", entreno.concentracionTotal, "Ejercicios de Concentración resueltos", true)
+                statCard("🧠", entreno.concentracionTotal, "Ejercicios de Concentración resueltos", true),
+                ...tarjetasDeModulos(entreno)
             );
             mostrarBotonDeNumeros();
 
@@ -1478,6 +1524,11 @@
             "diagnostico-publico": "🌐 Diagnósticos de nivel del público — quiénes lo hicieron y a quién falta atender",
             arbitraje: "⚖️ Exámenes de arbitraje del público — quiénes lo hicieron y a quién falta responder",
             concentracion: "🧠 Concentración — ejercicios resueltos",
+            temas: "🗂️ Ejercicios por tema — resueltos y cuántos sin error ni pista",
+            visualizacion: "👁️ Visualización — ejercicios resueltos",
+            tipos: "🧩 Tipos de entrenamiento — ejercicios con estrellas",
+            aperturas: "📖 Aperturas — líneas estudiadas (firmes: aguantan tres semanas sin repasar)",
+            precision: "🎯 Precisión posicional — porcentaje de la última ronda",
             cursos: "🏛️ Cursos — temas estudiados por alumno",
         };
 
@@ -1622,6 +1673,15 @@
                         else if (topic === "mates") { value = entreno.matesTotal; label = value ? `${value} (${entreno.mate1}·${entreno.mate2}·${entreno.mate3} en 1/2/3)` : "—"; }
                         else if (topic === "tactica") { value = entreno.tacticaTotal; label = value ? String(value) : "—"; }
                         else if (topic === "concentracion") { value = entreno.concentracionTotal; label = value ? value + " ejercicios" : "—"; }
+                        else if (topic === "temas") {
+                            value = entreno.temas;
+                            const pct = porcentajeLimpio(entreno);
+                            label = value ? `${value} ejercicios` + (pct === null ? "" : ` · ${pct} % sin error ni pista`) : "—";
+                        }
+                        else if (topic === "visualizacion") { value = entreno.visualizacion; label = value ? value + " ejercicios" : "—"; }
+                        else if (topic === "tipos") { value = entreno.tiposEjercicios; label = value ? `${value} ejercicios (${entreno.tiposEstrellas}⭐)` : "—"; }
+                        else if (topic === "aperturas") { value = entreno.aperturasEmpezadas; label = value ? `${value} líneas · ${entreno.aperturasFirmes} firmes` : "—"; }
+                        else if (topic === "precision") { value = entreno.precisionUltima || 0; label = textoPrecision(entreno); }
                         return { name: s.full_name || s.email, value, label };
                     })
                     .sort((a, b) => b.value - a.value)
@@ -1884,6 +1944,31 @@
         // el nombre del alumno en esta página. Los recursos (título y enlace de
         // cada semana) NO se editan a mano y siguen saliendo tal cual del
         // repositorio, verificados contra el material real.
+        /* El avance del plan: cuánto hizo el alumno, desde el diagnóstico del
+           que salió, en cada lugar al que manda un recurso (avance_del_plan()
+           cuenta en la base; PlanEntrenamiento.marcarAvance lo pone al lado de
+           cada enlace, igual que en la página del diagnóstico). Se guarda la
+           última respuesta para volver a marcar cuando el plan se repinta
+           (editar, recalcular). */
+        let avancePlan = { clave: null, datos: null };
+        async function marcarAvanceDelPlan(contenedor, alumnoId, desde) {
+            const clave = alumnoId + "|" + (desde || "");
+            if (avancePlan.clave !== clave) {
+                avancePlan = { clave, datos: null };
+                try {
+                    const { data, error } = await sb.rpc("avance_del_plan", { p_alumno: alumnoId, p_desde: desde || null });
+                    if (error || avancePlan.clave !== clave) return;
+                    avancePlan.datos = PE.avancePorClave(data);
+                } catch (e) { return; }
+            }
+            if (avancePlan.datos) PE.marcarAvance(contenedor, avancePlan.datos);
+        }
+        function pintarPlanCuerpo(plan) {
+            const cuerpo = document.getElementById("plan-cuerpo");
+            cuerpo.innerHTML = planHTML(plan);
+            if (avancePlan.datos) PE.marcarAvance(cuerpo, avancePlan.datos);
+        }
+
         function planHTML(plan) {
             return `<p class="text-sm text-brand-600 dark:text-brand-300 mb-1"><strong>Rutina sugerida:</strong> ${escVis(plan.rutina)}.</p>
                 <p class="text-sm text-brand-600 dark:text-brand-300 mb-1"><strong>Prioridad:</strong> ${plan.prioridad.map(escVis).join(" → ")}.</p>
@@ -1894,7 +1979,7 @@
                         <p class="text-xs text-brand-450 dark:text-brand-350 mb-1">${escVis(s.porque)}</p>
                         <p class="text-xs text-brand-500 dark:text-brand-300 mb-2"><strong>Meta:</strong> ${escVis(s.objetivo)}</p>
                         <ul class="list-disc pl-5 space-y-1 text-sm text-brand-600 dark:text-brand-300">${s.tareas.map((x) => `<li>${escVis(x)}</li>`).join("")}</ul>
-                        <p class="text-xs mt-2">${s.recursos.map((r) => `<a href="${r.href}" class="text-accent-700 dark:text-accent-400 hover:underline">${escVis(r.texto)}</a>`).join(" · ")}</p>
+                        <p class="text-xs mt-2">${s.recursos.map((r) => { const c = PE.claveDeAvance(r.href); return `<a href="${r.href}"${c ? ` data-clave="${escVis(c)}"` : ""} class="text-accent-700 dark:text-accent-400 hover:underline">${escVis(r.texto)}</a>`; }).join(" · ")}</p>
                     </div>`).join("")}</div>
                 <p class="text-xs text-brand-450 dark:text-brand-350 mt-3">${escVis(plan.medicion)}</p>`;
         }
@@ -2016,13 +2101,13 @@
             document.getElementById("plan-editar").classList.add("hidden");
             document.getElementById("plan-recalcular").classList.add("hidden");
             document.getElementById("pe-cancelar").addEventListener("click", () => {
-                document.getElementById("plan-cuerpo").innerHTML = planHTML(plan);
+                pintarPlanCuerpo(plan);
                 document.getElementById("plan-editar").classList.remove("hidden");
                 document.getElementById("plan-recalcular").classList.remove("hidden");
             });
             document.getElementById("pe-aplicar").addEventListener("click", () => {
                 leerEdicionPlan(plan);
-                document.getElementById("plan-cuerpo").innerHTML = planHTML(plan);
+                pintarPlanCuerpo(plan);
                 document.getElementById("plan-editar").classList.remove("hidden");
                 document.getElementById("plan-recalcular").classList.remove("hidden");
                 document.getElementById("plan-estado").textContent = "Cambios aplicados: falta guardar o compartir para que queden.";
@@ -2105,12 +2190,13 @@
                 </div>`;
 
             conectarEloEditor(student);
+            marcarAvanceDelPlan(document.getElementById("plan-cuerpo"), studentId, entreno.diagnostico.created_at);
             document.getElementById("plan-editar").addEventListener("click", () => activarEdicionPlan(plan));
             document.getElementById("plan-recalcular").addEventListener("click", async () => {
                 if (!(await Avisos.confirmar("Se pierden los ajustes que hiciste a mano.", { titulo: "¿Volver al plan que calcula el diagnóstico?", aceptar: "Recalcular", peligro: true }))) return;
                 Object.assign(plan, PE.generarPlan(resumen));
                 plan.editado = null;
-                document.getElementById("plan-cuerpo").innerHTML = planHTML(plan);
+                pintarPlanCuerpo(plan);
                 document.getElementById("plan-estado").textContent = "Recalculado desde el diagnóstico: falta guardar o compartir para que quede así.";
             });
             const guardar = (compartir) => guardarPlan(studentId, plan, entreno.diagnostico, compartir);
@@ -2174,6 +2260,7 @@
                     ${planHTML(plan)}`
                   : `<p class="text-sm text-brand-500 dark:text-brand-300">Tu profesor todavía no te ha compartido un plan. Mientras tanto, lo más flojo del diagnóstico es ${resumen.debilidades.length ? resumen.debilidades.map((d) => d.nombre.toLowerCase()).join(", ") : "nada en particular: sigue con tu ritmo"} — por ahí conviene empezar.</p>
                      <p class="text-xs text-brand-450 dark:text-brand-350 mt-2"><a href="entreno/diagnostico.html" class="text-accent-700 dark:text-accent-400 hover:underline">Ver el detalle completo de tu diagnóstico</a></p>`}`;
+            if (plan) marcarAvanceDelPlan(body, profile.id, (planCompartido.plan && planCompartido.plan.diagnostico_fecha) || entreno.diagnostico.created_at);
         }
 
 

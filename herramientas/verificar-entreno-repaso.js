@@ -1,5 +1,5 @@
 /* Comprueba, en un navegador, la cola de «Repasar fallados» de Ejercicios por
-   tema (js/repaso-fallados.js) y el bloque «Hoy te toca» del hub de
+   tema y de Mates (js/repaso-fallados.js) y el bloque «Hoy te toca» del hub de
    Entrenamiento (js/entreno-index.js).
 
    - Un ejercicio resuelto con error entra a la cola y vuelve HOY; uno limpio a
@@ -102,6 +102,37 @@ async function temas(browser) {
   await d.ctx.close();
 }
 
+async function mates(browser) {
+  console.log("\n=== Mates: la misma cola, en su pestaña ===");
+  const CLAVE_M = "entreno_mates_repaso_v1";
+  const { page, ctx, errores } = await abrir(browser, "/entreno/mates.html");
+  await page.waitForFunction(() => PUZZLES.mate1.length > 0 && game !== null, { timeout: 20000 });
+  igual("sin nada que repasar, no hay pestaña de repaso",
+    await page.evaluate(() => [...document.querySelectorAll("#tabs .tab")].some((b) => b.textContent.includes("Repasar"))), "false");
+
+  // Con error vuelve hoy mismo (con solo pista, mañana: hoy no habría pestaña).
+  const fallado = await page.evaluate(() => { const id = currentPuzzle().id; missedThisPuzzle = true; finishPuzzle(); return id; });
+  const cola = await page.evaluate((k) => JSON.parse(localStorage.getItem(k) || "{}"), CLAVE_M);
+  igual("el resuelto con error entra a la cola de Mates, para hoy", cola[fallado] && cola[fallado].vence, hoy());
+  igual("y aparece la pestaña, con cuántos", await page.evaluate(() =>
+    [...document.querySelectorAll("#tabs .tab")].map((b) => b.textContent.trim()).find((t) => t.includes("Repasar"))), "🔁 Repasar fallados 1 para hoy");
+
+  await page.waitForFunction(() => !locked, { timeout: 5000 });
+  await page.evaluate(() => [...document.querySelectorAll("#tabs .tab")].find((b) => b.textContent.includes("Repasar")).click());
+  igual("la pestaña trae el que costó", await page.evaluate(() => [currentCategory, currentPuzzle().id]), ["__repaso", fallado]);
+  const antes = await inserts(page);
+  await page.evaluate(() => { missedThisPuzzle = false; usedHintThisPuzzle = false; finishPuzzle(); });
+  igual("repasado limpio, vuelve más adelante",
+    await page.evaluate(([k, id]) => JSON.parse(localStorage.getItem(k))[id].vence, [CLAVE_M, fallado]) > hoy(), "true");
+  igual("y no se registra otra vez", (await inserts(page)) - antes, "0");
+  await page.waitForFunction(() => document.getElementById("celebration").checkVisibility(), { timeout: 5000 });
+  igual("al terminar, «¡Repaso terminado!» y sin «volver a empezar»", await page.evaluate(() =>
+    [document.getElementById("celebration-title").textContent, document.getElementById("celebration-replay-btn").checkVisibility()]),
+    ["¡Repaso terminado!", false]);
+  sinErrores(errores, "mates");
+  await ctx.close();
+}
+
 async function hub(browser) {
   console.log("\n=== El hub: «Hoy te toca» ===");
   const ayer = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
@@ -110,6 +141,7 @@ async function hub(browser) {
   const local = {
     [CLAVE]: JSON.stringify({ a: Object.assign(ficha(ayer, "2026-01-01T00:00:00Z"), { tema: "fork" }), b: Object.assign(ficha(hoy(), "2026-01-01T00:00:00Z"), { tema: "pin" }), c: Object.assign(ficha(manana, "2026-01-01T00:00:00Z"), { tema: "pin" }) }),
     // Dos vencidas ya empezadas, una al día y una nueva (sin `ultimo`): cuentan dos.
+    entreno_mates_repaso_v1: JSON.stringify({ "mate1-0001": Object.assign(ficha(hoy(), "2026-01-01T00:00:00Z"), { category: "mate1" }) }),
     aperturas_srs_v1: JSON.stringify({ l1: ficha(ayer, "2026-01-01T00:00:00Z"), l2: ficha(hoy(), "2026-01-01T00:00:00Z"), l3: ficha(manana, "2026-01-01T00:00:00Z"), l4: { vence: hoy() } }),
   };
   {
@@ -119,8 +151,9 @@ async function hub(browser) {
     const items = await page.evaluate(() => Array.from(document.querySelectorAll("#hoy-lista a")).map((a) => [a.textContent.replace("→", "").trim(), a.getAttribute("href")]));
     igual("se ve", await page.evaluate(() => document.getElementById("hoy").checkVisibility()), "true");
     igual("los repasos de Temas que vencieron (2 de 3)", items[0], ["🔁Repasar 2 ejercicios que te costaron", "temas.html?repaso=1"]);
-    igual("las líneas de Aperturas vencidas, sin contar la nueva", items[1], ["📖2 líneas de aperturas para repasar", "aperturas.html"]);
-    igual("y el diagnóstico, que falta", items[2], ["🧭Hacer el diagnóstico para saber por dónde empezar", "diagnostico.html"]);
+    igual("los mates que costaron", items[1], ["♚Repasar 1 mate que te costó", "mates.html?repaso=1"]);
+    igual("las líneas de Aperturas vencidas, sin contar la nueva", items[2], ["📖2 líneas de aperturas para repasar", "aperturas.html"]);
+    igual("y nunca más de tres: el diagnóstico queda para cuando haya lugar", items.length, "3");
     igual("el título es un encabezado del nivel correcto (h2, bajo el h1)",
       await page.evaluate(() => document.getElementById("hoy-titulo").tagName), "H2");
     sinErrores(errores, "hub");
@@ -149,6 +182,7 @@ async function hub(browser) {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
     await temas(browser);
+    await mates(browser);
     await hub(browser);
   } catch (e) {
     console.log("  ✗ " + (e && e.stack || e));

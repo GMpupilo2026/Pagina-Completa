@@ -678,6 +678,36 @@ permisos: cada vía con su nombre, que es como la citan estas notas y como se
 revisa. Si una tabla con varias vías se vuelve lenta, se arma su conjunto una
 vez, como arriba.
 
+## Los módulos de Entrenamiento que no se veían
+
+Ejercicios por tema, Visualización, Tipos de entrenamiento, Aperturas y
+Precisión posicional no aparecían en Informes: el alumno practicaba y el
+profesor solo veía los minutos. Los cuenta `informes_entreno_modulos()`
+(migración `20260928130332`), y la página los muestra en las tarjetas de
+«Ver todos los números» y en cinco temas nuevos del selector.
+
+- **Es una función aparte, no columnas nuevas de
+  `informes_resumen_alumnos()`**: esa la usan también clases, cobros,
+  formularios y subgrupos, y cambiarle el tipo de retorno obliga a borrarla y
+  volverla a crear.
+- **`SECURITY INVOKER`**: cada quien recibe lo que la RLS de
+  `training_progress` y `training_state` le deja ver. Comprobado impersonando
+  en SQL: un profesor con 60 alumnos recibe esos 60 y nadie más; un alumno,
+  solo su renglón; `anon` no la puede ejecutar.
+- **Tipos, Aperturas y Precisión viven en el espejo `training_state`**, con el
+  texto de localStorage tal cual (`value.raw`). `json_seguro()` devuelve NULL si
+  está roto, y cada forma (objeto, lista) se separa en su propio CTE
+  **materializado** antes de abrirla con `jsonb_each` o `jsonb_array_length`:
+  un `AND` no asegura el orden en que Postgres lo evalúa, y un solo valor raro
+  tumbaría el informe de todo el grupo. Por lo mismo, cada cast va dentro de un
+  `CASE`.
+- **«Sin error ni pista»** es el porcentaje de los ejercicios de Temas y
+  Táctica que salieron limpios, **sobre los que ya guardan cómo salieron**
+  (`detail.limpio`, desde #491), no sobre todos: los de antes no lo saben, y
+  contarlos como «no limpios» diría que el alumno empeoró el día del cambio.
+- Las tarjetas nuevas van todas en la segunda fila (`extra`): las ocho que se
+  miran de verdad siguen siendo ocho. `verificar-informes.js` lo cuenta.
+
 ## Los informes que llegan a la casa
 
 En Informes, mirando a UN alumno, está "📧 Informes a la casa": a qué correos se

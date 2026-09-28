@@ -160,6 +160,7 @@ window.ProgresoUsuario = (function () {
     { clave: "batalla_victorias_v1",             fusion: "maxNumero" },     // duelos ganados
     { clave: "aperturas_srs_v1",                 fusion: "srsPorLinea" },  // Aperturas y celadas
     { clave: "entreno_temas_repaso_v1",          fusion: "srsPorLinea" },  // Ejercicios por tema: la cola de «Repasar fallados»
+    { clave: "entreno_mates_repaso_v1",          fusion: "srsPorLinea" },  // Mates: la misma cola
     { clave: "aperturas_vistas_v1",              fusion: "maxNumero" },
     { clave: "entreno_visualizacion_solved",     fusion: "unionObjeto" },   // Visualización
     { clave: "entreno_visualizacion_best",       fusion: "maxNumero" },
