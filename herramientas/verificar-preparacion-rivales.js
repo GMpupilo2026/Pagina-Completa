@@ -254,6 +254,93 @@ function analisisVersion1() {
   return JSON.parse(JSON.stringify(r));
 }
 
+
+// ------------------------------------------------------------ etapa 2: más allá de la apertura
+
+// Los tipos de final, con posiciones armadas a mano.
+function pruebaTiposDeFinal() {
+  console.log("\n=== Etapa 2: los tipos de final ===");
+  const tipo = (fen) => { const pz = Pos.piezas(Pos.desdeFen(fen)); return A.esFinal(pz) ? A.tipoDeFinal(pz) : "no es final"; };
+  const casos = [
+    ["8/5k2/8/8/8/8/2K5/8 w - -", "de peones"],
+    ["r7/5k2/8/8/8/8/2K5/R7 w - -", "de torres"],
+    ["8/5k2/8/2b5/8/8/2K1B3/8 w - -", "de alfiles de distinto color"],
+    ["8/5k2/8/3b4/8/8/2K1B3/8 w - -", "de alfiles del mismo color"],
+    ["8/5k2/8/2n5/8/8/2K1B3/8 w - -", "de alfil contra caballo"],
+    ["r7/5k2/8/2n5/8/8/2K1B3/R7 w - -", "de torre y pieza menor"],
+    ["q7/5k2/8/8/8/8/2K5/Q7 w - -", "de damas"],
+    ["q7/5k2/8/8/8/8/2K5/QR6 w - -", "no es final"],
+    ["rr6/5k2/8/2n5/8/8/2K1B3/RR6 w - -", "no es final"],
+  ];
+  igual("cada posición, su tipo (y dama y torre contra dama no es final)", casos.map(([f]) => tipo(f)), casos.map((c) => c[1]));
+}
+
+/* Dónde entra la partida en un final: se compara contra un cálculo aparte,
+   hecho con el tablero de chess.js, en partidas al azar. Mismo criterio (13
+   puntos de piezas y dos piezas por lado), otra forma de contarlas. */
+function pruebaDeteccionDeFinales() {
+  console.log("\n=== Etapa 2: dónde entra cada partida en un final ===");
+  let semilla = 4242;
+  const azar = () => { semilla = (semilla * 1103515245 + 12345) & 0x7fffffff; return semilla / 0x7fffffff; };
+  const VAL = { q: 9, r: 5, b: 3, n: 3, p: 1 };
+  const oraculo = (sec) => {
+    const g = new Chess();
+    for (let i = 0; i < sec.length; i++) {
+      g.move(sec[i]);
+      const lado = { w: { v: 0, n: 0, m: 0 }, b: { v: 0, n: 0, m: 0 } };
+      g.board().flat().forEach((c) => { if (!c || c.type === "k") return; lado[c.color].m += VAL[c.type]; if (c.type !== "p") { lado[c.color].v += VAL[c.type]; lado[c.color].n += 1; } });
+      if (lado.w.v <= 13 && lado.b.v <= 13 && lado.w.n <= 2 && lado.b.n <= 2) return { ply: i + 1, dif: lado.w.m - lado.b.m };
+    }
+    return null;
+  };
+  let t = "", esperados = [];
+  for (let j = 0; j < 60; j++) {
+    const g = new Chess();
+    const sec = [];
+    for (let k = 0; k < 160 && !g.game_over(); k++) { const ms = g.moves(); const san = ms[Math.floor(azar() * ms.length)]; g.move(san); sec.push(san); }
+    esperados.push(oraculo(sec));
+    t += '[White "Pedro"]\n[Black "Otro"]\n[Result "1-0"]\n\n' + sec.map((m, i) => (i % 2 === 0 ? (i / 2 + 1) + ". " : "") + m).join(" ") + " 1-0\n\n";
+  }
+  const lista = A.partidasDelRival(A.leerPgn(t), "pedro");
+  igual("60 partidas al azar: el mismo momento y la misma ventaja que con chess.js",
+    lista.map((x) => x.final && [x.final.ply, x.final.dif]), esperados.map((e) => e && [e.ply, e.dif]));
+  cierto("y hay de todo: con final (" + esperados.filter(Boolean).length + ") y sin final (" + esperados.filter((e) => !e).length + ")",
+    esperados.filter(Boolean).length >= 10 && esperados.filter((e) => !e).length >= 5);
+}
+
+/* Cómo pierde y el reloj: 20 partidas del rival. Pierde 10: 6 por tiempo y 4
+   abandonando; gana 10 abandonando el otro. En todas gasta 2 minutos de 3 en
+   sus primeras 15 jugadas (su rival, 20 segundos), y en las que pierde por
+   tiempo termina con 2 segundos. */
+function pruebaComoPierde() {
+  console.log("\n=== Etapa 2: cómo pierde y cómo usa el reloj ===");
+  const jugadas = "e4 e5 Nf3 Nc6 Bc4 Bc5 c3 Nf6 d3 d6 O-O O-O Re1 a6 a4 h6 Nbd2 Re8 h3 Be6 Bxe6 Rxe6 Nf1 d5 exd5 Qxd5 Ng3 Rd8 Qc2 Qd7 Be3 Bxe3 Rxe3 Nd5 Ree1 Nf4 Rad1 Qd5 Ne4 Nxh3+".split(" ");
+  let t = "";
+  for (let j = 0; j < 20; j++) {
+    const pierde = j < 10;
+    const porTiempo = j < 6;
+    const cuerpo = jugadas.map((m, i) => {
+      const suya = i % 2 === 0;          // Pedro lleva blancas
+      const n = Math.floor(i / 2) + 1;
+      let clk = suya ? (porTiempo && n >= 19 ? 2 : 180 - (n <= 15 ? n * 8 : 120 + (n - 15) * 2)) : 180 - Math.min(n, 15) * 1.3 - Math.max(0, n - 15);
+      clk = Math.round(clk);
+      return (suya ? n + ". " : "") + m + " {[%clk 0:" + String(Math.floor(clk / 60)).padStart(2, "0") + ":" + String(clk % 60).padStart(2, "0") + "]}";
+    }).join(" ");
+    const res = pierde ? "0-1" : "1-0";
+    t += '[White "Pedro"]\n[Black "Otro ' + j + '"]\n[Result "' + res + '"]\n[TimeControl "180+0"]\n[Termination "' + (porTiempo ? "Time forfeit" : "Normal") + '"]\n\n' + cuerpo + " " + res + "\n\n";
+  }
+  const r = A.analizar(A.leerPgn(t), "Pedro");
+  const m = r.masAlla;
+  igual("cómo terminan sus derrotas", m.derrotas.map((x) => [x.fin, x.n]), [["tiempo", 6], ["abandono", 4]]);
+  igual("cuándo pierde: las partidas duran 20 jugadas, así que se deciden en la apertura", m.fases, { apertura: 10, medio: 0, final: 0 });
+  cierto("y el FODA dice que la preparación de apertura rinde", r.foda.oportunidades.some((x) => /El 100 % de sus derrotas se decide hasta la jugada 20/.test(x)));
+  igual("el reloj: gasta 2/3 de su tiempo en 15 jugadas, su rival menos del 11 %",
+    [Math.round(100 * m.reloj.apertura), Math.round(100 * m.reloj.aperturaRivales), Math.round(100 * m.reloj.apuros)], [67, 11, 30]);
+  cierto("el FODA lo dice: derrotas por tiempo", r.foda.debilidades.some((x) => /El 60 % de sus derrotas son por tiempo \(6 de 10\)/.test(x)));
+  cierto("y el tiempo que gasta en la apertura es una oportunidad", r.foda.oportunidades.some((x) => /gasta más tiempo que sus rivales \(67 % .* contra 11 %\)/.test(x)));
+  cierto("y los apuros de tiempo, una debilidad", r.foda.debilidades.some((x) => /apuros de tiempo .* 30 %/.test(x)));
+}
+
 // ------------------------------------------------------------ 2. la página
 
 // Un Supabase de mentira. `puede` es lo que contesta puedo_preparar_rivales().
@@ -441,7 +528,9 @@ async function pruebaConPermiso(browser) {
   igual("el foco va al título del resultado", await page.evaluate(() => document.activeElement.id), "titulo-resultado");
   const titulos = await page.evaluate(() => [...document.querySelectorAll("#resultado-cuerpo h3")].filter((h) => h.checkVisibility()).map((h) => h.textContent));
   igual("están todas las partes, en orden", titulos,
-    ["Análisis FODA, visto desde quien quiere ganarle", "Qué jugarle", "Lo que dice Stockfish", "Su repertorio", "Dónde rinde menos y dónde más", "Por ritmo, por año y por Elo"]);
+    ["Análisis FODA, visto desde quien quiere ganarle", "Qué jugarle", "Lo que dice Stockfish", "Más allá de la apertura", "Su repertorio", "Dónde rinde menos y dónde más", "Por ritmo, por año y por Elo"]);
+  cierto("sin relojes en el PGN, «El reloj» lo dice en vez de inventar",
+    /no traen los relojes/.test(await page.textContent("[aria-labelledby='masalla-titulo']")));
   igual("el FODA tiene sus cuatro cuadros", await page.evaluate(() =>
     [...document.querySelectorAll("#resultado-cuerpo h4")].map((h) => h.textContent).filter((t) => /^(Fortalezas|Debilidades|Oportunidades|Amenazas)/.test(t)).length), 4);
   igual("el plan con blancas empieza por 1.e4", await page.evaluate(() =>
@@ -647,6 +736,9 @@ async function pruebaMotorDeVerdad(browser) {
   pruebaTransposiciones();
   pruebaFiltros();
   pruebaPgnDelPlan(conMotor);
+  pruebaTiposDeFinal();
+  pruebaDeteccionDeFinales();
+  pruebaComoPierde();
   pruebaCsp();
   pruebaArchivosDelMotor();
   const browser = await chromium.launch({ executablePath: CHROME });

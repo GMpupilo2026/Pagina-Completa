@@ -217,6 +217,78 @@
     return "otro";
   }
 
+  // El ritmo en números: tiempo inicial e incremento, en segundos.
+  function controlDe(e) {
+    const m = String(e.TimeControl || "").trim().match(/^(\d+)(?:\+(\d+))?$/);
+    return m ? { base: Number(m[1]), inc: Number(m[2] || 0) } : null;
+  }
+
+  // ------------------------------------------------------------ los finales
+
+  const VALOR = { Q: 9, R: 5, B: 3, N: 3, P: 1 };
+  function valorPiezas(l) { return l.Q * 9 + l.R * 5 + l.B.length * 3 + l.N * 3; }
+  function cuantasPiezas(l) { return l.Q + l.R + l.B.length + l.N; }
+
+  // Un final: cada lado con 13 puntos de piezas o menos (sin contar peones) y
+  // dos piezas como mucho. Torre y alfil contra torre es un final; dama y
+  // torre contra dama, no.
+  function esFinal(pz) {
+    return valorPiezas(pz.w) <= 13 && valorPiezas(pz.b) <= 13 && cuantasPiezas(pz.w) <= 2 && cuantasPiezas(pz.b) <= 2;
+  }
+
+  function tipoDeFinal(pz) {
+    const tipos = new Set();
+    for (const l of [pz.w, pz.b]) {
+      if (l.Q) tipos.add("Q");
+      if (l.R) tipos.add("R");
+      if (l.B.length) tipos.add("B");
+      if (l.N) tipos.add("N");
+    }
+    const solo = (...t) => [...tipos].every((x) => t.includes(x));
+    if (!tipos.size) return "de peones";
+    if (solo("R")) return "de torres";
+    if (solo("Q")) return "de damas";
+    if (solo("B")) {
+      if (pz.w.B.length === 1 && pz.b.B.length === 1) return pz.w.B[0] !== pz.b.B[0] ? "de alfiles de distinto color" : "de alfiles del mismo color";
+      return "de alfiles";
+    }
+    if (solo("N")) return "de caballos";
+    if (solo("B", "N")) {
+      const unoContraUno = cuantasPiezas(pz.w) === 1 && cuantasPiezas(pz.b) === 1;
+      return unoContraUno ? "de alfil contra caballo" : "de piezas menores";
+    }
+    if (!tipos.has("Q")) return "de torre y pieza menor";
+    return "con dama y otras piezas";
+  }
+
+  // El primer momento en que la partida entra en un final: en qué media
+  // jugada, de qué tipo y cuánto material de ventaja tenía el rival (peones
+  // incluidos; en puntos). Solo se mira después de una captura o una
+  // coronación, que es lo único que cambia el material.
+  function finalDe(p, color) {
+    // Guardado por color: la ventaja es la del rival, y en el mismo archivo se
+    // puede analizar a cualquiera de los dos jugadores.
+    if (!p._final) Object.defineProperty(p, "_final", { value: {}, enumerable: false });
+    if (p._final[color] !== undefined) return p._final[color];
+    let e = Pos.inicial();
+    let final = null;
+    for (let i = 0; i < p.jugadas.length; i++) {
+      const san = p.jugadas[i];
+      e = Pos.aplicar(e, san);
+      if (!e) break;
+      if (san.indexOf("x") < 0 && san.indexOf("=") < 0) continue;
+      const pz = Pos.piezas(e);
+      if (esFinal(pz)) {
+        const val = (l) => valorPiezas(l) + l.P * VALOR.P;
+        const rival = color === "w" ? pz.w : pz.b, otro = color === "w" ? pz.b : pz.w;
+        final = { ply: i + 1, tipo: tipoDeFinal(pz), dif: val(rival) - val(otro) };
+        break;
+      }
+    }
+    p._final[color] = final;
+    return final;
+  }
+
   // Las partidas del rival, desde su lado: color, resultado, Elos.
   function partidasDelRival(partidas, claveRival) {
     const out = [];
@@ -237,6 +309,10 @@
         jugadas: p.jugadas,
         relojes: p.relojes || null,
         fin: finDe(e, res, p.mate),
+        control: controlDe(e),
+        // El final al que llegó (si llegó): se calcula una vez por partida y
+        // queda guardado en ella, porque los filtros vuelven a pedirlo.
+        final: finalDe(p, color),
         elo: numero(color === "w" ? e.WhiteElo : e.BlackElo),
         eloRival: numero(color === "w" ? e.BlackElo : e.WhiteElo),
         oponente: (color === "w" ? e.Black : e.White) || "",
@@ -507,6 +583,65 @@
     };
   }
 
+  // ------------------------------------------------------------ más allá de la apertura
+
+  const FINES_DECISIVOS = ["tiempo", "abandono", "mate", "abandonada", "otro"];
+  const mediana2 = (xs) => { if (!xs.length) return null; const s = xs.slice().sort((a, b) => a - b); const m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
+
+  // Cómo termina, cuándo pierde, cómo usa el reloj y qué le pasa en los finales.
+  function masAllaDe(lista, base, minN) {
+    const cuenta = (xs, clave) => {
+      const m = new Map();
+      xs.forEach((x) => { const k = clave(x); m.set(k, (m.get(k) || 0) + 1); });
+      return [...m.entries()].map(([k, n]) => ({ fin: k, n, reparto: n / xs.length })).sort((a, b) => b.n - a.n);
+    };
+    const perdidas = lista.filter((x) => x.res === "P");
+    const ganadas = lista.filter((x) => x.res === "G");
+    // Cuándo pierde: en el final si ya había entrado en uno; si no, por la jugada.
+    const fase = (x) => (x.final && x.final.ply <= x.jugadas.length ? "final" : x.jugadas.length <= 40 ? "apertura" : "medio");
+    const fases = { apertura: 0, medio: 0, final: 0 };
+    perdidas.forEach((x) => { fases[fase(x)] += 1; });
+
+    // El reloj: solo con las partidas que lo traen y cuyo ritmo se conoce.
+    let reloj = null;
+    const conReloj = lista.filter((x) => x.relojes && x.control && x.control.base > 0);
+    if (conReloj.length >= minN) {
+      const suyo = (x, jugada) => x.relojes[2 * (jugada - 1) + (x.color === "w" ? 0 : 1)];
+      const delOtro = (x, jugada) => x.relojes[2 * (jugada - 1) + (x.color === "w" ? 1 : 0)];
+      const usado = (x, clk, jugada) => (x.control.base + jugada * x.control.inc - clk) / x.control.base;
+      const en = (jugada, deQuien) => mediana2(conReloj.map((x) => { const c = deQuien(x, jugada); return c == null ? null : c / x.control.base; }).filter((v) => v != null));
+      const gastoApertura = (deQuien) => mediana2(conReloj.map((x) => { const c = deQuien(x, 15); return c == null ? null : usado(x, c, 15); }).filter((v) => v != null));
+      const enApuros = conReloj.filter((x) => x.relojes.some((c, i) => c != null && (i % 2 === 0) === (x.color === "w") && c < 0.1 * x.control.base)).length;
+      reloj = {
+        partidas: conReloj.length,
+        queda20: en(20, suyo), queda40: en(40, suyo),
+        rivales20: en(20, delOtro),
+        apertura: gastoApertura(suyo), aperturaRivales: gastoApertura(delOtro),
+        apuros: enApuros / conReloj.length,
+      };
+    }
+
+    // Los finales: a cuáles llega, cuánto saca en cada uno y si convierte.
+    const conFinal = lista.filter((x) => x.final);
+    const porTipo = agrupar(conFinal, (x) => x.final.tipo);
+    const finales = [...porTipo.entries()].map(([tipo, c]) => ({ tipo, ...resumen(c) })).sort((a, b) => b.n - a.n);
+    const conVentaja = conFinal.filter((x) => x.final.dif >= 2);
+    const enDesventaja = conFinal.filter((x) => x.final.dif <= -2);
+    return {
+      derrotas: cuenta(perdidas, (x) => x.fin), victorias: cuenta(ganadas, (x) => x.fin),
+      perdidas: perdidas.length, ganadas: ganadas.length,
+      fases,
+      reloj,
+      llegaFinal: lista.length ? conFinal.length / lista.length : 0,
+      finales,
+      conversion: {
+        ventaja: { n: conVentaja.length, ganadas: conVentaja.filter((x) => x.res === "G").length },
+        desventaja: { n: enDesventaja.length, salvadas: enDesventaja.filter((x) => x.res !== "P").length },
+      },
+      base,
+    };
+  }
+
   // Menos de esto, y la página avisa que dice poco.
   const POCAS = 30;
 
@@ -517,7 +652,7 @@
     if (!todas.length) return null;
     const filtros = { ritmos: (o.ritmos || []).slice(), desde: o.desde || null };
     const lista = todas.filter((x) => pasaFiltros(x, filtros));
-    if (!lista.length) return { version: 2, vacio: true, rival: nombreDe(partidas, clave, rival), totalRival: todas.length, filtros, disponibles: disponibles(todas) };
+    if (!lista.length) return { version: 3, vacio: true, rival: nombreDe(partidas, clave, rival), totalRival: todas.length, filtros, disponibles: disponibles(todas) };
     const total = lista.length;
     const minN = o.minimo || minimo(total);
 
@@ -550,7 +685,7 @@
     const perdidasCortas = perdidas.filter((x) => x.jugadas.length <= 50).length;
 
     const resultado = {
-      version: 2,
+      version: 3,
       rival: nombreDe(partidas, clave, rival),
       generado: new Date().toISOString(),
       total,
@@ -594,6 +729,7 @@
         })),
         plan: plan(arbol.w, "w", base.w, minN, PROFUNDIDAD_PLAN, 0),
       },
+      masAlla: masAllaDe(lista, puntos(global), minN),
       motor: null,
     };
     resultado.debiles.sort((a, b) => (a.puntos - a.base) - (b.puntos - b.base));
@@ -609,6 +745,46 @@
   // ------------------------------------------------------------ FODA
 
   function colorEs(c) { return c === "w" ? "blancas" : "negras"; }
+
+  const FIN_ES = { tiempo: "por tiempo", abandono: "abandonando", mate: "con mate", abandonada: "abandonando la partida (desconexión)", otro: "de otra forma", tablas: "en tablas", ahogado: "por ahogado", repeticion: "por repetición", material: "por material insuficiente" };
+  const pctEntero = (x) => Math.round(100 * x) + " %";
+
+  // Lo que la etapa 2 agrega al FODA: cómo pierde, el reloj y los finales.
+  function fodaMasAlla(r, F, D, O, A) {
+    const m = r.masAlla;
+    const porTiempo = m.derrotas.find((x) => x.fin === "tiempo");
+    if (m.perdidas >= r.minimo && porTiempo && porTiempo.reparto >= 0.25) {
+      D.push("El " + pctEntero(porTiempo.reparto) + " de sus derrotas son por tiempo (" + porTiempo.n + " de " + m.perdidas + ").");
+      O.push("Pierde mucho por tiempo: complícale la posición y aprieta el reloj.");
+    }
+    const conMate = m.derrotas.find((x) => x.fin === "mate");
+    if (m.perdidas >= r.minimo && conMate && conMate.reparto >= 0.25) {
+      D.push("El " + pctEntero(conMate.reparto) + " de sus derrotas terminan en mate: no abandona y se deja atacar.");
+    }
+    if (m.perdidas >= r.minimo && m.fases.apertura / m.perdidas >= 0.4) {
+      O.push("El " + pctEntero(m.fases.apertura / m.perdidas) + " de sus derrotas se decide hasta la jugada 20: la preparación de apertura rinde.");
+    }
+    if (m.reloj) {
+      if (m.reloj.apuros >= 0.3) D.push("Se queda en apuros de tiempo (menos del 10 % de su reloj) en el " + pctEntero(m.reloj.apuros) + " de sus partidas.");
+      if (m.reloj.apertura != null && m.reloj.aperturaRivales != null && m.reloj.apertura - m.reloj.aperturaRivales >= 0.1) {
+        O.push("En la apertura gasta más tiempo que sus rivales (" + pctEntero(m.reloj.apertura) + " de su reloj en 15 jugadas, contra " + pctEntero(m.reloj.aperturaRivales) + "): una línea poco común lo obliga a pensar.");
+      }
+    }
+    for (const f of m.finales) {
+      if (f.n < r.minimo) continue;
+      const zz = z(f, m.base), dif = f.puntos - m.base;
+      if (zz <= -1.28 && dif <= -0.05) {
+        D.push("En los finales " + f.tipo + " saca " + pct(f.puntos) + " (" + f.n + " partidas; su promedio es " + pct(m.base) + ").");
+        O.push("Busca cambiar piezas hacia un final " + f.tipo + ".");
+      } else if (zz >= 1.28 && dif >= 0.05) {
+        F.push("En los finales " + f.tipo + " saca " + pct(f.puntos) + " (" + f.n + " partidas).");
+        A.push("Evita los finales " + f.tipo + ": ahí rinde más que en el resto.");
+      }
+    }
+    const v = m.conversion.ventaja, d = m.conversion.desventaja;
+    if (v.n >= r.minimo && v.ganadas / v.n < 0.6) D.push("Le cuesta ganar los finales con ventaja: de " + v.n + " convirtió " + v.ganadas + " (" + pctEntero(v.ganadas / v.n) + ").");
+    if (d.n >= r.minimo && d.salvadas / d.n >= 0.4) F.push("Se defiende bien en los finales con desventaja: salvó " + d.salvadas + " de " + d.n + ".");
+  }
 
   function foda(r) {
     const F = [], D = [], O = [], A = [];
@@ -669,6 +845,7 @@
         if (x.puntos >= 0.4) A.push("Aguanta bien contra gente más fuerte: " + pct(x.puntos) + " cuando el rival tiene " + x.tramo.toLowerCase() + " (" + x.n + " partidas).");
       });
     }
+    if (r.masAlla) fodaMasAlla(r, F, D, O, A);
     return { fortalezas: F, debilidades: D, oportunidades: O, amenazas: A };
   }
 
@@ -733,7 +910,7 @@
 
   return {
     leerPgn, jugadasDe, jugadasYRelojes, jugadores, claveNombre, analizar, ritmoDe, finDe, partidasDelRival,
-    sanEs, lineaEs, pct, textoEval, minimo, POCAS,
+    sanEs, lineaEs, pct, textoEval, minimo, POCAS, tipoDeFinal, esFinal, FIN_ES,
     tareasDelMotor, aplicarMotor, fenDe,
   };
 });

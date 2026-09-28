@@ -209,5 +209,35 @@
     return filas.join("/") + " " + e.turno + " " + (e.enroques || "-") + " " + (e.alPaso >= 0 ? nombre(e.alPaso) : "-");
   }
 
-  return { inicial, aplicar, clave };
+  // Lo que hay en el tablero, por color: cuántas damas, torres, caballos y
+  // peones, y de qué color de casilla es cada alfil ("c" clara, "o" oscura).
+  function piezas(e) {
+    const out = { w: { Q: 0, R: 0, B: [], N: 0, P: 0 }, b: { Q: 0, R: 0, B: [], N: 0, P: 0 } };
+    for (let c = 0; c < 64; c++) {
+      const p = e.t[c];
+      if (!p || p === "K" || p === "k") continue;
+      const lado = out[blanca(p) ? "w" : "b"];
+      const tipo = p.toUpperCase();
+      if (tipo === "B") lado.B.push(((c & 7) + (c >> 3)) % 2 === 0 ? "o" : "c");
+      else lado[tipo] += 1;
+    }
+    return out;
+  }
+
+  // Un estado desde un FEN (para las pruebas y para partidas que no empiezan
+  // en la posición inicial).
+  function desdeFen(fen) {
+    const [colocacion, turno, enroques, alPaso] = String(fen).trim().split(/\s+/);
+    const t = new Array(64).fill("");
+    colocacion.split("/").forEach((fila, i) => {
+      let col = 0;
+      for (const ch of fila) {
+        if (/\d/.test(ch)) col += Number(ch);
+        else { t[(7 - i) * 8 + col] = ch; col += 1; }
+      }
+    });
+    return { t, turno: turno || "w", enroques: enroques && enroques !== "-" ? enroques : "", alPaso: alPaso && alPaso !== "-" ? casilla(alPaso) : -1 };
+  }
+
+  return { inicial, aplicar, clave, piezas, desdeFen };
 });
