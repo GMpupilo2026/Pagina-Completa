@@ -128,16 +128,17 @@
             </div>
         </div>
     </section>
-    <!-- Las cifras salen de las inscripciones reales a los torneos en línea:
-         js/cifras-portada.js las pide en cada visita a cifras_torneos() (base
-         de Colegios), que devuelve solo los cuatro totales. Las escritas acá
-         son las del día en que se armó la sección: si la consulta falla, queda
-         un piso que es cierto, porque las inscripciones no bajan. -->
+    <!-- Las cifras salen de datos reales: js/cifras-portada.js las pide en cada
+         visita. Estudiantes suma las cuentas de alumno de la Academia
+         (cifras_academia()) y las inscripciones a los torneos en línea
+         (cifras_torneos(), base de Colegios); centros, provincias y cantones
+         salen de los torneos. Las escritas acá son las del día en que se armó
+         la sección: si una consulta falla, queda un piso que es cierto. -->
     <section class="bg-brand-700 py-8" aria-labelledby="cifras-titulo">
         <div class="max-w-7xl mx-auto px-4">
-            <h2 id="cifras-titulo" class="text-center text-brand-200 text-xs font-semibold uppercase tracking-wide mb-5">Inscripciones a nuestros torneos en línea</h2>
+            <h2 id="cifras-titulo" class="text-center text-brand-200 text-xs font-semibold uppercase tracking-wide mb-5">La Academia y nuestros torneos en línea</h2>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-                <div><p class="text-3xl md:text-4xl font-bold text-accent-400" data-cifra="estudiantes">105</p><p class="text-brand-200 text-sm mt-1">Estudiantes inscritos</p></div>
+                <div><p class="text-3xl md:text-4xl font-bold text-accent-400" data-cifra="estudiantes">235</p><p class="text-brand-200 text-sm mt-1">Estudiantes</p></div>
                 <div><p class="text-3xl md:text-4xl font-bold text-accent-400" data-cifra="centros">23</p><p class="text-brand-200 text-sm mt-1">Escuelas y colegios</p></div>
                 <div><p class="text-3xl md:text-4xl font-bold text-accent-400" data-cifra="provincias">6</p><p class="text-brand-200 text-sm mt-1">Provincias</p></div>
                 <div><p class="text-3xl md:text-4xl font-bold text-accent-400" data-cifra="cantones">16</p><p class="text-brand-200 text-sm mt-1">Cantones</p></div>

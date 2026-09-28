@@ -1123,26 +1123,36 @@ toda la razón de que esta página esté armada distinto al resto del sitio.
 ## Las cifras de la portada
 
 Las cuatro cifras de `index.html` (estudiantes, escuelas y colegios, provincias
-y cantones) salen de las inscripciones reales a los torneos en línea. Antes eran
-números escritos a mano («+500 estudiantes», «+120 artículos» cuando había 7) y
-no los respaldaba nada.
+y cantones) salen de datos reales. Antes eran números escritos a mano («+500
+estudiantes», «+120 artículos» cuando había 7) y no los respaldaba nada.
 
-- **La tabla sigue cerrada.** Las trae `public.cifras_torneos()`, en la base de
-  Colegios, que es `SECURITY DEFINER` y **devuelve cuatro números y nada más**:
-  ni una fila, ni un nombre, ni cuántos hay por colegio. Por eso, y solo por
-  eso, se le dio execute a `anon`: la portada se abre sin cuenta, con la clave
-  pública de ese proyecto. Comprobado impersonando `anon` en SQL: la función
-  contesta y `select … from inscripciones` sigue dando error de permisos.
-- **Las personas se cuentan por cédula** (solo los dígitos), no por fila:
-  quien se inscribe dos veces es un estudiante. Centros, provincias y cantones,
-  sin distinguir mayúsculas ni espacios de más.
+- **Estudiantes es una suma**: las cuentas de alumno de la Academia más las
+  personas inscritas en los torneos en línea. Centros, provincias y cantones
+  salen solo de los torneos, que es donde se pide el colegio. Las dos fuentes
+  no se cruzan (la Academia no guarda cédula), así que alguien que está en las
+  dos se cuenta dos veces. Así lo pidió el dueño del sitio.
+- **Cada base tiene su función y ninguna tabla se abre.**
+  `cifras_torneos()` (base de Colegios) y `cifras_academia()` (Academia) son
+  `SECURITY DEFINER` y **devuelven totales y nada más**: ni una fila, ni un
+  nombre, ni cuántos hay por colegio. Por eso, y solo por eso, tienen execute
+  para `anon`, igual que `formulario_publico()`: la portada se abre sin cuenta.
+  Comprobado impersonando `anon` en SQL: las funciones contestan y
+  `select … from inscripciones` sigue dando error de permisos.
+- **Quién cuenta.** En los torneos, las personas por cédula (solo los
+  dígitos), no por fila: quien se inscribe dos veces es un estudiante. En la
+  Academia, `role = 'alumno'` menos las cuentas de prueba, que son las que se
+  llaman «Prueba…» (Prueba, Prueba 2, Prueba Gratis): las arma el equipo para
+  probar. **Una cuenta de prueba nueva tiene que llamarse así** o entra a la
+  cifra.
 - **Se actualizan solas**: `js/cifras-portada.js` las pide en cada visita, así
-  que un inscrito nuevo aparece en la siguiente carga. No hay Realtime a
-  propósito: suscribirse exigiría que `anon` pudiera leer la tabla.
-- **El HTML trae escritas las del día en que se armó la sección.** Si la
-  consulta falla (sin conexión, la base caída), quedan esas, que siguen siendo
-  ciertas porque las inscripciones no bajan. Un cero o una respuesta rara no
-  pisa la cifra escrita.
-- `verificar-cifras-portada.js` lo comprueba con la base doblada: que las
-  cifras se reemplacen, que con la consulta caída queden las del HTML y que la
-  llamada vaya a la función y no a la tabla.
+  que un inscrito o una cuenta nueva aparece en la siguiente carga. No hay
+  Realtime a propósito: suscribirse exigiría que `anon` pudiera leer las tablas.
+  Las llamadas van con `fetch` a PostgREST y no con el cliente de Supabase:
+  cargar la librería en la portada solo para esto pesaría más que la portada.
+- **El HTML trae escritas las del día en que se armó la sección.** Si una
+  consulta falla, quedan esas. Estudiantes solo se reemplaza **si contestaron
+  las dos bases**: con una sola, la suma saldría por debajo de la real. Un cero
+  o una respuesta rara no pisa la cifra escrita.
+- `verificar-cifras-portada.js` lo comprueba con las dos bases dobladas: que se
+  pidan las funciones y nunca las tablas, que estudiantes sea la suma, que con
+  una base caída no cambie y que con todo caído queden las del HTML.

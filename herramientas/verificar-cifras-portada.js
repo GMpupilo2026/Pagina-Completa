@@ -1,13 +1,17 @@
-/* Las cifras de la portada salen de las inscripciones a los torneos.
+/* Las cifras de la portada salen de los datos reales.
 
    index.html trae escritas unas cifras y js/cifras-portada.js las cambia por
-   las que devuelve cifras_torneos() en la base de Colegios. Lo que comprueba,
-   con esa base doblada (acá no se sale a la red):
+   las que devuelven dos funciones: cifras_torneos() en la base de Colegios y
+   cifras_academia() en la de la Academia. Estudiantes es la suma de las dos.
+   Lo que comprueba, con las dos bases dobladas (acá no se sale a la red):
 
-   - que la llamada vaya a la FUNCIÓN y nunca a la tabla `inscripciones`;
-   - que las cuatro cifras se reemplacen por las que contesta, con el formato
-     de Costa Rica (1 234, con espacio fino);
-   - que con la consulta caída, o con un cero, queden las escritas en el HTML.
+   - que se llame a las dos FUNCIONES y nunca a las tablas (`inscripciones`,
+     `profiles`);
+   - que estudiantes sea la suma y el resto venga de los torneos, con el
+     formato de Costa Rica;
+   - que con una base caída la cifra de estudiantes no cambie (la suma
+     saldría por debajo de la real), pero sí las que dependen de la otra;
+   - que con todo caído, con un cero o con un 500, queden las del HTML.
 
    Ver «Las cifras de la portada» en docs/decisiones/paneles.md.
 
@@ -17,6 +21,7 @@ const { chromium } = require("playwright");
 const CHROME = process.env.CHROME_PATH || undefined;
 const BASE = process.env.BASE_URL || "http://localhost:8777";
 const COLEGIOS = "https://prcfbzvshnusisczlpxl.supabase.co/";
+const ACADEMIA = "https://bgtijpimpcokxatxxbki.supabase.co/";
 
 let fallos = 0;
 function cierto(nombre, valor, detalle) {
@@ -24,17 +29,19 @@ function cierto(nombre, valor, detalle) {
   else { console.log("  ✗ " + nombre + (detalle ? "\n      " + detalle : "")); fallos += 1; }
 }
 
-/* Abre la portada con la base de Colegios doblada: `responder(url)` devuelve
-   { status, body } o null para cortar la conexión. */
-async function abrir(browser, responder) {
+/* Abre la portada con las dos bases dobladas. `torneos` y `academia` son lo
+   que contesta cada una: { status, body }, o null para cortar la conexión. */
+async function abrir(browser, torneos, academia) {
   const ctx = await browser.newContext({ serviceWorkers: "block" });
   const pedidas = [];
   await ctx.route("**/*", (ruta) => {
     const url = ruta.request().url();
     if (url.startsWith(BASE)) return ruta.continue();
-    if (url.startsWith(COLEGIOS)) {
-      pedidas.push(ruta.request().method() + " " + url.slice(COLEGIOS.length));
-      const r = responder(url);
+    const base = url.startsWith(COLEGIOS) ? COLEGIOS : url.startsWith(ACADEMIA) ? ACADEMIA : null;
+    if (base) {
+      pedidas.push((base === COLEGIOS ? "colegios " : "academia ") + ruta.request().method() + " " + url.slice(base.length));
+      const esperada = base === COLEGIOS ? "rest/v1/rpc/cifras_torneos" : "rest/v1/rpc/cifras_academia";
+      const r = url.slice(base.length).startsWith(esperada) ? (base === COLEGIOS ? torneos : academia) : { status: 404, body: {} };
       if (!r) return ruta.abort();
       return ruta.fulfill({ status: r.status, contentType: "application/json", body: JSON.stringify(r.body),
         headers: { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "*" } });
@@ -49,36 +56,48 @@ async function abrir(browser, responder) {
   return { cifras, pedidas };
 }
 
+const TORNEOS = { status: 200, body: [{ estudiantes: 1234, centros: 57, provincias: 7, cantones: 41 }] };
+const ACADEMIA_OK = { status: 200, body: [{ alumnos: 300 }] };
+const miles = (n) => n.toLocaleString("es-CR");
+
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
 
-  // Las escritas en el HTML: con la red caída tienen que quedar esas.
-  const html = await abrir(browser, () => null);
-  console.log("\nCon la consulta caída");
+  console.log("\nCon las dos bases caídas");
+  const html = await abrir(browser, null, null);
   cierto("hay cuatro cifras en la portada", Object.keys(html.cifras).length === 4, JSON.stringify(html.cifras));
   cierto("quedan las escritas en el HTML, ninguna vacía",
     Object.values(html.cifras).every((v) => /^\d/.test(v)), JSON.stringify(html.cifras));
 
-  console.log("\nCon la función contestando");
-  const bien = await abrir(browser, (url) => url.includes("/rest/v1/rpc/cifras_torneos")
-    ? { status: 200, body: [{ estudiantes: 1234, centros: 57, provincias: 7, cantones: 41 }] }
-    : { status: 404, body: {} });
-  cierto("se pide la función y nada más", bien.pedidas.length > 0 && bien.pedidas.every((p) => p.startsWith("POST rest/v1/rpc/cifras_torneos")), bien.pedidas.join(" · "));
-  cierto("nunca se pide la tabla de inscripciones", !bien.pedidas.some((p) => /inscripciones/.test(p)), bien.pedidas.join(" · "));
-  const esperado = { estudiantes: (1234).toLocaleString("es-CR"), centros: "57", provincias: "7", cantones: "41" };
-  cierto("las cuatro cifras son las que contestó la función", JSON.stringify(bien.cifras) === JSON.stringify(esperado),
+  console.log("\nCon las dos contestando");
+  const bien = await abrir(browser, TORNEOS, ACADEMIA_OK);
+  cierto("se piden las dos funciones y nada más",
+    bien.pedidas.length === 2 && bien.pedidas.includes("colegios POST rest/v1/rpc/cifras_torneos") && bien.pedidas.includes("academia POST rest/v1/rpc/cifras_academia"),
+    bien.pedidas.join(" · "));
+  cierto("nunca se piden las tablas", !bien.pedidas.some((p) => /inscripciones|profiles/.test(p)), bien.pedidas.join(" · "));
+  const esperado = { estudiantes: miles(1234 + 300), centros: "57", provincias: "7", cantones: "41" };
+  cierto("estudiantes es la suma de las dos y el resto viene de los torneos", JSON.stringify(bien.cifras) === JSON.stringify(esperado),
     "llegó " + JSON.stringify(bien.cifras) + ", se esperaba " + JSON.stringify(esperado));
 
-  console.log("\nCon una respuesta rara");
-  const cero = await abrir(browser, () => ({ status: 200, body: [{ estudiantes: 0, centros: null, provincias: "x", cantones: 41 }] }));
+  console.log("\nCon la Academia caída");
+  const sinAcademia = await abrir(browser, TORNEOS, { status: 500, body: { message: "caída" } });
+  cierto("estudiantes no cambia: la suma quedaría corta", sinAcademia.cifras.estudiantes === html.cifras.estudiantes, JSON.stringify(sinAcademia.cifras));
+  cierto("centros, provincias y cantones sí se ponen", sinAcademia.cifras.centros === "57" && sinAcademia.cifras.cantones === "41", JSON.stringify(sinAcademia.cifras));
+
+  console.log("\nCon los torneos caídos");
+  const sinTorneos = await abrir(browser, null, ACADEMIA_OK);
+  cierto("quedan todas las del HTML", JSON.stringify(sinTorneos.cifras) === JSON.stringify(html.cifras), JSON.stringify(sinTorneos.cifras));
+
+  console.log("\nCon respuestas raras");
+  const raras = await abrir(browser, { status: 200, body: [{ estudiantes: 0, centros: null, provincias: "x", cantones: 41 }] }, ACADEMIA_OK);
   cierto("un cero, un null o un texto no pisan la cifra escrita",
-    cero.cifras.estudiantes === html.cifras.estudiantes && cero.cifras.centros === html.cifras.centros && cero.cifras.provincias === html.cifras.provincias,
-    JSON.stringify(cero.cifras));
-  cierto("la que sí vino bien se pone", cero.cifras.cantones === "41", JSON.stringify(cero.cifras));
-  const error = await abrir(browser, () => ({ status: 500, body: { message: "caída" } }));
-  cierto("con un error 500 quedan las del HTML", JSON.stringify(error.cifras) === JSON.stringify(html.cifras), JSON.stringify(error.cifras));
+    raras.cifras.estudiantes === html.cifras.estudiantes && raras.cifras.centros === html.cifras.centros && raras.cifras.provincias === html.cifras.provincias,
+    JSON.stringify(raras.cifras));
+  cierto("la que sí vino bien se pone", raras.cifras.cantones === "41", JSON.stringify(raras.cifras));
+  const error = await abrir(browser, { status: 500, body: {} }, { status: 500, body: {} });
+  cierto("con un 500 en las dos quedan las del HTML", JSON.stringify(error.cifras) === JSON.stringify(html.cifras), JSON.stringify(error.cifras));
 
   await browser.close();
-  console.log(fallos ? `\n${fallos} fallo(s)` : "\nLas cifras de la portada salen de la función y aguantan que falle.");
+  console.log(fallos ? `\n${fallos} fallo(s)` : "\nLas cifras de la portada salen de las funciones y aguantan que fallen.");
   process.exit(fallos ? 1 : 0);
 })();
