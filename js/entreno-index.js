@@ -14,13 +14,13 @@ const gateChecking = document.getElementById('gate-checking');
 
 const NEXT_PATH = 'entreno/index.html';
 
-async function unlock(){
+async function unlock(alumnoId){
   gate.classList.add('hidden');
   app.classList.remove('hidden');
   // Los contadores salen del progreso de la cuenta, no solo de este aparato.
   await ProgresoUsuario.init();
   showTemasProgress();
-  pintarHoy();
+  pintarHoy(alumnoId);
 }
 
 /* «Hoy te toca»: hasta tres cosas concretas para hacer hoy, sacadas del
@@ -31,9 +31,30 @@ async function unlock(){
 function leerJSON(clave){
   try { return JSON.parse(localStorage.getItem(clave) || 'null'); } catch (e) { return null; }
 }
-function cosasDeHoy(){
+/* La semana del plan del diagnóstico: a dónde ir y cuánto se hizo ahí.
+   Antes el plan vivía solo en la página del diagnóstico, y en los datos se
+   veía: de los alumnos que lo hicieron, un tercio no volvió a entrenar y otro
+   tercio lo dejó a los uno o dos días. El plan decía qué hacer cada semana;
+   nadie se lo recordaba. La cuenta la hace PlanEntrenamiento.hoyDelPlan(), la
+   misma que usa la franja del panel. */
+async function cosaDelPlan(alumnoId, diag){
+  const PE = window.PlanEntrenamiento;
+  if (!PE || !alumnoId || !diag || !diag.detalle) return null;
+  let hoy = null;
+  try { hoy = await PE.hoyDelPlan(sb, alumnoId, diag.detalle); } catch (e) { return null; }
+  if (!hoy) return null;
+  const avance = hoy.hechos === null ? '' : hoy.hechos ? ` (✓ ${hoy.hechos} ${hoy.hechos === 1 ? 'hecho' : 'hechos'})` : ' (todavía nada)';
+  return { icono: '📅', href: PE.enlace(hoy.recurso.href, '../'),
+    texto: `Tu plan, semana ${hoy.numero} de ${hoy.total} · ${hoy.foco}: ${hoy.recurso.texto}${avance}` };
+}
+async function cosasDeHoy(alumnoId){
   const cosas = [];
   const SRS = window.RepasoEspaciado;
+
+  // Primero el plan: es lo que dice qué entrenar; lo demás es repasar.
+  const diag = leerJSON('diagnostico_resultado_v1');
+  const delPlan = await cosaDelPlan(alumnoId, diag);
+  if (delPlan) cosas.push(delPlan);
 
   // Ejercicios por tema que se resolvieron con error o con pista y vuelven hoy.
   if (window.RepasoFallados) {
@@ -56,7 +77,6 @@ function cosasDeHoy(){
 
   // El diagnóstico: hacerlo si no hay, repetirlo a las cuatro semanas (es lo
   // que pide la última semana del plan).
-  const diag = leerJSON('diagnostico_resultado_v1');
   const fecha = diag && Date.parse(diag.fecha || '');
   if (!diag || !fecha) {
     cosas.push({ icono: '🧭', href: 'diagnostico.html', texto: 'Hacer el diagnóstico para saber por dónde empezar' });
@@ -65,8 +85,8 @@ function cosasDeHoy(){
   }
   return cosas.slice(0, 3);
 }
-function pintarHoy(){
-  const cosas = cosasDeHoy();
+async function pintarHoy(alumnoId){
+  const cosas = await cosasDeHoy(alumnoId);
   const caja = document.getElementById('hoy');
   const lista = document.getElementById('hoy-lista');
   lista.innerHTML = '';
@@ -109,10 +129,11 @@ function showTemasProgress(){
 // progreso de cada quien queda guardado y visible para el profesor en
 // Informes.
 async function requireLoginThenGate(){
-  let hasSession = false;
+  let hasSession = false, alumnoId = null;
   try {
     const { data } = await sb.auth.getSession();
     hasSession = !!(data && data.session);
+    alumnoId = hasSession ? data.session.user.id : null;
   } catch (e) {
     hasSession = false;
   }
@@ -121,7 +142,7 @@ async function requireLoginThenGate(){
     window.location.href = '../login.html?next=' + encodeURIComponent(NEXT_PATH);
     return;
   }
-  unlock();
+  unlock(alumnoId);
 }
 
 requireLoginThenGate();

@@ -330,6 +330,13 @@ navegador.
   falta o tiene más de cuatro semanas, que es lo que pide la última semana del
   plan. Todo sale del progreso que ProgresoUsuario ya bajó de la cuenta. Sin
   nada pendiente, el bloque no sale.
+- **Lo primero de «Hoy te toca» es la semana del plan del diagnóstico**
+  («📅 Tu plan, semana 2 de 4 · Valor del material: Ejercicios de pieza
+  colgada (✓ 3 hechos)»). El plan de cuatro semanas vivía solo en la página
+  del diagnóstico y en los datos se veía: de los 52 alumnos que lo habían
+  hecho, 17 no volvieron a entrenar y 19 lo dejaron a los uno o dos días. El
+  plan decía qué hacer; nadie se lo recordaba. Ver «La semana del plan, en el
+  hub y en el panel».
 - **Mates tiene la misma cola** (`entreno_mates_repaso_v1`, también en
   `CLAVES`): una pestaña más, «🔁 Repasar fallados», que solo aparece si hoy
   toca alguno, y `mates.html?repaso=1` para abrirla directo. El hub la cuenta
@@ -397,6 +404,37 @@ para el diagnóstico del que salió o uno anterior; si el alumno hizo uno nuevo
 después, ese plan quedó viejo y se muestra el recalculado. Lo que el profesor
 reescribió a mano va por `textContent`, y un recurso con esquema
 (`javascript:`, `https:`) no se pinta: los recursos son rutas del sitio.
+
+### La semana del plan, en el hub y en el panel
+
+`PlanEntrenamiento.hoyDelPlan(sb, alumno, detalle)` contesta «¿qué pide hoy
+el plan?» y lo usan dos pantallas: «Hoy te toca» (`entreno/index.html`) y la
+franja del panel (`clases.html`, ver «La semana del plan, para quien ya
+arrancó» en paneles.md). Una sola cuenta para que las dos digan lo mismo que la
+página del diagnóstico.
+
+- **Qué plan**: el que el profesor compartió desde Informes si vale para este
+  diagnóstico (`planCompartido()`, la misma regla que usaba sola la página del
+  diagnóstico y que se mudó al módulo); si no, el recalculado.
+- **Qué semana** (`semanaVigente()`): la 1 empieza el día del diagnóstico y
+  cada una dura siete días de calendario **en hora de Costa Rica**. Pasada la
+  última, el plan terminó y no sale nada: ahí «Hoy te toca» ya pide repetir el
+  diagnóstico, que es lo que dice la última semana.
+- **A dónde manda** (`recursoPrincipal()`): el primer recurso de la semana cuyo
+  trabajo CUENTA (tiene clave en `claveDeAvance()` y no es la portada de un
+  curso), para que el número suba y al día siguiente se vea el avance. La
+  portada de un curso solo si la semana no trae nada mejor. Un recurso con
+  esquema (`javascript:`, `https:`) no se vuelve enlace (`recursoSeguro()`,
+  que ahora usa también la página del diagnóstico).
+- **Cuánto lleva**: `avance_del_plan()` desde la fecha del diagnóstico, igual
+  que los «(✓ N hechos)» del plan entero. Sin clave no hay número (un «0»
+  diría que no hizo nada, y no se sabe), y la semana que manda a repetir el
+  diagnóstico tampoco lleva: contaría el mismo diagnóstico del que salió.
+- **El emoji del título no entra en la frase** («Semana 2 · ⚖️ Valor del
+  material» → «Valor del material»): el lector de pantalla lo leería en voz
+  alta.
+- Lo prueban `verificar-entreno-repaso.js` (el hub) y `verificar-panel.js`
+  (la franja), con lo esperado leído del plan de verdad y no escrito a mano.
 
 ## Estudio manda a practicar el tema de la ficha
 

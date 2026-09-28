@@ -1273,7 +1273,6 @@
             const ejercicios = Object.keys(porActividad)
                 .filter((a) => a !== "diagnostico")
                 .reduce((n, a) => n + (porActividad[a] || 0), 0);
-            if (ejercicios > 0) return;   // ya arrancó: acá no hay nada que guiar
 
             const { data, error } = await sb.rpc("informes_diagnosticos_alumnos");
             if (error) return;
@@ -1281,6 +1280,9 @@
             // pero se busca el suyo igual — es la misma precaución que en
             // loadEntrenoProgress().
             const mio = (data || []).find((f) => f.student_id === profile.id) || null;
+
+            // 0. Ya arrancó: lo que sigue guiando es la semana de su plan.
+            if (ejercicios > 0) return mostrarSemanaDelPlan(mio);
 
             // 1. Ya lo rindió: lo que falta es qué hacer con el resultado.
             if (mio && mio.detalle) {
@@ -1328,6 +1330,40 @@
                 texto: "El diagnóstico dice en qué estás bien y en qué no, y con eso tu profe sabe qué ponerte. No hay que estudiar nada antes.",
                 destino: "entreno/diagnostico.html", cta: "Hacer el diagnóstico →",
                 icono: "🧭", urgente: false,
+            });
+        }
+
+        /* La semana del plan, para quien ya arrancó.
+
+           Los tres peldaños de arriba se apagan con el primer ejercicio, y
+           ahí el panel se quedaba callado. En los datos, ese es justo el
+           punto donde se corta el camino: de los alumnos que hicieron el
+           diagnóstico, un tercio no volvió a entrenar y otro tercio lo dejó a
+           los uno o dos días. El plan de cuatro semanas decía qué hacer, pero
+           vivía solo en la página del diagnóstico.
+
+           No es un cartel que se repite igual: cambia de semana en semana y
+           el número de «hechos» sube con lo que hace. Se apaga solo cuando el
+           plan termina (ahí «Hoy te toca» pide repetir el diagnóstico). La
+           cuenta es PlanEntrenamiento.hoyDelPlan(), la misma de «Hoy te toca»,
+           y respeta el plan que el profesor compartió desde Informes. */
+        async function mostrarSemanaDelPlan(mio) {
+            if (!mio || !mio.detalle) return;
+            try { await traerScript("js/plan-entrenamiento.js"); } catch (e) { return; }
+            const PE = window.PlanEntrenamiento;
+            if (!PE || !PE.hoyDelPlan) return;
+            const detalle = mio.detalle.fecha ? mio.detalle : Object.assign({}, mio.detalle, { fecha: mio.fecha });
+            let hoy = null;
+            try { hoy = await PE.hoyDelPlan(sb, profile.id, detalle); } catch (e) { return; }
+            if (!hoy) return;
+            const avance = hoy.hechos === null ? ""
+                : hoy.hechos ? ` Llevas ${hoy.hechos} ${hoy.hechos === 1 ? "hecho" : "hechos"} ahí desde el diagnóstico.`
+                : " Todavía no has hecho nada ahí: empieza hoy.";
+            pintarFranja({
+                titulo: `Tu plan · semana ${hoy.numero} de ${hoy.total}`,
+                texto: `Esta semana toca ${hoy.foco}${hoy.delProfesor ? ", en el plan que te compartió tu profe" : ""}.${avance}`,
+                destino: hoy.recurso.href, cta: `${hoy.recurso.texto} →`,
+                icono: "📅", urgente: false,
             });
         }
 
