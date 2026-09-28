@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20260927081958
+# al-dia-con: 20260928050117
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -1401,6 +1401,7 @@ trigger  tareas  tareas_protege_alumno
 trigger  tournaments  tournaments_proteger
 trigger  training_progress  training_progress_valida_marca
 indice  Ejercicios Lichess  ejercicios_lichess_nbplays_idx
+indice  Ejercicios Lichess  ejercicios_lichess_pkey
 indice  academia_ia  academia_ia_academia_id_fk
 indice  academia_ia  academia_ia_pkey
 indice  academia_ia  academia_ia_una_por_academia
@@ -1471,7 +1472,9 @@ indice  encargados  encargados_sin_repetir
 indice  encargados  encargados_student_idx
 indice  encuesta_curso_respuestas  encuesta_curso_respuestas_encuesta
 indice  encuesta_curso_respuestas  encuesta_curso_respuestas_pkey
+indice  encuestas_curso  encuestas_curso_creado_por_fk
 indice  encuestas_curso  encuestas_curso_pkey
+indice  encuestas_curso  encuestas_curso_profesor_id_fk
 indice  encuestas_curso  encuestas_curso_slug_key
 indice  encuestas_profesor  encuestas_profesor_periodo
 indice  encuestas_profesor  encuestas_profesor_pkey
@@ -1526,7 +1529,9 @@ indice  informes_profesor  informes_profesor_pkey
 indice  informes_profesor  informes_profesor_profesor_id_periodo_key
 indice  informes_profesor_detalle  informes_profesor_detalle_pkey
 indice  insignias  insignias_alumno
+indice  insignias  insignias_otorgada_por_fk
 indice  insignias  insignias_pkey
+indice  insignias  insignias_tipo_fk
 indice  insignias_tipos  insignias_tipos_pkey
 indice  interno.envios_publicos  envios_publicos_correo
 indice  interno.envios_publicos  envios_publicos_creado
@@ -1595,6 +1600,7 @@ indice  recordatorios_informe  recordatorios_informe_persona_id_fk
 indice  recordatorios_informe  recordatorios_informe_pkey
 indice  salas_torneo  salas_torneo_clave_key
 indice  salas_torneo  salas_torneo_pkey
+indice  salas_torneo  salas_torneo_updated_by_fk
 indice  saved_games  saved_games_created_by_fk
 indice  saved_games  saved_games_pkey
 indice  solicitudes_academia  solicitudes_academia_pkey
@@ -1642,6 +1648,7 @@ indice  training_progress  training_progress_pkey
 indice  training_progress  training_progress_student_idx
 indice  training_state  training_state_pkey
 indice  trofeos_ajustes  trofeos_ajustes_alumno
+indice  trofeos_ajustes  trofeos_ajustes_creado_por_fk
 indice  trofeos_ajustes  trofeos_ajustes_pkey
 indice  tv_settings  tv_settings_pkey
 indice  tv_settings  tv_settings_updated_by_fk
