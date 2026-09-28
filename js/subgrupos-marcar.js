@@ -1,7 +1,8 @@
 /* Marcar de una vez a todos los alumnos de un subgrupo.
  *
- * Lo usan las dos pantallas donde se elige a quién se le manda algo —Tareas y
- * Exámenes—, que tienen la misma lista de casillas. Escrito dos veces se
+ * Lo usan las pantallas donde se elige a quién se le manda algo —Tareas,
+ * Exámenes y el plan de la preparación de rivales—, que tienen la misma lista
+ * de casillas. Escrito dos veces se
  * separaría a la primera corrección, y son justo las dos pantallas donde
  * equivocarse cuesta caro: una tarea mandada a toda la Academia en vez de a
  * los seis del martes no da ningún error.

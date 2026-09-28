@@ -131,6 +131,39 @@
                     </div>
                     <div id="visor"></div>
                 </section>
+                <!-- Mandar el plan de un lado a uno o varios alumnos, con su tarea
+                     (js/preparacion-rivales.js → mandar_plan_rival()). Se abre con
+                     «Mandárselo a un alumno», debajo de cada plan. -->
+                <section id="mandar-caja" hidden aria-labelledby="mandar-titulo" class="scroll-mt-28 bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
+                    <div class="flex flex-wrap items-center justify-between gap-3 mb-2">
+                        <h3 id="mandar-titulo" tabindex="-1" class="font-serif text-xl font-bold text-brand-800 dark:text-white focus:outline-none">Mandar el plan</h3>
+                        <button id="mandar-cerrar" type="button" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Cerrar</button>
+                    </div>
+                    <p class="text-sm text-brand-600 dark:text-brand-200 mb-1">El alumno recibe <strong>solo el plan</strong>: las jugadas, cuánto saca el rival en cada una y lo que dijo Stockfish de ellas, para recorrerlas en el tablero. El resto del análisis no lo ve. Le llega como una tarea.</p>
+                    <p id="mandar-sin-motor" hidden class="text-sm font-semibold text-accent-700 dark:text-accent-400 mb-1">Este plan todavía no está revisado con Stockfish: se manda sin sus avisos.</p>
+                    <form id="mandar-form" class="mt-4 space-y-4" novalidate>
+                        <fieldset>
+                            <legend class="text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">A quién</legend>
+                            <p id="mandar-cargando" class="text-sm text-brand-500 dark:text-brand-300">Buscando a tus alumnos…</p>
+                            <p id="mandar-sin-alumnos" hidden class="text-sm text-brand-500 dark:text-brand-300">No tienes alumnos a quienes mandárselo.</p>
+                            <div id="mandar-alumnos" class="max-h-64 overflow-y-auto grid sm:grid-cols-2 gap-x-4 gap-y-1"></div>
+                        </fieldset>
+                        <div class="flex flex-wrap gap-4">
+                            <div>
+                                <label for="mandar-vence" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Vence</label>
+                                <input id="mandar-vence" type="datetime-local" required class="bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            </div>
+                            <div class="flex-1 min-w-[14rem]">
+                                <label for="mandar-nota" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Nota para el alumno (opcional)</label>
+                                <textarea id="mandar-nota" rows="2" maxlength="2000" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></textarea>
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-3">
+                            <button id="mandar-enviar" type="submit" class="px-4 py-2 rounded-lg text-sm font-semibold bg-accent-500 hover:bg-accent-400 text-brand-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-50">Mandar el plan y la tarea</button>
+                            <p id="mandar-estado" role="status" class="text-sm text-brand-600 dark:text-brand-200"></p>
+                        </div>
+                    </form>
+                </section>
                 <div id="resultado-cuerpo" class="space-y-6"></div>
             </section>
 
@@ -161,6 +194,7 @@
     <script src="js/comandos-tablero.js"></script>
     <script src="js/cuadro-comandos.js"></script>
     <script src="js/visor-linea.js"></script>
+    <script src="js/subgrupos-marcar.js"></script>
     <script src="js/preparacion-lineas.js"></script>
     <script src="js/preparacion-posiciones.js"></script>
     <script src="js/preparacion-analisis.js"></script>

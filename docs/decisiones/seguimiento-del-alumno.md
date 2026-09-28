@@ -149,6 +149,12 @@ que la franja se vea de verdad dentro del ejercicio (se mide el `display` que
 calcula el navegador) y que sin `?tarea=` no aparezca, y que `?tema=` y `?cat=`
 abran de verdad lo que piden.
 
+Una tarea también la puede crear otra pantalla, siempre con `crear_tarea()`: la
+preparación de rivales manda el plan con un renglón `completar` que abre
+`plan-rival.html` (`material_slug` `plan-rival`, que no está en el catálogo de
+`js/material-plataforma.js` porque no se elige desde Tareas). Ver «Mandar el
+plan al alumno y a la clase: etapa 4».
+
 Lo que se rompe acá no da error: un renglón que cuenta la actividad equivocada,
 un enlace sin su recorte, o una tarea que se le manda a todos los alumnos en
 vez de a los marcados.

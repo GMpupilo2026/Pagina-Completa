@@ -344,30 +344,39 @@ function pruebaComoPierde() {
 // ------------------------------------------------------------ 2. la página
 
 // Un Supabase de mentira. `puede` es lo que contesta puedo_preparar_rivales().
-function clienteFalso(puede, guardados) {
+/* `tablas` suma otras tablas con sus filas: los alumnos que ve el profesor
+   (profiles), sus Archivos, los planes mandados. Cada insert y cada borrado
+   quedan anotados en __insertados / __borrados con su tabla. */
+function clienteFalso(puede, guardados, tablas) {
   return `
 window.__insertados = [];
 window.__borrados = [];
+window.__mandados = [];
 (function () {
-  const TABLAS = { preparaciones_rival: ${JSON.stringify(guardados || [])} };
+  const TABLAS = Object.assign({ preparaciones_rival: ${JSON.stringify(guardados || [])} }, ${JSON.stringify(tablas || {})});
+  let siguiente = 1;
   function constructor(tabla, filas) {
-    let filas2 = (filas || []).slice(), unica = false, insertando = null, borrando = false;
+    let filas2 = (filas || []).slice(), unica = false, quizas = false, insertando = null, borrando = false;
     const b = {
       select() { return b; },
       eq(col, val) { filas2 = filas2.filter((r) => String(r[col]) === String(val)); return b; },
+      in(col, vals) { filas2 = filas2.filter((r) => vals.map(String).includes(String(r[col]))); return b; },
       order() { return b; },
       range(a, z) { filas2 = filas2.slice(a, z + 1); return b; },
       insert(fila) {
-        insertando = Object.assign({ id: "p-" + (TABLAS[tabla].length + 1), profesor_id: "u-profe", created_at: "2026-09-28T12:00:00Z" }, fila);
+        insertando = [].concat(fila).map((f) => Object.assign({ id: "p-" + (siguiente++), profesor_id: "u-profe", created_at: "2026-09-28T12:00:00Z" }, f));
         return b;
       },
       delete() { borrando = true; return b; },
       single() { unica = true; return b; },
+      maybeSingle() { unica = true; quizas = true; return b; },
       then(res, rej) {
         if (insertando) {
-          TABLAS[tabla].unshift(insertando);
-          window.__insertados.push(JSON.parse(JSON.stringify(insertando)));
-          filas2 = [insertando];
+          insertando.forEach((f) => {
+            TABLAS[tabla].unshift(f);
+            window.__insertados.push(Object.assign({ tabla }, JSON.parse(JSON.stringify(f))));
+          });
+          filas2 = insertando;
         }
         if (borrando) {
           filas2.forEach((f) => { TABLAS[tabla].splice(TABLAS[tabla].indexOf(f), 1); window.__borrados.push(f.id); });
@@ -386,9 +395,13 @@ window.__borrados = [];
       getUser: () => Promise.resolve({ data: { user: { id: "u-profe" } } }),
       signOut: () => Promise.resolve({}),
     },
-    from: (t) => constructor(t, TABLAS[t] !== undefined ? TABLAS[t] : []),
-    rpc: (n) => {
+    from: (t) => { if (!TABLAS[t]) TABLAS[t] = []; return constructor(t, TABLAS[t]); },
+    rpc: (n, args) => {
       if (n === "puedo_preparar_rivales") return Promise.resolve({ data: ${JSON.stringify(puede)}, error: null });
+      if (n === "mandar_plan_rival") {
+        window.__mandados.push(JSON.parse(JSON.stringify(args)));
+        return Promise.resolve({ data: args.p_alumnos.length, error: null });
+      }
       return Promise.resolve({ data: [], error: null });
     },
     channel: () => ({ on() { return this; }, subscribe() { return this; }, track() { return Promise.resolve(); }, presenceState: () => ({}) }),
@@ -435,14 +448,14 @@ const MOTOR_FALSO = `
 })();
 `;
 
-async function abrir(browser, puede, guardados, adaptado) {
+async function abrir(browser, puede, guardados, adaptado, tablas, pagina) {
   const ctx = await browser.newContext({ serviceWorkers: "block", acceptDownloads: true });
   // El cuadro para escribir solo se ve en Modo Adaptado (js/cuadro-comandos.js).
   if (adaptado) await ctx.addInitScript(() => localStorage.setItem("oscarBlindMode_v1", "1"));
   await ctx.route("**/cdn.jsdelivr.net/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
   await ctx.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await ctx.route("**/fonts.gstatic.com/**", (r) => r.abort());
-  await ctx.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso(puede, guardados) }));
+  await ctx.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso(puede, guardados, tablas) }));
   await ctx.route("**/js/shared-engine.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: MOTOR_FALSO }));
   await ctx.addInitScript(contestarAvisos);
   // «Se ve» se mide con checkVisibility(), no con la clase ni el atributo.
@@ -452,7 +465,7 @@ async function abrir(browser, puede, guardados, adaptado) {
   page.on("pageerror", (e) => errores.push(String(e)));
   page.on("console", (m) => { if (m.type() === "error") errores.push("console: " + m.text()); });
   page.on("dialog", (d) => { errores.push("diálogo del navegador: " + d.message()); d.dismiss(); });
-  await page.goto(BASE + "/preparacion-rivales.html", { waitUntil: "networkidle" });
+  await page.goto(BASE + "/" + (pagina || "preparacion-rivales.html"), { waitUntil: "networkidle" });
   await page.waitForFunction(() => document.getElementById("loading").classList.contains("hidden"), null, { timeout: 15000 });
   return { page, ctx, errores };
 }
@@ -678,6 +691,133 @@ async function pruebaEtapa3(browser) {
   await ctx.close();
 }
 
+/* Etapa 4, sin navegador: lo que se le manda al alumno es SOLO el plan de un
+   lado y lo que dijo Stockfish de sus jugadas; cada línea del plan sale en su
+   propio PGN, que chess.js lee y que llega a donde dice el camino. */
+function pruebaPlanDelAlumno(r) {
+  console.log("\n=== Etapa 4: lo que se le manda al alumno ===");
+  const p = L.planDelAlumno(r, "conNegras");
+  igual("solo el plan y el motor, nada más del análisis", Object.keys(p).sort(), ["motor", "plan"]);
+  const texto = JSON.stringify(p);
+  cierto("sin el FODA, el repertorio ni el otro lado", !/foda|repertorio|conBlancas|fortalezas|primeras|contra/i.test(texto));
+  const clavesDelPlan = new Set();
+  (function bajar(nodos, antes) { for (const x of nodos) { const sec = antes.concat(x.san); clavesDelPlan.add(sec.join(" ")); bajar(x.hijos || [], sec); } })(p.plan, []);
+  const delMotor = p.motor.errores.concat(p.motor.cuidado).map((x) => x.sec.concat(x.jugada).join(" "));
+  cierto("lo de Stockfish es solo de jugadas del plan, y trae su Dh4 (" + delMotor.join(" | ") + ")", delMotor.length > 0 && delMotor.every((k) => clavesDelPlan.has(k)) && delMotor.some((k) => /Qh4$/.test(k)));
+  const todas = r.motor.errores.concat(r.motor.cuidado).filter((x) => clavesDelPlan.has(x.sec.concat(x.jugada).join(" "))).length;
+  igual("y no se pierde ninguna que sí es del plan", delMotor.length, todas);
+
+  const lineas = L.lineasDelPlan(r.conNegras.plan);
+  cierto("el plan con negras tiene varias líneas (" + lineas.length + ")", lineas.length >= 2);
+  const malas = lineas.filter((c) => {
+    const g = new Chess();
+    if (!g.load_pgn(L.lineaAPgn(r, "conNegras", c), { sloppy: true })) return true;
+    return g.history().join(" ") !== c.map((x) => x.san).join(" ");
+  });
+  igual("cada línea en PGN la lee chess.js y llega a su última jugada", malas.length, 0);
+}
+
+/* Etapa 4 en la página: mandar el plan a un alumno (una sola llamada, con solo
+   el plan) y guardarlo en Archivos, una fila por línea, reemplazando lo de
+   antes. Y la página del alumno: el plan, el tablero y nada del análisis. */
+async function pruebaEtapa4(browser) {
+  console.log("\n=== Etapa 4: mandar el plan al alumno y a Archivos ===");
+  const alumnos = [
+    { id: "a-1", full_name: "Ana Alumna", email: "ana@x.com", role: "alumno" },
+    { id: "a-2", full_name: "Beto Alumno", email: "beto@x.com", role: "alumno" },
+    { id: "u-colega", full_name: "Una Profe", email: "p@x.com", role: "profesor" },
+  ];
+  const { page, ctx, errores } = await abrir(browser, true, [], false, { profiles: alumnos });
+  await page.setInputFiles("#pgn-archivo", { name: "rival.pgn", mimeType: "application/x-chess-pgn", buffer: Buffer.from(pgnDePrueba(), "utf8") });
+  await page.click("#leer");
+  await page.waitForFunction(() => /Se leyeron/.test(document.getElementById("leido").textContent), null, { timeout: 10000 });
+  await page.click("#analizar");
+  await page.waitForFunction(() => /Listo/.test(document.getElementById("motor-estado").textContent), null, { timeout: 30000 });
+  igual("cada plan trae sus tres acciones", await page.evaluate(() =>
+    [...document.querySelectorAll("[aria-labelledby='planes-titulo'] [data-pgn], [aria-labelledby='planes-titulo'] [data-mandar], [aria-labelledby='planes-titulo'] [data-archivar]")].map((b) => b.textContent)),
+    ["Bajar el plan con blancas (PGN)", "Mandárselo a un alumno", "Guardar en Archivos (para la clase)",
+     "Bajar el plan con negras (PGN)", "Mandárselo a un alumno", "Guardar en Archivos (para la clase)"]);
+
+  // Mandar.
+  await page.click('[data-mandar="conBlancas"]');
+  await page.waitForFunction(() => document.getElementById("mandar-caja").checkVisibility() && document.querySelectorAll(".mandar-check").length > 0, null, { timeout: 5000 });
+  igual("se abre la caja, con el foco en su título", await page.evaluate(() => [document.getElementById("mandar-titulo").textContent, document.activeElement.id]),
+    ["Mandar el plan con blancas contra Pedro Perez", "mandar-titulo"]);
+  igual("la lista trae solo cuentas de alumno", await page.evaluate(() => [...document.querySelectorAll(".mandar-check")].map((c) => c.value)), ["a-1", "a-2"]);
+  igual("revisado con Stockfish, no avisa que falta la revisión", await page.evaluate(() => SE_VE("mandar-sin-motor")), false);
+  cierto("la fecha límite viene puesta, en el futuro", await page.evaluate(() => new Date(document.getElementById("mandar-vence").value) > new Date()));
+  await page.click("#mandar-enviar");
+  igual("sin marcar a nadie, lo dice y no manda nada", await page.evaluate(() => [document.getElementById("mandar-estado").textContent, window.__mandados.length]), ["Marca al menos un alumno.", 0]);
+  await page.check('.mandar-check[value="a-2"]');
+  await page.fill("#mandar-nota", "Mira bien la 3.");
+  await page.click("#mandar-enviar");
+  await page.waitForFunction(() => window.__mandados.length === 1, null, { timeout: 5000 });
+  const mandado = await page.evaluate(() => window.__mandados[0]);
+  igual("una sola llamada, con el alumno, el lado y la nota", [mandado.p_alumnos, mandado.p_lado, mandado.p_rival, mandado.p_nota], [["a-2"], "conBlancas", "Pedro Perez", "Mira bien la 3."]);
+  igual("lo que viaja es solo el plan", Object.keys(mandado.p_plan).sort(), ["motor", "plan"]);
+  cierto("sin nada del análisis", !/foda|repertorio|conNegras|primeras|masAlla/i.test(JSON.stringify(mandado.p_plan)));
+  igual("y dice que se mandó", await page.textContent("#mandar-estado"), "Plan mandado a 1 alumno, con su tarea.");
+  await page.click("#mandar-cerrar");
+  igual("al cerrar, el foco vuelve al botón", await page.evaluate(() => [SE_VE("mandar-caja"), document.activeElement.dataset.mandar]), [false, "conBlancas"]);
+
+  // A Archivos, dos veces: la segunda reemplaza. Con negras, que tiene varias líneas.
+  await page.click('[data-archivar="conNegras"]');
+  await page.waitForFunction(() => window.__insertados.filter((i) => i.tabla === "archivos_pgn").length > 0, null, { timeout: 5000 });
+  const archivos = await page.evaluate(() => window.__insertados.filter((i) => i.tabla === "archivos_pgn"));
+  cierto("una fila por línea del plan (" + archivos.length + "), en la carpeta del rival",
+    archivos.length >= 2 && archivos.every((a) => a.carpeta === "Preparación: Pedro Perez" && a.profesor_id === "u-profe" && /^Con negras · 1\.(e4|d4) /.test(a.titulo)));
+  const malas = archivos.filter((a) => {
+    const g = new Chess();
+    if (!g.load_pgn(a.pgn, { sloppy: true })) return true;
+    return g.history().length !== a.move_count || g.fen() !== a.fen_final;
+  });
+  igual("cada PGN se lee y trae bien sus jugadas y su posición final", malas.length, 0);
+  cierto("preguntó antes, diciendo dónde queda", await page.evaluate(() => window.__avisos.some((t) => /Se guardan \d+ líneas en la carpeta «Preparación: Pedro Perez»\. En la clase en vivo aparecen en 📁 Archivos\./.test(t))));
+  const primeras = archivos.map((a) => a.id);
+  await page.click('[data-archivar="conNegras"]');
+  await page.waitForFunction((n) => window.__borrados.length === n, primeras.length, { timeout: 5000 });
+  igual("guardarlo otra vez reemplaza: se borran las de antes y quedan las nuevas", await page.evaluate((ids) => [
+    window.__borrados.slice().sort().join() === ids.slice().sort().join(),
+    window.__insertados.filter((i) => i.tabla === "archivos_pgn").length,
+    window.__avisos.some((t) => /ya hay \d+ líneas de este plan\. Se reemplazan/.test(t))], primeras), [true, 2 * primeras.length, true]);
+  igual("sin errores en consola ni diálogos del navegador", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+
+  // La página del alumno, con el plan que se mandó.
+  console.log("\n=== Etapa 4: la página del alumno ===");
+  const fila = { id: "plan-1", profesor_id: "u-profe", alumno_id: "a-2", rival: "Pedro Perez", lado: "conBlancas", plan: mandado.p_plan, nota: "Mira bien la 3.", created_at: "2026-09-28T12:00:00Z" };
+  const al = await abrir(browser, false, [], false, { planes_rival_alumno: [fila] }, "plan-rival.html?id=plan-1");
+  const pedidos = [];
+  al.ctx.on("request", (q) => pedidos.push(q.url()));
+  igual("se ve el plan con su título, la fecha y la nota del profe", await al.page.evaluate(() => [SE_VE("app"), document.getElementById("titulo").textContent,
+    document.getElementById("subtitulo").textContent, document.getElementById("nota").textContent]),
+    [true, "Tu plan contra Pedro Perez", "Con blancas · te lo mandaron el 28 de septiembre de 2026.", "Mira bien la 3."]);
+  cierto("sin nada del análisis: ni FODA, ni repertorio, ni Stockfish en vivo", await al.page.evaluate(() =>
+    !/Fortalezas|Debilidades|Su repertorio|Más allá de la apertura/.test(document.body.textContent) && !window.SharedEngine));
+  igual("el tablero arranca en la línea principal, en la salida", await al.page.evaluate(() =>
+    [document.querySelector("#visor .visor-titulo").textContent, document.querySelector("#visor .sr-only[role='status']").textContent]), ["La línea principal", "Posición de salida."]);
+  await al.page.click("#plan button[aria-label='1…e5, ver en el tablero']");
+  await al.page.waitForFunction(() => /^Jugada 2 de/.test(document.querySelector("#visor .visor-escrita").textContent), null, { timeout: 3000 });
+  igual("una jugada del plan abre su línea en el tablero, con su nota", await al.page.evaluate(() =>
+    [document.querySelector("#visor .visor-titulo").textContent, /^Él la juega el \d+ %/.test(document.querySelector("#visor .visor-nota").textContent), document.activeElement.className]),
+    ["1.e4 e5", true, "visor-titulo"]);
+  const [bajada] = await Promise.all([al.page.waitForEvent("download"), al.page.click("#bajar-pgn")]);
+  const pgn = require("fs").readFileSync(await bajada.path(), "utf8");
+  igual("el alumno baja el plan en PGN", [bajada.suggestedFilename(), /\[Black "Pedro Perez"\]/.test(pgn), /1\. e4/.test(pgn)], ["plan-pedro-perez-blancas.pgn", true, true]);
+  igual("sin errores", al.errores.join(" | ") || "ninguno", "ninguno");
+  await al.ctx.close();
+
+  // La sesión del doble es «u-profe»: acá hace de alumno.
+  const lista = await abrir(browser, false, [], false, { planes_rival_alumno: [Object.assign({}, fila, { alumno_id: "u-profe" }), Object.assign({}, fila, { id: "plan-otro", alumno_id: "otro" })] }, "plan-rival.html");
+  igual("sin id, la lista con sus planes (los de otro alumno no, aunque llegaran)", await lista.page.evaluate(() =>
+    [...document.querySelectorAll("#lista-planes a")].map((a) => [a.getAttribute("href"), a.querySelector("p").textContent])),
+    [["plan-rival.html?id=plan-1", "Contra Pedro Perez, con blancas"]]);
+  await lista.ctx.close();
+  const nada = await abrir(browser, false, [], false, { planes_rival_alumno: [] }, "plan-rival.html?id=no-existe");
+  igual("un plan que no está lo dice", await nada.page.evaluate(() => [SE_VE("no-esta"), SE_VE("app")]), [true, false]);
+  await nada.ctx.close();
+}
+
 // Las partidas «de Lichess»: las mismas de prueba, con el rival como usuario.
 function pgnDeUsuario(usuario) {
   return pgnDePrueba().replace(/Pérez, Pedro|Pedro Perez|Pedro Pérez|PEDRO PÉREZ/g, usuario);
@@ -851,6 +991,7 @@ async function pruebaMotorDeVerdad(browser) {
   pruebaTransposiciones();
   pruebaFiltros();
   pruebaPgnDelPlan(conMotor);
+  pruebaPlanDelAlumno(conMotor);
   pruebaTiposDeFinal();
   pruebaDeteccionDeFinales();
   pruebaComoPierde();
@@ -863,6 +1004,7 @@ async function pruebaMotorDeVerdad(browser) {
     await pruebaDescarga(browser);
     await pruebaEtapa1(browser, analisisVersion1());
     await pruebaEtapa3(browser);
+    await pruebaEtapa4(browser);
     await pruebaMotorDeVerdad(browser);
   } finally {
     await browser.close();
