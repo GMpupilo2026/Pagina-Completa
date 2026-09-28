@@ -90,11 +90,19 @@ window.JuegoAviso = (function () {
   }
 
   function suscribir() {
+    /* Este archivo va en todas las páginas de la Academia: sin filtro, cada
+       partida nueva de la plataforma le llegaba a cada persona conectada, y
+       Realtime revisaba la RLS una vez por cada una (ver «Realtime escucha solo
+       lo que la pantalla muestra»). Un filtro mira una sola columna: van dos,
+       blancas y negras. La de cuatro no se puede filtrar (los asientos son un
+       jsonb) y solo la arma quien da clase: es rara, se deja como estaba. */
+    const alNacer2p = (payload) => {
+      const row = payload.new;
+      if (row && row.status === "playing" && esMia(row, "game_rooms")) mostrarAviso(row, "game_rooms");
+    };
     sb.channel("juego-aviso-2p-" + userId)
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "game_rooms" }, (payload) => {
-        const row = payload.new;
-        if (row && row.status === "playing" && esMia(row, "game_rooms")) mostrarAviso(row, "game_rooms");
-      })
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "game_rooms", filter: "white_id=eq." + userId }, alNacer2p)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "game_rooms", filter: "black_id=eq." + userId }, alNacer2p)
       .subscribe();
     sb.channel("juego-aviso-4p-" + userId)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "fourplayer_games" }, (payload) => {

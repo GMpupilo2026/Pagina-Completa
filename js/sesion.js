@@ -2564,22 +2564,43 @@
             await loadChatMessages();
         });
 
+        // Solo los hilos que esta pantalla muestra: el del propio alumno, o los de
+        // los alumnos de este profesor. Sin filtro, cada mensaje de cualquier clase
+        // de la plataforma le llegaba a todas las clases abiertas y Realtime revisaba
+        // la RLS una vez por cada una (ver «Realtime escucha solo lo que la pantalla
+        // muestra»). El filtro `in` acepta hasta 100 valores: de a 100.
+        // El DELETE va aparte y sin filtro porque Realtime no filtra borrados; es
+        // raro (solo «Vaciar esta conversación») y el callback descarta los ajenos.
+        function filtrosDelChat() {
+            if (!isTeacher) return ["student_id=eq." + profile.id];
+            const ids = chatStudents.map((s) => s.id);
+            const filtros = [];
+            for (let i = 0; i < ids.length; i += 100) filtros.push("student_id=in.(" + ids.slice(i, i + 100).join(",") + ")");
+            return filtros;
+        }
+
         function subscribeChat() {
-            sb.channel("class-chat-messages-changes")
-                .on("postgres_changes", { event: "*", schema: "public", table: "class_chat_messages" }, (payload) => {
-                    const affectedStudentId = (payload.new && payload.new.student_id) || (payload.old && payload.old.student_id);
-                    if (affectedStudentId === currentChatThreadId()) {
-                        loadChatMessages();
-                    } else if (isTeacher && affectedStudentId && payload.eventType === "INSERT") {
-                        // Mensaje nuevo en la conversación de otro alumno: se marca en el
-                        // selector en vez de interrumpir la conversación que se está viendo.
-                        chatUnseen.add(affectedStudentId);
-                        renderChatStudentOptions();
-                        const student = chatStudents.find((s) => s.id === affectedStudentId);
-                        setStatus("💬 Nuevo mensaje de " + (student ? (student.full_name || student.email) : "un alumno") + " en su chat privado.");
-                    }
-                })
-                .subscribe();
+            const canal = sb.channel("class-chat-messages-changes");
+            for (const filter of filtrosDelChat()) {
+                canal.on("postgres_changes", { event: "INSERT", schema: "public", table: "class_chat_messages", filter }, alCambiarElChat);
+                canal.on("postgres_changes", { event: "UPDATE", schema: "public", table: "class_chat_messages", filter }, alCambiarElChat);
+            }
+            canal.on("postgres_changes", { event: "DELETE", schema: "public", table: "class_chat_messages" }, alCambiarElChat);
+            canal.subscribe();
+
+            function alCambiarElChat(payload) {
+                const affectedStudentId = (payload.new && payload.new.student_id) || (payload.old && payload.old.student_id);
+                if (affectedStudentId === currentChatThreadId()) {
+                    loadChatMessages();
+                } else if (isTeacher && affectedStudentId && payload.eventType === "INSERT") {
+                    // Mensaje nuevo en la conversación de otro alumno: se marca en el
+                    // selector en vez de interrumpir la conversación que se está viendo.
+                    chatUnseen.add(affectedStudentId);
+                    renderChatStudentOptions();
+                    const student = chatStudents.find((s) => s.id === affectedStudentId);
+                    setStatus("💬 Nuevo mensaje de " + (student ? (student.full_name || student.email) : "un alumno") + " en su chat privado.");
+                }
+            }
         }
 
         document.getElementById("chat-form").addEventListener("submit", async (e) => {
