@@ -37,6 +37,7 @@
             confites: "Confites del caballo",
             ilumina: "Ilumina el tablero",
             visualizacion: "Visualización",
+            finales: "Finales contra la máquina",
         };
         const NIVEL_TEXTO = { bronce: "Bronce", plata: "Plata", oro: "Oro", diamante: "Diamante" };
 

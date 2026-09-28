@@ -19,12 +19,14 @@ window.LogrosCatalogo = (function () {
   "use strict";
 
   // Cuántos tipos de actividad de training_progress se pueden alcanzar de
-  // verdad hoy. Son 14 en el CHECK de la base, pero 'desafios' está declarada
+  // verdad hoy. Son 15 en el CHECK de la base, pero 'desafios' está declarada
   // sin ningún uso real (entreno/desafios.html registra como 'practicar' —
-  // ver CLAUDE.md), así que exigir las 14 dejaría un logro que nadie puede
+  // ver CLAUDE.md), así que exigir las 15 dejaría un logro que nadie puede
   // conseguir nunca, y eso no daría ningún error: se quedaría gris para
-  // siempre sin que nadie supiera por qué.
-  const ACTIVIDADES_ALCANZABLES = 13;
+  // siempre sin que nadie supiera por qué. Subió de 13 a 14 con 'finales'
+  // (Finales contra la máquina): nadie tenía todavía las 13 (el máximo era
+  // 12), así que nadie pierde la medalla.
+  const ACTIVIDADES_ALCANZABLES = 14;
 
   function porActividad(stats, clave) {
     return (stats.por_actividad && stats.por_actividad[clave]) || 0;
@@ -95,6 +97,7 @@ window.LogrosCatalogo = (function () {
     { id: "confites_1", categoria: "confites", nivel: "bronce", emoji: "🐴", nombre: "A por los confites", descripcion: "Jugaste tu primera ronda de Confites del caballo.", meta: 1, valor: (s) => porActividad(s, "confites") },
     { id: "ilumina_5", categoria: "ilumina", nivel: "bronce", emoji: "💡", nombre: "Se hizo la luz", descripcion: "5 niveles de Ilumina el tablero resueltos.", meta: 5, valor: (s) => porActividad(s, "ilumina") },
     { id: "visualizacion_10", categoria: "visualizacion", nivel: "bronce", emoji: "👁️", nombre: "Lo ves sin mirar", descripcion: "10 ejercicios de Visualización resueltos.", meta: 10, valor: (s) => porActividad(s, "visualizacion") },
+    { id: "finales_5", categoria: "finales", nivel: "plata", emoji: "🏁", nombre: "Final de libro", descripcion: "5 finales contra la máquina ganados o salvados.", meta: 5, valor: (s) => porActividad(s, "finales") },
   ];
 
   // Le agrega a cada logro su estado con los números de este alumno: cuánto

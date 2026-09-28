@@ -73,7 +73,7 @@ PAGINAS = [
     "entreno/desafios.html", "entreno/estudio.html", "entreno/index.html",
     "entreno/mates.html", "entreno/practicas.html", "entreno/temas.html",
     "entreno/visualizacion.html", "entreno/aperturas.html",
-    "entreno/precision-posicional.html", "entreno/tipos.html",
+    "entreno/precision-posicional.html", "entreno/tipos.html", "entreno/finales.html",
     "sonar.html", "batalla-naval.html",
     "cursos/academia/aperturas-y-defensas.html",
     "cursos/academia/arbitro-nacional.html",
@@ -594,6 +594,7 @@ NOMBRE_Y_PADRE = {
     "entreno/aperturas.html": ("Aperturas y celadas", "entreno/index.html"),
     "entreno/precision-posicional.html": ("Precisión posicional", "entreno/index.html"),
     "entreno/tipos.html": ("Tipos de entrenamiento", "entreno/index.html"),
+    "entreno/finales.html": ("Finales contra la máquina", "entreno/index.html"),
     "cursos/academia/index.html": ("Mis cursos", "clases.html"),
 }
 
