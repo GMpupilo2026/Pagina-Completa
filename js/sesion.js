@@ -175,6 +175,9 @@
         // todo sin tocar la partida hasta que se pulsa "Jugar desde aquí". Los alumnos ven
         // en su tablero lo que el profesor mira (ver transmitirVista).
         let variantNodes = [];
+        // Lo que el profe dijo de cada jugada: {"e4 e5": {nag, texto}}, con el
+        // camino desde start_fen como clave (ver js/pgn-clase.js).
+        let comentariosClase = {};
 
         async function loadVariantTree() {
             const { data, error } = await sb.from("variant_nodes").select("*").eq("teacher_id", boardOwnerId).order("created_at");
@@ -211,7 +214,7 @@
             const isCurrent = board.isViewingHistory() && ctx && ctx.parentNodeId === node.id;
             btn.className = "px-1 rounded hover:bg-brand-100 dark:hover:bg-brand-800 transition-colors italic text-accent-600 dark:text-accent-400" +
                 (isCurrent ? " bg-accent-500/30 font-bold not-italic" : "");
-            btn.textContent = node.san;
+            ponerTextoDeJugada(btn, node.san, fullPath);
             btn.addEventListener("click", () => { board.viewVariantNode(node, fullPath); renderMoveList(); transmitirVista(); });
             li.appendChild(btn);
             const children = variantChildrenOf(node.id);
@@ -244,9 +247,21 @@
             const isCurrent = board.isViewingHistory() && ctx && ctx.parentNodeId === null && board.viewPath.length === ply;
             btn.className = "px-1 rounded hover:bg-brand-100 dark:hover:bg-brand-800 transition-colors" +
                 (isCurrent ? " bg-accent-500/30 font-bold text-brand-800 dark:text-white" : "");
-            btn.textContent = san;
+            ponerTextoDeJugada(btn, san, board.moves().slice(0, ply));
             btn.addEventListener("click", () => { board.viewMainAt(ply); renderMoveList(); transmitirVista(); });
             return btn;
+        }
+
+        // La jugada con su signo (!, ?…) y un 💬 si tiene comentario, que también
+        // se dice al lector de pantalla (el 💬 solo no le dice nada).
+        function ponerTextoDeJugada(btn, san, camino) {
+            const c = PgnClase.comentarioDe(comentariosClase, camino);
+            btn.textContent = san + (c && c.nag ? PgnClase.signoDe(c.nag) : "") + (c && c.texto ? " 💬" : "");
+            if (c) {
+                const dicho = [c.nag ? PgnClase.nombreDelSigno(c.nag) : "", c.texto].filter(Boolean).join(": ");
+                btn.title = dicho;
+                btn.setAttribute("aria-label", san + ", comentada: " + dicho);
+            }
         }
 
         function renderMoveList() {
@@ -279,6 +294,105 @@
                 }
             }
             updateHistoryControls();
+            pintarComentarioDeLaJugada();
+        }
+
+        /* ---------- Comentar las jugadas ----------
+           El profe le pone un signo y unas palabras a la jugada que está mirando
+           (la de la vista o, si no, la última de la partida). La clase lo ve
+           debajo de su tablero cuando mira esa jugada, y viaja en el PGN. */
+        function caminoQueSeVe() {
+            const v = board.currentView();
+            return v ? v.path : board.moves();
+        }
+
+        let signoElegido = null;
+        let comentarioEditandoDe = null;   // la clave cuyo texto está en el cuadro
+
+        function pintarSignos() {
+            const caja = document.getElementById("comentar-signos");
+            if (!caja) return;
+            if (!caja.childElementCount) {
+                PgnClase.SIGNOS.forEach((s) => {
+                    const b = document.createElement("button");
+                    b.type = "button";
+                    b.dataset.nag = String(s.nag);
+                    b.className = "min-w-[2.25rem] px-2 py-1 rounded-lg border text-sm font-mono font-bold transition-colors";
+                    b.textContent = s.signo;
+                    b.title = s.nombre;
+                    b.setAttribute("aria-label", s.nombre + " (" + s.signo + ")");
+                    b.addEventListener("click", () => { signoElegido = signoElegido === s.nag ? null : s.nag; pintarSignos(); });
+                    caja.appendChild(b);
+                });
+            }
+            caja.querySelectorAll("button").forEach((b) => {
+                const on = Number(b.dataset.nag) === signoElegido;
+                b.setAttribute("aria-pressed", on ? "true" : "false");
+                b.classList.toggle("bg-accent-500", on);
+                b.classList.toggle("text-brand-900", on);
+                b.classList.toggle("border-accent-600", on);
+                b.classList.toggle("border-brand-200", !on);
+                b.classList.toggle("dark:border-brand-700", !on);
+                b.classList.toggle("text-brand-700", !on);
+                b.classList.toggle("dark:text-brand-200", !on);
+            });
+        }
+
+        function pintarComentarioDeLaJugada() {
+            const camino = caminoQueSeVe();
+            const c = camino.length ? PgnClase.comentarioDe(comentariosClase, camino) : null;
+            if (isTeacher) {
+                const caja = document.getElementById("comentar-jugada");
+                if (!caja) return;
+                caja.hidden = !camino.length || board.freeMode;
+                if (caja.hidden) return;
+                document.getElementById("comentar-jugada-cual").textContent = numerarJugadas(camino, camino.length - 1);
+                const k = PgnClase.clave(camino);
+                // Solo se rellena al cambiar de jugada: un eco de Realtime no le
+                // borra al profe lo que está escribiendo.
+                if (k !== comentarioEditandoDe) {
+                    comentarioEditandoDe = k;
+                    signoElegido = c ? c.nag : null;
+                    document.getElementById("comentar-texto").value = c ? c.texto : "";
+                }
+                document.getElementById("comentar-quitar-btn").hidden = !c;
+                pintarSignos();
+                return;
+            }
+            const el = document.getElementById("comentario-profe");
+            if (!el) return;
+            const texto = c ? "📝 Tu profe comentó " + numerarJugadas(camino, camino.length - 1)
+                + (c.nag ? PgnClase.signoDe(c.nag) + " (" + PgnClase.nombreDelSigno(c.nag).toLowerCase() + ")" : "")
+                + (c.texto ? ": " + c.texto : ".") : "";
+            if (claseAcc && texto && el.textContent !== texto) claseAcc.decir(texto.replace("📝 ", ""));
+            el.textContent = texto;   // textContent: el comentario lo escribió una persona
+            el.hidden = !texto;
+        }
+
+        async function guardarComentario(quitar) {
+            const camino = caminoQueSeVe();
+            if (!camino.length) return;
+            const k = PgnClase.clave(camino);
+            const texto = quitar ? "" : document.getElementById("comentar-texto").value.trim().slice(0, 300);
+            const nag = quitar ? null : signoElegido;
+            // Solo se guardan los de jugadas que siguen en el árbol: los de una
+            // línea que ya se borró no tienen dónde ir.
+            const vivos = PgnClase.caminos(board.moves(), variantNodes);
+            vivos.add(k);
+            const nuevos = {};
+            Object.keys(comentariosClase).forEach((x) => { if (vivos.has(x) && x !== k) nuevos[x] = comentariosClase[x]; });
+            if (nag || texto) nuevos[k] = { nag, texto };
+            const { error } = await sb.from("game_state").update({ comentarios: nuevos }).eq("id", myGameStateId);
+            if (error) { console.error(error); setStatus("No se pudo guardar el comentario: " + error.message); return; }
+            comentariosClase = nuevos;
+            comentarioEditandoDe = null;
+            renderMoveList();
+            setStatus(nag || texto ? "📝 Comentario guardado: la clase lo ve debajo de su tablero." : "Comentario quitado.");
+        }
+
+        if (document.getElementById("comentar-guardar-btn")) {
+            document.getElementById("comentar-guardar-btn").addEventListener("click", () => guardarComentario(false));
+            document.getElementById("comentar-quitar-btn").addEventListener("click", () => guardarComentario(true));
         }
 
         function updateHistoryControls() {
@@ -366,10 +480,10 @@
             if (discardedMain && discardedMain.length) {
                 // Archiva la línea en vivo ANTERIOR completa en "Partidas guardadas" para no
                 // perderla: "devolver la jugada sin borrarla, para crear variantes".
-                const tempGame = new Chess();
+                const tempGame = board.startFen ? new Chess(board.startFen) : new Chess();
                 discardedMain.forEach((m) => tempGame.move(m));
                 await sb.from("saved_games").insert({
-                    pgn: pgnFromMoves(discardedMain),
+                    pgn: pgnDeLaClase(discardedMain, true),
                     fen_final: tempGame.fen(),
                     move_count: discardedMain.length,
                     title: "Línea anterior (reemplazada por una variante)",
@@ -431,6 +545,7 @@
             }
             activePlayerId = row.active_player_id || null;
             activePlayerColor = row.active_player_color || "both";
+            comentariosClase = row.comentarios && typeof row.comentarios === "object" ? row.comentarios : {};
             updateTurnIndicator();
             updateAccessForRole();
             renderMoveList();
@@ -1087,7 +1202,7 @@
             board.viewLive();
             ultimaVistaEnviada = "null";
             const { error } = await sb.from("game_state").update({
-                fen, moves: [], start_fen: fen, last_move: null, vista: null,
+                fen, moves: [], start_fen: fen, last_move: null, vista: null, comentarios: {},
                 arrows: [], circles: [], active_player_id: null, active_player_color: "both",
                 updated_by: session.user.id, updated_at: new Date().toISOString(),
             }).eq("id", myGameStateId);
@@ -2403,12 +2518,17 @@
         document.getElementById("engine-retry-btn").addEventListener("click", () => { if (engineEnabled) updateEngineEval(); });
 
         // ---------- Partidas guardadas (PGN) ----------
-        function pgnFromMoves(moves) {
-            const g = new Chess();
-            const today = new Date().toISOString().slice(0, 10).replace(/-/g, ".");
-            if (g.header) g.header("Event", "Clase de Ajedrez Integral", "Date", today, "White", "Profesor", "Black", "Alumnos", "Result", "*");
-            for (const san of moves) g.move(san);
-            return g.pgn();
+        /* El PGN de la clase: desde SU posición de arranque, con las variantes y
+           los comentarios (ver js/pgn-clase.js). `soloLinea` es para archivar una
+           línea que se reemplaza: esa va sola, sin las variantes de la actual. */
+        function pgnDeLaClase(moves, soloLinea) {
+            return PgnClase.armar({
+                inicio: board.startFen,
+                jugadas: moves,
+                variantes: soloLinea ? [] : variantNodes,
+                comentarios: comentariosClase,
+                encabezados: { Annotator: profile.full_name || "?" },
+            });
         }
 
         function downloadText(filename, text) {
@@ -2647,13 +2767,17 @@
         document.getElementById("save-game-btn").addEventListener("click", async () => {
             const moves = board.moves();
             if (!moves.length) { setStatus("No hay jugadas todavía para guardar."); return; }
-            const pgn = pgnFromMoves(moves);
+            const pgn = pgnDeLaClase(moves, false);
             const { error } = await sb.from("saved_games").insert({
                 pgn, fen_final: board.fen(), move_count: moves.length, created_by: session.user.id,
             });
             if (error) { console.error(error); setStatus("No se pudo guardar la partida: " + error.message); return; }
-            downloadText("clase-" + new Date().toISOString().slice(0, 10) + ".pgn", pgn);
-            setStatus("Partida guardada y PGN descargado.");
+            const hoy = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Costa_Rica" }).format(new Date());
+            downloadText("clase-" + hoy + ".pgn", pgn);
+            const n = PgnClase.contar({ jugadas: moves, variantes: variantNodes, comentarios: comentariosClase });
+            setStatus("Partida guardada y PGN descargado: " + n.jugadas + (n.jugadas === 1 ? " jugada" : " jugadas")
+                + (n.variantes ? ", " + n.variantes + (n.variantes === 1 ? " jugada de variante" : " jugadas de variantes") : "")
+                + (n.comentarios ? ", " + n.comentarios + (n.comentarios === 1 ? " comentario" : " comentarios") : "") + ".");
         });
 
         // ---------- Preguntar a la clase: "¿qué jugarías?" ----------
@@ -4464,7 +4588,8 @@
             board.reset();
             board.viewLive(); // la clase vuelve a la partida (vista null): el profe también
             board.setMarks([], []);
-            await pushBoardState();
+            comentariosClase = {};
+            await pushBoardState({ comentarios: {} });
             await clearVariantTree();
             cerrarLeccionLocal(); // reiniciar el tablero también suelta el curso que estaba abierto en el panel del profesor
             updateTurnIndicator();
