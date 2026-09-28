@@ -81,8 +81,10 @@ falló.
   niveles (bronce, plata, oro, diamante): racha de días, ejercicios totales,
   variedad de tipos practicados, días de práctica acumulados (no hace falta
   que sean seguidos) y metas por cada tipo de ejercicio.
-- **`ACTIVIDADES_ALCANZABLES` es 13, no 14.** El CHECK de `training_progress`
-  tiene 14 actividades, pero `desafios` está declarada sin ningún uso real
+- **`ACTIVIDADES_ALCANZABLES` es 14, no 15** (era 13 hasta que llegó
+  `finales`; nadie tenía todavía las 13, así que nadie perdió la medalla). El
+  CHECK de `training_progress` tiene 15 actividades, pero `desafios` está
+  declarada sin ningún uso real
   (`entreno/desafios.html` registra como `'practicar'`): pedir las 14 para el
   logro "Las probaste todas" habría dejado un logro que nadie puede conseguir
   nunca, y eso no da ningún error —se queda gris para siempre sin que nadie
@@ -451,7 +453,7 @@ y el alumno practicaba otro motivo sin que nada fallara.
 
 `entreno/index.html` reparte los accesos en **Fundamentos** (Mates,
 Aprender, Coordenadas, Desafíos), **Practicar** (Ejercicios por tema, Practicar), **Entreno** (Aperturas y
-celadas, 4×4, Visualización, Precisión posicional) y
+celadas, 4×4, Visualización, Precisión posicional, Finales contra la máquina) y
 **Tipos de entrenamiento** (una sola tarjeta que abre su ficha, ver «Los Tipos
 de entrenamiento»).
 
@@ -513,6 +515,55 @@ los cuatro grupos con lo suyo, que cada acceso sea un encabezado, que no se salt
 ningún nivel, que el clic en la esquina de la tarjeta siga abriendo su enlace,
 que `tactica.html` redirija, que el progreso se herede y que un ejercicio de
 táctica se apunte como `tactica`.
+
+## Finales contra la máquina
+
+`entreno/finales.html`: los finales de libro que hay que saber de memoria
+—el peón pasado lejano, el alfil del color equivocado, dama contra peón en
+séptima (central, de torre y de alfil), torre contra peón, Philidor, Lucena,
+Vancura y torre contra alfil— jugados contra Stockfish a máxima fuerza
+(`PracticeEngine.getMove(fen, "max")`, el mismo Worker de la clase en vivo).
+Cada uno tiene una meta: **ganar** (dar mate) o **salvar** (hacer tablas).
+
+- **No hay «la jugada de la solución».** El rival es el motor y lo que decide
+  es cómo termina la partida, según chess.js: el mate del alumno es ganar;
+  ahogado, triple repetición, 50 jugadas o material insuficiente son tablas.
+  Salvar también se logra **aguantando** `aguantar` jugadas propias (25): al
+  llegar, el motor mira la posición y, si ya está perdida (mate a la vista o
+  dos peones abajo), no cuenta. **Si el motor no contesta, no se da por
+  logrado**: no se puede saber, y regalarlo mentiría en Informes.
+- **Ninguna posición se cree a ciegas.** Son las de los libros, escritas a mano
+  en `herramientas/finales-generar.js`, que las pasa por chess.js (legal: el
+  bando que no mueve no puede estar en jaque, que cuelga a Stockfish) y por
+  Stockfish a profundidad 26 desde el lado del alumno: ganar pide mate o +4;
+  salvar, 0,5 o menos. Lo que dijo el motor queda en el banco (`motor`) y
+  `verificar-finales.js` lo vuelve a exigir sin motor. `entreno/data/finales.json`
+  no se edita a mano.
+- **Lo que ya existía no se repite**: los mates básicos (dama, torre, dos
+  alfiles, alfil y caballo) son «Con lo justo» y rey y peón contra rey es «Rey y
+  peón», los dos en Tipos de entrenamiento, con tablas exactas.
+- **Cuenta UNA vez por final** (como Mates): ganarlo o salvarlo lo marca
+  (`entreno_finales_solved`, viaja con la cuenta) y escribe una fila
+  `activity = 'finales'` con `final_id`, `meta` y cómo salió. Por eso la
+  actividad está en el CHECK de `training_progress` (migración
+  `20260928232013`), en el catálogo de Tareas (meta de cantidad), en el tiempo
+  por sección (también en el correo a la casa: `informes-encargados`), en el
+  área de finales del plan del diagnóstico y en Logros (medalla «Final de
+  libro», 5 finales).
+- **`verificar-finales.js` revisa además que la base acepte TODA actividad que
+  las páginas registran**: busca cada `EntrenoProgress.log('<x>', …)` de `js/`
+  y la exige en el CHECK de la última migración que lo define. Una actividad
+  fuera del CHECK se rechaza sin que nada avise (ver «Cuatro actividades se
+  sumaron al CHECK»). `finales100` queda fuera a sabiendas, con su motivo
+  escrito en el verificador.
+- Dos pistas: la idea del final y, después, «la máquina jugaría…» con la pieza
+  resaltada. Cualquiera de las dos cuenta como pista (`con_pista`).
+- Las jugadas se escriben como en el resto del sitio (`Tc2`, no `Rc2`): la
+  traducción es `TiposReglas.sanEs()`.
+- `verificar-finales-pagina.js` la juega en un navegador con un motor de
+  mentira: ganar cuenta una vez, salvar con la posición en tablas cuenta, con
+  la posición perdida o sin motor no, y la máquina empieza cuando la posición
+  es del otro bando.
 
 ## Aperturas y celadas: memorizar jugando, con repaso espaciado
 

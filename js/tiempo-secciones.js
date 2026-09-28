@@ -41,6 +41,7 @@ window.TiempoSecciones = (function () {
         "confites":             { nombre: "Confites del caballo",  emoji: "🍬", unidad: ["recorrido", "recorridos"] },
         "ilumina":              { nombre: "Ilumina el tablero",    emoji: "💡", unidad: ["nivel", "niveles"] },
         "visualizacion":        { nombre: "Visualización",         emoji: "👁️", unidad: ["ejercicio", "ejercicios"] },
+        "finales":              { nombre: "Finales contra la máquina", emoji: "🏁", unidad: ["final", "finales"] },
         "estudio":              { nombre: "Estudio (fichas)",      emoji: "📚" },
         "precision-posicional": { nombre: "Precisión posicional",  emoji: "🧭" },
         "sonar":                { nombre: "El Sonar",              emoji: "🔊" },

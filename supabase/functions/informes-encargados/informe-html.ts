@@ -56,6 +56,7 @@ const ACTIVIDADES: Record<string, { nombre: string; unidad: string; emoji: strin
   confites:        { nombre: "Confites del caballo",  unidad: "partidas",    emoji: "🍬" },
   ilumina:         { nombre: "Ilumina el tablero",    unidad: "niveles",     emoji: "💡" },
   visualizacion:   { nombre: "Visualización",         unidad: "ejercicios",  emoji: "👁️" },
+  finales:         { nombre: "Finales contra la máquina", unidad: "logrados", emoji: "🏁" },
 };
 
 // Cómo se llama cada SECCIÓN de public.tiempo_por_seccion() cuando se la
@@ -78,6 +79,7 @@ export const SECCIONES: Record<string, { nombre: string; emoji: string; unidad?:
   "confites":             { nombre: "Confites del caballo",  emoji: "🍬", unidad: ["recorrido", "recorridos"] },
   "ilumina":              { nombre: "Ilumina el tablero",    emoji: "💡", unidad: ["nivel", "niveles"] },
   "visualizacion":        { nombre: "Visualización",         emoji: "👁️", unidad: ["ejercicio", "ejercicios"] },
+  "finales":              { nombre: "Finales contra la máquina", emoji: "🏁", unidad: ["final", "finales"] },
   "estudio":              { nombre: "Estudio (fichas)",      emoji: "📚" },
   "precision-posicional": { nombre: "Precisión posicional",  emoji: "🧭" },
   "sonar":                { nombre: "El Sonar",              emoji: "🔊" },

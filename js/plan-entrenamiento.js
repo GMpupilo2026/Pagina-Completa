@@ -145,6 +145,7 @@ window.PlanEntrenamiento = (function () {
       recursos: [
         { texto: 'Ejercicios de final de peones', href: 'entreno/temas.html?tema=pawnEndgame' },
         { texto: 'Ejercicios de final de torres', href: 'entreno/temas.html?tema=rookEndgame' },
+        { texto: 'Finales contra la máquina', href: 'entreno/finales.html' },
         { texto: 'Practicar — bloque de finales', href: 'entreno/practicas.html' },
         { texto: 'Ficha: la oposición', href: 'entreno/estudio.html?ficha=oposicion' },
         { texto: 'Ficha: la regla del cuadrado', href: 'entreno/estudio.html?ficha=regla-del-cuadrado' },
@@ -765,6 +766,7 @@ window.PlanEntrenamiento = (function () {
     'entreno/coordenadas.html': 'coordenadas', 'entreno/aperturas.html': 'aperturas',
     'entreno/4x4.html': '4x4', 'entreno/visualizacion.html': 'visualizacion',
     'entreno/diagnostico.html': 'diagnostico',
+    'entreno/finales.html': 'finales',
   };
   function claveDeAvance(href) {
     const [ruta, consulta] = String(href || '').split('?');
