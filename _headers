@@ -18,8 +18,15 @@
 # El proyecto de la Academia está en img-src por los logos de las academias
 # (bucket público academia-marca): se ven en el encabezado y en los
 # formularios públicos. Es el mismo origen que ya está en connect-src.
+# script-src NO lleva 'unsafe-inline': un <script> que alguien lograra meter en
+# una página no corre. Los cuatro scripts que sí van escritos en las páginas
+# (la guardia de sesión, el tema, el modo oscuro y las fuentes; los ponen sus
+# generadores, idénticos en todas) se autorizan por su hash, que escribe
+# herramientas/csp-hashes.js. Si un generador cambia su bloque,
+# verificar-csp.js falla hasta que se corre ese script.
+#
 /*
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' https://cdn.jsdelivr.net https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://bgtijpimpcokxatxxbki.supabase.co; connect-src 'self' https://cdn.jsdelivr.net https://huggingface.co https://*.huggingface.co https://*.hf.co https://bgtijpimpcokxatxxbki.supabase.co wss://bgtijpimpcokxatxxbki.supabase.co https://prcfbzvshnusisczlpxl.supabase.co wss://prcfbzvshnusisczlpxl.supabase.co https://ajedrez-inscripciones.gmpupilo.workers.dev https://api.hacienda.go.cr https://lichess.org https://api.chess.com; frame-src https://challenges.cloudflare.com https://lichess.org https://www.youtube-nocookie.com https://player.twitch.tv; worker-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-r2M0L8lRXIwjTnGxyAl9KAsnqTxGnnN5EB9HoLxbWas=' 'sha256-1fkEptF17HtO6UkV8wojrNj4DU4AO8RMBgBZnA96hyA=' 'sha256-xSZSNs7SoW2z079LAKuoPTu3HSvpR9fVjN0be2TWovk=' 'sha256-labAcQayhsJn4WIPogmjgRK06gK3PV8e2b6P44Qt844=' 'unsafe-eval' 'wasm-unsafe-eval' https://cdn.jsdelivr.net https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://bgtijpimpcokxatxxbki.supabase.co; connect-src 'self' https://cdn.jsdelivr.net https://huggingface.co https://*.huggingface.co https://*.hf.co https://bgtijpimpcokxatxxbki.supabase.co wss://bgtijpimpcokxatxxbki.supabase.co https://prcfbzvshnusisczlpxl.supabase.co wss://prcfbzvshnusisczlpxl.supabase.co https://ajedrez-inscripciones.gmpupilo.workers.dev https://api.hacienda.go.cr https://lichess.org https://api.chess.com; frame-src https://challenges.cloudflare.com https://lichess.org https://www.youtube-nocookie.com https://player.twitch.tv; worker-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
