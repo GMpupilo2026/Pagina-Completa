@@ -115,15 +115,29 @@ Lo que el service worker no toca nunca:
 el navegador se queda con un `sw.js` viejo, la app deja de actualizarse y no hay
 forma de avisarle a nadie: sigue sirviendo lo de antes sin dar ningún error.
 
-### Los iconos no son el favicon
+### Los iconos de la app y el favicon salen del logo de la marca
 
-El favicon del sitio es un emoji, y un emoji no sirve de icono de app: cada
-sistema lo dibuja distinto y las tiendas piden un PNG. `node
-herramientas/pwa-iconos.js` dibuja el caballo del juego de piezas que el sitio
-ya usa (leído de `js/finales-100.js` vía `lib/tablero-svg.js`), en ámbar sobre
-el azul del encabezado. **Van dos de 512 y no uno**: Android recorta el icono en
-círculo, así que el `maskable` lleva bastante más margen — sin eso le come las
-orejas al caballo.
+`node herramientas/pwa-iconos.js` dibuja los iconos de la app y el de la
+pestaña a partir del logo de la marca (`img/logo-oscar-angulo.png`, el crema),
+sobre el azul del encabezado. Antes el icono de la app era el caballo genérico
+del juego de piezas, en ámbar, y el favicon un emoji ♟️, que cada sistema dibuja
+distinto: ninguno de los dos era la marca.
+
+- **Sin la cinta.** El logo trae abajo «Oscar Angulo Cubero · Profesional de
+  Ajedrez», que a tamaño de icono no se lee: se queda el caballo, el peón y los
+  cuadros, el mismo recorte que el encabezado (`logo-encabezado.py`), pero
+  hecho desde el original grande, porque el del encabezado mide 96 px y a 512
+  se vería borroso.
+- **Van dos de 512 y no uno**: Android recorta el icono en círculo y solo
+  garantiza el 80 % central, así que el `maskable` lleva más margen; sin eso le
+  come los cuadros de los lados.
+- **La pestaña lleva solo el caballo con el peón.** A 16 y 32 px los cuadros
+  vuelven el logo diminuto y ruidoso. `img/favicon.svg` es un SVG con el PNG
+  adentro, para que las páginas lo sigan pidiendo por el mismo nombre sin
+  tocar ninguna.
+- Un celular que ya instaló la app puede tardar en mostrar el icono nuevo:
+  el sistema lo vuelve a pedir cuando quiere, y desde el sitio no se puede
+  forzar.
 
 ### La cabecera va en TODAS las páginas
 
