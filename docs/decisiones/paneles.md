@@ -1059,6 +1059,117 @@ número de cada PR enlazado.
   el título ajeno literal, el buscador sin tildes y que a quien no administra
   no se le pinte.
 
+## La preparación de rivales
+
+`preparacion-rivales.html`: un profesor carga un PGN con partidas de un rival
+(de Lichess, Chess.com o de donde sea) y la página arma el análisis completo:
+cuánto saca con cada color, por ritmo, por año y según el Elo del oponente; su
+repertorio; las líneas donde rinde menos y más; el FODA; qué jugarle con
+blancas y con negras; y la revisión de todo eso con Stockfish. Nació de
+preparar a mano la partida contra Oscar a partir del libro del bot: se pidió
+lo mismo para cualquier rival, activable profesor por profesor desde
+administración.
+
+**Quién puede lo decide la base.** `puedo_preparar_rivales()` dice que sí a
+quien administra y a los profesores que están en
+`preparacion_rivales_profesores`. Esa tabla no tiene política de escritura: la
+escribe `activar_preparacion_rivales()`, que exige administrar, exige que la
+cuenta sea de un profesor y **devuelve cómo quedó**, leído de la tabla. El
+interruptor de `admin.html#preparacion` (`js/admin-preparacion.js`) pinta eso,
+no lo que se pidió. La tarjeta del panel del profesor (grupo Herramientas de
+`js/clases.js`) sale solo si la función dice que sí; mirando el panel de otra
+persona («Ver como» una persona) se pregunta por esa persona y no por quien
+mira.
+
+**El PGN no sale de la computadora.** Se lee con `FileReader` y se analiza en
+el navegador; lo que se guarda (`preparaciones_rival.analisis`) es el
+resultado, que pesa unos pocos KB aunque el PGN tenga 30.000 partidas. Lo ve
+su dueño y quien administra. Guardar exige tener la función activa (política
+de `insert`); si administración la apaga, lo guardado se sigue viendo y
+borrando, pero no se guarda nada nuevo. Se comprobó en SQL impersonando cada
+rol: un profesor sin activar no guarda ni se activa solo, uno
+activo no guarda a nombre de otro ni ve lo de otro, y `anon` no ejecuta nada.
+
+**Las cuentas viven en `js/preparacion-analisis.js`, sin pantalla**, para que
+las pruebe Node sin navegador. Decisiones que no se ven:
+
+- **El árbol se arma con la secuencia de jugadas, no con la posición.** Las
+  transposiciones cuentan aparte. Rehacer cada jugada con chess.js para sacar
+  la posición tardaba minutos con miles de partidas; la SAN de un PGN exportado
+  ya viene normalizada. Con 30.000 partidas (8 MB) leer tarda un segundo y
+  analizar 0,2. chess.js se usa solo para las pocas posiciones que van al
+  motor.
+- **Nada se decide con pocas partidas.** Una línea cuenta desde `minimo()`
+  partidas (el 1 % del archivo, entre 4 y 30). Para elegir qué jugarle, la
+  puntuación se «encoge» hacia su promedio con 8 partidas imaginarias: 3 de 3
+  no es 100 %. Una línea es fuerte o débil cuando se aparta de su promedio con
+  ese color más de lo que explica el azar (z de ±1,28 y al menos 5 puntos). La
+  comparación es contra su promedio **con ese color**: saca menos con negras
+  que con blancas, y eso no convierte cada línea con negras en un punto débil.
+- **Del mismo rival hay nombres escritos de varias formas.** «Angulo, Oscar»,
+  «Oscar Angulo» y «ÓSCAR ANGULO» son la misma persona (`claveNombre()`: sin
+  tildes, sin mayúsculas, palabras ordenadas). Se muestra la forma que más se
+  repite en el archivo.
+- **El plan sigue hasta el fondo toda apertura que el rival juega una de cada
+  cuatro veces o más**, no solo la más jugada. Con la más jugada nada más, a un
+  rival que abre 1.e4 y 1.d4 se le preparaba una sola: su 4.Dh4 de siempre
+  después de 1.d4 c5 (el error que Stockfish le encontró a Oscar) nunca llegaba
+  al motor.
+- **Stockfish revisa las jugadas de los planes, las suyas y las nuestras**
+  (`tareasDelMotor()`, hasta 30, primero las más jugadas). Si una jugada
+  habitual del rival pierde medio peón o más, es un error que se le puede
+  preparar y va a Oportunidades. Si una recomendación nuestra pierde un peón o
+  más, va a Amenazas: los números premian una jugada mala cuando él no la supo
+  castigar (en el primer informe sobre Oscar, la receta contra el Englund
+  recomendaba 5.Dd2, que pierde la torre). Corre con el Stockfish del sitio
+  (`js/shared-engine.js`), a profundidad 14 y en un solo hilo, para que la
+  revisión no se eternice en una computadora modesta: alcanza para ver errores
+  claros, no para matices. Se puede parar a la mitad, y lo revisado se muestra
+  igual.
+- **Todo sale en notación española** (`sanEs()`) y los porcentajes con coma.
+
+### Bajar las partidas de Lichess o Chess.com
+
+Buscar el PGN de un rival en su perfil, exportarlo y cargarlo era el paso que
+más costaba. Ahora se escribe su usuario de Lichess o de Chess.com, se elige
+cuántas partidas (las últimas 500, 2000, 5000 o todas) y la página las baja,
+elige a ese usuario como rival y analiza sola (`js/preparacion-descarga.js`).
+
+- **Directo desde el navegador**, sin pasar por el worker ni por Supabase: las
+  dos APIs son públicas, sin clave y con CORS abierto. Por eso `_headers` las
+  tiene en `connect-src` (`lichess.org` ya estaba por las transmisiones;
+  `api.chess.com` entró con esto). Sin esa línea la descarga funciona en la
+  máquina de prueba —que no manda `_headers`— y falla en producción sin
+  explicar nada: `verificar-preparacion-rivales.js` lee la política.
+- **Solo sale el nombre de usuario**, y las dos están en la lista de
+  proveedores de `privacidad.html` (ver «Las páginas legales»).
+- **Lichess** entrega todo en un solo flujo, las más nuevas primero, a unas 20
+  partidas por segundo sin cuenta: se lee de a pedazos para ir diciendo cuántas
+  van. Se piden sin relojes, sin evaluaciones y sin el nombre de la apertura:
+  el análisis no los usa y el flujo pesa menos.
+- **Chess.com** guarda las partidas por mes: se pide la lista de meses y se
+  baja uno por vez, del más nuevo al más viejo, hasta juntar las pedidas. De a
+  uno a propósito: Chess.com pide no hacer pedidos en paralelo y contesta 429.
+- **Se puede parar**, y se analiza lo que ya llegó, sin la última partida si
+  quedó a medias.
+- Un usuario que no existe, un 429 o un error del sitio se dicen en palabras
+  en la página; no van a la consola como error, porque no lo son.
+
+Lo prueba `verificar-preparacion-rivales.js`, en dos partes. Sin navegador,
+con un PGN de patrones plantados (dónde pierde, dónde gana, dónde improvisa, un
+nombre escrito de tres formas, comentarios, variantes anidadas y NAG): que se
+lean todas, que el rival sea uno solo, que el análisis encuentre lo plantado y
+que el motor marque el error sembrado. En un navegador, con un Supabase de
+mentira y un Stockfish de mentira (castiga la dama blanca en h4): sin la función
+se ve el aviso y no la herramienta; con ella se carga el archivo, se analiza, se
+ve cada parte en su orden, el motor marca 4.Dh4, se guarda el resultado sin el
+PGN, borrar pide confirmar, y un nombre con marcado queda como texto. La
+descarga se prueba con un Lichess y un Chess.com de mentira (con CORS, como los
+de verdad): qué se les pide, en qué orden, que corte en el tope y que un usuario
+que no existe se diga. La
+sección de administración la prueba `verificar-admin.js` y la tarjeta del panel
+`verificar-panel.js`.
+
 ## Las inscripciones a torneos en línea
 
 `inscripciones.html` muestra lo que llegó por `inscripcion.html`, el formulario

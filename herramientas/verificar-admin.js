@@ -96,6 +96,7 @@ window.__consultas = [];
     equipo_alumnos: [{ equipo_id: "eq-1", alumno_id: "u-5" }],
     equipo_entrenadores: [],
     coordinador_profesores: [],
+    preparacion_rivales_profesores: [],
   };
   const SUBGRUPOS_VISTA = [
     { id: "sg-1", nombre: "Los del martes", profesor_id: "u-profe", profesor: "Profe Vega",
@@ -131,11 +132,17 @@ window.__consultas = [];
       signOut: () => Promise.resolve({}),
     },
     from: (t) => constructor(t, TABLAS[t] !== undefined ? TABLAS[t] : []),
-    rpc: (n) => {
+    rpc: (n, args) => {
       if (n === "soy_coordinador") {
         return Promise.resolve({ data: !!(USUARIO.is_admin || USUARIO.es_coordinador), error: null });
       }
       if (n === "subgrupos_a_la_vista") return constructor(n, SUBGRUPOS_VISTA);
+      /* Activar la preparación de rivales: la base devuelve cómo QUEDÓ, y la
+         página pinta eso. Se anota lo que se pidió. */
+      if (n === "activar_preparacion_rivales") {
+        window.__activaciones = (window.__activaciones || []).concat([args]);
+        return Promise.resolve({ data: !!(args && args.p_activa), error: null });
+      }
       return constructor(n, []);
     },
     channel: () => ({ on() { return this; }, subscribe() { return this; } }),
@@ -314,6 +321,34 @@ async function pruebaSecciones(browser) {
   await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
   igual("admin.html#supervisores abre Supervisores", await visibles(), ["supervisores"]);
 
+  igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+}
+
+/* ============ admin.html · a quién se le activa la preparación de rivales ============ */
+
+async function pruebaPreparacionRivales(browser) {
+  console.log("\n=== Preparación de rivales: a qué profesores se les activa ===");
+  const { page, ctx, errores } = await abrir(browser, "/admin.html", ADMIN);
+  await page.goto(BASE + "/admin.html", { waitUntil: "networkidle" });
+  await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
+  await irA(page, "preparacion");
+  await page.waitForSelector("#prep-lista li", { timeout: 10000 });
+  const filas = () => page.evaluate(() => Array.from(document.querySelectorAll("#prep-lista li")).filter((li) => li.checkVisibility())
+    .map((li) => [li.querySelector("p").textContent, (li.querySelector("[role=switch]") || {}).textContent || "", li.querySelector("[role=switch]") ? li.querySelector("[role=switch]").getAttribute("aria-checked") : "sin interruptor"]));
+  igual("salen los profesores, y solo ellos, con su interruptor apagado", await filas(), [["Karina Rojas", "○Apagada", "false"]]);
+  igual("el resumen lo dice con palabras", await page.textContent("#prep-resumen"), "0 de 1 profesores la tienen activa");
+  await page.click("#prep-lista [role=switch]");
+  await page.waitForFunction(() => document.querySelector("#prep-lista [role=switch]").getAttribute("aria-checked") === "true", null, { timeout: 5000 });
+  igual("activarla le pide a la base ESE profesor, encendido",
+    await page.evaluate(() => window.__activaciones), [{ p_profesor: "u-profe", p_activa: true }]);
+  igual("y el interruptor pinta lo que devolvió la base, también en texto", await filas(), [["Karina Rojas", "●Activa", "true"]]);
+  igual("el resumen se actualiza", await page.textContent("#prep-resumen"), "1 de 1 profesores la tiene activa");
+  await page.fill("#prep-buscar", "zzz");
+  igual("buscar a alguien que no está dice que no hay", await page.evaluate(() => document.getElementById("prep-vacio").checkVisibility()), true);
+  await page.fill("#prep-buscar", "karina");
+  igual("y buscando por nombre se encuentra", (await filas()).length, 1);
+  igual("el botón abre la herramienta", await page.getAttribute('[data-seccion="preparacion"] a[href="preparacion-rivales.html"]', "href"), "preparacion-rivales.html");
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
 }
@@ -833,6 +868,7 @@ async function pruebaVolcarEnUnEquipo(browser) {
   try {
     await pruebaAtajos(browser);
     await pruebaSecciones(browser);
+    await pruebaPreparacionRivales(browser);
     await pruebaFichasDeGrupo(browser);
     await pruebaVolcarEnUnEquipo(browser);
     await pruebaCuentasDeUnGrupo(browser);
