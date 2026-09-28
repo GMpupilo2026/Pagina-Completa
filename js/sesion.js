@@ -1002,8 +1002,7 @@
             const expectedPlies = Math.max(1, Math.min(6, Math.ceil((a.move_count || 1) / 2)));
             if (!(await aplicarPosicionEnClase(fen))) return;
             document.getElementById("question-plies-input").value = expectedPlies;
-            await sb.from("questions").update({ closed_at: new Date().toISOString() }).eq("created_by", boardOwnerId).is("closed_at", null);
-            const { data, error } = await sb.from("questions").insert({ fen, created_by: session.user.id, expected_plies: expectedPlies }).select().single();
+            const { data, error } = await crearPregunta(fen, expectedPlies);
             if (error) { console.error(error); setStatus("No se pudo crear la pregunta: " + error.message); return; }
             document.getElementById("archivos-panel").classList.add("hidden");
             activateTeacherTab("preguntar");
@@ -2235,11 +2234,7 @@
         async function preguntarDelPlan(item) {
             if (!(await aplicarPosicionEnClase(item.fen))) return;
             document.getElementById("question-plies-input").value = 1;
-            await sb.from("questions").update({ closed_at: new Date().toISOString() })
-                .eq("created_by", boardOwnerId).is("closed_at", null);
-            const { data, error } = await sb.from("questions")
-                .insert({ fen: item.fen, created_by: session.user.id, expected_plies: 1 })
-                .select().single();
+            const { data, error } = await crearPregunta(item.fen, 1);
             if (error) { console.error(error); setStatus("No se pudo crear la pregunta: " + error.message); return; }
             activateTeacherTab("preguntar");
             setStatus("Pregunta abierta desde el plan: " + item.titulo);
@@ -2812,6 +2807,254 @@
         let questionEngineBusy = false;
         let questionEngineLastFailed = false;
 
+        /* ---------- Preguntas: tiempo, opciones y lo que contestó la clase ----------
+           Una sola puerta crea las preguntas de «¿qué jugarías?» (la usan el botón,
+           Táctica, el plan, los archivos y los Tipos): así el tiempo para contestar
+           vale para todas sin que ninguna se olvide de mandarlo. Las de opciones
+           van por hacer_pregunta_de_opciones(), que guarda la correcta aparte, donde
+           los alumnos no la leen. Ver js/pregunta-clase.js. */
+        function tiempoElegido() {
+            const v = document.getElementById("question-tiempo");
+            const n = v ? parseInt(v.value, 10) : NaN;
+            return isFinite(n) && n > 0 ? n : null;
+        }
+
+        async function crearPregunta(fen, expectedPlies) {
+            await sb.from("questions").update({ closed_at: new Date().toISOString() })
+                .eq("created_by", boardOwnerId).is("closed_at", null);
+            return sb.from("questions")
+                .insert({ fen, created_by: session.user.id, expected_plies: expectedPlies, tiempo_limite: tiempoElegido() })
+                .select().single();
+        }
+
+        async function crearPreguntaDeOpciones(prompt, opciones, correcta) {
+            const fen = board.fen();
+            const motivo = motivoPosicionInvalida(fen);
+            if (motivo) { setStatus(motivo); return false; }
+            const { error } = await sb.rpc("hacer_pregunta_de_opciones", {
+                p_fen: fen, p_prompt: prompt, p_opciones: opciones,
+                p_correcta: correcta, p_tiempo_limite: tiempoElegido(),
+            });
+            if (error) { console.error(error); setStatus("No se pudo crear la pregunta: " + error.message); return false; }
+            setStatus("Pregunta enviada a la clase: " + prompt);
+            return true;
+        }
+
+        function montarControlesDePreguntas() {
+            const sel = document.getElementById("question-tiempo");
+            if (!sel || sel.childElementCount) return;
+            PreguntaClase.TIEMPOS.forEach((t) => {
+                const o = document.createElement("option");
+                o.value = t.segundos === null ? "" : String(t.segundos);
+                o.textContent = t.texto;
+                sel.appendChild(o);
+            });
+            // Las filas de «una pregunta con tus opciones»: cuatro, con su radio de
+            // «esta es la correcta» y uno de «ninguna» que arranca marcado.
+            const filas = document.getElementById("opciones-filas");
+            const ninguna = document.createElement("label");
+            ninguna.className = "flex items-center gap-2 text-xs text-brand-600 dark:text-brand-300";
+            ninguna.innerHTML = '<input type="radio" name="opcion-correcta" value="" checked> Ninguna es «la correcta»';
+            for (let i = 0; i < 4; i++) {
+                const fila = document.createElement("div");
+                fila.className = "flex items-center gap-2";
+                const radio = document.createElement("input");
+                radio.type = "radio";
+                radio.name = "opcion-correcta";
+                radio.value = String(i);
+                radio.setAttribute("aria-label", "La opción " + (i + 1) + " es la correcta");
+                const txt = document.createElement("input");
+                txt.type = "text";
+                txt.maxLength = 120;
+                txt.id = "opcion-texto-" + i;
+                txt.placeholder = "Opción " + (i + 1);
+                txt.setAttribute("aria-label", "Opción " + (i + 1));
+                txt.className = "flex-1 text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500";
+                fila.append(radio, txt);
+                filas.appendChild(fila);
+            }
+            filas.appendChild(ninguna);
+
+            document.getElementById("ask-quien-mejor-btn").addEventListener("click", () => {
+                const v = document.getElementById("quien-mejor-correcta").value;
+                crearPreguntaDeOpciones(PreguntaClase.QUIEN_ESTA_MEJOR.prompt, PreguntaClase.QUIEN_ESTA_MEJOR.opciones, v === "" ? null : Number(v));
+            });
+            document.getElementById("ask-termometro-btn").addEventListener("click", () => {
+                crearPreguntaDeOpciones(PreguntaClase.TERMOMETRO.prompt, PreguntaClase.TERMOMETRO.opciones, null);
+            });
+            document.getElementById("ask-opciones-btn").addEventListener("click", async () => {
+                const prompt = document.getElementById("opciones-prompt").value.trim();
+                // Se juntan las escritas, y la correcta se renumera: si se dejó la
+                // opción 2 vacía, la 3 pasa a ser la segunda.
+                const marcada = (document.querySelector('input[name="opcion-correcta"]:checked') || {}).value;
+                const opciones = [];
+                let correcta = null;
+                for (let i = 0; i < 4; i++) {
+                    const t = document.getElementById("opcion-texto-" + i).value.trim();
+                    if (!t) continue;
+                    if (marcada === String(i)) correcta = opciones.length;
+                    opciones.push(t);
+                }
+                if (!prompt) { setStatus("Escribe la pregunta antes de mandarla."); document.getElementById("opciones-prompt").focus(); return; }
+                if (opciones.length < 2) { setStatus("Escribe al menos dos opciones."); document.getElementById("opcion-texto-0").focus(); return; }
+                if (marcada && correcta === null) { setStatus("La opción que marcaste como correcta está vacía."); return; }
+                await crearPreguntaDeOpciones(prompt, opciones, correcta);
+            });
+            document.getElementById("mostrar-resultados-btn").addEventListener("click", async () => {
+                if (!currentQuestion) return;
+                const valor = !currentQuestion.resultados_visibles;
+                const { error } = await sb.from("questions").update({ resultados_visibles: valor }).eq("id", currentQuestion.id);
+                if (error) { console.error(error); setStatus("No se pudo cambiar: " + error.message); return; }
+                currentQuestion.resultados_visibles = valor;
+                pintarResultadosProfe();
+                setStatus(valor ? "📊 La clase ya ve lo que contestó el grupo (sin nombres)." : "La clase ya no ve las respuestas del grupo.");
+            });
+        }
+
+        // Lo que contestó el grupo, sin nombres (el profe lo ve siempre).
+        let resultadosPreguntaPedidos = 0;
+        async function cargarResultados(pregunta) {
+            const { data, error } = await sb.rpc("resultados_de_la_pregunta", { p_pregunta: pregunta.id });
+            if (error) { console.error(error); return null; }
+            return data || [];
+        }
+
+        function pintarListaDeResultados(caja, pregunta, filas) {
+            caja.innerHTML = "";
+            const tit = document.createElement("p");
+            tit.className = "font-semibold mb-1";
+            tit.textContent = PreguntaClase.titularDeResultados(filas);
+            caja.appendChild(tit);
+            const lineas = PreguntaClase.lineasDeResultados(pregunta, filas);
+            if (!lineas.some((l) => l.cuantos)) return;
+            const ul = document.createElement("ul");
+            ul.className = "space-y-1";
+            lineas.forEach((l) => {
+                const li = document.createElement("li");
+                // La barra acompaña; el dato va escrito al lado (nunca el color solo).
+                const barra = document.createElement("span");
+                barra.setAttribute("aria-hidden", "true");
+                barra.className = "inline-block align-middle h-2 rounded mr-2 " + (l.correcta ? "bg-green-600" : "bg-accent-500");
+                barra.style.width = l.cuantos ? Math.max(3, Math.round(l.porcentaje * 0.6)) + "px" : "0";
+                const t = document.createElement("span");
+                t.textContent = (l.correcta ? "✓ " : "") + l.dicho;   // textContent: las opciones las escribió una persona
+                li.append(barra, t);
+                ul.appendChild(li);
+            });
+            caja.appendChild(ul);
+        }
+
+        async function pintarResultadosProfe() {
+            const caja = document.getElementById("question-resultados-profe");
+            const btn = document.getElementById("mostrar-resultados-btn");
+            if (!caja || !currentQuestion) return;
+            const visibles = !!currentQuestion.resultados_visibles;
+            btn.setAttribute("aria-pressed", visibles ? "true" : "false");
+            btn.textContent = visibles ? "🙈 Dejar de mostrar las respuestas a la clase" : "📊 Mostrar las respuestas a la clase";
+            const pedido = ++resultadosPreguntaPedidos;
+            const filas = await cargarResultados(currentQuestion);
+            if (pedido !== resultadosPreguntaPedidos || !filas) return;
+            pintarListaDeResultados(caja, currentQuestion, filas);
+        }
+
+        /* Mientras la clase ve los resultados, cada respuesta nueva se los tiene que
+           actualizar: el profe «toca» la pregunta y el cambio les llega por Realtime.
+           Una vez por segundo como mucho, aunque contesten diez juntos. */
+        let avisoResultadosPendiente = null;
+        function avisarResultadosALaClase() {
+            if (!currentQuestion || !currentQuestion.resultados_visibles || avisoResultadosPendiente) return;
+            const id = currentQuestion.id;
+            avisoResultadosPendiente = setTimeout(async () => {
+                avisoResultadosPendiente = null;
+                await sb.from("questions").update({ resultados_visibles: true }).eq("id", id);
+            }, 1000);
+        }
+
+        async function pintarResultadosAlumno() {
+            const caja = document.getElementById("question-resultados-alumno");
+            if (!caja) return;
+            if (!currentQuestion || !currentQuestion.resultados_visibles) {
+                caja.hidden = true;
+                if (questionBoard && !PreguntaClase.esDeOpciones(currentQuestion)) questionBoard.setMarks([], []);
+                return;
+            }
+            const filas = await cargarResultados(currentQuestion);
+            if (!filas) return;
+            caja.hidden = false;
+            pintarListaDeResultados(caja, currentQuestion, filas);
+            if (questionBoard && !PreguntaClase.esDeOpciones(currentQuestion)) {
+                questionBoard.setMarks(PreguntaClase.flechasDeResultados(currentQuestion.fen, filas, ["verde", "azul"]), []);
+            }
+        }
+
+        // La cuenta regresiva, de las dos pantallas. Al alumno se le dice en voz a
+        // los 10 segundos y al terminar; el texto que cambia cada segundo no es vivo.
+        let tiempoDichoPara = null;
+        function pintarTiempoDeLaPregunta() {
+            const q = currentQuestion && !currentQuestion.closed_at ? currentQuestion : null;
+            const quedan = PreguntaClase.segundosRestantes(q);
+            if (isTeacher) {
+                const el = document.getElementById("question-tiempo-profe");
+                if (el) el.textContent = quedan === null ? "" : "· " + PreguntaClase.textoRestante(quedan);
+                return;
+            }
+            const el = document.getElementById("question-tiempo-alumno");
+            if (!el) return;
+            el.hidden = quedan === null;
+            el.textContent = PreguntaClase.textoRestante(quedan);
+            if (quedan === null) return;
+            const aviso = document.getElementById("question-tiempo-aviso");
+            const clave = q.id + ":" + (quedan <= 0 ? "fin" : quedan <= 10 ? "10" : "");
+            if (quedan <= 10 && tiempoDichoPara !== clave) {
+                tiempoDichoPara = clave;
+                aviso.textContent = quedan <= 0 ? "Se acabó el tiempo." : "Quedan 10 segundos.";
+            }
+            if (quedan <= 0 && !myAnswer && questionBoard) {
+                questionBoard.setInteractive(false);
+                document.querySelectorAll("#question-opciones button").forEach((b) => { b.disabled = true; });
+                document.getElementById("question-status-text").textContent = "Se acabó el tiempo: esta vez no alcanzaste a contestar.";
+            }
+        }
+        setInterval(pintarTiempoDeLaPregunta, 1000);
+
+        // Las opciones del alumno: un botón por opción, con aria-pressed en la suya.
+        function pintarOpcionesAlumno() {
+            const caja = document.getElementById("question-opciones");
+            const esOp = PreguntaClase.esDeOpciones(currentQuestion);
+            caja.hidden = !esOp;
+            if (!esOp) { caja.innerHTML = ""; return; }
+            const vencida = PreguntaClase.segundosRestantes(currentQuestion) === 0;
+            caja.innerHTML = "";
+            currentQuestion.opciones.forEach((texto, i) => {
+                const b = document.createElement("button");
+                b.type = "button";
+                const mia = myAnswer && myAnswer.opcion === i;
+                b.className = "w-full text-left px-4 py-3 rounded-lg border-2 text-sm font-semibold transition-colors "
+                    + (mia ? "border-accent-600 bg-accent-500 text-brand-900" : "border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 hover:bg-brand-100 dark:hover:bg-brand-800");
+                b.setAttribute("aria-pressed", mia ? "true" : "false");
+                b.textContent = String(texto);   // la escribió una persona
+                b.disabled = vencida;
+                b.addEventListener("click", () => enviarOpcion(i));
+                caja.appendChild(b);
+            });
+        }
+
+        async function enviarOpcion(i) {
+            if (!currentQuestion || currentQuestion.closed_at) return;
+            const { data, error } = await sb.from("question_answers").upsert({
+                question_id: currentQuestion.id, student_id: profile.id, moves: [], resulting_fen: currentQuestion.fen, opcion: i,
+            }, { onConflict: "question_id,student_id" }).select().single();
+            if (error) {
+                console.error(error);
+                document.getElementById("question-status-text").textContent = /tiempo/i.test(error.message)
+                    ? "Se acabó el tiempo: tu respuesta no alcanzó a llegar." : "No se pudo enviar tu respuesta: " + error.message;
+                return;
+            }
+            myAnswer = data || { opcion: i, is_correct: null };
+            pintarOpcionesAlumno();
+            updateAnswerFeedbackUI();
+        }
+
         function subscribeQuestions() {
             sb.channel("questions-changes:" + boardOwnerId)
                 .on("postgres_changes", { event: "*", schema: "public", table: "questions", filter: "created_by=eq." + boardOwnerId }, () => loadCurrentQuestion())
@@ -2820,6 +3063,7 @@
                 sb.channel("question-answers-changes")
                     .on("postgres_changes", { event: "*", schema: "public", table: "question_answers" }, () => {
                         if (currentQuestion) loadAnswersFor(currentQuestion.id);
+                        avisarResultadosALaClase();
                     })
                     .subscribe();
             } else {
@@ -2863,9 +3107,19 @@
         async function loadCurrentQuestion() {
             const { data, error } = await sb.from("questions").select("*").eq("created_by", boardOwnerId).order("created_at", { ascending: false }).limit(1).maybeSingle();
             if (error) { console.error(error); return; }
+            const antes = currentQuestion;
             currentQuestion = data || null;
-            if (isTeacher) renderTeacherQuestionPanel();
-            else await renderStudentQuestionCard();
+            pintarTiempoDeLaPregunta();
+            if (isTeacher) { renderTeacherQuestionPanel(); return; }
+            /* La MISMA pregunta, sin cerrarse: solo cambió si la clase ve los
+               resultados (o llegó una respuesta nueva y el profe los refrescó).
+               Volver a armar la tarjeta le borraría al alumno las jugadas que lleva. */
+            if (antes && currentQuestion && antes.id === currentQuestion.id && !antes.closed_at === !currentQuestion.closed_at
+                && !document.getElementById("question-card").classList.contains("hidden")) {
+                await pintarResultadosAlumno();
+                return;
+            }
+            await renderStudentQuestionCard();
         }
 
         function renderTeacherQuestionPanel() {
@@ -2875,9 +3129,15 @@
                 return;
             }
             activeEl.classList.remove("hidden");
-            renderEngineReferenceAnswer(null);
-            loadEngineAnswerFor(currentQuestion.id);
+            // El motor solo tiene algo que decir de una jugada, no de una opinión.
+            const esOp = PreguntaClase.esDeOpciones(currentQuestion);
+            document.getElementById("engine-reference-answer").hidden = esOp;
+            if (!esOp) {
+                renderEngineReferenceAnswer(null);
+                loadEngineAnswerFor(currentQuestion.id);
+            }
             loadAnswersFor(currentQuestion.id);
+            pintarTiempoDeLaPregunta();
         }
 
         async function loadAnswersFor(questionId) {
@@ -2887,6 +3147,7 @@
                 .order("created_at");
             if (error) { console.error(error); return; }
             renderAnswersList(data || []);
+            pintarResultadosProfe();
         }
 
         function renderAnswersList(answers) {
@@ -2911,7 +3172,9 @@
                 row.className = "flex items-center justify-between gap-2 mt-0.5";
                 const movesEl = document.createElement("span");
                 movesEl.className = "text-brand-500 dark:text-brand-300 font-mono text-xs break-words";
-                movesEl.textContent = (a.moves || []).join(" ") || "—";
+                movesEl.textContent = PreguntaClase.esDeOpciones(currentQuestion)
+                    ? (a.opcion != null ? PreguntaClase.textoDeOpcion(currentQuestion, a.opcion) : "—")
+                    : (a.moves || []).join(" ") || "—";
                 const actions = document.createElement("span");
                 actions.className = "flex items-center gap-1 shrink-0";
                 const correctBtn = document.createElement("button");
@@ -3036,8 +3299,7 @@
             // la sesión (ver js/shared-engine.js). Se valida acá con la misma regla.
             const motivo = motivoPosicionInvalida(fen);
             if (motivo) { setStatus(motivo); return; }
-            await sb.from("questions").update({ closed_at: new Date().toISOString() }).eq("created_by", boardOwnerId).is("closed_at", null);
-            const { data, error } = await sb.from("questions").insert({ fen, created_by: session.user.id, expected_plies: expectedPlies }).select().single();
+            const { data, error } = await crearPregunta(fen, expectedPlies);
             if (error) { console.error(error); setStatus("No se pudo crear la pregunta: " + error.message); return; }
             setStatus("Pregunta enviada a la clase.");
             computeEngineAnswer(data.id, fen, expectedPlies); // en segundo plano, no bloquea la pregunta
@@ -3281,8 +3543,7 @@
             const expectedPlies = Math.max(1, Math.min(6, Math.ceil((ex.solution || [""]).length / 2)));
             if (!(await aplicarPosicionEnClase(fen))) return;
             document.getElementById("question-plies-input").value = expectedPlies;
-            await sb.from("questions").update({ closed_at: new Date().toISOString() }).eq("created_by", boardOwnerId).is("closed_at", null);
-            const { data, error } = await sb.from("questions").insert({ fen, created_by: session.user.id, expected_plies: expectedPlies }).select().single();
+            const { data, error } = await crearPregunta(fen, expectedPlies);
             if (error) { console.error(error); setStatus("No se pudo crear la pregunta: " + error.message); return; }
             activateTeacherTab("preguntar");
             setStatus("Ejercicio de táctica enviado a la clase como pregunta.");
@@ -3420,8 +3681,7 @@
         async function tiposPreguntar(fen, aviso) {
             if (!(await aplicarPosicionEnClase(fen))) return;
             document.getElementById("question-plies-input").value = 1;
-            await sb.from("questions").update({ closed_at: new Date().toISOString() }).eq("created_by", boardOwnerId).is("closed_at", null);
-            const { data, error } = await sb.from("questions").insert({ fen, created_by: session.user.id, expected_plies: 1 }).select().single();
+            const { data, error } = await crearPregunta(fen, 1);
             if (error) { console.error(error); setStatus("No se pudo crear la pregunta: " + error.message); return; }
             activateTeacherTab("preguntar");
             setStatus(aviso);
@@ -3642,7 +3902,9 @@
         // ---------- Tarjeta de pregunta del alumno (overlay sobre el tablero) ----------
         function updateAnswerFeedbackUI() {
             if (!myAnswer) return;
-            const movesText = (myAnswer.moves || []).join(" ");
+            const movesText = PreguntaClase.esDeOpciones(currentQuestion)
+                ? "«" + PreguntaClase.textoDeOpcion(currentQuestion, myAnswer.opcion) + "»"
+                : (myAnswer.moves || []).join(" ");
             let text = "Tu respuesta: " + movesText + " ✓ enviada";
             if (myAnswer.is_correct === true) text = "Tu respuesta: " + movesText + " — ✅ ¡Correcto!";
             else if (myAnswer.is_correct === false) text = "Tu respuesta: " + movesText + " — ❌ Revisa de nuevo";
@@ -3816,6 +4078,30 @@
             if (recienAbierta) enfocarCuandoSeVea(document.getElementById("question-titulo"));
 
             const retryBtn = document.getElementById("question-retry-btn");
+            /* Una de opciones no se contesta moviendo: el tablero es la posición de
+               la que se habla (y el termómetro ni eso: no se muestra). Se contesta
+               con los botones, y cambiar de opción es tocar otra. */
+            const esOp = PreguntaClase.esDeOpciones(currentQuestion);
+            const esTermometro = esOp && JSON.stringify(currentQuestion.opciones) === JSON.stringify(PreguntaClase.TERMOMETRO.opciones);
+            document.getElementById("question-board-caja").hidden = esTermometro;
+            document.getElementById("question-cmd").hidden = esOp;
+            if (esOp) {
+                document.getElementById("question-color-hint").textContent = "";
+                document.getElementById("question-plies-hint").textContent = esTermometro
+                    ? "Contesta con sinceridad: tu profe no le enseña a la clase quién eligió qué."
+                    : "Elige una opción. Puedes cambiarla mientras la pregunta siga abierta.";
+                questionBoard.setInteractive(false);
+                retryBtn.classList.add("hidden");
+                document.getElementById("question-undo-btn").classList.add("hidden");
+                document.getElementById("question-retry-engine-btn").classList.add("hidden");
+                pintarOpcionesAlumno();
+                if (myAnswer) updateAnswerFeedbackUI();
+                else document.getElementById("question-status-text").textContent = "Todavía no contestaste.";
+                pintarTiempoDeLaPregunta();
+                await pintarResultadosAlumno();
+                return;
+            }
+            document.getElementById("question-opciones").hidden = true;
             if (myAnswer) {
                 questionBoard.setInteractive(false);
                 retryBtn.classList.remove("hidden");
@@ -3827,6 +4113,8 @@
                 questionBoard.setInteractive(true);
                 updateQuestionCardStatus();
             }
+            pintarTiempoDeLaPregunta();
+            await pintarResultadosAlumno();
         }
 
         // Deshace la última jugada del alumno: como el motor ya respondió entre medio, hay
@@ -4568,6 +4856,7 @@
                 document.getElementById("app").classList.remove("hidden");
                 return;
             }
+            if (isTeacher) montarControlesDePreguntas();
             await loadCurrentQuestion();
             subscribeQuestions();
             await loadCurrentPractice();
