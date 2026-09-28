@@ -1275,6 +1275,47 @@ momento y la ventaja al entrar en un final, contra un cálculo aparte con el
 tablero de chess.js en 60 partidas al azar; y cómo pierde y el reloj con 20
 partidas de relojes y resultados conocidos, incluido lo que dice el FODA.
 
+### Ver las líneas en un tablero: etapa 3
+
+Cada jugada del plan de «Qué jugarle» es un botón: abre un tablero («En el
+tablero», arriba del resultado) en la posición de esa jugada, con la línea
+hasta ahí y, por delante, la continuación principal del plan hasta donde
+llegue (`lineaDelPlan()` en `js/preparacion-lineas.js`). Cada error que marcó
+Stockfish trae también su «Ver», que abre la línea en la jugada del error.
+
+- **El tablero es `js/visor-linea.js`**, que se recorre con ⏮ ◀ ▶ ⏭, tocando
+  una jugada de la lista, con el teclado (`js/tablero-accesible.js`: una sola
+  parada de tabulador y flechas por las casillas) y escribiendo en el cuadro de
+  comandos del Modo Adaptado («siguiente», «anterior», «jugada 5»,
+  «evaluación», o una pregunta como «caballos»). En cada paso se lee **la
+  jugada contada** («El caballo blanco va de…»), no la posición entera: esa
+  queda escrita aparte, en «La posición, pieza por pieza». Son las mismas
+  decisiones del tablero de Estudio (ver «Estudio: el tablero de una ficha era
+  decoración»), y por eso **`js/ficha-render.js` toma de `js/visor-linea.js`**
+  cómo se pinta una pieza, cómo se cuenta una jugada y cómo se recorre
+  escribiendo: antes esas tres cosas eran de Estudio y se habrían copiado.
+- **Debajo de cada jugada, su nota**: cuánto la juega él y cuánto saca, y lo
+  que dijo Stockfish si la marcó. Es el mismo texto que va en los comentarios
+  del PGN del plan (`notaJugada()`), una sola copia.
+- **Stockfish evalúa la posición que se ve** (el mismo 19 lite de la revisión,
+  `PreparacionMotor.evaluar`), una vez por posición: volver a una jugada no lo
+  vuelve a pedir. Si la revisión está corriendo, la evaluación espera su turno
+  en la misma cola del motor. Sin motor, ese renglón de la evaluación no se
+  muestra.
+- **Una jugada que no se puede hacer corta la línea ahí**: el tablero nunca
+  muestra una posición que no sale de las jugadas.
+- El foco va al título del tablero al abrirlo y vuelve al botón que lo abrió al
+  cerrarlo. Un análisis nuevo (otro rival, otros filtros) lo cierra, porque
+  mostraba una línea del anterior.
+- **Cada casilla es cuadrada por sí misma** (`aspect-ratio` en la casilla, no
+  filas de `1fr` en un tablero cuadrado): así, en el celular, una fila sin
+  piezas se aplastaba.
+
+El verificador abre el tablero desde una jugada del plan y desde un error de
+Stockfish, y comprueba la posición, la jugada contada, la nota, la evaluación
+del doble del motor, los botones, lo escrito, las flechas, el foco al cerrar y
+que una jugada ilegal corte la línea.
+
 ## Las inscripciones a torneos en línea
 
 `inscripciones.html` muestra lo que llegó por `inscripcion.html`, el formulario

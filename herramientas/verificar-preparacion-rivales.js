@@ -435,8 +435,10 @@ const MOTOR_FALSO = `
 })();
 `;
 
-async function abrir(browser, puede, guardados) {
+async function abrir(browser, puede, guardados, adaptado) {
   const ctx = await browser.newContext({ serviceWorkers: "block", acceptDownloads: true });
+  // El cuadro para escribir solo se ve en Modo Adaptado (js/cuadro-comandos.js).
+  if (adaptado) await ctx.addInitScript(() => localStorage.setItem("oscarBlindMode_v1", "1"));
   await ctx.route("**/cdn.jsdelivr.net/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
   await ctx.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await ctx.route("**/fonts.gstatic.com/**", (r) => r.abort());
@@ -559,6 +561,119 @@ async function pruebaConPermiso(browser) {
   cierto("eliminar pidió confirmar y la lista quedó vacía", await page.evaluate(() => window.__avisos.some((t) => /¿Eliminar este análisis\?/.test(t))));
 
   igual("el nombre con marcado no se volvió HTML en ningún lado", await page.evaluate(() => document.querySelectorAll("main img").length), 0);
+  igual("sin errores en consola ni diálogos del navegador", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+}
+
+/* Etapa 3: las líneas se ven en un tablero. Una jugada del plan lo abre en esa
+   posición con la continuación principal por delante; se recorre con los
+   botones, escribiendo y con el lector de pantalla; Stockfish (el doble) dice
+   su evaluación en cada paso, y al cerrar el foco vuelve al botón que lo abrió. */
+async function pruebaEtapa3(browser) {
+  console.log("\n=== Etapa 3: las líneas en un tablero ===");
+  const { page, ctx, errores } = await abrir(browser, true, [], true);
+  await page.setInputFiles("#pgn-archivo", { name: "rival.pgn", mimeType: "application/x-chess-pgn", buffer: Buffer.from(pgnDePrueba(), "utf8") });
+  await page.click("#leer");
+  await page.waitForFunction(() => /Se leyeron/.test(document.getElementById("leido").textContent), null, { timeout: 10000 });
+  await page.click("#analizar");
+  await page.waitForFunction(() => /Listo/.test(document.getElementById("motor-estado").textContent), null, { timeout: 30000 });
+  igual("el tablero no se ve antes de pedirlo", await page.evaluate(() => SE_VE("visor-caja")), false);
+
+  // La segunda jugada del plan con blancas: 1.e4 c5 → se abre después de 1…c5.
+  const botones = await page.evaluate(() => [...document.querySelectorAll("[aria-labelledby='planes-titulo'] button[aria-label$='ver en el tablero']")].map((b) => b.getAttribute("aria-label")));
+  cierto("cada jugada del plan es un botón que dice que abre el tablero (" + botones.slice(0, 3).join(" | ") + ")", botones.length >= 4 && botones[0] === "1.e4, ver en el tablero");
+  await page.click("[aria-labelledby='planes-titulo'] button[aria-label='" + botones[1] + "']");
+  await page.waitForFunction(() => document.getElementById("visor-caja").checkVisibility(), null, { timeout: 5000 });
+  const abierto = await page.evaluate(() => {
+    const t = document.querySelector("#visor .visor-tablero");
+    const e4 = t.querySelector("[data-square='e4']");
+    return {
+      titulo: document.querySelector("#visor .visor-titulo").textContent,
+      foco: document.activeElement.className,
+      casillas: t.querySelectorAll("button.visor-sq").length,
+      paradas: [...t.querySelectorAll("button")].filter((b) => b.tabIndex === 0).length,
+      e4: e4.textContent.trim() !== "" || !!e4.querySelector("svg, img, span"),
+      ultima: [...t.querySelectorAll(".visor-ultima")].map((c) => c.dataset.square).sort(),
+    };
+  });
+  igual("se abre en la posición de esa jugada, con el título de la línea", [abierto.titulo, abierto.ultima], ["El plan: 1.e4 e5", ["e5", "e7"]]);
+  igual("el foco va al título del tablero", abierto.foco, "visor-titulo");
+  igual("64 casillas y una sola parada de tabulador", [abierto.casillas, abierto.paradas], [64, 1]);
+  cierto("el peón de e4 está pintado", abierto.e4);
+  await page.waitForFunction(() => /Jugada 2 de/.test(document.querySelector("#visor .visor-escrita").textContent), null, { timeout: 3000 });
+  const paso2 = await page.evaluate(() => [document.querySelector("#visor .visor-escrita").textContent, document.querySelector("#visor .visor-nota").textContent]);
+  cierto("la jugada va contada, no solo en SAN (" + paso2[0] + ")", /^Jugada 2 de \d+: e5\. El peón negro va de eva 7 a eva 5\.$/.test(paso2[0].replace(/\s+/g, " ")));
+  cierto("y con su nota: cuánto la juega y cuánto saca (" + paso2[1] + ")", /^Él la juega el \d+ % de las veces; él saca .* en \d+ partidas\.$/.test(paso2[1]));
+  await page.waitForFunction(() => /^Stockfish: /.test(document.querySelector("#visor .visor-motor").textContent), null, { timeout: 5000 });
+  igual("Stockfish evalúa la posición que se ve", await page.textContent("#visor .visor-motor"), "Stockfish: +0,20 · lo mejor: a3.");
+
+  // Adelante con el botón, atrás escribiendo.
+  await page.click("#visor button[aria-label='Jugada siguiente']");
+  await page.waitForFunction(() => /^Jugada 3 de/.test(document.querySelector("#visor .visor-escrita").textContent), null, { timeout: 3000 });
+  igual("▶ avanza una jugada y la marca en la lista", await page.evaluate(() => document.querySelector("#visor .visor-jugada[aria-current='step']").textContent), "Cf3");
+  await page.fill("#visor .cc-input", "anterior");
+  await page.press("#visor .cc-input", "Enter");
+  await page.waitForFunction(() => /^Jugada 2 de/.test(document.querySelector("#visor .visor-escrita").textContent), null, { timeout: 3000 });
+  cierto("«anterior» escrito vuelve una jugada", true);
+  await page.fill("#visor .cc-input", "jugada 1");
+  await page.press("#visor .cc-input", "Enter");
+  await page.waitForFunction(() => /^Jugada 1 de/.test(document.querySelector("#visor .visor-escrita").textContent), null, { timeout: 3000 });
+  cierto("«jugada 1» escrito va a esa jugada", true);
+  await page.click("#visor button[aria-label='Ir a la posición inicial']");
+  igual("⏮ va a la salida y apaga ◀ y ⏮", await page.evaluate(() => [
+    document.querySelector("#visor .sr-only[role='status']").textContent,
+    document.querySelector("#visor button[aria-label='Jugada anterior']").disabled,
+    document.querySelector("#visor button[aria-label='Ir a la posición inicial']").disabled]), ["Posición de salida.", true, true]);
+  await page.fill("#visor .cc-input", "anterior");
+  await page.press("#visor .cc-input", "Enter");
+  igual("y escribir «anterior» ahí lo dice, sin moverse", await page.textContent("#visor .cc-msg"), "Ya estás en la posición de salida.");
+  await page.fill("#visor .cc-input", "evaluación");
+  await page.press("#visor .cc-input", "Enter");
+  await page.waitForFunction(() => /^Stockfish: /.test(document.querySelector("#visor .cc-msg").textContent), null, { timeout: 5000 });
+  cierto("«evaluación» escrita contesta lo de Stockfish", true);
+
+  // Con el teclado en el tablero se va de casilla en casilla, sin salir de él.
+  await page.focus("#visor .visor-tablero button[tabindex='0']");
+  const antes = await page.evaluate(() => document.activeElement.dataset.square);
+  await page.keyboard.press("ArrowRight");
+  const despues = await page.evaluate(() => document.activeElement.dataset.square);
+  cierto("las flechas mueven el foco por las casillas (" + antes + " → " + despues + ")", !!antes && !!despues && antes !== despues);
+
+  // Cerrar devuelve el foco al botón que lo abrió.
+  await page.click("#visor-cerrar");
+  igual("al cerrar se oculta y el foco vuelve a la jugada del plan", await page.evaluate(() => [SE_VE("visor-caja"), document.activeElement.getAttribute("aria-label")]), [false, botones[1]]);
+
+  // «Ver» en un error de Stockfish abre esa línea en la jugada del error.
+  const ver = await page.$("button[aria-label^='Ver en el tablero:']");
+  cierto("los errores de Stockfish traen su botón «Ver»", !!ver);
+  await ver.click();
+  await page.waitForFunction(() => document.getElementById("visor-caja").checkVisibility(), null, { timeout: 5000 });
+  const error = await page.evaluate(() => {
+    const t = document.querySelector("#visor .visor-tablero");
+    return [document.querySelector("#visor .visor-titulo").textContent, t.querySelector(".visor-ultima[data-square='h4']") ? "h4" : "", document.querySelector("#visor .visor-nota").textContent];
+  });
+  cierto("se abre en su Dh4, con lo que dijo Stockfish (" + error.join(" | ") + ")", /Dh4$/.test(error[0]) && error[1] === "h4" && /^Su error: Dh4 \(\+0,20 → −0,80\)\. Lo mejor era /.test(error[2]));
+  await page.waitForFunction(() => /^Stockfish: /.test(document.querySelector("#visor .visor-motor").textContent), null, { timeout: 5000 });
+  igual("y Stockfish, en esa posición, da la ventaja", await page.evaluate(() => document.querySelector("#visor .visor-motor").textContent.replace(/ ·.*/, "")), "Stockfish: −0,80");
+
+  // Una jugada que no se puede hacer corta la línea: nunca una posición inventada.
+  const cortada = await page.evaluate(() => {
+    const d = document.createElement("div");
+    document.body.appendChild(d);
+    const v = VisorLinea.montar(d, {});
+    v.cargar(["e4", "e5", "Ke3", "Nf3"], { titulo: "Prueba" });
+    const r = [v.total, v.indice];
+    d.remove();
+    return r;
+  });
+  igual("una jugada ilegal corta la línea ahí", cortada, [2, 2]);
+
+  // Otro análisis oculta el tablero de la línea anterior.
+  await page.selectOption("#filtro-desde", "2");
+  await page.waitForFunction(() => /Listo/.test(document.getElementById("motor-estado").textContent), null, { timeout: 30000 });
+  await page.click("#analizar");
+  await page.waitForFunction(() => /Listo/.test(document.getElementById("motor-estado").textContent) && !document.getElementById("visor-caja").checkVisibility(), null, { timeout: 30000 });
+  cierto("un análisis nuevo oculta el tablero", true);
   igual("sin errores en consola ni diálogos del navegador", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
 }
@@ -747,6 +862,7 @@ async function pruebaMotorDeVerdad(browser) {
     await pruebaConPermiso(browser);
     await pruebaDescarga(browser);
     await pruebaEtapa1(browser, analisisVersion1());
+    await pruebaEtapa3(browser);
     await pruebaMotorDeVerdad(browser);
   } finally {
     await browser.close();

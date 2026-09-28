@@ -15,7 +15,8 @@
  *
  * Requiere que la página ya tenga cargado chess.js, js/aperturas-lineas.js,
  * js/fichas-estudio.js, js/blind-notation.js, js/chess-piece-svg.js,
- * js/piece-style-themes.js y js/coordenadas-tablero.js, y que su HTML traiga
+ * js/piece-style-themes.js, js/coordenadas-tablero.js y js/visor-linea.js, y
+ * que su HTML traiga
  * estos ids:
  *
  *   t-idea/l-idea, t-1/l-1, t-2/l-2, t-3/l-3, t-4/l-4  — los cinco bloques
@@ -38,13 +39,11 @@
 window.FichaRender = (function () {
   "use strict";
 
-  const GLYPH = {
-    w: { p: "♙", n: "♘", b: "♗", r: "♖", q: "♕", k: "♔" },
-    b: { p: "♟", n: "♞", b: "♝", r: "♜", q: "♛", k: "♚" },
-  };
+  // Cómo se pinta una pieza, cómo se cuenta una jugada y cómo se recorre
+  // escribiendo: de js/visor-linea.js, que es el mismo tablero de recorrer
+  // líneas que usa la preparación de rivales. Una sola copia de cada cosa.
+  const { dibujarPieza, jugadaContada, pasoPedido, aEspanol } = window.VisorLinea;
   const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
-  const PIEZAS_ES = { N: "C", B: "A", R: "T", Q: "D", K: "R" };
-  const aEspanol = (san) => String(san).replace(/[NBRQK]/g, (l) => PIEZAS_ES[l]);
   const esClara = (sq) => ((sq.charCodeAt(0) - 97) + (parseInt(sq[1], 10) - 1)) % 2 === 1;
 
   const LINEAS_POR_ID = new Map((window.AperturasLineas ? window.AperturasLineas.LINEAS : []).map((L) => [L.id, L]));
@@ -61,21 +60,6 @@ window.FichaRender = (function () {
     return F.lineaId ? LINEAS_POR_ID.get(F.lineaId) || null : null;
   }
 
-  function dibujarPieza(cont, piece) {
-    const span = document.createElement("span");
-    span.setAttribute("aria-hidden", "true");
-    if (window.PiezaPreferida) {
-      PiezaPreferida.pintar(span, piece.type, piece.color);
-    } else if (window.PieceStyleThemes && window.PieceStyleThemes.esDibujado() && window.ChessPieceSVG) {
-      span.innerHTML = window.ChessPieceSVG.markup(piece.type, piece.color);
-      span.className = "chess-piece-illustrated";
-    } else {
-      span.className = piece.color === "w" ? "piece-white" : "piece-black";
-      span.textContent = GLYPH[piece.color][piece.type];
-    }
-    cont.appendChild(span);
-  }
-
   function crear() {
     let fichaActual = null;
     let partida = null;
@@ -90,41 +74,6 @@ window.FichaRender = (function () {
       ultimaJugada = null;
       for (let i = 0; i < n; i++) ultimaJugada = g.move(jugadas[i], { sloppy: true });
       return g;
-    }
-
-    /* La jugada CONTADA: qué pieza, de dónde a dónde, si se come algo y si da
-       jaque. Es lo que hace falta al recorrer una línea, y es lo único que se
-       lee solo en cada paso.
-       LA POSICIÓN ENTERA NO SE LEE EN CADA JUGADA, y ese es el punto: una
-       apertura son doce jugadas y treinta y dos piezas, o sea trescientas
-       ochenta y cuatro casillas dictadas para ver una línea que dura medio
-       minuto. Nadie escucha eso — se apaga el lector de pantalla y se abandona
-       la ficha. La posición completa se queda escrita debajo, para leerla
-       cuando se quiera o pedirla con "posición". */
-    function jugadaContada(mv) {
-      if (!mv) return "";
-      const B = window.BlindNotation;
-      const donde = (sq) => (B && B.squareSpoken ? B.squareSpoken(sq) : sq);
-      const NOMBRE = { k: "el rey", q: "la dama", r: "la torre", b: "el alfil", n: "el caballo", p: "el peón" };
-      const color = mv.color === "w" ? "blanco" : "negro";
-      const colorF = mv.color === "w" ? "blanca" : "negra";
-      const fem = mv.piece === "q" || mv.piece === "r";
-      if (mv.flags && mv.flags.indexOf("k") >= 0) return "Enroque corto de las " + (mv.color === "w" ? "blancas" : "negras") + ".";
-      if (mv.flags && mv.flags.indexOf("q") >= 0) return "Enroque largo de las " + (mv.color === "w" ? "blancas" : "negras") + ".";
-      let t = NOMBRE[mv.piece] + " " + (fem ? colorF : color) + " va de " + donde(mv.from) + " a " + donde(mv.to);
-      if (mv.captured) t += " y se come " + NOMBRE[mv.captured];
-      if (mv.promotion) t += " y corona " + NOMBRE[mv.promotion].replace(/^el |^la /, "");
-      // La frase va detrás de un punto ("Jugada 3 de 12: Cf3. El caballo…"), así
-      // que empieza en mayúscula: un lector de pantalla no lo nota, pero esto
-      // también se lee con los ojos.
-      // El jaque y el mate van DICHOS. El "+" del final de la notación no lo
-      // lee nadie en voz alta, y es justo el dato que cambia cómo se mira la
-      // posición que viene.
-      const san = String(mv.san || "");
-      if (/#$/.test(san)) t += " y es jaque mate";
-      else if (/\+$/.test(san)) t += " y da jaque";
-      t = t.charAt(0).toUpperCase() + t.slice(1);
-      return t + ".";
     }
 
     function dibujarTablero() {
@@ -184,17 +133,8 @@ window.FichaRender = (function () {
        Lo que NO es ninguna de estas palabras vuelve a js/comandos-tablero.js
        como pregunta, que ya lo atendió antes de llegar hasta acá. */
     function recorrerEscribiendo(texto, api) {
-      const t = String(texto).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
       const total = jugadasDe(fichaActual).length;
-      let n = null;
-      if (/^(siguiente|sig|adelante|s|\+)$/.test(t)) n = indice + 1;
-      else if (/^(anterior|atras|ant|a|-)$/.test(t)) n = indice - 1;
-      else if (/^(inicio|principio|salida|empezar)$/.test(t)) n = 0;
-      else if (/^(final|fin|ultima|ultimo)$/.test(t)) n = total;
-      else {
-        const m = t.match(/^(?:jugada|ir a la jugada|ir a)\s*(\d+)$/);
-        if (m) n = parseInt(m[1], 10);
-      }
+      const n = pasoPedido(texto, indice, total);
       if (n === null) {
         api.decir(`No entendí "${texto}". Escribe "siguiente", "anterior", "jugada 5", o una pregunta como "caballos". Escribe "ayuda" para la lista.`);
         return;

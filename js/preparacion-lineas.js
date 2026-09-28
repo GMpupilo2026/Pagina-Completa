@@ -12,6 +12,11 @@
  *   fenDe(sec)                        la posición (con chess.js), o null
  *   planAPgn(resultado, lado)         el plan de «qué jugarle» en PGN, con sus
  *                                     ramas y comentarios
+ *   lineaDelPlan(resultado, camino)   una jugada del plan para el tablero
+ *                                     (js/visor-linea.js): la línea, sus notas y
+ *                                     en qué jugada se abre
+ *   notaJugada(x, errores)            la nota de una jugada: la misma en el PGN
+ *                                     y en el tablero
  */
 (function (raiz, fabrica) {
   "use strict";
@@ -76,16 +81,44 @@
 
   function sinLlaves(t) { return String(t).replace(/[{}]/g, ""); }
 
-  // El comentario de cada jugada: cuánto saca él ahí y, si Stockfish la marcó,
-  // qué dice.
-  function comentario(x, errores) {
+  // Lo que dice Stockfish de cada jugada que marcó, por la línea que lleva a ella.
+  function erroresDelMotor(r) {
+    const errores = new Map();
+    if (r && r.motor) {
+      for (const x of r.motor.errores.concat(r.motor.cuidado)) errores.set(x.sec.concat(x.jugada).join(" "), x);
+    }
+    return errores;
+  }
+
+  // La nota de una jugada del plan: cuánto saca él ahí y, si Stockfish la
+  // marcó, qué dice. La misma para el PGN y para el tablero.
+  function notaJugada(x, errores) {
     const partes = [];
     if (x.quien === "rival" && x.reparto != null) partes.push("Él la juega el " + Math.round(100 * x.reparto) + " % de las veces");
     partes.push("él saca " + pct(x.puntos) + " en " + x.n + (x.n === 1 ? " partida" : " partidas"));
     const e = errores && errores.get(x.clave);
     if (e) partes.push("Stockfish: " + (x.quien === "rival" ? "es un error" : "ojo, es un error") +
       " (" + textoEval(e.antes) + " → " + textoEval(e.despues) + ")" + (e.mejor ? ", lo mejor era " + sanEs(e.mejor) : ""));
-    return "{" + sinLlaves(partes.join("; ")) + "}";
+    return partes.join("; ");
+  }
+
+  function comentario(x, errores) { return "{" + sinLlaves(notaJugada(x, errores)) + "}"; }
+
+  /* Una línea del plan para el tablero: el camino hasta una jugada (los nodos
+     desde la primera) y, después, la continuación principal hasta el final.
+     Devuelve { sec, notas, en }: `en` es cuántas jugadas lleva el camino, que
+     es donde se abre el tablero. */
+  function lineaDelPlan(r, camino) {
+    const errores = erroresDelMotor(r);
+    const nodos = camino.slice();
+    let x = nodos[nodos.length - 1];
+    while (x && x.hijos && x.hijos.length) { x = x.hijos[0]; nodos.push(x); }
+    const sec = [];
+    const notas = nodos.map((n) => {
+      sec.push(n.san);
+      return notaJugada(Object.assign({}, n, { clave: sec.join(" ") }), errores);
+    });
+    return { sec, notas: notas.map((t) => t.charAt(0).toUpperCase() + t.slice(1) + "."), en: camino.length };
   }
 
   function numero(ply, forzar) {
@@ -116,10 +149,7 @@
   function planAPgn(r, lado) {
     const plan = r[lado] && r[lado].plan;
     if (!plan || !plan.length) return "";
-    const errores = new Map();
-    if (r.motor) {
-      for (const x of r.motor.errores.concat(r.motor.cuidado)) errores.set(x.sec.concat(x.jugada).join(" "), x);
-    }
+    const errores = erroresDelMotor(r);
     const tuBlancas = lado === "conBlancas";
     const rival = sinLlaves(String(r.rival || "Rival")).replace(/"/g, "'");
     const encabezado = [
@@ -136,5 +166,5 @@
     return encabezado + "\n\n" + movimientos(copia, 0, [], errores, true) + " *\n";
   }
 
-  return { sanEs, lineaEs, pct, textoEval, fenDe, planAPgn };
+  return { sanEs, lineaEs, pct, textoEval, fenDe, planAPgn, lineaDelPlan, notaJugada, erroresDelMotor };
 });

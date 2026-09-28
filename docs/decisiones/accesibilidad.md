@@ -178,6 +178,11 @@ vez. Ahora:
   quien contesta desde el recuadro tendría que salir de él, tabular hasta el
   botón y volver, en cada jugada.
 
+Cómo se pinta una pieza, cómo se cuenta una jugada y cómo se recorre escribiendo
+viven en `js/visor-linea.js`, que es también el tablero de recorrer líneas de la
+preparación de rivales (ver «Ver las líneas en un tablero: etapa 3»):
+`js/ficha-render.js` los toma de ahí, y Estudio carga ese archivo antes.
+
 ### Al tocar cualquiera de estas piezas
 
 **Correr `node herramientas/verificar-entreno-accesible.js`** (con el sitio en

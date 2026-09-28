@@ -1063,3 +1063,42 @@ footer li > a {
 .cine-sala[data-escenario="arcade"] .cine-reloj { font-family: ui-monospace, "Courier New", monospace; }
 .cine-sala[data-escenario="arcade"] .pizarra :is(h2, h3) { font-family: inherit; text-transform: uppercase; letter-spacing: 0.1em; }
 .cine-sala[data-escenario="arcade"] .cine-marquesina h1 { text-shadow: 0 0 12px rgb(255 43 214 / 0.8); }
+
+/* ===== Recorrer una línea en un tablero (js/visor-linea.js) =====
+   Lo usa la preparación de rivales. Las casillas toman el color que eligió el
+   alumno (--sq-light / --sq-dark, ver «El tablero que eligió el alumno es el
+   mismo en TODO el sitio»). La última jugada se marca con un borde, además de
+   decirse en palabras: el color nunca va solo. */
+.visor-linea { display: flex; flex-direction: column; align-items: center; gap: 0.6rem; }
+.visor-titulo { font-weight: 700; text-align: center; color: rgb(var(--c-brand-800, 36 59 83)); }
+.dark .visor-titulo { color: #fff; }
+.visor-titulo:focus { outline: none; }
+/* Aire a la izquierda y abajo: ahí escribe las coordenadas js/coordenadas-tablero.js. */
+.visor-marco { width: 100%; max-width: 420px; padding: 0 0 18px 18px; }
+/* Cada casilla es cuadrada por sí misma: con filas de «1fr» sobre un tablero
+   cuadrado, una fila vacía (sin piezas) se aplastaba en el celular. */
+.visor-tablero { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); width: 100%; border: 2px solid rgb(var(--c-brand-700, 51 78 104)); }
+.visor-sq { position: relative; aspect-ratio: 1 / 1; min-width: 0; display: flex; align-items: center; justify-content: center; border: 0; padding: 0; margin: 0; font-size: min(7vw, 32px); font-family: inherit; color: inherit; user-select: none; cursor: default; }
+.visor-sq > span { width: 88%; height: 88%; display: flex; align-items: center; justify-content: center; }
+.visor-clara { background: var(--sq-light, #f0f4f8); }
+.visor-oscura { background: var(--sq-dark, #486581); }
+.visor-ultima { box-shadow: inset 0 0 0 3px rgb(var(--c-accent-500, 222 145 29)); }
+.visor-sq:focus-visible { outline: 3px solid rgb(var(--c-accent-500, 222 145 29)); outline-offset: -3px; z-index: 1; }
+.visor-controles { display: flex; gap: 0.5rem; }
+.visor-control { min-width: 44px; min-height: 44px; border-radius: 0.5rem; border: 1px solid rgb(var(--c-brand-200, 188 204 220)); background: #fff; color: rgb(var(--c-brand-800, 36 59 83)); font-size: 1.05rem; }
+.dark .visor-control { background: rgb(var(--c-brand-900, 16 42 67)); border-color: rgb(var(--c-brand-700, 51 78 104)); color: #fff; }
+.visor-control:hover:not(:disabled) { border-color: rgb(var(--c-accent-500, 222 145 29)); }
+.visor-control:disabled { opacity: 0.4; cursor: not-allowed; }
+.visor-control:focus-visible, .visor-jugada:focus-visible { outline: 3px solid rgb(var(--c-accent-500, 222 145 29)); outline-offset: 2px; }
+.visor-escrita, .visor-nota, .visor-motor { max-width: 520px; text-align: center; font-size: 0.9rem; line-height: 1.5; margin: 0; color: rgb(var(--c-brand-700, 51 78 104)); }
+.dark .visor-escrita, .dark .visor-nota, .dark .visor-motor { color: rgb(var(--c-brand-100, 217 226 236)); }
+.visor-motor { font-weight: 600; }
+.visor-posicion { max-width: 520px; font-size: 0.85rem; color: rgb(var(--c-brand-600, 72 101 129)); }
+.dark .visor-posicion { color: rgb(var(--c-brand-200, 188 204 220)); }
+.visor-posicion summary { cursor: pointer; text-align: center; }
+.visor-jugadas { max-width: 520px; display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 12px; font-size: 0.9rem; }
+.visor-par { display: inline-flex; align-items: baseline; gap: 2px; white-space: nowrap; }
+.visor-par b { font-weight: 600; font-size: 0.85em; opacity: 0.7; }
+.visor-jugada { background: transparent; border: 1px solid transparent; border-radius: 0.25rem; padding: 2px 6px; color: inherit; font-family: ui-monospace, monospace; cursor: pointer; }
+.visor-jugada:hover { border-color: rgb(var(--c-brand-300, 159 179 200)); }
+.visor-actual { background: rgb(var(--c-accent-500, 222 145 29)); color: rgb(var(--c-brand-900, 16 42 67)); font-weight: 700; }
