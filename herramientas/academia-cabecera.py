@@ -268,7 +268,7 @@ def cabecera(ruta):
         '<nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia">'
         '<div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2">'
         f'<a id="marca-enlace" href="{arriba}clases.html" class="flex items-center gap-2 text-white min-w-0">'
-        '<span class="text-3xl" aria-hidden="true">♟️</span>'
+        '<img src="/img/logo-marca.png" alt="" width="78" height="48" class="h-10 md:h-12 w-auto shrink-0">'
         '<span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span>'
         '<span class="sr-only"> — panel de la Academia</span>'
         '</a>'
