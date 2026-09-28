@@ -985,8 +985,12 @@ vacío, al del supervisor. Lo arma `_compartido/remitente-academia.ts` con
 
 **Y los tres correos llevan arriba la marca de la academia**: su color de
 fondo, su logo y su nombre, y el asunto firma con ese nombre. Con dos
-academias o ninguna, la cabecera de siempre de Ajedrez Integral (la misma regla
-del remitente). La franja la arma **una sola función**,
+academias o ninguna, la cabecera de Ajedrez Integral, con su logo (el crema del
+encabezado del sitio, `https://ajedrez-integral.com/img/logo-marca.png`, con la
+dirección completa porque el correo se abre lejos del sitio) y la etiqueta en
+ámbar (la misma regla del remitente). Una academia **sin** logo lleva solo su
+nombre: el logo de Ajedrez Integral no se le presta a otra marca.
+`verificar-marca-correo.js` comprueba los tres casos. La franja la arma **una sola función**,
 `cabeceraCorreo()` de `_compartido/marca-correo.ts`, y la marca llega dentro
 del `Remitente` (`remitenteDe()` llama a `marca_de_alumno()`, que solo puede
 llamar la service role): así ningún correo tiene que acordarse de pedirla.
