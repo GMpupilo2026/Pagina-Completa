@@ -130,17 +130,28 @@
   // ramas va toda al mismo nivel; solo se entra un nivel cuando él tiene
   // varias respuestas. Con una sangría por jugada, en el celular la décima
   // jugada quedaba en una columna de tres palabras.
-  function renglonPlan(x, ply) {
+  // La jugada del plan es un botón: abre el tablero en esa posición, con la
+  // continuación principal por delante.
+  function jugadaQueAbre(san, camino) {
+    if (!opcionesActuales.alVerLinea) return jugada(san);
+    const b = el("button", "font-mono whitespace-nowrap underline decoration-dotted underline-offset-4 hover:text-accent-700 dark:hover:text-accent-400 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", san);
+    b.type = "button";
+    b.setAttribute("aria-label", san + ", ver en el tablero");
+    b.addEventListener("click", () => opcionesActuales.alVerLinea(camino.slice(), b));
+    return b;
+  }
+
+  function renglonPlan(x, ply, camino) {
     const li = el("li", "text-sm");
     const texto = el("p", "text-brand-700 dark:text-brand-200");
     const num = Math.floor(ply / 2) + 1;
     const san = (ply % 2 === 0 ? num + "." : num + "…") + A.sanEs(x.san);
     if (x.quien === "tu") {
       texto.appendChild(el("strong", "text-brand-800 dark:text-white", "Juega "));
-      texto.appendChild(jugada(san));
+      texto.appendChild(jugadaQueAbre(san, camino));
     } else {
       texto.appendChild(document.createTextNode("Si él juega "));
-      texto.appendChild(jugada(san));
+      texto.appendChild(jugadaQueAbre(san, camino));
       texto.appendChild(document.createTextNode(" (" + Math.round(100 * x.reparto) + " % de las veces)"));
     }
     texto.appendChild(el("span", "text-brand-450 dark:text-brand-350", " · él saca " + A.pct(x.puntos) + " en " + x.n + (x.n === 1 ? " partida" : " partidas")));
@@ -148,21 +159,23 @@
     return li;
   }
 
-  function listaPlan(nodos, ply) {
+  function listaPlan(nodos, ply, previo) {
+    const antes = previo || [];
     const ul = el("ul", ply === 0 ? (nodos.length > 1 ? "space-y-5" : "space-y-1.5") : "mt-2 ml-2 pl-3 border-l-2 border-brand-100 dark:border-brand-800 space-y-3");
     for (const x of nodos) {
       // Cada rama es su propio bloque; adentro, la línea corre sin sangría.
       const rama = nodos.length > 1 ? el("li") : null;
       const destino = rama ? el("ul", "space-y-1.5") : ul;
-      let actual = x, p = ply, ultimo = null;
+      let actual = x, p = ply, ultimo = null, camino = antes.concat(x);
       for (;;) {
-        ultimo = renglonPlan(actual, p);
+        ultimo = renglonPlan(actual, p, camino);
         destino.appendChild(ultimo);
         if (!actual.hijos || actual.hijos.length !== 1) break;
         actual = actual.hijos[0];
+        camino = camino.concat(actual);
         p += 1;
       }
-      if (actual.hijos && actual.hijos.length > 1) ultimo.appendChild(listaPlan(actual.hijos, p + 1));
+      if (actual.hijos && actual.hijos.length > 1) ultimo.appendChild(listaPlan(actual.hijos, p + 1, camino));
       if (rama) { rama.appendChild(destino); ul.appendChild(rama); }
     }
     return ul;
@@ -219,8 +232,9 @@
     if (m.errores.length) {
       s.appendChild(el("h4", "font-bold text-brand-800 dark:text-white mb-2", "Errores que repite (prepárale la refutación)"));
       s.appendChild(tabla("Jugadas habituales del rival que Stockfish da como error",
-        [{ titulo: "Después de" }, { titulo: "Él suele jugar" }, { titulo: "Partidas", num: true }, { titulo: "Mejor era" }, { titulo: "Evaluación", num: true }],
-        m.errores.map((x) => [jugada(x.sec.length ? A.lineaEs(x.sec) : "el comienzo"), jugada(A.sanEs(x.jugada)), x.n, jugada(x.mejor ? A.sanEs(x.mejor) : "—"), A.textoEval(x.antes) + " → " + A.textoEval(x.despues)])));
+        [{ titulo: "Después de" }, { titulo: "Él suele jugar" }, { titulo: "Partidas", num: true }, { titulo: "Mejor era" }, { titulo: "Evaluación", num: true }].concat(opcionesActuales.alVerSecuencia ? [{ titulo: "Tablero" }] : []),
+        m.errores.map((x) => [jugada(x.sec.length ? A.lineaEs(x.sec) : "el comienzo"), jugada(A.sanEs(x.jugada)), x.n, jugada(x.mejor ? A.sanEs(x.mejor) : "—"), A.textoEval(x.antes) + " → " + A.textoEval(x.despues)]
+          .concat(opcionesActuales.alVerSecuencia ? [botonVer(x.sec.concat(x.jugada), "Ver en el tablero: " + A.lineaEs(x.sec.concat(x.jugada)), "Su error: " + A.sanEs(x.jugada) + " (" + A.textoEval(x.antes) + " → " + A.textoEval(x.despues) + "). Lo mejor era " + (x.mejor ? A.sanEs(x.mejor) : "otra jugada") + ".")] : []))));
     } else {
       s.appendChild(el("p", "text-sm text-brand-600 dark:text-brand-200 mb-3", "En sus líneas más jugadas no se encontró ningún error claro suyo: sus aperturas se sostienen."));
     }
@@ -353,6 +367,14 @@
         (d.perdidasConJugadas ? " " + d.perdidasCortas + " de " + d.perdidasConJugadas + " derrotas terminan antes de la jugada 25." : "")));
     }
     return s;
+  }
+
+  function botonVer(sec, etiqueta, nota) {
+    const b = el("button", "px-2 py-1 rounded text-xs font-semibold bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "Ver");
+    b.type = "button";
+    b.setAttribute("aria-label", etiqueta);
+    b.addEventListener("click", () => opcionesActuales.alVerSecuencia(sec, nota, b));
+    return b;
   }
 
   function botonPgn(lado, texto) {

@@ -327,6 +327,8 @@
   function mostrar(r, id) {
     actual = r;
     guardadoId = id;
+    // Otro análisis: el tablero mostraba una línea del anterior.
+    $("visor-caja").hidden = true;
     $("resultado").hidden = false;
     $("titulo-resultado").textContent = r.rival;
     pintarFiltros(r);
@@ -356,7 +358,48 @@
     $("titulo-resultado").focus();
   }
 
-  function pintar(r) { P.cuerpo(r, $("resultado-cuerpo"), { alBajarPgn: (lado) => bajarPgn(r, lado) }); }
+  function pintar(r) {
+    P.cuerpo(r, $("resultado-cuerpo"), {
+      alBajarPgn: (lado) => bajarPgn(r, lado),
+      // Una jugada del plan: la línea hasta ahí y su continuación principal.
+      alVerLinea: (camino, origen) => {
+        const l = L.lineaDelPlan(r, camino);
+        abrirVisor(l.sec, { en: l.en, notas: l.notas, titulo: "El plan: " + L.lineaEs(l.sec.slice(0, l.en)) }, origen);
+      },
+      // Una línea suelta (un error de Stockfish): se abre en su última jugada.
+      alVerSecuencia: (sec, nota, origen) => {
+        const notas = sec.map((x, i) => (i === sec.length - 1 ? nota : ""));
+        abrirVisor(sec, { en: sec.length, notas, titulo: L.lineaEs(sec) }, origen);
+      },
+    });
+  }
+
+  // ------------------------------------------------------------ el tablero
+
+  let visor = null;
+  let volverA = null;   // el botón que abrió el tablero: ahí vuelve el foco al cerrarlo
+
+  function abrirVisor(sec, opciones, origen) {
+    if (!visor) {
+      visor = window.VisorLinea.montar($("visor"), {
+        nombre: "Tablero de la preparación",
+        // Stockfish en cada posición (el mismo 19 lite de la revisión). Si la
+        // revisión está corriendo, espera su turno en la misma cola.
+        evaluar: M.disponible() ? (fen) => M.evaluar(fen) : null,
+      });
+    }
+    volverA = origen || null;
+    $("visor-caja").hidden = false;
+    visor.cargar(sec, opciones);
+    $("visor-caja").scrollIntoView({ block: "start" });
+    visor.enfocar();
+  }
+
+  function cerrarVisor() {
+    $("visor-caja").hidden = true;
+    if (volverA && document.body.contains(volverA)) volverA.focus();
+    volverA = null;
+  }
 
   function bajarPgn(r, lado) {
     const texto = L.planAPgn(r, lado);
@@ -516,6 +559,7 @@
     $("guardar").addEventListener("click", guardar);
     $("motor-revisar").addEventListener("click", iniciarRevision);
     $("motor-parar").addEventListener("click", () => { if (revision) revision.parar = true; });
+    $("visor-cerrar").addEventListener("click", cerrarVisor);
     cargarGuardados();
   }
 

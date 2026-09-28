@@ -50,7 +50,7 @@ MODULOS = [
 ]
 TIENE_TABLERO = re.compile(
     r"piece-white|PiezaPreferida|js/[a-z0-9-]*board\.js|tablero-pregunta\.js"
-    r"|ficha-render\.js|finales-100\.js|curso-partidas\.js"
+    r"|ficha-render\.js|visor-linea\.js|finales-100\.js|curso-partidas\.js"
     # Los que arman su tablero entero desde su js/ y no dejan rastro en el HTML.
     r"|js/(?:racha-tactica|te-reto|entreno-diagnostico|entreno-practicas|entreno-aprender|transmision"
     r"|entreno-temas|entreno-mates|entreno-desafios"

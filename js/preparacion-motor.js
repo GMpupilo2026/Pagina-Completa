@@ -98,5 +98,6 @@
     return { tareas: tareas.slice(0, hechas), evals, hechas, total: tareas.length, detalle, error };
   }
 
-  window.PreparacionMotor = { revisar, disponible, PROFUNDIDAD, MOTOR };
+  // `evaluar(fen)` sola también: el tablero de la línea la pide en cada paso.
+  window.PreparacionMotor = { revisar, evaluar, disponible, PROFUNDIDAD, MOTOR };
 })();
