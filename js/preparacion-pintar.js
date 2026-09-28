@@ -80,6 +80,7 @@
     c.appendChild(pintarFoda(r));
     c.appendChild(pintarPlanes(r));
     if (r.motor) c.appendChild(pintarMotor(r));
+    if (r.masAlla) c.appendChild(pintarMasAlla(r));
     c.appendChild(pintarRepertorio(r));
     c.appendChild(pintarLineas(r));
     c.appendChild(pintarTablas(r));
@@ -236,6 +237,63 @@
       [{ titulo: "Línea" }, { titulo: "Quién" }, { titulo: "Evaluación", num: true }],
       m.lineas.map((x) => [jugada(A.lineaEs(x.sec.concat(x.jugada))), x.quien === "tu" ? "Tú" : "Él", A.textoEval(x.despues)])));
     s.appendChild(det);
+    return s;
+  }
+
+  // Etapa 2: cómo termina, cuándo pierde, el reloj y los finales.
+  function pintarMasAlla(r) {
+    const m = r.masAlla;
+    const FIN = window.PreparacionAnalisis.FIN_ES;
+    const pc = (x) => Math.round(100 * x) + " %";
+    const s = tarjeta("Más allá de la apertura", "masalla-titulo");
+    const grilla = el("div", "grid lg:grid-cols-2 gap-6");
+
+    const termina = el("div", "min-w-0");
+    termina.appendChild(el("h4", "font-bold text-brand-800 dark:text-white mb-2", "Cómo terminan sus partidas"));
+    const filas = (xs, total) => xs.map((x) => [FIN[x.fin] || x.fin, x.n, pc(x.n / Math.max(total, 1))]);
+    termina.appendChild(el("p", "text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1", "Sus derrotas (" + m.perdidas + ")"));
+    termina.appendChild(m.derrotas.length ? tabla("Cómo terminan sus derrotas", [{ titulo: "Pierde" }, { titulo: "Partidas", num: true }, { titulo: "Parte", num: true }], filas(m.derrotas, m.perdidas))
+      : el("p", "text-sm text-brand-500 dark:text-brand-300", "No tiene derrotas en estas partidas."));
+    termina.appendChild(el("p", "text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mt-4 mb-1", "Sus victorias (" + m.ganadas + ")"));
+    termina.appendChild(m.victorias.length ? tabla("Cómo terminan sus victorias", [{ titulo: "Gana" }, { titulo: "Partidas", num: true }, { titulo: "Parte", num: true }], filas(m.victorias, m.ganadas))
+      : el("p", "text-sm text-brand-500 dark:text-brand-300", "No tiene victorias en estas partidas."));
+    if (m.perdidas) {
+      termina.appendChild(el("p", "text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mt-4 mb-1", "Cuándo pierde"));
+      termina.appendChild(tabla("En qué momento de la partida pierde", [{ titulo: "Momento" }, { titulo: "Derrotas", num: true }, { titulo: "Parte", num: true }], [
+        ["En la apertura (hasta la jugada 20)", m.fases.apertura, pc(m.fases.apertura / m.perdidas)],
+        ["En el medio juego", m.fases.medio, pc(m.fases.medio / m.perdidas)],
+        ["En el final", m.fases.final, pc(m.fases.final / m.perdidas)],
+      ]));
+    }
+    grilla.appendChild(termina);
+
+    const derecha = el("div", "min-w-0");
+    derecha.appendChild(el("h4", "font-bold text-brand-800 dark:text-white mb-2", "El reloj"));
+    if (m.reloj) {
+      const x = m.reloj;
+      derecha.appendChild(tabla("Cómo usa el tiempo", [{ titulo: "Dato" }, { titulo: "Él", num: true }, { titulo: "Sus rivales", num: true }], [
+        ["Le queda en la jugada 20", x.queda20 == null ? "—" : pc(x.queda20), x.rivales20 == null ? "—" : pc(x.rivales20)],
+        ["Le queda en la jugada 40", x.queda40 == null ? "—" : pc(x.queda40), "—"],
+        ["Gasta en las primeras 15 jugadas", x.apertura == null ? "—" : pc(x.apertura), x.aperturaRivales == null ? "—" : pc(x.aperturaRivales)],
+        ["Partidas en que se queda con menos del 10 % del reloj", pc(x.apuros), "—"],
+      ]));
+      derecha.appendChild(el("p", "text-xs text-brand-450 dark:text-brand-350 mt-2", "Sobre " + x.partidas + " partidas con reloj, en proporción del tiempo inicial de cada una (medianas)."));
+    } else {
+      derecha.appendChild(el("p", "text-sm text-brand-500 dark:text-brand-300", "Estas partidas no traen los relojes. Los PGN de Lichess y Chess.com sí los traen: bájalas con su usuario."));
+    }
+    derecha.appendChild(el("h4", "font-bold text-brand-800 dark:text-white mt-5 mb-2", "Sus finales"));
+    derecha.appendChild(el("p", "text-sm text-brand-600 dark:text-brand-200 mb-2", "Llega a un final en el " + pc(m.llegaFinal) + " de sus partidas. Su promedio general es " + A.pct(m.base) + "."));
+    if (m.finales.length) {
+      derecha.appendChild(tabla("Cuánto saca en cada tipo de final", [{ titulo: "Final" }, { titulo: "Partidas", num: true }, { titulo: "Saca", num: true }],
+        m.finales.map((f) => ["Final " + f.tipo, f.n, A.pct(f.puntos)])));
+      const v = m.conversion.ventaja, d = m.conversion.desventaja;
+      const partes = [];
+      if (v.n) partes.push("Con ventaja de material (2 puntos o más) llegó a " + v.n + (v.n === 1 ? " final" : " finales") + " y ganó " + v.ganadas + ".");
+      if (d.n) partes.push("Con desventaja llegó a " + d.n + " y salvó " + d.salvadas + ".");
+      if (partes.length) derecha.appendChild(el("p", "text-sm text-brand-600 dark:text-brand-200 mt-3", partes.join(" ")));
+    }
+    grilla.appendChild(derecha);
+    s.appendChild(grilla);
     return s;
   }
 

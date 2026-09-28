@@ -1234,6 +1234,47 @@ la primera es la base:
   `version` (2 desde esta etapa); la página pinta lo que haya y no pide lo que
   una versión vieja no tenía. El verificador abre uno de la versión 1.
 
+### Más allá de la apertura: etapa 2
+
+Una tarjeta nueva, «Más allá de la apertura», con lo que el rival hace después
+de la teoría (`masAllaDe()` en `js/preparacion-analisis.js`):
+
+- **Cómo terminan sus partidas**: sus derrotas y sus victorias por tiempo,
+  abandono, mate o abandonando la partida. Sale de la etiqueta `Termination`
+  (ver «La base de la preparación: etapa 1»).
+- **Cuándo pierde**: en la apertura (partidas de hasta 20 jugadas), en el medio
+  juego, o en el final si ya había entrado en uno.
+- **El reloj**, solo con las partidas que traen `[%clk]` y cuyo ritmo se conoce.
+  Todo va en proporción del tiempo inicial de cada partida, porque un archivo
+  mezcla bullet con rápidas: cuánto le queda en la jugada 20 y en la 40, cuánto
+  gasta en las primeras 15 (contra lo que gastan sus rivales en las mismas
+  partidas) y en qué parte de las partidas se queda con menos del 10 %. Son
+  medianas: una partida abandonada en la jugada 3 no mueve nada. Sin relojes, la
+  tarjeta lo dice en vez de inventar.
+- **Sus finales.** Una partida entra en un final cuando cada lado tiene 13
+  puntos de piezas o menos (sin peones) y dos piezas como mucho: torre y alfil
+  contra torre es un final; dama y torre contra dama, no. Se mira después de
+  cada captura o coronación, con `js/preparacion-posiciones.js`, y se guarda en
+  la partida **por color** (la ventaja es la del rival, y del mismo archivo se
+  puede analizar a los dos jugadores). El tipo sale de las piezas que quedan:
+  de peones, de torres, de damas, de alfiles de distinto o del mismo color, de
+  caballos, de alfil contra caballo, de piezas menores, de torre y pieza menor,
+  o con dama y otras piezas. La **conversión** mira la ventaja de material al
+  entrar en el final (2 puntos o más): cuántas ganó con ventaja y cuántas salvó
+  con desventaja.
+- **Al FODA** entra lo que se aparta de verdad, con los mismos umbrales de las
+  líneas: derrotas por tiempo (25 % o más) y la oportunidad de apretar el reloj;
+  derrotas con mate; derrotas que se deciden en la apertura (40 % o más: la
+  preparación rinde); apuros de tiempo (30 % o más); si gasta más tiempo que sus
+  rivales en la apertura (10 puntos o más); los tipos de final donde rinde menos
+  o más que su promedio, con su «busca» o «evita»; y si le cuesta convertir o se
+  defiende bien.
+
+El verificador comprueba los tipos de final con posiciones armadas a mano; el
+momento y la ventaja al entrar en un final, contra un cálculo aparte con el
+tablero de chess.js en 60 partidas al azar; y cómo pierde y el reloj con 20
+partidas de relojes y resultados conocidos, incluido lo que dice el FODA.
+
 ## Las inscripciones a torneos en línea
 
 `inscripciones.html` muestra lo que llegó por `inscripcion.html`, el formulario
