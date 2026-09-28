@@ -243,6 +243,28 @@ window.__deletes = [];
         const ajustes = TABLAS.trofeos_ajustes.filter((r) => r.alumno_id === alumno).reduce((a, r) => a + r.cantidad, 0);
         return constructor(n, [{ por_clase: porClase, ajustes: ajustes, total: Math.max(0, porClase + ajustes) }]);
       }
+      /* Lo que hizo cada alumno en una clase, contado de las MISMAS tablas
+         como en la base: sin trigger en el doble, las preguntas y prácticas
+         sembradas traen su class_session_id. */
+      if (n === "resumen_de_la_clase") {
+        const pq = TABLAS.questions.filter((q) => q.class_session_id === args.p_clase).map((q) => q.id);
+        const ps = TABLAS.practice_sessions.filter((q) => q.class_session_id === args.p_clase).map((q) => q.id);
+        const resp = TABLAS.question_answers.filter((a) => pq.includes(a.question_id));
+        const prac = TABLAS.practice_games.filter((g) => ps.includes(g.session_id));
+        const gente = [...new Set(TABLAS.class_attendance.filter((a) => a.session_id === args.p_clase).map((a) => a.student_id)
+          .concat(resp.map((a) => a.student_id), prac.map((g) => g.student_id)))];
+        const filas = gente.map((id) => {
+          const p = PERFILES.find((x) => x.id === id) || {};
+          const r = resp.filter((a) => a.student_id === id), g = prac.filter((x) => x.student_id === id);
+          return { student_id: id, nombre: p.full_name || p.email || "Alumno", preguntas: pq.length,
+            respondidas: r.length, correctas: r.filter((a) => a.is_correct === true).length,
+            incorrectas: r.filter((a) => a.is_correct === false).length, sin_calificar: r.filter((a) => a.is_correct == null).length,
+            practicas: g.length, ganadas: g.filter((x) => x.status === "checkmate_win").length,
+            tablas: g.filter((x) => x.status === "draw").length,
+            perdidas: g.filter((x) => x.status === "checkmate_loss" || x.status === "resigned").length };
+        }).sort((a, b) => a.nombre.localeCompare(b.nombre));
+        return constructor(n, filas);
+      }
       return constructor(n, n === "mis_clases"
       ? [{ profesor_id: "u-profe", profesor: "Karina Rojas", es_principal: true,
            clase_abierta: SESIONES.some((c) => c.created_by === "u-profe" && !c.ended_at) }]

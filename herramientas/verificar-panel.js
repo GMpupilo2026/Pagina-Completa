@@ -770,6 +770,33 @@ async function pruebaCoordinadorRecortado(browser) {
   await ctx.close();
 }
 
+/* «Qué hicieron» en cada clase del registro: lo que contestó cada alumno
+   (resumen_de_la_clase, js/resumen-clase.js). Se pide al abrirlo y de ESA
+   clase, no con la lista: una llamada por clase para cien clases sería pedir
+   cien veces algo que casi nunca se mira. */
+async function pruebaRegistroResumen(browser) {
+  console.log("\n=== Qué hicieron en una clase del registro ===");
+  const { page, ctx, errores } = await panel(browser, [PROFE], "u-profe", null, { rpc: { resumen_de_la_clase: [
+    { student_id: "u-ana", nombre: "Ana Rojas", preguntas: 3, respondidas: 2, correctas: 2, incorrectas: 0, sin_calificar: 0,
+      practicas: 0, ganadas: 0, tablas: 0, perdidas: 0 }] } });
+  await page.waitForSelector("#sessions-log tbody tr", { timeout: 10000 });
+  const pedidas = () => page.evaluate(() => window.__consultas.filter((c) => c.tabla === "resumen_de_la_clase").map((c) => c.args && c.args.p_clase));
+  igual("con la lista no se pide ningún resumen", JSON.stringify(await pedidas()), "[]");
+  const btn = page.locator("#sessions-log tbody tr").first().getByRole("button", { name: "Qué hicieron" });
+  igual("el botón dice que está cerrado", await btn.getAttribute("aria-expanded"), "false");
+  await btn.click();
+  await page.waitForFunction(() => /contestadas/.test(document.getElementById("sessions-log").textContent), null, { timeout: 5000 });
+  igual("pide el de ESA clase", JSON.stringify(await pedidas()), JSON.stringify(["c-0"]));
+  igual("y dice que está abierto", await btn.getAttribute("aria-expanded"), "true");
+  igual("lo pinta escrito", await page.evaluate(() =>
+    [...document.querySelectorAll("#sessions-log tbody td table tbody tr")].map((tr) => [...tr.children].map((c) => c.textContent).join(" | ")).join()),
+    "Ana Rojas | 2 de 3 contestadas: 2 bien | —");
+  await btn.click();
+  igual("se vuelve a cerrar", await page.evaluate(() => /contestadas/.test(document.getElementById("sessions-log").textContent)), "false");
+  igual("sin errores en la página", errores, []);
+  await ctx.close();
+}
+
 async function pruebaRegistro(browser) {
   console.log("\n=== El registro de clases ===");
   const { page, ctx, errores } = await panel(browser, [PROFE], "u-profe");
@@ -2032,6 +2059,7 @@ if (require.main !== module) return;
     await pruebaPersonas(browser);
     await pruebaCoordinadorRecortado(browser);
     await pruebaRegistro(browser);
+    await pruebaRegistroResumen(browser);
     await pruebaPantalla(browser);
   } finally {
     await browser.close();
