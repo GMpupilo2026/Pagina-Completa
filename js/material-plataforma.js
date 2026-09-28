@@ -84,6 +84,11 @@ window.MaterialPlataforma = (function () {
     { slug: "visualizacion", label: "Visualización", href: "entreno/visualizacion.html",
       actividades: ["visualizacion"], metas: ["cantidad", "minutos"], unidad: "ejercicios" },
 
+    /* Cuenta cada final ganado o salvado UNA vez (como Mates): son diez, así
+       que «5 finales» son cinco distintos. */
+    { slug: "finales", label: "Finales contra la máquina", href: "entreno/finales.html",
+      actividades: ["finales"], metas: ["cantidad", "minutos"], unidad: "finales" },
+
     { slug: "concentracion", label: "Concentración", href: "concentracion.html",
       actividades: ["concentracion"], metas: ["cantidad", "minutos"], unidad: "rondas" },
 

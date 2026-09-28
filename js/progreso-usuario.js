@@ -168,6 +168,8 @@ window.ProgresoUsuario = (function () {
     { clave: "entreno_visualizacion_best",       fusion: "maxNumero" },
     { clave: "entreno_visualizacion_streak",     fusion: "ultimaEscritura" },
     { clave: "entreno_visualizacion_last",       fusion: "ultimoLugar" },
+    { clave: "entreno_finales_solved",           fusion: "unionObjeto" },   // Finales contra la máquina
+    { clave: "entreno_finales_last",             fusion: "ultimoLugar" },
     { clave: "tipos_estrellas_v1",               fusion: "maxPorClave" },   // Tipos de entrenamiento: "tipo:id" → estrellas
     { clave: "tipos_mejor_v1",                   fusion: "minPorClave" },   // Con lo justo: posición → menos jugadas
   ];
