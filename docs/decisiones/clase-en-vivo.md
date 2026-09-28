@@ -250,6 +250,59 @@ al crear y extender una variante y al jugar en vivo, y lo que se PINTA en el
 tablero de la alumna (las casillas, por su `aria-label`), con su aviso escrito y
 sin poder mover mientras el profe muestra otra cosa.
 
+### El PGN de la clase lleva su arranque, sus variantes y sus comentarios
+
+«💾 Guardar PGN» rehacía la línea principal desde la posición **estándar**
+(`new Chess()`). Eso perdía tres cosas sin dar ningún error:
+
+- **La posición de arranque.** Casi toda clase empieza con una posición mandada
+  (Táctica, un diagrama del curso, «Armar posición»): desde la posición
+  estándar chess.js rechaza la primera jugada **en silencio** y el PGN salía
+  vacío, con el aviso «Partida guardada y PGN descargado». La línea que se
+  archiva al «Jugar desde aquí» tenía el mismo problema, y además su
+  `fen_final` salía de la posición estándar.
+- **Las variantes** de `variant_nodes`, que son justo el trabajo de la clase.
+- **Lo que el profe dijo de cada jugada**, que no tenía dónde guardarse.
+
+Lo arma `js/pgn-clase.js`, una función pura (la usan igual el botón y el
+verificador): `SetUp`/`FEN` cuando la posición no es la estándar, la numeración
+que sigue la del FEN (una clase que arranca en la jugada 30 con negras empieza
+«30… h6»), las variantes anidadas donde nacen —una raíz con `root_ply = n` es
+otra jugada en lugar de la n-ésima; una que nace al FINAL de la partida es su
+continuación—, el número repetido al volver de una variante o de un comentario
+(«31… Kh7», como pide el estándar), los signos como NAG (`$1`…`$6`) y los
+comentarios sin `}` (lo cerraría). La fecha es la de Costa Rica. El aviso dice
+qué lleva: «3 jugadas, 1 jugada de variante, 1 comentario».
+
+**Los comentarios van en `game_state.comentarios`**, con el CAMINO de jugadas
+desde `start_fen` como clave (`"h6 Ra8+"`): así sirve igual para la línea
+principal y para cualquier variante, sin una tabla aparte que se desfase del
+árbol.
+
+- **Solo el profe los escribe**: `protect_game_state_teacher_columns` le deja
+  los de antes a cualquier otro, igual que la vista y las flechas. Comprobado
+  impersonando roles: la alumna no los cambia, el profe sí. Un CHECK
+  (`game_state_comentarios_forma`) exige un objeto de hasta 64 KB.
+- **Se comenta la jugada que se está mirando** (la de la vista o, si no, la
+  última): el editor va debajo de «Jugadas», con los seis signos como botones
+  con `aria-pressed` y su nombre dicho. El cuadro solo se rellena al CAMBIAR de
+  jugada: un eco de Realtime no le borra al profe lo que está escribiendo.
+- **La clase lo ve debajo de su tablero** cuando mira esa jugada
+  (`#comentario-profe`), con el signo dicho en palabras («31. Ra8+! (buena
+  jugada): …») y por `textContent`, porque lo escribió una persona. Con el Modo
+  Adaptado se le dice en voz. En la lista del profe la jugada lleva su signo y
+  un 💬, y el `aria-label` dice el comentario.
+- **Se vacían cuando cambia el arranque** (`aplicarPosicionEnClase`,
+  «Reiniciar»): una clave de otra partida no pertenece a esta. Y al guardar uno
+  se descartan los de jugadas que ya no están en el árbol, para que la columna
+  no crezca con restos.
+
+**Al tocar el PGN, los comentarios o `applyGameStateRow`, correr `node
+herramientas/verificar-todo.js clase-pgn`.** Prueba el armador sin navegador
+(y que chess.js 0.10.3 lea la línea principal de lo que sale) y la clase con el
+doble de `verificar-clase-registrada.js`. Está probado que falla de verdad: con
+la posición estándar de antes y sin variantes saltan dos comprobaciones.
+
 ### El modo sencillo de la clase en vivo
 
 Aun ordenada, la pantalla del profesor tiene catorce controles delante, y la
