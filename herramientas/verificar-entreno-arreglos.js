@@ -18,7 +18,6 @@
 const { chromium } = require("./lib/playwright-con-sesion");
 
 const CHROME = process.env.CHROME_PATH || "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
-const BASE = process.env.BASE_URL || "http://localhost:8777";
 
 let fallos = 0;
 function igual(nombre, hallado, esperado) {
@@ -28,62 +27,14 @@ function igual(nombre, hallado, esperado) {
   else console.log("  ✓ " + nombre + ": " + a);
 }
 
-/* El doble de Supabase: una sesión, anota los insert, y training_plans
-   devuelve la fila que se le pase (la política real solo la da si shared). El
-   filtro se aplica en el RESOLVER: .eq() solo lo anota. */
-function clienteFalso(planes) {
-  return `
-(function () {
-  window.__inserts = [];
-  const PLANES = ${JSON.stringify(planes || [])};
-  function consulta(tabla) {
-    const filtros = [];
-    const q = {
-      select() { return q; }, order() { return q; }, limit() { return q; }, range() { return q; }, in() { return q; },
-      eq(c, v) { filtros.push([c, v]); return q; },
-      insert(rows) {
-        window.__inserts.push({ tabla, rows });
-        return { select() { return this; }, single() { return Promise.resolve({ data: { id: 1 }, error: null }); },
-                 then(r) { return Promise.resolve({ data: null, error: null }).then(r); } };
-      },
-      update() { return q; },
-      filas() {
-        const base = tabla === "training_plans" ? PLANES : [];
-        return base.filter((f) => filtros.every(([c, v]) => f[c] === v));
-      },
-      maybeSingle() { return Promise.resolve({ data: q.filas()[0] || null, error: null }); },
-      single() { return Promise.resolve({ data: q.filas()[0] || null, error: null }); },
-      then(r) { return Promise.resolve({ data: q.filas(), error: null }).then(r); },
-    };
-    return q;
-  }
-  window.sb = {
-    auth: {
-      getSession: () => Promise.resolve({ data: { session: { user: { id: "u-ana" }, access_token: "t" } } }),
-      getUser: () => Promise.resolve({ data: { user: { id: "u-ana" } } }),
-      onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
-    },
-    from: consulta,
-    rpc: () => ({ then(r) { return Promise.resolve({ data: [], error: null }).then(r); } }),
-    channel: () => ({ on() { return this; }, subscribe() { return this; } }),
-    removeChannel() {},
-  };
-})();
-`;
-}
-
+/* El doble de Supabase es el de herramientas/lib/doble-entreno.js. Acá
+   training_plans devuelve la fila que se le pase (la política real solo la da
+   si shared), y se espera a que la página abra la aplicación. */
+const doble = require("./lib/doble-entreno");
 async function abrir(browser, ruta, planes) {
-  const ctx = await browser.newContext({ serviceWorkers: "block" });
-  const page = await ctx.newPage();
-  const errores = [];
-  page.on("pageerror", (e) => errores.push(String(e)));
-  await ctx.route("**/cdn.jsdelivr.net/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
-  await ctx.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
-  await ctx.route("**/fonts.gstatic.com/**", (r) => r.abort());
-  await ctx.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso(planes) }));
-  await page.goto(BASE + ruta, { waitUntil: "networkidle" });
-  await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
-  return { page, ctx, errores };
+  const r = await doble.abrir(browser, ruta, planes ? { training_plans: planes } : {});
+  await r.page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
+  return r;
 }
 const clic = (page, sq) => page.click(`#board [data-square="${sq}"]`);
 const estado = (page) => page.evaluate(() => (document.getElementById("round-status") || document.getElementById("lesson-status")).textContent);
