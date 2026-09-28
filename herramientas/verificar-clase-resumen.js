@@ -100,7 +100,7 @@ async function pruebaSinNada(browser) {
   await page.waitForSelector("#clase-cerrar-btn:not(.hidden)", { timeout: 10000 });
   await page.click("#clase-cerrar-btn");
   await page.waitForFunction(() => /no se hicieron/.test(document.getElementById("clase-resumen").textContent), null, { timeout: 5000 });
-  igual("lo dice", await page.textContent("#clase-resumen p"), "En esta clase no se hicieron preguntas ni prácticas contra el motor.");
+  igual("lo dice", await page.textContent("#clase-resumen p"), "En esta clase no se hicieron preguntas, prácticas contra el motor ni partidas entre alumnos.");
   igual("sin una tabla de guiones", await page.evaluate(() => !!document.querySelector("#clase-resumen table")), false);
   igual("sin errores en consola", errores, []);
   await ctx.close();

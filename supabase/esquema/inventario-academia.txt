@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20260928231046
+# al-dia-con: 20260928232441
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -425,6 +425,7 @@ columna  game_rooms.black_id  uuid
 columna  game_rooms.black_ready  boolean
 columna  game_rooms.black_time_left  numeric
 columna  game_rooms.cartas_state  jsonb
+columna  game_rooms.class_session_id  uuid
 columna  game_rooms.clock_updated_at  timestamp with time zone
 columna  game_rooms.created_at  timestamp with time zone
 columna  game_rooms.created_by  uuid
@@ -597,6 +598,7 @@ columna  practice_games.eval_cp  integer
 columna  practice_games.fen  text
 columna  practice_games.id  uuid
 columna  practice_games.moves  jsonb
+columna  practice_games.reloj_ms  integer
 columna  practice_games.session_id  uuid
 columna  practice_games.status  text
 columna  practice_games.student_color  text
@@ -608,7 +610,9 @@ columna  practice_sessions.created_by  uuid
 columna  practice_sessions.ended_at  timestamp with time zone
 columna  practice_sessions.fen  text
 columna  practice_sessions.id  uuid
+columna  practice_sessions.incremento_segundos  integer
 columna  practice_sessions.level  text
+columna  practice_sessions.reloj_segundos  integer
 columna  preguntas_clave.correcta  integer
 columna  preguntas_clave.question_id  uuid
 columna  preparacion_rivales_profesores.activado_por  uuid
@@ -1421,6 +1425,7 @@ trigger  examenes  examenes_exige_acceso_al_empezar
 trigger  formularios  formularios_academia_propia
 trigger  fourplayer_games  reloj_de_partida
 trigger  game_rooms  game_rooms_exige_acceso
+trigger  game_rooms  game_rooms_ligar_a_la_clase
 trigger  game_rooms  reloj_de_partida
 trigger  game_state  protect_game_state_teacher_columns_trigger
 trigger  ia_uso  ia_uso_avisa_tope
@@ -1551,6 +1556,7 @@ indice  formularios  formularios_slug_key
 indice  fourplayer_games  fourplayer_games_created_by_fk
 indice  fourplayer_games  fourplayer_games_pkey
 indice  game_rooms  game_rooms_black_id_fk
+indice  game_rooms  game_rooms_class_session_idx
 indice  game_rooms  game_rooms_created_by_fk
 indice  game_rooms  game_rooms_pkey
 indice  game_rooms  game_rooms_white_id_fk

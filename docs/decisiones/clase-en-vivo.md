@@ -359,6 +359,57 @@ profe» y avise con `__cambioEnBase`. Está probado que falla de verdad: sin el
 tiempo en `crearPregunta` saltan dos comprobaciones, y rearmando la tarjeta en
 cada aviso salta la de «no se le borró lo que llevaba jugado».
 
+### Práctica con reloj, partidas entre alumnos y «a ciegas»
+
+Tres herramientas de entrenamiento que faltaban en la clase. Lo que cuenta
+está en la base (migración `partidas_y_reloj_de_la_clase`), comprobado
+impersonando roles.
+
+- **La práctica contra el motor puede llevar reloj** (1 a 10 minutos, con o
+  sin incremento): `practice_sessions.reloj_segundos` / `incremento_segundos`.
+  El reloj es del alumno —el motor juega al instante— y **lo lleva su
+  navegador**, a propósito: es entrenamiento contra una máquina, no una
+  partida puntuable, y validarlo en el servidor como las de `game_rooms`
+  sería mucho aparato para nada. Corre solo en su turno; al mover se le
+  descuenta lo que pensó y se le suma el incremento, y lo que le queda se
+  guarda en `practice_games.reloj_ms`. Al caer, la partida termina con
+  `status = 'timeout'`, que el resumen cuenta como derrota. Se le dice en voz
+  a los 10 s y al caer, desde una región viva aparte (el texto que cambia
+  cada segundo no lo es).
+- **Una sola puerta abre la práctica**, `crearPractica()`: había tres inserts
+  (el botón, los archivos y «Con lo justo»), y el reloj tenía que viajar en
+  todos.
+- **Partidas entre alumnos**: «Emparejar a los alumnos conectados» arma al azar
+  una partida por pareja, con el ritmo elegido, desde la posición inicial o
+  la del tablero de la clase. Son las partidas de siempre (`game_rooms`,
+  variante estándar, en `estandar.html`): mismo reloj que valida el servidor,
+  misma política de quién puede armar con quién (`puedo_armar_partida_con`) y
+  el mismo aviso de pareo que llega a cualquier página (`js/juego-aviso.js`,
+  que `sesion.html` ya carga). El que sobra con un número impar **se dice**,
+  por su nombre: dejarlo fuera callado es dejarlo sin jugar sin que nadie se
+  entere.
+  - Quedan ligadas a la clase con el MISMO trigger de las preguntas
+    (`ligar_a_la_clase_abierta` sobre `game_rooms`): cualquier partida que el
+    profe arme con la clase abierta —también desde Juegos o un torneo— cuenta
+    como de esa clase.
+  - Desde una posición que no es la inicial, la triple repetición no se
+    declara nunca: `js/repeticion.js` reproduce desde la posición estándar y,
+    si no llega a la FEN guardada, a propósito no declara nada.
+  - La lista de la pestaña dice cómo va cada una y trae «Mirar» (se abre en
+    otra pestaña, y el enlace lo dice). Se refresca por Realtime con el filtro
+    `created_by`.
+- **El resumen del cierre las cuenta**: `resumen_de_la_clase` suma partidas
+  (cada una para los dos, desde su lado) y la columna «Partidas con
+  compañeros» sale solo si hubo. El profe que jugó con un alumno no aparece
+  como alumno de su propia clase.
+- **A ciegas**: con «Ocultar» puesto, el alumno no tenía nada que seguir. Ahora
+  ve la partida escrita (`#jugadas-a-ciegas`) hasta la jugada que se está
+  mirando: eso es el ejercicio de visualización.
+
+**Al tocar esto, correr `node herramientas/verificar-todo.js clase-partidas`.**
+Está probado que falla de verdad: sin descontar el reloj al mover, o sin
+pintar la partida escrita, se cae.
+
 ### El modo sencillo de la clase en vivo
 
 Aun ordenada, la pantalla del profesor tiene catorce controles delante, y la

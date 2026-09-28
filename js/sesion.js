@@ -466,6 +466,17 @@
             return "Tu profe está mostrando una variante: " + numerarJugadas(vista.path, root) + ".";
         }
 
+        /* A ciegas: con las piezas ocultas el alumno no tenía nada que seguir.
+           Ahora ve la partida escrita hasta la jugada que se está mirando. */
+        function pintarJugadasACiegas() {
+            const el = document.getElementById("jugadas-a-ciegas");
+            if (!el || isTeacher) return;
+            const camino = board.piecesHidden ? caminoQueSeVe() : [];
+            el.hidden = !board.piecesHidden;
+            el.textContent = !board.piecesHidden ? ""
+                : "🙈 Piezas ocultas: síguela de memoria. " + (camino.length ? "Jugadas: " + numerarJugadas(camino, 0) + "." : "Todavía no hay jugadas: imagina la posición de salida.");
+        }
+
         function pintarVistaDelProfe() {
             const el = document.getElementById("vista-profe");
             if (!el) return;
@@ -550,6 +561,7 @@
             updateAccessForRole();
             renderMoveList();
             pintarVistaDelProfe();
+            pintarJugadasACiegas();
             renderStudentsList();
             updateHideBoardBtn();
             if (isTeacher) updateEngineEval();
@@ -1020,10 +1032,7 @@
             if (!fen) { msgEl.textContent = "Ese PGN no se pudo interpretar."; return; }
             if (!(await aplicarPosicionEnClase(fen))) return;
             if (typeof PracticeEngine !== "undefined") PracticeEngine.preload();
-            await sb.from("practice_sessions").update({ ended_at: new Date().toISOString() }).eq("created_by", boardOwnerId).is("ended_at", null);
-            const { error } = await sb.from("practice_sessions").insert({
-                fen, level: selectedPracticeLevel, created_by: session.user.id,
-            });
+            const { error } = await crearPractica(fen, selectedPracticeLevel);
             if (error) { console.error(error); setStatus("No se pudo iniciar la práctica: " + error.message); return; }
             document.getElementById("archivos-panel").classList.add("hidden");
             activateTeacherTab("practicar");
@@ -3691,9 +3700,8 @@
         async function tiposPracticar(fen) {
             if (!(await aplicarPosicionEnClase(fen))) return;
             if (typeof PracticeEngine !== "undefined") PracticeEngine.preload();
-            await sb.from("practice_sessions").update({ ended_at: new Date().toISOString() }).eq("created_by", boardOwnerId).is("ended_at", null);
             // Nivel máximo: el rey solo tiene que defenderse lo mejor posible.
-            const { error } = await sb.from("practice_sessions").insert({ fen, level: "max", created_by: session.user.id });
+            const { error } = await crearPractica(fen, "max");
             if (error) { console.error(error); setStatus("No se pudo iniciar la práctica: " + error.message); return; }
             activateTeacherTab("practicar");
             setStatus("Con lo justo: cada alumno juega el final contra el motor. Que den mate.");
@@ -4196,6 +4204,7 @@
             if (status === "checkmate_loss") return "💀 Perdió por jaque mate";
             if (status === "draw") return "🤝 Tablas";
             if (status === "resigned") return "🏳️ Se rindió";
+            if (status === "timeout") return "⏱️ Se quedó sin tiempo";
             return "Jugando…";
         }
 
@@ -4215,6 +4224,165 @@
             }
             if (g.in_draw && g.in_draw()) return "draw"; // in_draw() ya cubre ahogado, material insuficiente, etc.
             return "playing";
+        }
+
+        /* ---------- Práctica con reloj y partidas entre alumnos ----------
+           Una sola puerta abre la práctica contra el motor (el botón, los archivos
+           y «Con lo justo»): así el reloj elegido viaja en todas. Solo puede haber
+           una ronda activa a la vez: cierra cualquier anterior sin cerrar. */
+        async function crearPractica(fen, level) {
+            await sb.from("practice_sessions").update({ ended_at: new Date().toISOString() }).eq("created_by", boardOwnerId).is("ended_at", null);
+            const reloj = parseInt((document.getElementById("practice-reloj") || {}).value, 10);
+            const inc = parseInt((document.getElementById("practice-incremento") || {}).value, 10);
+            return sb.from("practice_sessions").insert({
+                fen, level, created_by: session.user.id,
+                reloj_segundos: isFinite(reloj) && reloj > 0 ? reloj : null,
+                incremento_segundos: isFinite(reloj) && reloj > 0 && isFinite(inc) ? inc : 0,
+            });
+        }
+
+        function montarControlesDePractica() {
+            const reloj = document.getElementById("practice-reloj");
+            if (!reloj || reloj.childElementCount) return;
+            PartidasClase.RELOJES_PRACTICA.forEach((t) => {
+                const o = document.createElement("option");
+                o.value = t.segundos === null ? "" : String(t.segundos);
+                o.textContent = t.texto;
+                reloj.appendChild(o);
+            });
+            const ritmo = document.getElementById("partidas-ritmo");
+            PartidasClase.RITMOS.forEach((r, i) => {
+                const o = document.createElement("option");
+                o.value = String(i);
+                o.textContent = r.texto;
+                ritmo.appendChild(o);
+            });
+            ritmo.value = "1";
+            document.getElementById("emparejar-btn").addEventListener("click", emparejarAlumnos);
+            cargarPartidasDeLaClase();
+            sb.channel("partidas-clase:" + boardOwnerId)
+                .on("postgres_changes", { event: "*", schema: "public", table: "game_rooms", filter: "created_by=eq." + boardOwnerId }, () => cargarPartidasDeLaClase())
+                .subscribe();
+        }
+
+        /* Empareja a los conectados (onlineStudents: solo alumnos, sin quien
+           supervisa) y arma una partida por pareja. Se crean con el insert de
+           siempre: la política de game_rooms (puedo_armar_partida_con) decide
+           con quién puede armar partidas este profesor. */
+        async function emparejarAlumnos() {
+            const msg = document.getElementById("partidas-msg");
+            if (!currentOpenSessionId) { msg.textContent = "Abre la clase primero: las partidas quedan en su registro."; return; }
+            const ids = [...onlineStudents.keys()];
+            if (ids.length < 2) { msg.textContent = "Hacen falta al menos dos alumnos conectados."; return; }
+            const ritmo = PartidasClase.RITMOS[parseInt(document.getElementById("partidas-ritmo").value, 10)] || PartidasClase.RITMOS[1];
+            let fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+            if (document.getElementById("partidas-desde-tablero").checked) {
+                fen = board.fen();
+                const motivo = motivoPosicionInvalida(fen);
+                if (motivo) { msg.textContent = motivo; return; }
+                if (new Chess(fen).game_over()) { msg.textContent = "En la posición del tablero la partida ya terminó: no hay nada que jugar."; return; }
+            }
+            const { parejas, sobra } = PartidasClase.emparejar(ids);
+            const btn = document.getElementById("emparejar-btn");
+            btn.disabled = true;
+            const filas = parejas.map((p) => ({
+                variant: "estandar", white_id: p.blancas, black_id: p.negras, created_by: session.user.id, fen,
+                initial_seconds: ritmo.inicial, increment_seconds: ritmo.incremento,
+                white_time_left: ritmo.inicial, black_time_left: ritmo.inicial,
+            }));
+            const { error } = await sb.from("game_rooms").insert(filas);
+            btn.disabled = false;
+            if (error) { console.error(error); msg.textContent = "No se pudieron armar las partidas: " + error.message; return; }
+            const nombre = (id) => (onlineStudents.get(id) || {}).full_name || (onlineStudents.get(id) || {}).email || "Alumno";
+            msg.textContent = (parejas.length === 1 ? "Se armó 1 partida" : "Se armaron " + parejas.length + " partidas")
+                + " (" + ritmo.texto + "). A cada uno le llega el aviso para entrar."
+                + (sobra ? " " + nombre(sobra) + " quedó sin pareja: puede jugar contra el motor o contigo." : "");
+            cargarPartidasDeLaClase();
+        }
+
+        async function cargarPartidasDeLaClase() {
+            const lista = document.getElementById("partidas-lista");
+            if (!lista) return;
+            if (!currentOpenSessionId) { lista.innerHTML = ""; return; }
+            const { data, error } = await sb.from("game_rooms")
+                .select("id, white_id, black_id, status, result, moves")
+                .eq("class_session_id", currentOpenSessionId).order("created_at");
+            if (error) { console.error(error); return; }
+            const { data: nombres } = await sb.rpc("nombres_de_jugadores", {
+                p_ids: [...new Set((data || []).flatMap((r) => [r.white_id, r.black_id]))],
+            });
+            const mapa = new Map((nombres || []).map((n) => [n.id, n.nombre || n.full_name]));
+            const nombre = (id) => mapa.get(id) || (onlineStudents.get(id) || {}).full_name || "Alumno";
+            lista.innerHTML = "";
+            (data || []).forEach((r) => {
+                const li = document.createElement("li");
+                li.className = "flex items-center justify-between gap-2 border-b border-brand-50 dark:border-brand-800/60 pb-1.5";
+                const t = document.createElement("span");
+                t.className = "text-brand-700 dark:text-brand-200";
+                t.textContent = nombre(r.white_id) + " (blancas) – " + nombre(r.black_id) + " (negras) · " + PartidasClase.estado(r, nombre);
+                const a = document.createElement("a");
+                a.href = "estandar.html?room=" + encodeURIComponent(r.id);
+                a.target = "_blank";
+                a.rel = "noopener";
+                a.className = "shrink-0 font-semibold text-accent-700 dark:text-accent-400 hover:underline";
+                a.textContent = "Mirar";
+                a.setAttribute("aria-label", "Mirar la partida de " + nombre(r.white_id) + " y " + nombre(r.black_id) + " (se abre en otra pestaña)");
+                li.append(t, a);
+                lista.appendChild(li);
+            });
+        }
+
+        /* El reloj del alumno en la práctica. Corre solo en su turno; al mover se
+           le descuenta lo que pensó y se le suma el incremento, y lo que le queda
+           se guarda en practice_games.reloj_ms. Al caer, la partida termina. */
+        let relojTurnoDesde = null;
+        let relojDichoPara = null;
+        let relojDePartida = null;
+        function relojBaseMs() {
+            if (!latestPracticeSession || !latestPracticeSession.reloj_segundos || !myPracticeGame) return null;
+            return myPracticeGame.reloj_ms != null ? myPracticeGame.reloj_ms : latestPracticeSession.reloj_segundos * 1000;
+        }
+        function relojRestanteMs() {
+            const base = relojBaseMs();
+            if (base === null) return null;
+            return relojTurnoDesde === null ? base : base - (Date.now() - relojTurnoDesde);
+        }
+        function tickRelojPractica() {
+            if (isTeacher) return;
+            const el = document.getElementById("practice-reloj-alumno");
+            if (!el) return;
+            const base = relojBaseMs();
+            const jugando = myPracticeGame && myPracticeGame.status === "playing" && practiceBoard;
+            el.hidden = base === null;
+            if (base === null) return;
+            // Una partida nueva (u otro intento) arranca su turno de cero.
+            const partida = myPracticeGame.id + ":" + (myPracticeGame.attempts || 1);
+            if (partida !== relojDePartida) { relojDePartida = partida; relojTurnoDesde = null; }
+            const miTurno = jugando && practiceBoard.game.turn() === myPracticeGame.student_color && !practiceEngineBusy;
+            if (miTurno && relojTurnoDesde === null) relojTurnoDesde = Date.now();
+            if (!miTurno) relojTurnoDesde = null;
+            const quedan = relojRestanteMs();
+            el.textContent = "⏱️ Tu reloj: " + PartidasClase.reloj(quedan);
+            const aviso = document.getElementById("practice-reloj-aviso");
+            const clave = myPracticeGame.id + ":" + (myPracticeGame.attempts || 1) + ":" + (quedan <= 0 ? "fin" : quedan <= 10000 ? "10" : "");
+            if (quedan <= 10000 && miTurno && relojDichoPara !== clave) {
+                relojDichoPara = clave;
+                aviso.textContent = quedan <= 0 ? "Se te acabó el tiempo." : "Te quedan 10 segundos.";
+            }
+            if (miTurno && quedan <= 0) {
+                relojTurnoDesde = null;
+                practiceBoard.setInteractive(false);
+                savePracticeGameRow({ status: "timeout", reloj_ms: 0 }).then(updatePracticeCardInteractivity);
+            }
+        }
+        setInterval(tickRelojPractica, 250);
+
+        // Lo que le queda después de su jugada (null si la práctica no tiene reloj).
+        function relojDespuesDeMover() {
+            const quedan = relojRestanteMs();
+            if (quedan === null) return null;
+            relojTurnoDesde = null;
+            return Math.max(0, Math.round(quedan + (latestPracticeSession.incremento_segundos || 0) * 1000));
         }
 
         function subscribePractice() {
@@ -4385,11 +4553,7 @@
             const motivoPractica = motivoPosicionInvalida(board.fen());
             if (motivoPractica) { setStatus(motivoPractica); return; }
             if (typeof PracticeEngine !== "undefined") PracticeEngine.preload();
-            // Solo puede haber una ronda activa a la vez: cierra cualquier anterior sin cerrar.
-            await sb.from("practice_sessions").update({ ended_at: new Date().toISOString() }).eq("created_by", boardOwnerId).is("ended_at", null);
-            const { error } = await sb.from("practice_sessions").insert({
-                fen: board.fen(), level: selectedPracticeLevel, created_by: session.user.id,
-            });
+            const { error } = await crearPractica(board.fen(), selectedPracticeLevel);
             if (error) { console.error(error); setStatus("No se pudo iniciar la práctica: " + error.message); return; }
             setStatus("Práctica iniciada: los alumnos ya pueden jugar contra el motor.");
         });
@@ -4620,7 +4784,8 @@
             const attemptsAtMove = myPracticeGame.attempts || 1;
             practiceBoard.setInteractive(false);
             const status = practiceResultForStudent(practiceBoard.game, myPracticeGame.student_color);
-            await savePracticeGameRow({ fen, moves, status });
+            const reloj = relojDespuesDeMover();
+            await savePracticeGameRow(Object.assign({ fen, moves, status }, reloj === null ? {} : { reloj_ms: reloj }));
             updatePracticeGameEval(fen, gameIdAtMove, attemptsAtMove); // en segundo plano, no bloquea la jugada del motor
             if (status !== "playing") { updatePracticeCardInteractivity(); return; }
             await requestEngineReply(gameIdAtMove, attemptsAtMove);
@@ -4644,7 +4809,7 @@
             if (!myPracticeGame || !latestPracticeSession || latestPracticeSession.ended_at) return;
             await savePracticeGameRow({
                 fen: latestPracticeSession.fen, moves: [], status: "playing",
-                eval_cp: null, attempts: (myPracticeGame.attempts || 1) + 1,
+                eval_cp: null, attempts: (myPracticeGame.attempts || 1) + 1, reloj_ms: null,
             });
             practiceBoard.loadMoves([], latestPracticeSession.fen);
             updatePracticeCardInteractivity();
@@ -4856,7 +5021,7 @@
                 document.getElementById("app").classList.remove("hidden");
                 return;
             }
-            if (isTeacher) montarControlesDePreguntas();
+            if (isTeacher) { montarControlesDePreguntas(); montarControlesDePractica(); }
             await loadCurrentQuestion();
             subscribeQuestions();
             await loadCurrentPractice();

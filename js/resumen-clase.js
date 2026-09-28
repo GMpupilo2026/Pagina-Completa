@@ -39,17 +39,32 @@ window.ResumenClase = (function () {
         return plural(f.practicas, "partida", "partidas") + ": " + partes.join(", ");
     }
 
+    function textoPartidas(f) {
+        if (!f.partidas) return "—";
+        const partes = [];
+        if (f.partidas_ganadas) partes.push(plural(f.partidas_ganadas, "ganada", "ganadas"));
+        if (f.partidas_tablas) partes.push(plural(f.partidas_tablas, "en tablas", "en tablas"));
+        if (f.partidas_perdidas) partes.push(plural(f.partidas_perdidas, "perdida", "perdidas"));
+        const enJuego = f.partidas - f.partidas_ganadas - f.partidas_tablas - f.partidas_perdidas;
+        if (enJuego > 0) partes.push(plural(enJuego, "sin terminar", "sin terminar"));
+        return plural(f.partidas, "partida", "partidas") + ": " + partes.join(", ");
+    }
+
     // Una línea para todo el grupo: lo primero que se lee.
     function titular(filas) {
         const preguntas = filas.length ? filas[0].preguntas : 0;
         const practicas = filas.reduce((a, f) => a + f.practicas, 0);
+        // Cada partida entre alumnos aparece en la fila de los dos.
+        const partidas = Math.round(filas.reduce((a, f) => a + (f.partidas || 0), 0) / 2);
         if (!filas.length) return "Nadie de tus alumnos quedó registrado en esta clase.";
-        if (!preguntas && !practicas) return "En esta clase no se hicieron preguntas ni prácticas contra el motor.";
+        if (!preguntas && !practicas && !partidas) return "En esta clase no se hicieron preguntas, prácticas contra el motor ni partidas entre alumnos.";
         const partes = [];
         if (preguntas) partes.push(plural(preguntas, "pregunta", "preguntas"));
         if (practicas) partes.push(plural(practicas, "partida de práctica", "partidas de práctica"));
+        if (partidas) partes.push(plural(partidas, "partida entre alumnos", "partidas entre alumnos"));
         const sinCalificar = filas.reduce((a, f) => a + f.sin_calificar, 0);
-        return "En esta clase: " + partes.join(" y ") + "."
+        const lista = partes.length > 1 ? partes.slice(0, -1).join(", ") + " y " + partes[partes.length - 1] : partes[0];
+        return "En esta clase: " + lista + "."
             + (sinCalificar ? (sinCalificar === 1 ? " Queda 1 respuesta sin calificar." : " Quedan " + sinCalificar + " respuestas sin calificar.") : "");
     }
 
@@ -64,14 +79,16 @@ window.ResumenClase = (function () {
         const o = opciones || {};
         caja.innerHTML = "";
         caja.appendChild(el("p", "text-sm font-semibold text-brand-700 dark:text-brand-200", titular(filas)));
-        const hay = filas.length && (filas[0].preguntas || filas.some((f) => f.practicas));
+        const hay = filas.length && (filas[0].preguntas || filas.some((f) => f.practicas || f.partidas));
+        const conPartidas = filas.some((f) => f.partidas);
         if (!hay) return;
         const envoltura = el("div", "overflow-x-auto mt-2");
         const tabla = el("table", "w-full text-sm");
         const cap = el("caption", "sr-only", o.titulo || "Lo que hizo cada alumno en la clase");
         const thead = el("thead");
         const trh = el("tr", "text-left text-xs uppercase text-brand-450 dark:text-brand-350 border-b border-brand-100 dark:border-brand-800");
-        ["Alumno", "Preguntas", "Práctica contra el motor"].forEach((t) => {
+        // La columna de partidas entre alumnos solo si hubo: una de guiones no dice nada.
+        ["Alumno", "Preguntas", "Práctica contra el motor"].concat(conPartidas ? ["Partidas con compañeros"] : []).forEach((t) => {
             const th = el("th", "py-1.5 pr-4 font-semibold", t);
             th.scope = "col";
             trh.appendChild(th);
@@ -85,6 +102,7 @@ window.ResumenClase = (function () {
             tr.append(th,
                 el("td", "py-1.5 pr-4 text-brand-600 dark:text-brand-300", textoPreguntas(f)),
                 el("td", "py-1.5 pr-4 text-brand-600 dark:text-brand-300", textoPracticas(f)));
+            if (conPartidas) tr.appendChild(el("td", "py-1.5 pr-4 text-brand-600 dark:text-brand-300", textoPartidas(f)));
             tbody.appendChild(tr);
         });
         tabla.append(cap, thead, tbody);
@@ -92,5 +110,5 @@ window.ResumenClase = (function () {
         caja.appendChild(envoltura);
     }
 
-    return { cargar, pintar, titular, textoPreguntas, textoPracticas };
+    return { cargar, pintar, titular, textoPreguntas, textoPracticas, textoPartidas };
 })();

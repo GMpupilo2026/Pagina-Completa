@@ -306,6 +306,9 @@
                     <p id="vista-profe" hidden class="max-w-[560px] mx-auto mt-2 rounded-xl bg-brand-100 dark:bg-brand-900 px-4 py-2 text-center text-sm text-brand-600 dark:text-brand-300"></p>
                     <!-- Solo quien sigue la clase: lo que el profe comentó de la jugada que se ve
                          (game_state.comentarios, ver pintarComentarioDeLaJugada). -->
+                    <!-- Solo quien sigue la clase, con las piezas ocultas: la partida escrita, para
+                         seguirla de memoria (ver pintarJugadasACiegas). Sin esto no había nada que seguir. -->
+                    <p id="jugadas-a-ciegas" hidden class="max-w-[560px] mx-auto mt-2 rounded-xl bg-brand-100 dark:bg-brand-900 px-4 py-2 text-sm font-mono text-brand-700 dark:text-brand-200"></p>
                     <p id="comentario-profe" hidden class="max-w-[560px] mx-auto mt-2 rounded-xl border border-accent-400/60 bg-white dark:bg-brand-900 px-4 py-2 text-sm text-brand-700 dark:text-brand-200"></p>
                     <p id="arrows-hint" class="hidden text-center text-brand-450 dark:text-brand-350 text-xs mt-1">Clic derecho + arrastrar dibuja una flecha (repetirla en el mismo color la borra) · clic derecho sobre una casilla la marca con un círculo · elige el color abajo</p>
                     <!-- Color con el que se dibujan las PRÓXIMAS flechas/círculos (ver
@@ -430,6 +433,10 @@
                             </div>
                             <p class="text-xs text-brand-500 dark:text-brand-300 mb-1">Nivel: <span id="practice-card-level" class="font-semibold"></span> · Juegas con <span id="practice-card-color" class="font-semibold"></span></p>
                             <p id="practice-card-status" role="status" class="text-xs text-brand-450 dark:text-brand-350 mb-3">Es tu turno.</p>
+                            <!-- Su reloj, si el profe puso uno. Cambia cada segundo: no es región viva;
+                                 lo que se dice en voz va aparte (a los 10 segundos y al caer). -->
+                            <p id="practice-reloj-alumno" hidden class="text-lg font-bold font-mono text-brand-800 dark:text-white -mt-2 mb-2"></p>
+                            <p id="practice-reloj-aviso" class="sr-only" aria-live="assertive"></p>
                             <div class="flex justify-center">
                                 <div id="practice-board" class="grid grid-cols-8 grid-rows-[repeat(8,minmax(0,1fr))] w-full max-w-[min(92vw,560px)] aspect-square rounded-lg overflow-hidden shadow-lg border-4 border-brand-700 select-none"></div>
                             </div>
@@ -687,6 +694,22 @@
                                 <button type="button" class="practice-level-btn text-xs font-semibold px-2 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" data-level="1800" aria-pressed="false">1800</button>
                                 <button type="button" class="practice-level-btn text-xs font-semibold px-2 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" data-level="max" aria-pressed="false">Máxima</button>
                             </div>
+                            <!-- El reloj es del alumno (el motor juega al instante). Lo lleva su navegador:
+                                 es entrenamiento contra una máquina, no una partida puntuable. -->
+                            <div class="grid grid-cols-2 gap-2 mb-3">
+                                <div>
+                                    <label for="practice-reloj" class="block text-xs text-brand-500 dark:text-brand-300 mb-1">Reloj del alumno</label>
+                                    <select id="practice-reloj" class="w-full text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500"></select>
+                                </div>
+                                <div>
+                                    <label for="practice-incremento" class="block text-xs text-brand-500 dark:text-brand-300 mb-1">Incremento</label>
+                                    <select id="practice-incremento" class="w-full text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500">
+                                        <option value="0">Sin incremento</option>
+                                        <option value="2">2 segundos</option>
+                                        <option value="5">5 segundos</option>
+                                    </select>
+                                </div>
+                            </div>
                             <button id="start-practice-btn" class="w-full bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2 rounded-lg text-sm transition-colors">🎯 Practicar: posición actual</button>
                         </div>
 
@@ -694,6 +717,23 @@
                             <p class="text-sm text-brand-600 dark:text-brand-300 mb-1">Práctica en curso — nivel <span id="practice-active-level" class="font-semibold"></span>.</p>
                             <p id="practice-active-count" class="text-xs text-brand-450 dark:text-brand-350 mb-3">Esperando a que los alumnos empiecen a jugar…</p>
                             <button id="end-practice-btn" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2 rounded-lg text-sm transition-colors">Terminar práctica</button>
+                        </div>
+
+                        <!-- Partidas entre alumnos: las de siempre (game_rooms, estandar.html), armadas de
+                             a muchas y ligadas a la clase. Ver js/partidas-clase.js. -->
+                        <div id="partidas-clase" class="mt-5 border-t border-brand-100 dark:border-brand-800 pt-4">
+                            <h3 class="font-semibold text-sm text-brand-800 dark:text-white mb-1"><span aria-hidden="true">♟️ </span>Partidas entre alumnos</h3>
+                            <p class="text-xs text-brand-450 dark:text-brand-350 mb-2">Empareja al azar a los alumnos conectados para que jueguen entre ellos, con reloj. A cada uno le llega el aviso para entrar a su partida, y quedan en el registro de esta clase.</p>
+                            <div class="flex items-center gap-2 mb-2">
+                                <label for="partidas-ritmo" class="text-xs text-brand-500 dark:text-brand-300">Ritmo:</label>
+                                <select id="partidas-ritmo" class="text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500"></select>
+                            </div>
+                            <label class="flex items-center gap-2 text-xs text-brand-600 dark:text-brand-300 mb-2">
+                                <input id="partidas-desde-tablero" type="checkbox"> Desde la posición del tablero de la clase
+                            </label>
+                            <button id="emparejar-btn" type="button" class="w-full text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors">Emparejar a los alumnos conectados</button>
+                            <p id="partidas-msg" class="text-xs text-brand-600 dark:text-brand-300 mt-2" aria-live="polite"></p>
+                            <ul id="partidas-lista" class="mt-2 space-y-1.5 text-xs"></ul>
                         </div>
                     </div>
 
@@ -853,6 +893,7 @@
     <script src="js/pgn-clase.js"></script>
     <script src="js/resumen-clase.js"></script>
     <script src="js/pregunta-clase.js"></script>
+    <script src="js/partidas-clase.js"></script>
     <script src="js/plan-clase.js"></script>
     <script src="js/notas-alumno.js"></script>
     <script src="js/trofeos.js"></script>
