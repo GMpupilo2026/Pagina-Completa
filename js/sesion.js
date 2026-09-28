@@ -488,6 +488,7 @@
                     move_count: discardedMain.length,
                     title: "Línea anterior (reemplazada por una variante)",
                     created_by: session.user.id,
+                    datos: datosDeLaClase(discardedMain, true),
                 });
             }
             board.setMarks([], []);
@@ -1399,6 +1400,7 @@
             const titulo = document.getElementById("clase-titulo").value.trim();
             const notas = document.getElementById("clase-notas").value.trim();
             btn.disabled = true;
+            const guardada = await guardarLaClaseAlCerrar(titulo);
             // Se pide de vuelta la fila para saber si el cierre PASÓ de verdad. Sin el
             // select, un update que no toca ninguna fila —el id quedó viejo porque la
             // cerraron desde el panel o desde otra pestaña— devuelve `error: null` y la
@@ -1424,7 +1426,29 @@
             document.getElementById("clase-notas").value = "";
             pintarEstadoDeClase();
             setStatus("✅ Clase cerrada y guardada en el registro"
-                + (titulo ? ' como "' + titulo + '"' : "") + ".");
+                + (titulo ? ' como "' + titulo + '"' : "") + "."
+                + (guardada ? " La partida de la clase quedó para que tus alumnos la repasen." : ""));
+        }
+
+        /* Al cerrar, la partida de la clase se guarda sola —si tiene jugadas y
+           no se guardó ya igual con «💾 Guardar PGN»—, ANTES de marcar la clase
+           como cerrada: el trigger ligar_a_la_clase_abierta la cuelga de la
+           clase que sigue abierta. Sin esto, repasar la clase dependía de que
+           el profe se acordara del botón, y lo que no se guarda no se puede
+           reconstruir después. Si falla, la clase se cierra igual: el registro
+           y la asistencia importan más, y se dice. */
+        async function guardarLaClaseAlCerrar(titulo) {
+            const moves = board.moves();
+            if (!moves.length || firmaDeLaClase() === firmaGuardada) return false;
+            const hoy = new Intl.DateTimeFormat("es-CR", { timeZone: "America/Costa_Rica", day: "numeric", month: "long" }).format(new Date());
+            const { error } = await sb.from("saved_games").insert({
+                pgn: pgnDeLaClase(moves, false), fen_final: board.fen(), move_count: moves.length,
+                title: titulo || "Clase del " + hoy, created_by: session.user.id,
+                datos: datosDeLaClase(moves, false),
+            });
+            if (error) { console.error("No se pudo guardar la partida de la clase:", error); return false; }
+            firmaGuardada = firmaDeLaClase();
+            return true;
         }
 
         // Lo que contestó cada alumno en esta clase, antes de cerrarla.
@@ -2527,6 +2551,26 @@
         /* El PGN de la clase: desde SU posición de arranque, con las variantes y
            los comentarios (ver js/pgn-clase.js). `soloLinea` es para archivar una
            línea que se reemplaza: esa va sola, sin las variantes de la actual. */
+        /* La clase en crudo, con la misma forma que recibe PgnClase.armar():
+           se guarda al lado del PGN (saved_games.datos) para que «Repasar mis
+           clases» la recorra jugada por jugada, con los comentarios y las
+           variantes, sin volver a parsear el PGN. */
+        function datosDeLaClase(moves, soloLinea) {
+            return {
+                inicio: board.startFen || null,
+                jugadas: moves.slice(),
+                variantes: soloLinea ? [] : variantNodes.map((n) => ({ id: n.id, parent_id: n.parent_id, root_ply: n.root_ply, san: n.san })),
+                comentarios: soloLinea ? {} : Object.assign({}, comentariosClase),
+            };
+        }
+        /* Lo que hay en el tablero, para no guardar dos veces la misma clase:
+           si el profe ya la guardó con el botón y no cambió nada, al cerrar no
+           se vuelve a guardar. */
+        let firmaGuardada = null;
+        function firmaDeLaClase() {
+            return JSON.stringify([board.startFen || null, board.moves(), variantNodes.length, comentariosClase]);
+        }
+
         function pgnDeLaClase(moves, soloLinea) {
             return PgnClase.armar({
                 inicio: board.startFen,
@@ -2776,14 +2820,19 @@
             const pgn = pgnDeLaClase(moves, false);
             const { error } = await sb.from("saved_games").insert({
                 pgn, fen_final: board.fen(), move_count: moves.length, created_by: session.user.id,
+                datos: datosDeLaClase(moves, false),
             });
             if (error) { console.error(error); setStatus("No se pudo guardar la partida: " + error.message); return; }
+            firmaGuardada = firmaDeLaClase();
             const hoy = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Costa_Rica" }).format(new Date());
             downloadText("clase-" + hoy + ".pgn", pgn);
             const n = PgnClase.contar({ jugadas: moves, variantes: variantNodes, comentarios: comentariosClase });
             setStatus("Partida guardada y PGN descargado: " + n.jugadas + (n.jugadas === 1 ? " jugada" : " jugadas")
                 + (n.variantes ? ", " + n.variantes + (n.variantes === 1 ? " jugada de variante" : " jugadas de variantes") : "")
-                + (n.comentarios ? ", " + n.comentarios + (n.comentarios === 1 ? " comentario" : " comentarios") : "") + ".");
+                + (n.comentarios ? ", " + n.comentarios + (n.comentarios === 1 ? " comentario" : " comentarios") : "") + "."
+                // Con la clase abierta, la base la liga a ella (trigger
+                // ligar_a_la_clase_abierta) y la ven quienes asistieron.
+                + (currentOpenSessionId ? " Tus alumnos que estuvieron en la clase la pueden repasar en «Repasar mis clases»." : ""));
         });
 
         // ---------- Preguntar a la clase: "¿qué jugarías?" ----------
