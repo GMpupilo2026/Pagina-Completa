@@ -451,6 +451,7 @@ let game = null;
 let selectedSquare = null;
 let foundSet = new Set();
 let quizRoundIndex = 0;
+let quizFallos = 0; // posiciones del quiz contestadas mal: con alguna, la lección no queda completada
 let lessonLocked = false;
 
 function drawBoard(){
@@ -637,6 +638,7 @@ function resetLesson(){
   selectedSquare = null;
   foundSet = new Set();
   quizRoundIndex = 0;
+  quizFallos = 0;
   document.getElementById('next-btn').style.display = 'none';
 
   if(currentLesson.type === 'quiz'){
@@ -690,21 +692,39 @@ document.getElementById('next-btn').addEventListener('click', () => {
 document.getElementById('quiz-mate-btn').addEventListener('click', () => answerQuiz('mate'));
 document.getElementById('quiz-ahogado-btn').addEventListener('click', () => answerQuiz('ahogado'));
 
+/* Con dos botones, dejar reintentar la misma posición era regalar la respuesta:
+   bastaba con apretar el otro. Ahora una respuesta mal explica por qué, cuenta y
+   pasa a la siguiente; la lección solo se completa sin fallar ninguna. */
 function answerQuiz(answer){
   if(lessonLocked) return;
   const round = currentLesson.rounds[quizRoundIndex];
-  if(answer === round.answer){
-    quizRoundIndex++;
-    if(quizRoundIndex >= currentLesson.rounds.length){
-      document.getElementById('quiz-controls').style.display = 'none';
-      finishLesson();
-    } else {
-      setStatus('✅ ¡Correcto! Siguiente posición…', 'ok');
-      setTimeout(loadQuizRound, 700);
-    }
-  } else {
-    setStatus('❌ No es esa — fíjate: ¿el rey está en jaque o no?', 'bad');
+  const total = currentLesson.rounds.length;
+  quizRoundIndex++;
+  const ultima = quizRoundIndex >= total;
+  if(answer !== round.answer){
+    quizFallos++;
+    const porque = game.in_check()
+      ? 'el rey está en jaque y no tiene cómo salir: es jaque mate.'
+      : 'el rey NO está en jaque, pero su bando no tiene ninguna jugada legal: es ahogado.';
+    setStatus('❌ No: ' + porque + (ultima ? '' : ' Siguiente posición…'), 'bad');
+  } else if(!ultima){
+    setStatus('✅ ¡Correcto! Siguiente posición…', 'ok');
   }
+  if(!ultima){
+    lessonLocked = true;
+    setTimeout(() => { lessonLocked = false; loadQuizRound(); }, answer === round.answer ? 700 : 2600);
+    return;
+  }
+  document.getElementById('quiz-controls').style.display = 'none';
+  if(quizFallos === 0){
+    finishLesson();
+    return;
+  }
+  lessonLocked = true;
+  const aciertos = total - quizFallos;
+  setTimeout(() => {
+    setStatus(`Acertaste ${aciertos} de ${total}. Para completar la lección hay que acertarlas todas: presiona «Reiniciar» y vuelve a intentarlo.`, 'bad');
+  }, answer === round.answer ? 0 : 2600);
 }
 
 /* ---------------- Arranque ---------------- */

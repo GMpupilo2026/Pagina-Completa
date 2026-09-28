@@ -224,6 +224,68 @@ su casa. Hay seis: ⭐ Estrella de buen estudiante, 💡 Buena respuesta,
   `informe-html.ts` pide desplegar `informes-encargados` (ver «Los informes
   que llegan a la casa»).
 
+## Lo que cuenta como acierto en los ejercicios
+
+Cada página de ejercicios tenía su propia copia del tablero y de la regla de
+qué es un acierto, y las copias se habían separado. Nada de esto daba ningún
+error: la página se veía perfecta y le decía al alumno otra cosa.
+`node herramientas/verificar-todo.js entreno-arreglos` lo comprueba en un
+navegador, página por página.
+
+- **Cualquier jugada que dé mate es correcta**, en Temas, Racha, Mates y
+  Practicar. Los bancos guardan UNA solución y a veces hay dos mates (en
+  `mate1-0071`, Ch6# y Ce5#; en la serie «beso» de Practicar, Dh7# y Da8#).
+  Mates y Practicar decían «no lleva al mate» de un mate.
+- **El tablero se mira desde el bando que juega**, también en Mates: casi 400
+  de sus posiciones de mate en 2 y en 3 son con negras.
+- **«Ver solución» no es un acierto.** En Practicar y Desafíos no suma a la
+  racha ni se festeja con «¡Correcto!» (Practicar dejaba la racha en 1).
+- **Las estrellas de una posición cuentan pistas Y errores**
+  (`EntrenoProgress.estrellasDeLaRonda`, una sola copia para Practicar y
+  Desafíos): antes solo las pistas, y probar jugada tras jugada hasta acertar
+  daba tres estrellas. Es la misma regla de Aperturas: la nota sale de lo que
+  de verdad pasó.
+- **En Visualización, un ejercicio con pista o con error no queda resuelto** y
+  vuelve a salir; tampoco se registra en `training_progress`. Antes se marcaba
+  igual y el contador (y lo que ve el profesor) contaba como dominado uno
+  sacado con la pista.
+- **En Visualización, «R» se lee como la línea lo pide.** Es el rey en
+  castellano y la torre en inglés, y `ChessMoveParser` prueba primero el
+  inglés: con rey y torre que llegan a la misma casilla, «Rd2» movía la torre y
+  le cortaba la racha a quien había calculado bien. Como la página sabe qué
+  jugada espera, prueba las dos lecturas y gana la esperada
+  (`jugadaDeLaLinea`); si ninguna lo es, queda la de siempre.
+- **El quiz de Aprender («¿mate o ahogado?») no deja reintentar la misma
+  posición**: con dos botones, eso era regalar la respuesta. Una respuesta mal
+  explica por qué y pasa a la siguiente; la lección solo se completa sin
+  fallar ninguna.
+
+## El plan del diagnóstico que ve el alumno
+
+`entreno/diagnostico.html` pinta el plan **entero**, las cuatro semanas con su
+meta. Antes pintaba solo las tres primeras y sin la meta: con tres áreas
+flojas se caía la cuarta, «Juntar todo y volver a medir», la que manda a
+repetir el diagnóstico.
+
+Si el profesor ya revisó el diagnóstico y le **compartió** su plan desde
+Informes (`training_plans`, que la política solo le devuelve al alumno cuando
+está compartido), se ve ese, con su nota, y no uno recalculado aparte. Vale
+para el diagnóstico del que salió o uno anterior; si el alumno hizo uno nuevo
+después, ese plan quedó viejo y se muestra el recalculado. Lo que el profesor
+reescribió a mano va por `textContent`, y un recurso con esquema
+(`javascript:`, `https:`) no se pinta: los recursos son rutas del sitio.
+
+## Estudio manda a practicar el tema de la ficha
+
+Las fichas de táctica y conceptos que nombran un tema de Ejercicios por tema
+traen `temaPractica` (la clave en `temas.json`) y la página les pone el botón
+«🎯 Practicar este tema» (`temas.html?tema=<clave>`, el mismo enlace de las
+tareas). `verificar-fichas.js` comprueba que el nombre del texto y la clave
+sean el mismo tema. **Ojo con los nombres de Lichess**: la horquilla es
+«Ataque doble» (`fork`) y la enfilada es «Pincho» (`skewer`). Las dos fichas
+estaban cruzadas —la horquilla mandaba al pincho y la enfilada a los rayos X—
+y el alumno practicaba otro motivo sin que nada fallara.
+
 ## El hub de Entrenamiento y sus grupos
 
 `entreno/index.html` reparte los accesos en **Fundamentos** (Mates,

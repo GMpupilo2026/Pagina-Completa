@@ -458,10 +458,11 @@ console.log("\n=== Los temas que la ficha manda a buscar existen ===");
 const TEMAS = (() => {
   const d = require(path.join(__dirname, "..", "entreno", "data", "temas.json"));
   const grupos = Array.isArray(d.groups) ? d.groups : Object.values(d.groups || {});
-  const nombres = new Set();
-  grupos.forEach((g) => (g.themes || []).forEach((t) => nombres.add(normal(t.name))));
-  return nombres;
+  const porNombre = new Map(); // nombre normalizado -> clave
+  grupos.forEach((g) => (g.themes || []).forEach((t) => porNombre.set(normal(t.name), t.key)));
+  return porNombre;
 })();
+const CLAVES = new Map([...TEMAS].map(([nombre, clave]) => [clave, nombre]));
 let citados = 0;
 FICHAS.forEach((F) => {
   const texto = [F.resumen, F.diagrama].concat(F.centro, ...F.bloques).join(" | ");
@@ -469,7 +470,22 @@ FICHAS.forEach((F) => {
     citados += 1;
     const nombre = cita.slice(cita.indexOf("«") + 1, -1);
     if (!TEMAS.has(normal(nombre))) mal(`[${F.id}] manda al tema «${nombre}», que no está en entreno/data/temas.json`);
+    /* El botón «Practicar este tema» va a temaPractica y el texto dice un
+       nombre: tienen que ser el MISMO tema. Si no, el texto manda a uno y el
+       botón a otro, y ninguno de los dos da error. */
+    else if (!F.temaPractica) mal(`[${F.id}] nombra el tema «${nombre}» pero no trae temaPractica: la ficha no tendría botón para practicarlo`);
+    else if (TEMAS.get(normal(nombre)) !== F.temaPractica) mal(`[${F.id}] el texto manda a «${nombre}» y el botón a ${F.temaPractica}: son temas distintos`);
   });
+  if (F.temaPractica && !CLAVES.has(F.temaPractica)) mal(`[${F.id}] temaPractica «${F.temaPractica}» no es una clave de entreno/data/temas.json: el botón abriría la lista`);
+});
+/* Los nombres de Ejercicios por tema son los de Lichess y no siempre coinciden
+   con los de acá: la horquilla es «Ataque doble» (fork) y la enfilada es
+   «Pincho» (skewer). Las dos fichas mandaban cruzadas —la horquilla al pincho y
+   la enfilada a los rayos X— y el alumno practicaba otro motivo sin que nada
+   fallara. Estas dos quedan fijas para que no se vuelvan a cruzar. */
+[["horquilla", "fork"], ["ataque-doble", "fork"], ["enfilada", "skewer"], ["clavada", "pin"]].forEach(([id, clave]) => {
+  const F = FICHAS.find((x) => x.id === id);
+  if (F && F.temaPractica !== clave) mal(`[${id}] tiene que practicarse en ${clave} («${CLAVES.get(clave)}»), no en ${F.temaPractica}`);
 });
 bien(`los ${citados} temas que nombran las fichas existen en Ejercicios por tema`);
 

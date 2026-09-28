@@ -186,6 +186,7 @@ function resetStreak(){ setStreak(0); }
 let currentCategory = 'mate1';
 let currentIndex = 0;
 let game = null;
+let orientation = 'w'; // el bando que juega: el tablero se mira desde ahí
 let solutionStep = 0;   // cuántas jugadas de puzzle.solution ya se jugaron (propias + del rival)
 let selectedSquare = null;
 let missedThisPuzzle = false;
@@ -242,8 +243,12 @@ function isLightSquare(square){
 function drawBoard(){
   const board = document.getElementById('board');
   board.innerHTML = '';
-  for(let rank = 8; rank >= 1; rank--){
-    for(let f = 0; f < 8; f++){
+  // El tablero se mira desde el bando que juega, como en Temas y en la Racha:
+  // en los mates en 2 y en 3 hay casi 400 posiciones en que juegan las negras.
+  const ranks = orientation === 'w' ? [8,7,6,5,4,3,2,1] : [1,2,3,4,5,6,7,8];
+  const files = orientation === 'w' ? [0,1,2,3,4,5,6,7] : [7,6,5,4,3,2,1,0];
+  for(const rank of ranks){
+    for(const f of files){
       const square = FILES[f] + rank;
       const btn = document.createElement('button');
       btn.type = 'button';
@@ -320,6 +325,7 @@ function loadPuzzle(){
     return;
   }
   game = new Chess(puzzle.fen);
+  orientation = game.turn();
   solutionStep = 0;
   selectedSquare = null;
   missedThisPuzzle = false;
@@ -417,7 +423,9 @@ function playMove(from, to, promotion){
   if(!moveResult) return;
 
   const expected = puzzle.solution[solutionStep];
-  if(moveResult.san !== expected){
+  // Cualquier jugada que dé mate también es correcta (como en Temas y en la
+  // Racha): el banco guarda UNA solución, y a veces hay más de un mate.
+  if(moveResult.san !== expected && !game.in_checkmate()){
     game.undo();
     drawBoard();
     missedThisPuzzle = true;
@@ -428,7 +436,7 @@ function playMove(from, to, promotion){
   }
 
   solutionStep++;
-  if(solutionStep >= puzzle.solution.length){
+  if(solutionStep >= puzzle.solution.length || game.in_checkmate()){
     finishPuzzle();
     return;
   }

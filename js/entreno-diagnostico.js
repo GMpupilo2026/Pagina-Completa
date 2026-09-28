@@ -748,6 +748,83 @@ function pintarEscalones(resumen) {
       : `El próximo escalón es el de ${'★'.repeat(alcanzado + 1)}: ahí está lo que te falta para subir de nivel, y de ahí sale tu plan.`}</p>`;
 }
 
+/* El plan de cuatro semanas. Antes se pintaban solo las tres primeras y sin la
+   meta de cada una: con tres áreas flojas se caía la cuarta, «Juntar todo y
+   volver a medir», que es la que manda a repetir el diagnóstico.
+   `nota` llega cuando el plan es el que compartió el profesor: sus textos los
+   pudo reescribir a mano, así que todo va por textContent, nunca por innerHTML. */
+function pintarPlan(plan, resumen, nota) {
+  const planBox = document.getElementById('result-plan');
+  planBox.innerHTML = '';
+  const el = (tag, cls, texto) => {
+    const n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (texto != null) n.textContent = texto;
+    return n;
+  };
+  if (nota !== undefined) {
+    const aviso = el('div', 'bg-accent-500/10 border border-accent-500/40 rounded-xl p-4');
+    aviso.appendChild(el('p', 'text-sm font-semibold text-brand-800 dark:text-white', 'Este es el plan que te compartió tu profesor.'));
+    if (nota) aviso.appendChild(el('p', 'text-sm text-brand-600 dark:text-brand-300 mt-1', `“${nota}”`));
+    planBox.appendChild(aviso);
+  }
+  planBox.appendChild(el('p', 'text-sm text-brand-500 dark:text-brand-300',
+    `Con ${plan.rutina} alcanza. Empieza por lo más flojo: ${(plan.prioridad || []).join(', ')}.` + (plan.metaElo ? ` Meta: ${plan.metaElo.texto}` : '')));
+  (plan.semanas || []).forEach((semana) => {
+    const caja = el('div', 'bg-white dark:bg-brand-900 rounded-xl shadow-md p-4');
+    caja.appendChild(el('p', 'font-serif font-bold text-brand-800 dark:text-white mb-1', semana.titulo));
+    caja.appendChild(el('p', 'text-xs text-brand-450 dark:text-brand-350 mb-1', semana.porque));
+    if (semana.objetivo) {
+      const meta = el('p', 'text-xs text-brand-500 dark:text-brand-300 mb-2');
+      meta.appendChild(el('strong', null, 'Meta: '));
+      meta.appendChild(document.createTextNode(semana.objetivo));
+      caja.appendChild(meta);
+    }
+    const ul = el('ul', 'list-disc pl-5 space-y-1 text-sm text-brand-600 dark:text-brand-300');
+    (semana.tareas || []).forEach((t) => ul.appendChild(el('li', null, t)));
+    caja.appendChild(ul);
+    const enlaces = el('p', 'text-xs mt-2');
+    (semana.recursos || []).forEach((r) => {
+      // Los recursos son rutas del propio sitio ("entreno/temas.html?tema=fork");
+      // algo con esquema (javascript:, https:) no sale de este repositorio.
+      if (!r || typeof r.href !== 'string' || /^[a-z][a-z0-9+.-]*:/i.test(r.href) || r.href.startsWith('//')) return;
+      if (enlaces.childNodes.length) enlaces.appendChild(document.createTextNode(' · '));
+      const a = el('a', 'text-accent-700 dark:text-accent-400 hover:underline', r.texto);
+      a.href = PE.enlace(r.href, '../');
+      enlaces.appendChild(a);
+    });
+    caja.appendChild(enlaces);
+    planBox.appendChild(caja);
+  });
+  if (plan.medicion) planBox.appendChild(el('p', 'text-xs text-brand-450 dark:text-brand-350', plan.medicion));
+  if (resumen.fortalezas.length) {
+    planBox.appendChild(el('p', 'text-sm text-brand-500 dark:text-brand-300',
+      `Lo que ya tienes firme: ${resumen.fortalezas.map((f) => f.nombre.toLowerCase()).join(', ')}. Mantenlo con un repaso corto por semana.`));
+  }
+}
+
+/* El plan que el profesor armó en Informes y le compartió al alumno
+   (training_plans; la política solo lo devuelve si está compartido). Vale para
+   el diagnóstico del que salió o uno anterior; si el alumno hizo uno NUEVO
+   después, ese plan quedó viejo y se muestra el recalculado. */
+let turnoDelPlan = 0;
+async function planDelProfesor(detalle) {
+  try {
+    const { data } = await sb.from('training_plans').select('plan, nota, shared')
+      .eq('student_id', sesionActual.user.id).maybeSingle();
+    const generado = data && data.shared && data.plan && data.plan.generado;
+    if (!generado || !Array.isArray(generado.semanas)) return null;
+    const delPlan = Date.parse(data.plan.diagnostico_fecha || '');
+    const deEste = Date.parse(detalle.fecha || '');
+    // Un minuto de margen: la fecha del detalle la pone el navegador y la del
+    // plan es el created_at de la fila, que pone la base un instante después.
+    if (!isNaN(delPlan) && !isNaN(deEste) && deEste > delPlan + 60000) return null;
+    return { plan: generado, nota: data.nota || '' };
+  } catch (e) {
+    return null;
+  }
+}
+
 function mostrarResultado(detalle, reciente) {
   const resumen = PE.resumir(detalle);
   const plan = PE.generarPlan(resumen);
@@ -794,30 +871,15 @@ function mostrarResultado(detalle, reciente) {
     areasBox.appendChild(fila);
   });
 
-  const planBox = document.getElementById('result-plan');
-  planBox.innerHTML = '';
-  const intro = document.createElement('p');
-  intro.className = 'text-sm text-brand-500 dark:text-brand-300';
-  intro.textContent = `Con ${plan.rutina} alcanza. Empieza por lo más flojo: ${plan.prioridad.join(', ')}.` + (plan.metaElo ? ` Meta: ${plan.metaElo.texto}` : '');
-  planBox.appendChild(intro);
-  plan.semanas.slice(0, 3).forEach((semana) => {
-    const caja = document.createElement('div');
-    caja.className = 'bg-white dark:bg-brand-900 rounded-xl shadow-md p-4';
-    caja.innerHTML = `
-      <p class="font-serif font-bold text-brand-800 dark:text-white mb-1">${semana.titulo}</p>
-      <p class="text-xs text-brand-450 dark:text-brand-350 mb-2">${semana.porque}</p>
-      <ul class="list-disc pl-5 space-y-1 text-sm text-brand-600 dark:text-brand-300">
-        ${semana.tareas.map((t) => `<li>${t}</li>`).join('')}
-      </ul>
-      <p class="text-xs mt-2">${semana.recursos.map((r) => `<a href="${PE.enlace(r.href, '../')}" class="text-accent-700 dark:text-accent-400 hover:underline">${r.texto}</a>`).join(' · ')}</p>`;
-    planBox.appendChild(caja);
+  pintarPlan(plan, resumen);
+  // Si el profesor ya revisó ESTE diagnóstico y le compartió su plan (el que
+  // edita en Informes), el alumno ve ese y no uno recalculado aparte. La
+  // respuesta llega después: si mientras tanto se abrió otro resultado, no se
+  // le pinta encima.
+  const turno = ++turnoDelPlan;
+  if (sesionActual) planDelProfesor(detalle).then((compartido) => {
+    if (compartido && turno === turnoDelPlan) pintarPlan(compartido.plan, resumen, compartido.nota);
   });
-  if (resumen.fortalezas.length) {
-    const fuerte = document.createElement('p');
-    fuerte.className = 'text-sm text-brand-500 dark:text-brand-300';
-    fuerte.textContent = `Lo que ya tienes firme: ${resumen.fortalezas.map((f) => f.nombre.toLowerCase()).join(', ')}. Mantenlo con un repaso corto por semana.`;
-    planBox.appendChild(fuerte);
-  }
 
   const review = document.getElementById('result-review');
   review.innerHTML = '';

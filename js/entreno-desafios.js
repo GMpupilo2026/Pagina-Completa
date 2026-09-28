@@ -418,6 +418,7 @@ let game = null;
 let selectedSquare = null;
 let roundLocked = false;
 let hintsUsedThisRound = 0;
+let errorsThisRound = 0; // jugadas equivocadas en este desafío: también bajan las estrellas
 let roundStartTime = 0;
 let setStarsEarned = [];
 let setStartTime = 0;
@@ -557,6 +558,7 @@ function loadRound(){
   selectedSquare = null;
   roundLocked = false;
   hintsUsedThisRound = 0;
+  errorsThisRound = 0;
   roundStartTime = Date.now();
   document.getElementById('hint-btn').disabled = false;
   document.getElementById('hint-btn').textContent = '💡 Pista';
@@ -641,6 +643,7 @@ function handleMoveResult(moveResult){
   if(correct){
     finishRound(moveResult);
   } else {
+    errorsThisRound++;
     resetStreak();
     setStatus(`${moveResult.san} es legal, pero no es la jugada que buscamos.`, 'bad');
     setTimeout(() => { game = new MiniChess(round.fen); drawBoard(); setStatus('Inténtalo de nuevo.'); }, 900);
@@ -652,14 +655,18 @@ function finishRound(moveResult){
   document.getElementById('hint-btn').disabled = true;
   const round = currentRound();
   const seconds = ((Date.now() - roundStartTime) / 1000).toFixed(1);
-  const stars = hintsUsedThisRound >= 2 ? 1 : (hintsUsedThisRound === 1 ? 2 : 3);
+  const stars = EntrenoProgress.estrellasDeLaRonda(hintsUsedThisRound, errorsThisRound);
   setStarsEarned.push(stars);
-  if(hintsUsedThisRound < 3) bumpStreak();
-  const fast = seconds < 4 && hintsUsedThisRound === 0;
+  // Con "Ver solución" (tercera pista) la jugada la hizo el botón: no suma a la
+  // racha ni se festeja, pero la explicación se muestra igual.
+  const conSolucion = hintsUsedThisRound >= 3;
+  if(!conSolucion) bumpStreak();
+  const fast = !conSolucion && seconds < 4 && hintsUsedThisRound === 0 && errorsThisRound === 0;
   const san = moveResult ? moveResult.san : round.san[0];
-  setStatus(`✅ ¡Correcto! ${san}${round.explain ? ' — ' + round.explain : ''}${fast ? ' ⚡' : ''}`, 'ok');
+  const inicio = conSolucion ? 'Solución:' : '✅ ¡Correcto!';
+  setStatus(`${inicio} ${san}${round.explain ? ' — ' + round.explain : ''}${fast ? ' ⚡' : ''}`, conSolucion ? '' : 'ok');
   if(window.BlindNotation && window.BlindNotation.speak){
-    try{ window.BlindNotation.speak('Correcto. ' + (round.explain || '')); }catch(e){}
+    try{ window.BlindNotation.speak((conSolucion ? 'Solución. ' : 'Correcto. ') + (round.explain || '')); }catch(e){}
   }
   setTimeout(() => {
     if(currentRoundIndex < currentSet.rounds.length - 1){
@@ -679,10 +686,10 @@ function finishSet(){
   setSetStars(currentSet.id, stars);
   document.getElementById('celebration-stars').innerHTML = starString(stars);
   const totalSeconds = ((Date.now() - setStartTime) / 1000).toFixed(0);
-  const noHints = setStarsEarned.every(s => s === 3);
+  const limpia = setStarsEarned.every(s => s === 3);
   document.getElementById('celebration-stats').textContent =
     `${currentSet.rounds.length} de ${currentSet.rounds.length} desafíos en ${totalSeconds}s` +
-    (noHints ? ' — ¡sin usar ninguna pista!' : '');
+    (limpia ? ' — ¡sin pistas ni errores!' : '');
   document.getElementById('celebration-title').textContent =
     stars === 3 ? '¡Desafíos perfectos! 🏆' : (stars === 2 ? '¡Desafíos completados! 🎉' : 'Completados — ¡a repetirlos para subir de estrellas!');
   EntrenoProgress.log('practicar', { set_id: 'desafio_' + currentSet.id, category: currentSet.cat, title: 'Desafíos: ' + currentSet.title, stars, seconds: Number(totalSeconds) });
