@@ -1696,7 +1696,38 @@
                 tdNotes.appendChild(etiqueta);
             }
             tdNotes.appendChild(document.createTextNode([s.title, s.notes].filter(Boolean).join(" · ") || "—"));
-            const tdActions = document.createElement("td"); tdActions.className = "py-2 text-right";
+            const tdActions = document.createElement("td"); tdActions.className = "py-2 text-right whitespace-nowrap";
+            /* Lo que contestó cada alumno en esa clase (js/resumen-clase.js): se
+               pide al abrirlo, no con la lista — una llamada por clase para cien
+               clases sería pedir cien veces algo que casi nunca se mira. */
+            let filaResumen = null;
+            if (s.modalidad !== "presencial") {
+                const verBtn = document.createElement("button");
+                verBtn.type = "button";
+                verBtn.className = "text-xs text-brand-600 dark:text-brand-300 hover:underline mr-3";
+                verBtn.textContent = "Qué hicieron";
+                verBtn.setAttribute("aria-expanded", "false");
+                verBtn.addEventListener("click", async () => {
+                    if (filaResumen) {
+                        filaResumen.remove();
+                        filaResumen = null;
+                        verBtn.setAttribute("aria-expanded", "false");
+                        return;
+                    }
+                    filaResumen = document.createElement("tr");
+                    const td = document.createElement("td");
+                    td.colSpan = 6;
+                    td.className = "pb-3";
+                    td.textContent = "Contando…";
+                    filaResumen.appendChild(td);
+                    tr.after(filaResumen);
+                    verBtn.setAttribute("aria-expanded", "true");
+                    const { filas, error } = await ResumenClase.cargar(sb, s.id);
+                    if (error) { td.textContent = "No se pudo contar: " + error.message; return; }
+                    ResumenClase.pintar(td, filas, { titulo: "Lo que hizo cada alumno en la clase del " + fmtDate(s.started_at) });
+                });
+                tdActions.appendChild(verBtn);
+            }
             if (isTeacher) {
                 const delBtn = document.createElement("button");
                 delBtn.type = "button";
