@@ -94,6 +94,34 @@
     });
   }
 
+  // Deja las partidas listas para elegir al rival. `rival` (un usuario recién
+  // bajado) se elige solo, si está en el archivo.
+  function cargarTexto(texto, estado, rival) {
+    partidas = A.leerPgn(texto);
+    if (!partidas.length) {
+      estado.textContent = "No se encontró ninguna partida. Revisa que sea un PGN.";
+      $("paso-rival").hidden = true;
+      return false;
+    }
+    const lista = A.jugadores(partidas);
+    estado.textContent = "Se leyeron " + partidas.length.toLocaleString("es-CR") + (partidas.length === 1 ? " partida" : " partidas") +
+      " de " + lista.length.toLocaleString("es-CR") + (lista.length === 1 ? " jugador." : " jugadores.");
+    const sel = $("rival");
+    sel.textContent = "";
+    lista.slice(0, 200).forEach((j) => {
+      const o = el("option", "", j.nombre + " — " + j.partidas.toLocaleString("es-CR") + (j.partidas === 1 ? " partida" : " partidas"));
+      o.value = j.nombre;
+      sel.appendChild(o);
+    });
+    if (rival) {
+      const clave = A.claveNombre(rival);
+      const suyo = lista.find((j) => j.clave === clave);
+      if (suyo) sel.value = suyo.nombre;
+    }
+    $("paso-rival").hidden = false;
+    return true;
+  }
+
   async function leer() {
     const boton = $("leer");
     const archivos = [...($("pgn-archivo").files || [])];
@@ -104,10 +132,10 @@
     }
     boton.disabled = true;
     $("leido").textContent = "Leyendo…";
+    let textos;
     try {
-      const textos = await Promise.all(archivos.map(leerArchivo));
+      textos = await Promise.all(archivos.map(leerArchivo));
       if (pegado.trim()) textos.push(pegado);
-      partidas = A.leerPgn(textos.join("\n\n"));
     } catch (e) {
       console.error(e);
       $("leido").textContent = "No se pudo leer el archivo: " + (e.message || e);
@@ -115,24 +143,76 @@
       return;
     }
     boton.disabled = false;
-    const conResultado = partidas.length;
-    if (!conResultado) {
-      $("leido").textContent = "No se encontró ninguna partida. Revisa que el archivo sea un PGN.";
-      $("paso-rival").hidden = true;
+    if (cargarTexto(textos.join("\n\n"), $("leido"))) $("rival").focus();
+  }
+
+  // ------------------------------------------------------------ 1b. bajar de Lichess o Chess.com
+
+  let bajando = null;   // el AbortController de la descarga en curso
+
+  async function bajar(ev) {
+    ev.preventDefault();
+    if (bajando) return;
+    const sitio = document.querySelector('input[name="bajar-sitio"]:checked').value;
+    const usuario = $("bajar-usuario").value.trim().replace(/^@/, "");
+    const maximo = parseInt($("bajar-maximo").value, 10) || 0;
+    const estado = $("bajar-estado");
+    const nombreSitio = sitio === "lichess" ? "Lichess" : "Chess.com";
+    if (!window.PreparacionDescarga.USUARIO_VALIDO.test(usuario)) {
+      estado.textContent = "Escribe el nombre de usuario tal como sale en su perfil: letras, números, guion o guion bajo.";
+      $("bajar-usuario").focus();
       return;
     }
-    const lista = A.jugadores(partidas);
-    $("leido").textContent = "Se leyeron " + conResultado.toLocaleString("es-CR") + (conResultado === 1 ? " partida" : " partidas") +
-      " de " + lista.length.toLocaleString("es-CR") + (lista.length === 1 ? " jugador." : " jugadores.");
-    const sel = $("rival");
-    sel.textContent = "";
-    lista.slice(0, 200).forEach((j) => {
-      const o = el("option", "", j.nombre + " — " + j.partidas.toLocaleString("es-CR") + (j.partidas === 1 ? " partida" : " partidas"));
-      o.value = j.nombre;
-      sel.appendChild(o);
-    });
-    $("paso-rival").hidden = false;
-    sel.focus();
+    bajando = new AbortController();
+    $("bajar").disabled = true;
+    $("bajar-parar").hidden = false;
+    estado.textContent = "Pidiéndole las partidas a " + nombreSitio + "…";
+    let texto = "";
+    let parado = false;
+    let ultimoAviso = 0;
+    try {
+      texto = await window.PreparacionDescarga.descargar({
+        sitio, usuario, maximo, senal: bajando.signal,
+        alAvanzar: (n, mes, meses) => {
+          // El lector de pantalla no necesita cada partida: una vez por segundo.
+          const ahora = Date.now();
+          if (ahora - ultimoAviso < 1000) return;
+          ultimoAviso = ahora;
+          estado.textContent = "Bajando de " + nombreSitio + ": " + n.toLocaleString("es-CR") + (n === 1 ? " partida" : " partidas") +
+            (meses ? " (mes " + mes + " de " + meses + ")" : "") + "…";
+        },
+      });
+    } catch (e) {
+      if (e && e.name === "AbortError") {
+        parado = true;
+      } else {
+        if (!(e && e.paraMostrar)) console.error(e);
+        estado.textContent = e && e.paraMostrar ? e.message : "No se pudieron bajar las partidas de " + nombreSitio + ". Revisa tu conexión y vuelve a intentarlo.";
+        terminarBajada();
+        return;
+      }
+    }
+    // Parado a la mitad: se analiza lo que ya llegó (en Lichess va quedando en
+    // el texto; en Chess.com, los meses completos).
+    if (parado) texto = window.PreparacionDescarga.ultimoTexto || texto;
+    terminarBajada();
+    if (!texto || !cargarTexto(texto, estado, usuario)) {
+      if (parado) estado.textContent = "Se paró antes de que llegara alguna partida.";
+      return;
+    }
+    const clave = A.claveNombre(usuario);
+    if (!A.jugadores(partidas).some((j) => j.clave === clave)) {
+      estado.textContent += " Ninguna es de «" + usuario + "»: elige al rival en la lista.";
+      $("rival").focus();
+      return;
+    }
+    analizar();
+  }
+
+  function terminarBajada() {
+    bajando = null;
+    $("bajar").disabled = false;
+    $("bajar-parar").hidden = true;
   }
 
   // ------------------------------------------------------------ 2. analizar
@@ -588,6 +668,8 @@
     }
     $("app").classList.remove("hidden");
     $("leer").addEventListener("click", leer);
+    $("bajar-form").addEventListener("submit", bajar);
+    $("bajar-parar").addEventListener("click", () => { if (bajando) bajando.abort(); });
     $("analizar").addEventListener("click", analizar);
     $("guardar").addEventListener("click", guardar);
     $("motor-revisar").addEventListener("click", revisarConMotor);

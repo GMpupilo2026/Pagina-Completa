@@ -35,7 +35,41 @@
 
             <section id="paso-cargar" aria-labelledby="titulo-cargar" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
                 <h2 id="titulo-cargar" class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-1">1. Las partidas del rival</h2>
-                <p class="text-sm text-brand-500 dark:text-brand-300 mb-4">Lichess y Chess.com las exportan desde el perfil de cada jugador. Mientras más partidas, más confiable el análisis: con menos de 30 sale, pero dice poco.</p>
+                <p class="text-sm text-brand-500 dark:text-brand-300 mb-4">Bájalas con su usuario de Lichess o de Chess.com, o carga un PGN que ya tengas. Mientras más partidas, más confiable el análisis: con menos de 30 sale, pero dice poco.</p>
+
+                <form id="bajar-form" class="rounded-xl bg-brand-50 dark:bg-brand-950 border border-brand-100 dark:border-brand-800 p-4 mb-5" novalidate>
+                    <h3 class="font-bold text-brand-800 dark:text-white mb-3">Con su usuario de Lichess o Chess.com</h3>
+                    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 items-end">
+                        <fieldset>
+                            <legend class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Sitio</legend>
+                            <div class="flex gap-4 py-2 text-sm">
+                                <label class="inline-flex items-center gap-2"><input type="radio" name="bajar-sitio" id="bajar-lichess" value="lichess" checked class="accent-accent-500"> Lichess</label>
+                                <label class="inline-flex items-center gap-2"><input type="radio" name="bajar-sitio" id="bajar-chesscom" value="chesscom" class="accent-accent-500"> Chess.com</label>
+                            </div>
+                        </fieldset>
+                        <div>
+                            <label for="bajar-usuario" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Usuario</label>
+                            <input id="bajar-usuario" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="30" placeholder="Como sale en su perfil" class="w-full px-3 py-2 rounded-lg bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        </div>
+                        <div>
+                            <label for="bajar-maximo" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Cuántas</label>
+                            <select id="bajar-maximo" class="w-full px-3 py-2 rounded-lg bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                <option value="500">Las últimas 500</option>
+                                <option value="2000" selected>Las últimas 2000</option>
+                                <option value="5000">Las últimas 5000</option>
+                                <option value="0">Todas</option>
+                            </select>
+                        </div>
+                        <div class="flex gap-2">
+                            <button id="bajar" type="submit" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-60">Bajar y analizar</button>
+                            <button id="bajar-parar" type="button" hidden class="px-4 py-2 rounded-lg text-sm font-semibold bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Parar</button>
+                        </div>
+                    </div>
+                    <p id="bajar-estado" role="status" class="text-sm text-brand-600 dark:text-brand-200 mt-3"></p>
+                    <p class="text-xs text-brand-450 dark:text-brand-350 mt-2">Se bajan solo sus partidas públicas. Lichess entrega unas 20 por segundo: 2000 tardan cerca de dos minutos. Si lo paras, se analiza lo que ya llegó.</p>
+                </form>
+
+                <h3 class="font-bold text-brand-800 dark:text-white mb-3">Con un archivo PGN</h3>
                 <div class="grid md:grid-cols-2 gap-4">
                     <div>
                         <label for="pgn-archivo" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Archivo PGN</label>
@@ -51,7 +85,7 @@
                     <button id="leer" type="button" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-60">Leer las partidas</button>
                     <p id="leido" role="status" class="text-sm text-brand-600 dark:text-brand-200"></p>
                 </div>
-                <p class="text-xs text-brand-450 dark:text-brand-350 mt-4">El PGN se lee en tu computadora y no se sube a ningún lado. Si guardas el análisis, se guarda solo el resultado, a tu nombre: lo ves tú y la administración.</p>
+                <p class="text-xs text-brand-450 dark:text-brand-350 mt-4">Las partidas se analizan en tu computadora y no se suben a ningún lado; a Lichess o Chess.com solo se les manda el usuario. Si guardas el análisis, se guarda solo el resultado, a tu nombre: lo ves tú y la administración.</p>
             </section>
 
             <section id="paso-rival" hidden aria-labelledby="titulo-rival" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
@@ -98,6 +132,7 @@
     <script src="js/vendor/chess.js"></script>
     <script src="js/shared-engine.js"></script>
     <script src="js/preparacion-analisis.js"></script>
+    <script src="js/preparacion-descarga.js"></script>
     <script src="js/preparacion-rivales.js"></script>
 <!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="js/modo-vista.js" defer></script><!-- modo-vista: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- atajo: inicio --><script src="js/atajo-buscar.js" data-arriba="" defer></script><!-- atajo: fin --></body>
 </html>

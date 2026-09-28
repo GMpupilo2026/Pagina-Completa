@@ -295,12 +295,114 @@ async function pruebaConPermiso(browser) {
   await ctx.close();
 }
 
+// Las partidas «de Lichess»: las mismas de prueba, con el rival como usuario.
+function pgnDeUsuario(usuario) {
+  return pgnDePrueba().replace(/Pérez, Pedro|Pedro Perez|Pedro Pérez|PEDRO PÉREZ/g, usuario);
+}
+
+/* Lichess y Chess.com de mentira. Contestan con CORS abierto, como los de
+   verdad: sin esa cabecera el navegador ni deja leer la respuesta. Se anota
+   cada pedido para saber qué se pidió y en qué orden. */
+async function servirSitios(ctx, pedidos) {
+  const cors = { "Access-Control-Allow-Origin": "*" };
+  await ctx.route("https://lichess.org/api/games/user/**", (r) => {
+    pedidos.push(r.request().url());
+    if (/\/user\/nadie\?/.test(r.request().url())) return r.fulfill({ status: 404, headers: cors, body: "" });
+    return r.fulfill({ status: 200, headers: Object.assign({ "Content-Type": "application/x-chess-pgn" }, cors), body: pgnDeUsuario("PedroP") });
+  });
+  const todo = pgnDeUsuario("pedrop").split(/\n\n(?=\[Event )/);
+  const mitad = Math.ceil(todo.length / 2);
+  await ctx.route("https://api.chess.com/pub/player/**", (r) => {
+    const url = r.request().url();
+    pedidos.push(url);
+    if (/\/games\/archives$/.test(url)) {
+      return r.fulfill({ status: 200, headers: Object.assign({ "Content-Type": "application/json" }, cors),
+        body: JSON.stringify({ archives: ["https://api.chess.com/pub/player/pedrop/games/2026/08", "https://api.chess.com/pub/player/pedrop/games/2026/09"] }) });
+    }
+    // Septiembre (el más nuevo) trae la primera mitad; agosto, el resto.
+    const cuerpo = /2026\/09\/pgn$/.test(url) ? todo.slice(0, mitad).join("\n\n") : todo.slice(mitad).join("\n\n");
+    return r.fulfill({ status: 200, headers: Object.assign({ "Content-Type": "application/x-chess-pgn" }, cors), body: cuerpo });
+  });
+}
+
+async function pruebaDescarga(browser) {
+  console.log("\n=== Bajar las partidas con el usuario de Lichess o Chess.com ===");
+  const { page, ctx, errores } = await abrir(browser, true);
+  const pedidos = [];
+  await servirSitios(ctx, pedidos);
+
+  // Un usuario inválido no se pide.
+  await page.fill("#bajar-usuario", "no vale!");
+  await page.click("#bajar");
+  cierto("un usuario inválido se explica y no se pide nada", /tal como sale en su perfil/.test(await page.textContent("#bajar-estado")) && pedidos.length === 0);
+
+  // Lichess: baja, elige al usuario como rival y analiza solo.
+  await page.fill("#bajar-usuario", "PedroP");
+  await page.selectOption("#bajar-maximo", "500");
+  await page.click("#bajar");
+  await page.waitForFunction(() => /Listo/.test(document.getElementById("motor-estado").textContent), null, { timeout: 30000 });
+  igual("a Lichess se le pide ese usuario, con el tope elegido y sin relojes ni evaluaciones",
+    pedidos.map((u) => { const x = new URL(u); return x.pathname + " max=" + x.searchParams.get("max") + " clocks=" + x.searchParams.get("clocks") + " evals=" + x.searchParams.get("evals"); }),
+    ["/api/games/user/PedroP max=500 clocks=false evals=false"]);
+  igual("y analiza solo, con el usuario como rival", [await page.textContent("#titulo-resultado"), await page.evaluate(() => document.getElementById("rival").value)], ["PedroP", "PedroP"]);
+  cierto("con todas sus partidas", /^73 partidas/.test(await page.textContent("#resultado-sub")));
+
+  // Un usuario que no existe: se dice, en palabras.
+  await page.fill("#bajar-usuario", "nadie");
+  await page.click("#bajar");
+  await page.waitForFunction(() => /No existe/.test(document.getElementById("bajar-estado").textContent), null, { timeout: 10000 });
+  igual("un usuario que no existe se dice", await page.textContent("#bajar-estado"), "No existe el usuario «nadie» en Lichess.");
+
+  // El 404 de «nadie» lo anota el navegador en la consola por su cuenta: es
+  // el pedido que falló, no un error de la página.
+  const errores404 = errores.filter((e) => /status of 404/.test(e));
+  errores.splice(0, errores.length, ...errores.filter((e) => !errores404.includes(e)));
+
+  // Chess.com: los meses, del más nuevo al más viejo.
+  pedidos.length = 0;
+  await page.check("#bajar-chesscom");
+  await page.fill("#bajar-usuario", "PedroP");
+  await page.selectOption("#bajar-maximo", "0");
+  await page.evaluate(() => { document.getElementById("motor-estado").textContent = ""; document.getElementById("titulo-resultado").textContent = ""; });
+  await page.click("#bajar");
+  await page.waitForFunction(() => /Listo/.test(document.getElementById("motor-estado").textContent), null, { timeout: 30000 });
+  igual("a Chess.com se le pide la lista de meses y cada mes, del más nuevo al más viejo",
+    pedidos.map((u) => u.replace("https://api.chess.com/pub/player/", "")),
+    ["pedrop/games/archives", "pedrop/games/2026/09/pgn", "pedrop/games/2026/08/pgn"]);
+  igual("y analiza las de los dos meses, con el nombre como sale en las partidas",
+    [await page.textContent("#titulo-resultado"), /^73 partidas/.test(await page.textContent("#resultado-sub"))], ["pedrop", true]);
+
+  // Con un tope que ya se juntó en el mes más nuevo, no se pide el siguiente
+  // y sale justo esa cantidad.
+  pedidos.length = 0;
+  const bajadas = await page.evaluate(async () => {
+    const t = await window.PreparacionDescarga.descargar({ sitio: "chesscom", usuario: "pedrop", maximo: 10 });
+    return window.PreparacionDescarga.contarPartidas(t);
+  });
+  igual("con tope 10: diez partidas y sin pedir agosto", [bajadas, pedidos.length], [10, 2]);
+
+  igual("sin errores en consola ni diálogos del navegador", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+}
+
+// La CSP tiene que dejar pedir a los dos sitios: sin eso, en producción la
+// descarga falla aunque acá funcione (el servidor de prueba no manda _headers).
+function pruebaCsp() {
+  console.log("\n=== La CSP deja bajar de Lichess y Chess.com ===");
+  const h = require("fs").readFileSync(require("path").join(__dirname, "..", "_headers"), "utf8");
+  const politica = (h.match(/^\s*Content-Security-Policy: (.+)$/m) || [])[1] || "";
+  const connect = ((politica.match(/connect-src ([^;]+);/) || [])[1] || "").split(/\s+/);
+  igual("connect-src tiene los dos", ["https://lichess.org", "https://api.chess.com"].filter((x) => !connect.includes(x)), []);
+}
+
 (async () => {
   pruebaAnalisis();
+  pruebaCsp();
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
     await pruebaSinPermiso(browser);
     await pruebaConPermiso(browser);
+    await pruebaDescarga(browser);
   } finally {
     await browser.close();
   }

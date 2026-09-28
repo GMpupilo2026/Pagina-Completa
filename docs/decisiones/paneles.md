@@ -1128,6 +1128,33 @@ las pruebe Node sin navegador. Decisiones que no se ven:
   igual.
 - **Todo sale en notación española** (`sanEs()`) y los porcentajes con coma.
 
+### Bajar las partidas de Lichess o Chess.com
+
+Buscar el PGN de un rival en su perfil, exportarlo y cargarlo era el paso que
+más costaba. Ahora se escribe su usuario de Lichess o de Chess.com, se elige
+cuántas partidas (las últimas 500, 2000, 5000 o todas) y la página las baja,
+elige a ese usuario como rival y analiza sola (`js/preparacion-descarga.js`).
+
+- **Directo desde el navegador**, sin pasar por el worker ni por Supabase: las
+  dos APIs son públicas, sin clave y con CORS abierto. Por eso `_headers` las
+  tiene en `connect-src` (`lichess.org` ya estaba por las transmisiones;
+  `api.chess.com` entró con esto). Sin esa línea la descarga funciona en la
+  máquina de prueba —que no manda `_headers`— y falla en producción sin
+  explicar nada: `verificar-preparacion-rivales.js` lee la política.
+- **Solo sale el nombre de usuario**, y las dos están en la lista de
+  proveedores de `privacidad.html` (ver «Las páginas legales»).
+- **Lichess** entrega todo en un solo flujo, las más nuevas primero, a unas 20
+  partidas por segundo sin cuenta: se lee de a pedazos para ir diciendo cuántas
+  van. Se piden sin relojes, sin evaluaciones y sin el nombre de la apertura:
+  el análisis no los usa y el flujo pesa menos.
+- **Chess.com** guarda las partidas por mes: se pide la lista de meses y se
+  baja uno por vez, del más nuevo al más viejo, hasta juntar las pedidas. De a
+  uno a propósito: Chess.com pide no hacer pedidos en paralelo y contesta 429.
+- **Se puede parar**, y se analiza lo que ya llegó, sin la última partida si
+  quedó a medias.
+- Un usuario que no existe, un 429 o un error del sitio se dicen en palabras
+  en la página; no van a la consola como error, porque no lo son.
+
 Lo prueba `verificar-preparacion-rivales.js`, en dos partes. Sin navegador,
 con un PGN de patrones plantados (dónde pierde, dónde gana, dónde improvisa, un
 nombre escrito de tres formas, comentarios, variantes anidadas y NAG): que se
@@ -1137,6 +1164,9 @@ mentira y un Stockfish de mentira (castiga la dama blanca en h4): sin la funció
 se ve el aviso y no la herramienta; con ella se carga el archivo, se analiza, se
 ve cada parte en su orden, el motor marca 4.Dh4, se guarda el resultado sin el
 PGN, borrar pide confirmar, y un nombre con marcado queda como texto. La
+descarga se prueba con un Lichess y un Chess.com de mentira (con CORS, como los
+de verdad): qué se les pide, en qué orden, que corte en el tope y que un usuario
+que no existe se diga. La
 sección de administración la prueba `verificar-admin.js` y la tarjeta del panel
 `verificar-panel.js`.
 
