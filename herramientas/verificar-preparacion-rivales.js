@@ -347,11 +347,12 @@ function pruebaComoPierde() {
 /* `tablas` suma otras tablas con sus filas: los alumnos que ve el profesor
    (profiles), sus Archivos, los planes mandados. Cada insert y cada borrado
    quedan anotados en __insertados / __borrados con su tabla. */
-function clienteFalso(puede, guardados, tablas) {
+function clienteFalso(puede, guardados, tablas, libro) {
   return `
 window.__insertados = [];
 window.__borrados = [];
 window.__mandados = [];
+window.__fensPedidas = [];
 (function () {
   const TABLAS = Object.assign({ preparaciones_rival: ${JSON.stringify(guardados || [])} }, ${JSON.stringify(tablas || {})});
   let siguiente = 1;
@@ -404,6 +405,20 @@ window.__mandados = [];
       }
       return Promise.resolve({ data: [], error: null });
     },
+    // La Edge Function explorador-maestros: con un libro, contesta de ahí (lo
+    // que no está, vacío, como el explorador); sin libro, como sin el token.
+    functions: {
+      invoke: (nombre, o) => {
+        if (nombre !== "explorador-maestros") return Promise.resolve({ data: null, error: { message: "no existe" } });
+        const LIBRO = ${JSON.stringify(libro || null)};
+        const fens = o.body.fens;
+        window.__fensPedidas.push(...fens);
+        if (!LIBRO) return Promise.resolve({ data: { posiciones: {}, faltan: fens, motivo: "sin_token" }, error: null });
+        const posiciones = {};
+        fens.forEach((f) => { posiciones[f] = LIBRO[f] || { w: 0, d: 0, b: 0, jugadas: [], apertura: null }; });
+        return Promise.resolve({ data: { posiciones, faltan: [], motivo: null }, error: null });
+      },
+    },
     channel: () => ({ on() { return this; }, subscribe() { return this; }, track() { return Promise.resolve(); }, presenceState: () => ({}) }),
     removeChannel: () => {},
   };
@@ -448,14 +463,14 @@ const MOTOR_FALSO = `
 })();
 `;
 
-async function abrir(browser, puede, guardados, adaptado, tablas, pagina) {
+async function abrir(browser, puede, guardados, adaptado, tablas, pagina, libro) {
   const ctx = await browser.newContext({ serviceWorkers: "block", acceptDownloads: true });
   // El cuadro para escribir solo se ve en Modo Adaptado (js/cuadro-comandos.js).
   if (adaptado) await ctx.addInitScript(() => localStorage.setItem("oscarBlindMode_v1", "1"));
   await ctx.route("**/cdn.jsdelivr.net/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
   await ctx.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await ctx.route("**/fonts.gstatic.com/**", (r) => r.abort());
-  await ctx.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso(puede, guardados, tablas) }));
+  await ctx.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso(puede, guardados, tablas, libro) }));
   await ctx.route("**/js/shared-engine.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: MOTOR_FALSO }));
   await ctx.addInitScript(contestarAvisos);
   // «Se ve» se mide con checkVisibility(), no con la clase ni el atributo.
@@ -691,6 +706,92 @@ async function pruebaEtapa3(browser) {
   await ctx.close();
 }
 
+/* Etapa 5: un «libro de maestros» de mentira, como lo contestaría el
+   explorador de Lichess: cada línea con cuántas partidas de maestros la
+   jugaron. Por posición (FEN de 4 campos, la clave de
+   js/preparacion-posiciones.js): cuántas partidas pasan por ahí y cuántas
+   siguieron con cada jugada. Una posición que no está en el libro contesta
+   vacía, como la del explorador. */
+const LIBRO = [
+  ["e4 e5 Nf3 Nc6 Bb5 a6 Ba4 Nf6 O-O Be7", 1000],
+  ["d4 d5 c4 e6 Nc3 Nf6 Bg5 Be7", 1000],
+  ["d4 c5 d5 e5", 100],                     // la Benoni: 2.d5, y 2.Cc3 casi nadie
+  ["e4 e6 d4 d5 Nc3 Nf6", 500],
+  ["e4 e6 d4 d5 e5 c5", 400],               // 3.e5 c5, no 3…Cf6
+  ["e4 e6 d4 d5 exd5 exd5", 300],
+  ["e4 e6 d4 d5 Nd2 Nf6", 300],
+];
+function libroDeMaestros() {
+  const T = require("../js/preparacion-teoria.js");
+  const datos = {};
+  for (const [linea, n] of LIBRO) {
+    let e = Pos.inicial();
+    for (const san of linea.split(" ")) {
+      const k = Pos.clave(e);
+      const d = datos[k] || (datos[k] = { w: 0, d: 0, b: 0, jugadas: [], apertura: null });
+      d.w += n;
+      let j = d.jugadas.find((x) => x.san === san);
+      if (!j) { j = { san, uci: "", w: 0, d: 0, b: 0 }; d.jugadas.push(j); }
+      j.w += n;
+      e = Pos.aplicar(e, san);
+    }
+  }
+  return { datos, T };
+}
+function respuestaDelLibro(datos, fen) { return datos[fen] || { w: 0, d: 0, b: 0, jugadas: [], apertura: null }; }
+
+function pruebaTeoria() {
+  console.log("\n=== Etapa 5: dónde deja la teoría ===");
+  const { datos: libro, T } = libroDeMaestros();
+  const r = A.analizar(A.leerPgn(pgnDePrueba()), "Pedro Perez");
+  const lineas = r.repertorioLineas.map((l) => l.color + " " + l.sec.join(" "));
+  cierto("el análisis trae las líneas de su repertorio, por color (" + lineas.length + ")",
+    lineas.includes("w d4 c5 Nc3 cxd4 Qxd4 Nc6 Qh4 e6") && lineas.includes("b e4 e5 Nf3 Nc6 Bb5 a6 Ba4 Nf6 O-O Be7") && lineas.some((x) => /^w e4 e6 d4 d5 e5/.test(x)));
+  igual("y cuántas de sus partidas jugaron cada jugada de la línea", r.repertorioLineas.find((l) => l.sec[1] === "c5").veces, [12, 12, 12, 12, 12, 12, 12, 12]);
+
+  // Por vueltas, como la página: solo lo que falta, y nada después de una salida.
+  const preguntadas = [];
+  const datos = {};
+  for (let v = 0; v < 40; v++) {
+    const faltan = T.pendientes(r, datos);
+    if (!faltan.length) break;
+    faltan.forEach((f) => { preguntadas.push(f); datos[f] = respuestaDelLibro(libro, f); });
+  }
+  igual("ninguna posición se pregunta dos veces", preguntadas.length, new Set(preguntadas).size);
+  let e = Pos.inicial();
+  for (const m of ["d4", "c5", "Nc3"]) e = Pos.aplicar(e, m);
+  cierto("y no se pregunta nada después de que la línea deja la teoría (" + preguntadas.length + " posiciones)", !preguntadas.includes(Pos.clave(e)));
+
+  T.aplicar(r, datos);
+  const salida = (sec) => { const l = r.teoria.lineas.find((x) => x.sec.join(" ").startsWith(sec)); return l && l.salida && [l.salida.ply, l.salida.quien, l.salida.jugada, l.salida.maestros, l.salida.total, l.salida.alternativas.map((a) => a.san)]; };
+  igual("con blancas, 1.d4 c5 2.Cc3: la deja él, con 0 de 100 partidas de maestros; lo habitual es d5", salida("d4 c5"), [2, "el", "Nc3", 0, 100, ["d5"]]);
+  igual("1.e4 e6 2.d4 d5 3.e5 Cf6: la deja su rival", salida("e4 e6 d4 d5 e5"), [5, "rival", "Nf6", 0, 400, ["c5"]]);
+  const espanola = r.teoria.lineas.find((l) => l.color === "b" && l.sec[0] === "e4");
+  igual("la Española con negras es teoría de punta a punta", [espanola.salida, espanola.completa], [null, true]);
+
+  A.rehacerFoda(r);
+  cierto("al FODA: una oportunidad con la posición a estudiar", r.foda.oportunidades.some((x) =>
+    /Con blancas, después de 1\.d4 c5 juega Cc3 \(12 partidas\), que los maestros casi no juegan \(0 de 100\); lo habitual es d5\. Ahí deja la teoría/.test(x)));
+
+  // La Edge Function valida cada FEN con su propia expresión regular: tiene que
+  // aceptar todas las claves que arma la página (con enroques, al paso, las
+  // dos manos), y rechazar lo que no es una posición.
+  const fuente = require("fs").readFileSync(require("path").join(__dirname, "..", "supabase", "functions", "explorador-maestros", "index.ts"), "utf8");
+  const FEN = new RegExp(fuente.match(/const FEN = \/(.+)\/;/)[1]);
+  const claves = new Set(preguntadas);
+  let eFen = Pos.inicial();
+  for (const m of ["e4", "c5", "Nf3", "d6", "d4", "cxd4", "Nxd4", "Nf6", "Nc3", "a6", "Be3", "e5", "Nb3", "Be6", "f3", "Be7", "Qd2", "O-O", "O-O-O"]) { claves.add(Pos.clave(eFen)); eFen = Pos.aplicar(eFen, m); }
+  const rechazadas = [...claves].filter((f) => !FEN.test(f));
+  igual("la función acepta todas las posiciones que le pregunta la página (" + claves.size + ")", rechazadas, []);
+  igual("y rechaza lo que no es una posición", ["", "x", "<script>/8/8/8/8/8/8/8 w - -", "8/8/8/8/8/8/8/8 w KQkq", "8/8/8/8/8/8/8/8 x - -"].filter((f) => FEN.test(f)), []);
+
+  // Sin respuestas del explorador (sin token), ninguna línea se da por revisada.
+  const r2 = A.analizar(A.leerPgn(pgnDePrueba()), "Pedro Perez");
+  T.aplicar(r2, {});
+  igual("sin respuestas, ninguna línea queda como revisada ni inventa una salida", [r2.teoria.faltan, r2.teoria.lineas.some((l) => l.salida)], [r2.teoria.lineas.length, false]);
+  return libro;
+}
+
 /* Etapa 4, sin navegador: lo que se le manda al alumno es SOLO el plan de un
    lado y lo que dijo Stockfish de sus jugadas; cada línea del plan sale en su
    propio PGN, que chess.js lee y que llega a donde dice el camino. */
@@ -816,6 +917,58 @@ async function pruebaEtapa4(browser) {
   const nada = await abrir(browser, false, [], false, { planes_rival_alumno: [] }, "plan-rival.html?id=no-existe");
   igual("un plan que no está lo dice", await nada.page.evaluate(() => [SE_VE("no-esta"), SE_VE("app")]), [true, false]);
   await nada.ctx.close();
+}
+
+/* Etapa 5 en la página: al analizar, la página le pregunta a la Edge Function
+   (el doble contesta del libro de mentira) y pinta dónde deja la teoría, con
+   su tablero; sin el token del servidor, lo dice y no pinta nada. */
+async function pruebaEtapa5(browser, libro) {
+  console.log("\n=== Etapa 5: dónde deja la teoría, en la página ===");
+  const analizarEn = async (page) => {
+    await page.setInputFiles("#pgn-archivo", { name: "rival.pgn", mimeType: "application/x-chess-pgn", buffer: Buffer.from(pgnDePrueba(), "utf8") });
+    await page.click("#leer");
+    await page.waitForFunction(() => /Se leyeron/.test(document.getElementById("leido").textContent), null, { timeout: 10000 });
+    await page.click("#analizar");
+    await page.waitForFunction(() => /Listo/.test(document.getElementById("motor-estado").textContent) && /^Comparado|falta el token/.test(document.getElementById("teoria-estado").textContent), null, { timeout: 30000 });
+  };
+
+  const { page, ctx, errores } = await abrir(browser, true, [], false, {}, null, libro);
+  await analizarEn(page);
+  const pedidas = await page.evaluate(() => window.__fensPedidas);
+  igual("se pregunta cada posición una sola vez", pedidas.length, new Set(pedidas).size);
+  cierto("el estado dice cuántas posiciones comparó (" + await page.textContent("#teoria-estado") + ")", /^Comparado con las partidas de maestros de Lichess \(\d+ posiciones\)\.$/.test(await page.textContent("#teoria-estado")));
+  cierto("se ve la tarjeta, después de la de Stockfish", await page.evaluate(() => {
+    const hs = [...document.querySelectorAll("#resultado-cuerpo h3")].filter((h) => h.checkVisibility()).map((h) => h.textContent);
+    return hs.indexOf("Dónde deja la teoría") === hs.indexOf("Lo que dice Stockfish") + 1;
+  }));
+  const renglones = (clave) => page.evaluate((k) => {
+    const li = document.querySelector("[aria-labelledby='teoria-titulo'] li[data-teoria='" + k + "']");
+    return li ? [...li.querySelectorAll("p")].map((p) => p.textContent) : null;
+  }, clave);
+  igual("1.d4 c5 2.Cc3: la deja él, en 12 partidas; los maestros, 0 de 100, juegan d5", await renglones("d4 c5 Nc3"),
+    ["1.d4 c5 2.Cc3", "Él la deja en la jugada 2, con Cc3 (12 partidas suyas).", "Los maestros la jugaron 0 veces de 100. Lo que juegan ellos: d5 (100 %)."]);
+  igual("3.e5 Cf6: la deja su rival", (await renglones("e4 e6 d4 d5 e5 Nf6"))[1], "Su rival la deja en la jugada 3, con Cf6 (5 partidas suyas).");
+  igual("la Española con negras sigue a los maestros hasta el final", (await renglones("e4 e5 Nf3 Nc6 Bb5 a6 Ba4 Nf6 O-O Be7"))[1], "No la deja: sigue a los maestros hasta la jugada 5 (20 partidas suyas).");
+  await page.click("[aria-labelledby='teoria-titulo'] button[aria-label='Ver en el tablero: 1.d4 c5 2.Cc3']");
+  await page.waitForFunction(() => document.getElementById("visor-caja").checkVisibility(), null, { timeout: 5000 });
+  igual("«Ver» abre el tablero en la jugada donde la deja, con lo que dicen los maestros", await page.evaluate(() =>
+    [document.querySelector("#visor .visor-titulo").textContent, document.querySelector("#visor .visor-nota").textContent]),
+    ["1.d4 c5 2.Cc3", "Aquí él deja la teoría con Cc3: los maestros la jugaron 0 veces de 100. Lo habitual es d5."]);
+  cierto("al FODA llega la posición a estudiar", await page.evaluate(() => /juega Cc3 \(12 partidas\), que los maestros casi no juegan \(0 de 100\)/.test(document.getElementById("resultado-cuerpo").textContent)));
+  cierto("y el FODA sigue trayendo lo de Stockfish", await page.evaluate(() => /suele jugar Dh4/.test(document.getElementById("resultado-cuerpo").textContent)));
+  await page.click("#guardar");
+  await page.waitForFunction(() => window.__insertados.some((i) => i.tabla === "preparaciones_rival"), null, { timeout: 5000 });
+  igual("se guarda con la teoría", await page.evaluate(() => { const i = window.__insertados.find((x) => x.tabla === "preparaciones_rival"); return [!!i.analisis.teoria, i.analisis.teoria.lineas.length > 0, i.analisis.version]; }), [true, true, 4]);
+  igual("sin errores en consola ni diálogos del navegador", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+
+  const sin = await abrir(browser, true, [], false, {}, null, null);
+  await analizarEn(sin.page);
+  igual("sin el token del servidor, lo dice y no pinta la tarjeta", await sin.page.evaluate(() => [
+    /falta el token de Lichess en el servidor \(LICHESS_TOKEN\)/.test(document.getElementById("teoria-estado").textContent),
+    !!document.querySelector("[aria-labelledby='teoria-titulo']")]), [true, false]);
+  igual("sin errores", sin.errores.join(" | ") || "ninguno", "ninguno");
+  await sin.ctx.close();
 }
 
 // Las partidas «de Lichess»: las mismas de prueba, con el rival como usuario.
@@ -992,6 +1145,7 @@ async function pruebaMotorDeVerdad(browser) {
   pruebaFiltros();
   pruebaPgnDelPlan(conMotor);
   pruebaPlanDelAlumno(conMotor);
+  const libro = pruebaTeoria();
   pruebaTiposDeFinal();
   pruebaDeteccionDeFinales();
   pruebaComoPierde();
@@ -1005,6 +1159,7 @@ async function pruebaMotorDeVerdad(browser) {
     await pruebaEtapa1(browser, analisisVersion1());
     await pruebaEtapa3(browser);
     await pruebaEtapa4(browser);
+    await pruebaEtapa5(browser, libro);
     await pruebaMotorDeVerdad(browser);
   } finally {
     await browser.close();
