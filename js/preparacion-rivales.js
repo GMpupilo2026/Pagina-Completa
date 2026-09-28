@@ -14,7 +14,12 @@
 
   const A = window.PreparacionAnalisis;
   const $ = (id) => document.getElementById(id);
-  const PROFUNDIDAD = 14;          // Stockfish en el navegador, un hilo: rápido y suficiente para detectar errores claros
+  // Stockfish 19 lite (lo pide el data-motor de su <script> en la página), en
+  // un hilo. A profundidad 18 tarda entre medio segundo y uno por posición en
+  // una computadora de escritorio: la revisión entera, un par de minutos en una
+  // modesta.
+  const PROFUNDIDAD = 18;
+  const MOTOR = "Stockfish 19 lite";
   const TOPE_BYTES = 1400000;      // la base acepta hasta 1,5 MB por análisis
 
   let yo = null;
@@ -561,7 +566,7 @@
     $("motor-parar").hidden = true;
     if (actual !== r) return;
     if (!hechas) return;
-    const detalle = "Stockfish 16, profundidad " + PROFUNDIDAD + ", " + hechas + " de " + tareas.length + " jugadas revisadas";
+    const detalle = MOTOR + ", profundidad " + PROFUNDIDAD + ", " + hechas + " de " + tareas.length + " jugadas revisadas";
     A.aplicarMotor(r, tareas.slice(0, hechas), evals, detalle);
     if (!/se detuvo/.test($("motor-estado").textContent)) {
       $("motor-estado").textContent = pararRevision ? "Revisión parada: " + detalle + "." : "Listo: " + detalle + ".";

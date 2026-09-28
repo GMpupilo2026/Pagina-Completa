@@ -1121,11 +1121,26 @@ las pruebe Node sin navegador. Decisiones que no se ven:
   preparar y va a Oportunidades. Si una recomendación nuestra pierde un peón o
   más, va a Amenazas: los números premian una jugada mala cuando él no la supo
   castigar (en el primer informe sobre Oscar, la receta contra el Englund
-  recomendaba 5.Dd2, que pierde la torre). Corre con el Stockfish del sitio
-  (`js/shared-engine.js`), a profundidad 14 y en un solo hilo, para que la
-  revisión no se eternice en una computadora modesta: alcanza para ver errores
-  claros, no para matices. Se puede parar a la mitad, y lo revisado se muestra
-  igual.
+  recomendaba 5.Dd2, que pierde la torre). Se puede parar a la mitad, y lo
+  revisado se muestra igual.
+- **El motor es Stockfish 19 lite, solo en esta página.** Stockfish 19 (setiembre
+  de 2026) es el motor público más fuerte. Su versión completa para navegador
+  pesa 94 MB —Cloudflare no publica archivos de más de 25 MB, y nadie espera
+  esa descarga—, y las de varios hilos exigen las cabeceras de aislamiento
+  (COOP/COEP), que romperían las fuentes, los videos y el tablero de Lichess
+  incrustados. Queda la **lite de un hilo** (1,7 MB, red neuronal más chica):
+  la que su autor recomienda para casi todo. Son los archivos del paquete de
+  npm `stockfish` 19.0.0 (el de Nathan Rugg, el que usa Chess.com), sin tocar,
+  en `js/vendor/stockfish/`; el verificador los compara por su huella. No está
+  en `package.json` a propósito: el paquete trae también la versión completa y
+  pesa 200 MB, que el CI bajaría en cada corrida.
+  - **La pide la página con `data-motor`** en el `<script>` de
+    `js/shared-engine.js`. El resto del sitio sigue con Stockfish 16: el nivel del
+    bot «Juega contra mí» (`OSCAR_ELO_CALIB`) está calibrado con ese, y cambiarle
+    el motor le movería la fuerza sin que nadie se entere.
+  - **Profundidad 18.** En una computadora de escritorio tarda entre medio
+    segundo y uno por posición, y el análisis de prueba entero se revisó en 13
+    segundos. Encontró solo el 4.Dh4 plantado (+0,08 → −0,57).
 - **Todo sale en notación española** (`sanEs()`) y los porcentajes con coma.
 
 ### Bajar las partidas de Lichess o Chess.com
