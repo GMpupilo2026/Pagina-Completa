@@ -226,8 +226,12 @@ function jugadasDe(F) {
     await page.click("#b-adelante");
     igual("y después del mate, con el caballo ya en f7",
       ordenado(await page.evaluate(LEER_TABLERO)), ordenado(tableroEsperado(F2.linea, F2.linea.length, F2.fen)));
-    igual("una ficha sin línea de apertura no ofrece el botón de practicar",
-      await page.evaluate(() => getComputedStyle(document.getElementById("b-practicar")).display), "none");
+    // Sin línea de apertura, una ficha de táctica se practica en su tema de
+    // Ejercicios por tema (el mismo ?tema= de las tareas).
+    igual("una ficha de táctica ofrece practicar su tema",
+      await page.evaluate(() => document.getElementById("b-practicar").checkVisibility()), "true");
+    igual("y el botón abre ese tema en Ejercicios por tema",
+      await page.getAttribute("#b-practicar", "href"), "temas.html?tema=" + F2.temaPractica);
 
     console.log("\n=== El enlace de una ficha ===");
     igual("al abrirla, la dirección queda apuntando a esa ficha",
@@ -235,6 +239,14 @@ function jugadasDe(F) {
     await page.click("#volver");
     igual("y al volver a la lista, la dirección se limpia",
       /\?ficha=/.test(page.url()), "false");
+    {
+      // Una ficha de concepto sin línea ni tema no promete nada que no esté.
+      const sinNada = FICHAS.find((F) => !F.lineaId && !F.temaPractica && !F.jugadas);
+      await page.click(`[data-ficha="${sinNada.id}"]`);
+      igual(`una ficha sin línea ni tema (${sinNada.id}) no ofrece el botón de practicar`,
+        await page.evaluate(() => document.getElementById("b-practicar").checkVisibility()), "false");
+      await page.click("#volver");
+    }
     {
       const d = await abrir(browser, "/entreno/estudio.html?ficha=horquilla");
       await d.page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
