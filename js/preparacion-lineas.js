@@ -17,6 +17,10 @@
  *                                     en qué jugada se abre
  *   notaJugada(x, errores)            la nota de una jugada: la misma en el PGN
  *                                     y en el tablero
+ *   lineasDelPlan(plan)               cada línea del plan, de la raíz a una hoja
+ *   lineaAPgn(resultado, lado, camino) una sola línea en PGN (para Archivos)
+ *   planDelAlumno(resultado, lado)    solo el plan y lo que dijo Stockfish de
+ *                                     sus jugadas: lo que se le manda al alumno
  */
 (function (raiz, fabrica) {
   "use strict";
@@ -166,5 +170,56 @@
     return encabezado + "\n\n" + movimientos(copia, 0, [], errores, true) + " *\n";
   }
 
-  return { sanEs, lineaEs, pct, textoEval, fenDe, planAPgn, lineaDelPlan, notaJugada, erroresDelMotor };
+  // ------------------------------------------------------------ el plan, suelto
+
+  // Cada línea del plan, de la primera jugada a una hoja: una lista de caminos
+  // (los nodos, en orden). Es lo que se guarda en Archivos, una fila por línea.
+  function lineasDelPlan(plan) {
+    const out = [];
+    (function bajar(nodos, antes) {
+      for (const x of nodos || []) {
+        const camino = antes.concat(x);
+        if (x.hijos && x.hijos.length) bajar(x.hijos, camino);
+        else out.push(camino);
+      }
+    })(plan, []);
+    return out;
+  }
+
+  // Un camino como su propio plan de una sola rama: así lo escribe planAPgn()
+  // y no hace falta una segunda forma de armar el PGN.
+  function lineaAPgn(r, lado, camino) {
+    let cadena = null;
+    for (let i = camino.length - 1; i >= 0; i--) {
+      const x = Object.assign({}, camino[i]);
+      x.hijos = cadena ? [cadena] : [];
+      cadena = x;
+    }
+    const solo = { rival: r.rival, motor: r.motor };
+    solo[lado] = { plan: cadena ? [cadena] : [] };
+    return planAPgn(solo, lado);
+  }
+
+  /* Lo que se le manda al alumno: el plan de un lado y lo que dijo Stockfish de
+     SUS jugadas, nada más. El FODA, el repertorio y el resto del análisis se
+     quedan con el profesor (ver «Mandar el plan al alumno y a la clase: etapa
+     4» en docs/decisiones/paneles.md). Con la misma forma que el resultado,
+     para que lineaDelPlan() y planAPgn() lo lean igual. */
+  function planDelAlumno(r, lado) {
+    const claves = new Set();
+    const copiar = (nodos, antes) => (nodos || []).map((x) => {
+      const sec = antes.concat(x.san);
+      claves.add(sec.join(" "));
+      const c = { san: x.san, quien: x.quien, n: x.n, puntos: x.puntos, hijos: copiar(x.hijos, sec) };
+      if (x.reparto != null) c.reparto = x.reparto;
+      return c;
+    });
+    const plan = copiar(r[lado] && r[lado].plan, []);
+    const suyo = (x) => claves.has(x.sec.concat(x.jugada).join(" "));
+    const motor = r.motor ? { errores: r.motor.errores.filter(suyo), cuidado: r.motor.cuidado.filter(suyo) } : null;
+    return { plan, motor };
+  }
+
+  return { sanEs, lineaEs, pct, textoEval, fenDe, planAPgn, lineaDelPlan, notaJugada, erroresDelMotor,
+    lineasDelPlan, lineaAPgn, planDelAlumno };
 });

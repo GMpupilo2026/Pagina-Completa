@@ -329,6 +329,7 @@
     guardadoId = id;
     // Otro análisis: el tablero mostraba una línea del anterior.
     $("visor-caja").hidden = true;
+    $("mandar-caja").hidden = true;
     $("resultado").hidden = false;
     $("titulo-resultado").textContent = r.rival;
     pintarFiltros(r);
@@ -361,6 +362,8 @@
   function pintar(r) {
     P.cuerpo(r, $("resultado-cuerpo"), {
       alBajarPgn: (lado) => bajarPgn(r, lado),
+      alMandar: (lado, origen) => abrirMandar(r, lado, origen),
+      alArchivar: (lado, origen) => archivar(r, lado, origen),
       // Una jugada del plan: la línea hasta ahí y su continuación principal.
       alVerLinea: (camino, origen) => {
         const l = L.lineaDelPlan(r, camino);
@@ -415,6 +418,151 @@
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
     Avisos.avisar("Plan bajado: " + nombre);
+  }
+
+  // ------------------------------------------------------------ mandar al alumno
+
+  /* El plan de un lado a uno o varios alumnos, con su tarea: UNA llamada,
+     mandar_plan_rival(), que valida en la base que sean alumnos de quien manda
+     (la lista de acá es solo la que la RLS le deja ver). Lo que viaja es
+     planDelAlumno(): el plan y lo que dijo Stockfish de SUS jugadas, no el
+     análisis. Ver «Mandar el plan al alumno y a la clase: etapa 4». */
+  let mandando = null;            // { r, lado, origen }
+  let alumnosCargados = false;
+
+  function nombreDelLado(lado) { return lado === "conBlancas" ? "con blancas" : "con negras"; }
+
+  // Dentro de una semana, a las 8 de la noche: la fecha de siempre de una tarea.
+  function venceSugerido() {
+    const d = new Date(Date.now() + 7 * 86400000);
+    d.setHours(20, 0, 0, 0);
+    const dos = (n) => String(n).padStart(2, "0");
+    return d.getFullYear() + "-" + dos(d.getMonth() + 1) + "-" + dos(d.getDate()) + "T20:00";
+  }
+
+  async function cargarAlumnos() {
+    if (alumnosCargados) return;
+    const lista = $("mandar-alumnos");
+    const todos = [];
+    // PostgREST corta a mil filas sin avisar: de mil en mil.
+    for (let desde = 0; ; desde += 1000) {
+      const { data, error } = await sb.from("profiles").select("id, full_name, email")
+        .eq("role", "alumno").order("full_name").order("id").range(desde, desde + 999);
+      if (error) { $("mandar-cargando").textContent = "No se pudo traer la lista de alumnos."; return; }
+      todos.push(...(data || []));
+      if (!data || data.length < 1000) break;
+    }
+    alumnosCargados = true;
+    $("mandar-cargando").hidden = true;
+    $("mandar-sin-alumnos").hidden = todos.length > 0;
+    lista.textContent = "";
+    for (const a of todos) {
+      const label = el("label", "flex items-center gap-2 text-sm px-2 py-1 rounded hover:bg-brand-50 dark:hover:bg-brand-800 cursor-pointer");
+      const c = el("input", "rounded border-brand-300 text-accent-500 focus:ring-accent-400 mandar-check");
+      c.type = "checkbox";
+      c.value = a.id;
+      label.appendChild(c);
+      label.appendChild(el("span", "", a.full_name || a.email || "Sin nombre"));
+      lista.appendChild(label);
+    }
+    // Elegir «los del martes» se hace igual que en Tareas y Exámenes.
+    if (window.SubgruposMarcar && todos.length) SubgruposMarcar.montar({ sb, antesDe: lista, casillas: ".mandar-check" });
+  }
+
+  function abrirMandar(r, lado, origen) {
+    mandando = { r, lado, origen };
+    $("mandar-titulo").textContent = "Mandar el plan " + nombreDelLado(lado) + " contra " + r.rival;
+    $("mandar-sin-motor").hidden = !!r.motor;
+    $("mandar-estado").textContent = "";
+    if (!$("mandar-vence").value) $("mandar-vence").value = venceSugerido();
+    $("mandar-caja").hidden = false;
+    $("mandar-caja").scrollIntoView({ block: "start" });
+    $("mandar-titulo").focus();
+    cargarAlumnos();
+  }
+
+  function cerrarMandar() {
+    $("mandar-caja").hidden = true;
+    const o = mandando && mandando.origen;
+    if (o && document.body.contains(o)) o.focus();
+    mandando = null;
+  }
+
+  async function mandar(ev) {
+    ev.preventDefault();
+    if (!mandando) return;
+    const estado = $("mandar-estado");
+    const alumnos = [...document.querySelectorAll(".mandar-check:checked")].map((c) => c.value);
+    if (!alumnos.length) { estado.textContent = "Marca al menos un alumno."; return; }
+    const vence = $("mandar-vence").value;
+    if (!vence) { estado.textContent = "Ponle una fecha límite."; return; }
+    if (new Date(vence) <= new Date()) { estado.textContent = "La fecha límite ya pasó."; return; }
+    const { r, lado } = mandando;
+    const b = $("mandar-enviar");
+    b.disabled = true;
+    estado.textContent = "Mandando…";
+    const { data, error } = await sb.rpc("mandar_plan_rival", {
+      p_alumnos: alumnos,
+      p_rival: String(r.rival).slice(0, 120),
+      p_lado: lado,
+      p_plan: L.planDelAlumno(r, lado),
+      p_nota: $("mandar-nota").value.trim(),
+      p_vence: new Date(vence).toISOString(),
+    });
+    b.disabled = false;
+    if (error) { estado.textContent = "No se pudo mandar: " + (error.message || error); return; }
+    const n = typeof data === "number" ? data : alumnos.length;
+    estado.textContent = "Plan mandado a " + n + (n === 1 ? " alumno" : " alumnos") + ", con su tarea.";
+    document.querySelectorAll(".mandar-check").forEach((c) => { c.checked = false; });
+    $("mandar-nota").value = "";
+  }
+
+  // ------------------------------------------------------------ a Archivos
+
+  /* Cada línea del plan como un PGN de Archivos (archivos_pgn, los mismos de
+     partidas.html), en una carpeta con el nombre del rival: así aparece en el
+     panel 📁 Archivos de la clase en vivo, lista para cargar. Una fila por
+     línea y no el plan entero, porque la clase carga una partida a la vez y el
+     título de cada fila dice la línea. Guardarlo otra vez reemplaza lo de
+     antes: se inserta lo nuevo y DESPUÉS se borra lo viejo, así un error a
+     medio camino no deja la carpeta vacía. */
+  async function archivar(r, lado, origen) {
+    const lineas = L.lineasDelPlan(r[lado] && r[lado].plan);
+    if (!lineas.length) return;
+    const carpeta = ("Preparación: " + r.rival).slice(0, 120);
+    const archivo = "preparacion-" + (lado === "conBlancas" ? "blancas" : "negras") + ".pgn";
+    const filas = [];
+    for (const camino of lineas) {
+      const sec = camino.map((x) => x.san);
+      const fen = L.fenDe(sec);
+      if (!fen) continue;           // una línea que no se puede jugar no se guarda
+      filas.push({
+        profesor_id: yo,
+        nombre_archivo: archivo,
+        titulo: (lado === "conBlancas" ? "Con blancas" : "Con negras") + " · " + L.lineaEs(sec),
+        pgn: L.lineaAPgn(r, lado, camino),
+        move_count: sec.length,
+        fen_final: fen,
+        carpeta,
+      });
+    }
+    const { data: viejas } = await sb.from("archivos_pgn").select("id")
+      .eq("profesor_id", yo).eq("carpeta", carpeta).eq("nombre_archivo", archivo);
+    const antes = (viejas || []).map((x) => x.id);
+    const pregunta = (antes.length
+      ? "En la carpeta «" + carpeta + "» ya hay " + antes.length + (antes.length === 1 ? " línea" : " líneas") + " de este plan. Se reemplazan por las " + filas.length + " de ahora."
+      : "Se guardan " + filas.length + (filas.length === 1 ? " línea" : " líneas") + " en la carpeta «" + carpeta + "».") +
+      " En la clase en vivo aparecen en 📁 Archivos.";
+    const ok = await Avisos.confirmar(pregunta, { titulo: "Guardar el plan " + nombreDelLado(lado) + " en Archivos", aceptar: antes.length ? "Reemplazar" : "Guardar" });
+    if (!ok) { if (origen) origen.focus(); return; }
+    const { error } = await sb.from("archivos_pgn").insert(filas);
+    if (error) {
+      Avisos.avisar("No se pudo guardar en Archivos: " + (error.message || error), { tipo: "error" });
+      return;
+    }
+    if (antes.length) await sb.from("archivos_pgn").delete().in("id", antes);
+    Avisos.avisar("Listo: " + filas.length + (filas.length === 1 ? " línea" : " líneas") + " en Archivos, carpeta «" + carpeta + "».");
+    if (origen) origen.focus();
   }
 
   // ------------------------------------------------------------ Stockfish
@@ -560,6 +708,8 @@
     $("motor-revisar").addEventListener("click", iniciarRevision);
     $("motor-parar").addEventListener("click", () => { if (revision) revision.parar = true; });
     $("visor-cerrar").addEventListener("click", cerrarVisor);
+    $("mandar-cerrar").addEventListener("click", cerrarMandar);
+    $("mandar-form").addEventListener("submit", mandar);
     cargarGuardados();
   }
 
