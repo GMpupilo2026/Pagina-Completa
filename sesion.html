@@ -300,6 +300,9 @@
                     <!-- Solo quien sigue la clase: qué jugada anterior o qué variante está
                          mostrando el profe (game_state.vista, ver pintarVistaDelProfe). -->
                     <p id="vista-profe" hidden class="max-w-[560px] mx-auto mt-2 rounded-xl bg-brand-100 dark:bg-brand-900 px-4 py-2 text-center text-sm text-brand-600 dark:text-brand-300"></p>
+                    <!-- Solo quien sigue la clase: lo que el profe comentó de la jugada que se ve
+                         (game_state.comentarios, ver pintarComentarioDeLaJugada). -->
+                    <p id="comentario-profe" hidden class="max-w-[560px] mx-auto mt-2 rounded-xl border border-accent-400/60 bg-white dark:bg-brand-900 px-4 py-2 text-sm text-brand-700 dark:text-brand-200"></p>
                     <p id="arrows-hint" class="hidden text-center text-brand-450 dark:text-brand-350 text-xs mt-1">Clic derecho + arrastrar dibuja una flecha (repetirla en el mismo color la borra) · clic derecho sobre una casilla la marca con un círculo · elige el color abajo</p>
                     <!-- Color con el que se dibujan las PRÓXIMAS flechas/círculos (ver
                          js/clases-board.js#MARK_COLORS y setMarkColor). Los botones los arma
@@ -353,6 +356,18 @@
                         </div>
                         <p id="move-list-empty" class="text-xs text-brand-450 dark:text-brand-350">Sin jugadas todavía…</p>
                         <ol id="move-list" class="hidden flex-wrap gap-x-1 gap-y-1.5 text-sm font-mono text-brand-600 dark:text-brand-300"></ol>
+                        <!-- Comentar la jugada que se está mirando (game_state.comentarios): el signo y
+                             el texto los ve la clase debajo de su tablero y viajan en el PGN. -->
+                        <div id="comentar-jugada" hidden class="mt-3 border-t border-brand-100 dark:border-brand-800 pt-3">
+                            <h3 class="text-xs font-semibold text-brand-700 dark:text-brand-200 mb-1.5">Comentar <span id="comentar-jugada-cual" class="font-mono"></span> <span class="font-normal text-brand-450 dark:text-brand-350">· lo ve toda la clase y va en el PGN</span></h3>
+                            <div id="comentar-signos" class="flex flex-wrap gap-1 mb-2" role="group" aria-label="Signo de la jugada"></div>
+                            <label for="comentar-texto" class="sr-only">Comentario de la jugada</label>
+                            <textarea id="comentar-texto" rows="2" maxlength="300" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-950 px-2 py-1.5 text-sm text-brand-800 dark:text-brand-100" placeholder="Qué quieres que la clase vea de esta jugada"></textarea>
+                            <div class="flex flex-wrap gap-2 mt-1.5">
+                                <button id="comentar-guardar-btn" type="button" class="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors">Guardar comentario</button>
+                                <button id="comentar-quitar-btn" type="button" class="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors">Quitar comentario</button>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Resultado de la calificación del profesor (solo alumno): un aviso aparte,
@@ -787,6 +802,7 @@
     <script src="js/clases-engine.js"></script>
     <script src="js/practice-engine.js"></script>
     <script src="js/posicion-valida.js"></script>
+    <script src="js/pgn-clase.js"></script>
     <script src="js/plan-clase.js"></script>
     <script src="js/notas-alumno.js"></script>
     <script src="js/trofeos.js"></script>
