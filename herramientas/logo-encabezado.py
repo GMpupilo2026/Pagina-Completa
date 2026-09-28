@@ -10,6 +10,13 @@ pantallas de alta densidad). Va en crema porque el encabezado y el pie son
 oscuros en todos los temas.
 
     pip install pillow
+De paso arma el logo COMPLETO, con la cinta, para la tarjeta del login
+(login.html), donde se ve a 160 px de ancho y la cinta sí se lee. Van dos:
+img/logo-completo-claro.png, el gris (img/logo-oscar-angulo-marca.png), para
+la tarjeta blanca del modo claro, donde el crema no se vería; e
+img/logo-completo-oscuro.png, el crema, para el modo oscuro. A 320 px de
+ancho, el doble de lo que se muestra, en vez de los originales de 760 y 1200.
+
     python3 herramientas/logo-encabezado.py
 """
 from pathlib import Path
@@ -27,3 +34,17 @@ dibujo = dibujo.crop(dibujo.getchannel("A").getbbox())
 ancho = round(dibujo.width * ALTO / dibujo.height)
 dibujo.resize((ancho, ALTO), Image.LANCZOS).save(DESTINO, optimize=True)
 print(f"{DESTINO.relative_to(RAIZ)}: {ancho}×{ALTO}")
+
+ANCHO_COMPLETO = 320
+for origen, destino in [
+    (RAIZ / "img" / "logo-oscar-angulo-marca.png", RAIZ / "img" / "logo-completo-claro.png"),
+    (ORIGEN, RAIZ / "img" / "logo-completo-oscuro.png"),
+]:
+    completo = Image.open(origen).convert("RGBA")
+    completo = completo.crop(completo.getchannel("A").getbbox())
+    alto = round(completo.height * ANCHO_COMPLETO / completo.width)
+    completo = completo.resize((ANCHO_COMPLETO, alto), Image.LANCZOS)
+    # Es un logo de un solo tono sobre transparente: con 32 colores de paleta
+    # se ve igual y pesa una cuarta parte.
+    completo.quantize(colors=32, method=Image.Quantize.FASTOCTREE).save(destino, optimize=True)
+    print(f"{destino.relative_to(RAIZ)}: {ANCHO_COMPLETO}×{alto}")

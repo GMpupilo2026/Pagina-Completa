@@ -6,8 +6,12 @@
 // de las familias vería el logo y la otra mitad no, sin que nada falle.
 //
 // - Alumno de UNA academia: su color de fondo, su logo y su nombre.
-// - En dos o en ninguna: la cabecera de siempre de Ajedrez Integral (la misma
-//   regla que el remitente y que el encabezado de la plataforma).
+// - En dos o en ninguna: la cabecera de Ajedrez Integral, con el logo de la
+//   marca (el mismo del encabezado del sitio, img/logo-marca.png, crema sobre
+//   este mismo azul) y la etiqueta en ámbar. Misma regla que el remitente y
+//   que el encabezado de la plataforma.
+// - Una academia sin logo lleva solo su nombre: el logo de Ajedrez Integral es
+//   de Ajedrez Integral y no se le presta a otra marca.
 //
 // El color ya lo exige la base con contraste 4,5 contra blanco
 // (color_con_texto_blanco), así que encima va todo en blanco: el ámbar de la
@@ -19,6 +23,9 @@ export type Marca = { nombre: string; color: string | null; logoUrl: string | nu
 
 const FONDO = "#102a43";
 const AMBAR = "#f0b429";
+// Con la dirección completa: el correo se abre lejos del sitio. Mide 155×96;
+// se muestra a 32 px de alto (el doble de densidad para pantallas nítidas).
+const LOGO_AI = "https://ajedrez-integral.com/img/logo-marca.png";
 
 function escapar(s: unknown) {
   return String(s ?? "").replace(/[&<>"']/g, (c) =>
@@ -31,12 +38,14 @@ const esColor = (c: unknown): c is string => typeof c === "string" && /^#[0-9a-f
 export function cabeceraCorreo(marca: Marca | null | undefined, tituloHtml: string, etiquetaColor = AMBAR) {
   const fondo = marca && esColor(marca.color) ? marca.color : FONDO;
   const conColor = fondo !== FONDO;
-  const logo = marca?.logoUrl && /^https:\/\/[^"'<>\s]+$/.test(marca.logoUrl)
+  const logo = !marca
+    ? `<img src="${LOGO_AI}" alt="" width="52" height="32" style="display:inline-block;vertical-align:middle;width:52px;height:32px;margin-right:8px;border:0">`
+    : marca.logoUrl && /^https:\/\/[^"'<>\s]+$/.test(marca.logoUrl)
     ? `<img src="${escapar(marca.logoUrl)}" alt="" width="36" height="36" style="display:inline-block;vertical-align:middle;width:36px;height:36px;border-radius:8px;background:#ffffff;padding:3px;margin-right:8px;object-fit:contain">`
     : "";
   const etiqueta = marca ? escapar(marca.nombre) : "Ajedrez Integral";
   return `<tr><td style="background:${fondo};padding:22px 24px">
-    <div style="color:${conColor || logo ? "#ffffff" : etiquetaColor};font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase">${logo}<span style="vertical-align:middle">${etiqueta}</span></div>
+    <div style="color:${conColor || (logo && marca) ? "#ffffff" : etiquetaColor};font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase">${logo}<span style="vertical-align:middle">${etiqueta}</span></div>
     <div style="color:#ffffff;font-size:20px;font-weight:700;margin-top:4px">${tituloHtml}</div>
   </td></tr>`;
 }
