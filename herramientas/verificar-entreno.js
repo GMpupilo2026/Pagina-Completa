@@ -143,7 +143,9 @@ async function pruebaHub(browser) {
   await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
 
   const grupos = await page.evaluate(() =>
-    Array.from(document.querySelectorAll("#app section")).map((s) => ({
+    // Solo los grupos de accesos (aria-labelledby="g-…"): «Hoy te toca» es
+    // otra sección, con lo pendiente del día, y no es un grupo.
+    Array.from(document.querySelectorAll('#app section[aria-labelledby^="g-"]')).map((s) => ({
       titulo: s.querySelector("h2").textContent,
       accesos: Array.from(s.querySelectorAll("h3")).map((h) => ({
         nombre: h.textContent,

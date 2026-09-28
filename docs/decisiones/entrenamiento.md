@@ -299,6 +299,40 @@ que el alumno de 1800 vuelve a empezar en los de 1000.
   quedan pocos), y dentro de una racha no se repite ninguno. Los récords
   guardados antes de este cambio son de la racha al azar.
 
+## Repasar lo que costó y «Hoy te toca»
+
+`node herramientas/verificar-todo.js entreno-repaso` lo comprueba en un
+navegador.
+
+- **Un ejercicio de Ejercicios por tema resuelto con error o con pista entra a
+  una cola de repaso espaciado** (`js/repaso-fallados.js`, sobre el mismo
+  `js/repaso-espaciado.js` de Aperturas). Antes se marcaba resuelto igual y no
+  volvía a salir nunca. Con error vuelve hoy mismo y el intervalo empieza de
+  cero; solo con pista, vuelve pronto; repasado limpio, el intervalo crece.
+  **Lo resuelto limpio a la primera no entra nunca**: la cola es de lo que
+  costó, no de todo lo hecho.
+- **Tres repasos limpios seguidos lo sacan de la cola**, y «sacar» es una
+  marca (`fuera: true`), no un borrado. La cola (`entreno_temas_repaso_v1`)
+  viaja con la cuenta con la fusión `srsPorLinea`, que SUMA fichas y se queda
+  con la de `ultimo` más nuevo: una ficha borrada en un aparato volvería desde
+  la cuenta sin que nada fallara. Uno que salió y se vuelve a fallar entra de
+  nuevo, desde cero.
+- **La lista de temas ofrece «Repasar fallados» solo cuando hoy toca alguno**,
+  y `temas.html?repaso=1` abre la cola directo. Mientras se repasa, la lista
+  es la de hoy, fija: lo que se vuelve a fallar queda para la próxima, no se
+  repite en la misma sesión. **Repasar no vuelve a registrar el ejercicio en
+  `training_progress`**: ya contó la primera vez, y contarlo de nuevo inflaría
+  lo que ve el profesor. «Saltar» en el repaso no lo reprograma.
+- **El hub de Entrenamiento dice qué toca hoy** (`#hoy`, hasta tres cosas,
+  cada una con cuántas son y a dónde lleva): los repasos vencidos de Temas, las
+  líneas de Aperturas ya empezadas cuyo repaso venció (las nuevas no cuentan:
+  eso es estudiar algo nuevo, no un repaso pendiente) y el diagnóstico si
+  falta o tiene más de cuatro semanas, que es lo que pide la última semana del
+  plan. Todo sale del progreso que ProgresoUsuario ya bajó de la cuenta. Sin
+  nada pendiente, el bloque no sale.
+- El doble de Supabase de los verificadores de Entrenamiento es uno solo:
+  `herramientas/lib/doble-entreno.js`.
+
 ## El plan del diagnóstico que ve el alumno
 
 `entreno/diagnostico.html` pinta el plan **entero**, las cuatro semanas con su

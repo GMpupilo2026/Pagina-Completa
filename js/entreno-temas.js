@@ -93,7 +93,53 @@ function markSolved(id){
   localStorage.setItem('entreno_temas_solved', JSON.stringify(s));
 }
 function isSolved(id){ return !!getSolved()[id]; }
-function idsOf(theme){ return DATA.themes[theme] || []; }
+function idsOf(theme){ return theme === REPASO ? repasoIds : (DATA.themes[theme] || []); }
+
+/* ---------------- Repasar fallados ----------------
+   Lo que se resolvió con error o con pista entra a una cola de repaso
+   espaciado (js/repaso-fallados.js) y vuelve cuando toca. Mientras se repasa,
+   `currentTheme` es REPASO y la lista es la de hoy, fija: lo que se vuelve a
+   fallar queda para la próxima, no se repite en la misma sesión. */
+const REPASO = '__repaso';
+const CLAVE_REPASO = window.RepasoFallados ? RepasoFallados.CLAVES.temas : null;
+let repasoIds = [];
+function enRepaso(){ return currentTheme === REPASO; }
+function pendientesDeRepaso(){
+  if(!window.RepasoFallados || !DATA) return [];
+  return RepasoFallados.pendientes(CLAVE_REPASO, (id) => !!DATA.puzzles[id]);
+}
+function pintarRepaso(){
+  const caja = document.getElementById('repaso-caja');
+  const n = pendientesDeRepaso().length;
+  caja.style.display = n ? '' : 'none';
+  if(!n) return;
+  document.getElementById('repaso-texto').textContent = n === 1
+    ? 'Hoy toca repasar 1 ejercicio que te costó (lo resolviste con un error o con una pista).'
+    : `Hoy toca repasar ${n} ejercicios que te costaron (los resolviste con un error o con una pista).`;
+}
+function abrirRepaso(){
+  repasoIds = pendientesDeRepaso();
+  if(!repasoIds.length) return;
+  currentTheme = REPASO;
+  document.getElementById('play-title').textContent = 'Repasar fallados';
+  document.getElementById('play-desc').textContent = 'Los que te costaron, otra vez. Si sale limpio, vuelve más adelante; si no, vuelve pronto.';
+  document.getElementById('themes-view').style.display = 'none';
+  document.getElementById('play-view').style.display = 'block';
+  pintarSelectorDesde();
+  currentIndex = 0;
+  loadPuzzle();
+  window.scrollTo({ top: 0 });
+  const t = document.getElementById('play-title'); t.setAttribute('tabindex', '-1'); t.focus();
+}
+function terminarRepaso(){
+  document.getElementById('play-area').style.display = 'none';
+  document.getElementById('celebration').style.display = 'block';
+  document.getElementById('celebration-title').textContent = '¡Repaso terminado!';
+  document.getElementById('celebration-replay-btn').style.display = 'none';
+  document.getElementById('celebration-stats').textContent =
+    `Repasaste ${repasoIds.length} ${repasoIds.length === 1 ? 'ejercicio' : 'ejercicios'}. Los que salieron limpios vuelven más adelante.`;
+  updateProgressBar();
+}
 function solvedCountFor(theme){
   const s = getSolved();
   return idsOf(theme).filter((id) => s[id]).length;
@@ -196,7 +242,7 @@ function pintarSelectorDesde(){
   }
   sel.value = String(nivelDesde);
   // Un tema sin rating (los de táctica de la casa) no tiene nada que elegir.
-  caja.style.display = currentTheme && temaConRating(currentTheme) ? '' : 'none';
+  caja.style.display = currentTheme && !enRepaso() && temaConRating(currentTheme) ? '' : 'none';
   const pista = document.getElementById('nivel-desde-pista');
   pista.textContent = nivelDeLaCuenta
     ? `Con tu nivel (≈${nivelDeLaCuenta}), te conviene empezar desde ${escalonDe(nivelDeLaCuenta - 300) || 'el más fácil'}.`
@@ -306,6 +352,7 @@ function showThemes(){
   document.getElementById('play-view').style.display = 'none';
   document.getElementById('themes-view').style.display = 'block';
   buildThemes();
+  pintarRepaso();
   try{ localStorage.removeItem('entreno_temas_last'); }catch(e){}
   window.scrollTo({ top: 0 });
 }
@@ -350,6 +397,12 @@ function openTheme(key){
 }
 
 function updateProgressBar(){
+  if(enRepaso()){
+    const total = repasoIds.length;
+    document.getElementById('progress-fill').style.width = (total ? Math.round(100 * currentIndex / total) : 0) + '%';
+    document.getElementById('progress-label').textContent = `Repaso · ejercicio ${Math.min(currentIndex + 1, total)} de ${total}`;
+    return;
+  }
   const total = idsOf(currentTheme).length;
   const done = solvedCountFor(currentTheme);
   document.getElementById('progress-fill').style.width = (total ? Math.round(100 * done / total) : 0) + '%';
@@ -633,7 +686,11 @@ function finishPuzzle(){
   const alreadySolved = isSolved(id);
   if(!missedThisPuzzle && !usedHintThisPuzzle) bumpStreak(); else resetStreak();
   setStatus(game.in_checkmate() ? '✅ ¡Jaque mate!' : '✅ ¡Correcto! Con esto se obtiene una ventaja decisiva.', 'ok');
-  if(!alreadySolved){
+  // La cola de repaso: lo que costó entra, lo que se repasa se vuelve a
+  // programar. Lo resuelto limpio a la primera no entra nunca.
+  if(window.RepasoFallados) RepasoFallados.anotar(CLAVE_REPASO, id, missedThisPuzzle, usedHintThisPuzzle,
+    { tema: enRepaso() ? (RepasoFallados.leer(CLAVE_REPASO)[id] || {}).tema : currentTheme });
+  if(!alreadySolved && !enRepaso()){
     markSolved(id);
     /* Informes tiene una columna de Táctica aparte de la de Ejercicios por tema.
        Al traerse los 148 ejercicios acá, si todo se apuntara como 'temas' esa
@@ -651,6 +708,11 @@ function finishPuzzle(){
   updateProgressBar();
   updateOverall();
   setTimeout(() => {
+    if(enRepaso()){
+      if(currentIndex < repasoIds.length - 1){ currentIndex++; loadPuzzle(); }
+      else { currentIndex = repasoIds.length; terminarRepaso(); }
+      return;
+    }
     if(solvedCountFor(currentTheme) < idsOf(currentTheme).length){
       currentIndex = siguienteIndice(currentTheme, currentIndex + 1);
       loadPuzzle();
@@ -663,6 +725,8 @@ function finishPuzzle(){
 function finishTheme(){
   document.getElementById('play-area').style.display = 'none';
   document.getElementById('celebration').style.display = 'block';
+  document.getElementById('celebration-title').textContent = '¡Tema completo!';
+  document.getElementById('celebration-replay-btn').style.display = '';
   const total = idsOf(currentTheme).length;
   const info = THEME_INFO[currentTheme] || { name: currentTheme };
   document.getElementById('celebration-stats').textContent =
@@ -703,9 +767,16 @@ document.getElementById('skip-btn').addEventListener('click', () => {
   resetStreak();
   // El siguiente sin resolver (a la altura elegida), no el de al lado: ese
   // podía estar ya hecho. Si el único que queda es este, vuelve a salir este.
+  if(enRepaso()){
+    // Saltar en el repaso no lo reprograma: sigue pendiente para la próxima.
+    if(currentIndex < repasoIds.length - 1){ currentIndex++; loadPuzzle(); }
+    else { currentIndex = repasoIds.length; terminarRepaso(); }
+    return;
+  }
   currentIndex = siguienteIndice(currentTheme, currentIndex + 1);
   loadPuzzle();
 });
+document.getElementById('repaso-btn').addEventListener('click', abrirRepaso);
 document.getElementById('nivel-desde').addEventListener('change', (e) => {
   nivelDesde = parseInt(e.target.value, 10) || 0;
   try{ localStorage.setItem(CLAVE_DESDE, String(nivelDesde)); }catch(err){}
@@ -741,6 +812,8 @@ function initApp(){
   // openTheme() arranca en el primer ejercicio SIN resolver (firstUnsolvedIndex),
   // así que los diez que pide la tarea son diez nuevos: lo que ya hizo no se
   // le vuelve a poner delante.
+  // ?repaso=1 es el enlace de «Hoy te toca» del hub: abre la cola directo.
+  if(new URLSearchParams(location.search).has('repaso') && pendientesDeRepaso().length){ abrirRepaso(); return; }
   if(wanted) openTheme(wanted); else showThemes();
 }
 

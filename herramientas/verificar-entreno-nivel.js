@@ -18,7 +18,6 @@
 const { chromium } = require("./lib/playwright-con-sesion");
 
 const CHROME = process.env.CHROME_PATH || "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
-const BASE = process.env.BASE_URL || "http://localhost:8777";
 
 let fallos = 0;
 function igual(nombre, hallado, esperado) {
@@ -28,60 +27,8 @@ function igual(nombre, hallado, esperado) {
   else console.log("  ✓ " + nombre + ": " + a);
 }
 
-/* El doble: una sesión (u-ana), anota los insert, y cada tabla devuelve las
-   filas que se le pasen, filtradas de verdad en el RESOLVER. */
-function clienteFalso(tablas) {
-  return `
-(function () {
-  window.__inserts = [];
-  const TABLAS = ${JSON.stringify(tablas || {})};
-  function consulta(tabla) {
-    const filtros = [];
-    const q = {
-      select() { return q; }, order() { return q; }, limit() { return q; }, range() { return q; }, in() { return q; },
-      eq(c, v) { filtros.push([c, v]); return q; },
-      upsert() { return Promise.resolve({ data: null, error: null }); },
-      insert(rows) {
-        window.__inserts.push({ tabla, rows });
-        return { select() { return this; }, single() { return Promise.resolve({ data: { id: 1 }, error: null }); },
-                 then(r) { return Promise.resolve({ data: null, error: null }).then(r); } };
-      },
-      update() { return q; },
-      filas() { return (TABLAS[tabla] || []).filter((f) => filtros.every(([c, v]) => f[c] === v)); },
-      maybeSingle() { return Promise.resolve({ data: q.filas()[0] || null, error: null }); },
-      single() { return Promise.resolve({ data: q.filas()[0] || null, error: null }); },
-      then(r) { return Promise.resolve({ data: q.filas(), error: null }).then(r); },
-    };
-    return q;
-  }
-  window.sb = {
-    auth: {
-      getSession: () => Promise.resolve({ data: { session: { user: { id: "u-ana" }, access_token: "t" } } }),
-      getUser: () => Promise.resolve({ data: { user: { id: "u-ana" } } }),
-      onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
-    },
-    from: consulta,
-    rpc: () => ({ then(r) { return Promise.resolve({ data: [], error: null }).then(r); } }),
-    channel: () => ({ on() { return this; }, subscribe() { return this; } }),
-    removeChannel() {},
-  };
-})();
-`;
-}
+const { abrir } = require("./lib/doble-entreno");
 
-async function abrir(browser, ruta, tablas, local) {
-  const ctx = await browser.newContext({ serviceWorkers: "block" });
-  if (local) await ctx.addInitScript((l) => { for (const k in l) localStorage.setItem(k, l[k]); }, local);
-  const page = await ctx.newPage();
-  const errores = [];
-  page.on("pageerror", (e) => errores.push(String(e)));
-  await ctx.route("**/cdn.jsdelivr.net/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
-  await ctx.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
-  await ctx.route("**/fonts.gstatic.com/**", (r) => r.abort());
-  await ctx.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso(tablas) }));
-  await page.goto(BASE + ruta, { waitUntil: "networkidle" });
-  return { page, ctx, errores };
-}
 function sinErrores(errores, pagina) {
   igual(`${pagina}: sin errores en la página`, errores.length ? errores.join(" | ") : "ninguno", "ninguno");
 }

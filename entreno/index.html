@@ -51,6 +51,13 @@
                  la tarjeta: así hay UN solo enlace por tarjeta y quien usa lector de
                  pantalla no escucha dos veces el mismo destino. Es el mismo patrón de
                  las tarjetas de cursos.html. -->
+            <!-- «Hoy te toca» (js/entreno-index.js): lo que el alumno tiene
+                 pendiente hoy —repasos que vencieron, el diagnóstico— sacado del
+                 progreso de su cuenta. Solo sale si hay algo. -->
+            <section id="hoy" aria-labelledby="hoy-titulo" class="hidden mb-10 rounded-2xl p-5 shadow-md bg-white dark:bg-brand-900">
+                <h2 id="hoy-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Hoy te toca</h2>
+                <ul id="hoy-lista" class="list-none p-0 m-0 space-y-2"></ul>
+            </section>
             <div class="space-y-8">
                 <section aria-labelledby="g-fundamentos">
                     <h2 id="g-fundamentos" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Fundamentos</h2>
@@ -142,6 +149,8 @@
     <script src="../js/vendor/supabase.js"></script>
     <script src="../js/supabase-client.js"></script>
     <script src="../js/progreso-usuario.js"></script>
+    <script src="../js/repaso-espaciado.js"></script>
+    <script src="../js/repaso-fallados.js"></script>
     <script src="../js/main.js"></script>
     <script src="../js/entreno-index.js"></script>
 <!-- burbuja: inicio --><script src="../js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="../js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- acceso: inicio --><script src="../js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="../js/modo-vista.js" defer></script><!-- modo-vista: fin --><!-- marca: inicio --><script src="../js/marca-academia.js" defer></script><!-- marca: fin --><!-- ayuda: inicio --><script src="../js/ayuda-guia.js" defer></script><!-- ayuda: fin --><!-- atajo: inicio --><script src="../js/atajo-buscar.js" data-arriba="../" defer></script><!-- atajo: fin --></body>

@@ -135,6 +135,8 @@
 
   .turn-banner{max-width:420px; margin:14px auto 0; text-align:center; font-size:0.95rem; color:var(--text-muted);}
   .turn-banner b{color:var(--text);}
+  .repaso{margin-top:14px;}
+  .repaso-texto{margin:6px 0 10px; font-size:0.9rem; color:var(--text-muted);}
   .nivel-desde{max-width:420px; margin:10px auto 0; display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:8px; font-size:0.85rem; color:var(--text-muted);}
   .nivel-desde select{background:var(--bg-panel); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:.3rem .5rem; font:inherit;}
   .nivel-desde-pista{flex-basis:100%; text-align:center; margin:0; font-size:0.78rem;}
@@ -218,6 +220,16 @@
           <span><b id="total-count">0</b> ejercicios en <b id="total-themes">0</b> temas</span>
         </div>
       </section>
+      <!-- «Repasar fallados» (js/repaso-fallados.js): lo que se resolvió con
+           error o con pista vuelve con repaso espaciado. Solo sale si hoy toca
+           alguno. -->
+      <section class="overall repaso" id="repaso-caja" aria-labelledby="repaso-titulo" style="display:none">
+        <div class="overall-head">
+          <h2 id="repaso-titulo"><span aria-hidden="true">🔁</span> Repasar fallados</h2>
+        </div>
+        <p id="repaso-texto" class="repaso-texto"></p>
+        <button type="button" class="bctrl primary" id="repaso-btn">Repasar ahora</button>
+      </section>
       <div class="toolbar">
         <label class="sr-only" for="search">Buscar tema</label>
         <input id="search" class="search" type="search" placeholder="Buscar tema (clavada, mate, final…)" autocomplete="off">
@@ -272,7 +284,7 @@
 
       <div id="celebration">
         <span class="big-emoji" aria-hidden="true">🎉</span>
-        <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white">¡Tema completo!</h2>
+        <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white" id="celebration-title">¡Tema completo!</h2>
         <p class="stats" id="celebration-stats"></p>
         <div class="round-controls">
           <button type="button" class="bctrl primary" id="celebration-replay-btn">Volver a empezar el tema</button>
@@ -312,6 +324,8 @@
 <script src="../js/cuadro-comandos.js"></script>
 <script src="../js/entreno-progress.js"></script>
 <script src="../js/progreso-usuario.js"></script>
+<script src="../js/repaso-espaciado.js"></script>
+<script src="../js/repaso-fallados.js"></script>
 <script src="../js/entreno-temas.js"></script>
 <!-- burbuja: inicio --><script src="../js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="../js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- acceso: inicio --><script src="../js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="../js/modo-vista.js" defer></script><!-- modo-vista: fin --><!-- marca: inicio --><script src="../js/marca-academia.js" defer></script><!-- marca: fin --><!-- ayuda: inicio --><script src="../js/ayuda-guia.js" defer></script><!-- ayuda: fin --><!-- atajo: inicio --><script src="../js/atajo-buscar.js" data-arriba="../" defer></script><!-- atajo: fin --></body>
 </html>
