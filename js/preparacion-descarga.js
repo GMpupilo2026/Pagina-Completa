@@ -11,6 +11,8 @@
  *
  * Lichess entrega las partidas en un solo flujo, las más nuevas primero, a unas
  * 20 por segundo sin cuenta: se va leyendo de a pedazos para decir cuántas van.
+ * Se piden con los relojes ([%clk]), que js/preparacion-analisis.js guarda por
+ * jugada.
  * Chess.com las guarda por mes: se pide la lista de meses y se baja un mes por
  * vez, del más nuevo al más viejo, hasta juntar las pedidas. Uno por vez y no
  * todos juntos: así lo pide Chess.com, y en paralelo corta con 429.
@@ -41,7 +43,9 @@
   }
 
   async function lichess(usuario, maximo, alAvanzar, senal) {
-    const q = new URLSearchParams({ clocks: "false", evals: "false", opening: "false", literate: "false" });
+    // Con relojes: dicen cómo usa el tiempo (etapa 2). Sin evaluaciones ni
+    // nombre de apertura, que el análisis no usa y hacen más pesado el flujo.
+    const q = new URLSearchParams({ clocks: "true", evals: "false", opening: "false", literate: "false" });
     if (maximo) q.set("max", String(maximo));
     const r = await fetch("https://lichess.org/api/games/user/" + encodeURIComponent(usuario) + "?" + q.toString(), {
       headers: { Accept: "application/x-chess-pgn" }, signal: senal,

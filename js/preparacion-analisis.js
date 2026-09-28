@@ -1,40 +1,40 @@
 /* Preparación de rivales: el análisis de un PGN, sin pantalla.
  *
- * Lo usa preparacion-rivales.html (js/preparacion-rivales.js) y lo prueba
- * herramientas/verificar-preparacion-rivales.js en Node, sin navegador. Por
- * eso acá no hay DOM ni motor: solo cuentas. La página le pone Stockfish con
- * tareasDelMotor() / aplicarMotor().
+ * Lo usan preparacion-rivales.html (por js/preparacion-trabajador.js, en
+ * segundo plano) y herramientas/verificar-preparacion-rivales.js en Node, sin
+ * navegador. Por eso acá no hay DOM ni motor: solo cuentas. La página le pone
+ * Stockfish con tareasDelMotor() / aplicarMotor().
  *
  * Qué hace, en orden:
- *   leerPgn(texto)          → las partidas (etiquetas y jugadas SAN).
+ *   leerPgn(texto)          → las partidas (etiquetas, jugadas SAN y relojes).
  *   jugadores(partidas)     → quién aparece y en cuántas, para elegir al rival.
- *   analizar(partidas, rival) → todo lo demás: cuánto saca por color, ritmo,
- *                             año y Elo; su repertorio; dónde rinde menos y
- *                             dónde más; qué jugarle con cada color; FODA.
+ *   analizar(partidas, rival, { ritmos, desde })
+ *                           → todo lo demás, con las partidas que pasan los
+ *                             filtros: cuánto saca por color, ritmo, año y Elo;
+ *                             su repertorio; dónde rinde menos y dónde más; qué
+ *                             jugarle con cada color; FODA.
  *
  * Decisiones (ver «La preparación de rivales» en docs/decisiones/paneles.md):
- *   - El árbol se arma con la SECUENCIA de jugadas, no con la posición: las
- *     transposiciones cuentan aparte. Replicar cada jugada con chess.js para
- *     sacar la posición tarda minutos con miles de partidas; la SAN de un PGN
- *     exportado ya viene normalizada. chess.js se usa solo donde hace falta
- *     una posición de verdad: las pocas que se le pasan al motor.
+ *   - El árbol se arma por POSICIÓN: 1.d4 Cf6 2.c4 e6 y 1.c4 e6 2.d4 Cf6 son
+ *     el mismo nodo, y cuenta lo de los dos órdenes. La clave de cada posición
+ *     la saca js/preparacion-posiciones.js (chess.js tardaba casi un minuto con
+ *     30.000 partidas). Cada arista guarda cuántas veces se jugó ESA jugada
+ *     desde ESA posición: el reparto de sus respuestas sale de ahí.
  *   - Nada se decide con una muestra chica. Una línea cuenta desde minimo()
  *     partidas, y su puntuación se «encoge» hacia el promedio del rival
  *     (suavizada) antes de compararla: 3 de 3 no es 100 %.
- *   - Todo el texto sale en notación española (C, A, T, D, R).
+ *   - Todo el texto sale en notación española (js/preparacion-lineas.js).
  */
 (function (raiz, fabrica) {
   "use strict";
-  let ChessLib = null;
-  if (typeof raiz !== "undefined" && raiz && raiz.Chess) ChessLib = raiz.Chess;
-  else if (typeof require === "function") {
-    try { ChessLib = require("chess.js").Chess; } catch (e) { ChessLib = null; }
-  }
-  const api = fabrica(ChessLib);
+  const req = (nombre, global) => (raiz && raiz[global]) || (typeof require === "function" ? require(nombre) : null);
+  const api = fabrica(req("./preparacion-lineas.js", "PreparacionLineas"), req("./preparacion-posiciones.js", "PreparacionPosiciones"));
   if (typeof module === "object" && module.exports) module.exports = api;
   else raiz.PreparacionAnalisis = api;
-})(typeof window !== "undefined" ? window : this, function (Chess) {
+})(typeof self !== "undefined" ? self : this, function (L, Pos) {
   "use strict";
+
+  const { sanEs, lineaEs, pct, textoEval, fenDe } = L;
 
   const MAX_JUGADAS_ARBOL = 16;     // medias jugadas que entran al árbol
   const MAX_PARTIDAS = 60000;       // lo que se lee de un PGN, como mucho
@@ -52,6 +52,43 @@
     do { antes = t; t = t.replace(/\([^()]*\)/g, " "); } while (t !== antes);
     t = t.replace(/\$\d+/g, " ");               // NAG
     return t;
+  }
+
+  // Las jugadas y, si el PGN los trae ([%clk 0:02:59] de Lichess y Chess.com),
+  // los segundos que le quedaban a quien jugó cada una. Los relojes están en los
+  // comentarios, así que se leen antes de limpiarlos.
+  function jugadasYRelojes(texto) {
+    const relojes = [];
+    let hay = false;
+    // Cada comentario con reloj se cambia por una marca «⌚segundos» pegada a su jugada.
+    const conMarcas = String(texto || "").replace(/\{[^}]*\[%clk\s+(\d+):(\d{1,2}):(\d{1,2}(?:\.\d+)?)\][^}]*\}/g,
+      (m, h, mi, se) => " ⌚" + (Number(h) * 3600 + Number(mi) * 60 + Math.round(Number(se))) + " ");
+    const jugadas = [];
+    for (let tok of limpiarJugadas(conMarcas).split(/\s+/)) {
+      if (!tok) continue;
+      if (tok[0] === "⌚") {
+        if (jugadas.length && relojes.length === jugadas.length - 1) { relojes.push(Number(tok.slice(1))); hay = true; }
+        continue;
+      }
+      if (relojes.length < jugadas.length) relojes.push(null);
+      const j = sanDeToken(tok);
+      if (j === false) break;
+      if (j) jugadas.push(j);
+    }
+    while (relojes.length < jugadas.length) relojes.push(null);
+    return { jugadas, relojes: hay ? relojes : null };
+  }
+
+  // Un token del texto de jugadas: la SAN limpia, null si no es una jugada, o
+  // false si la partida termina ahí.
+  function sanDeToken(tok0) {
+    let tok = tok0.replace(/^\d+\.(\.\.)?/, "");   // «12.» o «12...» pegado
+    if (!tok || /^\.+$/.test(tok)) return null;
+    if (/^(1-0|0-1|1\/2-1\/2|½-½|\*)$/.test(tok)) return false;
+    if (tok === "--" || tok === "Z0") return false;  // jugada nula: la partida ya no es real
+    tok = tok.replace(/[!?+#]+$/g, "").replace(/^0-0-0$/, "O-O-O").replace(/^0-0$/, "O-O");
+    if (!/^([KQRBN]?[a-h]?[1-8]?x?[a-h][1-8](=?[QRBN])?|O-O(-O)?)$/.test(tok)) return null;
+    return tok.replace(/([a-h][18])([QRBN])$/, "$1=$2");
   }
 
   function jugadasDe(texto) {
@@ -77,8 +114,10 @@
     let hayEtiquetas = false;
     function cerrar() {
       if (!hayEtiquetas && !cuerpo.join("").trim()) return;
-      const jugadas = jugadasDe(cuerpo.join("\n"));
-      if (hayEtiquetas || jugadas.length) partidas.push({ etiquetas, jugadas });
+      const { jugadas, relojes } = jugadasYRelojes(cuerpo.join("\n"));
+      // Cómo terminó: si la última jugada es mate, se sabe aunque no lo diga la etiqueta.
+      const mate = /#\s*(\{[^}]*\}\s*)*(1-0|0-1)?\s*$/.test(cuerpo.join(" ").replace(/\s+(1-0|0-1|1\/2-1\/2|\*)\s*$/, " $1"));
+      if (hayEtiquetas || jugadas.length) partidas.push(relojes ? { etiquetas, jugadas, relojes, mate } : { etiquetas, jugadas, mate });
       etiquetas = {}; cuerpo = []; hayEtiquetas = false;
     }
     for (const linea of lineas) {
@@ -159,6 +198,25 @@
     return m[1] + "-" + (m[2] === "??" ? "01" : m[2]) + "-" + (m[3] === "??" ? "01" : m[3]);
   }
 
+  // Cómo terminó una partida, en pocas categorías. Lichess dice «Normal» para
+  // mate, abandono y tablas por acuerdo; Chess.com lo escribe en inglés
+  // («Juan won by resignation»). Lo que no se reconoce queda como «otro».
+  function finDe(e, res, mate) {
+    const t = String(e.Termination || "").toLowerCase();
+    if (/time|tiempo/.test(t)) return res === "T" ? "tablas" : "tiempo";
+    if (/abandon/.test(t)) return "abandonada";
+    // «stalemate» (ahogado) también dice «mate»: va antes.
+    if (/stalemate/.test(t)) return "ahogado";
+    if (/checkmate/.test(t) || mate) return "mate";
+    if (/resign/.test(t)) return "abandono";
+    if (/repetition/.test(t)) return "repeticion";
+    if (/insufficient/.test(t)) return "material";
+    if (/agreement|50/.test(t)) return "tablas";
+    if (res === "T") return "tablas";
+    if (/normal|won/.test(t)) return "abandono";
+    return "otro";
+  }
+
   // Las partidas del rival, desde su lado: color, resultado, Elos.
   function partidasDelRival(partidas, claveRival) {
     const out = [];
@@ -177,6 +235,8 @@
       out.push({
         color, res,
         jugadas: p.jugadas,
+        relojes: p.relojes || null,
+        fin: finDe(e, res, p.mate),
         elo: numero(color === "w" ? e.WhiteElo : e.BlackElo),
         eloRival: numero(color === "w" ? e.BlackElo : e.WhiteElo),
         oponente: (color === "w" ? e.Black : e.White) || "",
@@ -207,6 +267,12 @@
 
   function nuevoNodo() { return { c: vacio(), hijos: new Map() }; }
 
+  // El árbol por posición. Primero la secuencia de cada partida (hasta
+  // MAX_JUGADAS_ARBOL medias jugadas); después cada nodo de la secuencia se
+  // junta con los demás que llegan a la MISMA posición. Queda un grafo: cada
+  // nodo es una posición, con la cuenta de todas las partidas que pasaron por
+  // ella (`c`), y cada arista es una jugada desde esa posición, con la cuenta
+  // de las partidas que la jugaron AHÍ (`arista`).
   function armarArbol(lista) {
     const raiz = nuevoNodo();
     for (const x of lista) {
@@ -220,49 +286,62 @@
         sumar(nodo.c, x.res);
       }
     }
+    return aGrafo(raiz);
+  }
+
+  function nodoGrafo() { return { c: vacio(), hijos: new Map() }; }
+
+  function aGrafo(raizSec) {
+    const porClave = new Map();
+    const inicial = Pos.inicial();
+    const raiz = nodoGrafo();
+    porClave.set(Pos.clave(inicial), raiz);
+    Object.assign(raiz.c, raizSec.c);
+    // Recorrido con pila: una partida larga no puede agotar la recursión.
+    const pila = [{ sec: raizSec, pos: inicial, nodo: raiz }];
+    while (pila.length) {
+      const { sec, pos, nodo } = pila.pop();
+      for (const [san, h] of sec.hijos) {
+        const p2 = Pos.aplicar(pos, san);
+        if (!p2) continue;   // una jugada que no se puede hacer corta la rama
+        const k = Pos.clave(p2);
+        let destino = porClave.get(k);
+        if (!destino) { destino = nodoGrafo(); porClave.set(k, destino); }
+        sumarCuenta(destino.c, h.c);
+        let arista = nodo.hijos.get(san);
+        if (!arista) { arista = { nodo: destino, c: vacio() }; nodo.hijos.set(san, arista); }
+        sumarCuenta(arista.c, h.c);
+        pila.push({ sec: h, pos: p2, nodo: destino });
+      }
+    }
     return raiz;
   }
 
+  function sumarCuenta(a, b) { a.n += b.n; a.g += b.g; a.t += b.t; a.p += b.p; }
+
+  // Las jugadas desde una posición, de la más jugada ahí a la menos. `nodo.c`
+  // es la posición a la que lleva (todos los órdenes); `arista` es cuántas
+  // veces se jugó esa jugada desde esta posición.
   function hijosOrdenados(nodo) {
-    return [...nodo.hijos.entries()].map(([san, h]) => ({ san, nodo: h })).sort((a, b) => b.nodo.c.n - a.nodo.c.n);
+    return [...nodo.hijos.entries()].map(([san, a]) => ({ san, nodo: a.nodo, arista: a.c }))
+      .sort((a, b) => b.arista.n - a.arista.n || b.nodo.c.n - a.nodo.c.n);
   }
+
+  function totalAristas(nodo) { let n = 0; for (const a of nodo.hijos.values()) n += a.c.n; return n; }
 
   // ¿A quién le toca después de `profundidad` medias jugadas? El rival juega
   // en las pares si lleva blancas, en las impares si lleva negras.
   function leTocaAlRival(color, profundidad) { return (profundidad % 2 === 0) === (color === "w"); }
 
-  // ------------------------------------------------------------ notación española
-
-  const PIEZA = { K: "R", Q: "D", R: "T", B: "A", N: "C" };
-  function sanEs(san) {
-    return String(san).replace(/^[KQRBN]/, (p) => PIEZA[p]).replace(/=([QRBN])/, (m, p) => "=" + PIEZA[p]);
-  }
-
-  // [e4, e5, Nf3] desde la jugada 1 → «1.e4 e5 2.Cf3». `desde` es la media
-  // jugada en que empieza (para escribir «2…Cc6» cuando arranca con negras).
-  function lineaEs(sec, desde) {
-    const d = desde || 0;
-    const partes = [];
-    sec.forEach((san, i) => {
-      const k = d + i;
-      const num = Math.floor(k / 2) + 1;
-      if (k % 2 === 0) partes.push(num + "." + sanEs(san));
-      else if (i === 0) partes.push(num + "…" + sanEs(san));
-      else partes.push(sanEs(san));
-    });
-    return partes.join(" ");
-  }
-
-  function pct(x) {
-    if (x == null || !Number.isFinite(x)) return "—";
-    return (Math.round(x * 1000) / 10).toFixed(1).replace(".", ",") + " %";
-  }
-
   // ------------------------------------------------------------ líneas notables
 
+  // Cada posición una vez, por el camino más jugado (el primero que la encuentra).
   function recorrer(raiz, color, visitar) {
+    const vistos = new Set([raiz]);
     (function paso(nodo, sec) {
       for (const { san, nodo: h } of hijosOrdenados(nodo)) {
+        if (vistos.has(h)) continue;
+        vistos.add(h);
         const s = sec.concat(san);
         visitar(h, s);
         paso(h, s);
@@ -302,16 +381,19 @@
   // las partidas, y queden al menos minN.
   function lineaPrincipal(raiz, minN) {
     const sec = [];
-    let nodo = raiz;
+    let nodo = raiz, n = raiz.c.n;
+    const vistos = new Set([raiz]);
     for (;;) {
       const hs = hijosOrdenados(nodo);
       if (!hs.length) break;
       const h = hs[0];
-      if (h.nodo.c.n < minN || h.nodo.c.n < 0.5 * nodo.c.n) break;
+      if (h.arista.n < minN || h.arista.n < 0.5 * totalAristas(nodo) || vistos.has(h.nodo)) break;
       sec.push(h.san);
+      vistos.add(h.nodo);
       nodo = h.nodo;
+      n = h.arista.n;
     }
-    return { sec, n: nodo.c.n, puntos: puntos(nodo.c) };
+    return { sec, n: sec.length ? n : nodo.c.n, puntos: puntos(nodo.c) };
   }
 
   // Donde le toca a él y no tiene una jugada fija: la más jugada no llega al
@@ -322,8 +404,8 @@
       if (!leTocaAlRival(color, sec.length) || h.c.n < 2 * minN || sec.length > 8) return;
       const hs = hijosOrdenados(h);
       if (hs.length < 2) return;
-      const reparto = hs[0].nodo.c.n / h.c.n;
-      if (reparto < 0.4) out.push({ color, sec, n: h.c.n, reparto, opciones: hs.slice(0, 4).map((x) => ({ san: x.san, n: x.nodo.c.n })) });
+      const reparto = hs[0].arista.n / Math.max(totalAristas(h), 1);
+      if (reparto < 0.4) out.push({ color, sec, n: h.c.n, reparto, opciones: hs.slice(0, 4).map((x) => ({ san: x.san, n: x.arista.n })) });
     });
     out.sort((a, b) => b.n - a.n);
     return out.slice(0, 4);
@@ -354,9 +436,10 @@
     // (sus dos primeras jugadas): 1.e4 y 1.d4 de un rival que abre con las
     // dos son dos preparaciones, no una y una nota al pie. El resto, dos
     // medias jugadas: la respuesta y la primera de él.
-    const respuestas = hs.filter((x) => x.nodo.c.n >= 0.1 * nodo.c.n).slice(0, 3);
+    const total = Math.max(totalAristas(nodo), 1);
+    const respuestas = hs.filter((x) => x.arista.n >= minN && x.arista.n >= 0.1 * total).slice(0, 3);
     return respuestas.map((x, i) => {
-      const reparto = x.nodo.c.n / nodo.c.n;
+      const reparto = x.arista.n / total;
       const hondo = i === 0 || (reparto >= 0.25 && profundidadTotal <= 3);
       return {
         san: x.san, quien: "rival", reparto, ...resumen(x.nodo.c),
@@ -405,11 +488,36 @@
 
   // ------------------------------------------------------------ el análisis
 
+  // Los filtros: `ritmos` (lista; vacía o ausente = todos) y `desde`
+  // ("AAAA-MM-DD"; las partidas sin fecha quedan afuera si se pide una).
+  function pasaFiltros(x, f) {
+    if (f.ritmos && f.ritmos.length && !f.ritmos.includes(x.ritmo)) return false;
+    if (f.desde && !(x.fecha && x.fecha >= f.desde)) return false;
+    return true;
+  }
+
+  // Con cuántas partidas se contaría cada ritmo y cada año, sin filtrar: lo que
+  // la página ofrece para elegir.
+  function disponibles(lista) {
+    const ritmos = agrupar(lista, (x) => x.ritmo);
+    const anios = agrupar(lista, (x) => (x.fecha ? x.fecha.slice(0, 4) : null));
+    return {
+      ritmos: ORDEN_RITMO.filter((r) => ritmos.has(r)).map((r) => ({ ritmo: r, n: ritmos.get(r).n })),
+      anios: [...anios.keys()].sort().map((a) => ({ anio: a, n: anios.get(a).n })),
+    };
+  }
+
+  // Menos de esto, y la página avisa que dice poco.
+  const POCAS = 30;
+
   function analizar(partidas, rival, opciones) {
     const o = opciones || {};
     const clave = claveNombre(rival);
-    const lista = partidasDelRival(partidas, clave);
-    if (!lista.length) return null;
+    const todas = partidasDelRival(partidas, clave);
+    if (!todas.length) return null;
+    const filtros = { ritmos: (o.ritmos || []).slice(), desde: o.desde || null };
+    const lista = todas.filter((x) => pasaFiltros(x, filtros));
+    if (!lista.length) return { version: 2, vacio: true, rival: nombreDe(partidas, clave, rival), totalRival: todas.length, filtros, disponibles: disponibles(todas) };
     const total = lista.length;
     const minN = o.minimo || minimo(total);
 
@@ -442,10 +550,14 @@
     const perdidasCortas = perdidas.filter((x) => x.jugadas.length <= 50).length;
 
     const resultado = {
-      version: 1,
-      rival: (jugadores(partidas).find((j) => j.clave === clave) || { nombre: rival }).nombre,
+      version: 2,
+      rival: nombreDe(partidas, clave, rival),
       generado: new Date().toISOString(),
       total,
+      totalRival: todas.length,
+      pocas: total < POCAS,
+      filtros,
+      disponibles: disponibles(todas),
       minimo: minN,
       fechas: { desde: fechas[0] || null, hasta: fechas[fechas.length - 1] || null },
       elo: { reciente: mediana(recientes.map((x) => x.elo)), maximo: lista.reduce((m, x) => Math.max(m, x.elo || 0), 0) || null },
@@ -459,10 +571,10 @@
         perdidasCortas, perdidasConJugadas: perdidas.length,
       },
       repertorio: {
-        blancas: hijosOrdenados(arbol.w).map((x) => ({ san: x.san, ...resumen(x.nodo.c), reparto: x.nodo.c.n / Math.max(arbol.w.c.n, 1) })).slice(0, 8),
-        negras: hijosOrdenados(arbol.b).filter((x) => x.nodo.c.n >= minN).slice(0, 6).map((x) => ({
-          contra: x.san, n: x.nodo.c.n,
-          respuestas: hijosOrdenados(x.nodo).slice(0, 5).map((y) => ({ san: y.san, ...resumen(y.nodo.c), reparto: y.nodo.c.n / x.nodo.c.n })),
+        blancas: hijosOrdenados(arbol.w).map((x) => ({ san: x.san, ...resumen(x.arista), reparto: x.arista.n / Math.max(totalAristas(arbol.w), 1) })).slice(0, 8),
+        negras: hijosOrdenados(arbol.b).filter((x) => x.arista.n >= minN).slice(0, 6).map((x) => ({
+          contra: x.san, n: x.arista.n,
+          respuestas: hijosOrdenados(x.nodo).slice(0, 5).map((y) => ({ san: y.san, ...resumen(y.arista), reparto: y.arista.n / Math.max(totalAristas(x.nodo), 1) })),
         })),
       },
       principal: { w: lineaPrincipal(arbol.w, minN), b: lineaPrincipal(arbol.b, minN) },
@@ -476,8 +588,8 @@
       },
       conNegras: {
         // Tú con negras: el rival lleva blancas y empieza él.
-        contra: hijosOrdenados(arbol.w).filter((x) => x.nodo.c.n >= minN).slice(0, 5).map((x) => ({
-          san: x.san, n: x.nodo.c.n, reparto: x.nodo.c.n / Math.max(arbol.w.c.n, 1),
+        contra: hijosOrdenados(arbol.w).filter((x) => x.arista.n >= minN).slice(0, 5).map((x) => ({
+          san: x.san, n: x.arista.n, reparto: x.arista.n / Math.max(totalAristas(arbol.w), 1),
           respuestas: opcionesNuestras(x.nodo, base.w, minN),
         })),
         plan: plan(arbol.w, "w", base.w, minN, PROFUNDIDAD_PLAN, 0),
@@ -488,6 +600,10 @@
     resultado.fuertes.sort((a, b) => (b.puntos - b.base) - (a.puntos - a.base));
     resultado.foda = foda(resultado);
     return resultado;
+  }
+
+  function nombreDe(partidas, clave, rival) {
+    return (jugadores(partidas).find((j) => j.clave === clave) || { nombre: rival }).nombre;
   }
 
   // ------------------------------------------------------------ FODA
@@ -585,22 +701,6 @@
     return tareas.slice(0, max);
   }
 
-  // La posición (FEN) después de una secuencia, o null si no es legal.
-  function fenDe(sec) {
-    if (!Chess) return null;
-    const g = new Chess();
-    for (const san of sec) if (!g.move(san, { sloppy: true })) return null;
-    return g.fen();
-  }
-
-  // Evaluaciones en peones desde las blancas; el mate va como ±(100 - jugadas).
-  function textoEval(v) {
-    if (v == null || !Number.isFinite(v)) return "—";
-    if (Math.abs(v) >= 50) return (v > 0 ? "+" : "−") + "M" + Math.round(100 - Math.abs(v));
-    const s = (Math.round(v * 100) / 100).toFixed(2).replace(".", ",");
-    return v > 0 ? "+" + s : v < 0 ? "−" + s.slice(1) : s;
-  }
-
   // `evals` trae, por clave: { antes: eval de la posición antes (desde las
   // blancas), mejor: SAN de la mejor jugada, despues: eval tras la jugada }.
   function aplicarMotor(r, tareas, evals, detalle) {
@@ -632,8 +732,8 @@
   }
 
   return {
-    leerPgn, jugadasDe, jugadores, claveNombre, analizar, ritmoDe,
-    sanEs, lineaEs, pct, textoEval, minimo,
+    leerPgn, jugadasDe, jugadasYRelojes, jugadores, claveNombre, analizar, ritmoDe, finDe, partidasDelRival,
+    sanEs, lineaEs, pct, textoEval, minimo, POCAS,
     tareasDelMotor, aplicarMotor, fenDe,
   };
 });
