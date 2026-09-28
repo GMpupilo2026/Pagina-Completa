@@ -21,17 +21,30 @@
  *   1. Se ordena a los inscritos por puntaje (de más a menos) y, en caso de
  *      empate, por el orden en que se inscribieron (primero inscrito
  *      primero) — un desempate estable y predecible, sin florituras.
- *   2. Se recorre la lista de arriba hacia abajo: al primer jugador sin
- *      pareja todavía se le busca, MÁS ABAJO en la lista, el primero con
- *      quien no haya jugado antes en este torneo.
- *   3. Si nadie más abajo cumple (ya jugó contra todos los que quedan sin
- *      pareja), se empareja con el primero disponible aunque signifique
- *      repetir rival — es el mismo último recurso que usa el software de
+ *   2. Se empareja de arriba hacia abajo: al primer jugador sin pareja se
+ *      le busca, MÁS ABAJO en la lista, el primero con quien no haya jugado
+ *      antes. Si esa elección deja a los de abajo sin forma de emparejarse
+ *      sin repetir, se vuelve atrás y se prueba con el siguiente (búsqueda
+ *      con retroceso). Antes era voraz, sin volver atrás: con 7 rondas y 8 a
+ *      16 jugadores repetía rivales que se podían evitar (con 16, casi dos
+ *      cruces repetidos por torneo).
+ *   3. Solo si NINGÚN emparejamiento evita repetir (más rondas que rivales
+ *      posibles, o un grupo muy chico) se admite repetir, y los menos cruces
+ *      repetidos posibles — el mismo último recurso que usa el software de
  *      emparejamiento "de verdad" cuando no hay alternativa.
+ *   4. Colores: nadie lleva más de 2 blancas de diferencia con sus negras
+ *      (ni al revés) ni juega tres seguidas con el mismo color, mientras se
+ *      pueda sin repetir rival (no repetir va primero). Entre los dos,
+ *      lleva blancas el que tiene menos blancas que negras; si van parejos,
+ *      el que jugó con negras la última vez; si también, el de más arriba.
+ *      Antes siempre llevaba blancas el de arriba: en 7 rondas, el puntero
+ *      podía jugarlas todas con blancas.
  * Empate de número de jugadores (bye): si hay un número impar de inscritos,
  * recibe el bye el jugador sin pareja de MENOR puntaje que todavía no haya
  * tenido un bye en este torneo (o, si ya todos tuvieron uno, el de menor
  * puntaje a secas) — así nadie recibe dos byes mientras haya alternativa.
+ * Si con ese bye los demás no se pueden emparejar sin repetir, se prueba
+ * con el siguiente candidato de abajo hacia arriba.
  *
  * ---------- Eliminación directa ----------
  * Ronda 1: se ordena aleatoriamente (torneo casual, no hay ranking previo
@@ -44,9 +57,10 @@
  * avanza antes de poder generar la ronda siguiente; es una decisión de
  * arbitraje real, no algo que este motor deba inventar por su cuenta.
  *
- * ---------- Todos contra todos (round robin, método del círculo) ----------
- * El método del círculo de toda la vida: se fija un jugador y se rota el
- * resto una posición por ronda. Con número impar de inscritos se agrega un
+ * ---------- Todos contra todos (round robin, tablas de Berger) ----------
+ * Las tablas de Berger, las mismas de los reglamentos FIDE (ver
+ * roundRobinRound): cada ronda, cada uno contra otro distinto, y los
+ * colores repartidos parejo. Con número impar de inscritos se agrega un
  * jugador fantasma (bye) para completar un número par — cada inscrito
  * termina jugando contra todos los demás exactamente una vez y con como
  * mucho un bye en total.
@@ -106,49 +120,138 @@ window.TorneoEngine = (function () {
   }
 
   // ---------- Suizo ----------
-  function swissRound(playerIds, allPreviousPairings, registrationOrder) {
-    const { score, byes, opponents } = standingsFromPairings(playerIds, allPreviousPairings);
-    const orderIndex = {};
-    (registrationOrder || playerIds).forEach((id, i) => { orderIndex[id] = i; });
 
-    let pool = playerIds.slice().sort((a, b) => {
-      if (score[b] !== score[a]) return score[b] - score[a];
-      return (orderIndex[a] || 0) - (orderIndex[b] || 0);
+  // Los colores que jugó cada uno, en orden (1 blancas, -1 negras). Un bye
+  // no cuenta: no se jugó.
+  function colorHistory(playerIds, allPairings) {
+    const colors = {};
+    playerIds.forEach((id) => { colors[id] = []; });
+    allPairings.forEach((p) => {
+      if (p.isBye) return;
+      if (colors[p.white]) colors[p.white].push(1);
+      if (colors[p.black]) colors[p.black].push(-1);
     });
+    return colors;
+  }
 
-    const pairings = [];
-    let byePlayer = null;
-    if (pool.length % 2 === 1) {
-      // De menor puntaje hacia arriba, el primero sin bye todavía.
-      for (let i = pool.length - 1; i >= 0; i--) {
-        if (!byes[pool[i]]) { byePlayer = pool[i]; break; }
+  // ¿Puede jugar con este color (1 o -1) sin pasarse de 2 de diferencia
+  // entre blancas y negras ni jugar tres seguidas con el mismo?
+  function colorFits(history, c) {
+    const diff = history.reduce((s, x) => s + x, 0) + c;
+    const n = history.length;
+    return Math.abs(diff) <= 2 && !(n >= 2 && history[n - 1] === c && history[n - 2] === c);
+  }
+
+  // true si `a` (el de más arriba) lleva blancas contra `b`.
+  function aTakesWhite(ha, hb) {
+    const okA = colorFits(ha, 1) && colorFits(hb, -1);
+    const okB = colorFits(ha, -1) && colorFits(hb, 1);
+    if (okA !== okB) return okA;
+    const da = ha.reduce((s, x) => s + x, 0), db = hb.reduce((s, x) => s + x, 0);
+    if (da !== db) return da < db;
+    const la = ha[ha.length - 1] || 0, lb = hb[hb.length - 1] || 0;
+    if (la !== lb) return la < lb;
+    return true;
+  }
+
+  function colorsClash(ha, hb) {
+    return !(colorFits(ha, 1) && colorFits(hb, -1)) && !(colorFits(ha, -1) && colorFits(hb, 1));
+  }
+
+  // Empareja `pool` (ya ordenado de más a menos) con como mucho `maxRepeats`
+  // cruces repetidos y `maxClashes` cruces en los que a alguno le toca un
+  // color que no le corresponde. Devuelve la lista de parejas o null si no
+  // se puede (o si la búsqueda se pasa del tope de pasos, que la corta a
+  // tiempo con grupos grandes).
+  function pairPool(pool, opponents, colors, maxRepeats, maxClashes, budget) {
+    function search(rest, repeatsLeft, clashesLeft) {
+      if (!rest.length) return [];
+      if (--budget.steps < 0) return null;
+      const a = rest[0];
+      for (let j = 1; j < rest.length; j++) {
+        const b = rest[j];
+        const repeat = !!(opponents[a] && opponents[a].has(b));
+        if (repeat && repeatsLeft === 0) continue;
+        const clash = colorsClash(colors[a], colors[b]);
+        if (clash && clashesLeft === 0) continue;
+        const sub = search(rest.slice(1, j).concat(rest.slice(j + 1)), repeatsLeft - (repeat ? 1 : 0), clashesLeft - (clash ? 1 : 0));
+        if (sub) return [[a, b]].concat(sub);
+        if (budget.steps < 0) return null;
       }
-      if (!byePlayer) byePlayer = pool[pool.length - 1]; // ya todos tuvieron bye alguna vez
-      pool = pool.filter((id) => id !== byePlayer);
-      pairings.push({ white: byePlayer, black: null, isBye: true });
+      return null;
     }
+    return search(pool, maxRepeats, maxClashes);
+  }
 
-    const used = new Set();
+  // El voraz de antes: solo si la búsqueda se pasa del tope de pasos.
+  function pairGreedy(pool, opponents) {
+    const used = new Set(), pairs = [];
     for (let i = 0; i < pool.length; i++) {
       const a = pool[i];
       if (used.has(a)) continue;
       let partner = null;
       for (let j = i + 1; j < pool.length; j++) {
         const b = pool[j];
-        if (used.has(b)) continue;
-        if (!opponents[a] || !opponents[a].has(b)) { partner = b; break; }
+        if (!used.has(b) && !(opponents[a] && opponents[a].has(b))) { partner = b; break; }
       }
       if (!partner) {
-        // Último recurso: el primero disponible, aunque repita rival.
         for (let j = i + 1; j < pool.length; j++) {
           if (!used.has(pool[j])) { partner = pool[j]; break; }
         }
       }
-      if (partner) {
-        used.add(a); used.add(partner);
-        pairings.push({ white: a, black: partner, isBye: false });
+      if (partner) { used.add(a); used.add(partner); pairs.push([a, partner]); }
+    }
+    return pairs;
+  }
+
+  function swissRound(playerIds, allPreviousPairings, registrationOrder) {
+    const { score, byes, opponents } = standingsFromPairings(playerIds, allPreviousPairings);
+    const colors = colorHistory(playerIds, allPreviousPairings);
+    const orderIndex = {};
+    (registrationOrder || playerIds).forEach((id, i) => { orderIndex[id] = i; });
+
+    const ranked = playerIds.slice().sort((a, b) => {
+      if (score[b] !== score[a]) return score[b] - score[a];
+      return (orderIndex[a] || 0) - (orderIndex[b] || 0);
+    });
+
+    // Candidatos al bye, en orden de preferencia: de menor puntaje hacia
+    // arriba los que no tuvieron bye; después, si hiciera falta, el resto.
+    let byeCandidates = [null];
+    if (ranked.length % 2 === 1) {
+      const fromBottom = ranked.slice().reverse();
+      byeCandidates = fromBottom.filter((id) => !byes[id]).concat(fromBottom.filter((id) => byes[id]));
+    }
+    const withoutBye = byeCandidates.filter((id) => id === null || !byes[id]);
+    const groups = withoutBye.length ? [withoutBye, byeCandidates] : [byeCandidates];
+
+    const budget = { steps: 200000 };
+    let chosen = null;
+    for (let g = 0; g < groups.length && !chosen; g++) {
+      // Primero no repetir rival; recién después, los colores.
+      const half = Math.floor(ranked.length / 2);
+      for (let k = 0; k <= half && !chosen && budget.steps >= 0; k++) {
+        for (let c = 0; c <= half && !chosen && budget.steps >= 0; c++) {
+          for (const byePlayer of groups[g]) {
+            const pool = ranked.filter((id) => id !== byePlayer);
+            const pairs = pairPool(pool, opponents, colors, k, c, budget);
+            if (pairs) { chosen = { byePlayer: byePlayer, pairs: pairs }; break; }
+            if (budget.steps < 0) break;
+          }
+        }
       }
     }
+    if (!chosen) {
+      const byePlayer = byeCandidates[0];
+      chosen = { byePlayer: byePlayer, pairs: pairGreedy(ranked.filter((id) => id !== byePlayer), opponents) };
+    }
+
+    const pairings = [];
+    if (chosen.byePlayer !== null) pairings.push({ white: chosen.byePlayer, black: null, isBye: true });
+    chosen.pairs.forEach(([a, b]) => {
+      // `a` siempre va más arriba en la lista que `b`.
+      pairings.push(aTakesWhite(colors[a], colors[b]) ? { white: a, black: b, isBye: false } : { white: b, black: a, isBye: false });
+    });
     return pairings;
   }
 
@@ -191,31 +294,35 @@ window.TorneoEngine = (function () {
     return null; // "draw" sin advanceId todavía, o sin jugar
   }
 
-  // ---------- Todos contra todos (método del círculo) ----------
+  // ---------- Todos contra todos (tablas de Berger) ----------
+  // Los jugadores se numeran 1..n por orden de inscripción (con uno fantasma
+  // si son impares: quien le toca, tiene bye). Con i, j < n, i y j se
+  // enfrentan en la ronda (i + j - 2) mod (n - 1) + 1, y quien no tiene
+  // pareja esa ronda juega contra n. Colores: entre i y j lleva blancas el
+  // menor si i + j es impar, el mayor si es par; contra n, las lleva i si
+  // está en la mitad de arriba. Así nadie termina con más de una blanca de
+  // diferencia con sus negras ni juega tres seguidas con el mismo color.
+  // Antes era el método del círculo con una regla de colores que parecía
+  // pareja y no lo era: con 8 jugadores, uno jugaba las 7 con blancas y
+  // otro 6 de 7 con negras.
   function roundRobinRound(playerIds, roundNumber) {
     const list = playerIds.slice();
     if (list.length % 2 === 1) list.push(null); // null = posición fantasma (bye)
     const n = list.length;
-    const totalRounds = n - 1;
-    const r = (roundNumber - 1) % totalRounds;
-    const fixed = list[0];
-    const rotating = list.slice(1);
-    const rotated = rotating.slice(r).concat(rotating.slice(0, r));
-    const arranged = [fixed].concat(rotated);
-    const pairings = [];
-    for (let i = 0; i < n / 2; i++) {
-      const a = arranged[i], b = arranged[n - 1 - i];
-      if (a === null || b === null) {
-        pairings.push({ white: a === null ? b : a, black: null, isBye: true });
-      } else {
-        // Se alternan colores según ronda y posición para repartir blancas
-        // parejo — no hay ranking previo que priorizar, así que alcanza con
-        // una regla simple y determinista.
-        const swap = (roundNumber + i) % 2 === 1;
-        pairings.push(swap ? { white: b, black: a, isBye: false } : { white: a, black: b, isBye: false });
-      }
+    const r = (roundNumber - 1) % (n - 1);
+    const player = (k) => list[k - 1];
+    const pairs = [];
+    for (let i = 1; i < n; i++) {
+      let j = ((r + 2 - i) % (n - 1) + (n - 1)) % (n - 1);
+      if (j === 0) j = n - 1;
+      if (j === i) pairs.unshift(i > n / 2 ? [i, n] : [n, i]); // el que juega contra n va primero
+      else if (j > i) pairs.push((i + j) % 2 === 1 ? [i, j] : [j, i]);
     }
-    return pairings;
+    return pairs.map(([w, b]) => {
+      const white = player(w), black = player(b);
+      if (white === null || black === null) return { white: white === null ? black : white, black: null, isBye: true };
+      return { white: white, black: black, isBye: false };
+    });
   }
 
   return {

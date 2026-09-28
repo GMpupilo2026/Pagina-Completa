@@ -65,11 +65,14 @@
         }
 
         function updateTurnIndicator() {
-            const turn = board.game.turn() === "w" ? "Blancas" : "Negras";
+            // El turno de la posición que se VE: si el profe está mostrando una
+            // jugada anterior o una variante, es el de esa, no el de la partida.
+            const g = board.viewGame || board.game;
+            const turn = g.turn() === "w" ? "Blancas" : "Negras";
             let text = `Turno: ${turn}`;
-            if (board.game.in_checkmate && board.game.in_checkmate()) text = `Jaque mate — ganan ${turn === "Blancas" ? "Negras" : "Blancas"}`;
-            else if (board.game.in_check && board.game.in_check()) text += " · ¡Jaque!";
-            else if (board.game.in_draw && board.game.in_draw()) text = "Tablas";
+            if (g.in_checkmate && g.in_checkmate()) text = `Jaque mate — ganan ${turn === "Blancas" ? "Negras" : "Blancas"}`;
+            else if (g.in_check && g.in_check()) text += " · ¡Jaque!";
+            else if (g.in_draw && g.in_draw()) text = "Tablas";
             document.getElementById("turn-indicator").textContent = text;
         }
 
@@ -169,7 +172,8 @@
 
         // ---------- Historial, variantes y sub-variantes ----------
         // navegar hacia atrás, explorar líneas alternativas y encadenarlas en sub-variantes,
-        // todo sin tocar el tablero en vivo de nadie más hasta que se pulsa "Jugar desde aquí".
+        // todo sin tocar la partida hasta que se pulsa "Jugar desde aquí". Los alumnos ven
+        // en su tablero lo que el profesor mira (ver transmitirVista).
         let variantNodes = [];
 
         async function loadVariantTree() {
@@ -208,7 +212,7 @@
             btn.className = "px-1 rounded hover:bg-brand-100 dark:hover:bg-brand-800 transition-colors italic text-accent-600 dark:text-accent-400" +
                 (isCurrent ? " bg-accent-500/30 font-bold not-italic" : "");
             btn.textContent = node.san;
-            btn.addEventListener("click", () => { board.viewVariantNode(node, fullPath); renderMoveList(); });
+            btn.addEventListener("click", () => { board.viewVariantNode(node, fullPath); renderMoveList(); transmitirVista(); });
             li.appendChild(btn);
             const children = variantChildrenOf(node.id);
             if (children.length) {
@@ -241,7 +245,7 @@
             btn.className = "px-1 rounded hover:bg-brand-100 dark:hover:bg-brand-800 transition-colors" +
                 (isCurrent ? " bg-accent-500/30 font-bold text-brand-800 dark:text-white" : "");
             btn.textContent = san;
-            btn.addEventListener("click", () => { board.viewMainAt(ply); renderMoveList(); });
+            btn.addEventListener("click", () => { board.viewMainAt(ply); renderMoveList(); transmitirVista(); });
             return btn;
         }
 
@@ -289,7 +293,72 @@
         document.getElementById("history-live-btn").addEventListener("click", () => {
             board.viewLive();
             renderMoveList();
+            transmitirVista();
         });
+
+        /* ---------- Los alumnos ven lo que mira el profesor ----------
+           Cuando el profesor se devuelve a una jugada anterior o recorre una
+           variante, eso no cambia la partida (sigue en game_state.moves), pero la
+           clase tiene que verlo: si no, el profe explica una posición y los alumnos
+           miran otra. Lo que mira se guarda en game_state.vista ({path, parent,
+           root}, o null = la posición en vivo) y cada tablero que sigue la clase lo
+           muestra. Va en la base y no en un mensaje suelto de Realtime para que
+           quien entra tarde, recarga o supervisa vea lo mismo. Solo el profesor la
+           cambia (el trigger protect_game_state_teacher_columns se la revierte a
+           cualquier otro). Ver «Los alumnos siguen lo que mira el profesor» en
+           docs/decisiones/clase-en-vivo.md. */
+        let ultimaVistaEnviada = null;
+        async function transmitirVista() {
+            if (!isTeacher || !myGameStateId) return;
+            const vista = board.currentView();
+            const clave = JSON.stringify(vista);
+            if (clave === ultimaVistaEnviada) return;
+            ultimaVistaEnviada = clave;
+            const { error } = await sb.from("game_state").update({ vista }).eq("id", myGameStateId);
+            if (error) { console.error(error); ultimaVistaEnviada = null; }
+        }
+
+        // "12. Nf3 Nc6 13. e4", o "12… Nc6 13. e4" si arranca con negras.
+        function numerarJugadas(path, desde) {
+            let numero = 1, turno = "w";
+            try {
+                const partes = (board.startFen || "").split(" ");
+                if (partes[1] === "b") turno = "b";
+                if (parseInt(partes[5], 10) > 0) numero = parseInt(partes[5], 10);
+            } catch (e) {}
+            const textos = [];
+            path.forEach((san, i) => {
+                if (i >= desde) {
+                    if (turno === "w") textos.push(numero + ". " + san);
+                    else textos.push(i === desde ? numero + "… " + san : san);
+                }
+                if (turno === "b") numero++;
+                turno = turno === "w" ? "b" : "w";
+            });
+            return textos.join(" ");
+        }
+
+        // Qué está mostrando el profe, dicho para el alumno (null = la posición en vivo).
+        function describirVista(vista) {
+            if (!vista || !Array.isArray(vista.path)) return null;
+            const principal = board.moves();
+            const root = Math.max(0, Math.min(vista.root || 0, vista.path.length));
+            const esVariante = vista.path.length > root || vista.path.some((san, i) => principal[i] !== san);
+            if (!esVariante) {
+                return vista.path.length
+                    ? "Tu profe volvió a una jugada anterior: " + numerarJugadas(vista.path, vista.path.length - 1) + "."
+                    : "Tu profe volvió a la posición de salida.";
+            }
+            return "Tu profe está mostrando una variante: " + numerarJugadas(vista.path, root) + ".";
+        }
+
+        function pintarVistaDelProfe() {
+            const el = document.getElementById("vista-profe");
+            if (!el) return;
+            const texto = isTeacher ? null : describirVista(board.currentView());
+            el.textContent = texto ? texto + " La partida sigue guardada: cuando vuelva al final, la verás de nuevo." : "";
+            el.hidden = !texto;
+        }
 
         document.getElementById("history-fork-btn").addEventListener("click", async () => {
             if (!canMoveNow() || !board.isViewingHistory()) return;
@@ -330,7 +399,18 @@
             // Mientras el profesor arma una posición a mano, el eco de Realtime (una
             // flecha, un cambio de control) no puede borrarle lo que lleva armado:
             // "Aplicar" la transmite y "Cancelar" vuelve a leer el estado de la base.
+            const primeraVez = !antes && !editando;
+            const vistaAntes = JSON.stringify(board.currentView());
             if (!editando) board.loadMoves(row.moves || [], row.start_fen);
+            /* Quien sigue la clase ve lo que mira el profe. El profe, en cambio, ya
+               tiene su vista en el tablero: solo la retoma al cargar la página (la
+               suya propia de antes de recargar), no con cada eco. */
+            if (!isTeacher && !editando) board.showView(row.vista || null);
+            else if (isTeacher && primeraVez && row.vista) {
+                board.showView(row.vista);
+                ultimaVistaEnviada = JSON.stringify(board.currentView());
+            }
+            const vistaCambio = JSON.stringify(board.currentView()) !== vistaAntes;
             board.setMarks(row.arrows || [], row.circles || []);
             // Ocultar piezas es una herramienta del profesor sobre el tablero de LOS ALUMNOS:
             // en su propio tablero el profesor siempre las ve, aunque la columna esté en true.
@@ -339,6 +419,10 @@
             lastPiecesHidden = !!row.pieces_hidden;
             if (claseAcc) {
                 if (!editando) claseAcc.anunciarCambio(antes, { inicio: row.start_fen || "", jugadas: row.moves || [] });
+                if (!isTeacher && antes && vistaCambio) {
+                    claseAcc.decir((describirVista(board.currentView()) || "Tu profe volvió a la posición de la partida.")
+                        + " Escribe \"posición\" para oírla.");
+                }
                 if (!isTeacher && ocultabaAntes !== board.piecesHidden) {
                     claseAcc.decir(board.piecesHidden
                         ? "Tu profe ocultó las piezas: ahora hay que ver el tablero de memoria."
@@ -350,6 +434,7 @@
             updateTurnIndicator();
             updateAccessForRole();
             renderMoveList();
+            pintarVistaDelProfe();
             renderStudentsList();
             updateHideBoardBtn();
             if (isTeacher) updateEngineEval();
@@ -374,12 +459,16 @@
             const hasControl = activePlayerId === profile.id;
             const colorLabel = activePlayerColor === "w" ? "blancas" : activePlayerColor === "b" ? "negras" : null;
             const myColorTurn = !hasControl || activePlayerColor === "both" || activePlayerColor === board.game.turn();
-            board.setInteractive(hasControl && myColorTurn);
+            // Mientras el profe muestra otra posición, una jugada del alumno sería
+            // sobre la que ve y no sobre la partida: se espera a que vuelva.
+            const profeMuestraOtra = board.isViewingHistory();
+            board.setInteractive(hasControl && myColorTurn && !profeMuestraOtra);
             let text = "Bienvenido a la clase. Verás el tablero moverse en vivo mientras el profesor juega.";
             if (hasControl) {
                 text = colorLabel
                     ? ("¡El profesor te dio el control con " + colorLabel + "! " + (myColorTurn ? "Ya puedes mover." : "Espera a que le toque a tu color."))
                     : "¡El profesor te dio el control del tablero! Ya puedes mover piezas.";
+                if (profeMuestraOtra) text = "Tienes el control, pero tu profe está mostrando otra posición: cuando vuelva a la partida, vas a poder mover.";
             }
             setStatus(text);
         }
@@ -995,8 +1084,10 @@
             const motivo = motivoPosicionInvalida(fen);
             if (motivo) { setStatus(motivo); return false; }
             board.loadMoves([], fen);
+            board.viewLive();
+            ultimaVistaEnviada = "null";
             const { error } = await sb.from("game_state").update({
-                fen, moves: [], start_fen: fen, last_move: null,
+                fen, moves: [], start_fen: fen, last_move: null, vista: null,
                 arrows: [], circles: [], active_player_id: null, active_player_color: "both",
                 updated_by: session.user.id, updated_at: new Date().toISOString(),
             }).eq("id", myGameStateId);
@@ -1028,9 +1119,13 @@
                 last_move: moves.length ? moves[moves.length - 1] : null,
                 arrows: [],
                 circles: [],
+                // Jugar en la partida (o «Jugar desde aquí») es mirar la posición
+                // en vivo. A un alumno con el control el trigger se la deja como estaba.
+                vista: null,
                 updated_by: session.user.id,
                 updated_at: new Date().toISOString(),
             }, extraFields || {})).eq("id", myGameStateId);
+            if (isTeacher) ultimaVistaEnviada = "null";
             if (error) {
                 console.error(error);
                 setStatus("No se pudo guardar el cambio: " + error.message);
@@ -1318,12 +1413,15 @@
                 onMarksChange: (marks) => pushMarksToServer(marks),
                 onVariantMove: async (san, fullPath, context) => {
                     const fen = board.viewGame.fen();
+                    // La clase ve la jugada de la variante ya, sin esperar a la base.
+                    transmitirVista();
                     const { data, error } = await sb.from("variant_nodes").insert({
                         parent_id: context.parentNodeId, root_ply: context.rootPly, san, fen,
                         created_by: session.user.id, teacher_id: boardOwnerId,
                     }).select().single();
                     if (error) { console.error(error); setStatus("No se pudo guardar la variante: " + error.message); return; }
                     board.setVariantParent(data.id);
+                    transmitirVista();
                     await loadVariantTree();
                 },
             });
@@ -1435,11 +1533,44 @@
             const total = board.moves().length;
             board.viewMainAt(Math.max(0, Math.min(ply, total)));
             renderMoveList();
+            transmitirVista();
+        }
+
+        /* ◀ y ▶ dentro de una variante se quedan en ELLA: ◀ vuelve a la jugada
+           anterior de la variante (y de la primera, a la línea principal de donde
+           nace) y ▶ sigue por su continuación. Antes ◀ saltaba siempre a la línea
+           principal, y para retomar la variante había que buscarla en la lista. */
+        function nodoQueSeVe() {
+            const ctx = board.isViewingHistory() ? board.getVariantContext() : null;
+            if (!ctx || ctx.parentNodeId === null) return null;
+            return variantNodes.find((v) => v.id === ctx.parentNodeId) || null;
+        }
+
+        function stepBack() {
+            const nodo = nodoQueSeVe();
+            if (!nodo) { stepToPly(currentViewedPly() - 1); return; }
+            const path = board.viewPath.slice(0, -1);
+            const padre = nodo.parent_id !== null ? variantNodes.find((v) => v.id === nodo.parent_id) : null;
+            if (padre) board.viewVariantNode(padre, path);
+            else board.viewMainAt(nodo.root_ply);
+            renderMoveList();
+            transmitirVista();
+        }
+
+        function stepForward() {
+            if (!board.isViewingHistory()) return;
+            const ctx = board.getVariantContext();
+            if (!ctx || ctx.parentNodeId === null) { stepToPly(currentViewedPly() + 1); return; }
+            const hijo = variantChildrenOf(ctx.parentNodeId)[0];
+            if (!hijo) return;
+            board.viewVariantNode(hijo, board.viewPath.concat([hijo.san]));
+            renderMoveList();
+            transmitirVista();
         }
 
         document.getElementById("move-nav-first").addEventListener("click", () => stepToPly(0));
-        document.getElementById("move-nav-prev").addEventListener("click", () => stepToPly(currentViewedPly() - 1));
-        document.getElementById("move-nav-next").addEventListener("click", () => stepToPly(currentViewedPly() + 1));
+        document.getElementById("move-nav-prev").addEventListener("click", stepBack);
+        document.getElementById("move-nav-next").addEventListener("click", stepForward);
         document.getElementById("move-nav-last").addEventListener("click", () => stepToPly(board.moves().length));
 
         // ---------- Ocultar piezas a los alumnos (solo profesor) ----------
@@ -1773,6 +1904,15 @@
                 notasBtn.setAttribute("aria-label", "Bitácora de " + (info.full_name || info.email));
                 notasBtn.addEventListener("click", () => abrirNotasEnClase(studentId, info.full_name || info.email));
                 actions.appendChild(notasBtn);
+                // Sus trofeos: sumar por un buen trabajo o quitar uno contado de más.
+                const trofeosBtn = document.createElement("button");
+                trofeosBtn.type = "button";
+                trofeosBtn.className = notasBtn.className;
+                trofeosBtn.textContent = "🏆";
+                trofeosBtn.title = "Trofeos e insignias: sumar, quitar o darle una insignia";
+                trofeosBtn.setAttribute("aria-label", "Trofeos e insignias de " + (info.full_name || info.email));
+                trofeosBtn.addEventListener("click", () => abrirTrofeosEnClase(studentId, info.full_name || info.email));
+                actions.appendChild(trofeosBtn);
 
                 // Con qué color puede mover: se elige ANTES de dar el control (para dárselo
                 // ya con el color correcto) y también se puede cambiar mientras ya lo tiene
@@ -2004,6 +2144,45 @@
         document.getElementById("notas-en-clase-cerrar").addEventListener("click", () => {
             document.getElementById("notas-en-clase").classList.add("hidden");
         });
+
+        /* Los trofeos del alumno, desde su renglón. Mismo criterio que la
+           bitácora: el panel se arma entero cada vez, para no ajustarle a uno
+           mirando el total del anterior. Quién puede ajustar lo decide
+           ajustar_trofeos() en la base, no este botón. */
+        function abrirTrofeosEnClase(studentId, nombre) {
+            if (!isTeacher) return;
+            const caja = document.getElementById("trofeos-en-clase");
+            document.getElementById("trofeos-en-clase-titulo").textContent = "🏆 Trofeos e insignias de " + nombre;
+            caja.classList.remove("hidden");
+            Trofeos.montarPanel(document.getElementById("trofeos-en-clase-body"), { sb, alumnoId: studentId });
+        }
+
+        document.getElementById("trofeos-en-clase-cerrar").addEventListener("click", () => {
+            document.getElementById("trofeos-en-clase").classList.add("hidden");
+        });
+
+        // ---------- Los trofeos del alumno (se acumulan de clase en clase) ----------
+        // Uno por cada respuesta marcada ✅ más los ajustes del profesor; la
+        // cuenta la hace trofeos_de() en la base. Se vuelve a pedir cada vez que
+        // el profesor califica o ajusta: así un ✅ cambiado a ❌ también resta.
+        async function cargarMisTrofeos() {
+            if (isTeacher || esObservador || !window.Trofeos) return;
+            const [t, p] = await Promise.all([Trofeos.cargar(sb), Trofeos.premios(sb, profile.id)]);
+            const insEl = document.getElementById("mis-insignias");
+            insEl.innerHTML = "";
+            if (p && p.insignias_total) insEl.appendChild(Trofeos.chipsInsignias(p.insignias, "total"));
+            const totalEl = document.getElementById("mis-trofeos-total");
+            const detalleEl = document.getElementById("mis-trofeos-detalle");
+            if (!t) {
+                totalEl.textContent = "🏆 —";
+                detalleEl.textContent = "No se pudieron cargar tus trofeos.";
+                return;
+            }
+            totalEl.textContent = "🏆 " + Trofeos.texto(t.total);
+            detalleEl.textContent = t.total
+                ? "Se suman de clase en clase: uno por cada respuesta correcta" + (t.ajustes ? ", más los que ajustó tu profesor." : ".")
+                : "Cada respuesta que tu profesor marque correcta te da un trofeo.";
+        }
 
         async function setActivePlayer(studentId, color) {
             const { error } = await sb.from("game_state").update({
@@ -2385,22 +2564,43 @@
             await loadChatMessages();
         });
 
+        // Solo los hilos que esta pantalla muestra: el del propio alumno, o los de
+        // los alumnos de este profesor. Sin filtro, cada mensaje de cualquier clase
+        // de la plataforma le llegaba a todas las clases abiertas y Realtime revisaba
+        // la RLS una vez por cada una (ver «Realtime escucha solo lo que la pantalla
+        // muestra»). El filtro `in` acepta hasta 100 valores: de a 100.
+        // El DELETE va aparte y sin filtro porque Realtime no filtra borrados; es
+        // raro (solo «Vaciar esta conversación») y el callback descarta los ajenos.
+        function filtrosDelChat() {
+            if (!isTeacher) return ["student_id=eq." + profile.id];
+            const ids = chatStudents.map((s) => s.id);
+            const filtros = [];
+            for (let i = 0; i < ids.length; i += 100) filtros.push("student_id=in.(" + ids.slice(i, i + 100).join(",") + ")");
+            return filtros;
+        }
+
         function subscribeChat() {
-            sb.channel("class-chat-messages-changes")
-                .on("postgres_changes", { event: "*", schema: "public", table: "class_chat_messages" }, (payload) => {
-                    const affectedStudentId = (payload.new && payload.new.student_id) || (payload.old && payload.old.student_id);
-                    if (affectedStudentId === currentChatThreadId()) {
-                        loadChatMessages();
-                    } else if (isTeacher && affectedStudentId && payload.eventType === "INSERT") {
-                        // Mensaje nuevo en la conversación de otro alumno: se marca en el
-                        // selector en vez de interrumpir la conversación que se está viendo.
-                        chatUnseen.add(affectedStudentId);
-                        renderChatStudentOptions();
-                        const student = chatStudents.find((s) => s.id === affectedStudentId);
-                        setStatus("💬 Nuevo mensaje de " + (student ? (student.full_name || student.email) : "un alumno") + " en su chat privado.");
-                    }
-                })
-                .subscribe();
+            const canal = sb.channel("class-chat-messages-changes");
+            for (const filter of filtrosDelChat()) {
+                canal.on("postgres_changes", { event: "INSERT", schema: "public", table: "class_chat_messages", filter }, alCambiarElChat);
+                canal.on("postgres_changes", { event: "UPDATE", schema: "public", table: "class_chat_messages", filter }, alCambiarElChat);
+            }
+            canal.on("postgres_changes", { event: "DELETE", schema: "public", table: "class_chat_messages" }, alCambiarElChat);
+            canal.subscribe();
+
+            function alCambiarElChat(payload) {
+                const affectedStudentId = (payload.new && payload.new.student_id) || (payload.old && payload.old.student_id);
+                if (affectedStudentId === currentChatThreadId()) {
+                    loadChatMessages();
+                } else if (isTeacher && affectedStudentId && payload.eventType === "INSERT") {
+                    // Mensaje nuevo en la conversación de otro alumno: se marca en el
+                    // selector en vez de interrumpir la conversación que se está viendo.
+                    chatUnseen.add(affectedStudentId);
+                    renderChatStudentOptions();
+                    const student = chatStudents.find((s) => s.id === affectedStudentId);
+                    setStatus("💬 Nuevo mensaje de " + (student ? (student.full_name || student.email) : "un alumno") + " en su chat privado.");
+                }
+            }
         }
 
         document.getElementById("chat-form").addEventListener("submit", async (e) => {
@@ -2490,8 +2690,31 @@
             } else {
                 // Feedback privado: solo llegan eventos de la PROPIA fila del alumno (RLS ya
                 // lo garantiza), así que marcar ✅/❌ nunca lo ven los demás alumnos.
+                // El profesor le dio una insignia: se celebra con el mismo aviso
+                // flotante de las respuestas, en dorado, y con el motivo.
+                sb.channel("mis-insignias")
+                    .on("postgres_changes", { event: "INSERT", schema: "public", table: "insignias", filter: "alumno_id=eq." + profile.id }, async (payload) => {
+                        cargarMisTrofeos();
+                        const fila = payload.new || {};
+                        const tipos = await Trofeos.tiposInsignias(sb);
+                        const tipo = tipos.find((x) => x.tipo === fila.tipo);
+                        if (!tipo) return;
+                        mostrarInsigniaGanada(tipo, fila.motivo);
+                    })
+                    .subscribe();
+                // El profesor sumó o quitó trofeos a mano.
+                sb.channel("mis-trofeos")
+                    .on("postgres_changes", { event: "INSERT", schema: "public", table: "trofeos_ajustes", filter: "alumno_id=eq." + profile.id }, (payload) => {
+                        cargarMisTrofeos();
+                        const n = payload.new && payload.new.cantidad;
+                        if (n) setStatus((n > 0 ? "🏆 Tu profesor te sumó " : "Tu profesor te quitó ") + Trofeos.texto(Math.abs(n))
+                            + (payload.new.motivo ? ": " + payload.new.motivo : "."));
+                    })
+                    .subscribe();
                 sb.channel("my-answer-feedback")
                     .on("postgres_changes", { event: "UPDATE", schema: "public", table: "question_answers", filter: "student_id=eq." + profile.id }, (payload) => {
+                        // Cualquier calificación, también de una pregunta vieja, mueve los trofeos.
+                        cargarMisTrofeos();
                         if (currentQuestion && payload.new.question_id === currentQuestion.id) {
                             myAnswer = payload.new;
                             updateAnswerFeedbackUI();
@@ -3251,13 +3474,22 @@
             const stillOpen = !!(currentQuestion && currentQuestion.id === answer.question_id && !currentQuestion.closed_at);
             if (answer.is_correct === true) {
                 toast.className = "fixed bottom-4 left-1/2 -translate-x-1/2 z-[70] w-[min(92vw,420px)] rounded-xl shadow-2xl p-4 text-center bg-green-500 text-white";
-                text.textContent = "✅ ¡Muy bien! Tu respuesta fue correcta.";
+                text.textContent = "✅ ¡Muy bien! Tu respuesta fue correcta. 🏆 +1 trofeo.";
                 retryBtn.classList.add("hidden");
             } else {
                 toast.className = "fixed bottom-4 left-1/2 -translate-x-1/2 z-[70] w-[min(92vw,420px)] rounded-xl shadow-2xl p-4 text-center bg-red-500 text-white";
                 text.textContent = stillOpen ? "❌ Esa no era la jugada correcta — vuelve a intentarlo." : "❌ Esa no era la jugada correcta.";
                 retryBtn.classList.toggle("hidden", !stillOpen);
             }
+            toast.classList.remove("hidden");
+        }
+
+        function mostrarInsigniaGanada(tipo, motivo) {
+            const toast = document.getElementById("answer-feedback-toast");
+            toast.className = "fixed bottom-4 left-1/2 -translate-x-1/2 z-[70] w-[min(92vw,420px)] rounded-xl shadow-2xl p-4 text-center bg-accent-500 text-brand-900";
+            document.getElementById("answer-feedback-text").textContent = tipo.emoji + " ¡Tu profe te dio la insignia «" + tipo.nombre + "»!"
+                + (motivo ? " " + motivo : "");
+            document.getElementById("answer-feedback-retry-btn").classList.add("hidden");
             toast.classList.remove("hidden");
         }
 
@@ -4174,6 +4406,7 @@
             } else {
                 document.getElementById("student-panel").classList.remove("hidden");
                 document.getElementById("raise-hand-btn").classList.remove("hidden");
+                cargarMisTrofeos();
             }
             setStatus(esObservador
                 ? "Estás mirando la clase de " + nombreObservado + " en vivo. El tablero se mueve solo con cada jugada."
@@ -4229,6 +4462,7 @@
 
         document.getElementById("reset-board-btn").addEventListener("click", async () => {
             board.reset();
+            board.viewLive(); // la clase vuelve a la partida (vista null): el profe también
             board.setMarks([], []);
             await pushBoardState();
             await clearVariantTree();

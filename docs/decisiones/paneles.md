@@ -53,9 +53,14 @@ lista, y el resto se acomoda solo.
   repasarlo (Estudio), después el curso completo y al final la lectura: Cursos
   estaba primero y es lo más largo de los cuatro, así que quien entra a
   practicar veinte minutos tenía delante lo que menos se parece a eso. En
-  "Jugar y competir" va primero donde se juega contra otra persona (Juegos),
-  después el torneo, y de último lo que se MIRA —TV en vivo no es jugar, es ver
-  jugar—, con el bot y las medallas detrás.
+  "Jugar y competir" va primero donde se juega contra otra persona (Juegos, y
+  Competir, que es retar a quien está en línea y las listas de partidas; ver
+  «Competir: retar y las listas de partidas tienen su propia página» en
+  `juegos-y-torneos.md`), después el torneo y al final el bot.
+- **"TV en vivo" y "Logros" están en "Tu cuenta"**, que va en este orden:
+  Configuración, Informes, Logros, TV en vivo y, solo al alumnado, "¿Cómo van
+  tus clases?". Lo pidió así el dueño de la Academia; antes las dos estaban al
+  final de "Jugar y competir".
 - **Un mismo destino no va dos veces en el panel.** "Racha táctica" salió de
   "Jugar y competir" porque ya es lo PRIMERO que hay dentro de `juegos.html`,
   en una franja a todo el ancho: el segundo camino no se usa y de paso ensancha
@@ -64,11 +69,10 @@ lista, y el resto se acomoda solo.
   nombre estaba largo para distinguirlo de la otra tarjeta que se llamaba
   igual, y esa otra es hoy "TV en vivo". El día que vuelva a haber dos, el que
   se renombra es el nuevo.
-- **"Mide tu nivel" es lo que uno hace por su cuenta**, y se llamaba
-  "Evaluaciones" con los exámenes adentro. Un examen te lo pone otra persona,
-  con fecha y con nota; un diagnóstico lo hace uno cuando quiere, para saber
-  dónde está parado. Ahí quedan los dos diagnósticos y nada más — y **el grupo
-  entero es SOLO de administración**, ver abajo.
+- **"Mide tu nivel" ya no existe.** Se llamaba "Evaluaciones" con los
+  exámenes adentro, y después quedó con los dos diagnósticos y SOLO para
+  administración (ver abajo). Hoy el de nivel vive en **"Lo que te pone tu
+  profesor"**, ver «El diagnóstico de nivel es de lo que te pone tu profesor».
 - **Un grupo del que no queda ni un acceso utilizable no se pinta.** A la
   alumna, "Herramientas" le salía como un encabezado y dos cuadros grises —sus
   dos accesos están en mantenimiento—: una sección entera de la página que no
@@ -77,31 +81,26 @@ lista, y el resto se acomoda solo.
   queda**, y con su razón escrita: ahí uno vino por otra cosa y de paso se
   entera de que eso vuelve. No se esconde con una clase: no se pinta — un
   enlace invisible pero presente sigue siendo una parada de tabulador.
-- **Los dos diagnósticos son SOLO de administración.** Estaban para todo el
-  mundo, y eso era regalar las dos pruebas con las que el sitio ubica el nivel
-  de alguien: los bancos —301 preguntas y 200 de reglamento— son archivos
-  estáticos, así que cuanta más gente las resuelve por su cuenta, menos miden.
-  Un diagnóstico se APLICA, no se practica.
-  - Lo quita `diagnosticosSoloParaAdministracion()`, sobre la lista ya armada y
-    en un solo lugar, igual que `apagarEnMantenimiento()`. Se quita el **grupo
-    entero** y no sus dos tarjetas: un encabezado sin nada debajo es la misma
-    sección muerta que ya se quitó de "Herramientas" para el alumnado.
-  - Va **después** del `if` que le reapunta el destino al arbitraje, así quien
-    administra lo conserva apuntando a `arbitraje.html` —la página con la
-    revisión de los exámenes del público y el detalle pregunta por pregunta— y
-    no a la versión pública. Y el grupo se queda **escrito en `TILE_GROUPS`**
-    con sus dos tarjetas: definirlo dentro del `if` de un rol volvería a
-    repartir el panel a pedazos.
-  - **El diagnóstico de nivel sigue abierto al público sin cuenta** en
-    `entreno/diagnostico.html`, que es una puerta de entrada al sitio y otra
-    cosa: lo que se quitó es el camino desde el panel de quien ya está adentro.
-    Lo mismo `nivel-de-arbitraje.html`, que es pública y enlazada desde la
-    portada.
-  - La comprobación que importa no es que el grupo no salga en la lista: es que
-    **no quede ni un enlace a esas dos páginas en la grilla**, escondido o no —
-    un enlace invisible pero presente sigue siendo una parada de tabulador.
-    `verificar-panel.js` lo mira con las tres caras, y a administración le pide
-    lo contrario: que SÍ se le pinten los dos, o se quedaría sin ninguna puerta.
+- **El diagnóstico de nivel es de lo que te pone tu profesor.** Durante un
+  tiempo los dos diagnósticos fueron SOLO de administración —«un diagnóstico se
+  APLICA, no se practica»—, y el alumno solo llegaba al de nivel por el primer
+  paso de la franja de arriba, que se apaga en cuanto lo rinde. Justamente
+  porque se aplica, su lugar es al lado de Tareas y Exámenes: te lo pide otra
+  persona para ubicarte, y lo que sale de ahí es el plan que te arma.
+  - **Al alumno** la tarjeta lo lleva a `entreno/diagnostico.html`, que de por
+    sí está abierta al público sin cuenta: no se regala nada que no estuviera.
+  - **A quien da clase** la misma tarjeta lo lleva al **resultado** de sus
+    alumnos (`informes.html?tema=diagnostico`), no a la prueba: el banco es el
+    mismo que el de ellos y resolverla por su cuenta no le sirve. Lo hace
+    `hrefProfe`, que `textosDelEquipoDocente()` aplica igual que `descProfe`.
+  - **El de arbitraje sigue siendo SOLO de administración**: está en su panel
+    («Resultados de las pruebas») y en ningún otro. `nivel-de-arbitraje.html`
+    sigue pública y enlazada desde la portada, que es otra cosa.
+  - `verificar-panel.js` pide que al alumnado el diagnóstico le salga **una
+    sola vez** (en ese grupo), que a la profesora la tarjeta vaya al informe y
+    que en la grilla de ninguno de los dos quede ni un enlace a
+    `arbitraje` —ni escondido: un enlace invisible pero presente sigue siendo
+    una parada de tabulador—.
 - **Un acceso apagado no es un enlace gris.** `renderTileCard()` le pone un
   `<div>` con `aria-disabled`, sin `href`: no promete un destino que no va a
   abrir. **Pero SÍ recibe el foco** (`tabindex="0"`, `role="link"`), y eso se
@@ -1060,6 +1059,222 @@ número de cada PR enlazado.
   el título ajeno literal, el buscador sin tildes y que a quien no administra
   no se le pinte.
 
+## La preparación de rivales
+
+`preparacion-rivales.html`: un profesor carga un PGN con partidas de un rival
+(de Lichess, Chess.com o de donde sea) y la página arma el análisis completo:
+cuánto saca con cada color, por ritmo, por año y según el Elo del oponente; su
+repertorio; las líneas donde rinde menos y más; el FODA; qué jugarle con
+blancas y con negras; y la revisión de todo eso con Stockfish. Nació de
+preparar a mano la partida contra Oscar a partir del libro del bot: se pidió
+lo mismo para cualquier rival, activable profesor por profesor desde
+administración.
+
+**Quién puede lo decide la base.** `puedo_preparar_rivales()` dice que sí a
+quien administra y a los profesores que están en
+`preparacion_rivales_profesores`. Esa tabla no tiene política de escritura: la
+escribe `activar_preparacion_rivales()`, que exige administrar, exige que la
+cuenta sea de un profesor y **devuelve cómo quedó**, leído de la tabla. El
+interruptor de `admin.html#preparacion` (`js/admin-preparacion.js`) pinta eso,
+no lo que se pidió. La tarjeta del panel del profesor (grupo Herramientas de
+`js/clases.js`) sale solo si la función dice que sí; mirando el panel de otra
+persona («Ver como» una persona) se pregunta por esa persona y no por quien
+mira.
+
+**El PGN no sale de la computadora.** Se lee con `FileReader` y se analiza en
+el navegador; lo que se guarda (`preparaciones_rival.analisis`) es el
+resultado, que pesa unos pocos KB aunque el PGN tenga 30.000 partidas. Lo ve
+su dueño y quien administra. Guardar exige tener la función activa (política
+de `insert`); si administración la apaga, lo guardado se sigue viendo y
+borrando, pero no se guarda nada nuevo. Se comprobó en SQL impersonando cada
+rol: un profesor sin activar no guarda ni se activa solo, uno
+activo no guarda a nombre de otro ni ve lo de otro, y `anon` no ejecuta nada.
+
+**Las cuentas viven en `js/preparacion-analisis.js`, sin pantalla**, para que
+las pruebe Node sin navegador. Decisiones que no se ven:
+
+- **El árbol se arma por posición** (desde la etapa 1; antes, por secuencia):
+  1.d4 Cf6 2.c4 e6 y 1.c4 e6 2.d4 Cf6 son el mismo nodo y cuentan juntas. Ver
+  «La base de la preparación: etapa 1».
+- **Nada se decide con pocas partidas.** Una línea cuenta desde `minimo()`
+  partidas (el 1 % del archivo, entre 4 y 30). Para elegir qué jugarle, la
+  puntuación se «encoge» hacia su promedio con 8 partidas imaginarias: 3 de 3
+  no es 100 %. Una línea es fuerte o débil cuando se aparta de su promedio con
+  ese color más de lo que explica el azar (z de ±1,28 y al menos 5 puntos). La
+  comparación es contra su promedio **con ese color**: saca menos con negras
+  que con blancas, y eso no convierte cada línea con negras en un punto débil.
+- **Del mismo rival hay nombres escritos de varias formas.** «Angulo, Oscar»,
+  «Oscar Angulo» y «ÓSCAR ANGULO» son la misma persona (`claveNombre()`: sin
+  tildes, sin mayúsculas, palabras ordenadas). Se muestra la forma que más se
+  repite en el archivo.
+- **El plan sigue hasta el fondo toda apertura que el rival juega una de cada
+  cuatro veces o más**, no solo la más jugada. Con la más jugada nada más, a un
+  rival que abre 1.e4 y 1.d4 se le preparaba una sola: su 4.Dh4 de siempre
+  después de 1.d4 c5 (el error que Stockfish le encontró a Oscar) nunca llegaba
+  al motor.
+- **Stockfish revisa las jugadas de los planes, las suyas y las nuestras**
+  (`tareasDelMotor()`, hasta 30, primero las más jugadas). Si una jugada
+  habitual del rival pierde medio peón o más, es un error que se le puede
+  preparar y va a Oportunidades. Si una recomendación nuestra pierde un peón o
+  más, va a Amenazas: los números premian una jugada mala cuando él no la supo
+  castigar (en el primer informe sobre Oscar, la receta contra el Englund
+  recomendaba 5.Dd2, que pierde la torre). Se puede parar a la mitad, y lo
+  revisado se muestra igual.
+- **El motor es Stockfish 19 lite, solo en esta página.** Stockfish 19 (setiembre
+  de 2026) es el motor público más fuerte. Su versión completa para navegador
+  pesa 94 MB —Cloudflare no publica archivos de más de 25 MB, y nadie espera
+  esa descarga—, y las de varios hilos exigen las cabeceras de aislamiento
+  (COOP/COEP), que romperían las fuentes, los videos y el tablero de Lichess
+  incrustados. Queda la **lite de un hilo** (1,7 MB, red neuronal más chica):
+  la que su autor recomienda para casi todo. Son los archivos del paquete de
+  npm `stockfish` 19.0.0 (el de Nathan Rugg, el que usa Chess.com), sin tocar,
+  en `js/vendor/stockfish/`; el verificador los compara por su huella. No está
+  en `package.json` a propósito: el paquete trae también la versión completa y
+  pesa 200 MB, que el CI bajaría en cada corrida.
+  - **La pide la página con `data-motor`** en el `<script>` de
+    `js/shared-engine.js`. El resto del sitio sigue con Stockfish 16: el nivel del
+    bot «Juega contra mí» (`OSCAR_ELO_CALIB`) está calibrado con ese, y cambiarle
+    el motor le movería la fuerza sin que nadie se entere.
+  - **Profundidad 18.** En una computadora de escritorio tarda entre medio
+    segundo y uno por posición, y el análisis de prueba entero se revisó en 13
+    segundos. Encontró solo el 4.Dh4 plantado (+0,08 → −0,57).
+- **Todo sale en notación española** (`sanEs()`) y los porcentajes con coma.
+
+### Bajar las partidas de Lichess o Chess.com
+
+Buscar el PGN de un rival en su perfil, exportarlo y cargarlo era el paso que
+más costaba. Ahora se escribe su usuario de Lichess o de Chess.com, se elige
+cuántas partidas (las últimas 500, 2000, 5000 o todas) y la página las baja,
+elige a ese usuario como rival y analiza sola (`js/preparacion-descarga.js`).
+
+- **Directo desde el navegador**, sin pasar por el worker ni por Supabase: las
+  dos APIs son públicas, sin clave y con CORS abierto. Por eso `_headers` las
+  tiene en `connect-src` (`lichess.org` ya estaba por las transmisiones;
+  `api.chess.com` entró con esto). Sin esa línea la descarga funciona en la
+  máquina de prueba —que no manda `_headers`— y falla en producción sin
+  explicar nada: `verificar-preparacion-rivales.js` lee la política.
+- **Solo sale el nombre de usuario**, y las dos están en la lista de
+  proveedores de `privacidad.html` (ver «Las páginas legales»).
+- **Lichess** entrega todo en un solo flujo, las más nuevas primero, a unas 20
+  partidas por segundo sin cuenta: se lee de a pedazos para ir diciendo cuántas
+  van. Se piden **con relojes** (desde la etapa 1: dicen cómo usa el tiempo) y
+  sin evaluaciones ni nombre de la apertura, que el análisis no usa y hacen más
+  pesado el flujo.
+- **Chess.com** guarda las partidas por mes: se pide la lista de meses y se
+  baja uno por vez, del más nuevo al más viejo, hasta juntar las pedidas. De a
+  uno a propósito: Chess.com pide no hacer pedidos en paralelo y contesta 429.
+- **Se puede parar**, y se analiza lo que ya llegó, sin la última partida si
+  quedó a medias.
+- Un usuario que no existe, un 429 o un error del sitio se dicen en palabras
+  en la página; no van a la consola como error, porque no lo son.
+
+Lo prueba `verificar-preparacion-rivales.js`, en dos partes. Sin navegador,
+con un PGN de patrones plantados (dónde pierde, dónde gana, dónde improvisa, un
+nombre escrito de tres formas, comentarios, variantes anidadas y NAG): que se
+lean todas, que el rival sea uno solo, que el análisis encuentre lo plantado y
+que el motor marque el error sembrado. En un navegador, con un Supabase de
+mentira y un Stockfish de mentira (castiga la dama blanca en h4): sin la función
+se ve el aviso y no la herramienta; con ella se carga el archivo, se analiza, se
+ve cada parte en su orden, el motor marca 4.Dh4, se guarda el resultado sin el
+PGN, borrar pide confirmar, y un nombre con marcado queda como texto. La
+descarga se prueba con un Lichess y un Chess.com de mentira (con CORS, como los
+de verdad): qué se les pide, en qué orden, que corte en el tope y que un usuario
+que no existe se diga. La
+sección de administración la prueba `verificar-admin.js` y la tarjeta del panel
+`verificar-panel.js`.
+
+### La base de la preparación: etapa 1
+
+Se pidieron siete mejoras (cruzar con las partidas del alumno, dónde se sale de
+la teoría, cómo pierde, sus finales, un tablero para recorrer las líneas,
+mandárselo al alumno y entrenar el repertorio), más los filtros. Casi todas
+dependen de cosas que no existían, así que van por etapas, un PR cada una, y
+la primera es la base:
+
+- **El árbol por posición.** `js/preparacion-posiciones.js` saca la clave de la
+  posición después de cada jugada (la misma de `js/chess-bot.js`: colocación,
+  turno, enroques y al paso a la manera de chess.js 0.10.3). chess.js lo sabe,
+  pero tarda 365 µs por jugada porque genera todas las legales para leer cada
+  SAN: con 30.000 partidas, casi un minuto. Esto solo aplica la jugada escrita
+  —busca la pieza que llega; si hay dos y el SAN no dice cuál, descarta la
+  clavada— y tarda 0,3 µs. Se comparó contra chess.js en 29.476 posiciones al
+  azar sin una diferencia; el verificador repite 40 partidas al azar y dos de
+  verdad con lo que el azar casi no trae (una captura al paso y un caballo
+  clavado cuya jugada va sin desambiguar).
+- **Nodo y arista no son lo mismo.** Cada nodo (posición) cuenta todas las
+  partidas que pasaron por ahí, por cualquier orden; cada arista (una jugada
+  desde esa posición) cuenta las que la jugaron AHÍ. Para elegir qué jugarle se
+  usa la posición (más partidas, la misma posición); para decir «él la juega el
+  63 % de las veces», la arista. Usar el nodo para el reparto daba más del 100 %
+  cuando a la posición se llegaba por otro lado.
+- **Los filtros por ritmo y fecha**, sobre el análisis ya hecho: ritmos (los
+  que el rival tiene, con cuántas partidas cada uno) y desde cuándo (todas, el
+  último año, los últimos 2 o 5). Cambiarlos vuelve a analizar al instante, sin
+  volver a leer ni a bajar nada: las partidas se quedan en el trabajador. Con
+  menos de 30 avisa que dice poco; si no pasa ninguna, lo dice y no pinta un
+  análisis vacío. En un análisis guardado no se pueden cambiar (las partidas no
+  se guardan): la página lo dice.
+- **Más datos de cada partida**, para la etapa 2: cómo terminó (tiempo,
+  abandono, mate, tablas, ahogado, repetición, material, abandonada; «stalemate»
+  también dice «mate» y va antes), todas las jugadas y los relojes (`[%clk]` de
+  Lichess y Chess.com, en segundos por jugada). No se guardan en el análisis:
+  viven con las partidas, en el trabajador.
+- **Las cuentas, en segundo plano** (`js/preparacion-trabajador.js`, un Web
+  Worker): con miles de partidas la página se congelaba unos segundos. Si el
+  navegador no deja crear el trabajador, las mismas funciones corren en la
+  página.
+- **Una «línea», una sola copia** (`js/preparacion-lineas.js`): la notación
+  española, la evaluación escrita, la posición para el motor y **el plan en
+  PGN**, con sus ramas como variantes y en cada jugada cuánto saca él y lo que
+  dijo Stockfish. Es lo que van a usar el tablero, la tarea, la clase en vivo y
+  el entrenamiento. Por ahora se baja con «Bajar el plan con blancas (PGN)».
+- **La página en módulos**: `js/preparacion-rivales.js` (el recorrido),
+  `js/preparacion-pintar.js` (dibujar) y `js/preparacion-motor.js` (Stockfish).
+- **Los análisis guardados antes siguen abriéndose.** El resultado lleva
+  `version` (2 desde esta etapa); la página pinta lo que haya y no pide lo que
+  una versión vieja no tenía. El verificador abre uno de la versión 1.
+
+### Más allá de la apertura: etapa 2
+
+Una tarjeta nueva, «Más allá de la apertura», con lo que el rival hace después
+de la teoría (`masAllaDe()` en `js/preparacion-analisis.js`):
+
+- **Cómo terminan sus partidas**: sus derrotas y sus victorias por tiempo,
+  abandono, mate o abandonando la partida. Sale de la etiqueta `Termination`
+  (ver «La base de la preparación: etapa 1»).
+- **Cuándo pierde**: en la apertura (partidas de hasta 20 jugadas), en el medio
+  juego, o en el final si ya había entrado en uno.
+- **El reloj**, solo con las partidas que traen `[%clk]` y cuyo ritmo se conoce.
+  Todo va en proporción del tiempo inicial de cada partida, porque un archivo
+  mezcla bullet con rápidas: cuánto le queda en la jugada 20 y en la 40, cuánto
+  gasta en las primeras 15 (contra lo que gastan sus rivales en las mismas
+  partidas) y en qué parte de las partidas se queda con menos del 10 %. Son
+  medianas: una partida abandonada en la jugada 3 no mueve nada. Sin relojes, la
+  tarjeta lo dice en vez de inventar.
+- **Sus finales.** Una partida entra en un final cuando cada lado tiene 13
+  puntos de piezas o menos (sin peones) y dos piezas como mucho: torre y alfil
+  contra torre es un final; dama y torre contra dama, no. Se mira después de
+  cada captura o coronación, con `js/preparacion-posiciones.js`, y se guarda en
+  la partida **por color** (la ventaja es la del rival, y del mismo archivo se
+  puede analizar a los dos jugadores). El tipo sale de las piezas que quedan:
+  de peones, de torres, de damas, de alfiles de distinto o del mismo color, de
+  caballos, de alfil contra caballo, de piezas menores, de torre y pieza menor,
+  o con dama y otras piezas. La **conversión** mira la ventaja de material al
+  entrar en el final (2 puntos o más): cuántas ganó con ventaja y cuántas salvó
+  con desventaja.
+- **Al FODA** entra lo que se aparta de verdad, con los mismos umbrales de las
+  líneas: derrotas por tiempo (25 % o más) y la oportunidad de apretar el reloj;
+  derrotas con mate; derrotas que se deciden en la apertura (40 % o más: la
+  preparación rinde); apuros de tiempo (30 % o más); si gasta más tiempo que sus
+  rivales en la apertura (10 puntos o más); los tipos de final donde rinde menos
+  o más que su promedio, con su «busca» o «evita»; y si le cuesta convertir o se
+  defiende bien.
+
+El verificador comprueba los tipos de final con posiciones armadas a mano; el
+momento y la ventaja al entrar en un final, contra un cálculo aparte con el
+tablero de chess.js en 60 partidas al azar; y cómo pierde y el reloj con 20
+partidas de relojes y resultados conocidos, incluido lo que dice el FODA.
+
 ## Las inscripciones a torneos en línea
 
 `inscripciones.html` muestra lo que llegó por `inscripcion.html`, el formulario
@@ -1120,3 +1335,40 @@ toda la razón de que esta página esté armada distinto al resto del sitio.
 - **Si algún día hay que cambiar quién puede ver esto**, se cambia
   `soy_coordinador()` en la Academia y se cambia solo; la función no tiene
   ninguna regla propia que actualizar.
+
+## Las cifras de la portada
+
+Las cuatro cifras de `index.html` (estudiantes, escuelas y colegios, provincias
+y cantones) salen de datos reales. Antes eran números escritos a mano («+500
+estudiantes», «+120 artículos» cuando había 7) y no los respaldaba nada.
+
+- **Estudiantes es una suma**: las cuentas de alumno de la Academia más las
+  personas inscritas en los torneos en línea. Centros, provincias y cantones
+  salen solo de los torneos, que es donde se pide el colegio. Las dos fuentes
+  no se cruzan (la Academia no guarda cédula), así que alguien que está en las
+  dos se cuenta dos veces. Así lo pidió el dueño del sitio.
+- **Cada base tiene su función y ninguna tabla se abre.**
+  `cifras_torneos()` (base de Colegios) y `cifras_academia()` (Academia) son
+  `SECURITY DEFINER` y **devuelven totales y nada más**: ni una fila, ni un
+  nombre, ni cuántos hay por colegio. Por eso, y solo por eso, tienen execute
+  para `anon`, igual que `formulario_publico()`: la portada se abre sin cuenta.
+  Comprobado impersonando `anon` en SQL: las funciones contestan y
+  `select … from inscripciones` sigue dando error de permisos.
+- **Quién cuenta.** En los torneos, las personas por cédula (solo los
+  dígitos), no por fila: quien se inscribe dos veces es un estudiante. En la
+  Academia, `role = 'alumno'` menos las cuentas de prueba, que son las que se
+  llaman «Prueba…» (Prueba, Prueba 2, Prueba Gratis): las arma el equipo para
+  probar. **Una cuenta de prueba nueva tiene que llamarse así** o entra a la
+  cifra.
+- **Se actualizan solas**: `js/cifras-portada.js` las pide en cada visita, así
+  que un inscrito o una cuenta nueva aparece en la siguiente carga. No hay
+  Realtime a propósito: suscribirse exigiría que `anon` pudiera leer las tablas.
+  Las llamadas van con `fetch` a PostgREST y no con el cliente de Supabase:
+  cargar la librería en la portada solo para esto pesaría más que la portada.
+- **El HTML trae escritas las del día en que se armó la sección.** Si una
+  consulta falla, quedan esas. Estudiantes solo se reemplaza **si contestaron
+  las dos bases**: con una sola, la suma saldría por debajo de la real. Un cero
+  o una respuesta rara no pisa la cifra escrita.
+- `verificar-cifras-portada.js` lo comprueba con las dos bases dobladas: que se
+  pidan las funciones y nunca las tablas, que estudiantes sea la suma, que con
+  una base caída no cambie y que con todo caído queden las del HTML.

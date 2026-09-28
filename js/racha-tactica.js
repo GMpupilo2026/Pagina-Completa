@@ -152,20 +152,30 @@
             const mv = CuadroComandos.jugadaPedida(copia, texto);
             if (!mv) { api.decir('"' + texto + '" no es una jugada legal en esta posición. Revísala e inténtalo de nuevo.'); return; }
             api.limpiar().decir("");
-            attemptMove(mv.from, mv.to);
+            attemptMove(mv.from, mv.to, mv.promotion);
         }
 
-        function attemptMove(from, to) {
-            const move = game.move({ from, to, promotion: "q" });
+        function attemptMove(from, to, promotion) {
+            // Si el peón corona y todavía no se dijo en qué, se pregunta (js/coronacion.js).
+            if (!promotion && window.Coronacion && Coronacion.hayQueElegir(game, from, to)) {
+                selected = null;
+                renderBoard();
+                Coronacion.pedir(game.turn(), (elegida) => {
+                    if (elegida && running && !resultLocked) attemptMove(from, to, elegida);
+                });
+                return;
+            }
+            const move = game.move({ from, to, promotion });
             selected = null;
             if (!move) { renderBoard(); return; } // no debería pasar: ya se validó como legal
             // El UCI de la solución es siempre "origen+destino" (+ promoción, en los 2
-            // puzzles que coronan) — alcanza con los primeros 4 caracteres porque el
-            // tablero solo permite mover una pieza legal de esa casilla a esa otra.
+            // puzzles que coronan): el origen y el destino tienen que coincidir, y si
+            // la solución corona, también la pieza que eligió el alumno.
             // Además, en los puzzles de mate hay unas 140 posiciones con más de una
             // jugada que da jaque mate: si el ejercicio es un mate y la jugada elegida
             // también da mate (aunque no sea la guardada), también cuenta como acierto.
-            const esLaJugadaGuardada = (from + to) === currentSolution.slice(0, 4);
+            const esLaJugadaGuardada = (from + to) === currentSolution.slice(0, 4) &&
+                (currentSolution.length < 5 || currentSolution[4] === move.promotion);
             const esOtroMateValido = !esLaJugadaGuardada && currentSan.endsWith("#") && game.in_checkmate();
             const isCorrect = esLaJugadaGuardada || esOtroMateValido;
             if (isCorrect) onCorrect(); else onFail("wrong");
@@ -237,13 +247,31 @@
             failTimeoutId = setTimeout(() => onFail("timeout"), TIME_LIMIT_MS);
         }
 
-        // ---------- Elegir y cargar un ejercicio al azar ----------
+        // ---------- Elegir el ejercicio: más difícil cuanto más larga la racha ----------
+        // Antes se sorteaba entre los 4446 sin mirar el rating (de 399 a 1791): a
+        // uno le tocaba un 1791 de entrada y a otro un 399 en el ejercicio treinta,
+        // con el mismo reloj, y el récord del grupo comparaba rachas que no se
+        // parecían. Ahora cada racha arranca fácil y sube: el ejercicio número n
+        // se sortea entre los que están cerca de ratingDeLaRacha(n). Así una racha
+        // de 20 vale lo mismo para todos. Dentro de una racha no se repite ninguno.
+        const RATING_INICIAL = 500, SUBE_POR_ACIERTO = 60, VENTANA = 100, MINIMO_PARA_SORTEAR = 8;
+        let ordenados = null;          // índices del banco, de menor a mayor rating
+        let vistosEnLaRacha = new Set();
+        function ratingDeLaRacha(n) { return RATING_INICIAL + SUBE_POR_ACIERTO * n; }
         function pickRandomPuzzle() {
             const pool = window.PUZZLE_RUSH_DATA || [];
-            let idx;
-            do {
-                idx = Math.floor(Math.random() * pool.length);
-            } while (pool.length > 1 && idx === lastIndex);
+            if (!ordenados) ordenados = pool.map((_, i) => i).sort((a, b) => (pool[a][3] || 0) - (pool[b][3] || 0));
+            const meta = ratingDeLaRacha(streak);
+            let ventana = VENTANA, candidatos = [];
+            // Se abre la ventana hasta tener de dónde sortear (arriba de 1700 hay pocos).
+            while (candidatos.length < MINIMO_PARA_SORTEAR && ventana < 3000) {
+                candidatos = ordenados.filter((i) => !vistosEnLaRacha.has(i) && Math.abs((pool[i][3] || 0) - meta) <= ventana);
+                ventana *= 2;
+            }
+            if (!candidatos.length) candidatos = ordenados.filter((i) => !vistosEnLaRacha.has(i));
+            if (!candidatos.length) { vistosEnLaRacha = new Set(); candidatos = ordenados.slice(); }
+            const idx = candidatos[Math.floor(Math.random() * candidatos.length)];
+            vistosEnLaRacha.add(idx);
             lastIndex = idx;
             return pool[idx];
         }
@@ -266,6 +294,7 @@
                 return;
             }
             streak = 0;
+            vistosEnLaRacha = new Set();
             updateStreakDisplay();
             setResultText("");
             document.getElementById("start-btn").classList.add("hidden");

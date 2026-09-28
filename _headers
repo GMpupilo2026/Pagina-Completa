@@ -11,6 +11,10 @@
 # transcribe ahí mismo. Si algún día se quita esa función, estos tres se
 # quitan también.
 #
+# lichess.org y api.chess.com están en connect-src por la preparación de
+# rivales (preparacion-rivales.html): baja las partidas públicas de un usuario
+# directo desde el navegador. Solo se les manda el nombre de usuario.
+#
 # El proyecto de la Academia está en img-src por los logos de las academias
 # (bucket público academia-marca): se ven en el encabezado y en los
 # formularios públicos. Es el mismo origen que ya está en connect-src.
@@ -22,7 +26,7 @@
 # verificar-csp.js falla hasta que se corre ese script.
 #
 /*
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-r2M0L8lRXIwjTnGxyAl9KAsnqTxGnnN5EB9HoLxbWas=' 'sha256-1fkEptF17HtO6UkV8wojrNj4DU4AO8RMBgBZnA96hyA=' 'sha256-xSZSNs7SoW2z079LAKuoPTu3HSvpR9fVjN0be2TWovk=' 'sha256-labAcQayhsJn4WIPogmjgRK06gK3PV8e2b6P44Qt844=' 'unsafe-eval' 'wasm-unsafe-eval' https://cdn.jsdelivr.net https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://bgtijpimpcokxatxxbki.supabase.co; connect-src 'self' https://cdn.jsdelivr.net https://huggingface.co https://*.huggingface.co https://*.hf.co https://bgtijpimpcokxatxxbki.supabase.co wss://bgtijpimpcokxatxxbki.supabase.co https://prcfbzvshnusisczlpxl.supabase.co wss://prcfbzvshnusisczlpxl.supabase.co https://ajedrez-inscripciones.gmpupilo.workers.dev https://api.hacienda.go.cr https://lichess.org; frame-src https://challenges.cloudflare.com https://lichess.org https://www.youtube-nocookie.com https://player.twitch.tv; worker-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-r2M0L8lRXIwjTnGxyAl9KAsnqTxGnnN5EB9HoLxbWas=' 'sha256-1fkEptF17HtO6UkV8wojrNj4DU4AO8RMBgBZnA96hyA=' 'sha256-xSZSNs7SoW2z079LAKuoPTu3HSvpR9fVjN0be2TWovk=' 'sha256-labAcQayhsJn4WIPogmjgRK06gK3PV8e2b6P44Qt844=' 'unsafe-eval' 'wasm-unsafe-eval' https://cdn.jsdelivr.net https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://bgtijpimpcokxatxxbki.supabase.co; connect-src 'self' https://cdn.jsdelivr.net https://huggingface.co https://*.huggingface.co https://*.hf.co https://bgtijpimpcokxatxxbki.supabase.co wss://bgtijpimpcokxatxxbki.supabase.co https://prcfbzvshnusisczlpxl.supabase.co wss://prcfbzvshnusisczlpxl.supabase.co https://ajedrez-inscripciones.gmpupilo.workers.dev https://api.hacienda.go.cr https://lichess.org https://api.chess.com; frame-src https://challenges.cloudflare.com https://lichess.org https://www.youtube-nocookie.com https://player.twitch.tv; worker-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin

@@ -234,25 +234,8 @@ function setSetStars(id, stars){
   saveProgress(p);
 }
 
-function getStreak(){
-  try{ return parseInt(localStorage.getItem('entreno_practicas_streak') || '0', 10) || 0; }catch(e){ return 0; }
-}
-function getBestStreak(){
-  try{ return parseInt(localStorage.getItem('entreno_practicas_best') || '0', 10) || 0; }catch(e){ return 0; }
-}
-function setStreak(n){
-  localStorage.setItem('entreno_practicas_streak', String(n));
-  const best = Math.max(getBestStreak(), n);
-  localStorage.setItem('entreno_practicas_best', String(best));
-  document.getElementById('streak-count').textContent = n;
-  document.getElementById('streak-best').textContent = best;
-}
-function bumpStreak(){
-  setStreak(getStreak() + 1);
-  const bar = document.getElementById('streak-bar');
-  bar.classList.remove('pulse'); void bar.offsetWidth; bar.classList.add('pulse');
-}
-function resetStreak(){ setStreak(0); }
+// La racha (js/ejercicio-tablero.js): la misma en todas las páginas de ejercicios.
+const { getStreak, getBestStreak, setStreak, bumpStreak, resetStreak } = EjercicioTablero.racha('entreno_practicas');
 
 let currentCategory = 'mates';
 let currentSet = null;
@@ -261,6 +244,7 @@ let game = null;
 let selectedSquare = null;
 let roundLocked = false;
 let hintsUsedThisRound = 0;
+let errorsThisRound = 0; // jugadas equivocadas en esta posición: también bajan las estrellas
 let roundStartTime = 0;
 let setStarsEarned = [];
 let setStartTime = 0;
@@ -394,6 +378,7 @@ function loadRound(){
   selectedSquare = null;
   roundLocked = false;
   hintsUsedThisRound = 0;
+  errorsThisRound = 0;
   roundStartTime = Date.now();
   document.getElementById('hint-btn').disabled = false;
   document.getElementById('hint-btn').textContent = '💡 Pista';
@@ -427,8 +412,20 @@ function onSquareClick(square, btn){
     } else { selectedSquare = null; drawBoard(); }
     return;
   }
-  const moveResult = game.move({ from: selectedSquare, to: square, promotion: 'q' });
+  const from = selectedSquare;
   selectedSquare = null;
+  if(window.Coronacion && Coronacion.hayQueElegir(game, from, square)){
+    // El peón corona: la pieza la elige el alumno (js/coronacion.js).
+    drawBoard();
+    Coronacion.pedir(game.turn(), (elegida) => {
+      if(!elegida) return;
+      const r = game.move({ from, to: square, promotion: elegida });
+      drawBoard();
+      if(r) handleMoveResult(r);
+    });
+    return;
+  }
+  const moveResult = game.move({ from, to: square });
   drawBoard();
   if(!moveResult) return;
   handleMoveResult(moveResult);
@@ -451,25 +448,30 @@ if(typeof enableBoardDrag !== 'undefined'){
 
 function handleMoveResult(moveResult){
   const round = currentSet.rounds[currentRoundIndex];
-  const correct = moveResult.from === round.from && moveResult.to === round.to;
+  // Cualquier jugada que dé mate también es correcta: la serie guarda UNA
+  // jugada, y en las de mate a veces hay dos (7k/8/6K1/…/7Q: Dh7# y Da8#).
+  const correct = (moveResult.from === round.from && moveResult.to === round.to) || game.in_checkmate();
   if(correct){
     finishRound();
   } else {
+    errorsThisRound++;
     resetStreak();
     setStatus(`${moveResult.san} es legal, pero no es la jugada que buscamos.`, 'bad');
     setTimeout(() => { game = new Chess(round.fen); drawBoard(); setStatus('Inténtalo de nuevo.'); }, 900);
   }
 }
 
-function finishRound(){
+/* conSolucion: la jugada la hizo el botón "Ver solución", no el alumno. Eso no
+   suma a la racha (antes la dejaba en 1) ni se festeja como "¡Correcto!". */
+function finishRound(conSolucion){
   roundLocked = true;
   document.getElementById('hint-btn').disabled = true;
   const seconds = ((Date.now() - roundStartTime) / 1000).toFixed(1);
-  const stars = hintsUsedThisRound >= 2 ? 1 : (hintsUsedThisRound === 1 ? 2 : 3);
+  const stars = EntrenoProgress.estrellasDeLaRonda(hintsUsedThisRound, errorsThisRound);
   setStarsEarned.push(stars);
-  bumpStreak();
-  const fast = seconds < 4 && hintsUsedThisRound === 0;
-  setStatus(`✅ ¡Correcto!${fast ? ' ⚡ ¡Relámpago!' : ''} (${seconds}s)`, 'ok');
+  if(!conSolucion) bumpStreak();
+  const fast = !conSolucion && seconds < 4 && hintsUsedThisRound === 0 && errorsThisRound === 0;
+  if(!conSolucion) setStatus(`✅ ¡Correcto!${fast ? ' ⚡ ¡Relámpago!' : ''} (${seconds}s)`, 'ok');
   setTimeout(() => {
     if(currentRoundIndex < currentSet.rounds.length - 1){
       currentRoundIndex++;
@@ -488,10 +490,10 @@ function finishSet(){
   setSetStars(currentSet.id, stars);
   document.getElementById('celebration-stars').innerHTML = starString(stars);
   const totalSeconds = ((Date.now() - setStartTime) / 1000).toFixed(0);
-  const noHints = setStarsEarned.every(s => s === 3);
+  const limpia = setStarsEarned.every(s => s === 3);
   document.getElementById('celebration-stats').textContent =
     `${currentSet.rounds.length} de ${currentSet.rounds.length} posiciones en ${totalSeconds}s` +
-    (noHints ? ' — ¡sin usar ninguna pista!' : '');
+    (limpia ? ' — ¡sin pistas ni errores!' : '');
   const titleText = stars === 3 ? '¡Serie perfecta! 🏆' : (stars === 2 ? '¡Serie completada! 🎉' : 'Serie completada — ¡a repetirla para subir de estrellas!');
   document.getElementById('celebration-title').textContent = titleText;
   EntrenoProgress.log('practicar', { set_id: currentSet.id, category: currentSet.cat, title: currentSet.title, stars, seconds: Number(totalSeconds) });
@@ -521,11 +523,11 @@ function giveHint(){
     document.getElementById('hint-btn').textContent = '💡 Ver solución';
   } else {
     resetStreak();
-    const moveResult = game.move({ from: round.from, to: round.to, promotion: 'q' });
+    const moveResult = game.move({ from: round.from, to: round.to, promotion: round.promotion || 'q' });
     drawBoard();
     renderPositionReadout();
     setStatus(`Solución: ${moveResult ? moveResult.san : round.from + '-' + round.to}.`);
-    finishRound();
+    finishRound(true);
   }
 }
 document.getElementById('hint-btn').addEventListener('click', giveHint);

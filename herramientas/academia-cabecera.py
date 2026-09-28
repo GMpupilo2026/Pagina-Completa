@@ -58,7 +58,7 @@ PAGINAS = [
     "ciegos.html", "clases.html", "cobros.html", "concentracion.html",
     "configuracion.html", "crazyhouse.html", "cuatro-jugadores.html",
     "duelo.html", "estandar.html", "formularios.html", "ilumina-tablero.html",
-    "informes.html", "inscripciones.html", "juegos.html",
+    "informes.html", "inscripciones.html", "juegos.html", "competir.html",
     "lector-planilla.html", "logros.html", "niebla.html", "partidas.html",
     "examen.html", "examenes.html",
     "planes.html", "racha-tactica.html", "reportes.html", "sesion.html",
@@ -67,6 +67,7 @@ PAGINAS = [
     "novedades.html",
     "tienda.html", "accesos.html",
     "encuesta-profesor.html", "satisfaccion.html", "encuestas-curso.html",
+    "preparacion-rivales.html",
     "torneo.html", "torneos.html", "variante.html",
     "entreno/4x4.html", "entreno/aprender.html", "entreno/coordenadas.html",
     "entreno/desafios.html", "entreno/estudio.html", "entreno/index.html",
@@ -183,7 +184,7 @@ AYUDA_GUIA = {
     "logros.html": "entrenamiento", "racha-tactica.html": "entrenamiento",
     "concentracion.html": "entrenamiento", "ilumina-tablero.html": "entrenamiento",
     "arbitraje.html": "evaluaciones",
-    "juegos.html": "juegos", "torneos.html": "juegos", "torneo.html": "juegos",
+    "juegos.html": "juegos", "competir.html": "juegos", "torneos.html": "juegos", "torneo.html": "juegos",
     "estandar.html": "juegos", "niebla.html": "juegos", "crazyhouse.html": "juegos",
     "cartas.html": "juegos", "duelo.html": "juegos", "cuatro-jugadores.html": "juegos",
     "variante.html": "juegos",
@@ -268,7 +269,7 @@ def cabecera(ruta):
         '<nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia">'
         '<div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2">'
         f'<a id="marca-enlace" href="{arriba}clases.html" class="flex items-center gap-2 text-white min-w-0">'
-        '<span class="text-3xl" aria-hidden="true">♟️</span>'
+        '<img src="/img/logo-marca.png" alt="" width="78" height="48" class="h-10 md:h-12 w-auto shrink-0">'
         '<span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span>'
         '<span class="sr-only"> — panel de la Academia</span>'
         '</a>'
@@ -544,6 +545,7 @@ NOMBRE_Y_PADRE = {
     "formularios.html": ("Formularios de inscripción", "clases.html"),
     "informes.html": ("Informes", "clases.html"),
     "juegos.html": ("Juegos", "clases.html"),
+    "competir.html": ("Competir", "clases.html"),
     "lector-planilla.html": ("Lector de planilla", "clases.html"),
     "logros.html": ("Logros", "clases.html"),
     "partidas.html": ("Archivos", "clases.html"),
@@ -565,6 +567,7 @@ NOMBRE_Y_PADRE = {
     "encuesta-profesor.html": ("¿Cómo van tus clases?", "clases.html"),
     "satisfaccion.html": ("Satisfacción con los profesores", "clases.html"),
     "encuestas-curso.html": ("Encuestas anónimas de cursos", "clases.html"),
+    "preparacion-rivales.html": ("Preparación de rivales", "clases.html"),
     "torneos.html": ("Torneos", "clases.html"),
     "torneo.html": ("Torneo", "torneos.html"),
     "cartas.html": ("Ajedrez de Cartas", "juegos.html"),

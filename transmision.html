@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/favicon.svg">
+    <title>Sala de transmisión — Ajedrez Integral</title>
+    <meta name="description" content="La sala de cine de Ajedrez Integral: las partidas de los torneos transmitidos, en vivo en la pantalla grande, y la pizarra con las posiciones.">
+    <link rel="canonical" href="https://ajedrez-integral.com/transmision.html">
+    <!-- Para cuando alguien pega el enlace en WhatsApp, que es por donde se comparte esto. -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Ajedrez Integral">
+    <meta property="og:locale" content="es_CR">
+    <meta property="og:title" content="Sala de transmisión — Ajedrez Integral">
+    <meta property="og:description" content="La sala de cine de Ajedrez Integral: las partidas de los torneos transmitidos, en vivo en la pantalla grande, y la pizarra con las posiciones.">
+    <meta property="og:url" content="https://ajedrez-integral.com/transmision.html">
+    <meta property="og:image" content="https://ajedrez-integral.com/img/og-ajedrez-integral.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Ajedrez Integral — clases de ajedrez en vivo, no solo videos. ajedrez-integral.com">
+    <meta name="twitter:card" content="summary_large_image">
+    <!-- Tailwind compilado: lo genera herramientas/css-construir.js.
+         Antes venía del CDN, que baja ~400 KB de JavaScript y compila el CSS
+         dentro del navegador en cada visita. -->
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link id="fuentes" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@700&display=swap" rel="stylesheet" media="print"><!-- fuentes: inicio --><script>(function(l){if(!l)return;function a(){l.media='all';}if(l.sheet)a();else l.addEventListener('load',a);})(document.getElementById('fuentes'));</script><!-- fuentes: fin -->
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- oscuro: inicio --><script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');}catch(e){}})();</script><!-- oscuro: fin -->
+    <script src="js/adaptive-mode.js"></script>
+    <!-- tablero: inicio -->
+    <script src="js/board-color-themes.js"></script>
+    <script src="js/piece-color-themes.js"></script>
+    <script src="js/piece-style-themes.js"></script>
+    <!-- tablero: fin -->
+
+
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/pwa.js" defer></script><!-- app: fin --><!-- tema: inicio --><script>(function(){try{var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');var f=localStorage.getItem('plataforma_tema_fuente_v1');if(!f||!/^[A-Za-z0-9 ]{2,32}$/.test(f))return;var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family='+f.replace(/ /g,'+')+':wght@400;500;600;700&display=swap';document.head.appendChild(l);}catch(e){}})();</script><!-- tema: fin --></head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg">
+        <div class="hidden lg:block bg-brand-900 border-b border-brand-700/60">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-8 flex items-center justify-end gap-5 text-xs text-brand-300">
+                <a href="te-reto.html" class="hover:text-accent-400">🏆 ¡Te reto!</a>
+                <span class="text-brand-700" aria-hidden="true">&middot;</span>
+                <a href="tv.html" class="hover:text-accent-400">TV en vivo</a>
+                <span class="text-brand-700" aria-hidden="true">&middot;</span>
+                <a href="torneos-en-vivo.html" class="hover:text-accent-400 text-accent-400">Torneos</a>
+            </div>
+        </div>
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
+            <div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2">
+                <a href="index.html" class="flex items-center gap-2 text-white"><img src="/img/logo-marca.png" alt="" width="78" height="48" class="h-10 md:h-12 w-auto shrink-0"><span class="font-serif text-xl md:text-2xl font-bold">Ajedrez <span class="text-accent-400">Integral</span></span></a>
+                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
+                    <li><a href="index.html" class="hover:text-accent-400">Inicio</a></li>
+                    <li><a href="cursos.html" class="hover:text-accent-400">Cursos</a></li>
+                    <li><a href="articulos.html" class="hover:text-accent-400">Artículos</a></li>
+                    <li><a href="tablero.html" class="hover:text-accent-400">Jugar contra el profe</a></li>
+                    <li><a href="clases.html" class="hover:text-accent-400">Academia</a></li>
+                    <li><a href="precios.html" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg">Inscríbete</a></li>
+                </ul>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                        <span id="theme-icon" aria-hidden="true">☀️</span>
+                    </button>
+                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-menu">
+                    <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                    <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
+            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
+                <li><a href="index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
+                <li><a href="cursos.html" class="block py-2 hover:text-accent-400">Cursos</a></li>
+                <li><a href="articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
+                <li><a href="tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
+                <li><a href="clases.html" class="block py-2 hover:text-accent-400">Academia</a></li>
+                <li><a href="te-reto.html" class="block py-2 hover:text-accent-400">🏆 ¡Te reto!</a></li>
+                <li><a href="tv.html" class="block py-2 hover:text-accent-400">TV en vivo</a></li>
+                <li><a href="torneos-en-vivo.html" class="block py-2 text-accent-400">Torneos</a></li>
+                <li><a href="precios.html" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">Inscríbete</a></li>
+            </ul>
+        </div>
+    </header>
+
+    <main id="main-content" class="cine-sala text-brand-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-16">
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                <p class="text-sm"><a href="torneos-en-vivo.html" class="text-brand-200 underline underline-offset-2 hover:text-accent-400 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">← Todos los torneos</a></p>
+                <!-- El ambiente de la sala (js/escenarios-sala.js): cine, teatro,
+                     estadio… Lo que elige quien mira se queda en su navegador. -->
+                <div class="flex items-center gap-2 text-sm">
+                    <label for="cine-ambiente" class="text-brand-200">Ambiente</label>
+                    <select id="cine-ambiente" class="cine-ambiente rounded-lg px-3 py-1.5 text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
+                </div>
+            </div>
+
+            <!-- La marquesina: el nombre del torneo entre bombillos, como la entrada
+                 de un cine. Los bombillos son adorno (CSS) y se quedan quietos para
+                 quien pidió menos movimiento. -->
+            <header class="cine-marquesina text-center px-4 py-6 sm:py-8 mb-6">
+                <p id="cine-antetitulo" class="text-accent-400 font-semibold uppercase tracking-widest text-xs sm:text-sm">En cartelera · transmisión en vivo</p>
+                <h1 id="cine-titulo" class="font-serif text-2xl sm:text-4xl font-bold text-white mt-2">Sala de transmisión</h1>
+                <p id="cine-sub" class="text-brand-200 text-sm mt-2"></p>
+            </header>
+
+            <div id="loading" role="status" class="min-h-[50vh] flex flex-col items-center justify-center gap-3 px-4 text-center text-brand-200"><span aria-hidden="true" class="w-8 h-8 rounded-full border-4 border-brand-700 border-t-accent-500 animate-spin motion-reduce:animate-none"></span><p class="text-sm">Encendiendo el proyector…</p></div>
+
+            <div id="cine-error" class="hidden max-w-xl mx-auto text-center bg-brand-900 border border-brand-700 rounded-2xl p-6">
+                <p class="text-4xl mb-3" aria-hidden="true">🎞️</p>
+                <p id="cine-error-texto" class="text-brand-100"></p>
+                <a id="cine-error-enlace" href="#" target="_blank" rel="noopener" class="inline-block mt-4 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-900">Ver la transmisión en Lichess<span class="sr-only"> (se abre en otra pestaña)</span> ↗</a>
+            </div>
+
+            <div id="cine-contenido" class="hidden">
+                <!-- Las funciones: una por ronda. -->
+                <nav aria-label="Rondas del torneo" class="mb-6">
+                    <ul id="cine-rondas" class="flex flex-wrap justify-center gap-2"></ul>
+                </nav>
+
+                <div class="grid lg:grid-cols-[minmax(0,1fr)_22rem] gap-8 items-start">
+                    <!-- La pantalla grande, entre los dos telones. -->
+                    <section aria-labelledby="cine-pantalla-titulo">
+                        <h2 id="cine-pantalla-titulo" class="sr-only">Partida en la pantalla grande</h2>
+                        <div class="cine-escenario">
+                            <div class="cine-telon cine-telon-izq" aria-hidden="true"></div>
+                            <div class="cine-pantalla">
+                                <div class="cine-jugador" id="cine-negras"></div>
+                                <div id="cine-tablero-marco" class="cine-tablero-marco">
+                                    <div id="cine-tablero" class="cine-tablero" role="img"></div>
+                                </div>
+                                <div class="cine-jugador" id="cine-blancas"></div>
+                            </div>
+                            <div class="cine-telon cine-telon-der" aria-hidden="true"></div>
+                        </div>
+                        <p id="cine-detalle" class="text-center text-brand-200 text-sm mt-4"></p>
+                        <p id="cine-posicion" class="sr-only"></p>
+                        <p id="cine-sin-partidas" class="hidden text-center text-brand-200 mt-4"></p>
+
+                        <!-- Las demás partidas de la ronda: se elige cuál pasa a la pantalla grande. -->
+                        <h3 class="font-serif text-lg font-bold text-white mt-10 mb-3 text-center"><span aria-hidden="true">🎬</span> Todas las partidas de la ronda</h3>
+                        <ul id="cine-cartelera" class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3"></ul>
+                    </section>
+
+                    <div class="space-y-6">
+                    <!-- El comentarista en video (YouTube o Twitch), si la sala tiene uno. -->
+                    <section id="cine-comentarista" class="hidden cine-comentarista" aria-labelledby="cine-comentarista-titulo">
+                        <h2 id="cine-comentarista-titulo" class="font-serif text-lg font-bold text-white mb-3 flex items-center justify-between gap-2">
+                            <span>Comentarista</span>
+                            <span class="cine-envivo text-accent-400 font-sans">en vivo</span>
+                        </h2>
+                        <div id="cine-comentarista-video" class="aspect-video w-full bg-black rounded-lg overflow-hidden"></div>
+                    </section>
+
+                    <!-- La pizarra con las posiciones. -->
+                    <section aria-labelledby="pizarra-titulo" class="pizarra">
+                        <h2 id="pizarra-titulo" class="font-serif text-xl font-bold text-center mb-1">Pizarra de posiciones</h2>
+                        <p id="pizarra-nota" class="pizarra-tenue text-xs text-center mb-4"></p>
+                        <!-- Con pizarras de chess-results (femenino, masculino…), una pestaña por cada una. -->
+                        <div id="pizarra-pestanas" class="hidden flex flex-wrap justify-center gap-2 mb-4" role="group" aria-label="Qué tabla de posiciones ver"></div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <caption id="pizarra-leyenda" class="sr-only">Posiciones del torneo: puesto, jugador, puntos y partidas jugadas</caption>
+                                <thead>
+                                    <tr class="pizarra-linea text-left">
+                                        <th scope="col" class="py-2 pr-2 font-semibold">#</th>
+                                        <th scope="col" class="py-2 pr-2 font-semibold">Jugador</th>
+                                        <th scope="col" class="py-2 pr-2 font-semibold text-right">Pts</th>
+                                        <th id="pizarra-col4" scope="col" class="py-2 font-semibold text-right"><abbr title="Partidas jugadas">PJ</abbr></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pizarra-cuerpo"></tbody>
+                            </table>
+                        </div>
+                        <p id="pizarra-vacia" class="hidden text-center text-sm mt-3">Todavía no terminó ninguna partida: la pizarra se llena con el primer resultado.</p>
+                        <p id="pizarra-fuente" class="hidden pizarra-tenue text-xs text-center mt-4"></p>
+                    </section>
+                    </div>
+                </div>
+
+                <!-- La quiniela de resultados, si administración la encendió en esta
+                     sala (js/quiniela.js; los datos, en la Edge Function quiniela). -->
+                <section id="quiniela" class="hidden mt-14" aria-labelledby="quiniela-titulo">
+                    <div class="text-center mb-6">
+                        <p class="text-accent-400 font-semibold uppercase tracking-widest text-xs">Juega con nosotros</p>
+                        <h2 id="quiniela-titulo" class="font-serif text-2xl sm:text-3xl font-bold text-white mt-1"><span aria-hidden="true">🎯 </span>Quiniela de resultados</h2>
+                        <p class="text-brand-200 text-sm mt-2 max-w-2xl mx-auto">Pronostica cómo termina cada partida antes de que empiece su ronda. Cada acierto suma un punto en la tabla.</p>
+                    </div>
+                    <div class="grid lg:grid-cols-[minmax(0,1fr)_22rem] gap-8 items-start">
+                        <div>
+                            <form id="quiniela-unirse" class="hidden cine-comentarista p-5 sm:p-6" novalidate aria-labelledby="quiniela-unirse-titulo">
+                                <h3 id="quiniela-unirse-titulo" class="font-serif text-lg font-bold text-white mb-1">Anótate para participar</h3>
+                                <p class="text-brand-200 text-sm mb-4">Solo tu nombre y tu correo. En la tabla se ve tu nombre; el correo no se publica y sirve para avisarte si ganas.</p>
+                                <div class="grid sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label for="quiniela-nombre" class="block text-xs font-semibold text-brand-200 uppercase tracking-wide mb-1">Nombre</label>
+                                        <input id="quiniela-nombre" type="text" maxlength="60" autocomplete="name" class="w-full px-3 py-2 rounded-lg bg-brand-950 border border-brand-700 text-white text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                                    </div>
+                                    <div>
+                                        <label for="quiniela-correo" class="block text-xs font-semibold text-brand-200 uppercase tracking-wide mb-1">Correo</label>
+                                        <input id="quiniela-correo" type="email" maxlength="200" autocomplete="email" inputmode="email" class="w-full px-3 py-2 rounded-lg bg-brand-950 border border-brand-700 text-white text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                                    </div>
+                                </div>
+                                <div class="flex items-start gap-2 mt-4">
+                                    <input type="checkbox" id="quiniela-acepto" class="mt-1 h-4 w-4 shrink-0 rounded border-brand-500 text-accent-500 focus:ring-accent-400">
+                                    <label for="quiniela-acepto" class="text-xs text-brand-200">Acepto que Ajedrez Integral guarde mi nombre, mi correo y mis pronósticos para esta quiniela, como dice la <a href="privacidad.html" target="_blank" rel="noopener" class="underline font-semibold text-accent-400 hover:text-white">Política de privacidad<span class="sr-only"> (se abre en otra pestaña)</span></a>.</label>
+                                </div>
+                                <button type="submit" id="quiniela-entrar" class="mt-4 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-950">Entrar a la quiniela</button>
+                                <p id="quiniela-unirse-msg" role="status" class="text-sm mt-3 text-brand-100"></p>
+                            </form>
+                            <div id="quiniela-mia" class="hidden">
+                                <p id="quiniela-quien" class="text-brand-100 text-sm mb-4"></p>
+                                <div id="quiniela-rondas" class="space-y-6"></div>
+                                <p id="quiniela-msg" role="status" class="text-sm mt-4 text-brand-100"></p>
+                            </div>
+                            <p id="quiniela-cargando" class="text-brand-200 text-sm">Cargando la quiniela…</p>
+                        </div>
+                        <section class="pizarra" aria-labelledby="quiniela-tabla-titulo">
+                            <h3 id="quiniela-tabla-titulo" class="font-serif text-xl font-bold text-center mb-1">Tabla de aciertos</h3>
+                            <p class="pizarra-tenue text-xs text-center mb-4">1 punto por acierto · con los mismos puntos se comparte el puesto</p>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-sm">
+                                    <caption class="sr-only">Tabla de aciertos de la quiniela: puesto, nombre, aciertos y partidas ya resueltas de sus pronósticos</caption>
+                                    <thead>
+                                        <tr class="pizarra-linea text-left">
+                                            <th scope="col" class="py-2 pr-2 font-semibold">#</th>
+                                            <th scope="col" class="py-2 pr-2 font-semibold">Nombre</th>
+                                            <th scope="col" class="py-2 pr-2 font-semibold text-right">Aciertos</th>
+                                            <th scope="col" class="py-2 font-semibold text-right"><abbr title="Pronósticos de partidas que ya terminaron">De</abbr></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="quiniela-tabla"></tbody>
+                                </table>
+                            </div>
+                            <p id="quiniela-tabla-vacia" class="hidden text-center text-sm mt-3">Todavía no se anotó nadie. ¡Sé la primera persona!</p>
+                        </section>
+                    </div>
+                </section>
+
+                <p class="text-center text-brand-200 text-xs mt-10"><span id="cine-actualizado"></span> Datos de <a id="cine-lichess" href="#" target="_blank" rel="noopener" class="underline underline-offset-2 hover:text-accent-400 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">la transmisión en Lichess<span class="sr-only"> (se abre en otra pestaña)</span></a>.</p>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-brand-900 text-brand-300 pt-16 pb-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-8 mb-12">
+                <div><a href="index.html" class="flex items-center gap-2 text-white mb-4"><img src="/img/logo-marca.png" alt="" width="78" height="48" class="h-9 w-auto shrink-0"><span class="font-serif text-lg font-bold">Ajedrez Integral</span></a><p class="text-sm text-brand-300">Plataforma educativa de ajedrez para escuelas, colegios y familias. Aprende, practica y compite.</p></div>
+                <div><h3 class="text-white font-semibold mb-4">Navegación</h3><ul class="space-y-2 text-sm"><li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li><li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li><li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li><li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li><li><a href="clases.html" class="hover:text-accent-400 transition-colors">Academia</a></li><li><a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a></li><li><a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a></li><li><a href="torneos-en-vivo.html" class="hover:text-accent-400 transition-colors">Torneos</a></li></ul></div>
+                <div><h3 class="text-white font-semibold mb-4">Recursos</h3><ul class="space-y-2 text-sm"><li><a href="entreno/diagnostico.html" class="hover:text-accent-400 transition-colors">Diagnóstico de nivel gratis</a></li><li><a href="bot.html" class="hover:text-accent-400 transition-colors">Jugar contra el bot</a></li><li><a href="sobre-oscar.html" class="hover:text-accent-400 transition-colors">Sobre Oscar</a></li><li><a href="inscripcion.html" class="hover:text-accent-400 transition-colors">Torneos en línea</a></li></ul></div>
+                <div><h3 class="text-white font-semibold mb-4">Contacto</h3><ul class="space-y-2 text-sm"><li><a href="mailto:info@ajedrez-integral.com" class="hover:text-accent-400 transition-colors">info@ajedrez-integral.com</a></li><li><a href="https://wa.me/50683092291" target="_blank" rel="noopener" class="hover:text-accent-400 transition-colors">+506 8309-2291 (WhatsApp)</a></li><li>Clases en línea desde Costa Rica</li></ul></div>
+            </div>
+            <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-300"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p><!-- legal: inicio --><p class="mt-2"><a href="privacidad.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Política de privacidad</a> <span aria-hidden="true">·</span> <a href="terminos.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Términos y condiciones</a></p><!-- legal: fin --></div>
+        </div>
+    </footer>
+    <!-- tablero-js: inicio -->
+    <script src="js/board-themes.js"></script>
+    <script src="js/chess-piece-svg.js"></script>
+    <script src="js/pieza-preferida.js"></script>
+    <script src="js/coordenadas-tablero.js"></script>
+    <script src="js/coronacion.js"></script>
+    <!-- tablero-js: fin -->
+    <script src="js/vendor/supabase.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/salas-torneo.js"></script>
+    <script src="js/video-embebido.js"></script>
+    <script src="js/escenarios-sala.js"></script>
+    <script src="js/legal-version.js"></script>
+    <script src="js/vendor/chess.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/quiniela.js"></script>
+    <script src="js/transmision.js"></script>
+</body>
+</html>

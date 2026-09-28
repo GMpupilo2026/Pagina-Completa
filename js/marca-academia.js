@@ -196,13 +196,43 @@
     main.parentNode.insertBefore(barra, main);
   }
 
+  /* El login (login.html) todavía no sabe quién va a entrar: muestra el logo
+     de la academia de la ÚLTIMA cuenta que entró en este aparato, que quedó
+     guardado en CLAVE (cerrar sesión no lo borra). Por eso acá no se mira el
+     uid. Si esa cuenta no era de una academia, o la academia no tiene logo, o
+     el logo no carga, queda el de Ajedrez Integral que trae la página.
+     Consecuencia aceptada: en una computadora compartida se ve el logo de la
+     academia de quien entró antes. Ver «El logo del login» en
+     docs/decisiones/permisos-y-roles.md. */
+  function pintarLogin() {
+    var caja = document.getElementById("logo-login");
+    if (!caja) return false;
+    var g;
+    try { g = JSON.parse(localStorage.getItem(CLAVE) || "null"); } catch (e) { g = null; }
+    var marca = g && g.marca;
+    var src = marca && marca.nombre ? urlDelLogo(marca.logo_path) : "";
+    if (!src) return false;
+    var originales = Array.prototype.slice.call(caja.childNodes);
+    var img = document.createElement("img");
+    img.src = src;
+    img.setAttribute("alt", "Logo de " + marca.nombre);
+    // Sobre blanco en los dos modos, como en el encabezado: el logo de una
+    // academia puede ser oscuro y perderse en la tarjeta del modo oscuro.
+    img.className = "block w-40 max-h-32 object-contain mx-auto mb-5 bg-white rounded-xl p-2";
+    img.addEventListener("error", function () { caja.replaceChildren.apply(caja, originales); });
+    caja.replaceChildren(img);
+    caja.dataset.academia = marca.academia_id || "";
+    return true;
+  }
+
   function arrancar() {
+    try { pintarLogin(); } catch (e) { console.warn("El logo del login no se pudo pintar:", e && e.message); }
     Promise.resolve().then(init).catch(function (e) {
       console.warn("La marca de la academia no se pudo pintar:", e && e.message);
     });
   }
 
-  var api = { contrasteConBlanco: contrasteConBlanco, urlDelLogo: urlDelLogo, aplicar: aplicar, montarSelectorAcademia: montarSelectorAcademia, BUCKET: BUCKET };
+  var api = { contrasteConBlanco: contrasteConBlanco, urlDelLogo: urlDelLogo, aplicar: aplicar, montarSelectorAcademia: montarSelectorAcademia, pintarLogin: pintarLogin, BUCKET: BUCKET };
   if (typeof window !== "undefined") {
     window.MarcaAcademia = api;
     if (typeof document !== "undefined" && !window.__marcaAcademiaSinArranque) {

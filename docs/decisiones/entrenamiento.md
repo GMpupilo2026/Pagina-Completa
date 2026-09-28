@@ -121,11 +121,299 @@ falló.
   Ilumina el tablero, Aperturas y celadas, Visualización) manden de verdad su
   fila a `training_progress` al terminar un ejercicio.
 
+## Los trofeos de la clase
+
+En la clase en vivo (`sesion.html`) el profesor pregunta «¿qué jugarías?» y
+marca ✅ o ❌ cada respuesta. **Cada respuesta marcada ✅ es un trofeo**, y los
+trofeos se acumulan de clase en clase: el alumno ve su total en la clase
+(`#mis-trofeos`, en su panel) y en `logros.html` («Tus trofeos de clase» y la
+categoría de medallas «Trofeos de clase»: 1, 10, 25, 50, 100 y 250).
+
+- **El total es respuestas correctas + ajustes del profesor.** Lo calcula
+  `public.trofeos_de(p_alumno default auth.uid())` y devuelve `por_clase`,
+  `ajustes` y `total` (nunca menos de cero).
+- **Las respuestas correctas no se guardan como trofeos: se cuentan**
+  (`question_answers.is_correct = true`). Si el profesor cambia un ✅ por ❌, el
+  trofeo se va solo; una tabla de «trofeos ganados» habría quedado con uno de
+  más sin que nada fallara.
+- **El profesor ajusta a mano** con el botón 🏆 del renglón del alumno
+  (pestaña Alumnos): +1, −1, +5 o una cantidad escrita (−100 a 100) con un
+  motivo que el alumno ve. Cada ajuste es una fila de `trofeos_ajustes` (quién,
+  cuánto, por qué y cuándo), no un total sobreescrito: así el alumno ve de
+  dónde salió cada trofeo y un ajuste no borra otro.
+- **Quién ajusta lo decide la base**: `ajustar_trofeos()` (`SECURITY DEFINER`)
+  exige `soy_profesor_de(alumno)` o `soy_admin()`, nunca a uno mismo, y rechaza
+  quitar más de lo que tiene (con un candado por alumno para que dos profesores
+  a la vez no lo dejen en negativo). La tabla no tiene política de escritura.
+  La leen el alumno, sus profesores (el conjunto `interno.alumnos_de()` armado
+  una vez), quien administra y quien supervisa a sus profesores.
+- **`trofeos_de()` es `SECURITY DEFINER` a propósito**: con INVOKER cada
+  profesor contaría solo las respuestas a SUS preguntas (la RLS de
+  `question_answers`) y un alumno con dos profesores tendría dos totales. El
+  permiso se pregunta explícito, con el `coalesce(..., false)` de siempre.
+- **El contador del alumno se vuelve a pedir** cada vez que Realtime avisa que
+  le calificaron una respuesta (de cualquier pregunta, no solo la abierta) o
+  que el profesor le agregó un ajuste (`trofeos_ajustes` está en la
+  publicación de Realtime). Nunca se suma en el navegador.
+- El módulo es `js/trofeos.js` (una sola copia para la clase y Logros). En
+  Logros, `Logros.cargar()` pide `trofeos_de` a la par de la racha; si falla,
+  cuenta cero y no tumba la racha.
+- Se probó con SQL de verdad, impersonando roles dentro de una transacción que
+  se deshace: el profesor ve 9 y con +3 queda en 12; quitar 100 se rechaza; la
+  alumna ve lo suyo y no puede sumarse ni insertar directo; alguien ajeno no ve
+  ni el total ni las filas; sin `auth.uid()` se rechaza.
+- **Verificadores**: `verificar-trofeos.js` (el panel del profesor manda el
+  alumno y la cantidad correctos, lo que no se puede no llega a la base, y la
+  alumna ve su total crecer y bajar solo) y `verificar-logros.js` (el total, su
+  desglose, los ajustes escapados y las medallas). El doble de
+  `verificar-clase-registrada.js` cuenta los trofeos igual que la base.
+
+## Las insignias de la clase
+
+Además de los trofeos, el profesor premia **a mano** lo que no da trofeo: un
+buen comentario, un ejercicio de la pizarra bien resuelto, la actitud. Son
+insignias, y se dan desde el mismo botón 🏆 del renglón del alumno en
+`sesion.html` («Dar una insignia»), con un motivo opcional que ven el alumno y
+su casa. Hay seis: ⭐ Estrella de buen estudiante, 💡 Buena respuesta,
+💬 Buen comentario, 💪 Gran esfuerzo, 🤝 Buen compañerismo y 🎨 Idea creativa.
+
+- **El catálogo vive en la base** (`insignias_tipos`), no en el código: lo
+  leen la clase, Logros, Informes y el correo a la casa, que es una Edge
+  Function en TypeScript y no puede importar un módulo del navegador. Dos
+  copias del nombre de una insignia se irían separando. Para agregar una, se
+  inserta una fila: la página y el correo la toman solos.
+- **Cada insignia es una fila** de `insignias` (quién, cuál, por qué, cuándo,
+  quién la dio). Las da `otorgar_insignia()` —su profesor o quien administra,
+  nunca a uno mismo— y las quita `quitar_insignia()` —solo quien la dio, o
+  quien administra—, que es el «Deshacer» que aparece al lado del aviso por si
+  el toque fue equivocado. Ninguna de las dos tablas tiene política de
+  escritura. La lectura sigue la misma RLS que `trofeos_ajustes`.
+- **`premios_de_alumno(alumno, desde, hasta)` cuenta todo junto**: trofeos del
+  periodo y del total, insignias por tipo (periodo y total) y las últimas cinco
+  del periodo con su motivo. Es `SECURITY DEFINER` con el criterio de
+  `resumen_tareas_examenes()`: `auth.uid()` nulo es la tanda de `pg_cron` (a
+  `anon` se le revoca el `execute`), así la tanda, la vista previa del
+  profesor y el propio alumno ven exactamente lo mismo.
+- **Llega al correo a la casa** porque `informe_de_alumno()` termina en
+  `|| public.premios_de_alumno(p_alumno, p_desde, p_hasta)`, igual que las
+  tareas. La migración no copió la función a mano: la reescribió a partir de
+  `pg_get_functiondef()` cambiando solo la cola, y falla si la cola ya no es la
+  esperada. En el correo sale el bloque **«🏆 Sus premios en clase»**: trofeos
+  del periodo («4 trofeos esta semana»), cada insignia del periodo con cuántas
+  veces, los motivos rotulados «De su profe» (escapados: los escribe una
+  persona) y cuántos lleva en total. **Sin premios en el periodo, no aparece**
+  —la misma regla que el plan—.
+- **En la clase**, el alumno ve sus insignias bajo su contador de trofeos, y
+  cuando le dan una se le celebra con el aviso flotante en dorado («⭐ ¡Tu profe
+  te dio la insignia…!»), por Realtime (`insignias` está en la publicación).
+- **En Logros**, una categoría de medallas «Insignias de clase» (1, 5, 15, 30 y
+  60) y la lista de las suyas en «Tus trofeos e insignias de clase».
+  `Logros.cargar()` pide `premios_de_alumno` en vez de `trofeos_de`.
+- **En Informes**, el bloque «🏆 Trofeos e insignias» del informe de cada alumno
+  (lo ven el profesor, quien administra, quien supervisa y el propio alumno).
+- Probado con SQL de verdad impersonando roles: el profesor da dos, un tipo
+  inventado se rechaza, otro profesor del mismo alumno no puede quitar la que
+  no dio, el alumno ve las suyas pero no puede darse ni quitar, alguien ajeno
+  no ve nada, y la tanda (sin `auth.uid()`) recibe los premios dentro de
+  `informe_de_alumno()`.
+- **Verificadores**: `verificar-trofeos.js` (dar, el motivo, deshacer, la
+  celebración del alumno), `verificar-logros.js` (medallas y lista, motivo
+  escapado), `verificar-informes.js` (el bloque del informe) y
+  `verificar-informe-casa.js` (el bloque del correo: cuenta el periodo y no el
+  total, «1 vez», motivo escapado, y que no salga vacío). Cambiar
+  `informe-html.ts` pide desplegar `informes-encargados` (ver «Los informes
+  que llegan a la casa»).
+
+## Lo que cuenta como acierto en los ejercicios
+
+Cada página de ejercicios tenía su propia copia del tablero y de la regla de
+qué es un acierto, y las copias se habían separado. Nada de esto daba ningún
+error: la página se veía perfecta y le decía al alumno otra cosa.
+`node herramientas/verificar-todo.js entreno-arreglos` lo comprueba en un
+navegador, página por página.
+
+- **Cualquier jugada que dé mate es correcta**, en Temas, Racha, Mates y
+  Practicar. Los bancos guardan UNA solución y a veces hay dos mates (en
+  `mate1-0071`, Ch6# y Ce5#; en la serie «beso» de Practicar, Dh7# y Da8#).
+  Mates y Practicar decían «no lleva al mate» de un mate.
+- **El tablero se mira desde el bando que juega**, también en Mates: casi 400
+  de sus posiciones de mate en 2 y en 3 son con negras.
+- **«Ver solución» no es un acierto.** En Practicar y Desafíos no suma a la
+  racha ni se festeja con «¡Correcto!» (Practicar dejaba la racha en 1).
+- **Las estrellas de una posición cuentan pistas Y errores**
+  (`EntrenoProgress.estrellasDeLaRonda`, una sola copia para Practicar y
+  Desafíos): antes solo las pistas, y probar jugada tras jugada hasta acertar
+  daba tres estrellas. Es la misma regla de Aperturas: la nota sale de lo que
+  de verdad pasó.
+- **En Visualización, un ejercicio con pista o con error no queda resuelto** y
+  vuelve a salir; tampoco se registra en `training_progress`. Antes se marcaba
+  igual y el contador (y lo que ve el profesor) contaba como dominado uno
+  sacado con la pista.
+- **En Visualización, «R» se lee como la línea lo pide.** Es el rey en
+  castellano y la torre en inglés, y `ChessMoveParser` prueba primero el
+  inglés: con rey y torre que llegan a la misma casilla, «Rd2» movía la torre y
+  le cortaba la racha a quien había calculado bien. Como la página sabe qué
+  jugada espera, prueba las dos lecturas y gana la esperada
+  (`jugadaDeLaLinea`); si ninguna lo es, queda la de siempre.
+- **El quiz de Aprender («¿mate o ahogado?») no deja reintentar la misma
+  posición**: con dos botones, eso era regalar la respuesta. Una respuesta mal
+  explica por qué y pasa a la siguiente; la lección solo se completa sin
+  fallar ninguna.
+
+## Cada ejercicio a la altura del alumno
+
+`node herramientas/verificar-todo.js entreno-nivel` lo comprueba en un
+navegador. Si esto se rompe, no da ningún error: la página sigue andando, solo
+que el alumno de 1800 vuelve a empezar en los de 1000.
+
+- **Ejercicios por tema arranca cada tema cerca del nivel del alumno.** Los
+  temas de Lichess vienen ordenados por rating (ataque doble va de 1047 a
+  1978) y la página arrancaba siempre en el primero sin resolver. Ahora
+  arranca en el primero sin resolver cuyo rating llegue a «desde», que se
+  elige en un selector debajo de la barra de progreso. «Desde» sale, en este
+  orden:
+  1. `?desde=<rating>` en el enlace.
+  2. Lo que eligió el alumno (`entreno_temas_desde`, del aparato).
+  3. Su nivel **menos 300**: el Elo del último diagnóstico (el resultado
+     guardado trae `elo`) o, si no hay, el de su perfil. Se resta porque el
+     rating de un ejercicio de Lichess no es un Elo FIDE: a igual fuerza, el de
+     Lichess suele ser más alto, así que quedarse corto es lo seguro.
+  4. Desde el más fácil.
+  Los temas sin rating (táctica de la casa) no muestran el selector y no se
+  filtran.
+- **«Saltar» y el paso al siguiente van al próximo SIN resolver** a esa
+  altura. Antes avanzaban uno y caían en ejercicios ya hechos. Las tareas
+  («resuelve 10 de ataque doble») siguen dando ejercicios nuevos: solo se
+  saltan los que ya estaban resueltos.
+- **Cada ejercicio de Temas y de Mates guarda cómo salió**:
+  `EntrenoProgress.comoSalio()` pone `limpio`, `con_error` y `con_pista` en el
+  `detail` de `training_progress`. Va en el detalle y no como actividad nueva,
+  así que el CHECK de la tabla no cambia y las filas viejas siguen valiendo.
+  Es lo que falta para medir la precisión por tema, que antes no se podía:
+  solo quedaba «resuelto».
+- **La Racha táctica sube la dificultad con la racha.** Antes sorteaba entre
+  los 4446 ejercicios (de 399 a 1791) sin mirar el rating: a uno le tocaba un
+  1791 de entrada y a otro un 399 en el trigésimo, con el mismo reloj, y el
+  récord del grupo comparaba rachas que no se parecían. Ahora el ejercicio
+  número n se sortea cerca de `500 + 60 × n` (la ventana se abre si arriba
+  quedan pocos), y dentro de una racha no se repite ninguno. Los récords
+  guardados antes de este cambio son de la racha al azar.
+
+## Repasar lo que costó y «Hoy te toca»
+
+`node herramientas/verificar-todo.js entreno-repaso` lo comprueba en un
+navegador.
+
+- **Un ejercicio de Ejercicios por tema resuelto con error o con pista entra a
+  una cola de repaso espaciado** (`js/repaso-fallados.js`, sobre el mismo
+  `js/repaso-espaciado.js` de Aperturas). Antes se marcaba resuelto igual y no
+  volvía a salir nunca. Con error vuelve hoy mismo y el intervalo empieza de
+  cero; solo con pista, vuelve pronto; repasado limpio, el intervalo crece.
+  **Lo resuelto limpio a la primera no entra nunca**: la cola es de lo que
+  costó, no de todo lo hecho.
+- **Tres repasos limpios seguidos lo sacan de la cola**, y «sacar» es una
+  marca (`fuera: true`), no un borrado. La cola (`entreno_temas_repaso_v1`)
+  viaja con la cuenta con la fusión `srsPorLinea`, que SUMA fichas y se queda
+  con la de `ultimo` más nuevo: una ficha borrada en un aparato volvería desde
+  la cuenta sin que nada fallara. Uno que salió y se vuelve a fallar entra de
+  nuevo, desde cero.
+- **La lista de temas ofrece «Repasar fallados» solo cuando hoy toca alguno**,
+  y `temas.html?repaso=1` abre la cola directo. Mientras se repasa, la lista
+  es la de hoy, fija: lo que se vuelve a fallar queda para la próxima, no se
+  repite en la misma sesión. **Repasar no vuelve a registrar el ejercicio en
+  `training_progress`**: ya contó la primera vez, y contarlo de nuevo inflaría
+  lo que ve el profesor. «Saltar» en el repaso no lo reprograma.
+- **El hub de Entrenamiento dice qué toca hoy** (`#hoy`, hasta tres cosas,
+  cada una con cuántas son y a dónde lleva): los repasos vencidos de Temas, las
+  líneas de Aperturas ya empezadas cuyo repaso venció (las nuevas no cuentan:
+  eso es estudiar algo nuevo, no un repaso pendiente) y el diagnóstico si
+  falta o tiene más de cuatro semanas, que es lo que pide la última semana del
+  plan. Todo sale del progreso que ProgresoUsuario ya bajó de la cuenta. Sin
+  nada pendiente, el bloque no sale.
+- **Mates tiene la misma cola** (`entreno_mates_repaso_v1`, también en
+  `CLAVES`): una pestaña más, «🔁 Repasar fallados», que solo aparece si hoy
+  toca alguno, y `mates.html?repaso=1` para abrirla directo. El hub la cuenta
+  aparte («Repasar N mates que te costaron»). «Hoy te toca» muestra como mucho
+  tres cosas, en este orden: repasos de Temas, de Mates, de Aperturas y el
+  diagnóstico; lo que no entra aparece cuando se despeja alguna de las otras.
+- El doble de Supabase de los verificadores de Entrenamiento es uno solo:
+  `herramientas/lib/doble-entreno.js`.
+
+### Una sola copia: js/ejercicio-tablero.js
+
+Los errores de la sección anterior eran, casi todos, diferencias entre copias
+del mismo código en cinco páginas. Lo que comparten Temas, Mates, Practicar,
+Desafíos y Visualización vive ahora en `js/ejercicio-tablero.js`:
+
+- **La racha** (`EjercicioTablero.racha(prefijo)`): guarda en
+  `<prefijo>_streak` y `<prefijo>_best` y pinta `#streak-count`,
+  `#streak-best` y `#streak-bar`. Las páginas siguen llamando `getStreak()`,
+  `setStreak()`… (se sacan del módulo con una desestructuración), así que nada
+  más cambió de nombre. **Desafíos tiene ahora su propia racha**
+  (`entreno_desafios_*`, en `CLAVES`): antes escribía en la de Practicar, y
+  fallar en una cortaba la racha de la otra. Su mejor marca arranca de cero.
+- **El orden del tablero** (`casillas(orientacion)`): desde el bando que juega.
+- **Qué es un acierto** (`esAcierto(juego, jugada, esperada)`): la jugada de
+  la solución o cualquiera que dé mate. Practicar sigue comparando origen y
+  destino (sus series no guardan la jugada en notación), más el mate.
+- **La coronación** (`jugarCoronando`): el diálogo de todo el sitio,
+  `js/coronacion.js`, que dice el nombre de cada pieza. Temas, Mates y
+  Desafíos tenían cada una su propio `#promo-modal` (el de Mates sin nombres
+  para el lector de pantalla); se fueron los tres. `tablero-cabecera.py` pone
+  `coronacion.js` en toda página que cargue el módulo, y
+  `verificar-coronacion.js` comprueba que ninguna de las tres vuelva a tener un
+  diálogo propio.
+
+Lo que todavía es de cada página: dibujar el tablero (cada una marca estados
+distintos: la última jugada, la pista, el origen elegido), las pistas y el
+flujo de cada ejercicio. Unificar eso es el paso siguiente, no este.
+
+## El plan del diagnóstico que ve el alumno
+
+`entreno/diagnostico.html` pinta el plan **entero**, las cuatro semanas con su
+meta. Antes pintaba solo las tres primeras y sin la meta: con tres áreas
+flojas se caía la cuarta, «Juntar todo y volver a medir», la que manda a
+repetir el diagnóstico.
+
+**Cada enlace del plan dice cuánto se hizo ahí desde el diagnóstico**
+(«(✓ 12 hechos)», «(todavía nada)»), en esta página y en Informes, con la misma
+función (`PlanEntrenamiento.marcarAvance`). Antes el plan era texto quieto y
+nadie sabía si se estaba siguiendo. La cuenta la hace `avance_del_plan(alumno,
+desde)` en la base (migración `20260928132719`, `SECURITY INVOKER`: la RLS de
+`training_progress` decide, y preguntar por otro alumno da cero filas), porque
+un alumno activo pasa de mil filas en un mes y PostgREST corta a mil sin
+avisar. Cada recurso se traduce a una clave (`PlanEntrenamiento.claveDeAvance`):
+`tema:<clave>`, `mates:<categoría>`, `curso:<slug>` o `actividad:<nombre>`.
+Lo que no deja rastro en `training_progress` (una ficha de Estudio, una página
+de juego) no tiene clave y **no lleva número**: un «0» diría que no hizo nada,
+y no se sabe. «Desde» es la fecha del diagnóstico del que salió el plan
+(`diagnostico_fecha` si es el que compartió el profesor). La prueban
+`verificar-entreno-arreglos.js` (esta página) y `verificar-informes.js`.
+
+Si el profesor ya revisó el diagnóstico y le **compartió** su plan desde
+Informes (`training_plans`, que la política solo le devuelve al alumno cuando
+está compartido), se ve ese, con su nota, y no uno recalculado aparte. Vale
+para el diagnóstico del que salió o uno anterior; si el alumno hizo uno nuevo
+después, ese plan quedó viejo y se muestra el recalculado. Lo que el profesor
+reescribió a mano va por `textContent`, y un recurso con esquema
+(`javascript:`, `https:`) no se pinta: los recursos son rutas del sitio.
+
+## Estudio manda a practicar el tema de la ficha
+
+Las fichas de táctica y conceptos que nombran un tema de Ejercicios por tema
+traen `temaPractica` (la clave en `temas.json`) y la página les pone el botón
+«🎯 Practicar este tema» (`temas.html?tema=<clave>`, el mismo enlace de las
+tareas). `verificar-fichas.js` comprueba que el nombre del texto y la clave
+sean el mismo tema. **Ojo con los nombres de Lichess**: la horquilla es
+«Ataque doble» (`fork`) y la enfilada es «Pincho» (`skewer`). Las dos fichas
+estaban cruzadas —la horquilla mandaba al pincho y la enfilada a los rayos X—
+y el alumno practicaba otro motivo sin que nada fallara.
+
 ## El hub de Entrenamiento y sus grupos
 
 `entreno/index.html` reparte los accesos en **Fundamentos** (Mates,
-Aprender, Coordenadas, Desafíos), **Practicar** (Ejercicios por tema, Practicar,
-Precisión posicional), **Entreno** (Aperturas y celadas, 4×4, Visualización) y
+Aprender, Coordenadas, Desafíos), **Practicar** (Ejercicios por tema, Practicar), **Entreno** (Aperturas y
+celadas, 4×4, Visualización, Precisión posicional) y
 **Tipos de entrenamiento** (una sola tarjeta que abre su ficha, ver «Los Tipos
 de entrenamiento»).
 
@@ -432,7 +720,7 @@ con la página.
 ## El Evaluador de precisión posicional: elegir el plan, no la táctica
 
 `entreno/precision-posicional.html` (tarjeta **"🧭 Precisión posicional"** en
-el grupo "Practicar" del hub de Entrenamiento) es un banco de 96 posiciones
+el grupo "Entreno" del hub de Entrenamiento) es un banco de 96 posiciones
 —12 por cada una de 8 áreas— con una pregunta de opción múltiple por posición.
 **Ninguna tiene una jugada que gane material o dé mate de inmediato**: lo que
 se pide es el plan correcto a largo plazo — mejorar la pieza peor colocada,

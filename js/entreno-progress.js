@@ -50,5 +50,22 @@ window.EntrenoProgress = (function () {
     }
   }
 
-  return { init, log, hasSession: () => !!userId };
+  /* Estrellas de una posición de Practicar o de Desafíos. Cuentan las pistas Y
+     las jugadas equivocadas: antes solo las pistas, y probar jugada tras jugada
+     hasta acertar daba tres estrellas. Una sola cosa en falta, dos; más, una.
+     "Ver solución" es la tercera pista, así que siempre deja una. */
+  function estrellasDeLaRonda(pistas, errores) {
+    const faltas = (pistas || 0) + (errores || 0);
+    return faltas >= 2 ? 1 : faltas === 1 ? 2 : 3;
+  }
+
+  /* Cómo salió un ejercicio, para el `detail` de training_progress. Va en el
+     detalle y no como actividad nueva: el CHECK de la tabla no cambia, y las
+     filas viejas (sin estos campos) siguen valiendo. `limpio` es sin error y
+     sin pista: lo que de verdad dice que el motivo se domina. */
+  function comoSalio(conError, conPista) {
+    return { limpio: !conError && !conPista, con_error: !!conError, con_pista: !!conPista };
+  }
+
+  return { init, log, estrellasDeLaRonda, comoSalio, hasSession: () => !!userId };
 })();

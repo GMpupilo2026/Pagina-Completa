@@ -186,6 +186,12 @@ window.__consultas = [];
       if (n === "mis_funciones_coordinacion") {
         return Promise.resolve({ data: (window.__misFunciones || ["formularios","altas","solicitudes","cuentas","acceso","roles","cobros","equipos","subgrupos"]), error: null });
       }
+      /* Un RPC que devuelve un valor suelto (un booleano, como
+         puedo_preparar_rivales) y no filas: se contesta tal cual. */
+      if (DATOS.rpc && DATOS.rpc[n] !== undefined && !Array.isArray(DATOS.rpc[n])) {
+        window.__consultas.push({ tabla: n, args: args || null });
+        return Promise.resolve({ data: DATOS.rpc[n], error: null });
+      }
       const c = constructor(n, n === "mis_clases"
         ? (DATOS.mis_clases || [MI_CLASE()])
         : (DATOS.rpc && DATOS.rpc[n]) || [], args);
@@ -300,20 +306,22 @@ async function pruebaAlumna(browser) {
      el lado del alumno —te lo pone otra persona y vence—, y estaban partidos
      entre "Aprender" y "Evaluaciones". El rótulo dice lo que las dos tienen en
      común, que es lo que no se deduce de sus nombres. */
-  igual("lo que te ponen con fecha va junto, y de segundo",
+  /* Y el diagnóstico de nivel va con ellas: no se practica, lo pide el
+     profesor para ubicarte. */
+  igual("lo que te ponen va junto, y de segundo, con el diagnóstico al final",
     grupo(grupos, "Lo que te pone tu profesor").tiles.map((t) => t.enlace),
-    ["tareas.html", "examenes.html"]);
+    ["tareas.html", "examenes.html", "entreno/diagnostico.html"]);
   /* Por índice a propósito: que vaya PRIMERA es el punto. Y se mira la
      etiqueta y no el href, porque sin clase abierta esa tarjeta está
      bloqueada y no tiene ninguno — eso tiene su propia prueba más abajo. */
   igual("«Clase en vivo» lleva un solo acceso, y es la sesión en vivo",
     grupos[0].tiles.map((t) => t.etiqueta), ["Sesión en vivo"]);
-  /* Primero donde se juega contra otra persona, después el torneo, y de último
-     lo que se MIRA. Y «Racha táctica» NO está: ya es lo primero que hay dentro
-     de juegos.html, y un mismo destino dos veces en el panel es el error que ya
-     se cometió con «Torneos». */
+  /* Primero donde se juega contra otra persona, después el torneo y el bot.
+     TV en vivo y Logros se fueron a «Tu cuenta». Y «Racha táctica» NO está: ya
+     es lo primero que hay dentro de juegos.html, y un mismo destino dos veces
+     en el panel es el error que ya se cometió con «Torneos». */
   igual("Jugar y competir", grupo(grupos, "Jugar y competir").tiles.map((t) => t.enlace),
-    ["juegos.html", "torneos.html", "tv.html", "tablero.html", "logros.html"]);
+    ["juegos.html", "competir.html", "torneos.html", "tablero.html"]);
   igual("y la racha táctica no se ofrece dos veces: en el panel ya no",
     grupos.flatMap((g) => g.tiles).filter((t) => t.enlace === "racha-tactica.html").length, "0");
   /* Dentro de Aprender, el orden es el del trabajo de todos los días: lo que se
@@ -323,18 +331,18 @@ async function pruebaAlumna(browser) {
     grupo(grupos, "Aprender").tiles.map((t) => t.enlace),
     ["entreno/index.html", "entreno/estudio.html", "cursos/academia/index.html",
      "articulos.html"]);
-  /* Los dos diagnósticos son SOLO de administración: son las dos pruebas con
-     las que el sitio ubica el nivel de alguien, y sus bancos son archivos
-     estáticos — cuanta más gente las resuelve por su cuenta, menos miden. Y no
-     alcanza con que el grupo no salga en la lista de arriba: lo que importa es
-     que no quede ni un enlace a esas dos páginas en la grilla, escondido o no. */
-  igual("a la alumna no se le ofrece ningún diagnóstico",
+  /* El diagnóstico de nivel se le ofrece UNA vez, en «Lo que te pone tu
+     profesor». El de arbitraje sigue siendo SOLO de administración: su banco
+     es un archivo estático y cuanta más gente lo resuelve por su cuenta, menos
+     mide. No alcanza con que no salga en la lista: no puede quedar ni un
+     enlace a esa página en la grilla, escondido o no. */
+  igual("a la alumna el diagnóstico de nivel le sale una sola vez, y el de arbitraje nunca",
     grupos.flatMap((g) => g.tiles)
       .filter((t) => /diagnostico|arbitraje/i.test((t.enlace || "") + " " + (t.etiqueta || "")))
-      .map((t) => t.enlace), []);
-  igual("y tampoco escondido en la página",
+      .map((t) => t.enlace), ["entreno/diagnostico.html"]);
+  igual("y el de arbitraje tampoco escondido en la página",
     await page.evaluate(() => document.querySelectorAll(
-      "#tile-grid [href*='diagnostico'], #tile-grid [href*='arbitraje']").length), "0");
+      "#tile-grid [href*='arbitraje']").length), "0");
   /* "Cerrar sesión" salió del grid: ya está en la cabecera, que es donde se
      busca, y era la única ACCIÓN entre un grid de lugares a los que ir. Un
      destino repetido en el panel ya había dado problemas con "Torneos". */
@@ -345,7 +353,7 @@ async function pruebaAlumna(browser) {
      tiene a quién calificar (la prueba del profesor, más abajo, lo dice). */
   igual("Tu cuenta, en su orden, con la encuesta sobre su profesor",
     grupo(grupos, "Tu cuenta").tiles.map((t) => t.etiqueta),
-    ["Informes", "Configuración", "¿Cómo van tus clases?"]);
+    ["Configuración", "Informes", "Logros", "TV en vivo", "¿Cómo van tus clases?"]);
   igual("y a la alumna no se le ofrecen los cobros por ninguna parte",
     grupos.flatMap((g) => g.tiles).filter((t) => /cobros\.html/.test(t.enlace || "")).length, "0");
   igual("«Cerrar sesión» no está dos veces: en el grid ya no",
@@ -385,13 +393,15 @@ async function pruebaProfesora(browser) {
   const { page, ctx, errores } = await panel(browser, [PROFE], "u-profe");
   const grupos = await page.evaluate(LEER_GRILLA);
 
-  /* Tampoco a quien da clase: los diagnósticos son de administración y ya. A
-     ella se los aplica administración, no los resuelve por su cuenta — y su
-     banco es el mismo que el de sus alumnos. */
-  igual("a la profesora tampoco se le ofrece ningún diagnóstico",
-    grupos.flatMap((g) => g.tiles)
-      .filter((t) => /diagnostico|arbitraje/i.test((t.enlace || "") + " " + (t.etiqueta || "")))
-      .map((t) => t.enlace), []);
+  /* A quien da clase, la tarjeta del diagnóstico la lleva al RESULTADO de sus
+     alumnos, no a la prueba: el banco es el mismo que el de ellos y
+     resolverla por su cuenta no le sirve. Ni una puerta a las dos pruebas. */
+  igual("a la profesora el diagnóstico la lleva al resultado de sus alumnos",
+    grupo(grupos, "Lo que le pones a tus alumnos").tiles.map((t) => t.enlace),
+    ["tareas.html", "examenes.html", "informes.html?tema=diagnostico"]);
+  igual("y no se le ofrece ninguna de las dos pruebas",
+    await page.evaluate(() => document.querySelectorAll(
+      "#tile-grid [href*='entreno/diagnostico'], #tile-grid [href*='arbitraje']").length), "0");
   /* El rótulo del grupo tiene dos públicos, igual que la descripción de un
      tile: del otro lado del escritorio, lo que te ponen es lo que mandas. */
   igual("y el grupo con fecha le habla de sus alumnos, no de su profesor",
@@ -424,11 +434,29 @@ async function pruebaProfesora(browser) {
      ofrecía "lo que se te ha cobrado" sobre una cuenta a la que no se le cobra
      nada. Y como no coordina, tampoco le toca la página entera de Cobros. */
   igual("a quien da clase no se le ofrece su propio recibo",
-    grupo(grupos, "Tu cuenta").tiles.map((t) => t.etiqueta), ["Informes", "Configuración"]);
+    grupo(grupos, "Tu cuenta").tiles.map((t) => t.etiqueta), ["Configuración", "Informes", "Logros", "TV en vivo"]);
   igual("y sin coordinar, cobros.html no le aparece por ningún lado",
     grupos.flatMap((g) => g.tiles).filter((t) => t.enlace === "cobros.html").length, "0");
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
+}
+
+/* La preparación de rivales la activa administración profesor por profesor
+   (admin.html#preparacion): la tarjeta sale solo si la base dice que sí. La
+   base contesta con un booleano, no con filas. */
+async function pruebaPreparacionRivales(browser) {
+  console.log("\n=== La tarjeta de «Preparación de rivales» ===");
+  let r = await panel(browser, [PROFE], "u-profe", null, { rpc: { puedo_preparar_rivales: true } });
+  let grupos = await r.page.evaluate(LEER_GRILLA);
+  igual("con la función activa, sale en Herramientas",
+    grupo(grupos, "Herramientas").tiles.map((t) => t.enlace).filter((x) => x === "preparacion-rivales.html"), ["preparacion-rivales.html"]);
+  igual("sin errores en consola", r.errores.join(" | ") || "ninguno", "ninguno");
+  await r.ctx.close();
+  r = await panel(browser, [PROFE], "u-profe", null, { rpc: { puedo_preparar_rivales: false } });
+  grupos = await r.page.evaluate(LEER_GRILLA);
+  igual("sin activar, no sale por ningún lado",
+    await r.page.evaluate(() => document.querySelectorAll("#tile-grid [href='preparacion-rivales.html']").length), "0");
+  await r.ctx.close();
 }
 
 /* El panel estaba escrito para el alumno de punta a punta, y a quien da clase
@@ -514,7 +542,7 @@ async function pruebaAdmin(browser) {
   const enlaces = grupos.flatMap((g) => g.tiles).map((t) => t.enlace);
   igual("nada de dar clase: ni sesión en vivo, ni tareas, ni exámenes, ni planes, ni asistencia, ni informe mensual, ni subgrupos, ni archivos, ni juegos, ni torneos",
     ["sesion.html", "tareas.html", "examenes.html", "planes.html", "asistencia.html", "informe-mensual.html",
-     "subgrupos.html", "partidas.html", "juegos.html", "torneos.html"].filter((x) => enlaces.includes(x)), []);
+     "subgrupos.html", "partidas.html", "juegos.html", "competir.html", "torneos.html"].filter((x) => enlaces.includes(x)), []);
   igual("y sí lo de supervisar y administrar",
     ["informes.html", "supervision.html", "tablero-academias.html", "novedades.html", "admin.html", "academias.html", "coordinacion.html", "cobros.html", "solicitudes.html"]
       .filter((x) => !enlaces.includes(x)), []);
@@ -1921,6 +1949,7 @@ if (require.main !== module) return;
     await pruebaProgresoAlumna(browser);
     await pruebaSemanaProfesora(browser);
     await pruebaProfesora(browser);
+    await pruebaPreparacionRivales(browser);
     await pruebaTextosPorRol(browser);
     await pruebaAdmin(browser);
     await pruebaBuscador(browser);

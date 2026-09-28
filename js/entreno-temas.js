@@ -21,6 +21,7 @@ async function unlock(){
   // ANTES de pintar, para seguir donde se quedó aunque sea otro dispositivo.
   await ProgresoUsuario.init();
   heredarTactica();
+  await leerNivelDeLaCuenta();
   loadDataThenStart();
 }
 
@@ -28,7 +29,6 @@ const GLYPH = {
   w: { p:'♙', n:'♘', b:'♗', r:'♖', q:'♕', k:'♔' },
   b: { p:'♟', n:'♞', b:'♝', r:'♜', q:'♛', k:'♚' },
 };
-const PIECE_NAME = { p:'peón', n:'caballo', b:'alfil', r:'torre', q:'dama', k:'rey' };
 // Un grupo sin icono se pinta con un punto pelado, así que al sumar uno nuevo
 // hay que sumarlo acá también: el de táctica es el mismo ⚔️ que tenía su página.
 const GROUP_ICON = { tactica:'⚔️', recommended:'🎲', phases:'⏳', motifs:'🎯', advanced:'🧠', mates:'♚', mateThemes:'👑', specialMoves:'✨', goals:'🏁', lengths:'📏', origin:'🏛️' };
@@ -92,36 +92,164 @@ function markSolved(id){
   localStorage.setItem('entreno_temas_solved', JSON.stringify(s));
 }
 function isSolved(id){ return !!getSolved()[id]; }
-function idsOf(theme){ return DATA.themes[theme] || []; }
+function idsOf(theme){ return theme === REPASO ? repasoIds : (DATA.themes[theme] || []); }
+
+/* ---------------- Repasar fallados ----------------
+   Lo que se resolvió con error o con pista entra a una cola de repaso
+   espaciado (js/repaso-fallados.js) y vuelve cuando toca. Mientras se repasa,
+   `currentTheme` es REPASO y la lista es la de hoy, fija: lo que se vuelve a
+   fallar queda para la próxima, no se repite en la misma sesión. */
+const REPASO = '__repaso';
+const CLAVE_REPASO = window.RepasoFallados ? RepasoFallados.CLAVES.temas : null;
+let repasoIds = [];
+function enRepaso(){ return currentTheme === REPASO; }
+function pendientesDeRepaso(){
+  if(!window.RepasoFallados || !DATA) return [];
+  return RepasoFallados.pendientes(CLAVE_REPASO, (id) => !!DATA.puzzles[id]);
+}
+function pintarRepaso(){
+  const caja = document.getElementById('repaso-caja');
+  const n = pendientesDeRepaso().length;
+  caja.style.display = n ? '' : 'none';
+  if(!n) return;
+  document.getElementById('repaso-texto').textContent = n === 1
+    ? 'Hoy toca repasar 1 ejercicio que te costó (lo resolviste con un error o con una pista).'
+    : `Hoy toca repasar ${n} ejercicios que te costaron (los resolviste con un error o con una pista).`;
+}
+function abrirRepaso(){
+  repasoIds = pendientesDeRepaso();
+  if(!repasoIds.length) return;
+  currentTheme = REPASO;
+  document.getElementById('play-title').textContent = 'Repasar fallados';
+  document.getElementById('play-desc').textContent = 'Los que te costaron, otra vez. Si sale limpio, vuelve más adelante; si no, vuelve pronto.';
+  document.getElementById('themes-view').style.display = 'none';
+  document.getElementById('play-view').style.display = 'block';
+  pintarSelectorDesde();
+  currentIndex = 0;
+  loadPuzzle();
+  window.scrollTo({ top: 0 });
+  const t = document.getElementById('play-title'); t.setAttribute('tabindex', '-1'); t.focus();
+}
+function terminarRepaso(){
+  document.getElementById('play-area').style.display = 'none';
+  document.getElementById('celebration').style.display = 'block';
+  document.getElementById('celebration-title').textContent = '¡Repaso terminado!';
+  document.getElementById('celebration-replay-btn').style.display = 'none';
+  document.getElementById('celebration-stats').textContent =
+    `Repasaste ${repasoIds.length} ${repasoIds.length === 1 ? 'ejercicio' : 'ejercicios'}. Los que salieron limpios vuelven más adelante.`;
+  updateProgressBar();
+}
 function solvedCountFor(theme){
   const s = getSolved();
   return idsOf(theme).filter((id) => s[id]).length;
 }
 function firstUnsolvedIndex(theme){
-  const s = getSolved();
-  const idx = idsOf(theme).findIndex((id) => !s[id]);
-  return idx === -1 ? 0 : idx;
+  return siguienteIndice(theme, 0);
 }
 
-function getStreak(){
-  try{ return parseInt(localStorage.getItem('entreno_temas_streak') || '0', 10) || 0; }catch(e){ return 0; }
+/* ---------------- Desde qué dificultad ----------------
+   Cada tema de Lichess viene ordenado por rating de menor a mayor (ataque
+   doble va de 1047 a 1978), y la página arrancaba siempre en el primero sin
+   resolver: un alumno de 1800 que el plan del diagnóstico mandaba a "ataque
+   doble" tenía que pasar unos sesenta ejercicios triviales antes de llegar a
+   algo que le sirviera. Ahora el tema arranca en el primero sin resolver cuyo
+   rating llegue a `nivelDesde`.
+
+   De dónde sale `nivelDesde`, en este orden:
+   1. `?desde=<rating>` en el enlace (lo que manda una tarea o el plan).
+   2. Lo que el alumno eligió en el selector (entreno_temas_desde).
+   3. Su nivel: el Elo del último diagnóstico o el que declaró en su perfil,
+      MENOS 300 — para calentar un poco por debajo y no arrancar en su techo.
+      El rating de un ejercicio de Lichess no es un Elo FIDE (a igual fuerza,
+      el de Lichess suele ser más alto), así que quedarse corto es lo seguro.
+   4. Nada: desde el más fácil, como siempre.
+   Los ejercicios SIN rating (los de táctica de la casa) no se filtran nunca. */
+const CLAVE_DESDE = 'entreno_temas_desde';
+const DESDE_OPCIONES = [0, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2200];
+let nivelDesde = 0;
+let nivelDeLaCuenta = null; // Elo del alumno, si se conoce
+
+async function leerNivelDeLaCuenta(){
+  try{
+    const r = JSON.parse(localStorage.getItem('diagnostico_resultado_v1') || 'null');
+    if(r && typeof r.elo === 'number') { nivelDeLaCuenta = r.elo; return; }
+  }catch(e){}
+  try{
+    const { data: ses } = await sb.auth.getSession();
+    const uid = ses && ses.session && ses.session.user && ses.session.user.id;
+    if(!uid) return;
+    const { data } = await sb.from('profiles').select('elo').eq('id', uid).maybeSingle();
+    if(data && typeof data.elo === 'number' && data.elo > 0) nivelDeLaCuenta = data.elo;
+  }catch(e){}
 }
-function getBestStreak(){
-  try{ return parseInt(localStorage.getItem('entreno_temas_best') || '0', 10) || 0; }catch(e){ return 0; }
+
+/* El escalón del selector que queda justo por debajo de un rating. */
+function escalonDe(rating){
+  let r = 0;
+  DESDE_OPCIONES.forEach((o) => { if(o <= rating) r = o; });
+  return r;
 }
-function setStreak(n){
-  localStorage.setItem('entreno_temas_streak', String(n));
-  const best = Math.max(getBestStreak(), n);
-  localStorage.setItem('entreno_temas_best', String(best));
-  document.getElementById('streak-count').textContent = n;
-  document.getElementById('streak-best').textContent = best;
+
+function elegirNivelDesde(){
+  const pedido = parseInt(new URLSearchParams(location.search).get('desde') || '', 10);
+  if(pedido > 0) return escalonDe(pedido);
+  let guardado = null;
+  try{ guardado = localStorage.getItem(CLAVE_DESDE); }catch(e){}
+  if(guardado !== null && !isNaN(parseInt(guardado, 10))) return escalonDe(parseInt(guardado, 10));
+  if(nivelDeLaCuenta) return escalonDe(nivelDeLaCuenta - 300);
+  return 0;
 }
-function bumpStreak(){
-  setStreak(getStreak() + 1);
-  const bar = document.getElementById('streak-bar');
-  bar.classList.remove('pulse'); void bar.offsetWidth; bar.classList.add('pulse');
+
+function temaConRating(theme){
+  return idsOf(theme).some((id) => DATA.puzzles[id] && typeof DATA.puzzles[id].rating === 'number');
 }
-function resetStreak(){ setStreak(0); }
+
+/* El próximo ejercicio para hacer, empezando a buscar en `desde` (índice):
+   primero uno sin resolver y a la altura de nivelDesde; si ya no queda
+   ninguno de esos más adelante, se vuelve a buscar desde el principio; y si
+   todos los que llegan al nivel están resueltos, cualquiera sin resolver.
+   Antes, "Siguiente" y "Saltar" avanzaban uno y caían en ejercicios ya
+   resueltos, que no suman nada. */
+function siguienteIndice(theme, desde){
+  const ids = idsOf(theme);
+  const s = getSolved();
+  const sirve = (id) => {
+    if(s[id]) return false;
+    const r = DATA.puzzles[id] && DATA.puzzles[id].rating;
+    return typeof r !== 'number' || r >= nivelDesde;
+  };
+  const buscar = (cond) => {
+    for(let i = desde; i < ids.length; i++) if(cond(ids[i])) return i;
+    for(let i = 0; i < Math.min(desde, ids.length); i++) if(cond(ids[i])) return i;
+    return -1;
+  };
+  let i = buscar(sirve);
+  if(i === -1) i = buscar((id) => !s[id]);
+  return i === -1 ? 0 : i;
+}
+
+function pintarSelectorDesde(){
+  const caja = document.getElementById('nivel-desde-caja');
+  const sel = document.getElementById('nivel-desde');
+  if(!sel.options.length){
+    DESDE_OPCIONES.forEach((o) => {
+      const op = document.createElement('option');
+      op.value = String(o);
+      op.textContent = o === 0 ? 'Desde el más fácil' : `Desde ${o}`;
+      sel.appendChild(op);
+    });
+  }
+  sel.value = String(nivelDesde);
+  // Un tema sin rating (los de táctica de la casa) no tiene nada que elegir.
+  caja.style.display = currentTheme && !enRepaso() && temaConRating(currentTheme) ? '' : 'none';
+  const pista = document.getElementById('nivel-desde-pista');
+  pista.textContent = nivelDeLaCuenta
+    ? `Con tu nivel (≈${nivelDeLaCuenta}), te conviene empezar desde ${escalonDe(nivelDeLaCuenta - 300) || 'el más fácil'}.`
+    : '';
+}
+
+// La racha (js/ejercicio-tablero.js): la misma en todas las páginas de ejercicios.
+const { getStreak, getBestStreak, setStreak, bumpStreak, resetStreak } = EjercicioTablero.racha('entreno_temas');
 
 /* ---------------- Vista de temas ---------------- */
 function normalize(s){ return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); }
@@ -206,6 +334,7 @@ function showThemes(){
   document.getElementById('play-view').style.display = 'none';
   document.getElementById('themes-view').style.display = 'block';
   buildThemes();
+  pintarRepaso();
   try{ localStorage.removeItem('entreno_temas_last'); }catch(e){}
   window.scrollTo({ top: 0 });
 }
@@ -233,6 +362,7 @@ function openTheme(key){
   document.getElementById('themes-view').style.display = 'none';
   document.getElementById('play-view').style.display = 'block';
   try{ localStorage.setItem('entreno_temas_last', key); }catch(e){}
+  pintarSelectorDesde();
   if(solvedCountFor(key) >= idsOf(key).length){
     currentIndex = 0;
     finishTheme();
@@ -249,6 +379,12 @@ function openTheme(key){
 }
 
 function updateProgressBar(){
+  if(enRepaso()){
+    const total = repasoIds.length;
+    document.getElementById('progress-fill').style.width = (total ? Math.round(100 * currentIndex / total) : 0) + '%';
+    document.getElementById('progress-label').textContent = `Repaso · ejercicio ${Math.min(currentIndex + 1, total)} de ${total}`;
+    return;
+  }
   const total = idsOf(currentTheme).length;
   const done = solvedCountFor(currentTheme);
   document.getElementById('progress-fill').style.width = (total ? Math.round(100 * done / total) : 0) + '%';
@@ -256,7 +392,6 @@ function updateProgressBar(){
 }
 
 /* ---------------- Tablero ---------------- */
-const FILES = ['a','b','c','d','e','f','g','h'];
 function isLightSquare(square){
   const file = square.charCodeAt(0) - 97;
   const rank = parseInt(square[1], 10) - 1;
@@ -267,39 +402,35 @@ function drawBoard(){
   refrescarComandos();
   const board = document.getElementById('board');
   board.innerHTML = '';
-  const ranks = orientation === 'w' ? [8,7,6,5,4,3,2,1] : [1,2,3,4,5,6,7,8];
-  const files = orientation === 'w' ? [0,1,2,3,4,5,6,7] : [7,6,5,4,3,2,1,0];
-  ranks.forEach((rank) => {
-    files.forEach((f) => {
-      const square = FILES[f] + rank;
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'sq ' + (isLightSquare(square) ? 'light' : 'dark');
-      btn.dataset.square = square;
-      const piece = game.get(square);
-      if(piece){
-        const span = document.createElement('span');
-        if (window.PiezaPreferida) PiezaPreferida.pintar(span, piece.type, piece.color);
-        else {
-          span.className = piece.color === 'w' ? 'piece-white' : 'piece-black';
-          span.textContent = GLYPH[piece.color][piece.type];
-        }
-        span.setAttribute('aria-hidden', 'true');
-        btn.appendChild(span);
+  // Desde el bando que juega (js/ejercicio-tablero.js, el mismo orden en Mates).
+  EjercicioTablero.casillas(orientation).forEach((square) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'sq ' + (isLightSquare(square) ? 'light' : 'dark');
+    btn.dataset.square = square;
+    const piece = game.get(square);
+    if(piece){
+      const span = document.createElement('span');
+      if (window.PiezaPreferida) PiezaPreferida.pintar(span, piece.type, piece.color);
+      else {
+        span.className = piece.color === 'w' ? 'piece-white' : 'piece-black';
+        span.textContent = GLYPH[piece.color][piece.type];
       }
-      /* Qué dice cada casilla lo escribe js/tablero-accesible.js, no esta
-         página: ahí las columnas van habladas ("eva 4", que no se confunde con
-         "bella 4" al oírlas) y los nombres de las piezas salen de la misma
-         tabla que el resto del sitio. Acá solo se declara el ESTADO, que es lo
-         único que esta página sabe y aquel no. */
-      if(square === selectedSquare){ btn.classList.add('selected'); btn.dataset.estado = 'seleccionada'; }
-      if(lastMove && (square === lastMove.from || square === lastMove.to)){
-        btn.classList.add('last');
-        btn.dataset.estado = (btn.dataset.estado ? btn.dataset.estado + ', ' : '') + 'de la última jugada';
-      }
-      btn.addEventListener('click', () => onSquareClick(square, btn));
-      board.appendChild(btn);
-    });
+      span.setAttribute('aria-hidden', 'true');
+      btn.appendChild(span);
+    }
+    /* Qué dice cada casilla lo escribe js/tablero-accesible.js, no esta
+       página: ahí las columnas van habladas ("eva 4", que no se confunde con
+       "bella 4" al oírlas) y los nombres de las piezas salen de la misma
+       tabla que el resto del sitio. Acá solo se declara el ESTADO, que es lo
+       único que esta página sabe y aquel no. */
+    if(square === selectedSquare){ btn.classList.add('selected'); btn.dataset.estado = 'seleccionada'; }
+    if(lastMove && (square === lastMove.from || square === lastMove.to)){
+      btn.classList.add('last');
+      btn.dataset.estado = (btn.dataset.estado ? btn.dataset.estado + ', ' : '') + 'de la última jugada';
+    }
+    btn.addEventListener('click', () => onSquareClick(square, btn));
+    board.appendChild(btn);
   });
   montarTeclado();
 }
@@ -442,11 +573,8 @@ function onSquareClick(square, btn){
   }
   const from = selectedSquare;
   selectedSquare = null;
-  if(candidates.length > 1 && candidates[0].flags.includes('p')){
-    askPromotion((choice) => playMove(from, square, choice));
-  } else {
-    playMove(from, square, candidates[0].promotion || undefined);
-  }
+  // En qué pieza corona: el diálogo de todo el sitio (js/coronacion.js).
+  EjercicioTablero.jugarCoronando(game, from, square, (pieza) => playMove(from, square, pieza));
 }
 
 if(typeof enableBoardDrag !== 'undefined'){
@@ -461,40 +589,21 @@ if(typeof enableBoardDrag !== 'undefined'){
   });
 }
 
-function askPromotion(callback){
-  const modal = document.getElementById('promo-modal');
-  const opts = document.getElementById('promo-opts');
-  opts.innerHTML = '';
-  const turn = game.turn();
-  ['q','r','b','n'].forEach((type) => {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'promo-btn';
-    btn.setAttribute('aria-label', PIECE_NAME[type]);
-    btn.innerHTML = window.PiezaPreferida ? PiezaPreferida.html(type, turn, { oculta: true }) : `<span class="${turn === 'w' ? 'piece-white' : 'piece-black'}" aria-hidden="true">${GLYPH[turn][type]}</span>`;
-    btn.addEventListener('click', () => { modal.style.display = 'none'; callback(type); });
-    opts.appendChild(btn);
-  });
-  modal.style.display = 'flex';
-}
-
 function playMove(from, to, promotion){
   const puzzle = currentPuzzle();
   const moveResult = game.move({ from, to, promotion: promotion || 'q' });
   if(!moveResult){ drawBoard(); return; }
 
   const expected = puzzle.solution[solutionStep];
-  if(moveResult.san !== expected){
-    // Cualquier jugada que dé mate también cuenta como correcta.
-    if(!game.in_checkmate()){
-      game.undo();
-      drawBoard();
-      missedThisPuzzle = true;
-      resetStreak();
-      flashWrong(document.querySelector('[data-square="' + to + '"]'));
-      setStatus(`${moveResult.san} es legal, pero no es la jugada de la solución.`, 'bad');
-      return;
-    }
+  // La de la solución o cualquier jugada que dé mate (js/ejercicio-tablero.js).
+  if(!EjercicioTablero.esAcierto(game, moveResult, expected)){
+    game.undo();
+    drawBoard();
+    missedThisPuzzle = true;
+    resetStreak();
+    flashWrong(document.querySelector('[data-square="' + to + '"]'));
+    setStatus(`${moveResult.san} es legal, pero no es la jugada de la solución.`, 'bad');
+    return;
   }
   lastMove = { from, to };
   drawBoard();
@@ -532,7 +641,11 @@ function finishPuzzle(){
   const alreadySolved = isSolved(id);
   if(!missedThisPuzzle && !usedHintThisPuzzle) bumpStreak(); else resetStreak();
   setStatus(game.in_checkmate() ? '✅ ¡Jaque mate!' : '✅ ¡Correcto! Con esto se obtiene una ventaja decisiva.', 'ok');
-  if(!alreadySolved){
+  // La cola de repaso: lo que costó entra, lo que se repasa se vuelve a
+  // programar. Lo resuelto limpio a la primera no entra nunca.
+  if(window.RepasoFallados) RepasoFallados.anotar(CLAVE_REPASO, id, missedThisPuzzle, usedHintThisPuzzle,
+    { tema: enRepaso() ? (RepasoFallados.leer(CLAVE_REPASO)[id] || {}).tema : currentTheme });
+  if(!alreadySolved && !enRepaso()){
     markSolved(id);
     /* Informes tiene una columna de Táctica aparte de la de Ejercicios por tema.
        Al traerse los 148 ejercicios acá, si todo se apuntara como 'temas' esa
@@ -541,13 +654,22 @@ function finishPuzzle(){
        qué. Así que cada ejercicio se apunta bajo la actividad que le
        corresponde, que es lo mismo que se apuntaba antes de mudarlos. */
     const actividad = TEMAS_DE_TACTICA.has(currentTheme) ? 'tactica' : 'temas';
-    EntrenoProgress.log(actividad, { puzzle_id: id, theme: currentTheme, rating: puzzle.rating ?? null });
+    // `limpio` (sin error ni pista) va en el detalle: sin eso, lo único que
+    // quedaba era "resuelto", y uno sacado con "Ver solución" contaba igual
+    // que uno limpio. Con esto se puede medir la precisión por tema.
+    EntrenoProgress.log(actividad, { puzzle_id: id, theme: currentTheme, rating: puzzle.rating ?? null,
+      ...EntrenoProgress.comoSalio(missedThisPuzzle, usedHintThisPuzzle) });
   }
   updateProgressBar();
   updateOverall();
   setTimeout(() => {
-    if(currentIndex < idsOf(currentTheme).length - 1){
-      currentIndex++;
+    if(enRepaso()){
+      if(currentIndex < repasoIds.length - 1){ currentIndex++; loadPuzzle(); }
+      else { currentIndex = repasoIds.length; terminarRepaso(); }
+      return;
+    }
+    if(solvedCountFor(currentTheme) < idsOf(currentTheme).length){
+      currentIndex = siguienteIndice(currentTheme, currentIndex + 1);
       loadPuzzle();
     } else {
       finishTheme();
@@ -558,6 +680,8 @@ function finishPuzzle(){
 function finishTheme(){
   document.getElementById('play-area').style.display = 'none';
   document.getElementById('celebration').style.display = 'block';
+  document.getElementById('celebration-title').textContent = '¡Tema completo!';
+  document.getElementById('celebration-replay-btn').style.display = '';
   const total = idsOf(currentTheme).length;
   const info = THEME_INFO[currentTheme] || { name: currentTheme };
   document.getElementById('celebration-stats').textContent =
@@ -596,11 +720,23 @@ document.getElementById('hint-btn').addEventListener('click', giveHint);
 document.getElementById('retry-btn').addEventListener('click', loadPuzzle);
 document.getElementById('skip-btn').addEventListener('click', () => {
   resetStreak();
-  if(currentIndex < idsOf(currentTheme).length - 1){
-    currentIndex++;
-  } else {
-    currentIndex = 0;
+  // El siguiente sin resolver (a la altura elegida), no el de al lado: ese
+  // podía estar ya hecho. Si el único que queda es este, vuelve a salir este.
+  if(enRepaso()){
+    // Saltar en el repaso no lo reprograma: sigue pendiente para la próxima.
+    if(currentIndex < repasoIds.length - 1){ currentIndex++; loadPuzzle(); }
+    else { currentIndex = repasoIds.length; terminarRepaso(); }
+    return;
   }
+  currentIndex = siguienteIndice(currentTheme, currentIndex + 1);
+  loadPuzzle();
+});
+document.getElementById('repaso-btn').addEventListener('click', abrirRepaso);
+document.getElementById('nivel-desde').addEventListener('change', (e) => {
+  nivelDesde = parseInt(e.target.value, 10) || 0;
+  try{ localStorage.setItem(CLAVE_DESDE, String(nivelDesde)); }catch(err){}
+  if(solvedCountFor(currentTheme) >= idsOf(currentTheme).length) return;
+  currentIndex = siguienteIndice(currentTheme, 0);
   loadPuzzle();
 });
 document.getElementById('celebration-replay-btn').addEventListener('click', () => {
@@ -622,6 +758,7 @@ function initApp(){
   // doble"): tiene que caer DENTRO del tema, no en la lista de ochenta, que
   // es justo lo que esa tarea viene a evitar. Manda sobre el hash y sobre lo
   // último que se estuvo haciendo — lo pidió el profe hoy.
+  nivelDesde = elegirNivelDesde();
   const pedido = new URLSearchParams(location.search).get('tema');
   const fromHash = (location.hash || '').replace('#', '');
   const wanted = (pedido && DATA.themes[pedido] ? pedido : null)
@@ -630,6 +767,8 @@ function initApp(){
   // openTheme() arranca en el primer ejercicio SIN resolver (firstUnsolvedIndex),
   // así que los diez que pide la tarea son diez nuevos: lo que ya hizo no se
   // le vuelve a poner delante.
+  // ?repaso=1 es el enlace de «Hoy te toca» del hub: abre la cola directo.
+  if(new URLSearchParams(location.search).has('repaso') && pendientesDeRepaso().length){ abrirRepaso(); return; }
   if(wanted) openTheme(wanted); else showThemes();
 }
 

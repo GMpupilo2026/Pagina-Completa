@@ -101,25 +101,8 @@ function firstUnsolvedIndex(nivelId){
   return idx === -1 ? 0 : idx;
 }
 
-function getStreak(){
-  try{ return parseInt(localStorage.getItem('entreno_visualizacion_streak') || '0', 10) || 0; }catch(e){ return 0; }
-}
-function getBestStreak(){
-  try{ return parseInt(localStorage.getItem('entreno_visualizacion_best') || '0', 10) || 0; }catch(e){ return 0; }
-}
-function setStreak(n){
-  localStorage.setItem('entreno_visualizacion_streak', String(n));
-  const best = Math.max(getBestStreak(), n);
-  localStorage.setItem('entreno_visualizacion_best', String(best));
-  document.getElementById('streak-count').textContent = n;
-  document.getElementById('streak-best').textContent = best;
-}
-function bumpStreak(){
-  setStreak(getStreak() + 1);
-  const bar = document.getElementById('streak-bar');
-  bar.classList.remove('pulse'); void bar.offsetWidth; bar.classList.add('pulse');
-}
-function resetStreak(){ setStreak(0); }
+// La racha (js/ejercicio-tablero.js): la misma en todas las páginas de ejercicios.
+const { getStreak, getBestStreak, setStreak, bumpStreak, resetStreak } = EjercicioTablero.racha('entreno_visualizacion');
 
 /* ---------------- Vista de niveles ---------------- */
 function buildLevels(){
@@ -328,27 +311,47 @@ function loadPuzzle(){
   document.getElementById('answer-input').focus();
 }
 
+/* "R" es el rey en castellano y la torre (rook) en inglés; ChessMoveParser
+   prueba primero el inglés. Con rey y torre que pueden ir a la misma casilla,
+   quien escribía «Rd2» queriendo mover el rey movía la torre, y la página le
+   decía que no era la jugada de la línea (y le cortaba la racha). Como acá se
+   sabe qué jugada pide la línea, se prueban las dos lecturas y, si una es la
+   esperada, gana esa. Si ninguna lo es, queda la de siempre. Las pruebas se
+   hacen sobre copias: la partida solo se mueve con la jugada elegida. */
+const ES_EN = { R: 'K', D: 'Q', T: 'R', A: 'B', C: 'N' };
+function jugadaDeLaLinea(texto, esperada){
+  const t = String(texto || '').trim();
+  const lecturas = [t];
+  if(ES_EN[t[0]]) lecturas.push(ES_EN[t[0]] + t.slice(1).replace(/=([DTAC])/i, (_, c) => '=' + ES_EN[c.toUpperCase()]));
+  let primera = null;
+  for(const l of lecturas){
+    const m = ChessMoveParser.tryParseMove(new Chess(game.fen()), l);
+    if(!m) continue;
+    if(m.san === esperada) { primera = m; break; }
+    if(!primera) primera = m;
+  }
+  return primera ? game.move(primera.san) : null;
+}
+
 function jugarEscribiendo(texto){
   if(locked) return;
   if(!texto.trim()){ return; }
   const puzzle = currentPuzzle();
-  const mv = ChessMoveParser.tryParseMove(game, texto);
+  const mv = jugadaDeLaLinea(texto, puzzle.solution[solutionStep]);
   if(!mv){
     setStatus(`"${texto}" no es una jugada legal en la posición que llevas calculada. Revísala e inténtalo de nuevo.`, 'bad');
     flashWrongInput();
     return;
   }
   const expected = puzzle.solution[solutionStep];
-  if(mv.san !== expected){
-    // Cualquier jugada que dé mate también cuenta como correcta.
-    if(!game.in_checkmate()){
-      game.undo();
-      missedThisPuzzle = true;
-      resetStreak();
-      flashWrongInput();
-      setStatus(`${mv.san} es legal, pero no es la jugada de la línea. Vuelve a calcular desde donde ibas.`, 'bad');
-      return;
-    }
+  // La de la línea o cualquier jugada que dé mate (js/ejercicio-tablero.js).
+  if(!EjercicioTablero.esAcierto(game, mv, expected)){
+    game.undo();
+    missedThisPuzzle = true;
+    resetStreak();
+    flashWrongInput();
+    setStatus(`${mv.san} es legal, pero no es la jugada de la línea. Vuelve a calcular desde donde ibas.`, 'bad');
+    return;
   }
   document.getElementById('answer-input').value = '';
   logJugadaPropia(mv.san);
@@ -404,10 +407,15 @@ function finishPuzzle(){
   document.getElementById('hint-btn').disabled = true;
   const id = currentId();
   const alreadySolved = isSolved(id);
-  if(!missedThisPuzzle && !usedHintThisPuzzle) bumpStreak(); else resetStreak();
-  setStatus(game.in_checkmate() ? '✅ ¡Jaque mate! Visualizaste la línea entera.' : '✅ ¡Correcto! Calculaste toda la línea sin ver el tablero moverse.', 'ok');
+  const limpio = !missedThisPuzzle && !usedHintThisPuzzle;
+  if(limpio) bumpStreak(); else resetStreak();
+  if(limpio) setStatus(game.in_checkmate() ? '✅ ¡Jaque mate! Visualizaste la línea entera.' : '✅ ¡Correcto! Calculaste toda la línea sin ver el tablero moverse.', 'ok');
+  else setStatus('Llegaste al final, pero con pista o con algún error: este ejercicio no cuenta como resuelto y va a volver a salir.');
   drawStaticBoard(game.fen(), game.turn() === 'w' ? 'b' : 'w');
-  if(!alreadySolved){
+  /* Solo cuenta lo resuelto sin pista ni error. Antes se marcaba igual y el
+     ejercicio no volvía a salir nunca: el contador (y lo que ve el profesor en
+     Informes) decía "resuelto" de uno que se sacó mirando la pista. */
+  if(!alreadySolved && limpio){
     markSolved(id);
     if (window.EntrenoProgress) EntrenoProgress.log("visualizacion", { puzzle_id: id });
   }

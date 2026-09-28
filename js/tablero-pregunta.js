@@ -117,12 +117,27 @@ window.TableroPregunta = (function () {
       }
       if (sq === origen) { origen = null; pintar(); return; }
 
-      const mov = g.move({ from: origen, to: sq, promotion: "q" });
+      if (window.Coronacion && Coronacion.hayQueElegir(g, origen, sq)) {
+        // El peón corona: la pieza la elige quien contesta (js/coronacion.js).
+        const desde = origen;
+        origen = null;
+        pintar();
+        Coronacion.pedir(g.turn(), (elegida) => {
+          if (elegida && !bloqueado) responder(g, g.move({ from: desde, to: sq, promotion: elegida }));
+        });
+        return;
+      }
+      const mov = g.move({ from: origen, to: sq });
       if (!mov) {
         // Tocar otra pieza propia cambia de pieza, en vez de no hacer nada.
         if (pieza && pieza.color === g.turn()) { origen = null; clic(sq); }
         return;
       }
+      responder(g, mov);
+    }
+
+    function responder(g, mov) {
+      if (!mov) return;
       respuesta = { from: mov.from, to: mov.to, promotion: mov.promotion || null, san: mov.san };
       origen = null;
       pintar([mov.from, mov.to]);

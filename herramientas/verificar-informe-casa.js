@@ -84,6 +84,30 @@ const CASOS = [
   { nombre: "marca-mala", frecuencia: "semanal", marca: { nombre: '<img src=x onerror=alert(1)>Reyes',
       color: 'red;background:url(https://malo.test/x)', logoUrl: 'javascript:alert(1)' },
     datos: { ...BASE, dias_activos: 5, tareas: SIN_DEBERES, examenes: { rendidos: 0, sin_hacer_hoy: 0, pendientes: 0 } } },
+  /* Con premios de la clase (public.premios_de_alumno(), dentro de
+     informe_de_alumno()): trofeos e insignias de la semana. El motivo lo
+     escribe el profe y lleva HTML a propósito: tiene que llegar como texto. */
+  { nombre: "con-premios", frecuencia: "semanal", datos: { ...BASE, dias_activos: 5,
+      tareas: SIN_DEBERES, examenes: { rendidos: 0, sin_hacer_hoy: 0, pendientes: 0 },
+      premios: {
+        trofeos_periodo: 4, trofeos_total: 23, insignias_periodo: 3, insignias_total: 7,
+        insignias: [
+          { tipo: "buen_estudiante", nombre: "Estrella de buen estudiante", emoji: "⭐", periodo: 2, total: 5 },
+          { tipo: "buen_comentario", nombre: "Buen comentario", emoji: "💬", periodo: 1, total: 1 },
+          { tipo: "idea_creativa", nombre: "Idea creativa", emoji: "🎨", periodo: 0, total: 1 },
+        ],
+        ultimas: [
+          { tipo: "buen_comentario", nombre: "Buen comentario", emoji: "💬",
+            motivo: "Explicó <b>muy bien</b> la clavada", fecha: "2026-09-18T15:00:00Z" },
+          { tipo: "buen_estudiante", nombre: "Estrella de buen estudiante", emoji: "⭐", motivo: "", fecha: "2026-09-16T15:00:00Z" },
+        ],
+      } } },
+  // Premios en cero en el periodo (aunque tenga de antes): el bloque no sale.
+  { nombre: "premios-viejos", frecuencia: "semanal", datos: { ...BASE, dias_activos: 5,
+      tareas: SIN_DEBERES, examenes: { rendidos: 0, sin_hacer_hoy: 0, pendientes: 0 },
+      premios: { trofeos_periodo: 0, trofeos_total: 23, insignias_periodo: 0, insignias_total: 7,
+        insignias: [{ tipo: "buen_estudiante", nombre: "Estrella de buen estudiante", emoji: "⭐", periodo: 0, total: 5 }],
+        ultimas: [] } } },
   { nombre: "diario-si", frecuencia: "diario", datos: { ...BASE, dias_del_periodo: 1, dias_activos: 1,
       tareas: SIN_DEBERES, examenes: { rendidos: 0, sin_hacer_hoy: 0, pendientes: 0 } } },
   { nombre: "diario-no", frecuencia: "diario", datos: { ...BASE, dias_del_periodo: 1, dias_activos: 0,
@@ -206,6 +230,19 @@ Object.keys(periodos).forEach((k) => {
   ok(periodos[k].esperados <= periodos[k].dias,
     `el umbral de ${k} (${periodos[k].esperados}) no cabe en sus ${periodos[k].dias} días`);
 });
+
+// ---------- Los premios de la clase ----------
+const pr = texto("con-premios");
+ok(/Sus premios en clase/.test(pr), "con premios en la semana falta el bloque «Sus premios en clase»");
+ok(/4 trofeos esta semana/.test(pr), "no dice cuántos trofeos ganó esta semana: " + pr.slice(0, 300));
+ok(/Estrella de buen estudiante 2 veces/.test(pr), "no dice cuántas estrellas de buen estudiante ganó");
+ok(/Buen comentario 1 vez/.test(pr), "no dice «1 vez» para una sola insignia");
+ok(!/Idea creativa/.test(pr), "una insignia de antes del periodo no va en el informe de la semana");
+ok(/De su profe:<\/strong> «Explicó &lt;b&gt;muy bien&lt;\/b&gt; la clavada»/.test(html["con-premios"]),
+  "el motivo del profe tiene que llegar escapado, como texto");
+ok(/En total lleva 23 trofeos y 7 insignias/.test(pr), "no dice cuántos lleva en total");
+ok(!/Sus premios en clase/.test(texto("premios-viejos")), "sin premios en el periodo el bloque no debería salir");
+ok(!/Sus premios en clase/.test(texto("va-bien")), "sin la clave premios el bloque no debería salir");
 
 if (fallos.length) {
   console.error(`❌ ${fallos.length} fallo(s):\n` + fallos.map((f) => "  - " + f).join("\n"));

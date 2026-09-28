@@ -379,6 +379,42 @@ verdad: contra el código de antes saltan **16 comprobaciones**.
   de a8 a h1 y chess.js de a1 a h8, así que un `JSON.stringify` a secas falla por
   el orden de las claves y no por la posición.
 
+### Siete rondas
+
+Se pidió revisar si un torneo ya se puede jugar **hasta 7 rondas**. Se puede, y
+se podía: la base no pone tope (`total_rounds` es un entero suelto) y el campo
+del Suizo acepta de 1 a 20. Pero la prueba de un torneo entero de 7 rondas sacó
+dos cosas que con 3 rondas no se notaban, y las dos estaban en el motor
+(`js/torneo-engine.js`), no en la página:
+
+- **El Suizo repetía rivales que se podían evitar.** Era voraz: al primero sin
+  pareja le daba el primero de abajo con quien no hubiera jugado, sin volver
+  atrás, y eso podía dejar a los últimos sin nadie nuevo. Con 7 rondas y 16
+  jugadores había casi dos cruces repetidos por torneo; en la página, con 10,
+  una pareja se enfrentó **tres veces**. Ahora busca con retroceso y solo
+  repite rival si ningún emparejamiento lo evita, y los menos posibles. El
+  bye también entra en la búsqueda: si con el candidato natural los demás no se
+  pueden emparejar sin repetir, se prueba con el siguiente (nunca uno que ya
+  tuvo bye mientras haya otro). Tiene tope de pasos, y con 200 jugadores las 7
+  rondas se arman en milisegundos.
+- **Los colores no se repartían.** En el Suizo llevaba blancas siempre el de
+  más arriba: el puntero podía jugar las 7 con blancas. En todos contra todos
+  la regla `(ronda + tablero) % 2` parecía pareja y no lo era: con 8, uno jugaba
+  las 7 con blancas y otro 6 de 7 con negras. El Suizo ahora cuida que nadie
+  pase de 2 de diferencia ni juegue 3 seguidas con el mismo color, **después**
+  de no repetir rival (el mismo orden del reglamento FIDE: en 1280 torneos
+  simulados pasa una vez, en la última ronda). Todos contra todos usa las
+  **tablas de Berger**, las de FIDE: una de diferencia como mucho y nunca tres
+  seguidas.
+
+Lo comprueba `node herramientas/verificar-torneo-rondas.js`: el motor solo, con
+7 rondas y de 2 a 128 jugadores (Suizo, todos contra todos de 7 y 8, eliminación
+de 65 a 128, que pide 7), y la página de punta a punta —un Suizo de 10 con 7
+rondas escritas en el campo y un todos contra todos de 8— hasta cerrar el
+torneo con su campeón, sin ofrecer una ronda 8. Para recargar entre ronda y
+ronda, el doble guarda lo escrito en `sessionStorage`. Contra el motor de antes
+saltan **8 comprobaciones**.
+
 ### El verificador de voseo no miraba la mitad del sitio
 
 Se descubrió acá, de rebote: `torneo.html` decía «Vuelve a Torneos y **entrá**
@@ -396,9 +432,39 @@ persona del pretérito— fueron a `BLANCA`, junto a las que ya estaban por lo m
 Y el verbo `entrar` se sumó a la tabla, que es la regla de siempre: **la tabla se
 completa cuando algo se escapa**.
 
+## Competir: retar y las listas de partidas tienen su propia página
+
+«🟢 En línea ahora», «Partidas en curso» y «Partidas terminadas» vivían en
+`juegos.html`, debajo de los juegos para uno solo y del formulario del
+profesor. Se mudaron a `competir.html`, con su tarjeta «⚔️ Competir» en el
+grupo «Jugar y competir» del panel, justo después de Juegos. Juegos quedó para
+conocer las modalidades, los juegos para uno solo, armar partidas y la tarjeta
+de la partida propia; Competir, para jugar contra otra persona y seguir esas
+partidas.
+
+- **Lo que usan las dos páginas está una sola vez**, en `js/juegos-comun.js`:
+  el catálogo de modalidades (`VARIANTS`), `estadoInicial()`,
+  `pageFor2pVariant()`, `variantLabel()`, `escapeHtml()` y `nombreVisible()`.
+  El formulario del profesor y aceptar un reto crean partidas: con dos copias
+  de `estadoInicial()`, una partida podía arrancar distinta según el camino.
+- **Las listas son de todos**, no solo del profesor como antes: a cada quien le
+  llegan las partidas que la RLS de `game_rooms`/`fourplayer_games` le deja ver.
+  «Terminar» y «Eliminar» se pintan solo a quien arma partidas (profesor o
+  administración); al alumno la base tampoco lo dejaría.
+- **Los retos que me llegan van en Competir**, encima de todo: el canal de
+  presencia (`juegos-en-linea`) solo anuncia a quien tiene esa página abierta,
+  así que solo desde ahí se puede retar y recibir un reto.
+- Juegos conserva una tarjeta a Competir, para quien buscaba ahí lo que se fue,
+  y al crear una partida el aviso dice que se sigue en Competir, con su enlace.
+- `node herramientas/verificar-todo.js profesor-juega panel` lo comprueba: que
+  Juegos ya no traiga las listas, que en Competir la partida propia diga
+  «Jugar», que el alumno no vea «Terminar» y que retar siga siendo de toda la
+  Academia.
+
 ## Retar a quien está en línea
 
-En `juegos.html`, debajo de las tarjetas, está "🟢 En línea ahora": quién más
+En `competir.html` (antes en `juegos.html`; ver «Competir: retar y las listas
+de partidas tienen su propia página») está "🟢 En línea ahora": quién más
 tiene abierta la página en este momento y un botón para retarlo a la modalidad y
 el reloj que uno elija. Si acepta, la partida nace sola y a los dos los manda a
 la página de la modalidad. Hasta ahora las partidas entre personas solo las
@@ -727,3 +793,298 @@ separe posiciones, que ante lo que no entiende no declare tablas, que ninguna
 página calcule el reloj con `Date.now()` a secas, y que el desfase se mida
 contra un servidor que va siete segundos por delante. Está probado que falla de
 verdad: quitando el recorte de la captura al paso, salta.
+
+## La sala de cine de las transmisiones
+
+`torneos-en-vivo.html` (el enlace «Torneos» junto a «¡Te reto!» y «TV en
+vivo») tiene una ficha por torneo transmitido. Un torneo que se transmite por
+Lichess (una transmisión, «broadcast») entra a `transmision.html?torneo=<clave>`:
+la partida elegida en la pantalla grande entre dos telones, las demás mesas de
+la ronda debajo y, al lado, la pizarra de posiciones. El código está en
+`js/transmision.js`; qué torneo muestra lo dice la sala de esa clave en la
+tabla `salas_torneo` (ver «Las salas de torneos se editan en administración»).
+
+- **Todo sale de la API pública de Lichess**, sin cuenta ni base propia:
+  `/api/broadcast/<id>` trae el torneo y sus rondas, y cada ronda se pide en su
+  dirección con `/api` delante (la que Lichess da en `url`). La ronda trae cada
+  partida con su FEN, así que no hace falta chess.js en la página: solo se lee
+  la parte de las piezas. La CSP ya dejaba `connect-src https://lichess.org`.
+- **La pizarra se suma acá, ronda por ronda**: 1 por ganar, ½ por tablas. No se
+  inventa un desempate: con los mismos puntos se comparte el puesto (1, 2, 2,
+  4). Y dice de cuántas rondas sale («Suma de X de Y rondas»): si una ronda no
+  cargó, la pizarra no muestra puntos de menos sin avisar.
+- **Solo se refresca la ronda que se está viendo, y solo si sigue en juego**,
+  cada 20 s; con la pestaña escondida no se le pide nada a Lichess.
+- **El tablero es el que eligió cada quien**: casillas con `--sq-light/--sq-dark`
+  y la pieza por `PiezaPreferida` (la página está en `tablero-cabecera.py`).
+  El grande lleva coordenadas; las miniaturas no (a ese tamaño no se leen).
+- **La sala está siempre a oscuras**, en modo claro y en oscuro. Los colores de
+  texto se midieron contra esos fondos fijos. La última jugada se marca en
+  dorado y además va escrita debajo («última jugada e2–e4»); quien usa lector
+  de pantalla tiene la posición en palabras.
+- `verificar-transmision.js` lo comprueba con un doble de Lichess cuyas
+  posiciones salen de jugar las jugadas con chess.js: la posición y la última
+  jugada, la pizarra con empates, cambiar de mesa y de ronda, que el resultado
+  nuevo llegue solo, el contraste y el aviso con Lichess caído. Rompiendo la
+  regla del puesto compartido, salta.
+
+## Las salas de torneos se editan en administración
+
+Las fichas de Torneos (`torneos-en-vivo.html`) y el torneo de cada sala de
+cine estaban escritos en el código: el HTML y una lista en `js/transmision.js`.
+Cada sala nueva era un cambio de código. Ahora viven en la tabla
+**`salas_torneo`** y las crea, edita, ordena, oculta y borra quien administra,
+en **`admin.html#torneos`** (`js/admin-salas-torneo.js`). Migración
+`20260927043856_salas_de_torneos_transmitidos`.
+
+- **Dos tipos de sala.** `lichess`: una transmisión de Lichess, que entra a la
+  sala de cine (`transmision.html?torneo=<clave>`) y lleva el id de la
+  transmisión. `enlaces`: cualquier otra (UTN va en idchess, que no tiene API
+  pública conocida), con uno a seis botones que la abren en otra pestaña. Las
+  de Lichess pueden llevar botones de más («Verlo directo en Lichess») y
+  pizarras de chess-results (ver «Las posiciones oficiales vienen de
+  chess-results»).
+- **Una sola ficha.** `js/salas-torneo.js` la pinta, y la usan la página
+  pública y la vista previa del editor (dentro de una caja `inert`: se ve pero
+  no se sigue). Lo que se ve en la vista previa es lo que se va a ver.
+- **Quién lee y quién escribe lo decide la RLS.** Las visibles las lee
+  cualquiera, anónimo incluido; las ocultas, solo quien administra (así se
+  prepara una sala antes de publicarla). Escribir: solo `soy_admin()`. No es
+  una tabla que reparte permisos, así que se escribe directo con políticas,
+  como `tv_settings`. `updated_at`/`updated_by` los pone un trigger, no el
+  navegador. Comprobado impersonando roles en SQL: anónimo y alumno no
+  insertan, y su update y su delete no tocan ninguna fila.
+- **Los enlaces se validan en la base**, con `interno.enlaces_de_sala_validos()`
+  en un `check`: solo `https://`, sin espacios ni comillas, texto de 1 a 60,
+  seis como máximo. Un «javascript:» en una página pública no puede depender
+  de que el formulario lo haya revisado. El formulario valida lo mismo antes de
+  mandar, para decirlo en palabras y llevar el foco al campo; la dirección
+  repetida (`23505`) también se explica.
+- **Un update que la RLS no deja pasar no da error: no toca ninguna fila.** El
+  editor pide `.select("id")` y, si no vuelve ninguna, dice «No se guardó: tu
+  cuenta no tiene permiso» en vez de «guardada».
+- **La dirección de UNA ronda de Lichess se guarda con su torneo.**
+  `lichess.org/broadcast/<torneo>/<id>` es el torneo;
+  `…/<torneo>/<ronda>/<id>` es una ronda, y «Comprobar en Lichess» le pregunta
+  de qué torneo es: la sala muestra el torneo entero, con todas sus rondas.
+- **La comprobación va con su botón, no al salir del campo.** Probado: el texto
+  del resultado corre el formulario, y si llega justo cuando se aprieta
+  «Guardar la sala», el clic cae en otro lado y no se guarda nada, sin error.
+- La dirección de la sala se arma sola con el nombre (sin tildes, con guiones)
+  hasta que se escribe a mano; editar el nombre de una sala que ya existe no le
+  cambia la dirección, que es la que ya se compartió.
+- `verificar-salas-torneo.js` lo prueba con `lib/doble-salas-torneo.js`, un
+  doble que aplica la RLS y los `check` de la tabla (también lo usa
+  `verificar-transmision.js`): las fichas, los dos tipos, los rechazos, la
+  ronda de Lichess, editar, ocultar, reordenar, borrar con su confirmación, el
+  contraste y el permiso perdido a mitad de camino. Quitando la comprobación
+  de «no se guardó», salta.
+
+## Las posiciones oficiales vienen de chess-results
+
+Una transmisión de Lichess puede traer solo algunas mesas: la del
+Interuniversitario UTN-CONARE 2026 trae dos, de un torneo femenino de 10 y un
+absoluto de 27. Sumar esas dos mesas daría una «tabla de posiciones» que no es
+la del torneo, y se vería perfecta. Las posiciones oficiales están en
+chess-results.com, así que una sala de Lichess puede llevar **pizarras**
+(`salas_torneo.pizarras`, migración `20260927050207`): el título de la pestaña
+(«Femenino», «Masculino») y la dirección del torneo en chess-results. Con
+pizarras, la sala de cine muestra esas posiciones, una pestaña por pizarra; sin
+pizarras, sigue sumando las partidas (ver «La sala de cine de las
+transmisiones»).
+
+- **chess-results no tiene API ni manda CORS**, así que el navegador no le
+  puede pedir nada. Las lee la Edge Function **`pizarra-torneo`**
+  (`verify_jwt` en true: la llama la página pública con la clave anónima).
+- **No es un proxy abierto.** Recibe la clave de una sala, no una dirección, y
+  solo lee las pizarras de esa sala si está visible. Y la base exige que sean
+  direcciones de chess-results (`interno.pizarras_de_sala_validas()`, que
+  rechaza también `chess-results.com.otro-sitio.com`); la función lo vuelve a
+  comprobar antes de pedir.
+- **Caché de 90 segundos** en `pizarras_cache`, que solo lee el service role
+  (ni anon ni authenticated tienen permiso): cien personas mirando la sala no
+  son cien pedidos a chess-results. Si chess-results no contesta, se devuelve
+  lo último que se leyó y la pizarra lo dice («Sin conexión con chess-results:
+  es lo último que se leyó, a las…»). Si no hay nada guardado, dice que no se
+  pudo leer: **nunca cae en sumar las mesas de Lichess**, que sería una tabla
+  equivocada con cara de buena.
+- **Qué se lee:** `art=1` (la clasificación después de la última ronda) con
+  `turdet=YES` (si no, un torneo de más de dos semanas pide tocar «Mostrar
+  detalles») y `zeilen=99999` (todas las filas). La dirección que cargó
+  administración puede ser cualquier página de ese torneo: se toma solo el
+  servidor y el número (`tnr…`).
+- **Las columnas se leen por el nombre del encabezado**, nunca por posición.
+  Comprobado con las páginas reales, pedidas desde la base con `pg_net` (desde
+  la sesión de Claude Code no hay salida a chess-results): el UTN-CONARE no
+  trae columna «Pts.» — los puntos son el «Des 1», y lo dice la «Anotación» de
+  abajo («Desempate 1: points (game-points)») —, y el absoluto trae además
+  `n`, `w` y `we` al final. El título (WIM, FM…) va en la columna sin nombre
+  antes de «Nombre». Los puntos llegan como «1,5» y se muestran «1½».
+- `pg_net` con cabeceras propias (`User-Agent`, `Accept-Language`) recibió
+  **400 Bad Request** de chess-results; sin ellas, 200. La función sí manda un
+  `User-Agent` de navegador, igual que `chess-results-proxy`, y funciona:
+  probado de punta a punta llamándola desde la base con la clave anónima.
+- Las medallas de la pizarra salen **solo cuando ya hay puntos**: en la ronda 0
+  todos tienen 0, y el orden es el de la lista inicial, no un podio.
+- `verificar-pizarra-chess-results.js` (sin navegador) saca `leerClasificacion()`
+  y `direcciones()` de la función, les quita los tipos con el propio Node y los
+  prueba contra HTML con la forma real y nombres inventados, en la forma de hoy
+  y en la vieja (clases sin «n», columna «Pts.»). Tomando los puntos de otra
+  columna, salta. `verificar-transmision.js` prueba la pizarra oficial en la
+  sala (pestañas, medallas, lo viejo, la función caída) y
+  `verificar-salas-torneo.js` el editor.
+
+## La sala se actualiza sola, jugada por jugada
+
+«No se actualiza en vivo», y era cierto por tres lados, ninguno con error a la
+vista:
+
+- **La sala abierta antes de la hora no se enteraba nunca de que empezaba.**
+  Solo volvía a pedir la ronda si al abrirla ya estaba «en curso», y el torneo
+  de Lichess, que es el que dice qué ronda es la de ahora, se pedía una sola
+  vez. Ahora una ronda sin partidas todavía se sigue pidiendo (salvo que ya
+  haya terminado), y el torneo se vuelve a pedir cada minuto: si la persona no
+  eligió una ronda a mano, la sala pasa sola a la que está en curso; si eligió
+  una, no se la cambia.
+- **Una partida sin jugadas viene de Lichess sin `fen`** (comprobado con la
+  ronda 1 del UTN-CONARE, pareada antes de empezar), y el tablero salía vacío.
+  Sin `fen` es la posición inicial.
+- **Cada 20 segundos no es «en vivo».** Lichess tiene una transmisión continua
+  por ronda, `/api/stream/broadcast/round/<id>.pgn`, que manda el PGN de cada
+  partida en el momento en que cambia (con `[%clk]` en cada jugada y un
+  `GameURL` que termina en el id de la partida). La sala la escucha con
+  `fetch` y un lector del cuerpo: cada jugada llega al instante. El PGN se
+  reproduce con chess.js (`js/vendor/chess.js`), así que la posición es legal
+  de verdad; entre una partida y otra vienen dos renglones vacíos. Si la
+  conexión se corta, se vuelve a abrir a los 5 segundos mientras la ronda siga
+  en curso. Pedir la ronda entera cada 20 segundos queda de respaldo (una mesa
+  nueva, algo perdido), y **no pisa** una partida que la transmisión ya trajo
+  más adelantada: se comparan las medias jugadas de las dos posiciones.
+- **El reloj de quien juega corre** segundo a segundo, desde su última jugada
+  (el `thinkTime` de la ronda o el momento en que llegó la jugada). Antes de la
+  primera jugada no corre ninguno: no se sabe cuándo se echó a andar.
+- Con cada jugada se redibujan las mesas y los botones de las rondas: **el
+  foco se anota antes y se devuelve después**, si no quien navega con Tab lo
+  perdía en cada jugada. La pizarra de chess-results no se redibuja con las
+  jugadas (no depende de ellas), por lo mismo con sus pestañas.
+- `verificar-transmision.js` lo prueba con la transmisión continua doblada: la
+  jugada llega sin esperar, el reloj corre, se reabre al cortarse, la ronda
+  vacía se sigue pidiendo, la partida sin `fen` y el seguir a la ronda en curso
+  (y no hacerlo si se eligió a mano). Sin la transmisión y sin volver a pedir
+  la ronda vacía, saltan ocho.
+
+## El comentarista en video
+
+Una sala de Lichess puede llevar el video de quien comenta el torneo en vivo
+(`salas_torneo.video_url`, migración `20260927054551`): va en la columna de la
+derecha, arriba de la pizarra, como una pantalla chica con el mismo marco que
+la grande. Se carga en el editor de `admin.html#torneos`.
+
+- **Solo YouTube y Twitch**, y lo exige la base (un `check` con los dos
+  dominios, que rechaza también `youtube.com.otro-sitio.com`): son los dos que
+  la CSP deja incrustar (`frame-src`), y son los que usan los canales de
+  ajedrez para comentar. El editor lo dice mientras se escribe («✓ Video de
+  YouTube: se va a ver en la sala» o que no sirve) y no manda uno que no sirva.
+- **Una sola copia de cómo se incrusta**: `js/video-embebido.js`
+  (`VideoEmbebido.leer`), que salió de `js/tv.js`, donde la TV ya lo hacía.
+  YouTube va por `youtube-nocookie.com` (su modo de privacidad mejorada) y
+  Twitch con `parent=` igual al sitio de la página, que Twitch exige.
+- El `<iframe>` lleva título («Comentarista en vivo de <sala> (YouTube)»), que
+  es lo que anuncia un lector de pantalla.
+- **La política de privacidad nombra Twitch** desde el 27 de setiembre de 2026:
+  su reproductor se carga desde Twitch, que recibe la dirección IP. La TV ya lo
+  incrustaba y no lo decía.
+- Con el comentarista arriba, la pizarra dejó de ser `sticky` en computadora:
+  una columna pegada más alta que la ventana deja su final fuera de alcance.
+- `verificar-transmision.js` comprueba el reproductor de YouTube y el de
+  Twitch (dirección y título) y que sin video no haya nada; `verificar-salas-
+  torneo.js`, el campo del editor. Sin pintar el comentarista, salta.
+
+## La quiniela de resultados
+
+Quien administra la enciende por sala (casilla «Quiniela de resultados
+abierta» en `admin.html#torneos`, `salas_torneo.quiniela`). En la sala de cine
+aparece «🎯 Quiniela de resultados»: cualquiera, sin cuenta, se anota con su
+nombre y su correo, pronostica cada partida transmitida (ganan blancas,
+tablas, ganan negras) y ve la tabla de aciertos. Migración
+`20260927060617_quiniela_de_resultados`, Edge Function `quiniela`,
+`js/quiniela.js`.
+
+- **Las partidas las copia de Lichess la Edge Function** (`quiniela_partidas`),
+  como mucho una vez cada 45 segundos por sala y solo cuando alguien mira o
+  pronostica: no hay tanda de pg_cron que mantener. Antes de guardar un
+  pronóstico vuelve a copiar si hace falta, así una partida que ya empezó se
+  cierra aunque la página no lo sepa.
+- **Cuándo se cierra una partida lo decide la base**
+  (`quiniela_cerrada()`, usada por `quiniela_pronosticar()`): al llegar la hora
+  de su ronda (`startsAt` de Lichess), si ya tiene jugadas o si ya tiene
+  resultado. La página muestra lo mismo, pero no decide.
+- **La tabla de aciertos se calcula, no se guarda** (`quiniela_tabla()`): un
+  punto por acierto, y con los mismos puntos se comparte el puesto. Las
+  medallas, solo a quien tiene aciertos.
+- **Nadie lee estas tablas desde el navegador**: ni `anon` ni `authenticated`
+  tienen permiso, salvo quien administra (política con `soy_admin()`), que ve
+  nombre, correo y aciertos en el editor para poder avisarle a quien gane.
+  `quiniela_unirse`, `quiniela_pronosticar` y `quiniela_yo` solo las ejecuta
+  el service role. La tabla pública la arma la función **sin el correo**.
+- **Sin cuenta, con código.** Al anotarse la función devuelve un código al
+  azar que se guarda en el navegador (`localStorage`, `quiniela_v1:<clave>`);
+  en la base va solo su sha256. Con él se cambian los pronósticos. Un correo
+  se anota una vez por sala (índice único): desde otro aparato no se puede
+  «volver a entrar» con el mismo correo, a propósito, porque sin un correo de
+  confirmación cualquiera podría entrar con el correo de otra persona.
+- **El freno de envíos sin cuenta** tiene un tipo nuevo, `quiniela`: 40 por IP
+  y por hora (el público de un torneo sale por la red del lugar), 5 por correo
+  al día y 500 por sala y por hora. La función le pasa la IP de quien se
+  anota. El freno va **antes** de mirar si el correo ya está: probar correos
+  de a uno para saber quién juega también gasta cupo.
+- **El consentimiento**: casilla con enlace a la política, y la base guarda la
+  versión aceptada y la hora (`interno.version_legal_valida`). La política de
+  privacidad dice qué se guarda, que el correo no se publica y que los datos
+  viven mientras exista la sala (al borrarla se borran con ella).
+- Al pronosticar, el botón se desactiva mientras guarda y **pierde el foco**;
+  por eso se anota a cuál volver (`volverA`). Lo encontró el verificador.
+- Probado en SQL impersonando roles (anónimo, alumno y admin, en una
+  transacción deshecha) y de punta a punta contra Lichess llamando a la
+  función desde la base. `verificar-quiniela.js` prueba la página y el editor
+  con un doble de la función que aplica las mismas reglas y mensajes; sin la
+  casilla de la privacidad, salta.
+
+## Los ambientes de la sala
+
+La sala de las transmisiones se puede ver de siete maneras: 🎬 sala de cine
+(la de siempre), 🎭 teatro, 🏛️ salón de actos, 🏟️ estadio, 🕰️ club clásico,
+🔭 planetario y 🕹️ arcade. Cambian el fondo, la marquesina, los telones (que
+en el estadio son la gradería, en el club las bibliotecas y en el planetario
+nebulosas), la pantalla, la pizarra (pizarra blanca en el salón, programa de
+mano en el teatro, marcador de luces en el estadio, tabla de récords en el
+arcade…), el antetítulo y el nombre de la pizarra. Migración
+`20260927081958_ambiente_de_la_sala`, `js/escenarios-sala.js`.
+
+- **Quien administra elige con cuál abre cada sala** («Ambiente de la sala»
+  en el editor, `salas_torneo.tema`, `cine` por omisión). **Quien mira lo
+  puede cambiar** con el selector «Ambiente» de arriba a la derecha; su
+  elección se queda en su navegador y para esa sala
+  (`localStorage`, `sala_ambiente_v1:<clave>`), como el tablero preferido: es
+  de dónde se mira. Si el navegador no deja guardar, se cambia igual.
+- **Un ambiente es un juego de variables** `--esc-*` sobre
+  `.cine-sala[data-escenario="…"]` en `css/styles.css`; las clases de la sala
+  no cambian y el JavaScript solo pone el atributo. Un ambiente nuevo va en
+  tres lados: la lista de `js/escenarios-sala.js` (la única, la usan la sala y
+  administración), su bloque en el CSS y la restricción de
+  `salas_torneo.tema` (una migración). `verificar-escenarios-sala.js`
+  comprueba que los tres digan lo mismo.
+- **El contraste se mide en los siete.** La sala tiene texto blanco,
+  `brand-100/200` y `accent-400` encima: por eso el fondo, la marquesina, la
+  pantalla y las cajas son oscuros en todos. La pizarra es la única que puede
+  ser clara, y trae sus propios colores de texto, de puntos y del anillo de
+  foco (el ámbar no se ve sobre blanco). El verificador lee los colores que
+  calculó el navegador y mide cada texto contra cada fondo, con la luz del
+  ambiente y un 10 % de blanco más por los adornos; el peor par da 4.74 (el
+  `brand-200` en el estadio). Con el tema de la plataforma no cambia nada: sus
+  colores tienen la misma luminancia (ver `js/temas-plataforma.js`).
+- **`montar()` corre apenas se carga el script**, no en `DOMContentLoaded`:
+  la sala puede llegar de la base antes, y montar le pisaba el ambiente de
+  administración con el cine. Lo encontró el verificador.
+- El enlace «Ver en chess-results» de la pizarra dejó de ponerse blanco al
+  pasar el mouse (`hover:text-white`): sobre una pizarra clara desaparecía.

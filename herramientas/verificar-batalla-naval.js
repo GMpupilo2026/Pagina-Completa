@@ -254,10 +254,13 @@ async function navegador() {
     const mar = { flota: flota.map((p) => Object.assign({ hundida: false }, p)), disparos: [] };
     const agua = B.TODAS.find((s) => !B.piezaEn(mar, s) && B.cuenta(mar, s) >= 2) || B.TODAS.find((s) => !B.piezaEn(mar, s));
     const n = B.cuenta(mar, agua);
+    // Con la flota al azar puede no haber casilla de agua con 2 o más: la frase
+    // cambia con el número (ninguna / 1 pieza / n piezas), igual que en la página.
+    const frase = n === 0 ? "ninguna pieza apunta ahí" : n === 1 ? "1 pieza apunta ahí" : n + " piezas apuntan ahí";
     const dijo = await escribir(page, hablar(agua));
-    cierto("un disparo al agua dice cuántas piezas apuntan ahí", new RegExp("Disparaste a " + hablar(agua) + "\\. Agua: " + n + " piezas apuntan ahí").test(dijo), dijo);
+    cierto("un disparo al agua dice cuántas piezas apuntan ahí", dijo.indexOf("Disparaste a " + hablar(agua) + ". Agua: " + frase + ".") === 0, dijo);
     const et = await page.$eval('#board [data-square="' + agua + '"]', (e) => e.getAttribute("aria-label"));
-    igual("la casilla recuerda el disparo en su nombre", et, hablar(agua) + ", agua, " + n + " piezas apuntan ahí");
+    igual("la casilla recuerda el disparo en su nombre", et, hablar(agua) + ", agua, " + frase);
     const sinTiro = B.TODAS.find((s) => s !== agua);
     igual("una casilla sin disparar no dice «vacía»", await page.$eval('#board [data-square="' + sinTiro + '"]', (e) => e.getAttribute("aria-label")), hablar(sinTiro) + ", sin disparar");
     const m1 = await medidas();
@@ -284,7 +287,11 @@ async function navegador() {
 
     console.log("\n— La pista y el teclado —");
     await escribir(page, "nivel 2");
-    await escribir(page, "a1");
+    // Un disparo al agua, no a «a1» a ciegas: con la flota al azar, a veces la
+    // dama estaba justo ahí, se hundía y la pista empezaba por la torre (falló
+    // así en el CI del PR #486, «La torre puede estar en 63 casillas»).
+    const agua2 = await page.evaluate(() => B.TODAS.find((s) => !B.piezaEn(partida.mar, s)));
+    await escribir(page, agua2);
     const pista = await escribir(page, "pista");
     cierto("la pista dice dónde puede estar cada pieza", /^Pista\. La dama puede estar en/.test(pista), pista.slice(0, 90));
     const seguras = await page.evaluate(() => BatallaNavalMotor.conocimiento(partida.mar).seguras);

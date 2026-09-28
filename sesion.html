@@ -30,7 +30,7 @@
 </head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
-    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a id="marca-enlace" href="clases.html" class="flex items-center gap-2 text-white min-w-0"><span class="text-3xl" aria-hidden="true">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><div class="flex items-center gap-2"><a id="ayuda-guia" href="guia-del-profesor-accesible.html#cap-2" target="_blank" rel="noopener" class="hidden text-white font-bold text-lg w-9 h-9 items-center justify-center rounded-lg border border-white/40 hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Ayuda: capítulo «La clase en vivo» de la guía del profesor (se abre en otra pestaña)" title="Guía del profesor: La clase en vivo"><span aria-hidden="true">?</span></a><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></div></nav></header><!-- migas: inicio --><div class="bg-brand-900"><nav id="migas" aria-label="Estás en" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 text-sm"><ol class="flex flex-wrap items-center gap-x-2 gap-y-1"><li class="flex items-center gap-2"><a href="clases.html" class="text-brand-200 underline underline-offset-2 hover:text-accent-400 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🏛️ </span>Academia</a></li><li class="flex items-center gap-2"><span aria-hidden="true" class="text-brand-400">›</span><span aria-current="page" class="font-semibold text-white">Sesión en vivo</span></li></ol></nav></div><!-- migas: fin -->
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a id="marca-enlace" href="clases.html" class="flex items-center gap-2 text-white min-w-0"><img src="/img/logo-marca.png" alt="" width="78" height="48" class="h-10 md:h-12 w-auto shrink-0"><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><div class="flex items-center gap-2"><a id="ayuda-guia" href="guia-del-profesor-accesible.html#cap-2" target="_blank" rel="noopener" class="hidden text-white font-bold text-lg w-9 h-9 items-center justify-center rounded-lg border border-white/40 hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Ayuda: capítulo «La clase en vivo» de la guía del profesor (se abre en otra pestaña)" title="Guía del profesor: La clase en vivo"><span aria-hidden="true">?</span></a><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></div></nav></header><!-- migas: inicio --><div class="bg-brand-900"><nav id="migas" aria-label="Estás en" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 text-sm"><ol class="flex flex-wrap items-center gap-x-2 gap-y-1"><li class="flex items-center gap-2"><a href="clases.html" class="text-brand-200 underline underline-offset-2 hover:text-accent-400 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🏛️ </span>Academia</a></li><li class="flex items-center gap-2"><span aria-hidden="true" class="text-brand-400">›</span><span aria-current="page" class="font-semibold text-white">Sesión en vivo</span></li></ol></nav></div><!-- migas: fin -->
     <main id="main-content">
 
     <!-- El encabezado es `sticky`, no `fixed` (ver "El encabezado ocupa su
@@ -297,6 +297,9 @@
                     <div id="clase-cmd" class="max-w-[560px] mx-auto"></div>
 
                     <p id="turn-indicator" class="text-center text-brand-500 dark:text-brand-300 text-sm mt-4"></p>
+                    <!-- Solo quien sigue la clase: qué jugada anterior o qué variante está
+                         mostrando el profe (game_state.vista, ver pintarVistaDelProfe). -->
+                    <p id="vista-profe" hidden class="max-w-[560px] mx-auto mt-2 rounded-xl bg-brand-100 dark:bg-brand-900 px-4 py-2 text-center text-sm text-brand-600 dark:text-brand-300"></p>
                     <p id="arrows-hint" class="hidden text-center text-brand-450 dark:text-brand-350 text-xs mt-1">Clic derecho + arrastrar dibuja una flecha (repetirla en el mismo color la borra) · clic derecho sobre una casilla la marca con un círculo · elige el color abajo</p>
                     <!-- Color con el que se dibujan las PRÓXIMAS flechas/círculos (ver
                          js/clases-board.js#MARK_COLORS y setMarkColor). Los botones los arma
@@ -335,14 +338,15 @@
                         <div id="practice-boards-grid" class="grid gap-3"></div>
                     </div>
 
-                    <!-- Jugadas: se pueden recorrer hacia atrás sin afectar el tablero en vivo de nadie más.
-                         Solo para el profesor — al alumno este apartado le distrae y no lo puede usar de
-                         todos modos (navegar el historial es una herramienta del profesor). -->
+                    <!-- Jugadas: se pueden recorrer hacia atrás sin tocar la partida. Lo que el profesor
+                         mira, los alumnos lo ven en su tablero (game_state.vista). Solo para el profesor —
+                         al alumno este apartado le distrae y no lo puede usar de todos modos (navegar el
+                         historial es una herramienta del profesor). -->
                     <div id="moves-panel" class="hidden mt-4 bg-white dark:bg-brand-900 rounded-xl shadow-md p-4">
                         <div class="flex items-center justify-between gap-2 mb-2">
                             <h2 class="font-serif font-bold text-brand-800 dark:text-white text-sm">Jugadas</h2>
                             <div id="history-controls" class="hidden items-center gap-2">
-                                <span class="text-xs text-brand-450 dark:text-brand-350">Viendo una jugada anterior</span>
+                                <span class="text-xs text-brand-450 dark:text-brand-350">Viendo una jugada anterior · la clase ve lo mismo</span>
                                 <button id="history-fork-btn" class="hidden text-xs font-semibold px-2 py-1 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors">Jugar desde aquí</button>
                                 <button id="history-live-btn" class="text-xs font-semibold px-2 py-1 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors">Volver al final</button>
                             </div>
@@ -680,6 +684,16 @@
                                 </div>
                                 <div id="notas-en-clase-body"></div>
                             </div>
+                            <!-- Los trofeos y las insignias del alumno, con el botón 🏆 de su
+                                 renglón: sumar trofeos por un buen trabajo, quitar uno contado de
+                                 más, o darle una insignia (buen estudiante, buena respuesta…). -->
+                            <div id="trofeos-en-clase" class="hidden mt-4 border-t border-brand-100 dark:border-brand-800 pt-4">
+                                <div class="flex items-center justify-between gap-2 mb-2">
+                                    <h3 id="trofeos-en-clase-titulo" class="font-semibold text-sm text-brand-700 dark:text-brand-200"></h3>
+                                    <button type="button" id="trofeos-en-clase-cerrar" class="text-xs font-semibold px-2 py-1 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">✖ Cerrar</button>
+                                </div>
+                                <div id="trofeos-en-clase-body"></div>
+                            </div>
                         </div>
                     </div>
 
@@ -700,6 +714,18 @@
                         <span class="text-4xl block mb-2">👀</span>
                         <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-2">Estás viendo en vivo</h2>
                         <p class="text-sm text-brand-500 dark:text-brand-300">El profesor está moviendo las piezas. El tablero se actualiza automáticamente con cada jugada.</p>
+                        <!-- Los trofeos se acumulan de clase en clase: uno por cada respuesta
+                             que el profesor marque correcta, más lo que él sume o quite a mano.
+                             Ver «Los trofeos de la clase» en docs/decisiones/entrenamiento.md. -->
+                        <div id="mis-trofeos" class="mt-4 pt-4 border-t border-brand-100 dark:border-brand-800">
+                            <h3 class="sr-only">Tus trofeos</h3>
+                            <p id="mis-trofeos-total" class="text-2xl font-bold text-brand-800 dark:text-white" aria-live="polite">🏆 …</p>
+                            <p id="mis-trofeos-detalle" class="text-xs text-brand-500 dark:text-brand-300 mt-1"></p>
+                            <!-- Las insignias que le dio su profesor a mano (⭐ buen estudiante,
+                                 💡 buena respuesta…): cuántas de cada una. -->
+                            <div id="mis-insignias" class="flex justify-center"></div>
+                            <a href="logros.html" class="inline-block mt-2 text-xs font-semibold underline underline-offset-2 text-brand-700 dark:text-brand-200 hover:no-underline">Ver todos tus logros</a>
+                        </div>
                     </div>
                 </aside>
             </div>
@@ -744,6 +770,7 @@
     <!-- tablero-js: inicio -->
     <script src="js/pieza-preferida.js"></script>
     <script src="js/coordenadas-tablero.js"></script>
+    <script src="js/coronacion.js"></script>
     <!-- tablero-js: fin -->
     <script src="js/vendor/chess.js"></script>
     <script src="js/vendor/supabase.js"></script>
@@ -762,6 +789,7 @@
     <script src="js/posicion-valida.js"></script>
     <script src="js/plan-clase.js"></script>
     <script src="js/notas-alumno.js"></script>
+    <script src="js/trofeos.js"></script>
     <script src="js/finales-100.js"></script>
     <script src="js/curso-partidas.js"></script>
     <script src="js/article-example-board.js"></script>

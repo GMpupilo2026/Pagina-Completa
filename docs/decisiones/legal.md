@@ -26,8 +26,9 @@ cambiar algo en el sitio, revisar si contradice lo que ya prometen:
 
 - **Proveedores**: la privacidad nombra a cada servicio que recibe datos
   (Supabase, Cloudflare, Resend, Google —tipografías, Vision del Lector de
-  planilla, notificaciones—, Anthropic para mejorar informes, Meet o Zoom y la
-  consulta de cédula de Hacienda). **Un servicio nuevo que reciba datos de
+  planilla, notificaciones—, Anthropic para mejorar informes, Meet o Zoom, la
+  consulta de cédula de Hacienda, y Lichess y Chess.com para bajar las partidas
+  públicas de un rival, a los que solo se les manda su usuario). **Un servicio nuevo que reciba datos de
   alumnos va a la lista**: sin eso, el envío al extranjero no está consentido
   (artículo 14).
   - La lista va **plegada** (`<details id="proveedores">`, «Ver la lista de

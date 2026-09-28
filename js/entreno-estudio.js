@@ -133,6 +133,14 @@ function abrirFicha(F){
     practicar.style.display = '';
     practicar.href = 'aperturas.html?linea=' + encodeURIComponent(linea.id);
     practicar.textContent = `🎯 Practicarla con ${linea.color === 'w' ? 'blancas' : 'negras'}`;
+  } else if(F.temaPractica){
+    /* Las de táctica y conceptos se practican en Ejercicios por tema: el
+       ?tema= abre directo ese tema (el mismo enlace que usan las tareas).
+       Que la clave exista y sea el tema que nombra el texto lo comprueba
+       herramientas/verificar-fichas.js. */
+    practicar.style.display = '';
+    practicar.href = 'temas.html?tema=' + encodeURIComponent(F.temaPractica);
+    practicar.textContent = '🎯 Practicar este tema';
   } else {
     practicar.style.display = 'none';
   }

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8"><!-- guardia: inicio --><script>(function(){try{if(window.sb||localStorage.getItem("sb-bgtijpimpcokxatxxbki-auth-token"))return;}catch(e){return;}try{window.stop()}catch(e){}var p=location.pathname.replace(/^\/+/,'');if(!p||/\/$/.test(p))p+='index.html';else if(!/\.html$/.test(p))p+='.html';location.replace('/login.html?next='+encodeURIComponent(p));})();</script><!-- guardia: fin -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/favicon.svg">
+    <title>Competir — Ajedrez Integral</title>
+    <meta name="description" content="Reta a quien esté en línea en la Academia y sigue las partidas en curso y terminadas.">
+    <meta name="robots" content="noindex">
+    <!-- Tailwind compilado: lo genera herramientas/css-construir.js.
+         Antes venía del CDN, que baja ~400 KB de JavaScript y compila el CSS
+         dentro del navegador en cada visita. -->
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link id="fuentes" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@700&display=swap" rel="stylesheet" media="print"><!-- fuentes: inicio --><script>(function(l){if(!l)return;function a(){l.media='all';}if(l.sheet)a();else l.addEventListener('load',a);})(document.getElementById('fuentes'));</script><!-- fuentes: fin -->
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- oscuro: inicio --><script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');}catch(e){}})();</script><!-- oscuro: fin -->
+    <script src="js/adaptive-mode.js"></script>
+
+
+
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/pwa.js" defer></script><!-- app: fin --><!-- tema: inicio --><script>(function(){try{var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');var f=localStorage.getItem('plataforma_tema_fuente_v1');if(!f||!/^[A-Za-z0-9 ]{2,32}$/.test(f))return;var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family='+f.replace(/ /g,'+')+':wght@400;500;600;700&display=swap';document.head.appendChild(l);}catch(e){}})();</script><!-- tema: fin --></head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a id="marca-enlace" href="clases.html" class="flex items-center gap-2 text-white min-w-0"><img src="/img/logo-marca.png" alt="" width="78" height="48" class="h-10 md:h-12 w-auto shrink-0"><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><div class="flex items-center gap-2"><a id="ayuda-guia" href="guia-del-profesor-accesible.html#cap-10" target="_blank" rel="noopener" class="hidden text-white font-bold text-lg w-9 h-9 items-center justify-center rounded-lg border border-white/40 hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Ayuda: capítulo «Jugar: partidas, retos y torneos» de la guía del profesor (se abre en otra pestaña)" title="Guía del profesor: Jugar: partidas, retos y torneos"><span aria-hidden="true">?</span></a><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></div></nav></header><!-- migas: inicio --><div class="bg-brand-900"><nav id="migas" aria-label="Estás en" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 text-sm"><ol class="flex flex-wrap items-center gap-x-2 gap-y-1"><li class="flex items-center gap-2"><a href="clases.html" class="text-brand-200 underline underline-offset-2 hover:text-accent-400 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🏛️ </span>Academia</a></li><li class="flex items-center gap-2"><span aria-hidden="true" class="text-brand-400">›</span><span aria-current="page" class="font-semibold text-white">Competir</span></li></ol></nav></div><!-- migas: fin -->
+    <main id="main-content">
+
+    <div id="loading" role="status" class="min-h-[50vh] flex flex-col items-center justify-center gap-3 px-4 text-center text-brand-500 dark:text-brand-300"><span aria-hidden="true" class="w-8 h-8 rounded-full border-4 border-brand-200 dark:border-brand-700 border-t-accent-500 animate-spin motion-reduce:animate-none"></span><p class="text-sm">Cargando…</p></div>
+
+    <div id="app" class="hidden pt-10 pb-16">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h1 class="font-serif text-3xl font-bold text-brand-800 dark:text-white mb-1">Competir <span aria-hidden="true">⚔️</span></h1>
+            <p class="text-brand-500 dark:text-brand-300 mb-8" id="subtitle">Reta a quien esté en línea y sigue las partidas.</p>
+
+            <div id="status-banner" class="hidden mb-6 rounded-xl bg-brand-100 dark:bg-brand-900 px-4 py-3 text-sm text-brand-600 dark:text-brand-300"></div>
+
+            <!-- Retos que me llegan: aparecen encima de todo y esperan respuesta -->
+            <div id="retos-recibidos" class="space-y-3 mb-6"></div>
+
+            <!-- Quién está conectado ahora y a quién se puede retar. Es de todos:
+                 alumnos y profesores lo ven igual. -->
+            <div id="en-linea-caja" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6">
+                <div class="flex items-center justify-between gap-3 mb-1">
+                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white"><span aria-hidden="true">🟢</span> En línea ahora</h2>
+                    <span class="text-xs text-brand-450 dark:text-brand-350" id="en-linea-cuenta"></span>
+                </div>
+                <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">Quien esté en esta página aparece acá. Rétalo y, si acepta, la partida empieza sola para los dos.</p>
+                <div class="grid sm:grid-cols-2 gap-3 mb-3">
+                    <div>
+                        <label for="reto-modalidad" class="block text-xs font-medium text-brand-500 dark:text-brand-300 mb-1">Modalidad del reto</label>
+                        <select id="reto-modalidad" class="w-full text-sm bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-2 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500"></select>
+                    </div>
+                    <div>
+                        <label for="reto-tiempo" class="block text-xs font-medium text-brand-500 dark:text-brand-300 mb-1">⏱️ Tiempo</label>
+                        <select id="reto-tiempo" class="w-full text-sm bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-2 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500"></select>
+                    </div>
+                </div>
+                <div id="en-linea-lista" class="space-y-2"></div>
+            </div>
+
+            <!-- Las listas de partidas: al profesor (y a quien administra) le
+                 llegan las de sus alumnos, con Terminar y Eliminar; al alumno,
+                 las suyas. Lo decide la RLS de game_rooms/fourplayer_games. -->
+            <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3"><span aria-hidden="true">♟️</span> Partidas en curso</h2>
+            <div id="ongoing-list" class="space-y-3 mb-8">
+                <p class="text-brand-450 dark:text-brand-350 text-sm">Todavía no hay partidas en curso.</p>
+            </div>
+
+            <details>
+                <summary class="font-serif text-lg font-bold text-brand-800 dark:text-white cursor-pointer mb-3"><span aria-hidden="true">🏁</span> Partidas terminadas</summary>
+                <div id="finished-list" class="space-y-2">
+                    <p class="text-brand-450 dark:text-brand-350 text-sm">Todavía no hay partidas terminadas.</p>
+                </div>
+            </details>
+        </div>
+    </div>
+
+    
+    </main>
+
+    <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p><!-- legal: inicio --><p class="mt-2"><a href="privacidad.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Política de privacidad</a> <span aria-hidden="true">·</span> <a href="terminos.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Términos y condiciones</a></p><!-- legal: fin --></div></footer>
+    <script src="js/vendor/supabase.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/vendor/chess.js"></script>
+    <script src="js/cartas-engine.js"></script>
+    <script src="js/duelo-engine.js"></script>
+    <script src="js/fourplayer-engine.js"></script>
+    <script src="js/variantes-engines.js"></script>
+    <script src="js/ritmos.js"></script>
+    <script src="js/avisos.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/juegos-comun.js"></script>
+    <script src="js/competir.js"></script>
+<!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="js/modo-vista.js" defer></script><!-- modo-vista: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- ayuda: inicio --><script src="js/ayuda-guia.js" defer></script><!-- ayuda: fin --><!-- atajo: inicio --><script src="js/atajo-buscar.js" data-arriba="" defer></script><!-- atajo: fin --></body>
+</html>
