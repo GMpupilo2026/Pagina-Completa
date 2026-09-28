@@ -144,6 +144,8 @@ window.ProgresoUsuario = (function () {
     { clave: "entreno_temas_total",              fusion: "maxNumero" },
     { clave: "entreno_practicas_best",           fusion: "maxNumero" },
     { clave: "entreno_practicas_streak",         fusion: "ultimaEscritura" },
+    { clave: "entreno_desafios_best",            fusion: "maxNumero" },     // Desafíos: su propia racha (antes compartía la de Practicar)
+    { clave: "entreno_desafios_streak",          fusion: "ultimaEscritura" },
     { prefijo: "entreno_coord_best_",            fusion: "maxNumero" },     // una por modo
     { clave: "entreno_temas_last",               fusion: "ultimoLugar" },
     { clave: "diagnostico_estado_v1",            fusion: "pruebaEnCurso" },

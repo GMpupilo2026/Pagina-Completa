@@ -390,25 +390,10 @@ function setSetStars(id, stars){
   saveProgress(p);
 }
 
-function getStreak(){
-  try{ return parseInt(localStorage.getItem('entreno_practicas_streak') || '0', 10) || 0; }catch(e){ return 0; }
-}
-function getBestStreak(){
-  try{ return parseInt(localStorage.getItem('entreno_practicas_best') || '0', 10) || 0; }catch(e){ return 0; }
-}
-function setStreak(n){
-  localStorage.setItem('entreno_practicas_streak', String(n));
-  const best = Math.max(getBestStreak(), n);
-  localStorage.setItem('entreno_practicas_best', String(best));
-  document.getElementById('streak-count').textContent = n;
-  document.getElementById('streak-best').textContent = best;
-}
-function bumpStreak(){
-  setStreak(getStreak() + 1);
-  const bar = document.getElementById('streak-bar');
-  bar.classList.remove('pulse'); void bar.offsetWidth; bar.classList.add('pulse');
-}
-function resetStreak(){ setStreak(0); }
+// La racha (js/ejercicio-tablero.js). Es la de Desafíos y no la de Practicar:
+// antes las dos escribían en entreno_practicas_*, y fallar en una cortaba la
+// racha de la otra.
+const { getStreak, getBestStreak, setStreak, bumpStreak, resetStreak } = EjercicioTablero.racha('entreno_desafios');
 
 /* ---------------- Estado ---------------- */
 let currentCategory = 'promocion';
@@ -596,31 +581,16 @@ function onSquareClick(square, btn){
   }
   const from = selectedSquare;
   selectedSquare = null;
+  // En qué pieza corona: el diálogo de todo el sitio (js/coronacion.js); sirve
+  // con MiniChess porque tiene el mismo moves({square, verbose}).
   if(target.flags.includes('p')){
-    askPromotion((choice) => { const r = game.move({ from, to: square, promotion: choice }); drawBoard(); if(r) handleMoveResult(r); });
+    EjercicioTablero.jugarCoronando(game, from, square, (pieza) => { const r = game.move({ from, to: square, promotion: pieza }); drawBoard(); if(r) handleMoveResult(r); });
     return;
   }
   const moveResult = game.move({ from, to: square });
   drawBoard();
   if(!moveResult) return;
   handleMoveResult(moveResult);
-}
-
-function askPromotion(callback){
-  const modal = document.getElementById('promo-modal');
-  const opts = document.getElementById('promo-opts');
-  opts.innerHTML = '';
-  const turn = game.turn();
-  ['q','r','b','n'].forEach((type) => {
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.className = 'promo-btn';
-    b.setAttribute('aria-label', PIECE_NAME[type]);
-    b.innerHTML = window.PiezaPreferida ? PiezaPreferida.html(type, turn, { oculta: true }) : `<span class="${turn === 'w' ? 'piece-white' : 'piece-black'}" aria-hidden="true">${GLYPH[turn][type]}</span>`;
-    b.addEventListener('click', () => { modal.style.display = 'none'; callback(type); });
-    opts.appendChild(b);
-  });
-  modal.style.display = 'flex';
 }
 
 // Arrastrar y soltar piezas (además del clic-clic de siempre): ver js/board-drag.js.

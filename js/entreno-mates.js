@@ -184,25 +184,8 @@ function firstUnsolvedIndex(cat){
   return idx === -1 ? 0 : idx;
 }
 
-function getStreak(){
-  try{ return parseInt(localStorage.getItem('entreno_mates_streak') || '0', 10) || 0; }catch(e){ return 0; }
-}
-function getBestStreak(){
-  try{ return parseInt(localStorage.getItem('entreno_mates_best') || '0', 10) || 0; }catch(e){ return 0; }
-}
-function setStreak(n){
-  localStorage.setItem('entreno_mates_streak', String(n));
-  const best = Math.max(getBestStreak(), n);
-  localStorage.setItem('entreno_mates_best', String(best));
-  document.getElementById('streak-count').textContent = n;
-  document.getElementById('streak-best').textContent = best;
-}
-function bumpStreak(){
-  setStreak(getStreak() + 1);
-  const bar = document.getElementById('streak-bar');
-  bar.classList.remove('pulse'); void bar.offsetWidth; bar.classList.add('pulse');
-}
-function resetStreak(){ setStreak(0); }
+// La racha (js/ejercicio-tablero.js): la misma en todas las páginas de ejercicios.
+const { getStreak, getBestStreak, setStreak, bumpStreak, resetStreak } = EjercicioTablero.racha('entreno_mates');
 
 /* ---------------- Estado del ejercicio actual ---------------- */
 let currentCategory = 'mate1';
@@ -273,7 +256,6 @@ function updateProgressBar(){
 }
 
 /* ---------------- Tablero ---------------- */
-const FILES = ['a','b','c','d','e','f','g','h'];
 function isLightSquare(square){
   const file = square.charCodeAt(0) - 97;
   const rank = parseInt(square[1], 10) - 1;
@@ -285,34 +267,29 @@ function drawBoard(){
   board.innerHTML = '';
   // El tablero se mira desde el bando que juega, como en Temas y en la Racha:
   // en los mates en 2 y en 3 hay casi 400 posiciones en que juegan las negras.
-  const ranks = orientation === 'w' ? [8,7,6,5,4,3,2,1] : [1,2,3,4,5,6,7,8];
-  const files = orientation === 'w' ? [0,1,2,3,4,5,6,7] : [7,6,5,4,3,2,1,0];
-  for(const rank of ranks){
-    for(const f of files){
-      const square = FILES[f] + rank;
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'sq ' + (isLightSquare(square) ? 'light' : 'dark');
-      btn.dataset.square = square;
-      const piece = game.get(square);
-      if(piece){
-        const span = document.createElement('span');
-        if (window.PiezaPreferida) PiezaPreferida.pintar(span, piece.type, piece.color);
-        else {
-          span.className = piece.color === 'w' ? 'piece-white' : 'piece-black';
-          span.textContent = GLYPH[piece.color][piece.type];
-        }
-        span.setAttribute('aria-hidden', 'true');
-        btn.appendChild(span);
+  for(const square of EjercicioTablero.casillas(orientation)){
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'sq ' + (isLightSquare(square) ? 'light' : 'dark');
+    btn.dataset.square = square;
+    const piece = game.get(square);
+    if(piece){
+      const span = document.createElement('span');
+      if (window.PiezaPreferida) PiezaPreferida.pintar(span, piece.type, piece.color);
+      else {
+        span.className = piece.color === 'w' ? 'piece-white' : 'piece-black';
+        span.textContent = GLYPH[piece.color][piece.type];
       }
-      // Qué dice cada casilla lo escribe js/tablero-accesible.js: acá solo se
-      // declara el estado, que es lo único que esta página sabe y aquel no.
-      // Antes las 64 casillas eran botones MUDOS: un lector de pantalla decía
-      // "botón" sesenta y cuatro veces y no había forma de mirar el tablero.
-      if(square === selectedSquare){ btn.classList.add('selected'); btn.dataset.estado = 'seleccionada'; }
-      btn.addEventListener('click', () => onSquareClick(square, btn));
-      board.appendChild(btn);
+      span.setAttribute('aria-hidden', 'true');
+      btn.appendChild(span);
     }
+    // Qué dice cada casilla lo escribe js/tablero-accesible.js: acá solo se
+    // declara el estado, que es lo único que esta página sabe y aquel no.
+    // Antes las 64 casillas eran botones MUDOS: un lector de pantalla decía
+    // "botón" sesenta y cuatro veces y no había forma de mirar el tablero.
+    if(square === selectedSquare){ btn.classList.add('selected'); btn.dataset.estado = 'seleccionada'; }
+    btn.addEventListener('click', () => onSquareClick(square, btn));
+    board.appendChild(btn);
   }
   montarTeclado();
   renderPositionReadout();
@@ -415,14 +392,9 @@ function onSquareClick(square, btn){
   }
   const from = selectedSquare;
   selectedSquare = null;
-  if(candidates.length > 1 && candidates[0].flags.includes('p')){
-    // Varias jugadas comparten origen/destino solo porque el peón puede coronar en
-    // distintas piezas: se le pregunta al alumno en vez de asumir dama siempre — algunas
-    // de estas posiciones necesitan justo una subpromoción para dar mate.
-    askPromotion((choice) => playMove(from, square, choice));
-  } else {
-    playMove(from, square, candidates[0].promotion || undefined);
-  }
+  // En qué pieza corona: el diálogo de todo el sitio (js/coronacion.js). Algunas
+  // de estas posiciones necesitan justo una subpromoción para dar mate.
+  EjercicioTablero.jugarCoronando(game, from, square, (pieza) => playMove(from, square, pieza));
 }
 
 // Arrastrar y soltar piezas (además del clic-clic de siempre): ver js/board-drag.js.
@@ -440,22 +412,6 @@ if(typeof enableBoardDrag !== 'undefined'){
   });
 }
 
-function askPromotion(callback){
-  const modal = document.getElementById('promo-modal');
-  const opts = document.getElementById('promo-opts');
-  opts.innerHTML = '';
-  const turn = game.turn();
-  ['q','r','b','n'].forEach((type) => {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'promo-btn';
-    btn.innerHTML = window.PiezaPreferida ? PiezaPreferida.html(type, turn, { oculta: true }) : `<span class="${turn === 'w' ? 'piece-white' : 'piece-black'}">${GLYPH[turn][type]}</span>`;
-    btn.addEventListener('click', () => { modal.style.display = 'none'; callback(type); });
-    opts.appendChild(btn);
-  });
-  modal.style.display = 'flex';
-}
-
 function playMove(from, to, promotion){
   const puzzle = currentPuzzle();
   const moveResult = game.move({ from, to, promotion: promotion || 'q' });
@@ -465,7 +421,7 @@ function playMove(from, to, promotion){
   const expected = puzzle.solution[solutionStep];
   // Cualquier jugada que dé mate también es correcta (como en Temas y en la
   // Racha): el banco guarda UNA solución, y a veces hay más de un mate.
-  if(moveResult.san !== expected && !game.in_checkmate()){
+  if(!EjercicioTablero.esAcierto(game, moveResult, expected)){
     game.undo();
     drawBoard();
     missedThisPuzzle = true;
