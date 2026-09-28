@@ -1093,12 +1093,9 @@ activo no guarda a nombre de otro ni ve lo de otro, y `anon` no ejecuta nada.
 **Las cuentas viven en `js/preparacion-analisis.js`, sin pantalla**, para que
 las pruebe Node sin navegador. Decisiones que no se ven:
 
-- **El árbol se arma con la secuencia de jugadas, no con la posición.** Las
-  transposiciones cuentan aparte. Rehacer cada jugada con chess.js para sacar
-  la posición tardaba minutos con miles de partidas; la SAN de un PGN exportado
-  ya viene normalizada. Con 30.000 partidas (8 MB) leer tarda un segundo y
-  analizar 0,2. chess.js se usa solo para las pocas posiciones que van al
-  motor.
+- **El árbol se arma por posición** (desde la etapa 1; antes, por secuencia):
+  1.d4 Cf6 2.c4 e6 y 1.c4 e6 2.d4 Cf6 son el mismo nodo y cuentan juntas. Ver
+  «La base de la preparación: etapa 1».
 - **Nada se decide con pocas partidas.** Una línea cuenta desde `minimo()`
   partidas (el 1 % del archivo, entre 4 y 30). Para elegir qué jugarle, la
   puntuación se «encoge» hacia su promedio con 8 partidas imaginarias: 3 de 3
@@ -1160,8 +1157,9 @@ elige a ese usuario como rival y analiza sola (`js/preparacion-descarga.js`).
   proveedores de `privacidad.html` (ver «Las páginas legales»).
 - **Lichess** entrega todo en un solo flujo, las más nuevas primero, a unas 20
   partidas por segundo sin cuenta: se lee de a pedazos para ir diciendo cuántas
-  van. Se piden sin relojes, sin evaluaciones y sin el nombre de la apertura:
-  el análisis no los usa y el flujo pesa menos.
+  van. Se piden **con relojes** (desde la etapa 1: dicen cómo usa el tiempo) y
+  sin evaluaciones ni nombre de la apertura, que el análisis no usa y hacen más
+  pesado el flujo.
 - **Chess.com** guarda las partidas por mes: se pide la lista de meses y se
   baja uno por vez, del más nuevo al más viejo, hasta juntar las pedidas. De a
   uno a propósito: Chess.com pide no hacer pedidos en paralelo y contesta 429.
@@ -1184,6 +1182,57 @@ de verdad): qué se les pide, en qué orden, que corte en el tope y que un usuar
 que no existe se diga. La
 sección de administración la prueba `verificar-admin.js` y la tarjeta del panel
 `verificar-panel.js`.
+
+### La base de la preparación: etapa 1
+
+Se pidieron siete mejoras (cruzar con las partidas del alumno, dónde se sale de
+la teoría, cómo pierde, sus finales, un tablero para recorrer las líneas,
+mandárselo al alumno y entrenar el repertorio), más los filtros. Casi todas
+dependen de cosas que no existían, así que van por etapas, un PR cada una, y
+la primera es la base:
+
+- **El árbol por posición.** `js/preparacion-posiciones.js` saca la clave de la
+  posición después de cada jugada (la misma de `js/chess-bot.js`: colocación,
+  turno, enroques y al paso a la manera de chess.js 0.10.3). chess.js lo sabe,
+  pero tarda 365 µs por jugada porque genera todas las legales para leer cada
+  SAN: con 30.000 partidas, casi un minuto. Esto solo aplica la jugada escrita
+  —busca la pieza que llega; si hay dos y el SAN no dice cuál, descarta la
+  clavada— y tarda 0,3 µs. Se comparó contra chess.js en 29.476 posiciones al
+  azar sin una diferencia; el verificador repite 40 partidas al azar y dos de
+  verdad con lo que el azar casi no trae (una captura al paso y un caballo
+  clavado cuya jugada va sin desambiguar).
+- **Nodo y arista no son lo mismo.** Cada nodo (posición) cuenta todas las
+  partidas que pasaron por ahí, por cualquier orden; cada arista (una jugada
+  desde esa posición) cuenta las que la jugaron AHÍ. Para elegir qué jugarle se
+  usa la posición (más partidas, la misma posición); para decir «él la juega el
+  63 % de las veces», la arista. Usar el nodo para el reparto daba más del 100 %
+  cuando a la posición se llegaba por otro lado.
+- **Los filtros por ritmo y fecha**, sobre el análisis ya hecho: ritmos (los
+  que el rival tiene, con cuántas partidas cada uno) y desde cuándo (todas, el
+  último año, los últimos 2 o 5). Cambiarlos vuelve a analizar al instante, sin
+  volver a leer ni a bajar nada: las partidas se quedan en el trabajador. Con
+  menos de 30 avisa que dice poco; si no pasa ninguna, lo dice y no pinta un
+  análisis vacío. En un análisis guardado no se pueden cambiar (las partidas no
+  se guardan): la página lo dice.
+- **Más datos de cada partida**, para la etapa 2: cómo terminó (tiempo,
+  abandono, mate, tablas, ahogado, repetición, material, abandonada; «stalemate»
+  también dice «mate» y va antes), todas las jugadas y los relojes (`[%clk]` de
+  Lichess y Chess.com, en segundos por jugada). No se guardan en el análisis:
+  viven con las partidas, en el trabajador.
+- **Las cuentas, en segundo plano** (`js/preparacion-trabajador.js`, un Web
+  Worker): con miles de partidas la página se congelaba unos segundos. Si el
+  navegador no deja crear el trabajador, las mismas funciones corren en la
+  página.
+- **Una «línea», una sola copia** (`js/preparacion-lineas.js`): la notación
+  española, la evaluación escrita, la posición para el motor y **el plan en
+  PGN**, con sus ramas como variantes y en cada jugada cuánto saca él y lo que
+  dijo Stockfish. Es lo que van a usar el tablero, la tarea, la clase en vivo y
+  el entrenamiento. Por ahora se baja con «Bajar el plan con blancas (PGN)».
+- **La página en módulos**: `js/preparacion-rivales.js` (el recorrido),
+  `js/preparacion-pintar.js` (dibujar) y `js/preparacion-motor.js` (Stockfish).
+- **Los análisis guardados antes siguen abriéndose.** El resultado lleva
+  `version` (2 desde esta etapa); la página pinta lo que haya y no pide lo que
+  una versión vieja no tenía. El verificador abre uno de la versión 1.
 
 ## Las inscripciones a torneos en línea
 

@@ -112,6 +112,10 @@
                         <button id="motor-parar" type="button" hidden class="px-4 py-2 rounded-lg text-sm font-semibold bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Parar la revisión</button>
                     </div>
                 </div>
+                <!-- Los filtros: con qué partidas se analiza. Los pinta
+                     js/preparacion-rivales.js con lo que el rival tiene. -->
+                <div id="filtros" hidden class="flex flex-wrap items-end gap-x-8 gap-y-3 rounded-xl bg-white dark:bg-brand-900 shadow-md px-5 py-4 mb-3"></div>
+                <p id="filtros-aviso" role="status" class="text-sm font-semibold text-accent-700 dark:text-accent-400 mb-2"></p>
                 <p id="motor-estado" role="status" class="text-sm text-brand-600 dark:text-brand-200 mb-4"></p>
                 <div id="resultado-cuerpo" class="space-y-6"></div>
             </section>
@@ -131,8 +135,12 @@
     <script src="js/main.js"></script>
     <script src="js/vendor/chess.js"></script>
     <script src="js/shared-engine.js" data-motor="stockfish-19-lite-single.js"></script>
+    <script src="js/preparacion-lineas.js"></script>
+    <script src="js/preparacion-posiciones.js"></script>
     <script src="js/preparacion-analisis.js"></script>
     <script src="js/preparacion-descarga.js"></script>
+    <script src="js/preparacion-pintar.js"></script>
+    <script src="js/preparacion-motor.js"></script>
     <script src="js/preparacion-rivales.js"></script>
 <!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="js/modo-vista.js" defer></script><!-- modo-vista: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- atajo: inicio --><script src="js/atajo-buscar.js" data-arriba="" defer></script><!-- atajo: fin --></body>
 </html>

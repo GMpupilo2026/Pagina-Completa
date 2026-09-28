@@ -21,6 +21,9 @@
 const { chromium } = require("./lib/playwright-con-sesion");
 const { contestarAvisos } = require("./lib/avisos-prueba.js");
 const A = require("../js/preparacion-analisis.js");
+const L = require("../js/preparacion-lineas.js");
+const Pos = require("../js/preparacion-posiciones.js");
+const { Chess } = require("chess.js");
 
 const CHROME = process.env.CHROME_PATH || "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
 const BASE = process.env.BASE_URL || "http://localhost:8777";
@@ -120,15 +123,146 @@ function pruebaAnalisis() {
   return r;
 }
 
+
+// ------------------------------------------------------------ etapa 1: la base
+
+/* Las posiciones: js/preparacion-posiciones.js tiene que dar la MISMA clave que
+   chess.js en cada jugada (si no, el árbol por posición junta lo que no es y el
+   libro de Oscar no encuentra nada). Partidas al azar con semilla fija, y dos
+   partidas de verdad con lo que el azar casi nunca trae: una captura al paso y
+   una pieza clavada que por eso no se desambigua. */
+function pruebaPosiciones() {
+  console.log("\n=== Las posiciones, contra chess.js ===");
+  let semilla = 2026;
+  const azar = () => { semilla = (semilla * 1103515245 + 12345) & 0x7fffffff; return semilla / 0x7fffffff; };
+  const comparar = (sec) => {
+    const g = new Chess();
+    let e = Pos.inicial();
+    for (const san of sec) {
+      g.move(san);
+      e = e && Pos.aplicar(e, san);
+      if (!e || Pos.clave(e) !== g.fen().split(" ").slice(0, 4).join(" ")) return san;
+    }
+    return null;
+  };
+  let jugadas = 0, fallidas = [];
+  for (let j = 0; j < 40; j++) {
+    const g = new Chess();
+    const sec = [];
+    for (let k = 0; k < 80 && !g.game_over(); k++) { const ms = g.moves(); const san = ms[Math.floor(azar() * ms.length)]; g.move(san); sec.push(san); }
+    jugadas += sec.length;
+    const f = comparar(sec);
+    if (f) fallidas.push(f);
+  }
+  igual("40 partidas al azar (" + jugadas + " jugadas): la misma clave que chess.js en todas", fallidas, []);
+  igual("una captura al paso (…axb3)", comparar("f4 a5 e3 a4 h4 d5 h5 h6 Ne2 Qd6 e4 Qe6 Nec3 Qc6 Nxd5 Be6 g3 Qd7 b4 axb3".split(" ")), null);
+  igual("un caballo clavado: «Nxf3» sin desambiguar porque el de d2 no se puede mover",
+    comparar("b3 a6 d4 d6 e3 Nc6 a3 h5 Qxh5 a5 g3 Bd7 h3 Qb8 Qf5 Rxh3 Bd3 Bc8 Qh7 Rxh1 Qh2 Nf6 Kf1 Bd7 f4 Qa7 Ke2 Nd8 Kd2 Rxh2+ Be2 Ne6 c3 Kd8 Bb2 Bc8 c4 Nh5 Kc2 Nhxf4 Nd2 Ng5 Bf3 Qc5 Rd1 Rg2 Rf1 Nxf3 Nxf3".split(" ")), null);
+  igual("enroques, y el derecho que se pierde al comerse una torre",
+    comparar("e4 e5 Nf3 Nc6 Bc4 Bc5 O-O Nf6 d3 O-O b3 d6 Bb2 Bg4 Bxe5 dxe5 Nc3 Qd6 Na4 Bxf2+ Rxf2".split(" ")), null);
+  const t0 = Date.now();
+  let e = Pos.inicial();
+  for (let i = 0; i < 20000; i++) { e = Pos.inicial(); for (const san of "e4 e5 Nf3 Nc6 Bb5 a6 Ba4 Nf6 O-O Be7 Re1 b5 Bb3 d6 c3 O-O".split(" ")) e = Pos.aplicar(e, san); Pos.clave(e); }
+  cierto("y rápido: 320.000 jugadas en " + (Date.now() - t0) + " ms (chess.js tardaría más de un minuto)", Date.now() - t0 < 3000);
+}
+
+// Cómo terminó cada partida, y los relojes que traen los PGN de Lichess y Chess.com.
+function pruebaDatosPorPartida() {
+  console.log("\n=== Lo que se guarda de cada partida ===");
+  const x = A.jugadasYRelojes("1. e4 { [%clk 0:03:00] } 1... e5 { [%clk 0:02:58] } 2. Qh5 {[%clk 0:02:55]} Nc6 3. Bc4 (3. Qxe5+ Nxe5) Nf6 4. Qxf7# { [%clk 0:02:50] } 1-0");
+  igual("las jugadas, sin la variante", x.jugadas, ["e4", "e5", "Qh5", "Nc6", "Bc4", "Nf6", "Qxf7"]);
+  igual("y el reloj de cada una, en segundos (sin reloj, vacío)", x.relojes, [180, 178, 175, null, null, null, 170]);
+  igual("sin relojes en el PGN, no se inventan", A.jugadasYRelojes("1. e4 e5 2. Nf3 *").relojes, null);
+  const casos = [
+    [{ Termination: "Time forfeit" }, "G", false, "tiempo"],
+    [{ Termination: "Normal" }, "G", true, "mate"],
+    [{ Termination: "Normal" }, "P", false, "abandono"],
+    [{ Termination: "Normal" }, "T", false, "tablas"],
+    [{ Termination: "Pedro won by resignation" }, "P", false, "abandono"],
+    [{ Termination: "Pedro won by checkmate" }, "G", false, "mate"],
+    [{ Termination: "Pedro won on time" }, "G", false, "tiempo"],
+    [{ Termination: "Game drawn by repetition" }, "T", false, "repeticion"],
+    [{ Termination: "Game drawn by stalemate" }, "T", false, "ahogado"],
+    [{ Termination: "Game drawn by timeout vs insufficient material" }, "T", false, "tablas"],
+    [{ Termination: "Abandoned" }, "P", false, "abandonada"],
+    [{}, "G", false, "otro"],
+  ];
+  igual("cómo terminó, en pocas categorías (Lichess y Chess.com)", casos.map(([e, r, m]) => A.finDe(e, r, m)), casos.map((c) => c[3]));
+  const [p] = A.leerPgn('[White "Pedro"]\n[Black "Otro"]\n[Result "1-0"]\n[Termination "Normal"]\n\n1. e4 e5 2. Qh5 Nc6 3. Bc4 Nf6 4. Qxf7# 1-0');
+  igual("un mate se reconoce por la jugada aunque la etiqueta diga «Normal»", A.partidasDelRival([p], "pedro")[0].fin, "mate");
+}
+
+/* Las transposiciones: la misma posición por dos órdenes cuenta junta. El
+   rival (negras) llega a 1.d4 Cf6 2.c4 e6 en 10 partidas y a 1.c4 e6 2.d4 Cf6
+   en otras 10: el plan tiene que ver 20 partidas en esa posición. */
+function pruebaTransposiciones() {
+  console.log("\n=== Transposiciones: una posición, sin importar el orden ===");
+  let t = "";
+  for (let i = 0; i < 10; i++) t += partida("Otro " + i, "Pedro", i < 8 ? "1-0" : "0-1", "d4 Nf6 2. c4 e6 3. Nc3 Bb4");
+  for (let i = 0; i < 10; i++) t += partida("Otro " + i, "Pedro", i < 8 ? "1-0" : "0-1", "c4 e6 2. d4 Nf6 3. Nc3 Bb4");
+  const r = A.analizar(A.leerPgn(t), "Pedro");
+  const nodo = (function buscar(ns, prof) {
+    for (const x of ns) { if (prof === 3) return x; const h = buscar(x.hijos || [], prof + 1); if (h) return h; }
+    return null;
+  })(r.conBlancas.plan, 0);
+  igual("después de cuatro medias jugadas, el plan cuenta las 20 partidas de los dos órdenes", nodo && [nodo.n, L.pct(nodo.puntos)], [20, "20,0 %"]);
+  cierto("y sigue más allá con las 20 (3.Cc3 Ab4)", nodo && nodo.hijos && nodo.hijos[0] && nodo.hijos[0].n === 20);
+}
+
+// Los filtros: por ritmo y desde una fecha, con lo que había disponible.
+function pruebaFiltros() {
+  console.log("\n=== Filtros por ritmo y fecha ===");
+  const conRitmo = (tc, fecha, res) => partida("Pedro", "Otro", res, "e4 e5 2. Nf3 Nc6", "").replace('[TimeControl "180+2"]', '[TimeControl "' + tc + '"]').replace('[Date "2025.03.04"]', '[Date "' + fecha + '"]');
+  let t = "";
+  for (let i = 0; i < 12; i++) t += conRitmo("60+0", "2026.06.0" + (1 + (i % 8)), "1-0");
+  for (let i = 0; i < 8; i++) t += conRitmo("600+5", "2023.02.0" + (1 + (i % 8)), "0-1");
+  const ps = A.leerPgn(t);
+  const todo = A.analizar(ps, "Pedro");
+  igual("sin filtros, todas; y dice qué hay para filtrar", [todo.total, todo.disponibles.ritmos, todo.disponibles.anios],
+    [20, [{ ritmo: "bullet", n: 12 }, { ritmo: "rápida", n: 8 }], [{ anio: "2023", n: 8 }, { anio: "2026", n: 12 }]]);
+  const rapidas = A.analizar(ps, "Pedro", { ritmos: ["rápida"] });
+  igual("solo rápidas: 8 partidas, y avisa que son pocas", [rapidas.total, rapidas.totalRival, rapidas.pocas, L.pct(rapidas.global.puntos)], [8, 20, true, "0,0 %"]);
+  const recientes = A.analizar(ps, "Pedro", { desde: "2025-09-28" });
+  igual("desde una fecha: las del último año", [recientes.total, recientes.filtros.desde], [12, "2025-09-28"]);
+  const nada = A.analizar(ps, "Pedro", { ritmos: ["clásica"] });
+  igual("si ninguna pasa, lo dice (y conserva lo disponible para volver a filtrar)", [nada.vacio, nada.totalRival, nada.disponibles.ritmos.length], [true, 20, 2]);
+}
+
+// El plan en PGN: con encabezado, comentarios, variantes y jugadas legales.
+function pruebaPgnDelPlan(r) {
+  console.log("\n=== El plan en PGN ===");
+  const pgn = L.planAPgn(r, "conNegras");
+  cierto("lleva encabezado: quién es quién", /\[White "Pedro Perez"\]/.test(pgn) && /\[Black "Tú"\]/.test(pgn) && /\[Event "Preparación contra Pedro Perez"\]/.test(pgn));
+  cierto("comenta cuánto saca él en cada jugada", /\{Él la juega el \d+ % de las veces; él saca [\d,]+ % en \d+ partidas\}/.test(pgn));
+  cierto("las ramas van como variantes", /\(1\. d4 /.test(pgn));
+  cierto("y el error de Stockfish, en la jugada que toca", /4\. Qh4 \{[^}]*Stockfish: es un error \(\+0,10 → −0,80\), lo mejor era Dd1/.test(pgn));
+  // Cada camino del plan tiene que ser una partida legal.
+  const malos = [];
+  (function recorrer(ns, sec) { for (const x of ns) { const s = sec.concat(x.san); if (!L.fenDe(s)) malos.push(s.join(" ")); recorrer(x.hijos || [], s); } })(r.conNegras.plan, []);
+  igual("todas las líneas del plan son legales", malos, []);
+  igual("y la línea principal se vuelve a leer igual", A.leerPgn(pgn)[0].jugadas.slice(0, 4), ["e4", "e6", "d4", "d5"]);
+}
+
+/* Un análisis como los que se guardaron antes de la etapa 1 (versión 1): sin
+   filtros, sin lo disponible, sin totalRival. Se arma quitándole eso a uno de
+   ahora, que es exactamente lo que no tenían. */
+function analisisVersion1() {
+  const r = A.analizar(A.leerPgn(pgnDePrueba()), "Pedro Perez");
+  for (const k of ["filtros", "disponibles", "totalRival", "pocas"]) delete r[k];
+  r.version = 1;
+  r.rival = "Viejo Rival";
+  return JSON.parse(JSON.stringify(r));
+}
+
 // ------------------------------------------------------------ 2. la página
 
 // Un Supabase de mentira. `puede` es lo que contesta puedo_preparar_rivales().
-function clienteFalso(puede) {
+function clienteFalso(puede, guardados) {
   return `
 window.__insertados = [];
 window.__borrados = [];
 (function () {
-  const TABLAS = { preparaciones_rival: [] };
+  const TABLAS = { preparaciones_rival: ${JSON.stringify(guardados || [])} };
   function constructor(tabla, filas) {
     let filas2 = (filas || []).slice(), unica = false, insertando = null, borrando = false;
     const b = {
@@ -214,12 +348,12 @@ const MOTOR_FALSO = `
 })();
 `;
 
-async function abrir(browser, puede) {
-  const ctx = await browser.newContext({ serviceWorkers: "block" });
+async function abrir(browser, puede, guardados) {
+  const ctx = await browser.newContext({ serviceWorkers: "block", acceptDownloads: true });
   await ctx.route("**/cdn.jsdelivr.net/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
   await ctx.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await ctx.route("**/fonts.gstatic.com/**", (r) => r.abort());
-  await ctx.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso(puede) }));
+  await ctx.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso(puede, guardados) }));
   await ctx.route("**/js/shared-engine.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: MOTOR_FALSO }));
   await ctx.addInitScript(contestarAvisos);
   // «Se ve» se mide con checkVisibility(), no con la clase ni el atributo.
@@ -232,6 +366,51 @@ async function abrir(browser, puede) {
   await page.goto(BASE + "/preparacion-rivales.html", { waitUntil: "networkidle" });
   await page.waitForFunction(() => document.getElementById("loading").classList.contains("hidden"), null, { timeout: 15000 });
   return { page, ctx, errores };
+}
+
+
+/* Etapa 1 en la página: las cuentas van al trabajador en segundo plano, los
+   filtros vuelven a analizar sin volver a leer, el plan se baja en PGN y un
+   análisis guardado antes de todo esto (versión 1) se sigue abriendo. */
+async function pruebaEtapa1(browser, viejo) {
+  console.log("\n=== En la página: trabajador, filtros, PGN y análisis viejos ===");
+  const { page, ctx, errores } = await abrir(browser, true, [{ id: "p-viejo", profesor_id: "u-profe", rival: viejo.rival, partidas: viejo.total, created_at: "2026-09-01T12:00:00Z", analisis: viejo }]);
+  const pedidos = [];
+  ctx.on("request", (r) => pedidos.push(r.url()));
+
+  await page.setInputFiles("#pgn-archivo", { name: "rival.pgn", mimeType: "application/x-chess-pgn", buffer: Buffer.from(pgnDePrueba(), "utf8") });
+  await page.click("#leer");
+  await page.waitForFunction(() => /Se leyeron/.test(document.getElementById("leido").textContent), null, { timeout: 10000 });
+  await page.click("#analizar");
+  await page.waitForFunction(() => /Listo/.test(document.getElementById("motor-estado").textContent), null, { timeout: 30000 });
+  igual("las cuentas corren en el trabajador en segundo plano", page.workers().map((w) => w.url().replace(/^.*\/js\//, "js/")).filter((u) => /preparacion/.test(u)), ["js/preparacion-trabajador.js"]);
+
+  igual("se ven los filtros, con lo que el rival tiene", await page.evaluate(() => [SE_VE("filtros"),
+    [...document.querySelectorAll('#filtros input[name="filtro-ritmo"]')].map((c) => c.parentElement.textContent + (c.checked ? " ✓" : ""))]),
+    [true, ["blitz (73) ✓"]]);
+  // Sus partidas son de marzo de 2025: «el último año» no deja ninguna.
+  await page.selectOption("#filtro-desde", "1");
+  await page.waitForFunction(() => /pasa estos filtros/.test(document.getElementById("resultado-sub").textContent), null, { timeout: 10000 });
+  igual("si ningún filtro deja partidas, lo dice y no pinta un análisis vacío",
+    [await page.textContent("#resultado-sub"), await page.evaluate(() => document.getElementById("resultado-cuerpo").children.length), await page.evaluate(() => document.getElementById("guardar").disabled)],
+    ["Ninguna de sus 73 partidas pasa estos filtros.", 0, true]);
+  await page.selectOption("#filtro-desde", "2");
+  await page.waitForFunction(() => /^73 partidas/.test(document.getElementById("resultado-sub").textContent) && /Listo/.test(document.getElementById("motor-estado").textContent), null, { timeout: 30000 });
+  igual("con «los últimos 2 años» vuelven las 73, con el mismo trabajador (sin volver a leer nada)",
+    page.workers().filter((w) => /preparacion-trabajador/.test(w.url())).length, 1);
+
+  const [bajada] = await Promise.all([page.waitForEvent("download"), page.click('[data-pgn="conBlancas"]')]);
+  const texto = require("fs").readFileSync(await bajada.path(), "utf8");
+  igual("el plan con blancas se baja en PGN", [bajada.suggestedFilename(), texto.split("\n")[0], /\[White "Tú"\]/.test(texto), /^1\. e4 \{/m.test(texto)],
+    ["preparacion-pedro-perez-blancas.pgn", '[Event "Preparación contra Pedro Perez"]', true, true]);
+
+  // El análisis guardado antes de la etapa 1: sin filtros ni transposiciones.
+  await page.click('#guardados button[aria-label="Abrir el análisis de ' + viejo.rival + '"]');
+  await page.waitForFunction((n) => document.getElementById("titulo-resultado").textContent === n, viejo.rival, { timeout: 10000 });
+  igual("un análisis de la versión 1 se abre igual, sin filtros (no los tenía)",
+    [await page.evaluate(() => SE_VE("filtros")), await page.evaluate(() => [...document.querySelectorAll("#resultado-cuerpo h3")].length >= 5)], [false, true]);
+  igual("sin errores en consola ni diálogos del navegador", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
 }
 
 async function pruebaSinPermiso(browser) {
@@ -341,9 +520,9 @@ async function pruebaDescarga(browser) {
   await page.selectOption("#bajar-maximo", "500");
   await page.click("#bajar");
   await page.waitForFunction(() => /Listo/.test(document.getElementById("motor-estado").textContent), null, { timeout: 30000 });
-  igual("a Lichess se le pide ese usuario, con el tope elegido y sin relojes ni evaluaciones",
+  igual("a Lichess se le pide ese usuario, con el tope elegido, con relojes y sin evaluaciones",
     pedidos.map((u) => { const x = new URL(u); return x.pathname + " max=" + x.searchParams.get("max") + " clocks=" + x.searchParams.get("clocks") + " evals=" + x.searchParams.get("evals"); }),
-    ["/api/games/user/PedroP max=500 clocks=false evals=false"]);
+    ["/api/games/user/PedroP max=500 clocks=true evals=false"]);
   igual("y analiza solo, con el usuario como rival", [await page.textContent("#titulo-resultado"), await page.evaluate(() => document.getElementById("rival").value)], ["PedroP", "PedroP"]);
   cierto("con todas sus partidas", /^73 partidas/.test(await page.textContent("#resultado-sub")));
 
@@ -462,7 +641,12 @@ async function pruebaMotorDeVerdad(browser) {
 }
 
 (async () => {
-  pruebaAnalisis();
+  const conMotor = pruebaAnalisis();
+  pruebaPosiciones();
+  pruebaDatosPorPartida();
+  pruebaTransposiciones();
+  pruebaFiltros();
+  pruebaPgnDelPlan(conMotor);
   pruebaCsp();
   pruebaArchivosDelMotor();
   const browser = await chromium.launch({ executablePath: CHROME });
@@ -470,6 +654,7 @@ async function pruebaMotorDeVerdad(browser) {
     await pruebaSinPermiso(browser);
     await pruebaConPermiso(browser);
     await pruebaDescarga(browser);
+    await pruebaEtapa1(browser, analisisVersion1());
     await pruebaMotorDeVerdad(browser);
   } finally {
     await browser.close();
