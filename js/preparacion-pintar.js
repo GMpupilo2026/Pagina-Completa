@@ -5,8 +5,9 @@
  * su repertorio, dónde rinde menos y más, y las tablas por ritmo, año y Elo.
  * Todo texto que viene del PGN (nombres, jugadas) va por textContent.
  *
- * Lee resultados de la versión 1 (antes de los filtros y del árbol por
- * posición) y de la 2: lo que la 1 no trae, no se pinta.
+ * Lee resultados de todas las versiones: la 1 (antes de los filtros y del
+ * árbol por posición), la 2, la 3 (sin las líneas para la teoría) y la 4. Lo
+ * que una versión no trae, no se pinta.
  */
 (function () {
   "use strict";
@@ -79,7 +80,9 @@
     c.appendChild(pintarCifras(r));
     c.appendChild(pintarFoda(r));
     c.appendChild(pintarPlanes(r));
+    if (r.cruce) c.appendChild(pintarCruce(r));
     if (r.motor) c.appendChild(pintarMotor(r));
+    if (r.teoria) c.appendChild(pintarTeoria(r));
     if (r.masAlla) c.appendChild(pintarMasAlla(r));
     c.appendChild(pintarRepertorio(r));
     c.appendChild(pintarLineas(r));
@@ -366,6 +369,126 @@
         "Sus victorias duran en promedio " + (d.ganadas || "—") + " jugadas y sus derrotas " + (d.perdidas || "—") + "." +
         (d.perdidasConJugadas ? " " + d.perdidasCortas + " de " + d.perdidasConJugadas + " derrotas terminan antes de la jugada 25." : "")));
     }
+    return s;
+  }
+
+  /* El cruce con las partidas del alumno (js/preparacion-cruce.js): por
+     color, si ya juega el plan y dónde le conviene jugar lo suyo. Listas y no
+     tablas, por el celular (lo mismo que «Dónde deja la teoría»). */
+  function pintarCruce(r) {
+    const c = r.cruce;
+    const s = tarjeta("Tu alumno contra él: " + c.alumno, "cruce-titulo");
+    s.appendChild(nota("Con " + c.total.toLocaleString("es-CR") + (c.total === 1 ? " partida" : " partidas") + " de " + c.alumno + " (una jugada cuenta desde " + c.minimo + "). «Él saca» es lo que consigue el rival; «tu alumno saca», lo que consigue el alumno en sus propias partidas."));
+    const renglon = (sec, textos, ver) => {
+      const li = el("li", "py-3 flex flex-wrap items-start justify-between gap-x-4 gap-y-2");
+      li.dataset.cruce = sec.join(" ");
+      const d = el("div", "min-w-0 flex-1");
+      d.appendChild(el("p", "font-mono text-sm text-brand-800 dark:text-white", A.lineaEs(sec)));
+      textos.forEach((t) => d.appendChild(el("p", "text-sm text-brand-600 dark:text-brand-200", t)));
+      li.appendChild(d);
+      if (ver && opcionesActuales.alVerSecuencia) li.appendChild(botonVer(sec, "Ver en el tablero: " + A.lineaEs(sec), ver));
+      return li;
+    };
+    const lista = (items) => { const ul = el("ul", "divide-y divide-brand-100 dark:divide-brand-800"); items.forEach((x) => ul.appendChild(x)); return ul; };
+    const partidas = (n) => n + (n === 1 ? " partida" : " partidas");
+    [["conBlancas", "Con blancas (tu alumno lleva blancas)"], ["conNegras", "Con negras (tu alumno lleva negras)"]].forEach(([clave, titulo]) => {
+      const l = c.lados[clave];
+      s.appendChild(el("h4", "font-bold text-brand-800 dark:text-white mt-5 mb-1", titulo));
+      if (!l.partidas) {
+        s.appendChild(el("p", "text-sm text-brand-500 dark:text-brand-300", "No trae partidas suyas con " + (clave === "conBlancas" ? "blancas." : "negras.")));
+        return;
+      }
+      const rp = l.resumenPlan;
+      const totalPlan = rp.laJuega + rp.otra + rp.nunca;
+      if (totalPlan) {
+        // Solo lo que no es cero: «en 0 juega otra cosa» no dice nada.
+        const partes = [rp.laJuega ? "ya juega " + rp.laJuega : "todavía no juega ninguna"];
+        if (rp.otra) partes.push("en " + rp.otra + " juega otra cosa");
+        if (rp.nunca) partes.push("a " + rp.nunca + " no llegó en sus partidas");
+        s.appendChild(el("p", "text-sm text-brand-700 dark:text-brand-100", "El plan: de " + totalPlan + (totalPlan === 1 ? " jugada que le toca, " : " jugadas que le tocan, ") + partes.join("; ") + "."));
+        const otras = l.plan.filter((x) => x.estado === "otra");
+        if (otras.length) {
+          s.appendChild(lista(otras.map((x) => {
+            const num = Math.floor(x.sec.length / 2) + 1;
+            const jug = (x.sec.length % 2 === 0 ? num + "." : num + "…");
+            return renglon(x.sec.concat(x.recomendada), [
+              "El plan dice " + jug + A.sanEs(x.recomendada) + "; tu alumno juega " + jug + A.sanEs(x.suya.san) + " (" + x.suya.n + " de " + x.total + ")."],
+              "El plan: " + A.sanEs(x.recomendada) + ". Tu alumno suele jugar " + A.sanEs(x.suya.san) + " (" + x.suya.n + " de " + x.total + ").");
+          })));
+        }
+      }
+      const texto = (x) => ["Tu alumno saca " + A.pct(x.alumno.puntos) + " en " + partidas(x.alumno.n) + "; él saca " + A.pct(x.rival.puntos) + " en " + partidas(x.rival.n) + " (su promedio con ese color: " + A.pct(l.base) + ")."];
+      if (l.aFavor.length) {
+        s.appendChild(el("h5", "text-sm font-semibold text-brand-800 dark:text-white mt-3", "Juega lo suyo: ahí él rinde menos"));
+        s.appendChild(lista(l.aFavor.map((x) => renglon(x.sec.concat(x.jugada), texto(x), "Aquí él saca " + A.pct(x.rival.puntos) + " y tu alumno ya la conoce: " + A.pct(x.alumno.puntos) + " en " + partidas(x.alumno.n) + "."))));
+      }
+      if (l.enContra.length) {
+        s.appendChild(el("h5", "text-sm font-semibold text-brand-800 dark:text-white mt-3", "Ojo: ahí él rinde más"));
+        s.appendChild(lista(l.enContra.map((x) => renglon(x.sec.concat(x.jugada), texto(x), "Aquí él saca " + A.pct(x.rival.puntos) + ": mejor evitarla."))));
+      }
+      if (!l.aFavor.length && !l.enContra.length) {
+        s.appendChild(el("p", "text-sm text-brand-500 dark:text-brand-300 mt-2", l.comunes
+          ? "En lo que juegan los dos, él rinde como siempre: nada se aparta de su promedio."
+          : "Sus repertorios no se cruzan: no llegan a ninguna posición con suficientes partidas de los dos."));
+      }
+    });
+    return s;
+  }
+
+  /* Dónde deja la teoría (js/preparacion-teoria.js): cada línea de su
+     repertorio, hasta la primera jugada que los maestros casi no juegan. Una
+     misma salida que aparece en varias líneas (las que siguen después) va una
+     sola vez, con la línea más corta que llega a ella. Es una lista y no una
+     tabla: seis columnas no entraban en el celular. */
+  function pintarTeoria(r) {
+    const s = tarjeta("Dónde deja la teoría", "teoria-titulo");
+    const t = r.teoria;
+    s.appendChild(nota("Sus líneas más jugadas, comparadas jugada por jugada con las partidas de maestros del explorador de Lichess. La línea deja la teoría en la primera jugada que los maestros jugaron menos de " + (window.PreparacionTeoria ? PreparacionTeoria.MIN_MAESTROS : 5) + " veces. Si esa jugada es suya, ahí improvisa o trae algo propio: es la posición que conviene estudiar."));
+    const lineas = t.lineas || [];
+    if (!lineas.length) {
+      s.appendChild(el("p", "text-sm text-brand-500 dark:text-brand-300", "No tiene líneas con suficientes partidas para compararlas."));
+      return s;
+    }
+    ["w", "b"].forEach((color) => {
+      const vistas = new Set();
+      const items = [];
+      lineas.filter((l) => l.color === color && l.completa).forEach((l) => {
+        const x = l.salida;
+        const hasta = x ? l.sec.slice(0, x.ply + 1) : l.sec;
+        const clave = (x ? "sale:" : "hasta:") + hasta.join(" ");
+        if (vistas.has(clave)) return;
+        vistas.add(clave);
+        const li = el("li", "py-3 flex flex-wrap items-start justify-between gap-x-4 gap-y-2");
+        li.dataset.teoria = hasta.join(" ");
+        const texto = el("div", "min-w-0 flex-1");
+        texto.appendChild(el("p", "font-mono text-sm text-brand-800 dark:text-white", A.lineaEs(hasta)));
+        let notaVer;
+        if (!x) {
+          texto.appendChild(el("p", "text-sm text-brand-600 dark:text-brand-200", "No la deja: sigue a los maestros hasta la jugada " + Math.ceil(l.sec.length / 2) + " (" + l.n + (l.n === 1 ? " partida suya)." : " partidas suyas).")));
+          notaVer = "Toda la línea es teoría de maestros.";
+        } else {
+          const veces = x.veces != null ? x.veces : l.n;
+          const quien = x.quien === "el" ? "Él la deja" : "Su rival la deja";
+          texto.appendChild(el("p", "text-sm font-semibold text-brand-700 dark:text-brand-100", quien + " en la jugada " + Math.ceil((x.ply + 1) / 2) + ", con " + A.sanEs(x.jugada) + " (" + veces + (veces === 1 ? " partida suya)." : " partidas suyas).")));
+          const alt = x.alternativas.map((a) => A.sanEs(a.san) + " (" + Math.round(100 * a.reparto) + " %)").join(", ");
+          texto.appendChild(el("p", "text-sm text-brand-600 dark:text-brand-200", "Los maestros la jugaron " + x.maestros + (x.maestros === 1 ? " vez" : " veces") + " de " + x.total.toLocaleString("es-CR") + "." + (alt ? " Lo que juegan ellos: " + alt + "." : "")));
+          notaVer = (x.quien === "el" ? "Aquí él deja la teoría con " : "Aquí su rival deja la teoría con ") + A.sanEs(x.jugada) +
+            ": los maestros la jugaron " + x.maestros + (x.maestros === 1 ? " vez" : " veces") + " de " + x.total.toLocaleString("es-CR") + "." +
+            (x.alternativas.length ? " Lo habitual es " + x.alternativas.slice(0, 2).map((a) => A.sanEs(a.san)).join(" o ") + "." : "");
+        }
+        li.appendChild(texto);
+        if (opcionesActuales.alVerSecuencia) li.appendChild(botonVer(hasta, "Ver en el tablero: " + A.lineaEs(hasta), notaVer));
+        items.push(li);
+      });
+      if (!items.length) return;
+      s.appendChild(el("h4", "font-bold text-brand-800 dark:text-white mt-4 mb-1", color === "w" ? "Cuando lleva blancas" : "Cuando lleva negras"));
+      const ul = el("ul", "divide-y divide-brand-100 dark:divide-brand-800");
+      items.forEach((li) => ul.appendChild(li));
+      s.appendChild(ul);
+    });
+    const sinDatos = lineas.filter((l) => !l.completa).length;
+    if (sinDatos) s.appendChild(el("p", "text-sm text-accent-700 dark:text-accent-400 mt-3", sinDatos + (sinDatos === 1 ? " línea quedó" : " líneas quedaron") + " sin revisar del todo: el explorador no contestó todas las posiciones."));
+    s.appendChild(el("p", "text-xs text-brand-450 dark:text-brand-350 mt-3", "Fuente: partidas de maestros del explorador de Lichess."));
     return s;
   }
 

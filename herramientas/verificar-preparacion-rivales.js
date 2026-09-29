@@ -347,11 +347,12 @@ function pruebaComoPierde() {
 /* `tablas` suma otras tablas con sus filas: los alumnos que ve el profesor
    (profiles), sus Archivos, los planes mandados. Cada insert y cada borrado
    quedan anotados en __insertados / __borrados con su tabla. */
-function clienteFalso(puede, guardados, tablas) {
+function clienteFalso(puede, guardados, tablas, libro) {
   return `
 window.__insertados = [];
 window.__borrados = [];
 window.__mandados = [];
+window.__fensPedidas = [];
 (function () {
   const TABLAS = Object.assign({ preparaciones_rival: ${JSON.stringify(guardados || [])} }, ${JSON.stringify(tablas || {})});
   let siguiente = 1;
@@ -404,6 +405,20 @@ window.__mandados = [];
       }
       return Promise.resolve({ data: [], error: null });
     },
+    // La Edge Function explorador-maestros: con un libro, contesta de ahí (lo
+    // que no está, vacío, como el explorador); sin libro, como sin el token.
+    functions: {
+      invoke: (nombre, o) => {
+        if (nombre !== "explorador-maestros") return Promise.resolve({ data: null, error: { message: "no existe" } });
+        const LIBRO = ${JSON.stringify(libro || null)};
+        const fens = o.body.fens;
+        window.__fensPedidas.push(...fens);
+        if (!LIBRO) return Promise.resolve({ data: { posiciones: {}, faltan: fens, motivo: "sin_token" }, error: null });
+        const posiciones = {};
+        fens.forEach((f) => { posiciones[f] = LIBRO[f] || { w: 0, d: 0, b: 0, jugadas: [], apertura: null }; });
+        return Promise.resolve({ data: { posiciones, faltan: [], motivo: null }, error: null });
+      },
+    },
     channel: () => ({ on() { return this; }, subscribe() { return this; }, track() { return Promise.resolve(); }, presenceState: () => ({}) }),
     removeChannel: () => {},
   };
@@ -448,14 +463,14 @@ const MOTOR_FALSO = `
 })();
 `;
 
-async function abrir(browser, puede, guardados, adaptado, tablas, pagina) {
+async function abrir(browser, puede, guardados, adaptado, tablas, pagina, libro) {
   const ctx = await browser.newContext({ serviceWorkers: "block", acceptDownloads: true });
   // El cuadro para escribir solo se ve en Modo Adaptado (js/cuadro-comandos.js).
   if (adaptado) await ctx.addInitScript(() => localStorage.setItem("oscarBlindMode_v1", "1"));
   await ctx.route("**/cdn.jsdelivr.net/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
   await ctx.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await ctx.route("**/fonts.gstatic.com/**", (r) => r.abort());
-  await ctx.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso(puede, guardados, tablas) }));
+  await ctx.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso(puede, guardados, tablas, libro) }));
   await ctx.route("**/js/shared-engine.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: MOTOR_FALSO }));
   await ctx.addInitScript(contestarAvisos);
   // «Se ve» se mide con checkVisibility(), no con la clase ni el atributo.
@@ -691,6 +706,126 @@ async function pruebaEtapa3(browser) {
   await ctx.close();
 }
 
+/* Etapa 5: un «libro de maestros» de mentira, como lo contestaría el
+   explorador de Lichess: cada línea con cuántas partidas de maestros la
+   jugaron. Por posición (FEN de 4 campos, la clave de
+   js/preparacion-posiciones.js): cuántas partidas pasan por ahí y cuántas
+   siguieron con cada jugada. Una posición que no está en el libro contesta
+   vacía, como la del explorador. */
+const LIBRO = [
+  ["e4 e5 Nf3 Nc6 Bb5 a6 Ba4 Nf6 O-O Be7", 1000],
+  ["d4 d5 c4 e6 Nc3 Nf6 Bg5 Be7", 1000],
+  ["d4 c5 d5 e5", 100],                     // la Benoni: 2.d5, y 2.Cc3 casi nadie
+  ["e4 e6 d4 d5 Nc3 Nf6", 500],
+  ["e4 e6 d4 d5 e5 c5", 400],               // 3.e5 c5, no 3…Cf6
+  ["e4 e6 d4 d5 exd5 exd5", 300],
+  ["e4 e6 d4 d5 Nd2 Nf6", 300],
+];
+function libroDeMaestros() {
+  const T = require("../js/preparacion-teoria.js");
+  const datos = {};
+  for (const [linea, n] of LIBRO) {
+    let e = Pos.inicial();
+    for (const san of linea.split(" ")) {
+      const k = Pos.clave(e);
+      const d = datos[k] || (datos[k] = { w: 0, d: 0, b: 0, jugadas: [], apertura: null });
+      d.w += n;
+      let j = d.jugadas.find((x) => x.san === san);
+      if (!j) { j = { san, uci: "", w: 0, d: 0, b: 0 }; d.jugadas.push(j); }
+      j.w += n;
+      e = Pos.aplicar(e, san);
+    }
+  }
+  return { datos, T };
+}
+function respuestaDelLibro(datos, fen) { return datos[fen] || { w: 0, d: 0, b: 0, jugadas: [], apertura: null }; }
+
+function pruebaTeoria() {
+  console.log("\n=== Etapa 5: dónde deja la teoría ===");
+  const { datos: libro, T } = libroDeMaestros();
+  const r = A.analizar(A.leerPgn(pgnDePrueba()), "Pedro Perez");
+  const lineas = r.repertorioLineas.map((l) => l.color + " " + l.sec.join(" "));
+  cierto("el análisis trae las líneas de su repertorio, por color (" + lineas.length + ")",
+    lineas.includes("w d4 c5 Nc3 cxd4 Qxd4 Nc6 Qh4 e6") && lineas.includes("b e4 e5 Nf3 Nc6 Bb5 a6 Ba4 Nf6 O-O Be7") && lineas.some((x) => /^w e4 e6 d4 d5 e5/.test(x)));
+  igual("y cuántas de sus partidas jugaron cada jugada de la línea", r.repertorioLineas.find((l) => l.sec[1] === "c5").veces, [12, 12, 12, 12, 12, 12, 12, 12]);
+
+  // Por vueltas, como la página: solo lo que falta, y nada después de una salida.
+  const preguntadas = [];
+  const datos = {};
+  for (let v = 0; v < 40; v++) {
+    const faltan = T.pendientes(r, datos);
+    if (!faltan.length) break;
+    faltan.forEach((f) => { preguntadas.push(f); datos[f] = respuestaDelLibro(libro, f); });
+  }
+  igual("ninguna posición se pregunta dos veces", preguntadas.length, new Set(preguntadas).size);
+  let e = Pos.inicial();
+  for (const m of ["d4", "c5", "Nc3"]) e = Pos.aplicar(e, m);
+  cierto("y no se pregunta nada después de que la línea deja la teoría (" + preguntadas.length + " posiciones)", !preguntadas.includes(Pos.clave(e)));
+
+  T.aplicar(r, datos);
+  const salida = (sec) => { const l = r.teoria.lineas.find((x) => x.sec.join(" ").startsWith(sec)); return l && l.salida && [l.salida.ply, l.salida.quien, l.salida.jugada, l.salida.maestros, l.salida.total, l.salida.alternativas.map((a) => a.san)]; };
+  igual("con blancas, 1.d4 c5 2.Cc3: la deja él, con 0 de 100 partidas de maestros; lo habitual es d5", salida("d4 c5"), [2, "el", "Nc3", 0, 100, ["d5"]]);
+  igual("1.e4 e6 2.d4 d5 3.e5 Cf6: la deja su rival", salida("e4 e6 d4 d5 e5"), [5, "rival", "Nf6", 0, 400, ["c5"]]);
+  const espanola = r.teoria.lineas.find((l) => l.color === "b" && l.sec[0] === "e4");
+  igual("la Española con negras es teoría de punta a punta", [espanola.salida, espanola.completa], [null, true]);
+
+  A.rehacerFoda(r);
+  cierto("al FODA: una oportunidad con la posición a estudiar", r.foda.oportunidades.some((x) =>
+    /Con blancas, después de 1\.d4 c5 juega Cc3 \(12 partidas\), que los maestros casi no juegan \(0 de 100\); lo habitual es d5\. Ahí deja la teoría/.test(x)));
+
+  // La Edge Function valida cada FEN con su propia expresión regular: tiene que
+  // aceptar todas las claves que arma la página (con enroques, al paso, las
+  // dos manos), y rechazar lo que no es una posición.
+  const fuente = require("fs").readFileSync(require("path").join(__dirname, "..", "supabase", "functions", "explorador-maestros", "index.ts"), "utf8");
+  const FEN = new RegExp(fuente.match(/const FEN = \/(.+)\/;/)[1]);
+  const claves = new Set(preguntadas);
+  let eFen = Pos.inicial();
+  for (const m of ["e4", "c5", "Nf3", "d6", "d4", "cxd4", "Nxd4", "Nf6", "Nc3", "a6", "Be3", "e5", "Nb3", "Be6", "f3", "Be7", "Qd2", "O-O", "O-O-O"]) { claves.add(Pos.clave(eFen)); eFen = Pos.aplicar(eFen, m); }
+  const rechazadas = [...claves].filter((f) => !FEN.test(f));
+  igual("la función acepta todas las posiciones que le pregunta la página (" + claves.size + ")", rechazadas, []);
+  igual("y rechaza lo que no es una posición", ["", "x", "<script>/8/8/8/8/8/8/8 w - -", "8/8/8/8/8/8/8/8 w KQkq", "8/8/8/8/8/8/8/8 x - -"].filter((f) => FEN.test(f)), []);
+
+  // Sin respuestas del explorador (sin token), ninguna línea se da por revisada.
+  const r2 = A.analizar(A.leerPgn(pgnDePrueba()), "Pedro Perez");
+  T.aplicar(r2, {});
+  igual("sin respuestas, ninguna línea queda como revisada ni inventa una salida", [r2.teoria.faltan, r2.teoria.lineas.some((l) => l.salida)], [r2.teoria.lineas.length, false]);
+  return libro;
+}
+
+/* Etapa 6: una alumna de mentira. Con blancas juega 1.e4 e5 2.Cf3 Cc6 3.Ac4
+   (el plan dice 3.Ab5) y 1.d4 d5 2.c4, donde el rival saca 90 %; contra 1.e4
+   saca 24 %. Con negras contesta 1.d4 con c5, que es lo que dice el plan. */
+function pgnDeAlumna() {
+  let t = "";
+  for (let i = 0; i < 10; i++) t += partida("Ana Alumna", "X" + i, i < 7 ? "1-0" : "0-1", "e4 e5 2. Nf3 Nc6 3. Bc4 Bc5");
+  for (let i = 0; i < 8; i++) t += partida("Ana Alumna", "Y" + i, i < 4 ? "1-0" : "0-1", "d4 d5 2. c4 e6 3. Nc3 Nf6");
+  for (let i = 0; i < 6; i++) t += partida("Z" + i, "Ana Alumna", i < 3 ? "1-0" : "0-1", "d4 c5 2. d5 e5");
+  return t;
+}
+
+function pruebaCruce() {
+  console.log("\n=== Etapa 6: el cruce con las partidas del alumno ===");
+  const C = require("../js/preparacion-cruce.js");
+  const rival = A.leerPgn(pgnDePrueba());
+  const r = A.analizar(rival, "Pedro Perez");
+  const planes = { conBlancas: r.conBlancas.plan, conNegras: r.conNegras.plan };
+  const c = C.cruzar(rival, "Pedro Perez", {}, A.leerPgn(pgnDeAlumna()), "Ana Alumna", planes);
+  igual("encuentra a la alumna y sus partidas por color", [c.alumno, c.total, c.lados.conBlancas.partidas, c.lados.conNegras.partidas], ["Ana Alumna", 24, 18, 6]);
+  const b = c.lados.conBlancas;
+  igual("con blancas, del plan ya juega 1.e4 y 2.Cf3", b.plan.filter((x) => x.estado === "la-juega").map((x) => x.recomendada), ["e4", "Nf3"]);
+  const otra = b.plan.find((x) => x.estado === "otra");
+  igual("y en la jugada 3 juega otra cosa: 3.Ac4 en vez de 3.Ab5, 10 de 10", [otra.sec.join(" "), otra.recomendada, otra.suya], ["e4 e5 Nf3 Nc6", "Bb5", { san: "Bc4", n: 10 }]);
+  igual("lo que sigue del plan, no lo alcanzó nunca", b.plan.filter((x) => x.estado === "nunca").length, 2);
+  igual("juega lo suyo: contra su 1.e4 el rival saca 23,8 %", b.aFavor.map((x) => [x.sec.concat(x.jugada).join(" "), x.alumno.n, A.pct(x.rival.puntos)]), [["e4", 10, "23,8 %"]]);
+  igual("ojo: contra su 1.d4 saca 90 %", b.enContra.map((x) => [x.sec.concat(x.jugada).join(" "), x.alumno.n, A.pct(x.rival.puntos)]), [["d4", 8, "90,0 %"]]);
+  const n = c.lados.conNegras;
+  igual("con negras, contra 1.d4 ya juega 1…c5, como dice el plan", n.plan.filter((x) => x.sec.join(" ") === "d4").map((x) => [x.recomendada, x.estado]), [["c5", "la-juega"]]);
+  // Con los filtros del análisis: sin partidas del rival que pasen, nada que cruzar.
+  const f = C.cruzar(rival, "Pedro Perez", { ritmos: ["clásica"] }, A.leerPgn(pgnDeAlumna()), "Ana Alumna", planes);
+  igual("con filtros que dejan al rival sin partidas, no inventa encuentros", [f.lados.conBlancas.comunes, f.lados.conBlancas.aFavor.length], [0, 0]);
+  igual("un alumno que no está en el archivo da null", C.cruzar(rival, "Pedro Perez", {}, A.leerPgn(pgnDeAlumna()), "Nadie", planes), null);
+}
+
 /* Etapa 4, sin navegador: lo que se le manda al alumno es SOLO el plan de un
    lado y lo que dijo Stockfish de sus jugadas; cada línea del plan sale en su
    propio PGN, que chess.js lee y que llega a donde dice el camino. */
@@ -818,6 +953,115 @@ async function pruebaEtapa4(browser) {
   await nada.ctx.close();
 }
 
+/* Etapa 5 en la página: al analizar, la página le pregunta a la Edge Function
+   (el doble contesta del libro de mentira) y pinta dónde deja la teoría, con
+   su tablero; sin el token del servidor, lo dice y no pinta nada. */
+async function pruebaEtapa5(browser, libro) {
+  console.log("\n=== Etapa 5: dónde deja la teoría, en la página ===");
+  const analizarEn = async (page) => {
+    await page.setInputFiles("#pgn-archivo", { name: "rival.pgn", mimeType: "application/x-chess-pgn", buffer: Buffer.from(pgnDePrueba(), "utf8") });
+    await page.click("#leer");
+    await page.waitForFunction(() => /Se leyeron/.test(document.getElementById("leido").textContent), null, { timeout: 10000 });
+    await page.click("#analizar");
+    await page.waitForFunction(() => /Listo/.test(document.getElementById("motor-estado").textContent) && /^Comparado|falta el token/.test(document.getElementById("teoria-estado").textContent), null, { timeout: 30000 });
+  };
+
+  const { page, ctx, errores } = await abrir(browser, true, [], false, {}, null, libro);
+  await analizarEn(page);
+  const pedidas = await page.evaluate(() => window.__fensPedidas);
+  igual("se pregunta cada posición una sola vez", pedidas.length, new Set(pedidas).size);
+  cierto("el estado dice cuántas posiciones comparó (" + await page.textContent("#teoria-estado") + ")", /^Comparado con las partidas de maestros de Lichess \(\d+ posiciones\)\.$/.test(await page.textContent("#teoria-estado")));
+  cierto("se ve la tarjeta, después de la de Stockfish", await page.evaluate(() => {
+    const hs = [...document.querySelectorAll("#resultado-cuerpo h3")].filter((h) => h.checkVisibility()).map((h) => h.textContent);
+    return hs.indexOf("Dónde deja la teoría") === hs.indexOf("Lo que dice Stockfish") + 1;
+  }));
+  const renglones = (clave) => page.evaluate((k) => {
+    const li = document.querySelector("[aria-labelledby='teoria-titulo'] li[data-teoria='" + k + "']");
+    return li ? [...li.querySelectorAll("p")].map((p) => p.textContent) : null;
+  }, clave);
+  igual("1.d4 c5 2.Cc3: la deja él, en 12 partidas; los maestros, 0 de 100, juegan d5", await renglones("d4 c5 Nc3"),
+    ["1.d4 c5 2.Cc3", "Él la deja en la jugada 2, con Cc3 (12 partidas suyas).", "Los maestros la jugaron 0 veces de 100. Lo que juegan ellos: d5 (100 %)."]);
+  igual("3.e5 Cf6: la deja su rival", (await renglones("e4 e6 d4 d5 e5 Nf6"))[1], "Su rival la deja en la jugada 3, con Cf6 (5 partidas suyas).");
+  igual("la Española con negras sigue a los maestros hasta el final", (await renglones("e4 e5 Nf3 Nc6 Bb5 a6 Ba4 Nf6 O-O Be7"))[1], "No la deja: sigue a los maestros hasta la jugada 5 (20 partidas suyas).");
+  await page.click("[aria-labelledby='teoria-titulo'] button[aria-label='Ver en el tablero: 1.d4 c5 2.Cc3']");
+  await page.waitForFunction(() => document.getElementById("visor-caja").checkVisibility(), null, { timeout: 5000 });
+  igual("«Ver» abre el tablero en la jugada donde la deja, con lo que dicen los maestros", await page.evaluate(() =>
+    [document.querySelector("#visor .visor-titulo").textContent, document.querySelector("#visor .visor-nota").textContent]),
+    ["1.d4 c5 2.Cc3", "Aquí él deja la teoría con Cc3: los maestros la jugaron 0 veces de 100. Lo habitual es d5."]);
+  cierto("al FODA llega la posición a estudiar", await page.evaluate(() => /juega Cc3 \(12 partidas\), que los maestros casi no juegan \(0 de 100\)/.test(document.getElementById("resultado-cuerpo").textContent)));
+  cierto("y el FODA sigue trayendo lo de Stockfish", await page.evaluate(() => /suele jugar Dh4/.test(document.getElementById("resultado-cuerpo").textContent)));
+  await page.click("#guardar");
+  await page.waitForFunction(() => window.__insertados.some((i) => i.tabla === "preparaciones_rival"), null, { timeout: 5000 });
+  igual("se guarda con la teoría", await page.evaluate(() => { const i = window.__insertados.find((x) => x.tabla === "preparaciones_rival"); return [!!i.analisis.teoria, i.analisis.teoria.lineas.length > 0, i.analisis.version]; }), [true, true, 4]);
+  igual("sin errores en consola ni diálogos del navegador", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+
+  const sin = await abrir(browser, true, [], false, {}, null, null);
+  await analizarEn(sin.page);
+  igual("sin el token del servidor, lo dice y no pinta la tarjeta", await sin.page.evaluate(() => [
+    /falta el token de Lichess en el servidor \(LICHESS_TOKEN\)/.test(document.getElementById("teoria-estado").textContent),
+    !!document.querySelector("[aria-labelledby='teoria-titulo']")]), [true, false]);
+  igual("sin errores", sin.errores.join(" | ") || "ninguno", "ninguno");
+  await sin.ctx.close();
+}
+
+/* Etapa 6 en la página: bajar las partidas de la alumna por su usuario (un
+   Lichess de mentira), cruzar sola, pintar la tarjeta y guardarla con el
+   análisis; con otros filtros se vuelve a cruzar sola, y un análisis guardado
+   de otro rival no cruza con las partidas que quedaron cargadas. */
+async function pruebaEtapa6(browser) {
+  console.log("\n=== Etapa 6: el cruce con el alumno, en la página ===");
+  const { page, ctx, errores } = await abrir(browser, true, [{ id: "p-otro", profesor_id: "u-profe", rival: "Otro Rival", partidas: 73, created_at: "2026-09-01T12:00:00Z", analisis: Object.assign(analisisVersion1(), { rival: "Otro Rival" }) }]);
+  const pedidos = [];
+  await servirSitios(ctx, pedidos);
+  await page.setInputFiles("#pgn-archivo", { name: "rival.pgn", mimeType: "application/x-chess-pgn", buffer: Buffer.from(pgnDePrueba(), "utf8") });
+  await page.click("#leer");
+  await page.waitForFunction(() => /Se leyeron/.test(document.getElementById("leido").textContent), null, { timeout: 10000 });
+  await page.click("#analizar");
+  await page.waitForFunction(() => /Listo/.test(document.getElementById("motor-estado").textContent), null, { timeout: 30000 });
+  igual("se ve la caja para cruzar con el alumno", await page.evaluate(() => SE_VE("alumno-caja")), true);
+
+  await page.fill("#alumno-usuario", "AnaAlumna");
+  await page.click("#alumno-bajar");
+  await page.waitForFunction(() => /^Listo: /.test(document.getElementById("alumno-estado").textContent), null, { timeout: 15000 });
+  cierto("se piden las partidas de la alumna a Lichess", pedidos.some((u) => /\/api\/games\/user\/AnaAlumna\?/.test(u)));
+  igual("y el foco va a la tarjeta del cruce", await page.evaluate(() => [document.getElementById("alumno-estado").textContent, document.activeElement.id]), ["Listo: AnaAlumna, 24 partidas.", "cruce-titulo"]);
+  const renglones = (clave) => page.evaluate((k) => {
+    const li = document.querySelector("[aria-labelledby='cruce-titulo'] li[data-cruce='" + k + "']");
+    return li ? [...li.querySelectorAll("p")].map((p) => p.textContent) : null;
+  }, clave);
+  cierto("con blancas: del plan ya juega 2, en 1 juega otra cosa y a 2 no llegó", await page.evaluate(() =>
+    /El plan: de 5 jugadas que le tocan, ya juega 2; en 1 juega otra cosa; a 2 no llegó en sus partidas\./.test(document.querySelector("[aria-labelledby='cruce-titulo']").textContent)));
+  igual("la jugada donde se aparta del plan", await renglones("e4 e5 Nf3 Nc6 Bb5"), ["1.e4 e5 2.Cf3 Cc6 3.Ab5", "El plan dice 3.Ab5; tu alumno juega 3.Ac4 (10 de 10)."]);
+  igual("juega lo suyo: 1.e4", await renglones("e4"), ["1.e4", "Tu alumno saca 70,0 % en 10 partidas; él saca 23,8 % en 21 partidas (su promedio con ese color: 56,1 %)."]);
+  cierto("con negras, lo que es cero no se dice", await page.evaluate(() =>
+    /El plan: de 9 jugadas que le tocan, ya juega 1; a 8 no llegó en sus partidas\./.test(document.querySelector("[aria-labelledby='cruce-titulo']").textContent)));
+  igual("ojo: 1.d4", (await renglones("d4"))[1], "Tu alumno saca 50,0 % en 8 partidas; él saca 90,0 % en 20 partidas (su promedio con ese color: 56,1 %).");
+  await page.click("[aria-labelledby='cruce-titulo'] button[aria-label='Ver en el tablero: 1.e4 e5 2.Cf3 Cc6 3.Ab5']");
+  await page.waitForFunction(() => document.getElementById("visor-caja").checkVisibility(), null, { timeout: 5000 });
+  igual("«Ver» abre el tablero con lo que juega el alumno", await page.textContent("#visor .visor-nota"), "El plan: Ab5. Tu alumno suele jugar Ac4 (10 de 10).");
+
+  await page.click("#guardar");
+  await page.waitForFunction(() => window.__insertados.some((i) => i.tabla === "preparaciones_rival"), null, { timeout: 5000 });
+  igual("se guarda con el cruce", await page.evaluate(() => window.__insertados.find((i) => i.tabla === "preparaciones_rival").analisis.cruce.alumno), "AnaAlumna");
+
+  // Otros filtros: se vuelve a cruzar solo, con la misma alumna. El estado se
+  // vacía antes, para no confundir el «Listo» de antes con uno nuevo.
+  await page.evaluate(() => { document.getElementById("alumno-estado").textContent = ""; });
+  await page.selectOption("#filtro-desde", "2");
+  await page.waitForFunction(() => /^Listo: AnaAlumna/.test(document.getElementById("alumno-estado").textContent) && !!document.querySelector("[aria-labelledby='cruce-titulo']"), null, { timeout: 30000 });
+  cierto("con otros filtros se vuelve a cruzar solo", true);
+
+  // Un análisis guardado de otro rival: no se cruza con las partidas de este.
+  await page.click('#guardados button[aria-label="Abrir el análisis de Otro Rival"]');
+  await page.waitForFunction(() => document.getElementById("titulo-resultado").textContent === "Otro Rival", null, { timeout: 10000 });
+  await page.click("#alumno-cruzar");
+  cierto("un análisis guardado de otro rival no se cruza con las partidas cargadas", await page.evaluate(() =>
+    /un análisis guardado no las trae/.test(document.getElementById("alumno-estado").textContent) && !document.querySelector("[aria-labelledby='cruce-titulo']")));
+  igual("sin errores en consola ni diálogos del navegador", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+}
+
 // Las partidas «de Lichess»: las mismas de prueba, con el rival como usuario.
 function pgnDeUsuario(usuario) {
   return pgnDePrueba().replace(/Pérez, Pedro|Pedro Perez|Pedro Pérez|PEDRO PÉREZ/g, usuario);
@@ -831,6 +1075,7 @@ async function servirSitios(ctx, pedidos) {
   await ctx.route("https://lichess.org/api/games/user/**", (r) => {
     pedidos.push(r.request().url());
     if (/\/user\/nadie\?/.test(r.request().url())) return r.fulfill({ status: 404, headers: cors, body: "" });
+    if (/\/user\/AnaAlumna\?/.test(r.request().url())) return r.fulfill({ status: 200, headers: Object.assign({ "Content-Type": "application/x-chess-pgn" }, cors), body: pgnDeAlumna().replace(/Ana Alumna/g, "AnaAlumna") });
     return r.fulfill({ status: 200, headers: Object.assign({ "Content-Type": "application/x-chess-pgn" }, cors), body: pgnDeUsuario("PedroP") });
   });
   const todo = pgnDeUsuario("pedrop").split(/\n\n(?=\[Event )/);
@@ -992,6 +1237,8 @@ async function pruebaMotorDeVerdad(browser) {
   pruebaFiltros();
   pruebaPgnDelPlan(conMotor);
   pruebaPlanDelAlumno(conMotor);
+  const libro = pruebaTeoria();
+  pruebaCruce();
   pruebaTiposDeFinal();
   pruebaDeteccionDeFinales();
   pruebaComoPierde();
@@ -1005,6 +1252,8 @@ async function pruebaMotorDeVerdad(browser) {
     await pruebaEtapa1(browser, analisisVersion1());
     await pruebaEtapa3(browser);
     await pruebaEtapa4(browser);
+    await pruebaEtapa5(browser, libro);
+    await pruebaEtapa6(browser);
     await pruebaMotorDeVerdad(browser);
   } finally {
     await browser.close();

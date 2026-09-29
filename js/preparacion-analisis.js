@@ -3,7 +3,8 @@
  * Lo usan preparacion-rivales.html (por js/preparacion-trabajador.js, en
  * segundo plano) y herramientas/verificar-preparacion-rivales.js en Node, sin
  * navegador. Por eso acá no hay DOM ni motor: solo cuentas. La página le pone
- * Stockfish con tareasDelMotor() / aplicarMotor().
+ * Stockfish con tareasDelMotor() / aplicarMotor(), y la comparación con los
+ * maestros (js/preparacion-teoria.js) con repertorioLineas y rehacerFoda().
  *
  * Qué hace, en orden:
  *   leerPgn(texto)          → las partidas (etiquetas, jugadas SAN y relojes).
@@ -487,6 +488,33 @@
     return out.slice(0, 4);
   }
 
+  /* Las líneas de su repertorio: lo que él juega de verdad, para ver hasta
+     dónde sigue la teoría de los maestros (js/preparacion-teoria.js). Donde
+     le toca a él, sus jugadas de una de cada cinco veces o más (dos como
+     mucho); donde le toca al otro, las respuestas de una de cada siete o más
+     (tres como mucho). Todo con al menos minN partidas, hasta 20 medias
+     jugadas: más allá, casi ninguna partida sigue en la misma línea. Se
+     guarda la hoja de cada rama (sus partidas y cuánto saca ahí); de las más
+     jugadas a las menos, diez por color. */
+  function lineasDeSuRepertorio(raiz, color, minN) {
+    const out = [];
+    // `veces[i]`: cuántas de sus partidas jugaron la jugada i de la línea.
+    (function bajar(nodo, sec, veces, visitados) {
+      const total = Math.max(totalAristas(nodo), 1);
+      const suyo = leTocaAlRival(color, sec.length);
+      const siguen = sec.length >= 20 ? [] : hijosOrdenados(nodo)
+        .filter((x) => x.arista.n >= minN && x.arista.n / total >= (suyo ? 0.2 : 0.15) && !visitados.has(x.nodo))
+        .slice(0, suyo ? 2 : 3);
+      if (!siguen.length) {
+        if (sec.length >= 2) out.push({ color, sec, veces, n: veces[veces.length - 1], puntos: puntos(nodo.c) });
+        return;
+      }
+      for (const x of siguen) bajar(x.nodo, sec.concat(x.san), veces.concat(x.arista.n), new Set(visitados).add(x.nodo));
+    })(raiz, [], [], new Set([raiz]));
+    out.sort((a, b) => b.n - a.n);
+    return out.slice(0, 10);
+  }
+
   // ------------------------------------------------------------ qué jugarle
 
   // El plan desde un nodo. Cuando nos toca, la jugada donde el rival saca
@@ -652,7 +680,7 @@
     if (!todas.length) return null;
     const filtros = { ritmos: (o.ritmos || []).slice(), desde: o.desde || null };
     const lista = todas.filter((x) => pasaFiltros(x, filtros));
-    if (!lista.length) return { version: 3, vacio: true, rival: nombreDe(partidas, clave, rival), totalRival: todas.length, filtros, disponibles: disponibles(todas) };
+    if (!lista.length) return { version: 4, vacio: true, rival: nombreDe(partidas, clave, rival), totalRival: todas.length, filtros, disponibles: disponibles(todas) };
     const total = lista.length;
     const minN = o.minimo || minimo(total);
 
@@ -685,7 +713,7 @@
     const perdidasCortas = perdidas.filter((x) => x.jugadas.length <= 50).length;
 
     const resultado = {
-      version: 3,
+      version: 4,
       rival: nombreDe(partidas, clave, rival),
       generado: new Date().toISOString(),
       total,
@@ -730,6 +758,10 @@
         plan: plan(arbol.w, "w", base.w, minN, PROFUNDIDAD_PLAN, 0),
       },
       masAlla: masAllaDe(lista, puntos(global), minN),
+      // Las líneas que se le consultan al explorador de maestros; lo que
+      // contesta queda en `teoria` (ver js/preparacion-teoria.js).
+      repertorioLineas: lineasDeSuRepertorio(arbol.w, "w", minN).concat(lineasDeSuRepertorio(arbol.b, "b", minN)),
+      teoria: null,
       motor: null,
     };
     resultado.debiles.sort((a, b) => (a.puntos - a.base) - (b.puntos - b.base));
@@ -846,7 +878,49 @@
       });
     }
     if (r.masAlla) fodaMasAlla(r, F, D, O, A);
+    if (r.teoria) fodaTeoria(r, F, D, O, A);
+    // Lo que encontró Stockfish va primero: es lo más concreto que hay.
+    if (r.motor) fodaMotor(r, O, A);
     return { fortalezas: F, debilidades: D, oportunidades: O, amenazas: A };
+  }
+
+  // Dónde deja la teoría (js/preparacion-teoria.js). Lo que cuenta es donde
+  // la deja ÉL: ahí juega algo que los maestros casi no juegan, y esa
+  // posición es la que conviene estudiar. Una línea que sigue a los maestros
+  // hasta el fondo es que la conoce.
+  function fodaTeoria(r, F, D, O, A) {
+    const lineas = r.teoria.lineas || [];
+    const suyas = lineas.filter((l) => l.salida && l.salida.quien === "el" && (l.salida.veces || l.n) >= r.minimo);
+    // Una misma salida puede estar en varias líneas (las que siguen después).
+    const vistas = new Set();
+    suyas.sort((a, b) => (b.salida.veces || b.n) - (a.salida.veces || a.n));
+    for (const l of suyas) {
+      const antes = l.sec.slice(0, l.salida.ply);
+      const clave = antes.concat(l.salida.jugada).join(" ");
+      if (vistas.has(clave)) continue;
+      vistas.add(clave);
+      const alt = l.salida.alternativas.slice(0, 2).map((x) => sanEs(x.san));
+      O.push("Con " + colorEs(l.color) + ", " + (antes.length ? "después de " + lineaEs(antes) : "de entrada") + " juega " + sanEs(l.salida.jugada) +
+        " (" + (l.salida.veces || l.n) + " partidas), que los maestros casi no juegan (" + l.salida.maestros + " de " + l.salida.total + ")" +
+        (alt.length ? "; lo habitual es " + alt.join(" o ") : "") + ". Ahí deja la teoría: estudia esa posición.");
+      if (vistas.size >= 3) break;
+    }
+    const conoce = lineas.filter((l) => l.completa && l.n >= r.minimo && (!l.salida ? l.sec.length >= 16 : l.salida.ply >= 16 && l.salida.quien === "rival"))
+      .sort((a, b) => b.n - a.n)[0];
+    if (conoce) {
+      const hasta = conoce.salida ? conoce.salida.ply : conoce.sec.length;
+      F.push("Conoce la teoría: con " + colorEs(conoce.color) + ", en " + lineaEs(conoce.sec.slice(0, Math.min(hasta, 6))) + "… sigue a los maestros hasta la jugada " + Math.ceil(hasta / 2) + " (" + conoce.n + " partidas).");
+    }
+  }
+
+  function fodaMotor(r, O, A) {
+    const { errores, cuidado } = r.motor;
+    errores.slice(0, 4).reverse().forEach((x) => {
+      O.unshift("Después de " + lineaEs(x.sec) + " suele jugar " + sanEs(x.jugada) + " (" + x.n + " partidas), y Stockfish dice que es un error: la posición pasa de " + textoEval(x.antes) + " a " + textoEval(x.despues) + ". Lo mejor era " + (x.mejor ? sanEs(x.mejor) : "otra jugada") + ".");
+    });
+    cuidado.slice(0, 3).reverse().forEach((x) => {
+      A.unshift("Ojo con " + lineaEs(x.sec.concat(x.jugada)) + ": a él le fue mal ahí, pero Stockfish la da como error (" + textoEval(x.antes) + " → " + textoEval(x.despues) + "). Mejor " + (x.mejor ? sanEs(x.mejor) : "otra jugada") + ".");
+    });
   }
 
   // ------------------------------------------------------------ el motor
@@ -896,21 +970,24 @@
     }
     errores.sort((a, b) => b.perdida * Math.sqrt(b.n) - a.perdida * Math.sqrt(a.n));
     r.motor = { detalle: detalle || "", errores, cuidado, lineas };
-    // Lo que el motor encontró va también al FODA.
-    const f = foda(r);
-    errores.slice(0, 4).forEach((x) => {
-      f.oportunidades.unshift("Después de " + lineaEs(x.sec) + " suele jugar " + sanEs(x.jugada) + " (" + x.n + " partidas), y Stockfish dice que es un error: la posición pasa de " + textoEval(x.antes) + " a " + textoEval(x.despues) + ". Lo mejor era " + (x.mejor ? sanEs(x.mejor) : "otra jugada") + ".");
-    });
-    cuidado.slice(0, 3).forEach((x) => {
-      f.amenazas.unshift("Ojo con " + lineaEs(x.sec.concat(x.jugada)) + ": a él le fue mal ahí, pero Stockfish la da como error (" + textoEval(x.antes) + " → " + textoEval(x.despues) + "). Mejor " + (x.mejor ? sanEs(x.mejor) : "otra jugada") + ".");
-    });
-    r.foda = f;
+    // Lo que el motor encontró va también al FODA (fodaMotor, dentro de foda()).
+    r.foda = foda(r);
+    return r;
+  }
+
+  // Lo que contestó el explorador de maestros ya está en r.teoria
+  // (js/preparacion-teoria.js): el FODA se vuelve a armar con eso.
+  function rehacerFoda(r) {
+    r.foda = foda(r);
     return r;
   }
 
   return {
     leerPgn, jugadasDe, jugadasYRelojes, jugadores, claveNombre, analizar, ritmoDe, finDe, partidasDelRival,
     sanEs, lineaEs, pct, textoEval, minimo, POCAS, tipoDeFinal, esFinal, FIN_ES,
-    tareasDelMotor, aplicarMotor, fenDe,
+    tareasDelMotor, aplicarMotor, rehacerFoda, fenDe,
+    // Para js/preparacion-cruce.js, que arma el árbol del alumno igual que el
+    // del rival: una sola forma de armarlo y de contarlo.
+    interno: { partidasDelRival, pasaFiltros, armarArbol, hijosOrdenados, totalAristas, puntos, resumen, suavizada, leTocaAlRival, nombreDe, esPrefijo },
   };
 });

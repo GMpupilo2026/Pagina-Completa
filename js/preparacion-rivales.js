@@ -12,6 +12,8 @@
  *   js/preparacion-motor.js       la revisión con Stockfish
  *   js/preparacion-lineas.js      notación, posiciones y el plan en PGN
  *   js/preparacion-descarga.js    bajar las partidas de Lichess o Chess.com
+ *   js/preparacion-teoria.js      dónde deja la teoría (explorador de maestros)
+ *   js/preparacion-cruce.js       el cruce con las partidas del alumno
  *
  * El PGN no sale de la computadora; lo que se guarda es el resultado
  * (preparaciones_rival.analisis). Ver «La preparación de rivales» en
@@ -58,11 +60,13 @@
     } catch (e) {
       w = null;
     }
-    let local = [];
+    let local = [], localAlumno = [];
     function pedir(msg) {
       if (!w) {
         const A = window.PreparacionAnalisis;
         if (msg.tipo === "leer") { local = A.leerPgn(msg.texto); return Promise.resolve({ total: local.length, jugadores: A.jugadores(local).slice(0, 200) }); }
+        if (msg.tipo === "leerAlumno") { localAlumno = A.leerPgn(msg.texto); return Promise.resolve({ total: localAlumno.length, jugadores: A.jugadores(localAlumno).slice(0, 200) }); }
+        if (msg.tipo === "cruzar") return Promise.resolve({ cruce: window.PreparacionCruce.cruzar(local, msg.rival, msg.filtros || {}, localAlumno, msg.alumno, msg.planes) });
         return Promise.resolve({ resultado: A.analizar(local, msg.rival, msg.filtros || {}) });
       }
       const id = siguiente++;
@@ -71,6 +75,8 @@
     return {
       leer: (texto) => pedir({ tipo: "leer", texto }),
       analizar: (rival, filtros) => pedir({ tipo: "analizar", rival, filtros }).then((r) => r.resultado),
+      leerAlumno: (texto) => pedir({ tipo: "leerAlumno", texto }),
+      cruzar: (rival, filtros, alumno, planes) => pedir({ tipo: "cruzar", rival, filtros, alumno, planes }).then((r) => r.cruce),
     };
   })();
 
@@ -243,7 +249,7 @@
     }
     rivalCargado = nombre;
     mostrar(r, null);
-    if (!r.vacio) iniciarRevision();
+    if (!r.vacio) { iniciarRevision(); iniciarTeoria(); if (ultimoAlumno) cruzar(); }
   }
 
   // Desde cuándo: las opciones son relativas a hoy.
@@ -334,6 +340,7 @@
     $("titulo-resultado").textContent = r.rival;
     pintarFiltros(r);
     const aviso = $("filtros-aviso");
+    $("alumno-caja").hidden = !!r.vacio;
     if (r.vacio) {
       $("resultado-sub").textContent = "Ninguna de sus " + r.totalRival.toLocaleString("es-CR") + " partidas pasa estos filtros.";
       aviso.textContent = "Amplía los filtros para ver el análisis.";
@@ -355,8 +362,11 @@
     $("guardar").disabled = !!id;
     $("guardar").textContent = id ? "Guardado" : "Guardar el análisis";
     $("motor-estado").textContent = r.motor ? "Revisado con Stockfish (" + r.motor.detalle + ")." : "";
+    $("teoria-estado").textContent = r.repertorioLineas ? "" : "Este análisis es de antes de la comparación con los maestros: vuelve a analizar para ver dónde deja la teoría.";
     pintar(r);
     $("titulo-resultado").focus();
+    // Un análisis guardado sin la teoría (o a medias) la busca al abrirse.
+    if (id && r.repertorioLineas && (!r.teoria || r.teoria.faltan)) iniciarTeoria();
   }
 
   function pintar(r) {
@@ -565,6 +575,161 @@
     if (origen) origen.focus();
   }
 
+  // ------------------------------------------------------------ el alumno
+
+  /* Cruzar con las partidas del alumno que lo va a enfrentar: se bajan (o se
+     lee un PGN) igual que las del rival, pero el trabajador las guarda aparte
+     y el cruce (js/preparacion-cruce.js) usa las del rival con los mismos
+     filtros del análisis que se ve. Queda en r.cruce y se guarda con él. Ver
+     «Cruzar con las partidas del alumno: etapa 6». */
+  let ultimoAlumno = null;          // con quién se cruzó: otros filtros vuelven a cruzar solos
+
+  async function cargarAlumno(texto, usuario) {
+    const estado = $("alumno-estado");
+    estado.textContent = "Leyendo las partidas de tu alumno…";
+    let r;
+    try {
+      r = await trabajo.leerAlumno(texto);
+    } catch (e) {
+      estado.textContent = "No se pudieron leer: " + (e.message || e);
+      return;
+    }
+    if (!r.total) { estado.textContent = "No se encontró ninguna partida. Revisa que sea un PGN."; $("alumno-elegir").hidden = true; return; }
+    const sel = $("alumno-nombre");
+    sel.textContent = "";
+    r.jugadores.forEach((j) => {
+      const o = el("option", "", j.nombre + " — " + j.partidas.toLocaleString("es-CR") + (j.partidas === 1 ? " partida" : " partidas"));
+      o.value = j.nombre;
+      sel.appendChild(o);
+    });
+    const suyo = usuario && r.jugadores.find((j) => j.clave === claveDe(usuario));
+    if (suyo) sel.value = suyo.nombre;
+    $("alumno-elegir").hidden = false;
+    estado.textContent = "Se leyeron " + r.total.toLocaleString("es-CR") + (r.total === 1 ? " partida." : " partidas.");
+    if (suyo) cruzar();
+    else sel.focus();
+  }
+
+  async function bajarAlumno(ev) {
+    ev.preventDefault();
+    const sitio = document.querySelector('input[name="alumno-sitio"]:checked').value;
+    const usuario = $("alumno-usuario").value.trim().replace(/^@/, "");
+    const estado = $("alumno-estado");
+    if (!window.PreparacionDescarga.USUARIO_VALIDO.test(usuario)) {
+      estado.textContent = "Escribe el nombre de usuario tal como sale en su perfil: letras, números, guion o guion bajo.";
+      $("alumno-usuario").focus();
+      return;
+    }
+    const nombreSitio = sitio === "lichess" ? "Lichess" : "Chess.com";
+    $("alumno-bajar").disabled = true;
+    estado.textContent = "Pidiéndole las partidas de tu alumno a " + nombreSitio + "…";
+    let texto = "";
+    try {
+      texto = await window.PreparacionDescarga.descargar({ sitio, usuario, maximo: 2000 });
+    } catch (e) {
+      if (!(e && e.paraMostrar)) console.error(e);
+      estado.textContent = e && e.paraMostrar ? e.message : "No se pudieron bajar las partidas de " + nombreSitio + ". Revisa tu conexión y vuelve a intentarlo.";
+      $("alumno-bajar").disabled = false;
+      return;
+    }
+    $("alumno-bajar").disabled = false;
+    await cargarAlumno(texto, usuario);
+  }
+
+  async function leerAlumno() {
+    const f = ($("alumno-archivo").files || [])[0];
+    if (!f) { $("alumno-estado").textContent = "Elige el archivo PGN con las partidas de tu alumno."; return; }
+    let texto;
+    try { texto = await leerArchivo(f); } catch (e) { $("alumno-estado").textContent = "No se pudo leer el archivo: " + (e.message || e); return; }
+    await cargarAlumno(texto, null);
+  }
+
+  async function cruzar() {
+    const r = actual;
+    const alumno = $("alumno-nombre").value;
+    // Las partidas del rival que tiene el trabajador tienen que ser las de ESTE
+    // análisis: uno guardado de otro rival no las trae.
+    const mismas = r && rivalCargado && claveDe(rivalCargado) === claveDe(r.rival);
+    if (!r || r.vacio || !alumno || !mismas) {
+      $("alumno-estado").textContent = mismas ? "Elige a tu alumno en la lista." : "Para cruzar hace falta analizar al rival con sus partidas cargadas (un análisis guardado no las trae): vuelve a cargarlas y analízalo.";
+      return;
+    }
+    $("alumno-cruzar").disabled = true;
+    $("alumno-estado").textContent = "Cruzando…";
+    let c;
+    try {
+      c = await trabajo.cruzar(rivalCargado, r.filtros || {}, alumno, { conBlancas: r.conBlancas.plan, conNegras: r.conNegras.plan });
+    } catch (e) {
+      $("alumno-cruzar").disabled = false;
+      $("alumno-estado").textContent = "No se pudo cruzar: " + (e.message || e);
+      return;
+    }
+    $("alumno-cruzar").disabled = false;
+    if (actual !== r) return;
+    if (!c) { $("alumno-estado").textContent = "Ese jugador no tiene partidas con resultado en el archivo."; return; }
+    r.cruce = c;
+    ultimoAlumno = alumno;
+    $("alumno-estado").textContent = "Listo: " + c.alumno + ", " + c.total.toLocaleString("es-CR") + (c.total === 1 ? " partida." : " partidas.");
+    pintar(r);
+    if (guardadoId) { guardadoId = null; $("guardar").disabled = false; $("guardar").textContent = "Guardar con el cruce"; }
+    const h = document.getElementById("cruce-titulo");
+    if (h) { h.tabIndex = -1; h.scrollIntoView({ block: "start" }); h.focus(); }
+  }
+
+  // ------------------------------------------------------------ la teoría
+
+  /* Dónde deja la teoría: las posiciones de sus líneas se le preguntan al
+     explorador de maestros de Lichess por la Edge Function explorador-maestros
+     (el explorador pide un token, que vive en el servidor). Por vueltas: en
+     cada una, solo la posición siguiente de cada línea que sigue en teoría
+     (PreparacionTeoria.pendientes). La función contesta de a tandas y dice
+     por qué paró, si paró. Ver «Dónde deja la teoría: etapa 5». */
+  const T = window.PreparacionTeoria;
+  const MOTIVO_TEORIA = {
+    sin_token: "La comparación con los maestros no está configurada todavía: falta el token de Lichess en el servidor (LICHESS_TOKEN). Lo agrega quien administra.",
+    token_invalido: "Lichess no aceptó el token del servidor (LICHESS_TOKEN): hay que cambiarlo.",
+    limitado: "Lichess pidió esperar un momento. Se muestra lo que alcanzó a contestar; vuelve a abrir el análisis en un minuto para completar el resto.",
+    error: "El explorador de maestros no contestó. Se muestra lo que alcanzó a contestar.",
+  };
+  let buscandoTeoria = null;
+
+  async function iniciarTeoria() {
+    const r = actual;
+    if (!r || r.vacio || !r.repertorioLineas || !T || buscandoTeoria === r) return;
+    buscandoTeoria = r;
+    const estado = $("teoria-estado");
+    const datos = {};
+    let motivo = null, consultadas = 0;
+    estado.textContent = "Comparando sus líneas con las partidas de maestros de Lichess…";
+    for (let vuelta = 0; vuelta < 40; vuelta++) {
+      const faltan = T.pendientes(r, datos);
+      if (!faltan.length) break;
+      let res;
+      try {
+        res = await sb.functions.invoke("explorador-maestros", { body: { fens: faltan.slice(0, 60) } });
+      } catch (e) {
+        res = { error: e };
+      }
+      if (actual !== r) { buscandoTeoria = null; return; }
+      if (res.error || !res.data) { motivo = "error"; break; }
+      const d = res.data;
+      Object.assign(datos, d.posiciones || {});
+      consultadas += Object.keys(d.posiciones || {}).length;
+      estado.textContent = "Comparando sus líneas con las partidas de maestros de Lichess: " + consultadas + (consultadas === 1 ? " posición" : " posiciones") + "…";
+      if (d.motivo && d.motivo !== "sigue") { motivo = d.motivo; break; }
+    }
+    buscandoTeoria = null;
+    if (actual !== r) return;
+    T.aplicar(r, datos);
+    r.teoria.motivo = motivo;
+    window.PreparacionAnalisis.rehacerFoda(r);
+    estado.textContent = motivo ? MOTIVO_TEORIA[motivo] || MOTIVO_TEORIA.error : "Comparado con las partidas de maestros de Lichess (" + consultadas + (consultadas === 1 ? " posición" : " posiciones") + ").";
+    // Sin ninguna respuesta no hay nada que mostrar: queda solo el aviso.
+    if (!consultadas) r.teoria = null;
+    pintar(r);
+    if (guardadoId && consultadas) { guardadoId = null; $("guardar").disabled = false; $("guardar").textContent = "Guardar con la teoría"; }
+  }
+
   // ------------------------------------------------------------ Stockfish
 
   function iniciarRevision() {
@@ -709,6 +874,9 @@
     $("motor-parar").addEventListener("click", () => { if (revision) revision.parar = true; });
     $("visor-cerrar").addEventListener("click", cerrarVisor);
     $("mandar-cerrar").addEventListener("click", cerrarMandar);
+    $("alumno-bajar-form").addEventListener("submit", bajarAlumno);
+    $("alumno-leer").addEventListener("click", leerAlumno);
+    $("alumno-cruzar").addEventListener("click", cruzar);
     $("mandar-form").addEventListener("submit", mandar);
     cargarGuardados();
   }

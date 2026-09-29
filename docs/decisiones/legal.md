@@ -106,6 +106,7 @@ prueba nada.
 | `solicitar_academia` | `unirse.html` | `solicitudes_academia.privacidad_version` y `privacidad_aceptada_en` |
 | `responder_formulario` | `formulario.html` | `formulario_respuestas.privacidad_version` y `privacidad_aceptada_en` |
 | `responder_encuesta_curso` | `encuesta-curso.html` | `encuesta_curso_respuestas.privacidad_version` y `privacidad_aceptada_en` |
+| `justificar_ausencia` | `justificaciones.html` | `justificaciones_ausencia.privacidad_version` y `privacidad_aceptada_en` (una constancia médica es un dato sensible) |
 | `elegir_plan` | `elegir-plan.html` | `solicitudes_academia.terminos_version` y `terminos_aceptados_en` (y la privacidad, si la solicitud no la tenía) |
 
 - **Lo exige la base, no la pantalla.** Sin una versión válida, las tres

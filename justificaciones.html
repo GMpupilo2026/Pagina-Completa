@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8"><!-- guardia: inicio --><script>(function(){try{if(window.sb||localStorage.getItem("sb-bgtijpimpcokxatxxbki-auth-token"))return;}catch(e){return;}try{window.stop()}catch(e){}var p=location.pathname.replace(/^\/+/,'');if(!p||/\/$/.test(p))p+='index.html';else if(!/\.html$/.test(p))p+='.html';location.replace('/login.html?next='+encodeURIComponent(p));})();</script><!-- guardia: fin -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/favicon.svg">
+    <title>Justificaciones de ausencia — Ajedrez Integral</title>
+    <meta name="description" content="El alumno cuenta por qué no llegó a clase, con un texto o un documento, y le llega a sus profesores, a la coordinación y a la supervisión.">
+    <meta name="robots" content="noindex">
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link id="fuentes" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@700&display=swap" rel="stylesheet" media="print"><!-- fuentes: inicio --><script>(function(l){if(!l)return;function a(){l.media='all';}if(l.sheet)a();else l.addEventListener('load',a);})(document.getElementById('fuentes'));</script><!-- fuentes: fin -->
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- oscuro: inicio --><script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');}catch(e){}})();</script><!-- oscuro: fin -->
+    <script src="js/adaptive-mode.js"></script>
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/pwa.js" defer></script><!-- app: fin --><!-- tema: inicio --><script>(function(){try{var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');var f=localStorage.getItem('plataforma_tema_fuente_v1');if(!f||!/^[A-Za-z0-9 ]{2,32}$/.test(f))return;var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family='+f.replace(/ /g,'+')+':wght@400;500;600;700&display=swap';document.head.appendChild(l);}catch(e){}})();</script><!-- tema: fin --></head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a id="marca-enlace" href="clases.html" class="flex items-center gap-2 text-white min-w-0"><img src="/img/logo-marca.png" alt="" width="78" height="48" class="h-10 md:h-12 w-auto shrink-0"><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><div class="flex items-center gap-2"><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></div></nav></header><!-- migas: inicio --><div class="bg-brand-900"><nav id="migas" aria-label="Estás en" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 text-sm"><ol class="flex flex-wrap items-center gap-x-2 gap-y-1"><li class="flex items-center gap-2"><a href="clases.html" class="text-brand-200 underline underline-offset-2 hover:text-accent-400 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🏛️ </span>Academia</a></li><li class="flex items-center gap-2"><span aria-hidden="true" class="text-brand-400">›</span><span aria-current="page" class="font-semibold text-white">Justificaciones de ausencia</span></li></ol></nav></div><!-- migas: fin -->
+
+    <main id="main-content" class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div id="loading" role="status" class="min-h-[50vh] flex flex-col items-center justify-center gap-3 px-4 text-center text-brand-500 dark:text-brand-300"><span aria-hidden="true" class="w-8 h-8 rounded-full border-4 border-brand-200 dark:border-brand-700 border-t-accent-500 animate-spin motion-reduce:animate-none"></span><p class="text-sm">Cargando…</p></div>
+
+        <!-- ===================== el alumno: justificar ===================== -->
+        <div id="app-alumno" class="hidden">
+            <h1 class="font-serif text-3xl sm:text-4xl font-bold text-brand-800 dark:text-white"><span aria-hidden="true">🩺</span> Justificar una ausencia</h1>
+            <p class="text-brand-500 dark:text-brand-300 mt-2">Si no pudiste llegar a clase —o sabes que vas a faltar—, cuéntalo aquí. Puedes escribir el motivo, adjuntar un documento (una constancia médica, una nota del colegio) o las dos cosas.</p>
+            <p id="a-quien" class="text-sm text-brand-600 dark:text-brand-300 mt-2">Le llega a tus profesores, a la coordinación y a la supervisión de tu academia.</p>
+
+            <form id="form" novalidate class="mt-6 bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 sm:p-6 space-y-5">
+                <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white">Una justificación nueva</h2>
+                <div class="grid sm:grid-cols-2 gap-4">
+                    <div>
+                        <label for="desde" class="block text-sm font-semibold text-brand-700 dark:text-brand-200 mb-1">Día en que faltaste</label>
+                        <input type="date" id="desde" required class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                    </div>
+                    <div>
+                        <label for="motivo" class="block text-sm font-semibold text-brand-700 dark:text-brand-200 mb-1">Motivo</label>
+                        <select id="motivo" required class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            <option value="">— Elige uno —</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="inline-flex items-center gap-2 text-sm text-brand-700 dark:text-brand-200 cursor-pointer">
+                        <input type="checkbox" id="varios" aria-controls="hasta-caja" class="w-4 h-4 accent-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        Fueron varios días seguidos
+                    </label>
+                    <div id="hasta-caja" hidden class="mt-3 sm:w-1/2">
+                        <label for="hasta" class="block text-sm font-semibold text-brand-700 dark:text-brand-200 mb-1">Último día que faltaste</label>
+                        <input type="date" id="hasta" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                    </div>
+                </div>
+                <div>
+                    <label for="detalle" class="block text-sm font-semibold text-brand-700 dark:text-brand-200 mb-1">Cuéntanos qué pasó <span class="font-normal text-brand-450 dark:text-brand-350">(si adjuntas un documento, esto es opcional)</span></label>
+                    <textarea id="detalle" rows="4" maxlength="2000" aria-describedby="detalle-ayuda" placeholder="Ej: Tuve fiebre y el médico me mandó reposo dos días." class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></textarea>
+                    <p id="detalle-ayuda" class="text-xs text-brand-450 dark:text-brand-350 mt-1">Hasta 2000 caracteres.</p>
+                </div>
+                <div>
+                    <label for="archivos" class="block text-sm font-semibold text-brand-700 dark:text-brand-200 mb-1">Documentos <span class="font-normal text-brand-450 dark:text-brand-350">(opcional)</span></label>
+                    <input type="file" id="archivos" multiple aria-describedby="archivos-formatos archivos-estado" class="block w-full text-sm text-brand-700 dark:text-brand-200 file:mr-3 file:bg-accent-500 file:text-brand-900 file:font-semibold file:border-0 file:rounded-lg file:px-4 file:py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded-lg">
+                    <p id="archivos-formatos" class="text-xs text-brand-450 dark:text-brand-350 mt-1"></p>
+                    <p id="archivos-estado" class="text-xs text-brand-600 dark:text-brand-300 mt-1" role="status"></p>
+                    <ul id="archivos-lista" class="flex flex-wrap gap-3 mt-2" aria-label="Documentos elegidos"></ul>
+                </div>
+                <label class="flex items-start gap-2 text-sm text-brand-700 dark:text-brand-200 cursor-pointer">
+                    <input type="checkbox" id="acepto-datos" class="mt-0.5 w-4 h-4 shrink-0 accent-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                    <span>Acepto que la Academia guarde esta justificación y sus documentos para llevar mi asistencia, según la <a href="privacidad.html" target="_blank" rel="noopener" class="underline">política de privacidad</a> (se abre en otra pestaña).</span>
+                </label>
+                <p id="msg" role="status" class="text-sm"></p>
+                <div class="flex flex-wrap items-center gap-3">
+                    <button type="submit" id="enviar" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-6 py-3 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Enviar la justificación</button>
+                    <a href="clases.html" class="text-sm font-semibold text-accent-700 dark:text-accent-400 hover:underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Volver al panel</a>
+                </div>
+            </form>
+
+            <section aria-labelledby="mias-titulo" class="mt-10">
+                <h2 id="mias-titulo" class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-1">Tus justificaciones</h2>
+                <p class="text-sm text-brand-500 dark:text-brand-300 mb-4">De la ausencia más reciente a la más vieja. Mientras nadie te contesta, puedes retirarla.</p>
+                <p id="mias-vacio" hidden class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-6 text-center text-brand-500 dark:text-brand-300">Todavía no has mandado ninguna justificación.</p>
+                <div id="mias" class="space-y-6"></div>
+            </section>
+        </div>
+
+        <!-- ============ profesores, coordinación y supervisión ============ -->
+        <div id="app-equipo" class="hidden">
+            <h1 class="font-serif text-3xl sm:text-4xl font-bold text-brand-800 dark:text-white"><span aria-hidden="true">🩺</span> Justificaciones de ausencia</h1>
+            <p class="text-brand-500 dark:text-brand-300 mt-2">Lo que mandaron tus estudiantes cuando no pudieron llegar a clase, ordenado por el día de la ausencia, de la más reciente a la más vieja. Contéstale a cada uno: le llega el aviso al celular.</p>
+
+            <div class="mt-6 grid grid-cols-3 gap-3" aria-label="Resumen">
+                <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4 text-center"><p id="n-pendiente" class="text-2xl font-bold text-brand-800 dark:text-white">—</p><p class="text-xs text-brand-500 dark:text-brand-300">⏳ Por revisar</p></div>
+                <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4 text-center"><p id="n-aceptada" class="text-2xl font-bold text-brand-800 dark:text-white">—</p><p class="text-xs text-brand-500 dark:text-brand-300">✅ Aceptadas</p></div>
+                <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4 text-center"><p id="n-no_aceptada" class="text-2xl font-bold text-brand-800 dark:text-white">—</p><p class="text-xs text-brand-500 dark:text-brand-300">❌ No aceptadas</p></div>
+            </div>
+
+            <div class="mt-6 flex flex-col sm:flex-row sm:items-end gap-3">
+                <div role="group" aria-label="Qué justificaciones ver" id="filtros" class="flex flex-wrap gap-2"></div>
+                <div class="sm:ml-auto">
+                    <label for="buscar" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Buscar un estudiante</label>
+                    <input type="search" id="buscar" maxlength="80" placeholder="Nombre" class="w-full sm:w-56 bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                </div>
+            </div>
+
+            <p id="lista-estado" role="status" class="mt-4 text-sm text-brand-500 dark:text-brand-300"></p>
+            <div id="lista" class="mt-2 space-y-8"></div>
+            <div class="mt-6 text-center">
+                <button type="button" id="mas" hidden class="bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Ver más</button>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p><!-- legal: inicio --><p class="mt-2"><a href="privacidad.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Política de privacidad</a> <span aria-hidden="true">·</span> <a href="terminos.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Términos y condiciones</a></p><!-- legal: fin --></div></footer>
+    <script src="js/vendor/supabase.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/avisos.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/legal-version.js"></script>
+    <script src="js/adjuntos.js"></script>
+    <script src="js/justificaciones.js"></script>
+<!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="js/modo-vista.js" defer></script><!-- modo-vista: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- atajo: inicio --><script src="js/atajo-buscar.js" data-arriba="" defer></script><!-- atajo: fin --></body>
+</html>

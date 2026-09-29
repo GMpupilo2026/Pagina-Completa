@@ -166,6 +166,10 @@ window.ResumenClase = (function () {
             det.appendChild(ol);
             caja.appendChild(det);
         }
+        // La partida de la clase, jugada por jugada, vive en «Repasar mis clases».
+        const repasar = el("a", "inline-block mt-3 text-sm font-semibold text-accent-700 dark:text-accent-400 hover:underline", "🎞️ Repasar la partida de tus clases →");
+        repasar.href = "repasar-clases.html";
+        caja.appendChild(repasar);
         caja.hidden = false;
     }
 

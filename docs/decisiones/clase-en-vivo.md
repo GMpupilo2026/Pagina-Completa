@@ -443,6 +443,44 @@ clase sin nada en la mano.
 tareas panel`.** Está probado que falla de verdad: con el enlace sin el id de
 la clase salta la comprobación del cierre.
 
+### Repasar mis clases: lo que pasó en la clase no se pierde al cerrarla
+
+La partida de la clase —con su arranque, sus variantes y lo que el profe
+comentó de cada jugada— solo la veía quien la guardaba (`saved_games_select`:
+`created_by = auth.uid()`), y solo si se acordaba de «💾 Guardar PGN». El
+alumno que quería repasar lo que vio no tenía cómo. Ahora
+(`repasar-clases.html`, tarjeta «🎞️ Repasar mis clases» en Aprender, junto a
+Estudio):
+
+- **La partida queda ligada a su clase** (`saved_games.class_session_id`). La
+  pone la base con el trigger que ya usan preguntas, prácticas y partidas de
+  la clase, `ligar_a_la_clase_abierta`: la clase abierta de quien guarda. Lo
+  guardado fuera de clase queda sin clase y sigue siendo solo del profe.
+- **La ve quien ASISTIÓ, y nadie más**: `saved_games_select_asistentes` mira
+  `class_attendance`; un compañero que no fue no la recibe. Como el resto de
+  la clase, solo con el acceso vigente (`saved_games_exige_acceso_sel`,
+  restrictiva). El insert solo deja ligarla a una clase propia. Comprobado
+  impersonando roles en SQL (migración `20260928235055`): el profe la ve, la
+  alumna que asistió la ve, el compañero que no fue no, y colgarla de la clase
+  de otro profe se rechaza.
+- **Al cerrar la clase se guarda sola** (`guardarLaClaseAlCerrar()`), ANTES
+  de marcarla cerrada —si no, el trigger ya no la encuentra abierta—, salvo
+  que no tenga jugadas o que ya se haya guardado igual con el botón
+  (`firmaDeLaClase()`). Si falla, la clase se cierra igual: el registro y la
+  asistencia importan más.
+- **Se guarda la clase en crudo** (`saved_games.datos`: la forma de
+  `js/pgn-clase.js`) al lado del PGN, en los tres guardados (el botón, la
+  línea archivada al «Jugar desde aquí» y el del cierre). El visor recorre el
+  MISMO árbol del que sale el PGN (`PgnClase.arbol`, que se exportó para
+  esto): la línea principal, cada variante entre paréntesis donde nace, el
+  comentario con el signo dicho en palabras y por `textContent`. Las partidas
+  de antes (sin `datos`) muestran la línea del PGN y lo dicen.
+- Se recorre con botones o con las flechas, Inicio y Fin del teclado; el
+  estado («Jugada 2… Cf6 (variante)») es región viva.
+- `node herramientas/verificar-todo.js repasar-clases` lo prueba en un
+  navegador y comprueba que los tres inserts de `sesion.js` lleven `datos` y
+  que el guardado del cierre vaya antes del `ended_at`.
+
 ### El modo sencillo de la clase en vivo
 
 Aun ordenada, la pantalla del profesor tiene catorce controles delante, y la

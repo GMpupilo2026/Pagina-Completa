@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"><!-- guardia: inicio --><script>(function(){try{if(window.sb||localStorage.getItem("sb-bgtijpimpcokxatxxbki-auth-token"))return;}catch(e){return;}try{window.stop()}catch(e){}var p=location.pathname.replace(/^\/+/,'');if(!p||/\/$/.test(p))p+='index.html';else if(!/\.html$/.test(p))p+='.html';location.replace('/login.html?next='+encodeURIComponent(p));})();</script><!-- guardia: fin -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/favicon.svg">
+<title>Repasar mis clases — Ajedrez Integral</title>
+<meta name="description" content="La partida de cada clase, jugada por jugada, con lo que comentó el profesor y sus variantes.">
+<meta name="robots" content="noindex">
+    <!-- Tailwind compilado: lo genera herramientas/css-construir.js.
+         Antes venía del CDN, que baja ~400 KB de JavaScript y compila el CSS
+         dentro del navegador en cada visita. -->
+    <link rel="stylesheet" href="css/tailwind.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link id="fuentes" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@700&display=swap" rel="stylesheet" media="print"><!-- fuentes: inicio --><script>(function(l){if(!l)return;function a(){l.media='all';}if(l.sheet)a();else l.addEventListener('load',a);})(document.getElementById('fuentes'));</script><!-- fuentes: fin -->
+<link rel="stylesheet" href="css/styles.css">
+<!-- oscuro: inicio --><script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');}catch(e){}})();</script><!-- oscuro: fin -->
+<style>
+  :root{
+    --bg-deep:#f0f4f8;
+    --bg-panel:#ffffff;
+    --bg-panel-2:#f0f4f8;
+    --line:#d9e2ec;
+    --text:#102a43;
+    --text-muted:#627d98;
+    --brass:#de911d;
+    --brass-bright:#f0b429;
+    --mate1:#3b6ea5;
+    --mate2:#9c4148;
+    --mate3:#6b3fa0;
+    --ok:#3f8f4f;
+    --bad:#c0392b;
+  }
+  html.dark{
+    --bg-deep:#0a1f33;
+    --bg-panel:#102a43;
+    --bg-panel-2:#0a1f33;
+    --line:#243b53;
+    --text:#f0f4f8;
+    --text-muted:#9fb3c8;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:'Inter', sans-serif; min-height:100vh; min-height:100dvh;}
+  h1,h2,h3{font-family:'Merriweather', serif; font-weight:700; margin:0;}
+  a{color:var(--brass-bright);}
+  *:focus-visible{outline:3px solid var(--brass-bright); outline-offset:2px;}
+
+  .streak-bar{
+    max-width:900px; margin:0 auto; padding:10px 24px 0; display:flex; align-items:center;
+    justify-content:center; gap:8px; font-size:0.95rem; color:var(--text-muted);
+  }
+  .streak-bar .flame{font-size:1.15rem; transition:transform .2s;}
+  .streak-bar.pulse .flame{animation:pulse-flame .4s ease-out;}
+  @keyframes pulse-flame{0%{transform:scale(1);} 40%{transform:scale(1.5);} 100%{transform:scale(1);}}
+  .streak-count{font-weight:700; color:var(--text);}
+
+  nav.tabs{display:flex; gap:6px; max-width:900px; margin:0 auto; padding:14px 24px 0; flex-wrap:wrap; justify-content:center;}
+  .tab{
+    background:var(--bg-panel); border:1px solid var(--line); border-bottom:3px solid var(--tab-color, var(--line));
+    color:var(--text-muted); font-family:'Inter', sans-serif; font-size:0.88rem; font-weight:500;
+    padding:10px 16px; cursor:pointer; transition:background .2s, color .2s, transform .12s ease-out;
+  }
+  .tab:hover{color:var(--text);}
+  .tab:active{transform:scale(0.97);}
+  .tab.active{background:var(--bg-panel-2); color:var(--text);}
+  .tab .n{color:var(--text-muted); font-size:0.8em;}
+
+  main{max-width:900px; margin:0 auto; padding:22px 24px 60px;}
+
+  .progress-track{max-width:420px; margin:0 auto 14px; height:6px; background:var(--line); border-radius:3px; overflow:hidden;}
+  .progress-fill{height:100%; background:var(--brass); border-radius:3px; transition:width .3s;}
+  .progress-label{max-width:420px; margin:0 auto 10px; text-align:center; font-size:0.82rem; color:var(--text-muted);}
+
+  .board-wrap{max-width:420px; margin:0 auto; position:relative;}
+  .board8{
+    display:grid; grid-template-columns:repeat(8,1fr); grid-template-rows:repeat(8,1fr);
+    width:100%; aspect-ratio:1/1; border:2px solid var(--brass); box-shadow:0 8px 30px rgba(16,42,67,0.18);
+  }
+  .sq{
+    position:relative; display:flex; align-items:center; justify-content:center;
+    font-size:min(7vw,32px); cursor:pointer; user-select:none; border:none; padding:0;
+    transition:background .12s;
+  }
+  .sq.light{background:var(--sq-light);}
+  .sq.dark{background:var(--sq-dark);}
+  .sq.selected{box-shadow:inset 0 0 0 4px var(--brass-bright);}
+  .sq.last-move{box-shadow:inset 0 0 0 3px rgba(59,110,165,0.75);}
+  .sq.wrong-flash{background:color-mix(in srgb, var(--bad) 55%, transparent) !important;}
+  .sq.hint-from{box-shadow:inset 0 0 0 4px #f0b429; animation:hint-pulse 1s ease-in-out infinite;}
+  .sq.target::after{content:""; position:absolute; inset:32%; border-radius:50%; background:rgba(240,180,41,0.5);}
+  .sq.target-capture::after{content:""; position:absolute; inset:8%; border:4px solid rgba(203,110,23,0.7); border-radius:50%; background:none;}
+  @keyframes hint-pulse{0%,100%{opacity:1;} 50%{opacity:0.35;}}
+
+  .mode-bar{
+    max-width:420px; margin:10px auto 0; padding:0 24px; display:flex;
+    justify-content:flex-end; align-items:center; gap:8px; font-size:0.78rem; color:var(--text-muted);
+  }
+  .mode-switch{display:inline-flex; border:1px solid var(--line); overflow:hidden;}
+  .mode-btn{
+    background:var(--bg-panel); border:none; color:var(--text-muted); font-family:'Inter', sans-serif;
+    font-size:0.78rem; padding:5px 10px; cursor:pointer; transition:background .15s, color .15s;
+  }
+  .mode-btn + .mode-btn{border-left:1px solid var(--line);}
+  .mode-btn.active{background:var(--brass); color:#102a43;}
+  .speech-btn{
+    background:var(--bg-panel); border:1px solid var(--line); border-radius:4px; color:var(--text-muted);
+    font-family:'Inter', sans-serif; font-size:0.78rem; padding:5px 10px; cursor:pointer; transition:background .15s, color .15s;
+  }
+
+  .position-readout{
+    background:var(--bg-panel); border:1px solid var(--line); padding:12px 16px; margin:0 0 16px;
+    font-size:0.85rem; color:var(--text-muted); line-height:1.6; max-width:420px; margin-left:auto; margin-right:auto;
+  }
+  .position-readout p{margin:2px 0;}
+
+  .turn-banner{max-width:420px; margin:14px auto 0; text-align:center; font-size:0.95rem; color:var(--text-muted);}
+  .turn-banner b{color:var(--text);}
+
+  .round-status{margin-top:12px; text-align:center; font-size:0.95rem; min-height:1.4em;}
+  .round-status.ok{color:var(--ok); font-weight:600;}
+  .round-status.bad{color:var(--bad);}
+  .round-controls{display:flex; gap:10px; justify-content:center; margin-top:16px; flex-wrap:wrap;}
+  .bctrl{
+    background:transparent; border:1px solid var(--line); color:var(--text); font-family:'Inter',sans-serif;
+    font-size:0.9rem; padding:11px 18px; cursor:pointer; transition:border-color .2s, transform .12s ease-out, background .2s;
+    min-height:44px;
+  }
+  .bctrl:hover{border-color:var(--brass);}
+  .bctrl:active:not(:disabled){transform:scale(0.97);}
+  .bctrl:disabled{opacity:0.35; cursor:not-allowed;}
+  .bctrl.primary{background:var(--brass); color:#102a43; border-color:var(--brass); font-weight:600;}
+  .bctrl.primary:hover{background:var(--brass-bright); border-color:var(--brass-bright);}
+
+  /* ---------- Selector de coronación ---------- */
+
+  /* ---------- Celebración al terminar una categoría ---------- */
+  #celebration{display:none; text-align:center; padding:30px 20px;}
+  #celebration .big-emoji{font-size:3.5rem; margin-bottom:10px; display:inline-block; animation:bounce-in .5s ease-out;}
+  @keyframes bounce-in{0%{transform:scale(0.3); opacity:0;} 60%{transform:scale(1.15); opacity:1;} 100%{transform:scale(1);}}
+  #celebration .stats{color:var(--text-muted); font-size:0.9rem; margin-bottom:18px;}
+
+  @media (prefers-reduced-motion: reduce){
+    .tab, .bctrl{transition-property: background-color, border-color, color;}
+    .sq.hint-from, .streak-bar.pulse .flame, #celebration .big-emoji{animation:none;}
+  }
+  /* Repasar mis clases: la lista de jugadas se lee como un PGN. */
+  #visor-jugadas{line-height:2;}
+  #visor-jugadas .jugada{border:0;background:none;padding:2px 5px;border-radius:6px;color:var(--text);font:inherit;cursor:pointer;}
+  #visor-jugadas .jugada:hover{background:var(--bg-panel-2);}
+  #visor-jugadas .jugada.actual{background:var(--brass-bright);color:#102a43;font-weight:700;}
+  #visor-jugadas .jugada:focus-visible{outline:3px solid var(--brass-bright);outline-offset:1px;}
+  #visor-jugadas .variante{color:var(--text-muted);font-size:0.92em;margin:0 2px;}
+  #visor-jugadas .variante .jugada{color:var(--text-muted);}
+  .sq{cursor:default;}
+</style>
+    <script src="js/piece-color-themes.js"></script>
+    <script src="js/piece-style-themes.js"></script>
+    <script src="js/board-color-themes.js"></script>
+    <script src="js/adaptive-mode.js"></script>
+
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/pwa.js" defer></script><!-- app: fin --><!-- tema: inicio --><script>(function(){try{var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');var f=localStorage.getItem('plataforma_tema_fuente_v1');if(!f||!/^[A-Za-z0-9 ]{2,32}$/.test(f))return;var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family='+f.replace(/ /g,'+')+':wght@400;500;600;700&display=swap';document.head.appendChild(l);}catch(e){}})();</script><!-- tema: fin --></head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a id="marca-enlace" href="clases.html" class="flex items-center gap-2 text-white min-w-0"><img src="/img/logo-marca.png" alt="" width="78" height="48" class="h-10 md:h-12 w-auto shrink-0"><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><div class="flex items-center gap-2"><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></div></nav></header><!-- migas: inicio --><div class="bg-brand-900"><nav id="migas" aria-label="Estás en" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 text-sm"><ol class="flex flex-wrap items-center gap-x-2 gap-y-1"><li class="flex items-center gap-2"><a href="clases.html" class="text-brand-200 underline underline-offset-2 hover:text-accent-400 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🏛️ </span>Academia</a></li><li class="flex items-center gap-2"><span aria-hidden="true" class="text-brand-400">›</span><span aria-current="page" class="font-semibold text-white">Repasar mis clases</span></li></ol></nav></div><!-- migas: fin -->
+
+<!-- ===== GATE: exige sesión de Academia ===== -->
+<div id="gate" class="min-h-[calc(100vh-5rem)] flex items-center justify-center px-4">
+    <div class="w-full max-w-sm text-center">
+        <p class="text-5xl mb-4" aria-hidden="true">🎞️</p>
+        <h1 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-2">Repasar mis clases</h1>
+        <p id="gate-checking" class="text-brand-500 dark:text-brand-300 mb-4">Comprobando tu sesión…</p>
+    </div>
+</div>
+
+<!-- ===== MAIN APP ===== -->
+
+<div id="app" class="hidden pt-10 pb-16">
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+    <h1 class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white">Repasar mis clases <span aria-hidden="true">🎞️</span></h1>
+    <p class="text-sm text-brand-500 dark:text-brand-300 mt-2 mb-6">La partida de cada clase a la que fuiste, jugada por jugada, con lo que comentó tu profe y las variantes que armó. Se recorre con los botones o con las flechas del teclado.</p>
+    <div class="grid md:grid-cols-[18rem_1fr] gap-6">
+      <section aria-labelledby="lista-titulo">
+        <h2 id="lista-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Tus clases</h2>
+        <ul id="lista-clases" class="list-none p-0 m-0 space-y-2"></ul>
+        <p id="lista-vacia" class="text-sm text-brand-500 dark:text-brand-300" hidden>Todavía no hay clases para repasar. Cuando tu profe guarde la partida de una clase a la que fuiste (o la cierre), aparece acá.</p>
+      </section>
+      <section id="visor" aria-labelledby="visor-titulo" hidden>
+        <h2 id="visor-titulo" tabindex="-1" class="font-serif text-xl font-bold text-brand-800 dark:text-white"></h2>
+        <p id="visor-fecha" class="text-xs text-brand-500 dark:text-brand-300 mb-2"></p>
+        <p id="visor-sin-datos" class="text-xs text-brand-500 dark:text-brand-300 mb-2" hidden>Esta partida se guardó antes de que las clases guardaran sus comentarios y variantes: solo trae las jugadas.</p>
+        <div class="board-wrap"><div class="board8" id="board" role="img" aria-label="Tablero de la clase"></div></div>
+        <div id="position-readout" class="position-readout" role="region" aria-label="Posición actual"></div>
+        <p id="visor-estado" class="round-status" role="status" aria-live="polite"></p>
+        <p id="visor-comentario" class="mt-2 rounded-xl px-4 py-3 bg-white dark:bg-brand-900 text-sm text-brand-800 dark:text-brand-100 shadow-sm" hidden></p>
+        <div class="round-controls" role="group" aria-label="Recorrer la partida">
+          <button type="button" class="bctrl" id="btn-inicio" aria-label="Al principio">⏮</button>
+          <button type="button" class="bctrl" id="btn-anterior" aria-label="Jugada anterior">◀</button>
+          <button type="button" class="bctrl" id="btn-siguiente" aria-label="Jugada siguiente">▶</button>
+          <button type="button" class="bctrl" id="btn-final" aria-label="Al final">⏭</button>
+          <button type="button" class="bctrl" id="btn-girar">Girar el tablero</button>
+        </div>
+        <h3 class="font-semibold text-brand-800 dark:text-white mt-4 mb-1">Jugadas</h3>
+        <div id="visor-jugadas" class="text-sm"></div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p><!-- legal: inicio --><p class="mt-2"><a href="privacidad.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Política de privacidad</a> <span aria-hidden="true">·</span> <a href="terminos.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Términos y condiciones</a></p><!-- legal: fin --></div></footer>
+<!-- tablero-js: inicio -->
+<script src="js/board-themes.js"></script>
+<script src="js/pieza-preferida.js"></script>
+<script src="js/coronacion.js"></script>
+<!-- tablero-js: fin -->
+<script src="js/vendor/supabase.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/chess-piece-svg.js"></script>
+<script src="js/main.js"></script>
+<script src="js/coordenadas-tablero.js"></script>
+<script src="js/vendor/chess.js"></script>
+<script src="js/blind-notation.js"></script>
+<script src="js/pgn-clase.js"></script>
+<script src="js/tipos-reglas.js"></script>
+<script src="js/ejercicio-tablero.js"></script>
+<script src="js/repasar-clases.js"></script>
+<!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="js/modo-vista.js" defer></script><!-- modo-vista: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- atajo: inicio --><script src="js/atajo-buscar.js" data-arriba="" defer></script><!-- atajo: fin --></body>
+</html>

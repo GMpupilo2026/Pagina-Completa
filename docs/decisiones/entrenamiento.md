@@ -332,7 +332,15 @@ navegador.
   falta o tiene más de cuatro semanas, que es lo que pide la última semana del
   plan. Todo sale del progreso que ProgresoUsuario ya bajó de la cuenta. Sin
   nada pendiente, el bloque no sale.
-- **Lo primero de «Hoy te toca» es la semana del plan del diagnóstico**
+- **Arriba de todo, la meta del día**: «Hoy llevas 3 de 5 ejercicios para que
+  el día cuente. Tu racha: 4 días 🔥», con su barra (y `aria-valuenow`). La
+  cuenta es `Logros.cargar()` → `progreso_dias_y_racha`, la misma de Logros y
+  del panel, y la meta es `Logros.META_DIARIA`: no se escribe otra vez. Antes
+  solo se veía entrando a Logros. Por eso **el bloque ya no se calla sin nada
+  pendiente**: queda la meta, que cambia de un día a otro y dice qué hacer. Si
+  la racha no se puede leer, la meta no sale y el bloque vuelve a depender de
+  que haya algo pendiente.
+- **Lo primero de la lista de «Hoy te toca» es la semana del plan del diagnóstico**
   («📅 Tu plan, semana 2 de 4 · Valor del material: Ejercicios de pieza
   colgada (✓ 3 hechos)»). El plan de cuatro semanas vivía solo en la página
   del diagnóstico y en los datos se veía: de los 52 alumnos que lo habían

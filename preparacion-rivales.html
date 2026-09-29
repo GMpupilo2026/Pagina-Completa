@@ -121,7 +121,8 @@
                      js/preparacion-rivales.js con lo que el rival tiene. -->
                 <div id="filtros" hidden class="flex flex-wrap items-end gap-x-8 gap-y-3 rounded-xl bg-white dark:bg-brand-900 shadow-md px-5 py-4 mb-3"></div>
                 <p id="filtros-aviso" role="status" class="text-sm font-semibold text-accent-700 dark:text-accent-400 mb-2"></p>
-                <p id="motor-estado" role="status" class="text-sm text-brand-600 dark:text-brand-200 mb-4"></p>
+                <p id="motor-estado" role="status" class="text-sm text-brand-600 dark:text-brand-200 mb-1"></p>
+                <p id="teoria-estado" role="status" class="text-sm text-brand-600 dark:text-brand-200 mb-4"></p>
                 <!-- El tablero para recorrer una línea del plan (js/visor-linea.js).
                      Se abre al tocar una jugada del plan o «Ver» en un error. -->
                 <section id="visor-caja" hidden aria-labelledby="visor-caja-titulo" class="scroll-mt-28 bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
@@ -164,6 +165,43 @@
                         </div>
                     </form>
                 </section>
+                <!-- Cruzar con las partidas del alumno que lo va a enfrentar
+                     (js/preparacion-cruce.js, en el trabajador). -->
+                <section id="alumno-caja" aria-labelledby="alumno-titulo" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
+                    <h3 id="alumno-titulo" class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-1">Cruzarlo con tu alumno</h3>
+                    <p class="text-sm text-brand-500 dark:text-brand-300 mb-4">Trae las partidas del alumno que lo va a enfrentar: se compara su repertorio con el plan (¿ya lo juega?) y con lo que el rival juega (¿dónde le conviene jugar lo suyo?).</p>
+                    <form id="alumno-bajar-form" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 items-end" novalidate>
+                        <fieldset>
+                            <legend class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Sitio</legend>
+                            <div class="flex gap-4 py-2 text-sm">
+                                <label class="inline-flex items-center gap-2"><input type="radio" name="alumno-sitio" id="alumno-lichess" value="lichess" checked class="accent-accent-500"> Lichess</label>
+                                <label class="inline-flex items-center gap-2"><input type="radio" name="alumno-sitio" id="alumno-chesscom" value="chesscom" class="accent-accent-500"> Chess.com</label>
+                            </div>
+                        </fieldset>
+                        <div>
+                            <label for="alumno-usuario" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Usuario de tu alumno</label>
+                            <input id="alumno-usuario" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="30" placeholder="Como sale en su perfil" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        </div>
+                        <div>
+                            <button id="alumno-bajar" type="submit" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-60">Bajar y cruzar</button>
+                        </div>
+                    </form>
+                    <div class="mt-4 flex flex-wrap items-end gap-3">
+                        <div>
+                            <label for="alumno-archivo" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">O un PGN con sus partidas</label>
+                            <input id="alumno-archivo" type="file" accept=".pgn,.txt,application/x-chess-pgn,text/plain" class="block w-full text-sm text-brand-700 dark:text-brand-200 file:mr-3 file:px-4 file:py-2 file:rounded-lg file:border-0 file:font-semibold file:bg-brand-100 dark:file:bg-brand-800 file:text-brand-700 dark:file:text-brand-100 hover:file:bg-brand-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded-lg">
+                        </div>
+                        <button id="alumno-leer" type="button" class="px-4 py-2 rounded-lg text-sm font-semibold bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Leer</button>
+                    </div>
+                    <div id="alumno-elegir" hidden class="mt-4 flex flex-wrap items-end gap-3">
+                        <div>
+                            <label for="alumno-nombre" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Tu alumno en ese archivo</label>
+                            <select id="alumno-nombre" class="px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
+                        </div>
+                        <button id="alumno-cruzar" type="button" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Cruzar</button>
+                    </div>
+                    <p id="alumno-estado" role="status" class="text-sm text-brand-600 dark:text-brand-200 mt-3"></p>
+                </section>
                 <div id="resultado-cuerpo" class="space-y-6"></div>
             </section>
 
@@ -197,7 +235,9 @@
     <script src="js/subgrupos-marcar.js"></script>
     <script src="js/preparacion-lineas.js"></script>
     <script src="js/preparacion-posiciones.js"></script>
+    <script src="js/preparacion-teoria.js"></script>
     <script src="js/preparacion-analisis.js"></script>
+    <script src="js/preparacion-cruce.js"></script>
     <script src="js/preparacion-descarga.js"></script>
     <script src="js/preparacion-pintar.js"></script>
     <script src="js/preparacion-motor.js"></script>
