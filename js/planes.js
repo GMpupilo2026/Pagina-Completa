@@ -72,6 +72,9 @@ async function init() {
 
     await cargarEquipo();
     await cargarPlanes();
+    // planes.html?plan=<id>: llegar directo a un plan (el de repaso que arma el panel).
+    const pedido = new URLSearchParams(location.search).get("plan");
+    if (pedido && planes.some((p) => p.id === pedido)) await abrirPlan(pedido);
     await cargarCompartidosConmigo();
 }
 

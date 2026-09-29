@@ -6,9 +6,9 @@
  *
  * Qué ve el alumno lo decide la RLS de planes_rival_alumno: su plan, y nada del
  * análisis del que salió (ver «Mandar el plan al alumno y a la clase: etapa 4»
- * en docs/decisiones/paneles.md). Acá no hay Stockfish: lo que dijo el motor
- * de cada jugada del plan ya viene en sus notas, y bajar un motor de varios
- * megas en el celular del alumno para eso no se justifica.
+ * en docs/decisiones/paneles.md). Stockfish no se baja para el plan: lo que
+ * dijo el motor de cada jugada ya viene en sus notas. Solo lo pide «Juega
+ * contra él», y solo cuando la partida se sale de lo que el rival juega.
  */
 (function () {
   "use strict";
@@ -197,6 +197,25 @@
     pintar();
   }
 
+  // ------------------------------------------------------------ «Juega contra él»
+
+  /* Una partida contra su libro, que viaja en el plan (planDelAlumno), y fuera
+     de él la computadora a su Elo (js/preparacion-sparring.js). Los planes
+     mandados antes no traen el libro: la sección no sale. Stockfish no se baja
+     al abrir la página: solo cuando la partida se sale de lo que él juega. */
+  function montarSparring(fila, r) {
+    const libro = fila.plan && fila.plan.libro;
+    if (!libro || !Object.keys(libro).length || !window.PreparacionSparring) return;
+    $("sparring-caja").hidden = false;
+    let s = null;
+    $("sparring-empezar").addEventListener("click", () => {
+      if (!s) s = PreparacionSparring.montar($("sparring"));
+      // Desde acá, otra partida se empieza con «Empezar de nuevo» del tablero.
+      $("sparring-empezar").hidden = true;
+      s.empezar({ libro, plan: r[fila.lado].plan, color: fila.lado === "conBlancas" ? "w" : "b", elo: fila.plan.elo, rival: fila.rival });
+    });
+  }
+
   async function init() {
     const { data } = await sb.auth.getSession();
     const sesion = data && data.session;
@@ -213,6 +232,7 @@
     if (error || !fila) { $("no-esta").classList.remove("hidden"); return; }
     const r = pintarPlan(fila);
     await montarEntrenamiento(fila, r, sesion.user.id);
+    montarSparring(fila, r);
   }
 
   init();

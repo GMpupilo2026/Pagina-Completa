@@ -2587,6 +2587,9 @@ hay lista: cada alumno tiene los suyos) y los verificadores.
   quitan una estrella; al tercero, la respuesta. Al final dice qué pasó en la
   partida («jugaste Cxf7 y la evaluación pasó de +0,1 a −4,6»). Resolver uno
   cuenta como cualquier Tipo (`activity = 'tipos'`, `category = 'errores'`).
+- **El profesor los ve en Informes**, en el informe de cada alumno (ver «Los
+  errores de sus partidas» en informes.md): los lee de `training_state` con
+  `ErroresPropios.deFilas()`, que no le cree nada a lo que guardó el navegador.
 - **Sin metas de cantidad en Tareas**: como cada alumno tiene una cantidad
   distinta, `metas-indice.py` no lo ofrece (se salta los tipos sin banco).
 - `herramientas/verificar-errores-propios.js` prueba la detección, el armado y

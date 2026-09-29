@@ -328,6 +328,10 @@
                 <p class="mt-4 pt-4 border-t border-brand-100 dark:border-brand-800 text-sm text-brand-500 dark:text-brand-300" id="profe-clases">—</p>
             </div>
 
+            <!-- «Lo que más le costó a tu clase» (solo profe): las preguntas del último mes que más
+                 fallaron sus alumnos, y un plan de repaso con ellas. Ver js/lo-que-costo.js. -->
+            <section id="lo-que-costo" hidden aria-labelledby="lo-que-costo-titulo" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-10"></section>
+
             <!-- ===== El resumen de quien SUPERVISA =====
                  No entrena ni da clase: al entrar necesita saber cuántos
                  estudiantes tiene a cargo y cuántos llevan días sin hacer nada.
@@ -423,6 +427,9 @@
     <script src="js/resumen-clase.js"></script>
     <script src="js/pendientes.js"></script>
     <script src="js/puntos-clase.js"></script>
+    <script src="js/notas-alumno.js"></script>
+    <script src="js/plan-clase.js"></script>
+    <script src="js/lo-que-costo.js"></script>
     <script src="js/clases.js"></script>
 <!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- ayuda: inicio --><script src="js/ayuda-guia.js" defer></script><!-- ayuda: fin --></body>
 </html>
