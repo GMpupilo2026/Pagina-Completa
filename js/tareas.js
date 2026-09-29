@@ -484,6 +484,17 @@ function tarjetaEnviada(t) {
     const items = t.items || [];
     // Qué lleva hecho, renglón por renglón: es lo que el profesor viene a ver.
     const resumen = items.map((r) => {
+        /* El diagnóstico no es «1/1»: lo que el profe viene a saber es si ya
+           lo rindió, y si sí, cuál le salió. `cumplido` sale de la base, que
+           solo cuenta el rendido DESPUÉS de asignarlo, así que «ya lo hizo»
+           quiere decir uno nuevo. El enlace abre Informes en el diagnóstico
+           de ESE alumno. */
+        if (r.material_slug === "diagnostico") {
+            if (!r.cumplido) return `<span>🧭 ${t.situacion === "programada" ? "Diagnóstico de nivel" : "Todavía no hace el diagnóstico"}</span>`;
+            const resultado = "informes.html?tema=diagnostico&alumno=" + encodeURIComponent(t.alumno_id || "");
+            return `<span class="text-green-600 dark:text-green-400">✔ Ya hizo el diagnóstico</span>`
+                + ` <a href="${escapeHtml(resultado)}" class="font-semibold text-accent-700 dark:text-accent-400 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded">Ver su resultado →</a>`;
+        }
         const meta = r.meta_tipo === "completar" ? 1 : r.meta_cantidad;
         return `<span class="${r.cumplido ? "text-green-600 dark:text-green-400" : ""}">${r.cumplido ? "✔" : ""} ${escapeHtml(r.filtro_label || r.material_label)} ${r.hecho}/${meta}</span>`;
     }).join(" · ");

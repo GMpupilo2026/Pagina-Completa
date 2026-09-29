@@ -172,9 +172,16 @@ nivel», en vez de «Hacer 1 diagnósticos de…»), y ya **no ofrece
 - Mientras el renglón no esté cumplido, el panel del alumno **ilumina la
   tarjeta del diagnóstico** y la franja de arriba lo nombra (ver «La tarjeta
   del diagnóstico se ilumina cuando el profe lo pide» en `paneles.md`).
+- **En «Tareas enviadas» el profe ve si ya lo hizo**, no un «1/1»: «🧭
+  Todavía no hace el diagnóstico» o «✔ Ya hizo el diagnóstico» con **«Ver su
+  resultado →»**, que abre `informes.html?tema=diagnostico&alumno=<id>` (el
+  diagnóstico de ESE alumno). «Ya lo hizo» sale de `cumplido`, así que quiere
+  decir uno rendido después de pedirlo.
 - `verificar-tareas.js` arma el renglón y pide que no ofrezca más meta que
   `cantidad`, que esconda la cantidad con 1 puesto, que la frase se lea bien y
-  que al cambiar de material vuelva el 10 de siempre.
+  que al cambiar de material vuelva el 10 de siempre. Y del lado del profe,
+  que «Tareas enviadas» diga «Todavía no hace…» sin enlace a quien no lo
+  rindió, y «Ya hizo…» con su enlace a quien sí.
 
 Lo que se rompe acá no da error: un renglón que cuenta la actividad equivocada,
 un enlace sin su recorte, o una tarea que se le manda a todos los alumnos en
