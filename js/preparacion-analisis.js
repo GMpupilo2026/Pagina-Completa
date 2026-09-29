@@ -428,6 +428,22 @@
 
   function esPrefijo(a, b) { return a.length <= b.length && a.every((x, i) => x === b[i]); }
 
+  /* Las jugadas que él repite: cada jugada SUYA con minN partidas o más, en
+     todo su árbol (hasta donde llega el árbol), de la más jugada a la menos.
+     Es lo que Stockfish revisa para encontrar sus errores de siempre
+     (tareasDelMotor): repertorioLineas guarda solo las ramas grandes y se
+     quedaba corto. */
+  const MAX_JUGADAS_SUYAS = 25;     // por color
+  function jugadasSuyas(raiz, color, minN) {
+    const out = [];
+    recorrer(raiz, color, (h, sec) => {
+      if (!leTocaAlRival(color, sec.length - 1) || h.c.n < minN) return;
+      out.push({ color, sec: sec.slice(0, -1), jugada: sec[sec.length - 1], n: h.c.n });
+    });
+    out.sort((a, b) => b.n - a.n || a.sec.length - b.sec.length);
+    return out.slice(0, MAX_JUGADAS_SUYAS);
+  }
+
   // Las líneas donde el rival se aparta de su promedio. Una línea larga que
   // son casi las mismas partidas que su comienzo no se repite: queda la más
   // corta, que es la que se puede buscar.
@@ -761,6 +777,8 @@
       // Las líneas que se le consultan al explorador de maestros; lo que
       // contesta queda en `teoria` (ver js/preparacion-teoria.js).
       repertorioLineas: lineasDeSuRepertorio(arbol.w, "w", minN).concat(lineasDeSuRepertorio(arbol.b, "b", minN)),
+      // Lo que Stockfish revisa de su repertorio (tareasDelMotor).
+      jugadasSuyas: jugadasSuyas(arbol.w, "w", minN).concat(jugadasSuyas(arbol.b, "b", minN)),
       teoria: null,
       motor: null,
     };
@@ -952,7 +970,14 @@
   //     Si pierde medio peón o más, es una trampa para prepararle.
   //   - cada jugada NUESTRA en los planes: que la recomendación no sea un
   //     error (los números pueden premiar una jugada mala que él no castigó).
-  // Cada tarea trae la secuencia ANTES de la jugada y la jugada.
+  //   - cada jugada de él en SU REPERTORIO (repertorioLineas), aunque el plan
+  //     no pase por ahí. Con un plan corto (con jeigoth5 fueron 7 jugadas)
+  //     no se revisaba lo que él juega de verdad, y «no se encontró ningún
+  //     error» quería decir «no se buscó». Ver «Stockfish sobre su
+  //     repertorio real» en docs/decisiones/paneles.md.
+  // Los planes son los que valen (planDe: a la medida del alumno si hay
+  // cruce). Cada tarea trae la secuencia ANTES de la jugada y la jugada.
+  const MAX_TAREAS_REPERTORIO = 40;
   function tareasDelMotor(r, tope) {
     const max = tope || 30;
     const tareas = [];
@@ -967,11 +992,35 @@
         juntar(x.hijos || [], sec.concat(x.san), lado, profundidad + 1);
       }
     }
-    juntar(r.conBlancas.plan, [], "conBlancas", 0);
-    juntar(r.conNegras.plan, [], "conNegras", 0);
+    juntar(L.planDe(r, "conBlancas"), [], "conBlancas", 0);
+    juntar(L.planDe(r, "conNegras"), [], "conNegras", 0);
     // Primero lo más jugado y lo más temprano: si se corta, se cortó lo menos importante.
     tareas.sort((a, b) => b.n - a.n || a.profundidad - b.profundidad);
-    return tareas.slice(0, max);
+    const delPlan = tareas.slice(0, max);
+
+    // Su repertorio: solo SUS jugadas, las que repite (minimo partidas o
+    // más). jugadasSuyas las trae todas; un análisis guardado antes solo
+    // trae las líneas de la teoría (repertorioLineas), o nada.
+    const suyas = [];
+    for (const x of r.jugadasSuyas || []) {
+      const clave = x.sec.concat(x.jugada).join(" ");
+      if (vistas.has(clave)) continue;
+      vistas.add(clave);
+      suyas.push({ clave, lado: x.color === "w" ? "conNegras" : "conBlancas", sec: x.sec, jugada: x.jugada, quien: "rival", n: x.n, profundidad: x.sec.length, repertorio: true });
+    }
+    for (const l of r.jugadasSuyas ? [] : r.repertorioLineas || []) {
+      const lado = l.color === "w" ? "conNegras" : "conBlancas";
+      l.sec.forEach((san, i) => {
+        if (!leTocaAlRival(l.color, i)) return;
+        const n = (l.veces && l.veces[i]) || l.n;
+        const clave = l.sec.slice(0, i + 1).join(" ");
+        if (n < r.minimo || vistas.has(clave)) return;
+        vistas.add(clave);
+        suyas.push({ clave, lado, sec: l.sec.slice(0, i), jugada: san, quien: "rival", n, profundidad: i, repertorio: true });
+      });
+    }
+    suyas.sort((a, b) => b.n - a.n || a.profundidad - b.profundidad);
+    return delPlan.concat(suyas.slice(0, MAX_TAREAS_REPERTORIO));
   }
 
   // `evals` trae, por clave: { antes: eval de la posición antes (desde las
@@ -985,6 +1034,7 @@
       const signo = mueveBlancas ? 1 : -1;
       const perdida = signo * (e.antes - e.despues);   // cuánto empeora para quien mueve
       const fila = { lado: t.lado, sec: t.sec, jugada: t.jugada, quien: t.quien, n: t.n, antes: e.antes, despues: e.despues, mejor: e.mejor, perdida };
+      if (t.repertorio) fila.repertorio = true;
       lineas.push(fila);
       if (e.mejor && e.mejor === t.jugada) continue;
       if (t.quien === "rival" && perdida >= 0.6) errores.push(fila);
@@ -1007,9 +1057,9 @@
   return {
     leerPgn, jugadasDe, jugadasYRelojes, jugadores, claveNombre, analizar, ritmoDe, finDe, partidasDelRival,
     sanEs, lineaEs, pct, textoEval, minimo, POCAS, tipoDeFinal, esFinal, FIN_ES,
-    tareasDelMotor, aplicarMotor, rehacerFoda, fenDe, senalesMasAlla,
+    tareasDelMotor, aplicarMotor, rehacerFoda, fenDe, senalesMasAlla, planDe: L.planDe, esAMedida: L.esAMedida,
     // Para js/preparacion-cruce.js, que arma el árbol del alumno igual que el
     // del rival: una sola forma de armarlo y de contarlo.
-    interno: { partidasDelRival, pasaFiltros, armarArbol, hijosOrdenados, totalAristas, puntos, resumen, suavizada, leTocaAlRival, nombreDe, esPrefijo },
+    interno: { partidasDelRival, pasaFiltros, armarArbol, hijosOrdenados, totalAristas, puntos, resumen, suavizada, leTocaAlRival, nombreDe, esPrefijo, PROFUNDIDAD_PLAN },
   };
 });

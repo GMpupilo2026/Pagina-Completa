@@ -22,6 +22,7 @@ const { chromium } = require("./lib/playwright-con-sesion");
 const { contestarAvisos } = require("./lib/avisos-prueba.js");
 const A = require("../js/preparacion-analisis.js");
 const R = require("../js/preparacion-resumen.js");
+const C = require("../js/preparacion-cruce.js");
 const L = require("../js/preparacion-lineas.js");
 const Pos = require("../js/preparacion-posiciones.js");
 const { Chess } = require("chess.js");
@@ -341,6 +342,76 @@ function pruebaComoPierde() {
   cierto("y el tiempo que gasta en la apertura es una oportunidad", r.foda.oportunidades.some((x) => /gasta más tiempo que sus rivales \(67 % .* contra 11 %\)/.test(x)));
   cierto("y los apuros de tiempo, una debilidad", r.foda.debilidades.some((x) => /apuros de tiempo .* 30 %/.test(x)));
   return r;
+}
+
+/* El plan a la medida del alumno (planAlumno en js/preparacion-cruce.js).
+   Pedro, con negras: contra 1.e4 saca 40 % en 20 partidas, contra 1.c4 saca
+   30 % en 10 (o 0 % en 12, en la segunda prueba) y contra 1.d4, 80 %. Ana
+   juega siempre 1.e4, nunca 1.c4. El plan general elige 1.c4 (menos para
+   él); el de Ana, 1.e4, que conoce y es casi igual de bueno. Pero si 1.c4 es
+   CLARAMENTE mejor, gana aunque Ana no la haya jugado nunca. */
+function pgnDeMedida(c4Gana, c4Partidas) {
+  let t = "";
+  const juega = (n, gana, jugadas) => { for (let i = 0; i < n; i++) t += partida("Otro " + i, "Pedro", i < gana ? "0-1" : "1-0", jugadas); };
+  juega(20, 8, "e4 e5 2. Nf3 Nc6");
+  juega(c4Partidas, c4Gana, "c4 e5 2. Nc3 Nf6");
+  juega(20, 16, "d4 d5 2. c4 e6");
+  return t;
+}
+function pgnDeAna() {
+  let t = "";
+  for (let i = 0; i < 30; i++) t += partida("Ana", "Otra " + i, i % 3 ? "1-0" : "0-1", "e4 e5 2. Nf3 Nc6");
+  return t;
+}
+
+function pruebaPlanAMedida() {
+  console.log("\n=== El plan a la medida del alumno ===");
+  const armar = (c4Gana, c4Partidas) => {
+    const lista = A.leerPgn(pgnDeMedida(c4Gana, c4Partidas));
+    const r = A.analizar(lista, "Pedro");
+    r.cruce = C.cruzar(lista, "Pedro", {}, A.leerPgn(pgnDeAna()), "Ana", { conBlancas: r.conBlancas.plan, conNegras: r.conNegras.plan });
+    return r;
+  };
+  const r = armar(3, 10);
+  igual("el plan general elige 1.c4: ahí él saca menos", r.conBlancas.plan[0].san, "c4");
+  const medida = L.planDe(r, "conBlancas");
+  igual("el de Ana, 1.e4: casi igual de bueno, y lo conoce (30 partidas)", [medida[0].san, medida[0].alumno && medida[0].alumno.n, L.esAMedida(r, "conBlancas")], ["e4", 30, true]);
+  cierto("sigue con las respuestas de él (1…e5) y las jugadas de Ana (2.Cf3)", medida[0].hijos[0].san === "e5" && medida[0].hijos[0].hijos[0].san === "Nf3");
+  cierto("es el que revisa Stockfish", A.tareasDelMotor(r).some((t) => t.clave === "e4 e5 Nf3" && !t.repertorio));
+  igual("es el que se le manda al alumno y el que se baja en PGN", [L.planDelAlumno(r, "conBlancas").plan[0].san, /^1\. e4 /m.test(L.planAPgn(r, "conBlancas"))], ["e4", true]);
+  const linea = R.armar(r).lados[0].lineas[0];
+  igual("el resumen lo dice, y muestra lo que elegía el general", [linea.titulo, linea.general],
+    ["Tu línea, a la medida de Ana", "Sin mirar a Ana, lo que más le cuesta a él es 1.c4 e5 2.Cc3 Cf6: él saca 30,0 % (le va mal) en 10 partidas."]);
+
+  const claro = armar(0, 12);
+  igual("pero si 1.c4 es CLARAMENTE mejor (0 de 12), gana aunque Ana no la juegue", L.planDe(claro, "conBlancas")[0].san, "c4");
+  const sinCruce = A.analizar(A.leerPgn(pgnDeMedida(3, 10)), "Pedro");
+  igual("sin cruce, el plan es el general", [L.planDe(sinCruce, "conBlancas")[0].san, L.esAMedida(sinCruce, "conBlancas")], ["c4", false]);
+  const viejo = JSON.parse(JSON.stringify(r));
+  delete viejo.cruce.lados.conBlancas.planAlumno;
+  igual("un cruce guardado antes (sin planAlumno) usa el general", L.planDe(viejo, "conBlancas")[0].san, "c4");
+}
+
+/* Stockfish sobre lo que él juega de verdad (tareasDelMotor + jugadasSuyas).
+   Con blancas el plan va por 1.e4: su 1.d4 d5 2.c4 e6 (20 partidas, 90 %)
+   no está en el plan, pero sí en lo que él repite, y se revisa igual. */
+function pruebaMotorRepertorio() {
+  console.log("\n=== Stockfish sobre su repertorio real ===");
+  const r = A.analizar(A.leerPgn(pgnDePrueba()), "Pedro Perez");
+  cierto("el análisis trae las jugadas que él repite (" + r.jugadasSuyas.length + ")", r.jugadasSuyas.some((x) => x.color === "b" && x.sec.join(" ") === "d4 d5 c4" && x.jugada === "e6" && x.n === 20));
+  const tareas = A.tareasDelMotor(r);
+  const e6 = tareas.find((t) => t.clave === "d4 d5 c4 e6");
+  cierto("Stockfish revisa su 2…e6 aunque el plan no pase por ahí", !!e6 && e6.repertorio && e6.lado === "conBlancas" && e6.quien === "rival");
+  cierto("y el plan se sigue revisando entero", tareas.some((t) => t.clave === "e4 e5 Nf3" && !t.repertorio));
+  const evals = {};
+  tareas.forEach((t) => { evals[t.clave] = { antes: 0.2, mejor: t.jugada, despues: 0.2 }; });
+  evals[e6.clave] = { antes: 0.3, mejor: "c6", despues: 1.1 };
+  A.aplicarMotor(r, tareas, evals, "prueba");
+  igual("si esa jugada suya es un error, aparece", r.motor.errores.map((x) => [A.lineaEs(x.sec.concat(x.jugada)), !!x.repertorio]), [["1.d4 d5 2.c4 e6", true]]);
+  igual("y el resumen pide prepararle el castigo, con blancas", R.armar(r).lados[0].haz[0].texto, "Prepara cómo castigar 2…e6: es un error suyo que repite.");
+  const viejo = JSON.parse(JSON.stringify(A.analizar(A.leerPgn(pgnDePrueba()), "Pedro Perez")));
+  delete viejo.jugadasSuyas;
+  cierto("un análisis guardado sin jugadasSuyas usa las líneas de la teoría", A.tareasDelMotor(viejo).some((t) => t.repertorio));
 }
 
 /* Qué hacer y qué no hacer (js/preparacion-resumen.js): órdenes cortas con su
@@ -1099,6 +1170,22 @@ async function pruebaEtapa5(browser, libro) {
     [document.querySelector("#visor .visor-titulo").textContent, /^Prepara cómo castigar 4\.Dh4.*Stockfish: \+0,20 → −0,80/.test(document.querySelector("#visor .visor-nota").textContent)]),
     ["1.d4 c5 2.Cc3 cxd4 3.Dxd4 Cc6 4.Dh4", true]);
   await page.click("#visor-cerrar");
+  // Lo ya revisado no se vuelve a pedir: cuando el plan cambia (llega el
+  // cruce), Stockfish revisa solo lo nuevo.
+  igual("Stockfish no vuelve a revisar lo que ya revisó: solo lo que falta", await page.evaluate(async (pgn) => {
+    const A = PreparacionAnalisis, M = PreparacionMotor;
+    const r = A.analizar(A.leerPgn(pgn), "Pedro Perez");
+    let antes = window.__motorPedidos || 0;
+    let res = await M.revisar(r, {});
+    A.aplicarMotor(r, res.tareas, res.evals, res.detalle);
+    const primera = (window.__motorPedidos || 0) - antes;
+    const faltaban = M.faltan(r);
+    r.motor.lineas = r.motor.lineas.filter((x) => x.sec.concat(x.jugada).join(" ") !== "d4 c5 Nc3 cxd4 Qxd4 Nc6 Qh4");
+    const faltaUna = M.faltan(r);
+    antes = window.__motorPedidos;
+    res = await M.revisar(r, {});
+    return [primera > 10, faltaban, faltaUna, window.__motorPedidos - antes, res.hechas === res.total, res.evals["d4 c5 Nc3 cxd4 Qxd4 Nc6 Qh4"].despues];
+  }, pgnDePrueba()), [true, 0, 1, 2, true, -0.8]);
   igual("y al terminar todo, no queda el aviso de que falta algo", await page.evaluate(() => document.querySelector("[aria-labelledby='resumen-titulo'] [data-pendiente]").checkVisibility()), false);
   await page.click("#guardar");
   await page.waitForFunction(() => window.__insertados.some((i) => i.tabla === "preparaciones_rival"), null, { timeout: 5000 });
@@ -1446,6 +1533,8 @@ async function pruebaMotorDeVerdad(browser) {
   pruebaTiposDeFinal();
   pruebaDeteccionDeFinales();
   pruebaResumen(conMotor, libro, pruebaComoPierde());
+  pruebaPlanAMedida();
+  pruebaMotorRepertorio();
   pruebaCsp();
   pruebaArchivosDelMotor();
   const browser = await chromium.launch({ executablePath: CHROME });

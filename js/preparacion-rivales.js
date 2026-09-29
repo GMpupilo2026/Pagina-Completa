@@ -546,7 +546,7 @@
      antes: se inserta lo nuevo y DESPUÉS se borra lo viejo, así un error a
      medio camino no deja la carpeta vacía. */
   async function archivar(r, lado, origen) {
-    const lineas = L.lineasDelPlan(r[lado] && r[lado].plan);
+    const lineas = L.lineasDelPlan(L.planDe(r, lado));
     if (!lineas.length) return;
     const carpeta = ("Preparación: " + r.rival).slice(0, 120);
     const archivo = "preparacion-" + (lado === "conBlancas" ? "blancas" : "negras") + ".pgn";
@@ -680,6 +680,10 @@
     ultimoAlumno = alumno;
     $("alumno-estado").textContent = "Listo: " + c.alumno + ", " + c.total.toLocaleString("es-CR") + (c.total === 1 ? " partida." : " partidas.");
     pintar(r);
+    // El plan pasó a ser a la medida del alumno: Stockfish revisa lo nuevo
+    // (lo ya revisado no se vuelve a pedir). Si está revisando, al terminar
+    // ve que el plan cambió y sigue.
+    if (!revision && M.disponible() && M.faltan(r)) { iniciarRevision(); P.pendiente($("resultado-cuerpo"), pendientes(r)); }
     if (guardadoId) { guardadoId = null; $("guardar").disabled = false; $("guardar").textContent = "Guardar con el cruce"; }
     const h = document.getElementById("cruce-titulo");
     if (h) { h.tabIndex = -1; h.scrollIntoView({ block: "start" }); h.focus(); }
@@ -748,6 +752,10 @@
       return;
     }
     const r = actual;
+    // Qué se pidió revisar: si mientras tanto el plan cambia (llegó el cruce),
+    // al terminar se revisa lo nuevo.
+    const clavesDe = () => window.PreparacionAnalisis.tareasDelMotor(r).map((t) => t.clave).join("|");
+    const pedidas = clavesDe();
     const esta = { parar: false };
     revision = esta;
     $("motor-revisar").disabled = true;
@@ -767,6 +775,7 @@
       pintar(r);
       // Si ya estaba guardado, lo revisado no está en la base: se puede guardar de nuevo.
       if (guardadoId) { guardadoId = null; $("guardar").disabled = false; $("guardar").textContent = "Guardar con la revisión"; }
+      if (!esta.parar && !res.error && clavesDe() !== pedidas) { iniciarRevision(); P.pendiente($("resultado-cuerpo"), pendientes(r)); }
     });
   }
 
