@@ -139,10 +139,14 @@
            No entrena, no juega y no da clase: lo suyo es administrativo. Por
            eso no se le recorta el panel de siempre —quitarle tarjetas una por
            una deja la mitad olvidada a la vista—, sino que se le pinta OTRO,
-           escrito entero acá. Cada tema de Informes es una tarjeta que abre
-           el informe de sus estudiantes ya filtrado por ese tema
-           (informes.html?tema=…, el mismo enlace que usa Administración). */
-        const TEMA = (tema) => "informes.html" + (tema ? "?tema=" + tema : "");
+           escrito entero acá.
+
+           Arriba va «Lo urgente» (cargarUrgenteSupervisor) y debajo sus
+           números. En la grilla, CADA DESTINO UNA SOLA VEZ: antes quince
+           tarjetas abrían informes.html, cada una con otro ?tema=, cuando la
+           página ya trae el selector de tema; ahora Informes es una tarjeta.
+           Ver «El panel de quien supervisa, sin caminos repetidos» en
+           docs/decisiones/paneles.md. */
         const SUPERVISOR_GROUPS = [
             /* Lo primero, a pedido del dueño de la Academia: lo que se hace
                todos los días con la gente de la academia —dar de alta una
@@ -150,7 +154,7 @@
                nueva» abre formularios.html ya con la caja de «＋ Alumno nuevo»
                abierta (?alta=1); «Cuentas» es la ficha de coordinacion.html:
                nombre, grupo, correo o usuario, profesores, rol y reenviar el
-               acceso. Cada destino está una sola vez en el panel. */
+               acceso. */
             { title: "Mi academia", tiles: [
                 { emoji: "➕", label: "Cuenta nueva", desc: "Da de alta a un alumno: le llega su acceso por correo, o entra con un usuario si no tiene", href: "formularios.html?alta=1" },
                 { emoji: "✏️", label: "Cuentas", desc: "Corrige todos los datos de las cuentas a tu cargo: nombre, grupo, correo, profesores y rol, y reenvía el acceso", href: "coordinacion.html" },
@@ -159,20 +163,8 @@
                    hacer cada coordinador. */
                 { emoji: "🏫", label: "Tu academia", desc: "Quién está en tu academia, sus datos de contacto y qué puede hacer cada coordinador", href: "academias.html" },
             ] },
-            { title: "Cómo van tus estudiantes", tiles: [
-                { emoji: "📊", label: "Resumen general", desc: "Todos tus estudiantes a cargo, uno por fila, con su tiempo, asistencia y nivel", href: TEMA("") },
-                { emoji: "😴", label: "Sin entrenar", desc: "Quién lleva 4 días o más sin hacer nada en la plataforma", href: TEMA("inactivos") },
-                { emoji: "🏫", label: "Asistencia y tiempo", desc: "Clases a las que fue y cuánto tiempo pasó en la plataforma", href: TEMA("asistencia") },
-                /* Por qué faltó: lo que mandaron cuando no llegaron a clase,
-                   con sus documentos, para contestarlo. */
-                { emoji: "🩺", label: "Justificaciones de ausencia", desc: "Por qué faltó cada uno a clase, con sus documentos, para aceptarla o no", href: "justificaciones.html" },
-                { emoji: "🚩", label: "Preguntas en clase", desc: "Cómo contestan cuando el profesor pregunta en la clase en vivo", href: TEMA("asignaciones") },
-                { emoji: "🧭", label: "Diagnóstico de nivel", desc: "El nivel medido de cada uno y dónde está floja la clase", href: TEMA("diagnostico") },
-                { emoji: "🏛️", label: "Cursos", desc: "Qué temas de cada curso ya estudió", href: TEMA("cursos") },
-                /* Su propio enlace del diagnóstico para gente sin cuenta: lo
-                   que se hace por él le llega solo a quien supervisa. */
-                { emoji: "🌐", label: "Diagnóstico de visitantes", desc: "Tu enlace para que alguien sin cuenta mida su nivel, y los resultados que te llegan", href: TEMA("diagnostico-publico") },
-            ] },
+            /* Supervisar es, sobre todo, supervisar a los profesores: va antes
+               que el detalle de los estudiantes. */
             { title: "Tus profesores", tiles: [
                 { emoji: "🧑‍🏫", label: "Supervisión de profesores", desc: "Qué hizo cada profesor en el mes —clases, tareas, exámenes— y su informe mensual", href: "supervision.html" },
                 { emoji: "⭐", label: "Satisfacción del alumnado", desc: "Qué opinan los estudiantes de cada profesor y quién dice que se va", href: "satisfaccion.html" },
@@ -181,19 +173,18 @@
                 { emoji: "📊", label: "Tablero de tu academia", desc: "Clases y horas del mes, alumnos que entrenaron, informes enviados y cobros pendientes", href: "tablero-academias.html" },
                 { emoji: "📄", label: "Reportes de actividades", desc: "El informe de lo que pasó en clase en un periodo, en Word y PDF", href: "reportes.html" },
             ] },
-            /* Plegado: es lo que menos se mira, y siete tarjetas empujaban el
-               resto del panel una pantalla abajo. Se abre con su botón y el
-               aparato recuerda lo que eligió (ver `plegable` en renderTiles). */
-            { title: "Qué están entrenando, tema por tema", plegable: true, tiles: [
-                { emoji: "♚", label: "Mates", desc: "Mates en 1, 2 y 3 resueltos", href: TEMA("mates") },
-                { emoji: "⚔️", label: "Táctica", desc: "Ejercicios de táctica resueltos", href: TEMA("tactica") },
-                { emoji: "🧩", label: "4×4", desc: "Ejercicios del tablero de 4×4", href: TEMA("4x4") },
-                { emoji: "🎓", label: "Lecciones", desc: "Lecciones de Aprender terminadas", href: TEMA("aprender") },
-                { emoji: "⚡", label: "Coordenadas", desc: "Su mejor marca en Coordenadas", href: TEMA("coordenadas") },
-                { emoji: "🏆", label: "Practicar", desc: "Series de Practicar y sus estrellas", href: TEMA("practicar") },
-                { emoji: "🧠", label: "Concentración", desc: "Niveles de Concentración superados", href: TEMA("concentracion") },
+            { title: "Tus estudiantes", tiles: [
+                /* UNA tarjeta para Informes: adentro se elige el tema
+                   (asistencia, diagnóstico, cursos, mates, táctica…). */
+                { emoji: "📈", label: "Informes de tus estudiantes", desc: "Todos tus estudiantes a cargo, y arriba en la página eliges el tema: asistencia, diagnóstico, cursos, lo que entrenan…", href: "informes.html" },
+                { emoji: "🩺", label: "Justificaciones de ausencia", desc: "Por qué faltó cada uno a clase, con sus documentos, para aceptarla o no", href: "justificaciones.html" },
+                /* Su propio enlace del diagnóstico para gente sin cuenta: lo
+                   que se hace por él le llega solo a quien supervisa. Es un
+                   tema de Informes, pero no es mirar a sus estudiantes: es
+                   repartir un enlace. */
+                { emoji: "🌐", label: "Diagnóstico de visitantes", desc: "Tu enlace para que alguien sin cuenta mida su nivel, y los resultados que te llegan", href: "informes.html?tema=diagnostico-publico" },
             ] },
-            { title: "Administración", tiles: [
+            { title: "Cobros y formularios", tiles: [
                 { emoji: "💳", label: "Cobros", desc: "Mensualidades, pagos y morosidad de tus estudiantes", href: "cobros.html" },
                 /* Los cupos que compró su academia: los reparte ella entre sus
                    miembros. Sin un paquete de su academia, la página se lo dice. */
@@ -309,6 +300,70 @@
             const inactivos = inacRes.error ? null : Number(inacRes.count || 0);
             inac.textContent = inactivos === null ? "—" : String(inactivos);
             inac.className = "text-2xl font-bold " + (inactivos > 0 ? "text-red-600 dark:text-red-400" : "text-brand-800 dark:text-white");
+        }
+
+        /* «Lo urgente» de quien supervisa, arriba de sus números. Lo cuenta
+           js/pendientes.js (el mismo de admin.html) y la base lo acota a su
+           gente. Los que llevan días sin entrenar NO van acá: ya son el número
+           de al lado, y dos veces el mismo dato hace pensar que son dos cosas.
+           Un conteo que falla dice que no se pudo revisar, nunca cero. */
+        const URGENTE_SUPERVISOR = ["solicitudes", "justificaciones", "informesSinLeer", "seVan", "morosos"];
+        async function cargarUrgenteSupervisor() {
+            const caja = document.getElementById("urgente-panel");
+            if (!caja || !window.Pendientes) return;
+            caja.hidden = false;
+            const conteos = await Pendientes.contarEnLaBase(sb, URGENTE_SUPERVISOR, { yo: profile.id });
+            const defs = URGENTE_SUPERVISOR.map((c) => Pendientes.EN_LA_BASE.find((d) => d.clave === c));
+            const lista = document.getElementById("urgente-panel-lista");
+            lista.replaceChildren();
+            // Lo urgente primero, después lo de vigilar; cada grupo en su orden.
+            const conAlgo = defs.filter((d) => conteos[d.clave] !== 0)
+                .sort((a, b) => (a.nivel === "urgente" ? 0 : 1) - (b.nivel === "urgente" ? 0 : 1));
+            conAlgo.forEach((d) => {
+                const n = conteos[d.clave];
+                const urgente = d.nivel === "urgente" && n !== null;
+                const li = document.createElement("li");
+                li.dataset.pendiente = d.clave;
+                const a = document.createElement("a");
+                a.href = d.href;
+                a.className = "flex items-center gap-3 py-2.5 rounded hover:bg-brand-50 dark:hover:bg-brand-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+                const icono = document.createElement("span");
+                icono.className = "text-xl shrink-0";
+                icono.setAttribute("aria-hidden", "true");
+                icono.textContent = d.emoji;
+                const texto = document.createElement("span");
+                texto.className = "min-w-0 flex-1 text-sm text-brand-800 dark:text-white";
+                // El nivel va escrito, no solo en el color.
+                const nivel = document.createElement("span");
+                nivel.className = "block text-xs font-bold uppercase tracking-wide " + (urgente ? "text-accent-700 dark:text-accent-400" : "text-brand-500 dark:text-brand-300");
+                nivel.textContent = n === null ? "No se pudo revisar" : urgente ? "Urgente" : "A vigilar";
+                const frase = document.createElement("span");
+                frase.className = "block";
+                if (n === null) {
+                    frase.textContent = d.alDia + ": no se pudo contar. Ábrelo para revisarlo.";
+                } else {
+                    const num = document.createElement("strong");
+                    num.textContent = n.toLocaleString("es-CR");
+                    frase.append(num, document.createTextNode(" " + d.titulo(n)));
+                }
+                texto.append(nivel, frase);
+                const ir = document.createElement("span");
+                ir.className = "shrink-0 text-xs font-semibold text-accent-700 dark:text-accent-400";
+                ir.textContent = d.accion + " →";
+                a.append(icono, texto, ir);
+                li.appendChild(a);
+                lista.appendChild(li);
+            });
+            const alDia = defs.filter((d) => conteos[d.clave] === 0).map((d) => d.alDia);
+            const pieAlDia = document.getElementById("urgente-panel-al-dia");
+            pieAlDia.hidden = !alDia.length;
+            pieAlDia.textContent = alDia.length ? "✓ Al día: " + alDia.join(" · ") + "." : "";
+            const urgentes = conAlgo.filter((d) => d.nivel === "urgente" && conteos[d.clave] > 0).length;
+            document.getElementById("urgente-panel-estado").textContent = !conAlgo.length
+                ? "Nada esperando: todo al día."
+                : urgentes
+                    ? (urgentes === 1 ? "1 cosa urgente: alguien está esperando." : urgentes + " cosas urgentes: alguien está esperando.")
+                    : "Nada urgente. Lo de abajo es para tenerlo a la vista.";
         }
 
         /* Quien supervisa y nada más: si además administra, manda su panel de
@@ -762,63 +817,11 @@
                     caja.className = "flex flex-col gap-3";
                     tilesGrid.appendChild(caja);
                 });
-                if (group.plegable) plegar(section, heading, tilesGrid, group.title);
-                else section.append(heading, tilesGrid);
+                section.append(heading, tilesGrid);
                 grid.appendChild(section);
             });
             pintarClaseEnVivo();
             aplicarBusqueda();
-        }
-
-        /* ---------- Un grupo plegable ----------
-           Arranca cerrado y se abre con el botón de al lado del rótulo, que
-           dice lo que hace («Mostrar» u «Ocultar») y si está abierto
-           (aria-expanded). El rótulo sigue siendo solo el título: todo lo que
-           busca un grupo lo busca por ese texto. Lo que eligió se recuerda en
-           el aparato —es una comodidad de quien mira, no un dato—, y sin
-           almacenamiento (ventana privada) simplemente arranca cerrado.
-           Mientras se busca, el buscador lo abre solo si ahí hay algo
-           (aplicarBusqueda): lo plegado no se esconde de la búsqueda. */
-        const CLAVE_PLEGADO = "panel_grupo_abierto_v1:";
-        function plegar(section, heading, tilesGrid, titulo) {
-            let abierto = false;
-            try { abierto = localStorage.getItem(CLAVE_PLEGADO + titulo) === "1"; } catch (e) { /* sin almacenamiento: cerrado */ }
-            tilesGrid.id = "grupo-" + textoBuscable(titulo).trim().replace(/ /g, "-");
-            heading.classList.remove("mb-3");
-            const fila = document.createElement("div");
-            fila.className = "flex flex-wrap items-center gap-x-3 gap-y-1 mb-3";
-            const boton = document.createElement("button");
-            boton.type = "button";
-            boton.className = "border border-brand-200 dark:border-brand-700 hover:border-accent-400 text-brand-700 dark:text-brand-200 px-3 py-1 rounded-lg text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
-            boton.setAttribute("aria-controls", tilesGrid.id);
-            boton.dataset.plegar = "1";
-            const pintar = () => {
-                boton.textContent = abierto ? "Ocultar" : "Mostrar";
-                boton.setAttribute("aria-expanded", abierto ? "true" : "false");
-                boton.setAttribute("aria-label", (abierto ? "Ocultar: " : "Mostrar: ") + titulo);
-                section.dataset.abierto = abierto ? "1" : "";
-                aplicarPlegado(section);
-            };
-            boton.addEventListener("click", () => {
-                abierto = !abierto;
-                try { localStorage.setItem(CLAVE_PLEGADO + titulo, abierto ? "1" : "0"); } catch (e) { /* no se recuerda */ }
-                pintar();
-            });
-            fila.append(heading, boton);
-            section.append(fila, tilesGrid);
-            pintar();
-        }
-        // Cerrado, sus tarjetas no se ven; buscando, se ven las que coinciden.
-        function aplicarPlegado(section) {
-            const grilla = section.querySelector(":scope > .grid");
-            const boton = section.querySelector("[data-plegar]");
-            if (!grilla || !boton) return;
-            const buscando = !!campoBusqueda.value.trim();
-            // `style.display` y no `hidden`: la clase `grid` le gana al
-            // atributo y la grilla seguiría viéndose.
-            grilla.style.display = section.dataset.abierto || buscando ? "" : "none";
-            // Buscando, el botón no pinta nada: los resultados ya están a la vista.
-            boton.style.display = buscando ? "none" : "";
         }
 
         /* ---------- El buscador de accesos ----------
@@ -846,7 +849,8 @@
             "nivel-de-arbitraje.html": "arbitro reglamento fide",
             "arbitraje.html": "arbitro reglamento fide revisar",
             "partidas.html": "pgn partidas guardadas carpetas subir",
-            "informes.html": "progreso estadisticas notas reportes asistencia alumnos informe a la casa encargados padres",
+            "informes.html": "progreso estadisticas notas reportes asistencia alumnos informe a la casa encargados padres sin entrenar inactivos diagnostico nivel cursos mates tactica coordenadas concentracion",
+            "informes.html?tema=diagnostico-publico": "visitantes enlace publico sin cuenta contactos",
             "configuracion.html": "contrasena clave perfil cuenta tema colores tablero piezas avisos notificaciones videollamada voz",
             "admin.html": "cuentas usuarios roles crear cuenta urgente pendientes supervisores coordinadores equipos sin profesor",
             "supervision.html": "profesores informe mensual actividad",
@@ -881,7 +885,10 @@
         }
         function buscableDeTile(t) {
             const destino = String(t.href || "").split("?")[0];
-            return textoBuscable([t.label, t.desc, t.nota || "", CLAVES_BUSQUEDA[destino] || ""].join(" "));
+            // Primero la dirección completa: un tema de Informes con tarjeta
+            // propia no hereda las palabras de toda la página.
+            const claves = CLAVES_BUSQUEDA[t.href] !== undefined ? CLAVES_BUSQUEDA[t.href] : (CLAVES_BUSQUEDA[destino] || "");
+            return textoBuscable([t.label, t.desc, t.nota || "", claves].join(" "));
         }
 
         const campoBusqueda = document.getElementById("buscar-panel-campo");
@@ -1017,7 +1024,6 @@
                 const video = sec.querySelector("#videollamada-wrap");
                 if (video) video.style.display = sesionVisible ? "" : "none";
                 sec.style.display = visibles ? "" : "none";
-                aplicarPlegado(sec);
                 total += visibles;
             });
 
@@ -2399,11 +2405,12 @@
                pinta el suyo, entero, y nada de la clase en vivo ni del
                registro de clases — no da clase. */
             if (esSupervisorSolo()) {
+                document.getElementById("panel-subtitulo").textContent = "Primero lo urgente; después, tus profesores y tus estudiantes.";
                 TILE_GROUPS.splice(0, TILE_GROUPS.length, ...SUPERVISOR_GROUPS);
                 renderTiles();
                 document.getElementById("registro-clases").hidden = true;
                 document.getElementById("progreso-supervisor").hidden = false;
-                await cargarPanelSupervisor();
+                await Promise.all([cargarPanelSupervisor(), cargarUrgenteSupervisor()]);
                 document.getElementById("loading").classList.add("hidden");
                 document.getElementById("app").classList.remove("hidden");
                 if (!document.activeElement || document.activeElement === document.body) {

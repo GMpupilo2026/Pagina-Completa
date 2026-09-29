@@ -4,11 +4,12 @@
    Lo que se rompe acá se rompe callado, así que se mira desde afuera, en un
    navegador de verdad:
 
-   - que al supervisor se le pinte SU panel —el informe de sus estudiantes tema
-     por tema, sus cuentas, cobros y formularios— y NADA de entrenar, jugar o dar
-     clase (un enlace a un ejercicio que se cuela ahí no da ningún error: el
-     panel se ve igual de bien y deja de ser administrativo);
-   - que cada tema lleve a Informes YA filtrado por ese tema;
+   - que al supervisor se le pinte SU panel —sus profesores, el informe de sus
+     estudiantes, sus cuentas, cobros y formularios— y NADA de entrenar, jugar
+     o dar clase (un enlace a un ejercicio que se cuela ahí no da ningún error:
+     el panel se ve igual de bien y deja de ser administrativo);
+   - que arriba vaya «Lo urgente», contado en la base, y que cada destino
+     esté UNA sola vez (antes quince tarjetas abrían informes.html);
    - que el conteo de «sin entrenar» cuente SOLO a sus estudiantes a cargo, y
      no a los compañeros que la RLS de profiles también le deja ver;
    - que el administrador, en «modo estudiante / profesor / supervisor», vea el
@@ -62,12 +63,23 @@ async function pruebaSupervisor(browser) {
     mis_supervisados: ["u-ana", "u-luis"],
     // u-otro es un "compañero" que la RLS le deja ver, pero no está a su cargo.
     informes_inactivos: [{ id: "u-ana" }, { id: "u-otro" }],
-  } };
+    justificaciones_pendientes: 2,
+    cobros_morosos: [],
+    respuestas_satisfaccion: [{ id: "e-1", seguir: "no" }],
+  },
+  solicitudes_academia: [],
+  /* Dos informes mensuales enviados sin leer, uno ya leído, y uno SUYO (quien
+     supervisa también es profesor): ese no cuenta. */
+  informes_profesor: [
+    { id: "i-1", profesor_id: "u-karina", estado: "enviado", leido_at: null },
+    { id: "i-2", profesor_id: "u-luis-p", estado: "enviado", leido_at: null },
+    { id: "i-3", profesor_id: "u-karina", estado: "enviado", leido_at: "2026-09-02T10:00:00Z" },
+    { id: "i-4", profesor_id: "u-sup", estado: "enviado", leido_at: null },
+  ] };
   const { page, ctx, errores } = await panel(browser, [SUP], SUP.id, null, datos);
   await page.waitForFunction(() => document.getElementById("sup-inactivos").textContent !== "—", null, { timeout: 10000 });
   const g = await page.evaluate(LEER);
-  igual("grupos del supervisor", g.grupos, ["Mi academia", "Cómo van tus estudiantes", "Tus profesores",
-                                           "Qué están entrenando, tema por tema", "Administración", "Tu cuenta"]);
+  igual("grupos del supervisor", g.grupos, ["Mi academia", "Tus profesores", "Tus estudiantes", "Cobros y formularios", "Tu cuenta"]);
   igual("«Mi academia» lleva a",
         await page.evaluate(() => [...Array.from(document.querySelectorAll("#tile-grid section"))
           .find((s) => s.querySelector("h2").textContent === "Mi academia")
@@ -75,17 +87,35 @@ async function pruebaSupervisor(browser) {
         ["formularios.html?alta=1", "coordinacion.html", "solicitudes.html", "academias.html"]);
   const repetidos = g.enlaces.filter((h, i) => g.enlaces.indexOf(h) !== i);
   igual("ningún destino dos veces en el panel", repetidos, []);
+  /* Una sola puerta a Informes: el tema se elige adentro. Antes eran quince
+     tarjetas, una por tema. Solo el diagnóstico de visitantes tiene la suya,
+     porque no es mirar a sus estudiantes sino repartir su enlace. */
+  igual("Informes, una sola tarjeta (más el enlace de visitantes)",
+        g.enlaces.filter((h) => h.startsWith("informes.html")), ["informes.html", "informes.html?tema=diagnostico-publico"]);
   igual("rótulo", g.badge, "🧭 Supervisor");
   const colados = g.enlaces.filter((h) => PROHIBIDOS.test(h));
   igual("ningún acceso a entrenar, jugar ni dar clase", colados, []);
-  const temas = await page.evaluate(() => Array.from(document.querySelectorAll("#tile-grid section"))
-    .find((s) => s.querySelector("h2").textContent.startsWith("Qué están"))
-    .querySelectorAll("a[href]").length);
-  const temasBien = await page.evaluate(() => Array.from(document.querySelectorAll("#tile-grid section"))
-    .find((s) => s.querySelector("h2").textContent.startsWith("Qué están"))
-    .querySelectorAll('a[href^="informes.html?tema="]').length);
-  igual("cada tema de entrenamiento abre Informes filtrado", temasBien, temas);
-  await pruebaPlegado(page);
+
+  /* «Lo urgente», arriba de sus números: lo que alguien espera primero, lo
+     de vigilar después, contado en la base. Sus informes propios no cuentan,
+     y los que no entrenan no se repiten (son el número de al lado). */
+  await page.waitForFunction(() => !/Revisando/.test(document.getElementById("urgente-panel-estado").textContent), null, { timeout: 10000 });
+  igual("«Lo urgente» se ve y va antes que sus números",
+        await page.evaluate(() => {
+          const u = document.getElementById("urgente-panel");
+          return u.checkVisibility() && !!(u.compareDocumentPosition(document.getElementById("progreso-supervisor")) & Node.DOCUMENT_POSITION_FOLLOWING);
+        }), true);
+  igual("lo que tiene algo, lo urgente primero y el nivel escrito",
+        await page.evaluate(() => Array.from(document.querySelectorAll("#urgente-panel-lista li")).filter((li) => li.checkVisibility())
+          .map((li) => li.dataset.pendiente + " · " + li.querySelector("a > span:nth-child(2)").innerText.replace(/\s+/g, " ").trim() + " → " + li.querySelector("a").getAttribute("href"))),
+        ["justificaciones · URGENTE 2 justificaciones de ausencia por revisar → justificaciones.html",
+         "informesSinLeer · URGENTE 2 informes mensuales de tus profesores sin leer → supervision.html",
+         "seVan · A VIGILAR 1 alumno dijo este mes que no sigue → satisfaccion.html"]);
+  igual("lo que está en cero se dice", await page.textContent("#urgente-panel-al-dia"), "✓ Al día: Solicitudes de ingreso · Pagos al día.");
+  igual("el resumen lo cuenta", await page.textContent("#urgente-panel-estado"), "2 cosas urgentes: alguien está esperando.");
+  igual("los informes se cuentan en la base, sin los suyos",
+        await page.evaluate(() => window.__consultas.filter((c) => c.tabla === "informes_profesor").map((c) => [c.count, !!c.head, c.eq.estado, c.neq && c.neq.profesor_id])),
+        [[true, true, "enviado", "u-sup"]]);
   igual("«sin entrenar» cuenta solo a los suyos", await page.textContent("#sup-inactivos"), "1");
   igual("estudiantes a cargo (de mi_gente)", await page.textContent("#sup-alumnos"), "12");
   igual("el registro de clases no se le pinta",
@@ -93,31 +123,6 @@ async function pruebaSupervisor(browser) {
   igual("sin franja de modo de vista (no administra)", g.barra, false);
   igual("sin errores en consola", errores, []);
   await ctx.close();
-}
-
-/* «Qué están entrenando» arranca plegado: se ve el rótulo y su botón, no sus
-   tarjetas. Se abre con el botón, el aparato lo recuerda al recargar, y el
-   buscador encuentra sus tarjetas aunque esté cerrado. Se mide lo que se VE. */
-async function pruebaPlegado(page) {
-  const ESTADO = () => {
-    const sec = Array.from(document.querySelectorAll("#tile-grid section"))
-      .find((s) => s.querySelector("h2").textContent.startsWith("Qué están"));
-    const b = sec.querySelector("button[aria-controls]");
-    return { boton: b.checkVisibility() ? b.textContent : null, abierto: b.getAttribute("aria-expanded"),
-             tarjetas: [...sec.querySelectorAll("a[href]")].filter((a) => a.checkVisibility()).length };
-  };
-  igual("«Qué están entrenando» arranca plegado", await page.evaluate(ESTADO), { boton: "Mostrar", abierto: "false", tarjetas: 0 });
-  await page.click("#tile-grid button[aria-controls]");
-  igual("«Mostrar» lo despliega", await page.evaluate(ESTADO), { boton: "Ocultar", abierto: "true", tarjetas: 7 });
-  await page.reload({ waitUntil: "networkidle" });
-  await page.waitForSelector("#tile-grid button[aria-controls]");
-  igual("al recargar sigue desplegado", await page.evaluate(ESTADO), { boton: "Ocultar", abierto: "true", tarjetas: 7 });
-  await page.click("#tile-grid button[aria-controls]");
-  igual("«Ocultar» lo vuelve a plegar", await page.evaluate(ESTADO), { boton: "Mostrar", abierto: "false", tarjetas: 0 });
-  await page.fill("#buscar-panel-campo", "mates");
-  igual("buscando, se ven sus tarjetas que coinciden (y no el botón)", await page.evaluate(ESTADO), { boton: null, abierto: "false", tarjetas: 1 });
-  await page.press("#buscar-panel-campo", "Escape");
-  igual("al borrar la búsqueda, vuelve a quedar plegado", await page.evaluate(ESTADO), { boton: "Mostrar", abierto: "false", tarjetas: 0 });
 }
 
 async function pruebaModosDelAdmin(browser) {

@@ -97,6 +97,7 @@ window.__consultas = [];
     const b = {
       select(_cols, opts) { if (opts && opts.count) anotado.count = true; if (opts && opts.head) anotado.head = true; return b; },
       eq(col, val) { anotado.eq[col] = val; filas2 = filas2.filter((r) => cmp(valor(r, col), val)); return b; },
+      neq(col, val) { anotado.neq = Object.assign(anotado.neq || {}, { [col]: val }); filas2 = filas2.filter((r) => !cmp(valor(r, col), val)); return b; },
       gte(col, val) { anotado.gte = { col: col, val: val }; filas2 = filas2.filter((r) => String(valor(r, col)) >= String(val)); return b; },
       lt(col, val) { anotado.lt = { col: col, val: val }; filas2 = filas2.filter((r) => String(valor(r, col)) < String(val)); return b; },
       is(col, val) { if (val === null) filas2 = filas2.filter((r) => r[col] === null || r[col] === undefined); return b; },
@@ -176,6 +177,7 @@ window.__consultas = [];
     questions: DATOS.questions || [],
     question_answers: DATOS.question_answers || [],
     solicitudes_academia: DATOS.solicitudes_academia || [],
+    informes_profesor: DATOS.informes_profesor || [],
   };
 
   window.sb = {

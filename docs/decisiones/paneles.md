@@ -996,7 +996,7 @@ y coordinadores**, y el panel se reordenó alrededor de eso.
 - **Lo que está en cero no desaparece**: va en «Al día», para que se sepa que
   se revisó. Y **un conteo que falla no se pinta como cero**: sale «No se pudo
   revisar». Un «al día» falso es peor que no decir nada.
-- **Todo se cuenta en la base** (`js/pendientes-admin.js`):
+- **Todo se cuenta en la base** (`js/pendientes.js`):
   `solicitudes_academia` con `head`, `justificaciones_pendientes()`, y
   `cobros_morosos()`, `respuestas_satisfaccion(…, p_solo_se_van)` e
   `informes_inactivos()` con `{ count: "exact", head: true }`. Lo único que se
@@ -1082,6 +1082,56 @@ puerta.**
   porque los diagnósticos de visitantes son contactos para invitar a la
   Academia y se consultan seguido: en el tema `diagnostico` había que bajar a
   buscarlos.
+
+### El panel de quien supervisa, sin caminos repetidos
+
+Lo mismo que en administración, pedido por el dueño para el panel de quien
+supervisa (`SUPERVISOR_GROUPS` y `cargarUrgenteSupervisor()` de
+`js/clases.js`): lo urgente primero y cada destino una sola vez.
+
+- **Arriba va «Lo urgente»**, antes de sus números «A tu cargo». Lo
+  **urgente** es lo que alguien espera: solicitudes sin responder,
+  justificaciones por revisar y **los informes mensuales de sus profesores
+  sin leer** (el pendiente propio de quien supervisa). Lo que hay que
+  **vigilar**: quién dijo este mes en la encuesta que no sigue y los saldos
+  vencidos. Solo sale lo que tiene algo; lo que está en cero va en una línea
+  «✓ Al día: …», y un conteo que falla dice «No se pudo revisar», nunca cero.
+  - **Lo cuenta `js/pendientes.js`, el mismo de `admin.html`** (antes
+    `pendientes-admin.js`; se renombró al usarlo dos paneles). Cada panel
+    pide solo sus claves. **La base acota cada conteo a su gente**: las
+    justificaciones y los cobros por `bajo_mi_coordinacion`, las encuestas por
+    `supervisados_por_mi()`, los informes por la política de
+    `informes_profesor` (el enviado de un profesor que supervisa). Las
+    solicitudes no tienen academia: ve las mismas que en `solicitudes.html`.
+  - **Los informes se cuentan sin los suyos** (`neq("profesor_id", yo)`):
+    quien supervisa también es profesor, y su propio informe enviado lo ve.
+  - **Los que no entrenan no entran en la lista**: ya son el número rojo de
+    «A tu cargo», justo debajo. El mismo dato dos veces hace pensar que son
+    dos problemas.
+- **Una sola puerta a Informes.** Quince tarjetas abrían `informes.html`, cada
+  una con otro `?tema=` (siete de ellas en un grupo plegado), cuando la página
+  ya trae el selector de tema con todos. Ahora es una tarjeta, «Informes de tus
+  estudiantes». La única que conserva su tema es «Diagnóstico de visitantes»:
+  no es mirar a sus estudiantes, es repartir su enlace. Las palabras con que
+  se pedían esos temas («mates», «sin entrenar», «diagnóstico»…) se sumaron a
+  las claves de búsqueda de Informes, así que el buscador del panel las sigue
+  encontrando; las claves ahora se buscan primero por la dirección completa,
+  para que la tarjeta de visitantes no herede las de toda la página.
+- **El grupo plegable se fue, y con él el mecanismo** (`plegar()`,
+  `aplicarPlegado()`): era el único que lo usaba.
+- Tampoco va ya «Ver el informe completo →» en la tarjeta de números (la de
+  quien supervisa y la de quien administra): llevaba al mismo lugar que el
+  número de estudiantes.
+- Los grupos: «Mi academia» (lo de todos los días, primero a pedido del
+  dueño), «Tus profesores», «Tus estudiantes», «Cobros y formularios» y «Tu
+  cuenta». «Cuenta nueva» (`formularios.html?alta=1`) y «Formularios de
+  inscripción» (`formularios.html`) abren la misma página, pero son dos cosas
+  distintas: dar de alta a alguien hoy y armar un formulario para compartir.
+- Lo prueba `pruebaSupervisor` en `verificar-supervisor.js`: los grupos, que
+  ningún destino esté dos veces, que Informes sea una tarjeta, «Lo urgente»
+  antes de los números con su orden, su nivel escrito y su destino, el «al
+  día» y que los informes se cuenten con `head` y sin los suyos. Rompiendo a
+  propósito el `neq` o devolviendo una tarjeta de tema, salta.
 
 ### Las cuentas se ven por GRUPO, no todas de una
 
