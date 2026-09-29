@@ -95,7 +95,7 @@ window.__consultas = [];
     // relacionada; sin resolver el punto, ese filtro no encuentra nunca nada.
     const valor = (fila, col) => String(col).split(".").reduce((o, k) => (o == null ? o : o[k]), fila);
     const b = {
-      select(_cols, opts) { if (opts && opts.count) anotado.count = true; return b; },
+      select(_cols, opts) { if (opts && opts.count) anotado.count = true; if (opts && opts.head) anotado.head = true; return b; },
       eq(col, val) { anotado.eq[col] = val; filas2 = filas2.filter((r) => cmp(valor(r, col), val)); return b; },
       gte(col, val) { anotado.gte = { col: col, val: val }; filas2 = filas2.filter((r) => String(valor(r, col)) >= String(val)); return b; },
       lt(col, val) { anotado.lt = { col: col, val: val }; filas2 = filas2.filter((r) => String(valor(r, col)) < String(val)); return b; },
@@ -175,6 +175,7 @@ window.__consultas = [];
     // Lo que se preguntó en una clase y lo que contestó cada uno («Tu última clase»).
     questions: DATOS.questions || [],
     question_answers: DATOS.question_answers || [],
+    solicitudes_academia: DATOS.solicitudes_academia || [],
   };
 
   window.sb = {
@@ -545,11 +546,38 @@ async function pruebaAdmin(browser) {
   /* Quien administra se encarga de que toda la empresa vaya bien: su panel es
      el suyo, escrito entero en ADMIN_GROUPS, y no el de un profesor recortado. */
   igual("sus grupos, en su orden", grupos.map((g) => g.titulo),
-    ["Cómo va la plataforma", "Cuentas y personas", "Formularios", "Cobros y accesos", "Resultados de las pruebas", "Revisar el contenido", "Tu cuenta"]);
-  /* Todos los formularios juntos, los mismos cuatro de admin.html. */
+    ["Administración", "Supervisión y coordinación", "Formularios", "Cobros y accesos", "Resultados de las pruebas", "Torneos", "Revisar el contenido", "Tu cuenta"]);
+  /* UNA sola puerta para cada cosa: acá están TODAS las páginas de quien
+     administra, y admin.html solo tiene lo que se maneja adentro (lo urgente,
+     las cuentas, supervisores y profesores). Antes admin.html traía una
+     segunda lista de páginas («Herramientas») y este panel repetía «Lo
+     urgente»; lo que solo estaba allá vino para acá. */
+  igual("Supervisión y coordinación, con lo suyo",
+    grupos.find((g) => g.titulo === "Supervisión y coordinación").tiles.map((t) => t.enlace),
+    ["supervision.html", "coordinacion.html", "informes.html", "justificaciones.html", "tablero-academias.html", "reportes.html"]);
+  igual("lo urgente NO se repite acá: está en Administración",
+    await page.evaluate(() => !!document.getElementById("urgente-admin")), false);
   igual("Formularios: todos juntos, con la encuesta de satisfacción",
     grupos.find((g) => g.titulo === "Formularios").tiles.map((t) => t.enlace),
-    ["satisfaccion.html", "encuestas-curso.html", "formularios.html", "solicitudes.html", "inscripciones.html"]);
+    ["satisfaccion.html", "encuestas-curso.html", "formularios.html", "solicitudes.html"]);
+  igual("lo que solo estaba en las Herramientas de admin.html, ahora acá",
+    ["precios.html", "prueba-gratis.html", "admin-jugador.html", "informes.html?tema=arbitraje", "arbitraje.html", "inscripciones.html"]
+      .filter((x) => !grupos.flatMap((g) => g.tiles).some((t) => t.enlace === x)), []);
+  /* Un enlace a una página que no existe no da ningún error: se ve igual de
+     bien y solo falla al apretarlo. Y los que llevan ?tema= dependen de que
+     ese tema exista en el selector de informes.html. */
+  {
+    const fs = require("fs"), path = require("path"), RAIZ = path.join(__dirname, "..");
+    const informes = fs.readFileSync(path.join(RAIZ, "informes.html"), "utf8");
+    const temas = [...informes.matchAll(/<option value="([^"]*)"/g)].map((m) => m[1]);
+    const rotos = grupos.flatMap((g) => g.tiles).map((t) => t.enlace).filter(Boolean).filter((href) => {
+      const [archivo, consulta] = href.split("#")[0].split("?");
+      if (!fs.existsSync(path.join(RAIZ, archivo))) return true;
+      const tema = new URLSearchParams(consulta || "").get("tema");
+      return !!(tema && !temas.includes(tema));
+    });
+    igual("todas las tarjetas llevan a algo que existe", rotos.join(" | ") || "ninguna rota", "ninguna rota");
+  }
   const enlaces = grupos.flatMap((g) => g.tiles).map((t) => t.enlace);
   igual("nada de dar clase: ni sesión en vivo, ni tareas, ni exámenes, ni planes, ni asistencia, ni informe mensual, ni subgrupos, ni archivos, ni juegos, ni torneos",
     ["sesion.html", "tareas.html", "examenes.html", "planes.html", "asistencia.html", "informe-mensual.html",
@@ -571,7 +599,7 @@ async function pruebaAdmin(browser) {
   igual("los que no entrenan se CUENTAN en la base, sin bajarse la lista",
     await page.evaluate(() => window.__consultas.filter((c) => c.tabla === "informes_inactivos").map((c) => [c.count, !!c.head])),
     [[true, true]]);
-  igual("el saludo dice para qué es el panel", await page.textContent("#panel-subtitulo"), "Desde aquí ves cómo va toda la plataforma.");
+  igual("el saludo dice para qué es el panel y dónde está lo demás", await page.textContent("#panel-subtitulo"), "Todas las páginas de la plataforma. Lo urgente y las cuentas están en Administración.");
   igual("sin errores en la página", errores, []);
   await ctx.close();
 
