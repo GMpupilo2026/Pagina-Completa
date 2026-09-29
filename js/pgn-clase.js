@@ -195,5 +195,7 @@ window.PgnClase = (function () {
         return out;
     }
 
-    return { armar, contar, caminos, clave, comentarioDe, signoDe, nombreDelSigno, SIGNOS };
+    // `arbol` lo usa también «Repasar mis clases» (js/repasar-clases.js) para
+    // recorrer la clase con sus variantes: el mismo árbol del que sale el PGN.
+    return { armar, contar, caminos, clave, comentarioDe, signoDe, nombreDelSigno, arbol, SIGNOS, INICIAL };
 })();

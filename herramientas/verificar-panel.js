@@ -331,7 +331,7 @@ async function pruebaAlumna(browser) {
      lectura. */
   igual("Aprender: lo que uno hace por su cuenta, ya sin Tareas",
     grupo(grupos, "Aprender").tiles.map((t) => t.enlace),
-    ["entreno/index.html", "entreno/estudio.html", "cursos/academia/index.html",
+    ["entreno/index.html", "entreno/estudio.html", "repasar-clases.html", "cursos/academia/index.html",
      "articulos.html"]);
   /* El diagnóstico de nivel se le ofrece UNA vez, en «Lo que te pone tu
      profesor». El de arbitraje sigue siendo SOLO de administración: su banco

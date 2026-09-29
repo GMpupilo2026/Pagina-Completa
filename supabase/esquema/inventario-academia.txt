@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20260928232013
+# al-dia-con: 20260928235055
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -759,8 +759,10 @@ columna  salas_torneo.updated_at  timestamp with time zone
 columna  salas_torneo.updated_by  uuid
 columna  salas_torneo.video_url  text
 columna  salas_torneo.visible  boolean
+columna  saved_games.class_session_id  uuid
 columna  saved_games.created_at  timestamp with time zone
 columna  saved_games.created_by  uuid
+columna  saved_games.datos  jsonb
 columna  saved_games.fen_final  text
 columna  saved_games.id  uuid
 columna  saved_games.move_count  integer
@@ -1358,8 +1360,10 @@ politica  salas_torneo  salas_torneo_crear  INSERT
 politica  salas_torneo  salas_torneo_editar  UPDATE
 politica  salas_torneo  salas_torneo_ver  SELECT
 politica  saved_games  saved_games_delete  DELETE
+politica  saved_games  saved_games_exige_acceso_sel  SELECT  restrictiva
 politica  saved_games  saved_games_insert  INSERT
 politica  saved_games  saved_games_select  SELECT
+politica  saved_games  saved_games_select_asistentes  SELECT
 politica  solicitudes_academia  solicitudes_academia_select  SELECT
 politica  solicitudes_academia  solicitudes_academia_update  UPDATE
 politica  subgrupo_alumnos  subgrupo_alumnos_delete  DELETE
@@ -1452,6 +1456,7 @@ trigger  question_answers  protect_answer_grading_trigger
 trigger  question_answers  respuesta_calificar_y_plazo_trigger
 trigger  questions  questions_ligar_a_la_clase
 trigger  salas_torneo  salas_torneo_sello
+trigger  saved_games  saved_games_ligar_a_la_clase
 trigger  tarea_items  proteger_tarea_items_alumno
 trigger  tareas  tareas_avisa_push
 trigger  tareas  tareas_protege_alumno
@@ -1669,6 +1674,7 @@ indice  recordatorios_informe  recordatorios_informe_pkey
 indice  salas_torneo  salas_torneo_clave_key
 indice  salas_torneo  salas_torneo_pkey
 indice  salas_torneo  salas_torneo_updated_by_fk
+indice  saved_games  saved_games_class_session_idx
 indice  saved_games  saved_games_created_by_fk
 indice  saved_games  saved_games_pkey
 indice  solicitudes_academia  solicitudes_academia_pkey
