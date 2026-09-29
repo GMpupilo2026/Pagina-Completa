@@ -241,6 +241,10 @@ function terminar() {
     if (e > (Number(estrellas[nivelActual]) || 0)) { estrellas[nivelActual] = e; localStorage.setItem(CLAVE_ESTRELLAS, JSON.stringify(estrellas)); }
     if (record) { mejor[nivelActual] = partida.jugadas; localStorage.setItem(CLAVE_MEJOR, JSON.stringify(mejor)); }
   } catch (err) {}
+  // Cada partida terminada suma a la meta del día, la racha, los logros y las
+  // tareas (training_progress). Sin puzzle_id: el tesoro se esconde al azar,
+  // así que cada partida es nueva y cuenta.
+  if (window.EntrenoProgress) EntrenoProgress.log("sonar", { nivel: nivelActual, jugadas: partida.jugadas, estrellas: e, con_pista: !!partida.ayudas });
   pintar();
   const siguiente = S.nivel(nivelActual + 1);
   avisar("¡Tesoro! " + (partida.recogidos.length > 1 ? "Recogiste los dos" : "Lo encontraste en " + hablada(partida.pos)) +
