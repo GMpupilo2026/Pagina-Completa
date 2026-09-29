@@ -245,6 +245,26 @@ function diagnosticoCon(finales, tactica) {
   d.areas.tactica = { peso: 20, total: 7, nosabe: 0, aciertos: 3, logrado: Math.round(tactica * 0.2) };
   return d;
 }
+/* «Tus propios errores» deja sus ejercicios en training_state, como los guarda
+   js/progreso-usuario.js ({ raw: "<json>" }). Seis de Ana (para el «Ver
+   todos»), uno con una «jugada» que es HTML (lo escribió su navegador: no se
+   cree ni se pinta), dos ya resueltos, y la fila de otra alumna, que el doble
+   filtra de verdad y no se puede colar. */
+function errorDeAna(i, nivel, extra) {
+  return Object.assign({ id: "juego-g" + i + "-" + (10 + i), nivel, fen: "8/8/8/8/8/8/8/K6k w - - 0 1", jugada: "Nxf7",
+    buenas: ["Bxf7+", "O-O"], mejor: "Bxf7+", antes: 13, despues: -455, fecha: "2026-09-2" + i + "T15:00:00Z", origen: "juego",
+    resumen: "Partida del 2" + i + " sept · jugada " + (5 + i) }, extra || {});
+}
+const ERRORES_ANA = {};
+[errorDeAna(1, 1), errorDeAna(2, 2), errorDeAna(3, 1), errorDeAna(4, 1), errorDeAna(5, 2), errorDeAna(6, 1),
+ errorDeAna(7, 1, { id: "malo", jugada: "<img src=x onerror=alert(1)>" })].forEach((x) => { ERRORES_ANA[x.id] = x; });
+const ESTADO_ERRORES = [
+  { student_id: "a-1", key: "errores_propios_v1", value: { raw: JSON.stringify(ERRORES_ANA) } },
+  { student_id: "a-1", key: "errores_analizadas_v1", value: { raw: JSON.stringify({ "juego:g1": "x", "juego:g2": "x", "practica:p1": "x", "juego:g3": "x" }) } },
+  { student_id: "a-1", key: "tipos_estrellas_v1", value: { raw: JSON.stringify({ "errores:juego-g6-16": 3, "errores:juego-g5-15": 2, "detective:x": 3 }) } },
+  { student_id: "a-2", key: "errores_propios_v1", value: { raw: JSON.stringify({ z: errorDeAna(9, 1, { id: "de-bea", resumen: "De Bea" }) }) } },
+];
+
 const DIAGNOSTICOS = [
   { student_id: "a-1", activity: "diagnostico", created_at: "2026-09-18T12:00:00Z", detail: diagnosticoCon(70, 40) },
   { student_id: "a-1", activity: "diagnostico", created_at: "2026-06-02T12:00:00Z", detail: diagnosticoCon(30, 60) },
@@ -366,6 +386,7 @@ async function pruebaProfesor(browser) {
       training_plans: [], diagnosticos_publicos: [], arbitrajes_publicos: arbitrajes,
       question_answers: RESPUESTAS,
       training_progress: DIAGNOSTICOS,
+      training_state: ESTADO_ERRORES,
       encargados: [{ id: "enc-1", student_id: "a-1", nombre: "Mamá de Ana", email: "mama@x.cr",
                      frecuencia: "semanal", activo: true, ultimo_envio_at: "2026-09-08T12:00:00Z", creado_por: "otra" },
                    { id: "enc-2", student_id: "a-1", nombre: "Tía de Ana", email: "tia@x.cr", frecuencia: "mensual",
@@ -621,6 +642,32 @@ async function pruebaProfesor(browser) {
      window.__consultas.filter((c) => c === "from:tareas" || c === "from:examenes" || c === "from:tarea_items").length].join(",")),
     "1,0");
 
+  console.log("-- Errores de sus partidas");
+  await page.waitForFunction(() => document.querySelector("#errores-body ul"), null, { timeout: 8000 }).catch(() => {});
+  igual("el bloque se ve", await page.evaluate(() => document.getElementById("errores-report").checkVisibility()), "true");
+  igual("el resumen cuenta lo suyo y nada más", await page.evaluate(() =>
+    document.querySelector("#errores-body > p").textContent.trim()),
+    "4 partidas revisadas · 6 errores (4 en que regaló, 2 en que se le escapó la ventaja) · 2 ya resueltos.");
+  igual("se ven los 5 más recientes", await page.evaluate(() =>
+    [...document.querySelectorAll("#errores-body li")].filter((li) => li.checkVisibility()).length), 5);
+  igual("el primero, con la jugada en castellano y las buenas", await page.evaluate(() =>
+    document.querySelector("#errores-body li").innerText.replace(/\s+/g, " ").trim()),
+    "Partida del 26 sept · jugada 11 — regaló Jugó Cxf7 (+0,1 → −4,5). Lo bueno: Axf7+ o 0-0. ✓ Ya lo resolvió ★★★");
+  igual("lo sin resolver lo dice escrito, no solo en color", await page.evaluate(() =>
+    document.querySelectorAll("#errores-body li")[2].innerText.includes("✗ Todavía no lo resolvió")), "true");
+  await page.click("#errores-body button");
+  igual("«Ver todos» abre el resto y dice que está abierto", await page.evaluate(() =>
+    [[...document.querySelectorAll("#errores-body li")].filter((li) => li.checkVisibility()).length,
+     document.querySelector("#errores-body button").getAttribute("aria-expanded")].join()), "6,true");
+  igual("lo que no tiene forma de ejercicio no se pinta (ni se ejecuta)", await page.evaluate(() =>
+    [document.getElementById("errores-body").innerHTML.includes("onerror"), !!document.querySelector("#errores-body img")].join()), "false,false");
+  igual("lo de otra alumna no se cuela", await page.evaluate(() => document.getElementById("errores-body").textContent.includes("De Bea")), "false");
+  await (await page.$("#errores-report")).screenshot({ path: "/tmp/informes-errores.png" }).catch(() => {});
+  igual("lo pide acotado a ESE alumno y a sus tres claves", await page.evaluate(() => {
+    const c = window.__consultas.find((x) => x.etiqueta === "from:training_state");
+    return c ? JSON.stringify(c.donde) : null;
+  }), JSON.stringify([["student_id", "a-1"]]));
+
   console.log("-- Trofeos e insignias");
   await page.waitForFunction(() => document.querySelector("#premios-body [data-insignias]"), null, { timeout: 8000 });
   igual("el bloque de premios se ve", await page.evaluate(() => document.getElementById("premios-report").checkVisibility()), "true");
@@ -819,9 +866,13 @@ async function pruebaAlumno(browser) {
     return p ? p.textContent.trim() : null;
   }), "Tienes 2 entregas vencidas sin hacer.");
   // Lo que este cambio vino a quitar: ninguna de las tablas de actividad se baja
-  // ya desde la página, ni entera ni por alumno.
-  igual("no pide ninguna tabla de actividad", await page.evaluate(() =>
-    window.__consultas.filter((c) => /class_presence_log|platform_activity_log|training_progress|training_state|class_attendance|class_sessions|saved_games/.test(c)).length), 0);
+  // entera desde la página. Pedir lo de UN alumno sí se puede (la comparación de
+  // diagnósticos, los errores de sus partidas): va acotado por student_id.
+  // (Antes esta regla se probaba contra el objeto de la consulta y no contra su
+  // etiqueta: "[object Object]" no calzaba nunca y daba 0 pasara lo que pasara.)
+  igual("no pide ninguna tabla de actividad sin acotarla a un alumno", await page.evaluate(() =>
+    window.__consultas.filter((c) => /class_presence_log|platform_activity_log|training_progress|training_state|class_attendance|class_sessions|saved_games/.test(c.etiqueta)
+      && !c.donde.some(([col]) => col === "student_id")).length), 0);
 
   errores.forEach((e) => { console.log("  ✗ error de la página: " + e); fallos += 1; });
   await page.close();
