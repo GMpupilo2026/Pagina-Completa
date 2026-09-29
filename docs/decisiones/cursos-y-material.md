@@ -114,6 +114,18 @@ posición de Lucena del curso "Estrategia en el final" tenía el rey negro
 demasiado cerca y la técnica del puente no ganaba, aunque todas las jugadas
 fueran legales.
 
+### «Marcar lección como estudiada» nunca guardó nada
+
+`curso-academia.js` guarda cada lección estudiada en `training_progress` con
+`activity = 'curso'`, pero `'curso'` no estaba en
+`training_progress_activity_check`: la base rechazaba cada fila y el alumno
+veía «No se pudo guardar el avance. Revisa tu conexión…», que culpaba a la red.
+No había ni una fila de `'curso'` en la base. Se agregó en
+`20260929213024_training_progress_curso.sql`, y `verificar-finales.js` («La base
+acepta cada actividad que se registra») ahora mira también los `insert`
+directos a `training_progress`, no solo `EntrenoProgress.log()`: fue por ahí que
+se escapó.
+
 ### Los cursos, recorridos con lector de pantalla
 
 `js/curso-adaptado.js` retoca el fragmento del curso después de que
