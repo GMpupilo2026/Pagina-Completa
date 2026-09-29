@@ -145,6 +145,9 @@
                 { emoji: "📊", label: "Resumen general", desc: "Todos tus estudiantes a cargo, uno por fila, con su tiempo, asistencia y nivel", href: TEMA("") },
                 { emoji: "😴", label: "Sin entrenar", desc: "Quién lleva 4 días o más sin hacer nada en la plataforma", href: TEMA("inactivos") },
                 { emoji: "🏫", label: "Asistencia y tiempo", desc: "Clases a las que fue y cuánto tiempo pasó en la plataforma", href: TEMA("asistencia") },
+                /* Por qué faltó: lo que mandaron cuando no llegaron a clase,
+                   con sus documentos, para contestarlo. */
+                { emoji: "🩺", label: "Justificaciones de ausencia", desc: "Por qué faltó cada uno a clase, con sus documentos, para aceptarla o no", href: "justificaciones.html" },
                 { emoji: "🚩", label: "Preguntas en clase", desc: "Cómo contestan cuando el profesor pregunta en la clase en vivo", href: TEMA("asignaciones") },
                 { emoji: "🧭", label: "Diagnóstico de nivel", desc: "El nivel medido de cada uno y dónde está floja la clase", href: TEMA("diagnostico") },
                 { emoji: "🏛️", label: "Cursos", desc: "Qué temas de cada curso ya estudió", href: TEMA("cursos") },
@@ -205,6 +208,7 @@
         const ADMIN_GROUPS = [
             { title: "Cómo va la plataforma", tiles: [
                 { emoji: "📊", label: "Informes", desc: "El progreso de todos los alumnos, tema por tema, y los informes a la casa", href: "informes.html" },
+                { emoji: "🩺", label: "Justificaciones de ausencia", desc: "Por qué faltó cada alumno a clase, con sus documentos", href: "justificaciones.html" },
                 { emoji: "🧑‍🏫", label: "Supervisión de profesores", desc: "Qué hizo cada profesor en el mes —clases, tareas, exámenes— y su informe mensual", href: "supervision.html" },
                 { emoji: "📈", label: "Tablero por academia", desc: "Clases, alumnos, informes, gasto de IA y cobros de cada academia", href: "tablero-academias.html" },
                 { emoji: "📄", label: "Reportes de actividades", desc: "El informe de lo que pasó en clase en un periodo, en Word y PDF", href: "reportes.html" },
@@ -744,6 +748,7 @@
             "tablero-academias.html": "cifras numeros del mes",
             "planes.html": "planificar preparar clase posiciones",
             "asistencia.html": "pasar lista presencial aula",
+            "justificaciones.html": "justificar ausencia falta faltas falte excusa constancia medica dictamen incapacidad permiso",
             "informe-mensual.html": "informe del mes supervision",
             "subgrupos.html": "listas grupos de alumnos",
             "guia-del-profesor-accesible.html": "ayuda manual como se hace",
@@ -2131,6 +2136,10 @@
                        informe que llega a la casa y en el reporte de
                        actividades. */
                     { emoji: "✅", label: "Asistencia presencial", desc: "Pasa lista de la clase que diste en el aula y anota qué se trabajó", href: "asistencia.html" },
+                    /* El otro lado de la lista: por qué no llegó quien faltó.
+                       Las manda el alumno desde su panel y le llegan a sus
+                       profesores, a su coordinación y a su supervisión. */
+                    { emoji: "🩺", label: "Justificaciones de ausencia", desc: "Por qué faltaron tus alumnos, con sus documentos: acéptala o no y le llega la respuesta", href: "justificaciones.html" },
                     /* El informe del mes para la supervisión. Los números se llenan
                        solos con lo que pasó en la plataforma; el profesor escribe
                        lo que los números no dicen. */
@@ -2189,6 +2198,10 @@
                calificar— y la base vuelve a comprobar que sea SU profesor. */
             if (!isTeacher && profile.role === "alumno") {
                 TILE_GROUPS.find((g) => g.title === "Tu cuenta").tiles.push(
+                    /* Si no pudo llegar a clase, lo cuenta aquí —con un texto,
+                       un documento o los dos— y le llega a sus profesores, a
+                       la coordinación y a la supervisión. */
+                    { emoji: "🩺", label: "Justificar una ausencia", desc: "¿No pudiste llegar a clase? Cuenta por qué o adjunta la constancia, y le llega a tus profesores", href: "justificaciones.html" },
                     { emoji: "⭐", label: "¿Cómo van tus clases?", desc: "Una encuesta corta sobre tu profesor: la lee la Academia, no tu profesor", href: "encuesta-profesor.html" }
                 );
             }
