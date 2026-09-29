@@ -29,6 +29,8 @@ let partidas = [];
 let actual = null;        // { partida, raiz, nodos: [], comentarios, sinDatos }
 let nodo = null;          // el que se está mirando (null = la posición de arranque)
 let orientacion = 'w';
+let yoId = null;
+let preguntas = [];       // las de la clase abierta, con su nodo (o null si no están en la partida)
 
 /* ---------------- La lista ---------------- */
 function fechaCR(iso){
@@ -39,7 +41,7 @@ async function cargarLista(){
   const lista = document.getElementById('lista-clases');
   const vacio = document.getElementById('lista-vacia');
   const { data, error } = await sb.from('saved_games')
-    .select('id, title, created_at, move_count, pgn, datos, class_session_id, class_sessions(title, started_at)')
+    .select('id, title, created_at, move_count, pgn, datos, class_session_id, created_by, class_sessions(title, started_at, para_ausentes)')
     .not('class_session_id', 'is', null)
     .order('created_at', { ascending: false })
     .range(0, 199);
@@ -49,6 +51,16 @@ async function cargarLista(){
     return;
   }
   partidas = data || [];
+  /* Las que el profe compartió con los que faltaron (class_sessions.para_ausentes)
+     le llegan también a quien no fue: se dice, para que sepa que es la que se
+     perdió. Su propia asistencia la lee de la base. */
+  const compartidas = partidas.filter((p) => p.class_sessions && p.class_sessions.para_ausentes && p.created_by !== yoId);
+  let fue = new Set();
+  if (compartidas.length && yoId) {
+    const { data: asist } = await sb.from('class_attendance').select('session_id')
+      .eq('student_id', yoId).in('session_id', compartidas.map((p) => p.class_session_id));
+    fue = new Set((asist || []).map((a) => a.session_id));
+  }
   lista.innerHTML = '';
   vacio.hidden = partidas.length > 0;
   partidas.forEach((p) => {
@@ -64,7 +76,8 @@ async function cargarLista(){
     const d = document.createElement('span');
     d.className = 'block text-xs text-brand-500 dark:text-brand-300';
     d.textContent = `${fechaCR(cs.started_at || p.created_at)} · ${p.move_count} ${p.move_count === 1 ? 'jugada' : 'jugadas'}`
-      + (p.title && cs.title && p.title !== cs.title ? ` · ${p.title}` : '');
+      + (p.title && cs.title && p.title !== cs.title ? ` · ${p.title}` : '')
+      + (compartidas.includes(p) && !fue.has(p.class_session_id) ? ' · 📤 Te la perdiste: tu profe la compartió' : '');
     btn.append(t, d);
     btn.addEventListener('click', () => abrir(p));
     li.appendChild(btn);
@@ -119,8 +132,116 @@ function abrir(p){
   document.getElementById('visor').hidden = false;
   document.querySelectorAll('#lista-clases button').forEach((b) => b.setAttribute('aria-current', b.dataset.id === p.id ? 'true' : 'false'));
   pintarJugadas();
+  preguntas = [];
+  document.getElementById('visor-preguntas').hidden = true;
   mirar(null);
   document.getElementById('visor-titulo').focus();
+  cargarPreguntas(p);
+}
+
+/* ---------------- Las preguntas de la clase ----------------
+   Las que hizo el profe en ESA clase (questions.class_session_id), en el
+   lugar de la partida donde se hicieron si esa posición está en ella. La
+   respuesta del motor la da la base solo de preguntas ya cerradas
+   (question_engine_answers_select_alumno): se muestra cuando el alumno la
+   pide, después de pensarla. Lo que contestó él en clase, si estuvo. */
+function clavePos(fen){ return String(fen || '').split(' ').slice(0, 4).join(' '); }
+async function cargarPreguntas(p){
+  const pedida = p.id;
+  const { data: qs, error } = await sb.from('questions').select('id, fen, prompt, tipo, opciones, closed_at, created_at')
+    .eq('class_session_id', p.class_session_id).order('created_at', { ascending: true });
+  if (error || !actual || actual.partida.id !== pedida) return;
+  const lista = (qs || []).filter((q) => q.fen);
+  if (!lista.length) return;
+  const ids = lista.map((q) => q.id);
+  const [{ data: motor }, { data: mias }] = await Promise.all([
+    sb.from('question_engine_answers').select('question_id, answer').in('question_id', ids),
+    yoId ? sb.from('question_answers').select('question_id, moves, opcion, is_correct').eq('student_id', yoId).in('question_id', ids)
+         : Promise.resolve({ data: [] }),
+  ]);
+  if (!actual || actual.partida.id !== pedida) return;
+  const porFen = new Map();
+  porFen.set(clavePos(actual.raiz.fen), null);
+  actual.nodos.forEach((n) => { if (!porFen.has(clavePos(n.fen))) porFen.set(clavePos(n.fen), n); });
+  preguntas = lista.map((q) => ({
+    q,
+    enPartida: porFen.has(clavePos(q.fen)),
+    nodo: porFen.get(clavePos(q.fen)) || null,
+    motor: ((motor || []).find((m) => m.question_id === q.id) || {}).answer || null,
+    mia: (mias || []).find((a) => a.question_id === q.id) || null,
+  }));
+  pintarPreguntas();
+  mirar(nodo);
+}
+
+function textoDePregunta(q){ return q.prompt || '¿Qué jugarías?'; }
+
+function pintarPreguntas(){
+  const caja = document.getElementById('visor-preguntas');
+  const ol = document.getElementById('visor-preguntas-lista');
+  ol.innerHTML = '';
+  preguntas.forEach((x, i) => {
+    const li = document.createElement('li');
+    li.className = 'rounded-xl px-4 py-3 bg-white dark:bg-brand-900 shadow-sm';
+    li.dataset.pregunta = x.q.id;
+    const t = document.createElement('p');
+    t.className = 'font-semibold text-brand-800 dark:text-white';
+    t.textContent = (i + 1) + '. ' + textoDePregunta(x.q);   // lo escribió una persona
+    li.appendChild(t);
+    const ir = document.createElement('button');
+    ir.type = 'button';
+    ir.className = 'bctrl mt-1';
+    ir.textContent = x.enPartida ? (x.nodo ? 'Ir a la posición (después de ' + nombreDe(x.nodo) + ')' : 'Ir a la posición (la de arranque)') : 'Ver la posición';
+    ir.addEventListener('click', () => {
+      if (x.enPartida) mirar(x.nodo);
+      else mirarPosicion(x.q.fen, 'Posición de la pregunta ' + (i + 1));
+    });
+    li.appendChild(ir);
+    if (x.mia) {
+      const m = document.createElement('p');
+      m.className = 'text-xs text-brand-600 dark:text-brand-300 mt-1';
+      const dicho = x.q.tipo === 'opciones' && Array.isArray(x.q.opciones)
+        ? (x.q.opciones[x.mia.opcion] != null ? String(x.q.opciones[x.mia.opcion]) : '—')
+        : ((x.mia.moves || []).join(' ') || '—');
+      m.textContent = 'Tu respuesta en clase: ' + dicho
+        + (x.mia.is_correct === true ? ' · ✅ correcta' : x.mia.is_correct === false ? ' · ❌ a revisar' : '');
+      li.appendChild(m);
+    }
+    if (x.motor && Array.isArray(x.motor.moves) && x.motor.moves.length) {
+      const ver = document.createElement('button');
+      ver.type = 'button';
+      ver.className = 'bctrl mt-1';
+      ver.textContent = 'Ver la respuesta del motor';
+      ver.setAttribute('aria-expanded', 'false');
+      const r = document.createElement('p');
+      r.className = 'text-sm text-brand-800 dark:text-brand-100 mt-1';
+      r.hidden = true;
+      r.textContent = 'El motor juega: ' + x.motor.moves.join(' ');
+      ver.addEventListener('click', () => {
+        r.hidden = !r.hidden;
+        ver.setAttribute('aria-expanded', r.hidden ? 'false' : 'true');
+        ver.textContent = r.hidden ? 'Ver la respuesta del motor' : 'Ocultar la respuesta';
+      });
+      li.append(ver, r);
+    }
+    ol.appendChild(li);
+  });
+  caja.hidden = !preguntas.length;
+}
+
+// Una posición que no está en la partida (la pregunta salió de Táctica, por ejemplo).
+function mirarPosicion(fen, texto){
+  pintarTablero(fen, null);
+  document.getElementById('visor-comentario').hidden = true;
+  document.getElementById('visor-estado').textContent = texto;
+  pintarAvisoDePregunta(fen);
+}
+
+function pintarAvisoDePregunta(fen){
+  const aviso = document.getElementById('visor-pregunta');
+  const x = preguntas.find((y) => clavePos(y.q.fen) === clavePos(fen));
+  aviso.hidden = !x;
+  aviso.textContent = x ? '❓ Acá tu profe preguntó: «' + textoDePregunta(x.q) + '». Piénsalo antes de seguir; la respuesta está abajo, en «Las preguntas de la clase».' : '';
 }
 
 /* Número de jugada de un camino, contando desde el arranque («30… h6»). */
@@ -224,6 +345,7 @@ function mirar(n){
   caja.hidden = !c;
   const estado = document.getElementById('visor-estado');
   estado.textContent = n ? `Jugada ${nombreDe(n)}${n.enVariante ? ' (variante)' : ''}` : 'Posición de arranque';
+  pintarAvisoDePregunta(fen);
   if (window.BlindNotation) BlindNotation.speak(estado.textContent + (c ? '. ' + caja.textContent : ''));
 }
 function anterior(){ if (nodo) mirar(nodo.padre); }
@@ -252,7 +374,7 @@ document.addEventListener('keydown', (e) => {
 /* ---------------- Arranque ---------------- */
 async function requireLoginThenGate(){
   let hay = false;
-  try { const { data } = await sb.auth.getSession(); hay = !!(data && data.session); } catch (e) { hay = false; }
+  try { const { data } = await sb.auth.getSession(); hay = !!(data && data.session); yoId = hay ? data.session.user.id : null; } catch (e) { hay = false; }
   if (!hay) {
     gateChecking.textContent = 'Necesitas iniciar sesión para repasar tus clases. Redirigiendo a iniciar sesión…';
     window.location.href = 'login.html?next=' + encodeURIComponent(NEXT_PATH);

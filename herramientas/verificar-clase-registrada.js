@@ -97,7 +97,7 @@ window.__deletes = [];
       insert(fila) {
         window.__inserts.push({ tabla: tabla, fila: fila });
         nuevas += 1;
-        pend = Object.assign({ id: "sesion-" + nuevas, started_at: new Date().toISOString(), ended_at: null }, fila);
+        pend = Object.assign({ id: "sesion-" + nuevas, started_at: new Date().toISOString(), created_at: new Date().toISOString(), ended_at: null }, fila);
         // Como ligar_a_la_clase_abierta: la pregunta nueva queda en la clase abierta.
         if (tabla === "questions" && !pend.class_session_id) {
           const abierta = SESIONES.find((c) => !c.ended_at);

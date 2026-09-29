@@ -1463,6 +1463,7 @@
                 ended_at: new Date().toISOString(),
                 title: titulo || null,
                 notes: notas || null,
+                para_ausentes: document.getElementById("clase-para-ausentes").checked,
             }).eq("id", currentOpenSessionId).select();
             btn.disabled = false;
             if (error) { setStatus("No se pudo cerrar la clase: " + error.message); return; }
@@ -1475,12 +1476,15 @@
             }
             const cerrada = currentOpenSessionId;
             currentOpenSessionId = null;
+            const paraAusentes = document.getElementById("clase-para-ausentes").checked;
             document.getElementById("clase-titulo").value = "";
             document.getElementById("clase-notas").value = "";
+            document.getElementById("clase-para-ausentes").checked = false;
             pintarEstadoDeClase();
             setStatus("✅ Clase cerrada y guardada en el registro"
                 + (titulo ? ' como "' + titulo + '"' : "") + "."
-                + (guardada ? " La partida de la clase quedó para que tus alumnos la repasen." : ""));
+                + (guardada ? " La partida de la clase quedó para que tus alumnos la repasen"
+                    + (paraAusentes ? ", también los que faltaron." : ".") : ""));
             // El paso siguiente de una clase es el repaso: la tarea ya viene con
             // los que asistieron marcados (tareas.html?clase=, solo el id).
             const despues = document.getElementById("clase-despues");
@@ -2419,7 +2423,11 @@
            entero cada vez: son pocas notas (las últimas cinco) y así no hay que
            acordarse de limpiar lo del alumno anterior — que es justo el descuido
            que dejaría al profesor escribiendo sobre quien no era. */
-        function abrirNotasEnClase(studentId, nombre) {
+        /* `posicion` ({fen, texto}) cuando se abre desde el tablero de ESE
+           alumno (su respuesta, su práctica): esa posición va marcada. Si no,
+           se ofrece la del tablero de la clase, sin marcar. La nota queda en la
+           clase abierta (notas_alumno.class_session_id). */
+        function abrirNotasEnClase(studentId, nombre, posicion) {
             if (!isTeacher) return;
             const caja = document.getElementById("notas-en-clase");
             document.getElementById("notas-en-clase-titulo").textContent = "📝 Bitácora de " + nombre;
@@ -2429,7 +2437,23 @@
                 alumnoId: studentId,
                 profesorId: profile.id,
                 compacto: true,
+                enClase: {
+                    claseId: () => currentOpenSessionId,
+                    fen: () => (posicion ? posicion.fen : board.fen()),
+                    conPosicion: !!posicion,
+                    textoPosicion: posicion ? posicion.texto : "Con la posición del tablero de la clase",
+                },
             });
+        }
+
+        // Anotar desde donde se está mirando: se abre su bitácora con esa posición.
+        function anotarDesde(studentId, nombre, posicion) {
+            activateTeacherTab("alumnos");
+            abrirNotasEnClase(studentId, nombre, posicion);
+            const caja = document.getElementById("notas-en-clase");
+            caja.scrollIntoView({ block: "nearest" });
+            const t = caja.querySelector("textarea");
+            if (t) t.focus();
         }
 
         document.getElementById("notas-en-clase-cerrar").addEventListener("click", () => {
@@ -3569,6 +3593,9 @@
             document.getElementById("elegido-casi-btn").addEventListener("click", () => terminarElegido("casi"));
             document.getElementById("elegido-listo-btn").addEventListener("click", () => terminarElegido(null));
             document.getElementById("elegido-preguntar-btn").addEventListener("click", preguntarleAlElegido);
+            document.getElementById("elegido-anotar-btn").addEventListener("click", () => {
+                if (elegidoActual) anotarDesde(elegidoActual.id, nombreDeConectado(elegidoActual.id));
+            });
             document.getElementById("elegido-insignia-btn").addEventListener("click", () => {
                 if (!elegidoActual) return;
                 abrirTrofeosEnClase(elegidoActual.id, nombreDeConectado(elegidoActual.id));
@@ -3941,7 +3968,8 @@
                         '<button type="button" data-nota="mal" class="flex-1 text-xs font-semibold px-2 py-1 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors"><span aria-hidden="true">❌ </span>A revisar</button>' +
                     "</div>" +
                     // Pasarla al tablero de todos, como una variante: la partida no se toca.
-                    '<button type="button" class="respuesta-mini-mostrar hidden mt-1.5 w-full text-xs font-semibold px-2 py-1.5 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors"><span aria-hidden="true">📺 </span>Mostrar a la clase</button>';
+                    '<button type="button" class="respuesta-mini-mostrar hidden mt-1.5 w-full text-xs font-semibold px-2 py-1.5 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors"><span aria-hidden="true">📺 </span>Mostrar a la clase</button>' +
+                    '<button type="button" class="respuesta-mini-anotar mt-1.5 w-full text-xs font-semibold px-2 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors"><span aria-hidden="true">📝 </span>Anotar en su bitácora</button>';
                 document.getElementById("question-boards-grid").appendChild(wrap);
                 t = {
                     el: wrap,
@@ -3961,10 +3989,13 @@
                     pintarTablerosDePregunta();
                 }));
                 wrap.querySelector(".respuesta-mini-mostrar").addEventListener("click", () => mostrarRespuestaALaClase(id));
+                wrap.querySelector(".respuesta-mini-anotar").addEventListener("click", () =>
+                    anotarDesde(id, nombreEnPregunta(id), { fen: t.board.fen(), texto: "Con la posición de su respuesta" }));
                 tablerosPregunta[id] = t;
             }
             const nombre = nombreEnPregunta(id);
             t.mostrarEl.setAttribute("aria-label", "Mostrar a la clase la respuesta de " + nombre);
+            t.el.querySelector(".respuesta-mini-anotar").setAttribute("aria-label", "Anotar en la bitácora de " + nombre);
             t.nombreEl.textContent = nombre;   // textContent: lo escribió una persona
             t.nombreEl.title = nombre;
             t.calificarEl.querySelectorAll("[data-nota]").forEach((btn) =>
@@ -5417,10 +5448,15 @@
                     // Pidió ayuda: va escrito, no solo con el borde.
                     '<p class="practice-mini-pide hidden text-xs font-bold text-brand-800 dark:text-white mt-1">🙋 Pide ayuda</p>' +
                     // Abre SU partida en grande: mirarla sin tocarla y mandarle una ayuda.
-                    '<button type="button" class="practice-mini-mirar mt-2 w-full text-xs font-semibold px-2 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors" aria-haspopup="dialog">👁 Mirar y ayudar</button>';
+                    '<button type="button" class="practice-mini-mirar mt-2 w-full text-xs font-semibold px-2 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors" aria-haspopup="dialog">👁 Mirar y ayudar</button>' +
+                    '<button type="button" class="practice-mini-anotar mt-1.5 w-full text-xs font-semibold px-2 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors"><span aria-hidden="true">📝 </span>Anotar en su bitácora</button>';
                 grid.appendChild(wrap);
                 const studentId = row.student_id;
                 wrap.querySelector(".practice-mini-mirar").addEventListener("click", (e) => abrirMirada(studentId, e.currentTarget));
+                wrap.querySelector(".practice-mini-anotar").addEventListener("click", () => {
+                    const e2 = practiceStudentBoards[studentId];
+                    anotarDesde(studentId, (e2 && e2.nombre) || "Alumno", { fen: e2.board.fen(), texto: "Con la posición de su partida" });
+                });
                 entry = {
                     el: wrap,
                     nameEl: wrap.querySelector(".practice-mini-name"),
@@ -5438,6 +5474,7 @@
             entry.row = row;
             entry.nombre = displayName;
             entry.el.querySelector(".practice-mini-mirar").setAttribute("aria-label", "Mirar y ayudar a " + displayName);
+            entry.el.querySelector(".practice-mini-anotar").setAttribute("aria-label", "Anotar en la bitácora de " + displayName);
             entry.colorEl.textContent = row.student_color === "w" ? "· blancas" : "· negras";
             entry.board.setFlipped(row.student_color === "b");
             entry.board.loadMoves(row.moves || [], latestPracticeSession.fen);
