@@ -249,7 +249,7 @@
     }
     rivalCargado = nombre;
     mostrar(r, null);
-    if (!r.vacio) { iniciarRevision(); iniciarTeoria(); if (ultimoAlumno) cruzar(); }
+    if (!r.vacio) { iniciarRevision(); iniciarTeoria(); if (ultimoAlumno) cruzar(); P.pendiente($("resultado-cuerpo"), pendientes(r)); }
   }
 
   // Desde cuándo: las opciones son relativas a hoy.
@@ -366,11 +366,20 @@
     pintar(r);
     $("titulo-resultado").focus();
     // Un análisis guardado sin la teoría (o a medias) la busca al abrirse.
-    if (id && r.repertorioLineas && (!r.teoria || r.teoria.faltan)) iniciarTeoria();
+    if (id && r.repertorioLineas && (!r.teoria || r.teoria.faltan)) { iniciarTeoria(); P.pendiente($("resultado-cuerpo"), pendientes(r)); }
+  }
+
+  // Lo que todavía corre sobre este análisis: el resumen de arriba lo avisa.
+  function pendientes(r) {
+    const l = [];
+    if (revision && actual === r) l.push("la revisión de Stockfish (sus errores y las jugadas del plan que no convienen)");
+    if (buscandoTeoria === r) l.push("la comparación con los maestros (dónde deja la teoría)");
+    return l;
   }
 
   function pintar(r) {
     P.cuerpo(r, $("resultado-cuerpo"), {
+      pendiente: pendientes(r),
       alBajarPgn: (lado) => bajarPgn(r, lado),
       alMandar: (lado, origen) => abrirMandar(r, lado, origen),
       alArchivar: (lado, origen) => archivar(r, lado, origen),
