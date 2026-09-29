@@ -1335,6 +1335,68 @@ async function pruebaPdfVisitante(browser) {
   await page.close();
 }
 
+/* El enlace propio del diagnóstico de quien supervisa (ver «El enlace del
+   diagnóstico de cada supervisor» en docs/decisiones/informes.md): ve los
+   diagnósticos que llegaron por SU enlace, lo copia desde ahí, y el arbitraje
+   sigue siendo de administración. Quien administra ve de quién era el enlace. */
+async function pruebaEnlaceSupervisor(browser) {
+  console.log("\n=== El enlace del diagnóstico de cada supervisor ===");
+  const VIS = [
+    { id: "v-1", created_at: "2026-09-20T15:00:00Z", nombre: "Llegó por Karina", email: "k@x.cr", telefono: null,
+      nivel: "Intermedio", porcentaje: 68, elo: null, atendido: false, detalle: DIAGNOSTICO, supervisor_id: "sup-1" },
+    { id: "v-2", created_at: "2026-09-12T15:00:00Z", nombre: "Llegó por la portada", email: "p@x.cr", telefono: null,
+      nivel: "Básico", porcentaje: 40, elo: null, atendido: false, detalle: DIAGNOSTICO, supervisor_id: null },
+  ];
+  const datos = (perfil) => ({
+    rpc: {
+      informes_resumen_alumnos: [ANA], informes_cursos_alumnos: [], informes_diagnosticos_alumnos: [],
+      informes_totales: { clases_cerradas: 0, preguntas: 0, partidas: 0 },
+      mis_supervisados: ["a-1"], mi_enlace_diagnostico: "a1b2c3d4e5",
+    },
+    tablas: {
+      profiles: [perfil, { id: "sup-1", role: "profesor", es_supervisor: true, full_name: "Karina Rojas" }],
+      training_plans: [], diagnosticos_publicos: VIS, arbitrajes_publicos: [],
+    },
+  });
+  const SUP = { id: "sup-1", role: "profesor", es_supervisor: true, is_admin: false, full_name: "Karina Rojas", email: "k@x.cr" };
+  let { page, errores } = await abrir(browser, datos(SUP), "sup-1", "/informes.html?tema=diagnostico-publico");
+
+  igual("pide solo los diagnósticos de SU enlace",
+    await page.evaluate(() => window.__consultas.filter((c) => c.etiqueta === "from:diagnosticos_publicos").map((c) => c.donde)),
+    [[["supervisor_id", "sup-1"]]]);
+  igual("y no baja los exámenes de arbitraje",
+    await page.evaluate(() => window.__consultas.some((c) => c.etiqueta === "from:arbitrajes_publicos")), false);
+  igual("en el selector le queda el diagnóstico del público, sin el arbitraje",
+    await page.evaluate(() => [...document.querySelectorAll("#temas-publico option")].map((o) => o.value)), ["diagnostico-publico"]);
+  igual("?tema=diagnostico-publico abre ese tema", await page.inputValue("#topic-filter"), "diagnostico-publico");
+  igual("el panel del arbitraje no está", await page.evaluate(() => !!document.getElementById("arbitrajes-publicos")), false);
+  igual("arriba, su enlace, armado desde la carpeta de la página",
+    await page.evaluate(() => { const e = document.querySelector("#topic-report-body #enlace-diagnostico"); return e && e.checkVisibility() ? e.value : null; }),
+    BASE + "/entreno/diagnostico.html?s=a1b2c3d4e5");
+  igual("y la lista trae solo el que llegó por su enlace",
+    await page.evaluate(() => [...document.querySelectorAll("#topic-report-body [data-ver]")].map((b) => b.closest("div.border").querySelector("p").textContent.replace("nuevo", "").trim())),
+    ["Llegó por Karina"]);
+  await page.evaluate(() => { window.__copiado = null; navigator.clipboard.writeText = (t) => { window.__copiado = t; return Promise.resolve(); }; });
+  await page.click("#topic-report-body [data-copiar]");
+  igual("«Copiar enlace» copia ese enlace", await page.evaluate(() => window.__copiado), BASE + "/entreno/diagnostico.html?s=a1b2c3d4e5");
+  if (errores.length) { console.log("  ✗ errores en la página: " + errores.join(" | ")); fallos += 1; }
+  await page.close();
+
+  const ADM = { id: "adm-1", role: "admin", is_admin: true, full_name: "Oscar", email: "o@x.cr" };
+  ({ page, errores } = await abrir(browser, datos(ADM), "adm-1", "/informes.html?tema=diagnostico-publico"));
+  igual("administración baja la bandeja entera",
+    await page.evaluate(() => window.__consultas.filter((c) => c.etiqueta === "from:diagnosticos_publicos").map((c) => c.donde)), [[]]);
+  igual("y en cada uno dice por el enlace de quién llegó",
+    await page.evaluate(() => [...document.querySelectorAll("#topic-report-body [data-ver]")].map((b) => {
+      const p = [...b.closest("div.border").querySelectorAll("p")].find((x) => x.textContent.startsWith("Llegó por el enlace"));
+      return p ? p.textContent : "(sin enlace)";
+    })),
+    ["Llegó por el enlace de Karina Rojas", "(sin enlace)"]);
+  igual("sin un enlace propio que copiar", await page.evaluate(() => !!document.getElementById("enlace-diagnostico")), false);
+  if (errores.length) { console.log("  ✗ errores en la página: " + errores.join(" | ")); fallos += 1; }
+  await page.close();
+}
+
 /* A un alumno que entra con usuario de la Academia también su profesor le pone
    la contraseña: es quien lo tiene en la clase. Un profesor que NO coordina ve
    solo eso de la tarjeta «Acceso a la cuenta» —reenviar el enlace sigue siendo
@@ -1390,6 +1452,7 @@ async function pruebaContrasenaProfesor(browser) {
     await pruebaCompartirPlanes(browser);
     await pruebaNombreAjeno(browser);
     await pruebaPdfVisitante(browser);
+    await pruebaEnlaceSupervisor(browser);
     await pruebaAlumnoPorEnlace(browser);
     await pruebaContrasenaProfesor(browser);
   } finally {

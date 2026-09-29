@@ -397,7 +397,14 @@
                    ni se le baja: la RLS se lo devolvería igual, así que el filtro
                    tiene que estar acá. Son dos páginas de mil filas que además no
                    iba a mirar. */
-                profile.is_admin ? traerTodo(() => sb.from("diagnosticos_publicos").select("*").order("created_at", { ascending: false })) : [],
+                /* Con una excepción: quien supervisa tiene su propio enlace del
+                   diagnóstico (?s=…), y lo que llega por él es suyo. La base
+                   solo le devuelve esos (diagnosticos_publicos_select); el
+                   .eq es para que quien administra, mirando «como supervisor»,
+                   vea lo de su propio enlace y no la bandeja entera. */
+                profile.is_admin ? traerTodo(() => sb.from("diagnosticos_publicos").select("*").order("created_at", { ascending: false }))
+                    : profile.es_supervisor ? traerTodo(() => sb.from("diagnosticos_publicos").select("*").eq("supervisor_id", profile.id).order("created_at", { ascending: false }))
+                    : [],
                 profile.is_admin ? traerTodo(() => sb.from("arbitrajes_publicos")
                     .select("id, created_at, nombre, email, porcentaje, nivel, revisado, revisado_at, detalle")
                     .order("created_at", { ascending: false })) : [],
@@ -433,13 +440,26 @@
                 alumnosDelInforme = alumnos.filter((a) => aCargo.has(a.id));
                 inactivosDelInforme = inactivosDelInforme.filter((a) => aCargo.has(a.id));
             }
+            /* El enlace propio del diagnóstico (quien supervisa) y, para quien
+               administra, de quién era el enlace por el que llegó cada uno.
+               Si algo falla, el panel sale igual sin eso: es un extra. */
+            let enlaceDiagnostico = null, nombresSupervisores = {};
+            if (profile.es_supervisor) {
+                const { data: cod, error: errCod } = await sb.rpc("mi_enlace_diagnostico");
+                if (!errCod && typeof cod === "string") enlaceDiagnostico = cod;
+            }
+            const conEnlace = [...new Set((visitantes || []).map((v) => v.supervisor_id).filter(Boolean))];
+            if (profile.is_admin && conEnlace.length) {
+                const { data: sups } = await sb.from("profiles").select("id, full_name").in("id", conEnlace);
+                (sups || []).forEach((p) => { nombresSupervisores[p.id] = p.full_name || "un supervisor"; });
+            }
             const plansByStudent = {}, resumenPorAlumno = {};
             planes.forEach((pl) => { plansByStudent[pl.student_id] = pl; });
             alumnosDelInforme.forEach((a) => { resumenPorAlumno[a.id] = a; });
             teacherData = {
                 totales, closedSessions: totales.clases_cerradas,
                 students: alumnosDelInforme, resumenPorAlumno, cursosPorAlumno, diagnosticoPorAlumno, modulosPorAlumno,
-                plansByStudent, visitantes, arbitrajes,
+                plansByStudent, visitantes, arbitrajes, enlaceDiagnostico, nombresSupervisores,
                 subgrupos: subgruposRes?.data || [],
                 inactivos: inactivosDelInforme,
             };
@@ -694,8 +714,21 @@
            Misma decisión que `soloParaAdministracion()` en el panel de la
            Academia. Las dos opciones del filtro se van con ellos, o quedaría un
            tema que enseña un panel que ya no está. */
+        function veVisitantes() {
+            return !!(profile && (profile.is_admin || profile.es_supervisor));
+        }
+
         function quitarLoDeFueraSiNoEsAdmin() {
             if (profile && profile.is_admin) return;
+            /* Quien supervisa se queda con los diagnósticos de visitantes: los
+               que llegan por SU enlace. El arbitraje sigue siendo de
+               administración. */
+            if (veVisitantes()) {
+                const caja = document.getElementById("arbitrajes-publicos")?.closest("details");
+                if (caja) caja.remove();
+                document.querySelector('#temas-publico option[value="arbitraje"]')?.remove();
+                return;
+            }
             ["arbitrajes-publicos", "diagnosticos-visitantes"].forEach((id) => {
                 const panel = document.getElementById(id);
                 const caja = panel && panel.closest("details");
@@ -819,13 +852,19 @@
                que leerse SIN abrirlos: si no, hay que abrir los dos en cada
                visita solo para saber si llegó algo nuevo, que es justo el paso
                que el plegado viene a quitar. */
+            const vis = (teacherData.visitantes || []).length;
+            const resumenVis = document.getElementById("visitantes-resumen");
+            if (resumenVis && !profile.is_admin) {
+                resumenVis.textContent = vis
+                    ? `${vis} ${vis === 1 ? "persona sin cuenta hizo" : "personas sin cuenta hicieron"} el diagnóstico por tu enlace`
+                    : "Todavía nadie lo hizo por tu enlace. Aquí lo copias.";
+            }
             if (!cajaArbitrajes) { document.getElementById("teacher-report").classList.remove("hidden"); return; }
             const arb = (teacherData.arbitrajes || []).length;
             const sinRevisar = (teacherData.arbitrajes || []).filter((a) => !a.revisado).length;
             document.getElementById("arbitrajes-resumen").textContent = arb
                 ? `${arb} ${arb === 1 ? "examen recibido" : "exámenes recibidos"}${sinRevisar ? ` · ${sinRevisar} sin responder` : " · todos respondidos"}`
                 : "Todavía no llegó ninguno.";
-            const vis = (teacherData.visitantes || []).length;
             document.getElementById("visitantes-resumen").textContent = vis
                 ? `${vis} ${vis === 1 ? "persona sin cuenta" : "personas sin cuenta"} hicieron el diagnóstico público`
                 : "Todavía no lo hizo nadie de fuera.";
@@ -1570,8 +1609,9 @@
                 alumnos.innerHTML = '<h3 class="font-serif font-bold text-brand-800 dark:text-white mb-3">Alumnos registrados</h3>';
                 const cajaAlumnos = document.createElement("div"); alumnos.appendChild(cajaAlumnos);
                 renderDiagnosticosClase(cajaAlumnos);
-                if (!(profile && profile.is_admin)) {
-                    // Los visitantes no son alumnos de nadie: son de administración.
+                if (!veVisitantes()) {
+                    // Los visitantes no son alumnos de nadie: son de administración
+                    // (o de quien supervisa, los de su enlace).
                     body.append(alumnos);
                     document.getElementById("topic-report").classList.remove("hidden");
                     return;
@@ -2520,11 +2560,56 @@ function areasFlojasArbitraje(fila) {
             } catch (e) { return null; }
         }
 
+        /* El enlace propio del diagnóstico: se arma desde la CARPETA de esta
+           página (informes.html está en la raíz), no cortándole el nombre,
+           así sirve igual abierta como /informes o /informes.html (ver «Los
+           formularios» en docs/decisiones/cuentas-y-formularios.md). */
+        function enlaceDiagnosticoDe(codigo) {
+            return new URL("entreno/diagnostico.html?s=" + encodeURIComponent(codigo), location.href).href;
+        }
+
+        function bloqueEnlaceDiagnostico(codigo) {
+            const caja = document.createElement("div");
+            caja.className = "rounded-xl bg-brand-50 dark:bg-brand-800 px-4 py-3 mb-4";
+            caja.innerHTML = `
+                <label for="enlace-diagnostico" class="block text-sm font-semibold text-brand-800 dark:text-white">Tu enlace del diagnóstico</label>
+                <p class="text-xs text-brand-500 dark:text-brand-300 mt-1 mb-2">Compártelo con quien quieras medirle el nivel: no necesita cuenta. Lo que se haga por este enlace te llega solo a ti, aquí.</p>
+                <div class="flex flex-wrap gap-2">
+                    <input id="enlace-diagnostico" type="text" readonly class="flex-1 min-w-0 px-3 py-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 text-brand-800 dark:text-white text-xs font-mono">
+                    <button type="button" data-copiar class="text-xs bg-accent-500 hover:bg-accent-400 text-brand-900 font-semibold px-3 py-2 rounded-lg transition-colors">Copiar enlace</button>
+                </div>
+                <p data-copiado class="text-xs text-brand-500 dark:text-brand-300 mt-1" role="status"></p>`;
+            const campo = caja.querySelector("input");
+            campo.value = enlaceDiagnosticoDe(codigo);
+            campo.addEventListener("focus", () => campo.select());
+            caja.querySelector("[data-copiar]").addEventListener("click", async () => {
+                const estado = caja.querySelector("[data-copiado]");
+                try {
+                    await navigator.clipboard.writeText(campo.value);
+                    estado.textContent = "Enlace copiado.";
+                } catch (e) {
+                    campo.select();
+                    estado.textContent = "No se pudo copiar solo: ya quedó seleccionado, cópialo con Ctrl + C.";
+                }
+            });
+            return caja;
+        }
+
         // Visitantes: lista de más reciente a más antiguo, con contacto, nivel y Elo; cada uno
         // se puede desplegar (mismas barras por área que un alumno) y marcar como atendido.
         function renderDiagnosticosVisitantes(contenedor) {
             const lista = teacherData.visitantes || [];
             contenedor.innerHTML = "";
+            if (teacherData.enlaceDiagnostico) contenedor.appendChild(bloqueEnlaceDiagnostico(teacherData.enlaceDiagnostico));
+            if (!lista.length && !profile.is_admin) {
+                const p = document.createElement("p");
+                p.className = "text-sm text-brand-450 dark:text-brand-350";
+                p.textContent = teacherData.enlaceDiagnostico
+                    ? "Todavía no llegó ningún diagnóstico por tu enlace. Cuando alguien lo haga, aparece aquí con su nombre, su correo y su nivel."
+                    : "No se pudo traer tu enlace del diagnóstico. Vuelve a cargar la página en un momento.";
+                contenedor.appendChild(p);
+                return;
+            }
             if (!lista.length) {
                 contenedor.innerHTML = '<p class="text-sm text-brand-450 dark:text-brand-350">Todavía nadie ha hecho el diagnóstico público. El enlace está en la portada, en Cursos y en cada curso: <code class="text-xs">entreno/diagnostico.html</code>.</p>';
                 return;
@@ -2549,6 +2634,7 @@ function areasFlojasArbitraje(fila) {
                         <p class="text-xs text-brand-500 dark:text-brand-300 whitespace-nowrap">${fmtFecha(v.created_at)} · <strong>${escVis(v.nivel || resumen.nivel.etiqueta)}</strong> · ${v.porcentaje != null ? v.porcentaje : resumen.porcentaje}%${v.elo ? ` · Elo ${v.elo}` : ""}</p>
                     </div>
                     ${contacto ? `<p class="text-xs text-brand-500 dark:text-brand-300 mt-1">${contacto}</p>` : ""}
+                    ${profile.is_admin && v.supervisor_id ? `<p class="text-xs text-brand-500 dark:text-brand-300 mt-1">Llegó por el enlace de ${escVis((teacherData.nombresSupervisores || {})[v.supervisor_id] || "un supervisor")}</p>` : ""}
                     <div class="flex flex-wrap gap-2 mt-2">
                         <button type="button" data-ver class="text-xs border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-3 py-1.5 rounded-lg hover:border-accent-500 transition-colors" aria-expanded="false">Ver detalle</button>
                         <button type="button" data-atendido class="text-xs border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-3 py-1.5 rounded-lg hover:border-accent-500 transition-colors">${v.atendido ? "Marcar como pendiente" : "Marcar como atendido"}</button>

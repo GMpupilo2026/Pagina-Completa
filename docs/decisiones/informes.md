@@ -167,12 +167,60 @@ tiene que ver al entrar.
   está. Las dos `<option>` siguen escritas en el HTML —`verificar-admin.js`
   comprueba contra el archivo que los atajos de `admin.html` apunten a temas
   que existen— y se quitan del DOM al cargar.
-- **Tampoco se le bajan.** La RLS se los devuelve igual a un profesor, así que
-  el filtro tiene que estar en la página: son dos páginas de mil filas que no
-  iba a mirar.
+- **Tampoco se le bajan.** Del arbitraje, la RLS se lo devuelve igual a un
+  profesor, así que ese filtro tiene que estar en la página. Del diagnóstico
+  ya no: desde «El enlace del diagnóstico de cada supervisor» (abajo) la base
+  solo se lo da a administración y al supervisor dueño del enlace.
 - Dentro del tema «🧭 Diagnóstico de nivel», el apartado de visitantes que va
   debajo de los alumnos se salta por lo mismo.
 
+
+#### El enlace del diagnóstico de cada supervisor
+
+Cada supervisor tiene **su propio enlace** del diagnóstico,
+`entreno/diagnostico.html?s=<código>`, para mandárselo a gente sin cuenta
+desde su academia; lo que se hace por ese enlace **le llega solo a él**, en
+Informes («🌐 Diagnósticos de visitantes», tarjeta del mismo nombre en su
+panel). Lo que llega sin enlace (la portada, Cursos) sigue siendo de
+administración.
+
+- **El código vive en `enlaces_diagnostico`** (uno por supervisor, sin
+  políticas) y lo da `mi_enlace_diagnostico()`: lo crea la primera vez y
+  después devuelve siempre el mismo. Exige `es_supervisor` o `is_admin`,
+  envuelto en `coalesce`. Es un código al azar y no el id de la cuenta.
+- **A quién le llega lo decide la base, no la página.** La página solo manda
+  el código (`enlace`); el trigger `diagnosticos_publicos_supervisor` lo
+  traduce a `supervisor_id` y **pisa** cualquier `supervisor_id` que venga en
+  el envío. Un código que no existe, o de alguien que ya no supervisa, deja
+  el diagnóstico en la bandeja de administración: perderlo sería peor. La
+  página lo dice antes de empezar («Este enlace ya no está activo…»).
+- **El visitante ve a quién le llega**: `enlace_diagnostico_publico(código)`
+  (`anon` puede llamarla) devuelve solo un nombre —el de la academia si el
+  supervisor tiene exactamente una; si no, el suyo—. El código se guarda con
+  sus datos, así que recargar sin el `?s=` no lo pierde.
+- **La RLS se cerró de paso.** Antes cualquier cuenta con `role = 'profesor'`
+  leía TODOS los diagnósticos públicos y solo la pantalla los escondía; con
+  diagnósticos de un supervisor eso cruzaba academias. Ahora leer y marcar
+  atendido es `is_admin` o `supervisor_id = (select auth.uid())`, y desde el
+  navegador solo se puede cambiar la columna `atendido` (grant por columna).
+  A `anon` le quedó solo el insert: tenía también select, update, delete y
+  truncate de los de omisión.
+- **Comprobado impersonando en SQL** (en una transacción que se deshizo): un
+  profesor que no supervisa no obtiene enlace; el visitante con el enlace de
+  una supervisora ve el nombre de su academia; uno inventado da nulo; el
+  diagnóstico por el enlace queda a nombre de esa supervisora, uno con
+  `supervisor_id` mandado a mano y uno con código falso quedan de
+  administración; `anon` no lee ni los diagnósticos ni los enlaces; la dueña
+  ve solo el suyo y lo marca atendido, pero no puede cambiarle el dueño; otra
+  supervisora y un profesor ven 0; administración, todos.
+- En Informes, quien supervisa pide **solo** los de su enlace (`.eq` además de
+  la RLS: quien administra mirando «como supervisor» ve lo de su propio
+  enlace, no la bandeja entera), arriba de la lista tiene el enlace con
+  «Copiar enlace» (armado desde la carpeta de la página, como en
+  Formularios), y el arbitraje sigue quitado. Quien administra ve en cada
+  diagnóstico «Llegó por el enlace de …».
+- `verificar-informes.js` («El enlace del diagnóstico de cada supervisor») y
+  `verificar-diagnostico-enlace.js` lo comprueban en el navegador.
 
 #### El diagnóstico de un visitante se descarga en PDF
 
