@@ -486,6 +486,17 @@
                         <!-- Quién acaba de pedir ayuda, dicho en voz: la tarjeta se marca y sube,
                              pero quien no ve la pantalla no se entera de eso. -->
                         <p id="practica-pedidos-aviso" class="sr-only" aria-live="polite"></p>
+                        <!-- Una pista para toda la ronda de una vez. Solo texto: cada alumno va en
+                             una posición distinta, y una flecha señalaría otra cosa en cada tablero. -->
+                        <form id="practica-todos" class="bg-white dark:bg-brand-900 rounded-xl shadow-md p-4 mb-3">
+                            <label for="practica-todos-pista" class="block text-sm font-semibold text-brand-800 dark:text-white mb-1"><span aria-hidden="true">📣 </span>Pista para todos</label>
+                            <p id="practica-todos-nota" class="text-xs text-brand-500 dark:text-brand-300 mb-2">Les llega a todos los que están jugando esta ronda. Solo texto, porque cada uno va en una posición distinta. Reemplaza la ayuda que le hayas mandado a cada uno.</p>
+                            <div class="flex flex-col sm:flex-row gap-2">
+                                <textarea id="practica-todos-pista" rows="2" maxlength="280" aria-describedby="practica-todos-nota" class="flex-1 rounded-lg border border-brand-300 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm" placeholder="Por ejemplo: antes de mover, busquen los jaques del rival."></textarea>
+                                <button type="submit" id="practica-todos-mandar" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2 rounded-lg text-sm transition-colors sm:self-start">📨 Mandarla a todos</button>
+                            </div>
+                            <p id="practica-todos-aviso" role="status" class="text-xs text-brand-600 dark:text-brand-300 mt-2"></p>
+                        </form>
                         <div id="practice-boards-grid" class="grid gap-3"></div>
                     </div>
 
