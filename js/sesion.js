@@ -2031,6 +2031,8 @@
 
         function renderStudentsList() {
             if (!isTeacher) return;
+            // Quien se conecta con una pregunta abierta también tiene su tablero.
+            pintarTablerosDePregunta();
             const listEl = document.getElementById("students-list");
             const badge = document.getElementById("hand-raised-badge");
             const entries = Array.from(onlineStudents.entries());
@@ -3007,11 +3009,13 @@
             return isFinite(n) && n > 0 ? n : null;
         }
 
-        async function crearPregunta(fen, expectedPlies) {
+        // paraAlumno: la pregunta dirigida, solo para quien tiene el turno. Los
+        // demás la ven pero no la contestan (lo rechaza la base).
+        async function crearPregunta(fen, expectedPlies, paraAlumno) {
             await sb.from("questions").update({ closed_at: new Date().toISOString() })
                 .eq("created_by", boardOwnerId).is("closed_at", null);
             return sb.from("questions")
-                .insert({ fen, created_by: session.user.id, expected_plies: expectedPlies, tiempo_limite: tiempoElegido() })
+                .insert({ fen, created_by: session.user.id, expected_plies: expectedPlies, tiempo_limite: tiempoElegido(), para_alumno: paraAlumno || null })
                 .select().single();
         }
 
@@ -3410,11 +3414,41 @@
             document.getElementById("elegido-bien-btn").addEventListener("click", () => terminarElegido("bien"));
             document.getElementById("elegido-casi-btn").addEventListener("click", () => terminarElegido("casi"));
             document.getElementById("elegido-listo-btn").addEventListener("click", () => terminarElegido(null));
+            document.getElementById("elegido-preguntar-btn").addEventListener("click", preguntarleAlElegido);
             document.getElementById("elegido-insignia-btn").addEventListener("click", () => {
                 if (!elegidoActual) return;
                 abrirTrofeosEnClase(elegidoActual.id, nombreDeConectado(elegidoActual.id));
                 document.getElementById("trofeos-en-clase").scrollIntoView({ block: "nearest" });
             });
+        }
+
+        /* La pregunta dirigida: la posición del tablero, solo para quien tiene
+           el turno. El profe mira cómo la resuelve en «Respuestas en el tablero». */
+        async function preguntarleAlElegido() {
+            if (!elegidoActual) return;
+            const fen = board.fen();
+            const motivo = motivoPosicionInvalida(fen);
+            if (motivo) { setStatus(motivo); return; }
+            const expectedPlies = Math.max(1, Math.min(6, parseInt(document.getElementById("question-plies-input").value, 10) || 1));
+            const { data, error } = await crearPregunta(fen, expectedPlies, elegidoActual.id);
+            if (error) { console.error(error); setStatus("No se pudo crear la pregunta: " + error.message); return; }
+            setStatus("❓ Le preguntaste a " + nombreDeConectado(elegidoActual.id) + ": mira su tablero debajo del tuyo.");
+            computeEngineAnswer(data.id, fen, expectedPlies);
+        }
+
+        /* Los demás ven para quién es la pregunta dirigida (el nombre viaja con
+           el turno, en game_state.elegido). */
+        function pintarPreguntaParaOtro() {
+            const linea = document.getElementById("pregunta-para-otro");
+            if (!linea || isTeacher) return;
+            const q = currentQuestion;
+            const para = q && !q.closed_at && q.para_alumno && q.para_alumno !== profile.id ? q.para_alumno : null;
+            const antes = linea.hidden;
+            linea.hidden = !para;
+            if (!para) return;
+            const nombre = elegidoActual && elegidoActual.id === para && elegidoActual.nombre ? elegidoActual.nombre : "un compañero";
+            document.getElementById("pregunta-para-otro-nombre").textContent = nombre;   // lo escribió una persona
+            if (antes && claseAcc) claseAcc.decir("Tu profe le hizo una pregunta a " + nombre + ".");
         }
 
         function pintarElegido(elegido) {
@@ -3433,6 +3467,7 @@
             const overlay = document.getElementById("elegido-overlay");
             const chip = document.getElementById("elegido-chip");
             if (!overlay) return;
+            pintarPreguntaParaOtro();
             const vigente = !!(elegidoActual && Date.now() - new Date(elegidoActual.at).getTime() < ELEGIDO_VIGENTE_MS);
             const soyYo = vigente && elegidoActual.id === profile.id;
             /* Los demás ven a quién eligieron, escrito y sin taparles nada: el
@@ -3545,6 +3580,7 @@
         }
 
         function renderTeacherQuestionPanel() {
+            seguirRespuestasEnCurso();
             const activeEl = document.getElementById("active-question");
             if (!currentQuestion || currentQuestion.closed_at) {
                 activeEl.classList.add("hidden");
@@ -3570,6 +3606,156 @@
             if (error) { console.error(error); return; }
             renderAnswersList(data || []);
             pintarResultadosProfe();
+            if (currentQuestion && currentQuestion.id === questionId) {
+                respuestasFinales = new Map((data || []).map((a) => [a.student_id, a]));
+                pintarTablerosDePregunta();
+            }
+        }
+
+        /* ---------- Respuestas en el tablero (solo profesor) ----------
+           Como los tableros de Practicar: uno por alumno, con lo que va jugando
+           en la pregunta mientras lo piensa (respuestas_en_curso) y, cuando la
+           manda, su respuesta (question_answers), con ✅/❌ ahí mismo. Una
+           pregunta dirigida muestra solo el tablero de esa persona. Las de
+           opciones no se contestan moviendo: no tienen tableros. */
+        const tablerosPregunta = {};          // student_id → la tarjeta con su tablero
+        let tablerosDePregunta = null;        // de qué pregunta son las tarjetas
+        const enCursoPorAlumno = new Map();   // student_id → fila de respuestas_en_curso
+        let respuestasFinales = new Map();    // student_id → fila de question_answers
+        let canalEnCurso = null;
+        let preguntaSeguida = null;
+
+        function preguntaConTableros() {
+            return isTeacher && currentQuestion && !currentQuestion.closed_at && !PreguntaClase.esDeOpciones(currentQuestion)
+                ? currentQuestion : null;
+        }
+
+        async function seguirRespuestasEnCurso() {
+            const q = preguntaConTableros();
+            const id = q ? q.id : null;
+            if (id === preguntaSeguida) { pintarTablerosDePregunta(); return; }
+            preguntaSeguida = id;
+            if (canalEnCurso) { sb.removeChannel(canalEnCurso); canalEnCurso = null; }
+            enCursoPorAlumno.clear();
+            respuestasFinales = new Map();
+            pintarTablerosDePregunta();
+            if (!id) return;
+            // Filtrado por la pregunta: solo llegan las jugadas de ESTA (ver
+            // «Realtime escucha solo lo que la pantalla muestra»).
+            canalEnCurso = sb.channel("respuestas-en-curso:" + id)
+                .on("postgres_changes", { event: "*", schema: "public", table: "respuestas_en_curso", filter: "question_id=eq." + id }, (payload) => {
+                    const fila = payload.new;
+                    if (!fila || fila.question_id !== preguntaSeguida) return;
+                    enCursoPorAlumno.set(fila.student_id, fila);
+                    pintarTablerosDePregunta();
+                })
+                .subscribe();
+            const { data, error } = await sb.from("respuestas_en_curso").select("*").eq("question_id", id);
+            if (error) { console.error(error); return; }
+            if (preguntaSeguida !== id) return;   // cambió la pregunta mientras llegaba
+            (data || []).forEach((f) => { if (!enCursoPorAlumno.has(f.student_id)) enCursoPorAlumno.set(f.student_id, f); });
+            pintarTablerosDePregunta();
+        }
+
+        function nombreEnPregunta(id) {
+            const fin = respuestasFinales.get(id);
+            if (fin && fin.profiles && (fin.profiles.full_name || fin.profiles.email)) return fin.profiles.full_name || fin.profiles.email;
+            if (onlineStudents.has(id)) return nombreDeConectado(id);
+            if (elegidoActual && elegidoActual.id === id && elegidoActual.nombre) return elegidoActual.nombre;
+            return "Alumno";
+        }
+
+        function pintarTablerosDePregunta() {
+            const seccion = document.getElementById("question-boards-section");
+            if (!seccion) return;
+            const grid = document.getElementById("question-boards-grid");
+            const q = preguntaConTableros();
+            if (!q || tablerosDePregunta !== q.id) {
+                grid.innerHTML = "";
+                Object.keys(tablerosPregunta).forEach((k) => delete tablerosPregunta[k]);
+                tablerosDePregunta = q ? q.id : null;
+            }
+            seccion.hidden = !q;
+            if (!q) return;
+            grid.style.gridTemplateColumns = "repeat(auto-fill, minmax(min(190px, 100%), 190px))";
+            grid.style.justifyContent = "center";
+            const ids = q.para_alumno ? [q.para_alumno]
+                : [...new Set([...onlineStudents.keys(), ...enCursoPorAlumno.keys(), ...respuestasFinales.keys()])];
+            Object.keys(tablerosPregunta).forEach((k) => {
+                if (!ids.includes(k)) { tablerosPregunta[k].el.remove(); delete tablerosPregunta[k]; }
+            });
+            ids.forEach((id) => pintarTableroDeRespuesta(q, id));
+            const hint = document.getElementById("question-boards-hint");
+            if (q.para_alumno) hint.textContent = "Pregunta solo para " + nombreEnPregunta(q.para_alumno) + ".";
+            else if (!ids.length) hint.textContent = "Todavía no hay alumnos conectados.";
+            else hint.textContent = "Respondieron " + ids.filter((id) => respuestasFinales.has(id)).length + " de " + ids.length + ".";
+        }
+
+        function pintarTableroDeRespuesta(q, id) {
+            let t = tablerosPregunta[id];
+            if (!t) {
+                const wrap = document.createElement("div");
+                wrap.className = "bg-white dark:bg-brand-900 rounded-xl shadow-md p-3";
+                wrap.dataset.alumno = id;
+                wrap.innerHTML =
+                    '<p class="respuesta-mini-nombre text-xs font-semibold text-brand-700 dark:text-brand-200 truncate mb-1"></p>' +
+                    '<div class="respuesta-mini-tablero grid grid-cols-8 grid-rows-[repeat(8,minmax(0,1fr))] w-full aspect-square rounded-lg overflow-hidden shadow border-2 border-brand-700 select-none mb-2"></div>' +
+                    '<p class="respuesta-mini-estado text-[11px] text-brand-450 dark:text-brand-350 break-words" aria-live="polite"></p>' +
+                    '<div class="respuesta-mini-calificar hidden flex gap-1 mt-1.5">' +
+                        '<button type="button" data-nota="bien" class="flex-1 text-xs font-semibold px-2 py-1 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors"><span aria-hidden="true">✅ </span>Correcta</button>' +
+                        '<button type="button" data-nota="mal" class="flex-1 text-xs font-semibold px-2 py-1 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors"><span aria-hidden="true">❌ </span>A revisar</button>' +
+                    "</div>";
+                document.getElementById("question-boards-grid").appendChild(wrap);
+                t = {
+                    el: wrap,
+                    nombreEl: wrap.querySelector(".respuesta-mini-nombre"),
+                    estadoEl: wrap.querySelector(".respuesta-mini-estado"),
+                    calificarEl: wrap.querySelector(".respuesta-mini-calificar"),
+                    board: new ClasesBoard(wrap.querySelector(".respuesta-mini-tablero"), { interactive: false, allowArrows: false, compact: true }),
+                    clave: null,
+                };
+                wrap.querySelectorAll("[data-nota]").forEach((btn) => btn.addEventListener("click", async () => {
+                    const fin = respuestasFinales.get(id);
+                    if (!fin) return;
+                    const valor = btn.dataset.nota === "bien";
+                    await setAnswerCorrect(fin.id, valor);
+                    fin.is_correct = valor;
+                    pintarTablerosDePregunta();
+                }));
+                tablerosPregunta[id] = t;
+            }
+            const nombre = nombreEnPregunta(id);
+            t.nombreEl.textContent = nombre;   // textContent: lo escribió una persona
+            t.nombreEl.title = nombre;
+            t.calificarEl.querySelectorAll("[data-nota]").forEach((btn) =>
+                btn.setAttribute("aria-label", (btn.dataset.nota === "bien" ? "Marcar correcta la respuesta de " : "Marcar a revisar la respuesta de ") + nombre));
+            const fin = respuestasFinales.get(id);
+            const curso = enCursoPorAlumno.get(id);
+            const moves = (fin ? fin.moves : curso ? curso.moves : null) || [];
+            const clave = q.id + "|" + JSON.stringify(moves);
+            if (t.clave !== clave) {
+                t.board.setFlipped(q.fen.split(" ")[1] === "b");
+                t.board.loadMoves(moves, q.fen);
+                t.clave = clave;
+            }
+            // El alumno mueve primero y el motor contesta entre jugada y jugada.
+            const suyas = Math.ceil(moves.length / 2);
+            const total = q.expected_plies || 1;
+            if (fin) {
+                t.estadoEl.textContent = "Respondió: " + (moves.join(" ") || "—")
+                    + (fin.is_correct === true ? " · ✅ correcta" : fin.is_correct === false ? " · ❌ a revisar" : " · sin calificar");
+            } else if (moves.length) {
+                t.estadoEl.textContent = "Pensando… lleva " + suyas + " de " + total + (total === 1 ? " jugada" : " jugadas") + ": " + moves.join(" ");
+            } else {
+                t.estadoEl.textContent = "Todavía no mueve.";
+            }
+            t.calificarEl.classList.toggle("hidden", !fin);
+            t.calificarEl.querySelectorAll("[data-nota]").forEach((btn) => {
+                const marcado = !!fin && fin.is_correct === (btn.dataset.nota === "bien");
+                btn.setAttribute("aria-pressed", marcado ? "true" : "false");
+                btn.classList.toggle("ring-2", marcado);
+                btn.classList.toggle("ring-accent-500", marcado);
+            });
         }
 
         function renderAnswersList(answers) {
@@ -4393,6 +4579,7 @@
                 });
                 if (move) {
                     questionBoard.render();
+                    mandarEnCurso();
                     if (preguntaAcc) {
                         preguntaAcc.actualizar();
                         preguntaAcc.decir("El motor jugó " + ClaseAdaptada.hablarJugada(move.san) + ". Te toca.");
@@ -4402,6 +4589,24 @@
                 questionEngineLastFailed = true;
             }
             updateQuestionCardStatus();
+        }
+
+        /* Lo que el alumno lleva jugado en la pregunta, antes de mandarla: el
+           profe lo ve en vivo en su tablero. En fila, para que una jugada vieja
+           no llegue después de una nueva. No es una respuesta: va a
+           respuestas_en_curso, no a question_answers (ver la migración
+           pregunta_dirigida_y_respuestas_en_curso). */
+        let colaEnCurso = Promise.resolve();
+        function mandarEnCurso() {
+            const q = currentQuestion;
+            if (!q || q.closed_at || !questionBoard || PreguntaClase.esDeOpciones(q)) return;
+            if (q.para_alumno && q.para_alumno !== profile.id) return;
+            const fila = { question_id: q.id, student_id: profile.id, moves: questionBoard.moves(), fen: questionBoard.fen(), updated_at: new Date().toISOString() };
+            colaEnCurso = colaEnCurso.then(async () => {
+                const { error } = await sb.from("respuestas_en_curso").upsert(fila, { onConflict: "question_id,student_id" });
+                // No frena al alumno: si no llega, igual contesta.
+                if (error) console.warn("No se pudo mostrarle al profe tu jugada:", error.message);
+            });
         }
 
         async function submitQuestionAnswer() {
@@ -4424,6 +4629,7 @@
         async function onQuestionStudentMove() {
             if (preguntaAcc) preguntaAcc.actualizar();
             questionMovesDone++;
+            mandarEnCurso();
             if (questionMovesDone >= currentQuestion.expected_plies) {
                 await submitQuestionAnswer();
                 return;
@@ -4437,12 +4643,20 @@
             const reopenBtn = document.getElementById("question-reopen-btn");
             // Al cerrar la pregunta, el cuadro desaparece por completo (no se queda mostrando
             // "pregunta cerrada").
+            pintarPreguntaParaOtro();
             if (!currentQuestion || currentQuestion.closed_at) {
                 card.classList.add("hidden");
                 reopenBtn.classList.add("hidden");
                 questionCardDismissedFor = null;
                 return;
             }
+            // Una pregunta para otro compañero: no se le abre encima a nadie más.
+            if (currentQuestion.para_alumno && currentQuestion.para_alumno !== profile.id) {
+                card.classList.add("hidden");
+                reopenBtn.classList.add("hidden");
+                return;
+            }
+            document.getElementById("question-para-ti").hidden = !currentQuestion.para_alumno;
             // El alumno cerró este mismo overlay con la ✖: sigue siendo la pregunta vigente
             // (no se cierra del lado del profesor), así que no se le vuelve a imponer encima
             // — solo se le deja el botón flotante para volver cuando quiera.
@@ -4546,6 +4760,7 @@
             const undoneStudentMove = questionBoard.undo(); // la jugada propia anterior
             if (undoneStudentMove) questionMovesDone = Math.max(0, questionMovesDone - 1);
             questionEngineLastFailed = false;
+            mandarEnCurso();
             updateQuestionCardStatus();
         });
 
@@ -4562,6 +4777,7 @@
             myAnswer = null;
             questionBoard.setInteractive(true);
             document.getElementById("question-retry-btn").classList.add("hidden");
+            mandarEnCurso();
             updateQuestionCardStatus();
         });
 
