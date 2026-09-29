@@ -315,6 +315,41 @@ marca esté en TODAS las páginas y con su canal alfa, la firma, el WhatsApp de
 los ajustes, el nombre del visitante y **no el de otro**, y que nada se baje al
 abrir la página. Con `GUARDAR_PDF=<ruta>` deja una copia para mirarla.
 
+#### El PDF del diagnóstico con la marca de la academia
+
+Si el diagnóstico llegó por el enlace del supervisor de **una** academia, el
+PDF que se baja en Informes es **de esa academia**: arriba una franja en su
+color con su logo (sobre un cuadro blanco) y su nombre en blanco, los títulos
+y las líneas en su color, **su logo como marca de agua** en todas las páginas,
+y la firma, el pie, el autor del archivo y el WhatsApp son los suyos. Lo pidió
+el dueño del sitio, igual que el tema de la página del diagnóstico.
+
+- **Qué marca le toca lo decide `marca_de_diagnostico(id)`**, `SECURITY
+  DEFINER`: nombre, color, logo y WhatsApp si el supervisor del enlace es de
+  una sola academia, y **solo a quien puede ver ese diagnóstico**
+  (administración o el supervisor dueño; la misma regla que
+  `diagnosticos_publicos_select`). Comprobado impersonando en SQL (revertido):
+  la dueña y administración la reciben; otra supervisora y un profesor, nada;
+  sin enlace, nada; `anon` no puede llamarla.
+- **La firma de Oscar no se le pone a otra marca**: sin logo, o si el logo no
+  se pudo bajar, el PDF de la academia sale con su franja y su nombre pero sin
+  marca de agua. Un diagnóstico sin academia sale como siempre, con la marca
+  de Oscar (y ahí sigue la regla de que sin ella no sale).
+- **El color se vuelve a medir contra el blanco** en Informes
+  (`MarcaAcademia.contrasteConBlanco`) antes de ponerlo en los títulos y la
+  franja: si no da 4,5, el PDF lleva su nombre y su logo sin su color.
+- **El generador es el mismo** (`js/reporte-pdf.js`), con dos campos
+  opcionales, `color` y `cabecera`; los reportes de actividades no los usan y
+  salen igual. El logo se prepara como la marca de agua
+  (`MarcaAgua.prepararDesde()`), que ahora **decodifica desde los bytes ya
+  bajados** (un `blob:`): el logo vive en Storage, otro origen, y leer sus
+  píxeles desde su dirección dejaría el lienzo sin poder leerse.
+- `verificar-informes.js` («El PDF de un diagnóstico con la marca de su
+  academia») baja el PDF y lo lee: franja, logo una vez, nombre en blanco,
+  títulos en su color, marca de agua en todas las páginas, firma y WhatsApp
+  de la academia, y ni una mención a Oscar. Con `GUARDAR_PDF_ACADEMIA=<ruta>`
+  deja una copia para mirarla.
+
 En el informe de UN alumno:
 
 - **Ocho números a la vista y ocho detrás de «Ver todos los números».**
