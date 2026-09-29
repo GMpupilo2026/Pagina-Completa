@@ -72,7 +72,8 @@
                 <div id="owner-start-panel" class="hidden border-t border-brand-100 dark:border-brand-800 pt-4">
                     <div id="rounds-field" class="hidden mb-3">
                         <label for="rounds-input" class="block text-xs font-medium text-brand-500 dark:text-brand-300 mb-1">Número de rondas (Suizo)</label>
-                        <input id="rounds-input" type="number" min="1" max="20" class="w-24 text-sm bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500">
+                        <input id="rounds-input" type="number" min="1" max="20" step="1" aria-describedby="rounds-aviso" class="w-24 text-sm bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500">
+                        <p id="rounds-aviso" class="text-xs text-brand-450 dark:text-brand-350 mt-1" aria-live="polite"></p>
                     </div>
                     <button id="start-btn" type="button" class="bg-accent-500 hover:bg-accent-600 disabled:opacity-50 disabled:cursor-not-allowed text-brand-900 font-bold px-5 py-2.5 rounded-xl text-sm transition-colors">Cerrar inscripciones y empezar</button>
                     <p class="text-xs text-brand-450 dark:text-brand-350 mt-2">Hacen falta al menos 2 inscritos. La primera ronda se genera automáticamente al empezar.</p>

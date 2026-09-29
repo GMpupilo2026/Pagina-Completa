@@ -51,9 +51,20 @@ function barajar(lista) {
 }
 
 /* ---------------- La ronda ---------------- */
+/* Los ítems de la última ronda guardada, para que la corta que sigue no
+   repita la misma idea espejada (PRUEBA.armar). `ultimaGuardada` la trae la
+   portada desde la cuenta; si no, la copia de este aparato. */
+let ultimaGuardada = null;
+function idsDeLaRondaAnterior() {
+  let g = ultimaGuardada;
+  if (!g) { try { g = JSON.parse(localStorage.getItem(CLAVE_RESULTADO) || 'null'); } catch (e) {} }
+  const d = g && g.detalle;
+  return d && Array.isArray(d.items) ? d.items : [];
+}
+
 function empezar() {
   const modo = (document.querySelector('input[name="tanda"]:checked') || {}).value || 'corta';
-  tanda = modo === 'completa' ? PRUEBA.armar() : PRUEBA.armar(1);
+  tanda = modo === 'completa' ? PRUEBA.armar() : PRUEBA.armar(1, idsDeLaRondaAnterior());
   respuestas = {};
   idx = 0;
   irA('pregunta-view');
@@ -192,6 +203,7 @@ async function guardar(detalle, resumen) {
     aciertos: resumen.aciertos, total: resumen.total, porcentaje: resumen.porcentaje,
     veredicto: resumen.veredicto.etiqueta,
   };
+  ultimaGuardada = { ficha, detalle };
   try { localStorage.setItem(CLAVE_RESULTADO, JSON.stringify({ ficha, detalle })); } catch (e) {}
   if (!perfil) return false;
   try {
@@ -250,6 +262,20 @@ function mostrarResultado(detalle, resumen) {
     caja.innerHTML = `
       <p class="font-serif font-bold text-brand-800 dark:text-white mb-1">${a.emoji} ${esc(a.nombre)} — ${a.porcentaje}%</p>
       <p class="text-sm text-brand-600 dark:text-brand-300">${esc(a.estudiar)}</p>`;
+    if (a.fichas.length) {
+      const p = document.createElement('p');
+      p.className = 'text-sm mt-2';
+      p.appendChild(document.createTextNode('Para estudiarlo: '));
+      a.fichas.forEach((f, i) => {
+        if (i) p.appendChild(document.createTextNode(' · '));
+        const enlace = document.createElement('a');
+        enlace.href = 'estudio.html?ficha=' + encodeURIComponent(f.id);
+        enlace.className = 'font-semibold text-brand-800 dark:text-white underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400';
+        enlace.textContent = 'Ficha: ' + f.titulo.charAt(0).toLowerCase() + f.titulo.slice(1);
+        p.appendChild(enlace);
+      });
+      caja.appendChild(p);
+    }
     plan.appendChild(caja);
   });
   if (resumen.firmes.length) {
@@ -282,6 +308,7 @@ async function pintarPrevio() {
   if (perfil) guardado = await leerEstado(CLAVE_RESULTADO);
   if (!guardado) { try { guardado = JSON.parse(localStorage.getItem(CLAVE_RESULTADO) || 'null'); } catch (e) {} }
   if (!guardado || !guardado.ficha) return;
+  ultimaGuardada = guardado;
   const f = guardado.ficha;
   $('previo').classList.remove('hidden');
   $('previo').innerHTML = `

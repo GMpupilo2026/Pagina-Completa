@@ -85,22 +85,37 @@
     return "";
   }
 
-  function lineasDelLado(plan, clave, r) {
+  function lineasDelLado(plan, clave, r, general) {
+    const aMedida = !!general;
+    const alumno = aMedida && r.cruce ? r.cruce.alumno : "";
     return (plan || []).slice(0, MAX_LINEAS).map((raizPlan) => {
       const p = principal(raizPlan);
       // Las cifras son las de la primera jugada tuya: todo lo que sigue
       // cuelga de esa decisión.
       const d = p.desde;
-      const titulo = clave === "conBlancas" ? "Tu línea"
-        : "Si abre " + jugadaNumerada([], raizPlan.san) + (raizPlan.reparto != null ? " (" + pctEntero(raizPlan.reparto) + " de las veces)" : "");
+      const titulo = (clave === "conBlancas" ? "Tu línea"
+        : "Si abre " + jugadaNumerada([], raizPlan.san) + (raizPlan.reparto != null ? " (" + pctEntero(raizPlan.reparto) + " de las veces)" : "")) +
+        (aMedida ? ", a la medida de " + alumno : "");
       // Lo mejor que hay en sus partidas puede seguir siendo bueno para él:
       // se dice, para que nadie crea que es una línea ganadora.
       const avisos = [];
       if (d.puntos > 0.55) avisos.push("Es lo que mejor funciona en sus partidas, pero igual le va bien ahí: prepárala a fondo.");
       const pocas = pocasPartidas(d.n, r);
       if (pocas) avisos.push(pocas);
-      const alumno = notaDelAlumno(p.sec, r, clave);
-      return { titulo, sec: p.sec, n: d.n, puntos: d.puntos, texto: saca(d.puntos) + " en " + partidas(d.n) + ".", aviso: avisos.join(" "), alumno };
+      const notaAlumno = notaDelAlumno(p.sec, r, clave);
+      // Si el plan general elegía otra cosa en la misma apertura, se dice:
+      // quien prepara decide con las dos a la vista.
+      let otra = "";
+      if (aMedida) {
+        const g = general.find((x) => clave === "conBlancas" || x.san === raizPlan.san);
+        if (g) {
+          const pg = principal(g);
+          if (pg.sec.join(" ") !== p.sec.join(" ")) {
+            otra = "Sin mirar a " + alumno + ", lo que más le cuesta a él es " + A.lineaEs(pg.sec) + ": " + saca(pg.desde.puntos) + " en " + partidas(pg.desde.n) + ".";
+          }
+        }
+      }
+      return { titulo, sec: p.sec, n: d.n, puntos: d.puntos, texto: saca(d.puntos) + " en " + partidas(d.n) + ".", aviso: avisos.join(" "), alumno: notaAlumno, general: otra };
     });
   }
 
@@ -157,7 +172,8 @@
     const colorRival = clave === "conBlancas" ? "b" : "w";
     const haz = [], evita = [];
     const motor = r.motor || { errores: [], cuidado: [] };
-    const lineas = lineasDelLado(r[clave] && r[clave].plan, clave, r);
+    const general = (r[clave] && r[clave].plan) || [];
+    const lineas = A.esAMedida && A.esAMedida(r, clave) ? lineasDelLado(A.planDe(r, clave), clave, r, general) : lineasDelLado(general, clave, r);
     // Lo que ya es parte de la línea recomendada no se repite abajo: sus
     // números ya están arriba.
     const yaEsta = (sec) => lineas.some((l) => esPrefijo(sec, l.sec));

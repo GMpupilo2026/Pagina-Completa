@@ -1393,6 +1393,11 @@ empieza a dar clase a los pequeños.
 
 Sus profesores y sus alumnos, con buscador, filtro por rol y «Ver más». Por
 cada cuenta: entrar a sus subgrupos, reenviarle el acceso y cambiarle el rol.
+Junto al profesor que está dando clase, «🔴 En clase ahora · Mirar la clase»:
+quien coordina la mira en vivo y ayuda en la práctica, como supervisión (ver
+«La clase en vivo, vista por quien supervisa», en `clase-en-vivo.md`). La
+lista de clases abiertas la entrega la base (`class_sessions_select_coordinacion`),
+solo de su gente.
 
 - **La lista la filtra y la corta `mi_gente()`, en la base.** Nace pensando en
   miles: bajarse las cuentas para filtrarlas en el navegador es la piedra con la

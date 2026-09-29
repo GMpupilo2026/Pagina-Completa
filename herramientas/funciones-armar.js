@@ -56,6 +56,9 @@ const FUNCIONES = {
   "explorador-maestros": [],
   // La quiniela de la sala de cine. Ver su cabecera.
   "quiniela": [],
+  // El correo al supervisor por un diagnóstico de su enlace (verify_jwt en
+  // false: la llama la base). Ver su cabecera.
+  "avisar-diagnostico": ["usuario-alumno.ts", "marca-correo.ts"],
 };
 
 function armar(nombre) {

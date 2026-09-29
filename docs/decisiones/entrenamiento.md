@@ -301,6 +301,44 @@ que el alumno de 1800 vuelve a empezar en los de 1000.
   quedan pocos), y dentro de una racha no se repite ninguno. Los récords
   guardados antes de este cambio son de la racha al azar.
 
+## Cinco arreglos cortos: orden, sesión, plan, fichas y niveles
+
+`verificar-entreno-arreglos.js` (en un navegador), `verificar-precision-posicional.js`,
+`verificar-tipos-pagina.js` y `verificar-plan-recursos.js` los comprueban.
+
+- **Visualización va de fácil a difícil dentro de cada nivel.** Los
+  ejercicios iban por id, o sea al azar: el Nivel 1 mezclaba uno de 600 con
+  otro de 2000. Ahora van por rating (los que no traen rating, al final; el id
+  desempata para que el orden no cambie). Lo resuelto se guarda por id, así
+  que reordenar no pierde nada.
+- **Racha táctica sin sesión manda al login con `?next=`**, como las demás
+  páginas: antes mandaba a `login.html` a secas y, al volver a entrar, el
+  alumno quedaba en el panel y no en la racha. Pasa cuando el token sigue
+  guardado pero la sesión venció (la guardia deja pasar y `getSession()` da
+  nada); el doble lo imita con `tablas.sesion = null`.
+- **El plan del diagnóstico manda también a Tipos de entrenamiento y a
+  Precisión posicional**, que no aparecían en ningún área. Cada enlace va a
+  `entreno/tipos.html#<tipo>` (abre la ficha de ese tipo) y
+  `verificar-plan-recursos.js` comprueba que el tipo exista en
+  `js/tipos-catalogo.js`: un ancla vieja abriría la lista general sin avisar.
+- **En Precisión posicional, «a reforzar» enlaza las fichas de Estudio** de
+  cada área (`fichas` en `js/precision-posicional-criterio.js`; el verificador
+  comprueba que existan y que el título sea el de la ficha). Antes el consejo
+  era una frase y ningún lugar adonde ir.
+- **Dos rondas cortas seguidas no repiten la misma idea espejada.** El banco
+  son 24 ideas con tres espejos cada una (`pp_x_01`, `_h`, `_v`, `_hv`): con
+  tres ideas por área, la ronda siguiente sacaba la misma posición dada
+  vuelta una de cada tres veces por área, y se contestaba de memoria.
+  `PRUEBA.armar(1, evitar)` deja fuera las ideas (`PRUEBA.idea(id)`) de la
+  ronda anterior, que sale de `detalle.items` del último resultado guardado;
+  si en un área no queda otra, se usa igual.
+- **Tipos: al resolver el último ejercicio que faltaba de un nivel, la página
+  dice «¡Nivel completo!»** y ofrece el siguiente; en el último ejercicio,
+  «Siguiente» dice adónde va («Nivel 2 →» o «Volver a los niveles») y lleva
+  ahí. Antes volvía a la lista sin decir nada. Solo festeja el cambio (el
+  nivel estaba incompleto y ahora no): repasar un nivel ya completo no vuelve
+  a festejar.
+
 ## Repasar lo que costó y «Hoy te toca»
 
 `node herramientas/verificar-todo.js entreno-repaso` lo comprueba en un
