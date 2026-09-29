@@ -3225,7 +3225,9 @@
                 nombreEl.setAttribute("aria-live", "polite");
             }
             nombreEl.textContent = nombreDeConectado(id);   // textContent: el nombre lo escribió una persona
-            const elegido = { id, at: new Date().toISOString() };
+            // El nombre viaja con la elección: los demás alumnos lo ven (y al
+            // recargar no dependen de que la presencia ya haya llegado).
+            const elegido = { id, at: new Date().toISOString(), nombre: nombreDeConectado(id) };
             const { error } = await sb.from("game_state").update({ elegido }).eq("id", myGameStateId);
             btn.disabled = false;
             if (error) { console.error(error); setStatus("No se pudo avisarle: " + error.message); return; }
@@ -3264,8 +3266,19 @@
             const overlay = document.getElementById("elegido-overlay");
             const chip = document.getElementById("elegido-chip");
             if (!overlay) return;
-            const soyYo = !!(elegidoActual && elegidoActual.id === profile.id
-                && Date.now() - new Date(elegidoActual.at).getTime() < ELEGIDO_VIGENTE_MS);
+            const vigente = !!(elegidoActual && Date.now() - new Date(elegidoActual.at).getTime() < ELEGIDO_VIGENTE_MS);
+            const soyYo = vigente && elegidoActual.id === profile.id;
+            /* Los demás ven a quién eligieron, escrito y sin taparles nada: el
+               aviso grande es solo para quien tiene que responder. */
+            const otro = document.getElementById("elegido-otro");
+            if (otro) {
+                const nombre = vigente && !soyYo ? (elegidoActual.nombre || nombreDeConectado(elegidoActual.id)) : "";
+                const antes = otro.dataset.at || "";
+                document.getElementById("elegido-otro-nombre").textContent = nombre;   // lo escribió una persona
+                otro.hidden = !nombre;
+                otro.dataset.at = nombre ? elegidoActual.at : "";
+                if (nombre && antes !== elegidoActual.at && claseAcc) claseAcc.decir("Tu profe eligió a " + nombre + " para responder.");
+            }
             let visto = null;
             try { visto = sessionStorage.getItem(ELEGIDO_VISTO); } catch (e) {}
             const mostrarGrande = soyYo && visto !== elegidoActual.at;

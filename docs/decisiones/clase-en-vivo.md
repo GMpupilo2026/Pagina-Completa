@@ -493,7 +493,7 @@ respondió.
   con el azar puro el mismo alumno sale tres veces seguidas y otro nunca, y en
   una clase eso se nota. Cuando ya les tocó a todos los conectados, vuelve a
   empezar la vuelta.
-- **Va en `game_state.elegido` ({id, at}) y no en un mensaje suelto de
+- **Va en `game_state.elegido` ({id, at, nombre}) y no en un mensaje suelto de
   Realtime**, por lo mismo que la vista: quien recarga justo en ese momento se
   entera igual. Solo el profe lo cambia (`protect_game_state_teacher_columns`;
   comprobado impersonando: la alumna con el control no se puede elegir sola) y
@@ -509,7 +509,12 @@ respondió.
 - **La ruleta** (los nombres girando un momento) no corre con «reducir
   movimiento», y mientras gira el nombre no es región viva: se anuncia solo el
   final.
-- Los demás alumnos no ven nada: no hace falta y así nadie queda expuesto.
+- **Los demás ven a quién eligieron**, escrito debajo de su tablero («Tu profe
+  eligió a Beto Mora para responder»), sin el aviso grande ni nada que les tape
+  la pantalla. El nombre viaja en la misma elección (`elegido.nombre`, lo pone
+  el profe desde la presencia): así lo ve también quien recarga antes de que le
+  llegue la presencia. Con el Modo Adaptado se dice en voz, una vez por
+  elección. Se va cuando el profe marca que ya respondió.
 
 **Al tocar esto, correr `node herramientas/verificar-todo.js clase-elegido`.**
 Está probado que falla de verdad: sin mostrar el aviso grande, se cae.

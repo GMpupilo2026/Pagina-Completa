@@ -17,8 +17,8 @@
      deje en null y que el botón de insignias abra el panel de ESE alumno;
    - que a la elegida le salga el aviso grande (y se vea de verdad), con el
      foco en su botón, que al cerrarlo quede la franja «Te toca responder», que
-     recargar no se lo vuelva a poner encima, y que a otro alumno no le salga
-     nada.
+     recargar no se lo vuelva a poner encima, y que los demás vean a quién
+     eligieron (escrito, sin el aviso grande).
 
    Con el sitio en localhost:8777 y playwright:
        node herramientas/verificar-clase-elegido.js
@@ -70,6 +70,7 @@ async function pruebaProfesor(browser) {
   const primero = await page.evaluate(() => window.__updates.filter((u) => u.tabla === "game_state" && u.campos.elegido).pop().campos.elegido);
   igual("manda {id, at} de un conectado", [["u-ana", "u-beto"].includes(primero.id), typeof primero.at], [true, "string"]);
   const nombres = { "u-ana": "Ana Rojas", "u-beto": "Beto Mora" };
+  igual("y su nombre, para que lo vean los demás", primero.nombre, nombres[primero.id]);
   igual("el profe ve a quién eligió", await page.textContent("#elegido-nombre"), nombres[primero.id]);
   igual("y se ve", await seVe(page, "#elegido-caja"), true);
 
@@ -121,12 +122,16 @@ async function pruebaAlumna(browser) {
 }
 
 async function pruebaOtroAlumno(browser) {
-  console.log("\n=== A otro alumno no le sale nada ===");
-  const { page, ctx, errores } = await abrir(browser, "u-ana", CLASE, { game_state: [fila({ id: "u-beto", at: new Date().toISOString() })] });
+  console.log("\n=== Los demás ven a quién eligieron ===");
+  const { page, ctx, errores } = await abrir(browser, "u-ana", CLASE, { game_state: [fila({ id: "u-beto", at: new Date().toISOString(), nombre: "Beto Mora" })] });
   await page.waitForSelector("#chessboard [data-square]", { timeout: 10000 });
   await page.waitForTimeout(400);
-  igual("ni el aviso", await seVe(page, "#elegido-overlay"), false);
-  igual("ni la franja", await seVe(page, "#elegido-chip"), false);
+  igual("no le sale el aviso grande", await seVe(page, "#elegido-overlay"), false);
+  igual("ni la franja de «te toca»", await seVe(page, "#elegido-chip"), false);
+  igual("pero ve a quién eligieron", await seVe(page, "#elegido-otro"), true);
+  igual("con su nombre", await page.textContent("#elegido-otro"), "🎯 Tu profe eligió a Beto Mora para responder.");
+  await page.evaluate((f) => window.__cambioEnBase("game_state", f), fila(null));
+  igual("cuando ya respondió, se va", await seVe(page, "#elegido-otro"), false);
   igual("sin errores en consola", errores, []);
   await ctx.close();
 }
