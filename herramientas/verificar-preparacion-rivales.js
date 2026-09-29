@@ -21,6 +21,7 @@
 const { chromium } = require("./lib/playwright-con-sesion");
 const { contestarAvisos } = require("./lib/avisos-prueba.js");
 const A = require("../js/preparacion-analisis.js");
+const R = require("../js/preparacion-resumen.js");
 const L = require("../js/preparacion-lineas.js");
 const Pos = require("../js/preparacion-posiciones.js");
 const { Chess } = require("chess.js");
@@ -339,6 +340,58 @@ function pruebaComoPierde() {
   cierto("el FODA lo dice: derrotas por tiempo", r.foda.debilidades.some((x) => /El 60 % de sus derrotas son por tiempo \(6 de 10\)/.test(x)));
   cierto("y el tiempo que gasta en la apertura es una oportunidad", r.foda.oportunidades.some((x) => /gasta más tiempo que sus rivales \(67 % .* contra 11 %\)/.test(x)));
   cierto("y los apuros de tiempo, una debilidad", r.foda.debilidades.some((x) => /apuros de tiempo .* 30 %/.test(x)));
+  return r;
+}
+
+/* Qué hacer y qué no hacer (js/preparacion-resumen.js): órdenes cortas con su
+   porqué, sacadas de lo que el análisis ya decidió. El rival de prueba tiene
+   todo plantado: la Española donde pierde, 1.d4 d5 donde gana, su 4.Dh4 que
+   Stockfish (el de mentira) da como error, su 2.Cc3 fuera de la teoría y el
+   1.e4 e6 2.d4 d5 donde improvisa. */
+function pruebaResumen(conMotor, libro, comoPierde) {
+  console.log("\n=== Qué hacer y qué no hacer contra él ===");
+  const T = require("../js/preparacion-teoria.js");
+  const r = JSON.parse(JSON.stringify(conMotor));
+  const datos = {};
+  for (let v = 0; v < 40; v++) {
+    const faltan = T.pendientes(r, datos);
+    if (!faltan.length) break;
+    faltan.forEach((f) => { datos[f] = respuestaDelLibro(libro, f); });
+  }
+  T.aplicar(r, datos);
+  const res = R.armar(r);
+  const [b, n] = res.lados;
+  igual("con blancas, la línea a jugar es la del plan, con cuánto saca él dicho en palabras",
+    b.lineas.map((x) => [x.titulo, A.lineaEs(x.sec), x.texto, x.aviso]),
+    [["Tu línea", "1.e4 e5 2.Cf3 Cc6 3.Ab5 a6 4.Aa4 Cf6 5.O-O Ae7", "él saca 23,8 % (le va mal) en 21 partidas.", ""]]);
+  igual("con negras, una línea por cada apertura suya; si igual le va bien ahí, lo avisa",
+    n.lineas.map((x) => [x.titulo, x.texto, !!x.aviso]),
+    [["Si abre 1.e4 (63 % de las veces)", "él saca 60,0 % (le va bien) en 20 partidas.", true], ["Si abre 1.d4 (38 % de las veces)", "él saca 83,3 % (le va muy bien) en 12 partidas.", true]]);
+  igual("con blancas: no ir a 1.d4 d5, con el porqué", b.evita.map((x) => [x.texto, x.porque]),
+    [["No vayas a 1.d4 d5.", "Ahí él saca 90,0 % (le va muy bien) en 20 partidas; con negras suele sacar 56,1 %."]]);
+  igual("y no repite «busca 1.e4 e5»: ya es el comienzo de su línea", b.haz.map((x) => x.texto), []);
+  igual("con negras: primero su error, después dónde deja la teoría y dónde improvisa", n.haz.map((x) => x.texto), [
+    "Prepara cómo castigar 4.Dh4: es un error suyo que repite.",
+    "Estudia 1.d4 c5 2.Cc3: ahí él deja la teoría.",
+    "Después de 1.e4 e6 2.d4 d5 no tiene una jugada fija: ahí improvisa."]);
+  igual("cada orden trae su porqué y la línea para el tablero", [n.haz[0].porque, n.haz[0].sec.join(" "), n.haz[1].porque],
+    ["La jugó en 12 partidas, después de 1.d4 c5 2.Cc3 cxd4 3.Dxd4 Cc6. Stockfish: +0,10 → −0,80; lo correcto era Dd1.", "d4 c5 Nc3 cxd4 Qxd4 Nc6 Qh4",
+      "Juega 2.Cc3 en 12 partidas; los maestros, 0 de 100 (lo habitual es d5)."]);
+  cierto("toda línea que se ofrece para el tablero es legal", res.lados.every((l) => l.lineas.concat(l.haz, l.evita).every((x) => !x.sec || A.fenDe(x.sec))));
+  igual("en toda la partida: llegar con la apertura estudiada", res.general.haz.map((x) => x.texto), ["Llega con la apertura bien estudiada."]);
+  igual("el porcentaje en palabras", [0.2, 0.4, 0.5, 0.6, 0.9].map(R.comoLeVa), ["le va mal", "le cuesta", "parejo", "le va bien", "le va muy bien"]);
+
+  const g = R.armar(comoPierde).general;
+  igual("el reloj y cómo pierde, como órdenes (de las mismas señales que el FODA)", g.haz.map((x) => x.texto), [
+    "Complícale la posición y aprieta el reloj.",
+    "Llega con la apertura bien estudiada.",
+    "Cuida tu reloj y lleva la partida a lo largo: él se apura al final.",
+    "Sácalo de lo que conoce: en la apertura piensa mucho."]);
+  igual("con el dato de cada una", g.haz[0].porque, "El 60 % de sus derrotas son por tiempo (6 de 10).");
+
+  // Un análisis guardado de la versión 1 (sin motor, sin teoría, sin más allá) se resume igual.
+  const v1 = R.armar(analisisVersion1());
+  cierto("un análisis viejo también se resume, sin romperse", v1.lados.length === 2 && v1.lados[0].lineas.length === 1);
 }
 
 // ------------------------------------------------------------ 2. la página
@@ -421,7 +474,8 @@ window.__fensPedidas = [];
         if (!LIBRO) return Promise.resolve({ data: { posiciones: {}, faltan: fens, motivo: "sin_token" }, error: null });
         const posiciones = {};
         fens.forEach((f) => { posiciones[f] = LIBRO[f] || { w: 0, d: 0, b: 0, jugadas: [], apertura: null }; });
-        return Promise.resolve({ data: { posiciones, faltan: [], motivo: null }, error: null });
+        // Tarda un poco, como la red: el aviso de «todavía falta» tiene que verse.
+        return new Promise((listo) => setTimeout(() => listo({ data: { posiciones, faltan: [], motivo: null }, error: null }), 60));
       },
     },
     channel: () => ({ on() { return this; }, subscribe() { return this; }, track() { return Promise.resolve(); }, presenceState: () => ({}) }),
@@ -563,7 +617,19 @@ async function pruebaConPermiso(browser) {
   igual("el foco va al título del resultado", await page.evaluate(() => document.activeElement.id), "titulo-resultado");
   const titulos = await page.evaluate(() => [...document.querySelectorAll("#resultado-cuerpo h3")].filter((h) => h.checkVisibility()).map((h) => h.textContent));
   igual("están todas las partes, en orden", titulos,
-    ["Análisis FODA, visto desde quien quiere ganarle", "Qué jugarle", "Lo que dice Stockfish", "Más allá de la apertura", "Su repertorio", "Dónde rinde menos y dónde más", "Por ritmo, por año y por Elo"]);
+    ["Qué hacer contra él", "Qué jugarle, jugada por jugada", "Lo que dice Stockfish", "Análisis FODA, visto desde quien quiere ganarle", "Más allá de la apertura", "Su repertorio", "Dónde rinde menos y dónde más", "Por ritmo, por año y por Elo"]);
+  igual("arriba de todo, qué hacer y qué no, con cada color", await page.evaluate(() => [...document.querySelectorAll("[aria-labelledby='resumen-titulo'] [data-lado] > h4")].map((h) => h.textContent)),
+    ["Cuando tú llevas blancas", "Cuando tú llevas negras", "En toda la partida"]);
+  igual("con blancas: la línea y lo que no hay que hacer", await page.evaluate(() => {
+    const d = document.querySelector("[aria-labelledby='resumen-titulo'] [data-lado='conBlancas']");
+    return [d.querySelector("[data-linea] p:nth-child(2)").textContent, d.querySelector("[data-consejos='evita'] li p").textContent];
+  }), ["1.e4 e5 2.Cf3 Cc6 3.Ab5 a6 4.Aa4 Cf6 5.O-O Ae7", "No vayas a 1.d4 d5."]);
+  // Sin el token no hay teoría, y Stockfish ya terminó: el aviso de «todavía
+  // falta» no puede quedar colgado (se mide si se ve, no el atributo).
+  igual("cuando ya no corre nada, no dice que falta algo", await page.evaluate(() => document.querySelector("[aria-labelledby='resumen-titulo'] [data-pendiente]").checkVisibility()), false);
+  igual("en el plan, las cifras solo cuando cambian: «1…e5 (siempre)» va sin repetir las de 1.e4", await page.evaluate(() =>
+    [...document.querySelectorAll("[aria-labelledby='planes-titulo'] ul li p")].slice(0, 3).map((p) => p.textContent)),
+    ["Juega 1.e4 · él saca 23,8 % (le va mal) en 21 partidas", "Si él juega 1…e5 (siempre)", "Juega 2.Cf3"]);
   cierto("sin relojes en el PGN, «El reloj» lo dice en vez de inventar",
     /no traen los relojes/.test(await page.textContent("[aria-labelledby='masalla-titulo']")));
   igual("el FODA tiene sus cuatro cuadros", await page.evaluate(() =>
@@ -677,7 +743,7 @@ async function pruebaEtapa3(browser) {
   igual("al cerrar se oculta y el foco vuelve a la jugada del plan", await page.evaluate(() => [SE_VE("visor-caja"), document.activeElement.getAttribute("aria-label")]), [false, botones[1]]);
 
   // «Ver» en un error de Stockfish abre esa línea en la jugada del error.
-  const ver = await page.$("button[aria-label^='Ver en el tablero:']");
+  const ver = await page.$("[aria-labelledby='motor-titulo'] button[aria-label^='Ver en el tablero:']");
   cierto("los errores de Stockfish traen su botón «Ver»", !!ver);
   await ver.click();
   await page.waitForFunction(() => document.getElementById("visor-caja").checkVisibility(), null, { timeout: 5000 });
@@ -963,16 +1029,19 @@ async function pruebaEtapa4(browser) {
    su tablero; sin el token del servidor, lo dice y no pinta nada. */
 async function pruebaEtapa5(browser, libro) {
   console.log("\n=== Etapa 5: dónde deja la teoría, en la página ===");
-  const analizarEn = async (page) => {
+  const analizarEn = async (page, conLibro) => {
     await page.setInputFiles("#pgn-archivo", { name: "rival.pgn", mimeType: "application/x-chess-pgn", buffer: Buffer.from(pgnDePrueba(), "utf8") });
     await page.click("#leer");
     await page.waitForFunction(() => /Se leyeron/.test(document.getElementById("leido").textContent), null, { timeout: 10000 });
     await page.click("#analizar");
+    // Apenas empiezan Stockfish y la teoría, el resumen avisa que se va a
+    // completar (antes de que ninguno termine y vuelva a pintar).
+    if (conLibro) await page.waitForFunction(() => { const p = document.querySelector("[aria-labelledby='resumen-titulo'] [data-pendiente]"); return p && p.checkVisibility() && /Stockfish.* y la comparación con los maestros/.test(p.textContent); }, null, { timeout: 5000 });
     await page.waitForFunction(() => /Listo/.test(document.getElementById("motor-estado").textContent) && /^Comparado|falta el token/.test(document.getElementById("teoria-estado").textContent), null, { timeout: 30000 });
   };
 
   const { page, ctx, errores } = await abrir(browser, true, [], false, {}, null, libro);
-  await analizarEn(page);
+  await analizarEn(page, true);
   const pedidas = await page.evaluate(() => window.__fensPedidas);
   igual("se pregunta cada posición una sola vez", pedidas.length, new Set(pedidas).size);
   cierto("el estado dice cuántas posiciones comparó (" + await page.textContent("#teoria-estado") + ")", /^Comparado con las partidas de maestros de Lichess \(\d+ posiciones\)\.$/.test(await page.textContent("#teoria-estado")));
@@ -995,6 +1064,18 @@ async function pruebaEtapa5(browser, libro) {
     ["1.d4 c5 2.Cc3", "Aquí él deja la teoría con Cc3: los maestros la jugaron 0 veces de 100. Lo habitual es d5."]);
   cierto("al FODA llega la posición a estudiar", await page.evaluate(() => /juega Cc3 \(12 partidas\), que los maestros casi no juegan \(0 de 100\)/.test(document.getElementById("resultado-cuerpo").textContent)));
   cierto("y el FODA sigue trayendo lo de Stockfish", await page.evaluate(() => /suele jugar Dh4/.test(document.getElementById("resultado-cuerpo").textContent)));
+  igual("el resumen, con negras: su error, dónde deja la teoría y dónde improvisa", await page.evaluate(() =>
+    [...document.querySelectorAll("[aria-labelledby='resumen-titulo'] [data-lado='conNegras'] [data-consejos='haz'] li p:first-child")].map((p) => p.textContent)), [
+    "Prepara cómo castigar 4.Dh4: es un error suyo que repite.",
+    "Estudia 1.d4 c5 2.Cc3: ahí él deja la teoría.",
+    "Después de 1.e4 e6 2.d4 d5 no tiene una jugada fija: ahí improvisa."]);
+  await page.click("[aria-labelledby='resumen-titulo'] [data-lado='conNegras'] [data-consejos='haz'] li button");
+  await page.waitForFunction(() => document.getElementById("visor-caja").checkVisibility(), null, { timeout: 5000 });
+  igual("su «Ver» abre el tablero en el error, con el consejo y su porqué", await page.evaluate(() =>
+    [document.querySelector("#visor .visor-titulo").textContent, /^Prepara cómo castigar 4\.Dh4.*Stockfish: \+0,20 → −0,80/.test(document.querySelector("#visor .visor-nota").textContent)]),
+    ["1.d4 c5 2.Cc3 cxd4 3.Dxd4 Cc6 4.Dh4", true]);
+  await page.click("#visor-cerrar");
+  igual("y al terminar todo, no queda el aviso de que falta algo", await page.evaluate(() => document.querySelector("[aria-labelledby='resumen-titulo'] [data-pendiente]").checkVisibility()), false);
   await page.click("#guardar");
   await page.waitForFunction(() => window.__insertados.some((i) => i.tabla === "preparaciones_rival"), null, { timeout: 5000 });
   igual("se guarda con la teoría", await page.evaluate(() => { const i = window.__insertados.find((x) => x.tabla === "preparaciones_rival"); return [!!i.analisis.teoria, i.analisis.teoria.lineas.length > 0, i.analisis.version]; }), [true, true, 4]);
@@ -1340,7 +1421,7 @@ async function pruebaMotorDeVerdad(browser) {
   pruebaCruce();
   pruebaTiposDeFinal();
   pruebaDeteccionDeFinales();
-  pruebaComoPierde();
+  pruebaResumen(conMotor, libro, pruebaComoPierde());
   pruebaCsp();
   pruebaArchivosDelMotor();
   const browser = await chromium.launch({ executablePath: CHROME });

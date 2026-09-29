@@ -781,41 +781,63 @@
   const FIN_ES = { tiempo: "por tiempo", abandono: "abandonando", mate: "con mate", abandonada: "abandonando la partida (desconexión)", otro: "de otra forma", tablas: "en tablas", ahogado: "por ahogado", repeticion: "por repetición", material: "por material insuficiente" };
   const pctEntero = (x) => Math.round(100 * x) + " %";
 
-  // Lo que la etapa 2 agrega al FODA: cómo pierde, el reloj y los finales.
-  function fodaMasAlla(r, F, D, O, A) {
+  /* Lo que la etapa 2 encuentra: cómo pierde, el reloj y los finales. Una
+     sola detección, con sus umbrales, para el FODA (fodaMasAlla) y para el
+     resumen de qué hacer y qué no (js/preparacion-resumen.js): cada señal
+     es { tipo, ...datos }. */
+  function senalesMasAlla(r) {
     const m = r.masAlla;
+    const out = [];
+    if (!m) return out;
+    const hay = m.perdidas >= r.minimo;
     const porTiempo = m.derrotas.find((x) => x.fin === "tiempo");
-    if (m.perdidas >= r.minimo && porTiempo && porTiempo.reparto >= 0.25) {
-      D.push("El " + pctEntero(porTiempo.reparto) + " de sus derrotas son por tiempo (" + porTiempo.n + " de " + m.perdidas + ").");
-      O.push("Pierde mucho por tiempo: complícale la posición y aprieta el reloj.");
-    }
+    if (hay && porTiempo && porTiempo.reparto >= 0.25) out.push({ tipo: "pierde-por-tiempo", parte: porTiempo.reparto, n: porTiempo.n, de: m.perdidas });
     const conMate = m.derrotas.find((x) => x.fin === "mate");
-    if (m.perdidas >= r.minimo && conMate && conMate.reparto >= 0.25) {
-      D.push("El " + pctEntero(conMate.reparto) + " de sus derrotas terminan en mate: no abandona y se deja atacar.");
-    }
-    if (m.perdidas >= r.minimo && m.fases.apertura / m.perdidas >= 0.4) {
-      O.push("El " + pctEntero(m.fases.apertura / m.perdidas) + " de sus derrotas se decide hasta la jugada 20: la preparación de apertura rinde.");
-    }
+    if (hay && conMate && conMate.reparto >= 0.25) out.push({ tipo: "pierde-con-mate", parte: conMate.reparto });
+    if (hay && m.fases.apertura / m.perdidas >= 0.4) out.push({ tipo: "pierde-en-la-apertura", parte: m.fases.apertura / m.perdidas });
     if (m.reloj) {
-      if (m.reloj.apuros >= 0.3) D.push("Se queda en apuros de tiempo (menos del 10 % de su reloj) en el " + pctEntero(m.reloj.apuros) + " de sus partidas.");
+      if (m.reloj.apuros >= 0.3) out.push({ tipo: "apuros-de-tiempo", parte: m.reloj.apuros });
       if (m.reloj.apertura != null && m.reloj.aperturaRivales != null && m.reloj.apertura - m.reloj.aperturaRivales >= 0.1) {
-        O.push("En la apertura gasta más tiempo que sus rivales (" + pctEntero(m.reloj.apertura) + " de su reloj en 15 jugadas, contra " + pctEntero(m.reloj.aperturaRivales) + "): una línea poco común lo obliga a pensar.");
+        out.push({ tipo: "piensa-la-apertura", el: m.reloj.apertura, rivales: m.reloj.aperturaRivales });
       }
     }
     for (const f of m.finales) {
       if (f.n < r.minimo) continue;
       const zz = z(f, m.base), dif = f.puntos - m.base;
-      if (zz <= -1.28 && dif <= -0.05) {
-        D.push("En los finales " + f.tipo + " saca " + pct(f.puntos) + " (" + f.n + " partidas; su promedio es " + pct(m.base) + ").");
-        O.push("Busca cambiar piezas hacia un final " + f.tipo + ".");
-      } else if (zz >= 1.28 && dif >= 0.05) {
-        F.push("En los finales " + f.tipo + " saca " + pct(f.puntos) + " (" + f.n + " partidas).");
-        A.push("Evita los finales " + f.tipo + ": ahí rinde más que en el resto.");
-      }
+      if (zz <= -1.28 && dif <= -0.05) out.push({ tipo: "final-debil", final: f.tipo, puntos: f.puntos, n: f.n, base: m.base });
+      else if (zz >= 1.28 && dif >= 0.05) out.push({ tipo: "final-fuerte", final: f.tipo, puntos: f.puntos, n: f.n, base: m.base });
     }
     const v = m.conversion.ventaja, d = m.conversion.desventaja;
-    if (v.n >= r.minimo && v.ganadas / v.n < 0.6) D.push("Le cuesta ganar los finales con ventaja: de " + v.n + " convirtió " + v.ganadas + " (" + pctEntero(v.ganadas / v.n) + ").");
-    if (d.n >= r.minimo && d.salvadas / d.n >= 0.4) F.push("Se defiende bien en los finales con desventaja: salvó " + d.salvadas + " de " + d.n + ".");
+    if (v.n >= r.minimo && v.ganadas / v.n < 0.6) out.push({ tipo: "no-convierte", ganadas: v.ganadas, n: v.n });
+    if (d.n >= r.minimo && d.salvadas / d.n >= 0.4) out.push({ tipo: "se-defiende", salvadas: d.salvadas, n: d.n });
+    return out;
+  }
+
+  function fodaMasAlla(r, F, D, O, A) {
+    for (const x of senalesMasAlla(r)) {
+      if (x.tipo === "pierde-por-tiempo") {
+        D.push("El " + pctEntero(x.parte) + " de sus derrotas son por tiempo (" + x.n + " de " + x.de + ").");
+        O.push("Pierde mucho por tiempo: complícale la posición y aprieta el reloj.");
+      } else if (x.tipo === "pierde-con-mate") {
+        D.push("El " + pctEntero(x.parte) + " de sus derrotas terminan en mate: no abandona y se deja atacar.");
+      } else if (x.tipo === "pierde-en-la-apertura") {
+        O.push("El " + pctEntero(x.parte) + " de sus derrotas se decide hasta la jugada 20: la preparación de apertura rinde.");
+      } else if (x.tipo === "apuros-de-tiempo") {
+        D.push("Se queda en apuros de tiempo (menos del 10 % de su reloj) en el " + pctEntero(x.parte) + " de sus partidas.");
+      } else if (x.tipo === "piensa-la-apertura") {
+        O.push("En la apertura gasta más tiempo que sus rivales (" + pctEntero(x.el) + " de su reloj en 15 jugadas, contra " + pctEntero(x.rivales) + "): una línea poco común lo obliga a pensar.");
+      } else if (x.tipo === "final-debil") {
+        D.push("En los finales " + x.final + " saca " + pct(x.puntos) + " (" + x.n + " partidas; su promedio es " + pct(x.base) + ").");
+        O.push("Busca cambiar piezas hacia un final " + x.final + ".");
+      } else if (x.tipo === "final-fuerte") {
+        F.push("En los finales " + x.final + " saca " + pct(x.puntos) + " (" + x.n + " partidas).");
+        A.push("Evita los finales " + x.final + ": ahí rinde más que en el resto.");
+      } else if (x.tipo === "no-convierte") {
+        D.push("Le cuesta ganar los finales con ventaja: de " + x.n + " convirtió " + x.ganadas + " (" + pctEntero(x.ganadas / x.n) + ").");
+      } else if (x.tipo === "se-defiende") {
+        F.push("Se defiende bien en los finales con desventaja: salvó " + x.salvadas + " de " + x.n + ".");
+      }
+    }
   }
 
   function foda(r) {
@@ -985,7 +1007,7 @@
   return {
     leerPgn, jugadasDe, jugadasYRelojes, jugadores, claveNombre, analizar, ritmoDe, finDe, partidasDelRival,
     sanEs, lineaEs, pct, textoEval, minimo, POCAS, tipoDeFinal, esFinal, FIN_ES,
-    tareasDelMotor, aplicarMotor, rehacerFoda, fenDe,
+    tareasDelMotor, aplicarMotor, rehacerFoda, fenDe, senalesMasAlla,
     // Para js/preparacion-cruce.js, que arma el árbol del alumno igual que el
     // del rival: una sola forma de armarlo y de contarlo.
     interno: { partidasDelRival, pasaFiltros, armarArbol, hijosOrdenados, totalAristas, puntos, resumen, suavizada, leTocaAlRival, nombreDe, esPrefijo },
