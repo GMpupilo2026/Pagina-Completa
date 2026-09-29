@@ -68,6 +68,13 @@ const FILES = ['a','b','c','d','e','f','g','h'];
 let estado = { perfil: {}, idx: 0, respuestas: {}, items: [] };
 let perfilCuenta = null;   // profiles: { elo, elo_tipo } del alumno (Configuración › Perfil)
 let sesionActual = null;   // sesión de Supabase (la fija init); null = visitante sin cuenta
+/* El enlace propio de un supervisor (entreno/diagnostico.html?s=<código>): el
+   diagnóstico del visitante le llega a él y no a administración. La página
+   solo manda el código; a quién le llega lo decide el trigger de la base
+   (diagnosticos_publicos_supervisor). `destino` es el nombre que se le enseña
+   al visitante, sacado de enlace_diagnostico_publico(). */
+let enlaceSupervisor = null; // { codigo, destino } | null
+const FORMA_ENLACE = /^[0-9a-f]{10}$/;
 let itemActual = null;
 let ordenOpciones = null;   // en qué orden se muestran las opciones de este ítem
 let seleccion = null;      // respuesta en curso (índice de opción, casilla o jugada)
@@ -217,7 +224,9 @@ function empezar() {
     if (!nombre) { msg.textContent = 'Escribe tu nombre para empezar.'; document.getElementById('visitante-nombre').focus(); return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { msg.textContent = 'Escribe un correo válido para poder enviarte el resultado.'; document.getElementById('visitante-email').focus(); return; }
     msg.textContent = '';
-    estado.visitante = { nombre, email, telefono };
+    estado.visitante = { nombre, email, telefono,
+      enlace: enlaceSupervisor ? enlaceSupervisor.codigo : null,
+      destino: enlaceSupervisor ? enlaceSupervisor.destino : null };
     guardarEstado();
   }
   if (!ITEMS.length || estado.idx >= ITEMS.length) {
@@ -684,11 +693,12 @@ async function terminar() {
         nombre: v.nombre, email: v.email || null, telefono: v.telefono || null,
         elo: detalle.perfil.elo || null, elo_tipo: detalle.perfil.elo ? detalle.perfil.elo_tipo : null,
         porcentaje: resumen.porcentaje, nivel: resumen.nivel.etiqueta, detalle,
+        enlace: v.enlace || null,
       }]);
       ok = !error;
     } catch (e) { ok = false; }
     document.getElementById('result-saved').textContent = ok
-      ? `Resultado enviado a Ajedrez Integral a nombre de ${v.nombre}. También quedó guardado en este dispositivo.`
+      ? `Resultado enviado a ${v.destino || 'Ajedrez Integral'} a nombre de ${v.nombre}. También quedó guardado en este dispositivo.`
       : 'No se pudo enviar el resultado (sin conexión). Quedó guardado en este dispositivo.';
     return;
   }
@@ -941,6 +951,33 @@ async function mostrarPdfSiEsAdmin(userId) {
   } catch (e) { /* si no se puede saber, no se muestra */ }
 }
 
+/* El código viene en la dirección; si no (recargó sin él, o volvió otro día a
+   seguir la prueba), el que quedó guardado con sus datos. Un código que la
+   base no reconoce se dice: el resultado igual se guarda, pero le llega a
+   administración, y quien le mandó el enlace lo estaría esperando. */
+async function leerEnlaceSupervisor(v) {
+  const aviso = document.getElementById('visitante-destino');
+  let codigo = null;
+  try { codigo = new URLSearchParams(location.search).get('s'); } catch (e) { codigo = null; }
+  if (!codigo) codigo = v.enlace || null;
+  if (!codigo) return;
+  codigo = String(codigo).trim().toLowerCase();
+  let destino = null;
+  if (FORMA_ENLACE.test(codigo)) {
+    try {
+      const { data, error } = await sb.rpc('enlace_diagnostico_publico', { p_codigo: codigo });
+      if (!error && typeof data === 'string' && data.trim()) destino = data.trim();
+    } catch (e) { destino = null; }
+  }
+  if (destino) {
+    enlaceSupervisor = { codigo, destino };
+    aviso.textContent = `Tu resultado le llega a ${destino}, que te compartió este enlace.`;
+  } else {
+    aviso.textContent = 'Este enlace ya no está activo: tu resultado le llega a Ajedrez Integral. Si esperabas mandárselo a otra persona, pídele su enlace otra vez.';
+  }
+  aviso.classList.remove('hidden');
+}
+
 async function init() {
   let sesion = null;
   try {
@@ -976,6 +1013,7 @@ async function init() {
     document.getElementById('visitante-nombre').value = v.nombre || '';
     document.getElementById('visitante-email').value = v.email || '';
     document.getElementById('visitante-telefono').value = v.telefono || '';
+    await leerEnlaceSupervisor(v);
     const volver = document.querySelector('#intro-view a[href="aprender.html"]');
     if (volver) { volver.href = '../cursos.html'; volver.innerHTML = '<span aria-hidden="true">←</span> Cursos'; }
   }
