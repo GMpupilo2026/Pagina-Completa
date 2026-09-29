@@ -59,6 +59,8 @@ async function pruebaMira(browser) {
   igual("rótulo", await page.textContent("#role-badge"), "👁 Supervisión");
   igual("dice de quién es la clase y que solo mira",
         /Clase de Karina Rojas\. Solo miras/.test(await page.textContent("#observador-texto")), true);
+  igual("la franja de arriba dice que mira, no le habla como a una alumna",
+        /^Estás mirando la clase de Karina Rojas/.test(await page.textContent("#status-banner")), true);
   igual("sin herramientas del profesor", await seVe(page, "teacher-toolbar"), false);
   igual("sin el panel del alumno", await seVe(page, "student-panel"), false);
   igual("sin levantar la mano", await seVe(page, "raise-hand-btn"), false);

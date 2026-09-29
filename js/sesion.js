@@ -589,7 +589,9 @@
         }
 
         function updateAccessForRole() {
-            if (isTeacher) return;
+            // Quien supervisa no tiene control que calcular, y el mensaje de alumno le
+            // pisaba el suyo («Estás mirando la clase de…») con cada jugada.
+            if (isTeacher || esObservador) return;
             const hasControl = activePlayerId === profile.id;
             const colorLabel = activePlayerColor === "w" ? "blancas" : activePlayerColor === "b" ? "negras" : null;
             const myColorTurn = !hasControl || activePlayerColor === "both" || activePlayerColor === board.game.turn();
@@ -2500,11 +2502,17 @@
                     const meta = state[key][0];
                     // Con dos pestañas abiertas hay dos metas: basta con que una lo mire.
                     const loMira = (state[key] || []).some((m) => m && m.mirando_a === profile.id);
-                    if (loMira && key !== profile.id) meMiran.push((meta && meta.full_name) || "Tu profe");
+                    if (loMira && key !== profile.id) {
+                        meMiran.push(meta && meta.role === "supervision"
+                            ? (meta.full_name || "Alguien") + " (supervisión)"
+                            : (meta && meta.full_name) || "Tu profe");
+                    }
                     if (meta && meta.role === "alumno") {
                         onlineStudents.set(key, { email: meta.email, full_name: meta.full_name, hand_raised: !!meta.hand_raised, hand_at: meta.hand_at || null });
                     } else if (meta && meta.role === "supervision") {
-                        mirando.push(meta.full_name || "Alguien de supervisión");
+                        // Si además está mirando la partida de un alumno, el profe lo sabe.
+                        const suya = meta.mirando_a && practiceStudentBoards[meta.mirando_a];
+                        mirando.push({ nombre: meta.full_name || "Alguien de supervisión", partida: suya ? suya.nombre : null });
                     }
                 }
                 renderStudentsList();
@@ -2551,12 +2559,12 @@
         // El profesor dice en su presencia a quién está mirando (o a nadie, con null).
         async function anunciarMirada(studentId) {
             mirandoA = studentId || null;
-            if (!presenceChannel || !isTeacher) return;
+            if (!presenceChannel || !veLaPractica()) return;
             try {
                 await presenceChannel.track({
                     email: profile.email,
                     full_name: profile.full_name || "",
-                    role: profile.role,
+                    role: esObservador ? "supervision" : profile.role,
                     online_at: new Date().toISOString(),
                     mirando_a: mirandoA,
                 });
@@ -2581,8 +2589,12 @@
                 const el = document.getElementById("observadores");
                 if (!el) return;
                 el.hidden = !mirando.length;
+                // Si además mira la partida de un alumno, se dice cuál: ayudar a tu alumno
+                // sin que lo sepas no es supervisar.
                 el.textContent = mirando.length
-                    ? "👁 " + mirando.join(", ") + (mirando.length === 1 ? " (supervisión) está mirando la clase." : " (supervisión) están mirando la clase.")
+                    ? "👁 " + mirando.map((m) => m.nombre).join(", ")
+                        + (mirando.length === 1 ? " (supervisión) está mirando la clase." : " (supervisión) están mirando la clase.")
+                        + mirando.filter((m) => m.partida).map((m) => " " + m.nombre + " está en la partida de " + m.partida + ".").join("")
                     : "";
             } else if (esObservador) {
                 const nombres = Array.from(onlineStudents.values()).map((i) => i.full_name || i.email || "Alumno");
@@ -5014,13 +5026,17 @@
             return Math.max(0, Math.round(quedan + (latestPracticeSession.incremento_segundos || 0) * 1000));
         }
 
+        // El profe y quien supervisa ven la partida de cada alumno (y pueden ayudar);
+        // el alumno ve la suya. La base dice qué filas le llegan a cada uno.
+        function veLaPractica() { return isTeacher || esObservador; }
+
         function subscribePractice() {
             sb.channel("practice-sessions-changes:" + boardOwnerId)
                 .on("postgres_changes", { event: "*", schema: "public", table: "practice_sessions", filter: "created_by=eq." + boardOwnerId }, (payload) => {
                     applyPracticeSessionUpdate(payload.new || payload.old);
                 })
                 .subscribe();
-            if (isTeacher) {
+            if (veLaPractica()) {
                 sb.channel("practice-games-changes:" + boardOwnerId)
                     .on("postgres_changes", { event: "*", schema: "public", table: "practice_games" }, (payload) => {
                         const row = (payload.new && payload.new.session_id) ? payload.new : payload.old;
@@ -5054,7 +5070,7 @@
             const { data, error } = await sb.from("practice_sessions").select("*").eq("created_by", boardOwnerId).order("created_at", { ascending: false }).limit(1).maybeSingle();
             if (error) { console.error(error); return; }
             latestPracticeSession = data || null;
-            if (isTeacher) renderTeacherPracticePanel();
+            if (veLaPractica()) renderTeacherPracticePanel();
             else await renderStudentPracticeCard();
         }
 
@@ -5072,7 +5088,7 @@
         function applyPracticeSessionUpdate(row) {
             if (!row) return;
             latestPracticeSession = row;
-            if (isTeacher) renderTeacherPracticePanel();
+            if (veLaPractica()) renderTeacherPracticePanel();
             else renderStudentPracticeCard();
         }
 
@@ -5150,8 +5166,12 @@
             entry.evalEl.setAttribute("aria-label", !hayEval ? "Todavía sin evaluar"
                 : Math.abs(row.eval_cp) < 50 ? "La partida va pareja"
                 : "Va mejor " + (row.eval_cp > 0 ? "el blanco" : "el negro"));
+            const conAyuda = PracticaAyuda.limpiar(row.ayuda);
             entry.statusEl.textContent = practiceStatusLabelWithAttempts(row)
-                + (PracticaAyuda.limpiar(row.ayuda) ? " · 💡 con tu ayuda" : "");
+                + (!conAyuda ? ""
+                    : conAyuda.de === profile.id ? " · 💡 con tu ayuda"
+                    : conAyuda.nombre ? " · 💡 con ayuda de " + conAyuda.nombre
+                    : " · 💡 con ayuda");
             if (mirar.studentId === row.student_id) refrescarMirada(row);
         }
 
@@ -5282,7 +5302,7 @@
             const r = await guardarAyuda(ayuda);
             boton.disabled = false;
             if (r.error) { aviso.textContent = "No se pudo mandar la ayuda: " + r.error; return; }
-            if (!r.fila || JSON.stringify(r.quedo) !== JSON.stringify(ayuda)) {
+            if (!r.fila || !PracticaAyuda.mismoContenido(r.quedo, ayuda)) {
                 aviso.textContent = "No le llegó: la ronda de práctica ya terminó.";
                 return;
             }
@@ -5311,8 +5331,10 @@
                 const leidas = PracticaAyuda.leerMarcas(mirarEl("marcas").value);
                 if (!leidas.malas.length && mirar.board) mirar.board.setMarks(leidas.flechas, leidas.circulos);
             });
-            document.getElementById("practica-mirar").addEventListener("keydown", (e) => {
-                if (e.key === "Escape") { e.preventDefault(); cerrarMirada(); }
+            // En todo el documento y no solo en el diálogo: mientras se guarda, el botón
+            // de mandar se desactiva y el foco se cae al body, y Escape dejaba de cerrar.
+            document.addEventListener("keydown", (e) => {
+                if (e.key === "Escape" && mirar.studentId) { e.preventDefault(); cerrarMirada(); }
             });
         }
 
@@ -5659,7 +5681,9 @@
             const ico = document.createElement("span");
             ico.setAttribute("aria-hidden", "true");
             ico.textContent = "💡 ";
-            titulo.append(ico, "Ayuda de tu profe");
+            // La base pone quién la dio: puede ser su profe o alguien de supervisión.
+            titulo.append(ico, ayuda.de && ayuda.de !== boardOwnerId && ayuda.nombre
+                ? "Ayuda de " + ayuda.nombre : "Ayuda de tu profe");
             marco.appendChild(titulo);
             if (ayuda.texto) {
                 const t = document.createElement("p");
@@ -5775,7 +5799,8 @@
             }
             document.getElementById("observador-texto").textContent =
                 "Clase de " + nombreObservado + ". Solo miras: no mueves el tablero, no contestas y no cuentas como alumno. "
-                + nombreObservado + " ve que estás mirando.";
+                + nombreObservado + " ve que estás mirando. Si la clase practica contra el motor, abajo del tablero "
+                + "ves la partida de cada alumno y puedes ayudar a uno con flechas y una pista, sin jugar por él.";
             // Las salas de videollamada de su clase, si tiene (la RLS solo las
             // entrega con la clase abierta).
             const caja = document.getElementById("observador-llamadas");
@@ -5881,6 +5906,11 @@
                conectado; las preguntas, la práctica y el chat son entre el
                profesor y cada alumno. */
             if (esObservador) {
+                // La práctica sí: mirar la partida de un alumno y ayudarlo (ver
+                // «El profe mira la partida de un alumno y lo ayuda»). La RLS se
+                // la entrega solo con la clase abierta.
+                await loadCurrentPractice();
+                subscribePractice();
                 document.getElementById("loading").classList.add("hidden");
                 document.getElementById("app").classList.remove("hidden");
                 return;

@@ -755,18 +755,23 @@ desde el panel «Ver como» de ese profesor. Quien administra también puede.
   dejan leer el tablero, las variantes y el enlace de la videollamada del
   profesor **solo mientras tiene la clase abierta** y solo si lo supervisa (en
   su academia activa, si tiene varias). El conjunto se arma una vez,
-  `interno.clases_que_superviso()`. Cerrada la clase, 0 filas. **Ninguna
-  política de escritura cambió.**
+  `interno.clases_que_superviso()`. Cerrada la clase, 0 filas. La única
+  escritura que se le abrió es la **ayuda en la práctica** (abajo).
 - **Solo mira.** No mueve el tablero (no es interactivo), no marca asistencia
   ni tiempo en clase, no abre ni cierra la clase, no contesta preguntas, no
-  entra a la práctica ni al chat (esos son entre el profesor y cada alumno).
-  Una supervisora anotada como alumna ensuciaría justo los registros que
-  después revisa.
+  juega la práctica ni entra al chat (esos son entre el profesor y cada
+  alumno). Una supervisora anotada como alumna ensuciaría justo los registros
+  que después revisa.
+- **Sí ve la práctica y puede ayudar**, igual que el profe: ve la partida de
+  cada alumno y le manda flechas y una pista a uno, sin jugar por él (ver «El
+  profe mira la partida de un alumno y lo ayuda»). Nunca crea su propia
+  partida: la página no le monta la tarjeta de alumna.
 - **Entra a la presencia como `supervision`, no como alumna**: no aparece en la
   lista de alumnos del profesor ni en su chat. Ve quién está conectado.
 - **El profesor ve que lo están mirando**: «👁 Marta Solano (supervisión) está
-  mirando la clase.», arriba de la franja de la clase. Mirar sin que el otro lo
-  sepa no es supervisar.
+  mirando la clase.», arriba de la franja de la clase, y si está en la partida
+  de un alumno, también: «Marta Solano está en la partida de Ana Rojas.» Mirar
+  sin que el otro lo sepa no es supervisar.
 - La videollamada sale como enlace solo si es `https`.
 - Sin clase abierta, lo dice en palabras («Karina Rojas no tiene la clase
   abierta ahora») y lleva de vuelta a Supervisión; al cerrarse la clase,
@@ -1386,8 +1391,24 @@ alumno le aparece en su propio tablero.
   dibuja se escribe en el mismo campo, y lo que no se entiende se dice y no se
   manda. Lo que no depende de la página (limpiar lo que llega, leer y decir
   las marcas) está una sola vez en `js/practica-ayuda.js`.
+- **También quien supervisa** (`sesion.html?observar=`): ve la práctica y
+  ayuda igual, con el alcance de todo lo demás que mira —solo mientras ese
+  profesor tiene la clase abierta y solo si lo supervisa—
+  (`practice_sessions_select_supervisor`, `practice_games_select_supervisor` y
+  `practice_games_update_supervisor`, sobre `interno.clases_que_superviso()`).
+  El update no le abre nada más que la ayuda: es el mismo trigger. Su página
+  no le monta la tarjeta de práctica de alumna, así que no crea partida ni
+  queda anotada. La base no se lo impide —`practice_games_insert_own` deja a
+  cualquiera crear SU propia partida, como siempre—: lo que la protege es que
+  ninguna pantalla de supervisión lo hace, y el verificador exige que no
+  escriba ningún insert.
+- **La ayuda dice de quién es.** El trigger le pone el `nombre` de quien la
+  dio (no quien la manda, que podría escribir cualquiera): el alumno lee
+  «Ayuda de Marta Solano» cuando no fue su profe, y la miniatura, «con ayuda
+  de Marta Solano».
 - **El alumno sabe que lo están mirando**: «👁 Karina Rojas está mirando tu
-  partida.» Viaja en la **presencia** del profe (`mirando_a`), no en la base:
+  partida.», o «Marta Solano (supervisión) está mirando tu partida.» Viaja en
+  la **presencia** (`mirando_a`), no en la base:
   al cerrar el diálogo, terminar la ronda o cerrar la pestaña se va solo, y
   nunca queda un «te están mirando» de alguien que ya no está. Mirar sin que el
   otro lo sepa no es ayudar.
@@ -1402,17 +1423,27 @@ Comprobado impersonando roles en SQL (revertido): el profe manda la ayuda y
 queda con su `de`, pero sus cambios a jugadas, estado, intentos y reloj se
 devuelven; el alumno no puede cambiarla y sí juega; al reintentar se borra; con
 la ronda terminada no entra; otro profesor cambia 0 filas; una sin `jugadas` o
-con una pista de 281 caracteres la rechaza el CHECK.
+con una pista de 281 caracteres la rechaza el CHECK. Con supervisión
+(`practica_ayuda_tambien_supervision`): con la clase abierta la supervisora ve
+la ronda y la partida (y el nombre del alumno), su ayuda entra con su nombre y
+sus cambios a jugadas y estado se devuelven; un profesor de otra academia ve 0
+y cambia 0; cerrada la clase, la política de supervisión da falso.
 
 **Al tocarlo, correr `node herramientas/verificar-todo.js practica-ayuda
-sesion-curso`.** `verificar-practica-ayuda.js` comprueba las dos pantallas:
+sesion-curso clase-supervisor`.** `verificar-practica-ayuda.js` comprueba las
+tres pantallas (profe, supervisión y alumno):
 que el tablero del profe no mueva ni mande nada, que lo que se manda sea solo
 la ayuda y a esa partida, que diga cuándo la base no la guardó, que la
 presencia diga a quién mira y vuelva a nadie, que al alumno se le pinten las
 flechas solo en su posición y en palabras, y que lo que él guarda nunca lleve
 la ayuda. Está probado que falla de verdad: pintando las flechas en cualquier
 posición y sin volver la presencia a nadie al cerrar, saltan cinco
-comprobaciones.
+comprobaciones; sin cargar la práctica para supervisión, o sin anunciar su
+presencia, también.
+
+Escape cierra el diálogo escuchando en todo el documento, no en el diálogo:
+al mandar, el botón se desactiva mientras guarda y el foco se cae al `body`,
+así que un Escape escuchado en el diálogo dejaba de cerrarlo.
 
 ### Táctica por tema: la vista previa y su botón
 

@@ -1648,6 +1648,113 @@ El verificador juega en la página con un plan chico:
 Comprobado que falla al poner el `theme` siempre y al no deshacer la jugada
 equivocada.
 
+### Qué hacer y qué no hacer: el resumen de arriba
+
+Con las siete etapas, el análisis quedó en diez tarjetas llenas de
+porcentajes, y quien lo leía no sabía qué hacer con eso: se pidió que fuera
+fácil de leer y que no quedara duda de qué hacer y qué no contra el rival.
+
+**Primero la respuesta, después el detalle.** La primera tarjeta es «Qué
+hacer contra él» (`js/preparacion-resumen.js` arma, `pintarResumen()` pinta).
+Tiene tres bloques:
+- **«Cuando tú llevas blancas».** La línea a jugar y, debajo, «Haz esto» y
+  «No hagas esto».
+- **«Cuando tú llevas negras».** Una línea por cada apertura suya («Si abre
+  1.e4 (63 % de las veces)»), con los mismos dos bloques.
+- **«En toda la partida».** El reloj, cómo pierde y los finales.
+
+**Cómo se escribe cada consejo.** Es una orden corta: «No vayas a 1.d4 d5.»,
+«Prepara cómo castigar 4.Dh4: es un error suyo que repite.». Debajo va el dato
+que la justifica, y «Ver» si es una posición.
+
+**Cómo se distinguen «Haz» y «No hagas».** Por el título escrito, no por el
+verde o el rojo del borde. El emoji del título va con `aria-hidden`.
+
+**El resumen no detecta nada.** Lee lo que el análisis ya decidió, así que no
+puede contradecir el detalle de abajo:
+- las líneas fuertes y débiles;
+- los errores de Stockfish y sus «cuidado»;
+- la salida de la teoría;
+- dónde improvisa;
+- el cruce con el alumno.
+
+**Una sola detección para el FODA y el resumen.** Lo de más allá de la
+apertura se sacó a `senalesMasAlla()` en el análisis:
+- devuelve señales con sus datos (`pierde-por-tiempo`, `final-debil`…);
+- `fodaMasAlla()` las escribe como FODA;
+- el resumen las escribe como órdenes.
+
+Los umbrales están en un solo lugar.
+
+**El porcentaje, dicho en palabras.** «Él saca 23,8 %» no le dice nada a quien
+no sabe que son puntos: `comoLeVa()` le agrega el significado:
+- menos de 35 %: «le va mal»;
+- de 35 a 45 %: «le cuesta»;
+- de 45 a 55 %: «parejo»;
+- de 55 a 65 %: «le va bien»;
+- más de 65 %: «le va muy bien».
+
+Se usa en el resumen y en el plan, también en `plan-rival.html`, que carga el
+módulo. «Cómo leer los porcentajes» (un `<details>`) explica la cuenta.
+
+**Lo mejor puede seguir siendo malo.** Contra 1.d4 el plan elige la respuesta
+donde él saca menos, pero ahí saca 83 %. La línea lo avisa: «Es lo que mejor
+funciona en sus partidas, pero igual le va bien ahí: prepárala a fondo». Sin
+eso, se leía como una línea ganadora.
+
+**No se repite.** Una línea débil que ya es el comienzo de la línea
+recomendada no vuelve a salir en «Haz esto»: sus números ya están arriba.
+
+**En el plan, las cifras solo cuando cambian.** En una línea sin ramas, diez
+renglones seguidos decían «él saca 23,8 % en 21 partidas», y lo que importaba
+(qué jugar) se perdía. Ahora:
+- el renglón escribe las cifras solo si difieren de las del anterior;
+- «(100 % de las veces)» es «(siempre)».
+
+**El aviso de «todavía falta» lo decide la página, no el análisis.** Un
+análisis sin `motor` puede no tenerlo nunca (el navegador sin Stockfish, la
+revisión parada), y uno sin teoría tampoco (sin el token). Por eso el resumen
+no pregunta «¿hay motor?»:
+- la página pasa `pendientes(r)`, lo que de verdad está corriendo;
+- apenas arranca Stockfish o la teoría, llama a `PreparacionPintar.pendiente()`
+  para mostrarlo sin volver a pintar todo;
+- con el Stockfish de verdad, la primera repintada llega recién al terminar.
+
+**El orden de las tarjetas.** Va de lo más útil para jugarle a lo más general:
+1. el resumen;
+2. las cifras;
+3. qué jugarle, jugada por jugada;
+4. el cruce;
+5. Stockfish;
+6. la teoría;
+7. el FODA;
+8. más allá de la apertura;
+9. el repertorio;
+10. dónde rinde menos y más;
+11. las tablas.
+
+El FODA bajó: ahora es el detalle, no la respuesta.
+
+**Cómo se comprueba.** `verificar-preparacion-rivales.js`, en «Qué hacer y
+qué no hacer contra él», mira:
+- las órdenes y su porqué con el rival de prueba;
+- las del reloj con el de «cómo pierde»;
+- que un análisis de la versión 1 se resuma igual;
+- en la página, el orden de las tarjetas;
+- que «Ver» abra el error en el tablero;
+- que el aviso se vea apenas arranca y se vaya al terminar, también sin token;
+- que el plan no repita cifras.
+
+El doble del explorador tarda 60 ms en contestar, como la red. Si contestara
+al instante, la teoría terminaba antes de que la prueba alcanzara a ver el
+aviso.
+
+Comprobado que falla en cuatro casos:
+- al repetir la línea débil;
+- al dejar el aviso siempre a la vista;
+- al escribir las cifras en todos los renglones;
+- al no avisar cuando empieza.
+
 ## Las inscripciones a torneos en línea
 
 `inscripciones.html` muestra lo que llegó por `inscripcion.html`, el formulario
