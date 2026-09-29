@@ -555,9 +555,11 @@ y llega a cobros, formularios, solicitudes y reportes. No entrena ni juega.
 - **Informes filtra por `mis_supervisados()`**: la RLS de `profiles` le deja
   ver también a «compañeros» sin ni un dato, y el informe los mezclaba.
 - **Su panel se pinta ENTERO aparte** (`SUPERVISOR_GROUPS` en `clases.html`),
-  no recortando el del equipo docente: cada tema de Informes es una tarjeta
-  que abre `informes.html?tema=…`, más Cuentas, Cobros, Formularios,
-  Solicitudes y Reportes. Sin clase en vivo ni registro de clases.
+  no recortando el del equipo docente: «Lo urgente» arriba, y sus profesores,
+  Informes (una tarjeta: el tema se elige adentro), Cuentas, Cobros,
+  Formularios, Solicitudes y Reportes. Sin clase en vivo ni registro de
+  clases. Ver «El panel de quien supervisa, sin caminos repetidos» en
+  paneles.md.
 - Comprobado impersonando en SQL (revertido): con un alumno asignado ve sus 514
   filas de progreso y 0 de uno ajeno, `bajo_mi_coordinacion` da `true` y
   `false` respectivamente, y sus secciones de tiempo salen.

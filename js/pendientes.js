@@ -1,8 +1,11 @@
-/* Lo urgente de quien administra: lo que se cuenta en la base.
+/* Lo urgente: lo que se cuenta en la base.
 
-   Lo usa «Lo urgente» de admin.html, que es el único lugar donde se muestra
-   (el panel de la Academia lo repetía y se quitó: ver «Una sola puerta para
-   cada cosa» en docs/decisiones/paneles.md).
+   Lo usan «Lo urgente» de admin.html (quien administra) y la tarjeta de
+   arriba del panel de quien supervisa (clases.html). Cada uno pide SOLO lo
+   suyo (`claves`), y la base acota cada conteo a lo que esa persona ve: a quien
+   supervisa, sus justificaciones, sus cobros y las encuestas de sus
+   profesores. Ver «Lo urgente primero» y «El panel de quien supervisa, sin
+   caminos repetidos» en docs/decisiones/paneles.md.
 
    Todo se CUENTA en la base (`count: "exact", head: true`, o una función que
    ya devuelve el número): PostgREST corta a mil filas sin avisar, y bajarse
@@ -11,9 +14,9 @@
    Un conteo que falla vale null, NUNCA cero: quien lo pinta dice «no se pudo
    revisar». Un «al día» falso es peor que no decir nada.
 
-     const n = await PendientesAdmin.contarEnLaBase(sb);
-       // { solicitudes, justificaciones, seVan, morosos, inactivos }
-     PendientesAdmin.EN_LA_BASE   // qué es cada uno, en el orden en que se muestra
+     const n = await Pendientes.contarEnLaBase(sb, ["solicitudes", "seVan"], { yo });
+       // { solicitudes: 2, seVan: 0 }  — null si no se pudo contar
+     Pendientes.EN_LA_BASE   // qué es cada uno, en el orden en que se muestra
 */
 (function () {
   "use strict";
@@ -32,17 +35,29 @@
     } catch (_) { return null; }
   }
 
-  async function contarEnLaBase(sb) {
-    const cabeza = { count: "exact", head: true };
-    const hoy = hoyCR();
-    const [solicitudes, justificaciones, seVan, morosos, inactivos] = await Promise.all([
-      contar(sb.from("solicitudes_academia").select("id", cabeza).eq("estado", "pendiente")),
-      contar(sb.rpc("justificaciones_pendientes")),
-      contar(sb.rpc("respuestas_satisfaccion", { p_desde: hoy.slice(0, 8) + "01", p_hasta: hoy, p_profesor: null, p_solo_se_van: true }, cabeza)),
-      contar(sb.rpc("cobros_morosos", {}, cabeza)),
-      contar(sb.rpc("informes_inactivos", { p_dias: 4 }, cabeza)),
-    ]);
-    return { solicitudes, justificaciones, seVan, morosos, inactivos };
+  const CABEZA = { count: "exact", head: true };
+
+  /* Cómo se cuenta cada uno. `yo` hace falta para no contarse a uno mismo
+     (quien supervisa también es profesor y ve sus propios informes). */
+  const CONTEOS = {
+    solicitudes: (sb) => sb.from("solicitudes_academia").select("id", CABEZA).eq("estado", "pendiente"),
+    justificaciones: (sb) => sb.rpc("justificaciones_pendientes"),
+    informesSinLeer: (sb, op) => sb.from("informes_profesor").select("id", CABEZA)
+      .eq("estado", "enviado").is("leido_at", null).neq("profesor_id", op.yo),
+    seVan: (sb) => {
+      const hoy = hoyCR();
+      return sb.rpc("respuestas_satisfaccion", { p_desde: hoy.slice(0, 8) + "01", p_hasta: hoy, p_profesor: null, p_solo_se_van: true }, CABEZA);
+    },
+    morosos: (sb) => sb.rpc("cobros_morosos", {}, CABEZA),
+    inactivos: (sb) => sb.rpc("informes_inactivos", { p_dias: 4 }, CABEZA),
+  };
+
+  async function contarEnLaBase(sb, claves, opciones) {
+    const op = opciones || {};
+    const valores = await Promise.all(claves.map((c) => contar(CONTEOS[c](sb, op))));
+    const r = {};
+    claves.forEach((c, i) => { r[c] = valores[i]; });
+    return r;
   }
 
   const pl = (n, uno, varios) => (n === 1 ? uno : varios);
@@ -59,6 +74,10 @@
       titulo: (n) => pl(n, "justificación de ausencia por revisar", "justificaciones de ausencia por revisar"),
       porque: "La familia espera saber si se aceptó.",
       accion: "Revisar", href: "justificaciones.html", alDia: "Justificaciones de ausencia" },
+    { clave: "informesSinLeer", nivel: "urgente", emoji: "📨",
+      titulo: (n) => pl(n, "informe mensual de un profesor sin leer", "informes mensuales de tus profesores sin leer"),
+      porque: "Te lo mandaron y esperan que lo leas y lo comentes.",
+      accion: "Leer", href: "supervision.html", alDia: "Informes mensuales leídos" },
     { clave: "seVan", nivel: "vigilar", emoji: "🚪",
       titulo: (n) => pl(n, "alumno dijo este mes que no sigue", "alumnos dijeron este mes que no siguen"),
       porque: "Lo contestaron en la encuesta de satisfacción con su profesor.",
@@ -73,5 +92,5 @@
       accion: "Ver por supervisor", href: "admin.html#supervisores", alDia: "Todos entrenaron esta semana" },
   ];
 
-  window.PendientesAdmin = { contarEnLaBase, EN_LA_BASE, hoyCR };
+  window.Pendientes = { contarEnLaBase, EN_LA_BASE, hoyCR };
 })();

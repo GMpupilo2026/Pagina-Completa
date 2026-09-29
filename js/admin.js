@@ -104,7 +104,7 @@
          * se resuelve. Ver «Lo urgente primero» en docs/decisiones/paneles.md.
          *
          * Lo que se cuenta en la base (solicitudes, justificaciones, cobros…)
-         * está en js/pendientes-admin.js. Lo único que se cuenta acá es lo
+         * está en js/pendientes.js. Lo único que se cuenta acá es lo
          * que sale de las cuentas que la página ya trae enteras (alumnos sin
          * profesor, coordinadores vacíos) y quién tiene a cargo a quién, que
          * se pinta en Supervisores y en Profesores, donde se arregla.
@@ -205,10 +205,10 @@
             const coordVacios = coordinadores.filter((f) => f.vacio).length;
             const pl = (n, uno, varios) => (n === 1 ? uno : varios);
             /* Los que se cuentan en la base: el texto es el de
-               js/pendientes-admin.js. Lo que lleva a otra sección de ESTA
+               js/pendientes.js. Lo que lleva a otra sección de ESTA
                página (admin.html#…) cambia de sección en vez de recargarla. */
             const deLaBase = (clave) => {
-                const d = PendientesAdmin.EN_LA_BASE.find((x) => x.clave === clave);
+                const d = Pendientes.EN_LA_BASE.find((x) => x.clave === clave);
                 const propia = d.href.startsWith("admin.html#") ? d.href.split("#")[1] : null;
                 return Object.assign({}, d, { n: conteosRemotos[clave], href: propia ? null : d.href, ir: propia });
             };
@@ -381,7 +381,7 @@
             if (revisando) return revisando;
             revisando = (async () => {
                 pintarUrgentes();
-                const [conteos] = await Promise.all([PendientesAdmin.contarEnLaBase(sb), cargarCobertura()]);
+                const [conteos] = await Promise.all([Pendientes.contarEnLaBase(sb, ["solicitudes", "justificaciones", "seVan", "morosos", "inactivos"]), cargarCobertura()]);
                 conteosRemotos = conteos;
             })();
             try { await revisando; } finally { revisando = null; }
