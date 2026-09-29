@@ -2420,3 +2420,37 @@ enroques de B saltan las 3 que corresponden.
 - No sube `ACTIVIDADES_ALCANZABLES` de Logros: los cursos se compran aparte,
   y exigirla dejaría «Las probaste todas» fuera del alcance de quien no los
   tiene.
+
+## La dificultad que se ajusta sola (Ejercicios por tema)
+
+- Cada tema arrancaba cerca del nivel del alumno (Elo del diagnóstico − 300,
+  o lo que eligió en el selector) y después se quedaba ahí: al que le salía
+  todo le seguían tocando ejercicios que ya no le enseñaban nada, y el tema va
+  de menor a mayor, así que al que se trababa le tocaban más difíciles.
+- `js/dificultad-adaptable.js` cuenta y decide: **5 limpios seguidos** (sin
+  error ni pista) suben un escalón del selector; **3 con error o pista entre
+  los últimos 4** bajan uno. Tras un cambio la cuenta vuelve a cero. Qué es
+  un escalón lo pone la página (`DESDE_OPCIONES`).
+- `js/entreno-temas.js` lo aplica: guarda el escalón nuevo como si lo hubiera
+  elegido (`entreno_temas_desde`), el selector lo muestra, y
+  `#nivel-ajuste` (`role="status"`) lo dice en pantalla. Al cambiar, el
+  siguiente se busca **desde el principio** del tema: hacia adelante solo
+  quedan los más difíciles, y bajar no bajaría nada.
+- **No ajusta**: el repaso, un tema sin rating (la táctica de la casa) ni una
+  dificultad fijada con `?desde=` (la puso la tarea o el plan). Elegir a mano
+  en el selector reinicia la cuenta.
+- Lo prueba `herramientas/verificar-dificultad-adaptable.js`, incluido el
+  caso en que se nota buscar desde el principio (arrancó en 1400 y se traba).
+
+## El primer paso después del diagnóstico
+
+- En los datos, de 52 alumnos que hicieron el diagnóstico, 17 no volvieron a
+  entrenar y 19 lo dejaron al primer o segundo día. El resultado terminaba en
+  un plan de cuatro semanas para leer y nada que hacer ya.
+- `entreno/diagnostico.html` pinta arriba de todo `#result-primer-paso`: lo
+  que toca hoy (`PE.hoyDelPlan()`, el mismo de «Hoy te toca» y del panel),
+  cuántos ejercicios pide la meta del día (`Logros.META_DIARIA`) y cuántos
+  lleva hoy (`Logros.cargar()`), con un botón directo al ejercicio. En la
+  semana 1 sin nada hecho dice «Tu primer paso: hoy mismo»; después, «Esta
+  semana te toca» y cuánto lleva ahí. A un visitante no se le pinta.
+- Lo prueba `verificar-entreno-repaso.js`.
