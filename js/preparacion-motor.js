@@ -73,6 +73,120 @@
     });
   }
 
+  /* Las mejores `lineas` jugadas de una posición (MultiPV), de la mejor a la
+     peor: [{ san, eval (desde las blancas) }]. Para «La línea a fondo»: en
+     cada jugada tuya, ¿es la mejor? ¿qué otras hay? El MultiPV se vuelve a
+     1 al terminar: el resto de la página lo usa así. */
+  function opciones(fen, lineas, profundidad) {
+    const g = new Chess(fen);
+    if (g.game_over()) return Promise.resolve([]);
+    return SharedEngine.runTask(async () => {
+      const motor = await SharedEngine.ensureEngine();
+      if (!motor) throw new Error("No se pudo cargar Stockfish");
+      return new Promise((res, rej) => {
+        const mejores = [];
+        let espera2 = null;
+        const espera = setTimeout(() => {
+          motor.postMessage("stop");
+          espera2 = setTimeout(() => {
+            SharedEngine.setMessageHandler(null);
+            SharedEngine.discardEngine();
+            rej(new Error("Stockfish no respondió"));
+          }, 4000);
+        }, 60000);
+        SharedEngine.setMessageHandler((ev) => {
+          const linea = typeof ev.data === "string" ? ev.data : "";
+          if (linea.startsWith("info") && / score /.test(linea) && / pv /.test(linea) && !/bound/.test(linea)) {
+            const m = linea.match(/ score (cp|mate) (-?\d+)/);
+            const k = parseInt((linea.match(/ multipv (\d+)/) || [0, "1"])[1], 10);
+            const uci = linea.split(" pv ")[1].trim().split(/\s+/)[0];
+            if (m && uci) {
+              const v = parseInt(m[2], 10);
+              mejores[k - 1] = { uci, v: m[1] === "cp" ? v / 100 : (v > 0 ? 100 - v : v < 0 ? -100 - v : -100) };
+            }
+          } else if (linea.startsWith("bestmove")) {
+            clearTimeout(espera); clearTimeout(espera2);
+            SharedEngine.setMessageHandler(null);
+            motor.postMessage("setoption name MultiPV value 1");
+            const out = [];
+            for (const x of mejores) {
+              if (!x) continue;
+              const mv = new Chess(fen).move({ from: x.uci.slice(0, 2), to: x.uci.slice(2, 4), promotion: x.uci[4] || undefined });
+              if (mv && !out.some((o) => o.san === mv.san.replace(/[+#]$/, ""))) out.push({ san: mv.san.replace(/[+#]$/, ""), eval: evalBlancas(fen, x.v) });
+            }
+            res(out);
+          }
+        });
+        motor.postMessage("setoption name MultiPV value " + (lineas || 3));
+        motor.postMessage("position fen " + fen);
+        motor.postMessage("go depth " + (profundidad || PROFUNDIDAD));
+      });
+    });
+  }
+
+  /* La continuación: desde `fen`, `medias` jugadas con la mejor de Stockfish
+     para los dos lados. { sec, eval } (el eval de la posición final). */
+  async function continuar(fen, medias, profundidad) {
+    const sec = [];
+    let actual = fen, ultimo = null;
+    for (let i = 0; i < medias; i++) {
+      const r = await evaluar(actual, profundidad);
+      ultimo = r.eval;
+      if (!r.mejor) break;
+      const g = new Chess(actual);
+      if (!g.move(r.mejor, { sloppy: true })) break;
+      sec.push(r.mejor);
+      actual = g.fen();
+    }
+    if (sec.length) ultimo = (await evaluar(actual, profundidad)).eval;
+    return { sec, eval: ultimo };
+  }
+
+  /* «La línea a fondo»: la línea principal de cada lado (planDe), en cada
+     jugada tuya las 3 mejores de Stockfish a profundidad 20, y al final una
+     continuación de 8 medias jugadas. `lineas`: { conBlancas: sec,
+     conNegras: sec }. Devuelve lo que se guarda en r.lineaFondo. */
+  const PROF_FONDO = 20;
+  const MEDIAS_CONTINUACION = 8;
+  async function aFondo(lineas, o) {
+    const out = { detalle: MOTOR + ", profundidad " + PROF_FONDO, lados: {} };
+    const lados = Object.keys(lineas).filter((k) => lineas[k] && lineas[k].length);
+    const total = lados.reduce((a, k) => a + Math.ceil(lineas[k].length / 2) + 1, 0);
+    let hechas = 0;
+    for (const lado of lados) {
+      const sec = lineas[lado];
+      const tuColor = lado === "conBlancas" ? "w" : "b";
+      const g = new Chess();
+      const jugadas = [];
+      for (let i = 0; i < sec.length; i++) {
+        if ((i % 2 === 0) === (tuColor === "w")) {
+          if (o.parar && o.parar()) return null;
+          if (o.alAvanzar) o.alAvanzar(hechas, total);
+          const ops = await opciones(g.fen(), 3, PROF_FONDO);
+          hechas += 1;
+          const pos = ops.findIndex((x) => x.san === sec[i].replace(/[+#]$/, ""));
+          const x = { ply: i + 1, jugada: sec[i], opciones: ops, puesto: pos >= 0 ? pos + 1 : null };
+          // Cuánto queda con la jugada del plan: «no está entre sus tres
+          // mejores» asusta aunque pierda 0,1 peones.
+          if (pos >= 0) x.evalJugada = ops[pos].eval;
+          else {
+            const d = new Chess(g.fen());
+            if (d.move(sec[i], { sloppy: true })) x.evalJugada = (await evaluar(d.fen(), PROF_FONDO)).eval;
+          }
+          if (ops[0] && x.evalJugada != null) x.diferencia = (tuColor === "w" ? 1 : -1) * (ops[0].eval - x.evalJugada);
+          jugadas.push(x);
+        }
+        if (!g.move(sec[i], { sloppy: true })) break;
+      }
+      if (o.parar && o.parar()) return null;
+      if (o.alAvanzar) o.alAvanzar(hechas, total);
+      const cont = await continuar(g.fen(), MEDIAS_CONTINUACION, PROF_FONDO);
+      hechas += 1;
+      out.lados[lado] = { sec: sec.slice(), jugadas, continuacion: cont };
+    }
+    return out;
+  }
+
   function disponible() { return !!(window.SharedEngine && window.Chess); }
 
   // Las evaluaciones que ya trae el resultado, por clave de tarea.
@@ -200,5 +314,5 @@
   }
 
   // `evaluar(fen)` sola también: el tablero de la línea la pide en cada paso.
-  window.PreparacionMotor = { revisar, revisarTactica, faltan, evaluar, disponible, PROFUNDIDAD, MOTOR };
+  window.PreparacionMotor = { revisar, revisarTactica, aFondo, opciones, continuar, faltan, evaluar, disponible, PROFUNDIDAD, MOTOR };
 })();

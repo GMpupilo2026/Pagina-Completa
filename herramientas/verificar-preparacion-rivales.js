@@ -704,6 +704,7 @@ const MOTOR_FALSO = `
   let manejador = null;
   const motor = {
     postMessage(m) {
+      if (m.startsWith("setoption name MultiPV value ")) { motor._multi = parseInt(m.slice(29), 10) || 1; window.__multiPV = motor._multi; return; }
       if (m.startsWith("position fen ")) { motor._fen = m.slice(13); return; }
       if (m.startsWith("go")) {
         const g = new Chess(motor._fen);
@@ -711,10 +712,14 @@ const MOTOR_FALSO = `
         const blancas = motor._fen.split(" ")[1] === "w";
         const desdeBlancas = q && q.type === "q" && q.color === "w" ? -80 : 20;
         const cp = blancas ? desdeBlancas : -desdeBlancas;
-        const mv = g.moves({ verbose: true }).find((x) => !(x.piece === "q" && x.to === "h4"));
+        const todas = g.moves({ verbose: true }).filter((x) => !(x.piece === "q" && x.to === "h4"));
+        // Con MultiPV, las primeras jugadas legales, cada una 10 centipeones peor.
+        const k = motor._multi || 1;
         setTimeout(() => {
           window.__motorPedidos = (window.__motorPedidos || 0) + 1;
-          manejador && manejador({ data: "info depth 14 score cp " + cp + " pv " + (mv ? mv.from + mv.to : "") });
+          if (k > 1) window.__pedidosMulti = (window.__pedidosMulti || 0) + 1;
+          todas.slice(0, k).forEach((mv, i) => manejador && manejador({ data: "info depth 14" + (k > 1 ? " multipv " + (i + 1) : "") + " score cp " + (cp - 10 * i) + " pv " + mv.from + mv.to }));
+          const mv = todas[0];
           manejador && manejador({ data: "bestmove " + (mv ? mv.from + mv.to + (mv.promotion || "") : "(none)") });
         }, 5);
       }
@@ -826,7 +831,7 @@ async function pruebaConPermiso(browser) {
   igual("el foco va al título del resultado", await page.evaluate(() => document.activeElement.id), "titulo-resultado");
   const titulos = await page.evaluate(() => [...document.querySelectorAll("#resultado-cuerpo h3")].filter((h) => h.checkVisibility()).map((h) => h.textContent));
   igual("están todas las partes, en orden", titulos,
-    ["Qué hacer contra él", "Qué jugarle, jugada por jugada", "Lo que dice Stockfish", "Análisis FODA, visto desde quien quiere ganarle", "Su táctica: con qué gana y con qué pierde", "Más allá de la apertura", "Su repertorio", "Dónde rinde menos y dónde más", "Por ritmo, por año y por Elo"]);
+    ["Qué hacer contra él", "Qué jugarle, jugada por jugada", "La línea a fondo", "Lo que dice Stockfish", "Análisis FODA, visto desde quien quiere ganarle", "Su táctica: con qué gana y con qué pierde", "Más allá de la apertura", "Su repertorio", "Dónde rinde menos y dónde más", "Por ritmo, por año y por Elo"]);
   igual("arriba de todo, qué hacer y qué no, con cada color", await page.evaluate(() => [...document.querySelectorAll("[aria-labelledby='resumen-titulo'] [data-lado] > h4")].map((h) => h.textContent)),
     ["Cuando tú llevas blancas", "Cuando tú llevas negras", "En toda la partida"]);
   igual("con blancas: la línea y lo que no hay que hacer", await page.evaluate(() => {
@@ -1716,6 +1721,45 @@ async function pruebaTacticaConMotorDeVerdad(browser) {
   await ctx.close();
 }
 
+/* La línea a fondo (aFondo), con el Stockfish de mentira: en cada jugada
+   tuya de la línea principal, 3 opciones (MultiPV) y si la tuya es la
+   mejor; al final, 8 medias jugadas de continuación. El motor de mentira
+   prefiere la primera jugada legal de chess.js: 1.e4 no lo es (1.a3 sí),
+   así que la línea con blancas dice que no es la mejor. */
+async function pruebaAFondo(browser) {
+  console.log("\n=== La línea a fondo ===");
+  const { page, ctx, errores } = await abrir(browser, true);
+  await page.setInputFiles("#pgn-archivo", { name: "rival.pgn", mimeType: "application/x-chess-pgn", buffer: Buffer.from(pgnDePrueba(), "utf8") });
+  await page.click("#leer");
+  await page.waitForFunction(() => /Se leyeron/.test(document.getElementById("leido").textContent), null, { timeout: 10000 });
+  await page.click("#analizar");
+  await page.waitForFunction(() => /Listo/.test(document.getElementById("motor-estado").textContent) && !document.getElementById("motor-revisar").disabled, null, { timeout: 60000 });
+  cierto("antes de pedirla, solo el botón", await page.evaluate(() => SE_VE("a-fondo") && !document.querySelector("[data-fondo]")));
+  await page.click("#a-fondo");
+  await page.waitForFunction(() => document.querySelector("[data-fondo='conBlancas']"), null, { timeout: 60000 });
+  const blancas = await page.evaluate(() => {
+    const d = document.querySelector("[data-fondo='conBlancas']");
+    return [d.querySelector("p").textContent, [...d.querySelectorAll("li")].map((li) => li.dataset.puesto), d.querySelector("li p").textContent, d.querySelector("[data-continuacion]").textContent];
+  });
+  igual("con blancas: la línea, cada jugada tuya contra las 3 de Stockfish", blancas.slice(0, 2), ["1.e4 e5 2.Cf3 Cc6 3.Ab5 a6 4.Aa4 Cf6 5.O-O Ae7", ["fuera", "fuera", "fuera", "fuera", "fuera"]]);
+  igual("dice qué prefiere y cuánto se pierde con la del plan, en palabras", blancas[2], "1.e4: Stockfish prefiere a3 (+0,20); con e4 queda en +0,20: casi igual, se puede jugar.");
+  igual("la continuación: 8 medias jugadas, desde la jugada 6", blancas[3].replace(/^Continuación preparada: /, "").replace(/ \([^)]*\)$/, "").split(" ").filter((x) => !/^\d+\.$/.test(x)).length === 8 && /^Continuación preparada: 6\./.test(blancas[3]), true);
+  igual("pidió 3 opciones y después volvió a 1", await page.evaluate(() => [window.__pedidosMulti >= 5, window.__multiPV]), [true, 1]);
+  cierto("el botón se va cuando ya está hecha", await page.evaluate(() => !document.getElementById("a-fondo")));
+  await page.click("[data-fondo='conBlancas'] [data-fondo]");
+  await page.waitForFunction(() => document.getElementById("visor-caja").checkVisibility(), null, { timeout: 5000 });
+  igual("«Ver toda la línea» abre el tablero desde el comienzo, con la línea y la continuación", await page.evaluate(() => [document.querySelector("#visor .visor-titulo").textContent, document.querySelectorAll("#visor .visor-jugada").length]),
+    ["Con blancas: la línea a fondo", 18]);
+  await page.evaluate(() => { window.print = () => {}; });
+  await page.click("#imprimir-hoja");
+  cierto("la hoja para imprimir lleva la continuación", await page.evaluate(() => [...document.querySelectorAll("#hoja .hoja-dato")].some((p) => /^Y después \(Stockfish\): 6\./.test(p.textContent))));
+  await page.click("#guardar");
+  await page.waitForFunction(() => window.__insertados.some((i) => i.tabla === "preparaciones_rival"), null, { timeout: 5000 });
+  igual("se guarda con la línea a fondo", await page.evaluate(() => { const i = window.__insertados.find((x) => x.tabla === "preparaciones_rival"); return [!!i.analisis.lineaFondo, Object.keys(i.analisis.lineaFondo.lados).sort()]; }), [true, ["conBlancas", "conNegras"]]);
+  igual("sin errores", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+}
+
 async function pruebaMotorDeVerdad(browser) {
   console.log("\n=== Stockfish 19 lite, corriendo en la página ===");
   const ctx = await browser.newContext({ serviceWorkers: "block" });
@@ -1782,6 +1826,7 @@ async function pruebaMotorDeVerdad(browser) {
     await pruebaDerrotasEnLaPagina(browser, conDerrotas);
     await pruebaTacticaEnLaPagina(browser, conTactica);
     await pruebaRitmoEHojaEnLaPagina(browser);
+    await pruebaAFondo(browser);
     await pruebaMotorDeVerdad(browser);
     await pruebaTacticaConMotorDeVerdad(browser);
   } finally {

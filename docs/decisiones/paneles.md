@@ -2125,6 +2125,53 @@ corre el Stockfish 19 lite real en la página con dos partidas legales:
 
 Falla con un umbral imposible y sin el tema de la mejor jugada.
 
+### La línea a fondo
+
+La revisión normal de Stockfish mira las jugadas del plan de una en una a
+profundidad 18 y solo avisa si alguna es un error. Se pidió más: la línea que
+se va a jugar, a fondo, con alternativas, y una continuación para llegar
+preparado. Lo hace `aFondo()` en `js/preparacion-motor.js`, y lo pinta la
+tarjeta «La línea a fondo», que va después de «Qué jugarle».
+
+**Qué línea.** La principal de cada color, la misma del resumen
+(`R.armar(r).lados[…].lineas[0]`): a la medida del alumno si hay cruce. Si
+después cambia (otro filtro, otro alumno), la tarjeta lo dice y ofrece volver
+a profundizar.
+
+**Qué hace, a profundidad 20.**
+- **En cada jugada tuya:** las 3 mejores de Stockfish (`opciones()`, con
+  MultiPV, que se vuelve a 1 al terminar porque el resto de la página lo usa
+  así). También la evaluación de la jugada del plan, aunque no esté entre esas
+  tres.
+- **Cuánto se pierde, en palabras:** menos de 0,3 peones es «casi igual, se
+  puede jugar»; menos de 0,8, «un poco peor»; más, «claramente peor:
+  piénsalo». Sin esto, con jeigoth5 decía «1.g3 no está entre sus tres
+  mejores», y asustaba: queda en +0,15 contra el +0,37 de 1.e4.
+- **Al final de la línea:** una continuación preparada de 8 medias jugadas,
+  con la mejor de Stockfish para los dos lados (`continuar()`).
+
+**Cuándo corre.** Va en un botón («Profundizar con Stockfish»), no solo, porque
+tarda: con jeigoth5, entre 27 y 36 segundos con el Stockfish real. Usa el
+mismo «Parar» y el mismo estado que la revisión, y si la revisión está
+corriendo, pide esperar.
+
+**Dónde queda.**
+- Se guarda en `r.lineaFondo`, con el análisis.
+- «Ver toda la línea en el tablero» la abre desde el comienzo, con las 3
+  opciones en la nota de cada jugada tuya y la continuación marcada.
+- La hoja para imprimir lleva «Y después (Stockfish): …».
+
+**Cómo se comprueba.** «La línea a fondo», en el verificador, usa el
+Stockfish de mentira, que ahora entiende MultiPV. Comprueba:
+- la línea con blancas;
+- cada jugada contra las 3 opciones, con el juicio en palabras;
+- la continuación de 8 medias jugadas desde la jugada 6;
+- que el MultiPV vuelva a 1;
+- el tablero, la hoja y lo guardado.
+
+Falla si no se vuelve a MultiPV 1. Con el Stockfish real se probó a mano sobre
+jeigoth5.
+
 ## Las inscripciones a torneos en línea
 
 `inscripciones.html` muestra lo que llegó por `inscripcion.html`, el formulario
