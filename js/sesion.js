@@ -575,6 +575,7 @@
             activePlayerColor = row.active_player_color || "both";
             comentariosClase = row.comentarios && typeof row.comentarios === "object" ? row.comentarios : {};
             if (!esObservador) pintarElegido(row.elegido || null);
+            pintarPensar(row.pensar || null);
             updateTurnIndicator();
             updateAccessForRole();
             renderMoveList();
@@ -3460,6 +3461,85 @@
             if (error) { console.error(error); setStatus("No se pudo crear la pregunta: " + error.message); return; }
             setStatus("❓ Le preguntaste a " + nombreDeConectado(elegidoActual.id) + ": mira su tablero debajo del tuyo.");
             computeEngineAnswer(data.id, fen, expectedPlies);
+        }
+
+        /* ---------- Tiempo para pensar (game_state.pensar) ----------
+           Una cuenta regresiva que ve toda la clase, sin abrir una pregunta. La
+           pone el profe; la hora de arranque la pone la base, y lo que falta se
+           calcula (PreguntaClase.estadoPensar). Se termina sola. */
+        let pensarActual = null;
+        let pensarDicho = "";
+
+        function pintarPensar(pensar) {
+            if (pensar !== undefined) pensarActual = pensar || null;
+            const caja = document.getElementById("pensar-aviso-caja");
+            if (!caja) return;
+            const estado = PreguntaClase.estadoPensar(pensarActual);
+            caja.hidden = !estado;
+            const voz = document.getElementById("pensar-voz");
+            if (!estado) { pensarDicho = ""; return; }
+            const texto = (pensarActual.texto || "").trim();
+            const que = document.getElementById("pensar-que");
+            que.hidden = !texto;
+            que.textContent = texto;   // lo escribió el profe: textContent
+            document.getElementById("pensar-reloj").hidden = estado.termino;
+            document.getElementById("pensar-reloj").textContent = PreguntaClase.reloj(estado.quedan);
+            document.getElementById("pensar-fin").hidden = !estado.termino;
+            document.getElementById("pensar-profe-acciones").classList.toggle("hidden", !isTeacher);
+            document.getElementById("pensar-mas-btn").hidden = estado.termino;
+            document.getElementById("pensar-terminar-btn").hidden = estado.termino;
+            // Elegir a alguien tiene sentido cuando ya pensaron (y lo hay en la caja del sorteo).
+            document.getElementById("pensar-elegir-btn").hidden = !estado.termino || !document.getElementById("elegir-azar-btn");
+            // Lo que se dice en voz: al empezar, a los 10 segundos y al terminar.
+            const clave = pensarActual.at + ":" + (estado.termino ? "fin" : estado.quedan <= 10 ? "10" : "inicio");
+            if (clave !== pensarDicho) {
+                const antes = pensarDicho;
+                pensarDicho = clave;
+                if (estado.termino) voz.textContent = "Se acabó el tiempo para pensar.";
+                else if (estado.quedan <= 10 && antes) voz.textContent = "Quedan 10 segundos para pensar.";
+                else if (!antes || !antes.startsWith(pensarActual.at)) {
+                    voz.textContent = "Tiempo para pensar: " + PreguntaClase.textoDeTiempo(pensarActual.segundos) + "." + (texto ? " " + texto : "");
+                }
+            }
+        }
+        setInterval(() => { if (pensarActual) pintarPensar(); }, 1000);
+
+        async function guardarPensar(pensar) {
+            const { data, error } = await sb.from("game_state").update({ pensar }).eq("id", myGameStateId).select("pensar").single();
+            if (error) { console.error(error); setStatus("No se pudo: " + error.message); return false; }
+            // La base cambia la hora de arranque por la suya: se usa la que devuelve.
+            pintarPensar(data && "pensar" in data ? data.pensar : pensar);
+            return true;
+        }
+
+        if (document.getElementById("pensar-btn")) {
+            const sel = document.getElementById("pensar-segundos");
+            PreguntaClase.TIEMPOS_PENSAR.forEach((t) => {
+                const o = document.createElement("option");
+                o.value = String(t.segundos);
+                o.textContent = t.texto;
+                if (t.segundos === 60) o.selected = true;
+                sel.appendChild(o);
+            });
+            document.getElementById("pensar-btn").addEventListener("click", async () => {
+                const segundos = parseInt(sel.value, 10) || 60;
+                const texto = document.getElementById("pensar-texto").value.trim().slice(0, 140);
+                // Un «at» nuevo: la base lo cambia por su hora (ver la migración).
+                if (await guardarPensar({ at: new Date().toISOString(), segundos, texto: texto || null })) {
+                    setStatus("⏳ " + PreguntaClase.textoDeTiempo(segundos) + " para pensar: toda la clase ve la cuenta regresiva.");
+                }
+            });
+            document.getElementById("pensar-mas-btn").addEventListener("click", () => {
+                if (!pensarActual) return;
+                // El mismo «at»: la base lo conserva y solo se alarga.
+                guardarPensar(Object.assign({}, pensarActual, { segundos: Math.min(3600, pensarActual.segundos + PreguntaClase.PENSAR_SUMA) }));
+            });
+            document.getElementById("pensar-terminar-btn").addEventListener("click", () => guardarPensar(null));
+            document.getElementById("pensar-elegir-btn").addEventListener("click", async () => {
+                await guardarPensar(null);
+                activateTeacherTab("alumnos");
+                elegirAlAzar();
+            });
         }
 
         /* Los demás ven para quién es la pregunta dirigida (el nombre viaja con

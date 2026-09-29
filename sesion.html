@@ -304,6 +304,21 @@
                          con ese modo encendido, lo decide el CSS. -->
                     <div id="clase-cmd" class="max-w-[560px] mx-auto"></div>
 
+                    <!-- Tiempo para pensar (game_state.pensar): lo ven todos, también el profe, que
+                         suele compartir su pantalla. El reloj cambia cada segundo, así que NO es región
+                         viva: lo que se dice en voz va aparte, al empezar, a los 10 segundos y al final. -->
+                    <div id="pensar-aviso-caja" hidden class="max-w-[560px] mx-auto mt-3 rounded-xl border-2 border-accent-500 bg-accent-50 dark:bg-brand-900 px-4 py-3 text-center">
+                        <p id="pensar-titulo" class="text-sm font-semibold text-brand-700 dark:text-brand-200"><span aria-hidden="true">⏳ </span>Tiempo para pensar</p>
+                        <p id="pensar-que" hidden class="text-base text-brand-800 dark:text-white mt-0.5 break-words"></p>
+                        <p id="pensar-reloj" class="font-mono text-4xl font-bold text-brand-800 dark:text-white mt-1"></p>
+                        <p id="pensar-fin" hidden class="text-lg font-bold text-brand-800 dark:text-white mt-1"><span aria-hidden="true">⏰ </span>¡Se acabó el tiempo!</p>
+                        <div id="pensar-profe-acciones" class="hidden flex flex-wrap justify-center gap-2 mt-2">
+                            <button id="pensar-mas-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">+30 segundos</button>
+                            <button id="pensar-terminar-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Terminar ya</button>
+                            <button id="pensar-elegir-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🎲 </span>Elegir a alguien para responder</button>
+                        </div>
+                    </div>
+                    <p id="pensar-voz" class="sr-only" aria-live="polite"></p>
                     <p id="turn-indicator" class="text-center text-brand-500 dark:text-brand-300 text-sm mt-4"></p>
                     <!-- Solo quien sigue la clase: qué jugada anterior o qué variante está
                          mostrando el profe (game_state.vista, ver pintarVistaDelProfe). -->
@@ -592,6 +607,15 @@
                                 <button id="clear-marks-btn" type="button" title="Borrar flechas y círculos dibujados" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">🧹 Flechas</button>
                                 <button id="toggle-hide-btn" type="button" title="Ocultar piezas a los alumnos" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">🙈 Ocultar</button>
                                 <button id="save-game-btn" type="button" title="Guardar la partida actual (queda en Partidas guardadas) y descargar su PGN" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">💾 Guardar PGN</button>
+                            </div>
+                            <!-- Tiempo para pensar: una cuenta regresiva que ve toda la clase, sin abrir una
+                                 pregunta (game_state.pensar). El texto es opcional. -->
+                            <div id="pensar-caja" class="flex flex-wrap items-center gap-1.5 mt-2">
+                                <label for="pensar-segundos" class="sr-only">Cuánto tiempo para pensar</label>
+                                <select id="pensar-segundos" class="text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-2 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500"></select>
+                                <label for="pensar-texto" class="sr-only">Qué tienen que pensar (opcional)</label>
+                                <input id="pensar-texto" type="text" maxlength="140" placeholder="Qué pensar (opcional)" class="flex-1 min-w-[120px] text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-2 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500">
+                                <button id="pensar-btn" type="button" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors"><span aria-hidden="true">⏳ </span>Tiempo para pensar</button>
                             </div>
                         </div>
                     </div>
