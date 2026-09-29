@@ -12,10 +12,11 @@
  * mismos primeros mates del libro y la calibración juntaba muchos intentos
  * de unos pocos mates y ninguno del resto (hacen falta 8 por mate). Por
  * bloques, el orden grueso del libro se mantiene; con la semilla del alumno,
- * cada uno ve siempre el mismo orden, en cualquier aparato. Con menos, casi todos irían a su centro y el
- * orden lo pondría el puñado medido: mejor el orden del libro, que al menos
- * es el de un autor. Los que faltan en una categoría ordenada van con el
- * centro de su categoría, sin pasar adelante de nada.
+ * cada uno ve siempre el mismo orden, en cualquier aparato.
+ *
+ * El 80 %, porque con menos casi todos irían al centro de su categoría y el
+ * orden lo pondría el puñado medido. Los que faltan en una categoría
+ * ordenada van con el centro de su categoría, sin pasar adelante de nada.
  */
 (function (raiz) {
   const COBERTURA = 0.8;

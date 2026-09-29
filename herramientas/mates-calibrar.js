@@ -12,8 +12,8 @@
  * Escribe entreno/data/mates-dificultad.json, que es SOLO agregado (la
  * dificultad de cada mate con MINIMO intentos o más, y el centro de cada
  * categoría). La página de Mates ordena una categoría por dificultad cuando
- * esa categoría tiene calibrados al menos el 80 % de sus mates; antes, sigue
- * en el orden del libro. No se edita a mano.
+ * esa categoría tiene calibrados al menos el 80 % de sus mates; antes, la
+ * baraja por bloques con la semilla de cada alumno. No se edita a mano.
  *
  * Cómo se corre:
  *   1. Exportar de Supabase (con cualquier cliente con permiso de lectura):

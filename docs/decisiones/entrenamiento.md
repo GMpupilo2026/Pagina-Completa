@@ -376,8 +376,9 @@ y no se le puede sacar de la base de Lichess: se probó buscando cada uno en la
 tabla «Ejercicios Lichess» (107 mil ejercicios de mate) aplicando la primera
 jugada de cada ejercicio de Lichess y comparando el tablero (una huella md5,
 para no bajar la tabla), y ninguno coincide; con los de Temas, 8 de 2455. La
-dificultad no se pone a ojo, así que Mates sigue en el orden del libro hasta
-que haya intentos suficientes para medirla (ver la sección siguiente).
+dificultad no se pone a ojo, así que Mates sigue el orden del libro (barajado
+por bloques para cada alumno, ver «Mates barajados…») hasta que haya intentos
+suficientes para medirla (ver la sección siguiente).
 
 ## Calibrar los Mates con los intentos reales
 
@@ -407,8 +408,9 @@ dos. Cuando alcance, la página se ordena sola.
 - **La página** (`js/mates-dificultad.js`) ordena una categoría de fácil a
   difícil **solo si tiene calibrados el 80 % de sus mates**, y entonces la
   barra dice «dificultad ≈1350». Con menos, casi todos irían a su centro y el
-  orden lo pondría el puñado medido; mejor el del libro. Sin el archivo, la
-  página funciona igual. El avance es por id, así que reordenar no pierde
+  orden lo pondría el puñado medido: la categoría va barajada por bloques con
+  la semilla del alumno (ver «Mates barajados, «Tu semana»…»). Sin el
+  archivo, la página funciona igual. El avance es por id, así que reordenar no pierde
   nada de lo resuelto.
 - **Por qué 8**: `verificar-mates-calibrar.js` inventa alumnos y mates de
   dificultad CONOCIDA (con los centros lejos de la previa) y comprueba que el
