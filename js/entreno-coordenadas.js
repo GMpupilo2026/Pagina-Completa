@@ -230,8 +230,13 @@ function montarTeclado(){
   });
 }
 
-function randomSquare(){
-  return FILES[Math.floor(Math.random() * 8)] + (1 + Math.floor(Math.random() * 8));
+/* La casilla siguiente: pesada por cuánto le cuesta al alumno
+   (js/coordenadas-casillas.js), y nunca la misma dos veces seguidas. */
+let falladaEsta = false;   // la casilla de ahora ya se contó como fallo
+function anotarFallo(){
+  if(falladaEsta || !currentTarget) return;
+  falladaEsta = true;
+  CoordenadasCasillas.anotar(currentTarget, false);
 }
 
 function armPerSquareTimer(){
@@ -256,6 +261,7 @@ function onSquareTimeout(){
   const missedSquareColor = isLightSquare(currentTarget) ? 'blanca' : 'negra';
   misses++;
   streak = 0;
+  anotarFallo();
   updateHud();
   // Primero el aviso del fallo y después newTarget() (que anuncia la casilla nueva):
   // speak() cancela cualquier frase anterior, así que lo último en anunciarse debe
@@ -265,9 +271,8 @@ function onSquareTimeout(){
 }
 
 function newTarget(){
-  let next = currentTarget;
-  while(next === currentTarget) next = randomSquare(); // nunca repite la misma casilla dos veces seguidas
-  currentTarget = next;
+  currentTarget = CoordenadasCasillas.elegir(CoordenadasCasillas.leer(), currentTarget);
+  falladaEsta = false;
   // En modo normal se ve el nombre real de la casilla ("e4"). En modo
   // adaptado, lo que se anuncia (y lee el lector de pantalla vía aria-live)
   // usa la notación de columnas — "Eva 4" — para no confundir letras al oído.
@@ -300,6 +305,7 @@ function handleGuess(square){
   if(!playing) return null;
   const correct = square === currentTarget;
   if(correct){
+    if(!falladaEsta) CoordenadasCasillas.anotar(currentTarget, true);
     score++;
     streak++;
     bestStreak = Math.max(bestStreak, streak);
@@ -308,6 +314,7 @@ function handleGuess(square){
   } else {
     misses++;
     streak = 0;
+    anotarFallo();
   }
   updateHud();
   return correct;
@@ -322,6 +329,7 @@ function handleColorGuess(answer){
   const correctAnswer = isLightSquare(currentTarget) ? 'b' : 'n';
   const correct = answer === correctAnswer;
   if(correct){
+    if(!falladaEsta) CoordenadasCasillas.anotar(currentTarget, true);
     score++;
     streak++;
     bestStreak = Math.max(bestStreak, streak);
@@ -332,6 +340,7 @@ function handleColorGuess(answer){
   } else {
     misses++;
     streak = 0;
+    anotarFallo();
   }
   updateHud();
   return correct;
@@ -412,10 +421,22 @@ function endRound(){
   });
 
   renderBestLine();
+  pintarDificiles();
 
   const againBtn = document.getElementById('again-btn');
   againBtn.focus();
   announceBlind(`Tiempo terminado. Puntuación: ${score}. ${misses} error${misses === 1 ? '' : 'es'}.${isNewBest ? ' Nueva mejor puntuación.' : ''}`);
+}
+
+/* Las casillas que más le cuestan, escritas: el tablero ya se las va a pedir
+   más seguido, pero saberlo ayuda a mirarlas a propósito. */
+function pintarDificiles(){
+  const caja = document.getElementById('dificiles');
+  const lista = CoordenadasCasillas.masDificiles(CoordenadasCasillas.leer(), 3);
+  caja.hidden = !lista.length;
+  caja.textContent = lista.length
+    ? 'Las que más te cuestan: ' + lista.map((x) => `${x.sq} (fallada ${x.fallos} de ${x.fallos + x.aciertos} veces)`).join(', ') + '. Te van a salir más seguido.'
+    : '';
 }
 
 function renderBestLine(){

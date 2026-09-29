@@ -53,10 +53,10 @@ const SETS = [
     ] },
   { id:'beso', cat:'mates', emoji:'👑', title:'Mate con dama o torre apoyada', desc:'Tu rey protege a la pieza que da el jaque mate justo al lado del rey rival.',
     rounds:[
-      { fen:'7k/8/6K1/8/8/8/8/7Q w - - 0 1', from:'h1', to:'h7' },
-      { fen:'k7/8/1K6/8/8/8/8/Q7 w - - 0 1', from:'a1', to:'a7' },
-      { fen:'7Q/8/8/8/8/6K1/8/7k w - - 0 1', from:'h8', to:'h2' },
-      { fen:'Q7/8/8/8/8/1K6/8/k7 w - - 0 1', from:'a8', to:'a2' },
+      { fen:'7k/Q7/6K1/8/8/8/8/8 w - - 0 1', from:'a7', to:'h7' },
+      { fen:'k7/7Q/1K6/8/8/8/8/8 w - - 0 1', from:'h7', to:'a7' },
+      { fen:'8/8/8/8/8/6K1/Q7/7k w - - 0 1', from:'a2', to:'h2' },
+      { fen:'8/8/8/8/8/1K6/7Q/k7 w - - 0 1', from:'h2', to:'a2' },
       { fen:'6k1/8/6K1/8/8/8/8/R7 w - - 0 1', from:'a1', to:'a8' },
     ] },
   { id:'horquilla', cat:'tacticas', emoji:'🍴', title:'Horquillas de caballo', desc:'Un solo salto de caballo ataca dos piezas rivales a la vez.',
@@ -79,16 +79,16 @@ const SETS = [
     rounds:[
       { fen:'7k/8/8/8/8/2N5/8/B3K3 w - - 0 1', from:'c3', to:'b5' },
       { fen:'4k3/8/8/8/4N3/8/8/K3R3 w - - 0 1', from:'e4', to:'c5' },
-      { fen:'k7/8/8/3B4/8/8/8/K6Q w - - 0 1', from:'d5', to:'e6' },
+      { fen:'k7/8/8/3R4/8/8/8/K6Q w - - 0 1', from:'d5', to:'e5' },
       { fen:'8/8/8/8/R1N4k/8/8/K7 w - - 0 1', from:'c4', to:'b6' },
       { fen:'7k/8/8/8/8/8/1P6/B3K3 w - - 0 1', from:'b2', to:'b3' },
     ] },
   { id:'doble', cat:'tacticas', emoji:'⚔️', title:'Ataques dobles', desc:'Una sola jugada de una pieza de largo alcance amenaza dos piezas rivales a la vez.',
     rounds:[
-      { fen:'7k/8/8/r6R/8/8/4r3/7K w - - 0 1', from:'h5', to:'e5' },
+      { fen:'6k1/8/8/b6R/8/8/4n3/7K w - - 0 1', from:'h5', to:'e5' },
       { fen:'k7/8/2r3n1/8/8/8/8/K6B w - - 0 1', from:'h1', to:'e4' },
-      { fen:'4r1k1/8/8/8/b6Q/8/8/K7 w - - 0 1', from:'h4', to:'e4' },
-      { fen:'7k/8/q7/4K3/8/8/3R3r/8 w - - 0 1', from:'d2', to:'a2' },
+      { fen:'6k1/8/2r5/8/b6Q/8/8/K7 w - - 0 1', from:'h4', to:'e4' },
+      { fen:'7k/8/b7/4K3/8/8/3R3n/8 w - - 0 1', from:'d2', to:'a2' },
       { fen:'k7/6n1/1r6/8/8/8/8/B6K w - - 0 1', from:'a1', to:'d4' },
     ] },
   { id:'torre', cat:'finales', emoji:'🏰', title:'Mate con rey y torre', desc:'El rey corta el paso y la torre da el jaque mate en el borde del tablero.',
@@ -407,8 +407,11 @@ if(typeof enableBoardDrag !== 'undefined'){
 function handleMoveResult(moveResult){
   const round = currentSet.rounds[currentRoundIndex];
   // Cualquier jugada que dé mate también es correcta: la serie guarda UNA
-  // jugada, y en las de mate a veces hay dos (7k/8/6K1/…/7Q: Dh7# y Da8#).
-  const correct = (moveResult.from === round.from && moveResult.to === round.to) || game.in_checkmate();
+  // jugada, y en las de mate a veces hay dos. Y en las tácticas, cualquiera
+  // que cumpla el motivo (js/motivos-tacticos.js): en un descubierto, todo
+  // salto del caballo descubre el jaque.
+  const correct = (moveResult.from === round.from && moveResult.to === round.to) || game.in_checkmate() ||
+    (window.MotivosTacticos && MotivosTacticos.MOTIVOS.includes(currentSet.id) && MotivosTacticos.cumple(currentSet.id, round.fen, moveResult));
   if(correct){
     finishRound();
   } else {
