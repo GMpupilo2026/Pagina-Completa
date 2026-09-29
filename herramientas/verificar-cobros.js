@@ -144,7 +144,10 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
           ? insertados.map((x, i) => Object.assign({ id: "nuevo-" + tabla + "-" + i }, x))
           : datos;
         if (Array.isArray(d) && unica) d = d.length ? d[0] : null;
-        return Promise.resolve({ data: d, error: null, count: conCuenta ? total : null }).then(res, rej);
+        // __demora imita la red: sin ella todo contesta al instante y un doble
+        // clic nunca encuentra la primera llamada todavía en camino.
+        const respuesta = { data: d, error: null, count: conCuenta ? total : null };
+        return new Promise((ok) => setTimeout(() => ok(respuesta), window.__demora || 0)).then(res, rej);
       },
     };
     return b;
@@ -371,6 +374,21 @@ async function pruebaCoordinacion(browser) {
   await page.waitForTimeout(300);
   igual("sin concepto no se crea ningún plan",
     await page.evaluate(() => window.__llamadas.filter((l) => l.tabla === "planes_cobro").length), 0);
+  // Doble clic en «Agregar» con un cobro personalizado: un solo plan, una sola
+  // suscripción. El índice único (alumno, plan) no lo atajaría, porque cada
+  // clic crea un plan distinto.
+  await page.fill("#s-manual-nombre", "Doble clic");
+  await page.fill("#s-manual-monto", "1000");
+  await page.evaluate(() => { window.__llamadas = []; window.__demora = 150; });
+  await page.dblclick("#s-guardar");
+  await page.waitForTimeout(1200);
+  await page.evaluate(() => { window.__demora = 0; });
+  igual("un doble clic en «Agregar» crea un solo plan y una sola suscripción",
+    await page.evaluate(() => ({
+      planes: window.__llamadas.filter((l) => l.tabla === "planes_cobro" && l.verbo === "insert").length,
+      suscripciones: window.__llamadas.filter((l) => l.tabla === "suscripciones" && l.verbo === "insert").length,
+    })), { planes: 1, suscripciones: 1 });
+  await page.check("#s-personalizado");
   await page.uncheck("#s-personalizado");
 
   // -------- dar de baja: termina hoy, o el día en que iba a empezar si aún no arranca

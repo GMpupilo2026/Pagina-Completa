@@ -1058,7 +1058,15 @@ async function init() {
 
 document.querySelectorAll(".ficha-btn").forEach((b) => b.addEventListener("click", () => mostrarFicha(b.dataset.ficha)));
 document.getElementById("p-guardar").addEventListener("click", crearPlan);
-document.getElementById("s-guardar").addEventListener("click", crearSuscripcion);
+/* Mientras guarda, el botón no se puede volver a apretar: con un cobro
+   personalizado cada clic crea SU PROPIO plan, así que un doble clic dejaba
+   dos planes y dos suscripciones, y el índice único (alumno, plan) no lo ve. */
+document.getElementById("s-guardar").addEventListener("click", async (ev) => {
+    const btn = ev.currentTarget;
+    if (btn.disabled) return;
+    btn.disabled = true;
+    try { await crearSuscripcion(); } finally { btn.disabled = false; }
+});
 document.getElementById("s-personalizado").addEventListener("change", (e) => {
     document.getElementById("s-plan-cell").classList.toggle("hidden", e.target.checked);
     document.getElementById("s-manual-cell").classList.toggle("hidden", !e.target.checked);
