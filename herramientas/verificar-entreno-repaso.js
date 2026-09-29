@@ -48,6 +48,7 @@ async function temas(browser) {
 
   // El primero, con un error; el segundo, limpio.
   const fallado = await page.evaluate(() => { const id = currentId(); missedThisPuzzle = true; finishPuzzle(); return id; });
+  await page.click("#fin-ejercicio .primary");   // «Siguiente ejercicio →»: ya no salta solo
   await page.waitForFunction((id) => currentId() !== id && !locked, fallado, { timeout: 5000 });
   const limpio = await page.evaluate(() => { const id = currentId(); missedThisPuzzle = false; usedHintThisPuzzle = false; finishPuzzle(); return id; });
   const cola = await page.evaluate((k) => JSON.parse(localStorage.getItem(k) || "{}"), CLAVE);
@@ -75,6 +76,7 @@ async function temas(browser) {
   const ficha = await page.evaluate(([k, id]) => JSON.parse(localStorage.getItem(k))[id], [CLAVE, fallado]);
   igual("repasado limpio, vuelve más adelante", ficha.vence > hoy(), "true");
   igual("y no se registra otra vez en training_progress", (await inserts(page)) - antes, "0");
+  await page.click("#fin-ejercicio .primary");   // «Siguiente ejercicio →»: ya no salta solo
   await page.waitForFunction(() => document.getElementById("celebration").checkVisibility(), { timeout: 5000 });
   igual("al terminar, «¡Repaso terminado!»",
     await page.evaluate(() => document.getElementById("celebration-title").textContent), "¡Repaso terminado!");
@@ -119,6 +121,7 @@ async function mates(browser) {
   igual("y aparece la pestaña, con cuántos", await page.evaluate(() =>
     [...document.querySelectorAll("#tabs .tab")].map((b) => b.textContent.trim()).find((t) => t.includes("Repasar"))), "🔁 Repasar fallados 1 para hoy");
 
+  await page.click("#fin-ejercicio .primary");   // «Siguiente ejercicio →»: ya no salta solo
   await page.waitForFunction(() => !locked, { timeout: 5000 });
   await page.evaluate(() => [...document.querySelectorAll("#tabs .tab")].find((b) => b.textContent.includes("Repasar")).click());
   igual("la pestaña trae el que costó", await page.evaluate(() => [currentCategory, currentPuzzle().id]), ["__repaso", fallado]);
@@ -127,6 +130,7 @@ async function mates(browser) {
   igual("repasado limpio, vuelve más adelante",
     await page.evaluate(([k, id]) => JSON.parse(localStorage.getItem(k))[id].vence, [CLAVE_M, fallado]) > hoy(), "true");
   igual("y no se registra otra vez", (await inserts(page)) - antes, "0");
+  await page.click("#fin-ejercicio .primary");   // «Siguiente ejercicio →»: ya no salta solo
   await page.waitForFunction(() => document.getElementById("celebration").checkVisibility(), { timeout: 5000 });
   igual("al terminar, «¡Repaso terminado!» y sin «volver a empezar»", await page.evaluate(() =>
     [document.getElementById("celebration-title").textContent, document.getElementById("celebration-replay-btn").checkVisibility()]),
