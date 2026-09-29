@@ -14,7 +14,7 @@
  * Si algo falla: { error }.
  */
 /* global importScripts, PreparacionAnalisis */
-importScripts("vendor/chess.js", "preparacion-lineas.js", "preparacion-posiciones.js", "preparacion-tactica.js", "preparacion-analisis.js", "preparacion-cruce.js");
+importScripts("vendor/chess.js", "preparacion-lineas.js", "preparacion-posiciones.js", "preparacion-libro.js", "preparacion-tactica.js", "preparacion-analisis.js", "preparacion-cruce.js");
 /* global PreparacionCruce */
 
 let partidas = [];

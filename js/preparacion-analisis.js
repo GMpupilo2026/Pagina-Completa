@@ -30,10 +30,10 @@
   "use strict";
   const req = (nombre, global) => (raiz && raiz[global]) || (typeof require === "function" ? require(nombre) : null);
   const api = fabrica(req("./preparacion-lineas.js", "PreparacionLineas"), req("./preparacion-posiciones.js", "PreparacionPosiciones"),
-    req("./preparacion-tactica.js", "PreparacionTactica"));
+    req("./preparacion-tactica.js", "PreparacionTactica"), req("./preparacion-libro.js", "PreparacionLibro"));
   if (typeof module === "object" && module.exports) module.exports = api;
   else raiz.PreparacionAnalisis = api;
-})(typeof self !== "undefined" ? self : this, function (L, Pos, Tactica) {
+})(typeof self !== "undefined" ? self : this, function (L, Pos, Tactica, Libro) {
   "use strict";
 
   const { sanEs, lineaEs, pct, textoEval, fenDe } = L;
@@ -387,7 +387,8 @@
     const porClave = new Map();
     const inicial = Pos.inicial();
     const raiz = nodoGrafo();
-    porClave.set(Pos.clave(inicial), raiz);
+    raiz.clave = Pos.clave(inicial);
+    porClave.set(raiz.clave, raiz);
     Object.assign(raiz.c, raizSec.c);
     // Recorrido con pila: una partida larga no puede agotar la recursión.
     const pila = [{ sec: raizSec, pos: inicial, nodo: raiz }];
@@ -398,7 +399,7 @@
         if (!p2) continue;   // una jugada que no se puede hacer corta la rama
         const k = Pos.clave(p2);
         let destino = porClave.get(k);
-        if (!destino) { destino = nodoGrafo(); porClave.set(k, destino); }
+        if (!destino) { destino = nodoGrafo(); destino.clave = k; porClave.set(k, destino); }
         sumarCuenta(destino.c, h.c);
         let arista = nodo.hijos.get(san);
         if (!arista) { arista = { nodo: destino, c: vacio() }; nodo.hijos.set(san, arista); }
@@ -457,6 +458,35 @@
     });
     out.sort((a, b) => b.n - a.n || a.sec.length - b.sec.length);
     return out.slice(0, MAX_JUGADAS_SUYAS);
+  }
+
+  /* Su libro, para «Juega contra él» (js/preparacion-libro.js): en cada
+     posición donde le toca a él y que vio LIBRO_MIN veces o más, sus jugadas
+     con las veces que las hizo ahí (seis como mucho). Por posición, así
+     que las transposiciones llegan al mismo lugar. Se queda con las
+     LIBRO_MAX posiciones más jugadas: con 30.000 partidas el árbol tiene
+     decenas de miles, y el libro viaja con el análisis guardado. */
+  const LIBRO_MIN = 2, LIBRO_MAX = 1000;
+  function libroDe(raiz, color) {
+    if (!Libro) return null;
+    const out = [];
+    const vistos = new Set([raiz]);
+    let nivel = [raiz];
+    for (let prof = 0; nivel.length; prof++) {
+      const sig = [];
+      for (const nodo of nivel) {
+        const total = totalAristas(nodo);
+        if (leTocaAlRival(color, prof) && total >= LIBRO_MIN) {
+          out.push({ clave: nodo.clave, total, jugadas: hijosOrdenados(nodo).slice(0, 6).map((h) => [h.san, h.arista.n]) });
+        }
+        for (const a of nodo.hijos.values()) if (!vistos.has(a.nodo)) { vistos.add(a.nodo); sig.push(a.nodo); }
+      }
+      nivel = sig;
+    }
+    out.sort((a, b) => b.total - a.total);
+    const libro = {};
+    for (const x of out.slice(0, LIBRO_MAX)) libro[Libro.huella(x.clave)] = x.jugadas;
+    return libro;
   }
 
   // Las líneas donde el rival se aparta de su promedio. Una línea larga que
@@ -961,6 +991,8 @@
       repertorioLineas: lineasDeSuRepertorio(arbol.w, "w", minN).concat(lineasDeSuRepertorio(arbol.b, "b", minN)),
       // Lo que Stockfish revisa de su repertorio (tareasDelMotor).
       jugadasSuyas: jugadasSuyas(arbol.w, "w", minN).concat(jugadasSuyas(arbol.b, "b", minN)),
+      // Lo que juega en cada posición: «Juega contra él» (js/preparacion-libro.js).
+      libro: { w: libroDe(arbol.w, "w"), b: libroDe(arbol.b, "b") },
       teoria: null,
       motor: null,
     };

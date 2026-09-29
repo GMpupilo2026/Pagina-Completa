@@ -1486,7 +1486,9 @@ Debajo de cada plan de «Qué jugarle» van tres botones: bajarlo en PGN,
 dónde rinde menos, la revisión de Stockfish) sigue en `preparaciones_rival`, que
 el alumno no ve nunca. Lo que viaja es `planDelAlumno()`
 (`js/preparacion-lineas.js`): el árbol de jugadas de un lado, con sus números, y
-lo que dijo Stockfish **de esas jugadas** y de ninguna otra.
+lo que dijo Stockfish **de esas jugadas** y de ninguna otra. Desde «Juega contra
+él» viajan también su libro con el color que lleva en ese plan y su Elo (ver
+«Juega contra él»): son sus jugadas y cuántas veces las hizo, nada del análisis.
 
 - **Por qué una tabla aparte, `planes_rival_alumno`, y no abrirle al alumno la
   fila del análisis:** la RLS es por fila, no por pedazo de un `jsonb`. Una
@@ -1528,9 +1530,10 @@ lo que dijo Stockfish **de esas jugadas** y de ninguna otra.
 - Sin `?id=`, lista los planes que le mandaron.
 - Lleva `js/tarea-en-curso.js`, así que al entrar desde la tarea se ve la
   franja con lo que falta.
-- **No carga Stockfish.** Lo que dijo el motor de cada jugada ya viene en su
-  nota, y bajar un motor de varios megas en el celular del alumno para eso no se
-  justifica.
+- **No carga Stockfish para el plan.** Lo que dijo el motor de cada jugada ya
+  viene en su nota, y bajar un motor de varios megas en el celular del alumno
+  para eso no se justifica. Solo lo baja «Juega contra él», y solo cuando la
+  partida se sale de lo que el rival juega.
 
 **A la clase se llega por Archivos.** «Guardar en Archivos» guarda **cada
 línea del plan como su propio PGN** en `archivos_pgn` (los mismos de
@@ -2328,6 +2331,69 @@ pronóstico: `certezaDe` (en `preparacion-analisis.js`) arma la preparación
 
 Verificador: `preparacion-rivales` (`pruebaCerteza` con un rival que sigue
 igual y otro que cambió 1…e5 por 1…c5, y `pruebaCertezaEnLaPagina`).
+
+### Juega contra él
+
+Todo lo anterior se lee; esto se juega. **«Jugar contra él»**, debajo de cada
+plan en `preparacion-rivales.html` y como sección propia en `plan-rival.html`,
+abre una partida de práctica contra el rival (`js/preparacion-sparring.js`):
+
+- **Mientras la posición esté en sus partidas, juega lo que él juega**, sorteado
+  con el peso de las veces que hizo cada jugada: una que hace 3 de cada 4 veces
+  sale 3 de cada 4. Y lo dice: «La juega 63 % de las veces en esta posición (20
+  partidas)». Siempre la más jugada habría sido otra forma de repetir el plan;
+  sorteada, sale también lo que juega de vez en cuando, que es lo que sorprende
+  en la partida de verdad.
+- **Cuando la posición ya no está, sigue Stockfish a su Elo** (el reciente del
+  análisis, `UCI_LimitStrength` + `UCI_Elo`, entre 1320 y 3190; sin Elo, 1800),
+  y lo dice en esa jugada. A toda su fuerza no sería él: sería practicar contra
+  la computadora. Al terminar, el motor vuelve a su fuerza completa: en la
+  página del profesor es el mismo que revisa el plan.
+- **Tu jugada se mide contra el plan**: «Es la del plan», o la primera que se
+  aparta dice qué decía el plan. Al terminar (mate, tablas o «Terminar la
+  partida»), «Cómo te fue» dice dónde te saliste del plan (o en qué jugada suya
+  que el plan no prepara), y cuántas de sus jugadas salieron de sus partidas.
+- **Es práctica: no se guarda nada** ni cuenta para la tarea. Para eso está
+  «Entrénalo».
+
+**Su libro** (`libroDe()` en el análisis, `js/preparacion-libro.js` para
+leerlo):
+- Es **por posición**, como el árbol: por otro orden de jugadas se llega al
+  mismo lugar y cuentan las dos. En la partida la posición se saca del FEN de
+  chess.js con `PreparacionPosiciones.desdeFen()`; el verificador comprueba en
+  todas las jugadas de prueba que da la misma clave que el árbol.
+- Solo las posiciones donde le toca a él y que vio **2 veces o más**, con sus
+  seis jugadas más hechas, hasta donde llega el árbol (16 medias jugadas). Con
+  una sola partida no hay repertorio: es una partida.
+- Cada posición va por una **huella de 53 bits** y no por su clave (unos 11
+  caracteres en vez de 60). Se queda con las **1000 posiciones más jugadas** de
+  cada color: con 8000 partidas de prueba el libro pesó unos 43 bytes por
+  posición, así que no pasa de 45 KB por color.
+- Viaja en el análisis guardado (`r.libro`) y en el plan del alumno (solo el
+  color del rival en ese plan). **Un análisis guardado antes no lo trae**: la
+  página lo dice en vez de abrir una partida que sería Stockfish desde la
+  primera jugada; un plan mandado antes no muestra la sección.
+
+**El tablero es el de «Entrénalo»** (`js/entrenador-linea.js`), con un modo
+nuevo, `jugarLibre()`: se juega cualquier jugada legal, la del rival la decide
+quien llama, y al coronar se elige la pieza (`js/coronacion.js`). Mismo clic,
+teclado y cuadro de comandos del Modo Adaptado, en vez de un segundo tablero.
+Si mientras el motor piensa se empieza otra partida, su jugada se tira.
+
+**Stockfish en la página del alumno** es el de siempre (16, el de
+`js/shared-engine.js` sin `data-motor`), y el Worker se crea recién cuando la
+partida sale del libro. Los dos motores, el 19 lite y el 16, se probaron de
+verdad a fuerza limitada: contestan una jugada legal.
+
+Verificador (`preparacion-rivales`): sin navegador, el libro (sus primeras
+jugadas en orden, nada suyo cuando no le toca, la transposición, el sorteo por
+peso, la clave desde chess.js y el seguimiento del plan) y que al alumno le
+llegue solo el libro de su rival. En la página, con el azar fijo y el motor de
+mentira: la jugada más jugada con su porcentaje, el tablero desde las negras,
+«Es la del plan», el motor que no se pide dentro del libro, la salida del libro
+con el Elo, las opciones UCI en su orden, «Cómo te fue», el foco al cerrar, el
+aviso de un análisis viejo, y en la página del alumno la partida, sin motor y
+sin guardar nada.
 
 ## Las inscripciones a torneos en línea
 
