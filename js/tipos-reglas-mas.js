@@ -383,7 +383,52 @@
     return tras + ".";
   }
 
+  /* =====================================================================
+   * Remata la ventaja (tipo 16): se empieza con +3 o más y se juega contra
+   * el motor. Lo logra quien da mate o, al cumplir las jugadas del nivel,
+   * sigue en +3 o más. Si en algún momento baja de +1,5, se escapó.
+   * Todo en centipeones desde el lado del ALUMNO; un mate vale ±10 000.
+   * ===================================================================== */
+  const REMATA = { gana: 300, escapa: 150 };
+  /* La evaluación del motor viene desde el lado del que tiene el turno. */
+  function cpDelAlumno(score, turnoEnFen, alumno) {
+    if (!score) return null;
+    const v = score.type === "mate" ? (score.value > 0 ? 10000 : -10000) : score.value;
+    return turnoEnFen === alumno ? v : -v;
+  }
+  function juicioRemata(cp) {
+    if (cp === null || cp === undefined) return "sin-motor";
+    if (cp >= REMATA.gana) return "gana";
+    if (cp >= REMATA.escapa) return "duda";
+    return "escapa";
+  }
+  /* Tres estrellas si nunca bajó de +3; dos si bajó pero lo recuperó; con
+     pista, una. */
+  function estrellasRemata(minimo, pista) {
+    if (pista) return 1;
+    return minimo >= REMATA.gana ? 3 : 2;
+  }
+
+  /* =====================================================================
+   * Elige a tiempo (tipo 17): posiciones tranquilas con varias candidatas
+   * razonables y un reloj. No hay «la única»: cuenta cuánto pierde la que
+   * eligió contra la mejor, medido con el motor (centipeones, desde el lado
+   * del alumno). Si se acaba el tiempo, cero: en una partida, se pierde.
+   * En Modo Adaptado el tiempo se triplica: leer la posición con lector de
+   * pantalla toma mucho más que mirarla.
+   * ===================================================================== */
+  const TIEMPO = { mejor: 30, buena: 110 };
+  function estrellasTiempo(perdida) {
+    if (perdida === null || perdida === undefined) return 0;   // se acabó el tiempo
+    if (perdida <= TIEMPO.mejor) return 3;
+    if (perdida <= TIEMPO.buena) return 2;
+    return 0;
+  }
+  function segundosTiempo(base, adaptado) { return adaptado ? base * 3 : base; }
+
   const TiposReglasMas = {
+    TIEMPO, estrellasTiempo, segundosTiempo,
+    REMATA, cpDelAlumno, juicioRemata, estrellasRemata,
     aguantaAcertada, textoRefuta,
     VALOR, atacadas, atacantes, amenazados, barrido, corregirBarrido,
     intercambio, textoIntercambio,

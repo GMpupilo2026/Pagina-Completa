@@ -1,0 +1,106 @@
+/* Comprueba «Tus propios errores» (js/errores-propios.js) sin navegador ni
+ * motor: la detección de errores, cómo se arma cada ejercicio y la regla que
+ * corrige la página. La página, jugada con partidas y un motor de mentira, la
+ * prueba herramientas/verificar-tipos-pagina.js.
+ *
+ *   - detectar(): solo cuenta las jugadas del alumno (con cualquier color y
+ *     con la posición de inicio con las negras al turno), pide una caída de 2
+ *     peones o más, separa «regalaste» (estaba bien y quedó mal) de «se te
+ *     escapó» (ganaba y ya no), no cuenta lo que ya estaba perdido y se queda
+ *     con los 3 más grandes de cada partida;
+ *   - ejercicio(): descarta el error si la mirada honda pone la jugada de la
+ *     partida entre las buenas, o si la mejor no deja 2 peones por encima;
+ *     las buenas son las que quedan a menos de 0,5 de la mejor;
+ *   - posiciones(): una partida que no se puede reproducir desde la inicial
+ *     (empezó «desde el tablero») da null y no se analiza;
+ *   - acierta(): cuenta cualquier jugada buena, con o sin «+», y reconoce la
+ *     jugada de la partida.
+ *
+ * Uso: node herramientas/verificar-errores-propios.js
+ */
+"use strict";
+const { Chess } = require("chess.js");
+const E = require("../js/errores-propios.js");
+const C = require("../js/tipos-catalogo.js");
+
+let fallos = 0, pruebas = 0;
+function ok(nombre, cond, detalle) {
+  pruebas++;
+  if (cond) { console.log("  ✓ " + nombre); return; }
+  fallos++;
+  console.log("  ✗ " + nombre + (detalle ? "\n      " + detalle : ""));
+}
+
+console.log("\n=== El catálogo ===");
+const t = C.tipo("errores");
+ok("«Tus propios errores» está en el catálogo, marcado como propio", !!t && t.propio === true);
+ok("con sus dos niveles", t && t.niveles.map((n) => n.n).join() === "1,2");
+
+console.log("\n=== detectar() ===");
+{
+  // Blancas: 0 → (blancas juegan) −300: regaló.
+  const r = E.detectar([0, -300, -300], "w", "w");
+  ok("blancas: de 0 a −3 es «regalaste»", r.length === 1 && r[0].ply === 0 && r[0].nivel === 1 && r[0].perdida === 300, JSON.stringify(r));
+  // La jugada del rival no cuenta.
+  ok("la jugada del rival no cuenta", E.detectar([0, 0, 400], "w", "w").length === 0);
+  // Negras: la evaluación viene desde las blancas.
+  const n = E.detectar([0, 0, 300], "b", "w");
+  ok("negras: de 0 a +3 blanco es «regalaste» de las negras", n.length === 1 && n[0].ply === 1 && n[0].nivel === 1 && n[0].antes === 0 && n[0].despues === -300, JSON.stringify(n));
+  // Posición de inicio con las negras al turno.
+  const b0 = E.detectar([0, 300, 300], "b", "b");
+  ok("con las negras al turno al empezar, la primera jugada es suya", b0.length === 1 && b0[0].ply === 0, JSON.stringify(b0));
+  // Ganaba y se escapó.
+  const g = E.detectar([500, 100, 100], "w", "w");
+  ok("de +5 a +1 es «se te escapó»", g.length === 1 && g[0].nivel === 2, JSON.stringify(g));
+  ok("de +6 a +3 no: sigue ganando", E.detectar([600, 300, 300], "w", "w").length === 0);
+  ok("perder 1,5 no alcanza", E.detectar([0, -150, -150], "w", "w").length === 0);
+  ok("lo que ya estaba perdido no cuenta (de −3 a −6)", E.detectar([-300, -600, -600], "w", "w").length === 0);
+  ok("un mate cuenta como ±10: de 0 a recibir mate es «regalaste» con pérdida 10", (() => { const x = E.detectar([0, -10000, -10000], "w", "w"); return x.length === 1 && x[0].perdida === 1000; })());
+  ok("sin evaluación (null) no se juzga", E.detectar([0, null, -500], "w", "w").length === 0);
+  const muchos = E.detectar([0, -300, -300, -300, 0, 0, 0, -500, -500, -500, 0, 0, 0, -250], "w", "w");
+  ok("de cada partida, los 3 más grandes, en orden de jugada", muchos.length === 3 && muchos.map((x) => x.ply).join() === "0,6,12", JSON.stringify(muchos.map((x) => [x.ply, x.perdida])));
+}
+
+console.log("\n=== ejercicio() ===");
+{
+  const partida = { clave: "juego:abc", origen: "juego", color: "w", fecha: "2026-09-20T15:00:00Z" };
+  const err = { ply: 4, antes: 0, despues: -300, perdida: 300, nivel: 1 };
+  const fen = "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3";
+  const ops = [{ san: "Bb5", eval: 0.3 }, { san: "Bc4", eval: 0.1 }, { san: "d4", eval: -0.5 }, { san: "Nxe5", eval: -2.8 }];
+  const x = E.ejercicio(partida, err, fen, "Nxe5", ops);
+  ok("arma el ejercicio", !!x && x.id === "juego-abc-4" && x.nivel === 1 && x.fen === fen && x.jugada === "Nxe5");
+  ok("las buenas: a menos de 0,5 de la mejor", x && x.buenas.join() === "Bb5,Bc4" && x.mejor === "Bb5", x && x.buenas.join());
+  ok("antes es lo que daba la mejor, desde el lado del alumno", x && x.antes === 30 && x.despues === -300);
+  ok("no guarda el nombre del rival", x && !JSON.stringify(x).match(/white|black|rival|nombre/i));
+  ok("si la honda pone la jugada de la partida entre las buenas, no hay ejercicio",
+    E.ejercicio(partida, err, fen, "Bc4", ops) === null);
+  ok("si la mejor no deja 2 peones por encima, tampoco",
+    E.ejercicio(partida, err, fen, "Nxe5", [{ san: "Bb5", eval: -1.5 }, { san: "Nxe5", eval: -2.8 }]) === null);
+  const neg = E.ejercicio({ clave: "practica:p1", origen: "practica", color: "b", fecha: "2026-09-21T15:00:00Z" },
+    { ply: 1, antes: 0, despues: -300, perdida: 300, nivel: 1 }, "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1", "f6",
+    [{ san: "e5", eval: -0.2 }, { san: "c5", eval: 0.1 }, { san: "f6", eval: 3 }]);
+  ok("con las negras, las evaluaciones se dan vuelta", !!neg && neg.buenas.join() === "e5,c5" && neg.antes === 20, JSON.stringify(neg));
+  ok("y el rótulo dice que es de la práctica en clase", !!neg && /^Práctica en clase/.test(neg.resumen));
+  ok("jaque y mate se comparan sin «+» ni «#»", (() => { const y = E.ejercicio(partida, err, fen, "Nxe5+", [{ san: "Bb5+", eval: 0.3 }, { san: "Nxe5", eval: -3 }]); return y && y.buenas.join() === "Bb5" && y.jugada === "Nxe5"; })());
+}
+
+console.log("\n=== posiciones() ===");
+{
+  const bien = E.posiciones(Chess, { fenInicial: null, jugadas: ["e4", "e5", "Nf3"] });
+  ok("una partida normal da una posición más que jugadas", Array.isArray(bien) && bien.length === 4);
+  ok("una que empezó «desde el tablero» no se puede reproducir: null", E.posiciones(Chess, { fenInicial: null, jugadas: ["e4", "e5", "Qh5", "Kf7"] }) === null);
+  const desde = E.posiciones(Chess, { fenInicial: "4k3/8/8/8/8/8/4P3/4K3 w - - 0 1", jugadas: ["e4", "Kd7"] });
+  ok("la de la práctica arranca de su posición", Array.isArray(desde) && desde.length === 3);
+}
+
+console.log("\n=== acierta() ===");
+{
+  const item = { fen: "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3", buenas: ["Bb5", "Bc4"], jugada: "Nxe5" };
+  ok("cualquier buena cuenta", E.acierta(Chess, item, "Bc4").ok && E.acierta(Chess, item, "Bb5").ok);
+  const p = E.acierta(Chess, item, "Nxe5");
+  ok("la de la partida no, y se reconoce", !p.ok && p.esLaDeLaPartida);
+  ok("una ilegal no es legal", !E.acierta(Chess, item, "Ke3").legal);
+}
+
+console.log(fallos ? "\n✗ " + fallos + " de " + pruebas + " comprobaciones fallaron." : "\n✓ Las " + pruebas + " comprobaciones pasaron.");
+process.exit(fallos ? 1 : 0);

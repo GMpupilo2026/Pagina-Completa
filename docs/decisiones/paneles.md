@@ -1133,6 +1133,109 @@ supervisa (`SUPERVISOR_GROUPS` y `cargarUrgenteSupervisor()` de
   día» y que los informes se cuenten con `head` y sin los suyos. Rompiendo a
   propósito el `neq` o devolviendo una tarjeta de tema, salta.
 
+### El panel de quien da clase
+
+El mismo pedido, para el panel del profesor: lo urgente primero, cada cosa en
+su lugar y sin caminos repetidos.
+
+- **Se reparte por lo que se viene a hacer** (`PANEL_DOCENTE` y
+  `ordenarPanelDocente()` de `js/clases.js`), no como el panel del alumno con
+  cosas encima: «Clase en vivo»; «Tus alumnos» (tareas, exámenes, informes,
+  justificaciones, subgrupos); «Tus clases» (planes, asistencia presencial,
+  repasar, archivos, la preparación de rivales si se la activaron y el informe
+  mensual); «Coordinación», solo a quien coordina (coordinación, solicitudes,
+  formularios y cobros, lo que su supervisor no le apagó); «Aprender»; «Jugar
+  y competir» y «Tu cuenta» (configuración y logros). Antes todo lo suyo caía
+  en «Herramientas», y Informes vivía en «Tu cuenta» aunque es de sus
+  alumnos.
+  - Se ordena **sobre la lista ya armada**, así respeta lo que cada quien
+    tiene. Las tarjetas se buscan por destino: una nueva que no esté en
+    `PANEL_DOCENTE` cae en «Otras», y `verificar-panel.js` pide que ese grupo
+    no exista.
+  - Vale igual para «Ver como: profesor» de quien administra y para el panel
+    de otra persona.
+- **El diagnóstico ya no es una segunda puerta a Informes.** A quien da clase
+  su tarjeta lo llevaba a `informes.html?tema=diagnostico`; ahora es solo del
+  alumnado (`soloAlumno`), y el profesor lo encuentra en Informes, que tiene su
+  selector de tema.
+- «Tu semana» ya no lleva «Ver informe completo →»: llevaba al mismo lugar que
+  el número de alumnos y que la tarjeta Informes.
+- **«Lo urgente» va antes que «Tu semana», y solo cuando hay algo** (su panel ya
+  tiene la franja del primer paso y «Tu semana»; un «todo al día» diario deja
+  de leerse). Es la misma tarjeta del supervisor (`cargarUrgente()`), con lo
+  del profesor:
+  - justificaciones de sus alumnos por revisar;
+  - **su informe mensual del mes pasado sin enviar**, solo si tiene
+    supervisión (`mis_supervisores()`), la misma regla que los recordatorios
+    de `recordar_informes_mensuales()`; se busca el enviado de ESE mes con su
+    id;
+  - si coordina, solicitudes y saldos vencidos.
+  - **Cada uno solo si su tarjeta está en el panel** (`clavesUrgenteDocente()`):
+    a un coordinador al que le apagaron los cobros ni se le preguntan. Sería
+    decirle «al día» sobre algo que no ve.
+  - Las tareas vencidas y los que no entrenan no se repiten: son números de
+    «Tu semana».
+- Lo prueban `pruebaProfesora` (los grupos en su orden, un destino una sola
+  vez, una sola puerta a Informes), `pruebaUrgenteProfesora` (lo que sale, a
+  dónde lleva, el informe con su id y su mes, que con todo al día no aparezca
+  y que sin supervisión no se reclame), `pruebaPreparacionRivales` y
+  `pruebaCoordinadorRecortado` en `verificar-panel.js`. Rompiendo a propósito
+  el filtro `soloAlumno` o dando el informe por enviado, saltan.
+
+### El panel del alumno, sin caminos repetidos
+
+El mismo pedido para el panel del alumno. Casi todo ya seguía el criterio, y
+se dejó como estaba:
+
+- **Su «Lo urgente» es la franja de arriba** (`#pendientes-aviso`): las tareas
+  y los exámenes con fecha (y rojo lo que ya venció), el diagnóstico que le
+  pidió su profe y, si no tiene nada, el primer paso. No se le agregó una
+  segunda tarjeta como la del profesor: la franja contesta la misma pregunta
+  («¿qué hago ahora?»), y dos bloques peleando el primer lugar es el problema
+  que este panel ya tuvo con «Estado de la clase». La clase en vivo, si está
+  abierta, va encima de todo.
+- **El orden de la página ya era el de las preguntas que uno se hace**: qué
+  me toca, por dónde iba, cómo voy y, después, a dónde puedo ir (lo dice el
+  comentario de `#progreso-alumno` en `clases.html`). El orden de «Tu cuenta»
+  lo pidió el dueño.
+- Los números de «Tu progreso» siguen llevando cada uno a lo suyo (la racha a
+  Logros, los ejercicios a su página): un número que no lleva a nada obliga a
+  ir a buscarlo.
+
+Lo que sí cambió, por ser dos puertas al mismo lugar:
+
+- «Tu progreso» ya no lleva «Ver informes completos →»: Informes es una
+  tarjeta de «Tu cuenta».
+- **«Tu última clase» abre el repaso de ESA clase**
+  (`repasar-clases.html?repaso=<clase>`, «🎞️ Repasar esta clase →»): lo que
+  no le salió, para resolverlo otra vez, y debajo la partida. Antes llevaba a
+  la lista general, que es la misma puerta que la tarjeta «Repasar mis
+  clases».
+- Lo prueban `pruebaProgresoAlumna` y `pruebaUltimaClase` en
+  `verificar-panel.js`; volviendo a poner el enlace viejo o el «Ver informes
+  completos», saltan.
+
+### La página de coordinación, lo de todos los días primero
+
+El mismo pedido para quien coordina. Su panel (`clases.html`) ya lo tenía desde
+«El panel de quien da clase»: el grupo «Coordinación» y, en «Lo urgente», sus
+solicitudes y saldos vencidos. Faltaba su pantalla propia, `coordinacion.html`:
+
+- **Las cuentas van primero y Equipos abajo.** Buscar a alguien, corregir su
+  ficha, reenviarle el acceso o ver quién está en clase es lo de todos los
+  días (la tarjeta del panel que lleva ahí se llama «Cuentas»); Equipos se
+  arma de vez en cuando y, arriba, empujaba la lista una pantalla hacia abajo.
+  La lista lleva su título, «✏️ Cuentas».
+- **Los números sirven para algo.** «Profesores que coordinas» y «alumnos
+  alcanzados» filtran la lista de un toque (un número que no lleva a nadie
+  obliga a ir a buscarlos). El tercero ya no es «cuentas en total» —la suma de
+  los otros dos, un dato repetido— sino **cuántos de su gente están dando
+  clase ahora** (sin contar la propia), que es cuando se puede ir a mirar y
+  ayudar desde la ficha.
+- **«Lo urgente» no se repite acá**: ya está en su panel, que es donde entra.
+- Lo prueba `pruebaOrdenYNumeros` en `verificar-coordinacion.js`; volviendo a
+  poner la suma, salta.
+
 ### Las cuentas se ven por GRUPO, no todas de una
 
 Lo primero que muestra la página son **fichas de grupo**, no la lista de
@@ -1237,7 +1340,7 @@ quien administra y a los profesores que están en
 escribe `activar_preparacion_rivales()`, que exige administrar, exige que la
 cuenta sea de un profesor y **devuelve cómo quedó**, leído de la tabla. El
 interruptor de `admin.html#preparacion` (`js/admin-preparacion.js`) pinta eso,
-no lo que se pidió. La tarjeta del panel del profesor (grupo Herramientas de
+no lo que se pidió. La tarjeta del panel del profesor (grupo «Tus clases» de
 `js/clases.js`) sale solo si la función dice que sí; mirando el panel de otra
 persona («Ver como» una persona) se pregunta por esa persona y no por quien
 mira.
@@ -2492,3 +2595,24 @@ estudiantes», «+120 artículos» cuando había 7) y no los respaldaba nada.
 - `verificar-cifras-portada.js` lo comprueba con las dos bases dobladas: que se
   pidan las funciones y nunca las tablas, que estudiantes sea la suma, que con
   una base caída no cambie y que con todo caído queden las del HTML.
+
+## Quiénes se están cayendo del plan
+
+- «Tu semana» decía CUÁNTOS alumnos llevan 4 días sin entrenar, pero no
+  QUIÉNES ni cuáles tenían un plan que seguir: el profe se enteraba revisando
+  uno por uno. En los datos, la mayoría de los que abandonan lo hacen en los
+  primeros días después del diagnóstico.
+- `public.se_caen_del_plan(p_dias)` (migración
+  `20260929153838_se_caen_del_plan.sql`, SECURITY INVOKER como
+  `informes_inactivos()`): alumnos con plan —el del diagnóstico o el
+  compartido, de los últimos 60 días— que llevan `p_dias` días o más sin
+  entrenar desde entonces. El diagnóstico no cuenta como entrenar. La RLS
+  decide de quién pregunta cada uno; probado impersonando a una profesora (ve
+  a los suyos) y a un alumno (no ve a nadie más).
+- `js/clases.js` → `cargarSeCaen()` pinta `#profe-caen` debajo de los
+  números: seis nombres (los que acaban de caerse primero: todavía se
+  recuperan con un mensaje), cada uno con su informe a un clic
+  (`informes.html?alumno=<id>`), y «Y N más en Informes». Sin nadie, no se
+  pinta. Mirando como otra persona («Ver como») tampoco: la RLS respondería
+  con la gente de quien mira.
+- Lo prueba `verificar-panel.js` (nombre por textContent incluido).

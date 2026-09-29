@@ -953,6 +953,137 @@ clase-repaso-personal`.** Está probado que fallan de verdad:
 - con la marcada mal fuera del repaso, o con cualquier jugada dada por buena;
 - marcando la tarea que no era.
 
+### sesion.js en partes
+
+`js/sesion.js` pasaba de 7000 líneas. Lo que tiene vida propia se mudó, tal
+cual, a su archivo:
+
+- `js/clase-votacion.js`: la clase juega votando;
+- `js/clase-mapa.js`: el mapa de jugadas;
+- `js/clase-calentamiento.js`: el calentamiento;
+- `js/clase-puntos.js`: los puntos, el podio y los equipos.
+
+Se comprobó que el código movido es idéntico, línea por línea sin la sangría.
+
+- **Son scripts clásicos cargados ANTES que `sesion.js`.** Las `let`/`const`
+  de arriba de un script clásico son globales para toda la página, así que
+  cada lado ve lo del otro. Usan lo de `sesion.js` (`board`, `sb`, `profile`,
+  `setStatus`…) **solo dentro de funciones**, que corren cuando `sesion.js` ya
+  cargó. Lo de arriba de estos archivos solo engancha botones.
+- **Tienen que cargar antes, no después.** `init()` de `sesion.js` arranca
+  apenas carga, y su primer `await` puede resolverse antes de que el
+  navegador ejecute el script siguiente: un módulo cargado después podría no
+  existir todavía cuando llega el primer estado del tablero.
+- **La primera línea de cada uno es `/* El código de sesion.html.`**: es lo
+  que usa `herramientas/lib/codigo-de-pagina.js` para juntar el código de la
+  página. Sin esa línea, un verificador que busca algo del código de la clase
+  dejaría de encontrarlo, y podría pasar sin comprobar nada.
+
+### Lo de la clase se limpia al cerrar
+
+El mapa, el calentamiento, el podio, los equipos, el tiempo para pensar y el
+turno viven en `game_state`, que es el tablero del profe, no el de una clase.
+Antes quedaban puestos, y la clase del día siguiente arrancaba con el podio y
+los equipos de la anterior.
+
+- Al cerrar, `limpiarLoDeLaClase()` los quita y termina la partida votada.
+- Las flechas se van solo si eran las del mapa.
+- La partida del tablero no se toca: es lo que se guarda y se repasa.
+
+### Lo que aparece se dice en voz
+
+Una caja que aparece no se anuncia sola: con lector de pantalla, nadie se
+enteraba del podio, de su equipo, del calentamiento ni del mapa. Ahora
+`anunciarALaClase(tipo, clave, texto)` lo dice en `#clase-voz` (una región
+viva `sr-only`, como `#pensar-voz`).
+
+- **Se dice una vez por cambio**, según una clave (el `at`, la pregunta, su
+  equipo), y no con cada eco de Realtime.
+- **Lo que llega junto se dice junto**, en un solo texto. Dos cambios
+  seguidos de la misma región viva se pisan, y el lector dice solo el último.
+- **Al profe no se le dice**: es él quien lo pone.
+- `claseAcc.decir` no sirve para esto: su región vive dentro del recuadro del
+  Modo Adaptado, que fuera del modo va con `display: none`, y una región
+  oculta no habla.
+
+### Los votos quedan en la partida, y «Jugar votando» desde el plan
+
+- **Los votos de cada jugada votada quedan como comentario de esa jugada**
+  (`game_state.comentarios`, el mismo de «📝 Comentar»). Por ejemplo: «Votos
+  de la clase: e5 2, c5 1 (3 votos).». Así van con la partida de la clase
+  al PGN y a «Repasar mis clases», sin guardar nada aparte.
+- **Los votos se juntan por la jugada, no por cómo se escribió.**
+  `resultados_de_la_pregunta` agrupa por el texto de la respuesta, así que
+  «e7e5» y «e5» eran dos votos distintos: partía la cuenta y hasta inventaba
+  un empate. Ahora cada respuesta se pasa por chess.js y se cuenta por su
+  SAN; la que no es legal no cuenta.
+- **«🗳️ Jugar votando»** en cada posición del plan la manda al tablero y
+  empieza la partida desde ella. La clase juega con el color que mueve en esa
+  posición.
+
+### El control remoto
+
+`sesion.html?control=1`, en el celular del profe con su misma cuenta.
+«📱 Control remoto», junto a «Proyector», muestra la dirección para
+escribirla o copiarla.
+
+- **Qué hay en la pantalla:** el tablero chico, lo que ve la clase y botones
+  grandes:
+  - recorrer la partida;
+  - 1 minuto para pensar;
+  - elegir a alguien;
+  - pasar el mapa de la pregunta;
+  - mostrar el podio;
+  - borrar las flechas.
+- **Cada botón hace lo mismo que su botón de siempre**, y escribe en
+  `game_state`: la clase y el proyector lo siguen. Lo que se esconde va por
+  lista blanca, `.control-se-ve`, como el proyector.
+- **Sigue lo que mira el profe en la computadora** (`game_state.vista`). Si
+  no, «▶» avanzaría desde otra jugada.
+- **La franja de estado no se ve en el celular:** `setStatus` escribe también
+  en `#control-estado`, para que lo que pasó se lea ahí.
+- **La partida votada no se maneja desde acá.** Vive en la ventana donde se
+  empezó (ver «La clase juega votando»).
+
+### Los puntos del mes
+
+`resumen_del_mes(p_profesor)` es una función `SECURITY INVOKER` de la base.
+Suma `resumen_de_la_clase` de las clases del mes en curso, en hora de Costa
+Rica.
+
+- **Devuelve los conteos, no los puntos.** La regla de los puntos vive una
+  sola vez, en `js/puntos-clase.js`.
+- **Quién ve qué.** Cada fila es de quien pregunta o de una clase suya:
+  - el profe ve a sus alumnos;
+  - el alumno ve solo lo suyo;
+  - otro profe no ve nada.
+- **La primera versión filtraba solo con la RLS, y no alcanzaba.** En una
+  partida entre alumnos, la RLS le deja ver al alumno la fila del
+  compañero, y otro profe veía algo de una clase ajena. Lo arregló
+  `resumen_del_mes_solo_lo_propio`. Comprobado impersonando: el profe ve a
+  sus diez alumnos; el alumno, su fila (también si pasa el id del profe); otro
+  profe, ninguna.
+- **Dónde se ven:**
+  - el profe, en «📅 Ver los puntos del mes», dentro de «Puntos de esta
+    clase»;
+  - el alumno, en la tarjeta «Tus puntos de septiembre» de su panel
+    (`clases.html`), que no aparece si este mes no tuvo clases.
+- **No hay tabla de posiciones para los alumnos.** Mostrarles la de sus
+  compañeros sería una lista que no pasa por una relación directa (ver «Las
+  academias son privadas»).
+- **El doble de `verificar-clase-registrada.js` aprendió `resumen_del_mes`**,
+  y lo calcula de verdad: suma su propio `resumen_de_la_clase` por cada clase
+  del mes, con el mismo filtro de quién ve qué.
+
+**Al tocar esto, correr `node herramientas/verificar-todo.js clase-remoto
+clase-juega`.** Está probado que fallan de verdad:
+- sin limpiar al cerrar;
+- avisando con cada eco, o avisándole al profe;
+- sin anotar los votos, o contando «e7e5» y «e5» aparte;
+- con «Jugar votando» sin el color que mueve;
+- con el control remoto que no sigue al profe o que no muestra el estado;
+- con el alumno pidiendo los puntos de otro.
+
 ### El modo sencillo de la clase en vivo
 
 Aun ordenada, la pantalla del profesor tiene catorce controles delante, y la
@@ -1316,7 +1447,7 @@ presencial, y esa clase no salía en Informes, no contaba para el «asistió a 4
 «clases este mes» de su panel. No daba ningún error: simplemente, para la
 plataforma, el alumno que solo va presencial no entrenaba nunca.
 
-`asistencia.html` (tarjeta **«✅ Asistencia presencial»** en Herramientas, al
+`asistencia.html` (tarjeta **«✅ Asistencia presencial»** en «Tus clases», al
 lado de Planes de clase) es donde se pasa lista: el día, la hora, cuánto duró,
 qué se trabajó y quiénes llegaron.
 
@@ -1977,7 +2108,7 @@ golpe saltan 3 comprobaciones, sin la persistencia 1 y cruzando las posiciones 8
 
 ### Los Tipos de entrenamiento, en la clase
 
-La pestaña **"🧠 Entrenamientos"** del profesor lista los quince Tipos de
+La pestaña **"🧠 Entrenamientos"** del profesor lista los dieciocho Tipos de
 entrenamiento de `entreno/tipos.html` (ver «Los Tipos de entrenamiento» en
 entrenamiento.md) en cascada tipo → nivel → ejercicio, con las mismas
 posiciones (`entreno/data/tipos.json`) y el mismo catálogo

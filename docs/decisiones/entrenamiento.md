@@ -99,10 +99,8 @@ falló.
   `js/entreno-progress.js` y llaman a `EntrenoProgress.log(...)` al terminar
   una ronda, una línea, un nivel o un ejercicio — mismo patrón que ya usaban
   Mates, 4×4, Aprende, etc. `finales100` (Los 100 finales) y el `slug` de
-  `js/curso-partidas.js` siguen sin poder escribir en `training_progress` (no
-  están en el CHECK): **no** se tocaron acá, porque emparejarlos con
-  `curso`/`leccion` como espera `cursos_temas` de `informes_resumen_alumnos()`
-  es un cambio aparte, no de esta tanda.
+  `js/curso-partidas.js` quedaron fuera en esta tanda; `finales100` entró
+  después (ver «La práctica de los cursos de finales cuenta»).
 - **`logros.html` exige sesión** (mismo patrón que `entreno/estudio.html`:
   gate → `requireLoginThenGate()` → `unlock()`), porque la racha es de la
   cuenta, no del aparato. Pide `progreso_dias_y_racha` por RPC — nunca baja
@@ -912,9 +910,11 @@ táctica se apunte como `tactica`.
 ## Finales contra la máquina
 
 `entreno/finales.html`: los finales de libro que hay que saber de memoria
-—el peón pasado lejano, el alfil del color equivocado, dama contra peón en
-séptima (central, de torre y de alfil), torre contra peón, Philidor, Lucena,
-Vancura y torre contra alfil— jugados contra Stockfish a máxima fuerza
+—el peón pasado lejano, el rompimiento, la mayoría en el flanco de dama, el
+alfil del color equivocado y el correcto, alfiles de distinto color, caballo
+contra peón, dama contra peón en séptima (central, de torre y de alfil), dos
+peones en sexta contra la torre, torre contra peón, cortar al rey, Philidor,
+Lucena, Vancura y torre contra alfil (17)— jugados contra Stockfish a máxima fuerza
 (`PracticeEngine.getMove(fen, "max")`, el mismo Worker de la clase en vivo).
 Cada uno tiene una meta: **ganar** (dar mate) o **salvar** (hacer tablas).
 
@@ -947,8 +947,8 @@ Cada uno tiene una meta: **ganar** (dar mate) o **salvar** (hacer tablas).
   las páginas registran**: busca cada `EntrenoProgress.log('<x>', …)` de `js/`
   y la exige en el CHECK de la última migración que lo define. Una actividad
   fuera del CHECK se rechaza sin que nada avise (ver «Cuatro actividades se
-  sumaron al CHECK»). `finales100` queda fuera a sabiendas, con su motivo
-  escrito en el verificador.
+  sumaron al CHECK»). Ya no queda ninguna fuera: `finales100` entró después
+  (ver «La práctica de los cursos de finales cuenta»).
 - Dos pistas: la idea del final y, después, «la máquina jugaría…» con la pieza
   resaltada. Cualquiera de las dos cuenta como pista (`con_pista`).
 - Las jugadas se escriben como en el resto del sitio (`Tc2`, no `Rc2`): la
@@ -2160,7 +2160,7 @@ haciendo que un disparo al agua sume uno, saltan nueve comprobaciones.
 ## Los Tipos de entrenamiento
 
 `entreno/tipos.html` (grupo y tarjeta **"🧠 Tipos de entrenamiento"** del hub)
-es una ficha con quince entrenamientos que no son «encuentra la mejor jugada»,
+es una ficha con dieciocho entrenamientos que no son «encuentra la mejor jugada»,
 cada uno con sus niveles: **El Detective** (¿qué jugada se acaba de hacer?,
 análisis retrógrado), **¿Qué quiere el rival?** (profilaxis: hacer la jugada
 que amenaza el rival), **Descarte** (tachar las candidatas que pierden),
@@ -2388,11 +2388,147 @@ el juego en `js/entreno-tipos-mas.js`, como los tipos 8 a 14.
   tablero) y la respuesta para el profesor: la defensa, la amenaza, la línea y
   por qué la segunda mejor ya pierde.
 
+### El tipo 16: Remata la ventaja
+
+La otra mitad de lo que no se entrenaba: **convertir**. Muchas partidas
+ganadas se escapan después del golpe, cuando ya no hay nada que calcular y hay
+que simplificar, cambiar piezas y no dejarle contrajuego al rival. El alumno
+empieza con +4 o más en una posición de partida real y juega contra Stockfish
+a toda su fuerza (`PracticeEngine`, el mismo Worker de Finales contra la
+máquina y de la práctica en la clase). La regla vive en
+`js/tipos-reglas-mas.js` (`cpDelAlumno`, `juicioRemata`, `estrellasRemata`) y
+el juego en `js/entreno-tipos-mas.js`.
+
+- **No hay «la jugada buena»: decide el motor.** Después de cada jugada del
+  alumno, el motor mira la posición. Si baja de +1,5, **se escapó** y termina
+  ahí, diciendo con qué jugada y cuánto quedó. Al cumplir las jugadas del
+  nivel (8, 10 o 12, en el catálogo) tiene que seguir en **+3 o más**; el mate
+  lo gana antes. Tablas por reglamento (ahogado, repetición, 50 jugadas,
+  material insuficiente), las decide chess.js, son escaparse.
+- **Estrellas**: tres si nunca bajó de +3, dos si bajó y lo recuperó, una con
+  pista («💡 Pista»: la máquina marca la pieza con que jugaría).
+- **Si el motor no contesta, no cuenta** (como en Finales): sin evaluación no
+  se puede saber si se escapó, y regalarlo mentiría en Informes. Tampoco
+  cuenta si la máquina no pudo jugar.
+- **De dónde salen**: de los ejercicios de «Ejercicios por tema» que ganan
+  material o posición (`crushing`, `advantage`; no los de mate). Se juega la
+  solución, el rival contesta con la mejor del motor (profundidad 16) y le toca
+  al alumno. Entra si quedan 14 piezas o más (medio juego: los finales de libro
+  ya están en Finales contra la máquina), nadie está en jaque, y el motor da
+  entre +4 y +8 sin mate a profundidad 18, habiendo dicho casi lo mismo a
+  profundidad 12 (a menos de 1): con +9 ya no hay nada que rematar, y una
+  posición donde el motor duda no sirve para medir si se escapó.
+- **El nivel lo pone el material**: una torre o más (1), una pieza (2), casi
+  igual (3): esa es la más difícil, porque la ventaja es de posición y se
+  enfría si no se juega rápido.
+- **La evaluación del navegador es más corta** (medio segundo) que la del
+  banco (profundidad 18), y se mueve: probándolo con el Stockfish de verdad,
+  jugar la mejor jugada del motor en un +3,3 del banco se leyó +2,1. Con el
+  banco empezando en +3, alguien que juega perfecto podía «no lograrlo». Por
+  eso **el banco arranca en +4 y la meta es +3** (un peón de margen para ese
+  ruido), y el corte de «se escapó» está en +1,5: lo que se mide es que la
+  ventaja no se derrumbe, no décimas.
+- `node herramientas/tipos-generar.js --solo remata` rehace solo este banco.
+  En la clase en vivo trae «🎯 Practicar»: cada alumno la juega contra el
+  motor en su tablero.
+
+### El tipo 17: Elige a tiempo
+
+Lo que la Racha táctica no toca: **decidir con el reloj en contra cuando no
+hay táctica**. Una posición tranquila, dos a cuatro candidatas razonables y un
+reloj (30, 15 u 8 segundos). La regla vive en `js/tipos-reglas-mas.js`
+(`estrellasTiempo`, `segundosTiempo`) y el juego en `js/entreno-tipos-mas.js`.
+
+- **No hay «la única buena».** Cuenta cuánto pierde la elegida contra la mejor:
+  la mejor (o a menos de 0,3), tres estrellas; hasta 1,1, dos (se resuelve);
+  más, ninguna. **Si se acaba el tiempo, cero**: en una partida se pierde por
+  tiempo, y es justo lo que se entrena.
+- **Las candidatas se analizan cada una SOLA** (`searchmoves`) a profundidad
+  18, y la pérdida es contra la mejor analizada igual; así la comparación no
+  depende de cuántas líneas miró el motor. Hay una mejor, una razonable
+  (pierde más de 0,3 y hasta 1,1: los cortes son los mismos de la regla de la
+  página, `M.TIEMPO`, para que ninguna razonable dé tres estrellas) y uno o dos errores (entre 1,3 y 4), eligiendo
+  capturas y jaques porque son los que tientan con prisa. **Nada que pierda más
+  de 4**: se descarta sin pensar y no enseña nada.
+- **Tranquila de verdad**: la segunda mejor está a menos de 0,6 de la mejor
+  (profundidad 12), nadie en jaque y la mejor entre −1,5 y +3 (medido con la
+  evaluación que se guarda, la de profundidad 18: la primera versión lo medía
+  a 12 y 20 se salían del rango; lo encontró el verificador). Si hubiera un
+  golpe, sería otro ejercicio. Salen del final de los ejercicios de «Ejercicios
+  por tema» (el golpe ya pasó), con la mejor respuesta del rival.
+- **Modo Adaptado: el triple de tiempo.** Leer la posición con lector de
+  pantalla toma mucho más que mirarla; el reloj entrena decidir, no leer
+  rápido. La página lo dice al empezar. El número del reloj es
+  `aria-hidden` (cambia cada segundo); lo que se anuncia es el inicio, la
+  mitad (si es de 10 segundos o más) y los últimos 5.
+- Se elige con los botones, tocando la jugada en el tablero o escribiéndola;
+  una jugada que no es candidata no cuenta. Al terminar, cada candidata dice
+  cuánto pierde con su signo escrito (✓ ≈ ✗), no solo con color.
+- El verificador de la página no espera el reloj: lo adelanta
+  (`clock.fastForward` de Playwright).
+- `node herramientas/tipos-generar.js --solo tiempo` rehace solo este banco.
+
+### El tipo 18: Tus propios errores
+
+El único tipo **sin banco**: los ejercicios salen de las partidas de cada
+alumno. En la ficha del tipo, «🔎 Buscar errores en mis partidas» revisa hasta
+10 partidas nuevas con Stockfish en el navegador del alumno, y cada jugada
+donde se cayó la evaluación se vuelve un ejercicio: encontrar una jugada buena
+en esa posición. Todo vive en `js/errores-propios.js`; el juego y el botón, en
+`js/entreno-tipos-mas.js`. El catálogo lo marca `propio: true`, y así lo tratan
+la página (lo carga de la cuenta y no de `tipos.json`), la clase en vivo (no
+hay lista: cada alumno tiene los suyos) y los verificadores.
+
+- **De dónde salen las partidas**, las dos con la RLS de siempre (el alumno
+  lee las suyas; ninguna migración nueva):
+  - `game_rooms`: Juegos, retos, parejas de la clase y torneos. Solo
+    `variant = 'estandar'` y `status = 'finished'`. **No guarda la posición de
+    inicio**: se reproduce desde la inicial y, si una jugada no es legal (la
+    partida empezó «desde el tablero» en la clase), se deja fuera y se marca
+    como revisada para no volver a intentarlo.
+  - `practice_games`: la práctica contra el motor en la clase, con la posición
+    de `practice_sessions` (la leen los alumnos de quien la creó). Solo guarda
+    el último intento de cada práctica: los anteriores ya no existen.
+  - El Bot de Oscar y los ejercicios de Entrenamiento no guardan las jugadas
+    (a propósito): no entran.
+- **Cómo se decide que fue un error**, en centipeones desde el lado del alumno
+  (un mate cuenta ±10): una pasada a profundidad 10 por todas las posiciones;
+  una jugada del alumno es error si la evaluación cae **2 peones o más**, y es
+  «Lo que regalaste» (nivel 1) si estaba en −1,5 o mejor y quedó en −1 o peor,
+  o «Lo que se te escapó» (nivel 2) si estaba en +2 o más y quedó por debajo
+  de +1,5. Lo que ya estaba perdido no cuenta. De cada partida, los tres más
+  grandes.
+- **La mirada honda confirma**: en cada error, cuatro líneas a profundidad 14.
+  Las **buenas** son las que quedan a menos de 0,5 de la mejor, y vale
+  cualquiera. Si la honda pone la jugada de la partida entre las buenas, o si
+  la mejor no deja 2 peones por encima de lo que se jugó, **no hay ejercicio**:
+  la pasada corta se equivocó. Probado con la trampa Blackburne Shilling: no
+  marca Cxe5 (todavía se salva con Axf7+), sí Cxf7, de +0,1 a −4,6.
+- **Lo que se guarda**: dos claves que viajan con la cuenta
+  (`errores_propios_v1`, los ejercicios; `errores_analizadas_v1`, qué partidas
+  ya se miraron), fundidas por unión. Así el alumno los ve en cualquier aparato,
+  no se revisa dos veces la misma partida y el profesor las puede leer
+  (`training_state`). **No se guarda el nombre del rival**: solo la posición,
+  la jugada que se hizo y las buenas. Como mucho 60 ejercicios, los más
+  recientes.
+- **El juego** es como Aguanta: cualquier jugada buena gana; la de la partida
+  se reconoce («esa es la que jugaste: fue el error»); cada error y la pista
+  quitan una estrella; al tercero, la respuesta. Al final dice qué pasó en la
+  partida («jugaste Cxf7 y la evaluación pasó de +0,1 a −4,6»). Resolver uno
+  cuenta como cualquier Tipo (`activity = 'tipos'`, `category = 'errores'`).
+- **Sin metas de cantidad en Tareas**: como cada alumno tiene una cantidad
+  distinta, `metas-indice.py` no lo ofrece (se salta los tipos sin banco).
+- `herramientas/verificar-errores-propios.js` prueba la detección, el armado y
+  la regla sin motor; `verificar-tipos-pagina.js` busca errores en partidas de
+  mentira con un motor de mentira (el doble de Supabase filtra de verdad: la
+  partida de otra variante, la ajena y la que sigue en curso ni llegan) y
+  juega el ejercicio.
+
 **Al tocar los bancos, las reglas o la página, correr**:
 
     node herramientas/tipos-generar.js          # solo si cambian los bancos (necesita Stockfish)
     node herramientas/verificar-tipos.js        # los bancos y las reglas, sin navegador (~1 min)
-    node herramientas/verificar-tipos-pagina.js # la página, jugada de punta a punta
+    node herramientas/verificar-tipos-pagina.js # la página, jugada de punta a punta (Remata, con un motor de mentira)
 
 El primero de los verificadores vuelve a comprobar con las reglas de la página
 todo lo que cada banco promete y recalcula las tablas de finales; el segundo
@@ -2402,3 +2538,55 @@ fallan de verdad: cambiando la opción buena de un Detective, un mínimo, un
 material y una respuesta de Fotografía saltan 7 comprobaciones; en Siete
 diferencias, cambiando una casilla del cambio, una evaluación de B o los
 enroques de B saltan las 3 que corresponden.
+
+## La práctica de los cursos de finales cuenta
+
+- `js/finales-100.js` (la práctica contra el motor de «El mapa de los
+  finales» y de «Estrategia en el final») registraba `finales100`, que no
+  estaba en el CHECK: la base rechazaba la fila callada y esas prácticas no
+  sumaban a la meta del día, la racha ni los logros.
+- Migración `20260929152955_finales100_cuenta_en_su_curso.sql`: suma
+  `finales100` al CHECK. La fila lleva el curso (`detail.curso`, del
+  `data-course` de la página) y `tiempo_por_seccion()` la cuenta dentro de
+  `curso:<slug>`, donde ya estaba el tiempo de esa página: en Informes no sale
+  una sección suelta sin minutos.
+- El correo a la casa la nombra «Finales de curso contra el motor» en «En qué
+  trabajó» (`ACTIVIDADES` de `informe-html.ts`; hace falta redesplegar
+  `informes-encargados` para verlo).
+- No sube `ACTIVIDADES_ALCANZABLES` de Logros: los cursos se compran aparte,
+  y exigirla dejaría «Las probaste todas» fuera del alcance de quien no los
+  tiene.
+
+## La dificultad que se ajusta sola (Ejercicios por tema)
+
+- Cada tema arrancaba cerca del nivel del alumno (Elo del diagnóstico − 300,
+  o lo que eligió en el selector) y después se quedaba ahí: al que le salía
+  todo le seguían tocando ejercicios que ya no le enseñaban nada, y el tema va
+  de menor a mayor, así que al que se trababa le tocaban más difíciles.
+- `js/dificultad-adaptable.js` cuenta y decide: **5 limpios seguidos** (sin
+  error ni pista) suben un escalón del selector; **3 con error o pista entre
+  los últimos 4** bajan uno. Tras un cambio la cuenta vuelve a cero. Qué es
+  un escalón lo pone la página (`DESDE_OPCIONES`).
+- `js/entreno-temas.js` lo aplica: guarda el escalón nuevo como si lo hubiera
+  elegido (`entreno_temas_desde`), el selector lo muestra, y
+  `#nivel-ajuste` (`role="status"`) lo dice en pantalla. Al cambiar, el
+  siguiente se busca **desde el principio** del tema: hacia adelante solo
+  quedan los más difíciles, y bajar no bajaría nada.
+- **No ajusta**: el repaso, un tema sin rating (la táctica de la casa) ni una
+  dificultad fijada con `?desde=` (la puso la tarea o el plan). Elegir a mano
+  en el selector reinicia la cuenta.
+- Lo prueba `herramientas/verificar-dificultad-adaptable.js`, incluido el
+  caso en que se nota buscar desde el principio (arrancó en 1400 y se traba).
+
+## El primer paso después del diagnóstico
+
+- En los datos, de 52 alumnos que hicieron el diagnóstico, 17 no volvieron a
+  entrenar y 19 lo dejaron al primer o segundo día. El resultado terminaba en
+  un plan de cuatro semanas para leer y nada que hacer ya.
+- `entreno/diagnostico.html` pinta arriba de todo `#result-primer-paso`: lo
+  que toca hoy (`PE.hoyDelPlan()`, el mismo de «Hoy te toca» y del panel),
+  cuántos ejercicios pide la meta del día (`Logros.META_DIARIA`) y cuántos
+  lleva hoy (`Logros.cargar()`), con un botón directo al ejercicio. En la
+  semana 1 sin nada hecho dice «Tu primer paso: hoy mismo»; después, «Esta
+  semana te toca» y cuánto lleva ahí. A un visitante no se le pinta.
+- Lo prueba `verificar-entreno-repaso.js`.

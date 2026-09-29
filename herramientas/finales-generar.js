@@ -54,10 +54,40 @@ const FUENTE = [
     pista: "Empuja el peón de a para llevarte al rey negro lejos, y con tu rey ve a comerte el peón de f.",
   },
   {
+    id: "rompimiento", titulo: "El rompimiento de peones", meta: "ganar", alumno: "w",
+    fen: "8/ppp3k1/8/PPP5/8/8/6K1/8 w - - 0 1",
+    idea: "Tres peones contra tres, y los reyes lejos: entregando uno, otro pasa. Es el rompimiento clásico.",
+    pista: "Juega b6. Si te comen con el peón de a, avanza c6; si te comen con el de c, avanza a6. Uno de tus peones corona.",
+  },
+  {
+    id: "mayoria", titulo: "La mayoría en el flanco de dama", meta: "ganar", alumno: "w",
+    fen: "8/pp3k2/8/8/8/8/PPP2K2/8 w - - 0 1",
+    idea: "Tres peones contra dos en el mismo flanco: con el rey adelante, se abre paso un peón pasado.",
+    pista: "Primero el rey: llévalo al centro y adelante (e3, d4, c4). Después avanza los peones juntos, empezando por el que no tiene contrario enfrente.",
+  },
+  {
     id: "alfil-equivocado", titulo: "El alfil del color equivocado", meta: "tablas", alumno: "b",
     fen: "7k/8/5K2/7P/8/8/4B3/8 b - - 0 1",
     idea: "El peón de torre corona en h8, una casilla oscura, y tu rival tiene un alfil de casillas claras: no puede sacarte de la esquina.",
     pista: "No salgas de la esquina: ve y vuelve entre h8 y g8 (o h7). Cuidado con dejar que te encierren sin jugadas: también es tablas, por ahogado.",
+  },
+  {
+    id: "alfil-correcto", titulo: "El alfil del color correcto", meta: "ganar", alumno: "w",
+    fen: "7k/8/5K2/7P/8/8/8/2B5 w - - 0 1",
+    idea: "Ahora el alfil es de casillas oscuras, del mismo color que h8: sí puede echar al rey negro de la esquina.",
+    pista: "Pon tu rey en g6, controla g7 con el alfil y empuja el peón. Cuidado con el ahogado: deja siempre una jugada al rey negro.",
+  },
+  {
+    id: "distinto-color", titulo: "Alfiles de distinto color", meta: "tablas", alumno: "b",
+    fen: "8/8/3k4/3P4/4P3/2B2K2/8/5b2 b - - 0 1",
+    idea: "Con alfiles de distinto color, dos peones de más muchas veces no alcanzan: tu rey bloquea en las casillas oscuras y tu alfil vigila las claras.",
+    pista: "Deja tu rey delante de los peones (d6, e5, e7) y tu alfil en una diagonal de casillas claras que mire a e4 o a d5. No lo alejes.",
+  },
+  {
+    id: "caballo-contra-peon", titulo: "Caballo contra peón", meta: "tablas", alumno: "w",
+    fen: "8/8/8/8/4N3/1k6/1p6/5K2 w - - 0 1",
+    idea: "El caballo solo puede frenar un peón si llega a tiempo a la casilla de coronación: aquí llega, pero cada jugada cuenta.",
+    pista: "Cd2 con jaque, y después vigila b1. Si el peón corona, que sea en una casilla donde el caballo se come la dama.",
   },
   {
     id: "dama-peon-central", titulo: "Dama contra peón en séptima", meta: "ganar", alumno: "w",
@@ -78,10 +108,22 @@ const FUENTE = [
     pista: "Cuando te obliguen a salir de delante del peón, no vuelvas a c1 ni a d1: ve a a1. Si te toman el peón, es ahogado.",
   },
   {
+    id: "peones-en-sexta", titulo: "Dos peones en sexta contra la torre", meta: "ganar", alumno: "w",
+    fen: "r7/8/5PP1/8/8/k7/8/6K1 w - - 0 1",
+    idea: "Dos peones unidos en la sexta fila le ganan a una torre sola si el rey rival está lejos: la torre no alcanza a frenar a los dos.",
+    pista: "Empuja g7: la torre tiene que ir a g8. Después acerca tu rey y avanza f7; la torre se tiene que entregar.",
+  },
+  {
     id: "torre-contra-peon", titulo: "Torre contra peón", meta: "ganar", alumno: "w",
     fen: "8/8/8/8/8/1k6/1p6/3K3R w - - 0 1",
     idea: "Tu rey está a tiempo: si llega a controlar la casilla de coronación, la torre se come el peón y queda torre contra rey.",
     pista: "Frena el peón con la torre en la columna b y acerca tu rey: cuando llegue, la torre se come el peón.",
+  },
+  {
+    id: "cortar-al-rey", titulo: "Cortar al rey", meta: "ganar", alumno: "w",
+    fen: "7r/8/8/6k1/8/8/2PK4/4R3 w - - 0 1",
+    idea: "Tu torre en la columna e deja al rey negro lejos del peón, del otro lado: con el rey cortado, el peón avanza con tu rey al lado.",
+    pista: "No muevas la torre de la columna e salvo para cortar más. Avanza el peón con tu rey al lado y, si te dan jaques de lejos, acerca el rey a la torre.",
   },
   {
     id: "philidor", titulo: "La posición de Philidor", meta: "tablas", alumno: "b",

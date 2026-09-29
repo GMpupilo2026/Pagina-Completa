@@ -1,9 +1,9 @@
 /* Comprueba entreno/tipos.html en un navegador de verdad: la ficha de los
- * Tipos de entrenamiento y los quince juegos, JUGADOS de punta a punta.
+ * Tipos de entrenamiento y los dieciocho juegos, JUGADOS de punta a punta.
  *
  * Los bancos los comprueba herramientas/verificar-tipos.js sin navegador.
  * Esto es lo que solo se rompe mirando la pantalla:
- *   - sin sesión manda a iniciar sesión; con sesión, la ficha trae los quince
+ *   - sin sesión manda a iniciar sesión; con sesión, la ficha trae los dieciocho
  *     tipos, cada uno con su encabezado y su enlace;
  *   - cada juego pinta LA posición de su ejercicio (se compara casilla por
  *     casilla contra la FEN del banco, no contra la página);
@@ -47,15 +47,34 @@ function clienteFalso(conSesion) {
   return `
 (function () {
   window.__escrituras = [];
+  /* Las filas de cada tabla las pone la prueba (window.__filas); los
+     filtros se aplican DE VERDAD al resolver, como la base. */
   function tabla(nombre) {
-    let filas = [];
+    let filas = ((window.__filas || {})[nombre] || []).slice();
+    const filtros = [];
+    let orden = null, desde = 0, hasta = Infinity;
     const api = {
-      select() { return api; }, eq() { return api; }, in() { return api; }, order() { return api; }, limit() { return api; },
+      select() { return api; }, limit() { return api; },
+      eq(c, v) { filtros.push((f) => f[c] === v); return api; },
+      neq(c, v) { filtros.push((f) => f[c] !== v); return api; },
+      in(c, vs) { filtros.push((f) => vs.indexOf(f[c]) >= 0); return api; },
+      or(txt) {
+        const partes = txt.split(",").map((p) => p.split("."));
+        filtros.push((f) => partes.some(([c, op, v]) => op === "eq" && String(f[c]) === v));
+        return api;
+      },
+      order(c, o) { orden = { c, asc: !o || o.ascending !== false }; return api; },
+      range(a, b) { desde = a; hasta = b; return api; },
       maybeSingle() { return Promise.resolve({ data: null, error: null }); },
       single() { return Promise.resolve({ data: null, error: null }); },
       upsert(fila) { window.__escrituras.push({ tabla: nombre, fila }); return Promise.resolve({ error: null }); },
       insert(fila) { window.__escrituras.push({ tabla: nombre, fila }); return Promise.resolve({ error: null }); },
-      then(res, rej) { return Promise.resolve({ data: filas, error: null }).then(res, rej); },
+      then(res, rej) {
+        let d = filas.filter((f) => filtros.every((fn) => fn(f)));
+        if (orden) d.sort((a, b) => (a[orden.c] < b[orden.c] ? -1 : a[orden.c] > b[orden.c] ? 1 : 0) * (orden.asc ? 1 : -1));
+        d = d.slice(desde, hasta + 1);
+        return Promise.resolve({ data: d, error: null }).then(res, rej);
+      },
     };
     return api;
   }
@@ -137,7 +156,7 @@ async function main() {
       enlace: li.querySelector("h2 a").getAttribute("href"),
       visible: li.checkVisibility(),
     })));
-    ok("quince fichas", fichas.length === 15, fichas.length);
+    ok("dieciocho fichas", fichas.length === 18, fichas.length);
     ok("cada una con su encabezado y su enlace", fichas.every((f) => f.titulo && /^#[a-z-]+$/.test(f.enlace) && f.visible), JSON.stringify(fichas));
     ok("un solo h1", (await page.$$eval("#vista-fichas h1", (h) => h.length)) === 1);
     await page.click('#fichas li:first-child h2 a');
@@ -362,7 +381,7 @@ async function main() {
     await ctx.close();
   }
 
-  /* ======================= 8 a 15 ======================= */
+  /* ======================= 8 a 18 ======================= */
   const M = require("../js/tipos-reglas-mas.js");
   const escribir = async (page, txt) => { await page.fill("#jugada-input", txt); await page.press("#jugada-input", "Enter"); };
 
@@ -571,6 +590,223 @@ async function main() {
     await page.press("#jugada-input", "Enter");
     await esperarEstado(page, /Aguanta/);
     ok("a la primera: tres estrellas", (await estrellas(page))["aguanta:" + item.id] === 3, JSON.stringify(await estrellas(page)));
+    ok("sin errores en consola", !errores.length, errores.join(" | "));
+    await ctx.close();
+  }
+
+  console.log("\n=== Remata la ventaja (con un motor de mentira) ===");
+  {
+    /* El motor de mentira: juega la primera jugada legal y evalúa lo que la
+       prueba le pone (window.__evals, en orden; después window.__eval; null =
+       el motor no contesta). Evalúa desde el que mueve, que tras la jugada del
+       alumno es la máquina: −400 son +4 para el alumno. */
+    const MOTOR_FALSO = `
+window.PracticeEngine = {
+  LEVELS: { max: {} }, preload() {}, jugadaDeRespaldo() { return null; },
+  async getMove(fen) { const m = new Chess(fen).moves({ verbose: true })[0]; return m ? m.from + m.to + (m.promotion || "") : null; },
+  async evaluate() { if (window.__evals && window.__evals.length) return window.__evals.shift(); return window.__eval === undefined ? { type: "cp", value: -400 } : window.__eval; },
+};`;
+    const conMotor = (evals, eval1) => async (ctx) => {
+      await ctx.route("**/js/shared-engine.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
+      await ctx.route("**/js/practice-engine.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: MOTOR_FALSO }));
+      await ctx.addInitScript((v) => { window.__evals = v.evals; if (v.uno !== "nada") window.__eval = v.uno; }, { evals, uno: eval1 === undefined ? "nada" : eval1 });
+    };
+    /* Juega jugadas legales que no repitan posición, esperando el turno. */
+    async function jugarHasta(page, item, re) {
+      const vistas = new Set();
+      for (let k = 0; k < item.jugadas + 2; k++) {
+        const t = await esperarEstado(page, /Te toca|Remataste|✗|no cuenta|Vas ganando|^$/);
+        if (/Remataste|✗|no cuenta/.test(t)) return t;
+        await page.waitForFunction(() => document.querySelector("#tablero button[data-square]"), null, { timeout: 5000 }).catch(() => {});
+        const fen = await page.evaluate(() => TiposEntreno.fen());
+        const g = new Chess(fen);
+        vistas.add(fen.split(" ").slice(0, 4).join(" "));
+        const clave = (f) => f.split(" ").slice(0, 4).join(" ");
+        const m = g.moves({ verbose: true }).find((x) => { const h = new Chess(fen); h.move(x); return !h.game_over() && !vistas.has(clave(h.fen())); });
+        { const h = new Chess(fen); h.move(m); vistas.add(clave(h.fen())); }
+        if (!(await page.isVisible("#jugada-input"))) return estado(page);
+        await page.fill("#jugada-input", R.sanEs(m.san));
+        await page.press("#jugada-input", "Enter");
+        await page.waitForFunction((f) => TiposEntreno.fen() !== f, fen, { timeout: 5000 }).catch(() => {});
+        await page.waitForFunction(() => !/revisa|piensa/.test(document.getElementById("estado").textContent), null, { timeout: 5000 }).catch(() => {});
+      }
+      return esperarEstado(page, re);
+    }
+    const item = DATOS.remata.find((x) => x.nivel === 1);
+    {
+      const { page, ctx, errores } = await abrir(browser, true, "#remata/1/" + item.id, conMotor([]));
+      await page.waitForSelector("#vista-juego:not(.hidden) #jugada-input");
+      await mismaPosicion(page, item.fen, "pinta la posición del ejercicio");
+      const primera = await page.$eval("#tablero [data-square]", (c) => c.dataset.square);
+      ok("el tablero está del lado del alumno", primera === (item.fen.split(" ")[1] === "w" ? "a8" : "h1"), "arriba a la izquierda: " + primera);
+      const t = await jugarHasta(page, item, /Remataste/);
+      ok("siempre en +4: remata a las " + item.jugadas + " jugadas", /Remataste/.test(t), t);
+      ok("sin bajar nunca de +3: tres estrellas", (await estrellas(page))["remata:" + item.id] === 3, JSON.stringify(await estrellas(page)));
+      ok("sin errores en consola", !errores.length, errores.join(" | "));
+      await ctx.close();
+    }
+    {
+      // bajó a +2 una vez y volvió: lo logra, con dos estrellas
+      const { page, ctx, errores } = await abrir(browser, true, "#remata/1/" + item.id, conMotor([{ type: "cp", value: -200 }]));
+      await page.waitForSelector("#vista-juego:not(.hidden) #jugada-input");
+      const t = await jugarHasta(page, item, /Remataste/);
+      ok("bajó a +2 y volvió: lo logra", /Remataste/.test(t), t);
+      ok("con dos estrellas", (await estrellas(page))["remata:" + item.id] === 2, JSON.stringify(await estrellas(page)));
+      ok("sin errores en consola", !errores.length, errores.join(" | "));
+      await ctx.close();
+    }
+    {
+      // a +0: se escapó a la primera
+      const { page, ctx, errores } = await abrir(browser, true, "#remata/1/" + item.id, conMotor([], { type: "cp", value: 0 }));
+      await page.waitForSelector("#vista-juego:not(.hidden) #jugada-input");
+      const t = await jugarHasta(page, item, /escapó/);
+      ok("si baja de +1,5 se escapó", /se te escapó/.test(t), t);
+      ok("y no da estrellas", !(await estrellas(page))["remata:" + item.id]);
+      ok("sin errores en consola", !errores.length, errores.join(" | "));
+      await ctx.close();
+    }
+    {
+      // sin motor no se regala nada
+      const { page, ctx, errores } = await abrir(browser, true, "#remata/1/" + item.id, conMotor([], null));
+      await page.waitForSelector("#vista-juego:not(.hidden) #jugada-input");
+      const t = await jugarHasta(page, item, /no cuenta/);
+      ok("si el motor no contesta, no cuenta", /no cuenta/.test(t), t);
+      ok("y no da estrellas", !(await estrellas(page))["remata:" + item.id]);
+      ok("sin errores en consola", !errores.length, errores.join(" | "));
+      await ctx.close();
+    }
+  }
+
+  console.log("\n=== Elige a tiempo ===");
+  {
+    const item = DATOS.tiempo.find((x) => x.nivel === 1);
+    const mejor = item.candidatas.find((c) => c.clase === "mejor");
+    const { page, ctx, errores } = await abrir(browser, true, "#tiempo/1/" + item.id);
+    await page.waitForSelector("#vista-juego:not(.hidden) #controles button");
+    await mismaPosicion(page, item.fen, "pinta la posición del ejercicio");
+    const opciones = await page.$$eval('#controles [role="group"] button', (b) => b.map((x) => x.textContent.trim()));
+    ok("muestra las candidatas del banco", JSON.stringify(opciones) === JSON.stringify(item.candidatas.map((c) => c.sanEs)), JSON.stringify(opciones));
+    ok("dice cuánto tiempo hay", /Tienes 30 segundos/.test(await estado(page)), await estado(page));
+    await page.locator('#controles [role="group"] button', { hasText: mejor.sanEs }).first().click();
+    const t = await esperarEstado(page, /La mejor/);
+    ok("la mejor: tres estrellas", /La mejor/.test(t) && (await estrellas(page))["tiempo:" + item.id] === 3, t);
+    const marcadas = await page.$$eval('#controles [role="group"] button', (b) => b.map((x) => x.textContent.trim()));
+    ok("después cada candidata dice cuánto pierde, con su signo escrito", marcadas.every((x) => /^[✓≈✗] /.test(x) && /la mejor|pierde/.test(x)), JSON.stringify(marcadas));
+    ok("sin errores en consola", !errores.length, errores.join(" | "));
+    await ctx.close();
+  }
+  {
+    // escrita, y una que pierde: sin estrellas
+    const item = DATOS.tiempo.find((x) => x.nivel === 2);
+    const error = item.candidatas.find((c) => c.clase === "error");
+    const { page, ctx, errores } = await abrir(browser, true, "#tiempo/2/" + item.id);
+    await page.waitForSelector("#vista-juego:not(.hidden) #jugada-input");
+    const otra = new Chess(item.fen).moves().find((s) => !item.candidatas.some((c) => c.san === s));
+    if (otra) {
+      await page.fill("#jugada-input", R.sanEs(otra));
+      await page.press("#jugada-input", "Enter");
+      ok("una jugada que no es candidata no cuenta", /no es una de las candidatas/.test(await esperarEstado(page, /candidatas/)));
+    }
+    await page.fill("#jugada-input", error.sanEs);
+    await page.press("#jugada-input", "Enter");
+    const t = await esperarEstado(page, /pierde/);
+    ok("escribir una que pierde: se explica y no da estrellas", /Esa pierde/.test(t) && !(await estrellas(page))["tiempo:" + item.id], t);
+    ok("sin errores en consola", !errores.length, errores.join(" | "));
+    await ctx.close();
+  }
+  {
+    // se acaba el reloj (el reloj de la página se adelanta, no se espera)
+    const item = DATOS.tiempo.find((x) => x.nivel === 3);
+    const { page, ctx, errores } = await abrir(browser, true, "#tiempo/3/" + item.id, async (c) => { await c.clock.install(); });
+    await page.waitForSelector("#vista-juego:not(.hidden) #controles button");
+    await page.clock.fastForward("00:09");
+    const t = await esperarEstado(page, /acabó el tiempo/);
+    ok("a los 8 segundos se acaba el tiempo", /Se acabó el tiempo/.test(t), t);
+    ok("y no da estrellas", !(await estrellas(page))["tiempo:" + item.id]);
+    const apagados = await page.$$eval('#controles [role="group"] button', (b) => b.every((x) => x.disabled));
+    ok("y ya no se puede elegir", apagados);
+    ok("sin errores en consola", !errores.length, errores.join(" | "));
+    await ctx.close();
+  }
+  {
+    // Modo Adaptado: el triple
+    const item = DATOS.tiempo.find((x) => x.nivel === 3);
+    const { page, ctx, errores } = await abrir(browser, true, "#tiempo/3/" + item.id, async (c) => {
+      await c.addInitScript(() => { localStorage.setItem("oscarBlindMode_v1", "1"); });
+      await c.clock.install();
+    });
+    await page.waitForSelector("#vista-juego:not(.hidden) #controles button");
+    ok("en Modo Adaptado, el triple de tiempo", /Tienes 24 segundos \(el triple/.test(await estado(page)), await estado(page));
+    await page.clock.fastForward("00:10");
+    ok("a los 10 segundos todavía se puede elegir", !(await page.$eval('#controles [role="group"] button', (b) => b.disabled)));
+    ok("sin errores en consola", !errores.length, errores.join(" | "));
+    await ctx.close();
+  }
+
+  console.log("\n=== Tus propios errores (partidas y motor de mentira) ===");
+  {
+    /* Una partida de Juegos de la alumna (u-1, blancas) donde se equivoca en
+       la jugada 4 (Cxe5 regala el caballo: de 0 a −3), otra de ajedrez
+       «desde el tablero» que no se puede reproducir, una de otra variante y
+       una de otra persona (el doble filtra de verdad: esas no llegan). */
+    const JUGADAS = ["e4", "e5", "Nf3", "Nc6", "Bc4", "Nd4", "Nxe5", "Qg5", "Nxf7", "Qxg2", "Rf1", "Qxe4+"];
+    const g = new Chess();
+    const fens = [g.fen()];
+    JUGADAS.forEach((s) => { g.move(s); fens.push(g.fen()); });
+    const evals = {};
+    fens.forEach((f, i) => { evals[f] = i <= 6 ? 0 : -3; });
+    const opciones = { [fens[6]]: [{ san: "c3", eval: 0.2 }, { san: "O-O", eval: 0 }, { san: "Nxe5", eval: -3 }] };
+    const filas = {
+      game_rooms: [
+        { id: "g-buena", variant: "estandar", status: "finished", white_id: "u-1", black_id: "u-2", moves: JUGADAS, updated_at: "2026-09-20T15:00:00Z" },
+        { id: "g-tablero", variant: "estandar", status: "finished", white_id: "u-2", black_id: "u-1", moves: ["Ke2", "Ke7", "Ke3", "Ke6", "Ke4", "Ke5", "Kd3", "Kd6", "Kc3", "Kc6", "Kb3", "Kb6"], updated_at: "2026-09-19T15:00:00Z" },
+        { id: "g-otra-variante", variant: "crazyhouse", status: "finished", white_id: "u-1", black_id: "u-2", moves: JUGADAS, updated_at: "2026-09-18T15:00:00Z" },
+        { id: "g-ajena", variant: "estandar", status: "finished", white_id: "u-3", black_id: "u-2", moves: JUGADAS, updated_at: "2026-09-17T15:00:00Z" },
+        { id: "g-en-curso", variant: "estandar", status: "playing", white_id: "u-1", black_id: "u-2", moves: JUGADAS, updated_at: "2026-09-16T15:00:00Z" },
+      ],
+      practice_games: [], practice_sessions: [],
+    };
+    const MOTOR_FALSO = `
+window.PreparacionMotor = {
+  disponible() { return true; },
+  async evaluar(fen) { return { eval: (window.__evals || {})[fen] || 0, mejor: null }; },
+  async opciones(fen) { return (window.__opciones || {})[fen] || []; },
+};`;
+    const preparar = async (ctx) => {
+      await ctx.route("**/js/preparacion-motor.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: MOTOR_FALSO }));
+      await ctx.addInitScript((v) => { window.__filas = v.filas; window.__evals = v.evals; window.__opciones = v.opciones; }, { filas, evals, opciones });
+    };
+    const { page, ctx, errores } = await abrir(browser, true, "#errores", preparar);
+    await page.waitForSelector("#vista-tipo:not(.hidden) #tipo-extra button");
+    const vacios = await page.$$eval("#niveles li", (l) => l.map((x) => x.textContent));
+    ok("antes de buscar, los niveles están vacíos", vacios.length === 2 && vacios.every((t) => /0 de 0/.test(t)), JSON.stringify(vacios));
+    await page.getByRole("button", { name: /Buscar errores en mis partidas/ }).click();
+    await page.waitForFunction(() => /Listo|No hay|No se pudieron/.test(document.querySelector('#tipo-extra [role="status"]').textContent), null, { timeout: 15000 }).catch(() => {});
+    const aviso = await page.textContent('#tipo-extra [role="status"]');
+    ok("revisa las dos partidas suyas, estándar y terminadas, y saca 1 ejercicio", /se revisaron 2 partidas y salió 1 ejercicio nuevo/.test(aviso), aviso);
+    const guardado = await page.evaluate(() => ({ ej: JSON.parse(localStorage.getItem("errores_propios_v1") || "{}"), vistas: JSON.parse(localStorage.getItem("errores_analizadas_v1") || "{}") }));
+    const ej = Object.values(guardado.ej);
+    ok("el ejercicio queda guardado con las buenas del motor", ej.length === 1 && ej[0].fen === fens[6] && ej[0].jugada === "Nxe5" && ej[0].buenas.join() === "c3,O-O" && ej[0].nivel === 1, JSON.stringify(ej));
+    ok("la que no se puede reproducir también queda como revisada (no se vuelve a intentar)", Object.keys(guardado.vistas).sort().join() === "juego:g-buena,juego:g-tablero", JSON.stringify(guardado.vistas));
+    ok("la de otra variante, la ajena y la que sigue en curso ni se piden", !Object.keys(guardado.vistas).some((k) => /otra|ajena|curso/.test(k)));
+    const nivel1 = await page.textContent("#niveles li:first-child");
+    ok("el nivel 1 ya tiene su ejercicio", /0 de 1 resueltos/.test(nivel1), nivel1);
+    // Otra vez: no hay nada nuevo.
+    await page.getByRole("button", { name: /Buscar errores en mis partidas/ }).click();
+    await page.waitForFunction(() => /No hay partidas nuevas/.test(document.querySelector('#tipo-extra [role="status"]').textContent), null, { timeout: 8000 }).catch(() => {});
+    ok("buscar otra vez no revisa lo ya revisado", /No hay partidas nuevas/.test(await page.textContent('#tipo-extra [role="status"]')));
+    // Jugar el ejercicio.
+    await page.evaluate((id) => { location.hash = "#errores/1/" + id; }, ej[0].id);
+    await page.waitForSelector("#vista-juego:not(.hidden) #jugada-input");
+    await mismaPosicion(page, fens[6], "pinta la posición de su partida");
+    await page.fill("#jugada-input", "Cxe5");
+    await page.press("#jugada-input", "Enter");
+    ok("la jugada de la partida se reconoce como el error", /la que jugaste en la partida/.test(await esperarEstado(page, /partida/)));
+    await page.fill("#jugada-input", "c3");
+    await page.press("#jugada-input", "Enter");
+    const t = await esperarEstado(page, /buena/);
+    ok("una buena: con un error, dos estrellas", /Esa es buena/.test(t) && (await estrellas(page))["errores:" + ej[0].id] === 2, t + " " + JSON.stringify(await estrellas(page)));
+    ok("y cuenta qué pasó en la partida", /En tu partida jugaste Cxe5 y la evaluación pasó de \+0,2 a −3,0/.test(await page.textContent("#explicacion")), await page.textContent("#explicacion"));
     ok("sin errores en consola", !errores.length, errores.join(" | "));
     await ctx.close();
   }

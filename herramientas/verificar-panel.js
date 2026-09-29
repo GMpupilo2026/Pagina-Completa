@@ -407,21 +407,22 @@ async function pruebaProfesora(browser) {
   const { page, ctx, errores } = await panel(browser, [PROFE], "u-profe");
   const grupos = await page.evaluate(LEER_GRILLA);
 
-  /* A quien da clase, la tarjeta del diagnóstico la lleva al RESULTADO de sus
-     alumnos, no a la prueba: el banco es el mismo que el de ellos y
-     resolverla por su cuenta no le sirve. Ni una puerta a las dos pruebas. */
-  igual("a la profesora el diagnóstico la lleva al resultado de sus alumnos",
-    grupo(grupos, "Lo que le pones a tus alumnos").tiles.map((t) => t.enlace),
-    ["tareas.html", "examenes.html", "informes.html?tema=diagnostico"]);
+  /* El panel de quien da clase se reparte por lo que se viene a hacer
+     (PANEL_DOCENTE en js/clases.js), no el del alumno con cosas encima. Una
+     tarjeta que no tenga lugar caería en «Otras»: ese grupo no debe existir. */
+  igual("sus grupos, en su orden (sin coordinar, no hay «Coordinación»)", grupos.map((g) => g.titulo),
+    ["Clase en vivo", "Tus alumnos", "Tus clases", "Aprender", "Jugar y competir", "Tu cuenta"]);
+  const enlacesProfe = grupos.flatMap((g) => g.tiles).map((t) => t.enlace).filter(Boolean);
+  igual("cada destino una sola vez", enlacesProfe.filter((h, i) => enlacesProfe.indexOf(h) !== i), []);
+  /* Informes es de sus alumnos, no de su cuenta; y el diagnóstico ya no es
+     una segunda puerta a Informes (informes.html?tema=diagnostico). */
+  igual("«Tus alumnos»: tareas, exámenes, informes, justificaciones y subgrupos",
+    grupo(grupos, "Tus alumnos").tiles.map((t) => t.enlace),
+    ["tareas.html", "examenes.html", "informes.html", "justificaciones.html", "subgrupos.html"]);
+  igual("una sola puerta a Informes", enlacesProfe.filter((h) => h.startsWith("informes.html")), ["informes.html"]);
   igual("y no se le ofrece ninguna de las dos pruebas",
     await page.evaluate(() => document.querySelectorAll(
       "#tile-grid [href*='entreno/diagnostico'], #tile-grid [href*='arbitraje']").length), "0");
-  /* El rótulo del grupo tiene dos públicos, igual que la descripción de un
-     tile: del otro lado del escritorio, lo que te ponen es lo que mandas. */
-  igual("y el grupo con fecha le habla de sus alumnos, no de su profesor",
-    grupos.map((g) => g.titulo).filter((x) => /Lo que/.test(x)), ["Lo que le pones a tus alumnos"]);
-  igual("a ella «Herramientas» sí se le pinta: sus accesos funcionan",
-    grupos.map((g) => g.titulo).includes("Herramientas"), "true");
   const apagados = await page.evaluate(() =>
     Array.from(document.querySelectorAll("#tile-grid [aria-disabled=true]"))
       .filter((el) => !el.closest("#videollamada-wrap") && !el.closest("#sesion-wrap"))
@@ -433,9 +434,9 @@ async function pruebaProfesora(browser) {
      `soloAdmin`, igual que la guía del profesor, así que a quien da clase se le
      QUITAN — no se le apagan: una tarjeta gris dice «esto vuelve», y lo que se
      quiere decir es que no es suyo. */
-  igual("las herramientas le quedan abiertas",
-    grupo(grupos, "Herramientas").tiles.map((t) => t.enlace),
-    ["partidas.html", "planes.html", "asistencia.html", "justificaciones.html", "informe-mensual.html", "subgrupos.html"]);
+  igual("«Tus clases»: prepararlas, darlas, repasarlas e informarlas",
+    grupo(grupos, "Tus clases").tiles.map((t) => t.enlace),
+    ["planes.html", "asistencia.html", "repasar-clases.html", "partidas.html", "informe-mensual.html"]);
   /* La tienda de materiales entra en la misma regla: todavía no está abierta,
      así que a quien da clase no se le pinta ni escondida — un enlace
      invisible pero presente sigue siendo una parada de tabulador, y encima
@@ -448,11 +449,65 @@ async function pruebaProfesora(browser) {
      ofrecía "lo que se te ha cobrado" sobre una cuenta a la que no se le cobra
      nada. Y como no coordina, tampoco le toca la página entera de Cobros. */
   igual("a quien da clase no se le ofrece su propio recibo",
-    grupo(grupos, "Tu cuenta").tiles.map((t) => t.etiqueta), ["Configuración", "Informes", "Logros"]);
+    grupo(grupos, "Tu cuenta").tiles.map((t) => t.etiqueta), ["Configuración", "Logros"]);
   igual("y sin coordinar, cobros.html no le aparece por ningún lado",
     grupos.flatMap((g) => g.tiles).filter((t) => t.enlace === "cobros.html").length, "0");
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
+}
+
+/* «Lo urgente» de quien da clase: solo aparece cuando hay algo, y solo con
+   lo que se resuelve en una tarjeta suya. Su informe mensual del mes pasado
+   cuenta si tiene supervisión (mis_supervisores()) y no lo envió. */
+async function pruebaUrgenteProfesora(browser) {
+  console.log("\n=== Lo urgente de quien da clase ===");
+  // El mes pasado, en hora de Costa Rica, como lo calcula js/pendientes.js.
+  const [a, m] = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Costa_Rica", year: "numeric", month: "2-digit" }).format(new Date()).split("-").map(Number);
+  const mesPasado = (m === 1 ? a - 1 : a) + "-" + String(m === 1 ? 12 : m - 1).padStart(2, "0") + "-01";
+  const nombreMes = new Intl.DateTimeFormat("es-CR", { month: "long", timeZone: "UTC" }).format(new Date(Date.UTC(m === 1 ? a - 1 : a, (m === 1 ? 12 : m - 1) - 1, 15)));
+
+  let r = await panel(browser, [PROFE], "u-profe", null, {
+    rpc: { justificaciones_pendientes: 2, mis_supervisores: [{ id: "u-sup" }] },
+    // Mandó el de hace dos meses, no el del mes pasado.
+    informes_profesor: [{ id: "i-viejo", profesor_id: "u-profe", periodo: "2000-01-01", estado: "enviado" }],
+  });
+  await r.page.waitForFunction(() => !/Revisando/.test(document.getElementById("urgente-panel-estado").textContent), null, { timeout: 10000 });
+  igual("se ve, antes que «Tu semana»",
+    await r.page.evaluate(() => {
+      const u = document.getElementById("urgente-panel");
+      return u.checkVisibility() && !!(u.compareDocumentPosition(document.getElementById("progreso-profe")) & Node.DOCUMENT_POSITION_FOLLOWING);
+    }), true);
+  igual("sus justificaciones y su informe del mes pasado, cada uno a donde se resuelve",
+    await r.page.evaluate(() => Array.from(document.querySelectorAll("#urgente-panel-lista li")).filter((li) => li.checkVisibility())
+      .map((li) => li.querySelector("a > span:nth-child(2)").innerText.replace(/\s+/g, " ").trim() + " → " + li.querySelector("a").getAttribute("href"))),
+    ["URGENTE 2 justificaciones de ausencia por revisar → justificaciones.html",
+     "URGENTE Tu informe mensual de " + nombreMes + " sin enviar → informe-mensual.html"]);
+  igual("el informe se busca por SU id, el mes pasado y enviado",
+    await r.page.evaluate(() => window.__consultas.filter((c) => c.tabla === "informes_profesor").map((c) => c.eq)),
+    [{ profesor_id: "u-profe", periodo: mesPasado, estado: "enviado" }]);
+  igual("sin coordinar, no se le cuentan solicitudes ni cobros",
+    await r.page.evaluate(() => window.__consultas.filter((c) => c.tabla === "solicitudes_academia" || c.tabla === "cobros_morosos").length), 0);
+  igual("sin errores en consola", r.errores.join(" | ") || "ninguno", "ninguno");
+  await r.ctx.close();
+
+  // Todo al día: la tarjeta no aparece (un «todo al día» diario deja de leerse).
+  r = await panel(browser, [PROFE], "u-profe", null, {
+    rpc: { justificaciones_pendientes: 0, mis_supervisores: [{ id: "u-sup" }] },
+    informes_profesor: [{ id: "i-1", profesor_id: "u-profe", periodo: mesPasado, estado: "enviado" }],
+  });
+  await r.page.waitForFunction(() => window.__consultas.some((c) => c.tabla === "informes_profesor"), null, { timeout: 10000 });
+  await r.page.waitForTimeout(300);
+  igual("con todo al día, la tarjeta no aparece",
+    await r.page.evaluate(() => document.getElementById("urgente-panel").checkVisibility()), false);
+  await r.ctx.close();
+
+  // Sin supervisión nadie le pide informe: no se le cuenta.
+  r = await panel(browser, [PROFE], "u-profe", null, { rpc: { justificaciones_pendientes: 0, mis_supervisores: [] } });
+  await r.page.waitForTimeout(800);
+  igual("sin supervisión, su informe no se le reclama",
+    [await r.page.evaluate(() => document.getElementById("urgente-panel").checkVisibility()),
+     await r.page.evaluate(() => window.__consultas.filter((c) => c.tabla === "informes_profesor").length)], [false, 0]);
+  await r.ctx.close();
 }
 
 /* La preparación de rivales la activa administración profesor por profesor
@@ -462,8 +517,8 @@ async function pruebaPreparacionRivales(browser) {
   console.log("\n=== La tarjeta de «Preparación de rivales» ===");
   let r = await panel(browser, [PROFE], "u-profe", null, { rpc: { puedo_preparar_rivales: true } });
   let grupos = await r.page.evaluate(LEER_GRILLA);
-  igual("con la función activa, sale en Herramientas",
-    grupo(grupos, "Herramientas").tiles.map((t) => t.enlace).filter((x) => x === "preparacion-rivales.html"), ["preparacion-rivales.html"]);
+  igual("con la función activa, sale en «Tus clases»",
+    grupo(grupos, "Tus clases").tiles.map((t) => t.enlace).filter((x) => x === "preparacion-rivales.html"), ["preparacion-rivales.html"]);
   igual("sin errores en consola", r.errores.join(" | ") || "ninguno", "ninguno");
   await r.ctx.close();
   r = await panel(browser, [PROFE], "u-profe", null, { rpc: { puedo_preparar_rivales: false } });
@@ -801,10 +856,15 @@ async function pruebaCoordinadorRecortado(browser) {
   const COORD = { id: "u-luis", role: "profesor", is_admin: false, es_coordinador: true, full_name: "Luis Mora", email: "luis@x.cr", grupo: null };
   const { page, ctx, errores } = await panel(browser, [COORD], "u-luis", null,
     { misFunciones: ["formularios", "altas", "cuentas", "acceso", "roles", "equipos", "subgrupos"] });
-  const enlaces = grupo(await page.evaluate(LEER_GRILLA), "Herramientas").tiles.map((t) => t.enlace);
+  const enlaces = grupo(await page.evaluate(LEER_GRILLA), "Coordinación").tiles.map((t) => t.enlace);
   igual("no se le pintan ni Cobros ni Solicitudes, y sí Formularios y Coordinación",
     ["cobros.html", "solicitudes.html", "formularios.html", "coordinacion.html"].map((x) => enlaces.includes(x)),
     [false, false, true, true]);
+  /* Lo urgente solo cuenta lo que tiene tarjeta: sin Solicitudes ni Cobros,
+     ni se le preguntan a la base (le diría «al día» de algo que no ve). */
+  await page.waitForTimeout(300);
+  igual("y «Lo urgente» no le cuenta solicitudes ni cobros",
+    await page.evaluate(() => window.__consultas.filter((c) => c.tabla === "solicitudes_academia" || c.tabla === "cobros_morosos").length), 0);
   igual("sin errores en la página", errores, []);
   await ctx.close();
 }
@@ -865,6 +925,11 @@ async function pruebaUltimaClase(browser) {
     "Preguntas: 1 de 2 contestadas: 1 bien | Práctica contra el motor: 1 partida: 1 perdida");
   igual("y lo que contestó en cada pregunta de ESA clase", await r.page.evaluate(() => [...document.querySelectorAll("#ultima-clase ol li")].map((l) => l.textContent).join(" | ")),
     "¿Qué jugarías? Tu respuesta: Ra8# — ✅ correcta | ¿Quién está mejor? Sin contestar");
+  /* Repasar ESA clase, no la lista general: esa ya es la tarjeta «Repasar
+     mis clases» de la grilla. */
+  igual("«Repasar esta clase» abre el repaso de ESA clase",
+    await r.page.evaluate(() => { const a = [...document.querySelectorAll("#ultima-clase a")].find((x) => /Repasar/.test(x.textContent)); return a ? a.getAttribute("href") : "no está"; }),
+    "repasar-clases.html?repaso=c-0");
   igual("sin errores en la página", r.errores, []);
   await r.ctx.close();
 
@@ -1634,6 +1699,10 @@ async function pruebaProgresoAlumna(browser) {
   igual("los tres números salen tal cual los contó la base",
     [visto.puzzles, visto.lecciones, visto.coord], ["37", "9", "24"]);
   igual("y la racha de días también", visto.racha, "4");
+  /* Informes es una tarjeta de «Tu cuenta»: «Tu progreso» no lleva otra
+     puerta al mismo lugar («Ver informes completos», que se quitó). */
+  igual("«Tu progreso» no repite la puerta a Informes",
+    await page.evaluate(() => document.querySelectorAll('#progreso-alumno a[href="informes.html"]').length), 0);
   igual("el récord de racha táctica se compara dentro de su grupo",
     visto.tituloRecord, "Racha táctica del grupo 7B");
   igual("con quién lo tiene", visto.record, "Bruno Mora lleva el récord con 14 aciertos seguidos.");
@@ -1665,6 +1734,7 @@ async function pruebaProgresoAlumna(browser) {
   await ctx.close();
 }
 
+const haceDias = (n) => new Date(Date.now() - n * 86400000 - 3600000).toISOString();
 async function pruebaSemanaProfesora(browser) {
   console.log("\n=== Tu semana, vista por una profesora ===");
   const { page, ctx, errores } = await panel(browser, [PROFE], "u-profe", {}, {
@@ -1678,7 +1748,16 @@ async function pruebaSemanaProfesora(browser) {
        cuenta por su lado. */
     rpc: { panel_profesor: [{ alumnos: 29, activos_7d: 11, tareas_pendientes: 6, tareas_vencidas: 2,
                               tareas_puestas: 9, clases_30d: 8, clases_dadas: 21,
-                              con_diagnostico: 29, con_plan: 29 }] },
+                              con_diagnostico: 29, con_plan: 29 }],
+           /* Quiénes se caen del plan: ocho, y se muestran seis. La primera
+              entrenó con el plan y paró; el segundo nunca lo empezó; el
+              tercero trae HTML en el nombre. */
+           se_caen_del_plan: [
+             { id: "u-1", nombre: "Ana Rojas", desde: haceDias(20), ultima: haceDias(3), entreno_con_plan: true },
+             { id: "u-2", nombre: "Beto Mora", desde: haceDias(8), ultima: null, entreno_con_plan: false },
+             { id: "u-3", nombre: '<img src=x onerror="window.__xss=1">', desde: haceDias(30), ultima: haceDias(5), entreno_con_plan: true },
+             ...[4, 5, 6, 7, 8].map((i) => ({ id: "u-" + i, nombre: "Alumno " + i, desde: haceDias(40), ultima: haceDias(10 + i), entreno_con_plan: true })),
+           ] },
   });
 
   const visto = await page.evaluate(() => ({
@@ -1704,6 +1783,23 @@ async function pruebaSemanaProfesora(browser) {
   igual("y con todo andando, ninguna franja de primer paso encima",
     await page.evaluate(() => getComputedStyle(document.getElementById("pendientes-aviso")).display), "none");
 
+  /* Quiénes se caen del plan: el número de arriba dice cuántos; esto dice
+     quiénes, con su informe a un clic. */
+  await page.waitForFunction(() => !document.getElementById("profe-caen").hidden, null, { timeout: 10000 });
+  const caen = await page.evaluate(() => ({
+    pidio: (window.__consultas || []).filter((c) => c.tabla === "se_caen_del_plan").map((c) => c.args),
+    filas: Array.from(document.querySelectorAll("#profe-caen-lista a")).map((a) => [a.getAttribute("href"), a.textContent]),
+    mas: document.getElementById("profe-caen-mas").textContent,
+    nodos: document.querySelectorAll("#profe-caen-lista img").length + (window.__xss || 0),
+  }));
+  igual("se pide a la base, con 3 días", caen.pidio, [{ p_dias: 3 }]);
+  igual("se muestran seis", caen.filas.length, "6");
+  igual("cada nombre lleva a su informe", caen.filas[0][0], "informes.html?alumno=u-1");
+  igual("con cuántos días lleva sin entrenar", caen.filas[0][1], "Ana Rojas3 días sin entrenar");
+  igual("y quien nunca empezó el plan lo dice", caen.filas[1][1], "Beto Morano empezó el plan (hace 8 días)");
+  igual("el nombre va como texto: no crea ningún nodo", caen.nodos, "0");
+  igual("y los que no caben, a Informes", caen.mas, "Y 2 más en Informes →");
+
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
 
@@ -1721,6 +1817,8 @@ async function pruebaSemanaProfesora(browser) {
   }));
   igual("con todos al día, ningún número se pinta en rojo", limpio.rojo, "false");
   igual("y una sola clase se dice en singular", limpio.clases, "Llevas 1 clase dada en los últimos 30 días.");
+  igual("y sin nadie que se caiga del plan, ese bloque no se pinta",
+    await r.page.evaluate(() => document.getElementById("profe-caen").hidden), "true");
   await r.ctx.close();
 
   await pruebaPrimerPasoProfesor(browser);
@@ -2221,6 +2319,7 @@ if (require.main !== module) return;
     await pruebaSemanaProfesora(browser);
     await pruebaProfesora(browser);
     await pruebaPreparacionRivales(browser);
+    await pruebaUrgenteProfesora(browser);
     await pruebaTextosPorRol(browser);
     await pruebaAdmin(browser);
     await pruebaBuscador(browser);

@@ -188,6 +188,8 @@ window.ProgresoUsuario = (function () {
     { clave: "tipos_registrados_v1",             fusion: "unionObjeto" },   // "tipo:id" ya registrado en training_progress
     { clave: "tipos_ultimo_v1",                  fusion: "ultimaEscritura" }, // el nivel de Tipos que se está jugando (lo propone el hub)
     { clave: "memoria_mejor_v1",                 fusion: "maxPorClave" },   // Memoria: segundos → más piezas sin un error
+    { clave: "errores_propios_v1",               fusion: "unionObjeto" },   // Tus propios errores: id → ejercicio (salen de sus partidas)
+    { clave: "errores_analizadas_v1",            fusion: "unionObjeto" },   // y qué partidas ya se miraron
   ];
 
   // Cuándo se escribió en ESTE aparato cada clave que se funde por fecha.

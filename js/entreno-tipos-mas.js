@@ -1,6 +1,7 @@
-/* Los Tipos de entrenamiento 8 a 15 de entreno/tipos.html: el Barrido,
+/* Los Tipos de entrenamiento 8 a 18 de entreno/tipos.html: el Barrido,
  * Intercambios, Constrúyela tú, Rey y peón, Adivina la jugada del maestro,
- * ¿Qué apertura es?, la Ruta segura y Aguanta.
+ * ¿Qué apertura es?, la Ruta segura, Aguanta, Remata la ventaja, Elige a
+ * tiempo y Tus propios errores.
  *
  * Usan las mismas piezas de la página que los siete primeros (el tablero, los
  * avisos, las estrellas: window.TiposUI, en js/entreno-tipos.js) y las reglas
@@ -479,6 +480,307 @@
       cerrar(0);
     });
     $("controles").append(bAmenaza, bPista, bVer);
+    redibujar(null);
+    U.pedirJugada("O escribe tu jugada (las " + COLOR[yo] + ")", (txt) => {
+      const m = U.jugadaEscrita(juego, txt);
+      if (!m) { estado("No entendí «" + txt + "» como una jugada de las " + COLOR[yo] + "."); return; }
+      $("jugada-input").value = "";
+      jugar({ from: m.from, to: m.to, promotion: m.promotion });
+    });
+  };
+  /* ================================================ 16. Remata la ventaja
+     Contra el motor a toda su fuerza (js/practice-engine.js, el mismo de
+     Finales contra la máquina). Después de cada jugada del alumno, el motor
+     mira la posición: si bajó de +1,5, se escapó. Al cumplir las jugadas del
+     nivel tiene que seguir en +3 o más; el mate lo gana antes. Si el motor no
+     contesta, no se da por logrado: no se puede saber. */
+  const numero = (cp) => (cp >= 10000 ? "mate" : cp <= -10000 ? "mate en contra" : R.numeroBalanza(cp / 100));
+  U.JUEGOS.remata = function (item) {
+    const yo = item.fen.split(" ")[1];
+    const juego = new Chess(item.fen);
+    let propias = 0, minimo = item.eval, pista = false, hecho = false, ocupado = false, vivo = true;
+    U.alLimpiar(() => { vivo = false; });
+    const cuenta = el("p", "text-sm font-semibold text-brand-700 dark:text-brand-200 mb-2");
+    const marcas = {};
+    const redibujar = (ultima) => U.tablero(juego.fen(), { orientacion: yo, juego, ultima, marcas: Object.assign({}, marcas), clic: hecho || ocupado ? null : U.moverConClic(juego, jugar) });
+    const contar = (cp) => { cuenta.textContent = "Jugada " + propias + " de " + item.jugadas + " · el motor te da " + numero(cp) + "."; };
+    function fin(texto, n) {
+      hecho = true; ocupado = false;
+      U.pedirJugada("", null);
+      bPista.disabled = true;
+      redibujar(tab.ultima);
+      estado(texto + (n ? " " + textoEstrellas(n) : ""));
+      explicar(item.respuesta);
+      terminar(item, n);
+    }
+    /* ¿Terminó por reglamento? Lo decide chess.js. */
+    function terminoLaPartida() {
+      if (juego.in_checkmate()) {
+        if (juego.turn() !== yo) fin("✓ ¡Jaque mate! Remataste la ventaja.", M.estrellasRemata(minimo, pista));
+        else fin("✗ Te dieron mate: la ventaja se dio vuelta.", 0);
+        return true;
+      }
+      if (juego.in_draw() || juego.in_stalemate() || juego.in_threefold_repetition()) {
+        const por = juego.in_stalemate() ? "ahogado" : juego.in_threefold_repetition() ? "triple repetición"
+          : juego.insufficient_material() ? "material insuficiente" : "la regla de las 50 jugadas";
+        fin("✗ Tablas por " + por + ": se te escapó la victoria.", 0);
+        return true;
+      }
+      return false;
+    }
+    async function jugar(mov) {
+      if (hecho || ocupado) return;
+      const m = juego.move(mov);
+      if (!m) { estado("Esa jugada no es legal."); return; }
+      propias++;
+      delete marcas[Object.keys(marcas)[0]];
+      ocupado = true;
+      redibujar([m.from, m.to]);
+      if (terminoLaPartida()) return;
+      estado("Jugaste " + R.sanEs(m.san) + ". La máquina revisa la posición…");
+      let score = null;
+      try { score = window.PracticeEngine ? await PracticeEngine.evaluate(juego.fen()) : null; } catch (e) { score = null; }
+      if (!vivo) return;
+      const cp = M.cpDelAlumno(score, juego.turn(), yo);
+      const juicio = M.juicioRemata(cp);
+      if (juicio === "sin-motor") { hecho = true; ocupado = false; U.pedirJugada("", null); estado("No se pudo comprobar la posición con el motor, así que este intento no cuenta. Recarga la página e inténtalo de nuevo."); return; }
+      minimo = Math.min(minimo, cp);
+      contar(cp);
+      if (juicio === "escapa") return fin("✗ Con " + R.sanEs(m.san) + " se te escapó: el motor te da " + numero(cp) + " (empezaste en " + numero(item.eval) + ").", 0);
+      if (propias >= item.jugadas) {
+        if (juicio === "gana") return fin("✓ ¡Remataste! Después de " + propias + " jugadas sigues en " + numero(cp) + ".", M.estrellasRemata(minimo, pista));
+        return fin("✗ Llegaste a " + propias + " jugadas, pero la ventaja bajó a " + numero(cp) + ": tiene que quedar en +3 o más.", 0);
+      }
+      estado("La máquina piensa…");
+      let uci = null;
+      try { uci = window.PracticeEngine ? await PracticeEngine.getMove(juego.fen(), "max") : null; } catch (e) { uci = null; }
+      if (!vivo) return;
+      const r = uci ? juego.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci[4] || undefined }) : null;
+      ocupado = false;
+      if (!r) { hecho = true; U.pedirJugada("", null); estado("La máquina no pudo jugar, así que este intento no cuenta. Usa «Otra vez» para empezar de nuevo."); redibujar(null); return; }
+      redibujar([r.from, r.to]);
+      if (terminoLaPartida()) return;
+      estado("La máquina jugó " + R.sanEs(r.san) + ". Te toca" + (juicio === "duda" ? ": ojo, la ventaja bajó de +3." : "."));
+    }
+    $("juego-turno").textContent = "Juegas con las " + COLOR[yo] + " contra la máquina a toda su fuerza.";
+    $("juego-enunciado").textContent = "Vas ganando (" + numero(item.eval) + "). Da mate o sigue en +3 o más después de " + item.jugadas + " jugadas. Si baja de +1,5, se te escapó.";
+    contar(item.eval);
+    $("controles").appendChild(cuenta);
+    const bPista = boton("💡 Pista", BTN_SEGUNDO + " mt-1", async () => {
+      if (hecho || ocupado || pista) return;
+      pista = true;
+      bPista.disabled = true;
+      estado("La máquina busca una buena jugada para ti…");
+      let uci = null;
+      try { uci = window.PracticeEngine ? await PracticeEngine.getMove(juego.fen(), "max") : null; } catch (e) { uci = null; }
+      if (!vivo || hecho) return;
+      if (!uci) { estado("El motor no respondió: sin pista esta vez."); return; }
+      const p = juego.get(uci.slice(0, 2));
+      marcas[uci.slice(0, 2)] = { cls: "m-bien", signo: "?", dicho: "pista: esta pieza" };
+      estado("Pista: juega con " + piezaDicha(p.color + p.type) + " de " + uci.slice(0, 2) + ". Con pista, una estrella.");
+      redibujar(tab.ultima);
+    });
+    $("controles").appendChild(bPista);
+    if (window.PracticeEngine) PracticeEngine.preload();
+    else estado("El motor no está disponible en este navegador: sin él no se puede jugar este entrenamiento.");
+    redibujar(null);
+    U.pedirJugada("O escribe tu jugada (las " + COLOR[yo] + ")", (txt) => {
+      const m = U.jugadaEscrita(juego, txt);
+      if (!m) { estado("No entendí «" + txt + "» como una jugada de las " + COLOR[yo] + "."); return; }
+      $("jugada-input").value = "";
+      jugar({ from: m.from, to: m.to, promotion: m.promotion });
+    });
+  };
+  /* ================================================ 17. Elige a tiempo
+     Varias candidatas razonables y un reloj. No hay «la única»: cuenta cuánto
+     pierde la elegida contra la mejor (el motor, al generar). Se elige con los
+     botones, tocando la jugada en el tablero o escribiéndola. Si se acaba el
+     tiempo, cero. En Modo Adaptado, el triple de tiempo. */
+  U.JUEGOS.tiempo = function (item) {
+    const yo = item.fen.split(" ")[1];
+    const juego = new Chess(item.fen);
+    const total = M.segundosTiempo(item.segundos, U.adaptado());
+    let quedan = total, hecho = false, reloj = null;
+    const inicio = Date.now();
+    const cuenta = el("p", "text-3xl font-bold text-center text-brand-800 dark:text-white my-2 tabular-nums", "⏱ " + quedan + " s");
+    cuenta.setAttribute("aria-hidden", "true");
+    const botones = [];
+    function cerrar(elegida) {
+      if (hecho) return;
+      hecho = true;
+      clearInterval(reloj);
+      U.pedirJugada("", null);
+      botones.forEach((b) => { b.disabled = true; });
+      const usados = Math.min(total, Math.round((Date.now() - inicio) / 1000));
+      const mejor = item.candidatas.find((c) => c.clase === "mejor");
+      let n = 0;
+      if (!elegida) {
+        estado("⌛ Se acabó el tiempo: en una partida, habrías perdido. La mejor era " + mejor.sanEs + ".");
+      } else {
+        n = M.estrellasTiempo(elegida.perdida);
+        const m = juego.move(elegida.san);
+        U.tablero(juego.fen(), { orientacion: yo, juego, ultima: [m.from, m.to] });
+        const que = elegida.clase === "mejor" ? "✓ ¡La mejor! " : n ? "✓ Buena elección: pierde poco (" + R.numeroBalanza(elegida.perdida / 100).replace("+", "") + "). " : "✗ Esa pierde " + R.numeroBalanza(elegida.perdida / 100).replace("+", "") + " contra la mejor, " + mejor.sanEs + ". ";
+        estado(que + "Elegiste en " + usados + " s. " + (n ? textoEstrellas(n) : ""));
+      }
+      botones.forEach((b) => {
+        const c = b._cand;
+        b.textContent = (c.clase === "mejor" ? "✓ " : c.perdida <= M.TIEMPO.buena ? "≈ " : "✗ ") + c.sanEs + " — " +
+          (c.clase === "mejor" ? "la mejor" : "pierde " + R.numeroBalanza(c.perdida / 100).replace("+", ""));
+      });
+      explicar(item.respuesta);
+      terminar(item, n);
+    }
+    function elegir(mov) {
+      if (hecho) return;
+      const m = new Chess(item.fen).move(mov);
+      if (!m) { estado("Esa jugada no es legal."); return; }
+      const c = item.candidatas.find((x) => x.san === m.san);
+      if (!c) { estado(R.sanEs(m.san) + " no es una de las candidatas. Elige entre: " + item.candidatas.map((x) => x.sanEs).join(", ") + "."); U.tablero(item.fen, { orientacion: yo, juego, clic: U.moverConClic(juego, elegir) }); return; }
+      cerrar(c);
+    }
+    $("juego-turno").textContent = "Juegan las " + COLOR[yo] + ".";
+    $("juego-enunciado").textContent = "Elige una de las candidatas antes de que se acabe el reloj.";
+    $("controles").appendChild(cuenta);
+    const caja = el("div");
+    caja.setAttribute("role", "group");
+    caja.setAttribute("aria-label", "Candidatas");
+    item.candidatas.forEach((c) => {
+      const b = el("button", CLASE_OPCION, c.sanEs);
+      b.type = "button";
+      b._cand = c;
+      b.addEventListener("click", () => cerrar(c));
+      botones.push(b);
+      caja.appendChild(b);
+    });
+    $("controles").appendChild(caja);
+    U.tablero(item.fen, { orientacion: yo, juego, clic: U.moverConClic(juego, elegir) });
+    U.pedirJugada("O escribe tu jugada (las " + COLOR[yo] + ")", (txt) => {
+      const m = U.jugadaEscrita(juego, txt);
+      if (!m) { estado("No entendí «" + txt + "» como una jugada de las " + COLOR[yo] + "."); return; }
+      $("jugada-input").value = "";
+      elegir({ from: m.from, to: m.to, promotion: m.promotion });
+    });
+    estado("Tienes " + total + " segundos" + (total !== item.segundos ? " (el triple, por el Modo Adaptado)" : "") + ". Candidatas: " + item.candidatas.map((c) => c.sanEs).join(", ") + ".");
+    const mitad = Math.floor(total / 2);
+    reloj = setInterval(() => {
+      quedan--;
+      cuenta.textContent = "⏱ " + quedan + " s";
+      if (quedan === mitad && mitad >= 10) estado("Quedan " + quedan + " segundos.");
+      if (quedan === 5) estado("Quedan 5 segundos.");
+      if (quedan <= 0) cerrar(null);
+    }, 1000);
+    U.alLimpiar(() => clearInterval(reloj));
+  };
+  /* ================================================ 18. Tus propios errores
+     Los ejercicios salen de las partidas del alumno (js/errores-propios.js).
+     Arriba de los niveles, el botón que las revisa; el juego es encontrar una
+     jugada buena en la posición donde se equivocó (vale cualquiera que el
+     motor dio tan buena como la mejor). */
+  const E = window.ErroresPropios;
+  U.EXTRA.errores = function (caja) {
+    const cuadro = el("div", "rounded-xl p-5 mb-6 bg-white dark:bg-brand-900 shadow-sm");
+    const cuantos = E ? E.ejercicios().length : 0;
+    const vistas = E ? Object.keys(E.vistas()).length : 0;
+    cuadro.appendChild(el("p", "text-sm text-brand-600 dark:text-brand-300 mb-3",
+      vistas ? (vistas === 1 ? "Ya se revisó 1 de tus partidas" : "Ya se revisaron " + vistas + " de tus partidas") +
+        (cuantos === 0 ? " y no salió ningún error." : cuantos === 1 ? " y salió 1 ejercicio." : " y salieron " + cuantos + " ejercicios.") +
+        " Cada vez que busques, se revisan hasta " + (E ? E.MAX_PARTIDAS : 10) + " partidas nuevas."
+        : "Todavía no se revisó ninguna de tus partidas. Se revisan hasta " + (E ? E.MAX_PARTIDAS : 10) + " cada vez, en tu computadora o celular: puede tardar unos minutos."));
+    const aviso = el("p", "text-sm font-semibold text-brand-700 dark:text-brand-200 mb-3");
+    aviso.setAttribute("role", "status");
+    const buscar = el("button", BTN_PRIMARIO, "🔎 Buscar errores en mis partidas");
+    buscar.type = "button";
+    const parar = el("button", BTN_SEGUNDO + " ml-2 hidden", "Detener");
+    parar.type = "button";
+    let detener = false;
+    parar.addEventListener("click", () => { detener = true; aviso.textContent = "Deteniendo… lo revisado hasta ahora queda guardado."; });
+    buscar.addEventListener("click", async () => {
+      if (!E || !window.PreparacionMotor || !PreparacionMotor.disponible()) { aviso.textContent = "El motor no está disponible en este navegador: sin él no se pueden revisar las partidas."; return; }
+      let uid = null;
+      try { const { data } = await sb.auth.getSession(); uid = data && data.session && data.session.user && data.session.user.id; } catch (e) { uid = null; }
+      if (!uid) { aviso.textContent = "Necesitas iniciar sesión para revisar tus partidas."; return; }
+      buscar.disabled = true; parar.classList.remove("hidden"); detener = false;
+      aviso.textContent = "Buscando tus partidas terminadas…";
+      try {
+        const r = await E.analizar(sb, uid, {
+          motor: PreparacionMotor,
+          parar: () => detener,
+          alAvanzar: (texto) => { aviso.textContent = "Revisando… " + texto; },
+        });
+        U.cargarPropios();
+        aviso.textContent = r.pendientesAntes === 0
+          ? "No hay partidas nuevas para revisar. Juega en Juegos o en la práctica de la clase y vuelve."
+          : "Listo: se revisaron " + r.partidas + (r.partidas === 1 ? " partida" : " partidas") + " y " +
+            (r.nuevos.length === 0 ? "no salió ningún error nuevo." : r.nuevos.length === 1 ? "salió 1 ejercicio nuevo." : "salieron " + r.nuevos.length + " ejercicios nuevos.");
+      } catch (e) {
+        console.error(e);
+        aviso.textContent = "No se pudieron revisar las partidas. Intenta de nuevo en un momento.";
+      }
+      buscar.disabled = false; parar.classList.add("hidden");
+      const texto = aviso.textContent;
+      U.repintarTipo("errores");
+      const nuevo = $("tipo-extra").querySelector('[role="status"]');
+      if (nuevo) nuevo.textContent = texto;
+    });
+    cuadro.append(aviso, buscar, parar);
+    caja.appendChild(cuadro);
+  };
+  U.JUEGOS.errores = function (item) {
+    const yo = item.fen.split(" ")[1];
+    const juego = new Chess(item.fen);
+    let errores = 0, pistas = 0, hecho = false;
+    const marcas = {};
+    const redibujar = (ultima) => U.tablero(juego.fen(), { orientacion: yo, juego, ultima, marcas: Object.assign({}, marcas), clic: hecho ? null : U.moverConClic(juego, jugar) });
+    const numero = (cp) => R.numeroBalanza(cp / 100);
+    const cuenta = "En tu partida jugaste " + R.sanEs(item.jugada) + " y la evaluación pasó de " + numero(item.antes) + " a " + numero(item.despues) + ".";
+    function cerrar(n) {
+      hecho = true;
+      U.pedirJugada("", null);
+      bPista.disabled = true; bVer.disabled = true;
+      explicar([cuenta, "Las buenas: " + item.buenas.map(R.sanEs).join(", ") + " (el motor da la mejor en " + numero(item.antes) + ")."]);
+      terminar(item, n);
+    }
+    function jugar(mov) {
+      if (hecho) return;
+      const r = E.acierta(Chess, item, mov);
+      if (!r.legal) { estado("Esa jugada no es legal para las " + COLOR[yo] + "."); return; }
+      if (r.ok) {
+        const m = juego.move(mov);
+        const n = Math.max(1, 3 - errores - pistas);
+        redibujar([m.from, m.to]);
+        estado("✓ ¡Esa es buena! " + R.sanEs(r.san) + ". " + textoEstrellas(n));
+        return cerrar(n);
+      }
+      errores++;
+      if (errores >= 3) {
+        const m = juego.move(item.mejor);
+        redibujar([m ? m.from : null, m ? m.to : null]);
+        estado("✗ " + R.sanEs(r.san) + " tampoco. La mejor era " + R.sanEs(item.mejor) + ".");
+        return cerrar(0);
+      }
+      estado("✗ " + (r.esLaDeLaPartida ? "Esa es la que jugaste en la partida: fue el error. " : R.sanEs(r.san) + " no es de las buenas. ") + "Busca otra.");
+      redibujar(null);
+    }
+    $("juego-turno").textContent = "Juegas con las " + COLOR[yo] + ". " + (item.resumen || "");
+    $("juego-enunciado").textContent = item.nivel === 2 ? "Ibas ganando y aquí se te escapó. ¿Qué debiste jugar?" : "Aquí estabas bien y te equivocaste. ¿Qué debiste jugar?";
+    const bPista = boton("💡 Pista", BTN_SEGUNDO + " mt-1", () => {
+      if (hecho || pistas) return;
+      pistas++;
+      bPista.disabled = true;
+      const m = new Chess(item.fen).move(item.mejor);
+      if (m) marcas[m.from] = { cls: "m-bien", signo: "?", dicho: "pista: esta pieza" };
+      estado("Pista: " + (m ? "juega con " + piezaDicha(yo + m.piece) + " de " + m.from : "piensa en la mejor jugada") + ". Una estrella menos.");
+      redibujar(null);
+    });
+    const bVer = boton("Ver la respuesta", BTN_SEGUNDO + " mt-1 ml-2", () => {
+      if (hecho) return;
+      const m = juego.move(item.mejor);
+      if (m) redibujar([m.from, m.to]);
+      estado("La mejor era " + R.sanEs(item.mejor) + ".");
+      cerrar(0);
+    });
+    $("controles").append(bPista, bVer);
     redibujar(null);
     U.pedirJugada("O escribe tu jugada (las " + COLOR[yo] + ")", (txt) => {
       const m = U.jugadaEscrita(juego, txt);

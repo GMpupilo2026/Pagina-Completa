@@ -19,7 +19,7 @@ window.LogrosCatalogo = (function () {
   "use strict";
 
   // Cuántos tipos de actividad de training_progress se pueden alcanzar de
-  // verdad hoy. Son 20 en el CHECK de la base, pero 'desafios' está declarada
+  // verdad hoy. Son 21 en el CHECK de la base, pero 'desafios' está declarada
   // sin ningún uso real (entreno/desafios.html registra como 'practicar' —
   // ver CLAUDE.md) y 'preparacion' solo la tiene quien recibió un plan contra
   // un rival, así que exigirlas dejaría un logro que casi nadie puede
@@ -27,7 +27,9 @@ window.LogrosCatalogo = (function () {
   // que nadie supiera por qué. Subió de 13 a 14 con 'finales' y a 15 con
   // 'tipos' (Tipos de entrenamiento): nadie tenía todavía las 14 (el máximo
   // era 12), así que nadie pierde la medalla. Y a 18 con 'precision-posicional',
-  // 'sonar' y 'batalla-naval': el máximo seguía en 12.
+  // 'sonar' y 'batalla-naval': el máximo seguía en 12. 'finales100' (la
+  // práctica de los cursos de finales) NO sube la cuenta: esos cursos se
+  // compran aparte y no todos los tienen.
   const ACTIVIDADES_ALCANZABLES = 18;
 
   function porActividad(stats, clave) {

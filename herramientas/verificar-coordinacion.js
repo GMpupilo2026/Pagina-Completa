@@ -249,6 +249,29 @@ async function pruebaEnClase(browser) {
   await page.close();
 }
 
+/* Lo de todos los días primero: la lista de cuentas va antes que Equipos, y
+   los números de arriba sirven para algo — los dos primeros filtran la lista,
+   y el tercero dice cuántos de su gente están dando clase ahora (antes era
+   «cuentas en total», la suma de los otros dos). */
+async function pruebaOrdenYNumeros(browser) {
+  console.log("\n=== Coordinación: lo de todos los días primero ===");
+  const { page, errores } = await abrir(browser, "coordinacion.html", COORD);
+  await page.waitForSelector("#lista > div", { timeout: 20000 });
+  igual("las cuentas van antes que Equipos",
+    await page.evaluate(() => !!(document.getElementById("buscar").compareDocumentPosition(document.getElementById("seccion-equipos")) & Node.DOCUMENT_POSITION_FOLLOWING)), true);
+  igual("los números: profesores, alumnos y quién da clase ahora (sin la suma repetida)",
+    await page.evaluate(() => [...document.querySelectorAll("#tarjetas > *")].map((t) => t.innerText.replace(/\s+/g, " ").trim())),
+    ["2 profesores que coordinas · ver", "3 alumnos alcanzados · ver", "1 dando clase ahora: «Mirar la clase» en su ficha"]);
+  await page.evaluate(() => { window.__rpc = []; });
+  await page.click('#tarjetas [data-filtro="alumno"]');
+  await page.waitForFunction(() => window.__rpc.some((r) => r.rpc === "mi_gente"), null, { timeout: 5000 });
+  igual("tocar «alumnos» filtra la lista por alumnos",
+    [await page.evaluate(() => document.getElementById("f-rol").value),
+     await page.evaluate(() => window.__rpc.filter((r) => r.rpc === "mi_gente").pop().args.p_rol)], ["alumno", "alumno"]);
+  igual("sin errores", errores, []);
+  await page.close();
+}
+
 async function pruebaPanel(browser) {
   console.log("\n=== El panel de Coordinación ===");
   const { page, errores } = await abrir(browser, "coordinacion.html", COORD);
@@ -695,6 +718,7 @@ async function pruebaEquipos(browser) {
   try {
     await pruebaEnClase(browser);
     await pruebaPanel(browser);
+    await pruebaOrdenYNumeros(browser);
     await pruebaBuscarPorEnlace(browser);
     await pruebaFicha(browser);
     await pruebaSinProfesores(browser);

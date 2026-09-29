@@ -4,7 +4,7 @@
    que se prueba acá es la página, no Stockfish (el banco lo comprobó el motor
    al generarlo: verificar-finales.js).
 
-   - Carga los diez finales, con la meta y el bando escritos.
+   - Carga todos los finales del banco, con la meta y el bando escritos.
    - GANAR: el mate del alumno cuenta, queda marcado (✓) y se registra UNA vez
      en training_progress como 'finales'. Volver a ganarlo no se registra otra.
    - SALVAR: aguantar las jugadas pedidas con la posición en tablas cuenta; si
@@ -13,6 +13,8 @@
    - Si el motor no contesta al comprobar, no se da por logrado.
 
    Uso:  npm install; node herramientas/verificar-todo.js finales-pagina       */
+const fs = require("fs");
+const path = require("path");
 const { chromium } = require("./lib/playwright-con-sesion");
 const { clienteFalso, BASE } = require("./lib/doble-entreno");
 
@@ -98,7 +100,7 @@ const inserts = (page) => page.evaluate(() => window.__inserts.filter((i) => i.t
     {
       const { page, ctx, errores } = await abrir(browser, null);
       const tabs = await page.evaluate(() => Array.from(document.querySelectorAll("#tabs .tab")).map((b) => b.textContent));
-      igual("diez finales en las pestañas", tabs.length, "10");
+      igual("todos los finales del banco en las pestañas", tabs.length, String(JSON.parse(fs.readFileSync(path.join(__dirname, "..", "entreno/data/finales.json"), "utf8")).finales.length));
       igual("cada pestaña dice su meta escrita (en la etiqueta accesible)",
         await page.evaluate(() => Array.from(document.querySelectorAll("#tabs .tab")).every((b) => /: (ganar|salvar)/.test(b.getAttribute("aria-label")))), "true");
       igual("empieza por el primero sin lograr", await page.evaluate(() => document.getElementById("final-titulo").textContent), "El peón pasado lejano");
