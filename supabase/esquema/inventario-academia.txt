@@ -214,6 +214,7 @@ columna  class_sessions.ended_at  timestamp with time zone
 columna  class_sessions.id  uuid
 columna  class_sessions.modalidad  text
 columna  class_sessions.notes  text
+columna  class_sessions.para_ausentes  boolean
 columna  class_sessions.started_at  timestamp with time zone
 columna  class_sessions.summary  jsonb
 columna  class_sessions.title  text
@@ -471,9 +472,11 @@ columna  game_rooms.white_time_left  numeric
 columna  game_state.active_player_color  text
 columna  game_state.active_player_id  uuid
 columna  game_state.arrows  jsonb
+columna  game_state.calentamiento  jsonb
 columna  game_state.circles  jsonb
 columna  game_state.comentarios  jsonb
 columna  game_state.elegido  jsonb
+columna  game_state.encuesta  jsonb
 columna  game_state.fen  text
 columna  game_state.id  integer
 columna  game_state.last_move  text
@@ -481,6 +484,7 @@ columna  game_state.moves  jsonb
 columna  game_state.owner_id  uuid
 columna  game_state.pensar  jsonb
 columna  game_state.pieces_hidden  boolean
+columna  game_state.podio  jsonb
 columna  game_state.shown_curso  text
 columna  game_state.shown_leccion  integer
 columna  game_state.start_fen  text
@@ -563,9 +567,11 @@ columna  justificaciones_ausencia.revisada_por  uuid
 columna  justificaciones_ausencia.revisada_por_nombre  text
 columna  justificaciones_ausencia.student_id  uuid
 columna  notas_alumno.alumno_id  uuid
+columna  notas_alumno.class_session_id  uuid
 columna  notas_alumno.compartida  boolean
 columna  notas_alumno.created_at  timestamp with time zone
 columna  notas_alumno.etiqueta  text
+columna  notas_alumno.fen  text
 columna  notas_alumno.id  uuid
 columna  notas_alumno.profesor_id  uuid
 columna  notas_alumno.texto  text
@@ -1127,6 +1133,7 @@ funcion  mis_supervisados()  definer  anon=false  auth=true
 funcion  mis_supervisores()  definer  anon=false  auth=true
 funcion  my_profile()  definer  anon=false  auth=true
 funcion  nombres_de_jugadores(p_ids uuid[])  definer  anon=false  auth=true
+funcion  notas_alumno_clase_propia()  definer  anon=false  auth=false
 funcion  ocurrencias_horario(p_profesor uuid, p_desde date, p_hasta date)  invoker  anon=false  auth=false
 funcion  otorgar_insignia(p_alumno uuid, p_tipo text, p_motivo text)  definer  anon=false  auth=true
 funcion  panel_profesor()  invoker  anon=false  auth=true
@@ -1432,6 +1439,7 @@ politica  question_answers  question_answers_update  UPDATE
 politica  question_engine_answers  question_engine_answers_exige_acceso_ins  INSERT  restrictiva
 politica  question_engine_answers  question_engine_answers_insert  INSERT
 politica  question_engine_answers  question_engine_answers_select  SELECT
+politica  question_engine_answers  question_engine_answers_select_alumno  SELECT
 politica  questions  questions_exige_acceso_sel  SELECT  restrictiva
 politica  questions  questions_insert  INSERT
 politica  questions  questions_select  SELECT
@@ -1453,6 +1461,7 @@ politica  saved_games  saved_games_exige_acceso_sel  SELECT  restrictiva
 politica  saved_games  saved_games_insert  INSERT
 politica  saved_games  saved_games_select  SELECT
 politica  saved_games  saved_games_select_asistentes  SELECT
+politica  saved_games  saved_games_select_ausentes  SELECT
 politica  solicitudes_academia  solicitudes_academia_select  SELECT
 politica  solicitudes_academia  solicitudes_academia_update  UPDATE
 politica  subgrupo_alumnos  subgrupo_alumnos_delete  DELETE
@@ -1537,6 +1546,7 @@ trigger  game_rooms  game_rooms_ligar_a_la_clase
 trigger  game_rooms  reloj_de_partida
 trigger  game_state  protect_game_state_teacher_columns_trigger
 trigger  ia_uso  ia_uso_avisa_tope
+trigger  notas_alumno  notas_alumno_clase_propia
 trigger  notas_alumno  notas_alumno_proteger
 trigger  planes_clase  planes_clase_proteger
 trigger  platform_activity_log  platform_activity_log_protege_tiempos

@@ -508,7 +508,10 @@ function finishSet(){
     (limpia ? ' — ¡sin pistas ni errores!' : '');
   const titleText = stars === 3 ? '¡Serie perfecta! 🏆' : (stars === 2 ? '¡Serie completada! 🎉' : 'Serie completada — ¡a repetirla para subir de estrellas!');
   document.getElementById('celebration-title').textContent = titleText;
-  EntrenoProgress.log('practicar', { set_id: currentSet.id, category: currentSet.cat, title: currentSet.title, stars, seconds: Number(totalSeconds) });
+  // Cómo salió: cuántas posiciones de la serie salieron limpias (tres
+  // estrellas: sin error, sin pista y sin «Ver solución»), y si fue toda.
+  EntrenoProgress.log('practicar', { set_id: currentSet.id, category: currentSet.cat, title: currentSet.title, stars, seconds: Number(totalSeconds),
+    rondas: setStarsEarned.length, rondas_limpias: setStarsEarned.filter(s => s === 3).length, limpio: limpia });
   if(window.BlindNotation) window.BlindNotation.speak(titleText);
   if(blindMode){
     // El foco cae directo en "Siguiente serie" — así, en modo adaptado, basta con

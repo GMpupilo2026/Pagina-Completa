@@ -23,7 +23,9 @@ function clienteFalso(tablas) {
   function consulta(tabla) {
     const filtros = [];
     const q = {
-      select() { return q; }, order() { return q; }, limit() { return q; }, range() { return q; }, in() { return q; },
+      select() { return q; }, order() { return q; }, limit() { return q; }, range() { return q; },
+      // .in(c, valores): filtra de verdad, como los demás.
+      in(c, vals) { filtros.push([c, (vals || []).map(String), "en"]); return q; },
       eq(c, v) { filtros.push([c, v]); return q; },
       // .not(c, "is", null): solo las filas que tienen algo en c.
       not(c, op, v) { if (op === "is" && v === null) filtros.push([c, undefined, "noNulo"]); return q; },
@@ -34,7 +36,7 @@ function clienteFalso(tablas) {
                  then(r) { return Promise.resolve({ data: null, error: null }).then(r); } };
       },
       update() { return q; },
-      filas() { return (TABLAS[tabla] || []).filter((f) => filtros.every(([c, v, modo]) => modo === "noNulo" ? f[c] != null : f[c] === v)); },
+      filas() { return (TABLAS[tabla] || []).filter((f) => filtros.every(([c, v, modo]) => modo === "noNulo" ? f[c] != null : modo === "en" ? v.includes(String(f[c])) : f[c] === v)); },
       maybeSingle() { return Promise.resolve({ data: q.filas()[0] || null, error: null }); },
       single() { return Promise.resolve({ data: q.filas()[0] || null, error: null }); },
       then(r) { return Promise.resolve({ data: q.filas(), error: null }).then(r); },
