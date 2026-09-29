@@ -60,6 +60,49 @@ function igual(nombre, hallado, esperado) {
     igual("sin errores en la página", errores, []);
     await ctx.close();
 
+    console.log("\n=== Lo que le costó a UN alumno (su informe) ===");
+    {
+      const { page, ctx, errores } = await P.panel(browser, [P.PROFE], "u-profe", null, { rpc: { panel_profesor: [PANEL] } });
+      const r = await page.evaluate(async ([filas]) => {
+        const caja = document.createElement("section");
+        caja.hidden = true;
+        document.body.appendChild(caja);
+        const pedidos = [];
+        const sbFalso = { rpc: (n, a) => { pedidos.push([n, a]); return Promise.resolve({ data: n === "preguntas_que_le_costaron" ? filas : [], error: null }); },
+          from: (t) => window.sb.from(t) };
+        await LoQueCosto.pintarDelAlumno(sbFalso, caja, "u-ana", "Ana Rojas", "u-profe", true);
+        const leer = () => [caja.checkVisibility(), caja.querySelector("h2").textContent, caja.querySelector("h2 + p").textContent,
+          [...caja.querySelectorAll("ol li")].map((li) => [...li.querySelectorAll("p")].map((x) => x.textContent)), caja.querySelectorAll(".nota-posicion").length];
+        const antes = leer();
+        [...caja.querySelectorAll("button")].find((b) => /Armar un plan de repaso para Ana Rojas/.test(b.textContent)).click();
+        await new Promise((ok) => setTimeout(ok, 300));
+        const sinPlan = document.createElement("section");
+        document.body.appendChild(sinPlan);
+        await LoQueCosto.pintarDelAlumno(sbFalso, sinPlan, "u-ana", "Ana Rojas", "u-profe", false);
+        return { antes, pedidos, inserts: window.__inserts.map((i) => [i.tabla, i.fila.titulo || null, i.fila.fen || null]), botonMirando: !!sinPlan.querySelector("button") };
+      }, [[
+        { question_id: "q1", fen: TRAS_E5, prompt: "¿Qué jugarías?", created_at: "2026-09-12T22:00:00Z", clase_titulo: "Aperturas", su_jugada: "d4", jugada_buena: "Nf3", contestadas: 14 },
+        { question_id: "q2", fen: PASILLO, prompt: null, created_at: "2026-09-20T22:00:00Z", clase_titulo: null, su_jugada: "Kf1", jugada_buena: "Ra8#", contestadas: 14 },
+      ]]);
+      igual("la pide para ese alumno y 30 días", r.pedidos[0], ["preguntas_que_le_costaron", { p_alumno: "u-ana", p_dias: 30 }]);
+      igual("dice cuántas falló de cuántas, qué jugó y cuál era la buena (en español)", r.antes.slice(0, 4), [true, "🧩 Lo que le costó a Ana Rojas",
+        "Falló 2 de 14 preguntas de clase que contestó en los últimos 30 días.",
+        [["Jugó d4; la buena era Cf3", "¿Qué jugarías?", "«Aperturas», 12 de septiembre"], ["Jugó Rf1; la buena era Ta8#", "¿Qué jugarías?", "Clase del 20 de septiembre"]]]);
+      igual("con su posición", r.antes[4], 2);
+      igual("el plan de repaso es para él, con qué jugó en cada renglón", r.inserts.map((x) => x.slice(0, 2)), [
+        ["planes_clase", r.inserts[0][1]], ["plan_items", "Clase del 12 de septiembre: jugó d4; la buena era Cf3"], ["plan_items", "Clase del 20 de septiembre: jugó Rf1; la buena era Ta8#"]]);
+      igual("y el plan se llama con su nombre", /^Repaso de Ana Rojas \(al /.test(r.inserts[0][1]), true);
+      igual("mirando a otra persona no se ofrece armar el plan", r.botonMirando, false);
+      igual("sin errores en la página", errores, []);
+      await ctx.close();
+      const raiz = require("path").join(__dirname, "..");
+      const html = require("fs").readFileSync(raiz + "/informes.html", "utf8"), js = require("fs").readFileSync(raiz + "/js/informes.js", "utf8");
+      igual("el informe la carga, la pinta (sin armar mirando a otra persona) y la esconde al cambiar de alumno", [
+        /<section id="le-costo-report" hidden/.test(html), /<script src="js\/lo-que-costo.js"><\/script>/.test(html), /<script src="js\/plan-clase.js"><\/script>/.test(html),
+        /LoQueCosto\.pintarDelAlumno\(sb, document\.getElementById\("le-costo-report"\), studentId, name, session\.user\.id, !profile\._persona\)/.test(js),
+        /getElementById\("le-costo-report"\)\.hidden = true/.test(js)], [true, true, true, true, true]);
+    }
+
     console.log("\n=== Sin preguntas falladas, o para el alumno ===");
     let r = await P.panel(browser, [P.PROFE], "u-profe", null, { rpc: { panel_profesor: [PANEL], preguntas_que_costaron: [] } });
     await r.page.waitForTimeout(800);

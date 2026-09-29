@@ -47,6 +47,8 @@
         let modoProyector = false;
         // El control remoto (sesion.html?control=1): el celular del profe maneja lo que ve la clase.
         let modoControl = false;
+        // «Ver como alumno» (sesion.html?como=alumno): el profe ve su propia clase como la ve un alumno, sin mandar nada.
+        let vistaPrevia = false;
         /* Quien supervisa (o administra) mirando la clase de un profesor:
            sesion.html?observar=<id>. Solo mira: ni mueve, ni contesta, ni marca
            asistencia, ni cuenta como alumno. Lo que puede leer lo decide la RLS
@@ -1343,7 +1345,8 @@
         let currentOpenSessionId = null;
 
         async function markAttendance(sessionId) {
-            if (isTeacher || esObservador) return;
+            // Tampoco cuenta como asistencia.
+            if (isTeacher || esObservador || vistaPrevia) return;
             const { error } = await sb.from("class_attendance").upsert(
                 { session_id: sessionId, student_id: profile.id },
                 { onConflict: "session_id,student_id", ignoreDuplicates: true }
@@ -1360,7 +1363,8 @@
         let presenceHeartbeatTimer = null;
 
         async function startPresenceLog(sessionId) {
-            if (isTeacher || esObservador || !sessionId || presenceLogId) return;
+            // La vista de alumno del profe no es un alumno: no suma tiempo en clase.
+            if (isTeacher || esObservador || vistaPrevia || !sessionId || presenceLogId) return;
             const { data, error } = await sb.from("class_presence_log")
                 .insert({ session_id: sessionId, student_id: profile.id })
                 .select().single();
@@ -1592,6 +1596,7 @@
            repasa. */
         async function limpiarLoDeLaClase() {
             if (partidaClase) await terminarPartidaClase("La partida de la clase terminó al cerrar la clase.");
+            if (ronda) await terminarRonda("La ronda rápida terminó al cerrar la clase.");
             const cambios = { encuesta: null, calentamiento: null, podio: null, equipos: null, pensar: null, elegido: null };
             // Las flechas del mapa se van con él; las que dibujó el profe, no.
             if (encuestaActual) { cambios.arrows = []; cambios.circles = []; }
@@ -2710,7 +2715,7 @@
                 // Quien observa entra como "supervision": no es alumno,
                 // así que no aparece en la lista de alumnos ni en el
                 // chat, y el profesor ve que está mirando.
-                role: esObservador ? "supervision" : profile.role,
+                role: esObservador ? "supervision" : vistaPrevia ? "vista-previa" : profile.role,
                 como: esObservador ? observaDesde.etiqueta : undefined,
                 online_at: new Date().toISOString(),
                 mirando_a: mirandoA,
@@ -2729,7 +2734,8 @@
         if (raiseHandBtn) raiseHandBtn.addEventListener("click", () => setHandRaised(!handRaised));
 
         function subscribePresence() {
-            presenceChannel = sb.channel(presenceChannelName(), { config: { presence: { key: profile.id } } });
+            // La vista previa entra con otra clave: con la misma, su anuncio se mezclaría con el de la ventana del profe.
+            presenceChannel = sb.channel(presenceChannelName(), { config: { presence: { key: vistaPrevia ? profile.id + ":vista-previa" : profile.id } } });
             presenceChannel.on("presence", { event: "sync" }, () => {
                 const state = presenceChannel.presenceState();
                 onlineStudents.clear();
@@ -2755,6 +2761,7 @@
                 renderStudentsList();
                 pintarCuentaCalentamiento();
                 pintarEquiposProfe();
+                if (isTeacher) { anotarConectados(); revisarCallados(); }
                 pintarObservadores(mirando);
                 if (!isTeacher && !esObservador) pintarTeMiran(meMiran);
                 // El nombre del elegido sale de la presencia: al recargar llega después.
@@ -3862,6 +3869,36 @@
                 window.open("sesion.html?proyector=1", "ajedrez-proyector");
             });
         }
+        /* ---------- «Ver como alumno» ----------
+           sesion.html?como=alumno: el profe ve su propia clase como la ve un
+           alumno (la pregunta, el calentamiento, el podio, los equipos…), para
+           revisar antes de mostrar algo, sin otra cuenta. NADA se manda desde
+           acá: se cortan en el cliente de Supabase todos los insert, upsert,
+           update y delete, y las funciones que no son de lectura. La presencia
+           entra con su propio rol («vista-previa»), que no cuenta como alumno:
+           ni asistencia, ni turno, ni aviso de quién no contesta. */
+        const RPC_DE_LECTURA = new Set(["mis_clases", "premios_de_alumno", "trofeos_de", "resultados_de_la_pregunta",
+            "nombres_de_jugadores", "alumnos_del_profesor", "resumen_de_la_clase", "salida_de_la_clase", "resumen_del_mes"]);
+        function nadaQueMandar() {
+            const p = Promise.resolve({ data: null, error: null });
+            const cadena = new Proxy({}, { get: (_, k) => (k === "then" ? p.then.bind(p) : k === "catch" ? p.catch.bind(p) : () => cadena) });
+            return cadena;
+        }
+        function prepararVistaPrevia() {
+            document.documentElement.classList.add("vista-previa");
+            document.getElementById("vista-previa-barra").hidden = false;
+            const from = sb.from.bind(sb), rpc = sb.rpc.bind(sb);
+            sb.from = (tabla) => {
+                const q = from(tabla);
+                ["insert", "upsert", "update", "delete"].forEach((m) => { q[m] = () => nadaQueMandar(); });
+                return q;
+            };
+            sb.rpc = (nombre, args, opciones) => (RPC_DE_LECTURA.has(nombre) ? rpc(nombre, args, opciones) : nadaQueMandar());
+        }
+        if (document.getElementById("vista-alumno-btn")) {
+            document.getElementById("vista-alumno-btn").addEventListener("click", () => window.open("sesion.html?como=alumno", "ajedrez-vista-alumno"));
+        }
+
         /* ---------- El control remoto ----------
            sesion.html?control=1, en el celular del profe con su misma cuenta:
            cada botón escribe en game_state lo mismo que su botón de siempre, así
@@ -4052,6 +4089,7 @@
 
         function renderTeacherQuestionPanel() {
             seguirRespuestasEnCurso();
+            revisarCallados();   // una pregunta que se cierra puede cambiar quién lleva rato sin contestar
             const activeEl = document.getElementById("active-question");
             if (!currentQuestion || currentQuestion.closed_at) {
                 activeEl.classList.add("hidden");
@@ -4585,7 +4623,36 @@
                 cuenta.className = "text-xs text-brand-450 dark:text-brand-350 min-w-0 truncate";
                 cuenta.textContent = ids.length + (ids.length === 1 ? " ejercicio" : " ejercicios");
                 barra.append(cuenta, vistaPreviaTactica.control());
+                // La ronda rápida (js/clase-ronda.js): 5 de estos al azar, uno tras otro.
+                const rondaBtn = document.createElement("button");
+                rondaBtn.type = "button";
+                rondaBtn.className = "mt-2 w-full text-xs font-semibold px-3 py-2 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+                rondaBtn.textContent = "⚡ Ronda rápida con " + Math.min(RondaRapida.TAMANO, ids.length) + " de estos, al azar";
+                rondaBtn.addEventListener("click", () => empezarRonda(RondaRapida.elegir(ids, RondaRapida.TAMANO)
+                    .map((id) => ({ fen: tacticsData.puzzles[id].fen, solucion: tacticsData.puzzles[id].solution }))));
                 body.appendChild(barra);
+                let rondaFila = null;
+                if (ids.length) {
+                    // El tiempo por posición, al lado del botón que la arranca.
+                    const fila = document.createElement("div");
+                    fila.className = "flex items-center gap-2 mt-2";
+                    const etiqueta = document.createElement("label");
+                    etiqueta.className = "text-xs text-brand-500 dark:text-brand-300 shrink-0";
+                    etiqueta.htmlFor = "ronda-segundos";
+                    etiqueta.textContent = "Tiempo por posición";
+                    const sel = document.createElement("select");
+                    sel.id = "ronda-segundos";
+                    sel.className = "text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500";
+                    [[20, "20 segundos"], [30, "30 segundos"], [45, "45 segundos"], [60, "1 minuto"]].forEach(([v, t]) => {
+                        const o = document.createElement("option");
+                        o.value = String(v);
+                        o.textContent = t;
+                        if (v === 30) o.selected = true;
+                        sel.appendChild(o);
+                    });
+                    fila.append(etiqueta, sel);
+                    rondaFila = fila;
+                }
                 const list = document.createElement("ul");
                 list.className = "space-y-2 mt-2 max-h-96 overflow-y-auto pr-1";
                 ids.forEach((id, i) => {
@@ -4648,6 +4715,9 @@
                     list.appendChild(li);
                 });
                 body.appendChild(list);
+                // La ronda va DEBAJO de la lista: arriba corría la galería ~80px hacia
+                // abajo, y en pantalla entraba un solo tablero (verificar-sesion-curso.js).
+                if (rondaFila) body.append(rondaFila, rondaBtn);
                 return;
             }
         }
@@ -6547,6 +6617,8 @@
                 boardOwnerId = profile.id;
                 modoProyector = new URLSearchParams(location.search).get("proyector") === "1";
                 modoControl = !modoProyector && new URLSearchParams(location.search).get("control") === "1";
+                vistaPrevia = !modoProyector && !modoControl && new URLSearchParams(location.search).get("como") === "alumno";
+                if (vistaPrevia) { isTeacher = false; prepararVistaPrevia(); }
                 document.documentElement.classList.toggle("modo-proyector", modoProyector);
                 document.documentElement.classList.toggle("modo-control", modoControl);
             } else {
@@ -6568,14 +6640,14 @@
                solo conseguiría pintarle una pantalla vacía: el candado se vería
                como una página rota. Y la clase ya no se abre sola cuando entra
                un alumno — justamente para que «hay clase» signifique algo. */
-            if (!isTeacher && !esObservador) {
+            if (!isTeacher && !esObservador && !vistaPrevia) {
                 const mia = clasesDelAlumno.find((c) => c.profesor_id === boardOwnerId);
                 if (!mia || !mia.clase_abierta) { mostrarSinClase(); esperarLaClase(); return; }
                 ClaseElegida.montarSelector(document.getElementById("selector-clase-wrap"), clasesDelAlumno, boardOwnerId);
             }
 
             const badge = document.getElementById("role-badge");
-            badge.textContent = esObservador ? observaDesde.insignia : isTeacher ? "Profesor" : "Alumno";
+            badge.textContent = esObservador ? observaDesde.insignia : isTeacher ? "Profesor" : vistaPrevia ? "Vista de alumno" : "Alumno";
             badge.classList.add(isTeacher ? "bg-accent-500" : "bg-brand-600", isTeacher ? "text-brand-900" : "text-white");
 
             if (isTeacher) {
@@ -6587,6 +6659,7 @@
                 if (!modoProyector && !modoControl) {
                     document.getElementById("proyector-btn").classList.remove("hidden");
                     document.getElementById("control-btn").classList.remove("hidden");
+                    document.getElementById("vista-alumno-btn").classList.remove("hidden");
                 }
                 document.getElementById("chat-student-picker").classList.remove("hidden");
                 let savedTab = TEACHER_TABS[0];

@@ -38,6 +38,13 @@
          hace falta descontarle una altura a mano. Acá quedaba un `pt-20 pb-16`
          de cuando SÍ era `fixed` — 144px muertos antes de que empezara nada,
          justo en la pantalla con más controles del sitio. -->
+    <!-- «Ver como alumno» (sesion.html?como=alumno): lo dice siempre, arriba, y da la salida. -->
+    <div id="vista-previa-barra" hidden class="sticky top-0 z-40" role="status">
+        <div class="bg-accent-500 text-brand-900 px-4 py-2 text-sm font-semibold flex flex-wrap items-center justify-center gap-3">
+            <span><span aria-hidden="true">👁️ </span>Estás viendo tu clase como la ve un alumno. Nada de lo que hagas acá se manda.</span>
+            <a href="sesion.html" class="underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-900">Volver a tu clase</a>
+        </div>
+    </div>
     <div id="app" class="hidden pt-3 sm:pt-6 pb-10">
         <section class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             <!-- En el celular lo de arriba va más junto: el tablero es lo que el alumno vino a ver. -->
@@ -325,6 +332,7 @@
                         <button id="flip-board-btn" type="button" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors min-h-[44px] sm:min-h-0" title="Girar el tablero (negras abajo)">⇅ Girar</button>
                         <button id="show-coords-btn" type="button" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors min-h-[44px] sm:min-h-0" aria-pressed="false" title="Mostrar el nombre de cada casilla (las coordenadas de afuera siempre se ven)">🔢 Coordenadas</button>
                         <button id="proyector-btn" type="button" class="hidden text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors min-h-[44px] sm:min-h-0" title="Abrir el tablero solo, en otra ventana: para el proyector o la tele del aula">📽️ Proyector</button>
+                        <button id="vista-alumno-btn" type="button" class="hidden text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors min-h-[44px] sm:min-h-0" title="Abrir tu clase como la ve un alumno, en otra ventana (no se manda nada)">👁️ Como alumno</button>
                         <button id="control-btn" type="button" class="hidden text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors min-h-[44px] sm:min-h-0" aria-expanded="false" aria-controls="control-enlace" title="Manejar la clase desde tu celular">📱 Control remoto</button>
                         <button id="raise-hand-btn" type="button" class="hidden text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors min-h-[44px] sm:min-h-0" aria-pressed="false" title="Pedirle la palabra al profesor">🖐️ Levantar la mano</button>
                         <span id="move-nav" class="hidden items-center gap-1 ml-1">
@@ -427,7 +435,7 @@
                         <ul id="equipos-lineas" class="mt-1 space-y-1 text-sm text-brand-800 dark:text-brand-100"></ul>
                     </div>
                     <div id="podio-caja" hidden class="proyector-se-ve control-se-ve max-w-[560px] mx-auto mt-3 rounded-xl border-2 border-accent-500 bg-white dark:bg-brand-900 px-4 py-3 text-center">
-                        <p class="text-sm font-semibold text-brand-700 dark:text-brand-200"><span aria-hidden="true">🏆 </span>Podio de la clase</p>
+                        <p class="text-sm font-semibold text-brand-700 dark:text-brand-200"><span aria-hidden="true">🏆 </span><span id="podio-titulo">Podio de la clase</span></p>
                         <ol id="podio-equipos" hidden class="mt-1 space-y-0.5 text-base font-semibold text-brand-800 dark:text-white" aria-label="Los equipos"></ol>
                         <ol id="podio-lineas" class="mt-1 space-y-0.5 text-base text-brand-800 dark:text-white"></ol>
                         <p id="podio-tu-lugar" hidden class="mt-2 text-sm font-semibold text-brand-700 dark:text-brand-200"></p>
@@ -729,6 +737,12 @@
                 </div>
 
                 <aside class="space-y-4">
+                    <!-- Solo el profe (js/clase-callados.js): quién lleva un rato sin contestar. Arriba de
+                         las pestañas para que se vea desde cualquiera. Nunca lo ve la clase. -->
+                    <div id="callados-aviso" hidden class="rounded-xl border border-accent-400/60 bg-accent-50 dark:bg-brand-900 px-4 py-3 text-sm text-brand-800 dark:text-brand-100" role="status">
+                        <p class="font-semibold"><span aria-hidden="true">🙋 </span>Llevan un rato sin contestar</p>
+                        <ul id="callados-lista" class="mt-1.5 space-y-1.5"></ul>
+                    </div>
                     <!-- Las ocho acciones rápidas estaban en una sola rejilla sin ningún
                          criterio, y el panel de abajo tenía que explicar con un párrafo dónde
                          encontrarlas. Van en DOS grupos con su rótulo, y el rótulo no describe
@@ -960,6 +974,25 @@
                                         <button id="partida-reabrir-btn" type="button" hidden class="text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Seguir la partida</button>
                                         <button id="partida-terminar-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Terminar la partida</button>
                                     </div>
+                                </div>
+                            </div>
+                        </details>
+                        <!-- La ronda rápida (js/clase-ronda.js): varias posiciones de Táctica seguidas, cada una
+                             una pregunta con tiempo que se califica sola con la solución del ejercicio. -->
+                        <details id="ronda-caja" class="mb-3 rounded-lg border border-brand-100 dark:border-brand-800">
+                            <summary class="cursor-pointer px-3 py-2 text-xs font-semibold text-brand-700 dark:text-brand-200"><span aria-hidden="true">⚡ </span>Ronda rápida: varias posiciones seguidas, con podio al final</summary>
+                            <div class="px-3 pb-3 space-y-2">
+                                <p class="text-xs text-brand-450 dark:text-brand-350">Se arma desde <strong>Táctica</strong>: elige un tema y una dificultad, el tiempo por posición, y toca «⚡ Ronda rápida». Van 5 posiciones al azar; cada una es una pregunta con tiempo y se califica sola con la solución del ejercicio.</p>
+                                <div id="ronda-en-curso" hidden>
+                                    <p id="ronda-estado" class="text-sm font-semibold text-brand-700 dark:text-brand-200" aria-live="polite"></p>
+                                    <div class="flex flex-wrap gap-2 mt-2">
+                                        <button id="ronda-siguiente-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Pasar a la siguiente</button>
+                                        <button id="ronda-terminar-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Terminar la ronda</button>
+                                    </div>
+                                </div>
+                                <div id="ronda-resultado" hidden class="rounded-lg bg-brand-50 dark:bg-brand-800/50 px-3 py-2">
+                                    <div id="ronda-resultado-lista" class="text-sm"></div>
+                                    <button id="ronda-podio-btn" type="button" class="mt-2 text-xs font-semibold px-3 py-2 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🏆 </span>Mostrar el podio de la ronda a la clase</button>
                                 </div>
                             </div>
                         </details>
@@ -1278,6 +1311,8 @@
     <script src="js/clase-mapa.js"></script>
     <script src="js/clase-calentamiento.js"></script>
     <script src="js/clase-puntos.js"></script>
+    <script src="js/clase-ronda.js"></script>
+    <script src="js/clase-callados.js"></script>
     <script src="js/sesion.js"></script>
 <!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="js/modo-vista.js" defer></script><!-- modo-vista: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- ayuda: inicio --><script src="js/ayuda-guia.js" defer></script><!-- ayuda: fin --></body>
 </html>
