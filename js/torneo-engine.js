@@ -23,15 +23,17 @@
  *      primero) — un desempate estable y predecible, sin florituras.
  *   2. Se empareja de arriba hacia abajo: al primer jugador sin pareja se
  *      le busca, MÁS ABAJO en la lista, el primero con quien no haya jugado
- *      antes. Si esa elección deja a los de abajo sin forma de emparejarse
- *      sin repetir, se vuelve atrás y se prueba con el siguiente (búsqueda
- *      con retroceso). Antes era voraz, sin volver atrás: con 7 rondas y 8 a
- *      16 jugadores repetía rivales que se podían evitar (con 16, casi dos
- *      cruces repetidos por torneo).
+ *      antes, siempre que a los de abajo les quede forma de emparejarse
+ *      todos sin repetir. Eso lo decide el algoritmo de Edmonds (ver
+ *      perfectPairs), sin probar a ciegas. Antes era voraz: con 7 rondas y
+ *      16 jugadores repetía casi dos rivales evitables por torneo; y la
+ *      búsqueda con retroceso que lo reemplazó no daba abasto con 20 rondas
+ *      y 30 a 64 jugadores.
  *   3. Solo si NINGÚN emparejamiento evita repetir (más rondas que rivales
  *      posibles, o un grupo muy chico) se admite repetir, y los menos cruces
- *      repetidos posibles — el mismo último recurso que usa el software de
- *      emparejamiento "de verdad" cuando no hay alternativa.
+ *      repetidos posibles, buscando con retroceso (pairPool) — el mismo
+ *      último recurso que usa el software de emparejamiento "de verdad"
+ *      cuando no hay alternativa.
  *   4. Colores: nadie lleva más de 2 blancas de diferencia con sus negras
  *      (ni al revés) ni juega tres seguidas con el mismo color, mientras se
  *      pueda sin repetir rival (no repetir va primero). Entre los dos,
@@ -158,16 +160,127 @@ window.TorneoEngine = (function () {
     return !(colorFits(ha, 1) && colorFits(hb, -1)) && !(colorFits(ha, -1) && colorFits(hb, 1));
   }
 
+  // ---------- Emparejamiento perfecto (Edmonds, con flores) ----------
+  // Decide si un grupo se puede emparejar ENTERO usando solo los cruces que
+  // `ok` permite, y en ese caso arma las parejas de arriba hacia abajo: al
+  // primero sin pareja, el más cercano de abajo con quien todavía quede un
+  // emparejamiento completo para el resto. Es lo mismo que buscaba la
+  // búsqueda con retroceso, pero sin probar caminos a ciegas: con 20 rondas
+  // y 30 a 64 jugadores, el retroceso se quedaba sin pasos y repetía rivales
+  // que se podían evitar. Cada comprobación es un camino de aumento, así que
+  // alcanza con cientos de jugadores.
+  function perfectPairs(pool, ok) {
+    const n = pool.length;
+    if (n % 2 === 1) return null;
+    const adj = pool.map((a, i) => {
+      const out = [];
+      for (let j = 0; j < n; j++) if (j !== i && ok(a, pool[j])) out.push(j);
+      return out;
+    });
+    const removed = new Array(n).fill(false);
+    let match = new Array(n).fill(-1);
+    const p = new Array(n), base = new Array(n), used = new Array(n), blossom = new Array(n);
+
+    function lca(a, b) {
+      const seen = new Array(n).fill(false);
+      for (;;) { a = base[a]; seen[a] = true; if (match[a] === -1) break; a = p[match[a]]; }
+      for (;;) { b = base[b]; if (seen[b]) return b; b = p[match[b]]; }
+    }
+    function markPath(v, b, child) {
+      while (base[v] !== b) {
+        blossom[base[v]] = blossom[base[match[v]]] = true;
+        p[v] = child; child = match[v]; v = p[match[v]];
+      }
+    }
+    function findPath(root) {
+      used.fill(false); p.fill(-1);
+      for (let i = 0; i < n; i++) base[i] = i;
+      used[root] = true;
+      const q = [root];
+      for (let qi = 0; qi < q.length; qi++) {
+        const v = q[qi];
+        for (const to of adj[v]) {
+          if (removed[to] || base[v] === base[to] || match[v] === to) continue;
+          if (to === root || (match[to] !== -1 && p[match[to]] !== -1)) {
+            const cur = lca(v, to);
+            blossom.fill(false);
+            markPath(v, cur, to); markPath(to, cur, v);
+            for (let i = 0; i < n; i++) {
+              if (!removed[i] && blossom[base[i]]) {
+                base[i] = cur;
+                if (!used[i]) { used[i] = true; q.push(i); }
+              }
+            }
+          } else if (p[to] === -1) {
+            p[to] = v;
+            if (match[to] === -1) return to;
+            used[match[to]] = true; q.push(match[to]);
+          }
+        }
+      }
+      return -1;
+    }
+    function augment(root) {
+      let v = findPath(root);
+      if (v === -1) return false;
+      while (v !== -1) { const pv = p[v], ppv = match[pv]; match[v] = pv; match[pv] = v; v = ppv; }
+      return true;
+    }
+
+    // Un emparejamiento completo cualquiera, para empezar.
+    for (let i = 0; i < n; i++) {
+      if (match[i] !== -1) continue;
+      for (const j of adj[i]) if (match[j] === -1) { match[i] = j; match[j] = i; break; }
+    }
+    for (let i = 0; i < n; i++) if (match[i] === -1 && !augment(i)) return null;
+
+    // De arriba hacia abajo, el más cercano que deje completo al resto.
+    const pairs = [];
+    for (let a = 0; a < n; a++) {
+      if (removed[a]) continue;
+      for (const b of adj[a]) {
+        if (b < a || removed[b]) continue;
+        if (match[a] === b) { removed[a] = removed[b] = true; pairs.push([pool[a], pool[b]]); break; }
+        const saved = match.slice();
+        const ma = match[a], mb = match[b];
+        removed[a] = removed[b] = true;
+        match[a] = match[b] = -1; match[ma] = -1; match[mb] = -1;
+        if (augment(ma)) { pairs.push([pool[a], pool[b]]); break; }
+        removed[a] = removed[b] = false;
+        match = saved;
+      }
+    }
+    return pairs;
+  }
+
   // Empareja `pool` (ya ordenado de más a menos) con como mucho `maxRepeats`
   // cruces repetidos y `maxClashes` cruces en los que a alguno le toca un
   // color que no le corresponde. Devuelve la lista de parejas o null si no
   // se puede (o si la búsqueda se pasa del tope de pasos, que la corta a
   // tiempo con grupos grandes).
   function pairPool(pool, opponents, colors, maxRepeats, maxClashes, budget) {
+    const allowed = (a, b, repeatsLeft, clashesLeft) =>
+      (repeatsLeft > 0 || !(opponents[a] && opponents[a].has(b))) &&
+      (clashesLeft > 0 || !colorsClash(colors[a], colors[b]));
     function search(rest, repeatsLeft, clashesLeft) {
       if (!rest.length) return [];
       if (--budget.steps < 0) return null;
-      const a = rest[0];
+      // Poda: si alguien ya no tiene con quién, este camino no sirve; si
+      // alguien tiene uno solo, se le empareja primero. Sin esto, con 20
+      // rondas y 30 o 40 jugadores la búsqueda tardaba tanto en descubrir
+      // los callejones sin salida que se quedaba sin pasos.
+      let a = rest[0];
+      if (repeatsLeft === 0 || clashesLeft === 0) {
+        for (let i = 0; i < rest.length; i++) {
+          let options = 0;
+          for (let j = 0; j < rest.length && options < 2; j++) {
+            if (i !== j && allowed(rest[i], rest[j], repeatsLeft, clashesLeft)) options++;
+          }
+          if (options === 0) return null;
+          if (options === 1) { a = rest[i]; break; }
+        }
+      }
+      if (a !== rest[0]) rest = [a].concat(rest.filter((id) => id !== a));
       for (let j = 1; j < rest.length; j++) {
         const b = rest[j];
         const repeat = !!(opponents[a] && opponents[a].has(b));
@@ -225,19 +338,34 @@ window.TorneoEngine = (function () {
     const withoutBye = byeCandidates.filter((id) => id === null || !byes[id]);
     const groups = withoutBye.length ? [withoutBye, byeCandidates] : [byeCandidates];
 
-    const budget = { steps: 200000 };
+    const half = Math.floor(ranked.length / 2);
+    const fresh = (a, b) => !(opponents[a] && opponents[a].has(b));
+    const levels = [
+      (a, b) => fresh(a, b) && !colorsClash(colors[a], colors[b]),  // sin repetir, colores bien
+      fresh,                                                        // sin repetir, colores libres
+    ];
+    // Nadie recibe dos byes mientras haya otra salida: eso va antes que todo.
+    // Dentro de cada grupo de candidatos al bye, primero no repetir rival y
+    // recién después los colores (aTakesWhite igual elige el mejor color
+    // posible para cada pareja). Si no hay forma de no repetir (más rondas
+    // que rivales posibles), los menos cruces repetidos posibles, buscando
+    // con retroceso: pasa solo con grupos chicos, donde la búsqueda es corta,
+    // y el tope de pasos la corta a tiempo si no.
     let chosen = null;
+    const budget = { steps: 200000 };
     for (let g = 0; g < groups.length && !chosen; g++) {
-      // Primero no repetir rival; recién después, los colores.
-      const half = Math.floor(ranked.length / 2);
-      for (let k = 0; k <= half && !chosen && budget.steps >= 0; k++) {
-        for (let c = 0; c <= half && !chosen && budget.steps >= 0; c++) {
-          for (const byePlayer of groups[g]) {
-            const pool = ranked.filter((id) => id !== byePlayer);
-            const pairs = pairPool(pool, opponents, colors, k, c, budget);
-            if (pairs) { chosen = { byePlayer: byePlayer, pairs: pairs }; break; }
-            if (budget.steps < 0) break;
-          }
+      for (const ok of levels) {
+        for (const byePlayer of groups[g]) {
+          const pairs = perfectPairs(ranked.filter((id) => id !== byePlayer), ok);
+          if (pairs) { chosen = { byePlayer: byePlayer, pairs: pairs }; break; }
+        }
+        if (chosen) break;
+      }
+      for (let k = 1; k <= half && !chosen && budget.steps >= 0; k++) {
+        for (const byePlayer of groups[g]) {
+          const pairs = pairPool(ranked.filter((id) => id !== byePlayer), opponents, colors, k, half, budget);
+          if (pairs) { chosen = { byePlayer: byePlayer, pairs: pairs }; break; }
+          if (budget.steps < 0) break;
         }
       }
     }

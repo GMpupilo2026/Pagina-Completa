@@ -356,6 +356,9 @@
     $("tablero-a-caja").classList.add("hidden");
     $("lectura-a").classList.add("hidden");
     $("estado").textContent = "";
+    $("nivel-completo").classList.add("hidden");
+    $("nivel-completo").textContent = "";
+    rotularSiguiente();
     if (!item) { estado("Este nivel no tiene ejercicios."); return; }
     const e = estrellasDe(partida.tipo, item.id);
     $("juego-progreso").textContent = "Ejercicio " + (partida.i + 1) + " de " + partida.items.length + (e ? " · tu mejor: " + textoEstrellas(e) : "");
@@ -363,14 +366,48 @@
     JUEGOS[partida.tipo](item);
     if (adaptado() && partida.tipo !== "fotografia") leerPosicion(item.fen);
   }
+  /* Nivel completo: todos sus ejercicios con al menos una estrella. Antes, al
+     terminar el último, «Siguiente» volvía a la lista de niveles sin decir
+     nada, y el alumno no se enteraba de que había otro nivel esperándolo. */
+  function nivelCompleto() {
+    const a = avance(partida.tipo, partida.nivel);
+    return a.total > 0 && a.hechos >= a.total;
+  }
+  function siguienteNivel() { return C.nivel(partida.tipo, partida.nivel + 1); }
+  function rotularSiguiente() {
+    const b = $("btn-siguiente"), otro = siguienteNivel();
+    if (partida.i < partida.items.length - 1) b.textContent = "Siguiente →";
+    else if (otro && nivelCompleto()) b.textContent = "Nivel " + otro.n + " →";
+    else b.textContent = "Volver a los niveles";
+  }
+  function avisarNivelCompleto() {
+    const caja = $("nivel-completo"), otro = siguienteNivel(), t = C.tipo(partida.tipo);
+    caja.textContent = "";
+    const titulo = el("p", "font-semibold");
+    const copa = el("span", null, "🏆 "); copa.setAttribute("aria-hidden", "true");
+    titulo.append(copa, "¡Nivel completo!");
+    caja.appendChild(titulo);
+    caja.appendChild(el("p", "text-sm mt-1", otro
+      ? "Resolviste los " + partida.items.length + " ejercicios del nivel " + partida.nivel + ". Sigue con el Nivel " + otro.n + ": " + otro.titulo + "."
+      : "Resolviste los " + partida.items.length + " ejercicios del último nivel de " + t.nombre + "."));
+    const ir = el("a", BTN_PRIMARIO + " inline-block mt-3", otro ? "Ir al Nivel " + otro.n : "Elegir otro tipo de entrenamiento");
+    ir.href = otro ? "#" + partida.tipo + "/" + otro.n : "#";
+    caja.appendChild(ir);
+    caja.classList.remove("hidden");
+  }
   function terminar(item, estrellas, extra) {
+    const completoAntes = nivelCompleto();
     anotarEstrellas(partida.tipo, item.id, estrellas);
     const e = estrellasDe(partida.tipo, item.id);
     $("juego-progreso").textContent = "Ejercicio " + (partida.i + 1) + " de " + partida.items.length + (e ? " · tu mejor: " + textoEstrellas(e) : "");
+    if (!completoAntes && nivelCompleto()) avisarNivelCompleto();
+    rotularSiguiente();
     if (extra !== false) $("btn-siguiente").focus();
   }
   $("btn-siguiente").addEventListener("click", () => {
+    const otro = siguienteNivel();
     if (partida.i < partida.items.length - 1) { partida.i++; cargarItem(); }
+    else if (otro && nivelCompleto()) { location.hash = "#" + partida.tipo + "/" + otro.n; }
     else { location.hash = "#" + partida.tipo; }
   });
   $("btn-anterior").addEventListener("click", () => { if (partida.i > 0) { partida.i--; cargarItem(); } });

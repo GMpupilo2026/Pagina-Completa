@@ -31,6 +31,8 @@ function cargar(archivo) {
 
 const PE = cargar("js/plan-entrenamiento.js").PlanEntrenamiento;
 const MP = cargar("js/material-plataforma.js").MaterialPlataforma;
+// Los tipos de entrenamiento, para comprobar los enlaces «tipos.html#<tipo>».
+const TIPOS = require(path.join(RAIZ, "js/tipos-catalogo.js"));
 const METAS = JSON.parse(fs.readFileSync(path.join(RAIZ, "entreno/data/metas.json"), "utf8"));
 
 /* Con qué parámetro recorta cada página NO se escribe acá: se le pregunta a su
@@ -60,9 +62,16 @@ for (const area of PE.AREAS) {
     if (vistos.has(r.href)) mal(`${area.id}: «${r.href}» está dos veces`);
     vistos.add(r.href);
 
-    const [pagina, query] = r.href.split("?");
+    const [conAncla, query] = r.href.split("?");
+    const [pagina, ancla] = conAncla.split("#");
     if (!fs.existsSync(path.join(RAIZ, pagina))) {
       mal(`${area.id}: «${pagina}» no existe (${r.texto})`);
+      continue;
+    }
+    // «tipos.html#<tipo>» abre la ficha de ese tipo: un tipo que no existe
+    // deja la lista de tipos, sin aviso, y el alumno no sabe qué buscar.
+    if (ancla && pagina === "entreno/tipos.html" && !TIPOS.tipo(ancla)) {
+      mal(`${area.id}: «#${ancla}» no es un tipo de entrenamiento (${r.texto})`);
       continue;
     }
     if (!query) continue;

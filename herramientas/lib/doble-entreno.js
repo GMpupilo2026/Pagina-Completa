@@ -1,7 +1,7 @@
 /* El doble de Supabase de los verificadores de Entrenamiento
  * (verificar-entreno-arreglos, -nivel y -repaso): una sola copia.
  *
- * - Hay una sesión (u-ana).
+ * - Hay una sesión (u-ana); con `tablas.sesion = null`, no (la sesión venció).
  * - Cada insert queda anotado en window.__inserts ({ tabla, rows }).
  * - Cada tabla devuelve las filas que se le pasen en `tablas`, filtradas de
  *   verdad en el RESOLVER: .eq() solo anota el filtro.
@@ -43,7 +43,8 @@ function clienteFalso(tablas) {
   }
   window.sb = {
     auth: {
-      getSession: () => Promise.resolve({ data: { session: { user: { id: "u-ana" }, access_token: "t" } } }),
+      // tablas.sesion === null: la sesión venció (el token sigue guardado).
+      getSession: () => Promise.resolve({ data: { session: TABLAS.sesion === null ? null : { user: { id: "u-ana" }, access_token: "t" } } }),
       getUser: () => Promise.resolve({ data: { user: { id: "u-ana" } } }),
       onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
     },

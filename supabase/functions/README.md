@@ -41,6 +41,14 @@ casos. Al desplegarla hay que dejar esa casilla desmarcada — con `verify_jwt`
 en true, el olvido de contraseña de los alumnos sin buzón deja de funcionar y
 la página no lo nota: sigue diciendo que el correo salió.
 
+## `avisar-diagnostico` va con `verify_jwt` en **false**
+
+La llama la base (el trigger `diagnosticos_publicos_avisa`, con pg_net), que no
+trae sesión de persona. A cambio exige el secreto `aviso_diagnostico_secreto`
+de la bóveda y solo recibe el `id` del diagnóstico: a quién se le escribe y qué
+dice sale de la fila. Con `verify_jwt` en true el trigger recibe un 401 y el
+supervisor simplemente no se entera, sin que nada falle a la vista.
+
 ## `prueba-gratis` va con `verify_jwt` en **true**, y solo para administración
 
 La prueba gratis se pide por WhatsApp y la crea quien administra desde

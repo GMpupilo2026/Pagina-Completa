@@ -10,6 +10,11 @@
  * pueda medir con un puñado de preguntas: lo único honesto que se puede decir
  * es cuánto se acertó, por área, y dar un veredicto en palabras — nunca un
  * número de nivel que suene más preciso de lo que en realidad es.
+ *
+ * `fichas` son las fichas de Estudio (js/fichas-estudio.js) donde está la
+ * idea de cada área: el bloque «a reforzar» las enlaza, para que el consejo
+ * lleve a algo que leer y no quede en una frase. El verificador comprueba
+ * que existan.
  */
 window.PrecisionPosicionalCriterio = (function () {
   "use strict";
@@ -19,41 +24,49 @@ window.PrecisionPosicionalCriterio = (function () {
       id: "mejorar_pieza", nombre: "Mejorar la peor pieza", emoji: "🐎",
       mide: "Reconocer cuál es la pieza propia peor colocada y encontrarle una ruta o un puesto mejor.",
       estudiar: "Antes de calcular nada, compara tus cuatro piezas menores y mayores con las del rival: la peor tuya es casi siempre la prioridad, no la mejor.",
+      fichas: [{ id: "alfil-malo", titulo: "El alfil malo" }, { id: "casilla-fuerte", titulo: "La casilla fuerte" }],
     },
     {
       id: "columnas_diagonales", nombre: "Columnas y diagonales abiertas", emoji: "🗼",
       mide: "Decidir cuándo abrir, ocupar o disputar una columna o una diagonal antes de que lo haga el rival.",
       estudiar: "Una columna o diagonal que se va a abrir se ocupa primero con la torre o el alfil, no después de que el rival ya esté ahí.",
+      fichas: [{ id: "columna-abierta", titulo: "La columna abierta" }],
     },
     {
       id: "cambios", nombre: "Qué cambiar y qué conservar", emoji: "⚖️",
       mide: "Elegir qué pieza propia cambiar y cuál conservar, según sea buena o mala, activa o pasiva.",
       estudiar: "La regla de siempre: se cambian las piezas malas propias por las piezas buenas rivales, nunca al revés.",
+      fichas: [{ id: "par-de-alfiles", titulo: "El par de alfiles" }, { id: "alfil-malo", titulo: "El alfil malo" }],
     },
     {
       id: "debilidades", nombre: "Fijar y atacar una debilidad", emoji: "🎯",
       mide: "Identificar un peón o una casilla débil en el bando rival y armar el plan para presionarla con calma.",
       estudiar: "Una debilidad casi nunca se gana de una jugada: se acumula presión, pieza por pieza, hasta que el rival no puede seguir defendiéndola.",
+      fichas: [{ id: "peon-dama-aislado", titulo: "El peón dama aislado" }, { id: "casilla-fuerte", titulo: "La casilla fuerte" }],
     },
     {
       id: "espacio_restriccion", nombre: "Espacio y restricción", emoji: "🧱",
       mide: "Sostener un peón avanzado o una mayoría de peones para quitarle casillas y movilidad al rival.",
       estudiar: "Un peón avanzado y bien sostenido no es una debilidad: es la base de una ventaja de espacio que hay que mantener, no cambiar por miedo.",
+      fichas: [{ id: "el-centro", titulo: "El centro" }, { id: "cadena-de-peones", titulo: "La cadena de peones" }],
     },
     {
       id: "flanco_ataque", nombre: "Elegir el flanco de ataque", emoji: "🏰",
       mide: "Decidir con qué —peones o piezas— y en qué flanco atacar, según en qué lado esté cada rey.",
       estudiar: "Con los reyes en flancos opuestos, los peones atacan; con los reyes en el mismo flanco, atacan las piezas y los peones propios se tocan lo menos posible.",
+      fichas: [{ id: "cadena-de-peones", titulo: "La cadena de peones" }, { id: "el-centro", titulo: "El centro" }],
     },
     {
       id: "estructura", nombre: "Decisiones de estructura de peones", emoji: "♟️",
       mide: "Evaluar si conviene aceptar un peón aislado o doblado, o cambiar en una casilla concreta, a cambio de otra ventaja.",
       estudiar: "Un peón aislado o doblado no es automáticamente malo: se juzga contra lo que se gana a cambio (espacio, una columna, actividad de piezas).",
+      fichas: [{ id: "peones-doblados", titulo: "Estructura de peones" }, { id: "peon-dama-aislado", titulo: "El peón dama aislado" }],
     },
     {
       id: "final_transformacion", nombre: "Transformar la ventaja en el final", emoji: "👑",
       mide: "Activar el rey y convertir una mayoría de peones en un peón pasado cuando el medio juego se termina.",
       estudiar: "En el final el rey es una pieza de ataque, no una pieza para esconder: actívalo hacia donde esté la mayoría de peones propia.",
+      fichas: [{ id: "rey-activo", titulo: "El rey activo" }, { id: "peon-pasado", titulo: "El peón pasado" }],
     },
   ];
   const AREA_POR_ID = {};
@@ -78,7 +91,7 @@ window.PrecisionPosicionalCriterio = (function () {
     const porAreaLista = AREAS.map((a) => {
       const d = areas[a.id] || { aciertos: 0, total: 0 };
       return {
-        id: a.id, nombre: a.nombre, emoji: a.emoji, mide: a.mide, estudiar: a.estudiar,
+        id: a.id, nombre: a.nombre, emoji: a.emoji, mide: a.mide, estudiar: a.estudiar, fichas: a.fichas || [],
         aciertos: d.aciertos || 0, total: d.total || 0,
         porcentaje: d.total ? Math.round((d.aciertos / d.total) * 100) : null,
       };
