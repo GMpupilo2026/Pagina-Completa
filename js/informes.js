@@ -97,6 +97,15 @@
             if (!f) return statCard("🔎", "—", "Tema más flojo (hace falta resolver 5 de un mismo tema)", true);
             return statCard("🔎", `${escVis(f.nombre)} · ${f.porcentaje} %`, `Tema más flojo: limpio en ${f.limpios} de ${f.intentos}`, true);
         }
+        /* Las casillas que más le cuestan en Coordenadas: la base manda los
+           contadores (coord_casillas) y el orden lo pone el mismo módulo de la
+           página (js/coordenadas-casillas.js), para no tener la fórmula dos veces. */
+        function tarjetaCoordenadas(e) {
+            const lista = e.coordCasillas && window.CoordenadasCasillas ? CoordenadasCasillas.masDificiles(e.coordCasillas, 3) : [];
+            if (!lista.length) return statCard("📍", "—", "Coordenadas: casillas que le cuestan (todavía ninguna fallada dos veces)", true);
+            return statCard("📍", lista.map((x) => x.sq).join(" · "),
+                "Coordenadas, las que más le cuestan: " + lista.map((x) => `${x.sq} (falló ${x.fallos} de ${x.fallos + x.aciertos})`).join(", "), true);
+        }
         function tarjetasDeModulos(e) {
             return [
                 tarjetaTemaFlojo(e),
@@ -105,6 +114,7 @@
                 statCard("📖", `${e.aperturasEmpezadas} (${e.aperturasFirmes} firmes)`, "Líneas de Aperturas estudiadas", true),
                 statCard("🎯", textoPrecision(e), "Precisión posicional", true),
                 statCard("🏁", e.finales, "Finales contra la máquina logrados", true),
+                tarjetaCoordenadas(e),
             ];
         }
 
@@ -153,6 +163,7 @@
                 precisionFecha: m.precision_fecha || null,
                 temaFlojo: m.temaFlojo || null,
                 finales: m.finales || 0,
+                coordCasillas: m.coord_casillas && typeof m.coord_casillas === "object" ? m.coord_casillas : null,
                 puzzles: f.puzzles || 0,
                 lessons: f.lecciones || 0,
                 bestCoord: f.mejor_coord || 0,

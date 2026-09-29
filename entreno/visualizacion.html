@@ -70,6 +70,8 @@
   }
   .tbtn:hover{background:var(--brass-bright); border-color:var(--brass-bright);}
   .tbtn:active{transform:scale(0.97);}
+  .repaso{margin-top:14px;}
+  .repaso-texto{margin:6px 0 10px; font-size:0.9rem; color:var(--text-muted);}
   .overall{background:var(--bg-panel); border:1px solid var(--line); padding:14px 16px 12px; margin-top:8px;}
   .overall-head{display:flex; justify-content:space-between; align-items:baseline; gap:12px;}
   .overall-head h2{font-size:1rem; color:var(--text);}
@@ -214,6 +216,16 @@
           <span><b id="total-count">0</b> ejercicios en <b id="total-levels">5</b> niveles</span>
         </div>
       </section>
+      <!-- «Repasar fallados» (js/repaso-fallados.js): lo que se resolvió con
+           error o con pista vuelve con repaso espaciado. Solo sale si hoy toca
+           alguno. -->
+      <section class="overall repaso" id="repaso-caja" aria-labelledby="repaso-titulo" style="display:none">
+        <div class="overall-head">
+          <h2 id="repaso-titulo"><span aria-hidden="true">🔁</span> Repasar fallados</h2>
+        </div>
+        <p id="repaso-texto" class="repaso-texto"></p>
+        <button type="button" class="bctrl primary" id="repaso-btn">Repasar ahora</button>
+      </section>
       <div id="levels"></div>
     </section>
 
@@ -262,7 +274,7 @@
 
       <div id="celebration">
         <span class="big-emoji" aria-hidden="true">🎉</span>
-        <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white">¡Nivel completo!</h2>
+        <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white" id="celebration-title">¡Nivel completo!</h2>
         <p class="stats" id="celebration-stats"></p>
         <div class="round-controls">
           <button type="button" class="bctrl primary" id="celebration-replay-btn">Volver a empezar el nivel</button>
@@ -294,6 +306,8 @@
 <script src="../js/blind-notation.js"></script>
 <script src="../js/chess-move-parser.js"></script>
 <script src="../js/progreso-usuario.js"></script>
+<script src="../js/repaso-espaciado.js"></script>
+<script src="../js/repaso-fallados.js"></script>
 <script src="../js/ejercicio-tablero.js"></script>
 <script src="../js/entreno-visualizacion.js"></script>
 <!-- burbuja: inicio --><script src="../js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="../js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- acceso: inicio --><script src="../js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="../js/modo-vista.js" defer></script><!-- modo-vista: fin --><!-- marca: inicio --><script src="../js/marca-academia.js" defer></script><!-- marca: fin --><!-- ayuda: inicio --><script src="../js/ayuda-guia.js" defer></script><!-- ayuda: fin --><!-- atajo: inicio --><script src="../js/atajo-buscar.js" data-arriba="../" defer></script><!-- atajo: fin --></body>

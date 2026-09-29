@@ -328,7 +328,8 @@ function pruebaVeredicto() {
 // Aperturas y Precisión posicional), que antes no se mostraba en ningún lado.
 const MODULOS_ANA = { student_id: "a-1", visualizacion: 4, temas: 30, con_como_salio: 10, limpios: 7,
   tipos_ejercicios: 5, tipos_estrellas: 12, aperturas_empezadas: 3, aperturas_firmes: 1,
-  precision_rondas: 2, precision_ultima: 75, precision_fecha: "2026-09-20T12:00:00Z", finales: 3 };
+  precision_rondas: 2, precision_ultima: 75, precision_fecha: "2026-09-20T12:00:00Z", finales: 3,
+  coord_casillas: { "b6:a": 1, "b6:f": 9, "g3:a": 3, "g3:f": 4 } };
 
 async function pruebaProfesor(browser) {
   console.log("\n=== Vista del profesor ===");
@@ -433,21 +434,21 @@ async function pruebaProfesor(browser) {
     [await page.inputValue("#student-filter"), await page.textContent("#student-report-title")].join(" | "),
     "a-1 | 🚩 Últimas asignaciones de Ana Rojas");
 
-  /* Veintitrés números de golpe no los lee nadie: los quince de segunda fila
-     nacen escondidos (las ocho de siempre más las siete de los módulos que se
-     sumaron: Temas, Visualización, Tipos, Aperturas, Precisión, el tema más
-     flojo y los Finales contra la máquina). Se mide el display que
+  /* Veinticuatro números de golpe no los lee nadie: los dieciséis de segunda
+     fila nacen escondidos (las ocho de siempre más las ocho de los módulos que
+     se sumaron: Temas, Visualización, Tipos, Aperturas, Precisión, el tema más
+     flojo, los Finales contra la máquina y las casillas de Coordenadas). Se mide el display que
      calcula el navegador, no la clase. */
   const escondidas = () => page.evaluate(() =>
     [...document.querySelectorAll("#stat-cards [data-extra]")]
       .filter((d) => getComputedStyle(d).display === "none").length);
-  igual("las quince secundarias nacen escondidas", await escondidas(), 15);
+  igual("las dieciséis secundarias nacen escondidas", await escondidas(), 16);
   igual("y las que se miran siguen a la vista", await page.evaluate(() =>
     [...document.querySelectorAll("#stat-cards > div")].filter((d) => getComputedStyle(d).display !== "none").length), 8);
   await page.click("#stat-cards-ver");
   igual("el botón las destapa todas", await escondidas(), 0);
   await page.click("#stat-cards-ver");
-  igual("y las vuelve a guardar", await escondidas(), 15);
+  igual("y las vuelve a guardar", await escondidas(), 16);
   await page.selectOption("#student-filter", "");
   await page.waitForFunction(() => !document.getElementById("teacher-report").classList.contains("hidden"));
 
@@ -784,6 +785,8 @@ async function pruebaAlumno(browser) {
   igual("Aperturas", await tarjeta(page, "Líneas de Aperturas estudiadas"), "3 (1 firmes)");
   igual("Precisión posicional", await tarjeta(page, "Precisión posicional"), "75 % en la última · 2 rondas");
   igual("Finales contra la máquina", await tarjeta(page, "Finales contra la máquina logrados"), "3");
+  igual("las casillas que más le cuestan en Coordenadas, ordenadas por el módulo de la página",
+    await tarjeta(page, "Coordenadas, las que más le cuestan: b6 (falló 9 de 10), g3 (falló 4 de 7)"), "b6 · g3");
   igual("el tema más flojo, con su nombre y cuántos limpios", await tarjeta(page, "Tema más flojo: limpio en 4 de 11"), "Clavada · 36 %");
   const pedido = await page.evaluate(() => ((window.__rpcArgs || []).find((a) => a[0] === "informes_tema_mas_flojo") || [])[1]);
   igual("a la base se le mandan los motivos, no «Mezcla» ni las fases",

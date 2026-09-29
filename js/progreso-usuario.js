@@ -172,6 +172,8 @@ window.ProgresoUsuario = (function () {
     { clave: "aperturas_srs_v1",                 fusion: "srsPorLinea" },  // Aperturas y celadas
     { clave: "entreno_temas_repaso_v1",          fusion: "srsPorLinea" },  // Ejercicios por tema: la cola de «Repasar fallados»
     { clave: "entreno_mates_repaso_v1",          fusion: "srsPorLinea" },  // Mates: la misma cola
+    { clave: "entreno_visualizacion_repaso_v1",  fusion: "srsPorLinea" },  // Visualización: la misma cola
+    { clave: "entreno_practicas_repaso_v1",      fusion: "srsPorLinea" },  // Practicar: la misma cola (por ronda)
     { clave: "aperturas_vistas_v1",              fusion: "maxNumero" },
     { clave: "entreno_visualizacion_solved",     fusion: "unionObjeto" },   // Visualización
     { clave: "entreno_visualizacion_best",       fusion: "maxNumero" },
@@ -182,6 +184,7 @@ window.ProgresoUsuario = (function () {
     { clave: "tipos_estrellas_v1",               fusion: "maxPorClave" },   // Tipos de entrenamiento: "tipo:id" → estrellas
     { clave: "tipos_mejor_v1",                   fusion: "minPorClave" },   // Con lo justo: posición → menos jugadas
     { clave: "tipos_registrados_v1",             fusion: "unionObjeto" },   // "tipo:id" ya registrado en training_progress
+    { clave: "tipos_ultimo_v1",                  fusion: "ultimaEscritura" }, // el nivel de Tipos que se está jugando (lo propone el hub)
   ];
 
   // Cuándo se escribió en ESTE aparato cada clave que se funde por fecha.

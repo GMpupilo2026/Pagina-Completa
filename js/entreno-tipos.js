@@ -21,6 +21,7 @@
   const CLAVE_ESTRELLAS = "tipos_estrellas_v1";
   const CLAVE_MEJOR = "tipos_mejor_v1";
   const CLAVE_REGISTRADOS = "tipos_registrados_v1";
+  const CLAVE_ULTIMO = "tipos_ultimo_v1";
   const LISTA_TIPOS = ["detective", "amenaza", "descarte", "balanza", "fotografia", "con-lo-justo"];
 
   let DATOS = null;
@@ -386,7 +387,15 @@
     $("titulo-juego").textContent = t.nombre + " — Nivel " + n.n + ": " + n.titulo;
     $("juego-desc").textContent = n.desc;
     $("volver-tipo").href = "#" + tipoId;
+    anotarUltimo();
     cargarItem();
+  }
+  /* El nivel que se está jugando y cuánto lleva, para que el «Hoy te toca» del
+     hub proponga seguirlo (js/entreno-index.js). Va con la cuenta
+     (ultimaEscritura: gana el aparato donde se jugó más tarde). */
+  function anotarUltimo() {
+    const t = C.tipo(partida.tipo), a = avance(partida.tipo, partida.nivel);
+    escribir(CLAVE_ULTIMO, { tipo: partida.tipo, nombre: t.nombre, nivel: partida.nivel, hechos: a.hechos, total: a.total });
   }
   function cargarItem() {
     if (limpiarJuego) { limpiarJuego(); limpiarJuego = null; }
@@ -442,6 +451,7 @@
     const completoAntes = nivelCompleto();
     anotarEstrellas(partida.tipo, item.id, estrellas);
     if (estrellas >= 1) registrar(partida.tipo, item, estrellas);
+    anotarUltimo();
     const e = estrellasDe(partida.tipo, item.id);
     $("juego-progreso").textContent = "Ejercicio " + (partida.i + 1) + " de " + partida.items.length + (e ? " · tu mejor: " + textoEstrellas(e) : "");
     if (!completoAntes && nivelCompleto()) avisarNivelCompleto();

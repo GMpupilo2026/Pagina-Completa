@@ -65,6 +65,20 @@ async function cosasDeHoy(alumnoId){
     const m = RepasoFallados.pendientes(RepasoFallados.CLAVES.mates).length;
     if (m) cosas.push({ icono: '♚', href: 'mates.html?repaso=1',
       texto: m === 1 ? 'Repasar 1 mate que te costó' : `Repasar ${m} mates que te costaron` });
+    const v = RepasoFallados.pendientes(RepasoFallados.CLAVES.visualizacion).length;
+    if (v) cosas.push({ icono: '👁️', href: 'visualizacion.html?repaso=1',
+      texto: v === 1 ? 'Repasar 1 ejercicio de Visualización que te costó' : `Repasar ${v} ejercicios de Visualización que te costaron` });
+    const p = RepasoFallados.pendientes(RepasoFallados.CLAVES.practicas).length;
+    if (p) cosas.push({ icono: '♞', href: 'practicas.html?repaso=1',
+      texto: p === 1 ? 'Repasar 1 posición de Practicar que te costó' : `Repasar ${p} posiciones de Practicar que te costaron` });
+  }
+
+  // El nivel de Tipos de entrenamiento que quedó a medias (lo anota
+  // js/entreno-tipos.js al jugar). Uno completo no se propone: ya está hecho.
+  const ultimo = leerJSON('tipos_ultimo_v1');
+  if (ultimo && ultimo.tipo && ultimo.nivel && ultimo.total > 0 && ultimo.hechos < ultimo.total) {
+    cosas.push({ icono: '🧩', href: 'tipos.html#' + encodeURIComponent(ultimo.tipo) + '/' + encodeURIComponent(ultimo.nivel),
+      texto: `Seguir con ${ultimo.nombre}, nivel ${ultimo.nivel} (${ultimo.hechos} de ${ultimo.total})` });
   }
 
   // El tema más flojo (js/tema-flojo.js): el motivo que menos sale limpio,

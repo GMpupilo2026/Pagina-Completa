@@ -74,6 +74,9 @@
   main{max-width:900px; margin:0 auto; padding:22px 24px 60px;}
 
   /* ---------- Lista de series ---------- */
+  .repaso{margin:0 0 16px; padding:14px 16px; border:1px solid var(--line, #d9e2ec); border-radius:12px;}
+  .repaso h2{font-size:1rem; margin:0;}
+  .repaso-texto{margin:6px 0 10px; font-size:0.9rem; color:var(--text-muted);}
   .set-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(240px,1fr)); gap:14px;}
   .set-card{
     display:flex; flex-direction:column; gap:6px; text-align:left;
@@ -221,6 +224,13 @@
 
   <main id="main-content">
     <div id="list-view">
+      <!-- «Repasar fallados» (js/repaso-fallados.js): las rondas que salieron
+           con error o con pista vuelven con repaso espaciado. -->
+      <section class="repaso" id="repaso-caja" aria-labelledby="repaso-titulo" hidden>
+        <h2 id="repaso-titulo"><span aria-hidden="true">🔁</span> Repasar fallados</h2>
+        <p id="repaso-texto" class="repaso-texto"></p>
+        <button type="button" class="bctrl primary" id="repaso-btn">Repasar ahora</button>
+      </section>
       <div class="set-grid" id="set-list"></div>
     </div>
 
@@ -293,6 +303,8 @@
 <script src="../js/progreso-usuario.js"></script>
 <script src="../js/ejercicio-tablero.js"></script>
 <script src="../js/motivos-tacticos.js"></script>
+<script src="../js/repaso-espaciado.js"></script>
+<script src="../js/repaso-fallados.js"></script>
 <script src="../js/entreno-practicas.js"></script>
 <!-- burbuja: inicio --><script src="../js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="../js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- acceso: inicio --><script src="../js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="../js/modo-vista.js" defer></script><!-- modo-vista: fin --><!-- marca: inicio --><script src="../js/marca-academia.js" defer></script><!-- marca: fin --><!-- ayuda: inicio --><script src="../js/ayuda-guia.js" defer></script><!-- ayuda: fin --><!-- atajo: inicio --><script src="../js/atajo-buscar.js" data-arriba="../" defer></script><!-- atajo: fin --></body>
 </html>
