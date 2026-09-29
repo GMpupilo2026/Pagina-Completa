@@ -243,7 +243,7 @@
     }
     rivalCargado = nombre;
     mostrar(r, null);
-    if (!r.vacio) iniciarRevision();
+    if (!r.vacio) { iniciarRevision(); iniciarTeoria(); }
   }
 
   // Desde cuándo: las opciones son relativas a hoy.
@@ -355,8 +355,11 @@
     $("guardar").disabled = !!id;
     $("guardar").textContent = id ? "Guardado" : "Guardar el análisis";
     $("motor-estado").textContent = r.motor ? "Revisado con Stockfish (" + r.motor.detalle + ")." : "";
+    $("teoria-estado").textContent = r.repertorioLineas ? "" : "Este análisis es de antes de la comparación con los maestros: vuelve a analizar para ver dónde deja la teoría.";
     pintar(r);
     $("titulo-resultado").focus();
+    // Un análisis guardado sin la teoría (o a medias) la busca al abrirse.
+    if (id && r.repertorioLineas && (!r.teoria || r.teoria.faltan)) iniciarTeoria();
   }
 
   function pintar(r) {
@@ -563,6 +566,60 @@
     if (antes.length) await sb.from("archivos_pgn").delete().in("id", antes);
     Avisos.avisar("Listo: " + filas.length + (filas.length === 1 ? " línea" : " líneas") + " en Archivos, carpeta «" + carpeta + "».");
     if (origen) origen.focus();
+  }
+
+  // ------------------------------------------------------------ la teoría
+
+  /* Dónde deja la teoría: las posiciones de sus líneas se le preguntan al
+     explorador de maestros de Lichess por la Edge Function explorador-maestros
+     (el explorador pide un token, que vive en el servidor). Por vueltas: en
+     cada una, solo la posición siguiente de cada línea que sigue en teoría
+     (PreparacionTeoria.pendientes). La función contesta de a tandas y dice
+     por qué paró, si paró. Ver «Dónde deja la teoría: etapa 5». */
+  const T = window.PreparacionTeoria;
+  const MOTIVO_TEORIA = {
+    sin_token: "La comparación con los maestros no está configurada todavía: falta el token de Lichess en el servidor (LICHESS_TOKEN). Lo agrega quien administra.",
+    token_invalido: "Lichess no aceptó el token del servidor (LICHESS_TOKEN): hay que cambiarlo.",
+    limitado: "Lichess pidió esperar un momento. Se muestra lo que alcanzó a contestar; vuelve a abrir el análisis en un minuto para completar el resto.",
+    error: "El explorador de maestros no contestó. Se muestra lo que alcanzó a contestar.",
+  };
+  let buscandoTeoria = null;
+
+  async function iniciarTeoria() {
+    const r = actual;
+    if (!r || r.vacio || !r.repertorioLineas || !T || buscandoTeoria === r) return;
+    buscandoTeoria = r;
+    const estado = $("teoria-estado");
+    const datos = {};
+    let motivo = null, consultadas = 0;
+    estado.textContent = "Comparando sus líneas con las partidas de maestros de Lichess…";
+    for (let vuelta = 0; vuelta < 40; vuelta++) {
+      const faltan = T.pendientes(r, datos);
+      if (!faltan.length) break;
+      let res;
+      try {
+        res = await sb.functions.invoke("explorador-maestros", { body: { fens: faltan.slice(0, 60) } });
+      } catch (e) {
+        res = { error: e };
+      }
+      if (actual !== r) { buscandoTeoria = null; return; }
+      if (res.error || !res.data) { motivo = "error"; break; }
+      const d = res.data;
+      Object.assign(datos, d.posiciones || {});
+      consultadas += Object.keys(d.posiciones || {}).length;
+      estado.textContent = "Comparando sus líneas con las partidas de maestros de Lichess: " + consultadas + (consultadas === 1 ? " posición" : " posiciones") + "…";
+      if (d.motivo && d.motivo !== "sigue") { motivo = d.motivo; break; }
+    }
+    buscandoTeoria = null;
+    if (actual !== r) return;
+    T.aplicar(r, datos);
+    r.teoria.motivo = motivo;
+    window.PreparacionAnalisis.rehacerFoda(r);
+    estado.textContent = motivo ? MOTIVO_TEORIA[motivo] || MOTIVO_TEORIA.error : "Comparado con las partidas de maestros de Lichess (" + consultadas + (consultadas === 1 ? " posición" : " posiciones") + ").";
+    // Sin ninguna respuesta no hay nada que mostrar: queda solo el aviso.
+    if (!consultadas) r.teoria = null;
+    pintar(r);
+    if (guardadoId && consultadas) { guardadoId = null; $("guardar").disabled = false; $("guardar").textContent = "Guardar con la teoría"; }
   }
 
   // ------------------------------------------------------------ Stockfish

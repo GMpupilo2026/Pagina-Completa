@@ -48,6 +48,17 @@ La prueba gratis se pide por WhatsApp y la crea quien administra desde
 perfil: una sesión de alumno no se abre pruebas llamándola directo. Crea la
 cuenta **bloqueada** y solo la abre después de que la base guardó cuándo vence.
 
+## `explorador-maestros` necesita `LICHESS_TOKEN`
+
+Desde 2026, el explorador de aperturas de Lichess exige un token en cada pedido.
+La función lo lee del secreto **`LICHESS_TOKEN`**: un token personal de
+Lichess, creado en https://lichess.org/account/oauth/token **sin marcar ningún
+permiso** (el explorador no pide ninguno). Sin el secreto, la función contesta
+`motivo: "sin_token"` y la preparación de rivales lo explica en pantalla. Solo
+pide `/masters`, solo con posiciones que tienen forma de FEN, y solo para quien
+puede preparar rivales. Lo que contesta se guarda en
+`explorador_maestros_cache`, que solo ve el service role.
+
 ## Los secretos
 
 No están aquí ni pueden estarlo: viven en los secretos del proyecto de

@@ -36,6 +36,7 @@ tabla  equipos  rls=true
 tabla  examen_items  rls=true
 tabla  examen_respuestas  rls=true
 tabla  examenes  rls=true
+tabla  explorador_maestros_cache  rls=true
 tabla  formulario_compartidos  rls=true
 tabla  formulario_respuestas  rls=true
 tabla  formularios  rls=true
@@ -382,6 +383,9 @@ columna  examenes.termina_at  timestamp with time zone
 columna  examenes.titulo  text
 columna  examenes.total_items  integer
 columna  examenes.vence_at  timestamp with time zone
+columna  explorador_maestros_cache.datos  jsonb
+columna  explorador_maestros_cache.fen  text
+columna  explorador_maestros_cache.leido_en  timestamp with time zone
 columna  formulario_compartidos.coordinador_id  uuid
 columna  formulario_compartidos.created_at  timestamp with time zone
 columna  formulario_compartidos.formulario_id  uuid
@@ -1549,6 +1553,7 @@ indice  examen_respuestas  examen_respuestas_pkey
 indice  examenes  examenes_alumno_idx
 indice  examenes  examenes_pkey
 indice  examenes  examenes_profesor_idx
+indice  explorador_maestros_cache  explorador_maestros_cache_pkey
 indice  formulario_compartidos  formulario_compartidos_coordinador_idx
 indice  formulario_compartidos  formulario_compartidos_pkey
 indice  formulario_respuestas  formulario_respuestas_alumno_id_fk

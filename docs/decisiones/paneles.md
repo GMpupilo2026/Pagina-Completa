@@ -1419,6 +1419,96 @@ Y en la página:
 Comprobado que falla al colar el FODA en lo que se manda y al no borrar las
 líneas viejas.
 
+### Dónde deja la teoría: etapa 5
+
+Una tarjeta nueva, **«Dónde deja la teoría»**. Toma sus líneas más jugadas,
+con cada color, y las compara jugada por jugada con las partidas de maestros
+del explorador de Lichess. La línea deja la teoría en la primera jugada que los
+maestros jugaron **menos de 5 veces** en esa posición.
+- Si esa jugada es **suya**, ahí improvisa o trae algo propio, y es la posición
+  que conviene estudiar. Eso va al FODA como oportunidad, con lo que juegan los
+  maestros ahí.
+- Si la juega **su rival**, él salió de libro sin tener que decidir nada.
+- Una línea que sigue a los maestros hasta la jugada 8 o más va al FODA como
+  fortaleza: «conoce la teoría».
+
+**Las líneas salen del análisis**, en `repertorioLineas`
+(`lineasDeSuRepertorio()` en `js/preparacion-analisis.js`):
+- donde le toca a él, las jugadas que hace una de cada cinco veces o más (dos
+  como mucho);
+- donde le toca al otro, las respuestas de una de cada siete o más (tres como
+  mucho);
+- todo con el mínimo de partidas del análisis y hasta 20 medias jugadas, diez
+  líneas por color;
+- cada línea guarda cuántas de sus partidas jugaron cada jugada (`veces`), así
+  el FODA dice el número exacto de la jugada donde deja la teoría.
+
+El resultado pasó a la **versión 4**. Un análisis guardado antes no trae las
+líneas, y la página dice que hay que volver a analizar.
+
+**El explorador exige un token, así que no se llama desde el navegador.**
+Desde 2026, `explorer.lichess.org` contesta **401 sin token**. Se comprobó
+desde la base con `pg_net`, porque desde el entorno de desarrollo Lichess está
+bloqueado.
+- Un token en la página es un token publicado. Por eso lo llama la Edge
+  Function **`explorador-maestros`**, con el token en el secreto
+  **`LICHESS_TOKEN`**: un token personal sin ningún permiso marcado.
+- Sin el secreto, la función contesta `motivo: "sin_token"` y la página lo
+  explica en vez de pintar una tarjeta vacía.
+- **No es un proxy abierto:**
+  - solo pide `/masters`;
+  - solo con algo que tiene la forma de un FEN (se valida con una expresión
+    regular);
+  - solo para quien puede preparar rivales: la función le pregunta a
+    `puedo_preparar_rivales()` con la sesión de quien llama. Comprobado desde
+    la base: sin sesión da 401, y con la clave anónima, 403.
+- **Caché, `explorador_maestros_cache`:**
+  - guarda lo que contestó Lichess por posición, con los cuatro campos del FEN
+    que dicen qué posición es, así los contadores de jugadas no parten la
+    caché;
+  - vale 180 días: la base de maestros crece despacio y la misma apertura la
+    consultan todos los profesores;
+  - no tiene políticas y se revocan todos los permisos: solo la usa el service
+    role.
+- **Cada pedido cuenta, así que se pregunta por vueltas**
+  (`PreparacionTeoria.pendientes()`). En cada vuelta va, de cada línea, solo la
+  primera posición sin respuesta, y solo si todas las jugadas anteriores son
+  teoría. Lo que viene después de una salida no se pregunta nunca.
+- La función pide de a una, se para con el primer 429 y dice por qué paró
+  (`sigue`, `limitado`, `token_invalido`, `error`). La página muestra lo que
+  alcanzó y dice qué faltó.
+
+**Lo que se le manda a Lichess son posiciones de ajedrez**, sin nombres ni
+ningún dato de nadie, y desde el servidor. La política de privacidad lo dice en
+el renglón de Lichess, que ya estaba en la lista de proveedores.
+
+**El FODA se arma entero en `foda()`**, incluidos los avisos de Stockfish
+(`fodaMotor()`) y los de la teoría (`fodaTeoria()`). Antes, `aplicarMotor()`
+los agregaba después de armarlo. Con la teoría llegando por su lado, cualquiera
+de las dos que volviera a armar el FODA habría borrado lo de la otra, sin dar
+ningún error. De paso, los avisos del motor quedaron en su orden: antes, el
+cuarto error salía primero.
+
+El verificador trae un «libro de maestros» de mentira con las cuentas por
+posición. Comprueba, sin navegador:
+- las líneas del repertorio y sus `veces`;
+- que por vueltas no se pregunte nada dos veces ni después de una salida;
+- quién deja la teoría y dónde (1.d4 c5 2.Cc3 la deja él, con 0 de 100; 3.e5
+  Cf6 la deja su rival);
+- que la Española con negras sea teoría hasta el fondo;
+- el FODA;
+- que sin respuestas no se invente ninguna salida.
+
+Y en la página, con un doble de la función:
+- la tarjeta después de la de Stockfish, con sus filas;
+- «Ver» en el tablero, con lo que dicen los maestros;
+- el FODA con los dos avisos;
+- que se guarde con la teoría;
+- el aviso cuando falta el token.
+
+Comprobado que falla al preguntar posiciones después de una salida y al sacar
+la teoría del FODA.
+
 ## Las inscripciones a torneos en línea
 
 `inscripciones.html` muestra lo que llegó por `inscripcion.html`, el formulario
