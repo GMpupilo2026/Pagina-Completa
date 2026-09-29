@@ -362,7 +362,29 @@
     return mejor;
   }
 
+  /* =====================================================================
+   * Aguanta (tipo 15): la única defensa. Cuenta SOLO la jugada que el motor
+   * dio como la única que no pierde; cualquier otra pierde, y el banco trae
+   * cómo la castiga el rival (item.refuta, por SAN).
+   * ===================================================================== */
+  function aguantaAcertada(Chess, item, mov) {
+    const g = cargar(Chess, item.fen);
+    const m = g && g.move(mov);
+    if (!m) return { legal: false, ok: false };
+    const ok = m.san === item.defensa;
+    return { legal: true, ok, san: m.san, refuta: ok ? null : (item.refuta || {})[m.san] || null };
+  }
+  /* «El rival contesta Cxe5 y te da mate en 3» / «… y el motor te da −3,4». */
+  function textoRefuta(r) {
+    if (!r) return "";
+    const tras = r.r ? "El rival contesta " + r.r : "El rival lo aprovecha";
+    if (r.m) return tras + " y te da mate en " + r.m + ".";
+    if (typeof r.e === "number") return tras + " y el motor te da " + R.numeroBalanza(r.e / 100) + ".";
+    return tras + ".";
+  }
+
   const TiposReglasMas = {
+    aguantaAcertada, textoRefuta,
     VALOR, atacadas, atacantes, amenazados, barrido, corregirBarrido,
     intercambio, textoIntercambio,
     construye, solucionesConstruye, tieneMateEn1,

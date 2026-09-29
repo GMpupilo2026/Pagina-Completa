@@ -1,6 +1,6 @@
-/* Los Tipos de entrenamiento 8 a 14 de entreno/tipos.html: el Barrido,
+/* Los Tipos de entrenamiento 8 a 15 de entreno/tipos.html: el Barrido,
  * Intercambios, Constrúyela tú, Rey y peón, Adivina la jugada del maestro,
- * ¿Qué apertura es? y la Ruta segura.
+ * ¿Qué apertura es?, la Ruta segura y Aguanta.
  *
  * Usan las mismas piezas de la página que los siete primeros (el tablero, los
  * avisos, las estrellas: window.TiposUI, en js/entreno-tipos.js) y las reglas
@@ -407,5 +407,84 @@
     }));
     redibujar();
     U.pedirJugada("O escribe la casilla a la que va (por ejemplo, e4)", (txt) => { $("jugada-input").value = ""; paso(txt); });
+  };
+  /* ================================================ 15. Aguanta
+     La única defensa: el rival tiene un golpe preparado y solo UNA jugada lo
+     frena (el motor lo comprobó al generar). Si falla, se deshace y se le dice
+     cómo lo castiga el rival; ver la amenaza o la pieza cuesta una estrella
+     cada una; al tercer error se muestra la respuesta. */
+  U.JUEGOS.aguanta = function (item) {
+    const yo = item.fen.split(" ")[1];
+    const juego = new Chess(item.fen);
+    let errores = 0, pistas = 0, hecho = false, vioAmenaza = false;
+    const marcas = {};
+    const redibujar = (ultima) => U.tablero(juego.fen(), { orientacion: yo, juego, ultima, marcas: Object.assign({}, marcas), clic: hecho ? null : U.moverConClic(juego, jugar) });
+    function cerrar(n) {
+      hecho = true;
+      U.pedirJugada("", null);
+      bAmenaza.disabled = true; bPista.disabled = true; bVer.disabled = true;
+      explicar(item.respuesta);
+      terminar(item, n);
+    }
+    function jugar(mov) {
+      if (hecho) return;
+      const r = M.aguantaAcertada(Chess, item, mov);
+      if (!r.legal) { estado("Esa jugada no es legal para las " + COLOR[yo] + "."); return; }
+      if (r.ok) {
+        const m = juego.move(mov);
+        const n = Math.max(1, 3 - errores - pistas);
+        redibujar([m.from, m.to]);
+        estado("✓ ¡Aguanta! " + R.sanEs(r.san) + " era la única. " + textoEstrellas(n));
+        cerrar(n);
+        return;
+      }
+      errores++;
+      const castigo = M.textoRefuta(r.refuta);
+      if (errores >= 3) {
+        const m = juego.move(item.defensa);
+        redibujar([m.from, m.to]);
+        estado("✗ Con " + R.sanEs(r.san) + " tampoco. " + castigo + " La única que aguantaba era " + item.defensaEs + ".");
+        cerrar(0);
+        return;
+      }
+      estado("✗ " + R.sanEs(r.san) + " pierde. " + castigo + " Busca otra" + (vioAmenaza ? "." : ": ¿viste qué quiere el rival?"));
+      redibujar(null);
+    }
+    $("juego-turno").textContent = "Juegan las " + COLOR[yo] + " (el tablero está de tu lado).";
+    $("juego-enunciado").textContent = "El rival tiene un golpe preparado. Solo UNA jugada aguanta: encuéntrala.";
+    const bAmenaza = boton("👀 ¿Qué quiere el rival?", BTN_SEGUNDO + " mt-1", () => {
+      if (hecho || vioAmenaza) return;
+      vioAmenaza = true; pistas++;
+      bAmenaza.disabled = true;
+      const m = new Chess(item.fenRival).move(item.amenaza);
+      marcas[m.from] = { cls: "m-mal", signo: "!", dicho: "la pieza con que amenaza el rival" };
+      marcas[m.to] = { cls: "m-mal", signo: "✕", dicho: "adonde quiere ir el rival" };
+      estado("El rival amenaza " + item.amenazaEs + (item.mateAmenaza ? " (mate en " + item.mateAmenaza + ")" : "") + ". " + (item.motivo || "") + " Una estrella menos.");
+      redibujar(null);
+    });
+    const bPista = boton("💡 Pista", BTN_SEGUNDO + " mt-1 ml-2", () => {
+      if (hecho) return;
+      pistas++;
+      bPista.disabled = true;
+      const m = new Chess(item.fen).move(item.defensa);
+      marcas[m.from] = { cls: "m-bien", signo: "?", dicho: "pista: esta pieza" };
+      estado("Pista: la defensa se juega con " + piezaDicha(yo + m.piece) + " de " + m.from + ". Una estrella menos.");
+      redibujar(null);
+    });
+    const bVer = boton("Ver la respuesta", BTN_SEGUNDO + " mt-1 ml-2", () => {
+      if (hecho) return;
+      const m = juego.move(item.defensa);
+      redibujar([m.from, m.to]);
+      estado("La única que aguantaba era " + item.defensaEs + ".");
+      cerrar(0);
+    });
+    $("controles").append(bAmenaza, bPista, bVer);
+    redibujar(null);
+    U.pedirJugada("O escribe tu jugada (las " + COLOR[yo] + ")", (txt) => {
+      const m = U.jugadaEscrita(juego, txt);
+      if (!m) { estado("No entendí «" + txt + "» como una jugada de las " + COLOR[yo] + "."); return; }
+      $("jugada-input").value = "";
+      jugar({ from: m.from, to: m.to, promotion: m.promotion });
+    });
   };
 })();

@@ -197,6 +197,19 @@
         { n: 4, titulo: "Tablero lleno", desc: "Caballo o alfil entre muchas piezas." },
       ],
     },
+    {
+      id: "aguanta", emoji: "🛡️", nombre: "Aguanta",
+      pregunta: "El rival amenaza algo serio. ¿Cuál es la única jugada que aguanta?",
+      entrena: "Defender: ver la amenaza a tiempo y encontrar la única jugada que la para sin perder otra cosa. Se entrena poco y decide muchas partidas.",
+      como: "Te toca mover y el rival tiene preparado un golpe. Solo UNA jugada lo frena (comprobado con el motor): todas las demás pierden. Si fallas, ves cómo te castiga el rival. Si no ves la amenaza, pide que te la muestren.",
+      clase: "Pon la posición y pregunta primero «¿qué quiere el rival?»; después, con «Preguntar», cada alumno busca la única defensa en su tablero.",
+      niveles: [
+        { n: 1, titulo: "Salva la pieza", desc: "El rival amenaza comerse algo, y solo una jugada lo evita sin perder otra cosa." },
+        { n: 2, titulo: "Tapa el mate", desc: "El rival amenaza mate en una. Solo una jugada lo para." },
+        { n: 3, titulo: "Contra el golpe", desc: "El rival prepara un golpe sin captura: un jaque, una horquilla, una jugada tranquila. Desármalo antes." },
+        { n: 4, titulo: "Lo que no se ve", desc: "El rival amenaza mate en dos o más jugadas: la defensa está más lejos." },
+      ],
+    },
   ];
 
   function tipo(id) { return TIPOS.find((t) => t.id === id) || null; }

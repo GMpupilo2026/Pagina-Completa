@@ -2160,7 +2160,7 @@ haciendo que un disparo al agua sume uno, saltan nueve comprobaciones.
 ## Los Tipos de entrenamiento
 
 `entreno/tipos.html` (grupo y tarjeta **"🧠 Tipos de entrenamiento"** del hub)
-es una ficha con catorce entrenamientos que no son «encuentra la mejor jugada»,
+es una ficha con quince entrenamientos que no son «encuentra la mejor jugada»,
 cada uno con sus niveles: **El Detective** (¿qué jugada se acaba de hacer?,
 análisis retrógrado), **¿Qué quiere el rival?** (profilaxis: hacer la jugada
 que amenaza el rival), **Descarte** (tachar las candidatas que pierden),
@@ -2327,6 +2327,66 @@ de jugar lo hacen en `PREPARAR[tipo]`.
   casilla atacada, en una jugada larga, sí se puede). Lo atacado se cuenta sin
   la pieza que viaja, porque ella no tapa nada. El mínimo es el camino más
   corto exacto.
+
+### El tipo 15: Aguanta
+
+Todo lo demás de Entrenamiento enseña a atacar; **Aguanta** enseña a
+defenderse: al que mueve le amenazan algo serio y **solo UNA jugada lo para**.
+La regla vive en `js/tipos-reglas-mas.js` (`aguantaAcertada`, `textoRefuta`) y
+el juego en `js/entreno-tipos-mas.js`, como los tipos 8 a 14.
+
+- **La primera idea no sirvió: girar el turno.** Se probó con la misma
+  posición de ¿Qué quiere el rival? (la del ejercicio con el turno del que se
+  defiende): de unas 1800 posiciones salieron 17. En casi todas, el que se
+  defiende tenía algo MEJOR que defenderse (quedaba +2,5 o más, o hasta con
+  mate): en un ejercicio de Lichess el rival suele acabar de comerse algo, y
+  con una jugada de regalo le toca a uno cobrarse. Así que la fuente principal
+  son los ejercicios que Lichess marca como defensa (`defensiveMove`,
+  `equality`): ahí la jugada del alumno ES la defensa, tal como se jugó. Los
+  giros de turno que sí cumplen también entran.
+- **«Una sola» lo dice el motor, con dos búsquedas.** Todas las jugadas a
+  profundidad 12 (de ahí sale, para cada error, la respuesta del rival que lo
+  castiga) y las dos mejores a profundidad 18: esa búsqueda mira todas las
+  jugadas, así que si otra aguantara saldría segunda. Entra solo si las dos
+  coinciden en la mejor, la mejor queda entre −1,5 y +2,5 (se defiende; no
+  hay un golpe propio) y la segunda pierde (recibe mate, o queda 2,5 peones
+  abajo y en −2 o peor). Los mismos cortes que «pierde» y «aguanta» en
+  Descarte.
+- **La amenaza tiene que ser de verdad**: si le tocara al rival, su mejor
+  jugada gana (mate o 2 peones). Por eso no entra ninguna con el rey en
+  jaque: ahí la amenaza ya está hecha, y el «¿Qué quiere el rival?» de la
+  pista no tendría qué mostrar. Tampoco entran posiciones con menos de 6
+  jugadas (se adivina).
+- **El nivel lo pone la amenaza, no el tema de Lichess**: comerse algo (1),
+  mate en 1 (2), un golpe sin captura (3), mate en 2 o más (4). El tema de un
+  ejercicio de defensa habla de la defensa, no de lo que amenazaba el rival;
+  la amenaza la ve el motor. El verificador vuelve a calcular el nivel con la
+  jugada guardada. Dentro de cada nivel van de menor a mayor rating. Hoy son
+  113 (40, 18, 40 y 15): los de mate escasean porque casi ningún ejercicio de
+  defensa de Lichess es contra un mate.
+- **Una «amenaza» que es solo acercar el rey no entra.** El motor la da por
+  buena (en un final, Rh4 gana el alfil que quedó encerrado), pero la pista
+  «¿Qué quiere el rival?» mostraría un paso del rey y el alumno no aprendería
+  nada. Eran 9 del nivel 3; el verificador exige que no vuelvan.
+- **Fallar enseña**: la jugada se deshace y se dice cómo la castiga el rival
+  («El rival contesta Cxe5 y el motor te da −3,4»), que es justo lo que no se
+  ve cuando uno no se defiende. «👀 ¿Qué quiere el rival?» marca la amenaza en
+  el tablero (con su signo escrito, «!» y «✕», no solo el color) y «💡 Pista»
+  la pieza de la defensa; cada ayuda y cada error quitan una estrella, y al
+  tercer error se muestra la respuesta (cuenta como fallado para el repaso).
+- **Las marcas del tablero se dicen.** `js/tablero-accesible.js` vuelve a
+  escribir el nombre de cada casilla y solo agrega lo que viene en
+  `data-estado`; la página ponía la marca en el `aria-label` y se perdía. Se
+  vio al verificar Aguanta, pero pasaba en todos los Tipos (la pista de ¿Qué
+  quiere el rival?, las casillas de Siete diferencias): ahora la marca va
+  también en `data-estado`.
+- **Se genera aparte**: `node herramientas/tipos-generar.js --solo aguanta`
+  rehace solo este banco con el motor y deja los otros catorce como están.
+  Volver a correr todo con otra versión de Stockfish podría cambiar ids de
+  los demás, y con ellos las estrellas guardadas de los alumnos.
+- En la clase en vivo trae «❓ Preguntar» (cada alumno busca la defensa en su
+  tablero) y la respuesta para el profesor: la defensa, la amenaza, la línea y
+  por qué la segunda mejor ya pierde.
 
 **Al tocar los bancos, las reglas o la página, correr**:
 

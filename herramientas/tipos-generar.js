@@ -58,9 +58,11 @@ const PUZZLES = Object.keys(TEMAS.puzzles).sort((a, b) => hash(a) - hash(b)).map
 /* ---------- motor: varios procesos a la vez ---------- */
 /* `--solo con-lo-justo` rehace solo ese banco (no usa el motor: sale de las
    tablas de finales) y deja el resto de tipos.json como está. Así se puede
-   ampliar sin Stockfish y sin tocar los demás. */
+   ampliar sin Stockfish y sin tocar los demás. `--solo aguanta` hace lo mismo
+   con Aguanta, que sí usa el motor: los demás bancos no se vuelven a analizar,
+   así que ningún id cambia y nadie pierde sus estrellas. */
 const SOLO = process.argv.includes("--solo") ? process.argv[process.argv.indexOf("--solo") + 1] : null;
-const MOTORES = SOLO ? [] : Array.from({ length: Math.max(1, Math.min(4, require("os").cpus().length)) }, () => new Motor());
+const MOTORES = SOLO === "con-lo-justo" ? [] : Array.from({ length: Math.max(1, Math.min(4, require("os").cpus().length)) }, () => new Motor());
 let libre = MOTORES.slice();
 const cola = [];
 function conMotor(fn) {
@@ -986,9 +988,131 @@ function generarRuta(reales) {
   return out;
 }
 
+/* ---------- 15. Aguanta: la única defensa ----------
+   Posiciones donde al que mueve le amenazan algo serio y solo UNA jugada lo
+   para. Salen de dos lugares del banco de «Ejercicios por tema»:
+     - los ejercicios que Lichess marca como defensa (`defensiveMove`,
+       `equality`): la jugada del alumno ES la defensa, tal cual se jugó;
+     - la posición de cualquier ejercicio con el turno del que se defiende (la
+       misma de ¿Qué quiere el rival?). Casi nunca sirve —el que se defiende
+       suele tener algo mejor que defenderse—, pero las pocas que sí, entran.
+   Entra solo si el motor dice que hay UNA jugada que aguanta:
+     - la amenaza del rival es real: si le tocara, su mejor jugada gana (mate
+       o 2 peones). Por eso no entra ninguna con el rey en jaque: ahí la
+       «amenaza» ya está hecha;
+     - la mejor defensa queda entre −1,5 y +2,5 (se defiende; no es que haya
+       un golpe propio mejor) y sin mate de por medio;
+     - la segunda pierde: recibe mate, o queda 2,5 peones o más por debajo y
+       en −2 o peor.
+   Se pide con TODAS las jugadas a profundidad 12 (de ahí sale cómo castiga el
+   rival cada error) y se confirma con las dos mejores a profundidad 18: como
+   esa búsqueda mira todas las jugadas, si otra aguantara saldría segunda.
+   El nivel lo pone la amenaza que vio el motor: comerse algo (1), mate en 1
+   (2), un golpe sin captura (3) o mate en 2 o más (4). Una amenaza que es
+   solo mover el rey (sin captura ni mate) no entra: no se lee como amenaza. Las posiciones que ya
+   usan ¿Qué quiere el rival? y Descarte no se repiten. */
+function nivelAguanta(fenRival, ra) {
+  if (ra.mate !== null && ra.mate > 0) return ra.mate === 1 ? 2 : 4;
+  return /x/.test(sanDeUci(fenRival, ra.uci)) ? 1 : 3;
+}
+async function generarAguanta(yaUsados) {
+  const cand = [];
+  const vistas = new Set();
+  const sumar = (pz, fenYo, fenRival, origen) => {
+    const k = fenYo.split(" ").slice(0, 2).join(" ");
+    if (vistas.has(k)) return;
+    const g = new Chess();
+    if (!g.load(fenYo) || g.in_check() || g.game_over()) return;
+    const h = new Chess();
+    if (!h.load(fenRival) || h.game_over()) return;
+    vistas.add(k);
+    cand.push({ pz, fenYo, fenRival, origen });
+  };
+  PUZZLES.forEach((pz) => {
+    const t = pz.themes || [];
+    if (!t.includes("defensiveMove") && !t.includes("equality")) return;
+    sumar(pz, pz.fen, conTurno(pz.fen, R.otro(pz.fen.split(" ")[1])), "defensa");
+  });
+  PUZZLES.forEach((pz) => {
+    if (yaUsados.has(pz.id) || !nivelAmenaza(pz)) return;
+    const fenYo = flipLegal(pz);
+    if (fenYo) sumar(pz, fenYo, conTurno(pz.fen, pz.fen.split(" ")[1]), "turno");
+  });
+  const pierde = (x, mejor) => (x.mate !== null && x.mate < 0) || (x.score <= mejor - 250 && x.score <= -200);
+  const aguanta = (x) => x.mate === null && x.score >= -150 && x.score <= 250;
+  const buenos = (await enParalelo(cand, async ({ pz, fenYo, fenRival, origen }) => {
+    const legales = new Chess(fenYo).moves({ verbose: true });
+    if (legales.length < 6) return null;               // con pocas jugadas se adivina
+    const [ra] = await analizar(fenRival, 1, 16);
+    if (!ra || !((ra.mate !== null && ra.mate > 0) || ra.score >= 200)) return null;
+    const todas = await analizar(fenYo, legales.length, 12);
+    if (todas.length !== legales.length) return null;
+    if (!aguanta(todas[0]) || !pierde(todas[1], todas[0].score)) return null;
+    const hondo = await analizar(fenYo, 2, 18);
+    if (hondo.length < 2 || hondo[0].uci !== todas[0].uci) return null;
+    if (!aguanta(hondo[0]) || !pierde(hondo[1], hondo[0].score)) return null;
+    // Una «amenaza» que es solo acercar el rey es real para el motor, pero no
+    // se ve como amenaza: la pista «¿Qué quiere el rival?» no enseñaría nada.
+    const mAm = new Chess(fenRival).move(sanDeUci(fenRival, ra.uci));
+    if (mAm.piece === "k" && !mAm.captured && !(ra.mate > 0)) return null;
+    const n = nivelAguanta(fenRival, ra);
+    const defensa = sanDeUci(fenYo, hondo[0].uci);
+    const amenaza = sanDeUci(fenRival, ra.uci);
+    const refuta = {};
+    todas.slice(1).forEach((x) => {
+      const san = sanDeUci(fenYo, x.uci);
+      const g = new Chess(fenYo); g.move(san);
+      const r = x.pv[1] ? sanDeUci(g.fen(), x.pv[1]) : null;
+      refuta[san] = { r: r ? R.sanEs(r) : null, e: x.mate === null ? x.score : null, m: x.mate !== null ? -x.mate : null };
+    });
+    const segunda = sanDeUci(fenYo, hondo[1].uci);
+    const yo = fenYo.split(" ")[1];
+    const evalTxt = (x) => (x.mate !== null ? "recibe mate en " + (-x.mate) : R.numeroBalanza(x.score / 100) + " para las " + R.COLOR[yo]);
+    const mateAmenaza = ra.mate !== null && ra.mate > 0 ? ra.mate : null;
+    // en los de defensa, el motivo de Lichess habla de la defensa, no de la amenaza
+    const mot = origen === "turno" ? motivo(pz.themes) : "";
+    return {
+      id: "agu-" + n + "-" + pz.id, nivel: n, origen, fen: fenYo, fenRival,
+      defensa, defensaEs: R.sanEs(defensa), eval: hondo[0].score,
+      amenaza, amenazaEs: R.sanEs(amenaza), mateAmenaza,
+      linea: lineaEs(fenYo, hondo[0].pv, 4),
+      segunda: { san: segunda, sanEs: R.sanEs(segunda), eval: hondo[1].mate === null ? hondo[1].score : null, mateEn: hondo[1].mate !== null ? -hondo[1].mate : null, linea: lineaEs(fenYo, hondo[1].pv, 3) },
+      refuta, motivo: mot, rating: pz.rating, partida: pz.game || null,
+      resumen: "Juegan las " + R.COLOR[yo] + " · ELO " + pz.rating,
+      respuesta: [
+        "La única que aguanta: " + R.sanEs(defensa) + " (" + evalTxt(hondo[0]) + ").",
+        ("Lo que amenazaba el rival: " + R.sanEs(amenaza) + (mateAmenaza ? " (mate en " + mateAmenaza + ")" : "") + ". " + mot).trim(),
+        "La línea: " + lineaEs(fenYo, hondo[0].pv, 4) + ".",
+        "La segunda mejor, " + R.sanEs(segunda) + ", ya pierde (" + evalTxt(hondo[1]) + "): " + lineaEs(fenYo, hondo[1].pv, 3) + ".",
+      ],
+    };
+  })).filter(Boolean);
+  // por nivel, de menor a mayor rating: el nivel también sube por dentro
+  const out = [];
+  for (const n of [1, 2, 3, 4]) out.push(...buenos.filter((x) => x.nivel === n).sort((a, b) => a.rating - b.rating || (a.id < b.id ? -1 : 1)).slice(0, POR_NIVEL * 2));
+  return out;
+}
+function usadosPorAmenazaYDescarte(datos) {
+  const ids = new Set();
+  (datos.amenaza || []).concat(datos.descarte || []).forEach((x) => ids.add(x.id.replace(/^(ame|des)-\d+-/, "")));
+  return ids;
+}
+
 /* ---------- solo un banco ---------- */
-if (SOLO) {
-  if (SOLO !== "con-lo-justo") { console.error("--solo solo sabe rehacer «con-lo-justo» (los demás usan el motor)."); process.exit(2); }
+if (SOLO === "aguanta") {
+  (async () => {
+    const datos = JSON.parse(fs.readFileSync(SALIDA, "utf8"));
+    console.log("Aguanta (motor)…");
+    datos.aguanta = await generarAguanta(usadosPorAmenazaYDescarte(datos));
+    guardarCache();
+    MOTORES.forEach((m) => m.cerrar());
+    fs.writeFileSync(SALIDA, JSON.stringify(datos) + "\n");
+    const c = datos.aguanta.reduce((m, x) => { m[x.nivel] = (m[x.nivel] || 0) + 1; return m; }, {});
+    console.log("aguanta       ", JSON.stringify(c));
+    process.exit(0);
+  })().catch((e) => { console.error(e); process.exit(1); });
+} else if (SOLO) {
+  if (SOLO !== "con-lo-justo") { console.error("--solo solo sabe rehacer «con-lo-justo» o «aguanta»."); process.exit(2); }
   const datos = JSON.parse(fs.readFileSync(SALIDA, "utf8"));
   console.log("Con lo justo (tablas de finales, tarda un par de minutos)…");
   datos["con-lo-justo"] = generarConLoJusto();
@@ -999,7 +1123,7 @@ if (SOLO) {
 }
 
 /* ---------- todo junto ---------- */
-(async () => {
+if (!SOLO) (async () => {
   console.log("Detective…");
   const detective = generarDetective();
   console.log("¿Qué quiere el rival?…");
@@ -1030,12 +1154,14 @@ if (SOLO) {
   const apertura = generarApertura();
   console.log("La ruta segura…");
   const ruta = generarRuta(reales);
+  console.log("Aguanta…");
+  const aguanta = await generarAguanta(usadosPorAmenazaYDescarte({ amenaza, descarte }));
   guardarCache();
   MOTORES.forEach((m) => m.cerrar());
   const datos = {
     fuente: "Posiciones de partidas reales de la base abierta de Lichess (CC0) y de js/aperturas-lineas.js; finales sorteados con su distancia exacta al mate. Generado por herramientas/tipos-generar.js: no se edita a mano.",
     detective, amenaza, descarte, diferencias, balanza, fotografia, "con-lo-justo": conLoJusto,
-    barrido, intercambios, construye, peones, maestro, apertura, ruta,
+    barrido, intercambios, construye, peones, maestro, apertura, ruta, aguanta,
   };
   fs.writeFileSync(SALIDA, JSON.stringify(datos) + "\n");
   const cuenta = (l) => l.reduce((m, x) => { m[x.nivel] = (m[x.nivel] || 0) + 1; return m; }, {});

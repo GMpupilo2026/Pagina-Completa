@@ -492,7 +492,7 @@ async function pruebaTipos(browser) {
   const { page, ctx, errores } = await abrir(browser, [PROFE, ALUMNA], "u-profe");
   await page.click("#teacher-tab-tipos");
   await page.waitForSelector("#tipos-body button", { timeout: 30000 });
-  igual("los catorce tipos", await page.$$eval("#tipos-body > div > button", (b) => b.length), 14);
+  igual("los quince tipos", await page.$$eval("#tipos-body > div > button", (b) => b.length), 15);
 
   async function abrirNivel(nombreTipo, nivel) {
     // Preguntar y Practicar se van a su pestaña: se vuelve a la de Entrenamientos

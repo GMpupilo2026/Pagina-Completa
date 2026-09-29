@@ -1668,6 +1668,14 @@
    "actividades": [
     "tipos"
    ]
+  },
+  {
+   "clave": "aguanta",
+   "label": "Aguanta",
+   "total": 113,
+   "actividades": [
+    "tipos"
+   ]
   }
  ]
 }
