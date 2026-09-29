@@ -83,6 +83,12 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
     equipos: ${JSON.stringify(EQUIPOS)},
     equipo_alumnos: ${JSON.stringify(EQUIPO_ALUMNOS)},
     equipo_entrenadores: ${JSON.stringify(EQUIPO_ENTRENADORES)},
+    /* Luis tiene la clase abierta; la de Rita ya se cerró. La base solo
+       le entrega a quien coordina las de su gente. */
+    class_sessions: [
+      { id: "cs-1", created_by: "u-luis", ended_at: null },
+      { id: "cs-2", created_by: "u-rita", ended_at: "2026-09-28T20:00:00Z" },
+    ],
   };
   const SUBGRUPOS_VISTA = ${JSON.stringify(SUBGRUPOS_VISTA)};
   /* Este doble FILTRA de verdad por rol y por texto, igual que la función de
@@ -107,7 +113,9 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
       select() { return b; },
       eq(col, val) { if (Array.isArray(datos)) datos = datos.filter((f) => String(f[col]) === String(val)); return b; },
       in() { return b; }, order() { return b; }, limit() { return b; },
-      range() { return b; }, is() { return b; }, not() { return b; }, or() { return b; },
+      range() { return b; }, not() { return b; }, or() { return b; },
+      // is(col, null) filtra de verdad: «las clases abiertas» son las de ended_at null.
+      is(col, val) { if (Array.isArray(datos) && val === null) datos = datos.filter((f) => f[col] === null || f[col] === undefined); return b; },
       insert(v) { window.__llamadas.push({ tabla, verbo: "insert", datos: v }); return b; },
       update(v) { window.__llamadas.push({ tabla, verbo: "update", datos: v }); return b; },
       upsert(v) { window.__llamadas.push({ tabla, verbo: "upsert", datos: v }); return b; },
@@ -223,6 +231,21 @@ async function pruebaBuscarPorEnlace(browser) {
   // La lista de la página (de a 50); antes pide los conteos y a los docentes.
   igual("y la primera lista que pide ya lo busca",
     await page.evaluate(() => (window.__rpc.filter((r) => r.rpc === "mi_gente" && r.args.p_limite === 50)[0] || { args: {} }).args.p_busqueda), "Luis Vega");
+  await page.close();
+}
+
+/* Quien coordina ve quién de su gente está dando clase y entra a mirarla (y a
+   ayudar en la práctica): sesion.html?observar=<id>. Solo junto a quien tiene
+   la clase ABIERTA, y escrito, no solo con el punto rojo. */
+async function pruebaEnClase(browser) {
+  console.log("\n=== En clase ahora: mirar la clase de un profesor ===");
+  const { page, errores } = await abrir(browser, "coordinacion.html", COORD);
+  await page.waitForSelector("#lista > div", { timeout: 20000 });
+  const enlaces = await page.$$eval("[data-observar]", (as) => as.map((a) => ({
+    de: a.dataset.observar, href: a.getAttribute("href"), texto: a.textContent, seVe: a.checkVisibility() })));
+  igual("solo junto a quien tiene la clase abierta", enlaces,
+    [{ de: "u-luis", href: "sesion.html?observar=u-luis", texto: "🔴 En clase ahora · Mirar la clase", seVe: true }]);
+  igual("sin errores", errores, []);
   await page.close();
 }
 
@@ -670,6 +693,7 @@ async function pruebaEquipos(browser) {
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
+    await pruebaEnClase(browser);
     await pruebaPanel(browser);
     await pruebaBuscarPorEnlace(browser);
     await pruebaFicha(browser);

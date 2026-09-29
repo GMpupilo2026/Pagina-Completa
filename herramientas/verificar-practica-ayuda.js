@@ -25,6 +25,11 @@
      anotada como alumna);
    - su presencia dice que es supervisión y a quién mira; el profe lo lee.
 
+   De quien coordina (lo mismo, con su nombre)
+   - entra a mirar, se nombra «Coordinación» y vuelve a coordinacion.html;
+   - su presencia dice «coordinación», y el profe y la alumna lo leen así;
+   - sin clase abierta, lo manda de vuelta a Coordinación y no a Supervisión.
+
    Del lado de la alumna
    - la pista se pinta como texto, y las flechas en su tablero Y en palabras;
    - escucha SU partida con filtro;
@@ -49,6 +54,8 @@ const { abrir, CHROME } = R;
 const CLASE = { id: "c-viva", created_by: "u-profe", started_at: new Date().toISOString(), ended_at: null };
 const INICIAL = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 const NOMBRE = "Ana <i>Rojas</i>";
+const COORD = { id: "u-coord", role: "profesor", is_admin: false, es_coordinador: true, es_supervisor: false,
+                full_name: "Luis Vega", email: "luis@x.cr", grupo: null };
 const SUP = { id: "u-sup", role: "profesor", is_admin: false, es_coordinador: false, es_supervisor: true,
               full_name: "Marta Solano", email: "marta@x.cr", grupo: null };
 
@@ -247,6 +254,49 @@ async function pruebaSupervision(browser) {
   await profe.ctx.close();
 }
 
+async function pruebaCoordinacion(browser) {
+  console.log("\n=== Quien coordina mira la partida de Ana y la ayuda ===");
+  const semillaCoord = Object.assign(semilla(), { profiles: [R.PROFE, R.ALUMNA, COORD] });
+  const { page, ctx, errores } = await abrir(browser, COORD.id, CLASE, semillaCoord, { ruta: "/sesion.html?observar=u-profe" });
+  cumple("se monta como observador", await seVe(page, "#observador-panel"));
+  igual("se nombra coordinación, no supervisión", (await texto(page, "#role-badge")).trim(), "👁 Coordinación");
+  igual("y vuelve a su pantalla", await page.getAttribute("#observador-panel a[href]", "href"), "coordinacion.html");
+  cumple("la franja de arriba dice que mira", /^Estás mirando la clase de Karina Rojas/.test(await texto(page, "#status-banner")));
+  await page.waitForSelector("#practice-boards-grid .practice-mini-mirar", { timeout: 30000 });
+  await page.click("#practice-boards-grid .practice-mini-mirar");
+  igual("su presencia dice que viene de coordinación y a quién mira",
+    await ultimoTrack(page).then((t) => t && { role: t.role, como: t.como, mirando_a: t.mirando_a }),
+    { role: "supervision", como: "coordinación", mirando_a: "u-ana" });
+  await page.fill("#practica-mirar-pista", "¿Qué pieza no está defendida?");
+  await page.click("#practica-mirar-mandar");
+  await page.waitForFunction(() => /Le llegó/.test(document.getElementById("practica-mirar-aviso").textContent), null, { timeout: 5000 }).catch(() => {});
+  igual("manda SOLO la ayuda, a la partida de Ana", (await updatesDePartida(page)).map((u) => ({ campos: Object.keys(u.campos), donde: u.donde })),
+    [{ campos: ["ayuda"], donde: [["id", "g-1"]] }]);
+  igual("no crea ninguna partida ni se anota en nada", await page.evaluate(() => window.__inserts.map((i) => i.tabla)), []);
+  igual("sin errores en la página", errores.filter((e) => !/stockfish|Worker|wasm/i.test(e)), []);
+  await ctx.close();
+
+  console.log("\n=== Sin clase abierta, vuelve a Coordinación ===");
+  const sin = await abrir(browser, COORD.id, null, { profiles: [R.PROFE, R.ALUMNA, COORD] }, { ruta: "/sesion.html?observar=u-profe" });
+  cumple("dice que no hay clase", await seVe(sin.page, "#sin-clase"));
+  igual("y el enlace lleva a Coordinación", await sin.page.$eval("#sin-clase a[href]", (a) => ({ href: a.getAttribute("href"), texto: a.textContent })),
+    { href: "coordinacion.html", texto: "← Volver a Coordinación" });
+  await sin.ctx.close();
+
+  console.log("\n=== El profe y la alumna leen «coordinación» ===");
+  const profe = await abrir(browser, "u-profe", CLASE, semilla());
+  await profe.page.waitForSelector("#practice-boards-grid .practice-mini-mirar", { timeout: 30000 });
+  await profe.page.evaluate(() => window.__presencia("u-coord", { role: "supervision", como: "coordinación", full_name: "Luis Vega", mirando_a: "u-ana" }));
+  igual("el profe lo lee", await texto(profe.page, "#observadores"),
+    "👁 Luis Vega (coordinación) está mirando la clase. Luis Vega está en la partida de " + NOMBRE + ".");
+  await profe.ctx.close();
+  const ana = await abrir(browser, "u-ana", CLASE, semilla());
+  await ana.page.waitForSelector("#practice-card:not(.hidden) #practice-board [data-square]", { timeout: 30000 });
+  await ana.page.evaluate(() => window.__presencia("u-coord", { role: "supervision", como: "coordinación", full_name: "Luis Vega", mirando_a: "u-ana" }));
+  igual("la alumna lo lee", await texto(ana.page, "#practica-te-miran"), "👁 Luis Vega (coordinación) está mirando tu partida.");
+  await ana.ctx.close();
+}
+
 async function pruebaAlumna(browser) {
   console.log("\n=== Ana recibe la ayuda en su tablero ===");
   const ayuda = { jugadas: 2, flechas: [{ from: "g1", to: "f3" }], circulos: [], texto: "Mira <b>el</b> caballo",
@@ -326,6 +376,7 @@ async function pruebaAlumna(browser) {
   try {
     await pruebaProfesor(browser);
     await pruebaSupervision(browser);
+    await pruebaCoordinacion(browser);
     await pruebaAlumna(browser);
   } finally {
     await browser.close();

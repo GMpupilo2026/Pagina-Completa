@@ -50,6 +50,14 @@
            solo de un profesor que supervisa). */
         let esObservador = false;
         let nombreObservado = "";
+        /* Quien observa puede venir de supervisión o de coordinación: mira lo
+           mismo (la base le da a cada uno su alcance), pero se nombra distinto y
+           vuelve a su propia pantalla. Supervisión gana si tiene las dos. */
+        const OBSERVA_DESDE = {
+            supervision: { etiqueta: "supervisión", insignia: "👁 Supervisión", volver: "supervision.html", pantalla: "Supervisión" },
+            coordinacion: { etiqueta: "coordinación", insignia: "👁 Coordinación", volver: "coordinacion.html", pantalla: "Coordinación" },
+        };
+        let observaDesde = OBSERVA_DESDE.supervision;
         let activePlayerId = null;
         // Con qué color puede mover activePlayerId: "w", "b" o "both" (los dos). Solo
         // importa mientras activePlayerId no sea null — el profesor siempre puede mover
@@ -1562,7 +1570,7 @@
                         // El profesor cerró la clase: registramos el último instante conectado
                         // y devolvemos al alumno al panel.
                         if (esObservador) {
-                            window.location.href = "supervision.html";
+                            window.location.href = observaDesde.volver;
                         } else if (!isTeacher) {
                             stopPresenceLog().finally(() => { window.location.href = "clases.html"; });
                         } else {
@@ -2502,7 +2510,7 @@
                     const loMira = (state[key] || []).some((m) => m && m.mirando_a === profile.id);
                     if (loMira && key !== profile.id) {
                         meMiran.push(meta && meta.role === "supervision"
-                            ? (meta.full_name || "Alguien") + " (supervisión)"
+                            ? (meta.full_name || "Alguien") + " (" + (meta.como || "supervisión") + ")"
                             : (meta && meta.full_name) || "Tu profe");
                     }
                     if (meta && meta.role === "alumno") {
@@ -2510,7 +2518,7 @@
                     } else if (meta && meta.role === "supervision") {
                         // Si además está mirando la partida de un alumno, el profe lo sabe.
                         const suya = meta.mirando_a && practiceStudentBoards[meta.mirando_a];
-                        mirando.push({ nombre: meta.full_name || "Alguien de supervisión", partida: suya ? suya.nombre : null });
+                        mirando.push({ nombre: meta.full_name || "Alguien", como: meta.como || "supervisión", partida: suya ? suya.nombre : null });
                     }
                 }
                 renderStudentsList();
@@ -2547,6 +2555,7 @@
                         // así que no aparece en la lista de alumnos ni en el
                         // chat, y el profesor ve que está mirando.
                         role: esObservador ? "supervision" : profile.role,
+                        como: esObservador ? observaDesde.etiqueta : undefined,
                         online_at: new Date().toISOString(),
                         mirando_a: mirandoA,
                     });
@@ -2563,6 +2572,7 @@
                     email: profile.email,
                     full_name: profile.full_name || "",
                     role: esObservador ? "supervision" : profile.role,
+                    como: esObservador ? observaDesde.etiqueta : undefined,
                     online_at: new Date().toISOString(),
                     mirando_a: mirandoA,
                 });
@@ -2580,7 +2590,7 @@
                 : "";
         }
 
-        /* Al profesor: quién de supervisión está mirando. A quien observa:
+        /* Al profesor: quién de supervisión o coordinación está mirando. A quien observa:
            cuántos alumnos hay conectados y quiénes. */
         function pintarObservadores(mirando) {
             if (isTeacher) {
@@ -2589,9 +2599,10 @@
                 el.hidden = !mirando.length;
                 // Si además mira la partida de un alumno, se dice cuál: ayudar a tu alumno
                 // sin que lo sepas no es supervisar.
+                // Cada quien con de dónde viene: supervisión o coordinación.
                 el.textContent = mirando.length
-                    ? "👁 " + mirando.map((m) => m.nombre).join(", ")
-                        + (mirando.length === 1 ? " (supervisión) está mirando la clase." : " (supervisión) están mirando la clase.")
+                    ? "👁 " + mirando.map((m) => m.nombre + " (" + m.como + ")").join(", ")
+                        + (mirando.length === 1 ? " está mirando la clase." : " están mirando la clase.")
                         + mirando.filter((m) => m.partida).map((m) => " " + m.nombre + " está en la partida de " + m.partida + ".").join("")
                     : "";
             } else if (esObservador) {
@@ -5571,16 +5582,19 @@
             if (!abierta) {
                 document.querySelector("#sin-clase h1").textContent = "No hay clase en este momento";
                 document.getElementById("sin-clase-texto").textContent = p
-                    ? nombreObservado + " no tiene la clase abierta ahora. Cuando la abra, vas a poder mirarla desde Supervisión."
-                    : "No supervisas a esa persona, o no tiene la clase abierta ahora.";
+                    ? nombreObservado + " no tiene la clase abierta ahora. Cuando la abra, vas a poder mirarla desde " + observaDesde.pantalla + "."
+                    : "Esa persona no está a tu cargo, o no tiene la clase abierta ahora.";
                 const volver = document.querySelector("#sin-clase a[href]");
-                volver.href = "supervision.html";
-                volver.textContent = "← Volver a Supervisión";
+                volver.href = observaDesde.volver;
+                volver.textContent = "← Volver a " + observaDesde.pantalla;
                 document.querySelector("#sin-clase p.text-sm").hidden = true;
                 document.getElementById("loading").classList.add("hidden");
                 document.getElementById("sin-clase").classList.remove("hidden");
                 return false;
             }
+            const volverPanel = document.querySelector("#observador-panel a[href]");
+            volverPanel.href = observaDesde.volver;
+            volverPanel.textContent = "← Volver a " + observaDesde.pantalla;
             document.getElementById("observador-texto").textContent =
                 "Clase de " + nombreObservado + ". Solo miras: no mueves el tablero, no contestas y no cuentas como alumno. "
                 + nombreObservado + " ve que estás mirando. Si la clase practica contra el motor, abajo del tablero "
@@ -5613,8 +5627,9 @@
             profile = profileData;
             isTeacher = profile.role === "profesor" || profile.is_admin === true;
             const observar = new URLSearchParams(location.search).get("observar");
-            if (observar && observar !== profile.id && (profile.es_supervisor || profile.is_admin)) {
+            if (observar && observar !== profile.id && (profile.es_supervisor || profile.is_admin || profile.es_coordinador)) {
                 esObservador = true;
+                observaDesde = profile.es_supervisor || profile.is_admin ? OBSERVA_DESDE.supervision : OBSERVA_DESDE.coordinacion;
                 isTeacher = false;
                 boardOwnerId = observar;
                 if (!(await prepararObservador())) return;
@@ -5646,7 +5661,7 @@
             }
 
             const badge = document.getElementById("role-badge");
-            badge.textContent = esObservador ? "👁 Supervisión" : isTeacher ? "Profesor" : "Alumno";
+            badge.textContent = esObservador ? observaDesde.insignia : isTeacher ? "Profesor" : "Alumno";
             badge.classList.add(isTeacher ? "bg-accent-500" : "bg-brand-600", isTeacher ? "text-brand-900" : "text-white");
 
             if (isTeacher) {
