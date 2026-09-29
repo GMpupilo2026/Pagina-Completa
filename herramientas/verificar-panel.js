@@ -925,6 +925,11 @@ async function pruebaUltimaClase(browser) {
     "Preguntas: 1 de 2 contestadas: 1 bien | Práctica contra el motor: 1 partida: 1 perdida");
   igual("y lo que contestó en cada pregunta de ESA clase", await r.page.evaluate(() => [...document.querySelectorAll("#ultima-clase ol li")].map((l) => l.textContent).join(" | ")),
     "¿Qué jugarías? Tu respuesta: Ra8# — ✅ correcta | ¿Quién está mejor? Sin contestar");
+  /* Repasar ESA clase, no la lista general: esa ya es la tarjeta «Repasar
+     mis clases» de la grilla. */
+  igual("«Repasar esta clase» abre el repaso de ESA clase",
+    await r.page.evaluate(() => { const a = [...document.querySelectorAll("#ultima-clase a")].find((x) => /Repasar/.test(x.textContent)); return a ? a.getAttribute("href") : "no está"; }),
+    "repasar-clases.html?repaso=c-0");
   igual("sin errores en la página", r.errores, []);
   await r.ctx.close();
 
@@ -1694,6 +1699,10 @@ async function pruebaProgresoAlumna(browser) {
   igual("los tres números salen tal cual los contó la base",
     [visto.puzzles, visto.lecciones, visto.coord], ["37", "9", "24"]);
   igual("y la racha de días también", visto.racha, "4");
+  /* Informes es una tarjeta de «Tu cuenta»: «Tu progreso» no lleva otra
+     puerta al mismo lugar («Ver informes completos», que se quitó). */
+  igual("«Tu progreso» no repite la puerta a Informes",
+    await page.evaluate(() => document.querySelectorAll('#progreso-alumno a[href="informes.html"]').length), 0);
   igual("el récord de racha táctica se compara dentro de su grupo",
     visto.tituloRecord, "Racha táctica del grupo 7B");
   igual("con quién lo tiene", visto.record, "Bruno Mora lleva el récord con 14 aciertos seguidos.");

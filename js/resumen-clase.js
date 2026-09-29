@@ -182,9 +182,13 @@ window.ResumenClase = (function () {
             det.appendChild(ol);
             caja.appendChild(det);
         }
-        // La partida de la clase, jugada por jugada, vive en «Repasar mis clases».
-        const repasar = el("a", "inline-block mt-3 text-sm font-semibold text-accent-700 dark:text-accent-400 hover:underline", "🎞️ Repasar la partida de tus clases →");
-        repasar.href = "repasar-clases.html";
+        /* Repasar ESTA clase: lo que no le salió, para volver a resolverlo, y
+           debajo la partida. Llevaba a la lista general de «Repasar mis
+           clases», que es la misma puerta que la tarjeta del panel; con
+           ?repaso=<clase> es un destino propio. Ver «El panel del alumno, sin
+           caminos repetidos» en docs/decisiones/paneles.md. */
+        const repasar = el("a", "inline-block mt-3 text-sm font-semibold text-accent-700 dark:text-accent-400 hover:underline", "🎞️ Repasar esta clase →");
+        repasar.href = "repasar-clases.html?repaso=" + encodeURIComponent(clase.id);
         caja.appendChild(repasar);
         caja.hidden = false;
     }
