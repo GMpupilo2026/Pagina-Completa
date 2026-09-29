@@ -848,6 +848,12 @@ contesta.
   en cada fila), ordenada por el día de la ausencia y en la pantalla agrupada
   por mes; arranca en «⏳ Por revisar». Los números de arriba se cuentan en la
   base con `count`/`head`.
+- **«⬇ Descargar esta lista en Excel»** baja lo que cumple el filtro y la
+  búsqueda puestos, no lo que se alcanzó a pintar: la pide a
+  `justificaciones_recibidas()` de a 200 hasta una página corta. Una fila por
+  justificación (estudiante, grupo, desde, hasta, días, motivo, qué pasó,
+  documentos **contados**, estado, respuesta, quién y cuándo contestó, cuándo
+  la mandó; las horas en Costa Rica). Lo arma `js/csv-excel.js` (ver abajo).
 - **Quién contestó se guarda con su nombre** (`revisada_por_nombre`): la RLS
   de `profiles` no le deja a la supervisión leer a todos los profesores, y
   «contestó alguien» no dice nada.
@@ -923,3 +929,23 @@ lado de la asistencia y no la baja.
 `verificar-asistencia.js`.** Probado que fallan de verdad: ignorando las
 justificadas en `asistenciaDe()` saltan 4 en Informes, y dejando pasar las no
 aceptadas en la ficha salta la de asistencia.
+
+### Bajar a Excel: `js/csv-excel.js`, y las fórmulas que escribe una persona
+
+`CsvExcel.bajar(nombre, cabeceras, filas)` arma el CSV con punto y coma y BOM
+(lo que Excel en español abre de un doble clic). Y **desarma las fórmulas**:
+lo que escribe una persona puede empezar con `=`, `+`, `-` o `@`, y Excel lo
+ejecuta al abrir el archivo —un alumno que escribe `=HYPERLINK(…)` en su
+justificación le deja un enlace armado a quien la baje—. A esas celdas se les
+antepone un apóstrofo, que Excel toma como «esto es texto» y no enseña; los
+números que arma la página van tal cual.
+
+- `DetalleMensual.csv()` (informe mensual, supervisión, satisfacción, encuestas
+  de curso) ya delega en él.
+- **Quedan dos copias aparte, sin desarmar fórmulas**: `bajarCsv()` de
+  `js/formularios.js` y de `js/cobros.js`. Pasarlas a `CsvExcel` es cambiar la
+  llamada y cargar el módulo en su página.
+- `verificar-justificaciones.js` baja el archivo de verdad: BOM, cabeceras, que
+  una fila escrita como fórmula salga con el apóstrofo y que con 250 baje las
+  250 en dos tandas. Probado que falla: sin el apóstrofo salta 1, y bajando
+  solo la primera tanda saltan 2.

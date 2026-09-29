@@ -23,6 +23,7 @@
  * Uso:  python3 -m http.server 8777    (desde la raíz del sitio)
  *       node herramientas/verificar-justificaciones.js
  */
+const fs = require("fs");
 const { chromium } = require("./lib/playwright-con-sesion");
 const { instalarAvisos, mensajesVisibles } = require("./lib/avisos-prueba.js");
 
@@ -237,7 +238,7 @@ async function pruebaProfesor(browser) {
   const recibidas = [
     fila({ id: "r-1", student_id: "a-1", alumno: XSS, grupo: "SJ", fecha_desde: "2026-09-25", motivo: "cita", detalle: "<script>window.__xss=2</script>Cita en el EBAIS", adjuntos: ["a-1/abcdefgh-1/foto.jpg", "a-1/abcdefgh-2/roto.pdf"], estado: "pendiente" }),
     fila({ id: "r-2", student_id: "a-2", alumno: "Bruno", fecha_desde: "2026-09-10", motivo: "estudios", detalle: "Examen del colegio", estado: "pendiente" }),
-    fila({ id: "r-3", student_id: "a-3", alumno: "Carla", fecha_desde: "2026-08-30", motivo: "familiar", detalle: "Boda", estado: "pendiente" }),
+    fila({ id: "r-3", student_id: "a-3", alumno: "Carla", fecha_desde: "2026-08-30", fecha_hasta: "2026-09-01", motivo: "familiar", detalle: '=HYPERLINK("http://malo.example";"Clic")', estado: "pendiente" }),
     fila({ id: "r-4", student_id: "a-4", alumno: "Dani", fecha_desde: "2026-08-02", motivo: "salud", detalle: "Gripe", estado: "aceptada", respuesta: "Que te mejores", revisada_por_nombre: "Profe Uno", revisada_en: "2026-08-03T15:00:00Z" }),
   ];
   const tablas = { justificaciones_ausencia: recibidas.map((r) => ({ id: r.id, student_id: r.student_id, estado: r.estado })).concat([{ id: "propia", student_id: "p-1", estado: "pendiente" }]) };
@@ -277,6 +278,24 @@ async function pruebaProfesor(browser) {
   igual("su formulario empieza cerrado", [await cambiar.getAttribute("aria-expanded"), await seVe(page, "#resp-r-4")], ["false", "no"]);
   await cambiar.click();
   igual("y al abrirlo lo dice", [await cambiar.getAttribute("aria-expanded"), await seVe(page, "#resp-r-4"), await page.inputValue("#resp-r-4")], ["true", "sí", "Que te mejores"]);
+
+  // Excel: lo que cumple el filtro puesto (Todas), con las fórmulas desarmadas.
+  const [descarga] = await Promise.all([page.waitForEvent("download"), page.click("#excel")]);
+  const csv = fs.readFileSync(await descarga.path(), "utf8");
+  cierto("se llama por lo que trae", /^justificaciones-todas-\d{4}-\d{2}-\d{2}\.csv$/.test(descarga.suggestedFilename()), descarga.suggestedFilename());
+  igual("lleva BOM y punto y coma, que es lo que Excel en español abre de un doble clic",
+    [csv.charCodeAt(0), csv.split("\r\n")[0].slice(1)],
+    [0xfeff, '"Estudiante";"Grupo";"Desde";"Hasta";"Días";"Motivo";"Qué pasó";"Documentos";"Estado";"Respuesta";"Contestó";"Contestada el";"Enviada el"']);
+  const lineas = csv.slice(1).split("\r\n").slice(1);
+  igual("una fila por justificación del filtro, en el orden de la lista", lineas.length, 4);
+  igual("la de Ana, con sus documentos contados y su nombre tal cual",
+    lineas[0], '"<img src=x onerror=""window.__xss=1"">Ana";"SJ";"2026-09-25";"2026-09-25";"1";"Cita médica o trámite";"<script>window.__xss=2</script>Cita en el EBAIS";"2 archivos adjuntos";"Por revisar";"";"";"";"2026-09-20 09:00"');
+  igual("lo que escribió Carla como fórmula queda como texto: Excel no lo ejecuta",
+    lineas[2], '"Carla";"";"2026-08-30";"2026-09-01";"3";"Asunto familiar";"\'=HYPERLINK(""http://malo.example"";""Clic"")";"Ninguno";"Por revisar";"";"";"";"2026-09-20 09:00"');
+  igual("la contestada trae quién, qué y cuándo", lineas[3].split(";").slice(8).join(";"),
+    '"Aceptada";"Que te mejores";"Profe Uno";"2026-08-03 09:00";"2026-09-20 09:00"');
+  igual("la pidió con el filtro puesto, de a 200", (await llamadas(page, "justificaciones_recibidas")).pop().args,
+    { p_estado: null, p_busqueda: null, p_limite: 200, p_desde: 0 });
   igual("sin inyección", await page.evaluate(() => window.__xss || 0), 0);
   igual("sin errores en la página", errores, []);
   await ctx.close();
@@ -290,6 +309,17 @@ async function pruebaProfesor(browser) {
   igual("la segunda página sigue donde quedó", (await llamadas(m.page, "justificaciones_recibidas")).pop().args.p_desde, 50);
   igual("y ya no ofrece más", await seVe(m.page, "#mas"), "no");
   await m.ctx.close();
+
+  console.log("\nExcel con más de lo que cabe en un pedido");
+  const cientos = Array.from({ length: 250 }, (_, i) => fila({ id: "x-" + i, student_id: "a-" + i, alumno: "Alumno " + i, fecha_desde: "2026-09-01", motivo: "otro", detalle: "x", estado: "pendiente" }));
+  const x = await abrir(browser, { tablas: { justificaciones_ausencia: [] }, recibidas: cientos, rpc: {} }, PROFE, "#lista article");
+  const [bajada] = await Promise.all([x.page.waitForEvent("download"), x.page.click("#excel")]);
+  const filasX = fs.readFileSync(await bajada.path(), "utf8").slice(1).split("\r\n").length - 1;
+  igual("baja las 250, no las 50 que se ven", filasX, 250);
+  igual("pidiéndolas en dos tandas, sin cruzar el techo de mil",
+    (await llamadas(x.page, "justificaciones_recibidas")).filter((r) => r.args.p_limite === 200).map((r) => r.args.p_desde), [0, 200]);
+  igual("sin errores en la página", x.errores, []);
+  await x.ctx.close();
 
   console.log("\nSin nada por revisar");
   const v = await abrir(browser, { tablas: { justificaciones_ausencia: [] }, recibidas: [], rpc: {} }, PROFE, "#app-equipo:not(.hidden)");
