@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20260929005911
+# al-dia-con: 20260929012847
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -626,6 +626,7 @@ columna  platform_activity_log.left_at  timestamp with time zone
 columna  platform_activity_log.pagina  text
 columna  platform_activity_log.student_id  uuid
 columna  practice_games.attempts  integer
+columna  practice_games.ayuda  jsonb
 columna  practice_games.created_at  timestamp with time zone
 columna  practice_games.eval_cp  integer
 columna  practice_games.fen  text
@@ -1103,6 +1104,7 @@ funcion  paquetes_con_uso()  invoker  anon=false  auth=true
 funcion  personas_para_ver_como()  definer  anon=false  auth=true
 funcion  plan_compartido_conmigo(p_plan uuid)  definer  anon=true  auth=true
 funcion  planes_compartidos_conmigo()  definer  anon=false  auth=true
+funcion  practica_ayuda_proteger()  invoker  anon=false  auth=false
 funcion  premios_de_alumno(p_alumno uuid, p_desde timestamp with time zone, p_hasta timestamp with time zone)  definer  anon=false  auth=true
 funcion  profesores_del_coordinador(p_coordinador uuid)  definer  anon=false  auth=true
 funcion  profile_teachers_suma_a_la_academia()  definer  anon=false  auth=false
@@ -1481,6 +1483,7 @@ trigger  ia_uso  ia_uso_avisa_tope
 trigger  notas_alumno  notas_alumno_proteger
 trigger  planes_clase  planes_clase_proteger
 trigger  platform_activity_log  platform_activity_log_protege_tiempos
+trigger  practice_games  practica_ayuda_proteger
 trigger  practice_sessions  practice_sessions_ligar_a_la_clase
 trigger  profesor_videollamada  profesor_videollamada_protege
 trigger  profile_teachers  profile_teachers_sincroniza_principal
