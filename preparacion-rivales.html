@@ -44,7 +44,7 @@
 
                 <form id="bajar-form" class="rounded-xl bg-brand-50 dark:bg-brand-950 border border-brand-100 dark:border-brand-800 p-4 mb-5" novalidate>
                     <h3 class="font-bold text-brand-800 dark:text-white mb-3">Con su usuario de Lichess o Chess.com</h3>
-                    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 items-end">
+                    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 items-end">
                         <fieldset>
                             <legend class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Sitio</legend>
                             <div class="flex gap-4 py-2 text-sm">
@@ -65,11 +65,27 @@
                                 <option value="0">Todas</option>
                             </select>
                         </div>
-                        <div class="flex gap-2">
+                    </div>
+                    <!-- Otras cuentas del mismo rival: se bajan después y se juntan con
+                         el nombre de la de arriba (js/preparacion-descarga.js). -->
+                    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 items-end mt-3">
+                        <fieldset>
+                            <legend class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Otras cuentas suyas, en</legend>
+                            <div class="flex gap-4 py-2 text-sm">
+                                <label class="inline-flex items-center gap-2"><input type="radio" name="bajar-otra-sitio" id="bajar-otra-lichess" value="lichess" class="accent-accent-500"> Lichess</label>
+                                <label class="inline-flex items-center gap-2"><input type="radio" name="bajar-otra-sitio" id="bajar-otra-chesscom" value="chesscom" checked class="accent-accent-500"> Chess.com</label>
+                            </div>
+                        </fieldset>
+                        <div class="sm:col-span-1 lg:col-span-2">
+                            <label for="bajar-otras" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Usuarios (opcional)</label>
+                            <input id="bajar-otras" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="120" placeholder="Si tiene otra cuenta; varias, separadas por coma" aria-describedby="bajar-otras-ayuda" class="w-full px-3 py-2 rounded-lg bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        </div>
+                    </div>
+                    <p id="bajar-otras-ayuda" class="text-xs text-brand-450 dark:text-brand-350 mt-1">Se bajan después de la de arriba, con el mismo «Cuántas» cada una, y se juntan como si fueran una sola cuenta.</p>
+                        <div class="flex gap-2 mt-3">
                             <button id="bajar" type="submit" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-60">Bajar y analizar</button>
                             <button id="bajar-parar" type="button" hidden class="px-4 py-2 rounded-lg text-sm font-semibold bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Parar</button>
                         </div>
-                    </div>
                     <p id="bajar-estado" role="status" class="text-sm text-brand-600 dark:text-brand-200 mt-3"></p>
                     <p class="text-xs text-brand-450 dark:text-brand-350 mt-2">Se bajan solo sus partidas públicas. Lichess entrega unas 20 por segundo: 2000 tardan cerca de dos minutos. Si lo paras, se analiza lo que ya llegó.</p>
                 </form>

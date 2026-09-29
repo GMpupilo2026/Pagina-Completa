@@ -2537,6 +2537,56 @@ limpia pase a mañana y el botón se vaya. Y en «Entrénalo», que el intento c
 un error guarde `fallos: [0]`. Comprobado que falla sin el orden por fecha y
 sin guardar dónde falló.
 
+### Varias cuentas del rival y más peso a lo que juega ahora
+
+Dos cosas que se pidieron para tener más partidas y que digan lo de hoy:
+
+**Varias cuentas.** Muchos rivales juegan en Lichess y en Chess.com, o tienen
+dos cuentas en el mismo sitio. Debajo del usuario va **«Otras cuentas suyas»**:
+el sitio y uno o varios usuarios, separados por coma.
+- Se bajan **una tras otra**, después de la de arriba, cada una con el mismo
+  «Cuántas». Una tras otra y no juntas por lo mismo que los meses de Chess.com:
+  en paralelo contestan 429.
+- **Se juntan con el nombre de la de arriba** (`unirCuentas()` en
+  `js/preparacion-descarga.js`): en las etiquetas `White`/`Black`, el usuario
+  de la otra cuenta pasa a llamarse como la principal, sin distinguir
+  mayúsculas. Así el análisis, el trabajador, los filtros y el cruce no se
+  enteran de que eran dos: es un jugador, sin pasar una lista de alias por
+  todos lados.
+- Una cuenta repetida (también con otras mayúsculas) se pide una vez. Un usuario
+  inválido se dice antes de pedir nada.
+- **Si falla una de las otras, se dice y se sigue** con las demás («De «x» en
+  Chess.com: No existe el usuario…»); si falla la de arriba, se para, como
+  antes. «Parar» corta todas y analiza lo que ya llegó.
+- El botón «Bajar y analizar» va **debajo de las dos filas**: antes de él, con
+  el tabulador, se pasa por las otras cuentas.
+
+**Más peso a lo reciente** (`ponerPesos()` en el análisis). Un repertorio
+cambia: lo que jugaba hace tres años pesaba igual que lo del mes pasado.
+- Cada partida pesa **la mitad por cada año** antes de su partida más nueva
+  (vida media de 365 días); sin fecha, como una de hace un año. Cada cuenta
+  lleva además `w`, la suma de esos pesos, junto a `n`.
+- **Solo para QUÉ juega**: el orden de sus jugadas (`hijosOrdenados`), su
+  reparto («la juega 63 %»), el plan, dónde improvisa, su línea principal, las
+  líneas de su repertorio y su libro (que guarda `[jugada, partidas, peso]`).
+  **Cuánto saca, y los mínimos, siguen con partidas enteras**: 3 de 3 tiene que
+  seguir siendo 3 partidas, y un porcentaje de puntos con pesos no se podría
+  leer.
+- Viene **marcado** («Más peso a lo que juega ahora», en los filtros) y se
+  puede desmarcar: vuelve a analizar al instante. `r.filtros.reciente` dice con
+  cuál se hizo. Con todas las partidas de la misma fecha no cambia nada.
+- «Juega contra él» dice «Últimamente la juega 63 %…» cuando el libro pesa lo
+  reciente, y el plan del alumno lleva `reciente` para decir lo mismo.
+
+Verificador (`preparacion-rivales`): sin navegador, un rival que en 2023
+contestaba 1.e4 con 1…e5 (30) y en 2026 con 1…c5 (12): sin peso, e5 primero
+(71 %); con peso, c5 (80 %), con las partidas enteras y el mismo resultado; su
+libro sortea igual y el plan con blancas va contra c5. Y que con una sola fecha
+no cambie nada. En la página, con Lichess y Chess.com de mentira: una cuenta de
+más inválida, el orden de lo que se pide (sin repetir), el rival único con 78
+partidas y la cuenta que no existe dicha; y el filtro marcado que, desmarcado,
+vuelve a analizar. Comprobado que falla sin pesos y sin juntar los nombres.
+
 ## Las inscripciones a torneos en línea
 
 `inscripciones.html` muestra lo que llegó por `inscripcion.html`, el formulario

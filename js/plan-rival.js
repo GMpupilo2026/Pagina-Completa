@@ -263,7 +263,7 @@
       if (!s) s = PreparacionSparring.montar($("sparring"));
       // Desde acá, otra partida se empieza con «Empezar de nuevo» del tablero.
       $("sparring-empezar").hidden = true;
-      s.empezar({ libro, plan: r[fila.lado].plan, color: fila.lado === "conBlancas" ? "w" : "b", elo: fila.plan.elo, rival: fila.rival });
+      s.empezar({ libro, plan: r[fila.lado].plan, color: fila.lado === "conBlancas" ? "w" : "b", elo: fila.plan.elo, rival: fila.rival, reciente: !!fila.plan.reciente });
     });
   }
 

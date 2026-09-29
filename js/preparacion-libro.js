@@ -1,7 +1,8 @@
 /* Preparación de rivales: su libro, para jugar contra «él».
  *
  * El libro es lo que el rival juega en cada posición de su árbol, con cuántas
- * veces jugó cada jugada ahí: { "<huella de la posición>": [["c5", 41], ["e5", 12]] }.
+ * veces jugó cada jugada ahí y su peso (lo reciente pesa más):
+ * { "<huella de la posición>": [["c5", 41, 30.5], ["e5", 12, 3.2]] }.
  * Lo arma el análisis (libroDe en js/preparacion-analisis.js), solo en las
  * posiciones donde le toca a él, y viaja con el resultado guardado y con el
  * plan que se le manda al alumno. «Juega contra él» (js/preparacion-sparring.js)
@@ -49,8 +50,11 @@
   function jugadas(libro, fen) {
     const lista = libro && libro[huella(claveDeFen(fen))];
     if (!lista || !lista.length) return [];
-    const total = lista.reduce((s, x) => s + x[1], 0) || 1;
-    return lista.map(([san, n]) => ({ san, n, reparto: n / total }));
+    // [jugada, partidas, peso]: el reparto va con el peso (lo reciente pesa más,
+    // ver ponerPesos en el análisis); un libro sin peso usa las partidas.
+    const peso = (x) => (x[2] != null ? x[2] : x[1]);
+    const total = lista.reduce((s, x) => s + peso(x), 0) || 1;
+    return lista.map((x) => ({ san: x[0], n: x[1], reparto: peso(x) / total }));
   }
 
   // Sorteada con el peso de las veces: una jugada que hace 3 de cada 4 veces
