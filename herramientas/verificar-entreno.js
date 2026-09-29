@@ -193,8 +193,8 @@ async function pruebaEncabezados(browser) {
 
   igual("un solo h1, y es el título de la página",
     niveles.filter((h) => h.nivel === 1).map((h) => h.texto), ["Entrenamiento 🏋️"]);
-  igual("los doce accesos son encabezados de verdad",
-    niveles.filter((h) => h.nivel === 3).length, "12");
+  igual("los trece accesos son encabezados de verdad",
+    niveles.filter((h) => h.nivel === 3).length, "13");
 
   // Sin saltos de nivel: de un h1 no se pasa a un h3.
   let salto = null;
