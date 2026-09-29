@@ -28,6 +28,11 @@
  *     regla de js/tipos-reglas-mas.js y tiene que dar lo mismo que el banco;
  *     la tabla de rey y peón se recalcula entera y se compara bit a bit, y
  *     las jugadas del maestro se comparan con la partida del curso.
+ *   - Aguanta: la defensa es legal y la regla de la página la acepta; toda
+ *     otra jugada legal está en `refuta` (con una respuesta del rival legal)
+ *     y la página la rechaza; nadie está en jaque; la amenaza es legal para
+ *     el rival y el nivel corresponde a lo que amenaza; lo que dijo el motor
+ *     cumple los cortes (la defensa entre −1,5 y +2,5, la segunda pierde).
  *
  * El motor no se vuelve a correr acá (en el CI no hay Stockfish): lo que dijo
  * se comprobó al generar, en herramientas/tipos-generar.js.
@@ -54,6 +59,12 @@ function ok(nombre, cond, detalle) {
 }
 function titulo(t) { console.log("\n=== " + t + " ==="); }
 function legal(fen) { const g = new Chess(); return g.load(fen) ? g : null; }
+/* Una jugada en castellano («Cxe5», «Rf1») es legal en esa posición. */
+const ES_EN = { R: "K", D: "Q", T: "R", A: "B", C: "N" };
+function jugadaEsLegal(g, es) {
+  const t = (ES_EN[es[0]] ? ES_EN[es[0]] + es.slice(1) : es).replace(/^0-0-0/, "O-O-O").replace(/^0-0/, "O-O");
+  return g.moves().some((s) => s === t || s === t.replace(/=([DTAC])/, (_, c) => "=" + ES_EN[c]));
+}
 const VALOR = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
 function material(fen) { let v = 0; R.tablero(fen).forEach((p) => { if (p) v += (p.c === "w" ? 1 : -1) * VALOR[p.t]; }); return v; }
 
@@ -435,6 +446,51 @@ DATOS.ruta.forEach((x) => {
 {
   ok("ruta: la torre de a1 a h8 rodea a su propio rey", JSON.stringify(M.rutaMinima("4k3/8/8/8/8/8/8/R3K3 w - - 0 1", "a1", "h8")) === JSON.stringify({ n: 3, camino: ["a2", "h2", "h8"] }));
   ok("ruta: no se puede terminar en una casilla atacada", M.rutaMinima("4k3/8/8/8/8/8/8/R3K3 w - - 0 1", "a1", "d8") === null);
+}
+
+titulo("Aguanta");
+DATOS.aguanta.forEach((x) => {
+  const g = legal(x.fen);
+  if (!g) return;
+  const yo = x.fen.split(" ")[1];
+  ok("no empieza en jaque (" + x.id + ")", !g.in_check());
+  ok("el tablero del rival es la misma posición con el otro turno (" + x.id + ")",
+    x.fenRival.split(" ")[0] === x.fen.split(" ")[0] && x.fenRival.split(" ")[1] === R.otro(yo) && !!legal(x.fenRival));
+  const am = new Chess(x.fenRival).move(x.amenaza);
+  ok("la amenaza es legal para el rival (" + x.id + ")", !!am && R.sanEs(x.amenaza) === x.amenazaEs);
+  if (am) {
+    const esperado = x.mateAmenaza ? (x.mateAmenaza === 1 ? 2 : 4) : (am.captured ? 1 : 3);
+    ok("el nivel es el de la amenaza (" + x.id + ")", x.nivel === esperado, "nivel " + x.nivel + ", esperaba " + esperado);
+    ok("la amenaza no es solo mover el rey (" + x.id + ")", !(am.piece === "k" && !am.captured && !x.mateAmenaza));
+    if (x.mateAmenaza === 1) { const h = new Chess(x.fenRival); h.move(x.amenaza); ok("la amenaza de mate en 1 es mate (" + x.id + ")", h.in_checkmate()); }
+  }
+  ok("la defensa es legal y su castellano el que se muestra (" + x.id + ")", !!new Chess(x.fen).move(x.defensa) && R.sanEs(x.defensa) === x.defensaEs);
+  ok("la regla de la página acepta la defensa (" + x.id + ")", M.aguantaAcertada(Chess, x, x.defensa).ok);
+  const legales = g.moves();
+  ok("al menos 6 jugadas para elegir (" + x.id + ")", legales.length >= 6, legales.length);
+  const otras = legales.filter((s) => s !== x.defensa);
+  ok("cada otra jugada tiene cómo la castiga el rival (" + x.id + ")", otras.every((s) => x.refuta[s]) && Object.keys(x.refuta).length === otras.length,
+    otras.filter((s) => !x.refuta[s]).join(","));
+  let malas = 0;
+  otras.forEach((s) => {
+    const rf = x.refuta[s];
+    if (M.aguantaAcertada(Chess, x, s).ok) malas++;
+    if (rf && rf.r) { const h = new Chess(x.fen); h.move(s); if (!jugadaEsLegal(h, rf.r)) malas++; }
+    if (rf && !(rf.m > 0 || typeof rf.e === "number")) malas++;
+  });
+  ok("la página rechaza las otras y sus respuestas son legales (" + x.id + ")", malas === 0, malas + " fallas");
+  ok("la defensa aguanta: entre −1,5 y +2,5 (" + x.id + ")", x.eval >= -150 && x.eval <= 250, x.eval);
+  const sg = x.segunda;
+  ok("la segunda mejor es otra jugada legal (" + x.id + ")", sg.san !== x.defensa && legales.includes(sg.san));
+  ok("y pierde: mate o 2,5 peones abajo y en −2 (" + x.id + ")", sg.mateEn > 0 || (sg.eval <= x.eval - 250 && sg.eval <= -200), JSON.stringify(sg));
+  ok("trae la respuesta para el profesor (" + x.id + ")", Array.isArray(x.respuesta) && x.respuesta[0].includes(x.defensaEs) && !!x.resumen);
+});
+// la mecánica de la regla y del texto, con casos escritos a mano
+{
+  const item = { fen: "6k1/5ppp/8/8/8/8/5PPP/r5K1 w - - 0 1", defensa: "Kf1", refuta: {} };
+  ok("aguantaAcertada: una jugada ilegal no es legal", !M.aguantaAcertada(Chess, item, "Ke2").legal);
+  ok("textoRefuta dice el mate", M.textoRefuta({ r: "Dxh7", m: 2 }) === "El rival contesta Dxh7 y te da mate en 2.");
+  ok("textoRefuta dice el número", M.textoRefuta({ r: "Cxe5", e: -340 }) === "El rival contesta Cxe5 y el motor te da −3,4.");
 }
 
 console.log("\n" + (fallos ? "✗ " + fallos + " de " + pruebas + " comprobaciones fallaron." : "✓ Las " + pruebas + " comprobaciones pasaron."));

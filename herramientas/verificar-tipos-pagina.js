@@ -1,9 +1,9 @@
 /* Comprueba entreno/tipos.html en un navegador de verdad: la ficha de los
- * Tipos de entrenamiento y los catorce juegos, JUGADOS de punta a punta.
+ * Tipos de entrenamiento y los quince juegos, JUGADOS de punta a punta.
  *
  * Los bancos los comprueba herramientas/verificar-tipos.js sin navegador.
  * Esto es lo que solo se rompe mirando la pantalla:
- *   - sin sesión manda a iniciar sesión; con sesión, la ficha trae los catorce
+ *   - sin sesión manda a iniciar sesión; con sesión, la ficha trae los quince
  *     tipos, cada uno con su encabezado y su enlace;
  *   - cada juego pinta LA posición de su ejercicio (se compara casilla por
  *     casilla contra la FEN del banco, no contra la página);
@@ -137,7 +137,7 @@ async function main() {
       enlace: li.querySelector("h2 a").getAttribute("href"),
       visible: li.checkVisibility(),
     })));
-    ok("catorce fichas", fichas.length === 14, fichas.length);
+    ok("quince fichas", fichas.length === 15, fichas.length);
     ok("cada una con su encabezado y su enlace", fichas.every((f) => f.titulo && /^#[a-z-]+$/.test(f.enlace) && f.visible), JSON.stringify(fichas));
     ok("un solo h1", (await page.$$eval("#vista-fichas h1", (h) => h.length)) === 1);
     await page.click('#fichas li:first-child h2 a');
@@ -362,7 +362,7 @@ async function main() {
     await ctx.close();
   }
 
-  /* ======================= 8 a 14 ======================= */
+  /* ======================= 8 a 15 ======================= */
   const M = require("../js/tipos-reglas-mas.js");
   const escribir = async (page, txt) => { await page.fill("#jugada-input", txt); await page.press("#jugada-input", "Enter"); };
 
@@ -523,6 +523,54 @@ async function main() {
     ok("por el camino más corto: tres estrellas", /camino más corto/.test(t) && (await estrellas(page))["ruta:" + item.id] === 3, t);
     const visto = await tableroVisto(page);
     ok("la pieza quedó en el destino", !!visto[item.hasta] && !visto[item.desde]);
+    ok("sin errores en consola", !errores.length, errores.join(" | "));
+    await ctx.close();
+  }
+
+  console.log("\n=== Aguanta ===");
+  {
+    const item = DATOS.aguanta.find((x) => x.fen.split(" ")[1] === "b") || DATOS.aguanta[0];
+    const { page, ctx, errores } = await abrir(browser, true, "#aguanta/" + item.nivel + "/" + item.id);
+    await page.waitForSelector("#vista-juego:not(.hidden) #jugada-input");
+    await mismaPosicion(page, item.fen, "pinta la posición del ejercicio");
+    const primera = await page.$eval("#tablero [data-square]", (c) => c.dataset.square);
+    ok("el tablero está del lado del alumno", primera === (item.fen.split(" ")[1] === "w" ? "a8" : "h1"), "arriba a la izquierda: " + primera);
+    // ver la amenaza la marca en el tablero, con su signo escrito
+    await page.getByRole("button", { name: /Qué quiere el rival/ }).click();
+    const t0 = await esperarEstado(page, /El rival amenaza/);
+    ok("«¿Qué quiere el rival?» dice la amenaza", t0.includes(item.amenazaEs), t0);
+    const destino = new Chess(item.fenRival).move(item.amenaza).to;
+    const marca = await page.$eval('#tablero [data-square="' + destino + '"]', (c) => ({ signo: c.dataset.marca || "", nombre: c.getAttribute("aria-label") || "" }));
+    ok("y la marca en el tablero con su signo y dicha", marca.signo === "✕" && /quiere ir el rival/.test(marca.nombre), JSON.stringify(marca));
+    // una jugada que pierde: se deshace y dice cómo castiga el rival
+    const mala = Object.keys(item.refuta)[0];
+    await page.fill("#jugada-input", R.sanEs(mala));
+    await page.press("#jugada-input", "Enter");
+    const t1 = await esperarEstado(page, /pierde/);
+    ok("una jugada que pierde se explica con la respuesta del rival", /pierde/.test(t1) && (!item.refuta[mala].r || t1.includes(item.refuta[mala].r)), t1);
+    await mismaPosicion(page, item.fen, "y el tablero vuelve a la posición");
+    ok("no da estrellas todavía", !(await estrellas(page))["aguanta:" + item.id]);
+    // la única defensa, escrita
+    await page.fill("#jugada-input", item.defensaEs);
+    await page.press("#jugada-input", "Enter");
+    const t2 = await esperarEstado(page, /Aguanta/);
+    ok("la única defensa es correcta", /era la única/.test(t2), t2);
+    ok("con la amenaza vista y un error: una estrella", (await estrellas(page))["aguanta:" + item.id] === 1, JSON.stringify(await estrellas(page)));
+    const g = new Chess(item.fen); g.move(item.defensa);
+    await mismaPosicion(page, g.fen(), "la defensa queda jugada en el tablero");
+    ok("explica la defensa y la línea", ((await page.textContent("#explicacion")) || "").includes("La única que aguanta: " + item.defensaEs));
+    ok("sin errores en consola", !errores.length, errores.join(" | "));
+    await ctx.close();
+  }
+  {
+    // a la primera y sin pistas: tres estrellas
+    const item = DATOS.aguanta.find((x) => x.nivel === 2) || DATOS.aguanta[1];
+    const { page, ctx, errores } = await abrir(browser, true, "#aguanta/" + item.nivel + "/" + item.id);
+    await page.waitForSelector("#vista-juego:not(.hidden) #jugada-input");
+    await page.fill("#jugada-input", item.defensaEs);
+    await page.press("#jugada-input", "Enter");
+    await esperarEstado(page, /Aguanta/);
+    ok("a la primera: tres estrellas", (await estrellas(page))["aguanta:" + item.id] === 3, JSON.stringify(await estrellas(page)));
     ok("sin errores en consola", !errores.length, errores.join(" | "));
     await ctx.close();
   }

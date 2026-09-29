@@ -179,6 +179,10 @@
       }
       if (m) nombre += ", " + m.dicho;
       celda.setAttribute("aria-label", nombre);
+      // js/tablero-accesible.js vuelve a escribir el nombre de cada casilla; lo
+      // que la página agrega (la marca) lo toma de data-estado. Sin esto, la
+      // marca se veía pero el lector de pantalla no la decía.
+      if (m && m.dicho) celda.dataset.estado = m.dicho;
       if (!tab.clic) celda.setAttribute("role", "img");
       t.appendChild(celda);
     }));
