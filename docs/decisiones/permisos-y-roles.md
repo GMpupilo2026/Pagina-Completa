@@ -1393,7 +1393,9 @@ empieza a dar clase a los pequeños.
 
 ### `coordinacion.html`: por dónde se entra a la gente que uno coordina
 
-Sus profesores y sus alumnos, con buscador, filtro por rol y «Ver más». Por
+Sus profesores y sus alumnos, con buscador, filtro por rol y «Ver más» (primero
+la lista y abajo Equipos: ver «La página de coordinación, lo de todos los días
+primero» en paneles.md). Por
 cada cuenta: entrar a sus subgrupos, reenviarle el acceso y cambiarle el rol.
 Junto al profesor que está dando clase, «🔴 En clase ahora · Mirar la clase»:
 quien coordina la mira en vivo y ayuda en la práctica, como supervisión (ver
