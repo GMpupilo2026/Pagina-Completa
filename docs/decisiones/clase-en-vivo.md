@@ -1950,6 +1950,25 @@ alumno le aparece en su propio tablero.
     profe lo apaga; el profe no lo puede encender; sí apagarlo; la alumna lo
     cancela; al reintentar se apaga.
 
+- **Una pista para todos a la vez**: arriba de «Tableros de los alumnos»,
+  «📣 Pista para todos». Va **solo texto**: cada alumno va en una posición
+  distinta, y una flecha dibujada en una señalaría otra cosa en las demás. Es
+  **un solo update filtrado por la ronda** (`session_id`), no un bucle por
+  alumno: la RLS decide a qué partidas llega (las del profe, o las que alcanza
+  quien observa) y el trigger le pone a cada una quién la dio y apaga los
+  pedidos de ayuda —no hizo falta migración—. La ayuda lleva `para_todos` y el
+  alumno la lee «Pista de tu profe para toda la clase». **Reemplaza** la ayuda
+  individual que tuviera cada uno, y la nota del campo lo dice. Se cuenta lo
+  que QUEDÓ guardado («Le llegó a los 12 alumnos», «a 10 de 12»), porque con la
+  ronda terminada la base la devuelve como estaba. Comprobado impersonando
+  roles: el profe la manda a las dos partidas de una vez, cada una con su `de`,
+  sin tocar las jugadas y apagando el pedido; una alumna no se la puede mandar
+  a nadie.
+  - El doble de `verificar-clase-registrada.js` cambiaba solo la PRIMERA fila
+    de un update; ahora cambia todas las que cumplen el filtro, como la base.
+    Con el de antes, «le llegó a los 2» se habría visto bien habiendo cambiado
+    una sola.
+
 Comprobado impersonando roles en SQL (revertido): el profe manda la ayuda y
 queda con su `de`, pero sus cambios a jugadas, estado, intentos y reloj se
 devuelven; el alumno no puede cambiarla y sí juega; al reintentar se borra; con

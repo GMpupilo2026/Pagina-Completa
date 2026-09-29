@@ -134,7 +134,9 @@ window.__deletes = [];
         }
         if (porActualizar) {
           window.__updates.push({ tabla: tabla, campos: porActualizar, donde: condiciones.slice() });
-          if (filas2[0]) Object.assign(filas2[0], porActualizar);
+          // Como la base: el update cambia TODAS las filas que cumplen el filtro, no
+          // solo la primera (un envío a toda la ronda lo dejaría en evidencia).
+          filas2.forEach((f) => Object.assign(f, porActualizar));
           porActualizar = null;
         }
         let d = pend !== null && pend !== undefined ? (unica ? pend : [pend]) : filas2;
