@@ -230,6 +230,42 @@ async function hub(browser) {
     igual("con el plan del profe, sale el suyo", items[0],
       ["📅Tu plan, semana 1 de 1 · Mates: Mates en uno (todavía nada)", "../entreno/mates.html?cat=mate1"]);
     await ctx.close();
+
+    /* El primer paso, en la misma página del diagnóstico: lo que toca hoy,
+       arriba de todo y con un botón directo (el mismo hoyDelPlan que el hub),
+       y la meta del día de Logros. */
+    ({ page, ctx, errores } = await abrir(browser, "/entreno/diagnostico.html",
+      { "rpc:progreso_dias_y_racha": [{ hoy_ejercicios: 1, racha_actual: 0 }] },
+      { diagnostico_resultado_v1: guardado(hace(0)) }));
+    await page.waitForFunction(() => { const b = document.getElementById("ver-previo-btn"); return b && b.checkVisibility(); }, null, { timeout: 20000 });
+    await page.click("#ver-previo-btn");
+    await page.waitForFunction(() => !document.getElementById("result-primer-paso").hidden, null, { timeout: 10000 });
+    const paso = await page.evaluate(() => ({
+      titulo: document.getElementById("primer-paso-titulo").textContent,
+      texto: document.getElementById("primer-paso-texto").textContent,
+      meta: document.getElementById("primer-paso-meta").textContent,
+      ir: [document.getElementById("primer-paso-ir").textContent, document.getElementById("primer-paso-ir").getAttribute("href")],
+      primero: document.querySelector("#result-view > div:not([hidden]):not(.hidden)").id || "sin id",
+    }));
+    igual("al terminar el diagnóstico, el primer paso es hoy", paso.titulo, "Tu primer paso: hoy mismo");
+    igual("dice qué y cuánto", paso.texto,
+      `La semana 1 de tu plan es Táctica. Empieza ya con «${recurso.texto}»: 5 ejercicios hoy y el día cuenta para tu racha.`);
+    igual("con la meta del día de Logros", paso.meta, "Hoy llevas 1 de 5.");
+    igual("y un botón directo al ejercicio", paso.ir, ["Empezar ahora →", "../" + recurso.href]);
+    sinErrores(errores, "diagnóstico con primer paso");
+    await ctx.close();
+
+    // Ya en la semana 2, y con trabajo hecho, dice cómo va en vez de «primer paso».
+    ({ page, ctx } = await abrir(browser, "/entreno/diagnostico.html",
+      { "rpc:avance_del_plan": [{ clave: PE.claveDeAvance(PE.recursoPrincipal(plan.semanas[1]).href), hechos: 4 }] },
+      { diagnostico_resultado_v1: guardado(hace(8)) }));
+    await page.waitForFunction(() => { const b = document.getElementById("ver-previo-btn"); return b && b.checkVisibility(); }, null, { timeout: 20000 });
+    await page.click("#ver-previo-btn");
+    await page.waitForFunction(() => !document.getElementById("result-primer-paso").hidden, null, { timeout: 10000 });
+    igual("en la semana 2, lo que toca y cuánto lleva",
+      await page.evaluate(() => [document.getElementById("primer-paso-titulo").textContent, document.getElementById("primer-paso-ir").textContent]),
+      [`Esta semana te toca: ${plan.semanas[1].titulo.split(" · ").slice(1).join(" · ").replace(/^[^\p{L}\p{N}]+/u, "")}`, "Seguir →"]);
+    await ctx.close();
   }
   {
     const { page, ctx } = await abrir(browser, "/entreno/index.html", {}, { diagnostico_resultado_v1: JSON.stringify({ fecha: new Date().toISOString() }) });

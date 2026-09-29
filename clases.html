@@ -315,6 +315,17 @@
                         <div class="text-xs text-brand-450 dark:text-brand-350 mt-1"><span aria-hidden="true">⏰ </span>Tareas vencidas</div>
                     </a>
                 </div>
+                <!-- Quiénes se están cayendo del plan (public.se_caen_del_plan()):
+                     alumnos con plan —el del diagnóstico o el compartido— que
+                     llevan 3 días o más sin entrenar. El número de arriba dice
+                     cuántos; esto dice QUIÉNES, con su informe a un clic. Sin
+                     nadie, no se pinta. -->
+                <div id="profe-caen" hidden class="mt-4 pt-4 border-t border-brand-100 dark:border-brand-800">
+                    <h3 class="text-sm font-semibold text-brand-800 dark:text-white"><span aria-hidden="true">📉 </span>Se están cayendo del plan</h3>
+                    <p class="text-xs text-brand-450 dark:text-brand-350 mt-0.5">Tienen plan y llevan 3 días o más sin entrenar. Los primeros días son los que más se pierden: un mensaje ahora pesa más que uno en un mes.</p>
+                    <ul id="profe-caen-lista" class="mt-2 divide-y divide-brand-100 dark:divide-brand-800"></ul>
+                    <a id="profe-caen-mas" hidden href="informes.html?tema=inactivos" class="inline-block mt-2 text-sm text-accent-700 dark:text-accent-400 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded"></a>
+                </div>
                 <p class="mt-4 pt-4 border-t border-brand-100 dark:border-brand-800 text-sm text-brand-500 dark:text-brand-300" id="profe-clases">—</p>
             </div>
 

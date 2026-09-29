@@ -1762,6 +1762,49 @@
             // El primer paso le habla al profesor («asigna tu primera tarea»):
             // a quien lo está revisando no le toca hacerlo.
             if (!profile._persona) primerPasoDelProfesor(fila);
+            // Quiénes se caen: la RLS responde con la gente de quien MIRA, así
+            // que mirando a otra persona no se pinta (serían los de uno).
+            if (!profile._persona) cargarSeCaen();
+        }
+
+        /* Los alumnos con plan que llevan días sin entrenar, por nombre, con
+           su informe a un clic. La lista la arma public.se_caen_del_plan()
+           (SECURITY INVOKER: la RLS decide de quién). Los que acaban de
+           caerse van primero: son los que todavía se recuperan con un
+           mensaje. */
+        const SE_CAEN_VISIBLES = 6;
+        async function cargarSeCaen() {
+            const caja = document.getElementById("profe-caen");
+            if (!caja) return;
+            const { data, error } = await sb.rpc("se_caen_del_plan", { p_dias: 3 });
+            if (error || !data || !data.length) { caja.hidden = true; return; }
+            const lista = document.getElementById("profe-caen-lista");
+            lista.replaceChildren();
+            const hoy = Date.now();
+            data.slice(0, SE_CAEN_VISIBLES).forEach((a) => {
+                const ref = Math.max(new Date(a.ultima || 0).getTime(), new Date(a.desde).getTime());
+                const dias = Math.max(1, Math.floor((hoy - ref) / 86400000));
+                const li = document.createElement("li");
+                const enlace = document.createElement("a");
+                enlace.href = "informes.html?alumno=" + encodeURIComponent(a.id);
+                enlace.className = "flex items-baseline justify-between gap-3 py-2 rounded hover:bg-brand-50 dark:hover:bg-brand-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+                const nombre = document.createElement("span");
+                nombre.className = "min-w-0 text-sm font-medium text-brand-800 dark:text-white";
+                nombre.textContent = a.nombre || "Sin nombre";
+                const cuanto = document.createElement("span");
+                cuanto.className = "shrink-0 text-xs text-brand-500 dark:text-brand-300";
+                cuanto.textContent = a.entreno_con_plan
+                    ? (dias === 1 ? "1 día sin entrenar" : dias + " días sin entrenar")
+                    : "no empezó el plan (" + (dias === 1 ? "hace 1 día" : "hace " + dias + " días") + ")";
+                enlace.append(nombre, cuanto);
+                li.appendChild(enlace);
+                lista.appendChild(li);
+            });
+            const resto = data.length - SE_CAEN_VISIBLES;
+            const mas = document.getElementById("profe-caen-mas");
+            mas.hidden = resto <= 0;
+            mas.textContent = resto === 1 ? "Y 1 más en Informes →" : "Y " + resto + " más en Informes →";
+            caja.hidden = false;
         }
 
         /* ---------- Por dónde empezar, del lado del que da clase ----------

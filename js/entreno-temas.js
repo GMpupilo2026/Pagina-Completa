@@ -244,6 +244,33 @@ function pintarSelectorDesde(){
     : '';
 }
 
+/* La dificultad que se ajusta sola (js/dificultad-adaptable.js): con varios
+   limpios seguidos sube un escalón, y si se traba baja uno. No toca el
+   repaso, un tema sin rating ni la dificultad que fijó una tarea o el plan
+   con ?desde= (la decidió el profesor). El escalón nuevo queda guardado como
+   si lo hubiera elegido en el selector, y se dice en pantalla. */
+const DESDE_FIJADO = parseInt(new URLSearchParams(location.search).get('desde') || '', 10) > 0;
+const ajusteDificultad = window.DificultadAdaptable ? DificultadAdaptable.crear() : null;
+let buscarDesdeElPrincipio = false;
+function ajustarDificultad(limpio){
+  if(!ajusteDificultad || DESDE_FIJADO || enRepaso() || !temaConRating(currentTheme)) return;
+  const cambio = ajusteDificultad.registrar(limpio);
+  if(!cambio) return;
+  const nuevo = DificultadAdaptable.escalon(DESDE_OPCIONES, nivelDesde, cambio);
+  if(nuevo === nivelDesde) return;
+  nivelDesde = nuevo;
+  try{ localStorage.setItem(CLAVE_DESDE, String(nivelDesde)); }catch(e){}
+  // El tema va de menor a mayor: para bajar hay que volver a buscar desde
+  // el principio (más adelante solo quedan los más difíciles).
+  buscarDesdeElPrincipio = true;
+  pintarSelectorDesde();
+  const aviso = document.getElementById('nivel-ajuste');
+  aviso.textContent = cambio === 'subir'
+    ? `⬆️ Te está saliendo fácil: ${DificultadAdaptable.SUBIR_CON} limpios seguidos. Los próximos arrancan desde ${nivelDesde}.`
+    : `⬇️ Bajamos un escalón: los próximos ${nivelDesde ? 'arrancan desde ' + nivelDesde : 'son los más fáciles'}. Primero afianzar, después se vuelve a subir.`;
+  aviso.hidden = false;
+}
+
 // La racha (js/ejercicio-tablero.js): la misma en todas las páginas de ejercicios.
 const { getStreak, getBestStreak, setStreak, bumpStreak, resetStreak } = EjercicioTablero.racha('entreno_temas');
 
@@ -603,6 +630,7 @@ function finishPuzzle(){
   const id = currentId();
   const alreadySolved = isSolved(id);
   if(!missedThisPuzzle && !usedHintThisPuzzle) bumpStreak(); else resetStreak();
+  ajustarDificultad(!missedThisPuzzle && !usedHintThisPuzzle);
   setStatus(game.in_checkmate() ? '✅ ¡Jaque mate!' : '✅ ¡Correcto! Con esto se obtiene una ventaja decisiva.', 'ok');
   // La cola de repaso: lo que costó entra, lo que se repasa se vuelve a
   // programar. Lo resuelto limpio a la primera no entra nunca.
@@ -640,7 +668,8 @@ function pasarAlSiguiente(){
     return;
   }
   if(solvedCountFor(currentTheme) < idsOf(currentTheme).length){
-    currentIndex = siguienteIndice(currentTheme, currentIndex + 1);
+    currentIndex = siguienteIndice(currentTheme, buscarDesdeElPrincipio ? 0 : currentIndex + 1);
+    buscarDesdeElPrincipio = false;
     loadPuzzle();
   } else {
     finishTheme();
@@ -715,6 +744,9 @@ document.getElementById('skip-btn').addEventListener('click', () => {
 document.getElementById('repaso-btn').addEventListener('click', abrirRepaso);
 document.getElementById('nivel-desde').addEventListener('change', (e) => {
   nivelDesde = parseInt(e.target.value, 10) || 0;
+  // Lo eligió a mano: la cuenta del ajuste empieza de nuevo en ese escalón.
+  if(ajusteDificultad) ajusteDificultad.reiniciar();
+  document.getElementById('nivel-ajuste').hidden = true;
   try{ localStorage.setItem(CLAVE_DESDE, String(nivelDesde)); }catch(err){}
   if(solvedCountFor(currentTheme) >= idsOf(currentTheme).length) return;
   currentIndex = siguienteIndice(currentTheme, 0);
