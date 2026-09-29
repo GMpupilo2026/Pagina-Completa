@@ -10,6 +10,9 @@
      otro; la lección solo se completa sin errores.
    - Visualización: «Rd2» se lee como el rey cuando la línea pide el rey; y un
      ejercicio sacado con pista o con error no cuenta como resuelto.
+   - Visualización va de fácil a difícil; Racha táctica sin sesión manda al
+     login con ?next=; Precisión posicional enlaza fichas en «a reforzar» y
+     no repite la misma idea espejada en la ronda corta siguiente.
    - Diagnóstico: el plan sale entero (las cuatro semanas, con su meta), y si el
      profesor compartió el suyo se ve ese, con su texto escapado.
 
@@ -171,6 +174,54 @@ async function visualizacion(browser) {
     await page.evaluate(() => window.__inserts.filter((i) => i.tabla === "training_progress").length), "0");
   sinErrores(errores, "visualización");
   await ctx.close();
+}
+
+/* Los cinco arreglos rápidos: el orden de Visualización, adónde manda Racha
+   táctica sin sesión, y en Precisión posicional las fichas de «a reforzar» y
+   que la ronda corta siguiente no repita la misma idea dada vuelta. */
+async function rapidos(browser) {
+  console.log("\n=== Visualización: de fácil a difícil ===");
+  {
+    const { page, ctx, errores } = await abrir(browser, "/entreno/visualizacion.html");
+    await page.waitForFunction(() => DATA && Object.keys(POOLS).length && NIVELES.every((n) => POOLS[n.id]), { timeout: 15000 });
+    igual("cada nivel va ordenado por rating, de menor a mayor", await page.evaluate(() => NIVELES.every((n) => {
+      const r = POOLS[n.id].map((id) => (typeof DATA.puzzles[id].rating === "number" ? DATA.puzzles[id].rating : Infinity));
+      return r.length > 1 && r.every((x, i) => i === 0 || r[i - 1] <= x);
+    })), "true");
+    sinErrores(errores, "visualización");
+    await ctx.close();
+  }
+
+  console.log("\n=== Racha táctica con la sesión vencida ===");
+  {
+    const { page, ctx } = await doble.abrir(browser, "/racha-tactica.html", { sesion: null });
+    await page.waitForURL(/login\.html/, { timeout: 8000 }).catch(() => {});
+    igual("manda a iniciar sesión y vuelve a Racha táctica", decodeURIComponent(new URL(page.url()).search), "?next=racha-tactica.html");
+    await ctx.close();
+  }
+
+  console.log("\n=== Precisión posicional ===");
+  {
+    const { page, ctx, errores } = await abrir(browser, "/entreno/precision-posicional.html");
+    await page.click("#start-btn");
+    await page.waitForFunction(() => Array.isArray(tanda) && tanda.length === 8, { timeout: 8000 });
+    const primera = await page.evaluate(() => tanda.map((i) => i.id));
+    // Sin contestar nada: las ocho áreas quedan «a reforzar» (se muestran tres).
+    await page.evaluate(() => terminar());
+    await page.waitForFunction(() => document.querySelectorAll("#r-plan a").length > 0, { timeout: 8000 }).catch(() => {});
+    const enlaces = await page.evaluate(() => [...document.querySelectorAll("#r-plan a")].map((a) => ({
+      href: a.getAttribute("href"), texto: a.textContent, visible: a.checkVisibility() })));
+    igual("«a reforzar» enlaza fichas de Estudio, visibles", enlaces.length >= 3 && enlaces.every((e) => /^estudio\.html\?ficha=[a-z-]+$/.test(e.href) && /^Ficha: /.test(e.texto) && e.visible), "true");
+    await page.click("#repeat-btn");
+    await page.click("#start-btn");
+    await page.waitForFunction((a) => tanda.length === 8 && tanda.map((i) => i.id).join() !== a.join(), primera, { timeout: 8000 });
+    const idea = (id) => id.replace(/_(h|v|hv)$/, "");
+    const segunda = await page.evaluate(() => tanda.map((i) => i.id));
+    const repetidas = segunda.filter((id) => primera.map(idea).includes(idea(id)));
+    igual("la ronda corta siguiente no repite ninguna idea, ni espejada", repetidas.join(", ") || "ninguna", "ninguna");
+    sinErrores(errores, "precisión posicional");
+    await ctx.close();
+  }
 }
 
 async function moduloComun(browser) {
@@ -348,6 +399,7 @@ async function diagnostico(browser) {
     await diagnostico(browser);
     await moduloComun(browser);
     await tableroYPistas(browser);
+    await rapidos(browser);
   } catch (e) {
     console.log("  ✗ " + (e && e.stack || e));
     fallos += 1;
