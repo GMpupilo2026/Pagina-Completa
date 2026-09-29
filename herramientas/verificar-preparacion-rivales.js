@@ -506,6 +506,46 @@ function pruebaFormaYRitmo() {
   cierto("con pocas partidas con fecha no se inventa una forma reciente", A.analizar(A.leerPgn(pgnDePrueba()), "Pedro Perez").reciente === null);
 }
 
+/* ¿Qué tan certera es? (certezaDe y certeza del resumen). Pedro, con negras:
+   en 2025 perdía contra 1.e4 e5 y ganaba contra 1.d4 d5. En septiembre de
+   2026, dos historias:
+     - SIGUE IGUAL: la preparación hecha con 2025 acierta todo;
+     - CAMBIÓ: contra 1.e4 ahora juega 1…c5 y gana; la preparación vieja
+       falla, y tiene que decirlo. */
+function pgnDeCerteza(cambio) {
+  let t = "";
+  const p = (res, jugadas, fecha) => { t += partida("Otro", "Pedro", res, jugadas).replace('[Date "2025.03.04"]', '[Date "' + fecha + '"]'); };
+  for (let i = 0; i < 40; i++) p(i % 4 ? "1-0" : "0-1", "e4 e5 2. Nf3 Nc6", "2025.0" + (1 + (i % 9)) + ".10");
+  for (let i = 0; i < 20; i++) p(i % 5 ? "0-1" : "1-0", "d4 d5 2. c4 e6", "2025.0" + (1 + (i % 9)) + ".11");
+  for (let i = 0; i < 10; i++) p(cambio ? "0-1" : (i % 4 ? "1-0" : "0-1"), cambio ? "e4 c5 2. Nf3 d6" : "e4 e5 2. Nf3 Nc6", "2026.09." + (10 + i));
+  for (let i = 0; i < 5; i++) p("0-1", "d4 d5 2. c4 e6", "2026.09." + (20 + i));
+  return t;
+}
+
+function pruebaCerteza() {
+  console.log("\n=== ¿Qué tan certera es la preparación? ===");
+  const igualA = A.analizar(A.leerPgn(pgnDeCerteza(false)), "Pedro");
+  igual("se prepara con las viejas y se prueba con las nuevas (el 20 %, al menos 15)", [igualA.certeza.viejas, igualA.certeza.nuevas, igualA.certeza.desde], [60, 15, "2026-09-10"]);
+  igual("si sigue igual: acierta todas sus decisiones", igualA.certeza.repertorio, { decisiones: 30, aciertos: 30, entreDos: 30 });
+  const ci = R.armar(igualA).certeza;
+  igual("y todo se confirma: confianza alta", [ci.confianza, ci.items.map((x) => x.veredicto)], ["alta", ["Muy predecible", "Se confirmó", "Se confirmó", "Se confirmó"]]);
+  igual("con el dato, comparado con su promedio", ci.items[1].texto, "En las líneas que se marcaron como débiles sacó 30,0 % en 10 partidas; en todas sus partidas nuevas con ese color, 53,3 %.");
+
+  const cambio = A.analizar(A.leerPgn(pgnDeCerteza(true)), "Pedro");
+  const cc = R.armar(cambio).certeza;
+  igual("si cambió a 1…c5: la mitad de sus decisiones ya no se adivinan", [cambio.certeza.repertorio.aciertos, cambio.certeza.repertorio.decisiones], [10, 20]);
+  igual("las débiles y el plan con blancas pasaban por 1.e4 e5, que ya no juega: lo dice", cc.items.map((x) => [x.titulo, x.veredicto]), [
+    ["¿Adivina lo que juega?", "Bastante predecible"],
+    ["¿Las líneas débiles siguieron siéndolo?", "Ya no las juega"],
+    ["¿Las fuertes también?", "Se confirmó"],
+    ["¿Funcionó el plan con blancas?", "Ya no las juega"],
+  ]);
+  igual("y cuenta por qué", cc.items[3].texto, "En sus 15 partidas nuevas con ese color no volvió a llegar a 1.e4 e5: parece que cambió de apertura.");
+  igual("y la confianza baja, con lo que hay que hacer", [cc.confianza, cc.consejo], ["baja", "Úsalo con cuidado: últimamente no juega como antes. Prepárate también para lo que juega ahora (mira los avisos de su forma reciente)."]);
+  cierto("si todas son del mismo día (no hay con qué prepararse antes), no se prueba", A.analizar(A.leerPgn(pgnDePrueba()), "Pedro Perez").certeza === null);
+  return igualA;
+}
+
 /* Stockfish sobre lo que él juega de verdad (tareasDelMotor + jugadasSuyas).
    Con blancas el plan va por 1.e4: su 1.d4 d5 2.c4 e6 (20 partidas, 90 %)
    no está en el plan, pero sí en lo que él repite, y se revisa igual. */
@@ -1760,6 +1800,18 @@ async function pruebaAFondo(browser) {
   await ctx.close();
 }
 
+async function pruebaCertezaEnLaPagina(browser, r) {
+  console.log("\n=== ¿Qué tan certera es?, en la página ===");
+  const { page, ctx, errores } = await abrir(browser, true, [{ id: "p-c", profesor_id: "u-profe", rival: "Pedro", partidas: r.total, created_at: "2026-09-29T01:00:00Z", analisis: JSON.parse(JSON.stringify(r)) }]);
+  await page.click('#guardados button[aria-label="Abrir el análisis de Pedro"]');
+  await page.waitForFunction(() => document.getElementById("titulo-resultado").textContent === "Pedro", null, { timeout: 10000 });
+  igual("la tarjeta va justo después del resumen", await page.evaluate(() => [...document.querySelectorAll("#resultado-cuerpo h3")].slice(0, 2).map((h) => h.textContent)), ["Qué hacer contra él", "¿Qué tan certera es esta preparación?"]);
+  igual("la confianza, escrita, y cada veredicto también", await page.evaluate(() => [document.querySelector("[data-confianza]").textContent + " / " + document.querySelector("[data-consejo]").textContent, [...document.querySelectorAll("[data-veredicto] p:first-child")].map((p) => p.textContent)]),
+    ["Confianza: alta / Puedes ir con este plan: con lo que se sabía antes, se adivinó lo que hizo después.", ["¿Adivina lo que juega? Muy predecible.", "¿Las líneas débiles siguieron siéndolo? Se confirmó.", "¿Las fuertes también? Se confirmó.", "¿Funcionó el plan con blancas? Se confirmó."]]);
+  igual("sin errores", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+}
+
 async function pruebaMotorDeVerdad(browser) {
   console.log("\n=== Stockfish 19 lite, corriendo en la página ===");
   const ctx = await browser.newContext({ serviceWorkers: "block" });
@@ -1810,6 +1862,7 @@ async function pruebaMotorDeVerdad(browser) {
   const conDerrotas = pruebaDerrotas();
   const conTactica = pruebaTactica();
   pruebaFormaYRitmo();
+  const conCerteza = pruebaCerteza();
   pruebaCsp();
   pruebaArchivosDelMotor();
   const browser = await chromium.launch({ executablePath: CHROME });
@@ -1827,6 +1880,7 @@ async function pruebaMotorDeVerdad(browser) {
     await pruebaTacticaEnLaPagina(browser, conTactica);
     await pruebaRitmoEHojaEnLaPagina(browser);
     await pruebaAFondo(browser);
+    await pruebaCertezaEnLaPagina(browser, conCerteza);
     await pruebaMotorDeVerdad(browser);
     await pruebaTacticaConMotorDeVerdad(browser);
   } finally {
