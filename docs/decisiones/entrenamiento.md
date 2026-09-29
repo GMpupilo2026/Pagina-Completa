@@ -659,7 +659,8 @@ y el alumno practicaba otro motivo sin que nada fallara.
 
 `entreno/index.html` reparte los accesos en **Fundamentos** (Mates,
 Aprender, Coordenadas, Desafíos), **Practicar** (Ejercicios por tema, Practicar), **Entreno** (Aperturas y
-celadas, 4×4, Visualización, Precisión posicional, Finales contra la máquina) y
+celadas, 4×4, Visualización, Precisión posicional, Finales contra la máquina,
+Memoria) y
 **Tipos de entrenamiento** (una sola tarjeta que abre su ficha, ver «Los Tipos
 de entrenamiento»).
 
@@ -770,6 +771,61 @@ Cada uno tiene una meta: **ganar** (dar mate) o **salvar** (hacer tablas).
   mentira: ganar cuenta una vez, salvar con la posición en tablas cuenta, con
   la posición perdida o sin motor no, y la máquina empieza cuando la posición
   es del otro bando.
+
+## La ficha de Memoria
+
+`entreno/memoria.html` (tarjeta **"📷 Memoria"** del grupo Entreno del hub):
+ves una posición unos segundos, desaparece y la reconstruyes. Es la idea de
+thememorychess.com, donde la dificultad la pone quien juega: **eliges cuántas
+piezas (de 3 a 32) y cuántos segundos (de 3 a 60)**, y con «Una pieza más»
+—solo después de una reconstrucción sin errores— la vas subiendo de a una.
+`memoria.html?piezas=8&segundos=10` arranca directo con eso, así el profesor
+manda el enlace con la dificultad ya puesta; la página deja la dirección así
+al empezar, para que se pueda copiar.
+
+- **Es Fotografía sin niveles fijos, y comparte con ella todo lo que se
+  puede.** Fotografía (Tipos de entrenamiento) tiene cinco niveles con rangos
+  de piezas y segundos que no se eligen; esta ficha no reemplaza a esa, la
+  deja a medida. La corrección es la MISMA (`TiposReglas.compararFoto`,
+  `leerPiezas` y `estrellasFoto`, de `js/tipos-reglas.js`) y el tablero es el
+  común de Entrenamiento (`EjercicioTablero.dibujar`); lo propio vive en
+  `js/entreno-memoria.js`.
+- **Ninguna posición se inventa.** `herramientas/memoria-generar.js` arma
+  `entreno/data/memoria.json` del banco de Lichess de «Ejercicios por tema»:
+  la posición de cada ejercicio y las que se van dando al jugar su solución.
+  Así hay de 3 a 32 piezas, todas de partidas jugadas (de 32 piezas hay 53
+  en el banco). Un sorteo de piezas al azar, como hacen otros sitios, da
+  posiciones que no pasan en una partida, y memorizarlas no entrena ver el
+  tablero por grupos con sentido. Se guardan 40 por cantidad de piezas, sin
+  repetir la misma colocación; el archivo no se edita a mano. Al corregir, un
+  enlace lleva a la partida de Lichess de donde salió.
+- **Esconde de verdad**, igual que Fotografía: al reconstruir el tablero no
+  tiene piezas y la lectura escrita del Modo Adaptado desaparece (sería
+  soplar). Se reconstruye tocando casillas con una paleta o **escribiendo**
+  «Rg1 Tf1 a2» por color. Las marcas de la corrección llevan su signo escrito
+  (✓ − ✗ +).
+- **El récord vive en la cuenta**: `memoria_mejor_v1` (segundos → la mayor
+  cantidad de piezas reconstruida sin un error, `maxPorClave`). Solo una
+  perfecta lo mueve. El tiempo se anota con `data-activity="memoria"`, que
+  está en las dos tablas de nombres (`js/tiempo-secciones.js` y la de
+  `informes-encargados`); la función del correo tiene que volver a
+  desplegarse para que el correo a la casa la nombre (hasta entonces dice
+  «memoria» a secas).
+
+**Al tocar el banco o la página, correr**:
+
+    node herramientas/memoria-generar.js        # solo si cambia el banco
+    node herramientas/verificar-todo.js memoria memoria-pagina
+
+El primero comprueba sin navegador que cada posición tenga exactamente sus
+piezas, sea legal y sea una posición real del banco de Lichess, que el
+archivo sea lo que arma hoy el generador y que la corrección cuente bien. El
+segundo juega la página: la posición que se ve es la del banco, se esconde
+sola al terminar la cuenta, escrita entera sale perfecta y guarda el récord,
+«Una pieza más» sube a la siguiente, y con errores el récord no se mueve.
+Está probado que fallan: una FEN inventada en el banco hace saltar 2
+comprobaciones; dejar la lectura escrita al reconstruir, o guardar el récord
+de una con errores, las que corresponden.
 
 ## Aperturas y celadas: memorizar jugando, con repaso espaciado
 

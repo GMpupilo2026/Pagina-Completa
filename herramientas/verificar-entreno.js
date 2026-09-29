@@ -162,7 +162,7 @@ async function pruebaHub(browser) {
   igual("Practicar", grupos[1].accesos.map((a) => a.nombre),
     ["Ejercicios por tema", "Practicar"]);
   igual("Entreno", grupos[2].accesos.map((a) => a.nombre),
-    ["Aperturas y celadas", "4×4", "Visualización", "Precisión posicional", "Finales contra la máquina"]);
+    ["Aperturas y celadas", "4×4", "Visualización", "Precisión posicional", "Finales contra la máquina", "Memoria"]);
   igual("Tipos de entrenamiento: una sola tarjeta, que abre su ficha", grupos[3].accesos.map((a) => a.nombre + " → " + a.destino),
     ["Tipos de entrenamiento → tipos.html"]);
   igual("la táctica ya no es un acceso suelto: se fue dentro de Ejercicios por tema",
