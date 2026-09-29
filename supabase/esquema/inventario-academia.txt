@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20260929020321
+# al-dia-con: 20260929023204
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -32,6 +32,7 @@ tabla  encargados  rls=true
 tabla  encuesta_curso_respuestas  rls=true
 tabla  encuestas_curso  rls=true
 tabla  encuestas_profesor  rls=true
+tabla  enlaces_diagnostico  rls=true
 tabla  equipo_alumnos  rls=true
 tabla  equipo_entrenadores  rls=true
 tabla  equipos  rls=true
@@ -285,10 +286,12 @@ columna  diagnosticos_publicos.detalle  jsonb
 columna  diagnosticos_publicos.elo  integer
 columna  diagnosticos_publicos.elo_tipo  text
 columna  diagnosticos_publicos.email  text
+columna  diagnosticos_publicos.enlace  text
 columna  diagnosticos_publicos.id  uuid
 columna  diagnosticos_publicos.nivel  text
 columna  diagnosticos_publicos.nombre  text
 columna  diagnosticos_publicos.porcentaje  integer
+columna  diagnosticos_publicos.supervisor_id  uuid
 columna  diagnosticos_publicos.telefono  text
 columna  encargados.activo  boolean
 columna  encargados.creado_por  uuid
@@ -342,6 +345,9 @@ columna  encuestas_profesor.profesor_id  uuid
 columna  encuestas_profesor.resuelve  smallint
 columna  encuestas_profesor.seguir  text
 columna  encuestas_profesor.updated_at  timestamp with time zone
+columna  enlaces_diagnostico.codigo  text
+columna  enlaces_diagnostico.created_at  timestamp with time zone
+columna  enlaces_diagnostico.supervisor_id  uuid
 columna  equipo_alumnos.alumno_id  uuid
 columna  equipo_alumnos.created_at  timestamp with time zone
 columna  equipo_alumnos.equipo_id  uuid
@@ -1004,6 +1010,7 @@ funcion  detalle_mensual_crudo(p_profesor uuid, p_periodo date)  definer  anon=f
 funcion  detalle_mensual_profesor(p_profesor uuid, p_periodo date)  definer  anon=false  auth=true
 funcion  detalle_para_mi(p_profesor uuid, p_detalle jsonb)  definer  anon=false  auth=false
 funcion  devolver_invitacion(p_profesor uuid)  definer  anon=false  auth=false
+funcion  diagnosticos_publicos_supervisor()  definer  anon=false  auth=false
 funcion  disparar_informes_encargados()  definer  anon=false  auth=false
 funcion  disparar_recordatorios_cobro()  definer  anon=false  auth=false
 funcion  disparar_recordatorios_programados()  definer  anon=false  auth=false
@@ -1011,6 +1018,7 @@ funcion  elegir_academia_activa(p_academia uuid)  definer  anon=false  auth=true
 funcion  elegir_plan(p_id uuid, p_plan text, p_version_terminos text, p_version_privacidad text)  definer  anon=false  auth=true
 funcion  encuesta_curso_publica(p_slug text)  definer  anon=true  auth=true
 funcion  encuesta_mis_profesores()  invoker  anon=false  auth=true
+funcion  enlace_diagnostico_publico(p_codigo text)  definer  anon=true  auth=true
 funcion  equipo_alumno_subgrupo()  definer  anon=false  auth=false
 funcion  equipo_bajo_mi_coordinacion(p_equipo uuid)  definer  anon=false  auth=true
 funcion  equipo_docente()  definer  anon=false  auth=true
@@ -1088,6 +1096,7 @@ funcion  marcar_supervisor(p_persona uuid, p_valor boolean)  definer  anon=false
 funcion  mes_en_palabras(p_periodo date)  invoker  anon=false  auth=true
 funcion  mes_es(d date)  invoker  anon=true  auth=true
 funcion  mi_acceso()  definer  anon=false  auth=true
+funcion  mi_enlace_diagnostico()  definer  anon=false  auth=true
 funcion  mi_gente(p_busqueda text, p_rol text, p_limite integer, p_desde integer)  invoker  anon=true  auth=true
 funcion  mi_grupo()  definer  anon=false  auth=true
 funcion  mi_marca_academia()  definer  anon=false  auth=true
@@ -1478,6 +1487,7 @@ trigger  class_presence_log  class_presence_log_protege_tiempos
 trigger  class_sessions  class_sessions_avisa_push
 trigger  cobros_contacto  cobros_contacto_protegido
 trigger  desafios  desafios_avisa_push
+trigger  diagnosticos_publicos  diagnosticos_publicos_supervisor
 trigger  equipo_alumnos  equipo_alumnos_subgrupo
 trigger  equipo_entrenadores  equipo_entrenadores_subgrupo
 trigger  equipos  equipos_renombra_subgrupos
@@ -1581,6 +1591,7 @@ indice  desafios  desafios_para_pendiente
 indice  desafios  desafios_pkey
 indice  desafios  desafios_room_id_fk
 indice  diagnosticos_publicos  diagnosticos_publicos_pkey
+indice  diagnosticos_publicos  diagnosticos_publicos_supervisor_idx
 indice  encargados  encargados_creado_por_fk
 indice  encargados  encargados_pendientes_idx
 indice  encargados  encargados_pkey
@@ -1596,6 +1607,8 @@ indice  encuestas_profesor  encuestas_profesor_periodo
 indice  encuestas_profesor  encuestas_profesor_pkey
 indice  encuestas_profesor  encuestas_profesor_profesor
 indice  encuestas_profesor  encuestas_profesor_una_por_mes
+indice  enlaces_diagnostico  enlaces_diagnostico_codigo_key
+indice  enlaces_diagnostico  enlaces_diagnostico_pkey
 indice  equipo_alumnos  equipo_alumnos_alumno_idx
 indice  equipo_alumnos  equipo_alumnos_pkey
 indice  equipo_entrenadores  equipo_entrenadores_pkey
@@ -2038,20 +2051,9 @@ grant  desafios  authenticated  SELECT
 grant  desafios  authenticated  TRIGGER
 grant  desafios  authenticated  TRUNCATE
 grant  desafios  authenticated  UPDATE
-grant  diagnosticos_publicos  anon  DELETE
 grant  diagnosticos_publicos  anon  INSERT
-grant  diagnosticos_publicos  anon  REFERENCES
-grant  diagnosticos_publicos  anon  SELECT
-grant  diagnosticos_publicos  anon  TRIGGER
-grant  diagnosticos_publicos  anon  TRUNCATE
-grant  diagnosticos_publicos  anon  UPDATE
-grant  diagnosticos_publicos  authenticated  DELETE
 grant  diagnosticos_publicos  authenticated  INSERT
-grant  diagnosticos_publicos  authenticated  REFERENCES
 grant  diagnosticos_publicos  authenticated  SELECT
-grant  diagnosticos_publicos  authenticated  TRIGGER
-grant  diagnosticos_publicos  authenticated  TRUNCATE
-grant  diagnosticos_publicos  authenticated  UPDATE
 grant  encargados  authenticated  DELETE
 grant  encargados  authenticated  INSERT
 grant  encargados  authenticated  REFERENCES
