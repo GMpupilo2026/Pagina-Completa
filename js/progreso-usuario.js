@@ -181,6 +181,7 @@ window.ProgresoUsuario = (function () {
     { clave: "entreno_finales_last",             fusion: "ultimoLugar" },
     { clave: "tipos_estrellas_v1",               fusion: "maxPorClave" },   // Tipos de entrenamiento: "tipo:id" → estrellas
     { clave: "tipos_mejor_v1",                   fusion: "minPorClave" },   // Con lo justo: posición → menos jugadas
+    { clave: "tipos_registrados_v1",             fusion: "unionObjeto" },   // "tipo:id" ya registrado en training_progress
   ];
 
   // Cuándo se escribió en ESTE aparato cada clave que se funde por fecha.

@@ -19,14 +19,15 @@ window.LogrosCatalogo = (function () {
   "use strict";
 
   // Cuántos tipos de actividad de training_progress se pueden alcanzar de
-  // verdad hoy. Son 15 en el CHECK de la base, pero 'desafios' está declarada
+  // verdad hoy. Son 17 en el CHECK de la base, pero 'desafios' está declarada
   // sin ningún uso real (entreno/desafios.html registra como 'practicar' —
-  // ver CLAUDE.md), así que exigir las 15 dejaría un logro que nadie puede
-  // conseguir nunca, y eso no daría ningún error: se quedaría gris para
-  // siempre sin que nadie supiera por qué. Subió de 13 a 14 con 'finales'
-  // (Finales contra la máquina): nadie tenía todavía las 13 (el máximo era
-  // 12), así que nadie pierde la medalla.
-  const ACTIVIDADES_ALCANZABLES = 14;
+  // ver CLAUDE.md) y 'preparacion' solo la tiene quien recibió un plan contra
+  // un rival, así que exigirlas dejaría un logro que casi nadie puede
+  // conseguir, y eso no daría ningún error: se quedaría gris para siempre sin
+  // que nadie supiera por qué. Subió de 13 a 14 con 'finales' y a 15 con
+  // 'tipos' (Tipos de entrenamiento): nadie tenía todavía las 14 (el máximo
+  // era 12), así que nadie pierde la medalla.
+  const ACTIVIDADES_ALCANZABLES = 15;
 
   function porActividad(stats, clave) {
     return (stats.por_actividad && stats.por_actividad[clave]) || 0;
@@ -98,6 +99,7 @@ window.LogrosCatalogo = (function () {
     { id: "ilumina_5", categoria: "ilumina", nivel: "bronce", emoji: "💡", nombre: "Se hizo la luz", descripcion: "5 niveles de Ilumina el tablero resueltos.", meta: 5, valor: (s) => porActividad(s, "ilumina") },
     { id: "visualizacion_10", categoria: "visualizacion", nivel: "bronce", emoji: "👁️", nombre: "Lo ves sin mirar", descripcion: "10 ejercicios de Visualización resueltos.", meta: 10, valor: (s) => porActividad(s, "visualizacion") },
     { id: "finales_5", categoria: "finales", nivel: "plata", emoji: "🏁", nombre: "Final de libro", descripcion: "5 finales contra la máquina ganados o salvados.", meta: 5, valor: (s) => porActividad(s, "finales") },
+    { id: "tipos_20", categoria: "tipos", nivel: "bronce", emoji: "🧩", nombre: "De todos los tipos", descripcion: "20 ejercicios de Tipos de entrenamiento resueltos.", meta: 20, valor: (s) => porActividad(s, "tipos") },
   ];
 
   // Le agrega a cada logro su estado con los números de este alumno: cuánto

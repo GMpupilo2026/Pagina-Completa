@@ -157,6 +157,21 @@ def recortes_de_estudio():
     ]
 
 
+def recortes_de_tipos():
+    """Los 14 Tipos de entrenamiento: cuántos ejercicios tiene cada uno en
+    entreno/data/tipos.json y su nombre, leído de js/tipos-catalogo.js (el mismo
+    archivo que usa la página). La clave es la que la página guarda en
+    detail.category."""
+    datos = json.loads((DATOS / "tipos.json").read_text(encoding="utf-8"))
+    nombres = por_node(
+        "const C=require('./js/tipos-catalogo.js');"
+        "console.log(JSON.stringify(C.TIPOS.map(t=>[t.id,t.nombre])))")
+    return [
+        {"clave": t, "label": n, "total": len(datos.get(t, [])), "actividades": ["tipos"]}
+        for t, n in nombres if datos.get(t)
+    ]
+
+
 def main():
     indice = {
         "_generado_por": "herramientas/metas-indice.py",
@@ -167,6 +182,7 @@ def main():
         "practicas": recortes_de_pagina("practicas.html", NOMBRE_PRACTICAR, "practicar"),
         "aperturas": recortes_de_aperturas(),
         "estudio": recortes_de_estudio(),
+        "tipos": recortes_de_tipos(),
     }
     SALIDA.write_text(
         json.dumps(indice, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
