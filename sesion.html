@@ -61,9 +61,12 @@
                  clase: mirar sin que el otro lo sepa no es supervisar. -->
             <p id="observadores" hidden class="mb-3 rounded-xl px-5 py-2 text-sm font-semibold bg-accent-50 dark:bg-brand-900 text-brand-800 dark:text-brand-100" aria-live="polite"></p>
             <!-- Después de cerrar: el repaso. Ver cerrarClaseDesdeAqui. -->
-            <p id="clase-despues" hidden class="mb-3 rounded-xl px-5 py-2 text-sm bg-accent-50 dark:bg-brand-900 text-brand-800 dark:text-brand-100">
+            <div id="clase-despues" hidden class="mb-3 rounded-xl px-5 py-2 text-sm bg-accent-50 dark:bg-brand-900 text-brand-800 dark:text-brand-100">
                 <a id="clase-tarea-enlace" href="tareas.html" class="font-semibold underline"><span aria-hidden="true">📋 </span>Mandar una tarea de repaso a los que vinieron</a>
-            </p>
+                <!-- El repaso personal (js/repaso-clase.js): a cada uno, las preguntas que no le salieron. -->
+                <button id="repaso-personal-btn" type="button" class="mt-1.5 block text-left font-semibold underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded"><span aria-hidden="true">📌 </span>Mandarle a cada uno su repaso: las preguntas que falló o no contestó</button>
+                <p id="repaso-personal-resultado" hidden class="mt-1 text-sm" aria-live="polite"></p>
+            </div>
             <div id="clase-estado" class="hidden mb-6 rounded-xl px-5 py-3 flex items-center justify-between gap-3 flex-wrap">
                 <p id="clase-estado-texto" class="text-sm font-semibold" aria-live="polite"></p>
                 <div class="flex items-center gap-2 flex-wrap">
@@ -113,8 +116,8 @@
                 <p id="salida-pasada" hidden class="w-full text-sm text-brand-700 dark:text-brand-200"></p>
             </div>
 
-            <div class="grid lg:grid-cols-[1fr_320px] gap-8 items-start">
-                <div>
+            <div class="proyector-contenido grid lg:grid-cols-[1fr_320px] gap-8 items-start">
+                <div class="proyector-columna">
                     <!-- Editor visual del tablero (solo profesor): se abre con "✏️ Editar" de la
                          barra de abajo. Flotante (position: fixed, arrastrable desde el título) en
                          vez de empujar el tablero hacia abajo — es una herramienta temporal, se usa
@@ -306,7 +309,12 @@
                         <div id="archivos-panel-list" class="space-y-2"></div>
                     </div>
 
-                    <div class="flex justify-center">
+                    <!-- Solo en el modo proyector (sesion.html?proyector=1). -->
+                    <div class="proyector-barra proyector-se-ve items-center justify-end gap-2 mb-2">
+                        <button id="proyector-completa-btn" type="button" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">⛶ Pantalla completa</button>
+                        <a href="sesion.html" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Salir del modo proyector</a>
+                    </div>
+                    <div class="proyector-se-ve flex justify-center">
                         <div id="chessboard" class="grid grid-cols-8 grid-rows-[repeat(8,minmax(0,1fr))] w-full max-w-[560px] aspect-square rounded-xl overflow-hidden shadow-2xl border-4 border-brand-700 select-none"></div>
                     </div>
 
@@ -315,6 +323,7 @@
                     <div class="flex items-center justify-center flex-wrap gap-2 mt-3">
                         <button id="flip-board-btn" type="button" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors" title="Girar el tablero (negras abajo)">⇅ Girar</button>
                         <button id="show-coords-btn" type="button" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors" aria-pressed="false" title="Mostrar el nombre de cada casilla (las coordenadas de afuera siempre se ven)">🔢 Coordenadas</button>
+                        <button id="proyector-btn" type="button" class="hidden text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors" title="Abrir el tablero solo, en otra ventana: para el proyector o la tele del aula">📽️ Proyector</button>
                         <button id="raise-hand-btn" type="button" class="hidden text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors" aria-pressed="false" title="Pedirle la palabra al profesor">🖐️ Levantar la mano</button>
                         <span id="move-nav" class="hidden items-center gap-1 ml-1">
                             <button id="move-nav-first" type="button" class="text-xs font-semibold w-8 h-8 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors" title="Primera jugada">⏮</button>
@@ -331,7 +340,7 @@
                     <!-- El mapa de jugadas de una pregunta (game_state.encuesta): las flechas van en el
                          tablero de la clase y acá, escrito, qué jugada es cada color y cuántos la
                          eligieron. Sin nombres. El color nunca va solo. -->
-                    <div id="encuesta-caja" hidden class="max-w-[560px] mx-auto mt-3 rounded-xl border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 px-4 py-3">
+                    <div id="encuesta-caja" hidden class="proyector-se-ve max-w-[560px] mx-auto mt-3 rounded-xl border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 px-4 py-3">
                         <p class="text-sm font-semibold text-brand-700 dark:text-brand-200"><span aria-hidden="true">🗺️ </span>Lo que jugó la clase</p>
                         <ul id="encuesta-lineas" class="mt-1 space-y-0.5 text-sm text-brand-700 dark:text-brand-200"></ul>
                         <button id="encuesta-quitar-btn" type="button" hidden class="mt-2 text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Quitar el mapa</button>
@@ -340,7 +349,7 @@
                     <!-- Posición de calentamiento (game_state.calentamiento): una para resolver mientras
                          empieza la clase. Cada alumno la juega en su propio tablero; el profe ve
                          cuántos la resolvieron (va en la presencia, no en una tabla). -->
-                    <div id="calentamiento-caja" hidden class="max-w-[560px] mx-auto mt-3 rounded-xl border-2 border-accent-500 bg-accent-50 dark:bg-brand-900 px-4 py-3">
+                    <div id="calentamiento-caja" hidden class="proyector-se-ve max-w-[560px] mx-auto mt-3 rounded-xl border-2 border-accent-500 bg-accent-50 dark:bg-brand-900 px-4 py-3">
                         <p class="text-sm font-semibold text-brand-700 dark:text-brand-200"><span aria-hidden="true">🔥 </span>Calentamiento<span id="calentamiento-titulo" class="font-normal"></span></p>
                         <div id="calentamiento-alumno" hidden>
                             <p id="calentamiento-turno" class="text-xs text-brand-600 dark:text-brand-300 mt-0.5"></p>
@@ -363,8 +372,15 @@
 
                     <!-- El podio de la clase (game_state.podio): una foto de los puntos que manda el
                          profe. Con o sin nombres; cada uno ve igual su propio lugar. -->
-                    <div id="podio-caja" hidden class="max-w-[560px] mx-auto mt-3 rounded-xl border-2 border-accent-500 bg-white dark:bg-brand-900 px-4 py-3 text-center">
+                    <!-- Los equipos (game_state.equipos): los ve toda la clase. El nombre del equipo es su
+                         color escrito, así el color nunca va solo. -->
+                    <div id="equipos-caja" hidden class="proyector-se-ve max-w-[560px] mx-auto mt-3 rounded-xl border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 px-4 py-3">
+                        <p class="text-sm font-semibold text-brand-700 dark:text-brand-200"><span aria-hidden="true">👥 </span>Los equipos de la clase</p>
+                        <ul id="equipos-lineas" class="mt-1 space-y-1 text-sm text-brand-800 dark:text-brand-100"></ul>
+                    </div>
+                    <div id="podio-caja" hidden class="proyector-se-ve max-w-[560px] mx-auto mt-3 rounded-xl border-2 border-accent-500 bg-white dark:bg-brand-900 px-4 py-3 text-center">
                         <p class="text-sm font-semibold text-brand-700 dark:text-brand-200"><span aria-hidden="true">🏆 </span>Podio de la clase</p>
+                        <ol id="podio-equipos" hidden class="mt-1 space-y-0.5 text-base font-semibold text-brand-800 dark:text-white" aria-label="Los equipos"></ol>
                         <ol id="podio-lineas" class="mt-1 space-y-0.5 text-base text-brand-800 dark:text-white"></ol>
                         <p id="podio-tu-lugar" hidden class="mt-2 text-sm font-semibold text-brand-700 dark:text-brand-200"></p>
                         <button id="podio-quitar-btn" type="button" hidden class="mt-2 text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Quitar el podio</button>
@@ -373,7 +389,7 @@
                     <!-- Tiempo para pensar (game_state.pensar): lo ven todos, también el profe, que
                          suele compartir su pantalla. El reloj cambia cada segundo, así que NO es región
                          viva: lo que se dice en voz va aparte, al empezar, a los 10 segundos y al final. -->
-                    <div id="pensar-aviso-caja" hidden class="max-w-[560px] mx-auto mt-3 rounded-xl border-2 border-accent-500 bg-accent-50 dark:bg-brand-900 px-4 py-3 text-center">
+                    <div id="pensar-aviso-caja" hidden class="proyector-se-ve max-w-[560px] mx-auto mt-3 rounded-xl border-2 border-accent-500 bg-accent-50 dark:bg-brand-900 px-4 py-3 text-center">
                         <p id="pensar-titulo" class="text-sm font-semibold text-brand-700 dark:text-brand-200"><span aria-hidden="true">⏳ </span>Tiempo para pensar</p>
                         <p id="pensar-que" hidden class="text-base text-brand-800 dark:text-white mt-0.5 break-words"></p>
                         <p id="pensar-reloj" class="font-mono text-4xl font-bold text-brand-800 dark:text-white mt-1"></p>
@@ -385,7 +401,7 @@
                         </div>
                     </div>
                     <p id="pensar-voz" class="sr-only" aria-live="polite"></p>
-                    <p id="turn-indicator" class="text-center text-brand-500 dark:text-brand-300 text-sm mt-4"></p>
+                    <p id="turn-indicator" class="proyector-se-ve text-center text-brand-500 dark:text-brand-300 text-sm mt-4"></p>
                     <!-- Solo quien sigue la clase: qué jugada anterior o qué variante está
                          mostrando el profe (game_state.vista, ver pintarVistaDelProfe). -->
                     <p id="vista-profe" hidden class="max-w-[560px] mx-auto mt-2 rounded-xl bg-brand-100 dark:bg-brand-900 px-4 py-2 text-center text-sm text-brand-600 dark:text-brand-300"></p>
@@ -844,6 +860,50 @@
                                 </div>
                             </div>
                         </details>
+                        <!-- La clase juega votando (ver «La clase juega votando» en docs/decisiones/clase-en-vivo.md):
+                             cada turno de la clase es una pregunta con tiempo, y se juega la más votada. -->
+                        <details id="partida-clase" class="mb-3 rounded-lg border border-brand-100 dark:border-brand-800">
+                            <summary class="cursor-pointer px-3 py-2 text-xs font-semibold text-brand-700 dark:text-brand-200"><span aria-hidden="true">🗳️ </span>La clase juega: vota la jugada contra el motor o contra ti</summary>
+                            <div class="px-3 pb-3 space-y-2">
+                                <p class="text-xs text-brand-450 dark:text-brand-350">Desde la posición del tablero. En cada turno de la clase se abre una pregunta con tiempo y se juega la jugada más votada (con empate, se sortea entre las empatadas).</p>
+                                <div id="partida-config" class="grid grid-cols-2 gap-2">
+                                    <label class="text-xs text-brand-500 dark:text-brand-300">Contra
+                                        <select id="partida-rival" class="w-full mt-0.5 text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500">
+                                            <option value="motor">El motor</option>
+                                            <option value="profe">Ti (mueves tú)</option>
+                                        </select>
+                                    </label>
+                                    <label class="text-xs text-brand-500 dark:text-brand-300">La clase juega con
+                                        <select id="partida-color" class="w-full mt-0.5 text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500">
+                                            <option value="w">Blancas</option>
+                                            <option value="b">Negras</option>
+                                        </select>
+                                    </label>
+                                    <label class="text-xs text-brand-500 dark:text-brand-300">Fuerza del motor
+                                        <select id="partida-nivel" class="w-full mt-0.5 text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500"></select>
+                                    </label>
+                                    <label class="text-xs text-brand-500 dark:text-brand-300">Tiempo para votar
+                                        <select id="partida-segundos" class="w-full mt-0.5 text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500">
+                                            <option value="20">20 segundos</option>
+                                            <option value="30" selected>30 segundos</option>
+                                            <option value="45">45 segundos</option>
+                                            <option value="60">1 minuto</option>
+                                            <option value="120">2 minutos</option>
+                                        </select>
+                                    </label>
+                                </div>
+                                <button id="partida-empezar-btn" type="button" class="w-full text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🗳️ </span>Empezar desde la posición del tablero</button>
+                                <div id="partida-en-curso" hidden>
+                                    <p id="partida-estado" class="text-sm font-semibold text-brand-700 dark:text-brand-200" aria-live="polite"></p>
+                                    <p id="partida-ultima" class="text-xs text-brand-600 dark:text-brand-300 mt-0.5"></p>
+                                    <div class="flex flex-wrap gap-2 mt-2">
+                                        <button id="partida-jugar-ya-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Jugar ya la más votada</button>
+                                        <button id="partida-reabrir-btn" type="button" hidden class="text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Seguir la partida</button>
+                                        <button id="partida-terminar-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Terminar la partida</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </details>
                         <div id="active-question" class="hidden">
                             <div class="flex items-center justify-between mb-2">
                                 <p class="text-xs text-brand-500 dark:text-brand-300">Pregunta activa <span id="question-tiempo-profe" class="font-semibold text-brand-700 dark:text-brand-200"></span></p>
@@ -997,6 +1057,23 @@
                                     <button id="podio-mostrar-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🏆 </span>Mostrar el podio a la clase</button>
                                 </div>
                             </details>
+                            <!-- Los equipos que compiten por puntos (game_state.equipos). -->
+                            <details id="equipos-profe" class="mb-3 rounded-lg border border-brand-100 dark:border-brand-800 px-3 py-2">
+                                <summary class="cursor-pointer text-xs font-semibold text-brand-700 dark:text-brand-200"><span aria-hidden="true">👥 </span>Equipos</summary>
+                                <p class="mt-2 text-xs text-brand-500 dark:text-brand-300">Reparte al azar a los conectados. Los puntos de cada equipo son la suma de los de sus integrantes, y salen en el podio.</p>
+                                <div class="flex flex-wrap items-center gap-2 mt-2">
+                                    <label class="text-xs text-brand-700 dark:text-brand-200">Cuántos
+                                        <select id="equipos-cuantos" class="ml-1 text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500">
+                                            <option value="2">2 equipos</option>
+                                            <option value="3">3 equipos</option>
+                                            <option value="4">4 equipos</option>
+                                        </select>
+                                    </label>
+                                    <button id="equipos-armar-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🎲 </span>Armar al azar con los conectados</button>
+                                </div>
+                                <div id="equipos-lista-profe" class="mt-2 text-sm space-y-2" aria-live="polite"></div>
+                                <button id="equipos-quitar-btn" type="button" hidden class="mt-2 text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Quitar los equipos</button>
+                            </details>
                             <ul id="students-list" class="space-y-2 text-sm">
                                 <li class="text-brand-450 dark:text-brand-350">Nadie conectado todavía…</li>
                             </ul>
@@ -1118,6 +1195,7 @@
     <script src="js/pgn-clase.js"></script>
     <script src="js/resumen-clase.js"></script>
     <script src="js/puntos-clase.js"></script>
+    <script src="js/repaso-clase.js"></script>
     <script src="js/pregunta-clase.js"></script>
     <script src="js/partidas-clase.js"></script>
     <script src="js/plan-clase.js"></script>

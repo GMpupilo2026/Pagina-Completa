@@ -2,7 +2,9 @@
  * (verificar-entreno-arreglos, -nivel y -repaso): una sola copia.
  *
  * - Hay una sesión (u-ana); con `tablas.sesion = null`, no (la sesión venció).
- * - Cada insert queda anotado en window.__inserts ({ tabla, rows }).
+ * - Cada insert queda anotado en window.__inserts ({ tabla, rows }), y cada
+ *   update en window.__updates ({ tabla, campos, filtros, filas }): cambia de
+ *   verdad las filas que pasan los filtros.
  * - Cada tabla devuelve las filas que se le pasen en `tablas`, filtradas de
  *   verdad en el RESOLVER: .eq() solo anota el filtro.
  * - sb.rpc("x") devuelve lo que traiga tablas["rpc:x"] (lista vacía si no).
@@ -22,11 +24,14 @@ function clienteFalso(tablas) {
   const TABLAS = ${JSON.stringify(tablas || {})};
   function consulta(tabla) {
     const filtros = [];
+    let porActualizar = null;
     const q = {
       select() { return q; }, order() { return q; }, limit() { return q; }, range() { return q; },
       // .in(c, valores): filtra de verdad, como los demás.
       in(c, vals) { filtros.push([c, (vals || []).map(String), "en"]); return q; },
       eq(c, v) { filtros.push([c, v]); return q; },
+      // .is(c, null): las que no tienen nada en c.
+      is(c, v) { if (v === null) filtros.push([c, undefined, "nulo"]); return q; },
       // .not(c, "is", null): solo las filas que tienen algo en c.
       not(c, op, v) { if (op === "is" && v === null) filtros.push([c, undefined, "noNulo"]); return q; },
       upsert() { return Promise.resolve({ data: null, error: null }); },
@@ -35,11 +40,22 @@ function clienteFalso(tablas) {
         return { select() { return this; }, single() { return Promise.resolve({ data: { id: 1 }, error: null }); },
                  then(r) { return Promise.resolve({ data: null, error: null }).then(r); } };
       },
-      update() { return q; },
-      filas() { return (TABLAS[tabla] || []).filter((f) => filtros.every(([c, v, modo]) => modo === "noNulo" ? f[c] != null : modo === "en" ? v.includes(String(f[c])) : f[c] === v)); },
+      // El filtro se apunta al RESOLVER: .update(x).eq(...) encadena, y acá
+      // todavía no hay ninguno. Se anota en window.__updates y cambia las filas.
+      update(campos) { porActualizar = campos; return q; },
+      filas() { return (TABLAS[tabla] || []).filter((f) => filtros.every(([c, v, modo]) => modo === "noNulo" ? f[c] != null : modo === "nulo" ? f[c] == null : modo === "en" ? v.includes(String(f[c])) : f[c] === v)); },
       maybeSingle() { return Promise.resolve({ data: q.filas()[0] || null, error: null }); },
       single() { return Promise.resolve({ data: q.filas()[0] || null, error: null }); },
-      then(r) { return Promise.resolve({ data: q.filas(), error: null }).then(r); },
+      then(r) {
+        if (porActualizar) {
+          const cambiadas = q.filas();
+          (window.__updates = window.__updates || []).push({ tabla, campos: porActualizar, filtros: filtros.slice(), filas: cambiadas.length });
+          cambiadas.forEach((f) => Object.assign(f, porActualizar));
+          porActualizar = null;
+          return Promise.resolve({ data: cambiadas, error: null }).then(r);
+        }
+        return Promise.resolve({ data: q.filas(), error: null }).then(r);
+      },
     };
     return q;
   }

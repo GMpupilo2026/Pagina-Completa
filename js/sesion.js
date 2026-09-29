@@ -43,6 +43,8 @@
         let claseAcc = null, preguntaAcc = null, practicaAcc = null;
         let primerEstadoCargado = false;
         let isTeacher = false;
+        // La ventana del proyector (sesion.html?proyector=1): el tablero solo, para la tele del aula.
+        let modoProyector = false;
         /* Quien supervisa (o administra) mirando la clase de un profesor:
            sesion.html?observar=<id>. Solo mira: ni mueve, ni contesta, ni marca
            asistencia, ni cuenta como alumno. Lo que puede leer lo decide la RLS
@@ -565,7 +567,8 @@
                tiene su vista en el tablero: solo la retoma al cargar la página (la
                suya propia de antes de recargar), no con cada eco. */
             vistaRecibida = row.vista || null;
-            if (!isTeacher && !editando) board.showView(row.vista || null);
+            // El proyector sigue lo que mira el profe, como un alumno.
+            if ((!isTeacher || modoProyector) && !editando) board.showView(row.vista || null);
             else if (isTeacher && primeraVez && row.vista) {
                 board.showView(row.vista);
                 ultimaVistaEnviada = JSON.stringify(board.currentView());
@@ -596,6 +599,7 @@
             pintarPensar(row.pensar || null);
             pintarEncuesta(row.encuesta || null);
             pintarCalentamiento(row.calentamiento || null);
+            pintarEquipos(row.equipos || null);
             pintarPodio(row.podio || null);
             updateTurnIndicator();
             updateAccessForRole();
@@ -1496,11 +1500,80 @@
             const despues = document.getElementById("clase-despues");
             const enlace = document.getElementById("clase-tarea-enlace");
             enlace.href = "tareas.html?clase=" + encodeURIComponent(cerrada);
+            ultimaClaseCerrada = cerrada;
+            if (document.getElementById("repaso-personal-btn")) {
+                document.getElementById("repaso-personal-btn").disabled = false;
+                document.getElementById("repaso-personal-resultado").hidden = true;
+            }
             despues.hidden = false;
             planHecho = new Set();
             document.querySelectorAll("#plan-items button[aria-pressed]").forEach((b) => pintarBotonHecho(b, false));
             document.getElementById("salida-resultado").hidden = true;
             mostrarSalidaPasada();
+        }
+
+        /* ---------- El repaso personal ----------
+           Al cerrar, una tarea para cada alumno que vino con las preguntas de
+           jugada que no le salieron (la regla es de js/repaso-clase.js, la
+           misma que usa repasar-clases.html para mostrárselas). Es UNA tarea
+           con un renglón que abre su repaso: cada uno ve las suyas, y el
+           renglón se marca solo cuando las resuelve todas. A quien ya tiene
+           el repaso de esta clase no se le manda otro. */
+        let ultimaClaseCerrada = null;
+        async function mandarRepasoPersonal() {
+            const claseId = ultimaClaseCerrada;
+            const btn = document.getElementById("repaso-personal-btn");
+            const res = document.getElementById("repaso-personal-resultado");
+            if (!claseId) return;
+            btn.disabled = true;
+            res.hidden = false;
+            res.textContent = "Buscando qué le quedó pendiente a cada uno…";
+            // Una pregunta que quedó abierta al cerrar ya no se contesta: se cierra.
+            await sb.from("questions").update({ closed_at: new Date().toISOString() }).eq("class_session_id", claseId).is("closed_at", null);
+            const [{ data: asist }, { data: preguntas }] = await Promise.all([
+                sb.from("class_attendance").select("student_id").eq("session_id", claseId),
+                sb.from("questions").select("id, fen, tipo, para_alumno, closed_at, created_at").eq("class_session_id", claseId),
+            ]);
+            const alumnos = [...new Set((asist || []).map((a) => a.student_id))].filter((id) => id !== profile.id);
+            const ids = (preguntas || []).map((q) => q.id);
+            if (!alumnos.length || !ids.length) {
+                res.textContent = !alumnos.length ? "Nadie quedó registrado en esta clase: no hay a quién mandarle repaso." : "En esta clase no hubo preguntas de jugada: no hay nada que repasar.";
+                return;
+            }
+            const href = RepasoClase.href(claseId);
+            const [{ data: respuestas }, { data: motor }, { data: yaTienen }] = await Promise.all([
+                sb.from("question_answers").select("question_id, student_id, moves, is_correct").in("question_id", ids),
+                sb.from("question_engine_answers").select("question_id, answer").in("question_id", ids),
+                sb.from("tarea_items").select("tareas!inner(alumno_id)").eq("material_href", href),
+            ]);
+            const conRepaso = new Set((yaTienen || []).map((t) => t.tareas && t.tareas.alumno_id));
+            const porAlumno = alumnos.map((id) => ({ id, n: RepasoClase.pendientes(preguntas, respuestas, motor, id).length }));
+            const aMandar = porAlumno.filter((x) => x.n > 0 && !conRepaso.has(x.id));
+            const sinNada = porAlumno.filter((x) => x.n === 0).length;
+            if (!aMandar.length) {
+                res.textContent = conRepaso.size ? "Ya les mandaste el repaso de esta clase." : "A nadie le quedó nada pendiente: todos resolvieron bien las preguntas de la clase. 🎉";
+                return;
+            }
+            const hoy = new Intl.DateTimeFormat("es-CR", { timeZone: "America/Costa_Rica", day: "numeric", month: "long" }).format(new Date());
+            const { error } = await sb.rpc("crear_tarea", {
+                p_alumnos: aMandar.map((x) => x.id),
+                p_titulo: "Repaso de la clase del " + hoy,
+                p_instrucciones: "Las preguntas de la clase que no te salieron, para resolverlas otra vez en el tablero.",
+                p_vence: new Date(Date.now() + 7 * 86400000).toISOString(),
+                p_items: [{ material_tipo: "herramienta", material_slug: "repasar-clases",
+                    material_label: "el repaso de la clase (las preguntas que no te salieron)", material_href: href, meta_tipo: "completar" }],
+                p_disponible_desde: null,
+            });
+            if (error) { console.error(error); btn.disabled = false; res.textContent = "No se pudo mandar el repaso: " + error.message; return; }
+            // Después de cerrar ya no están conectados: el nombre se lee de la base.
+            const { data: perfiles } = await sb.from("profiles").select("id, full_name, email").in("id", aMandar.map((x) => x.id));
+            const nombre = (id) => { const p = (perfiles || []).find((x) => x.id === id); return (p && (p.full_name || p.email)) || nombreDeConectado(id); };
+            res.textContent = "📌 Se mandó el repaso a " + aMandar.length + (aMandar.length === 1 ? " alumno: " : " alumnos: ")
+                + aMandar.map((x) => nombre(x.id) + " (" + x.n + (x.n === 1 ? " pregunta)" : " preguntas)")).join(", ") + "."
+                + (sinNada ? " " + sinNada + (sinNada === 1 ? " no tenía" : " no tenían") + " nada pendiente." : "");
+        }
+        if (document.getElementById("repaso-personal-btn")) {
+            document.getElementById("repaso-personal-btn").addEventListener("click", mandarRepasoPersonal);
         }
 
         /* Al cerrar, la partida de la clase se guarda sola —si tiene jugadas y
@@ -1630,9 +1703,10 @@
 
         function initBoardForRole() {
             const container = document.getElementById("chessboard");
+            // El proyector solo muestra: la clase se da desde la otra ventana.
             board = new ClasesBoard(container, {
-                interactive: isTeacher,
-                allowArrows: isTeacher,
+                interactive: isTeacher && !modoProyector,
+                allowArrows: isTeacher && !modoProyector,
                 externalCoords: true,
                 onFreeModeChange: () => updateLiveFenDisplay(),
                 onMove: () => {
@@ -1644,6 +1718,7 @@
                     updateTurnIndicator();
                     renderMoveList();
                     if (isTeacher) updateEngineEval();
+                    if (isTeacher) despuesDeJugarEnLaPartida();
                 },
                 onMarksChange: (marks) => pushMarksToServer(marks),
                 onVariantMove: async (san, fullPath, context) => {
@@ -2621,6 +2696,7 @@
                 }
                 renderStudentsList();
                 pintarCuentaCalentamiento();
+                pintarEquiposProfe();
                 pintarObservadores(mirando);
                 if (!isTeacher && !esObservador) pintarTeMiran(meMiran);
                 // El nombre del elegido sale de la presencia: al recargar llega después.
@@ -2721,7 +2797,7 @@
         }
 
         async function updateEngineEval() {
-            if (!engineEnabled || typeof ClasesEngine === "undefined") return;
+            if (!engineEnabled || modoProyector || typeof ClasesEngine === "undefined") return;
             const myRequestId = ++engineRequestId;
             const fen = board.fen();
             const turnAtEval = board.game.turn();
@@ -3115,12 +3191,14 @@
         // paraAlumno: la pregunta dirigida, solo para quien tiene el turno. Los
         // demás la ven pero no la contestan (lo rechaza la base).
         // deSalida: la pregunta de salida, la última de la clase (ver hacerPreguntaDeSalida).
-        async function crearPregunta(fen, expectedPlies, paraAlumno, deSalida) {
+        // extra: {prompt, tiempo} para las que arma la página sola (la votación de la clase).
+        async function crearPregunta(fen, expectedPlies, paraAlumno, deSalida, extra) {
             await sb.from("questions").update({ closed_at: new Date().toISOString() })
                 .eq("created_by", boardOwnerId).is("closed_at", null);
-            return sb.from("questions")
-                .insert({ fen, created_by: session.user.id, expected_plies: expectedPlies, tiempo_limite: tiempoElegido(), para_alumno: paraAlumno || null, de_salida: !!deSalida })
-                .select().single();
+            const fila = { fen, created_by: session.user.id, expected_plies: expectedPlies,
+                tiempo_limite: extra && extra.tiempo ? extra.tiempo : tiempoElegido(), para_alumno: paraAlumno || null, de_salida: !!deSalida };
+            if (extra && extra.prompt) fila.prompt = extra.prompt;
+            return sb.from("questions").insert(fila).select().single();
         }
 
         async function crearPreguntaDeOpciones(prompt, opciones, correcta) {
@@ -3717,6 +3795,229 @@
             });
         }
 
+        /* ---------- El modo proyector ----------
+           Otra ventana con el tablero solo (sesion.html?proyector=1), para la
+           tele o el proyector del aula: lo que se esconde lo decide el CSS
+           (lista blanca .proyector-se-ve, en css/styles.css). */
+        if (document.getElementById("proyector-btn")) {
+            document.getElementById("proyector-btn").addEventListener("click", () => {
+                window.open("sesion.html?proyector=1", "ajedrez-proyector");
+            });
+        }
+        document.getElementById("proyector-completa-btn").addEventListener("click", () => {
+            const el = document.documentElement;
+            if (document.fullscreenElement) document.exitFullscreen();
+            else if (el.requestFullscreen) el.requestFullscreen().catch(() => {});
+        });
+
+        /* ---------- La clase juega votando ----------
+           La clase juega una partida contra el motor o contra el profe desde la
+           posición del tablero. Cada turno de la clase es una pregunta de
+           jugada con tiempo (la de siempre: cuenta para los puntos y se ve en
+           «Respuestas en el tablero»); al cerrarse se juega la más votada, con
+           empate se sortea entre las empatadas y se dice. El motor contesta
+           desde la computadora del profe. El estado vive en esta página
+           (sessionStorage): al recargar, la partida queda en pausa. */
+        const PARTIDA_CLAVE = "sesion_partida_clase_v1";
+        let partidaClase = null;          // {rival, color, nivel, segundos}
+        let votacion = null;              // {id, fen, cierre}
+        let motorPensandoPartida = false;
+        const colorEscrito = (c) => (c === "w" ? "blancas" : "negras");
+        const clavePosicion = (f) => String(f || "").split(" ").slice(0, 4).join(" ");
+
+        function guardarPartidaClase() {
+            try {
+                if (partidaClase) sessionStorage.setItem(PARTIDA_CLAVE, JSON.stringify(partidaClase));
+                else sessionStorage.removeItem(PARTIDA_CLAVE);
+            } catch (e) {}
+        }
+
+        function pintarPartidaClase(estado) {
+            const enCurso = document.getElementById("partida-en-curso");
+            if (!enCurso) return;
+            enCurso.hidden = !partidaClase;
+            document.getElementById("partida-config").classList.toggle("hidden", !!partidaClase);
+            document.getElementById("partida-empezar-btn").hidden = !!partidaClase;
+            document.getElementById("partida-jugar-ya-btn").hidden = !votacion;
+            if (estado !== undefined) document.getElementById("partida-estado").textContent = estado;
+            if (!partidaClase) document.getElementById("partida-ultima").textContent = "";
+        }
+
+        // Juega en el tablero de la clase por la misma puerta que el clic (board.jugar).
+        function jugarEnElTablero(jugada) {
+            board.viewLive();
+            let m = null;
+            try {
+                m = /^[a-h][1-8][a-h][1-8][qrbn]?$/.test(jugada)
+                    ? new Chess(board.fen()).move({ from: jugada.slice(0, 2), to: jugada.slice(2, 4), promotion: jugada[4] || "q" })
+                    : new Chess(board.fen()).move(jugada, { sloppy: true });
+            } catch (e) { m = null; }
+            if (!m) return null;
+            return board.jugar({ from: m.from, to: m.to, promotion: m.promotion });
+        }
+
+        function finalDeLaPartida(g) {
+            if (g.in_checkmate()) {
+                const gana = g.turn() === "w" ? "b" : "w";
+                return "¡Jaque mate! Ganaron las " + colorEscrito(gana) + (gana === partidaClase.color ? ": ganó la clase. 🎉" : ".");
+            }
+            if (g.in_stalemate()) return "Tablas por ahogado.";
+            if (g.in_threefold_repetition()) return "Tablas por triple repetición.";
+            if (g.insufficient_material()) return "Tablas: no queda material para dar mate.";
+            return "Tablas.";
+        }
+
+        async function empezarPartidaClase() {
+            if (board.freeMode) { setStatus("Aplica o cancela la posición que estás armando antes de empezar."); return; }
+            board.viewLive();
+            renderMoveList();
+            transmitirVista();
+            const fen = board.fen();
+            const motivo = motivoPosicionInvalida(fen);
+            if (motivo) { setStatus(motivo); return; }
+            if (new Chess(fen).game_over()) { setStatus("En esta posición la partida ya terminó."); return; }
+            partidaClase = {
+                rival: document.getElementById("partida-rival").value === "profe" ? "profe" : "motor",
+                color: document.getElementById("partida-color").value === "b" ? "b" : "w",
+                nivel: document.getElementById("partida-nivel").value || "1500",
+                segundos: parseInt(document.getElementById("partida-segundos").value, 10) || 30,
+            };
+            guardarPartidaClase();
+            document.getElementById("partida-ultima").textContent = "";
+            if (partidaClase.rival === "motor" && typeof PracticeEngine !== "undefined") PracticeEngine.preload();
+            pintarPartidaClase();
+            await seguirPartidaClase();
+        }
+
+        async function seguirPartidaClase() {
+            if (!partidaClase || votacion || motorPensandoPartida) return;
+            document.getElementById("partida-reabrir-btn").hidden = true;
+            const g = new Chess(board.fen());
+            if (g.game_over()) { terminarPartidaClase(finalDeLaPartida(g)); return; }
+            if (g.turn() === partidaClase.color) { await abrirVotacion(); return; }
+            if (partidaClase.rival === "motor") { await jugarMotorEnLaPartida(); return; }
+            pintarPartidaClase("Te toca a ti con las " + colorEscrito(g.turn()) + ": juega en el tablero de la clase.");
+        }
+
+        async function abrirVotacion() {
+            const fen = board.fen();
+            const contra = partidaClase.rival === "motor" ? "el motor" : "tu profe";
+            votacion = { id: null, fen, cierre: null };
+            const { data, error } = await crearPregunta(fen, 1, null, false, {
+                prompt: "La clase contra " + contra + ": ¿qué jugamos con las " + colorEscrito(partidaClase.color) + "?",
+                tiempo: partidaClase.segundos,
+            });
+            if (error || !data) {
+                votacion = null;
+                console.error(error);
+                pintarPartidaClase("No se pudo abrir la votación" + (error ? ": " + error.message : "."));
+                document.getElementById("partida-reabrir-btn").hidden = false;
+                return;
+            }
+            votacion.id = data.id;
+            // La base acepta votos hasta 5 segundos después del plazo: se cierra un poco después.
+            votacion.cierre = setTimeout(() => cerrarVotacion(), (partidaClase.segundos + 6) * 1000);
+            pintarPartidaClase("🗳️ La clase está votando (" + PreguntaClase.textoDeTiempo(partidaClase.segundos) + ").");
+            computeEngineAnswer(data.id, fen, 1);
+        }
+
+        async function cerrarVotacion() {
+            if (!votacion || !votacion.id) return;
+            const v = votacion;
+            clearTimeout(v.cierre);
+            const filas = (await cargarResultados({ id: v.id })) || [];
+            await sb.from("questions").update({ closed_at: new Date().toISOString() }).eq("id", v.id);
+            votacion = null;
+            if (!partidaClase) return;
+            const conVotos = filas.filter((f) => f.cuantos > 0);
+            if (!conVotos.length) {
+                pintarPartidaClase("Nadie votó. Sigue la partida cuando estén listos: se abre otra votación.");
+                document.getElementById("partida-reabrir-btn").hidden = false;
+                return;
+            }
+            if (clavePosicion(board.fen()) !== clavePosicion(v.fen)) {
+                pintarPartidaClase("El tablero cambió durante la votación, así que no se jugó nada.");
+                document.getElementById("partida-reabrir-btn").hidden = false;
+                return;
+            }
+            const total = conVotos.reduce((a, f) => a + f.cuantos, 0);
+            const max = Math.max(...conVotos.map((f) => f.cuantos));
+            const empatadas = conVotos.filter((f) => f.cuantos === max);
+            const elegida = empatadas[Math.floor(Math.random() * empatadas.length)];
+            const sanDe = (r) => { try { const m = new Chess(v.fen).move(r, { sloppy: true }); return m ? m.san : r; } catch (e) { return r; } };
+            const jugada = jugarEnElTablero(elegida.respuesta);
+            if (!jugada) {
+                pintarPartidaClase("La jugada más votada no se pudo jugar. Vuelve a abrir la votación.");
+                document.getElementById("partida-reabrir-btn").hidden = false;
+                return;
+            }
+            document.getElementById("partida-ultima").textContent = "La clase jugó " + jugada.san + " (" + max + " de " + total + (total === 1 ? " voto" : " votos")
+                + (empatadas.length > 1 ? "; hubo empate entre " + empatadas.map((f) => sanDe(f.respuesta)).join(", ") + " y se sorteó" : "") + ").";
+            // board.jugar avisa a onMove, que sigue la partida (ver despuesDeJugarEnLaPartida).
+        }
+
+        async function jugarMotorEnLaPartida() {
+            motorPensandoPartida = true;
+            pintarPartidaClase("🤖 El motor está pensando…");
+            const fen = board.fen();
+            let uci = null;
+            try { uci = typeof PracticeEngine !== "undefined" ? await PracticeEngine.getMove(fen, partidaClase ? partidaClase.nivel : "1500") : null; } catch (e) { uci = null; }
+            if (!uci && typeof PracticeEngine !== "undefined") uci = PracticeEngine.jugadaDeRespaldo(fen);
+            motorPensandoPartida = false;
+            if (!partidaClase) return;
+            if (clavePosicion(board.fen()) !== clavePosicion(fen)) { seguirPartidaClase(); return; }
+            const jugada = uci ? jugarEnElTablero(uci) : null;
+            if (!jugada) {
+                pintarPartidaClase("El motor no pudo jugar. Juega tú su jugada en el tablero y la partida sigue.");
+                return;
+            }
+            const ultima = document.getElementById("partida-ultima");
+            ultima.textContent = (ultima.textContent ? ultima.textContent + " " : "") + "El motor contestó " + jugada.san + ".";
+        }
+
+        // Después de cada jugada en el tablero del profe (la de la clase, la del motor o la suya).
+        function despuesDeJugarEnLaPartida() {
+            if (!partidaClase || votacion || motorPensandoPartida) return;
+            setTimeout(seguirPartidaClase, 300);
+        }
+
+        async function terminarPartidaClase(mensaje) {
+            if (votacion) {
+                clearTimeout(votacion.cierre);
+                if (votacion.id) await sb.from("questions").update({ closed_at: new Date().toISOString() }).eq("id", votacion.id);
+                votacion = null;
+            }
+            partidaClase = null;
+            guardarPartidaClase();
+            pintarPartidaClase("");
+            setStatus(mensaje || "Terminaste la partida de la clase.");
+        }
+
+        if (document.getElementById("partida-empezar-btn")) {
+            const niveles = document.getElementById("partida-nivel");
+            const LEVELS = typeof PracticeEngine !== "undefined" ? PracticeEngine.LEVELS : { "1500": { label: "1500 de fuerza" } };
+            Object.keys(LEVELS).forEach((k) => {
+                const o = document.createElement("option");
+                o.value = k;
+                o.textContent = LEVELS[k].label;
+                niveles.appendChild(o);
+            });
+            document.getElementById("partida-rival").addEventListener("change", (e) => {
+                niveles.disabled = e.target.value !== "motor";
+            });
+            document.getElementById("partida-empezar-btn").addEventListener("click", empezarPartidaClase);
+            document.getElementById("partida-jugar-ya-btn").addEventListener("click", cerrarVotacion);
+            document.getElementById("partida-reabrir-btn").addEventListener("click", seguirPartidaClase);
+            document.getElementById("partida-terminar-btn").addEventListener("click", () => terminarPartidaClase());
+            // Al recargar, la partida queda en pausa: se sigue con un botón, no sola.
+            try { partidaClase = JSON.parse(sessionStorage.getItem(PARTIDA_CLAVE) || "null"); } catch (e) { partidaClase = null; }
+            if (partidaClase) {
+                pintarPartidaClase("La partida de la clase quedó en pausa al recargar la página.");
+                const b = document.getElementById("partida-reabrir-btn");
+                b.hidden = false;
+            }
+        }
+
         /* ---------- El mapa de jugadas (game_state.encuesta) ----------
            Lo que contestó la clase en una pregunta de jugada, pasado al tablero
            de todos: las cinco jugadas más elegidas como flechas, y debajo,
@@ -3998,6 +4299,7 @@
             if (error) { console.error(error); caja.textContent = "No se pudieron contar los puntos: " + error.message; return; }
             filasDePuntos = filas;
             pintarListaDePuntos(caja, filas);
+            pintarEquiposProfe();
         }
 
         async function mostrarPodio(conNombres) {
@@ -4007,6 +4309,8 @@
             filasDePuntos = filas;
             const podio = PuntosClase.podioParaLaClase(filas, conNombres);
             if (!podio.lineas.length) { setStatus("Todavía nadie sumó puntos: no hay podio que mostrar."); return; }
+            // Con equipos armados, el podio lleva también el de los equipos.
+            if (equiposActual) podio.equipos = PuntosClase.puntosDeEquipos(filas, equiposActual.lista);
             const { error: err2 } = await sb.from("game_state").update({ podio }).eq("id", myGameStateId);
             if (err2) { console.error(err2); setStatus("No se pudo mostrar el podio: " + err2.message); return; }
             pintarPodio(podio);
@@ -4023,7 +4327,17 @@
             const tu = document.getElementById("podio-tu-lugar");
             tu.hidden = true;
             document.getElementById("podio-quitar-btn").hidden = !isTeacher;
+            const olEq = document.getElementById("podio-equipos");
+            olEq.innerHTML = "";
+            olEq.hidden = !(podioActual && Array.isArray(podioActual.equipos) && podioActual.equipos.length);
             if (!podioActual) return;
+            (podioActual.equipos || []).forEach((e) => {
+                const li = document.createElement("li");
+                const mio = equiposActual && miEquipo() && miEquipo().nombre === e.nombre;
+                li.textContent = PuntosClase.medalla(e.puesto) + " " + e.puesto + ".º Equipo " + String(e.nombre) + " — "
+                    + PuntosClase.textoPuntos(Number(e.puntos) || 0) + (mio ? " (tu equipo)" : "");
+                olEq.appendChild(li);
+            });
             podioActual.lineas.filter((l) => l.puesto <= 3).forEach((l) => {
                 const li = document.createElement("li");
                 const mia = l.id === profile.id;
@@ -4056,6 +4370,142 @@
             if (error) { console.error(error); setStatus("No se pudo quitar el podio: " + error.message); return; }
             pintarPodio(null);
         });
+
+        /* ---------- Los equipos (game_state.equipos) ----------
+           El profe reparte a los conectados al azar en dos a cuatro equipos
+           (PuntosClase.repartir: quedan parejos) y puede cambiar a cualquiera
+           de equipo. Los ve toda la clase; los puntos de cada equipo se suman
+           de los de sus integrantes y salen en el podio. Quien se conecta
+           después queda «sin equipo» hasta que el profe lo pone en uno. */
+        let equiposActual = null;
+        const miEquipo = () => (equiposActual ? equiposActual.lista.find((e) => (e.miembros || []).some((m) => m.id === profile.id)) || null : null);
+
+        function muestraDeColor(color) {
+            const m = document.createElement("span");
+            m.setAttribute("aria-hidden", "true");
+            m.className = "inline-block w-3 h-3 rounded-full shrink-0 align-middle mr-1.5";
+            m.style.background = ClasesBoard.MARK_COLORS[color] || ClasesBoard.MARK_COLORS.naranja;
+            return m;
+        }
+
+        function pintarEquipos(equipos) {
+            equiposActual = equipos && Array.isArray(equipos.lista) && equipos.lista.length >= 2 ? equipos : null;
+            const caja = document.getElementById("equipos-caja");
+            if (caja) {
+                caja.hidden = !equiposActual;
+                const ul = document.getElementById("equipos-lineas");
+                ul.innerHTML = "";
+                if (equiposActual) {
+                    const mio = miEquipo();
+                    equiposActual.lista.forEach((e) => {
+                        const li = document.createElement("li");
+                        const t = document.createElement("span");
+                        const nombres = (e.miembros || []).map((m) => String(m.nombre || "Alumno")).join(", ");
+                        // Los nombres los escribió una persona: textContent.
+                        t.textContent = "Equipo " + String(e.nombre) + ": " + (nombres || "nadie todavía") + (mio === e ? " (tu equipo)" : "");
+                        if (mio === e) li.className = "font-bold";
+                        li.append(muestraDeColor(e.color), t);
+                        ul.appendChild(li);
+                    });
+                }
+            }
+            pintarEquiposProfe();
+        }
+
+        // Los controles del profe: cada equipo con sus puntos y un selector por integrante.
+        function pintarEquiposProfe() {
+            const caja = document.getElementById("equipos-lista-profe");
+            if (!caja || !isTeacher) return;
+            document.getElementById("equipos-quitar-btn").hidden = !equiposActual;
+            caja.innerHTML = "";
+            if (!equiposActual) return;
+            const puntos = new Map(PuntosClase.puntosDeEquipos(filasDePuntos, equiposActual.lista).map((e) => [e.nombre, e.puntos]));
+            const enAlguno = new Set(equiposActual.lista.flatMap((e) => (e.miembros || []).map((m) => m.id)));
+            const sinEquipo = [...onlineStudents.entries()].filter(([id]) => !enAlguno.has(id))
+                .map(([id, info]) => ({ id, nombre: info.full_name || info.email || "Alumno" }));
+            const grupos = equiposActual.lista.map((e, i) => ({ titulo: "Equipo " + e.nombre + " — " + PuntosClase.textoPuntos(puntos.get(e.nombre) || 0), color: e.color, miembros: e.miembros || [], indice: i }));
+            if (sinEquipo.length) grupos.push({ titulo: "Sin equipo (se conectaron después)", color: null, miembros: sinEquipo, indice: -1 });
+            grupos.forEach((g) => {
+                const div = document.createElement("div");
+                const h = document.createElement("p");
+                h.className = "font-semibold text-brand-800 dark:text-brand-100";
+                if (g.color) h.appendChild(muestraDeColor(g.color));
+                h.appendChild(document.createTextNode(g.titulo));
+                div.appendChild(h);
+                const ul = document.createElement("ul");
+                ul.className = "space-y-1 mt-1";
+                g.miembros.forEach((m) => {
+                    const li = document.createElement("li");
+                    li.className = "flex items-center justify-between gap-2";
+                    const n = document.createElement("span");
+                    n.textContent = String(m.nombre || "Alumno");
+                    const sel = document.createElement("select");
+                    sel.className = "text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500";
+                    sel.setAttribute("aria-label", "Equipo de " + String(m.nombre || "Alumno"));
+                    if (g.indice === -1) {
+                        const o = document.createElement("option");
+                        o.value = "-1"; o.textContent = "Elegir equipo…";
+                        sel.appendChild(o);
+                    }
+                    equiposActual.lista.forEach((e, i) => {
+                        const o = document.createElement("option");
+                        o.value = String(i);
+                        o.textContent = "Equipo " + e.nombre;
+                        sel.appendChild(o);
+                    });
+                    sel.value = String(g.indice);
+                    sel.addEventListener("change", () => moverDeEquipo(m, parseInt(sel.value, 10)));
+                    li.append(n, sel);
+                    ul.appendChild(li);
+                });
+                if (!g.miembros.length) {
+                    const li = document.createElement("li");
+                    li.className = "text-xs text-brand-500 dark:text-brand-300";
+                    li.textContent = "Nadie todavía.";
+                    ul.appendChild(li);
+                }
+                div.appendChild(ul);
+                caja.appendChild(div);
+            });
+        }
+
+        async function guardarEquipos(equipos) {
+            const { error } = await sb.from("game_state").update({ equipos }).eq("id", myGameStateId);
+            if (error) { console.error(error); setStatus("No se pudieron guardar los equipos: " + error.message); return false; }
+            pintarEquipos(equipos);
+            return true;
+        }
+
+        async function armarEquipos() {
+            const alumnos = [...onlineStudents.entries()].map(([id, info]) => ({ id, nombre: info.full_name || info.email || "Alumno" }));
+            const cuantos = parseInt(document.getElementById("equipos-cuantos").value, 10) || 2;
+            if (alumnos.length < cuantos) {
+                setStatus("Para " + cuantos + " equipos hacen falta al menos " + cuantos + " alumnos conectados, y hay " + alumnos.length + ".");
+                return;
+            }
+            if (equiposActual && !(await Avisos.confirmar("Los equipos de ahora se reemplazan por unos nuevos, repartidos al azar.",
+                { titulo: "¿Armar equipos nuevos?", aceptar: "Armar equipos nuevos" }))) return;
+            if (await guardarEquipos(PuntosClase.repartir(alumnos, cuantos))) {
+                setStatus("👥 Equipos armados: toda la clase ve en cuál quedó cada uno.");
+            }
+        }
+
+        async function moverDeEquipo(miembro, destino) {
+            if (!equiposActual || !(destino >= 0)) return;
+            const lista = equiposActual.lista.map((e, i) => ({
+                nombre: e.nombre, color: e.color,
+                miembros: (e.miembros || []).filter((m) => m.id !== miembro.id).concat(i === destino ? [{ id: miembro.id, nombre: miembro.nombre }] : []),
+            }));
+            await guardarEquipos({ at: equiposActual.at, lista });
+        }
+
+        if (document.getElementById("equipos-armar-btn")) {
+            document.getElementById("equipos-armar-btn").addEventListener("click", armarEquipos);
+            document.getElementById("equipos-quitar-btn").addEventListener("click", async () => {
+                if (await guardarEquipos(null)) setStatus("Quitaste los equipos.");
+            });
+            document.getElementById("equipos-profe").addEventListener("toggle", (e) => { if (e.target.open) pintarEquiposProfe(); });
+        }
 
         /* Los demás ven para quién es la pregunta dirigida (el nombre viaja con
            el turno, en game_state.elegido). */
@@ -6596,6 +7046,8 @@
                 if (!(await prepararObservador())) return;
             } else if (isTeacher) {
                 boardOwnerId = profile.id;
+                modoProyector = new URLSearchParams(location.search).get("proyector") === "1";
+                document.documentElement.classList.toggle("modo-proyector", modoProyector);
             } else {
                 // Con más de un profesor, el alumno elige a cuál clase entra.
                 const { clases, elegida } = await ClaseElegida.resolver();
@@ -6631,6 +7083,7 @@
                 document.getElementById("engine-panel").classList.remove("hidden");
                 document.getElementById("teacher-tabs-wrap").classList.remove("hidden");
                 document.getElementById("clear-chat-btn").classList.remove("hidden");
+                if (!modoProyector) document.getElementById("proyector-btn").classList.remove("hidden");
                 document.getElementById("chat-student-picker").classList.remove("hidden");
                 let savedTab = TEACHER_TABS[0];
                 try { savedTab = localStorage.getItem(TEACHER_TAB_KEY) || savedTab; } catch (e) {}

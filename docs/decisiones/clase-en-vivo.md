@@ -850,6 +850,109 @@ quitar el mapa al borrar las flechas, dando por buena cualquier jugada del
 calentamiento, guardando la solución en SAN, sin el cuadro para escribir, con el podio sin nombres que los
 lleva igual o con el lugar del alumno tomado de otro, salta.
 
+### La clase juega votando
+
+«🗳️ La clase juega» (pestaña Preguntar): la clase juega una partida contra
+el motor o contra el profe desde la posición del tablero.
+
+- **Cada turno de la clase es una pregunta de jugada con tiempo**, la de
+  siempre (`crearPregunta` con su `prompt` y su `tiempo_limite`), no un
+  mecanismo aparte. Por eso cuenta para los puntos, se ve en «Respuestas en
+  el tablero», el motor calcula su respuesta y entra en el repaso personal.
+- Al cerrarse (se cierra sola unos segundos después del plazo, porque la base
+  acepta votos hasta 5 s después; o con «Jugar ya la más votada») **se juega
+  la más votada, por la misma puerta que el clic** (`board.jugar`): así se
+  transmite, se registra y avisa a `onMove` como cualquier otra jugada.
+  **Con empate se sortea entre las empatadas y se dice** («hubo empate entre
+  Ac4, Cf3 y se sorteó»): elegir siempre la primera favorecería el orden
+  alfabético.
+- Si nadie votó, o el tablero cambió durante la votación, no se juega nada y
+  se ofrece «Seguir la partida».
+- **El motor contesta desde la computadora del profe** (`PracticeEngine`, con
+  la fuerza elegida); contra el profe, la partida espera su jugada en el
+  tablero, y con ella se abre la votación siguiente (`despuesDeJugarEnLaPartida`,
+  enganchado a `onMove`).
+- El estado vive en esa página (`sessionStorage`), no en la base: es del rato
+  de la clase. Al recargar, la partida queda en pausa y se sigue con un botón,
+  para que una recarga no abra una votación sola.
+
+### El repaso personal
+
+Al cerrar la clase, «📌 Mandarle a cada uno su repaso» manda UNA tarea
+(`crear_tarea`) con un renglón `completar` que abre
+`repasar-clases.html?repaso=<clase>`. Cada alumno ve ahí **solo las preguntas
+de jugada que a él no le salieron**.
+
+- **La regla está una sola vez**, en `js/repaso-clase.js`
+  (`RepasoClase.pendientes`), y la usan las dos pantallas: el cierre decide a
+  quién mandarle la tarea y el alumno ve las suyas. Con dos copias, a alguien
+  le llegaría una tarea vacía.
+- Entra lo que falló (`is_correct = false`, aunque la primera jugada fuera la
+  del motor), lo que no contestó y lo que contestó distinto del motor sin que
+  el profe lo calificara. No entran las de opciones (el termómetro no tiene
+  respuesta correcta), las abiertas (la base no le da al alumno la respuesta
+  del motor mientras siguen abiertas), las dirigidas a otro ni las que no
+  tienen respuesta del motor. Van a lo sumo diez, en el orden de la clase:
+  una partida votada entera daría treinta.
+- Solo a los que vinieron (`class_attendance`) y a quien le quedó algo. A
+  quien ya tiene el repaso de esa clase (un renglón con ese enlace) no se le
+  manda otro.
+- El alumno lo resuelve tocando o escribiendo (`js/cuadro-comandos.js`, con
+  `js/tablero-accesible.js` para el teclado). Vale la jugada del motor o
+  cualquier mate. «Ver la respuesta» la muestra jugada, pero no cuenta como
+  resuelta.
+- **Al resolverlas todas se marca solo el renglón de SU tarea**:
+  `tarea_items.completada_at`, lo único que el alumno puede escribir de una
+  tarea. Se marca la tarea que lo trajo (`?tarea=`, que agrega `tareas.html`
+  a cada enlace).
+- El doble de `lib/doble-entreno.js` aprendió `.is()` y un `update()` que
+  anota y cambia las filas de verdad (antes no hacía nada), con el filtro
+  apuntado en el resolver.
+
+### El modo proyector
+
+«📽️ Proyector» (junto a Girar) abre otra ventana, `sesion.html?proyector=1`,
+para la tele o el proyector del aula: el tablero grande y lo que ve toda la
+clase (el tiempo para pensar, el mapa de jugadas, el calentamiento, el podio,
+los equipos). Sirve en la clase presencial con una segunda pantalla: la clase
+se da desde la ventana de siempre.
+
+- **Lo que se ve va por lista blanca** (`.proyector-se-ve`, reglas en
+  `css/styles.css`), no por lista negra: una herramienta nueva del profe no
+  aparece proyectada sin que alguien lo decida.
+- **El tablero del proyector no se mueve** (`interactive` y `allowArrows` en
+  false) y **sigue lo que mira el profe** (`game_state.vista`), como un
+  alumno. No calcula con el motor: ese trabajo ya lo hace la otra ventana.
+- El tope de 420 px del tablero en las pantallas bajas (`@media (max-height:
+  800px)`) es más específico que una regla simple: el proyector lo pisa con
+  `#app` en el selector. En la tele el tablero es lo único que hay.
+
+### Los equipos
+
+«👥 Equipos» (pestaña Alumnos): el profe reparte a los conectados en dos a
+cuatro equipos (`PuntosClase.repartir`: al azar y parejos, a lo sumo uno de
+diferencia) y puede cambiar a cualquiera de equipo con un selector. Quien se
+conecta después queda «sin equipo» hasta que el profe lo pone en uno.
+
+- Van en `game_state.equipos` (migración `game_state_equipos`), protegidos
+  por el mismo trigger que el podio y con su CHECK de forma envuelto en
+  `coalesce`. Comprobado impersonando: la forma mala se rechaza y un alumno no
+  los cambia.
+- **Los puntos de un equipo no se guardan**: son la suma de los de sus
+  integrantes (`PuntosClase.puntosDeEquipos`, sobre `resumen_de_la_clase`), y
+  salen en el podio con su puesto (los empatados lo comparten).
+- El nombre del equipo es su color escrito («Equipo Azul»): el color nunca va
+  solo. Cada alumno ve el suyo marcado («tu equipo»), también en el podio.
+
+**Al tocar esto, correr `node herramientas/verificar-todo.js clase-juega
+clase-repaso-personal`.** Está probado que fallan de verdad:
+- sin decir el empate, o sin cerrar la votación;
+- sin seguir la partida después de que mueve el profe;
+- con los nombres de los equipos por `innerHTML`, o con el podio sin los equipos;
+- con el proyector que deja mover o que muestra la barra del profe;
+- con la marcada mal fuera del repaso, o con cualquier jugada dada por buena;
+- marcando la tarea que no era.
+
 ### El modo sencillo de la clase en vivo
 
 Aun ordenada, la pantalla del profesor tiene catorce controles delante, y la
