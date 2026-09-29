@@ -104,6 +104,7 @@
                 statCard("🧩", `${e.tiposEjercicios} (${e.tiposEstrellas}⭐)`, "Tipos de entrenamiento: ejercicios con estrellas", true),
                 statCard("📖", `${e.aperturasEmpezadas} (${e.aperturasFirmes} firmes)`, "Líneas de Aperturas estudiadas", true),
                 statCard("🎯", textoPrecision(e), "Precisión posicional", true),
+                statCard("🏁", e.finales, "Finales contra la máquina logrados", true),
             ];
         }
 
@@ -151,6 +152,7 @@
                 precisionUltima: typeof m.precision_ultima === "number" ? m.precision_ultima : null,
                 precisionFecha: m.precision_fecha || null,
                 temaFlojo: m.temaFlojo || null,
+                finales: m.finales || 0,
                 puzzles: f.puzzles || 0,
                 lessons: f.lecciones || 0,
                 bestCoord: f.mejor_coord || 0,
