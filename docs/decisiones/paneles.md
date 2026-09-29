@@ -1579,6 +1579,75 @@ En la página comprueba:
 Comprobado que falla al quitar el volver a cruzar y al quitar la comprobación
 del rival.
 
+### Entrenar el plan: etapa 7
+
+En `plan-rival.html`, debajo del plan, va **«Entrénalo»**: el alumno juega cada
+línea del plan **de memoria**. Él mueve sus piezas y el tablero mueve las del
+rival, con una pausa, diciendo qué jugó y la nota de esa jugada.
+- Una jugada legal que no es la del plan se deshace y cuenta como error.
+- «Pista» dice la jugada y marca de dónde sale.
+- **La nota la pone lo que pasó, no el alumno**, como en Aperturas: una línea
+  queda sabida cuando sale **sin errores y sin pistas**.
+- Se juega con clic, con el teclado (`js/tablero-accesible.js`) y
+  escribiendo en el cuadro del Modo Adaptado («c5», «Cf3», «pista»).
+- Con negras, el tablero se da vuelta y el rival abre solo.
+
+**El entrenador es `js/entrenador-linea.js`**, un módulo, y toma de
+`js/visor-linea.js` cómo se pinta la pieza y cómo se cuenta la jugada. El de
+Aperturas (`js/entreno-aperturas.js`) hace lo mismo con su propia pantalla y
+su repaso espaciado. Es anterior y quedó como estaba: unirlos sería mudar
+Aperturas a este módulo, un cambio aparte.
+
+**Cuenta en Informes y llena la tarea sola.** Cada línea terminada queda en
+`training_progress` con la actividad nueva **`preparacion`**:
+- `detail.linea_id` es `<id del plan>:<jugadas>`.
+- **Solo si salió limpia** lleva además `detail.theme` = el id del plan.
+- La tarea que crea `mandar_plan_rival()` dejó de ser un renglón «completar»,
+  que el alumno marcaba a mano. Ahora es **«cantidad»**:
+  - tantas líneas como hojas tiene el plan, contadas en SQL igual que
+    `lineasDelPlan()`;
+  - con `actividades = ['preparacion']` y `filtro_clave` = el id del plan.
+  - `tareas_con_avance()`, sin cambios, cuenta los `linea_id` distintos que
+    tienen ese `theme`. O sea que **cada línea cuenta una vez, y solo la que
+    salió limpia**. Una línea con errores queda registrada, pero sin `theme`, y
+    por eso no llega a la tarea.
+  - Se lee «Aprender 2 líneas de tu plan contra…», porque el catálogo de Tareas
+    (`js/material-plataforma.js`) tiene la entrada `plan-rival` con
+    `unidad: "líneas"` y `noSeElige: true`: no se ofrece en `tareas.html`,
+    porque cada plan es de un alumno.
+  - Las tareas que ya se habían mandado siguen como estaban, con su «Ya lo
+    hice».
+- **El tiempo** cuenta con `js/tiempo-plataforma.js` en la sección
+  **«Preparación de rivales»**. `plan-rival.html` está en `TIEMPO_ACTIVIDAD`
+  de `academia-cabecera.py`, y la sección está en `js/tiempo-secciones.js` y en
+  el `informe-html.ts` del correo a la casa. Se volvió a desplegar
+  `informes-encargados` (versión 16, comprobada por huella contra el
+  repositorio): lo desplegado todavía no tenía ni «Finales contra la máquina».
+  `tiempo_por_seccion()` no hubo que tocarla, porque pasa la actividad como
+  sección.
+- Lo que ya salió limpio se lee de la base, no del navegador: vale en la
+  computadora y en el celular.
+- **Se registra solo si quien mira es el alumno del plan.** Un profesor que lo
+  prueba lo juega igual, pero no le suma a nadie, y la página lo dice.
+
+Comprobado en SQL, con un plan de dos líneas:
+- la tarea pide 2;
+- la línea limpia repetida cuenta una vez y la de errores no cuenta (1 de 2);
+- con la segunda limpia queda cumplida;
+- la sección «preparacion» de `tiempo_por_seccion()` dice 2 líneas.
+
+El verificador juega en la página con un plan chico:
+- una jugada que no es la del plan se deshace;
+- el rival contesta y se dice qué jugó;
+- con un error se registra sin `theme`, y limpia, con `theme`;
+- el progreso sube;
+- la pista marca la casilla y no cuenta;
+- con negras el tablero se da vuelta y se juega escribiendo;
+- un profesor no registra nada.
+
+Comprobado que falla al poner el `theme` siempre y al no deshacer la jugada
+equivocada.
+
 ## Las inscripciones a torneos en línea
 
 `inscripciones.html` muestra lo que llegó por `inscripcion.html`, el formulario

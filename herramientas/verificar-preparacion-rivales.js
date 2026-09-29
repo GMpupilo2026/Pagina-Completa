@@ -360,7 +360,12 @@ window.__fensPedidas = [];
     let filas2 = (filas || []).slice(), unica = false, quizas = false, insertando = null, borrando = false;
     const b = {
       select() { return b; },
-      eq(col, val) { filas2 = filas2.filter((r) => String(r[col]) === String(val)); return b; },
+      // «detail->>theme»: un campo dentro de un jsonb, como lo pide PostgREST.
+      eq(col, val) {
+        const [c, dentro] = col.split("->>");
+        filas2 = filas2.filter((r) => String(dentro ? (r[c] || {})[dentro] : r[c]) === String(val));
+        return b;
+      },
       in(col, vals) { filas2 = filas2.filter((r) => vals.map(String).includes(String(r[col]))); return b; },
       order() { return b; },
       range(a, z) { filas2 = filas2.slice(a, z + 1); return b; },
@@ -1062,6 +1067,100 @@ async function pruebaEtapa6(browser) {
   await ctx.close();
 }
 
+/* Etapa 7: el alumno entrena el plan en plan-rival.html. Un plan chico, de dos
+   líneas (1.e4 e5 2.Cf3 y 1.e4 c5). Se juega con clics y escribiendo; una
+   jugada que no es la del plan se deshace y cuenta; la línea con errores o
+   pistas queda registrada SIN theme (no cuenta para la tarea) y la limpia CON
+   theme = el id del plan. Con negras, el tablero se da vuelta. Un profesor que
+   mira el plan de su alumno no suma nada. */
+const PLAN_CHICO = { plan: [{ san: "e4", quien: "tu", n: 5, puntos: 0.2, hijos: [
+  { san: "e5", quien: "rival", reparto: 0.6, n: 3, puntos: 0.3, hijos: [{ san: "Nf3", quien: "tu", n: 3, puntos: 0.1, hijos: [] }] },
+  { san: "c5", quien: "rival", reparto: 0.4, n: 2, puntos: 0.5, hijos: [] }] }], motor: null };
+
+async function pruebaEtapa7(browser) {
+  console.log("\n=== Etapa 7: entrenar el plan ===");
+  const fila = { id: "plan-7", profesor_id: "p-x", alumno_id: "u-profe", rival: "Pedro Perez", lado: "conBlancas", plan: PLAN_CHICO, nota: null, created_at: "2026-09-28T12:00:00Z" };
+  const { page, ctx, errores } = await abrir(browser, false, [], false, { planes_rival_alumno: [fila], training_progress: [] }, "plan-rival.html?id=plan-7");
+  igual("dice cuántas líneas ya le salen", await page.textContent("#entrenar-progreso"), "Te salen sin errores 0 de 2 líneas.");
+  igual("una fila por línea, con su botón", await page.evaluate(() => [...document.querySelectorAll("#entrenar-lineas li")].map((li) => li.dataset.linea)), ["e4 e5 Nf3", "e4 c5"]);
+
+  const tocar = async (a, b) => { await page.click("#entrenador [data-square='" + a + "']"); await page.click("#entrenador [data-square='" + b + "']"); };
+  const turno = () => page.textContent("#entrenador .entrenador-turno");
+  await page.click("#entrenar-siguiente");
+  await page.waitForFunction(() => document.getElementById("entrenador-caja").checkVisibility(), null, { timeout: 5000 });
+  igual("se abre el entrenador, con el foco en su título", await page.evaluate(() => [document.querySelector("#entrenador .visor-titulo").textContent, document.activeElement.className]), ["Línea 1 de 2", "visor-titulo"]);
+  igual("le toca a él, con blancas", await turno(), "Te toca: juegas con blancas.");
+  igual("con blancas, el tablero empieza en a8", await page.evaluate(() => document.querySelector("#entrenador .visor-tablero button").dataset.square), "a8");
+  // Una jugada legal que no es la del plan: se deshace y cuenta.
+  await tocar("d2", "d4");
+  igual("una jugada que no es la del plan se deshace y lo dice", await page.evaluate(() => [
+    document.querySelector("#entrenador .visor-nota").textContent, !!document.querySelector("#entrenador [data-square='d4'] span")]),
+    ["Esa no es la jugada del plan. Vuelve a intentarlo.", false]);
+  await tocar("e2", "e4");
+  await page.waitForFunction(() => /^Te toca/.test(document.querySelector("#entrenador .entrenador-turno").textContent), null, { timeout: 5000 });
+  cierto("el rival contesta solo, y se dice qué jugó (" + await page.textContent("#entrenador .visor-nota") + ")",
+    /^El rival: El peón negro va de eva 7 a eva 5\. Él la juega el 60 % de las veces/.test(await page.textContent("#entrenador .visor-nota")));
+  await tocar("g1", "f3");
+  await page.waitForFunction(() => /Línea completa/.test(document.querySelector("#entrenador .entrenador-turno").textContent), null, { timeout: 5000 });
+  await page.waitForFunction(() => window.__insertados.some((i) => i.tabla === "training_progress"), null, { timeout: 5000 });
+  igual("con un error: lo dice, y se registra sin theme (no cuenta para la tarea)", await page.evaluate(() => {
+    const i = window.__insertados.filter((x) => x.tabla === "training_progress")[0];
+    return [document.getElementById("entrenador-resultado").textContent, i.activity, i.detail.linea_id, i.detail.limpio, i.detail.theme || null];
+  }), ["Te salió con 1 error y 0 pistas: vuelve a jugarla hasta que te salga limpia.", "preparacion", "plan-7:e4 e5 Nf3", false, null]);
+  igual("y todavía no cuenta", await page.textContent("#entrenar-progreso"), "Te salen sin errores 0 de 2 líneas.");
+
+  // Otra vez, limpia.
+  await page.click("#entrenador button:has-text('Empezar de nuevo')");
+  await tocar("e2", "e4");
+  await page.waitForFunction(() => /^Te toca/.test(document.querySelector("#entrenador .entrenador-turno").textContent), null, { timeout: 5000 });
+  await tocar("g1", "f3");
+  await page.waitForFunction(() => window.__insertados.filter((i) => i.tabla === "training_progress").length === 2, null, { timeout: 5000 });
+  igual("limpia: cuenta, con theme = el id del plan", await page.evaluate(() => {
+    const i = window.__insertados.filter((x) => x.tabla === "training_progress")[1];
+    return [document.getElementById("entrenador-resultado").textContent, i.detail.limpio, i.detail.theme];
+  }), ["¡Te salió sin errores ni pistas! Esta línea ya cuenta.", true, "plan-7"]);
+  await page.waitForFunction(() => /1 de 2/.test(document.getElementById("entrenar-progreso").textContent), null, { timeout: 5000 });
+  cierto("y el progreso sube a 1 de 2, con la línea marcada", await page.evaluate(() =>
+    /✔ Ya te sale sin errores/.test(document.querySelector("#entrenar-lineas li[data-linea='e4 e5 Nf3']").textContent)));
+
+  // La siguiente es la que falta; con pista no cuenta.
+  await page.click("#entrenar-siguiente");
+  await page.waitForFunction(() => document.querySelector("#entrenador .visor-titulo").textContent === "Línea 2 de 2", null, { timeout: 5000 });
+  await page.click("#entrenador button:has-text('Pista')");
+  igual("la pista dice la jugada y marca de dónde sale", await page.evaluate(() => [
+    document.querySelector("#entrenador .visor-nota").textContent, document.querySelector("#entrenador [data-square='e2']").classList.contains("visor-seleccionada")]),
+    ["La jugada del plan es e4. Hazla en el tablero.", true]);
+  await tocar("e2", "e4");
+  await page.waitForFunction(() => window.__insertados.filter((i) => i.tabla === "training_progress").length === 3, null, { timeout: 5000 });
+  igual("con pista no cuenta", await page.evaluate(() => { const i = window.__insertados.filter((x) => x.tabla === "training_progress")[2]; return [i.detail.linea_id, i.detail.pistas, i.detail.theme || null]; }), ["plan-7:e4 c5", 1, null]);
+  igual("sin errores", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+
+  // Con negras y en Modo Adaptado: el tablero se da vuelta y se juega escribiendo.
+  const negras = Object.assign({}, fila, { id: "plan-8", lado: "conNegras", plan: { plan: [{ san: "e4", quien: "rival", reparto: 1, n: 5, puntos: 0.5, hijos: [{ san: "c5", quien: "tu", n: 5, puntos: 0.4, hijos: [] }] }], motor: null } });
+  const n = await abrir(browser, false, [], true, { planes_rival_alumno: [negras], training_progress: [] }, "plan-rival.html?id=plan-8");
+  await n.page.click("#entrenar-siguiente");
+  await n.page.waitForFunction(() => /^Te toca: juegas con negras/.test((document.querySelector("#entrenador .entrenador-turno") || {}).textContent || ""), null, { timeout: 5000 });
+  igual("con negras, el rival abre solo y el tablero empieza en h1", await n.page.evaluate(() => document.querySelector("#entrenador .visor-tablero button").dataset.square), "h1");
+  await n.page.fill("#entrenador .cc-input", "c5");
+  await n.page.press("#entrenador .cc-input", "Enter");
+  await n.page.waitForFunction(() => window.__insertados.some((i) => i.tabla === "training_progress"), null, { timeout: 5000 });
+  igual("escribiendo «c5» se juega y la línea sale limpia", await n.page.evaluate(() => { const i = window.__insertados.find((x) => x.tabla === "training_progress"); return [i.detail.linea_id, i.detail.theme]; }), ["plan-8:e4 c5", "plan-8"]);
+  await n.ctx.close();
+
+  // Un profesor que mira el plan de su alumno: no suma nada.
+  const ajeno = Object.assign({}, fila, { alumno_id: "otro-alumno" });
+  const p = await abrir(browser, false, [], false, { planes_rival_alumno: [ajeno], training_progress: [] }, "plan-rival.html?id=plan-7");
+  igual("un profesor que lo mira lo sabe", await p.page.textContent("#entrenar-progreso"), "Estás viendo el plan de un alumno: lo que entrenes acá no se le suma.");
+  await p.page.click("#entrenar-siguiente");
+  await p.page.click("#entrenador [data-square='e2']"); await p.page.click("#entrenador [data-square='e4']");
+  await p.page.waitForFunction(() => /^Te toca/.test(document.querySelector("#entrenador .entrenador-turno").textContent), null, { timeout: 5000 });
+  await p.page.click("#entrenador [data-square='g1']"); await p.page.click("#entrenador [data-square='f3']");
+  await p.page.waitForFunction(() => /Línea completa/.test(document.querySelector("#entrenador .entrenador-turno").textContent), null, { timeout: 5000 });
+  igual("y no se registra nada", await p.page.evaluate(() => window.__insertados.filter((i) => i.tabla === "training_progress").length), 0);
+  await p.ctx.close();
+}
+
 // Las partidas «de Lichess»: las mismas de prueba, con el rival como usuario.
 function pgnDeUsuario(usuario) {
   return pgnDePrueba().replace(/Pérez, Pedro|Pedro Perez|Pedro Pérez|PEDRO PÉREZ/g, usuario);
@@ -1254,6 +1353,7 @@ async function pruebaMotorDeVerdad(browser) {
     await pruebaEtapa4(browser);
     await pruebaEtapa5(browser, libro);
     await pruebaEtapa6(browser);
+    await pruebaEtapa7(browser);
     await pruebaMotorDeVerdad(browser);
   } finally {
     await browser.close();

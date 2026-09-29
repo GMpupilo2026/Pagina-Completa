@@ -103,6 +103,13 @@ window.MaterialPlataforma = (function () {
 
     { slug: "arbitraje", label: "Diagnóstico de arbitraje", href: "nivel-de-arbitraje.html",
       actividades: [], metas: ["completar"], unidad: "" },
+
+    /* El plan contra un rival: no se elige en Tareas, porque cada plan es de un
+       alumno. Lo manda la preparación de rivales (mandar_plan_rival(), con el
+       id del plan en filtro_clave) y está acá para que la tarea se lea bien
+       («Aprender 4 líneas de tu plan contra…») y se sepa qué cuenta. */
+    { slug: "plan-rival", label: "Tu plan contra un rival", href: "plan-rival.html",
+      actividades: ["preparacion"], metas: ["cantidad"], unidad: "líneas", noSeElige: true },
   ];
 
   const META_LABEL = {

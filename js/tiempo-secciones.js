@@ -42,6 +42,7 @@ window.TiempoSecciones = (function () {
         "ilumina":              { nombre: "Ilumina el tablero",    emoji: "💡", unidad: ["nivel", "niveles"] },
         "visualizacion":        { nombre: "Visualización",         emoji: "👁️", unidad: ["ejercicio", "ejercicios"] },
         "finales":              { nombre: "Finales contra la máquina", emoji: "🏁", unidad: ["final", "finales"] },
+        "preparacion":          { nombre: "Preparación de rivales", emoji: "🔭", unidad: ["línea", "líneas"] },
         "estudio":              { nombre: "Estudio (fichas)",      emoji: "📚" },
         "precision-posicional": { nombre: "Precisión posicional",  emoji: "🧭" },
         "sonar":                { nombre: "El Sonar",              emoji: "🔊" },

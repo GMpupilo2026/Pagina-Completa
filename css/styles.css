@@ -1102,3 +1102,10 @@ footer li > a {
 .visor-jugada { background: transparent; border: 1px solid transparent; border-radius: 0.25rem; padding: 2px 6px; color: inherit; font-family: ui-monospace, monospace; cursor: pointer; }
 .visor-jugada:hover { border-color: rgb(var(--c-brand-300, 159 179 200)); }
 .visor-actual { background: rgb(var(--c-accent-500, 222 145 29)); color: rgb(var(--c-brand-900, 16 42 67)); font-weight: 700; }
+/* Jugar la línea de memoria (js/entrenador-linea.js): la pieza elegida y la
+   jugada equivocada se marcan con un borde, y además se dicen en palabras. */
+.visor-seleccionada { box-shadow: inset 0 0 0 4px rgb(var(--c-accent-500, 222 145 29)); }
+.visor-mal { box-shadow: inset 0 0 0 4px #b91c1c; }
+.entrenador-turno { font-weight: 600; text-align: center; margin: 0; color: rgb(var(--c-brand-800, 36 59 83)); }
+.dark .entrenador-turno { color: #fff; }
+.entrenador-boton { padding: 0 0.9rem; font-size: 0.9rem; font-weight: 600; }
