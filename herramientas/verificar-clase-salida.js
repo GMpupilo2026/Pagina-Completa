@@ -118,6 +118,55 @@ async function pruebaClaseSiguiente(browser) {
   await ctx.close();
 }
 
+/* Si no quedó, lo que se vio del plan en esa clase (clase_plan_hecho) se
+   propone para repasar: sube al principio de «Mi plan» con su marca. Si
+   quedó, nada. */
+const PLAN = {
+  planes_clase: [{ id: "pl-1", profesor_id: "u-profe", titulo: "Finales", notas: null, created_at: "1" }],
+  plan_items: [
+    { id: "it-1", plan_id: "pl-1", orden: 0, tipo: "posicion", titulo: "Oposición", fen: FEN, pregunta: null, nota: null },
+    { id: "it-2", plan_id: "pl-1", orden: 1, tipo: "posicion", titulo: "Regla del cuadrado", fen: FEN, pregunta: null, nota: null },
+  ],
+  clase_plan_hecho: [{ class_session_id: "c-vieja", plan_item_id: "it-2" }],
+};
+function claseVieja(opcionDeTodos) {
+  return Object.assign({
+    game_state: [fila()],
+    class_sessions: [
+      { id: "c-vieja", created_by: "u-profe", title: "Finales de torre", started_at: "2026-09-20T15:00:00Z", ended_at: "2026-09-20T16:00:00Z" },
+      CLASE,
+    ],
+    class_attendance: [{ session_id: "c-vieja", student_id: "u-ana" }],
+    questions: [{ id: "q-s", class_session_id: "c-vieja", created_by: "u-profe", prompt: "¿Entendiste?", tipo: "opciones",
+      opciones: TERMOMETRO, de_salida: true, fen: FEN, created_at: "2026-09-20T15:55:00Z", closed_at: "2026-09-20T16:00:00Z" }],
+    question_answers: [{ id: "a1", question_id: "q-s", student_id: "u-ana", opcion: opcionDeTodos, is_correct: null }],
+  }, JSON.parse(JSON.stringify(PLAN)));
+}
+
+async function pruebaRepaso(browser) {
+  console.log("\n=== Si no quedó, se propone repasar lo que se vio ===");
+  let r = await abrir(browser, "u-profe", CLASE, claseVieja(2));
+  await r.page.waitForSelector("#repasar-plan-btn", { timeout: 10000 });
+  igual("dice qué se vio", /Se vio: «[^»]*Regla del cuadrado»\./.test(await r.page.textContent("#salida-pasada")), true);
+  igual("y ofrece repasarlo", await seVe(r.page, "#repasar-plan-btn"), true);
+  await r.page.click("#repasar-plan-btn");
+  await r.page.waitForFunction(() => document.querySelectorAll("#plan-items li[data-plan-item]").length === 2, null, { timeout: 5000 });
+  igual("abre ese plan", await r.page.inputValue("#plan-select"), "pl-1");
+  igual("con lo de repasar primero", await r.page.evaluate(() =>
+    [...document.querySelectorAll("#plan-items li[data-plan-item]")].map((li) => li.dataset.planItem)), ["it-2", "it-1"]);
+  igual("y marcado, escrito", await r.page.evaluate(() =>
+    [...document.querySelectorAll("#plan-items li[data-plan-item]")].map((li) => !!li.querySelector(".plan-repasar"))), [true, false]);
+  igual("se ve", await seVe(r.page, "#plan-items .plan-repasar"), true);
+  igual("sin errores en consola", r.errores, []);
+  await r.ctx.close();
+
+  r = await abrir(browser, "u-profe", CLASE, claseVieja(0));
+  await r.page.waitForFunction(() => /quedó/.test(document.getElementById("salida-pasada").textContent), null, { timeout: 10000 });
+  igual("si quedó, no propone repasar", await r.page.evaluate(() => !!document.getElementById("repasar-plan-btn")), false);
+  igual("sin errores en consola", r.errores, []);
+  await r.ctx.close();
+}
+
 async function pruebaAlumna(browser) {
   console.log("\n=== La alumna no ve nada de esto ===");
   const { page, ctx, errores } = await abrir(browser, "u-ana", CLASE, { game_state: [fila()] });
@@ -135,6 +184,7 @@ async function pruebaAlumna(browser) {
   try {
     await pruebaCierre(browser);
     await pruebaClaseSiguiente(browser);
+    await pruebaRepaso(browser);
     await pruebaAlumna(browser);
   } catch (e) {
     console.log("  ✗ la prueba se cayó: " + (e && e.stack || e));
