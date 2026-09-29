@@ -2292,6 +2292,43 @@ Stockfish de mentira, que ahora entiende MultiPV. Comprueba:
 Falla si no se vuelve a MultiPV 1. Con el Stockfish real se probó a mano sobre
 jeigoth5.
 
+## Qué tan certera es la preparación
+
+Una preparación dice «juega esto, en esto pierde, esto le funciona», pero no
+decía cuánto fiarse. Ahora se prueba contra el futuro, como se prueba un
+pronóstico: `certezaDe` (en `preparacion-analisis.js`) arma la preparación
+**solo con las partidas anteriores** y la compara con las que jugó después.
+
+- Las nuevas son el 20 % más reciente (al menos 15); las viejas, las de
+  **antes del primer día** de las nuevas. Una partida del mismo día no sirve
+  para prepararse y para probar a la vez: si todas tienen la misma fecha (un
+  PGN sin fechas de verdad), no hay prueba. Hacen falta 60 partidas con fecha
+  y 45 viejas; con menos, la tarjeta no sale.
+- **¿Adivina lo que juega?** Se bajan sus partidas nuevas por el árbol viejo
+  y, en cada jugada suya con bastantes partidas detrás (el mismo mínimo del
+  análisis), se cuenta si hizo la más jugada (y si fue una de las dos más
+  jugadas). Con menos de 10 decisiones no se juzga.
+- **Las débiles, las fuertes y el plan** se comparan con su promedio en las
+  partidas nuevas con ese color, no con un número fijo: si en lo nuevo sacó
+  53 %, una línea débil se confirma si sacó 5 puntos menos. Si en todo lo nuevo
+  ya sacó 0 % o 100 %, no se le puede pedir que quede más abajo o más arriba:
+  basta con llegar al extremo. Con menos de 5 partidas: «Todavía no se puede
+  decir».
+- **«Ya no las juega»**: si tuvo 5 partidas nuevas con ese color y ninguna
+  pasó por esas líneas, cambió de apertura, y cuenta en contra: la
+  preparación apunta a algo que ya no hace. Antes esto salía como «0 partidas,
+  no se puede decir», que era verdad pero escondía lo importante.
+- **La confianza** es alta si adivina al menos 60 % y todo lo juzgado se
+  confirmó; baja si adivina menos de 40 % o se confirmó menos de la mitad; si
+  no, media. Va escrita («Confianza: alta») y con lo que hay que hacer, no solo
+  en color: cada comprobación lleva su borde verde o rojo **y** su veredicto
+  en palabras.
+- La tarjeta va justo después de «Qué hacer contra él»: es lo que dice cuánto
+  pesa todo lo demás.
+
+Verificador: `preparacion-rivales` (`pruebaCerteza` con un rival que sigue
+igual y otro que cambió 1…e5 por 1…c5, y `pruebaCertezaEnLaPagina`).
+
 ## Las inscripciones a torneos en línea
 
 `inscripciones.html` muestra lo que llegó por `inscripcion.html`, el formulario

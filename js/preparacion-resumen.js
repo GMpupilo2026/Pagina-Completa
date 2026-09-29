@@ -384,11 +384,72 @@
     };
   }
 
+  /* ¿Qué tan certera es? (r.certeza, la prueba hacia atrás de certezaDe()).
+     Cada comprobación, en palabras y con su veredicto escrito («se
+     confirmó», «no se confirmó», «todavía no se puede decir»), y una
+     confianza general: alta, media o baja.
+       { confianza, porque, items: [{ titulo, texto, veredicto }] } o null */
+  const MIN_PRUEBA = 5;
+  function certeza(r) {
+    const c = r.certeza;
+    if (!c) return null;
+    const items = [];
+    const rp = c.repertorio;
+    let pRep = null;
+    if (rp.decisiones >= 10) {
+      pRep = rp.aciertos / rp.decisiones;
+      items.push({
+        titulo: "¿Adivina lo que juega?",
+        texto: "Acertó su jugada en " + rp.aciertos + " de " + rp.decisiones + " decisiones (" + pctEntero(pRep) + "); contando sus dos más jugadas, en " + pctEntero(rp.entreDos / rp.decisiones) + ".",
+        veredicto: pRep >= 0.7 ? "Muy predecible" : pRep >= 0.5 ? "Bastante predecible" : "Poco predecible: varía mucho",
+        bien: pRep >= 0.5,
+      });
+    }
+    const linea = (titulo, x, peor, que, dondeYaNo) => {
+      if (!x || x.base == null) return;
+      // Tenía partidas nuevas con ese color y no entró nunca: cambió de apertura.
+      if (!x.n && x.conColor >= MIN_PRUEBA) {
+        items.push({ titulo, texto: "En sus " + x.conColor + " partidas nuevas con ese color no volvió a " + dondeYaNo + ": parece que cambió de apertura.", veredicto: "Ya no las juega", bien: false });
+        return;
+      }
+      if (x.n < MIN_PRUEBA) {
+        items.push({ titulo, texto: (x.n === 1 ? "Solo 1 partida nueva pasó" : "Solo " + x.n + " partidas nuevas pasaron") + " por " + que + ".", veredicto: "Todavía no se puede decir", bien: null });
+        return;
+      }
+      // Si en todo lo nuevo ya sacó 0 % o 100 %, no se puede quedar más abajo
+      // o más arriba: basta con que la línea llegue a ese extremo.
+      const ok = peor ? x.puntos <= Math.max(x.base - 0.05, 0.05) : x.puntos >= Math.min(x.base + 0.05, 0.95);
+      items.push({
+        titulo,
+        texto: "En " + que + " sacó " + A.pct(x.puntos) + " en " + partidas(x.n) + "; en todas sus partidas nuevas con ese color, " + A.pct(x.base) + ".",
+        veredicto: ok ? "Se confirmó" : "No se confirmó", bien: ok,
+      });
+    };
+    linea("¿Las líneas débiles siguieron siéndolo?", c.debiles, true, "las líneas que se marcaron como débiles", "entrar en esas líneas");
+    linea("¿Las fuertes también?", c.fuertes, false, "las líneas que se marcaron como fuertes", "entrar en esas líneas");
+    if (c.plan.conBlancas) linea("¿Funcionó el plan con blancas?", c.plan.conBlancas, true, "las partidas donde le jugaron " + A.lineaEs(c.plan.conBlancas.sec), "llegar a " + A.lineaEs(c.plan.conBlancas.sec));
+    if (c.plan.conNegras) linea("¿Funcionó el plan con negras?", c.plan.conNegras, true, "las partidas con " + A.lineaEs(c.plan.conNegras.sec), "abrir con " + A.lineaEs(c.plan.conNegras.sec));
+    const juzgadas = items.filter((x) => x.bien !== null && x.titulo !== "¿Adivina lo que juega?");
+    const buenas = juzgadas.filter((x) => x.bien).length;
+    let confianza = "media";
+    if (pRep != null && pRep >= 0.6 && juzgadas.length && buenas === juzgadas.length) confianza = "alta";
+    else if ((pRep != null && pRep < 0.4) || (juzgadas.length && buenas < juzgadas.length / 2)) confianza = "baja";
+    const porque = "Se armó con sus " + c.viejas + " partidas anteriores y se comparó con las " + c.nuevas + " que jugó después (" +
+      "del " + fechaCorta(c.desde) + " al " + fechaCorta(c.hasta) + "): " + buenas + " de " + juzgadas.length + " comprobaciones se confirmaron.";
+    const consejo = {
+      alta: "Puedes ir con este plan: con lo que se sabía antes, se adivinó lo que hizo después.",
+      media: "Sirve de guía, pero lleva pensada una alternativa por si se sale de lo esperado.",
+      baja: "Úsalo con cuidado: últimamente no juega como antes. Prepárate también para lo que juega ahora (mira los avisos de su forma reciente).",
+    }[confianza];
+    return { confianza, consejo, porque, items };
+  }
+  const fechaCorta = (iso) => { const [a, m, d] = String(iso).slice(0, 10).split("-"); return d + "/" + m + "/" + a; };
+
   function armar(r) {
     const g = general(r);
     const ra = racha(r);
     g.avisos = ra ? [ra] : [];
-    return { lados: [lado(r, "conBlancas"), lado(r, "conNegras")], general: g, ritmo: ritmoDeLaPartida(r) };
+    return { lados: [lado(r, "conBlancas"), lado(r, "conNegras")], general: g, ritmo: ritmoDeLaPartida(r), certeza: certeza(r) };
   }
 
   return { armar, comoLeVa, jugadaNumerada, derrotasEn, mismoRitmo };

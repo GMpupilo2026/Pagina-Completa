@@ -45,6 +45,8 @@
         let isTeacher = false;
         // La ventana del proyector (sesion.html?proyector=1): el tablero solo, para la tele del aula.
         let modoProyector = false;
+        // El control remoto (sesion.html?control=1): el celular del profe maneja lo que ve la clase.
+        let modoControl = false;
         /* Quien supervisa (o administra) mirando la clase de un profesor:
            sesion.html?observar=<id>. Solo mira: ni mueve, ni contesta, ni marca
            asistencia, ni cuenta como alumno. Lo que puede leer lo decide la RLS
@@ -80,6 +82,8 @@
 
         function setStatus(text) {
             document.getElementById("status-banner").textContent = text;
+            // En el control remoto la franja de estado no se ve: se repite en su panel.
+            if (modoControl) document.getElementById("control-estado").textContent = text;
         }
 
         function updateTurnIndicator() {
@@ -567,8 +571,11 @@
                tiene su vista en el tablero: solo la retoma al cargar la página (la
                suya propia de antes de recargar), no con cada eco. */
             vistaRecibida = row.vista || null;
-            // El proyector sigue lo que mira el profe, como un alumno.
-            if ((!isTeacher || modoProyector) && !editando) board.showView(row.vista || null);
+            // El proyector y el control remoto siguen lo que mira el profe, como un alumno.
+            if ((!isTeacher || modoProyector || modoControl) && !editando) {
+                board.showView(row.vista || null);
+                if (modoControl) ultimaVistaEnviada = JSON.stringify(board.currentView());
+            }
             else if (isTeacher && primeraVez && row.vista) {
                 board.showView(row.vista);
                 ultimaVistaEnviada = JSON.stringify(board.currentView());
@@ -1486,6 +1493,7 @@
             }
             const cerrada = currentOpenSessionId;
             currentOpenSessionId = null;
+            await limpiarLoDeLaClase();
             const paraAusentes = document.getElementById("clase-para-ausentes").checked;
             document.getElementById("clase-titulo").value = "";
             document.getElementById("clase-notas").value = "";
@@ -1574,6 +1582,48 @@
         }
         if (document.getElementById("repaso-personal-btn")) {
             document.getElementById("repaso-personal-btn").addEventListener("click", mandarRepasoPersonal);
+        }
+
+        /* Lo que vive en game_state para ESTA clase no pasa a la siguiente: el
+           mapa, el calentamiento, el podio, los equipos, el tiempo para pensar
+           y el turno. Antes quedaban puestos, y la clase del día siguiente
+           arrancaba con el podio de la anterior a la vista. La partida votada
+           también termina. El tablero y su partida no se tocan: son lo que se
+           repasa. */
+        async function limpiarLoDeLaClase() {
+            if (partidaClase) await terminarPartidaClase("La partida de la clase terminó al cerrar la clase.");
+            const cambios = { encuesta: null, calentamiento: null, podio: null, equipos: null, pensar: null, elegido: null };
+            // Las flechas del mapa se van con él; las que dibujó el profe, no.
+            if (encuestaActual) { cambios.arrows = []; cambios.circles = []; }
+            const { error } = await sb.from("game_state").update(cambios).eq("id", myGameStateId);
+            if (error) { console.error("No se pudo limpiar lo de la clase:", error); return; }
+            if (cambios.arrows) board.setMarks([], []);
+            pintarEncuesta(null);
+            pintarCalentamiento(null);
+            pintarPodio(null);
+            pintarEquipos(null);
+            pintarPensar(null);
+            pintarElegido(null);
+        }
+
+        /* Lo que aparece para toda la clase, dicho en voz para quien usa lector
+           de pantalla (#clase-voz): una caja que aparece no se anuncia sola.
+           Cada cosa se dice una vez por cambio (su clave), no con cada eco de
+           Realtime; lo que llega junto se dice junto, para que un aviso no
+           pise al otro. Al profe no: es él quien lo pone. */
+        const yaAnunciado = {};
+        let porAnunciar = [];
+        function anunciarALaClase(tipo, clave, texto) {
+            if (!clave) { yaAnunciado[tipo] = null; return; }
+            if (isTeacher || yaAnunciado[tipo] === clave) return;
+            yaAnunciado[tipo] = clave;
+            porAnunciar.push(texto);
+            if (porAnunciar.length > 1) return;
+            setTimeout(() => {
+                const voz = document.getElementById("clase-voz");
+                if (voz) { voz.textContent = ""; voz.textContent = porAnunciar.join(" "); }
+                porAnunciar = [];
+            }, 80);
         }
 
         /* Al cerrar, la partida de la clase se guarda sola —si tiene jugadas y
@@ -2457,6 +2507,14 @@
                 });
                 acciones.appendChild(alTablero);
 
+                const votar = document.createElement("button");
+                votar.type = "button";
+                votar.className = clases;
+                votar.textContent = "🗳️ Jugar votando";
+                votar.title = "La clase juega esta posición votando cada jugada, contra el motor";
+                votar.addEventListener("click", () => jugarVotandoDesde(item.fen));
+                acciones.appendChild(votar);
+
                 const calentar = document.createElement("button");
                 calentar.type = "button";
                 calentar.className = clases;
@@ -2797,7 +2855,7 @@
         }
 
         async function updateEngineEval() {
-            if (!engineEnabled || modoProyector || typeof ClasesEngine === "undefined") return;
+            if (!engineEnabled || modoProyector || modoControl || typeof ClasesEngine === "undefined") return;
             const myRequestId = ++engineRequestId;
             const fen = board.fen();
             const turnAtEval = board.game.turn();
@@ -3804,708 +3862,48 @@
                 window.open("sesion.html?proyector=1", "ajedrez-proyector");
             });
         }
+        /* ---------- El control remoto ----------
+           sesion.html?control=1, en el celular del profe con su misma cuenta:
+           cada botón escribe en game_state lo mismo que su botón de siempre, así
+           que la clase y el proyector lo siguen. La partida votada no: vive en
+           la ventana donde se empezó (ver «La clase juega votando»). */
+        if (document.getElementById("control-btn")) {
+            const enlace = new URL("sesion.html?control=1", location.href).href;
+            document.getElementById("control-enlace-url").textContent = enlace;
+            document.getElementById("control-btn").addEventListener("click", (e) => {
+                const caja = document.getElementById("control-enlace");
+                caja.hidden = !caja.hidden;
+                e.currentTarget.setAttribute("aria-expanded", caja.hidden ? "false" : "true");
+            });
+            document.getElementById("control-copiar-btn").addEventListener("click", async () => {
+                try { await navigator.clipboard.writeText(enlace); setStatus("Copiaste la dirección del control remoto."); }
+                catch (e) { setStatus("No se pudo copiar: escríbela en tu celular tal como se ve."); }
+            });
+        }
+        const clicEn = (id) => () => document.getElementById(id).click();
+        document.getElementById("control-inicio-btn").addEventListener("click", clicEn("move-nav-first"));
+        document.getElementById("control-anterior-btn").addEventListener("click", clicEn("move-nav-prev"));
+        document.getElementById("control-siguiente-btn").addEventListener("click", clicEn("move-nav-next"));
+        document.getElementById("control-final-btn").addEventListener("click", clicEn("move-nav-last"));
+        document.getElementById("control-pensar-btn").addEventListener("click", async () => {
+            if (await guardarPensar({ at: new Date().toISOString(), segundos: 60, texto: null })) setStatus("⏳ 1 minuto para pensar: toda la clase ve la cuenta regresiva.");
+        });
+        document.getElementById("control-elegir-btn").addEventListener("click", () => elegirAlAzar());
+        document.getElementById("control-mapa-btn").addEventListener("click", () => {
+            if (!currentQuestion || currentQuestion.closed_at) { setStatus("No hay una pregunta abierta para pasar su mapa."); return; }
+            pasarEncuestaAlTablero();
+        });
+        document.getElementById("control-podio-btn").addEventListener("click", () => {
+            const cb = document.getElementById("podio-con-nombres");
+            mostrarPodio(cb ? cb.checked : true);
+        });
+        document.getElementById("control-flechas-btn").addEventListener("click", () => board.clearMarks());
+
         document.getElementById("proyector-completa-btn").addEventListener("click", () => {
             const el = document.documentElement;
             if (document.fullscreenElement) document.exitFullscreen();
             else if (el.requestFullscreen) el.requestFullscreen().catch(() => {});
         });
-
-        /* ---------- La clase juega votando ----------
-           La clase juega una partida contra el motor o contra el profe desde la
-           posición del tablero. Cada turno de la clase es una pregunta de
-           jugada con tiempo (la de siempre: cuenta para los puntos y se ve en
-           «Respuestas en el tablero»); al cerrarse se juega la más votada, con
-           empate se sortea entre las empatadas y se dice. El motor contesta
-           desde la computadora del profe. El estado vive en esta página
-           (sessionStorage): al recargar, la partida queda en pausa. */
-        const PARTIDA_CLAVE = "sesion_partida_clase_v1";
-        let partidaClase = null;          // {rival, color, nivel, segundos}
-        let votacion = null;              // {id, fen, cierre}
-        let motorPensandoPartida = false;
-        const colorEscrito = (c) => (c === "w" ? "blancas" : "negras");
-        const clavePosicion = (f) => String(f || "").split(" ").slice(0, 4).join(" ");
-
-        function guardarPartidaClase() {
-            try {
-                if (partidaClase) sessionStorage.setItem(PARTIDA_CLAVE, JSON.stringify(partidaClase));
-                else sessionStorage.removeItem(PARTIDA_CLAVE);
-            } catch (e) {}
-        }
-
-        function pintarPartidaClase(estado) {
-            const enCurso = document.getElementById("partida-en-curso");
-            if (!enCurso) return;
-            enCurso.hidden = !partidaClase;
-            document.getElementById("partida-config").classList.toggle("hidden", !!partidaClase);
-            document.getElementById("partida-empezar-btn").hidden = !!partidaClase;
-            document.getElementById("partida-jugar-ya-btn").hidden = !votacion;
-            if (estado !== undefined) document.getElementById("partida-estado").textContent = estado;
-            if (!partidaClase) document.getElementById("partida-ultima").textContent = "";
-        }
-
-        // Juega en el tablero de la clase por la misma puerta que el clic (board.jugar).
-        function jugarEnElTablero(jugada) {
-            board.viewLive();
-            let m = null;
-            try {
-                m = /^[a-h][1-8][a-h][1-8][qrbn]?$/.test(jugada)
-                    ? new Chess(board.fen()).move({ from: jugada.slice(0, 2), to: jugada.slice(2, 4), promotion: jugada[4] || "q" })
-                    : new Chess(board.fen()).move(jugada, { sloppy: true });
-            } catch (e) { m = null; }
-            if (!m) return null;
-            return board.jugar({ from: m.from, to: m.to, promotion: m.promotion });
-        }
-
-        function finalDeLaPartida(g) {
-            if (g.in_checkmate()) {
-                const gana = g.turn() === "w" ? "b" : "w";
-                return "¡Jaque mate! Ganaron las " + colorEscrito(gana) + (gana === partidaClase.color ? ": ganó la clase. 🎉" : ".");
-            }
-            if (g.in_stalemate()) return "Tablas por ahogado.";
-            if (g.in_threefold_repetition()) return "Tablas por triple repetición.";
-            if (g.insufficient_material()) return "Tablas: no queda material para dar mate.";
-            return "Tablas.";
-        }
-
-        async function empezarPartidaClase() {
-            if (board.freeMode) { setStatus("Aplica o cancela la posición que estás armando antes de empezar."); return; }
-            board.viewLive();
-            renderMoveList();
-            transmitirVista();
-            const fen = board.fen();
-            const motivo = motivoPosicionInvalida(fen);
-            if (motivo) { setStatus(motivo); return; }
-            if (new Chess(fen).game_over()) { setStatus("En esta posición la partida ya terminó."); return; }
-            partidaClase = {
-                rival: document.getElementById("partida-rival").value === "profe" ? "profe" : "motor",
-                color: document.getElementById("partida-color").value === "b" ? "b" : "w",
-                nivel: document.getElementById("partida-nivel").value || "1500",
-                segundos: parseInt(document.getElementById("partida-segundos").value, 10) || 30,
-            };
-            guardarPartidaClase();
-            document.getElementById("partida-ultima").textContent = "";
-            if (partidaClase.rival === "motor" && typeof PracticeEngine !== "undefined") PracticeEngine.preload();
-            pintarPartidaClase();
-            await seguirPartidaClase();
-        }
-
-        async function seguirPartidaClase() {
-            if (!partidaClase || votacion || motorPensandoPartida) return;
-            document.getElementById("partida-reabrir-btn").hidden = true;
-            const g = new Chess(board.fen());
-            if (g.game_over()) { terminarPartidaClase(finalDeLaPartida(g)); return; }
-            if (g.turn() === partidaClase.color) { await abrirVotacion(); return; }
-            if (partidaClase.rival === "motor") { await jugarMotorEnLaPartida(); return; }
-            pintarPartidaClase("Te toca a ti con las " + colorEscrito(g.turn()) + ": juega en el tablero de la clase.");
-        }
-
-        async function abrirVotacion() {
-            const fen = board.fen();
-            const contra = partidaClase.rival === "motor" ? "el motor" : "tu profe";
-            votacion = { id: null, fen, cierre: null };
-            const { data, error } = await crearPregunta(fen, 1, null, false, {
-                prompt: "La clase contra " + contra + ": ¿qué jugamos con las " + colorEscrito(partidaClase.color) + "?",
-                tiempo: partidaClase.segundos,
-            });
-            if (error || !data) {
-                votacion = null;
-                console.error(error);
-                pintarPartidaClase("No se pudo abrir la votación" + (error ? ": " + error.message : "."));
-                document.getElementById("partida-reabrir-btn").hidden = false;
-                return;
-            }
-            votacion.id = data.id;
-            // La base acepta votos hasta 5 segundos después del plazo: se cierra un poco después.
-            votacion.cierre = setTimeout(() => cerrarVotacion(), (partidaClase.segundos + 6) * 1000);
-            pintarPartidaClase("🗳️ La clase está votando (" + PreguntaClase.textoDeTiempo(partidaClase.segundos) + ").");
-            computeEngineAnswer(data.id, fen, 1);
-        }
-
-        async function cerrarVotacion() {
-            if (!votacion || !votacion.id) return;
-            const v = votacion;
-            clearTimeout(v.cierre);
-            const filas = (await cargarResultados({ id: v.id })) || [];
-            await sb.from("questions").update({ closed_at: new Date().toISOString() }).eq("id", v.id);
-            votacion = null;
-            if (!partidaClase) return;
-            const conVotos = filas.filter((f) => f.cuantos > 0);
-            if (!conVotos.length) {
-                pintarPartidaClase("Nadie votó. Sigue la partida cuando estén listos: se abre otra votación.");
-                document.getElementById("partida-reabrir-btn").hidden = false;
-                return;
-            }
-            if (clavePosicion(board.fen()) !== clavePosicion(v.fen)) {
-                pintarPartidaClase("El tablero cambió durante la votación, así que no se jugó nada.");
-                document.getElementById("partida-reabrir-btn").hidden = false;
-                return;
-            }
-            const total = conVotos.reduce((a, f) => a + f.cuantos, 0);
-            const max = Math.max(...conVotos.map((f) => f.cuantos));
-            const empatadas = conVotos.filter((f) => f.cuantos === max);
-            const elegida = empatadas[Math.floor(Math.random() * empatadas.length)];
-            const sanDe = (r) => { try { const m = new Chess(v.fen).move(r, { sloppy: true }); return m ? m.san : r; } catch (e) { return r; } };
-            const jugada = jugarEnElTablero(elegida.respuesta);
-            if (!jugada) {
-                pintarPartidaClase("La jugada más votada no se pudo jugar. Vuelve a abrir la votación.");
-                document.getElementById("partida-reabrir-btn").hidden = false;
-                return;
-            }
-            document.getElementById("partida-ultima").textContent = "La clase jugó " + jugada.san + " (" + max + " de " + total + (total === 1 ? " voto" : " votos")
-                + (empatadas.length > 1 ? "; hubo empate entre " + empatadas.map((f) => sanDe(f.respuesta)).join(", ") + " y se sorteó" : "") + ").";
-            // board.jugar avisa a onMove, que sigue la partida (ver despuesDeJugarEnLaPartida).
-        }
-
-        async function jugarMotorEnLaPartida() {
-            motorPensandoPartida = true;
-            pintarPartidaClase("🤖 El motor está pensando…");
-            const fen = board.fen();
-            let uci = null;
-            try { uci = typeof PracticeEngine !== "undefined" ? await PracticeEngine.getMove(fen, partidaClase ? partidaClase.nivel : "1500") : null; } catch (e) { uci = null; }
-            if (!uci && typeof PracticeEngine !== "undefined") uci = PracticeEngine.jugadaDeRespaldo(fen);
-            motorPensandoPartida = false;
-            if (!partidaClase) return;
-            if (clavePosicion(board.fen()) !== clavePosicion(fen)) { seguirPartidaClase(); return; }
-            const jugada = uci ? jugarEnElTablero(uci) : null;
-            if (!jugada) {
-                pintarPartidaClase("El motor no pudo jugar. Juega tú su jugada en el tablero y la partida sigue.");
-                return;
-            }
-            const ultima = document.getElementById("partida-ultima");
-            ultima.textContent = (ultima.textContent ? ultima.textContent + " " : "") + "El motor contestó " + jugada.san + ".";
-        }
-
-        // Después de cada jugada en el tablero del profe (la de la clase, la del motor o la suya).
-        function despuesDeJugarEnLaPartida() {
-            if (!partidaClase || votacion || motorPensandoPartida) return;
-            setTimeout(seguirPartidaClase, 300);
-        }
-
-        async function terminarPartidaClase(mensaje) {
-            if (votacion) {
-                clearTimeout(votacion.cierre);
-                if (votacion.id) await sb.from("questions").update({ closed_at: new Date().toISOString() }).eq("id", votacion.id);
-                votacion = null;
-            }
-            partidaClase = null;
-            guardarPartidaClase();
-            pintarPartidaClase("");
-            setStatus(mensaje || "Terminaste la partida de la clase.");
-        }
-
-        if (document.getElementById("partida-empezar-btn")) {
-            const niveles = document.getElementById("partida-nivel");
-            const LEVELS = typeof PracticeEngine !== "undefined" ? PracticeEngine.LEVELS : { "1500": { label: "1500 de fuerza" } };
-            Object.keys(LEVELS).forEach((k) => {
-                const o = document.createElement("option");
-                o.value = k;
-                o.textContent = LEVELS[k].label;
-                niveles.appendChild(o);
-            });
-            document.getElementById("partida-rival").addEventListener("change", (e) => {
-                niveles.disabled = e.target.value !== "motor";
-            });
-            document.getElementById("partida-empezar-btn").addEventListener("click", empezarPartidaClase);
-            document.getElementById("partida-jugar-ya-btn").addEventListener("click", cerrarVotacion);
-            document.getElementById("partida-reabrir-btn").addEventListener("click", seguirPartidaClase);
-            document.getElementById("partida-terminar-btn").addEventListener("click", () => terminarPartidaClase());
-            // Al recargar, la partida queda en pausa: se sigue con un botón, no sola.
-            try { partidaClase = JSON.parse(sessionStorage.getItem(PARTIDA_CLAVE) || "null"); } catch (e) { partidaClase = null; }
-            if (partidaClase) {
-                pintarPartidaClase("La partida de la clase quedó en pausa al recargar la página.");
-                const b = document.getElementById("partida-reabrir-btn");
-                b.hidden = false;
-            }
-        }
-
-        /* ---------- El mapa de jugadas (game_state.encuesta) ----------
-           Lo que contestó la clase en una pregunta de jugada, pasado al tablero
-           de todos: las cinco jugadas más elegidas como flechas, y debajo,
-           escrito, qué jugada es cada color y cuántos la eligieron. Sin
-           nombres: los números salen de resultados_de_la_pregunta(), como los
-           resultados que ya se le muestran a la clase. */
-        const COLORES_ENCUESTA = ["verde", "azul", "naranja", "rojo", "negro"];
-        const NOMBRE_COLOR = { verde: "Verde", azul: "Azul", naranja: "Naranja", rojo: "Rojo", negro: "Negro" };
-        let encuestaActual = null;
-
-        async function pasarEncuestaAlTablero() {
-            const q = currentQuestion;
-            if (!q || PreguntaClase.esDeOpciones(q)) return;
-            const filas = await cargarResultados(q);
-            if (!filas) { setStatus("No se pudo contar lo que contestó la clase."); return; }
-            const arrows = [], lineas = [];
-            filas.filter((f) => f.cuantos > 0).forEach((f) => {
-                if (arrows.length >= COLORES_ENCUESTA.length) return;
-                let m = null;
-                try { m = new Chess(q.fen).move(f.respuesta, { sloppy: true }); } catch (e) { m = null; }
-                if (!m) return;
-                const color = COLORES_ENCUESTA[arrows.length];
-                arrows.push({ from: m.from, to: m.to, color });
-                lineas.push({ jugada: m.san, cuantos: f.cuantos, color });
-            });
-            if (!lineas.length) { setStatus("Todavía nadie contestó con una jugada: no hay mapa que pasar."); return; }
-            // Las flechas van en el tablero de la clase, así que tiene que tener la posición de la pregunta.
-            let k = jugadaDeLaPosicion(q.fen);
-            if (k === -1) {
-                const seguir = await Avisos.confirmar("El tablero de la clase ya no tiene la posición de la pregunta. Para pasar el mapa hay que volver a mandarla, y la partida que está ahora se reemplaza.",
-                    { titulo: "¿Volver a la posición de la pregunta?", aceptar: "Mandar la posición y el mapa" });
-                if (!seguir || !(await aplicarPosicionEnClase(q.fen))) return;
-                k = 0;
-            }
-            if (k !== board.moves().length || board.isViewingHistory()) {
-                if (k === board.moves().length) board.viewLive(); else board.viewMainAt(k);
-                renderMoveList();
-                await transmitirVista();
-            }
-            board.setMarks(arrows, []);
-            const encuesta = { question_id: q.id, lineas };
-            const { error } = await sb.from("game_state").update({ arrows, circles: [], encuesta }).eq("id", myGameStateId);
-            if (error) { console.error(error); setStatus("No se pudo pasar el mapa: " + error.message); return; }
-            pintarEncuesta(encuesta);
-            setStatus("🗺️ La clase ve en el tablero lo que jugó: " + lineas.map((l) => l.jugada + " (" + l.cuantos + ")").join(", ") + ".");
-        }
-
-        function pintarEncuesta(encuesta) {
-            encuestaActual = encuesta && Array.isArray(encuesta.lineas) && encuesta.lineas.length ? encuesta : null;
-            const caja = document.getElementById("encuesta-caja");
-            if (!caja) return;
-            caja.hidden = !encuestaActual;
-            const ul = document.getElementById("encuesta-lineas");
-            ul.innerHTML = "";
-            if (!encuestaActual) return;
-            encuestaActual.lineas.forEach((l) => {
-                const li = document.createElement("li");
-                li.className = "flex items-center gap-2";
-                const color = ClasesBoard.MARK_COLORS[l.color] ? l.color : "naranja";
-                const muestra = document.createElement("span");
-                muestra.setAttribute("aria-hidden", "true");
-                muestra.className = "inline-block w-3 h-3 rounded-full shrink-0";
-                muestra.style.background = ClasesBoard.MARK_COLORS[color];
-                const t = document.createElement("span");
-                const n = Number(l.cuantos) || 0;
-                // El color va escrito: la flecha sola no dice cuál es cuál.
-                t.textContent = NOMBRE_COLOR[color] + ": " + String(l.jugada || "") + " — " + n + (n === 1 ? " alumno" : " alumnos");
-                li.append(muestra, t);
-                ul.appendChild(li);
-            });
-            document.getElementById("encuesta-quitar-btn").hidden = !isTeacher;
-        }
-
-        async function quitarEncuesta() {
-            board.setMarks([], []);
-            const { error } = await sb.from("game_state").update({ arrows: [], circles: [], encuesta: null }).eq("id", myGameStateId);
-            if (error) { console.error(error); setStatus("No se pudo quitar el mapa: " + error.message); return; }
-            pintarEncuesta(null);
-        }
-
-        if (document.getElementById("encuesta-btn")) {
-            document.getElementById("encuesta-btn").addEventListener("click", pasarEncuestaAlTablero);
-        }
-        document.getElementById("encuesta-quitar-btn").addEventListener("click", quitarEncuesta);
-
-        /* ---------- Posición de calentamiento (game_state.calentamiento) ----------
-           Una posición para resolver mientras empieza la clase: cada alumno la
-           juega en su propio tablero, sin que cuente como pregunta. La primera
-           jugada se compara con la solución (la del ejercicio de Táctica, o la
-           que calcula el motor en la computadora del profe al mandarla). Quién
-           la resolvió va en la presencia: es de ese rato, no se guarda. */
-        let calentamientoActual = null;
-        let calentamientoBoard = null;
-        let calentamientoPintadoPara = null;
-        let calentamientoAcc = null;
-
-        const aUci = (m) => m.from + m.to + (m.promotion || "");
-        function solucionEnUci(fen, jugadas) {
-            const g = new Chess(fen);
-            const out = [];
-            for (const j of jugadas || []) {
-                let m = null;
-                try { m = g.move(j, { sloppy: true }); } catch (e) { m = null; }
-                if (!m) break;
-                out.push(aUci(m));
-            }
-            return out;
-        }
-
-        async function mandarCalentamiento(fen, solucion, titulo) {
-            const motivo = motivoPosicionInvalida(fen);
-            if (motivo) { setStatus(motivo); return false; }
-            let uci = solucionEnUci(fen, solucion);
-            if (!uci.length && typeof PracticeEngine !== "undefined") {
-                setStatus("🔥 Buscando con el motor la mejor jugada del calentamiento…");
-                const mejor = await PracticeEngine.getMove(fen, "max");
-                uci = solucionEnUci(fen, mejor ? [mejor] : []);
-            }
-            const calentamiento = { at: new Date().toISOString(), fen, solucion: uci.length ? uci : null, titulo: (titulo || "").slice(0, 140) || null };
-            const { error } = await sb.from("game_state").update({ calentamiento }).eq("id", myGameStateId);
-            if (error) { console.error(error); setStatus("No se pudo mandar el calentamiento: " + error.message); return false; }
-            pintarCalentamiento(calentamiento);
-            setStatus("🔥 Calentamiento enviado: cada alumno lo resuelve en su propio tablero. Debajo del tablero ves cuántos ya lo resolvieron.");
-            return true;
-        }
-
-        function pintarCalentamiento(cal) {
-            calentamientoActual = cal && cal.fen ? cal : null;
-            const caja = document.getElementById("calentamiento-caja");
-            if (!caja) return;
-            caja.hidden = !calentamientoActual;
-            document.getElementById("calentamiento-titulo").textContent = calentamientoActual && calentamientoActual.titulo ? ": " + calentamientoActual.titulo : "";
-            document.getElementById("calentamiento-profe").hidden = !isTeacher;
-            document.getElementById("calentamiento-alumno").hidden = isTeacher || esObservador;
-            if (!calentamientoActual) { calentamientoPintadoPara = null; return; }
-            if (isTeacher) { pintarCuentaCalentamiento(); return; }
-            if (esObservador || calentamientoPintadoPara === calentamientoActual.at) return;
-            calentamientoPintadoPara = calentamientoActual.at;
-            empezarCalentamiento();
-        }
-
-        function empezarCalentamiento() {
-            const cal = calentamientoActual;
-            if (!cal) return;
-            if (!calentamientoBoard) {
-                calentamientoBoard = new ClasesBoard(document.getElementById("calentamiento-tablero"), {
-                    interactive: true, allowArrows: false, externalCoords: true,
-                    onMove: () => juzgarCalentamiento(),
-                });
-                calentamientoAcc = window.ClaseAdaptada ? ClaseAdaptada.montar(document.getElementById("calentamiento-cmd"), () => calentamientoBoard, {
-                    etiqueta: "Escribe tu jugada del calentamiento",
-                    porQueNoPuedes: () => calentamientoResuelto === (calentamientoActual && calentamientoActual.at)
-                        ? "Ya lo resolviste." : "Toca «Intentarlo otra vez» para volver a jugar.",
-                }) : null;
-            }
-            const color = cal.fen.split(" ")[1] === "b" ? "b" : "w";
-            calentamientoBoard.setFlipped(color === "b");
-            calentamientoBoard.loadFen(cal.fen);
-            calentamientoBoard.setInteractive(calentamientoResuelto !== cal.at);
-            if (calentamientoAcc) calentamientoAcc.actualizar();
-            document.getElementById("calentamiento-turno").textContent = (color === "b" ? "Juegan ⚫ Negras" : "Juegan ⚪ Blancas") + ": encuentra la mejor jugada.";
-            document.getElementById("calentamiento-msg").textContent = calentamientoResuelto === cal.at ? "✅ ¡Ya lo resolviste!" : "";
-            document.getElementById("calentamiento-otra-btn").hidden = true;
-            document.getElementById("calentamiento-solucion-btn").hidden = !cal.solucion || calentamientoResuelto === cal.at;
-        }
-
-        async function juzgarCalentamiento() {
-            const cal = calentamientoActual;
-            if (!cal) return;
-            calentamientoBoard.setInteractive(false);
-            const g = new Chess(cal.fen);
-            const jugada = calentamientoBoard.moves()[0];
-            const m = jugada ? g.move(jugada) : null;
-            const msg = document.getElementById("calentamiento-msg");
-            const bien = !!(m && cal.solucion && cal.solucion[0] === aUci(m));
-            if (bien) {
-                msg.textContent = "✅ ¡Bien! " + m.san + " es la jugada.";
-                document.getElementById("calentamiento-solucion-btn").hidden = true;
-                document.getElementById("calentamiento-otra-btn").hidden = true;
-                calentamientoResuelto = cal.at;
-                if (presenceChannel) await presenceChannel.track(metaDePresencia());
-            } else {
-                msg.textContent = cal.solucion ? "❌ " + (m ? m.san : "Esa") + " no es la mejor. Inténtalo otra vez." : "Tu profe no dejó la solución de esta posición: coméntala en la clase.";
-                document.getElementById("calentamiento-otra-btn").hidden = false;
-            }
-        }
-
-        document.getElementById("calentamiento-otra-btn").addEventListener("click", () => {
-            if (!calentamientoActual) return;
-            calentamientoBoard.loadFen(calentamientoActual.fen);
-            calentamientoBoard.setInteractive(true);
-            if (calentamientoAcc) calentamientoAcc.actualizar();
-            document.getElementById("calentamiento-msg").textContent = "";
-            document.getElementById("calentamiento-otra-btn").hidden = true;
-        });
-        document.getElementById("calentamiento-solucion-btn").addEventListener("click", () => {
-            const cal = calentamientoActual;
-            if (!cal || !cal.solucion) return;
-            const g = new Chess(cal.fen);
-            const sans = [];
-            for (const u of cal.solucion) {
-                const m = g.move({ from: u.slice(0, 2), to: u.slice(2, 4), promotion: u[4] || undefined });
-                if (!m) break;
-                sans.push(m.san);
-            }
-            calentamientoBoard.loadFen(cal.fen);
-            calentamientoBoard.setInteractive(false);
-            calentamientoBoard.setMarks([{ from: cal.solucion[0].slice(0, 2), to: cal.solucion[0].slice(2, 4), color: "verde" }], []);
-            document.getElementById("calentamiento-msg").textContent = "La solución: " + sans.join(" ") + ".";
-            document.getElementById("calentamiento-otra-btn").hidden = true;
-            document.getElementById("calentamiento-solucion-btn").hidden = true;
-        });
-
-        // Cuántos de los conectados ya lo resolvieron (lo dice la presencia de cada uno).
-        function pintarCuentaCalentamiento() {
-            const el = document.getElementById("calentamiento-cuenta");
-            if (!el || !isTeacher || !calentamientoActual) return;
-            const conectados = [...onlineStudents.values()];
-            const listos = conectados.filter((s) => s.calentamiento === calentamientoActual.at).length;
-            el.textContent = conectados.length
-                ? listos + " de " + conectados.length + (conectados.length === 1 ? " conectado ya lo resolvió." : " conectados ya lo resolvieron.")
-                : "Todavía no hay alumnos conectados.";
-        }
-
-        if (document.getElementById("calentamiento-terminar-btn")) {
-            document.getElementById("calentamiento-terminar-btn").addEventListener("click", async () => {
-                const { error } = await sb.from("game_state").update({ calentamiento: null }).eq("id", myGameStateId);
-                if (error) { console.error(error); setStatus("No se pudo terminar: " + error.message); return; }
-                pintarCalentamiento(null);
-            });
-        }
-
-        /* ---------- Los puntos de la clase y el podio (game_state.podio) ----------
-           Los puntos se cuentan de resumen_de_la_clase con la regla de
-           js/puntos-clase.js, escrita a la vista. El podio que ve la clase es
-           una foto que manda el profe: con nombres, o sin ellos (cada uno ve
-           igual su propio lugar, porque se reconoce por su id). */
-        let filasDePuntos = [];
-        let podioActual = null;
-
-        function pintarListaDePuntos(caja, filas) {
-            caja.innerHTML = "";
-            const ranking = PuntosClase.ranking(filas).filter((x) => x.puntos > 0);
-            if (!ranking.length) {
-                const p = document.createElement("p");
-                p.className = "text-brand-500 dark:text-brand-300";
-                p.textContent = "Todavía nadie sumó puntos en esta clase.";
-                caja.appendChild(p);
-                return;
-            }
-            const ol = document.createElement("ol");
-            ol.className = "space-y-1";
-            ranking.forEach((x) => {
-                const li = document.createElement("li");
-                const cab = document.createElement("p");
-                cab.className = "font-semibold text-brand-800 dark:text-brand-100";
-                // El nombre lo escribió una persona: textContent.
-                cab.textContent = (PuntosClase.medalla(x.puesto) ? PuntosClase.medalla(x.puesto) + " " : "") + x.puesto + ".º " + x.nombre + " — " + PuntosClase.textoPuntos(x.puntos);
-                const det = document.createElement("p");
-                det.className = "text-xs text-brand-500 dark:text-brand-300";
-                det.textContent = PuntosClase.desglose(x.fila);
-                li.append(cab, det);
-                ol.appendChild(li);
-            });
-            caja.appendChild(ol);
-        }
-
-        async function contarPuntos() {
-            const caja = document.getElementById("puntos-lista");
-            if (!caja) return;
-            document.getElementById("puntos-regla").textContent = "Cómo se cuentan: " + PuntosClase.reglaEscrita() + ".";
-            if (!currentOpenSessionId) {
-                filasDePuntos = [];
-                caja.textContent = "Los puntos se cuentan desde que se abre la clase, y todavía no hay una abierta.";
-                return;
-            }
-            caja.textContent = "Contando…";
-            const { filas, error } = await ResumenClase.cargar(sb, currentOpenSessionId);
-            if (error) { console.error(error); caja.textContent = "No se pudieron contar los puntos: " + error.message; return; }
-            filasDePuntos = filas;
-            pintarListaDePuntos(caja, filas);
-            pintarEquiposProfe();
-        }
-
-        async function mostrarPodio(conNombres) {
-            if (!currentOpenSessionId) { setStatus("Abre la clase para contar los puntos."); return; }
-            const { filas, error } = await ResumenClase.cargar(sb, currentOpenSessionId);
-            if (error) { console.error(error); setStatus("No se pudieron contar los puntos: " + error.message); return; }
-            filasDePuntos = filas;
-            const podio = PuntosClase.podioParaLaClase(filas, conNombres);
-            if (!podio.lineas.length) { setStatus("Todavía nadie sumó puntos: no hay podio que mostrar."); return; }
-            // Con equipos armados, el podio lleva también el de los equipos.
-            if (equiposActual) podio.equipos = PuntosClase.puntosDeEquipos(filas, equiposActual.lista);
-            const { error: err2 } = await sb.from("game_state").update({ podio }).eq("id", myGameStateId);
-            if (err2) { console.error(err2); setStatus("No se pudo mostrar el podio: " + err2.message); return; }
-            pintarPodio(podio);
-            setStatus("🏆 La clase ve el podio" + (conNombres ? ", con los nombres." : ", sin nombres: cada uno ve su propio lugar."));
-        }
-
-        function pintarPodio(podio) {
-            podioActual = podio && Array.isArray(podio.lineas) && podio.lineas.length ? podio : null;
-            const caja = document.getElementById("podio-caja");
-            if (!caja) return;
-            caja.hidden = !podioActual;
-            const ol = document.getElementById("podio-lineas");
-            ol.innerHTML = "";
-            const tu = document.getElementById("podio-tu-lugar");
-            tu.hidden = true;
-            document.getElementById("podio-quitar-btn").hidden = !isTeacher;
-            const olEq = document.getElementById("podio-equipos");
-            olEq.innerHTML = "";
-            olEq.hidden = !(podioActual && Array.isArray(podioActual.equipos) && podioActual.equipos.length);
-            if (!podioActual) return;
-            (podioActual.equipos || []).forEach((e) => {
-                const li = document.createElement("li");
-                const mio = equiposActual && miEquipo() && miEquipo().nombre === e.nombre;
-                li.textContent = PuntosClase.medalla(e.puesto) + " " + e.puesto + ".º Equipo " + String(e.nombre) + " — "
-                    + PuntosClase.textoPuntos(Number(e.puntos) || 0) + (mio ? " (tu equipo)" : "");
-                olEq.appendChild(li);
-            });
-            podioActual.lineas.filter((l) => l.puesto <= 3).forEach((l) => {
-                const li = document.createElement("li");
-                const mia = l.id === profile.id;
-                const quien = l.nombre ? String(l.nombre) : (mia ? "Tú" : "");
-                li.textContent = PuntosClase.medalla(l.puesto) + " " + l.puesto + ".º lugar" + (quien ? ": " + quien : "") + " — " + PuntosClase.textoPuntos(Number(l.puntos) || 0) + (mia && l.nombre ? " (tú)" : "");
-                if (mia) li.className = "font-bold";
-                ol.appendChild(li);
-            });
-            if (isTeacher || esObservador) return;
-            const mia = podioActual.lineas.find((l) => l.id === profile.id);
-            tu.hidden = false;
-            tu.textContent = mia
-                ? "Tú: " + mia.puesto + ".º lugar con " + PuntosClase.textoPuntos(Number(mia.puntos) || 0) + "."
-                : "Todavía no sumaste puntos en esta clase: contesta la próxima pregunta.";
-        }
-
-        if (document.getElementById("puntos-caja")) {
-            document.getElementById("puntos-caja").addEventListener("toggle", (e) => { if (e.target.open) contarPuntos(); });
-            document.getElementById("puntos-actualizar-btn").addEventListener("click", contarPuntos);
-            document.getElementById("podio-mostrar-btn").addEventListener("click", () => mostrarPodio(document.getElementById("podio-con-nombres").checked));
-        }
-        if (document.getElementById("cierre-podio-btn")) {
-            document.getElementById("cierre-podio-btn").addEventListener("click", () => {
-                const cb = document.getElementById("podio-con-nombres");
-                mostrarPodio(cb ? cb.checked : true);
-            });
-        }
-        document.getElementById("podio-quitar-btn").addEventListener("click", async () => {
-            const { error } = await sb.from("game_state").update({ podio: null }).eq("id", myGameStateId);
-            if (error) { console.error(error); setStatus("No se pudo quitar el podio: " + error.message); return; }
-            pintarPodio(null);
-        });
-
-        /* ---------- Los equipos (game_state.equipos) ----------
-           El profe reparte a los conectados al azar en dos a cuatro equipos
-           (PuntosClase.repartir: quedan parejos) y puede cambiar a cualquiera
-           de equipo. Los ve toda la clase; los puntos de cada equipo se suman
-           de los de sus integrantes y salen en el podio. Quien se conecta
-           después queda «sin equipo» hasta que el profe lo pone en uno. */
-        let equiposActual = null;
-        const miEquipo = () => (equiposActual ? equiposActual.lista.find((e) => (e.miembros || []).some((m) => m.id === profile.id)) || null : null);
-
-        function muestraDeColor(color) {
-            const m = document.createElement("span");
-            m.setAttribute("aria-hidden", "true");
-            m.className = "inline-block w-3 h-3 rounded-full shrink-0 align-middle mr-1.5";
-            m.style.background = ClasesBoard.MARK_COLORS[color] || ClasesBoard.MARK_COLORS.naranja;
-            return m;
-        }
-
-        function pintarEquipos(equipos) {
-            equiposActual = equipos && Array.isArray(equipos.lista) && equipos.lista.length >= 2 ? equipos : null;
-            const caja = document.getElementById("equipos-caja");
-            if (caja) {
-                caja.hidden = !equiposActual;
-                const ul = document.getElementById("equipos-lineas");
-                ul.innerHTML = "";
-                if (equiposActual) {
-                    const mio = miEquipo();
-                    equiposActual.lista.forEach((e) => {
-                        const li = document.createElement("li");
-                        const t = document.createElement("span");
-                        const nombres = (e.miembros || []).map((m) => String(m.nombre || "Alumno")).join(", ");
-                        // Los nombres los escribió una persona: textContent.
-                        t.textContent = "Equipo " + String(e.nombre) + ": " + (nombres || "nadie todavía") + (mio === e ? " (tu equipo)" : "");
-                        if (mio === e) li.className = "font-bold";
-                        li.append(muestraDeColor(e.color), t);
-                        ul.appendChild(li);
-                    });
-                }
-            }
-            pintarEquiposProfe();
-        }
-
-        // Los controles del profe: cada equipo con sus puntos y un selector por integrante.
-        function pintarEquiposProfe() {
-            const caja = document.getElementById("equipos-lista-profe");
-            if (!caja || !isTeacher) return;
-            document.getElementById("equipos-quitar-btn").hidden = !equiposActual;
-            caja.innerHTML = "";
-            if (!equiposActual) return;
-            const puntos = new Map(PuntosClase.puntosDeEquipos(filasDePuntos, equiposActual.lista).map((e) => [e.nombre, e.puntos]));
-            const enAlguno = new Set(equiposActual.lista.flatMap((e) => (e.miembros || []).map((m) => m.id)));
-            const sinEquipo = [...onlineStudents.entries()].filter(([id]) => !enAlguno.has(id))
-                .map(([id, info]) => ({ id, nombre: info.full_name || info.email || "Alumno" }));
-            const grupos = equiposActual.lista.map((e, i) => ({ titulo: "Equipo " + e.nombre + " — " + PuntosClase.textoPuntos(puntos.get(e.nombre) || 0), color: e.color, miembros: e.miembros || [], indice: i }));
-            if (sinEquipo.length) grupos.push({ titulo: "Sin equipo (se conectaron después)", color: null, miembros: sinEquipo, indice: -1 });
-            grupos.forEach((g) => {
-                const div = document.createElement("div");
-                const h = document.createElement("p");
-                h.className = "font-semibold text-brand-800 dark:text-brand-100";
-                if (g.color) h.appendChild(muestraDeColor(g.color));
-                h.appendChild(document.createTextNode(g.titulo));
-                div.appendChild(h);
-                const ul = document.createElement("ul");
-                ul.className = "space-y-1 mt-1";
-                g.miembros.forEach((m) => {
-                    const li = document.createElement("li");
-                    li.className = "flex items-center justify-between gap-2";
-                    const n = document.createElement("span");
-                    n.textContent = String(m.nombre || "Alumno");
-                    const sel = document.createElement("select");
-                    sel.className = "text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500";
-                    sel.setAttribute("aria-label", "Equipo de " + String(m.nombre || "Alumno"));
-                    if (g.indice === -1) {
-                        const o = document.createElement("option");
-                        o.value = "-1"; o.textContent = "Elegir equipo…";
-                        sel.appendChild(o);
-                    }
-                    equiposActual.lista.forEach((e, i) => {
-                        const o = document.createElement("option");
-                        o.value = String(i);
-                        o.textContent = "Equipo " + e.nombre;
-                        sel.appendChild(o);
-                    });
-                    sel.value = String(g.indice);
-                    sel.addEventListener("change", () => moverDeEquipo(m, parseInt(sel.value, 10)));
-                    li.append(n, sel);
-                    ul.appendChild(li);
-                });
-                if (!g.miembros.length) {
-                    const li = document.createElement("li");
-                    li.className = "text-xs text-brand-500 dark:text-brand-300";
-                    li.textContent = "Nadie todavía.";
-                    ul.appendChild(li);
-                }
-                div.appendChild(ul);
-                caja.appendChild(div);
-            });
-        }
-
-        async function guardarEquipos(equipos) {
-            const { error } = await sb.from("game_state").update({ equipos }).eq("id", myGameStateId);
-            if (error) { console.error(error); setStatus("No se pudieron guardar los equipos: " + error.message); return false; }
-            pintarEquipos(equipos);
-            return true;
-        }
-
-        async function armarEquipos() {
-            const alumnos = [...onlineStudents.entries()].map(([id, info]) => ({ id, nombre: info.full_name || info.email || "Alumno" }));
-            const cuantos = parseInt(document.getElementById("equipos-cuantos").value, 10) || 2;
-            if (alumnos.length < cuantos) {
-                setStatus("Para " + cuantos + " equipos hacen falta al menos " + cuantos + " alumnos conectados, y hay " + alumnos.length + ".");
-                return;
-            }
-            if (equiposActual && !(await Avisos.confirmar("Los equipos de ahora se reemplazan por unos nuevos, repartidos al azar.",
-                { titulo: "¿Armar equipos nuevos?", aceptar: "Armar equipos nuevos" }))) return;
-            if (await guardarEquipos(PuntosClase.repartir(alumnos, cuantos))) {
-                setStatus("👥 Equipos armados: toda la clase ve en cuál quedó cada uno.");
-            }
-        }
-
-        async function moverDeEquipo(miembro, destino) {
-            if (!equiposActual || !(destino >= 0)) return;
-            const lista = equiposActual.lista.map((e, i) => ({
-                nombre: e.nombre, color: e.color,
-                miembros: (e.miembros || []).filter((m) => m.id !== miembro.id).concat(i === destino ? [{ id: miembro.id, nombre: miembro.nombre }] : []),
-            }));
-            await guardarEquipos({ at: equiposActual.at, lista });
-        }
-
-        if (document.getElementById("equipos-armar-btn")) {
-            document.getElementById("equipos-armar-btn").addEventListener("click", armarEquipos);
-            document.getElementById("equipos-quitar-btn").addEventListener("click", async () => {
-                if (await guardarEquipos(null)) setStatus("Quitaste los equipos.");
-            });
-            document.getElementById("equipos-profe").addEventListener("toggle", (e) => { if (e.target.open) pintarEquiposProfe(); });
-        }
 
         /* Los demás ven para quién es la pregunta dirigida (el nombre viaja con
            el turno, en game_state.elegido). */
@@ -7048,7 +6446,9 @@
             } else if (isTeacher) {
                 boardOwnerId = profile.id;
                 modoProyector = new URLSearchParams(location.search).get("proyector") === "1";
+                modoControl = !modoProyector && new URLSearchParams(location.search).get("control") === "1";
                 document.documentElement.classList.toggle("modo-proyector", modoProyector);
+                document.documentElement.classList.toggle("modo-control", modoControl);
             } else {
                 // Con más de un profesor, el alumno elige a cuál clase entra.
                 const { clases, elegida } = await ClaseElegida.resolver();
@@ -7084,7 +6484,10 @@
                 document.getElementById("engine-panel").classList.remove("hidden");
                 document.getElementById("teacher-tabs-wrap").classList.remove("hidden");
                 document.getElementById("clear-chat-btn").classList.remove("hidden");
-                if (!modoProyector) document.getElementById("proyector-btn").classList.remove("hidden");
+                if (!modoProyector && !modoControl) {
+                    document.getElementById("proyector-btn").classList.remove("hidden");
+                    document.getElementById("control-btn").classList.remove("hidden");
+                }
                 document.getElementById("chat-student-picker").classList.remove("hidden");
                 let savedTab = TEACHER_TABS[0];
                 try { savedTab = localStorage.getItem(TEACHER_TAB_KEY) || savedTab; } catch (e) {}

@@ -98,9 +98,44 @@ window.PuntosClase = (function () {
         return conPuntos;
     }
 
+    /* ---------- Los puntos del mes ----------
+       resumen_del_mes (la base) suma lo de las clases del mes en curso, en
+       hora de Costa Rica; los puntos salen de la MISMA regla de arriba. El
+       profe pasa su id y ve a sus alumnos; el alumno pasa null y ve lo suyo. */
+    async function cargarDelMes(sb, profesorId) {
+        const { data, error } = await sb.rpc("resumen_del_mes", { p_profesor: profesorId || null });
+        return { filas: data || [], error };
+    }
+
+    function nombreDelMes() {
+        try { return new Intl.DateTimeFormat("es-CR", { timeZone: "America/Costa_Rica", month: "long" }).format(new Date()); }
+        catch (e) { return "este mes"; }
+    }
+
+    // La tarjeta del panel del alumno: sus puntos del mes. Sin clases este mes, no aparece.
+    async function pintarDelMesDelAlumno(sb, caja) {
+        if (!caja) return;
+        const { filas, error } = await cargarDelMes(sb, null);
+        const f = !error && filas[0];
+        if (!f || !(f.clases > 0)) { caja.hidden = true; return; }
+        caja.innerHTML = "";
+        const el = (tag, cls, texto) => { const e = document.createElement(tag); e.className = cls; e.textContent = texto; return e; };
+        const h2 = el("h2", "font-serif text-lg font-bold text-brand-800 dark:text-white", "");
+        h2.id = "puntos-mes-titulo";
+        const ic = el("span", "", "🏆 ");
+        ic.setAttribute("aria-hidden", "true");
+        h2.append(ic, document.createTextNode("Tus puntos de " + nombreDelMes()));
+        const n = puntos(f);
+        caja.append(h2,
+            el("p", "text-2xl font-bold text-brand-800 dark:text-white mt-1", textoPuntos(n) + " en " + f.clases + (f.clases === 1 ? " clase" : " clases")),
+            el("p", "text-sm text-brand-600 dark:text-brand-300 mt-1", n ? desglose(f) : "Todavía no sumaste puntos este mes: contesta las preguntas de la clase."),
+            el("p", "text-xs text-brand-500 dark:text-brand-300 mt-2", "Cómo se cuentan: " + reglaEscrita() + "."));
+        caja.hidden = false;
+    }
+
     function medalla(puesto) { return puesto === 1 ? "🥇" : puesto === 2 ? "🥈" : puesto === 3 ? "🥉" : ""; }
     function textoPuntos(n) { return n + (n === 1 ? " punto" : " puntos"); }
 
     return { REGLAS, puntos, desglose, reglaEscrita, ranking, podioParaLaClase, medalla, textoPuntos,
-        EQUIPOS, repartir, puntosDeEquipos };
+        EQUIPOS, repartir, puntosDeEquipos, cargarDelMes, nombreDelMes, pintarDelMesDelAlumno };
 })();
