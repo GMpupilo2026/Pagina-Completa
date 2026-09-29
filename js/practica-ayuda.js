@@ -66,7 +66,17 @@
     const texto = typeof ayuda.texto === "string" ? ayuda.texto.trim().slice(0, MAX_TEXTO) : "";
     const jugadas = Number.isInteger(ayuda.jugadas) && ayuda.jugadas >= 0 ? ayuda.jugadas : null;
     if (jugadas === null || (!flechas.length && !circulos.length && !texto)) return null;
-    return { jugadas, flechas, circulos, texto };
+    const limpia = { jugadas, flechas, circulos, texto };
+    // Quién la dio lo pone la base (el profe o alguien de supervisión).
+    if (typeof ayuda.de === "string") limpia.de = ayuda.de;
+    if (typeof ayuda.nombre === "string" && ayuda.nombre.trim()) limpia.nombre = ayuda.nombre.trim().slice(0, 80);
+    return limpia;
+  }
+
+  // ¿Quedó guardado lo que se mandó? Sin mirar quién ni cuándo, que los pone la base.
+  function mismoContenido(a, b) {
+    const c = (x) => x && JSON.stringify([x.jugadas, x.flechas, x.circulos, x.texto]);
+    return !!a && !!b && c(a) === c(b);
   }
 
   // ¿Las flechas se pueden pintar en la posición que tiene ahora el alumno?
@@ -111,5 +121,5 @@
     return partes.join("; ");
   }
 
-  window.PracticaAyuda = { limpiar, vale, leerMarcas, escribirMarcas, enPalabras, MAX_TEXTO, MAX_MARCAS };
+  window.PracticaAyuda = { limpiar, mismoContenido, vale, leerMarcas, escribirMarcas, enPalabras, MAX_TEXTO, MAX_MARCAS };
 })();
