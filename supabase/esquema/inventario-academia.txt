@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20260929190705
+# al-dia-con: 20260929203429
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -15,6 +15,8 @@ tabla  avisos_ficha_faltante  rls=true
 tabla  avisos_ia_tope  rls=true
 tabla  avisos_racha  rls=true
 tabla  clase_elegidos  rls=true
+tabla  clase_enlaces  rls=true
+tabla  clase_espectadores  rls=true
 tabla  clase_plan_hecho  rls=true
 tabla  class_attendance  rls=true
 tabla  class_chat_messages  rls=true
@@ -53,6 +55,7 @@ tabla  informes_profesor  rls=true
 tabla  informes_profesor_detalle  rls=true
 tabla  insignias  rls=true
 tabla  insignias_tipos  rls=true
+tabla  interno.clase_espectadores_ip  rls=true
 tabla  interno.envios_publicos  rls=true
 tabla  justificaciones_ausencia  rls=true
 tabla  notas_alumno  rls=true
@@ -197,6 +200,23 @@ columna  clase_elegidos.id  uuid
 columna  clase_elegidos.origen  text
 columna  clase_elegidos.resultado  text
 columna  clase_elegidos.student_id  uuid
+columna  clase_enlaces.apagado_at  timestamp with time zone
+columna  clase_enlaces.creado_at  timestamp with time zone
+columna  clase_enlaces.id  uuid
+columna  clase_enlaces.owner_id  uuid
+columna  clase_enlaces.token  text
+columna  clase_espectadores.bloqueado_at  timestamp with time zone
+columna  clase_espectadores.enlace_id  uuid
+columna  clase_espectadores.entro_at  timestamp with time zone
+columna  clase_espectadores.id  uuid
+columna  clase_espectadores.nombre  text
+columna  clase_espectadores.owner_id  uuid
+columna  clase_espectadores.privacidad_aceptada_en  timestamp with time zone
+columna  clase_espectadores.privacidad_version  text
+columna  clase_espectadores.salidas  integer
+columna  clase_espectadores.secreto_hash  text
+columna  clase_espectadores.ultima_salida_at  timestamp with time zone
+columna  clase_espectadores.visto_at  timestamp with time zone
 columna  clase_plan_hecho.class_session_id  uuid
 columna  clase_plan_hecho.created_at  timestamp with time zone
 columna  clase_plan_hecho.plan_item_id  uuid
@@ -553,6 +573,9 @@ columna  insignias_tipos.emoji  text
 columna  insignias_tipos.nombre  text
 columna  insignias_tipos.orden  smallint
 columna  insignias_tipos.tipo  text
+columna  interno.clase_espectadores_ip.enlace_id  uuid
+columna  interno.clase_espectadores_ip.espectador_id  uuid
+columna  interno.clase_espectadores_ip.ip  text
 columna  interno.envios_publicos.ambito  text
 columna  interno.envios_publicos.correo  text
 columna  interno.envios_publicos.creado  timestamp with time zone
@@ -1019,6 +1042,13 @@ funcion  cambiar_rol(p_persona uuid, p_rol text)  definer  anon=false  auth=true
 funcion  cerrar_examen(p_examen uuid, p_motivo text)  definer  anon=false  auth=true
 funcion  cifras_academia()  definer  anon=true  auth=true
 funcion  clase_abierta_de(p_profesor uuid)  definer  anon=false  auth=true
+funcion  clase_enlace_apagar()  definer  anon=false  auth=true
+funcion  clase_enlace_obtener(p_nuevo boolean)  definer  anon=false  auth=true
+funcion  clase_enlace_sacar(p_espectador uuid)  definer  anon=false  auth=true
+funcion  clase_invitado_entrar(p_token text, p_nombre text, p_privacidad text)  definer  anon=true  auth=true
+funcion  clase_invitado_info(p_token text)  definer  anon=true  auth=true
+funcion  clase_invitado_salio(p_token text, p_secreto text)  definer  anon=true  auth=true
+funcion  clase_invitado_ver(p_token text, p_secreto text)  definer  anon=true  auth=true
 funcion  cobros_morosos()  invoker  anon=true  auth=true
 funcion  cobros_resumen()  invoker  anon=true  auth=true
 funcion  color_con_texto_blanco(p text)  invoker  anon=true  auth=true
@@ -1277,6 +1307,8 @@ politica  clase_elegidos  clase_elegidos_insert  INSERT
 politica  clase_elegidos  clase_elegidos_select  SELECT
 politica  clase_elegidos  clase_elegidos_select_propio  SELECT
 politica  clase_elegidos  clase_elegidos_update  UPDATE
+politica  clase_enlaces  clase_enlaces_select  SELECT
+politica  clase_espectadores  clase_espectadores_select  SELECT
 politica  clase_plan_hecho  clase_plan_hecho_de_quien_da_la_clase  ALL
 politica  class_attendance  class_attendance_delete_profesor  DELETE
 politica  class_attendance  class_attendance_exige_acceso_ins  INSERT  restrictiva
@@ -1626,6 +1658,13 @@ indice  avisos_racha  avisos_racha_pkey
 indice  clase_elegidos  clase_elegidos_alumno_idx
 indice  clase_elegidos  clase_elegidos_clase_idx
 indice  clase_elegidos  clase_elegidos_pkey
+indice  clase_enlaces  clase_enlaces_pkey
+indice  clase_enlaces  clase_enlaces_token_key
+indice  clase_enlaces  clase_enlaces_uno_vigente
+indice  clase_espectadores  clase_espectadores_enlace
+indice  clase_espectadores  clase_espectadores_owner
+indice  clase_espectadores  clase_espectadores_pkey
+indice  clase_espectadores  clase_espectadores_secreto_hash_key
 indice  clase_plan_hecho  clase_plan_hecho_item_idx
 indice  clase_plan_hecho  clase_plan_hecho_pkey
 indice  class_attendance  class_attendance_pkey
@@ -1738,6 +1777,8 @@ indice  insignias  insignias_otorgada_por_fk
 indice  insignias  insignias_pkey
 indice  insignias  insignias_tipo_fk
 indice  insignias_tipos  insignias_tipos_pkey
+indice  interno.clase_espectadores_ip  clase_espectadores_ip_enlace
+indice  interno.clase_espectadores_ip  clase_espectadores_ip_pkey
 indice  interno.envios_publicos  envios_publicos_correo
 indice  interno.envios_publicos  envios_publicos_creado
 indice  interno.envios_publicos  envios_publicos_ip
@@ -1885,6 +1926,7 @@ extension  pgcrypto  1.3
 extension  supabase_vault  0.3.1
 extension  uuid-ossp  1.1
 realtime  archivos_pgn
+realtime  clase_espectadores
 realtime  class_attendance
 realtime  class_chat_messages
 realtime  class_sessions
@@ -1908,6 +1950,7 @@ cron  cobros-generar  30 11 * * *
 cron  cobros-recordatorios  30 12 * * *
 cron  cobros-recordatorios-programados  */5 * * * *
 cron  informes-a-encargados  0 * * * *
+cron  limpiar-invitados-de-clase  20 7 * * *
 cron  recordar-informes-mensuales  0 14 * * *
 grant  Ejercicios Lichess  anon  DELETE
 grant  Ejercicios Lichess  anon  INSERT
@@ -1992,6 +2035,7 @@ grant  clase_elegidos  authenticated  SELECT
 grant  clase_elegidos  authenticated  TRIGGER
 grant  clase_elegidos  authenticated  TRUNCATE
 grant  clase_elegidos  authenticated  UPDATE
+grant  clase_enlaces  authenticated  SELECT
 grant  clase_plan_hecho  authenticated  DELETE
 grant  clase_plan_hecho  authenticated  INSERT
 grant  clase_plan_hecho  authenticated  REFERENCES

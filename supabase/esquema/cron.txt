@@ -7,3 +7,4 @@ informes-a-encargados    0 * * * *    activo=true   (cada hora — el informe a 
 cobros-recordatorios-programados  */5 * * * *  activo=true   (cada 5 min — los recordatorios de cobro con dia y hora puestos a mano)
 recordar-informes-mensuales  0 14 * * *   activo=true   (8:00 a.m. CR — pide el informe mensual los dias 1 y 3, y avisa a la supervision el 5)
 avisar-fichas-faltantes      10 * * * *   activo=true   (cada hora — avisa al profesor de una clase de su horario que paso sin ficha)
+limpiar-invitados-de-clase  20 7 * * *   activo=true   (1:20 a.m. CR — borra los invitados de una clase de hace más de dos días)
