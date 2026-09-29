@@ -256,7 +256,7 @@ function errorDeAna(i, nivel, extra) {
     resumen: "Partida del 2" + i + " sept · jugada " + (5 + i) }, extra || {});
 }
 const ERRORES_ANA = {};
-[errorDeAna(1, 1), errorDeAna(2, 2), errorDeAna(3, 1), errorDeAna(4, 1), errorDeAna(5, 2), errorDeAna(6, 1),
+[errorDeAna(1, 1), errorDeAna(2, 2, { tema: "horquilla" }), errorDeAna(3, 1, { tema: "clavada" }), errorDeAna(4, 1, { tema: "clavada" }), errorDeAna(5, 2), errorDeAna(6, 1, { tema: "clavada" }),
  errorDeAna(7, 1, { id: "malo", jugada: "<img src=x onerror=alert(1)>" })].forEach((x) => { ERRORES_ANA[x.id] = x; });
 const ESTADO_ERRORES = [
   { student_id: "a-1", key: "errores_propios_v1", value: { raw: JSON.stringify(ERRORES_ANA) } },
@@ -648,11 +648,13 @@ async function pruebaProfesor(browser) {
   igual("el resumen cuenta lo suyo y nada más", await page.evaluate(() =>
     document.querySelector("#errores-body > p").textContent.trim()),
     "4 partidas revisadas · 6 errores (4 en que regaló, 2 en que se le escapó la ventaja) · 2 ya resueltos.");
+  igual("y lo que más se repite, por tema", await page.evaluate(() =>
+    document.querySelectorAll("#errores-body > p")[1].textContent.trim()), "Lo que más se repite: clavadas (3), horquillas (1).");
   igual("se ven los 5 más recientes", await page.evaluate(() =>
     [...document.querySelectorAll("#errores-body li")].filter((li) => li.checkVisibility()).length), 5);
   igual("el primero, con la jugada en castellano y las buenas", await page.evaluate(() =>
     document.querySelector("#errores-body li").innerText.replace(/\s+/g, " ").trim()),
-    "Partida del 26 sept · jugada 11 — regaló Jugó Cxf7 (+0,1 → −4,5). Lo bueno: Axf7+ o 0-0. ✓ Ya lo resolvió ★★★");
+    "Partida del 26 sept · jugada 11 — regaló · clavada Jugó Cxf7 (+0,1 → −4,5). Lo bueno: Axf7+ o 0-0. ✓ Ya lo resolvió ★★★");
   igual("lo sin resolver lo dice escrito, no solo en color", await page.evaluate(() =>
     document.querySelectorAll("#errores-body li")[2].innerText.includes("✗ Todavía no lo resolvió")), "true");
   await page.click("#errores-body button");

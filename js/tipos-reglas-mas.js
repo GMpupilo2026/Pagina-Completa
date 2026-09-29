@@ -426,7 +426,31 @@
   }
   function segundosTiempo(base, adaptado) { return adaptado ? base * 3 : base; }
 
+  /* =====================================================================
+   * Salva las tablas (tipo 19): el espejo de Remata. Se empieza con menos
+   * material pero en una posición que se puede aguantar (el motor da entre
+   * −0,8 y +0,5) y se juega contra el motor. Lo logra quien llega a tablas
+   * por reglamento (ahogado, repetición, 50 jugadas, material insuficiente) o
+   * quien, al cumplir las jugadas del nivel, no bajó de −2,5 en ningún
+   * momento. Si baja de −2,5, se perdió. Hay un peón y medio de margen para
+   * la evaluación corta del navegador, que se mueve (ver Remata).
+   * ===================================================================== */
+  const TABLAS = { firme: -150, pierde: -250 };
+  function juicioTablas(cp) {
+    if (cp === null || cp === undefined) return "sin-motor";
+    if (cp >= TABLAS.firme) return "firme";
+    if (cp >= TABLAS.pierde) return "duda";
+    return "perdida";
+  }
+  /* Tres estrellas si nunca bajó de −1,5; dos si pasó por la cuerda floja y
+     aguantó igual; con pista, una. */
+  function estrellasTablas(minimo, pista) {
+    if (pista) return 1;
+    return minimo >= TABLAS.firme ? 3 : 2;
+  }
+
   const TiposReglasMas = {
+    TABLAS, juicioTablas, estrellasTablas,
     TIEMPO, estrellasTiempo, segundosTiempo,
     REMATA, cpDelAlumno, juicioRemata, estrellasRemata,
     aguantaAcertada, textoRefuta,

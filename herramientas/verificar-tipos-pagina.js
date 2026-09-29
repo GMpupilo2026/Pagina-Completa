@@ -1,9 +1,9 @@
 /* Comprueba entreno/tipos.html en un navegador de verdad: la ficha de los
- * Tipos de entrenamiento y los dieciocho juegos, JUGADOS de punta a punta.
+ * Tipos de entrenamiento y los diecinueve juegos, JUGADOS de punta a punta.
  *
  * Los bancos los comprueba herramientas/verificar-tipos.js sin navegador.
  * Esto es lo que solo se rompe mirando la pantalla:
- *   - sin sesión manda a iniciar sesión; con sesión, la ficha trae los dieciocho
+ *   - sin sesión manda a iniciar sesión; con sesión, la ficha trae los diecinueve
  *     tipos, cada uno con su encabezado y su enlace;
  *   - cada juego pinta LA posición de su ejercicio (se compara casilla por
  *     casilla contra la FEN del banco, no contra la página);
@@ -156,7 +156,7 @@ async function main() {
       enlace: li.querySelector("h2 a").getAttribute("href"),
       visible: li.checkVisibility(),
     })));
-    ok("dieciocho fichas", fichas.length === 18, fichas.length);
+    ok("diecinueve fichas", fichas.length === 19, fichas.length);
     ok("cada una con su encabezado y su enlace", fichas.every((f) => f.titulo && /^#[a-z-]+$/.test(f.enlace) && f.visible), JSON.stringify(fichas));
     ok("un solo h1", (await page.$$eval("#vista-fichas h1", (h) => h.length)) === 1);
     await page.click('#fichas li:first-child h2 a');
@@ -381,7 +381,7 @@ async function main() {
     await ctx.close();
   }
 
-  /* ======================= 8 a 18 ======================= */
+  /* ======================= 8 a 19 ======================= */
   const M = require("../js/tipos-reglas-mas.js");
   const escribir = async (page, txt) => { await page.fill("#jugada-input", txt); await page.press("#jugada-input", "Enter"); };
 
@@ -615,8 +615,8 @@ window.PracticeEngine = {
     async function jugarHasta(page, item, re) {
       const vistas = new Set();
       for (let k = 0; k < item.jugadas + 2; k++) {
-        const t = await esperarEstado(page, /Te toca|Remataste|✗|no cuenta|Vas ganando|^$/);
-        if (/Remataste|✗|no cuenta/.test(t)) return t;
+        const t = await esperarEstado(page, /Te toca|Remataste|Aguantaste|Salvaste|✗|no cuenta|Vas ganando|Vas con menos|^$/);
+        if (/Remataste|Aguantaste|Salvaste|✗|no cuenta/.test(t)) return t;
         await page.waitForFunction(() => document.querySelector("#tablero button[data-square]"), null, { timeout: 5000 }).catch(() => {});
         const fen = await page.evaluate(() => TiposEntreno.fen());
         const g = new Chess(fen);
@@ -672,6 +672,43 @@ window.PracticeEngine = {
       const t = await jugarHasta(page, item, /no cuenta/);
       ok("si el motor no contesta, no cuenta", /no cuenta/.test(t), t);
       ok("y no da estrellas", !(await estrellas(page))["remata:" + item.id]);
+      ok("sin errores en consola", !errores.length, errores.join(" | "));
+      await ctx.close();
+    }
+
+    console.log("\n=== Salva las tablas (el mismo juego, con otras reglas) ===");
+    const tab1 = DATOS.tablas.find((x) => x.nivel === 1) || DATOS.tablas[0];
+    {
+      // en 0,0 todo el tiempo: aguantó sin pasar por la cuerda floja
+      const { page, ctx, errores } = await abrir(browser, true, "#tablas/" + tab1.nivel + "/" + tab1.id, conMotor([], { type: "cp", value: 0 }));
+      await page.waitForSelector("#vista-juego:not(.hidden) #jugada-input");
+      await mismaPosicion(page, tab1.fen, "pinta la posición del ejercicio");
+      ok("dice que va con menos material y cuánto hay que aguantar", new RegExp("Vas con menos material.*aguanta " + tab1.jugadas + " jugadas").test(await page.textContent("#juego-enunciado")));
+      const t = await jugarHasta(page, tab1, /Aguantaste|Salvaste/);
+      ok("en 0,0 hasta el final: lo salva", /Aguantaste|Salvaste/.test(t), t);
+      ok("sin pasar de −1,5: tres estrellas", (await estrellas(page))["tablas:" + tab1.id] === 3, JSON.stringify(await estrellas(page)));
+      ok("sin errores en consola", !errores.length, errores.join(" | "));
+      await ctx.close();
+    }
+    {
+      // En la cuerda floja (−2) hasta el final: aguantó igual, con dos. (La
+      // primera versión bajaba a −2 una vez y volvía a 0: no probaba que
+      // terminar en la cuerda floja también salva.)
+      const { page, ctx, errores } = await abrir(browser, true, "#tablas/" + tab1.nivel + "/" + tab1.id, conMotor([], { type: "cp", value: 200 }));
+      await page.waitForSelector("#vista-juego:not(.hidden) #jugada-input");
+      const t = await jugarHasta(page, tab1, /Aguantaste|Salvaste/);
+      ok("en −2 hasta el final: lo salva igual", /Aguantaste|Salvaste/.test(t), t);
+      ok("con dos estrellas", (await estrellas(page))["tablas:" + tab1.id] === 2, JSON.stringify(await estrellas(page)));
+      ok("sin errores en consola", !errores.length, errores.join(" | "));
+      await ctx.close();
+    }
+    {
+      // −3: se perdió a la primera (lo que es bueno en Remata aquí es malo)
+      const { page, ctx, errores } = await abrir(browser, true, "#tablas/" + tab1.nivel + "/" + tab1.id, conMotor([], { type: "cp", value: 300 }));
+      await page.waitForSelector("#vista-juego:not(.hidden) #jugada-input");
+      const t = await jugarHasta(page, tab1, /se perdió/);
+      ok("si baja de −2,5, se perdió", /la posición se perdió/.test(t), t);
+      ok("y no da estrellas", !(await estrellas(page))["tablas:" + tab1.id]);
       ok("sin errores en consola", !errores.length, errores.join(" | "));
       await ctx.close();
     }
@@ -769,12 +806,12 @@ window.PracticeEngine = {
     const MOTOR_FALSO = `
 window.PreparacionMotor = {
   disponible() { return true; },
-  async evaluar(fen) { return { eval: (window.__evals || {})[fen] || 0, mejor: null }; },
+  async evaluar(fen) { return { eval: (window.__evals || {})[fen] || 0, mejor: (window.__mejores || {})[fen] || null }; },
   async opciones(fen) { return (window.__opciones || {})[fen] || []; },
 };`;
     const preparar = async (ctx) => {
       await ctx.route("**/js/preparacion-motor.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: MOTOR_FALSO }));
-      await ctx.addInitScript((v) => { window.__filas = v.filas; window.__evals = v.evals; window.__opciones = v.opciones; }, { filas, evals, opciones });
+      await ctx.addInitScript((v) => { window.__filas = v.filas; window.__evals = v.evals; window.__opciones = v.opciones; window.__mejores = v.mejores; }, { filas, evals, opciones, mejores: { [fens[7]]: "Qg5" } });
     };
     const { page, ctx, errores } = await abrir(browser, true, "#errores", preparar);
     await page.waitForSelector("#vista-tipo:not(.hidden) #tipo-extra button");
@@ -787,6 +824,9 @@ window.PreparacionMotor = {
     const guardado = await page.evaluate(() => ({ ej: JSON.parse(localStorage.getItem("errores_propios_v1") || "{}"), vistas: JSON.parse(localStorage.getItem("errores_analizadas_v1") || "{}") }));
     const ej = Object.values(guardado.ej);
     ok("el ejercicio queda guardado con las buenas del motor", ej.length === 1 && ej[0].fen === fens[6] && ej[0].jugada === "Nxe5" && ej[0].buenas.join() === "c3,O-O" && ej[0].nivel === 1, JSON.stringify(ej));
+    ok("y con su tema: el castigo del rival (Dg5) es una clavada", ej[0] && ej[0].tema === "clavada", ej[0] && ej[0].tema);
+    const lineaTema = await page.evaluate(() => { const p = [...document.querySelectorAll("#tipo-extra p")].find((x) => /más se repite/.test(x.textContent)); return p ? [p.textContent, (p.querySelector("a") || {}).getAttribute ? p.querySelector("a").getAttribute("href") : null] : null; });
+    ok("el panel dice qué se repite y manda a practicarlo", !!lineaTema && /Lo que más se repite en tus errores: clavadas \(1 de 1\)/.test(lineaTema[0]) && lineaTema[1] === "temas.html?tema=pin", JSON.stringify(lineaTema));
     ok("la que no se puede reproducir también queda como revisada (no se vuelve a intentar)", Object.keys(guardado.vistas).sort().join() === "juego:g-buena,juego:g-tablero", JSON.stringify(guardado.vistas));
     ok("la de otra variante, la ajena y la que sigue en curso ni se piden", !Object.keys(guardado.vistas).some((k) => /otra|ajena|curso/.test(k)));
     const nivel1 = await page.textContent("#niveles li:first-child");
@@ -807,6 +847,7 @@ window.PreparacionMotor = {
     const t = await esperarEstado(page, /buena/);
     ok("una buena: con un error, dos estrellas", /Esa es buena/.test(t) && (await estrellas(page))["errores:" + ej[0].id] === 2, t + " " + JSON.stringify(await estrellas(page)));
     ok("y cuenta qué pasó en la partida", /En tu partida jugaste Cxe5 y la evaluación pasó de \+0,2 a −3,0/.test(await page.textContent("#explicacion")), await page.textContent("#explicacion"));
+    ok("y qué le hicieron, con el enlace para practicarlo", /Lo que te hicieron: Clavada/.test(await page.textContent("#explicacion")) && (await page.getAttribute('#explicacion a[href^="temas.html"]', "href")) === "temas.html?tema=pin");
     ok("sin errores en consola", !errores.length, errores.join(" | "));
     await ctx.close();
   }
