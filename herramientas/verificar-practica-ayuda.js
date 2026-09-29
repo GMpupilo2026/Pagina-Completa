@@ -39,6 +39,12 @@
    - al profe la tarjeta se le marca con texto, sube al principio, se dice en
      voz y la cuenta de arriba la suma; «✔ Marcar como atendido» lo apaga.
 
+   Una pista para todos a la vez
+   - va en UNA consulta filtrada por la ronda, solo texto y marcada para todos;
+   - dice a cuántos les llegó, y si la base no la guardó (ronda terminada), lo
+     dice en vez de «le llegó»; sin texto no manda nada;
+   - la alumna la lee como «Pista de tu profe para toda la clase».
+
    Del lado de la alumna
    - la pista se pinta como texto, y las flechas en su tablero Y en palabras;
    - escucha SU partida con filtro;
@@ -371,6 +377,59 @@ async function pruebaPedidoProfe(browser) {
   await ctx.close();
 }
 
+async function pruebaPistaATodos(browser) {
+  console.log("\n=== Una pista para toda la ronda ===");
+  const sem = semilla();
+  sem.practice_games.push({ id: "g-2", session_id: "p-1", student_id: "u-beto", student_color: "w", fen: INICIAL,
+    moves: ["d4"], status: "playing", eval_cp: null, attempts: 1, reloj_ms: null, ayuda: null, pide_ayuda_at: null,
+    created_at: new Date().toISOString(), profiles: { full_name: "Beto Mora", email: "beto@x.cr" } });
+  const { page, ctx, errores } = await abrir(browser, "u-profe", CLASE, sem);
+  await page.waitForSelector("#practice-boards-grid .practice-mini-mirar", { timeout: 30000 });
+  cumple("el campo para todos se ve", await seVe(page, "#practica-todos-pista"));
+
+  await page.click("#practica-todos-mandar");
+  igual("sin texto no manda nada", (await updatesDePartida(page)).length, 0);
+  igual("y lo dice", await texto(page, "#practica-todos-aviso"), "Escribe la pista antes de mandarla.");
+
+  await page.fill("#practica-todos-pista", "Antes de mover, busquen los jaques del rival.");
+  await page.click("#practica-todos-mandar");
+  await page.waitForFunction(() => /Le llegó/.test(document.getElementById("practica-todos-aviso").textContent), null, { timeout: 5000 }).catch(() => {});
+  const u = await updatesDePartida(page);
+  igual("va en UNA consulta, filtrada por la ronda, solo texto y para todos", u.map((x) => ({ campos: x.campos, donde: x.donde })), [{
+    campos: { ayuda: { jugadas: 0, flechas: [], circulos: [], texto: "Antes de mover, busquen los jaques del rival.", para_todos: true } },
+    donde: [["session_id", "p-1"]],
+  }]);
+  igual("dice a cuántos les llegó", await texto(page, "#practica-todos-aviso"), "Le llegó a los 2 alumnos.");
+  igual("las dos miniaturas lo muestran", await page.$$eval("#practice-boards-grid .practice-mini-status", (ps) => ps.map((p) => /con (tu )?ayuda/.test(p.textContent))), [true, true]);
+  igual("y el campo se vacía", await page.inputValue("#practica-todos-pista"), "");
+
+  // La base no la guardó (ronda terminada): no puede decir «le llegó».
+  await page.evaluate(() => {
+    const orig = window.sb.from;
+    window.sb.from = (t) => {
+      const b = orig(t);
+      if (t === "practice_games") { const up = b.update; b.update = () => up.call(b, {}); }
+      return b;
+    };
+  });
+  await page.fill("#practica-todos-pista", "Otra pista");
+  await page.click("#practica-todos-mandar");
+  await page.waitForFunction(() => /nadie/.test(document.getElementById("practica-todos-aviso").textContent), null, { timeout: 5000 }).catch(() => {});
+  igual("si la base no la guardó, lo dice", await texto(page, "#practica-todos-aviso"), "No le llegó a nadie: la ronda de práctica ya terminó.");
+  igual("sin errores en la página", errores.filter((e) => !/stockfish|Worker|wasm/i.test(e)), []);
+  await ctx.close();
+
+  console.log("\n=== La alumna lee la pista para toda la clase ===");
+  const ana = await abrir(browser, "u-ana", CLASE, semilla({ jugadas: 0, flechas: [], circulos: [], texto: "Busquen los jaques.",
+    para_todos: true, de: "u-profe", nombre: "Karina Rojas" }));
+  await ana.page.waitForSelector("#practice-card:not(.hidden) #practice-board [data-square]", { timeout: 30000 });
+  await ana.page.waitForFunction(() => /para toda la clase/.test(document.getElementById("practica-ayuda").textContent), null, { timeout: 5000 }).catch(() => {});
+  cumple("se lee como pista para toda la clase", /^💡 Pista de tu profe para toda la clase/.test(await texto(ana.page, "#practica-ayuda")), await texto(ana.page, "#practica-ayuda"));
+  cumple("con su texto", (await texto(ana.page, "#practica-ayuda")).includes("Busquen los jaques."));
+  igual("sin flechas en su tablero", await marcasDibujadas(ana.page, "practice-board"), { flechas: 0, circulos: 0 });
+  await ana.ctx.close();
+}
+
 async function pruebaPedidoAlumna(browser) {
   console.log("\n=== Ana pide ayuda desde su partida ===");
   const { page, ctx, errores } = await abrir(browser, "u-ana", CLASE, semilla());
@@ -491,6 +550,7 @@ async function pruebaAlumna(browser) {
     await pruebaAdministracion(browser);
     await pruebaPedidoProfe(browser);
     await pruebaPedidoAlumna(browser);
+    await pruebaPistaATodos(browser);
     await pruebaAlumna(browser);
   } finally {
     await browser.close();

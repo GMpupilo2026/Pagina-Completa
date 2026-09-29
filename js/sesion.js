@@ -5839,6 +5839,45 @@
             return { flechas: mirar.board.arrows, circulos: mirar.board.circles };
         }
 
+        // ---------- Una pista para toda la ronda ----------
+        // Un solo update filtrado por la ronda: la RLS decide a qué partidas llega (las
+        // del profe, o las que alcanza quien observa) y el trigger le pone a cada una
+        // quién la dio y apaga los pedidos de ayuda. Se cuenta lo que QUEDÓ guardado,
+        // no lo que se mandó: con la ronda terminada la base lo devuelve como estaba.
+        async function mandarPistaATodos(e) {
+            e.preventDefault();
+            const aviso = document.getElementById("practica-todos-aviso");
+            const campo = document.getElementById("practica-todos-pista");
+            const texto = campo.value.trim().slice(0, PracticaAyuda.MAX_TEXTO);
+            if (!texto) { aviso.textContent = "Escribe la pista antes de mandarla."; campo.focus(); return; }
+            if (!latestPracticeSession || latestPracticeSession.ended_at) { aviso.textContent = "No hay una ronda de práctica en curso."; return; }
+            const boton = document.getElementById("practica-todos-mandar");
+            boton.disabled = true;
+            const ayuda = { jugadas: 0, flechas: [], circulos: [], texto, para_todos: true };
+            const { data, error } = await sb.from("practice_games").update({ ayuda })
+                .eq("session_id", latestPracticeSession.id).select("*");
+            boton.disabled = false;
+            if (error) { aviso.textContent = "No se pudo mandar la pista: " + error.message; return; }
+            const filas = data || [];
+            const llegaron = filas.filter((f) => {
+                const q = PracticaAyuda.limpiar(f.ayuda);
+                return q && q.para_todos && q.texto === texto;
+            });
+            llegaron.forEach((f) => {
+                const entry = practiceStudentBoards[f.student_id];
+                if (entry && entry.row) upsertPracticeStudentBoard(Object.assign({}, entry.row,
+                    { ayuda: f.ayuda, pide_ayuda_at: f.pide_ayuda_at || null }));
+            });
+            if (!filas.length) { aviso.textContent = "Todavía no hay nadie jugando esta ronda."; return; }
+            if (!llegaron.length) { aviso.textContent = "No le llegó a nadie: la ronda de práctica ya terminó."; return; }
+            aviso.textContent = llegaron.length === filas.length
+                ? "Le llegó a " + (filas.length === 1 ? "1 alumno." : "los " + filas.length + " alumnos.")
+                : "Le llegó a " + llegaron.length + " de " + filas.length + " alumnos.";
+            campo.value = "";
+        }
+        const formTodos = document.getElementById("practica-todos");
+        if (formTodos) formTodos.addEventListener("submit", mandarPistaATodos);
+
         async function guardarAyuda(ayuda) {
             const { data, error } = await sb.from("practice_games").update({ ayuda })
                 .eq("id", mirar.row.id).select("ayuda, pide_ayuda_at").maybeSingle();
@@ -6299,8 +6338,10 @@
             ico.setAttribute("aria-hidden", "true");
             ico.textContent = "💡 ";
             // La base pone quién la dio: puede ser su profe o alguien de supervisión.
-            titulo.append(ico, ayuda.de && ayuda.de !== boardOwnerId && ayuda.nombre
-                ? "Ayuda de " + ayuda.nombre : "Ayuda de tu profe");
+            const quien = ayuda.de && ayuda.de !== boardOwnerId && ayuda.nombre ? ayuda.nombre : "tu profe";
+            titulo.append(ico, ayuda.para_todos
+                ? "Pista de " + quien + " para toda la clase"
+                : "Ayuda de " + quien);
             marco.appendChild(titulo);
             if (ayuda.texto) {
                 const t = document.createElement("p");
