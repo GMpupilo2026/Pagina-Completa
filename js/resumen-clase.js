@@ -50,18 +50,31 @@ window.ResumenClase = (function () {
         return plural(f.partidas, "partida", "partidas") + ": " + partes.join(", ");
     }
 
+    // La participación oral: los turnos al azar o por mano levantada.
+    function textoTurnos(f) {
+        if (!f.turnos) return "—";
+        const partes = [];
+        if (f.turnos_bien) partes.push(f.turnos_bien + " bien");
+        if (f.turnos_casi) partes.push(f.turnos_casi + " casi");
+        const sin = f.turnos - (f.turnos_bien || 0) - (f.turnos_casi || 0);
+        if (sin > 0) partes.push(sin + " sin anotar");
+        return plural(f.turnos, "turno", "turnos") + ": " + partes.join(", ");
+    }
+
     // Una línea para todo el grupo: lo primero que se lee.
     function titular(filas) {
         const preguntas = filas.length ? filas[0].preguntas : 0;
         const practicas = filas.reduce((a, f) => a + f.practicas, 0);
         // Cada partida entre alumnos aparece en la fila de los dos.
         const partidas = Math.round(filas.reduce((a, f) => a + (f.partidas || 0), 0) / 2);
+        const turnos = filas.reduce((a, f) => a + (f.turnos || 0), 0);
         if (!filas.length) return "Nadie de tus alumnos quedó registrado en esta clase.";
-        if (!preguntas && !practicas && !partidas) return "En esta clase no se hicieron preguntas, prácticas contra el motor ni partidas entre alumnos.";
+        if (!preguntas && !practicas && !partidas && !turnos) return "En esta clase no se hicieron preguntas, prácticas contra el motor ni partidas entre alumnos.";
         const partes = [];
         if (preguntas) partes.push(plural(preguntas, "pregunta", "preguntas"));
         if (practicas) partes.push(plural(practicas, "partida de práctica", "partidas de práctica"));
         if (partidas) partes.push(plural(partidas, "partida entre alumnos", "partidas entre alumnos"));
+        if (turnos) partes.push(plural(turnos, "turno de palabra", "turnos de palabra"));
         const sinCalificar = filas.reduce((a, f) => a + f.sin_calificar, 0);
         const lista = partes.length > 1 ? partes.slice(0, -1).join(", ") + " y " + partes[partes.length - 1] : partes[0];
         return "En esta clase: " + lista + "."
@@ -79,8 +92,9 @@ window.ResumenClase = (function () {
         const o = opciones || {};
         caja.innerHTML = "";
         caja.appendChild(el("p", "text-sm font-semibold text-brand-700 dark:text-brand-200", titular(filas)));
-        const hay = filas.length && (filas[0].preguntas || filas.some((f) => f.practicas || f.partidas));
+        const hay = filas.length && (filas[0].preguntas || filas.some((f) => f.practicas || f.partidas || f.turnos));
         const conPartidas = filas.some((f) => f.partidas);
+        const conTurnos = filas.some((f) => f.turnos);
         if (!hay) return;
         const envoltura = el("div", "overflow-x-auto mt-2");
         const tabla = el("table", "w-full text-sm");
@@ -88,7 +102,7 @@ window.ResumenClase = (function () {
         const thead = el("thead");
         const trh = el("tr", "text-left text-xs uppercase text-brand-450 dark:text-brand-350 border-b border-brand-100 dark:border-brand-800");
         // La columna de partidas entre alumnos solo si hubo: una de guiones no dice nada.
-        ["Alumno", "Preguntas", "Práctica contra el motor"].concat(conPartidas ? ["Partidas con compañeros"] : []).forEach((t) => {
+        ["Alumno", "Preguntas", "Práctica contra el motor"].concat(conPartidas ? ["Partidas con compañeros"] : [], conTurnos ? ["Participación"] : []).forEach((t) => {
             const th = el("th", "py-1.5 pr-4 font-semibold", t);
             th.scope = "col";
             trh.appendChild(th);
@@ -103,6 +117,7 @@ window.ResumenClase = (function () {
                 el("td", "py-1.5 pr-4 text-brand-600 dark:text-brand-300", textoPreguntas(f)),
                 el("td", "py-1.5 pr-4 text-brand-600 dark:text-brand-300", textoPracticas(f)));
             if (conPartidas) tr.appendChild(el("td", "py-1.5 pr-4 text-brand-600 dark:text-brand-300", textoPartidas(f)));
+            if (conTurnos) tr.appendChild(el("td", "py-1.5 pr-4 text-brand-600 dark:text-brand-300", textoTurnos(f)));
             tbody.appendChild(tr);
         });
         tabla.append(cap, thead, tbody);
@@ -143,6 +158,7 @@ window.ResumenClase = (function () {
         if (mia.preguntas) partes.push("Preguntas: " + textoPreguntas(mia));
         if (mia.practicas) partes.push("Práctica contra el motor: " + textoPracticas(mia));
         if (mia.partidas) partes.push("Partidas con compañeros: " + textoPartidas(mia));
+        if (mia.turnos) partes.push("Participación: " + textoTurnos(mia));
         if (!partes.length) partes.push("Estuviste en la clase.");
         const ul = el("ul", "text-sm text-brand-700 dark:text-brand-200 space-y-0.5");
         partes.forEach((t) => ul.appendChild(el("li", "", t)));
@@ -173,5 +189,5 @@ window.ResumenClase = (function () {
         caja.hidden = false;
     }
 
-    return { cargar, pintar, titular, textoPreguntas, textoPracticas, textoPartidas, pintarUltimaClaseDelAlumno };
+    return { cargar, pintar, titular, textoPreguntas, textoPracticas, textoPartidas, textoTurnos, pintarUltimaClaseDelAlumno };
 })();
