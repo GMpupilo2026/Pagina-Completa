@@ -21,6 +21,12 @@
    5. QUE "CONECTADO" SIGNIFIQUE LO MISMO que en el resto del sitio: con la
       pestaña de fondo se deja de anunciar, como en js/tiempo-plataforma.js.
    6. QUE EL NOMBRE AJENO NO SE EJECUTE: lo escribe el propio alumno.
+   7. QUE QUIEN ADMINISTRA VEA A TODOS. Nadie se anuncia en su canal: si
+      escuchara solo el suyo, diría "0 alumnos en línea" con la Academia
+      llena. Pasó, con una clase entera conectada.
+   8. QUE EL ALUMNO EN LA CLASE EN VIVO CUENTE. sesion.html no pinta la
+      burbuja, pero el alumno ahí se anuncia (`data-solo-anunciar`), aunque
+      no toque nada y aunque la pestaña quede de fondo.
 
    Uso:  python3 -m http.server 8777    (desde la raíz del sitio)
          node herramientas/verificar-burbuja.js                              */
@@ -33,6 +39,7 @@ const BASE = process.env.BASE_URL || "http://localhost:8777";
 const RAIZ = path.dirname(__dirname);
 const PAGINA = "/subgrupos.html";   // liviana y de la Academia: la burbuja va en todas
 
+const ADMIN = { id: "u-admin", role: "profesor", is_admin: true, full_name: "Oscar Angulo", email: "o@x.cr" };
 const PROFE = { id: "u-profe", role: "profesor", is_admin: false, full_name: "Karina Rojas", email: "karina@x.cr" };
 const OTRA_PROFE = { id: "u-profe2", role: "profesor", is_admin: false, full_name: "Laura Mena", email: "laura@x.cr" };
 const ANA = { id: "u-ana", role: "alumno", is_admin: false, full_name: "Ana Rojas", email: "ana@x.cr" };
@@ -144,6 +151,15 @@ function igual(nombre, hallado, esperado) {
 
 async function abrir(browser, cfg) {
   const ctx = await browser.newContext({ serviceWorkers: "block" });
+  /* Como la pone el generador en sesion.html: se reescribe la línea de la
+     página liviana en vez de abrir la clase entera con el doble. */
+  if (cfg.soloAnunciar) {
+    await ctx.route("**" + PAGINA, async (r) => {
+      const resp = await r.fetch();
+      const cuerpo = (await resp.text()).replace('js/burbuja-en-linea.js"', 'js/burbuja-en-linea.js" data-solo-anunciar');
+      r.fulfill({ response: resp, body: cuerpo });
+    });
+  }
   await ctx.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await ctx.route("**/fonts.gstatic.com/**", (r) => r.abort());
   await ctx.route("**/js/supabase-client.js", (r) =>
@@ -236,6 +252,62 @@ async function pruebaProfesor(browser) {
   await r.ctx.close();
 }
 
+async function pruebaAdmin(browser) {
+  console.log("\n=== Quien administra ve a los alumnos de todos ===");
+  const r = await abrir(browser, {
+    yo: "u-admin", perfiles: [ADMIN, PROFE, OTRA_PROFE, ANA, SOFIA], chat: [],
+  });
+  const p = r.page;
+  igual("escucha su canal y el de cada profesor",
+    await p.evaluate(() => Object.keys(window.__canales).sort().join(",")),
+    "academia-en-linea:u-admin,academia-en-linea:u-profe,academia-en-linea:u-profe2");
+
+  const ahora = new Date().toISOString();
+  await p.evaluate((t) => window.__sembrar("academia-en-linea:u-profe", [
+    { id: "u-ana", nombre: "Ana", pagina: "Clase en vivo", desde: t }]), ahora);
+  await p.waitForTimeout(300);
+  /* El error que tenía: cada sync vaciaba la lista y dejaba solo los del
+     último canal que habló. Ana tiene que seguir cuando habla el otro. */
+  await p.evaluate((t) => window.__sembrar("academia-en-linea:u-profe2", [
+    { id: "u-sofia", nombre: "Sofía", pagina: "Mates", desde: t },
+    { id: "u-ana", nombre: "Ana", pagina: "Mates", desde: "2000-01-01T00:00:00Z" }]), ahora);
+  await p.waitForTimeout(400);
+  igual("junta a los alumnos de los dos profesores, sin repetir a nadie",
+    (await p.evaluate(LEER)).etiqueta, "🟢 2 alumnos en línea");
+  await p.click("#burbuja-boton");
+  await p.waitForTimeout(300);
+  igual("de quien sale en dos canales, se pinta el anuncio más reciente",
+    (await p.evaluate(LEER)).filas.filter((f) => f.id === "u-ana").map((f) => /Clase en vivo/.test(f.texto)).join(), "true");
+  await r.ctx.close();
+}
+
+async function pruebaEnClase(browser) {
+  console.log("\n=== En la clase en vivo (data-solo-anunciar) ===");
+  let r = await abrir(browser, {
+    soloAnunciar: true, yo: "u-ana", perfiles: [ANA, PROFE], chat: [],
+    clases: [{ profesor_id: "u-profe", profesor: "Karina Rojas", es_principal: true, clase_abierta: true }],
+  });
+  const canal = "academia-en-linea:u-profe";
+  igual("al alumno no se le pinta nada", (await r.page.evaluate(LEER)).hayBurbuja, "false");
+  igual("se anuncia a su profesor como «Clase en vivo»",
+    await r.page.evaluate((c) => (window.__canales[c].tracks[0] || {}).pagina, canal), "Clase en vivo");
+  /* Mirar y escuchar la clase es estar: ni la pestaña de fondo lo saca. */
+  await r.page.evaluate(() => {
+    Object.defineProperty(document, "visibilityState", { get: () => "hidden", configurable: true });
+    document.dispatchEvent(new Event("visibilitychange"));
+  });
+  await r.page.waitForTimeout(400);
+  igual("con la pestaña de fondo sigue anunciado",
+    await r.page.evaluate((c) => window.__canales[c].untracks, canal), "0");
+  await r.ctx.close();
+
+  r = await abrir(browser, { soloAnunciar: true, yo: "u-profe", perfiles: [PROFE, ANA], chat: [] });
+  igual("a quien da clase tampoco (ya tiene su lista)",
+    [(await r.page.evaluate(LEER)).hayBurbuja, await r.page.evaluate(() => Object.keys(window.__canales).length)].join("|"),
+    "false|0");
+  await r.ctx.close();
+}
+
 async function pruebaAlumna(browser) {
   console.log("\n=== La burbuja de la alumna ===");
   const DOS_PROFES = [
@@ -298,6 +370,8 @@ function pruebaPaginas() {
   const paginas = (lista.match(/"([^"]+\.html)"/g) || []).map((s) => s.slice(1, -1));
   const sin = (((cab.match(/^SIN_BURBUJA = \{([^}]*)\}/m) || [])[1] || "").match(/"([^"]+)"/g) || [])
     .map((s) => s.slice(1, -1));
+  const solo = (((cab.match(/^SOLO_ANUNCIA = \{([^}]*)\}/m) || [])[1] || "").match(/"([^"]+)"/g) || [])
+    .map((s) => s.slice(1, -1));
 
   igual("la lista de páginas de la Academia no está vacía", paginas.length > 40, "true");
   /* Las tres que van sin burbuja, escritas acá para que quitársela a una
@@ -308,12 +382,16 @@ function pruebaPaginas() {
      comprar. */
   igual("las tres exceptuadas están escritas", sin.slice().sort().join(","), "examen.html,sesion.html,tienda.html");
 
+  igual("sesion.html la lleva solo para anunciar", solo.join(","), "sesion.html");
+
   const malas = [], sinScript = [];
   for (const p of paginas) {
     const s = fs.readFileSync(path.join(RAIZ, p), "utf8");
     const m = s.match(/<!-- burbuja: inicio -->([\s\S]*?)<!-- burbuja: fin -->/);
-    if (sin.indexOf(p) >= 0) { if (m) malas.push(p); continue; }
+    const soloAnuncia = solo.indexOf(p) >= 0;
+    if (sin.indexOf(p) >= 0 && !soloAnuncia) { if (m) malas.push(p); continue; }
     if (!m) { sinScript.push(p); continue; }
+    if (soloAnuncia !== /data-solo-anunciar/.test(m[1])) malas.push(p + " (data-solo-anunciar mal puesto)");
     // La ruta relativa tiene que llegar de verdad al archivo: un 404 no avisa.
     const src = (m[1].match(/src="([^"]+)"/) || [])[1] || "";
     const destino = path.resolve(path.dirname(path.join(RAIZ, p)), src);
@@ -355,6 +433,8 @@ async function pruebaNoEnsucia(browser) {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
     await pruebaProfesor(browser);
+    await pruebaAdmin(browser);
+    await pruebaEnClase(browser);
     await pruebaAlumna(browser);
     await pruebaInactividad(browser);
     await pruebaNoEnsucia(browser);

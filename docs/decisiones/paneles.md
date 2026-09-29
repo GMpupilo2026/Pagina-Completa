@@ -861,6 +861,32 @@ sostienen esto:
 - **La página se dice con el `<title>`, no con el `pathname`.** «entreno/4x4.html»
   no le dice nada a quien lo lee; el título ya está escrito para leerse.
 
+### Quien administra escucha el canal de cada profesor
+
+**Pasó**: con una clase entera conectada, la burbuja de quien administra decía
+«0 alumnos en línea». Eran dos causas, y ninguna daba error:
+
+- **Nadie se anuncia en el canal de quien administra**: no es profesor de
+  nadie. Escuchaba solo `academia-en-linea:<su id>`, así que para él siempre
+  había cero. Ahora escucha también el canal de cada profesor (los pide a
+  `profiles` con `role = 'profesor'`, que la RLS le deja ver) y junta a todos.
+  No se abre ningún canal global: son los mismos canales por profesor, y lo
+  que ve ahí ya lo ve en `profiles`. Tope de 90 canales (Realtime deja 100 por
+  cliente); con siete profesores sobra.
+- **La lista se arma con TODOS los canales en cada sync**, no con el que acaba
+  de hablar: antes cada sync la vaciaba y quedaban solo los del último
+  profesor. Un alumno con dos profesores sale una vez, con su anuncio más
+  reciente.
+- **El alumno que está en la clase en vivo no se anunciaba**: `sesion.html`
+  no llevaba el script. Ahora lo lleva con `data-solo-anunciar` (`SOLO_ANUNCIA`
+  en `academia-cabecera.py`): no se pinta nada para nadie, quien da clase no
+  hace nada (ya tiene su lista) y el alumno se anuncia como «Clase en vivo».
+  **Ahí cuenta como conectado aunque no toque nada y con la pestaña de
+  fondo**: mirar y escuchar la clase es estar, la misma regla de
+  `class_presence_log`.
+- `examen.html` y `tienda.html` siguen sin el script: el alumno en un examen
+  no se cuenta.
+
 ### "Conectado" quiere decir lo mismo que en el resto del sitio
 
 Tener la pestaña abierta no es estar. `js/tiempo-plataforma.js` ya decidió qué
@@ -880,7 +906,7 @@ anunciar y al volver la actividad se vuelve a anunciar. Si no, la burbuja diría
 - Escape la cierra **y devuelve el foco al botón**: un panel que se cierra
   dejando el foco en la nada deja perdido a quien usa teclado. El botón lleva
   `aria-expanded` y `aria-controls`, y el contador va en una región viva.
-- **Tres páginas de la Academia se quedan SIN burbuja** (`SIN_BURBUJA` en
+- **Tres páginas de la Academia se quedan SIN burbuja visible** (`SIN_BURBUJA` en
   `academia-cabecera.py`): `sesion.html`, que ya tiene su propia lista de
   conectados en un panel hecho para eso; `examen.html`, donde un panel que se
   despliega es la distracción que el antitrampa viene a evitar; y
