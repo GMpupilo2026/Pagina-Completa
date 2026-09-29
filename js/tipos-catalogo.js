@@ -234,6 +234,28 @@
         { n: 3, titulo: "Blitz", desc: "Cuatro candidatas y 8 segundos.", segundos: 8 },
       ],
     },
+    {
+      id: "errores", emoji: "🪞", nombre: "Tus propios errores", propio: true,
+      pregunta: "¿Qué debiste jugar en tu partida?",
+      entrena: "Aprender de lo que te pasó a ti: los errores de tus propias partidas son los que más se repiten, y los que más enseñan.",
+      como: "Busca errores en tus partidas terminadas (Juegos, retos, torneos de la Academia y la práctica en clase): el motor las revisa en tu computadora o celular y cada jugada donde se cayó la evaluación se vuelve un ejercicio. Encuentra una jugada buena en esa posición; vale cualquiera que el motor dé tan buena como la mejor.",
+      clase: "Cada alumno tiene los suyos: salen de sus partidas. Pídeles que busquen sus errores y que traigan uno a la clase para comentarlo juntos.",
+      niveles: [
+        { n: 1, titulo: "Lo que regalaste", desc: "Estabas bien y con esa jugada quedaste mal." },
+        { n: 2, titulo: "Lo que se te escapó", desc: "Ibas ganando y con esa jugada se te fue la ventaja." },
+      ],
+    },
+    {
+      id: "tablas", emoji: "🤝", nombre: "Salva las tablas",
+      pregunta: "Vas con menos material. ¿Lo puedes aguantar?",
+      entrena: "Defender una posición inferior sin rendirse: buscar el jaque continuo, el ahogado, cambiar lo que sobra, armar una fortaleza. Muchas partidas perdidas se salvan aquí.",
+      como: "Empiezas con menos material, pero el motor dice que se puede aguantar. Juegas contra la máquina a toda su fuerza: lo logras si llegas a tablas (ahogado, repetición, 50 jugadas o material insuficiente) o si aguantas las jugadas del nivel sin que la posición se pierda (sin bajar de −2,5).",
+      clase: "Con «Practicar», cada alumno juega la posición contra el motor. Antes, pregunten qué recursos hay: ¿un jaque continuo? ¿un ahogado? ¿qué conviene cambiar?",
+      niveles: [
+        { n: 1, titulo: "Un peón menos", desc: "Te falta un peón, y la ventaja del rival crece si te descuidas. 10 jugadas.", jugadas: 10 },
+        { n: 2, titulo: "Más de un peón", desc: "Te faltan dos puntos de material o más: hay que buscar los recursos. 12 jugadas.", jugadas: 12 },
+      ],
+    },
   ];
 
   function tipo(id) { return TIPOS.find((t) => t.id === id) || null; }
@@ -241,6 +263,9 @@
     const t = tipo(tipoId);
     return t ? t.niveles.find((x) => x.n === +n) || null : null;
   }
+  /* Los tipos `propio` (Tus propios errores) no tienen banco en
+     entreno/data/tipos.json: sus ejercicios salen de las partidas de cada
+     alumno (js/errores-propios.js). */
   /* La clave de avance de un ejercicio: "tipo:id". */
   function clave(tipoId, itemId) { return tipoId + ":" + itemId; }
 

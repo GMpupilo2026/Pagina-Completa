@@ -25,6 +25,7 @@ const R = require("../js/preparacion-resumen.js");
 const C = require("../js/preparacion-cruce.js");
 const L = require("../js/preparacion-lineas.js");
 const Pos = require("../js/preparacion-posiciones.js");
+const Lb = require("../js/preparacion-libro.js");
 const { Chess } = require("chess.js");
 
 const CHROME = process.env.CHROME_PATH || "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
@@ -669,7 +670,12 @@ window.__fensPedidas = [];
         return b;
       },
       in(col, vals) { filas2 = filas2.filter((r) => vals.map(String).includes(String(r[col]))); return b; },
-      order() { return b; },
+      // Ordena de verdad, como PostgREST (el repaso depende del orden).
+      order(col, o) {
+        const asc = !o || o.ascending !== false;
+        filas2.sort((x, y) => (String(x[col]) < String(y[col]) ? -1 : String(x[col]) > String(y[col]) ? 1 : 0) * (asc ? 1 : -1));
+        return b;
+      },
       range(a, z) { filas2 = filas2.slice(a, z + 1); return b; },
       insert(fila) {
         insertando = [].concat(fila).map((f) => Object.assign({ id: "p-" + (siguiente++), profesor_id: "u-profe", created_at: "2026-09-28T12:00:00Z" }, f));
@@ -746,6 +752,7 @@ const MOTOR_FALSO = `
     postMessage(m) {
       if (m.startsWith("setoption name MultiPV value ")) { motor._multi = parseInt(m.slice(29), 10) || 1; window.__multiPV = motor._multi; return; }
       if (m.startsWith("position fen ")) { motor._fen = m.slice(13); return; }
+      if (m.startsWith("setoption name UCI_")) { (window.__uci = window.__uci || []).push(m.slice(15)); return; }
       if (m.startsWith("go")) {
         const g = new Chess(motor._fen);
         const q = g.get("h4");
@@ -767,7 +774,7 @@ const MOTOR_FALSO = `
   };
   let cola = Promise.resolve();
   window.SharedEngine = {
-    ensureEngine: () => Promise.resolve(motor),
+    ensureEngine: () => { window.__motorArrancado = (window.__motorArrancado || 0) + 1; return Promise.resolve(motor); },
     runTask: (t) => { const r = cola.then(t, t); cola = r.catch(() => null); return r; },
     setMessageHandler: (f) => { manejador = f; },
     discardEngine: () => {},
@@ -1154,10 +1161,182 @@ function pruebaCruce() {
 /* Etapa 4, sin navegador: lo que se le manda al alumno es SOLO el plan de un
    lado y lo que dijo Stockfish de sus jugadas; cada línea del plan sale en su
    propio PGN, que chess.js lee y que llega a donde dice el camino. */
+/* Su libro, para «Juega contra él» (js/preparacion-libro.js y libroDe en el
+   análisis): lo que juega en cada posición donde le toca, por posición y no
+   por orden de jugadas, y encontrado desde una posición de chess.js. */
+function pruebaLibro(r) {
+  console.log("\n=== Su libro, para jugar contra él ===");
+  const g = new Chess();
+  igual("con blancas abre 1.e4 (20) y 1.d4 (12), en ese orden", Lb.jugadas(r.libro.w, g.fen()).map((x) => [x.san, x.n]), [["e4", 20], ["d4", 12]]);
+  igual("en la posición inicial no hay nada suyo con negras (le toca a las blancas)", Lb.jugadas(r.libro.b, g.fen()), []);
+  g.move("e4");
+  igual("con negras, contra 1.e4 juega 1…e5 las 21 veces", Lb.jugadas(r.libro.b, g.fen()).map((x) => [x.san, x.n, x.reparto]), [["e5", 21, 1]]);
+  igual("sorteada con el peso de las veces: 0,5 da 1.e4 y 0,7 da 1.d4", [Lb.elegir(r.libro.w, new Chess().fen(), 0.5).san, Lb.elegir(r.libro.w, new Chess().fen(), 0.7).san], ["e4", "d4"]);
+  cierto("fuera de su libro no inventa nada", Lb.elegir(r.libro.w, new Chess("rnbqkbnr/pppppppp/8/8/8/5N2/PPPPPPPP/RNBQKB1R b KQkq - 1 1").fen()) === null);
+
+  // Por posición: llega igual por otro orden de jugadas.
+  let t = "";
+  for (let i = 0; i < 6; i++) t += partida("Otro " + i, "Pedro", "1-0", "d4 Nf6 2. c4 e6 3. Nc3 Bb4");
+  for (let i = 0; i < 2; i++) t += partida("Otro " + i, "Pedro", "1-0", "c4 e6 2. d4 Nf6 3. Nc3 d5");
+  const rt = A.analizar(A.leerPgn(t), "Pedro");
+  const h = new Chess();
+  ["c4", "e6", "d4", "Nf6", "Nc3"].forEach((x) => h.move(x));
+  igual("por otro orden llega a la misma posición y cuenta las dos", Lb.jugadas(rt.libro.b, h.fen()).map((x) => [x.san, x.n]), [["Bb4", 6], ["d5", 2]]);
+
+  // La clave desde un FEN de chess.js es la misma del árbol, jugada por jugada.
+  let distintas = 0;
+  for (const x of A.leerPgn(pgnDePrueba())) {
+    const c = new Chess();
+    let e = Pos.inicial();
+    for (const san of x.jugadas) {
+      if (!c.move(san, { sloppy: true })) break;
+      e = Pos.aplicar(e, san);
+      if (Lb.claveDeFen(c.fen()) !== Pos.clave(e)) distintas += 1;
+    }
+  }
+  igual("la clave de un FEN de chess.js es la del árbol en todas las jugadas de prueba", distintas, 0);
+  cierto("cada posición va por su huella, de unos 11 caracteres", Object.keys(r.libro.w).every((k) => /^[0-9a-z]{6,12}$/.test(k)));
+
+  const plan = r.conNegras.plan;
+  igual("seguir el plan: 1.e4 e6 2.d4 d5 va entero", Lb.seguirPlan(plan, ["e4", "e6", "d4", "d5"], "b").seguidas, 4);
+  igual("una tuya distinta: te saliste, con lo que decía el plan", Lb.seguirPlan(plan, ["e4", "c5"], "b").desvio, { i: 1, jugada: "c5", plan: "e6" });
+  igual("una suya que el plan no prepara", Lb.seguirPlan(plan, ["c4"], "b").sinPreparar, { i: 0, jugada: "c4" });
+}
+
+/* Lo reciente pesa más en QUÉ juega (ponerPesos): en 2023 contestaba 1.e4
+   con 1…e5 (30 partidas); en 2026, con 1…c5 (12). Contadas igual, e5 es su
+   jugada; con lo reciente pesando más, c5. Cuánto saca y los mínimos, igual. */
+function pruebaReciente() {
+  console.log("\n=== Más peso a lo que juega ahora ===");
+  let t = "";
+  const p = (res, jugadas, fecha) => { t += partida("Otro", "Pedro", res, jugadas).replace('[Date "2025.03.04"]', '[Date "' + fecha + '"]'); };
+  for (let i = 0; i < 30; i++) p(i % 2 ? "1-0" : "0-1", "e4 e5 2. Nf3 Nc6", "2023.0" + (1 + (i % 9)) + ".15");
+  for (let i = 0; i < 12; i++) p("0-1", "e4 c5 2. Nf3 d6", "2026.09." + (10 + i));
+  const partidas = A.leerPgn(t);
+  const con = A.analizar(partidas, "Pedro");
+  const sin = A.analizar(partidas, "Pedro", { reciente: false });
+  const contra = (r) => r.repertorio.negras[0].respuestas.map((x) => [x.san, x.n, Math.round(x.reparto * 100)]);
+  igual("sin peso: contra 1.e4, 1…e5 primero (30 de 42)", contra(sin), [["e5", 30, 71], ["c5", 12, 29]]);
+  igual("con lo reciente pesando más (por defecto): 1…c5 primero, con las partidas enteras", contra(con), [["c5", 12, 80], ["e5", 30, 20]]);
+  igual("cuánto saca no cambia: 1…c5 sigue siendo 12 de 12", [con.repertorio.negras[0].respuestas[0].n, con.repertorio.negras[0].respuestas[0].puntos, con.global.puntos === sin.global.puntos], [12, 1, true]);
+  igual("el resultado dice si se pesó lo reciente", [con.filtros.reciente, sin.filtros.reciente], [true, false]);
+  const g = new Chess(); g.move("e4");
+  igual("su libro sortea con el peso: 1…c5 sale 80 de cada 100", Lb.jugadas(con.libro.b, g.fen()).map((x) => [x.san, x.n, Math.round(x.reparto * 100)]), [["c5", 12, 80], ["e5", 30, 20]]);
+  igual("sin peso, con las partidas", Lb.jugadas(sin.libro.b, g.fen()).map((x) => [x.san, Math.round(x.reparto * 100)]), [["e5", 71], ["c5", 29]]);
+  cierto("con blancas le jugaremos a su 1…c5 (el plan sigue lo que juega ahora)", con.conBlancas.plan[0].hijos[0].san === "c5");
+  cierto("con todas las partidas de la misma fecha, pesar lo reciente no cambia nada", JSON.stringify(A.analizar(A.leerPgn(pgnDePrueba()), "Pedro Perez").repertorio) === JSON.stringify(A.analizar(A.leerPgn(pgnDePrueba()), "Pedro Perez", { reciente: false }).repertorio));
+}
+
+/* El árbol llega a 30 medias jugadas (15 jugadas). Más allá de la 16, lo
+   que vio una sola partida no se abre: el nodo espera a la segunda. Una
+   Española cerrada de 24 medias jugadas, 6 veces; y una que se aparta en la
+   jugada 10 (…Ab7 en vez de …Cbd7). */
+function pruebaArbolHondo() {
+  console.log("\n=== El árbol más hondo: hasta la jugada 15 ===");
+  const LINEA = "e4 e5 Nf3 Nc6 Bb5 a6 Ba4 Nf6 O-O Be7 Re1 b5 Bb3 d6 c3 O-O h3 Nb8 d4 Nbd7 Nbd2 Bb7 Bc2 Re8".split(" ");
+  const OTRA = "e4 e5 Nf3 Nc6 Bb5 a6 Ba4 Nf6 O-O Be7 Re1 b5 Bb3 d6 c3 O-O h3 Nb8 d4 Bb7 Nbd2 Nbd7 Bc2 Re8".split(" ");
+  const pgnDe = (sec) => sec.map((m, i) => (i % 2 ? "" : (i / 2 + 1) + ". ") + m).join(" ").replace(/^1\. /, "");
+  let t = "";
+  for (let i = 0; i < 6; i++) t += partida("Otro " + i, "Pedro", i % 2 ? "1-0" : "0-1", pgnDe(LINEA));
+  t += partida("Otro 9", "Pedro", "1-0", pgnDe(OTRA));
+  const r = A.analizar(A.leerPgn(t), "Pedro");
+  const g = new Chess();
+  LINEA.slice(0, 21).forEach((m) => g.move(m));
+  igual("su libro llega a la jugada 11: después de 11.Cbd2 juega 11…Ab7, las 6 veces", Lb.jugadas(r.libro.b, g.fen()).map((x) => [x.san, x.n]), [["Bb7", 6]]);
+  const h = new Chess();
+  LINEA.slice(0, 19).forEach((m) => h.move(m));
+  igual("y en la jugada 10 sabe que una vez se apartó", Lb.jugadas(r.libro.b, h.fen()).map((x) => [x.san, x.n]), [["Nbd7", 6], ["Bb7", 1]]);
+  const principal = L.lineasDelPlan(r.conBlancas.plan)[0].map((x) => x.san);
+  cierto("el plan con blancas sigue la línea más allá de la jugada 5 (" + principal.length + " medias jugadas)", principal.length >= 16 && principal.join(" ") === LINEA.slice(0, principal.length).join(" "));
+
+  // Por dentro: la que se apartó queda en su nodo, sin abrir; con una segunda, se abre.
+  const I = A.interno;
+  const bajar = (raiz, sec) => sec.reduce((n, m) => n && n.hijos.get(m) && n.hijos.get(m).nodo, raiz);
+  const una = I.armarArbol(A.leerPgn(t).map((x) => Object.assign(x, { color: "b", res: "G" })));
+  const nodo = bajar(una, OTRA.slice(0, 20));
+  igual("la jugada 10…Ab7 que vio una sola partida: está, pero no se abre más allá", [nodo && nodo.c.n, nodo && nodo.hijos.size], [1, 0]);
+  const dos = I.armarArbol(A.leerPgn(t + partida("Otro 10", "Pedro", "1-0", pgnDe(OTRA))).map((x) => Object.assign(x, { color: "b", res: "G" })));
+  igual("con una segunda por el mismo camino se abre, con las dos; y en la jugada 11 se junta con las 6 (la misma posición por otro orden)",
+    [bajar(dos, OTRA.slice(0, 20)).c.n, bajar(dos, OTRA.slice(0, 21)).c.n, bajar(dos, OTRA.slice(0, 22)).c.n], [2, 2, 8]);
+  // Una Berlinesa que vio una sola partida: hasta la media jugada 16 entra entera; después, no.
+  const BERLINESA = "e4 e5 Nf3 Nc6 Bb5 Nf6 O-O Nxe4 Re1 Nd6 Nxe5 Be7 Bf1 Nxe5 Rxe5 O-O d4 Bf6".split(" ");
+  const tres = I.armarArbol(A.leerPgn(t + partida("Otro 11", "Pedro", "1-0", pgnDe(BERLINESA))).map((x) => Object.assign(x, { color: "b", res: "G" })));
+  igual("hasta la jugada 8 entra todo, aunque la vea una sola; después, no se abre", [bajar(tres, BERLINESA.slice(0, 16)).c.n, !!bajar(tres, BERLINESA.slice(0, 17))], [1, false]);
+}
+
+/* Su tipo de posición (js/preparacion-estructuras.js). Pedro, con blancas,
+   en tres aperturas que llegan enteras a la jugada 12 (comprobadas con
+   chess.js): contra la Tarrasch su rival queda con el peón aislado y Pedro
+   saca 25 %; en la Francesa del avance el centro queda cerrado y saca 85 %;
+   en la Española cerrada, ni una cosa ni la otra, 50 %. */
+const ESTRUCTURAS = {
+  tarrasch: "d4 d5 c4 e6 Nc3 c5 cxd5 exd5 Nf3 Nc6 g3 Nf6 Bg2 Be7 O-O O-O Bg5 cxd4 Nxd4 h6 Be3 Re8 Qb3 Na5",
+  francesa: "e4 e6 d4 d5 e5 c5 c3 Nc6 Nf3 Qb6 a3 c4 Nbd2 Bd7 Be2 Nge7 O-O Nf5 Re1 h6 Nf1 g5 h3 Bg7",
+  espanola: "e4 e5 Nf3 Nc6 Bb5 a6 Ba4 Nf6 O-O Be7 Re1 b5 Bb3 d6 c3 O-O h3 Nb8 d4 Nbd7 Nbd2 Bb7 Bc2 Re8",
+};
+function pgnDeEstructuras() {
+  const pgnDe = (sec) => sec.split(" ").map((m, i) => (i % 2 ? "" : (i / 2 + 1) + ". ") + m).join(" ").replace(/^1\. /, "");
+  let t = "";
+  for (let i = 0; i < 20; i++) t += partida("Pedro", "Otro " + i, i < 5 ? "1-0" : "0-1", pgnDe(ESTRUCTURAS.tarrasch));
+  for (let i = 0; i < 20; i++) t += partida("Pedro", "Otro " + i, i < 17 ? "1-0" : "0-1", pgnDe(ESTRUCTURAS.francesa));
+  for (let i = 0; i < 20; i++) t += partida("Pedro", "Otro " + i, i < 10 ? "1-0" : "0-1", pgnDe(ESTRUCTURAS.espanola));
+  return t;
+}
+
+function pruebaEstructuras() {
+  console.log("\n=== Su tipo de posición ===");
+  const E = require("../js/preparacion-estructuras.js");
+  const legales = Object.values(ESTRUCTURAS).every((sec) => { const g = new Chess(); return sec.split(" ").every((m) => g.move(m)) && g.history().length === 24; });
+  cierto("las tres aperturas de prueba son legales y llegan a la jugada 12 (chess.js)", legales);
+  // Cada línea se juega con chess.js: si una jugada no es legal, no hay posición que mirar.
+  const en = (sec, color) => { const g = new Chess(); return sec.split(" ").every((m) => g.move(m)) ? E.rasgos(Pos.desdeFen(g.fen()), color) : "jugada ilegal"; };
+  igual("Tarrasch: el peón aislado es del rival de Pedro", en(ESTRUCTURAS.tarrasch, "w"), ["aislado-rival"]);
+  igual("y si Pedro llevara las negras, sería suyo", en(ESTRUCTURAS.tarrasch, "b"), ["aislado-suyo"]);
+  igual("Francesa del avance: centro cerrado (e5 contra e6)", en(ESTRUCTURAS.francesa, "w"), ["centro-cerrado"]);
+  igual("Española cerrada: e4 contra e5 no cierra nada", en(ESTRUCTURAS.espanola, "w"), []);
+  igual("una Escocesa con las damas cambiadas y enroques opuestos: centro abierto, enroques opuestos y sin damas", en("e4 e5 Nf3 Nc6 d4 exd4 Nxd4 Nxd4 Qxd4 Qf6 Qxf6 Nxf6 Nc3 Bb4 Bd2 O-O O-O-O Re8 f3 d5 exd5 Bxc3 Bxc3 Nxd5", "w"), ["centro-abierto", "enroques-opuestos", "sin-damas"]);
+
+  const r = A.analizar(A.leerPgn(pgnDeEstructuras()), "Pedro");
+  const e = r.estructuras;
+  igual("se miran las 60 en la jugada 12", [e.momento, e.total], [12, 60]);
+  igual("con el peón aislado de su rival rinde menos; con el centro cerrado, más",
+    e.rasgos.map((x) => [x.clave, x.n, Math.round(x.puntos * 100), x.veredicto]), [["aislado-rival", 20, 25, -1], ["centro-cerrado", 20, 85, 1]]);
+  cierto("contra lo esperable para él con blancas (" + A.pct(e.rasgos[0].esperado) + ")", Math.abs(e.rasgos[0].esperado - r.porColor.w.puntos) < 1e-9);
+  const g = R.armar(r).general;
+  igual("el resumen dice qué buscar y qué evitar", [g.haz.filter((x) => x.estructura).map((x) => x.texto), g.evita.filter((x) => x.estructura).map((x) => x.texto)],
+    [["Busca quedarte con el peón aislado."], ["Evita cerrar el centro."]]);
+  igual("con el dato", g.haz.find((x) => x.estructura).porque, "En la jugada 12 le pasa en el 33 % de sus partidas; ahí él saca 25,0 % (le va mal) en 20 partidas (lo esperable para él, 53,3 %).");
+  // Con pocas partidas no se juzga, aunque la diferencia sea enorme: 6 Tarrasch
+  // perdidas y 6 Españolas ganadas (0 % contra 50 %) no llegan a las 8.
+  const pgnDe = (sec) => sec.split(" ").map((m, i) => (i % 2 ? "" : (i / 2 + 1) + ". ") + m).join(" ").replace(/^1\. /, "");
+  let seis = "";
+  for (let i = 0; i < 6; i++) seis += partida("Pedro", "Otro " + i, "0-1", pgnDe(ESTRUCTURAS.tarrasch)) + partida("Pedro", "Otro " + i, "1-0", pgnDe(ESTRUCTURAS.espanola));
+  const pocas = A.analizar(A.leerPgn(seis), "Pedro").estructuras.rasgos;
+  igual("con 6 partidas no se dice nada, aunque saque 0 % (hacen falta " + 8 + ")", pocas.map((x) => [x.clave, x.n, x.puntos, x.veredicto]), [["aislado-rival", 6, 0, 0]]);
+  cierto("una partida que no llega a la jugada 12 no cuenta", A.analizar(A.leerPgn(partida("Pedro", "X", "1-0", "e4 e5 2. Nf3 Nc6")), "Pedro").estructuras === null);
+  return r;
+}
+
+/* La tarjeta en la página: cada tipo con su veredicto escrito. */
+async function pruebaEstructurasEnLaPagina(browser, r) {
+  console.log("\n=== Su tipo de posición, en la página ===");
+  const { page, ctx, errores } = await abrir(browser, true, [{ id: "p-e", profesor_id: "u-profe", rival: "Pedro", partidas: r.total, created_at: "2026-09-29T01:00:00Z", analisis: JSON.parse(JSON.stringify(r)) }]);
+  await page.click('#guardados button[aria-label="Abrir el análisis de Pedro"]');
+  await page.waitForFunction(() => document.getElementById("titulo-resultado").textContent === "Pedro", null, { timeout: 10000 });
+  cierto("está la tarjeta, después de la táctica", await page.evaluate(() => { const hs = [...document.querySelectorAll("#resultado-cuerpo h3")].map((h) => h.textContent); return hs.indexOf("Su tipo de posición") === hs.indexOf("Su táctica: con qué gana y con qué pierde") + 1; }));
+  igual("cada tipo con su veredicto, escrito", await page.evaluate(() => [...document.querySelectorAll("[data-estructura] p:first-child")].map((p) => p.textContent)),
+    ["Su rival con el peón aislado. Ahí rinde menos: búscalo.", "Centro cerrado. Ahí rinde más: evítalo."]);
+  igual("y el dato", await page.textContent("[data-estructura='aislado-rival'] p:nth-child(2)"), "Le pasa en el 33 % de sus partidas (20); ahí saca 25,0 %, y lo esperable para él es 53,3 %.");
+  cierto("arriba, en qué hacer, sale «Busca quedarte con el peón aislado.»", await page.evaluate(() => document.querySelector("[aria-labelledby='resumen-titulo']").textContent.includes("Busca quedarte con el peón aislado.")));
+  igual("sin errores", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+}
+
 function pruebaPlanDelAlumno(r) {
   console.log("\n=== Etapa 4: lo que se le manda al alumno ===");
   const p = L.planDelAlumno(r, "conNegras");
-  igual("solo el plan y el motor, nada más del análisis", Object.keys(p).sort(), ["motor", "plan"]);
+  igual("el plan, el motor, su libro con ese color, su Elo y si pesa lo reciente: nada más del análisis", Object.keys(p).sort(), ["elo", "libro", "motor", "plan", "reciente"]);
+  cierto("el libro es el de él con blancas (con negras juegas tú)", p.libro === r.libro.w && p.elo === r.elo.reciente);
   const texto = JSON.stringify(p);
   cierto("sin el FODA, el repertorio ni el otro lado", !/foda|repertorio|conBlancas|fortalezas|primeras|contra/i.test(texto));
   const clavesDelPlan = new Set();
@@ -1214,7 +1393,7 @@ async function pruebaEtapa4(browser) {
   await page.waitForFunction(() => window.__mandados.length === 1, null, { timeout: 5000 });
   const mandado = await page.evaluate(() => window.__mandados[0]);
   igual("una sola llamada, con el alumno, el lado y la nota", [mandado.p_alumnos, mandado.p_lado, mandado.p_rival, mandado.p_nota], [["a-2"], "conBlancas", "Pedro Perez", "Mira bien la 3."]);
-  igual("lo que viaja es solo el plan", Object.keys(mandado.p_plan).sort(), ["motor", "plan"]);
+  igual("lo que viaja es el plan, con su libro y su Elo para «Juega contra él»", Object.keys(mandado.p_plan).sort(), ["elo", "libro", "motor", "plan", "reciente"]);
   cierto("sin nada del análisis", !/foda|repertorio|conNegras|primeras|masAlla/i.test(JSON.stringify(mandado.p_plan)));
   igual("y dice que se mandó", await page.textContent("#mandar-estado"), "Plan mandado a 1 alumno, con su tarea.");
   await page.click("#mandar-cerrar");
@@ -1252,8 +1431,8 @@ async function pruebaEtapa4(browser) {
   igual("se ve el plan con su título, la fecha y la nota del profe", await al.page.evaluate(() => [SE_VE("app"), document.getElementById("titulo").textContent,
     document.getElementById("subtitulo").textContent, document.getElementById("nota").textContent]),
     [true, "Tu plan contra Pedro Perez", "Con blancas · te lo mandaron el 28 de septiembre de 2026.", "Mira bien la 3."]);
-  cierto("sin nada del análisis: ni FODA, ni repertorio, ni Stockfish en vivo", await al.page.evaluate(() =>
-    !/Fortalezas|Debilidades|Su repertorio|Más allá de la apertura/.test(document.body.textContent) && !window.SharedEngine));
+  cierto("sin nada del análisis: ni FODA, ni repertorio, ni Stockfish arrancado", await al.page.evaluate(() =>
+    !/Fortalezas|Debilidades|Su repertorio|Más allá de la apertura/.test(document.body.textContent) && !window.__motorArrancado));
   igual("el tablero arranca en la línea principal, en la salida", await al.page.evaluate(() =>
     [document.querySelector("#visor .visor-titulo").textContent, document.querySelector("#visor .sr-only[role='status']").textContent]), ["La línea principal", "Posición de salida."]);
   await al.page.click("#plan button[aria-label='1…e5, ver en el tablero']");
@@ -1458,6 +1637,7 @@ async function pruebaEtapa7(browser) {
     const i = window.__insertados.filter((x) => x.tabla === "training_progress")[0];
     return [document.getElementById("entrenador-resultado").textContent, i.activity, i.detail.linea_id, i.detail.limpio, i.detail.theme || null];
   }), ["Te salió con 1 error y 0 pistas: vuelve a jugarla hasta que te salga limpia.", "preparacion", "plan-7:e4 e5 Nf3", false, null]);
+  igual("y guarda en qué jugada de la línea se equivocó (la 1.e4, índice 0)", await page.evaluate(() => window.__insertados.filter((x) => x.tabla === "training_progress")[0].detail.fallos), [0]);
   igual("y todavía no cuenta", await page.textContent("#entrenar-progreso"), "Te salen sin errores 0 de 2 líneas.");
 
   // Otra vez, limpia.
@@ -1512,6 +1692,52 @@ async function pruebaEtapa7(browser) {
   await p.ctx.close();
 }
 
+/* Repasar las líneas del plan: la repetición espaciada de Aperturas
+   (js/repaso-espaciado.js), armada con los intentos que ya están en
+   training_progress, en hora de Costa Rica. Las fechas van relativas a hoy. */
+function pruebaRepasoEspaciado() {
+  console.log("\n=== Repasar las líneas: la repetición espaciada, desde lo que ya pasó ===");
+  const RE = require("../js/repaso-espaciado.js");
+  const e = RE.desdeHistoria([
+    { id: "a", nota: "bien", dia: "2026-09-01" }, { id: "a", nota: "bien", dia: "2026-09-02" },
+    { id: "b", nota: "bien", dia: "2026-09-01" }, { id: "b", nota: "mal", dia: "2026-09-03" },
+    { id: "c", nota: "regular", dia: "2026-09-03" },
+  ]);
+  igual("dos bien seguidas: al día siguiente y después a los 3 días", [e.a.vence, e.a.intervalo], ["2026-09-05", 3]);
+  igual("una mal: vuelve el mismo día y empieza de cero", [e.b.vence, e.b.repasos], ["2026-09-03", 0]);
+  igual("con pistas: al día siguiente", e.c.vence, "2026-09-04");
+  igual("para el 4: la fallada y la de pistas, primero la más atrasada", RE.pendientes(["a", "b", "c"], e, "2026-09-04"), ["b", "c"]);
+}
+
+async function pruebaRepasoEnLaPagina(browser) {
+  console.log("\n=== Repasar las líneas, en la página del alumno ===");
+  const dia = (n) => { const d = new Date(Date.now() + n * 86400000); return d.toLocaleDateString("en-CA", { timeZone: "America/Costa_Rica" }); };
+  const a = (n) => dia(n) + "T18:00:00Z";
+  const fila = { id: "plan-r", profesor_id: "p-x", alumno_id: "u-profe", rival: "Pedro Perez", lado: "conBlancas", plan: PLAN_CHICO, nota: null, created_at: "2026-09-28T12:00:00Z" };
+  const fila2 = (linea, limpio, cuando, fallos) => ({ id: "t-" + linea + cuando, student_id: "u-profe", activity: "preparacion", created_at: cuando,
+    detail: Object.assign({ linea_id: "plan-r:" + linea, plan: "plan-r", limpio, errores: limpio ? 0 : 1, pistas: 0, fallos }, limpio ? { theme: "plan-r" } : {}) });
+  // «e4 e5 Nf3»: limpia antier y ayer → vuelve pasado mañana. «e4 c5»: ayer con un error en 1.e4 → toca hoy.
+  // Van desordenadas a propósito: la página las pide en orden.
+  const intentos = [fila2("e4 c5", false, a(-1), [0]), fila2("e4 e5 Nf3", true, a(-1), []), fila2("e4 e5 Nf3", true, a(-2), [])];
+  const { page, ctx, errores } = await abrir(browser, false, [], false, { planes_rival_alumno: [fila], training_progress: intentos }, "plan-rival.html?id=plan-r");
+  const fecha = new Date(dia(2) + "T12:00:00Z").toLocaleDateString("es-CR", { timeZone: "UTC", day: "numeric", month: "long" });
+  igual("cuántas tocan hoy, y el botón para repasarlas", await page.evaluate(() => [document.getElementById("entrenar-repaso").textContent, SE_VE("entrenar-repasar"), document.getElementById("entrenar-repasar").textContent]),
+    ["Para repasar hoy: 1 línea.", true, "Repasar las de hoy (1)"]);
+  igual("cada línea dice cuándo le toca", await page.evaluate(() => [...document.querySelectorAll("#entrenar-lineas [data-estado]")].map((x) => x.textContent)),
+    ["✔ Ya te sale sin errores · Próximo repaso: " + fecha + ".", "Todavía no te sale sin errores · Toca repasarla hoy."]);
+  igual("y dónde se equivocó la última vez", await page.evaluate(() => [...document.querySelectorAll("#entrenar-lineas [data-fallos]")].map((x) => x.textContent)), ["La última vez fallaste en 1.e4."]);
+  await page.click("#entrenar-repasar");
+  await page.waitForFunction(() => document.getElementById("entrenador-caja").checkVisibility(), null, { timeout: 5000 });
+  igual("«Repasar las de hoy» abre la que toca", await page.textContent("#entrenador .visor-titulo"), "Línea 2 de 2");
+  await page.click("#entrenador [data-square='e2']"); await page.click("#entrenador [data-square='e4']");
+  await page.waitForFunction(() => window.__insertados.some((i) => i.tabla === "training_progress"), null, { timeout: 5000 });
+  await page.waitForFunction(() => /Hoy no te toca/.test(document.getElementById("entrenar-repaso").textContent), null, { timeout: 5000 });
+  igual("limpia hoy: ya no toca, vuelve mañana, y el botón se va", await page.evaluate(() => [SE_VE("entrenar-repasar"), document.querySelectorAll("#entrenar-lineas [data-estado]")[1].textContent, document.querySelectorAll("#entrenar-lineas [data-fallos]").length]),
+    [false, "✔ Ya te sale sin errores · Próximo repaso: " + new Date(dia(1) + "T12:00:00Z").toLocaleDateString("es-CR", { timeZone: "UTC", day: "numeric", month: "long" }) + ".", 0]);
+  igual("sin errores", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+}
+
 // Las partidas «de Lichess»: las mismas de prueba, con el rival como usuario.
 function pgnDeUsuario(usuario) {
   return pgnDePrueba().replace(/Pérez, Pedro|Pedro Perez|Pedro Pérez|PEDRO PÉREZ/g, usuario);
@@ -1533,6 +1759,16 @@ async function servirSitios(ctx, pedidos) {
   await ctx.route("https://api.chess.com/pub/player/**", (r) => {
     const url = r.request().url();
     pedidos.push(url);
+    // Otras cuentas del mismo rival: pedro_cc (5 partidas suyas) y nadie2 (no existe).
+    if (/\/player\/nadie2\//.test(url)) return r.fulfill({ status: 404, headers: cors, body: "" });
+    if (/\/player\/pedro_cc\/games\/archives$/.test(url)) {
+      return r.fulfill({ status: 200, headers: Object.assign({ "Content-Type": "application/json" }, cors), body: JSON.stringify({ archives: ["https://api.chess.com/pub/player/pedro_cc/games/2026/09"] }) });
+    }
+    if (/\/player\/pedro_cc\//.test(url)) {
+      let t = "";
+      for (let i = 0; i < 5; i++) t += partida("pedro_cc", "Otro " + i, "1-0", "Nf3 d5 2. g3 Nf6");
+      return r.fulfill({ status: 200, headers: Object.assign({ "Content-Type": "application/x-chess-pgn" }, cors), body: t });
+    }
     if (/\/games\/archives$/.test(url)) {
       return r.fulfill({ status: 200, headers: Object.assign({ "Content-Type": "application/json" }, cors),
         body: JSON.stringify({ archives: ["https://api.chess.com/pub/player/pedrop/games/2026/08", "https://api.chess.com/pub/player/pedrop/games/2026/09"] }) });
@@ -1598,6 +1834,35 @@ async function pruebaDescarga(browser) {
     return window.PreparacionDescarga.contarPartidas(t);
   });
   igual("con tope 10: diez partidas y sin pedir agosto", [bajadas, pedidos.length], [10, 2]);
+
+  // Varias cuentas: la de Lichess y dos más en Chess.com, una que no existe.
+  pedidos.length = 0;
+  await page.check("#bajar-lichess");
+  await page.fill("#bajar-usuario", "PedroP");
+  await page.selectOption("#bajar-maximo", "500");
+  await page.check("#bajar-otra-chesscom");
+  await page.fill("#bajar-otras", "no vale!");
+  await page.click("#bajar");
+  cierto("una cuenta de más inválida se explica y no se pide nada", /«no» no es un usuario válido|«vale!» no es un usuario válido/.test(await page.textContent("#bajar-estado")) && pedidos.length === 0);
+  await page.fill("#bajar-otras", "@pedro_cc, nadie2, PEDRO_CC");
+  await page.evaluate(() => { document.getElementById("motor-estado").textContent = ""; document.getElementById("titulo-resultado").textContent = ""; });
+  await page.click("#bajar");
+  await page.waitForFunction(() => /Listo/.test(document.getElementById("motor-estado").textContent), null, { timeout: 30000 });
+  igual("se bajan una tras otra: Lichess y después cada cuenta de Chess.com (sin repetir la misma con otras mayúsculas)",
+    pedidos.map((u) => u.replace("https://api.chess.com/pub/player/", "cc:").replace(/^https:\/\/lichess\.org\/api\/games\/user\/([^?]+).*$/, "li:$1")),
+    ["li:PedroP", "cc:pedro_cc/games/archives", "cc:pedro_cc/games/2026/09/pgn", "cc:nadie2/games/archives"]);
+  igual("todas son del mismo rival, con el nombre de la de arriba: 73 + 5 partidas",
+    [await page.textContent("#titulo-resultado"), (await page.textContent("#resultado-sub")).split(" ")[0], await page.evaluate(() => [...document.getElementById("rival").options].filter((o) => /pedro/i.test(o.value)).length)], ["PedroP", "78", 1]);
+  cierto("la que no existe se dice, y se siguió con las demás (" + await page.textContent("#bajar-estado") + ")", /De «nadie2» en Chess\.com: No existe el usuario «nadie2» en Chess\.com\./.test(await page.textContent("#bajar-estado")));
+  const errores404b = errores.filter((e) => /status of 404/.test(e));
+  errores.splice(0, errores.length, ...errores.filter((e) => !errores404b.includes(e)));
+
+  // Más peso a lo reciente: marcado por defecto; desmarcarlo vuelve a analizar sin peso.
+  igual("«Más peso a lo que juega ahora» viene marcado", await page.evaluate(() => document.getElementById("filtro-reciente").checked), true);
+  await page.evaluate(() => { document.getElementById("motor-estado").textContent = ""; });
+  await page.uncheck("#filtro-reciente");
+  await page.waitForFunction(() => /Listo/.test(document.getElementById("motor-estado").textContent), null, { timeout: 30000 });
+  igual("desmarcado, vuelve a analizar sin peso y lo recuerda", await page.evaluate(() => document.getElementById("filtro-reciente").checked), false);
 
   igual("sin errores en consola ni diálogos del navegador", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
@@ -1812,6 +2077,81 @@ async function pruebaCertezaEnLaPagina(browser, r) {
   await ctx.close();
 }
 
+/* «Juega contra él» en las dos páginas, con el Stockfish de mentira (juega la
+   primera jugada legal y anota las opciones UCI_). El azar se fija en 0: en
+   cada posición sale su jugada más jugada. */
+async function pruebaSparring(browser, r) {
+  console.log("\n=== Juega contra él ===");
+  const guardado = { id: "p-s", profesor_id: "u-profe", rival: r.rival, partidas: r.total, created_at: "2026-09-29T01:00:00Z", analisis: JSON.parse(JSON.stringify(r)) };
+  const viejo = Object.assign({}, guardado, { id: "p-v", rival: "Viejo", analisis: Object.assign(JSON.parse(JSON.stringify(r)), { rival: "Viejo", libro: undefined }) });
+  const { page, ctx, errores } = await abrir(browser, true, [guardado, viejo]);
+  await page.evaluate(() => { Math.random = () => 0; });
+  await page.click('#guardados button[aria-label="Abrir el análisis de ' + r.rival + '"]');
+  await page.waitForFunction((n) => document.getElementById("titulo-resultado").textContent === n, r.rival, { timeout: 10000 });
+  const nota = () => page.textContent("#sparring .visor-nota");
+  const turno = () => page.textContent("#sparring .entrenador-turno");
+  const tocar = async (a, b) => { await page.click("#sparring [data-square='" + a + "']"); await page.click("#sparring [data-square='" + b + "']"); };
+  const esperarTurno = () => page.waitForFunction(() => /^Te toca/.test(document.querySelector("#sparring .entrenador-turno").textContent), null, { timeout: 8000 });
+
+  cierto("cada plan trae su «Jugar contra él»", await page.evaluate(() => !!document.querySelector("[data-jugar='conBlancas']") && !!document.querySelector("[data-jugar='conNegras']")));
+  await page.click("[data-jugar='conNegras']");
+  await page.waitForFunction(() => SE_VE("sparring-caja"), null, { timeout: 5000 });
+  await esperarTurno();
+  igual("con negras abre él, con su jugada más jugada, y dice cuánto la juega", await nota(), "El rival: El peón blanco va de eva 2 a eva 4. Últimamente la juega 63 % de las veces en esta posición (20 partidas).");
+  igual("y el tablero se ve desde las negras", await page.evaluate(() => document.querySelector("#sparring .visor-tablero button").dataset.square), "h1");
+  await tocar("e7", "e6");
+  igual("tu jugada, contra el plan", await nota(), "Es la del plan.");
+  await esperarTurno();
+  cierto("él sigue con lo suyo (" + await nota() + ")", /Últimamente la juega 100 % de las veces en esta posición \(20 partidas\)\.$/.test(await nota()));
+  await tocar("d7", "d5");
+  await esperarTurno();
+  cierto("en 3.Cc3 reparte: 25 % (" + await nota() + ")", /^El rival: El caballo blanco va de bella 1 a cesar 3\. Últimamente la juega 25 % de las veces/.test(await nota()));
+  cierto("hasta acá, el motor no se pidió", await page.evaluate(() => !window.__uci && !window.__motorArrancado));
+  await tocar("f8", "b4");
+  await page.waitForFunction(() => /^El rival/.test(document.querySelector("#sparring .visor-nota").textContent), null, { timeout: 8000 });
+  const saleDelLibro = await nota();
+  cierto("fuera de su libro juega Stockfish y lo dice (" + saleDelLibro + ")", /Aquí se acaba lo que él juega en sus partidas: desde ahora juega Stockfish a su nivel \(Elo 20[01]0\)\.$/.test(saleDelLibro));
+  cierto("con la fuerza limitada a su Elo, y el motor vuelve a toda su fuerza (" + await page.evaluate(() => (window.__uci || []).join(" | ")) + ")",
+    await page.evaluate(() => /^UCI_LimitStrength value true \| UCI_Elo value 20[01]0 \| UCI_LimitStrength value false$/.test((window.__uci || []).join(" | "))));
+  await esperarTurno();
+  await page.click("#sparring button:has-text('Terminar la partida')");
+  const resumen = await page.evaluate(() => [...document.querySelectorAll("[data-sparring-resumen] li")].map((li) => li.textContent));
+  igual("al terminar: dónde te saliste del plan y dónde se salió él", resumen, [
+    "Te saliste del plan en 3…Ab4: el plan decía 3…Cf6.",
+    "3 jugadas suyas salieron de sus partidas; desde " + (await page.evaluate(() => { const h = document.querySelector("#sparring .visor-escrita").textContent.split(" "); return h[h.length - 1]; })) + " jugó Stockfish a su nivel.",
+  ]);
+  igual("la partida terminada lo dice", await turno(), "Partida terminada.");
+  await page.click("#sparring-cerrar");
+  igual("cerrar la devuelve al botón que la abrió", await page.evaluate(() => [SE_VE("sparring-caja"), document.activeElement.dataset.jugar]), [false, "conNegras"]);
+
+  // Un análisis guardado antes de esto no trae el libro: se dice.
+  await page.click('#guardados button[aria-label="Abrir el análisis de Viejo"]');
+  await page.waitForFunction(() => document.getElementById("titulo-resultado").textContent === "Viejo", null, { timeout: 10000 });
+  await page.click("[data-jugar='conBlancas']");
+  cierto("un análisis sin libro lo dice, en vez de jugar", await page.evaluate(() => !SE_VE("sparring-caja") && window.__avisos.some((t) => /no trae lo que él juega en cada posición/.test(t))));
+  igual("sin errores", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+
+  // El alumno: el libro viaja en su plan. Sin salir del libro no se baja el motor.
+  const plan = L.planDelAlumno(r, "conBlancas");
+  const fila = { id: "plan-s", profesor_id: "p-x", alumno_id: "u-profe", rival: r.rival, lado: "conBlancas", plan, nota: null, created_at: "2026-09-29T12:00:00Z" };
+  const sinLibro = Object.assign({}, fila, { id: "plan-v", plan: { plan: plan.plan, motor: null } });
+  const a = await abrir(browser, false, [], false, { planes_rival_alumno: [fila, sinLibro], training_progress: [] }, "plan-rival.html?id=plan-s");
+  cierto("en la página del alumno está «Juega contra él»", await a.page.evaluate(() => SE_VE("sparring-caja")));
+  await a.page.click("#sparring-empezar");
+  cierto("empezada la partida, otra se empieza desde el tablero (el botón de arriba se va)", await a.page.evaluate(() => !SE_VE("sparring-empezar")));
+  await a.page.waitForFunction(() => /^Te toca/.test((document.querySelector("#sparring .entrenador-turno") || {}).textContent || ""), null, { timeout: 5000 });
+  await a.page.click("#sparring [data-square='e2']"); await a.page.click("#sparring [data-square='e4']");
+  await a.page.waitForFunction(() => /^El rival/.test(document.querySelector("#sparring .visor-nota").textContent), null, { timeout: 8000 });
+  igual("contra 1.e4 contesta lo suyo, con cuánto lo juega", await a.page.textContent("#sparring .visor-nota"), "El rival: El peón negro va de eva 7 a eva 5. Últimamente la juega 100 % de las veces en esta posición (21 partidas).");
+  igual("sin salir de su libro, ni el motor ni nada guardado", await a.page.evaluate(() => [!!window.__motorArrancado, (window.__insertados || []).filter((i) => i.tabla === "training_progress").length]), [false, 0]);
+  igual("sin errores en la página del alumno", a.errores.join(" | ") || "ninguno", "ninguno");
+  await a.ctx.close();
+  const v = await abrir(browser, false, [], false, { planes_rival_alumno: [sinLibro], training_progress: [] }, "plan-rival.html?id=plan-v");
+  cierto("un plan mandado antes, sin libro, no muestra la sección", await v.page.evaluate(() => !SE_VE("sparring-caja")));
+  await v.ctx.close();
+}
+
 async function pruebaMotorDeVerdad(browser) {
   console.log("\n=== Stockfish 19 lite, corriendo en la página ===");
   const ctx = await browser.newContext({ serviceWorkers: "block" });
@@ -1840,8 +2180,32 @@ async function pruebaMotorDeVerdad(browser) {
   igual("la página carga el motor 19 lite", String(r.url).replace(/^.*\/js\//, "js/"), "js/vendor/stockfish/stockfish-19-lite-single.js");
   igual("y el motor se presenta como Stockfish 19", r.nombre, "id name Stockfish 19 Lite WASM");
   cierto("y contesta una jugada legal (" + r.mejor + ")", !!A.fenDe([]) && /^[a-h][1-8][a-h][1-8][qrbn]?$/.test(String(r.mejor)));
+  // «Juega contra él» fuera del libro: la fuerza limitada (UCI_Elo desde 1320).
+  const conFuerza = await page.evaluate(async () => {
+    const fen = "r1bqkbnr/pp1ppppp/2n5/8/3Q4/2N5/PPP1PPPP/R1B1KBNR w KQkq - 1 4";
+    const san = await PreparacionSparring.jugadaDelMotor(fen, 1320);
+    return { san, legal: !!(san && new Chess(fen).move(san)) };
+  });
+  cierto("a 1320 de Elo, Stockfish 19 contesta una jugada legal (" + conFuerza.san + ")", conFuerza.legal);
   igual("sin errores en la página", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
+
+  // En la página del alumno va el Stockfish de siempre (16), no el 19 lite.
+  const ctx2 = await browser.newContext({ serviceWorkers: "block" });
+  await ctx2.route("**/fonts.gstatic.com/**", (x) => x.abort());
+  await ctx2.route("**/js/supabase-client.js", (x) => x.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso(false, [], { planes_rival_alumno: [], training_progress: [] }) }));
+  const p2 = await ctx2.newPage();
+  const errores2 = [];
+  p2.on("pageerror", (e) => errores2.push(String(e)));
+  await p2.goto(BASE + "/plan-rival.html", { waitUntil: "networkidle" });
+  const alumno = await p2.evaluate(async () => {
+    const fen = "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2";
+    const san = await PreparacionSparring.jugadaDelMotor(fen, 1500);
+    return { url: SharedEngine.URL, san, legal: !!(san && new Chess(fen).move(san)) };
+  });
+  cierto("en la página del alumno, el Stockfish de siempre a 1500 contesta una jugada legal (" + alumno.san + ", " + String(alumno.url).replace(/^.*\/js\//, "js/") + ")", alumno.legal && !/19-lite/.test(alumno.url));
+  igual("sin errores en la página del alumno", errores2.join(" | ") || "ninguno", "ninguno");
+  await ctx2.close();
 }
 
 (async () => {
@@ -1852,6 +2216,11 @@ async function pruebaMotorDeVerdad(browser) {
   pruebaFiltros();
   pruebaPgnDelPlan(conMotor);
   pruebaPlanDelAlumno(conMotor);
+  pruebaLibro(conMotor);
+  pruebaRepasoEspaciado();
+  pruebaReciente();
+  pruebaArbolHondo();
+  const conEstructuras = pruebaEstructuras();
   const libro = pruebaTeoria();
   pruebaCruce();
   pruebaTiposDeFinal();
@@ -1876,11 +2245,14 @@ async function pruebaMotorDeVerdad(browser) {
     await pruebaEtapa5(browser, libro);
     await pruebaEtapa6(browser);
     await pruebaEtapa7(browser);
+    await pruebaRepasoEnLaPagina(browser);
     await pruebaDerrotasEnLaPagina(browser, conDerrotas);
     await pruebaTacticaEnLaPagina(browser, conTactica);
     await pruebaRitmoEHojaEnLaPagina(browser);
     await pruebaAFondo(browser);
     await pruebaCertezaEnLaPagina(browser, conCerteza);
+    await pruebaSparring(browser, conMotor);
+    await pruebaEstructurasEnLaPagina(browser, conEstructuras);
     await pruebaMotorDeVerdad(browser);
     await pruebaTacticaConMotorDeVerdad(browser);
   } finally {

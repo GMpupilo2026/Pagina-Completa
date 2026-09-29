@@ -93,6 +93,7 @@
     if (r.teoria) c.appendChild(pintarTeoria(r));
     c.appendChild(pintarFoda(r));
     if (r.tactica && window.PreparacionTactica) c.appendChild(pintarTactica(r));
+    if (r.estructuras) c.appendChild(pintarEstructuras(r));
     if (r.masAlla) c.appendChild(pintarMasAlla(r));
     c.appendChild(pintarRepertorio(r));
     c.appendChild(pintarLineas(r));
@@ -339,6 +340,30 @@
   /* Su táctica (js/preparacion-tactica.js): con qué gana y con qué pierde,
      tema por tema, con cuántas partidas, ejemplos para ver en el tablero (en
      la jugada del patrón) y a qué practicar. */
+  /* Su tipo de posición: cada rasgo en la jugada 12, cuánto aparece y cuánto
+     saca ahí contra lo esperable para él. El veredicto va escrito; el borde de
+     color lo acompaña (verde: bueno para ti, rojo: malo para ti). */
+  function pintarEstructuras(r) {
+    const e = r.estructuras;
+    const s = tarjeta("Su tipo de posición", "estructuras-titulo");
+    s.appendChild(nota("Cómo está la posición en la jugada " + e.momento + " de sus partidas (" + e.total.toLocaleString("es-CR") +
+      " que llegaron ahí), y cuánto saca en cada tipo comparado con lo esperable para él con ese color."));
+    if (!e.rasgos.length) { s.appendChild(nota("Ninguno de estos tipos de posición aparece en sus partidas.")); return s; }
+    const ul = el("ul", "space-y-2");
+    e.rasgos.forEach((x) => {
+      const pocas = x.n < e.minimo;
+      const veredicto = pocas ? "Pocas partidas para decir algo" : x.veredicto === -1 ? "Ahí rinde menos: búscalo" : x.veredicto === 1 ? "Ahí rinde más: evítalo" : "Rinde como siempre";
+      const borde = pocas || !x.veredicto ? "border-brand-300 dark:border-brand-600" : x.veredicto === -1 ? "border-green-600 dark:border-green-400" : "border-red-600 dark:border-red-400";
+      const li = el("li", "border-l-4 " + borde + " pl-3 py-1");
+      li.dataset.estructura = x.clave;
+      li.appendChild(el("p", "text-sm font-semibold text-brand-800 dark:text-white", x.nombre + ". " + veredicto + "."));
+      li.appendChild(el("p", "text-sm text-brand-600 dark:text-brand-200", "Le pasa en el " + Math.round(x.parte * 100) + " % de sus partidas (" + x.n + "); ahí saca " + A.pct(x.puntos) + ", y lo esperable para él es " + A.pct(x.esperado) + "."));
+      ul.appendChild(li);
+    });
+    s.appendChild(ul);
+    return s;
+  }
+
   function pintarTactica(r) {
     const t = r.tactica, T = window.PreparacionTactica;
     const s = tarjeta("Su táctica: con qué gana y con qué pierde", "tactica-titulo");
@@ -1025,6 +1050,7 @@
   function accionesPlan(lado, nombre) {
     const o = opcionesActuales;
     const fila = el("div", "mt-4 flex flex-wrap gap-2");
+    if (o.alJugar) fila.appendChild(botonPlan("Jugar contra él " + nombre, ["jugar", lado], (b) => o.alJugar(lado, b)));
     if (o.alBajarPgn) fila.appendChild(botonPlan("Bajar el plan " + nombre + " (PGN)", ["pgn", lado], () => o.alBajarPgn(lado)));
     if (o.alMandar) fila.appendChild(botonPlan("Mandárselo a un alumno", ["mandar", lado], (b) => o.alMandar(lado, b)));
     if (o.alArchivar) fila.appendChild(botonPlan("Guardar en Archivos (para la clase)", ["archivar", lado], (b) => o.alArchivar(lado, b)));

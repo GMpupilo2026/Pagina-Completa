@@ -37,6 +37,11 @@
  *     motor daba entre +4 y +8 sin mate, el material guardado es el de la
  *     posición y decide el nivel, y las jugadas son las del catálogo. Las
  *     reglas de la página (juicio y estrellas) se prueban con casos a mano.
+ *   - Salva las tablas: 6 piezas o más, nadie en jaque, al alumno le falta
+ *     material ahora y después de la línea del motor (y el nivel según
+ *     cuánto), el motor
+ *     daba entre −0,8 y +0,5 sin mate, y las jugadas son las del catálogo. La
+ *     regla (firme, cuerda floja, perdida) y las estrellas, con casos a mano.
  *   - Elige a tiempo: las candidatas son legales y distintas, hay UNA mejor
  *     (pérdida 0), una razonable (entre 0,3 y 1,1) y errores (entre 1,3 y 4);
  *     la pérdida guardada es la diferencia de evaluaciones; la segunda mejor
@@ -82,6 +87,9 @@ titulo("Catálogo y niveles");
 const ids = new Set();
 C.TIPOS.forEach((t) => {
   const items = DATOS[t.id];
+  // Tus propios errores no tiene banco: sale de las partidas de cada alumno
+  // (lo prueba herramientas/verificar-errores-propios.js).
+  if (t.propio) { ok(t.id + ": un tipo propio no trae banco en tipos.json", items === undefined); return; }
   ok(t.id + ": el banco existe", Array.isArray(items) && items.length > 0);
   if (!items) return;
   t.niveles.forEach((n) => {
@@ -527,6 +535,28 @@ DATOS.remata.forEach((x) => {
   ok("remata: +3 gana, +2 es duda, +1 se escapó", M.juicioRemata(300) === "gana" && M.juicioRemata(200) === "duda" && M.juicioRemata(149) === "escapa");
   ok("remata: nunca bajó de +3: tres estrellas; bajó y volvió: dos; con pista: una",
     M.estrellasRemata(320, false) === 3 && M.estrellasRemata(180, false) === 2 && M.estrellasRemata(900, true) === 1);
+}
+
+titulo("Salva las tablas");
+DATOS.tablas.forEach((x) => {
+  const g = legal(x.fen);
+  if (!g) return;
+  const yo = x.fen.split(" ")[1];
+  ok("nadie empieza en jaque ni la partida terminó (" + x.id + ")", !g.in_check() && !g.game_over());
+  ok("6 piezas o más (" + x.id + ")", R.tablero(x.fen).filter(Boolean).length >= 6);
+  ok("el material de ahora es el de la posición, y falta (" + x.id + ")", material(x.fen) * (yo === "w" ? 1 : -1) === x.materialAhora && x.materialAhora <= -1);
+  ok("y sigue faltando después de la línea del motor: no es un cambio a medias (" + x.id + ")", x.material <= -1, x.material);
+  ok("el nivel es el del material que falta (" + x.id + ")", x.nivel === (x.material <= -2 ? 2 : 1));
+  ok("las jugadas son las del catálogo (" + x.id + ")", x.jugadas === C.nivel("tablas", x.nivel).jugadas);
+  ok("el motor daba entre −0,8 y +0,5, sin mate (" + x.id + ")", x.eval >= -80 && x.eval <= 50, x.eval);
+  ok("arranca «firme» para la regla de la página (" + x.id + ")", M.juicioTablas(x.eval) === "firme");
+  ok("trae la respuesta para el profesor (" + x.id + ")", Array.isArray(x.respuesta) && x.respuesta.length >= 3 && !!x.resumen);
+});
+{
+  ok("tablas: −1 es firme, −2 cuerda floja, −3 perdida, sin motor no hay juicio",
+    M.juicioTablas(-100) === "firme" && M.juicioTablas(-200) === "duda" && M.juicioTablas(-300) === "perdida" && M.juicioTablas(null) === "sin-motor");
+  ok("tablas: nunca bajó de −1,5: tres; pasó por la cuerda floja: dos; con pista: una",
+    M.estrellasTablas(-100, false) === 3 && M.estrellasTablas(-200, false) === 2 && M.estrellasTablas(0, true) === 1);
 }
 
 titulo("Elige a tiempo");

@@ -47,6 +47,8 @@
         let modoProyector = false;
         // El control remoto (sesion.html?control=1): el celular del profe maneja lo que ve la clase.
         let modoControl = false;
+        // «Ver como alumno» (sesion.html?como=alumno): el profe ve su propia clase como la ve un alumno, sin mandar nada.
+        let vistaPrevia = false;
         /* Quien supervisa (o administra) mirando la clase de un profesor:
            sesion.html?observar=<id>. Solo mira: ni mueve, ni contesta, ni marca
            asistencia, ni cuenta como alumno. Lo que puede leer lo decide la RLS
@@ -1343,7 +1345,8 @@
         let currentOpenSessionId = null;
 
         async function markAttendance(sessionId) {
-            if (isTeacher || esObservador) return;
+            // Tampoco cuenta como asistencia.
+            if (isTeacher || esObservador || vistaPrevia) return;
             const { error } = await sb.from("class_attendance").upsert(
                 { session_id: sessionId, student_id: profile.id },
                 { onConflict: "session_id,student_id", ignoreDuplicates: true }
@@ -1360,7 +1363,8 @@
         let presenceHeartbeatTimer = null;
 
         async function startPresenceLog(sessionId) {
-            if (isTeacher || esObservador || !sessionId || presenceLogId) return;
+            // La vista de alumno del profe no es un alumno: no suma tiempo en clase.
+            if (isTeacher || esObservador || vistaPrevia || !sessionId || presenceLogId) return;
             const { data, error } = await sb.from("class_presence_log")
                 .insert({ session_id: sessionId, student_id: profile.id })
                 .select().single();
@@ -1592,6 +1596,7 @@
            repasa. */
         async function limpiarLoDeLaClase() {
             if (partidaClase) await terminarPartidaClase("La partida de la clase terminó al cerrar la clase.");
+            if (ronda) await terminarRonda("La ronda rápida terminó al cerrar la clase.");
             const cambios = { encuesta: null, calentamiento: null, podio: null, equipos: null, pensar: null, elegido: null };
             // Las flechas del mapa se van con él; las que dibujó el profe, no.
             if (encuestaActual) { cambios.arrows = []; cambios.circles = []; }
@@ -2710,7 +2715,7 @@
                 // Quien observa entra como "supervision": no es alumno,
                 // así que no aparece en la lista de alumnos ni en el
                 // chat, y el profesor ve que está mirando.
-                role: esObservador ? "supervision" : profile.role,
+                role: esObservador ? "supervision" : vistaPrevia ? "vista-previa" : profile.role,
                 como: esObservador ? observaDesde.etiqueta : undefined,
                 online_at: new Date().toISOString(),
                 mirando_a: mirandoA,
@@ -2729,7 +2734,8 @@
         if (raiseHandBtn) raiseHandBtn.addEventListener("click", () => setHandRaised(!handRaised));
 
         function subscribePresence() {
-            presenceChannel = sb.channel(presenceChannelName(), { config: { presence: { key: profile.id } } });
+            // La vista previa entra con otra clave: con la misma, su anuncio se mezclaría con el de la ventana del profe.
+            presenceChannel = sb.channel(presenceChannelName(), { config: { presence: { key: vistaPrevia ? profile.id + ":vista-previa" : profile.id } } });
             presenceChannel.on("presence", { event: "sync" }, () => {
                 const state = presenceChannel.presenceState();
                 onlineStudents.clear();
@@ -2755,6 +2761,7 @@
                 renderStudentsList();
                 pintarCuentaCalentamiento();
                 pintarEquiposProfe();
+                if (isTeacher) { anotarConectados(); revisarCallados(); pintarQuienesEntraron(); }
                 pintarObservadores(mirando);
                 if (!isTeacher && !esObservador) pintarTeMiran(meMiran);
                 // El nombre del elegido sale de la presencia: al recargar llega después.
@@ -3862,6 +3869,36 @@
                 window.open("sesion.html?proyector=1", "ajedrez-proyector");
             });
         }
+        /* ---------- «Ver como alumno» ----------
+           sesion.html?como=alumno: el profe ve su propia clase como la ve un
+           alumno (la pregunta, el calentamiento, el podio, los equipos…), para
+           revisar antes de mostrar algo, sin otra cuenta. NADA se manda desde
+           acá: se cortan en el cliente de Supabase todos los insert, upsert,
+           update y delete, y las funciones que no son de lectura. La presencia
+           entra con su propio rol («vista-previa»), que no cuenta como alumno:
+           ni asistencia, ni turno, ni aviso de quién no contesta. */
+        const RPC_DE_LECTURA = new Set(["mis_clases", "premios_de_alumno", "trofeos_de", "resultados_de_la_pregunta",
+            "nombres_de_jugadores", "alumnos_del_profesor", "resumen_de_la_clase", "salida_de_la_clase", "resumen_del_mes"]);
+        function nadaQueMandar() {
+            const p = Promise.resolve({ data: null, error: null });
+            const cadena = new Proxy({}, { get: (_, k) => (k === "then" ? p.then.bind(p) : k === "catch" ? p.catch.bind(p) : () => cadena) });
+            return cadena;
+        }
+        function prepararVistaPrevia() {
+            document.documentElement.classList.add("vista-previa");
+            document.getElementById("vista-previa-barra").hidden = false;
+            const from = sb.from.bind(sb), rpc = sb.rpc.bind(sb);
+            sb.from = (tabla) => {
+                const q = from(tabla);
+                ["insert", "upsert", "update", "delete"].forEach((m) => { q[m] = () => nadaQueMandar(); });
+                return q;
+            };
+            sb.rpc = (nombre, args, opciones) => (RPC_DE_LECTURA.has(nombre) ? rpc(nombre, args, opciones) : nadaQueMandar());
+        }
+        if (document.getElementById("vista-alumno-btn")) {
+            document.getElementById("vista-alumno-btn").addEventListener("click", () => window.open("sesion.html?como=alumno", "ajedrez-vista-alumno"));
+        }
+
         /* ---------- El control remoto ----------
            sesion.html?control=1, en el celular del profe con su misma cuenta:
            cada botón escribe en game_state lo mismo que su botón de siempre, así
@@ -4052,6 +4089,7 @@
 
         function renderTeacherQuestionPanel() {
             seguirRespuestasEnCurso();
+            revisarCallados();   // una pregunta que se cierra puede cambiar quién lleva rato sin contestar
             const activeEl = document.getElementById("active-question");
             if (!currentQuestion || currentQuestion.closed_at) {
                 activeEl.classList.add("hidden");
@@ -4585,7 +4623,36 @@
                 cuenta.className = "text-xs text-brand-450 dark:text-brand-350 min-w-0 truncate";
                 cuenta.textContent = ids.length + (ids.length === 1 ? " ejercicio" : " ejercicios");
                 barra.append(cuenta, vistaPreviaTactica.control());
+                // La ronda rápida (js/clase-ronda.js): 5 de estos al azar, uno tras otro.
+                const rondaBtn = document.createElement("button");
+                rondaBtn.type = "button";
+                rondaBtn.className = "mt-2 w-full text-xs font-semibold px-3 py-2 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+                rondaBtn.textContent = "⚡ Ronda rápida con " + Math.min(RondaRapida.TAMANO, ids.length) + " de estos, al azar";
+                rondaBtn.addEventListener("click", () => empezarRonda(RondaRapida.elegir(ids, RondaRapida.TAMANO)
+                    .map((id) => ({ fen: tacticsData.puzzles[id].fen, solucion: tacticsData.puzzles[id].solution }))));
                 body.appendChild(barra);
+                let rondaFila = null;
+                if (ids.length) {
+                    // El tiempo por posición, al lado del botón que la arranca.
+                    const fila = document.createElement("div");
+                    fila.className = "flex items-center gap-2 mt-2";
+                    const etiqueta = document.createElement("label");
+                    etiqueta.className = "text-xs text-brand-500 dark:text-brand-300 shrink-0";
+                    etiqueta.htmlFor = "ronda-segundos";
+                    etiqueta.textContent = "Tiempo por posición";
+                    const sel = document.createElement("select");
+                    sel.id = "ronda-segundos";
+                    sel.className = "text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500";
+                    [[20, "20 segundos"], [30, "30 segundos"], [45, "45 segundos"], [60, "1 minuto"]].forEach(([v, t]) => {
+                        const o = document.createElement("option");
+                        o.value = String(v);
+                        o.textContent = t;
+                        if (v === 30) o.selected = true;
+                        sel.appendChild(o);
+                    });
+                    fila.append(etiqueta, sel);
+                    rondaFila = fila;
+                }
                 const list = document.createElement("ul");
                 list.className = "space-y-2 mt-2 max-h-96 overflow-y-auto pr-1";
                 ids.forEach((id, i) => {
@@ -4648,6 +4715,9 @@
                     list.appendChild(li);
                 });
                 body.appendChild(list);
+                // La ronda va DEBAJO de la lista: arriba corría la galería ~80px hacia
+                // abajo, y en pantalla entraba un solo tablero (verificar-sesion-curso.js).
+                if (rondaFila) body.append(rondaFila, rondaBtn);
                 return;
             }
         }
@@ -4696,7 +4766,7 @@
         }
 
         // ---------- Tipos de entrenamiento (cascada tipo → nivel → ejercicio) ----------
-        // Los mismos diecisiete de entreno/tipos.html, con las mismas posiciones
+        // Los mismos diecinueve de entreno/tipos.html, con las mismas posiciones
         // (entreno/data/tipos.json) y el mismo catálogo (js/tipos-catalogo.js): el
         // profesor los jala a la clase sin salir de la sesión. Toda posición entra por
         // aplicarPosicionEnClase(), como Táctica y Archivos. Lo que es la RESPUESTA
@@ -4878,6 +4948,18 @@
                 clase.className = "text-xs text-brand-450 dark:text-brand-350 mb-2";
                 clase.textContent = t.clase;
                 body.append(tit, clase);
+                // Tus propios errores no tiene banco: cada alumno tiene los
+                // suyos (salen de sus partidas), así que aquí no hay lista.
+                if (t.propio) {
+                    const abrir = document.createElement("a");
+                    abrir.href = "entreno/tipos.html#" + t.id;
+                    abrir.target = "_blank";
+                    abrir.rel = "noopener";
+                    abrir.className = "inline-block mt-1 text-xs font-semibold text-accent-700 dark:text-accent-400 underline";
+                    abrir.textContent = "Abrir la ficha de «" + t.nombre + "» (otra pestaña)";
+                    body.appendChild(abrir);
+                    return;
+                }
                 t.niveles.forEach((n) => {
                     const cuantos = (tiposData[t.id] || []).filter((x) => x.nivel === n.n).length;
                     if (!cuantos) return;
@@ -4965,6 +5047,7 @@
                 if (t.id === "maestro") acciones.appendChild(tiposBoton("❓ Preguntar", TIPOS_BTN_ACCION, () => tiposPreguntar(tiposFen(item), "Pregunta abierta: ¿qué jugarías aquí? Después miren la jugada del maestro."), "Abre la pregunta con la primera posición del tramo"));
                 if (t.id === "aguanta") acciones.appendChild(tiposBoton("❓ Preguntar", TIPOS_BTN_ACCION, () => tiposPreguntar(item.fen, "Pregunta abierta: solo una jugada aguanta. ¿Cuál?"), "Cada alumno busca la única defensa en su tablero"));
                 if (t.id === "remata") acciones.appendChild(tiposBoton("🎯 Practicar", TIPOS_BTN_ACCION, () => tiposPracticar(item.fen), "Cada alumno juega la posición contra el motor para rematar la ventaja"));
+                if (t.id === "tablas") acciones.appendChild(tiposBoton("🎯 Practicar", TIPOS_BTN_ACCION, () => tiposPracticar(item.fen), "Cada alumno juega la posición contra el motor para salvar las tablas"));
                 if (t.id === "con-lo-justo") acciones.appendChild(tiposBoton("🎯 Practicar", TIPOS_BTN_ACCION, () => tiposPracticar(item.fen), "Cada alumno juega el final contra el motor"));
                 const respBtn = tiposBoton("🔎 Respuesta", TIPOS_BTN, () => {
                     const abierta = !respWrap.classList.contains("hidden");
@@ -5581,9 +5664,12 @@
                         if (!row || !("ayuda" in row) || !myPracticeGame || row.id !== myPracticeGame.id) return;
                         // Y su pedido de ayuda, que se apaga solo cuando alguien lo atiende.
                         const pide = "pide_ayuda_at" in row ? row.pide_ayuda_at || null : myPracticeGame.pide_ayuda_at || null;
+                        // Y su respuesta, que se borra cuando le llega una ayuda nueva.
+                        const resp = "respuesta" in row ? row.respuesta || null : myPracticeGame.respuesta || null;
                         if (JSON.stringify(row.ayuda || null) === JSON.stringify(myPracticeGame.ayuda || null)
-                            && pide === (myPracticeGame.pide_ayuda_at || null)) return;
-                        myPracticeGame = Object.assign({}, myPracticeGame, { ayuda: row.ayuda || null, pide_ayuda_at: pide });
+                            && pide === (myPracticeGame.pide_ayuda_at || null)
+                            && resp === (myPracticeGame.respuesta || null)) return;
+                        myPracticeGame = Object.assign({}, myPracticeGame, { ayuda: row.ayuda || null, pide_ayuda_at: pide, respuesta: resp });
                         pintarAyudaAlumno();
                         pintarPedidoAlumno();
                     })
@@ -5665,6 +5751,8 @@
                     '<p class="practice-mini-status text-[11px] text-brand-450 dark:text-brand-350"></p>' +
                     // Pidió ayuda: va escrito, no solo con el borde.
                     '<p class="practice-mini-pide hidden text-xs font-bold text-brand-800 dark:text-white mt-1">🙋 Pide ayuda</p>' +
+                    // Lo que contestó a la ayuda (texto del alumno: por textContent).
+                    '<p class="practice-mini-respuesta hidden text-xs text-brand-800 dark:text-white mt-1 truncate"></p>' +
                     // Abre SU partida en grande: mirarla sin tocarla y mandarle una ayuda.
                     '<button type="button" class="practice-mini-mirar mt-2 w-full text-xs font-semibold px-2 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors" aria-haspopup="dialog">👁 Mirar y ayudar</button>' +
                     '<button type="button" class="practice-mini-anotar mt-1.5 w-full text-xs font-semibold px-2 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors"><span aria-hidden="true">📝 </span>Anotar en su bitácora</button>';
@@ -5730,6 +5818,16 @@
                 pedidosAnunciados.add(row.id + ":" + row.pide_ayuda_at);
                 document.getElementById("practica-pedidos-aviso").textContent = entry.nombre + " pide ayuda en su partida.";
             }
+            // Lo que contestó: escrito en la tarjeta y dicho en voz una vez por respuesta.
+            const resp = row.respuesta || "";
+            const r = entry.el.querySelector(".practice-mini-respuesta");
+            r.classList.toggle("hidden", !resp);
+            r.textContent = resp ? "💬 «" + resp + "»" : "";
+            r.title = resp;
+            if (resp && !pedidosAnunciados.has("r:" + row.id + ":" + row.respuesta_at)) {
+                pedidosAnunciados.add("r:" + row.id + ":" + row.respuesta_at);
+                document.getElementById("practica-pedidos-aviso").textContent = entry.nombre + " contestó: " + resp;
+            }
         }
 
         // ---------- La partida de UN alumno, en grande (solo profesor) ----------
@@ -5792,6 +5890,8 @@
                 + " · nivel " + practiceLevelLabel(latestPracticeSession.level)
                 + " · " + (moves.length === 1 ? "1 jugada" : moves.length + " jugadas");
             let estado = (row.pide_ayuda_at ? "🙋 Pidió ayuda. " : "") + practiceStatusLabelWithAttempts(row);
+            const contesto = row.respuesta ? "💬 " + mirarEl("nombre").textContent + " contestó: «" + row.respuesta + "»" : "";
+            if (mirarEl("respuesta").textContent !== contesto) mirarEl("respuesta").textContent = contesto;
             mirarEl("atendido").hidden = !row.pide_ayuda_at;
             if (row.status === "playing") {
                 estado += mirar.board.game.turn() === row.student_color ? ". Le toca mover." : ". Piensa el motor.";
@@ -5827,9 +5927,49 @@
             return { flechas: mirar.board.arrows, circulos: mirar.board.circles };
         }
 
+        // ---------- Una pista para toda la ronda ----------
+        // Un solo update filtrado por la ronda: la RLS decide a qué partidas llega (las
+        // del profe, o las que alcanza quien observa) y el trigger le pone a cada una
+        // quién la dio y apaga los pedidos de ayuda. Se cuenta lo que QUEDÓ guardado,
+        // no lo que se mandó: con la ronda terminada la base lo devuelve como estaba.
+        async function mandarPistaATodos(e) {
+            e.preventDefault();
+            const aviso = document.getElementById("practica-todos-aviso");
+            const campo = document.getElementById("practica-todos-pista");
+            const texto = campo.value.trim().slice(0, PracticaAyuda.MAX_TEXTO);
+            if (!texto) { aviso.textContent = "Escribe la pista antes de mandarla."; campo.focus(); return; }
+            if (!latestPracticeSession || latestPracticeSession.ended_at) { aviso.textContent = "No hay una ronda de práctica en curso."; return; }
+            const boton = document.getElementById("practica-todos-mandar");
+            boton.disabled = true;
+            const ayuda = { jugadas: 0, flechas: [], circulos: [], texto, para_todos: true };
+            const { data, error } = await sb.from("practice_games").update({ ayuda })
+                .eq("session_id", latestPracticeSession.id).select("*");
+            boton.disabled = false;
+            if (error) { aviso.textContent = "No se pudo mandar la pista: " + error.message; return; }
+            const filas = data || [];
+            const llegaron = filas.filter((f) => {
+                const q = PracticaAyuda.limpiar(f.ayuda);
+                return q && q.para_todos && q.texto === texto;
+            });
+            llegaron.forEach((f) => {
+                const entry = practiceStudentBoards[f.student_id];
+                if (entry && entry.row) upsertPracticeStudentBoard(Object.assign({}, entry.row,
+                    { ayuda: f.ayuda, pide_ayuda_at: f.pide_ayuda_at || null,
+                      respuesta: f.respuesta || null, respuesta_at: f.respuesta_at || null }));
+            });
+            if (!filas.length) { aviso.textContent = "Todavía no hay nadie jugando esta ronda."; return; }
+            if (!llegaron.length) { aviso.textContent = "No le llegó a nadie: la ronda de práctica ya terminó."; return; }
+            aviso.textContent = llegaron.length === filas.length
+                ? "Le llegó a " + (filas.length === 1 ? "1 alumno." : "los " + filas.length + " alumnos.")
+                : "Le llegó a " + llegaron.length + " de " + filas.length + " alumnos.";
+            campo.value = "";
+        }
+        const formTodos = document.getElementById("practica-todos");
+        if (formTodos) formTodos.addEventListener("submit", mandarPistaATodos);
+
         async function guardarAyuda(ayuda) {
             const { data, error } = await sb.from("practice_games").update({ ayuda })
-                .eq("id", mirar.row.id).select("ayuda, pide_ayuda_at").maybeSingle();
+                .eq("id", mirar.row.id).select("ayuda, pide_ayuda_at, respuesta, respuesta_at").maybeSingle();
             if (error) return { error: error.message };
             // Se mira lo que QUEDÓ, no lo que se mandó: con la ronda terminada la base la
             // devuelve como estaba sin dar ningún error.
@@ -5838,7 +5978,8 @@
                 // La miniatura no espera el eco de Realtime para decir que ya tiene ayuda.
                 const entry = practiceStudentBoards[mirar.studentId];
                 if (entry && entry.row) upsertPracticeStudentBoard(Object.assign({}, entry.row,
-                    { ayuda: data.ayuda, pide_ayuda_at: data.pide_ayuda_at || null }));
+                    { ayuda: data.ayuda, pide_ayuda_at: data.pide_ayuda_at || null,
+                      respuesta: data.respuesta || null, respuesta_at: data.respuesta_at || null }));
             }
             return { quedo, fila: !!data };
         }
@@ -6231,7 +6372,7 @@
                 eval_cp: null, attempts: (myPracticeGame.attempts || 1) + 1, reloj_ms: null,
             });
             // La base borra la ayuda al reintentar: era de la partida anterior.
-            myPracticeGame = Object.assign({}, myPracticeGame, { ayuda: null, pide_ayuda_at: null });
+            myPracticeGame = Object.assign({}, myPracticeGame, { ayuda: null, pide_ayuda_at: null, respuesta: null });
             practiceBoard.loadMoves([], latestPracticeSession.fen);
             pintarAyudaAlumno();
             pintarPedidoAlumno();
@@ -6268,7 +6409,33 @@
         });
 
         let ayudaPintada = null; // lo último escrito en la región viva, para no repetirlo
+        // ---------- Contestarle a quien lo ayudó ----------
+        // Solo con una ayuda a la vista (la base tampoco guarda una respuesta sin ella).
+        // Vive en su fila: la lee quien la mandó, sea su profe o alguien que observa.
+        function pintarContestar() {
+            const form = document.getElementById("practica-contestar");
+            if (!form || isTeacher || esObservador) return;
+            const ayuda = myPracticeGame ? PracticaAyuda.limpiar(myPracticeGame.ayuda) : null;
+            form.hidden = !ayuda;
+            const resp = ayuda && myPracticeGame.respuesta;
+            const txt = resp ? "Le contestaste: «" + resp + "»." : "";
+            const estado = document.getElementById("practica-contestado");
+            if (estado.textContent !== txt) estado.textContent = txt;   // la región viva no se repite
+        }
+        const formContestar = document.getElementById("practica-contestar");
+        if (formContestar) formContestar.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            if (!myPracticeGame) return;
+            const campo = document.getElementById("practica-contestar-texto");
+            const texto = campo.value.trim().slice(0, 280);
+            if (!texto) { document.getElementById("practica-contestado").textContent = "Escribe tu respuesta antes de mandarla."; campo.focus(); return; }
+            await savePracticeGameRow({ respuesta: texto });
+            campo.value = "";
+            pintarContestar();
+        });
+
         function pintarAyudaAlumno() {
+            pintarContestar();
             const caja = document.getElementById("practica-ayuda");
             if (!caja || isTeacher) return;
             const ayuda = myPracticeGame ? PracticaAyuda.limpiar(myPracticeGame.ayuda) : null;
@@ -6287,8 +6454,10 @@
             ico.setAttribute("aria-hidden", "true");
             ico.textContent = "💡 ";
             // La base pone quién la dio: puede ser su profe o alguien de supervisión.
-            titulo.append(ico, ayuda.de && ayuda.de !== boardOwnerId && ayuda.nombre
-                ? "Ayuda de " + ayuda.nombre : "Ayuda de tu profe");
+            const quien = ayuda.de && ayuda.de !== boardOwnerId && ayuda.nombre ? ayuda.nombre : "tu profe";
+            titulo.append(ico, ayuda.para_todos
+                ? "Pista de " + quien + " para toda la clase"
+                : "Ayuda de " + quien);
             marco.appendChild(titulo);
             if (ayuda.texto) {
                 const t = document.createElement("p");
@@ -6448,6 +6617,8 @@
                 boardOwnerId = profile.id;
                 modoProyector = new URLSearchParams(location.search).get("proyector") === "1";
                 modoControl = !modoProyector && new URLSearchParams(location.search).get("control") === "1";
+                vistaPrevia = !modoProyector && !modoControl && new URLSearchParams(location.search).get("como") === "alumno";
+                if (vistaPrevia) { isTeacher = false; prepararVistaPrevia(); }
                 document.documentElement.classList.toggle("modo-proyector", modoProyector);
                 document.documentElement.classList.toggle("modo-control", modoControl);
             } else {
@@ -6469,14 +6640,14 @@
                solo conseguiría pintarle una pantalla vacía: el candado se vería
                como una página rota. Y la clase ya no se abre sola cuando entra
                un alumno — justamente para que «hay clase» signifique algo. */
-            if (!isTeacher && !esObservador) {
+            if (!isTeacher && !esObservador && !vistaPrevia) {
                 const mia = clasesDelAlumno.find((c) => c.profesor_id === boardOwnerId);
                 if (!mia || !mia.clase_abierta) { mostrarSinClase(); esperarLaClase(); return; }
                 ClaseElegida.montarSelector(document.getElementById("selector-clase-wrap"), clasesDelAlumno, boardOwnerId);
             }
 
             const badge = document.getElementById("role-badge");
-            badge.textContent = esObservador ? observaDesde.insignia : isTeacher ? "Profesor" : "Alumno";
+            badge.textContent = esObservador ? observaDesde.insignia : isTeacher ? "Profesor" : vistaPrevia ? "Vista de alumno" : "Alumno";
             badge.classList.add(isTeacher ? "bg-accent-500" : "bg-brand-600", isTeacher ? "text-brand-900" : "text-white");
 
             if (isTeacher) {
@@ -6488,6 +6659,7 @@
                 if (!modoProyector && !modoControl) {
                     document.getElementById("proyector-btn").classList.remove("hidden");
                     document.getElementById("control-btn").classList.remove("hidden");
+                    document.getElementById("vista-alumno-btn").classList.remove("hidden");
                 }
                 document.getElementById("chat-student-picker").classList.remove("hidden");
                 let savedTab = TEACHER_TABS[0];

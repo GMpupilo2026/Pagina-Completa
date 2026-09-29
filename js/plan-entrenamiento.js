@@ -114,6 +114,7 @@ window.PlanEntrenamiento = (function () {
         { texto: 'Ficha: la horquilla', href: 'entreno/estudio.html?ficha=horquilla' },
         { texto: 'Curso: Estrategia y Táctica', href: 'cursos/estrategia-y-tactica.html' },
         { texto: 'Tipos de entrenamiento: ¿Qué quiere el rival?', href: 'entreno/tipos.html#amenaza' },
+        { texto: 'Tipos de entrenamiento: Aguanta (la única jugada que defiende)', href: 'entreno/tipos.html#aguanta' },
       ],
     },
     {
@@ -157,6 +158,7 @@ window.PlanEntrenamiento = (function () {
         { texto: 'Artículo: la oposición', href: 'articulos/la-oposicion.html' },
         { texto: 'Tipos de entrenamiento: Rey y peón', href: 'entreno/tipos.html#peones' },
         { texto: 'Tipos de entrenamiento: Con lo justo', href: 'entreno/tipos.html#con-lo-justo' },
+        { texto: 'Tipos de entrenamiento: Salva las tablas', href: 'entreno/tipos.html#tablas' },
       ],
     },
     {
@@ -178,6 +180,8 @@ window.PlanEntrenamiento = (function () {
         { texto: 'Curso: Estrategia y Táctica', href: 'cursos/estrategia-y-tactica.html' },
         { texto: 'Artículo: peones doblados', href: 'articulos/peones-doblados.html' },
         { texto: 'Precisión posicional: elegir el plan', href: 'entreno/precision-posicional.html' },
+        { texto: 'Tipos de entrenamiento: Remata la ventaja', href: 'entreno/tipos.html#remata' },
+        { texto: 'Tipos de entrenamiento: Elige a tiempo', href: 'entreno/tipos.html#tiempo' },
       ],
     },
     {
@@ -199,6 +203,8 @@ window.PlanEntrenamiento = (function () {
         { texto: 'Curso: Cálculo y Visualización', href: 'cursos/calculo-y-visualizacion.html' },
         { texto: 'Tipos de entrenamiento: Fotografía', href: 'entreno/tipos.html#fotografia' },
         { texto: 'Tipos de entrenamiento: El Barrido', href: 'entreno/tipos.html#barrido' },
+        { texto: 'Memoria: ver la posición y reconstruirla', href: 'entreno/memoria.html' },
+        { texto: 'El Sonar: encontrar el tesoro sin ver el tablero', href: 'sonar.html' },
       ],
     },
   ];
@@ -794,10 +800,16 @@ window.PlanEntrenamiento = (function () {
     'entreno/4x4.html': '4x4', 'entreno/visualizacion.html': 'visualizacion',
     'entreno/diagnostico.html': 'diagnostico',
     'entreno/finales.html': 'finales',
+    'entreno/memoria.html': 'memoria', 'entreno/precision-posicional.html': 'precision-posicional',
+    'sonar.html': 'sonar', 'batalla-naval.html': 'batalla-naval', 'concentracion.html': 'concentracion',
   };
   function claveDeAvance(href) {
-    const [ruta, consulta] = String(href || '').split('?');
+    const [conAncla, consulta] = String(href || '').split('?');
+    const [ruta, ancla] = conAncla.split('#');
     const q = new URLSearchParams(consulta || '');
+    // Un tipo de entrenamiento («tipos.html#balanza»): avance_del_plan cuenta
+    // cada tipo por su cuenta (detail.category).
+    if (ruta === 'entreno/tipos.html' && ancla) return 'tipo:' + ancla;
     if (ruta === 'entreno/temas.html' && q.get('tema')) return 'tema:' + q.get('tema');
     if (ruta === 'entreno/mates.html' && q.get('cat')) return 'mates:' + q.get('cat');
     if (ACTIVIDAD_DE_PAGINA[ruta]) return 'actividad:' + ACTIVIDAD_DE_PAGINA[ruta];

@@ -257,11 +257,16 @@ async function main() {
       // Tipos de entrenamiento: un recorte por tipo, con su total de tipos.json.
       const tipos = leer("entreno/data/tipos.json");
       const catalogo = require(path.join(RAIZ, "js/tipos-catalogo.js"));
-      const conEjercicios = catalogo.TIPOS.filter((t) => (tipos[t.id] || []).length).map((t) => t.id);
+      // Los tipos `propio` (Tus propios errores) no tienen banco: cada alumno
+      // tiene los suyos. Se ofrecen igual, sin total (no hay tope que dar).
+      const conEjercicios = catalogo.TIPOS.filter((t) => t.propio || (tipos[t.id] || []).length).map((t) => t.id);
       ok(JSON.stringify((metas.tipos || []).map((t) => t.clave)) === JSON.stringify(conEjercicios),
         `metas.json trae los tipos ${(metas.tipos || []).map((t) => t.clave).join(",")} y el catálogo tiene ${conEjercicios.join(",")}`);
-      (metas.tipos || []).forEach((t) => ok(t.total === (tipos[t.clave] || []).length && t.actividades.join() === "tipos",
-        `el tipo ${t.clave} dice ${t.total} y en tipos.json hay ${(tipos[t.clave] || []).length}`));
+      (metas.tipos || []).forEach((t) => {
+        const propio = catalogo.tipo(t.clave) && catalogo.tipo(t.clave).propio;
+        ok((propio ? t.total === null : t.total === (tipos[t.clave] || []).length) && t.actividades.join() === "tipos",
+          `el tipo ${t.clave} dice ${t.total} y ${propio ? "un tipo propio no tiene total" : "en tipos.json hay " + (tipos[t.clave] || []).length}`);
+      });
     }
   }
 
@@ -356,6 +361,20 @@ async function main() {
        rendirlo, así que no hay cantidad que elegir ni «terminarlo» que el
        alumno marque a mano. Y al cambiar de material vuelve el 10 de
        siempre: un renglón que heredara el 1 pediría un solo ejercicio. */
+    /* «Tus propios errores» (Tipos de entrenamiento) no tiene banco: cada alumno
+       tiene los suyos. Se puede pedir «resuelve N de tus errores», sin un tope
+       que salga de un banco (el de siempre, 1000) y sin «(N)» en el nombre. */
+    await pagina.selectOption("#renglones .renglon:nth-of-type(2) .r-material", "herramienta:tipos");
+    await pagina.waitForSelector("#renglones .renglon:nth-of-type(2) .r-recorte-wrap:not(.hidden)", { timeout: 5000 });
+    const errores = await pagina.$eval('#renglones .renglon:nth-of-type(2) .r-recorte option[value="errores"]', (o) => o.textContent.trim()).catch(() => null);
+    ok(errores === "Tus propios errores", `Tipos debería ofrecer «Tus propios errores» sin total, salió ${JSON.stringify(errores)}`);
+    await pagina.selectOption("#renglones .renglon:nth-of-type(2) .r-recorte", "errores");
+    await pagina.fill("#renglones .renglon:nth-of-type(2) .r-cantidad", "5");
+    ok(await pagina.getAttribute("#renglones .renglon:nth-of-type(2) .r-cantidad", "max") === "1000",
+      "«Tus propios errores» no tiene banco: el tope es el de siempre, no uno inventado");
+    const fraseErr = await pagina.textContent("#renglones .renglon:nth-of-type(2) .r-frase");
+    ok(/5/.test(fraseErr) && /Tus propios errores/.test(fraseErr), `la frase no dice lo que se pidió: ${JSON.stringify(fraseErr)}`);
+
     await pagina.selectOption("#renglones .renglon:nth-of-type(2) .r-material", "herramienta:diagnostico");
     const metasDiag = await pagina.$$eval("#renglones .renglon:nth-of-type(2) .r-meta option", (e) => e.map((o) => o.value));
     ok(JSON.stringify(metasDiag) === JSON.stringify(["cantidad"]),
@@ -609,6 +628,47 @@ async function main() {
     const titulo = await pagina.inputValue("#t-titulo");
     ok(titulo === "Repaso de la clase: Finales de torre", `?clase= debería proponer el título de la clase, puso ${JSON.stringify(titulo)}`);
     await pagina.close();
+  }
+
+  // ---------- 4 ter) desde Informes: «Mandarle 10 de La balanza» ----------
+  // El renglón llega armado: el tipo, la cantidad, el alumno marcado y el
+  // título. Lo que no existe se ignora; la cantidad respeta el tope.
+  {
+    const armado = async (query) => {
+      const pagina = await navegador.newPage();
+      await pagina.addInitScript(clienteFalso([PROFE, ALUMNA1, ALUMNA2], [], PROFE.id));
+      await pagina.goto(`${BASE}/tareas.html?${query}`, { waitUntil: "networkidle" });
+      await pagina.waitForSelector("#app:not(.hidden)", { timeout: 10000 });
+      await pagina.waitForTimeout(300);
+      const r = await pagina.evaluate(() => {
+        const div = document.querySelector("#renglones .renglon");
+        return {
+          marcados: [...document.querySelectorAll(".alumno-check")].filter((e) => e.checked).map((e) => e.value),
+          material: div.querySelector(".r-material").value,
+          recorte: div.querySelector(".r-recorte").value,
+          meta: div.querySelector(".r-meta").value,
+          cantidad: div.querySelector(".r-cantidad").value,
+          frase: div.querySelector(".r-frase").textContent,
+          titulo: document.getElementById("t-titulo").value,
+          renglones: document.querySelectorAll("#renglones .renglon").length,
+        };
+      });
+      await pagina.close();
+      return r;
+    };
+    const a = await armado("alumno=u-beto&material=tipos&recorte=balanza&cantidad=10");
+    ok(JSON.stringify(a.marcados) === JSON.stringify(["u-beto"]), `?material= desde Informes debería marcar al alumno, marcó ${JSON.stringify(a.marcados)}`);
+    ok(a.material === "herramienta:tipos" && a.recorte === "balanza" && a.meta === "cantidad" && a.cantidad === "10" && a.renglones === 1,
+      `el renglón debería llegar armado (tipos · balanza · 10), llegó ${JSON.stringify(a)}`);
+    ok(/10 ejercicios de La balanza/.test(a.frase), `la frase debería decir «10 ejercicios de La balanza», dice ${JSON.stringify(a.frase)}`);
+    ok(a.titulo === "La balanza", `el título propuesto debería ser «La balanza», es ${JSON.stringify(a.titulo)}`);
+    const b = await armado("alumno=u-beto&material=tipos&recorte=balanza&cantidad=300");
+    ok(b.cantidad === "80", `pedir más de los que hay debería quedar en el tope del tipo (80), quedó ${b.cantidad}`);
+    const c = await armado("alumno=u-beto&material=tipos&recorte=no-existe&cantidad=10");
+    ok(c.material === "herramienta:tipos" && c.recorte === "", `un recorte que no existe se ignora (queda «todo»), quedó ${JSON.stringify(c.recorte)}`);
+    const d = await armado("alumno=u-beto&material=no-existe&cantidad=10");
+    ok(d.material !== "herramienta:no-existe" && JSON.stringify(d.marcados) === JSON.stringify(["u-beto"]),
+      `un material que no existe se ignora y el alumno queda marcado igual, quedó ${JSON.stringify(d)}`);
   }
 
   // ---------- 5) que la página se vea ----------

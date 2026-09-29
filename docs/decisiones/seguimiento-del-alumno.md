@@ -96,6 +96,12 @@ alumno, que es justo lo que la tarea viene a evitar.
   tema, una categoría o una línea, correrlo**; el verificador compara el índice
   contra las fuentes, porque un índice viejo le ofrece al profesor un tema que
   ya no existe y eso solo lo descubre el alumno al abrir el enlace.
+- **Un recorte puede no tener total**: «Tus propios errores» (Tipos de
+  entrenamiento) no tiene banco, cada alumno tiene los suyos. Va en
+  `metas.json` con `total: null`: el formulario lo ofrece sin «(N)» y con el
+  tope de siempre (1000), y `tareas_con_avance()` lo cuenta igual, porque
+  nunca usó el total (cuenta ejercicios distintos de esa `category`). Ver
+  «El tipo 18: Tus propios errores» en entrenamiento.md.
 
 ### La franja de la tarea vive dentro del ejercicio
 
@@ -263,6 +269,11 @@ enterarse allá cuesta la clase.
   pasa— no hay que volver a buscarlo en la lista.
 - Las notas del plan **se guardan al salir del campo**, sin botón: es un campo
   que se toca de pasada mientras se arma el resto.
+- **Un plan también se arma solo, desde lo que ya pasó**: con las preguntas
+  que más le costaron a la clase (ver «Lo que más le costó a tu clase» en
+  clase-en-vivo.md) o con los errores de las partidas de un alumno, desde su
+  informe (ver «Llevar sus errores a un plan de clase» en informes.md). Los
+  dos escriben con la misma API de `js/plan-clase.js`.
 
 ### Quién puede qué
 
@@ -485,6 +496,26 @@ para el alumno". Observo, asigno. Dos detalles que no son de estilo:
 - **El título no se toca.** Lo propone la página desde el renglón elegido;
   pisarlo con la etiqueta de la nota dejaría al profesor corrigiendo a mano un
   campo que antes salía bien.
+
+### Del informe a la tarea, con el renglón armado
+
+La tarjeta del tipo más flojo en Informes lleva a
+`tareas.html?alumno=<id>&material=tipos&recorte=balanza&cantidad=10`, y
+`desdeElInforme()` (en `js/tareas.js`) deja el primer renglón armado: el
+material, el recorte, la meta en cantidad y el número. Al alumno lo marca
+`desdeLaBitacora()`, como siempre.
+
+- **Solo se toma lo que el renglón ofrece.** Un material o un recorte que no
+  existe se ignora sin decir nada (queda «— todo —»), y la cantidad respeta el
+  tope del recorte: `?cantidad=300` de un tipo con 80 queda en 80.
+- Lo que viaja no es privado (una herramienta, un recorte y un número), así
+  que puede ir en la dirección, a diferencia del texto de una nota.
+- `agregarRenglon()` devuelve la promesa de su `refrescarRenglon()` y el
+  arranque la espera: si no, la primera carga de recortes (la del material por
+  omisión) podía terminar DESPUÉS de la de `tipos` y dejar en el selector los
+  recortes equivocados.
+- `verificar-tareas.js` (4 ter) prueba el renglón armado, el tope, el recorte y
+  el material que no existen.
 
 ### Detalles que ya costaron una vez
 

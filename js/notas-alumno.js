@@ -480,5 +480,5 @@ window.NotasAlumno = (function () {
         return notas.length;
     }
 
-    return { listar, crear, actualizar, borrar, fechaCorta, enlaceTarea, montarPanel, montarLectura, TOPE_COMPACTO };
+    return { listar, crear, actualizar, borrar, fechaCorta, enlaceTarea, montarPanel, montarLectura, TOPE_COMPACTO, diagrama };
 })();

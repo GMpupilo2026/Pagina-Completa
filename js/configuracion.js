@@ -811,6 +811,7 @@
             document.getElementById("loading").classList.add("hidden");
             document.getElementById("app").classList.remove("hidden");
             pintarAvisos();
+            pintarAvisoRacha();
             Notificaciones.atenderRenovaciones();
         }
 
@@ -866,6 +867,32 @@
             }
             avisosBtn.disabled = false;
             pintarAvisos();
+        });
+
+        /* El aviso de racha se apaga por persona (preferencias_avisos): sin
+           fila está encendido, igual que lo lee public.avisar_rachas(). */
+        const avisosRacha = document.getElementById("avisos-racha");
+        const avisosRachaMsg = document.getElementById("avisos-racha-msg");
+        async function pintarAvisoRacha() {
+            if (!profile || profile.role !== "alumno") return;
+            const { data, error } = await sb.from("preferencias_avisos").select("racha").eq("user_id", profile.id).maybeSingle();
+            if (error) return;
+            avisosRacha.checked = !data || data.racha !== false;
+            document.getElementById("avisos-racha-caja").hidden = false;
+        }
+        avisosRacha.addEventListener("change", async () => {
+            avisosRacha.disabled = true;
+            const { error } = await sb.from("preferencias_avisos")
+                .upsert({ user_id: profile.id, racha: avisosRacha.checked, updated_at: new Date().toISOString() }, { onConflict: "user_id" });
+            avisosRacha.disabled = false;
+            if (error) {
+                avisosRacha.checked = !avisosRacha.checked;
+                avisosRachaMsg.className = "text-xs mt-2 text-red-600 dark:text-red-400";
+                avisosRachaMsg.textContent = "No se pudo guardar. Revisa tu conexión y vuelve a intentarlo.";
+                return;
+            }
+            avisosRachaMsg.className = "text-xs mt-2 text-green-600 dark:text-green-400";
+            avisosRachaMsg.textContent = avisosRacha.checked ? "Listo: te avisamos si tu racha está en juego." : "Listo: ya no te avisamos de la racha.";
         });
 
         avisosProbar.addEventListener("click", async () => {

@@ -157,56 +157,83 @@
 
   let bajando = null;   // el AbortController de la descarga en curso
 
+  /* Bajar sus partidas: la cuenta de arriba y, si se escribieron, sus otras
+     cuentas (en el otro sitio o en el mismo), una tras otra. Las de las otras
+     cuentas se juntan con el nombre de la de arriba (unirCuentas): para el
+     análisis es un solo jugador. Si una de las otras no se puede bajar, se
+     dice y se sigue con las demás; si falla la de arriba, se para. Ver
+     «Varias cuentas del rival». */
   async function bajar(ev) {
     ev.preventDefault();
     if (bajando) return;
+    const D = window.PreparacionDescarga;
     const sitio = document.querySelector('input[name="bajar-sitio"]:checked').value;
     const usuario = $("bajar-usuario").value.trim().replace(/^@/, "");
     const maximo = parseInt($("bajar-maximo").value, 10) || 0;
     const estado = $("bajar-estado");
-    const nombreSitio = sitio === "lichess" ? "Lichess" : "Chess.com";
-    if (!window.PreparacionDescarga.USUARIO_VALIDO.test(usuario)) {
+    const nombreDe = (s) => (s === "lichess" ? "Lichess" : "Chess.com");
+    if (!D.USUARIO_VALIDO.test(usuario)) {
       estado.textContent = "Escribe el nombre de usuario tal como sale en su perfil: letras, números, guion o guion bajo.";
       $("bajar-usuario").focus();
       return;
     }
+    const otroSitio = document.querySelector('input[name="bajar-otra-sitio"]:checked').value;
+    const otras = D.cuentasDe($("bajar-otras").value)
+      .filter((u) => !(otroSitio === sitio && u.toLowerCase() === usuario.toLowerCase()));
+    const mala = otras.find((u) => !D.USUARIO_VALIDO.test(u));
+    if (mala) {
+      estado.textContent = "«" + mala + "» no es un usuario válido: letras, números, guion o guion bajo, separados por coma.";
+      $("bajar-otras").focus();
+      return;
+    }
+    const cuentas = [{ sitio, usuario }].concat(otras.map((u) => ({ sitio: otroSitio, usuario: u })));
     bajando = new AbortController();
     $("bajar").disabled = true;
     $("bajar-parar").hidden = false;
-    estado.textContent = "Pidiéndole las partidas a " + nombreSitio + "…";
-    let texto = "";
+    const textos = [];
+    const avisos = [];
     let parado = false;
-    let ultimoAviso = 0;
-    try {
-      texto = await window.PreparacionDescarga.descargar({
-        sitio, usuario, maximo, senal: bajando.signal,
-        alAvanzar: (n, mes, meses) => {
-          // El lector de pantalla no necesita cada partida: una vez por segundo.
-          const ahora = Date.now();
-          if (ahora - ultimoAviso < 1000) return;
-          ultimoAviso = ahora;
-          estado.textContent = "Bajando de " + nombreSitio + ": " + n.toLocaleString("es-CR") + (n === 1 ? " partida" : " partidas") +
-            (meses ? " (mes " + mes + " de " + meses + ")" : "") + "…";
-        },
-      });
-    } catch (e) {
-      if (e && e.name === "AbortError") {
-        parado = true;
-      } else {
-        if (!(e && e.paraMostrar)) console.error(e);
-        estado.textContent = e && e.paraMostrar ? e.message : "No se pudieron bajar las partidas de " + nombreSitio + ". Revisa tu conexión y vuelve a intentarlo.";
-        terminarBajada();
-        return;
+    for (let k = 0; k < cuentas.length && !parado; k++) {
+      const c = cuentas[k];
+      const cual = cuentas.length > 1 ? " (cuenta " + (k + 1) + " de " + cuentas.length + ": " + c.usuario + ")" : "";
+      estado.textContent = "Pidiéndole las partidas a " + nombreDe(c.sitio) + cual + "…";
+      let ultimoAviso = 0;
+      let texto = "";
+      try {
+        texto = await D.descargar({
+          sitio: c.sitio, usuario: c.usuario, maximo, senal: bajando.signal,
+          alAvanzar: (n, mes, meses) => {
+            // El lector de pantalla no necesita cada partida: una vez por segundo.
+            const ahora = Date.now();
+            if (ahora - ultimoAviso < 1000) return;
+            ultimoAviso = ahora;
+            estado.textContent = "Bajando de " + nombreDe(c.sitio) + cual + ": " + n.toLocaleString("es-CR") + (n === 1 ? " partida" : " partidas") +
+              (meses ? " (mes " + mes + " de " + meses + ")" : "") + "…";
+          },
+        });
+      } catch (e) {
+        if (e && e.name === "AbortError") {
+          // Parado a la mitad: se analiza lo que ya llegó (en Lichess va
+          // quedando en el texto; en Chess.com, los meses completos).
+          parado = true;
+          texto = D.ultimoTexto || "";
+        } else {
+          if (!(e && e.paraMostrar)) console.error(e);
+          const porQue = e && e.paraMostrar ? e.message : "No se pudieron bajar las partidas de " + nombreDe(c.sitio) + ". Revisa tu conexión y vuelve a intentarlo.";
+          if (k === 0) { estado.textContent = porQue; terminarBajada(); return; }
+          avisos.push("De «" + c.usuario + "» en " + nombreDe(c.sitio) + ": " + porQue);
+          continue;
+        }
       }
+      if (texto) textos.push(k === 0 ? texto : D.unirCuentas(texto, c.usuario, usuario));
     }
-    // Parado a la mitad: se analiza lo que ya llegó (en Lichess va quedando en
-    // el texto; en Chess.com, los meses completos).
-    if (parado) texto = window.PreparacionDescarga.ultimoTexto || texto;
     terminarBajada();
-    if (!texto || !(await cargarTexto(texto, estado, usuario))) {
+    const todo = textos.join("\n\n");
+    if (!todo || !(await cargarTexto(todo, estado, usuario))) {
       if (parado) estado.textContent = "Se paró antes de que llegara alguna partida.";
       return;
     }
+    if (avisos.length) estado.textContent += " " + avisos.join(" ");
     if (!jugadoresLeidos.some((j) => j.clave === claveDe(usuario))) {
       estado.textContent += " Ninguna es de «" + usuario + "»: elige al rival en la lista.";
       $("rival").focus();
@@ -329,6 +356,22 @@
     dr.appendChild(labR);
     dr.appendChild(selR);
     caja.appendChild(dr);
+
+    // Lo reciente pesa más en QUÉ juega (ponerPesos del análisis). Un análisis
+    // guardado antes de esto no lo dice: se contaba todo igual.
+    const labRec = el("label", "inline-flex items-center gap-2 text-sm self-center");
+    const rec = el("input", "accent-accent-500");
+    rec.type = "checkbox";
+    rec.id = "filtro-reciente";
+    rec.checked = !!(r.filtros && r.filtros.reciente);
+    rec.disabled = !editable;
+    labRec.appendChild(rec);
+    labRec.appendChild(document.createTextNode("Más peso a lo que juega ahora"));
+    const dRec = el("div", "min-w-0");
+    dRec.appendChild(labRec);
+    dRec.appendChild(el("p", "text-xs text-brand-450 dark:text-brand-350", "Para decir qué juega, una partida de hace un año cuenta la mitad."));
+    caja.appendChild(dRec);
+
     selR.addEventListener("change", () => {
       const partida = selR.value || null;
       if (!editable) {
@@ -338,10 +381,10 @@
       }
       const anios = parseInt(sel.value, 10);
       const desde = anios ? haceAnios(anios) : null;
-      if (!partida) { calcular(rivalCargado, { ritmos: [], desde, partida: null }); return; }
+      if (!partida) { calcular(rivalCargado, { ritmos: [], desde, partida: null, reciente: rec.checked }); return; }
       const suyos = r.disponibles.ritmos.filter((x) => window.PreparacionResumen.mismoRitmo(x.ritmo, partida));
       const n = suyos.reduce((a, x) => a + x.n, 0);
-      calcular(rivalCargado, n >= window.PreparacionAnalisis.POCAS ? { ritmos: suyos.map((x) => x.ritmo), desde, partida } : { ritmos: [], desde, partida });
+      calcular(rivalCargado, n >= window.PreparacionAnalisis.POCAS ? { ritmos: suyos.map((x) => x.ritmo), desde, partida, reciente: rec.checked } : { ritmos: [], desde, partida, reciente: rec.checked });
     });
 
     if (!editable) {
@@ -354,10 +397,11 @@
       if (!marcados.length) { $("filtros-aviso").textContent = "Marca al menos un ritmo."; return; }
       const todos = marcados.length === r.disponibles.ritmos.length;
       const anios = parseInt(sel.value, 10);
-      calcular(rivalCargado, { ritmos: todos ? [] : marcados, desde: anios ? haceAnios(anios) : null, partida: selR.value || null });
+      calcular(rivalCargado, { ritmos: todos ? [] : marcados, desde: anios ? haceAnios(anios) : null, partida: selR.value || null, reciente: rec.checked });
     };
     caja.querySelectorAll('input[name="filtro-ritmo"]').forEach((c) => c.addEventListener("change", alCambiar));
     sel.addEventListener("change", alCambiar);
+    rec.addEventListener("change", alCambiar);
   }
 
   // ------------------------------------------------------------ pintar
@@ -368,6 +412,7 @@
     // Otro análisis: el tablero mostraba una línea del anterior.
     $("visor-caja").hidden = true;
     $("mandar-caja").hidden = true;
+    $("sparring-caja").hidden = true;
     $("resultado").hidden = false;
     $("titulo-resultado").textContent = r.rival;
     pintarFiltros(r);
@@ -425,6 +470,7 @@
       },
       alBajarPgn: (lado) => bajarPgn(r, lado),
       alMandar: (lado, origen) => abrirMandar(r, lado, origen),
+      alJugar: (lado, origen) => abrirSparring(r, lado, origen),
       alArchivar: (lado, origen) => archivar(r, lado, origen),
       // Una jugada del plan: la línea hasta ahí y su continuación principal.
       alVerLinea: (camino, origen) => {
@@ -470,6 +516,35 @@
     $("visor-caja").hidden = true;
     if (volverA && document.body.contains(volverA)) volverA.focus();
     volverA = null;
+  }
+
+  // ------------------------------------------------------------ «Juega contra él»
+
+  /* Una partida contra su libro (r.libro, del color que lleva él) y, fuera
+     de él, Stockfish a su Elo. Un análisis guardado antes de esto no trae el
+     libro: se dice, en vez de abrir una partida que sería Stockfish desde la
+     primera jugada. */
+  let sparring = null;
+  let volverSparring = null;
+  function abrirSparring(r, lado, origen) {
+    const suyo = lado === "conBlancas" ? "b" : "w";
+    const libro = r.libro && r.libro[suyo];
+    if (!libro || !Object.keys(libro).length) {
+      Avisos.avisar("Este análisis no trae lo que él juega en cada posición (se hizo antes de «Juega contra él»). Vuelve a cargar sus partidas y analízalo otra vez.");
+      return;
+    }
+    if (!sparring) sparring = window.PreparacionSparring.montar($("sparring"));
+    volverSparring = origen || null;
+    $("sparring-caja").hidden = false;
+    $("sparring-caja").scrollIntoView({ block: "start" });
+    sparring.empezar({ libro, plan: L.planDe(r, lado), color: lado === "conBlancas" ? "w" : "b", elo: r.elo && r.elo.reciente, rival: r.rival, reciente: !!(r.filtros && r.filtros.reciente) });
+  }
+
+  function cerrarSparring() {
+    if (sparring) sparring.entrenador.terminar();
+    $("sparring-caja").hidden = true;
+    if (volverSparring && document.body.contains(volverSparring)) volverSparring.focus();
+    volverSparring = null;
   }
 
   function bajarPgn(r, lado) {
@@ -1000,6 +1075,7 @@
     $("motor-revisar").addEventListener("click", iniciarRevision);
     $("motor-parar").addEventListener("click", () => { if (revision) revision.parar = true; });
     $("visor-cerrar").addEventListener("click", cerrarVisor);
+    $("sparring-cerrar").addEventListener("click", cerrarSparring);
     $("mandar-cerrar").addEventListener("click", cerrarMandar);
     $("alumno-bajar-form").addEventListener("submit", bajarAlumno);
     $("alumno-leer").addEventListener("click", leerAlumno);

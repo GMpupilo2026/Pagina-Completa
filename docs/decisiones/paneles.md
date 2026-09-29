@@ -1236,6 +1236,37 @@ solicitudes y saldos vencidos. Faltaba su pantalla propia, `coordinacion.html`:
 - Lo prueba `pruebaOrdenYNumeros` en `verificar-coordinacion.js`; volviendo a
   poner la suma, salta.
 
+### Equipos: lo que pide atención primero
+
+La sección Equipos de `coordinacion.html` pintaba cada equipo entero, con sus
+etiquetas, sus selectores y el volcado de grupos, uno debajo del otro y en el
+orden del nombre. Con varios equipos era una pared, y un equipo **sin
+entrenadores** —que no le da acceso a nadie: es una llave sin puerta— se veía
+igual que uno que funciona. Además, quien administra tenía dos puertas al mismo
+lugar: esta y `admin.html#equipos`.
+
+- **Arriba, cuántos piden atención** («3 equipos · ⚠️ 1 pide atención»), y
+  la lista en orden: primero los que les falta algo (sin entrenadores o sin
+  alumnos), después los que puede repartir y al final los que tienen gente de
+  otra coordinación, que solo se miran. Solo se dice «pide atención» de lo que
+  quien coordina puede arreglar.
+- **Cada equipo va plegado con su resumen**: nombre, cuántos entrenadores y
+  alumnos, y lo que le falta escrito («⚠️ sin entrenadores y sin alumnos»);
+  el borde lo marca, pero no va solo. Se abre solo el que pide atención, el
+  recién creado o el único que hay. **Lo que se abrió queda abierto** al
+  repintar: cada ✕ o cada volcado repinta la lista, y si se volviera a cerrar
+  habría que buscar el equipo otra vez.
+- **«Nuevo equipo» va al final**: se hace de vez en cuando. El equipo recién
+  creado queda abierto y primero (está vacío), que es donde se le ponen sus
+  entrenadores.
+- **Quien administra no tiene una segunda puerta**: en coordinación la sección
+  le dice que los equipos se arman en Administración › Equipos, con el enlace,
+  y no se baja ni los equipos ni la lista de todos los alumnos.
+- Lo prueban `pruebaEquipos` y `pruebaEquiposAdmin` en
+  `verificar-coordinacion.js`: el orden y qué está abierto (medido con
+  `checkVisibility()`), el resumen, que lo abierto sigue abierto después de
+  volcar, y que a quien administra no se le pinta otra lista.
+
 ### Las cuentas se ven por GRUPO, no todas de una
 
 Lo primero que muestra la página son **fichas de grupo**, no la lista de
@@ -1589,7 +1620,9 @@ Debajo de cada plan de «Qué jugarle» van tres botones: bajarlo en PGN,
 dónde rinde menos, la revisión de Stockfish) sigue en `preparaciones_rival`, que
 el alumno no ve nunca. Lo que viaja es `planDelAlumno()`
 (`js/preparacion-lineas.js`): el árbol de jugadas de un lado, con sus números, y
-lo que dijo Stockfish **de esas jugadas** y de ninguna otra.
+lo que dijo Stockfish **de esas jugadas** y de ninguna otra. Desde «Juega contra
+él» viajan también su libro con el color que lleva en ese plan y su Elo (ver
+«Juega contra él»): son sus jugadas y cuántas veces las hizo, nada del análisis.
 
 - **Por qué una tabla aparte, `planes_rival_alumno`, y no abrirle al alumno la
   fila del análisis:** la RLS es por fila, no por pedazo de un `jsonb`. Una
@@ -1631,9 +1664,10 @@ lo que dijo Stockfish **de esas jugadas** y de ninguna otra.
 - Sin `?id=`, lista los planes que le mandaron.
 - Lleva `js/tarea-en-curso.js`, así que al entrar desde la tarea se ve la
   franja con lo que falta.
-- **No carga Stockfish.** Lo que dijo el motor de cada jugada ya viene en su
-  nota, y bajar un motor de varios megas en el celular del alumno para eso no se
-  justifica.
+- **No carga Stockfish para el plan.** Lo que dijo el motor de cada jugada ya
+  viene en su nota, y bajar un motor de varios megas en el celular del alumno
+  para eso no se justifica. Solo lo baja «Juega contra él», y solo cuando la
+  partida se sale de lo que el rival juega.
 
 **A la clase se llega por Archivos.** «Guardar en Archivos» guarda **cada
 línea del plan como su propio PGN** en `archivos_pgn` (los mismos de
@@ -2432,6 +2466,242 @@ pronóstico: `certezaDe` (en `preparacion-analisis.js`) arma la preparación
 Verificador: `preparacion-rivales` (`pruebaCerteza` con un rival que sigue
 igual y otro que cambió 1…e5 por 1…c5, y `pruebaCertezaEnLaPagina`).
 
+### Juega contra él
+
+Todo lo anterior se lee; esto se juega. **«Jugar contra él»**, debajo de cada
+plan en `preparacion-rivales.html` y como sección propia en `plan-rival.html`,
+abre una partida de práctica contra el rival (`js/preparacion-sparring.js`):
+
+- **Mientras la posición esté en sus partidas, juega lo que él juega**, sorteado
+  con el peso de las veces que hizo cada jugada: una que hace 3 de cada 4 veces
+  sale 3 de cada 4. Y lo dice: «La juega 63 % de las veces en esta posición (20
+  partidas)». Siempre la más jugada habría sido otra forma de repetir el plan;
+  sorteada, sale también lo que juega de vez en cuando, que es lo que sorprende
+  en la partida de verdad.
+- **Cuando la posición ya no está, sigue Stockfish a su Elo** (el reciente del
+  análisis, `UCI_LimitStrength` + `UCI_Elo`, entre 1320 y 3190; sin Elo, 1800),
+  y lo dice en esa jugada. A toda su fuerza no sería él: sería practicar contra
+  la computadora. Al terminar, el motor vuelve a su fuerza completa: en la
+  página del profesor es el mismo que revisa el plan.
+- **Tu jugada se mide contra el plan**: «Es la del plan», o la primera que se
+  aparta dice qué decía el plan. Al terminar (mate, tablas o «Terminar la
+  partida»), «Cómo te fue» dice dónde te saliste del plan (o en qué jugada suya
+  que el plan no prepara), y cuántas de sus jugadas salieron de sus partidas.
+- **Es práctica: no se guarda nada** ni cuenta para la tarea. Para eso está
+  «Entrénalo».
+
+**Su libro** (`libroDe()` en el análisis, `js/preparacion-libro.js` para
+leerlo):
+- Es **por posición**, como el árbol: por otro orden de jugadas se llega al
+  mismo lugar y cuentan las dos. En la partida la posición se saca del FEN de
+  chess.js con `PreparacionPosiciones.desdeFen()`; el verificador comprueba en
+  todas las jugadas de prueba que da la misma clave que el árbol.
+- Solo las posiciones donde le toca a él y que vio **2 veces o más**, con sus
+  seis jugadas más hechas, hasta donde llega el árbol (30 medias jugadas desde
+  «El árbol más hondo»; antes, 16). Con
+  una sola partida no hay repertorio: es una partida.
+- Cada posición va por una **huella de 53 bits** y no por su clave (unos 11
+  caracteres en vez de 60). Se queda con las **1500 posiciones más jugadas** de
+  cada color (eran 1000 hasta «El árbol más hondo»): con el peso de lo reciente
+  cada posición pesa unos 52 bytes, así que no pasa de 80 KB por color.
+- Viaja en el análisis guardado (`r.libro`) y en el plan del alumno (solo el
+  color del rival en ese plan). **Un análisis guardado antes no lo trae**: la
+  página lo dice en vez de abrir una partida que sería Stockfish desde la
+  primera jugada; un plan mandado antes no muestra la sección.
+
+**El tablero es el de «Entrénalo»** (`js/entrenador-linea.js`), con un modo
+nuevo, `jugarLibre()`: se juega cualquier jugada legal, la del rival la decide
+quien llama, y al coronar se elige la pieza (`js/coronacion.js`). Mismo clic,
+teclado y cuadro de comandos del Modo Adaptado, en vez de un segundo tablero.
+Si mientras el motor piensa se empieza otra partida, su jugada se tira.
+
+**Stockfish en la página del alumno** es el de siempre (16, el de
+`js/shared-engine.js` sin `data-motor`), y el Worker se crea recién cuando la
+partida sale del libro. Los dos motores, el 19 lite y el 16, se probaron de
+verdad a fuerza limitada: contestan una jugada legal.
+
+Verificador (`preparacion-rivales`): sin navegador, el libro (sus primeras
+jugadas en orden, nada suyo cuando no le toca, la transposición, el sorteo por
+peso, la clave desde chess.js y el seguimiento del plan) y que al alumno le
+llegue solo el libro de su rival. En la página, con el azar fijo y el motor de
+mentira: la jugada más jugada con su porcentaje, el tablero desde las negras,
+«Es la del plan», el motor que no se pide dentro del libro, la salida del libro
+con el Elo, las opciones UCI en su orden, «Cómo te fue», el foco al cerrar, el
+aviso de un análisis viejo, y en la página del alumno la partida, sin motor y
+sin guardar nada.
+
+### Repasar las líneas del plan
+
+«Entrénalo» decía qué líneas ya salían limpias, pero una línea que salió limpia
+hace tres semanas no se sabe hoy. Ahora cada línea dice **cuándo le toca**
+(«Próximo repaso: 1 de octubre», «Toca repasarla hoy»), arriba dice cuántas
+tocan hoy, **«Repasar las de hoy»** abre la primera, y cada línea dice **dónde
+se equivocó la última vez** («La última vez fallaste en 1.e4»).
+
+- **Es la repetición espaciada de Aperturas** (`js/repaso-espaciado.js`, SM-2
+  recortado): una bien vuelve al día siguiente, a los 3 días y después cada vez
+  más lejos; una fallada vuelve hoy y empieza de cero. Limpia es «bien», solo
+  con pistas es «regular» y con errores es «mal».
+- **No se guarda en ningún lado: se arma con lo que ya está.** Cada intento ya
+  quedaba en `training_progress` (etapa 7). `plan-rival.js` los pide por
+  `detail->>plan`, **en orden de fecha**, y `desdeHistoria()` los pasa uno por
+  uno por `calificar()`. Guardar la ficha aparte habría sido una segunda
+  verdad que se desincroniza (lo que se deriva no se guarda), y así vale en la
+  computadora y en el celular. El día de cada intento es el de Costa Rica.
+- **El orden importa**: dos intentos al revés dan otra fecha. Por eso el doble de
+  Supabase del verificador ahora ordena de verdad con `order()` (antes lo
+  ignoraba), y la prueba mete los intentos desordenados a propósito.
+- **Lo que toca hoy son solo las que ya jugó alguna vez**: una línea nueva es
+  «la siguiente línea», no un repaso. Primero la fallada, y entre las demás la
+  más atrasada (`pendientes()`).
+- **Dónde falló**: el entrenador (`js/entrenador-linea.js`) devuelve `fallos`,
+  el índice de cada jugada de la línea donde hubo un error o una pista, y va en
+  `detail.fallos` del intento. Se muestra el del último intento de esa línea.
+- La tarea no cambia: sigue contando las líneas limpias (`theme`).
+- Un profesor que mira el plan de un alumno no ve su repaso ni suma nada, como
+  antes.
+
+Verificador (`preparacion-rivales`): `desdeHistoria()` sin navegador (dos bien
+seguidas, una mal, una con pistas y el orden de `pendientes()`); en la página,
+con intentos relativos a hoy y desordenados: cuántas tocan, la fecha de cada
+una, dónde falló, que «Repasar las de hoy» abra la que toca, y que al salir
+limpia pase a mañana y el botón se vaya. Y en «Entrénalo», que el intento con
+un error guarde `fallos: [0]`. Comprobado que falla sin el orden por fecha y
+sin guardar dónde falló.
+
+### Varias cuentas del rival y más peso a lo que juega ahora
+
+Dos cosas que se pidieron para tener más partidas y que digan lo de hoy:
+
+**Varias cuentas.** Muchos rivales juegan en Lichess y en Chess.com, o tienen
+dos cuentas en el mismo sitio. Debajo del usuario va **«Otras cuentas suyas»**:
+el sitio y uno o varios usuarios, separados por coma.
+- Se bajan **una tras otra**, después de la de arriba, cada una con el mismo
+  «Cuántas». Una tras otra y no juntas por lo mismo que los meses de Chess.com:
+  en paralelo contestan 429.
+- **Se juntan con el nombre de la de arriba** (`unirCuentas()` en
+  `js/preparacion-descarga.js`): en las etiquetas `White`/`Black`, el usuario
+  de la otra cuenta pasa a llamarse como la principal, sin distinguir
+  mayúsculas. Así el análisis, el trabajador, los filtros y el cruce no se
+  enteran de que eran dos: es un jugador, sin pasar una lista de alias por
+  todos lados.
+- Una cuenta repetida (también con otras mayúsculas) se pide una vez. Un usuario
+  inválido se dice antes de pedir nada.
+- **Si falla una de las otras, se dice y se sigue** con las demás («De «x» en
+  Chess.com: No existe el usuario…»); si falla la de arriba, se para, como
+  antes. «Parar» corta todas y analiza lo que ya llegó.
+- El botón «Bajar y analizar» va **debajo de las dos filas**: antes de él, con
+  el tabulador, se pasa por las otras cuentas.
+
+**Más peso a lo reciente** (`ponerPesos()` en el análisis). Un repertorio
+cambia: lo que jugaba hace tres años pesaba igual que lo del mes pasado.
+- Cada partida pesa **la mitad por cada año** antes de su partida más nueva
+  (vida media de 365 días); sin fecha, como una de hace un año. Cada cuenta
+  lleva además `w`, la suma de esos pesos, junto a `n`.
+- **Solo para QUÉ juega**: el orden de sus jugadas (`hijosOrdenados`), su
+  reparto («la juega 63 %»), el plan, dónde improvisa, su línea principal, las
+  líneas de su repertorio y su libro (que guarda `[jugada, partidas, peso]`).
+  **Cuánto saca, y los mínimos, siguen con partidas enteras**: 3 de 3 tiene que
+  seguir siendo 3 partidas, y un porcentaje de puntos con pesos no se podría
+  leer.
+- Viene **marcado** («Más peso a lo que juega ahora», en los filtros) y se
+  puede desmarcar: vuelve a analizar al instante. `r.filtros.reciente` dice con
+  cuál se hizo. Con todas las partidas de la misma fecha no cambia nada.
+- «Juega contra él» dice «Últimamente la juega 63 %…» cuando el libro pesa lo
+  reciente, y el plan del alumno lleva `reciente` para decir lo mismo.
+
+Verificador (`preparacion-rivales`): sin navegador, un rival que en 2023
+contestaba 1.e4 con 1…e5 (30) y en 2026 con 1…c5 (12): sin peso, e5 primero
+(71 %); con peso, c5 (80 %), con las partidas enteras y el mismo resultado; su
+libro sortea igual y el plan con blancas va contra c5. Y que con una sola fecha
+no cambie nada. En la página, con Lichess y Chess.com de mentira: una cuenta de
+más inválida, el orden de lo que se pide (sin repetir), el rival único con 78
+partidas y la cuenta que no existe dicha; y el filtro marcado que, desmarcado,
+vuelve a analizar. Comprobado que falla sin pesos y sin juntar los nombres.
+
+### El árbol más hondo
+
+El árbol del rival llegaba a 16 medias jugadas (la jugada 8): el plan no veía
+sus líneas largas y «Juega contra él» salía siempre de su libro ahí, aunque él
+repitiera la misma Española hasta la jugada 15. Ahora llega a **30 medias
+jugadas** (`MAX_JUGADAS_ARBOL`), el plan principal a **16** (antes 10) y el
+libro guarda **1500 posiciones** por color (antes 1000).
+
+**Abrir todo hasta la 30 no se podía.** Allá abajo casi cada partida es
+distinta: con 6000 partidas de 40 medias jugadas de prueba, el análisis pasó de
+1,95 s y 107 MB a 3,74 s y 356 MB, casi todo en nodos que vio una sola partida y
+que nada usa (lo que menos pide algo es el libro, 2 partidas). Así que
+`armarArbol()` abre todo **hasta la media jugada 16** (`PROFUNDIDAD_COMPLETA`),
+como antes, y más allá **una secuencia que vio una sola partida no se abre**:
+el nodo guarda la partida (`solo`) y la sigue bajando recién cuando llega una
+segunda por el mismo camino. Con las mismas 6000 partidas: 1,94 s y 122 MB.
+
+- **Lo que se pierde**: dos partidas que llegan a la misma posición profunda
+  por caminos distintos, una por cada camino, no se juntan (cada una quedó
+  guardada en su nodo). Con dos o más por un camino, sí: la transposición se
+  junta como siempre (el verificador lo comprueba: la Española con …Ab7 y
+  …Cbd7 cambiados de orden llega a la misma posición en la jugada 11).
+- Hasta la media jugada 16 no cambia nada, ni para lo que vio una sola.
+- Todo lo que baja por el árbol (el plan, el libro, lo que juega, la certeza)
+  sigue igual: un nodo sin abrir no tiene hijos, como el final de una partida.
+- `lineasDeSuRepertorio()` sigue hasta la media jugada 20 y el cruce con el
+  alumno hasta la 14: más hondo, el explorador de maestros recibiría más
+  pedidos y el cruce casi nunca encuentra posiciones en común.
+
+Verificador (`preparacion-rivales`, «El árbol más hondo»): una Española
+cerrada de 24 medias jugadas, 6 veces, y una que se aparta en la jugada 10. Su
+libro llega a la jugada 11, sabe que una vez se apartó, el plan pasa de la
+jugada 5; la que se apartó no se abre, con una segunda se abre y se junta por
+transposición; y una Berlinesa que vio una sola entra entera hasta la media
+jugada 16 y no después.
+
+### Su tipo de posición
+
+La táctica decía con qué golpes gana y pierde; faltaba **en qué posiciones**
+le va mal, para buscarle una partida y no solo una apertura. La tarjeta **«Su
+tipo de posición»** (después de la táctica) y el resumen de arriba («Busca
+quedarte con el peón aislado», «Evita cerrar el centro») salen de
+`js/preparacion-estructuras.js`:
+
+- **Se mira cada partida en la jugada 12** (24 medias jugadas): la apertura ya
+  terminó y los peones quedaron armados. Una partida más corta no cuenta. La
+  posición sale de `js/preparacion-posiciones.js`, sin chess.js.
+- **Los rasgos**, desde el lado del rival:
+  - peón aislado de dama (en d, sin peones en c ni en e): el suyo y el de su
+    rival, por separado (no es lo mismo tenerlo que jugar contra él);
+  - peones colgantes (c y d, sin peones en b ni en e): los suyos y los de su
+    rival;
+  - **centro cerrado**: un peón central que cruzó y quedó trabado (e5 contra
+    e6, d5 contra d6, o …e4 contra e3). **d4 contra d5 no cierra nada**: con
+    la primera versión, que contaba cualquier peón con otro delante, toda
+    Tarrasch salía «cerrada»;
+  - centro abierto (ningún peón en d ni en e), enroques opuestos (los reyes en
+    alas distintas) y sin damas.
+- **Se juzga contra lo esperable para ESAS partidas**: el promedio del rival con
+  el color que llevaba en cada una, no el 50 % ni su promedio general. Con
+  negras saca menos, y eso no vuelve débil a toda estructura típica de las
+  negras (la misma decisión de «Dónde rinde menos»).
+- Cuenta cuando se aparta más de lo que explica el azar (z de ±1,28) y en 5
+  puntos o más, **con 8 partidas o más** (o el mínimo del análisis, si es
+  mayor). Con menos, la tarjeta dice «Pocas partidas para decir algo»: 6
+  Tarrasch perdidas contra 6 Españolas ganadas no alcanzan.
+- **El veredicto va escrito** («Ahí rinde menos: búscalo») y el borde lo
+  acompaña: verde es bueno para quien le juega, rojo malo.
+- Al resumen van dos de cada lado como mucho, con el dato («En la jugada 12
+  le pasa en el 33 % de sus partidas; ahí él saca 25,0 %…»).
+- Un análisis guardado antes no trae `r.estructuras`: la tarjeta no sale.
+
+Verificador (`preparacion-rivales`, «Su tipo de posición»): tres aperturas que
+llegan enteras a la jugada 12, **comprobadas con chess.js** (la Francesa de la
+primera versión tenía una jugada ilegal: el caballo iba a h2, donde había un
+peón). Sin navegador: los rasgos de cada una (y de una Escocesa con enroques
+opuestos y sin damas), el veredicto con Pedro sacando 25 % contra el peón
+aislado y 85 % con el centro cerrado, lo esperable con blancas, el resumen, el
+mínimo de 8 y que una partida corta no cuente. En la página: la tarjeta
+después de la táctica, cada veredicto escrito, el dato y el resumen. Roto a
+propósito sin lo esperable por color, con «cerrado» para d4 contra d5 y sin el
+mínimo: saltó cada vez.
+
 ## Las inscripciones a torneos en línea
 
 `inscripciones.html` muestra lo que llegó por `inscripcion.html`, el formulario
@@ -2550,3 +2820,24 @@ estudiantes», «+120 artículos» cuando había 7) y no los respaldaba nada.
   pinta. Mirando como otra persona («Ver como») tampoco: la RLS respondería
   con la gente de quien mira.
 - Lo prueba `verificar-panel.js` (nombre por textContent incluido).
+
+## Hoy entrenaron
+
+- El alumno tiene su resumen del día en el hub; el profe no veía nada del
+  día: «Tu semana» cuenta a siete días. Debajo de «Se están cayendo del plan»
+  va `#profe-hoy`, que dice quién entrenó hoy, cuánto y cuántos salieron
+  limpios. Por ejemplo, «Ana Rojas — 12 ejercicios · 9 de 11 limpios». Cada
+  nombre lleva a su informe.
+- `public.entreno_hoy_de_mis_alumnos()` (migración `20260929175618`,
+  SECURITY INVOKER): una fila por alumno que entrenó hoy (día de Costa
+  Rica), de más a menos.
+  - «Limpios» cuenta solo lo que dice cómo salió; sin nada de eso, no se
+    menciona.
+  - La RLS decide de quién. Se probó impersonando a un profesor que no
+    administra, con filas de prueba revertidas: ve a su alumno y no al
+    ajeno. Administración ve a todos, a propósito.
+- `js/clases.js` → `cargarHoyEntrenaron()`: seis nombres y «Y N alumnos
+  más». Sin nadie, no se pinta, y mirando como otra persona («Ver como»)
+  tampoco, por lo mismo que la lista de los que se caen.
+- Lo prueba `verificar-panel.js` (nombre por textContent incluido, sin
+  «limpios» cuando no hay con qué, oculto sin nadie).

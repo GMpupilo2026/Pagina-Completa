@@ -1762,9 +1762,49 @@
             // El primer paso le habla al profesor («asigna tu primera tarea»):
             // a quien lo está revisando no le toca hacerlo.
             if (!profile._persona) primerPasoDelProfesor(fila);
+            // Lo que más le costó a su clase: las preguntas son de quien entra
+            // (auth.uid()), así que mirando a otra persona no se muestra.
+            if (!profile._persona) LoQueCosto.pintar(sb, document.getElementById("lo-que-costo"), profile.id).catch((e) => console.error(e));
             // Quiénes se caen: la RLS responde con la gente de quien MIRA, así
             // que mirando a otra persona no se pinta (serían los de uno).
             if (!profile._persona) cargarSeCaen();
+            // Y quiénes entrenaron hoy: igual, la RLS responde con los de quien mira.
+            if (!profile._persona) cargarHoyEntrenaron();
+        }
+
+        /* Quiénes entrenaron hoy, cuánto y cuántos limpios (sin error ni
+           pista, de lo que dice cómo salió), de más a menos, con su informe a
+           un clic. La lista la arma public.entreno_hoy_de_mis_alumnos()
+           (SECURITY INVOKER: la RLS decide de quién). */
+        const HOY_VISIBLES = 6;
+        async function cargarHoyEntrenaron() {
+            const caja = document.getElementById("profe-hoy");
+            if (!caja) return;
+            const { data, error } = await sb.rpc("entreno_hoy_de_mis_alumnos");
+            if (error || !data || !data.length) { caja.hidden = true; return; }
+            const lista = document.getElementById("profe-hoy-lista");
+            lista.replaceChildren();
+            data.slice(0, HOY_VISIBLES).forEach((a) => {
+                const li = document.createElement("li");
+                const enlace = document.createElement("a");
+                enlace.href = "informes.html?alumno=" + encodeURIComponent(a.student_id);
+                enlace.className = "flex items-baseline justify-between gap-3 py-2 rounded hover:bg-brand-50 dark:hover:bg-brand-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+                const nombre = document.createElement("span");
+                nombre.className = "min-w-0 text-sm font-medium text-brand-800 dark:text-white";
+                nombre.textContent = a.nombre || "Sin nombre";
+                const cuanto = document.createElement("span");
+                cuanto.className = "shrink-0 text-xs text-brand-500 dark:text-brand-300";
+                cuanto.textContent = (a.ejercicios === 1 ? "1 ejercicio" : a.ejercicios + " ejercicios") +
+                    (a.con_como_salio ? ` · ${a.limpios} de ${a.con_como_salio} limpios` : "");
+                enlace.append(nombre, cuanto);
+                li.appendChild(enlace);
+                lista.appendChild(li);
+            });
+            const resto = data.length - HOY_VISIBLES;
+            const mas = document.getElementById("profe-hoy-mas");
+            mas.hidden = resto <= 0;
+            mas.textContent = resto === 1 ? "Y 1 alumno más." : "Y " + resto + " alumnos más.";
+            caja.hidden = false;
         }
 
         /* Los alumnos con plan que llevan días sin entrenar, por nombre, con

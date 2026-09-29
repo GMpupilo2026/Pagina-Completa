@@ -1084,6 +1084,213 @@ clase-juega`.** Está probado que fallan de verdad:
 - con el control remoto que no sigue al profe o que no muestra el estado;
 - con el alumno pidiendo los puntos de otro.
 
+### La clase en el celular del alumno
+
+Muchos alumnos entran desde el celular, y ahí lo que se rompe no da ningún
+error: la página funciona, pero el tablero queda abajo, la cuenta regresiva
+no se ve mientras se mira el tablero, o un botón no se acierta con el dedo.
+Medido en 375 × 740, con el mapa, el calentamiento, los equipos, el podio y
+el tiempo para pensar puestos a la vez.
+
+- **Lo de arriba va más junto en pantallas chicas** (`sm:` recupera lo de
+  siempre): el título, «Contraseña/Salir» y la franja de estado. El tablero
+  arrancaba a unos 300 px de arriba y ahora a 228: entra entero sin bajar.
+- **El turno y el tiempo para pensar van pegados al tablero**, antes del
+  mapa, el calentamiento, los equipos y el podio. Antes, en el celular, la
+  cuenta regresiva quedaba debajo de todo eso, y quien miraba el tablero no
+  la veía. En la computadora también queda mejor.
+- **Los botones para el dedo miden 44 px de alto en el celular**: Girar,
+  Coordenadas, Levantar la mano, y la ✕ que cierra la pregunta (medía 24).
+  En la computadora quedan como estaban.
+- Nada se sale a lo ancho, y la tarjeta de la pregunta muestra su tablero
+  entero.
+
+**Al tocar la pantalla de la clase, correr `node herramientas/verificar-todo.js
+clase-movil`.** Está probado que falla de verdad: con el `sesion.html` de
+antes saltan lo de arriba, el orden, la cuenta regresiva y los dos tamaños.
+
+### Lo que más le costó a tu clase
+
+En el panel del profe (`clases.html`), una tarjeta con las preguntas de jugada
+de los últimos 30 días que más falló su clase, con su posición. Un botón arma
+con ellas un plan de repaso. Así, lo que no quedó se repite en la clase
+siguiente sin buscarlo a mano.
+
+- **La cuenta la hace la base**: `preguntas_que_costaron(p_dias)`, `SECURITY
+  INVOKER`, solo con las preguntas de quien pregunta.
+  - Usa la misma regla de fallo que el repaso personal: marcada mal, o sin
+    calificar y distinta de la primera jugada del motor.
+  - Solo cuentan las preguntas ya cerradas y con al menos dos respuestas: con
+    una sola, el porcentaje no dice nada del grupo.
+  - Devuelve las diez que más costaron.
+  - Comprobado impersonando: el profe ve sus diez preguntas y el alumno,
+    ninguna.
+- **El plan de repaso** es uno nuevo, «Repaso: lo que más costó (al …)», con
+  un renglón de posición por pregunta, en el mismo orden, y el enunciado como
+  su `pregunta` (js/plan-clase.js).
+  - La tarjeta lleva a `planes.html?plan=<id>`, que ahora abre ese plan
+    directamente.
+  - En la clase, cada renglón trae sus botones de siempre: «Al tablero»,
+    «Preguntar», «Jugar votando» y «Calentamiento».
+- **Mirando a otra persona («Ver como») no se muestra**: la función contesta
+  con las preguntas de quien entra, no de la persona que se mira.
+- El diagrama es `NotasAlumno.diagrama`, que ahora se exporta: el mismo de
+  las notas con posición, una sola copia.
+- El doble de `verificar-panel.js` anotaba los insert y no devolvía nada: sin
+  id, no se podía probar un plan con sus renglones. Ahora los anota en
+  `window.__inserts` y devuelve la fila con su id, como PostgREST.
+
+**Al tocar esto, correr `node herramientas/verificar-todo.js lo-que-costo
+panel`.** Está probado que falla de verdad:
+- sin el enunciado;
+- con los renglones sin orden;
+- con `planes.html` que no abre el plan;
+- con la tarjeta vacía a la vista.
+
+### La ronda rápida
+
+«⚡ Ronda rápida con 5 de estos, al azar», en Táctica. Toma cinco ejercicios
+del tema y la dificultad que se están mirando, sin repetir.
+
+- **El tiempo por posición se elige al lado del botón**, en Táctica mismo. Se
+  pensó ponerlo en la pestaña Preguntar, pero entonces el profe tenía que ir y
+  volver entre pestañas para arrancar una ronda.
+- **Los dos van debajo de la lista de ejercicios, no arriba.** Arriba corrían
+  la galería de «Ver todas las posiciones» unos 80 px hacia abajo; en la
+  pantalla del CI entraba un solo tablero y `verificar-sesion-curso.js` lo
+  marcó.
+- **Cada posición es una pregunta con tiempo**, la de siempre (`crearPregunta`
+  con su `prompt` y su `tiempo_limite`), y el tablero de la clase la muestra.
+  Se cierra sola un poco después del plazo (la base acepta hasta 5 s más), o
+  con «Pasar a la siguiente».
+- **Se califica sola** (`RondaRapida.esBuena`), porque la solución del
+  ejercicio es conocida:
+  - vale la jugada de la solución (también escrita «a1a8») o cualquier mate;
+  - así cuenta para los puntos y los trofeos como si el profe la hubiera
+    marcado.
+- **Al terminar sale el resultado:** cuántas buenas tuvo cada uno, con el
+  puesto compartido en el empate. «Mostrar el podio de la ronda» usa el mismo
+  `game_state.podio` con un `titulo`, que la caja muestra en lugar de «Podio
+  de la clase»; su CHECK de forma admite claves de más.
+- No arranca si hay una partida votada en curso, y termina al cerrar la
+  clase.
+
+### La participación pareja
+
+Arriba de las pestañas del profe, y solo para él (nunca lo ve la clase):
+«🙋 Llevan un rato sin contestar», con quién no contestó 3 o más de las
+últimas 4 preguntas (`Callados.calcular`).
+
+- **Qué preguntas cuentan:**
+  - solo las de todos (una dirigida a otro no cuenta);
+  - solo las que se hicieron mientras el alumno estaba: a quien acaba de
+    entrar no se le cuenta lo de antes. Desde cuándo está lo anota la página
+    del profe al verlo llegar; el `online_at` de la presencia no sirve, porque
+    cambia con cada anuncio.
+- **«🎯 Darle el turno»** usa el turno de siempre (`darTurno`), con un origen
+  nuevo, `'profe'` (migración `clase_elegidos_origen_profe`). Sin él, ese
+  turno habría quedado en el registro como un sorteo que no fue. Al alumno se
+  le dice «Tu profe te eligió», sin mencionar que no contestaba.
+- Se vuelve a contar cuando cambia la presencia o una pregunta, juntando las
+  llamadas seguidas en una sola consulta.
+
+### Lo que le costó a cada alumno
+
+En su informe (`informes.html?alumno=`), «🧩 Lo que le costó a Ana»: las
+preguntas de clase de los últimos 30 días que contestó mal, qué jugó y cuál
+era la buena (en notación española), con su posición y cuántas falló de
+cuántas contestó. «Armar un plan de repaso para Ana» usa el mismo armado que
+la tarjeta de la clase (`LoQueCosto.armarPlan`), y cada renglón dice qué jugó.
+
+- **La base:** `preguntas_que_le_costaron(p_alumno, p_dias)`, `SECURITY
+  INVOKER`, con la misma regla de fallo que el repaso personal. Comprobado
+  impersonando:
+  - su profe ve sus preguntas falladas;
+  - un compañero y otro profe no ven ninguna;
+  - el propio alumno tampoco, porque su RLS no le da las preguntas de las
+    clases cerradas por esa vía. Por eso la sección es solo del informe que
+    mira el profe.
+- **Mirando a otra persona («Ver como») se ve**, pero no se ofrece armar el
+  plan: quedaría a nombre de quien mira.
+
+### «Ver como alumno»
+
+«👁️ Como alumno», junto a «Proyector», abre `sesion.html?como=alumno`. Es la
+clase del profe tal como la ve un alumno (la pregunta, el calentamiento, el
+podio con «Tú: …», los equipos…), para revisar antes de mostrar algo, sin
+otra cuenta. Una barra arriba lo dice siempre y da la salida.
+
+- **Nada se manda desde ahí**, y se corta en el cliente de Supabase mismo, no
+  en cada botón. En esa ventana:
+  - `insert`, `upsert`, `update` y `delete` no hacen nada;
+  - de las funciones de la base, solo corren las de lectura
+    (`RPC_DE_LECTURA`).
+  - Así, contestar una pregunta no deja respuesta, ni la «en curso».
+- **La asistencia y el tiempo en clase (`class_presence_log`) ni se
+  intentan.** Al principio se intentaban y, como la escritura devolvía vacío,
+  la página se caía antes de mostrarse: lo encontró la prueba.
+- **La presencia entra con otra clave y con el rol `vista-previa`**:
+  - no cuenta como alumno: ni asistencia, ni turno, ni aviso de quién no
+    contesta;
+  - con la misma clave, su anuncio se habría mezclado con el de la ventana del
+    profe.
+
+**Al tocar esto, correr `node herramientas/verificar-todo.js clase-ronda
+lo-que-costo`.** Está probado que fallan de verdad:
+- **ronda rápida:**
+  - sin aceptar un mate que no es el guardado, o sin calificar;
+  - con el podio sin título;
+- **aviso de quién no contesta:**
+  - contándole lo de antes a quien entró tarde;
+  - contando las dirigidas a otro;
+  - dando el turno como un sorteo;
+- **«Ver como alumno»:**
+  - con la vista de alumno que manda algo;
+  - o que entra a la presencia como alumno;
+- **lo que le costó a un alumno:**
+  - con el plan ofrecido mirando a otra persona;
+  - con las jugadas en inglés.
+
+### Entrar desde el celular con un código QR
+
+En la clase presencial, «📱 Código para entrar», en la barra del proyector
+(`sesion.html?proyector=1`), muestra arriba del tablero un código QR grande.
+Al lado van la dirección escrita y cuántos alumnos ya entraron. El código
+abre `sesion.html?profe=<id del profe>` en el celular; el alumno entra con su
+cuenta de siempre y contesta ahí.
+
+- **`?profe=` elige la clase, no da permiso.** `ClaseElegida.resolver` lo usa
+  solo si ese profe está en `mis_clases()` del alumno, y la deja recordada. Si
+  el id no es de sus profes, no hace nada; y lo que se ve lo decide igual la
+  RLS. Lo del id en el código no es un dato que abra nada: sin la relación,
+  la base no entrega su clase.
+- **El parámetro se quita de la dirección** (`history.replaceState`). Si no,
+  al cambiar de clase con el selector (que recarga) volvería a mandar él.
+- **Quien no tenía sesión en ese celular pierde el `?profe=`.** La guardia de
+  sesión manda a `login.html?next=` solo con la ruta, y `next` no acepta
+  parámetros a propósito (una redirección abierta). No se tocó: después del
+  login cae en `sesion.html`, y en un celular nuevo no hay clase recordada, así
+  que entra a la que está abierta. Solo quedaría mal un alumno con dos profes
+  con clase abierta a la vez, en un celular donde nunca entró.
+- **El código va negro sobre blanco también en modo oscuro**, con su fondo
+  y su margen de 4 módulos dentro del dibujo, no puestos por la caja. Invertido
+  o sin margen, muchas cámaras no lo encuentran. La dirección escrita va sin el
+  id: quien la teclea entra igual a la clase abierta.
+- **La librería es `qrcode-generator`** (MIT, sin dependencias), en
+  `js/vendor/qrcode.js` como las demás (ver `herramientas/lib/librerias-vendor.js`).
+  `js/clase-qr.js` la pide recién al mostrar el código: solo la usa el
+  proyector.
+
+**Al tocar esto, correr `node herramientas/verificar-todo.js clase-qr`.** Lee
+el código de una captura de la pantalla con `jsqr` (solo de desarrollo), en
+modo claro y oscuro. Está probado que falla de verdad:
+- con la dirección sin el profe;
+- sin el margen o sin el fondo blanco del dibujo, o con la caja oscura;
+- sin quitar el parámetro, o aceptando el id de cualquiera;
+- sin contar a quien entra;
+- cargando la librería siempre;
+- con el botón sin `aria-expanded`.
+
 ### El modo sencillo de la clase en vivo
 
 Aun ordenada, la pantalla del profesor tiene catorce controles delante, y la
@@ -1950,6 +2157,41 @@ alumno le aparece en su propio tablero.
     profe lo apaga; el profe no lo puede encender; sí apagarlo; la alumna lo
     cancela; al reintentar se apaga.
 
+- **El alumno le contesta a quien lo ayudó**: debajo de la ayuda, «💬
+  Contestarle» (hasta 280 caracteres). Vive en su fila
+  (`practice_games.respuesta`, `respuesta_at`, migración
+  `practica_el_alumno_contesta`) y **no en el chat privado**: el chat es solo
+  entre el alumno y su profe, y la ayuda la puede haber dado alguien de
+  supervisión o coordinación, que tiene que leer la respuesta ahí mismo donde
+  la mandó. El mismo trigger lo hace cumplir: solo el alumno la escribe, y
+  solo si tiene una ayuda a la que contestar (el campo tampoco sale sin ella);
+  la hora la pone la base; texto vacío la quita; quien no es el alumno no la
+  toca; **una ayuda nueva, o quitar la ayuda, la borra**, porque contestaba a
+  otra; reintentar también. Al profe le sale en la miniatura y en el diálogo,
+  siempre por `textContent` —es texto que escribe un alumno—, y se dice en voz
+  una vez por respuesta. Comprobado impersonando roles: sin ayuda no entra; la
+  hora falsa se ignora y los espacios se recortan; jugar no la borra; el profe
+  no la puede cambiar; 281 caracteres los rechaza el CHECK; la ayuda nueva, el
+  texto vacío y el reintento la borran.
+- **Una pista para todos a la vez**: arriba de «Tableros de los alumnos»,
+  «📣 Pista para todos». Va **solo texto**: cada alumno va en una posición
+  distinta, y una flecha dibujada en una señalaría otra cosa en las demás. Es
+  **un solo update filtrado por la ronda** (`session_id`), no un bucle por
+  alumno: la RLS decide a qué partidas llega (las del profe, o las que alcanza
+  quien observa) y el trigger le pone a cada una quién la dio y apaga los
+  pedidos de ayuda —no hizo falta migración—. La ayuda lleva `para_todos` y el
+  alumno la lee «Pista de tu profe para toda la clase». **Reemplaza** la ayuda
+  individual que tuviera cada uno, y la nota del campo lo dice. Se cuenta lo
+  que QUEDÓ guardado («Le llegó a los 12 alumnos», «a 10 de 12»), porque con la
+  ronda terminada la base la devuelve como estaba. Comprobado impersonando
+  roles: el profe la manda a las dos partidas de una vez, cada una con su `de`,
+  sin tocar las jugadas y apagando el pedido; una alumna no se la puede mandar
+  a nadie.
+  - El doble de `verificar-clase-registrada.js` cambiaba solo la PRIMERA fila
+    de un update; ahora cambia todas las que cumplen el filtro, como la base.
+    Con el de antes, «le llegó a los 2» se habría visto bien habiendo cambiado
+    una sola.
+
 Comprobado impersonando roles en SQL (revertido): el profe manda la ayuda y
 queda con su `de`, pero sus cambios a jugadas, estado, intentos y reloj se
 devuelven; el alumno no puede cambiarla y sí juega; al reintentar se borra; con
@@ -2108,7 +2350,7 @@ golpe saltan 3 comprobaciones, sin la persistencia 1 y cruzando las posiciones 8
 
 ### Los Tipos de entrenamiento, en la clase
 
-La pestaña **"🧠 Entrenamientos"** del profesor lista los diecisiete Tipos de
+La pestaña **"🧠 Entrenamientos"** del profesor lista los diecinueve Tipos de
 entrenamiento de `entreno/tipos.html` (ver «Los Tipos de entrenamiento» en
 entrenamiento.md) en cascada tipo → nivel → ejercicio, con las mismas
 posiciones (`entreno/data/tipos.json`) y el mismo catálogo

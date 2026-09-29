@@ -125,7 +125,10 @@ window.__funcion = [];
            de donde la página refresca su estado, y un doble que devolviera la
            tabla entera daría por bueno un recuento equivocado. */
         if (pendiente && (pendiente.accion === "insert" || pendiente.accion === "upsert")) {
-          d = Array.isArray(pendiente.fila) ? pendiente.fila : [pendiente.fila];
+          // Como la base: lo que se inserta sin id recibe uno (el plan nuevo
+          // tiene que tener con qué colgarle sus renglones).
+          d = (Array.isArray(pendiente.fila) ? pendiente.fila : [pendiente.fila])
+            .map((f) => (f && f.id === undefined && pendiente.accion === "insert" ? Object.assign({ id: etiqueta.replace("from:", "") + "-" + (window.__escrituras.length) }, f) : f));
           return Promise.resolve({ data: unica ? (d[0] || null) : d, error: null }).then(res, rej);
         }
         if (pendiente && pendiente.accion === "update" && Array.isArray(filas)) {
@@ -245,6 +248,26 @@ function diagnosticoCon(finales, tactica) {
   d.areas.tactica = { peso: 20, total: 7, nosabe: 0, aciertos: 3, logrado: Math.round(tactica * 0.2) };
   return d;
 }
+/* «Tus propios errores» deja sus ejercicios en training_state, como los guarda
+   js/progreso-usuario.js ({ raw: "<json>" }). Seis de Ana (para el «Ver
+   todos»), uno con una «jugada» que es HTML (lo escribió su navegador: no se
+   cree ni se pinta), dos ya resueltos, y la fila de otra alumna, que el doble
+   filtra de verdad y no se puede colar. */
+function errorDeAna(i, nivel, extra) {
+  return Object.assign({ id: "juego-g" + i + "-" + (10 + i), nivel, fen: "8/8/8/8/8/8/8/K6k w - - 0 1", jugada: "Nxf7",
+    buenas: ["Bxf7+", "O-O"], mejor: "Bxf7+", antes: 13, despues: -455, fecha: "2026-09-2" + i + "T15:00:00Z", origen: "juego",
+    resumen: "Partida del 2" + i + " sept · jugada " + (5 + i) }, extra || {});
+}
+const ERRORES_ANA = {};
+[errorDeAna(1, 1), errorDeAna(2, 2, { tema: "horquilla" }), errorDeAna(3, 1, { tema: "clavada" }), errorDeAna(4, 1, { tema: "clavada" }), errorDeAna(5, 2), errorDeAna(6, 1, { tema: "clavada" }),
+ errorDeAna(7, 1, { id: "malo", jugada: "<img src=x onerror=alert(1)>" })].forEach((x) => { ERRORES_ANA[x.id] = x; });
+const ESTADO_ERRORES = [
+  { student_id: "a-1", key: "errores_propios_v1", value: { raw: JSON.stringify(ERRORES_ANA) } },
+  { student_id: "a-1", key: "errores_analizadas_v1", value: { raw: JSON.stringify({ "juego:g1": "x", "juego:g2": "x", "practica:p1": "x", "juego:g3": "x" }) } },
+  { student_id: "a-1", key: "tipos_estrellas_v1", value: { raw: JSON.stringify({ "errores:juego-g6-16": 3, "errores:juego-g5-15": 2, "detective:x": 3 }) } },
+  { student_id: "a-2", key: "errores_propios_v1", value: { raw: JSON.stringify({ z: errorDeAna(9, 1, { id: "de-bea", resumen: "De Bea" }) }) } },
+];
+
 const DIAGNOSTICOS = [
   { student_id: "a-1", activity: "diagnostico", created_at: "2026-09-18T12:00:00Z", detail: diagnosticoCon(70, 40) },
   { student_id: "a-1", activity: "diagnostico", created_at: "2026-06-02T12:00:00Z", detail: diagnosticoCon(30, 60) },
@@ -283,7 +306,8 @@ async function abrir(browser, datos, usuarioId, ruta, almacen) {
 }
 
 const tarjeta = (page, etiqueta) => page.evaluate((e) => {
-  const t = [...document.querySelectorAll("#stat-cards > div")].find((d) => d.lastElementChild.textContent.trim() === e);
+  // La etiqueta es el tercer hijo: debajo puede venir un enlace (el del tipo más flojo).
+  const t = [...document.querySelectorAll("#stat-cards > div")].find((d) => d.children[2] && d.children[2].textContent.trim() === e);
   return t ? t.children[1].textContent.trim() : null;
 }, etiqueta);
 
@@ -345,6 +369,7 @@ async function pruebaProfesor(browser) {
       informes_resumen_alumnos: [ANA, BRUNO, CARLA],
       informes_cursos_alumnos: CURSOS_ANA,
       informes_entreno_modulos: [MODULOS_ANA, { student_id: "a-2", temas: 8, con_como_salio: 0, limpios: 0 }],
+      informes_tipo_mas_flojo: [{ student_id: "a-1", tipo: "balanza", intentos: 8, limpios: 3, porcentaje: 38 }],
       // Bruno faltó a dos clases con una justificación aceptada.
       faltas_justificadas: [{ student_id: "a-2", clases_justificadas: 2 }],
       // Lo hecho desde el diagnóstico en cada lugar al que manda el plan: el
@@ -361,11 +386,28 @@ async function pruebaProfesor(browser) {
       premios_de_alumno: PREMIOS_ANA,
       trofeos_de: [{ por_clase: 9, ajustes: 0, total: 9 }],
     },
+    /* Los temas de los errores del grupo (errores_temas_del_grupo): la base
+       contesta distinto según los alumnos que se le pasen, así que si la página
+       no mandara los del grupo elegido, la lista no cambiaría al filtrar. Un
+       tema que la página no conoce (lo escribió el navegador de un alumno) y
+       «otra» no se pintan. */
+    rpcPorArgs: {
+      errores_temas_del_grupo: {
+        '{"p_alumnos":["a-1","a-2","a-3"]}': [
+          { tema: "clavada", errores: 5, alumnos: 2 },
+          { tema: "<img src=x>", errores: 4, alumnos: 1 },
+          { tema: "horquilla", errores: 1, alumnos: 1 },
+          { tema: "otra", errores: 1, alumnos: 1 },
+        ],
+        '{"p_alumnos":["a-2"]}': [{ tema: "colgada", errores: 2, alumnos: 1 }],
+      },
+    },
     tablas: {
       profiles: [{ id: "prof-1", role: "profesor", is_admin: true, full_name: "Oscar", email: "o@x.cr" }],
       training_plans: [], diagnosticos_publicos: [], arbitrajes_publicos: arbitrajes,
       question_answers: RESPUESTAS,
       training_progress: DIAGNOSTICOS,
+      training_state: ESTADO_ERRORES,
       encargados: [{ id: "enc-1", student_id: "a-1", nombre: "Mamá de Ana", email: "mama@x.cr",
                      frecuencia: "semanal", activo: true, ultimo_envio_at: "2026-09-08T12:00:00Z", creado_por: "otra" },
                    { id: "enc-2", student_id: "a-1", nombre: "Tía de Ana", email: "tia@x.cr", frecuencia: "mensual",
@@ -385,6 +427,16 @@ async function pruebaProfesor(browser) {
   igual("entreno · Ana", await fila(page, "entreno-table-body", 0), "Ana Rojas | 12 | 4 | 18 | 2 (5⭐) | 6 (1·2·3) | 7 | 4");
   igual("entreno · Bruno", await fila(page, "entreno-table-body", 1), "Bruno Mena | 3 | 0 | — | — | — | — | —");
   igual("ranking · primera fila", await page.textContent("#leaderboard > div:first-child"), "Ana Rojas7/10 · 70%");
+
+  console.log("-- Los errores de las partidas del grupo");
+  await page.waitForFunction(() => document.querySelectorAll("#errores-grupo-body li").length > 0);
+  const temasGrupo = () => page.evaluate(() => [...document.querySelectorAll("#errores-grupo-body li")].map((li) => {
+    const a = li.querySelector("a");
+    return li.querySelector("span").textContent + (a ? " → " + a.getAttribute("href") : "");
+  }).join(" // "));
+  igual("los temas de todo el grupo, con su nombre y a dónde practicarlos; lo desconocido y «otra» no salen", await temasGrupo(),
+    "Clavada · 5 errores en 2 alumnos → entreno/temas.html?tema=pin // Horquilla (ataque doble) · 1 error en 1 alumno → entreno/temas.html?tema=fork");
+  igual("y se ve de verdad", await page.evaluate(() => document.getElementById("errores-grupo-body").checkVisibility()), true);
 
   /* EL ÍNDICE DE LA CLASE. Antes acá salían tres listas de los mismos alumnos
      —precisión, asistencia y entrenamiento— una detrás de otra y sin corte: con
@@ -410,16 +462,19 @@ async function pruebaProfesor(browser) {
   igual("y el de visitantes también arranca cerrado",
     await page.evaluate(() => document.getElementById("diagnosticos-visitantes").closest("details").open), false);
 
-  /* La franja de lo que pide actuar: los datos ya estaban cargados y no se
-     decían en ninguna parte. Se mide el display que CALCULA el navegador, no la
-     clase — la lección que dejó el cartel de instalar la app. */
-  console.log("-- Qué pide atención");
-  igual("la franja se ve de verdad", await page.evaluate(() =>
-    getComputedStyle(document.getElementById("atencion")).display === "none" ? "no" : "sí"), "sí");
-  igual("y dice qué falta, con su número", await page.evaluate(() =>
-    [...document.querySelectorAll("#atencion-botones button")].map((b) => b.textContent)),
-    ["🧭 2 sin diagnóstico", "📤 1 plan sin compartir"]);
-  await page.click("#atencion-botones button");
+  /* Lo que pide atención va escrito dentro de la pregunta que lo contesta,
+     no en una franja aparte que llevaba al mismo tema. Se mide lo que se VE
+     (checkVisibility), no la clase. */
+  console.log("-- Lo que pide atención, dentro de su pregunta");
+  const pendientes = () => page.evaluate(() => [...document.querySelectorAll("#preguntas-rapidas button")]
+    .filter((b) => b.checkVisibility()).map((b) => b.textContent));
+  igual("ya no hay una franja aparte", await page.evaluate(() => !!document.getElementById("atencion")), false);
+  igual("cada pregunta dice lo que falta, con su número", await pendientes(),
+    ["¿Quién no está entrenando?", "¿Quién viene a clase?", "¿Cómo contestan en clase?",
+     "¿Qué nivel tiene cada uno? · ⚠️ 2 sin diagnóstico · 1 plan sin compartir"]);
+  igual("y el rótulo avisa qué quiere decir la marca", await page.textContent("#preguntas-rapidas-titulo"),
+    "Preguntas de siempre · lo marcado con ⚠️ pide atención");
+  await page.click('#preguntas-rapidas button[data-tema="diagnostico"]');
   await page.waitForFunction(() => !document.getElementById("topic-report").classList.contains("hidden"));
   igual("y tocarla deja el filtro puesto, no solo avisa",
     await page.inputValue("#topic-filter"), "diagnostico");
@@ -434,21 +489,22 @@ async function pruebaProfesor(browser) {
     [await page.inputValue("#student-filter"), await page.textContent("#student-report-title")].join(" | "),
     "a-1 | 🚩 Últimas asignaciones de Ana Rojas");
 
-  /* Veinticuatro números de golpe no los lee nadie: los dieciséis de segunda
-     fila nacen escondidos (las ocho de siempre más las ocho de los módulos que
-     se sumaron: Temas, Visualización, Tipos, Aperturas, Precisión, el tema más
-     flojo, los Finales contra la máquina y las casillas de Coordenadas). Se mide el display que
+  /* Veinticinco números de golpe no los lee nadie: los diecisiete de segunda
+     fila nacen escondidos (las ocho de siempre más las nueve de los módulos que
+     se sumaron: Temas, Visualización, Tipos, el tipo más flojo, Aperturas,
+     Precisión, el tema más flojo, los Finales contra la máquina y las casillas
+     de Coordenadas). Se mide el display que
      calcula el navegador, no la clase. */
   const escondidas = () => page.evaluate(() =>
     [...document.querySelectorAll("#stat-cards [data-extra]")]
       .filter((d) => getComputedStyle(d).display === "none").length);
-  igual("las dieciséis secundarias nacen escondidas", await escondidas(), 16);
+  igual("las diecisiete secundarias nacen escondidas", await escondidas(), 17);
   igual("y las que se miran siguen a la vista", await page.evaluate(() =>
     [...document.querySelectorAll("#stat-cards > div")].filter((d) => getComputedStyle(d).display !== "none").length), 8);
   await page.click("#stat-cards-ver");
   igual("el botón las destapa todas", await escondidas(), 0);
   await page.click("#stat-cards-ver");
-  igual("y las vuelve a guardar", await escondidas(), 16);
+  igual("y las vuelve a guardar", await escondidas(), 17);
   await page.selectOption("#student-filter", "");
   await page.waitForFunction(() => !document.getElementById("teacher-report").classList.contains("hidden"));
 
@@ -474,6 +530,13 @@ async function pruebaProfesor(browser) {
   igual("Asistencia", await tarjeta(page, "Asistencia (75%)"), "3/4");
   igual("Tiempo total en la plataforma", await tarjeta(page, "Tiempo total en la plataforma"), "1 h 35 min");
   igual("Temas de cursos estudiados", await tarjeta(page, "Temas de cursos estudiados"), "3");
+  /* Del tipo más flojo, derecho a Tareas con el renglón armado
+     (verificar-tareas.js prueba que llegue armado). */
+  igual("el tipo más flojo trae «Mandarle 10 de La balanza», con el alumno, el tipo y la cantidad",
+    await page.evaluate(() => {
+      const a = document.querySelector("#stat-cards a[data-tipo-flojo]");
+      return a ? [a.textContent, a.getAttribute("href")].join(" | ") : null;
+    }), "Mandarle 10 de La balanza → | tareas.html?alumno=a-1&material=tipos&recorte=balanza&cantidad=10");
   // El plan dice, al lado de cada enlace, cuánto se hizo ahí desde el
   // diagnóstico; los recursos que no dejan rastro (una ficha, una página de
   // juego) no llevan número, y lo que no se tocó dice «todavía nada».
@@ -621,6 +684,49 @@ async function pruebaProfesor(browser) {
      window.__consultas.filter((c) => c === "from:tareas" || c === "from:examenes" || c === "from:tarea_items").length].join(",")),
     "1,0");
 
+  console.log("-- Errores de sus partidas");
+  await page.waitForFunction(() => document.querySelector("#errores-body ul"), null, { timeout: 8000 }).catch(() => {});
+  igual("el bloque se ve", await page.evaluate(() => document.getElementById("errores-report").checkVisibility()), "true");
+  igual("el resumen cuenta lo suyo y nada más", await page.evaluate(() =>
+    document.querySelector("#errores-body > p").textContent.trim()),
+    "4 partidas revisadas · 6 errores (4 en que regaló, 2 en que se le escapó la ventaja) · 2 ya resueltos.");
+  igual("y lo que más se repite, por tema", await page.evaluate(() =>
+    document.querySelectorAll("#errores-body > p")[1].textContent.trim()), "Lo que más se repite: clavadas (3), horquillas (1).");
+  igual("se ven los 5 más recientes", await page.evaluate(() =>
+    [...document.querySelectorAll("#errores-body li")].filter((li) => li.checkVisibility()).length), 5);
+  igual("el primero, con la jugada en castellano y las buenas", await page.evaluate(() =>
+    document.querySelector("#errores-body li").innerText.replace(/\s+/g, " ").trim()),
+    "Partida del 26 sept · jugada 11 — regaló · clavada Jugó Cxf7 (+0,1 → −4,5). Lo bueno: Axf7+ o 0-0. ✓ Ya lo resolvió ★★★");
+  igual("lo sin resolver lo dice escrito, no solo en color", await page.evaluate(() =>
+    document.querySelectorAll("#errores-body li")[2].innerText.includes("✗ Todavía no lo resolvió")), "true");
+  await page.click("#errores-body button");
+  igual("«Ver todos» abre el resto y dice que está abierto", await page.evaluate(() =>
+    [[...document.querySelectorAll("#errores-body li")].filter((li) => li.checkVisibility()).length,
+     document.querySelector("#errores-body button").getAttribute("aria-expanded")].join()), "6,true");
+  igual("lo que no tiene forma de ejercicio no se pinta (ni se ejecuta)", await page.evaluate(() =>
+    [document.getElementById("errores-body").innerHTML.includes("onerror"), !!document.querySelector("#errores-body img")].join()), "false,false");
+  igual("lo de otra alumna no se cuela", await page.evaluate(() => document.getElementById("errores-body").textContent.includes("De Bea")), "false");
+  await (await page.$("#errores-report")).screenshot({ path: "/tmp/informes-errores.png" }).catch(() => {});
+
+  // Llevar sus errores a un plan de clase (quien da clase: prof-1 es profesor).
+  const antesPlan = await page.evaluate(() => window.__escrituras.length);
+  await page.getByRole("button", { name: /errores a un plan de clase/ }).click();
+  await page.waitForFunction(() => /Listo|No se pudo/.test((document.querySelector('#errores-body [role="status"]') || {}).textContent || ""), null, { timeout: 8000 }).catch(() => {});
+  const plan = await page.evaluate((desde) => window.__escrituras.slice(desde).map((e) => ({ t: e.etiqueta, f: e.fila })), antesPlan);
+  const cab = plan.filter((e) => e.t === "from:planes_clase");
+  const renglones = plan.filter((e) => e.t === "from:plan_items").map((e) => e.f);
+  igual("crea UN plan, a nombre de quien da clase y con el nombre del alumno", cab.length === 1 && cab[0].f.profesor_id === "prof-1" && /Errores de las partidas de Ana Rojas/.test(cab[0].f.titulo), "true");
+  igual("una posición por error (los 6 que tienen forma; el de HTML no entra)", renglones.length, 6);
+  igual("todas de tipo posición, colgadas del plan nuevo y con su FEN", renglones.every((x) => x.tipo === "posicion" && x.fen && x.plan_id && x.plan_id.indexOf("planes_clase-") === 0), "true");
+  igual("primero las que no resolvió", renglones.slice(0, 4).map((x) => x.titulo.split(" · ").slice(0, 2).join(" · ")).join(" | "),
+    "Partida del 24 sept · jugada 9 | Partida del 23 sept · jugada 8 | Partida del 22 sept · jugada 7 | Partida del 21 sept · jugada 6");
+  igual("la pregunta del profe dice qué se jugó y qué era lo bueno", renglones[0].pregunta, "¿Qué jugarías? En la partida se jugó Cxf7; lo bueno: Axf7+ o 0-0.");
+  igual("y ofrece abrir ESE plan", /^planes\.html\?plan=planes_clase-\d+$/.test(await page.evaluate(() => { const a = document.querySelector('#errores-body [role="status"] a'); return a ? a.getAttribute("href") : ""; })), "true");
+  igual("lo pide acotado a ESE alumno y a sus tres claves", await page.evaluate(() => {
+    const c = window.__consultas.find((x) => x.etiqueta === "from:training_state");
+    return c ? JSON.stringify(c.donde) : null;
+  }), JSON.stringify([["student_id", "a-1"]]));
+
   console.log("-- Trofeos e insignias");
   await page.waitForFunction(() => document.querySelector("#premios-body [data-insignias]"), null, { timeout: 8000 });
   igual("el bloque de premios se ve", await page.evaluate(() => document.getElementById("premios-report").checkVisibility()), "true");
@@ -708,6 +814,9 @@ async function pruebaProfesor(browser) {
   await page.selectOption("#group-filter", "7B");
   await page.waitForFunction(() => document.querySelectorAll("#attendance-table-body tr").length === 1);
   igual("solo 7B", await fila(page, "attendance-table-body", 0), "Bruno Mena | 7B | 1/4 · 2 faltas justificadas | 10 min | 0 min | 10 min");
+  await page.waitForFunction(() => document.getElementById("errores-grupo-body").textContent.includes("Pieza sin defender"));
+  igual("los errores del grupo siguen al filtro: a la base se le mandan solo los de 7B", await temasGrupo(),
+    "Pieza sin defender · 2 errores en 1 alumno → entreno/temas.html?tema=hangingPiece");
   await page.selectOption("#group-filter", "");
   await page.selectOption("#topic-filter", "4x4");
   await page.waitForFunction(() => !document.getElementById("topic-report").classList.contains("hidden"));
@@ -751,6 +860,8 @@ async function pruebaAlumno(browser) {
       // El tema más flojo (js/tema-flojo.js): la clave la pone la base, el nombre
       // sale de entreno/data/temas-motivos.json.
       informes_tema_mas_flojo: [{ student_id: "a-1", tema: "pin", intentos: 11, limpios: 4, porcentaje: 36 }],
+      // El tipo más flojo (js/tipo-flojo.js): el nombre sale de js/tipos-catalogo.js.
+      informes_tipo_mas_flojo: [{ student_id: "a-1", tipo: "balanza", intentos: 8, limpios: 3, porcentaje: 38 }],
       informes_diagnosticos_alumnos: [{ student_id: "a-1", detalle: DIAGNOSTICO, fecha: "2026-09-10T12:00:00Z", a_medias_pregunta: null, a_medias_fecha: null }],
       informes_totales: { clases_cerradas: 4, preguntas: 10, partidas: 2 },
       resumen_tareas_examenes: DEBERES,
@@ -788,6 +899,10 @@ async function pruebaAlumno(browser) {
   igual("las casillas que más le cuestan en Coordenadas, ordenadas por el módulo de la página",
     await tarjeta(page, "Coordenadas, las que más le cuestan: b6 (falló 9 de 10), g3 (falló 4 de 7)"), "b6 · g3");
   igual("el tema más flojo, con su nombre y cuántos limpios", await tarjeta(page, "Tema más flojo: limpio en 4 de 11"), "Clavada · 36 %");
+  igual("el tipo de entrenamiento más flojo, con el nombre del catálogo y cuántos con tres estrellas",
+    await tarjeta(page, "Tipo más flojo: tres estrellas en 3 de 8"), "La balanza · 38 %");
+  igual("el alumno no se manda tareas: su tarjeta no trae el enlace",
+    await page.evaluate(() => document.querySelectorAll("#stat-cards a[data-tipo-flojo]").length), 0);
   const pedido = await page.evaluate(() => ((window.__rpcArgs || []).find((a) => a[0] === "informes_tema_mas_flojo") || [])[1]);
   igual("a la base se le mandan los motivos, no «Mezcla» ni las fases",
     pedido && [pedido.p_temas.includes("pin"), pedido.p_temas.includes("backRankMate"), pedido.p_temas.includes("mix"), pedido.p_temas.includes("middlegame")],
@@ -819,9 +934,13 @@ async function pruebaAlumno(browser) {
     return p ? p.textContent.trim() : null;
   }), "Tienes 2 entregas vencidas sin hacer.");
   // Lo que este cambio vino a quitar: ninguna de las tablas de actividad se baja
-  // ya desde la página, ni entera ni por alumno.
-  igual("no pide ninguna tabla de actividad", await page.evaluate(() =>
-    window.__consultas.filter((c) => /class_presence_log|platform_activity_log|training_progress|training_state|class_attendance|class_sessions|saved_games/.test(c)).length), 0);
+  // entera desde la página. Pedir lo de UN alumno sí se puede (la comparación de
+  // diagnósticos, los errores de sus partidas): va acotado por student_id.
+  // (Antes esta regla se probaba contra el objeto de la consulta y no contra su
+  // etiqueta: "[object Object]" no calzaba nunca y daba 0 pasara lo que pasara.)
+  igual("no pide ninguna tabla de actividad sin acotarla a un alumno", await page.evaluate(() =>
+    window.__consultas.filter((c) => /class_presence_log|platform_activity_log|training_progress|training_state|class_attendance|class_sessions|saved_games/.test(c.etiqueta)
+      && !c.donde.some(([col]) => col === "student_id")).length), 0);
 
   errores.forEach((e) => { console.log("  ✗ error de la página: " + e); fallos += 1; });
   await page.close();
@@ -1129,16 +1248,17 @@ async function pruebaClaseGrande(browser) {
       return document.querySelector("#diagnosticos-clase [data-pend-corto]").classList.contains("hidden") ? "no" : "sí";
     }), "sí");
 
-  igual("la franja dice los tres que no entrenan", await page.evaluate(() =>
-    [...document.querySelectorAll("#atencion-botones button")].map((b) => b.textContent)),
-    ["😴 3 sin entrenar hace 4 días o más", "🧭 40 sin diagnóstico", "📤 5 planes sin compartir"]);
+  const conPendiente = () => page.evaluate(() => [...document.querySelectorAll("#preguntas-rapidas button")]
+    .filter((b) => b.querySelector("[data-pendiente]").textContent).map((b) => b.textContent));
+  igual("las preguntas dicen los tres que no entrenan y lo que falta del diagnóstico", await conPendiente(),
+    ["¿Quién no está entrenando? · ⚠️ 3 sin entrenar", "¿Qué nivel tiene cada uno? · ⚠️ 40 sin diagnóstico · 5 planes sin compartir"]);
 
   /* La lista de «sin entrenar» y su botón de invitar a la casa: no es el
      informe programado, es el empujón puntual que agrega este cambio. Lo que
      se comprueba es que el botón le pida a la función el ALUMNO CORRECTO —
      el primero de la lista, que es quien nunca entrenó, no cualquiera. */
   console.log("-- La lista de «sin entrenar» y el botón de invitar");
-  await page.click("#atencion-botones button");
+  await page.click('#preguntas-rapidas button[data-tema="inactivos"]');
   await page.waitForFunction(() => !document.getElementById("topic-report").classList.contains("hidden"));
   igual("el clic deja el filtro en «inactivos»", await page.inputValue("#topic-filter"), "inactivos");
   igual("lista a los tres, el que nunca entrenó primero", await page.evaluate(() =>
@@ -1149,6 +1269,17 @@ async function pruebaClaseGrande(browser) {
   await page.waitForFunction(() => window.__funcion.length > 0);
   igual("«invitar a practicar» le pide a la función ese alumno", await page.evaluate(() => window.__funcion[0]),
     { action: "invitar_practicar", student_id: "g45" });
+
+  /* El número de la pregunta y la lista que abre son del MISMO grupo: antes
+     la cuenta respetaba el grupo y la lista traía a todos. */
+  console.log("-- «Sin entrenar» respeta el grupo elegido");
+  await page.selectOption("#group-filter", "7A");
+  igual("con 7A, la pregunta cuenta solo a los de 7A", (await conPendiente())[0],
+    "¿Quién no está entrenando? · ⚠️ 2 sin entrenar");
+  igual("y la lista trae a esos mismos dos", await page.evaluate(() =>
+    [...document.querySelectorAll("#topic-report-body > div")].map((d) => d.querySelector("span").textContent.trim())),
+    ["Sofía Núñez · 7A", "Alumna 03 · 7A"]);
+  await page.selectOption("#group-filter", "");
   await page.selectOption("#topic-filter", "");
   await page.waitForFunction(() => !document.getElementById("teacher-report").classList.contains("hidden"));
 
@@ -1162,7 +1293,7 @@ async function pruebaClaseGrande(browser) {
     [...document.querySelectorAll("#topic-filter option")].map((o) => o.value).sort().join(",")),
     ["", "4x4", "aprender", "aperturas", "asignaciones", "asistencia", "concentracion", "coordenadas", "cursos", "diagnostico", "inactivos", "mates", "practicar", "precision", "tactica", "temas", "tipos", "visualizacion"].sort().join(","));
   const preguntas = () => page.evaluate(() => [...document.querySelectorAll("#preguntas-rapidas button")]
-    .filter((b) => b.checkVisibility()).map((b) => b.textContent + (b.getAttribute("aria-pressed") === "true" ? " [marcada]" : "")));
+    .filter((b) => b.checkVisibility()).map((b) => b.firstChild.textContent + (b.getAttribute("aria-pressed") === "true" ? " [marcada]" : "")));
   igual("se ven las cuatro preguntas, ninguna marcada", await preguntas(),
     ["¿Quién no está entrenando?", "¿Quién viene a clase?", "¿Cómo contestan en clase?", "¿Qué nivel tiene cada uno?"]);
   await page.click('#preguntas-rapidas button[data-tema="inactivos"]');

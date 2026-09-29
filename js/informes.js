@@ -97,6 +97,34 @@
             if (!f) return statCard("🔎", "—", "Tema más flojo (hace falta resolver 5 de un mismo tema)", true);
             return statCard("🔎", `${escVis(f.nombre)} · ${f.porcentaje} %`, `Tema más flojo: limpio en ${f.limpios} de ${f.intentos}`, true);
         }
+        /* El Tipo de entrenamiento más flojo (js/tipo-flojo.js): el tipo que
+           menos sale con tres estrellas. Igual que el tema: sin cinco ejercicios
+           de un mismo tipo no hay con qué opinar, y la tarjeta lo dice. */
+        /* Con `alumnoId` (la ficha de un alumno, vista por quien puede mandar
+           tareas), la tarjeta trae «Mandarle 10 de La balanza»: abre Tareas con
+           el alumno marcado y el renglón armado (tareas.html?material=…, ver
+           desdeElInforme en js/tareas.js). Sin eso, el profe veía el hueco y
+           tenía que ir a Tareas a buscar el mismo tipo en la lista. */
+        const EJERCICIOS_DEL_TIPO_FLOJO = 10;
+        function tarjetaTipoFlojo(e, alumnoId) {
+            const f = e.tipoFlojo;
+            if (!f) return statCard("📉", "—", "Tipo de entrenamiento más flojo (hace falta resolver 5 de un mismo tipo)", true);
+            const card = statCard("📉", `${escVis(f.nombre)} · ${f.porcentaje} %`, `Tipo más flojo: tres estrellas en ${f.limpios} de ${f.intentos}`, true);
+            if (alumnoId && puedeMandarTareas()) {
+                const a = document.createElement("a");
+                a.href = "tareas.html?" + new URLSearchParams({ alumno: alumnoId, material: "tipos", recorte: f.tipo, cantidad: String(EJERCICIOS_DEL_TIPO_FLOJO) });
+                a.className = "inline-block mt-2 text-sm font-semibold text-accent-700 dark:text-accent-400 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded";
+                a.dataset.tipoFlojo = f.tipo;
+                a.textContent = `Mandarle ${EJERCICIOS_DEL_TIPO_FLOJO} de ${f.nombre} →`;
+                card.appendChild(a);
+            }
+            return card;
+        }
+        /* Lo mismo que decide tareas.html (puedeAsignar); «Ver como» otra persona
+           no manda nada. */
+        function puedeMandarTareas() {
+            return !!(profile && (profile.role === "profesor" || profile.is_admin) && !profile._persona);
+        }
         /* Las casillas que más le cuestan en Coordenadas: la base manda los
            contadores (coord_casillas) y el orden lo pone el mismo módulo de la
            página (js/coordenadas-casillas.js), para no tener la fórmula dos veces. */
@@ -106,11 +134,12 @@
             return statCard("📍", lista.map((x) => x.sq).join(" · "),
                 "Coordenadas, las que más le cuestan: " + lista.map((x) => `${x.sq} (falló ${x.fallos} de ${x.fallos + x.aciertos})`).join(", "), true);
         }
-        function tarjetasDeModulos(e) {
+        function tarjetasDeModulos(e, alumnoId) {
             return [
                 tarjetaTemaFlojo(e),
                 statCard("👁️", e.visualizacion, "Ejercicios de Visualización resueltos", true),
                 statCard("🧩", `${e.tiposEjercicios} (${e.tiposEstrellas}⭐)`, "Tipos de entrenamiento: ejercicios con estrellas", true),
+                tarjetaTipoFlojo(e, alumnoId),
                 statCard("📖", `${e.aperturasEmpezadas} (${e.aperturasFirmes} firmes)`, "Líneas de Aperturas estudiadas", true),
                 statCard("🎯", textoPrecision(e), "Precisión posicional", true),
                 statCard("🏁", e.finales, "Finales contra la máquina logrados", true),
@@ -162,6 +191,7 @@
                 precisionUltima: typeof m.precision_ultima === "number" ? m.precision_ultima : null,
                 precisionFecha: m.precision_fecha || null,
                 temaFlojo: m.temaFlojo || null,
+                tipoFlojo: m.tipoFlojo || null,
                 finales: m.finales || 0,
                 coordCasillas: m.coord_casillas && typeof m.coord_casillas === "object" ? m.coord_casillas : null,
                 puzzles: f.puzzles || 0,
@@ -190,7 +220,7 @@
         // compañeros—, así que su vista busca SU renglón por id y nunca toma el primero.
         // Por eso sirven para las dos vistas sin escribir la cuenta dos veces.
         async function cargarResumen() {
-            const [alumnos, cursos, diagnosticos, modulos, justificadas, flojos] = await Promise.all([
+            const [alumnos, cursos, diagnosticos, modulos, justificadas, flojos, tiposFlojos] = await Promise.all([
                 traerTodo(() => sb.rpc("informes_resumen_alumnos")),
                 traerTodo(() => sb.rpc("informes_cursos_alumnos")),
                 traerTodo(() => sb.rpc("informes_diagnosticos_alumnos")),
@@ -200,6 +230,8 @@
                 traerTodo(() => sb.rpc("faltas_justificadas")),
                 // Si la cuenta del tema más flojo falla, el informe sale igual, sin esa tarjeta.
                 window.TemaFlojo ? TemaFlojo.cargar(sb, "").catch(() => ({})) : Promise.resolve({}),
+                // Y la del tipo más flojo, igual.
+                window.TipoFlojo ? TipoFlojo.cargar(sb).catch(() => ({})) : Promise.resolve({}),
             ]);
             const justificadasPorAlumno = {};
             justificadas.forEach((j) => { justificadasPorAlumno[j.student_id] = j.clases_justificadas || 0; });
@@ -209,6 +241,7 @@
             diagnosticos.forEach((d) => { diagnosticoPorAlumno[d.student_id] = d; });
             modulos.forEach((m) => { modulosPorAlumno[m.student_id] = m; });
             Object.keys(flojos).forEach((id) => { modulosPorAlumno[id] = Object.assign({}, modulosPorAlumno[id], { temaFlojo: flojos[id] }); });
+            Object.keys(tiposFlojos).forEach((id) => { modulosPorAlumno[id] = Object.assign({}, modulosPorAlumno[id], { tipoFlojo: tiposFlojos[id] }); });
             return { alumnos, cursosPorAlumno, diagnosticoPorAlumno, modulosPorAlumno };
         }
 
@@ -695,43 +728,49 @@
             mas.textContent = `Ver más alumnos (faltan ${lista.length - vistos})`;
         }
 
-        /* ---------------- Qué pide atención ----------------
+        /* ---------------- Lo que pide atención ----------------
 
-           Los tres datos ya estaban cargados y no se decían en ninguna parte:
-           había que acordarse de ir a buscarlos al filtro de tema. Cada uno es un
-           botón que deja el filtro puesto, así que enterarse y actuar son el
-           mismo gesto. Con todo al día la franja NO se pinta: un cartel que se
-           repite deja de leerse. */
-        function renderAtencion() {
-            const caja = document.getElementById("atencion");
-            const botones = document.getElementById("atencion-botones");
-            botones.innerHTML = "";
+           Quién lleva 4 días o más sin entrenar, a quién le falta el
+           diagnóstico y cuántos planes están sin compartir. No tiene una franja
+           propia: va escrito DENTRO de la pregunta de siempre que lo contesta
+           («¿Quién no está entrenando? · 3 sin entrenar»). Antes eran dos filas
+           de botones que llevaban al mismo tema, y dos puertas al mismo lugar
+           hacen pensar que son dos cosas (ver «Lo que pide atención va en su
+           pregunta» en docs/decisiones/informes.md). Se cuenta sobre el grupo
+           elegido, igual que la lista que abre. */
+        function pendientesPorTema() {
             const dentro = new Set(filteredStudents().map((s) => s.id));
-            const inactivos = (teacherData.inactivos || []).filter((i) => dentro.has(i.id));
+            const inactivos = (teacherData.inactivos || []).filter((i) => dentro.has(i.id)).length;
             const { conDiagnostico, pendientes } = diagnosticosDeClase();
-            const faltanPlan = planesQueFaltan(conDiagnostico).total;
-
-            const boton = (texto, alFinal) => {
-                const b = document.createElement("button");
-                b.type = "button";
-                b.className = "bg-white dark:bg-brand-800 border border-accent-400/50 text-brand-700 dark:text-brand-200 font-semibold px-3 py-1.5 rounded-lg text-sm hover:border-accent-500 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
-                b.textContent = texto;
-                b.addEventListener("click", alFinal);
-                botones.appendChild(b);
-            };
-            const conFiltro = (tema) => () => {
-                document.getElementById("topic-filter").value = tema;
-                applyTeacherFilters();
-                window.scrollTo({ top: 0, behavior: "smooth" });
-            };
-
-            if (inactivos.length) boton(`😴 ${inactivos.length} sin entrenar hace 4 días o más`, conFiltro("inactivos"));
-            if (pendientes.length) boton(`🧭 ${pendientes.length} sin diagnóstico`, conFiltro("diagnostico"));
             // Un plan sin compartir no lo ve ni el alumno ni su casa, o sea que
             // cuenta como que no existe: es lo mismo que dice "Tu semana".
-            if (faltanPlan) boton(`📤 ${faltanPlan} ${faltanPlan === 1 ? "plan sin compartir" : "planes sin compartir"}`, conFiltro("diagnostico"));
+            const faltanPlan = planesQueFaltan(conDiagnostico).total;
+            const diag = [];
+            if (pendientes.length) diag.push(`${pendientes.length} sin diagnóstico`);
+            if (faltanPlan) diag.push(`${faltanPlan} ${faltanPlan === 1 ? "plan sin compartir" : "planes sin compartir"}`);
+            return {
+                inactivos: inactivos ? `${inactivos} sin entrenar` : "",
+                diagnostico: diag.join(" · "),
+            };
+        }
 
-            caja.classList.toggle("hidden", !botones.children.length);
+        function pintarPendientesDePreguntas() {
+            const pend = pendientesPorTema();
+            let cuantas = 0;
+            document.querySelectorAll("#preguntas-rapidas button").forEach((b) => {
+                const texto = pend[b.dataset.tema] || "";
+                const span = b.querySelector("[data-pendiente]");
+                span.textContent = texto ? ` · ⚠️ ${texto}` : "";
+                // El borde marca cuál pide atención, pero no va solo: el número
+                // está escrito en el botón.
+                b.classList.toggle("border-accent-500", !!texto);
+                b.classList.toggle("border-brand-200", !texto);
+                b.classList.toggle("dark:border-brand-700", !texto);
+                if (texto) cuantas++;
+            });
+            document.getElementById("preguntas-rapidas-titulo").textContent = cuantas
+                ? "Preguntas de siempre · lo marcado con ⚠️ pide atención"
+                : "Preguntas de siempre";
         }
 
         /* Lo de fuera de la plataforma se QUITA, no se esconde: un <details>
@@ -770,7 +809,6 @@
             document.getElementById("stat-cards").innerHTML = "";
             document.getElementById("stat-cards").classList.add("hidden");
             document.getElementById("stat-cards-mas").classList.add("hidden");
-            document.getElementById("atencion").classList.add("hidden");
             document.getElementById("student-report").classList.add("hidden");
             document.getElementById("cursos-report").classList.add("hidden");
             document.getElementById("diagnostico-report").classList.add("hidden");
@@ -778,9 +816,11 @@
             document.getElementById("encargados-report").classList.add("hidden");
             document.getElementById("deberes-report").classList.add("hidden");
             document.getElementById("premios-report").classList.add("hidden");
+            document.getElementById("errores-report").classList.add("hidden");
             document.getElementById("tiempo-report").classList.add("hidden");
             document.getElementById("evolucion-report").classList.add("hidden");
             document.getElementById("notas-report").classList.add("hidden");
+            document.getElementById("le-costo-report").hidden = true;
             document.getElementById("notas-alumno-report").classList.add("hidden");
             document.getElementById("topic-report").classList.add("hidden");
             document.getElementById("teacher-report").classList.add("hidden");
@@ -861,7 +901,6 @@
                 statCard("📥", totales.partidas, "Partidas guardadas")
             );
 
-            renderAtencion();
             // Al volver al resumen se arranca otra vez por el principio: dejar el
             // corte donde estaba haría que cambiar de grupo enseñara ochenta filas
             // del grupo nuevo sin que nadie lo hubiera pedido.
@@ -872,6 +911,7 @@
             const cajaVisitantes = document.getElementById("diagnosticos-visitantes");
             if (cajaArbitrajes) renderArbitrajesPublicos(cajaArbitrajes);
             renderDiagnosticosClase(document.getElementById("diagnosticos-clase"));
+            renderErroresDelGrupo(students);
             if (cajaVisitantes) renderDiagnosticosVisitantes(cajaVisitantes);
 
             /* Los dos paneles del público van plegados, así que su conteo tiene
@@ -947,7 +987,7 @@
                 statCard("⚡", entreno.bestCoord, "Mejor puntuación en Coordenadas", true),
                 statCard("🏆", `${entreno.practiceCompleted} (${entreno.practiceStars}⭐)`, "Series de Practicar completadas", true),
                 statCard("🧠", entreno.concentracionTotal, "Ejercicios de Concentración resueltos", true),
-                ...tarjetasDeModulos(entreno)
+                ...tarjetasDeModulos(entreno, studentId)
             );
             mostrarBotonDeNumeros();
 
@@ -957,8 +997,12 @@
             renderDiagnosticoProfesor(studentId, name, entreno);
             renderDeberes(studentId, false);
             renderPremios(studentId, false);
+            renderErroresPartidas(studentId, name);
             renderAcceso(studentId, name);
             renderNotas(studentId);
+            // Lo que le costó en clase. Mirando a otra persona («Ver como») se ve, pero el plan no se arma: sería de quien mira.
+            LoQueCosto.pintarDelAlumno(sb, document.getElementById("le-costo-report"), studentId, name, session.user.id, !profile._persona)
+                .catch((e) => console.error(e));
             renderEncargados(studentId, name);
 
             const historyEl = document.getElementById("student-history");
@@ -978,6 +1022,198 @@
                 });
             }
             document.getElementById("student-report").classList.remove("hidden");
+        }
+
+        /* ---------------- Los errores de sus partidas ----------------
+
+           «Tus propios errores» (js/errores-propios.js) revisa las partidas del
+           alumno en SU navegador y deja los ejercicios en su training_state, que
+           la RLS deja leer a sus profesores, a quien supervisa y a
+           administración. Acá solo se leen: ErroresPropios.deFilas() descarta lo
+           que no tenga forma de ejercicio (lo escribió el navegador del alumno)
+           y todo se pinta con textContent. Tres claves, una sola consulta. */
+        /* Los temas de los errores de TODO el grupo (el filtro de arriba). Los
+           cuenta la base —errores_temas_del_grupo(), SECURITY INVOKER sobre
+           training_state—: bajarse los ejercicios de cada alumno para sumarlos
+           acá chocaría con el corte de ~1000 filas de PostgREST. Se le pasan los
+           ids del grupo elegido; lo que de verdad se ve lo sigue decidiendo la
+           RLS. `erroresGrupoVez`: si se cambia de grupo antes de que conteste,
+           la respuesta vieja no pisa a la nueva. */
+        let erroresGrupoVez = 0;
+        async function renderErroresDelGrupo(students) {
+            const caja = document.getElementById("errores-grupo");
+            const body = document.getElementById("errores-grupo-body");
+            if (!caja || !body) return;
+            const TEMAS = window.PreparacionTactica ? PreparacionTactica.TEMAS : null;
+            if (!TEMAS) { caja.classList.add("hidden"); return; }
+            caja.classList.remove("hidden");
+            const vez = ++erroresGrupoVez;
+            body.textContent = "";
+            const p = (texto, cls) => { const x = document.createElement("p"); x.className = cls || "text-sm text-brand-600 dark:text-brand-300"; x.textContent = texto; body.appendChild(x); return x; };
+            if (!students.length) { p("No hay alumnos en este grupo."); return; }
+            p("Cargando…");
+            const { data, error } = await sb.rpc("errores_temas_del_grupo", { p_alumnos: students.map((s) => s.id) });
+            if (vez !== erroresGrupoVez) return;
+            body.textContent = "";
+            if (error) { p("No se pudieron cargar los errores del grupo. Intenta de nuevo en un momento."); return; }
+            // Solo los temas que la página sabe nombrar: la clave la escribió el
+            // navegador de cada alumno.
+            const filas = (data || []).filter((f) => f && TEMAS[f.tema] && f.tema !== "otra" && f.errores > 0).slice(0, 6);
+            if (!filas.length) {
+                p("Todavía no hay errores con tema en las partidas de este grupo. Aparecen cuando tus alumnos las revisan en Entrenamiento → Tipos de entrenamiento → «Tus propios errores».");
+                return;
+            }
+            const ol = document.createElement("ol");
+            ol.className = "space-y-2";
+            filas.forEach((f) => {
+                const t = TEMAS[f.tema];
+                const li = document.createElement("li");
+                li.className = "flex flex-wrap items-baseline justify-between gap-2 border-b border-brand-50 dark:border-brand-800/60 last:border-0 pb-2";
+                const izq = document.createElement("span");
+                izq.className = "text-sm text-brand-700 dark:text-brand-200";
+                const nombre = document.createElement("strong");
+                nombre.textContent = t.nombre;
+                izq.append(nombre, " · " + pluralES(f.errores, "error", "errores") + " en " + pluralES(f.alumnos, "alumno", "alumnos"));
+                li.appendChild(izq);
+                if (t.practica) {
+                    const a = document.createElement("a");
+                    a.href = "entreno/temas.html?tema=" + encodeURIComponent(t.practica);
+                    a.className = "text-sm font-semibold text-accent-700 dark:text-accent-400 underline";
+                    a.textContent = "Ejercicios de " + t.plural + " →";
+                    li.appendChild(a);
+                }
+                ol.appendChild(li);
+            });
+            body.appendChild(ol);
+        }
+
+        const ERRORES_A_LA_VISTA = 5;
+        async function renderErroresPartidas(studentId, name) {
+            const caja = document.getElementById("errores-report");
+            const body = document.getElementById("errores-body");
+            if (!window.ErroresPropios) { caja.classList.add("hidden"); return; }
+            document.getElementById("errores-title").textContent = "🪞 Errores de las partidas de " + name;
+            body.textContent = "Cargando…";
+            caja.classList.remove("hidden");
+            const { data, error } = await sb.from("training_state").select("key, value")
+                .eq("student_id", studentId)
+                .in("key", [ErroresPropios.CLAVE_EJERCICIOS, ErroresPropios.CLAVE_VISTAS, "tipos_estrellas_v1"]);
+            body.textContent = "";
+            const p = (texto, cls) => { const x = document.createElement("p"); x.className = cls || "text-sm text-brand-600 dark:text-brand-300"; x.textContent = texto; body.appendChild(x); return x; };
+            if (error) { p("No se pudieron cargar sus errores. Intenta de nuevo en un momento."); return; }
+            const r = ErroresPropios.deFilas(data);
+            if (!r.revisadas) {
+                p("Todavía no revisó sus partidas. Se hace desde Entrenamiento → Tipos de entrenamiento → «Tus propios errores», con el botón «Buscar errores en mis partidas».");
+                return;
+            }
+            const regalados = r.ejercicios.filter((x) => x.nivel === 1).length;
+            const escapados = r.ejercicios.length - regalados;
+            const resueltos = Object.keys(r.resueltos).length;
+            p(pluralES(r.revisadas, "partida revisada", "partidas revisadas") + " · " +
+              (r.ejercicios.length
+                ? pluralES(r.ejercicios.length, "error", "errores") + " (" + regalados + " en que regaló, " + escapados + " en que se le escapó la ventaja) · " + pluralES(resueltos, "ya resuelto", "ya resueltos") + "."
+                : "no salió ningún error."), "text-sm font-semibold text-brand-700 dark:text-brand-200 mb-3");
+            if (!r.ejercicios.length) return;
+            // Los temas que más se repiten (el reconocedor de la preparación de rivales).
+            const TEMAS = window.PreparacionTactica ? PreparacionTactica.TEMAS : null;
+            const temas = TEMAS ? ErroresPropios.temasDe(r.ejercicios, TEMAS) : [];
+            if (temas.length) p("Lo que más se repite: " + temas.slice(0, 3).map((t) => t.plural + " (" + t.n + ")").join(", ") + ".", "text-sm text-brand-700 dark:text-brand-200 mb-3");
+            const sanEs = (s) => (window.TiposReglas ? TiposReglas.sanEs(s) : s);
+            const num = (cp) => (window.TiposReglas ? TiposReglas.numeroBalanza(cp / 100) : String(cp / 100));
+            const ul = document.createElement("ul");
+            ul.className = "space-y-2";
+            r.ejercicios.forEach((x, i) => {
+                const li = document.createElement("li");
+                li.className = "text-sm border-b border-brand-50 dark:border-brand-800/60 last:border-0 pb-2" + (i >= ERRORES_A_LA_VISTA ? " hidden" : "");
+                if (i >= ERRORES_A_LA_VISTA) li.dataset.extra = "1";
+                const cab = document.createElement("p");
+                cab.className = "font-semibold text-brand-700 dark:text-brand-200";
+                cab.textContent = String(x.resumen || fmtFecha(x.fecha)).slice(0, 80) + " — " + (x.nivel === 2 ? "se le escapó la ventaja" : "regaló") +
+                    (x.tema && TEMAS && TEMAS[x.tema] ? " · " + TEMAS[x.tema].nombre.toLowerCase() : "");
+                const det = document.createElement("p");
+                det.className = "text-brand-600 dark:text-brand-300";
+                det.textContent = "Jugó " + sanEs(x.jugada) + " (" + num(x.antes) + " → " + num(x.despues) + "). Lo bueno: " + x.buenas.map(sanEs).join(" o ") + ".";
+                const est = document.createElement("p");
+                est.className = "text-xs text-brand-450 dark:text-brand-350";
+                const n = r.resueltos[x.id];
+                est.textContent = n ? "✓ Ya lo resolvió " + "★".repeat(n) + "☆".repeat(3 - n) : "✗ Todavía no lo resolvió";
+                li.append(cab, det, est);
+                ul.appendChild(li);
+            });
+            body.appendChild(ul);
+            if (r.ejercicios.length > ERRORES_A_LA_VISTA) {
+                const ver = document.createElement("button");
+                ver.type = "button";
+                ver.className = "mt-3 text-sm font-semibold text-accent-700 dark:text-accent-400 underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+                ver.setAttribute("aria-expanded", "false");
+                const rotulo = () => { const abierto = ver.getAttribute("aria-expanded") === "true"; ver.textContent = abierto ? "Ver menos" : "Ver todos (" + r.ejercicios.length + ")"; };
+                rotulo();
+                ver.addEventListener("click", () => {
+                    const abrir = ver.getAttribute("aria-expanded") !== "true";
+                    ul.querySelectorAll("li[data-extra]").forEach((li) => li.classList.toggle("hidden", !abrir));
+                    ver.setAttribute("aria-expanded", abrir ? "true" : "false");
+                    rotulo();
+                });
+                body.appendChild(ver);
+            }
+            botonPlanDeErrores(body, name, r);
+        }
+
+        /* Llevar sus errores a la clase: un plan de clase nuevo (js/plan-clase.js)
+           con una posición por error, como hace «Lo que más le costó a tu clase»
+           (js/lo-que-costo.js). Primero los que todavía no resolvió, hasta 12. Es
+           de quien da clase: administración no da clase (lo revisa con «Ver
+           como: profesor») y mirando «como» otra persona no se escribe nada a su
+           nombre. Las posiciones las guardó el navegador del alumno: cada una
+           pasa por PosicionValida antes de entrar al plan. */
+        const PLAN_ERRORES_MAX = 12;
+        function botonPlanDeErrores(body, name, r) {
+            if (!window.PlanClase || !window.PosicionValida || profile.role !== "profesor" || profile._persona) return;
+            const orden = r.ejercicios.filter((x) => !r.resueltos[x.id]).concat(r.ejercicios.filter((x) => r.resueltos[x.id]));
+            const elegidos = orden.filter((x) => !PosicionValida.motivo(x.fen)).slice(0, PLAN_ERRORES_MAX);
+            if (!elegidos.length) return;
+            const caja = document.createElement("div");
+            caja.className = "mt-4 border-t border-brand-100 dark:border-brand-800 pt-4";
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "text-sm font-semibold px-4 py-2 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+            const ic = document.createElement("span"); ic.setAttribute("aria-hidden", "true"); ic.textContent = "📋 ";
+            btn.append(ic, document.createTextNode(elegidos.length === 1 ? "Llevar este error a un plan de clase" : "Llevar " + elegidos.length + " errores a un plan de clase"));
+            const msg = document.createElement("p");
+            msg.className = "text-sm mt-2 text-brand-600 dark:text-brand-300";
+            msg.setAttribute("role", "status");
+            btn.addEventListener("click", async () => {
+                btn.disabled = true;
+                msg.textContent = "Armando el plan…";
+                const T = window.PreparacionTactica ? PreparacionTactica.TEMAS : null;
+                const sanEs = (s) => (window.TiposReglas ? TiposReglas.sanEs(s) : s);
+                try {
+                    const hoy = new Intl.DateTimeFormat("es-CR", { timeZone: "America/Costa_Rica", day: "numeric", month: "long" }).format(new Date());
+                    const plan = await PlanClase.crearPlan(sb, profile.id, ("Errores de las partidas de " + name + " (al " + hoy + ")").slice(0, 200),
+                        "Salen de «Tus propios errores»: la posición antes de cada error de sus partidas. En la clase, pon cada una en el tablero y pregunta qué jugarían.");
+                    for (let i = 0; i < elegidos.length; i += 1) {
+                        const x = elegidos[i];
+                        const tema = x.tema && T && T[x.tema] ? " · " + T[x.tema].nombre.toLowerCase() : "";
+                        await PlanClase.agregarItem(sb, plan.id, {
+                            orden: i, tipo: "posicion", fen: x.fen,
+                            titulo: (String(x.resumen || "Error").slice(0, 80) + tema).slice(0, 200),
+                            pregunta: ("¿Qué jugarías? En la partida se jugó " + sanEs(x.jugada) + "; lo bueno: " + x.buenas.map(sanEs).join(" o ") + ".").slice(0, 500),
+                        });
+                    }
+                    msg.textContent = "Listo: el plan quedó en tus Planes de clase. En la clase lo abres y pones cada posición en el tablero. ";
+                    const a = document.createElement("a");
+                    a.href = "planes.html?plan=" + encodeURIComponent(plan.id);
+                    a.className = "font-semibold text-accent-700 dark:text-accent-400 underline";
+                    a.textContent = "Abrir el plan";
+                    msg.appendChild(a);
+                } catch (e) {
+                    console.error(e);
+                    msg.textContent = "No se pudo armar el plan. Intenta de nuevo en un momento.";
+                    btn.disabled = false;
+                }
+            });
+            caja.append(btn, msg);
+            body.appendChild(caja);
         }
 
         /* ---------------- Tareas y exámenes ----------------
@@ -1678,7 +1914,10 @@
             // invitación a practicar (acción "invitar_practicar" de la Edge
             // Function) — no es el informe programado, es un empujón puntual.
             if (topic === "inactivos") {
-                const inactivos = teacherData.inactivos || [];
+                // Del grupo elegido, como el número de su pregunta: sin esto,
+                // «3 sin entrenar» en 7A abría la lista de todos los grupos.
+                const dentro = new Set(filteredStudents().map((x) => x.id));
+                const inactivos = (teacherData.inactivos || []).filter((x) => dentro.has(x.id));
                 if (!inactivos.length) {
                     body.innerHTML = '<p class="text-brand-450 dark:text-brand-350 text-sm">Nadie: toda la clase entrenó en los últimos 4 días. 🎉</p>';
                 } else {
@@ -1832,7 +2071,11 @@
                 const b = document.createElement("button");
                 b.type = "button";
                 b.dataset.tema = tema;
-                b.textContent = texto;
+                const pregunta = document.createElement("span");
+                pregunta.textContent = texto;
+                const pendiente = document.createElement("span");
+                pendiente.dataset.pendiente = "";
+                b.append(pregunta, pendiente);
                 b.className = "px-3 py-1.5 rounded-full text-sm font-semibold border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 "
                     + "border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 text-brand-700 dark:text-brand-200 hover:border-accent-500 "
                     + "aria-pressed:bg-accent-500 aria-pressed:border-accent-500 aria-pressed:text-brand-900";
@@ -1856,6 +2099,7 @@
             document.querySelectorAll("#preguntas-rapidas button").forEach((b) => {
                 b.setAttribute("aria-pressed", String(!studentId && b.dataset.tema === topic));
             });
+            pintarPendientesDePreguntas();
             hideAllReportPanels();
             if (studentId) await renderStudentDetail(studentId);
             else if (topic) renderTopicReport(topic);

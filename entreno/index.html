@@ -61,8 +61,25 @@
                 <div id="hoy-meta" class="mb-3" hidden>
                     <p id="hoy-meta-texto" class="text-sm text-brand-600 dark:text-brand-200 mb-1"></p>
                     <div id="hoy-meta-barra" class="h-2 w-full rounded bg-brand-100 dark:bg-brand-800 overflow-hidden" role="progressbar" aria-labelledby="hoy-meta-texto" aria-valuemin="0"><div id="hoy-meta-relleno" class="h-full bg-accent-500 rounded" style="width:0%"></div></div>
+                    <!-- El resumen del día (public.entreno_resumen_hoy): qué hizo hoy, cuántos
+                         salieron limpios y cuántos repasos tocan mañana. Solo con algo hecho. -->
+                    <p id="hoy-resumen" class="text-sm text-brand-600 dark:text-brand-200 mt-2" hidden></p>
+                    <!-- Tu semana (public.entreno_mi_semana): los últimos 7 días contra los
+                         7 anteriores. Solo si entrenó en alguna de las dos. -->
+                    <p id="hoy-semana" class="text-sm text-brand-600 dark:text-brand-200 mt-1" hidden></p>
                 </div>
                 <ul id="hoy-lista" class="list-none p-0 m-0 space-y-2"></ul>
+                <!-- El aviso de racha (public.avisar_rachas(), 6:05 p. m.): solo le
+                     llega a quien tiene los avisos encendidos en el aparato, y casi
+                     nadie los tenía. Se ofrece acá, en la tarjeta de la racha, y no al
+                     cargar: el navegador deja pedir el permiso una sola vez. Va DESPUÉS
+                     de la lista: arriba, en el celular, empujaba lo que toca hacer hoy
+                     fuera de la pantalla (ver «El hub en el celular»). -->
+                <div id="hoy-avisos" class="mt-4 flex flex-wrap items-center gap-2" hidden>
+                    <button type="button" id="hoy-avisos-si" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-3 py-1.5 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🔔 </span><span id="hoy-avisos-si-texto">Avísame si mi racha está en juego</span></button>
+                    <button type="button" id="hoy-avisos-no" class="text-sm text-brand-500 dark:text-brand-300 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded px-1">Ahora no</button>
+                </div>
+                <p id="hoy-avisos-msg" class="text-xs mt-2 text-brand-500 dark:text-brand-300" role="status" aria-live="polite"></p>
             </section>
             <div class="space-y-8">
                 <section aria-labelledby="g-fundamentos">
@@ -145,7 +162,7 @@
                     </ul>
                 </section>
                 <!-- Los Tipos de entrenamiento: UNA tarjeta que abre su ficha, con
-                     los diecisiete tipos adentro (entreno/tipos.html). Ver «Los Tipos de
+                     los diecinueve tipos adentro (entreno/tipos.html). Ver «Los Tipos de
                      entrenamiento» en docs/decisiones/entrenamiento.md. -->
                 <section aria-labelledby="g-tipos">
                     <h2 id="g-tipos" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Tipos de entrenamiento</h2>
@@ -153,7 +170,7 @@
                         <li class="group relative flex flex-col items-center text-center gap-2 rounded-2xl p-6 shadow-md bg-white dark:bg-brand-900 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200">
                             <span class="w-14 h-14 rounded-xl flex items-center justify-center text-3xl bg-brand-50 dark:bg-brand-800 group-hover:scale-105 transition-transform" aria-hidden="true">🧠</span>
                             <h3 class="font-semibold text-brand-800 dark:text-white text-sm"><a href="tipos.html" class="rounded after:absolute after:inset-0 after:rounded-2xl hover:text-accent-700 dark:hover:text-accent-400 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500">Tipos de entrenamiento</a></h3>
-                            <p class="text-xs text-brand-450 dark:text-brand-350">Diecisiete entrenamientos: el Detective, el Barrido, Aguanta, Remata la ventaja, Elige a tiempo, Constrúyela tú, Rey y peón, Adivina la jugada del maestro y más</p>
+                            <p class="text-xs text-brand-450 dark:text-brand-350">Diecinueve entrenamientos: el Detective, el Barrido, Aguanta, Remata la ventaja, Salva las tablas, Elige a tiempo, Tus propios errores, Constrúyela tú, Rey y peón, Adivina la jugada del maestro y más</p>
                         </li>
                     </ul>
                 </section>
@@ -169,8 +186,12 @@
     <script src="../js/repaso-fallados.js"></script>
     <script src="../js/plan-entrenamiento.js"></script>
     <script src="../js/tema-flojo.js"></script>
+    <script src="../js/tipos-catalogo.js"></script>
+    <script src="../js/tipo-flojo.js"></script>
     <script src="../js/logros-catalogo.js"></script>
     <script src="../js/logros.js"></script>
+    <script src="../js/tiempo-secciones.js"></script>
+    <script src="../js/notificaciones.js"></script>
     <script src="../js/main.js"></script>
     <script src="../js/entreno-index.js"></script>
 <!-- burbuja: inicio --><script src="../js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="../js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- acceso: inicio --><script src="../js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="../js/modo-vista.js" defer></script><!-- modo-vista: fin --><!-- marca: inicio --><script src="../js/marca-academia.js" defer></script><!-- marca: fin --><!-- ayuda: inicio --><script src="../js/ayuda-guia.js" defer></script><!-- ayuda: fin --><!-- atajo: inicio --><script src="../js/atajo-buscar.js" data-arriba="../" defer></script><!-- atajo: fin --></body>

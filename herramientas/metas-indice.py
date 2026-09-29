@@ -158,17 +158,22 @@ def recortes_de_estudio():
 
 
 def recortes_de_tipos():
-    """Los 14 Tipos de entrenamiento: cuántos ejercicios tiene cada uno en
+    """Los Tipos de entrenamiento: cuántos ejercicios tiene cada uno en
     entreno/data/tipos.json y su nombre, leído de js/tipos-catalogo.js (el mismo
     archivo que usa la página). La clave es la que la página guarda en
-    detail.category."""
+    detail.category.
+
+    Los tipos `propio` (Tus propios errores) no tienen banco: cada alumno tiene
+    los suyos. Van con total None: la meta de cantidad se puede pedir («resuelve
+    5 de tus errores») y tareas_con_avance() la cuenta igual (ejercicios
+    distintos de esa category), pero no hay un tope que ofrecer."""
     datos = json.loads((DATOS / "tipos.json").read_text(encoding="utf-8"))
     nombres = por_node(
         "const C=require('./js/tipos-catalogo.js');"
-        "console.log(JSON.stringify(C.TIPOS.map(t=>[t.id,t.nombre])))")
+        "console.log(JSON.stringify(C.TIPOS.map(t=>[t.id,t.nombre,!!t.propio])))")
     return [
-        {"clave": t, "label": n, "total": len(datos.get(t, [])), "actividades": ["tipos"]}
-        for t, n in nombres if datos.get(t)
+        {"clave": t, "label": n, "total": None if propio else len(datos.get(t, [])), "actividades": ["tipos"]}
+        for t, n, propio in nombres if propio or datos.get(t)
     ]
 
 

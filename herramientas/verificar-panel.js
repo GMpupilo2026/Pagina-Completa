@@ -118,7 +118,14 @@ window.__consultas = [];
       },
       limit(n) { anotado.limit = n; filas2 = filas2.slice(0, n); return b; },
       range(a, z) { anotado.range = [a, z]; anotado.total = filas2.length; filas2 = filas2.slice(a, z + 1); return b; },
-      insert() { return b; },
+      // Un insert queda anotado (window.__inserts) y devuelve la fila con su id,
+      // como PostgREST con .select(): sin id no se puede seguir (un plan y sus renglones).
+      insert(fila) {
+        window.__inserts = window.__inserts || [];
+        window.__inserts.push({ tabla: tabla, fila: fila });
+        filas2 = [Object.assign({ id: tabla + "-" + window.__inserts.length }, fila)];
+        return b;
+      },
       update() { return b; },
       delete() { return b; },
       maybeSingle() { unica = true; return b; },
@@ -1757,6 +1764,15 @@ async function pruebaSemanaProfesora(browser) {
              { id: "u-2", nombre: "Beto Mora", desde: haceDias(8), ultima: null, entreno_con_plan: false },
              { id: "u-3", nombre: '<img src=x onerror="window.__xss=1">', desde: haceDias(30), ultima: haceDias(5), entreno_con_plan: true },
              ...[4, 5, 6, 7, 8].map((i) => ({ id: "u-" + i, nombre: "Alumno " + i, desde: haceDias(40), ultima: haceDias(10 + i), entreno_con_plan: true })),
+           ],
+           /* Quiénes entrenaron hoy: siete, se muestran seis. La segunda solo
+              hizo cosas que no dicen cómo salieron (sin «limpios»); la tercera
+              trae HTML en el nombre. */
+           entreno_hoy_de_mis_alumnos: [
+             { student_id: "u-1", nombre: "Ana Rojas", ejercicios: 12, con_como_salio: 11, limpios: 9 },
+             { student_id: "u-2", nombre: "Beto Mora", ejercicios: 1, con_como_salio: 0, limpios: 0 },
+             { student_id: "u-3", nombre: '<img src=x onerror="window.__xss=1">', ejercicios: 3, con_como_salio: 3, limpios: 3 },
+             ...[4, 5, 6, 7].map((i) => ({ student_id: "u-" + i, nombre: "Alumno " + i, ejercicios: 2, con_como_salio: 2, limpios: 1 })),
            ] },
   });
 
@@ -1800,6 +1816,20 @@ async function pruebaSemanaProfesora(browser) {
   igual("el nombre va como texto: no crea ningún nodo", caen.nodos, "0");
   igual("y los que no caben, a Informes", caen.mas, "Y 2 más en Informes →");
 
+  /* Hoy entrenaron: quién, cuánto y cuántos limpios. */
+  await page.waitForFunction(() => !document.getElementById("profe-hoy").hidden, null, { timeout: 10000 });
+  const hoy = await page.evaluate(() => ({
+    visible: document.getElementById("profe-hoy").checkVisibility(),
+    filas: Array.from(document.querySelectorAll("#profe-hoy-lista a")).map((a) => [a.getAttribute("href"), a.textContent]),
+    mas: document.getElementById("profe-hoy-mas").textContent,
+    nodos: document.querySelectorAll("#profe-hoy-lista img").length + (window.__xss || 0),
+  }));
+  igual("«Hoy entrenaron» se ve", hoy.visible, "true");
+  igual("con cuánto y cuántos limpios, y el nombre lleva a su informe", hoy.filas[0], ["informes.html?alumno=u-1", "Ana Rojas12 ejercicios · 9 de 11 limpios"]);
+  igual("sin «limpios» cuando nada de lo que hizo dice cómo salió", hoy.filas[1][1], "Beto Mora1 ejercicio");
+  igual("seis a la vista y el resto dicho", [hoy.filas.length, hoy.mas], [6, "Y 1 alumno más."]);
+  igual("el nombre va como texto: no crea ningún nodo", hoy.nodos, "0");
+
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
 
@@ -1819,6 +1849,8 @@ async function pruebaSemanaProfesora(browser) {
   igual("y una sola clase se dice en singular", limpio.clases, "Llevas 1 clase dada en los últimos 30 días.");
   igual("y sin nadie que se caiga del plan, ese bloque no se pinta",
     await r.page.evaluate(() => document.getElementById("profe-caen").hidden), "true");
+  igual("ni «Hoy entrenaron» si nadie entrenó hoy",
+    await r.page.evaluate(() => document.getElementById("profe-hoy").checkVisibility()), "false");
   await r.ctx.close();
 
   await pruebaPrimerPasoProfesor(browser);

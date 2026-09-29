@@ -19,7 +19,7 @@ window.LogrosCatalogo = (function () {
   "use strict";
 
   // Cuántos tipos de actividad de training_progress se pueden alcanzar de
-  // verdad hoy. Son 21 en el CHECK de la base, pero 'desafios' está declarada
+  // verdad hoy. Son 22 en el CHECK de la base, pero 'desafios' está declarada
   // sin ningún uso real (entreno/desafios.html registra como 'practicar' —
   // ver CLAUDE.md) y 'preparacion' solo la tiene quien recibió un plan contra
   // un rival, así que exigirlas dejaría un logro que casi nadie puede
@@ -29,8 +29,13 @@ window.LogrosCatalogo = (function () {
   // era 12), así que nadie pierde la medalla. Y a 18 con 'precision-posicional',
   // 'sonar' y 'batalla-naval': el máximo seguía en 12. 'finales100' (la
   // práctica de los cursos de finales) NO sube la cuenta: esos cursos se
-  // compran aparte y no todos los tienen.
-  const ACTIVIDADES_ALCANZABLES = 18;
+  // compran aparte y no todos los tienen. A 19 con 'memoria' (la ficha de
+  // Memoria).
+  const ACTIVIDADES_ALCANZABLES = 19;
+
+  function hito(stats, clave) {
+    return Number(stats.hitos && stats.hitos[clave]) || 0;
+  }
 
   function porActividad(stats, clave) {
     return (stats.por_actividad && stats.por_actividad[clave]) || 0;
@@ -102,7 +107,17 @@ window.LogrosCatalogo = (function () {
     { id: "ilumina_5", categoria: "ilumina", nivel: "bronce", emoji: "💡", nombre: "Se hizo la luz", descripcion: "5 niveles de Ilumina el tablero resueltos.", meta: 5, valor: (s) => porActividad(s, "ilumina") },
     { id: "visualizacion_10", categoria: "visualizacion", nivel: "bronce", emoji: "👁️", nombre: "Lo ves sin mirar", descripcion: "10 ejercicios de Visualización resueltos.", meta: 10, valor: (s) => porActividad(s, "visualizacion") },
     { id: "finales_5", categoria: "finales", nivel: "plata", emoji: "🏁", nombre: "Final de libro", descripcion: "5 finales contra la máquina ganados o salvados.", meta: 5, valor: (s) => porActividad(s, "finales") },
+    { id: "sonar_10", categoria: "sonar", nivel: "bronce", emoji: "🔊", nombre: "Cazatesoros", descripcion: "Encontraste el tesoro en 10 partidas del Sonar.", meta: 10, valor: (s) => porActividad(s, "sonar") },
+    { id: "sonar_3estrellas", categoria: "sonar", nivel: "plata", emoji: "🔊", nombre: "Oído fino", descripcion: "5 tesoros del Sonar encontrados con tres estrellas.", meta: 5, valor: (s) => hito(s, "tesoros_3") },
+    { id: "batalla_10", categoria: "batalla-naval", nivel: "bronce", emoji: "🚢", nombre: "A toda vela", descripcion: "10 partidas de Batalla naval terminadas.", meta: 10, valor: (s) => porActividad(s, "batalla-naval") },
+    { id: "batalla_duelo", categoria: "batalla-naval", nivel: "plata", emoji: "🚢", nombre: "Almirante", descripcion: "Le ganaste un duelo de Batalla naval a la computadora.", meta: 1, valor: (s) => hito(s, "duelos_ganados") },
+    { id: "precision_70", categoria: "precision-posicional", nivel: "oro", emoji: "🧭", nombre: "Ojo de estratega", descripcion: "3 tandas de Precisión posicional con 70 % o más.", meta: 3, valor: (s) => hito(s, "tandas_70") },
+    { id: "memoria_10", categoria: "memoria", nivel: "bronce", emoji: "📷", nombre: "Retratista", descripcion: "10 posiciones de Memoria reconstruidas.", meta: 10, valor: (s) => porActividad(s, "memoria") },
+    { id: "memoria_12", categoria: "memoria", nivel: "oro", emoji: "📷", nombre: "Memoria fotográfica", descripcion: "Reconstruiste una posición de 12 piezas sin un error.", meta: 12, valor: (s) => hito(s, "memoria_max_limpia") },
     { id: "tipos_20", categoria: "tipos", nivel: "bronce", emoji: "🧩", nombre: "De todos los tipos", descripcion: "20 ejercicios de Tipos de entrenamiento resueltos.", meta: 20, valor: (s) => porActividad(s, "tipos") },
+    { id: "tipos_completo_1", categoria: "tipos", nivel: "plata", emoji: "🧩", nombre: "Tipo dominado", descripcion: "Completaste un Tipo de entrenamiento entero: todos sus ejercicios con al menos una estrella.", meta: 1, valor: (s) => s.tipos_completos },
+    { id: "tipos_completo_5", categoria: "tipos", nivel: "oro", emoji: "🧩", nombre: "Cinco tipos dominados", descripcion: "Completaste cinco Tipos de entrenamiento enteros.", meta: 5, valor: (s) => s.tipos_completos },
+    { id: "tipos_completo_10", categoria: "tipos", nivel: "diamante", emoji: "🧩", nombre: "Diez tipos dominados", descripcion: "Completaste diez Tipos de entrenamiento enteros.", meta: 10, valor: (s) => s.tipos_completos },
   ];
 
   // Le agrega a cada logro su estado con los números de este alumno: cuánto

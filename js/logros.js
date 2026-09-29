@@ -37,6 +37,15 @@ window.Logros = (function () {
     // los ajusta; las insignias las da él a mano.
     trofeos: 0,
     insignias: 0,
+    // Lo que no es «cuántos» (public.logros_hitos): duelos de Batalla naval
+    // ganados, tandas de Precisión con 70 % o más, tesoros del Sonar con tres
+    // estrellas.
+    hitos: {},
+    // Cuántos Tipos de entrenamiento completó (todos sus ejercicios con una
+    // estrella o más). Lo anota entreno/tipos.html en la cuenta
+    // (training_state, 'tipos_completos_v1'): es la única que tiene los
+    // ejercicios de verdad.
+    tipos_completos: 0,
   };
 
   function vacio(sesion, error) {
@@ -64,6 +73,19 @@ window.Logros = (function () {
       const premiosP = Promise.resolve(sb.rpc("premios_de_alumno", { p_alumno: sesion.user.id }))
         .then((r) => (r && !r.error && r.data && r.data.premios ? r.data.premios : {}))
         .catch(() => ({}));
+      const hitosP = Promise.resolve(sb.rpc("logros_hitos"))
+        .then((r) => (r && !r.error && r.data && typeof r.data === "object" && !Array.isArray(r.data) ? r.data : {}))
+        .catch(() => ({}));
+      // Dentro de .then: si esta consulta tropieza, cuenta cero y no tumba la racha.
+      const completosP = Promise.resolve()
+        .then(() => sb.from("training_state").select("value")
+          .eq("student_id", sesion.user.id).eq("key", "tipos_completos_v1").maybeSingle())
+        .then((r) => {
+          const raw = r && !r.error && r.data && r.data.value && r.data.value.raw;
+          const o = typeof raw === "string" ? JSON.parse(raw) : null;
+          return o && typeof o === "object" ? Object.keys(o).filter((k) => o[k]).length : 0;
+        })
+        .catch(() => 0);
       const { data, error } = await sb.rpc("progreso_dias_y_racha");
       if (error) throw error;
       const fila = (data && data[0]) || {};
@@ -73,6 +95,8 @@ window.Logros = (function () {
       const premios = await premiosP;
       stats.trofeos = Number(premios.trofeos_total) || 0;
       stats.insignias = Number(premios.insignias_total) || 0;
+      stats.hitos = await hitosP;
+      stats.tipos_completos = await completosP;
       return { stats: stats, logros: window.LogrosCatalogo.conEstado(stats), sesion: true, error: false };
     } catch (e) {
       console.warn("No se pudo cargar tu racha y tus logros:", e && e.message ? e.message : e);

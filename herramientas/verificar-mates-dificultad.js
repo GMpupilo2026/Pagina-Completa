@@ -4,7 +4,8 @@
  * herramientas/mates-calibrar.js) y, con js/mates-dificultad.js, ordena de
  * fácil a difícil SOLO las categorías con el 80 % de sus mates calibrados.
  * Se prueba con archivos inventados (servidos en lugar del de verdad):
- *   - con el archivo de hoy (nada calibrado), el orden del libro;
+ *   - con el archivo de hoy (nada calibrado), barajado por bloques con la
+ *     semilla del alumno;
  *   - con Mate en 1 calibrado entero, Mate en 1 va de fácil a difícil y dice
  *     la dificultad, y Mate en 2 (sin calibrar) sigue en el orden del libro;
  *   - con un 79 %, el orden del libro;
@@ -52,7 +53,20 @@ console.log("\n=== js/mates-dificultad.js ===");
   ok(MD.ordenar(lista, pocos, "mate1").map((p) => p.id).join() === "mate1-a,mate1-b,mate1-c,mate1-d", "con menos del 80 % calibrado, el orden del libro");
   ok(MD.ordenar(lista, null, "mate1").map((p) => p.id).join() === "mate1-a,mate1-b,mate1-c,mate1-d", "sin datos, el orden del libro");
   ok(MD.ordenar(lista, datos, "mate1") !== lista, "devuelve una copia: no toca la lista que recibe");
+
+  // Mientras no hay dificultad, se baraja por bloques con la semilla del alumno.
+  const larga = Array.from({ length: 130 }, (_, i) => ({ id: "m" + i }));
+  const a = MD.barajar(larga, "u-ana").map((p) => p.id);
+  ok(JSON.stringify(a) === JSON.stringify(MD.barajar(larga, "u-ana").map((p) => p.id)), "la misma semilla da siempre el mismo orden (cualquier aparato)");
+  ok(JSON.stringify(a) !== JSON.stringify(MD.barajar(larga, "u-beto").map((p) => p.id)), "otro alumno, otro orden: los intentos se reparten");
+  ok(a.every((id, i) => Math.floor(Number(id.slice(1)) / MD.BLOQUE) === Math.floor(i / MD.BLOQUE)) && new Set(a).size === 130,
+    `cada mate se queda en su bloque de ${MD.BLOQUE}: el orden grueso del libro se mantiene`);
+  ok(a.slice(0, MD.BLOQUE).join() !== larga.slice(0, MD.BLOQUE).map((p) => p.id).join(), "y dentro del bloque sí cambia");
+  ok(MD.barajar(larga, null).map((p) => p.id).join() === larga.map((p) => p.id).join(), "sin semilla (sin sesión), el orden del libro");
+  ok(MD.orden(lista, datos, "mate1", "u-ana").map((p) => p.id).join() === "mate1-b,mate1-d,mate1-c,mate1-a", "calibrada, manda la dificultad y no se baraja");
 }
+// El doble de sesión es "u-ana" (herramientas/lib/doble-entreno.js).
+const barajado = (cat) => MD.barajar(banco.filter((p) => p.category === cat), "u-ana").map((p) => p.id);
 
 async function abrir(browser, archivo) {
   const ctx = await browser.newContext({ serviceWorkers: "block" });
@@ -82,8 +96,8 @@ async function main() {
       const { page, ctx, errores } = await abrir(browser, null);
       const e = await estado(page);
       const real = JSON.parse(fs.readFileSync(path.join(RAIZ, "entreno/data/mates-dificultad.json"), "utf8"));
-      const esperado = MD.ordenada(real, "mate1") ? MD.ordenar(banco.filter((p) => p.category === "mate1"), real, "mate1").map((p) => p.id) : ids("mate1");
-      ok(e.mate1.join() === esperado.join(), MD.ordenada(real, "mate1") ? "Mate en 1 va de fácil a difícil" : "Mate en 1 sigue en el orden del libro (todavía no alcanza para calibrar)");
+      const esperado = MD.ordenada(real, "mate1") ? MD.ordenar(banco.filter((p) => p.category === "mate1"), real, "mate1").map((p) => p.id) : barajado("mate1");
+      ok(e.mate1.join() === esperado.join(), MD.ordenada(real, "mate1") ? "Mate en 1 va de fácil a difícil" : "Mate en 1 va barajado por bloques con la semilla del alumno (todavía no alcanza para calibrar)");
       ok(!errores.length, "sin errores en la página", errores.join(" | "));
       await ctx.close();
     }
@@ -95,10 +109,10 @@ async function main() {
       ok(e.mate1.join() === ids("mate1").slice().reverse().join(), "Mate en 1 va de fácil a difícil (acá, al revés del libro)");
       ok(e.id === ids("mate1")[total.mate1 - 1], "arranca por el más fácil", e.id);
       ok(new RegExp(`dificultad ≈${2000 - (total.mate1 - 1)}$`).test(e.etiqueta), "la barra dice la dificultad, en números", e.etiqueta);
-      ok(e.mate2.join() === ids("mate2").join(), "Mate en 2, sin calibrar, sigue en el orden del libro");
+      ok(e.mate2.join() === barajado("mate2").join(), "Mate en 2, sin calibrar, va barajado por bloques");
       await page.click("#tabs button:nth-child(2)");
       const e2 = await estado(page);
-      ok(e2.cat === "mate2" && e2.id === ids("mate2")[0] && !/dificultad/.test(e2.etiqueta), "y al pasar a Mate en 2 no dice ninguna dificultad", e2.etiqueta);
+      ok(e2.cat === "mate2" && e2.id === barajado("mate2")[0] && !/dificultad/.test(e2.etiqueta), "y al pasar a Mate en 2 arranca por el primero del barajado, sin decir dificultad", e2.etiqueta);
       ok(!errores.length, "sin errores en la página", errores.join(" | "));
       await ctx.close();
     }
@@ -108,7 +122,7 @@ async function main() {
       const cuantos = Math.floor(total.mate1 * 0.79);
       const { page, ctx } = await abrir(browser, inventado("mate1", cuantos));
       const e = await estado(page);
-      ok(e.mate1.join() === ids("mate1").join() && !/dificultad/.test(e.etiqueta), `con ${cuantos} de ${total.mate1} calibrados, el orden del libro y sin dificultad`, e.etiqueta);
+      ok(e.mate1.join() === barajado("mate1").join() && !/dificultad/.test(e.etiqueta), `con ${cuantos} de ${total.mate1} calibrados, barajado y sin dificultad`, e.etiqueta);
       await ctx.close();
     }
 
@@ -116,7 +130,7 @@ async function main() {
     {
       const { page, ctx, errores } = await abrir(browser, "falta");
       const e = await estado(page);
-      ok(e.mate1.join() === ids("mate1").join() && e.id === ids("mate1")[0], "la página funciona igual, en el orden del libro");
+      ok(e.mate1.join() === barajado("mate1").join() && e.id === barajado("mate1")[0], "la página funciona igual, barajada por bloques");
       ok(!errores.length, "sin errores en la página", errores.join(" | "));
       await ctx.close();
     }

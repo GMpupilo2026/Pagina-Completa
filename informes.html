@@ -42,7 +42,9 @@
                  con todo; esto es la puerta para quien no sabe que «¿quién no
                  está entrenando?» se llama «Sin entrenar (4 días)» en una lista
                  de quince (ver «Las preguntas de siempre» en
-                 docs/decisiones/informes.md). -->
+                 docs/decisiones/informes.md). Lo que pide atención va escrito
+                 dentro de su pregunta, con su número, y no en una franja
+                 aparte (ver «Lo que pide atención va en su pregunta»). -->
             <div id="preguntas-rapidas" hidden class="mb-4">
                 <p id="preguntas-rapidas-titulo" class="text-xs font-semibold text-brand-500 dark:text-brand-300 mb-2">Preguntas de siempre</p>
                 <div class="flex flex-wrap gap-2" role="group" aria-labelledby="preguntas-rapidas-titulo"></div>
@@ -99,18 +101,6 @@
                 </div>
             </div>
 
-            <!-- Lo que pide actuar HOY, arriba de todo y antes de los números:
-                 quién lleva 4 días o más sin entrenar, a quién le falta el
-                 diagnóstico y cuántos planes están sin compartir. Los tres datos
-                 ya estaban cargados y no se decían en ninguna parte — había que
-                 ir a buscarlos al filtro. Arranca oculta y solo se destapa si de
-                 verdad hay algo que decir: una franja que diga "todo al día" es
-                 ruido en todas las visitas menos una. -->
-            <div id="atencion" class="hidden mb-6 rounded-2xl border border-accent-400/40 bg-accent-50 dark:bg-brand-900 dark:border-accent-400/30 p-4">
-                <p class="text-sm font-semibold text-brand-800 dark:text-white mb-2">⚠️ Qué pide atención</p>
-                <div id="atencion-botones" class="flex flex-wrap gap-2"></div>
-            </div>
-
             <div id="stat-cards" class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-3"></div>
             <!-- Las tarjetas secundarias nacen escondidas (ver statCard): dieciséis
                  números de golpe no los lee nadie, y las ocho que importan quedan
@@ -155,6 +145,9 @@
             <!-- La bitácora: lo que el profesor observa de este alumno.
                  Mirando a UN alumno y solo para quien da clase; el alumno ve
                  aparte las que le compartieron (#notas-alumno-report). -->
+            <!-- «Lo que le costó a <alumno>» (solo el profe, js/lo-que-costo.js): las preguntas de
+                 clase que contestó mal, qué jugó, y un plan de repaso para él. -->
+            <section id="le-costo-report" hidden aria-labelledby="le-costo-titulo" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6"></section>
             <div id="notas-report" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
                 <h2 id="notas-title" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1"><span aria-hidden="true">📝</span> Bitácora</h2>
                 <p id="notas-sub" class="text-xs text-brand-450 dark:text-brand-350 mb-4">Lo que vas viendo de este alumno. Es tuya: un colega que comparta el alumno no la ve. Marca "Que la vea el alumno" para que le aparezca a él en su propia página.</p>
@@ -191,6 +184,15 @@
                 <h2 id="premios-title" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1"><span aria-hidden="true">🏆</span> Trofeos e insignias</h2>
                 <p id="premios-sub" class="text-xs text-brand-450 dark:text-brand-350 mb-4">Lo que ganó en las clases en vivo, desde siempre. Las insignias se dan con el botón 🏆 de su renglón, en la clase.</p>
                 <div id="premios-body"></div>
+            </div>
+
+            <!-- Los errores de sus partidas: los que encontró «Tus propios errores»
+                 (Tipos de entrenamiento) en el navegador del alumno y quedaron en
+                 su training_state. Solo mirando a UN alumno. -->
+            <div id="errores-report" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
+                <h2 id="errores-title" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1"><span aria-hidden="true">🪞</span> Errores de sus partidas</h2>
+                <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">Los que encontró «Tus propios errores» (Entrenamiento → Tipos de entrenamiento) en sus partidas de la Academia: Juegos, retos, torneos y la práctica en clase.</p>
+                <div id="errores-body"></div>
             </div>
 
             <div id="student-report" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
@@ -401,6 +403,17 @@
                     <div id="diagnosticos-clase"></div>
                 </div>
 
+                <!-- Los temas que más se repiten en los errores de las partidas de
+                     TODO el grupo elegido arriba («Tus propios errores»). Lo cuenta la
+                     base (errores_temas_del_grupo), con la RLS de training_state: el
+                     navegador no se baja los ejercicios de cada alumno para sumarlos.
+                     Lo pinta renderErroresDelGrupo(). -->
+                <div id="errores-grupo" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
+                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1"><span aria-hidden="true">🪞</span> Los errores de las partidas del grupo</h2>
+                    <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">Los temas que más se repiten cuando los alumnos del grupo elegido arriba revisan sus partidas en «Tus propios errores»: por dónde conviene la próxima clase.</p>
+                    <div id="errores-grupo-body" aria-live="polite"></div>
+                </div>
+
                 <!-- Los dos de abajo NO son de sus alumnos: son gente de fuera que hizo
                      la prueba pública. Ocupaban el primer lugar de la página, o sea que
                      lo primero que veía un profesor al entrar no era su clase. Van
@@ -447,6 +460,8 @@
     <script src="js/plan-entrenamiento.js"></script>
     <script src="js/arbitraje-nivel.js"></script>
     <script src="js/notas-alumno.js"></script>
+    <script src="js/plan-clase.js"></script>
+    <script src="js/lo-que-costo.js"></script>
     <script src="js/trofeos.js"></script>
     <script src="js/evolucion-alumno.js"></script>
     <script src="js/tiempo-secciones.js"></script>
@@ -455,7 +470,15 @@
     <script src="js/contrasena-alumno.js"></script>
     <script src="js/main.js"></script>
     <script src="js/tema-flojo.js"></script>
+    <script src="js/tipos-catalogo.js"></script>
+    <script src="js/tipo-flojo.js"></script>
     <script src="js/coordenadas-casillas.js"></script>
+    <script src="js/vendor/chess.js"></script>
+    <script src="js/posicion-valida.js"></script>
+    <script src="js/tipos-reglas.js"></script>
+    <script src="js/preparacion-posiciones.js"></script>
+    <script src="js/preparacion-tactica.js"></script>
+    <script src="js/errores-propios.js"></script>
     <script src="js/informes.js"></script>
 <!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- ayuda: inicio --><script src="js/ayuda-guia.js" defer></script><!-- ayuda: fin --><!-- atajo: inicio --><script src="js/atajo-buscar.js" data-arriba="" defer></script><!-- atajo: fin --></body>
 </html>

@@ -83,13 +83,13 @@ nombres.
 Nada de eso daba ningún error: la página se veía perfecta, los números estaban
 bien, y el profesor simplemente no usaba Informes.
 
-- **Arriba va lo que pide actuar**, como en el panel de la Academia: una franja
-  con quién lleva una semana sin entrenar, a quién le falta el diagnóstico y
-  cuántos planes están sin compartir. Los tres datos **ya estaban cargados** y
-  no se decían en ninguna parte — había que acordarse de ir a buscarlos al
-  filtro de tema. Cada uno es un botón que **deja el filtro puesto**, así que
-  enterarse y actuar son el mismo gesto. Con todo al día la franja no se pinta:
-  un cartel que se repite deja de leerse.
+- **Arriba va lo que pide actuar**, como en el panel de la Academia: quién
+  lleva 4 días o más sin entrenar, a quién le falta el diagnóstico y cuántos
+  planes están sin compartir. Los tres datos **ya estaban cargados** y no se
+  decían en ninguna parte — había que acordarse de ir a buscarlos al filtro de
+  tema. Van escritos dentro de la pregunta de siempre que los contesta, y
+  tocarla **deja el filtro puesto**, así que enterarse y actuar son el mismo
+  gesto (ver «Lo que pide atención va en su pregunta»).
   - Los conteos no se hacen acá: los inactivos salen de `informes_inactivos()`,
     la misma lista que cuenta `panel_profesor()` en «Tu semana», y los planes
     que faltan de `planesQueFaltan()`, la misma que pinta el botón de compartir
@@ -422,13 +422,43 @@ eso se llama «😴 Sin entrenar (4 días)» y buscarlo entre las quince.
   - La que está contestada queda marcada, con `aria-pressed` y con el botón
     relleno. No es solo un cambio de color: cambia el relleno, y el lector de
     pantalla dice «presionado». Cambiar el tema en el selector mueve la marca.
-  - Se parecen a los botones de la franja de «Lo que pide actuar», pero no son
-    lo mismo. La franja sale solo cuando hay algo que atender y trae el número
-    («😴 3 sin entrenar»). Las preguntas están siempre, que es cuando uno viene
-    a preguntar aunque todo esté al día.
+  - Están siempre, también con todo al día: es cuando uno viene a preguntar.
+    Lo que pide atención se les escribe adentro (abajo).
 - Lo prueba `verificar-informes.js`: los bloques (y que a un profesor no le
   quede el del público), que no se perdió ningún tema, las cuatro preguntas a
   la vista, y que la marca siga al tema.
+
+### Lo que pide atención va en su pregunta
+
+Arriba había dos filas de botones que llevaban al mismo lugar: las
+«Preguntas de siempre» y, debajo de los filtros, una franja «⚠️ Qué pide
+atención» con «😴 3 sin entrenar hace 4 días o más», «🧭 2 sin diagnóstico» y
+«📤 1 plan sin compartir». Los dos primeros eran el mismo tema que
+«¿Quién no está entrenando?» y «¿Qué nivel tiene cada uno?», y el tercero
+también abría el diagnóstico. Dos puertas al mismo lugar hacen pensar que son
+dos cosas, y lo urgente quedaba debajo de los tres selectores. Es el mismo
+criterio de los paneles (ver «Una sola puerta para cada cosa» en
+`paneles.md`).
+
+- **La franja ya no existe**: lo que decía va escrito dentro de la pregunta que
+  lo contesta, que es lo primero de la página: «¿Quién no está entrenando? ·
+  ⚠️ 3 sin entrenar», «¿Qué nivel tiene cada uno? · ⚠️ 2 sin diagnóstico ·
+  1 plan sin compartir». Con todo al día, la pregunta queda con su texto de
+  siempre.
+- **El borde de la que pide atención cambia, pero el color no va solo**: el
+  número está escrito en el botón, y el rótulo dice qué quiere decir la marca
+  («lo marcado con ⚠️ pide atención»). El orden de las cuatro no cambia: una
+  pregunta que salta de lugar según el día no se encuentra.
+- **Se cuenta sobre el grupo elegido y se vuelve a contar con cada filtro**
+  (`pintarPendientesDePreguntas()` en `applyTeacherFilters()`), así que
+  compartir planes o cambiar de grupo actualiza el número.
+- **La lista de «sin entrenar» también respeta el grupo.** Antes la franja
+  contaba los de 7A y la lista que abría traía a todos los grupos: «2 sin
+  entrenar» abría tres nombres. El número y la lista son ahora la misma
+  cuenta.
+- Lo prueba `verificar-informes.js`: que no queda franja, el texto de cada
+  pregunta con y sin pendientes, que tocarla deja el filtro puesto, y que con
+  7A el número y la lista dicen los mismos dos.
 
 ### Un total solo sube: «Cómo viene» es lo que dice si mejora
 
@@ -878,6 +908,119 @@ tarjeta más de segunda fila (eran catorce; con los Finales contra la máquina, 
   la función sea INVOKER; `verificar-informes.js`, la tarjeta y que a la base
   se le manden los motivos y no «Mezcla».
 
+### El tipo de entrenamiento más flojo
+
+La misma idea que el tema, para Tipos de entrenamiento:
+`informes_tipo_mas_flojo()` (SECURITY INVOKER, una fila por alumno, migración
+`20260929172136`) dice en qué tipo le cuesta más sacar tres estrellas:
+«La balanza · 38 % — tres estrellas en 3 de 8». Es una tarjeta más de la
+segunda fila (ahora son diecisiete).
+
+- **Mira `estrellas`, no `limpio`**:
+  - cada ejercicio de Tipos se registra una vez, la primera que se resuelve,
+    con sus estrellas (desde #555);
+  - `limpio` se sumó después (#559);
+  - tres estrellas es limpio en todos los tipos, así que las filas viejas
+    también cuentan.
+- **Desde 5 ejercicios distintos de un mismo tipo**, como el tema. Sin eso,
+  la tarjeta dice qué falta.
+- El nombre del tipo lo pone `js/tipo-flojo.js` con `js/tipos-catalogo.js`,
+  el mismo catálogo de la página: la base solo manda la clave.
+- Se comprobó en la base con filas de prueba (revertidas) e impersonando a un
+  alumno:
+  - «detective» (40 %) sale antes que «balanza» (83 %);
+  - un tipo con 3 ejercicios no entra;
+  - un ejercicio repetido cuenta una vez;
+  - cada alumno ve solo su fila.
+- `verificar-informes.js` prueba la tarjeta y el nombre.
+- **«Mandarle 10 de La balanza →»**: en la ficha de un alumno, la tarjeta trae
+  un enlace a `tareas.html?alumno=<id>&material=tipos&recorte=balanza&cantidad=10`,
+  que deja el renglón armado (ver «Del informe a la tarea, con el renglón
+  armado» en `seguimiento-del-alumno.md`). El profe veía el hueco y tenía que
+  ir a Tareas a buscar ese mismo tipo en la lista.
+  - Solo lo ve quien puede mandar tareas (`profesor` o `is_admin`, como
+    `puedeAsignar` en `tareas.js`) y no en «Ver como» otra persona. El alumno
+    que mira su propio informe no lo tiene.
+  - El helper `tarjeta()` del verificador busca la etiqueta en el tercer hijo
+    de la tarjeta, no en el último: el enlace va debajo.
+
+## Los errores de sus partidas
+
+«Tus propios errores» (Tipos de entrenamiento, ver «El tipo 18: Tus propios
+errores» en entrenamiento.md) revisa las partidas del alumno en SU navegador y
+deja los ejercicios en su `training_state`. El informe de un alumno trae el
+panel **«🪞 Errores de las partidas de …»**: cuántas partidas revisó, cuántos
+errores salieron (en cuántos regaló y en cuántos se le escapó la ventaja),
+cuántos ya resolvió, y los cinco más recientes con «Ver todos»: cuándo, qué
+jugó, cómo cambió la evaluación, qué era lo bueno y si ya lo resolvió (con ✓ y
+✗ escritos, no solo en color).
+
+- **No hace falta nada nuevo en la base**: `training_state` ya la leen los
+  profesores del alumno, quien supervisa y administración (ver «La RLS de las
+  tablas de actividad arma el conjunto UNA vez»). Una consulta, acotada a ESE
+  alumno y a sus tres claves (`errores_propios_v1`, `errores_analizadas_v1` y
+  `tipos_estrellas_v1`, de donde salen las estrellas de cada uno).
+- **No se le cree nada a lo guardado**: lo escribió el navegador del alumno y
+  se puede tocar desde la consola. `ErroresPropios.deFilas()` descarta lo que no
+  tenga forma de ejercicio —una «jugada» que no es una jugada, un nivel que no
+  existe, un JSON roto— y todo se pinta con `textContent`. El verificador mete
+  una «jugada» que es `<img onerror>` y exige que ni aparezca.
+- **Si no revisó nunca sus partidas**, el panel lo dice y explica dónde se
+  hace, en vez de un «0 errores» que parecería una buena noticia.
+- Va solo en el informe del profesor: el alumno ya los ve, y los juega, en
+  Tipos de entrenamiento.
+- **De paso**: la regla «no pide ninguna tabla de actividad» de
+  `verificar-informes.js` **nunca podía saltar**: probaba la expresión contra
+  el objeto de cada consulta y no contra su etiqueta, y `"[object Object]"` no
+  calza con nada. Ahora mira la etiqueta y dice lo que quería decir: ninguna de
+  esas tablas se pide **sin acotarla a un alumno** (la comparación de
+  diagnósticos y este panel piden lo de uno, y está bien). Rota a propósito
+  —la consulta de diagnósticos sin `student_id`—, salta.
+
+### Llevar sus errores a un plan de clase
+
+Debajo de la lista, el profesor tiene **«📋 Llevar N errores a un plan de
+clase»**: crea un plan (`planes_clase` + `plan_items`, con la API de
+`js/plan-clase.js`, igual que «Lo que le costó a tu clase») con hasta 12
+posiciones, **primero las que el alumno todavía no resolvió**. Cada una va como
+ítem `posicion` con su FEN, el título (la partida, la jugada y el tema) y la
+pregunta «¿Qué jugarías? En la partida se jugó X; lo bueno: Y o Z.». En la
+clase se abre el plan y cada posición va al tablero con un toque.
+
+- **Ninguna posición se inventa**: son las de sus partidas, y antes de
+  guardarlas pasan por `PosicionValida.motivo()` (la que no sea una posición
+  legal se salta).
+- Solo para quien da clase (`role = profesor`) y no en «Ver como»: una cuenta
+  que solo administra no da clase, y un plan armado mirando como otra persona
+  quedaría a nombre de quien mira.
+- El aviso termina con «Abrir el plan» (`planes.html?plan=<id>`).
+  `verificar-informes.js` comprueba el plan, sus ítems, el orden (sin resolver
+  primero: roto a propósito, salta) y el enlace.
+
+### Los temas de los errores de todo el grupo
+
+La vista de grupo trae **«🪞 Los errores de las partidas del grupo»**: los
+temas que más se repiten en los errores de los alumnos del grupo elegido
+arriba, con cuántos errores y en cuántos alumnos, y el enlace a practicar cada
+uno en «Ejercicios por tema». Sirve para decidir la próxima clase.
+
+- **Lo cuenta la base**: `errores_temas_del_grupo(p_alumnos)` (migración
+  `20260929190705`), `SECURITY INVOKER` sobre `training_state`, así que ve lo
+  que ya dejaba ver su RLS y nada más (se comprobó impersonando a un profesor:
+  el alumno de otra academia no suma; y a un alumno: solo lo suyo). Bajarse
+  los ejercicios de cada alumno para sumarlos en el navegador chocaría con el
+  corte de ~1000 filas.
+- `p_alumnos` son los del grupo o subgrupo del filtro: la lista **sigue al
+  filtro**. El doble del verificador contesta distinto según los alumnos que
+  se le pasen (`rpcPorArgs`); mandar siempre a todos, a propósito, lo hace
+  saltar.
+- El JSON lo escribió el navegador del alumno: un `raw` roto se salta
+  (`interno.jsonb_o_nulo`), solo cuenta lo que tenga `id` y `fen`, y el tema
+  tiene que tener forma de clave. En la página, además, solo se pinta un tema
+  que `PreparacionTactica.TEMAS` sabe nombrar, y nunca «otra».
+- Una respuesta vieja no pisa a la nueva si se cambia de grupo antes de que
+  conteste (`erroresGrupoVez`).
+
 ## Los informes que llegan a la casa
 
 En Informes, mirando a UN alumno, está "📧 Informes a la casa": a qué correos se
@@ -1056,6 +1199,31 @@ confirmar, salta la del primer toque.
 herramientas/funciones-armar.js`). Comprobado después de subirla: con una firma
 inventada la tanda responde **401** sin mandar un solo correo, que es la prueba
 de que el módulo nuevo carga.
+
+### «Esta semana: 48 ejercicios (la anterior, 31)» en el informe a la casa
+
+La casa veía minutos, días y clases, pero no si el alumno venía mejorando. El
+informe ahora dice, debajo de las tres tarjetas: «📈 Esta semana: 48 ejercicios
+(la anterior, 31) · 70 % le salieron sin error ni pista (la anterior, 62 %).»
+Es lo mismo que el alumno ve como «Tu semana» en su hub.
+
+- La cuenta la hace `public.entreno_comparado(p_alumno, p_desde, p_hasta)`
+  (SECURITY INVOKER, migración `20260929201700`): el periodo del informe contra
+  el anterior **del mismo largo** (la semana, el mes, ayer). Se suma a la cola
+  de `informe_de_alumno()` a partir de su definición vigente, como los premios:
+  no se copia a mano la función entera.
+- El porcentaje sale solo de los ejercicios que dicen cómo salieron
+  (`detail ? 'limpio'`); los que no lo dicen no cuentan ni a favor ni en contra.
+- Cada frecuencia con sus palabras: «Hoy … (ayer, 3)», «Este mes … (el
+  anterior no entrenó)».
+- **Sin ejercicios en el periodo la línea no sale**: el veredicto de arriba ya
+  dice que no entró, y «0 ejercicios» solo lo repetiría. Tampoco sale con una
+  base de antes, sin la clave `comparacion`.
+- Se comprobó en la base con filas de prueba revertidas: tres filas en la
+  semana (dos con «cómo salió», una limpia), una en la anterior y una de hace
+  19 días que no entra; y otro alumno ve ceros.
+- `verificar-informe-casa.js` prueba el semanal, el mensual sin periodo
+  anterior, el caso en cero y la base sin la clave.
 
 ### Las tareas y los exámenes del informe NO se cuentan con la RLS de quien mira
 

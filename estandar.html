@@ -103,6 +103,11 @@
             <!-- Justo debajo de tu nombre: así se ve de una que el botón es tuyo, no una
                  acción genérica de la partida (ver bothReady() y la condición de interactividad). -->
             <button id="ready-btn" class="hidden w-full mb-6 bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2.5 rounded-xl text-sm transition-colors">✅ Estoy listo para jugar</button>
+            <!-- Al terminar, quien jugó puede revisar ESTA partida con «Tus propios
+                 errores» (Tipos de entrenamiento): la revisa Stockfish en su navegador
+                 y cada error se vuelve un ejercicio. Ver «Revisa esta partida» en
+                 docs/decisiones/entrenamiento.md. -->
+            <a id="revisar-partida" href="entreno/tipos.html#errores" class="hidden block w-full mb-6 text-center bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2.5 rounded-xl text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🪞</span> Revisa tus errores en esta partida</a>
 
             <div class="bg-white dark:bg-brand-900 rounded-xl shadow-md p-4">
                 <h2 class="font-serif font-bold text-brand-800 dark:text-white text-sm mb-2">Jugadas</h2>

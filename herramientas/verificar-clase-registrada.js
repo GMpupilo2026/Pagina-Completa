@@ -134,7 +134,9 @@ window.__deletes = [];
         }
         if (porActualizar) {
           window.__updates.push({ tabla: tabla, campos: porActualizar, donde: condiciones.slice() });
-          if (filas2[0]) Object.assign(filas2[0], porActualizar);
+          // Como la base: el update cambia TODAS las filas que cumplen el filtro, no
+          // solo la primera (un envío a toda la ronda lo dejaría en evidencia).
+          filas2.forEach((f) => Object.assign(f, porActualizar));
           porActualizar = null;
         }
         let d = pend !== null && pend !== undefined ? (unica ? pend : [pend]) : filas2;
@@ -368,6 +370,8 @@ window.__deletes = [];
         }));
         return constructor(n, Object.values(suma));
       }
+      // Una semilla puede traer sus propias clases (un alumno con dos profes).
+      if (n === "mis_clases" && TABLAS.mis_clases) return constructor(n, TABLAS.mis_clases);
       return constructor(n, n === "mis_clases"
       ? [{ profesor_id: "u-profe", profesor: "Karina Rojas", es_principal: true,
            clase_abierta: SESIONES.some((c) => c.created_by === "u-profe" && !c.ended_at) }]

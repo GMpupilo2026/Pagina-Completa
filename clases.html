@@ -325,8 +325,21 @@
                     <ul id="profe-caen-lista" class="mt-2 divide-y divide-brand-100 dark:divide-brand-800"></ul>
                     <a id="profe-caen-mas" hidden href="informes.html?tema=inactivos" class="inline-block mt-2 text-sm text-accent-700 dark:text-accent-400 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded"></a>
                 </div>
+                <!-- Hoy entrenaron (public.entreno_hoy_de_mis_alumnos()): quién
+                     entrenó hoy, cuánto y cuántos limpios, con su informe a un
+                     clic. Es el resumen del día del alumno visto desde acá. Sin
+                     nadie, no se pinta. -->
+                <div id="profe-hoy" hidden class="mt-4 pt-4 border-t border-brand-100 dark:border-brand-800">
+                    <h3 class="text-sm font-semibold text-brand-800 dark:text-white"><span aria-hidden="true">🏋️ </span>Hoy entrenaron</h3>
+                    <ul id="profe-hoy-lista" class="mt-2 divide-y divide-brand-100 dark:divide-brand-800"></ul>
+                    <p id="profe-hoy-mas" hidden class="mt-2 text-sm text-brand-500 dark:text-brand-300"></p>
+                </div>
                 <p class="mt-4 pt-4 border-t border-brand-100 dark:border-brand-800 text-sm text-brand-500 dark:text-brand-300" id="profe-clases">—</p>
             </div>
+
+            <!-- «Lo que más le costó a tu clase» (solo profe): las preguntas del último mes que más
+                 fallaron sus alumnos, y un plan de repaso con ellas. Ver js/lo-que-costo.js. -->
+            <section id="lo-que-costo" hidden aria-labelledby="lo-que-costo-titulo" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-10"></section>
 
             <!-- ===== El resumen de quien SUPERVISA =====
                  No entrena ni da clase: al entrar necesita saber cuántos
@@ -423,6 +436,9 @@
     <script src="js/resumen-clase.js"></script>
     <script src="js/pendientes.js"></script>
     <script src="js/puntos-clase.js"></script>
+    <script src="js/notas-alumno.js"></script>
+    <script src="js/plan-clase.js"></script>
+    <script src="js/lo-que-costo.js"></script>
     <script src="js/clases.js"></script>
 <!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- ayuda: inicio --><script src="js/ayuda-guia.js" defer></script><!-- ayuda: fin --></body>
 </html>
