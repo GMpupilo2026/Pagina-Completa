@@ -36,7 +36,7 @@ FIN = "<!-- legal: fin -->"
 # y los dos documentos accesibles, los suyos (guia-profesores.js,
 # diagnostico-libro.js): lo que se genera no se edita a mano. Todos piden
 # sesión, y quien tiene sesión ya pasó por las páginas que sí llevan el pie.
-CARPETAS_FUERA = ("cursos/recursos/", "cursos/protegido/", "herramientas/", "node_modules/", "docs/", "supabase/")
+CARPETAS_FUERA = ("cursos/recursos/", "cursos/protegido/", "material/", "herramientas/", "node_modules/", "docs/", "supabase/")
 FUERA = {"guia-del-profesor-accesible.html", "libro-de-diagnostico-accesible.html"}
 
 ENLACE = ('class="underline underline-offset-2 hover:no-underline rounded '

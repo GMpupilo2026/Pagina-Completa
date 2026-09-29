@@ -39,11 +39,12 @@ FIN = "<!-- app: fin -->"
 #     declararlo. Esta lista tiene que decir lo mismo que la de
 #     verificar-pwa.js, y una vez no lo decía: el verificador ya exceptuaba el
 #     libro y el generador se lo ponía igual en cada corrida;
-#   - el material de estudio de las lecciones son documentos, no páginas.
+#   - el material de estudio de las lecciones y lo que se vende en material/
+#     son documentos, no páginas.
 FUERA = {"inscripcion.html", "offline.html", "formulario.html",
          "libro-de-diagnostico-accesible.html",
          "guia-del-profesor-accesible.html"}
-CARPETAS_FUERA = ("cursos/recursos/", "cursos/protegido/", "herramientas/", "node_modules/")
+CARPETAS_FUERA = ("cursos/recursos/", "cursos/protegido/", "material/", "herramientas/", "node_modules/")
 
 
 def paginas():

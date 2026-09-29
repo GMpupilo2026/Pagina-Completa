@@ -40,6 +40,35 @@ const ESTE_PERIODO: Record<Frecuencia, string> = {
   diario: "hoy", semanal: "esta semana", mensual: "este mes", anual: "este año",
 };
 
+// «Esta semana: 48 ejercicios (la anterior, 31)»: el periodo y el anterior del
+// mismo largo, como se dicen en la casa.
+const COMPARAR: Record<Frecuencia, [string, string]> = {
+  diario: ["Hoy", "ayer"], semanal: ["Esta semana", "la anterior"],
+  mensual: ["Este mes", "el anterior"], anual: ["Este año", "el anterior"],
+};
+
+/* ---- Cómo viene con los ejercicios ----
+   Lo que el alumno ve en su hub como «Tu semana» (public.entreno_mi_semana),
+   dicho a la casa: cuántos ejercicios hizo y qué parte le salió sin error ni
+   pista, contra el periodo anterior. La casa veía minutos y días, pero no si
+   venía mejorando. Lo cuenta public.entreno_comparado() dentro de
+   informe_de_alumno(). Sin ejercicios en el periodo no sale: el veredicto de
+   arriba ya dice que no entró, y «0 ejercicios» solo lo repetiría. El
+   porcentaje solo con ejercicios que dicen cómo salieron. */
+export function lineaComparacion(c: Record<string, any> | null | undefined, frecuencia: Frecuencia): string {
+  if (!c || !(Number(c.esta) > 0)) return "";
+  const [este, anterior] = COMPARAR[frecuencia] ?? COMPARAR.semanal;
+  const n = (x: number) => plural(x, "ejercicio", "ejercicios");
+  const pct = (l: unknown, t: unknown) => Math.round(100 * (Number(l) || 0) / Number(t));
+  let t = `${este}: ${n(Number(c.esta))}` +
+    (Number(c.anterior) > 0 ? ` (${anterior}, ${Number(c.anterior)})` : ` (${anterior} no entrenó)`);
+  if (Number(c.esta_con) > 0) {
+    t += ` · ${pct(c.esta_limpios, c.esta_con)} % le salieron sin error ni pista`;
+    if (Number(c.anterior_con) > 0) t += ` (${anterior}, ${pct(c.anterior_limpios, c.anterior_con)} %)`;
+  }
+  return t + ".";
+}
+
 // Cómo se llama cada actividad cuando se la cuenta alguien de la casa.
 const ACTIVIDADES: Record<string, { nombre: string; unidad: string; emoji: string }> = {
   "4x4":           { nombre: "Ejercicios 4×4",        unidad: "resueltos",   emoji: "🧩" },
@@ -248,6 +277,8 @@ export function informeHtml(
       </tr>`;
     }).join("");
 
+  const comparacion = lineaComparacion(d.comparacion, frecuencia);
+
   const hizoAlgo = lineas || minutos > 0 || (d.clases ?? 0) > 0 || (d.respuestas ?? 0) > 0;
   const estado = comoVa(d, frecuencia);
 
@@ -432,6 +463,9 @@ export function informeHtml(
         ${tarjeta(precision, "precisión en clase")}
       </tr>
     </table>` : ""}
+
+    ${comparacion ? `
+    <p style="margin:0 0 20px;font-size:14px;color:#243b53;line-height:1.5">📈 ${escapar(comparacion)}</p>` : ""}
 
     ${bloquePremios}
 

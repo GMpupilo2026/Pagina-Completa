@@ -249,7 +249,9 @@ async function pintarResumenHoy(){
   const partes = Object.keys(r.por_actividad || {})
     .sort((a, b) => r.por_actividad[b] - r.por_actividad[a] || a.localeCompare(b))
     .map((a) => `${nombre(a)} ${r.por_actividad[a]}`);
-  let texto = `Hoy: ${r.total} ${r.total === 1 ? 'ejercicio' : 'ejercicios'} (${partes.join(', ')})`;
+  /* El total ya lo dice la meta, justo arriba: repetirlo alargaba la tarjeta
+     en el celular. Acá va solo cómo se reparte. */
+  let texto = `Hoy: ${partes.join(', ')}`;
   if (r.con_como_salio) texto += ` · ${r.limpios} de ${r.con_como_salio} sin error ni pista`;
   const manana = repasosParaManana();
   if (manana) texto += ` · Para mañana: ${manana === 1 ? '1 repaso' : `${manana} repasos`}.`;

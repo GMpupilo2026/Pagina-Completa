@@ -60,11 +60,15 @@ Cuando la variable se perdió, dejó afuera a **todos**, incluido el profesor.
 - **`run_worker_first` en `wrangler.jsonc` es la mitad del candado.** Con
   Workers Assets, un archivo que existe se sirve directo, **sin pasar por el
   worker**: sin esa línea el código está perfecto y el candado no existe, sin
-  ningún error. Solo nombra las dos carpetas; el resto del sitio se sirve como
-  siempre.
-- Lo que queda abierto a propósito: la portada y el temario, y los libros de la
-  raíz (`guia-del-profesor.pdf`, `libro-de-diagnostico.pdf`…), que no son de
-  ningún curso.
+  ningún error. Nombra esas carpetas y `material/`; el resto del sitio se sirve
+  como siempre.
+- `cursos/recursos/<curso>/` abre con el acceso vigente **o** con la compra de
+  ese material, y los libros sueltos viven en `material/<producto>/` y abren
+  solo con su compra (ver «La tienda con permiso por producto» en
+  cobros-acceso-y-tienda.md).
+- Lo que queda abierto a propósito: la portada y el temario,
+  `guia-del-profesor-accesible.html` (la ayuda «?») e
+  `instrucciones-adaptadas.pdf` (va en el correo de bienvenida).
 
 **Al tocar `worker.js`, `wrangler.jsonc` o `SesionCursos`, correr
 `node herramientas/verificar-worker.js`** (sin red: cambia `fetch` por un
@@ -377,8 +381,8 @@ mismo:
 
 | archivo | para qué |
 |---|---|
-| `guia-del-profesor-presentacion.pdf` | diapositivas 16:9, para proyectar en una capacitación |
-| `guia-del-profesor.pdf` | manual A4, para leer y tener al lado del teclado |
+| `material/guia-del-profesor/guia-del-profesor-presentacion.pdf` | diapositivas 16:9, para proyectar en una capacitación |
+| `material/guia-del-profesor/guia-del-profesor.pdf` | manual A4, para leer y tener al lado del teclado |
 | `guia-del-profesor-accesible.html` | el mismo contenido sin una sola imagen |
 
 Son tres salidas y **no tres documentos**: escritas aparte se irían separando a

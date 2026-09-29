@@ -108,6 +108,18 @@ const CASOS = [
       premios: { trofeos_periodo: 0, trofeos_total: 23, insignias_periodo: 0, insignias_total: 7,
         insignias: [{ tipo: "buen_estudiante", nombre: "Estrella de buen estudiante", emoji: "⭐", periodo: 0, total: 5 }],
         ultimas: [] } } },
+  /* Cómo viene con los ejercicios (public.entreno_comparado(), dentro de
+     informe_de_alumno()): el periodo contra el anterior del mismo largo. */
+  { nombre: "comparacion", frecuencia: "semanal", datos: { ...BASE, dias_activos: 5,
+      tareas: SIN_DEBERES, examenes: { rendidos: 0, sin_hacer_hoy: 0, pendientes: 0 },
+      comparacion: { esta: 48, esta_con: 40, esta_limpios: 28, anterior: 31, anterior_con: 29, anterior_limpios: 18 } } },
+  { nombre: "comparacion-sin-anterior", frecuencia: "mensual", datos: { ...BASE, dias_activos: 5,
+      tareas: SIN_DEBERES, examenes: { rendidos: 0, sin_hacer_hoy: 0, pendientes: 0 },
+      comparacion: { esta: 1, esta_con: 0, esta_limpios: 0, anterior: 0, anterior_con: 0, anterior_limpios: 0 } } },
+  { nombre: "comparacion-en-cero", frecuencia: "semanal", datos: { ...BASE, dias_activos: 0,
+      clases: 0, respuestas: 0, correctas: 0, minutos_clase: 0, minutos_ejercicios: 0, entreno: {},
+      tareas: SIN_DEBERES, examenes: { rendidos: 0, sin_hacer_hoy: 0, pendientes: 0 },
+      comparacion: { esta: 0, esta_con: 0, esta_limpios: 0, anterior: 12, anterior_con: 10, anterior_limpios: 5 } } },
   { nombre: "diario-si", frecuencia: "diario", datos: { ...BASE, dias_del_periodo: 1, dias_activos: 1,
       tareas: SIN_DEBERES, examenes: { rendidos: 0, sin_hacer_hoy: 0, pendientes: 0 } } },
   { nombre: "diario-no", frecuencia: "diario", datos: { ...BASE, dias_del_periodo: 1, dias_activos: 0,
@@ -243,6 +255,15 @@ ok(/De su profe:<\/strong> «Explicó &lt;b&gt;muy bien&lt;\/b&gt; la clavada»/
 ok(/En total lleva 23 trofeos y 7 insignias/.test(pr), "no dice cuántos lleva en total");
 ok(!/Sus premios en clase/.test(texto("premios-viejos")), "sin premios en el periodo el bloque no debería salir");
 ok(!/Sus premios en clase/.test(texto("va-bien")), "sin la clave premios el bloque no debería salir");
+
+// ---------- Cómo viene con los ejercicios ----------
+ok(/Esta semana: 48 ejercicios \(la anterior, 31\) · 70 % le salieron sin error ni pista \(la anterior, 62 %\)\./.test(texto("comparacion")),
+  "debería comparar la semana con la anterior, en ejercicios y en limpios: " + texto("comparacion").slice(0, 600));
+ok(/Este mes: 1 ejercicio \(el anterior no entrenó\)\./.test(texto("comparacion-sin-anterior")),
+  "el mensual habla del mes, en singular, y dice si el anterior no entrenó");
+ok(!/sin error ni pista/.test(texto("comparacion-sin-anterior")), "sin ejercicios que digan cómo salieron no se inventa un porcentaje");
+ok(!/Esta semana:/.test(texto("comparacion-en-cero")), "sin ejercicios en el periodo la línea no sale (el veredicto ya lo dice)");
+ok(!/Esta semana:/.test(texto("va-bien")), "sin la clave comparacion (una base de antes) la línea no sale");
 
 if (fallos.length) {
   console.error(`❌ ${fallos.length} fallo(s):\n` + fallos.map((f) => "  - " + f).join("\n"));

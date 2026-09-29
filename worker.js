@@ -27,7 +27,21 @@
 //     (abrir un PDF, un enlace), se explica y se ofrece iniciar sesión.
 //   · Con sesión pero sin acceso vigente: 403, y se dice por qué.
 //
-// El worker solo corre en esas dos carpetas: lo dice run_worker_first en
+// ---- Lo que se vende suelto: permiso por producto ----
+//
+// La tienda vende cada material por separado, y con el candado de arriba lo
+// bajaba cualquier cuenta con el acceso vigente —no quien lo compró— y los
+// libros de la raíz no tenían ninguno. Ahora (ver «La tienda con permiso por
+// producto» en docs/decisiones/cobros-acceso-y-tienda.md):
+//   · cursos/recursos/<producto>/  lo baja quien tiene el acceso vigente, como
+//     siempre, O quien compró ese material;
+//   · material/<producto>/         los libros y las guías sueltas: solo quien
+//     los compró (y administración).
+// El producto es el nombre de la carpeta, el mismo id de js/tienda-catalogo.js
+// (verificar-tienda.js lo comprueba). La compra la registra administración en
+// tienda.html; la pregunta es public.puede_bajar(producto, basta_el_acceso).
+//
+// El worker solo corre en esas carpetas: lo dice run_worker_first en
 // wrangler.jsonc. Sin esa línea Cloudflare sirve el archivo directo, sin pasar
 // por acá, y el candado no existe aunque el código esté perfecto.
 //
@@ -43,11 +57,24 @@ const SUPABASE_URL = "https://bgtijpimpcokxatxxbki.supabase.co";
 const SUPABASE_ANON_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJndGlqcGltcGNva3hhdHh4YmtpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg5ODczMjksImV4cCI6MjEwNDU2MzMyOX0.h-AcAEQNaYMVo5UVtdWqUCTYgiSLFKDgXsn3lnbAhmQ";
 const COOKIE = "ai_sesion_cursos";
-const PROTEGIDO = /^\/cursos\/(protegido|recursos)\//;
+const PROTEGIDO = /^\/(cursos\/(protegido|recursos)|material)\//;
+
+// Qué hay que preguntar para esa dirección. Los cursos (protegido/) se abren
+// con el acceso a la Academia; lo que se vende suelto, con su compra.
+function queSePregunta(pathname) {
+  let m = pathname.match(/^\/cursos\/recursos\/([a-z0-9-]+)\//);
+  if (m) return { producto: m[1], bastaAcceso: true };
+  m = pathname.match(/^\/material\/([a-z0-9-]+)\//);
+  if (m) return { producto: m[1], bastaAcceso: false };
+  if (/^\/material\//.test(pathname)) return { producto: "", bastaAcceso: false };
+  return null;   // cursos/protegido/: acceso_vigente(), como siempre
+}
 
 // Lo que ya se preguntó, para no ir a Supabase por cada archivo de una
 // lección. Vive lo que vive la instancia del worker, y cada respuesta vale
-// 5 minutos como mucho (o hasta que venza el token, si es antes).
+// 5 minutos como mucho (o hasta que venza el token, si es antes). Se guarda
+// por token Y por producto: guardado solo por token, haber comprado UN
+// material abría todos los demás durante esos 5 minutos.
 const yaVisto = new Map();
 const VALE_MS = 5 * 60 * 1000;
 
@@ -87,7 +114,7 @@ export default {
     if (!PROTEGIDO.test(url.pathname)) return env.ASSETS.fetch(request);
 
     // ---- El contenido de los cursos ----
-    const veredicto = await preguntar(leerCookie(request, COOKIE));
+    const veredicto = await preguntar(leerCookie(request, COOKIE), Date.now(), queSePregunta(url.pathname));
     if (veredicto !== "pasa") return negar(request, url, veredicto);
 
     const res = await env.ASSETS.fetch(request);
@@ -124,7 +151,7 @@ function carga(token) {
 }
 
 // "pasa" | "sin_sesion" | "sin_acceso"
-async function preguntar(token, ahora = Date.now()) {
+async function preguntar(token, ahora = Date.now(), que = null) {
   if (!token) return "sin_sesion";
   const c = carga(token);
   if (!c || c.role !== "authenticated" || typeof c.exp !== "number" || c.exp * 1000 <= ahora) {
@@ -136,19 +163,22 @@ async function preguntar(token, ahora = Date.now()) {
   // dejar afuera a todo el mundo, que es lo que hizo el candado anterior.
   const esDeEsteProyecto = c.iss === SUPABASE_URL + "/auth/v1";
 
-  const visto = yaVisto.get(token);
+  // material/ sin carpeta de producto no es nada que se venda: no se sirve.
+  if (que && !que.producto) return "sin_acceso";
+  const clave = que ? token + "|" + que.producto : token;
+  const visto = yaVisto.get(clave);
   if (visto && visto > ahora) return "pasa";
 
   let res;
   try {
-    res = await fetch(SUPABASE_URL + "/rest/v1/rpc/acceso_vigente", {
+    res = await fetch(SUPABASE_URL + "/rest/v1/rpc/" + (que ? "puede_bajar" : "acceso_vigente"), {
       method: "POST",
       headers: {
         apikey: SUPABASE_ANON_KEY,
         Authorization: "Bearer " + token,
         "Content-Type": "application/json",
       },
-      body: "{}",
+      body: que ? JSON.stringify({ p_producto: que.producto, p_basta_acceso: que.bastaAcceso }) : "{}",
       signal: AbortSignal.timeout(4000),
     });
   } catch (e) {
@@ -169,13 +199,14 @@ async function preguntar(token, ahora = Date.now()) {
   if (vigente !== true) return esDeEsteProyecto ? "pasa" : "sin_sesion";
 
   if (yaVisto.size > 2000) yaVisto.clear();
-  yaVisto.set(token, Math.min(ahora + VALE_MS, c.exp * 1000));
+  yaVisto.set(clave, Math.min(ahora + VALE_MS, c.exp * 1000));
   return "pasa";
 }
 
 // El curso al que pertenece el archivo, para mandar a su portada: el login
 // solo acepta volver a una página .html, y un PDF no lo es.
 function portadaDelCurso(pathname) {
+  if (/^\/material\//.test(pathname)) return "clases.html";
   const m = pathname.match(/^\/cursos\/(?:protegido\/(?:data\/)?|recursos\/)([a-z0-9-]+)/);
   return m ? "cursos/" + m[1] + ".html" : "cursos.html";
 }
@@ -194,16 +225,21 @@ function negar(request, url, veredicto) {
     "Referrer-Policy": "strict-origin-when-cross-origin",
     "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
   };
+  const suelto = /^\/material\//.test(url.pathname);
   const esPagina = request.headers.get("Sec-Fetch-Mode") === "navigate" ||
     /text\/html/.test(request.headers.get("Accept") || "");
   if (!esPagina) {
-    return new Response(veredicto === "sin_acceso" ? "Acceso a la Academia no vigente" : "Hace falta iniciar sesión",
+    return new Response(veredicto === "sin_acceso" ? (suelto ? "Este material se compra aparte" : "Acceso a la Academia no vigente") : "Hace falta iniciar sesión",
       { status: estado, headers: { ...cabeceras, "Content-Type": "text/plain; charset=utf-8" } });
   }
   const portada = portadaDelCurso(url.pathname);
-  const cuerpo = veredicto === "sin_acceso"
+  const cuerpo = veredicto === "sin_acceso" && suelto
+    ? `<h1>Este material se compra aparte</h1>
+<p>Lo pueden abrir las cuentas que lo compraron. Si ya lo compraste, escríbenos por WhatsApp al +506 8309-2291 y lo dejamos asociado a tu cuenta.</p>
+<p><a class="boton" href="https://wa.me/50683092291">Escribir por WhatsApp</a></p>`
+    : veredicto === "sin_acceso"
     ? `<h1>Tu acceso a la Academia no está activo</h1>
-<p>Este material es de los cursos de la Academia. En tu panel te decimos hasta cuándo estuvo activo y cómo renovarlo.</p>
+<p>Este material es de los cursos de la Academia: lo abre quien tiene el acceso activo o quien compró este material. En tu panel te decimos hasta cuándo estuvo activo y cómo renovarlo.</p>
 <p><a class="boton" href="/clases.html">Ir a mi panel</a></p>`
     : `<h1>Este material es de la Academia</h1>
 <p>Lo pueden abrir los alumnos con su cuenta. Inicia sesión y te llevamos al curso.</p>

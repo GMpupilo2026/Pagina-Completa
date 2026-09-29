@@ -316,7 +316,7 @@ console.log(`Maqueta: ${htmlTemporal} · ${ITEMS.length} ítems · ${TOTAL_PUNTO
   const navegador = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
   const pagina = await navegador.newPage();
   await pagina.goto("file://" + htmlTemporal, { waitUntil: "load" });
-  const destino = path.join(RAIZ, "diagnostico-de-nivel.pdf");
+  const destino = path.join(RAIZ, "material", "diagnostico-de-nivel", "diagnostico-de-nivel.pdf");
   await pagina.pdf({
     path: destino,
     format: "A4",

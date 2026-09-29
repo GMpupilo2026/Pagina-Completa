@@ -100,10 +100,30 @@
         /* El Tipo de entrenamiento más flojo (js/tipo-flojo.js): el tipo que
            menos sale con tres estrellas. Igual que el tema: sin cinco ejercicios
            de un mismo tipo no hay con qué opinar, y la tarjeta lo dice. */
-        function tarjetaTipoFlojo(e) {
+        /* Con `alumnoId` (la ficha de un alumno, vista por quien puede mandar
+           tareas), la tarjeta trae «Mandarle 10 de La balanza»: abre Tareas con
+           el alumno marcado y el renglón armado (tareas.html?material=…, ver
+           desdeElInforme en js/tareas.js). Sin eso, el profe veía el hueco y
+           tenía que ir a Tareas a buscar el mismo tipo en la lista. */
+        const EJERCICIOS_DEL_TIPO_FLOJO = 10;
+        function tarjetaTipoFlojo(e, alumnoId) {
             const f = e.tipoFlojo;
             if (!f) return statCard("📉", "—", "Tipo de entrenamiento más flojo (hace falta resolver 5 de un mismo tipo)", true);
-            return statCard("📉", `${escVis(f.nombre)} · ${f.porcentaje} %`, `Tipo más flojo: tres estrellas en ${f.limpios} de ${f.intentos}`, true);
+            const card = statCard("📉", `${escVis(f.nombre)} · ${f.porcentaje} %`, `Tipo más flojo: tres estrellas en ${f.limpios} de ${f.intentos}`, true);
+            if (alumnoId && puedeMandarTareas()) {
+                const a = document.createElement("a");
+                a.href = "tareas.html?" + new URLSearchParams({ alumno: alumnoId, material: "tipos", recorte: f.tipo, cantidad: String(EJERCICIOS_DEL_TIPO_FLOJO) });
+                a.className = "inline-block mt-2 text-sm font-semibold text-accent-700 dark:text-accent-400 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded";
+                a.dataset.tipoFlojo = f.tipo;
+                a.textContent = `Mandarle ${EJERCICIOS_DEL_TIPO_FLOJO} de ${f.nombre} →`;
+                card.appendChild(a);
+            }
+            return card;
+        }
+        /* Lo mismo que decide tareas.html (puedeAsignar); «Ver como» otra persona
+           no manda nada. */
+        function puedeMandarTareas() {
+            return !!(profile && (profile.role === "profesor" || profile.is_admin) && !profile._persona);
         }
         /* Las casillas que más le cuestan en Coordenadas: la base manda los
            contadores (coord_casillas) y el orden lo pone el mismo módulo de la
@@ -114,12 +134,12 @@
             return statCard("📍", lista.map((x) => x.sq).join(" · "),
                 "Coordenadas, las que más le cuestan: " + lista.map((x) => `${x.sq} (falló ${x.fallos} de ${x.fallos + x.aciertos})`).join(", "), true);
         }
-        function tarjetasDeModulos(e) {
+        function tarjetasDeModulos(e, alumnoId) {
             return [
                 tarjetaTemaFlojo(e),
                 statCard("👁️", e.visualizacion, "Ejercicios de Visualización resueltos", true),
                 statCard("🧩", `${e.tiposEjercicios} (${e.tiposEstrellas}⭐)`, "Tipos de entrenamiento: ejercicios con estrellas", true),
-                tarjetaTipoFlojo(e),
+                tarjetaTipoFlojo(e, alumnoId),
                 statCard("📖", `${e.aperturasEmpezadas} (${e.aperturasFirmes} firmes)`, "Líneas de Aperturas estudiadas", true),
                 statCard("🎯", textoPrecision(e), "Precisión posicional", true),
                 statCard("🏁", e.finales, "Finales contra la máquina logrados", true),
@@ -967,7 +987,7 @@
                 statCard("⚡", entreno.bestCoord, "Mejor puntuación en Coordenadas", true),
                 statCard("🏆", `${entreno.practiceCompleted} (${entreno.practiceStars}⭐)`, "Series de Practicar completadas", true),
                 statCard("🧠", entreno.concentracionTotal, "Ejercicios de Concentración resueltos", true),
-                ...tarjetasDeModulos(entreno)
+                ...tarjetasDeModulos(entreno, studentId)
             );
             mostrarBotonDeNumeros();
 
@@ -3104,7 +3124,7 @@ function areasFlojasArbitraje(fila) {
 
             if (!conDiagnostico.length) {
                 const empezados = pendientes.filter((p) => p.aMedias);
-                contenedor.innerHTML = `<p class="text-sm text-brand-500 dark:text-brand-300">Todavía ningún alumno ha terminado el diagnóstico${total ? ` (${total} asignado${total === 1 ? "" : "s"})` : ""}${empezados.length ? `; ${empezados.map((p) => `${escVis(p.nombre)} lo dejó en la pregunta ${p.aMedias.pregunta}`).join(", ")}` : ""}. Está en Evaluaciones › Diagnóstico de nivel y toma unos 20 minutos.${profile && profile.is_admin ? ` También se puede aplicar en papel con <a href="diagnostico-de-nivel.pdf" class="text-accent-700 dark:text-accent-400 hover:underline">la versión imprimible</a>, y para estudiar y corregir está <a href="libro-de-diagnostico.pdf" class="text-accent-700 dark:text-accent-400 hover:underline">el libro con el banco entero</a> (los dos traen las respuestas: son solo para administración).` : ""}</p>`;
+                contenedor.innerHTML = `<p class="text-sm text-brand-500 dark:text-brand-300">Todavía ningún alumno ha terminado el diagnóstico${total ? ` (${total} asignado${total === 1 ? "" : "s"})` : ""}${empezados.length ? `; ${empezados.map((p) => `${escVis(p.nombre)} lo dejó en la pregunta ${p.aMedias.pregunta}`).join(", ")}` : ""}. Está en Evaluaciones › Diagnóstico de nivel y toma unos 20 minutos.${profile && profile.is_admin ? ` También se puede aplicar en papel con <a href="material/diagnostico-de-nivel/diagnostico-de-nivel.pdf" class="text-accent-700 dark:text-accent-400 hover:underline">la versión imprimible</a>, y para estudiar y corregir está <a href="material/libro-de-diagnostico/libro-de-diagnostico.pdf" class="text-accent-700 dark:text-accent-400 hover:underline">el libro con el banco entero</a> (los dos traen las respuestas: son solo para administración).` : ""}</p>`;
                 return;
             }
 

@@ -534,7 +534,7 @@ fs.writeFileSync(htmlMarcaTemporal, htmlMarca);
 fs.writeFileSync(htmlPortadaTemporal, htmlPortada);
 fs.writeFileSync(htmlTemporal, html);
 
-const destinoAccesible = path.join(RAIZ, "libro-de-diagnostico-accesible.html");
+const destinoAccesible = path.join(RAIZ, "material", "libro-de-diagnostico", "libro-de-diagnostico-accesible.html");
 fs.writeFileSync(destinoAccesible, accesible());
 
 console.log(`Maqueta: ${htmlTemporal}\nTapa:    ${htmlPortadaTemporal}`);
@@ -544,7 +544,7 @@ console.log("Accesible:", destinoAccesible);
 (async () => {
   const { chromium } = require("playwright");
   const navegador = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
-  const destino = path.join(RAIZ, "libro-de-diagnostico.pdf");
+  const destino = path.join(RAIZ, "material", "libro-de-diagnostico", "libro-de-diagnostico.pdf");
   const tapa = path.join(tmp, "diagnostico-libro-tapa.pdf");
   const cuerpo = path.join(tmp, "diagnostico-libro-cuerpo.pdf");
   const marca = path.join(tmp, "diagnostico-libro-marca.pdf");

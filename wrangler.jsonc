@@ -9,6 +9,6 @@
 		// el candado del contenido de los cursos (ver worker.js). Sin esta
 		// línea Cloudflare sirve el archivo directo y el candado no existe,
 		// sin dar ningún error. Todo lo demás se sirve como siempre.
-		"run_worker_first": ["/cursos/protegido/*", "/cursos/recursos/*"]
+		"run_worker_first": ["/cursos/protegido/*", "/cursos/recursos/*", "/material/*"]
 	}
 }

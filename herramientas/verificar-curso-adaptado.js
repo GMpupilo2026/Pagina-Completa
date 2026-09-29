@@ -262,7 +262,7 @@ function pruebaPlurales() {
     if (!fs.statSync(carpeta).isDirectory()) return;
     fs.readdirSync(carpeta).filter((n) => n.endsWith("-accesible.html")).forEach((n) => mirar(path.join(carpeta, n)));
   });
-  mirar(path.join(RAIZ, "libro-de-diagnostico-accesible.html"));
+  mirar(path.join(RAIZ, "material", "libro-de-diagnostico", "libro-de-diagnostico-accesible.html"));
   igual("ningún material accesible dice «alfils» ni «peónes»",
     sueltos.slice(0, 3).join(", ") || "ninguno", "ninguno");
 }
