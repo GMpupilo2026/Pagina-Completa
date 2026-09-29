@@ -64,7 +64,28 @@
     return { sec, desde: ultimoTuyo || nodo };
   }
 
-  function lineasDelLado(plan, clave) {
+  // Con pocas partidas, un porcentaje es una pista y no una regla: se dice.
+  // Pocas es menos del doble de las que el análisis pide para contar una
+  // línea (con un rival de 500 partidas, «1.g3» salía de 9).
+  function pocasPartidas(n, r) {
+    return n < 2 * r.minimo ? "Son solo " + partidas(n) + ": tómalo como pista, no como regla." : "";
+  }
+
+  // Lo que dice el cruce de la línea: ¿el alumno ya la juega?
+  function notaDelAlumno(sec, r, clave) {
+    const c = r.cruce && r.cruce.lados && r.cruce.lados[clave];
+    if (!c || !c.plan) return "";
+    const suyas = c.plan.filter((x) => esPrefijo(x.sec.concat(x.recomendada), sec));
+    const otra = suyas.find((x) => x.estado === "otra" && x.suya);
+    if (otra) {
+      return r.cruce.alumno + " suele jugar " + jugadaNumerada(otra.sec, otra.suya.san) + " y no " + jugadaNumerada(otra.sec, otra.recomendada) +
+        " (" + otra.suya.n + " contra " + otra.veces + " de " + otra.total + " partidas): que practique la línea antes.";
+    }
+    if (suyas.length && suyas.every((x) => x.estado === "la-juega")) return r.cruce.alumno + " ya juega esta línea.";
+    return "";
+  }
+
+  function lineasDelLado(plan, clave, r) {
     return (plan || []).slice(0, MAX_LINEAS).map((raizPlan) => {
       const p = principal(raizPlan);
       // Las cifras son las de la primera jugada tuya: todo lo que sigue
@@ -74,26 +95,77 @@
         : "Si abre " + jugadaNumerada([], raizPlan.san) + (raizPlan.reparto != null ? " (" + pctEntero(raizPlan.reparto) + " de las veces)" : "");
       // Lo mejor que hay en sus partidas puede seguir siendo bueno para él:
       // se dice, para que nadie crea que es una línea ganadora.
-      const aviso = d.puntos > 0.55 ? "Es lo que mejor funciona en sus partidas, pero igual le va bien ahí: prepárala a fondo." : "";
-      return { titulo, sec: p.sec, n: d.n, puntos: d.puntos, texto: saca(d.puntos) + " en " + partidas(d.n) + ".", aviso };
+      const avisos = [];
+      if (d.puntos > 0.55) avisos.push("Es lo que mejor funciona en sus partidas, pero igual le va bien ahí: prepárala a fondo.");
+      const pocas = pocasPartidas(d.n, r);
+      if (pocas) avisos.push(pocas);
+      const alumno = notaDelAlumno(p.sec, r, clave);
+      return { titulo, sec: p.sec, n: d.n, puntos: d.puntos, texto: saca(d.puntos) + " en " + partidas(d.n) + ".", aviso: avisos.join(" "), alumno };
     });
   }
 
-  // Agrega sin repetir la misma posición dos veces.
+  const esPrefijo = (corta, larga) => corta.length <= larga.length && corta.every((x, i) => x === larga[i]);
+  const parientes = (a, b) => esPrefijo(a, b) || esPrefijo(b, a);
+
+  // Agrega sin repetir: ni la misma posición, ni —dentro del mismo tipo de
+  // consejo— una línea que es el comienzo (o la continuación) de otra ya
+  // dicha. «1.e4 e6», «1.e4 e6 2.d4» y «1.e4 e6 2.d4 d5 3.Cd2…» son un solo
+  // consejo, no tres; pero «ahí deja la teoría» y «ahí repite un error» en
+  // la misma línea son dos cosas distintas.
   function agregar(lista, orden, max) {
     if (lista.length >= max) return;
-    const clave = orden.sec ? orden.sec.join(" ") : orden.texto;
-    if (lista.some((x) => (x.sec ? x.sec.join(" ") : x.texto) === clave)) return;
+    if (orden.sec && lista.some((x) => x.sec && (x.sec.join(" ") === orden.sec.join(" ") || (x.tipo === orden.tipo && parientes(x.sec, orden.sec))))) return;
+    if (!orden.sec && lista.some((x) => x.texto === orden.texto)) return;
     lista.push(orden);
   }
+
+  // ¿La última jugada de la línea es de él o tuya? Cambia qué se puede
+  // pedir: «juega 2.d4» se puede; «busca 1.e4 g6», no: 1…g6 lo elige él.
+  const ultimaEsSuya = (sec, colorRival) => ((sec.length - 1) % 2 === 0) === (colorRival === "w");
+
+  // Una línea donde rinde menos (o más) que de costumbre, dicha según de
+  // quién es la última jugada.
+  function lineaNotable(l, colorRival, buena) {
+    const antes = l.sec.slice(0, -1), ult = l.sec[l.sec.length - 1];
+    const jug = jugadaNumerada(antes, ult);
+    const porque = "Ahí " + saca(l.puntos) + " en " + partidas(l.n) + "; con " + colorEs(colorRival) + " suele sacar " + A.pct(l.base) + ".";
+    if (!ultimaEsSuya(l.sec, colorRival)) {
+      return {
+        texto: buena ? "Juega " + jug + (antes.length ? " después de " + A.lineaEs(antes) : "") + ": ahí rinde menos que de costumbre."
+          : "No juegues " + jug + (antes.length ? " después de " + A.lineaEs(antes) : "") + ".",
+        porque,
+      };
+    }
+    // La elige él: no se puede pedir, solo prepararla (o evitar llegar).
+    if (buena) {
+      const como = comoLeVa(l.puntos);
+      const dicho = como === "le va mal" || como === "le cuesta" ? "a él " + como : "él rinde menos que de costumbre";
+      return { texto: "Si llegan a " + A.lineaEs(l.sec) + ", " + dicho + ": estudia esa posición.", porque };
+    }
+    return {
+      texto: "Cuidado si llegan a " + A.lineaEs(l.sec) + ": ahí a él " + comoLeVa(l.puntos) + ".",
+      porque: porque + (antes.length ? " Si no la conoces, evita " + A.lineaEs(antes) + "." : ""),
+    };
+  }
+
+  // Las líneas notables, de la más clara a la menos: cuánto se aparta de su
+  // promedio, pesado por cuántas partidas la respaldan (la de 23 partidas
+  // antes que la de 7, aunque la de 7 se aparte un poco más).
+  const peso = (l) => Math.abs(l.puntos - l.base) * Math.sqrt(l.n);
 
   function lado(r, clave) {
     const colorRival = clave === "conBlancas" ? "b" : "w";
     const haz = [], evita = [];
     const motor = r.motor || { errores: [], cuidado: [] };
+    const lineas = lineasDelLado(r[clave] && r[clave].plan, clave, r);
+    // Lo que ya es parte de la línea recomendada no se repite abajo: sus
+    // números ya están arriba.
+    const yaEsta = (sec) => lineas.some((l) => esPrefijo(sec, l.sec));
+    const cruce = r.cruce && r.cruce.lados && r.cruce.lados[clave];
 
     // HAZ, de lo más concreto a lo más general.
     motor.errores.filter((x) => x.lado === clave).forEach((x) => agregar(haz, {
+      tipo: "error",
       texto: "Prepara cómo castigar " + jugadaNumerada(x.sec, x.jugada) + ": es un error suyo que repite.",
       porque: "La jugó en " + partidas(x.n) + ", " + despuesDe(x.sec) + ". Stockfish: " + A.textoEval(x.antes) + " → " + A.textoEval(x.despues) + "; lo correcto era " + (x.mejor ? A.sanEs(x.mejor) : "otra jugada") + ".",
       sec: x.sec.concat(x.jugada),
@@ -106,57 +178,54 @@
         const antes = l.sec.slice(0, l.salida.ply);
         const alt = l.salida.alternativas.slice(0, 2).map((y) => A.sanEs(y.san));
         agregar(haz, {
+          tipo: "teoria",
           texto: "Estudia " + A.lineaEs(antes.concat(l.salida.jugada)) + ": ahí él deja la teoría.",
           porque: "Juega " + jugadaNumerada(antes, l.salida.jugada) + " en " + partidas(l.salida.veces || l.n) + "; los maestros, " + l.salida.maestros + " de " + l.salida.total.toLocaleString("es-CR") + (alt.length ? " (lo habitual es " + alt.join(" o ") + ")" : "") + ".",
           sec: antes.concat(l.salida.jugada),
         }, MAX_HAZ);
       });
 
-    // Una línea débil que ya es el comienzo de la línea recomendada no se
-    // repite: sus números ya están ahí.
-    const lineas = lineasDelLado(r[clave] && r[clave].plan, clave);
-    const yaEsta = (sec) => lineas.some((l) => sec.length <= l.sec.length && sec.every((x, i) => x === l.sec[i]));
-    (r.debiles || []).filter((l) => l.color === colorRival && !yaEsta(l.sec)).forEach((l) => agregar(haz, {
-      texto: "Busca " + A.lineaEs(l.sec) + ".",
-      porque: "Ahí " + saca(l.puntos) + " en " + partidas(l.n) + "; con " + colorEs(colorRival) + " suele sacar " + A.pct(l.base) + ".",
-      sec: l.sec,
-    }, MAX_HAZ));
-
-    (r.improvisa || []).filter((x) => x.color === colorRival).forEach((x) => agregar(haz, {
-      texto: "Después de " + A.lineaEs(x.sec) + " no tiene una jugada fija: ahí improvisa.",
-      porque: "Su jugada más usada ahí, " + A.sanEs(x.opciones[0].san) + ", sale solo en el " + pctEntero(x.reparto) + " de las veces.",
-      sec: x.sec,
-    }, MAX_HAZ));
-
-    const cruce = r.cruce && r.cruce.lados && r.cruce.lados[clave];
+    // Lo del alumno va antes que lo general: es quien va a jugar. Solo lo
+    // que de verdad le cuesta al rival (menos de 50 %); «le va bien, pero
+    // menos que de costumbre» no es un consejo para jugar.
     if (cruce) {
-      cruce.aFavor.forEach((x) => agregar(haz, {
-        texto: r.cruce.alumno + " puede jugar lo suyo: " + A.lineaEs(x.sec.concat(x.jugada)) + ".",
+      cruce.aFavor.filter((x) => x.rival.puntos < 0.5 && !yaEsta(x.sec.concat(x.jugada))).forEach((x) => agregar(haz, {
+        tipo: "alumno",
+        texto: r.cruce.alumno + " puede jugar lo suyo: " + jugadaNumerada(x.sec, x.jugada) + (x.sec.length ? " después de " + A.lineaEs(x.sec) : "") + ".",
         porque: "Ahí " + saca(x.rival.puntos) + ", y " + r.cruce.alumno + " ya la conoce (" + partidas(x.alumno.n) + ").",
         sec: x.sec.concat(x.jugada),
       }, MAX_HAZ));
     }
 
+    (r.debiles || []).filter((l) => l.color === colorRival && !yaEsta(l.sec)).sort((a, b) => peso(b) - peso(a))
+      .forEach((l) => agregar(haz, Object.assign(lineaNotable(l, colorRival, true), { tipo: "linea", sec: l.sec }), MAX_HAZ));
+
+    (r.improvisa || []).filter((x) => x.color === colorRival).forEach((x) => agregar(haz, {
+      tipo: "improvisa",
+      texto: "Después de " + A.lineaEs(x.sec) + " no tiene una jugada fija: ahí improvisa.",
+      porque: "Su jugada más usada ahí, " + A.sanEs(x.opciones[0].san) + ", sale solo en el " + pctEntero(x.reparto) + " de las veces.",
+      sec: x.sec,
+    }, MAX_HAZ));
+
     // EVITA.
     motor.cuidado.filter((x) => x.lado === clave).forEach((x) => agregar(evita, {
+      tipo: "error",
       texto: "No juegues " + jugadaNumerada(x.sec, x.jugada) + " " + despuesDe(x.sec) + ", aunque a él le haya ido mal ahí.",
       porque: "Stockfish la da como error (" + A.textoEval(x.antes) + " → " + A.textoEval(x.despues) + "). Mejor " + (x.mejor ? A.sanEs(x.mejor) : "otra jugada") + ".",
       sec: x.sec.concat(x.jugada),
     }, MAX_EVITA));
 
-    (r.fuertes || []).filter((l) => l.color === colorRival).forEach((l) => agregar(evita, {
-      texto: "No vayas a " + A.lineaEs(l.sec) + ".",
-      porque: "Ahí " + saca(l.puntos) + " en " + partidas(l.n) + "; con " + colorEs(colorRival) + " suele sacar " + A.pct(l.base) + ".",
-      sec: l.sec,
-    }, MAX_EVITA));
-
     if (cruce) {
       cruce.enContra.forEach((x) => agregar(evita, {
-        texto: r.cruce.alumno + " suele jugar " + A.lineaEs(x.sec.concat(x.jugada)) + ": mejor que no.",
+        tipo: "alumno",
+        texto: r.cruce.alumno + " suele jugar " + jugadaNumerada(x.sec, x.jugada) + (x.sec.length ? " después de " + A.lineaEs(x.sec) : "") + ": contra él, mejor que no.",
         porque: "Ahí " + saca(x.rival.puntos) + " en " + partidas(x.rival.n) + ".",
         sec: x.sec.concat(x.jugada),
       }, MAX_EVITA));
     }
+
+    (r.fuertes || []).filter((l) => l.color === colorRival).sort((a, b) => peso(b) - peso(a))
+      .forEach((l) => agregar(evita, Object.assign(lineaNotable(l, colorRival, false), { tipo: "linea", sec: l.sec }), MAX_EVITA));
 
     return {
       clave,
@@ -177,9 +246,9 @@
       else if (x.tipo === "apuros-de-tiempo") haz.push({ texto: "Cuida tu reloj y lleva la partida a lo largo: él se apura al final.", porque: "Se queda con menos del 10 % de su tiempo en el " + pctEntero(x.parte) + " de sus partidas." });
       else if (x.tipo === "piensa-la-apertura") haz.push({ texto: "Sácalo de lo que conoce: en la apertura piensa mucho.", porque: "Gasta el " + pctEntero(x.el) + " de su reloj en las primeras 15 jugadas; sus rivales, el " + pctEntero(x.rivales) + "." });
       else if (x.tipo === "pierde-con-mate") haz.push({ texto: "Ataca a su rey.", porque: "El " + pctEntero(x.parte) + " de sus derrotas terminan en mate." });
-      else if (x.tipo === "final-debil") haz.push({ texto: "Cambia piezas hacia un final " + x.final + ".", porque: "En esos finales " + saca(x.puntos) + " en " + partidas(x.n) + "; su promedio es " + A.pct(x.base) + "." });
+      else if (x.tipo === "final-debil") haz.push({ texto: "Cambia piezas hacia un final " + x.final + ".", porque: ("En esos finales " + saca(x.puntos) + " en " + partidas(x.n) + "; su promedio es " + A.pct(x.base) + ". " + pocasPartidas(x.n, r)).trim() });
       else if (x.tipo === "no-convierte") haz.push({ texto: "Si quedas abajo en material en el final, sigue peleando.", porque: "Con ventaja en el final ganó solo " + x.ganadas + " de " + x.n + "." });
-      else if (x.tipo === "final-fuerte") evita.push({ texto: "No cambies hacia un final " + x.final + ".", porque: "En esos finales " + saca(x.puntos) + " en " + partidas(x.n) + "." });
+      else if (x.tipo === "final-fuerte") evita.push({ texto: "No cambies hacia un final " + x.final + ".", porque: ("En esos finales " + saca(x.puntos) + " en " + partidas(x.n) + ". " + pocasPartidas(x.n, r)).trim() });
       else if (x.tipo === "se-defiende") evita.push({ texto: "No te relajes si ganas material en el final.", porque: "Con desventaja en el final salvó " + x.salvadas + " de " + x.n + "." });
     }
     return { haz, evita };

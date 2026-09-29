@@ -102,7 +102,42 @@ window.PreguntaClase = (function () {
         return out;
     }
 
+    /* ---------- Tiempo para pensar (game_state.pensar) ----------
+       Una cuenta regresiva para toda la clase, sin pregunta. La hora de
+       arranque la pone la base (protect_game_state_teacher_columns); lo que
+       falta se calcula acá. Al terminar, el aviso queda unos segundos más
+       diciendo que se acabó, y después se va solo. */
+    const TIEMPOS_PENSAR = [
+        { segundos: 30, texto: "30 segundos" },
+        { segundos: 60, texto: "1 minuto" },
+        { segundos: 120, texto: "2 minutos" },
+        { segundos: 180, texto: "3 minutos" },
+        { segundos: 300, texto: "5 minutos" },
+    ];
+    const PENSAR_SUMA = 30;          // «+30 s»
+    const PENSAR_QUEDA_AL_TERMINAR = 8;
+
+    // null si no hay (o ya pasó); si no, {quedan, termino}.
+    function estadoPensar(pensar, ahora) {
+        if (!pensar || !pensar.at || !pensar.segundos) return null;
+        const inicio = new Date(pensar.at).getTime();
+        if (!isFinite(inicio)) return null;
+        const t = ahora == null ? Date.now() : ahora;
+        const fin = inicio + pensar.segundos * 1000;
+        if (t > fin + PENSAR_QUEDA_AL_TERMINAR * 1000) return null;
+        const quedan = Math.max(0, Math.ceil((fin - t) / 1000));
+        return { quedan, termino: quedan <= 0 };
+    }
+
+    function textoDeTiempo(segundos) {
+        const t = TIEMPOS_PENSAR.find((x) => x.segundos === segundos);
+        if (t) return t.texto;
+        const m = Math.floor(segundos / 60), s = segundos % 60;
+        return (m ? plural(m, "minuto", "minutos") : "") + (m && s ? " y " : "") + (s ? plural(s, "segundo", "segundos") : "");
+    }
+
     return {
+        TIEMPOS_PENSAR, PENSAR_SUMA, estadoPensar, textoDeTiempo,
         TIEMPOS, QUIEN_ESTA_MEJOR, TERMOMETRO,
         segundosRestantes, textoRestante, reloj, esDeOpciones, textoDeOpcion,
         lineasDeResultados, titularDeResultados, flechasDeResultados,

@@ -367,8 +367,8 @@ function pruebaResumen(conMotor, libro, comoPierde) {
   igual("con negras, una línea por cada apertura suya; si igual le va bien ahí, lo avisa",
     n.lineas.map((x) => [x.titulo, x.texto, !!x.aviso]),
     [["Si abre 1.e4 (63 % de las veces)", "él saca 60,0 % (le va bien) en 20 partidas.", true], ["Si abre 1.d4 (38 % de las veces)", "él saca 83,3 % (le va muy bien) en 12 partidas.", true]]);
-  igual("con blancas: no ir a 1.d4 d5, con el porqué", b.evita.map((x) => [x.texto, x.porque]),
-    [["No vayas a 1.d4 d5.", "Ahí él saca 90,0 % (le va muy bien) en 20 partidas; con negras suele sacar 56,1 %."]]);
+  igual("con blancas: cuidado con 1.d4 d5 (1…d5 lo elige él), con el porqué", b.evita.map((x) => [x.texto, x.porque]),
+    [["Cuidado si llegan a 1.d4 d5: ahí a él le va muy bien.", "Ahí él saca 90,0 % (le va muy bien) en 20 partidas; con negras suele sacar 56,1 %. Si no la conoces, evita 1.d4."]]);
   igual("y no repite «busca 1.e4 e5»: ya es el comienzo de su línea", b.haz.map((x) => x.texto), []);
   igual("con negras: primero su error, después dónde deja la teoría y dónde improvisa", n.haz.map((x) => x.texto), [
     "Prepara cómo castigar 4.Dh4: es un error suyo que repite.",
@@ -388,6 +388,30 @@ function pruebaResumen(conMotor, libro, comoPierde) {
     "Cuida tu reloj y lleva la partida a lo largo: él se apura al final.",
     "Sácalo de lo que conoce: en la apertura piensa mucho."]);
   igual("con el dato de cada una", g.haz[0].porque, "El 60 % de sus derrotas son por tiempo (6 de 10).");
+
+  /* Lo que salió al probarlo con un rival de verdad (jeigoth5, 500 partidas):
+     la línea recomendada era 1.g3 (9 partidas) y los consejos hablaban de
+     1.e4 como si fuera tuya la jugada de él («No vayas a 1.e4 g6»), la misma
+     idea salía tres veces con una jugada más, y lo del alumno no aparecía. */
+  const linea = (sec, color, puntos, n, base) => ({ sec, color, puntos, n, base, g: 0, t: 0, p: 0 });
+  const real = {
+    minimo: 5,
+    conBlancas: { plan: [{ san: "g3", quien: "tu", n: 9, puntos: 0.22, hijos: [{ san: "d5", quien: "rival", n: 8, puntos: 0.25, reparto: 0.89, hijos: [{ san: "Bg2", quien: "tu", n: 8, puntos: 0.25, hijos: [] }] }] }] },
+    conNegras: { plan: [] },
+    debiles: [linea(["e4", "e6", "d4", "d5", "Nd2", "dxe4", "Nxe4"], "b", 0.29, 7, 0.67), linea(["e4", "e6"], "b", 0.37, 23, 0.67), linea(["e4", "e6", "d4"], "b", 0.39, 14, 0.67)],
+    fuertes: [linea(["e4", "Nc6", "d4"], "b", 1, 8, 0.67), linea(["e4", "g6"], "b", 0.93, 14, 0.67), linea(["e4", "g6", "d4"], "b", 0.89, 9, 0.67)],
+    improvisa: [],
+    cruce: { alumno: "Ana", lados: { conBlancas: { plan: [{ sec: [], recomendada: "g3", veces: 89, total: 986, suya: { san: "d4", n: 653 }, estado: "otra" }], aFavor: [], enContra: [] } } },
+  };
+  const rb = R.armar(real).lados[0];
+  igual("una idea, un consejo: de «1.e4 e6», «…2.d4» y «…3.Cd2 dxe4 4.Cxe4» queda la de más partidas", rb.haz.map((x) => x.texto),
+    ["Si llegan a 1.e4 e6, a él le cuesta: estudia esa posición."]);
+  igual("lo que elige él no se pide: se avisa; lo que eliges tú, sí («no juegues 2.d4»)", rb.evita.map((x) => x.texto),
+    ["Cuidado si llegan a 1.e4 g6: ahí a él le va muy bien.", "No juegues 2.d4 después de 1.e4 Cc6."]);
+  igual("y dice cómo evitarla: sin jugar 1.e4", rb.evita[0].porque.endsWith("Si no la conoces, evita 1.e4."), true);
+  igual("9 partidas son una pista, y lo dice", rb.lineas[0].aviso, "Son solo 9 partidas: tómalo como pista, no como regla.");
+  igual("y si el alumno juega otra cosa ahí, lo dice en la línea", rb.lineas[0].alumno,
+    "Ana suele jugar 1.d4 y no 1.g3 (653 contra 89 de 986 partidas): que practique la línea antes.");
 
   // Un análisis guardado de la versión 1 (sin motor, sin teoría, sin más allá) se resume igual.
   const v1 = R.armar(analisisVersion1());
@@ -623,7 +647,7 @@ async function pruebaConPermiso(browser) {
   igual("con blancas: la línea y lo que no hay que hacer", await page.evaluate(() => {
     const d = document.querySelector("[aria-labelledby='resumen-titulo'] [data-lado='conBlancas']");
     return [d.querySelector("[data-linea] p:nth-child(2)").textContent, d.querySelector("[data-consejos='evita'] li p").textContent];
-  }), ["1.e4 e5 2.Cf3 Cc6 3.Ab5 a6 4.Aa4 Cf6 5.O-O Ae7", "No vayas a 1.d4 d5."]);
+  }), ["1.e4 e5 2.Cf3 Cc6 3.Ab5 a6 4.Aa4 Cf6 5.O-O Ae7", "Cuidado si llegan a 1.d4 d5: ahí a él le va muy bien."]);
   // Sin el token no hay teoría, y Stockfish ya terminó: el aviso de «todavía
   // falta» no puede quedar colgado (se mide si se ve, no el atributo).
   igual("cuando ya no corre nada, no dice que falta algo", await page.evaluate(() => document.querySelector("[aria-labelledby='resumen-titulo'] [data-pendiente]").checkVisibility()), false);
