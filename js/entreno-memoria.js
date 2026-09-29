@@ -259,6 +259,12 @@
     pintar();
     const n = R.estrellasFoto(r.errores, r.total);
     const record = !r.errores && anotarMejor(ajustes.segundos, ajustes.piezas);
+    // Cada posición reconstruida suma a la meta del día, la racha, los logros
+    // y las tareas (training_progress). Sin puzzle_id: la posición se sortea,
+    // así que cada ronda cuenta. `limpio` es sin un error.
+    if (window.EntrenoProgress) EntrenoProgress.log("memoria", {
+      piezas: ajustes.piezas, segundos: ajustes.segundos, aciertos: r.aciertos, total: r.total, estrellas: n, limpio: !r.errores,
+    });
     $("juego-enunciado").textContent = r.errores ? "Así era la posición." : "¡Perfecta!";
     estado((r.errores ? "Acertaste " + r.aciertos + " de " + r.total + " piezas. " : "✓ ¡Perfecta! ") +
       (n ? textoEstrellas(n) : "Sin estrellas.") + (record ? " Nuevo récord con " + ajustes.segundos + " segundos." : ""));

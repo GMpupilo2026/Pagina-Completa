@@ -132,6 +132,28 @@ for (const area of PE.AREAS) {
   }
 }
 
+/* El plan dice, al lado de cada enlace, cuánto hizo el alumno ahí desde el
+   diagnóstico (avance_del_plan, con la clave de PlanEntrenamiento.claveDeAvance).
+   Un recurso que lleva a una página que SÍ registra en training_progress pero
+   sin clave queda diciendo nada, callado: pasó con los tipos (todo Tipos era
+   'actividad:tipos' y el enlace «tipos.html#balanza» no pedía ninguna) y con
+   Concentración. Qué páginas registran lo dice Tareas: las herramientas con
+   meta de cantidad (js/material-plataforma.js). */
+console.log("\n=== Cada recurso de una página que registra cuenta su avance ===");
+for (const area of PE.AREAS) {
+  for (const r of area.recursos || []) {
+    const pagina = r.href.split("?")[0].split("#")[0];
+    const h = MP.HERRAMIENTAS.find((t) => t.href === pagina && (t.metas || []).includes("cantidad"));
+    if (!h) continue;
+    const clave = PE.claveDeAvance(r.href);
+    const esperada = pagina === "entreno/tipos.html" && r.href.includes("#") ? "tipo:" + r.href.split("#")[1]
+      : (h.actividades || []).map((a) => "actividad:" + a);
+    const vale = !!clave && (Array.isArray(esperada) ? (esperada.includes(clave) || /^(tema|mates):/.test(clave)) : clave === esperada);
+    if (!vale) mal(`${area.id}: «${r.href}» registra (${h.actividades.join(", ")}) pero el plan le pide «${clave}»`);
+  }
+}
+if (!fallos) bien("todos los recursos de páginas que registran piden la clave de lo que registran");
+
 console.log(fallos
   ? `\n${fallos} fallo(s)`
   : "\nEl plan manda a material que existe, y cada área tiene dónde practicar.");

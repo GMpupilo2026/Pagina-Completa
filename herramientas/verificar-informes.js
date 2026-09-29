@@ -458,21 +458,22 @@ async function pruebaProfesor(browser) {
     [await page.inputValue("#student-filter"), await page.textContent("#student-report-title")].join(" | "),
     "a-1 | 🚩 Últimas asignaciones de Ana Rojas");
 
-  /* Veinticuatro números de golpe no los lee nadie: los dieciséis de segunda
-     fila nacen escondidos (las ocho de siempre más las ocho de los módulos que
-     se sumaron: Temas, Visualización, Tipos, Aperturas, Precisión, el tema más
-     flojo, los Finales contra la máquina y las casillas de Coordenadas). Se mide el display que
+  /* Veinticinco números de golpe no los lee nadie: los diecisiete de segunda
+     fila nacen escondidos (las ocho de siempre más las nueve de los módulos que
+     se sumaron: Temas, Visualización, Tipos, el tipo más flojo, Aperturas,
+     Precisión, el tema más flojo, los Finales contra la máquina y las casillas
+     de Coordenadas). Se mide el display que
      calcula el navegador, no la clase. */
   const escondidas = () => page.evaluate(() =>
     [...document.querySelectorAll("#stat-cards [data-extra]")]
       .filter((d) => getComputedStyle(d).display === "none").length);
-  igual("las dieciséis secundarias nacen escondidas", await escondidas(), 16);
+  igual("las diecisiete secundarias nacen escondidas", await escondidas(), 17);
   igual("y las que se miran siguen a la vista", await page.evaluate(() =>
     [...document.querySelectorAll("#stat-cards > div")].filter((d) => getComputedStyle(d).display !== "none").length), 8);
   await page.click("#stat-cards-ver");
   igual("el botón las destapa todas", await escondidas(), 0);
   await page.click("#stat-cards-ver");
-  igual("y las vuelve a guardar", await escondidas(), 16);
+  igual("y las vuelve a guardar", await escondidas(), 17);
   await page.selectOption("#student-filter", "");
   await page.waitForFunction(() => !document.getElementById("teacher-report").classList.contains("hidden"));
 
@@ -803,6 +804,8 @@ async function pruebaAlumno(browser) {
       // El tema más flojo (js/tema-flojo.js): la clave la pone la base, el nombre
       // sale de entreno/data/temas-motivos.json.
       informes_tema_mas_flojo: [{ student_id: "a-1", tema: "pin", intentos: 11, limpios: 4, porcentaje: 36 }],
+      // El tipo más flojo (js/tipo-flojo.js): el nombre sale de js/tipos-catalogo.js.
+      informes_tipo_mas_flojo: [{ student_id: "a-1", tipo: "balanza", intentos: 8, limpios: 3, porcentaje: 38 }],
       informes_diagnosticos_alumnos: [{ student_id: "a-1", detalle: DIAGNOSTICO, fecha: "2026-09-10T12:00:00Z", a_medias_pregunta: null, a_medias_fecha: null }],
       informes_totales: { clases_cerradas: 4, preguntas: 10, partidas: 2 },
       resumen_tareas_examenes: DEBERES,
@@ -840,6 +843,8 @@ async function pruebaAlumno(browser) {
   igual("las casillas que más le cuestan en Coordenadas, ordenadas por el módulo de la página",
     await tarjeta(page, "Coordenadas, las que más le cuestan: b6 (falló 9 de 10), g3 (falló 4 de 7)"), "b6 · g3");
   igual("el tema más flojo, con su nombre y cuántos limpios", await tarjeta(page, "Tema más flojo: limpio en 4 de 11"), "Clavada · 36 %");
+  igual("el tipo de entrenamiento más flojo, con el nombre del catálogo y cuántos con tres estrellas",
+    await tarjeta(page, "Tipo más flojo: tres estrellas en 3 de 8"), "La balanza · 38 %");
   const pedido = await page.evaluate(() => ((window.__rpcArgs || []).find((a) => a[0] === "informes_tema_mas_flojo") || [])[1]);
   igual("a la base se le mandan los motivos, no «Mezcla» ni las fases",
     pedido && [pedido.p_temas.includes("pin"), pedido.p_temas.includes("backRankMate"), pedido.p_temas.includes("mix"), pedido.p_temas.includes("middlegame")],

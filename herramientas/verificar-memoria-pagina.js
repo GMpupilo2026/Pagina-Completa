@@ -46,7 +46,7 @@ function clienteFalso(conSesion) {
       maybeSingle() { return Promise.resolve({ data: null, error: null }); },
       single() { return Promise.resolve({ data: null, error: null }); },
       upsert() { return Promise.resolve({ error: null }); },
-      insert() { return Promise.resolve({ error: null }); },
+      insert(filas) { (window.__inserts = window.__inserts || []).push({ tabla: nombre, fila: [].concat(filas)[0] }); return Promise.resolve({ error: null }); },
       update() { return api; },
       then(res, rej) { return Promise.resolve({ data: [], error: null }).then(res, rej); },
     };
@@ -172,6 +172,9 @@ async function main() {
     const t = await estado(page, /Perfecta|Acertaste/);
     ok("entera, perfecta y con récord nuevo", /Perfecta/.test(t) && /Nuevo récord/.test(t), t);
     ok("el récord queda guardado: 60 s → 8 piezas", (await record(page))["60"] === 8, JSON.stringify(await record(page)));
+    // Y la ronda queda en training_progress: meta del día, racha, logros, tareas.
+    const filas = await page.evaluate(() => (window.__inserts || []).filter((i) => i.tabla === "training_progress").map((i) => [i.fila.activity, i.fila.detail.piezas, i.fila.detail.segundos, i.fila.detail.limpio, i.fila.detail.estrellas]));
+    ok("se registra una vez como «memoria», con piezas, segundos y limpio", JSON.stringify(filas) === JSON.stringify([["memoria", 8, 60, true, 3]]), JSON.stringify(filas));
     const mas = page.getByRole("button", { name: /Una pieza más/ });
     ok("ofrece «Una pieza más»", (await mas.count()) === 1);
     await mas.click();
@@ -204,6 +207,8 @@ async function main() {
     const signos = await page.$$eval("#tablero [data-marca]", (c) => c.map((x) => x.dataset.marca + x.dataset.square));
     ok("la buena lleva ✓ y cada una que faltó lleva − escrito", signos.filter((s) => s[0] === "−").length === 5 && signos.includes("✓" + R.sq(i)), signos.join(" "));
     ok("el récord no cambia", (await record(page))["10"] === 5);
+    const fila = await page.evaluate(() => ((window.__inserts || []).filter((i) => i.tabla === "training_progress").pop() || {}).fila);
+    ok("con errores también se registra, pero no limpio", !!fila && fila.activity === "memoria" && fila.detail.limpio === false && fila.detail.aciertos === 1 && fila.detail.total === 6, JSON.stringify(fila));
     ok("sin «Una pieza más» si no salió perfecta", (await page.getByRole("button", { name: /Una pieza más/ }).count()) === 0);
     await page.getByRole("button", { name: "Cambiar piezas o segundos" }).click();
     await page.waitForSelector("#vista-ajustes:not(.hidden)");
