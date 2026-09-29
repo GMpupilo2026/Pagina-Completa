@@ -13,6 +13,7 @@ tabla  archivos_pgn  rls=true
 tabla  avisos_cobro  rls=true
 tabla  avisos_ficha_faltante  rls=true
 tabla  avisos_ia_tope  rls=true
+tabla  clase_plan_hecho  rls=true
 tabla  class_attendance  rls=true
 tabla  class_chat_messages  rls=true
 tabla  class_presence_log  rls=true
@@ -180,6 +181,9 @@ columna  avisos_ia_tope.gasto_usd  numeric(12,6)
 columna  avisos_ia_tope.periodo  date
 columna  avisos_ia_tope.tope_usd  numeric(10,2)
 columna  avisos_ia_tope.umbral  smallint
+columna  clase_plan_hecho.class_session_id  uuid
+columna  clase_plan_hecho.created_at  timestamp with time zone
+columna  clase_plan_hecho.plan_item_id  uuid
 columna  class_attendance.id  uuid
 columna  class_attendance.joined_at  timestamp with time zone
 columna  class_attendance.minutos_tarde  integer
@@ -431,6 +435,7 @@ columna  game_rooms.black_id  uuid
 columna  game_rooms.black_ready  boolean
 columna  game_rooms.black_time_left  numeric
 columna  game_rooms.cartas_state  jsonb
+columna  game_rooms.class_session_id  uuid
 columna  game_rooms.clock_updated_at  timestamp with time zone
 columna  game_rooms.created_at  timestamp with time zone
 columna  game_rooms.created_by  uuid
@@ -626,6 +631,7 @@ columna  practice_games.eval_cp  integer
 columna  practice_games.fen  text
 columna  practice_games.id  uuid
 columna  practice_games.moves  jsonb
+columna  practice_games.reloj_ms  integer
 columna  practice_games.session_id  uuid
 columna  practice_games.status  text
 columna  practice_games.student_color  text
@@ -637,7 +643,9 @@ columna  practice_sessions.created_by  uuid
 columna  practice_sessions.ended_at  timestamp with time zone
 columna  practice_sessions.fen  text
 columna  practice_sessions.id  uuid
+columna  practice_sessions.incremento_segundos  integer
 columna  practice_sessions.level  text
+columna  practice_sessions.reloj_segundos  integer
 columna  preguntas_clave.correcta  integer
 columna  preguntas_clave.question_id  uuid
 columna  preparacion_rivales_profesores.activado_por  uuid
@@ -1194,6 +1202,7 @@ politica  archivos_pgn  archivos_pgn_insert  INSERT
 politica  archivos_pgn  archivos_pgn_select  SELECT
 politica  archivos_pgn  archivos_pgn_update  UPDATE
 politica  avisos_cobro  avisos_lee_coordinacion  SELECT
+politica  clase_plan_hecho  clase_plan_hecho_de_quien_da_la_clase  ALL
 politica  class_attendance  class_attendance_delete_profesor  DELETE
 politica  class_attendance  class_attendance_exige_acceso_ins  INSERT  restrictiva
 politica  class_attendance  class_attendance_exige_acceso_upd  UPDATE  restrictiva
@@ -1464,6 +1473,7 @@ trigger  examenes  examenes_exige_acceso_al_empezar
 trigger  formularios  formularios_academia_propia
 trigger  fourplayer_games  reloj_de_partida
 trigger  game_rooms  game_rooms_exige_acceso
+trigger  game_rooms  game_rooms_ligar_a_la_clase
 trigger  game_rooms  reloj_de_partida
 trigger  game_state  protect_game_state_teacher_columns_trigger
 trigger  ia_uso  ia_uso_avisa_tope
@@ -1513,6 +1523,8 @@ indice  avisos_cobro  avisos_cobro_pkey
 indice  avisos_cobro  avisos_cobro_una_vez
 indice  avisos_ficha_faltante  avisos_ficha_faltante_pkey
 indice  avisos_ia_tope  avisos_ia_tope_pkey
+indice  clase_plan_hecho  clase_plan_hecho_item_idx
+indice  clase_plan_hecho  clase_plan_hecho_pkey
 indice  class_attendance  class_attendance_pkey
 indice  class_attendance  class_attendance_session_id_student_id_key
 indice  class_attendance  class_attendance_student_idx
@@ -1596,6 +1608,7 @@ indice  formularios  formularios_slug_key
 indice  fourplayer_games  fourplayer_games_created_by_fk
 indice  fourplayer_games  fourplayer_games_pkey
 indice  game_rooms  game_rooms_black_id_fk
+indice  game_rooms  game_rooms_class_session_idx
 indice  game_rooms  game_rooms_created_by_fk
 indice  game_rooms  game_rooms_pkey
 indice  game_rooms  game_rooms_white_id_fk
@@ -1862,6 +1875,13 @@ grant  avisos_cobro  authenticated  SELECT
 grant  avisos_cobro  authenticated  TRIGGER
 grant  avisos_cobro  authenticated  TRUNCATE
 grant  avisos_cobro  authenticated  UPDATE
+grant  clase_plan_hecho  authenticated  DELETE
+grant  clase_plan_hecho  authenticated  INSERT
+grant  clase_plan_hecho  authenticated  REFERENCES
+grant  clase_plan_hecho  authenticated  SELECT
+grant  clase_plan_hecho  authenticated  TRIGGER
+grant  clase_plan_hecho  authenticated  TRUNCATE
+grant  clase_plan_hecho  authenticated  UPDATE
 grant  class_attendance  anon  DELETE
 grant  class_attendance  anon  INSERT
 grant  class_attendance  anon  REFERENCES
