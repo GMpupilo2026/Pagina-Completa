@@ -367,6 +367,30 @@ y Ver la línea») lo comprueba en un navegador.
 - Los verificadores que daban por hecho el salto (`entreno-nivel`,
   `entreno-repaso`) ahora aprietan «Siguiente».
 
+## Mates: de dónde salen y por qué no tienen dificultad
+
+Los 2455 mates (`entreno/data/mates.json`) salen del libro de László Polgár
+*Chess: 5334 Problems, Combinations, and Games* (#59): posiciones recortadas
+(casi todas con «0 1» en la FEN), no de partidas. Por eso **no tienen rating**
+y no se le puede sacar de la base de Lichess: se probó buscando cada uno en la
+tabla «Ejercicios Lichess» (107 mil ejercicios de mate) aplicando la primera
+jugada de cada ejercicio de Lichess y comparando el tablero (una huella md5,
+para no bajar la tabla), y ninguno coincide; con los de Temas, 8 de 2455. La
+dificultad no se pone a ojo, así que Mates sigue en el orden del libro. El día
+que haya suficientes intentos registrados (`activity = 'mates'`, con
+`limpio` desde #491), se puede calibrar con las respuestas reales.
+
+## Finales contra la máquina, en Informes
+
+La revisión de la página no encontró nada mal en el juego (la meta la decide
+cómo termina la partida y, sin motor, no se regala nada), pero **el profesor no
+veía los finales**: la página escribe una fila por final logrado y ninguna
+función de Informes la contaba. `informes_entreno_modulos()` suma la columna
+`finales` (finales distintos logrados; migración `20260929051137`, que borra y
+vuelve a crear la función porque cambia lo que devuelve, con sus permisos), e
+Informes la muestra en una tarjeta de segunda fila (ahora son quince). Lo
+prueba `verificar-informes.js`.
+
 ## El tema más flojo, en el hub
 
 El «Hoy te toca» propone el motivo que menos sale limpio («Tu tema más flojo,
@@ -1964,6 +1988,13 @@ enlace del profesor llevan a donde tienen que llevar.
   reconstruye tocando casillas con una paleta o **escribiendo** «Rg1 Tf1 a2»
   por color, que es como la contesta quien no ve el tablero. Las marcas de la
   corrección llevan su signo escrito (✓ − ✗ +), el color no va solo.
+- **Con lo justo tiene 69 finales, no 30.** Eran 6 por nivel y se acababan en
+  minutos. `node herramientas/tipos-generar.js --solo con-lo-justo` rehace
+  solo ese banco (no usa Stockfish: sale de las tablas) y deja el resto de
+  `tipos.json` igual; pide 15 por nivel con hasta 3 por cada distancia al mate
+  (dos torres y dama no dan para más: 12), y no repite una posición que el
+  sorteo saque dos veces (pasó: dos iguales daban un id repetido). Las 30 de
+  antes siguen, con el mismo id, así que nadie pierde sus estrellas.
 - **Con lo justo: el mínimo es exacto, no «lo que dijo el motor».**
   Stockfish no sirve para contar jugadas hasta el mate: a una posición de rey y
   torre le dio «mate en 20», y el máximo teórico de ese final es 16. Así que

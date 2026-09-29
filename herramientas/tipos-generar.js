@@ -56,7 +56,11 @@ const TEMAS = JSON.parse(fs.readFileSync(path.join(RAIZ, "entreno/data/temas.jso
 const PUZZLES = Object.keys(TEMAS.puzzles).sort((a, b) => hash(a) - hash(b)).map((id) => Object.assign({ id }, TEMAS.puzzles[id]));
 
 /* ---------- motor: varios procesos a la vez ---------- */
-const MOTORES = Array.from({ length: Math.max(1, Math.min(4, require("os").cpus().length)) }, () => new Motor());
+/* `--solo con-lo-justo` rehace solo ese banco (no usa el motor: sale de las
+   tablas de finales) y deja el resto de tipos.json como está. Así se puede
+   ampliar sin Stockfish y sin tocar los demás. */
+const SOLO = process.argv.includes("--solo") ? process.argv[process.argv.indexOf("--solo") + 1] : null;
+const MOTORES = SOLO ? [] : Array.from({ length: Math.max(1, Math.min(4, require("os").cpus().length)) }, () => new Motor());
 let libre = MOTORES.slice();
 const cola = [];
 function conMotor(fn) {
@@ -428,6 +432,10 @@ function generarFotografia() {
  * 6. Con lo justo
  * ===================================================================== */
 const FINALES = { 1: ["rr", 4], 2: ["q", 7], 3: ["r", 12], 4: ["bb", 13], 5: ["bn", 22] };
+/* Eran 6 por nivel y se agotaban en minutos; con 15 (y hasta 3 por cada
+   distancia al mate, para que no salgan todas iguales) hay para varias
+   sesiones. Las 6 de antes siguen: el sorteo es el mismo y solo se amplió. */
+const POR_NIVEL_FINALES = 15;
 const LETRA = { q: "Q", r: "R", b: "B", n: "N" };
 function generarConLoJusto() {
   const out = [];
@@ -438,7 +446,7 @@ function generarConLoJusto() {
     const tipos = piezasF.split("");
     const elegidas = [];
     let intentos = 0;
-    while (elegidas.length < 6 && intentos++ < 200000) {
+    while (elegidas.length < POR_NIVEL_FINALES && intentos++ < 400000) {
       const sqs = [];
       while (sqs.length < 2 + tipos.length) { const s = Math.floor(r() * 64); if (!sqs.includes(s)) sqs.push(s); }
       const [wk, bk, ...ps] = sqs;
@@ -456,9 +464,10 @@ function generarConLoJusto() {
       // negras no pueden estar en jaque con blancas al mover
       const gb = new Chess(); gb.load(R.colocacion(tab) + " b - - 0 1");
       if (gb.in_check()) continue;
+      if (elegidas.some((x) => x.fen === fen)) continue;  // el sorteo puede repetir una posición
       const d = tabla.dtm(fen);
       if (!d || d < minDtm) continue;
-      if (elegidas.filter((x) => x.minimo === d).length >= 2) continue;  // variedad
+      if (elegidas.filter((x) => x.minimo === d).length >= 3) continue;  // variedad
       elegidas.push({ id: "fin-" + n + "-" + hash(fen).toString(36), nivel: n, fen, minimo: d, piezas: piezasF });
     }
     elegidas.sort((a, b) => a.minimo - b.minimo).forEach((x) => out.push(x));
@@ -975,6 +984,18 @@ function generarRuta(reales) {
     }
   }
   return out;
+}
+
+/* ---------- solo un banco ---------- */
+if (SOLO) {
+  if (SOLO !== "con-lo-justo") { console.error("--solo solo sabe rehacer «con-lo-justo» (los demás usan el motor)."); process.exit(2); }
+  const datos = JSON.parse(fs.readFileSync(SALIDA, "utf8"));
+  console.log("Con lo justo (tablas de finales, tarda un par de minutos)…");
+  datos["con-lo-justo"] = generarConLoJusto();
+  fs.writeFileSync(SALIDA, JSON.stringify(datos) + "\n");
+  const c = datos["con-lo-justo"].reduce((m, x) => { m[x.nivel] = (m[x.nivel] || 0) + 1; return m; }, {});
+  console.log("con-lo-justo  ", JSON.stringify(c));
+  process.exit(0);
 }
 
 /* ---------- todo junto ---------- */

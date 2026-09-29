@@ -861,7 +861,7 @@ profesor solo veía los minutos. Los cuenta `informes_entreno_modulos()`
 Desde #491 cada ejercicio de Temas guarda si salió limpio; con eso
 `informes_tema_mas_flojo(p_temas)` (SECURITY INVOKER, una fila por alumno) dice
 en qué MOTIVO le cuesta más: «Clavada · 36 % — limpio en 4 de 11». Es una
-tarjeta más de segunda fila (ahora son catorce) y el mismo dato alimenta el
+tarjeta más de segunda fila (eran catorce; con los Finales contra la máquina, quince) y el mismo dato alimenta el
 «Hoy te toca» del hub (ver «El tema más flojo, en el hub» en entrenamiento.md).
 
 - **La lista de motivos la manda la página**, desde
