@@ -530,6 +530,22 @@ registro de tiempo).
   repaso de Practicar, el hub), `verificar-tipos-pagina.js` (que se anote el
   nivel) y `verificar-informes.js` (la tarjeta).
 
+## El hub en el celular
+
+Se miró la tarjeta «Hoy te toca» a 390 px, en claro y en oscuro, con todo lo
+que se le fue sumando (la meta, el resumen del día, «Tu semana», el aviso de
+racha y la lista). Tenía tres párrafos y un botón grande antes de lo que toca
+hacer, y la lista quedaba abajo de la pantalla.
+
+- **El botón de avisos va DESPUÉS de la lista.** Es una oferta de una vez; lo
+  que se viene a buscar es la lista.
+- **El resumen del día ya no repite el total**: la meta, justo arriba, dice
+  «7 ejercicios». Queda «Hoy: Mates 4, Tipos de entrenamiento 2, Memoria 1 ·
+  5 de 7 sin error ni pista · Para mañana: 3 repasos.»
+- `verificar-entreno-repaso.js` mide en la pantalla, a 390 px, que el primer
+  enlace de la lista quede arriba del botón de avisos y que no haya
+  desplazamiento de lado.
+
 ## Mates barajados, «Tu semana», los tipos completos y «Salva las tablas» en el plan
 
 - **Mates se baraja por bloques de 50** mientras una categoría no tiene su

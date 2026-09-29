@@ -933,6 +933,16 @@ segunda fila (ahora son diecisiete).
   - un ejercicio repetido cuenta una vez;
   - cada alumno ve solo su fila.
 - `verificar-informes.js` prueba la tarjeta y el nombre.
+- **«Mandarle 10 de La balanza →»**: en la ficha de un alumno, la tarjeta trae
+  un enlace a `tareas.html?alumno=<id>&material=tipos&recorte=balanza&cantidad=10`,
+  que deja el renglón armado (ver «Del informe a la tarea, con el renglón
+  armado» en `seguimiento-del-alumno.md`). El profe veía el hueco y tenía que
+  ir a Tareas a buscar ese mismo tipo en la lista.
+  - Solo lo ve quien puede mandar tareas (`profesor` o `is_admin`, como
+    `puedeAsignar` en `tareas.js`) y no en «Ver como» otra persona. El alumno
+    que mira su propio informe no lo tiene.
+  - El helper `tarjeta()` del verificador busca la etiqueta en el tercer hijo
+    de la tarjeta, no en el último: el enlace va debajo.
 
 ## Los errores de sus partidas
 
@@ -1189,6 +1199,31 @@ confirmar, salta la del primer toque.
 herramientas/funciones-armar.js`). Comprobado después de subirla: con una firma
 inventada la tanda responde **401** sin mandar un solo correo, que es la prueba
 de que el módulo nuevo carga.
+
+### «Esta semana: 48 ejercicios (la anterior, 31)» en el informe a la casa
+
+La casa veía minutos, días y clases, pero no si el alumno venía mejorando. El
+informe ahora dice, debajo de las tres tarjetas: «📈 Esta semana: 48 ejercicios
+(la anterior, 31) · 70 % le salieron sin error ni pista (la anterior, 62 %).»
+Es lo mismo que el alumno ve como «Tu semana» en su hub.
+
+- La cuenta la hace `public.entreno_comparado(p_alumno, p_desde, p_hasta)`
+  (SECURITY INVOKER, migración `20260929201700`): el periodo del informe contra
+  el anterior **del mismo largo** (la semana, el mes, ayer). Se suma a la cola
+  de `informe_de_alumno()` a partir de su definición vigente, como los premios:
+  no se copia a mano la función entera.
+- El porcentaje sale solo de los ejercicios que dicen cómo salieron
+  (`detail ? 'limpio'`); los que no lo dicen no cuentan ni a favor ni en contra.
+- Cada frecuencia con sus palabras: «Hoy … (ayer, 3)», «Este mes … (el
+  anterior no entrenó)».
+- **Sin ejercicios en el periodo la línea no sale**: el veredicto de arriba ya
+  dice que no entró, y «0 ejercicios» solo lo repetiría. Tampoco sale con una
+  base de antes, sin la clave `comparacion`.
+- Se comprobó en la base con filas de prueba revertidas: tres filas en la
+  semana (dos con «cómo salió», una limpia), una en la anterior y una de hace
+  19 días que no entra; y otro alumno ve ceros.
+- `verificar-informe-casa.js` prueba el semanal, el mensual sin periodo
+  anterior, el caso en cero y la base sin la clave.
 
 ### Las tareas y los exámenes del informe NO se cuentan con la RLS de quien mira
 
