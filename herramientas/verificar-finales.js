@@ -76,9 +76,17 @@ else {
     let m;
     const src = leer("js/" + f);
     while ((m = re.exec(src))) registradas.add(m[1]);
+    /* Y las que se insertan directo, sin EntrenoProgress: el avance de los
+       cursos ('curso', js/curso-academia.js) nunca se guardó por esto. */
+    const directo = /from\(\s*['"]training_progress['"]\s*\)\s*\.insert\(([^;]*)/g;
+    while ((m = directo.exec(src))) {
+      const a = /activity:\s*['"]([a-z0-9_-]+)['"]/.exec(m[1]);
+      if (a) registradas.add(a[1]);
+    }
   }
-  /* Ninguna fuera: 'finales100' fue la última que la base rechazaba callada
-     (20260929152955_finales100_cuenta_en_su_curso.sql). */
+  /* Ninguna fuera: 'finales100' y 'curso' fueron las que la base rechazaba
+     callada (20260929152955_finales100_cuenta_en_su_curso.sql,
+     20260929213024_training_progress_curso.sql). */
   const faltan = [...registradas].filter((a) => !check.actividades.has(a));
   if (faltan.length) mal(`la base (${check.f}) rechazaría: ${faltan.join(", ")}`);
   else bien(`las ${registradas.size} actividades que registran las páginas están en ${check.f}`);
