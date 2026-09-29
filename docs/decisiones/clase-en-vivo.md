@@ -481,6 +481,39 @@ Estudio):
   navegador y comprueba que los tres inserts de `sesion.js` lleven `datos` y
   que el guardado del cierre vaya antes del `ended_at`.
 
+### El alumno elegido al azar para responder
+
+«🎲 Elegir a un alumno al azar», en la pestaña Alumnos: sale uno de los
+conectados y al elegido le sale en grande en su pantalla, «¡Te eligieron para
+responder!». El profe ve a quién eligió y ahí mismo le puede dar una insignia o
+trofeos (el mismo panel de Trofeos de su renglón), elegir a otro o marcar que ya
+respondió.
+
+- **Sin repetir hasta que les toque a todos** (`PartidasClase.elegirSinRepetir`):
+  con el azar puro el mismo alumno sale tres veces seguidas y otro nunca, y en
+  una clase eso se nota. Cuando ya les tocó a todos los conectados, vuelve a
+  empezar la vuelta.
+- **Va en `game_state.elegido` ({id, at}) y no en un mensaje suelto de
+  Realtime**, por lo mismo que la vista: quien recarga justo en ese momento se
+  entera igual. Solo el profe lo cambia (`protect_game_state_teacher_columns`;
+  comprobado impersonando: la alumna con el control no se puede elegir sola) y
+  un CHECK exige la forma.
+- **El texto no tiene género**: «¡Te eligieron para responder!», no «Has sido
+  el elegido», porque la cuenta no dice si es alumno o alumna y adivinar se
+  equivoca con alguien.
+- **El aviso grande sale una vez por elección**: al cerrarlo («¡Voy!») se
+  recuerda en la pestaña (`sessionStorage`), así que recargar no se lo vuelve a
+  poner encima; queda una franja «Te toca responder» hasta que el profe marca
+  que ya respondió. Un aviso de hace más de 15 minutos no se pinta: es de otra
+  pregunta. El foco va al botón y con el Modo Adaptado se dice en voz.
+- **La ruleta** (los nombres girando un momento) no corre con «reducir
+  movimiento», y mientras gira el nombre no es región viva: se anuncia solo el
+  final.
+- Los demás alumnos no ven nada: no hace falta y así nadie queda expuesto.
+
+**Al tocar esto, correr `node herramientas/verificar-todo.js clase-elegido`.**
+Está probado que falla de verdad: sin mostrar el aviso grande, se cae.
+
 ### El modo sencillo de la clase en vivo
 
 Aun ordenada, la pantalla del profesor tiene catorce controles delante, y la

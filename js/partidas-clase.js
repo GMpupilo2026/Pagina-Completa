@@ -61,5 +61,23 @@ window.PartidasClase = (function () {
         return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
     }
 
-    return { RITMOS, RELOJES_PRACTICA, emparejar, estado, reloj };
+    /* A quién le toca responder, al azar entre los conectados y sin repetir
+       hasta que les toque a todos: con el azar puro, el mismo alumno sale tres
+       veces seguidas y otro nunca. `yaElegidos` es un Set que esta función
+       va llenando; cuando no queda nadie nuevo conectado, se vacía y vuelve a
+       empezar la vuelta. Devuelve null si no hay nadie conectado. */
+    function elegirSinRepetir(conectados, yaElegidos, azar) {
+        if (!conectados.length) return null;
+        let pendientes = conectados.filter((id) => !yaElegidos.has(id));
+        if (!pendientes.length) {
+            yaElegidos.clear();
+            pendientes = conectados.slice();
+        }
+        const r = azar || Math.random;
+        const id = pendientes[Math.floor(r() * pendientes.length)];
+        yaElegidos.add(id);
+        return id;
+    }
+
+    return { RITMOS, RELOJES_PRACTICA, emparejar, estado, reloj, elegirSinRepetir };
 })();

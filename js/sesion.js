@@ -558,6 +558,7 @@
             activePlayerId = row.active_player_id || null;
             activePlayerColor = row.active_player_color || "both";
             comentariosClase = row.comentarios && typeof row.comentarios === "object" ? row.comentarios : {};
+            if (!esObservador) pintarElegido(row.elegido || null);
             updateTurnIndicator();
             updateAccessForRole();
             renderMoveList();
@@ -2479,6 +2480,8 @@
                 }
                 renderStudentsList();
                 pintarObservadores(mirando);
+                // El nombre del elegido sale de la presencia: al recargar llega después.
+                if (isTeacher && elegidoActual) pintarElegido(elegidoActual);
                 // La lista de "con quién chatear" solo muestra alumnos conectados ahora
                 // mismo a la clase (ver renderChatStudentOptions) — cada vez que cambia
                 // quién está conectado, se refresca también esa lista.
@@ -3181,6 +3184,105 @@
             myAnswer = data || { opcion: i, is_correct: null };
             pintarOpcionesAlumno();
             updateAnswerFeedbackUI();
+        }
+
+        /* ---------- El alumno elegido al azar para responder ----------
+           Queda en game_state.elegido ({id, at}) y no en un mensaje suelto de
+           Realtime: quien recarga justo en ese momento se entera igual. Solo el
+           profe lo cambia (protect_game_state_teacher_columns). Al elegido le sale
+           en grande; los demás no ven nada. */
+        const yaElegidos = new Set();
+        let elegidoActual = null;        // {id, at} tal como está en la base
+        // El aviso se cierra una vez por elección (se recuerda en la pestaña:
+        // recargar no se lo vuelve a poner encima si ya lo cerró).
+        const ELEGIDO_VISTO = "sesion_elegido_visto_v1";
+        // Un aviso de hace más de 15 minutos es de otra pregunta: no se pinta.
+        const ELEGIDO_VIGENTE_MS = 15 * 60000;
+
+        function nombreDeConectado(id) {
+            const info = onlineStudents.get(id) || {};
+            return info.full_name || info.email || "Alumno";
+        }
+
+        async function elegirAlAzar() {
+            const btn = document.getElementById("elegir-azar-btn");
+            const conectados = [...onlineStudents.keys()];
+            if (!conectados.length) { setStatus("No hay alumnos conectados para elegir."); return; }
+            const id = PartidasClase.elegirSinRepetir(conectados, yaElegidos);
+            const caja = document.getElementById("elegido-caja");
+            const nombreEl = document.getElementById("elegido-nombre");
+            caja.hidden = false;
+            btn.disabled = true;
+            /* Una ruleta corta con los nombres, salvo con «reducir movimiento».
+               Mientras gira, el nombre no es región viva: se anuncia solo el final. */
+            const reducir = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+            if (!reducir && conectados.length > 1) {
+                nombreEl.setAttribute("aria-live", "off");
+                for (let i = 0; i < 12; i++) {
+                    nombreEl.textContent = nombreDeConectado(conectados[i % conectados.length]);
+                    await new Promise((r) => setTimeout(r, 70 + i * 12));
+                }
+                nombreEl.setAttribute("aria-live", "polite");
+            }
+            nombreEl.textContent = nombreDeConectado(id);   // textContent: el nombre lo escribió una persona
+            const elegido = { id, at: new Date().toISOString() };
+            const { error } = await sb.from("game_state").update({ elegido }).eq("id", myGameStateId);
+            btn.disabled = false;
+            if (error) { console.error(error); setStatus("No se pudo avisarle: " + error.message); return; }
+            elegidoActual = elegido;
+            setStatus("🎯 Le toca responder a " + nombreDeConectado(id) + ": ya le salió el aviso en su pantalla.");
+        }
+
+        async function terminarElegido() {
+            const { error } = await sb.from("game_state").update({ elegido: null }).eq("id", myGameStateId);
+            if (error) { console.error(error); setStatus("No se pudo quitar el aviso: " + error.message); return; }
+            elegidoActual = null;
+            document.getElementById("elegido-caja").hidden = true;
+        }
+
+        if (document.getElementById("elegir-azar-btn")) {
+            document.getElementById("elegir-azar-btn").addEventListener("click", elegirAlAzar);
+            document.getElementById("elegido-otro-btn").addEventListener("click", elegirAlAzar);
+            document.getElementById("elegido-listo-btn").addEventListener("click", terminarElegido);
+            document.getElementById("elegido-insignia-btn").addEventListener("click", () => {
+                if (!elegidoActual) return;
+                abrirTrofeosEnClase(elegidoActual.id, nombreDeConectado(elegidoActual.id));
+                document.getElementById("trofeos-en-clase").scrollIntoView({ block: "nearest" });
+            });
+        }
+
+        function pintarElegido(elegido) {
+            elegidoActual = elegido || null;
+            if (isTeacher) {
+                // Al recargar, el profe vuelve a ver a quién había elegido.
+                const caja = document.getElementById("elegido-caja");
+                if (!caja) return;
+                caja.hidden = !elegidoActual;
+                if (elegidoActual) document.getElementById("elegido-nombre").textContent = nombreDeConectado(elegidoActual.id);
+                return;
+            }
+            const overlay = document.getElementById("elegido-overlay");
+            const chip = document.getElementById("elegido-chip");
+            if (!overlay) return;
+            const soyYo = !!(elegidoActual && elegidoActual.id === profile.id
+                && Date.now() - new Date(elegidoActual.at).getTime() < ELEGIDO_VIGENTE_MS);
+            let visto = null;
+            try { visto = sessionStorage.getItem(ELEGIDO_VISTO); } catch (e) {}
+            const mostrarGrande = soyYo && visto !== elegidoActual.at;
+            const estabaAbierto = !overlay.classList.contains("hidden");
+            overlay.classList.toggle("hidden", !mostrarGrande);
+            chip.hidden = !soyYo || mostrarGrande;
+            if (mostrarGrande && !estabaAbierto) {
+                enfocarCuandoSeVea(document.getElementById("elegido-overlay-ok"));
+                if (claseAcc) claseAcc.decir("¡Te eligieron para responder! Tu profe te va a hacer una pregunta.");
+            }
+        }
+
+        if (document.getElementById("elegido-overlay-ok")) {
+            document.getElementById("elegido-overlay-ok").addEventListener("click", () => {
+                if (elegidoActual) { try { sessionStorage.setItem(ELEGIDO_VISTO, elegidoActual.at); } catch (e) {} }
+                pintarElegido(elegidoActual);
+            });
         }
 
         function subscribeQuestions() {
