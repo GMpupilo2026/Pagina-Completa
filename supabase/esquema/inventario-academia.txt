@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20260929163207
+# al-dia-con: 20260929172549
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -665,6 +665,8 @@ columna  practice_games.id  uuid
 columna  practice_games.moves  jsonb
 columna  practice_games.pide_ayuda_at  timestamp with time zone
 columna  practice_games.reloj_ms  integer
+columna  practice_games.respuesta  text
+columna  practice_games.respuesta_at  timestamp with time zone
 columna  practice_games.session_id  uuid
 columna  practice_games.status  text
 columna  practice_games.student_color  text
