@@ -311,9 +311,22 @@
   }
 
   // En toda la partida: el reloj, cómo pierde, los finales, la táctica.
+  /* Su tipo de posición (r.estructuras): lo que se aparta de lo esperable para
+     él, dos de cada lado como mucho. Débil para él = búscalo; fuerte =
+     evítalo. */
+  function estructuras(r, haz, evita) {
+    const e = r.estructuras;
+    if (!e) return;
+    const porque = (x) => ("En la jugada " + e.momento + " le pasa en el " + pctEntero(x.parte) + " de sus partidas; ahí " + saca(x.puntos) + " en " + partidas(x.n) +
+      " (lo esperable para él, " + A.pct(x.esperado) + "). " + pocasPartidas(x.n, r)).trim();
+    e.rasgos.filter((x) => x.veredicto === -1).slice(0, 2).forEach((x) => haz.push({ texto: "Busca " + x.como + ".", porque: porque(x), estructura: x.clave }));
+    e.rasgos.filter((x) => x.veredicto === 1).slice(0, 2).forEach((x) => evita.push({ texto: "Evita " + x.como + ".", porque: porque(x), estructura: x.clave }));
+  }
+
   function general(r) {
     const haz = [], evita = [];
     tactica(r, haz, evita);
+    estructuras(r, haz, evita);
     const senales = A.senalesMasAlla ? A.senalesMasAlla(r) : [];
     for (const x of senales) {
       if (x.tipo === "pierde-en-la-apertura") haz.push({ texto: "Llega con la apertura bien estudiada.", porque: "El " + pctEntero(x.parte) + " de sus derrotas se decide antes de la jugada 20." });

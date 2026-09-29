@@ -2655,6 +2655,53 @@ jugada 5; la que se apartó no se abre, con una segunda se abre y se junta por
 transposición; y una Berlinesa que vio una sola entra entera hasta la media
 jugada 16 y no después.
 
+### Su tipo de posición
+
+La táctica decía con qué golpes gana y pierde; faltaba **en qué posiciones**
+le va mal, para buscarle una partida y no solo una apertura. La tarjeta **«Su
+tipo de posición»** (después de la táctica) y el resumen de arriba («Busca
+quedarte con el peón aislado», «Evita cerrar el centro») salen de
+`js/preparacion-estructuras.js`:
+
+- **Se mira cada partida en la jugada 12** (24 medias jugadas): la apertura ya
+  terminó y los peones quedaron armados. Una partida más corta no cuenta. La
+  posición sale de `js/preparacion-posiciones.js`, sin chess.js.
+- **Los rasgos**, desde el lado del rival:
+  - peón aislado de dama (en d, sin peones en c ni en e): el suyo y el de su
+    rival, por separado (no es lo mismo tenerlo que jugar contra él);
+  - peones colgantes (c y d, sin peones en b ni en e): los suyos y los de su
+    rival;
+  - **centro cerrado**: un peón central que cruzó y quedó trabado (e5 contra
+    e6, d5 contra d6, o …e4 contra e3). **d4 contra d5 no cierra nada**: con
+    la primera versión, que contaba cualquier peón con otro delante, toda
+    Tarrasch salía «cerrada»;
+  - centro abierto (ningún peón en d ni en e), enroques opuestos (los reyes en
+    alas distintas) y sin damas.
+- **Se juzga contra lo esperable para ESAS partidas**: el promedio del rival con
+  el color que llevaba en cada una, no el 50 % ni su promedio general. Con
+  negras saca menos, y eso no vuelve débil a toda estructura típica de las
+  negras (la misma decisión de «Dónde rinde menos»).
+- Cuenta cuando se aparta más de lo que explica el azar (z de ±1,28) y en 5
+  puntos o más, **con 8 partidas o más** (o el mínimo del análisis, si es
+  mayor). Con menos, la tarjeta dice «Pocas partidas para decir algo»: 6
+  Tarrasch perdidas contra 6 Españolas ganadas no alcanzan.
+- **El veredicto va escrito** («Ahí rinde menos: búscalo») y el borde lo
+  acompaña: verde es bueno para quien le juega, rojo malo.
+- Al resumen van dos de cada lado como mucho, con el dato («En la jugada 12
+  le pasa en el 33 % de sus partidas; ahí él saca 25,0 %…»).
+- Un análisis guardado antes no trae `r.estructuras`: la tarjeta no sale.
+
+Verificador (`preparacion-rivales`, «Su tipo de posición»): tres aperturas que
+llegan enteras a la jugada 12, **comprobadas con chess.js** (la Francesa de la
+primera versión tenía una jugada ilegal: el caballo iba a h2, donde había un
+peón). Sin navegador: los rasgos de cada una (y de una Escocesa con enroques
+opuestos y sin damas), el veredicto con Pedro sacando 25 % contra el peón
+aislado y 85 % con el centro cerrado, lo esperable con blancas, el resumen, el
+mínimo de 8 y que una partida corta no cuente. En la página: la tarjeta
+después de la táctica, cada veredicto escrito, el dato y el resumen. Roto a
+propósito sin lo esperable por color, con «cerrado» para d4 contra d5 y sin el
+mínimo: saltó cada vez.
+
 ## Las inscripciones a torneos en línea
 
 `inscripciones.html` muestra lo que llegó por `inscripcion.html`, el formulario

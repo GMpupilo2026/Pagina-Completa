@@ -30,10 +30,11 @@
   "use strict";
   const req = (nombre, global) => (raiz && raiz[global]) || (typeof require === "function" ? require(nombre) : null);
   const api = fabrica(req("./preparacion-lineas.js", "PreparacionLineas"), req("./preparacion-posiciones.js", "PreparacionPosiciones"),
-    req("./preparacion-tactica.js", "PreparacionTactica"), req("./preparacion-libro.js", "PreparacionLibro"));
+    req("./preparacion-tactica.js", "PreparacionTactica"), req("./preparacion-libro.js", "PreparacionLibro"),
+    req("./preparacion-estructuras.js", "PreparacionEstructuras"));
   if (typeof module === "object" && module.exports) module.exports = api;
   else raiz.PreparacionAnalisis = api;
-})(typeof self !== "undefined" ? self : this, function (L, Pos, Tactica, Libro) {
+})(typeof self !== "undefined" ? self : this, function (L, Pos, Tactica, Libro, Estructuras) {
   "use strict";
 
   const { sanEs, lineaEs, pct, textoEval, fenDe } = L;
@@ -1029,6 +1030,8 @@
       certeza: certezaDe(lista),
       // Qué táctica hace y con cuál pierde (js/preparacion-tactica.js).
       tactica: Tactica ? Tactica.analizar(lista) : null,
+      // En qué posiciones rinde menos y más (js/preparacion-estructuras.js).
+      estructuras: Estructuras ? Estructuras.analizar(lista, base, minN) : null,
       // Las líneas que se le consultan al explorador de maestros; lo que
       // contesta queda en `teoria` (ver js/preparacion-teoria.js).
       repertorioLineas: lineasDeSuRepertorio(arbol.w, "w", minN).concat(lineasDeSuRepertorio(arbol.b, "b", minN)),
