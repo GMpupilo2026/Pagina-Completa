@@ -431,16 +431,19 @@ async function pruebaProfesor(browser) {
   igual("y el de visitantes también arranca cerrado",
     await page.evaluate(() => document.getElementById("diagnosticos-visitantes").closest("details").open), false);
 
-  /* La franja de lo que pide actuar: los datos ya estaban cargados y no se
-     decían en ninguna parte. Se mide el display que CALCULA el navegador, no la
-     clase — la lección que dejó el cartel de instalar la app. */
-  console.log("-- Qué pide atención");
-  igual("la franja se ve de verdad", await page.evaluate(() =>
-    getComputedStyle(document.getElementById("atencion")).display === "none" ? "no" : "sí"), "sí");
-  igual("y dice qué falta, con su número", await page.evaluate(() =>
-    [...document.querySelectorAll("#atencion-botones button")].map((b) => b.textContent)),
-    ["🧭 2 sin diagnóstico", "📤 1 plan sin compartir"]);
-  await page.click("#atencion-botones button");
+  /* Lo que pide atención va escrito dentro de la pregunta que lo contesta,
+     no en una franja aparte que llevaba al mismo tema. Se mide lo que se VE
+     (checkVisibility), no la clase. */
+  console.log("-- Lo que pide atención, dentro de su pregunta");
+  const pendientes = () => page.evaluate(() => [...document.querySelectorAll("#preguntas-rapidas button")]
+    .filter((b) => b.checkVisibility()).map((b) => b.textContent));
+  igual("ya no hay una franja aparte", await page.evaluate(() => !!document.getElementById("atencion")), false);
+  igual("cada pregunta dice lo que falta, con su número", await pendientes(),
+    ["¿Quién no está entrenando?", "¿Quién viene a clase?", "¿Cómo contestan en clase?",
+     "¿Qué nivel tiene cada uno? · ⚠️ 2 sin diagnóstico · 1 plan sin compartir"]);
+  igual("y el rótulo avisa qué quiere decir la marca", await page.textContent("#preguntas-rapidas-titulo"),
+    "Preguntas de siempre · lo marcado con ⚠️ pide atención");
+  await page.click('#preguntas-rapidas button[data-tema="diagnostico"]');
   await page.waitForFunction(() => !document.getElementById("topic-report").classList.contains("hidden"));
   igual("y tocarla deja el filtro puesto, no solo avisa",
     await page.inputValue("#topic-filter"), "diagnostico");
@@ -1182,16 +1185,17 @@ async function pruebaClaseGrande(browser) {
       return document.querySelector("#diagnosticos-clase [data-pend-corto]").classList.contains("hidden") ? "no" : "sí";
     }), "sí");
 
-  igual("la franja dice los tres que no entrenan", await page.evaluate(() =>
-    [...document.querySelectorAll("#atencion-botones button")].map((b) => b.textContent)),
-    ["😴 3 sin entrenar hace 4 días o más", "🧭 40 sin diagnóstico", "📤 5 planes sin compartir"]);
+  const conPendiente = () => page.evaluate(() => [...document.querySelectorAll("#preguntas-rapidas button")]
+    .filter((b) => b.querySelector("[data-pendiente]").textContent).map((b) => b.textContent));
+  igual("las preguntas dicen los tres que no entrenan y lo que falta del diagnóstico", await conPendiente(),
+    ["¿Quién no está entrenando? · ⚠️ 3 sin entrenar", "¿Qué nivel tiene cada uno? · ⚠️ 40 sin diagnóstico · 5 planes sin compartir"]);
 
   /* La lista de «sin entrenar» y su botón de invitar a la casa: no es el
      informe programado, es el empujón puntual que agrega este cambio. Lo que
      se comprueba es que el botón le pida a la función el ALUMNO CORRECTO —
      el primero de la lista, que es quien nunca entrenó, no cualquiera. */
   console.log("-- La lista de «sin entrenar» y el botón de invitar");
-  await page.click("#atencion-botones button");
+  await page.click('#preguntas-rapidas button[data-tema="inactivos"]');
   await page.waitForFunction(() => !document.getElementById("topic-report").classList.contains("hidden"));
   igual("el clic deja el filtro en «inactivos»", await page.inputValue("#topic-filter"), "inactivos");
   igual("lista a los tres, el que nunca entrenó primero", await page.evaluate(() =>
@@ -1202,6 +1206,17 @@ async function pruebaClaseGrande(browser) {
   await page.waitForFunction(() => window.__funcion.length > 0);
   igual("«invitar a practicar» le pide a la función ese alumno", await page.evaluate(() => window.__funcion[0]),
     { action: "invitar_practicar", student_id: "g45" });
+
+  /* El número de la pregunta y la lista que abre son del MISMO grupo: antes
+     la cuenta respetaba el grupo y la lista traía a todos. */
+  console.log("-- «Sin entrenar» respeta el grupo elegido");
+  await page.selectOption("#group-filter", "7A");
+  igual("con 7A, la pregunta cuenta solo a los de 7A", (await conPendiente())[0],
+    "¿Quién no está entrenando? · ⚠️ 2 sin entrenar");
+  igual("y la lista trae a esos mismos dos", await page.evaluate(() =>
+    [...document.querySelectorAll("#topic-report-body > div")].map((d) => d.querySelector("span").textContent.trim())),
+    ["Sofía Núñez · 7A", "Alumna 03 · 7A"]);
+  await page.selectOption("#group-filter", "");
   await page.selectOption("#topic-filter", "");
   await page.waitForFunction(() => !document.getElementById("teacher-report").classList.contains("hidden"));
 
@@ -1215,7 +1230,7 @@ async function pruebaClaseGrande(browser) {
     [...document.querySelectorAll("#topic-filter option")].map((o) => o.value).sort().join(",")),
     ["", "4x4", "aprender", "aperturas", "asignaciones", "asistencia", "concentracion", "coordenadas", "cursos", "diagnostico", "inactivos", "mates", "practicar", "precision", "tactica", "temas", "tipos", "visualizacion"].sort().join(","));
   const preguntas = () => page.evaluate(() => [...document.querySelectorAll("#preguntas-rapidas button")]
-    .filter((b) => b.checkVisibility()).map((b) => b.textContent + (b.getAttribute("aria-pressed") === "true" ? " [marcada]" : "")));
+    .filter((b) => b.checkVisibility()).map((b) => b.firstChild.textContent + (b.getAttribute("aria-pressed") === "true" ? " [marcada]" : "")));
   igual("se ven las cuatro preguntas, ninguna marcada", await preguntas(),
     ["¿Quién no está entrenando?", "¿Quién viene a clase?", "¿Cómo contestan en clase?", "¿Qué nivel tiene cada uno?"]);
   await page.click('#preguntas-rapidas button[data-tema="inactivos"]');

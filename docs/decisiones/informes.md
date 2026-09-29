@@ -83,13 +83,13 @@ nombres.
 Nada de eso daba ningún error: la página se veía perfecta, los números estaban
 bien, y el profesor simplemente no usaba Informes.
 
-- **Arriba va lo que pide actuar**, como en el panel de la Academia: una franja
-  con quién lleva una semana sin entrenar, a quién le falta el diagnóstico y
-  cuántos planes están sin compartir. Los tres datos **ya estaban cargados** y
-  no se decían en ninguna parte — había que acordarse de ir a buscarlos al
-  filtro de tema. Cada uno es un botón que **deja el filtro puesto**, así que
-  enterarse y actuar son el mismo gesto. Con todo al día la franja no se pinta:
-  un cartel que se repite deja de leerse.
+- **Arriba va lo que pide actuar**, como en el panel de la Academia: quién
+  lleva 4 días o más sin entrenar, a quién le falta el diagnóstico y cuántos
+  planes están sin compartir. Los tres datos **ya estaban cargados** y no se
+  decían en ninguna parte — había que acordarse de ir a buscarlos al filtro de
+  tema. Van escritos dentro de la pregunta de siempre que los contesta, y
+  tocarla **deja el filtro puesto**, así que enterarse y actuar son el mismo
+  gesto (ver «Lo que pide atención va en su pregunta»).
   - Los conteos no se hacen acá: los inactivos salen de `informes_inactivos()`,
     la misma lista que cuenta `panel_profesor()` en «Tu semana», y los planes
     que faltan de `planesQueFaltan()`, la misma que pinta el botón de compartir
@@ -422,13 +422,43 @@ eso se llama «😴 Sin entrenar (4 días)» y buscarlo entre las quince.
   - La que está contestada queda marcada, con `aria-pressed` y con el botón
     relleno. No es solo un cambio de color: cambia el relleno, y el lector de
     pantalla dice «presionado». Cambiar el tema en el selector mueve la marca.
-  - Se parecen a los botones de la franja de «Lo que pide actuar», pero no son
-    lo mismo. La franja sale solo cuando hay algo que atender y trae el número
-    («😴 3 sin entrenar»). Las preguntas están siempre, que es cuando uno viene
-    a preguntar aunque todo esté al día.
+  - Están siempre, también con todo al día: es cuando uno viene a preguntar.
+    Lo que pide atención se les escribe adentro (abajo).
 - Lo prueba `verificar-informes.js`: los bloques (y que a un profesor no le
   quede el del público), que no se perdió ningún tema, las cuatro preguntas a
   la vista, y que la marca siga al tema.
+
+### Lo que pide atención va en su pregunta
+
+Arriba había dos filas de botones que llevaban al mismo lugar: las
+«Preguntas de siempre» y, debajo de los filtros, una franja «⚠️ Qué pide
+atención» con «😴 3 sin entrenar hace 4 días o más», «🧭 2 sin diagnóstico» y
+«📤 1 plan sin compartir». Los dos primeros eran el mismo tema que
+«¿Quién no está entrenando?» y «¿Qué nivel tiene cada uno?», y el tercero
+también abría el diagnóstico. Dos puertas al mismo lugar hacen pensar que son
+dos cosas, y lo urgente quedaba debajo de los tres selectores. Es el mismo
+criterio de los paneles (ver «Una sola puerta para cada cosa» en
+`paneles.md`).
+
+- **La franja ya no existe**: lo que decía va escrito dentro de la pregunta que
+  lo contesta, que es lo primero de la página: «¿Quién no está entrenando? ·
+  ⚠️ 3 sin entrenar», «¿Qué nivel tiene cada uno? · ⚠️ 2 sin diagnóstico ·
+  1 plan sin compartir». Con todo al día, la pregunta queda con su texto de
+  siempre.
+- **El borde de la que pide atención cambia, pero el color no va solo**: el
+  número está escrito en el botón, y el rótulo dice qué quiere decir la marca
+  («lo marcado con ⚠️ pide atención»). El orden de las cuatro no cambia: una
+  pregunta que salta de lugar según el día no se encuentra.
+- **Se cuenta sobre el grupo elegido y se vuelve a contar con cada filtro**
+  (`pintarPendientesDePreguntas()` en `applyTeacherFilters()`), así que
+  compartir planes o cambiar de grupo actualiza el número.
+- **La lista de «sin entrenar» también respeta el grupo.** Antes la franja
+  contaba los de 7A y la lista que abría traía a todos los grupos: «2 sin
+  entrenar» abría tres nombres. El número y la lista son ahora la misma
+  cuenta.
+- Lo prueba `verificar-informes.js`: que no queda franja, el texto de cada
+  pregunta con y sin pendientes, que tocarla deja el filtro puesto, y que con
+  7A el número y la lista dicen los mismos dos.
 
 ### Un total solo sube: «Cómo viene» es lo que dice si mejora
 
