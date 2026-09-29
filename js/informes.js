@@ -695,43 +695,49 @@
             mas.textContent = `Ver más alumnos (faltan ${lista.length - vistos})`;
         }
 
-        /* ---------------- Qué pide atención ----------------
+        /* ---------------- Lo que pide atención ----------------
 
-           Los tres datos ya estaban cargados y no se decían en ninguna parte:
-           había que acordarse de ir a buscarlos al filtro de tema. Cada uno es un
-           botón que deja el filtro puesto, así que enterarse y actuar son el
-           mismo gesto. Con todo al día la franja NO se pinta: un cartel que se
-           repite deja de leerse. */
-        function renderAtencion() {
-            const caja = document.getElementById("atencion");
-            const botones = document.getElementById("atencion-botones");
-            botones.innerHTML = "";
+           Quién lleva 4 días o más sin entrenar, a quién le falta el
+           diagnóstico y cuántos planes están sin compartir. No tiene una franja
+           propia: va escrito DENTRO de la pregunta de siempre que lo contesta
+           («¿Quién no está entrenando? · 3 sin entrenar»). Antes eran dos filas
+           de botones que llevaban al mismo tema, y dos puertas al mismo lugar
+           hacen pensar que son dos cosas (ver «Lo que pide atención va en su
+           pregunta» en docs/decisiones/informes.md). Se cuenta sobre el grupo
+           elegido, igual que la lista que abre. */
+        function pendientesPorTema() {
             const dentro = new Set(filteredStudents().map((s) => s.id));
-            const inactivos = (teacherData.inactivos || []).filter((i) => dentro.has(i.id));
+            const inactivos = (teacherData.inactivos || []).filter((i) => dentro.has(i.id)).length;
             const { conDiagnostico, pendientes } = diagnosticosDeClase();
-            const faltanPlan = planesQueFaltan(conDiagnostico).total;
-
-            const boton = (texto, alFinal) => {
-                const b = document.createElement("button");
-                b.type = "button";
-                b.className = "bg-white dark:bg-brand-800 border border-accent-400/50 text-brand-700 dark:text-brand-200 font-semibold px-3 py-1.5 rounded-lg text-sm hover:border-accent-500 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
-                b.textContent = texto;
-                b.addEventListener("click", alFinal);
-                botones.appendChild(b);
-            };
-            const conFiltro = (tema) => () => {
-                document.getElementById("topic-filter").value = tema;
-                applyTeacherFilters();
-                window.scrollTo({ top: 0, behavior: "smooth" });
-            };
-
-            if (inactivos.length) boton(`😴 ${inactivos.length} sin entrenar hace 4 días o más`, conFiltro("inactivos"));
-            if (pendientes.length) boton(`🧭 ${pendientes.length} sin diagnóstico`, conFiltro("diagnostico"));
             // Un plan sin compartir no lo ve ni el alumno ni su casa, o sea que
             // cuenta como que no existe: es lo mismo que dice "Tu semana".
-            if (faltanPlan) boton(`📤 ${faltanPlan} ${faltanPlan === 1 ? "plan sin compartir" : "planes sin compartir"}`, conFiltro("diagnostico"));
+            const faltanPlan = planesQueFaltan(conDiagnostico).total;
+            const diag = [];
+            if (pendientes.length) diag.push(`${pendientes.length} sin diagnóstico`);
+            if (faltanPlan) diag.push(`${faltanPlan} ${faltanPlan === 1 ? "plan sin compartir" : "planes sin compartir"}`);
+            return {
+                inactivos: inactivos ? `${inactivos} sin entrenar` : "",
+                diagnostico: diag.join(" · "),
+            };
+        }
 
-            caja.classList.toggle("hidden", !botones.children.length);
+        function pintarPendientesDePreguntas() {
+            const pend = pendientesPorTema();
+            let cuantas = 0;
+            document.querySelectorAll("#preguntas-rapidas button").forEach((b) => {
+                const texto = pend[b.dataset.tema] || "";
+                const span = b.querySelector("[data-pendiente]");
+                span.textContent = texto ? ` · ⚠️ ${texto}` : "";
+                // El borde marca cuál pide atención, pero no va solo: el número
+                // está escrito en el botón.
+                b.classList.toggle("border-accent-500", !!texto);
+                b.classList.toggle("border-brand-200", !texto);
+                b.classList.toggle("dark:border-brand-700", !texto);
+                if (texto) cuantas++;
+            });
+            document.getElementById("preguntas-rapidas-titulo").textContent = cuantas
+                ? "Preguntas de siempre · lo marcado con ⚠️ pide atención"
+                : "Preguntas de siempre";
         }
 
         /* Lo de fuera de la plataforma se QUITA, no se esconde: un <details>
@@ -770,7 +776,6 @@
             document.getElementById("stat-cards").innerHTML = "";
             document.getElementById("stat-cards").classList.add("hidden");
             document.getElementById("stat-cards-mas").classList.add("hidden");
-            document.getElementById("atencion").classList.add("hidden");
             document.getElementById("student-report").classList.add("hidden");
             document.getElementById("cursos-report").classList.add("hidden");
             document.getElementById("diagnostico-report").classList.add("hidden");
@@ -861,7 +866,6 @@
                 statCard("📥", totales.partidas, "Partidas guardadas")
             );
 
-            renderAtencion();
             // Al volver al resumen se arranca otra vez por el principio: dejar el
             // corte donde estaba haría que cambiar de grupo enseñara ochenta filas
             // del grupo nuevo sin que nadie lo hubiera pedido.
@@ -1678,7 +1682,10 @@
             // invitación a practicar (acción "invitar_practicar" de la Edge
             // Function) — no es el informe programado, es un empujón puntual.
             if (topic === "inactivos") {
-                const inactivos = teacherData.inactivos || [];
+                // Del grupo elegido, como el número de su pregunta: sin esto,
+                // «3 sin entrenar» en 7A abría la lista de todos los grupos.
+                const dentro = new Set(filteredStudents().map((x) => x.id));
+                const inactivos = (teacherData.inactivos || []).filter((x) => dentro.has(x.id));
                 if (!inactivos.length) {
                     body.innerHTML = '<p class="text-brand-450 dark:text-brand-350 text-sm">Nadie: toda la clase entrenó en los últimos 4 días. 🎉</p>';
                 } else {
@@ -1832,7 +1839,11 @@
                 const b = document.createElement("button");
                 b.type = "button";
                 b.dataset.tema = tema;
-                b.textContent = texto;
+                const pregunta = document.createElement("span");
+                pregunta.textContent = texto;
+                const pendiente = document.createElement("span");
+                pendiente.dataset.pendiente = "";
+                b.append(pregunta, pendiente);
                 b.className = "px-3 py-1.5 rounded-full text-sm font-semibold border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 "
                     + "border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 text-brand-700 dark:text-brand-200 hover:border-accent-500 "
                     + "aria-pressed:bg-accent-500 aria-pressed:border-accent-500 aria-pressed:text-brand-900";
@@ -1856,6 +1867,7 @@
             document.querySelectorAll("#preguntas-rapidas button").forEach((b) => {
                 b.setAttribute("aria-pressed", String(!studentId && b.dataset.tema === topic));
             });
+            pintarPendientesDePreguntas();
             hideAllReportPanels();
             if (studentId) await renderStudentDetail(studentId);
             else if (topic) renderTopicReport(topic);
