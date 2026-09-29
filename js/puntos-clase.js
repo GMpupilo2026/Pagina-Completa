@@ -59,8 +59,48 @@ window.PuntosClase = (function () {
         };
     }
 
+    /* ---------- Los equipos (game_state.equipos) ----------
+       Hasta cuatro, cada uno con su nombre y su color (el color nunca va
+       solo: el nombre del equipo ES el color escrito). Los puntos de un
+       equipo son la suma de los de sus integrantes: no se guardan. */
+    const EQUIPOS = [
+        { nombre: "Azul", color: "azul" },
+        { nombre: "Verde", color: "verde" },
+        { nombre: "Naranja", color: "naranja" },
+        { nombre: "Rojo", color: "rojo" },
+    ];
+
+    // Reparte a los alumnos al azar, de a uno por equipo: quedan parejos (a lo sumo uno de diferencia).
+    function repartir(alumnos, cuantos, azar) {
+        const n = Math.max(2, Math.min(EQUIPOS.length, cuantos || 2));
+        const r = azar || Math.random;
+        const mezcla = (alumnos || []).slice();
+        for (let i = mezcla.length - 1; i > 0; i--) {
+            const j = Math.floor(r() * (i + 1));
+            [mezcla[i], mezcla[j]] = [mezcla[j], mezcla[i]];
+        }
+        const lista = EQUIPOS.slice(0, n).map((e) => ({ nombre: e.nombre, color: e.color, miembros: [] }));
+        mezcla.forEach((a, i) => lista[i % n].miembros.push({ id: a.id, nombre: a.nombre }));
+        return { at: new Date().toISOString(), lista };
+    }
+
+    function puntosDeEquipos(filas, lista) {
+        const porAlumno = new Map((filas || []).map((f) => [f.student_id, puntos(f)]));
+        const conPuntos = (lista || []).map((e) => ({
+            nombre: e.nombre, color: e.color,
+            puntos: (e.miembros || []).reduce((s, m) => s + (porAlumno.get(m.id) || 0), 0),
+        })).sort((a, b) => b.puntos - a.puntos);
+        let puesto = 0, anterior = null;
+        conPuntos.forEach((x, i) => {
+            if (x.puntos !== anterior) { puesto = i + 1; anterior = x.puntos; }
+            x.puesto = puesto;
+        });
+        return conPuntos;
+    }
+
     function medalla(puesto) { return puesto === 1 ? "🥇" : puesto === 2 ? "🥈" : puesto === 3 ? "🥉" : ""; }
     function textoPuntos(n) { return n + (n === 1 ? " punto" : " puntos"); }
 
-    return { REGLAS, puntos, desglose, reglaEscrita, ranking, podioParaLaClase, medalla, textoPuntos };
+    return { REGLAS, puntos, desglose, reglaEscrita, ranking, podioParaLaClase, medalla, textoPuntos,
+        EQUIPOS, repartir, puntosDeEquipos };
 })();

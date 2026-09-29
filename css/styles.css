@@ -1176,3 +1176,33 @@ html[data-marca-academia] .marca-fondo a.marca-invertido {
   background-color: #ffffff !important;
   color: var(--marca-academia) !important;
 }
+
+/* ===== Modo proyector (sesion.html?proyector=1) =====
+   Una ventana aparte para la tele o el proyector del aula: el tablero grande y
+   lo que ve toda la clase (el tiempo para pensar, el mapa de jugadas, el
+   calentamiento, el podio, los equipos). Lo demás se esconde por lista
+   blanca (.proyector-se-ve), así una herramienta nueva no aparece proyectada
+   sin que nadie lo decida. Ver «El modo proyector» en
+   docs/decisiones/clase-en-vivo.md. */
+.proyector-barra { display: none; }
+html.modo-proyector .proyector-barra { display: flex; }
+html.modo-proyector #header,
+html.modo-proyector #migas,
+html.modo-proyector footer,
+html.modo-proyector #app > section > :not(.proyector-contenido),
+html.modo-proyector .proyector-contenido > aside,
+html.modo-proyector .proyector-columna > :not(.proyector-se-ve) { display: none !important; }
+html.modo-proyector #app { padding-top: 0.75rem; }
+html.modo-proyector .proyector-contenido { display: block; }
+html.modo-proyector #app > section { max-width: none; }
+/* Más específico que el tope de 420 px de las pantallas bajas (#app #chessboard,
+   #app .board-coords-outer): en la tele el tablero es lo único que hay. Manda el
+   envoltorio de las coordenadas; el tablero llena su ancho. */
+html.modo-proyector #app .board-coords-outer,
+html.modo-proyector .proyector-columna > .proyector-se-ve.max-w-\[560px\] { max-width: min(80vh, 94vw); }
+html.modo-proyector #app #chessboard { max-width: none; }
+html.modo-proyector #turn-indicator { font-size: 1.5rem; line-height: 2rem; }
+html.modo-proyector #calentamiento-terminar-btn,
+html.modo-proyector #encuesta-quitar-btn,
+html.modo-proyector #podio-quitar-btn,
+html.modo-proyector #pensar-profe-acciones { display: none !important; }

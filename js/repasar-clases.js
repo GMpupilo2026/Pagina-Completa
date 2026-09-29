@@ -371,6 +371,174 @@ document.addEventListener('keydown', (e) => {
   else if (e.key === 'End') { e.preventDefault(); alFinal(); }
 });
 
+/* ---------------- El repaso personal (?repaso=<clase>) ----------------
+   Las preguntas de jugada de esa clase que a este alumno no le salieron
+   (la regla es de js/repaso-clase.js, la misma con la que el profe mandó la
+   tarea). Se resuelven en el tablero, tocando o escribiendo; la primera
+   jugada se compara con la del motor (o un mate cualquiera). Al resolverlas
+   todas, el renglón de la tarea se marca solo (tarea_items.completada_at: lo
+   único que el alumno puede escribir de su tarea). */
+const repaso = { claseId: null, tareaId: null, lista: [], i: 0, juego: null, sel: null, ultima: null, resueltas: new Set(), comandos: null, teclado: null };
+
+async function abrirRepaso(claseId){
+  repaso.claseId = claseId;
+  repaso.tareaId = new URLSearchParams(location.search).get('tarea');
+  const caja = document.getElementById('repaso');
+  const intro = document.getElementById('repaso-intro');
+  caja.hidden = false;
+  intro.textContent = 'Buscando las preguntas de la clase…';
+  const { data: qs, error } = await sb.from('questions').select('id, fen, prompt, tipo, para_alumno, closed_at, created_at').eq('class_session_id', claseId);
+  if (error) { intro.textContent = 'No se pudo cargar tu repaso. Intenta recargar la página.'; return; }
+  const ids = (qs || []).map((q) => q.id);
+  const [{ data: mias }, { data: motor }, { data: clase }] = await Promise.all([
+    ids.length ? sb.from('question_answers').select('question_id, student_id, moves, is_correct').eq('student_id', yoId).in('question_id', ids) : Promise.resolve({ data: [] }),
+    ids.length ? sb.from('question_engine_answers').select('question_id, answer').in('question_id', ids) : Promise.resolve({ data: [] }),
+    sb.from('class_sessions').select('title, started_at').eq('id', claseId).maybeSingle(),
+  ]);
+  repaso.lista = RepasoClase.pendientes(qs, mias, motor, yoId);
+  const cuando = clase && clase.started_at ? ' del ' + fechaCR(clase.started_at) : '';
+  document.getElementById('repaso-titulo').lastChild.textContent = 'Tu repaso de la clase' + cuando;
+  if (!repaso.lista.length) {
+    intro.textContent = 'No te quedó ninguna pregunta pendiente de esta clase. 🎉';
+    await marcarTareaHecha();
+    return;
+  }
+  intro.textContent = repaso.lista.length === 1
+    ? 'Una pregunta de la clase no te salió: resuélvela otra vez en el tablero.'
+    : repaso.lista.length + ' preguntas de la clase no te salieron: resuélvelas otra vez en el tablero.';
+  document.getElementById('repaso-ejercicio').hidden = false;
+  if (!repaso.comandos && window.CuadroComandos) {
+    repaso.comandos = CuadroComandos.montar(document.getElementById('repaso-cmd'), {
+      etiqueta: 'Escribe tu jugada, o una pregunta sobre la posición',
+      juego: () => repaso.juego,
+      tablero: () => repaso.teclado,
+      onEnviar: (texto, api) => {
+        if (!repaso.juego || repaso.sel === 'hecha') { api.decir('Toca «Intentarlo otra vez» o pasa a la siguiente.'); return; }
+        const mv = window.ComandosTablero ? ComandosTablero.jugadaEscrita(repaso.juego, texto) : null;
+        if (!mv) { api.decir('"' + texto.trim() + '" no es una jugada legal en esta posición.'); return; }
+        api.limpiar();
+        jugarRepaso(mv.from, mv.to, mv.promotion);
+      },
+    });
+  }
+  if (!repaso.teclado && window.TableroAccesible) {
+    repaso.teclado = TableroAccesible.montar(document.getElementById('repaso-board'), { nombre: 'Tablero del repaso', juego: () => repaso.juego });
+  }
+  mostrarPreguntaDelRepaso(0);
+  document.getElementById('repaso-titulo').focus();
+}
+
+function mostrarPreguntaDelRepaso(i){
+  repaso.i = i;
+  const x = repaso.lista[i];
+  repaso.juego = new Chess(x.pregunta.fen);
+  repaso.sel = null;
+  repaso.ultima = null;
+  document.getElementById('repaso-progreso').textContent = 'Pregunta ' + (i + 1) + ' de ' + repaso.lista.length;
+  document.getElementById('repaso-pregunta').textContent = textoDePregunta(x.pregunta);   // la escribió una persona
+  document.getElementById('repaso-turno').textContent = repaso.juego.turn() === 'w' ? 'Juegan ⚪ blancas.' : 'Juegan ⚫ negras.';
+  document.getElementById('repaso-msg').textContent = '';
+  document.getElementById('repaso-otra-btn').hidden = true;
+  document.getElementById('repaso-siguiente-btn').hidden = true;
+  document.getElementById('repaso-ver-btn').hidden = false;
+  pintarRepaso();
+}
+
+function pintarRepaso(marcas){
+  const t = document.getElementById('repaso-board');
+  EjercicioTablero.dibujar(t, {
+    juego: repaso.juego, orientacion: new Chess(repaso.lista[repaso.i].pregunta.fen).turn(),
+    seleccionada: typeof repaso.sel === 'string' && repaso.sel !== 'hecha' ? repaso.sel : null,
+    ultima: repaso.ultima, marcas: marcas || null,
+    alTocar: (sq) => tocarRepaso(sq),
+  });
+  if (typeof repaso.sel === 'string' && repaso.sel !== 'hecha') EjercicioTablero.marcarDestinos(t, repaso.juego, repaso.sel);
+  if (repaso.comandos) repaso.comandos.posicion(repaso.juego);
+}
+
+function tocarRepaso(sq){
+  if (repaso.sel === 'hecha') return;
+  const p = repaso.juego.get(sq);
+  if (repaso.sel && repaso.sel !== sq) {
+    const esLegal = repaso.juego.moves({ square: repaso.sel, verbose: true }).some((m) => m.to === sq);
+    if (esLegal) { EjercicioTablero.jugarCoronando(repaso.juego, repaso.sel, sq, (pieza) => jugarRepaso(repaso.sel, sq, pieza)); return; }
+  }
+  repaso.sel = p && p.color === repaso.juego.turn() ? sq : null;
+  pintarRepaso();
+}
+
+function jugarRepaso(desde, hasta, pieza){
+  const x = repaso.lista[repaso.i];
+  const mv = repaso.juego.move({ from: desde, to: hasta, promotion: pieza || 'q' });
+  if (!mv) return;
+  repaso.sel = 'hecha';
+  repaso.ultima = { from: mv.from, to: mv.to };
+  const bien = EjercicioTablero.esAcierto(repaso.juego, mv, x.jugada) || RepasoClase.igualJugada(x.pregunta.fen, mv.san, x.jugada);
+  const msg = document.getElementById('repaso-msg');
+  if (bien) {
+    repaso.resueltas.add(x.pregunta.id);
+    msg.textContent = '✅ ¡Bien! ' + EjercicioTablero.jugadaEs(mv.san) + ' es la jugada.';
+    document.getElementById('repaso-ver-btn').hidden = true;
+    terminarPreguntaDelRepaso();
+  } else {
+    msg.textContent = '❌ ' + EjercicioTablero.jugadaEs(mv.san) + ' no es la mejor. Inténtalo otra vez.';
+    document.getElementById('repaso-otra-btn').hidden = false;
+  }
+  pintarRepaso();
+}
+
+function terminarPreguntaDelRepaso(){
+  const quedan = repaso.lista.some((x) => !repaso.resueltas.has(x.pregunta.id));
+  document.getElementById('repaso-otra-btn').hidden = true;
+  document.getElementById('repaso-siguiente-btn').hidden = !quedan;
+  if (!quedan) {
+    const fin = document.getElementById('repaso-fin');
+    fin.hidden = false;
+    fin.textContent = '🎉 Terminaste tu repaso: resolviste todas las preguntas que te habían quedado.';
+    marcarTareaHecha();
+  }
+}
+
+// El renglón de la tarea que trajo hasta acá (o, sin ?tarea=, el de este repaso).
+async function marcarTareaHecha(){
+  let q = sb.from('tarea_items').update({ completada_at: new Date().toISOString() })
+    .eq('material_href', RepasoClase.href(repaso.claseId)).is('completada_at', null);
+  if (repaso.tareaId) q = q.eq('tarea_id', repaso.tareaId);
+  const { error } = await q;
+  if (error) console.error(error);
+}
+
+document.getElementById('repaso-otra-btn').addEventListener('click', () => {
+  const x = repaso.lista[repaso.i];
+  repaso.juego = new Chess(x.pregunta.fen);
+  repaso.sel = null; repaso.ultima = null;
+  document.getElementById('repaso-msg').textContent = '';
+  document.getElementById('repaso-otra-btn').hidden = true;
+  pintarRepaso();
+});
+document.getElementById('repaso-ver-btn').addEventListener('click', () => {
+  const x = repaso.lista[repaso.i];
+  const mv = RepasoClase.jugadaDe(x.pregunta.fen, x.jugada);
+  // Se ve jugada en el tablero; no cuenta como resuelta.
+  repaso.juego = new Chess(x.pregunta.fen);
+  if (mv) repaso.juego.move(mv.san);
+  repaso.sel = 'hecha';
+  repaso.ultima = mv ? { from: mv.from, to: mv.to } : null;
+  document.getElementById('repaso-msg').textContent = 'La respuesta: ' + EjercicioTablero.jugadaEs(mv ? mv.san : x.jugada)
+    + '. Esta no cuenta como resuelta: vuelve a ella después.';
+  document.getElementById('repaso-ver-btn').hidden = true;
+  document.getElementById('repaso-otra-btn').hidden = false;
+  document.getElementById('repaso-siguiente-btn').hidden = repaso.lista.length < 2;
+  pintarRepaso();
+});
+document.getElementById('repaso-siguiente-btn').addEventListener('click', () => {
+  // La siguiente sin resolver, dando la vuelta.
+  for (let k = 1; k <= repaso.lista.length; k++) {
+    const j = (repaso.i + k) % repaso.lista.length;
+    if (!repaso.resueltas.has(repaso.lista[j].pregunta.id)) { mostrarPreguntaDelRepaso(j); return; }
+  }
+});
+
 /* ---------------- Arranque ---------------- */
 async function requireLoginThenGate(){
   let hay = false;
@@ -383,6 +551,8 @@ async function requireLoginThenGate(){
   gate.classList.add('hidden');
   app.classList.remove('hidden');
   cargarLista();
+  const claseDelRepaso = new URLSearchParams(location.search).get('repaso');
+  if (claseDelRepaso) abrirRepaso(claseDelRepaso);
 }
 requireLoginThenGate();
 

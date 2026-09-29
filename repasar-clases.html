@@ -180,6 +180,26 @@
   <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
     <h1 class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white">Repasar mis clases <span aria-hidden="true">🎞️</span></h1>
     <p class="text-sm text-brand-500 dark:text-brand-300 mt-2 mb-6">La partida de cada clase a la que fuiste (y de las que tu profe compartió con los que faltaron), jugada por jugada, con lo que comentó tu profe, las variantes que armó y las preguntas que hizo. Se recorre con los botones o con las flechas del teclado.</p>
+    <!-- El repaso personal (repasar-clases.html?repaso=<clase>, js/repaso-clase.js): las preguntas
+         de la clase que a este alumno no le salieron, para resolverlas otra vez. -->
+    <section id="repaso" aria-labelledby="repaso-titulo" hidden class="mb-8 rounded-2xl border-2 border-accent-500 bg-white dark:bg-brand-900 p-5">
+      <h2 id="repaso-titulo" tabindex="-1" class="font-serif text-xl font-bold text-brand-800 dark:text-white"><span aria-hidden="true">📌 </span>Tu repaso de la clase</h2>
+      <p id="repaso-intro" class="text-sm text-brand-600 dark:text-brand-300 mt-1"></p>
+      <div id="repaso-ejercicio" hidden>
+        <p id="repaso-progreso" class="text-sm font-semibold text-brand-700 dark:text-brand-200 mt-3"></p>
+        <p id="repaso-pregunta" class="text-sm text-brand-800 dark:text-brand-100"></p>
+        <p id="repaso-turno" class="text-xs text-brand-500 dark:text-brand-300 mb-2"></p>
+        <div class="board-wrap"><div class="board8" id="repaso-board"></div></div>
+        <div id="repaso-cmd"></div>
+        <p id="repaso-msg" class="round-status" role="status" aria-live="polite"></p>
+        <div class="round-controls">
+          <button type="button" class="bctrl" id="repaso-otra-btn" hidden>Intentarlo otra vez</button>
+          <button type="button" class="bctrl" id="repaso-ver-btn">Ver la respuesta</button>
+          <button type="button" class="bctrl" id="repaso-siguiente-btn" hidden>Siguiente pregunta →</button>
+        </div>
+      </div>
+      <p id="repaso-fin" hidden class="mt-3 text-base font-semibold text-brand-800 dark:text-white"></p>
+    </section>
     <div class="grid md:grid-cols-[18rem_1fr] gap-6">
       <section aria-labelledby="lista-titulo">
         <h2 id="lista-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Tus clases</h2>
@@ -232,6 +252,10 @@
 <script src="js/pgn-clase.js"></script>
 <script src="js/tipos-reglas.js"></script>
 <script src="js/ejercicio-tablero.js"></script>
+<script src="js/tablero-accesible.js"></script>
+<script src="js/comandos-tablero.js"></script>
+<script src="js/cuadro-comandos.js"></script>
+<script src="js/repaso-clase.js"></script>
 <script src="js/repasar-clases.js"></script>
 <!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="js/modo-vista.js" defer></script><!-- modo-vista: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- atajo: inicio --><script src="js/atajo-buscar.js" data-arriba="" defer></script><!-- atajo: fin --></body>
 </html>
