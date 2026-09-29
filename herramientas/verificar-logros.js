@@ -29,8 +29,12 @@ const STATS = {
   tipos_distintos: 4,
   hoy_ejercicios: 3,
   primer_dia: "2026-08-01",
-  por_actividad: { mates: 60, "4x4": 50, temas: 3, confites: 1 },
+  por_actividad: { mates: 60, "4x4": 50, temas: 3, confites: 1, sonar: 12, "batalla-naval": 4, memoria: 9 },
 };
+// Lo que no es «cuántos» (public.logros_hitos): un duelo ganado, dos tandas
+// de Precisión con 70 % o más (le falta una) y cuatro tesoros con tres
+// estrellas (le falta uno).
+const HITOS = { duelos_ganados: 1, tandas_70: 2, tesoros_3: 4, memoria_max_limpia: 12 };
 
 // Los trofeos de la clase (public.trofeos_de, js/trofeos.js): 9 por
 // respuestas correctas y 3 que sumó el profesor. El motivo del ajuste lleva
@@ -61,7 +65,8 @@ function clienteFalso(sesion, stats) {
       window.__rpcPedidos.push(nombre);
       const filas = nombre === "progreso_dias_y_racha" ? ${JSON.stringify(stats ? [stats] : [])}
         : nombre === "trofeos_de" ? ${JSON.stringify(stats ? [TROFEOS] : [])}
-        : nombre === "premios_de_alumno" ? ${JSON.stringify(stats ? { premios: PREMIOS } : null)} : [];
+        : nombre === "premios_de_alumno" ? ${JSON.stringify(stats ? { premios: PREMIOS } : null)}
+        : nombre === "logros_hitos" ? ${JSON.stringify(stats ? HITOS : {})} : [];
       return { then(r) { return Promise.resolve({ data: filas, error: null }).then(r); } };
     },
   };
@@ -237,10 +242,10 @@ async function abrir(browser, ruta, sesion, stats, opts) {
       // cuenta de progreso, así que no cuentan acá.
       // trofeos_de es la cuenta de los trofeos de la clase, también en la base.
       await page.evaluate(() => Array.from(new Set(window.__rpcPedidos.filter((n) => !["mi_acceso", "mi_marca_academia", "mis_academias_supervisadas"].includes(n)))).sort()),
-      ["premios_de_alumno", "progreso_dias_y_racha", "trofeos_de"]);
+      ["logros_hitos", "premios_de_alumno", "progreso_dias_y_racha", "trofeos_de"]);
 
     console.log("\n=== Los logros: la página pinta lo que el catálogo calcula ===");
-    const esperado = await page.evaluate((stats) => window.LogrosCatalogo.conEstado(stats), Object.assign({}, STATS, { trofeos: PREMIOS.trofeos_total, insignias: PREMIOS.insignias_total }));
+    const esperado = await page.evaluate((stats) => window.LogrosCatalogo.conEstado(stats), Object.assign({}, STATS, { trofeos: PREMIOS.trofeos_total, insignias: PREMIOS.insignias_total, hitos: HITOS }));
     const pintado = await page.evaluate(() =>
       Array.from(document.querySelectorAll("#logros-grid li")).map((li) => ({
         conseguido: li.textContent.includes("Conseguido ✔"),
@@ -256,6 +261,11 @@ async function abrir(browser, ruta, sesion, stats, opts) {
     igual("racha (2/8): solo llegó a los 3 y a los 7 días", cabeceras[0], "Racha de días (2/8)");
     igual("confites (1/1): su primera ronda ya cuenta", cabeceras.find((t) => t.startsWith("Confites")), "Confites del caballo (1/1)");
     igual("mates (2/3): tiene 60, así que le falta el de 200", cabeceras.find((t) => t.startsWith("Mates")), "Mates (2/3)");
+    igual("el Sonar (1/2): 12 partidas, pero 4 tesoros con tres estrellas de 5", cabeceras.find((t) => t.startsWith("El Sonar")), "El Sonar (1/2)");
+    igual("Batalla naval (1/2): el duelo ganado sí, las 10 partidas todavía no", cabeceras.find((t) => t.startsWith("Batalla")), "Batalla naval (1/2)");
+    igual("Precisión posicional (0/1): 2 tandas con 70 % de 3", cabeceras.find((t) => t.startsWith("Precisión")), "Precisión posicional (0/1)");
+    igual("Memoria (1/2): 12 piezas sin error sí (sale del hito, no de las 9 posiciones), las 10 posiciones todavía no", cabeceras.find((t) => t.startsWith("Memoria")), "Memoria (1/2)");
+    igual("Tipos de entrenamiento tiene su título, no la clave", cabeceras.some((t) => t.startsWith("Tipos de entrenamiento (")), "true");
     igual("trofeos (2/6): con 12 tiene el de 1 y el de 10", cabeceras.find((t) => t.startsWith("Trofeos")), "Trofeos de clase (2/6)");
     igual("insignias (2/5): con 7 tiene la de 1 y la de 5", cabeceras.find((t) => t.startsWith("Insignias")), "Insignias de clase (2/5)");
 

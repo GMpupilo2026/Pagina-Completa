@@ -2736,3 +2736,24 @@ estudiantes», «+120 artículos» cuando había 7) y no los respaldaba nada.
   pinta. Mirando como otra persona («Ver como») tampoco: la RLS respondería
   con la gente de quien mira.
 - Lo prueba `verificar-panel.js` (nombre por textContent incluido).
+
+## Hoy entrenaron
+
+- El alumno tiene su resumen del día en el hub; el profe no veía nada del
+  día: «Tu semana» cuenta a siete días. Debajo de «Se están cayendo del plan»
+  va `#profe-hoy`, que dice quién entrenó hoy, cuánto y cuántos salieron
+  limpios. Por ejemplo, «Ana Rojas — 12 ejercicios · 9 de 11 limpios». Cada
+  nombre lleva a su informe.
+- `public.entreno_hoy_de_mis_alumnos()` (migración `20260929175618`,
+  SECURITY INVOKER): una fila por alumno que entrenó hoy (día de Costa
+  Rica), de más a menos.
+  - «Limpios» cuenta solo lo que dice cómo salió; sin nada de eso, no se
+    menciona.
+  - La RLS decide de quién. Se probó impersonando a un profesor que no
+    administra, con filas de prueba revertidas: ve a su alumno y no al
+    ajeno. Administración ve a todos, a propósito.
+- `js/clases.js` → `cargarHoyEntrenaron()`: seis nombres y «Y N alumnos
+  más». Sin nadie, no se pinta, y mirando como otra persona («Ver como»)
+  tampoco, por lo mismo que la lista de los que se caen.
+- Lo prueba `verificar-panel.js` (nombre por textContent incluido, sin
+  «limpios» cuando no hay con qué, oculto sin nadie).

@@ -98,6 +98,16 @@ async function cosasDeHoy(alumnoId){
     } catch (e) { /* sin dato, sin propuesta */ }
   }
 
+  // Y el Tipo de entrenamiento más flojo (js/tipo-flojo.js): el que menos sale
+  // con tres estrellas, desde cinco ejercicios. Lleva a la ficha de ese tipo.
+  if (window.TipoFlojo && alumnoId) {
+    try {
+      const f = (await TipoFlojo.cargar(sb))[alumnoId];
+      if (f && f.porcentaje < TipoFlojo.FLOJO) cosas.push({ icono: '📉', href: 'tipos.html#' + encodeURIComponent(f.tipo),
+        texto: `Tu tipo de entrenamiento más flojo, «${f.nombre}»: tres estrellas en ${f.limpios} de ${f.intentos}` });
+    } catch (e) { /* sin dato, sin propuesta */ }
+  }
+
   // Líneas de Aperturas ya empezadas cuyo repaso venció (las nuevas no cuentan:
   // eso es estudiar algo nuevo, no un repaso pendiente).
   const srs = leerJSON('aperturas_srs_v1');
@@ -115,7 +125,52 @@ async function cosasDeHoy(alumnoId){
   } else if (Date.now() - fecha > 28 * 24 * 3600 * 1000) {
     cosas.push({ icono: '🧭', href: 'diagnostico.html', texto: 'Repetir el diagnóstico: ya pasaron cuatro semanas' });
   }
+
+  // Lo que quedó empezado y no vence: van al final, así que solo se proponen
+  // cuando hay lugar (tres como mucho).
+  const finales = await finalesPendientes();
+  if (finales) cosas.push(finales);
+  const precision = await precisionOlvidada(alumnoId);
+  if (precision) cosas.push(precision);
   return cosas.slice(0, 3);
+}
+
+/* Finales contra la máquina ya empezados y sin terminar: cuántos lleva y cuál
+   sigue (la página abre sola el primero sin lograr). A quien nunca jugó uno no
+   se le propone: sería empujar una página más, no seguir algo. */
+async function finalesPendientes(){
+  const hechos = leerJSON('entreno_finales_solved');
+  const n = hechos && typeof hechos === 'object' ? Object.keys(hechos).filter((k) => hechos[k]).length : 0;
+  if (!n) return null;
+  let banco = null;
+  try { const r = await fetch('data/finales.json'); if (r.ok) banco = await r.json(); } catch (e) { return null; }
+  const lista = (banco && banco.finales) || [];
+  const logrados = lista.filter((f) => hechos[f.id]).length;
+  const sigue = lista.find((f) => !hechos[f.id]);
+  if (!sigue) return null;
+  return { icono: '🏁', href: 'finales.html?final=' + encodeURIComponent(sigue.id),
+    texto: `Seguir con los finales contra la máquina: «${sigue.titulo}» (${logrados} de ${lista.length} logrados)` };
+}
+
+/* Precisión posicional: si ya hizo alguna tanda y la última fue hace una
+   semana o más. El historial vive en la cuenta (training_state,
+   'precision_posicional_historial_v1', lo más nuevo primero, con su fecha),
+   así que cuenta también lo hecho antes de que las tandas se registraran en
+   training_progress. */
+const DIAS_SIN_PRECISION = 7;
+async function precisionOlvidada(alumnoId){
+  if (!alumnoId || !window.sb) return null;
+  let historial = null;
+  try {
+    const { data } = await sb.from('training_state').select('value').eq('student_id', alumnoId).eq('key', 'precision_posicional_historial_v1').maybeSingle();
+    historial = data && data.value && typeof data.value.raw === 'string' ? JSON.parse(data.value.raw) : null;
+  } catch (e) { return null; }
+  const ultima = Array.isArray(historial) && historial[0] ? Date.parse(historial[0].fecha || '') : NaN;
+  if (!Number.isFinite(ultima)) return null;
+  const dias = Math.floor((Date.now() - ultima) / (24 * 3600 * 1000));
+  if (dias < DIAS_SIN_PRECISION) return null;
+  return { icono: '🧭', href: 'precision-posicional.html',
+    texto: `Una tanda de Precisión posicional: la última fue hace ${dias} días` };
 }
 /* La meta del día: cuántos ejercicios lleva hoy de los que hacen falta para
    que el día cuente en la racha, y la racha. La cuenta es la de Logros
@@ -142,7 +197,56 @@ async function pintarMeta(){
   document.getElementById('hoy-meta-relleno').style.width = Math.round(100 * Math.min(hoy, meta) / meta) + '%';
   document.getElementById('hoy-meta').hidden = false;
   ofrecerAvisos(racha);
+  if (hoy > 0) await pintarResumenHoy();
   return true;
+}
+
+/* El resumen del día: antes cada página festejaba lo suyo y nadie juntaba el
+   día. «Hoy: 12 ejercicios (Mates 6, Tipos de entrenamiento 4, Memoria 2) ·
+   9 de 11 limpios · Para mañana: 3 repasos.» Lo de hoy lo cuenta la base
+   (entreno_resumen_hoy, día de Costa Rica); los nombres son los de
+   js/tiempo-secciones.js, los mismos de Informes; los repasos de mañana, las
+   colas de este aparato (viajan con la cuenta). Si la base no responde, no se
+   pinta nada. */
+async function pintarResumenHoy(){
+  const caja = document.getElementById('hoy-resumen');
+  let r = null;
+  try {
+    const { data, error } = await sb.rpc('entreno_resumen_hoy');
+    if (!error && data && typeof data === 'object') r = data;
+  } catch (e) { r = null; }
+  if (!r || !r.total) return;
+  const nombre = (a) => window.TiempoSecciones ? TiempoSecciones.describir(a).nombre : a;
+  const partes = Object.keys(r.por_actividad || {})
+    .sort((a, b) => r.por_actividad[b] - r.por_actividad[a] || a.localeCompare(b))
+    .map((a) => `${nombre(a)} ${r.por_actividad[a]}`);
+  let texto = `Hoy: ${r.total} ${r.total === 1 ? 'ejercicio' : 'ejercicios'} (${partes.join(', ')})`;
+  if (r.con_como_salio) texto += ` · ${r.limpios} de ${r.con_como_salio} sin error ni pista`;
+  const manana = repasosParaManana();
+  if (manana) texto += ` · Para mañana: ${manana === 1 ? '1 repaso' : `${manana} repasos`}.`;
+  else texto += '.';
+  caja.textContent = texto;
+  caja.hidden = false;
+}
+
+/* Cuántos repasos tocan mañana (lo que vence hasta mañana y no salió de la
+   cola), de todas las colas de «Repasar fallados» y de Aperturas. */
+function repasosParaManana(){
+  const SRS = window.RepasoEspaciado;
+  if (!SRS) return 0;
+  const manana = SRS.sumarDias(SRS.hoy(), 1);
+  let n = 0;
+  if (window.RepasoFallados) {
+    Object.values(RepasoFallados.CLAVES).forEach((clave) => {
+      const e = RepasoFallados.leer(clave);
+      Object.keys(e).forEach((id) => { if (e[id] && !e[id].fuera && e[id].vence && e[id].vence <= manana) n++; });
+    });
+  }
+  const srs = leerJSON('aperturas_srs_v1');
+  if (srs && typeof srs === 'object') {
+    Object.keys(srs).forEach((id) => { if (srs[id] && srs[id].ultimo && srs[id].vence && srs[id].vence <= manana) n++; });
+  }
+  return n;
 }
 
 /* El aviso de racha sale por la tarde (public.avisar_rachas()) solo a los

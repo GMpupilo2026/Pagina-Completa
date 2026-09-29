@@ -37,6 +37,10 @@ window.Logros = (function () {
     // los ajusta; las insignias las da él a mano.
     trofeos: 0,
     insignias: 0,
+    // Lo que no es «cuántos» (public.logros_hitos): duelos de Batalla naval
+    // ganados, tandas de Precisión con 70 % o más, tesoros del Sonar con tres
+    // estrellas.
+    hitos: {},
   };
 
   function vacio(sesion, error) {
@@ -64,6 +68,9 @@ window.Logros = (function () {
       const premiosP = Promise.resolve(sb.rpc("premios_de_alumno", { p_alumno: sesion.user.id }))
         .then((r) => (r && !r.error && r.data && r.data.premios ? r.data.premios : {}))
         .catch(() => ({}));
+      const hitosP = Promise.resolve(sb.rpc("logros_hitos"))
+        .then((r) => (r && !r.error && r.data && typeof r.data === "object" && !Array.isArray(r.data) ? r.data : {}))
+        .catch(() => ({}));
       const { data, error } = await sb.rpc("progreso_dias_y_racha");
       if (error) throw error;
       const fila = (data && data[0]) || {};
@@ -73,6 +80,7 @@ window.Logros = (function () {
       const premios = await premiosP;
       stats.trofeos = Number(premios.trofeos_total) || 0;
       stats.insignias = Number(premios.insignias_total) || 0;
+      stats.hitos = await hitosP;
       return { stats: stats, logros: window.LogrosCatalogo.conEstado(stats), sesion: true, error: false };
     } catch (e) {
       console.warn("No se pudo cargar tu racha y tus logros:", e && e.message ? e.message : e);

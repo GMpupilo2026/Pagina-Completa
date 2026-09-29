@@ -109,6 +109,10 @@ window.MaterialPlataforma = (function () {
     { slug: "batalla-naval", label: "Batalla naval", href: "batalla-naval.html",
       actividades: ["batalla-naval"], metas: ["cantidad", "minutos"], unidad: "partidas" },
 
+    /* Memoria: cada posición reconstruida, como una ronda (se sortea). */
+    { slug: "memoria", label: "Memoria", href: "entreno/memoria.html",
+      actividades: ["memoria"], metas: ["cantidad", "minutos"], unidad: "posiciones" },
+
     { slug: "concentracion", label: "Concentración", href: "concentracion.html",
       actividades: ["concentracion"], metas: ["cantidad", "minutos"], unidad: "rondas" },
 

@@ -97,6 +97,14 @@
             if (!f) return statCard("🔎", "—", "Tema más flojo (hace falta resolver 5 de un mismo tema)", true);
             return statCard("🔎", `${escVis(f.nombre)} · ${f.porcentaje} %`, `Tema más flojo: limpio en ${f.limpios} de ${f.intentos}`, true);
         }
+        /* El Tipo de entrenamiento más flojo (js/tipo-flojo.js): el tipo que
+           menos sale con tres estrellas. Igual que el tema: sin cinco ejercicios
+           de un mismo tipo no hay con qué opinar, y la tarjeta lo dice. */
+        function tarjetaTipoFlojo(e) {
+            const f = e.tipoFlojo;
+            if (!f) return statCard("📉", "—", "Tipo de entrenamiento más flojo (hace falta resolver 5 de un mismo tipo)", true);
+            return statCard("📉", `${escVis(f.nombre)} · ${f.porcentaje} %`, `Tipo más flojo: tres estrellas en ${f.limpios} de ${f.intentos}`, true);
+        }
         /* Las casillas que más le cuestan en Coordenadas: la base manda los
            contadores (coord_casillas) y el orden lo pone el mismo módulo de la
            página (js/coordenadas-casillas.js), para no tener la fórmula dos veces. */
@@ -111,6 +119,7 @@
                 tarjetaTemaFlojo(e),
                 statCard("👁️", e.visualizacion, "Ejercicios de Visualización resueltos", true),
                 statCard("🧩", `${e.tiposEjercicios} (${e.tiposEstrellas}⭐)`, "Tipos de entrenamiento: ejercicios con estrellas", true),
+                tarjetaTipoFlojo(e),
                 statCard("📖", `${e.aperturasEmpezadas} (${e.aperturasFirmes} firmes)`, "Líneas de Aperturas estudiadas", true),
                 statCard("🎯", textoPrecision(e), "Precisión posicional", true),
                 statCard("🏁", e.finales, "Finales contra la máquina logrados", true),
@@ -162,6 +171,7 @@
                 precisionUltima: typeof m.precision_ultima === "number" ? m.precision_ultima : null,
                 precisionFecha: m.precision_fecha || null,
                 temaFlojo: m.temaFlojo || null,
+                tipoFlojo: m.tipoFlojo || null,
                 finales: m.finales || 0,
                 coordCasillas: m.coord_casillas && typeof m.coord_casillas === "object" ? m.coord_casillas : null,
                 puzzles: f.puzzles || 0,
@@ -190,7 +200,7 @@
         // compañeros—, así que su vista busca SU renglón por id y nunca toma el primero.
         // Por eso sirven para las dos vistas sin escribir la cuenta dos veces.
         async function cargarResumen() {
-            const [alumnos, cursos, diagnosticos, modulos, justificadas, flojos] = await Promise.all([
+            const [alumnos, cursos, diagnosticos, modulos, justificadas, flojos, tiposFlojos] = await Promise.all([
                 traerTodo(() => sb.rpc("informes_resumen_alumnos")),
                 traerTodo(() => sb.rpc("informes_cursos_alumnos")),
                 traerTodo(() => sb.rpc("informes_diagnosticos_alumnos")),
@@ -200,6 +210,8 @@
                 traerTodo(() => sb.rpc("faltas_justificadas")),
                 // Si la cuenta del tema más flojo falla, el informe sale igual, sin esa tarjeta.
                 window.TemaFlojo ? TemaFlojo.cargar(sb, "").catch(() => ({})) : Promise.resolve({}),
+                // Y la del tipo más flojo, igual.
+                window.TipoFlojo ? TipoFlojo.cargar(sb).catch(() => ({})) : Promise.resolve({}),
             ]);
             const justificadasPorAlumno = {};
             justificadas.forEach((j) => { justificadasPorAlumno[j.student_id] = j.clases_justificadas || 0; });
@@ -209,6 +221,7 @@
             diagnosticos.forEach((d) => { diagnosticoPorAlumno[d.student_id] = d; });
             modulos.forEach((m) => { modulosPorAlumno[m.student_id] = m; });
             Object.keys(flojos).forEach((id) => { modulosPorAlumno[id] = Object.assign({}, modulosPorAlumno[id], { temaFlojo: flojos[id] }); });
+            Object.keys(tiposFlojos).forEach((id) => { modulosPorAlumno[id] = Object.assign({}, modulosPorAlumno[id], { tipoFlojo: tiposFlojos[id] }); });
             return { alumnos, cursosPorAlumno, diagnosticoPorAlumno, modulosPorAlumno };
         }
 
