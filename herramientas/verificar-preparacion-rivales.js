@@ -670,7 +670,12 @@ window.__fensPedidas = [];
         return b;
       },
       in(col, vals) { filas2 = filas2.filter((r) => vals.map(String).includes(String(r[col]))); return b; },
-      order() { return b; },
+      // Ordena de verdad, como PostgREST (el repaso depende del orden).
+      order(col, o) {
+        const asc = !o || o.ascending !== false;
+        filas2.sort((x, y) => (String(x[col]) < String(y[col]) ? -1 : String(x[col]) > String(y[col]) ? 1 : 0) * (asc ? 1 : -1));
+        return b;
+      },
       range(a, z) { filas2 = filas2.slice(a, z + 1); return b; },
       insert(fila) {
         insertando = [].concat(fila).map((f) => Object.assign({ id: "p-" + (siguiente++), profesor_id: "u-profe", created_at: "2026-09-28T12:00:00Z" }, f));
@@ -1503,6 +1508,7 @@ async function pruebaEtapa7(browser) {
     const i = window.__insertados.filter((x) => x.tabla === "training_progress")[0];
     return [document.getElementById("entrenador-resultado").textContent, i.activity, i.detail.linea_id, i.detail.limpio, i.detail.theme || null];
   }), ["Te salió con 1 error y 0 pistas: vuelve a jugarla hasta que te salga limpia.", "preparacion", "plan-7:e4 e5 Nf3", false, null]);
+  igual("y guarda en qué jugada de la línea se equivocó (la 1.e4, índice 0)", await page.evaluate(() => window.__insertados.filter((x) => x.tabla === "training_progress")[0].detail.fallos), [0]);
   igual("y todavía no cuenta", await page.textContent("#entrenar-progreso"), "Te salen sin errores 0 de 2 líneas.");
 
   // Otra vez, limpia.
@@ -1555,6 +1561,52 @@ async function pruebaEtapa7(browser) {
   await p.page.waitForFunction(() => /Línea completa/.test(document.querySelector("#entrenador .entrenador-turno").textContent), null, { timeout: 5000 });
   igual("y no se registra nada", await p.page.evaluate(() => window.__insertados.filter((i) => i.tabla === "training_progress").length), 0);
   await p.ctx.close();
+}
+
+/* Repasar las líneas del plan: la repetición espaciada de Aperturas
+   (js/repaso-espaciado.js), armada con los intentos que ya están en
+   training_progress, en hora de Costa Rica. Las fechas van relativas a hoy. */
+function pruebaRepasoEspaciado() {
+  console.log("\n=== Repasar las líneas: la repetición espaciada, desde lo que ya pasó ===");
+  const RE = require("../js/repaso-espaciado.js");
+  const e = RE.desdeHistoria([
+    { id: "a", nota: "bien", dia: "2026-09-01" }, { id: "a", nota: "bien", dia: "2026-09-02" },
+    { id: "b", nota: "bien", dia: "2026-09-01" }, { id: "b", nota: "mal", dia: "2026-09-03" },
+    { id: "c", nota: "regular", dia: "2026-09-03" },
+  ]);
+  igual("dos bien seguidas: al día siguiente y después a los 3 días", [e.a.vence, e.a.intervalo], ["2026-09-05", 3]);
+  igual("una mal: vuelve el mismo día y empieza de cero", [e.b.vence, e.b.repasos], ["2026-09-03", 0]);
+  igual("con pistas: al día siguiente", e.c.vence, "2026-09-04");
+  igual("para el 4: la fallada y la de pistas, primero la más atrasada", RE.pendientes(["a", "b", "c"], e, "2026-09-04"), ["b", "c"]);
+}
+
+async function pruebaRepasoEnLaPagina(browser) {
+  console.log("\n=== Repasar las líneas, en la página del alumno ===");
+  const dia = (n) => { const d = new Date(Date.now() + n * 86400000); return d.toLocaleDateString("en-CA", { timeZone: "America/Costa_Rica" }); };
+  const a = (n) => dia(n) + "T18:00:00Z";
+  const fila = { id: "plan-r", profesor_id: "p-x", alumno_id: "u-profe", rival: "Pedro Perez", lado: "conBlancas", plan: PLAN_CHICO, nota: null, created_at: "2026-09-28T12:00:00Z" };
+  const fila2 = (linea, limpio, cuando, fallos) => ({ id: "t-" + linea + cuando, student_id: "u-profe", activity: "preparacion", created_at: cuando,
+    detail: Object.assign({ linea_id: "plan-r:" + linea, plan: "plan-r", limpio, errores: limpio ? 0 : 1, pistas: 0, fallos }, limpio ? { theme: "plan-r" } : {}) });
+  // «e4 e5 Nf3»: limpia antier y ayer → vuelve pasado mañana. «e4 c5»: ayer con un error en 1.e4 → toca hoy.
+  // Van desordenadas a propósito: la página las pide en orden.
+  const intentos = [fila2("e4 c5", false, a(-1), [0]), fila2("e4 e5 Nf3", true, a(-1), []), fila2("e4 e5 Nf3", true, a(-2), [])];
+  const { page, ctx, errores } = await abrir(browser, false, [], false, { planes_rival_alumno: [fila], training_progress: intentos }, "plan-rival.html?id=plan-r");
+  const fecha = new Date(dia(2) + "T12:00:00Z").toLocaleDateString("es-CR", { timeZone: "UTC", day: "numeric", month: "long" });
+  igual("cuántas tocan hoy, y el botón para repasarlas", await page.evaluate(() => [document.getElementById("entrenar-repaso").textContent, SE_VE("entrenar-repasar"), document.getElementById("entrenar-repasar").textContent]),
+    ["Para repasar hoy: 1 línea.", true, "Repasar las de hoy (1)"]);
+  igual("cada línea dice cuándo le toca", await page.evaluate(() => [...document.querySelectorAll("#entrenar-lineas [data-estado]")].map((x) => x.textContent)),
+    ["✔ Ya te sale sin errores · Próximo repaso: " + fecha + ".", "Todavía no te sale sin errores · Toca repasarla hoy."]);
+  igual("y dónde se equivocó la última vez", await page.evaluate(() => [...document.querySelectorAll("#entrenar-lineas [data-fallos]")].map((x) => x.textContent)), ["La última vez fallaste en 1.e4."]);
+  await page.click("#entrenar-repasar");
+  await page.waitForFunction(() => document.getElementById("entrenador-caja").checkVisibility(), null, { timeout: 5000 });
+  igual("«Repasar las de hoy» abre la que toca", await page.textContent("#entrenador .visor-titulo"), "Línea 2 de 2");
+  await page.click("#entrenador [data-square='e2']"); await page.click("#entrenador [data-square='e4']");
+  await page.waitForFunction(() => window.__insertados.some((i) => i.tabla === "training_progress"), null, { timeout: 5000 });
+  await page.waitForFunction(() => /Hoy no te toca/.test(document.getElementById("entrenar-repaso").textContent), null, { timeout: 5000 });
+  igual("limpia hoy: ya no toca, vuelve mañana, y el botón se va", await page.evaluate(() => [SE_VE("entrenar-repasar"), document.querySelectorAll("#entrenar-lineas [data-estado]")[1].textContent, document.querySelectorAll("#entrenar-lineas [data-fallos]").length]),
+    [false, "✔ Ya te sale sin errores · Próximo repaso: " + new Date(dia(1) + "T12:00:00Z").toLocaleDateString("es-CR", { timeZone: "UTC", day: "numeric", month: "long" }) + ".", 0]);
+  igual("sin errores", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
 }
 
 // Las partidas «de Lichess»: las mismas de prueba, con el rival como usuario.
@@ -1997,6 +2049,7 @@ async function pruebaMotorDeVerdad(browser) {
   pruebaPgnDelPlan(conMotor);
   pruebaPlanDelAlumno(conMotor);
   pruebaLibro(conMotor);
+  pruebaRepasoEspaciado();
   const libro = pruebaTeoria();
   pruebaCruce();
   pruebaTiposDeFinal();
@@ -2021,6 +2074,7 @@ async function pruebaMotorDeVerdad(browser) {
     await pruebaEtapa5(browser, libro);
     await pruebaEtapa6(browser);
     await pruebaEtapa7(browser);
+    await pruebaRepasoEnLaPagina(browser);
     await pruebaDerrotasEnLaPagina(browser, conDerrotas);
     await pruebaTacticaEnLaPagina(browser, conTactica);
     await pruebaRitmoEHojaEnLaPagina(browser);

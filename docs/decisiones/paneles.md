@@ -2498,6 +2498,45 @@ con el Elo, las opciones UCI en su orden, «Cómo te fue», el foco al cerrar, e
 aviso de un análisis viejo, y en la página del alumno la partida, sin motor y
 sin guardar nada.
 
+### Repasar las líneas del plan
+
+«Entrénalo» decía qué líneas ya salían limpias, pero una línea que salió limpia
+hace tres semanas no se sabe hoy. Ahora cada línea dice **cuándo le toca**
+(«Próximo repaso: 1 de octubre», «Toca repasarla hoy»), arriba dice cuántas
+tocan hoy, **«Repasar las de hoy»** abre la primera, y cada línea dice **dónde
+se equivocó la última vez** («La última vez fallaste en 1.e4»).
+
+- **Es la repetición espaciada de Aperturas** (`js/repaso-espaciado.js`, SM-2
+  recortado): una bien vuelve al día siguiente, a los 3 días y después cada vez
+  más lejos; una fallada vuelve hoy y empieza de cero. Limpia es «bien», solo
+  con pistas es «regular» y con errores es «mal».
+- **No se guarda en ningún lado: se arma con lo que ya está.** Cada intento ya
+  quedaba en `training_progress` (etapa 7). `plan-rival.js` los pide por
+  `detail->>plan`, **en orden de fecha**, y `desdeHistoria()` los pasa uno por
+  uno por `calificar()`. Guardar la ficha aparte habría sido una segunda
+  verdad que se desincroniza (lo que se deriva no se guarda), y así vale en la
+  computadora y en el celular. El día de cada intento es el de Costa Rica.
+- **El orden importa**: dos intentos al revés dan otra fecha. Por eso el doble de
+  Supabase del verificador ahora ordena de verdad con `order()` (antes lo
+  ignoraba), y la prueba mete los intentos desordenados a propósito.
+- **Lo que toca hoy son solo las que ya jugó alguna vez**: una línea nueva es
+  «la siguiente línea», no un repaso. Primero la fallada, y entre las demás la
+  más atrasada (`pendientes()`).
+- **Dónde falló**: el entrenador (`js/entrenador-linea.js`) devuelve `fallos`,
+  el índice de cada jugada de la línea donde hubo un error o una pista, y va en
+  `detail.fallos` del intento. Se muestra el del último intento de esa línea.
+- La tarea no cambia: sigue contando las líneas limpias (`theme`).
+- Un profesor que mira el plan de un alumno no ve su repaso ni suma nada, como
+  antes.
+
+Verificador (`preparacion-rivales`): `desdeHistoria()` sin navegador (dos bien
+seguidas, una mal, una con pistas y el orden de `pendientes()`); en la página,
+con intentos relativos a hoy y desordenados: cuántas tocan, la fecha de cada
+una, dónde falló, que «Repasar las de hoy» abra la que toca, y que al salir
+limpia pase a mañana y el botón se vaya. Y en «Entrénalo», que el intento con
+un error guarde `fallos: [0]`. Comprobado que falla sin el orden por fecha y
+sin guardar dónde falló.
+
 ## Las inscripciones a torneos en línea
 
 `inscripciones.html` muestra lo que llegó por `inscripcion.html`, el formulario

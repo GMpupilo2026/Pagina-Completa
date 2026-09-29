@@ -60,11 +60,13 @@
                  Cada línea que sale sin errores ni pistas cuenta para la tarea. -->
             <section id="entrenar-caja" aria-labelledby="entrenar-titulo" class="mt-6 bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
                 <h2 id="entrenar-titulo" class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-1">Entrénalo</h2>
-                <p class="text-sm text-brand-500 dark:text-brand-300 mb-3">Juega cada línea de memoria: tú mueves tus piezas y el tablero mueve las del rival. Una línea queda sabida cuando te sale sin errores y sin pistas.</p>
+                <p class="text-sm text-brand-500 dark:text-brand-300 mb-3">Juega cada línea de memoria: tú mueves tus piezas y el tablero mueve las del rival. Una línea queda sabida cuando te sale sin errores y sin pistas. Después vuelve a tocar cada vez más espaciado (al día siguiente, a los 3 días, a la semana…), y si fallas, vuelve hoy.</p>
                 <p id="entrenar-progreso" role="status" class="text-sm font-semibold text-brand-700 dark:text-brand-100 mb-3"></p>
                 <div class="flex flex-wrap gap-2 mb-3">
                     <button id="entrenar-siguiente" type="button" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Entrenar la siguiente línea</button>
+                    <button id="entrenar-repasar" type="button" hidden class="bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Repasar las de hoy</button>
                 </div>
+                <p id="entrenar-repaso" role="status" class="text-sm text-brand-600 dark:text-brand-200 mb-3"></p>
                 <ul id="entrenar-lineas" class="divide-y divide-brand-100 dark:divide-brand-800"></ul>
                 <div id="entrenador-caja" hidden class="mt-5 border-t border-brand-100 dark:border-brand-800 pt-5">
                     <div id="entrenador"></div>
@@ -111,6 +113,7 @@
     <script src="js/preparacion-resumen.js"></script>
     <script src="js/preparacion-pintar.js"></script>
     <script src="js/entreno-progress.js"></script>
+    <script src="js/repaso-espaciado.js"></script>
     <script src="js/entrenador-linea.js"></script>
     <script src="js/shared-engine.js"></script>
     <script src="js/preparacion-posiciones.js"></script>
