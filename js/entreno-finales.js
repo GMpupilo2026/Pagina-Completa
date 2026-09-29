@@ -136,6 +136,18 @@ function markSolved(id){
 }
 function isSolved(id){ return !!getSolved()[id]; }
 
+/* «Repasar fallados» (js/repaso-fallados.js, la misma cola de Temas y Mates):
+   un final perdido (o unas tablas cuando había que ganar) vuelve hoy mismo; uno
+   logrado con pista, pronto; y logrado limpio, cada vez más espaciado, hasta
+   salir de la cola con tres seguidos. Uno logrado limpio a la primera no entra. */
+const CLAVE_REPASO = window.RepasoFallados ? RepasoFallados.CLAVES.finales : null;
+function pendientesDeRepaso(){
+  return CLAVE_REPASO ? RepasoFallados.pendientes(CLAVE_REPASO, (id) => FINALES.some((f) => f.id === id)) : [];
+}
+function anotarRepaso(conError, conPista){
+  if(CLAVE_REPASO) RepasoFallados.anotar(CLAVE_REPASO, finalActual().id, conError, conPista);
+}
+
 /* ---------------- Estado del final en curso ---------------- */
 let actual = 0;
 let game = null;
@@ -154,20 +166,23 @@ function buildTabs(){
   const tabs = document.getElementById('tabs');
   tabs.innerHTML = '';
   const s = getSolved();
+  const repasar = pendientesDeRepaso();
   FINALES.forEach((f, i) => {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'tab' + (i === actual ? ' active' : '');
     btn.setAttribute('aria-current', i === actual ? 'true' : 'false');
     // El estado va escrito, no solo con el color o un icono.
-    btn.textContent = `${META[f.meta].icono} ${f.titulo}${s[f.id] ? ' ✓' : ''}`;
-    btn.setAttribute('aria-label', `${f.titulo}: ${META[f.meta].etiqueta.toLowerCase()}${s[f.id] ? ', ya lo lograste' : ''}`);
+    const toca = repasar.includes(f.id);
+    btn.textContent = `${META[f.meta].icono} ${f.titulo}${s[f.id] ? ' ✓' : ''}${toca ? ' 🔁' : ''}`;
+    btn.setAttribute('aria-label', `${f.titulo}: ${META[f.meta].etiqueta.toLowerCase()}${s[f.id] ? ', ya lo lograste' : ''}${toca ? ', toca repasarlo hoy' : ''}`);
     btn.addEventListener('click', () => { actual = i; loadFinal(); });
     tabs.appendChild(btn);
   });
   const hechos = FINALES.filter((f) => s[f.id]).length;
   document.getElementById('progress-fill').style.width = (FINALES.length ? Math.round(100 * hechos / FINALES.length) : 0) + '%';
-  document.getElementById('progress-label').textContent = `${hechos} de ${FINALES.length} finales logrados`;
+  document.getElementById('progress-label').textContent = `${hechos} de ${FINALES.length} finales logrados` +
+    (repasar.length ? ` · ${repasar.length} para repasar hoy (🔁)` : '');
 }
 
 /* ---------------- Tablero ---------------- */
@@ -394,6 +409,7 @@ function logrado(texto){
   terminado = true;
   const f = finalActual();
   const yaEstaba = isSolved(f.id);
+  anotarRepaso(false, usedHint);
   if(!yaEstaba){
     markSolved(f.id);
     EntrenoProgress.log('finales', Object.assign({ final_id: f.id, meta: f.meta, jugadas: jugadasPropias },
@@ -403,6 +419,7 @@ function logrado(texto){
 }
 function fallado(texto){
   terminado = true;
+  anotarRepaso(true, usedHint);
   mostrarResultado('♟️', texto, finalActual().pista ? `Pista: ${finalActual().pista}` : '');
 }
 function mostrarResultado(emoji, titulo, detalle){
@@ -459,7 +476,9 @@ function initApp(){
   applyBlindModeUI();
   // ?final=<id> es el enlace de una tarea o del plan; si no, el primero sin
   // lograr (o el último que se abrió, si todos están logrados).
-  const pedido = new URLSearchParams(location.search).get('final');
+  // ?repaso=1 (del «Hoy te toca» del hub): el primero que toca repasar.
+  const params = new URLSearchParams(location.search);
+  const pedido = params.get('final') || (params.get('repaso') ? pendientesDeRepaso()[0] : null);
   const s = getSolved();
   let i = FINALES.findIndex((f) => f.id === pedido);
   if(i < 0) i = FINALES.findIndex((f) => !s[f.id]);

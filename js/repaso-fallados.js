@@ -21,8 +21,8 @@
  * así la cola viaja con la cuenta, no con el aparato.
  *
  * No sabe de ajedrez ni de páginas: lo usan Ejercicios por tema, Mates,
- * Visualización y Practicar (anotar y repasar) y el hub de Entrenamiento
- * (contar lo que toca hoy).
+ * Visualización, Practicar, Tipos de entrenamiento y Finales (anotar y
+ * repasar) y el hub de Entrenamiento (contar lo que toca hoy).
  */
 (function () {
   "use strict";
@@ -34,6 +34,8 @@
     mates: "entreno_mates_repaso_v1",
     visualizacion: "entreno_visualizacion_repaso_v1",
     practicas: "entreno_practicas_repaso_v1",
+    tipos: "entreno_tipos_repaso_v1",
+    finales: "entreno_finales_repaso_v1",
   };
 
   function leer(clave) {
