@@ -76,9 +76,30 @@ const TAREAS_ALUMNA = [
       { id: "i-diag", orden: 0, material_tipo: "herramienta", material_slug: "diagnostico",
         material_label: "Diagnóstico de nivel", material_href: "entreno/diagnostico.html",
         filtro_clave: null, filtro_label: null, leccion: null,
-        meta_tipo: "completar", meta_cantidad: null, hecho: 1, cumplido: true },
+        meta_tipo: "cantidad", meta_cantidad: 1, hecho: 1, cumplido: true },
     ],
   },
+];
+
+/* Lo que ve el profe en «Tareas enviadas» cuando pidió el diagnóstico: a Ana
+   todavía no lo rindió, Beto ya (uno nuevo: la base solo cuenta el rendido
+   después de asignarlo). */
+function diagnosticoPedido(id, alumno, nombre, hecho) {
+  return {
+    id: id, profesor_id: "u-profe", profesor_nombre: "Karina Rojas",
+    alumno_id: alumno, alumno_nombre: nombre, titulo: "Diagnóstico de nivel", instrucciones: "",
+    vence_at: new Date(AHORA + 3 * 86400000).toISOString(),
+    created_at: new Date(AHORA - 86400000).toISOString(),
+    renglones: 1, cumplidos: hecho ? 1 : 0, situacion: hecho ? "completada" : "pendiente",
+    items: [{ id: "i-" + id, orden: 0, material_tipo: "herramienta", material_slug: "diagnostico",
+      material_label: "Diagnóstico de nivel", material_href: "entreno/diagnostico.html",
+      filtro_clave: null, filtro_label: null, leccion: null,
+      meta_tipo: "cantidad", meta_cantidad: 1, hecho: hecho ? 1 : 0, cumplido: !!hecho }],
+  };
+}
+const TAREAS_DIAGNOSTICO = [
+  diagnosticoPedido("td-ana", "u-ana", "Ana Rojas", false),
+  diagnosticoPedido("td-beto", "u-beto", "Beto Solano", true),
 ];
 
 function clienteFalso(perfiles, tareasSeed, usuarioId) {
@@ -299,7 +320,24 @@ async function main() {
     // Renglón 2: 10 minutos de coordenadas.
     await pagina.click("#agregar-renglon");
     await pagina.waitForSelector("#renglones .renglon:nth-of-type(2)", { timeout: 5000 });
+    /* De paso, el diagnóstico de nivel: se pide UNA vez y se cuenta solo al
+       rendirlo, así que no hay cantidad que elegir ni «terminarlo» que el
+       alumno marque a mano. Y al cambiar de material vuelve el 10 de
+       siempre: un renglón que heredara el 1 pediría un solo ejercicio. */
+    await pagina.selectOption("#renglones .renglon:nth-of-type(2) .r-material", "herramienta:diagnostico");
+    const metasDiag = await pagina.$$eval("#renglones .renglon:nth-of-type(2) .r-meta option", (e) => e.map((o) => o.value));
+    ok(JSON.stringify(metasDiag) === JSON.stringify(["cantidad"]),
+      `el diagnóstico solo puede pedirse por cantidad (se cuenta al rendirlo), ofreció ${JSON.stringify(metasDiag)}`);
+    ok(!(await pagina.isVisible("#renglones .renglon:nth-of-type(2) .r-cantidad-wrap")),
+      "el diagnóstico se pide una vez: no debería pedir una cantidad");
+    ok(await pagina.inputValue("#renglones .renglon:nth-of-type(2) .r-cantidad") === "1",
+      "el diagnóstico debería ir con cantidad 1");
+    const fraseDiag = await pagina.textContent("#renglones .renglon:nth-of-type(2) .r-frase");
+    ok(fraseDiag === "Hacer el diagnóstico de nivel", `la frase del diagnóstico no se lee bien: ${JSON.stringify(fraseDiag)}`);
+
     await pagina.selectOption("#renglones .renglon:nth-of-type(2) .r-material", "herramienta:coordenadas");
+    ok(await pagina.inputValue("#renglones .renglon:nth-of-type(2) .r-cantidad") === "10",
+      "al dejar el diagnóstico, la cantidad debería volver a 10");
     await pagina.selectOption("#renglones .renglon:nth-of-type(2) .r-meta", "minutos");
     await pagina.fill("#renglones .renglon:nth-of-type(2) .r-cantidad", "10");
 
@@ -362,6 +400,31 @@ async function main() {
       }
     }
 
+    await pagina.close();
+  }
+
+  // ---------- 1 bis) el profe ve en «Tareas enviadas» si ya hizo el diagnóstico ----------
+  {
+    const pagina = await navegador.newPage();
+    await pagina.addInitScript(clienteFalso([PROFE, ALUMNA1, ALUMNA2], TAREAS_DIAGNOSTICO, PROFE.id));
+    await pagina.goto(`${BASE}/tareas.html`, { waitUntil: "networkidle" });
+    await pagina.waitForSelector("#enviadas-lista > div", { timeout: 10000 });
+    const tarjetas = await pagina.$$eval("#enviadas-lista > div", (els) => els.map((e) => {
+      const a = e.querySelector("a[href*='diagnostico']");
+      return { texto: e.textContent.replace(/\s+/g, " ").trim(), enlace: a ? a.getAttribute("href") : null,
+               visible: a ? a.checkVisibility() : false };
+    }));
+    const ana = tarjetas.find((t) => /Ana Rojas/.test(t.texto)) || {};
+    const beto = tarjetas.find((t) => /Beto Solano/.test(t.texto)) || {};
+    ok(/Todavía no hace el diagnóstico/.test(ana.texto || ""),
+      `a quien no lo rindió debería decirle «Todavía no hace el diagnóstico»: ${JSON.stringify(ana.texto)}`);
+    ok(!ana.enlace, "a quien no lo rindió no hay resultado que ver: no debería llevar enlace");
+    ok(/✔ Ya hizo el diagnóstico/.test(beto.texto || ""),
+      `a quien ya lo rindió debería decirle «✔ Ya hizo el diagnóstico»: ${JSON.stringify(beto.texto)}`);
+    ok(beto.enlace === "informes.html?tema=diagnostico&alumno=u-beto" && beto.visible,
+      `«Ver su resultado» debería abrir el diagnóstico de ESE alumno en Informes: ${JSON.stringify(beto.enlace)}`);
+    ok(!/\b1\/1\b/.test((beto.texto || "").replace(/Completada 1\/1/, "")),
+      "el renglón del diagnóstico no debería leerse como «1/1»");
     await pagina.close();
   }
 

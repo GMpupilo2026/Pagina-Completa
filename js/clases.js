@@ -404,7 +404,22 @@
             } else {
                 el = document.createElement("a");
                 el.href = t.href;
-                el.className = base + " bg-white dark:bg-brand-900 hover:shadow-xl hover:-translate-y-0.5" + (t.primary ? " ring-2 ring-accent-500" : "");
+                el.className = base + " bg-white dark:bg-brand-900 hover:shadow-xl hover:-translate-y-0.5" + ((t.primary || t.pedido) ? " ring-2 ring-accent-500" : "");
+            }
+            /* Lo que el profe te pidió y todavía no hiciste se ILUMINA: el
+               mismo anillo que «Sesión en vivo» y un punto que late en la
+               esquina. El punto es adorno (`aria-hidden`) y se queda quieto
+               con «reducir movimiento»: lo que dice va escrito en la
+               etiqueta de abajo, que es lo que lee el lector de pantalla. */
+            if (t.pedido && !t.disabled) {
+                el.classList.add("relative");
+                el.dataset.pedido = "1";
+                const punto = document.createElement("span");
+                punto.className = "absolute top-3 right-3 flex w-3 h-3";
+                punto.setAttribute("aria-hidden", "true");
+                punto.innerHTML = '<span class="absolute inline-flex w-full h-full rounded-full bg-accent-500 opacity-75 animate-ping motion-reduce:animate-none"></span>'
+                    + '<span class="relative inline-flex w-3 h-3 rounded-full bg-accent-500"></span>';
+                el.appendChild(punto);
             }
             const iconWrap = document.createElement("div");
             iconWrap.className = "w-14 h-14 rounded-xl flex items-center justify-center text-3xl overflow-hidden shrink-0 " + (t.primary ? "bg-accent-500/20" : "bg-brand-50 dark:bg-brand-800") + " group-hover:scale-105 transition-transform";
@@ -433,6 +448,14 @@
             desc.className = "text-xs " + ((t.apagado && t.apagado.notaClases) || "text-brand-450 dark:text-brand-350");
             desc.textContent = t.desc;
             texto.append(label, desc);
+            if (t.pedido && !t.disabled) {
+                // Mismo par de colores que la llamada a la acción de la franja
+                // de arriba, sobre el mismo fondo de tarjeta.
+                const pedido = document.createElement("span");
+                pedido.className = "text-[11px] font-semibold px-2 py-0.5 rounded-full border border-accent-500 text-accent-700 dark:text-accent-400";
+                pedido.textContent = t.pedido;
+                texto.appendChild(pedido);
+            }
             if (t.nota) {
                 const nota = document.createElement("span");
                 nota.className = "text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-brand-100 dark:bg-brand-800 text-brand-500 dark:text-brand-300";
@@ -1183,12 +1206,46 @@
             return new Date(e.vence_at) > ahora ? "por_hacer" : "perdido";
         }
 
+        /* ---------- El diagnóstico que pidió el profe ----------
+           El profe lo asigna como un renglón de una tarea (Tareas → «Diagnóstico
+           de nivel»), y mientras ese renglón no esté cumplido la tarjeta del
+           diagnóstico se ilumina y lleva a la prueba con `?tarea=`, así la
+           franja de la tarea aparece dentro. Quién lo tiene pendiente no lo
+           decide esta página: `cumplido` sale de tareas_con_avance(), que solo
+           cuenta el diagnóstico rendido DESPUÉS de asignarlo. Una tarea
+           programada todavía no se le muestra, así que tampoco ilumina nada.
+           Se repinta SOLO esa tarjeta: repintar la grilla cerraría lo que
+           estuviera abierto debajo. */
+        function marcarDiagnosticoPedido(tareas) {
+            let hallado = null;
+            for (const t of tareas) {
+                if (t.situacion !== "pendiente" && t.situacion !== "vencida") continue;
+                const r = (t.items || []).find((i) => i.material_slug === "diagnostico" && !i.cumplido);
+                if (r) { hallado = { tarea: t, renglon: r }; break; }
+            }
+            const tile = TILE_GROUPS.flatMap((g) => g.tiles).find((x) => x.href === "entreno/diagnostico.html");
+            if (!hallado || !tile) return null;
+            const href = "entreno/diagnostico.html?tarea=" + encodeURIComponent(hallado.tarea.id);
+            const viejo = document.querySelector('#tile-grid a[href="entreno/diagnostico.html"]');
+            tile.href = href;
+            tile.pedido = hallado.tarea.situacion === "vencida"
+                ? "Te lo pidió tu profe · se pasó la fecha"
+                : `Te lo pidió tu profe · vence ${venceEnPalabras(hallado.tarea.vence_at)}`;
+            if (viejo) {
+                const nuevo = renderTileCard(tile, false);
+                nuevo.dataset.buscar = viejo.dataset.buscar;
+                viejo.replaceWith(nuevo);
+            }
+            return { ...hallado, href };
+        }
+
         async function cargarPendientes(rachaP) {
             const [t, x] = await Promise.all([
                 sb.rpc("tareas_con_avance", { p_alumno: profile.id, p_pendientes: true, p_limite: 50 }),
                 sb.rpc("examenes_con_nota", { p_alumno: profile.id, p_limite: 50 }),
             ]);
             const tareas = (t.error ? [] : t.data) || [];
+            const diagnosticoPedido = marcarDiagnosticoPedido(tareas);
             /* Si los exámenes no llegan se siguen mostrando las tareas: quedarse
                sin franja por la mitad que falló sería perder también la que sí
                se pudo leer. */
@@ -1267,6 +1324,13 @@
                         + ` · ${e0.preguntas} preguntas en ${e0.minutos} minutos.`;
                     destino = `examen.html?id=${encodeURIComponent(e0.id)}`;
                     cta = "Empezar el examen →"; icono = "📝";
+                } else if (diagnosticoPedido && diagnosticoPedido.tarea.id === t0.id) {
+                    /* Si lo más próximo es el diagnóstico que le pidió el
+                       profe, la franja lo dice con su nombre y lo lleva
+                       directo a la prueba, no a la lista de tareas. */
+                    msg = `Tu profe te pidió el diagnóstico de nivel. Vence ${venceEnPalabras(t0.vence_at)}.`;
+                    destino = diagnosticoPedido.href;
+                    cta = "Hacer el diagnóstico →"; icono = "🧭";
                 } else {
                     // Cuánto lleva de la más próxima: con renglones, "2 de 5"
                     // dice mucho más que el título solo.
