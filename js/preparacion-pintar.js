@@ -347,7 +347,79 @@
     grilla.appendChild(columna("Con qué gana él (cuídate de esto)", t.realiza, dG, "realiza", "En sus victorias no se ve una táctica que se repita."));
     grilla.appendChild(columna("Con qué pierde (búscalo)", t.sufre, dP, "sufre", "En sus derrotas no se ve una táctica que se repita."));
     s.appendChild(grilla);
+    const tm = r.tacticaMotor;
+    if (tm) s.appendChild(pintarTacticaMotor(r, tm));
+    else if (t.momentos) s.appendChild(el("p", "text-sm text-brand-500 dark:text-brand-300 mt-4", "Cuando termine la revisión de Stockfish, aquí se confirman sus errores y aparece lo que no vio."));
     return s;
+  }
+
+  /* Lo que dijo Stockfish de su táctica (r.tacticaMotor, revisarTactica en
+     js/preparacion-motor.js): cuántos momentos decisivos fueron errores de
+     verdad, sus errores con la jugada buena, y lo que no vio. */
+  function pintarTacticaMotor(r, tm) {
+    const T = window.PreparacionTactica;
+    const d = el("div", "mt-6");
+    d.dataset.tacticaMotor = "";
+    const conf = tm.momentos.filter((x) => x.confirmada);
+    d.appendChild(el("h4", "font-bold text-brand-800 dark:text-white mb-1", "Revisado con Stockfish"));
+    const nm = tm.momentos.length;
+    d.appendChild(el("p", "text-sm text-brand-600 dark:text-brand-200 mb-3", (nm === 1 ? "Se revisó 1 momento decisivo" : "Se revisaron " + nm + " momentos decisivos, los más recientes") + ": " +
+      (conf.length === 1 ? "1 fue un error claro" : conf.length + " fueron errores claros") + " (una jugada que perdió 1,5 peones o más de golpe). " + tm.detalle + "."));
+    const suyos = conf.filter((x) => !x.gano).slice(0, 5);
+    const renglon = (x, texto, nota) => {
+      const li = el("li", "py-2 flex flex-wrap items-start justify-between gap-x-4 gap-y-1");
+      const tx = el("div", "min-w-0 flex-1");
+      tx.appendChild(el("p", "text-sm text-brand-700 dark:text-brand-100", texto));
+      li.appendChild(tx);
+      const acc = el("div", "flex items-center gap-3 text-sm");
+      if (opcionesActuales.alVerSecuencia) acc.appendChild(botonVer(x.sec, "Ver en el tablero: " + texto, nota, x.ply));
+      if (x.enlace) {
+        const a = el("a", "underline text-brand-700 dark:text-brand-100 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "partida ↗");
+        a.href = x.enlace; a.target = "_blank"; a.rel = "noopener noreferrer";
+        a.setAttribute("aria-label", "Ver la partida (se abre en otra pestaña)");
+        acc.appendChild(a);
+      }
+      li.appendChild(acc);
+      return li;
+    };
+    // Cuánto costó, en peones; con mate de por medio (o 20 peones o más),
+    // «la partida»: «M-8 peones» no se entiende.
+    const peones = (v) => (Math.abs(v) >= 20 ? null : A.textoEval(v).replace("+", "") + " peones");
+    const jugadaN = (ply, san) => (ply % 2 === 1 ? Math.ceil(ply / 2) + "." : Math.ceil(ply / 2) + "…") + A.sanEs(san);
+    if (suyos.length) {
+      d.appendChild(el("h5", "text-sm font-semibold text-brand-800 dark:text-white mt-2", "Sus errores decisivos"));
+      const ul = el("ul", "divide-y divide-brand-100 dark:divide-brand-800");
+      ul.dataset.errores = "";
+      suyos.forEach((x) => {
+        const texto = "Jugó " + jugadaN(x.ply, x.jugada) + (x.mejor ? "; lo correcto era " + A.sanEs(x.mejor) : "") + (peones(x.perdida) ? " (perdió " + peones(x.perdida) + ")" : " (con eso perdía la partida)") + (x.oponente ? ", contra " + x.oponente : "") + ".";
+        ul.appendChild(renglon(x, texto, "Su error: " + A.sanEs(x.jugada) + (x.mejor ? ". Lo correcto era " + A.sanEs(x.mejor) : "") + "."));
+      });
+      d.appendChild(ul);
+    }
+    d.appendChild(el("h5", "text-sm font-semibold text-brand-800 dark:text-white mt-4", "Lo que no vio"));
+    d.appendChild(el("p", "text-sm text-brand-600 dark:text-brand-200", "En sus " + tm.buscadas + " partidas más recientes se buscaron posiciones donde tenía con qué ganar material y jugó otra cosa; Stockfish revisó " + tm.candidatas + " y confirmó las que de verdad ganaban."));
+    if (!tm.noVio.length) {
+      d.appendChild(el("p", "text-sm text-brand-500 dark:text-brand-300 mt-1", "No se encontró ninguna táctica ganadora que se le haya escapado: ve lo que tiene."));
+    } else {
+      const ul = el("ul", "divide-y divide-brand-100 dark:divide-brand-800");
+      ul.dataset.noVio = "";
+      tm.noVio.forEach((g) => {
+        const nombre = T && T.TEMAS[g.tema] ? T.TEMAS[g.tema] : { nombre: g.tema };
+        const li = el("li", "py-3");
+        li.dataset.tema = g.tema;
+        li.appendChild(el("p", "text-sm font-semibold text-brand-800 dark:text-white", nombre.nombre + ": " + g.n + (g.n === 1 ? " vez" : " veces")));
+        const sub = el("ul", "mt-1");
+        g.ejemplos.forEach((x) => {
+          const texto = "Tenía " + jugadaN(x.ply, x.mejor) + " y jugó " + jugadaN(x.ply, x.jugada) + (peones(x.perdida) ? " (se le escaparon " + peones(x.perdida) + ")" : " (ganaba la partida)") + (x.oponente ? ", contra " + x.oponente : "") + ".";
+          sub.appendChild(renglon(Object.assign({}, x, { ply: x.ply - 1 }), texto, "Aquí tenía " + A.sanEs(x.mejor) + " (" + nombre.nombre.toLowerCase() + ") y jugó " + A.sanEs(x.jugada) + "."));
+        });
+        li.appendChild(sub);
+        if (nombre.practica) li.appendChild(enlacePractica(nombre.practica, g.tema));
+        ul.appendChild(li);
+      });
+      d.appendChild(ul);
+    }
+    return d;
   }
 
   function listaConsejos(titulo, emoji, items, tipo, vacio) {

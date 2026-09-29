@@ -1679,6 +1679,43 @@ async function pruebaRitmoEHojaEnLaPagina(browser) {
   await ctx.close();
 }
 
+/* La táctica con el Stockfish de verdad (revisarTactica). Dos partidas
+   legales (comprobadas con chess.js):
+     - la trampa de la Petrov con Pedro de negras: su 4…Cf6?? pierde la dama
+       (lo correcto era 4…De7), y Stockfish tiene que confirmarlo;
+     - Pedro de blancas no ve la dama regalada: tras 4…Dh4?? tenía 5.Cxh4 y
+       jugó 5.Cc3. Stockfish confirma que «no la vio». */
+const DAMA_REGALADA = "e4 e5 Nf3 Nc6 Bc4 Bc5 d3 Qh4 Nc3 Nf6 O-O Qh5";
+async function pruebaTacticaConMotorDeVerdad(browser) {
+  console.log("\n=== La táctica, revisada con el Stockfish de verdad ===");
+  for (const js of [PETROV, DAMA_REGALADA]) { const g = new Chess(); cierto("es legal: " + js, js.split(" ").every((m) => g.move(m))); }
+  let t = partida("Otro 1", "Pedro", "1-0", conNumeros(PETROV)) + partida("Pedro", "Otro 2", "1-0", conNumeros(DAMA_REGALADA));
+  for (let i = 0; i < 4; i++) t += partida("Pedro", "Otro " + (3 + i), i % 2 ? "1-0" : "0-1", "d4 d5 2. c4 e6");
+  const ctx = await browser.newContext({ serviceWorkers: "block" });
+  await ctx.route("**/fonts.gstatic.com/**", (r) => r.abort());
+  await ctx.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
+  await ctx.route("**/cdn.jsdelivr.net/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
+  await ctx.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso(true) }));
+  await ctx.addInitScript(contestarAvisos);
+  const page = await ctx.newPage();
+  const errores = [];
+  page.on("pageerror", (e) => errores.push(String(e)));
+  await page.goto(BASE + "/preparacion-rivales.html", { waitUntil: "networkidle" });
+  await page.waitForFunction(() => document.getElementById("loading").classList.contains("hidden"), null, { timeout: 15000 });
+  await page.setInputFiles("#pgn-archivo", { name: "rival.pgn", mimeType: "application/x-chess-pgn", buffer: Buffer.from(t, "utf8") });
+  await page.click("#leer");
+  await page.waitForFunction(() => /Se leyeron/.test(document.getElementById("leido").textContent), null, { timeout: 10000 });
+  await page.selectOption("#rival", { label: "Pedro — 6 partidas" }).catch(() => {});
+  await page.click("#analizar");
+  await page.waitForFunction(() => /táctica revisada/.test(document.getElementById("motor-estado").textContent), null, { timeout: 240000 });
+  igual("su error decisivo, con la jugada buena (4…De7)", await page.evaluate(() => [...document.querySelectorAll("[data-errores] li p")].map((p) => p.textContent.replace(/perdió [\d,]+ peones/, "perdió N peones"))),
+    ["Jugó 4…Cf6; lo correcto era De7 (perdió N peones), contra Otro 1."]);
+  igual("lo que no vio: la dama regalada (una pieza sin defender)", await page.evaluate(() => [...document.querySelectorAll("[data-no-vio] > li")].map((li) => [li.dataset.tema, li.querySelector("p").textContent, li.querySelector(":scope ul li p").textContent.replace(/escaparon [\d,]+ peones/, "escaparon N peones")])),
+    [["colgada", "Pieza sin defender: 1 vez", "Tenía 5.Cxh4 y jugó 5.Cc3 (ganaba la partida), contra Otro 2."]]);
+  igual("sin errores en la página", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+}
+
 async function pruebaMotorDeVerdad(browser) {
   console.log("\n=== Stockfish 19 lite, corriendo en la página ===");
   const ctx = await browser.newContext({ serviceWorkers: "block" });
@@ -1746,6 +1783,7 @@ async function pruebaMotorDeVerdad(browser) {
     await pruebaTacticaEnLaPagina(browser, conTactica);
     await pruebaRitmoEHojaEnLaPagina(browser);
     await pruebaMotorDeVerdad(browser);
+    await pruebaTacticaConMotorDeVerdad(browser);
   } finally {
     await browser.close();
   }
