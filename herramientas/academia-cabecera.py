@@ -116,6 +116,12 @@ JUEGO_AVISO_FIN = "<!-- juego-aviso: fin -->"
 #     línea" no tiene nada que decir en una página de venta.
 SIN_BURBUJA = {"sesion.html", "examen.html", "tienda.html"}
 
+# Pero en sesion.html el script SÍ va, con `data-solo-anunciar`: no se pinta
+# nada, y el alumno que está en la clase se anuncia a sus profesores. Sin esa
+# línea, un alumno en clase no contaba como conectado y la burbuja de quien
+# administra decía "0" con la clase llena.
+SOLO_ANUNCIA = {"sesion.html"}
+
 # El aviso de partida asignada (js/juego-aviso.js) SOLO se quita de examen.html,
 # por la misma razón que ahí tampoco va la burbuja: un aviso que aparece solo y
 # traslada a otra página es justo la distracción que el antitrampa del examen
@@ -286,14 +292,16 @@ def cabecera(ruta):
     )
 
 
-def burbuja(ruta):
+def burbuja(ruta, solo_anunciar=False):
     """La burbuja va con `defer` y DESPUÉS del cliente de Supabase, que es de
     quien depende (`window.sb`). Como el cliente de cada página va en el
     cuerpo o en el head con defer, alcanza con ponerla al final del <body>:
     para entonces `sb` ya existe."""
     arriba = "../" * ruta.count("/")
     return (BURBUJA_INICIO
-            + f'<script src="{arriba}js/burbuja-en-linea.js" defer></script>'
+            + f'<script src="{arriba}js/burbuja-en-linea.js"'
+            + (' data-solo-anunciar' if solo_anunciar else '')
+            + ' defer></script>'
             + BURBUJA_FIN)
 
 
@@ -303,13 +311,13 @@ def poner_burbuja(ruta, s):
     if i >= 0:
         j = s.find(BURBUJA_FIN, i)
         s = s[:i] + s[j + len(BURBUJA_FIN):]
-    if ruta in SIN_BURBUJA:
+    if ruta in SIN_BURBUJA and ruta not in SOLO_ANUNCIA:
         return s
     cierre = s.rfind("</body>")
     if cierre < 0:
         print(f"⚠️  {ruta}: no tiene </body>, se queda sin burbuja.")
         return s
-    return s[:cierre] + burbuja(ruta) + s[cierre:]
+    return s[:cierre] + burbuja(ruta, ruta in SOLO_ANUNCIA) + s[cierre:]
 
 
 def juego_aviso(ruta):
