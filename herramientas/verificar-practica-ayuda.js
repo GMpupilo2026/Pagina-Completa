@@ -25,6 +25,20 @@
      anotada como alumna);
    - su presencia dice que es supervisión y a quién mira; el profe lo lee.
 
+   De quien coordina (lo mismo, con su nombre)
+   - entra a mirar, se nombra «Coordinación» y vuelve a coordinacion.html;
+   - su presencia dice «coordinación», y el profe y la alumna lo leen así;
+   - sin clase abierta, lo manda de vuelta a Coordinación y no a Supervisión.
+
+   De quien administra (entra desde Supervisión, que le lista a todos)
+   - se nombra «Administración», no «Supervisión», y ayuda igual.
+
+   El alumno pide ayuda desde su partida
+   - «🙋 Pedir ayuda» manda SOLO su pedido; el botón dice que pidió y deja
+     cancelar; cuando alguien lo atiende, se lo dice;
+   - al profe la tarjeta se le marca con texto, sube al principio, se dice en
+     voz y la cuenta de arriba la suma; «✔ Marcar como atendido» lo apaga.
+
    Del lado de la alumna
    - la pista se pinta como texto, y las flechas en su tablero Y en palabras;
    - escucha SU partida con filtro;
@@ -49,6 +63,10 @@ const { abrir, CHROME } = R;
 const CLASE = { id: "c-viva", created_by: "u-profe", started_at: new Date().toISOString(), ended_at: null };
 const INICIAL = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 const NOMBRE = "Ana <i>Rojas</i>";
+const COORD = { id: "u-coord", role: "profesor", is_admin: false, es_coordinador: true, es_supervisor: false,
+                full_name: "Luis Vega", email: "luis@x.cr", grupo: null };
+const ADMIN = { id: "u-oscar", role: "admin", is_admin: true, es_coordinador: false, es_supervisor: false,
+                full_name: "Oscar Angulo", email: "oscar@x.cr", grupo: null };
 const SUP = { id: "u-sup", role: "profesor", is_admin: false, es_coordinador: false, es_supervisor: true,
               full_name: "Marta Solano", email: "marta@x.cr", grupo: null };
 
@@ -247,6 +265,149 @@ async function pruebaSupervision(browser) {
   await profe.ctx.close();
 }
 
+async function pruebaCoordinacion(browser) {
+  console.log("\n=== Quien coordina mira la partida de Ana y la ayuda ===");
+  const semillaCoord = Object.assign(semilla(), { profiles: [R.PROFE, R.ALUMNA, COORD] });
+  const { page, ctx, errores } = await abrir(browser, COORD.id, CLASE, semillaCoord, { ruta: "/sesion.html?observar=u-profe" });
+  cumple("se monta como observador", await seVe(page, "#observador-panel"));
+  igual("se nombra coordinación, no supervisión", (await texto(page, "#role-badge")).trim(), "👁 Coordinación");
+  igual("y vuelve a su pantalla", await page.getAttribute("#observador-panel a[href]", "href"), "coordinacion.html");
+  cumple("la franja de arriba dice que mira", /^Estás mirando la clase de Karina Rojas/.test(await texto(page, "#status-banner")));
+  await page.waitForSelector("#practice-boards-grid .practice-mini-mirar", { timeout: 30000 });
+  await page.click("#practice-boards-grid .practice-mini-mirar");
+  igual("su presencia dice que viene de coordinación y a quién mira",
+    await ultimoTrack(page).then((t) => t && { role: t.role, como: t.como, mirando_a: t.mirando_a }),
+    { role: "supervision", como: "coordinación", mirando_a: "u-ana" });
+  await page.fill("#practica-mirar-pista", "¿Qué pieza no está defendida?");
+  await page.click("#practica-mirar-mandar");
+  await page.waitForFunction(() => /Le llegó/.test(document.getElementById("practica-mirar-aviso").textContent), null, { timeout: 5000 }).catch(() => {});
+  igual("manda SOLO la ayuda, a la partida de Ana", (await updatesDePartida(page)).map((u) => ({ campos: Object.keys(u.campos), donde: u.donde })),
+    [{ campos: ["ayuda"], donde: [["id", "g-1"]] }]);
+  igual("no crea ninguna partida ni se anota en nada", await page.evaluate(() => window.__inserts.map((i) => i.tabla)), []);
+  igual("sin errores en la página", errores.filter((e) => !/stockfish|Worker|wasm/i.test(e)), []);
+  await ctx.close();
+
+  console.log("\n=== Sin clase abierta, vuelve a Coordinación ===");
+  const sin = await abrir(browser, COORD.id, null, { profiles: [R.PROFE, R.ALUMNA, COORD] }, { ruta: "/sesion.html?observar=u-profe" });
+  cumple("dice que no hay clase", await seVe(sin.page, "#sin-clase"));
+  igual("y el enlace lleva a Coordinación", await sin.page.$eval("#sin-clase a[href]", (a) => ({ href: a.getAttribute("href"), texto: a.textContent })),
+    { href: "coordinacion.html", texto: "← Volver a Coordinación" });
+  await sin.ctx.close();
+
+  console.log("\n=== El profe y la alumna leen «coordinación» ===");
+  const profe = await abrir(browser, "u-profe", CLASE, semilla());
+  await profe.page.waitForSelector("#practice-boards-grid .practice-mini-mirar", { timeout: 30000 });
+  await profe.page.evaluate(() => window.__presencia("u-coord", { role: "supervision", como: "coordinación", full_name: "Luis Vega", mirando_a: "u-ana" }));
+  igual("el profe lo lee", await texto(profe.page, "#observadores"),
+    "👁 Luis Vega (coordinación) está mirando la clase. Luis Vega está en la partida de " + NOMBRE + ".");
+  await profe.ctx.close();
+  const ana = await abrir(browser, "u-ana", CLASE, semilla());
+  await ana.page.waitForSelector("#practice-card:not(.hidden) #practice-board [data-square]", { timeout: 30000 });
+  await ana.page.evaluate(() => window.__presencia("u-coord", { role: "supervision", como: "coordinación", full_name: "Luis Vega", mirando_a: "u-ana" }));
+  igual("la alumna lo lee", await texto(ana.page, "#practica-te-miran"), "👁 Luis Vega (coordinación) está mirando tu partida.");
+  await ana.ctx.close();
+}
+
+async function pruebaAdministracion(browser) {
+  console.log("\n=== Quien administra mira la partida de Ana y la ayuda ===");
+  const semillaAdmin = Object.assign(semilla(), { profiles: [R.PROFE, R.ALUMNA, ADMIN] });
+  const { page, ctx, errores } = await abrir(browser, ADMIN.id, CLASE, semillaAdmin, { ruta: "/sesion.html?observar=u-profe" });
+  cumple("se monta como observador", await seVe(page, "#observador-panel"));
+  igual("se nombra administración", (await texto(page, "#role-badge")).trim(), "👁 Administración");
+  igual("y vuelve a Supervisión, por donde entró", await page.getAttribute("#observador-panel a[href]", "href"), "supervision.html");
+  cumple("sin las herramientas de dar clase", !(await seVe(page, "#teacher-toolbar")));
+  await page.waitForSelector("#practice-boards-grid .practice-mini-mirar", { timeout: 30000 });
+  await page.click("#practice-boards-grid .practice-mini-mirar");
+  igual("su presencia dice que viene de administración y a quién mira",
+    await ultimoTrack(page).then((t) => t && { role: t.role, como: t.como, mirando_a: t.mirando_a }),
+    { role: "supervision", como: "administración", mirando_a: "u-ana" });
+  await page.fill("#practica-mirar-marcas", "g1-f3");
+  await page.click("#practica-mirar-mandar");
+  await page.waitForFunction(() => /Le llegó/.test(document.getElementById("practica-mirar-aviso").textContent), null, { timeout: 5000 }).catch(() => {});
+  igual("manda SOLO la ayuda, a la partida de Ana", (await updatesDePartida(page)).map((u) => ({ campos: Object.keys(u.campos), donde: u.donde })),
+    [{ campos: ["ayuda"], donde: [["id", "g-1"]] }]);
+  igual("no crea ninguna partida ni se anota en nada", await page.evaluate(() => window.__inserts.map((i) => i.tabla)), []);
+  igual("sin errores en la página", errores.filter((e) => !/stockfish|Worker|wasm/i.test(e)), []);
+  await ctx.close();
+}
+
+async function pruebaPedidoProfe(browser) {
+  console.log("\n=== Ana pide ayuda: el profe lo ve y lo atiende ===");
+  const sem = semilla();
+  sem.practice_games[0].pide_ayuda_at = new Date().toISOString();
+  // Beto va primero en la lista y no pidió nada: Ana tiene que subir igual.
+  sem.practice_games.unshift({ id: "g-2", session_id: "p-1", student_id: "u-beto", student_color: "w", fen: INICIAL,
+    moves: [], status: "playing", eval_cp: null, attempts: 1, reloj_ms: null, ayuda: null, pide_ayuda_at: null,
+    created_at: new Date().toISOString(), profiles: { full_name: "Beto Mora", email: "beto@x.cr" } });
+  const { page, ctx, errores } = await abrir(browser, "u-profe", CLASE, sem);
+  await page.waitForSelector("#practice-boards-grid .practice-mini-mirar", { timeout: 30000 });
+  await page.waitForTimeout(200);
+  const tarjetas = await page.evaluate(() => [...document.querySelectorAll("#practice-boards-grid > div")].map((d) => ({
+    nombre: d.querySelector(".practice-mini-name").textContent,
+    pide: d.querySelector(".practice-mini-pide").checkVisibility(),
+    arriba: d.getBoundingClientRect().top, izq: d.getBoundingClientRect().left,
+  })));
+  const ana = tarjetas.find((t) => t.nombre === NOMBRE), beto = tarjetas.find((t) => t.nombre === "Beto Mora");
+  cumple("la tarjeta de Ana dice que pide ayuda, escrito", ana && ana.pide, tarjetas);
+  cumple("la de Beto no", beto && !beto.pide);
+  cumple("Ana sube antes que Beto", ana && beto && (ana.arriba < beto.arriba || (ana.arriba === beto.arriba && ana.izq < beto.izq)), tarjetas);
+  cumple("la cuenta de arriba lo suma", /· 🙋 1 pide ayuda$/.test(await texto(page, "#practice-boards-hint")), await texto(page, "#practice-boards-hint"));
+  igual("se dice en voz", await texto(page, "#practica-pedidos-aviso"), NOMBRE + " pide ayuda en su partida.");
+  const botonAna = await page.$$eval("#practice-boards-grid .practice-mini-mirar", (bs) => bs.map((b) => b.getAttribute("aria-label")));
+  cumple("su botón lo dice", botonAna.includes("Mirar y ayudar a " + NOMBRE + " (pide ayuda)"), botonAna);
+
+  await page.click('#practice-boards-grid .practice-mini-mirar[aria-label$="(pide ayuda)"]');
+  cumple("el diálogo lo dice", /^🙋 Pidió ayuda\./.test(await texto(page, "#practica-mirar-estado")), await texto(page, "#practica-mirar-estado"));
+  cumple("y ofrece «Marcar como atendido»", await seVe(page, "#practica-mirar-atendido"));
+  await page.click("#practica-mirar-atendido");
+  await page.waitForFunction(() => /atendido/.test(document.getElementById("practica-mirar-aviso").textContent), null, { timeout: 5000 }).catch(() => {});
+  const u = await updatesDePartida(page);
+  igual("«Marcar como atendido» manda solo apagar el pedido, a la partida de Ana", u.map((x) => ({ campos: x.campos, donde: x.donde })),
+    [{ campos: { pide_ayuda_at: null }, donde: [["id", "g-1"]] }]);
+  igual("y lo dice", await texto(page, "#practica-mirar-aviso"), "Marcaste como atendido el pedido de " + NOMBRE + ".");
+  cumple("la tarjeta deja de marcarlo", !(await page.evaluate(() => [...document.querySelectorAll(".practice-mini-pide")].some((p) => p.checkVisibility()))));
+  cumple("y el botón desaparece", !(await seVe(page, "#practica-mirar-atendido")));
+  igual("sin errores en la página", errores.filter((e) => !/stockfish|Worker|wasm/i.test(e)), []);
+  await ctx.close();
+}
+
+async function pruebaPedidoAlumna(browser) {
+  console.log("\n=== Ana pide ayuda desde su partida ===");
+  const { page, ctx, errores } = await abrir(browser, "u-ana", CLASE, semilla());
+  await page.waitForSelector("#practice-card:not(.hidden) #practice-board [data-square]", { timeout: 30000 });
+  igual("el botón se ofrece", await page.$eval("#practica-pedir-ayuda", (b) => ({ texto: b.textContent, pulsado: b.getAttribute("aria-pressed"), seVe: b.checkVisibility() })),
+    { texto: "🙋 Pedir ayuda", pulsado: "false", seVe: true });
+  await page.click("#practica-pedir-ayuda");
+  await page.waitForFunction(() => document.getElementById("practica-pedir-ayuda").getAttribute("aria-pressed") === "true", null, { timeout: 5000 }).catch(() => {});
+  const u = await updatesDePartida(page);
+  cumple("manda SOLO su pedido, a su partida", u.length === 1 && JSON.stringify(Object.keys(u[0].campos)) === '["pide_ayuda_at"]'
+    && typeof u[0].campos.pide_ayuda_at === "string" && JSON.stringify(u[0].donde) === '[["id","g-1"]]', u);
+  igual("el botón dice que pidió y deja cancelar", await page.$eval("#practica-pedir-ayuda", (b) => ({ texto: b.textContent, pulsado: b.getAttribute("aria-pressed") })),
+    { texto: "✋ Pediste ayuda · Cancelar", pulsado: "true" });
+  cumple("y se lo dice", /Le avisamos a tu profe/.test(await texto(page, "#practica-pedido")));
+
+  // Alguien lo atiende: le llega la ayuda y el pedido se apaga.
+  await page.evaluate(() => {
+    const g = Object.assign({}, window.__tablas.practice_games[0], { pide_ayuda_at: null,
+      ayuda: { jugadas: 2, flechas: [], circulos: [], texto: "Mira el caballo", de: "u-profe", nombre: "Karina Rojas" } });
+    window.__cambioEnBase("practice_games", g);
+  });
+  await page.waitForFunction(() => document.getElementById("practica-pedir-ayuda").getAttribute("aria-pressed") === "false", null, { timeout: 5000 }).catch(() => {});
+  igual("cuando lo atienden, el botón vuelve", await page.$eval("#practica-pedir-ayuda", (b) => b.textContent), "🙋 Pedir ayuda");
+  igual("y se le dice", await texto(page, "#practica-pedido"), "Tu pedido de ayuda ya no está activo.");
+  cumple("con la ayuda en su tablero", (await texto(page, "#practica-ayuda")).includes("Mira el caballo"));
+
+  // Pedir y cancelar.
+  await page.click("#practica-pedir-ayuda");
+  await page.waitForFunction(() => document.getElementById("practica-pedir-ayuda").getAttribute("aria-pressed") === "true", null, { timeout: 5000 }).catch(() => {});
+  await page.click("#practica-pedir-ayuda");
+  await page.waitForFunction(() => document.getElementById("practica-pedir-ayuda").getAttribute("aria-pressed") === "false", null, { timeout: 5000 }).catch(() => {});
+  const u2 = await updatesDePartida(page);
+  igual("cancelar manda el pedido en null", u2[u2.length - 1] && u2[u2.length - 1].campos, { pide_ayuda_at: null });
+  igual("sin errores en la página", errores.filter((e) => !/stockfish|Worker|wasm/i.test(e)), []);
+  await ctx.close();
+}
+
 async function pruebaAlumna(browser) {
   console.log("\n=== Ana recibe la ayuda en su tablero ===");
   const ayuda = { jugadas: 2, flechas: [{ from: "g1", to: "f3" }], circulos: [], texto: "Mira <b>el</b> caballo",
@@ -326,6 +487,10 @@ async function pruebaAlumna(browser) {
   try {
     await pruebaProfesor(browser);
     await pruebaSupervision(browser);
+    await pruebaCoordinacion(browser);
+    await pruebaAdministracion(browser);
+    await pruebaPedidoProfe(browser);
+    await pruebaPedidoAlumna(browser);
     await pruebaAlumna(browser);
   } finally {
     await browser.close();

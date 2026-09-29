@@ -21,6 +21,9 @@
  *   lineaAPgn(resultado, lado, camino) una sola línea en PGN (para Archivos)
  *   planDelAlumno(resultado, lado)    solo el plan y lo que dijo Stockfish de
  *                                     sus jugadas: lo que se le manda al alumno
+ *   planDe(resultado, lado)           EL plan de ese lado: el hecho a la medida
+ *                                     del alumno si hay cruce, si no el general.
+ *                                     Todo lo que usa «el plan» pasa por acá.
  */
 (function (raiz, fabrica) {
   "use strict";
@@ -149,9 +152,21 @@
     return s + (resto ? " " + resto : "");
   }
 
+  /* El plan de un lado. Con las partidas de un alumno cruzadas
+     (js/preparacion-cruce.js), el plan a su medida: donde las opciones se
+     parecen, va con lo que el alumno ya juega. Sin cruce (o un cruce guardado
+     antes de que existiera), el general. Ver «El plan a la medida del
+     alumno» en docs/decisiones/paneles.md. */
+  function planDe(r, lado) {
+    const c = r && r.cruce && r.cruce.lados && r.cruce.lados[lado];
+    if (c && c.planAlumno && c.planAlumno.length) return c.planAlumno;
+    return (r && r[lado] && r[lado].plan) || [];
+  }
+  const esAMedida = (r, lado) => planDe(r, lado) !== ((r && r[lado] && r[lado].plan) || []);
+
   // `lado` es "conBlancas" (tú llevas blancas) o "conNegras".
   function planAPgn(r, lado) {
-    const plan = r[lado] && r[lado].plan;
+    const plan = planDe(r, lado);
     if (!plan || !plan.length) return "";
     const errores = erroresDelMotor(r);
     const tuBlancas = lado === "conBlancas";
@@ -214,12 +229,12 @@
       if (x.reparto != null) c.reparto = x.reparto;
       return c;
     });
-    const plan = copiar(r[lado] && r[lado].plan, []);
+    const plan = copiar(planDe(r, lado), []);
     const suyo = (x) => claves.has(x.sec.concat(x.jugada).join(" "));
     const motor = r.motor ? { errores: r.motor.errores.filter(suyo), cuidado: r.motor.cuidado.filter(suyo) } : null;
     return { plan, motor };
   }
 
   return { sanEs, lineaEs, pct, textoEval, fenDe, planAPgn, lineaDelPlan, notaJugada, erroresDelMotor,
-    lineasDelPlan, lineaAPgn, planDelAlumno };
+    lineasDelPlan, lineaAPgn, planDelAlumno, planDe, esAMedida };
 });

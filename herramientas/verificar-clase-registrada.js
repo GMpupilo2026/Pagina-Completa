@@ -90,12 +90,19 @@ window.__deletes = [];
       eq(col, val) { condiciones.push([col, val]); filas2 = filas2.filter((r) => String(r[col]) === String(val)); return b; },
       in(col, vals) { filas2 = filas2.filter((r) => vals.map(String).includes(String(r[col]))); return b; },
       is(col, val) { if (val === null) filas2 = filas2.filter((r) => r[col] === null || r[col] === undefined); return b; },
+      // .not("ended_at", "is", null): las que sí tienen valor.
+      not(col, op, val) { if (op === "is" && val === null) filas2 = filas2.filter((r) => r[col] !== null && r[col] !== undefined); return b; },
       gte() { return b; }, lte() { return b; }, or() { return b; },
       order() { return b; }, limit() { return b; }, range() { return b; },
       insert(fila) {
         window.__inserts.push({ tabla: tabla, fila: fila });
         nuevas += 1;
         pend = Object.assign({ id: "sesion-" + nuevas, started_at: new Date().toISOString(), ended_at: null }, fila);
+        // Como ligar_a_la_clase_abierta: la pregunta nueva queda en la clase abierta.
+        if (tabla === "questions" && !pend.class_session_id) {
+          const abierta = SESIONES.find((c) => !c.ended_at);
+          if (abierta) pend.class_session_id = abierta.id;
+        }
         // La fila nueva entra a la tabla: una segunda consulta tiene que
         // encontrarla, como en la base de verdad.
         (filas || []).push(pend);
@@ -268,7 +275,8 @@ window.__deletes = [];
         TABLAS.questions.forEach((q) => { if (q.created_by === ${JSON.stringify(quien)} && !q.closed_at) q.closed_at = new Date().toISOString(); });
         const q = { id: "qo-" + (TABLAS.questions.length + 1), fen: args.p_fen, prompt: args.p_prompt, created_by: ${JSON.stringify(quien)},
           expected_plies: 1, tipo: "opciones", opciones: args.p_opciones, tiempo_limite: args.p_tiempo_limite,
-          resultados_visibles: false, created_at: new Date().toISOString(), closed_at: null };
+          resultados_visibles: false, created_at: new Date().toISOString(), closed_at: null,
+          class_session_id: (SESIONES.find((c) => !c.ended_at) || {}).id || null };
         TABLAS.questions.push(q);
         if (args.p_correcta !== null && args.p_correcta !== undefined) TABLAS.preguntas_clave.push({ question_id: q.id, correcta: args.p_correcta });
         return constructor(n, [q]);
@@ -291,6 +299,20 @@ window.__deletes = [];
             .sort((a, b) => b.cuantos - a.cuantos || a.respuesta.localeCompare(b.respuesta));
         }
         return constructor(n, filas);
+      }
+      // La pregunta de salida: la última marcada de esa clase, contada como la base.
+      if (n === "salida_de_la_clase") {
+        const q = TABLAS.questions.filter((x) => x.class_session_id === args.p_clase && x.de_salida)
+          .sort((x, y) => String(y.created_at || "").localeCompare(String(x.created_at || "")))[0];
+        if (!q) return constructor(n, []);
+        const a = TABLAS.question_answers.filter((x) => x.question_id === q.id);
+        const porOpcion = q.tipo === "opciones" && !a.some((x) => x.is_correct != null);
+        const asistentes = TABLAS.class_attendance.filter((x) => x.session_id === args.p_clase && x.student_id !== "u-profe").length;
+        return constructor(n, [{ question_id: q.id, prompt: q.prompt, tipo: q.tipo, asistentes, respondieron: a.length,
+          bien: a.filter((x) => porOpcion ? x.opcion === 0 : x.is_correct === true).length,
+          medio: a.filter((x) => porOpcion && x.opcion === 1).length,
+          mal: a.filter((x) => porOpcion ? x.opcion >= 2 : x.is_correct === false).length,
+          sin_calificar: a.filter((x) => !porOpcion && x.is_correct == null).length }]);
       }
       if (n === "resumen_de_la_clase") {
         const pq = TABLAS.questions.filter((q) => q.class_session_id === args.p_clase).map((q) => q.id);

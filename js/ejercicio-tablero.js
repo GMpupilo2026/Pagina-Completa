@@ -55,6 +55,21 @@
  *       (`jugada()` → { from, to, promotion }). El botón dice lo que va a
  *       hacer: «Pista», «Otra pista», «Ver solución». Devuelve
  *       { dar, reiniciar, marcas, usadas }; `marcas()` va a dibujar().
+ *
+ *   EjercicioTablero.refutacion(juego)
+ *       Con la jugada EQUIVOCADA ya hecha en `juego` (le toca al rival): qué
+ *       responde el rival, si es algo que chess.js puede afirmar sin motor.
+ *       Un mate en una, o una pieza (caballo o más) que se come y no se puede
+ *       recuperar. Si no, null: nunca se inventa una refutación que no está.
+ *
+ *   EjercicioTablero.jugadaEs(san)
+ *       La jugada en castellano (Cf3, Dxh7#), como la escribe el alumno.
+ *
+ *   EjercicioTablero.fin({ caja, desde, jugadas, orientacion, siguiente })
+ *       Al terminar un ejercicio, en vez de saltar al siguiente al segundo:
+ *       «Siguiente →» (el alumno decide cuándo) y «Ver la línea», que abre la
+ *       línea jugada desde `desde` en js/visor-linea.js (recorrible con
+ *       ◀ ▶, teclado y lector de pantalla). Devuelve { cerrar, activo }.
  */
 (function () {
   "use strict";
@@ -201,7 +216,81 @@
     return { dar, reiniciar, marcas: () => marcas, usadas: () => n };
   }
 
-  const api = { racha, casillas, esAcierto, jugarCoronando, dibujar, marcarDestinos, destello, pistas };
+  const PIEZAS_ES = { N: "C", B: "A", R: "T", Q: "D", K: "R" };
+  function jugadaEs(san) {
+    if (typeof window !== "undefined" && window.VisorLinea) return VisorLinea.aEspanol(san);
+    return String(san).replace(/[NBRQK]/g, (l) => PIEZAS_ES[l]);
+  }
+
+  const VALOR = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
+  const NOMBRE = { p: "el peón", n: "el caballo", b: "el alfil", r: "la torre", q: "la dama" };
+  function refutacion(juego) {
+    let jugadas = [];
+    try { jugadas = juego.moves({ verbose: true }) || []; } catch (e) { return null; }
+    // 1. Un mate en una: lo más claro que se puede decir.
+    for (const m of jugadas) {
+      juego.move(m);
+      const mate = juego.in_checkmate();
+      juego.undo();
+      if (mate) return "Así el rival da mate con " + jugadaEs(m.san) + ".";
+    }
+    // 2. Una pieza que se come y no se puede recuperar en esa casilla.
+    let peor = null;
+    for (const m of jugadas) {
+      if (!m.captured || VALOR[m.captured] < 3) continue;
+      juego.move(m);
+      const recupera = juego.moves({ verbose: true }).some((r) => r.to === m.to);
+      juego.undo();
+      if (!recupera && (!peor || VALOR[m.captured] > VALOR[peor.captured])) peor = m;
+    }
+    if (peor) {
+      return "Así el rival se come " + NOMBRE[peor.captured] + " de " + peor.to + " con " + jugadaEs(peor.san) +
+        ", y ninguna pieza tuya puede volver a comer en " + peor.to + ".";
+    }
+    return null;
+  }
+
+  function fin(o) {
+    const caja = typeof o.caja === "string" ? document.querySelector(o.caja) : o.caja;
+    if (!caja) { if (o.siguiente) o.siguiente(); return { cerrar() {}, activo: () => false }; }
+    caja.textContent = "";
+    caja.hidden = false;
+    const botones = document.createElement("div");
+    botones.className = "round-controls";
+    const sig = document.createElement("button");
+    sig.type = "button"; sig.className = "bctrl primary"; sig.textContent = "Siguiente ejercicio →";
+    const ver = document.createElement("button");
+    ver.type = "button"; ver.className = "bctrl"; ver.textContent = "Ver la línea";
+    ver.setAttribute("aria-expanded", "false");
+    const visor = document.createElement("div");
+    visor.className = "fin-visor";
+    visor.id = (caja.id || "fin") + "-visor";
+    visor.hidden = true;
+    ver.setAttribute("aria-controls", visor.id);
+    botones.append(sig, ver);
+    caja.append(botones, visor);
+    let montado = null, activo = true;
+    ver.addEventListener("click", () => {
+      const abrir = visor.hidden;
+      visor.hidden = !abrir;
+      ver.setAttribute("aria-expanded", String(abrir));
+      ver.textContent = abrir ? "Ocultar la línea" : "Ver la línea";
+      if (abrir && !montado && window.VisorLinea) {
+        montado = VisorLinea.montar(visor, { nombre: "Tablero de la línea del ejercicio" });
+        montado.cargar(o.jugadas || [], { desde: o.desde, orientacion: o.orientacion, titulo: "La línea del ejercicio", en: 0 });
+      }
+      if (abrir && montado) montado.enfocar();
+    });
+    function cerrar() { activo = false; caja.hidden = true; caja.textContent = ""; }
+    sig.addEventListener("click", () => { cerrar(); if (o.siguiente) o.siguiente(); });
+    // El foco va a «Siguiente», salvo que el alumno esté escribiendo en el
+    // cuadro de comandos: ahí sigue, y «siguiente» escrito también avanza.
+    const a = document.activeElement;
+    if (!(a && (a.tagName === "INPUT" || a.tagName === "TEXTAREA"))) sig.focus();
+    return { cerrar, activo: () => activo, siguiente: () => sig.click() };
+  }
+
+  const api = { racha, casillas, esAcierto, jugarCoronando, dibujar, marcarDestinos, destello, pistas, refutacion, jugadaEs, fin };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (typeof window !== "undefined") window.EjercicioTablero = api;
 })();

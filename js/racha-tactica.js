@@ -343,7 +343,8 @@
         async function init() {
             const { data } = await sb.auth.getSession();
             session = data.session;
-            if (!session) { window.location.href = "login.html"; return; }
+            // Con ?next= se vuelve a la Racha después de iniciar sesión, no al panel.
+            if (!session) { window.location.href = "login.html?next=" + encodeURIComponent("racha-tactica.html"); return; }
             const { data: profileData, error: profileError } = await sb.from("profiles").select("*").eq("id", session.user.id).single();
             if (profileError || !profileData) { document.getElementById("loading").textContent = "No se pudo cargar tu perfil. Cierra sesión y vuelve a entrar."; return; }
             profile = profileData;

@@ -644,6 +644,52 @@ clase-elegido`.** Está probado que falla de verdad: sin pintar qué pensar, con
 «+30» mandando un arranque nuevo, sin decir que se acabó, sin irse solo, o sin
 leer `pensar` de la fila, salta.
 
+### La pregunta de salida
+
+Al cerrar la clase, junto al título y la nota, el profe puede hacer una última
+pregunta sobre lo visto: «🌡️ ¿lo entendiste?» o «❓ ¿qué jugarías?» en la
+posición del tablero. Lo que contestan dice si el tema quedó o hay que
+repetirlo, y se lo recuerda al profe cuando abre la clase siguiente, que es
+cuando lo va a usar. Migraciones `pregunta_de_salida` y
+`question_answers_el_alumno_solo_la_suya`, comprobadas impersonando.
+
+- **Es una pregunta como cualquiera, marcada `questions.de_salida`**: los
+  alumnos la contestan igual, el plazo y la calificación son los mismos. El
+  termómetro sale por `hacer_pregunta_de_opciones` y se marca después con un
+  `update` (lo permite `questions_update` a quien la hizo); la de jugada lleva
+  `de_salida` en el insert.
+- **La cuenta la hace la base**: `salida_de_la_clase(clase)`, SECURITY
+  INVOKER, toma la ÚLTIMA de salida de esa clase y dice cuántos asistieron,
+  cuántos contestaron y cómo les fue. Del termómetro (opciones sin calificar)
+  cuenta la opción: la primera es «bien», la segunda «a medias», el resto
+  «mal»; de una de jugada, la calificación. Probado: el profe ve todo, otro
+  profe nada, una alumna solo lo suyo.
+- **El veredicto lo dice la página** (`ResumenClase.veredictoSalida`, una sola
+  copia): «más o menos» vale la mitad; con 70 % o más «✅ El tema quedó», con
+  40 % o más «🤔 Quedó a medias: conviene un repaso corto», y si no «🔁
+  Conviene repetir el tema la próxima clase». Siempre con los números escritos
+  («2 de 8 alumnos contestaron: 1 lo entendió, 1 no lo entendió»). Lo que falta
+  calificar no cuenta: se dice, y si falta todo, no adivina.
+- **Se ve en tres lugares**: en el cierre (cambia con cada respuesta: la
+  escucha de `question_answers` lo refresca aunque la pregunta vigente no se
+  haya cargado), en «Qué hicieron» del registro del panel, arriba de la tabla,
+  y al profe al entrar a la clase siguiente («📌 La clase pasada («…»), la
+  pregunta de salida dijo: …»). Al alumno no se le muestra: su cuenta sería
+  solo la suya.
+- **De paso se cerró un agujero**: desde 20260914 cualquier alumno podía LEER
+  las respuestas de sus compañeros a las preguntas de su profe, con el ✅/❌
+  que la pantalla promete «en privado». La política de 20260914 copió a
+  `question_answers` la condición de `questions` («creada por mi profesor») y
+  la de 20260915 la pasó a `es_mi_profesor()`. Ahora el alumno ve solo la
+  suya, como decía la original. El conteo sin nombres que ve la clase sale de
+  `resultados_de_la_pregunta()`, SECURITY DEFINER, que no depende de esto; las
+  funciones de informes (INVOKER) le dan a un alumno solo lo suyo.
+
+**Al tocar esto, correr `node herramientas/verificar-todo.js clase-salida
+panel`.** Está probado que falla de verdad: sin marcar la de jugada o el
+termómetro, sin el recordatorio al entrar, con «más o menos» valiendo cero, sin
+refrescar al llegar respuestas, o sin la línea del registro, salta.
+
 ### El modo sencillo de la clase en vivo
 
 Aun ordenada, la pantalla del profesor tiene catorce controles delante, y la
@@ -810,7 +856,42 @@ desde el panel «Ver como» de ese profesor. Quien administra también puede.
   abierta ahora») y lleva de vuelta a Supervisión; al cerrarse la clase,
   vuelve sola a Supervisión.
 - Un alumno con `?observar=` en la dirección sigue siendo alumno: el modo solo
-  se enciende con `es_supervisor` o `is_admin`, y la RLS decide igual.
+  se enciende con `es_supervisor`, `is_admin` o `es_coordinador`, y la RLS
+  decide igual.
+- **Quien coordina también mira** (y ayuda en la práctica), sobre sus
+  profesores. Se llega desde «🔴 En clase ahora · Mirar la clase» en
+  `coordinacion.html`, junto al profesor que tiene la clase abierta. El alcance
+  es el de coordinación, preguntado con `bajo_mi_coordinacion()` y armado una
+  vez en `interno.profesores_que_coordino()` y `interno.clases_que_coordino()`
+  (de ésos, los que tienen la clase abierta). Las políticas son las mismas de
+  supervisión con `_coordinacion` (`game_state`, `variant_nodes`,
+  `profesor_videollamada`, `practice_sessions`, `practice_games` para leer y
+  para la ayuda) más `class_sessions_select_coordinacion`, que hace falta para
+  saber que la clase está abierta, para esa lista y para enterarse de que se
+  cerró. Solo cuentas con `es_coordinador`: quien supervisa y quien
+  administra ya tenían lo suyo.
+  - **Se nombra por lo que es**: la insignia dice «👁 Coordinación», la
+    presencia lleva `como: "coordinación"` (el rol de presencia sigue siendo
+    `supervision`, que quiere decir «observa»), y el profe y el alumno leen
+    «Luis Vega (coordinación)». Vuelve a `coordinacion.html`, no a
+    Supervisión. Quien supervisa y coordina a la vez entra como supervisión.
+- **Quien administra también mira y ayuda**, en todas las clases: la base ya
+  se lo daba (`is_admin` en las políticas de siempre de `game_state`,
+  `variant_nodes`, `profesor_videollamada`, `practice_sessions` y
+  `practice_games`; de la partida, el trigger le deja cambiar solo la ayuda) y
+  entra desde Supervisión, que le lista a todos los profesores con «En clase
+  ahora». Lo que faltaba era nombrarlo: entraba como «Supervisión» y el profe y
+  el alumno leían «(supervisión)». Ahora es «👁 Administración» y
+  «(administración)»; con varios papeles gana el más amplio (administración,
+  después supervisión, después coordinación). Comprobado impersonando a la
+  cuenta master: ve el tablero y la partida, y su ayuda entra con su nombre
+  sin tocar las jugadas.
+  - Comprobado impersonando roles en SQL (revertido): la coordinadora ve la
+    clase, el tablero y la partida del profesor de su academia, y su ayuda
+    entra con su nombre sin tocar las jugadas; los de un profesor de otra
+    academia, 0; una coordinadora sin gente, 0; cerrada la clase, las
+    políticas nuevas dan falso (la que se probó seguía viendo la partida por
+    ser también profesora del alumno, un acceso que ya tenía).
 - Comprobado impersonando roles en SQL (revertido): con la clase abierta la
   supervisora ve el tablero de su profesor (1 fila) y no el de un profesor de
   otra academia (0); cerrada la clase, 0; otro profesor y una llamada sin
@@ -1424,7 +1505,8 @@ alumno le aparece en su propio tablero.
   dibuja se escribe en el mismo campo, y lo que no se entiende se dice y no se
   manda. Lo que no depende de la página (limpiar lo que llega, leer y decir
   las marcas) está una sola vez en `js/practica-ayuda.js`.
-- **También quien supervisa** (`sesion.html?observar=`): ve la práctica y
+- **También quien supervisa, y quien coordina** (`sesion.html?observar=`; ver
+  «La clase en vivo, vista por quien supervisa»): ve la práctica y
   ayuda igual, con el alcance de todo lo demás que mira —solo mientras ese
   profesor tiene la clase abierta y solo si lo supervisa—
   (`practice_sessions_select_supervisor`, `practice_games_select_supervisor` y
@@ -1452,6 +1534,28 @@ alumno le aparece en su propio tablero.
   (`student_id=eq.<su id>`) y de ese aviso toma **solo la ayuda**: las jugadas
   las lleva su navegador, y un eco atrasado de la base se las pisaría.
 
+- **El alumno también la pide**: «🙋 Pedir ayuda» en su tarjeta de práctica.
+  El pedido vive en su fila (`practice_games.pide_ayuda_at`, migración
+  `practica_el_alumno_pide_ayuda`) y no en un mensaje suelto, porque quien
+  entra después a mirar —el profe que recarga, supervisión, coordinación—
+  también tiene que verlo. Lo hace cumplir el mismo trigger: el alumno lo
+  enciende y lo apaga, y la hora la pone la base (pedir otra vez no la corre:
+  el que pidió primero sigue primero); quien no es el alumno solo puede
+  APAGARLO, nunca encenderlo a su nombre; mandarle una ayuda lo da por
+  atendido, y reintentar la partida lo apaga.
+  - Al profe (y a quien observa) la tarjeta se le marca **con texto**
+    («🙋 Pide ayuda») además del borde, **sube al principio** de la grilla
+    (`order: -1`: sin eso, con veinte alumnos el pedido queda abajo, fuera de
+    la pantalla), la cuenta de arriba lo suma y se dice en voz una vez por
+    pedido (`#practica-pedidos-aviso`). En el diálogo, «✔ Marcar como atendido» lo
+    apaga sin mandar nada: muchas veces se ayuda de palabra, por la llamada.
+  - Al alumno el botón le dice que pidió y le deja cancelar
+    (`aria-pressed`), y cuando alguien lo atiende se le dice.
+  - Comprobado impersonando roles (revertido): la hora que manda el
+    navegador se ignora; pedir otra vez o jugar no la corre; la ayuda del
+    profe lo apaga; el profe no lo puede encender; sí apagarlo; la alumna lo
+    cancela; al reintentar se apaga.
+
 Comprobado impersonando roles en SQL (revertido): el profe manda la ayuda y
 queda con su `de`, pero sus cambios a jugadas, estado, intentos y reloj se
 devuelven; el alumno no puede cambiarla y sí juega; al reintentar se borra; con
@@ -1463,8 +1567,9 @@ sus cambios a jugadas y estado se devuelven; un profesor de otra academia ve 0
 y cambia 0; cerrada la clase, la política de supervisión da falso.
 
 **Al tocarlo, correr `node herramientas/verificar-todo.js practica-ayuda
-sesion-curso clase-supervisor`.** `verificar-practica-ayuda.js` comprueba las
-tres pantallas (profe, supervisión y alumno):
+sesion-curso clase-supervisor coordinacion`.** `verificar-practica-ayuda.js`
+comprueba las pantallas del profe, de supervisión, de coordinación y del
+alumno:
 que el tablero del profe no mueva ni mande nada, que lo que se manda sea solo
 la ayuda y a esa partida, que diga cuándo la base no la guardó, que la
 presencia diga a quién mira y vuelva a nadie, que al alumno se le pinten las

@@ -50,6 +50,17 @@
            solo de un profesor que supervisa). */
         let esObservador = false;
         let nombreObservado = "";
+        /* Quien observa puede venir de administración, supervisión o
+           coordinación: mira lo mismo (la base le da a cada uno su alcance),
+           pero se nombra distinto y vuelve a su propia pantalla. Con más de un
+           papel, gana el más amplio. Quien administra entra por Supervisión,
+           que le lista a todos los profesores. */
+        const OBSERVA_DESDE = {
+            administracion: { etiqueta: "administración", insignia: "👁 Administración", volver: "supervision.html", pantalla: "Supervisión" },
+            supervision: { etiqueta: "supervisión", insignia: "👁 Supervisión", volver: "supervision.html", pantalla: "Supervisión" },
+            coordinacion: { etiqueta: "coordinación", insignia: "👁 Coordinación", volver: "coordinacion.html", pantalla: "Coordinación" },
+        };
+        let observaDesde = OBSERVA_DESDE.supervision;
         let activePlayerId = null;
         // Con qué color puede mover activePlayerId: "w", "b" o "both" (los dos). Solo
         // importa mientras activePlayerId no sea null — el profesor siempre puede mover
@@ -1413,6 +1424,7 @@
                 btn.textContent = "Confirmar y cerrar";
                 document.getElementById("clase-titulo").focus();
                 pintarResumenDeLaClase(currentOpenSessionId);
+                refrescarSalida();
                 // Lo que se marcó del plan ya dice qué se trabajó: se propone, no se pisa.
                 const notasEl = document.getElementById("clase-notas");
                 const dados = itemsDelPlan.filter((it) => planHecho.has(it.id)).map((it) => it.titulo);
@@ -1459,6 +1471,8 @@
             despues.hidden = false;
             planHecho = new Set();
             document.querySelectorAll("#plan-items button[aria-pressed]").forEach((b) => pintarBotonHecho(b, false));
+            document.getElementById("salida-resultado").hidden = true;
+            mostrarSalidaPasada();
         }
 
         /* Al cerrar, la partida de la clase se guarda sola —si tiene jugadas y
@@ -1538,6 +1552,7 @@
             currentOpenSessionId = openSession ? openSession.id : null;
             refrescarPlanHecho();
             cargarTurnos();
+            mostrarSalidaPasada();
             if (openSession) {
                 await markAttendance(openSession.id);
                 await startPresenceLog(openSession.id);
@@ -1563,7 +1578,7 @@
                         // El profesor cerró la clase: registramos el último instante conectado
                         // y devolvemos al alumno al panel.
                         if (esObservador) {
-                            window.location.href = "supervision.html";
+                            window.location.href = observaDesde.volver;
                         } else if (!isTeacher) {
                             stopPresenceLog().finally(() => { window.location.href = "clases.html"; });
                         } else {
@@ -2505,7 +2520,7 @@
                     const loMira = (state[key] || []).some((m) => m && m.mirando_a === profile.id);
                     if (loMira && key !== profile.id) {
                         meMiran.push(meta && meta.role === "supervision"
-                            ? (meta.full_name || "Alguien") + " (supervisión)"
+                            ? (meta.full_name || "Alguien") + " (" + (meta.como || "supervisión") + ")"
                             : (meta && meta.full_name) || "Tu profe");
                     }
                     if (meta && meta.role === "alumno") {
@@ -2513,7 +2528,7 @@
                     } else if (meta && meta.role === "supervision") {
                         // Si además está mirando la partida de un alumno, el profe lo sabe.
                         const suya = meta.mirando_a && practiceStudentBoards[meta.mirando_a];
-                        mirando.push({ nombre: meta.full_name || "Alguien de supervisión", partida: suya ? suya.nombre : null });
+                        mirando.push({ nombre: meta.full_name || "Alguien", como: meta.como || "supervisión", partida: suya ? suya.nombre : null });
                     }
                 }
                 renderStudentsList();
@@ -2550,6 +2565,7 @@
                         // así que no aparece en la lista de alumnos ni en el
                         // chat, y el profesor ve que está mirando.
                         role: esObservador ? "supervision" : profile.role,
+                        como: esObservador ? observaDesde.etiqueta : undefined,
                         online_at: new Date().toISOString(),
                         mirando_a: mirandoA,
                     });
@@ -2566,6 +2582,7 @@
                     email: profile.email,
                     full_name: profile.full_name || "",
                     role: esObservador ? "supervision" : profile.role,
+                    como: esObservador ? observaDesde.etiqueta : undefined,
                     online_at: new Date().toISOString(),
                     mirando_a: mirandoA,
                 });
@@ -2583,7 +2600,7 @@
                 : "";
         }
 
-        /* Al profesor: quién de supervisión está mirando. A quien observa:
+        /* Al profesor: quién de supervisión o coordinación está mirando. A quien observa:
            cuántos alumnos hay conectados y quiénes. */
         function pintarObservadores(mirando) {
             if (isTeacher) {
@@ -2592,9 +2609,10 @@
                 el.hidden = !mirando.length;
                 // Si además mira la partida de un alumno, se dice cuál: ayudar a tu alumno
                 // sin que lo sepas no es supervisar.
+                // Cada quien con de dónde viene: supervisión o coordinación.
                 el.textContent = mirando.length
-                    ? "👁 " + mirando.map((m) => m.nombre).join(", ")
-                        + (mirando.length === 1 ? " (supervisión) está mirando la clase." : " (supervisión) están mirando la clase.")
+                    ? "👁 " + mirando.map((m) => m.nombre + " (" + m.como + ")").join(", ")
+                        + (mirando.length === 1 ? " está mirando la clase." : " están mirando la clase.")
                         + mirando.filter((m) => m.partida).map((m) => " " + m.nombre + " está en la partida de " + m.partida + ".").join("")
                     : "";
             } else if (esObservador) {
@@ -3024,11 +3042,12 @@
 
         // paraAlumno: la pregunta dirigida, solo para quien tiene el turno. Los
         // demás la ven pero no la contestan (lo rechaza la base).
-        async function crearPregunta(fen, expectedPlies, paraAlumno) {
+        // deSalida: la pregunta de salida, la última de la clase (ver hacerPreguntaDeSalida).
+        async function crearPregunta(fen, expectedPlies, paraAlumno, deSalida) {
             await sb.from("questions").update({ closed_at: new Date().toISOString() })
                 .eq("created_by", boardOwnerId).is("closed_at", null);
             return sb.from("questions")
-                .insert({ fen, created_by: session.user.id, expected_plies: expectedPlies, tiempo_limite: tiempoElegido(), para_alumno: paraAlumno || null })
+                .insert({ fen, created_by: session.user.id, expected_plies: expectedPlies, tiempo_limite: tiempoElegido(), para_alumno: paraAlumno || null, de_salida: !!deSalida })
                 .select().single();
         }
 
@@ -3036,13 +3055,67 @@
             const fen = board.fen();
             const motivo = motivoPosicionInvalida(fen);
             if (motivo) { setStatus(motivo); return false; }
-            const { error } = await sb.rpc("hacer_pregunta_de_opciones", {
+            const { data, error } = await sb.rpc("hacer_pregunta_de_opciones", {
                 p_fen: fen, p_prompt: prompt, p_opciones: opciones,
                 p_correcta: correcta, p_tiempo_limite: tiempoElegido(),
             });
             if (error) { console.error(error); setStatus("No se pudo crear la pregunta: " + error.message); return false; }
             setStatus("Pregunta enviada a la clase: " + prompt);
-            return true;
+            // La fila de la pregunta (la de salida la marca después).
+            return (Array.isArray(data) ? data[0] : data) || true;
+        }
+
+        /* ---------- La pregunta de salida ----------
+           La última de la clase, sobre lo visto: el termómetro o «¿qué
+           jugarías?» en el tablero, marcada questions.de_salida. Lo que dice
+           (ResumenClase.veredictoSalida) se ve al cerrar, queda en el registro y
+           se le recuerda al profe al abrir la clase siguiente. */
+        async function hacerPreguntaDeSalida(tipo) {
+            if (!currentOpenSessionId) { setStatus("La pregunta de salida es de una clase abierta."); return; }
+            if (tipo === "termometro") {
+                const q = await crearPreguntaDeOpciones(PreguntaClase.TERMOMETRO.prompt, PreguntaClase.TERMOMETRO.opciones, null);
+                if (!q) return;
+                const { error } = await sb.from("questions").update({ de_salida: true }).eq("id", q.id);
+                if (error) { console.error(error); setStatus("La pregunta salió, pero no quedó marcada como de salida: " + error.message); return; }
+            } else {
+                const fen = board.fen();
+                const motivo = motivoPosicionInvalida(fen);
+                if (motivo) { setStatus(motivo); return; }
+                const { data, error } = await crearPregunta(fen, 1, null, true);
+                if (error) { console.error(error); setStatus("No se pudo crear la pregunta: " + error.message); return; }
+                computeEngineAnswer(data.id, fen, 1);
+            }
+            setStatus("🚪 Pregunta de salida enviada: lo que contesten dice si el tema quedó.");
+            refrescarSalida();
+        }
+
+        async function refrescarSalida() {
+            const caja = document.getElementById("salida-resultado");
+            if (!caja || !currentOpenSessionId) return;
+            const { fila, error } = await ResumenClase.cargarSalida(sb, currentOpenSessionId);
+            if (error) { console.error(error); return; }
+            ResumenClase.pintarSalida(caja, fila);
+        }
+
+        // Al empezar: lo que dijo la pregunta de salida de la última clase cerrada.
+        async function mostrarSalidaPasada() {
+            const caja = document.getElementById("salida-pasada");
+            if (!caja || !isTeacher) return;
+            const { data, error } = await sb.from("class_sessions").select("id, title, ended_at")
+                .eq("created_by", boardOwnerId).not("ended_at", "is", null)
+                .order("ended_at", { ascending: false }).limit(1);
+            if (error) { console.error(error); return; }
+            const pasada = data && data[0];
+            if (!pasada) { caja.hidden = true; return; }
+            const { fila, error: err2 } = await ResumenClase.cargarSalida(sb, pasada.id);
+            if (err2) { console.error(err2); return; }
+            ResumenClase.pintarSalida(caja, fila, "📌 La clase pasada" + (pasada.title ? " («" + pasada.title + "»)" : "")
+                + ", la pregunta de salida dijo: ");
+        }
+
+        if (document.getElementById("salida-termometro-btn")) {
+            document.getElementById("salida-termometro-btn").addEventListener("click", () => hacerPreguntaDeSalida("termometro"));
+            document.getElementById("salida-jugada-btn").addEventListener("click", () => hacerPreguntaDeSalida("jugada"));
         }
 
         function montarControlesDePreguntas() {
@@ -3613,6 +3686,8 @@
                     .on("postgres_changes", { event: "*", schema: "public", table: "question_answers" }, () => {
                         if (currentQuestion) loadAnswersFor(currentQuestion.id);
                         avisarResultadosALaClase();
+                        // Cerrando la clase: la pregunta de salida cambia con cada respuesta.
+                        if (!document.getElementById("clase-cerrar-campos").classList.contains("hidden")) refrescarSalida();
                     })
                     .subscribe();
             } else {
@@ -3903,7 +3978,10 @@
             const { error } = await sb.from("question_answers").update({ is_correct: value }).eq("id", answerId);
             if (error) console.error(error);
             // Si está cerrando la clase, el resumen de arriba tiene que contar esta nota.
-            if (!document.getElementById("clase-cerrar-campos").classList.contains("hidden")) pintarResumenDeLaClase(currentOpenSessionId);
+            if (!document.getElementById("clase-cerrar-campos").classList.contains("hidden")) {
+                pintarResumenDeLaClase(currentOpenSessionId);
+                refrescarSalida();
+            }
         }
 
         // ---------- Respuesta de referencia del motor (privada, solo el profesor) ----------
@@ -5132,9 +5210,13 @@
                     .on("postgres_changes", { event: "UPDATE", schema: "public", table: "practice_games", filter: "student_id=eq." + profile.id }, (payload) => {
                         const row = payload.new;
                         if (!row || !("ayuda" in row) || !myPracticeGame || row.id !== myPracticeGame.id) return;
-                        if (JSON.stringify(row.ayuda || null) === JSON.stringify(myPracticeGame.ayuda || null)) return;
-                        myPracticeGame = Object.assign({}, myPracticeGame, { ayuda: row.ayuda || null });
+                        // Y su pedido de ayuda, que se apaga solo cuando alguien lo atiende.
+                        const pide = "pide_ayuda_at" in row ? row.pide_ayuda_at || null : myPracticeGame.pide_ayuda_at || null;
+                        if (JSON.stringify(row.ayuda || null) === JSON.stringify(myPracticeGame.ayuda || null)
+                            && pide === (myPracticeGame.pide_ayuda_at || null)) return;
+                        myPracticeGame = Object.assign({}, myPracticeGame, { ayuda: row.ayuda || null, pide_ayuda_at: pide });
                         pintarAyudaAlumno();
+                        pintarPedidoAlumno();
                     })
                     .subscribe();
             }
@@ -5212,6 +5294,8 @@
                         '<div class="practice-mini-bar bg-white h-full transition-all duration-500 ease-out" style="width:50%"></div>' +
                     "</div>" +
                     '<p class="practice-mini-status text-[11px] text-brand-450 dark:text-brand-350"></p>' +
+                    // Pidió ayuda: va escrito, no solo con el borde.
+                    '<p class="practice-mini-pide hidden text-xs font-bold text-brand-800 dark:text-white mt-1">🙋 Pide ayuda</p>' +
                     // Abre SU partida en grande: mirarla sin tocarla y mandarle una ayuda.
                     '<button type="button" class="practice-mini-mirar mt-2 w-full text-xs font-semibold px-2 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors" aria-haspopup="dialog">👁 Mirar y ayudar</button>';
                 grid.appendChild(wrap);
@@ -5252,7 +5336,25 @@
                     : conAyuda.de === profile.id ? " · 💡 con tu ayuda"
                     : conAyuda.nombre ? " · 💡 con ayuda de " + conAyuda.nombre
                     : " · 💡 con ayuda");
+            pintarPedidoEnMiniatura(entry, row);
             if (mirar.studentId === row.student_id) refrescarMirada(row);
+        }
+
+        // Quien pide ayuda se marca (con texto y con borde) y sube al principio de la
+        // grilla; y se dice en voz la primera vez que aparece cada pedido.
+        const pedidosAnunciados = new Set();
+        function pintarPedidoEnMiniatura(entry, row) {
+            const pide = !!row.pide_ayuda_at;
+            entry.el.style.order = pide ? "-1" : "";
+            entry.el.classList.toggle("ring-4", pide);
+            entry.el.classList.toggle("ring-accent-500", pide);
+            entry.el.querySelector(".practice-mini-pide").classList.toggle("hidden", !pide);
+            entry.el.querySelector(".practice-mini-mirar").setAttribute("aria-label",
+                "Mirar y ayudar a " + entry.nombre + (pide ? " (pide ayuda)" : ""));
+            if (pide && !pedidosAnunciados.has(row.id + ":" + row.pide_ayuda_at)) {
+                pedidosAnunciados.add(row.id + ":" + row.pide_ayuda_at);
+                document.getElementById("practica-pedidos-aviso").textContent = entry.nombre + " pide ayuda en su partida.";
+            }
         }
 
         // ---------- La partida de UN alumno, en grande (solo profesor) ----------
@@ -5314,7 +5416,8 @@
             mirarEl("info").textContent = "Juega con " + (row.student_color === "w" ? "blancas" : "negras")
                 + " · nivel " + practiceLevelLabel(latestPracticeSession.level)
                 + " · " + (moves.length === 1 ? "1 jugada" : moves.length + " jugadas");
-            let estado = practiceStatusLabelWithAttempts(row);
+            let estado = (row.pide_ayuda_at ? "🙋 Pidió ayuda. " : "") + practiceStatusLabelWithAttempts(row);
+            mirarEl("atendido").hidden = !row.pide_ayuda_at;
             if (row.status === "playing") {
                 estado += mirar.board.game.turn() === row.student_color ? ". Le toca mover." : ". Piensa el motor.";
             }
@@ -5351,7 +5454,7 @@
 
         async function guardarAyuda(ayuda) {
             const { data, error } = await sb.from("practice_games").update({ ayuda })
-                .eq("id", mirar.row.id).select("ayuda").maybeSingle();
+                .eq("id", mirar.row.id).select("ayuda, pide_ayuda_at").maybeSingle();
             if (error) return { error: error.message };
             // Se mira lo que QUEDÓ, no lo que se mandó: con la ronda terminada la base la
             // devuelve como estaba sin dar ningún error.
@@ -5359,7 +5462,8 @@
             if (data) {
                 // La miniatura no espera el eco de Realtime para decir que ya tiene ayuda.
                 const entry = practiceStudentBoards[mirar.studentId];
-                if (entry && entry.row) upsertPracticeStudentBoard(Object.assign({}, entry.row, { ayuda: data.ayuda }));
+                if (entry && entry.row) upsertPracticeStudentBoard(Object.assign({}, entry.row,
+                    { ayuda: data.ayuda, pide_ayuda_at: data.pide_ayuda_at || null }));
             }
             return { quedo, fila: !!data };
         }
@@ -5402,8 +5506,24 @@
             aviso.textContent = "Le quitaste la ayuda a " + nombre + ".";
         }
 
+        // Lo atendió de palabra (por la llamada), sin mandarle nada: se apaga el pedido.
+        async function marcarAtendido() {
+            if (!mirar.row) return;
+            const aviso = mirarEl("aviso");
+            const nombre = mirarEl("nombre").textContent;
+            const { data, error } = await sb.from("practice_games").update({ pide_ayuda_at: null })
+                .eq("id", mirar.row.id).select("ayuda, pide_ayuda_at").maybeSingle();
+            if (error) { aviso.textContent = "No se pudo marcar: " + error.message; return; }
+            // Se mira lo que QUEDÓ: si la base no lo apagó, no se dice que sí.
+            if (!data || data.pide_ayuda_at) { aviso.textContent = "No se pudo marcar como atendido."; return; }
+            const entry = practiceStudentBoards[mirar.studentId];
+            if (entry && entry.row) upsertPracticeStudentBoard(Object.assign({}, entry.row, { pide_ayuda_at: null }));
+            aviso.textContent = "Marcaste como atendido el pedido de " + nombre + ".";
+        }
+
         if (document.getElementById("practica-mirar")) {
             mirarEl("cerrar").addEventListener("click", cerrarMirada);
+            mirarEl("atendido").addEventListener("click", marcarAtendido);
             mirarEl("mandar").addEventListener("click", mandarAyuda);
             mirarEl("quitar").addEventListener("click", quitarAyuda);
             // Escribir marcas las dibuja en cuanto se entienden (a medio escribir, «g1-», no).
@@ -5454,8 +5574,10 @@
                 }
             });
             updatePracticeBoardsGridColumns(rows.length);
+            const piden = rows.filter((r) => r.pide_ayuda_at).length;
             document.getElementById("practice-boards-hint").textContent = rows.length
                 ? rows.length + (rows.length === 1 ? " alumno jugando" : " alumnos jugando")
+                    + (piden ? " · 🙋 " + piden + (piden === 1 ? " pide ayuda" : " piden ayuda") : "")
                 : "Esperando a que los alumnos empiecen a jugar…";
         }
 
@@ -5506,6 +5628,7 @@
                 practiceCardDismissedFor = null;
                 myPracticeGame = null;
                 pintarAyudaAlumno();
+                pintarPedidoAlumno();
                 return;
             }
             // El alumno cerró este mismo overlay con la ✖: la ronda sigue activa (la partida
@@ -5566,6 +5689,7 @@
             practiceBoard.setFlipped(myPracticeGame.student_color === "b");
             practiceBoard.loadMoves(myPracticeGame.moves || [], latestPracticeSession.fen);
             pintarAyudaAlumno();
+            pintarPedidoAlumno();
             if (practicaAcc) practicaAcc.actualizar();
             if (practicaRecienAbierta) enfocarCuandoSeVea(document.getElementById("practice-titulo"));
             updatePracticeCardInteractivity();
@@ -5732,9 +5856,10 @@
                 eval_cp: null, attempts: (myPracticeGame.attempts || 1) + 1, reloj_ms: null,
             });
             // La base borra la ayuda al reintentar: era de la partida anterior.
-            myPracticeGame = Object.assign({}, myPracticeGame, { ayuda: null });
+            myPracticeGame = Object.assign({}, myPracticeGame, { ayuda: null, pide_ayuda_at: null });
             practiceBoard.loadMoves([], latestPracticeSession.fen);
             pintarAyudaAlumno();
+            pintarPedidoAlumno();
             updatePracticeCardInteractivity();
         }
 
@@ -5742,6 +5867,31 @@
         // Las flechas se pintan SOLO en la posición para la que se dieron: después de la
         // siguiente jugada señalarían otra cosa. La pista sigue a la vista. Todo va
         // también en palabras: el color de una flecha no dice nada solo.
+        // ---------- Pedir ayuda desde la partida ----------
+        // El pedido vive en su fila (pide_ayuda_at): lo ve su profe y quien observa, y
+        // se apaga solo cuando alguien le manda una ayuda. La hora la pone la base.
+        let pedidoPintado = null;
+        function pintarPedidoAlumno() {
+            const boton = document.getElementById("practica-pedir-ayuda");
+            if (!boton || isTeacher || esObservador) return;
+            const pide = !!(myPracticeGame && myPracticeGame.pide_ayuda_at);
+            boton.setAttribute("aria-pressed", pide ? "true" : "false");
+            boton.textContent = pide ? "✋ Pediste ayuda · Cancelar" : "🙋 Pedir ayuda";
+            if (pedidoPintado === pide) return;   // la región viva no se reescribe igual
+            const antes = pedidoPintado;
+            pedidoPintado = pide;
+            document.getElementById("practica-pedido").textContent = pide
+                ? "Le avisamos a tu profe que necesitas ayuda. Sigue jugando si quieres: te va a llegar aquí."
+                : antes ? "Tu pedido de ayuda ya no está activo." : "";
+        }
+
+        document.getElementById("practica-pedir-ayuda").addEventListener("click", async () => {
+            if (!myPracticeGame) return;
+            const pide = !!myPracticeGame.pide_ayuda_at;
+            await savePracticeGameRow({ pide_ayuda_at: pide ? null : new Date().toISOString() });
+            pintarPedidoAlumno();
+        });
+
         let ayudaPintada = null; // lo último escrito en la región viva, para no repetirlo
         function pintarAyudaAlumno() {
             const caja = document.getElementById("practica-ayuda");
@@ -5867,16 +6017,19 @@
             if (!abierta) {
                 document.querySelector("#sin-clase h1").textContent = "No hay clase en este momento";
                 document.getElementById("sin-clase-texto").textContent = p
-                    ? nombreObservado + " no tiene la clase abierta ahora. Cuando la abra, vas a poder mirarla desde Supervisión."
-                    : "No supervisas a esa persona, o no tiene la clase abierta ahora.";
+                    ? nombreObservado + " no tiene la clase abierta ahora. Cuando la abra, vas a poder mirarla desde " + observaDesde.pantalla + "."
+                    : "Esa persona no está a tu cargo, o no tiene la clase abierta ahora.";
                 const volver = document.querySelector("#sin-clase a[href]");
-                volver.href = "supervision.html";
-                volver.textContent = "← Volver a Supervisión";
+                volver.href = observaDesde.volver;
+                volver.textContent = "← Volver a " + observaDesde.pantalla;
                 document.querySelector("#sin-clase p.text-sm").hidden = true;
                 document.getElementById("loading").classList.add("hidden");
                 document.getElementById("sin-clase").classList.remove("hidden");
                 return false;
             }
+            const volverPanel = document.querySelector("#observador-panel a[href]");
+            volverPanel.href = observaDesde.volver;
+            volverPanel.textContent = "← Volver a " + observaDesde.pantalla;
             document.getElementById("observador-texto").textContent =
                 "Clase de " + nombreObservado + ". Solo miras: no mueves el tablero, no contestas y no cuentas como alumno. "
                 + nombreObservado + " ve que estás mirando. Si la clase practica contra el motor, abajo del tablero "
@@ -5909,8 +6062,10 @@
             profile = profileData;
             isTeacher = profile.role === "profesor" || profile.is_admin === true;
             const observar = new URLSearchParams(location.search).get("observar");
-            if (observar && observar !== profile.id && (profile.es_supervisor || profile.is_admin)) {
+            if (observar && observar !== profile.id && (profile.es_supervisor || profile.is_admin || profile.es_coordinador)) {
                 esObservador = true;
+                observaDesde = profile.is_admin ? OBSERVA_DESDE.administracion
+                    : profile.es_supervisor ? OBSERVA_DESDE.supervision : OBSERVA_DESDE.coordinacion;
                 isTeacher = false;
                 boardOwnerId = observar;
                 if (!(await prepararObservador())) return;
@@ -5942,7 +6097,7 @@
             }
 
             const badge = document.getElementById("role-badge");
-            badge.textContent = esObservador ? "👁 Supervisión" : isTeacher ? "Profesor" : "Alumno";
+            badge.textContent = esObservador ? observaDesde.insignia : isTeacher ? "Profesor" : "Alumno";
             badge.classList.add(isTeacher ? "bg-accent-500" : "bg-brand-600", isTeacher ? "text-brand-900" : "text-white");
 
             if (isTeacher) {

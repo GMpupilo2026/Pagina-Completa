@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20260929025657
+# al-dia-con: 20260929034304
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -32,6 +32,7 @@ tabla  encargados  rls=true
 tabla  encuesta_curso_respuestas  rls=true
 tabla  encuestas_curso  rls=true
 tabla  encuestas_profesor  rls=true
+tabla  enlaces_diagnostico  rls=true
 tabla  equipo_alumnos  rls=true
 tabla  equipo_entrenadores  rls=true
 tabla  equipos  rls=true
@@ -281,15 +282,18 @@ columna  desafios.para_id  uuid
 columna  desafios.respondido_at  timestamp with time zone
 columna  desafios.room_id  uuid
 columna  diagnosticos_publicos.atendido  boolean
+columna  diagnosticos_publicos.aviso_enviado_at  timestamp with time zone
 columna  diagnosticos_publicos.created_at  timestamp with time zone
 columna  diagnosticos_publicos.detalle  jsonb
 columna  diagnosticos_publicos.elo  integer
 columna  diagnosticos_publicos.elo_tipo  text
 columna  diagnosticos_publicos.email  text
+columna  diagnosticos_publicos.enlace  text
 columna  diagnosticos_publicos.id  uuid
 columna  diagnosticos_publicos.nivel  text
 columna  diagnosticos_publicos.nombre  text
 columna  diagnosticos_publicos.porcentaje  integer
+columna  diagnosticos_publicos.supervisor_id  uuid
 columna  diagnosticos_publicos.telefono  text
 columna  encargados.activo  boolean
 columna  encargados.creado_por  uuid
@@ -343,6 +347,9 @@ columna  encuestas_profesor.profesor_id  uuid
 columna  encuestas_profesor.resuelve  smallint
 columna  encuestas_profesor.seguir  text
 columna  encuestas_profesor.updated_at  timestamp with time zone
+columna  enlaces_diagnostico.codigo  text
+columna  enlaces_diagnostico.created_at  timestamp with time zone
+columna  enlaces_diagnostico.supervisor_id  uuid
 columna  equipo_alumnos.alumno_id  uuid
 columna  equipo_alumnos.created_at  timestamp with time zone
 columna  equipo_alumnos.equipo_id  uuid
@@ -642,6 +649,7 @@ columna  practice_games.eval_cp  integer
 columna  practice_games.fen  text
 columna  practice_games.id  uuid
 columna  practice_games.moves  jsonb
+columna  practice_games.pide_ayuda_at  timestamp with time zone
 columna  practice_games.reloj_ms  integer
 columna  practice_games.session_id  uuid
 columna  practice_games.status  text
@@ -739,6 +747,7 @@ columna  questions.class_session_id  uuid
 columna  questions.closed_at  timestamp with time zone
 columna  questions.created_at  timestamp with time zone
 columna  questions.created_by  uuid
+columna  questions.de_salida  boolean
 columna  questions.expected_plies  integer
 columna  questions.fen  text
 columna  questions.id  uuid
@@ -977,6 +986,7 @@ funcion  alumnos_del_profesor_con_nombre(p_profesor uuid)  invoker  anon=true  a
 funcion  avance_del_plan(p_alumno uuid, p_desde timestamp with time zone)  invoker  anon=false  auth=true
 funcion  avisar_clase_abierta()  definer  anon=false  auth=false
 funcion  avisar_desafio()  definer  anon=false  auth=false
+funcion  avisar_diagnostico_supervisor()  definer  anon=false  auth=false
 funcion  avisar_examen_asignado()  definer  anon=false  auth=false
 funcion  avisar_examen_reabierto()  definer  anon=false  auth=false
 funcion  avisar_fichas_faltantes()  definer  anon=false  auth=false
@@ -1012,6 +1022,7 @@ funcion  detalle_mensual_crudo(p_profesor uuid, p_periodo date)  definer  anon=f
 funcion  detalle_mensual_profesor(p_profesor uuid, p_periodo date)  definer  anon=false  auth=true
 funcion  detalle_para_mi(p_profesor uuid, p_detalle jsonb)  definer  anon=false  auth=false
 funcion  devolver_invitacion(p_profesor uuid)  definer  anon=false  auth=false
+funcion  diagnosticos_publicos_supervisor()  definer  anon=false  auth=false
 funcion  disparar_informes_encargados()  definer  anon=false  auth=false
 funcion  disparar_recordatorios_cobro()  definer  anon=false  auth=false
 funcion  disparar_recordatorios_programados()  definer  anon=false  auth=false
@@ -1019,6 +1030,7 @@ funcion  elegir_academia_activa(p_academia uuid)  definer  anon=false  auth=true
 funcion  elegir_plan(p_id uuid, p_plan text, p_version_terminos text, p_version_privacidad text)  definer  anon=false  auth=true
 funcion  encuesta_curso_publica(p_slug text)  definer  anon=true  auth=true
 funcion  encuesta_mis_profesores()  invoker  anon=false  auth=true
+funcion  enlace_diagnostico_publico(p_codigo text)  definer  anon=true  auth=true
 funcion  equipo_alumno_subgrupo()  definer  anon=false  auth=false
 funcion  equipo_bajo_mi_coordinacion(p_equipo uuid)  definer  anon=false  auth=true
 funcion  equipo_docente()  definer  anon=false  auth=true
@@ -1070,6 +1082,7 @@ funcion  interno.academia_activa()  definer  anon=false  auth=true
 funcion  interno.academias_de(p_persona uuid)  definer  anon=false  auth=true
 funcion  interno.alumnos_de(p_profesor uuid)  definer  anon=false  auth=true
 funcion  interno.bajo_mi_coordinacion_conjunto()  definer  anon=false  auth=true
+funcion  interno.clases_que_coordino()  definer  anon=false  auth=true
 funcion  interno.clases_que_superviso()  definer  anon=false  auth=true
 funcion  interno.comparten_academia(p_a uuid, p_b uuid)  definer  anon=false  auth=true
 funcion  interno.coordinadores_de(p_persona uuid)  definer  anon=false  auth=false
@@ -1079,6 +1092,7 @@ funcion  interno.gente_de_mis_academias()  definer  anon=false  auth=true
 funcion  interno.nombre_libre_de_subgrupo(p_profesor uuid, p_base text, p_excepto uuid)  definer  anon=false  auth=false
 funcion  interno.pizarras_de_sala_validas(p jsonb)  invoker  anon=true  auth=true
 funcion  interno.profesores_de(p_alumno uuid)  definer  anon=false  auth=true
+funcion  interno.profesores_que_coordino()  definer  anon=false  auth=true
 funcion  interno.salas_torneo_sello()  invoker  anon=false  auth=false
 funcion  interno.subgrupo_del_equipo_al_dia(p_equipo uuid, p_profesor uuid)  definer  anon=false  auth=false
 funcion  interno.supervisados_por_mi()  definer  anon=false  auth=true
@@ -1096,6 +1110,7 @@ funcion  marcar_supervisor(p_persona uuid, p_valor boolean)  definer  anon=false
 funcion  mes_en_palabras(p_periodo date)  invoker  anon=false  auth=true
 funcion  mes_es(d date)  invoker  anon=true  auth=true
 funcion  mi_acceso()  definer  anon=false  auth=true
+funcion  mi_enlace_diagnostico()  definer  anon=false  auth=true
 funcion  mi_gente(p_busqueda text, p_rol text, p_limite integer, p_desde integer)  invoker  anon=true  auth=true
 funcion  mi_grupo()  definer  anon=false  auth=true
 funcion  mi_marca_academia()  definer  anon=false  auth=true
@@ -1172,6 +1187,8 @@ funcion  resumen_satisfaccion(p_desde date, p_hasta date)  invoker  anon=false  
 funcion  resumen_tareas_examenes(p_alumno uuid, p_desde timestamp with time zone, p_hasta timestamp with time zone)  definer  anon=false  auth=true
 funcion  retirar_justificacion(p_id uuid)  definer  anon=false  auth=true
 funcion  revisar_informe_mensual(p_id uuid, p_comentario text)  definer  anon=false  auth=true
+funcion  salida_de_la_clase(p_clase uuid)  invoker  anon=false  auth=true
+funcion  secreto_aviso_diagnostico()  definer  anon=false  auth=false
 funcion  secreto_tanda_cobros()  definer  anon=false  auth=false
 funcion  secreto_tanda_informes()  definer  anon=false  auth=false
 funcion  secreto_tanda_push()  definer  anon=false  auth=false
@@ -1248,6 +1265,7 @@ politica  class_presence_log  class_presence_log_update_own  UPDATE
 politica  class_sessions  class_sessions_delete  DELETE
 politica  class_sessions  class_sessions_insert  INSERT
 politica  class_sessions  class_sessions_select  SELECT
+politica  class_sessions  class_sessions_select_coordinacion  SELECT
 politica  class_sessions  class_sessions_select_supervisor  SELECT
 politica  class_sessions  class_sessions_update  UPDATE
 politica  cobros  cobros_coordinacion  ALL
@@ -1315,6 +1333,7 @@ politica  game_rooms  game_rooms_update  UPDATE
 politica  game_state  game_state_exige_acceso_sel  SELECT  restrictiva
 politica  game_state  game_state_insert  INSERT
 politica  game_state  game_state_select  SELECT
+politica  game_state  game_state_select_coordinacion  SELECT
 politica  game_state  game_state_select_supervisor  SELECT
 politica  game_state  game_state_update  UPDATE
 politica  horario_clases  horario_clases_delete  DELETE
@@ -1362,12 +1381,15 @@ politica  practice_games  practice_games_exige_acceso_ins  INSERT  restrictiva
 politica  practice_games  practice_games_exige_acceso_upd  UPDATE  restrictiva
 politica  practice_games  practice_games_insert_own  INSERT
 politica  practice_games  practice_games_select  SELECT
+politica  practice_games  practice_games_select_coordinacion  SELECT
 politica  practice_games  practice_games_select_supervisor  SELECT
 politica  practice_games  practice_games_update  UPDATE
+politica  practice_games  practice_games_update_coordinacion  UPDATE
 politica  practice_games  practice_games_update_supervisor  UPDATE
 politica  practice_sessions  practice_sessions_exige_acceso_sel  SELECT  restrictiva
 politica  practice_sessions  practice_sessions_insert  INSERT
 politica  practice_sessions  practice_sessions_select  SELECT
+politica  practice_sessions  practice_sessions_select_coordinacion  SELECT
 politica  practice_sessions  practice_sessions_select_supervisor  SELECT
 politica  practice_sessions  practice_sessions_update  UPDATE
 politica  preguntas_clave  preguntas_clave_de_quien_pregunta  ALL
@@ -1378,6 +1400,7 @@ politica  preparaciones_rival  preparaciones_rival_ver  SELECT
 politica  profesor_videollamada  profesor_videollamada_delete  DELETE
 politica  profesor_videollamada  profesor_videollamada_insert  INSERT
 politica  profesor_videollamada  profesor_videollamada_select  SELECT
+politica  profesor_videollamada  profesor_videollamada_select_coordinacion  SELECT
 politica  profesor_videollamada  profesor_videollamada_select_supervisor  SELECT
 politica  profesor_videollamada  profesor_videollamada_update  UPDATE
 politica  profile_teachers  profile_teachers_select  SELECT
@@ -1488,12 +1511,15 @@ politica  variant_nodes  variant_nodes_delete  DELETE
 politica  variant_nodes  variant_nodes_exige_acceso_sel  SELECT  restrictiva
 politica  variant_nodes  variant_nodes_insert  INSERT
 politica  variant_nodes  variant_nodes_select  SELECT
+politica  variant_nodes  variant_nodes_select_coordinacion  SELECT
 politica  variant_nodes  variant_nodes_select_supervisor  SELECT
 trigger  ajustes_academia  ajustes_academia_protegido
 trigger  class_presence_log  class_presence_log_protege_tiempos
 trigger  class_sessions  class_sessions_avisa_push
 trigger  cobros_contacto  cobros_contacto_protegido
 trigger  desafios  desafios_avisa_push
+trigger  diagnosticos_publicos  diagnosticos_publicos_avisa
+trigger  diagnosticos_publicos  diagnosticos_publicos_supervisor
 trigger  equipo_alumnos  equipo_alumnos_subgrupo
 trigger  equipo_entrenadores  equipo_entrenadores_subgrupo
 trigger  equipos  equipos_renombra_subgrupos
@@ -1597,6 +1623,7 @@ indice  desafios  desafios_para_pendiente
 indice  desafios  desafios_pkey
 indice  desafios  desafios_room_id_fk
 indice  diagnosticos_publicos  diagnosticos_publicos_pkey
+indice  diagnosticos_publicos  diagnosticos_publicos_supervisor_idx
 indice  encargados  encargados_creado_por_fk
 indice  encargados  encargados_pendientes_idx
 indice  encargados  encargados_pkey
@@ -1612,6 +1639,8 @@ indice  encuestas_profesor  encuestas_profesor_periodo
 indice  encuestas_profesor  encuestas_profesor_pkey
 indice  encuestas_profesor  encuestas_profesor_profesor
 indice  encuestas_profesor  encuestas_profesor_una_por_mes
+indice  enlaces_diagnostico  enlaces_diagnostico_codigo_key
+indice  enlaces_diagnostico  enlaces_diagnostico_pkey
 indice  equipo_alumnos  equipo_alumnos_alumno_idx
 indice  equipo_alumnos  equipo_alumnos_pkey
 indice  equipo_entrenadores  equipo_entrenadores_pkey
@@ -2056,20 +2085,9 @@ grant  desafios  authenticated  SELECT
 grant  desafios  authenticated  TRIGGER
 grant  desafios  authenticated  TRUNCATE
 grant  desafios  authenticated  UPDATE
-grant  diagnosticos_publicos  anon  DELETE
 grant  diagnosticos_publicos  anon  INSERT
-grant  diagnosticos_publicos  anon  REFERENCES
-grant  diagnosticos_publicos  anon  SELECT
-grant  diagnosticos_publicos  anon  TRIGGER
-grant  diagnosticos_publicos  anon  TRUNCATE
-grant  diagnosticos_publicos  anon  UPDATE
-grant  diagnosticos_publicos  authenticated  DELETE
 grant  diagnosticos_publicos  authenticated  INSERT
-grant  diagnosticos_publicos  authenticated  REFERENCES
 grant  diagnosticos_publicos  authenticated  SELECT
-grant  diagnosticos_publicos  authenticated  TRIGGER
-grant  diagnosticos_publicos  authenticated  TRUNCATE
-grant  diagnosticos_publicos  authenticated  UPDATE
 grant  encargados  authenticated  DELETE
 grant  encargados  authenticated  INSERT
 grant  encargados  authenticated  REFERENCES

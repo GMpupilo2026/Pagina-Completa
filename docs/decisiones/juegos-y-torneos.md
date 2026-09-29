@@ -415,6 +415,54 @@ torneo con su campeón, sin ofrecer una ronda 8. Para recargar entre ronda y
 ronda, el doble guarda lo escrito en `sessionStorage`. Contra el motor de antes
 saltan **8 comprobaciones**.
 
+### Veinte rondas
+
+Después de las 7 se probó el máximo del campo: **20 rondas**. La página las
+juega enteras (un Suizo de 24, de la ronda 1 a la 20, cierra con su campeón y no
+ofrece la 21), pero salieron tres cosas:
+
+- **El campo aceptaba cualquier número.** `parseInt` a secas: con «-3» el torneo
+  empezaba con -3 rondas y se quedaba trabado sin ninguna, y «25» pasaba aunque
+  el campo diga máximo 20 (el `min`/`max` de un `<input>` solo lo mira el
+  navegador al mandar un formulario, y esto no lo es). `startTournament()` ahora
+  exige un entero entre el `min` y el `max` del propio campo, y si no, lo dice
+  y no empieza. Vacío sigue siendo «el sugerido».
+- **Con muchas rondas, la búsqueda con retroceso no daba abasto.** Con 20 rondas
+  y 30 a 64 jugadores se quedaba sin pasos, caía al voraz y repetía hasta 5
+  rivales que se podían evitar. Ahora cada ronda se arma con el **algoritmo de
+  Edmonds** (emparejamiento perfecto en un grafo, con flores): comprueba si
+  existe una ronda entera sin repetir y, conservando el orden del Suizo (al de
+  arriba, el más cercano de abajo), elige cada pareja solo si al resto le queda
+  un emparejamiento completo. Nunca prueba a ciegas: de 25 a 200 jugadores,
+  cero repetidos en 20 rondas, y 200 jugadores tardan unas décimas. El
+  retroceso queda solo para cuando repetir es inevitable, que es con grupos
+  chicos, donde es corto. El orden de prioridades no cambió: primero que nadie
+  tenga dos byes, después no repetir rival, después los colores.
+- **Con 20 o menos inscritos, 20 rondas obligan a repetir**: hay más partidas
+  que parejas posibles (con N inscritos alcanzan N − 1 rondas, N si son
+  impares). No es un error y se deja hacer —el motor repite lo mínimo, a lo
+  sumo un par de cruces más que el mínimo teórico—, pero quien organiza lo
+  tiene que saber antes de empezar: debajo del campo aparece «Con 10 inscritos
+  alcanzan 9 rondas sin repetir rival; con 20, algunos se van a enfrentar más de
+  una vez.», atado al campo con `aria-describedby` y `aria-live`.
+
+Todos contra todos no pasa por el campo: son N − 1 rondas (N si son impares), así
+que con 21 o 22 inscritos son 21, y las tablas de Berger las reparten igual de
+bien. Eliminación directa llegaría a 20 rondas con más de 500 000 inscritos.
+
+Lo comprueba el mismo `verificar-torneo-rondas.js`: el motor con 20 rondas de 2
+a 200 jugadores, el campo (con «-3», «0», «21», «25» y «2.5» no empieza; con 20
+y 10 inscritos avisa) y el Suizo de 24 de punta a punta. Contra el código de
+antes saltan el motor y el «-3».
+
+- **La prueba esperaba de menos.** Al principio esperaba solo a que la ronda
+  nueva existiera en el doble y recargaba: la página todavía estaba cerrando lo
+  suyo (`maybeFinishRound` al final de `generateRound()`), la recarga se lo
+  cortaba y el torneo no se cerraba nunca. Ahora espera a que la ronda esté
+  **pintada**, que es lo último que hace la página. Y cada prueba atrapa su
+  propio error: con la página vieja, la del campo reventaba después de «-3» y
+  lo que venía detrás no se miraba.
+
 ### El verificador de voseo no miraba la mitad del sitio
 
 Se descubrió acá, de rebote: `torneo.html` decía «Vuelve a Torneos y **entrá**
@@ -454,6 +502,14 @@ partidas.
 - **Los retos que me llegan van en Competir**, encima de todo: el canal de
   presencia (`juegos-en-linea`) solo anuncia a quien tiene esa página abierta,
   así que solo desde ahí se puede retar y recibir un reto.
+- **TV en vivo también está en Competir**, en su tarjeta debajo de Torneos:
+  ver jugar va junto a jugar. Salió de «Tu cuenta» del panel. A quien
+  administra se le sigue ofreciendo en «Revisar el contenido».
+- **Torneos también se entra desde Competir.** Su tarjeta salió del panel y
+  es la primera de `competir.html` (debajo de los retos que llegan); las migas
+  de `torneos.html` dicen Academia › Competir › Torneos. El texto cambia según
+  quien mira: al alumno, «los que arma tu profesor»; a quien arma torneos,
+  «para tus alumnos».
 - Juegos conserva una tarjeta a Competir, para quien buscaba ahí lo que se fue,
   y al crear una partida el aviso dice que se sigue en Competir, con su enlace.
 - `node herramientas/verificar-todo.js profesor-juega panel` lo comprueba: que

@@ -56,11 +56,12 @@ lista, y el resto se acomoda solo.
   "Jugar y competir" va primero donde se juega contra otra persona (Juegos, y
   Competir, que es retar a quien está en línea y las listas de partidas; ver
   «Competir: retar y las listas de partidas tienen su propia página» en
-  `juegos-y-torneos.md`), después el torneo y al final el bot.
-- **"TV en vivo" y "Logros" están en "Tu cuenta"**, que va en este orden:
-  Configuración, Informes, Logros, TV en vivo y, solo al alumnado, "¿Cómo van
-  tus clases?". Lo pidió así el dueño de la Academia; antes las dos estaban al
-  final de "Jugar y competir".
+  `juegos-y-torneos.md`) y al final el bot. Torneos y TV en vivo ya no tienen
+  tarjeta: se entra a los dos desde Competir.
+- **"Logros" está en "Tu cuenta"**, que va en este orden: Configuración,
+  Informes, Logros y, solo al alumnado, "¿Cómo van tus clases?". Lo pidió así
+  el dueño de la Academia. "TV en vivo" estuvo ahí un tiempo y pasó a Competir,
+  junto a los torneos. A quien administra se le deja en «Revisar el contenido».
 - **Un mismo destino no va dos veces en el panel.** "Racha táctica" salió de
   "Jugar y competir" porque ya es lo PRIMERO que hay dentro de `juegos.html`,
   en una franja a todo el ancho: el segundo camino no se usa y de paso ensancha
@@ -1782,6 +1783,106 @@ Comprobado que falla en cuatro casos:
 - al dejar el aviso siempre a la vista;
 - al escribir las cifras en todos los renglones;
 - al no avisar cuando empieza.
+
+### El plan a la medida del alumno
+
+Con jeigoth5, el plan general recomendaba 1.g3, que salía de 9 partidas de
+500. GMpupilo, el alumno que lo iba a enfrentar, juega 1.d4 en 653 de sus 986
+partidas. Un plan que el alumno no conoce se juega mal, por buenos que sean
+sus números.
+
+**Cómo elige.** Con un alumno cruzado, `planAlumno()` (en
+`js/preparacion-cruce.js`) arma el plan sobre el árbol del rival y el del
+alumno a la vez:
+- Donde le toca al alumno, elige la jugada con la que el rival saca menos (lo
+  suavizado, igual que el plan general), con un premio para lo que el alumno
+  ya juega.
+- El premio vale 5 puntos si la jugó `minA` veces o más, y hasta 10 puntos más
+  según qué parte de sus partidas en esa posición la juega.
+- Entre dos opciones parecidas gana la que conoce. Una claramente mejor contra
+  el rival gana aunque sea nueva.
+- Donde le toca al rival, sigue sus respuestas igual que el plan general.
+
+**Cómo sale con jeigoth5, a mano.** Estas cuentas son de los números del cruce
+guardado:
+- Contra 1.d4, 1…c6 (él saca 65 % suavizado, en 5 partidas; GMpupilo nunca la
+  jugó) pierde con 1…d5 (66 % en 23 partidas; GMpupilo la juega en la mitad).
+- 1.g3 (43 % en 9 partidas) le sigue ganando a 1.d4 (58 % en 34), porque la
+  diferencia es grande. Pero GMpupilo jugó 1.g3 89 veces: la conoce.
+
+**Una sola puerta: `planDe(r, lado)`** (`js/preparacion-lineas.js`). Todo lo
+que usa «el plan» pregunta ahí:
+- «Qué jugarle» y el resumen;
+- el PGN, lo que se le manda al alumno y lo que se guarda en Archivos;
+- las tareas de Stockfish.
+
+Con un cruce que trae `planAlumno`, devuelve ese; si no, el general. Un cruce
+guardado antes (versión 1) sigue usando el general. El «¿ya lo juega?» del
+cruce se pregunta sobre el plan que va a jugar, que es el suyo.
+
+**Lo que se ve.**
+- En «Qué jugarle»:
+  - el plan dice «a la medida de Ana»;
+  - en cada jugada de ella, «Ana la jugó 30 veces»;
+  - si el general elegía otra cosa, «El plan general, sin mirar a Ana» queda
+    plegado debajo.
+- En el resumen, la línea lo avisa: «Sin mirar a Ana, lo que más le cuesta a
+  él es 1.c4…».
+
+Quien prepara decide con las dos a la vista.
+
+**Stockfish revisa lo nuevo, no todo otra vez.** El cruce llega después del
+análisis, y cambia el plan. `revisar()` en `js/preparacion-motor.js` hace esto:
+- toma de `r.motor.lineas` lo ya evaluado y pide solo lo que falta
+  (`faltan(r)`);
+- la página relanza la revisión al cruzar;
+- si ya estaba revisando, al terminar ve que las tareas cambiaron y sigue.
+
+**Cómo se comprueba.** `verificar-preparacion-rivales.js` tiene «El plan a la
+medida del alumno». Pedro saca 40 % contra 1.e4, 30 % contra 1.c4 y 80 % contra
+1.d4; Ana juega siempre 1.e4. Se comprueba:
+- el general elige 1.c4;
+- el de Ana elige 1.e4, y es el que revisan Stockfish, el PGN y el plan que se
+  manda;
+- con 1.c4 en 0 de 12, gana 1.c4 aunque Ana no la juegue;
+- sin cruce, o con un cruce viejo, el plan es el general.
+
+En la página se comprueba que Stockfish pide 2 posiciones y no todas cuando
+falta una sola jugada. Falla sin el premio, con `planDe` devolviendo siempre el
+general y sin reutilizar lo revisado.
+
+### Stockfish sobre su repertorio real
+
+Con jeigoth5, la revisión miró 7 jugadas, las del plan, que era corto. Decía
+«no se encontró ningún error», pero en realidad no se había buscado:
+- su 1.d4 (125 partidas) no se revisó;
+- 1.Cf3 (57) tampoco;
+- ni lo que sigue después.
+
+**Qué revisa ahora.** El análisis guarda `jugadasSuyas`: las jugadas de él que
+repite, con `minimo` partidas o más, en todo su árbol y de la más jugada a la
+menos (25 por color). `tareasDelMotor()` revisa dos cosas:
+- el plan, igual que antes (30 como mucho);
+- hasta 40 de esas jugadas suyas, aunque el plan no pase por ahí.
+
+Un error ahí aparece en la tarjeta y en el resumen con `repertorio: true`:
+«Prepara cómo castigar…». Un análisis guardado antes usa sus `repertorioLineas`,
+o nada si no las tiene.
+
+**Probado con el Stockfish de verdad.** Con el repertorio guardado de jeigoth5,
+Stockfish 19 lite revisó 17 jugadas en 11 segundos, 10 de ellas suyas, y no
+encontró errores: sus sistemas con 1.d4 son sólidos. Por eso la tarjeta dice
+cuánto se buscó y qué significa: «Se revisaron N jugadas suyas… ninguna es un
+error claro. Para ganarle, más que una trampa, sirve llevarlo a donde rinde
+menos».
+
+**Cómo se comprueba.** «Stockfish sobre su repertorio real», en el verificador.
+El 2…e6 de Pedro contra 1.d4 d5 2.c4 no está en el plan con blancas:
+- se revisa igual;
+- si Stockfish lo da como error, aparece y el resumen pide prepararle el
+  castigo.
+
+Falla si se ignoran las `jugadasSuyas`.
 
 ## Las inscripciones a torneos en línea
 

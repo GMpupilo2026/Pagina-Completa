@@ -10,6 +10,13 @@
  *     propias partidas, y en cada jugada del alumno, cuánto saca el rival
  *     contra ella. Donde saca menos que de costumbre, es mejor que el alumno
  *     juegue lo que ya sabe; donde saca más, conviene evitarla.
+ *   - EL PLAN A SU MEDIDA (planAlumno). El plan general elige, donde le toca
+ *     al alumno, la jugada con la que el rival saca menos, aunque salga de 9
+ *     partidas y el alumno no la haya jugado nunca. Este elige igual, pero
+ *     con un premio para lo que el alumno ya juega: entre dos opciones
+ *     parecidas gana la que conoce. Una jugada claramente mejor contra el
+ *     rival sigue ganando aunque sea nueva para él. Ver «El plan a la medida
+ *     del alumno» en docs/decisiones/paneles.md.
  *
  * El árbol del alumno se arma igual que el del rival (armarArbol() del
  * análisis: por posición, con las transposiciones juntas). Al alumno no se le
@@ -32,6 +39,15 @@
   const I = A.interno;
   const MAX_PROFUNDIDAD = 14;      // medias jugadas del cruce
   const DIFERENCIA = 0.05;         // cinco puntos sobre su promedio, como en el análisis
+  // El premio por conocerla, en puntos de lo que saca el rival (suavizado):
+  // 5 por jugarla con alguna frecuencia (minA partidas o más) y hasta 10 más
+  // según qué parte de sus partidas en esa posición la juega. Con jeigoth5:
+  // contra 1.d4, 1…c6 (él saca 65 %, suavizado, en 5 partidas; el alumno
+  // nunca la jugó) pierde con 1…d5 (66 % en 23; el alumno la juega en la
+  // mitad de sus partidas). 1.g3 (43 % en 9) sigue ganándole a 1.d4 (58 %
+  // en 34) aunque el alumno juegue mucho más 1.d4: la diferencia es grande.
+  const PREMIO_CONOCE = 0.05;
+  const PREMIO_FRECUENCIA = 0.1;
 
   // Cuántas partidas del alumno hacen falta para decir «esto juega»: el 1 %,
   // entre 2 y 10. Un alumno trae muchas menos partidas que un rival de Lichess.
@@ -99,6 +115,44 @@
     return elegidas;
   }
 
+  /* El plan a la medida del alumno, con la misma forma que el plan del
+     análisis (san, quien, n, puntos, reparto, hijos) más, en sus jugadas,
+     cuántas partidas tiene él ahí (`alumno`). RA y AL son los nodos del
+     rival y del alumno en la misma posición (AL null si nunca llegó). */
+  function planAlumno(RA, AL, colorRival, base, minR, minA, prof, ply) {
+    if (prof <= 0 || !RA) return [];
+    const hs = I.hijosOrdenados(RA).filter((x) => x.nodo.c.n >= minR);
+    if (!hs.length) return [];
+    if (!I.leTocaAlRival(colorRival, ply)) {
+      const totalA = AL ? I.totalAristas(AL) : 0;
+      let mejor = null;
+      for (const x of hs) {
+        const a = AL ? AL.hijos.get(x.san) : null;
+        const nA = a ? a.c.n : 0;
+        const premio = nA >= minA ? PREMIO_CONOCE + PREMIO_FRECUENCIA * (nA / Math.max(totalA, 1)) : 0;
+        const valor = I.suavizada(x.nodo.c, base) - premio;
+        if (!mejor || valor < mejor.valor) mejor = { x, a, valor };
+      }
+      const nodo = { san: mejor.x.san, quien: "tu", ...I.resumen(mejor.x.nodo.c) };
+      if (mejor.a) nodo.alumno = I.resumen(mejor.a.c);
+      nodo.hijos = planAlumno(mejor.x.nodo, mejor.a ? mejor.a.nodo : null, colorRival, base, minR, minA, prof - 1, ply + 1);
+      return [nodo];
+    }
+    // Donde le toca a él, lo mismo que el plan del análisis: sus respuestas
+    // más jugadas; la principal hasta el fondo y las otras un poco.
+    const total = Math.max(I.totalAristas(RA), 1);
+    const respuestas = hs.filter((x) => x.arista.n >= minR && x.arista.n >= 0.1 * total).slice(0, 3);
+    return respuestas.map((x, i) => {
+      const reparto = x.arista.n / total;
+      const hondo = i === 0 || (reparto >= 0.25 && ply <= 3);
+      const a = AL ? AL.hijos.get(x.san) : null;
+      return {
+        san: x.san, quien: "rival", reparto, ...I.resumen(x.nodo.c),
+        hijos: planAlumno(x.nodo, a ? a.nodo : null, colorRival, base, minR, minA, hondo ? prof - 1 : Math.min(prof - 1, 2), ply + 1),
+      };
+    });
+  }
+
   function lado(listaR, listaA, colorAlumno, planes, nombreLado, minR, minA) {
     const colorRival = colorAlumno === "w" ? "b" : "w";
     const lr = listaR.filter((x) => x.color === colorRival);
@@ -111,13 +165,16 @@
     const aFavor = elegir(todos.filter((x) => x.s <= base - DIFERENCIA).sort((a, b) => a.s - b.s), 5);
     const enContra = elegir(todos.filter((x) => x.s >= base + DIFERENCIA).sort((a, b) => b.s - a.s), 3);
     const limpio = (x) => ({ sec: x.sec, jugada: x.jugada, alumno: x.alumno, rival: x.rival });
-    const plan = la.length ? segunElPlan(planes && planes[nombreLado], AL, minA) : [];
+    const aMedida = la.length && lr.length ? planAlumno(RA, AL, colorRival, base ?? 0.5, minR, minA, I.PROFUNDIDAD_PLAN, 0) : [];
+    // «¿Ya lo juega?» se pregunta sobre el plan que va a jugar: el suyo.
+    const plan = la.length ? segunElPlan(aMedida.length ? aMedida : planes && planes[nombreLado], AL, minA) : [];
     const cuenta = (e) => plan.filter((x) => x.estado === e).length;
     return {
       partidas: la.length,
       puntos: I.puntos(AL.c),
       base,
       plan,
+      planAlumno: aMedida,
       resumenPlan: { laJuega: cuenta("la-juega"), otra: cuenta("otra"), nunca: cuenta("nunca") },
       comunes: todos.length,
       aFavor: aFavor.map(limpio),
@@ -133,7 +190,7 @@
     const minR = A.minimo(listaR.length);
     const minA = minimoAlumno(listaA.length);
     return {
-      version: 1,
+      version: 2,
       alumno: I.nombreDe(partidasAlumno, claveA, alumno),
       total: listaA.length,
       minimo: minA,

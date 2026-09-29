@@ -326,11 +326,13 @@ async function pruebaAlumna(browser) {
   igual("«Clase en vivo» lleva un solo acceso, y es la sesión en vivo",
     grupos[0].tiles.map((t) => t.etiqueta), ["Sesión en vivo"]);
   /* Primero donde se juega contra otra persona, después el torneo y el bot.
-     TV en vivo y Logros se fueron a «Tu cuenta». Y «Racha táctica» NO está: ya
+     Logros se fue a «Tu cuenta» y TV en vivo, a Competir. Y «Racha táctica» NO está: ya
      es lo primero que hay dentro de juegos.html, y un mismo destino dos veces
      en el panel es el error que ya se cometió con «Torneos». */
   igual("Jugar y competir", grupo(grupos, "Jugar y competir").tiles.map((t) => t.enlace),
-    ["juegos.html", "competir.html", "torneos.html", "tablero.html"]);
+    ["juegos.html", "competir.html", "tablero.html"]);
+  igual("y Torneos y TV en vivo ya no van en el panel: se entra desde Competir",
+    grupos.flatMap((g) => g.tiles).filter((t) => t.enlace === "torneos.html" || t.enlace === "tv.html").length, "0");
   igual("y la racha táctica no se ofrece dos veces: en el panel ya no",
     grupos.flatMap((g) => g.tiles).filter((t) => t.enlace === "racha-tactica.html").length, "0");
   /* Dentro de Aprender, el orden es el del trabajo de todos los días: lo que se
@@ -362,7 +364,7 @@ async function pruebaAlumna(browser) {
      tiene a quién calificar (la prueba del profesor, más abajo, lo dice). */
   igual("Tu cuenta, en su orden, con la encuesta sobre su profesor",
     grupo(grupos, "Tu cuenta").tiles.map((t) => t.etiqueta),
-    ["Configuración", "Informes", "Logros", "TV en vivo", "Justificar una ausencia", "¿Cómo van tus clases?"]);
+    ["Configuración", "Informes", "Logros", "Justificar una ausencia", "¿Cómo van tus clases?"]);
   igual("y a la alumna no se le ofrecen los cobros por ninguna parte",
     grupos.flatMap((g) => g.tiles).filter((t) => /cobros\.html/.test(t.enlace || "")).length, "0");
   igual("«Cerrar sesión» no está dos veces: en el grid ya no",
@@ -443,7 +445,7 @@ async function pruebaProfesora(browser) {
      ofrecía "lo que se te ha cobrado" sobre una cuenta a la que no se le cobra
      nada. Y como no coordina, tampoco le toca la página entera de Cobros. */
   igual("a quien da clase no se le ofrece su propio recibo",
-    grupo(grupos, "Tu cuenta").tiles.map((t) => t.etiqueta), ["Configuración", "Informes", "Logros", "TV en vivo"]);
+    grupo(grupos, "Tu cuenta").tiles.map((t) => t.etiqueta), ["Configuración", "Informes", "Logros"]);
   igual("y sin coordinar, cobros.html no le aparece por ningún lado",
     grupos.flatMap((g) => g.tiles).filter((t) => t.enlace === "cobros.html").length, "0");
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
@@ -511,7 +513,7 @@ async function pruebaTextosPorRol(browser) {
   igual("a la profesora, Tareas le habla de asignar",
     profe["Tareas"], "Pide cantidades y la tarea se llena sola con lo que entrenan");
   igual("Informes es el de sus alumnos", profe["Informes"], "El progreso de tus alumnos y los informes a la casa");
-  igual("los torneos los arma ella", profe["Torneos"], "Arma torneos para tus alumnos, con sus rondas y su tabla");
+  igual("los torneos los arma ella (en Competir)", profe["Competir"], "Torneos para tus alumnos, TV en vivo, retos a quien esté en línea y sus partidas");
   igual("y el rival de Juegos también", profe["Juegos"], "Crazyhouse y otras modalidades — arma las partidas de tus alumnos");
   igual("la sesión en vivo es el tablero de SU clase", profe["Sesión en vivo"], "El tablero que ve tu clase, en vivo");
 
@@ -785,7 +787,10 @@ async function pruebaRegistroResumen(browser) {
   console.log("\n=== Qué hicieron en una clase del registro ===");
   const { page, ctx, errores } = await panel(browser, [PROFE], "u-profe", null, { rpc: { resumen_de_la_clase: [
     { student_id: "u-ana", nombre: "Ana Rojas", preguntas: 3, respondidas: 2, correctas: 2, incorrectas: 0, sin_calificar: 0,
-      practicas: 0, ganadas: 0, tablas: 0, perdidas: 0 }] } });
+      practicas: 0, ganadas: 0, tablas: 0, perdidas: 0 }],
+    // La pregunta de salida de esa clase (salida_de_la_clase): 1 de 3 entendió.
+    salida_de_la_clase: [{ question_id: "q-s", prompt: "¿Entendiste?", tipo: "opciones", asistentes: 4, respondieron: 3,
+      bien: 1, medio: 0, mal: 2, sin_calificar: 0 }] } });
   await page.waitForSelector("#sessions-log tbody tr", { timeout: 10000 });
   const pedidas = () => page.evaluate(() => window.__consultas.filter((c) => c.tabla === "resumen_de_la_clase").map((c) => c.args && c.args.p_clase));
   igual("con la lista no se pide ningún resumen", JSON.stringify(await pedidas()), "[]");
@@ -798,6 +803,9 @@ async function pruebaRegistroResumen(browser) {
   igual("lo pinta escrito", await page.evaluate(() =>
     [...document.querySelectorAll("#sessions-log tbody td table tbody tr")].map((tr) => [...tr.children].map((c) => c.textContent).join(" | ")).join()),
     "Ana Rojas | 2 de 3 contestadas: 2 bien | —");
+  await page.waitForSelector("#sessions-log .salida-registro", { timeout: 5000 });
+  igual("y arriba, lo que dijo la pregunta de salida", await page.textContent("#sessions-log .salida-registro"),
+    "🚪 Pregunta de salida: 🔁 Conviene repetir el tema la próxima clase. 3 de 4 alumnos contestaron: 1 lo entendió, 2 no lo entendieron.");
   await btn.click();
   igual("se vuelve a cerrar", await page.evaluate(() => /contestadas/.test(document.getElementById("sessions-log").textContent)), "false");
   igual("sin errores en la página", errores, []);

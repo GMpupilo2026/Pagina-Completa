@@ -301,6 +301,72 @@ que el alumno de 1800 vuelve a empezar en los de 1000.
   quedan pocos), y dentro de una racha no se repite ninguno. Los récords
   guardados antes de este cambio son de la racha al azar.
 
+## Cinco arreglos cortos: orden, sesión, plan, fichas y niveles
+
+`verificar-entreno-arreglos.js` (en un navegador), `verificar-precision-posicional.js`,
+`verificar-tipos-pagina.js` y `verificar-plan-recursos.js` los comprueban.
+
+- **Visualización va de fácil a difícil dentro de cada nivel.** Los
+  ejercicios iban por id, o sea al azar: el Nivel 1 mezclaba uno de 600 con
+  otro de 2000. Ahora van por rating (los que no traen rating, al final; el id
+  desempata para que el orden no cambie). Lo resuelto se guarda por id, así
+  que reordenar no pierde nada.
+- **Racha táctica sin sesión manda al login con `?next=`**, como las demás
+  páginas: antes mandaba a `login.html` a secas y, al volver a entrar, el
+  alumno quedaba en el panel y no en la racha. Pasa cuando el token sigue
+  guardado pero la sesión venció (la guardia deja pasar y `getSession()` da
+  nada); el doble lo imita con `tablas.sesion = null`.
+- **El plan del diagnóstico manda también a Tipos de entrenamiento y a
+  Precisión posicional**, que no aparecían en ningún área. Cada enlace va a
+  `entreno/tipos.html#<tipo>` (abre la ficha de ese tipo) y
+  `verificar-plan-recursos.js` comprueba que el tipo exista en
+  `js/tipos-catalogo.js`: un ancla vieja abriría la lista general sin avisar.
+- **En Precisión posicional, «a reforzar» enlaza las fichas de Estudio** de
+  cada área (`fichas` en `js/precision-posicional-criterio.js`; el verificador
+  comprueba que existan y que el título sea el de la ficha). Antes el consejo
+  era una frase y ningún lugar adonde ir.
+- **Dos rondas cortas seguidas no repiten la misma idea espejada.** El banco
+  son 24 ideas con tres espejos cada una (`pp_x_01`, `_h`, `_v`, `_hv`): con
+  tres ideas por área, la ronda siguiente sacaba la misma posición dada
+  vuelta una de cada tres veces por área, y se contestaba de memoria.
+  `PRUEBA.armar(1, evitar)` deja fuera las ideas (`PRUEBA.idea(id)`) de la
+  ronda anterior, que sale de `detalle.items` del último resultado guardado;
+  si en un área no queda otra, se usa igual.
+- **Tipos: al resolver el último ejercicio que faltaba de un nivel, la página
+  dice «¡Nivel completo!»** y ofrece el siguiente; en el último ejercicio,
+  «Siguiente» dice adónde va («Nivel 2 →» o «Volver a los niveles») y lleva
+  ahí. Antes volvía a la lista sin decir nada. Solo festeja el cambio (el
+  nivel estaba incompleto y ahora no): repasar un nivel ya completo no vuelve
+  a festejar.
+
+## Entender el error y ver la línea (Temas y Mates)
+
+`verificar-entreno-arreglos.js` («La refutación del error» y «Mates: Siguiente
+y Ver la línea») lo comprueba en un navegador.
+
+- **Al fallar, la página dice qué contesta el rival**, pero solo lo que
+  chess.js puede afirmar sin motor (`EjercicioTablero.refutacion()`): un mate
+  en una, o una pieza (caballo o más) que el rival se come y que ninguna pieza
+  propia puede volver a comer en esa casilla. El texto dice exactamente eso
+  («y ninguna pieza tuya puede volver a comer en d4»), no «pierdes la dama»:
+  eso sería una promesa que sin motor no se puede hacer (la regla de
+  CLAUDE.md: lo que promete un resultado se comprueba con motor). Si no hay nada así, el aviso queda como antes. Las jugadas van
+  en castellano (`jugadaEs`: Cf3, Dxh7#), como las escribe el alumno.
+- **Resuelto el ejercicio, ya no salta solo al siguiente.** Antes pasaba al
+  segundo y no daba tiempo de mirar qué se había jugado. Ahora
+  `EjercicioTablero.fin()` pone «Siguiente ejercicio →» (con el foco, salvo
+  que el alumno esté escribiendo en el cuadro de comandos, donde «siguiente»
+  hace lo mismo) y «Ver la línea», que abre la línea jugada en
+  `js/visor-linea.js`: el mismo visor de Estudio y de la preparación de
+  rivales, recorrible con ⏮ ◀ ▶ ⏭, teclado, lector de pantalla y escribiendo.
+- Para eso el visor aprendió a **arrancar desde una posición** (`desde`, una
+  FEN; la numeración sigue la de la FEN, «24… Txe1» si empiezan las negras) y
+  a **mirarse desde las negras** (`orientacion: "b"`), como el ejercicio.
+- La línea que se muestra es la que **se jugó** (`game.history()`), no la
+  guardada: si el alumno dio otro mate, se ve el suyo.
+- Los verificadores que daban por hecho el salto (`entreno-nivel`,
+  `entreno-repaso`) ahora aprietan «Siguiente».
+
 ## Repasar lo que costó y «Hoy te toca»
 
 `node herramientas/verificar-todo.js entreno-repaso` lo comprueba en un

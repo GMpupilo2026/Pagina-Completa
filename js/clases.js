@@ -104,11 +104,14 @@
                mudaron «En línea ahora» (retar), «Partidas en curso» y
                «Partidas terminadas». Juegos quedó para conocer las modalidades
                y armar partidas; Competir, para jugar contra otra persona y
-               seguir esas partidas. */
+               seguir esas partidas.
+
+               «Torneos» y «TV en vivo» ya no tienen tarjeta propia: se entra desde Competir,
+               que es donde vive todo lo de jugar contra otra persona. Un
+               destino, un camino (ver «Racha táctica» arriba). */
             { title: "Jugar y competir", tiles: [
                 { emoji: "🎲", label: "Juegos", desc: "Crazyhouse y otras modalidades — tu profesor te asigna el rival", descProfe: "Crazyhouse y otras modalidades — arma las partidas de tus alumnos", href: "juegos.html" },
-                { emoji: "⚔️", label: "Competir", desc: "Reta a quien esté en línea ahora y sigue tus partidas en curso y terminadas", descProfe: "Reta a quien esté en línea y sigue las partidas de tus alumnos, en curso y terminadas", href: "competir.html" },
-                { emoji: "🥇", label: "Torneos", desc: "Inscríbete y compite en los torneos que arma tu profesor", descProfe: "Arma torneos para tus alumnos, con sus rondas y su tabla", href: "torneos.html" },
+                { emoji: "⚔️", label: "Competir", desc: "Torneos, TV en vivo, retos a quien esté en línea y tus partidas", descProfe: "Torneos para tus alumnos, TV en vivo, retos a quien esté en línea y sus partidas", href: "competir.html" },
                 { photo: "img/oscar-avatar.jpg", label: "Juega contra mí", desc: "Practica contra Oscar, nuestro motor", href: "tablero.html" },
             ] },
             /* «Mide tu nivel» (los dos diagnósticos) ya no existe: el de
@@ -122,13 +125,13 @@
                 { emoji: "📂", label: "Archivos", desc: "Sube tus PGN completos y revisa las partidas guardadas en clase — llévalos al tablero en vivo", href: "partidas.html", mantenimientoAlumno: true },
             ] },
             /* El orden lo pidió el dueño de la Academia: Configuración,
-               Informes, Logros, TV en vivo y, al alumnado, «¿Cómo van tus
-               clases?» de última (se agrega más abajo, solo a su panel). */
+               Informes, Logros y, al alumnado, «¿Cómo van tus clases?» de
+               última (se agrega más abajo, solo a su panel). «TV en vivo» ya
+               no va acá: se entra desde Competir, con los torneos. */
             { title: "Tu cuenta", tiles: [
                 { emoji: "⚙️", label: "Configuración", desc: "Tu perfil y contraseña", href: "configuracion.html" },
                 { emoji: "📊", label: "Informes", desc: "Tu progreso y estadísticas", descProfe: "El progreso de tus alumnos y los informes a la casa", href: "informes.html" },
                 { emoji: "🏅", label: "Logros", desc: "Tu racha de días entrenando y las medallas que has ganado", descProfe: "El catálogo de medallas y cómo se gana la racha de días", href: "logros.html" },
-                { emoji: "📺", label: "TV en vivo", desc: "Las partidas de la Academia en directo, con su tabla de posiciones", href: "tv.html" },
             ] },
         ];
 
@@ -166,6 +169,9 @@
                 { emoji: "🚩", label: "Preguntas en clase", desc: "Cómo contestan cuando el profesor pregunta en la clase en vivo", href: TEMA("asignaciones") },
                 { emoji: "🧭", label: "Diagnóstico de nivel", desc: "El nivel medido de cada uno y dónde está floja la clase", href: TEMA("diagnostico") },
                 { emoji: "🏛️", label: "Cursos", desc: "Qué temas de cada curso ya estudió", href: TEMA("cursos") },
+                /* Su propio enlace del diagnóstico para gente sin cuenta: lo
+                   que se hace por él le llega solo a quien supervisa. */
+                { emoji: "🌐", label: "Diagnóstico de visitantes", desc: "Tu enlace para que alguien sin cuenta mida su nivel, y los resultados que te llegan", href: TEMA("diagnostico-publico") },
             ] },
             { title: "Tus profesores", tiles: [
                 { emoji: "🧑‍🏫", label: "Supervisión de profesores", desc: "Qué hizo cada profesor en el mes —clases, tareas, exámenes— y su informe mensual", href: "supervision.html" },
@@ -794,9 +800,7 @@
             "cursos/academia/index.html": "curso temario lecciones",
             "articulos.html": "leer lecturas blog",
             "juegos.html": "partidas jugar rival crazyhouse niebla variantes modalidades",
-            "competir.html": "retar reto en linea conectados partidas en curso terminadas rival",
-            "torneos.html": "torneo competir competencia rondas tabla",
-            "tv.html": "ver partidas en directo transmision",
+            "competir.html": "retar reto en linea conectados partidas en curso terminadas rival torneo torneos competencia rondas tabla tv ver partidas en directo transmision",
             "tablero.html": "bot motor oscar jugar contra la computadora",
             "logros.html": "medallas racha premios",
             "entreno/diagnostico.html": "nivel examen de nivel prueba de nivel",
@@ -1834,6 +1838,14 @@
                     const { filas, error } = await ResumenClase.cargar(sb, s.id);
                     if (error) { td.textContent = "No se pudo contar: " + error.message; return; }
                     ResumenClase.pintar(td, filas, { titulo: "Lo que hizo cada alumno en la clase del " + fmtDate(s.started_at) });
+                    // Lo que dijo la pregunta de salida, si la hubo: arriba de la tabla.
+                    const { fila: salida } = await ResumenClase.cargarSalida(sb, s.id);
+                    if (salida) {
+                        const p = document.createElement("p");
+                        p.className = "salida-registro text-sm text-brand-700 dark:text-brand-200 mb-2";
+                        ResumenClase.pintarSalida(p, salida, "🚪 Pregunta de salida: ");
+                        td.prepend(p);
+                    }
                 });
                 tdActions.appendChild(verBtn);
             }

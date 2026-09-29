@@ -70,6 +70,8 @@ window.PlanEntrenamiento = (function () {
         { texto: 'Entreno 4×4', href: 'entreno/4x4.html' },
         { texto: 'Ficha: la pieza atrapada', href: 'entreno/estudio.html?ficha=pieza-atrapada' },
         { texto: 'Curso: Desequilibrios de material', href: 'cursos/desequilibrios-de-material.html' },
+        { texto: 'Tipos de entrenamiento: Intercambios', href: 'entreno/tipos.html#intercambios' },
+        { texto: 'Tipos de entrenamiento: La balanza', href: 'entreno/tipos.html#balanza' },
       ],
     },
     {
@@ -90,6 +92,7 @@ window.PlanEntrenamiento = (function () {
         { texto: 'Ficha: el centro', href: 'entreno/estudio.html?ficha=el-centro' },
         { texto: 'Curso: Aperturas y Defensas', href: 'cursos/aperturas-y-defensas.html' },
         { texto: 'Artículo: el centro del tablero', href: 'articulos/el-centro-del-tablero.html' },
+        { texto: 'Tipos de entrenamiento: ¿Qué apertura es?', href: 'entreno/tipos.html#apertura' },
       ],
     },
     {
@@ -110,6 +113,7 @@ window.PlanEntrenamiento = (function () {
         { texto: 'Racha táctica', href: 'racha-tactica.html' },
         { texto: 'Ficha: la horquilla', href: 'entreno/estudio.html?ficha=horquilla' },
         { texto: 'Curso: Estrategia y Táctica', href: 'cursos/estrategia-y-tactica.html' },
+        { texto: 'Tipos de entrenamiento: ¿Qué quiere el rival?', href: 'entreno/tipos.html#amenaza' },
       ],
     },
     {
@@ -151,6 +155,8 @@ window.PlanEntrenamiento = (function () {
         { texto: 'Ficha: la regla del cuadrado', href: 'entreno/estudio.html?ficha=regla-del-cuadrado' },
         { texto: 'Curso: El mapa de los finales', href: 'cursos/el-mapa-de-los-finales.html' },
         { texto: 'Artículo: la oposición', href: 'articulos/la-oposicion.html' },
+        { texto: 'Tipos de entrenamiento: Rey y peón', href: 'entreno/tipos.html#peones' },
+        { texto: 'Tipos de entrenamiento: Con lo justo', href: 'entreno/tipos.html#con-lo-justo' },
       ],
     },
     {
@@ -171,6 +177,7 @@ window.PlanEntrenamiento = (function () {
         { texto: 'Ficha: la columna abierta', href: 'entreno/estudio.html?ficha=columna-abierta' },
         { texto: 'Curso: Estrategia y Táctica', href: 'cursos/estrategia-y-tactica.html' },
         { texto: 'Artículo: peones doblados', href: 'articulos/peones-doblados.html' },
+        { texto: 'Precisión posicional: elegir el plan', href: 'entreno/precision-posicional.html' },
       ],
     },
     {
@@ -190,6 +197,8 @@ window.PlanEntrenamiento = (function () {
         { texto: 'Coordenadas', href: 'entreno/coordenadas.html' },
         { texto: 'Concentración', href: 'concentracion.html' },
         { texto: 'Curso: Cálculo y Visualización', href: 'cursos/calculo-y-visualizacion.html' },
+        { texto: 'Tipos de entrenamiento: Fotografía', href: 'entreno/tipos.html#fotografia' },
+        { texto: 'Tipos de entrenamiento: El Barrido', href: 'entreno/tipos.html#barrido' },
       ],
     },
   ];
