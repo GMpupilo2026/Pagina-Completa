@@ -178,6 +178,12 @@ window.__deletes = [];
     estado["u-sup"] = [{ email: "marta@x.cr", full_name: "Marta Solano", role: "supervision", online_at: new Date().toISOString() }];
     oyentes.presence.forEach((f) => f());
   };
+  // Cualquier presencia a mano (o quitarla, con meta null): lo que otra persona
+  // anuncia de sí misma, como a quién está mirando el profe en la práctica.
+  window.__presencia = function (clave, meta) {
+    if (meta) estado[clave] = [meta]; else delete estado[clave];
+    oyentes.presence.forEach((f) => f());
+  };
   window.__entraOtroAlumno = function () {
     estado["u-beto"] = [{ email: "beto@x.cr", full_name: "Beto Mora", role: "alumno", online_at: new Date().toISOString() }];
     oyentes.presence.forEach((f) => f());
@@ -324,6 +330,8 @@ window.__deletes = [];
         // pasa en la pantalla del ALUMNO cuando el profesor mueve.
         if (tipo === "postgres_changes" && ev && ev.table) {
           (oyentes.pg[ev.table] = oyentes.pg[ev.table] || []).push(f);
+          // Con qué filtro escucha cada canal: es lo que decide qué le llega.
+          (window.__escuchas = window.__escuchas || []).push({ canal: nombre, tabla: ev.table, evento: ev.event, filtro: ev.filter || null });
         }
         return this;
       },

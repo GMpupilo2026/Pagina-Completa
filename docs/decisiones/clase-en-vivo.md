@@ -1261,6 +1261,75 @@ con el tablero y que el tablero siga cuadrado. Su doble acepta **filas de
 arranque** para sembrar una pregunta abierta o una ronda de práctica: sin eso los
 dos overlays del alumno no se pueden ni ver.
 
+### El profe mira la partida de un alumno y lo ayuda
+
+Las miniaturas dicen a quién ayudar, pero a 190 px no se lee una partida, y
+ayudar era hablarle al alumno por la llamada («fíjate en tu caballo»)
+mientras él miraba otra cosa. Ahora cada miniatura trae **«👁 Mirar y
+ayudar»**: abre SU partida en grande (`#practica-mirar`), en vivo, y le deja
+al profe mandarle una **ayuda** —flechas, círculos y una pista escrita— que al
+alumno le aparece en su propio tablero.
+
+- **Solo mira, y eso lo pone la base.** El tablero grande no es interactivo,
+  pero la política `practice_games_update` ya dejaba escribir a sus
+  profesores y a administración (para destrabar una partida). El trigger
+  `practica_ayuda_proteger` hace que, para quien no es el alumno, la fila
+  quede **entera** como estaba salvo `ayuda`: se copia la fila vieja completa
+  (`new := old`) y no columna por columna, porque la primera versión nombraba
+  las columnas y ya se le había escapado `reloj_ms` —el profe podía cambiarle
+  el reloj— sin ningún error. Una columna que se agregue mañana queda cubierta
+  sola.
+- **La ayuda no se la escribe el alumno**: su update deja `ayuda` como
+  estaba. Y al **reintentar** (`attempts` cambia) la base la borra: era de la
+  partida anterior. Con la ronda terminada ya no entra ayuda nueva. Quién la dio
+  y cuándo (`de`, `en`) los pone el trigger, no quien la manda.
+- **La forma la cuida un CHECK** (`practice_games_ayuda_forma`): objeto, el
+  número de jugadas de la posición, a lo sumo 12 flechas y 12 círculos, pista
+  de hasta 280 caracteres. Va envuelto en `coalesce(..., false)`: sin él, una
+  ayuda sin `jugadas` pasaba (el `jsonb_typeof` de una clave que falta da NULL,
+  y un CHECK en NULL pasa) — comprobado impersonando al profe, y corregido en
+  `practica_ayuda_forma_sin_nulos`.
+- **Las flechas son de UNA posición.** La ayuda guarda `jugadas`, y el alumno
+  las ve solo mientras su partida tenga ese número de jugadas: después de la
+  siguiente señalarían otra cosa. La pista sigue a la vista, y se le dice que
+  las flechas eran para antes de su jugada. Del lado del profe, cuando el
+  alumno (o el motor) mueve, se borran las flechas que tenía dibujadas y el
+  estado lo dice.
+- **Todo va también escrito.** El alumno lee «En tu tablero: una flecha de g1
+  a f3» en una región viva que está SIEMPRE en la página (vacía si no hay
+  ayuda: una región que aparece no se anuncia). El profe puede **escribir**
+  las flechas («g1-f3 e4») en vez de dibujarlas con clic derecho: lo que se
+  dibuja se escribe en el mismo campo, y lo que no se entiende se dice y no se
+  manda. Lo que no depende de la página (limpiar lo que llega, leer y decir
+  las marcas) está una sola vez en `js/practica-ayuda.js`.
+- **El alumno sabe que lo están mirando**: «👁 Karina Rojas está mirando tu
+  partida.» Viaja en la **presencia** del profe (`mirando_a`), no en la base:
+  al cerrar el diálogo, terminar la ronda o cerrar la pestaña se va solo, y
+  nunca queda un «te están mirando» de alguien que ya no está. Mirar sin que el
+  otro lo sepa no es ayudar.
+- **Se mira lo que QUEDÓ, no lo que se mandó**: el update pide la fila de
+  vuelta, porque con la ronda terminada el trigger la devuelve como estaba sin
+  dar error, y la pantalla diría «le llegó» de algo que no llegó.
+- El alumno escucha su partida por Realtime **con filtro**
+  (`student_id=eq.<su id>`) y de ese aviso toma **solo la ayuda**: las jugadas
+  las lleva su navegador, y un eco atrasado de la base se las pisaría.
+
+Comprobado impersonando roles en SQL (revertido): el profe manda la ayuda y
+queda con su `de`, pero sus cambios a jugadas, estado, intentos y reloj se
+devuelven; el alumno no puede cambiarla y sí juega; al reintentar se borra; con
+la ronda terminada no entra; otro profesor cambia 0 filas; una sin `jugadas` o
+con una pista de 281 caracteres la rechaza el CHECK.
+
+**Al tocarlo, correr `node herramientas/verificar-todo.js practica-ayuda
+sesion-curso`.** `verificar-practica-ayuda.js` comprueba las dos pantallas:
+que el tablero del profe no mueva ni mande nada, que lo que se manda sea solo
+la ayuda y a esa partida, que diga cuándo la base no la guardó, que la
+presencia diga a quién mira y vuelva a nadie, que al alumno se le pinten las
+flechas solo en su posición y en palabras, y que lo que él guarda nunca lleve
+la ayuda. Está probado que falla de verdad: pintando las flechas en cualquier
+posición y sin volver la presencia a nadie al cerrar, saltan cinco
+comprobaciones.
+
 ### Táctica por tema: la vista previa y su botón
 
 - **El tablero de la vista previa lo dibuja el mismo diagrama de ejemplo que los
