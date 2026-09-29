@@ -15,9 +15,12 @@
            El candado es `is_admin` a secas, no `soy_coordinador()`: esto no
            es una herramienta de coordinación sino una página de venta que
            todavía no está abierta, y quien decide cuándo abre es quien
-           administra. Como todo filtro del sitio, decide qué se PINTA — los
-           archivos que vende siguen sirviéndose sin candado, y eso está
-           dicho con todas las letras arriba de la página. */
+           administra. Como todo filtro del sitio, decide qué se PINTA, y eso está
+           dicho con todas las letras arriba de la página. El candado de los
+           ARCHIVOS está en el worker: cada material se abre con su compra
+           (js/tienda-compras.js la registra) —o, el de un curso, también con
+           el acceso a la Academia al día—. Ver «La tienda con permiso por
+           producto» en docs/decisiones/cobros-acceso-y-tienda.md. */
         const T = window.TiendaCatalogo;
         let waBase = null;           // el enlace de WhatsApp, o null si no hay número
         const elegidos = new Set();  // ids marcados, en el orden en que se marcaron
@@ -359,6 +362,7 @@
             pintarBonos();
             pintarFiltros();
             pintarProductos();
+            if (window.TiendaCompras) window.TiendaCompras.iniciar();
 
             document.getElementById("loading").classList.add("hidden");
             document.getElementById("app").classList.remove("hidden");

@@ -113,6 +113,24 @@ function pruebaCatalogo() {
   cierto("el enlace para revisar cada material abre algo que existe",
     vistasRotas.length === 0, vistasRotas.map(([id, v]) => id + " → " + v).join(", "));
 
+  // -------- la carpeta se llama como el id: el candado pregunta por ella
+  /* El worker pregunta `puede_bajar(<carpeta>)` y registrar_compra() guarda
+     el id: si no son el mismo texto, la compra queda registrada y el
+     material no abre nunca. Solo dos archivos quedan fuera, en la raíz y sin
+     candado, a propósito. */
+  const PUBLICOS = ["guia-del-profesor-accesible.html", "instrucciones-adaptadas.pdf"];
+  const desalineados = [];
+  for (const p of T.PRODUCTOS) {
+    const rutas = (p.carpeta ? [p.carpeta + "/"] : []).concat(p.archivos || []);
+    for (const r of rutas) {
+      if (PUBLICOS.includes(r)) continue;
+      const m = r.match(/^(?:cursos\/recursos|material)\/([^/]+)\//);
+      if (!m || m[1] !== p.id) desalineados.push(p.id + " → " + r);
+    }
+  }
+  cierto("todo lo que se vende está en cursos/recursos/<id>/ o material/<id>/",
+    desalineados.length === 0, desalineados.join(", "));
+
   // -------- ids
   const ids = T.PRODUCTOS.map((p) => p.id);
   cierto("ningún id repetido", new Set(ids).size === ids.length);
@@ -156,27 +174,60 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
 (function () {
   const PERFIL = ${JSON.stringify(perfil)};
   const AJUSTES = ${JSON.stringify(whatsapp ? [{ clave: "whatsapp_consultas", valor: whatsapp }] : [])};
-  const TABLAS = { profiles: [PERFIL], ajustes_academia: AJUSTES };
-  function constructor(filas, tabla) {
+  /* Una compradora con HTML en el nombre: el panel de compras lo tiene que
+     pintar como texto. */
+  const COMPRADORA = { id: "u-ana", full_name: "Ana <b>Mora</b>", email: "ana@correo.cr", is_admin: false };
+  window.__compras = [];
+  const TABLAS = { profiles: [PERFIL, COMPRADORA], ajustes_academia: AJUSTES, compras_tienda: window.__compras };
+  /* Los filtros se apuntan y se aplican en el RESOLVER, sobre la tabla como
+     está en ese momento: así una lista que se vuelve a pedir después de
+     registrar una compra trae la compra. */
+  function constructor(tabla) {
     let unica = false;
-    let datos = Array.isArray(filas) ? filas.slice() : filas;
+    const filtros = [];
+    let tope = null;
     const b = {
       select() { return b; },
-      eq(col, val) { if (Array.isArray(datos)) datos = datos.filter((f) => String(f[col]) === String(val)); return b; },
-      in() { return b; }, order() { return b; }, limit() { return b; }, maybeSingle() { unica = true; return b; },
+      eq(col, val) { filtros.push((f) => String(f[col]) === String(val)); return b; },
+      in(col, vals) { filtros.push((f) => vals.map(String).includes(String(f[col]))); return b; },
+      /* El or de la búsqueda: "full_name.ilike.%x%,email.ilike.%x%". */
+      or(expr) {
+        const partes = expr.split(",").map((p) => {
+          const m = p.match(/^(\\w+)\\.ilike\\.%(.*)%$/);
+          return m && { col: m[1], txt: m[2].toLowerCase() };
+        });
+        if (partes.some((x) => !x)) throw new Error("or() mal armado: " + expr);
+        filtros.push((f) => partes.some((x) => String(f[x.col] || "").toLowerCase().includes(x.txt)));
+        return b;
+      },
+      order() { return b; }, limit(n) { tope = n; return b; }, range(a, z) { tope = z - a + 1; return b; },
+      maybeSingle() { unica = true; return b; },
       single() { unica = true; return b; },
       then(res, rej) {
-        let d = datos;
-        if (Array.isArray(d) && unica) d = d.length ? d[0] : null;
+        let d = (TABLAS[tabla] || []).filter((f) => filtros.every((fn) => fn(f)));
+        if (tope !== null) d = d.slice(0, tope);
+        if (unica) d = d.length ? d[0] : null;
         return Promise.resolve({ data: d, error: null }).then(res, rej);
       },
     };
     return b;
   }
+  /* registrar_compra() como la de la base: solo administración, y la
+     lista queda como dice la función (insertar sin duplicar, o borrar). */
+  function rpc(n, args) {
+    window.__llamadas.push({ n, args });
+    if (n === "registrar_compra") {
+      if (!PERFIL.is_admin) return Promise.resolve({ data: null, error: { message: "Solo administración registra compras." } });
+      const i = window.__compras.findIndex((c) => c.profile_id === args.p_profile && c.producto === args.p_producto);
+      if (args.p_registrar && i < 0) window.__compras.push({ profile_id: args.p_profile, producto: args.p_producto, creado_en: "2026-09-29T18:00:00Z" });
+      if (!args.p_registrar && i >= 0) window.__compras.splice(i, 1);
+    }
+    return Promise.resolve({ data: null, error: null });
+  }
   window.sb = {
     auth: { getSession: () => Promise.resolve({ data: { session: { user: { id: PERFIL.id }, access_token: "t" } } }), signOut: () => Promise.resolve({}) },
-    from: (t) => constructor(TABLAS[t] !== undefined ? TABLAS[t] : [], t),
-    rpc: (n) => constructor([], "rpc:" + n),
+    from: (t) => constructor(t),
+    rpc,
     channel: () => ({ on() { return this; }, subscribe() { return this; }, track() { return Promise.resolve(); }, presenceState: () => ({}) }),
     removeChannel: () => {},
   };
@@ -345,8 +396,8 @@ async function pruebaAdmin(browser) {
     T.MODULOS.every((m) => pack.includes(m.titulo)), pack.slice(0, 300));
 
   // -------- el aviso de administración
-  cierto("el aviso dice que los archivos se sirven sin candado",
-    (await page.textContent("#app")).includes("sin ningún candado"));
+  cierto("el aviso dice que cada material tiene su candado por compra",
+    (await page.textContent("#app")).includes("Cada material ya tiene su candado por compra"));
   igual("con el número puesto, el aviso de «no hay WhatsApp» no se ve",
     await page.evaluate(() => document.getElementById("sin-whatsapp").checkVisibility()), false);
 
@@ -370,6 +421,66 @@ async function pruebaSinWhatsapp(browser) {
   await page.waitForTimeout(200);
   igual("y apretar «pedir» no abre ningún chat",
     await page.evaluate(() => window.__abiertas.length), 0);
+
+  cierto("sin errores en la consola", errores.length === 0, errores.join(" | "));
+  await page.close();
+}
+
+async function pruebaCompras(browser) {
+  console.log("\n=== Las compras registradas ===");
+  const { page, errores } = await abrir(browser, ADMIN, WHATSAPP);
+  await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
+
+  igual("sin compras, se dice que no hay",
+    await page.evaluate(() => document.getElementById("compras-vacia").checkVisibility()), true);
+  igual("el menú trae todos los materiales del catálogo",
+    await page.evaluate(() => document.querySelectorAll("#compra-producto option[value]:not([value=''])").length), T.PRODUCTOS.length);
+
+  /* Sin elegir a nadie no se llama a la base: el nombre escrito no es una
+     cuenta, y registrarle la compra «a un texto» no abriría nada. */
+  await page.fill("#compra-buscar", "ana");
+  await page.selectOption("#compra-producto", "examen-de-arbitraje");
+  await page.evaluate(() => { window.__llamadas = []; });
+  await page.click("#compra-form button[type=submit]");
+  await page.waitForTimeout(150);
+  igual("sin elegir a la persona de la lista, no se registra nada",
+    await page.evaluate(() => window.__llamadas.length), 0);
+
+  await page.fill("#compra-buscar", "");
+  await page.type("#compra-buscar", "correo.cr");
+  await page.waitForSelector("#compra-resultados button", { timeout: 5000 });
+  igual("la búsqueda por correo la encuentra, y el nombre va como texto",
+    await page.evaluate(() => document.querySelector("#compra-resultados button span").textContent), "Ana <b>Mora</b>");
+  igual("ningún <b> de verdad dentro de los resultados",
+    await page.evaluate(() => document.querySelectorAll("#compra-resultados b").length), 0);
+  await page.click("#compra-resultados button");
+  cierto("dice a quién se le va a registrar",
+    (await page.textContent("#compra-elegida")).includes("Ana <b>Mora</b>"));
+  await page.selectOption("#compra-producto", "examen-de-arbitraje");
+  await page.click("#compra-form button[type=submit]");
+  await page.waitForSelector("#compras-lista li", { timeout: 5000 });
+  igual("se llama a registrar_compra con la cuenta y el id del producto",
+    await page.evaluate(() => JSON.stringify(window.__llamadas.map((l) => l.args))),
+    JSON.stringify([{ p_profile: "u-ana", p_producto: "examen-de-arbitraje", p_registrar: true }]));
+  const fila = await page.textContent("#compras-lista li");
+  cierto("y la compra aparece en la lista, con el nombre y el material",
+    fila.includes("Ana <b>Mora</b>") && fila.includes(T.producto("examen-de-arbitraje").titulo), fila);
+  igual("ya no se dice que no hay compras",
+    await page.evaluate(() => document.getElementById("compras-vacia").checkVisibility()), false);
+
+  /* Quitarla pide confirmación propia (nunca confirm()), y «Dejarla» no
+     toca nada. */
+  await page.click("#compras-lista li button");
+  await page.click("[data-avisos-cancelar]");
+  await page.waitForTimeout(150);
+  igual("«Dejarla» no la quita",
+    await page.evaluate(() => window.__compras.length), 1);
+  await page.click("#compras-lista li button");
+  await page.click("[data-avisos-aceptar]");
+  await page.waitForSelector("#compras-vacia:not(.hidden)", { timeout: 5000 });
+  igual("«Quitar la compra» la borra con registrar_compra(…, false)",
+    await page.evaluate(() => JSON.stringify(window.__llamadas.slice(-1)[0].args)),
+    JSON.stringify({ p_profile: "u-ana", p_producto: "examen-de-arbitraje", p_registrar: false }));
 
   cierto("sin errores en la consola", errores.length === 0, errores.join(" | "));
   await page.close();
@@ -412,6 +523,7 @@ async function pruebaSeVe(browser) {
     await pruebaCerrada(browser, "el equipo docente", PROFE);
     await pruebaCerrada(browser, "el alumnado", ALUMNA);
     await pruebaSinWhatsapp(browser);
+    await pruebaCompras(browser);
     await pruebaSeVe(browser);
   } finally {
     await browser.close();

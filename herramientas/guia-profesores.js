@@ -524,9 +524,9 @@ agrandada. No hay ninguna imagen: no hace falta ver nada para usarla.</p>
 <div class="descargas">
   <p class="rotulo">Los mismos contenidos, para llevar:</p>
   <ul>
-    <li><a href="guia-del-profesor.pdf">El manual en PDF</a> — ${CAPITULOS.length}
+    <li><a href="material/guia-del-profesor/guia-del-profesor.pdf">El manual en PDF</a> — ${CAPITULOS.length}
     capítulos en A4, para leer y tener al lado del teclado.</li>
-    <li><a href="guia-del-profesor-presentacion.pdf">La presentación en PDF</a> —
+    <li><a href="material/guia-del-profesor/guia-del-profesor-presentacion.pdf">La presentación en PDF</a> —
     diapositivas 16:9, para proyectar en una capacitación.</li>
   </ul>
   <p class="nota-pdf">Los dos se pueden imprimir. Llevan la marca de agua de la
@@ -640,8 +640,8 @@ fs.writeFileSync(htmlMarca169, htmlMarca(LAMINA.ancho, LAMINA.alto, "120mm"));
   });
   await navegador.close();
 
-  const salidaPresentacion = path.join(RAIZ, "guia-del-profesor-presentacion.pdf");
-  const salidaManual = path.join(RAIZ, "guia-del-profesor.pdf");
+  const salidaPresentacion = path.join(RAIZ, "material", "guia-del-profesor", "guia-del-profesor-presentacion.pdf");
+  const salidaManual = path.join(RAIZ, "material", "guia-del-profesor", "guia-del-profesor.pdf");
 
   sellar(pdfPresentacion, marca169, salidaPresentacion, 1);   // la portada no lleva marca
   sellar(pdfManual, marcaA4, salidaManual, 0);                // el manual arranca en contenido

@@ -23,6 +23,7 @@ tabla  class_sessions  rls=true
 tabla  cobros  rls=true
 tabla  cobros_contacto  rls=true
 tabla  cobros_recordatorios_programados  rls=true
+tabla  compras_tienda  rls=true
 tabla  coordinador_funciones_quitadas  rls=true
 tabla  coordinador_profesores  rls=true
 tabla  course_unlocks  rls=true
@@ -257,6 +258,10 @@ columna  cobros_recordatorios_programados.id  uuid
 columna  cobros_recordatorios_programados.nota  text
 columna  cobros_recordatorios_programados.programado_para  timestamp with time zone
 columna  cobros_recordatorios_programados.student_id  uuid
+columna  compras_tienda.creado_en  timestamp with time zone
+columna  compras_tienda.otorgado_por  uuid
+columna  compras_tienda.producto  text
+columna  compras_tienda.profile_id  uuid
 columna  coordinador_funciones_quitadas.academia_id  uuid
 columna  coordinador_funciones_quitadas.coordinador_id  uuid
 columna  coordinador_funciones_quitadas.created_at  timestamp with time zone
@@ -1188,6 +1193,7 @@ funcion  proteger_tareas_alumno()  definer  anon=false  auth=false
 funcion  proteger_tiempos_de_presencia()  definer  anon=false  auth=false
 funcion  proteger_torneo()  invoker  anon=false  auth=false
 funcion  prueba_gratis_activar(p_alumno uuid, p_nombre text, p_ip text, p_privacidad text, p_terminos text)  definer  anon=false  auth=false
+funcion  puede_bajar(p_producto text, p_basta_acceso boolean)  invoker  anon=false  auth=true
 funcion  puede_marcar_academia(p_nombre text)  definer  anon=true  auth=true
 funcion  puede_ver_equipo(p_equipo uuid)  definer  anon=false  auth=true
 funcion  puede_ver_paquete(p_paquete uuid)  definer  anon=false  auth=true
@@ -1204,6 +1210,7 @@ funcion  quiniela_yo(p_sala uuid, p_token text)  definer  anon=false  auth=false
 funcion  quitar_insignia(p_id uuid)  definer  anon=false  auth=true
 funcion  recordar_informes_mensuales(p_hoy date)  definer  anon=false  auth=false
 funcion  registrar_arbitraje_publico(p_nombre text, p_email text, p_porcentaje integer, p_nivel text, p_detalle jsonb)  definer  anon=true  auth=true
+funcion  registrar_compra(p_profile uuid, p_producto text, p_registrar boolean)  definer  anon=false  auth=true
 funcion  registrar_salida_examen(p_examen uuid, p_segundos integer)  definer  anon=false  auth=true
 funcion  reporte_actividades(p_desde date, p_hasta date)  invoker  anon=false  auth=true
 funcion  responder_encuesta_curso(p_slug text, p_respuestas jsonb, p_version_privacidad text)  definer  anon=true  auth=true
@@ -1309,6 +1316,7 @@ politica  cobros  cobros_lee_alumno  SELECT
 politica  cobros_contacto  cobros_contacto_coordinacion  ALL
 politica  cobros_contacto  cobros_contacto_lee_alumno  SELECT
 politica  cobros_recordatorios_programados  cobros_recordatorios_programados_coordinacion  ALL
+politica  compras_tienda  compras_tienda_select  SELECT
 politica  coordinador_funciones_quitadas  coordinador_funciones_quitadas_select  SELECT
 politica  coordinador_profesores  coordinador_profesores_select  SELECT
 politica  course_unlocks  course_unlocks_delete  DELETE
@@ -1653,6 +1661,7 @@ indice  cobros_recordatorios_programados  cobros_recordatorios_programados_cread
 indice  cobros_recordatorios_programados  cobros_recordatorios_programados_pendientes_idx
 indice  cobros_recordatorios_programados  cobros_recordatorios_programados_pkey
 indice  cobros_recordatorios_programados  cobros_recordatorios_programados_student_id_fk
+indice  compras_tienda  compras_tienda_pkey
 indice  coordinador_funciones_quitadas  coordinador_funciones_quitadas_coordinador_id_fk
 indice  coordinador_funciones_quitadas  coordinador_funciones_quitadas_pkey
 indice  coordinador_profesores  coordinador_profesores_pkey
@@ -2084,6 +2093,7 @@ grant  cobros_vista  authenticated  SELECT
 grant  cobros_vista  authenticated  TRIGGER
 grant  cobros_vista  authenticated  TRUNCATE
 grant  cobros_vista  authenticated  UPDATE
+grant  compras_tienda  authenticated  SELECT
 grant  coordinador_funciones_quitadas  authenticated  REFERENCES
 grant  coordinador_funciones_quitadas  authenticated  SELECT
 grant  coordinador_funciones_quitadas  authenticated  TRIGGER

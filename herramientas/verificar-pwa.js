@@ -203,7 +203,7 @@ function servidorPropio() {
       const rel = path.relative(RAIZ, p).replace(/\\/g, "/");
       if (e.isDirectory()) {
         if (/^(node_modules|\.git|herramientas)$/.test(e.name)) continue;
-        if (rel.startsWith("cursos/recursos") || rel.startsWith("cursos/protegido")) continue;
+        if (rel.startsWith("cursos/recursos") || rel.startsWith("cursos/protegido") || rel.startsWith("material")) continue;
         recorrer(p);
       } else if (e.name.endsWith(".html")) {
         /* Las que a propósito NO son parte de la app: inscripcion.html y

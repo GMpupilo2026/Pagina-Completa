@@ -751,14 +751,56 @@ mismo que las mensualidades de `cobros.html`, y por la misma razón: es como
 funciona de verdad una academia acá y no necesita ninguna credencial. La entrega
 es a mano, por correo.
 
-**Antes de abrirla al público hay UNA cosa que resolver, y está escrita arriba
-de la propia página**: `cursos/recursos/` ya tiene candado, pero es el de la
-Academia —lo baja **cualquier cuenta con el acceso vigente**, no quien compró
-ese material—, y los libros de la raíz siguen **sin ninguno**: quien conozca la
-dirección exacta se los baja sin pagar, sin ningún error ni registro. Mientras
-la entrega se haga a mano no cambia nada; el día que la tienda abra, lo que se
-cobra aparte necesita un permiso por producto comprado. Va escrito EN LA PÁGINA y no solo acá porque es la decisión que hay que
-tomar antes de apretar el botón de abrir.
+Lo que antes quedaba por resolver antes de abrirla —que `cursos/recursos/`
+tuviera el candado de la Academia y no uno por compra, y que los libros de la
+raíz no tuvieran ninguno— ya está resuelto: ver «La tienda con permiso por
+producto», abajo.
+
+### La tienda con permiso por producto
+
+Hasta acá, lo que la tienda vendía se lo bajaba gratis quien supiera la
+dirección: `cursos/recursos/` tenía el candado de la Academia (cualquier cuenta
+con el acceso al día, no quien compró ESE material) y los libros de la raíz
+—el del diagnóstico, el cuadernillo, el de arbitraje, la guía del profesor—
+ninguno. Se veía perfecto y no daba ningún error.
+
+- **Quién compró qué está en la base**: `compras_tienda` (una fila por persona y
+  producto; la llave primaria impide registrarla dos veces). No tiene política
+  de escritura: la escribe `registrar_compra(persona, producto, registrar)`,
+  que es `SECURITY DEFINER` y rechaza a quien no administra (42501). La
+  pantalla es la sección «Compras registradas» de `tienda.html`
+  (`js/tienda-compras.js`): se busca la cuenta por nombre o correo (en la base,
+  de a diez), se elige el material y se registra; «Quitar la compra» pide
+  confirmación.
+- **La pregunta es `puede_bajar(producto, basta_el_acceso)`**, `SECURITY
+  INVOKER` a propósito: solo mira la compra de quien pregunta (la RLS no le
+  deja ver otras), así que no es una API sobre otra persona. Contesta sí a
+  administración, a quien compró, y —solo si `basta_el_acceso`— a quien tiene
+  el acceso vigente. Se comprobó impersonando roles en SQL: el alumno no puede
+  registrar ni insertar; el acceso abre un curso pero no un libro; la compra de
+  una persona no le abre nada a otra; `anon` no la puede llamar.
+- **El worker decide por la carpeta** (`worker.js`, `queSePregunta()`):
+  `cursos/recursos/<id>/` pregunta con `basta_el_acceso = true` (quien paga la
+  Academia sigue teniendo el material de sus cursos, como siempre);
+  `material/<id>/` con `false` (solo quien lo compró). `material/` sin carpeta
+  no se sirve. La respuesta se guarda por token **y producto**: guardarla solo
+  por token le abriría a quien compró un libro todos los demás.
+  `run_worker_first` nombra `/material/*`; sin esa línea el candado no existe.
+- **El producto ES el nombre de la carpeta**, el mismo id de
+  `js/tienda-catalogo.js`. Si no son el mismo texto, la compra queda
+  registrada y el material no abre nunca, sin ningún error:
+  `verificar-tienda.js` lo comprueba.
+- **Los libros se mudaron a `material/<id>/`** y sus generadores escriben ahí.
+  Todos sus enlaces ya eran solo de administración, así que a nadie se le
+  cerró nada que tuviera. Quedan en la raíz, **sin candado y a propósito**, dos
+  archivos: `guia-del-profesor-accesible.html` (es la ayuda «?» de decenas de
+  páginas; ponerle candado rompería la ayuda del sitio) e
+  `instrucciones-adaptadas.pdf` (va adjunto en el correo de bienvenida y la
+  Edge Function lo baja de la raíz). Venderlos es vender la comodidad de
+  tenerlos, no el acceso.
+- `sw.js` no guarda nada de `material/`: una copia en el teléfono se seguiría
+  abriendo después de quitar la compra.
+
 
 **Al tocar `js/tienda-catalogo.js`, `tienda.html` o el material que vende,
 correr `node herramientas/verificar-tienda.js`** (con el sitio en

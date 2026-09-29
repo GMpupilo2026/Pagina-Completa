@@ -1602,7 +1602,7 @@ volver a verificarlas con chess.js: cada ítem dice en `prueba` qué debe cumpli
   distinguen con daltonismo (ΔE 5.7 en deutan, comprobado con el validador de
   la skill dataviz), así que cada barra lleva su porcentaje y su etiqueta en
   texto, y hay leyenda.
-- `diagnostico-de-nivel.pdf` (raíz) es el diagnóstico en papel, con sus
+- `diagnostico-de-nivel.pdf` (`material/diagnostico-de-nivel/`, con candado por compra) es el diagnóstico en papel, con sus
   diagramas y su hoja de corrección. **No se edita a mano**: lo genera
   `herramientas/diagnostico-pdf.js` desde el banco de ítems, así que al tocar
   ítems, áreas o niveles hay que volver a correrlo (`node
@@ -2066,7 +2066,7 @@ no se puede "probar" una jugada.
   alcance para la cuota). No
   necesita nada instalado: `node herramientas/verificar-arbitraje.js`. **Al
   tocar el banco, correrlo.**
-- `examen-de-arbitraje.pdf` (raíz) es el banco entero en papel, tipo libro:
+- `examen-de-arbitraje.pdf` (`material/examen-de-arbitraje/`, con candado por compra) es el banco entero en papel, tipo libro:
   tapa diseñada, capítulo por área, dentro de cada uno las preguntas ordenadas
   por escalón, con
   la opción correcta marcada, el porqué y el artículo del Handbook, más el índice

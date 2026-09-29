@@ -51,7 +51,14 @@ window.TiendaCatalogo = (function () {
 
   /* ======================= Los productos =======================
      `carpeta` / `archivos` son rutas de verdad dentro del repositorio, y el
-     verificador las abre una por una. `piezas` es lo que la ficha promete, y
+     verificador las abre una por una. Lo que se vende va en una carpeta con
+     el MISMO nombre que el id —cursos/recursos/<id>/ o material/<id>/—,
+     porque el candado del worker pregunta por la compra con el nombre de la
+     carpeta (ver «La tienda con permiso por producto» en
+     docs/decisiones/cobros-acceso-y-tienda.md). Solo quedan en la raíz, sin
+     candado, la guía del profesor accesible (es la ayuda «?» de decenas de
+     páginas) y las instrucciones adaptadas (van adjuntas en el correo de
+     bienvenida). `piezas` es lo que la ficha promete, y
      también se comprueba contra el disco.
 
      `gancho` es la frase de venta —lo que el material le resuelve a quien lo
@@ -201,7 +208,7 @@ window.TiendaCatalogo = (function () {
       nivel: "Todo el equipo docente",
       gancho: "301 preguntas con la respuesta marcada, el porqué y cómo se comprobó cada posición.",
       resumen: "El banco entero del diagnóstico de nivel, ordenado por sus nueve áreas y por escalón de dificultad, con índice, escala de niveles y hoja de respuestas. 82 páginas. Va con su versión accesible en HTML, que cuenta cada posición pieza por pieza.",
-      archivos: ["libro-de-diagnostico.pdf", "libro-de-diagnostico-accesible.html"],
+      archivos: ["material/libro-de-diagnostico/libro-de-diagnostico.pdf", "material/libro-de-diagnostico/libro-de-diagnostico-accesible.html"],
       piezas: { preguntas: 301, areas: 9, paginas: 82 },
     },
     {
@@ -212,7 +219,7 @@ window.TiendaCatalogo = (function () {
       nivel: "Todo el equipo docente",
       gancho: "Siéntalos a los veinte a la vez y sal de ahí sabiendo el nivel de cada uno.",
       resumen: "El cuadernillo para aplicar en el aula, con sus diagramas y su hoja de corrección: 63 preguntas por las nueve áreas, siete de cada una, con el mismo reparto de dificultad siempre — así dos diagnósticos del mismo alumno se comparan aunque las preguntas hayan sido otras. 27 páginas.",
-      archivos: ["diagnostico-de-nivel.pdf"],
+      archivos: ["material/diagnostico-de-nivel/diagnostico-de-nivel.pdf"],
       piezas: { preguntas: 63, areas: 9, paginas: 27 },
     },
     {
@@ -223,7 +230,7 @@ window.TiendaCatalogo = (function () {
       nivel: "Formación docente",
       gancho: "200 preguntas de reglamento, y cada respuesta cita su artículo del Handbook.",
       resumen: "Las ocho áreas del arbitraje —leyes, reloj, irregularidades, tablas, conducta, ritmos, competición y títulos—, veinticinco preguntas cada una y cinco en cada escalón de dificultad. Citado artículo por artículo: un árbitro no discute de memoria. 136 páginas.",
-      archivos: ["examen-de-arbitraje.pdf"],
+      archivos: ["material/examen-de-arbitraje/examen-de-arbitraje.pdf"],
       piezas: { preguntas: 200, areas: 8, paginas: 136 },
     },
     {
@@ -234,7 +241,7 @@ window.TiendaCatalogo = (function () {
       nivel: "Todo el equipo docente",
       gancho: "El manual que deja a un entrenador nuevo dando clase la primera semana.",
       resumen: "Quince capítulos y 78 apartados, con capturas de cada pantalla: la clase en vivo, los planes, las tareas, los exámenes, los informes y lo que conviene no olvidar. Sale en tres formas del mismo contenido — manual A4 de 48 páginas, presentación de 120 láminas para capacitar, y página accesible que se lee sin ver la pantalla.",
-      archivos: ["guia-del-profesor.pdf", "guia-del-profesor-presentacion.pdf", "guia-del-profesor-accesible.html"],
+      archivos: ["material/guia-del-profesor/guia-del-profesor.pdf", "material/guia-del-profesor/guia-del-profesor-presentacion.pdf", "guia-del-profesor-accesible.html"],
       piezas: { capitulos: 15, apartados: 78, laminas: 120 },
     },
     {
