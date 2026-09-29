@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20260929014311
+# al-dia-con: 20260929020321
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -185,6 +185,8 @@ columna  avisos_ia_tope.umbral  smallint
 columna  clase_elegidos.class_session_id  uuid
 columna  clase_elegidos.created_at  timestamp with time zone
 columna  clase_elegidos.id  uuid
+columna  clase_elegidos.origen  text
+columna  clase_elegidos.resultado  text
 columna  clase_elegidos.student_id  uuid
 columna  clase_plan_hecho.class_session_id  uuid
 columna  clase_plan_hecho.created_at  timestamp with time zone
@@ -1213,6 +1215,8 @@ politica  archivos_pgn  archivos_pgn_update  UPDATE
 politica  avisos_cobro  avisos_lee_coordinacion  SELECT
 politica  clase_elegidos  clase_elegidos_insert  INSERT
 politica  clase_elegidos  clase_elegidos_select  SELECT
+politica  clase_elegidos  clase_elegidos_select_propio  SELECT
+politica  clase_elegidos  clase_elegidos_update  UPDATE
 politica  clase_plan_hecho  clase_plan_hecho_de_quien_da_la_clase  ALL
 politica  class_attendance  class_attendance_delete_profesor  DELETE
 politica  class_attendance  class_attendance_exige_acceso_ins  INSERT  restrictiva

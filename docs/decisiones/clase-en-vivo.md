@@ -527,6 +527,44 @@ respondió.
 **Al tocar esto, correr `node herramientas/verificar-todo.js clase-elegido`.**
 Está probado que falla de verdad: sin mostrar el aviso grande, se cae.
 
+### La participación oral: cómo respondió, y la cola de manos levantadas
+
+El turno al azar decía a quién le tocaba, pero no cómo le fue; y «Levantar la
+mano» ya existía, pero el profe veía las manos sin saber quién la levantó
+primero. Las dos cosas terminan en el mismo registro: `clase_elegidos`, una
+fila por turno de palabra (migración `participacion_oral_en_la_clase`,
+comprobada impersonando).
+
+- **Cómo respondió**: «✅ Bien», «🤔 Casi» o «Terminar sin anotar». Cualquiera
+  termina el turno; los dos primeros anotan `resultado` en la fila de ESE
+  turno (la que devolvió el insert, o —si el profe recargó en medio— la última
+  sin anotar de ese alumno). La cuenta del recuadro lo dice escrito («2 veces:
+  1 bien, 1 casi»). Solo quien dio la clase anota: el alumno lee lo suyo
+  (política `clase_elegidos_select_propio`, para «Tu última clase») pero no se
+  puede calificar, y otro profe no cambia nada. Un CHECK acepta solo `bien` y
+  `casi`.
+- **Las manos van en el orden en que se levantaron**: levantar la mano anuncia
+  la hora en la presencia (`hand_at`), y la lista del profe pone primero las
+  manos, ordenadas por esa hora, con el puesto ESCRITO («🖐️ 1.º»): el orden de
+  la lista solo no lo dice. Sin la hora, la lista salía en el orden en que
+  llegó cada presencia, que no es el orden en que pidieron la palabra.
+- **«🗣️ Darle la palabra»** es un turno más, de origen `mano`, por la misma
+  puerta que el sorteo (`darTurno`): le baja la mano, queda en
+  `game_state.elegido` con `motivo: 'mano'` y en `clase_elegidos`. A quien la
+  pidió le sale «¡Tienes la palabra!» (no «te eligieron»: la pidió él) y los
+  demás leen «Tu profe le dio la palabra a …».
+- **El resumen de la clase cuenta los turnos**: `resumen_de_la_clase` suma
+  `turnos`, `turnos_bien` y `turnos_casi`, y la tabla del cierre, del registro
+  y de «Tu última clase» trae la columna «Participación» («3 turnos: 1 bien,
+  1 casi, 1 sin anotar») solo si hubo.
+- La fila de acciones de cada alumno se acomoda en varias líneas: con «Darle
+  la palabra» ya no cabía en un celular y el selector de colores quedaba
+  cortado.
+
+**Al tocar esto, correr `node herramientas/verificar-todo.js clase-participacion
+clase-elegido clase-resumen`.** Está probado que falla de verdad: sin ordenar
+por la hora de la mano, o sin guardar el resultado, salta.
+
 ### El modo sencillo de la clase en vivo
 
 Aun ordenada, la pantalla del profesor tiene catorce controles delante, y la
