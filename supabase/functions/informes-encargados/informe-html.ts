@@ -57,6 +57,7 @@ const ACTIVIDADES: Record<string, { nombre: string; unidad: string; emoji: strin
   ilumina:         { nombre: "Ilumina el tablero",    unidad: "niveles",     emoji: "💡" },
   visualizacion:   { nombre: "Visualización",         unidad: "ejercicios",  emoji: "👁️" },
   finales:         { nombre: "Finales contra la máquina", unidad: "logrados", emoji: "🏁" },
+  finales100:      { nombre: "Finales de curso contra el motor", unidad: "practicados", emoji: "🏁" },
 };
 
 // Cómo se llama cada SECCIÓN de public.tiempo_por_seccion() cuando se la

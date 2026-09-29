@@ -77,13 +77,9 @@ else {
     const src = leer("js/" + f);
     while ((m = re.exec(src))) registradas.add(m[1]);
   }
-  /* Las que ya se sabe que la base rechaza, con dónde está escrito por qué.
-     Una nueva sin su motivo acá es un error: nadie la decidió. */
-  const CONOCIDAS = {
-    finales100: "«Cuatro actividades se sumaron al CHECK…» en docs/decisiones/entrenamiento.md: emparejarla con curso/lección es un cambio aparte",
-  };
-  Object.keys(CONOCIDAS).forEach((a) => { if (registradas.has(a) && !check.actividades.has(a)) console.log(`  · ${a}: fuera del CHECK a sabiendas (${CONOCIDAS[a]})`); });
-  const faltan = [...registradas].filter((a) => !check.actividades.has(a) && !CONOCIDAS[a]);
+  /* Ninguna fuera: 'finales100' fue la última que la base rechazaba callada
+     (20260929152955_finales100_cuenta_en_su_curso.sql). */
+  const faltan = [...registradas].filter((a) => !check.actividades.has(a));
   if (faltan.length) mal(`la base (${check.f}) rechazaría: ${faltan.join(", ")}`);
   else bien(`las ${registradas.size} actividades que registran las páginas están en ${check.f}`);
   if (check.actividades.has("finales")) bien("'finales' está en el CHECK"); else mal("'finales' no está en el CHECK");

@@ -99,10 +99,8 @@ falló.
   `js/entreno-progress.js` y llaman a `EntrenoProgress.log(...)` al terminar
   una ronda, una línea, un nivel o un ejercicio — mismo patrón que ya usaban
   Mates, 4×4, Aprende, etc. `finales100` (Los 100 finales) y el `slug` de
-  `js/curso-partidas.js` siguen sin poder escribir en `training_progress` (no
-  están en el CHECK): **no** se tocaron acá, porque emparejarlos con
-  `curso`/`leccion` como espera `cursos_temas` de `informes_resumen_alumnos()`
-  es un cambio aparte, no de esta tanda.
+  `js/curso-partidas.js` quedaron fuera en esta tanda; `finales100` entró
+  después (ver «La práctica de los cursos de finales cuenta»).
 - **`logros.html` exige sesión** (mismo patrón que `entreno/estudio.html`:
   gate → `requireLoginThenGate()` → `unlock()`), porque la racha es de la
   cuenta, no del aparato. Pide `progreso_dias_y_racha` por RPC — nunca baja
@@ -947,8 +945,8 @@ Cada uno tiene una meta: **ganar** (dar mate) o **salvar** (hacer tablas).
   las páginas registran**: busca cada `EntrenoProgress.log('<x>', …)` de `js/`
   y la exige en el CHECK de la última migración que lo define. Una actividad
   fuera del CHECK se rechaza sin que nada avise (ver «Cuatro actividades se
-  sumaron al CHECK»). `finales100` queda fuera a sabiendas, con su motivo
-  escrito en el verificador.
+  sumaron al CHECK»). Ya no queda ninguna fuera: `finales100` entró después
+  (ver «La práctica de los cursos de finales cuenta»).
 - Dos pistas: la idea del final y, después, «la máquina jugaría…» con la pieza
   resaltada. Cualquiera de las dos cuenta como pista (`con_pista`).
 - Las jugadas se escriben como en el resto del sitio (`Tc2`, no `Rc2`): la
@@ -2402,3 +2400,21 @@ fallan de verdad: cambiando la opción buena de un Detective, un mínimo, un
 material y una respuesta de Fotografía saltan 7 comprobaciones; en Siete
 diferencias, cambiando una casilla del cambio, una evaluación de B o los
 enroques de B saltan las 3 que corresponden.
+
+## La práctica de los cursos de finales cuenta
+
+- `js/finales-100.js` (la práctica contra el motor de «El mapa de los
+  finales» y de «Estrategia en el final») registraba `finales100`, que no
+  estaba en el CHECK: la base rechazaba la fila callada y esas prácticas no
+  sumaban a la meta del día, la racha ni los logros.
+- Migración `20260929152955_finales100_cuenta_en_su_curso.sql`: suma
+  `finales100` al CHECK. La fila lleva el curso (`detail.curso`, del
+  `data-course` de la página) y `tiempo_por_seccion()` la cuenta dentro de
+  `curso:<slug>`, donde ya estaba el tiempo de esa página: en Informes no sale
+  una sección suelta sin minutos.
+- El correo a la casa la nombra «Finales de curso contra el motor» en «En qué
+  trabajó» (`ACTIVIDADES` de `informe-html.ts`; hace falta redesplegar
+  `informes-encargados` para verlo).
+- No sube `ACTIVIDADES_ALCANZABLES` de Logros: los cursos se compran aparte,
+  y exigirla dejaría «Las probaste todas» fuera del alcance de quien no los
+  tiene.
