@@ -247,7 +247,19 @@
       .forEach((l) => agregar(evita, Object.assign(lineaNotable(l, colorRival, false), { tipo: "linea", sec: l.sec }), MAX_EVITA));
 
     const marcar = conDerrotas(r, colorRival);
+    // Si cambió de repertorio hace poco, se avisa arriba: el plan puede estar
+    // armado con lo que ya no juega.
+    const avisos = ((r.reciente && r.reciente.cambios) || []).filter((c) => c.color === colorRival).map((c) => {
+      const donde = c.sec.length ? "contra " + A.lineaEs(c.sec) : "de entrada";
+      const nueva = c.antesParte < 0.1;
+      return {
+        texto: "Ojo: últimamente " + donde + " juega " + jugadaNumerada(c.sec, c.ahora.san) + (nueva ? ", que casi no jugaba" : " y ya no tanto " + jugadaNumerada(c.sec, c.antes.san)) + ".",
+        porque: "En sus últimas " + c.ahora.n + " partidas ahí la juega el " + pctEntero(c.ahora.parte) + "; antes jugaba " + jugadaNumerada(c.sec, c.antes.san) + " el " + pctEntero(c.antes.parte) + " de las veces. Prepara las dos.",
+        sec: c.sec.concat(c.ahora.san),
+      };
+    });
     return {
+      avisos,
       clave,
       titulo: clave === "conBlancas" ? "Cuando tú llevas blancas" : "Cuando tú llevas negras",
       lineas: lineas.map(marcar),
@@ -324,9 +336,47 @@
     return (x) => { if (x.sec) x.derrotas = derrotasEn(r, x.sec, colorRival); return x; };
   }
 
-  function armar(r) {
-    return { lados: [lado(r, "conBlancas"), lado(r, "conNegras")], general: general(r) };
+  /* El ritmo de la partida que viene (r.filtros.partida). Si el análisis ya
+     está filtrado a ese ritmo, se dice; si no (tiene muy pocas partidas a
+     ese ritmo), se avisa con cuántas cuenta y cuánto saca ahí. */
+  function ritmoDeLaPartida(r) {
+    const f = r.filtros || {};
+    if (!f.partida) return null;
+    const en = (r.porRitmo || []).filter((x) => mismoRitmo(x.ritmo, f.partida));
+    const n = en.reduce((a, x) => a + x.n, 0);
+    if (f.ritmos && f.ritmos.length && f.ritmos.every((x) => mismoRitmo(x, f.partida))) {
+      return { aviso: false, texto: "Preparado para una partida a " + f.partida + ": se usan solo sus partidas a ese ritmo (" + partidas(r.total) + ")." };
+    }
+    const pts = n ? en.reduce((a, x) => a + x.puntos * x.n, 0) / n : null;
+    return {
+      aviso: true,
+      texto: "Tu partida es a " + f.partida + ", y a ese ritmo " + (n ? "tiene " + partidas(n) + " (saca " + A.pct(pts) + ")" : "no tiene ninguna partida") +
+        ": son muy pocas para filtrar, así que el análisis usa todos sus ritmos. Tómalo con cuidado: a otro ritmo se juega distinto.",
+    };
+  }
+  // Los ritmos que se juntan: a ritmo lento, rápida y clásica; a ritmo muy
+  // rápido, bullet e hiperbullet.
+  const GRUPO_RITMO = { "hiperbullet": "bullet", "bullet": "bullet", "blitz": "blitz", "rápida": "lenta", "clásica": "lenta" };
+  const mismoRitmo = (a, b) => GRUPO_RITMO[a] && GRUPO_RITMO[a] === GRUPO_RITMO[b];
+
+  // La racha: si en sus partidas recientes saca 10 puntos más (o menos) que antes.
+  function racha(r) {
+    const c = r.reciente;
+    if (!c || c.n < 20 || c.puntos == null || c.antes.puntos == null) return null;
+    const dif = c.puntos - c.antes.puntos;
+    if (Math.abs(dif) < 0.1) return null;
+    return {
+      texto: dif > 0 ? "Viene en racha: juega mejor que de costumbre." : "Viene a la baja: juega peor que de costumbre.",
+      porque: "En sus últimas " + c.n + " partidas saca " + A.pct(c.puntos) + "; antes, " + A.pct(c.antes.puntos) + ".",
+    };
   }
 
-  return { armar, comoLeVa, jugadaNumerada, derrotasEn };
+  function armar(r) {
+    const g = general(r);
+    const ra = racha(r);
+    g.avisos = ra ? [ra] : [];
+    return { lados: [lado(r, "conBlancas"), lado(r, "conNegras")], general: g, ritmo: ritmoDeLaPartida(r) };
+  }
+
+  return { armar, comoLeVa, jugadaNumerada, derrotasEn, mismoRitmo };
 });
