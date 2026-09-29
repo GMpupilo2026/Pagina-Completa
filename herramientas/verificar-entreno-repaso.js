@@ -237,6 +237,27 @@ async function hub(browser) {
       [true, false, "Hoy llevas 0 de 5 ejercicios para que el día cuente. Con eso empiezas una racha."]);
     await ctx.close();
   }
+  /* El tema más flojo (js/tema-flojo.js): lo propone si está por debajo del 70 %,
+     y solo el del alumno de la sesión (la base puede devolver más filas). */
+  {
+    const fresco = { diagnostico_resultado_v1: JSON.stringify({ fecha: new Date().toISOString() }) };
+    const flojo = (pct) => ({ "rpc:informes_tema_mas_flojo": [
+      { student_id: "otra", tema: "fork", intentos: 9, limpios: 1, porcentaje: 11 },
+      { student_id: "u-ana", tema: "pin", intentos: 11, limpios: Math.round(11 * pct / 100), porcentaje: pct }] });
+    let { page, ctx, errores } = await abrir(browser, "/entreno/index.html", flojo(36), fresco);
+    await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
+    await page.waitForFunction(() => document.querySelectorAll("#hoy-lista a").length > 0, { timeout: 10000 });
+    const items = await page.evaluate(() => Array.from(document.querySelectorAll("#hoy-lista a")).map((a) => [a.textContent.replace("→", "").trim(), a.getAttribute("href")]));
+    igual("propone el tema más flojo del alumno, con su nombre y a dónde ir", items,
+      [["🎯Tu tema más flojo, «Clavada»: limpio en 4 de 11", "temas.html?tema=pin"]]);
+    sinErrores(errores, "hub con tema flojo");
+    await ctx.close();
+    ({ page, ctx } = await abrir(browser, "/entreno/index.html", flojo(80), fresco));
+    await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
+    await page.waitForTimeout(600);
+    igual("con 80 % limpio no lo propone", await page.evaluate(() => document.querySelectorAll("#hoy-lista a").length), "0");
+    await ctx.close();
+  }
   /* La meta del día sale de progreso_dias_y_racha, la misma cuenta de Logros. */
   {
     const racha = (hoy, actual) => ({ "rpc:progreso_dias_y_racha": [{ dias_activos: 9, racha_actual: actual, racha_record: 7,

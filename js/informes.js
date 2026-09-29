@@ -89,8 +89,17 @@
             return (e.precisionUltima === null ? "" : e.precisionUltima + " % en la última") +
                 ` · ${e.precisionRondas} ${e.precisionRondas === 1 ? "ronda" : "rondas"}`;
         }
+        /* El tema más flojo (js/tema-flojo.js): el motivo que menos sale limpio.
+           Sin cinco ejercicios de un mismo motivo con «cómo salió», no hay con qué
+           opinar, y la tarjeta lo dice en vez de mostrar un cero. */
+        function tarjetaTemaFlojo(e) {
+            const f = e.temaFlojo;
+            if (!f) return statCard("🔎", "—", "Tema más flojo (hace falta resolver 5 de un mismo tema)", true);
+            return statCard("🔎", `${escVis(f.nombre)} · ${f.porcentaje} %`, `Tema más flojo: limpio en ${f.limpios} de ${f.intentos}`, true);
+        }
         function tarjetasDeModulos(e) {
             return [
+                tarjetaTemaFlojo(e),
                 statCard("👁️", e.visualizacion, "Ejercicios de Visualización resueltos", true),
                 statCard("🧩", `${e.tiposEjercicios} (${e.tiposEstrellas}⭐)`, "Tipos de entrenamiento: ejercicios con estrellas", true),
                 statCard("📖", `${e.aperturasEmpezadas} (${e.aperturasFirmes} firmes)`, "Líneas de Aperturas estudiadas", true),
@@ -141,6 +150,7 @@
                 precisionRondas: m.precision_rondas || 0,
                 precisionUltima: typeof m.precision_ultima === "number" ? m.precision_ultima : null,
                 precisionFecha: m.precision_fecha || null,
+                temaFlojo: m.temaFlojo || null,
                 puzzles: f.puzzles || 0,
                 lessons: f.lecciones || 0,
                 bestCoord: f.mejor_coord || 0,
@@ -167,7 +177,7 @@
         // compañeros—, así que su vista busca SU renglón por id y nunca toma el primero.
         // Por eso sirven para las dos vistas sin escribir la cuenta dos veces.
         async function cargarResumen() {
-            const [alumnos, cursos, diagnosticos, modulos, justificadas] = await Promise.all([
+            const [alumnos, cursos, diagnosticos, modulos, justificadas, flojos] = await Promise.all([
                 traerTodo(() => sb.rpc("informes_resumen_alumnos")),
                 traerTodo(() => sb.rpc("informes_cursos_alumnos")),
                 traerTodo(() => sb.rpc("informes_diagnosticos_alumnos")),
@@ -175,6 +185,8 @@
                 // Las clases a las que faltó con una justificación ACEPTADA: las
                 // cuenta la base (faltas_justificadas), no se guardan.
                 traerTodo(() => sb.rpc("faltas_justificadas")),
+                // Si la cuenta del tema más flojo falla, el informe sale igual, sin esa tarjeta.
+                window.TemaFlojo ? TemaFlojo.cargar(sb, "").catch(() => ({})) : Promise.resolve({}),
             ]);
             const justificadasPorAlumno = {};
             justificadas.forEach((j) => { justificadasPorAlumno[j.student_id] = j.clases_justificadas || 0; });
@@ -183,6 +195,7 @@
             cursos.forEach((c) => { (cursosPorAlumno[c.student_id] = cursosPorAlumno[c.student_id] || []).push(c); });
             diagnosticos.forEach((d) => { diagnosticoPorAlumno[d.student_id] = d; });
             modulos.forEach((m) => { modulosPorAlumno[m.student_id] = m; });
+            Object.keys(flojos).forEach((id) => { modulosPorAlumno[id] = Object.assign({}, modulosPorAlumno[id], { temaFlojo: flojos[id] }); });
             return { alumnos, cursosPorAlumno, diagnosticoPorAlumno, modulosPorAlumno };
         }
 

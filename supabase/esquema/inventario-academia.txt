@@ -1077,6 +1077,7 @@ funcion  informes_diagnosticos_alumnos()  invoker  anon=false  auth=true
 funcion  informes_entreno_modulos()  invoker  anon=false  auth=true
 funcion  informes_inactivos(p_dias integer)  invoker  anon=true  auth=true
 funcion  informes_resumen_alumnos()  invoker  anon=false  auth=true
+funcion  informes_tema_mas_flojo(p_temas text[])  invoker  anon=false  auth=true
 funcion  informes_totales()  invoker  anon=false  auth=true
 funcion  iniciar_examen(p_examen uuid)  definer  anon=false  auth=true
 funcion  interno.academia_activa()  definer  anon=false  auth=true
