@@ -104,11 +104,14 @@
                mudaron «En línea ahora» (retar), «Partidas en curso» y
                «Partidas terminadas». Juegos quedó para conocer las modalidades
                y armar partidas; Competir, para jugar contra otra persona y
-               seguir esas partidas. */
+               seguir esas partidas.
+
+               «Torneos» ya no tiene tarjeta propia: se entra desde Competir,
+               que es donde vive todo lo de jugar contra otra persona. Un
+               destino, un camino (ver «Racha táctica» arriba). */
             { title: "Jugar y competir", tiles: [
                 { emoji: "🎲", label: "Juegos", desc: "Crazyhouse y otras modalidades — tu profesor te asigna el rival", descProfe: "Crazyhouse y otras modalidades — arma las partidas de tus alumnos", href: "juegos.html" },
-                { emoji: "⚔️", label: "Competir", desc: "Reta a quien esté en línea ahora y sigue tus partidas en curso y terminadas", descProfe: "Reta a quien esté en línea y sigue las partidas de tus alumnos, en curso y terminadas", href: "competir.html" },
-                { emoji: "🥇", label: "Torneos", desc: "Inscríbete y compite en los torneos que arma tu profesor", descProfe: "Arma torneos para tus alumnos, con sus rondas y su tabla", href: "torneos.html" },
+                { emoji: "⚔️", label: "Competir", desc: "Torneos, retos a quien esté en línea y tus partidas en curso y terminadas", descProfe: "Torneos para tus alumnos, retos a quien esté en línea y sus partidas en curso y terminadas", href: "competir.html" },
                 { photo: "img/oscar-avatar.jpg", label: "Juega contra mí", desc: "Practica contra Oscar, nuestro motor", href: "tablero.html" },
             ] },
             /* «Mide tu nivel» (los dos diagnósticos) ya no existe: el de
@@ -794,8 +797,7 @@
             "cursos/academia/index.html": "curso temario lecciones",
             "articulos.html": "leer lecturas blog",
             "juegos.html": "partidas jugar rival crazyhouse niebla variantes modalidades",
-            "competir.html": "retar reto en linea conectados partidas en curso terminadas rival",
-            "torneos.html": "torneo competir competencia rondas tabla",
+            "competir.html": "retar reto en linea conectados partidas en curso terminadas rival torneo torneos competencia rondas tabla",
             "tv.html": "ver partidas en directo transmision",
             "tablero.html": "bot motor oscar jugar contra la computadora",
             "logros.html": "medallas racha premios",

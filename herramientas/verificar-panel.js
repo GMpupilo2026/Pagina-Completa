@@ -330,7 +330,9 @@ async function pruebaAlumna(browser) {
      es lo primero que hay dentro de juegos.html, y un mismo destino dos veces
      en el panel es el error que ya se cometió con «Torneos». */
   igual("Jugar y competir", grupo(grupos, "Jugar y competir").tiles.map((t) => t.enlace),
-    ["juegos.html", "competir.html", "torneos.html", "tablero.html"]);
+    ["juegos.html", "competir.html", "tablero.html"]);
+  igual("y Torneos ya no va en el panel: se entra desde Competir",
+    grupos.flatMap((g) => g.tiles).filter((t) => t.enlace === "torneos.html").length, "0");
   igual("y la racha táctica no se ofrece dos veces: en el panel ya no",
     grupos.flatMap((g) => g.tiles).filter((t) => t.enlace === "racha-tactica.html").length, "0");
   /* Dentro de Aprender, el orden es el del trabajo de todos los días: lo que se
@@ -511,7 +513,7 @@ async function pruebaTextosPorRol(browser) {
   igual("a la profesora, Tareas le habla de asignar",
     profe["Tareas"], "Pide cantidades y la tarea se llena sola con lo que entrenan");
   igual("Informes es el de sus alumnos", profe["Informes"], "El progreso de tus alumnos y los informes a la casa");
-  igual("los torneos los arma ella", profe["Torneos"], "Arma torneos para tus alumnos, con sus rondas y su tabla");
+  igual("los torneos los arma ella (en Competir)", profe["Competir"], "Torneos para tus alumnos, retos a quien esté en línea y sus partidas en curso y terminadas");
   igual("y el rival de Juegos también", profe["Juegos"], "Crazyhouse y otras modalidades — arma las partidas de tus alumnos");
   igual("la sesión en vivo es el tablero de SU clase", profe["Sesión en vivo"], "El tablero que ve tu clase, en vivo");
 

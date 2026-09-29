@@ -454,6 +454,11 @@ partidas.
 - **Los retos que me llegan van en Competir**, encima de todo: el canal de
   presencia (`juegos-en-linea`) solo anuncia a quien tiene esa página abierta,
   así que solo desde ahí se puede retar y recibir un reto.
+- **Torneos también se entra desde Competir.** Su tarjeta salió del panel y
+  es la primera de `competir.html` (debajo de los retos que llegan); las migas
+  de `torneos.html` dicen Academia › Competir › Torneos. El texto cambia según
+  quien mira: al alumno, «los que arma tu profesor»; a quien arma torneos,
+  «para tus alumnos».
 - Juegos conserva una tarjeta a Competir, para quien buscaba ahí lo que se fue,
   y al crear una partida el aviso dice que se sigue en Competir, con su enlace.
 - `node herramientas/verificar-todo.js profesor-juega panel` lo comprueba: que

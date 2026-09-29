@@ -5,6 +5,7 @@
      - «En línea ahora»: quién tiene esta página abierta y el botón de retarlo,
        con los retos que me llegan encima de todo;
      - «Partidas en curso» y «Partidas terminadas».
+   Y la tarjeta de Torneos, que antes estaba sola en el panel.
    Juegos se quedó con el catálogo, los juegos para uno solo, el formulario
    del profesor y la tarjeta de la partida propia. Lo que usan las dos
    páginas vive en js/juegos-comun.js. */
@@ -427,8 +428,10 @@
             // Quien administra ve esta página como profesor, igual que en Juegos.
             isTeacher = profile.role === "profesor" || !!profile.is_admin;
             document.getElementById("subtitle").textContent = isTeacher
-                ? "Reta a quien esté en línea y sigue las partidas de tus alumnos, en curso y terminadas."
-                : "Reta a quien esté en línea y sigue tus partidas, en curso y terminadas.";
+                ? "Torneos, retos a quien esté en línea y las partidas de tus alumnos, en curso y terminadas."
+                : "Torneos, retos a quien esté en línea y tus partidas, en curso y terminadas.";
+            // A quien arma torneos no se le dice «los que arma tu profesor».
+            if (isTeacher) document.getElementById("torneos-desc").textContent = "Arma torneos para tus alumnos, con sus rondas y su tabla.";
 
             // Quién está en línea y los retos: para todos, alumnos y profesores.
             await iniciarPresencia();

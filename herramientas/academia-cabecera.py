@@ -573,7 +573,7 @@ NOMBRE_Y_PADRE = {
     "encuestas-curso.html": ("Encuestas anónimas de cursos", "clases.html"),
     "preparacion-rivales.html": ("Preparación de rivales", "clases.html"),
     "plan-rival.html": ("Tu plan contra un rival", "tareas.html"),
-    "torneos.html": ("Torneos", "clases.html"),
+    "torneos.html": ("Torneos", "competir.html"),
     "torneo.html": ("Torneo", "torneos.html"),
     "cartas.html": ("Ajedrez de Cartas", "juegos.html"),
     "concentracion.html": ("Concentración", "juegos.html"),

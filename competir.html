@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="img/favicon.svg">
     <title>Competir — Ajedrez Integral</title>
-    <meta name="description" content="Reta a quien esté en línea en la Academia y sigue las partidas en curso y terminadas.">
+    <meta name="description" content="Torneos, retos a quien esté en línea en la Academia y las partidas en curso y terminadas.">
     <meta name="robots" content="noindex">
     <!-- Tailwind compilado: lo genera herramientas/css-construir.js.
          Antes venía del CDN, que baja ~400 KB de JavaScript y compila el CSS
@@ -31,12 +31,25 @@
     <div id="app" class="hidden pt-10 pb-16">
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <h1 class="font-serif text-3xl font-bold text-brand-800 dark:text-white mb-1">Competir <span aria-hidden="true">⚔️</span></h1>
-            <p class="text-brand-500 dark:text-brand-300 mb-8" id="subtitle">Reta a quien esté en línea y sigue las partidas.</p>
+            <p class="text-brand-500 dark:text-brand-300 mb-8" id="subtitle">Torneos, retos a quien esté en línea y las partidas.</p>
 
             <div id="status-banner" class="hidden mb-6 rounded-xl bg-brand-100 dark:bg-brand-900 px-4 py-3 text-sm text-brand-600 dark:text-brand-300"></div>
 
             <!-- Retos que me llegan: aparecen encima de todo y esperan respuesta -->
             <div id="retos-recibidos" class="space-y-3 mb-6"></div>
+
+            <!-- Torneos: su tarjeta del panel se mudó acá, junto a lo demás de
+                 jugar contra otra persona. El texto de abajo lo cambia
+                 js/competir.js a quien arma torneos. -->
+            <a href="torneos.html" class="block bg-gradient-to-r from-accent-500 to-accent-600 text-brand-900 rounded-2xl shadow-md p-5 mb-6 hover:shadow-lg transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-700 focus-visible:ring-offset-2">
+                <div class="flex items-center gap-4">
+                    <span class="text-4xl" aria-hidden="true">🥇</span>
+                    <div>
+                        <h2 class="font-serif text-lg font-bold">Torneos</h2>
+                        <p class="text-sm" id="torneos-desc">Inscríbete y compite en los torneos que arma tu profesor, con sus rondas y su tabla.</p>
+                    </div>
+                </div>
+            </a>
 
             <!-- Quién está conectado ahora y a quién se puede retar. Es de todos:
                  alumnos y profesores lo ven igual. -->

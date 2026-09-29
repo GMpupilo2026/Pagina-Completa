@@ -255,6 +255,8 @@ async function pruebaPartidaPropia(browser) {
   const ajena = botones.find((b) => b.quienes.indexOf("Karina") === -1);
   igual("en su partida el botón dice Jugar", mia && mia.boton, "♟️ Jugar");
   igual("en la de los alumnos sigue diciendo Ver", ajena && ajena.boton, "👀 Ver");
+  igual("Competir lleva a Torneos", String(!!(await c.page.$("a[href='torneos.html']"))), "true");
+  igual("y a quien los arma se lo dice así", await c.page.textContent("#torneos-desc"), "Arma torneos para tus alumnos, con sus rondas y su tabla.");
   igual("y quien arma las partidas las puede terminar", String(await c.page.$$eval("#ongoing-list button", (bs) => bs.some((b) => b.textContent === "Terminar"))), "true");
   igual("sin errores en consola", c.errores.join(" | ") || "ninguno", "ninguno");
   await c.ctx.close();
@@ -268,6 +270,7 @@ async function pruebaPartidaPropia(browser) {
     botones: Array.from(document.querySelectorAll("#ongoing-list button, #finished-list button")).map((b) => b.textContent),
   }));
   igual("el alumno ve su partida en la lista", alumno.filas, 1);
+  igual("y a él Torneos le habla de los de su profesor", /arma tu profesor/.test(await a.page.textContent("#torneos-desc")), "true");
   igual("sin botones de Terminar ni Eliminar", alumno.botones.join(",") || "ninguno", "ninguno");
   igual("sin errores en consola", a.errores.join(" | ") || "ninguno", "ninguno");
   await a.ctx.close();

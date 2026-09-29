@@ -56,7 +56,8 @@ lista, y el resto se acomoda solo.
   "Jugar y competir" va primero donde se juega contra otra persona (Juegos, y
   Competir, que es retar a quien está en línea y las listas de partidas; ver
   «Competir: retar y las listas de partidas tienen su propia página» en
-  `juegos-y-torneos.md`), después el torneo y al final el bot.
+  `juegos-y-torneos.md`) y al final el bot. Torneos ya no tiene tarjeta: se
+  entra desde Competir.
 - **"TV en vivo" y "Logros" están en "Tu cuenta"**, que va en este orden:
   Configuración, Informes, Logros, TV en vivo y, solo al alumnado, "¿Cómo van
   tus clases?". Lo pidió así el dueño de la Academia; antes las dos estaban al
