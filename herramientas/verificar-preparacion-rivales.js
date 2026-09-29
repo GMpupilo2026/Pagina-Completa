@@ -1227,6 +1227,43 @@ function pruebaReciente() {
   cierto("con todas las partidas de la misma fecha, pesar lo reciente no cambia nada", JSON.stringify(A.analizar(A.leerPgn(pgnDePrueba()), "Pedro Perez").repertorio) === JSON.stringify(A.analizar(A.leerPgn(pgnDePrueba()), "Pedro Perez", { reciente: false }).repertorio));
 }
 
+/* El árbol llega a 30 medias jugadas (15 jugadas). Más allá de la 16, lo
+   que vio una sola partida no se abre: el nodo espera a la segunda. Una
+   Española cerrada de 24 medias jugadas, 6 veces; y una que se aparta en la
+   jugada 10 (…Ab7 en vez de …Cbd7). */
+function pruebaArbolHondo() {
+  console.log("\n=== El árbol más hondo: hasta la jugada 15 ===");
+  const LINEA = "e4 e5 Nf3 Nc6 Bb5 a6 Ba4 Nf6 O-O Be7 Re1 b5 Bb3 d6 c3 O-O h3 Nb8 d4 Nbd7 Nbd2 Bb7 Bc2 Re8".split(" ");
+  const OTRA = "e4 e5 Nf3 Nc6 Bb5 a6 Ba4 Nf6 O-O Be7 Re1 b5 Bb3 d6 c3 O-O h3 Nb8 d4 Bb7 Nbd2 Nbd7 Bc2 Re8".split(" ");
+  const pgnDe = (sec) => sec.map((m, i) => (i % 2 ? "" : (i / 2 + 1) + ". ") + m).join(" ").replace(/^1\. /, "");
+  let t = "";
+  for (let i = 0; i < 6; i++) t += partida("Otro " + i, "Pedro", i % 2 ? "1-0" : "0-1", pgnDe(LINEA));
+  t += partida("Otro 9", "Pedro", "1-0", pgnDe(OTRA));
+  const r = A.analizar(A.leerPgn(t), "Pedro");
+  const g = new Chess();
+  LINEA.slice(0, 21).forEach((m) => g.move(m));
+  igual("su libro llega a la jugada 11: después de 11.Cbd2 juega 11…Ab7, las 6 veces", Lb.jugadas(r.libro.b, g.fen()).map((x) => [x.san, x.n]), [["Bb7", 6]]);
+  const h = new Chess();
+  LINEA.slice(0, 19).forEach((m) => h.move(m));
+  igual("y en la jugada 10 sabe que una vez se apartó", Lb.jugadas(r.libro.b, h.fen()).map((x) => [x.san, x.n]), [["Nbd7", 6], ["Bb7", 1]]);
+  const principal = L.lineasDelPlan(r.conBlancas.plan)[0].map((x) => x.san);
+  cierto("el plan con blancas sigue la línea más allá de la jugada 5 (" + principal.length + " medias jugadas)", principal.length >= 16 && principal.join(" ") === LINEA.slice(0, principal.length).join(" "));
+
+  // Por dentro: la que se apartó queda en su nodo, sin abrir; con una segunda, se abre.
+  const I = A.interno;
+  const bajar = (raiz, sec) => sec.reduce((n, m) => n && n.hijos.get(m) && n.hijos.get(m).nodo, raiz);
+  const una = I.armarArbol(A.leerPgn(t).map((x) => Object.assign(x, { color: "b", res: "G" })));
+  const nodo = bajar(una, OTRA.slice(0, 20));
+  igual("la jugada 10…Ab7 que vio una sola partida: está, pero no se abre más allá", [nodo && nodo.c.n, nodo && nodo.hijos.size], [1, 0]);
+  const dos = I.armarArbol(A.leerPgn(t + partida("Otro 10", "Pedro", "1-0", pgnDe(OTRA))).map((x) => Object.assign(x, { color: "b", res: "G" })));
+  igual("con una segunda por el mismo camino se abre, con las dos; y en la jugada 11 se junta con las 6 (la misma posición por otro orden)",
+    [bajar(dos, OTRA.slice(0, 20)).c.n, bajar(dos, OTRA.slice(0, 21)).c.n, bajar(dos, OTRA.slice(0, 22)).c.n], [2, 2, 8]);
+  // Una Berlinesa que vio una sola partida: hasta la media jugada 16 entra entera; después, no.
+  const BERLINESA = "e4 e5 Nf3 Nc6 Bb5 Nf6 O-O Nxe4 Re1 Nd6 Nxe5 Be7 Bf1 Nxe5 Rxe5 O-O d4 Bf6".split(" ");
+  const tres = I.armarArbol(A.leerPgn(t + partida("Otro 11", "Pedro", "1-0", pgnDe(BERLINESA))).map((x) => Object.assign(x, { color: "b", res: "G" })));
+  igual("hasta la jugada 8 entra todo, aunque la vea una sola; después, no se abre", [bajar(tres, BERLINESA.slice(0, 16)).c.n, !!bajar(tres, BERLINESA.slice(0, 17))], [1, false]);
+}
+
 function pruebaPlanDelAlumno(r) {
   console.log("\n=== Etapa 4: lo que se le manda al alumno ===");
   const p = L.planDelAlumno(r, "conNegras");
@@ -2114,6 +2151,7 @@ async function pruebaMotorDeVerdad(browser) {
   pruebaLibro(conMotor);
   pruebaRepasoEspaciado();
   pruebaReciente();
+  pruebaArbolHondo();
   const libro = pruebaTeoria();
   pruebaCruce();
   pruebaTiposDeFinal();
