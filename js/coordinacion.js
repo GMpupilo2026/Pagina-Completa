@@ -681,6 +681,10 @@ let equipoRecienCreado = null;
 
 function pintarEquipos() {
     const caja = document.getElementById("equipos-lista");
+    /* Lo abierto se lee del DOM antes de borrarlo: el evento `toggle` llega
+       un instante después del clic, y un repintado que cae en ese instante
+       (un volcado, un ✕) volvería a cerrar lo que se acaba de abrir. */
+    caja.querySelectorAll("details[data-equipo]").forEach((d) => equipoAbierto.set(d.dataset.equipo, d.open));
     caja.innerHTML = "";
     document.getElementById("equipos-vacio").classList.toggle("hidden", equipos.length > 0);
 
