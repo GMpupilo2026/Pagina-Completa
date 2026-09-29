@@ -1720,6 +1720,34 @@ no pregunta «¿hay motor?»:
   para mostrarlo sin volver a pintar todo;
 - con el Stockfish de verdad, la primera repintada llega recién al terminar.
 
+**Probado con un rival de verdad, y corregido.** Con datos de prueba se veía
+bien. Con jeigoth5 (500 partidas de Lichess, Elo 2707, con Stockfish, la teoría
+y el cruce con un alumno) salieron cinco problemas:
+- **Pedía jugadas que elige él.** La línea era 1.g3 y los consejos decían «No
+  vayas a 1.e4 g6», pero 1…g6 lo elige él. Ahora el consejo depende de quién
+  hace la última jugada (`ultimaEsSuya()`):
+  - si es tuya: «Juega 2…Cf6 después de 1.d4 d5 2.Cf3» o «No juegues 2.d4
+    después de 1.e4 Cc6»;
+  - si es de él: «Si llegan a 1.e4 e6, a él le cuesta: estudia esa posición»
+    o «Cuidado si llegan a 1.e4 g6», con «si no la conoces, evita 1.e4».
+- **La misma idea salía tres veces.** Pasaba con «1.e4 e6», «…2.d4» y «…3.Cd2
+  dxe4 4.Cxe4». Dentro de un mismo tipo de consejo, una línea que empieza o
+  continúa otra ya dicha no se repite. Queda la de más peso: cuánto se aparta
+  de su promedio por la raíz de las partidas, así que la de 23 partidas gana
+  a la de 7. Entre tipos distintos sí se repite: «ahí deja la teoría» y «ahí
+  repite un error» en la misma línea son dos consejos.
+- **1.g3 salía de 9 partidas de 500 y no lo decía.** Debajo del doble de
+  `minimo` se avisa: «Son solo 9 partidas: tómalo como pista, no como regla».
+- **Lo del alumno no aparecía.** Ahora va antes que las líneas generales, porque
+  es quien va a jugar, y solo si ahí el rival saca menos de 50 %. Además, la
+  línea recomendada dice si el alumno ya la juega o si juega otra cosa: «suele
+  jugar 1.d4 y no 1.g3 (653 contra 89): que practique la línea antes».
+- **«Busca» una línea donde él saca 50 %.** Ahora dice «rinde menos que de
+  costumbre»; «le cuesta» o «le va mal» se dicen solo cuando lo es.
+
+El verificador arma un caso con esos datos y comprueba cada regla. Falla si se
+quita la deduplicación o si se pide la jugada de él como si fuera tuya.
+
 **El orden de las tarjetas.** Va de lo más útil para jugarle a lo más general:
 1. el resumen;
 2. las cifras;
