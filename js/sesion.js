@@ -468,9 +468,26 @@
             return textos.join(" ");
         }
 
+        /* La vista que llegó de la base trae lo que el tablero no guarda (de
+           quién es la respuesta que se muestra): se le suma a la que se ve, si
+           es la misma. */
+        let vistaRecibida = null;
+        function vistaQueSeVe() {
+            const v = board.currentView();
+            if (v && vistaRecibida && vistaRecibida.respuesta && JSON.stringify(v.path) === JSON.stringify(vistaRecibida.path)) {
+                return Object.assign({}, v, { respuesta: vistaRecibida.respuesta });
+            }
+            return v;
+        }
+
         // Qué está mostrando el profe, dicho para el alumno (null = la posición en vivo).
         function describirVista(vista) {
             if (!vista || !Array.isArray(vista.path)) return null;
+            // Una respuesta que el profe le muestra a la clase.
+            if (vista.respuesta && typeof vista.respuesta === "object") {
+                const quien = vista.respuesta.nombre ? String(vista.respuesta.nombre) : "un compañero";
+                return "📺 Así lo resolvió " + quien + ": " + numerarJugadas(vista.path, Math.max(0, Math.min(vista.root || 0, vista.path.length))) + ".";
+            }
             const principal = board.moves();
             const root = Math.max(0, Math.min(vista.root || 0, vista.path.length));
             const esVariante = vista.path.length > root || vista.path.some((san, i) => principal[i] !== san);
@@ -496,7 +513,7 @@
         function pintarVistaDelProfe() {
             const el = document.getElementById("vista-profe");
             if (!el) return;
-            const texto = isTeacher ? null : describirVista(board.currentView());
+            const texto = isTeacher ? null : describirVista(vistaQueSeVe());
             el.textContent = texto ? texto + " La partida sigue guardada: cuando vuelva al final, la verás de nuevo." : "";
             el.hidden = !texto;
         }
@@ -547,6 +564,7 @@
             /* Quien sigue la clase ve lo que mira el profe. El profe, en cambio, ya
                tiene su vista en el tablero: solo la retoma al cargar la página (la
                suya propia de antes de recargar), no con cada eco. */
+            vistaRecibida = row.vista || null;
             if (!isTeacher && !editando) board.showView(row.vista || null);
             else if (isTeacher && primeraVez && row.vista) {
                 board.showView(row.vista);
@@ -562,7 +580,7 @@
             if (claseAcc) {
                 if (!editando) claseAcc.anunciarCambio(antes, { inicio: row.start_fen || "", jugadas: row.moves || [] });
                 if (!isTeacher && antes && vistaCambio) {
-                    claseAcc.decir((describirVista(board.currentView()) || "Tu profe volvió a la posición de la partida.")
+                    claseAcc.decir((describirVista(vistaQueSeVe()) || "Tu profe volvió a la posición de la partida.")
                         + " Escribe \"posición\" para oírla.");
                 }
                 if (!isTeacher && ocultabaAntes !== board.piecesHidden) {
@@ -2255,7 +2273,9 @@
                 return;
             }
             await cargarPlanHecho();
-            itemsDelPlan.forEach((it) => lista.appendChild(pintarRenglonDelPlan(it)));
+            // Lo que hay que repasar de la clase pasada va primero (sort estable: el resto en su orden).
+            itemsDelPlan.slice().sort((a, b) => repaso.ids.has(b.id) - repaso.ids.has(a.id))
+                .forEach((it) => lista.appendChild(pintarRenglonDelPlan(it)));
         }
 
         /* Lo que ya se dio del plan en ESTA clase (clase_plan_hecho). Es de la
@@ -2313,6 +2333,13 @@
             titulo.className = "font-semibold text-brand-700 dark:text-brand-200 break-words";
             titulo.textContent = PlanClase.resumen(item);
             li.appendChild(titulo);
+
+            if (repaso.ids.has(item.id)) {
+                const r = document.createElement("p");
+                r.className = "plan-repasar text-xs font-semibold text-accent-700 dark:text-accent-400 mt-0.5";
+                r.textContent = "🔁 Para repasar: la pregunta de salida de la clase pasada dijo que no quedó.";
+                li.appendChild(r);
+            }
 
             const detalle = item.pregunta || item.nota;
             if (detalle) {
@@ -3111,6 +3138,47 @@
             if (err2) { console.error(err2); return; }
             ResumenClase.pintarSalida(caja, fila, "📌 La clase pasada" + (pasada.title ? " («" + pasada.title + "»)" : "")
                 + ", la pregunta de salida dijo: ");
+            const v = ResumenClase.veredictoSalida(fila);
+            await proponerRepaso(pasada.id, v && (v.tono === "repetir" || v.tono === "medias"), caja);
+        }
+
+        /* Si no quedó, lo que se vio del plan en esa clase (clase_plan_hecho)
+           se propone para repasar: sube al principio de «Mi plan» con su marca.
+           No se guarda nada: sale de la pregunta de salida y de lo marcado. */
+        let repaso = { ids: new Set(), planId: null };
+        async function proponerRepaso(claseId, hayQueRepasar, caja) {
+            repaso = { ids: new Set(), planId: null };
+            if (hayQueRepasar) {
+                const { data: hechos, error } = await sb.from("clase_plan_hecho").select("plan_item_id").eq("class_session_id", claseId);
+                if (error) { console.error(error); return; }
+                const ids = (hechos || []).map((h) => h.plan_item_id);
+                const { data: items, error: err2 } = ids.length
+                    ? await sb.from("plan_items").select("id, plan_id, titulo, tipo, leccion").in("id", ids)
+                    : { data: [], error: null };
+                if (err2) { console.error(err2); return; }
+                if ((items || []).length) {
+                    repaso = { ids: new Set(items.map((it) => it.id)), planId: items[0].plan_id };
+                    caja.appendChild(document.createTextNode(" Se vio: " + items.map((it) => "«" + PlanClase.resumen(it) + "»").join(", ") + ". "));
+                    const btn = document.createElement("button");
+                    btn.type = "button";
+                    btn.id = "repasar-plan-btn";
+                    btn.className = "text-xs font-semibold px-2 py-1 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+                    btn.textContent = "🔁 Repasarlo en Mi plan";
+                    btn.addEventListener("click", async () => {
+                        const select = document.getElementById("plan-select");
+                        if (repaso.planId && [...select.options].some((o) => o.value === repaso.planId)) {
+                            select.value = repaso.planId;
+                            await abrirPlanEnClase(repaso.planId);
+                        }
+                        activateTeacherTab("plan");
+                        document.getElementById("plan-items").scrollIntoView({ block: "nearest" });
+                    });
+                    caja.appendChild(btn);
+                }
+            }
+            // Si ya había un plan abierto, se vuelve a pintar con lo de repasar arriba.
+            const select = document.getElementById("plan-select");
+            if (select && select.value) await abrirPlanEnClase(select.value);
         }
 
         if (document.getElementById("salida-termometro-btn")) {
@@ -3871,13 +3939,16 @@
                     '<div class="respuesta-mini-calificar hidden flex gap-1 mt-1.5">' +
                         '<button type="button" data-nota="bien" class="flex-1 text-xs font-semibold px-2 py-1 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors"><span aria-hidden="true">✅ </span>Correcta</button>' +
                         '<button type="button" data-nota="mal" class="flex-1 text-xs font-semibold px-2 py-1 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors"><span aria-hidden="true">❌ </span>A revisar</button>' +
-                    "</div>";
+                    "</div>" +
+                    // Pasarla al tablero de todos, como una variante: la partida no se toca.
+                    '<button type="button" class="respuesta-mini-mostrar hidden mt-1.5 w-full text-xs font-semibold px-2 py-1.5 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors"><span aria-hidden="true">📺 </span>Mostrar a la clase</button>';
                 document.getElementById("question-boards-grid").appendChild(wrap);
                 t = {
                     el: wrap,
                     nombreEl: wrap.querySelector(".respuesta-mini-nombre"),
                     estadoEl: wrap.querySelector(".respuesta-mini-estado"),
                     calificarEl: wrap.querySelector(".respuesta-mini-calificar"),
+                    mostrarEl: wrap.querySelector(".respuesta-mini-mostrar"),
                     board: new ClasesBoard(wrap.querySelector(".respuesta-mini-tablero"), { interactive: false, allowArrows: false, compact: true }),
                     clave: null,
                 };
@@ -3889,9 +3960,11 @@
                     fin.is_correct = valor;
                     pintarTablerosDePregunta();
                 }));
+                wrap.querySelector(".respuesta-mini-mostrar").addEventListener("click", () => mostrarRespuestaALaClase(id));
                 tablerosPregunta[id] = t;
             }
             const nombre = nombreEnPregunta(id);
+            t.mostrarEl.setAttribute("aria-label", "Mostrar a la clase la respuesta de " + nombre);
             t.nombreEl.textContent = nombre;   // textContent: lo escribió una persona
             t.nombreEl.title = nombre;
             t.calificarEl.querySelectorAll("[data-nota]").forEach((btn) =>
@@ -3917,12 +3990,59 @@
                 t.estadoEl.textContent = "Todavía no mueve.";
             }
             t.calificarEl.classList.toggle("hidden", !fin);
+            t.mostrarEl.classList.toggle("hidden", !(fin && moves.length));
             t.calificarEl.querySelectorAll("[data-nota]").forEach((btn) => {
                 const marcado = !!fin && fin.is_correct === (btn.dataset.nota === "bien");
                 btn.setAttribute("aria-pressed", marcado ? "true" : "false");
                 btn.classList.toggle("ring-2", marcado);
                 btn.classList.toggle("ring-accent-500", marcado);
             });
+        }
+
+        /* ---------- Mostrar la respuesta de un alumno a toda la clase ----------
+           Va como una VARIANTE que mira el profe (game_state.vista): la partida
+           de la clase no se toca, y al volver al final todos la ven de nuevo.
+           La vista lleva además de quién es la respuesta ({nombre} o null, si el
+           profe no quiere decirlo), y eso es lo que lee la clase. */
+        function jugadaDeLaPosicion(fen) {
+            // Cuántas jugadas de la partida hay hasta la posición de la pregunta
+            // (-1 si ya no está en ella). Se comparan pieza, turno, enroques y al paso.
+            const clave = (f) => String(f || "").split(" ").slice(0, 4).join(" ");
+            const buscada = clave(fen);
+            const g = board.startFen ? new Chess(board.startFen) : new Chess();
+            const principal = board.moves();
+            if (clave(g.fen()) === buscada) return 0;
+            for (let i = 0; i < principal.length; i++) {
+                if (!g.move(principal[i])) return -1;
+                if (clave(g.fen()) === buscada) return i + 1;
+            }
+            return -1;
+        }
+
+        async function mostrarRespuestaALaClase(id) {
+            const q = preguntaConTableros();
+            const fin = respuestasFinales.get(id);
+            if (!q || !fin || !(fin.moves || []).length) return;
+            let k = jugadaDeLaPosicion(q.fen);
+            if (k === -1) {
+                // Se cambió la posición después de preguntar: hay que mandarla de nuevo.
+                const seguir = await Avisos.confirmar("El tablero de la clase ya no tiene la posición de la pregunta. Para mostrar la respuesta hay que volver a mandarla, y la partida que está ahora se reemplaza.",
+                    { titulo: "¿Volver a la posición de la pregunta?", aceptar: "Mandar la posición y mostrarla" });
+                if (!seguir || !(await aplicarPosicionEnClase(q.fen))) return;
+                k = 0;
+            }
+            const vista = { path: board.moves().slice(0, k).concat(fin.moves), parent: null, root: k };
+            board.showView(vista);
+            renderMoveList();
+            const conNombre = document.getElementById("mostrar-con-nombre").checked;
+            const nombre = nombreEnPregunta(id);
+            // La vista local no lleva el autor: así transmitirVista() no la vuelve a mandar sin él.
+            ultimaVistaEnviada = JSON.stringify(board.currentView());
+            const { error } = await sb.from("game_state").update({ vista: Object.assign({}, vista, { respuesta: { nombre: conNombre ? nombre : null } }) })
+                .eq("id", myGameStateId);
+            if (error) { console.error(error); ultimaVistaEnviada = null; setStatus("No se pudo mostrar: " + error.message); return; }
+            setStatus("📺 La clase ve la respuesta de " + nombre + (conNombre ? ", con su nombre." : ", sin su nombre.")
+                + " Vuelve al final de la partida para seguir.");
         }
 
         function renderAnswersList(answers) {
