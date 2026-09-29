@@ -75,6 +75,15 @@ const HORARIO = [
     subgrupo_id: null, titulo: "Táctica en línea", modalidad: "en_linea", desde: HOY_CR, hasta: null },
 ];
 
+/* Las justificaciones de ausencia que cubren un día: Bruno tiene una aceptada
+   del 14 al 16 de setiembre; hoy, Camila una por revisar y Ana una que NO se
+   aceptó, que no justifica nada y no se tiene que ver. */
+const JUSTIFICACIONES = [
+  { student_id: "u-bruno", estado: "aceptada", fecha_desde: "2026-09-14", fecha_hasta: "2026-09-16" },
+  { student_id: "u-cami", estado: "pendiente", fecha_desde: HOY_CR, fecha_hasta: HOY_CR },
+  { student_id: "u-ana", estado: "no_aceptada", fecha_desde: HOY_CR, fecha_hasta: HOY_CR },
+];
+
 function clienteFalso(perfil) {
   return `
 window.__llamadas = [];
@@ -86,6 +95,7 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
     profiles: ${JSON.stringify([PROFE, ...ALUMNOS])},
     class_sessions: ${JSON.stringify(FICHAS)},
     horario_clases: ${JSON.stringify(HORARIO)},
+    justificaciones_ausencia: ${JSON.stringify(JUSTIFICACIONES)},
   };
   const RPC = {
     alumnos_del_profesor_con_nombre: ${JSON.stringify(ALUMNOS)},
@@ -109,6 +119,11 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
         if (Array.isArray(datos)) datos = datos.filter((f) => String(f[col]) === String(val));
         return b;
       },
+      // Los de comparar filtran de verdad, igual que eq(): un doble que los
+      // dejara pasar daría por buena una consulta que pide otro día.
+      lte(col, val) { filtros.push([col, "<=", val]); if (Array.isArray(datos)) datos = datos.filter((f) => String(f[col]) <= String(val)); return b; },
+      gte(col, val) { filtros.push([col, ">=", val]); if (Array.isArray(datos)) datos = datos.filter((f) => String(f[col]) >= String(val)); return b; },
+      neq(col, val) { filtros.push([col, "<>", val]); if (Array.isArray(datos)) datos = datos.filter((f) => String(f[col]) !== String(val)); return b; },
       in() { return b; }, order() { return b; }, limit() { return b; },
       range() { return b; }, is() { return b; }, not() { return b; }, or() { return b; },
       insert(v) { escritura = { verbo: "insert", datos: v }; return b; },
@@ -266,7 +281,7 @@ async function pruebaFicha(browser) {
   await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
 
   igual("se ofrecen los tres alumnos",
-    await page.evaluate(() => [...document.querySelectorAll(".alumno-fila span")].map((s) => s.textContent)),
+    await page.evaluate(() => [...document.querySelectorAll(".alumno-fila label span")].map((s) => s.textContent)),
     ["Ana Rojas · 7A", "Bruno Mena · 7B", "Camila Ñúñez · 7B"]);
   igual("y nadie arranca marcado",
     await page.evaluate(() => document.querySelectorAll(".alumno-chk:checked").length), 0);
@@ -279,8 +294,18 @@ async function pruebaFicha(browser) {
     [false, false, false]);
   igual("el contador lo dice", await page.textContent("#cuenta"), "Nadie marcado");
 
+  // -------- quién justificó su ausencia ESE día, al lado de su nombre
+  const justificadasVisibles = () => page.evaluate(() => [...document.querySelectorAll(".justificada")]
+    .map((s) => (s.checkVisibility() ? s.textContent : "")));
+  await page.waitForFunction(() => [...document.querySelectorAll(".justificada")].some((s) => s.checkVisibility()), null, { timeout: 5000 }).catch(() => {});
+  igual("hoy: la de Camila, por revisar; la no aceptada de Ana no se ve",
+    await justificadasVisibles(), ["", "", "🩺 Justificación por revisar"]);
+
   // -------- LA FECHA: lo que viaja es el instante local, no el texto
   await page.fill("#fecha", "2026-09-15");
+  await page.waitForTimeout(200);
+  igual("al cambiar el día, cambia quién justificó: Bruno, aceptada",
+    await justificadasVisibles(), ["", "🩺 Falta justificada", ""]);
   await page.fill("#hora", "15:00");
   await page.fill("#minutos", "90");
   await page.fill("#titulo", "  Finales en el aula  ");
@@ -315,7 +340,7 @@ async function pruebaFicha(browser) {
     await page.evaluate(() => document.querySelectorAll(".alumno-chk").length), 3);
   igual("pero solo se ve la que coincide",
     await page.evaluate(() => [...document.querySelectorAll(".alumno-fila")]
-      .filter((f) => f.checkVisibility()).map((f) => f.textContent.trim())),
+      .filter((f) => f.checkVisibility()).map((f) => f.querySelector("label").textContent.trim())),
     ["Bruno Mena · 7B"]);
   igual("y quien quedó escondido conserva su marca",
     await page.evaluate(() => document.querySelectorAll(".alumno-chk:checked").length), 1);
