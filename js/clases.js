@@ -1762,6 +1762,9 @@
             // El primer paso le habla al profesor («asigna tu primera tarea»):
             // a quien lo está revisando no le toca hacerlo.
             if (!profile._persona) primerPasoDelProfesor(fila);
+            // Lo que más le costó a su clase: las preguntas son de quien entra
+            // (auth.uid()), así que mirando a otra persona no se muestra.
+            if (!profile._persona) LoQueCosto.pintar(sb, document.getElementById("lo-que-costo"), profile.id).catch((e) => console.error(e));
             // Quiénes se caen: la RLS responde con la gente de quien MIRA, así
             // que mirando a otra persona no se pinta (serían los de uno).
             if (!profile._persona) cargarSeCaen();

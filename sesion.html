@@ -38,10 +38,11 @@
          hace falta descontarle una altura a mano. Acá quedaba un `pt-20 pb-16`
          de cuando SÍ era `fixed` — 144px muertos antes de que empezara nada,
          justo en la pantalla con más controles del sitio. -->
-    <div id="app" class="hidden pt-6 pb-10">
+    <div id="app" class="hidden pt-3 sm:pt-6 pb-10">
         <section class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between flex-wrap gap-3 mb-6">
-                <h1 class="font-serif text-3xl font-bold text-brand-800 dark:text-white">Sesión en vivo <span aria-hidden="true">♟️</span></h1>
+            <!-- En el celular lo de arriba va más junto: el tablero es lo que el alumno vino a ver. -->
+            <div class="flex items-center justify-between flex-wrap gap-3 mb-3 sm:mb-6">
+                <h1 class="font-serif text-2xl sm:text-3xl font-bold text-brand-800 dark:text-white">Sesión en vivo <span aria-hidden="true">♟️</span></h1>
                 <div class="flex items-center gap-3">
                     <span id="role-badge" class="hidden sm:inline-block text-xs font-bold uppercase tracking-wide px-3 py-1 rounded-full"></span>
                     <span id="selector-clase-wrap" class="hidden items-center gap-2"></span>
@@ -50,7 +51,7 @@
                 </div>
             </div>
 
-            <div id="status-banner" role="status" class="mb-6 rounded-xl bg-brand-100 dark:bg-brand-900 px-5 py-3 text-sm text-brand-600 dark:text-brand-300"></div>
+            <div id="status-banner" role="status" class="mb-3 sm:mb-6 rounded-xl bg-brand-100 dark:bg-brand-900 px-4 sm:px-5 py-2 sm:py-3 text-sm text-brand-600 dark:text-brand-300"></div>
 
             <!-- Si la clase está quedando registrada o no. Va ACÁ y no en el
                  panel porque acá es donde se da la clase: el profesor entra
@@ -321,11 +322,11 @@
                     <!-- Barra del tablero: girar y coordenadas (para todos); levantar la mano (solo alumnos);
                          navegar jugadas (solo profesor) -->
                     <div class="flex items-center justify-center flex-wrap gap-2 mt-3">
-                        <button id="flip-board-btn" type="button" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors" title="Girar el tablero (negras abajo)">⇅ Girar</button>
-                        <button id="show-coords-btn" type="button" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors" aria-pressed="false" title="Mostrar el nombre de cada casilla (las coordenadas de afuera siempre se ven)">🔢 Coordenadas</button>
-                        <button id="proyector-btn" type="button" class="hidden text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors" title="Abrir el tablero solo, en otra ventana: para el proyector o la tele del aula">📽️ Proyector</button>
-                        <button id="control-btn" type="button" class="hidden text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors" aria-expanded="false" aria-controls="control-enlace" title="Manejar la clase desde tu celular">📱 Control remoto</button>
-                        <button id="raise-hand-btn" type="button" class="hidden text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors" aria-pressed="false" title="Pedirle la palabra al profesor">🖐️ Levantar la mano</button>
+                        <button id="flip-board-btn" type="button" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors min-h-[44px] sm:min-h-0" title="Girar el tablero (negras abajo)">⇅ Girar</button>
+                        <button id="show-coords-btn" type="button" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors min-h-[44px] sm:min-h-0" aria-pressed="false" title="Mostrar el nombre de cada casilla (las coordenadas de afuera siempre se ven)">🔢 Coordenadas</button>
+                        <button id="proyector-btn" type="button" class="hidden text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors min-h-[44px] sm:min-h-0" title="Abrir el tablero solo, en otra ventana: para el proyector o la tele del aula">📽️ Proyector</button>
+                        <button id="control-btn" type="button" class="hidden text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors min-h-[44px] sm:min-h-0" aria-expanded="false" aria-controls="control-enlace" title="Manejar la clase desde tu celular">📱 Control remoto</button>
+                        <button id="raise-hand-btn" type="button" class="hidden text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors min-h-[44px] sm:min-h-0" aria-pressed="false" title="Pedirle la palabra al profesor">🖐️ Levantar la mano</button>
                         <span id="move-nav" class="hidden items-center gap-1 ml-1">
                             <button id="move-nav-first" type="button" class="text-xs font-semibold w-8 h-8 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors" title="Primera jugada">⏮</button>
                             <button id="move-nav-prev" type="button" class="text-xs font-semibold w-8 h-8 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors" title="Jugada anterior">◀</button>
@@ -333,6 +334,26 @@
                             <button id="move-nav-last" type="button" class="text-xs font-semibold w-8 h-8 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors" title="Última jugada">⏭</button>
                         </span>
                     </div>
+
+                    <!-- De quién es el turno, pegado al tablero del que habla. -->
+                    <p id="turn-indicator" class="proyector-se-ve control-se-ve text-center text-brand-500 dark:text-brand-300 text-sm mt-4"></p>
+                    <!-- Va justo debajo del tablero: es lo más urgente de la pantalla, y en el celular
+                         lo demás queda más abajo.
+                         Tiempo para pensar (game_state.pensar): lo ven todos, también el profe, que
+                         suele compartir su pantalla. El reloj cambia cada segundo, así que NO es región
+                         viva: lo que se dice en voz va aparte, al empezar, a los 10 segundos y al final. -->
+                    <div id="pensar-aviso-caja" hidden class="proyector-se-ve control-se-ve max-w-[560px] mx-auto mt-3 rounded-xl border-2 border-accent-500 bg-accent-50 dark:bg-brand-900 px-4 py-3 text-center">
+                        <p id="pensar-titulo" class="text-sm font-semibold text-brand-700 dark:text-brand-200"><span aria-hidden="true">⏳ </span>Tiempo para pensar</p>
+                        <p id="pensar-que" hidden class="text-base text-brand-800 dark:text-white mt-0.5 break-words"></p>
+                        <p id="pensar-reloj" class="font-mono text-4xl font-bold text-brand-800 dark:text-white mt-1"></p>
+                        <p id="pensar-fin" hidden class="text-lg font-bold text-brand-800 dark:text-white mt-1"><span aria-hidden="true">⏰ </span>¡Se acabó el tiempo!</p>
+                        <div id="pensar-profe-acciones" class="hidden flex flex-wrap justify-center gap-2 mt-2">
+                            <button id="pensar-mas-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">+30 segundos</button>
+                            <button id="pensar-terminar-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Terminar ya</button>
+                            <button id="pensar-elegir-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🎲 </span>Elegir a alguien para responder</button>
+                        </div>
+                    </div>
+                    <p id="pensar-voz" class="sr-only" aria-live="polite"></p>
 
                     <!-- Cómo abrir el control remoto: la dirección, para escribirla o copiarla en el celular. -->
                     <div id="control-enlace" hidden class="max-w-[560px] mx-auto mt-3 rounded-xl border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 px-4 py-3 text-sm text-brand-700 dark:text-brand-200">
@@ -413,25 +434,9 @@
                         <button id="podio-quitar-btn" type="button" hidden class="mt-2 text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Quitar el podio</button>
                     </div>
 
-                    <!-- Tiempo para pensar (game_state.pensar): lo ven todos, también el profe, que
-                         suele compartir su pantalla. El reloj cambia cada segundo, así que NO es región
-                         viva: lo que se dice en voz va aparte, al empezar, a los 10 segundos y al final. -->
-                    <div id="pensar-aviso-caja" hidden class="proyector-se-ve control-se-ve max-w-[560px] mx-auto mt-3 rounded-xl border-2 border-accent-500 bg-accent-50 dark:bg-brand-900 px-4 py-3 text-center">
-                        <p id="pensar-titulo" class="text-sm font-semibold text-brand-700 dark:text-brand-200"><span aria-hidden="true">⏳ </span>Tiempo para pensar</p>
-                        <p id="pensar-que" hidden class="text-base text-brand-800 dark:text-white mt-0.5 break-words"></p>
-                        <p id="pensar-reloj" class="font-mono text-4xl font-bold text-brand-800 dark:text-white mt-1"></p>
-                        <p id="pensar-fin" hidden class="text-lg font-bold text-brand-800 dark:text-white mt-1"><span aria-hidden="true">⏰ </span>¡Se acabó el tiempo!</p>
-                        <div id="pensar-profe-acciones" class="hidden flex flex-wrap justify-center gap-2 mt-2">
-                            <button id="pensar-mas-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">+30 segundos</button>
-                            <button id="pensar-terminar-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Terminar ya</button>
-                            <button id="pensar-elegir-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🎲 </span>Elegir a alguien para responder</button>
-                        </div>
-                    </div>
-                    <p id="pensar-voz" class="sr-only" aria-live="polite"></p>
                     <!-- Lo que aparece para toda la clase (el mapa, el calentamiento, el podio, los equipos),
                          dicho en voz para quien usa lector de pantalla: esas cajas aparecen sin avisar. -->
                     <p id="clase-voz" class="sr-only" aria-live="polite"></p>
-                    <p id="turn-indicator" class="proyector-se-ve control-se-ve text-center text-brand-500 dark:text-brand-300 text-sm mt-4"></p>
                     <!-- Solo quien sigue la clase: qué jugada anterior o qué variante está
                          mostrando el profe (game_state.vista, ver pintarVistaDelProfe). -->
                     <p id="vista-profe" hidden class="max-w-[560px] mx-auto mt-2 rounded-xl bg-brand-100 dark:bg-brand-900 px-4 py-2 text-center text-sm text-brand-600 dark:text-brand-300"></p>
@@ -612,7 +617,7 @@
                         <div class="bg-white dark:bg-brand-900 border-2 border-accent-500 rounded-xl shadow-2xl p-4 sm:p-6 w-full max-w-2xl max-h-[95vh] overflow-y-auto">
                             <div class="flex items-start justify-between gap-2 mb-1">
                                 <h2 id="question-titulo" tabindex="-1" class="font-serif font-bold text-brand-800 dark:text-white focus:outline-none"><span aria-hidden="true">❓ </span><span class="sr-only">Pregunta de tu profe: </span><span id="question-prompt-text"></span></h2>
-                                <button type="button" id="question-close-btn" class="shrink-0 w-6 h-6 flex items-center justify-center rounded-lg text-brand-400 hover:text-brand-700 dark:hover:text-brand-200 hover:bg-brand-100 dark:hover:bg-brand-800 transition-colors" title="Salir por ahora (la pregunta sigue abierta, puedes volver a contestarla)" aria-label="Salir por ahora">✖</button>
+                                <button type="button" id="question-close-btn" class="shrink-0 w-11 h-11 sm:w-6 sm:h-6 flex items-center justify-center rounded-lg text-brand-400 hover:text-brand-700 dark:hover:text-brand-200 hover:bg-brand-100 dark:hover:bg-brand-800 transition-colors" title="Salir por ahora (la pregunta sigue abierta, puedes volver a contestarla)" aria-label="Salir por ahora">✖</button>
                             </div>
                             <p id="question-para-ti" hidden class="text-sm font-semibold text-accent-700 dark:text-accent-400 mb-1"><span aria-hidden="true">🎯 </span>Esta pregunta es solo para ti: el resto de la clase mira cómo la resuelves.</p>
                             <p id="question-color-hint" class="text-sm font-semibold text-brand-700 dark:text-brand-200 mb-1"></p>
