@@ -57,6 +57,11 @@
         // el profesor en vivo delante de toda la clase, sin poder tocar las piezas negras.
         let activePlayerColor = "both";
         let presenceChannel = null;
+        // Profesor: de qué alumno está mirando la partida de práctica en grande (ver
+        // «La partida de UN alumno, en grande»). Viaja en su presencia, así que al
+        // cerrar la pestaña se va solo: el alumno nunca se queda con un «te está
+        // mirando» de alguien que ya no está.
+        let mirandoA = null;
         let engineEnabled = false;
         let engineRequestId = 0;
 
@@ -2469,8 +2474,12 @@
                 const state = presenceChannel.presenceState();
                 onlineStudents.clear();
                 const mirando = [];
+                const meMiran = [];
                 for (const key of Object.keys(state)) {
                     const meta = state[key][0];
+                    // Con dos pestañas abiertas hay dos metas: basta con que una lo mire.
+                    const loMira = (state[key] || []).some((m) => m && m.mirando_a === profile.id);
+                    if (loMira && key !== profile.id) meMiran.push((meta && meta.full_name) || "Tu profe");
                     if (meta && meta.role === "alumno") {
                         onlineStudents.set(key, { email: meta.email, full_name: meta.full_name, hand_raised: !!meta.hand_raised });
                     } else if (meta && meta.role === "supervision") {
@@ -2479,6 +2488,7 @@
                 }
                 renderStudentsList();
                 pintarObservadores(mirando);
+                if (!isTeacher && !esObservador) pintarTeMiran(meMiran);
                 // La lista de "con quién chatear" solo muestra alumnos conectados ahora
                 // mismo a la clase (ver renderChatStudentOptions) — cada vez que cambia
                 // quién está conectado, se refresca también esa lista.
@@ -2507,9 +2517,36 @@
                         // chat, y el profesor ve que está mirando.
                         role: esObservador ? "supervision" : profile.role,
                         online_at: new Date().toISOString(),
+                        mirando_a: mirandoA,
                     });
                 }
             });
+        }
+
+        // El profesor dice en su presencia a quién está mirando (o a nadie, con null).
+        async function anunciarMirada(studentId) {
+            mirandoA = studentId || null;
+            if (!presenceChannel || !isTeacher) return;
+            try {
+                await presenceChannel.track({
+                    email: profile.email,
+                    full_name: profile.full_name || "",
+                    role: profile.role,
+                    online_at: new Date().toISOString(),
+                    mirando_a: mirandoA,
+                });
+            } catch (e) { console.error(e); }
+        }
+
+        /* Al alumno: quién está mirando su partida. Solo mientras tiene una
+           práctica: fuera de ella no hay «su partida» que mirar. */
+        function pintarTeMiran(nombres) {
+            const el = document.getElementById("practica-te-miran");
+            if (!el) return;
+            el.hidden = !nombres.length;
+            el.textContent = nombres.length
+                ? "👁 " + nombres.join(", ") + (nombres.length === 1 ? " está mirando tu partida." : " están mirando tu partida.")
+                : "";
         }
 
         /* Al profesor: quién de supervisión está mirando. A quien observa:
@@ -4518,6 +4555,19 @@
                         loadPracticeGamesForSession(latestPracticeSession.id);
                     })
                     .subscribe();
+            } else if (!esObservador) {
+                // El alumno escucha SU partida solo por la ayuda que le manda el profe:
+                // las jugadas las lleva este navegador, y un eco atrasado de la base las
+                // pisaría (ver «La ayuda del profe, en la tarjeta del alumno»).
+                sb.channel("practice-games-mia:" + profile.id)
+                    .on("postgres_changes", { event: "UPDATE", schema: "public", table: "practice_games", filter: "student_id=eq." + profile.id }, (payload) => {
+                        const row = payload.new;
+                        if (!row || !("ayuda" in row) || !myPracticeGame || row.id !== myPracticeGame.id) return;
+                        if (JSON.stringify(row.ayuda || null) === JSON.stringify(myPracticeGame.ayuda || null)) return;
+                        myPracticeGame = Object.assign({}, myPracticeGame, { ayuda: row.ayuda || null });
+                        pintarAyudaAlumno();
+                    })
+                    .subscribe();
             }
         }
 
@@ -4563,6 +4613,7 @@
                 document.getElementById("practice-active-level").textContent = practiceLevelLabel(latestPracticeSession.level);
                 loadPracticeGamesForSession(latestPracticeSession.id);
             } else {
+                cerrarMirada();
                 document.getElementById("practice-boards-grid").innerHTML = "";
                 Object.keys(practiceStudentBoards).forEach((k) => delete practiceStudentBoards[k]);
             }
@@ -4591,8 +4642,12 @@
                     '<div class="practice-mini-eval h-2 w-full rounded-full overflow-hidden bg-brand-800 border border-brand-300 dark:border-brand-700 flex mb-1.5" role="img">' +
                         '<div class="practice-mini-bar bg-white h-full transition-all duration-500 ease-out" style="width:50%"></div>' +
                     "</div>" +
-                    '<p class="practice-mini-status text-[11px] text-brand-450 dark:text-brand-350"></p>';
+                    '<p class="practice-mini-status text-[11px] text-brand-450 dark:text-brand-350"></p>' +
+                    // Abre SU partida en grande: mirarla sin tocarla y mandarle una ayuda.
+                    '<button type="button" class="practice-mini-mirar mt-2 w-full text-xs font-semibold px-2 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors" aria-haspopup="dialog">👁 Mirar y ayudar</button>';
                 grid.appendChild(wrap);
+                const studentId = row.student_id;
+                wrap.querySelector(".practice-mini-mirar").addEventListener("click", (e) => abrirMirada(studentId, e.currentTarget));
                 entry = {
                     el: wrap,
                     nameEl: wrap.querySelector(".practice-mini-name"),
@@ -4607,6 +4662,9 @@
             const displayName = (row.profiles && (row.profiles.full_name || row.profiles.email)) || "Alumno";
             entry.nameEl.textContent = displayName;
             entry.nameEl.title = displayName;
+            entry.row = row;
+            entry.nombre = displayName;
+            entry.el.querySelector(".practice-mini-mirar").setAttribute("aria-label", "Mirar y ayudar a " + displayName);
             entry.colorEl.textContent = row.student_color === "w" ? "· blancas" : "· negras";
             entry.board.setFlipped(row.student_color === "b");
             entry.board.loadMoves(row.moves || [], latestPracticeSession.fen);
@@ -4619,7 +4677,170 @@
             entry.evalEl.setAttribute("aria-label", !hayEval ? "Todavía sin evaluar"
                 : Math.abs(row.eval_cp) < 50 ? "La partida va pareja"
                 : "Va mejor " + (row.eval_cp > 0 ? "el blanco" : "el negro"));
-            entry.statusEl.textContent = practiceStatusLabelWithAttempts(row);
+            entry.statusEl.textContent = practiceStatusLabelWithAttempts(row)
+                + (PracticaAyuda.limpiar(row.ayuda) ? " · 💡 con tu ayuda" : "");
+            if (mirar.studentId === row.student_id) refrescarMirada(row);
+        }
+
+        // ---------- La partida de UN alumno, en grande (solo profesor) ----------
+        // La mira en vivo sin poder mover sus piezas (el tablero no es interactivo, y la
+        // base igual le devuelve la fila tal cual si lo intentara: ver la migración
+        // practica_el_profe_mira_y_ayuda) y le manda una ayuda que al alumno le aparece en
+        // su tablero. El alumno ve que lo están mirando: viaja en la presencia.
+        const mirar = { studentId: null, row: null, board: null, jugadas: null, volverA: null };
+
+        function mirarEl(id) { return document.getElementById("practica-mirar-" + id); }
+
+        function abrirMirada(studentId, boton) {
+            const entry = practiceStudentBoards[studentId];
+            if (!entry || !entry.row) return;
+            if (!mirar.board) {
+                mirar.board = new ClasesBoard(mirarEl("tablero"), {
+                    interactive: false,
+                    allowArrows: true,
+                    externalCoords: true,
+                    // Lo que se dibuja se escribe en el campo: una sola lista de marcas,
+                    // la misma para quien dibuja y para quien escribe.
+                    onMarksChange: (m) => { mirarEl("marcas").value = PracticaAyuda.escribirMarcas(m.arrows, m.circles); },
+                });
+                mirarEl("tablero").setAttribute("aria-label", "Tablero del alumno, solo para mirar");
+            }
+            mirar.studentId = studentId;
+            mirar.volverA = boton || null;
+            mirar.jugadas = null;
+            mirarEl("nombre").textContent = entry.nombre;
+            mirarEl("nombre-pista").textContent = entry.nombre;
+            mirarEl("aviso").textContent = "";
+            // Lo que ya le había mandado, para seguir desde ahí en vez de empezar de cero.
+            const previa = PracticaAyuda.limpiar(entry.row.ayuda);
+            mirarEl("pista").value = previa ? previa.texto : "";
+            refrescarMirada(entry.row);
+            const vigente = PracticaAyuda.vale(previa, (entry.row.moves || []).length);
+            ponerMarcasMirada(vigente ? previa.flechas : [], vigente ? previa.circulos : []);
+            document.getElementById("practica-mirar").classList.remove("hidden");
+            enfocarCuandoSeVea(mirarEl("titulo"));
+            anunciarMirada(studentId);
+        }
+
+        function ponerMarcasMirada(flechas, circulos) {
+            mirar.board.setMarks(flechas, circulos);
+            mirarEl("marcas").value = PracticaAyuda.escribirMarcas(flechas, circulos);
+        }
+
+        function refrescarMirada(row) {
+            if (!mirar.board || !latestPracticeSession) return;
+            mirar.row = row;
+            const moves = row.moves || [];
+            mirar.board.setFlipped(row.student_color === "b");
+            mirar.board.loadMoves(moves, latestPracticeSession.fen);
+            // Movió (él o el motor): las flechas que el profe tenía dibujadas eran de la
+            // posición anterior y ahora señalarían otra cosa.
+            const movio = mirar.jugadas !== null && mirar.jugadas !== moves.length;
+            if (movio) ponerMarcasMirada([], []);
+            mirar.jugadas = moves.length;
+            mirarEl("info").textContent = "Juega con " + (row.student_color === "w" ? "blancas" : "negras")
+                + " · nivel " + practiceLevelLabel(latestPracticeSession.level)
+                + " · " + (moves.length === 1 ? "1 jugada" : moves.length + " jugadas");
+            let estado = practiceStatusLabelWithAttempts(row);
+            if (row.status === "playing") {
+                estado += mirar.board.game.turn() === row.student_color ? ". Le toca mover." : ". Piensa el motor.";
+            }
+            const enviada = PracticaAyuda.limpiar(row.ayuda);
+            if (enviada && !PracticaAyuda.vale(enviada, moves.length) && (enviada.flechas.length || enviada.circulos.length)) {
+                estado += " Ya jugó después de tu ayuda: las flechas eran para la posición anterior y no se le ven" + (enviada.texto ? "; la pista sí." : ".");
+            }
+            if (movio) estado += " Se borraron las flechas que tenías dibujadas.";
+            mirarEl("estado").textContent = estado;
+        }
+
+        function cerrarMirada() {
+            if (!mirar.studentId) return;
+            mirar.studentId = null;
+            mirar.row = null;
+            document.getElementById("practica-mirar").classList.add("hidden");
+            anunciarMirada(null);
+            const volver = mirar.volverA;
+            mirar.volverA = null;
+            if (volver && volver.isConnected) volver.focus();
+        }
+
+        // Lo escrito manda: si no se entiende, se dice qué y no se manda nada.
+        function marcasEscritas() {
+            const leidas = PracticaAyuda.leerMarcas(mirarEl("marcas").value);
+            if (leidas.malas.length) return { error: "No entendí «" + leidas.malas.join(" ") + "»: escribe las flechas como g1-f3 y los círculos como e4." };
+            // Si coincide con lo dibujado, se queda con el dibujo (que trae los colores).
+            const dibujado = PracticaAyuda.escribirMarcas(mirar.board.arrows, mirar.board.circles);
+            if (dibujado !== PracticaAyuda.escribirMarcas(leidas.flechas, leidas.circulos)) {
+                mirar.board.setMarks(leidas.flechas, leidas.circulos);
+            }
+            return { flechas: mirar.board.arrows, circulos: mirar.board.circles };
+        }
+
+        async function guardarAyuda(ayuda) {
+            const { data, error } = await sb.from("practice_games").update({ ayuda })
+                .eq("id", mirar.row.id).select("ayuda").maybeSingle();
+            if (error) return { error: error.message };
+            // Se mira lo que QUEDÓ, no lo que se mandó: con la ronda terminada la base la
+            // devuelve como estaba sin dar ningún error.
+            const quedo = data ? PracticaAyuda.limpiar(data.ayuda) : undefined;
+            if (data) {
+                // La miniatura no espera el eco de Realtime para decir que ya tiene ayuda.
+                const entry = practiceStudentBoards[mirar.studentId];
+                if (entry && entry.row) upsertPracticeStudentBoard(Object.assign({}, entry.row, { ayuda: data.ayuda }));
+            }
+            return { quedo, fila: !!data };
+        }
+
+        async function mandarAyuda() {
+            if (!mirar.row) return;
+            const aviso = mirarEl("aviso");
+            const marcas = marcasEscritas();
+            if (marcas.error) { aviso.textContent = marcas.error; return; }
+            const ayuda = PracticaAyuda.limpiar({
+                jugadas: (mirar.row.moves || []).length,
+                flechas: marcas.flechas,
+                circulos: marcas.circulos,
+                texto: mirarEl("pista").value,
+            });
+            if (!ayuda) { aviso.textContent = "Escribe una pista o marca al menos una flecha o un círculo."; return; }
+            const boton = mirarEl("mandar");
+            boton.disabled = true;
+            const nombre = mirarEl("nombre").textContent;
+            const r = await guardarAyuda(ayuda);
+            boton.disabled = false;
+            if (r.error) { aviso.textContent = "No se pudo mandar la ayuda: " + r.error; return; }
+            if (!r.fila || JSON.stringify(r.quedo) !== JSON.stringify(ayuda)) {
+                aviso.textContent = "No le llegó: la ronda de práctica ya terminó.";
+                return;
+            }
+            const partes = [PracticaAyuda.enPalabras(ayuda), ayuda.texto ? "la pista" : ""].filter(Boolean);
+            aviso.textContent = "Le llegó a " + nombre + ": " + partes.join(" y ") + ".";
+        }
+
+        async function quitarAyuda() {
+            if (!mirar.row) return;
+            const aviso = mirarEl("aviso");
+            const nombre = mirarEl("nombre").textContent;
+            const r = await guardarAyuda(null);
+            if (r.error) { aviso.textContent = "No se pudo quitar la ayuda: " + r.error; return; }
+            if (!r.fila || r.quedo) { aviso.textContent = "No se pudo quitar: la ronda de práctica ya terminó."; return; }
+            ponerMarcasMirada([], []);
+            mirarEl("pista").value = "";
+            aviso.textContent = "Le quitaste la ayuda a " + nombre + ".";
+        }
+
+        if (document.getElementById("practica-mirar")) {
+            mirarEl("cerrar").addEventListener("click", cerrarMirada);
+            mirarEl("mandar").addEventListener("click", mandarAyuda);
+            mirarEl("quitar").addEventListener("click", quitarAyuda);
+            // Escribir marcas las dibuja en cuanto se entienden (a medio escribir, «g1-», no).
+            mirarEl("marcas").addEventListener("input", () => {
+                const leidas = PracticaAyuda.leerMarcas(mirarEl("marcas").value);
+                if (!leidas.malas.length && mirar.board) mirar.board.setMarks(leidas.flechas, leidas.circulos);
+            });
+            document.getElementById("practica-mirar").addEventListener("keydown", (e) => {
+                if (e.key === "Escape") { e.preventDefault(); cerrarMirada(); }
+            });
         }
 
         // Tableros siempre del MISMO tamaño, sin importar cuántos alumnos estén jugando:
@@ -4652,6 +4873,7 @@
             // Por si alguna fila se borró manualmente: quita su tarjeta de la grilla.
             Object.keys(practiceStudentBoards).forEach((studentId) => {
                 if (!seen.has(studentId)) {
+                    if (mirar.studentId === studentId) cerrarMirada();
                     practiceStudentBoards[studentId].el.remove();
                     delete practiceStudentBoards[studentId];
                 }
@@ -4708,6 +4930,7 @@
                 reopenBtn.classList.add("hidden");
                 practiceCardDismissedFor = null;
                 myPracticeGame = null;
+                pintarAyudaAlumno();
                 return;
             }
             // El alumno cerró este mismo overlay con la ✖: la ronda sigue activa (la partida
@@ -4767,6 +4990,7 @@
             if (!dismissed) practiceCardAbiertaPara = latestPracticeSession.id;
             practiceBoard.setFlipped(myPracticeGame.student_color === "b");
             practiceBoard.loadMoves(myPracticeGame.moves || [], latestPracticeSession.fen);
+            pintarAyudaAlumno();
             if (practicaAcc) practicaAcc.actualizar();
             if (practicaRecienAbierta) enfocarCuandoSeVea(document.getElementById("practice-titulo"));
             updatePracticeCardInteractivity();
@@ -4879,6 +5103,7 @@
                 });
                 if (move) {
                     practiceBoard.render();
+                    pintarAyudaAlumno();
                     if (practicaAcc) {
                         practicaAcc.actualizar();
                         practicaAcc.decir("El motor jugó " + ClaseAdaptada.hablarJugada(move.san) + ". "
@@ -4898,6 +5123,7 @@
 
         async function onPracticeStudentMove(fen, moves) {
             if (!myPracticeGame) return;
+            pintarAyudaAlumno();
             if (practicaAcc) practicaAcc.actualizar();
             const gameIdAtMove = myPracticeGame.id;
             const attemptsAtMove = myPracticeGame.attempts || 1;
@@ -4930,8 +5156,54 @@
                 fen: latestPracticeSession.fen, moves: [], status: "playing",
                 eval_cp: null, attempts: (myPracticeGame.attempts || 1) + 1, reloj_ms: null,
             });
+            // La base borra la ayuda al reintentar: era de la partida anterior.
+            myPracticeGame = Object.assign({}, myPracticeGame, { ayuda: null });
             practiceBoard.loadMoves([], latestPracticeSession.fen);
+            pintarAyudaAlumno();
             updatePracticeCardInteractivity();
+        }
+
+        // ---------- La ayuda del profe, en la tarjeta del alumno ----------
+        // Las flechas se pintan SOLO en la posición para la que se dieron: después de la
+        // siguiente jugada señalarían otra cosa. La pista sigue a la vista. Todo va
+        // también en palabras: el color de una flecha no dice nada solo.
+        let ayudaPintada = null; // lo último escrito en la región viva, para no repetirlo
+        function pintarAyudaAlumno() {
+            const caja = document.getElementById("practica-ayuda");
+            if (!caja || isTeacher) return;
+            const ayuda = myPracticeGame ? PracticaAyuda.limpiar(myPracticeGame.ayuda) : null;
+            const jugadas = practiceBoard ? practiceBoard.game.history().length : 0;
+            const vigente = PracticaAyuda.vale(ayuda, jugadas);
+            if (practiceBoard) practiceBoard.setMarks(vigente ? ayuda.flechas : [], vigente ? ayuda.circulos : []);
+            const clave = ayuda ? JSON.stringify(ayuda) + ":" + vigente : "";
+            if (clave === ayudaPintada) return; // reescribir la región viva la volvería a leer
+            ayudaPintada = clave;
+            if (!ayuda) { caja.replaceChildren(); return; }
+            const marco = document.createElement("div");
+            marco.className = "mt-3 rounded-lg border-2 border-accent-500 p-3 text-sm text-brand-800 dark:text-white";
+            const titulo = document.createElement("p");
+            titulo.className = "font-semibold";
+            const ico = document.createElement("span");
+            ico.setAttribute("aria-hidden", "true");
+            ico.textContent = "💡 ";
+            titulo.append(ico, "Ayuda de tu profe");
+            marco.appendChild(titulo);
+            if (ayuda.texto) {
+                const t = document.createElement("p");
+                t.className = "mt-1";
+                t.textContent = ayuda.texto;
+                marco.appendChild(t);
+            }
+            const marcas = PracticaAyuda.enPalabras(ayuda);
+            if (marcas) {
+                const m = document.createElement("p");
+                m.className = "mt-1 text-xs text-brand-600 dark:text-brand-300";
+                m.textContent = vigente
+                    ? "En tu tablero: " + marcas + "."
+                    : "Te había marcado " + marcas + ", pero era para la posición de antes de tu jugada: ya no se muestran.";
+                marco.appendChild(m);
+            }
+            caja.replaceChildren(marco);
         }
 
         document.getElementById("practice-resign-btn").addEventListener("click", resignPracticeGame);
