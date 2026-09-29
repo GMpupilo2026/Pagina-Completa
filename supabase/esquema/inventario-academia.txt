@@ -1070,6 +1070,7 @@ funcion  interno.academia_activa()  definer  anon=false  auth=true
 funcion  interno.academias_de(p_persona uuid)  definer  anon=false  auth=true
 funcion  interno.alumnos_de(p_profesor uuid)  definer  anon=false  auth=true
 funcion  interno.bajo_mi_coordinacion_conjunto()  definer  anon=false  auth=true
+funcion  interno.clases_que_coordino()  definer  anon=false  auth=true
 funcion  interno.clases_que_superviso()  definer  anon=false  auth=true
 funcion  interno.comparten_academia(p_a uuid, p_b uuid)  definer  anon=false  auth=true
 funcion  interno.coordinadores_de(p_persona uuid)  definer  anon=false  auth=false
@@ -1079,6 +1080,7 @@ funcion  interno.gente_de_mis_academias()  definer  anon=false  auth=true
 funcion  interno.nombre_libre_de_subgrupo(p_profesor uuid, p_base text, p_excepto uuid)  definer  anon=false  auth=false
 funcion  interno.pizarras_de_sala_validas(p jsonb)  invoker  anon=true  auth=true
 funcion  interno.profesores_de(p_alumno uuid)  definer  anon=false  auth=true
+funcion  interno.profesores_que_coordino()  definer  anon=false  auth=true
 funcion  interno.salas_torneo_sello()  invoker  anon=false  auth=false
 funcion  interno.subgrupo_del_equipo_al_dia(p_equipo uuid, p_profesor uuid)  definer  anon=false  auth=false
 funcion  interno.supervisados_por_mi()  definer  anon=false  auth=true
@@ -1248,6 +1250,7 @@ politica  class_presence_log  class_presence_log_update_own  UPDATE
 politica  class_sessions  class_sessions_delete  DELETE
 politica  class_sessions  class_sessions_insert  INSERT
 politica  class_sessions  class_sessions_select  SELECT
+politica  class_sessions  class_sessions_select_coordinacion  SELECT
 politica  class_sessions  class_sessions_select_supervisor  SELECT
 politica  class_sessions  class_sessions_update  UPDATE
 politica  cobros  cobros_coordinacion  ALL
@@ -1315,6 +1318,7 @@ politica  game_rooms  game_rooms_update  UPDATE
 politica  game_state  game_state_exige_acceso_sel  SELECT  restrictiva
 politica  game_state  game_state_insert  INSERT
 politica  game_state  game_state_select  SELECT
+politica  game_state  game_state_select_coordinacion  SELECT
 politica  game_state  game_state_select_supervisor  SELECT
 politica  game_state  game_state_update  UPDATE
 politica  horario_clases  horario_clases_delete  DELETE
@@ -1362,12 +1366,15 @@ politica  practice_games  practice_games_exige_acceso_ins  INSERT  restrictiva
 politica  practice_games  practice_games_exige_acceso_upd  UPDATE  restrictiva
 politica  practice_games  practice_games_insert_own  INSERT
 politica  practice_games  practice_games_select  SELECT
+politica  practice_games  practice_games_select_coordinacion  SELECT
 politica  practice_games  practice_games_select_supervisor  SELECT
 politica  practice_games  practice_games_update  UPDATE
+politica  practice_games  practice_games_update_coordinacion  UPDATE
 politica  practice_games  practice_games_update_supervisor  UPDATE
 politica  practice_sessions  practice_sessions_exige_acceso_sel  SELECT  restrictiva
 politica  practice_sessions  practice_sessions_insert  INSERT
 politica  practice_sessions  practice_sessions_select  SELECT
+politica  practice_sessions  practice_sessions_select_coordinacion  SELECT
 politica  practice_sessions  practice_sessions_select_supervisor  SELECT
 politica  practice_sessions  practice_sessions_update  UPDATE
 politica  preguntas_clave  preguntas_clave_de_quien_pregunta  ALL
@@ -1378,6 +1385,7 @@ politica  preparaciones_rival  preparaciones_rival_ver  SELECT
 politica  profesor_videollamada  profesor_videollamada_delete  DELETE
 politica  profesor_videollamada  profesor_videollamada_insert  INSERT
 politica  profesor_videollamada  profesor_videollamada_select  SELECT
+politica  profesor_videollamada  profesor_videollamada_select_coordinacion  SELECT
 politica  profesor_videollamada  profesor_videollamada_select_supervisor  SELECT
 politica  profesor_videollamada  profesor_videollamada_update  UPDATE
 politica  profile_teachers  profile_teachers_select  SELECT
@@ -1488,6 +1496,7 @@ politica  variant_nodes  variant_nodes_delete  DELETE
 politica  variant_nodes  variant_nodes_exige_acceso_sel  SELECT  restrictiva
 politica  variant_nodes  variant_nodes_insert  INSERT
 politica  variant_nodes  variant_nodes_select  SELECT
+politica  variant_nodes  variant_nodes_select_coordinacion  SELECT
 politica  variant_nodes  variant_nodes_select_supervisor  SELECT
 trigger  ajustes_academia  ajustes_academia_protegido
 trigger  class_presence_log  class_presence_log_protege_tiempos

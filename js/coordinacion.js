@@ -34,6 +34,10 @@ let peticion = 0;          // descarta la respuesta que llega tarde
    selector de cada ficha. Ofrecer uno que no coordina sería ofrecer un botón
    que `coord_set_profesores()` va a rechazar. */
 let misProfesores = [];
+/* Qué profesores tienen la clase abierta ahora: se puede mirar en vivo
+   (sesion.html?observar=<id>) y ayudar en la práctica. La base solo entrega las
+   clases de quienes uno coordina. */
+let enClase = new Set();
 const POR_PAGINA = 50;
 
 function el(tag, clase, texto) {
@@ -105,6 +109,13 @@ function tarjeta(u) {
     fila.appendChild(izq);
 
     const acciones = el("div", "flex flex-wrap gap-2");
+    // Va escrito, no solo con el punto rojo.
+    if (u.role === "profesor" && u.id !== perfil.id && enClase.has(u.id)) {
+        const vivo = el("a", "text-xs font-semibold px-3 py-1.5 rounded-full bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300 underline self-center focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "🔴 En clase ahora · Mirar la clase");
+        vivo.href = "sesion.html?observar=" + encodeURIComponent(u.id);
+        vivo.dataset.observar = u.id;
+        acciones.appendChild(vivo);
+    }
 
     /* La ficha se monta ENTERA al abrirla y se tira al cerrarla, en vez de ir
        actualizando lo que cambió: así no hay que acordarse de limpiar lo de la
@@ -800,6 +811,8 @@ async function init() {
         sb.rpc("mi_gente", { p_busqueda: null, p_rol: "profesor", p_limite: 1, p_desde: 0 }),
         sb.rpc("mi_gente", { p_busqueda: null, p_rol: "alumno", p_limite: 1, p_desde: 0 }),
     ]);
+    const { data: abiertas } = await sb.from("class_sessions").select("created_by").is("ended_at", null).limit(200);
+    enClase = new Set((abiertas || []).map((c) => c.created_by));
     const nProfes = profes && profes.length ? Number(profes[0].total) : 0;
     const nAlumnos = alums && alums.length ? Number(alums[0].total) : 0;
     pintarTarjetas(nProfes, nAlumnos);
