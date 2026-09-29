@@ -388,6 +388,46 @@
         mas.hidden = desdeFila >= total;
     }
 
+    /* Excel: baja LO QUE CUMPLE el filtro y la búsqueda puestos, no lo que se
+       alcanzó a pintar (quien filtró por «Por revisar» quiere esas, todas). Se
+       pide a la misma función, de a 200, hasta que llega una página corta:
+       pedirlo de un tiro cruzaría el techo de mil filas de PostgREST. Los
+       documentos se CUENTAN, no se pega la ruta (como en Formularios). */
+    async function bajarExcel() {
+        const boton = document.getElementById("excel");
+        boton.disabled = true;
+        const todas = [];
+        try {
+            for (let desde = 0; ; desde += 200) {
+                const { data, error } = await sb.rpc("justificaciones_recibidas", {
+                    p_estado: filtro || null, p_busqueda: busqueda || null, p_limite: 200, p_desde: desde,
+                });
+                if (error) throw error;
+                todas.push(...(data || []));
+                if (!data || data.length < 200) break;
+            }
+        } catch (e) {
+            boton.disabled = false;
+            Avisos.avisar("No se pudo bajar la lista: " + (e.message || e), { tipo: "error" });
+            return;
+        }
+        boton.disabled = false;
+        if (!todas.length) { Avisos.avisar("No hay justificaciones que bajar con ese filtro.", { tipo: "error" }); return; }
+        const enCR = (ts) => (ts ? new Date(ts).toLocaleString("sv-SE", { timeZone: "America/Costa_Rica" }).slice(0, 16) : "");
+        const dias = (j) => Math.round((Date.parse(j.fecha_hasta) - Date.parse(j.fecha_desde)) / 86400000) + 1;
+        const cabeceras = ["Estudiante", "Grupo", "Desde", "Hasta", "Días", "Motivo", "Qué pasó", "Documentos",
+            "Estado", "Respuesta", "Contestó", "Contestada el", "Enviada el"];
+        const filas = todas.map((j) => [
+            j.alumno, j.grupo || "", j.fecha_desde, j.fecha_hasta, dias(j), motivoDe(j.motivo).texto,
+            j.detalle || "", Adjuntos.contar(j.adjuntos) || "Ninguno",
+            (ESTADOS[j.estado] || ESTADOS.pendiente).texto.replace(/^\S+\s/, ""),
+            j.respuesta || "", j.revisada_por_nombre || "", enCR(j.revisada_en), enCR(j.created_at),
+        ]);
+        const cual = (FILTROS.find((f) => f.valor === filtro) || FILTROS[3]).texto.replace(/^\S+\s/, "").toLowerCase().replace(/\s+/g, "-");
+        CsvExcel.bajar("justificaciones-" + (filtro ? cual : "todas") + "-" + hoyCR() + ".csv", cabeceras, filas);
+        Avisos.avisar("⬇ " + (todas.length === 1 ? "1 justificación bajada." : todas.length + " justificaciones bajadas."));
+    }
+
     async function iniciarEquipo() {
         document.getElementById("app-equipo").classList.remove("hidden");
         const pedidoFiltro = new URLSearchParams(location.search).get("estado");
@@ -399,6 +439,7 @@
             espera = setTimeout(() => { busqueda = e.target.value.trim(); cargarRecibidas(true); }, 300);
         });
         document.getElementById("mas").addEventListener("click", () => cargarRecibidas(false));
+        document.getElementById("excel").addEventListener("click", bajarExcel);
         await Promise.all([contar(), cargarRecibidas(true)]);
     }
 
