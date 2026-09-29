@@ -390,6 +390,12 @@
     $("titulo-tipo").append(e, t.nombre);
     $("tipo-pregunta").textContent = t.pregunta;
     $("tipo-como").textContent = t.como;
+    // Lo que un tipo agrega arriba de sus niveles (Tus propios errores: el
+    // botón que busca errores en las partidas).
+    let extra = $("tipo-extra");
+    if (!extra) { extra = el("div"); extra.id = "tipo-extra"; $("niveles").parentNode.insertBefore(extra, $("niveles")); }
+    extra.innerHTML = "";
+    if (EXTRA[tipoId]) EXTRA[tipoId](extra);
     const ul = $("niveles");
     ul.innerHTML = "";
     t.niveles.forEach((n) => {
@@ -470,7 +476,12 @@
     $("nivel-completo").classList.add("hidden");
     $("nivel-completo").textContent = "";
     rotularSiguiente();
-    if (!item) { estado(partida.cola ? "Hoy no te toca repasar nada." : "Este nivel no tiene ejercicios."); return; }
+    if (!item) {
+      estado(partida.cola ? "Hoy no te toca repasar nada."
+        : C.tipo(partida.tipo).propio ? "Todavía no hay errores tuyos en este nivel. Vuelve a los niveles y busca en tus partidas."
+        : "Este nivel no tiene ejercicios.");
+      return;
+    }
     const e = estrellasDe(partida.tipo, item.id);
     $("juego-progreso").textContent = (partida.cola ? "Repaso · " + C.tipo(partida.tipo).nombre + " · " : "") +
       "Ejercicio " + (partida.i + 1) + " de " + partida.items.length + (e ? " · tu mejor: " + textoEstrellas(e) : "");
@@ -532,6 +543,7 @@
   /* ============================================================ los juegos */
   const JUEGOS = {};
   const PREPARAR = {};
+  const EXTRA = {};
 
   /* ---------- 1. El Detective ---------- */
   JUEGOS.detective = function (item) {
@@ -1020,12 +1032,22 @@
       const r = await fetch("data/tipos.json");
       if (!r.ok) throw new Error("tipos.json: " + r.status);
       DATOS = await r.json();
+      cargarPropios();
     } catch (e) {
       console.error(e);
       $("main-content").innerHTML = '<p class="text-center text-brand-500 dark:text-brand-300 py-10">No se pudieron cargar los ejercicios. Intenta recargar la página.</p>';
       return;
     }
     rutear();
+  }
+  /* Los tipos `propio` (Tus propios errores) no vienen en tipos.json: sus
+     ejercicios son de cada alumno (js/errores-propios.js) y ya bajaron con la
+     cuenta (ProgresoUsuario.init, arriba). */
+  function cargarPropios() {
+    if (!DATOS) return;
+    C.TIPOS.filter((t) => t.propio).forEach((t) => {
+      DATOS[t.id] = t.id === "errores" && window.ErroresPropios ? ErroresPropios.ejercicios() : [];
+    });
   }
   async function requireLoginThenGate() {
     let hay = false;
@@ -1042,10 +1064,11 @@
   /* Las piezas de la página que usan los juegos de js/entreno-tipos-mas.js
      (tipos 8 a 14): el mismo tablero, los mismos avisos, las mismas estrellas. */
   window.TiposUI = {
-    JUEGOS, PREPARAR, $, el, boton, estado, explicar, textoEstrellas, terminar,
+    JUEGOS, PREPARAR, EXTRA, $, el, boton, estado, explicar, textoEstrellas, terminar,
     tablero, pintar, tab: () => tab, tableroFijo, leerPosicion, adaptado,
     pedirJugada, jugadaEscrita, moverConClic, COLOR, BTN_PRIMARIO, BTN_SEGUNDO,
     datos: () => DATOS, ponerDatos: (k, v) => { DATOS[k] = v; }, alLimpiar: (fn) => { limpiarJuego = fn; },
+    cargarPropios, repintarTipo: (id) => pintarTipo(id),
   };
   requireLoginThenGate();
 })();
