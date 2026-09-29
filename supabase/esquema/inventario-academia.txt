@@ -1354,10 +1354,13 @@ politica  practice_games  practice_games_exige_acceso_ins  INSERT  restrictiva
 politica  practice_games  practice_games_exige_acceso_upd  UPDATE  restrictiva
 politica  practice_games  practice_games_insert_own  INSERT
 politica  practice_games  practice_games_select  SELECT
+politica  practice_games  practice_games_select_supervisor  SELECT
 politica  practice_games  practice_games_update  UPDATE
+politica  practice_games  practice_games_update_supervisor  UPDATE
 politica  practice_sessions  practice_sessions_exige_acceso_sel  SELECT  restrictiva
 politica  practice_sessions  practice_sessions_insert  INSERT
 politica  practice_sessions  practice_sessions_select  SELECT
+politica  practice_sessions  practice_sessions_select_supervisor  SELECT
 politica  practice_sessions  practice_sessions_update  UPDATE
 politica  preguntas_clave  preguntas_clave_de_quien_pregunta  ALL
 politica  preparacion_rivales_profesores  preparacion_rivales_profesores_ver  SELECT
