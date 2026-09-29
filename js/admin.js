@@ -20,96 +20,13 @@
         // versión que se puede ir separando de la primera corrección.
         const FUNCION_CORREOS = `${window.SUPABASE_URL}/functions/v1/correos-alumno`;
 
-        /* ================= Los atajos del panel =================
-         *
-         * Eran ocho botones en una fila corrida, sin ningún criterio de orden:
-         * el diagnóstico de los alumnos al lado de la base de datos de
-         * chess-results. Agrupados por lo que uno viene a hacer —ver
-         * resultados, manejar formularios, consultar una base, sacar un
-         * informe— se encuentra sin leerlos todos.
-         *
-         * Las tarjetas son más chicas que las del panel de la Academia a
-         * propósito: acá son atajos de quien administra, que ya sabe lo que
-         * busca, no la puerta de entrada de un alumno.
-         *
-         * Están en una lista y no escritas a mano porque eran las mismas doce
-         * clases copiadas ocho veces, que es cuestión de tiempo que una quede
-         * distinta.
-         */
-        const ATAJOS = [
-            /* Todos los formularios en un solo lugar, y primero: los que se
-               arman, los que llegan de afuera y la encuesta de satisfacción.
-               La misma lista está en el grupo «Formularios» de ADMIN_GROUPS
-               (js/clases.js). */
-            { titulo: "Formularios", cards: [
-                { emoji: "⭐", label: "Satisfacción con los profesores", desc: "Qué opina el alumnado de cada profesor y quién dice que se va", href: "satisfaccion.html" },
-                { emoji: "🦯", label: "Encuestas anónimas de cursos", desc: "Sin iniciar sesión y accesibles con lector de pantalla: deserción, forma de enseñar y expectativas", href: "encuestas-curso.html" },
-                { emoji: "📋", label: "Formularios de inscripción", desc: "Ármalos, compártelos por enlace y baja las respuestas", href: "formularios.html" },
-                { emoji: "📝", label: "Solicitudes de la Academia", desc: "Aprobar o rechazar pedidos de ingreso", href: "solicitudes.html" },
-                { emoji: "🏅", label: "Inscripciones a torneos en línea", desc: "Las respuestas del formulario de inscripcion.html", href: "inscripciones.html" },
-            ] },
-            { titulo: "Resultados", cards: [
-                { emoji: "🧭", label: "Diagnóstico de nivel", desc: "De los alumnos de la Academia", href: "informes.html?tema=diagnostico" },
-                { emoji: "⚖️", label: "Examen de arbitraje", desc: "Del equipo docente, con su detalle", href: "arbitraje.html" },
-                { emoji: "🌐", label: "Diagnóstico de nivel público", desc: "Visitantes sin cuenta: contactos para invitar", href: "informes.html?tema=diagnostico-publico" },
-                { emoji: "🌐", label: "Examen de arbitraje público", desc: "Quiénes lo hicieron y a quién falta responder", href: "informes.html?tema=arbitraje" },
-            ] },
-            { titulo: "Bases de datos", cards: [
-                { emoji: "🔎", label: "Jugadores de chess-results", desc: "Busca a una persona y su historial de torneos", href: "admin-jugador.html" },
-            ] },
-            { titulo: "Acceso a la plataforma", cards: [
-                { emoji: "🎟️", label: "Accesos y cupos", desc: "Paquetes, sus alumnos y si se exige el acceso", href: "accesos.html" },
-                { emoji: "🏷️", label: "Precios", desc: "La tabla para enseñar a una academia o un colegio", href: "precios.html" },
-                { emoji: "🎁", label: "Prueba gratis", desc: "Crear los 3 días de prueba de quien la pidió por WhatsApp", href: "prueba-gratis.html" },
-            ] },
-            { titulo: "Venta de materiales", cards: [
-                { emoji: "🛒", label: "Tienda de materiales", desc: "El catálogo con sus precios y su texto de venta — todavía cerrada al público", href: "tienda.html" },
-            ] },
-            { titulo: "Reportes", cards: [
-                { emoji: "📄", label: "Actividades", desc: "Lo que pasó en clase, en Word y en PDF", href: "reportes.html" },
-                { emoji: "🧑‍🏫", label: "Supervisión de profesores", desc: "Qué hizo cada profesor en el mes y su informe mensual", href: "supervision.html" },
-                { emoji: "📊", label: "Tablero por academia", desc: "Clases, alumnos, informes, gasto de IA y cobros de cada academia", href: "tablero-academias.html" },
-                { emoji: "💳", label: "Cobros", desc: "Mensualidades, pagos y morosidad", href: "cobros.html" },
-            ] },
-            { titulo: "La plataforma", cards: [
-                { emoji: "🗂️", label: "Actualizaciones", desc: "Todo lo que se le ha hecho al sitio desde el primer día", href: "novedades.html" },
-            ] },
-        ];
-
-        function renderAtajos() {
-            const caja = document.getElementById("atajos");
-            caja.innerHTML = "";
-            ATAJOS.forEach((grupo) => {
-                const sec = document.createElement("section");
-                const h = document.createElement("h3");
-                h.className = "text-xs font-bold uppercase tracking-wide text-brand-450 dark:text-brand-350 mb-2";
-                h.textContent = grupo.titulo;
-                const grid = document.createElement("div");
-                grid.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2";
-                grupo.cards.forEach((c) => {
-                    const a = document.createElement("a");
-                    a.href = c.href;
-                    a.className = "group flex items-center gap-3 rounded-xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 px-3 py-2.5 hover:border-accent-500 hover:shadow-md transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
-                    const icono = document.createElement("span");
-                    icono.className = "text-xl shrink-0";
-                    icono.setAttribute("aria-hidden", "true");
-                    icono.textContent = c.emoji;
-                    const texto = document.createElement("span");
-                    texto.className = "min-w-0";
-                    const label = document.createElement("span");
-                    label.className = "block text-sm font-semibold text-brand-800 dark:text-white leading-tight";
-                    label.textContent = c.label;
-                    const desc = document.createElement("span");
-                    desc.className = "block text-xs text-brand-450 dark:text-brand-350 leading-tight mt-0.5";
-                    desc.textContent = c.desc;
-                    texto.append(label, desc);
-                    a.append(icono, texto);
-                    grid.appendChild(a);
-                });
-                sec.append(h, grid);
-                caja.appendChild(sec);
-            });
-        }
+        /* Las páginas de administración (informes, cobros, formularios,
+           resultados…) NO tienen atajos acá: están en el panel de la Academia
+           (ADMIN_GROUPS de js/clases.js), que es donde entra quien administra.
+           Aquí había una segunda lista, «Herramientas», con casi las mismas
+           tarjetas: dos caminos al mismo lugar, y dos listas que se iban
+           separando. Ver «Una sola puerta para cada cosa» en
+           docs/decisiones/paneles.md. */
 
         /* ================= Las secciones del panel =================
          *
@@ -119,7 +36,7 @@
          * para que atrás/adelante y un enlace guardado lleven a la misma.
          * Todo lo que ya estaba sigue con sus mismos ids: solo cambia qué se ve.
          */
-        const SECCIONES = ["inicio", "supervision", "cuentas", "crear", "profesores", "supervisores", "equipos", "novedades", "torneos", "preparacion", "herramientas"];
+        const SECCIONES = ["inicio", "cuentas", "crear", "profesores", "supervisores", "equipos", "novedades", "torneos", "preparacion"];
 
         function seccionDelEnlace() {
             const h = location.hash.replace("#", "");
@@ -146,8 +63,6 @@
             if (!(opciones && opciones.sinHistoria) && location.hash !== "#" + nombre) {
                 history.pushState(null, "", "#" + nombre);
             }
-            // Se cambió un supervisor o un coordinador: lo urgente se vuelve a contar.
-            if ((nombre === "inicio" || nombre === "supervision") && coberturaVieja && allUsers.length) revisarPendientes();
         }
 
         document.querySelectorAll("[data-ir]").forEach((a) => a.addEventListener("click", (e) => {
@@ -168,84 +83,11 @@
             document.getElementById("admin-fecha").textContent = fecha.charAt(0).toUpperCase() + fecha.slice(1);
         }
 
-        /* Lo de todos los días, en «Inicio»: las cuatro o cinco cosas a las que
-           se entra casi siempre. Las que son de este panel cambian de sección;
-           las demás son páginas. Todas siguen también en su lugar de siempre. */
-        const RAPIDOS = [
-            { emoji: "➕", label: "Crear cuenta", ir: "crear" },
-            { emoji: "👥", label: "Buscar cuentas", ir: "cuentas" },
-            { emoji: "📝", label: "Solicitudes", href: "solicitudes.html" },
-            { emoji: "💳", label: "Cobros", href: "cobros.html" },
-            { emoji: "🧑‍🏫", label: "Supervisión", href: "supervision.html" },
-            { emoji: "🎟️", label: "Accesos", href: "accesos.html" },
-        ];
-
-        function pintarRapidos() {
-            const caja = document.getElementById("inicio-rapidos");
-            caja.innerHTML = "";
-            RAPIDOS.forEach((r) => {
-                const a = document.createElement("a");
-                a.href = r.href || "#" + r.ir;
-                a.className = "flex flex-col items-start justify-between gap-6 min-h-[6.5rem] rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 p-4 shadow-sm hover:border-accent-500 hover:shadow-md transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
-                const icono = document.createElement("span");
-                icono.className = "text-2xl";
-                icono.setAttribute("aria-hidden", "true");
-                icono.textContent = r.emoji;
-                const label = document.createElement("span");
-                label.className = "text-sm font-semibold text-brand-800 dark:text-white leading-tight";
-                label.textContent = r.label;
-                a.append(icono, label);
-                if (r.ir) a.addEventListener("click", (e) => { e.preventDefault(); irA(r.ir); window.scrollTo({ top: 0 }); });
-                caja.appendChild(a);
-            });
-        }
-
-        /* Los números de arriba de «Inicio». Cada uno abre «Cuentas» con ese
-           filtro puesto: un número que no lleva a nadie obliga a ir a buscarlos. */
+        /* «Inicio» es solo «Lo urgente». Antes llevaba también los números de
+           la plataforma, «Lo de todos los días» y un recuadro de supervisión:
+           todo eso estaba repetido en el menú, en Cuentas o en el panel de la
+           Academia. */
         function pintarInicio() {
-            const alumnos = allUsers.filter((u) => u.role === "alumno");
-            const sueltos = alumnos.filter((u) => !profesoresDe(u.id).length).length;
-            const profes = allUsers.filter((u) => u.role === "profesor").length;
-            const numeros = [
-                { emoji: "👥", valor: allUsers.length, label: allUsers.length === 1 ? "cuenta en total" : "cuentas en total", filtro: "" },
-                { emoji: "🎒", valor: alumnos.length, label: alumnos.length === 1 ? "estudiante" : "estudiantes", filtro: "alumno" },
-                { emoji: "🎓", valor: profes, label: profes === 1 ? "profesor" : "profesores", filtro: "profesor" },
-                { emoji: "⚠️", valor: sueltos, label: "sin profesor asignado", filtro: "sin-profesor", alerta: sueltos > 0 },
-            ];
-            const lista = document.getElementById("inicio-numeros");
-            lista.innerHTML = "";
-            numeros.forEach((n) => {
-                const li = document.createElement("li");
-                const b = document.createElement("button");
-                b.type = "button";
-                b.className = "w-full h-full text-left flex items-center gap-3 rounded-2xl p-4 shadow-sm transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 "
-                    + (n.alerta
-                        ? "bg-accent-50 dark:bg-brand-800 border-2 border-accent-500 hover:shadow-md"
-                        : "bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 hover:border-accent-500 hover:shadow-md");
-                const icono = document.createElement("span");
-                icono.className = "text-2xl shrink-0";
-                icono.setAttribute("aria-hidden", "true");
-                icono.textContent = n.emoji;
-                const texto = document.createElement("span");
-                texto.className = "min-w-0";
-                const valor = document.createElement("span");
-                valor.className = "block text-2xl font-bold text-brand-800 dark:text-white leading-none";
-                valor.textContent = n.valor.toLocaleString("es-CR");
-                const label = document.createElement("span");
-                label.className = "block text-xs text-brand-500 dark:text-brand-300 mt-1";
-                label.textContent = n.label;
-                texto.append(valor, label);
-                b.append(icono, texto);
-                b.addEventListener("click", () => {
-                    irA("cuentas");
-                    grupoAbierto = null;
-                    document.getElementById("user-search").value = "";
-                    document.getElementById("role-filter").value = n.filtro;
-                    refiltrarCuentas();
-                });
-                li.appendChild(b);
-                lista.appendChild(li);
-            });
             pintarUrgentes();
             document.getElementById("admin-cuantas").textContent = allUsers.length
                 ? allUsers.length.toLocaleString("es-CR") + (allUsers.length === 1 ? " cuenta" : " cuentas")
@@ -262,16 +104,15 @@
          * se resuelve. Ver «Lo urgente primero» en docs/decisiones/paneles.md.
          *
          * Lo que se cuenta en la base (solicitudes, justificaciones, cobros…)
-         * está en js/pendientes-admin.js, que usa también el panel de
-         * clases.html. Lo único que se cuenta acá es lo que sale de las
-         * cuentas que la página ya trae enteras (alumnos sin profesor,
-         * coordinadores vacíos) y quién cubre a quién.
+         * está en js/pendientes-admin.js. Lo único que se cuenta acá es lo
+         * que sale de las cuentas que la página ya trae enteras (alumnos sin
+         * profesor, coordinadores vacíos) y quién tiene a cargo a quién, que
+         * se pinta en Supervisores y en Profesores, donde se arregla.
          *
          * Un conteo que falla NO se pinta como cero: se dice que no se pudo
          * revisar. Un «al día» falso es peor que no decir nada.
          */
         let cobertura = null;          // { supervisoresDe: Map(profesor -> [supervisor…]), inactivos: Set } | null
-        let coberturaVieja = true;     // se cambió un supervisor o un coordinador: hay que volver a preguntar
         let conteosRemotos = {};       // clave -> número | null (null = no se pudo)
         let revisando = null;
 
@@ -299,7 +140,6 @@
                 inactivos = new Set(filas.map((f) => f.id));
             } catch (_) { inactivos = null; }
             cobertura = fallo ? null : { supervisoresDe, inactivos };
-            coberturaVieja = false;
         }
 
         // Los profesores a los que nadie ve: sin supervisor y fuera de toda coordinación.
@@ -382,7 +222,7 @@
                 { clave: "profes-sin-nadie", nivel: "urgente", emoji: "🧭", n: sinNadie ? sinNadie.length : null,
                   titulo: (n) => pl(n, "profesor que nadie supervisa ni coordina", "profesores que nadie supervisa ni coordina"),
                   porque: "Nadie revisa sus clases ni sus informes.",
-                  accion: "Ver quiénes son", ir: "supervision", alDia: "Todos los profesores están a cargo de alguien" },
+                  accion: "Ver quiénes son", ir: "profesores", alDia: "Todos los profesores están a cargo de alguien" },
                 { clave: "sup-vacios", nivel: "vigilar", emoji: "🧭", n: supVacios,
                   titulo: (n) => pl(n, "supervisor sin nadie a cargo", "supervisores sin nadie a cargo"),
                   porque: "Tienen la marca pero ninguna cuenta asignada: su panel sale vacío.",
@@ -487,53 +327,6 @@
             enMenu.classList.toggle("hidden", !urgentes.length);
             enMenu.textContent = urgentes.length ? String(urgentes.length) : "";
             enMenu.title = urgentes.length ? urgentes.length + (urgentes.length === 1 ? " cosa urgente" : " cosas urgentes") : "";
-            pintarMandoEnInicio();
-        }
-
-        // Los cuatro números de supervisión y coordinación, en «Inicio».
-        function pintarMandoEnInicio() {
-            const { supervisores, coordinadores } = filasDeMando();
-            const sinNadie = profesoresSinNadie();
-            const profes = allUsers.filter((u) => u.role === "profesor" && !u.is_admin && !u.es_supervisor).length;
-            const numeros = [
-                { emoji: "🧭", valor: supervisores.length, label: supervisores.length === 1 ? "supervisor" : "supervisores", ir: "supervisores" },
-                { emoji: "🎓", valor: coordinadores.length, label: coordinadores.length === 1 ? "coordinador" : "coordinadores", ir: "profesores" },
-                { emoji: "✅", valor: sinNadie ? profes - sinNadie.length : null, de: profes, label: "profesores con supervisor o coordinador", ir: "supervision" },
-                { emoji: "⚠️", valor: sinNadie ? sinNadie.length : null, label: "profesores sin supervisión ni coordinación", ir: "supervision", alerta: !!(sinNadie && sinNadie.length) },
-            ];
-            const lista = document.getElementById("inicio-mando");
-            lista.innerHTML = "";
-            numeros.forEach((n) => {
-                const li = document.createElement("li");
-                const a = document.createElement("a");
-                a.href = "#" + n.ir;
-                a.className = "w-full h-full flex items-center gap-3 rounded-xl p-3 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 "
-                    + (n.alerta ? "bg-accent-50 dark:bg-brand-800 border-2 border-accent-500" : "bg-brand-50 dark:bg-brand-950 border border-brand-100 dark:border-brand-800 hover:border-accent-500");
-                const icono = document.createElement("span");
-                icono.className = "text-xl shrink-0";
-                icono.setAttribute("aria-hidden", "true");
-                icono.textContent = n.emoji;
-                const texto = document.createElement("span");
-                texto.className = "min-w-0";
-                const valor = document.createElement("span");
-                valor.className = "block text-xl font-bold text-brand-800 dark:text-white leading-none";
-                valor.textContent = n.valor === null ? "—" : n.valor.toLocaleString("es-CR") + (n.de !== undefined ? " de " + n.de.toLocaleString("es-CR") : "");
-                const label = document.createElement("span");
-                label.className = "block text-xs text-brand-500 dark:text-brand-300 mt-1";
-                label.textContent = n.label;
-                texto.append(valor, label);
-                a.append(icono, texto);
-                a.addEventListener("click", (e) => { e.preventDefault(); irA(n.ir); window.scrollTo({ top: 0 }); });
-                li.appendChild(a);
-                lista.appendChild(li);
-            });
-        }
-
-        function celda(texto, clase) {
-            const td = document.createElement("td");
-            td.className = clase || "py-2 pr-3 text-right text-brand-600 dark:text-brand-300";
-            td.textContent = texto;
-            return td;
         }
 
         function botonIr(texto, seccion) {
@@ -557,54 +350,9 @@
             return a;
         }
 
-        function filaDeMando(f, rol) {
-            const tr = document.createElement("tr");
-            tr.className = "border-b border-brand-50 dark:border-brand-800/60 last:border-0 align-middle";
-            const tdN = document.createElement("td");
-            tdN.className = "py-2 pr-3 font-medium text-brand-700 dark:text-brand-200";
-            tdN.textContent = teacherLabel(f.persona);
-            if (f.vacio) {
-                const aviso = document.createElement("span");
-                aviso.className = "block text-xs font-semibold text-accent-700 dark:text-accent-400";
-                aviso.textContent = rol === "sup" ? "⚠️ No tiene a nadie a cargo" : "⚠️ No coordina a ningún profesor";
-                tdN.appendChild(aviso);
-            }
-            tr.appendChild(tdN);
-            tr.appendChild(celda(f.profes === null ? "—" : String(f.profes)));
-            tr.appendChild(celda(f.alumnos.toLocaleString("es-CR")));
-            const tdI = celda(f.inactivos === null ? "—" : f.inactivos.toLocaleString("es-CR"));
-            if (f.inactivos > 0) tdI.className = "py-2 pr-3 text-right font-semibold text-red-600 dark:text-red-400";
-            tr.appendChild(tdI);
-            const tdA = document.createElement("td");
-            tdA.className = "py-2 text-right whitespace-nowrap space-x-3";
-            if (rol === "coord") tdA.appendChild(enlaceVerPanel(f.persona));
-            tdA.appendChild(botonIr(f.vacio ? "Asignar" : "Editar", rol === "sup" ? "supervisores" : "profesores"));
-            tr.appendChild(tdA);
-            return tr;
-        }
-
-        function pintarMando() {
-            document.getElementById("mando-cargando").hidden = !revisando && !!cobertura;
-            if (!revisando && !cobertura) document.getElementById("mando-cargando").textContent = "No se pudo revisar quién supervisa a cada profesor. Prueba «Volver a revisar» en Lo urgente.";
-            const { supervisores, coordinadores } = filasDeMando();
-            const tbS = document.getElementById("mando-supervisores");
-            const tbC = document.getElementById("mando-coordinadores");
-            tbS.innerHTML = ""; tbC.innerHTML = "";
-            supervisores.forEach((f) => tbS.appendChild(filaDeMando(f, "sup")));
-            coordinadores.forEach((f) => tbC.appendChild(filaDeMando(f, "coord")));
-            const vacia = (tb, texto) => {
-                if (tb.children.length) return;
-                const tr = document.createElement("tr");
-                const td = document.createElement("td");
-                td.colSpan = 5;
-                td.className = "py-4 text-xs text-brand-450 dark:text-brand-350";
-                td.textContent = texto;
-                tr.appendChild(td);
-                tb.appendChild(tr);
-            };
-            vacia(tbS, "Todavía no hay ningún supervisor. Se nombra en «Supervisores».");
-            vacia(tbC, "Todavía no hay ningún coordinador. Se marca en «Profesores y coordinación».");
-
+        /* Los profesores que nadie ve, arriba de la tabla de Profesores: ahí
+           mismo se les pone coordinador, y el botón lleva a Supervisores. */
+        function pintarSinNadie() {
             const sinNadie = profesoresSinNadie() || [];
             const caja = document.getElementById("mando-sin-nadie-caja");
             const ul = document.getElementById("mando-sin-nadie");
@@ -621,7 +369,7 @@
                 n.textContent = teacherLabel(p) + " · " + alumnos + (alumnos === 1 ? " alumno" : " alumnos");
                 const acc = document.createElement("span");
                 acc.className = "space-x-3";
-                acc.append(enlaceVerPanel(p), botonIr("Darle supervisor", "supervisores"), botonIr("Ponerlo con un coordinador", "profesores"));
+                acc.append(enlaceVerPanel(p), botonIr("Darle supervisor", "supervisores"));
                 li.append(n, acc);
                 ul.appendChild(li);
             });
@@ -632,12 +380,14 @@
         async function revisarPendientes() {
             if (revisando) return revisando;
             revisando = (async () => {
-                pintarUrgentes(); pintarMando();
+                pintarUrgentes();
                 const [conteos] = await Promise.all([PendientesAdmin.contarEnLaBase(sb), cargarCobertura()]);
                 conteosRemotos = conteos;
             })();
             try { await revisando; } finally { revisando = null; }
-            pintarUrgentes(); pintarMando();
+            // Lo que se sabe ahora de quién cubre a quién va en cada lugar donde
+            // se arregla: la ficha de cada supervisor y la tabla de profesores.
+            pintarUrgentes(); renderSupervisores(); renderProfesores(); pintarSinNadie();
         }
 
         document.getElementById("urgentes-actualizar").addEventListener("click", () => revisarPendientes());
@@ -1556,7 +1306,6 @@
          * contador. Quien administra no tiene tope.
          */
         function renderProfesores() {
-            coberturaVieja = true;
             const body = document.getElementById("profesores-body");
             body.innerHTML = "";
             const profes = allUsers.filter((u) => u.role === "profesor")
@@ -1582,6 +1331,35 @@
                 tdAlumnos.textContent = porProfe.get(p.id) || 0;
                 tr.appendChild(tdAlumnos);
 
+                /* Quién lo tiene a cargo: sus supervisores (supervisores_de()) y
+                   quién lo coordina. Si nadie, se dice: nadie revisa sus clases. */
+                const tdCargo = document.createElement("td");
+                tdCargo.className = "py-2 pr-3 text-xs";
+                tdCargo.dataset.cargo = p.id;
+                if (p.is_admin || p.es_supervisor) {
+                    tdCargo.className += " text-brand-450 dark:text-brand-350";
+                    tdCargo.textContent = "—";
+                } else if (!cobertura) {
+                    tdCargo.className += " text-brand-450 dark:text-brand-350";
+                    tdCargo.textContent = revisando ? "Revisando…" : "No se pudo revisar";
+                } else {
+                    const nombreDe = (id) => { const u = allUsers.find((x) => x.id === id); return u ? teacherLabel(u) : "?"; };
+                    const sups = (cobertura.supervisoresDe.get(p.id) || []).map(nombreDe);
+                    const coords = [];
+                    coordinadosPor.forEach((lista, c) => {
+                        const cu = allUsers.find((x) => x.id === c);
+                        if (cu && cu.es_coordinador && lista.includes(p.id)) coords.push(teacherLabel(cu));
+                    });
+                    if (!sups.length && !coords.length) {
+                        tdCargo.className += " font-semibold text-accent-700 dark:text-accent-400";
+                        tdCargo.textContent = "⚠️ Nadie lo supervisa ni coordina";
+                    } else {
+                        tdCargo.className += " text-brand-600 dark:text-brand-300";
+                        tdCargo.textContent = [sups.length ? "Supervisa: " + sups.join(", ") : "", coords.length ? "Coordina: " + coords.join(", ") : ""].filter(Boolean).join(" · ");
+                    }
+                }
+                tr.appendChild(tdCargo);
+
                 // Coordinar es un añadido al rol de profesor, no un rol aparte:
                 // así "todos los permisos de profesor" queda garantizado sin
                 // tener que revisar una por una las 23 comprobaciones de
@@ -1598,6 +1376,7 @@
                     const { error } = await sb.rpc("marcar_coordinador", { p_profesor: p.id, p_valor: coord.checked });
                     if (error) { Avisos.avisar("No se pudo cambiar: " + error.message, { tipo: "error" }); coord.checked = antes; return; }
                     p.es_coordinador = coord.checked;
+                    revisarPendientes();
                 });
                 tdCoord.appendChild(coord);
                 tr.appendChild(tdCoord);
@@ -1619,7 +1398,17 @@
                         if (error) { Avisos.avisar("No se pudo guardar: " + error.message, { tipo: "error" }); return; }
                         coordinadosPor.set(p.id, lista);
                         renderProfesores();
+                        revisarPendientes();
                     }, "la coordinación de " + teacherLabel(p)));
+                    // Lo que abarca su coordinación y a quién llamar.
+                    const f = filasDeMando().coordinadores.find((x) => x.persona.id === p.id);
+                    const abarca = document.createElement("p");
+                    abarca.className = "text-xs mt-1 " + (f && f.vacio ? "font-semibold text-accent-700 dark:text-accent-400" : "text-brand-500 dark:text-brand-300");
+                    abarca.dataset.abarca = p.id;
+                    abarca.textContent = !f ? "" : f.vacio
+                        ? "⚠️ No coordina a ningún profesor: solo ve a sus propios alumnos."
+                        : `${f.alumnos} alumno${f.alumnos === 1 ? "" : "s"} (suyos y de ellos)` + (f.inactivos === null ? "" : `; ${f.inactivos} ${f.inactivos === 1 ? "lleva" : "llevan"} 4 días o más sin entrenar`);
+                    tdCoordA.appendChild(abarca);
                 } else {
                     const sin = document.createElement("span");
                     sin.className = "text-xs text-brand-450 dark:text-brand-350";
@@ -1700,22 +1489,13 @@
             });
 
             if (!profes.length) {
-                body.innerHTML = '<tr><td colspan="6" class="py-4 text-brand-450 dark:text-brand-350">Todavía no hay ninguna cuenta con rol de profesor.</td></tr>';
+                body.innerHTML = '<tr><td colspan="8" class="py-4 text-brand-450 dark:text-brand-350">Todavía no hay ninguna cuenta con rol de profesor.</td></tr>';
             }
 
             // Un alumno sin profesor no aparece en los informes de nadie: conviene
             // que salte a la vista en vez de quedarse perdido en la lista.
             const sueltos = allUsers.filter((u) => u.role === "alumno" && !profesoresDe(u.id).length).length;
-            // Este badge va en el <summary>, así que se ve aunque la tarjeta
-            // "Profesores" esté cerrada: colapsarla no puede esconder este aviso.
-            const badge = document.getElementById("profesores-badge");
-            badge.classList.toggle("hidden", sueltos === 0);
-            badge.textContent = sueltos ? "⚠️ " + sueltos + " sin profesor" : "";
-            // Y en el menú, con el número: se ve desde cualquier sección.
-            const enMenu = document.getElementById("nav-sin-profesor");
-            enMenu.classList.toggle("hidden", sueltos === 0);
-            enMenu.textContent = sueltos ? String(sueltos) : "";
-            enMenu.title = sueltos ? sueltos + " sin profesor" : "";
+            // El número va también en «Lo urgente» (y en su marca del menú).
             const aviso = document.getElementById("sin-profesor-aviso");
             aviso.classList.toggle("hidden", sueltos === 0);
             if (sueltos) {
@@ -1783,11 +1563,11 @@
             if (error) { avisoSup("No se pudo guardar: " + error.message, true); return; }
             cuentasPorSupervisor.set(sup.id, unicos);
             renderSupervisores();
+            revisarPendientes();
             avisoSup(frase || ("Guardado: " + teacherLabel(sup) + " tiene " + data + " cuenta" + (data === 1 ? "" : "s") + " a su cargo."));
         }
 
         function renderSupervisores() {
-            coberturaVieja = true;
             const caja = document.getElementById("sup-lista");
             caja.innerHTML = "";
             const supervisores = allUsers.filter((u) => u.es_supervisor)
@@ -1807,6 +1587,7 @@
                 const u = allUsers.find((x) => x.id === id);
                 if (u) u.es_supervisor = true;
                 renderSupervisores();
+                revisarPendientes();
                 avisoSup((u ? teacherLabel(u) : "La cuenta") + " ya supervisa. Ahora asígnale sus cuentas.");
             };
 
@@ -1830,7 +1611,23 @@
                 const nProf = puestos.filter((id) => porId.get(id)?.role === "profesor").length;
                 const resumen = document.createElement("span");
                 resumen.className = "text-xs text-brand-500 dark:text-brand-300";
-                resumen.textContent = `${nAlum} alumno${nAlum === 1 ? "" : "s"} y ${nProf} profesor${nProf === 1 ? "" : "es"} asignados`;
+                resumen.textContent = `${nAlum} alumno${nAlum === 1 ? "" : "s"} y ${nProf} profesor${nProf === 1 ? "" : "es"} asignados a mano`;
+                /* Lo que de verdad cubre (supervisores_de(): lo asignado a mano
+                   y lo que llega por la academia) y a quién llamar. Antes esto
+                   vivía en otra sección, «Quién cubre a quién», que repetía la
+                   lista de supervisores. */
+                const f = filasDeMando().supervisores.find((x) => x.persona.id === sup.id);
+                const cubre = document.createElement("p");
+                cubre.className = "w-full text-sm " + (f && f.vacio ? "font-semibold text-accent-700 dark:text-accent-400" : "text-brand-700 dark:text-brand-200");
+                cubre.dataset.cubre = sup.id;
+                if (!f || f.profes === null) {
+                    cubre.textContent = cobertura === null && !revisando ? "No se pudo revisar a quién cubre." : "Revisando a quién cubre…";
+                } else if (f.vacio) {
+                    cubre.textContent = "⚠️ No tiene a nadie a cargo: su panel sale vacío.";
+                } else {
+                    cubre.textContent = `Cubre ${f.profes} profesor${f.profes === 1 ? "" : "es"} y ${f.alumnos} alumno${f.alumnos === 1 ? "" : "s"}`
+                        + (f.inactivos === null ? "." : `; ${f.inactivos} ${f.inactivos === 1 ? "lleva" : "llevan"} 4 días o más sin entrenar.`);
+                }
                 const quitar = document.createElement("button");
                 quitar.type = "button";
                 quitar.className = "text-xs text-brand-500 dark:text-brand-300 hover:text-red-600 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded";
@@ -1846,12 +1643,13 @@
                     sup.es_supervisor = false;
                     cuentasPorSupervisor.delete(sup.id);
                     renderSupervisores();
+                    revisarPendientes();
                     avisoSup(teacherLabel(sup) + " ya no supervisa.");
                 });
                 const izq = document.createElement("div");
                 izq.className = "flex flex-wrap items-baseline gap-3";
                 izq.append(nombre, resumen);
-                cab.append(izq, quitar);
+                cab.append(izq, quitar, cubre);
 
                 // Sumar un grupo entero: la unión con lo que ya tiene.
                 const filaGrupo = document.createElement("div");
@@ -2249,14 +2047,9 @@
                 return;
             }
 
-            renderAtajos();
-            pintarRapidos();
             pintarSaludo(profile.full_name);
-            // Entrar a un modo de vista lleva al panel, que es donde se nota.
-            document.querySelectorAll("[data-modo-vista]").forEach((b) => b.addEventListener("click", () => {
-                if (window.ModoVista) ModoVista.fijar(b.dataset.modoVista);
-                location.href = "clases.html";
-            }));
+            /* «Ver como» ya no tiene tarjeta acá: está en el selector de arriba
+               del panel de la Academia (js/modo-vista.js), que es donde se nota. */
             await loadUsers();
             await loadEquipos();
             await loadSupervisores();

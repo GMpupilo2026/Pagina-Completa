@@ -1850,7 +1850,8 @@ dificultad— pero más formal: no hay tablero, cada respuesta cita su artículo
 no se puede "probar" una jugada.
 
 - **Solo profesores y administración.** El enlace vive en la ficha
-  "Herramientas" de `clases.html` y en `admin.html`, y la página lo vuelve a
+  "Herramientas" de `clases.html` (en el de quien administra, «Resultados de
+  las pruebas»), y la página lo vuelve a
   comprobar (`perfil.role === 'profesor' || perfil.is_admin`): sin eso muestra
   el aviso de acceso denegado. Como todo en el sitio, el filtro es del
   navegador: `js/arbitraje-items.js` es un archivo estático con las respuestas

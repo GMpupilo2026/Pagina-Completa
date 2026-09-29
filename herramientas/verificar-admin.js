@@ -10,8 +10,8 @@
 
    Cuatro cosas, por cuatro peligros distintos:
 
-   1. LOS ATAJOS. Que estén los cuatro grupos con lo suyo y que cada uno apunte
-      a una página o a un filtro que de verdad existe.
+   1. UNA SOLA PUERTA. Que admin.html no vuelva a traer atajos a las páginas
+      que ya están en el panel de la Academia, ni una sección repetida.
 
    2. LAS CUENTAS. Que buscar encuentre sin importar las tildes, que el filtro
       de rol funcione —incluido "sin profesor asignado", que no es un rol pero
@@ -223,60 +223,39 @@ async function esperarLlamada(accion, ms = 10000) {
   }
 }
 
-/* ====================== admin.html · los atajos ====================== */
-
-async function pruebaAtajos(browser) {
-  console.log("\n=== Los atajos de administración ===");
+/* ====================== admin.html · una sola puerta ======================
+   Quien administra tiene dos pantallas: el panel de la Academia (clases.html),
+   con TODAS las páginas, y ésta, con lo que se maneja adentro. Había una
+   segunda lista de páginas acá («Herramientas»), un «Ver como» repetido, los
+   números de la plataforma repetidos en Inicio y una sección («Quién cubre a
+   quién») que repetía supervisores y coordinadores. Esta prueba cuida que no
+   vuelvan: lo que se repite se desordena, y la gente se pierde. */
+async function pruebaUnaSolaPuerta(browser) {
+  console.log("\n=== Una sola puerta para cada cosa ===");
   const { page, ctx, errores } = await abrir(browser, "/admin.html", ADMIN);
   await page.goto(BASE + "/admin.html", { waitUntil: "networkidle" });
   await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
-
-  const grupos = await page.evaluate(() =>
-    Array.from(document.querySelectorAll("#atajos section")).map((s) => ({
-      titulo: s.querySelector("h3").textContent,
-      enlaces: Array.from(s.querySelectorAll("a")).map((a) => a.getAttribute("href")),
-      etiquetas: Array.from(s.querySelectorAll("a span span:first-child")).map((n) => n.textContent),
-    })));
-
-  igual("los grupos de atajos, en su orden", grupos.map((g) => g.titulo),
-    ["Formularios", "Resultados", "Bases de datos", "Acceso a la plataforma", "Venta de materiales", "Reportes", "La plataforma"]);
-  /* Cada grupo se busca POR NOMBRE y no por su posición: con índices, sumar un
-     grupo renumeraba media docena de comprobaciones que no tienen nada que ver
-     con el orden, y había que corregirlas a mano una por una. Es la misma
-     razón por la que clases.html busca sus grupos por título. El orden se
-     comprueba arriba, una sola vez, que es donde importa. */
-  const atajos = (t) => (grupos.find((g) => g.titulo === t) || { enlaces: ["(no está ese grupo)"] }).enlaces;
-  igual("Resultados: los dos diagnósticos y los dos exámenes", atajos("Resultados"),
-    ["informes.html?tema=diagnostico", "arbitraje.html",
-     "informes.html?tema=diagnostico-publico", "informes.html?tema=arbitraje"]);
-  igual("Formularios: todos juntos, con la encuesta de satisfacción", atajos("Formularios"), ["satisfaccion.html", "encuestas-curso.html", "formularios.html", "solicitudes.html", "inscripciones.html"]);
-  igual("Bases de datos", atajos("Bases de datos"), ["admin-jugador.html"]);
-  igual("Acceso a la plataforma", atajos("Acceso a la plataforma"), ["accesos.html", "precios.html", "prueba-gratis.html"]);
-  igual("Venta de materiales", atajos("Venta de materiales"), ["tienda.html"]);
-  igual("Reportes", atajos("Reportes"), ["reportes.html", "supervision.html", "tablero-academias.html", "cobros.html"]);
-  igual("La plataforma", atajos("La plataforma"), ["novedades.html"]);
-  igual("los informes de toda la plataforma siguen aparte y de primeros",
+  igual("el menú, por grupos y sin repetir",
+    await page.evaluate(() => Array.from(document.querySelectorAll("nav[aria-label='Secciones de administración'] ul")).map((ul) =>
+      document.getElementById(ul.getAttribute("aria-labelledby")).textContent + ": " + Array.from(ul.querySelectorAll("a")).map((a) => a.dataset.ir).join(", "))),
+    ["Hoy: inicio", "Supervisión y coordinación: supervisores, profesores, equipos", "Personas: cuentas, crear", "La plataforma: novedades, torneos, preparacion"]);
+  igual("cada sección del menú existe y hay una por entrada",
     await page.evaluate(() => {
-      const a = document.querySelector('#app a[href="informes.html"]');
-      // Aparte de las tarjetas y antes que ellas.
-      return a && !a.closest("#atajos") && (a.compareDocumentPosition(document.getElementById("atajos")) & Node.DOCUMENT_POSITION_FOLLOWING) ? "sí" : "no";
-    }), "sí");
-
-  /* Un atajo que apunta a una página que no existe no da ningún error: se ve
-     igual de bien y solo falla al apretarlo. Se comprueban los archivos, y
-     para los que llevan ?tema=, que ese tema exista en el selector de
-     informes.html. */
-  const informes = fs.readFileSync(path.join(RAIZ, "informes.html"), "utf8");
-  const temas = [...informes.matchAll(/<option value="([^"]*)"/g)].map((m) => m[1]);
-  let rotos = [];
-  grupos.forEach((g) => g.enlaces.forEach((href) => {
-    const [archivo, consulta] = href.split("?");
-    if (!fs.existsSync(path.join(RAIZ, archivo))) { rotos.push(href + " (no existe el archivo)"); return; }
-    const tema = new URLSearchParams(consulta || "").get("tema");
-    if (tema && !temas.includes(tema)) rotos.push(href + " (informes.html no tiene ese tema)");
-  }));
-  igual("todos los atajos llevan a algo que existe", rotos.join(" | ") || "ninguno roto", "ninguno roto");
-
+      const menu = Array.from(document.querySelectorAll(".admin-nav")).map((a) => a.dataset.ir).sort();
+      const secciones = Array.from(document.querySelectorAll("[data-seccion]")).map((s) => s.dataset.seccion).sort();
+      return JSON.stringify(menu) === JSON.stringify(secciones) && new Set(menu).size === menu.length;
+    }), true);
+  igual("sin atajos a páginas, sin «Ver como», sin números repetidos en Inicio",
+    await page.evaluate(() => ["atajos", "inicio-numeros", "inicio-rapidos", "inicio-mando", "nav-sin-profesor", "profesores-badge"]
+      .filter((id) => document.getElementById(id)).concat(document.querySelector("[data-modo-vista]") ? ["data-modo-vista"] : [])), []);
+  /* Fuera de «Lo urgente» (que lleva a donde se resuelve cada cosa) y de «Ver
+     su panel», la página enlaza a otras páginas solo para decir dónde están
+     todas: el panel de la Academia. */
+  igual("las páginas se abren desde el panel de la Academia, no desde acá",
+    await page.evaluate(() => Array.from(document.querySelectorAll("#app a[href]"))
+      .filter((a) => !a.closest("#urgentes") && !a.closest("[data-seccion='torneos']") && !a.closest("[data-seccion='preparacion']")
+        && !/ver_como=/.test(a.getAttribute("href")) && /\.html/.test(a.getAttribute("href")))
+      .map((a) => a.getAttribute("href"))), ["clases.html"]);
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
 }
@@ -309,17 +288,12 @@ async function pruebaSecciones(browser) {
   igual("el saludo lleva el nombre de quien entra",
     /^(Buenos días|Buenas tardes|Buenas noches), Oscar$/.test(await page.textContent("#admin-saludo")), true);
 
-  /* Los números salen de la lista entera (1205, pedida de mil en mil), no del
-     primer pedazo: con 1000 acá, algo se volvió a pedir de un solo tiro. */
-  const numeros = await page.evaluate(() =>
-    Array.from(document.querySelectorAll("#inicio-numeros button span.min-w-0")).map((b) => b.innerText.replace(/\s+/g, " ").trim()));
-  igual("los números de Inicio, con la lista entera",
-    numeros, ["1 205 cuentas en total", "1 203 estudiantes", "1 profesor", "3 sin profesor asignado"]);
-  igual("el menú avisa de los sin profesor, con el número",
-    await page.evaluate(() => { const b = document.getElementById("nav-sin-profesor"); return b.checkVisibility() ? b.textContent : "no se ve"; }), "3");
-
-  // Cada número lleva a ESAS cuentas.
-  await page.click("#inicio-numeros li:nth-child(4) button");
+  /* «Sin profesor» sale de la lista entera (1205, pedida de mil en mil), no
+     del primer pedazo, y lleva a ESAS cuentas. */
+  igual("lo urgente cuenta los sin profesor con la lista entera",
+    await page.evaluate(() => document.querySelector('#urgentes li[data-pendiente="sin-profesor"] p:nth-of-type(2)').textContent),
+    "3 alumnos sin profesor asignado");
+  await page.click('#urgentes li[data-pendiente="sin-profesor"] a');
   await page.waitForFunction(() => /3 cuentas/.test(document.getElementById("users-summary").textContent), { timeout: 10000 });
   igual("«sin profesor» lleva a Cuentas con ese filtro",
     [await visibles(), await page.evaluate(() => document.getElementById("role-filter").value)],
@@ -409,11 +383,6 @@ async function pruebaUrgente(browser) {
   igual("solicitudes, cobros y satisfacción se cuentan con head", consultas.sort(), ["cobros_morosos:head", "respuestas_satisfaccion:head", "solicitudes_academia:head"]);
   igual("«este mes» arranca el primero del mes", /-01$/.test((await page.evaluate(() => window.__satisfaccion)).p_desde), true);
 
-  // Supervisión y coordinación de un vistazo.
-  igual("los números de supervisión en Inicio",
-    await page.evaluate(() => Array.from(document.querySelectorAll("#inicio-mando a span.min-w-0")).map((a) => a.innerText.replace(/\s+/g, " ").trim())),
-    ["1 supervisor", "1 coordinador", "1 de 3 profesores con supervisor o coordinador", "2 profesores sin supervisión ni coordinación"]);
-
   // Cada pendiente lleva a donde se resuelve.
   igual("las solicitudes llevan a solicitudes.html",
     await page.getAttribute('#urgentes li[data-pendiente="solicitudes"] a', "href"), "solicitudes.html");
@@ -425,20 +394,27 @@ async function pruebaUrgente(browser) {
   await page.goBack();
   await page.waitForFunction(() => document.querySelector('[data-seccion="inicio"]').checkVisibility(), null, { timeout: 5000 });
   await page.click('#urgentes li[data-pendiente="profes-sin-nadie"] a');
-  await page.waitForFunction(() => document.querySelector('[data-seccion="supervision"]').checkVisibility(), null, { timeout: 5000 });
-  bien("«profesores sin nadie» lleva a «Quién cubre a quién»");
+  await page.waitForFunction(() => document.querySelector('[data-seccion="profesores"]').checkVisibility(), null, { timeout: 5000 });
+  bien("«profesores sin nadie» lleva a Profesores y coordinadores");
 
-  const tabla = (id) => page.evaluate((i) => Array.from(document.querySelectorAll("#" + i + " tr")).map((tr) =>
-    Array.from(tr.cells).slice(0, 4).map((td) => td.innerText.replace(/\s+/g, " ").trim()).join(" | ")), id);
-  igual("Marta supervisa a Karina (por la academia) y ve a sus 2 alumnos, 1 sin entrenar",
-    await tabla("mando-supervisores"), ["Marta Solano | 1 | 2 | 1"]);
-  igual("Luis coordina pero no tiene a nadie, y se le avisa",
-    await tabla("mando-coordinadores"), ["Luis Coto ⚠️ No coordina a ningún profesor | 0 | 0 | 0"]);
+  /* Quién tiene a cargo a cada profesor, en su fila: una sola vez, donde se
+     arregla. Karina está a cargo de Marta SOLO por la academia. */
+  const cargo = (id) => page.evaluate((i) => document.querySelector('[data-cargo="' + i + '"]').textContent, id);
+  igual("Karina: la supervisa Marta (por la academia)", await cargo("u-profe"), "Supervisa: Marta Solano");
+  igual("Pedro: nadie, y se dice", await cargo("u-pedro"), "⚠️ Nadie lo supervisa ni coordina");
+  igual("Luis coordina pero no tiene a nadie, y se le avisa en su fila",
+    await page.evaluate(() => document.querySelector('[data-abarca="u-coord"]').textContent),
+    "⚠️ No coordina a ningún profesor: solo ve a sus propios alumnos.");
   igual("los profesores que nadie ve, con cuántos alumnos (la supervisora no cuenta)",
     await page.evaluate(() => Array.from(document.querySelectorAll("#mando-sin-nadie li")).filter((li) => li.checkVisibility()).map((li) => li.querySelector("span").textContent)),
     ["Luis Coto · 0 alumnos", "Pedro Vega · 1 alumno"]);
   igual("y se les puede mirar el panel",
     await page.getAttribute("#mando-sin-nadie li:last-child a", "href"), "clases.html?ver_como=u-pedro");
+  // Y en la ficha de cada supervisor, lo que cubre y a quién llamar.
+  await irA(page, "supervisores");
+  igual("Marta cubre a Karina y sus 2 alumnos, 1 sin entrenar",
+    await page.evaluate(() => document.querySelector('[data-cubre="u-sup"]').textContent),
+    "Cubre 1 profesor y 2 alumnos; 1 lleva 4 días o más sin entrenar.");
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
 
@@ -998,7 +974,7 @@ async function pruebaVolcarEnUnEquipo(browser) {
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
-    await pruebaAtajos(browser);
+    await pruebaUnaSolaPuerta(browser);
     await pruebaSecciones(browser);
     await pruebaUrgente(browser);
     await pruebaPreparacionRivales(browser);

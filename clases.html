@@ -299,24 +299,6 @@
                 <p class="mt-4 pt-4 border-t border-brand-100 dark:border-brand-800 text-sm text-brand-500 dark:text-brand-300" id="profe-clases">—</p>
             </div>
 
-            <!-- ===== Lo urgente de quien ADMINISTRA =====
-                 Lo que alguien está esperando (solicitudes, justificaciones) y
-                 lo que conviene vigilar, contado en la base por
-                 js/pendientes-admin.js, lo mismo que «Lo urgente» de
-                 admin.html. Lo que se cuenta sobre todas las cuentas (alumnos
-                 sin profesor, profesores que nadie supervisa) está allá: el
-                 enlace de abajo lo dice. Ver «Lo urgente primero» en
-                 docs/decisiones/paneles.md. -->
-            <div id="urgente-admin" hidden class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
-                <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
-                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white"><span aria-hidden="true">🚨 </span>Lo urgente</h2>
-                    <a href="admin.html" class="text-sm text-accent-700 dark:text-accent-400 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded">Ver todo lo urgente en Administración →</a>
-                </div>
-                <p id="urgente-admin-estado" role="status" class="text-sm text-brand-500 dark:text-brand-300">Revisando los pendientes…</p>
-                <ul id="urgente-admin-lista" class="mt-3 divide-y divide-brand-100 dark:divide-brand-800"></ul>
-                <p class="mt-3 pt-3 border-t border-brand-100 dark:border-brand-800 text-xs text-brand-500 dark:text-brand-300">Los alumnos sin profesor y los profesores que nadie supervisa ni coordina se revisan en <a href="admin.html#supervision" class="font-semibold underline underline-offset-2 hover:text-accent-700 dark:hover:text-accent-400 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Administración › Quién cubre a quién</a>.</p>
-            </div>
-
             <!-- ===== El resumen de quien SUPERVISA =====
                  No entrena ni da clase: al entrar necesita saber cuántos
                  estudiantes tiene a cargo y cuántos llevan días sin hacer nada.
@@ -411,7 +393,6 @@
     <script src="js/videollamada.js"></script>
     <script src="js/actualizaciones-popup.js"></script>
     <script src="js/resumen-clase.js"></script>
-    <script src="js/pendientes-admin.js"></script>
     <script src="js/clases.js"></script>
 <!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- ayuda: inicio --><script src="js/ayuda-guia.js" defer></script><!-- ayuda: fin --></body>
 </html>

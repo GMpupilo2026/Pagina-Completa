@@ -1,10 +1,8 @@
 /* Lo urgente de quien administra: lo que se cuenta en la base.
 
-   Lo usan dos pantallas —«Lo urgente» de admin.html y la tarjeta de arriba
-   del panel de quien administra en clases.html— y por eso vive acá: con dos
-   copias, la primera que cambie un texto o una consulta deja a la otra
-   diciendo algo distinto. Ver «Lo urgente primero» en
-   docs/decisiones/paneles.md.
+   Lo usa «Lo urgente» de admin.html, que es el único lugar donde se muestra
+   (el panel de la Academia lo repetía y se quitó: ver «Una sola puerta para
+   cada cosa» en docs/decisiones/paneles.md).
 
    Todo se CUENTA en la base (`count: "exact", head: true`, o una función que
    ya devuelve el número): PostgREST corta a mil filas sin avisar, y bajarse
@@ -71,8 +69,8 @@
       accion: "Ver cobros", href: "cobros.html", alDia: "Pagos al día" },
     { clave: "inactivos", nivel: "vigilar", emoji: "💤",
       titulo: (n) => pl(n, "alumno lleva 4 días o más sin entrenar", "alumnos llevan 4 días o más sin entrenar"),
-      porque: "Por supervisor y por coordinador, en «Quién cubre a quién».",
-      accion: "Ver por supervisor", href: "admin.html#supervision", alDia: "Todos entrenaron esta semana" },
+      porque: "Cuántos son de cada supervisor está en su ficha, en Supervisores.",
+      accion: "Ver por supervisor", href: "admin.html#supervisores", alDia: "Todos entrenaron esta semana" },
   ];
 
   window.PendientesAdmin = { contarEnLaBase, EN_LA_BASE, hoyCR };

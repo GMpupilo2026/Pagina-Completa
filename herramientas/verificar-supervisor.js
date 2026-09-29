@@ -263,8 +263,10 @@ async function pruebaAdminSupervisores(browser) {
   igual("nombrar supervisor manda a quién y el valor",
         await page.evaluate(() => window.__rpc.filter((r) => r.n === "marcar_supervisor").pop().args),
         { p_persona: "u-profe", p_valor: true });
-  igual("la tarjeta «Ver la plataforma como…» ofrece los tres modos",
-        await page.$$eval("[data-modo-vista]", (bs) => bs.map((b) => b.dataset.modoVista)), ["alumno", "profesor", "supervisor"]);
+  /* «Ver como» está una sola vez: en el selector de arriba del panel de la
+     Academia (#modo-vista-panel, que se prueba más arriba con sus modos).
+     admin.html tenía una tarjeta que hacía lo mismo. */
+  igual("admin.html no repite «Ver como»", await page.$$eval("[data-modo-vista]", (bs) => bs.length), 0);
   igual("sin errores en la página", errores, []);
   await ctx.close();
 }

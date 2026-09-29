@@ -164,9 +164,9 @@ tiene que ver al entrar.
   Academia; lo hace `quitarLoDeFueraSiNoEsAdmin()`.
 - **Sus dos temas se van del filtro con ellos** (`arbitraje` y
   `diagnostico-publico`), o quedaría un tema que enseña un panel que ya no
-  está. Las dos `<option>` siguen escritas en el HTML —`verificar-admin.js`
-  comprueba contra el archivo que los atajos de `admin.html` apunten a temas
-  que existen— y se quitan del DOM al cargar.
+  está. Las dos `<option>` siguen escritas en el HTML —`verificar-panel.js`
+  comprueba contra el archivo que las tarjetas del panel de quien administra
+  apunten a temas que existen— y se quitan del DOM al cargar.
 - **Tampoco se le bajan.** Del arbitraje, la RLS se lo devuelve igual a un
   profesor, así que ese filtro tiene que estar en la página. Del diagnóstico
   ya no: desde «El enlace del diagnóstico de cada supervisor» (abajo) la base

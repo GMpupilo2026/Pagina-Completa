@@ -763,12 +763,12 @@ clase.
 - **Se le pinta OTRO panel, escrito entero en `ADMIN_GROUPS`**, igual que a
   quien supervisa (`SUPERVISOR_GROUPS`). No se le recorta el del profesor
   tarjeta por tarjeta: con cada tarjeta nueva del profesor habría que acordarse
-  de quitársela, y la que se olvide aparece. Los grupos van en el orden de
-  admin.html: «Supervisión y coordinación», «Cuentas y academias»,
-  «Formularios», «Cobros y accesos», «Resultados de las pruebas», «Revisar el
-  contenido» y «Tu cuenta» (ver «Lo urgente primero»).
-- **Arriba de todo va «Lo urgente»** (ver «Lo urgente primero») y después
-  **el resumen de toda la plataforma**: estudiantes, profesores y
+  de quitársela, y la que se olvide aparece. Los grupos: «Administración»,
+  «Supervisión y coordinación», «Formularios», «Cobros y accesos»,
+  «Resultados de las pruebas», «Torneos», «Revisar el contenido» y «Tu
+  cuenta». Es la lista de TODAS sus páginas (ver «Una sola puerta para cada
+  cosa»).
+- **Arriba va el resumen de toda la plataforma**: estudiantes, profesores y
   quiénes llevan 4 días sin entrenar. Es la misma tarjeta de quien supervisa,
   con el título «Toda la plataforma». Los números se cuentan en la base:
   `mi_gente()` trae el total, y `informes_inactivos()` se cuenta con
@@ -933,8 +933,9 @@ segura de poner en tantas páginas.
 ## El panel de Administración
 
 `admin.html` es de quien administra. Lo que hace está en las secciones de
-abajo (atajos, cuentas, profesores…); cómo se reparte en la pantalla, en «El
-panel de Administración, por secciones».
+abajo (lo urgente, cuentas, profesores…); cómo se reparte en la pantalla, en
+«El panel de Administración, por secciones», y qué va acá y qué en el panel de
+la Academia, en «Una sola puerta para cada cosa».
 
 ### El panel de Administración, por secciones
 
@@ -945,38 +946,33 @@ había que saber que estaba ahí y bajar; lo plegado no se encontraba. Se pidió
 algo «más sencillo de usar», con la forma de un tablero: menú a la izquierda y
 tarjetas.
 
-- **Un menú a la izquierda y UNA sección a la vista**: Inicio, Cuentas, Crear
-  cuenta, Profesores, Supervisores, Equipos, Novedades y Herramientas (los
-  atajos de siempre). En el celular el menú es una tira de arriba que se
+- **Un menú a la izquierda y UNA sección a la vista**, por grupos (hoy: ver
+  «Una sola puerta para cada cosa»). En el celular el menú es una tira de arriba que se
   desliza. Cada sección es un `<section data-seccion>` y la muestra `irA()` de
   `js/admin.js`; **los ids de adentro no cambiaron**, así que todo el resto del
   código siguió igual. Ya no hay `<details>`: una sección no se pliega.
 - **La dirección lleva la sección** (`admin.html#equipos`): atrás/adelante del
   navegador y un enlace guardado llevan a la misma.
-- **«Inicio» dice cómo está la plataforma de un vistazo** (hoy va debajo de
-  «Lo urgente»: ver «Lo urgente primero»): cuántas cuentas,
-  estudiantes, profesores y **cuántos alumnos sin profesor** (resaltado, porque
-  esos no salen en los informes de nadie). **Cada número lleva a esas
-  cuentas**, con el filtro puesto: un número que no lleva a nadie obliga a ir a
-  buscarlos. Se cuentan sobre la lista entera que ya se pedía de mil en mil;
-  contarlos aparte habría sido un segundo lugar donde cortarse a las mil.
-  Debajo, Informes de toda la plataforma (sigue siendo la puerta grande y va
-  antes que los atajos), «Lo de todos los días» —crear cuenta, buscar,
-  solicitudes, cobros, supervisión y accesos, que también siguen en su lugar de
-  siempre— y «Ver como».
+- **«Inicio» es «Lo urgente»** (ver «Lo urgente primero»). Antes decía cuántas
+  cuentas, estudiantes y profesores había, con Informes, «Lo de todos los
+  días» y «Ver como» debajo: todo eso estaba repetido en otro lado y se quitó
+  (ver «Una sola puerta para cada cosa»). Los alumnos sin profesor siguen a un
+  clic: son un pendiente de «Lo urgente», que abre Cuentas con el filtro
+  puesto, contado sobre la lista entera que ya se pide de mil en mil.
 - **El buscador de cuentas está arriba, en todas las secciones**: buscar a
   alguien es lo que más se hace acá. Escribir lleva a Cuentas. Si se viene de
   otra sección, **se quita el filtro de rol** que hubiera quedado puesto: no se
   ve desde ahí, y seguiría escondiendo gente sin que se note.
-- El número de alumnos sin profesor va también **en el menú**, junto a
-  «Profesores», y no solo dentro de esa sección: antes iba en el encabezado de
-  la tarjeta plegada justamente para que plegarla no lo escondiera.
+- El menú lleva **un solo número**: cuántas cosas urgentes hay, junto a «Lo
+  urgente». Antes llevaba también el de alumnos sin profesor junto a
+  «Profesores»; ese ya está dentro de lo urgente, y dos números en el menú
+  hacían pensar que eran dos problemas.
 - **Los colores son los del sitio** (el azul de la marca y el ámbar de los
   botones), no los de la imagen de referencia: son los que ya tienen el
   contraste medido y los que cambian con el tema de la plataforma.
 - `verificar-admin.js` mide con `checkVisibility()` que al entrar se vea solo
-  Inicio, que los números salgan de las 1205 cuentas de prueba (con 1000 se
-  habría vuelto a pedir de un solo tiro), que cada número lleve a sus cuentas,
+  Inicio, que «sin profesor» salga de las 1205 cuentas de prueba (con 1000 se
+  habría vuelto a pedir de un solo tiro) y lleve a sus cuentas,
   que buscar desde otra sección lleve a Cuentas sin el filtro viejo y que
   `#supervisores` abra Supervisores. Las pruebas que tocan una sección van
   primero a ella con el menú, como una persona.
@@ -988,7 +984,7 @@ panel decía cuántas cuentas había, y lo que esperaba a alguien había que ir 
 buscarlo página por página. **Quien administra está para ayudar a supervisores
 y coordinadores**, y el panel se reordenó alrededor de eso.
 
-- **«Inicio» ahora es «Lo urgente»**: una lista de pendientes, cada uno con su
+- **«Inicio» es «Lo urgente»**: una lista de pendientes, cada uno con su
   número, por qué importa y un botón que lleva a donde se resuelve. Primero
   lo **urgente** (alguien espera): solicitudes de ingreso sin responder,
   justificaciones de ausencia por revisar, alumnos sin profesor y profesores
@@ -1000,17 +996,23 @@ y coordinadores**, y el panel se reordenó alrededor de eso.
 - **Lo que está en cero no desaparece**: va en «Al día», para que se sepa que
   se revisó. Y **un conteo que falla no se pinta como cero**: sale «No se pudo
   revisar». Un «al día» falso es peor que no decir nada.
-- **Todo se cuenta en la base**: `solicitudes_academia` con `head`,
-  `justificaciones_pendientes()`, y `cobros_morosos()`,
-  `respuestas_satisfaccion(…, p_solo_se_van)` e `informes_inactivos()` con
-  `{ count: "exact", head: true }`. Lo único que se cuenta en la página es lo
-  que sale de las cuentas que ya trae enteras. Los saldos vencidos son filas
-  de `cobros_morosos()`: una por alumno **y moneda**, y así lo dice el texto.
-- **«Quién cubre a quién»** (`admin.html#supervision`) es la sección nueva:
-  cada supervisor y cada coordinador con cuántos profesores y alumnos tiene y
-  cuántos de esos alumnos llevan 4 días sin entrenar (a quién llamar), y
-  arriba, resaltados, los profesores que nadie ve, con «👁 Ver su panel»
-  (`clases.html?ver_como=`) y los botones para asignarlos.
+- **Todo se cuenta en la base** (`js/pendientes-admin.js`):
+  `solicitudes_academia` con `head`, `justificaciones_pendientes()`, y
+  `cobros_morosos()`, `respuestas_satisfaccion(…, p_solo_se_van)` e
+  `informes_inactivos()` con `{ count: "exact", head: true }`. Lo único que se
+  cuenta en la página es lo que sale de las cuentas que ya trae enteras. Los
+  saldos vencidos son filas de `cobros_morosos()`: una por alumno **y
+  moneda**, y así lo dice el texto.
+- **Quién tiene a cargo a quién está donde se arregla**, no en una sección
+  aparte:
+  - en **Profesores y coordinadores**, cada profesor dice quién lo supervisa y
+    quién lo coordina («Supervisa: Marta · Coordina: Luis», o «⚠️ Nadie lo
+    supervisa ni coordina»); cada coordinador, cuántos alumnos abarca y
+    cuántos llevan 4 días sin entrenar; y arriba, resaltados, los profesores
+    que nadie ve, con «👁 Ver su panel» (`clases.html?ver_como=`);
+  - en **Supervisores**, la ficha de cada uno dice a cuántos profesores y
+    alumnos cubre de verdad y cuántos llevan 4 días sin entrenar (a quién
+    llamar), o que no tiene a nadie.
   - **Quién supervisa a un profesor lo contesta `supervisores_de()`**, una
     llamada por profesor en paralelo (son decenas). Armarlo con
     `supervisor_cuentas` dejaba afuera lo que llega por la academia: el
@@ -1018,71 +1020,68 @@ y coordinadores**, y el panel se reordenó alrededor de eso.
     academia, y con la tabla saldría «sin supervisor».
   - Quien supervisa no cuenta como «profesor sin nadie» (no hay supervisor de
     supervisores); un coordinador sí, porque también lo revisa un supervisor.
-  - Al cambiar un supervisor o un coordinador, volver a «Lo urgente» o a
-    «Quién cubre a quién» vuelve a contar.
-- **El menú va por grupos**: «Hoy», «Supervisión y coordinación» (quién cubre
-  a quién, supervisores, profesores, equipos), «Personas» (cuentas, crear) y
-  «La plataforma» (herramientas, novedades, salas de torneos, preparación de
-  rivales). «Ver la plataforma como…» se fue a Herramientas; los números de
-  la plataforma quedaron al final de Inicio.
-- **El panel de la Academia de quien administra (`clases.html`) sigue el
-  mismo criterio.** Arriba de todo, antes del resumen de la plataforma, va la
-  tarjeta «Lo urgente»: lo que se cuenta en la base, solo lo que tiene algo,
-  cada uno con su enlace, y «Ver todo lo urgente en Administración». Los
-  grupos arrancan con «Supervisión y coordinación» (quién cubre a quién,
-  supervisión, coordinación, informes, justificaciones, tablero por academia,
-  reportes); después «Cuentas y academias». «Actualizaciones» pasó al final
-  de «Revisar el contenido».
-  - **Los conteos de la base viven en `js/pendientes-admin.js`**, con sus
-    textos, y lo usan las dos pantallas: con dos copias, la primera que
-    cambie una consulta deja a la otra diciendo otra cosa.
-  - **La tarjeta de `clases.html` no dice «todo al día»**: lo que se cuenta
-    sobre todas las cuentas (alumnos sin profesor, quién cubre a quién) no
-    está ahí, sino en Administración, y la tarjeta lo dice con su enlace.
-    Cuando no hay nada, dice «Nada esperando respuesta en solicitudes,
-    justificaciones, cobros ni encuestas».
-- Lo prueban `pruebaUrgente` en `verificar-admin.js` (el orden, el «al día», el
-  número del menú, que se cuente con `head`, a dónde lleva cada pendiente, las
-  dos tablas y que un conteo caído no diga «al día») y `pruebaAdmin` en
-  `verificar-panel.js` (los grupos en su orden, la tarjeta antes de la grilla,
-  sus enlaces y que las solicitudes se cuenten con `head`). Rompiendo a
-  propósito `supervisores_de`, haciendo que un error cuente como cero o
-  bajando las solicitudes en vez de contarlas, saltan.
+  - Cada cambio de un supervisor o un coordinador vuelve a contar todo.
+  - Primero hubo una sección «Quién cubre a quién» con dos tablas; se quitó
+    porque repetía la lista de supervisores y la de coordinadores.
+- Lo prueba `pruebaUrgente` en `verificar-admin.js`: el orden, el «al día», el
+  número del menú, que se cuente con `head`, a dónde lleva cada pendiente,
+  quién tiene a cargo a cada profesor, lo que cubre cada supervisor y que un
+  conteo caído no diga «al día». Rompiendo a propósito `supervisores_de` o
+  haciendo que un error cuente como cero, salta.
 
-### Los atajos, por grupos
+### Una sola puerta para cada cosa
 
-Eran ocho botones en una fila corrida, sin ningún criterio de orden —el
-diagnóstico de los alumnos al lado de la base de datos de chess-results— y cada
-uno con las mismas doce clases de Tailwind copiadas. Ahora salen de `ATAJOS`,
-una lista con cuatro grupos: **Resultados** (los dos diagnósticos y los dos
-exámenes, el de la Academia y el del público), **Formularios**, **Bases de
-datos** y **Reportes**.
+Después de ordenar lo urgente, el dueño pidió revisar que no hubiera
+**información repetida ni dos caminos al mismo lugar**, para no perderse. Había
+muchos:
 
-**Todos los formularios van juntos y primero**, en el grupo **Formularios**:
-la encuesta de satisfacción con los profesores, las encuestas anónimas de
-cursos (sin sesión y para lector de pantalla), el armador de formularios de
-inscripción, las solicitudes de la Academia y las inscripciones a torneos en
-línea. Antes estaban repartidos (en el panel de quien administra, las
-solicitudes y el armador vivían dentro de «Cuentas y personas»). El panel de la
-Academia de quien administra (`ADMIN_GROUPS` de `js/clases.js`) tiene el mismo
-grupo, con las mismas cinco tarjetas en el mismo orden: son dos listas, y
-cada una dice dónde está la otra.
+- `admin.html` tenía «Herramientas», una segunda lista de páginas (informes,
+  cobros, formularios, resultados, supervisión…) que casi calcaba el panel de
+  la Academia de quien administra, más «Lo de todos los días» y el recuadro de
+  Informes en Inicio;
+- el panel de la Academia repetía «Lo urgente» y tenía una tarjeta a una
+  sección de `admin.html`;
+- supervisores y coordinadores salían en dos secciones cada uno;
+- «Ver como» estaba en el selector del panel y en una tarjeta de
+  `admin.html`; «Crear cuenta», en el menú y en un botón de Cuentas; el número
+  de alumnos sin profesor, en Inicio, en el menú y en Profesores.
 
-- Las tarjetas son **más chicas** que las del panel de la Academia a propósito:
-  acá son atajos de quien ya sabe lo que busca, no la puerta de entrada de un
-  alumno.
-- **"Informes de toda la plataforma" queda aparte y primero**, con su botón
-  ámbar: es la puerta grande, y las tarjetas son atajos a un apartado suyo.
-- Cuatro de los cinco atajos de Resultados llevan a `informes.html?tema=…`. Ese
-  enlace directo **depende de que el tema exista en el selector de
-  `informes.html`**: si se le cambia el nombre a una opción, el atajo lleva al
-  resumen general sin decir nada. Por eso `verificar-admin.js` comprueba que
-  cada atajo apunte a un archivo que existe y, si lleva `?tema=`, a un tema que
-  el selector de verdad tiene.
-- Se agregó el tema `diagnostico-publico`, hermano del de arbitraje público: los
-  diagnósticos de visitantes ya salían dentro del tema `diagnostico` y en el
-  resumen general, pero ahí hay que bajar a buscarlos, y son contactos para
-  invitar a Academia — se consultan seguido.
+La regla que quedó: **cada pantalla hace lo suyo, y cada destino tiene una sola
+puerta.**
+
+- **El panel de la Academia (`clases.html`, `ADMIN_GROUPS`) tiene TODAS las
+  páginas**, que es donde entra quien administra: Administración (esta
+  página) y Academias; Supervisión y coordinación; Formularios; Cobros y
+  accesos; Resultados de las pruebas; Torneos; Revisar el contenido y Tu
+  cuenta. Lo que solo estaba en Herramientas (precios, prueba gratis,
+  jugadores de chess-results, el arbitraje del público) vino para acá.
+- **`admin.html` tiene lo que se maneja adentro**, con el menú en cuatro
+  grupos: «Hoy» (Lo urgente), «Supervisión y coordinación» (Supervisores,
+  Profesores y coordinadores, Equipos), «Personas» (Cuentas, Crear cuenta) y
+  «La plataforma» (Avisos internos, Salas de torneos, Preparación de rivales).
+  A otras páginas solo lleva desde un pendiente de «Lo urgente» (a donde se
+  resuelve) y desde su subtítulo, que dice dónde están las demás.
+- «Novedades» de `admin.html` pasó a llamarse **«Avisos internos»**: son los
+  avisos entre quienes administran, y con el mismo nombre se confundía con
+  «Actualizaciones» (`novedades.html`, lo que se le ha hecho al sitio).
+- La descripción del examen de arbitraje decía «los del público» en una lista
+  y «del equipo docente» en la otra. `arbitraje.html` es el del equipo
+  docente; el del público es `informes.html?tema=arbitraje`, y ahora cada uno
+  dice lo suyo.
+- Lo prueban `pruebaUnaSolaPuerta` en `verificar-admin.js` (el menú por
+  grupos, una entrada por sección, que no vuelvan los atajos, «Ver como» ni
+  los números repetidos, y que la página no enlace a otras fuera de lo
+  urgente) y `pruebaAdmin` en `verificar-panel.js` (los grupos, que cada
+  destino esté una sola vez, que lo de Herramientas esté en el panel y que
+  **cada tarjeta lleve a un archivo que existe** y, si lleva `?tema=`, a un
+  tema que `informes.html` de verdad tiene: si se le cambia el nombre a una
+  opción, el enlace lleva al resumen general sin decir nada). Probado
+  rompiéndolo: un atajo metido en `admin.html` y un enlace mal escrito en el
+  panel saltan.
+- El tema `diagnostico-publico` (hermano del de arbitraje público) existe
+  porque los diagnósticos de visitantes son contactos para invitar a la
+  Academia y se consultan seguido: en el tema `diagnostico` había que bajar a
+  buscarlos.
 
 ### Las cuentas se ven por GRUPO, no todas de una
 

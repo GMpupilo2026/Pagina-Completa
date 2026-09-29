@@ -540,46 +540,44 @@ async function pruebaAdmin(browser) {
     rpc: {
       mi_gente: [{ id: "x", total: 312 }],
       informes_inactivos: [{ id: "a1" }, { id: "a2" }, { id: "a3" }],
-      justificaciones_pendientes: 2,
-      cobros_morosos: [],
-      respuestas_satisfaccion: [],
     },
-    solicitudes_academia: [{ id: "s-1", estado: "pendiente" }, { id: "s-2", estado: "aprobada" }],
   });
   const grupos = await page.evaluate(LEER_GRILLA);
   /* Quien administra se encarga de que toda la empresa vaya bien: su panel es
      el suyo, escrito entero en ADMIN_GROUPS, y no el de un profesor recortado. */
   igual("sus grupos, en su orden", grupos.map((g) => g.titulo),
-    ["Supervisión y coordinación", "Cuentas y academias", "Formularios", "Cobros y accesos", "Resultados de las pruebas", "Revisar el contenido", "Tu cuenta"]);
-  /* Primero lo que necesitan supervisores y coordinadores, que es para lo que
-     existe quien administra: el mismo orden que el menú de admin.html. */
-  igual("Supervisión y coordinación, primero y con lo suyo",
+    ["Administración", "Supervisión y coordinación", "Formularios", "Cobros y accesos", "Resultados de las pruebas", "Torneos", "Revisar el contenido", "Tu cuenta"]);
+  /* UNA sola puerta para cada cosa: acá están TODAS las páginas de quien
+     administra, y admin.html solo tiene lo que se maneja adentro (lo urgente,
+     las cuentas, supervisores y profesores). Antes admin.html traía una
+     segunda lista de páginas («Herramientas») y este panel repetía «Lo
+     urgente»; lo que solo estaba allá vino para acá. */
+  igual("Supervisión y coordinación, con lo suyo",
     grupos.find((g) => g.titulo === "Supervisión y coordinación").tiles.map((t) => t.enlace),
-    ["admin.html#supervision", "supervision.html", "coordinacion.html", "informes.html", "justificaciones.html", "tablero-academias.html", "reportes.html"]);
-  /* «Lo urgente», arriba de la grilla: solo lo que tiene algo, contado en la
-     base (js/pendientes-admin.js, el mismo de admin.html). */
-  igual("«Lo urgente» se ve y va antes de la grilla",
-    await page.evaluate(() => {
-      const u = document.getElementById("urgente-admin");
-      return u.checkVisibility() && !!(u.compareDocumentPosition(document.getElementById("tile-grid")) & Node.DOCUMENT_POSITION_FOLLOWING);
-    }), true);
-  igual("con lo que tiene algo, lo urgente primero y el nivel escrito",
-    await page.evaluate(() => Array.from(document.querySelectorAll("#urgente-admin-lista li")).filter((li) => li.checkVisibility())
-      .map((li) => li.dataset.pendiente + " · " + li.querySelector("a > span:nth-child(2)").innerText.replace(/\s+/g, " ").trim())),
-    ["solicitudes · URGENTE 1 solicitud de ingreso sin responder",
-     "justificaciones · URGENTE 2 justificaciones de ausencia por revisar",
-     "inactivos · A VIGILAR 3 alumnos llevan 4 días o más sin entrenar"]);
-  igual("y cada uno lleva a donde se resuelve",
-    await page.evaluate(() => Array.from(document.querySelectorAll("#urgente-admin-lista a")).map((a) => a.getAttribute("href"))),
-    ["solicitudes.html", "justificaciones.html", "admin.html#supervision"]);
-  igual("el resumen lo dice", await page.textContent("#urgente-admin-estado"), "2 cosas urgentes: alguien está esperando.");
-  igual("las solicitudes se cuentan en la base, sin bajarlas",
-    await page.evaluate(() => window.__consultas.filter((c) => c.tabla === "solicitudes_academia").map((c) => [c.count, !!c.head, c.eq.estado])),
-    [[true, true, "pendiente"]]);
-  /* Todos los formularios juntos, los mismos cuatro de admin.html. */
+    ["supervision.html", "coordinacion.html", "informes.html", "justificaciones.html", "tablero-academias.html", "reportes.html"]);
+  igual("lo urgente NO se repite acá: está en Administración",
+    await page.evaluate(() => !!document.getElementById("urgente-admin")), false);
   igual("Formularios: todos juntos, con la encuesta de satisfacción",
     grupos.find((g) => g.titulo === "Formularios").tiles.map((t) => t.enlace),
-    ["satisfaccion.html", "encuestas-curso.html", "formularios.html", "solicitudes.html", "inscripciones.html"]);
+    ["satisfaccion.html", "encuestas-curso.html", "formularios.html", "solicitudes.html"]);
+  igual("lo que solo estaba en las Herramientas de admin.html, ahora acá",
+    ["precios.html", "prueba-gratis.html", "admin-jugador.html", "informes.html?tema=arbitraje", "arbitraje.html", "inscripciones.html"]
+      .filter((x) => !grupos.flatMap((g) => g.tiles).some((t) => t.enlace === x)), []);
+  /* Un enlace a una página que no existe no da ningún error: se ve igual de
+     bien y solo falla al apretarlo. Y los que llevan ?tema= dependen de que
+     ese tema exista en el selector de informes.html. */
+  {
+    const fs = require("fs"), path = require("path"), RAIZ = path.join(__dirname, "..");
+    const informes = fs.readFileSync(path.join(RAIZ, "informes.html"), "utf8");
+    const temas = [...informes.matchAll(/<option value="([^"]*)"/g)].map((m) => m[1]);
+    const rotos = grupos.flatMap((g) => g.tiles).map((t) => t.enlace).filter(Boolean).filter((href) => {
+      const [archivo, consulta] = href.split("#")[0].split("?");
+      if (!fs.existsSync(path.join(RAIZ, archivo))) return true;
+      const tema = new URLSearchParams(consulta || "").get("tema");
+      return !!(tema && !temas.includes(tema));
+    });
+    igual("todas las tarjetas llevan a algo que existe", rotos.join(" | ") || "ninguna rota", "ninguna rota");
+  }
   const enlaces = grupos.flatMap((g) => g.tiles).map((t) => t.enlace);
   igual("nada de dar clase: ni sesión en vivo, ni tareas, ni exámenes, ni planes, ni asistencia, ni informe mensual, ni subgrupos, ni archivos, ni juegos, ni torneos",
     ["sesion.html", "tareas.html", "examenes.html", "planes.html", "asistencia.html", "informe-mensual.html",
@@ -598,10 +596,10 @@ async function pruebaAdmin(browser) {
   igual("con los números de todos: estudiantes, profesores y sin entrenar",
     await page.evaluate(() => ["sup-alumnos", "sup-profes", "sup-inactivos"].map((i) => document.getElementById(i).textContent)),
     ["312", "312", "3"]);
-  igual("los que no entrenan se CUENTAN en la base, sin bajarse la lista (el resumen y «Lo urgente»)",
+  igual("los que no entrenan se CUENTAN en la base, sin bajarse la lista",
     await page.evaluate(() => window.__consultas.filter((c) => c.tabla === "informes_inactivos").map((c) => [c.count, !!c.head])),
-    [[true, true], [true, true]]);
-  igual("el saludo dice para qué es el panel", await page.textContent("#panel-subtitulo"), "Primero lo urgente; después, lo que necesitan supervisores y coordinadores.");
+    [[true, true]]);
+  igual("el saludo dice para qué es el panel y dónde está lo demás", await page.textContent("#panel-subtitulo"), "Todas las páginas de la plataforma. Lo urgente y las cuentas están en Administración.");
   igual("sin errores en la página", errores, []);
   await ctx.close();
 
