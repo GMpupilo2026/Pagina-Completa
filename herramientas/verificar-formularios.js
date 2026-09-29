@@ -526,6 +526,28 @@ async function pruebaSupervisor(browser) {
   await page.close();
 }
 
+/* formularios.html?alta=1 es «Cuenta nueva» del panel de quien supervisa:
+   abre ya la caja de «＋ Alumno nuevo» y deja la dirección limpia, para que
+   recargar no la vuelva a abrir. */
+async function pruebaAltaDirecta(browser) {
+  console.log("\n=== «Cuenta nueva» abre el alta directo ===");
+  const { page, errores } = await abrir(browser, "/formularios.html?alta=1", clienteFalso({
+    rpc: { informes_resumen_alumnos: [], mi_gente: [] },
+    tablas: {
+      profiles: [{ id: "u-sup", role: "profesor", is_admin: false, es_supervisor: true, es_coordinador: false, full_name: "Sara Vega" }],
+      formularios: [], formulario_respuestas: [],
+    },
+  }, "u-sup"));
+  await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
+  igual("la caja del alumno nuevo está abierta y con el foco en el nombre",
+    await page.evaluate(() => [document.getElementById("alta-fondo").checkVisibility(),
+      document.getElementById("alta-titulo").textContent, document.activeElement.id]),
+    [true, "Crear una cuenta de alumno", "alta-alumno-nombre"]);
+  igual("la dirección queda limpia", new URL(page.url()).search, "");
+  errores.forEach((e) => { console.log("  ✗ error de la página: " + e); fallos += 1; });
+  await page.close();
+}
+
 /* Compartir un formulario con otro coordinador. Lo que hace cumplir quién
    puede leer qué se comprobó impersonando roles en SQL; esto es lo otro: que
    el bloque solo aparezca donde tiene que aparecer y que mande a la base
@@ -788,6 +810,7 @@ async function pruebaImagenes(browser) {
     await pruebaArmador(browser);
     await pruebaAdministracion(browser);
     await pruebaSupervisor(browser);
+    await pruebaAltaDirecta(browser);
     await pruebaCompartir(browser);
     await pruebaPublica(browser);
     await pruebaImagenes(browser);
