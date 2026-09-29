@@ -792,6 +792,40 @@ function pruebaTeoria() {
   return libro;
 }
 
+/* Etapa 6: una alumna de mentira. Con blancas juega 1.e4 e5 2.Cf3 Cc6 3.Ac4
+   (el plan dice 3.Ab5) y 1.d4 d5 2.c4, donde el rival saca 90 %; contra 1.e4
+   saca 24 %. Con negras contesta 1.d4 con c5, que es lo que dice el plan. */
+function pgnDeAlumna() {
+  let t = "";
+  for (let i = 0; i < 10; i++) t += partida("Ana Alumna", "X" + i, i < 7 ? "1-0" : "0-1", "e4 e5 2. Nf3 Nc6 3. Bc4 Bc5");
+  for (let i = 0; i < 8; i++) t += partida("Ana Alumna", "Y" + i, i < 4 ? "1-0" : "0-1", "d4 d5 2. c4 e6 3. Nc3 Nf6");
+  for (let i = 0; i < 6; i++) t += partida("Z" + i, "Ana Alumna", i < 3 ? "1-0" : "0-1", "d4 c5 2. d5 e5");
+  return t;
+}
+
+function pruebaCruce() {
+  console.log("\n=== Etapa 6: el cruce con las partidas del alumno ===");
+  const C = require("../js/preparacion-cruce.js");
+  const rival = A.leerPgn(pgnDePrueba());
+  const r = A.analizar(rival, "Pedro Perez");
+  const planes = { conBlancas: r.conBlancas.plan, conNegras: r.conNegras.plan };
+  const c = C.cruzar(rival, "Pedro Perez", {}, A.leerPgn(pgnDeAlumna()), "Ana Alumna", planes);
+  igual("encuentra a la alumna y sus partidas por color", [c.alumno, c.total, c.lados.conBlancas.partidas, c.lados.conNegras.partidas], ["Ana Alumna", 24, 18, 6]);
+  const b = c.lados.conBlancas;
+  igual("con blancas, del plan ya juega 1.e4 y 2.Cf3", b.plan.filter((x) => x.estado === "la-juega").map((x) => x.recomendada), ["e4", "Nf3"]);
+  const otra = b.plan.find((x) => x.estado === "otra");
+  igual("y en la jugada 3 juega otra cosa: 3.Ac4 en vez de 3.Ab5, 10 de 10", [otra.sec.join(" "), otra.recomendada, otra.suya], ["e4 e5 Nf3 Nc6", "Bb5", { san: "Bc4", n: 10 }]);
+  igual("lo que sigue del plan, no lo alcanzó nunca", b.plan.filter((x) => x.estado === "nunca").length, 2);
+  igual("juega lo suyo: contra su 1.e4 el rival saca 23,8 %", b.aFavor.map((x) => [x.sec.concat(x.jugada).join(" "), x.alumno.n, A.pct(x.rival.puntos)]), [["e4", 10, "23,8 %"]]);
+  igual("ojo: contra su 1.d4 saca 90 %", b.enContra.map((x) => [x.sec.concat(x.jugada).join(" "), x.alumno.n, A.pct(x.rival.puntos)]), [["d4", 8, "90,0 %"]]);
+  const n = c.lados.conNegras;
+  igual("con negras, contra 1.d4 ya juega 1…c5, como dice el plan", n.plan.filter((x) => x.sec.join(" ") === "d4").map((x) => [x.recomendada, x.estado]), [["c5", "la-juega"]]);
+  // Con los filtros del análisis: sin partidas del rival que pasen, nada que cruzar.
+  const f = C.cruzar(rival, "Pedro Perez", { ritmos: ["clásica"] }, A.leerPgn(pgnDeAlumna()), "Ana Alumna", planes);
+  igual("con filtros que dejan al rival sin partidas, no inventa encuentros", [f.lados.conBlancas.comunes, f.lados.conBlancas.aFavor.length], [0, 0]);
+  igual("un alumno que no está en el archivo da null", C.cruzar(rival, "Pedro Perez", {}, A.leerPgn(pgnDeAlumna()), "Nadie", planes), null);
+}
+
 /* Etapa 4, sin navegador: lo que se le manda al alumno es SOLO el plan de un
    lado y lo que dijo Stockfish de sus jugadas; cada línea del plan sale en su
    propio PGN, que chess.js lee y que llega a donde dice el camino. */
@@ -971,6 +1005,63 @@ async function pruebaEtapa5(browser, libro) {
   await sin.ctx.close();
 }
 
+/* Etapa 6 en la página: bajar las partidas de la alumna por su usuario (un
+   Lichess de mentira), cruzar sola, pintar la tarjeta y guardarla con el
+   análisis; con otros filtros se vuelve a cruzar sola, y un análisis guardado
+   de otro rival no cruza con las partidas que quedaron cargadas. */
+async function pruebaEtapa6(browser) {
+  console.log("\n=== Etapa 6: el cruce con el alumno, en la página ===");
+  const { page, ctx, errores } = await abrir(browser, true, [{ id: "p-otro", profesor_id: "u-profe", rival: "Otro Rival", partidas: 73, created_at: "2026-09-01T12:00:00Z", analisis: Object.assign(analisisVersion1(), { rival: "Otro Rival" }) }]);
+  const pedidos = [];
+  await servirSitios(ctx, pedidos);
+  await page.setInputFiles("#pgn-archivo", { name: "rival.pgn", mimeType: "application/x-chess-pgn", buffer: Buffer.from(pgnDePrueba(), "utf8") });
+  await page.click("#leer");
+  await page.waitForFunction(() => /Se leyeron/.test(document.getElementById("leido").textContent), null, { timeout: 10000 });
+  await page.click("#analizar");
+  await page.waitForFunction(() => /Listo/.test(document.getElementById("motor-estado").textContent), null, { timeout: 30000 });
+  igual("se ve la caja para cruzar con el alumno", await page.evaluate(() => SE_VE("alumno-caja")), true);
+
+  await page.fill("#alumno-usuario", "AnaAlumna");
+  await page.click("#alumno-bajar");
+  await page.waitForFunction(() => /^Listo: /.test(document.getElementById("alumno-estado").textContent), null, { timeout: 15000 });
+  cierto("se piden las partidas de la alumna a Lichess", pedidos.some((u) => /\/api\/games\/user\/AnaAlumna\?/.test(u)));
+  igual("y el foco va a la tarjeta del cruce", await page.evaluate(() => [document.getElementById("alumno-estado").textContent, document.activeElement.id]), ["Listo: AnaAlumna, 24 partidas.", "cruce-titulo"]);
+  const renglones = (clave) => page.evaluate((k) => {
+    const li = document.querySelector("[aria-labelledby='cruce-titulo'] li[data-cruce='" + k + "']");
+    return li ? [...li.querySelectorAll("p")].map((p) => p.textContent) : null;
+  }, clave);
+  cierto("con blancas: del plan ya juega 2, en 1 juega otra cosa y a 2 no llegó", await page.evaluate(() =>
+    /El plan: de 5 jugadas que le tocan, ya juega 2; en 1 juega otra cosa; a 2 no llegó en sus partidas\./.test(document.querySelector("[aria-labelledby='cruce-titulo']").textContent)));
+  igual("la jugada donde se aparta del plan", await renglones("e4 e5 Nf3 Nc6 Bb5"), ["1.e4 e5 2.Cf3 Cc6 3.Ab5", "El plan dice 3.Ab5; tu alumno juega 3.Ac4 (10 de 10)."]);
+  igual("juega lo suyo: 1.e4", await renglones("e4"), ["1.e4", "Tu alumno saca 70,0 % en 10 partidas; él saca 23,8 % en 21 partidas (su promedio con ese color: 56,1 %)."]);
+  cierto("con negras, lo que es cero no se dice", await page.evaluate(() =>
+    /El plan: de 9 jugadas que le tocan, ya juega 1; a 8 no llegó en sus partidas\./.test(document.querySelector("[aria-labelledby='cruce-titulo']").textContent)));
+  igual("ojo: 1.d4", (await renglones("d4"))[1], "Tu alumno saca 50,0 % en 8 partidas; él saca 90,0 % en 20 partidas (su promedio con ese color: 56,1 %).");
+  await page.click("[aria-labelledby='cruce-titulo'] button[aria-label='Ver en el tablero: 1.e4 e5 2.Cf3 Cc6 3.Ab5']");
+  await page.waitForFunction(() => document.getElementById("visor-caja").checkVisibility(), null, { timeout: 5000 });
+  igual("«Ver» abre el tablero con lo que juega el alumno", await page.textContent("#visor .visor-nota"), "El plan: Ab5. Tu alumno suele jugar Ac4 (10 de 10).");
+
+  await page.click("#guardar");
+  await page.waitForFunction(() => window.__insertados.some((i) => i.tabla === "preparaciones_rival"), null, { timeout: 5000 });
+  igual("se guarda con el cruce", await page.evaluate(() => window.__insertados.find((i) => i.tabla === "preparaciones_rival").analisis.cruce.alumno), "AnaAlumna");
+
+  // Otros filtros: se vuelve a cruzar solo, con la misma alumna. El estado se
+  // vacía antes, para no confundir el «Listo» de antes con uno nuevo.
+  await page.evaluate(() => { document.getElementById("alumno-estado").textContent = ""; });
+  await page.selectOption("#filtro-desde", "2");
+  await page.waitForFunction(() => /^Listo: AnaAlumna/.test(document.getElementById("alumno-estado").textContent) && !!document.querySelector("[aria-labelledby='cruce-titulo']"), null, { timeout: 30000 });
+  cierto("con otros filtros se vuelve a cruzar solo", true);
+
+  // Un análisis guardado de otro rival: no se cruza con las partidas de este.
+  await page.click('#guardados button[aria-label="Abrir el análisis de Otro Rival"]');
+  await page.waitForFunction(() => document.getElementById("titulo-resultado").textContent === "Otro Rival", null, { timeout: 10000 });
+  await page.click("#alumno-cruzar");
+  cierto("un análisis guardado de otro rival no se cruza con las partidas cargadas", await page.evaluate(() =>
+    /un análisis guardado no las trae/.test(document.getElementById("alumno-estado").textContent) && !document.querySelector("[aria-labelledby='cruce-titulo']")));
+  igual("sin errores en consola ni diálogos del navegador", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+}
+
 // Las partidas «de Lichess»: las mismas de prueba, con el rival como usuario.
 function pgnDeUsuario(usuario) {
   return pgnDePrueba().replace(/Pérez, Pedro|Pedro Perez|Pedro Pérez|PEDRO PÉREZ/g, usuario);
@@ -984,6 +1075,7 @@ async function servirSitios(ctx, pedidos) {
   await ctx.route("https://lichess.org/api/games/user/**", (r) => {
     pedidos.push(r.request().url());
     if (/\/user\/nadie\?/.test(r.request().url())) return r.fulfill({ status: 404, headers: cors, body: "" });
+    if (/\/user\/AnaAlumna\?/.test(r.request().url())) return r.fulfill({ status: 200, headers: Object.assign({ "Content-Type": "application/x-chess-pgn" }, cors), body: pgnDeAlumna().replace(/Ana Alumna/g, "AnaAlumna") });
     return r.fulfill({ status: 200, headers: Object.assign({ "Content-Type": "application/x-chess-pgn" }, cors), body: pgnDeUsuario("PedroP") });
   });
   const todo = pgnDeUsuario("pedrop").split(/\n\n(?=\[Event )/);
@@ -1146,6 +1238,7 @@ async function pruebaMotorDeVerdad(browser) {
   pruebaPgnDelPlan(conMotor);
   pruebaPlanDelAlumno(conMotor);
   const libro = pruebaTeoria();
+  pruebaCruce();
   pruebaTiposDeFinal();
   pruebaDeteccionDeFinales();
   pruebaComoPierde();
@@ -1160,6 +1253,7 @@ async function pruebaMotorDeVerdad(browser) {
     await pruebaEtapa3(browser);
     await pruebaEtapa4(browser);
     await pruebaEtapa5(browser, libro);
+    await pruebaEtapa6(browser);
     await pruebaMotorDeVerdad(browser);
   } finally {
     await browser.close();

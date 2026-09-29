@@ -1509,6 +1509,76 @@ Y en la página, con un doble de la función:
 Comprobado que falla al preguntar posiciones después de una salida y al sacar
 la teoría del FODA.
 
+### Cruzar con las partidas del alumno: etapa 6
+
+El análisis dice qué jugarle al rival; el alumno que lo va a enfrentar tiene su
+propio repertorio. **«Cruzarlo con tu alumno»** trae las partidas del alumno
+(con su usuario de Lichess o Chess.com, o un PGN) y arma la tarjeta **«Tu
+alumno contra él»**. Para cada color dice dos cosas:
+
+- **El plan, ¿ya lo juega?** Mira cada jugada del plan que le toca al alumno:
+  - «la juega»: es su jugada de siempre ahí, o la hace la mitad de las veces o
+    más;
+  - «juega otra cosa»: con cuál y cuántas veces, con su «Ver» en el tablero;
+  - «no llegó»: tiene menos partidas que el mínimo en esa posición.
+
+  El resumen solo nombra lo que no es cero.
+- **Lo suyo, ¿le sirve?** Busca las posiciones a las que llegan los dos en sus
+  propias partidas. En cada jugada del alumno, compara cuánto saca el rival
+  contra ella con su promedio con ese color, suavizado como en el análisis.
+  - Cinco puntos menos o más: **«juega lo suyo: ahí él rinde menos»**. Es
+    mejor que el alumno juegue lo que ya sabe que aprenderse el plan de cero.
+  - Cinco puntos más o más: **«ojo: ahí él rinde más»**.
+  - Si no llegan a ninguna posición en común, lo dice aparte: no es lo mismo
+    que «rinde como siempre».
+
+**Cómo se cuenta** (`js/preparacion-cruce.js`):
+- El árbol del alumno se arma igual que el del rival: `armarArbol()` del
+  análisis, por posición, con las transposiciones juntas. Para eso el análisis
+  expone sus piezas en `PreparacionAnalisis.interno`: una sola forma de armar
+  y contar el árbol.
+- El mínimo del alumno es el 1 % de sus partidas, entre 2 y 10: un alumno
+  trae muchas menos que un rival de Lichess. El del rival es el del análisis.
+- El cruce baja por los dos árboles a la vez, solo por jugadas que los dos
+  tienen con su mínimo, hasta 14 medias jugadas. La misma línea con una jugada
+  más no se repite, con el criterio de «Dónde rinde menos».
+
+**En la página:**
+- **Corre en el trabajador en segundo plano.** Las partidas del alumno se
+  guardan aparte de las del rival, así leerlas no borra nada. Se cruzan con
+  las partidas del rival que pasan los mismos filtros del análisis que se ve,
+  y al cambiar los filtros se vuelve a cruzar solo.
+- Al alumno no se le aplican los filtros: sus partidas son todas las que trajo.
+- **Un análisis guardado no trae las partidas del rival**, solo el resultado.
+  Si el trabajador tiene las de otro rival, cruzar diría cualquier cosa sin
+  dar ningún error. Por eso se exige que el rival cargado sea el del análisis
+  que se ve, y si no, se pide volver a cargarlas.
+- Si el usuario bajado aparece en las partidas, se elige solo y cruza de una
+  vez. Si no, o si es un PGN, se elige en la lista.
+- El cruce queda en `r.cruce` y se guarda con el análisis.
+
+El verificador trae una alumna de mentira. Con blancas juega 1.e4 e5 2.Cf3 Cc6
+3.Ac4 (el plan dice 3.Ab5) y 1.d4 d5 2.c4, donde el rival saca 90 %; contra su
+1.e4 saca 24 %. Con negras contesta 1.d4 con c5, lo que dice el plan.
+
+Sin navegador comprueba:
+- las partidas por color;
+- qué jugadas del plan ya juega, dónde se aparta y qué no alcanzó;
+- «juega lo suyo» y «ojo»;
+- que con filtros que dejan al rival sin partidas no invente encuentros;
+- que un alumno que no está en el archivo dé `null`.
+
+En la página comprueba:
+- la descarga por usuario y el cruce solo;
+- la tarjeta, con el resumen sin ceros;
+- «Ver» en el tablero;
+- que se guarde con el cruce;
+- que otros filtros vuelvan a cruzar;
+- que un análisis guardado de otro rival no se cruce.
+
+Comprobado que falla al quitar el volver a cruzar y al quitar la comprobación
+del rival.
+
 ## Las inscripciones a torneos en línea
 
 `inscripciones.html` muestra lo que llegó por `inscripcion.html`, el formulario

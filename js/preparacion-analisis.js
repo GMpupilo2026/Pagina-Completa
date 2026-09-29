@@ -986,5 +986,8 @@
     leerPgn, jugadasDe, jugadasYRelojes, jugadores, claveNombre, analizar, ritmoDe, finDe, partidasDelRival,
     sanEs, lineaEs, pct, textoEval, minimo, POCAS, tipoDeFinal, esFinal, FIN_ES,
     tareasDelMotor, aplicarMotor, rehacerFoda, fenDe,
+    // Para js/preparacion-cruce.js, que arma el árbol del alumno igual que el
+    // del rival: una sola forma de armarlo y de contarlo.
+    interno: { partidasDelRival, pasaFiltros, armarArbol, hijosOrdenados, totalAristas, puntos, resumen, suavizada, leTocaAlRival, nombreDe, esPrefijo },
   };
 });
