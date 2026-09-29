@@ -852,6 +852,32 @@ window.PreparacionMotor = {
     await ctx.close();
   }
 
+  console.log("\n=== Tipo completo: para los logros ===");
+  {
+    // Todos los ejercicios de Amenaza con estrella: la portada lo marca completo
+    // y lo anota en la cuenta (tipos_completos_v1, lo lee js/logros.js). Con uno
+    // menos, no.
+    const todos = {};
+    DATOS.amenaza.forEach((x) => { todos["amenaza:" + x.id] = 1; });
+    const casi = Object.assign({}, todos); delete casi["amenaza:" + DATOS.amenaza[0].id];
+    const ver = async (estrellas) => {
+      const { page, ctx, errores } = await abrir(browser, true, "", async (c) => { await c.addInitScript((v) => { if (!sessionStorage.getItem("__puesto")) { localStorage.setItem("tipos_estrellas_v1", v); sessionStorage.setItem("__puesto", "1"); } }, JSON.stringify(estrellas)); });
+      await page.waitForSelector("#fichas li", { timeout: 15000 });
+      const r = await page.evaluate(() => {
+        const li = Array.from(document.querySelectorAll("#fichas li")).find((x) => x.querySelector('a[href="#amenaza"]'));
+        return { completos: JSON.parse(localStorage.getItem("tipos_completos_v1") || "{}"), pie: li ? li.textContent : "" };
+      });
+      ok("sin errores en consola (tipo completo)", !errores.length, errores.join(" | "));
+      await ctx.close();
+      return r;
+    };
+    const lleno = await ver(todos);
+    ok("con todos sus ejercicios con estrella, Amenaza queda anotado como completo", lleno.completos.amenaza === true && Object.keys(lleno.completos).length === 1, JSON.stringify(lleno.completos));
+    ok("y la ficha lo dice escrito", /completo 🏅/.test(lleno.pie), lleno.pie.slice(-80));
+    const falta = await ver(casi);
+    ok("con uno sin resolver, no", !falta.completos.amenaza && !/completo 🏅/.test(falta.pie), JSON.stringify(falta.completos));
+  }
+
   console.log("\n=== Nivel completo ===");
   {
     // Todo el nivel 1 de Amenaza resuelto menos el último: al resolverlo,

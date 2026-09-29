@@ -115,6 +115,9 @@ window.LogrosCatalogo = (function () {
     { id: "memoria_10", categoria: "memoria", nivel: "bronce", emoji: "📷", nombre: "Retratista", descripcion: "10 posiciones de Memoria reconstruidas.", meta: 10, valor: (s) => porActividad(s, "memoria") },
     { id: "memoria_12", categoria: "memoria", nivel: "oro", emoji: "📷", nombre: "Memoria fotográfica", descripcion: "Reconstruiste una posición de 12 piezas sin un error.", meta: 12, valor: (s) => hito(s, "memoria_max_limpia") },
     { id: "tipos_20", categoria: "tipos", nivel: "bronce", emoji: "🧩", nombre: "De todos los tipos", descripcion: "20 ejercicios de Tipos de entrenamiento resueltos.", meta: 20, valor: (s) => porActividad(s, "tipos") },
+    { id: "tipos_completo_1", categoria: "tipos", nivel: "plata", emoji: "🧩", nombre: "Tipo dominado", descripcion: "Completaste un Tipo de entrenamiento entero: todos sus ejercicios con al menos una estrella.", meta: 1, valor: (s) => s.tipos_completos },
+    { id: "tipos_completo_5", categoria: "tipos", nivel: "oro", emoji: "🧩", nombre: "Cinco tipos dominados", descripcion: "Completaste cinco Tipos de entrenamiento enteros.", meta: 5, valor: (s) => s.tipos_completos },
+    { id: "tipos_completo_10", categoria: "tipos", nivel: "diamante", emoji: "🧩", nombre: "Diez tipos dominados", descripcion: "Completaste diez Tipos de entrenamiento enteros.", meta: 10, valor: (s) => s.tipos_completos },
   ];
 
   // Le agrega a cada logro su estado con los números de este alumno: cuánto

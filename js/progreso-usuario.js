@@ -186,6 +186,7 @@ window.ProgresoUsuario = (function () {
     { clave: "tipos_estrellas_v1",               fusion: "maxPorClave" },   // Tipos de entrenamiento: "tipo:id" → estrellas
     { clave: "tipos_mejor_v1",                   fusion: "minPorClave" },   // Con lo justo: posición → menos jugadas
     { clave: "tipos_registrados_v1",             fusion: "unionObjeto" },   // "tipo:id" ya registrado en training_progress
+    { clave: "tipos_completos_v1",               fusion: "unionObjeto" },   // tipos completos (todos con estrella): los logros
     { clave: "tipos_ultimo_v1",                  fusion: "ultimaEscritura" }, // el nivel de Tipos que se está jugando (lo propone el hub)
     { clave: "memoria_mejor_v1",                 fusion: "maxPorClave" },   // Memoria: segundos → más piezas sin un error
     { clave: "errores_propios_v1",               fusion: "unionObjeto" },   // Tus propios errores: id → ejercicio (salen de sus partidas)

@@ -22,6 +22,7 @@
   const CLAVE_MEJOR = "tipos_mejor_v1";
   const CLAVE_REGISTRADOS = "tipos_registrados_v1";
   const CLAVE_ULTIMO = "tipos_ultimo_v1";
+  const CLAVE_COMPLETOS = "tipos_completos_v1";
   const LISTA_TIPOS = ["detective", "amenaza", "descarte", "balanza", "fotografia", "con-lo-justo"];
 
   let DATOS = null;
@@ -96,6 +97,23 @@
     let hechos = 0, estrellas = 0;
     items.forEach((x) => { const e = est[C.clave(tipo, x.id)] || 0; if (e >= 1) hechos++; estrellas += e; });
     return { hechos, total: items.length, estrellas, maximo: items.length * 3 };
+  }
+  /* Los tipos completos (todos sus ejercicios con una estrella o más), para
+     los logros (js/logros.js los lee de la cuenta). Se anotan acá porque esta
+     página es la única que tiene los ejercicios de verdad; contarlos desde
+     Logros pediría bajarse tipos.json entero. Viaja con la cuenta
+     (unionObjeto): un tipo completo no se «descompleta». Los tipos `propio`
+     (Tus propios errores) no cuentan: sus ejercicios crecen con las partidas. */
+  function anotarCompletos() {
+    const o = leer(CLAVE_COMPLETOS);
+    let cambio = false;
+    C.TIPOS.forEach((t) => {
+      if (t.propio || o[t.id]) return;
+      const a = avance(t.id);
+      if (a.total > 0 && a.hechos >= a.total) { o[t.id] = true; cambio = true; }
+    });
+    if (cambio) escribir(CLAVE_COMPLETOS, o);
+    return o;
   }
   function textoEstrellas(n) { return "★".repeat(n) + "☆".repeat(Math.max(0, 3 - n)); }
 
@@ -343,6 +361,7 @@
 
   function pintarFichas() {
     pintarRepaso();
+    const completos = anotarCompletos();
     const ul = $("fichas");
     ul.innerHTML = "";
     C.TIPOS.forEach((t) => {
@@ -373,7 +392,7 @@
       niv.textContent = t.niveles.length + " niveles: " + t.niveles.map((n) => n.n + ". " + n.titulo).join(" · ");
       li.appendChild(niv);
       const pie = el("div", "flex flex-wrap items-center justify-between gap-2 mt-auto");
-      pie.appendChild(el("span", "text-xs text-brand-500 dark:text-brand-300", a.hechos + " de " + a.total + " resueltos · " + a.estrellas + " de " + a.maximo + " estrellas"));
+      pie.appendChild(el("span", "text-xs text-brand-500 dark:text-brand-300", a.hechos + " de " + a.total + " resueltos · " + a.estrellas + " de " + a.maximo + " estrellas" + (completos[t.id] ? " · completo 🏅" : "")));
       const ir = el("a", BTN_PRIMARIO + " inline-block", a.hechos ? "Continuar" : "Empezar");
       ir.href = "#" + t.id;
       ir.setAttribute("aria-label", (a.hechos ? "Continuar" : "Empezar") + ": " + t.nombre);
@@ -528,6 +547,7 @@
     const e = estrellasDe(partida.tipo, item.id);
     $("juego-progreso").textContent = "Ejercicio " + (partida.i + 1) + " de " + partida.items.length + (e ? " · tu mejor: " + textoEstrellas(e) : "");
     if (!completoAntes && nivelCompleto()) avisarNivelCompleto();
+    anotarCompletos();
     rotularSiguiente();
     if (extra !== false) $("btn-siguiente").focus();
   }

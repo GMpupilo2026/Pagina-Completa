@@ -405,6 +405,27 @@ async function hub(browser) {
       await resumen({ "rpc:progreso_dias_y_racha": [{ hoy_ejercicios: 0, racha_actual: 2 }],
         "rpc:entreno_resumen_hoy": { total: 0, por_actividad: {}, con_como_salio: 0, limpios: 0 } }), null);
   }
+  /* Tu semana: los últimos 7 días contra los 7 anteriores. */
+  {
+    const fresco = { diagnostico_resultado_v1: JSON.stringify({ fecha: new Date().toISOString() }) };
+    const semana = async (s) => {
+      const { page, ctx, errores } = await abrir(browser, "/entreno/index.html",
+        { "rpc:progreso_dias_y_racha": [{ hoy_ejercicios: 0, racha_actual: 0 }], "rpc:entreno_mi_semana": s }, fresco);
+      await page.waitForFunction(() => { const l = document.getElementById("hoy-lista"); return l.hidden || l.querySelector("a"); }, { timeout: 10000 });
+      const r = await page.evaluate(() => { const p = document.getElementById("hoy-semana"); return p.checkVisibility() ? p.textContent : null; });
+      sinErrores(errores, "hub (semana)");
+      await ctx.close();
+      return r;
+    };
+    igual("compara la semana con la anterior, en ejercicios y en limpios",
+      await semana({ esta: 48, esta_con: 40, esta_limpios: 28, anterior: 31, anterior_con: 29, anterior_limpios: 18 }),
+      "Esta semana: 48 ejercicios (la anterior, 31) · 70 % sin error ni pista (la anterior, 62 %).");
+    igual("si la anterior no entrenó, lo dice",
+      await semana({ esta: 1, esta_con: 0, esta_limpios: 0, anterior: 0, anterior_con: 0, anterior_limpios: 0 }),
+      "Esta semana: 1 ejercicio (la anterior no entrenaste).");
+    igual("sin nada en las dos semanas, no se pinta",
+      await semana({ esta: 0, esta_con: 0, esta_limpios: 0, anterior: 0, anterior_con: 0, anterior_limpios: 0 }), null);
+  }
   /* El nivel de Tipos que quedó a medias (tipos_ultimo_v1, lo anota la página
      al jugar): se propone seguirlo; uno completo, no. */
   {

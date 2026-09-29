@@ -158,6 +158,7 @@ window.PlanEntrenamiento = (function () {
         { texto: 'Artículo: la oposición', href: 'articulos/la-oposicion.html' },
         { texto: 'Tipos de entrenamiento: Rey y peón', href: 'entreno/tipos.html#peones' },
         { texto: 'Tipos de entrenamiento: Con lo justo', href: 'entreno/tipos.html#con-lo-justo' },
+        { texto: 'Tipos de entrenamiento: Salva las tablas', href: 'entreno/tipos.html#tablas' },
       ],
     },
     {
