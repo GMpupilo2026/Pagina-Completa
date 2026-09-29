@@ -212,8 +212,12 @@ function pintarSuscripciones() {
         btn.type = "button";
         btn.addEventListener("click", async () => {
             if (!(await Avisos.confirmar("Los cobros ya emitidos se quedan como están.", { titulo: "¿Dar de baja a " + nombreDe(s.student_id) + " de este plan?", aceptar: "Dar de baja", peligro: true }))) return;
+            // Una suscripción que todavía no arranca (inicio en el futuro) no
+            // puede terminar hoy: la base exige fin >= inicio. Termina el día
+            // en que iba a empezar. Las fechas "AAAA-MM-DD" se comparan como texto.
+            const hoy = hoyCR();
             const { error } = await sb.from("suscripciones")
-                .update({ activa: false, fin: hoyCR() }).eq("id", s.id);
+                .update({ activa: false, fin: s.inicio > hoy ? s.inicio : hoy }).eq("id", s.id);
             if (error) return avisar("No se pudo: " + error.message, true);
             avisar("Dado de baja.");
             await cargarTodo();
@@ -1054,7 +1058,15 @@ async function init() {
 
 document.querySelectorAll(".ficha-btn").forEach((b) => b.addEventListener("click", () => mostrarFicha(b.dataset.ficha)));
 document.getElementById("p-guardar").addEventListener("click", crearPlan);
-document.getElementById("s-guardar").addEventListener("click", crearSuscripcion);
+/* Mientras guarda, el botón no se puede volver a apretar: con un cobro
+   personalizado cada clic crea SU PROPIO plan, así que un doble clic dejaba
+   dos planes y dos suscripciones, y el índice único (alumno, plan) no lo ve. */
+document.getElementById("s-guardar").addEventListener("click", async (ev) => {
+    const btn = ev.currentTarget;
+    if (btn.disabled) return;
+    btn.disabled = true;
+    try { await crearSuscripcion(); } finally { btn.disabled = false; }
+});
 document.getElementById("s-personalizado").addEventListener("change", (e) => {
     document.getElementById("s-plan-cell").classList.toggle("hidden", e.target.checked);
     document.getElementById("s-manual-cell").classList.toggle("hidden", !e.target.checked);
