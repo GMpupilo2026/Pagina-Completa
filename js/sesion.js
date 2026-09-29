@@ -4696,7 +4696,7 @@
         }
 
         // ---------- Tipos de entrenamiento (cascada tipo → nivel → ejercicio) ----------
-        // Los mismos dieciséis de entreno/tipos.html, con las mismas posiciones
+        // Los mismos diecisiete de entreno/tipos.html, con las mismas posiciones
         // (entreno/data/tipos.json) y el mismo catálogo (js/tipos-catalogo.js): el
         // profesor los jala a la clase sin salir de la sesión. Toda posición entra por
         // aplicarPosicionEnClase(), como Táctica y Archivos. Lo que es la RESPUESTA

@@ -2160,7 +2160,7 @@ haciendo que un disparo al agua sume uno, saltan nueve comprobaciones.
 ## Los Tipos de entrenamiento
 
 `entreno/tipos.html` (grupo y tarjeta **"🧠 Tipos de entrenamiento"** del hub)
-es una ficha con dieciséis entrenamientos que no son «encuentra la mejor jugada»,
+es una ficha con diecisiete entrenamientos que no son «encuentra la mejor jugada»,
 cada uno con sus niveles: **El Detective** (¿qué jugada se acaba de hacer?,
 análisis retrógrado), **¿Qué quiere el rival?** (profilaxis: hacer la jugada
 que amenaza el rival), **Descarte** (tachar las candidatas que pierden),
@@ -2431,6 +2431,42 @@ el juego en `js/entreno-tipos-mas.js`.
 - `node herramientas/tipos-generar.js --solo remata` rehace solo este banco.
   En la clase en vivo trae «🎯 Practicar»: cada alumno la juega contra el
   motor en su tablero.
+
+### El tipo 17: Elige a tiempo
+
+Lo que la Racha táctica no toca: **decidir con el reloj en contra cuando no
+hay táctica**. Una posición tranquila, dos a cuatro candidatas razonables y un
+reloj (30, 15 u 8 segundos). La regla vive en `js/tipos-reglas-mas.js`
+(`estrellasTiempo`, `segundosTiempo`) y el juego en `js/entreno-tipos-mas.js`.
+
+- **No hay «la única buena».** Cuenta cuánto pierde la elegida contra la mejor:
+  la mejor (o a menos de 0,3), tres estrellas; hasta 1,1, dos (se resuelve);
+  más, ninguna. **Si se acaba el tiempo, cero**: en una partida se pierde por
+  tiempo, y es justo lo que se entrena.
+- **Las candidatas se analizan cada una SOLA** (`searchmoves`) a profundidad
+  18, y la pérdida es contra la mejor analizada igual; así la comparación no
+  depende de cuántas líneas miró el motor. Hay una mejor, una razonable
+  (pierde más de 0,3 y hasta 1,1: los cortes son los mismos de la regla de la
+  página, `M.TIEMPO`, para que ninguna razonable dé tres estrellas) y uno o dos errores (entre 1,3 y 4), eligiendo
+  capturas y jaques porque son los que tientan con prisa. **Nada que pierda más
+  de 4**: se descarta sin pensar y no enseña nada.
+- **Tranquila de verdad**: la segunda mejor está a menos de 0,6 de la mejor
+  (profundidad 12), nadie en jaque y la mejor entre −1,5 y +3 (medido con la
+  evaluación que se guarda, la de profundidad 18: la primera versión lo medía
+  a 12 y 20 se salían del rango; lo encontró el verificador). Si hubiera un
+  golpe, sería otro ejercicio. Salen del final de los ejercicios de «Ejercicios
+  por tema» (el golpe ya pasó), con la mejor respuesta del rival.
+- **Modo Adaptado: el triple de tiempo.** Leer la posición con lector de
+  pantalla toma mucho más que mirarla; el reloj entrena decidir, no leer
+  rápido. La página lo dice al empezar. El número del reloj es
+  `aria-hidden` (cambia cada segundo); lo que se anuncia es el inicio, la
+  mitad (si es de 10 segundos o más) y los últimos 5.
+- Se elige con los botones, tocando la jugada en el tablero o escribiéndola;
+  una jugada que no es candidata no cuenta. Al terminar, cada candidata dice
+  cuánto pierde con su signo escrito (✓ ≈ ✗), no solo con color.
+- El verificador de la página no espera el reloj: lo adelanta
+  (`clock.fastForward` de Playwright).
+- `node herramientas/tipos-generar.js --solo tiempo` rehace solo este banco.
 
 **Al tocar los bancos, las reglas o la página, correr**:
 

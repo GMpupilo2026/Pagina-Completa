@@ -37,6 +37,11 @@
  *     motor daba entre +4 y +8 sin mate, el material guardado es el de la
  *     posición y decide el nivel, y las jugadas son las del catálogo. Las
  *     reglas de la página (juicio y estrellas) se prueban con casos a mano.
+ *   - Elige a tiempo: las candidatas son legales y distintas, hay UNA mejor
+ *     (pérdida 0), una razonable (entre 0,3 y 1,1) y errores (entre 1,3 y 4);
+ *     la pérdida guardada es la diferencia de evaluaciones; la segunda mejor
+ *     del banco no está lejos (posición tranquila); cantidad y segundos son
+ *     los del nivel.
  *
  * El motor no se vuelve a correr acá (en el CI no hay Stockfish): lo que dijo
  * se comprobó al generar, en herramientas/tipos-generar.js.
@@ -522,6 +527,33 @@ DATOS.remata.forEach((x) => {
   ok("remata: +3 gana, +2 es duda, +1 se escapó", M.juicioRemata(300) === "gana" && M.juicioRemata(200) === "duda" && M.juicioRemata(149) === "escapa");
   ok("remata: nunca bajó de +3: tres estrellas; bajó y volvió: dos; con pista: una",
     M.estrellasRemata(320, false) === 3 && M.estrellasRemata(180, false) === 2 && M.estrellasRemata(900, true) === 1);
+}
+
+titulo("Elige a tiempo");
+DATOS.tiempo.forEach((x) => {
+  const g = legal(x.fen);
+  if (!g) return;
+  ok("nadie empieza en jaque (" + x.id + ")", !g.in_check());
+  ok("los segundos son los del nivel (" + x.id + ")", x.segundos === C.nivel("tiempo", x.nivel).segundos);
+  ok("trae su rating: los niveles se reparten por dificultad (" + x.id + ")", typeof x.rating === "number");
+  ok("tres candidatas (cuatro en el nivel 3) (" + x.id + ")", x.candidatas.length === (x.nivel === 3 ? 4 : 3), x.candidatas.length);
+  const sans = x.candidatas.map((c) => c.san);
+  ok("legales y distintas (" + x.id + ")", new Set(sans).size === sans.length && sans.every((s) => g.moves().includes(s)) && x.candidatas.every((c) => R.sanEs(c.san) === c.sanEs));
+  const mejores = x.candidatas.filter((c) => c.clase === "mejor");
+  ok("una sola mejor, con pérdida 0 y la evaluación más alta (" + x.id + ")", mejores.length === 1 && mejores[0].perdida === 0 && x.candidatas.every((c) => c.eval <= mejores[0].eval));
+  if (mejores.length !== 1) return;
+  ok("la pérdida es la diferencia con la mejor (" + x.id + ")", x.candidatas.every((c) => c.perdida === mejores[0].eval - c.eval));
+  ok("la mejor aguanta: entre −1,5 y +3 (" + x.id + ")", mejores[0].eval >= -150 && mejores[0].eval <= 300, mejores[0].eval);
+  ok("una razonable, más de 0,3 y hasta 1,1 (" + x.id + ")", x.candidatas.filter((c) => c.clase === "razonable" && c.perdida > 30 && c.perdida <= 110).length === 1);
+  const err = x.candidatas.filter((c) => c.clase === "error");
+  ok("los errores pierden entre 1,3 y 4: ni regalados ni absurdos (" + x.id + ")", err.length >= 1 && err.every((c) => c.perdida >= 130 && c.perdida <= 400));
+  ok("la regla da 3 a la mejor, 2 a la razonable y 0 al error (" + x.id + ")",
+    x.candidatas.every((c) => M.estrellasTiempo(c.perdida) === (c.clase === "mejor" ? 3 : c.clase === "razonable" ? 2 : 0)));
+  ok("trae la respuesta para el profesor (" + x.id + ")", Array.isArray(x.respuesta) && x.respuesta.length === x.candidatas.length);
+});
+{
+  ok("tiempo: se acabó el reloj, cero estrellas", M.estrellasTiempo(null) === 0);
+  ok("tiempo: en Modo Adaptado, el triple", M.segundosTiempo(8, true) === 24 && M.segundosTiempo(8, false) === 8);
 }
 
 console.log("\n" + (fallos ? "✗ " + fallos + " de " + pruebas + " comprobaciones fallaron." : "✓ Las " + pruebas + " comprobaciones pasaron."));

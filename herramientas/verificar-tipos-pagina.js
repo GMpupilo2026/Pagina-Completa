@@ -1,9 +1,9 @@
 /* Comprueba entreno/tipos.html en un navegador de verdad: la ficha de los
- * Tipos de entrenamiento y los dieciséis juegos, JUGADOS de punta a punta.
+ * Tipos de entrenamiento y los diecisiete juegos, JUGADOS de punta a punta.
  *
  * Los bancos los comprueba herramientas/verificar-tipos.js sin navegador.
  * Esto es lo que solo se rompe mirando la pantalla:
- *   - sin sesión manda a iniciar sesión; con sesión, la ficha trae los dieciséis
+ *   - sin sesión manda a iniciar sesión; con sesión, la ficha trae los diecisiete
  *     tipos, cada uno con su encabezado y su enlace;
  *   - cada juego pinta LA posición de su ejercicio (se compara casilla por
  *     casilla contra la FEN del banco, no contra la página);
@@ -137,7 +137,7 @@ async function main() {
       enlace: li.querySelector("h2 a").getAttribute("href"),
       visible: li.checkVisibility(),
     })));
-    ok("dieciséis fichas", fichas.length === 16, fichas.length);
+    ok("diecisiete fichas", fichas.length === 17, fichas.length);
     ok("cada una con su encabezado y su enlace", fichas.every((f) => f.titulo && /^#[a-z-]+$/.test(f.enlace) && f.visible), JSON.stringify(fichas));
     ok("un solo h1", (await page.$$eval("#vista-fichas h1", (h) => h.length)) === 1);
     await page.click('#fichas li:first-child h2 a');
@@ -362,7 +362,7 @@ async function main() {
     await ctx.close();
   }
 
-  /* ======================= 8 a 16 ======================= */
+  /* ======================= 8 a 17 ======================= */
   const M = require("../js/tipos-reglas-mas.js");
   const escribir = async (page, txt) => { await page.fill("#jugada-input", txt); await page.press("#jugada-input", "Enter"); };
 
@@ -656,6 +656,72 @@ window.PracticeEngine = {
       ok("sin errores en consola", !errores.length, errores.join(" | "));
       await ctx.close();
     }
+  }
+
+  console.log("\n=== Elige a tiempo ===");
+  {
+    const item = DATOS.tiempo.find((x) => x.nivel === 1);
+    const mejor = item.candidatas.find((c) => c.clase === "mejor");
+    const { page, ctx, errores } = await abrir(browser, true, "#tiempo/1/" + item.id);
+    await page.waitForSelector("#vista-juego:not(.hidden) #controles button");
+    await mismaPosicion(page, item.fen, "pinta la posición del ejercicio");
+    const opciones = await page.$$eval('#controles [role="group"] button', (b) => b.map((x) => x.textContent.trim()));
+    ok("muestra las candidatas del banco", JSON.stringify(opciones) === JSON.stringify(item.candidatas.map((c) => c.sanEs)), JSON.stringify(opciones));
+    ok("dice cuánto tiempo hay", /Tienes 30 segundos/.test(await estado(page)), await estado(page));
+    await page.locator('#controles [role="group"] button', { hasText: mejor.sanEs }).first().click();
+    const t = await esperarEstado(page, /La mejor/);
+    ok("la mejor: tres estrellas", /La mejor/.test(t) && (await estrellas(page))["tiempo:" + item.id] === 3, t);
+    const marcadas = await page.$$eval('#controles [role="group"] button', (b) => b.map((x) => x.textContent.trim()));
+    ok("después cada candidata dice cuánto pierde, con su signo escrito", marcadas.every((x) => /^[✓≈✗] /.test(x) && /la mejor|pierde/.test(x)), JSON.stringify(marcadas));
+    ok("sin errores en consola", !errores.length, errores.join(" | "));
+    await ctx.close();
+  }
+  {
+    // escrita, y una que pierde: sin estrellas
+    const item = DATOS.tiempo.find((x) => x.nivel === 2);
+    const error = item.candidatas.find((c) => c.clase === "error");
+    const { page, ctx, errores } = await abrir(browser, true, "#tiempo/2/" + item.id);
+    await page.waitForSelector("#vista-juego:not(.hidden) #jugada-input");
+    const otra = new Chess(item.fen).moves().find((s) => !item.candidatas.some((c) => c.san === s));
+    if (otra) {
+      await page.fill("#jugada-input", R.sanEs(otra));
+      await page.press("#jugada-input", "Enter");
+      ok("una jugada que no es candidata no cuenta", /no es una de las candidatas/.test(await esperarEstado(page, /candidatas/)));
+    }
+    await page.fill("#jugada-input", error.sanEs);
+    await page.press("#jugada-input", "Enter");
+    const t = await esperarEstado(page, /pierde/);
+    ok("escribir una que pierde: se explica y no da estrellas", /Esa pierde/.test(t) && !(await estrellas(page))["tiempo:" + item.id], t);
+    ok("sin errores en consola", !errores.length, errores.join(" | "));
+    await ctx.close();
+  }
+  {
+    // se acaba el reloj (el reloj de la página se adelanta, no se espera)
+    const item = DATOS.tiempo.find((x) => x.nivel === 3);
+    const { page, ctx, errores } = await abrir(browser, true, "#tiempo/3/" + item.id, async (c) => { await c.clock.install(); });
+    await page.waitForSelector("#vista-juego:not(.hidden) #controles button");
+    await page.clock.fastForward("00:09");
+    const t = await esperarEstado(page, /acabó el tiempo/);
+    ok("a los 8 segundos se acaba el tiempo", /Se acabó el tiempo/.test(t), t);
+    ok("y no da estrellas", !(await estrellas(page))["tiempo:" + item.id]);
+    const apagados = await page.$$eval('#controles [role="group"] button', (b) => b.every((x) => x.disabled));
+    ok("y ya no se puede elegir", apagados);
+    ok("sin errores en consola", !errores.length, errores.join(" | "));
+    await ctx.close();
+  }
+  {
+    // Modo Adaptado: el triple
+    const item = DATOS.tiempo.find((x) => x.nivel === 3);
+    const { page, ctx, errores } = await abrir(browser, true, "#tiempo/3/" + item.id, async (c) => {
+      await c.addInitScript(() => { localStorage.setItem("oscarBlindMode_v1", "1"); });
+      await c.clock.install();
+    });
+    await page.waitForSelector("#vista-juego:not(.hidden) #controles button");
+    ok("en Modo Adaptado, el triple de tiempo", /Tienes 24 segundos \(el triple/.test(await estado(page)), await estado(page));
+    await page.clock.fastForward("00:10");
+    ok("a los 10 segundos todavía se puede elegir", !(await page.$eval('#controles [role="group"] button', (b) => b.disabled)));
+    ok("sin errores en consola", !errores.length, errores.join(" | "));
+    await ctx.close();
   }
 
   console.log("\n=== Nivel completo ===");

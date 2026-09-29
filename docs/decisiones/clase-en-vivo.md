@@ -2108,7 +2108,7 @@ golpe saltan 3 comprobaciones, sin la persistencia 1 y cruzando las posiciones 8
 
 ### Los Tipos de entrenamiento, en la clase
 
-La pestaña **"🧠 Entrenamientos"** del profesor lista los dieciséis Tipos de
+La pestaña **"🧠 Entrenamientos"** del profesor lista los diecisiete Tipos de
 entrenamiento de `entreno/tipos.html` (ver «Los Tipos de entrenamiento» en
 entrenamiento.md) en cascada tipo → nivel → ejercicio, con las mismas
 posiciones (`entreno/data/tipos.json`) y el mismo catálogo

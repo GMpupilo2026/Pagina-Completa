@@ -1,6 +1,7 @@
-/* Los Tipos de entrenamiento 8 a 16 de entreno/tipos.html: el Barrido,
+/* Los Tipos de entrenamiento 8 a 17 de entreno/tipos.html: el Barrido,
  * Intercambios, Constrúyela tú, Rey y peón, Adivina la jugada del maestro,
- * ¿Qué apertura es?, la Ruta segura, Aguanta y Remata la ventaja.
+ * ¿Qué apertura es?, la Ruta segura, Aguanta, Remata la ventaja y Elige a
+ * tiempo.
  *
  * Usan las mismas piezas de la página que los siete primeros (el tablero, los
  * avisos, las estrellas: window.TiposUI, en js/entreno-tipos.js) y las reglas
@@ -589,5 +590,86 @@
       $("jugada-input").value = "";
       jugar({ from: m.from, to: m.to, promotion: m.promotion });
     });
+  };
+  /* ================================================ 17. Elige a tiempo
+     Varias candidatas razonables y un reloj. No hay «la única»: cuenta cuánto
+     pierde la elegida contra la mejor (el motor, al generar). Se elige con los
+     botones, tocando la jugada en el tablero o escribiéndola. Si se acaba el
+     tiempo, cero. En Modo Adaptado, el triple de tiempo. */
+  U.JUEGOS.tiempo = function (item) {
+    const yo = item.fen.split(" ")[1];
+    const juego = new Chess(item.fen);
+    const total = M.segundosTiempo(item.segundos, U.adaptado());
+    let quedan = total, hecho = false, reloj = null;
+    const inicio = Date.now();
+    const cuenta = el("p", "text-3xl font-bold text-center text-brand-800 dark:text-white my-2 tabular-nums", "⏱ " + quedan + " s");
+    cuenta.setAttribute("aria-hidden", "true");
+    const botones = [];
+    function cerrar(elegida) {
+      if (hecho) return;
+      hecho = true;
+      clearInterval(reloj);
+      U.pedirJugada("", null);
+      botones.forEach((b) => { b.disabled = true; });
+      const usados = Math.min(total, Math.round((Date.now() - inicio) / 1000));
+      const mejor = item.candidatas.find((c) => c.clase === "mejor");
+      let n = 0;
+      if (!elegida) {
+        estado("⌛ Se acabó el tiempo: en una partida, habrías perdido. La mejor era " + mejor.sanEs + ".");
+      } else {
+        n = M.estrellasTiempo(elegida.perdida);
+        const m = juego.move(elegida.san);
+        U.tablero(juego.fen(), { orientacion: yo, juego, ultima: [m.from, m.to] });
+        const que = elegida.clase === "mejor" ? "✓ ¡La mejor! " : n ? "✓ Buena elección: pierde poco (" + R.numeroBalanza(elegida.perdida / 100).replace("+", "") + "). " : "✗ Esa pierde " + R.numeroBalanza(elegida.perdida / 100).replace("+", "") + " contra la mejor, " + mejor.sanEs + ". ";
+        estado(que + "Elegiste en " + usados + " s. " + (n ? textoEstrellas(n) : ""));
+      }
+      botones.forEach((b) => {
+        const c = b._cand;
+        b.textContent = (c.clase === "mejor" ? "✓ " : c.perdida <= M.TIEMPO.buena ? "≈ " : "✗ ") + c.sanEs + " — " +
+          (c.clase === "mejor" ? "la mejor" : "pierde " + R.numeroBalanza(c.perdida / 100).replace("+", ""));
+      });
+      explicar(item.respuesta);
+      terminar(item, n);
+    }
+    function elegir(mov) {
+      if (hecho) return;
+      const m = new Chess(item.fen).move(mov);
+      if (!m) { estado("Esa jugada no es legal."); return; }
+      const c = item.candidatas.find((x) => x.san === m.san);
+      if (!c) { estado(R.sanEs(m.san) + " no es una de las candidatas. Elige entre: " + item.candidatas.map((x) => x.sanEs).join(", ") + "."); U.tablero(item.fen, { orientacion: yo, juego, clic: U.moverConClic(juego, elegir) }); return; }
+      cerrar(c);
+    }
+    $("juego-turno").textContent = "Juegan las " + COLOR[yo] + ".";
+    $("juego-enunciado").textContent = "Elige una de las candidatas antes de que se acabe el reloj.";
+    $("controles").appendChild(cuenta);
+    const caja = el("div");
+    caja.setAttribute("role", "group");
+    caja.setAttribute("aria-label", "Candidatas");
+    item.candidatas.forEach((c) => {
+      const b = el("button", CLASE_OPCION, c.sanEs);
+      b.type = "button";
+      b._cand = c;
+      b.addEventListener("click", () => cerrar(c));
+      botones.push(b);
+      caja.appendChild(b);
+    });
+    $("controles").appendChild(caja);
+    U.tablero(item.fen, { orientacion: yo, juego, clic: U.moverConClic(juego, elegir) });
+    U.pedirJugada("O escribe tu jugada (las " + COLOR[yo] + ")", (txt) => {
+      const m = U.jugadaEscrita(juego, txt);
+      if (!m) { estado("No entendí «" + txt + "» como una jugada de las " + COLOR[yo] + "."); return; }
+      $("jugada-input").value = "";
+      elegir({ from: m.from, to: m.to, promotion: m.promotion });
+    });
+    estado("Tienes " + total + " segundos" + (total !== item.segundos ? " (el triple, por el Modo Adaptado)" : "") + ". Candidatas: " + item.candidatas.map((c) => c.sanEs).join(", ") + ".");
+    const mitad = Math.floor(total / 2);
+    reloj = setInterval(() => {
+      quedan--;
+      cuenta.textContent = "⏱ " + quedan + " s";
+      if (quedan === mitad && mitad >= 10) estado("Quedan " + quedan + " segundos.");
+      if (quedan === 5) estado("Quedan 5 segundos.");
+      if (quedan <= 0) cerrar(null);
+    }, 1000);
+    U.alLimpiar(() => clearInterval(reloj));
   };
 })();
