@@ -23,10 +23,6 @@ async function unlock(){
   loadPuzzlesThenStart();
 }
 
-const GLYPH = {
-  w: { p:'♙', n:'♘', b:'♗', r:'♖', q:'♕', k:'♔' },
-  b: { p:'♟', n:'♞', b:'♝', r:'♜', q:'♛', k:'♚' },
-};
 
 const CATEGORY_ORDER = ['mate1', 'mate2', 'mate3'];
 const CATEGORY_LABEL = { mate1: '🎯 Mate en 1', mate2: '⚔️ Mate en 2', mate3: '🏆 Mate en 3', __repaso: '🔁 Repasar fallados' };
@@ -192,6 +188,7 @@ let currentCategory = 'mate1';
 let currentIndex = 0;
 let game = null;
 let orientation = 'w'; // el bando que juega: el tablero se mira desde ahí
+let lastMove = null;    // la última jugada del rival, marcada en el tablero
 let solutionStep = 0;   // cuántas jugadas de puzzle.solution ya se jugaron (propias + del rival)
 let selectedSquare = null;
 let missedThisPuzzle = false;
@@ -256,41 +253,15 @@ function updateProgressBar(){
 }
 
 /* ---------------- Tablero ---------------- */
-function isLightSquare(square){
-  const file = square.charCodeAt(0) - 97;
-  const rank = parseInt(square[1], 10) - 1;
-  return (file + rank) % 2 === 1;
-}
 
 function drawBoard(){
-  const board = document.getElementById('board');
-  board.innerHTML = '';
-  // El tablero se mira desde el bando que juega, como en Temas y en la Racha:
-  // en los mates en 2 y en 3 hay casi 400 posiciones en que juegan las negras.
-  for(const square of EjercicioTablero.casillas(orientation)){
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'sq ' + (isLightSquare(square) ? 'light' : 'dark');
-    btn.dataset.square = square;
-    const piece = game.get(square);
-    if(piece){
-      const span = document.createElement('span');
-      if (window.PiezaPreferida) PiezaPreferida.pintar(span, piece.type, piece.color);
-      else {
-        span.className = piece.color === 'w' ? 'piece-white' : 'piece-black';
-        span.textContent = GLYPH[piece.color][piece.type];
-      }
-      span.setAttribute('aria-hidden', 'true');
-      btn.appendChild(span);
-    }
-    // Qué dice cada casilla lo escribe js/tablero-accesible.js: acá solo se
-    // declara el estado, que es lo único que esta página sabe y aquel no.
-    // Antes las 64 casillas eran botones MUDOS: un lector de pantalla decía
-    // "botón" sesenta y cuatro veces y no había forma de mirar el tablero.
-    if(square === selectedSquare){ btn.classList.add('selected'); btn.dataset.estado = 'seleccionada'; }
-    btn.addEventListener('click', () => onSquareClick(square, btn));
-    board.appendChild(btn);
-  }
+  // El tablero, desde el bando que juega (en los mates en 2 y en 3 hay casi 400
+  // posiciones con negras), con la última jugada del rival y las marcas de la
+  // pista: todo lo pinta el módulo común (js/ejercicio-tablero.js).
+  EjercicioTablero.dibujar(document.getElementById('board'), {
+    juego: game, orientacion: orientation, seleccionada: selectedSquare,
+    ultima: lastMove, marcas: pistas.marcas(), alTocar: onSquareClick,
+  });
   montarTeclado();
   renderPositionReadout();
 }
@@ -307,11 +278,6 @@ function montarTeclado(){
   });
 }
 
-function flashWrong(btn){
-  if(!btn) return;
-  btn.classList.add('wrong-flash');
-  setTimeout(() => btn.classList.remove('wrong-flash'), 350);
-}
 function setStatus(text, cls){
   const el = document.getElementById('round-status');
   el.textContent = text;
@@ -324,14 +290,7 @@ function setStatus(text, cls){
      qué se había jugado: o sea, sin poder seguir. */
   if(comandos) comandos.decir(text);
 }
-function highlightTargets(square){
-  const legal = game.moves({ square, verbose: true });
-  const board = document.getElementById('board');
-  legal.forEach((m) => {
-    const cell = board.querySelector('[data-square="' + m.to + '"]');
-    if(cell) cell.classList.add(m.flags.includes('c') || m.flags.includes('e') ? 'target-capture' : 'target');
-  });
-}
+function highlightTargets(square){ EjercicioTablero.marcarDestinos(document.getElementById('board'), game, square); }
 
 function loadPuzzle(){
   const puzzle = currentPuzzle();
@@ -345,12 +304,12 @@ function loadPuzzle(){
   orientation = game.turn();
   solutionStep = 0;
   selectedSquare = null;
+  lastMove = null;
   missedThisPuzzle = false;
   usedHintThisPuzzle = false;
-  hintStage = 0;
   locked = false;
   document.getElementById('hint-btn').disabled = false;
-  document.getElementById('hint-btn').textContent = '💡 Pista';
+  pistas.reiniciar();
   drawBoard();
   buildTabs();
   updateProgressBar();
@@ -386,7 +345,7 @@ function onSquareClick(square, btn){
       selectedSquare = square; drawBoard(); highlightTargets(square);
     } else {
       selectedSquare = null; drawBoard();
-      flashWrong(document.querySelector('[data-square="' + square + '"]'));
+      EjercicioTablero.destello(document.querySelector('[data-square="' + square + '"]'));
     }
     return;
   }
@@ -426,12 +385,13 @@ function playMove(from, to, promotion){
     drawBoard();
     missedThisPuzzle = true;
     resetStreak();
-    flashWrong(document.querySelector('[data-square="' + to + '"]'));
+    EjercicioTablero.destello(document.querySelector('[data-square="' + to + '"]'));
     setStatus(`${moveResult.san} es legal, pero no lleva al mate en la cantidad de jugadas pedida.`, 'bad');
     return;
   }
 
   solutionStep++;
+  pistas.reiniciar();   // la marca de la pista ya no apunta a nada
   if(solutionStep >= puzzle.solution.length || game.in_checkmate()){
     finishPuzzle();
     return;
@@ -442,15 +402,14 @@ function playMove(from, to, promotion){
   setStatus('✓ Correcto — el rival responde…', 'ok');
   setTimeout(() => {
     const replySan = puzzle.solution[solutionStep];
-    game.move(replySan);
+    const reply = game.move(replySan);
+    if(reply) lastMove = { from: reply.from, to: reply.to };
     solutionStep++;
     drawBoard();
     locked = false;
     if(solutionStep >= puzzle.solution.length){
       finishPuzzle();
     } else {
-      hintStage = 0;
-      document.getElementById('hint-btn').textContent = '💡 Pista';
       const replySpoken = blindMode && window.BlindNotation ? window.BlindNotation.sanSpoken(replySan) : replySan;
       setStatus(blindMode ? `El rival juega ${replySpoken}. Sigue buscando el mate.` : 'Sigue buscando el mate.');
     }
@@ -505,32 +464,27 @@ function finishCategory(){
   }
 }
 
-let hintStage = 0; // 0 = sin pista todavía, 1 = pieza resaltada, 2 = ya se jugó sola
+/* Las pistas, por etapas (js/ejercicio-tablero.js): la pieza que se mueve y
+   después la solución. En Modo Adaptado la casilla se dice en palabras. */
+function jugadaEsperada(){
+  const puzzle = currentPuzzle();
+  if(!puzzle || !game) return null;
+  const esperada = puzzle.solution[solutionStep];
+  return game.moves({ verbose: true }).find((m) => m.san === esperada) || null;
+}
+const pistas = EjercicioTablero.pistas({
+  boton: '#hint-btn',
+  etapas: () => ['origen', 'solucion'],
+  jugada: jugadaEsperada,
+  repintar: drawBoard,
+  decir: setStatus,
+  enPalabras: () => blindMode,
+  alDar: () => { usedHintThisPuzzle = true; },
+  alResolver: (j) => { selectedSquare = null; playMove(j.from, j.to, j.promotion || undefined); },
+});
 function giveHint(){
   if(locked) return;
-  usedHintThisPuzzle = true;
-  const puzzle = currentPuzzle();
-  const expected = puzzle.solution[solutionStep];
-  const legal = game.moves({ verbose: true });
-  const target = legal.find((m) => m.san === expected);
-  const board = document.getElementById('board');
-
-  if(hintStage === 0){
-    hintStage = 1;
-    board.querySelectorAll('.hint-from').forEach((el) => el.classList.remove('hint-from'));
-    if(target){
-      const cell = board.querySelector('[data-square="' + target.from + '"]');
-      if(cell) cell.classList.add('hint-from');
-    }
-    setStatus(blindMode && target ? `Pista: mueve la pieza en ${window.BlindNotation.squareSpoken(target.from)}.` : 'Pista: fíjate en la pieza resaltada.');
-    document.getElementById('hint-btn').textContent = '💡 Ver solución';
-  } else {
-    hintStage = 0;
-    document.getElementById('hint-btn').textContent = '💡 Pista';
-    if(!target) return;
-    selectedSquare = null;
-    playMove(target.from, target.to, target.promotion || undefined);
-  }
+  pistas.dar();
 }
 document.getElementById('hint-btn').addEventListener('click', giveHint);
 document.getElementById('retry-btn').addEventListener('click', loadPuzzle);

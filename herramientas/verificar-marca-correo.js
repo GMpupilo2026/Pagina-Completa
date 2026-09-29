@@ -8,7 +8,9 @@
    - una academia con logo lleva el suyo, y el de Ajedrez Integral no;
    - una academia SIN logo lleva solo su nombre: el de Ajedrez Integral no se
      le presta;
-   - un logo o un color que no sean lo que dicen no entran al HTML.
+   - un logo o un color que no sean lo que dicen no entran al HTML;
+   - los dos correos de bienvenida (al alumno y a la casa) llevan esa misma
+     franja, con el logo de Ajedrez Integral, una sola vez.
 
        node herramientas/verificar-marca-correo.js                           */
 const path = require("path");
@@ -52,6 +54,20 @@ console.log("\nLo que no es lo que dice no entra");
 cierto("un logo que no es https no entra", imgs(html.malo).length === 0 && !html.malo.includes("javascript:"), JSON.stringify(imgs(html.malo)));
 cierto("un color que no es #rrggbb no entra", !html.malo.includes("url(x)"), html.malo.slice(0, 200));
 cierto("el nombre va escapado", html.malo.includes("&lt;b&gt;Santa&lt;/b&gt;") && !html.malo.includes("<b>Santa"), html.malo.slice(0, 400));
+
+console.log("\nEl correo de bienvenida");
+const b = spawnSync(process.execPath, ["--experimental-strip-types", "--no-warnings", "--input-type=module", "-e",
+  `import { cuerpoBienvenida, cuerpoBienvenidaCasa } from ${JSON.stringify(path.join(RAIZ, "supabase/functions/_compartido/invitacion-email.ts"))};
+   process.stdout.write(JSON.stringify({
+     alumno: cuerpoBienvenida("ana@example.com", "https://x/e", "Ana Rojas"),
+     casa: cuerpoBienvenidaCasa("ana.rojas@alumno.ajedrez-integral.com", "https://x/e", "Ana Rojas", "Luis"),
+   }));`], { encoding: "utf8" });
+if (b.status !== 0) { console.log(b.stderr); process.exit(1); }
+const bien = JSON.parse(b.stdout);
+for (const [quien, h] of Object.entries(bien)) {
+  cierto(`${quien === "casa" ? "el de la casa" : "el del alumno"} lleva la franja con el logo, una vez`,
+    JSON.stringify(imgs(h)) === JSON.stringify([LOGO_AI]) && h.indexOf(LOGO_AI) < h.indexOf("<h1"), JSON.stringify(imgs(h)));
+}
 
 console.log(fallos ? `\n${fallos} fallo(s)` : "\nLa cabecera de los correos lleva el logo que corresponde.");
 process.exit(fallos ? 1 : 0);

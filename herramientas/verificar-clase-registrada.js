@@ -154,6 +154,7 @@ window.__deletes = [];
   };
   for (const t of Object.keys(SEMILLA)) TABLAS[t] = SEMILLA[t].slice();
   TABLAS.preguntas_clave = TABLAS.preguntas_clave || [];
+  TABLAS.clase_elegidos = TABLAS.clase_elegidos || [];
   // Para que una prueba cambie la base «desde otra pantalla» (el profe muestra
   // los resultados) y después avise con __cambioEnBase, como haría Realtime.
   window.__tablas = TABLAS;
@@ -182,6 +183,11 @@ window.__deletes = [];
   // anuncia de sí misma, como a quién está mirando el profe en la práctica.
   window.__presencia = function (clave, meta) {
     if (meta) estado[clave] = [meta]; else delete estado[clave];
+    oyentes.presence.forEach((f) => f());
+  };
+  // Cualquier presencia a mano (una mano levantada con su hora, por ejemplo).
+  window.__ponerPresencia = function (key, meta) {
+    estado[key] = [meta];
     oyentes.presence.forEach((f) => f());
   };
   window.__entraOtroAlumno = function () {
@@ -297,8 +303,10 @@ window.__deletes = [];
           lados.push({ id: r.white_id, res: r.result === "white" ? "g" : r.result === "black" ? "p" : r.result === "draw" ? "t" : null });
           lados.push({ id: r.black_id, res: r.result === "black" ? "g" : r.result === "white" ? "p" : r.result === "draw" ? "t" : null });
         });
+        // Los turnos de palabra (al azar o por mano levantada) y cómo respondió.
+        const turn = (TABLAS.clase_elegidos || []).filter((e) => e.class_session_id === args.p_clase);
         const gente = [...new Set(TABLAS.class_attendance.filter((a) => a.session_id === args.p_clase).map((a) => a.student_id)
-          .concat(resp.map((a) => a.student_id), prac.map((g) => g.student_id), lados.map((l) => l.id)))]
+          .concat(resp.map((a) => a.student_id), prac.map((g) => g.student_id), lados.map((l) => l.id), turn.map((e) => e.student_id)))]
           .filter((id) => id !== "u-profe");
         const filas = gente.map((id) => {
           const p = PERFILES.find((x) => x.id === id) || {};
@@ -310,7 +318,9 @@ window.__deletes = [];
             tablas: g.filter((x) => x.status === "draw").length,
             perdidas: g.filter((x) => x.status === "checkmate_loss" || x.status === "resigned" || x.status === "timeout").length,
             partidas: lados.filter((l) => l.id === id).length, partidas_ganadas: lados.filter((l) => l.id === id && l.res === "g").length,
-            partidas_tablas: lados.filter((l) => l.id === id && l.res === "t").length, partidas_perdidas: lados.filter((l) => l.id === id && l.res === "p").length };
+            partidas_tablas: lados.filter((l) => l.id === id && l.res === "t").length, partidas_perdidas: lados.filter((l) => l.id === id && l.res === "p").length,
+            turnos: turn.filter((e) => e.student_id === id).length, turnos_bien: turn.filter((e) => e.student_id === id && e.resultado === "bien").length,
+            turnos_casi: turn.filter((e) => e.student_id === id && e.resultado === "casi").length };
         }).sort((a, b) => a.nombre.localeCompare(b.nombre));
         return constructor(n, filas);
       }

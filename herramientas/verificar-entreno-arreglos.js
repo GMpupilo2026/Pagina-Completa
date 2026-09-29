@@ -211,6 +211,75 @@ async function moduloComun(browser) {
   }
 }
 
+async function tableroYPistas(browser) {
+  console.log("\n=== El tablero y las pistas, los mismos en todas las páginas ===");
+  const celda = (page, sq) => page.evaluate((x) => {
+    const c = document.querySelector(`#board [data-square="${x}"]`);
+    return c ? { clases: [...c.classList].filter((k) => /hint|last/.test(k)).join(" "), label: c.getAttribute("aria-label") || "" } : null;
+  }, sq);
+  {
+    // Temas, en un grupo mezclado: la primera pista dice el motivo; la segunda
+    // marca la pieza, y la marca SOBREVIVE a un repintado (antes se perdía).
+    const { page, ctx, errores } = await abrir(browser, "/entreno/temas.html?tema=mix", null, { entreno_temas_desde: "0" });
+    await page.waitForFunction(() => typeof currentTheme !== "undefined" && currentTheme === "mix" && game !== null, { timeout: 20000 });
+    await page.evaluate(() => {
+      // El primero del grupo cuyo motivo se conozca.
+      const ids = idsOf("mix");
+      for (let i = 0; i < ids.length; i++) { currentIndex = i; if (motivoDelEjercicio()) break; }
+      loadPuzzle();
+    });
+    await page.evaluate(() => giveHint());
+    igual("en un grupo mezclado, la primera pista dice el motivo", /^Pista: el motivo es «/.test(await estado(page)), "true");
+    igual("y el botón pasa a «Otra pista»", await page.textContent("#hint-btn"), "💡 Otra pista");
+    const desde = await page.evaluate(() => { giveHint(); return jugadaEsperada().from; });
+    igual("la segunda marca la pieza", (await celda(page, desde)).clases, "hint-from");
+    await page.evaluate(() => drawBoard());
+    igual("la marca sigue después de repintar", (await celda(page, desde)).clases, "hint-from");
+    igual("y el lector de pantalla la oye", /pista: la pieza que se mueve/.test((await celda(page, desde)).label), "true");
+    igual("el botón ya dice «Ver solución»", await page.textContent("#hint-btn"), "💡 Ver solución");
+    sinErrores(errores, "temas, pistas");
+    await ctx.close();
+  }
+  {
+    // Mates: la respuesta del rival queda marcada como la última jugada.
+    const { page, ctx, errores } = await abrir(browser, "/entreno/mates.html");
+    await page.waitForFunction(() => PUZZLES.mate2.length > 0, { timeout: 20000 });
+    await page.evaluate(() => { currentCategory = "mate2"; currentIndex = 0; loadPuzzle(); const j = jugadaEsperada(); playMove(j.from, j.to, j.promotion); });
+    await page.waitForFunction(() => !locked, { timeout: 5000 });
+    igual("la respuesta del rival queda marcada en el tablero", await page.evaluate(() =>
+      document.querySelectorAll("#board .sq.last").length), "2");
+    sinErrores(errores, "mates, última jugada");
+    await ctx.close();
+  }
+  {
+    // Practicar: una serie con negras se mira desde las negras.
+    const { page, ctx, errores } = await abrir(browser, "/entreno/practicas.html");
+    await page.evaluate(() => { openSet(SETS.find((x) => x.id === "coz")); currentRoundIndex = 4; loadRound(); });
+    igual("con negras al turno, la primera casilla es h1", await page.evaluate(() =>
+      document.querySelector("#board [data-square]").dataset.square), "h1");
+    await page.evaluate(() => { giveHint(); giveHint(); });
+    igual("pieza y destino marcados", [(await celda(page, "e4")).clases, (await celda(page, "f2")).clases], ["hint-from", "hint-to"]);
+    sinErrores(errores, "practicar, tablero");
+    await ctx.close();
+  }
+  {
+    // Desafíos sin pista escrita: antes las dos primeras marcaban la misma
+    // pieza; ahora la segunda marca la casilla de destino.
+    const { page, ctx, errores } = await abrir(browser, "/entreno/desafios.html");
+    await page.waitForFunction(() => SETS.length > 0, { timeout: 20000 });
+    const j = await page.evaluate(() => {
+      for (const set of SETS) for (let i = 0; i < set.rounds.length; i++) {
+        if (!set.rounds[i].hint) { openSet(set); currentRoundIndex = i; loadRound(); return jugadaDelDesafio(); }
+      }
+      return null;
+    });
+    await page.evaluate(() => { giveHint(); giveHint(); });
+    igual("sin pista escrita: pieza y después destino", [(await celda(page, j.from)).clases, (await celda(page, j.to)).clases], ["hint-from", "hint-to"]);
+    sinErrores(errores, "desafíos, pistas");
+    await ctx.close();
+  }
+}
+
 const SEMANAS = [1, 2, 3, 4].map((n) => ({
   titulo: `Semana ${n}`, porque: "porque sí", objetivo: `Meta ${n}`, tareas: ["una tarea"],
   recursos: [{ texto: "Temas", href: "entreno/temas.html?tema=fork" }, { texto: "malo", href: "javascript:alert(1)" }],
@@ -278,6 +347,7 @@ async function diagnostico(browser) {
     await visualizacion(browser);
     await diagnostico(browser);
     await moduloComun(browser);
+    await tableroYPistas(browser);
   } catch (e) {
     console.log("  ✗ " + (e && e.stack || e));
     fallos += 1;

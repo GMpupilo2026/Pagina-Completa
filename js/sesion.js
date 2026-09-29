@@ -2041,8 +2041,12 @@
                 listEl.innerHTML = '<li class="text-brand-450 dark:text-brand-350">Nadie conectado todavía…</li>';
                 return;
             }
-            // Quienes piden la palabra aparecen primero, para que el profesor los vea sin buscar.
-            entries.sort((a, b) => (b[1].hand_raised ? 1 : 0) - (a[1].hand_raised ? 1 : 0));
+            /* Quienes piden la palabra aparecen primero y EN EL ORDEN en que la
+               pidieron (hand_at): así el profe se la da al que esperó más, no al
+               primero que vio. Los demás, después. */
+            const llegada = (info) => (info.hand_at ? new Date(info.hand_at).getTime() : Infinity);
+            entries.sort((a, b) => (b[1].hand_raised ? 1 : 0) - (a[1].hand_raised ? 1 : 0) || llegada(a[1]) - llegada(b[1]));
+            let turnoEnCola = 0;
             listEl.innerHTML = "";
             for (const [studentId, info] of entries) {
                 const hasControl = activePlayerId === studentId;
@@ -2055,10 +2059,12 @@
                 dot.title = "En vivo";
                 label.appendChild(dot);
                 if (info.hand_raised) {
+                    turnoEnCola += 1;
                     const handIcon = document.createElement("span");
-                    handIcon.className = "shrink-0";
-                    handIcon.textContent = "🖐️";
-                    handIcon.title = "Pidiendo la palabra";
+                    handIcon.className = "shrink-0 font-semibold text-brand-800 dark:text-white";
+                    // El puesto en la cola va escrito, no solo el orden de la lista.
+                    handIcon.textContent = "🖐️ " + turnoEnCola + ".º";
+                    handIcon.title = "Pidiendo la palabra: " + turnoEnCola + ".º en la cola";
                     label.appendChild(handIcon);
                 }
                 const name = document.createElement("span");
@@ -2068,8 +2074,15 @@
                 name.textContent = info.full_name || info.email;
                 label.appendChild(name);
                 const actions = document.createElement("span");
-                actions.className = "flex items-center gap-1 shrink-0";
+                actions.className = "flex flex-wrap items-center gap-1";
                 if (info.hand_raised) {
+                    const palabraBtn = document.createElement("button");
+                    palabraBtn.type = "button";
+                    palabraBtn.className = "text-xs font-semibold px-2 py-1.5 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+                    palabraBtn.textContent = "🗣️ Darle la palabra";
+                    palabraBtn.setAttribute("aria-label", "Darle la palabra a " + (info.full_name || info.email));
+                    palabraBtn.addEventListener("click", () => darLaPalabra(studentId));
+                    actions.appendChild(palabraBtn);
                     const lowerBtn = document.createElement("button");
                     lowerBtn.type = "button";
                     lowerBtn.className = "text-xs font-semibold px-2 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors";
@@ -2451,8 +2464,11 @@
             btn.classList.toggle("dark:text-brand-200", !handRaised);
         }
 
+        // Cuándo levantó la mano: el profe ve la cola en ese orden.
+        let handAt = null;
         async function setHandRaised(value) {
             handRaised = !!value;
+            handAt = handRaised ? (handAt || new Date().toISOString()) : null;
             updateRaiseHandBtn();
             if (!presenceChannel) return;
             await presenceChannel.track({
@@ -2461,6 +2477,7 @@
                 role: profile.role,
                 online_at: new Date().toISOString(),
                 hand_raised: handRaised,
+                hand_at: handAt,
             });
         }
 
@@ -2489,7 +2506,7 @@
                             : (meta && meta.full_name) || "Tu profe");
                     }
                     if (meta && meta.role === "alumno") {
-                        onlineStudents.set(key, { email: meta.email, full_name: meta.full_name, hand_raised: !!meta.hand_raised });
+                        onlineStudents.set(key, { email: meta.email, full_name: meta.full_name, hand_raised: !!meta.hand_raised, hand_at: meta.hand_at || null });
                     } else if (meta && meta.role === "supervision") {
                         // Si además está mirando la partida de un alumno, el profe lo sabe.
                         const suya = meta.mirando_a && practiceStudentBoards[meta.mirando_a];
@@ -3258,16 +3275,40 @@
             return info.full_name || info.email || "Alumno";
         }
 
-        /* La historia de la clase: una fila por elección. Son pocas por clase
-           (una por pregunta), así que se cuentan acá sin miedo al tope de mil. */
+        /* La historia de la clase: una fila por turno (clase_elegidos), al
+           azar o por mano levantada, con cómo respondió. Son pocas por clase,
+           así que se cuentan acá sin miedo al tope de mil. */
+        let turnoActualId = null;        // la fila del turno en curso, para anotarle el resultado
         async function cargarTurnos() {
             if (!isTeacher || !currentOpenSessionId) { turnosEnLaClase = new Map(); turnosDeLaClase = null; pintarTurnos(); return; }
-            const { data, error } = await sb.from("clase_elegidos").select("student_id").eq("class_session_id", currentOpenSessionId);
+            const { data, error } = await sb.from("clase_elegidos").select("id, student_id, resultado, created_at")
+                .eq("class_session_id", currentOpenSessionId).order("created_at");
             if (error) { console.error(error); return; }
             turnosEnLaClase = new Map();
-            (data || []).forEach((f) => turnosEnLaClase.set(f.student_id, (turnosEnLaClase.get(f.student_id) || 0) + 1));
+            (data || []).forEach((f) => sumarTurno(f.student_id, f.resultado));
             turnosDeLaClase = currentOpenSessionId;
+            // Al recargar con alguien en turno: su fila es la última suya sin anotar.
+            if (elegidoActual && !turnoActualId) {
+                const suya = (data || []).filter((f) => f.student_id === elegidoActual.id && !f.resultado).pop();
+                turnoActualId = suya ? suya.id : null;
+            }
             pintarTurnos();
+        }
+
+        function sumarTurno(id, resultado) {
+            const t = turnosEnLaClase.get(id) || { veces: 0, bien: 0, casi: 0 };
+            t.veces += 1;
+            if (resultado === "bien") t.bien += 1;
+            if (resultado === "casi") t.casi += 1;
+            turnosEnLaClase.set(id, t);
+        }
+
+        function textoTurnos(t) {
+            if (!t || !t.veces) return "todavía no";
+            const partes = [];
+            if (t.bien) partes.push(t.bien + " bien");
+            if (t.casi) partes.push(t.casi + " casi");
+            return (t.veces === 1 ? "1 vez" : t.veces + " veces") + (partes.length ? ": " + partes.join(", ") : "");
         }
 
         // Escrito, uno por renglón: los conectados (aunque tengan cero) y
@@ -3277,8 +3318,8 @@
             if (!lista) return;
             const ids = new Set([...onlineStudents.keys(), ...turnosEnLaClase.keys()]);
             lista.innerHTML = "";
-            const filas = [...ids].map((id) => ({ id, veces: turnosEnLaClase.get(id) || 0, nombre: nombreDeConectado(id) }))
-                .sort((a, b) => a.veces - b.veces || a.nombre.localeCompare(b.nombre));
+            const filas = [...ids].map((id) => ({ id, t: turnosEnLaClase.get(id), nombre: nombreDeConectado(id) }))
+                .sort((a, b) => ((a.t && a.t.veces) || 0) - ((b.t && b.t.veces) || 0) || a.nombre.localeCompare(b.nombre));
             document.getElementById("elegidos-cuenta-caja").hidden = !filas.length;
             filas.forEach((f) => {
                 const li = document.createElement("li");
@@ -3288,10 +3329,32 @@
                 n.textContent = f.nombre;   // lo escribió una persona
                 const v = document.createElement("span");
                 v.className = "shrink-0 font-semibold text-brand-800 dark:text-white";
-                v.textContent = f.veces === 0 ? "todavía no" : f.veces === 1 ? "1 vez" : f.veces + " veces";
+                v.textContent = textoTurnos(f.t);
                 li.append(n, v);
                 lista.appendChild(li);
             });
+        }
+
+        /* Darle el turno a alguien: la misma puerta para el sorteo y para la
+           mano levantada. Queda en game_state.elegido (lo ve la clase) y en
+           clase_elegidos (lo cuenta). */
+        async function darTurno(id, origen) {
+            const nombre = nombreDeConectado(id);
+            // El nombre viaja con la elección: los demás alumnos lo ven (y al
+            // recargar no dependen de que la presencia ya haya llegado).
+            const elegido = { id, at: new Date().toISOString(), nombre, motivo: origen };
+            const { error } = await sb.from("game_state").update({ elegido }).eq("id", myGameStateId);
+            if (error) { console.error(error); setStatus("No se pudo avisarle: " + error.message); return false; }
+            elegidoActual = elegido;
+            document.getElementById("elegido-caja").hidden = false;
+            document.getElementById("elegido-nombre").textContent = nombre;   // textContent: lo escribió una persona
+            document.getElementById("elegido-titulo").textContent = origen === "mano" ? "Tiene la palabra:" : "Le toca responder a:";
+            const { data, error: errTurno } = await sb.from("clase_elegidos")
+                .insert({ class_session_id: currentOpenSessionId, student_id: id, origen }).select("id").single();
+            if (errTurno) { console.error(errTurno); turnoActualId = null; }
+            else { turnoActualId = data && data.id; sumarTurno(id, null); }
+            pintarTurnos();
+            return true;
         }
 
         async function elegirAlAzar() {
@@ -3300,7 +3363,8 @@
             if (!conectados.length) { setStatus("No hay alumnos conectados para elegir."); return; }
             if (!currentOpenSessionId) { setStatus("Abre la clase primero: cada turno queda en su registro."); return; }
             if (turnosDeLaClase !== currentOpenSessionId) await cargarTurnos();
-            const id = PartidasClase.elegirConMenos(conectados, turnosEnLaClase);
+            const veces = new Map([...turnosEnLaClase].map(([k, t]) => [k, t.veces]));
+            const id = PartidasClase.elegirConMenos(conectados, veces);
             const caja = document.getElementById("elegido-caja");
             const nombreEl = document.getElementById("elegido-nombre");
             caja.hidden = false;
@@ -3316,33 +3380,48 @@
                 }
                 nombreEl.setAttribute("aria-live", "polite");
             }
-            nombreEl.textContent = nombreDeConectado(id);   // textContent: el nombre lo escribió una persona
-            // El nombre viaja con la elección: los demás alumnos lo ven (y al
-            // recargar no dependen de que la presencia ya haya llegado).
-            const elegido = { id, at: new Date().toISOString(), nombre: nombreDeConectado(id) };
-            const { error } = await sb.from("game_state").update({ elegido }).eq("id", myGameStateId);
+            const ok = await darTurno(id, "azar");
             btn.disabled = false;
-            if (error) { console.error(error); setStatus("No se pudo avisarle: " + error.message); return; }
-            elegidoActual = elegido;
-            // Queda en la historia de la clase: es lo que cuenta los turnos.
-            const { error: errTurno } = await sb.from("clase_elegidos").insert({ class_session_id: currentOpenSessionId, student_id: id });
-            if (errTurno) console.error(errTurno);
-            else turnosEnLaClase.set(id, (turnosEnLaClase.get(id) || 0) + 1);
-            pintarTurnos();
-            setStatus("🎯 Le toca responder a " + nombreDeConectado(id) + ": ya le salió el aviso en su pantalla.");
+            if (ok) setStatus("🎯 Le toca responder a " + nombreDeConectado(id) + ": ya le salió el aviso en su pantalla.");
         }
 
-        async function terminarElegido() {
+        /* La mano levantada, en el orden en que llegó: el profe le da la
+           palabra y eso es un turno más (origen 'mano'), con su aviso. */
+        async function darLaPalabra(id) {
+            if (!currentOpenSessionId) { setStatus("Abre la clase primero: cada turno queda en su registro."); return; }
+            if (turnosDeLaClase !== currentOpenSessionId) await cargarTurnos();
+            lowerStudentHand(id);
+            if (await darTurno(id, "mano")) setStatus("🗣️ " + nombreDeConectado(id) + " tiene la palabra.");
+        }
+
+        /* Terminar el turno, anotando cómo respondió ('bien', 'casi') o sin
+           anotar (null). La nota va a la fila del turno; el aviso se quita. */
+        async function terminarElegido(resultado) {
+            if (resultado && elegidoActual) {
+                if (!turnoActualId) await cargarTurnos();
+                if (turnoActualId) {
+                    const { error: errNota } = await sb.from("clase_elegidos").update({ resultado }).eq("id", turnoActualId);
+                    if (errNota) { console.error(errNota); setStatus("No se pudo anotar: " + errNota.message); return; }
+                    const t = turnosEnLaClase.get(elegidoActual.id);
+                    if (t) t[resultado] += 1;
+                }
+            }
             const { error } = await sb.from("game_state").update({ elegido: null }).eq("id", myGameStateId);
             if (error) { console.error(error); setStatus("No se pudo quitar el aviso: " + error.message); return; }
+            const quien = elegidoActual ? nombreDeConectado(elegidoActual.id) : "";
             elegidoActual = null;
+            turnoActualId = null;
             document.getElementById("elegido-caja").hidden = true;
+            pintarTurnos();
+            if (resultado) setStatus("Anotado: " + quien + " respondió " + (resultado === "bien" ? "bien" : "casi") + ".");
         }
 
         if (document.getElementById("elegir-azar-btn")) {
             document.getElementById("elegir-azar-btn").addEventListener("click", elegirAlAzar);
             document.getElementById("elegido-otro-btn").addEventListener("click", elegirAlAzar);
-            document.getElementById("elegido-listo-btn").addEventListener("click", terminarElegido);
+            document.getElementById("elegido-bien-btn").addEventListener("click", () => terminarElegido("bien"));
+            document.getElementById("elegido-casi-btn").addEventListener("click", () => terminarElegido("casi"));
+            document.getElementById("elegido-listo-btn").addEventListener("click", () => terminarElegido(null));
             document.getElementById("elegido-insignia-btn").addEventListener("click", () => {
                 if (!elegidoActual) return;
                 abrirTrofeosEnClase(elegidoActual.id, nombreDeConectado(elegidoActual.id));
@@ -3357,7 +3436,10 @@
                 const caja = document.getElementById("elegido-caja");
                 if (!caja) return;
                 caja.hidden = !elegidoActual;
-                if (elegidoActual) document.getElementById("elegido-nombre").textContent = nombreDeConectado(elegidoActual.id);
+                if (elegidoActual) {
+                    document.getElementById("elegido-nombre").textContent = nombreDeConectado(elegidoActual.id);
+                    document.getElementById("elegido-titulo").textContent = elegidoActual.motivo === "mano" ? "Tiene la palabra:" : "Le toca responder a:";
+                }
                 return;
             }
             const overlay = document.getElementById("elegido-overlay");
@@ -3371,10 +3453,15 @@
             if (otro) {
                 const nombre = vigente && !soyYo ? (elegidoActual.nombre || nombreDeConectado(elegidoActual.id)) : "";
                 const antes = otro.dataset.at || "";
+                const porMano = !!(elegidoActual && elegidoActual.motivo === "mano");
+                document.getElementById("elegido-otro-antes").textContent = porMano ? "Tu profe le dio la palabra a " : "Tu profe eligió a ";
+                document.getElementById("elegido-otro-despues").textContent = porMano ? "." : " para responder.";
                 document.getElementById("elegido-otro-nombre").textContent = nombre;   // lo escribió una persona
                 otro.hidden = !nombre;
                 otro.dataset.at = nombre ? elegidoActual.at : "";
-                if (nombre && antes !== elegidoActual.at && claseAcc) claseAcc.decir("Tu profe eligió a " + nombre + " para responder.");
+                if (nombre && antes !== elegidoActual.at && claseAcc) {
+                    claseAcc.decir(porMano ? "Tu profe le dio la palabra a " + nombre + "." : "Tu profe eligió a " + nombre + " para responder.");
+                }
             }
             let visto = null;
             try { visto = sessionStorage.getItem(ELEGIDO_VISTO); } catch (e) {}
@@ -3382,9 +3469,16 @@
             const estabaAbierto = !overlay.classList.contains("hidden");
             overlay.classList.toggle("hidden", !mostrarGrande);
             chip.hidden = !soyYo || mostrarGrande;
+            // Por la mano levantada no lo «eligieron»: le dieron la palabra que pidió.
+            const porManoYo = soyYo && elegidoActual.motivo === "mano";
+            document.getElementById("elegido-overlay-titulo").textContent = porManoYo ? "¡Tienes la palabra!" : "¡Te eligieron para responder!";
+            document.getElementById("elegido-overlay-texto").textContent = porManoYo
+                ? "Tu profe vio tu mano levantada. ¡Adelante!" : "Tu profe te va a hacer una pregunta. ¡Tú puedes!";
+            chip.textContent = porManoYo ? "🗣️ Tienes la palabra." : "🎯 Te toca responder: tu profe te eligió.";
             if (mostrarGrande && !estabaAbierto) {
                 enfocarCuandoSeVea(document.getElementById("elegido-overlay-ok"));
-                if (claseAcc) claseAcc.decir("¡Te eligieron para responder! Tu profe te va a hacer una pregunta.");
+                if (claseAcc) claseAcc.decir(porManoYo ? "¡Tienes la palabra! Tu profe vio tu mano levantada."
+                    : "¡Te eligieron para responder! Tu profe te va a hacer una pregunta.");
             }
         }
 

@@ -25,10 +25,6 @@ async function unlock(){
   loadDataThenStart();
 }
 
-const GLYPH = {
-  w: { p:'♙', n:'♘', b:'♗', r:'♖', q:'♕', k:'♔' },
-  b: { p:'♟', n:'♞', b:'♝', r:'♜', q:'♛', k:'♚' },
-};
 // Un grupo sin icono se pinta con un punto pelado, así que al sumar uno nuevo
 // hay que sumarlo acá también: el de táctica es el mismo ⚔️ que tenía su página.
 const GROUP_ICON = { tactica:'⚔️', recommended:'🎲', phases:'⏳', motifs:'🎯', advanced:'🧠', mates:'♚', mateThemes:'👑', specialMoves:'✨', goals:'🏁', lengths:'📏', origin:'🏛️' };
@@ -392,45 +388,14 @@ function updateProgressBar(){
 }
 
 /* ---------------- Tablero ---------------- */
-function isLightSquare(square){
-  const file = square.charCodeAt(0) - 97;
-  const rank = parseInt(square[1], 10) - 1;
-  return (file + rank) % 2 === 1;
-}
 
 function drawBoard(){
   refrescarComandos();
-  const board = document.getElementById('board');
-  board.innerHTML = '';
-  // Desde el bando que juega (js/ejercicio-tablero.js, el mismo orden en Mates).
-  EjercicioTablero.casillas(orientation).forEach((square) => {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'sq ' + (isLightSquare(square) ? 'light' : 'dark');
-    btn.dataset.square = square;
-    const piece = game.get(square);
-    if(piece){
-      const span = document.createElement('span');
-      if (window.PiezaPreferida) PiezaPreferida.pintar(span, piece.type, piece.color);
-      else {
-        span.className = piece.color === 'w' ? 'piece-white' : 'piece-black';
-        span.textContent = GLYPH[piece.color][piece.type];
-      }
-      span.setAttribute('aria-hidden', 'true');
-      btn.appendChild(span);
-    }
-    /* Qué dice cada casilla lo escribe js/tablero-accesible.js, no esta
-       página: ahí las columnas van habladas ("eva 4", que no se confunde con
-       "bella 4" al oírlas) y los nombres de las piezas salen de la misma
-       tabla que el resto del sitio. Acá solo se declara el ESTADO, que es lo
-       único que esta página sabe y aquel no. */
-    if(square === selectedSquare){ btn.classList.add('selected'); btn.dataset.estado = 'seleccionada'; }
-    if(lastMove && (square === lastMove.from || square === lastMove.to)){
-      btn.classList.add('last');
-      btn.dataset.estado = (btn.dataset.estado ? btn.dataset.estado + ', ' : '') + 'de la última jugada';
-    }
-    btn.addEventListener('click', () => onSquareClick(square, btn));
-    board.appendChild(btn);
+  // El tablero, la pieza elegida y las marcas de la pista los pinta el módulo
+  // común (js/ejercicio-tablero.js): desde el bando que juega, igual que Mates.
+  EjercicioTablero.dibujar(document.getElementById('board'), {
+    juego: game, orientacion: orientation, seleccionada: selectedSquare,
+    ultima: lastMove, marcas: pistas.marcas(), alTocar: onSquareClick,
   });
   montarTeclado();
 }
@@ -487,11 +452,6 @@ function jugarEscribiendo(texto, api){
   playMove(mv.from, mv.to, mv.promotion);
 }
 
-function flashWrong(btn){
-  if(!btn) return;
-  btn.classList.add('wrong-flash');
-  setTimeout(() => btn.classList.remove('wrong-flash'), 350);
-}
 function setStatus(text, cls){
   const el = document.getElementById('round-status');
   el.textContent = text;
@@ -500,14 +460,7 @@ function setStatus(text, cls){
   // escribiendo tiene el foco ahí y el renglón del tablero le queda lejos.
   if(comandos) comandos.decir(text);
 }
-function highlightTargets(square){
-  const legal = game.moves({ square, verbose: true });
-  const board = document.getElementById('board');
-  legal.forEach((m) => {
-    const cell = board.querySelector('[data-square="' + m.to + '"]');
-    if(cell) cell.classList.add(m.flags.includes('c') || m.flags.includes('e') ? 'target-capture' : 'target');
-  });
-}
+function highlightTargets(square){ EjercicioTablero.marcarDestinos(document.getElementById('board'), game, square); }
 
 function loadPuzzle(){
   const puzzle = currentPuzzle();
@@ -524,10 +477,9 @@ function loadPuzzle(){
   lastMove = null;
   missedThisPuzzle = false;
   usedHintThisPuzzle = false;
-  hintStage = 0;
   locked = false;
   document.getElementById('hint-btn').disabled = false;
-  document.getElementById('hint-btn').textContent = '💡 Pista';
+  pistas.reiniciar();
   drawBoard();
   updateProgressBar();
   const turnColor = game.turn() === 'w' ? 'blancas' : 'negras';
@@ -567,7 +519,7 @@ function onSquareClick(square, btn){
       selectedSquare = square; drawBoard(); highlightTargets(square);
     } else {
       selectedSquare = null; drawBoard();
-      flashWrong(document.querySelector('[data-square="' + square + '"]'));
+      EjercicioTablero.destello(document.querySelector('[data-square="' + square + '"]'));
     }
     return;
   }
@@ -601,11 +553,12 @@ function playMove(from, to, promotion){
     drawBoard();
     missedThisPuzzle = true;
     resetStreak();
-    flashWrong(document.querySelector('[data-square="' + to + '"]'));
+    EjercicioTablero.destello(document.querySelector('[data-square="' + to + '"]'));
     setStatus(`${moveResult.san} es legal, pero no es la jugada de la solución.`, 'bad');
     return;
   }
   lastMove = { from, to };
+  pistas.reiniciar();   // la marca de la pista ya no apunta a nada
   drawBoard();
 
   solutionStep++;
@@ -626,8 +579,7 @@ function playMove(from, to, promotion){
     if(solutionStep >= puzzle.solution.length){
       finishPuzzle();
     } else {
-      hintStage = 0;
-      document.getElementById('hint-btn').textContent = '💡 Pista';
+      pistas.reiniciar();
       setStatus('Sigue buscando la continuación.');
     }
   }, 650);
@@ -689,32 +641,43 @@ function finishTheme(){
   updateProgressBar();
 }
 
-let hintStage = 0;
+/* Las pistas, por etapas (js/ejercicio-tablero.js). En un grupo que mezcla
+   motivos ("recomendados", "fases", "largo"…) la primera dice cuál es el
+   motivo: está en el propio ejercicio y es justo lo que el alumno no sabe.
+   Dentro de un tema, el motivo ya lo dice el título, así que empieza por la
+   pieza. Después, la solución. */
+const GRUPOS_DE_MOTIVO = ['motifs', 'advanced', 'mateThemes', 'specialMoves'];
+let motivosConocidos = null;
+function motivoDelEjercicio(){
+  const puzzle = currentPuzzle();
+  if(!puzzle || !Array.isArray(puzzle.themes)) return null;
+  if(!motivosConocidos){
+    motivosConocidos = new Set();
+    (DATA.groups || []).filter((g) => GRUPOS_DE_MOTIVO.includes(g.id))
+      .forEach((g) => g.themes.forEach((t) => motivosConocidos.add(t.key)));
+  }
+  return puzzle.themes.find((k) => k !== currentTheme && motivosConocidos.has(k) && THEME_INFO[k]) || null;
+}
+function jugadaEsperada(){
+  const puzzle = currentPuzzle();
+  if(!puzzle || !game) return null;
+  const esperada = puzzle.solution[solutionStep];
+  return game.moves({ verbose: true }).find((m) => m.san === esperada) || null;
+}
+const pistas = EjercicioTablero.pistas({
+  boton: '#hint-btn',
+  etapas: () => motivoDelEjercicio() ? ['texto', 'origen', 'solucion'] : ['origen', 'solucion'],
+  texto: () => { const i = THEME_INFO[motivoDelEjercicio()]; return `el motivo es «${i.name}»${i.desc ? ': ' + i.desc : ''}`; },
+  jugada: jugadaEsperada,
+  repintar: drawBoard,
+  decir: setStatus,
+  enPalabras: () => document.documentElement.classList.contains('adaptive-mode'),
+  alDar: () => { usedHintThisPuzzle = true; },
+  alResolver: (j) => { selectedSquare = null; playMove(j.from, j.to, j.promotion || undefined); },
+});
 function giveHint(){
   if(locked) return;
-  usedHintThisPuzzle = true;
-  const puzzle = currentPuzzle();
-  const expected = puzzle.solution[solutionStep];
-  const legal = game.moves({ verbose: true });
-  const target = legal.find((m) => m.san === expected);
-  const board = document.getElementById('board');
-
-  if(hintStage === 0){
-    hintStage = 1;
-    board.querySelectorAll('.hint-from').forEach((el) => el.classList.remove('hint-from'));
-    if(target){
-      const cell = board.querySelector('[data-square="' + target.from + '"]');
-      if(cell) cell.classList.add('hint-from');
-    }
-    setStatus('Pista: fíjate en la pieza resaltada.');
-    document.getElementById('hint-btn').textContent = '💡 Ver solución';
-  } else {
-    hintStage = 0;
-    document.getElementById('hint-btn').textContent = '💡 Pista';
-    if(!target) return;
-    selectedSquare = null;
-    playMove(target.from, target.to, target.promotion || undefined);
-  }
+  pistas.dar();
 }
 document.getElementById('hint-btn').addEventListener('click', giveHint);
 document.getElementById('retry-btn').addEventListener('click', loadPuzzle);

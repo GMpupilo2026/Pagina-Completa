@@ -38,8 +38,8 @@ const FUNCIONES = {
   // más. Va en esta lista igual, para que se despliegue con el resto y no
   // haya que acordarse de subirla aparte.
   "admin-manage-users": ["usuario-alumno.ts"],
-  "create-student": ["invitacion-email.ts", "usuario-alumno.ts", "profesor-elegido.ts"],
-  "inscribir-alumno": ["invitacion-email.ts", "usuario-alumno.ts", "profesor-elegido.ts"],
+  "create-student": ["invitacion-email.ts", "usuario-alumno.ts", "profesor-elegido.ts", "marca-correo.ts"],
+  "inscribir-alumno": ["invitacion-email.ts", "usuario-alumno.ts", "profesor-elegido.ts", "marca-correo.ts"],
   "recuperar-acceso": ["usuario-alumno.ts", "recuperacion-email.ts"],
   "reenviar-acceso": ["usuario-alumno.ts", "recuperacion-email.ts"],
   "correos-alumno": ["usuario-alumno.ts"],
@@ -80,13 +80,16 @@ function armar(nombre) {
     archivos.push({ name: compartido, content: fs.readFileSync(origen, "utf8") });
   }
 
-  // El index tiene que importar de verdad lo que se le copia, o el despliegue
-  // sube un archivo que nadie usa y el correo sale del código viejo.
+  // Lo que se copia tiene que importarlo de verdad algún archivo de la
+  // función, o el despliegue sube un archivo que nadie usa y el correo sale
+  // del código viejo. Puede importarlo el index o otro compartido: la
+  // bienvenida (invitacion-email.ts) trae la franja de marca-correo.ts.
   const index = archivos.find((a) => a.name === "index.ts");
   if (!index) throw new Error(`${nombre} no tiene index.ts`);
   for (const compartido of FUNCIONES[nombre]) {
-    if (!index.content.includes(`./${compartido}`)) {
-      throw new Error(`${nombre}/index.ts no importa "./${compartido}"`);
+    const loImporta = archivos.some((a) => a.name !== compartido && a.content.includes(`./${compartido}`));
+    if (!loImporta) {
+      throw new Error(`Ningún archivo de ${nombre} importa "./${compartido}"`);
     }
   }
 

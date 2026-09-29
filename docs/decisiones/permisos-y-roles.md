@@ -990,7 +990,12 @@ encabezado del sitio, `https://ajedrez-integral.com/img/logo-marca.png`, con la
 dirección completa porque el correo se abre lejos del sitio) y la etiqueta en
 ámbar (la misma regla del remitente). Una academia **sin** logo lleva solo su
 nombre: el logo de Ajedrez Integral no se le presta a otra marca.
-`verificar-marca-correo.js` comprueba los tres casos. La franja la arma **una sola función**,
+`verificar-marca-correo.js` comprueba los tres casos. El correo de
+**bienvenida** (`invitacion-email.ts`, lo mandan `create-student` e
+`inscribir-alumno`) lleva esa misma franja, siempre sin marca de academia:
+todo su texto habla de la «Academia de Ajedrez Integral», y el logo de otra
+marca arriba lo contradiría. Por eso `funciones-armar.js` acepta que un
+compartido lo importe otro compartido, y no solo el `index.ts`. La franja la arma **una sola función**,
 `cabeceraCorreo()` de `_compartido/marca-correo.ts`, y la marca llega dentro
 del `Remitente` (`remitenteDe()` llama a `marca_de_alumno()`, que solo puede
 llamar la service role): así ningún correo tiene que acordarse de pedirla.
