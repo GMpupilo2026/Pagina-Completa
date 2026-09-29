@@ -1020,6 +1020,7 @@ funcion  examen_informe(p_examen uuid)  definer  anon=false  auth=true
 funcion  examen_para_alumno(p_examen uuid)  definer  anon=false  auth=true
 funcion  examenes_con_nota(p_alumno uuid, p_profesor uuid, p_limite integer)  invoker  anon=true  auth=true
 funcion  exigir_acceso_vigente()  definer  anon=false  auth=false
+funcion  faltas_justificadas(p_desde date, p_hasta date)  invoker  anon=false  auth=true
 funcion  fecha_segura(p_texto text)  invoker  anon=false  auth=true
 funcion  formulario_acepta_adjuntos(p_carpeta text)  definer  anon=true  auth=true
 funcion  formulario_compartido_conmigo(p_formulario uuid)  definer  anon=false  auth=true

@@ -54,6 +54,14 @@ const DATOS = {
   preguntas: [{ id: "p1", prompt: "¿Qué jugarías aquí?", created_at: "2026-09-14T15:32:00Z", respuestas: 3, aciertos: 2 }],
 };
 
+/* Las faltas con una justificación aceptada (public.faltas_justificadas()):
+   María faltó a una, y Sebastián a dos sin haber ido a ninguna, así que no
+   está en la lista de reporte_actividades(), que sale de las asistencias. */
+const FALTAS = [
+  { student_id: "b", full_name: "María Herrera", grupo: null, clases_justificadas: 1 },
+  { student_id: "c", full_name: "Sebastián <b>Mora</b>", grupo: "SJ", clases_justificadas: 2 },
+];
+
 function clienteFalso(perfil) {
   return `
 window.SUPABASE_URL = "https://falso.supabase.co";
@@ -62,6 +70,7 @@ window.__llamadas = [];
 (function () {
   const PERFIL = ${JSON.stringify(perfil)};
   const DATOS = ${JSON.stringify(DATOS)};
+  const FALTAS = ${JSON.stringify(FALTAS)};
   function constructor(tabla, filas) {
     const b = {
       select() { return b; }, eq() { return b; }, in() { return b; }, order() { return b; },
@@ -77,9 +86,17 @@ window.__llamadas = [];
   window.sb = {
     auth: { getSession: () => Promise.resolve({ data: { session: { user: { id: "u-1" }, access_token: "t" } } }) },
     from: (t) => constructor(t, t === "profiles" ? [PERFIL] : []),
+    // Como el cliente de verdad: rpc() devuelve algo que se puede acotar con
+    // range() y esperar.
     rpc: (nombre, args) => {
-      window.__llamadas.push({ rpc: nombre, args: args });
-      return Promise.resolve({ data: nombre === "reporte_actividades" ? DATOS : null, error: null });
+      const llamada = { rpc: nombre, args: args };
+      window.__llamadas.push(llamada);
+      const data = nombre === "reporte_actividades" ? DATOS : nombre === "faltas_justificadas" ? FALTAS : null;
+      const r = {
+        range(a, z) { llamada.rango = [a, z]; return r; },
+        then(res, rej) { return Promise.resolve({ data: data, error: null }).then(res, rej); },
+      };
+      return r;
     },
     channel: () => ({ on() { return this; }, subscribe() { return this; } }),
     removeChannel: () => {},
@@ -361,6 +378,19 @@ async function probarTranscripcion(navegador) {
   cumple("trae el detalle de cada clase", vista.includes("Táctica básica") && vista.includes("Finales de peones"));
   cumple("trae lo que se trabajó", vista.includes("Horquillas y clavadas"));
   cumple("trae la asistencia por estudiante", vista.includes("Jean Quesada Arauz") && vista.includes("María Herrera"));
+  igual("pide las faltas justificadas del MISMO periodo, sin cortar a mil",
+    await p.evaluate(() => {
+      const suyas = window.__llamadas.filter((l) => l.rpc === "faltas_justificadas");
+      return suyas.length ? [suyas[suyas.length - 1].args, suyas[suyas.length - 1].rango] : null;
+    }),
+    [{ p_desde: "2026-09-01", p_hasta: "2026-09-30" }, [0, 4999]]);
+  cumple("suma las faltas justificadas al resumen", /Faltas justificadas \(aceptadas\)\s*3/.test(vista), vista.match(/Faltas justificadas[^\n]{0,40}/));
+  igual("y las pone por estudiante, con quien faltó a todas justificado incluido",
+    await p.evaluate(() => {
+      const t = [...document.querySelectorAll("#vista table")].find((x) => x.textContent.includes("Faltas justificadas") && x.textContent.includes("Tiempo en clase"));
+      return t ? [...t.querySelectorAll("tr")].slice(1).map((tr) => [...tr.children].map((c) => c.textContent.trim()).join(" | ")) : null;
+    }),
+    ["Jean Quesada Arauz | SJ | 2 | — | 19 min", "María Herrera | — | 1 | 1 | 12 min", "Sebastián <b>Mora</b> | SJ | 0 | 2 | 0 min"]);
 
   // --------------------------------------------- se sueltan archivos
   console.log("\n=== Los archivos que se adjuntan ===");
