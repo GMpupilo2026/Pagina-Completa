@@ -38,7 +38,7 @@ export function esCorreoInterno(email?: string | null): boolean {
    dos formas distintas y el niño no sabría cuál le toca — y para escribirlo en
    el celular tendría que ir a buscar el acento. "Muñoz" entra como "munoz". */
 function sinTildes(texto: string): string {
-  return texto.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/ñ/gi, "n");
+  return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ñ/gi, "n");
 }
 
 /**
