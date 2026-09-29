@@ -481,6 +481,52 @@ Estudio):
   navegador y comprueba que los tres inserts de `sesion.js` lleven `datos` y
   que el guardado del cierre vaya antes del `ended_at`.
 
+### El alumno elegido al azar para responder
+
+«🎲 Elegir a un alumno al azar», en la pestaña Alumnos: sale uno de los
+conectados y al elegido le sale en grande en su pantalla, «¡Te eligieron para
+responder!». El profe ve a quién eligió y ahí mismo le puede dar una insignia o
+trofeos (el mismo panel de Trofeos de su renglón), elegir a otro o marcar que ya
+respondió.
+
+- **Cuántas veces le tocó a cada uno queda en la base** (`clase_elegidos`: una
+  fila por elección, con su clase). El profe la ve escrita en el mismo
+  recuadro, primero los que menos llevan —«todavía no», «1 vez», «2 veces»—,
+  con los conectados aunque tengan cero y quien ya pasó aunque se haya ido. La
+  RLS deja leer y escribir solo a quien dio la clase, y solo sobre alumnos
+  suyos (comprobado impersonando: otro profe y el alumno no leen ni escriben, y
+  un alumno ajeno no se puede anotar). Son pocas filas por clase, así que se
+  cuentan en la página sin miedo al tope de mil.
+- **El sorteo elige entre los que llevan menos**
+  (`PartidasClase.elegirConMenos`), con esa misma cuenta: nadie repite hasta
+  que les toque a todos, y quien se conecta tarde (con cero) entra primero.
+  Antes la cuenta vivía en la memoria de la página y se perdía al recargar.
+- **Va en `game_state.elegido` ({id, at, nombre}) y no en un mensaje suelto de
+  Realtime**, por lo mismo que la vista: quien recarga justo en ese momento se
+  entera igual. Solo el profe lo cambia (`protect_game_state_teacher_columns`;
+  comprobado impersonando: la alumna con el control no se puede elegir sola) y
+  un CHECK exige la forma.
+- **El texto no tiene género**: «¡Te eligieron para responder!», no «Has sido
+  el elegido», porque la cuenta no dice si es alumno o alumna y adivinar se
+  equivoca con alguien.
+- **El aviso grande sale una vez por elección**: al cerrarlo («¡Voy!») se
+  recuerda en la pestaña (`sessionStorage`), así que recargar no se lo vuelve a
+  poner encima; queda una franja «Te toca responder» hasta que el profe marca
+  que ya respondió. Un aviso de hace más de 15 minutos no se pinta: es de otra
+  pregunta. El foco va al botón y con el Modo Adaptado se dice en voz.
+- **La ruleta** (los nombres girando un momento) no corre con «reducir
+  movimiento», y mientras gira el nombre no es región viva: se anuncia solo el
+  final.
+- **Los demás ven a quién eligieron**, escrito debajo de su tablero («Tu profe
+  eligió a Beto Mora para responder»), sin el aviso grande ni nada que les tape
+  la pantalla. El nombre viaja en la misma elección (`elegido.nombre`, lo pone
+  el profe desde la presencia): así lo ve también quien recarga antes de que le
+  llegue la presencia. Con el Modo Adaptado se dice en voz, una vez por
+  elección. Se va cuando el profe marca que ya respondió.
+
+**Al tocar esto, correr `node herramientas/verificar-todo.js clase-elegido`.**
+Está probado que falla de verdad: sin mostrar el aviso grande, se cae.
+
 ### El modo sencillo de la clase en vivo
 
 Aun ordenada, la pantalla del profesor tiene catorce controles delante, y la

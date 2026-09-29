@@ -312,6 +312,10 @@
                          (game_state.comentarios, ver pintarComentarioDeLaJugada). -->
                     <!-- Solo quien sigue la clase, con las piezas ocultas: la partida escrita, para
                          seguirla de memoria (ver pintarJugadasACiegas). Sin esto no había nada que seguir. -->
+                    <!-- Después de cerrar el aviso grande, queda esto mientras le toque. -->
+                    <p id="elegido-chip" hidden class="max-w-[560px] mx-auto mt-2 rounded-xl border-2 border-accent-500 bg-accent-50 dark:bg-brand-900 px-4 py-2 text-center text-sm font-bold text-brand-800 dark:text-white"><span aria-hidden="true">🎯 </span>Te toca responder: tu profe te eligió.</p>
+                    <!-- Los demás alumnos: a quién eligió el profe para responder. -->
+                    <p id="elegido-otro" hidden class="max-w-[560px] mx-auto mt-2 rounded-xl border-2 border-accent-500 bg-accent-50 dark:bg-brand-900 px-4 py-3 text-center text-lg text-brand-800 dark:text-white" aria-live="polite"><span aria-hidden="true">🎯 </span>Tu profe eligió a <strong id="elegido-otro-nombre" class="font-bold"></strong> para responder.</p>
                     <p id="jugadas-a-ciegas" hidden class="max-w-[560px] mx-auto mt-2 rounded-xl bg-brand-100 dark:bg-brand-900 px-4 py-2 text-sm font-mono text-brand-700 dark:text-brand-200"></p>
                     <p id="comentario-profe" hidden class="max-w-[560px] mx-auto mt-2 rounded-xl border border-accent-400/60 bg-white dark:bg-brand-900 px-4 py-2 text-sm text-brand-700 dark:text-brand-200"></p>
                     <p id="arrows-hint" class="hidden text-center text-brand-450 dark:text-brand-350 text-xs mt-1">Clic derecho + arrastrar dibuja una flecha (repetirla en el mismo color la borra) · clic derecho sobre una casilla la marca con un círculo · elige el color abajo</p>
@@ -431,6 +435,16 @@
                     <!-- Pregunta del profesor: aparece flotando por encima del tablero, solo la ven los alumnos.
                          Overlay de pantalla completa (fixed inset-0): igual que en Práctica contra el motor,
                          el tablero puede ser tan grande como el principal en vez de quedar en tamaño de tarjeta. -->
+                    <!-- El alumno elegido al azar para responder: en grande, sobre todo lo demás.
+                         Solo se le pinta a quien eligieron (ver pintarElegido). -->
+                    <div id="elegido-overlay" role="alertdialog" aria-modal="true" aria-labelledby="elegido-overlay-titulo" aria-describedby="elegido-overlay-texto" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-black/70 px-4">
+                        <div class="bg-white dark:bg-brand-900 border-4 border-accent-500 rounded-2xl shadow-2xl p-8 sm:p-10 w-full max-w-xl text-center">
+                            <p class="text-6xl sm:text-7xl" aria-hidden="true">🎯</p>
+                            <h2 id="elegido-overlay-titulo" tabindex="-1" class="font-serif text-3xl sm:text-5xl font-bold text-brand-800 dark:text-white mt-3 focus:outline-none">¡Te eligieron para responder!</h2>
+                            <p id="elegido-overlay-texto" class="text-lg sm:text-xl text-brand-600 dark:text-brand-200 mt-4">Tu profe te va a hacer una pregunta. ¡Tú puedes!</p>
+                            <button id="elegido-overlay-ok" type="button" class="mt-8 bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-8 py-3 rounded-xl text-lg transition-colors focus:outline-none focus-visible:ring-4 focus-visible:ring-accent-400">¡Voy!</button>
+                        </div>
+                    </div>
                     <div id="question-card" role="dialog" aria-modal="true" aria-labelledby="question-titulo" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
                         <div class="bg-white dark:bg-brand-900 border-2 border-accent-500 rounded-xl shadow-2xl p-4 sm:p-6 w-full max-w-2xl max-h-[95vh] overflow-y-auto">
                             <div class="flex items-start justify-between gap-2 mb-1">
@@ -816,6 +830,27 @@
                         <div id="students-panel" data-tab-panel="alumnos" role="tabpanel" aria-labelledby="teacher-tab-alumnos" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
                             <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-1">Alumnos conectados</h2>
                             <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">Dale el control a un alumno para que pueda mover piezas él mismo.</p>
+                            <!-- Elegir a quién le toca responder, al azar entre los conectados
+                                 (game_state.elegido). Al elegido le sale en grande en su pantalla. -->
+                            <div id="elegir-azar" class="mb-4 rounded-lg border border-accent-400/60 bg-accent-50 dark:bg-brand-950 p-3">
+                                <button id="elegir-azar-btn" type="button" class="w-full bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🎲 </span>Elegir a un alumno al azar</button>
+                                <p class="text-xs text-brand-500 dark:text-brand-300 mt-1.5">Entre los conectados, sin repetir hasta que les toque a todos. Al elegido le sale en grande en su pantalla.</p>
+                                <div id="elegido-caja" hidden class="mt-3">
+                                    <p class="text-xs text-brand-500 dark:text-brand-300">Le toca responder a:</p>
+                                    <p id="elegido-nombre" class="font-serif text-2xl font-bold text-brand-800 dark:text-white break-words" aria-live="polite"></p>
+                                    <div class="flex flex-wrap gap-2 mt-2">
+                                        <button id="elegido-insignia-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🏅 </span>Darle una insignia o trofeos</button>
+                                        <button id="elegido-otro-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🎲 </span>Elegir a otro</button>
+                                        <button id="elegido-listo-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">✔ </span>Ya respondió</button>
+                                    </div>
+                                </div>
+                                <!-- Cuántas veces le tocó a cada uno en ESTA clase (clase_elegidos). El
+                                     sorteo elige entre los que llevan menos. -->
+                                <details id="elegidos-cuenta-caja" hidden open class="mt-3 border-t border-accent-400/40 pt-2">
+                                    <summary class="cursor-pointer text-xs font-semibold text-brand-700 dark:text-brand-200">Cuántas veces le tocó a cada uno en esta clase</summary>
+                                    <ul id="elegidos-cuenta" class="mt-2 space-y-1 text-sm"></ul>
+                                </details>
+                            </div>
                             <ul id="students-list" class="space-y-2 text-sm">
                                 <li class="text-brand-450 dark:text-brand-350">Nadie conectado todavía…</li>
                             </ul>
