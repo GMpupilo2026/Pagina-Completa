@@ -528,6 +528,43 @@ registro de tiempo).
   repaso de Practicar, el hub), `verificar-tipos-pagina.js` (que se anote el
   nivel) y `verificar-informes.js` (la tarjeta).
 
+## Logros del Sonar, Batalla naval y Precisión; y el hub propone lo empezado
+
+- **Logros nuevos**:
+  - «Cazatesoros»: 10 partidas del Sonar.
+  - «Oído fino»: 5 tesoros con tres estrellas.
+  - «A toda vela»: 10 partidas de Batalla naval.
+  - «Almirante»: ganarle un duelo a la computadora.
+  - «Ojo de estratega»: 3 tandas de Precisión posicional con 70 % o más.
+
+  Los que no son «cuántos» salen de `public.logros_hitos()` (migración
+  `20260929165038`, SECURITY INVOKER: la RLS de `training_progress` decide).
+  No se agregaron claves a `por_actividad` de `progreso_dias_y_racha()`:
+  el panel suma todas esas claves para contar ejercicios y las inflaría.
+  `js/logros.js` pide los hitos a la par de la racha; si fallan, cuentan
+  cero y la racha no se cae. Se probó en la base con filas de prueba
+  (revertidas) e impersonando a un alumno:
+  - 70 % cuenta y 69,9 % no;
+  - un duelo perdido no cuenta;
+  - los hitos de otro alumno salen en cero.
+- La página de Logros **tenía «tipos» sin título** (salía la clave); ahora
+  dice «Tipos de entrenamiento», y las tres categorías nuevas tienen el
+  suyo.
+- **El «Hoy te toca» propone lo empezado que no vence**, al final de la
+  lista (así solo sale cuando hay lugar, tres como mucho):
+  - **los finales contra la máquina a medias**: «Seguir con los finales
+    contra la máquina: «El rompimiento de peones» (1 de 17 logrados)» →
+    `finales.html?final=<id>`. A quien nunca jugó uno no se le propone, y
+    con todos logrados tampoco.
+  - **una tanda de Precisión posicional** si ya hizo alguna y la última
+    fue hace 7 días o más (`DIAS_SIN_PRECISION`). La fecha sale del
+    historial de la cuenta (`training_state`,
+    `precision_posicional_historial_v1`), no de `training_progress`: así
+    cuenta también lo hecho antes de que las tandas se registraran ahí.
+- Lo prueban `verificar-logros.js` (los cinco logros, los títulos, que se
+  pida `logros_hitos`) y `verificar-entreno-repaso.js` (las dos propuestas,
+  con sus casos de no proponer).
+
 ## Repasar fallados también en Tipos y Finales; y `limpio` en Tipos, Practicar y 4×4
 
 - **Tipos de entrenamiento tiene la cola de «Repasar fallados»**

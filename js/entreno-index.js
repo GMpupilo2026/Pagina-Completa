@@ -115,7 +115,52 @@ async function cosasDeHoy(alumnoId){
   } else if (Date.now() - fecha > 28 * 24 * 3600 * 1000) {
     cosas.push({ icono: '🧭', href: 'diagnostico.html', texto: 'Repetir el diagnóstico: ya pasaron cuatro semanas' });
   }
+
+  // Lo que quedó empezado y no vence: van al final, así que solo se proponen
+  // cuando hay lugar (tres como mucho).
+  const finales = await finalesPendientes();
+  if (finales) cosas.push(finales);
+  const precision = await precisionOlvidada(alumnoId);
+  if (precision) cosas.push(precision);
   return cosas.slice(0, 3);
+}
+
+/* Finales contra la máquina ya empezados y sin terminar: cuántos lleva y cuál
+   sigue (la página abre sola el primero sin lograr). A quien nunca jugó uno no
+   se le propone: sería empujar una página más, no seguir algo. */
+async function finalesPendientes(){
+  const hechos = leerJSON('entreno_finales_solved');
+  const n = hechos && typeof hechos === 'object' ? Object.keys(hechos).filter((k) => hechos[k]).length : 0;
+  if (!n) return null;
+  let banco = null;
+  try { const r = await fetch('data/finales.json'); if (r.ok) banco = await r.json(); } catch (e) { return null; }
+  const lista = (banco && banco.finales) || [];
+  const logrados = lista.filter((f) => hechos[f.id]).length;
+  const sigue = lista.find((f) => !hechos[f.id]);
+  if (!sigue) return null;
+  return { icono: '🏁', href: 'finales.html?final=' + encodeURIComponent(sigue.id),
+    texto: `Seguir con los finales contra la máquina: «${sigue.titulo}» (${logrados} de ${lista.length} logrados)` };
+}
+
+/* Precisión posicional: si ya hizo alguna tanda y la última fue hace una
+   semana o más. El historial vive en la cuenta (training_state,
+   'precision_posicional_historial_v1', lo más nuevo primero, con su fecha),
+   así que cuenta también lo hecho antes de que las tandas se registraran en
+   training_progress. */
+const DIAS_SIN_PRECISION = 7;
+async function precisionOlvidada(alumnoId){
+  if (!alumnoId || !window.sb) return null;
+  let historial = null;
+  try {
+    const { data } = await sb.from('training_state').select('value').eq('student_id', alumnoId).eq('key', 'precision_posicional_historial_v1').maybeSingle();
+    historial = data && data.value && typeof data.value.raw === 'string' ? JSON.parse(data.value.raw) : null;
+  } catch (e) { return null; }
+  const ultima = Array.isArray(historial) && historial[0] ? Date.parse(historial[0].fecha || '') : NaN;
+  if (!Number.isFinite(ultima)) return null;
+  const dias = Math.floor((Date.now() - ultima) / (24 * 3600 * 1000));
+  if (dias < DIAS_SIN_PRECISION) return null;
+  return { icono: '🧭', href: 'precision-posicional.html',
+    texto: `Una tanda de Precisión posicional: la última fue hace ${dias} días` };
 }
 /* La meta del día: cuántos ejercicios lleva hoy de los que hacen falta para
    que el día cuente en la racha, y la racha. La cuenta es la de Logros

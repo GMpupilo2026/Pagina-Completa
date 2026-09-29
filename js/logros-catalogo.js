@@ -32,6 +32,10 @@ window.LogrosCatalogo = (function () {
   // compran aparte y no todos los tienen.
   const ACTIVIDADES_ALCANZABLES = 18;
 
+  function hito(stats, clave) {
+    return Number(stats.hitos && stats.hitos[clave]) || 0;
+  }
+
   function porActividad(stats, clave) {
     return (stats.por_actividad && stats.por_actividad[clave]) || 0;
   }
@@ -102,6 +106,11 @@ window.LogrosCatalogo = (function () {
     { id: "ilumina_5", categoria: "ilumina", nivel: "bronce", emoji: "💡", nombre: "Se hizo la luz", descripcion: "5 niveles de Ilumina el tablero resueltos.", meta: 5, valor: (s) => porActividad(s, "ilumina") },
     { id: "visualizacion_10", categoria: "visualizacion", nivel: "bronce", emoji: "👁️", nombre: "Lo ves sin mirar", descripcion: "10 ejercicios de Visualización resueltos.", meta: 10, valor: (s) => porActividad(s, "visualizacion") },
     { id: "finales_5", categoria: "finales", nivel: "plata", emoji: "🏁", nombre: "Final de libro", descripcion: "5 finales contra la máquina ganados o salvados.", meta: 5, valor: (s) => porActividad(s, "finales") },
+    { id: "sonar_10", categoria: "sonar", nivel: "bronce", emoji: "🔊", nombre: "Cazatesoros", descripcion: "Encontraste el tesoro en 10 partidas del Sonar.", meta: 10, valor: (s) => porActividad(s, "sonar") },
+    { id: "sonar_3estrellas", categoria: "sonar", nivel: "plata", emoji: "🔊", nombre: "Oído fino", descripcion: "5 tesoros del Sonar encontrados con tres estrellas.", meta: 5, valor: (s) => hito(s, "tesoros_3") },
+    { id: "batalla_10", categoria: "batalla-naval", nivel: "bronce", emoji: "🚢", nombre: "A toda vela", descripcion: "10 partidas de Batalla naval terminadas.", meta: 10, valor: (s) => porActividad(s, "batalla-naval") },
+    { id: "batalla_duelo", categoria: "batalla-naval", nivel: "plata", emoji: "🚢", nombre: "Almirante", descripcion: "Le ganaste un duelo de Batalla naval a la computadora.", meta: 1, valor: (s) => hito(s, "duelos_ganados") },
+    { id: "precision_70", categoria: "precision-posicional", nivel: "oro", emoji: "🧭", nombre: "Ojo de estratega", descripcion: "3 tandas de Precisión posicional con 70 % o más.", meta: 3, valor: (s) => hito(s, "tandas_70") },
     { id: "tipos_20", categoria: "tipos", nivel: "bronce", emoji: "🧩", nombre: "De todos los tipos", descripcion: "20 ejercicios de Tipos de entrenamiento resueltos.", meta: 20, valor: (s) => porActividad(s, "tipos") },
   ];
 

@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20260929153838
+# al-dia-con: 20260929165038
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -1112,6 +1112,7 @@ funcion  justificaciones_pendientes()  invoker  anon=false  auth=true
 funcion  justificaciones_recibidas(p_estado text, p_busqueda text, p_limite integer, p_desde integer)  invoker  anon=false  auth=true
 funcion  justificar_ausencia(p_desde date, p_hasta date, p_motivo text, p_detalle text, p_adjuntos jsonb, p_privacidad text)  definer  anon=false  auth=true
 funcion  ligar_a_la_clase_abierta()  invoker  anon=false  auth=false
+funcion  logros_hitos(alumno uuid)  invoker  anon=false  auth=true
 funcion  mandar_plan_rival(p_alumnos uuid[], p_rival text, p_lado text, p_plan jsonb, p_nota text, p_vence timestamp with time zone)  invoker  anon=false  auth=true
 funcion  marca_de_alumno(p_alumno uuid)  definer  anon=false  auth=false
 funcion  marca_de_diagnostico(p_id uuid)  definer  anon=false  auth=true

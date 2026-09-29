@@ -330,6 +330,35 @@ async function hub(browser) {
       [["🧩Repasar 2 ejercicios de Tipos que te costaron", "tipos.html#repaso"], ["🏁Volver a jugar 1 final que te costó", "finales.html?repaso=1"]]);
     await ctx.close();
   }
+  /* Lo empezado que no vence: los finales contra la máquina a medias y una
+     tanda de Precisión si la última fue hace una semana o más. */
+  {
+    const fs = require("fs"), path = require("path");
+    const banco = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "entreno", "data", "finales.json"), "utf8")).finales;
+    const fresco = { diagnostico_resultado_v1: JSON.stringify({ fecha: new Date().toISOString() }) };
+    const historial = (dias) => [{ student_id: "u-ana", key: "precision_posicional_historial_v1",
+      value: { raw: JSON.stringify([{ fecha: new Date(Date.now() - dias * 86400000 - 3600000).toISOString(), porcentaje: 60 }]) } }];
+    const hoyTe = async (tablas, local) => {
+      const { page, ctx, errores } = await abrir(browser, "/entreno/index.html", tablas, Object.assign({}, fresco, local));
+      await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
+      // La lista ya se pintó cuando tiene enlaces o quedó `hidden` (vacía): al
+      // abrir no lleva el atributo. Si no, «no propone nada» pasaría solo por
+      // mirar antes de tiempo.
+      await page.waitForFunction(() => { const l = document.getElementById("hoy-lista"); return l.hidden || l.querySelector("a"); }, { timeout: 10000 });
+      const items = await page.evaluate(() => Array.from(document.querySelectorAll("#hoy-lista a")).map((a) => [a.textContent.replace("→", "").trim(), a.getAttribute("href")]));
+      sinErrores(errores, "hub");
+      await ctx.close();
+      return items;
+    };
+    igual("con un final logrado, propone seguir con el primero sin lograr, con cuántos lleva",
+      await hoyTe({}, { entreno_finales_solved: JSON.stringify({ [banco[0].id]: true }) }),
+      [[`🏁Seguir con los finales contra la máquina: «${banco[1].titulo}» (1 de ${banco.length} logrados)`, "finales.html?final=" + banco[1].id]]);
+    igual("a quien nunca jugó un final no se lo propone", await hoyTe({}, {}), []);
+    igual("con todos logrados, tampoco", await hoyTe({}, { entreno_finales_solved: JSON.stringify(Object.fromEntries(banco.map((f) => [f.id, true]))) }), []);
+    igual("la última tanda de Precisión fue hace 10 días: la propone",
+      await hoyTe({ training_state: historial(10) }, {}), [["🧭Una tanda de Precisión posicional: la última fue hace 10 días", "precision-posicional.html"]]);
+    igual("hace 3 días: todavía no", await hoyTe({ training_state: historial(3) }, {}), []);
+  }
   /* El nivel de Tipos que quedó a medias (tipos_ultimo_v1, lo anota la página
      al jugar): se propone seguirlo; uno completo, no. */
   {
