@@ -339,6 +339,34 @@ que el alumno de 1800 vuelve a empezar en los de 1000.
   nivel estaba incompleto y ahora no): repasar un nivel ya completo no vuelve
   a festejar.
 
+## Entender el error y ver la línea (Temas y Mates)
+
+`verificar-entreno-arreglos.js` («La refutación del error» y «Mates: Siguiente
+y Ver la línea») lo comprueba en un navegador.
+
+- **Al fallar, la página dice qué contesta el rival**, pero solo lo que
+  chess.js puede afirmar sin motor (`EjercicioTablero.refutacion()`): un mate
+  en una, o una pieza (caballo o más) que el rival se come y que ninguna pieza
+  propia puede volver a comer en esa casilla. El texto dice exactamente eso
+  («y ninguna pieza tuya puede volver a comer en d4»), no «pierdes la dama»:
+  eso sería una promesa que sin motor no se puede hacer (la regla de
+  CLAUDE.md: lo que promete un resultado se comprueba con motor). Si no hay nada así, el aviso queda como antes. Las jugadas van
+  en castellano (`jugadaEs`: Cf3, Dxh7#), como las escribe el alumno.
+- **Resuelto el ejercicio, ya no salta solo al siguiente.** Antes pasaba al
+  segundo y no daba tiempo de mirar qué se había jugado. Ahora
+  `EjercicioTablero.fin()` pone «Siguiente ejercicio →» (con el foco, salvo
+  que el alumno esté escribiendo en el cuadro de comandos, donde «siguiente»
+  hace lo mismo) y «Ver la línea», que abre la línea jugada en
+  `js/visor-linea.js`: el mismo visor de Estudio y de la preparación de
+  rivales, recorrible con ⏮ ◀ ▶ ⏭, teclado, lector de pantalla y escribiendo.
+- Para eso el visor aprendió a **arrancar desde una posición** (`desde`, una
+  FEN; la numeración sigue la de la FEN, «24… Txe1» si empiezan las negras) y
+  a **mirarse desde las negras** (`orientacion: "b"`), como el ejercicio.
+- La línea que se muestra es la que **se jugó** (`game.history()`), no la
+  guardada: si el alumno dio otro mate, se ve el suyo.
+- Los verificadores que daban por hecho el salto (`entreno-nivel`,
+  `entreno-repaso`) ahora aprietan «Siguiente».
+
 ## Repasar lo que costó y «Hoy te toca»
 
 `node herramientas/verificar-todo.js entreno-repaso` lo comprueba en un
