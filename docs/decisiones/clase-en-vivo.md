@@ -856,7 +856,42 @@ desde el panel «Ver como» de ese profesor. Quien administra también puede.
   abierta ahora») y lleva de vuelta a Supervisión; al cerrarse la clase,
   vuelve sola a Supervisión.
 - Un alumno con `?observar=` en la dirección sigue siendo alumno: el modo solo
-  se enciende con `es_supervisor` o `is_admin`, y la RLS decide igual.
+  se enciende con `es_supervisor`, `is_admin` o `es_coordinador`, y la RLS
+  decide igual.
+- **Quien coordina también mira** (y ayuda en la práctica), sobre sus
+  profesores. Se llega desde «🔴 En clase ahora · Mirar la clase» en
+  `coordinacion.html`, junto al profesor que tiene la clase abierta. El alcance
+  es el de coordinación, preguntado con `bajo_mi_coordinacion()` y armado una
+  vez en `interno.profesores_que_coordino()` y `interno.clases_que_coordino()`
+  (de ésos, los que tienen la clase abierta). Las políticas son las mismas de
+  supervisión con `_coordinacion` (`game_state`, `variant_nodes`,
+  `profesor_videollamada`, `practice_sessions`, `practice_games` para leer y
+  para la ayuda) más `class_sessions_select_coordinacion`, que hace falta para
+  saber que la clase está abierta, para esa lista y para enterarse de que se
+  cerró. Solo cuentas con `es_coordinador`: quien supervisa y quien
+  administra ya tenían lo suyo.
+  - **Se nombra por lo que es**: la insignia dice «👁 Coordinación», la
+    presencia lleva `como: "coordinación"` (el rol de presencia sigue siendo
+    `supervision`, que quiere decir «observa»), y el profe y el alumno leen
+    «Luis Vega (coordinación)». Vuelve a `coordinacion.html`, no a
+    Supervisión. Quien supervisa y coordina a la vez entra como supervisión.
+- **Quien administra también mira y ayuda**, en todas las clases: la base ya
+  se lo daba (`is_admin` en las políticas de siempre de `game_state`,
+  `variant_nodes`, `profesor_videollamada`, `practice_sessions` y
+  `practice_games`; de la partida, el trigger le deja cambiar solo la ayuda) y
+  entra desde Supervisión, que le lista a todos los profesores con «En clase
+  ahora». Lo que faltaba era nombrarlo: entraba como «Supervisión» y el profe y
+  el alumno leían «(supervisión)». Ahora es «👁 Administración» y
+  «(administración)»; con varios papeles gana el más amplio (administración,
+  después supervisión, después coordinación). Comprobado impersonando a la
+  cuenta master: ve el tablero y la partida, y su ayuda entra con su nombre
+  sin tocar las jugadas.
+  - Comprobado impersonando roles en SQL (revertido): la coordinadora ve la
+    clase, el tablero y la partida del profesor de su academia, y su ayuda
+    entra con su nombre sin tocar las jugadas; los de un profesor de otra
+    academia, 0; una coordinadora sin gente, 0; cerrada la clase, las
+    políticas nuevas dan falso (la que se probó seguía viendo la partida por
+    ser también profesora del alumno, un acceso que ya tenía).
 - Comprobado impersonando roles en SQL (revertido): con la clase abierta la
   supervisora ve el tablero de su profesor (1 fila) y no el de un profesor de
   otra academia (0); cerrada la clase, 0; otro profesor y una llamada sin
@@ -1470,7 +1505,8 @@ alumno le aparece en su propio tablero.
   dibuja se escribe en el mismo campo, y lo que no se entiende se dice y no se
   manda. Lo que no depende de la página (limpiar lo que llega, leer y decir
   las marcas) está una sola vez en `js/practica-ayuda.js`.
-- **También quien supervisa** (`sesion.html?observar=`): ve la práctica y
+- **También quien supervisa, y quien coordina** (`sesion.html?observar=`; ver
+  «La clase en vivo, vista por quien supervisa»): ve la práctica y
   ayuda igual, con el alcance de todo lo demás que mira —solo mientras ese
   profesor tiene la clase abierta y solo si lo supervisa—
   (`practice_sessions_select_supervisor`, `practice_games_select_supervisor` y
@@ -1509,8 +1545,9 @@ sus cambios a jugadas y estado se devuelven; un profesor de otra academia ve 0
 y cambia 0; cerrada la clase, la política de supervisión da falso.
 
 **Al tocarlo, correr `node herramientas/verificar-todo.js practica-ayuda
-sesion-curso clase-supervisor`.** `verificar-practica-ayuda.js` comprueba las
-tres pantallas (profe, supervisión y alumno):
+sesion-curso clase-supervisor coordinacion`.** `verificar-practica-ayuda.js`
+comprueba las pantallas del profe, de supervisión, de coordinación y del
+alumno:
 que el tablero del profe no mueva ni mande nada, que lo que se manda sea solo
 la ayuda y a esa partida, que diga cuándo la base no la guardó, que la
 presencia diga a quién mira y vuelva a nadie, que al alumno se le pinten las

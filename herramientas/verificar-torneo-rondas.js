@@ -16,7 +16,10 @@
      2. Un torneo trabado (current_round 0 con la ronda 1 terminada) genera la
         ronda 2, no otra ronda 1.
      3. Doble clic en «Generar ronda» → una sola ronda nueva.
-     4. Un torneo de 7 rondas se juega entero: el suizo (10 jugadores, 7
+     4. El campo de rondas del Suizo: lo que no es un entero de 1 a 20 no
+        empieza el torneo, y pedir más rondas de las que alcanzan sin repetir
+        rival se avisa.
+     5. Un torneo de 7 rondas se juega entero: el suizo (10 jugadores, 7
         rondas escritas a mano) y el todos contra todos de 8 (7 rondas solas)
         llegan a la ronda 7, no ofrecen una 8.ª y cierran el torneo con su
         campeón una sola vez. Antes, el motor, sin la página, con 7 rondas y
@@ -24,6 +27,8 @@
         y reparte los colores; la eliminación de 65 a 128 pide 7 rondas y
         termina en un campeón. Ver «Siete rondas» en
         docs/decisiones/juegos-y-torneos.md.
+     6. Y uno de 20, el máximo del campo: un Suizo de 24 de punta a punta, y
+        el motor con 20 rondas de 2 a 200 jugadores. Ver «Veinte rondas».
 
    El doble hace cumplir el índice único de (tournament_id, round_number) como
    la base, y tarda en contestar las escrituras: sin esa demora el segundo clic
@@ -371,6 +376,29 @@ function pruebaMotor() {
   }
   ok("todos contra todos de 3 a 22: nadie pasa de 1 blanca de diferencia ni juega 3 seguidas del mismo color", rrMal.length === 0, rrMal.slice(0, 3));
 
+  // ---- 20 rondas, el máximo del campo ----
+  const cortos20 = [], evitables20 = [], lejosDelMinimo = [], colores20 = [];
+  for (const n of [2, 3, 4, 5, 8, 10, 15, 20, 21, 22, 25, 30, 40, 64, 100]) {
+    for (let semilla = 1; semilla <= (n <= 40 ? 10 : 3); semilla++) {
+      const r = suizoSimulado(E, n, 20, semilla * 313 + n);
+      if (r.faltantes) cortos20.push({ n, semilla });
+      if (n >= 25 && (r.repetidos || r.byesDobles)) evitables20.push({ n, semilla, r });
+      if (n >= 25 && r.peorDiferencia > 2) colores20.push({ n, semilla, r });
+      // Con 20 o menos no se puede no repetir: hay más partidas que parejas
+      // posibles. Lo que se pide es que repita casi lo mínimo que se puede.
+      const minimo = Math.max(0, 20 * Math.floor(n / 2) - n * (n - 1) / 2);
+      if (n <= 20 && r.repetidos > minimo + 2) lejosDelMinimo.push({ n, semilla, repetidos: r.repetidos, minimo });
+    }
+  }
+  ok("suizo de 20 rondas: de 2 a 100 jugadores, cada ronda trae a todos", cortos20.length === 0, cortos20.slice(0, 3));
+  ok("suizo de 20 rondas: de 25 a 100 jugadores, nadie repite rival ni recibe dos byes", evitables20.length === 0, evitables20.slice(0, 3));
+  ok("suizo de 20 rondas: de 25 a 100 jugadores, nadie pasa de 2 blancas de diferencia", colores20.length === 0, colores20.slice(0, 3));
+  ok("suizo de 20 rondas con 20 o menos: repite a lo sumo 2 cruces más que el mínimo posible", lejosDelMinimo.length === 0, lejosDelMinimo.slice(0, 3));
+  const t20 = Date.now();
+  suizoSimulado(E, 200, 20, 9);
+  const lento20 = Date.now() - t20;
+  ok("suizo de 200 jugadores: las 20 rondas se arman en menos de 5 s", lento20 < 5000, lento20 + " ms");
+
   const elim = [];
   [65, 100, 128].forEach((n) => {
     const ids = Array.from({ length: n }, (_, i) => "p" + i);
@@ -408,42 +436,61 @@ async function jugarRonda(page, numero) {
   }, numero);
 }
 
+// Recarga y espera a que la página termine de pintar el torneo.
 async function recargar(page) {
   await page.reload();
-  await page.waitForTimeout(1200);
+  await page.waitForFunction(() => {
+    const b = document.getElementById("generate-round-btn");
+    return document.getElementById("finished-banner").checkVisibility() || /Generar ronda \d+/.test(b.textContent);
+  }, null, { timeout: 15000 }).catch(() => {});
 }
 
-async function pruebaSieteRondas(browser, formato, jugadores) {
-  const titulo = formato === "swiss" ? "Suizo de " + jugadores.length + ", 7 rondas escritas a mano" : "Todos contra todos de " + jugadores.length;
-  console.log("\n▶ " + titulo + ": el torneo entero, de la ronda 1 a la 7");
+/* Espera a que la página termine de armar la ronda k: lo último que hace
+   generateRound() es repintar, así que la ronda pintada quiere decir que ya
+   no queda nada suyo en vuelo. Esperar solo a que la ronda exista en el
+   doble no alcanza: la página todavía estaba cerrando cosas, y la recarga
+   siguiente se lo cortaba a la mitad (el torneo no se cerraba nunca). */
+async function esperarRondaPintada(page, k) {
+  await page.waitForFunction((k) => document.querySelectorAll("#rounds-container h3").length === k,
+    k, { timeout: 15000 }).catch(() => {});
+}
+
+/* Un torneo entero, de la ronda 1 a la última, por la página: empezarlo
+   (escribiendo las rondas en el campo si es Suizo), y ronda por ronda jugar
+   sus partidas, recargar y generar la siguiente, hasta que el torneo cierre. */
+async function pruebaTorneoEntero(browser, formato, jugadores, rondas) {
+  const titulo = formato === "swiss"
+    ? "Suizo de " + jugadores.length + ", " + rondas + " rondas escritas a mano"
+    : "Todos contra todos de " + jugadores.length;
+  console.log("\n▶ " + titulo + ": el torneo entero, de la ronda 1 a la " + rondas);
   const { ctx, page, errores } = await abrir(browser, datosBase(
     { status: "registration", current_round: 0, total_rounds: null, format: formato }, [], jugadores));
 
   if (formato === "swiss") {
     const campo = page.locator("#rounds-input");
     ok("el campo de rondas se ve", await campo.evaluate((e) => e.checkVisibility()));
-    await campo.fill("7");
-    ok("el campo acepta 7 rondas", await campo.evaluate((e) => e.checkValidity()));
+    await campo.fill(String(rondas));
+    ok("el campo acepta " + rondas + " rondas", await campo.evaluate((e) => e.checkValidity()));
   }
   await page.click("#start-btn");
-  await page.waitForTimeout(2500);
+  await esperarRondaPintada(page, 1);
   let t = await page.evaluate(() => window.__T.tournaments[0]);
-  ok("el torneo queda con 7 rondas", t.total_rounds === 7, t.total_rounds);
+  ok("el torneo queda con " + rondas + " rondas", t.total_rounds === rondas, t.total_rounds);
 
   const pasos = [];
-  for (let n = 1; n <= 7; n++) {
+  for (let n = 1; n <= rondas; n++) {
     const estado = await jugarRonda(page, n);
     if (estado !== "finished") { pasos.push("la ronda " + n + " no se cerró: " + estado); break; }
     await recargar(page);
-    if (n === 7) break;
+    if (n === rondas) break;
     const boton = page.locator("#generate-round-btn");
     const texto = (await boton.textContent()).trim();
     const habilitado = (await boton.evaluate((e) => e.checkVisibility())) && !(await boton.isDisabled());
     if (texto !== "Generar ronda " + (n + 1) || !habilitado) { pasos.push({ ronda: n + 1, texto, habilitado }); break; }
     await boton.click();
-    await page.waitForTimeout(2000);
+    await esperarRondaPintada(page, n + 1);
   }
-  ok("cada ronda se cierra y ofrece la siguiente, hasta la 7", pasos.length === 0, pasos);
+  ok("cada ronda se cierra y ofrece la siguiente, hasta la " + rondas, pasos.length === 0, pasos);
 
   const r = await page.evaluate(RESUMEN);
   t = await page.evaluate(() => window.__T.tournaments[0]);
@@ -463,35 +510,91 @@ async function pruebaSieteRondas(browser, formato, jugadores) {
   const partidas = {};
   cruces.filter((c) => !c.is_bye).forEach((c) => { partidas[c.white_id] = (partidas[c.white_id] || 0) + 1; partidas[c.black_id] = (partidas[c.black_id] || 0) + 1; });
   const colorDesparejo = jugadores.filter((j) => Math.abs(2 * (blancas[j.id] || 0) - (partidas[j.id] || 0)) > 2).map((j) => j.full_name);
+  const todas = JSON.stringify(Array.from({ length: rondas }, (_, i) => i + 1));
 
   ok("la página no tira errores de JavaScript", errores.length === 0, errores);
-  ok("hay exactamente 7 rondas, de la 1 a la 7", JSON.stringify(r.rondas) === "[1,2,3,4,5,6,7]", r.rondas);
+  ok("hay exactamente " + rondas + " rondas, de la 1 a la " + rondas, JSON.stringify(r.rondas.slice().sort((x, y) => x - y)) === todas, r.rondas);
   ok("ninguna ronda rechazada por repetida", r.rechazadas === 0, r);
   ok("cada ronda trae a todos los jugadores", rondasIncompletas === 0, rondasIncompletas);
-  ok("nadie repite rival en las 7 rondas", repetidas.length === 0, repetidas);
+  ok("nadie repite rival en las " + rondas + " rondas", repetidas.length === 0, repetidas);
   ok("nadie juega más de 2 blancas de diferencia con sus negras", colorDesparejo.length === 0, colorDesparejo);
-  ok("current_round queda en 7", t.current_round === 7, t.current_round);
-  ok("al cerrar la 7.ª el torneo termina, con campeón", t.status === "finished" && (t.winner_ids || []).length > 0, { status: t.status, winner_ids: t.winner_ids });
+  ok("current_round queda en " + rondas, t.current_round === rondas, t.current_round);
+  ok("al cerrar la última el torneo termina, con campeón", t.status === "finished" && (t.winner_ids || []).length > 0, { status: t.status, winner_ids: t.winner_ids });
   const campeones = await page.evaluate(() => window.__T.public_tournament_champions.length);
   ok("el campeón entra al salón de la fama una sola vez", campeones === (t.winner_ids || []).length, campeones);
 
   const boton = await page.locator("#generate-round-btn").evaluate((e) => e.checkVisibility());
-  ok("ya no se ofrece una ronda 8", !boton);
+  ok("ya no se ofrece una ronda " + (rondas + 1), !boton);
   const cartel = await page.locator("#finished-banner").evaluate((e) => e.checkVisibility());
   ok("se ve el cartel de torneo terminado", cartel);
   ok("ningún aviso de error", r.errores.length === 0, r.errores);
   await ctx.close();
 }
 
+/* El campo de rondas del Suizo: lo que no es un entero de 1 a 20 no empieza
+   el torneo (antes «-3» lo empezaba con -3 rondas y se quedaba sin ninguna,
+   y «25» pasaba), y pedir más rondas de las que alcanzan sin repetir rival
+   lo avisa ahí mismo. */
+async function pruebaCampoDeRondas(browser) {
+  console.log("\n▶ El campo de rondas del Suizo");
+  const jugadores = NOMBRES.map(alumno);
+  const { ctx, page, errores } = await abrir(browser, datosBase(
+    { status: "registration", current_round: 0, total_rounds: null, format: "swiss" }, [], jugadores));
+  const campo = page.locator("#rounds-input");
+  const aviso = page.locator("#rounds-aviso");
+
+  for (const malo of ["-3", "0", "21", "25", "2.5"]) {
+    await campo.fill(malo);
+    await page.click("#start-btn");
+    await page.waitForTimeout(600);
+    const r = await page.evaluate(() => ({
+      estado: window.__T.tournaments[0].status,
+      total: window.__T.tournaments[0].total_rounds,
+      rondas: window.__T.tournament_rounds.length,
+      error: [...document.querySelectorAll("[data-tipo='error']")].map((e) => e.textContent).pop() || "",
+    }));
+    ok("con «" + malo + "» el torneo no empieza y lo dice", r.estado === "registration" && r.total === null && r.rondas === 0 && /de 1 a 20/.test(r.error), r);
+    if (r.estado !== "registration") { await ctx.close(); return; }   // ya empezó: el campo no está más
+  }
+
+  await campo.fill("9");
+  ok("con 10 inscritos y 9 rondas no hay aviso", ((await aviso.textContent()) || "").trim() === "");
+  await campo.fill("20");
+  const texto = ((await aviso.textContent()) || "").trim();
+  ok("con 10 inscritos y 20 rondas avisa que alcanzan 9 sin repetir",
+     (await aviso.evaluate((e) => e.checkVisibility())) && /Con 10 inscritos alcanzan 9 rondas sin repetir rival; con 20/.test(texto), texto);
+  ok("el aviso lo lee el lector de pantalla (aria-describedby del campo)",
+     (await campo.getAttribute("aria-describedby")) === "rounds-aviso" && (await aviso.getAttribute("aria-live")) === "polite");
+
+  await page.click("#start-btn");
+  await esperarRondaPintada(page, 1);
+  const t = await page.evaluate(() => window.__T.tournaments[0]);
+  ok("con 20 el torneo empieza igual: repetir rival se puede, solo se avisa", t.status === "in_progress" && t.total_rounds === 20, t);
+  ok("la página no tira errores de JavaScript", errores.length === 0, errores);
+  await ctx.close();
+}
+
+// Una prueba que revienta cuenta como fallo y deja correr a las demás: si no,
+// lo que venía después se quedaba sin mirar.
+async function correr(prueba, ...args) {
+  try { await prueba(...args); }
+  catch (e) { fallos++; console.log("  ❌ " + prueba.name + " se cayó: " + String(e && e.message || e).split("\n")[0]); }
+}
+
 (async () => {
   pruebaMotor();
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
-    await pruebaEmpezar(browser);
-    await pruebaTrabado(browser);
-    await pruebaGenerarDosVeces(browser);
-    await pruebaSieteRondas(browser, "swiss", NOMBRES.map(alumno));
-    await pruebaSieteRondas(browser, "round_robin", NOMBRES.slice(0, 8).map(alumno));
+    await correr(pruebaEmpezar, browser);
+    await correr(pruebaTrabado, browser);
+    await correr(pruebaGenerarDosVeces, browser);
+    await correr(pruebaCampoDeRondas, browser);
+    await correr(pruebaTorneoEntero, browser, "swiss", NOMBRES.map(alumno), 7);
+    await correr(pruebaTorneoEntero, browser, "round_robin", NOMBRES.slice(0, 8).map(alumno), 7);
+    // 20, el máximo del campo, con 24 inscritos: alcanzan para no repetir.
+    await correr(pruebaTorneoEntero, browser, "swiss", Array.from({ length: 24 }, (_, i) => ({
+      id: "u-p" + (i + 1), full_name: "Participante " + (i + 1), email: "p" + (i + 1) + "@x.cr", role: "alumno", is_admin: false,
+    })), 20);
   } finally {
     await browser.close();
   }

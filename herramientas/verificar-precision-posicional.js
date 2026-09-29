@@ -140,6 +140,34 @@ if (corta.length !== areasValidas.length) fallos.push(`armar(1) debería devolve
 const idsCorta = new Set(corta.map((i) => i.area));
 if (idsCorta.size !== areasValidas.length) fallos.push("armar(1) no trajo las ocho áreas");
 
+/* ---------- dos rondas cortas seguidas no repiten la misma idea espejada ---------- */
+// pp_x_01 y pp_x_01_hv son la misma posición dada vuelta: con 3 ideas por
+// área, sin `evitar` la segunda ronda corta la repetía una de cada tres veces.
+for (let vuelta = 0; vuelta < 300; vuelta++) {
+  const antes = PRUEBA.armar(1);
+  const ideas = new Set(antes.map((i) => PRUEBA.idea(i.id)));
+  const despues = PRUEBA.armar(1, antes.map((i) => i.id));
+  const repetida = despues.find((i) => ideas.has(PRUEBA.idea(i.id)));
+  if (repetida) { fallos.push(`armar(1, anterior) repitió la idea de ${repetida.id} (${PRUEBA.idea(repetida.id)}), que ya estaba en la ronda anterior`); break; }
+  if (despues.length !== areasValidas.length) { fallos.push(`armar(1, anterior) devolvió ${despues.length} posiciones`); break; }
+}
+if (PRUEBA.idea("pp_mejorar_01_hv") !== "pp_mejorar_01" || PRUEBA.idea("pp_mejorar_01_h") !== "pp_mejorar_01") {
+  fallos.push("idea() no le quita la marca del espejo al id");
+}
+// Si se pide evitar TODO el banco, igual sale una ronda completa.
+if (PRUEBA.armar(1, ITEMS.map((i) => i.id)).length !== areasValidas.length) fallos.push("armar(1, todo) dejó áreas sin posición");
+
+/* ---------- las fichas de «a reforzar» existen ---------- */
+const FICHAS = require(path.join(RAIZ, "js/fichas-estudio.js"));
+CRITERIO.AREAS.forEach((a) => {
+  if (!Array.isArray(a.fichas) || !a.fichas.length) { fallos.push(`el área "${a.id}" no enlaza ninguna ficha de Estudio`); return; }
+  a.fichas.forEach((f) => {
+    const ficha = FICHAS.FICHAS.find((x) => x.id === f.id);
+    if (!ficha) fallos.push(`el área "${a.id}" enlaza la ficha "${f.id}", que no existe en js/fichas-estudio.js`);
+    else if (ficha.titulo !== f.titulo) fallos.push(`el área "${a.id}" llama «${f.titulo}» a la ficha "${f.id}", que se titula «${ficha.titulo}»`);
+  });
+});
+
 /* ---------- resultado ---------- */
 const porArea = {};
 ITEMS.forEach((i) => { porArea[i.area] = (porArea[i.area] || 0) + 1; });

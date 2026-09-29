@@ -75,6 +75,13 @@ function buildPools(){
     const nivel = NIVELES.find((x) => x.len ? x.len === n : (x.lenMin && n >= x.lenMin));
     if(nivel) POOLS[nivel.id].push(id);
   });
+  /* Dentro de cada nivel, de fácil a difícil. Antes iban por id, o sea al
+     azar: el Nivel 1 mezclaba ejercicios de 600 con otros de 2000. Los que no
+     traen rating (los de táctica de la casa) van al final, y el id desempata
+     para que el orden no cambie de una visita a otra. Lo resuelto se guarda
+     por id, así que reordenar no pierde nada. */
+  const r = (id) => (typeof DATA.puzzles[id].rating === 'number' ? DATA.puzzles[id].rating : Infinity);
+  Object.keys(POOLS).forEach((k) => POOLS[k].sort((a, b) => (r(a) - r(b)) || (a < b ? -1 : a > b ? 1 : 0)));
 }
 function idsOf(nivelId){ return POOLS[nivelId] || []; }
 

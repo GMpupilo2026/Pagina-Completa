@@ -166,6 +166,9 @@
                 { emoji: "🚩", label: "Preguntas en clase", desc: "Cómo contestan cuando el profesor pregunta en la clase en vivo", href: TEMA("asignaciones") },
                 { emoji: "🧭", label: "Diagnóstico de nivel", desc: "El nivel medido de cada uno y dónde está floja la clase", href: TEMA("diagnostico") },
                 { emoji: "🏛️", label: "Cursos", desc: "Qué temas de cada curso ya estudió", href: TEMA("cursos") },
+                /* Su propio enlace del diagnóstico para gente sin cuenta: lo
+                   que se hace por él le llega solo a quien supervisa. */
+                { emoji: "🌐", label: "Diagnóstico de visitantes", desc: "Tu enlace para que alguien sin cuenta mida su nivel, y los resultados que te llegan", href: TEMA("diagnostico-publico") },
             ] },
             { title: "Tus profesores", tiles: [
                 { emoji: "🧑‍🏫", label: "Supervisión de profesores", desc: "Qué hizo cada profesor en el mes —clases, tareas, exámenes— y su informe mensual", href: "supervision.html" },
