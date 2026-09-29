@@ -1215,6 +1215,27 @@ Lo que sí cambió, por ser dos puertas al mismo lugar:
   `verificar-panel.js`; volviendo a poner el enlace viejo o el «Ver informes
   completos», saltan.
 
+### La página de coordinación, lo de todos los días primero
+
+El mismo pedido para quien coordina. Su panel (`clases.html`) ya lo tenía desde
+«El panel de quien da clase»: el grupo «Coordinación» y, en «Lo urgente», sus
+solicitudes y saldos vencidos. Faltaba su pantalla propia, `coordinacion.html`:
+
+- **Las cuentas van primero y Equipos abajo.** Buscar a alguien, corregir su
+  ficha, reenviarle el acceso o ver quién está en clase es lo de todos los
+  días (la tarjeta del panel que lleva ahí se llama «Cuentas»); Equipos se
+  arma de vez en cuando y, arriba, empujaba la lista una pantalla hacia abajo.
+  La lista lleva su título, «✏️ Cuentas».
+- **Los números sirven para algo.** «Profesores que coordinas» y «alumnos
+  alcanzados» filtran la lista de un toque (un número que no lleva a nadie
+  obliga a ir a buscarlos). El tercero ya no es «cuentas en total» —la suma de
+  los otros dos, un dato repetido— sino **cuántos de su gente están dando
+  clase ahora** (sin contar la propia), que es cuando se puede ir a mirar y
+  ayudar desde la ficha.
+- **«Lo urgente» no se repite acá**: ya está en su panel, que es donde entra.
+- Lo prueba `pruebaOrdenYNumeros` en `verificar-coordinacion.js`; volviendo a
+  poner la suma, salta.
+
 ### Las cuentas se ven por GRUPO, no todas de una
 
 Lo primero que muestra la página son **fichas de grupo**, no la lista de

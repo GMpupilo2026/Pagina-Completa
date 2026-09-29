@@ -82,6 +82,9 @@ titulo("Catálogo y niveles");
 const ids = new Set();
 C.TIPOS.forEach((t) => {
   const items = DATOS[t.id];
+  // Tus propios errores no tiene banco: sale de las partidas de cada alumno
+  // (lo prueba herramientas/verificar-errores-propios.js).
+  if (t.propio) { ok(t.id + ": un tipo propio no trae banco en tipos.json", items === undefined); return; }
   ok(t.id + ": el banco existe", Array.isArray(items) && items.length > 0);
   if (!items) return;
   t.niveles.forEach((n) => {

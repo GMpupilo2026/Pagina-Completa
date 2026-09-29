@@ -4696,7 +4696,7 @@
         }
 
         // ---------- Tipos de entrenamiento (cascada tipo → nivel → ejercicio) ----------
-        // Los mismos diecisiete de entreno/tipos.html, con las mismas posiciones
+        // Los mismos dieciocho de entreno/tipos.html, con las mismas posiciones
         // (entreno/data/tipos.json) y el mismo catálogo (js/tipos-catalogo.js): el
         // profesor los jala a la clase sin salir de la sesión. Toda posición entra por
         // aplicarPosicionEnClase(), como Táctica y Archivos. Lo que es la RESPUESTA
@@ -4878,6 +4878,18 @@
                 clase.className = "text-xs text-brand-450 dark:text-brand-350 mb-2";
                 clase.textContent = t.clase;
                 body.append(tit, clase);
+                // Tus propios errores no tiene banco: cada alumno tiene los
+                // suyos (salen de sus partidas), así que aquí no hay lista.
+                if (t.propio) {
+                    const abrir = document.createElement("a");
+                    abrir.href = "entreno/tipos.html#" + t.id;
+                    abrir.target = "_blank";
+                    abrir.rel = "noopener";
+                    abrir.className = "inline-block mt-1 text-xs font-semibold text-accent-700 dark:text-accent-400 underline";
+                    abrir.textContent = "Abrir la ficha de «" + t.nombre + "» (otra pestaña)";
+                    body.appendChild(abrir);
+                    return;
+                }
                 t.niveles.forEach((n) => {
                     const cuantos = (tiposData[t.id] || []).filter((x) => x.nivel === n.n).length;
                     if (!cuantos) return;

@@ -461,18 +461,34 @@ async function reenviar(u, boton) {
     boton.textContent = "✉️ Reenviar acceso";
 }
 
-function pintarTarjetas(profesores, alumnos) {
+/* Los números de arriba. Los dos primeros FILTRAN la lista de abajo con un
+   toque (un número que no lleva a nadie obliga a ir a buscarlos). El tercero
+   ya no es «cuentas en total» —la suma de los otros dos, un dato repetido—
+   sino lo que pasa ahora: cuántos de su gente están dando clase, que es
+   cuando se puede mirar y ayudar. */
+function pintarTarjetas(profesores, alumnos, enClaseAhora) {
     const caja = document.getElementById("tarjetas");
     caja.innerHTML = "";
-    const t = (valor, etiqueta) => {
-        const d = el("div", "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5");
+    const t = (valor, etiqueta, rol) => {
+        const d = el(rol === undefined ? "div" : "button",
+            "text-left bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5"
+            + (rol === undefined ? "" : " hover:shadow-lg transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"));
+        if (rol !== undefined) {
+            d.type = "button";
+            d.dataset.filtro = rol;
+            d.addEventListener("click", () => {
+                document.getElementById("f-rol").value = rol;
+                cargar(true);
+                document.getElementById("buscar").scrollIntoView({ behavior: "smooth", block: "center" });
+            });
+        }
         d.appendChild(el("p", "text-2xl font-bold text-brand-800 dark:text-white", String(valor)));
         d.appendChild(el("p", "text-xs text-brand-450 dark:text-brand-350 mt-1", etiqueta));
         return d;
     };
-    caja.appendChild(t(profesores, profesores === 1 ? "profesor que coordinas" : "profesores que coordinas"));
-    caja.appendChild(t(alumnos, alumnos === 1 ? "alumno alcanzado" : "alumnos alcanzados"));
-    caja.appendChild(t(profesores + alumnos, "cuentas en total"));
+    caja.appendChild(t(profesores, (profesores === 1 ? "profesor que coordinas" : "profesores que coordinas") + " · ver", "profesor"));
+    caja.appendChild(t(alumnos, (alumnos === 1 ? "alumno alcanzado" : "alumnos alcanzados") + " · ver", "alumno"));
+    caja.appendChild(t(enClaseAhora, "dando clase ahora: «Mirar la clase» en su ficha"));
 }
 
 /* ---------------------------------------------------------------- equipos
@@ -815,7 +831,8 @@ async function init() {
     enClase = new Set((abiertas || []).map((c) => c.created_by));
     const nProfes = profes && profes.length ? Number(profes[0].total) : 0;
     const nAlumnos = alums && alums.length ? Number(alums[0].total) : 0;
-    pintarTarjetas(nProfes, nAlumnos);
+    // Su propia clase no cuenta: se trata de a quién puede ir a mirar.
+    pintarTarjetas(nProfes, nAlumnos, [...enClase].filter((id) => id !== perfil.id).length);
 
     // Y la lista de a quién puede asignarle alumnos. Si falla, la ficha sigue
     // dejando corregir el nombre y el correo: perder eso también por esto
