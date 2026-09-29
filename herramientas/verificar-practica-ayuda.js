@@ -19,10 +19,18 @@
    - cuando el alumno juega, avisa que las flechas eran de antes y las borra;
    - quitar la ayuda manda null; al terminar la ronda se deja de mirar.
 
+   De quien supervisa (sesion.html?observar=)
+   - ve las partidas de la práctica y abre una igual que el profe;
+   - lo que manda es SOLO la ayuda, y no crea ninguna partida (no queda
+     anotada como alumna);
+   - su presencia dice que es supervisión y a quién mira; el profe lo lee.
+
    Del lado de la alumna
    - la pista se pinta como texto, y las flechas en su tablero Y en palabras;
    - escucha SU partida con filtro;
-   - ve quién la está mirando, y deja de verlo cuando se va;
+   - ve quién la está mirando, y deja de verlo cuando se va; si es alguien de
+     supervisión, lo dice;
+   - una ayuda de quien supervisa dice de quién es, no «de tu profe»;
    - una ayuda de otra posición no pinta flechas; al jugar, se borran;
    - lo que ella guarda nunca lleva la ayuda;
    - no tiene nada de lo del profe.
@@ -41,6 +49,8 @@ const { abrir, CHROME } = R;
 const CLASE = { id: "c-viva", created_by: "u-profe", started_at: new Date().toISOString(), ended_at: null };
 const INICIAL = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 const NOMBRE = "Ana <i>Rojas</i>";
+const SUP = { id: "u-sup", role: "profesor", is_admin: false, es_coordinador: false, es_supervisor: true,
+              full_name: "Marta Solano", email: "marta@x.cr", grupo: null };
 
 function semilla(ayuda) {
   return {
@@ -129,7 +139,7 @@ async function pruebaProfesor(browser) {
   });
   igual("dice que le llegó, en palabras", await texto(page, "#practica-mirar-aviso"),
     "Le llegó a " + NOMBRE + ": una flecha de g1 a f3; un círculo en d7 y la pista.");
-  cumple("la miniatura dice que tiene tu ayuda", /con tu ayuda/.test(await texto(page, "#practice-boards-grid .practice-mini-status")));
+  cumple("la miniatura dice que tiene ayuda", /con (tu )?ayuda/.test(await texto(page, "#practice-boards-grid .practice-mini-status")));
 
   // Lo que no se entiende se dice, y no se manda.
   await page.fill("#practica-mirar-marcas", "zz9 g1-f3");
@@ -199,6 +209,44 @@ async function pruebaProfesor(browser) {
   await ctx.close();
 }
 
+async function pruebaSupervision(browser) {
+  console.log("\n=== Quien supervisa mira la partida de Ana y la ayuda ===");
+  const semillaSup = Object.assign(semilla(), { profiles: [R.PROFE, R.ALUMNA, SUP] });
+  const { page, ctx, errores } = await abrir(browser, SUP.id, CLASE, semillaSup, { ruta: "/sesion.html?observar=u-profe" });
+  cumple("se monta como supervisión", await seVe(page, "#observador-panel"));
+  cumple("el panel dice que puede ayudar en la práctica", /puedes ayudar a uno con flechas y una pista/.test(await texto(page, "#observador-texto")));
+  await page.waitForSelector("#practice-boards-grid .practice-mini-mirar", { timeout: 30000 });
+  cumple("ve la partida de cada alumno", await seVe(page, "#practice-boards-section"));
+  cumple("sin las herramientas del profe", !(await seVe(page, "#teacher-toolbar")));
+  cumple("ni la tarjeta de práctica de alumna", !(await seVe(page, "#practice-card")));
+
+  await page.click("#practice-boards-grid .practice-mini-mirar");
+  cumple("abre su partida en grande", await seVe(page, "#practica-mirar"));
+  igual("su presencia dice que es supervisión y que mira a Ana",
+    await ultimoTrack(page).then((t) => t && { role: t.role, mirando_a: t.mirando_a }), { role: "supervision", mirando_a: "u-ana" });
+  await page.click('#practica-mirar-tablero [data-square="g1"]');
+  await page.click('#practica-mirar-tablero [data-square="f3"]');
+  await page.fill("#practica-mirar-pista", "Cuenta los defensores de e5.");
+  await page.click("#practica-mirar-mandar");
+  await page.waitForFunction(() => /Le llegó/.test(document.getElementById("practica-mirar-aviso").textContent), null, { timeout: 5000 }).catch(() => {});
+  igual("manda SOLO la ayuda, a la partida de Ana", (await updatesDePartida(page)).map((u) => ({ campos: Object.keys(u.campos), donde: u.donde })),
+    [{ campos: ["ayuda"], donde: [["id", "g-1"]] }]);
+  cumple("dice que le llegó", /^Le llegó a /.test(await texto(page, "#practica-mirar-aviso")), await texto(page, "#practica-mirar-aviso"));
+  igual("no crea ninguna partida ni se anota en nada", await page.evaluate(() => window.__inserts.map((i) => i.tabla)), []);
+  await page.keyboard.press("Escape");
+  igual("al cerrar, deja de mirar", (await ultimoTrack(page) || {}).mirando_a, null);
+  igual("sin errores en la página", errores.filter((e) => !/stockfish|Worker|wasm/i.test(e)), []);
+  await ctx.close();
+
+  console.log("\n=== El profe sabe que supervisión mira la partida de Ana ===");
+  const profe = await abrir(browser, "u-profe", CLASE, semilla());
+  await profe.page.waitForSelector("#practice-boards-grid .practice-mini-mirar", { timeout: 30000 });
+  await profe.page.evaluate(() => window.__presencia("u-sup", { role: "supervision", full_name: "Marta Solano", mirando_a: "u-ana" }));
+  igual("lo dice arriba", await texto(profe.page, "#observadores"),
+    "👁 Marta Solano (supervisión) está mirando la clase. Marta Solano está en la partida de " + NOMBRE + ".");
+  await profe.ctx.close();
+}
+
 async function pruebaAlumna(browser) {
   console.log("\n=== Ana recibe la ayuda en su tablero ===");
   const ayuda = { jugadas: 2, flechas: [{ from: "g1", to: "f3" }], circulos: [], texto: "Mira <b>el</b> caballo",
@@ -225,6 +273,18 @@ async function pruebaAlumna(browser) {
   igual("con su nombre", await texto(page, "#practica-te-miran"), "👁 Karina Rojas está mirando tu partida.");
   await page.evaluate(() => window.__presencia("u-profe", { role: "profesor", full_name: "Karina Rojas", mirando_a: "u-beto" }));
   cumple("si mira a otro, ya no lo dice", !(await seVe(page, "#practica-te-miran")));
+  await page.evaluate(() => window.__presencia("u-sup", { role: "supervision", full_name: "Marta Solano", mirando_a: "u-ana" }));
+  igual("si es supervisión, lo dice", await texto(page, "#practica-te-miran"), "👁 Marta Solano (supervisión) está mirando tu partida.");
+  await page.evaluate(() => window.__presencia("u-sup", null));
+
+  // Una ayuda de quien supervisa dice de quién es.
+  await page.evaluate(() => {
+    const g = Object.assign({}, window.__tablas.practice_games[0]);
+    g.ayuda = { jugadas: 2, flechas: [], circulos: [], texto: "Cuenta los defensores.", de: "u-sup", nombre: "Marta Solano" };
+    window.__cambioEnBase("practice_games", g);
+  });
+  await page.waitForFunction(() => /Marta Solano/.test(document.getElementById("practica-ayuda").textContent), null, { timeout: 5000 }).catch(() => {});
+  cumple("una ayuda de supervisión dice de quién es", /^💡 Ayuda de Marta Solano/.test(await texto(page, "#practica-ayuda")), await texto(page, "#practica-ayuda"));
 
   // Una ayuda para otra posición: no se pintan flechas.
   await page.evaluate(() => {
@@ -265,6 +325,7 @@ async function pruebaAlumna(browser) {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
     await pruebaProfesor(browser);
+    await pruebaSupervision(browser);
     await pruebaAlumna(browser);
   } finally {
     await browser.close();
