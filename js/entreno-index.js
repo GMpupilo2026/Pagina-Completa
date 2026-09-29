@@ -141,8 +141,51 @@ async function pintarMeta(){
   barra.setAttribute('aria-valuenow', String(Math.min(hoy, meta)));
   document.getElementById('hoy-meta-relleno').style.width = Math.round(100 * Math.min(hoy, meta) / meta) + '%';
   document.getElementById('hoy-meta').hidden = false;
+  ofrecerAvisos(racha);
   return true;
 }
+
+/* El aviso de racha sale por la tarde (public.avisar_rachas()) solo a los
+   aparatos con los avisos encendidos, y casi nadie los tenía. Se ofrece acá,
+   junto a la racha, porque es donde se entiende para qué sirve; y se pide el
+   permiso solo al apretar el botón: el navegador deja preguntar una sola vez.
+   «Ahora no» lo guarda dos semanas en este aparato. */
+const CLAVE_AVISOS_NO = 'entreno_avisos_ahora_no';
+const DIAS_AVISOS_NO = 14;
+async function ofrecerAvisos(racha){
+  const caja = document.getElementById('hoy-avisos');
+  if (!caja || !window.Notificaciones) return;
+  try {
+    const no = parseInt(localStorage.getItem(CLAVE_AVISOS_NO) || '0', 10);
+    if (no && Date.now() - no < DIAS_AVISOS_NO * 86400000) return;
+  } catch (e) {}
+  let est;
+  try { est = await Notificaciones.estado(); } catch (e) { return; }
+  if (est !== 'apagado') return;
+  document.getElementById('hoy-avisos-si').textContent = racha
+    ? `🔔 Avísame si mi racha de ${racha === 1 ? '1 día' : racha + ' días'} está en juego`
+    : '🔔 Avísame por la tarde si me faltan ejercicios';
+  caja.hidden = false;
+}
+document.getElementById('hoy-avisos-si').addEventListener('click', async () => {
+  const msg = document.getElementById('hoy-avisos-msg');
+  const btn = document.getElementById('hoy-avisos-si');
+  btn.disabled = true;
+  try {
+    const { data } = await sb.auth.getSession();
+    if (!data || !data.session) throw new Error('Tu sesión se cerró: vuelve a entrar.');
+    await Notificaciones.encender(data.session);
+    document.getElementById('hoy-avisos').hidden = true;
+    msg.textContent = '✅ Listo: si a las 6 de la tarde tu racha está en juego, te llega un aviso. Se apaga en Configuración.';
+  } catch (e) {
+    msg.textContent = (e && e.message) || String(e);
+    btn.disabled = false;
+  }
+});
+document.getElementById('hoy-avisos-no').addEventListener('click', () => {
+  try { localStorage.setItem(CLAVE_AVISOS_NO, String(Date.now())); } catch (e) {}
+  document.getElementById('hoy-avisos').hidden = true;
+});
 
 async function pintarHoy(alumnoId){
   const [cosas, conMeta] = await Promise.all([cosasDeHoy(alumnoId), pintarMeta()]);

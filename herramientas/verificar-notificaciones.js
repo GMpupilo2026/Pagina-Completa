@@ -163,8 +163,8 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
       getSession: () => Promise.resolve({ data: { session: { user: { id: "u-ana" }, access_token: "t" } } }),
       updateUser: () => Promise.resolve({ error: null }),
     },
-    from: (t) => constructor(t, t === "profiles" ? [PERFIL] : []),
-    rpc: () => constructor("rpc", []),
+    from: (t) => constructor(t, t === "profiles" ? [PERFIL] : ((window.__tablas || {})[t] || [])),
+    rpc: (n) => constructor("rpc:" + n, (window.__rpc || {})[n] || []),
     channel: () => ({ on() { return this; }, subscribe() { return this; }, track() { return Promise.resolve(); }, presenceState: () => ({}) }),
     removeChannel: () => {},
   };
@@ -183,6 +183,58 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
   };
 })();
 `;
+}
+
+/* El permiso y el servicio de push, de mentira (ver por qué adentro). Los
+   usan las dos páginas que encienden avisos: Configuración y el hub. */
+async function aparatoDeMentira(p) {
+  // Se apunta cuándo se pide el permiso, que es lo que más se hace mal.
+  /* Y el permiso del navegador también es de mentira, como el servicio de
+     push de abajo. En Linux, Chromium solo lo concede si hay un servicio de
+     notificaciones del sistema detrás: el runner del CI lo tiene y la
+     máquina de las sesiones no, y ahí `Notification.permission` salía
+     "denied" aunque se le diera con grantPermissions(). La página hacía lo
+     correcto —decía «bloqueados»— y la prueba fallaba sin nada roto. Lo que
+     se comprueba es la PÁGINA: que no pida el permiso al cargar, que lo
+     pida una vez al apretar, y qué hace después. Arranca en "default",
+     como un aparato que nunca contestó, y dice que sí al pedírselo. */
+  await p.addInitScript(() => {
+    window.__pedidos = 0;
+    let permiso = "default";
+    Object.defineProperty(Notification, "permission", { get: () => permiso, configurable: true });
+    Notification.requestPermission = function () {
+      window.__pedidos += 1;
+      permiso = "granted";
+      return Promise.resolve(permiso);
+    };
+  });
+
+  // Un servicio de push de mentira. Chromium sin cabeza no tiene ninguno
+  // detrás (`subscribe()` responde "Registration failed - permission
+  // denied"), y lo que acá se comprueba no es que Chromium alcance a
+  // Google: es qué hace la PÁGINA con la suscripción que recibe —cuándo
+  // pide el permiso, qué guarda y qué borra—. El cifrado de verdad se
+  // prueba arriba, con llaves de verdad.
+  await p.addInitScript(() => {
+    const b64url = (u) => {
+      let s = "";
+      for (let i = 0; i < u.length; i++) s += String.fromCharCode(u[i]);
+      return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    };
+    let actual = null;
+    PushManager.prototype.getSubscription = function () { return Promise.resolve(actual); };
+    PushManager.prototype.subscribe = function (opciones) {
+      const pub = new Uint8Array(65); pub[0] = 4; crypto.getRandomValues(pub.subarray(1));
+      const auth = crypto.getRandomValues(new Uint8Array(16));
+      actual = {
+        endpoint: "https://fcm.googleapis.com/fcm/send/" + b64url(crypto.getRandomValues(new Uint8Array(16))),
+        options: { applicationServerKey: (opciones || {}).applicationServerKey },
+        toJSON() { return { endpoint: this.endpoint, keys: { p256dh: b64url(pub), auth: b64url(auth) } }; },
+        unsubscribe() { actual = null; return Promise.resolve(true); },
+      };
+      return Promise.resolve(actual);
+    };
+  });
 }
 
 (async () => {
@@ -223,53 +275,7 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
     await p.route("**/fonts.gstatic.com/**", (r) => r.abort());
     await p.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso() }));
 
-    // Se apunta cuándo se pide el permiso, que es lo que más se hace mal.
-    /* Y el permiso del navegador también es de mentira, como el servicio de
-       push de abajo. En Linux, Chromium solo lo concede si hay un servicio de
-       notificaciones del sistema detrás: el runner del CI lo tiene y la
-       máquina de las sesiones no, y ahí `Notification.permission` salía
-       "denied" aunque se le diera con grantPermissions(). La página hacía lo
-       correcto —decía «bloqueados»— y la prueba fallaba sin nada roto. Lo que
-       se comprueba es la PÁGINA: que no pida el permiso al cargar, que lo
-       pida una vez al apretar, y qué hace después. Arranca en "default",
-       como un aparato que nunca contestó, y dice que sí al pedírselo. */
-    await p.addInitScript(() => {
-      window.__pedidos = 0;
-      let permiso = "default";
-      Object.defineProperty(Notification, "permission", { get: () => permiso, configurable: true });
-      Notification.requestPermission = function () {
-        window.__pedidos += 1;
-        permiso = "granted";
-        return Promise.resolve(permiso);
-      };
-    });
-
-    // Un servicio de push de mentira. Chromium sin cabeza no tiene ninguno
-    // detrás (`subscribe()` responde "Registration failed - permission
-    // denied"), y lo que acá se comprueba no es que Chromium alcance a
-    // Google: es qué hace la PÁGINA con la suscripción que recibe —cuándo
-    // pide el permiso, qué guarda y qué borra—. El cifrado de verdad se
-    // prueba arriba, con llaves de verdad.
-    await p.addInitScript(() => {
-      const b64url = (u) => {
-        let s = "";
-        for (let i = 0; i < u.length; i++) s += String.fromCharCode(u[i]);
-        return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-      };
-      let actual = null;
-      PushManager.prototype.getSubscription = function () { return Promise.resolve(actual); };
-      PushManager.prototype.subscribe = function (opciones) {
-        const pub = new Uint8Array(65); pub[0] = 4; crypto.getRandomValues(pub.subarray(1));
-        const auth = crypto.getRandomValues(new Uint8Array(16));
-        actual = {
-          endpoint: "https://fcm.googleapis.com/fcm/send/" + b64url(crypto.getRandomValues(new Uint8Array(16))),
-          options: { applicationServerKey: (opciones || {}).applicationServerKey },
-          toJSON() { return { endpoint: this.endpoint, keys: { p256dh: b64url(pub), auth: b64url(auth) } }; },
-          unsubscribe() { actual = null; return Promise.resolve(true); },
-        };
-        return Promise.resolve(actual);
-      };
-    });
+    await aparatoDeMentira(p);
     await p.goto(BASE + "/configuracion.html", { waitUntil: "networkidle" });
     await p.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
     await p.waitForTimeout(800);
@@ -282,6 +288,18 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
       (await p.evaluate(() => document.getElementById("avisos-btn").textContent)).indexOf("Encender") !== -1, "true");
     igual("el botón de prueba está escondido hasta encenderlos",
       await p.evaluate(() => document.getElementById("avisos-probar").hidden), "true");
+
+    /* El aviso de racha se apaga por persona (preferencias_avisos). Sin fila
+       está encendido, como lo lee public.avisar_rachas(). */
+    igual("a la alumna se le ofrece el aviso de racha, encendido",
+      await p.evaluate(() => [document.getElementById("avisos-racha-caja").hidden, document.getElementById("avisos-racha").checked]), [false, true]);
+    await p.evaluate(() => { window.__llamadas = []; });
+    await p.click("#avisos-racha");
+    await p.waitForTimeout(300);
+    igual("apagarlo guarda la preferencia de ella, por persona",
+      await p.evaluate(() => { const l = window.__llamadas.find((x) => x.tabla === "preferencias_avisos"); return l && [l.verbo, l.datos.user_id, l.datos.racha, l.opciones.onConflict]; }),
+      ["upsert", "u-ana", false, "user_id"]);
+    igual("y lo dice", await p.evaluate(() => document.getElementById("avisos-racha-msg").textContent), "Listo: ya no te avisamos de la racha.");
 
     // Se enciende. La llave falsa tiene la forma de una VAPID de verdad.
     await p.evaluate(() => {
@@ -325,6 +343,65 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
     if (errores.length) { console.log("  ✗ errores en la página: " + errores.join(" | ")); fallos += 1; }
     await p.close();
     await contexto.close();
+  }
+
+  // ------------------------------------------------------------- el hub
+  /* «Hoy te toca» ofrece encender los avisos junto a la racha: el aviso de
+     racha solo le llega a quien los tiene encendidos, y casi nadie los tenía. */
+  console.log("\n=== El hub ofrece el aviso de racha ===");
+  {
+    const contexto = await navegador.newContext();
+    const p = await contexto.newPage();
+    const errores = [];
+    p.on("pageerror", (e) => errores.push(String(e)));
+    await p.route("**/cdn.jsdelivr.net/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
+    await p.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
+    await p.route("**/fonts.gstatic.com/**", (r) => r.abort());
+    await p.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript",
+      body: "window.__rpc = { progreso_dias_y_racha: [{ racha_actual: 4, hoy_ejercicios: 2 }] };\n" + clienteFalso() }));
+    await aparatoDeMentira(p);
+    await p.goto(BASE + "/entreno/index.html", { waitUntil: "networkidle" });
+    await p.waitForFunction(() => !document.getElementById("hoy-avisos").hidden, null, { timeout: 15000 });
+    igual("al cargar NO se pide el permiso", await p.evaluate(() => window.__pedidos), 0);
+    igual("el botón nombra la racha", await p.evaluate(() => document.getElementById("hoy-avisos-si").textContent),
+      "🔔 Avísame si mi racha de 4 días está en juego");
+    await p.evaluate(() => {
+      const b = new Uint8Array(65); b[0] = 4; crypto.getRandomValues(b.subarray(1));
+      let s = ""; for (const x of b) s += String.fromCharCode(x);
+      window.__llaveFalsa = btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+      window.__llamadas = [];
+    });
+    await p.click("#hoy-avisos-si");
+    await p.waitForFunction(() => document.getElementById("hoy-avisos").hidden, null, { timeout: 5000 });
+    igual("se pidió el permiso una vez, al apretar", await p.evaluate(() => window.__pedidos), 1);
+    igual("y quedó guardado el aparato",
+      await p.evaluate(() => !!window.__llamadas.find((l) => l.tabla === "push_suscripciones" && l.verbo === "upsert")), "true");
+    igual("y lo dice", (await p.evaluate(() => document.getElementById("hoy-avisos-msg").textContent)).startsWith("✅ Listo"), "true");
+    await p.close();
+    await contexto.close();
+
+    /* «Ahora no» lo guarda en el aparato: al volver, no insiste. En otro
+       contexto y sin service worker: el que registró la página de arriba
+       atendería él mismo las descargas y el doble de Supabase no llegaría. */
+    const otro = await navegador.newContext({ serviceWorkers: "block" });
+    const q = await otro.newPage();
+    q.on("pageerror", (e) => errores.push(String(e)));
+    await q.route("**/cdn.jsdelivr.net/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
+    await q.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
+    await q.route("**/fonts.gstatic.com/**", (r) => r.abort());
+    await q.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript",
+      body: "window.__rpc = { progreso_dias_y_racha: [{ racha_actual: 0, hoy_ejercicios: 0 }] };\n" + clienteFalso() }));
+    await aparatoDeMentira(q);
+    await q.goto(BASE + "/entreno/index.html", { waitUntil: "networkidle" });
+    await q.waitForFunction(() => !document.getElementById("hoy-avisos").hidden, null, { timeout: 15000 });
+    igual("sin racha, lo ofrece para la tarde", await q.evaluate(() => document.getElementById("hoy-avisos-si").textContent),
+      "🔔 Avísame por la tarde si me faltan ejercicios");
+    await q.click("#hoy-avisos-no");
+    await q.reload({ waitUntil: "networkidle" });
+    await q.waitForTimeout(800);
+    igual("después de «Ahora no», al volver no insiste", await q.evaluate(() => document.getElementById("hoy-avisos").hidden), "true");
+    if (errores.length) { console.log("  ✗ errores en la página: " + errores.join(" | ")); fallos += 1; }
+    await otro.close();
   }
 
   await navegador.close();

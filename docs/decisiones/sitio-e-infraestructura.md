@@ -1388,3 +1388,26 @@ Del asesor de rendimiento de Supabase (28 de setiembre de 2026, 143 cuentas):
 - **Los 31 «índices sin usar» tampoco se borraron**: el proyecto tiene menos de
   un mes y sus estadísticas de uso son de un puñado de personas. Un índice que
   hoy nadie usa puede ser el que sostiene un informe con mil alumnos.
+
+## El aviso de racha
+
+- La racha (días seguidos con al menos 5 ejercicios, la de Logros) solo se veía
+  entrando a la plataforma: quien no entraba un día la perdía sin enterarse, y
+  ese es justo el día en que un aviso sirve.
+- Migración `20260929163207_aviso_de_racha.sql`: `public.avisar_rachas()`
+  corre con pg_cron a las **6:05 p. m. de Costa Rica** (`5 0 * * *` UTC) y
+  manda, por `avisar_push()`, «🔥 Tu racha de N días está en juego — te faltan
+  M ejercicios para que hoy cuente» a cada alumno con racha, con menos de 5
+  ejercicios hoy y un aparato con avisos encendidos. Un aviso por día y por
+  alumno (`avisos_racha`, que no lee ni escribe nadie más que la función).
+- Se apaga por persona en Configuración (`preferencias_avisos.racha`, RLS: cada
+  quien la suya; sin fila está encendido). Los demás avisos no cambian.
+- **Casi nadie tenía los avisos encendidos** (2 alumnos al estrenarlo), así que
+  «Hoy te toca» (`entreno/index.html`) ofrece encenderlos junto a la racha:
+  «🔔 Avísame si mi racha de N días está en juego». El permiso se pide solo al
+  apretar, nunca al cargar (el navegador deja pedirlo una vez), y «Ahora no»
+  lo calla dos semanas en ese aparato.
+- Probado en la base dentro de un bloque que se deshace solo: a una alumna con
+  racha de ayer y 2 ejercicios hoy le sale el aviso con «faltan 3»; la segunda
+  corrida no repite; a quien lo apagó no le sale. La página, en
+  `verificar-notificaciones.js`.
