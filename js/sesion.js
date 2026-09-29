@@ -6670,6 +6670,10 @@
                 cargarPlanesEnClase();
                 setupTeacherLessonTools();
                 setupArchivosTools();
+                // El enlace para invitados sin cuenta es de quien da la clase:
+                // quien administra no da clase, y el proyector y el control remoto
+                // son otra ventana de la misma clase.
+                if (profile.role === "profesor" && !modoProyector && !modoControl) ClaseInvitados.montar(sb, profile.id);
             } else if (esObservador) {
                 document.getElementById("observador-panel").classList.remove("hidden");
             } else {

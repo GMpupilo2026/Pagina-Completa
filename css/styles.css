@@ -1221,3 +1221,12 @@ html.modo-control .proyector-contenido > aside,
 html.modo-control .proyector-columna > :not(.control-se-ve) { display: none !important; }
 html.modo-control #app { padding-top: 0.75rem; }
 html.modo-control .proyector-contenido { display: block; }
+
+/* ver-clase.html: la clase vista por un invitado sin cuenta. El tablero es
+   lo único que hay: tan grande como quepa en el ancho y en el alto que dejan
+   la barra y el aviso de arriba. Ver «La clase vista por invitados sin cuenta»
+   en docs/decisiones/clase-en-vivo.md. */
+.vc-tablero { width: min(calc(100vw - 3rem), calc(100vh - 6.5rem)); }
+@supports (height: 100dvh) {
+    .vc-tablero { width: min(calc(100vw - 3rem), calc(100dvh - 6.5rem)); }
+}
