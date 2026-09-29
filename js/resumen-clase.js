@@ -189,5 +189,54 @@ window.ResumenClase = (function () {
         caja.hidden = false;
     }
 
-    return { cargar, pintar, titular, textoPreguntas, textoPracticas, textoPartidas, textoTurnos, pintarUltimaClaseDelAlumno };
+    /* ---------- La pregunta de salida ----------
+       La última de la clase, sobre lo visto (questions.de_salida). La cuenta
+       la da la base (salida_de_la_clase); acá se dice qué significa. Del
+       termómetro, «más o menos» vale la mitad. Lo que falta calificar no
+       cuenta ni a favor ni en contra: se dice. */
+    const SALIDA_QUEDO = 0.7, SALIDA_A_MEDIAS = 0.4;
+
+    async function cargarSalida(sb, claseId) {
+        const { data, error } = await sb.rpc("salida_de_la_clase", { p_clase: claseId });
+        return { fila: (Array.isArray(data) ? data[0] : data) || null, error };
+    }
+
+    // {tono, texto, detalle}, o null si la clase no tuvo pregunta de salida.
+    function veredictoSalida(f) {
+        if (!f) return null;
+        const termometro = f.tipo === "opciones";
+        const calificadas = (f.bien || 0) + (f.medio || 0) + (f.mal || 0);
+        const partes = [];
+        if (termometro) {
+            if (f.bien) partes.push(f.bien + " lo " + (f.bien === 1 ? "entendió" : "entendieron"));
+            if (f.medio) partes.push(f.medio + " más o menos");
+            if (f.mal) partes.push(f.mal + " no lo " + (f.mal === 1 ? "entendió" : "entendieron"));
+        } else {
+            if (f.bien) partes.push(f.bien + " bien");
+            if (f.mal) partes.push(f.mal + " a revisar");
+        }
+        if (f.sin_calificar) partes.push(plural(f.sin_calificar, "sin calificar", "sin calificar"));
+        const detalle = (f.asistentes ? f.respondieron + " de " + plural(f.asistentes, "alumno", "alumnos") + " contestaron"
+            : plural(f.respondieron, "respuesta", "respuestas")) + (partes.length ? ": " + partes.join(", ") : "") + ".";
+        if (!f.respondieron) return { tono: "nada", texto: "Nadie contestó la pregunta de salida.", detalle: "" };
+        if (!calificadas) return { tono: "falta", texto: "Falta calificar la pregunta de salida para saber si el tema quedó.", detalle };
+        const nota = ((f.bien || 0) + (f.medio || 0) / 2) / calificadas;
+        if (nota >= SALIDA_QUEDO) return { tono: "quedo", texto: "✅ El tema quedó.", detalle };
+        if (nota >= SALIDA_A_MEDIAS) return { tono: "medias", texto: "🤔 Quedó a medias: conviene un repaso corto la próxima clase.", detalle };
+        return { tono: "repetir", texto: "🔁 Conviene repetir el tema la próxima clase.", detalle };
+    }
+
+    // Una línea: el veredicto en negrita y el detalle. Vacía si no hubo.
+    function pintarSalida(caja, f, antes) {
+        caja.textContent = "";
+        const v = veredictoSalida(f);
+        caja.hidden = !v;
+        if (!v) return;
+        if (antes) caja.appendChild(document.createTextNode(antes));
+        caja.appendChild(el("strong", "font-semibold", v.texto));
+        if (v.detalle) caja.appendChild(document.createTextNode(" " + v.detalle));
+    }
+
+    return { cargar, pintar, titular, textoPreguntas, textoPracticas, textoPartidas, textoTurnos, pintarUltimaClaseDelAlumno,
+        cargarSalida, veredictoSalida, pintarSalida };
 })();

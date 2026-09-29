@@ -1413,6 +1413,7 @@
                 btn.textContent = "Confirmar y cerrar";
                 document.getElementById("clase-titulo").focus();
                 pintarResumenDeLaClase(currentOpenSessionId);
+                refrescarSalida();
                 // Lo que se marcó del plan ya dice qué se trabajó: se propone, no se pisa.
                 const notasEl = document.getElementById("clase-notas");
                 const dados = itemsDelPlan.filter((it) => planHecho.has(it.id)).map((it) => it.titulo);
@@ -1459,6 +1460,8 @@
             despues.hidden = false;
             planHecho = new Set();
             document.querySelectorAll("#plan-items button[aria-pressed]").forEach((b) => pintarBotonHecho(b, false));
+            document.getElementById("salida-resultado").hidden = true;
+            mostrarSalidaPasada();
         }
 
         /* Al cerrar, la partida de la clase se guarda sola —si tiene jugadas y
@@ -1538,6 +1541,7 @@
             currentOpenSessionId = openSession ? openSession.id : null;
             refrescarPlanHecho();
             cargarTurnos();
+            mostrarSalidaPasada();
             if (openSession) {
                 await markAttendance(openSession.id);
                 await startPresenceLog(openSession.id);
@@ -3024,11 +3028,12 @@
 
         // paraAlumno: la pregunta dirigida, solo para quien tiene el turno. Los
         // demás la ven pero no la contestan (lo rechaza la base).
-        async function crearPregunta(fen, expectedPlies, paraAlumno) {
+        // deSalida: la pregunta de salida, la última de la clase (ver hacerPreguntaDeSalida).
+        async function crearPregunta(fen, expectedPlies, paraAlumno, deSalida) {
             await sb.from("questions").update({ closed_at: new Date().toISOString() })
                 .eq("created_by", boardOwnerId).is("closed_at", null);
             return sb.from("questions")
-                .insert({ fen, created_by: session.user.id, expected_plies: expectedPlies, tiempo_limite: tiempoElegido(), para_alumno: paraAlumno || null })
+                .insert({ fen, created_by: session.user.id, expected_plies: expectedPlies, tiempo_limite: tiempoElegido(), para_alumno: paraAlumno || null, de_salida: !!deSalida })
                 .select().single();
         }
 
@@ -3036,13 +3041,67 @@
             const fen = board.fen();
             const motivo = motivoPosicionInvalida(fen);
             if (motivo) { setStatus(motivo); return false; }
-            const { error } = await sb.rpc("hacer_pregunta_de_opciones", {
+            const { data, error } = await sb.rpc("hacer_pregunta_de_opciones", {
                 p_fen: fen, p_prompt: prompt, p_opciones: opciones,
                 p_correcta: correcta, p_tiempo_limite: tiempoElegido(),
             });
             if (error) { console.error(error); setStatus("No se pudo crear la pregunta: " + error.message); return false; }
             setStatus("Pregunta enviada a la clase: " + prompt);
-            return true;
+            // La fila de la pregunta (la de salida la marca después).
+            return (Array.isArray(data) ? data[0] : data) || true;
+        }
+
+        /* ---------- La pregunta de salida ----------
+           La última de la clase, sobre lo visto: el termómetro o «¿qué
+           jugarías?» en el tablero, marcada questions.de_salida. Lo que dice
+           (ResumenClase.veredictoSalida) se ve al cerrar, queda en el registro y
+           se le recuerda al profe al abrir la clase siguiente. */
+        async function hacerPreguntaDeSalida(tipo) {
+            if (!currentOpenSessionId) { setStatus("La pregunta de salida es de una clase abierta."); return; }
+            if (tipo === "termometro") {
+                const q = await crearPreguntaDeOpciones(PreguntaClase.TERMOMETRO.prompt, PreguntaClase.TERMOMETRO.opciones, null);
+                if (!q) return;
+                const { error } = await sb.from("questions").update({ de_salida: true }).eq("id", q.id);
+                if (error) { console.error(error); setStatus("La pregunta salió, pero no quedó marcada como de salida: " + error.message); return; }
+            } else {
+                const fen = board.fen();
+                const motivo = motivoPosicionInvalida(fen);
+                if (motivo) { setStatus(motivo); return; }
+                const { data, error } = await crearPregunta(fen, 1, null, true);
+                if (error) { console.error(error); setStatus("No se pudo crear la pregunta: " + error.message); return; }
+                computeEngineAnswer(data.id, fen, 1);
+            }
+            setStatus("🚪 Pregunta de salida enviada: lo que contesten dice si el tema quedó.");
+            refrescarSalida();
+        }
+
+        async function refrescarSalida() {
+            const caja = document.getElementById("salida-resultado");
+            if (!caja || !currentOpenSessionId) return;
+            const { fila, error } = await ResumenClase.cargarSalida(sb, currentOpenSessionId);
+            if (error) { console.error(error); return; }
+            ResumenClase.pintarSalida(caja, fila);
+        }
+
+        // Al empezar: lo que dijo la pregunta de salida de la última clase cerrada.
+        async function mostrarSalidaPasada() {
+            const caja = document.getElementById("salida-pasada");
+            if (!caja || !isTeacher) return;
+            const { data, error } = await sb.from("class_sessions").select("id, title, ended_at")
+                .eq("created_by", boardOwnerId).not("ended_at", "is", null)
+                .order("ended_at", { ascending: false }).limit(1);
+            if (error) { console.error(error); return; }
+            const pasada = data && data[0];
+            if (!pasada) { caja.hidden = true; return; }
+            const { fila, error: err2 } = await ResumenClase.cargarSalida(sb, pasada.id);
+            if (err2) { console.error(err2); return; }
+            ResumenClase.pintarSalida(caja, fila, "📌 La clase pasada" + (pasada.title ? " («" + pasada.title + "»)" : "")
+                + ", la pregunta de salida dijo: ");
+        }
+
+        if (document.getElementById("salida-termometro-btn")) {
+            document.getElementById("salida-termometro-btn").addEventListener("click", () => hacerPreguntaDeSalida("termometro"));
+            document.getElementById("salida-jugada-btn").addEventListener("click", () => hacerPreguntaDeSalida("jugada"));
         }
 
         function montarControlesDePreguntas() {
@@ -3613,6 +3672,8 @@
                     .on("postgres_changes", { event: "*", schema: "public", table: "question_answers" }, () => {
                         if (currentQuestion) loadAnswersFor(currentQuestion.id);
                         avisarResultadosALaClase();
+                        // Cerrando la clase: la pregunta de salida cambia con cada respuesta.
+                        if (!document.getElementById("clase-cerrar-campos").classList.contains("hidden")) refrescarSalida();
                     })
                     .subscribe();
             } else {
@@ -3903,7 +3964,10 @@
             const { error } = await sb.from("question_answers").update({ is_correct: value }).eq("id", answerId);
             if (error) console.error(error);
             // Si está cerrando la clase, el resumen de arriba tiene que contar esta nota.
-            if (!document.getElementById("clase-cerrar-campos").classList.contains("hidden")) pintarResumenDeLaClase(currentOpenSessionId);
+            if (!document.getElementById("clase-cerrar-campos").classList.contains("hidden")) {
+                pintarResumenDeLaClase(currentOpenSessionId);
+                refrescarSalida();
+            }
         }
 
         // ---------- Respuesta de referencia del motor (privada, solo el profesor) ----------
