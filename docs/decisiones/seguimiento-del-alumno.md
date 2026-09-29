@@ -428,6 +428,17 @@ que la lógica vive en **`js/notas-alumno.js`** y no en ninguna de las páginas:
   se repasa.
 - Y de solo lectura, el **propio alumno**, en su página de Informes.
 
+### La nota lleva la clase y la posición
+
+Desde la clase en vivo, la nota queda en la clase donde se escribió
+(`notas_alumno.class_session_id`) y puede llevar la posición del tablero
+(`notas_alumno.fen`), que se dibuja con la nota —en la clase y en Informes—
+sin chess.js ni tablero: con las casillas y piezas del tablero elegido
+(`diagrama()` en `js/notas-alumno.js`). Que la clase sea de quien firma lo
+revisa el trigger `notas_alumno_clase_propia`, y la forma de la posición un
+CHECK. Cómo se anota desde la clase, en «Notas rápidas desde donde se mira»
+(clase-en-vivo.md).
+
 ### Quién ve qué lo decide la base
 
 - **Aislada por profesor, igual que `tareas` y `class_sessions`**: un profesor ve

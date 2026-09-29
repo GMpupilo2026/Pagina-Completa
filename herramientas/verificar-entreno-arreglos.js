@@ -341,8 +341,12 @@ async function coordenadas(browser) {
     currentTarget = "c3"; falladaEsta = false;
     ["d4", "e5", "f6"].forEach((sq) => handleGuess(sq));
     handleGuess("c3");
+    /* La siguiente la sortea la página, y b6 (sembrada con 9 de 10) sale una
+       de cada veinte veces: entonces su acierto sería el segundo y el total,
+       11. Se fija una sin historia, para que la prueba no dependa del sorteo. */
+    currentTarget = "e4"; falladaEsta = false;
     const tras = currentTarget;
-    handleGuess(tras);            // la siguiente, a la primera: un acierto
+    handleGuess(tras);            // a la primera: un acierto
     const e = CoordenadasCasillas.leer();
     return [e["c3:f"], e["c3:a"] || 0, e[tras + ":a"], misses];
   });

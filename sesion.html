@@ -85,6 +85,12 @@
                     <!-- Lo que contestó cada alumno en ESTA clase (resumen_de_la_clase, ver
                          js/resumen-clase.js): se ve antes de confirmar, que es cuando todavía
                          se pueden calificar las respuestas que faltan. -->
+                    <!-- class_sessions.para_ausentes: la partida de la clase la pueden repasar también los
+                         alumnos del profe que no vinieron (saved_games_select_ausentes), con sus preguntas. -->
+                    <label class="sm:col-span-2 flex items-center gap-2 text-sm text-brand-700 dark:text-brand-200">
+                        <input id="clase-para-ausentes" type="checkbox">
+                        <span><span aria-hidden="true">📤 </span>Que la repasen también los que faltaron <span class="text-xs text-brand-500 dark:text-brand-300">(en «Repasar mis clases», con las preguntas de la clase)</span></span>
+                    </label>
                     <!-- La pregunta de salida (questions.de_salida): la última, sobre lo visto. El
                          veredicto (salida_de_la_clase) queda en el registro y se le recuerda al
                          profe al abrir la clase siguiente. -->
@@ -910,6 +916,7 @@
                                     <div class="flex flex-wrap gap-2 mt-2">
                                         <button id="elegido-insignia-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🏅 </span>Darle una insignia o trofeos</button>
                                         <button id="elegido-preguntar-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">❓ </span>Preguntarle con el tablero</button>
+                                        <button id="elegido-anotar-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">📝 </span>Anotar en su bitácora</button>
                                         <button id="elegido-otro-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🎲 </span>Elegir a otro</button>
                                     </div>
                                     <!-- Cómo respondió: queda en clase_elegidos.resultado y en el resumen

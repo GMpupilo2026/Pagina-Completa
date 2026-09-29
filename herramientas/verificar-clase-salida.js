@@ -90,6 +90,14 @@ async function pruebaCierre(browser) {
   await page.waitForFunction(() => window.__inserts.some((i) => i.tabla === "questions" && i.fila.de_salida), null, { timeout: 5000 });
   igual("«¿qué jugarías?» sale marcada de salida", await page.evaluate(() =>
     window.__inserts.filter((i) => i.tabla === "questions" && i.fila.de_salida).map((i) => [i.fila.fen, i.fila.expected_plies])), [[FEN, 1]]);
+
+  // La clase para los que faltaron (class_sessions.para_ausentes): se elige al cerrar.
+  igual("se ofrece compartirla con los que faltaron, sin marcar", [await seVe(page, "#clase-para-ausentes"), await page.isChecked("#clase-para-ausentes")], [true, false]);
+  await page.check("#clase-para-ausentes");
+  await page.click("#clase-cerrar-btn");
+  await page.waitForFunction(() => window.__updates.some((u) => u.tabla === "class_sessions" && u.campos.ended_at), null, { timeout: 5000 });
+  igual("al cerrar, va en la clase", await page.evaluate(() =>
+    window.__updates.filter((u) => u.tabla === "class_sessions" && u.campos.ended_at).map((u) => u.campos.para_ausentes)), [true]);
   igual("sin errores en consola", errores, []);
   await ctx.close();
 }
