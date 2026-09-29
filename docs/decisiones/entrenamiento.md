@@ -377,6 +377,80 @@ flojo» en informes.md); el hub se queda con la fila del alumno de la sesión.
 Si la base no responde, no se propone nada. Lo prueba
 `verificar-entreno-repaso.js`.
 
+## Coordenadas insiste en las casillas que cuestan
+
+Antes cada casilla salía al azar parejo y no se guardaba cuáles fallaba el
+alumno. Ahora `js/coordenadas-casillas.js` lleva, por casilla, aciertos y
+fallos (`entreno_coord_casillas_v1`: `"e4:a"`, `"e4:f"`, que viaja con la
+cuenta con `maxPorClave`: los contadores solo suben) y el sorteo pesa
+`1 + 3 · fallos / (aciertos + fallos + 1)`.
+
+- Todas siguen saliendo (una nunca vista o dominada pesa 1); una que se falla
+  casi siempre sale hasta cuatro veces más. Una ronda solo de las difíciles no
+  entrenaría el tablero entero.
+- **Cada pedido cuenta UNA vez**: fallo si hubo algún error o se acabó el
+  tiempo, acierto si salió a la primera. Tres clics malos en la misma no son
+  tres fallos (los «errores» de la ronda sí siguen contando cada clic).
+- Vale igual en Modo Adaptado (decir el color de la casilla).
+- Al terminar, la ronda nombra las que más cuestan (con al menos dos fallos):
+  «b6 (fallada 9 de 10 veces)».
+- Lo prueba `verificar-entreno-arreglos.js` («Coordenadas: las casillas que
+  cuestan»), con el sorteo medido en 64 000 tiros.
+
+## Tipos: al tablero también se le pregunta
+
+El recuadro de la jugada de Tipos de entrenamiento solo aceptaba jugadas o
+casillas; ahora entiende también las preguntas de todo Entrenamiento
+(`js/comandos-tablero.js`: «posición», «reyes», «qué hay en e4», «fila 4»,
+«ayuda»), antes de tratar el texto como respuesta. Una pregunta no cuenta como
+error. Tres cuidados:
+
+- **Una casilla sola («e4») no es pregunta**: es la respuesta de varios juegos
+  (Descarte, el Barrido, Ruta segura), y `interpretar()` no la toma.
+- **Con las piezas tapadas (Fotografía) no se contesta nada**: la posición es
+  lo que hay que recordar.
+- **Sin partida de verdad** (un tablero armado a mano, Constrúyela tú),
+  «jugadas de f3» no se cuenta: «no tiene jugadas» sería falso.
+
+Visualización ya preguntaba con el mismo módulo, y el 4×4 tiene su propio
+cuadro a propósito: su tablero es de 4×4 y el común supone uno de 8×8. Lo
+prueba `verificar-tipos-pagina.js` («reyes» en ¿Qué quiere el rival?).
+
+## Practicar y Aprender: las posiciones escritas en el código, revisadas
+
+Las series de Practicar (`SETS` en `js/entreno-practicas.js`) y las lecciones
+de Aprender (`LESSONS` en `js/entreno-aprender.js`) viven en el código y ningún
+verificador las recorría. `verificar-practicar-aprender.js` (sin navegador)
+las recorre todas con chess.js, y al estrenarlo encontró diez ejercicios mal:
+
+- **Siete posiciones ilegales**: el rey del que no juega ya estaba en jaque
+  (chess.js no lo mira). Los cuatro de «Mate con dama o torre apoyada»
+  (`7k/8/6K1/…/7Q`: la dama de h1 ya daba jaque por la columna), un
+  descubierto y la lección del descubierto (el alfil que tapaba la diagonal
+  daba jaque él mismo: un alfil no puede «tapar» una diagonal), y un ataque
+  doble.
+- **Tres «ataques dobles» que regalaban la pieza**: la torre de e8 se comía la
+  dama de e4, la dama de a6 la torre de a2, y en la lección la torre de a8 se
+  comía la dama de d8. Una torre no puede atacar una dama sin que la dama
+  pueda comérsela.
+
+Cada uno se rehizo con el cambio más chico que lo deja bien (la dama que llega
+por la fila y no por la columna, una torre o un caballo tapando en vez del
+alfil, piezas menores como blanco), comprobado con chess.js.
+
+**Y la página acepta cualquier jugada que cumpla el motivo**, no solo la
+guardada (`js/motivos-tacticos.js`, el mismo módulo que usa el verificador): en
+un ataque descubierto todo salto del caballo descubre el jaque, y en varias
+horquillas y dobles hay otra jugada que también lo es; 47 respuestas buenas se
+rechazaban con «no es la jugada que buscamos». Cumplir el motivo exige también
+que el rival no pueda comer la pieza que atacó: una horquilla que regala el
+caballo no es lo que el ejercicio enseña. Las lecciones de táctica dicen su
+`motivo`. Lo prueba `verificar-entreno-arreglos.js` («cualquier jugada que
+cumpla el motivo»).
+
+No se mudaron a JSON: lo que faltaba era que alguien las revisara, y el
+verificador las lee donde están.
+
 ## Repasar lo que costó y «Hoy te toca»
 
 `node herramientas/verificar-todo.js entreno-repaso` lo comprueba en un

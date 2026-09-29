@@ -110,16 +110,16 @@ const LESSONS = [
   // ---------- Tácticas básicas ----------
   { id:'tac_horquilla', cat:'tacticas', title:'Horquilla', type:'move',
     text:'Una horquilla ataca dos piezas rivales a la vez con una sola pieza, obligando al rival a perder una de ellas. Encuentra el salto de caballo que ataca al rey Y a la dama negra al mismo tiempo.',
-    fen:'6k1/8/2q5/3N4/8/8/8/K7 w - - 0 1', solution:{from:'d5',to:'e7'} },
+    fen:'6k1/8/2q5/3N4/8/8/8/K7 w - - 0 1', solution:{from:'d5',to:'e7'}, motivo:'horquilla' },
   { id:'tac_clavada', cat:'tacticas', title:'Clavada', type:'move',
     text:'Una pieza está "clavada" cuando no puede moverse sin dejar expuesta a una pieza más valiosa detrás de ella — aquí, su propio rey. El caballo negro está clavado por tu torre y no se puede mover: captúralo gratis.',
-    fen:'4k3/8/4n3/8/2B1R3/8/8/4K3 w - - 0 1', solution:{from:'c4',to:'e6'} },
+    fen:'4k3/8/4n3/8/2B1R3/8/8/4K3 w - - 0 1', solution:{from:'c4',to:'e6'}, motivo:'clavada' },
   { id:'tac_descubierta', cat:'tacticas', title:'Ataque descubierto', type:'move',
     text:'Un ataque descubierto pasa cuando mueves una pieza y, al apartarse, deja a otra pieza tuya atacando algo que antes tapaba. Mueve el caballo y descubre el jaque de tu alfil.',
-    fen:'4k3/8/8/8/B7/2N5/8/6K1 w - - 0 1', solution:{from:'c3',to:'d5'} },
+    fen:'4k3/8/2N5/8/B7/8/8/6K1 w - - 0 1', solution:{from:'c6',to:'d4'}, motivo:'descubierto' },
   { id:'tac_doble', cat:'tacticas', title:'Ataque doble', type:'move',
     text:'Un ataque doble amenaza dos piezas rivales a la vez con una sola pieza de largo alcance (a diferencia de la horquilla, que siempre es de un caballo). Mueve la dama a la casilla que ataca la torre Y el caballo negros al mismo tiempo.',
-    fen:'r6n/8/4k3/8/3Q4/8/8/7K w - - 0 1', solution:{from:'d4',to:'d8'} },
+    fen:'7n/2r5/4k3/8/3Q4/8/8/7K w - - 0 1', solution:{from:'d4',to:'d8'}, motivo:'doble' },
 ];
 
 const CATEGORY_ORDER = ['movimientos','reglas','tacticas','asignaciones'];
@@ -292,11 +292,19 @@ function blindHandleMoveGuess(raw){
   moverPreguntandoCoronacion(from, to, blindResolverJugada);
 }
 
+/* En las tácticas, cualquier jugada que cumpla el motivo de la lección
+   (js/motivos-tacticos.js): en el ataque descubierto, todo salto del caballo
+   descubre el jaque, y la lección solo aceptaba uno. */
+function cumpleElMotivo(moveResult){
+  return !!(currentLesson.motivo && window.MotivosTacticos && MotivosTacticos.cumple(currentLesson.motivo, currentLesson.fen, moveResult));
+}
+
 function blindResolverJugada(moveResult){
   if(!moveResult) return;
   renderPositionReadout();
   const correct = currentLesson.anyLegalMove ||
-    (currentLesson.solution && moveResult.from === currentLesson.solution.from && moveResult.to === currentLesson.solution.to);
+    (currentLesson.solution && moveResult.from === currentLesson.solution.from && moveResult.to === currentLesson.solution.to) ||
+    cumpleElMotivo(moveResult);
   const sanText = window.BlindNotation.sanSpoken(moveResult.san);
   if(correct){
     setStatus(`✅ ${sanText}. ¡Correcto!`, 'ok');
@@ -579,7 +587,8 @@ function onSquareClick(square, btn){
 
 function resolverJugada(moveResult){
   const correct = currentLesson.anyLegalMove ||
-    (currentLesson.solution && moveResult.from === currentLesson.solution.from && moveResult.to === currentLesson.solution.to);
+    (currentLesson.solution && moveResult.from === currentLesson.solution.from && moveResult.to === currentLesson.solution.to) ||
+    cumpleElMotivo(moveResult);
 
   if(correct){
     finishLesson();
