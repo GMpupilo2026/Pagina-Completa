@@ -850,6 +850,48 @@ function planDelProfesor(detalle) {
   return PE.planCompartido(sb, sesionActual.user.id, detalle);
 }
 
+/* El primer paso: lo que toca HOY del plan, arriba de todo y con un botón.
+   El resultado terminaba en un plan de cuatro semanas para leer, y en los
+   datos se ve lo que pasaba: de 52 alumnos que hicieron el diagnóstico, 17 no
+   volvieron a entrenar y 19 lo dejaron al primer o segundo día. Lo que toca
+   lo dice PE.hoyDelPlan(), el mismo de «Hoy te toca» y del panel, y la meta
+   del día es la de Logros (js/logros.js): las tres pantallas dicen lo mismo. */
+let turnoPrimerPaso = 0;
+async function pintarPrimerPaso(detalle) {
+  const caja = document.getElementById('result-primer-paso');
+  caja.hidden = true;
+  if (!sesionActual) return;
+  const turno = ++turnoPrimerPaso;
+  let hoy = null, logros = null;
+  try {
+    [hoy, logros] = await Promise.all([
+      PE.hoyDelPlan(sb, sesionActual.user.id, detalle),
+      window.Logros ? Logros.cargar().catch(() => null) : null,
+    ]);
+  } catch (e) { return; }
+  if (!hoy || turno !== turnoPrimerPaso) return;
+  const meta = window.Logros ? Logros.META_DIARIA : 5;
+  const empezando = hoy.numero === 1 && !hoy.hechos;
+  document.getElementById('primer-paso-titulo').textContent = empezando
+    ? 'Tu primer paso: hoy mismo'
+    : `Esta semana te toca: ${hoy.foco}`;
+  document.getElementById('primer-paso-texto').textContent = empezando
+    ? `La semana 1 de tu plan es ${hoy.foco}. Empieza ya con «${hoy.recurso.texto}»: ${meta} ejercicios hoy y el día cuenta para tu racha.`
+    : `Semana ${hoy.numero} de ${hoy.total} del plan${hoy.delProfesor ? ' que te compartió tu profesor' : ''}: «${hoy.recurso.texto}»`
+      + (hoy.hechos === null ? '.' : hoy.hechos ? ` (llevas ${hoy.hechos} desde el diagnóstico).` : ' (todavía nada).');
+  const metaEl = document.getElementById('primer-paso-meta');
+  const st = logros && logros.sesion && !logros.error ? logros.stats : null;
+  metaEl.hidden = !st;
+  if (st) {
+    const n = st.hoy_ejercicios || 0;
+    metaEl.textContent = n >= meta ? `✅ Hoy ya llevas ${n}: el día cuenta para tu racha.` : `Hoy llevas ${n} de ${meta}.`;
+  }
+  const ir = document.getElementById('primer-paso-ir');
+  ir.href = PE.enlace(hoy.recurso.href, '../');
+  ir.textContent = empezando ? 'Empezar ahora →' : 'Seguir →';
+  caja.hidden = false;
+}
+
 function mostrarResultado(detalle, reciente) {
   const resumen = PE.resumir(detalle);
   const plan = PE.generarPlan(resumen);
@@ -903,6 +945,7 @@ function mostrarResultado(detalle, reciente) {
 
   pintarPlan(plan, resumen);
   pintarAvance(detalle.fecha);
+  pintarPrimerPaso(detalle);
   // Si el profesor ya revisó ESTE diagnóstico y le compartió su plan (el que
   // edita en Informes), el alumno ve ese y no uno recalculado aparte. La
   // respuesta llega después: si mientras tanto se abrió otro resultado, no se
