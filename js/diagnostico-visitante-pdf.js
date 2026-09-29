@@ -101,6 +101,7 @@ window.DiagnosticoVisitantePDF = (function () {
           ", y el nivel se calculó con los dos (cerca de " + e.combinado + margen(e.errorCombinado) + "). " + sinEmoji(e.lectura && e.lectura.texto)
         : "Sin Elo declarado: el nivel sale solo de la prueba (cerca de " + e.estimado + margen(e.error) + ").",
     });
+    if (PE.notaRecalibrado(resumen)) bloques.push({ tipo: "parrafo", texto: PE.notaRecalibrado(resumen) });
     if (resumen.modelo === "elo") {
       bloques.push({
         tipo: "parrafo",

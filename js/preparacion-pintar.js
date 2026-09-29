@@ -90,6 +90,7 @@
     if (r.motor) c.appendChild(pintarMotor(r));
     if (r.teoria) c.appendChild(pintarTeoria(r));
     c.appendChild(pintarFoda(r));
+    if (r.tactica && window.PreparacionTactica) c.appendChild(pintarTactica(r));
     if (r.masAlla) c.appendChild(pintarMasAlla(r));
     c.appendChild(pintarRepertorio(r));
     c.appendChild(pintarLineas(r));
@@ -144,6 +145,8 @@
           a.textContent = x.alumno;
           t.appendChild(a);
         }
+        const der = derrotasAqui(x.derrotas);
+        if (der) t.appendChild(der);
         caja.appendChild(t);
         if (opcionesActuales.alVerSecuencia) caja.appendChild(botonVer(x.sec, "Ver en el tablero: " + A.lineaEs(x.sec), x.titulo + ": en esta línea " + x.texto));
         d.appendChild(caja);
@@ -178,6 +181,97 @@
     if (p) ponerPendiente(p, lista);
   }
 
+  /* Cómo le ganaron por esa línea: las partidas reales que perdió, con el
+     enlace para verlas enteras (el análisis solo guarda enlaces https de
+     Lichess o Chess.com). Plegado: es para quien quiere estudiar el cómo. */
+  function derrotasAqui(d) {
+    if (!d || !d.n) return null;
+    const det = el("details", "mt-1");
+    det.dataset.derrotas = String(d.n);
+    det.appendChild(el("summary", "cursor-pointer text-sm font-semibold text-brand-600 dark:text-brand-200 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400",
+      "Cómo le ganaron aquí (" + d.n + (d.n === 1 ? " partida" : " partidas") + ")"));
+    const FIN = window.PreparacionAnalisis ? window.PreparacionAnalisis.FIN_ES : {};
+    const ul = el("ul", "mt-1 space-y-1 text-sm text-brand-600 dark:text-brand-200");
+    d.lista.forEach((x) => {
+      const li = el("li");
+      const partes = [];
+      if (x.fecha) partes.push(fecha(x.fecha));
+      if (x.oponente) partes.push("contra " + x.oponente + (x.elo ? " (" + x.elo + ")" : ""));
+      partes.push("perdió " + (FIN[x.fin] || "") + " en " + Math.ceil(x.jugadas / 2) + " jugadas");
+      li.appendChild(document.createTextNode(partes.join(" · ").replace(/perdió +en/, "perdió en")));
+      if (x.enlace) {
+        const a = el("a", "ml-2 font-semibold underline text-brand-700 dark:text-brand-100 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "Ver la partida ↗");
+        a.href = x.enlace;
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        a.setAttribute("aria-label", "Ver la partida" + (x.oponente ? " contra " + x.oponente : "") + " (se abre en otra pestaña)");
+        li.appendChild(a);
+      }
+      ul.appendChild(li);
+    });
+    if (d.n > d.lista.length) ul.appendChild(el("li", "text-brand-450 dark:text-brand-350", "Y " + (d.n - d.lista.length) + " más: aquí van las más recientes."));
+    det.appendChild(ul);
+    return det;
+  }
+
+  // A practicar ese tema en Entrenamiento (entreno/temas.html).
+  function enlacePractica(clave, tema) {
+    const T = window.PreparacionTactica;
+    const nombre = T && T.TEMAS[tema] ? T.TEMAS[tema].plural : "este tema";
+    const a = el("a", "inline-block mt-1 text-sm font-semibold underline text-brand-700 dark:text-brand-100 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "Practicar " + nombre);
+    a.href = "entreno/temas.html?tema=" + encodeURIComponent(clave);
+    a.dataset.practica = clave;
+    return a;
+  }
+
+  /* Su táctica (js/preparacion-tactica.js): con qué gana y con qué pierde,
+     tema por tema, con cuántas partidas, ejemplos para ver en el tablero (en
+     la jugada del patrón) y a qué practicar. */
+  function pintarTactica(r) {
+    const t = r.tactica, T = window.PreparacionTactica;
+    const s = tarjeta("Su táctica: con qué gana y con qué pierde", "tactica-titulo");
+    const dG = t.revisadas.ganadas - t.sinMaterial.ganadas, dP = t.revisadas.perdidas - t.sinMaterial.perdidas;
+    const cuantas = (n, uno, varios) => n + " " + (n === 1 ? uno : varios);
+    s.appendChild(nota("En sus " + cuantas(t.revisadas.ganadas, "victoria", "victorias") + " y " + cuantas(t.revisadas.perdidas, "derrota", "derrotas") + " más recientes se buscó el momento decisivo: la primera vez que un bando perdió 2 puntos de material o más sin recuperarlos, y la táctica que lo hizo. Es un conteo por patrón, sin motor: muestra tendencias. No entran las que se decidieron sin perder material (por tiempo, en lo posicional o por abandono): " + cuantas(t.sinMaterial.ganadas, "victoria", "victorias") + " y " + cuantas(t.sinMaterial.perdidas, "derrota", "derrotas") + "."));
+    const grilla = el("div", "grid lg:grid-cols-2 gap-6");
+    const columna = (titulo, lista, total, lado, vacio) => {
+      const d = el("div", "min-w-0");
+      d.dataset.tactica = lado;
+      d.appendChild(el("h4", "font-bold text-brand-800 dark:text-white mb-2", titulo));
+      if (!lista.length) { d.appendChild(el("p", "text-sm text-brand-500 dark:text-brand-300", vacio)); return d; }
+      const ul = el("ul", "divide-y divide-brand-100 dark:divide-brand-800");
+      lista.forEach((x) => {
+        const tm = T.TEMAS[x.tema] || { nombre: x.tema };
+        const li = el("li", "py-3");
+        li.dataset.tema = x.tema;
+        li.appendChild(el("p", "text-sm font-semibold text-brand-800 dark:text-white", tm.nombre + ": " + x.n + (x.n === 1 ? " partida" : " partidas") + " (" + Math.round(100 * x.n / Math.max(total, 1)) + " %)"));
+        const fila = el("div", "mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm");
+        x.ejemplos.forEach((ej, i) => {
+          if (opcionesActuales.alVerSecuencia) {
+            const b = botonVer(ej.sec, "Ver en el tablero el ejemplo " + (i + 1) + " de " + tm.nombre.toLowerCase(), tm.nombre + ": la jugada que decide." + (ej.oponente ? " Contra " + ej.oponente + "." : ""), ej.ply);
+            b.textContent = "Ver ejemplo " + (i + 1);
+            fila.appendChild(b);
+          }
+          if (ej.enlace) {
+            const a = el("a", "underline text-brand-700 dark:text-brand-100 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "partida " + (i + 1) + " ↗");
+            a.href = ej.enlace; a.target = "_blank"; a.rel = "noopener noreferrer";
+            a.setAttribute("aria-label", "Ver la partida del ejemplo " + (i + 1) + " (se abre en otra pestaña)");
+            fila.appendChild(a);
+          }
+        });
+        if (tm.practica) fila.appendChild(enlacePractica(tm.practica, x.tema));
+        li.appendChild(fila);
+        ul.appendChild(li);
+      });
+      d.appendChild(ul);
+      return d;
+    };
+    grilla.appendChild(columna("Con qué gana él (cuídate de esto)", t.realiza, dG, "realiza", "En sus victorias no se ve una táctica que se repita."));
+    grilla.appendChild(columna("Con qué pierde (búscalo)", t.sufre, dP, "sufre", "En sus derrotas no se ve una táctica que se repita."));
+    s.appendChild(grilla);
+    return s;
+  }
+
   function listaConsejos(titulo, emoji, items, tipo, vacio) {
     const caja = el("div", "mb-4 min-w-0");
     caja.dataset.consejos = tipo;
@@ -197,6 +291,9 @@
       const t = el("div", "min-w-0 flex-1");
       t.appendChild(el("p", "text-sm font-semibold text-brand-800 dark:text-white", x.texto));
       if (x.porque) t.appendChild(el("p", "text-sm text-brand-600 dark:text-brand-200", x.porque));
+      if (x.practica) t.appendChild(enlacePractica(x.practica, x.tema));
+      const der = derrotasAqui(x.derrotas);
+      if (der) t.appendChild(der);
       li.appendChild(t);
       if (x.sec && opcionesActuales.alVerSecuencia) li.appendChild(botonVer(x.sec, "Ver en el tablero: " + A.lineaEs(x.sec), x.texto + " " + (x.porque || "")));
       ul.appendChild(li);
@@ -646,11 +743,12 @@
     return s;
   }
 
-  function botonVer(sec, etiqueta, nota) {
+  // `en`: en qué jugada se abre (si no, en la última).
+  function botonVer(sec, etiqueta, nota, en) {
     const b = el("button", "px-2 py-1 rounded text-xs font-semibold bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "Ver");
     b.type = "button";
     b.setAttribute("aria-label", etiqueta);
-    b.addEventListener("click", () => opcionesActuales.alVerSecuencia(sec, nota, b));
+    b.addEventListener("click", () => opcionesActuales.alVerSecuencia(sec, nota, b, en));
     return b;
   }
 

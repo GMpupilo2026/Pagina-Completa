@@ -62,7 +62,11 @@ const PROFUNDIDAD = 18;
    para que repetir la prueba no repita las preguntas. Del más difícil se
    toman más, porque es el que menos ítems viejos tiene y el que más pide la
    prueba. */
-const POR_CASILLERO = { 1: 6, 2: 6, 3: 6, 4: 6, 5: 10 };
+/* El 6 son los muy difíciles (rating 2650 o más), agregados después de la
+   primera calibración con la versión 5: resultó que las de Lichess eran unos
+   380 puntos más fáciles de lo que decía el descuento (ver el corrimiento en
+   diagnostico-calibrar.js), y el escalón 5 se quedó vacío. */
+const POR_CASILLERO = { 1: 6, 2: 6, 3: 6, 4: 6, 5: 10, 6: 16 };
 const DE_OPCION = 2;
 
 /* Dificultad en escala Elo a partir del rating de Lichess. */
@@ -331,10 +335,15 @@ async function main() {
     usados.add(a.id);
   });
   Object.keys(porCasillero).sort().forEach((k) => {
-    const lista = porCasillero[k].slice(0, POR_CASILLERO[k.split(":")[1]]);
+    // Los muy difíciles (casillero 6) se toman de mayor a menor rating y todos
+    // de mover: son los que tienen que llenar el escalón 5, y las de opción
+    // salen más fáciles (hay cuatro jugadas escritas y se puede descartar).
+    const muyDificil = k.split(":")[1] === "6";
+    const orden6 = muyDificil ? porCasillero[k].slice().sort((x, y) => y.rating - x.rating) : porCasillero[k];
+    const lista = orden6.slice(0, POR_CASILLERO[k.split(":")[1]]);
     let opciones = 0;
     lista.forEach((a, n) => {
-      const tipo = opciones < DE_OPCION && elegirDistractores(a) ? "opcion_tablero" : "jugada";
+      const tipo = !muyDificil && opciones < DE_OPCION && elegirDistractores(a) ? "opcion_tablero" : "jugada";
       if (tipo === "opcion_tablero") opciones += 1;
       items.push(comoItem(a, tipo, n));
     });

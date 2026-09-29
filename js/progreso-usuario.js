@@ -115,7 +115,15 @@ window.ProgresoUsuario = (function () {
     masReciente(local, remoto) {
       if (local === null) return remoto;
       if (remoto === null) return local;
-      const cuando = (crudo) => Date.parse(leerObjeto(crudo).fecha || 0) || 0;
+      /* `actualizado` es cuándo se reescribió una copia que ya existía (un
+         diagnóstico recalculado, por ejemplo). No se toca `fecha`, que es la
+         del diagnóstico y la usa lo de abajo para saber si una prueba a medias
+         ya se terminó. Sin esto, la copia vieja del aparato —misma `fecha`—
+         le ganaba al empate a la recalculada y la volvía a subir. */
+      const cuando = (crudo) => {
+        const o = leerObjeto(crudo);
+        return Math.max(Date.parse(o.fecha || 0) || 0, Date.parse(o.actualizado || 0) || 0);
+      };
       return cuando(local) >= cuando(remoto) ? local : remoto;
     },
   };
