@@ -378,9 +378,55 @@ y no se le puede sacar de la base de Lichess: se probó buscando cada uno en la
 tabla «Ejercicios Lichess» (107 mil ejercicios de mate) aplicando la primera
 jugada de cada ejercicio de Lichess y comparando el tablero (una huella md5,
 para no bajar la tabla), y ninguno coincide; con los de Temas, 8 de 2455. La
-dificultad no se pone a ojo, así que Mates sigue en el orden del libro. El día
-que haya suficientes intentos registrados (`activity = 'mates'`, con
-`limpio` desde #491), se puede calibrar con las respuestas reales.
+dificultad no se pone a ojo, así que Mates sigue en el orden del libro hasta
+que haya intentos suficientes para medirla (ver la sección siguiente).
+
+## Calibrar los Mates con los intentos reales
+
+La herramienta está lista, pero **todavía no alcanza**. A fines de septiembre
+de 2026 había 77 intentos con `limpio`, de 4 alumnos, y ningún mate con más de
+dos. Cuando alcance, la página se ordena sola.
+
+- **Qué se mide**: cada mate que un alumno resuelve por primera vez queda en
+  `training_progress` (`activity = 'mates'`) con `limpio` (sin error y sin
+  pista, desde #491). `herramientas/lib/mates-ajuste.js` le pone a cada mate
+  su dificultad en puntos Elo con el modelo del diagnóstico
+  (`PlanEntrenamiento.probabilidad`, sin azar). El ajuste va por turnos, igual
+  que `diagnostico-calibrar.js`:
+  1. el centro de cada categoría, con todos sus intentos;
+  2. cada mate, desde ese centro (± 300);
+  3. cada alumno, desde su medida: la fuerza del último diagnóstico (± su
+     error), si no el Elo del perfil (± el margen de su origen), y si no
+     1200 ± 500.
+  Esa medida es lo que ancla la escala al Elo.
+- **Cómo se corre**: la consulta para exportar está en la cabecera de
+  `herramientas/mates-calibrar.js`. El archivo exportado va FUERA del
+  repositorio (son datos de personas; el script se niega si está adentro).
+  Después: `node herramientas/mates-calibrar.js intentos.json`. Escribe
+  `entreno/data/mates-dificultad.json`, que es SOLO agregado: cuántos
+  intentos y alumnos, el centro de cada categoría y la dificultad de cada mate
+  con **8 intentos o más**. No se edita a mano.
+- **La página** (`js/mates-dificultad.js`) ordena una categoría de fácil a
+  difícil **solo si tiene calibrados el 80 % de sus mates**, y entonces la
+  barra dice «dificultad ≈1350». Con menos, casi todos irían a su centro y el
+  orden lo pondría el puñado medido; mejor el del libro. Sin el archivo, la
+  página funciona igual. El avance es por id, así que reordenar no pierde
+  nada de lo resuelto.
+- **Por qué 8**: `verificar-mates-calibrar.js` inventa alumnos y mates de
+  dificultad CONOCIDA (con los centros lejos de la previa) y comprueba que el
+  ajuste la recupere:
+  - con unos 30 intentos por mate, Spearman 0,97 y error medio de ~80 puntos;
+  - con unos 8, el orden dentro de cada categoría ya sigue al de verdad
+    (~0,8).
+  El mismo verificador revisa que lo publicado no traiga nada de ningún alumno.
+  `verificar-mates-dificultad.js` prueba la página: el archivo de hoy, una
+  categoría calibrada entera, el 79 % y sin archivo.
+- **Sesgo conocido**: solo se registra el mate resuelto, así que el que se
+  abandona no cuenta como fallo. Por eso la medida es «limpio o no», no
+  «resuelto o no».
+- Conviene volver a correrlo cada unos miles de intentos nuevos. Cada vez
+  parte de la previa, no del resultado anterior, así que los mismos datos no
+  se cuentan dos veces.
 
 ## Finales contra la máquina, en Informes
 

@@ -1,0 +1,24 @@
+{
+ "generado": "2026-09-29",
+ "intentos": 77,
+ "alumnos": 4,
+ "minimo": 8,
+ "categorias": {
+  "mate1": {
+   "centro": 950,
+   "calibrados": 0,
+   "total": 306
+  },
+  "mate2": {
+   "centro": 1260,
+   "calibrados": 0,
+   "total": 1434
+  },
+  "mate3": {
+   "centro": 1740,
+   "calibrados": 0,
+   "total": 715
+  }
+ },
+ "elo": {}
+}
