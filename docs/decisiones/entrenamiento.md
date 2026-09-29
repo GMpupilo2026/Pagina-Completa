@@ -381,9 +381,33 @@ Desafíos y Visualización vive ahora en `js/ejercicio-tablero.js`:
   `verificar-coronacion.js` comprueba que ninguna de las tres vuelva a tener un
   diálogo propio.
 
-Lo que todavía es de cada página: dibujar el tablero (cada una marca estados
-distintos: la última jugada, la pista, el origen elegido), las pistas y el
-flujo de cada ejercicio. Unificar eso es el paso siguiente, no este.
+- **El tablero** (`dibujar(tablero, {...})`): Temas, Mates, Practicar y
+  Desafíos lo pintan con la misma función. Cada casilla lleva su estado en
+  `data-estado` («seleccionada», «de la última jugada», «pista: la pieza que se
+  mueve»), que es lo que `js/tablero-accesible.js` le suma a lo que oye el
+  lector de pantalla. Con eso, **Practicar y Desafíos también se miran desde el
+  bando que juega** (hay series con negras que se veían al revés) y **Mates
+  marca la respuesta del rival**, como ya hacía Temas. Desafíos dejaba su
+  propio `aria-label` en cada casilla; ahora lo escribe `tablero-accesible.js`,
+  igual que en las demás.
+- **Las pistas** (`pistas({...})`), por etapas: `texto`, `origen`, `destino` y
+  `solucion`. Cada página dice cuáles usa:
+  - Temas: el **motivo** primero cuando el grupo los mezcla («recomendados»,
+    «fases», «largo»…) y el ejercicio trae uno conocido; después la pieza y la
+    solución. Dentro de un tema, el motivo ya lo dice el título.
+  - Mates: la pieza y la solución.
+  - Practicar: la pieza, el destino y la solución.
+  - Desafíos: su pista escrita si la trae; si no, la pieza y el destino (antes,
+    sin pista escrita, las dos primeras marcaban la misma pieza). Después, la
+    solución.
+  El botón dice lo que va a hacer («Pista», «Otra pista», «Ver solución»), y
+  **la marca de la pista sobrevive a los repintados**: antes se ponía a mano
+  sobre la casilla y se perdía con el siguiente clic. Cada pista cuenta para
+  las estrellas igual que antes.
+
+Lo que sigue siendo de cada página es el flujo del ejercicio (la respuesta del
+rival, cuándo termina, qué se registra). Aprender y Visualización no entraron:
+Aprender no tiene pistas y Visualización no tiene tablero que se toque.
 
 ## El plan del diagnóstico que ve el alumno
 

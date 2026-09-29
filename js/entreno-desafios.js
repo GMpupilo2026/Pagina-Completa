@@ -29,10 +29,6 @@ async function unlock(){
    posiciones no tienen reyes, así que el tablero usa un motor propio
    (MiniChess, abajo) en vez de chess.js, que exige reyes. Para corregir o
    agregar desafíos basta editar el JSON. */
-const GLYPH = {
-  w: { p:'♙', n:'♘', b:'♗', r:'♖', q:'♕', k:'♔' },
-  b: { p:'♟', n:'♞', b:'♝', r:'♜', q:'♛', k:'♚' },
-};
 const CAT_COLOR = { promocion:'#75935a', material:'#3b6ea5', defensa:'#9c4148', mate:'#6b3fa0' };
 const SET_SIZE = 5;
 
@@ -455,54 +451,19 @@ function showList(){
 }
 
 /* ---------------- Tablero ---------------- */
-const FILES = ['a','b','c','d','e','f','g','h'];
-const PIECE_NAME = { p:'peón', n:'caballo', b:'alfil', r:'torre', q:'dama', k:'rey' };
-function isLightSquare(square){
-  const file = square.charCodeAt(0) - 97;
-  const rank = parseInt(square[1], 10) - 1;
-  return (file + rank) % 2 === 1;
-}
 
 function drawBoard(){
-  const board = document.getElementById('board');
-  board.innerHTML = '';
-  for(let rank = 8; rank >= 1; rank--){
-    for(let f = 0; f < 8; f++){
-      const square = FILES[f] + rank;
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'sq ' + (isLightSquare(square) ? 'light' : 'dark');
-      btn.dataset.square = square;
-      const piece = game.get(square);
-      let label = square;
-      if(piece){
-        const span = document.createElement('span');
-        if (window.PiezaPreferida) PiezaPreferida.pintar(span, piece.type, piece.color);
-        else {
-          span.className = piece.color === 'w' ? 'piece-white' : 'piece-black';
-          span.textContent = GLYPH[piece.color][piece.type];
-        }
-        span.setAttribute('aria-hidden', 'true');
-        btn.appendChild(span);
-        label += ', ' + PIECE_NAME[piece.type] + (piece.color === 'w' ? ' blanc' : ' negr') + (piece.type === 'q' || piece.type === 'r' ? 'a' : 'o');
-      }
-      btn.setAttribute('aria-label', label);
-      // Qué dice cada casilla lo escribe js/tablero-accesible.js: acá solo se
-      // declara el estado, que es lo único que esta página sabe y aquel no.
-      if(square === selectedSquare){ btn.classList.add('selected'); btn.dataset.estado = 'seleccionada'; }
-      btn.addEventListener('click', () => onSquareClick(square, btn));
-      board.appendChild(btn);
-    }
-  }
+  // El tablero lo pinta el módulo común (js/ejercicio-tablero.js), desde el
+  // bando que juega y con las marcas de la pista. Lo que dice cada casilla lo
+  // escribe js/tablero-accesible.js (antes esta página ponía el suyo aparte).
+  EjercicioTablero.dibujar(document.getElementById('board'), {
+    juego: game, orientacion: game.turn(), seleccionada: selectedSquare,
+    marcas: pistas.marcas(), alTocar: onSquareClick,
+  });
   montarTeclado();
   renderPositionReadout();
 }
 
-function flashWrong(btn){
-  if(!btn) return;
-  btn.classList.add('wrong-flash');
-  setTimeout(() => btn.classList.remove('wrong-flash'), 350);
-}
 function setStatus(text, cls){
   const el = document.getElementById('round-status');
   el.textContent = text;
@@ -514,14 +475,7 @@ function setStatus(text, cls){
      qué se había jugado: o sea, sin poder seguir. */
   if(comandos) comandos.decir(text);
 }
-function highlightTargets(square){
-  const legal = game.moves({ square, verbose: true });
-  const board = document.getElementById('board');
-  legal.forEach((m) => {
-    const cell = board.querySelector('[data-square="' + m.to + '"]');
-    if(cell) cell.classList.add(m.flags.includes('c') || m.flags.includes('e') ? 'target-capture' : 'target');
-  });
-}
+function highlightTargets(square){ EjercicioTablero.marcarDestinos(document.getElementById('board'), game, square); }
 
 function buildRoundDots(){
   const wrap = document.getElementById('round-progress');
@@ -546,7 +500,7 @@ function loadRound(){
   errorsThisRound = 0;
   roundStartTime = Date.now();
   document.getElementById('hint-btn').disabled = false;
-  document.getElementById('hint-btn').textContent = '💡 Pista';
+  pistas.reiniciar();
   document.getElementById('round-text').textContent = round.text;
   document.getElementById('round-source').textContent = round.source;
   drawBoard();
@@ -576,7 +530,7 @@ function onSquareClick(square, btn){
   if(!target){
     if(piece && piece.color === game.turn()){
       selectedSquare = square; drawBoard(); highlightTargets(square);
-    } else { selectedSquare = null; drawBoard(); flashWrong(btn); }
+    } else { selectedSquare = null; drawBoard(); EjercicioTablero.destello(btn); }
     return;
   }
   const from = selectedSquare;
@@ -665,35 +619,34 @@ function finishSet(){
   EntrenoProgress.log('practicar', { set_id: 'desafio_' + currentSet.id, category: currentSet.cat, title: 'Desafíos: ' + currentSet.title, stars, seconds: Number(totalSeconds) });
 }
 
-function giveHint(){
-  if(roundLocked) return;
-  hintsUsedThisRound++;
-  const round = currentRound();
-  const board = document.getElementById('board');
-  const first = round.moves[0];
-  const from = first.slice(0, 2), to = first.slice(2, 4);
-  if(hintsUsedThisRound === 1){
-    if(round.hint){
-      setStatus('Pista: ' + round.hint);
-    } else {
-      board.querySelectorAll('.hint-from').forEach(el => el.classList.remove('hint-from'));
-      const cell = board.querySelector('[data-square="' + from + '"]');
-      if(cell) cell.classList.add('hint-from');
-      setStatus(blindMode ? `Pista: mueve la pieza de ${window.BlindNotation.squareSpoken(from)}.` : 'Pista: fíjate en la pieza resaltada.');
-    }
-    document.getElementById('hint-btn').textContent = '💡 Otra pista';
-  } else if(hintsUsedThisRound === 2){
-    board.querySelectorAll('.hint-from').forEach(el => el.classList.remove('hint-from'));
-    const cell = board.querySelector('[data-square="' + from + '"]');
-    if(cell) cell.classList.add('hint-from');
-    setStatus(blindMode ? `Pista: mueve la pieza de ${window.BlindNotation.squareSpoken(from)}.` : 'Pista: fíjate en la pieza resaltada.');
-    document.getElementById('hint-btn').textContent = '💡 Ver solución';
-  } else {
+/* Las pistas, por etapas (js/ejercicio-tablero.js). Si el desafío trae su
+   pista escrita, va primero; si no, la pieza y después la casilla adonde va
+   (antes, sin pista escrita, las dos primeras marcaban la misma pieza).
+   Después, la solución. Cada una cuenta para las estrellas. */
+function jugadaDelDesafio(){
+  const r = currentRound();
+  const m = r && r.moves && r.moves[0];
+  return m ? { from: m.slice(0, 2), to: m.slice(2, 4), promotion: m[4] } : null;
+}
+const pistas = EjercicioTablero.pistas({
+  boton: '#hint-btn',
+  etapas: () => (currentRound() && currentRound().hint ? ['texto', 'origen', 'solucion'] : ['origen', 'destino', 'solucion']),
+  texto: () => currentRound().hint,
+  jugada: jugadaDelDesafio,
+  repintar: () => { drawBoard(); },
+  decir: setStatus,
+  enPalabras: () => blindMode,
+  alDar: (n) => { hintsUsedThisRound = n; },
+  alResolver: (j) => {
     resetStreak();
-    const moveResult = game.move({ from, to, promotion: first[4] || 'q' });
+    const moveResult = game.move({ from: j.from, to: j.to, promotion: j.promotion || 'q' });
     drawBoard();
     finishRound(moveResult);
-  }
+  },
+});
+function giveHint(){
+  if(roundLocked) return;
+  pistas.dar();
 }
 document.getElementById('hint-btn').addEventListener('click', giveHint);
 document.getElementById('retry-round-btn').addEventListener('click', loadRound);

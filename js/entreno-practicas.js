@@ -33,10 +33,6 @@ async function unlock(){
    que el jaque tras la jugada lo da una pieza DISTINTA a la que se movió
    (ataques descubiertos). Ninguna posición se escribió "a ojo".
 */
-const GLYPH = {
-  w: { p:'♙', n:'♘', b:'♗', r:'♖', q:'♕', k:'♔' },
-  b: { p:'♟', n:'♞', b:'♝', r:'♜', q:'♛', k:'♚' },
-};
 
 const SETS = [
   { id:'pasillo', cat:'mates', emoji:'🚪', title:'Mate del pasillo', desc:'El rey enemigo está atrapado en la última fila por sus propios peones.',
@@ -296,49 +292,18 @@ function showList(){
 }
 
 /* ---------------- Tablero ---------------- */
-const FILES = ['a','b','c','d','e','f','g','h'];
-function isLightSquare(square){
-  const file = square.charCodeAt(0) - 97;
-  const rank = parseInt(square[1], 10) - 1;
-  return (file + rank) % 2 === 1;
-}
 
 function drawBoard(){
-  const board = document.getElementById('board');
-  board.innerHTML = '';
-  for(let rank = 8; rank >= 1; rank--){
-    for(let f = 0; f < 8; f++){
-      const square = FILES[f] + rank;
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'sq ' + (isLightSquare(square) ? 'light' : 'dark');
-      btn.dataset.square = square;
-      const piece = game.get(square);
-      if(piece){
-        const span = document.createElement('span');
-        if (window.PiezaPreferida) PiezaPreferida.pintar(span, piece.type, piece.color);
-        else {
-          span.className = piece.color === 'w' ? 'piece-white' : 'piece-black';
-          span.textContent = GLYPH[piece.color][piece.type];
-        }
-        span.setAttribute('aria-hidden', 'true');
-        btn.appendChild(span);
-      }
-      // Qué dice cada casilla lo escribe js/tablero-accesible.js: acá solo se
-      // declara el estado, que es lo único que esta página sabe y aquel no.
-      if(square === selectedSquare){ btn.classList.add('selected'); btn.dataset.estado = 'seleccionada'; }
-      btn.addEventListener('click', () => onSquareClick(square, btn));
-      board.appendChild(btn);
-    }
-  }
+  // El tablero lo pinta el módulo común (js/ejercicio-tablero.js): desde el
+  // bando que juega —hay series con negras— y con las marcas de la pista.
+  EjercicioTablero.dibujar(document.getElementById('board'), {
+    juego: game, orientacion: game.turn(), seleccionada: selectedSquare,
+    marcas: pistas.marcas(), alTocar: onSquareClick,
+  });
   montarTeclado();
   renderPositionReadout();
 }
 
-function flashWrong(btn){
-  btn.classList.add('wrong-flash');
-  setTimeout(() => btn.classList.remove('wrong-flash'), 350);
-}
 function setStatus(text, cls){
   const el = document.getElementById('round-status');
   el.textContent = text;
@@ -351,14 +316,7 @@ function setStatus(text, cls){
      qué se había jugado: o sea, sin poder seguir. */
   if(comandos) comandos.decir(text);
 }
-function highlightTargets(square){
-  const legal = game.moves({ square, verbose: true });
-  const board = document.getElementById('board');
-  legal.forEach((m) => {
-    const cell = board.querySelector('[data-square="' + m.to + '"]');
-    if(cell) cell.classList.add(m.flags.includes('c') || m.flags.includes('e') ? 'target-capture' : 'target');
-  });
-}
+function highlightTargets(square){ EjercicioTablero.marcarDestinos(document.getElementById('board'), game, square); }
 
 function buildRoundDots(){
   const wrap = document.getElementById('round-progress');
@@ -381,7 +339,7 @@ function loadRound(){
   errorsThisRound = 0;
   roundStartTime = Date.now();
   document.getElementById('hint-btn').disabled = false;
-  document.getElementById('hint-btn').textContent = '💡 Pista';
+  pistas.reiniciar();
   drawBoard();
   buildRoundDots();
   setStatus(blindMode ? 'Escribe la jugada que quieres hacer.' : 'Encuentra la jugada. Haz clic en la pieza que quieres mover.');
@@ -505,30 +463,29 @@ function finishSet(){
   }
 }
 
-function giveHint(){
-  if(roundLocked) return;
-  hintsUsedThisRound++;
-  const round = currentSet.rounds[currentRoundIndex];
-  const board = document.getElementById('board');
-  if(hintsUsedThisRound === 1){
-    board.querySelectorAll('.hint-from').forEach(el => el.classList.remove('hint-from'));
-    const cell = board.querySelector('[data-square="' + round.from + '"]');
-    if(cell) cell.classList.add('hint-from');
-    setStatus(blindMode ? `Pista: mueve la pieza en ${window.BlindNotation.squareSpoken(round.from)}.` : 'Pista: fíjate en la pieza resaltada.');
-    document.getElementById('hint-btn').textContent = '💡 Otra pista';
-  } else if(hintsUsedThisRound === 2){
-    const cell = board.querySelector('[data-square="' + round.to + '"]');
-    if(cell) cell.classList.add('hint-to');
-    setStatus(blindMode ? `Pista: la casilla de destino es ${window.BlindNotation.squareSpoken(round.to)}.` : 'Pista: la casilla marcada con el círculo es el destino.');
-    document.getElementById('hint-btn').textContent = '💡 Ver solución';
-  } else {
+/* Las pistas, por etapas (js/ejercicio-tablero.js): la pieza, después la
+   casilla adonde va, después la solución. Cada una cuenta para las estrellas
+   (EntrenoProgress.estrellasDeLaRonda). */
+const pistas = EjercicioTablero.pistas({
+  boton: '#hint-btn',
+  etapas: () => ['origen', 'destino', 'solucion'],
+  jugada: () => { const r = currentSet && currentSet.rounds[currentRoundIndex]; return r ? { from: r.from, to: r.to, promotion: r.promotion } : null; },
+  repintar: () => { drawBoard(); },
+  decir: setStatus,
+  enPalabras: () => blindMode,
+  alDar: (n) => { hintsUsedThisRound = n; },
+  alResolver: (j) => {
     resetStreak();
-    const moveResult = game.move({ from: round.from, to: round.to, promotion: round.promotion || 'q' });
+    const moveResult = game.move({ from: j.from, to: j.to, promotion: j.promotion || 'q' });
     drawBoard();
     renderPositionReadout();
-    setStatus(`Solución: ${moveResult ? moveResult.san : round.from + '-' + round.to}.`);
+    setStatus(`Solución: ${moveResult ? moveResult.san : j.from + '-' + j.to}.`);
     finishRound(true);
-  }
+  },
+});
+function giveHint(){
+  if(roundLocked) return;
+  pistas.dar();
 }
 document.getElementById('hint-btn').addEventListener('click', giveHint);
 document.getElementById('retry-round-btn').addEventListener('click', loadRound);
