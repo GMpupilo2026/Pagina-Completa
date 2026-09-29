@@ -497,6 +497,26 @@ para el alumno". Observo, asigno. Dos detalles que no son de estilo:
   pisarlo con la etiqueta de la nota dejaría al profesor corrigiendo a mano un
   campo que antes salía bien.
 
+### Del informe a la tarea, con el renglón armado
+
+La tarjeta del tipo más flojo en Informes lleva a
+`tareas.html?alumno=<id>&material=tipos&recorte=balanza&cantidad=10`, y
+`desdeElInforme()` (en `js/tareas.js`) deja el primer renglón armado: el
+material, el recorte, la meta en cantidad y el número. Al alumno lo marca
+`desdeLaBitacora()`, como siempre.
+
+- **Solo se toma lo que el renglón ofrece.** Un material o un recorte que no
+  existe se ignora sin decir nada (queda «— todo —»), y la cantidad respeta el
+  tope del recorte: `?cantidad=300` de un tipo con 80 queda en 80.
+- Lo que viaja no es privado (una herramienta, un recorte y un número), así
+  que puede ir en la dirección, a diferencia del texto de una nota.
+- `agregarRenglon()` devuelve la promesa de su `refrescarRenglon()` y el
+  arranque la espera: si no, la primera carga de recortes (la del material por
+  omisión) podía terminar DESPUÉS de la de `tipos` y dejar en el selector los
+  recortes equivocados.
+- `verificar-tareas.js` (4 ter) prueba el renglón armado, el tope, el recorte y
+  el material que no existen.
+
 ### Detalles que ya costaron una vez
 
 - **Que la nota esté compartida va ESCRITO** ("👁️ La ve el alumno"), no solo con

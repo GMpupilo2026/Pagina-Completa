@@ -81,10 +81,11 @@ async function init() {
         await cargarAlumnos();
         cursosCatalogo = await MaterialPlataforma.cursos();
         document.getElementById("agregar-renglon").addEventListener("click", () => agregarRenglon());
-        agregarRenglon();
+        await agregarRenglon();
         document.getElementById("form-tarea").addEventListener("submit", enviarTarea);
         await desdeLaBitacora();
         await desdeLaClase();
+        await desdeElInforme();
         await cargarEnviadas();
     } else {
         document.getElementById("vista-alumno").classList.remove("hidden");
@@ -194,6 +195,33 @@ async function desdeLaClase() {
     }
 }
 
+/* Desde Informes («Mandarle 10 de La balanza», en la tarjeta del tipo más
+   flojo): `?alumno=<id>&material=tipos&recorte=balanza&cantidad=10` deja el
+   primer renglón armado; al alumno lo marca desdeLaBitacora. Lo que viaja en
+   la dirección no es nada privado: el nombre de una herramienta, de un recorte
+   y un número. Solo se toma lo que el renglón ofrece: un material o un
+   recorte que no existe se ignora sin decir nada, y la cantidad respeta el
+   tope del recorte (no se piden 300 de un tipo que tiene 80). */
+async function desdeElInforme() {
+    const params = new URLSearchParams(location.search);
+    const slug = params.get("material");
+    const div = document.querySelector("#renglones .renglon");
+    if (!slug || !div) return;
+    const hay = (sel, v) => [...sel.options].some((o) => o.value === v);
+    const selMat = div.querySelector(".r-material");
+    if (!hay(selMat, "herramienta:" + slug)) return;
+    selMat.value = "herramienta:" + slug;
+    await refrescarRenglon(div, true);
+    const recorte = params.get("recorte");
+    const selRec = div.querySelector(".r-recorte");
+    if (recorte && hay(selRec, recorte)) selRec.value = recorte;
+    const selMeta = div.querySelector(".r-meta");
+    if (hay(selMeta, "cantidad")) selMeta.value = "cantidad";
+    const n = parseInt(params.get("cantidad"), 10);
+    if (n > 0 && selMeta.value === "cantidad") div.querySelector(".r-cantidad").value = String(n);
+    await refrescarRenglon(div);
+}
+
 // ---------- Vista profesor: los renglones ----------
 function agregarRenglon() {
     const tpl = document.getElementById("tpl-renglon");
@@ -228,8 +256,9 @@ function agregarRenglon() {
     });
 
     document.getElementById("renglones").appendChild(div);
-    refrescarRenglon(div, true);
+    const listo = refrescarRenglon(div, true);
     actualizarQuitar();
+    return listo;
 }
 
 /* Con un solo renglón no se ofrece quitarlo: una tarea sin nada que hacer no

@@ -400,10 +400,29 @@ async function hub(browser) {
     igual("con algo hecho hoy, el resumen dice qué, cuántos limpios y los repasos de mañana",
       await resumen({ "rpc:progreso_dias_y_racha": [{ hoy_ejercicios: 3, racha_actual: 2 }],
         "rpc:entreno_resumen_hoy": { total: 3, por_actividad: { memoria: 1, mates: 2 }, con_como_salio: 2, limpios: 1 } }),
-      "Hoy: 3 ejercicios (Mates 2, Memoria 1) · 1 de 2 sin error ni pista · Para mañana: 2 repasos.");
+      "Hoy: Mates 2, Memoria 1 · 1 de 2 sin error ni pista · Para mañana: 2 repasos.");
     igual("sin nada hecho hoy, no hay resumen",
       await resumen({ "rpc:progreso_dias_y_racha": [{ hoy_ejercicios: 0, racha_actual: 2 }],
         "rpc:entreno_resumen_hoy": { total: 0, por_actividad: {}, con_como_salio: 0, limpios: 0 } }), null);
+  }
+  /* En el celular, lo que toca hacer hoy va antes que el botón de avisos:
+     arriba, lo empujaba fuera de la pantalla. Se mide en la pantalla. */
+  {
+    const fresco = { diagnostico_resultado_v1: JSON.stringify({ fecha: new Date().toISOString() }),
+      entreno_mates_repaso_v1: JSON.stringify({ a: { facilidad: 2.5, intervalo: 1, repasos: 1, fallos: 0, vence: "2026-01-01", ultimo: "2026-01-01T00:00:00Z" } }) };
+    const { page, ctx, errores } = await abrir(browser, "/entreno/index.html",
+      { "rpc:progreso_dias_y_racha": [{ hoy_ejercicios: 7, racha_actual: 5 }] }, fresco);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.waitForFunction(() => document.querySelector("#hoy-lista a") && !document.getElementById("hoy-avisos").hidden, null, { timeout: 10000 });
+    const m = await page.evaluate(() => {
+      const lista = document.querySelector("#hoy-lista a").getBoundingClientRect();
+      const avisos = document.getElementById("hoy-avisos").getBoundingClientRect();
+      return { lista: lista.top, avisos: avisos.top, ancho: document.documentElement.scrollWidth };
+    });
+    igual("en el celular, la lista de hoy va antes que el botón de avisos", String(m.lista < m.avisos), "true");
+    igual("y no hay desplazamiento de lado", String(m.ancho <= 390), "true");
+    sinErrores(errores, "hub (celular)");
+    await ctx.close();
   }
   /* Tu semana: los últimos 7 días contra los 7 anteriores. */
   {

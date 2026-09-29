@@ -306,7 +306,8 @@ async function abrir(browser, datos, usuarioId, ruta, almacen) {
 }
 
 const tarjeta = (page, etiqueta) => page.evaluate((e) => {
-  const t = [...document.querySelectorAll("#stat-cards > div")].find((d) => d.lastElementChild.textContent.trim() === e);
+  // La etiqueta es el tercer hijo: debajo puede venir un enlace (el del tipo más flojo).
+  const t = [...document.querySelectorAll("#stat-cards > div")].find((d) => d.children[2] && d.children[2].textContent.trim() === e);
   return t ? t.children[1].textContent.trim() : null;
 }, etiqueta);
 
@@ -368,6 +369,7 @@ async function pruebaProfesor(browser) {
       informes_resumen_alumnos: [ANA, BRUNO, CARLA],
       informes_cursos_alumnos: CURSOS_ANA,
       informes_entreno_modulos: [MODULOS_ANA, { student_id: "a-2", temas: 8, con_como_salio: 0, limpios: 0 }],
+      informes_tipo_mas_flojo: [{ student_id: "a-1", tipo: "balanza", intentos: 8, limpios: 3, porcentaje: 38 }],
       // Bruno faltó a dos clases con una justificación aceptada.
       faltas_justificadas: [{ student_id: "a-2", clases_justificadas: 2 }],
       // Lo hecho desde el diagnóstico en cada lugar al que manda el plan: el
@@ -528,6 +530,13 @@ async function pruebaProfesor(browser) {
   igual("Asistencia", await tarjeta(page, "Asistencia (75%)"), "3/4");
   igual("Tiempo total en la plataforma", await tarjeta(page, "Tiempo total en la plataforma"), "1 h 35 min");
   igual("Temas de cursos estudiados", await tarjeta(page, "Temas de cursos estudiados"), "3");
+  /* Del tipo más flojo, derecho a Tareas con el renglón armado
+     (verificar-tareas.js prueba que llegue armado). */
+  igual("el tipo más flojo trae «Mandarle 10 de La balanza», con el alumno, el tipo y la cantidad",
+    await page.evaluate(() => {
+      const a = document.querySelector("#stat-cards a[data-tipo-flojo]");
+      return a ? [a.textContent, a.getAttribute("href")].join(" | ") : null;
+    }), "Mandarle 10 de La balanza → | tareas.html?alumno=a-1&material=tipos&recorte=balanza&cantidad=10");
   // El plan dice, al lado de cada enlace, cuánto se hizo ahí desde el
   // diagnóstico; los recursos que no dejan rastro (una ficha, una página de
   // juego) no llevan número, y lo que no se tocó dice «todavía nada».
@@ -892,6 +901,8 @@ async function pruebaAlumno(browser) {
   igual("el tema más flojo, con su nombre y cuántos limpios", await tarjeta(page, "Tema más flojo: limpio en 4 de 11"), "Clavada · 36 %");
   igual("el tipo de entrenamiento más flojo, con el nombre del catálogo y cuántos con tres estrellas",
     await tarjeta(page, "Tipo más flojo: tres estrellas en 3 de 8"), "La balanza · 38 %");
+  igual("el alumno no se manda tareas: su tarjeta no trae el enlace",
+    await page.evaluate(() => document.querySelectorAll("#stat-cards a[data-tipo-flojo]").length), 0);
   const pedido = await page.evaluate(() => ((window.__rpcArgs || []).find((a) => a[0] === "informes_tema_mas_flojo") || [])[1]);
   igual("a la base se le mandan los motivos, no «Mezcla» ni las fases",
     pedido && [pedido.p_temas.includes("pin"), pedido.p_temas.includes("backRankMate"), pedido.p_temas.includes("mix"), pedido.p_temas.includes("middlegame")],

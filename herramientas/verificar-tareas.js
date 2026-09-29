@@ -630,6 +630,47 @@ async function main() {
     await pagina.close();
   }
 
+  // ---------- 4 ter) desde Informes: «Mandarle 10 de La balanza» ----------
+  // El renglón llega armado: el tipo, la cantidad, el alumno marcado y el
+  // título. Lo que no existe se ignora; la cantidad respeta el tope.
+  {
+    const armado = async (query) => {
+      const pagina = await navegador.newPage();
+      await pagina.addInitScript(clienteFalso([PROFE, ALUMNA1, ALUMNA2], [], PROFE.id));
+      await pagina.goto(`${BASE}/tareas.html?${query}`, { waitUntil: "networkidle" });
+      await pagina.waitForSelector("#app:not(.hidden)", { timeout: 10000 });
+      await pagina.waitForTimeout(300);
+      const r = await pagina.evaluate(() => {
+        const div = document.querySelector("#renglones .renglon");
+        return {
+          marcados: [...document.querySelectorAll(".alumno-check")].filter((e) => e.checked).map((e) => e.value),
+          material: div.querySelector(".r-material").value,
+          recorte: div.querySelector(".r-recorte").value,
+          meta: div.querySelector(".r-meta").value,
+          cantidad: div.querySelector(".r-cantidad").value,
+          frase: div.querySelector(".r-frase").textContent,
+          titulo: document.getElementById("t-titulo").value,
+          renglones: document.querySelectorAll("#renglones .renglon").length,
+        };
+      });
+      await pagina.close();
+      return r;
+    };
+    const a = await armado("alumno=u-beto&material=tipos&recorte=balanza&cantidad=10");
+    ok(JSON.stringify(a.marcados) === JSON.stringify(["u-beto"]), `?material= desde Informes debería marcar al alumno, marcó ${JSON.stringify(a.marcados)}`);
+    ok(a.material === "herramienta:tipos" && a.recorte === "balanza" && a.meta === "cantidad" && a.cantidad === "10" && a.renglones === 1,
+      `el renglón debería llegar armado (tipos · balanza · 10), llegó ${JSON.stringify(a)}`);
+    ok(/10 ejercicios de La balanza/.test(a.frase), `la frase debería decir «10 ejercicios de La balanza», dice ${JSON.stringify(a.frase)}`);
+    ok(a.titulo === "La balanza", `el título propuesto debería ser «La balanza», es ${JSON.stringify(a.titulo)}`);
+    const b = await armado("alumno=u-beto&material=tipos&recorte=balanza&cantidad=300");
+    ok(b.cantidad === "80", `pedir más de los que hay debería quedar en el tope del tipo (80), quedó ${b.cantidad}`);
+    const c = await armado("alumno=u-beto&material=tipos&recorte=no-existe&cantidad=10");
+    ok(c.material === "herramienta:tipos" && c.recorte === "", `un recorte que no existe se ignora (queda «todo»), quedó ${JSON.stringify(c.recorte)}`);
+    const d = await armado("alumno=u-beto&material=no-existe&cantidad=10");
+    ok(d.material !== "herramienta:no-existe" && JSON.stringify(d.marcados) === JSON.stringify(["u-beto"]),
+      `un material que no existe se ignora y el alumno queda marcado igual, quedó ${JSON.stringify(d)}`);
+  }
+
   // ---------- 5) que la página se vea ----------
   {
     const pagina = await navegador.newPage();
