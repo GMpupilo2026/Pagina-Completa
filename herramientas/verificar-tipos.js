@@ -33,6 +33,10 @@
  *     y la página la rechaza; nadie está en jaque; la amenaza es legal para
  *     el rival y el nivel corresponde a lo que amenaza; lo que dijo el motor
  *     cumple los cortes (la defensa entre −1,5 y +2,5, la segunda pierde).
+ *   - Remata la ventaja: medio juego (14 piezas o más), nadie en jaque, el
+ *     motor daba entre +4 y +8 sin mate, el material guardado es el de la
+ *     posición y decide el nivel, y las jugadas son las del catálogo. Las
+ *     reglas de la página (juicio y estrellas) se prueban con casos a mano.
  *
  * El motor no se vuelve a correr acá (en el CI no hay Stockfish): lo que dijo
  * se comprobó al generar, en herramientas/tipos-generar.js.
@@ -491,6 +495,33 @@ DATOS.aguanta.forEach((x) => {
   ok("aguantaAcertada: una jugada ilegal no es legal", !M.aguantaAcertada(Chess, item, "Ke2").legal);
   ok("textoRefuta dice el mate", M.textoRefuta({ r: "Dxh7", m: 2 }) === "El rival contesta Dxh7 y te da mate en 2.");
   ok("textoRefuta dice el número", M.textoRefuta({ r: "Cxe5", e: -340 }) === "El rival contesta Cxe5 y el motor te da −3,4.");
+}
+
+titulo("Remata la ventaja");
+DATOS.remata.forEach((x) => {
+  const g = legal(x.fen);
+  if (!g) return;
+  const yo = x.fen.split(" ")[1];
+  ok("nadie empieza en jaque ni la partida terminó (" + x.id + ")", !g.in_check() && !g.game_over());
+  ok("es medio juego: 14 piezas o más (" + x.id + ")", R.tablero(x.fen).filter(Boolean).length >= 14);
+  const mat = material(x.fen) * (yo === "w" ? 1 : -1);
+  ok("el material es el de la posición (" + x.id + ")", mat === x.material, mat + " contra " + x.material);
+  const n = mat >= 5 ? 1 : mat >= 3 ? 2 : 3;
+  ok("el nivel es el del material (" + x.id + ")", x.nivel === n && mat >= -1, "nivel " + x.nivel + ", material " + mat);
+  ok("las jugadas son las del catálogo (" + x.id + ")", x.jugadas === C.nivel("remata", x.nivel).jugadas);
+  ok("el motor daba entre +4 y +8, sin mate (" + x.id + ")", x.eval >= 400 && x.eval <= 800, x.eval);
+  ok("arranca como «gana» para la regla de la página (" + x.id + ")", M.juicioRemata(x.eval) === "gana");
+  ok("trae la respuesta para el profesor (" + x.id + ")", Array.isArray(x.respuesta) && x.respuesta.length >= 3 && !!x.resumen);
+});
+{
+  // la regla: el motor habla desde el que mueve; el alumno lo ve desde su lado
+  ok("remata: −420 con las negras al turno son +420 para el blanco", M.cpDelAlumno({ type: "cp", value: -420 }, "b", "w") === 420);
+  ok("remata: mate a favor del que mueve, siendo él el alumno", M.cpDelAlumno({ type: "mate", value: 3 }, "w", "w") === 10000);
+  ok("remata: mate del motor contra el alumno", M.cpDelAlumno({ type: "mate", value: 2 }, "b", "w") === -10000);
+  ok("remata: sin motor no hay juicio", M.juicioRemata(M.cpDelAlumno(null, "w", "w")) === "sin-motor");
+  ok("remata: +3 gana, +2 es duda, +1 se escapó", M.juicioRemata(300) === "gana" && M.juicioRemata(200) === "duda" && M.juicioRemata(149) === "escapa");
+  ok("remata: nunca bajó de +3: tres estrellas; bajó y volvió: dos; con pista: una",
+    M.estrellasRemata(320, false) === 3 && M.estrellasRemata(180, false) === 2 && M.estrellasRemata(900, true) === 1);
 }
 
 console.log("\n" + (fallos ? "✗ " + fallos + " de " + pruebas + " comprobaciones fallaron." : "✓ Las " + pruebas + " comprobaciones pasaron."));

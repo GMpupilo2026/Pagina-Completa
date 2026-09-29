@@ -1,9 +1,9 @@
 /* Comprueba entreno/tipos.html en un navegador de verdad: la ficha de los
- * Tipos de entrenamiento y los quince juegos, JUGADOS de punta a punta.
+ * Tipos de entrenamiento y los dieciséis juegos, JUGADOS de punta a punta.
  *
  * Los bancos los comprueba herramientas/verificar-tipos.js sin navegador.
  * Esto es lo que solo se rompe mirando la pantalla:
- *   - sin sesión manda a iniciar sesión; con sesión, la ficha trae los quince
+ *   - sin sesión manda a iniciar sesión; con sesión, la ficha trae los dieciséis
  *     tipos, cada uno con su encabezado y su enlace;
  *   - cada juego pinta LA posición de su ejercicio (se compara casilla por
  *     casilla contra la FEN del banco, no contra la página);
@@ -137,7 +137,7 @@ async function main() {
       enlace: li.querySelector("h2 a").getAttribute("href"),
       visible: li.checkVisibility(),
     })));
-    ok("quince fichas", fichas.length === 15, fichas.length);
+    ok("dieciséis fichas", fichas.length === 16, fichas.length);
     ok("cada una con su encabezado y su enlace", fichas.every((f) => f.titulo && /^#[a-z-]+$/.test(f.enlace) && f.visible), JSON.stringify(fichas));
     ok("un solo h1", (await page.$$eval("#vista-fichas h1", (h) => h.length)) === 1);
     await page.click('#fichas li:first-child h2 a');
@@ -362,7 +362,7 @@ async function main() {
     await ctx.close();
   }
 
-  /* ======================= 8 a 15 ======================= */
+  /* ======================= 8 a 16 ======================= */
   const M = require("../js/tipos-reglas-mas.js");
   const escribir = async (page, txt) => { await page.fill("#jugada-input", txt); await page.press("#jugada-input", "Enter"); };
 
@@ -573,6 +573,89 @@ async function main() {
     ok("a la primera: tres estrellas", (await estrellas(page))["aguanta:" + item.id] === 3, JSON.stringify(await estrellas(page)));
     ok("sin errores en consola", !errores.length, errores.join(" | "));
     await ctx.close();
+  }
+
+  console.log("\n=== Remata la ventaja (con un motor de mentira) ===");
+  {
+    /* El motor de mentira: juega la primera jugada legal y evalúa lo que la
+       prueba le pone (window.__evals, en orden; después window.__eval; null =
+       el motor no contesta). Evalúa desde el que mueve, que tras la jugada del
+       alumno es la máquina: −400 son +4 para el alumno. */
+    const MOTOR_FALSO = `
+window.PracticeEngine = {
+  LEVELS: { max: {} }, preload() {}, jugadaDeRespaldo() { return null; },
+  async getMove(fen) { const m = new Chess(fen).moves({ verbose: true })[0]; return m ? m.from + m.to + (m.promotion || "") : null; },
+  async evaluate() { if (window.__evals && window.__evals.length) return window.__evals.shift(); return window.__eval === undefined ? { type: "cp", value: -400 } : window.__eval; },
+};`;
+    const conMotor = (evals, eval1) => async (ctx) => {
+      await ctx.route("**/js/shared-engine.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
+      await ctx.route("**/js/practice-engine.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: MOTOR_FALSO }));
+      await ctx.addInitScript((v) => { window.__evals = v.evals; if (v.uno !== "nada") window.__eval = v.uno; }, { evals, uno: eval1 === undefined ? "nada" : eval1 });
+    };
+    /* Juega jugadas legales que no repitan posición, esperando el turno. */
+    async function jugarHasta(page, item, re) {
+      const vistas = new Set();
+      for (let k = 0; k < item.jugadas + 2; k++) {
+        const t = await esperarEstado(page, /Te toca|Remataste|✗|no cuenta|Vas ganando|^$/);
+        if (/Remataste|✗|no cuenta/.test(t)) return t;
+        await page.waitForFunction(() => document.querySelector("#tablero button[data-square]"), null, { timeout: 5000 }).catch(() => {});
+        const fen = await page.evaluate(() => TiposEntreno.fen());
+        const g = new Chess(fen);
+        vistas.add(fen.split(" ").slice(0, 4).join(" "));
+        const clave = (f) => f.split(" ").slice(0, 4).join(" ");
+        const m = g.moves({ verbose: true }).find((x) => { const h = new Chess(fen); h.move(x); return !h.game_over() && !vistas.has(clave(h.fen())); });
+        { const h = new Chess(fen); h.move(m); vistas.add(clave(h.fen())); }
+        if (!(await page.isVisible("#jugada-input"))) return estado(page);
+        await page.fill("#jugada-input", R.sanEs(m.san));
+        await page.press("#jugada-input", "Enter");
+        await page.waitForFunction((f) => TiposEntreno.fen() !== f, fen, { timeout: 5000 }).catch(() => {});
+        await page.waitForFunction(() => !/revisa|piensa/.test(document.getElementById("estado").textContent), null, { timeout: 5000 }).catch(() => {});
+      }
+      return esperarEstado(page, re);
+    }
+    const item = DATOS.remata.find((x) => x.nivel === 1);
+    {
+      const { page, ctx, errores } = await abrir(browser, true, "#remata/1/" + item.id, conMotor([]));
+      await page.waitForSelector("#vista-juego:not(.hidden) #jugada-input");
+      await mismaPosicion(page, item.fen, "pinta la posición del ejercicio");
+      const primera = await page.$eval("#tablero [data-square]", (c) => c.dataset.square);
+      ok("el tablero está del lado del alumno", primera === (item.fen.split(" ")[1] === "w" ? "a8" : "h1"), "arriba a la izquierda: " + primera);
+      const t = await jugarHasta(page, item, /Remataste/);
+      ok("siempre en +4: remata a las " + item.jugadas + " jugadas", /Remataste/.test(t), t);
+      ok("sin bajar nunca de +3: tres estrellas", (await estrellas(page))["remata:" + item.id] === 3, JSON.stringify(await estrellas(page)));
+      ok("sin errores en consola", !errores.length, errores.join(" | "));
+      await ctx.close();
+    }
+    {
+      // bajó a +2 una vez y volvió: lo logra, con dos estrellas
+      const { page, ctx, errores } = await abrir(browser, true, "#remata/1/" + item.id, conMotor([{ type: "cp", value: -200 }]));
+      await page.waitForSelector("#vista-juego:not(.hidden) #jugada-input");
+      const t = await jugarHasta(page, item, /Remataste/);
+      ok("bajó a +2 y volvió: lo logra", /Remataste/.test(t), t);
+      ok("con dos estrellas", (await estrellas(page))["remata:" + item.id] === 2, JSON.stringify(await estrellas(page)));
+      ok("sin errores en consola", !errores.length, errores.join(" | "));
+      await ctx.close();
+    }
+    {
+      // a +0: se escapó a la primera
+      const { page, ctx, errores } = await abrir(browser, true, "#remata/1/" + item.id, conMotor([], { type: "cp", value: 0 }));
+      await page.waitForSelector("#vista-juego:not(.hidden) #jugada-input");
+      const t = await jugarHasta(page, item, /escapó/);
+      ok("si baja de +1,5 se escapó", /se te escapó/.test(t), t);
+      ok("y no da estrellas", !(await estrellas(page))["remata:" + item.id]);
+      ok("sin errores en consola", !errores.length, errores.join(" | "));
+      await ctx.close();
+    }
+    {
+      // sin motor no se regala nada
+      const { page, ctx, errores } = await abrir(browser, true, "#remata/1/" + item.id, conMotor([], null));
+      await page.waitForSelector("#vista-juego:not(.hidden) #jugada-input");
+      const t = await jugarHasta(page, item, /no cuenta/);
+      ok("si el motor no contesta, no cuenta", /no cuenta/.test(t), t);
+      ok("y no da estrellas", !(await estrellas(page))["remata:" + item.id]);
+      ok("sin errores en consola", !errores.length, errores.join(" | "));
+      await ctx.close();
+    }
   }
 
   console.log("\n=== Nivel completo ===");
