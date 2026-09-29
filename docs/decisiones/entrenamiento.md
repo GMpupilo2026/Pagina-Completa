@@ -528,6 +528,35 @@ registro de tiempo).
   repaso de Practicar, el hub), `verificar-tipos-pagina.js` (que se anote el
   nivel) y `verificar-informes.js` (la tarjeta).
 
+## El tipo más flojo en el hub, y el plan del diagnóstico con lo nuevo
+
+- **«Hoy te toca» propone el Tipo de entrenamiento más flojo** si queda por
+  debajo del 70 % (`TipoFlojo.FLOJO`, el mismo corte del tema). Por
+  ejemplo: «Tu tipo de entrenamiento más flojo, «La balanza»: tres estrellas
+  en 3 de 8» → `tipos.html#balanza`. Es la misma cuenta de Informes
+  (`informes_tipo_mas_flojo()`, ver «El tipo de entrenamiento más flojo» en
+  informes.md); el hub se queda con la fila del alumno de la sesión.
+- **El plan del diagnóstico propone lo nuevo**:
+  - Táctica: Aguanta.
+  - Estrategia: Remata la ventaja y Elige a tiempo.
+  - Cálculo: Memoria y el Sonar.
+
+  Van al final de cada área, así que el primer paso de cada semana no
+  cambia.
+- **Y cuenta lo que se hace ahí.** Antes, los enlaces del plan a un tipo
+  (`tipos.html#balanza`) decían «(todavía nada)» para siempre por dos
+  razones:
+  - `claveDeAvance` no entendía el `#`;
+  - `avance_del_plan()` juntaba todo Tipos en `actividad:tipos`.
+
+  Ahora cada tipo es `tipo:<id>` (migración `20260929174938`). Pasaba lo
+  mismo con Concentración, y también con Memoria, Precisión, el Sonar y
+  Batalla naval, que ya registran: `ACTIVIDAD_DE_PAGINA` las conoce.
+- `verificar-plan-recursos.js` comprueba ahora que **todo recurso del plan
+  que lleva a una página que registra pida la clave de lo que registra**.
+  Qué páginas registran lo dice Tareas: las herramientas con meta de
+  cantidad. Rota a propósito (sin Concentración, sin el `#`), salta.
+
 ## Memoria cuenta, y el resumen del día en el hub
 
 - **Memoria** (`entreno/memoria.html`, #560) no registraba nada: ni en

@@ -6,11 +6,13 @@
  * el profesor sus alumnos, administración todos. Acá solo se le pone nombre a
  * lo que vuelve, con js/tipos-catalogo.js (el mismo catálogo de la página).
  *
- * Es la hermana de js/tema-flojo.js (el motivo más flojo en Temas). La usa
- * Informes (una tarjeta más del alumno).
+ * Es la hermana de js/tema-flojo.js (el motivo más flojo en Temas). La usan
+ * Informes (una tarjeta más del alumno) y el «Hoy te toca» del hub.
  *
  *   TipoFlojo.cargar(sb) → Promise<{ [student_id]: { tipo, nombre,
  *                                    intentos, limpios, porcentaje } }>
+ *   TipoFlojo.FLOJO: por debajo de este porcentaje, el hub lo propone (el
+ *                    mismo corte que el tema).
  */
 (function () {
   "use strict";
@@ -35,7 +37,8 @@
     return salida;
   }
 
-  const api = { cargar };
+  const FLOJO = 70;
+  const api = { cargar, FLOJO };
   if (typeof window !== "undefined") window.TipoFlojo = api;
   if (typeof module !== "undefined" && module.exports) module.exports = api;
 })();

@@ -98,6 +98,16 @@ async function cosasDeHoy(alumnoId){
     } catch (e) { /* sin dato, sin propuesta */ }
   }
 
+  // Y el Tipo de entrenamiento más flojo (js/tipo-flojo.js): el que menos sale
+  // con tres estrellas, desde cinco ejercicios. Lleva a la ficha de ese tipo.
+  if (window.TipoFlojo && alumnoId) {
+    try {
+      const f = (await TipoFlojo.cargar(sb))[alumnoId];
+      if (f && f.porcentaje < TipoFlojo.FLOJO) cosas.push({ icono: '📉', href: 'tipos.html#' + encodeURIComponent(f.tipo),
+        texto: `Tu tipo de entrenamiento más flojo, «${f.nombre}»: tres estrellas en ${f.limpios} de ${f.intentos}` });
+    } catch (e) { /* sin dato, sin propuesta */ }
+  }
+
   // Líneas de Aperturas ya empezadas cuyo repaso venció (las nuevas no cuentan:
   // eso es estudiar algo nuevo, no un repaso pendiente).
   const srs = leerJSON('aperturas_srs_v1');

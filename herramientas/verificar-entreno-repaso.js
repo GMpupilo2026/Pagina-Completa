@@ -279,6 +279,25 @@ async function hub(browser) {
       [true, false, "Hoy llevas 0 de 5 ejercicios para que el día cuente. Con eso empiezas una racha."]);
     await ctx.close();
   }
+  /* El tipo de entrenamiento más flojo (js/tipo-flojo.js): igual que el tema,
+     por debajo del 70 % y solo el del alumno de la sesión. */
+  {
+    const fresco = { diagnostico_resultado_v1: JSON.stringify({ fecha: new Date().toISOString() }) };
+    const flojo = (pct) => ({ "rpc:informes_tipo_mas_flojo": [
+      { student_id: "otra", tipo: "detective", intentos: 9, limpios: 1, porcentaje: 11 },
+      { student_id: "u-ana", tipo: "balanza", intentos: 8, limpios: Math.round(8 * pct / 100), porcentaje: pct }] });
+    const ver = async (pct) => {
+      const { page, ctx, errores } = await abrir(browser, "/entreno/index.html", flojo(pct), fresco);
+      await page.waitForFunction(() => { const l = document.getElementById("hoy-lista"); return l.hidden || l.querySelector("a"); }, { timeout: 20000 });
+      const items = await page.evaluate(() => Array.from(document.querySelectorAll("#hoy-lista a")).map((a) => [a.textContent.replace("→", "").trim(), a.getAttribute("href")]));
+      sinErrores(errores, "hub con tipo flojo");
+      await ctx.close();
+      return items;
+    };
+    igual("propone el tipo más flojo del alumno, con el nombre del catálogo y a su ficha", await ver(38),
+      [["📉Tu tipo de entrenamiento más flojo, «La balanza»: tres estrellas en 3 de 8", "tipos.html#balanza"]]);
+    igual("con 75 % no lo propone", await ver(75), []);
+  }
   /* El tema más flojo (js/tema-flojo.js): lo propone si está por debajo del 70 %,
      y solo el del alumno de la sesión (la base puede devolver más filas). */
   {
