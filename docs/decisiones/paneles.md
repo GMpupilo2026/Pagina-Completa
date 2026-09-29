@@ -1133,6 +1133,55 @@ supervisa (`SUPERVISOR_GROUPS` y `cargarUrgenteSupervisor()` de
   día» y que los informes se cuenten con `head` y sin los suyos. Rompiendo a
   propósito el `neq` o devolviendo una tarjeta de tema, salta.
 
+### El panel de quien da clase
+
+El mismo pedido, para el panel del profesor: lo urgente primero, cada cosa en
+su lugar y sin caminos repetidos.
+
+- **Se reparte por lo que se viene a hacer** (`PANEL_DOCENTE` y
+  `ordenarPanelDocente()` de `js/clases.js`), no como el panel del alumno con
+  cosas encima: «Clase en vivo»; «Tus alumnos» (tareas, exámenes, informes,
+  justificaciones, subgrupos); «Tus clases» (planes, asistencia presencial,
+  repasar, archivos, la preparación de rivales si se la activaron y el informe
+  mensual); «Coordinación», solo a quien coordina (coordinación, solicitudes,
+  formularios y cobros, lo que su supervisor no le apagó); «Aprender»; «Jugar
+  y competir» y «Tu cuenta» (configuración y logros). Antes todo lo suyo caía
+  en «Herramientas», y Informes vivía en «Tu cuenta» aunque es de sus
+  alumnos.
+  - Se ordena **sobre la lista ya armada**, así respeta lo que cada quien
+    tiene. Las tarjetas se buscan por destino: una nueva que no esté en
+    `PANEL_DOCENTE` cae en «Otras», y `verificar-panel.js` pide que ese grupo
+    no exista.
+  - Vale igual para «Ver como: profesor» de quien administra y para el panel
+    de otra persona.
+- **El diagnóstico ya no es una segunda puerta a Informes.** A quien da clase
+  su tarjeta lo llevaba a `informes.html?tema=diagnostico`; ahora es solo del
+  alumnado (`soloAlumno`), y el profesor lo encuentra en Informes, que tiene su
+  selector de tema.
+- «Tu semana» ya no lleva «Ver informe completo →»: llevaba al mismo lugar que
+  el número de alumnos y que la tarjeta Informes.
+- **«Lo urgente» va antes que «Tu semana», y solo cuando hay algo** (su panel ya
+  tiene la franja del primer paso y «Tu semana»; un «todo al día» diario deja
+  de leerse). Es la misma tarjeta del supervisor (`cargarUrgente()`), con lo
+  del profesor:
+  - justificaciones de sus alumnos por revisar;
+  - **su informe mensual del mes pasado sin enviar**, solo si tiene
+    supervisión (`mis_supervisores()`), la misma regla que los recordatorios
+    de `recordar_informes_mensuales()`; se busca el enviado de ESE mes con su
+    id;
+  - si coordina, solicitudes y saldos vencidos.
+  - **Cada uno solo si su tarjeta está en el panel** (`clavesUrgenteDocente()`):
+    a un coordinador al que le apagaron los cobros ni se le preguntan. Sería
+    decirle «al día» sobre algo que no ve.
+  - Las tareas vencidas y los que no entrenan no se repiten: son números de
+    «Tu semana».
+- Lo prueban `pruebaProfesora` (los grupos en su orden, un destino una sola
+  vez, una sola puerta a Informes), `pruebaUrgenteProfesora` (lo que sale, a
+  dónde lleva, el informe con su id y su mes, que con todo al día no aparezca
+  y que sin supervisión no se reclame), `pruebaPreparacionRivales` y
+  `pruebaCoordinadorRecortado` en `verificar-panel.js`. Rompiendo a propósito
+  el filtro `soloAlumno` o dando el informe por enviado, saltan.
+
 ### Las cuentas se ven por GRUPO, no todas de una
 
 Lo primero que muestra la página son **fichas de grupo**, no la lista de
@@ -1237,7 +1286,7 @@ quien administra y a los profesores que están en
 escribe `activar_preparacion_rivales()`, que exige administrar, exige que la
 cuenta sea de un profesor y **devuelve cómo quedó**, leído de la tabla. El
 interruptor de `admin.html#preparacion` (`js/admin-preparacion.js`) pinta eso,
-no lo que se pidió. La tarjeta del panel del profesor (grupo Herramientas de
+no lo que se pidió. La tarjeta del panel del profesor (grupo «Tus clases» de
 `js/clases.js`) sale solo si la función dice que sí; mirando el panel de otra
 persona («Ver como» una persona) se pregunta por esa persona y no por quien
 mira.

@@ -1447,7 +1447,7 @@ presencial, y esa clase no salía en Informes, no contaba para el «asistió a 4
 «clases este mes» de su panel. No daba ningún error: simplemente, para la
 plataforma, el alumno que solo va presencial no entrenaba nunca.
 
-`asistencia.html` (tarjeta **«✅ Asistencia presencial»** en Herramientas, al
+`asistencia.html` (tarjeta **«✅ Asistencia presencial»** en «Tus clases», al
 lado de Planes de clase) es donde se pasa lista: el día, la hora, cuánto duró,
 qué se trabajó y quiénes llegaron.
 
