@@ -212,8 +212,12 @@ function pintarSuscripciones() {
         btn.type = "button";
         btn.addEventListener("click", async () => {
             if (!(await Avisos.confirmar("Los cobros ya emitidos se quedan como están.", { titulo: "¿Dar de baja a " + nombreDe(s.student_id) + " de este plan?", aceptar: "Dar de baja", peligro: true }))) return;
+            // Una suscripción que todavía no arranca (inicio en el futuro) no
+            // puede terminar hoy: la base exige fin >= inicio. Termina el día
+            // en que iba a empezar. Las fechas "AAAA-MM-DD" se comparan como texto.
+            const hoy = hoyCR();
             const { error } = await sb.from("suscripciones")
-                .update({ activa: false, fin: hoyCR() }).eq("id", s.id);
+                .update({ activa: false, fin: s.inicio > hoy ? s.inicio : hoy }).eq("id", s.id);
             if (error) return avisar("No se pudo: " + error.message, true);
             avisar("Dado de baja.");
             await cargarTodo();

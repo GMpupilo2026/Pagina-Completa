@@ -47,6 +47,9 @@ const PLANES = [
 ];
 const SUSCRIPCIONES = [
   { id: "s-1", student_id: "u-ana", plan_id: "p-mes", inicio: "2026-06-01", dia_cobro: 5, descuento_pct: 10, activa: true },
+  // Una que todavía no arranca: darla de baja hoy no puede mandar fin = hoy,
+  // porque la base exige fin >= inicio (suscripciones_check).
+  { id: "s-2", student_id: "u-bruno", plan_id: "p-mes", inicio: "2099-10-15", dia_cobro: 5, descuento_pct: 0, activa: true },
 ];
 // Las cuatro situaciones, ya calculadas por la base. La página solo las pinta.
 const COBROS = [
@@ -369,6 +372,20 @@ async function pruebaCoordinacion(browser) {
   igual("sin concepto no se crea ningún plan",
     await page.evaluate(() => window.__llamadas.filter((l) => l.tabla === "planes_cobro").length), 0);
   await page.uncheck("#s-personalizado");
+
+  // -------- dar de baja: termina hoy, o el día en que iba a empezar si aún no arranca
+  const bajaDe = async (id) => {
+    await page.evaluate(() => { window.__llamadas = []; });
+    const fila = page.locator("#suscripciones-lista > div").filter({ hasText: id === "s-1" ? "Ana" : "Bruno" }).filter({ hasText: id === "s-1" ? "2026" : "2099" });
+    await fila.locator("button").click();
+    await page.waitForTimeout(300);
+    const l = await page.evaluate(() => window.__llamadas.find((x) => x.tabla === "suscripciones" && x.verbo === "update"));
+    return l && l.datos;
+  };
+  igual("la baja de una suscripción en curso termina hoy",
+    await bajaDe("s-1"), { activa: false, fin: new Date().toLocaleDateString("en-CA", { timeZone: "America/Costa_Rica" }) });
+  igual("la baja de una que aún no arranca termina el día de inicio (fin >= inicio)",
+    await bajaDe("s-2"), { activa: false, fin: "2099-10-15" });
 
   // -------- registrar un pago parcial
   await page.click('[data-ficha="cobros"]');
