@@ -1206,3 +1206,18 @@ html.modo-proyector #calentamiento-terminar-btn,
 html.modo-proyector #encuesta-quitar-btn,
 html.modo-proyector #podio-quitar-btn,
 html.modo-proyector #pensar-profe-acciones { display: none !important; }
+
+/* ===== Control remoto (sesion.html?control=1) =====
+   El celular del profe: el tablero chico y botones grandes para lo que ve la
+   clase. Igual que el proyector, por lista blanca (.control-se-ve). Ver «El
+   control remoto» en docs/decisiones/clase-en-vivo.md. */
+.control-remoto { display: none; }
+html.modo-control .control-remoto { display: grid; }
+html.modo-control #header,
+html.modo-control #migas,
+html.modo-control footer,
+html.modo-control #app > section > :not(.proyector-contenido),
+html.modo-control .proyector-contenido > aside,
+html.modo-control .proyector-columna > :not(.control-se-ve) { display: none !important; }
+html.modo-control #app { padding-top: 0.75rem; }
+html.modo-control .proyector-contenido { display: block; }

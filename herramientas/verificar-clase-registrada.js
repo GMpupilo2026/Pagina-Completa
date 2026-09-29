@@ -202,6 +202,42 @@ window.__deletes = [];
     oyentes.presence.forEach((f) => f());
   };
 
+  // Lo que hizo cada alumno en UNA clase, contado como la base (resumen_de_la_clase).
+  function resumenDeLaClase(clase) {
+      const pq = TABLAS.questions.filter((q) => q.class_session_id === clase).map((q) => q.id);
+      const ps = TABLAS.practice_sessions.filter((q) => q.class_session_id === clase).map((q) => q.id);
+      const resp = TABLAS.question_answers.filter((a) => pq.includes(a.question_id));
+      const prac = TABLAS.practice_games.filter((g) => ps.includes(g.session_id));
+      // Cada partida entre alumnos cuenta para los dos, desde su lado.
+      const lados = [];
+      TABLAS.game_rooms.filter((r) => r.class_session_id === clase).forEach((r) => {
+        lados.push({ id: r.white_id, res: r.result === "white" ? "g" : r.result === "black" ? "p" : r.result === "draw" ? "t" : null });
+        lados.push({ id: r.black_id, res: r.result === "black" ? "g" : r.result === "white" ? "p" : r.result === "draw" ? "t" : null });
+      });
+      // Los turnos de palabra (al azar o por mano levantada) y cómo respondió.
+      const turn = (TABLAS.clase_elegidos || []).filter((e) => e.class_session_id === clase);
+      const gente = [...new Set(TABLAS.class_attendance.filter((a) => a.session_id === clase).map((a) => a.student_id)
+        .concat(resp.map((a) => a.student_id), prac.map((g) => g.student_id), lados.map((l) => l.id), turn.map((e) => e.student_id)))]
+        .filter((id) => id !== "u-profe");
+      const filas = gente.map((id) => {
+        const p = PERFILES.find((x) => x.id === id) || {};
+        const r = resp.filter((a) => a.student_id === id), g = prac.filter((x) => x.student_id === id);
+        // Las preguntas de todos y las dirigidas a él; las de otro, no.
+        const suyas = TABLAS.questions.filter((q) => pq.includes(q.id) && (!q.para_alumno || q.para_alumno === id)).length;
+        return { student_id: id, nombre: p.full_name || p.email || "Alumno", preguntas: suyas,
+          respondidas: r.length, correctas: r.filter((a) => a.is_correct === true).length,
+          incorrectas: r.filter((a) => a.is_correct === false).length, sin_calificar: r.filter((a) => a.is_correct == null).length,
+          practicas: g.length, ganadas: g.filter((x) => x.status === "checkmate_win").length,
+          tablas: g.filter((x) => x.status === "draw").length,
+          perdidas: g.filter((x) => x.status === "checkmate_loss" || x.status === "resigned" || x.status === "timeout").length,
+          partidas: lados.filter((l) => l.id === id).length, partidas_ganadas: lados.filter((l) => l.id === id && l.res === "g").length,
+          partidas_tablas: lados.filter((l) => l.id === id && l.res === "t").length, partidas_perdidas: lados.filter((l) => l.id === id && l.res === "p").length,
+          turnos: turn.filter((e) => e.student_id === id).length, turnos_bien: turn.filter((e) => e.student_id === id && e.resultado === "bien").length,
+          turnos_casi: turn.filter((e) => e.student_id === id && e.resultado === "casi").length };
+      }).sort((a, b) => a.nombre.localeCompare(b.nombre));
+      return filas;
+  }
+  const QUIEN = ${JSON.stringify(quien)};
   window.sb = {
     auth: {
       getSession: () => Promise.resolve({ data: { session: { user: { id: ${JSON.stringify(quien)} }, access_token: "t" } } }),
@@ -314,39 +350,23 @@ window.__deletes = [];
           mal: a.filter((x) => porOpcion ? x.opcion >= 2 : x.is_correct === false).length,
           sin_calificar: a.filter((x) => !porOpcion && x.is_correct == null).length }]);
       }
-      if (n === "resumen_de_la_clase") {
-        const pq = TABLAS.questions.filter((q) => q.class_session_id === args.p_clase).map((q) => q.id);
-        const ps = TABLAS.practice_sessions.filter((q) => q.class_session_id === args.p_clase).map((q) => q.id);
-        const resp = TABLAS.question_answers.filter((a) => pq.includes(a.question_id));
-        const prac = TABLAS.practice_games.filter((g) => ps.includes(g.session_id));
-        // Cada partida entre alumnos cuenta para los dos, desde su lado.
-        const lados = [];
-        TABLAS.game_rooms.filter((r) => r.class_session_id === args.p_clase).forEach((r) => {
-          lados.push({ id: r.white_id, res: r.result === "white" ? "g" : r.result === "black" ? "p" : r.result === "draw" ? "t" : null });
-          lados.push({ id: r.black_id, res: r.result === "black" ? "g" : r.result === "white" ? "p" : r.result === "draw" ? "t" : null });
-        });
-        // Los turnos de palabra (al azar o por mano levantada) y cómo respondió.
-        const turn = (TABLAS.clase_elegidos || []).filter((e) => e.class_session_id === args.p_clase);
-        const gente = [...new Set(TABLAS.class_attendance.filter((a) => a.session_id === args.p_clase).map((a) => a.student_id)
-          .concat(resp.map((a) => a.student_id), prac.map((g) => g.student_id), lados.map((l) => l.id), turn.map((e) => e.student_id)))]
-          .filter((id) => id !== "u-profe");
-        const filas = gente.map((id) => {
-          const p = PERFILES.find((x) => x.id === id) || {};
-          const r = resp.filter((a) => a.student_id === id), g = prac.filter((x) => x.student_id === id);
-          // Las preguntas de todos y las dirigidas a él; las de otro, no.
-          const suyas = TABLAS.questions.filter((q) => pq.includes(q.id) && (!q.para_alumno || q.para_alumno === id)).length;
-          return { student_id: id, nombre: p.full_name || p.email || "Alumno", preguntas: suyas,
-            respondidas: r.length, correctas: r.filter((a) => a.is_correct === true).length,
-            incorrectas: r.filter((a) => a.is_correct === false).length, sin_calificar: r.filter((a) => a.is_correct == null).length,
-            practicas: g.length, ganadas: g.filter((x) => x.status === "checkmate_win").length,
-            tablas: g.filter((x) => x.status === "draw").length,
-            perdidas: g.filter((x) => x.status === "checkmate_loss" || x.status === "resigned" || x.status === "timeout").length,
-            partidas: lados.filter((l) => l.id === id).length, partidas_ganadas: lados.filter((l) => l.id === id && l.res === "g").length,
-            partidas_tablas: lados.filter((l) => l.id === id && l.res === "t").length, partidas_perdidas: lados.filter((l) => l.id === id && l.res === "p").length,
-            turnos: turn.filter((e) => e.student_id === id).length, turnos_bien: turn.filter((e) => e.student_id === id && e.resultado === "bien").length,
-            turnos_casi: turn.filter((e) => e.student_id === id && e.resultado === "casi").length };
-        }).sort((a, b) => a.nombre.localeCompare(b.nombre));
-        return constructor(n, filas);
+      if (n === "resumen_de_la_clase") return constructor(n, resumenDeLaClase(args.p_clase));
+      /* Los puntos del mes: la suma de resumen_de_la_clase de las clases de
+         este mes (del profe que se pide), y solo filas de quien pregunta o de
+         una clase suya, como la base. */
+      if (n === "resumen_del_mes") {
+        const desde = new Date(); desde.setDate(1); desde.setHours(0, 0, 0, 0);
+        const clases = SESIONES.concat(TABLAS.clases_del_mes || []).filter((c) => new Date(c.started_at) >= desde
+          && (!args.p_profesor || c.created_by === args.p_profesor));
+        const suma = {};
+        const CAMPOS = ["respondidas", "correctas", "turnos_bien", "turnos_casi", "ganadas", "tablas", "partidas_ganadas", "partidas_tablas"];
+        clases.forEach((c) => resumenDeLaClase(c.id).forEach((f) => {
+          if (f.student_id !== QUIEN && c.created_by !== QUIEN) return;
+          const x = suma[f.student_id] = suma[f.student_id] || { student_id: f.student_id, nombre: f.nombre, clases: 0 };
+          x.clases += 1;
+          CAMPOS.forEach((k) => { x[k] = (x[k] || 0) + (f[k] || 0); });
+        }));
+        return constructor(n, Object.values(suma));
       }
       return constructor(n, n === "mis_clases"
       ? [{ profesor_id: "u-profe", profesor: "Karina Rojas", es_principal: true,
