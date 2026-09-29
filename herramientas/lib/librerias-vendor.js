@@ -42,6 +42,18 @@ const LIBRERIAS = [
     cdn: /https?:\/\/[^"']*three(\.min)?\.js/,
   },
   {
+    // El código QR para entrar a la clase desde el proyector (js/clase-qr.js
+    // lo pide recién cuando el profe lo muestra; ver «Entrar desde el celular
+    // con un código QR»).
+    nombre: "qrcode-generator",
+    paquete: "qrcode-generator",
+    // Su `exports` no deja pedir dist/qrcode.js por la ruta: el nombre del
+    // paquete resuelve (`require`) justo a ese archivo.
+    npm: "qrcode-generator",
+    archivo: "js/vendor/qrcode.js",
+    cdn: /https?:\/\/[^"']*qrcode[^"']*\.js/,
+  },
+  {
     // Lo carga js/errores.js recién cuando hay un error que mandar (ver «Los
     // errores de la gente llegan a Sentry»): nadie más lo pide.
     nombre: "Sentry",
