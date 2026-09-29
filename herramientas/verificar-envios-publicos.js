@@ -3,8 +3,9 @@
  *
  * No necesita navegador, ni red, ni la base: lee supabase/migraciones/.
  *
- * responder_formulario, registrar_arbitraje_publico, solicitar_academia y
- * responder_encuesta_curso (la encuesta anónima de un curso) las puede llamar cualquiera con la clave pública del HTML, y cada llamada es una
+ * responder_formulario, registrar_arbitraje_publico, solicitar_academia,
+ * responder_encuesta_curso (la encuesta anónima de un curso) y
+ * clase_invitado_entrar (mirar una clase con el enlace de invitados) las puede llamar cualquiera con la clave pública del HTML, y cada llamada es una
  * fila nueva. Desde 20260924122318_freno_envios_publicos llaman a
  * interno.frenar_envio_publico() antes de insertar. Se pierde callado: basta
  * con que una migración futura vuelva a crear una de las tres copiando su
@@ -19,7 +20,7 @@ const fs = require("fs");
 const path = require("path");
 
 const DIR = path.join(__dirname, "..", "supabase", "migraciones");
-const FUNCIONES = ["responder_formulario", "registrar_arbitraje_publico", "solicitar_academia", "responder_encuesta_curso"];
+const FUNCIONES = ["responder_formulario", "registrar_arbitraje_publico", "solicitar_academia", "responder_encuesta_curso", "clase_invitado_entrar"];
 let fallos = 0;
 const mal = (m) => { console.log("  ✗ " + m); fallos += 1; };
 const bien = (m) => console.log("  ✓ " + m);

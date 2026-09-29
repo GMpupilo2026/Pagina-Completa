@@ -1291,6 +1291,82 @@ modo claro y oscuro. Está probado que falla de verdad:
 - cargando la librería siempre;
 - con el botón sin `aria-expanded`.
 
+### La clase vista por invitados sin cuenta
+
+Para que alguien conozca la clase antes de tener usuario, el profe comparte un
+enlace desde «➕ Invitar» → «🔗 Que vean la clase sin cuenta»
+(`js/clase-invitados.js`). Quien lo abre (`ver-clase.html#t=<token>`) escribe
+su nombre, acepta la privacidad y ve el tablero en pantalla completa,
+siguiendo lo que mira el profe, **sin poder tocar nada**. La idea es que quiera
+su cuenta: al terminar, la pantalla le ofrece la prueba gratis y los planes.
+
+- **Lo que ve lo decide la base, no la pantalla.** El invitado no tiene
+  `auth.uid()`: no puede leer `game_state` ni por la RLS ni por Realtime. Todo
+  pasa por funciones `SECURITY DEFINER` que reciben el token del enlace y el
+  secreto del invitado (se guarda solo su sha256), y **cada vez** vuelven a
+  mirar que el enlace siga vigente, que la clase esté abierta
+  (`clase_abierta_de`) y que el invitado no esté bloqueado:
+  `clase_invitado_info` (de quién es la clase), `clase_invitado_entrar`,
+  `clase_invitado_ver` y `clase_invitado_salio`. Las del profe
+  (`clase_enlace_obtener`, `clase_enlace_apagar`, `clase_enlace_sacar`) solo
+  con sesión, y la primera solo para `role = 'profesor'`: quien administra no
+  da clase.
+- **Solo sale el tablero**: la posición, las jugadas, la vista del profe, sus
+  flechas y círculos, y si ocultó las piezas. Nada del chat ni de los alumnos,
+  y de `vista` se quita `respuesta` (el nombre del alumno cuya respuesta se
+  muestra): las academias son privadas.
+- **Pregunta cada 2 s en vez de escuchar Realtime.** Sin sesión no hay RLS que
+  lo deje escuchar, y un canal de broadcast lo seguiría escuchando un
+  bloqueado desde la consola. Una llamada que vuelve a mirar el permiso cada
+  vez es lo que hace cumplir el bloqueo.
+- **Salirse de la pantalla, como en el examen**: `visibilitychange`, `blur` y
+  salir de pantalla completa. La salida se anota **en el momento**, no al
+  volver: así al profe le llega aunque el invitado cierre la pestaña. La
+  primera vez, al volver, `Avisos.alerta` le dice que el profe ya lo sabe y que
+  si vuelve a salir ya no va a ver el tablero; mientras la lee, el tablero no
+  se ve. La segunda, la base lo bloquea (`bloqueado_at`) y
+  `clase_invitado_ver` ya no le da el tablero. El `blur` y el
+  `visibilitychange` de la misma salida cuentan una vez (en la página y en la
+  base, con 3 s de margen). Recargar la página puede contar como salirse: la pestaña se oculta al descargarse.
+- **Al profe le llega por Realtime** (`clase_espectadores`, filtrado por
+  `owner_id`): quién entró, la primera salida («se le advirtió») y la segunda
+  («ya no puede ver el tablero»), con la lista escrita al lado de cada nombre.
+  `visto_at` cambia cada 20 s mientras mira (para decir «mirando» o «se fue»)
+  y eso NO es un aviso: el aviso sale solo si subieron las `salidas`.
+- **Volver a entrar con otro nombre no alcanza**: la IP de cada invitado queda
+  en `interno.clase_espectadores_ip` (no la ve nadie, ni el profe) y un
+  bloqueado cierra la entrada a esa IP en ese enlace. En la misma computadora
+  lo recuerda además el navegador. Desde otra conexión sí se puede: sin cuenta
+  no hay forma segura de saber quién es, y para eso está el profe, que ve la
+  lista y puede **sacar** a cualquiera.
+- **El freno**: entrar crea una fila sin cuenta, así que pasa por
+  `interno.frenar_envio_publico('invitado', …)` (30 por IP y 150 por enlace en
+  una hora), y hay un cupo de 40 mirando a la vez por enlace.
+- **Un solo enlace vigente por profe** (índice único parcial). «Cambiar el
+  enlace» y «Apagar el enlace» sacan a todos los invitados y borran sus filas.
+  Además, `limpiar-invitados-de-clase` (pg_cron, diario) borra los de hace más
+  de dos días, que es lo que promete la política de privacidad.
+- **El token va en el `#`, no en `?`**: no viaja al servidor ni queda en
+  registros ni en el Referer.
+- **En la pantalla de la clase no hay ningún enlace, ni el pie**: tocarlo
+  sería salirse. La pantalla completa se pide dentro del clic de «Entrar»
+  (después de esperar a la base el navegador ya no la deja); en el iPhone no
+  existe y la clase se ve igual, ocupando la ventana. Los primeros 1,5 s
+  después de entrar no cuentan como salida: entrar a pantalla completa mueve
+  el foco.
+- El formulario lleva su casilla de privacidad y manda la versión aceptada;
+  la política dice qué se guarda de un invitado.
+
+**Al tocar esto, correr `node herramientas/verificar-todo.js clase-invitados
+envios-publicos`.** El primero comprueba, con un doble de las cuatro funciones,
+que sin la casilla no se entra, que el tablero muestra la posición y sigue la
+vista del profe, que no hay enlaces en la clase, que tocar d7 y d6 no mueve,
+que la primera salida se anota una vez y advierte, que la segunda saca y deja
+de pedir el tablero, que al recargar sigue fuera, y del lado del profe los
+avisos, la lista y el enlace nuevo; a la alumna no se le pinta nada. Está
+probado que falla con el tablero movible y sin el freno de la salida doble.
+El segundo, que `clase_invitado_entrar` pase por el freno.
+
 ### El modo sencillo de la clase en vivo
 
 Aun ordenada, la pantalla del profesor tiene catorce controles delante, y la

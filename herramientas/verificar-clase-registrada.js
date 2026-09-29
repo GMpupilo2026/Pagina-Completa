@@ -155,6 +155,8 @@ window.__deletes = [];
     class_attendance: [], class_presence_log: [], practice_sessions: [], practice_games: [], game_rooms: [],
     class_chat_messages: [], saved_games: [], archivos_pgn: [], planes_clase: [], plan_items: [],
     notas_alumno: [], trofeos_ajustes: [], insignias: [], respuestas_en_curso: [],
+    // El enlace para invitados sin cuenta (verificar-clase-invitados.js).
+    clase_enlaces: [], clase_espectadores: [],
     // El catálogo es de la base (insignias_tipos): dos de muestra alcanzan.
     insignias_tipos: [
       { tipo: "buen_estudiante", nombre: "Estrella de buen estudiante", emoji: "⭐", descripcion: "Por su actitud.", orden: 1 },
@@ -351,6 +353,24 @@ window.__deletes = [];
           medio: a.filter((x) => porOpcion && x.opcion === 1).length,
           mal: a.filter((x) => porOpcion ? x.opcion >= 2 : x.is_correct === false).length,
           sin_calificar: a.filter((x) => !porOpcion && x.is_correct == null).length }]);
+      }
+      /* El enlace para invitados, como en la base: uno vigente por profe;
+         cambiarlo o apagarlo borra a sus invitados; sacar a uno lo bloquea. */
+      const objeto = (d) => ({ then(res, rej) { return Promise.resolve({ data: d, error: null }).then(res, rej); } });
+      if (n === "clase_enlace_obtener" || n === "clase_enlace_apagar") {
+        if (n === "clase_enlace_apagar" || args.p_nuevo) {
+          TABLAS.clase_enlaces.forEach((e) => { if (!e.apagado_at) e.apagado_at = new Date().toISOString(); });
+          TABLAS.clase_espectadores.length = 0;
+          if (n === "clase_enlace_apagar") return objeto(null);
+        }
+        let e = TABLAS.clase_enlaces.find((x) => !x.apagado_at);
+        if (!e) { e = { id: "enl-" + (TABLAS.clase_enlaces.length + 1), owner_id: QUIEN, token: "tok" + (TABLAS.clase_enlaces.length + 1), apagado_at: null }; TABLAS.clase_enlaces.push(e); }
+        return objeto({ token: e.token });
+      }
+      if (n === "clase_enlace_sacar") {
+        const i = TABLAS.clase_espectadores.find((x) => x.id === args.p_espectador);
+        if (i && !i.bloqueado_at) i.bloqueado_at = new Date().toISOString();
+        return objeto(null);
       }
       if (n === "resumen_de_la_clase") return constructor(n, resumenDeLaClase(args.p_clase));
       /* Los puntos del mes: la suma de resumen_de_la_clase de las clases de
