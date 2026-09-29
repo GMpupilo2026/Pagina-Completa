@@ -158,6 +158,8 @@ window.ReporteArmar = (function () {
       ["Estudiantes distintos que asistieron", String(estudiantes)],
       ["Asistencias registradas", String(t.asistencias || 0)]);
     if (tardes) filasResumen.push(["— de ellas, llegando tarde", String(tardes)]);
+    // Solo cuando hubo alguna, como las tardías.
+    if (t.faltas_justificadas) filasResumen.push(["Faltas justificadas (aceptadas)", String(t.faltas_justificadas)]);
     filasResumen.push(
       ["Tiempo total en clase", duracionLarga(t.minutos || 0)],
       ["Posiciones planteadas en pizarra", String(t.preguntas || 0)],
@@ -209,6 +211,7 @@ window.ReporteArmar = (function () {
       // entera de ceros ocupa ancho y no dice nada.
       const hayPresenciales = presenciales > 0;
       const hayTardes = tardes > 0;
+      const hayJustificadas = (t.faltas_justificadas || 0) > 0;
       const encabezados = ["Estudiante", "Grupo", "Clases"];
       const anchos = [2.4, 1, 0.7];
       if (hayPresenciales) { encabezados.push("De ellas presenciales"); anchos.push(1); }
@@ -216,6 +219,7 @@ window.ReporteArmar = (function () {
       // minutos y tres de media hora son cosas distintas, y el número de veces
       // solo no las separa.
       if (hayTardes) { encabezados.push("Llegó tarde"); anchos.push(1); }
+      if (hayJustificadas) { encabezados.push("Faltas justificadas"); anchos.push(1); }
       encabezados.push("Tiempo en clase"); anchos.push(1.1);
       bloques.push({ tipo: "tabla",
         encabezados: encabezados,
@@ -228,6 +232,7 @@ window.ReporteArmar = (function () {
               : (s.tardes === 1 ? "1 vez" : s.tardes + " veces") +
                 (s.minutos_tarde ? " (" + s.minutos_tarde + " min)" : ""));
           }
+          if (hayJustificadas) fila.push(s.justificadas ? String(s.justificadas) : "—");
           fila.push(duracionLarga(s.minutos || 0));
           return fila;
         }) });
@@ -242,6 +247,10 @@ window.ReporteArmar = (function () {
         (hayTardes
           ? " A quien llegó tarde ya se le descontaron esos minutos: su tiempo empieza a contar " +
             "cuando llegó."
+          : "") +
+        (hayJustificadas
+          ? " Una falta justificada es una clase a la que no fue y que cae en una justificación " +
+            "de ausencia que su profesor, la coordinación o la supervisión aceptó."
           : "") });
     }
 
@@ -519,9 +528,35 @@ window.ReporteArmar = (function () {
       .trim() || "—";
   }
 
+  /* Junta a lo de reporte_actividades() las faltas con una justificación
+     ACEPTADA del periodo (faltas_justificadas(), la misma cuenta de Informes).
+     Quien faltó a todas justificado no está en `estudiantes` —esa lista sale de
+     las asistencias—, así que se suma con cero clases: dejarlo fuera sería
+     decir que no tenía nada que justificar. */
+  function conFaltasJustificadas(datos, faltas) {
+    const d = Object.assign({}, datos || {});
+    const estudiantes = (d.estudiantes || []).map((s) => Object.assign({}, s, { justificadas: 0 }));
+    const porId = new Map(estudiantes.map((s) => [s.id, s]));
+    let total = 0;
+    for (const f of faltas || []) {
+      const n = f.clases_justificadas || 0;
+      if (!n) continue;
+      total += n;
+      const s = porId.get(f.student_id);
+      if (s) s.justificadas = n;
+      else estudiantes.push({ id: f.student_id, full_name: f.full_name, grupo: f.grupo, clases: 0,
+        clases_presenciales: 0, tardes: 0, minutos_tarde: 0, minutos: 0, justificadas: n });
+    }
+    estudiantes.sort((a, b) => String(a.full_name || "").localeCompare(String(b.full_name || ""), "es"));
+    d.estudiantes = estudiantes;
+    d.totales = Object.assign({}, d.totales || {}, { faltas_justificadas: total });
+    return d;
+  }
+
   return {
     armar: armar,
     armarExterno: armarExterno,
+    conFaltasJustificadas: conFaltasJustificadas,
     _periodoLargo: periodoLargo,
     _fechaCorta: fechaCorta,
     _fechaLarga: fechaLarga,

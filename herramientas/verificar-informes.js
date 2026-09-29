@@ -342,6 +342,8 @@ async function pruebaProfesor(browser) {
       informes_resumen_alumnos: [ANA, BRUNO, CARLA],
       informes_cursos_alumnos: CURSOS_ANA,
       informes_entreno_modulos: [MODULOS_ANA, { student_id: "a-2", temas: 8, con_como_salio: 0, limpios: 0 }],
+      // Bruno faltó a dos clases con una justificación aceptada.
+      faltas_justificadas: [{ student_id: "a-2", clases_justificadas: 2 }],
       // Lo hecho desde el diagnóstico en cada lugar al que manda el plan: el
       // plan siempre termina mandando a repetir el diagnóstico.
       avance_del_plan: [{ clave: "actividad:diagnostico", hechos: 1 }],
@@ -375,7 +377,7 @@ async function pruebaProfesor(browser) {
   igual("Partidas guardadas", await tarjeta(page, "Partidas guardadas"), "2");
   igual("Alumnos", await tarjeta(page, "Alumnos"), "3");
   igual("asistencia · Ana", await fila(page, "attendance-table-body", 0), "Ana Rojas | 7A | 3/4 | 1 h 5 min | 30 min | 1 h 35 min");
-  igual("asistencia · Bruno", await fila(page, "attendance-table-body", 1), "Bruno Mena | 7B | 1/4 | 10 min | 0 min | 10 min");
+  igual("asistencia · Bruno, con sus faltas justificadas escritas", await fila(page, "attendance-table-body", 1), "Bruno Mena | 7B | 1/4 · 2 faltas justificadas | 10 min | 0 min | 10 min");
   igual("asistencia · Carla", await fila(page, "attendance-table-body", 2), "Carla Soto | — | 0/4 | 0 min | 0 min | 0 min");
   igual("entreno · Ana", await fila(page, "entreno-table-body", 0), "Ana Rojas | 12 | 4 | 18 | 2 (5⭐) | 6 (1·2·3) | 7 | 4");
   igual("entreno · Bruno", await fila(page, "entreno-table-body", 1), "Bruno Mena | 3 | 0 | — | — | — | — | —");
@@ -390,7 +392,7 @@ async function pruebaProfesor(browser) {
   igual("una fila por alumno, con su nivel y si está entrenando",
     await filaLimpia(page, "alumnos-tbody", 0), "Ana Rojas 7A | 3/4 | 1 h 35 min | 7/10 · 70% | Intermedio | ✅ Esta semana");
   igual("y a quien no hizo el diagnóstico se le dice, no se le pinta un hueco",
-    await filaLimpia(page, "alumnos-tbody", 1), "Bruno Mena 7B | 1/4 | 10 min | 1/4 · 25% | Sin diagnóstico | ✅ Esta semana");
+    await filaLimpia(page, "alumnos-tbody", 1), "Bruno Mena 7B | 1/4 · 2 faltas justificadas | 10 min | 1/4 · 25% | Sin diagnóstico | ✅ Esta semana");
   igual("con todos a la vista, el conteo no habla de corte",
     await page.textContent("#alumnos-cuenta"), "3 alumnos");
 
@@ -701,7 +703,7 @@ async function pruebaProfesor(browser) {
   await page.selectOption("#student-filter", "");
   await page.selectOption("#group-filter", "7B");
   await page.waitForFunction(() => document.querySelectorAll("#attendance-table-body tr").length === 1);
-  igual("solo 7B", await fila(page, "attendance-table-body", 0), "Bruno Mena | 7B | 1/4 | 10 min | 0 min | 10 min");
+  igual("solo 7B", await fila(page, "attendance-table-body", 0), "Bruno Mena | 7B | 1/4 · 2 faltas justificadas | 10 min | 0 min | 10 min");
   await page.selectOption("#group-filter", "");
   await page.selectOption("#topic-filter", "4x4");
   await page.waitForFunction(() => !document.getElementById("topic-report").classList.contains("hidden"));
@@ -738,6 +740,8 @@ async function pruebaAlumno(browser) {
   const { page, errores } = await abrir(browser, {
     rpc: {
       informes_resumen_alumnos: [ANA],
+      // Una falta justificada no cuenta en contra: 3 de las 3 que no justificó.
+      faltas_justificadas: [{ student_id: "a-1", clases_justificadas: 1 }],
       informes_cursos_alumnos: [CURSOS_ANA[0]],
       informes_entreno_modulos: [MODULOS_ANA],
       informes_diagnosticos_alumnos: [{ student_id: "a-1", detalle: DIAGNOSTICO, fecha: "2026-09-10T12:00:00Z", a_medias_pregunta: null, a_medias_fecha: null }],
@@ -761,7 +765,7 @@ async function pruebaAlumno(browser) {
   igual("Correctas", await tarjeta(page, "Correctas"), "7");
   igual("Precisión", await tarjeta(page, "Precisión"), "78%");
   igual("Pendientes de revisar", await tarjeta(page, "Pendientes de revisar"), "1");
-  igual("Asistencia", await tarjeta(page, "Asistencia (75%)"), "3/4");
+  igual("Asistencia: la falta justificada no cuenta en contra y va escrita", await tarjeta(page, "Asistencia (100%) · 1 falta justificada"), "3/4");
   igual("Tiempo en clase", await tarjeta(page, "Tiempo en clase"), "1 h 5 min");
   igual("Tiempo en ejercicios", await tarjeta(page, "Tiempo en ejercicios"), "30 min");
   igual("Tiempo total en la plataforma", await tarjeta(page, "Tiempo total en la plataforma"), "1 h 35 min");

@@ -167,17 +167,44 @@
         // compañeros—, así que su vista busca SU renglón por id y nunca toma el primero.
         // Por eso sirven para las dos vistas sin escribir la cuenta dos veces.
         async function cargarResumen() {
-            const [alumnos, cursos, diagnosticos, modulos] = await Promise.all([
+            const [alumnos, cursos, diagnosticos, modulos, justificadas] = await Promise.all([
                 traerTodo(() => sb.rpc("informes_resumen_alumnos")),
                 traerTodo(() => sb.rpc("informes_cursos_alumnos")),
                 traerTodo(() => sb.rpc("informes_diagnosticos_alumnos")),
                 traerTodo(() => sb.rpc("informes_entreno_modulos")),
+                // Las clases a las que faltó con una justificación ACEPTADA: las
+                // cuenta la base (faltas_justificadas), no se guardan.
+                traerTodo(() => sb.rpc("faltas_justificadas")),
             ]);
+            const justificadasPorAlumno = {};
+            justificadas.forEach((j) => { justificadasPorAlumno[j.student_id] = j.clases_justificadas || 0; });
+            alumnos.forEach((a) => { a.clases_justificadas = justificadasPorAlumno[a.id] || 0; });
             const cursosPorAlumno = {}, diagnosticoPorAlumno = {}, modulosPorAlumno = {};
             cursos.forEach((c) => { (cursosPorAlumno[c.student_id] = cursosPorAlumno[c.student_id] || []).push(c); });
             diagnosticos.forEach((d) => { diagnosticoPorAlumno[d.student_id] = d; });
             modulos.forEach((m) => { modulosPorAlumno[m.student_id] = m; });
             return { alumnos, cursosPorAlumno, diagnosticoPorAlumno, modulosPorAlumno };
+        }
+
+        /* La asistencia de un alumno: «fue a 3 de 5». Una falta justificada (una
+           justificación ACEPTADA, ver justificaciones.html) se dice escrita al
+           lado y no cuenta en contra: el porcentaje se saca sobre las clases que
+           NO justificó. Una sola copia, porque la asistencia sale en cinco
+           lugares de esta página y cada uno la contaba a su manera. */
+        const justificadasTexto = (n) => n ? " · " + n + (n === 1 ? " falta justificada" : " faltas justificadas") : "";
+        function tarjetaAsistencia(a, cerradas) {
+            return statCard("🏫", a.fue + "/" + (cerradas || 0), "Asistencia (" + a.tasa + "%)" + justificadasTexto(a.just));
+        }
+
+        function asistenciaDe(fila, cerradas) {
+            const fue = (fila && fila.clases_asistidas) || 0;
+            const just = (fila && fila.clases_justificadas) || 0;
+            const base = Math.max(0, (cerradas || 0) - just);
+            return {
+                fue, just,
+                texto: fue + "/" + (cerradas || 0) + justificadasTexto(just),
+                tasa: base ? Math.round((fue / base) * 100) : 0,
+            };
         }
 
         // Tarjeta "Cursos": una barra por curso con los temas estudiados sobre el total y
@@ -290,8 +317,7 @@
 
             const { data: totales } = await sb.rpc("informes_totales").maybeSingle();
             const closedCount = (totales && totales.clases_cerradas) || 0;
-            const attendedClosed = fila.clases_asistidas || 0;
-            const attendanceRate = closedCount ? Math.round((attendedClosed / closedCount) * 100) : 0;
+            const asistencia = asistenciaDe(fila, closedCount);
             const totalMinutes = fila.minutos_clase || 0;
             const exerciseMinutesStudent = fila.minutos_ejercicios || 0;
 
@@ -306,7 +332,7 @@
             const cards = document.getElementById("stat-cards");
             cards.append(
                 statCard("🎯", accuracy + "%", "Precisión"),
-                statCard("🏫", `${attendedClosed}/${closedCount}`, `Asistencia (${attendanceRate}%)`),
+                tarjetaAsistencia(asistencia, closedCount),
                 statCard("⏱️", fmtDuration(totalMinutes + exerciseMinutesStudent), "Tiempo total en la plataforma"),
                 statCard("🧩", entreno.puzzles, "Ejercicios 4×4 resueltos"),
                 statCard("🎓", entreno.lessons, "Lecciones de Aprender completadas"),
@@ -567,7 +593,8 @@
                 return lista.sort((a, b) => min(b) - min(a) || porNombre(a, b));
             }
             if (panelAlumnos.orden === "precision") return lista.sort((a, b) => pct(b) - pct(a) || porNombre(a, b));
-            if (panelAlumnos.orden === "asistencia") return lista.sort((a, b) => (a.clases_asistidas || 0) - (b.clases_asistidas || 0) || porNombre(a, b));
+            // Por el porcentaje, que ya no cuenta las faltas justificadas.
+            if (panelAlumnos.orden === "asistencia") return lista.sort((a, b) => asistenciaDe(a, teacherData.closedSessions).tasa - asistenciaDe(b, teacherData.closedSessions).tasa || porNombre(a, b));
             return lista.sort(porNombre);
         }
 
@@ -601,7 +628,7 @@
                         <button type="button" data-abrir="${escVis(s.id)}" class="font-medium text-brand-700 dark:text-brand-200 hover:text-accent-600 dark:hover:text-accent-400 transition-colors text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded">${escVis(nombre)}</button>
                         ${s.grupo ? `<span class="block text-xs text-brand-450 dark:text-brand-350">${escVis(s.grupo)}</span>` : ""}
                     </td>
-                    <td class="py-2 pr-4 text-brand-500 dark:text-brand-300">${s.clases_asistidas}/${teacherData.closedSessions}</td>
+                    <td class="py-2 pr-4 text-brand-500 dark:text-brand-300">${escVis(asistenciaDe(s, teacherData.closedSessions).texto)}</td>
                     <td class="py-2 pr-4 text-brand-500 dark:text-brand-300">${fmtDuration((s.minutos_clase || 0) + (s.minutos_ejercicios || 0))}</td>
                     <td class="py-2 pr-4 text-brand-500 dark:text-brand-300">${pct === null ? "—" : `${s.correctas}/${s.respuestas} · ${pct}%`}</td>
                     <td class="py-2 pr-4 text-brand-500 dark:text-brand-300">${resumen ? escVis(resumen.nivel.etiqueta) : "<span class=\"text-brand-450 dark:text-brand-350\">Sin diagnóstico</span>"}</td>
@@ -731,7 +758,7 @@
                     tr.className = "border-b border-brand-50 dark:border-brand-800/60 last:border-0";
                     const tdName = document.createElement("td"); tdName.className = "py-2 pr-4 font-medium text-brand-700 dark:text-brand-200"; tdName.textContent = s.full_name || s.email;
                     const tdGrupo = document.createElement("td"); tdGrupo.className = "py-2 pr-4 text-brand-500 dark:text-brand-300"; tdGrupo.textContent = s.grupo || "—";
-                    const tdAtt = document.createElement("td"); tdAtt.className = "py-2 pr-4 text-brand-500 dark:text-brand-300"; tdAtt.textContent = `${s.clases_asistidas}/${closedSessions}`;
+                    const tdAtt = document.createElement("td"); tdAtt.className = "py-2 pr-4 text-brand-500 dark:text-brand-300"; tdAtt.textContent = asistenciaDe(s, closedSessions).texto;
                     const tdClase = document.createElement("td"); tdClase.className = "py-2 pr-4 text-brand-500 dark:text-brand-300"; tdClase.textContent = fmtDuration(s.minutos_clase);
                     const tdEjercicios = document.createElement("td"); tdEjercicios.className = "py-2 pr-4 text-brand-500 dark:text-brand-300"; tdEjercicios.textContent = fmtDuration(s.minutos_ejercicios);
                     const tdTotal = document.createElement("td"); tdTotal.className = "py-2 font-semibold text-brand-700 dark:text-brand-200"; tdTotal.textContent = fmtDuration(s.minutos_clase + s.minutos_ejercicios);
@@ -821,8 +848,7 @@
             const correct = fila.correctas || 0;
             const calificadas = fila.calificadas || 0;
             const accuracy = calificadas ? Math.round((correct / calificadas) * 100) : 0;
-            const attendedClosed = fila.clases_asistidas || 0;
-            const attendanceRate = teacherData.closedSessions ? Math.round((attendedClosed / teacherData.closedSessions) * 100) : 0;
+            const asistencia = asistenciaDe(fila, teacherData.closedSessions);
             const totalMinutes = fila.minutos_clase || 0;
             const exerciseMinutesDetail = fila.minutos_ejercicios || 0;
             const entreno = entrenoDeAlumno(studentId);
@@ -840,7 +866,7 @@
             cards.classList.remove("hidden");
             cards.append(
                 statCard("🎯", accuracy + "%", "Precisión"),
-                statCard("🏫", `${attendedClosed}/${teacherData.closedSessions}`, `Asistencia (${attendanceRate}%)`),
+                tarjetaAsistencia(asistencia, teacherData.closedSessions),
                 statCard("⏱️", fmtDuration(totalMinutes + exerciseMinutesDetail), "Tiempo total en la plataforma"),
                 statCard("🧩", entreno.puzzles, "Ejercicios 4×4 resueltos"),
                 statCard("🎓", entreno.lessons, "Lecciones de Aprender completadas"),
@@ -1650,7 +1676,7 @@
                 students
                     .map((s) => ({
                         name: s.full_name || s.email,
-                        count: s.clases_asistidas,
+                        asistencia: asistenciaDe(s, teacherData.closedSessions),
                         minutes: s.minutos_clase,
                         exerciseMinutes: s.minutos_ejercicios,
                     }))
@@ -1658,7 +1684,7 @@
                     .forEach((r) => {
                         const row = document.createElement("div");
                         row.className = "flex items-center justify-between text-sm border-b border-brand-50 dark:border-brand-800/60 last:border-0 pb-2";
-                        row.innerHTML = `<span class="font-medium text-brand-700 dark:text-brand-200">${escVis(r.name)}</span><span class="text-brand-500 dark:text-brand-300">${r.count}/${teacherData.closedSessions} clases · ⏱️ ${fmtDuration(r.minutes)} en clase + ${fmtDuration(r.exerciseMinutes)} en ejercicios = ${fmtDuration(r.minutes + r.exerciseMinutes)}</span>`;
+                        row.innerHTML = `<span class="font-medium text-brand-700 dark:text-brand-200">${escVis(r.name)}</span><span class="text-brand-500 dark:text-brand-300">${r.asistencia.fue}/${teacherData.closedSessions} clases${justificadasTexto(r.asistencia.just)} · ⏱️ ${fmtDuration(r.minutes)} en clase + ${fmtDuration(r.exerciseMinutes)} en ejercicios = ${fmtDuration(r.minutes + r.exerciseMinutes)}</span>`;
                         body.appendChild(row);
                     });
             } else {

@@ -44,6 +44,12 @@ let editando = null;          // id de la ficha que se está corrigiendo
 let busqueda = "";
 let horario = [];             // las clases fijas de la semana (horario_clases vigentes)
 let subgrupos = [];           // los suyos, para «con quiénes» del horario
+/* Quién mandó una justificación de ausencia (justificaciones.html) que cubre
+   el día de la ficha: se dice al lado de su nombre al pasar lista. La cuenta de
+   faltas justificadas NO sale de acá —la hace la base, faltas_justificadas()—:
+   esto solo avisa, para que quien pasa lista no la busque en otra página. */
+let justificadas = { fecha: null, porAlumno: new Map() };
+let pedidoJustificadas = 0;
 
 const POR_PAGINA = 10;
 
@@ -141,6 +147,11 @@ function pintarCasillas() {
         label.appendChild(el("span", "truncate", nombreDe(a) + (a.grupo ? " · " + a.grupo : "")));
         fila.appendChild(label);
 
+        const just = el("span", "justificada shrink-0 text-xs font-semibold text-brand-600 dark:text-brand-300");
+        just.dataset.alumno = a.id;
+        just.hidden = true;
+        fila.appendChild(just);
+
         const min = document.createElement("input");
         min.type = "number";
         min.min = "0";
@@ -184,6 +195,47 @@ function pintarCasillas() {
     caja.appendChild(el("p", "sin-coincidencias hidden text-sm text-brand-450 dark:text-brand-350 p-2 sm:col-span-2", "Ninguno coincide con eso."));
     filtrar();
     pintarCuenta();
+    const fecha = document.getElementById("fecha").value;
+    if (justificadas.fecha === fecha) pintarJustificadas();
+    else cargarJustificadas(fecha);
+}
+
+/* Las justificaciones que cubren ESE día, aceptadas o por revisar (una no
+   aceptada no justifica nada). Qué alumnos salen lo decide la RLS: los suyos. */
+async function cargarJustificadas(fecha) {
+    const n = ++pedidoJustificadas;
+    const estado = document.getElementById("justificadas-estado");
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha || "")) {
+        justificadas = { fecha, porAlumno: new Map() };
+        pintarJustificadas();
+        return;
+    }
+    const { data, error } = await sb.from("justificaciones_ausencia")
+        .select("student_id, estado")
+        .lte("fecha_desde", fecha).gte("fecha_hasta", fecha).neq("estado", "no_aceptada")
+        .range(0, 999);
+    if (n !== pedidoJustificadas) return;   // llegó tarde: ya se cambió el día
+    // Que falle y no se pinte nada se leería igual que «nadie justificó».
+    if (estado) estado.textContent = error ? "No se pudieron revisar las justificaciones de ausencia de ese día: " + error.message : "";
+    const porAlumno = new Map();
+    (data || []).forEach((j) => {
+        // Si hay dos, manda la aceptada.
+        if (porAlumno.get(j.student_id) !== "aceptada") porAlumno.set(j.student_id, j.estado);
+    });
+    justificadas = { fecha, porAlumno };
+    pintarJustificadas();
+}
+
+function pintarJustificadas() {
+    document.querySelectorAll(".justificada").forEach((s) => {
+        const e = justificadas.porAlumno.get(s.dataset.alumno);
+        s.hidden = !e;
+        s.textContent = "";
+        if (!e) return;
+        const emoji = el("span", null, "🩺 ");
+        emoji.setAttribute("aria-hidden", "true");
+        s.append(emoji, document.createTextNode(e === "aceptada" ? "Falta justificada" : "Justificación por revisar"));
+    });
 }
 
 function filtrar() {
@@ -706,6 +758,7 @@ document.getElementById("cancelar").addEventListener("click", limpiar);
 document.getElementById("h-guardar").addEventListener("click", agregarHorario);
 document.getElementById("marcar-todos").addEventListener("click", () => marcarTodos(true));
 document.getElementById("marcar-ninguno").addEventListener("click", () => marcarTodos(false));
+document.getElementById("fecha").addEventListener("change", (e) => cargarJustificadas(e.target.value));
 document.getElementById("buscar").addEventListener("input", (e) => {
     busqueda = e.target.value;
     filtrar();

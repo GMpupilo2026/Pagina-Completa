@@ -392,10 +392,16 @@
             if (!desde || !hasta) return decir(estado, "Falta decir desde y hasta cuándo.", true);
             if (desde > hasta) return decir(estado, "La fecha de inicio va antes que la de fin.", true);
             decir(estado, "Buscando…");
-            const { data, error } = await sb.rpc("reporte_actividades", { p_desde: desde, p_hasta: hasta });
+            const [rep, just] = await Promise.all([
+                sb.rpc("reporte_actividades", { p_desde: desde, p_hasta: hasta }),
+                // Las faltas con una justificación ACEPTADA en el periodo: las
+                // cuenta la base, la misma función que usa Informes.
+                sb.rpc("faltas_justificadas", { p_desde: desde, p_hasta: hasta }).range(0, 4999),
+            ]);
+            const error = rep.error || just.error;
             if (error) return decir(estado, "No se pudieron traer los datos: " + error.message, true);
-            datos = data;
-            const t = (data && data.totales) || {};
+            datos = ReporteArmar.conFaltasJustificadas(rep.data, just.data || []);
+            const t = (datos && datos.totales) || {};
             /* Cuántas son presenciales se dice acá arriba y no solo dentro del
                informe: es lo primero que se mira para saber si la ficha de
                asistencia de la semana pasada llegó de verdad. Sin ese número,
