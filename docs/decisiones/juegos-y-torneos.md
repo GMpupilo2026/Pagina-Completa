@@ -454,6 +454,9 @@ partidas.
 - **Los retos que me llegan van en Competir**, encima de todo: el canal de
   presencia (`juegos-en-linea`) solo anuncia a quien tiene esa página abierta,
   así que solo desde ahí se puede retar y recibir un reto.
+- **TV en vivo también está en Competir**, en su tarjeta debajo de Torneos:
+  ver jugar va junto a jugar. Salió de «Tu cuenta» del panel. A quien
+  administra se le sigue ofreciendo en «Revisar el contenido».
 - **Torneos también se entra desde Competir.** Su tarjeta salió del panel y
   es la primera de `competir.html` (debajo de los retos que llegan); las migas
   de `torneos.html` dicen Academia › Competir › Torneos. El texto cambia según
