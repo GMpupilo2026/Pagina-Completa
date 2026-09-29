@@ -798,58 +798,8 @@
    ]
   }
  ],
- "aprender": [
-  {
-   "clave": "movimientos",
-   "label": "Cómo mueve cada pieza",
-   "total": 12,
-   "actividades": [
-    "aprender"
-   ]
-  },
-  {
-   "clave": "reglas",
-   "label": "Las reglas",
-   "total": 5,
-   "actividades": [
-    "aprender"
-   ]
-  },
-  {
-   "clave": "tacticas",
-   "label": "Primeras tácticas",
-   "total": 4,
-   "actividades": [
-    "aprender"
-   ]
-  }
- ],
- "practicas": [
-  {
-   "clave": "tacticas",
-   "label": "Tácticas",
-   "total": 4,
-   "actividades": [
-    "practicar"
-   ]
-  },
-  {
-   "clave": "mates",
-   "label": "Mates",
-   "total": 3,
-   "actividades": [
-    "practicar"
-   ]
-  },
-  {
-   "clave": "finales",
-   "label": "Finales",
-   "total": 2,
-   "actividades": [
-    "practicar"
-   ]
-  }
- ],
+ "aprender": [],
+ "practicas": [],
  "aperturas": [
   {
    "clave": "pastor-mate",
@@ -1604,6 +1554,120 @@
    "grupo": "Conceptos",
    "total": 1,
    "actividades": []
+  }
+ ],
+ "tipos": [
+  {
+   "clave": "detective",
+   "label": "El Detective",
+   "total": 80,
+   "actividades": [
+    "tipos"
+   ]
+  },
+  {
+   "clave": "amenaza",
+   "label": "¿Qué quiere el rival?",
+   "total": 100,
+   "actividades": [
+    "tipos"
+   ]
+  },
+  {
+   "clave": "descarte",
+   "label": "Descarte",
+   "total": 80,
+   "actividades": [
+    "tipos"
+   ]
+  },
+  {
+   "clave": "diferencias",
+   "label": "Siete diferencias",
+   "total": 80,
+   "actividades": [
+    "tipos"
+   ]
+  },
+  {
+   "clave": "balanza",
+   "label": "La balanza",
+   "total": 80,
+   "actividades": [
+    "tipos"
+   ]
+  },
+  {
+   "clave": "fotografia",
+   "label": "Fotografía",
+   "total": 100,
+   "actividades": [
+    "tipos"
+   ]
+  },
+  {
+   "clave": "con-lo-justo",
+   "label": "Con lo justo",
+   "total": 69,
+   "actividades": [
+    "tipos"
+   ]
+  },
+  {
+   "clave": "barrido",
+   "label": "El Barrido",
+   "total": 80,
+   "actividades": [
+    "tipos"
+   ]
+  },
+  {
+   "clave": "intercambios",
+   "label": "Intercambios",
+   "total": 80,
+   "actividades": [
+    "tipos"
+   ]
+  },
+  {
+   "clave": "construye",
+   "label": "Constrúyela tú",
+   "total": 100,
+   "actividades": [
+    "tipos"
+   ]
+  },
+  {
+   "clave": "peones",
+   "label": "Rey y peón",
+   "total": 80,
+   "actividades": [
+    "tipos"
+   ]
+  },
+  {
+   "clave": "maestro",
+   "label": "Adivina la jugada del maestro",
+   "total": 90,
+   "actividades": [
+    "tipos"
+   ]
+  },
+  {
+   "clave": "apertura",
+   "label": "¿Qué apertura es?",
+   "total": 113,
+   "actividades": [
+    "tipos"
+   ]
+  },
+  {
+   "clave": "ruta",
+   "label": "La ruta segura",
+   "total": 80,
+   "actividades": [
+    "tipos"
+   ]
   }
  ]
 }

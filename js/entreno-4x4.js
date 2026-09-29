@@ -433,7 +433,22 @@ function announce(text, hablado){
    lo anterior al empezar lo siguiente, así que un segundo anuncio se comía la posición
    entera — al reiniciar solo se oía "Ejercicio reiniciado." y nunca qué había quedado
    en el tablero, que es justo lo que hace falta para volver a empezar. */
+/* Cómo salió el ejercicio, para training_progress: `limpio` es resolverlo sin
+   quedarse sin capturas y sin reiniciarlo a medio camino. En 4×4 no hay pistas
+   ni jugadas rechazadas: el tropiezo es el callejón sin salida. Volver a
+   empezarlo desde «Reintentar» (ya resuelto) o desde otro ejercicio es un
+   intento nuevo, limpio otra vez. */
+let intentoLimpio = true;
+/* «Reiniciar» (el botón o el comando escrito): hacerlo a medio camino (ya había
+   capturado algo, o se había trabado) es un tropiezo. */
+function reiniciarEjercicio(){
+  // Después de ganarlo no es un tropiezo: es volver a empezar.
+  const tropezo = Object.keys(boardState).length > 1 && (!intentoLimpio || captureLog.length > 0);
+  loadPuzzleAt(boardExIndex, 'Ejercicio reiniciado.');
+  if(tropezo) intentoLimpio = false;
+}
 function loadPuzzleAt(exIndex, prefijo){
+  intentoLimpio = true;
   selectedCell = null;
   focusedCell = [0,0];
   captureLog = [];
@@ -661,7 +676,8 @@ function checkWin(){
     const ex = boardExList[boardExIndex];
     const puz = puzzleForExercise(ex);
     markSolved(puz.id);
-    EntrenoProgress.log('4x4', { puzzle_id: puz.id, category: ex.category, number: ex.number });
+    EntrenoProgress.log('4x4', { puzzle_id: puz.id, category: ex.category, number: ex.number,
+      ...EntrenoProgress.comoSalio(!intentoLimpio, false) });
     setStatus('¡Resuelto!');
     document.getElementById('win-overlay').classList.add('open');
     updatePuzzleNavButtons(); // antes de decidir el foco: hace falta saber si "Siguiente" tiene a dónde ir
@@ -680,6 +696,7 @@ function checkWin(){
     return captureTargets(boardState[k], r, c, boardState).length > 0;
   });
   if(!anyMove){
+    intentoLimpio = false;
     setStatus('No quedan capturas posibles. Pulsa "Reiniciar" para intentarlo de nuevo.');
     announce('No quedan capturas posibles. Pulsa Reiniciar para intentarlo de nuevo.');
   }
@@ -1081,7 +1098,7 @@ function handleCmdFormSubmit(e){
   if(upper === 'AYUDA' || upper === 'HELP' || upper === '?'){ input.value=''; announceHelp(); return; }
   if(upper === 'REINICIAR' || upper === 'RESET'){
     input.value = '';
-    loadPuzzleAt(boardExIndex, 'Ejercicio reiniciado.');
+    reiniciarEjercicio();
     cmdAnnounce('Ejercicio reiniciado.', false);
     return;
   }
@@ -1183,9 +1200,7 @@ if(cmdFormEl) cmdFormEl.addEventListener('submit', handleCmdFormSubmit);
 const repeatCapturesBtn = document.getElementById('repeat-captures-btn');
 if(repeatCapturesBtn) repeatCapturesBtn.addEventListener('click', announceCaptureHistory);
 
-document.getElementById('board-reset').addEventListener('click', () => {
-  loadPuzzleAt(boardExIndex, 'Ejercicio reiniciado.');
-});
+document.getElementById('board-reset').addEventListener('click', reiniciarEjercicio);
 document.getElementById('win-retry').addEventListener('click', () => loadPuzzleAt(boardExIndex));
 document.getElementById('board-prev-puzzle').addEventListener('click', () => {
   if(boardExIndex > 0){

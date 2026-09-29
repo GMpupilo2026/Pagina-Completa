@@ -26,6 +26,16 @@
  * La marca de agua se dibuja en TODAS las páginas, con el logo en escala de
  * grises y su canal alfa aparte (/SMask). Sin el alfa, la imagen taparía el
  * texto con un rectángulo blanco.
+ *
+ * Dos cosas opcionales, para el PDF que lleva la marca de una academia (el
+ * diagnóstico de un visitante que llegó por su enlace):
+ *   documento.color    → "#rrggbb": los títulos y la línea van en ese color.
+ *   documento.cabecera → { nombre, color, logo }: una franja arriba de la
+ *                        primera página, en su color, con el logo (preparado
+ *                        como la marca de agua) sobre blanco y el nombre en
+ *                        blanco. El color tiene que dar 4,5 contra el blanco:
+ *                        lo mide quien arma el documento.
+ * Sin ellas, el PDF sale como siempre (los reportes de actividades).
  */
 window.ReportePDF = (function () {
   "use strict";
@@ -158,11 +168,11 @@ window.ReportePDF = (function () {
     if (this.y - alto < MARGEN + 30) this.cerrarPagina();   // 30 = sitio para el pie
   };
 
-  Lienzo.prototype.texto = function (linea, tam, negrita, sangria, gris) {
+  Lienzo.prototype.texto = function (linea, tam, negrita, sangria, gris, rgb) {
     this.espacio(tam * 1.35);
     this.y -= tam * 1.15;
     this.ops.push("BT /" + (negrita ? "FB" : "FN") + " " + tam + " Tf" +
-      (gris ? " " + gris + " " + gris + " " + gris + " rg" : " 0.10 0.16 0.24 rg") +
+      (rgb ? " " + rgb + " rg" : gris ? " " + gris + " " + gris + " " + gris + " rg" : " 0.10 0.16 0.24 rg") +
       " 1 0 0 1 " + (MARGEN + (sangria || 0)).toFixed(2) + " " + this.y.toFixed(2) + " Tm (" +
       escapar(linea) + ") Tj ET");
     this.y -= tam * 0.2;
@@ -177,10 +187,10 @@ window.ReportePDF = (function () {
     this.y -= tam * 0.45;      // aire entre párrafos
   };
 
-  Lienzo.prototype.linea = function () {
+  Lienzo.prototype.linea = function (rgb) {
     this.espacio(10);
     this.y -= 6;
-    this.ops.push("0.80 0.84 0.88 RG 0.8 w " + MARGEN + " " + this.y.toFixed(2) + " m " +
+    this.ops.push((rgb ? rgb + " RG 1.2 w " : "0.80 0.84 0.88 RG 0.8 w ") + MARGEN + " " + this.y.toFixed(2) + " m " +
       (A4.ancho - MARGEN).toFixed(2) + " " + this.y.toFixed(2) + " l S");
     this.y -= 6;
   };
@@ -224,6 +234,34 @@ window.ReportePDF = (function () {
         (A4.ancho - MARGEN).toFixed(2) + " " + (this.y - 5).toFixed(2) + " l S");
     }
     this.y -= 8;
+  };
+
+  /* La franja de la academia, arriba de la primera página: su color de fondo,
+     el logo sobre un cuadro blanco (un logo oscuro no se pierde) y el nombre
+     en blanco, que es el par medido. */
+  Lienzo.prototype.banda = function (nombre, rgb, logo) {
+    const alto = 64;
+    const arriba = A4.alto - MARGEN + 20;
+    this.ops.push(rgb + " rg " + MARGEN + " " + (arriba - alto).toFixed(2) + " " +
+      this.anchoUtil().toFixed(2) + " " + alto + " re f");
+    let x = MARGEN + 14;
+    if (logo) {
+      const lado = 44;
+      const y = arriba - alto + (alto - lado) / 2;
+      this.ops.push("1 1 1 rg " + x + " " + y.toFixed(2) + " " + lado + " " + lado + " re f");
+      // El logo cabe en el cuadro sin deformarse, con 3 puntos de aire.
+      const cabe = lado - 6;
+      const esc = Math.min(cabe / logo.ancho, cabe / logo.alto);
+      const w = logo.ancho * esc, h = logo.alto * esc;
+      this.ops.push("q " + w.toFixed(2) + " 0 0 " + h.toFixed(2) + " " + (x + (lado - w) / 2).toFixed(2) + " " +
+        (y + (lado - h) / 2).toFixed(2) + " cm /Logo Do Q");
+      x += lado + 14;
+    }
+    const tam = 18;
+    this.ops.push("BT /FB " + tam + " Tf 1 1 1 rg 1 0 0 1 " + x.toFixed(2) + " " +
+      (arriba - alto / 2 - tam * 0.35).toFixed(2) + " Tm (" +
+      escapar(recortar(nombre, A4.ancho - MARGEN - x - 10, tam, true)) + ") Tj ET");
+    this.y = arriba - alto - 14;
   };
 
   function recortar(texto, ancho, tam, negrita) {
@@ -281,6 +319,25 @@ window.ReportePDF = (function () {
           " /Height " + documento.marca.alto + " /ColorSpace /DeviceRGB /BitsPerComponent 8" +
           " /Filter /DCTDecode" + (alfaId ? " /SMask " + alfaId + " 0 R" : "") + " /Length @@ >>",
         flujo: documento.marca.jpeg,
+      });
+    }
+
+    // --- el logo de la cabecera, igual que la marca: dibujo + su alfa
+    const logo = documento.cabecera && documento.cabecera.logo && documento.cabecera.logo.jpeg
+      ? documento.cabecera.logo : null;
+    if (logo) {
+      const alfaLogo = logo.alfa
+        ? doc.nuevo({
+            diccionario: "<< /Type /XObject /Subtype /Image /Width " + logo.ancho + " /Height " + logo.alto +
+              " /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /FlateDecode /Length @@ >>",
+            flujo: await desinflar(logo.alfa),
+          })
+        : null;
+      recursos.imagenes.Logo = doc.nuevo({
+        diccionario: "<< /Type /XObject /Subtype /Image /Width " + logo.ancho + " /Height " + logo.alto +
+          " /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode" +
+          (alfaLogo ? " /SMask " + alfaLogo + " 0 R" : "") + " /Length @@ >>",
+        flujo: logo.jpeg,
       });
     }
 
@@ -379,12 +436,17 @@ window.ReportePDF = (function () {
      dibuja. Que los dos lean la misma estructura es lo que evita que el PDF y
      el Word se vayan separando con el tiempo. */
   function pintar(lienzo, documento, idPorFoto) {
-    lienzo.texto(documento.titulo || "Informe", 20, true);
+    const acento = aRgb(documento.color);
+    const cab = documento.cabecera;
+    if (cab && aRgb(cab.color)) {
+      lienzo.banda(cab.nombre || "", aRgb(cab.color), cab.logo && cab.logo.jpeg ? cab.logo : null);
+    }
+    lienzo.texto(documento.titulo || "Informe", 20, true, 0, null, acento);
     if (documento.subtitulo) lienzo.parrafo(documento.subtitulo, 11, false, 0, 0.45);
-    lienzo.linea();
+    lienzo.linea(acento);
 
     for (const bloque of documento.bloques || []) {
-      if (bloque.tipo === "titulo") { lienzo.y -= 8; lienzo.texto(bloque.texto, 14, true); lienzo.y -= 2; }
+      if (bloque.tipo === "titulo") { lienzo.y -= 8; lienzo.texto(bloque.texto, 14, true, 0, null, acento); lienzo.y -= 2; }
       else if (bloque.tipo === "subtitulo") { lienzo.y -= 4; lienzo.texto(bloque.texto, 11, true); }
       else if (bloque.tipo === "parrafo") lienzo.parrafo(bloque.texto, 10, false);
       else if (bloque.tipo === "nota") lienzo.parrafo(bloque.texto, 9, false, 0, 0.45);
@@ -399,9 +461,18 @@ window.ReportePDF = (function () {
           lienzo.imagen(nombre, bloque.foto.ancho, bloque.foto.alto, bloque.anchoMax || 320);
           if (bloque.pie) lienzo.parrafo(bloque.pie, 9, false, 0, 0.45);
         }
-      } else if (bloque.tipo === "separador") lienzo.linea();
+      } else if (bloque.tipo === "separador") lienzo.linea(acento);
     }
   }
 
-  return { generar: generar, _renglones: renglones, _aLatin1: aLatin1, _anchoDe: anchoDe };
+  /* "#1c3870" → "0.110 0.220 0.439", lo que entiende un PDF. Un color que no
+     tenga esa forma no se usa: termina escrito dentro del contenido. */
+  function aRgb(hex) {
+    const m = /^#([0-9a-f]{6})$/i.exec(String(hex || ""));
+    if (!m) return null;
+    const n = parseInt(m[1], 16);
+    return [n >> 16 & 255, n >> 8 & 255, n & 255].map((v) => (v / 255).toFixed(3)).join(" ");
+  }
+
+  return { generar: generar, _renglones: renglones, _aLatin1: aLatin1, _anchoDe: anchoDe, _aRgb: aRgb };
 })();

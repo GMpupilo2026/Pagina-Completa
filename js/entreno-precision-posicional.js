@@ -190,6 +190,13 @@ async function terminar() {
   const detalle = construirDetalle();
   const resumen = CRITERIO.resumir(detalle);
   const subida = guardar(detalle, resumen);
+  // Cada tanda terminada suma a la meta del día, la racha, los logros y las
+  // tareas (training_progress). Sin puzzle_id: la tanda se sortea, así que
+  // cada una cuenta.
+  if (window.EntrenoProgress) EntrenoProgress.log('precision-posicional', {
+    modo: detalle.modo, cantidad: detalle.cantidad,
+    aciertos: resumen.aciertos, porcentaje: resumen.porcentaje,
+  });
   mostrarResultado(detalle, resumen);
   $('r-guardado').textContent = 'Guardando el resultado…';
   $('r-guardado').textContent = (await subida)

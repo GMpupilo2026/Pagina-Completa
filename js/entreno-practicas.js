@@ -53,10 +53,10 @@ const SETS = [
     ] },
   { id:'beso', cat:'mates', emoji:'👑', title:'Mate con dama o torre apoyada', desc:'Tu rey protege a la pieza que da el jaque mate justo al lado del rey rival.',
     rounds:[
-      { fen:'7k/8/6K1/8/8/8/8/7Q w - - 0 1', from:'h1', to:'h7' },
-      { fen:'k7/8/1K6/8/8/8/8/Q7 w - - 0 1', from:'a1', to:'a7' },
-      { fen:'7Q/8/8/8/8/6K1/8/7k w - - 0 1', from:'h8', to:'h2' },
-      { fen:'Q7/8/8/8/8/1K6/8/k7 w - - 0 1', from:'a8', to:'a2' },
+      { fen:'7k/Q7/6K1/8/8/8/8/8 w - - 0 1', from:'a7', to:'h7' },
+      { fen:'k7/7Q/1K6/8/8/8/8/8 w - - 0 1', from:'h7', to:'a7' },
+      { fen:'8/8/8/8/8/6K1/Q7/7k w - - 0 1', from:'a2', to:'h2' },
+      { fen:'8/8/8/8/8/1K6/7Q/k7 w - - 0 1', from:'h2', to:'a2' },
       { fen:'6k1/8/6K1/8/8/8/8/R7 w - - 0 1', from:'a1', to:'a8' },
     ] },
   { id:'horquilla', cat:'tacticas', emoji:'🍴', title:'Horquillas de caballo', desc:'Un solo salto de caballo ataca dos piezas rivales a la vez.',
@@ -79,16 +79,16 @@ const SETS = [
     rounds:[
       { fen:'7k/8/8/8/8/2N5/8/B3K3 w - - 0 1', from:'c3', to:'b5' },
       { fen:'4k3/8/8/8/4N3/8/8/K3R3 w - - 0 1', from:'e4', to:'c5' },
-      { fen:'k7/8/8/3B4/8/8/8/K6Q w - - 0 1', from:'d5', to:'e6' },
+      { fen:'k7/8/8/3R4/8/8/8/K6Q w - - 0 1', from:'d5', to:'e5' },
       { fen:'8/8/8/8/R1N4k/8/8/K7 w - - 0 1', from:'c4', to:'b6' },
       { fen:'7k/8/8/8/8/8/1P6/B3K3 w - - 0 1', from:'b2', to:'b3' },
     ] },
   { id:'doble', cat:'tacticas', emoji:'⚔️', title:'Ataques dobles', desc:'Una sola jugada de una pieza de largo alcance amenaza dos piezas rivales a la vez.',
     rounds:[
-      { fen:'7k/8/8/r6R/8/8/4r3/7K w - - 0 1', from:'h5', to:'e5' },
+      { fen:'6k1/8/8/b6R/8/8/4n3/7K w - - 0 1', from:'h5', to:'e5' },
       { fen:'k7/8/2r3n1/8/8/8/8/K6B w - - 0 1', from:'h1', to:'e4' },
-      { fen:'4r1k1/8/8/8/b6Q/8/8/K7 w - - 0 1', from:'h4', to:'e4' },
-      { fen:'7k/8/q7/4K3/8/8/3R3r/8 w - - 0 1', from:'d2', to:'a2' },
+      { fen:'6k1/8/2r5/8/b6Q/8/8/K7 w - - 0 1', from:'h4', to:'e4' },
+      { fen:'7k/8/b7/4K3/8/8/3R3n/8 w - - 0 1', from:'d2', to:'a2' },
       { fen:'k7/6n1/1r6/8/8/8/8/B6K w - - 0 1', from:'a1', to:'d4' },
     ] },
   { id:'torre', cat:'finales', emoji:'🏰', title:'Mate con rey y torre', desc:'El rey corta el paso y la torre da el jaque mate en el borde del tablero.',
@@ -269,10 +269,44 @@ function starString(n){
   return full + empty;
 }
 
+/* «Repasar fallados» (js/repaso-fallados.js, lo mismo que Temas, Mates y
+   Visualización): cada RONDA que salió con error, pista o «Ver solución»
+   entra a una cola de repaso espaciado (id "serie:número") y vuelve cuando
+   toca. El repaso es una serie más, armada con las rondas de hoy: cada una
+   recuerda su serie (`_serie`), que es la que dice el motivo que vale. */
+const REPASO = '__repaso';
+const CLAVE_REPASO = window.RepasoFallados ? RepasoFallados.CLAVES.practicas : null;
+function rondaPorId(rid){
+  const i = rid.lastIndexOf(':');
+  const set = SETS.find((s) => s.id === rid.slice(0, i));
+  const r = set && set.rounds[+rid.slice(i + 1)];
+  return r ? Object.assign({}, r, { _rid: rid, _serie: set.id }) : null;
+}
+function pendientesDeRepaso(){
+  if(!window.RepasoFallados) return [];
+  return RepasoFallados.pendientes(CLAVE_REPASO, (rid) => !!rondaPorId(rid));
+}
+function pintarRepaso(){
+  const caja = document.getElementById('repaso-caja');
+  const n = pendientesDeRepaso().length;
+  caja.hidden = !n;
+  if(!n) return;
+  document.getElementById('repaso-texto').textContent = n === 1
+    ? 'Hoy toca repasar 1 posición que te costó (la resolviste con un error o con una pista).'
+    : `Hoy toca repasar ${n} posiciones que te costaron (las resolviste con un error o con una pista).`;
+}
+function abrirRepaso(){
+  const rondas = pendientesDeRepaso().map(rondaPorId);
+  if(!rondas.length) return;
+  openSet({ id: REPASO, cat: currentCategory, emoji: '🔁', title: 'Repasar fallados',
+    desc: 'Las que te costaron, otra vez. Si sale limpia, vuelve más adelante; si no, vuelve pronto.', rounds: rondas });
+}
+
 function showList(){
   document.getElementById('set-view').style.display = 'none';
   document.getElementById('list-view').style.display = 'block';
   buildTabs();
+  pintarRepaso();
   const list = setsFor(currentCategory);
   const box = document.getElementById('set-list');
   box.innerHTML = '';
@@ -407,8 +441,11 @@ if(typeof enableBoardDrag !== 'undefined'){
 function handleMoveResult(moveResult){
   const round = currentSet.rounds[currentRoundIndex];
   // Cualquier jugada que dé mate también es correcta: la serie guarda UNA
-  // jugada, y en las de mate a veces hay dos (7k/8/6K1/…/7Q: Dh7# y Da8#).
-  const correct = (moveResult.from === round.from && moveResult.to === round.to) || game.in_checkmate();
+  // jugada, y en las de mate a veces hay dos. Y en las tácticas, cualquiera
+  // que cumpla el motivo (js/motivos-tacticos.js): en un descubierto, todo
+  // salto del caballo descubre el jaque.
+  const correct = (moveResult.from === round.from && moveResult.to === round.to) || game.in_checkmate() ||
+    (window.MotivosTacticos && MotivosTacticos.MOTIVOS.includes(round._serie || currentSet.id) && MotivosTacticos.cumple(round._serie || currentSet.id, round.fen, moveResult));
   if(correct){
     finishRound();
   } else {
@@ -427,6 +464,10 @@ function finishRound(conSolucion){
   const seconds = ((Date.now() - roundStartTime) / 1000).toFixed(1);
   const stars = EntrenoProgress.estrellasDeLaRonda(hintsUsedThisRound, errorsThisRound);
   setStarsEarned.push(stars);
+  // La cola de repaso: lo que costó entra; lo que se repasa se reprograma.
+  const ronda = currentSet.rounds[currentRoundIndex];
+  if(window.RepasoFallados) RepasoFallados.anotar(CLAVE_REPASO, ronda._rid || (currentSet.id + ':' + currentRoundIndex),
+    errorsThisRound > 0, hintsUsedThisRound > 0 || !!conSolucion);
   if(!conSolucion) bumpStreak();
   const fast = !conSolucion && seconds < 4 && hintsUsedThisRound === 0 && errorsThisRound === 0;
   if(!conSolucion) setStatus(`✅ ¡Correcto!${fast ? ' ⚡ ¡Relámpago!' : ''} (${seconds}s)`, 'ok');
@@ -443,6 +484,19 @@ function finishRound(conSolucion){
 function finishSet(){
   document.getElementById('play-area').style.display = 'none';
   document.getElementById('celebration').style.display = 'block';
+  const enRepaso = currentSet.id === REPASO;
+  document.getElementById('celebration-next-btn').style.display = enRepaso ? 'none' : '';
+  if(enRepaso){
+    // El repaso no es una serie: no tiene estrellas propias ni se registra como serie terminada.
+    const n = currentSet.rounds.length;
+    document.getElementById('celebration-stars').innerHTML = '';
+    document.getElementById('celebration-title').textContent = '¡Repaso terminado!';
+    document.getElementById('celebration-stats').textContent =
+      `Repasaste ${n} ${n === 1 ? 'posición' : 'posiciones'}. Las que salieron limpias vuelven más adelante.`;
+    if(window.BlindNotation) window.BlindNotation.speak('¡Repaso terminado!');
+    document.getElementById('celebration-back-btn').focus();
+    return;
+  }
   const avg = setStarsEarned.reduce((a,b) => a+b, 0) / setStarsEarned.length;
   const stars = avg >= 2.6 ? 3 : (avg >= 1.6 ? 2 : 1);
   setSetStars(currentSet.id, stars);
@@ -454,7 +508,10 @@ function finishSet(){
     (limpia ? ' — ¡sin pistas ni errores!' : '');
   const titleText = stars === 3 ? '¡Serie perfecta! 🏆' : (stars === 2 ? '¡Serie completada! 🎉' : 'Serie completada — ¡a repetirla para subir de estrellas!');
   document.getElementById('celebration-title').textContent = titleText;
-  EntrenoProgress.log('practicar', { set_id: currentSet.id, category: currentSet.cat, title: currentSet.title, stars, seconds: Number(totalSeconds) });
+  // Cómo salió: cuántas posiciones de la serie salieron limpias (tres
+  // estrellas: sin error, sin pista y sin «Ver solución»), y si fue toda.
+  EntrenoProgress.log('practicar', { set_id: currentSet.id, category: currentSet.cat, title: currentSet.title, stars, seconds: Number(totalSeconds),
+    rondas: setStarsEarned.length, rondas_limpias: setStarsEarned.filter(s => s === 3).length, limpio: limpia });
   if(window.BlindNotation) window.BlindNotation.speak(titleText);
   if(blindMode){
     // El foco cae directo en "Siguiente serie" — así, en modo adaptado, basta con
@@ -516,6 +573,7 @@ function openSet(set){
 }
 
 document.getElementById('back-to-list').addEventListener('click', (e) => { e.preventDefault(); showList(); });
+document.getElementById('repaso-btn').addEventListener('click', abrirRepaso);
 document.getElementById('celebration-back-btn').addEventListener('click', showList);
 document.getElementById('celebration-next-btn').addEventListener('click', () => {
   const list = setsFor(currentCategory);
@@ -532,6 +590,8 @@ function initApp(){
   setStreak(getStreak());
   applyBlindModeUI();
   showList();
+  // ?repaso=1 es el enlace de «Hoy te toca» del hub: abre la cola directo.
+  if(new URLSearchParams(location.search).has('repaso') && pendientesDeRepaso().length) abrirRepaso();
 }
 
 async function requireLoginThenGate(){

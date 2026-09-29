@@ -106,6 +106,20 @@
     const s = tarjeta("Qué hacer contra él", "resumen-titulo");
     s.classList.add("ring-2", "ring-accent-400");
     s.appendChild(nota("Lo esencial del análisis. Cada consejo trae el dato que lo justifica; el detalle está en las tarjetas de abajo."));
+    if (opcionesActuales.alImprimir) {
+      const b = el("button", "mb-3 px-3 py-1.5 rounded-lg text-sm font-semibold bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "Hoja para imprimir (o guardar en PDF)");
+      b.type = "button";
+      b.id = "imprimir-hoja";
+      b.addEventListener("click", () => opcionesActuales.alImprimir(b));
+      s.appendChild(b);
+    }
+    // El ritmo de la partida que viene: si el análisis se filtró a él, o si
+    // hay muy pocas partidas a ese ritmo para filtrar.
+    if (res.ritmo) {
+      const p = el("p", "text-sm mb-3 " + (res.ritmo.aviso ? "font-semibold text-accent-700 dark:text-accent-400" : "text-brand-700 dark:text-brand-100"), res.ritmo.texto);
+      p.dataset.ritmo = res.ritmo.aviso ? "aviso" : "filtrado";
+      s.appendChild(p);
+    }
     const leer = el("details", "mb-4");
     leer.appendChild(el("summary", "cursor-pointer text-sm font-semibold text-brand-600 dark:text-brand-200 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "Cómo leer los porcentajes"));
     leer.appendChild(el("p", "text-sm text-brand-600 dark:text-brand-200 mt-2", "«Él saca 24 %» quiere decir que en esas partidas el rival sumó 24 de cada 100 puntos posibles (1 por ganada, ½ por tablas). Menos de 45 %: le cuesta, y esa línea te conviene. Más de 55 %: le va bien, y conviene evitarla. Entre las dos, parejo."));
@@ -121,6 +135,7 @@
       const d = el("div", "min-w-0");
       d.dataset.lado = l.clave;
       d.appendChild(el("h4", "font-bold text-lg text-brand-800 dark:text-white mb-2", l.titulo));
+      (l.avisos || []).forEach((x) => d.appendChild(avisoReciente(x)));
       if (!l.lineas.length) {
         d.appendChild(el("p", "text-sm text-brand-500 dark:text-brand-300 mb-3", "No hay suficientes partidas suyas con " + (l.clave === "conBlancas" ? "negras" : "blancas") + " para recomendar una línea."));
       }
@@ -157,10 +172,11 @@
     });
     s.appendChild(grilla);
     const g = res.general;
-    if (g.haz.length || g.evita.length) {
+    if (g.haz.length || g.evita.length || (g.avisos && g.avisos.length)) {
       const d = el("div", "mt-6");
       d.dataset.lado = "general";
       d.appendChild(el("h4", "font-bold text-lg text-brand-800 dark:text-white mb-2", "En toda la partida"));
+      (g.avisos || []).forEach((x) => d.appendChild(avisoReciente(x)));
       const dos = el("div", "grid lg:grid-cols-2 gap-6");
       if (g.haz.length) dos.appendChild(listaConsejos("Haz esto", "✅", g.haz, "haz"));
       if (g.evita.length) dos.appendChild(listaConsejos("No hagas esto", "⛔", g.evita, "evita"));
@@ -168,6 +184,68 @@
       s.appendChild(d);
     }
     return s;
+  }
+
+  // Un aviso de su forma reciente (cambió de repertorio, viene en racha).
+  function avisoReciente(x) {
+    const d = el("div", "rounded-xl border-2 border-accent-400 p-3 mb-3 flex flex-wrap items-start justify-between gap-x-4 gap-y-2");
+    d.dataset.reciente = "";
+    const t = el("div", "min-w-0 flex-1");
+    t.appendChild(el("p", "text-sm font-semibold text-brand-800 dark:text-white", x.texto));
+    if (x.porque) t.appendChild(el("p", "text-sm text-brand-600 dark:text-brand-200", x.porque));
+    d.appendChild(t);
+    if (x.sec && opcionesActuales.alVerSecuencia) d.appendChild(botonVer(x.sec, "Ver en el tablero: " + A.lineaEs(x.sec), x.texto));
+    return d;
+  }
+
+  /* La hoja para imprimir: una página con lo esencial, para llevar a la
+     partida o mirar en el celular antes de sentarse (guardada en PDF). Sale
+     del mismo resumen: la línea de cada color, tres cosas que hacer y tres
+     que no, lo de toda la partida, y los avisos de su forma reciente. Sin
+     botones ni plegables: en papel no se tocan. */
+  function pintarHoja(r) {
+    const res = R().armar(r);
+    const h = el("div", "hoja");
+    h.appendChild(el("h1", "hoja-titulo", "Contra " + r.rival));
+    const sub = [r.total + " partidas"];
+    if (r.fechas && r.fechas.desde) sub.push("del " + fecha(r.fechas.desde) + " al " + fecha(r.fechas.hasta));
+    if (r.filtros && r.filtros.partida) sub.push("partida a " + r.filtros.partida);
+    if (r.cruce && r.cruce.alumno) sub.push("para " + r.cruce.alumno);
+    h.appendChild(el("p", "hoja-sub", sub.join(" · ")));
+    if (res.ritmo && res.ritmo.aviso) h.appendChild(el("p", "hoja-aviso", res.ritmo.texto));
+    const lista = (titulo, items, max) => {
+      if (!items.length) return null;
+      const d = el("div", "hoja-bloque");
+      d.appendChild(el("h3", "", titulo));
+      const ul = el("ul");
+      items.slice(0, max).forEach((x) => ul.appendChild(el("li", "", x.texto)));
+      d.appendChild(ul);
+      return d;
+    };
+    const cols = el("div", "hoja-columnas");
+    res.lados.forEach((l) => {
+      const d = el("section", "hoja-lado");
+      d.appendChild(el("h2", "", l.titulo));
+      (l.avisos || []).forEach((x) => d.appendChild(el("p", "hoja-aviso", x.texto)));
+      l.lineas.forEach((x) => {
+        d.appendChild(el("p", "hoja-linea-titulo", x.titulo));
+        d.appendChild(el("p", "hoja-linea", A.lineaEs(x.sec)));
+        d.appendChild(el("p", "hoja-dato", "En esta línea " + x.texto));
+      });
+      [lista("Haz esto", l.haz, 3), lista("No hagas esto", l.evita, 3)].forEach((b) => b && d.appendChild(b));
+      cols.appendChild(d);
+    });
+    h.appendChild(cols);
+    const g = res.general;
+    if (g.haz.length || g.evita.length || g.avisos.length) {
+      const d = el("section", "hoja-general");
+      d.appendChild(el("h2", "", "En toda la partida"));
+      g.avisos.forEach((x) => d.appendChild(el("p", "hoja-aviso", x.texto + " " + x.porque)));
+      [lista("Haz esto", g.haz, 4), lista("No hagas esto", g.evita, 3)].forEach((b) => b && d.appendChild(b));
+      h.appendChild(d);
+    }
+    h.appendChild(el("p", "hoja-pie", "Ajedrez Integral · Preparación de rivales · " + fecha(new Date().toISOString())));
+    return h;
   }
 
   function ponerPendiente(p, lista) {
@@ -269,7 +347,79 @@
     grilla.appendChild(columna("Con qué gana él (cuídate de esto)", t.realiza, dG, "realiza", "En sus victorias no se ve una táctica que se repita."));
     grilla.appendChild(columna("Con qué pierde (búscalo)", t.sufre, dP, "sufre", "En sus derrotas no se ve una táctica que se repita."));
     s.appendChild(grilla);
+    const tm = r.tacticaMotor;
+    if (tm) s.appendChild(pintarTacticaMotor(r, tm));
+    else if (t.momentos) s.appendChild(el("p", "text-sm text-brand-500 dark:text-brand-300 mt-4", "Cuando termine la revisión de Stockfish, aquí se confirman sus errores y aparece lo que no vio."));
     return s;
+  }
+
+  /* Lo que dijo Stockfish de su táctica (r.tacticaMotor, revisarTactica en
+     js/preparacion-motor.js): cuántos momentos decisivos fueron errores de
+     verdad, sus errores con la jugada buena, y lo que no vio. */
+  function pintarTacticaMotor(r, tm) {
+    const T = window.PreparacionTactica;
+    const d = el("div", "mt-6");
+    d.dataset.tacticaMotor = "";
+    const conf = tm.momentos.filter((x) => x.confirmada);
+    d.appendChild(el("h4", "font-bold text-brand-800 dark:text-white mb-1", "Revisado con Stockfish"));
+    const nm = tm.momentos.length;
+    d.appendChild(el("p", "text-sm text-brand-600 dark:text-brand-200 mb-3", (nm === 1 ? "Se revisó 1 momento decisivo" : "Se revisaron " + nm + " momentos decisivos, los más recientes") + ": " +
+      (conf.length === 1 ? "1 fue un error claro" : conf.length + " fueron errores claros") + " (una jugada que perdió 1,5 peones o más de golpe). " + tm.detalle + "."));
+    const suyos = conf.filter((x) => !x.gano).slice(0, 5);
+    const renglon = (x, texto, nota) => {
+      const li = el("li", "py-2 flex flex-wrap items-start justify-between gap-x-4 gap-y-1");
+      const tx = el("div", "min-w-0 flex-1");
+      tx.appendChild(el("p", "text-sm text-brand-700 dark:text-brand-100", texto));
+      li.appendChild(tx);
+      const acc = el("div", "flex items-center gap-3 text-sm");
+      if (opcionesActuales.alVerSecuencia) acc.appendChild(botonVer(x.sec, "Ver en el tablero: " + texto, nota, x.ply));
+      if (x.enlace) {
+        const a = el("a", "underline text-brand-700 dark:text-brand-100 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "partida ↗");
+        a.href = x.enlace; a.target = "_blank"; a.rel = "noopener noreferrer";
+        a.setAttribute("aria-label", "Ver la partida (se abre en otra pestaña)");
+        acc.appendChild(a);
+      }
+      li.appendChild(acc);
+      return li;
+    };
+    // Cuánto costó, en peones; con mate de por medio (o 20 peones o más),
+    // «la partida»: «M-8 peones» no se entiende.
+    const peones = (v) => (Math.abs(v) >= 20 ? null : A.textoEval(v).replace("+", "") + " peones");
+    const jugadaN = (ply, san) => (ply % 2 === 1 ? Math.ceil(ply / 2) + "." : Math.ceil(ply / 2) + "…") + A.sanEs(san);
+    if (suyos.length) {
+      d.appendChild(el("h5", "text-sm font-semibold text-brand-800 dark:text-white mt-2", "Sus errores decisivos"));
+      const ul = el("ul", "divide-y divide-brand-100 dark:divide-brand-800");
+      ul.dataset.errores = "";
+      suyos.forEach((x) => {
+        const texto = "Jugó " + jugadaN(x.ply, x.jugada) + (x.mejor ? "; lo correcto era " + A.sanEs(x.mejor) : "") + (peones(x.perdida) ? " (perdió " + peones(x.perdida) + ")" : " (con eso perdía la partida)") + (x.oponente ? ", contra " + x.oponente : "") + ".";
+        ul.appendChild(renglon(x, texto, "Su error: " + A.sanEs(x.jugada) + (x.mejor ? ". Lo correcto era " + A.sanEs(x.mejor) : "") + "."));
+      });
+      d.appendChild(ul);
+    }
+    d.appendChild(el("h5", "text-sm font-semibold text-brand-800 dark:text-white mt-4", "Lo que no vio"));
+    d.appendChild(el("p", "text-sm text-brand-600 dark:text-brand-200", "En sus " + tm.buscadas + " partidas más recientes se buscaron posiciones donde tenía con qué ganar material y jugó otra cosa; Stockfish revisó " + tm.candidatas + " y confirmó las que de verdad ganaban."));
+    if (!tm.noVio.length) {
+      d.appendChild(el("p", "text-sm text-brand-500 dark:text-brand-300 mt-1", "No se encontró ninguna táctica ganadora que se le haya escapado: ve lo que tiene."));
+    } else {
+      const ul = el("ul", "divide-y divide-brand-100 dark:divide-brand-800");
+      ul.dataset.noVio = "";
+      tm.noVio.forEach((g) => {
+        const nombre = T && T.TEMAS[g.tema] ? T.TEMAS[g.tema] : { nombre: g.tema };
+        const li = el("li", "py-3");
+        li.dataset.tema = g.tema;
+        li.appendChild(el("p", "text-sm font-semibold text-brand-800 dark:text-white", nombre.nombre + ": " + g.n + (g.n === 1 ? " vez" : " veces")));
+        const sub = el("ul", "mt-1");
+        g.ejemplos.forEach((x) => {
+          const texto = "Tenía " + jugadaN(x.ply, x.mejor) + " y jugó " + jugadaN(x.ply, x.jugada) + (peones(x.perdida) ? " (se le escaparon " + peones(x.perdida) + ")" : " (ganaba la partida)") + (x.oponente ? ", contra " + x.oponente : "") + ".";
+          sub.appendChild(renglon(Object.assign({}, x, { ply: x.ply - 1 }), texto, "Aquí tenía " + A.sanEs(x.mejor) + " (" + nombre.nombre.toLowerCase() + ") y jugó " + A.sanEs(x.jugada) + "."));
+        });
+        li.appendChild(sub);
+        if (nombre.practica) li.appendChild(enlacePractica(nombre.practica, g.tema));
+        ul.appendChild(li);
+      });
+      d.appendChild(ul);
+    }
+    return d;
   }
 
   function listaConsejos(titulo, emoji, items, tipo, vacio) {
@@ -779,5 +929,5 @@
     return listaPlan(nodos, 0);
   }
 
-  window.PreparacionPintar = { cuerpo: pintarCuerpo, plan: pintarSoloPlan, pendiente, el, tabla, jugada, fecha };
+  window.PreparacionPintar = { cuerpo: pintarCuerpo, plan: pintarSoloPlan, pendiente, hoja: pintarHoja, el, tabla, jugada, fecha };
 })();

@@ -155,6 +155,7 @@ window.ProgresoUsuario = (function () {
     { clave: "entreno_desafios_best",            fusion: "maxNumero" },     // Desafíos: su propia racha (antes compartía la de Practicar)
     { clave: "entreno_desafios_streak",          fusion: "ultimaEscritura" },
     { prefijo: "entreno_coord_best_",            fusion: "maxNumero" },     // una por modo
+    { clave: "entreno_coord_casillas_v1",        fusion: "maxPorClave" },   // "e4:a"/"e4:f" → aciertos/fallos
     { clave: "entreno_temas_last",               fusion: "ultimoLugar" },
     { clave: "diagnostico_estado_v1",            fusion: "pruebaEnCurso" },
     { clave: "diagnostico_resultado_v1",         fusion: "masReciente" },
@@ -171,6 +172,10 @@ window.ProgresoUsuario = (function () {
     { clave: "aperturas_srs_v1",                 fusion: "srsPorLinea" },  // Aperturas y celadas
     { clave: "entreno_temas_repaso_v1",          fusion: "srsPorLinea" },  // Ejercicios por tema: la cola de «Repasar fallados»
     { clave: "entreno_mates_repaso_v1",          fusion: "srsPorLinea" },  // Mates: la misma cola
+    { clave: "entreno_visualizacion_repaso_v1",  fusion: "srsPorLinea" },  // Visualización: la misma cola
+    { clave: "entreno_practicas_repaso_v1",      fusion: "srsPorLinea" },  // Practicar: la misma cola (por ronda)
+    { clave: "entreno_tipos_repaso_v1",          fusion: "srsPorLinea" },  // Tipos de entrenamiento: la misma cola ("tipo:id")
+    { clave: "entreno_finales_repaso_v1",        fusion: "srsPorLinea" },  // Finales contra la máquina: la misma cola
     { clave: "aperturas_vistas_v1",              fusion: "maxNumero" },
     { clave: "entreno_visualizacion_solved",     fusion: "unionObjeto" },   // Visualización
     { clave: "entreno_visualizacion_best",       fusion: "maxNumero" },
@@ -180,6 +185,9 @@ window.ProgresoUsuario = (function () {
     { clave: "entreno_finales_last",             fusion: "ultimoLugar" },
     { clave: "tipos_estrellas_v1",               fusion: "maxPorClave" },   // Tipos de entrenamiento: "tipo:id" → estrellas
     { clave: "tipos_mejor_v1",                   fusion: "minPorClave" },   // Con lo justo: posición → menos jugadas
+    { clave: "tipos_registrados_v1",             fusion: "unionObjeto" },   // "tipo:id" ya registrado en training_progress
+    { clave: "tipos_ultimo_v1",                  fusion: "ultimaEscritura" }, // el nivel de Tipos que se está jugando (lo propone el hub)
+    { clave: "memoria_mejor_v1",                 fusion: "maxPorClave" },   // Memoria: segundos → más piezas sin un error
   ];
 
   // Cuándo se escribió en ESTE aparato cada clave que se funde por fecha.

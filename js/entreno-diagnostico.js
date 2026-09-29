@@ -860,6 +860,9 @@ function mostrarResultado(detalle, reciente) {
   }
 
   document.getElementById('result-cta-visitante').classList.toggle('hidden', !!sesionActual);
+  // Un visitante no tiene Informes ni profesor todavía: lo de la cuenta no va.
+  document.getElementById('result-nota-alumno').classList.toggle('hidden', !sesionActual);
+  document.getElementById('result-informes').classList.toggle('hidden', !sesionActual);
   document.getElementById('result-level').textContent = resumen.nivel.etiqueta;
   document.getElementById('result-level-desc').textContent = resumen.nivel.descripcion;
   const sinSaber = Object.keys(detalle.nosabe || {}).length;
@@ -960,6 +963,96 @@ async function mostrarPdfSiEsAdmin(userId) {
    seguir la prueba), el que quedó guardado con sus datos. Un código que la
    base no reconoce se dice: el resultado igual se guarda, pero le llega a
    administración, y quien le mandó el enlace lo estaría esperando. */
+/* El tema de la academia: si el supervisor del enlace es de UNA academia, la
+   página se viste con su marca —el logo y el nombre arriba, su color en el
+   encabezado, las tarjetas y los botones, y al final su WhatsApp en vez del de
+   Ajedrez Integral—. La marca la da enlace_diagnostico_marca(), la misma regla
+   que los formularios y los correos. Los colores los pone css/styles.css
+   (html[data-marca-academia]); acá solo se decide si se puede.
+
+   El color se vuelve a medir contra el blanco antes de usarlo: si no da 4,5,
+   la página muestra el logo y el nombre pero conserva sus colores. Todo lo que
+   viene de la base (nombre, logo, número) se pone con textContent o se
+   comprueba antes. Si algo falla, la página queda como siempre. Ver «El tema
+   de la academia en el diagnóstico» en docs/decisiones/informes.md. */
+let marcaAcademia = null; // { nombre, color, logo_path, whatsapp } | null
+
+async function vestirConLaAcademia(codigo) {
+  let m = null;
+  try {
+    const { data, error } = await sb.rpc('enlace_diagnostico_marca', { p_codigo: codigo });
+    const fila = Array.isArray(data) ? data[0] : data;
+    if (!error && fila && typeof fila.nombre === 'string' && fila.nombre.trim()) m = fila;
+  } catch (e) { m = null; }
+  if (!m) return;
+  marcaAcademia = { nombre: m.nombre.trim(), color: m.color || null, logo_path: m.logo_path || null, whatsapp: m.whatsapp || null };
+
+  const MA = window.MarcaAcademia;
+  const contraste = MA && marcaAcademia.color ? MA.contrasteConBlanco(marcaAcademia.color) : null;
+  if (contraste != null && contraste >= 4.5) {
+    const raiz = document.documentElement;
+    raiz.style.setProperty('--marca-academia', marcaAcademia.color);
+    raiz.setAttribute('data-marca-academia', '');
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', marcaAcademia.color);
+  }
+  const logo = MA ? MA.urlDelLogo(marcaAcademia.logo_path) : '';
+
+  // La franja de arriba.
+  document.getElementById('marca-diagnostico-nombre').textContent = marcaAcademia.nombre;
+  const img = document.getElementById('marca-diagnostico-logo');
+  if (logo) {
+    img.addEventListener('error', () => img.classList.add('hidden'));
+    img.src = logo;
+    img.classList.remove('hidden');
+  }
+  const franja = document.getElementById('marca-diagnostico');
+  franja.classList.remove('hidden');
+  franja.classList.add('flex');
+
+  // El encabezado: su logo y su nombre en lugar de los de Ajedrez Integral.
+  const enlaceMarca = document.querySelector('#header nav a');
+  if (enlaceMarca) {
+    enlaceMarca.textContent = '';
+    enlaceMarca.href = location.pathname + '?s=' + encodeURIComponent(codigo);
+    if (logo) {
+      const chico = document.createElement('img');
+      chico.src = logo;
+      chico.alt = '';
+      chico.className = 'h-10 w-10 md:h-12 md:w-12 object-contain rounded-lg bg-white p-1 shrink-0';
+      chico.addEventListener('error', () => chico.remove());
+      enlaceMarca.appendChild(chico);
+    }
+    const nombre = document.createElement('span');
+    nombre.className = 'font-serif text-xl md:text-2xl font-bold tracking-tight';
+    nombre.textContent = marcaAcademia.nombre;
+    enlaceMarca.appendChild(nombre);
+  }
+  document.title = 'Diagnóstico de nivel — ' + marcaAcademia.nombre;
+  const login = document.getElementById('visitante-login');
+  if (login) login.textContent = '¿Ya tienes cuenta? Inicia sesión';
+
+  // Al final: escribirle a la academia, no a Ajedrez Integral.
+  document.getElementById('cta-titulo').textContent = `¿Quieres entrenar con ${marcaAcademia.nombre}?`;
+  document.getElementById('cta-texto').textContent =
+    `${marcaAcademia.nombre} ya recibió tu resultado: revisa tus áreas, te arma un plan de cuatro semanas y te escribe para contarte cómo seguir.`;
+  document.getElementById('cta-cursos').classList.add('hidden');
+  // «← Cursos» llevaría a los cursos de Ajedrez Integral.
+  const volver = document.querySelector('#intro-view > a');
+  if (volver) volver.classList.add('hidden');
+  const wa = document.getElementById('cta-whatsapp');
+  const numero = String(marcaAcademia.whatsapp || '').replace(/\D/g, '');
+  if (numero.length >= 8) {
+    const completo = numero.length === 8 ? '506' + numero : numero;
+    wa.href = 'https://wa.me/' + completo + '?text=' +
+      encodeURIComponent(`Hola, hice el diagnóstico de nivel con el enlace de ${marcaAcademia.nombre} y quiero información.`);
+    wa.textContent = `💬 Escribirle a ${marcaAcademia.nombre}`;
+    wa.classList.add('marca-invertido');
+  } else {
+    wa.classList.add('hidden');
+  }
+}
+
 async function leerEnlaceSupervisor(v) {
   const aviso = document.getElementById('visitante-destino');
   let codigo = null;
@@ -977,6 +1070,7 @@ async function leerEnlaceSupervisor(v) {
   if (destino) {
     enlaceSupervisor = { codigo, destino };
     aviso.textContent = `Tu resultado le llega a ${destino}, que te compartió este enlace.`;
+    await vestirConLaAcademia(codigo);
   } else {
     aviso.textContent = 'Este enlace ya no está activo: tu resultado le llega a Ajedrez Integral. Si esperabas mandárselo a otra persona, pídele su enlace otra vez.';
   }

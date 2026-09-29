@@ -253,6 +253,15 @@ async function main() {
         const n = mates.filter((m) => m.category === c.clave).length;
         ok(n === c.total, `la categoría ${c.clave} dice ${c.total} y en mates.json hay ${n}`);
       });
+
+      // Tipos de entrenamiento: un recorte por tipo, con su total de tipos.json.
+      const tipos = leer("entreno/data/tipos.json");
+      const catalogo = require(path.join(RAIZ, "js/tipos-catalogo.js"));
+      const conEjercicios = catalogo.TIPOS.filter((t) => (tipos[t.id] || []).length).map((t) => t.id);
+      ok(JSON.stringify((metas.tipos || []).map((t) => t.clave)) === JSON.stringify(conEjercicios),
+        `metas.json trae los tipos ${(metas.tipos || []).map((t) => t.clave).join(",")} y el catálogo tiene ${conEjercicios.join(",")}`);
+      (metas.tipos || []).forEach((t) => ok(t.total === (tipos[t.clave] || []).length && t.actividades.join() === "tipos",
+        `el tipo ${t.clave} dice ${t.total} y en tipos.json hay ${(tipos[t.clave] || []).length}`));
     }
   }
 
@@ -275,6 +284,29 @@ async function main() {
         "Estudio no escribe en training_progress: ofrecer 'cantidad' sería una barra que nunca sube");
       ok(M.herramienta("temas").hrefRecorte("x") === "entreno/temas.html?tema=x",
         "el enlace de un tema no lleva el recorte, así que el alumno cae en la lista de ochenta");
+      const tip = M.herramienta("tipos");
+      ok(tip && tip.recortes === "tipos" && tip.hrefRecorte("detective") === "entreno/tipos.html#detective" && tip.metas.includes("cantidad"),
+        "Tipos de entrenamiento no se puede pedir por tipo, o el enlace no abre la ficha de ese tipo");
+      // Precisión, el Sonar y Batalla naval registran desde la migración
+      // 20260929060654: se pueden pedir por cantidad, cada una con su nombre.
+      [["precision-posicional", "entreno/precision-posicional.html"], ["sonar", "sonar.html"], ["batalla-naval", "batalla-naval.html"]].forEach(([slug, href]) => {
+        const h = M.herramienta(slug);
+        ok(h && h.href === href && h.actividades.join() === slug && h.metas.includes("cantidad") && h.metas.includes("minutos"),
+          `${slug} no está en Tareas con cantidad y minutos, o no cuenta su propia actividad`);
+      });
+
+      /* Pedir 'cantidad' cuenta filas de training_progress con esas
+         actividades, y la base RECHAZA sin avisar las que no están en su
+         CHECK: la barra se quedaría en cero para siempre. Se lee el CHECK de
+         la última migración que lo define. */
+      const dir = path.join(RAIZ, "supabase/migraciones");
+      const ultima = fs.readdirSync(dir).sort().filter((f) => /training_progress_activity_check/.test(fs.readFileSync(path.join(dir, f), "utf8"))).pop();
+      const check = ((fs.readFileSync(path.join(dir, ultima), "utf8").match(/add constraint training_progress_activity_check[\s\S]*?array\[([\s\S]*?)\]/) || [])[1] || "")
+        .match(/'([a-z0-9_-]+)'/g).map((x) => x.replace(/'/g, ""));
+      const fueraDelCheck = [];
+      M.HERRAMIENTAS.filter((h) => h.metas.includes("cantidad")).forEach((h) =>
+        (h.actividades || []).forEach((a) => { if (!check.includes(a)) fueraDelCheck.push(h.slug + ":" + a); }));
+      ok(!fueraDelCheck.length, `herramientas que piden cantidad de una actividad que la base rechaza (${ultima}): ${fueraDelCheck.join(", ")}`);
     }
   }
 

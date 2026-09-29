@@ -20,6 +20,8 @@
   const R = window.TiposReglas;
   const CLAVE_ESTRELLAS = "tipos_estrellas_v1";
   const CLAVE_MEJOR = "tipos_mejor_v1";
+  const CLAVE_REGISTRADOS = "tipos_registrados_v1";
+  const CLAVE_ULTIMO = "tipos_ultimo_v1";
   const LISTA_TIPOS = ["detective", "amenaza", "descarte", "balanza", "fotografia", "con-lo-justo"];
 
   let DATOS = null;
@@ -39,6 +41,44 @@
     if ((o[k] || 0) >= n) return;
     o[k] = n;
     escribir(CLAVE_ESTRELLAS, o);
+  }
+  /* Cada ejercicio resuelto va UNA vez a training_progress (activity 'tipos'):
+     así cuenta para la meta del día, la racha, los logros, «Cómo viene» y las
+     tareas, que leen esa tabla. `puzzle_id` es "tipo:id" (para contar
+     distintos) y `category` el tipo, que es el recorte de una tarea
+     («10 de Detective»). Los ya registrados se anotan aparte
+     (CLAVE_REGISTRADOS, viaja con la cuenta) y no por las estrellas: lo resuelto
+     antes de que existiera el registro se registra la próxima vez que se
+     resuelve, en vez de quedar fuera para siempre y dejar imposible una tarea. */
+  function registrar(tipo, item, estrellas) {
+    const k = C.clave(tipo, item.id);
+    const hechos = leer(CLAVE_REGISTRADOS);
+    if (hechos[k] || !window.EntrenoProgress) return;
+    hechos[k] = true;
+    escribir(CLAVE_REGISTRADOS, hechos);
+    // `limpio`: tres estrellas, que en todos los tipos es sin error y sin
+    // pista (o, en Con lo justo y Fotografía, perfecto). Es la primera vez que
+    // se resuelve, como en Mates: lo que dice si ya se domina.
+    EntrenoProgress.log("tipos", { puzzle_id: k, category: tipo, nivel: item.nivel, estrellas, limpio: estrellas === 3 });
+  }
+
+  /* «Repasar fallados» (js/repaso-fallados.js, la misma cola de Temas y
+     Mates): lo que sale con menos de tres estrellas vuelve a salir. Con una
+     estrella o ninguna cuenta como error ("mal": vuelve hoy mismo); con dos,
+     como pista ("regular"). Tres estrellas a la primera no entra nunca. */
+  const CLAVE_REPASO = window.RepasoFallados ? RepasoFallados.CLAVES.tipos : null;
+  function anotarRepaso(tipo, item, estrellas) {
+    if (!CLAVE_REPASO) return;
+    RepasoFallados.anotar(CLAVE_REPASO, C.clave(tipo, item.id), estrellas < 2, estrellas === 2, { tipo, nivel: item.nivel });
+  }
+  function itemDeClave(k) {
+    const i = k.indexOf(":");
+    const tipo = k.slice(0, i), id = k.slice(i + 1);
+    const item = C.tipo(tipo) && ((DATOS && DATOS[tipo]) || []).find((x) => x.id === id);
+    return item ? { tipo, item } : null;
+  }
+  function pendientesDeRepaso() {
+    return CLAVE_REPASO ? RepasoFallados.pendientes(CLAVE_REPASO, (k) => !!itemDeClave(k)) : [];
   }
   function anotarMejor(id, jugadas) {
     const o = leer(CLAVE_MEJOR);
@@ -243,11 +283,37 @@
     $("jugada-form").classList.toggle("hidden", !fn);
     $("jugada-input").value = "";
   }
+  /* Antes de tratarlo como respuesta, se mira si era una PREGUNTA sobre el
+     tablero («caballos», «qué hay en e4», «posición», «ayuda»): las mismas que
+     entienden los demás ejercicios de Entrenamiento (js/comandos-tablero.js).
+     Una casilla sola («e4») no es pregunta: es la respuesta de varios juegos.
+     Con las piezas tapadas (Fotografía) no se contesta nada: la posición es lo
+     que hay que recordar. Y sin partida de verdad (un tablero armado a mano),
+     «jugadas de…» no se puede contar: decir «no tiene jugadas» sería falso. */
+  function juegoParaPreguntas() {
+    if (tab.juego) return { juego: tab.juego, partida: true };
+    if (tab.fen && !tab.piezasLibres) {
+      try { if (new Chess().validate_fen(tab.fen).valid) return { juego: new Chess(tab.fen), partida: true }; } catch (e) {}
+    }
+    return { juego: { get: piezaEn, turn: () => (tab.fen ? tab.fen.split(" ")[1] : "w"), moves: () => [] }, partida: false };
+  }
+  function preguntaAlTablero(txt) {
+    if (!window.ComandosTablero) return false;
+    const j = juegoParaPreguntas();
+    const r = ComandosTablero.interpretar(txt, { juego: () => j.juego, tablero: accesible });
+    if (!r.manejado) return false;
+    if (r.tipo === "ayuda") estado("Contesta como pide el ejercicio. Preguntas sobre el tablero: «posición», «caballos», «qué hay en e4», «jugadas de f3», «fila 4».");
+    else if (tab.oculto) estado("Ahora las piezas están tapadas: la posición es justo lo que tienes que recordar.");
+    else if (r.tipo === "jugadas" && !j.partida) estado("En este ejercicio el tablero no es una partida: no se pueden contar sus jugadas.");
+    else if (r.respuesta) estado(r.respuesta);
+    return true;
+  }
   $("jugada-form").addEventListener("submit", (e) => {
     e.preventDefault();
     if (!alEscribir) return;
     const txt = $("jugada-input").value.trim();
     if (!txt) return;
+    if (preguntaAlTablero(txt)) { $("jugada-input").value = ""; return; }
     alEscribir(txt);
   });
 
@@ -256,7 +322,23 @@
     ["vista-fichas", "vista-tipo", "vista-juego"].forEach((v) => $(v).classList.toggle("hidden", v !== vista));
   }
 
+  function pintarRepaso() {
+    const caja = $("repaso-tipos"), n = pendientesDeRepaso().length;
+    caja.textContent = "";
+    caja.classList.toggle("hidden", !n);
+    if (!n) return;
+    const t = el("p", "font-semibold text-brand-800 dark:text-white");
+    const ico = el("span", null, "🔁 "); ico.setAttribute("aria-hidden", "true");
+    t.append(ico, n === 1 ? "Hoy toca repasar 1 ejercicio que te costó" : "Hoy toca repasar " + n + " ejercicios que te costaron");
+    caja.appendChild(t);
+    caja.appendChild(el("p", "text-sm text-brand-500 dark:text-brand-300 mt-1", "Lo que sale con menos de tres estrellas vuelve a salir hasta que lo resuelvas limpio tres veces seguidas."));
+    const ir = el("a", BTN_PRIMARIO + " inline-block mt-3", "Repasar fallados");
+    ir.href = "#repaso";
+    caja.appendChild(ir);
+  }
+
   function pintarFichas() {
+    pintarRepaso();
     const ul = $("fichas");
     ul.innerHTML = "";
     C.TIPOS.forEach((t) => {
@@ -332,22 +414,47 @@
   }
 
   /* ------------------------------------------------------------ el juego */
-  const partida = { tipo: null, nivel: null, items: [], i: 0 };
+  /* En el repaso, `cola` trae los ejercicios de varios tipos ({ tipo, item }):
+     cada uno se juega con el juego de SU tipo. */
+  const partida = { tipo: null, nivel: null, items: [], i: 0, cola: null };
   let limpiarJuego = null;
 
   function abrirJuego(tipoId, nivelN, itemId) {
     const t = C.tipo(tipoId), n = C.nivel(tipoId, nivelN);
+    partida.cola = null;
     partida.tipo = tipoId; partida.nivel = +nivelN; partida.items = itemsDe(tipoId, nivelN);
     const pedido = itemId ? partida.items.findIndex((x) => x.id === itemId) : -1;
     partida.i = pedido >= 0 ? pedido : Math.max(0, partida.items.findIndex((x) => estrellasDe(tipoId, x.id) < 1));
     $("titulo-juego").textContent = t.nombre + " — Nivel " + n.n + ": " + n.titulo;
     $("juego-desc").textContent = n.desc;
     $("volver-tipo").href = "#" + tipoId;
+    anotarUltimo();
     cargarItem();
+  }
+  /* El nivel que se está jugando y cuánto lleva, para que el «Hoy te toca» del
+     hub proponga seguirlo (js/entreno-index.js). Va con la cuenta
+     (ultimaEscritura: gana el aparato donde se jugó más tarde). */
+  function abrirRepaso() {
+    const cola = pendientesDeRepaso().map(itemDeClave);
+    partida.cola = cola;
+    partida.items = cola.map((x) => x.item);
+    partida.i = 0;
+    $("titulo-juego").textContent = "🔁 Repasar fallados";
+    $("juego-desc").textContent = cola.length
+      ? "Los ejercicios que te costaron y que hoy toca repasar, de todos los tipos."
+      : "Hoy no te toca repasar nada. Lo que salga con menos de tres estrellas vuelve a aparecer acá.";
+    $("volver-tipo").href = "#";
+    cargarItem();
+  }
+  function anotarUltimo() {
+    if (partida.cola) return;   // el repaso no es «el nivel que quedó a medias»
+    const t = C.tipo(partida.tipo), a = avance(partida.tipo, partida.nivel);
+    escribir(CLAVE_ULTIMO, { tipo: partida.tipo, nombre: t.nombre, nivel: partida.nivel, hechos: a.hechos, total: a.total });
   }
   function cargarItem() {
     if (limpiarJuego) { limpiarJuego(); limpiarJuego = null; }
     const item = partida.items[partida.i];
+    if (partida.cola && partida.cola[partida.i]) { partida.tipo = partida.cola[partida.i].tipo; partida.nivel = item.nivel; }
     $("controles").innerHTML = "";
     $("juego-turno").textContent = "";
     explicar(null);
@@ -359,9 +466,10 @@
     $("nivel-completo").classList.add("hidden");
     $("nivel-completo").textContent = "";
     rotularSiguiente();
-    if (!item) { estado("Este nivel no tiene ejercicios."); return; }
+    if (!item) { estado(partida.cola ? "Hoy no te toca repasar nada." : "Este nivel no tiene ejercicios."); return; }
     const e = estrellasDe(partida.tipo, item.id);
-    $("juego-progreso").textContent = "Ejercicio " + (partida.i + 1) + " de " + partida.items.length + (e ? " · tu mejor: " + textoEstrellas(e) : "");
+    $("juego-progreso").textContent = (partida.cola ? "Repaso · " + C.tipo(partida.tipo).nombre + " · " : "") +
+      "Ejercicio " + (partida.i + 1) + " de " + partida.items.length + (e ? " · tu mejor: " + textoEstrellas(e) : "");
     $("btn-anterior").disabled = partida.i === 0;
     JUEGOS[partida.tipo](item);
     if (adaptado() && partida.tipo !== "fotografia") leerPosicion(item.fen);
@@ -370,15 +478,16 @@
      terminar el último, «Siguiente» volvía a la lista de niveles sin decir
      nada, y el alumno no se enteraba de que había otro nivel esperándolo. */
   function nivelCompleto() {
+    if (partida.cola) return false;
     const a = avance(partida.tipo, partida.nivel);
     return a.total > 0 && a.hechos >= a.total;
   }
-  function siguienteNivel() { return C.nivel(partida.tipo, partida.nivel + 1); }
+  function siguienteNivel() { return partida.cola ? null : C.nivel(partida.tipo, partida.nivel + 1); }
   function rotularSiguiente() {
     const b = $("btn-siguiente"), otro = siguienteNivel();
     if (partida.i < partida.items.length - 1) b.textContent = "Siguiente →";
     else if (otro && nivelCompleto()) b.textContent = "Nivel " + otro.n + " →";
-    else b.textContent = "Volver a los niveles";
+    else b.textContent = partida.cola ? "Terminar el repaso" : "Volver a los niveles";
   }
   function avisarNivelCompleto() {
     const caja = $("nivel-completo"), otro = siguienteNivel(), t = C.tipo(partida.tipo);
@@ -398,6 +507,9 @@
   function terminar(item, estrellas, extra) {
     const completoAntes = nivelCompleto();
     anotarEstrellas(partida.tipo, item.id, estrellas);
+    if (estrellas >= 1) registrar(partida.tipo, item, estrellas);
+    anotarRepaso(partida.tipo, item, estrellas);
+    anotarUltimo();
     const e = estrellasDe(partida.tipo, item.id);
     $("juego-progreso").textContent = "Ejercicio " + (partida.i + 1) + " de " + partida.items.length + (e ? " · tu mejor: " + textoEstrellas(e) : "");
     if (!completoAntes && nivelCompleto()) avisarNivelCompleto();
@@ -408,7 +520,7 @@
     const otro = siguienteNivel();
     if (partida.i < partida.items.length - 1) { partida.i++; cargarItem(); }
     else if (otro && nivelCompleto()) { location.hash = "#" + partida.tipo + "/" + otro.n; }
-    else { location.hash = "#" + partida.tipo; }
+    else { location.hash = partida.cola ? "#" : "#" + partida.tipo; }
   });
   $("btn-anterior").addEventListener("click", () => { if (partida.i > 0) { partida.i--; cargarItem(); } });
   $("btn-otra-vez").addEventListener("click", () => cargarItem());
@@ -860,7 +972,15 @@
   function rutear() {
     const h = decodeURIComponent((location.hash || "").replace(/^#/, ""));
     const [tipo, nivel, item] = h.split("/");
-    if (tipo && C.tipo(tipo) && nivel && C.nivel(tipo, nivel)) {
+    if (tipo === "repaso") {
+      mostrar("vista-juego");
+      $("controles").innerHTML = "";
+      $("juego-enunciado").textContent = "";
+      // Los tipos que cargan algo aparte (el maestro, rey y peón) lo cargan
+      // antes, si hay alguno suyo en la cola; si no carga, ese queda fuera hoy.
+      const tipos = [...new Set(CLAVE_REPASO ? Object.keys(RepasoFallados.leer(CLAVE_REPASO)).map((k) => k.split(":")[0]) : [])];
+      Promise.all(tipos.filter((t) => PREPARAR[t]).map((t) => PREPARAR[t]().catch(() => null))).then(abrirRepaso);
+    } else if (tipo && C.tipo(tipo) && nivel && C.nivel(tipo, nivel)) {
       mostrar("vista-juego");
       // Algunos tipos cargan algo aparte antes de jugar (las partidas del
       // maestro, detrás del candado de los cursos; la tabla de rey y peón).

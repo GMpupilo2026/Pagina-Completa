@@ -86,6 +86,8 @@ window.__escrituras = [];
 window.__funcion = [];
 (function () {
   const DATOS = ${JSON.stringify(datos)};
+  // El logo de una academia se arma con la dirección del proyecto.
+  if (DATOS.supabaseUrl) window.SUPABASE_URL = DATOS.supabaseUrl;
   function constructor(filas, etiqueta) {
     let desde = null, hasta = null, limite = null, unica = false;
     let condiciones = [], dentro = [], orden = null, pendiente = null;
@@ -326,7 +328,8 @@ function pruebaVeredicto() {
 // Aperturas y Precisión posicional), que antes no se mostraba en ningún lado.
 const MODULOS_ANA = { student_id: "a-1", visualizacion: 4, temas: 30, con_como_salio: 10, limpios: 7,
   tipos_ejercicios: 5, tipos_estrellas: 12, aperturas_empezadas: 3, aperturas_firmes: 1,
-  precision_rondas: 2, precision_ultima: 75, precision_fecha: "2026-09-20T12:00:00Z" };
+  precision_rondas: 2, precision_ultima: 75, precision_fecha: "2026-09-20T12:00:00Z", finales: 3,
+  coord_casillas: { "b6:a": 1, "b6:f": 9, "g3:a": 3, "g3:f": 4 } };
 
 async function pruebaProfesor(browser) {
   console.log("\n=== Vista del profesor ===");
@@ -431,21 +434,21 @@ async function pruebaProfesor(browser) {
     [await page.inputValue("#student-filter"), await page.textContent("#student-report-title")].join(" | "),
     "a-1 | 🚩 Últimas asignaciones de Ana Rojas");
 
-  /* Veintidós números de golpe no los lee nadie: los catorce de segunda fila
-     nacen escondidos (las ocho de siempre más las seis de los módulos que se
-     sumaron: Temas, Visualización, Tipos, Aperturas, Precisión y el tema más
-     flojo). Se mide el display que
+  /* Veinticuatro números de golpe no los lee nadie: los dieciséis de segunda
+     fila nacen escondidos (las ocho de siempre más las ocho de los módulos que
+     se sumaron: Temas, Visualización, Tipos, Aperturas, Precisión, el tema más
+     flojo, los Finales contra la máquina y las casillas de Coordenadas). Se mide el display que
      calcula el navegador, no la clase. */
   const escondidas = () => page.evaluate(() =>
     [...document.querySelectorAll("#stat-cards [data-extra]")]
       .filter((d) => getComputedStyle(d).display === "none").length);
-  igual("las catorce secundarias nacen escondidas", await escondidas(), 14);
+  igual("las dieciséis secundarias nacen escondidas", await escondidas(), 16);
   igual("y las que se miran siguen a la vista", await page.evaluate(() =>
     [...document.querySelectorAll("#stat-cards > div")].filter((d) => getComputedStyle(d).display !== "none").length), 8);
   await page.click("#stat-cards-ver");
   igual("el botón las destapa todas", await escondidas(), 0);
   await page.click("#stat-cards-ver");
-  igual("y las vuelve a guardar", await escondidas(), 14);
+  igual("y las vuelve a guardar", await escondidas(), 16);
   await page.selectOption("#student-filter", "");
   await page.waitForFunction(() => !document.getElementById("teacher-report").classList.contains("hidden"));
 
@@ -781,6 +784,9 @@ async function pruebaAlumno(browser) {
   igual("Tipos de entrenamiento", await tarjeta(page, "Tipos de entrenamiento: ejercicios con estrellas"), "5 (12⭐)");
   igual("Aperturas", await tarjeta(page, "Líneas de Aperturas estudiadas"), "3 (1 firmes)");
   igual("Precisión posicional", await tarjeta(page, "Precisión posicional"), "75 % en la última · 2 rondas");
+  igual("Finales contra la máquina", await tarjeta(page, "Finales contra la máquina logrados"), "3");
+  igual("las casillas que más le cuestan en Coordenadas, ordenadas por el módulo de la página",
+    await tarjeta(page, "Coordenadas, las que más le cuestan: b6 (falló 9 de 10), g3 (falló 4 de 7)"), "b6 · g3");
   igual("el tema más flojo, con su nombre y cuántos limpios", await tarjeta(page, "Tema más flojo: limpio en 4 de 11"), "Clavada · 36 %");
   const pedido = await page.evaluate(() => ((window.__rpcArgs || []).find((a) => a[0] === "informes_tema_mas_flojo") || [])[1]);
   igual("a la base se le mandan los motivos, no «Mezcla» ni las fases",
@@ -1406,6 +1412,82 @@ async function pruebaEnlaceSupervisor(browser) {
   await page.close();
 }
 
+/* Un PNG de verdad, de un color, armado a mano (sin librerías): el logo de
+   prueba de la academia. */
+function pngDeUnColor(lado, [r, g, b]) {
+  const zlib = require("zlib");
+  const crcTabla = Array.from({ length: 256 }, (_, n) => {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+    return c >>> 0;
+  });
+  const crc = (buf) => { let c = 0xffffffff; for (const x of buf) c = crcTabla[(c ^ x) & 255] ^ (c >>> 8); return (c ^ 0xffffffff) >>> 0; };
+  const trozo = (tipo, datos) => {
+    const t = Buffer.from(tipo, "ascii");
+    const largo = Buffer.alloc(4); largo.writeUInt32BE(datos.length);
+    const c = Buffer.alloc(4); c.writeUInt32BE(crc(Buffer.concat([t, datos])));
+    return Buffer.concat([largo, t, datos, c]);
+  };
+  const ihdr = Buffer.alloc(13);
+  ihdr.writeUInt32BE(lado, 0); ihdr.writeUInt32BE(lado, 4);
+  ihdr[8] = 8; ihdr[9] = 6; // 8 bits, RGBA
+  const filas = [];
+  for (let y = 0; y < lado; y++) {
+    filas.push(Buffer.from([0]));
+    for (let x = 0; x < lado; x++) filas.push(Buffer.from([r, g, b, 255]));
+  }
+  return Buffer.concat([
+    Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
+    trozo("IHDR", ihdr), trozo("IDAT", zlib.deflateSync(Buffer.concat(filas))), trozo("IEND", Buffer.alloc(0)),
+  ]);
+}
+
+/* El PDF de un diagnóstico que llegó por el enlace de una academia: lleva SU
+   marca (franja con logo y nombre, su color en los títulos, su logo de marca
+   de agua, su firma y su WhatsApp) y no la de Oscar. Ver «El PDF del
+   diagnóstico con la marca de la academia» en docs/decisiones/informes.md. */
+async function pruebaPdfAcademia(browser) {
+  console.log("\n=== El PDF de un diagnóstico con la marca de su academia ===");
+  const VIS = [{ id: "v-9", created_at: "2026-09-20T15:00:00Z", nombre: "Lucía Fernández", email: "lucia@x.cr",
+    telefono: null, nivel: "Intermedio", porcentaje: 68, elo: null, atendido: false, detalle: DIAGNOSTICO, supervisor_id: "sup-1" }];
+  const { page, errores } = await abrir(browser, {
+    supabaseUrl: "https://ejemplo.supabase.co",
+    rpc: {
+      informes_resumen_alumnos: [ANA], informes_cursos_alumnos: [], informes_diagnosticos_alumnos: [],
+      informes_totales: { clases_cerradas: 0, preguntas: 0, partidas: 0 },
+      mis_supervisados: ["a-1"], mi_enlace_diagnostico: "a1b2c3d4e5",
+      marca_de_diagnostico: [{ nombre: "ADAPZ", color: "#1c3870", logo_path: "ac1/logo-x.png", whatsapp: "50684554870" }],
+    },
+    tablas: {
+      profiles: [{ id: "sup-1", role: "profesor", es_supervisor: true, is_admin: false, full_name: "Karina Rojas", email: "k@x.cr" }],
+      training_plans: [], diagnosticos_publicos: VIS, arbitrajes_publicos: [],
+      ajustes_academia: [{ clave: "whatsapp_consultas", valor: "8309 2291" }],
+    },
+  }, "sup-1", "/informes.html?tema=diagnostico-publico");
+  await page.route("**/storage/v1/object/public/academia-marca/**", (r) =>
+    r.fulfill({ status: 200, contentType: "image/png", body: pngDeUnColor(40, [220, 40, 40]) }));
+
+  const [descarga] = await Promise.all([page.waitForEvent("download"), page.locator("#topic-report-body [data-pdf]").first().click()]);
+  igual("pide la marca de ESE diagnóstico",
+    await page.evaluate(() => (window.__rpcArgs || []).filter(([n]) => n === "marca_de_diagnostico").map(([, a]) => a)), [{ p_id: "v-9" }]);
+  const pdf = require("fs").readFileSync(await descarga.path()).toString("latin1");
+  if (process.env.GUARDAR_PDF_ACADEMIA) require("fs").copyFileSync(await descarga.path(), process.env.GUARDAR_PDF_ACADEMIA);
+  const paginas = (pdf.match(/\/Type \/Page\b(?!s)/g) || []).length;
+  const AZUL = "0.110 0.220 0.439";
+  igual("arriba, la franja en su color", pdf.includes(AZUL + " rg 56 "), true);
+  igual("con su logo sobre blanco, una sola vez (en la primera página)", (pdf.match(/\/Logo Do/g) || []).length, 1);
+  igual("y su nombre en blanco", /\/FB 18 Tf 1 1 1 rg [^\n]*\(ADAPZ\) Tj/.test(pdf), true);
+  igual("los títulos van en su color", pdf.includes("/FB 14 Tf " + AZUL + " rg"), true);
+  igual("la marca de agua es su logo, en TODAS las páginas", (pdf.match(/\/Marca Do/g) || []).length, paginas);
+  igual("la firma es de la academia", pdf.includes("(Preparado por ADAPZ) Tj"), true);
+  igual("con su WhatsApp, no el de los ajustes", [pdf.includes("WhatsApp: +506 8455 4870"), pdf.includes("8309 2291")], [true, false]);
+  igual("y en ningún lado la firma de Oscar", /Oscar Angulo Cubero/.test(pdf), false);
+  igual("el autor del archivo es la academia", /\/Author \(ADAPZ\)/.test(pdf), true);
+  igual("el pie de cada página dice de quién es", (pdf.match(/\(ADAPZ · diagn/g) || pdf.match(/\(ADAPZ \xb7 diagn/g) || []).length, paginas);
+  if (errores.length) { console.log("  ✗ errores en la página: " + errores.join(" | ")); fallos += 1; }
+  await page.close();
+}
+
 /* A un alumno que entra con usuario de la Academia también su profesor le pone
    la contraseña: es quien lo tiene en la clase. Un profesor que NO coordina ve
    solo eso de la tarjeta «Acceso a la cuenta» —reenviar el enlace sigue siendo
@@ -1462,6 +1544,7 @@ async function pruebaContrasenaProfesor(browser) {
     await pruebaNombreAjeno(browser);
     await pruebaPdfVisitante(browser);
     await pruebaEnlaceSupervisor(browser);
+    await pruebaPdfAcademia(browser);
     await pruebaAlumnoPorEnlace(browser);
     await pruebaContrasenaProfesor(browser);
   } finally {

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* Que nadie vuelva a cargar desde un CDN las librerías que viven en js/vendor/:
- * Supabase, chess.js y three.js (la lista está en lib/librerias-vendor.js).
+ * Supabase, chess.js, three.js y Sentry (la lista está en lib/librerias-vendor.js).
  *
  * No necesita navegador, ni red, ni el sitio servido.
  *
@@ -75,10 +75,10 @@ for (const lib of LIBRERIAS) {
   else bien(conLibreria.length + " páginas la cargan, todas con una ruta que llega");
 
   // ---- Es la de npm, sin editar ----
-  let npm = null;
-  try { npm = require.resolve(lib.npm, { paths: [raiz] }); } catch { }
-  if (!npm) console.log("  · el paquete no está instalado, no se compara (npm install)");
-  else if (Buffer.compare(local, fs.readFileSync(npm)) === 0) bien("es byte a byte la de npm, sin editar a mano");
+  let esperado = null;
+  try { esperado = LIBRERIAS.contenido(lib); } catch { }
+  if (!esperado) console.log("  · el paquete no está instalado, no se compara (npm install)");
+  else if (Buffer.compare(local, esperado) === 0) bien("es byte a byte la de npm" + (lib.construir ? " (armada con esbuild)" : "") + ", sin editar a mano");
   else mal("NO coincide con la de npm: o está desactualizada, o alguien la editó. Corre: node herramientas/vendor.js");
 }
 

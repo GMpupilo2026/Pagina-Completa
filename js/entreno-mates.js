@@ -163,7 +163,26 @@ async function loadPuzzlesThenStart(){
     console.error(e);
     return;
   }
+  await cargarDificultad();
   initApp();
+}
+
+/* La dificultad medida con los intentos reales (herramientas/mates-calibrar.js,
+   js/mates-dificultad.js): una categoría con el 80 % de sus mates calibrados
+   va de fácil a difícil; si no, en el orden del libro. Sin el archivo, igual. */
+let DIFICULTAD = null;
+async function cargarDificultad(){
+  try {
+    const res = await fetch('data/mates-dificultad.json');
+    if(res.ok) DIFICULTAD = await res.json();
+  } catch (e) { DIFICULTAD = null; }
+  if(!DIFICULTAD || !window.MatesDificultad) return;
+  CATEGORY_ORDER.forEach((cat) => { PUZZLES[cat] = MatesDificultad.ordenar(PUZZLES[cat], DIFICULTAD, cat); });
+}
+function textoDificultad(puzzle){
+  if(!DIFICULTAD || !window.MatesDificultad || !MatesDificultad.ordenada(DIFICULTAD, puzzle.category)) return '';
+  const e = MatesDificultad.de(DIFICULTAD, puzzle.id);
+  return e === null ? '' : ` · dificultad ≈${e}`;
 }
 
 /* ---------------- Progreso y racha (localStorage) ---------------- */
@@ -256,7 +275,7 @@ function updateProgressBar(){
   const total = PUZZLES[currentCategory].length;
   const done = solvedCountFor(currentCategory);
   document.getElementById('progress-fill').style.width = (total ? Math.round(100 * done / total) : 0) + '%';
-  document.getElementById('progress-label').textContent = `${done}/${total} resueltos en ${CATEGORY_LABEL[currentCategory].replace(/^\S+\s/, '')} · posición ${currentIndex + 1} de ${total}`;
+  document.getElementById('progress-label').textContent = `${done}/${total} resueltos en ${CATEGORY_LABEL[currentCategory].replace(/^\S+\s/, '')} · posición ${currentIndex + 1} de ${total}${textoDificultad(currentPuzzle())}`;
 }
 
 /* ---------------- Tablero ---------------- */

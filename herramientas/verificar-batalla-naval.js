@@ -184,7 +184,8 @@ function reglas() {
 const CON_SESION = `
 (function () {
   window.sb = { auth: { getSession: () => Promise.resolve({ data: { session: { user: { id: "u-ana" } } } }) },
-    from: () => ({ select() { return this; }, eq() { return this; }, insert() { return this; }, upsert() { return this; },
+    from: (tabla) => ({ select() { return this; }, eq() { return this; }, upsert() { return this; },
+                   insert(filas) { (window.__inserts = window.__inserts || []).push({ tabla, fila: [].concat(filas)[0] }); return this; },
                    update() { return this; }, single() { return Promise.resolve({ data: null, error: null }); },
                    then(r) { return Promise.resolve({ data: [], error: null }).then(r); } }),
     rpc: () => ({ then(r) { return Promise.resolve({ data: [], error: null }).then(r); } }) };
@@ -279,6 +280,11 @@ async function navegador() {
     }
     cierto("al hundir la última, lo dice con las estrellas escritas", /Hundiste toda la flota con 4 disparos/.test(ultimo) && /3 estrellas de 3/.test(ultimo), ultimo.slice(0, 160));
     igual("las estrellas quedan guardadas", await page.evaluate(() => JSON.parse(localStorage.getItem("batalla_estrellas_v1"))), { 1: 3 });
+    // Y la partida queda en training_progress: meta del día, racha, logros, tareas.
+    const registros = () => page.evaluate(() => (window.__inserts || []).filter((i) => i.tabla === "training_progress").map((i) => [i.fila.activity, i.fila.student_id, i.fila.detail]));
+    await page.waitForFunction(() => (window.__inserts || []).length, null, { timeout: 3000 }).catch(() => {});
+    igual("la partida se registra UNA vez como actividad «batalla-naval», con nivel, disparos y estrellas",
+      await registros(), [["batalla-naval", "u-ana", { nivel: 1, disparos: 4, estrellas: 3, con_pista: false }]]);
     igual("y la mejor marca, en disparos", await page.evaluate(() => JSON.parse(localStorage.getItem("batalla_mejor_v1"))), { 1: 4 });
     const hist = await escribir(page, "historial");
     cierto("«historial» repasa los disparos", /^Tus disparos\. /.test(hist) && hist.indexOf(hablar(agua) + ": agua, " + n) !== -1, hist.slice(0, 90));
@@ -323,6 +329,14 @@ async function navegador() {
     const mia = await escribir(page, "mi flota");
     cierto("«mi flota» dice dónde están tus piezas", /^Tu flota: la dama en /.test(mia), mia.slice(0, 80));
 
+    // Un duelo terminado también cuenta, se gane o se pierda: se juega hasta el final.
+    await page.evaluate(() => { while (!partida.terminada) { const s = BatallaNavalMotor.TODAS.find((c) => !BatallaNavalMotor.disparoEn(partida.mar, c)); document.getElementById("cmd-input").value = s; document.getElementById("cmd-form").requestSubmit(); } });
+    await page.waitForTimeout(300);
+    const duelo = (await registros()).filter((r) => r[2].duelo);
+    cierto("un duelo terminado se registra como «batalla-naval», diciendo si ganaste",
+      duelo.length === 1 && duelo[0][0] === "batalla-naval" && typeof duelo[0][2].gano === "boolean" && duelo[0][2].gano === (await page.evaluate(() => partida.ganador === "yo")), JSON.stringify(duelo));
+
+    await escribir(page, "nuevo");
     const raro = await escribir(page, "hola");
     cierto("lo que no se entiende se dice", /No entendí/.test(raro), raro);
 

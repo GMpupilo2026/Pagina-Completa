@@ -15,6 +15,8 @@
      no repite la misma idea espejada en la ronda corta siguiente.
    - Temas y Mates: al fallar dicen qué contesta el rival (si chess.js lo
      puede afirmar); al terminar esperan a «Siguiente» y dejan ver la línea.
+   - Coordenadas: cada casilla lleva sus aciertos y fallos, y el sorteo
+     insiste en las que cuestan.
    - Diagnóstico: el plan sale entero (las cuatro semanas, con su meta), y si el
      profesor compartió el suyo se ve ese, con su texto escapado.
 
@@ -86,16 +88,16 @@ async function practicar(browser) {
   const { page, ctx, errores } = await abrir(browser, "/entreno/practicas.html");
   await page.evaluate(() => { setStreak(5); openSet(SETS.find((s) => s.id === "beso")); });
 
-  // Ronda 1, 7k/8/6K1/8/8/8/8/7Q w: la serie guarda Dh7#, y Da8# también es mate.
-  await clic(page, "h1"); await clic(page, "a8");
-  igual("otro mate (Da8#) se acepta", /¡Correcto!/.test(await estado(page)), "true");
+  // Ronda 1, 7k/Q7/6K1/8/8/8/8/8 w: la serie guarda Dh7#, y Db8# también es mate.
+  await clic(page, "a7"); await clic(page, "b8");
+  igual("otro mate (Db8#) se acepta", /¡Correcto!/.test(await estado(page)), "true");
   igual("con tres estrellas y la racha sube", await page.evaluate(() => [setStarsEarned[0], getStreak()]), [3, 6]);
   await page.waitForFunction(() => currentRoundIndex === 1 && !roundLocked, { timeout: 5000 });
 
   // Ronda 2: una jugada equivocada y después la buena → dos estrellas, no tres.
-  await clic(page, "a1"); await clic(page, "b1");
+  await clic(page, "h7"); await clic(page, "h1");
   await page.waitForTimeout(1000);
-  await clic(page, "a1"); await clic(page, "a7");
+  await clic(page, "h7"); await clic(page, "a7");
   igual("con un error antes de acertar, dos estrellas", await page.evaluate(() => setStarsEarned[1]), "2");
   await page.waitForFunction(() => currentRoundIndex === 2 && !roundLocked, { timeout: 5000 });
 
@@ -316,6 +318,76 @@ async function verLaLinea(browser) {
   }
 }
 
+/* Coordenadas insiste en las casillas que cuestan (js/coordenadas-casillas.js):
+   cada pedido cuenta una vez, el sorteo las pesa y al final se nombran. */
+async function coordenadas(browser) {
+  console.log("\n=== Coordenadas: las casillas que cuestan ===");
+  const { page, ctx, errores } = await doble.abrir(browser, "/entreno/coordenadas.html", {},
+    { entreno_coord_casillas_v1: JSON.stringify({ "b6:f": 9, "b6:a": 1 }) });
+  await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
+  // El sorteo: b6, fallada 9 de 10 veces, sale bastante más que el promedio.
+  const frec = await page.evaluate(() => {
+    const e = CoordenadasCasillas.leer(); let b6 = 0; const N = 64000;
+    for (let i = 0; i < N; i++) if (CoordenadasCasillas.elegir(e, null, i / N) === "b6") b6++;
+    return [b6 / N, CoordenadasCasillas.peso(e, "b6"), CoordenadasCasillas.peso(e, "e4"), CoordenadasCasillas.elegir(e, "b6", 0.5) !== "b6"];
+  });
+  igual("b6 pesa más (1 + 3·9/11) y e4, que nunca salió, 1", [frec[1].toFixed(2), frec[2]], ["3.45", 1]);
+  igual("y sale unas 3,45 veces más que una casilla cualquiera", Math.abs(frec[0] - 3.45 / (63 + 3.45)) < 0.002, "true");
+  igual("la que se acaba de pedir no se repite", frec[3], "true");
+
+  await page.click("#start-btn");
+  // Tres clics malos y después el bueno: UN fallo, ningún acierto.
+  const r = await page.evaluate(() => {
+    currentTarget = "c3"; falladaEsta = false;
+    ["d4", "e5", "f6"].forEach((sq) => handleGuess(sq));
+    handleGuess("c3");
+    const tras = currentTarget;
+    handleGuess(tras);            // la siguiente, a la primera: un acierto
+    const e = CoordenadasCasillas.leer();
+    return [e["c3:f"], e["c3:a"] || 0, e[tras + ":a"], misses];
+  });
+  igual("tres clics malos en la misma cuentan UN fallo, y encontrarla después no es acierto", r.slice(0, 2), [1, 0]);
+  igual("la que sale a la primera es un acierto", r[2], 1);
+  igual("los errores de la ronda siguen contando los tres clics", r[3], 3);
+  await page.evaluate(() => endRound());
+  igual("al terminar, nombra las que más cuestan", await page.evaluate(() => {
+    const d = document.getElementById("dificiles"); return d.checkVisibility() ? d.textContent : "";
+  }), "Las que más te cuestan: b6 (fallada 9 de 10 veces). Te van a salir más seguido.");
+  igual("y viaja con la cuenta (maxPorClave)", await page.evaluate(() =>
+    (ProgresoUsuario.claves().find((c) => c.clave === "entreno_coord_casillas_v1") || {}).fusion), "maxPorClave");
+  sinErrores(errores, "coordenadas");
+  await ctx.close();
+}
+
+/* En las tácticas, cualquier jugada que cumpla el motivo es buena
+   (js/motivos-tacticos.js): en un descubierto, todo salto del caballo descubre
+   el jaque, y antes solo se aceptaba el guardado. */
+async function motivos(browser) {
+  console.log("\n=== Practicar y Aprender: cualquier jugada que cumpla el motivo ===");
+  {
+    const { page, ctx, errores } = await abrir(browser, "/entreno/practicas.html");
+    // descubierto #1: 7k/8/8/8/8/2N5/8/B3K3 w, guardada Cb5+; Ce4+ también descubre el jaque del alfil.
+    await page.evaluate(() => openSet(SETS.find((s) => s.id === "descubierto")));
+    await clic(page, "c3"); await clic(page, "e4");
+    igual("un descubierto que no es el guardado (Ce4+) se acepta", /¡Correcto!/.test(await estado(page)), "true");
+    await page.waitForFunction(() => currentRoundIndex === 1 && !roundLocked, { timeout: 5000 });
+    // Una jugada que no descubre nada sigue siendo un error.
+    await clic(page, "e1"); await clic(page, "f1");
+    igual("una jugada que no cumple el motivo sigue sin valer", /no es la jugada que buscamos/.test(await estado(page)), "true");
+    sinErrores(errores, "practicar, motivos");
+    await ctx.close();
+  }
+  {
+    const { page, ctx, errores } = await abrir(browser, "/entreno/aprender.html");
+    await page.evaluate(() => openLesson(LESSONS.find((l) => l.id === "tac_descubierta")));
+    // 4k3/8/2N5/8/B7/8/8/6K1 w: la guardada es Cd4+; Cb4+ también descubre el alfil.
+    await page.evaluate(() => { const m = game.move({ from: "c6", to: "b4" }); resolverJugada(m); });
+    igual("en Aprender, otro salto que descubre el jaque también completa la lección", await page.evaluate(() => isSolved("tac_descubierta")), "true");
+    sinErrores(errores, "aprender, motivos");
+    await ctx.close();
+  }
+}
+
 async function moduloComun(browser) {
   console.log("\n=== El módulo común de ejercicios (js/ejercicio-tablero.js) ===");
   {
@@ -493,6 +565,8 @@ async function diagnostico(browser) {
     await tableroYPistas(browser);
     await rapidos(browser);
     await verLaLinea(browser);
+    await coordenadas(browser);
+    await motivos(browser);
   } catch (e) {
     console.log("  ✗ " + (e && e.stack || e));
     fallos += 1;

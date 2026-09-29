@@ -478,6 +478,34 @@ function pruebaTactica() {
   return r;
 }
 
+/* Su forma reciente (formaReciente) y el ritmo de la partida. Pedro, con
+   negras contra 1.e4, jugó 1…e5 en 2025 (40 partidas) y ahora 1…c5 (15, en
+   septiembre de 2026); además viene ganando todo. */
+function pgnDeForma() {
+  let t = "";
+  const p = (w, b, res, jugadas, fecha, tc) => { t += partida(w, b, res, jugadas).replace('[Date "2025.03.04"]', '[Date "' + fecha + '"]').replace('[TimeControl "180+2"]', '[TimeControl "' + (tc || "180+2") + '"]'); };
+  for (let i = 0; i < 40; i++) p("Otro " + i, "Pedro", i % 2 ? "1-0" : "0-1", "e4 e5", "2025.0" + (1 + (i % 9)) + ".10");
+  for (let i = 0; i < 15; i++) p("Otro " + i, "Pedro", "0-1", "e4 c5", "2026.09." + (10 + i));
+  for (let i = 0; i < 10; i++) p("Pedro", "Otro " + i, "1-0", "d4 d5", "2026.08." + (10 + i), "900+10");
+  return t;
+}
+
+function pruebaFormaYRitmo() {
+  console.log("\n=== Forma reciente y ritmo de la partida ===");
+  const r = A.analizar(A.leerPgn(pgnDeForma()), "Pedro", { partida: "rápida" });
+  const c = r.reciente;
+  igual("las recientes: los 3 meses antes de su última partida", [c.n, c.desde, c.hasta, c.antes.n], [25, "2026-08-10", "2026-09-24", 40]);
+  igual("con negras contra 1.e4 cambió: ahora 1…c5, antes 1…e5", c.cambios.map((x) => [x.color, x.sec.join(" "), x.ahora.san, x.antes.san]), [["b", "e4", "c5", "e5"]]);
+  const res = R.armar(r);
+  igual("el resumen lo avisa arriba del lado con blancas", res.lados[0].avisos.map((x) => x.texto), ["Ojo: últimamente contra 1.e4 juega 1…c5, que casi no jugaba."]);
+  igual("y dice que viene en racha", res.general.avisos.map((x) => [x.texto, x.porque]), [["Viene en racha: juega mejor que de costumbre.", "En sus últimas 25 partidas saca 100,0 %; antes, 50,0 %."]]);
+  igual("a rápida tiene 10 partidas: no se filtra, se avisa", [res.ritmo.aviso, /tiene 10 partidas \(saca 100,0 %\): son muy pocas para filtrar/.test(res.ritmo.texto)], [true, true]);
+  const rb = A.analizar(A.leerPgn(pgnDeForma()), "Pedro", { partida: "blitz", ritmos: ["blitz"] });
+  igual("filtrado a blitz, lo dice sin alarma", R.armar(rb).ritmo, { aviso: false, texto: "Preparado para una partida a blitz: se usan solo sus partidas a ese ritmo (55 partidas)." });
+  igual("rápida y clásica van juntas; bullet e hiperbullet, también", [R.mismoRitmo("rápida", "clásica"), R.mismoRitmo("hiperbullet", "bullet"), R.mismoRitmo("blitz", "bullet")], [true, true, false]);
+  cierto("con pocas partidas con fecha no se inventa una forma reciente", A.analizar(A.leerPgn(pgnDePrueba()), "Pedro Perez").reciente === null);
+}
+
 /* Stockfish sobre lo que él juega de verdad (tareasDelMotor + jugadasSuyas).
    Con blancas el plan va por 1.e4: su 1.d4 d5 2.c4 e6 (20 partidas, 90 %)
    no está en el plan, pero sí en lo que él repite, y se revisa igual. */
@@ -1617,6 +1645,77 @@ async function pruebaTacticaEnLaPagina(browser, r) {
   await ctx.close();
 }
 
+/* En la página: el selector de ritmo filtra (73 partidas a blitz) o avisa
+   (ninguna a rápida), y la hoja para imprimir sale sola al imprimir. */
+async function pruebaRitmoEHojaEnLaPagina(browser) {
+  console.log("\n=== El ritmo de la partida y la hoja para imprimir ===");
+  const { page, ctx, errores } = await abrir(browser, true);
+  await ctx.addInitScript(() => { window.print = () => { window.__imprimio = (window.__imprimio || 0) + 1; }; });
+  await page.evaluate(() => { window.print = () => { window.__imprimio = (window.__imprimio || 0) + 1; }; });
+  await page.setInputFiles("#pgn-archivo", { name: "rival.pgn", mimeType: "application/x-chess-pgn", buffer: Buffer.from(pgnDePrueba(), "utf8") });
+  await page.click("#leer");
+  await page.waitForFunction(() => /Se leyeron/.test(document.getElementById("leido").textContent), null, { timeout: 10000 });
+  await page.click("#analizar");
+  await page.waitForFunction(() => /Listo/.test(document.getElementById("motor-estado").textContent), null, { timeout: 30000 });
+  await page.selectOption("#filtro-partida", "blitz");
+  await page.waitForFunction(() => { const p = document.querySelector("[data-ritmo]"); return p && p.checkVisibility(); }, null, { timeout: 30000 });
+  igual("a blitz tiene 73 partidas: se filtra y lo dice", [await page.textContent("[data-ritmo]"), await page.evaluate(() => document.querySelector("[data-ritmo]").dataset.ritmo)],
+    ["Preparado para una partida a blitz: se usan solo sus partidas a ese ritmo (73 partidas).", "filtrado"]);
+  await page.selectOption("#filtro-partida", "rápida");
+  await page.waitForFunction(() => { const p = document.querySelector("[data-ritmo]"); return p && p.dataset.ritmo === "aviso"; }, null, { timeout: 30000 });
+  cierto("a rápida no tiene ninguna: usa todos los ritmos y avisa", /a ese ritmo no tiene ninguna partida: son muy pocas para filtrar/.test(await page.textContent("[data-ritmo]")));
+  igual("el selector recuerda lo elegido", await page.evaluate(() => document.getElementById("filtro-partida").value), "rápida");
+
+  igual("en pantalla la hoja no se ve", await page.evaluate(() => document.getElementById("hoja").checkVisibility()), false);
+  await page.click("#imprimir-hoja");
+  igual("«Hoja para imprimir» la arma e imprime", await page.evaluate(() => [window.__imprimio, document.querySelector("#hoja h1").textContent, document.documentElement.classList.contains("imprimir-hoja")]),
+    [1, "Contra Pedro Perez", true]);
+  await page.emulateMedia({ media: "print" });
+  igual("al imprimir sale solo la hoja", await page.evaluate(() => [document.getElementById("hoja").checkVisibility(), document.getElementById("app").checkVisibility()]), [true, false]);
+  igual("con cada color, sus líneas y qué hacer", await page.evaluate(() => [...document.querySelectorAll("#hoja h2")].map((h) => h.textContent)), ["Cuando tú llevas blancas", "Cuando tú llevas negras", "En toda la partida"]);
+  cierto("sin botones ni plegables", await page.evaluate(() => !document.querySelector("#hoja button, #hoja details, #hoja a")));
+  await page.emulateMedia({ media: "screen" });
+  igual("sin errores", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+}
+
+/* La táctica con el Stockfish de verdad (revisarTactica). Dos partidas
+   legales (comprobadas con chess.js):
+     - la trampa de la Petrov con Pedro de negras: su 4…Cf6?? pierde la dama
+       (lo correcto era 4…De7), y Stockfish tiene que confirmarlo;
+     - Pedro de blancas no ve la dama regalada: tras 4…Dh4?? tenía 5.Cxh4 y
+       jugó 5.Cc3. Stockfish confirma que «no la vio». */
+const DAMA_REGALADA = "e4 e5 Nf3 Nc6 Bc4 Bc5 d3 Qh4 Nc3 Nf6 O-O Qh5";
+async function pruebaTacticaConMotorDeVerdad(browser) {
+  console.log("\n=== La táctica, revisada con el Stockfish de verdad ===");
+  for (const js of [PETROV, DAMA_REGALADA]) { const g = new Chess(); cierto("es legal: " + js, js.split(" ").every((m) => g.move(m))); }
+  let t = partida("Otro 1", "Pedro", "1-0", conNumeros(PETROV)) + partida("Pedro", "Otro 2", "1-0", conNumeros(DAMA_REGALADA));
+  for (let i = 0; i < 4; i++) t += partida("Pedro", "Otro " + (3 + i), i % 2 ? "1-0" : "0-1", "d4 d5 2. c4 e6");
+  const ctx = await browser.newContext({ serviceWorkers: "block" });
+  await ctx.route("**/fonts.gstatic.com/**", (r) => r.abort());
+  await ctx.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
+  await ctx.route("**/cdn.jsdelivr.net/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
+  await ctx.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso(true) }));
+  await ctx.addInitScript(contestarAvisos);
+  const page = await ctx.newPage();
+  const errores = [];
+  page.on("pageerror", (e) => errores.push(String(e)));
+  await page.goto(BASE + "/preparacion-rivales.html", { waitUntil: "networkidle" });
+  await page.waitForFunction(() => document.getElementById("loading").classList.contains("hidden"), null, { timeout: 15000 });
+  await page.setInputFiles("#pgn-archivo", { name: "rival.pgn", mimeType: "application/x-chess-pgn", buffer: Buffer.from(t, "utf8") });
+  await page.click("#leer");
+  await page.waitForFunction(() => /Se leyeron/.test(document.getElementById("leido").textContent), null, { timeout: 10000 });
+  await page.selectOption("#rival", { label: "Pedro — 6 partidas" }).catch(() => {});
+  await page.click("#analizar");
+  await page.waitForFunction(() => /táctica revisada/.test(document.getElementById("motor-estado").textContent), null, { timeout: 240000 });
+  igual("su error decisivo, con la jugada buena (4…De7)", await page.evaluate(() => [...document.querySelectorAll("[data-errores] li p")].map((p) => p.textContent.replace(/perdió [\d,]+ peones/, "perdió N peones"))),
+    ["Jugó 4…Cf6; lo correcto era De7 (perdió N peones), contra Otro 1."]);
+  igual("lo que no vio: la dama regalada (una pieza sin defender)", await page.evaluate(() => [...document.querySelectorAll("[data-no-vio] > li")].map((li) => [li.dataset.tema, li.querySelector("p").textContent, li.querySelector(":scope ul li p").textContent.replace(/escaparon [\d,]+ peones/, "escaparon N peones")])),
+    [["colgada", "Pieza sin defender: 1 vez", "Tenía 5.Cxh4 y jugó 5.Cc3 (ganaba la partida), contra Otro 2."]]);
+  igual("sin errores en la página", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+}
+
 async function pruebaMotorDeVerdad(browser) {
   console.log("\n=== Stockfish 19 lite, corriendo en la página ===");
   const ctx = await browser.newContext({ serviceWorkers: "block" });
@@ -1666,6 +1765,7 @@ async function pruebaMotorDeVerdad(browser) {
   pruebaMotorRepertorio();
   const conDerrotas = pruebaDerrotas();
   const conTactica = pruebaTactica();
+  pruebaFormaYRitmo();
   pruebaCsp();
   pruebaArchivosDelMotor();
   const browser = await chromium.launch({ executablePath: CHROME });
@@ -1681,7 +1781,9 @@ async function pruebaMotorDeVerdad(browser) {
     await pruebaEtapa7(browser);
     await pruebaDerrotasEnLaPagina(browser, conDerrotas);
     await pruebaTacticaEnLaPagina(browser, conTactica);
+    await pruebaRitmoEHojaEnLaPagina(browser);
     await pruebaMotorDeVerdad(browser);
+    await pruebaTacticaConMotorDeVerdad(browser);
   } finally {
     await browser.close();
   }

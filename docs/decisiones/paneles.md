@@ -2000,6 +2000,131 @@ versión en la página revisan:
 
 Falla si se quita la regla de «el patrón tiene que ser el que cobró».
 
+### Forma reciente, ritmo de la partida y hoja para imprimir
+
+**Su forma reciente (`formaReciente()`).** Un rival que cambió de defensa hace
+dos meses deja sin valor el plan armado con años de partidas.
+
+Qué se compara:
+- las partidas recientes, que son los 3 meses antes de su ÚLTIMA partida (no
+  de hoy, porque el archivo puede ser viejo), o sus 30 últimas si en esos
+  meses jugó menos de 20;
+- contra las anteriores;
+- con blancas, su primera jugada; con negras, su respuesta a las dos primeras
+  jugadas que más le hacen.
+
+Cuándo cambió, siempre con 8 partidas o más en esa posición de cada lado:
+- si la más jugada ahora no es la de antes, y ahora sale en el 40 % o más;
+- si algo que casi no jugaba (menos del 10 %) ahora sale en el 30 % o más.
+
+Qué muestra:
+- arriba del color que corresponde, un aviso con borde: «Ojo: últimamente
+  contra 1.e4 juega 1…c5, que casi no jugaba… Prepara las dos»;
+- si en las recientes saca 10 puntos más o menos que antes, «Viene en racha»
+  o «Viene a la baja» en «En toda la partida».
+
+Con menos de 40 partidas con fecha, no se calcula.
+
+**El ritmo de la partida que viene.** «Tu partida es a…», en los filtros,
+junta los ritmos: rápida con clásica, bullet con hiperbullet
+(`mismoRitmo()`).
+- Si a ese ritmo tiene 30 partidas o más (`POCAS`), el análisis se filtra a
+  él, y el resumen dice «Preparado para una partida a blitz: se usan solo sus
+  partidas a ese ritmo».
+- Si tiene menos, se usan todos sus ritmos, y el resumen avisa con cuántas
+  partidas cuenta a ese ritmo y cuánto saca: jeigoth5 tiene 11 partidas a
+  rápida contra 474 de bullet y blitz.
+- En un análisis guardado no se vuelve a analizar: solo cambia el aviso.
+
+El ritmo elegido queda en `filtros.partida`, se guarda con el análisis y sale
+en la hoja.
+
+**La hoja para imprimir (`pintarHoja()`).** Es una página con lo esencial,
+para llevarla a la partida o mirarla en el celular antes de sentarse
+(guardada en PDF). Lleva:
+- la línea de cada color;
+- tres cosas que hacer y tres que no;
+- lo de toda la partida;
+- los avisos de forma reciente y de ritmo.
+
+Cómo se arma:
+- sale del mismo `armar()` del resumen, así que no puede decir otra cosa;
+- no lleva botones, plegables ni enlaces, porque en papel no se tocan;
+- se arma en `#hoja`, un hijo directo del `body`, y
+  `@media print` con `html.imprimir-hoja` (en `css/styles.css`) oculta todo lo
+  demás;
+- en pantalla no se ve;
+- la clase se quita en `afterprint`.
+
+Con el análisis guardado de jeigoth5, Chromium la imprime en una sola página A4.
+
+**Cómo se comprueba.** «Forma reciente y ritmo de la partida» y «El ritmo de
+la partida y la hoja para imprimir», en el verificador. Pedro pasó de 1…e5 a
+1…c5 y viene ganando todo. En la página se comprueba:
+- que blitz filtra y rápida avisa;
+- que en pantalla la hoja no se ve;
+- que «Hoja para imprimir» la arma e imprime;
+- que, emulando la impresión, sale solo la hoja, medido con `checkVisibility()`.
+
+Falla sin la regla de impresión y sin detectar el cambio de repertorio.
+
+### La táctica, revisada con Stockfish
+
+El reconocedor de patrones («Los temas tácticos del rival») no usa motor:
+cuenta tendencias, pero no sabe si la jugada del momento decisivo fue un error
+de verdad, ni ve lo que el rival pudo hacer y no hizo. Se pidió más precisión,
+así que se hace en dos pasos.
+
+**1. En el trabajador, sin motor (`js/preparacion-tactica.js`).** El análisis
+guarda dos cosas.
+- `momentos`: los 40 momentos decisivos más recientes, con la posición (FEN)
+  antes del error del que perdió y la jugada que hizo. El error es su jugada
+  justo antes de la del patrón.
+- `candidatas`: posiciones donde ÉL tenía con qué ganar material y jugó otra
+  cosa, sin ganarlo en las 4 medias jugadas siguientes. Son 40 como mucho,
+  una por partida y de sus 100 más recientes.
+
+Tener con qué ganar material quiere decir que, en su turno y sin estar en
+jaque, había una pieza contraria de 3 o más atacada por una suya y sin
+defender, o defendida pero que vale 2 o más que la que ataca. Primero se
+generaron sus jugadas con chess.js, pero con 300 partidas tardaba 8 segundos.
+Con los ataques del propio tablero tarda 0,4, y deja pasar alguna jugada que
+no es legal: Stockfish decide.
+
+**2. En la página, con Stockfish (`revisarTactica()`, en
+`js/preparacion-motor.js`).** Corre al terminar la revisión normal, a
+profundidad 14, con el mismo «Parar».
+- **Momentos.** Se evalúa antes y después del error. Si perdió 1,5 peones o
+  más de golpe, es un error confirmado, con la jugada buena: «Jugó 4…Cf6; lo
+  correcto era De7 (perdió 4,98 peones)».
+- **Candidatas.** Cuenta como «no la vio» si la mejor jugada de Stockfish lo
+  dejaba 1 peón o más arriba y la que jugó perdió 1,5 o más de eso. El tema es
+  el de la mejor jugada de Stockfish (`temaDeJugada()`), no el de la sospecha.
+- Con mate de por medio no se escribe «M-8 peones»: dice «ganaba la partida» o
+  «con eso perdía la partida».
+- Queda en `r.tacticaMotor` y se guarda con el análisis. Una revisión parada a
+  medias no se guarda como hecha.
+
+**Lo que se ve.**
+- **En la tarjeta de táctica:**
+  - cuántos momentos fueron errores claros;
+  - «Sus errores decisivos», con la jugada buena, «Ver» (se abre en su error)
+    y la partida;
+  - «Lo que no vio», por tema, con ejemplos: «Tenía 5.Cxh4 y jugó 5.Cc3
+    (ganaba la partida)». Trae «Ver», que se abre antes de su jugada, y
+    «Practicar».
+- **En el resumen:** con 2 o más del mismo tema, «Juega posiciones con
+  táctica: se le escapan …».
+
+**Cómo se comprueba.** «La táctica, revisada con el Stockfish de verdad»
+corre el Stockfish 19 lite real en la página con dos partidas legales:
+- la trampa de la Petrov con él de negras: 4…Cf6?? confirmado, lo correcto era
+  4…De7;
+- una dama regalada que no toma: 4…Dh4?? 5.Cc3 en vez de 5.Cxh4, que queda
+  como «no la vio», pieza sin defender.
+
+Falla con un umbral imposible y sin el tema de la mejor jugada.
+
 ## Las inscripciones a torneos en línea
 
 `inscripciones.html` muestra lo que llegó por `inscripcion.html`, el formulario

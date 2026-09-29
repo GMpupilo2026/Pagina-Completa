@@ -15,6 +15,12 @@
      semanas. Arriba, la meta del día (de Logros); sin nada pendiente queda
      solo esa.
 
+   - Visualización y Practicar tienen la misma cola (Practicar, por ronda,
+     y en el repaso vale el motivo de la serie de origen), y el hub la
+     propone. También Tipos de entrenamiento (de todos los tipos, en #repaso)
+     y Finales (la pestaña lo marca; ?repaso=1 lo abre).
+   - Tipos, Practicar y 4×4 registran `limpio` en training_progress.
+
    Nada de esto da un error si se rompe: el ejercicio fallado simplemente no
    vuelve nunca, que es lo que pasaba antes.
 
@@ -258,6 +264,55 @@ async function hub(browser) {
     igual("con 80 % limpio no lo propone", await page.evaluate(() => document.querySelectorAll("#hoy-lista a").length), "0");
     await ctx.close();
   }
+  /* Los repasos de Visualización y de Practicar también se proponen. */
+  {
+    const fresco = { diagnostico_resultado_v1: JSON.stringify({ fecha: new Date().toISOString() }) };
+    const ficha = (vence) => ({ facilidad: 2.5, intervalo: 1, repasos: 1, fallos: 0, vence, ultimo: "2026-01-01T00:00:00Z" });
+    const { page, ctx } = await abrir(browser, "/entreno/index.html", {}, Object.assign({}, fresco, {
+      entreno_visualizacion_repaso_v1: JSON.stringify({ a: ficha(hoy()), b: ficha(hoy()) }),
+      entreno_practicas_repaso_v1: JSON.stringify({ "pasillo:0": ficha(hoy()) }),
+    }));
+    await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
+    await page.waitForFunction(() => document.querySelectorAll("#hoy-lista a").length > 0, { timeout: 10000 });
+    igual("propone los repasos de Visualización y de Practicar, con a dónde ir", await page.evaluate(() =>
+      Array.from(document.querySelectorAll("#hoy-lista a")).map((a) => [a.textContent.replace("→", "").trim(), a.getAttribute("href")])),
+      [["👁️Repasar 2 ejercicios de Visualización que te costaron", "visualizacion.html?repaso=1"], ["♞Repasar 1 posición de Practicar que te costó", "practicas.html?repaso=1"]]);
+    await ctx.close();
+  }
+  /* Y los de Tipos y de Finales. */
+  {
+    const fresco = { diagnostico_resultado_v1: JSON.stringify({ fecha: new Date().toISOString() }) };
+    const ficha = (vence) => ({ facilidad: 2.5, intervalo: 1, repasos: 1, fallos: 0, vence, ultimo: "2026-01-01T00:00:00Z" });
+    const { page, ctx } = await abrir(browser, "/entreno/index.html", {}, Object.assign({}, fresco, {
+      entreno_tipos_repaso_v1: JSON.stringify({ "detective:a": ficha(hoy()), "amenaza:b": ficha(hoy()) }),
+      entreno_finales_repaso_v1: JSON.stringify({ lucena: ficha(hoy()) }),
+    }));
+    await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
+    await page.waitForFunction(() => document.querySelectorAll("#hoy-lista a").length > 0, { timeout: 10000 });
+    igual("propone los repasos de Tipos y de Finales, con a dónde ir", await page.evaluate(() =>
+      Array.from(document.querySelectorAll("#hoy-lista a")).map((a) => [a.textContent.replace("→", "").trim(), a.getAttribute("href")])),
+      [["🧩Repasar 2 ejercicios de Tipos que te costaron", "tipos.html#repaso"], ["🏁Volver a jugar 1 final que te costó", "finales.html?repaso=1"]]);
+    await ctx.close();
+  }
+  /* El nivel de Tipos que quedó a medias (tipos_ultimo_v1, lo anota la página
+     al jugar): se propone seguirlo; uno completo, no. */
+  {
+    const fresco = { diagnostico_resultado_v1: JSON.stringify({ fecha: new Date().toISOString() }) };
+    const ultimo = (hechos) => Object.assign({}, fresco, { tipos_ultimo_v1: JSON.stringify({ tipo: "detective", nombre: "El Detective", nivel: 2, hechos, total: 20 }) });
+    let { page, ctx, errores } = await abrir(browser, "/entreno/index.html", {}, ultimo(7));
+    await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
+    await page.waitForFunction(() => document.querySelectorAll("#hoy-lista a").length > 0, { timeout: 10000 });
+    igual("propone seguir el nivel de Tipos a medias, con cuánto lleva", await page.evaluate(() =>
+      Array.from(document.querySelectorAll("#hoy-lista a")).map((a) => [a.textContent.replace("→", "").trim(), a.getAttribute("href")])),
+      [["🧩Seguir con El Detective, nivel 2 (7 de 20)", "tipos.html#detective/2"]]);
+    sinErrores(errores, "hub con Tipos a medias");
+    await ctx.close();
+    ({ page, ctx } = await abrir(browser, "/entreno/index.html", {}, ultimo(20)));
+    await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
+    await page.waitForTimeout(600);
+    igual("un nivel completo no se propone", await page.evaluate(() => document.querySelectorAll("#hoy-lista a").length), "0");
+    await ctx.close();
+  }
   /* La meta del día sale de progreso_dias_y_racha, la misma cuenta de Logros. */
   {
     const racha = (hoy, actual) => ({ "rpc:progreso_dias_y_racha": [{ dias_activos: 9, racha_actual: actual, racha_record: 7,
@@ -281,11 +336,187 @@ async function hub(browser) {
   }
 }
 
+async function visualizacion(browser) {
+  console.log("\n=== Visualización: la misma cola ===");
+  const C = "entreno_visualizacion_repaso_v1";
+  const { page, ctx, errores } = await abrir(browser, "/entreno/visualizacion.html");
+  await page.waitForFunction(() => typeof NIVELES !== "undefined" && DATA && typeof openLevel === "function", { timeout: 20000 });
+  await page.evaluate(() => openLevel(NIVELES[0].id));
+  await page.waitForFunction(() => game !== null && currentId() !== undefined, { timeout: 15000 });
+  const fallado = await page.evaluate(() => { const id = currentId(); missedThisPuzzle = true; finishPuzzle(); return id; });
+  igual("con un error entra a la cola, para hoy", await page.evaluate(([k, id]) => (JSON.parse(localStorage.getItem(k) || "{}")[id] || {}).vence, [C, fallado]), hoy());
+  await page.waitForFunction(() => !locked, { timeout: 5000 });
+  await page.evaluate(() => showLevels());
+  igual("la lista de niveles ofrece el repaso", await page.evaluate(() => [document.getElementById("repaso-caja").checkVisibility(), document.getElementById("repaso-texto").textContent]),
+    [true, "Hoy toca repasar 1 ejercicio que te costó (lo resolviste con un error o con una pista)."]);
+  await page.click("#repaso-btn");
+  igual("el repaso trae el que costó", await page.evaluate(() => [currentLevel, currentId(), document.getElementById("play-title").textContent]), ["__repaso", fallado, "Repasar fallados — lo que te costó"]);
+  const antes = await inserts(page);
+  await page.evaluate(() => { missedThisPuzzle = false; usedHintThisPuzzle = false; finishPuzzle(); });
+  igual("repasado limpio, vuelve más adelante", await page.evaluate(([k, id]) => JSON.parse(localStorage.getItem(k))[id].vence, [C, fallado]) > hoy(), "true");
+  igual("y ahora sí cuenta como resuelto (con error no había contado)", [await page.evaluate((id) => isSolved(id), fallado), (await inserts(page)) - antes], [true, 1]);
+  await page.waitForFunction(() => document.getElementById("celebration").checkVisibility(), { timeout: 5000 });
+  igual("al terminar, «¡Repaso terminado!» y sin «volver a empezar»", await page.evaluate(() =>
+    [document.getElementById("celebration-title").textContent, document.getElementById("celebration-replay-btn").checkVisibility()]), ["¡Repaso terminado!", false]);
+  sinErrores(errores, "visualización");
+  await ctx.close();
+}
+
+async function practicar(browser) {
+  console.log("\n=== Practicar: la cola por ronda ===");
+  const C = "entreno_practicas_repaso_v1";
+  const { page, ctx, errores } = await abrir(browser, "/entreno/practicas.html");
+  await page.waitForFunction(() => typeof SETS !== "undefined" && document.getElementById("set-list").children.length > 0, { timeout: 20000 });
+  // La primera ronda del descubierto, con un error: entra como "descubierto:0".
+  await page.evaluate(() => { openSet(SETS.find((x) => x.id === "descubierto")); errorsThisRound = 1; finishRound(false); });
+  igual("una ronda con error entra a la cola, con su serie y su número", await page.evaluate((k) => Object.keys(JSON.parse(localStorage.getItem(k) || "{}")), C), ["descubierto:0"]);
+  await page.evaluate(() => showList());
+  igual("la lista de series ofrece el repaso", await page.evaluate(() => [document.getElementById("repaso-caja").checkVisibility(), document.getElementById("repaso-texto").textContent]),
+    [true, "Hoy toca repasar 1 posición que te costó (la resolviste con un error o con una pista)."]);
+  await page.click("#repaso-btn");
+  igual("el repaso es una serie con esa ronda", await page.evaluate(() => [currentSet.id, currentSet.rounds.length, currentSet.rounds[0]._rid, game.fen() === SETS.find((x) => x.id === "descubierto").rounds[0].fen]),
+    ["__repaso", 1, "descubierto:0", true]);
+  // En el repaso vale el motivo de su serie: otro salto que descubre el jaque.
+  await page.click('#board [data-square="c3"]'); await page.click('#board [data-square="e4"]');
+  igual("otra jugada que cumple el motivo de su serie también vale en el repaso", await page.evaluate(() => /¡Correcto!/.test(document.getElementById("round-status").textContent)), "true");
+  igual("repasada limpia, vuelve más adelante", await page.evaluate((k) => JSON.parse(localStorage.getItem(k))["descubierto:0"].vence, C) > hoy(), "true");
+  await page.waitForFunction(() => document.getElementById("celebration").checkVisibility(), { timeout: 5000 });
+  igual("al terminar, «¡Repaso terminado!», sin «siguiente serie» ni estrellas guardadas", await page.evaluate(() =>
+    [document.getElementById("celebration-title").textContent, document.getElementById("celebration-next-btn").checkVisibility(), getSetStars("__repaso"),
+     window.__inserts.some((i) => i.tabla === "training_progress" && JSON.stringify(i.rows).includes("__repaso"))]),
+    ["¡Repaso terminado!", false, 0, false]);
+  sinErrores(errores, "practicar");
+  await ctx.close();
+}
+
+async function tipos(browser) {
+  console.log("\n=== Tipos de entrenamiento: la misma cola, de todos los tipos ===");
+  const C = "entreno_tipos_repaso_v1";
+  const { page, ctx, errores } = await abrir(browser, "/entreno/tipos.html");
+  await page.waitForSelector("#fichas li", { timeout: 20000 });
+  igual("sin nada que repasar, la portada no ofrece el repaso", await page.evaluate(() => document.getElementById("repaso-tipos").checkVisibility()), false);
+  // Se juega el primero de Detective, nivel 1, y sale con una estrella.
+  await page.evaluate(() => { location.hash = "#detective/1"; });
+  await page.waitForSelector("#vista-juego:not(.hidden) #controles input[type=radio]", { timeout: 15000 });
+  const det = await page.evaluate(() => TiposEntreno.datos().detective.filter((x) => x.nivel === 1));
+  await page.evaluate((it) => TiposUI.terminar(it, 1), det[0]);
+  // Y el segundo, con tres: limpio a la primera, no entra.
+  await page.evaluate(() => document.getElementById("btn-siguiente").click());
+  await page.waitForFunction(() => /Ejercicio 2 de/.test(document.getElementById("juego-progreso").textContent), null, { timeout: 8000 });
+  await page.evaluate((it) => TiposUI.terminar(it, 3), det[1]);
+  igual("con una estrella entra a la cola, para hoy, como «tipo:id»; con tres no",
+    await page.evaluate((k) => { const o = JSON.parse(localStorage.getItem(k) || "{}"); return Object.keys(o).map((id) => [id, o[id].vence, o[id].tipo]); }, C),
+    [["detective:" + det[0].id, hoy(), "detective"]]);
+  const reg = () => page.evaluate(() => window.__inserts.filter((i) => i.tabla === "training_progress").map((i) => [].concat(i.rows)[0].detail).map((d) => [d.puzzle_id, d.estrellas, d.limpio]));
+  igual("y se registra con `limpio` (tres estrellas) la primera vez que se resuelve", await reg(),
+    [["detective:" + det[0].id, 1, false], ["detective:" + det[1].id, 3, true]]);
+  await page.evaluate(() => { location.hash = "#"; });
+  await page.waitForSelector("#vista-fichas:not(.hidden)", { timeout: 8000 });
+  igual("la portada ofrece el repaso, con cuántos y a dónde lleva", await page.evaluate(() => {
+    const c = document.getElementById("repaso-tipos");
+    return [c.checkVisibility(), c.querySelector("p").textContent, c.querySelector("a").getAttribute("href")];
+  }), [true, "🔁 Hoy toca repasar 1 ejercicio que te costó", "#repaso"]);
+  // Lo que el hub propone seguir (otro tipo): el repaso no lo tiene que pisar.
+  await page.evaluate(() => localStorage.setItem("tipos_ultimo_v1", JSON.stringify({ tipo: "amenaza", nombre: "La amenaza", nivel: 2, hechos: 1, total: 10 })));
+  await page.click("#repaso-tipos a");
+  await page.waitForSelector("#vista-juego:not(.hidden) #controles input[type=radio]", { timeout: 15000 });
+  igual("el repaso trae ese ejercicio, con el juego de su tipo", await page.evaluate(() =>
+    [document.getElementById("titulo-juego").textContent, document.getElementById("juego-progreso").textContent, document.getElementById("btn-siguiente").textContent]),
+    ["🔁 Repasar fallados", "Repaso · El Detective · Ejercicio 1 de 1 · tu mejor: ★☆☆", "Terminar el repaso"]);
+  const antes = (await reg()).length;
+  await page.evaluate((it) => TiposUI.terminar(it, 3), det[0]);
+  igual("repasado limpio, vuelve más adelante", await page.evaluate(([k, id]) => JSON.parse(localStorage.getItem(k))[id].vence, [C, "detective:" + det[0].id]) > hoy(), "true");
+  igual("y repasar no lo vuelve a registrar (ya contó)", (await reg()).length - antes, "0");
+  igual("el repaso no pasa a ser «el nivel que quedó a medias» del hub", await page.evaluate(() => JSON.parse(localStorage.getItem("tipos_ultimo_v1")).tipo), "amenaza");
+  await page.evaluate(() => document.getElementById("btn-siguiente").click());
+  await page.waitForSelector("#vista-fichas:not(.hidden)", { timeout: 8000 });
+  igual("al terminar vuelve a la portada, que ya no ofrece el repaso", await page.evaluate(() => document.getElementById("repaso-tipos").checkVisibility()), false);
+  sinErrores(errores, "tipos");
+  await ctx.close();
+}
+
+async function finales(browser) {
+  console.log("\n=== Finales contra la máquina: la misma cola ===");
+  const C = "entreno_finales_repaso_v1";
+  let { page, ctx, errores } = await abrir(browser, "/entreno/finales.html");
+  await page.waitForFunction(() => typeof FINALES !== "undefined" && FINALES.length > 1 && document.getElementById("tabs").children.length > 1, { timeout: 20000 });
+  const [f0, f1] = await page.evaluate(() => [FINALES[0].id, FINALES[1].id]);
+  // Se pierde el SEGUNDO: así ?repaso=1 no puede acertar por casualidad (el
+  // primero sin lograr sería el primero).
+  await page.evaluate(() => { actual = 1; loadFinal(); fallado("Te dieron mate."); });
+  igual("un final perdido entra a la cola, para hoy", await page.evaluate(([k, id]) => (JSON.parse(localStorage.getItem(k) || "{}")[id] || {}).vence, [C, f1]), hoy());
+  igual("y no cuenta como logrado", await page.evaluate(() => window.__inserts.filter((i) => i.tabla === "training_progress").length), "0");
+  await page.evaluate(() => { actual = 0; loadFinal(); logrado("¡Jaque mate!"); });
+  igual("uno logrado limpio a la primera no entra", await page.evaluate(([k, id]) => id in JSON.parse(localStorage.getItem(k) || "{}"), [C, f0]), false);
+  igual("la pestaña del que toca repasar lo dice, escrito", await page.evaluate(() => {
+    const b = document.querySelectorAll("#tabs button")[1];
+    return [/🔁$/.test(b.textContent), /toca repasarlo hoy$/.test(b.getAttribute("aria-label")), document.getElementById("progress-label").textContent];
+  }), [true, true, "1 de " + (await page.evaluate(() => FINALES.length)) + " finales logrados · 1 para repasar hoy (🔁)"]);
+  sinErrores(errores, "finales");
+  const guardado = await page.evaluate((k) => localStorage.getItem(k), C);
+  await ctx.close();
+  // ?repaso=1 (el enlace del hub) abre el que toca, aunque haya otro sin lograr antes.
+  ({ page, ctx, errores } = await abrir(browser, "/entreno/finales.html?repaso=1", {}, { [C]: guardado }));
+  await page.waitForFunction(() => typeof FINALES !== "undefined" && FINALES.length > 1 && document.getElementById("final-titulo").textContent, { timeout: 20000 });
+  igual("?repaso=1 abre el final que toca repasar (no el primero sin lograr)", await page.evaluate(() => finalActual().id), f1);
+  await page.evaluate(() => { usedHint = true; logrado("¡Jaque mate!"); });
+  igual("logrado con pista sigue en la cola, pero para pronto", await page.evaluate(([k, id]) => { const f = JSON.parse(localStorage.getItem(k))[id]; return [f.fuera, f.limpiosSeguidos]; }, [C, f1]), [false, 0]);
+  sinErrores(errores, "finales ?repaso=1");
+  await ctx.close();
+}
+
+/* `limpio` en Practicar (por serie) y en 4×4 (sin trabarse ni reiniciar). */
+async function limpios(browser) {
+  console.log("\n=== Cómo salió: Practicar y 4×4 ===");
+  {
+    const { page, ctx, errores } = await abrir(browser, "/entreno/practicas.html");
+    await page.waitForFunction(() => typeof SETS !== "undefined" && document.getElementById("set-list").children.length > 0, { timeout: 20000 });
+    const n = await page.evaluate(() => {
+      const set = SETS.find((x) => x.rounds.length >= 2);
+      openSet(set);
+      // Todas limpias menos la primera, con una pista.
+      setStarsEarned = set.rounds.map((r, i) => (i === 0 ? 2 : 3));
+      finishSet();
+      return set.rounds.length;
+    });
+    igual("la serie se registra con cuántas posiciones salieron limpias, y si fue toda", await page.evaluate(() => {
+      const d = [].concat(window.__inserts.filter((i) => i.tabla === "training_progress").pop().rows)[0].detail;
+      return [d.rondas, d.rondas_limpias, d.limpio];
+    }), [n, n - 1, false]);
+    sinErrores(errores, "practicar (limpio)");
+    await ctx.close();
+  }
+  {
+    const { page, ctx, errores } = await abrir(browser, "/entreno/4x4.html");
+    await page.waitForFunction(() => typeof boardExList !== "undefined" && boardExList.length > 1 && Object.keys(boardState).length > 1, { timeout: 20000 });
+    const ultimo = () => page.evaluate(() => { const d = [].concat(window.__inserts.filter((i) => i.tabla === "training_progress").pop().rows)[0].detail; return [d.limpio, d.con_error]; });
+    // Resuelto sin tropiezos (se deja una sola pieza y se revisa).
+    await page.evaluate(() => { const k = Object.keys(boardState)[0]; boardState = { [k]: boardState[k] }; checkWin(); });
+    igual("resuelto sin trabarse: limpio", await ultimo(), [true, false]);
+    // Otro, reiniciado a medio camino.
+    await page.evaluate(() => { document.getElementById("win-overlay").classList.remove("open"); loadPuzzleAt(1); captureLog.push({}); });
+    await page.click("#board-reset");
+    await page.evaluate(() => { const k = Object.keys(boardState)[0]; boardState = { [k]: boardState[k] }; checkWin(); });
+    igual("reiniciado a medio camino: no limpio", await ultimo(), [false, true]);
+    // «Reintentar» después de ganarlo es un intento nuevo.
+    await page.click("#win-retry");
+    await page.evaluate(() => { const k = Object.keys(boardState)[0]; boardState = { [k]: boardState[k] }; checkWin(); });
+    igual("volver a empezarlo después de ganarlo es un intento nuevo, limpio otra vez", await ultimo(), [true, false]);
+    sinErrores(errores, "4×4 (limpio)");
+    await ctx.close();
+  }
+}
+
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
     await temas(browser);
     await mates(browser);
+    await visualizacion(browser);
+    await practicar(browser);
+    await tipos(browser);
+    await finales(browser);
+    await limpios(browser);
     await hub(browser);
   } catch (e) {
     console.log("  ✗ " + (e && e.stack || e));
