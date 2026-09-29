@@ -222,41 +222,56 @@
 
            «Revisar el contenido» está porque su trabajo es que todo funcione:
            son las páginas que el alumnado usa, para abrirlas y comprobarlas. */
+        /* UNA sola puerta para cada cosa. Quien administra tiene dos
+           pantallas y cada una hace lo suyo:
+           - acá, en el panel de la Academia, están TODAS las páginas
+             (informes, cobros, formularios, resultados…);
+           - en admin.html, lo que se maneja adentro de esa página: lo urgente,
+             las cuentas, supervisores, profesores y coordinadores, equipos.
+           admin.html tenía además «Herramientas», una segunda lista de casi
+           las mismas páginas, y este panel repetía «Lo urgente» y una tarjeta
+           a una de sus secciones. Ahora cada destino está una sola vez. Lo que
+           solo estaba en Herramientas (precios, prueba gratis, jugadores de
+           chess-results, el arbitraje del público) vino para acá. Ver «Una
+           sola puerta para cada cosa» en docs/decisiones/paneles.md. */
         const ADMIN_GROUPS = [
-            { title: "Cómo va la plataforma", tiles: [
+            { title: "Administración", tiles: [
+                { emoji: "👑", label: "Administración", desc: "Lo urgente, las cuentas, supervisores, profesores, coordinadores y equipos", href: "admin.html" },
+                { emoji: "🏫", label: "Academias", desc: "Crea las academias, ponles supervisor y reparte a su gente", href: "academias.html" },
+            ] },
+            { title: "Supervisión y coordinación", tiles: [
+                { emoji: "🧑‍🏫", label: "Supervisión de profesores", desc: "Qué hizo cada profesor en el mes —clases, tareas, exámenes— y su informe mensual", href: "supervision.html" },
+                { emoji: "🧭", label: "Coordinación", desc: "Los profesores y sus alumnos: quién es quién, cómo entra y cómo se ordena", href: "coordinacion.html" },
                 { emoji: "📊", label: "Informes", desc: "El progreso de todos los alumnos, tema por tema, y los informes a la casa", href: "informes.html" },
                 { emoji: "🩺", label: "Justificaciones de ausencia", desc: "Por qué faltó cada alumno a clase, con sus documentos", href: "justificaciones.html" },
-                { emoji: "🧑‍🏫", label: "Supervisión de profesores", desc: "Qué hizo cada profesor en el mes —clases, tareas, exámenes— y su informe mensual", href: "supervision.html" },
                 { emoji: "📈", label: "Tablero por academia", desc: "Clases, alumnos, informes, gasto de IA y cobros de cada academia", href: "tablero-academias.html" },
                 { emoji: "📄", label: "Reportes de actividades", desc: "El informe de lo que pasó en clase en un periodo, en Word y PDF", href: "reportes.html" },
-                { emoji: "🗂️", label: "Actualizaciones", desc: "Todo lo que se le ha hecho a la plataforma desde el primer día", href: "novedades.html" },
             ] },
-            { title: "Cuentas y personas", tiles: [
-                { emoji: "👑", label: "Administración", desc: "Cuentas, roles, profesores, supervisores y equipos", href: "admin.html" },
-                { emoji: "🏫", label: "Academias", desc: "Crea las academias, ponles supervisor y reparte a su gente", href: "academias.html" },
-                { emoji: "🧭", label: "Coordinación", desc: "Los profesores y sus alumnos: quién es quién, cómo entra y cómo se ordena", href: "coordinacion.html" },
-            ] },
-            /* Todos los formularios juntos: los que se arman, los que llegan
-               de afuera (torneo en línea, pedir ingreso) y la encuesta de
-               satisfacción. Antes estaban repartidos entre «Cuentas y
-               personas» y el panel de Administración. La misma lista, en el
-               mismo orden, es el grupo «Formularios» de ATAJOS en js/admin.js. */
+            /* Todos los formularios juntos: los que se arman, el pedido de
+               ingreso y las encuestas. Las inscripciones a torneos van con
+               Torneos, que es donde se las busca. */
             { title: "Formularios", tiles: [
                 { emoji: "⭐", label: "Satisfacción con los profesores", desc: "Qué opina el alumnado de cada profesor y quién dice que se va", href: "satisfaccion.html" },
                 { emoji: "🦯", label: "Encuestas anónimas de cursos", desc: "Sin iniciar sesión y accesibles con lector de pantalla: deserción, forma de enseñar y expectativas", href: "encuestas-curso.html" },
                 { emoji: "📋", label: "Formularios de inscripción", desc: "Arma un formulario, compártelo por enlace y baja las respuestas", href: "formularios.html" },
                 { emoji: "📝", label: "Solicitudes de la Academia", desc: "Quien pidió unirse: aprobar crea la cuenta, rechazar invita a un plan pago", href: "solicitudes.html" },
-                { emoji: "🏅", label: "Inscripciones a torneos en línea", desc: "Las respuestas del formulario de inscripcion.html", href: "inscripciones.html" },
             ] },
             { title: "Cobros y accesos", tiles: [
                 { emoji: "💳", label: "Cobros de la Academia", desc: "Mensualidades, pagos y morosidad. Los recordatorios salen solos", href: "cobros.html" },
                 { emoji: "🎟️", label: "Accesos y cupos", desc: "Los paquetes de acceso y los cupos de cada academia", href: "accesos.html" },
+                { emoji: "🏷️", label: "Precios", desc: "La tabla para enseñar a una academia o un colegio", href: "precios.html" },
+                { emoji: "🎁", label: "Prueba gratis", desc: "Crear los 3 días de prueba de quien la pidió por WhatsApp", href: "prueba-gratis.html" },
                 { emoji: "🛒", label: "Tienda de materiales", desc: "El catálogo de venta: todavía no está abierta al público", href: "tienda.html" },
             ] },
             { title: "Resultados de las pruebas", tiles: [
                 { emoji: "🧭", label: "Diagnósticos de nivel", desc: "El nivel medido de cada alumno y dónde está floja cada clase", href: "informes.html?tema=diagnostico" },
                 { emoji: "🌐", label: "Diagnósticos del público", desc: "Quién hizo el diagnóstico sin cuenta: contactos para invitar a la Academia", href: "informes.html?tema=diagnostico-publico" },
-                { emoji: "⚖️", label: "Exámenes de arbitraje", desc: "Los del público: revísalos y respóndeles", href: "arbitraje.html" },
+                { emoji: "⚖️", label: "Examen de arbitraje", desc: "El del equipo docente, con el detalle de cada respuesta", href: "arbitraje.html" },
+                { emoji: "🌐", label: "Arbitraje del público", desc: "Quiénes lo hicieron sin cuenta y a quién falta responder", href: "informes.html?tema=arbitraje" },
+            ] },
+            { title: "Torneos", tiles: [
+                { emoji: "🏅", label: "Inscripciones a torneos en línea", desc: "Las respuestas del formulario de inscripcion.html", href: "inscripciones.html" },
+                { emoji: "🔎", label: "Jugadores de chess-results", desc: "Busca a una persona y su historial de torneos", href: "admin-jugador.html" },
             ] },
             { title: "Revisar el contenido", tiles: [
                 { emoji: "🏛️", label: "Cursos", desc: "Los cursos de la Academia y el temario de cada uno", href: "cursos/academia/index.html" },
@@ -266,6 +281,7 @@
                 { emoji: "📺", label: "TV en vivo", desc: "Las partidas de la Academia en directo", href: "tv.html" },
                 { emoji: "📘", label: "Guía del profesor", desc: "Todo lo que la plataforma deja hacer y cómo se hace", href: "guia-del-profesor-accesible.html" },
                 { emoji: "📝", label: "Lector de planilla", desc: "Todavía en prueba: fotografía una planilla y conviértela en PGN", href: "lector-planilla.html" },
+                { emoji: "🗂️", label: "Actualizaciones", desc: "Todo lo que se le ha hecho a la plataforma desde el primer día", href: "novedades.html" },
             ] },
             { title: "Tu cuenta", tiles: [
                 { emoji: "⚙️", label: "Configuración", desc: "Tu perfil y contraseña", href: "configuracion.html" },
@@ -832,7 +848,7 @@
             "partidas.html": "pgn partidas guardadas carpetas subir",
             "informes.html": "progreso estadisticas notas reportes asistencia alumnos informe a la casa encargados padres",
             "configuracion.html": "contrasena clave perfil cuenta tema colores tablero piezas avisos notificaciones videollamada voz",
-            "admin.html": "cuentas usuarios roles crear cuenta novedades",
+            "admin.html": "cuentas usuarios roles crear cuenta urgente pendientes supervisores coordinadores equipos sin profesor",
             "supervision.html": "profesores informe mensual actividad",
             "academias.html": "academia supervisor",
             "tablero-academias.html": "cifras numeros del mes",
@@ -2364,7 +2380,7 @@
                `profile.is_admin` viene en false y cae en el panel docente, que
                es justamente lo que quiere revisar. */
             if (profile.is_admin) {
-                document.getElementById("panel-subtitulo").textContent = "Desde aquí ves cómo va toda la plataforma.";
+                document.getElementById("panel-subtitulo").textContent = "Todas las páginas de la plataforma. Lo urgente y las cuentas están en Administración.";
                 TILE_GROUPS.splice(0, TILE_GROUPS.length, ...ADMIN_GROUPS);
                 renderTiles();
                 document.getElementById("registro-clases").hidden = true;
