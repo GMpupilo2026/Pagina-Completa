@@ -422,6 +422,38 @@ logros, no salían en «Cómo viene» y no se podían pedir como tarea. Todo eso
   ejercicio, y también lo resuelto antes.
 - Precisión posicional, el Sonar y la Batalla naval siguen sin escribir ahí.
 
+## Repasar fallados también en Visualización y Practicar; y el hub propone más
+
+- **Visualización y Practicar tienen la cola de «Repasar fallados»**
+  (`js/repaso-fallados.js`, la misma de Temas y Mates, con sus claves
+  `entreno_visualizacion_repaso_v1` y `entreno_practicas_repaso_v1`, que viajan
+  con la cuenta). Lo que sale con error o con pista entra; lo repasado limpio
+  se reprograma y, a los tres limpios seguidos, sale.
+  - En **Visualización** el repaso es un «nivel» más (`__repaso`) con los de
+    hoy. Repasado limpio, cuenta como resuelto: con error no había contado.
+  - En **Practicar** la cola es **por ronda** (`serie:número`), no por serie:
+    lo que costó es una posición, no las cinco. El repaso es una serie armada
+    con esas rondas; cada una recuerda su serie (`_serie`), que es la que dice
+    qué motivo vale (`js/motivos-tacticos.js`): en el repaso de un descubierto
+    sigue valiendo cualquier salto que descubra el jaque. «Ver solución» cuenta
+    como pista. El repaso no guarda estrellas ni se registra como serie.
+  - Las dos abren la cola con `?repaso=1`, el enlace del hub.
+- **El «Hoy te toca» propone también**: los repasos de Visualización y de
+  Practicar, y **seguir el nivel de Tipos que quedó a medias**
+  («Seguir con El Detective, nivel 2 (7 de 20)» → `tipos.html#detective/2`).
+  Eso último lo anota la página de Tipos en `tipos_ultimo_v1` (tipo, nivel,
+  cuántos lleva y cuántos son) al abrir un nivel y al resolver; viaja con la
+  cuenta con `ultimaEscritura` (gana el aparato donde se jugó más tarde). Un
+  nivel completo no se propone. Siguen siendo tres cosas como mucho.
+- **Informes dice las casillas que más le cuestan en Coordenadas**
+  («b6 · g3 — falló 9 de 10, 4 de 7»). `informes_entreno_modulos()` manda los
+  contadores de las casillas falladas dos veces o más (`coord_casillas`,
+  migración `20260929054914`) y el orden lo pone `js/coordenadas-casillas.js`,
+  el mismo de la página: la fórmula no se escribe dos veces.
+- Lo prueban `verificar-entreno-repaso.js` (las dos colas, el motivo en el
+  repaso de Practicar, el hub), `verificar-tipos-pagina.js` (que se anote el
+  nivel) y `verificar-informes.js` (la tarjeta).
+
 ## El tema más flojo, en el hub
 
 El «Hoy te toca» propone el motivo que menos sale limpio («Tu tema más flojo,
