@@ -115,7 +115,15 @@ window.ProgresoUsuario = (function () {
     masReciente(local, remoto) {
       if (local === null) return remoto;
       if (remoto === null) return local;
-      const cuando = (crudo) => Date.parse(leerObjeto(crudo).fecha || 0) || 0;
+      /* `actualizado` es cuándo se reescribió una copia que ya existía (un
+         diagnóstico recalculado, por ejemplo). No se toca `fecha`, que es la
+         del diagnóstico y la usa lo de abajo para saber si una prueba a medias
+         ya se terminó. Sin esto, la copia vieja del aparato —misma `fecha`—
+         le ganaba al empate a la recalculada y la volvía a subir. */
+      const cuando = (crudo) => {
+        const o = leerObjeto(crudo);
+        return Math.max(Date.parse(o.fecha || 0) || 0, Date.parse(o.actualizado || 0) || 0);
+      };
       return cuando(local) >= cuando(remoto) ? local : remoto;
     },
   };
@@ -147,6 +155,7 @@ window.ProgresoUsuario = (function () {
     { clave: "entreno_desafios_best",            fusion: "maxNumero" },     // Desafíos: su propia racha (antes compartía la de Practicar)
     { clave: "entreno_desafios_streak",          fusion: "ultimaEscritura" },
     { prefijo: "entreno_coord_best_",            fusion: "maxNumero" },     // una por modo
+    { clave: "entreno_coord_casillas_v1",        fusion: "maxPorClave" },   // "e4:a"/"e4:f" → aciertos/fallos
     { clave: "entreno_temas_last",               fusion: "ultimoLugar" },
     { clave: "diagnostico_estado_v1",            fusion: "pruebaEnCurso" },
     { clave: "diagnostico_resultado_v1",         fusion: "masReciente" },

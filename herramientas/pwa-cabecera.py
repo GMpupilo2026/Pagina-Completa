@@ -7,6 +7,10 @@ Son tres etiquetas y un script, en todas las páginas del sitio:
     <link rel="manifest">         lo que le dice al celular que esto se instala
     <link rel="apple-touch-icon"> el icono en iPhone, que no lee el manifest
     <script src="js/pwa.js">      registra el service worker
+    <script src="js/errores.js">  avisa a Sentry de los errores de la gente;
+                                  SÍNCRONO a propósito: tiene que estar
+                                  escuchando antes de que corran los scripts
+                                  del final del <body> (ver js/errores.js)
 
 Van en TODAS y no solo en la portada porque la gente entra por donde sea —un
 enlace a un curso, el que le mandaron por WhatsApp— y el celular solo ofrece
@@ -66,6 +70,7 @@ def bloque(ruta):
         + '<link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png">'
         + '<meta name="apple-mobile-web-app-capable" content="yes">'
         + '<meta name="apple-mobile-web-app-title" content="Ajedrez">'
+        + f'<script src="{arriba}js/errores.js"></script>'
         + f'<script src="{arriba}js/pwa.js" defer></script>'
         + FIN
     )

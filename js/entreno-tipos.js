@@ -243,11 +243,37 @@
     $("jugada-form").classList.toggle("hidden", !fn);
     $("jugada-input").value = "";
   }
+  /* Antes de tratarlo como respuesta, se mira si era una PREGUNTA sobre el
+     tablero («caballos», «qué hay en e4», «posición», «ayuda»): las mismas que
+     entienden los demás ejercicios de Entrenamiento (js/comandos-tablero.js).
+     Una casilla sola («e4») no es pregunta: es la respuesta de varios juegos.
+     Con las piezas tapadas (Fotografía) no se contesta nada: la posición es lo
+     que hay que recordar. Y sin partida de verdad (un tablero armado a mano),
+     «jugadas de…» no se puede contar: decir «no tiene jugadas» sería falso. */
+  function juegoParaPreguntas() {
+    if (tab.juego) return { juego: tab.juego, partida: true };
+    if (tab.fen && !tab.piezasLibres) {
+      try { if (new Chess().validate_fen(tab.fen).valid) return { juego: new Chess(tab.fen), partida: true }; } catch (e) {}
+    }
+    return { juego: { get: piezaEn, turn: () => (tab.fen ? tab.fen.split(" ")[1] : "w"), moves: () => [] }, partida: false };
+  }
+  function preguntaAlTablero(txt) {
+    if (!window.ComandosTablero) return false;
+    const j = juegoParaPreguntas();
+    const r = ComandosTablero.interpretar(txt, { juego: () => j.juego, tablero: accesible });
+    if (!r.manejado) return false;
+    if (r.tipo === "ayuda") estado("Contesta como pide el ejercicio. Preguntas sobre el tablero: «posición», «caballos», «qué hay en e4», «jugadas de f3», «fila 4».");
+    else if (tab.oculto) estado("Ahora las piezas están tapadas: la posición es justo lo que tienes que recordar.");
+    else if (r.tipo === "jugadas" && !j.partida) estado("En este ejercicio el tablero no es una partida: no se pueden contar sus jugadas.");
+    else if (r.respuesta) estado(r.respuesta);
+    return true;
+  }
   $("jugada-form").addEventListener("submit", (e) => {
     e.preventDefault();
     if (!alEscribir) return;
     const txt = $("jugada-input").value.trim();
     if (!txt) return;
+    if (preguntaAlTablero(txt)) { $("jugada-input").value = ""; return; }
     alEscribir(txt);
   });
 

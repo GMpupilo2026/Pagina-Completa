@@ -367,6 +367,114 @@ y Ver la línea») lo comprueba en un navegador.
 - Los verificadores que daban por hecho el salto (`entreno-nivel`,
   `entreno-repaso`) ahora aprietan «Siguiente».
 
+## Mates: de dónde salen y por qué no tienen dificultad
+
+Los 2455 mates (`entreno/data/mates.json`) salen del libro de László Polgár
+*Chess: 5334 Problems, Combinations, and Games* (#59): posiciones recortadas
+(casi todas con «0 1» en la FEN), no de partidas. Por eso **no tienen rating**
+y no se le puede sacar de la base de Lichess: se probó buscando cada uno en la
+tabla «Ejercicios Lichess» (107 mil ejercicios de mate) aplicando la primera
+jugada de cada ejercicio de Lichess y comparando el tablero (una huella md5,
+para no bajar la tabla), y ninguno coincide; con los de Temas, 8 de 2455. La
+dificultad no se pone a ojo, así que Mates sigue en el orden del libro. El día
+que haya suficientes intentos registrados (`activity = 'mates'`, con
+`limpio` desde #491), se puede calibrar con las respuestas reales.
+
+## Finales contra la máquina, en Informes
+
+La revisión de la página no encontró nada mal en el juego (la meta la decide
+cómo termina la partida y, sin motor, no se regala nada), pero **el profesor no
+veía los finales**: la página escribe una fila por final logrado y ninguna
+función de Informes la contaba. `informes_entreno_modulos()` suma la columna
+`finales` (finales distintos logrados; migración `20260929051137`, que borra y
+vuelve a crear la función porque cambia lo que devuelve, con sus permisos), e
+Informes la muestra en una tarjeta de segunda fila (ahora son quince). Lo
+prueba `verificar-informes.js`.
+
+## El tema más flojo, en el hub
+
+El «Hoy te toca» propone el motivo que menos sale limpio («Tu tema más flojo,
+«Clavada»: limpio en 4 de 11», que lleva a `temas.html?tema=pin`) cuando
+está por debajo del 70 % (`TemaFlojo.FLOJO`). La cuenta es la misma de
+Informes (`js/tema-flojo.js` → `informes_tema_mas_flojo`, ver «El tema más
+flojo» en informes.md); el hub se queda con la fila del alumno de la sesión.
+Si la base no responde, no se propone nada. Lo prueba
+`verificar-entreno-repaso.js`.
+
+## Coordenadas insiste en las casillas que cuestan
+
+Antes cada casilla salía al azar parejo y no se guardaba cuáles fallaba el
+alumno. Ahora `js/coordenadas-casillas.js` lleva, por casilla, aciertos y
+fallos (`entreno_coord_casillas_v1`: `"e4:a"`, `"e4:f"`, que viaja con la
+cuenta con `maxPorClave`: los contadores solo suben) y el sorteo pesa
+`1 + 3 · fallos / (aciertos + fallos + 1)`.
+
+- Todas siguen saliendo (una nunca vista o dominada pesa 1); una que se falla
+  casi siempre sale hasta cuatro veces más. Una ronda solo de las difíciles no
+  entrenaría el tablero entero.
+- **Cada pedido cuenta UNA vez**: fallo si hubo algún error o se acabó el
+  tiempo, acierto si salió a la primera. Tres clics malos en la misma no son
+  tres fallos (los «errores» de la ronda sí siguen contando cada clic).
+- Vale igual en Modo Adaptado (decir el color de la casilla).
+- Al terminar, la ronda nombra las que más cuestan (con al menos dos fallos):
+  «b6 (fallada 9 de 10 veces)».
+- Lo prueba `verificar-entreno-arreglos.js` («Coordenadas: las casillas que
+  cuestan»), con el sorteo medido en 64 000 tiros.
+
+## Tipos: al tablero también se le pregunta
+
+El recuadro de la jugada de Tipos de entrenamiento solo aceptaba jugadas o
+casillas; ahora entiende también las preguntas de todo Entrenamiento
+(`js/comandos-tablero.js`: «posición», «reyes», «qué hay en e4», «fila 4»,
+«ayuda»), antes de tratar el texto como respuesta. Una pregunta no cuenta como
+error. Tres cuidados:
+
+- **Una casilla sola («e4») no es pregunta**: es la respuesta de varios juegos
+  (Descarte, el Barrido, Ruta segura), y `interpretar()` no la toma.
+- **Con las piezas tapadas (Fotografía) no se contesta nada**: la posición es
+  lo que hay que recordar.
+- **Sin partida de verdad** (un tablero armado a mano, Constrúyela tú),
+  «jugadas de f3» no se cuenta: «no tiene jugadas» sería falso.
+
+Visualización ya preguntaba con el mismo módulo, y el 4×4 tiene su propio
+cuadro a propósito: su tablero es de 4×4 y el común supone uno de 8×8. Lo
+prueba `verificar-tipos-pagina.js` («reyes» en ¿Qué quiere el rival?).
+
+## Practicar y Aprender: las posiciones escritas en el código, revisadas
+
+Las series de Practicar (`SETS` en `js/entreno-practicas.js`) y las lecciones
+de Aprender (`LESSONS` en `js/entreno-aprender.js`) viven en el código y ningún
+verificador las recorría. `verificar-practicar-aprender.js` (sin navegador)
+las recorre todas con chess.js, y al estrenarlo encontró diez ejercicios mal:
+
+- **Siete posiciones ilegales**: el rey del que no juega ya estaba en jaque
+  (chess.js no lo mira). Los cuatro de «Mate con dama o torre apoyada»
+  (`7k/8/6K1/…/7Q`: la dama de h1 ya daba jaque por la columna), un
+  descubierto y la lección del descubierto (el alfil que tapaba la diagonal
+  daba jaque él mismo: un alfil no puede «tapar» una diagonal), y un ataque
+  doble.
+- **Tres «ataques dobles» que regalaban la pieza**: la torre de e8 se comía la
+  dama de e4, la dama de a6 la torre de a2, y en la lección la torre de a8 se
+  comía la dama de d8. Una torre no puede atacar una dama sin que la dama
+  pueda comérsela.
+
+Cada uno se rehizo con el cambio más chico que lo deja bien (la dama que llega
+por la fila y no por la columna, una torre o un caballo tapando en vez del
+alfil, piezas menores como blanco), comprobado con chess.js.
+
+**Y la página acepta cualquier jugada que cumpla el motivo**, no solo la
+guardada (`js/motivos-tacticos.js`, el mismo módulo que usa el verificador): en
+un ataque descubierto todo salto del caballo descubre el jaque, y en varias
+horquillas y dobles hay otra jugada que también lo es; 47 respuestas buenas se
+rechazaban con «no es la jugada que buscamos». Cumplir el motivo exige también
+que el rival no pueda comer la pieza que atacó: una horquilla que regala el
+caballo no es lo que el ejercicio enseña. Las lecciones de táctica dicen su
+`motivo`. Lo prueba `verificar-entreno-arreglos.js` («cualquier jugada que
+cumpla el motivo»).
+
+No se mudaron a JSON: lo que faltaba era que alguien las revisara, y el
+verificador las lee donde están.
+
 ## Repasar lo que costó y «Hoy te toca»
 
 `node herramientas/verificar-todo.js entreno-repaso` lo comprueba en un
@@ -1139,7 +1247,7 @@ que encontró el de `informes.html`.
 
 `libro-de-diagnostico.pdf` es **otra cosa** que `diagnostico-de-nivel.pdf`, y
 conviene no confundirlos: aquel es UNA forma de la prueba, sorteada, para que el
-alumno la conteste en papel; este es el **banco entero** —todas las preguntas (583 desde la versión 5), área
+alumno la conteste en papel; este es el **banco entero** —todas las preguntas (696 desde la versión 6), área
 por área y escalón por escalón, con la respuesta marcada, el porqué y cómo se
 comprobó cada posición—, para estudiar y para corregir. Uno se reparte, el otro
 no. Lo genera `herramientas/diagnostico-libro.js`.
@@ -1424,11 +1532,65 @@ volver a etiquetarlos.
   `diagnostico-calibrar.js`: ajusta esas dificultades igual que ajustó las de
   las viejas.
 
+#### La primera calibración con la versión 5 (y la versión 6)
+
+El 29 de septiembre de 2026 había 17 diagnósticos de la versión 5, 16 con Elo
+declarado. **La prueba sobrestimaba a los jugadores de club en unos 350
+puntos**: un 1400 nacional salía ≈1899, un 1495 FIDE ≈2096, un 1634 ≈2142. El
+descuento que se le había puesto al rating de Lichess (−400 las de mover, −550
+las de opción) se quedaba corto: el rating de ejercicios de Lichess está más
+inflado respecto al Elo de lo que se supuso, y en el diagnóstico no hay reloj.
+
+- **El calibrador estima ahora un corrimiento por tipo para todas las de
+  Lichess juntas**, además del ajuste de cada pregunta. Cada pregunta de Lichess
+  la había contestado una a tres personas, y calibrada sola casi no se habría
+  movido; el corrimiento usa todas las respuestas a la vez. Salió **−380 las de
+  mover y −160 las de opción** (o sea, rating − 780 y rating − 710). Con eso, el
+  sesgo de la versión 5 contra el Elo declarado bajó de +349 a +59 puntos.
+- **Al bajar, el escalón 5 quedó vacío.** Se agregaron ejercicios de Lichess
+  de rating 2650 a 3060, tomados de mayor a menor rating y todos de mover
+  (casillero 6 del generador). El banco pasó de 583 a 696 preguntas, sin perder
+  ni cambiar ninguna de las publicadas.
+- **Reglas dejó el escalón 5**: ninguna pregunta de reglas pasó de ~1920 con los
+  datos (un jugador de 2000 conoce el reglamento), así que su casillero pasó a
+  un segundo de escalón 4. Como cambió `FORMA`, `VERSION` subió a 6.
+- **Los mates de escalón 5 son justos**: en toda la base hay solo 2 mates de
+  2780 o más con las blancas en turno. Si hay que repetir la prueba, esas dos se
+  repiten.
+- Simulación con las dificultades nuevas: el nivel se acierta el 90 % de las
+  veces en el centro de cada nivel, con un error típico de 70 a 90 puntos entre
+  1300 y 2100.
+- **Los 17 diagnósticos de la versión 5 ya rendidos se recalcularon** (16 de
+  alumnos y 1 de visitante), a pedido del dueño del repo, porque se habían
+  medido con las dificultades infladas: la mayoría bajó un nivel (un 1634 que
+  había salido «Muy avanzado» quedó «Intermedio»). Se hizo en la base, en una
+  sola transacción, en las tres copias: `training_progress`, el espejo de
+  `training_state` (`diagnostico_resultado_v1`) y `diagnosticos_publicos`.
+  Solo se tocaron `medicion`, `nivel` y `nivel_etiqueta`, y se agregó
+  **`recalibrado`**: `{ fecha, motivo, medicion_anterior, nivel_anterior,
+  nivel_etiqueta_anterior }`. Con eso el resultado, Informes y el PDF del
+  visitante dicen «Resultado recalculado el …: por qué. Antes decía ≈X
+  (nivel)» (`PlanEntrenamiento.notaRecalibrado`): quien vio «Avanzado» y ahora
+  ve «Intermedio» tiene que saber por qué cambió.
+  - **Primero se mergeó el código, después se tocó la base.** El espejo del
+    aparato del alumno le ganaba al empate a la copia recalculada (misma
+    `fecha`) y la volvía a subir; ahora la copia gana también por
+    `actualizado` (js/progreso-usuario.js), y a la copia del espejo se le puso
+    ese campo. **No se cambió `fecha`**: es la del diagnóstico, y
+    progreso-usuario la usa para decidir si una prueba a medias ya terminó —
+    moverla habría borrado la prueba a medias de quien estuviera haciendo una.
+  - El script y los datos del recálculo no están en el repositorio: llevan las
+    respuestas de personas. Si hay que repetirlo, se rehace con
+    `PlanEntrenamiento.medir()` sobre `detalle.items` y `detalle.respuestas`, y
+    cada `update` exige la fecha exacta del diagnóstico y que todavía no tenga
+    `recalibrado` (así no se aplica dos veces).
+
 #### Cómo se rehace
 
 - Preguntas de Lichess: exportar candidatos (la consulta está en la cabecera
   del script) y `STOCKFISH=/usr/games/stockfish node
-  herramientas/diagnostico-lichess.js candidatos.json`. El análisis del motor
+  herramientas/diagnostico-lichess.js candidatos.json`. **Después, siempre la
+  calibración**: el generador escribe `elo = eloBase`, sin el corrimiento. El análisis del motor
   queda en `herramientas/.cache-lichess.json` (ignorado por git).
 - Calibración: exportar las respuestas (consulta en la cabecera) FUERA del
   repositorio y `node herramientas/diagnostico-calibrar.js respuestas.json`.
@@ -1826,6 +1988,13 @@ enlace del profesor llevan a donde tienen que llevar.
   reconstruye tocando casillas con una paleta o **escribiendo** «Rg1 Tf1 a2»
   por color, que es como la contesta quien no ve el tablero. Las marcas de la
   corrección llevan su signo escrito (✓ − ✗ +), el color no va solo.
+- **Con lo justo tiene 69 finales, no 30.** Eran 6 por nivel y se acababan en
+  minutos. `node herramientas/tipos-generar.js --solo con-lo-justo` rehace
+  solo ese banco (no usa Stockfish: sale de las tablas) y deja el resto de
+  `tipos.json` igual; pide 15 por nivel con hasta 3 por cada distancia al mate
+  (dos torres y dama no dan para más: 12), y no repite una posición que el
+  sorteo saque dos veces (pasó: dos iguales daban un id repetido). Las 30 de
+  antes siguen, con el mismo id, así que nadie pierde sus estrellas.
 - **Con lo justo: el mínimo es exacto, no «lo que dijo el motor».**
   Stockfish no sirve para contar jugadas hasta el mate: a una posición de rey y
   torre le dio «mate en 20», y el máximo teórico de ese final es 16. Así que

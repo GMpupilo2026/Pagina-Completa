@@ -690,6 +690,53 @@ panel`.** Está probado que falla de verdad: sin marcar la de jugada o el
 termómetro, sin el recordatorio al entrar, con «más o menos» valiendo cero, sin
 refrescar al llegar respuestas, o sin la línea del registro, salta.
 
+### Mostrar la respuesta de un alumno a la clase
+
+En «Respuestas en el tablero», cada respuesta ya mandada trae «📺 Mostrar a la
+clase»: pasa al tablero de todos para comentarla. Sin migración.
+
+- **Va como una variante que mira el profe** (`game_state.vista`), no como
+  jugadas de la partida: la partida de la clase no se toca, y al volver al
+  final todos la ven de nuevo, como cualquier variante. La vista nace en la
+  jugada de la partida donde está la posición de la pregunta
+  (`jugadaDeLaPosicion`: compara pieza, turno, enroques y al paso) y sigue con
+  las jugadas del alumno.
+- **Si esa posición ya no está en el tablero** (el profe mandó otra después
+  de preguntar), lo dice y pregunta antes de reemplazar la partida («Mandar la
+  posición y mostrarla»). Cancelar no toca nada.
+- **De quién es, solo si el profe quiere**: la vista lleva `respuesta:
+  {nombre}` (null = sin nombre). La casilla «decir de quién es» arranca sin
+  marcar: mostrar una respuesta equivocada con nombre puede avergonzar. La
+  clase lee «📺 Así lo resolvió Ana Rojas: 1. e4 e5 2. Nf3.» o «… un
+  compañero …».
+- El tablero no guarda ese dato, así que la página se queda con la vista que
+  llegó (`vistaRecibida`) y se lo suma a la que se ve si es la misma
+  (`vistaQueSeVe`). En cuanto el profe se mueve, la vista nueva ya no lo trae
+  y el cartel cambia solo.
+
+**Al tocar esto, correr `node herramientas/verificar-todo.js clase-mostrar
+clase-vista`.** Está probado que falla de verdad: con el nombre siempre, con la
+variante sin la parte de la partida, reemplazando la partida aunque se
+cancele, o sin pasarle el autor a lo que ve el alumno, salta.
+
+### Repasar lo que no quedó
+
+Si la pregunta de salida de la clase pasada dijo «🔁 repetir» o «🤔 a
+medias», el recordatorio del principio dice qué se vio del plan en esa clase
+(«Se vio: «♟️ Regla del cuadrado».») y ofrece «🔁 Repasarlo en Mi plan»: abre
+ese plan con esos renglones arriba y marcados, escrito («🔁 Para repasar: la
+pregunta de salida de la clase pasada dijo que no quedó»). Si quedó, nada.
+
+- **No se guarda nada**: sale de la pregunta de salida
+  (`salida_de_la_clase`) y de lo que se marcó como dado en esa clase
+  (`clase_plan_hecho`). Si no se marcó nada del plan, solo queda el veredicto.
+- El orden es un `sort` estable: lo de repasar primero y el resto como estaba.
+  Si ya había un plan abierto, se vuelve a pintar.
+
+**Al tocar esto, correr `node herramientas/verificar-todo.js clase-salida
+planes`.** Está probado que falla de verdad: sin subir lo de repasar, o
+proponiéndolo aunque el tema haya quedado, salta.
+
 ### El modo sencillo de la clase en vivo
 
 Aun ordenada, la pantalla del profesor tiene catorce controles delante, y la

@@ -37,7 +37,7 @@
     <!-- tablero: fin -->
 
 
-<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="../js/pwa.js" defer></script><!-- app: fin --><!-- tema: inicio --><script>(function(){try{var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');var f=localStorage.getItem('plataforma_tema_fuente_v1');if(!f||!/^[A-Za-z0-9 ]{2,32}$/.test(f))return;var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family='+f.replace(/ /g,'+')+':wght@400;500;600;700&display=swap';document.head.appendChild(l);}catch(e){}})();</script><!-- tema: fin --></head>
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="../js/errores.js"></script><script src="../js/pwa.js" defer></script><!-- app: fin --><!-- tema: inicio --><script>(function(){try{var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');var f=localStorage.getItem('plataforma_tema_fuente_v1');if(!f||!/^[A-Za-z0-9 ]{2,32}$/.test(f))return;var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family='+f.replace(/ /g,'+')+':wght@400;500;600;700&display=swap';document.head.appendChild(l);}catch(e){}})();</script><!-- tema: fin --></head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
     <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
@@ -85,6 +85,16 @@
 
             <!-- ---------- Portada ---------- -->
             <section id="intro-view">
+                <!-- La marca de la academia del enlace (?s=…): su logo y su nombre en su color.
+                     La pinta js/entreno-diagnostico.js; ver «El tema de la academia en el
+                     diagnóstico» en docs/decisiones/informes.md. -->
+                <div id="marca-diagnostico" class="hidden marca-fondo bg-brand-800 text-white rounded-2xl shadow-md p-5 mb-6 items-center gap-4">
+                    <img id="marca-diagnostico-logo" alt="" class="hidden h-16 w-16 object-contain rounded-xl bg-white p-1.5 shrink-0">
+                    <div class="min-w-0">
+                        <p class="text-xs font-semibold uppercase tracking-wide">Diagnóstico de nivel de</p>
+                        <p id="marca-diagnostico-nombre" class="font-serif text-2xl font-bold break-words"></p>
+                    </div>
+                </div>
                 <a href="aprender.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors mb-3">← 🎓 Aprende</a>
                 <h1 class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white mb-1"><span aria-hidden="true">🧭</span> Diagnóstico de nivel</h1>
                 <p class="text-brand-500 dark:text-brand-300 text-sm mb-6">60 preguntas y posiciones que miden nueve áreas del juego, de las reglas a los finales, en cinco escalones de dificultad: de lo que se aprende el primer día a lo que resuelve alguien de más de 2000. Muchas son para resolver en el tablero, y la mitad son difíciles de verdad: es normal no saber varias. Se sortean de un banco más grande, así que si lo repites dentro de unas semanas no te van a tocar las mismas. Cada pregunta tiene su dificultad medida en puntos, así que no cuenta cuántas aciertes sino cuáles: resolver una difícil vale mucho más que acertar una fácil. No se aprueba ni se reprueba: sirve para armarte un plan.</p>
@@ -94,9 +104,9 @@
                 <!-- Modo visitante: la prueba es pública. Quien no tiene cuenta deja su nombre y
                      correo, y su resultado va a la tabla diagnosticos_publicos (Informes los muestra
                      aparte de los alumnos registrados). -->
-                <div id="visitante-box" class="hidden bg-brand-800 dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6 text-brand-100">
+                <div id="visitante-box" class="hidden marca-fondo bg-brand-800 dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6 text-brand-100">
                     <h2 class="font-serif text-lg font-bold text-white mb-1">Diagnóstico gratuito, sin cuenta</h2>
-                    <p class="text-sm text-brand-200 mb-4">Al terminar verás tu nivel estimado, tus áreas fuertes y flojas y por dónde empezar. Déjanos tu nombre y correo para que el profesor pueda ver tu resultado y escribirte. <a href="../login.html?next=entreno/diagnostico.html" class="text-accent-400 hover:text-accent-300 underline">¿Ya eres alumno de Ajedrez Integral? Inicia sesión</a> y el resultado queda en tu cuenta.</p>
+                    <p class="text-sm text-brand-200 mb-4">Al terminar verás tu nivel estimado, tus áreas fuertes y flojas y por dónde empezar. Déjanos tu nombre y correo para que el profesor pueda ver tu resultado y escribirte. <a href="../login.html?next=entreno/diagnostico.html" id="visitante-login" class="text-accent-400 hover:text-accent-300 underline">¿Ya eres alumno de Ajedrez Integral? Inicia sesión</a> y el resultado queda en tu cuenta.</p>
                     <div class="grid sm:grid-cols-2 gap-3">
                         <div>
                             <label for="visitante-nombre" class="block text-xs font-medium text-brand-200 mb-1">Nombre y apellido <span aria-hidden="true">*</span></label>
@@ -131,7 +141,7 @@
                 </div>
 
                 <div class="flex flex-wrap items-center gap-3">
-                    <button type="button" id="start-btn" class="w-full sm:w-auto bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-6 py-3 rounded-xl text-base transition-all hover:scale-105 shadow-lg">Empezar el diagnóstico →</button>
+                    <button type="button" id="start-btn" class="marca-boton w-full sm:w-auto bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-6 py-3 rounded-xl text-base transition-all hover:scale-105 shadow-lg">Empezar el diagnóstico →</button>
                     <!-- Mismo diagnóstico en papel, con sus diagramas y su hoja de corrección:
                          se genera desde este mismo banco de ítems (herramientas/diagnostico-pdf.js).
                          Trae las respuestas, así que solo se le ofrece a QUIEN ADMINISTRA —ni
@@ -142,7 +152,7 @@
                          conteste; este es para estudiar y corregir, y trae las 118 preguntas. -->
                     <a href="../libro-de-diagnostico.pdf" id="libro-docente" class="hidden border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-5 py-3 rounded-xl text-sm hover:border-accent-500 transition-colors">📕 Descargar el libro del banco (PDF)</a>
                 </div>
-                <p id="pdf-docente-nota" class="hidden text-xs text-brand-450 dark:text-brand-350 mt-2">Solo para administración, los dos con marca de agua y sin entregar a nadie más. El <strong>cuadernillo</strong> es una prueba de 60 ejercicios con sus diagramas, su hoja de corrección y la tabla de puntos a fuerza estimada. El <strong>libro</strong> es el banco entero —583 preguntas por área y por escalón, con la respuesta, el porqué y cómo se comprobó cada posición—; hay también una <a href="../libro-de-diagnostico-accesible.html" class="underline">versión para lector de pantalla</a>.</p>
+                <p id="pdf-docente-nota" class="hidden text-xs text-brand-450 dark:text-brand-350 mt-2">Solo para administración, los dos con marca de agua y sin entregar a nadie más. El <strong>cuadernillo</strong> es una prueba de 60 ejercicios con sus diagramas, su hoja de corrección y la tabla de puntos a fuerza estimada. El <strong>libro</strong> es el banco entero —696 preguntas por área y por escalón, con la respuesta, el porqué y cómo se comprobó cada posición—; hay también una <a href="../libro-de-diagnostico-accesible.html" class="underline">versión para lector de pantalla</a>.</p>
             </section>
 
             <!-- ---------- Prueba ---------- -->
@@ -171,7 +181,7 @@
 
                 <div class="flex justify-between items-center gap-3 mt-6">
                     <button type="button" id="abandon-btn" class="text-sm text-brand-450 dark:text-brand-350 hover:text-accent-500 transition-colors">Guardar y salir</button>
-                    <button type="button" id="next-btn" disabled class="bg-accent-500 hover:bg-accent-600 disabled:opacity-40 disabled:cursor-not-allowed text-brand-900 font-bold px-6 py-3 rounded-xl transition-colors">Siguiente →</button>
+                    <button type="button" id="next-btn" disabled class="marca-boton bg-accent-500 hover:bg-accent-600 disabled:opacity-40 disabled:cursor-not-allowed text-brand-900 font-bold px-6 py-3 rounded-xl transition-colors">Siguiente →</button>
                 </div>
             </section>
 
@@ -180,19 +190,19 @@
                 <h1 class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white mb-1">Tu diagnóstico</h1>
                 <p id="result-saved" class="text-xs text-brand-450 dark:text-brand-350 mb-5"></p>
 
-                <div class="bg-gradient-to-r from-accent-500 to-accent-600 text-brand-900 rounded-2xl shadow-md p-5 mb-6">
+                <div class="marca-fondo bg-gradient-to-r from-accent-500 to-accent-600 text-brand-900 rounded-2xl shadow-md p-5 mb-6">
                     <p class="text-xs font-semibold uppercase tracking-wide opacity-80">Nivel estimado</p>
                     <p id="result-level" class="font-serif text-2xl font-bold"></p>
                     <p id="result-level-desc" class="text-sm mt-1"></p>
                     <p id="result-score" class="text-xs mt-2 opacity-90"></p>
                 </div>
 
-                <div id="result-cta-visitante" class="hidden bg-brand-800 dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6 text-center">
-                    <p class="text-white font-serif text-lg font-bold mb-2">¿Quieres un plan de entrenamiento con seguimiento?</p>
-                    <p class="text-brand-200 text-sm mb-4">En Ajedrez Integral el profesor revisa este diagnóstico, te arma un plan de cuatro semanas y sigue tu avance clase a clase. Tu resultado ya le llegó.</p>
+                <div id="result-cta-visitante" class="hidden marca-fondo bg-brand-800 dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6 text-center">
+                    <p id="cta-titulo" class="text-white font-serif text-lg font-bold mb-2">¿Quieres un plan de entrenamiento con seguimiento?</p>
+                    <p id="cta-texto" class="text-brand-200 text-sm mb-4">En Ajedrez Integral el profesor revisa este diagnóstico, te arma un plan de cuatro semanas y sigue tu avance clase a clase. Tu resultado ya le llegó.</p>
                     <div class="flex flex-wrap justify-center gap-3">
-                        <a href="https://wa.me/50683092291?text=Hola%2C%20hice%20el%20diagn%C3%B3stico%20de%20nivel%20en%20ajedrez-integral.com%20y%20quiero%20informaci%C3%B3n%20de%20la%20Academia." target="_blank" rel="noopener" class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-6 py-2.5 rounded-lg transition-colors">💬 Inscribirme en Ajedrez Integral</a>
-                        <a href="../cursos.html" class="inline-block border border-brand-400 hover:border-accent-400 text-white font-semibold px-6 py-2.5 rounded-lg transition-colors">Ver los cursos →</a>
+                        <a href="https://wa.me/50683092291?text=Hola%2C%20hice%20el%20diagn%C3%B3stico%20de%20nivel%20en%20ajedrez-integral.com%20y%20quiero%20informaci%C3%B3n%20de%20la%20Academia." target="_blank" rel="noopener" id="cta-whatsapp" class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-6 py-2.5 rounded-lg transition-colors">💬 Inscribirme en Ajedrez Integral</a>
+                        <a href="../cursos.html" id="cta-cursos" class="inline-block border border-brand-400 hover:border-accent-400 text-white font-semibold px-6 py-2.5 rounded-lg transition-colors">Ver los cursos →</a>
                     </div>
                 </div>
 
@@ -206,12 +216,12 @@
                 <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Repaso de tus respuestas</h2>
                 <div id="result-review" class="space-y-2 mb-8"></div>
 
-                <div class="bg-brand-100 dark:bg-brand-900 rounded-xl px-4 py-3 text-xs text-brand-600 dark:text-brand-300 mb-6">
+                <div id="result-nota-alumno" class="bg-brand-100 dark:bg-brand-900 rounded-xl px-4 py-3 text-xs text-brand-600 dark:text-brand-300 mb-6">
                     Tu profesor ve este mismo diagnóstico en Informes, con un plan de entrenamiento de cuatro semanas hecho a partir de estos resultados. Puede compartírtelo cuando lo tenga listo: te aparecerá en tu página de Informes.
                 </div>
 
                 <div class="flex flex-wrap gap-3">
-                    <a href="../informes.html" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-6 py-3 rounded-xl transition-colors">Ver mis Informes</a>
+                    <a href="../informes.html" id="result-informes" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-6 py-3 rounded-xl transition-colors">Ver mis Informes</a>
                     <button type="button" id="repeat-btn" class="border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-5 py-3 rounded-xl hover:border-accent-500 transition-colors">Repetir el diagnóstico</button>
                 </div>
             </section>
@@ -240,6 +250,7 @@
     <script src="../js/vendor/chess.js"></script>
     <script src="../js/vendor/supabase.js"></script>
     <script src="../js/supabase-client.js"></script>
+    <script src="../js/marca-academia.js"></script>
     <script src="../js/tiempo-plataforma.js" data-activity="diagnostico"></script>
     <script src="../js/entreno-progress.js"></script>
     <script src="../js/progreso-usuario.js"></script>

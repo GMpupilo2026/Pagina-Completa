@@ -41,10 +41,13 @@ const PENDIENTE_KEY = 'diagnostico_pendiente_v1';
      5 — 60 ítems, la mitad de escalones 4 y 5, muchos de resolver en el
          tablero; el nivel sale de la fuerza medida en puntos Elo
          (PlanEntrenamiento.medir), no de los escalones.
+     6 — reglas deja el escalón 5 por un segundo de escalón 4 (ninguna pregunta
+         de reglas llegó a 2000 con los datos), y las de Lichess se recalibraron:
+         eran unos 380 puntos más fáciles de lo que se había supuesto.
    Una prueba empezada con una versión anterior no se puede continuar: los
    ejercicios ya no son los mismos y el resultado mezclaría dos mediciones
    distintas. Se descarta y se avisa en la portada. */
-const VERSION = 5;
+const VERSION = 6;
 
 /* "No lo sé todavía" es una respuesta más, no un botón de saltar: vale cero
    puntos igual que fallar, pero se guarda aparte. Para el profesor no es lo
@@ -857,6 +860,9 @@ function mostrarResultado(detalle, reciente) {
   }
 
   document.getElementById('result-cta-visitante').classList.toggle('hidden', !!sesionActual);
+  // Un visitante no tiene Informes ni profesor todavía: lo de la cuenta no va.
+  document.getElementById('result-nota-alumno').classList.toggle('hidden', !sesionActual);
+  document.getElementById('result-informes').classList.toggle('hidden', !sesionActual);
   document.getElementById('result-level').textContent = resumen.nivel.etiqueta;
   document.getElementById('result-level-desc').textContent = resumen.nivel.descripcion;
   const sinSaber = Object.keys(detalle.nosabe || {}).length;
@@ -870,6 +876,8 @@ function mostrarResultado(detalle, reciente) {
   eloEl.textContent = resumen.elo && resumen.elo.declarado
     ? `Elo: ${resumen.elo.lectura.texto} Nivel calculado combinando tu Elo con la prueba (${margen(resumen.elo.combinado, resumen.elo.errorCombinado)}).`
     : `Sin Elo registrado: el nivel sale solo de la prueba (${margen(resumen.elo.estimado, resumen.elo.error)}).${sesionActual ? ' Si tienes rating, agrégalo en Configuración › Perfil y el próximo diagnóstico lo tendrá en cuenta.' : ''}`;
+  const nota = PE.notaRecalibrado(resumen);
+  if (nota) eloEl.textContent += ' ' + nota;
   pintarEscalones(resumen);
 
   const areasBox = document.getElementById('result-areas');
@@ -932,7 +940,7 @@ document.getElementById('repeat-btn').addEventListener('click', () => { borrarEs
 /* SOLO administración, no todo el equipo docente.
  *
  * Estos dos PDF traen las respuestas y la hoja de corrección: el cuadernillo es
- * la prueba que el alumno va a contestar y el libro es el banco entero, las 583
+ * la prueba que el alumno va a contestar y el libro es el banco entero, las 696
  * preguntas con su respuesta marcada. Cuanta más gente los tenga bajados, más
  * fácil es que terminen circulando y que el diagnóstico deje de medir nada.
  * Quien dé clase y los necesite se los pide a quien administra.
@@ -955,6 +963,96 @@ async function mostrarPdfSiEsAdmin(userId) {
    seguir la prueba), el que quedó guardado con sus datos. Un código que la
    base no reconoce se dice: el resultado igual se guarda, pero le llega a
    administración, y quien le mandó el enlace lo estaría esperando. */
+/* El tema de la academia: si el supervisor del enlace es de UNA academia, la
+   página se viste con su marca —el logo y el nombre arriba, su color en el
+   encabezado, las tarjetas y los botones, y al final su WhatsApp en vez del de
+   Ajedrez Integral—. La marca la da enlace_diagnostico_marca(), la misma regla
+   que los formularios y los correos. Los colores los pone css/styles.css
+   (html[data-marca-academia]); acá solo se decide si se puede.
+
+   El color se vuelve a medir contra el blanco antes de usarlo: si no da 4,5,
+   la página muestra el logo y el nombre pero conserva sus colores. Todo lo que
+   viene de la base (nombre, logo, número) se pone con textContent o se
+   comprueba antes. Si algo falla, la página queda como siempre. Ver «El tema
+   de la academia en el diagnóstico» en docs/decisiones/informes.md. */
+let marcaAcademia = null; // { nombre, color, logo_path, whatsapp } | null
+
+async function vestirConLaAcademia(codigo) {
+  let m = null;
+  try {
+    const { data, error } = await sb.rpc('enlace_diagnostico_marca', { p_codigo: codigo });
+    const fila = Array.isArray(data) ? data[0] : data;
+    if (!error && fila && typeof fila.nombre === 'string' && fila.nombre.trim()) m = fila;
+  } catch (e) { m = null; }
+  if (!m) return;
+  marcaAcademia = { nombre: m.nombre.trim(), color: m.color || null, logo_path: m.logo_path || null, whatsapp: m.whatsapp || null };
+
+  const MA = window.MarcaAcademia;
+  const contraste = MA && marcaAcademia.color ? MA.contrasteConBlanco(marcaAcademia.color) : null;
+  if (contraste != null && contraste >= 4.5) {
+    const raiz = document.documentElement;
+    raiz.style.setProperty('--marca-academia', marcaAcademia.color);
+    raiz.setAttribute('data-marca-academia', '');
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', marcaAcademia.color);
+  }
+  const logo = MA ? MA.urlDelLogo(marcaAcademia.logo_path) : '';
+
+  // La franja de arriba.
+  document.getElementById('marca-diagnostico-nombre').textContent = marcaAcademia.nombre;
+  const img = document.getElementById('marca-diagnostico-logo');
+  if (logo) {
+    img.addEventListener('error', () => img.classList.add('hidden'));
+    img.src = logo;
+    img.classList.remove('hidden');
+  }
+  const franja = document.getElementById('marca-diagnostico');
+  franja.classList.remove('hidden');
+  franja.classList.add('flex');
+
+  // El encabezado: su logo y su nombre en lugar de los de Ajedrez Integral.
+  const enlaceMarca = document.querySelector('#header nav a');
+  if (enlaceMarca) {
+    enlaceMarca.textContent = '';
+    enlaceMarca.href = location.pathname + '?s=' + encodeURIComponent(codigo);
+    if (logo) {
+      const chico = document.createElement('img');
+      chico.src = logo;
+      chico.alt = '';
+      chico.className = 'h-10 w-10 md:h-12 md:w-12 object-contain rounded-lg bg-white p-1 shrink-0';
+      chico.addEventListener('error', () => chico.remove());
+      enlaceMarca.appendChild(chico);
+    }
+    const nombre = document.createElement('span');
+    nombre.className = 'font-serif text-xl md:text-2xl font-bold tracking-tight';
+    nombre.textContent = marcaAcademia.nombre;
+    enlaceMarca.appendChild(nombre);
+  }
+  document.title = 'Diagnóstico de nivel — ' + marcaAcademia.nombre;
+  const login = document.getElementById('visitante-login');
+  if (login) login.textContent = '¿Ya tienes cuenta? Inicia sesión';
+
+  // Al final: escribirle a la academia, no a Ajedrez Integral.
+  document.getElementById('cta-titulo').textContent = `¿Quieres entrenar con ${marcaAcademia.nombre}?`;
+  document.getElementById('cta-texto').textContent =
+    `${marcaAcademia.nombre} ya recibió tu resultado: revisa tus áreas, te arma un plan de cuatro semanas y te escribe para contarte cómo seguir.`;
+  document.getElementById('cta-cursos').classList.add('hidden');
+  // «← Cursos» llevaría a los cursos de Ajedrez Integral.
+  const volver = document.querySelector('#intro-view > a');
+  if (volver) volver.classList.add('hidden');
+  const wa = document.getElementById('cta-whatsapp');
+  const numero = String(marcaAcademia.whatsapp || '').replace(/\D/g, '');
+  if (numero.length >= 8) {
+    const completo = numero.length === 8 ? '506' + numero : numero;
+    wa.href = 'https://wa.me/' + completo + '?text=' +
+      encodeURIComponent(`Hola, hice el diagnóstico de nivel con el enlace de ${marcaAcademia.nombre} y quiero información.`);
+    wa.textContent = `💬 Escribirle a ${marcaAcademia.nombre}`;
+    wa.classList.add('marca-invertido');
+  } else {
+    wa.classList.add('hidden');
+  }
+}
+
 async function leerEnlaceSupervisor(v) {
   const aviso = document.getElementById('visitante-destino');
   let codigo = null;
@@ -972,6 +1070,7 @@ async function leerEnlaceSupervisor(v) {
   if (destino) {
     enlaceSupervisor = { codigo, destino };
     aviso.textContent = `Tu resultado le llega a ${destino}, que te compartió este enlace.`;
+    await vestirConLaAcademia(codigo);
   } else {
     aviso.textContent = 'Este enlace ya no está activo: tu resultado le llega a Ajedrez Integral. Si esperabas mandárselo a otra persona, pídele su enlace otra vez.';
   }

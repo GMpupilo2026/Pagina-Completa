@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20260929034304
+# al-dia-con: 20260929051137
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -1030,6 +1030,7 @@ funcion  elegir_academia_activa(p_academia uuid)  definer  anon=false  auth=true
 funcion  elegir_plan(p_id uuid, p_plan text, p_version_terminos text, p_version_privacidad text)  definer  anon=false  auth=true
 funcion  encuesta_curso_publica(p_slug text)  definer  anon=true  auth=true
 funcion  encuesta_mis_profesores()  invoker  anon=false  auth=true
+funcion  enlace_diagnostico_marca(p_codigo text)  definer  anon=true  auth=true
 funcion  enlace_diagnostico_publico(p_codigo text)  definer  anon=true  auth=true
 funcion  equipo_alumno_subgrupo()  definer  anon=false  auth=false
 funcion  equipo_bajo_mi_coordinacion(p_equipo uuid)  definer  anon=false  auth=true
@@ -1076,6 +1077,7 @@ funcion  informes_diagnosticos_alumnos()  invoker  anon=false  auth=true
 funcion  informes_entreno_modulos()  invoker  anon=false  auth=true
 funcion  informes_inactivos(p_dias integer)  invoker  anon=true  auth=true
 funcion  informes_resumen_alumnos()  invoker  anon=false  auth=true
+funcion  informes_tema_mas_flojo(p_temas text[])  invoker  anon=false  auth=true
 funcion  informes_totales()  invoker  anon=false  auth=true
 funcion  iniciar_examen(p_examen uuid)  definer  anon=false  auth=true
 funcion  interno.academia_activa()  definer  anon=false  auth=true
@@ -1105,6 +1107,7 @@ funcion  justificar_ausencia(p_desde date, p_hasta date, p_motivo text, p_detall
 funcion  ligar_a_la_clase_abierta()  invoker  anon=false  auth=false
 funcion  mandar_plan_rival(p_alumnos uuid[], p_rival text, p_lado text, p_plan jsonb, p_nota text, p_vence timestamp with time zone)  invoker  anon=false  auth=true
 funcion  marca_de_alumno(p_alumno uuid)  definer  anon=false  auth=false
+funcion  marca_de_diagnostico(p_id uuid)  definer  anon=false  auth=true
 funcion  marcar_coordinador(p_profesor uuid, p_valor boolean)  definer  anon=false  auth=true
 funcion  marcar_supervisor(p_persona uuid, p_valor boolean)  definer  anon=false  auth=true
 funcion  mes_en_palabras(p_periodo date)  invoker  anon=false  auth=true

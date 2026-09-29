@@ -89,12 +89,22 @@
             return (e.precisionUltima === null ? "" : e.precisionUltima + " % en la última") +
                 ` · ${e.precisionRondas} ${e.precisionRondas === 1 ? "ronda" : "rondas"}`;
         }
+        /* El tema más flojo (js/tema-flojo.js): el motivo que menos sale limpio.
+           Sin cinco ejercicios de un mismo motivo con «cómo salió», no hay con qué
+           opinar, y la tarjeta lo dice en vez de mostrar un cero. */
+        function tarjetaTemaFlojo(e) {
+            const f = e.temaFlojo;
+            if (!f) return statCard("🔎", "—", "Tema más flojo (hace falta resolver 5 de un mismo tema)", true);
+            return statCard("🔎", `${escVis(f.nombre)} · ${f.porcentaje} %`, `Tema más flojo: limpio en ${f.limpios} de ${f.intentos}`, true);
+        }
         function tarjetasDeModulos(e) {
             return [
+                tarjetaTemaFlojo(e),
                 statCard("👁️", e.visualizacion, "Ejercicios de Visualización resueltos", true),
                 statCard("🧩", `${e.tiposEjercicios} (${e.tiposEstrellas}⭐)`, "Tipos de entrenamiento: ejercicios con estrellas", true),
                 statCard("📖", `${e.aperturasEmpezadas} (${e.aperturasFirmes} firmes)`, "Líneas de Aperturas estudiadas", true),
                 statCard("🎯", textoPrecision(e), "Precisión posicional", true),
+                statCard("🏁", e.finales, "Finales contra la máquina logrados", true),
             ];
         }
 
@@ -141,6 +151,8 @@
                 precisionRondas: m.precision_rondas || 0,
                 precisionUltima: typeof m.precision_ultima === "number" ? m.precision_ultima : null,
                 precisionFecha: m.precision_fecha || null,
+                temaFlojo: m.temaFlojo || null,
+                finales: m.finales || 0,
                 puzzles: f.puzzles || 0,
                 lessons: f.lecciones || 0,
                 bestCoord: f.mejor_coord || 0,
@@ -167,7 +179,7 @@
         // compañeros—, así que su vista busca SU renglón por id y nunca toma el primero.
         // Por eso sirven para las dos vistas sin escribir la cuenta dos veces.
         async function cargarResumen() {
-            const [alumnos, cursos, diagnosticos, modulos, justificadas] = await Promise.all([
+            const [alumnos, cursos, diagnosticos, modulos, justificadas, flojos] = await Promise.all([
                 traerTodo(() => sb.rpc("informes_resumen_alumnos")),
                 traerTodo(() => sb.rpc("informes_cursos_alumnos")),
                 traerTodo(() => sb.rpc("informes_diagnosticos_alumnos")),
@@ -175,6 +187,8 @@
                 // Las clases a las que faltó con una justificación ACEPTADA: las
                 // cuenta la base (faltas_justificadas), no se guardan.
                 traerTodo(() => sb.rpc("faltas_justificadas")),
+                // Si la cuenta del tema más flojo falla, el informe sale igual, sin esa tarjeta.
+                window.TemaFlojo ? TemaFlojo.cargar(sb, "").catch(() => ({})) : Promise.resolve({}),
             ]);
             const justificadasPorAlumno = {};
             justificadas.forEach((j) => { justificadasPorAlumno[j.student_id] = j.clases_justificadas || 0; });
@@ -183,6 +197,7 @@
             cursos.forEach((c) => { (cursosPorAlumno[c.student_id] = cursosPorAlumno[c.student_id] || []).push(c); });
             diagnosticos.forEach((d) => { diagnosticoPorAlumno[d.student_id] = d; });
             modulos.forEach((m) => { modulosPorAlumno[m.student_id] = m; });
+            Object.keys(flojos).forEach((id) => { modulosPorAlumno[id] = Object.assign({}, modulosPorAlumno[id], { temaFlojo: flojos[id] }); });
             return { alumnos, cursosPorAlumno, diagnosticoPorAlumno, modulosPorAlumno };
         }
 
@@ -1913,6 +1928,10 @@
         }
 
         function eloLineaHTML(resumen, propio) {
+            return eloLineaSolaHTML(resumen, propio) + (PE.notaRecalibrado(resumen)
+                ? `<p class="text-xs text-brand-500 dark:text-brand-300 mt-1">${escVis(PE.notaRecalibrado(resumen))}</p>` : "");
+        }
+        function eloLineaSolaHTML(resumen, propio) {
             const e = resumen.elo || {};
             // Desde la versión 5 la prueba trae su margen de error («≈1720 ± 110»).
             const m = (v, err) => err ? `≈${v} ± ${err}` : `≈${v}`;
@@ -2595,6 +2614,30 @@ function areasFlojasArbitraje(fila) {
             return caja;
         }
 
+        /* La academia del PDF: si el diagnóstico llegó por el enlace del supervisor
+           de UNA academia, el PDF lleva su marca (su nombre, su logo, su color y
+           su WhatsApp). Lo decide la base, marca_de_diagnostico(), que solo
+           contesta a quien puede ver ese diagnóstico. El color se vuelve a medir
+           contra el blanco: si no da 4,5, el PDF va con su nombre y su logo pero
+           sin su color. Si algo falla, el PDF sale como siempre. Ver «El PDF del
+           diagnóstico con la marca de la academia» en docs/decisiones/informes.md. */
+        async function marcaDelDiagnostico(v) {
+            if (!v.supervisor_id) return null;
+            try {
+                const { data, error } = await sb.rpc("marca_de_diagnostico", { p_id: v.id });
+                const f = Array.isArray(data) ? data[0] : data;
+                if (error || !f || !f.nombre) return null;
+                const MA = window.MarcaAcademia;
+                const c = MA && f.color ? MA.contrasteConBlanco(f.color) : null;
+                return {
+                    nombre: f.nombre,
+                    color: c != null && c >= 4.5 ? f.color : null,
+                    logoUrl: MA && f.logo_path ? MA.urlDelLogo(f.logo_path) : "",
+                    whatsapp: f.whatsapp || null,
+                };
+            } catch (e) { return null; }
+        }
+
         // Visitantes: lista de más reciente a más antiguo, con contacto, nivel y Elo; cada uno
         // se puede desplegar (mismas barras por área que un alumno) y marcar como atendido.
         function renderDiagnosticosVisitantes(contenedor) {
@@ -2659,7 +2702,10 @@ function areasFlojasArbitraje(fila) {
                     estado.textContent = "Armando el PDF…";
                     try {
                         await cargarPdfVisitante();
-                        const r = await DiagnosticoVisitantePDF.descargar(v, { whatsapp: await whatsappAcademia() });
+                        const academia = await marcaDelDiagnostico(v);
+                        const r = await DiagnosticoVisitantePDF.descargar(v, academia
+                            ? { academia: academia }
+                            : { whatsapp: await whatsappAcademia() });
                         estado.textContent = "Listo, se descargó " + r.nombre + ".";
                     } catch (e) {
                         estado.textContent = "No se pudo armar el PDF: " + ((e && e.message) || e);

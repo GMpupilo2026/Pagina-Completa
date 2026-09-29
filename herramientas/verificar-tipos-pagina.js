@@ -15,7 +15,9 @@
  *     lector de pantalla, hasta dar mate, y el mate llega en el mínimo exacto
  *     jugando perfecto (las jugadas las elige la tabla de finales en Node);
  *   - al resolver el último ejercicio que faltaba de un nivel, dice «¡Nivel
- *     completo!» y «Siguiente» lleva al nivel que sigue.
+ *     completo!» y «Siguiente» lleva al nivel que sigue;
+ *   - en el recuadro de la jugada también se le pregunta al tablero
+ *     («reyes»), como en el resto de Entrenamiento.
  *
  * Uso:  python3 -m http.server 8777    (desde la raíz del sitio)
  *       node herramientas/verificar-tipos-pagina.js
@@ -184,6 +186,15 @@ async function main() {
     await page.press("#jugada-input", "Enter");
     const t1 = await esperarEstado(page, /no es lo que más le conviene/);
     ok("otra jugada del rival no cuenta", /no es lo que más/.test(t1), t1);
+    // En el mismo recuadro se le puede PREGUNTAR al tablero (js/comandos-tablero.js).
+    // Las columnas se dicen como en todo el sitio (js/blind-notation.js): «gustav 1».
+    const HABLADA = { a: "anna", b: "bella", c: "cesar", d: "david", e: "eva", f: "felix", g: "gustav", h: "hector" };
+    const reyes = R.tablero(item.fenRival).map((p, i) => (p && p.t === "k" ? R.sq(i) : null)).filter(Boolean);
+    await page.fill("#jugada-input", "reyes");
+    await page.press("#jugada-input", "Enter");
+    const t3 = await esperarEstado(page, /[Rr]ey/);
+    ok("«reyes» contesta dónde están, sin tomarlo como jugada", reyes.length === 2 && reyes.every((sq) => t3.includes(sq) || t3.includes(HABLADA[sq[0]] + " " + sq[1])) && !/no es/.test(t3), t3 + " · reyes en " + reyes.join(","));
+    ok("y el recuadro queda vacío para seguir", (await page.inputValue("#jugada-input")) === "");
     await page.fill("#jugada-input", item.amenazaEs);
     await page.press("#jugada-input", "Enter");
     const t2 = await esperarEstado(page, /Eso es lo que quiere/);
