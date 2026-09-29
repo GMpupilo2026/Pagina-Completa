@@ -1,4 +1,4 @@
-# Tareas, planes, bitácora y exámenes
+# Tareas, planes, bitácora, exámenes y justificaciones de ausencia
 
 Notas de diseño para Claude, sacadas del CLAUDE.md de la raíz: lo que el profesor le pone y le observa a cada alumno.
 El índice de todos los temas y las reglas que valen para todo el sitio
@@ -820,3 +820,69 @@ mueve), que salir de la ventana se le cuente al servidor dos veces y a la
 tercera cierre, que el alumno vea nota y áreas pero no las preguntas, y que el
 profesor sí las vea. Lo que hace cumplir la base se comprobó impersonando roles
 en SQL, como está dicho arriba.
+
+## Las justificaciones de ausencia
+
+`justificaciones.html` (tarjeta **«🩺 Justificar una ausencia»** en «Tu
+cuenta» del panel del alumno; **«Justificaciones de ausencia»** en
+Herramientas del profesor —y de quien coordina, que da clase—, en «Cómo van tus
+estudiantes» de quien supervisa y en «Cómo va la plataforma» de quien
+administra). Una página, dos lados: el alumno cuenta por qué no llegó a clase
+—un texto, un documento o las dos cosas— y quien la recibe la lee y la
+contesta.
+
+- **La tabla `justificaciones_ausencia` no tiene política de escritura.** La
+  escriben tres funciones: `justificar_ausencia()` (solo `role = 'alumno'`,
+  exige la versión de la privacidad, fechas de hace menos de cuatro meses o
+  hasta dos meses adelante, un mes como máximo por justificación, y texto o
+  documento), `responder_justificacion()` (sus profesores —`soy_profesor_de()`—
+  o quien lo tiene `bajo_mi_coordinacion()`: coordinación, supervisión y
+  administración; nunca el propio alumno) y `retirar_justificacion()` (el
+  alumno, y solo mientras nadie la contestó).
+- **Lo que no puede pasar dos veces lo impide un índice único**
+  (alumno, primer día, último día): el doble toque o el reintento no deja dos.
+- **Quién la lee lo decide la RLS**: el alumno, `interno.alumnos_de()` y
+  `interno.bajo_mi_coordinacion_conjunto()`, con el conjunto armado una vez.
+  La lista la da `justificaciones_recibidas()` (INVOKER, de a 50 con el total
+  en cada fila), ordenada por el día de la ausencia y en la pantalla agrupada
+  por mes; arranca en «⏳ Por revisar». Los números de arriba se cuentan en la
+  base con `count`/`head`.
+- **Quién contestó se guarda con su nombre** (`revisada_por_nombre`): la RLS
+  de `profiles` no le deja a la supervisión leer a todos los profesores, y
+  «contestó alguien» no dice nada.
+- **Los documentos van al bucket PRIVADO `justificaciones`**, en
+  `<id del alumno>/<id al azar>/<nombre>`, con `js/adjuntos.js` (la misma copia
+  que los formularios). Subir: solo a la carpeta propia. Leer: lo propio y lo
+  que nombra una justificación que la RLS deja ver (la subconsulta de la
+  política pasa por la RLS de la tabla: es la misma pregunta). Borrar: solo lo
+  propio que ya no nombra ninguna justificación, así el documento de una ya
+  mandada no se cambia por detrás. `justificar_ausencia()` comprueba que cada
+  ruta sea de la carpeta de quien manda y que **exista** en Storage.
+- **A quién le llega el aviso al celular**: `interno.profesores_de()`,
+  `interno.coordinadores_de()` (nueva: los coordinadores de sus profesores y
+  los de su academia; no se le da a `authenticated`) y `supervisores_de()`. Al
+  contestar, al alumno. Van dentro de un bloque que atrapa el error: un aviso
+  que falla no deshace el envío.
+- **La casilla de la privacidad se mira antes de subir nada** y la versión
+  queda guardada (ver «El consentimiento queda guardado» en `legal.md`): una
+  constancia médica es un dato sensible, y `privacidad.html` lo dice.
+- **Lo que NO hace todavía**: no toca la asistencia (una justificación
+  aceptada no cambia el «asistió a 4 de 5» del informe ni del reporte). Si se
+  pide, se calcula al contar, no se guarda.
+- Comprobado impersonando roles en SQL (revertido): el alumno manda y ve solo
+  las suyas; el doble envío, una sin texto ni documento, una ruta de otra
+  carpeta y una sin privacidad se rechazan; el `update` directo da permiso
+  denegado; el alumno no se la acepta a sí mismo; su profesor la ve y la
+  contesta; la supervisora la ve con la respuesta; un profesor ajeno ve 0 y no
+  puede contestar; el alumno no puede retirar la ya contestada; los avisos van
+  al profesor y a la supervisora.
+
+**Al tocar `justificaciones.html`, `js/justificaciones.js` o las funciones de
+arriba, correr `node herramientas/verificar-justificaciones.js`** (con el sitio
+en localhost:8777 y playwright). Comprueba que se suba una vez a la carpeta del
+alumno y viaje exactamente esa ruta, que sin texto ni documento o sin la
+privacidad no se suba ni se mande nada, que la respuesta viaje con el id de ESA
+justificación, que la lista se pida de a 50 y agrupada por mes, que el estado
+vaya escrito, que la foto se vea de verdad y que nombres y textos vayan como
+texto. Está probado que falla de verdad: subiendo a otra carpeta y
+contestando con otro id, saltan 2.

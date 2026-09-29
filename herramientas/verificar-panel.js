@@ -355,7 +355,7 @@ async function pruebaAlumna(browser) {
      tiene a quién calificar (la prueba del profesor, más abajo, lo dice). */
   igual("Tu cuenta, en su orden, con la encuesta sobre su profesor",
     grupo(grupos, "Tu cuenta").tiles.map((t) => t.etiqueta),
-    ["Configuración", "Informes", "Logros", "TV en vivo", "¿Cómo van tus clases?"]);
+    ["Configuración", "Informes", "Logros", "TV en vivo", "Justificar una ausencia", "¿Cómo van tus clases?"]);
   igual("y a la alumna no se le ofrecen los cobros por ninguna parte",
     grupos.flatMap((g) => g.tiles).filter((t) => /cobros\.html/.test(t.enlace || "")).length, "0");
   igual("«Cerrar sesión» no está dos veces: en el grid ya no",
@@ -423,7 +423,7 @@ async function pruebaProfesora(browser) {
      quiere decir es que no es suyo. */
   igual("las herramientas le quedan abiertas",
     grupo(grupos, "Herramientas").tiles.map((t) => t.enlace),
-    ["partidas.html", "planes.html", "asistencia.html", "informe-mensual.html", "subgrupos.html"]);
+    ["partidas.html", "planes.html", "asistencia.html", "justificaciones.html", "informe-mensual.html", "subgrupos.html"]);
   /* La tienda de materiales entra en la misma regla: todavía no está abierta,
      así que a quien da clase no se le pinta ni escondida — un enlace
      invisible pero presente sigue siendo una parada de tabulador, y encima
