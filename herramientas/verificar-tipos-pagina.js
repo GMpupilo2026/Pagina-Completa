@@ -13,7 +13,9 @@
  *     miden las piezas visibles, no la clase);
  *   - Con lo justo se juega ESCRIBIENDO las jugadas, como lo juega quien usa
  *     lector de pantalla, hasta dar mate, y el mate llega en el mínimo exacto
- *     jugando perfecto (las jugadas las elige la tabla de finales en Node).
+ *     jugando perfecto (las jugadas las elige la tabla de finales en Node);
+ *   - al resolver el último ejercicio que faltaba de un nivel, dice «¡Nivel
+ *     completo!» y «Siguiente» lleva al nivel que sigue.
  *
  * Uso:  python3 -m http.server 8777    (desde la raíz del sitio)
  *       node herramientas/verificar-tipos-pagina.js
@@ -504,6 +506,41 @@ async function main() {
     ok("por el camino más corto: tres estrellas", /camino más corto/.test(t) && (await estrellas(page))["ruta:" + item.id] === 3, t);
     const visto = await tableroVisto(page);
     ok("la pieza quedó en el destino", !!visto[item.hasta] && !visto[item.desde]);
+    ok("sin errores en consola", !errores.length, errores.join(" | "));
+    await ctx.close();
+  }
+
+  console.log("\n=== Nivel completo ===");
+  {
+    // Todo el nivel 1 de Amenaza resuelto menos el último: al resolverlo,
+    // la página tiene que decir que se completó y ofrecer el nivel 2.
+    const nivel = DATOS.amenaza.filter((x) => x.nivel === 1);
+    const ultimo = nivel[nivel.length - 1];
+    const previas = {};
+    nivel.slice(0, -1).forEach((x) => { previas["amenaza:" + x.id] = 1; });
+    const conPrevias = (o) => async (c) => { await c.addInitScript((v) => { if (!sessionStorage.getItem("__puesto")) { localStorage.setItem("tipos_estrellas_v1", v); sessionStorage.setItem("__puesto", "1"); } }, JSON.stringify(o)); };
+    const { page, ctx, errores } = await abrir(browser, true, "#amenaza/1/" + ultimo.id, conPrevias(previas));
+    await page.waitForSelector("#vista-juego:not(.hidden) #jugada-input");
+    const aviso = () => page.evaluate(() => { const e = document.getElementById("nivel-completo"); return e.checkVisibility() ? e.textContent : ""; });
+    ok("antes de resolver el último no dice nada", (await aviso()) === "");
+    await page.fill("#jugada-input", ultimo.amenazaEs);
+    await page.press("#jugada-input", "Enter");
+    await esperarEstado(page, /Eso es lo que quiere/);
+    const t = await aviso();
+    ok("al resolver el último dice «¡Nivel completo!» y ofrece el nivel 2", /Nivel completo/.test(t) && /Nivel 2: Mate en 1/.test(t), t);
+    ok("el enlace lleva al nivel 2", (await page.evaluate(() => { const a = document.querySelector("#nivel-completo a"); return a && a.getAttribute("href"); })) === "#amenaza/2");
+    ok("«Siguiente» dice adónde va", (await page.textContent("#btn-siguiente")).trim() === "Nivel 2 →", await page.textContent("#btn-siguiente"));
+    await page.click("#btn-siguiente");
+    await page.waitForFunction(() => /Nivel 2/.test(document.getElementById("titulo-juego").textContent), null, { timeout: 8000 }).catch(() => {});
+    ok("y abre el nivel 2", /#amenaza\/2$/.test(page.url()) && /Nivel 2/.test(await page.textContent("#titulo-juego")), page.url());
+    ok("el aviso no sigue puesto en el nivel nuevo", (await aviso()) === "");
+    // Repasar un nivel que ya estaba completo no vuelve a festejar.
+    await page.evaluate((id) => { location.hash = "#amenaza/1/" + id; }, ultimo.id);
+    await page.waitForFunction(() => /Nivel 1/.test(document.getElementById("titulo-juego").textContent), null, { timeout: 8000 });
+    await page.fill("#jugada-input", ultimo.amenazaEs);
+    await page.press("#jugada-input", "Enter");
+    await esperarEstado(page, /Eso es lo que quiere/);
+    ok("repasar un nivel ya completo no vuelve a festejar", (await aviso()) === "");
     ok("sin errores en consola", !errores.length, errores.join(" | "));
     await ctx.close();
   }
