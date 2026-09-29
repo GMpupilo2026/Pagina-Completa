@@ -35,6 +35,8 @@
 // vez de dejar una cuenta muda de la que nadie se entera hasta que alguien
 // pregunta por qué ese alumno nunca entró.
 
+import { cabeceraCorreo } from "./marca-correo.ts";
+
 const SITE_URL = "https://ajedrez-integral.com";
 const PDF_URL = `${SITE_URL}/instrucciones-adaptadas.pdf`;
 const DESTINO = `${SITE_URL}/bienvenida.html`;
@@ -222,6 +224,20 @@ async function adjuntoInstrucciones() {
    descarta el <style> del <head>, así que un CSS bonito se vería perfecto en el
    navegador y roto en el correo, que es donde de verdad se lee. Misma decisión
    que informe-html.ts. */
+/* La franja de arriba, con el logo de la marca: la MISMA de los correos a la
+   casa (`cabeceraCorreo()` de marca-correo.ts), para que la bienvenida se vea
+   del mismo sitio que el informe que llega después. Va sin marca de academia
+   a propósito: este correo habla de la «Academia de Ajedrez Integral» en todo
+   el texto, y ponerle arriba el logo de otra marca lo contradiría. */
+function franja(titulo: string) {
+  return (
+    `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" ` +
+    `style="border-radius:12px;overflow:hidden;margin:0 0 22px;">` +
+    cabeceraCorreo(null, escapar(titulo)) +
+    `</table>`
+  );
+}
+
 function paso(numero: number, texto: string) {
   return (
     `<tr>` +
@@ -241,6 +257,7 @@ export function cuerpoBienvenida(email: string, enlace: string, fullName?: strin
 
   return (
     `<div style="font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:0 auto;color:#334e68;">` +
+    franja("Tu cuenta en la Academia") +
 
     `<h1 style="font-size:22px;color:#102a43;margin:0 0 6px;">${saludo}</h1>` +
     `<p style="font-size:16px;line-height:1.6;margin:0 0 18px;">` +
@@ -311,6 +328,7 @@ export function cuerpoBienvenidaCasa(
 
   return (
     `<div style="font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:0 auto;color:#334e68;">` +
+    franja("Una cuenta nueva en la Academia") +
 
     `<h1 style="font-size:22px;color:#102a43;margin:0 0 6px;">${saludo}</h1>` +
     `<p style="font-size:16px;line-height:1.6;margin:0 0 18px;">` +
