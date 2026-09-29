@@ -371,7 +371,7 @@ los alumnos del equipo** (migración `equipo_se_ve_como_subgrupo`), marcado con
 
 #### Dónde se usan
 
-- **`subgrupos.html`** (tarjeta «👥 Mis subgrupos» en Herramientas): crear,
+- **`subgrupos.html`** (tarjeta «👥 Mis subgrupos» en «Tus alumnos»): crear,
   renombrar, borrar y marcar quiénes están. **Al guardar se manda SOLO lo que
   cambió**, no la lista entera: borrar todo y volver a insertarlo dejaría el
   subgrupo vacío un instante y, si el insert fallara a la mitad, se quedaría
@@ -568,9 +568,9 @@ y llega a cobros, formularios, solicitudes y reportes. No entrena ni juega.
 
 Leer a los alumnos de un profesor no dice qué hizo el profesor. Por eso quien
 supervisa tiene además `supervision.html` (tarjeta «Supervisión de profesores»,
-grupo «Tus profesores» de su panel; quien administra la tiene en Herramientas y
-en `admin.html` › Reportes) y cada profesor tiene `informe-mensual.html`
-(tarjeta «Informe mensual» en Herramientas, junto a Asistencia presencial).
+grupo «Tus profesores» de su panel; quien administra la tiene en «Supervisión y coordinación»
+de su panel) y cada profesor tiene `informe-mensual.html`
+(tarjeta «Informe mensual» en «Tus clases», junto a Asistencia presencial).
 
 - **La actividad de un profesor en un mes la cuenta UNA función,
   `public.actividad_profesor(profesor, mes)`**: alumnos a cargo y cuántos
@@ -1393,7 +1393,9 @@ empieza a dar clase a los pequeños.
 
 ### `coordinacion.html`: por dónde se entra a la gente que uno coordina
 
-Sus profesores y sus alumnos, con buscador, filtro por rol y «Ver más». Por
+Sus profesores y sus alumnos, con buscador, filtro por rol y «Ver más» (primero
+la lista y abajo Equipos: ver «La página de coordinación, lo de todos los días
+primero» en paneles.md). Por
 cada cuenta: entrar a sus subgrupos, reenviarle el acceso y cambiarle el rol.
 Junto al profesor que está dando clase, «🔴 En clase ahora · Mirar la clase»:
 quien coordina la mira en vivo y ayuda en la práctica, como supervisión (ver

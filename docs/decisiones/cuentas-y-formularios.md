@@ -199,8 +199,12 @@ contratar— y **ver los planes es público**.
   elegir.
 - **Quien no tiene cuenta** —la mayoría de los rechazados— sigue por WhatsApp:
   la página lo dice y lo ofrece. El correo del rechazo (`sendInvitacionPlan`
-  en `admin-manage-users`) todavía dice solo «elige un plan»; la página explica
-  el resto.
+  en `admin-manage-users`) dice los mismos dos caminos: con cuenta, iniciar
+  sesión con la de ese correo y elegir; sin cuenta, WhatsApp. **No lleva
+  precios**: los tenía escritos a mano y se habían quedado viejos (el acceso a
+  la plataforma decía ₡6.900); los dice la página, que los saca de
+  `js/precios-acceso.js`. El nombre de quien pidió entrar va escapado en los
+  dos correos del archivo: lo escribió esa persona en `unirse.html`.
 - `verificar-legal.js` lo prueba en el navegador: sin sesión se ven los tres
   planes sin botones, con login y WhatsApp, y no se llama a la base; con sesión
   y de vuelta del login (la solicitud en la pestaña, no en la dirección), se

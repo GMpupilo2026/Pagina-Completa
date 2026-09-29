@@ -45,20 +45,20 @@
                El rótulo NO repite los nombres de las dos tarjetas: dice lo que
                las dos tienen en común y que no se deduce de ellas —que te las
                pone alguien más—. El diagnóstico también: no se hace cuando a
-               uno le parece, lo pide el profesor para ubicarte. Por
-               eso lleva `titleProfe`, igual que los tiles llevan `descProfe`:
-               del otro lado del escritorio la misma pareja es lo que MANDAS. */
-            { title: "Lo que te pone tu profesor", titleProfe: "Lo que le pones a tus alumnos", tiles: [
+               uno le parece, lo pide el profesor para ubicarte. A quien da
+               clase este grupo no le llega así: su panel se reordena entero en
+               PANEL_DOCENTE, y Tareas y Exámenes van en «Tus alumnos». */
+            { title: "Lo que te pone tu profesor", tiles: [
                 { emoji: "📋", label: "Tareas", desc: "Con fecha límite, y se llenan solas con lo que entrenas", descProfe: "Pide cantidades y la tarea se llena sola con lo que entrenan", href: "tareas.html" },
                 { emoji: "📝", label: "Exámenes", desc: "Con nota y reloj: una sola oportunidad por pregunta", descProfe: "Con nota y reloj, y el informe pregunta por pregunta de cada uno", href: "examenes.html" },
                 /* El diagnóstico entra acá y no en un grupo propio: no se
                    practica, se APLICA —es tu profesor quien te lo pide para
-                   ubicarte—, y lo que sale de él es el plan que te arma. A
-                   quien da clase la misma tarjeta lo lleva al RESULTADO de sus
-                   alumnos (`hrefProfe`), no a la prueba: el banco es el mismo
-                   que el de ellos, y resolverla por su cuenta no le sirve de
-                   nada. El de arbitraje sigue siendo solo de administración. */
-                { emoji: "🧭", label: "Diagnóstico de nivel", desc: "La prueba que ubica tu nivel y arma tu plan de entrenamiento", descProfe: "El nivel de cada alumno y dónde está floja la clase", href: "entreno/diagnostico.html", hrefProfe: "informes.html?tema=diagnostico" },
+                   ubicarte—, y lo que sale de él es el plan que te arma. Es
+                   SOLO del alumnado: a quien da clase esta tarjeta lo llevaba
+                   a informes.html?tema=diagnostico, una segunda puerta a
+                   Informes, que ya tiene su tarjeta y su selector de tema. El
+                   de arbitraje sigue siendo solo de administración. */
+                { emoji: "🧭", label: "Diagnóstico de nivel", desc: "La prueba que ubica tu nivel y arma tu plan de entrenamiento", href: "entreno/diagnostico.html", soloAlumno: true },
             ] },
             /* "Aprender" va antes que "Jugar y competir": esto es una academia,
                y lo primero que se ofrece al entrar es lo que se viene a hacer.
@@ -302,18 +302,25 @@
             inac.className = "text-2xl font-bold " + (inactivos > 0 ? "text-red-600 dark:text-red-400" : "text-brand-800 dark:text-white");
         }
 
-        /* «Lo urgente» de quien supervisa, arriba de sus números. Lo cuenta
-           js/pendientes.js (el mismo de admin.html) y la base lo acota a su
-           gente. Los que llevan días sin entrenar NO van acá: ya son el número
-           de al lado, y dos veces el mismo dato hace pensar que son dos cosas.
-           Un conteo que falla dice que no se pudo revisar, nunca cero. */
+        /* «Lo urgente», arriba de los números: el de quien supervisa y el de
+           quien da clase. Lo cuenta js/pendientes.js (el mismo de admin.html)
+           y la base lo acota a su gente. Los que llevan días sin entrenar y
+           las tareas vencidas NO van acá: ya son números de la tarjeta de
+           abajo, y dos veces el mismo dato hace pensar que son dos cosas. Un
+           conteo que falla dice que no se pudo revisar, nunca cero.
+
+           `soloSiHayAlgo`: a quien da clase la tarjeta solo le aparece cuando
+           hay algo. Su panel ya tiene la franja del primer paso y «Tu semana»;
+           un «todo al día» de todos los días deja de leerse (la lección de la
+           franja: con todo al día no se dice nada). */
         const URGENTE_SUPERVISOR = ["solicitudes", "justificaciones", "informesSinLeer", "seVan", "morosos"];
-        async function cargarUrgenteSupervisor() {
+        async function cargarUrgente(claves, opciones) {
+            const op = opciones || {};
             const caja = document.getElementById("urgente-panel");
-            if (!caja || !window.Pendientes) return;
-            caja.hidden = false;
-            const conteos = await Pendientes.contarEnLaBase(sb, URGENTE_SUPERVISOR, { yo: profile.id });
-            const defs = URGENTE_SUPERVISOR.map((c) => Pendientes.EN_LA_BASE.find((d) => d.clave === c));
+            if (!caja || !window.Pendientes || !claves.length) return;
+            if (!op.soloSiHayAlgo) caja.hidden = false;
+            const conteos = await Pendientes.contarEnLaBase(sb, claves, { yo: profile.id });
+            const defs = claves.map((c) => Pendientes.EN_LA_BASE.find((d) => d.clave === c));
             const lista = document.getElementById("urgente-panel-lista");
             lista.replaceChildren();
             // Lo urgente primero, después lo de vigilar; cada grupo en su orden.
@@ -341,6 +348,8 @@
                 frase.className = "block";
                 if (n === null) {
                     frase.textContent = d.alDia + ": no se pudo contar. Ábrelo para revisarlo.";
+                } else if (d.sinNumero) {
+                    frase.textContent = d.titulo(n);
                 } else {
                     const num = document.createElement("strong");
                     num.textContent = n.toLocaleString("es-CR");
@@ -359,6 +368,10 @@
             pieAlDia.hidden = !alDia.length;
             pieAlDia.textContent = alDia.length ? "✓ Al día: " + alDia.join(" · ") + "." : "";
             const urgentes = conAlgo.filter((d) => d.nivel === "urgente" && conteos[d.clave] > 0).length;
+            if (op.soloSiHayAlgo) {
+                caja.hidden = !conAlgo.length;
+                pieAlDia.hidden = true;
+            }
             document.getElementById("urgente-panel-estado").textContent = !conAlgo.length
                 ? "Nada esperando: todo al día."
                 : urgentes
@@ -444,6 +457,54 @@
                 if (t.descProfe) t.desc = t.descProfe;
                 if (t.hrefProfe) t.href = t.hrefProfe;
             }));
+        }
+
+        /* ---------- El panel de quien da clase, por lo que hace ----------
+           El panel del equipo docente era el del alumno con cosas encima: sus
+           herramientas caían todas en «Herramientas» —preparar la clase,
+           pasar lista, las justificaciones, el informe mensual, los
+           subgrupos, y si coordina, cobros y solicitudes—, Informes vivía en
+           «Tu cuenta» aunque es de sus alumnos, y el diagnóstico era una
+           segunda puerta a Informes. Ahora, sobre la lista YA armada (así
+           respeta lo que cada quien tiene: la preparación de rivales si se la
+           activaron, lo de coordinación que no le apagaron), las tarjetas se
+           reparten por lo que se viene a hacer. Se buscan por destino: una
+           tarjeta nueva que no esté acá cae en «Otras», y
+           verificar-panel.js pide que ese grupo no exista.
+           Ver «El panel de quien da clase» en docs/decisiones/paneles.md. */
+        const PANEL_DOCENTE = [
+            { title: "Clase en vivo", destacado: true, hrefs: ["sesion.html"] },
+            { title: "Tus alumnos", hrefs: ["tareas.html", "examenes.html", "informes.html", "justificaciones.html", "subgrupos.html"] },
+            { title: "Tus clases", hrefs: ["planes.html", "asistencia.html", "repasar-clases.html", "partidas.html", "preparacion-rivales.html", "informe-mensual.html"] },
+            { title: "Coordinación", hrefs: ["coordinacion.html", "solicitudes.html", "formularios.html", "cobros.html"] },
+            { title: "Aprender", hrefs: ["entreno/index.html", "entreno/estudio.html", "cursos/academia/index.html", "articulos.html"] },
+            { title: "Jugar y competir", hrefs: ["juegos.html", "competir.html", "tablero.html"] },
+            { title: "Tu cuenta", hrefs: ["configuracion.html", "logros.html"] },
+        ];
+        function ordenarPanelDocente() {
+            if (!esEquipoDocente()) return;
+            const todas = TILE_GROUPS.flatMap((g) => g.tiles).filter((t) => !t.soloAlumno);
+            const usadas = new Set();
+            const grupos = PANEL_DOCENTE.map((g) => ({
+                title: g.title, destacado: !!g.destacado,
+                tiles: g.hrefs.map((h) => todas.find((t) => t.href === h)).filter((t) => t && usadas.add(t)),
+            })).filter((g) => g.tiles.length);
+            const sueltas = todas.filter((t) => !usadas.has(t));
+            if (sueltas.length) grupos.push({ title: "Otras", tiles: sueltas });
+            TILE_GROUPS.splice(0, TILE_GROUPS.length, ...grupos);
+        }
+
+        /* Lo urgente de quien da clase: lo que se resuelve en una tarjeta que
+           SÍ tiene. A quien no coordina no se le cuentan solicitudes ni
+           cobros; sería decirle «al día» sobre algo que no puede ver. Su
+           informe mensual va siempre (la base mira si tiene supervisión). */
+        function clavesUrgenteDocente() {
+            const tiene = (h) => TILE_GROUPS.some((g) => g.tiles.some((t) => t.href === h));
+            return ["justificaciones", "informePropio", "solicitudes", "morosos"].filter((c) =>
+                c === "informePropio" ? tiene("informe-mensual.html")
+                : c === "justificaciones" ? tiene("justificaciones.html")
+                : c === "solicitudes" ? tiene("solicitudes.html")
+                : tiene("cobros.html"));
         }
 
         function renderTileCard(t, destacado) {
@@ -1701,6 +1762,49 @@
             // El primer paso le habla al profesor («asigna tu primera tarea»):
             // a quien lo está revisando no le toca hacerlo.
             if (!profile._persona) primerPasoDelProfesor(fila);
+            // Quiénes se caen: la RLS responde con la gente de quien MIRA, así
+            // que mirando a otra persona no se pinta (serían los de uno).
+            if (!profile._persona) cargarSeCaen();
+        }
+
+        /* Los alumnos con plan que llevan días sin entrenar, por nombre, con
+           su informe a un clic. La lista la arma public.se_caen_del_plan()
+           (SECURITY INVOKER: la RLS decide de quién). Los que acaban de
+           caerse van primero: son los que todavía se recuperan con un
+           mensaje. */
+        const SE_CAEN_VISIBLES = 6;
+        async function cargarSeCaen() {
+            const caja = document.getElementById("profe-caen");
+            if (!caja) return;
+            const { data, error } = await sb.rpc("se_caen_del_plan", { p_dias: 3 });
+            if (error || !data || !data.length) { caja.hidden = true; return; }
+            const lista = document.getElementById("profe-caen-lista");
+            lista.replaceChildren();
+            const hoy = Date.now();
+            data.slice(0, SE_CAEN_VISIBLES).forEach((a) => {
+                const ref = Math.max(new Date(a.ultima || 0).getTime(), new Date(a.desde).getTime());
+                const dias = Math.max(1, Math.floor((hoy - ref) / 86400000));
+                const li = document.createElement("li");
+                const enlace = document.createElement("a");
+                enlace.href = "informes.html?alumno=" + encodeURIComponent(a.id);
+                enlace.className = "flex items-baseline justify-between gap-3 py-2 rounded hover:bg-brand-50 dark:hover:bg-brand-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+                const nombre = document.createElement("span");
+                nombre.className = "min-w-0 text-sm font-medium text-brand-800 dark:text-white";
+                nombre.textContent = a.nombre || "Sin nombre";
+                const cuanto = document.createElement("span");
+                cuanto.className = "shrink-0 text-xs text-brand-500 dark:text-brand-300";
+                cuanto.textContent = a.entreno_con_plan
+                    ? (dias === 1 ? "1 día sin entrenar" : dias + " días sin entrenar")
+                    : "no empezó el plan (" + (dias === 1 ? "hace 1 día" : "hace " + dias + " días") + ")";
+                enlace.append(nombre, cuanto);
+                li.appendChild(enlace);
+                lista.appendChild(li);
+            });
+            const resto = data.length - SE_CAEN_VISIBLES;
+            const mas = document.getElementById("profe-caen-mas");
+            mas.hidden = resto <= 0;
+            mas.textContent = resto === 1 ? "Y 1 más en Informes →" : "Y " + resto + " más en Informes →";
+            caja.hidden = false;
         }
 
         /* ---------- Por dónde empezar, del lado del que da clase ----------
@@ -2289,7 +2393,7 @@
                    así que no lleva `desc` de alumno: se suma acá en vez de vivir
                    en la lista con un descProfe. */
                 TILE_GROUPS.find((g) => g.title === "Herramientas").tiles.push(
-                    { emoji: "📋", label: "Planes de clase", desc: "Prepara la clase antes de darla: las posiciones y las lecciones, en orden", href: "planes.html" },
+                    { emoji: "🗒️", label: "Planes de clase", desc: "Prepara la clase antes de darla: las posiciones y las lecciones, en orden", href: "planes.html" },
                     /* La clase del aula también queda registrada. Va acá, al
                        lado de los planes, porque es el otro extremo de la misma
                        clase: uno la prepara antes y el otro la anota después.
@@ -2410,7 +2514,7 @@
                 renderTiles();
                 document.getElementById("registro-clases").hidden = true;
                 document.getElementById("progreso-supervisor").hidden = false;
-                await Promise.all([cargarPanelSupervisor(), cargarUrgenteSupervisor()]);
+                await Promise.all([cargarPanelSupervisor(), cargarUrgente(URGENTE_SUPERVISOR)]);
                 document.getElementById("loading").classList.add("hidden");
                 document.getElementById("app").classList.remove("hidden");
                 if (!document.activeElement || document.activeElement === document.body) {
@@ -2424,6 +2528,7 @@
             // alumnado lo que está en mantenimiento, sin tocar lo del equipo
             // docente.
             textosDelEquipoDocente();
+            ordenarPanelDocente();
             apagarEnMantenimiento();
             renderTiles();
 
@@ -2479,7 +2584,7 @@
                para los profesores. */
             if (isTeacher || profile.is_admin) {
                 document.getElementById("progreso-profe").hidden = false;
-                await cargarPanelProfe();
+                await Promise.all([cargarPanelProfe(), cargarUrgente(clavesUrgenteDocente(), { soloSiHayAlgo: true })]);
             } else {
                 document.getElementById("progreso-alumno").hidden = false;
                 // Van en paralelo: son cinco consultas independientes y en

@@ -15,7 +15,8 @@
  *
  * Progreso: cada práctica terminada se guarda en localStorage (f100:progreso) y,
  * si hay sesión de Academia y EntrenoProgress, también en training_progress con
- * activity "finales100".
+ * activity "finales100" y el curso en detail.curso: cuenta para la meta del día,
+ * la racha y los logros, y su tiempo va con el del curso.
  */
 (function () {
   "use strict";
@@ -35,13 +36,16 @@
   })();
   const CURSO_POR_DEFECTO = "el-mapa-de-los-finales";
 
-  function urlDatos(root) {
+  function cursoDe(root) {
     const cont = (root && root.closest && root.closest("[data-course]")) ||
       (root && root.querySelector && root.querySelector("[data-course]")) ||
       document.getElementById("course-content-body");
-    const slug = (cont && cont.dataset && cont.dataset.course) || CURSO_POR_DEFECTO;
-    return DATA_BASE + slug + ".json";
+    return (cont && cont.dataset && cont.dataset.course) || CURSO_POR_DEFECTO;
   }
+  function urlDatos(root) { return DATA_BASE + cursoDe(root) + ".json"; }
+  // El curso de lo practicado: la base cuenta esa fila en el tiempo del curso
+  // (tiempo_por_seccion la junta con «curso:<slug>», donde se fue el rato).
+  let cursoActual = CURSO_POR_DEFECTO;
   const LIGHT = "#f0dcc0", DARK = "#a5744a", BORDER = "#2b1d12", MARK = "#c8961e", SEL = "#3b82f6";
   const RES_TXT = { "1-0": "Ganan blancas", "0-1": "Ganan negras", "½": "Tablas" };
   const ES = { K: "R", Q: "D", R: "T", B: "A", N: "C" };
@@ -130,7 +134,7 @@
   function progreso() { try { return JSON.parse(localStorage.getItem("f100:progreso") || "{}"); } catch (e) { return {}; } }
   function guardar(id, rec) {
     try { const p = progreso(); p[id] = rec; localStorage.setItem("f100:progreso", JSON.stringify(p)); } catch (e) {}
-    if (window.EntrenoProgress) { try { window.EntrenoProgress.log("finales100", Object.assign({ diagrama: id }, rec)); } catch (e) {} }
+    if (window.EntrenoProgress) { try { window.EntrenoProgress.log("finales100", Object.assign({ diagrama: id, curso: cursoActual }, rec)); } catch (e) {} }
     document.dispatchEvent(new CustomEvent("f100:progreso", { detail: { id, rec } }));
   }
 
@@ -390,6 +394,7 @@
     // alumno: se baja antes de marcar nada, así lo practicado en otro aparato
     // aparece igual aquí. Si no hay sesión, sigue el progreso local de siempre.
     const cuenta = window.ProgresoUsuario ? window.ProgresoUsuario.init().catch(() => {}) : Promise.resolve();
+    cursoActual = cursoDe(root === document ? null : root);
     const url = urlDatos(root === document ? null : root);
     return cuenta.then(() => loadData(url)).then(() => {
       nodes.forEach((el) => {

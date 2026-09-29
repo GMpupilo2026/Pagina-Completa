@@ -1676,6 +1676,22 @@
    "actividades": [
     "tipos"
    ]
+  },
+  {
+   "clave": "remata",
+   "label": "Remata la ventaja",
+   "total": 120,
+   "actividades": [
+    "tipos"
+   ]
+  },
+  {
+   "clave": "tiempo",
+   "label": "Elige a tiempo",
+   "total": 120,
+   "actividades": [
+    "tipos"
+   ]
   }
  ]
 }

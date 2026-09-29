@@ -210,6 +210,41 @@
         { n: 4, titulo: "Lo que no se ve", desc: "El rival amenaza mate en dos o más jugadas: la defensa está más lejos." },
       ],
     },
+    {
+      id: "remata", emoji: "🏁", nombre: "Remata la ventaja",
+      pregunta: "Vas ganando. ¿La puedes llevar a casa?",
+      entrena: "Convertir una ventaja: simplificar, cambiar piezas, no apurarse y no dejarle contrajuego al rival. Muchas partidas ganadas se escapan aquí.",
+      como: "Empiezas con +4 o más (medido con el motor) en una posición de partida real y juegas contra la máquina a toda su fuerza. Lo logras si das mate o si, al cumplir las jugadas del nivel, sigues en +3 o más. Si la ventaja baja de +1,5, se te escapó.",
+      clase: "Con «Practicar», cada alumno juega la posición contra el motor en su tablero. Antes, pregunten en voz alta cuál es el plan: ¿cambiar piezas, atacar al rey, avanzar un peón pasado?",
+      niveles: [
+        { n: 1, titulo: "Material de sobra", desc: "Tienes una torre o más de ventaja. 8 jugadas.", jugadas: 8 },
+        { n: 2, titulo: "Una pieza de más", desc: "Tienes una pieza de ventaja (o su equivalente). 10 jugadas.", jugadas: 10 },
+        { n: 3, titulo: "Sin material de más", desc: "El material está casi igual, pero tu posición gana: no la dejes enfriar. 12 jugadas.", jugadas: 12 },
+      ],
+    },
+    {
+      id: "tiempo", emoji: "⏱️", nombre: "Elige a tiempo",
+      pregunta: "El reloj corre. ¿Cuál juegas?",
+      entrena: "Decidir con el reloj en contra en posiciones tranquilas, donde no hay táctica que salve: elegir una jugada sana a tiempo vale más que buscar la perfecta y perder por tiempo.",
+      como: "Ves una posición de partida real sin golpes a la vista y dos, tres o cuatro jugadas candidatas. Elige una antes de que se acabe el reloj. No hay una sola buena: cuenta cuánto pierde la tuya contra la mejor, medido con el motor. Si se acaba el tiempo, es como perder por tiempo. En Modo Adaptado tienes el triple de tiempo.",
+      clase: "Pon la posición y cuenta en voz alta los segundos: que cada alumno levante la mano con su candidata antes de que termines. Después muestren cuánto pierde cada una.",
+      niveles: [
+        { n: 1, titulo: "Con calma", desc: "Tres candidatas y 30 segundos.", segundos: 30 },
+        { n: 2, titulo: "Ritmo rápido", desc: "Tres candidatas y 15 segundos.", segundos: 15 },
+        { n: 3, titulo: "Blitz", desc: "Cuatro candidatas y 8 segundos.", segundos: 8 },
+      ],
+    },
+    {
+      id: "errores", emoji: "🪞", nombre: "Tus propios errores", propio: true,
+      pregunta: "¿Qué debiste jugar en tu partida?",
+      entrena: "Aprender de lo que te pasó a ti: los errores de tus propias partidas son los que más se repiten, y los que más enseñan.",
+      como: "Busca errores en tus partidas terminadas (Juegos, retos, torneos de la Academia y la práctica en clase): el motor las revisa en tu computadora o celular y cada jugada donde se cayó la evaluación se vuelve un ejercicio. Encuentra una jugada buena en esa posición; vale cualquiera que el motor dé tan buena como la mejor.",
+      clase: "Cada alumno tiene los suyos: salen de sus partidas. Pídeles que busquen sus errores y que traigan uno a la clase para comentarlo juntos.",
+      niveles: [
+        { n: 1, titulo: "Lo que regalaste", desc: "Estabas bien y con esa jugada quedaste mal." },
+        { n: 2, titulo: "Lo que se te escapó", desc: "Ibas ganando y con esa jugada se te fue la ventaja." },
+      ],
+    },
   ];
 
   function tipo(id) { return TIPOS.find((t) => t.id === id) || null; }
@@ -217,6 +252,9 @@
     const t = tipo(tipoId);
     return t ? t.niveles.find((x) => x.n === +n) || null : null;
   }
+  /* Los tipos `propio` (Tus propios errores) no tienen banco en
+     entreno/data/tipos.json: sus ejercicios salen de las partidas de cada
+     alumno (js/errores-propios.js). */
   /* La clave de avance de un ejercicio: "tipo:id". */
   function clave(tipoId, itemId) { return tipoId + ":" + itemId; }
 

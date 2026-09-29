@@ -1447,7 +1447,7 @@ presencial, y esa clase no salía en Informes, no contaba para el «asistió a 4
 «clases este mes» de su panel. No daba ningún error: simplemente, para la
 plataforma, el alumno que solo va presencial no entrenaba nunca.
 
-`asistencia.html` (tarjeta **«✅ Asistencia presencial»** en Herramientas, al
+`asistencia.html` (tarjeta **«✅ Asistencia presencial»** en «Tus clases», al
 lado de Planes de clase) es donde se pasa lista: el día, la hora, cuánto duró,
 qué se trabajó y quiénes llegaron.
 
@@ -2127,7 +2127,7 @@ golpe saltan 3 comprobaciones, sin la persistencia 1 y cruzando las posiciones 8
 
 ### Los Tipos de entrenamiento, en la clase
 
-La pestaña **"🧠 Entrenamientos"** del profesor lista los quince Tipos de
+La pestaña **"🧠 Entrenamientos"** del profesor lista los dieciocho Tipos de
 entrenamiento de `entreno/tipos.html` (ver «Los Tipos de entrenamiento» en
 entrenamiento.md) en cascada tipo → nivel → ejercicio, con las mismas
 posiciones (`entreno/data/tipos.json`) y el mismo catálogo

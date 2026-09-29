@@ -197,6 +197,18 @@
                     <p id="result-score" class="text-xs mt-2 opacity-90"></p>
                 </div>
 
+                <!-- El primer paso (js/entreno-diagnostico.js → pintarPrimerPaso):
+                     lo que toca hoy del plan, con un botón directo y la meta
+                     del día. En los datos, de 52 alumnos que hicieron el
+                     diagnóstico, 17 no volvieron a entrenar: el resultado
+                     terminaba en un plan para leer y nada que hacer ya. -->
+                <div id="result-primer-paso" hidden class="bg-white dark:bg-brand-900 rounded-2xl shadow-md border-l-4 border-accent-500 p-5 mb-6">
+                    <h2 id="primer-paso-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white"></h2>
+                    <p id="primer-paso-texto" class="text-sm text-brand-600 dark:text-brand-300 mt-1"></p>
+                    <p id="primer-paso-meta" hidden class="text-xs text-brand-500 dark:text-brand-300 mt-2"></p>
+                    <a id="primer-paso-ir" href="#" class="inline-block mt-3 bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-5 py-2.5 rounded-xl transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></a>
+                </div>
+
                 <div id="result-cta-visitante" class="hidden marca-fondo bg-brand-800 dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6 text-center">
                     <p id="cta-titulo" class="text-white font-serif text-lg font-bold mb-2">¿Quieres un plan de entrenamiento con seguimiento?</p>
                     <p id="cta-texto" class="text-brand-200 text-sm mb-4">En Ajedrez Integral el profesor revisa este diagnóstico, te arma un plan de cuatro semanas y sigue tu avance clase a clase. Tu resultado ya le llegó.</p>
@@ -255,6 +267,8 @@
     <script src="../js/entreno-progress.js"></script>
     <script src="../js/progreso-usuario.js"></script>
     <script src="../js/plan-entrenamiento.js"></script>
+    <script src="../js/logros-catalogo.js"></script>
+    <script src="../js/logros.js"></script>
     <script src="../js/blind-notation.js"></script>
     <script src="../js/chess-move-parser.js"></script>
     <script src="../js/tablero-accesible.js"></script>

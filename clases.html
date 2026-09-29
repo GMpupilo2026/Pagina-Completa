@@ -238,7 +238,6 @@
             <div id="progreso-alumno" hidden class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-10">
                 <div class="flex items-center justify-between flex-wrap gap-2 mb-4">
                     <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white">Tu progreso</h2>
-                    <a href="informes.html" class="text-sm text-accent-700 dark:text-accent-400 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded">Ver informes completos →</a>
                 </div>
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
                     <a href="logros.html" class="rounded-xl p-2 hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
@@ -265,6 +264,22 @@
                 </a>
             </div>
 
+            <!-- ===== Lo urgente (quien supervisa y quien da clase) =====
+                 Lo que alguien está esperando (solicitudes, justificaciones,
+                 los informes mensuales de sus profesores sin leer) y lo que
+                 conviene vigilar, contado en la base por js/pendientes.js y
+                 acotado por la base a su gente. Solo lo que tiene algo; lo que
+                 está en cero va en «Al día». A quien da clase solo le aparece
+                 cuando hay algo. Va antes que «Tu semana» y que «A tu cargo».
+                 Ver «El panel de quien supervisa, sin caminos repetidos» y «El
+                 panel de quien da clase» en docs/decisiones/paneles.md. -->
+            <div id="urgente-panel" hidden class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
+                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1"><span aria-hidden="true">🚨 </span>Lo urgente</h2>
+                <p id="urgente-panel-estado" role="status" class="text-sm text-brand-500 dark:text-brand-300">Revisando los pendientes…</p>
+                <ul id="urgente-panel-lista" class="mt-3 divide-y divide-brand-100 dark:divide-brand-800"></ul>
+                <p id="urgente-panel-al-dia" hidden class="mt-3 pt-3 border-t border-brand-100 dark:border-brand-800 text-xs text-brand-500 dark:text-brand-300"></p>
+            </div>
+
             <!-- ===== Tu semana (equipo docente) =====
                  Quien da clase entraba y veía "Tu progreso en Entrenamiento"
                  con SUS ejercicios 4×4 en cero, su racha de días y el récord de
@@ -280,7 +295,6 @@
             <div id="progreso-profe" hidden class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-10">
                 <div class="flex items-center justify-between flex-wrap gap-2 mb-4">
                     <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white">Tu semana</h2>
-                    <a href="informes.html" class="text-sm text-accent-700 dark:text-accent-400 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded">Ver informes completos →</a>
                 </div>
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
                     <a href="informes.html" class="rounded-xl p-2 hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
@@ -300,21 +314,18 @@
                         <div class="text-xs text-brand-450 dark:text-brand-350 mt-1"><span aria-hidden="true">⏰ </span>Tareas vencidas</div>
                     </a>
                 </div>
+                <!-- Quiénes se están cayendo del plan (public.se_caen_del_plan()):
+                     alumnos con plan —el del diagnóstico o el compartido— que
+                     llevan 3 días o más sin entrenar. El número de arriba dice
+                     cuántos; esto dice QUIÉNES, con su informe a un clic. Sin
+                     nadie, no se pinta. -->
+                <div id="profe-caen" hidden class="mt-4 pt-4 border-t border-brand-100 dark:border-brand-800">
+                    <h3 class="text-sm font-semibold text-brand-800 dark:text-white"><span aria-hidden="true">📉 </span>Se están cayendo del plan</h3>
+                    <p class="text-xs text-brand-450 dark:text-brand-350 mt-0.5">Tienen plan y llevan 3 días o más sin entrenar. Los primeros días son los que más se pierden: un mensaje ahora pesa más que uno en un mes.</p>
+                    <ul id="profe-caen-lista" class="mt-2 divide-y divide-brand-100 dark:divide-brand-800"></ul>
+                    <a id="profe-caen-mas" hidden href="informes.html?tema=inactivos" class="inline-block mt-2 text-sm text-accent-700 dark:text-accent-400 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded"></a>
+                </div>
                 <p class="mt-4 pt-4 border-t border-brand-100 dark:border-brand-800 text-sm text-brand-500 dark:text-brand-300" id="profe-clases">—</p>
-            </div>
-
-            <!-- ===== Lo urgente de quien SUPERVISA =====
-                 Lo que alguien está esperando (solicitudes, justificaciones,
-                 los informes mensuales de sus profesores sin leer) y lo que
-                 conviene vigilar, contado en la base por js/pendientes.js y
-                 acotado por la base a su gente. Solo lo que tiene algo; lo que
-                 está en cero va en «Al día». Ver «El panel de quien supervisa,
-                 sin caminos repetidos» en docs/decisiones/paneles.md. -->
-            <div id="urgente-panel" hidden class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
-                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1"><span aria-hidden="true">🚨 </span>Lo urgente</h2>
-                <p id="urgente-panel-estado" role="status" class="text-sm text-brand-500 dark:text-brand-300">Revisando los pendientes…</p>
-                <ul id="urgente-panel-lista" class="mt-3 divide-y divide-brand-100 dark:divide-brand-800"></ul>
-                <p id="urgente-panel-al-dia" hidden class="mt-3 pt-3 border-t border-brand-100 dark:border-brand-800 text-xs text-brand-500 dark:text-brand-300"></p>
             </div>
 
             <!-- ===== El resumen de quien SUPERVISA =====
