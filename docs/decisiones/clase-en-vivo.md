@@ -565,6 +565,52 @@ comprobada impersonando).
 clase-elegido clase-resumen`.** Está probado que falla de verdad: sin ordenar
 por la hora de la mano, o sin guardar el resultado, salta.
 
+### La pregunta dirigida y las respuestas en el tablero
+
+Con alguien con el turno (al azar o por mano levantada), «❓ Preguntarle con el
+tablero» le hace a ESA persona la pregunta de «¿qué jugarías?» sobre la
+posición del tablero. Y cualquier pregunta de jugada (dirigida o para todos) se
+ve en vivo en el tablero de cada alumno, como las partidas de Practicar.
+Migración `pregunta_dirigida_y_respuestas_en_curso`, comprobada impersonando.
+
+- **`questions.para_alumno`**: la pregunta es de una sola persona. Que los
+  demás no la contesten lo pone la base, no la pantalla:
+  `respuesta_calificar_y_plazo` rechaza la respuesta de cualquier otro («Esta
+  pregunta es para otro alumno.»). Probado: la alumna de la pregunta contesta,
+  otro alumno no, ni en `question_answers` ni en `respuestas_en_curso`.
+- **Los demás ven para quién es y no se les abre nada encima**: una línea
+  «Tu profe le hizo una pregunta a … Piensa tu respuesta en silencio.» (el
+  nombre viaja con el turno, en `game_state.elegido`; sin él dice «un
+  compañero»). A la persona le sale la pregunta con «Esta pregunta es solo para
+  ti», detrás del aviso grande de que la eligieron.
+- **Lo que va jugando cada uno va a `respuestas_en_curso`, no a
+  `question_answers`**: los informes, los trofeos, las insignias y el tiempo
+  por sección cuentan las filas de `question_answers`, y una respuesta a medias
+  no es una respuesta. Una fila por alumno y pregunta (la clave primaria), que
+  el alumno solo escribe en una pregunta abierta de su profe que sea para todos
+  o para él; la leen él, quien hizo la pregunta y administración, no los
+  compañeros. Se manda en fila (`colaEnCurso`) para que una jugada vieja no
+  llegue después de una nueva, y si falla no frena al alumno.
+- **«Respuestas en el tablero»**, debajo del tablero del profe (como los de
+  Practicar, y por eso también en modo sencillo, que esconde la pestaña
+  Preguntar): un tablero por conectado, o solo el de la persona si es
+  dirigida. Dice escrito en qué va: «Todavía no mueve», «Pensando… lleva 1 de
+  2 jugadas: d4 d5» (cuenta las suyas, no las del motor) o «Respondió: e4 ·
+  sin calificar», y con la respuesta mandada trae «✅ Correcta» / «❌ A
+  revisar» ahí mismo, por el mismo `setAnswerCorrect` de la lista. La escucha
+  de Realtime va filtrada por la pregunta (`question_id=eq.…`) y se cambia al
+  cambiar de pregunta. Las de opciones no se contestan moviendo: no tienen
+  tableros.
+- **`resumen_de_la_clase` cuenta a cada uno sus preguntas**: las de toda la
+  clase y las dirigidas a él. Una pregunta dirigida a otro no le suma una «sin
+  responder».
+
+**Al tocar esto, correr `node herramientas/verificar-todo.js clase-dirigida
+clase-preguntas clase-elegido`.** Está probado que falla de verdad: sin mandar
+`para_alumno`, con la pregunta abierta para todos en la pantalla de los demás,
+sin mandar las jugadas en curso, o mostrando todos los tableros en una
+dirigida, salta.
+
 ### El modo sencillo de la clase en vivo
 
 Aun ordenada, la pantalla del profesor tiene catorce controles delante, y la

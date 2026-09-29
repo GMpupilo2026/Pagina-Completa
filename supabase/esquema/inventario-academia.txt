@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20260929020321
+# al-dia-con: 20260929023207
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -84,6 +84,7 @@ tabla  quiniela_participantes  rls=true
 tabla  quiniela_partidas  rls=true
 tabla  quiniela_pronosticos  rls=true
 tabla  recordatorios_informe  rls=true
+tabla  respuestas_en_curso  rls=true
 tabla  salas_torneo  rls=true
 tabla  saved_games  rls=true
 tabla  solicitudes_academia  rls=true
@@ -741,6 +742,7 @@ columna  questions.expected_plies  integer
 columna  questions.fen  text
 columna  questions.id  uuid
 columna  questions.opciones  jsonb
+columna  questions.para_alumno  uuid
 columna  questions.prompt  text
 columna  questions.resultados_visibles  boolean
 columna  questions.tiempo_limite  integer
@@ -774,6 +776,11 @@ columna  recordatorios_informe.enviado_at  timestamp with time zone
 columna  recordatorios_informe.periodo  date
 columna  recordatorios_informe.persona_id  uuid
 columna  recordatorios_informe.tipo  text
+columna  respuestas_en_curso.fen  text
+columna  respuestas_en_curso.moves  jsonb
+columna  respuestas_en_curso.question_id  uuid
+columna  respuestas_en_curso.student_id  uuid
+columna  respuestas_en_curso.updated_at  timestamp with time zone
 columna  salas_torneo.clave  text
 columna  salas_torneo.created_at  timestamp with time zone
 columna  salas_torneo.descripcion  text
@@ -1405,6 +1412,11 @@ politica  questions  questions_update  UPDATE
 politica  quiniela_participantes  quiniela_participantes_admin  SELECT
 politica  quiniela_partidas  quiniela_partidas_admin  SELECT
 politica  quiniela_pronosticos  quiniela_pronosticos_admin  SELECT
+politica  respuestas_en_curso  respuestas_en_curso_exige_acceso_ins  INSERT  restrictiva
+politica  respuestas_en_curso  respuestas_en_curso_exige_acceso_upd  UPDATE  restrictiva
+politica  respuestas_en_curso  respuestas_en_curso_insert  INSERT
+politica  respuestas_en_curso  respuestas_en_curso_select  SELECT
+politica  respuestas_en_curso  respuestas_en_curso_update  UPDATE
 politica  salas_torneo  salas_torneo_borrar  DELETE
 politica  salas_torneo  salas_torneo_crear  INSERT
 politica  salas_torneo  salas_torneo_editar  UPDATE
@@ -1733,6 +1745,7 @@ indice  quiniela_pronosticos  quiniela_pronosticos_pkey
 indice  quiniela_pronosticos  quiniela_pronosticos_sala
 indice  recordatorios_informe  recordatorios_informe_persona_id_fk
 indice  recordatorios_informe  recordatorios_informe_pkey
+indice  respuestas_en_curso  respuestas_en_curso_pkey
 indice  salas_torneo  salas_torneo_clave_key
 indice  salas_torneo  salas_torneo_pkey
 indice  salas_torneo  salas_torneo_updated_by_fk
@@ -1811,6 +1824,7 @@ realtime  practice_games
 realtime  practice_sessions
 realtime  question_answers
 realtime  questions
+realtime  respuestas_en_curso
 realtime  saved_games
 realtime  trofeos_ajustes
 realtime  tv_settings
@@ -2461,6 +2475,13 @@ grant  questions  authenticated  UPDATE
 grant  quiniela_participantes  authenticated  SELECT
 grant  quiniela_partidas  authenticated  SELECT
 grant  quiniela_pronosticos  authenticated  SELECT
+grant  respuestas_en_curso  authenticated  DELETE
+grant  respuestas_en_curso  authenticated  INSERT
+grant  respuestas_en_curso  authenticated  REFERENCES
+grant  respuestas_en_curso  authenticated  SELECT
+grant  respuestas_en_curso  authenticated  TRIGGER
+grant  respuestas_en_curso  authenticated  TRUNCATE
+grant  respuestas_en_curso  authenticated  UPDATE
 grant  salas_torneo  anon  SELECT
 grant  salas_torneo  authenticated  DELETE
 grant  salas_torneo  authenticated  INSERT
