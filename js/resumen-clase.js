@@ -110,5 +110,64 @@ window.ResumenClase = (function () {
         caja.appendChild(envoltura);
     }
 
-    return { cargar, pintar, titular, textoPreguntas, textoPracticas, textoPartidas };
+    /* «Tu última clase», en el panel del alumno: lo que hizo él (su fila de
+       resumen_de_la_clase, que la RLS le da solo a él) y lo que contestó en
+       cada pregunta. Solo si la clase fue hace menos de dos semanas y él hizo
+       o estuvo en algo: si no, la tarjeta no aparece. */
+    const DIAS_ULTIMA_CLASE = 14;
+    async function pintarUltimaClaseDelAlumno(sb, caja, alumnoId) {
+        const desde = new Date(Date.now() - DIAS_ULTIMA_CLASE * 86400000).toISOString();
+        const { data: clases } = await sb.from("class_sessions").select("id, title, started_at, modalidad")
+            .not("ended_at", "is", null).gte("started_at", desde).eq("modalidad", "en_linea")
+            .order("started_at", { ascending: false }).limit(1);
+        const clase = (clases || [])[0];
+        if (!clase) { caja.hidden = true; return; }
+        const [{ filas }, { data: preguntas }] = await Promise.all([
+            cargar(sb, clase.id),
+            sb.from("questions").select("id, prompt, tipo, opciones").eq("class_session_id", clase.id).order("created_at"),
+        ]);
+        const mia = (filas || []).find((f) => f.student_id === alumnoId);
+        if (!mia) { caja.hidden = true; return; }
+        const ids = (preguntas || []).map((q) => q.id);
+        const { data: respuestas } = ids.length
+            ? await sb.from("question_answers").select("question_id, moves, opcion, is_correct").eq("student_id", alumnoId).in("question_id", ids)
+            : { data: [] };
+
+        caja.innerHTML = "";
+        const fecha = new Date(clase.started_at).toLocaleDateString("es-CR", { weekday: "long", day: "numeric", month: "long", timeZone: "America/Costa_Rica" });
+        const h2 = el("h2", "font-serif text-lg font-bold text-brand-800 dark:text-white", "Tu última clase");
+        h2.id = "ultima-clase-titulo";
+        caja.appendChild(h2);
+        caja.appendChild(el("p", "text-sm text-brand-500 dark:text-brand-300 mb-2", fecha + (clase.title ? " · " + clase.title : "")));
+        const partes = [];
+        if (mia.preguntas) partes.push("Preguntas: " + textoPreguntas(mia));
+        if (mia.practicas) partes.push("Práctica contra el motor: " + textoPracticas(mia));
+        if (mia.partidas) partes.push("Partidas con compañeros: " + textoPartidas(mia));
+        if (!partes.length) partes.push("Estuviste en la clase.");
+        const ul = el("ul", "text-sm text-brand-700 dark:text-brand-200 space-y-0.5");
+        partes.forEach((t) => ul.appendChild(el("li", "", t)));
+        caja.appendChild(ul);
+        if ((preguntas || []).length) {
+            const det = el("details", "mt-3");
+            det.appendChild(el("summary", "cursor-pointer text-sm font-semibold text-accent-700 dark:text-accent-400", "Ver lo que contestaste"));
+            const ol = el("ol", "mt-2 space-y-1.5 text-sm list-decimal pl-5 text-brand-700 dark:text-brand-200");
+            preguntas.forEach((q) => {
+                const r = (respuestas || []).find((x) => x.question_id === q.id);
+                let tuya = "Sin contestar";
+                if (r) {
+                    const texto = q.tipo === "opciones" && Array.isArray(q.opciones) ? "«" + (q.opciones[r.opcion] || "") + "»" : (r.moves || []).join(" ");
+                    tuya = "Tu respuesta: " + texto + (r.is_correct === true ? " — ✅ correcta" : r.is_correct === false ? " — ❌ a revisar" : "");
+                }
+                const li = el("li", "");
+                li.appendChild(el("span", "font-medium", q.prompt + " "));
+                li.appendChild(el("span", "text-brand-500 dark:text-brand-300", tuya));
+                ol.appendChild(li);
+            });
+            det.appendChild(ol);
+            caja.appendChild(det);
+        }
+        caja.hidden = false;
+    }
+
+    return { cargar, pintar, titular, textoPreguntas, textoPracticas, textoPartidas, pintarUltimaClaseDelAlumno };
 })();

@@ -2310,6 +2310,7 @@
                    misma consulta para pintar el mismo dato. */
                 const rachaP = window.Logros.cargar();
                 await Promise.all([
+                    ResumenClase.pintarUltimaClaseDelAlumno(sb, document.getElementById("ultima-clase"), profile.id).catch((e) => console.error(e)),
                     cargarPendientes(rachaP),
                     cargarSeguirCurso(),
                     loadEntrenoProgress(),

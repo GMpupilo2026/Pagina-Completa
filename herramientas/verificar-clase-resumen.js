@@ -106,11 +106,46 @@ async function pruebaSinNada(browser) {
   await ctx.close();
 }
 
+/* Lo que se dio del plan se marca en la clase (clase_plan_hecho), propone la
+   nota del cierre, y al cerrar queda el enlace a la tarea de repaso con el id
+   de ESA clase. */
+async function pruebaPlanYTarea(browser) {
+  console.log("\n=== El plan marcado en la clase y la tarea al cerrar ===");
+  const { page, ctx, errores } = await abrir(browser, "u-profe", CLASE, {
+    planes_clase: [{ id: "pl1", profesor_id: "u-profe", titulo: "Finales", notas: null, created_at: HOY }],
+    plan_items: [
+      { id: "it1", plan_id: "pl1", tipo: "posicion", titulo: "Lucena", fen: "1K1k4/1P6/8/8/8/8/r7/2R5 w - - 0 1", orden: 0 },
+      { id: "it2", plan_id: "pl1", tipo: "posicion", titulo: "Philidor", fen: "4k3/8/8/8/8/8/4K3/8 w - - 0 1", orden: 1 },
+    ],
+  });
+  await page.waitForFunction(() => document.querySelectorAll("#plan-select option").length > 1, null, { timeout: 10000 });
+  await page.evaluate(() => activateTeacherTab("plan"));
+  await page.selectOption("#plan-select", "pl1");
+  await page.waitForFunction(() => document.querySelectorAll('#plan-items button[aria-pressed]').length === 2, null, { timeout: 5000 });
+  const btn = '#plan-items li[data-plan-item="it1"] button[aria-pressed]';
+  igual("cada renglón dice que no se dio", await page.getAttribute(btn, "aria-pressed"), "false");
+  await page.click(btn);
+  await page.waitForFunction((b) => document.querySelector(b).getAttribute("aria-pressed") === "true", btn, { timeout: 5000 });
+  igual("marcarlo lo guarda en ESTA clase", await page.evaluate(() =>
+    window.__inserts.filter((i) => i.tabla === "clase_plan_hecho").map((i) => i.fila)), [{ class_session_id: "c-viva", plan_item_id: "it1" }]);
+  igual("y el botón lo dice", await page.textContent(btn), "✅ Dado en esta clase");
+
+  await page.click("#clase-cerrar-btn");
+  igual("la nota del cierre propone lo que se dio", await page.inputValue("#clase-notas"), "Del plan: Lucena.");
+  igual("antes de cerrar, sin enlace a la tarea", await seVe(page, "#clase-despues"), false);
+  await page.click("#clase-cerrar-btn");
+  await page.waitForFunction(() => !document.getElementById("clase-despues").hidden, null, { timeout: 5000 });
+  igual("al cerrar, el enlace a la tarea de repaso con el id de la clase", await page.getAttribute("#clase-tarea-enlace", "href"), "tareas.html?clase=c-viva");
+  igual("sin errores en consola", errores, []);
+  await ctx.close();
+}
+
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
     await pruebaCierre(browser);
     await pruebaSinNada(browser);
+    await pruebaPlanYTarea(browser);
   } catch (e) {
     console.log("  ✗ la prueba se cayó: " + (e && e.stack || e));
     fallos += 1;

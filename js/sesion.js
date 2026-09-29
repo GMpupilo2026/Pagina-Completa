@@ -1403,6 +1403,10 @@
                 btn.textContent = "Confirmar y cerrar";
                 document.getElementById("clase-titulo").focus();
                 pintarResumenDeLaClase(currentOpenSessionId);
+                // Lo que se marcó del plan ya dice qué se trabajó: se propone, no se pisa.
+                const notasEl = document.getElementById("clase-notas");
+                const dados = itemsDelPlan.filter((it) => planHecho.has(it.id)).map((it) => it.titulo);
+                if (!notasEl.value.trim() && dados.length) notasEl.value = ("Del plan: " + dados.join("; ") + ".").slice(0, 500);
                 return;
             }
             const titulo = document.getElementById("clase-titulo").value.trim();
@@ -1428,12 +1432,21 @@
                 pintarEstadoDeClase();
                 return;
             }
+            const cerrada = currentOpenSessionId;
             currentOpenSessionId = null;
             document.getElementById("clase-titulo").value = "";
             document.getElementById("clase-notas").value = "";
             pintarEstadoDeClase();
             setStatus("✅ Clase cerrada y guardada en el registro"
                 + (titulo ? ' como "' + titulo + '"' : "") + ".");
+            // El paso siguiente de una clase es el repaso: la tarea ya viene con
+            // los que asistieron marcados (tareas.html?clase=, solo el id).
+            const despues = document.getElementById("clase-despues");
+            const enlace = document.getElementById("clase-tarea-enlace");
+            enlace.href = "tareas.html?clase=" + encodeURIComponent(cerrada);
+            despues.hidden = false;
+            planHecho = new Set();
+            document.querySelectorAll("#plan-items button[aria-pressed]").forEach((b) => pintarBotonHecho(b, false));
         }
 
         // Lo que contestó cada alumno en esta clase, antes de cerrarla.
@@ -1465,6 +1478,8 @@
                 texto.textContent = "🔴 Clase en curso: se está registrando la asistencia y el tiempo de tus alumnos.";
                 abrir.classList.add("hidden");
                 cerrar.classList.remove("hidden");
+                // Una clase nueva: el enlace a la tarea era de la anterior.
+                document.getElementById("clase-despues").hidden = true;
             } else {
                 caja.className = "mb-6 rounded-xl px-5 py-3 flex items-center justify-between gap-3 flex-wrap bg-brand-100 dark:bg-brand-900";
                 texto.className = "text-sm font-semibold text-brand-600 dark:text-brand-300";
@@ -1488,6 +1503,7 @@
             const { data } = await sb.from("class_sessions").select("*").eq("created_by", boardOwnerId).is("ended_at", null).order("started_at", { ascending: false }).limit(1);
             const openSession = (data && data[0]) || null;
             currentOpenSessionId = openSession ? openSession.id : null;
+            refrescarPlanHecho();
             if (openSession) {
                 await markAttendance(openSession.id);
                 await startPresenceLog(openSession.id);
@@ -2174,7 +2190,54 @@
                 msg.textContent = "Este plan todavía está vacío.";
                 return;
             }
+            await cargarPlanHecho();
             itemsDelPlan.forEach((it) => lista.appendChild(pintarRenglonDelPlan(it)));
+        }
+
+        /* Lo que ya se dio del plan en ESTA clase (clase_plan_hecho). Es de la
+           clase y no del plan: el mismo plan se da en varias clases. */
+        let planHecho = new Set();
+        async function cargarPlanHecho() {
+            planHecho = new Set();
+            if (!currentOpenSessionId) return;
+            const { data, error } = await sb.from("clase_plan_hecho").select("plan_item_id").eq("class_session_id", currentOpenSessionId);
+            if (error) { console.error(error); return; }
+            (data || []).forEach((f) => planHecho.add(f.plan_item_id));
+        }
+
+        async function marcarPlanHecho(item, btn) {
+            if (!currentOpenSessionId) { setStatus("Abre la clase primero: lo que se da del plan queda en su registro."); return; }
+            const hecho = planHecho.has(item.id);
+            btn.disabled = true;
+            const q = hecho
+                ? sb.from("clase_plan_hecho").delete().eq("class_session_id", currentOpenSessionId).eq("plan_item_id", item.id)
+                : sb.from("clase_plan_hecho").insert({ class_session_id: currentOpenSessionId, plan_item_id: item.id });
+            const { error } = await q;
+            btn.disabled = false;
+            if (error) { console.error(error); setStatus("No se pudo marcar: " + error.message); return; }
+            if (hecho) planHecho.delete(item.id); else planHecho.add(item.id);
+            pintarBotonHecho(btn, !hecho);
+        }
+
+        function pintarBotonHecho(btn, hecho) {
+            btn.setAttribute("aria-pressed", hecho ? "true" : "false");
+            btn.textContent = hecho ? "✅ Dado en esta clase" : "☐ Ya lo di";
+            btn.classList.toggle("bg-green-100", hecho);
+            btn.classList.toggle("dark:bg-green-900", hecho);
+            btn.classList.toggle("text-green-800", hecho);
+            btn.classList.toggle("dark:text-green-200", hecho);
+        }
+
+        /* La clase se puede abrir (o saberse abierta, al recargar) DESPUÉS de
+           pintar el plan: entonces se vuelve a leer lo marcado y se repintan
+           los botones, o quedarían todos en «Ya lo di» sin serlo. */
+        async function refrescarPlanHecho() {
+            if (!isTeacher || !itemsDelPlan.length) return;
+            await cargarPlanHecho();
+            document.querySelectorAll("#plan-items li[data-plan-item]").forEach((li) => {
+                const b = li.querySelector("button[aria-pressed]");
+                if (b) pintarBotonHecho(b, planHecho.has(li.dataset.planItem));
+            });
         }
 
         function pintarRenglonDelPlan(item) {
@@ -2229,7 +2292,14 @@
                 acciones.appendChild(abrir);
             }
 
-            if (acciones.childElementCount) li.appendChild(acciones);
+            const hechoBtn = document.createElement("button");
+            hechoBtn.type = "button";
+            hechoBtn.className = clases + " ml-auto";
+            hechoBtn.title = "Queda en el registro de esta clase, y en la nota del cierre";
+            hechoBtn.addEventListener("click", () => marcarPlanHecho(item, hechoBtn));
+            acciones.appendChild(hechoBtn);
+            li.appendChild(acciones);
+            pintarBotonHecho(hechoBtn, planHecho.has(item.id));
             return li;
         }
 

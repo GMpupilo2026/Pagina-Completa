@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20260928232441
+# al-dia-con: 20260928233738
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -13,6 +13,7 @@ tabla  archivos_pgn  rls=true
 tabla  avisos_cobro  rls=true
 tabla  avisos_ficha_faltante  rls=true
 tabla  avisos_ia_tope  rls=true
+tabla  clase_plan_hecho  rls=true
 tabla  class_attendance  rls=true
 tabla  class_chat_messages  rls=true
 tabla  class_presence_log  rls=true
@@ -178,6 +179,9 @@ columna  avisos_ia_tope.gasto_usd  numeric(12,6)
 columna  avisos_ia_tope.periodo  date
 columna  avisos_ia_tope.tope_usd  numeric(10,2)
 columna  avisos_ia_tope.umbral  smallint
+columna  clase_plan_hecho.class_session_id  uuid
+columna  clase_plan_hecho.created_at  timestamp with time zone
+columna  clase_plan_hecho.plan_item_id  uuid
 columna  class_attendance.id  uuid
 columna  class_attendance.joined_at  timestamp with time zone
 columna  class_attendance.minutos_tarde  integer
@@ -1170,6 +1174,7 @@ politica  archivos_pgn  archivos_pgn_insert  INSERT
 politica  archivos_pgn  archivos_pgn_select  SELECT
 politica  archivos_pgn  archivos_pgn_update  UPDATE
 politica  avisos_cobro  avisos_lee_coordinacion  SELECT
+politica  clase_plan_hecho  clase_plan_hecho_de_quien_da_la_clase  ALL
 politica  class_attendance  class_attendance_delete_profesor  DELETE
 politica  class_attendance  class_attendance_exige_acceso_ins  INSERT  restrictiva
 politica  class_attendance  class_attendance_exige_acceso_upd  UPDATE  restrictiva
@@ -1486,6 +1491,8 @@ indice  avisos_cobro  avisos_cobro_pkey
 indice  avisos_cobro  avisos_cobro_una_vez
 indice  avisos_ficha_faltante  avisos_ficha_faltante_pkey
 indice  avisos_ia_tope  avisos_ia_tope_pkey
+indice  clase_plan_hecho  clase_plan_hecho_item_idx
+indice  clase_plan_hecho  clase_plan_hecho_pkey
 indice  class_attendance  class_attendance_pkey
 indice  class_attendance  class_attendance_session_id_student_id_key
 indice  class_attendance  class_attendance_student_idx
@@ -1830,6 +1837,13 @@ grant  avisos_cobro  authenticated  SELECT
 grant  avisos_cobro  authenticated  TRIGGER
 grant  avisos_cobro  authenticated  TRUNCATE
 grant  avisos_cobro  authenticated  UPDATE
+grant  clase_plan_hecho  authenticated  DELETE
+grant  clase_plan_hecho  authenticated  INSERT
+grant  clase_plan_hecho  authenticated  REFERENCES
+grant  clase_plan_hecho  authenticated  SELECT
+grant  clase_plan_hecho  authenticated  TRIGGER
+grant  clase_plan_hecho  authenticated  TRUNCATE
+grant  clase_plan_hecho  authenticated  UPDATE
 grant  class_attendance  anon  DELETE
 grant  class_attendance  anon  INSERT
 grant  class_attendance  anon  REFERENCES

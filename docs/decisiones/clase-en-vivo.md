@@ -410,6 +410,39 @@ impersonando roles.
 Está probado que falla de verdad: sin descontar el reloj al mover, o sin
 pintar la partida escrita, se cae.
 
+### Antes y después de la clase: el plan marcado, la tarea de repaso y «Tu última clase»
+
+La clase empezaba en «Mi plan» y terminaba en «Cerrar la clase», pero ninguno
+de los dos lados se enteraba del otro: el plan no sabía hasta dónde se llegó,
+el cierre pedía escribir de nuevo lo que se trabajó, y el alumno se iba de la
+clase sin nada en la mano.
+
+- **«☐ Ya lo di» en cada renglón del plan** (`aria-pressed`). Se guarda en
+  `clase_plan_hecho` —la clase y el renglón—, y no en el plan: el mismo plan se
+  da en varias clases y en cada una se llega hasta donde se llega. Es un hecho
+  que el profe afirma, no algo que se pueda deducir de otras filas, así que se
+  guarda. La RLS deja escribir solo a quien dio la clase (comprobado
+  impersonando: otro profesor no lee ni escribe, el alumno no lee).
+- **La nota del cierre se propone sola** con lo que se marcó («Del plan:
+  Lucena; Philidor.»), con los títulos y sin los emojis: esa nota termina
+  impresa en el reporte de actividades. Solo si está vacía: lo que el profe ya
+  escribió no se pisa.
+- **Al cerrar queda el enlace a la tarea de repaso**: `tareas.html?clase=<id>`
+  marca a los que asistieron (lo lee de `class_attendance`) y pone «Repaso de
+  la clase: …» como título. Viaja solo el id de la clase, como la bitácora
+  manda solo el id de la nota. El título de la clase le gana al que se propone
+  del primer renglón y queda como elegido: cambiar los renglones no lo pisa.
+- **«Tu última clase» en el panel del alumno** (`clases.html`): la última clase
+  en línea de las dos últimas semanas, con lo que hizo —su fila de
+  `resumen_de_la_clase`, que la RLS le da solo a él— y, plegado, lo que
+  contestó en cada pregunta de ESA clase, con la opción escrita y si estuvo
+  bien. Si no estuvo ni hizo nada en ella, la tarjeta no sale. Lo pinta
+  `js/resumen-clase.js`, la misma copia que el cierre y el registro.
+
+**Al tocar esto, correr `node herramientas/verificar-todo.js clase-resumen
+tareas panel`.** Está probado que falla de verdad: con el enlace sin el id de
+la clase salta la comprobación del cierre.
+
 ### El modo sencillo de la clase en vivo
 
 Aun ordenada, la pantalla del profesor tiene catorce controles delante, y la
