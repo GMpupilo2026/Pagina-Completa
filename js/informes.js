@@ -2614,6 +2614,30 @@ function areasFlojasArbitraje(fila) {
             return caja;
         }
 
+        /* La academia del PDF: si el diagnóstico llegó por el enlace del supervisor
+           de UNA academia, el PDF lleva su marca (su nombre, su logo, su color y
+           su WhatsApp). Lo decide la base, marca_de_diagnostico(), que solo
+           contesta a quien puede ver ese diagnóstico. El color se vuelve a medir
+           contra el blanco: si no da 4,5, el PDF va con su nombre y su logo pero
+           sin su color. Si algo falla, el PDF sale como siempre. Ver «El PDF del
+           diagnóstico con la marca de la academia» en docs/decisiones/informes.md. */
+        async function marcaDelDiagnostico(v) {
+            if (!v.supervisor_id) return null;
+            try {
+                const { data, error } = await sb.rpc("marca_de_diagnostico", { p_id: v.id });
+                const f = Array.isArray(data) ? data[0] : data;
+                if (error || !f || !f.nombre) return null;
+                const MA = window.MarcaAcademia;
+                const c = MA && f.color ? MA.contrasteConBlanco(f.color) : null;
+                return {
+                    nombre: f.nombre,
+                    color: c != null && c >= 4.5 ? f.color : null,
+                    logoUrl: MA && f.logo_path ? MA.urlDelLogo(f.logo_path) : "",
+                    whatsapp: f.whatsapp || null,
+                };
+            } catch (e) { return null; }
+        }
+
         // Visitantes: lista de más reciente a más antiguo, con contacto, nivel y Elo; cada uno
         // se puede desplegar (mismas barras por área que un alumno) y marcar como atendido.
         function renderDiagnosticosVisitantes(contenedor) {
@@ -2678,7 +2702,10 @@ function areasFlojasArbitraje(fila) {
                     estado.textContent = "Armando el PDF…";
                     try {
                         await cargarPdfVisitante();
-                        const r = await DiagnosticoVisitantePDF.descargar(v, { whatsapp: await whatsappAcademia() });
+                        const academia = await marcaDelDiagnostico(v);
+                        const r = await DiagnosticoVisitantePDF.descargar(v, academia
+                            ? { academia: academia }
+                            : { whatsapp: await whatsappAcademia() });
                         estado.textContent = "Listo, se descargó " + r.nombre + ".";
                     } catch (e) {
                         estado.textContent = "No se pudo armar el PDF: " + ((e && e.message) || e);

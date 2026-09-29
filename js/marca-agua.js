@@ -1,5 +1,7 @@
 /**
  * Ajedrez Integral — la marca de agua de Oscar Angulo Cubero, lista para un PDF.
+ * También arma el logo de una academia (prepararDesde), para el PDF del
+ * diagnóstico de un visitante que llegó por su enlace.
  *
  * El generador de PDF (`js/reporte-pdf.js`) necesita el logo partido en dos:
  * el dibujo en JPEG y su canal alfa aparte. Sin el alfa, la imagen taparía el
@@ -17,10 +19,16 @@ window.MarcaAgua = (function () {
   let promesa = null;
 
   async function armar(url) {
-    const png = new Uint8Array(await (await fetch(url)).arrayBuffer());
+    const respuesta = await fetch(url);
+    if (!respuesta.ok) throw new Error("no se pudo bajar el logo (" + respuesta.status + ")");
+    const png = new Uint8Array(await respuesta.arrayBuffer());
+    /* La imagen se decodifica desde los bytes ya bajados (un blob:), no desde
+       la dirección: el logo de una academia vive en Storage, otro origen, y
+       leer sus píxeles desde ahí dejaría el lienzo «manchado» y sin alfa. */
     const img = new Image();
-    img.src = url;
-    await img.decode();
+    const local = URL.createObjectURL(new Blob([png]));
+    img.src = local;
+    try { await img.decode(); } finally { setTimeout(() => URL.revokeObjectURL(local), 0); }
     const lienzo = document.createElement("canvas");
     lienzo.width = img.naturalWidth;
     lienzo.height = img.naturalHeight;
@@ -54,5 +62,15 @@ window.MarcaAgua = (function () {
     return promesa;
   }
 
-  return { preparar: preparar, URL: URL_MARCA };
+  /* Otro logo —el de una academia— listo igual para un PDF: cabecera y marca
+     de agua. Se guarda por dirección, igual que el de Oscar. */
+  const porDireccion = new Map();
+  function prepararDesde(url) {
+    if (!porDireccion.has(url)) {
+      porDireccion.set(url, armar(url).catch((e) => { porDireccion.delete(url); throw e; }));
+    }
+    return porDireccion.get(url);
+  }
+
+  return { preparar: preparar, prepararDesde: prepararDesde, URL: URL_MARCA };
 })();

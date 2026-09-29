@@ -1111,3 +1111,43 @@ footer li > a {
 .entrenador-turno { font-weight: 600; text-align: center; margin: 0; color: rgb(var(--c-brand-800, 36 59 83)); }
 .dark .entrenador-turno { color: #fff; }
 .entrenador-boton { padding: 0 0.9rem; font-size: 0.9rem; font-weight: 600; }
+
+/* ===== El tema de una academia en el diagnóstico de visitante =====
+   entreno/diagnostico.html?s=<código> es el enlace que el supervisor de una
+   academia manda a gente sin cuenta, y la página se viste con SU marca
+   (js/entreno-diagnostico.js pone data-marca-academia en <html> y el color en
+   --marca-academia). Ver «El tema de la academia en el diagnóstico» en
+   docs/decisiones/informes.md.
+
+   El color de una academia solo se sabe que da 4,5 contra el BLANCO (lo exige
+   la base, color_con_texto_blanco, y la página lo vuelve a medir antes de
+   usarlo). Por eso todo lo que va encima del color va en blanco, sin
+   transparencias: un texto al 80 % ya no está medido. */
+html[data-marca-academia] #header,
+html[data-marca-academia] #mobile-menu,
+html[data-marca-academia] .marca-fondo {
+  background-color: var(--marca-academia) !important;
+  background-image: none !important;
+}
+html[data-marca-academia] .marca-fondo,
+html[data-marca-academia] .marca-fondo :is(h2, p, span, label, a) {
+  color: #ffffff !important;
+  opacity: 1 !important;
+}
+html[data-marca-academia] .marca-boton {
+  background-color: var(--marca-academia) !important;
+  color: #ffffff !important;
+}
+html[data-marca-academia] .marca-boton:hover { filter: brightness(1.12); }
+html[data-marca-academia] #q-bar { background-color: var(--marca-academia) !important; }
+/* El menú de Ajedrez Integral (cursos, precios…) no es de la academia: en su
+   página se quita, y el encabezado lleva su logo y su nombre. */
+html[data-marca-academia] #header nav ul,
+html[data-marca-academia] #menu-toggle,
+html[data-marca-academia] #mobile-menu { display: none !important; }
+/* El botón de WhatsApp de la academia va al revés: fondo blanco y el color de
+   la academia en el texto (el mismo par, medido contra el blanco). */
+html[data-marca-academia] .marca-fondo a.marca-invertido {
+  background-color: #ffffff !important;
+  color: var(--marca-academia) !important;
+}

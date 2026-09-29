@@ -246,6 +246,79 @@ administración.
   `verificar-diagnostico-enlace.js` (en el navegador) y
   `verificar-aviso-diagnostico.js` (el correo, sin red) lo comprueban.
 
+#### El tema de la academia en el diagnóstico
+
+Quien abre el enlace de un supervisor de **una** academia ve el diagnóstico
+**vestido con la marca de esa academia**: su logo y su nombre en el
+encabezado y en una franja arriba del título, su color en el encabezado, en
+la tarjeta de los datos, en los botones, en la barra de avance y en la
+tarjeta del nivel, y al final «¿Quieres entrenar con …?» con el WhatsApp de
+la academia. Lo pidió el dueño del sitio para que el diagnóstico que manda
+cada academia se vea suyo.
+
+- **La marca la da `enlace_diagnostico_marca(código)`** (`anon` puede
+  llamarla): nombre, color, logo y WhatsApp, **solo si el supervisor es de UNA
+  academia**, la misma regla que sus formularios (`formulario_publico`) y sus
+  correos. Con dos o ninguna, la página queda como siempre (sigue diciendo a
+  quién le llega el resultado).
+- **Los colores los pone `css/styles.css`**, bajo `html[data-marca-academia]`
+  con el color en `--marca-academia`; `js/entreno-diagnostico.js`
+  (`vestirConLaAcademia()`) solo decide si se puede. **El color se vuelve a
+  medir contra el blanco antes de usarlo** (`MarcaAcademia.contrasteConBlanco`):
+  la base ya lo exige al guardarlo, pero si no da 4,5 la página muestra el logo
+  y el nombre y conserva sus colores.
+- **Encima del color todo va en blanco y sin transparencia**: lo único medido
+  es blanco contra ese color. Por eso la tarjeta del nivel deja el ámbar y sus
+  textos al 80 %, y el botón de WhatsApp va al revés (fondo blanco, letra del
+  color de la academia: el mismo par).
+- **Lo que es de Ajedrez Integral se quita**: el menú del encabezado (cursos,
+  precios), «← Cursos» y «Ver los cursos». El pie con la política de
+  privacidad se queda: la página y los datos siguen siendo de la plataforma.
+- El nombre, el logo y el número vienen de la base: van con `textContent`, el
+  logo por `urlDelLogo()` (el bucket público de siempre) y si no carga se
+  esconde; el WhatsApp se queda con los dígitos y, si son 8, se le pone el 506.
+- **De paso**: a un visitante ya no se le ofrece «Ver mis Informes» ni el aviso
+  de que su profesor lo ve en Informes; no tiene cuenta ni profesor.
+- `verificar-diagnostico-enlace.js` lo mide en el navegador (colores con
+  `getComputedStyle`, lo que se ve con `checkVisibility`): con el tema, con un
+  color que no da 4,5 y con un supervisor sin academia. Con
+  `GUARDAR_CAPTURAS=<carpeta>` deja capturas de la portada y el resultado.
+
+#### El PDF del diagnóstico con la marca de la academia
+
+Si el diagnóstico llegó por el enlace del supervisor de **una** academia, el
+PDF que se baja en Informes es **de esa academia**: arriba una franja en su
+color con su logo (sobre un cuadro blanco) y su nombre en blanco, los títulos
+y las líneas en su color, **su logo como marca de agua** en todas las páginas,
+y la firma, el pie, el autor del archivo y el WhatsApp son los suyos. Lo pidió
+el dueño del sitio, igual que el tema de la página del diagnóstico.
+
+- **Qué marca le toca lo decide `marca_de_diagnostico(id)`**, `SECURITY
+  DEFINER`: nombre, color, logo y WhatsApp si el supervisor del enlace es de
+  una sola academia, y **solo a quien puede ver ese diagnóstico**
+  (administración o el supervisor dueño; la misma regla que
+  `diagnosticos_publicos_select`). Comprobado impersonando en SQL (revertido):
+  la dueña y administración la reciben; otra supervisora y un profesor, nada;
+  sin enlace, nada; `anon` no puede llamarla.
+- **La firma de Oscar no se le pone a otra marca**: sin logo, o si el logo no
+  se pudo bajar, el PDF de la academia sale con su franja y su nombre pero sin
+  marca de agua. Un diagnóstico sin academia sale como siempre, con la marca
+  de Oscar (y ahí sigue la regla de que sin ella no sale).
+- **El color se vuelve a medir contra el blanco** en Informes
+  (`MarcaAcademia.contrasteConBlanco`) antes de ponerlo en los títulos y la
+  franja: si no da 4,5, el PDF lleva su nombre y su logo sin su color.
+- **El generador es el mismo** (`js/reporte-pdf.js`), con dos campos
+  opcionales, `color` y `cabecera`; los reportes de actividades no los usan y
+  salen igual. El logo se prepara como la marca de agua
+  (`MarcaAgua.prepararDesde()`), que ahora **decodifica desde los bytes ya
+  bajados** (un `blob:`): el logo vive en Storage, otro origen, y leer sus
+  píxeles desde su dirección dejaría el lienzo sin poder leerse.
+- `verificar-informes.js` («El PDF de un diagnóstico con la marca de su
+  academia») baja el PDF y lo lee: franja, logo una vez, nombre en blanco,
+  títulos en su color, marca de agua en todas las páginas, firma y WhatsApp
+  de la academia, y ni una mención a Oscar. Con `GUARDAR_PDF_ACADEMIA=<ruta>`
+  deja una copia para mirarla.
+
 #### El diagnóstico de un visitante se descarga en PDF
 
 Cada visitante del panel «🌐 Diagnósticos de visitantes» trae **«⬇ Descargar

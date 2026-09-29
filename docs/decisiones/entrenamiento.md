@@ -1560,11 +1560,30 @@ inflado respecto al Elo de lo que se supuso, y en el diagnóstico no hay reloj.
 - Simulación con las dificultades nuevas: el nivel se acierta el 90 % de las
   veces en el centro de cada nivel, con un error típico de 70 a 90 puntos entre
   1300 y 2100.
-- **Los 16 diagnósticos de la versión 5 ya rendidos se midieron con las
-  dificultades infladas** y quedaron guardados así (`detalle.medicion`): con las
-  de ahora, varios bajarían uno o dos niveles (un 1634 que salió «Muy avanzado»
-  sería «Intermedio»). No se recalcularon: cambiar el resultado que ya vio una
-  persona es una decisión de quien administra, no de la calibración.
+- **Los 17 diagnósticos de la versión 5 ya rendidos se recalcularon** (16 de
+  alumnos y 1 de visitante), a pedido del dueño del repo, porque se habían
+  medido con las dificultades infladas: la mayoría bajó un nivel (un 1634 que
+  había salido «Muy avanzado» quedó «Intermedio»). Se hizo en la base, en una
+  sola transacción, en las tres copias: `training_progress`, el espejo de
+  `training_state` (`diagnostico_resultado_v1`) y `diagnosticos_publicos`.
+  Solo se tocaron `medicion`, `nivel` y `nivel_etiqueta`, y se agregó
+  **`recalibrado`**: `{ fecha, motivo, medicion_anterior, nivel_anterior,
+  nivel_etiqueta_anterior }`. Con eso el resultado, Informes y el PDF del
+  visitante dicen «Resultado recalculado el …: por qué. Antes decía ≈X
+  (nivel)» (`PlanEntrenamiento.notaRecalibrado`): quien vio «Avanzado» y ahora
+  ve «Intermedio» tiene que saber por qué cambió.
+  - **Primero se mergeó el código, después se tocó la base.** El espejo del
+    aparato del alumno le ganaba al empate a la copia recalculada (misma
+    `fecha`) y la volvía a subir; ahora la copia gana también por
+    `actualizado` (js/progreso-usuario.js), y a la copia del espejo se le puso
+    ese campo. **No se cambió `fecha`**: es la del diagnóstico, y
+    progreso-usuario la usa para decidir si una prueba a medias ya terminó —
+    moverla habría borrado la prueba a medias de quien estuviera haciendo una.
+  - El script y los datos del recálculo no están en el repositorio: llevan las
+    respuestas de personas. Si hay que repetirlo, se rehace con
+    `PlanEntrenamiento.medir()` sobre `detalle.items` y `detalle.respuestas`, y
+    cada `update` exige la fecha exacta del diagnóstico y que todavía no tenga
+    `recalibrado` (así no se aplica dos veces).
 
 #### Cómo se rehace
 
