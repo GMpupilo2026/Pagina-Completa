@@ -1581,6 +1581,28 @@ alumno le aparece en su propio tablero.
   (`student_id=eq.<su id>`) y de ese aviso toma **solo la ayuda**: las jugadas
   las lleva su navegador, y un eco atrasado de la base se las pisaría.
 
+- **El alumno también la pide**: «🙋 Pedir ayuda» en su tarjeta de práctica.
+  El pedido vive en su fila (`practice_games.pide_ayuda_at`, migración
+  `practica_el_alumno_pide_ayuda`) y no en un mensaje suelto, porque quien
+  entra después a mirar —el profe que recarga, supervisión, coordinación—
+  también tiene que verlo. Lo hace cumplir el mismo trigger: el alumno lo
+  enciende y lo apaga, y la hora la pone la base (pedir otra vez no la corre:
+  el que pidió primero sigue primero); quien no es el alumno solo puede
+  APAGARLO, nunca encenderlo a su nombre; mandarle una ayuda lo da por
+  atendido, y reintentar la partida lo apaga.
+  - Al profe (y a quien observa) la tarjeta se le marca **con texto**
+    («🙋 Pide ayuda») además del borde, **sube al principio** de la grilla
+    (`order: -1`: sin eso, con veinte alumnos el pedido queda abajo, fuera de
+    la pantalla), la cuenta de arriba lo suma y se dice en voz una vez por
+    pedido (`#practica-pedidos-aviso`). En el diálogo, «✔ Marcar como atendido» lo
+    apaga sin mandar nada: muchas veces se ayuda de palabra, por la llamada.
+  - Al alumno el botón le dice que pidió y le deja cancelar
+    (`aria-pressed`), y cuando alguien lo atiende se le dice.
+  - Comprobado impersonando roles (revertido): la hora que manda el
+    navegador se ignora; pedir otra vez o jugar no la corre; la ayuda del
+    profe lo apaga; el profe no lo puede encender; sí apagarlo; la alumna lo
+    cancela; al reintentar se apaga.
+
 Comprobado impersonando roles en SQL (revertido): el profe manda la ayuda y
 queda con su `de`, pero sus cambios a jugadas, estado, intentos y reloj se
 devuelven; el alumno no puede cambiarla y sí juega; al reintentar se borra; con

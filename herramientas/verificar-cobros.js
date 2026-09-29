@@ -47,6 +47,9 @@ const PLANES = [
 ];
 const SUSCRIPCIONES = [
   { id: "s-1", student_id: "u-ana", plan_id: "p-mes", inicio: "2026-06-01", dia_cobro: 5, descuento_pct: 10, activa: true },
+  // Una que todavía no arranca: darla de baja hoy no puede mandar fin = hoy,
+  // porque la base exige fin >= inicio (suscripciones_check).
+  { id: "s-2", student_id: "u-bruno", plan_id: "p-mes", inicio: "2099-10-15", dia_cobro: 5, descuento_pct: 0, activa: true },
 ];
 // Las cuatro situaciones, ya calculadas por la base. La página solo las pinta.
 const COBROS = [
@@ -141,7 +144,10 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
           ? insertados.map((x, i) => Object.assign({ id: "nuevo-" + tabla + "-" + i }, x))
           : datos;
         if (Array.isArray(d) && unica) d = d.length ? d[0] : null;
-        return Promise.resolve({ data: d, error: null, count: conCuenta ? total : null }).then(res, rej);
+        // __demora imita la red: sin ella todo contesta al instante y un doble
+        // clic nunca encuentra la primera llamada todavía en camino.
+        const respuesta = { data: d, error: null, count: conCuenta ? total : null };
+        return new Promise((ok) => setTimeout(() => ok(respuesta), window.__demora || 0)).then(res, rej);
       },
     };
     return b;
@@ -368,7 +374,36 @@ async function pruebaCoordinacion(browser) {
   await page.waitForTimeout(300);
   igual("sin concepto no se crea ningún plan",
     await page.evaluate(() => window.__llamadas.filter((l) => l.tabla === "planes_cobro").length), 0);
+  // Doble clic en «Agregar» con un cobro personalizado: un solo plan, una sola
+  // suscripción. El índice único (alumno, plan) no lo atajaría, porque cada
+  // clic crea un plan distinto.
+  await page.fill("#s-manual-nombre", "Doble clic");
+  await page.fill("#s-manual-monto", "1000");
+  await page.evaluate(() => { window.__llamadas = []; window.__demora = 150; });
+  await page.dblclick("#s-guardar");
+  await page.waitForTimeout(1200);
+  await page.evaluate(() => { window.__demora = 0; });
+  igual("un doble clic en «Agregar» crea un solo plan y una sola suscripción",
+    await page.evaluate(() => ({
+      planes: window.__llamadas.filter((l) => l.tabla === "planes_cobro" && l.verbo === "insert").length,
+      suscripciones: window.__llamadas.filter((l) => l.tabla === "suscripciones" && l.verbo === "insert").length,
+    })), { planes: 1, suscripciones: 1 });
+  await page.check("#s-personalizado");
   await page.uncheck("#s-personalizado");
+
+  // -------- dar de baja: termina hoy, o el día en que iba a empezar si aún no arranca
+  const bajaDe = async (id) => {
+    await page.evaluate(() => { window.__llamadas = []; });
+    const fila = page.locator("#suscripciones-lista > div").filter({ hasText: id === "s-1" ? "Ana" : "Bruno" }).filter({ hasText: id === "s-1" ? "2026" : "2099" });
+    await fila.locator("button").click();
+    await page.waitForTimeout(300);
+    const l = await page.evaluate(() => window.__llamadas.find((x) => x.tabla === "suscripciones" && x.verbo === "update"));
+    return l && l.datos;
+  };
+  igual("la baja de una suscripción en curso termina hoy",
+    await bajaDe("s-1"), { activa: false, fin: new Date().toLocaleDateString("en-CA", { timeZone: "America/Costa_Rica" }) });
+  igual("la baja de una que aún no arranca termina el día de inicio (fin >= inicio)",
+    await bajaDe("s-2"), { activa: false, fin: "2099-10-15" });
 
   // -------- registrar un pago parcial
   await page.click('[data-ficha="cobros"]');
