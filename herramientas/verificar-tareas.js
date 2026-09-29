@@ -287,6 +287,13 @@ async function main() {
       const tip = M.herramienta("tipos");
       ok(tip && tip.recortes === "tipos" && tip.hrefRecorte("detective") === "entreno/tipos.html#detective" && tip.metas.includes("cantidad"),
         "Tipos de entrenamiento no se puede pedir por tipo, o el enlace no abre la ficha de ese tipo");
+      // Precisión, el Sonar y Batalla naval registran desde la migración
+      // 20260929060654: se pueden pedir por cantidad, cada una con su nombre.
+      [["precision-posicional", "entreno/precision-posicional.html"], ["sonar", "sonar.html"], ["batalla-naval", "batalla-naval.html"]].forEach(([slug, href]) => {
+        const h = M.herramienta(slug);
+        ok(h && h.href === href && h.actividades.join() === slug && h.metas.includes("cantidad") && h.metas.includes("minutos"),
+          `${slug} no está en Tareas con cantidad y minutos, o no cuenta su propia actividad`);
+      });
 
       /* Pedir 'cantidad' cuenta filas de training_progress con esas
          actividades, y la base RECHAZA sin avisar las que no están en su
@@ -295,7 +302,7 @@ async function main() {
       const dir = path.join(RAIZ, "supabase/migraciones");
       const ultima = fs.readdirSync(dir).sort().filter((f) => /training_progress_activity_check/.test(fs.readFileSync(path.join(dir, f), "utf8"))).pop();
       const check = ((fs.readFileSync(path.join(dir, ultima), "utf8").match(/add constraint training_progress_activity_check[\s\S]*?array\[([\s\S]*?)\]/) || [])[1] || "")
-        .match(/'([a-z0-9_]+)'/g).map((x) => x.replace(/'/g, ""));
+        .match(/'([a-z0-9_-]+)'/g).map((x) => x.replace(/'/g, ""));
       const fueraDelCheck = [];
       M.HERRAMIENTAS.filter((h) => h.metas.includes("cantidad")).forEach((h) =>
         (h.actividades || []).forEach((a) => { if (!check.includes(a)) fueraDelCheck.push(h.slug + ":" + a); }));

@@ -51,6 +51,10 @@ function clienteFalso(conSesion) {
         if (nombre === "training_state") return Promise.resolve({ data: null });
         return Promise.resolve({ data: null });
       },
+      insert: function (filas) {
+        window.__escrituras.push({ tabla: nombre, fila: [].concat(filas)[0], insert: true });
+        return Promise.resolve({ error: null });
+      },
       upsert: function (fila) {
         window.__escrituras.push({ tabla: nombre, fila: fila, filtros: Object.assign({}, api._filtros) });
         return Promise.resolve({ error: null });
@@ -147,6 +151,14 @@ async function main() {
     const upsertResultado = (escrituras || []).find((e) => e.tabla === "training_state" && e.fila.key === "precision_posicional_resultado_v1");
     ok("guarda el resultado en training_state", !!upsertResultado, "escrituras: " + JSON.stringify(escrituras));
     ok("el upsert va a nombre del alumno de la sesión", !!upsertResultado && upsertResultado.fila.student_id === "u-1");
+    // La tanda también queda en training_progress (meta del día, racha,
+    // logros, tareas), una sola vez, con su marcador.
+    const tandas = (escrituras || []).filter((e) => e.tabla === "training_progress");
+    const m = /(\d+) de (\d+)/.exec(marcador) || [];
+    ok("la tanda se registra UNA vez como actividad «precision-posicional», con su marcador",
+      tandas.length === 1 && tandas[0].fila.activity === "precision-posicional" && tandas[0].fila.student_id === "u-1" &&
+      tandas[0].fila.detail.aciertos === Number(m[1]) && tandas[0].fila.detail.cantidad === Number(m[2]) && tandas[0].fila.detail.modo === "corta",
+      JSON.stringify(tandas));
 
     ok("sin errores en la consola", errores.length === 0, errores.join("\n      "));
     await ctx.close();

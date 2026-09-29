@@ -81,11 +81,13 @@ falló.
   niveles (bronce, plata, oro, diamante): racha de días, ejercicios totales,
   variedad de tipos practicados, días de práctica acumulados (no hace falta
   que sean seguidos) y metas por cada tipo de ejercicio.
-- **`ACTIVIDADES_ALCANZABLES` es 14, no 15** (era 13 hasta que llegó
-  `finales`; nadie tenía todavía las 13, así que nadie perdió la medalla). El
-  CHECK de `training_progress` tiene 15 actividades, pero `desafios` está
+- **`ACTIVIDADES_ALCANZABLES` es 18, no 20** (era 13 hasta que llegó
+  `finales`, 15 con `tipos` y 18 con Precisión, el Sonar y Batalla naval;
+  nadie tenía ninguna de esas cifras, así que nadie perdió la medalla). El
+  CHECK de `training_progress` tiene 20 actividades, pero `desafios` está
   declarada sin ningún uso real
-  (`entreno/desafios.html` registra como `'practicar'`): pedir las 14 para el
+  (`entreno/desafios.html` registra como `'practicar'`) y `preparacion` solo
+  la tiene quien recibió un plan contra un rival: pedir las 20 para el
   logro "Las probaste todas" habría dejado un logro que nadie puede conseguir
   nunca, y eso no da ningún error —se queda gris para siempre sin que nadie
   sepa por qué—.
@@ -420,7 +422,35 @@ logros, no salían en «Cómo viene» y no se podían pedir como tarea. Todo eso
   queda en cero y nada avisa), y que los recortes de Tipos coincidan con
   `tipos.json`. `verificar-tipos-pagina.js` prueba el registro: una vez por
   ejercicio, y también lo resuelto antes.
-- Precisión posicional, el Sonar y la Batalla naval siguen sin escribir ahí.
+- Precisión posicional, el Sonar y la Batalla naval se sumaron después (ver
+  la sección siguiente).
+
+## Precisión, el Sonar y Batalla naval también cuentan
+
+Las tres guardaban su resultado solo en el progreso de la cuenta, así que
+quedaban fuera de la meta del día, la racha, los logros, «Cómo viene» y las
+tareas por cantidad. Ahora cada tanda o partida terminada escribe UNA fila en
+`training_progress` (migración `20260929060654`: `'precision-posicional'`,
+`'sonar'` y `'batalla-naval'` en el CHECK, el mismo nombre que ya usaba su
+registro de tiempo).
+
+- **Sin `puzzle_id` ni `nivel_id`, a propósito**: la tanda de Precisión se
+  sortea y el tesoro y la flota se esconden al azar, así que cada partida es
+  nueva. `tareas_con_avance()` cuenta distintos por esas claves y, sin ellas,
+  cae en `tp.id`: «5 partidas de Sonar» son cinco partidas jugadas, no cinco
+  niveles. El detalle lleva lo que sirve para leerla: `nivel`, `jugadas` o
+  `disparos`, `estrellas` y `con_pista`; el duelo de Batalla naval,
+  `duelo: true` y `gano` (se registra se gane o se pierda: se jugó); la
+  tanda de Precisión, `modo`, `cantidad`, `aciertos` y `porcentaje`.
+- **Tareas**: las tres están en `js/material-plataforma.js` con cantidad y
+  minutos (antes no estaban de ninguna forma).
+- **Logros**: «Las probaste todas» pasa de 15 a 18 actividades alcanzables
+  (el máximo de cualquier alumno seguía en 12).
+- `verificar-tareas.js` leía el CHECK con `'([a-z0-9_]+)'`, **sin el guion**:
+  habría dado por rechazadas `precision-posicional` y `batalla-naval`. Ahora
+  lo lee con guion. `verificar-sonar.js`, `verificar-batalla-naval.js` (también
+  el duelo) y `verificar-precision-posicional-pagina.js` prueban que se
+  registra una sola fila, con su detalle.
 
 ## Repasar fallados también en Visualización y Practicar; y el hub propone más
 
@@ -1137,12 +1167,11 @@ eso se parece y se diferencia del resto de los bancos a la vez:
 - **El resultado se guarda en `training_state`** (claves
   `precision_posicional_resultado_v1` / `_historial_v1`), exactamente como el
   examen de arbitraje: esa tabla ya tiene su RLS (cada quien ve lo suyo) y no
-  hace falta ninguna tabla nueva. **No escribe en `training_progress`**, la
-  misma decisión que ya tomó Confites: esa tabla tiene el CHECK de
-  actividades permitidas y sumar una nueva ahí es una migración aparte que
-  esta tanda no pidió. El tiempo sí se registra, como en toda página de
-  Entreno: `js/tiempo-plataforma.js data-activity="precision-posicional"`, que
-  no tiene ningún CHECK.
+  hace falta ninguna tabla nueva. Además, cada tanda terminada escribe una
+  fila en `training_progress` (`'precision-posicional'`, ver «Precisión, el
+  Sonar y Batalla naval también cuentan»). El tiempo se registra, como en
+  toda página de Entreno: `js/tiempo-plataforma.js
+  data-activity="precision-posicional"`.
 - **El cuadro de comandos (`js/cuadro-comandos.js`) reutiliza `comandos.
   posicion(juego)`** para la lectura de la posición en Modo Adaptado, en vez
   de escribirla de nuevo: acá SÍ hay una partida de chess.js detrás de cada
@@ -1906,9 +1935,9 @@ el más cercano) y aguas turbias (solo dice «más cerca», «más lejos» o «i
 - El progreso son `sonar_estrellas_v1` (nivel → estrellas, `maxPorClave`) y
   `sonar_mejor_v1` (nivel → menos jugadas). Esa segunda necesitó una fusión
   nueva, **`minPorClave`**, en `js/progreso-usuario.js`: fundirla con el máximo
-  se quedaría con la PEOR marca de los dos aparatos. **No escribe en
-  `training_progress`** —esa tabla tiene el CHECK de actividades y sumar una es
-  una migración aparte—; el tiempo sí se registra con
+  se quedaría con la PEOR marca de los dos aparatos. Cada partida terminada
+  escribe una fila en `training_progress` (`'sonar'`, ver «Precisión, el Sonar
+  y Batalla naval también cuentan»); el tiempo se registra con
   `js/tiempo-plataforma.js data-activity="sonar"`.
 
 **Al tocar el motor o la página, correr `node herramientas/verificar-sonar.js`**
@@ -1969,8 +1998,10 @@ tiene flota y la computadora le dispara.
   tema.
 - El progreso son `batalla_estrellas_v1` (`maxPorClave`), `batalla_mejor_v1`
   (`minPorClave`) y `batalla_victorias_v1` (`maxNumero`), en CLAVES de
-  `js/progreso-usuario.js`. No escribe en `training_progress` (el CHECK de
-  actividades); el tiempo sí, con `data-activity="batalla-naval"`.
+  `js/progreso-usuario.js`. Cada partida terminada, también un duelo, escribe
+  una fila en `training_progress` (`'batalla-naval'`, ver «Precisión, el Sonar
+  y Batalla naval también cuentan»); el tiempo, con
+  `data-activity="batalla-naval"`.
 
 **Al tocar el motor o la página, correr `node herramientas/verificar-batalla-naval.js`**
 (`--sin-navegador` corre solo las reglas). Está probado que falla de verdad:

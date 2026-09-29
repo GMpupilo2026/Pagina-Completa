@@ -207,6 +207,13 @@ function jugar(sq) {
   avisar(texto);
 }
 
+/* Cada partida terminada (también un duelo, se gane o se pierda) suma a la
+   meta del día, la racha, los logros y las tareas (training_progress). Sin
+   puzzle_id: la flota se esconde al azar, así que cada partida es nueva. */
+function registrar(detalle) {
+  if (window.EntrenoProgress) EntrenoProgress.log("batalla-naval", detalle);
+}
+
 function terminar(texto) {
   const n = B.nivel(nivelActual);
   const estrellas = leerMapa(CLAVE_ESTRELLAS), mejor = leerMapa(CLAVE_MEJOR);
@@ -215,6 +222,7 @@ function terminar(texto) {
     if (partida.ganador === "yo") {
       try { localStorage.setItem(CLAVE_VICTORIAS, String(victorias() + 1)); } catch (e) {}
     }
+    registrar({ duelo: true, gano: partida.ganador === "yo", disparos: tiros });
     pintar();
     const quedan = B.aFlote(partida.miMar).length;
     avisar(texto + (partida.ganador === "yo"
@@ -229,6 +237,7 @@ function terminar(texto) {
     if (e > (Number(estrellas[n.id]) || 0)) { estrellas[n.id] = e; localStorage.setItem(CLAVE_ESTRELLAS, JSON.stringify(estrellas)); }
     if (record) { mejor[n.id] = tiros; localStorage.setItem(CLAVE_MEJOR, JSON.stringify(mejor)); }
   } catch (err) {}
+  registrar({ nivel: n.id, disparos: tiros, estrellas: e, con_pista: !!partida.ayudas });
   pintar();
   const siguiente = B.nivel(n.id + 1);
   avisar(texto + " ¡Hundiste toda la flota con " + disparos(tiros) + "! " +
