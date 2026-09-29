@@ -778,6 +778,7 @@
             document.getElementById("encargados-report").classList.add("hidden");
             document.getElementById("deberes-report").classList.add("hidden");
             document.getElementById("premios-report").classList.add("hidden");
+            document.getElementById("errores-report").classList.add("hidden");
             document.getElementById("tiempo-report").classList.add("hidden");
             document.getElementById("evolucion-report").classList.add("hidden");
             document.getElementById("notas-report").classList.add("hidden");
@@ -957,6 +958,7 @@
             renderDiagnosticoProfesor(studentId, name, entreno);
             renderDeberes(studentId, false);
             renderPremios(studentId, false);
+            renderErroresPartidas(studentId, name);
             renderAcceso(studentId, name);
             renderNotas(studentId);
             renderEncargados(studentId, name);
@@ -978,6 +980,80 @@
                 });
             }
             document.getElementById("student-report").classList.remove("hidden");
+        }
+
+        /* ---------------- Los errores de sus partidas ----------------
+
+           «Tus propios errores» (js/errores-propios.js) revisa las partidas del
+           alumno en SU navegador y deja los ejercicios en su training_state, que
+           la RLS deja leer a sus profesores, a quien supervisa y a
+           administración. Acá solo se leen: ErroresPropios.deFilas() descarta lo
+           que no tenga forma de ejercicio (lo escribió el navegador del alumno)
+           y todo se pinta con textContent. Tres claves, una sola consulta. */
+        const ERRORES_A_LA_VISTA = 5;
+        async function renderErroresPartidas(studentId, name) {
+            const caja = document.getElementById("errores-report");
+            const body = document.getElementById("errores-body");
+            if (!window.ErroresPropios) { caja.classList.add("hidden"); return; }
+            document.getElementById("errores-title").textContent = "🪞 Errores de las partidas de " + name;
+            body.textContent = "Cargando…";
+            caja.classList.remove("hidden");
+            const { data, error } = await sb.from("training_state").select("key, value")
+                .eq("student_id", studentId)
+                .in("key", [ErroresPropios.CLAVE_EJERCICIOS, ErroresPropios.CLAVE_VISTAS, "tipos_estrellas_v1"]);
+            body.textContent = "";
+            const p = (texto, cls) => { const x = document.createElement("p"); x.className = cls || "text-sm text-brand-600 dark:text-brand-300"; x.textContent = texto; body.appendChild(x); return x; };
+            if (error) { p("No se pudieron cargar sus errores. Intenta de nuevo en un momento."); return; }
+            const r = ErroresPropios.deFilas(data);
+            if (!r.revisadas) {
+                p("Todavía no revisó sus partidas. Se hace desde Entrenamiento → Tipos de entrenamiento → «Tus propios errores», con el botón «Buscar errores en mis partidas».");
+                return;
+            }
+            const regalados = r.ejercicios.filter((x) => x.nivel === 1).length;
+            const escapados = r.ejercicios.length - regalados;
+            const resueltos = Object.keys(r.resueltos).length;
+            p(pluralES(r.revisadas, "partida revisada", "partidas revisadas") + " · " +
+              (r.ejercicios.length
+                ? pluralES(r.ejercicios.length, "error", "errores") + " (" + regalados + " en que regaló, " + escapados + " en que se le escapó la ventaja) · " + pluralES(resueltos, "ya resuelto", "ya resueltos") + "."
+                : "no salió ningún error."), "text-sm font-semibold text-brand-700 dark:text-brand-200 mb-3");
+            if (!r.ejercicios.length) return;
+            const sanEs = (s) => (window.TiposReglas ? TiposReglas.sanEs(s) : s);
+            const num = (cp) => (window.TiposReglas ? TiposReglas.numeroBalanza(cp / 100) : String(cp / 100));
+            const ul = document.createElement("ul");
+            ul.className = "space-y-2";
+            r.ejercicios.forEach((x, i) => {
+                const li = document.createElement("li");
+                li.className = "text-sm border-b border-brand-50 dark:border-brand-800/60 last:border-0 pb-2" + (i >= ERRORES_A_LA_VISTA ? " hidden" : "");
+                if (i >= ERRORES_A_LA_VISTA) li.dataset.extra = "1";
+                const cab = document.createElement("p");
+                cab.className = "font-semibold text-brand-700 dark:text-brand-200";
+                cab.textContent = String(x.resumen || fmtFecha(x.fecha)).slice(0, 80) + " — " + (x.nivel === 2 ? "se le escapó la ventaja" : "regaló");
+                const det = document.createElement("p");
+                det.className = "text-brand-600 dark:text-brand-300";
+                det.textContent = "Jugó " + sanEs(x.jugada) + " (" + num(x.antes) + " → " + num(x.despues) + "). Lo bueno: " + x.buenas.map(sanEs).join(" o ") + ".";
+                const est = document.createElement("p");
+                est.className = "text-xs text-brand-450 dark:text-brand-350";
+                const n = r.resueltos[x.id];
+                est.textContent = n ? "✓ Ya lo resolvió " + "★".repeat(n) + "☆".repeat(3 - n) : "✗ Todavía no lo resolvió";
+                li.append(cab, det, est);
+                ul.appendChild(li);
+            });
+            body.appendChild(ul);
+            if (r.ejercicios.length > ERRORES_A_LA_VISTA) {
+                const ver = document.createElement("button");
+                ver.type = "button";
+                ver.className = "mt-3 text-sm font-semibold text-accent-700 dark:text-accent-400 underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+                ver.setAttribute("aria-expanded", "false");
+                const rotulo = () => { const abierto = ver.getAttribute("aria-expanded") === "true"; ver.textContent = abierto ? "Ver menos" : "Ver todos (" + r.ejercicios.length + ")"; };
+                rotulo();
+                ver.addEventListener("click", () => {
+                    const abrir = ver.getAttribute("aria-expanded") !== "true";
+                    ul.querySelectorAll("li[data-extra]").forEach((li) => li.classList.toggle("hidden", !abrir));
+                    ver.setAttribute("aria-expanded", abrir ? "true" : "false");
+                    rotulo();
+                });
+                body.appendChild(ver);
+            }
         }
 
         /* ---------------- Tareas y exámenes ----------------
