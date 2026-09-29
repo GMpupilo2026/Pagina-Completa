@@ -12,7 +12,8 @@
    - El hub dice qué toca hoy: la semana del plan del diagnóstico (primero,
      con a dónde ir y cuánto lleva ahí), repasos de Temas, líneas de Aperturas
      vencidas (no las nuevas) y el diagnóstico si falta o tiene más de cuatro
-     semanas. Sin nada pendiente, el bloque no sale.
+     semanas. Arriba, la meta del día (de Logros); sin nada pendiente queda
+     solo esa.
 
    Nada de esto da un error si se rompe: el ejercicio fallado simplemente no
    vuelve nunca, que es lo que pasaba antes.
@@ -224,8 +225,33 @@ async function hub(browser) {
     const { page, ctx } = await abrir(browser, "/entreno/index.html", {}, { diagnostico_resultado_v1: JSON.stringify({ fecha: new Date().toISOString() }) });
     await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
     await page.waitForTimeout(500);
-    igual("sin nada pendiente, el bloque no sale",
-      await page.evaluate(() => document.getElementById("hoy").checkVisibility()), "false");
+    /* Cambió a propósito: sin nada pendiente, el bloque ya no se calla. Queda
+       la meta del día, que cambia de un día a otro y dice qué hacer. */
+    igual("sin nada pendiente, el bloque trae solo la meta del día",
+      await page.evaluate(() => [document.getElementById("hoy").checkVisibility(), document.getElementById("hoy-lista").checkVisibility(),
+        document.getElementById("hoy-meta-texto").textContent]),
+      [true, false, "Hoy llevas 0 de 5 ejercicios para que el día cuente. Con eso empiezas una racha."]);
+    await ctx.close();
+  }
+  /* La meta del día sale de progreso_dias_y_racha, la misma cuenta de Logros. */
+  {
+    const racha = (hoy, actual) => ({ "rpc:progreso_dias_y_racha": [{ dias_activos: 9, racha_actual: actual, racha_record: 7,
+      total_ejercicios: 120, tipos_distintos: 4, hoy_ejercicios: hoy, primer_dia: "2026-09-01", por_actividad: {} }] });
+    let { page, ctx } = await abrir(browser, "/entreno/index.html", racha(3, 4), {});
+    await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
+    await page.waitForFunction(() => !document.getElementById("hoy-meta").hidden, null, { timeout: 10000 });
+    igual("a mitad del día: cuántos lleva, cuántos faltan y la racha",
+      await page.evaluate(() => document.getElementById("hoy-meta-texto").textContent),
+      "Hoy llevas 3 de 5 ejercicios para que el día cuente. Tu racha: 4 días 🔥 — no la cortes.");
+    igual("la barra lo dice también para el lector de pantalla",
+      await page.evaluate(() => { const b = document.getElementById("hoy-meta-barra"); return [b.getAttribute("aria-valuenow"), b.getAttribute("aria-valuemax")]; }), ["3", "5"]);
+    await ctx.close();
+    ({ page, ctx } = await abrir(browser, "/entreno/index.html", racha(7, 5), {}));
+    await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
+    await page.waitForFunction(() => !document.getElementById("hoy-meta").hidden, null, { timeout: 10000 });
+    igual("con la meta cumplida, lo celebra con la racha",
+      await page.evaluate(() => document.getElementById("hoy-meta-texto").textContent),
+      "✅ Hoy ya cuenta para tu racha: 7 ejercicios. Llevas 5 días seguidos 🔥");
     await ctx.close();
   }
 }
