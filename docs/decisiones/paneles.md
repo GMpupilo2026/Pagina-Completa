@@ -1977,6 +1977,74 @@ versión en la página revisan:
 
 Falla si se quita la regla de «el patrón tiene que ser el que cobró».
 
+### Forma reciente, ritmo de la partida y hoja para imprimir
+
+**Su forma reciente (`formaReciente()`).** Un rival que cambió de defensa hace
+dos meses deja sin valor el plan armado con años de partidas.
+
+Qué se compara:
+- las partidas recientes, que son los 3 meses antes de su ÚLTIMA partida (no
+  de hoy, porque el archivo puede ser viejo), o sus 30 últimas si en esos
+  meses jugó menos de 20;
+- contra las anteriores;
+- con blancas, su primera jugada; con negras, su respuesta a las dos primeras
+  jugadas que más le hacen.
+
+Cuándo cambió, siempre con 8 partidas o más en esa posición de cada lado:
+- si la más jugada ahora no es la de antes, y ahora sale en el 40 % o más;
+- si algo que casi no jugaba (menos del 10 %) ahora sale en el 30 % o más.
+
+Qué muestra:
+- arriba del color que corresponde, un aviso con borde: «Ojo: últimamente
+  contra 1.e4 juega 1…c5, que casi no jugaba… Prepara las dos»;
+- si en las recientes saca 10 puntos más o menos que antes, «Viene en racha»
+  o «Viene a la baja» en «En toda la partida».
+
+Con menos de 40 partidas con fecha, no se calcula.
+
+**El ritmo de la partida que viene.** «Tu partida es a…», en los filtros,
+junta los ritmos: rápida con clásica, bullet con hiperbullet
+(`mismoRitmo()`).
+- Si a ese ritmo tiene 30 partidas o más (`POCAS`), el análisis se filtra a
+  él, y el resumen dice «Preparado para una partida a blitz: se usan solo sus
+  partidas a ese ritmo».
+- Si tiene menos, se usan todos sus ritmos, y el resumen avisa con cuántas
+  partidas cuenta a ese ritmo y cuánto saca: jeigoth5 tiene 11 partidas a
+  rápida contra 474 de bullet y blitz.
+- En un análisis guardado no se vuelve a analizar: solo cambia el aviso.
+
+El ritmo elegido queda en `filtros.partida`, se guarda con el análisis y sale
+en la hoja.
+
+**La hoja para imprimir (`pintarHoja()`).** Es una página con lo esencial,
+para llevarla a la partida o mirarla en el celular antes de sentarse
+(guardada en PDF). Lleva:
+- la línea de cada color;
+- tres cosas que hacer y tres que no;
+- lo de toda la partida;
+- los avisos de forma reciente y de ritmo.
+
+Cómo se arma:
+- sale del mismo `armar()` del resumen, así que no puede decir otra cosa;
+- no lleva botones, plegables ni enlaces, porque en papel no se tocan;
+- se arma en `#hoja`, un hijo directo del `body`, y
+  `@media print` con `html.imprimir-hoja` (en `css/styles.css`) oculta todo lo
+  demás;
+- en pantalla no se ve;
+- la clase se quita en `afterprint`.
+
+Con el análisis guardado de jeigoth5, Chromium la imprime en una sola página A4.
+
+**Cómo se comprueba.** «Forma reciente y ritmo de la partida» y «El ritmo de
+la partida y la hoja para imprimir», en el verificador. Pedro pasó de 1…e5 a
+1…c5 y viene ganando todo. En la página se comprueba:
+- que blitz filtra y rápida avisa;
+- que en pantalla la hoja no se ve;
+- que «Hoja para imprimir» la arma e imprime;
+- que, emulando la impresión, sale solo la hoja, medido con `checkVisibility()`.
+
+Falla sin la regla de impresión y sin detectar el cambio de repertorio.
+
 ## Las inscripciones a torneos en línea
 
 `inscripciones.html` muestra lo que llegó por `inscripcion.html`, el formulario

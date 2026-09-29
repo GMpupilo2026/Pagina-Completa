@@ -722,6 +722,65 @@
       });
   }
 
+  /* Su forma reciente: ¿cambió de repertorio o de racha? Se comparan sus
+     partidas recientes (los 3 meses antes de su última partida, o sus 30
+     últimas si en esos meses jugó menos de 20) con las anteriores. Un
+     jugador que cambió de defensa hace dos meses deja el plan viejo sin
+     valor, aunque sus números de años lo sostengan.
+       - con blancas: su primera jugada;
+       - con negras: su respuesta a las dos primeras jugadas que más le hacen.
+     Cambió si la más jugada ahora no es la de antes (y la juega en el 40 %
+     o más de las recientes, con 8 partidas o más en esa posición), o si
+     algo que casi no jugaba (menos del 10 %) ahora sale en el 30 % o más. */
+  const DIAS_RECIENTES = 90;
+  function formaReciente(lista) {
+    const conFecha = lista.filter((x) => x.fecha).sort((a, b) => (a.fecha < b.fecha ? 1 : a.fecha > b.fecha ? -1 : 0));
+    if (conFecha.length < 40) return null;
+    const ultima = new Date(conFecha[0].fecha + "T00:00:00Z");
+    const corte = new Date(ultima.getTime() - DIAS_RECIENTES * 86400000).toISOString().slice(0, 10);
+    let recientes = conFecha.filter((x) => x.fecha >= corte);
+    if (recientes.length < 20) recientes = conFecha.slice(0, 30);
+    const antes = conFecha.slice(recientes.length);
+    if (antes.length < 20) return null;
+    const reparto = (xs, sec) => {
+      const m = new Map();
+      let total = 0;
+      for (const x of xs) {
+        if (!sec.every((s, i) => x.jugadas[i] === s)) continue;
+        const sig = x.jugadas[sec.length];
+        if (!sig) continue;
+        total += 1;
+        m.set(sig, (m.get(sig) || 0) + 1);
+      }
+      const orden = [...m.entries()].sort((a, b) => b[1] - a[1]);
+      return { total, top: orden[0] ? { san: orden[0][0], n: orden[0][1], parte: orden[0][1] / total } : null, parte: (san) => (total ? (m.get(san) || 0) / total : 0) };
+    };
+    const cambios = [];
+    const mirar = (color, sec) => {
+      const r = reparto(recientes.filter((x) => x.color === color), sec);
+      const v = reparto(antes.filter((x) => x.color === color), sec);
+      if (!r.top || !v.top || r.total < 8 || v.total < 8) return;
+      const otraPrincipal = r.top.san !== v.top.san && r.top.parte >= 0.4;
+      const nueva = v.parte(r.top.san) < 0.1 && r.top.parte >= 0.3;
+      if (otraPrincipal || nueva) {
+        cambios.push({ color, sec, ahora: { san: r.top.san, parte: r.top.parte, n: r.total }, antes: { san: v.top.san, parte: v.top.parte, n: v.total }, antesParte: v.parte(r.top.san) });
+      }
+    };
+    mirar("w", []);
+    // Con negras: contra las dos primeras jugadas que más le hacen.
+    const primeras = [];
+    { const m = new Map(); conFecha.filter((x) => x.color === "b" && x.jugadas[0]).forEach((x) => m.set(x.jugadas[0], (m.get(x.jugadas[0]) || 0) + 1));
+      [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, 2).forEach(([san]) => primeras.push(san)); }
+    primeras.forEach((san) => mirar("b", [san]));
+    const cuenta = (xs) => { const c = vacio(); xs.forEach((x) => sumar(c, x.res)); return c; };
+    const cr = cuenta(recientes), ca = cuenta(antes);
+    return {
+      desde: recientes[recientes.length - 1].fecha, hasta: recientes[0].fecha,
+      n: recientes.length, puntos: puntos(cr), antes: { n: antes.length, puntos: puntos(ca) },
+      cambios,
+    };
+  }
+
   // Menos de esto, y la página avisa que dice poco.
   const POCAS = 30;
 
@@ -730,7 +789,8 @@
     const clave = claveNombre(rival);
     const todas = partidasDelRival(partidas, clave);
     if (!todas.length) return null;
-    const filtros = { ritmos: (o.ritmos || []).slice(), desde: o.desde || null };
+    // `partida`: el ritmo de la partida que viene, si se dijo (lo usa el resumen).
+    const filtros = { ritmos: (o.ritmos || []).slice(), desde: o.desde || null, partida: o.partida || null };
     const lista = todas.filter((x) => pasaFiltros(x, filtros));
     if (!lista.length) return { version: 4, vacio: true, rival: nombreDe(partidas, clave, rival), totalRival: todas.length, filtros, disponibles: disponibles(todas) };
     const total = lista.length;
@@ -811,6 +871,7 @@
       },
       masAlla: masAllaDe(lista, puntos(global), minN),
       derrotas: derrotasDe(lista),
+      reciente: formaReciente(lista),
       // Qué táctica hace y con cuál pierde (js/preparacion-tactica.js).
       tactica: Tactica ? Tactica.analizar(lista) : null,
       // Las líneas que se le consultan al explorador de maestros; lo que
