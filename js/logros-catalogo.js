@@ -19,7 +19,7 @@ window.LogrosCatalogo = (function () {
   "use strict";
 
   // Cuántos tipos de actividad de training_progress se pueden alcanzar de
-  // verdad hoy. Son 21 en el CHECK de la base, pero 'desafios' está declarada
+  // verdad hoy. Son 22 en el CHECK de la base, pero 'desafios' está declarada
   // sin ningún uso real (entreno/desafios.html registra como 'practicar' —
   // ver CLAUDE.md) y 'preparacion' solo la tiene quien recibió un plan contra
   // un rival, así que exigirlas dejaría un logro que casi nadie puede
@@ -29,8 +29,9 @@ window.LogrosCatalogo = (function () {
   // era 12), así que nadie pierde la medalla. Y a 18 con 'precision-posicional',
   // 'sonar' y 'batalla-naval': el máximo seguía en 12. 'finales100' (la
   // práctica de los cursos de finales) NO sube la cuenta: esos cursos se
-  // compran aparte y no todos los tienen.
-  const ACTIVIDADES_ALCANZABLES = 18;
+  // compran aparte y no todos los tienen. A 19 con 'memoria' (la ficha de
+  // Memoria).
+  const ACTIVIDADES_ALCANZABLES = 19;
 
   function hito(stats, clave) {
     return Number(stats.hitos && stats.hitos[clave]) || 0;
@@ -111,6 +112,8 @@ window.LogrosCatalogo = (function () {
     { id: "batalla_10", categoria: "batalla-naval", nivel: "bronce", emoji: "🚢", nombre: "A toda vela", descripcion: "10 partidas de Batalla naval terminadas.", meta: 10, valor: (s) => porActividad(s, "batalla-naval") },
     { id: "batalla_duelo", categoria: "batalla-naval", nivel: "plata", emoji: "🚢", nombre: "Almirante", descripcion: "Le ganaste un duelo de Batalla naval a la computadora.", meta: 1, valor: (s) => hito(s, "duelos_ganados") },
     { id: "precision_70", categoria: "precision-posicional", nivel: "oro", emoji: "🧭", nombre: "Ojo de estratega", descripcion: "3 tandas de Precisión posicional con 70 % o más.", meta: 3, valor: (s) => hito(s, "tandas_70") },
+    { id: "memoria_10", categoria: "memoria", nivel: "bronce", emoji: "📷", nombre: "Retratista", descripcion: "10 posiciones de Memoria reconstruidas.", meta: 10, valor: (s) => porActividad(s, "memoria") },
+    { id: "memoria_12", categoria: "memoria", nivel: "oro", emoji: "📷", nombre: "Memoria fotográfica", descripcion: "Reconstruiste una posición de 12 piezas sin un error.", meta: 12, valor: (s) => hito(s, "memoria_max_limpia") },
     { id: "tipos_20", categoria: "tipos", nivel: "bronce", emoji: "🧩", nombre: "De todos los tipos", descripcion: "20 ejercicios de Tipos de entrenamiento resueltos.", meta: 20, valor: (s) => porActividad(s, "tipos") },
   ];
 

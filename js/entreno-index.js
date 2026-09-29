@@ -187,7 +187,56 @@ async function pintarMeta(){
   document.getElementById('hoy-meta-relleno').style.width = Math.round(100 * Math.min(hoy, meta) / meta) + '%';
   document.getElementById('hoy-meta').hidden = false;
   ofrecerAvisos(racha);
+  if (hoy > 0) await pintarResumenHoy();
   return true;
+}
+
+/* El resumen del día: antes cada página festejaba lo suyo y nadie juntaba el
+   día. «Hoy: 12 ejercicios (Mates 6, Tipos de entrenamiento 4, Memoria 2) ·
+   9 de 11 limpios · Para mañana: 3 repasos.» Lo de hoy lo cuenta la base
+   (entreno_resumen_hoy, día de Costa Rica); los nombres son los de
+   js/tiempo-secciones.js, los mismos de Informes; los repasos de mañana, las
+   colas de este aparato (viajan con la cuenta). Si la base no responde, no se
+   pinta nada. */
+async function pintarResumenHoy(){
+  const caja = document.getElementById('hoy-resumen');
+  let r = null;
+  try {
+    const { data, error } = await sb.rpc('entreno_resumen_hoy');
+    if (!error && data && typeof data === 'object') r = data;
+  } catch (e) { r = null; }
+  if (!r || !r.total) return;
+  const nombre = (a) => window.TiempoSecciones ? TiempoSecciones.describir(a).nombre : a;
+  const partes = Object.keys(r.por_actividad || {})
+    .sort((a, b) => r.por_actividad[b] - r.por_actividad[a] || a.localeCompare(b))
+    .map((a) => `${nombre(a)} ${r.por_actividad[a]}`);
+  let texto = `Hoy: ${r.total} ${r.total === 1 ? 'ejercicio' : 'ejercicios'} (${partes.join(', ')})`;
+  if (r.con_como_salio) texto += ` · ${r.limpios} de ${r.con_como_salio} sin error ni pista`;
+  const manana = repasosParaManana();
+  if (manana) texto += ` · Para mañana: ${manana === 1 ? '1 repaso' : `${manana} repasos`}.`;
+  else texto += '.';
+  caja.textContent = texto;
+  caja.hidden = false;
+}
+
+/* Cuántos repasos tocan mañana (lo que vence hasta mañana y no salió de la
+   cola), de todas las colas de «Repasar fallados» y de Aperturas. */
+function repasosParaManana(){
+  const SRS = window.RepasoEspaciado;
+  if (!SRS) return 0;
+  const manana = SRS.sumarDias(SRS.hoy(), 1);
+  let n = 0;
+  if (window.RepasoFallados) {
+    Object.values(RepasoFallados.CLAVES).forEach((clave) => {
+      const e = RepasoFallados.leer(clave);
+      Object.keys(e).forEach((id) => { if (e[id] && !e[id].fuera && e[id].vence && e[id].vence <= manana) n++; });
+    });
+  }
+  const srs = leerJSON('aperturas_srs_v1');
+  if (srs && typeof srs === 'object') {
+    Object.keys(srs).forEach((id) => { if (srs[id] && srs[id].ultimo && srs[id].vence && srs[id].vence <= manana) n++; });
+  }
+  return n;
 }
 
 /* El aviso de racha sale por la tarde (public.avisar_rachas()) solo a los

@@ -878,6 +878,32 @@ tarjeta más de segunda fila (eran catorce; con los Finales contra la máquina, 
   la función sea INVOKER; `verificar-informes.js`, la tarjeta y que a la base
   se le manden los motivos y no «Mezcla».
 
+### El tipo de entrenamiento más flojo
+
+La misma idea que el tema, para Tipos de entrenamiento:
+`informes_tipo_mas_flojo()` (SECURITY INVOKER, una fila por alumno, migración
+`20260929172136`) dice en qué tipo le cuesta más sacar tres estrellas:
+«La balanza · 38 % — tres estrellas en 3 de 8». Es una tarjeta más de la
+segunda fila (ahora son diecisiete).
+
+- **Mira `estrellas`, no `limpio`**:
+  - cada ejercicio de Tipos se registra una vez, la primera que se resuelve,
+    con sus estrellas (desde #555);
+  - `limpio` se sumó después (#559);
+  - tres estrellas es limpio en todos los tipos, así que las filas viejas
+    también cuentan.
+- **Desde 5 ejercicios distintos de un mismo tipo**, como el tema. Sin eso,
+  la tarjeta dice qué falta.
+- El nombre del tipo lo pone `js/tipo-flojo.js` con `js/tipos-catalogo.js`,
+  el mismo catálogo de la página: la base solo manda la clave.
+- Se comprobó en la base con filas de prueba (revertidas) e impersonando a un
+  alumno:
+  - «detective» (40 %) sale antes que «balanza» (83 %);
+  - un tipo con 3 ejercicios no entra;
+  - un ejercicio repetido cuenta una vez;
+  - cada alumno ve solo su fila.
+- `verificar-informes.js` prueba la tarjeta y el nombre.
+
 ## Los informes que llegan a la casa
 
 En Informes, mirando a UN alumno, está "📧 Informes a la casa": a qué correos se

@@ -359,6 +359,33 @@ async function hub(browser) {
       await hoyTe({ training_state: historial(10) }, {}), [["🧭Una tanda de Precisión posicional: la última fue hace 10 días", "precision-posicional.html"]]);
     igual("hace 3 días: todavía no", await hoyTe({ training_state: historial(3) }, {}), []);
   }
+  /* El resumen del día, debajo de la meta: lo de hoy por actividad, cuántos
+     limpios y los repasos de mañana. */
+  {
+    const fresco = { diagnostico_resultado_v1: JSON.stringify({ fecha: new Date().toISOString() }) };
+    const dia = (n) => { const d = new Date(Date.now() + n * 86400000); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); };
+    const ficha = (vence) => ({ facilidad: 2.5, intervalo: 1, repasos: 1, fallos: 0, vence, ultimo: "2026-01-01T00:00:00Z" });
+    const local = Object.assign({}, fresco, {
+      // Mañana tocan dos: el que vence mañana y el de hoy (si no se hace); el de pasado mañana y el que ya salió, no.
+      entreno_mates_repaso_v1: JSON.stringify({ a: ficha(dia(1)), b: ficha(dia(2)), c: Object.assign(ficha(dia(1)), { fuera: true }) }),
+      entreno_tipos_repaso_v1: JSON.stringify({ "detective:x": ficha(dia(0)) }),
+    });
+    const resumen = async (tablas) => {
+      const { page, ctx, errores } = await abrir(browser, "/entreno/index.html", tablas, local);
+      await page.waitForFunction(() => { const l = document.getElementById("hoy-lista"); return l.hidden || l.querySelector("a"); }, { timeout: 10000 });
+      const r = await page.evaluate(() => { const p = document.getElementById("hoy-resumen"); return p.checkVisibility() ? p.textContent : null; });
+      sinErrores(errores, "hub (resumen)");
+      await ctx.close();
+      return r;
+    };
+    igual("con algo hecho hoy, el resumen dice qué, cuántos limpios y los repasos de mañana",
+      await resumen({ "rpc:progreso_dias_y_racha": [{ hoy_ejercicios: 3, racha_actual: 2 }],
+        "rpc:entreno_resumen_hoy": { total: 3, por_actividad: { memoria: 1, mates: 2 }, con_como_salio: 2, limpios: 1 } }),
+      "Hoy: 3 ejercicios (Mates 2, Memoria 1) · 1 de 2 sin error ni pista · Para mañana: 2 repasos.");
+    igual("sin nada hecho hoy, no hay resumen",
+      await resumen({ "rpc:progreso_dias_y_racha": [{ hoy_ejercicios: 0, racha_actual: 2 }],
+        "rpc:entreno_resumen_hoy": { total: 0, por_actividad: {}, con_como_salio: 0, limpios: 0 } }), null);
+  }
   /* El nivel de Tipos que quedó a medias (tipos_ultimo_v1, lo anota la página
      al jugar): se propone seguirlo; uno completo, no. */
   {

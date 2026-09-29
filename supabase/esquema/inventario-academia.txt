@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20260929165038
+# al-dia-con: 20260929172621
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -1050,6 +1050,7 @@ funcion  encuesta_curso_publica(p_slug text)  definer  anon=true  auth=true
 funcion  encuesta_mis_profesores()  invoker  anon=false  auth=true
 funcion  enlace_diagnostico_marca(p_codigo text)  definer  anon=true  auth=true
 funcion  enlace_diagnostico_publico(p_codigo text)  definer  anon=true  auth=true
+funcion  entreno_resumen_hoy(alumno uuid)  invoker  anon=false  auth=true
 funcion  equipo_alumno_subgrupo()  definer  anon=false  auth=false
 funcion  equipo_bajo_mi_coordinacion(p_equipo uuid)  definer  anon=false  auth=true
 funcion  equipo_docente()  definer  anon=false  auth=true
@@ -1096,6 +1097,7 @@ funcion  informes_entreno_modulos()  invoker  anon=false  auth=true
 funcion  informes_inactivos(p_dias integer)  invoker  anon=true  auth=true
 funcion  informes_resumen_alumnos()  invoker  anon=false  auth=true
 funcion  informes_tema_mas_flojo(p_temas text[])  invoker  anon=false  auth=true
+funcion  informes_tipo_mas_flojo()  invoker  anon=false  auth=true
 funcion  informes_totales()  invoker  anon=false  auth=true
 funcion  iniciar_examen(p_examen uuid)  definer  anon=false  auth=true
 funcion  interno.academia_activa()  definer  anon=false  auth=true

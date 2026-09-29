@@ -528,6 +528,40 @@ registro de tiempo).
   repaso de Practicar, el hub), `verificar-tipos-pagina.js` (que se anote el
   nivel) y `verificar-informes.js` (la tarjeta).
 
+## Memoria cuenta, y el resumen del día en el hub
+
+- **Memoria** (`entreno/memoria.html`, #560) no registraba nada: ni en
+  `training_progress` ni el tiempo (le faltaba `js/tiempo-plataforma.js`,
+  aunque Informes ya tenía su sección). Ahora:
+  - cada posición reconstruida escribe una fila `memoria`, con `piezas`,
+    `segundos`, `aciertos`, `total`, `estrellas` y `limpio` (sin un error).
+    Va sin `puzzle_id`: la posición se sortea, así que en una tarea cada
+    ronda cuenta. La migración `20260929171852` suma `'memoria'` al CHECK;
+  - se puede pedir en Tareas, por cantidad o por minutos;
+  - tiene dos logros: «Retratista» (10 posiciones) y «Memoria fotográfica»
+    (una de 12 piezas sin un error). El segundo sale de `logros_hitos()`
+    (`memoria_max_limpia`: la mayor cantidad de piezas reconstruida limpia);
+  - «Las probaste todas» pasa a 19 actividades.
+- **Los tipos 15 a 18** (Aguanta, Remata la ventaja, Elige a tiempo y Tus
+  propios errores) ya contaban: los cuatro terminan en `terminar()`, así que
+  se registran como `tipos`, entran a la cola de repaso y suman a «De todos
+  los tipos». No hubo que tocarlos.
+- **El resumen del día**, debajo de la meta en el hub: «Hoy: 12 ejercicios
+  (Mates 6, Tipos de entrenamiento 4, Memoria 2) · 9 de 11 sin error ni
+  pista · Para mañana: 3 repasos».
+  - Antes cada página festejaba lo suyo y nadie juntaba el día.
+  - Lo de hoy lo cuenta la base: `entreno_resumen_hoy()`, migración
+    `20260929172621`, con el día de Costa Rica.
+  - Los nombres son los de `js/tiempo-secciones.js`, los mismos de
+    Informes.
+  - Los repasos de mañana salen de todas las colas de «Repasar fallados» y
+    de Aperturas.
+  - Solo sale con algo hecho hoy; si la base no responde, no se pinta nada.
+- Lo prueban `verificar-memoria-pagina.js` (el registro, limpio y no),
+  `verificar-logros.js` (los logros de Memoria, con números que distinguen
+  el hito del conteo) y `verificar-entreno-repaso.js` (el resumen, y que no
+  salga sin nada hecho).
+
 ## Logros del Sonar, Batalla naval y Precisión; y el hub propone lo empezado
 
 - **Logros nuevos**:
