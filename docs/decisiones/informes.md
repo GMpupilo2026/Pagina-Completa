@@ -219,8 +219,32 @@ administración.
   «Copiar enlace» (armado desde la carpeta de la página, como en
   Formularios), y el arbitraje sigue quitado. Quien administra ve en cada
   diagnóstico «Llegó por el enlace de …».
-- `verificar-informes.js` («El enlace del diagnóstico de cada supervisor») y
-  `verificar-diagnostico-enlace.js` lo comprueban en el navegador.
+- **Y le llega un correo.** Al entrar un diagnóstico con supervisor, el
+  trigger `diagnosticos_publicos_avisa` (AFTER INSERT, cuando el otro ya puso
+  `supervisor_id`) llama con pg_net a la Edge Function `avisar-diagnostico`,
+  que le escribe al supervisor con los datos del visitante, su nivel y el
+  enlace a Informes, con la marca de su academia si tiene una sola, y
+  `reply_to` al correo del visitante: con «Responder» le escribe a él.
+  - **Lo dispara la base, no la página**: un envío cortado a la mitad no se
+    queda sin aviso. Y si encolarlo falla, el insert sigue: perder el
+    diagnóstico por el aviso sería peor.
+  - **La función va con `verify_jwt` en false** (la llama un trigger) y a
+    cambio exige el secreto `aviso_diagnostico_secreto` de la bóveda, que
+    creó la propia migración y no ve nadie. **Recibe solo el `id`**: a quién
+    se le escribe y qué dice sale de la fila, así que quien la llamara no
+    podría elegir destinatario ni texto.
+  - **Un correo por diagnóstico**: antes de mandar «toma» la fila poniendo
+    `aviso_enviado_at` solo si estaba vacía, y la vuelve a vaciar si Resend
+    falla. Un supervisor con usuario sin buzón no recibe nada.
+  - El nombre, el correo y el teléfono son texto ajeno: van escapados, también
+    en los `href`, y el asunto va sin saltos de línea.
+  - Comprobado en la base: sin el secreto la función contesta 401; con el
+    secreto y un id sin supervisor, «omitido» sin mandar nada; en una
+    transacción que se deshizo, el insert con enlace encola UN pedido con solo
+    el id y el insert sin enlace no encola nada.
+- `verificar-informes.js` («El enlace del diagnóstico de cada supervisor»),
+  `verificar-diagnostico-enlace.js` (en el navegador) y
+  `verificar-aviso-diagnostico.js` (el correo, sin red) lo comprueban.
 
 #### El diagnóstico de un visitante se descarga en PDF
 

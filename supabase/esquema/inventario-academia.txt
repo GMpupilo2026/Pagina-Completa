@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20260929023204
+# al-dia-con: 20260929025847
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -281,6 +281,7 @@ columna  desafios.para_id  uuid
 columna  desafios.respondido_at  timestamp with time zone
 columna  desafios.room_id  uuid
 columna  diagnosticos_publicos.atendido  boolean
+columna  diagnosticos_publicos.aviso_enviado_at  timestamp with time zone
 columna  diagnosticos_publicos.created_at  timestamp with time zone
 columna  diagnosticos_publicos.detalle  jsonb
 columna  diagnosticos_publicos.elo  integer
@@ -975,6 +976,7 @@ funcion  alumnos_del_profesor_con_nombre(p_profesor uuid)  invoker  anon=true  a
 funcion  avance_del_plan(p_alumno uuid, p_desde timestamp with time zone)  invoker  anon=false  auth=true
 funcion  avisar_clase_abierta()  definer  anon=false  auth=false
 funcion  avisar_desafio()  definer  anon=false  auth=false
+funcion  avisar_diagnostico_supervisor()  definer  anon=false  auth=false
 funcion  avisar_examen_asignado()  definer  anon=false  auth=false
 funcion  avisar_examen_reabierto()  definer  anon=false  auth=false
 funcion  avisar_fichas_faltantes()  definer  anon=false  auth=false
@@ -1173,6 +1175,7 @@ funcion  resumen_satisfaccion(p_desde date, p_hasta date)  invoker  anon=false  
 funcion  resumen_tareas_examenes(p_alumno uuid, p_desde timestamp with time zone, p_hasta timestamp with time zone)  definer  anon=false  auth=true
 funcion  retirar_justificacion(p_id uuid)  definer  anon=false  auth=true
 funcion  revisar_informe_mensual(p_id uuid, p_comentario text)  definer  anon=false  auth=true
+funcion  secreto_aviso_diagnostico()  definer  anon=false  auth=false
 funcion  secreto_tanda_cobros()  definer  anon=false  auth=false
 funcion  secreto_tanda_informes()  definer  anon=false  auth=false
 funcion  secreto_tanda_push()  definer  anon=false  auth=false
@@ -1487,6 +1490,7 @@ trigger  class_presence_log  class_presence_log_protege_tiempos
 trigger  class_sessions  class_sessions_avisa_push
 trigger  cobros_contacto  cobros_contacto_protegido
 trigger  desafios  desafios_avisa_push
+trigger  diagnosticos_publicos  diagnosticos_publicos_avisa
 trigger  diagnosticos_publicos  diagnosticos_publicos_supervisor
 trigger  equipo_alumnos  equipo_alumnos_subgrupo
 trigger  equipo_entrenadores  equipo_entrenadores_subgrupo

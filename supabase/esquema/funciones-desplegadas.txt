@@ -7,6 +7,7 @@
 #
 # funcion                      verify_jwt   que hace
 admin-manage-users             true         el panel de administracion: cuentas, cupo, equipos
+avisar-diagnostico             false        el correo al supervisor por un diagnostico de su enlace (trigger, secreto de la boveda)
 bootstrap-admin                true         deshabilitada (410): la cuenta master ya existe
 chess-results-proxy            true         trae de chess-results.com la ficha de un jugador
 cobros-recordatorios           false        la tanda diaria de avisos de morosidad (pg_cron)
