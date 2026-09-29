@@ -403,6 +403,17 @@
                     <div id="diagnosticos-clase"></div>
                 </div>
 
+                <!-- Los temas que más se repiten en los errores de las partidas de
+                     TODO el grupo elegido arriba («Tus propios errores»). Lo cuenta la
+                     base (errores_temas_del_grupo), con la RLS de training_state: el
+                     navegador no se baja los ejercicios de cada alumno para sumarlos.
+                     Lo pinta renderErroresDelGrupo(). -->
+                <div id="errores-grupo" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
+                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1"><span aria-hidden="true">🪞</span> Los errores de las partidas del grupo</h2>
+                    <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">Los temas que más se repiten cuando los alumnos del grupo elegido arriba revisan sus partidas en «Tus propios errores»: por dónde conviene la próxima clase.</p>
+                    <div id="errores-grupo-body" aria-live="polite"></div>
+                </div>
+
                 <!-- Los dos de abajo NO son de sus alumnos: son gente de fuera que hizo
                      la prueba pública. Ocupaban el primer lugar de la página, o sea que
                      lo primero que veía un profesor al entrar no era su clase. Van
@@ -462,6 +473,8 @@
     <script src="js/tipos-catalogo.js"></script>
     <script src="js/tipo-flojo.js"></script>
     <script src="js/coordenadas-casillas.js"></script>
+    <script src="js/vendor/chess.js"></script>
+    <script src="js/posicion-valida.js"></script>
     <script src="js/tipos-reglas.js"></script>
     <script src="js/preparacion-posiciones.js"></script>
     <script src="js/preparacion-tactica.js"></script>

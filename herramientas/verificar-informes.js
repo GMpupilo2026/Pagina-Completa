@@ -125,7 +125,10 @@ window.__funcion = [];
            de donde la página refresca su estado, y un doble que devolviera la
            tabla entera daría por bueno un recuento equivocado. */
         if (pendiente && (pendiente.accion === "insert" || pendiente.accion === "upsert")) {
-          d = Array.isArray(pendiente.fila) ? pendiente.fila : [pendiente.fila];
+          // Como la base: lo que se inserta sin id recibe uno (el plan nuevo
+          // tiene que tener con qué colgarle sus renglones).
+          d = (Array.isArray(pendiente.fila) ? pendiente.fila : [pendiente.fila])
+            .map((f) => (f && f.id === undefined && pendiente.accion === "insert" ? Object.assign({ id: etiqueta.replace("from:", "") + "-" + (window.__escrituras.length) }, f) : f));
           return Promise.resolve({ data: unica ? (d[0] || null) : d, error: null }).then(res, rej);
         }
         if (pendiente && pendiente.accion === "update" && Array.isArray(filas)) {
@@ -381,6 +384,22 @@ async function pruebaProfesor(browser) {
       premios_de_alumno: PREMIOS_ANA,
       trofeos_de: [{ por_clase: 9, ajustes: 0, total: 9 }],
     },
+    /* Los temas de los errores del grupo (errores_temas_del_grupo): la base
+       contesta distinto según los alumnos que se le pasen, así que si la página
+       no mandara los del grupo elegido, la lista no cambiaría al filtrar. Un
+       tema que la página no conoce (lo escribió el navegador de un alumno) y
+       «otra» no se pintan. */
+    rpcPorArgs: {
+      errores_temas_del_grupo: {
+        '{"p_alumnos":["a-1","a-2","a-3"]}': [
+          { tema: "clavada", errores: 5, alumnos: 2 },
+          { tema: "<img src=x>", errores: 4, alumnos: 1 },
+          { tema: "horquilla", errores: 1, alumnos: 1 },
+          { tema: "otra", errores: 1, alumnos: 1 },
+        ],
+        '{"p_alumnos":["a-2"]}': [{ tema: "colgada", errores: 2, alumnos: 1 }],
+      },
+    },
     tablas: {
       profiles: [{ id: "prof-1", role: "profesor", is_admin: true, full_name: "Oscar", email: "o@x.cr" }],
       training_plans: [], diagnosticos_publicos: [], arbitrajes_publicos: arbitrajes,
@@ -406,6 +425,16 @@ async function pruebaProfesor(browser) {
   igual("entreno · Ana", await fila(page, "entreno-table-body", 0), "Ana Rojas | 12 | 4 | 18 | 2 (5⭐) | 6 (1·2·3) | 7 | 4");
   igual("entreno · Bruno", await fila(page, "entreno-table-body", 1), "Bruno Mena | 3 | 0 | — | — | — | — | —");
   igual("ranking · primera fila", await page.textContent("#leaderboard > div:first-child"), "Ana Rojas7/10 · 70%");
+
+  console.log("-- Los errores de las partidas del grupo");
+  await page.waitForFunction(() => document.querySelectorAll("#errores-grupo-body li").length > 0);
+  const temasGrupo = () => page.evaluate(() => [...document.querySelectorAll("#errores-grupo-body li")].map((li) => {
+    const a = li.querySelector("a");
+    return li.querySelector("span").textContent + (a ? " → " + a.getAttribute("href") : "");
+  }).join(" // "));
+  igual("los temas de todo el grupo, con su nombre y a dónde practicarlos; lo desconocido y «otra» no salen", await temasGrupo(),
+    "Clavada · 5 errores en 2 alumnos → entreno/temas.html?tema=pin // Horquilla (ataque doble) · 1 error en 1 alumno → entreno/temas.html?tema=fork");
+  igual("y se ve de verdad", await page.evaluate(() => document.getElementById("errores-grupo-body").checkVisibility()), true);
 
   /* EL ÍNDICE DE LA CLASE. Antes acá salían tres listas de los mismos alumnos
      —precisión, asistencia y entrenamiento— una detrás de otra y sin corte: con
@@ -669,6 +698,21 @@ async function pruebaProfesor(browser) {
     [document.getElementById("errores-body").innerHTML.includes("onerror"), !!document.querySelector("#errores-body img")].join()), "false,false");
   igual("lo de otra alumna no se cuela", await page.evaluate(() => document.getElementById("errores-body").textContent.includes("De Bea")), "false");
   await (await page.$("#errores-report")).screenshot({ path: "/tmp/informes-errores.png" }).catch(() => {});
+
+  // Llevar sus errores a un plan de clase (quien da clase: prof-1 es profesor).
+  const antesPlan = await page.evaluate(() => window.__escrituras.length);
+  await page.getByRole("button", { name: /errores a un plan de clase/ }).click();
+  await page.waitForFunction(() => /Listo|No se pudo/.test((document.querySelector('#errores-body [role="status"]') || {}).textContent || ""), null, { timeout: 8000 }).catch(() => {});
+  const plan = await page.evaluate((desde) => window.__escrituras.slice(desde).map((e) => ({ t: e.etiqueta, f: e.fila })), antesPlan);
+  const cab = plan.filter((e) => e.t === "from:planes_clase");
+  const renglones = plan.filter((e) => e.t === "from:plan_items").map((e) => e.f);
+  igual("crea UN plan, a nombre de quien da clase y con el nombre del alumno", cab.length === 1 && cab[0].f.profesor_id === "prof-1" && /Errores de las partidas de Ana Rojas/.test(cab[0].f.titulo), "true");
+  igual("una posición por error (los 6 que tienen forma; el de HTML no entra)", renglones.length, 6);
+  igual("todas de tipo posición, colgadas del plan nuevo y con su FEN", renglones.every((x) => x.tipo === "posicion" && x.fen && x.plan_id && x.plan_id.indexOf("planes_clase-") === 0), "true");
+  igual("primero las que no resolvió", renglones.slice(0, 4).map((x) => x.titulo.split(" · ").slice(0, 2).join(" · ")).join(" | "),
+    "Partida del 24 sept · jugada 9 | Partida del 23 sept · jugada 8 | Partida del 22 sept · jugada 7 | Partida del 21 sept · jugada 6");
+  igual("la pregunta del profe dice qué se jugó y qué era lo bueno", renglones[0].pregunta, "¿Qué jugarías? En la partida se jugó Cxf7; lo bueno: Axf7+ o 0-0.");
+  igual("y ofrece abrir ESE plan", /^planes\.html\?plan=planes_clase-\d+$/.test(await page.evaluate(() => { const a = document.querySelector('#errores-body [role="status"] a'); return a ? a.getAttribute("href") : ""; })), "true");
   igual("lo pide acotado a ESE alumno y a sus tres claves", await page.evaluate(() => {
     const c = window.__consultas.find((x) => x.etiqueta === "from:training_state");
     return c ? JSON.stringify(c.donde) : null;
@@ -761,6 +805,9 @@ async function pruebaProfesor(browser) {
   await page.selectOption("#group-filter", "7B");
   await page.waitForFunction(() => document.querySelectorAll("#attendance-table-body tr").length === 1);
   igual("solo 7B", await fila(page, "attendance-table-body", 0), "Bruno Mena | 7B | 1/4 · 2 faltas justificadas | 10 min | 0 min | 10 min");
+  await page.waitForFunction(() => document.getElementById("errores-grupo-body").textContent.includes("Pieza sin defender"));
+  igual("los errores del grupo siguen al filtro: a la base se le mandan solo los de 7B", await temasGrupo(),
+    "Pieza sin defender · 2 errores en 1 alumno → entreno/temas.html?tema=hangingPiece");
   await page.selectOption("#group-filter", "");
   await page.selectOption("#topic-filter", "4x4");
   await page.waitForFunction(() => !document.getElementById("topic-report").classList.contains("hidden"));

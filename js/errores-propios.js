@@ -163,13 +163,18 @@
   /* ---------- las partidas ---------- */
   /* [{ clave, origen, color, turno0, fenInicial, jugadas, fecha }] de las
      terminadas, de la más reciente a la más vieja. */
-  async function traerPartidas(sb, uid) {
+  /* `solo`: la clave de UNA partida ("juego:<id>"), para «Revisa esta
+     partida» al terminarla en Juegos; se pide esa sola, aunque no esté entre
+     las 30 más recientes, y con los mismos filtros (suya, estándar, terminada). */
+  async function traerPartidas(sb, uid, solo) {
     const out = [];
+    const soloJuego = solo && /^juego:[0-9a-zA-Z-]{1,64}$/.test(solo) ? solo.slice(6) : null;
+    let pedidoJuegos = sb.from("game_rooms").select("id, white_id, black_id, moves, updated_at")
+      .eq("variant", "estandar").eq("status", "finished")
+      .or("white_id.eq." + uid + ",black_id.eq." + uid);
+    if (soloJuego) pedidoJuegos = pedidoJuegos.eq("id", soloJuego);
     const [juegos, practicas] = await Promise.all([
-      sb.from("game_rooms").select("id, white_id, black_id, moves, updated_at")
-        .eq("variant", "estandar").eq("status", "finished")
-        .or("white_id.eq." + uid + ",black_id.eq." + uid)
-        .order("updated_at", { ascending: false }).range(0, 29),
+      pedidoJuegos.order("updated_at", { ascending: false }).range(0, 29),
       sb.from("practice_games").select("id, session_id, moves, student_color, status, updated_at")
         .eq("student_id", uid).neq("status", "playing")
         .order("updated_at", { ascending: false }).range(0, 29),
@@ -215,8 +220,16 @@
   async function analizar(sb, uid, o) {
     const motor = o.motor;
     const yaVistas = vistas();
-    const todas = await traerPartidas(sb, uid);
-    const pendientes = todas.filter((p) => !yaVistas[p.clave]).slice(0, MAX_PARTIDAS);
+    const todas = await traerPartidas(sb, uid, o.solo);
+    if (o.solo) {
+      // Revisar UNA partida: si no es suya (o no terminó, o no es estándar), no
+      // llega; si ya se revisó, se dice cuáles salieron de ella.
+      const esa = todas.find((p) => p.clave === o.solo);
+      if (!esa) return { partidas: 0, pendientesAntes: 0, nuevos: [], noEncontrada: true };
+      if (yaVistas[esa.clave]) return { partidas: 0, pendientesAntes: 0, nuevos: [], yaRevisada: true, deEsa: ejercicios().filter((x) => x.id.indexOf(esa.clave.replace(":", "-") + "-") === 0) };
+      if (esa.jugadas.length < 10) return { partidas: 0, pendientesAntes: 0, nuevos: [], muyCorta: true };
+    }
+    const pendientes = (o.solo ? todas.filter((p) => p.clave === o.solo) : todas).filter((p) => !yaVistas[p.clave]).slice(0, MAX_PARTIDAS);
     const nuevos = [];
     let hechas = 0;
     for (const p of pendientes) {

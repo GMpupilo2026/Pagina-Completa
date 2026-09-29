@@ -891,6 +891,7 @@
             const cajaVisitantes = document.getElementById("diagnosticos-visitantes");
             if (cajaArbitrajes) renderArbitrajesPublicos(cajaArbitrajes);
             renderDiagnosticosClase(document.getElementById("diagnosticos-clase"));
+            renderErroresDelGrupo(students);
             if (cajaVisitantes) renderDiagnosticosVisitantes(cajaVisitantes);
 
             /* Los dos paneles del público van plegados, así que su conteo tiene
@@ -1011,6 +1012,61 @@
            administración. Acá solo se leen: ErroresPropios.deFilas() descarta lo
            que no tenga forma de ejercicio (lo escribió el navegador del alumno)
            y todo se pinta con textContent. Tres claves, una sola consulta. */
+        /* Los temas de los errores de TODO el grupo (el filtro de arriba). Los
+           cuenta la base —errores_temas_del_grupo(), SECURITY INVOKER sobre
+           training_state—: bajarse los ejercicios de cada alumno para sumarlos
+           acá chocaría con el corte de ~1000 filas de PostgREST. Se le pasan los
+           ids del grupo elegido; lo que de verdad se ve lo sigue decidiendo la
+           RLS. `erroresGrupoVez`: si se cambia de grupo antes de que conteste,
+           la respuesta vieja no pisa a la nueva. */
+        let erroresGrupoVez = 0;
+        async function renderErroresDelGrupo(students) {
+            const caja = document.getElementById("errores-grupo");
+            const body = document.getElementById("errores-grupo-body");
+            if (!caja || !body) return;
+            const TEMAS = window.PreparacionTactica ? PreparacionTactica.TEMAS : null;
+            if (!TEMAS) { caja.classList.add("hidden"); return; }
+            caja.classList.remove("hidden");
+            const vez = ++erroresGrupoVez;
+            body.textContent = "";
+            const p = (texto, cls) => { const x = document.createElement("p"); x.className = cls || "text-sm text-brand-600 dark:text-brand-300"; x.textContent = texto; body.appendChild(x); return x; };
+            if (!students.length) { p("No hay alumnos en este grupo."); return; }
+            p("Cargando…");
+            const { data, error } = await sb.rpc("errores_temas_del_grupo", { p_alumnos: students.map((s) => s.id) });
+            if (vez !== erroresGrupoVez) return;
+            body.textContent = "";
+            if (error) { p("No se pudieron cargar los errores del grupo. Intenta de nuevo en un momento."); return; }
+            // Solo los temas que la página sabe nombrar: la clave la escribió el
+            // navegador de cada alumno.
+            const filas = (data || []).filter((f) => f && TEMAS[f.tema] && f.tema !== "otra" && f.errores > 0).slice(0, 6);
+            if (!filas.length) {
+                p("Todavía no hay errores con tema en las partidas de este grupo. Aparecen cuando tus alumnos las revisan en Entrenamiento → Tipos de entrenamiento → «Tus propios errores».");
+                return;
+            }
+            const ol = document.createElement("ol");
+            ol.className = "space-y-2";
+            filas.forEach((f) => {
+                const t = TEMAS[f.tema];
+                const li = document.createElement("li");
+                li.className = "flex flex-wrap items-baseline justify-between gap-2 border-b border-brand-50 dark:border-brand-800/60 last:border-0 pb-2";
+                const izq = document.createElement("span");
+                izq.className = "text-sm text-brand-700 dark:text-brand-200";
+                const nombre = document.createElement("strong");
+                nombre.textContent = t.nombre;
+                izq.append(nombre, " · " + pluralES(f.errores, "error", "errores") + " en " + pluralES(f.alumnos, "alumno", "alumnos"));
+                li.appendChild(izq);
+                if (t.practica) {
+                    const a = document.createElement("a");
+                    a.href = "entreno/temas.html?tema=" + encodeURIComponent(t.practica);
+                    a.className = "text-sm font-semibold text-accent-700 dark:text-accent-400 underline";
+                    a.textContent = "Ejercicios de " + t.plural + " →";
+                    li.appendChild(a);
+                }
+                ol.appendChild(li);
+            });
+            body.appendChild(ol);
+        }
+
         const ERRORES_A_LA_VISTA = 5;
         async function renderErroresPartidas(studentId, name) {
             const caja = document.getElementById("errores-report");
@@ -1080,6 +1136,64 @@
                 });
                 body.appendChild(ver);
             }
+            botonPlanDeErrores(body, name, r);
+        }
+
+        /* Llevar sus errores a la clase: un plan de clase nuevo (js/plan-clase.js)
+           con una posición por error, como hace «Lo que más le costó a tu clase»
+           (js/lo-que-costo.js). Primero los que todavía no resolvió, hasta 12. Es
+           de quien da clase: administración no da clase (lo revisa con «Ver
+           como: profesor») y mirando «como» otra persona no se escribe nada a su
+           nombre. Las posiciones las guardó el navegador del alumno: cada una
+           pasa por PosicionValida antes de entrar al plan. */
+        const PLAN_ERRORES_MAX = 12;
+        function botonPlanDeErrores(body, name, r) {
+            if (!window.PlanClase || !window.PosicionValida || profile.role !== "profesor" || profile._persona) return;
+            const orden = r.ejercicios.filter((x) => !r.resueltos[x.id]).concat(r.ejercicios.filter((x) => r.resueltos[x.id]));
+            const elegidos = orden.filter((x) => !PosicionValida.motivo(x.fen)).slice(0, PLAN_ERRORES_MAX);
+            if (!elegidos.length) return;
+            const caja = document.createElement("div");
+            caja.className = "mt-4 border-t border-brand-100 dark:border-brand-800 pt-4";
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "text-sm font-semibold px-4 py-2 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+            const ic = document.createElement("span"); ic.setAttribute("aria-hidden", "true"); ic.textContent = "📋 ";
+            btn.append(ic, document.createTextNode(elegidos.length === 1 ? "Llevar este error a un plan de clase" : "Llevar " + elegidos.length + " errores a un plan de clase"));
+            const msg = document.createElement("p");
+            msg.className = "text-sm mt-2 text-brand-600 dark:text-brand-300";
+            msg.setAttribute("role", "status");
+            btn.addEventListener("click", async () => {
+                btn.disabled = true;
+                msg.textContent = "Armando el plan…";
+                const T = window.PreparacionTactica ? PreparacionTactica.TEMAS : null;
+                const sanEs = (s) => (window.TiposReglas ? TiposReglas.sanEs(s) : s);
+                try {
+                    const hoy = new Intl.DateTimeFormat("es-CR", { timeZone: "America/Costa_Rica", day: "numeric", month: "long" }).format(new Date());
+                    const plan = await PlanClase.crearPlan(sb, profile.id, ("Errores de las partidas de " + name + " (al " + hoy + ")").slice(0, 200),
+                        "Salen de «Tus propios errores»: la posición antes de cada error de sus partidas. En la clase, pon cada una en el tablero y pregunta qué jugarían.");
+                    for (let i = 0; i < elegidos.length; i += 1) {
+                        const x = elegidos[i];
+                        const tema = x.tema && T && T[x.tema] ? " · " + T[x.tema].nombre.toLowerCase() : "";
+                        await PlanClase.agregarItem(sb, plan.id, {
+                            orden: i, tipo: "posicion", fen: x.fen,
+                            titulo: (String(x.resumen || "Error").slice(0, 80) + tema).slice(0, 200),
+                            pregunta: ("¿Qué jugarías? En la partida se jugó " + sanEs(x.jugada) + "; lo bueno: " + x.buenas.map(sanEs).join(" o ") + ".").slice(0, 500),
+                        });
+                    }
+                    msg.textContent = "Listo: el plan quedó en tus Planes de clase. En la clase lo abres y pones cada posición en el tablero. ";
+                    const a = document.createElement("a");
+                    a.href = "planes.html?plan=" + encodeURIComponent(plan.id);
+                    a.className = "font-semibold text-accent-700 dark:text-accent-400 underline";
+                    a.textContent = "Abrir el plan";
+                    msg.appendChild(a);
+                } catch (e) {
+                    console.error(e);
+                    msg.textContent = "No se pudo armar el plan. Intenta de nuevo en un momento.";
+                    btn.disabled = false;
+                }
+            });
+            caja.append(btn, msg);
+            body.appendChild(caja);
         }
 
         /* ---------------- Tareas y exámenes ----------------

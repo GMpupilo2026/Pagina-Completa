@@ -967,6 +967,50 @@ jugó, cómo cambió la evaluación, qué era lo bueno y si ya lo resolvió (con
   diagnósticos y este panel piden lo de uno, y está bien). Rota a propósito
   —la consulta de diagnósticos sin `student_id`—, salta.
 
+### Llevar sus errores a un plan de clase
+
+Debajo de la lista, el profesor tiene **«📋 Llevar N errores a un plan de
+clase»**: crea un plan (`planes_clase` + `plan_items`, con la API de
+`js/plan-clase.js`, igual que «Lo que le costó a tu clase») con hasta 12
+posiciones, **primero las que el alumno todavía no resolvió**. Cada una va como
+ítem `posicion` con su FEN, el título (la partida, la jugada y el tema) y la
+pregunta «¿Qué jugarías? En la partida se jugó X; lo bueno: Y o Z.». En la
+clase se abre el plan y cada posición va al tablero con un toque.
+
+- **Ninguna posición se inventa**: son las de sus partidas, y antes de
+  guardarlas pasan por `PosicionValida.motivo()` (la que no sea una posición
+  legal se salta).
+- Solo para quien da clase (`role = profesor`) y no en «Ver como»: una cuenta
+  que solo administra no da clase, y un plan armado mirando como otra persona
+  quedaría a nombre de quien mira.
+- El aviso termina con «Abrir el plan» (`planes.html?plan=<id>`).
+  `verificar-informes.js` comprueba el plan, sus ítems, el orden (sin resolver
+  primero: roto a propósito, salta) y el enlace.
+
+### Los temas de los errores de todo el grupo
+
+La vista de grupo trae **«🪞 Los errores de las partidas del grupo»**: los
+temas que más se repiten en los errores de los alumnos del grupo elegido
+arriba, con cuántos errores y en cuántos alumnos, y el enlace a practicar cada
+uno en «Ejercicios por tema». Sirve para decidir la próxima clase.
+
+- **Lo cuenta la base**: `errores_temas_del_grupo(p_alumnos)` (migración
+  `20260929190705`), `SECURITY INVOKER` sobre `training_state`, así que ve lo
+  que ya dejaba ver su RLS y nada más (se comprobó impersonando a un profesor:
+  el alumno de otra academia no suma; y a un alumno: solo lo suyo). Bajarse
+  los ejercicios de cada alumno para sumarlos en el navegador chocaría con el
+  corte de ~1000 filas.
+- `p_alumnos` son los del grupo o subgrupo del filtro: la lista **sigue al
+  filtro**. El doble del verificador contesta distinto según los alumnos que
+  se le pasen (`rpcPorArgs`); mandar siempre a todos, a propósito, lo hace
+  saltar.
+- El JSON lo escribió el navegador del alumno: un `raw` roto se salta
+  (`interno.jsonb_o_nulo`), solo cuenta lo que tenga `id` y `fen`, y el tema
+  tiene que tener forma de clave. En la página, además, solo se pinta un tema
+  que `PreparacionTactica.TEMAS` sabe nombrar, y nunca «otra».
+- Una respuesta vieja no pisa a la nueva si se cambia de grupo antes de que
+  conteste (`erroresGrupoVez`).
+
 ## Los informes que llegan a la casa
 
 En Informes, mirando a UN alumno, está "📧 Informes a la casa": a qué correos se

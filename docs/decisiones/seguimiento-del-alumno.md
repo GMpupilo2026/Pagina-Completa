@@ -269,6 +269,11 @@ enterarse allá cuesta la clase.
   pasa— no hay que volver a buscarlo en la lista.
 - Las notas del plan **se guardan al salir del campo**, sin botón: es un campo
   que se toca de pasada mientras se arma el resto.
+- **Un plan también se arma solo, desde lo que ya pasó**: con las preguntas
+  que más le costaron a la clase (ver «Lo que más le costó a tu clase» en
+  clase-en-vivo.md) o con los errores de las partidas de un alumno, desde su
+  informe (ver «Llevar sus errores a un plan de clase» en informes.md). Los
+  dos escriben con la misma API de `js/plan-clase.js`.
 
 ### Quién puede qué
 

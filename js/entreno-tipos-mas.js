@@ -711,6 +711,7 @@
      jugada buena en la posición donde se equivocó (vale cualquiera que el
      motor dio tan buena como la mejor). */
   const E = window.ErroresPropios;
+  let revisarPedidaHecha = false;
   U.EXTRA.errores = function (caja) {
     const cuadro = el("div", "rounded-xl p-5 mb-6 bg-white dark:bg-brand-900 shadow-sm");
     const cuantos = E ? E.ejercicios().length : 0;
@@ -743,24 +744,37 @@
     parar.type = "button";
     let detener = false;
     parar.addEventListener("click", () => { detener = true; aviso.textContent = "Deteniendo… lo revisado hasta ahora queda guardado."; });
-    buscar.addEventListener("click", async () => {
+    /* Busca errores: en las partidas nuevas, o en UNA (`solo`, «Revisa esta
+       partida» al terminarla en Juegos: llega como ?revisar=juego:<id>). */
+    const plural = (n, uno, varios) => n + " " + (n === 1 ? uno : varios);
+    async function buscarErrores(solo) {
       if (!E || !window.PreparacionMotor || !PreparacionMotor.disponible()) { aviso.textContent = "El motor no está disponible en este navegador: sin él no se pueden revisar las partidas."; return; }
       let uid = null;
       try { const { data } = await sb.auth.getSession(); uid = data && data.session && data.session.user && data.session.user.id; } catch (e) { uid = null; }
       if (!uid) { aviso.textContent = "Necesitas iniciar sesión para revisar tus partidas."; return; }
       buscar.disabled = true; parar.classList.remove("hidden"); detener = false;
-      aviso.textContent = "Buscando tus partidas terminadas…";
+      aviso.textContent = solo ? "Buscando tu partida…" : "Buscando tus partidas terminadas…";
+      let primero = null;
       try {
         const r = await E.analizar(sb, uid, {
-          motor: PreparacionMotor,
+          motor: PreparacionMotor, solo,
           parar: () => detener,
           alAvanzar: (texto) => { aviso.textContent = "Revisando… " + texto; },
         });
         U.cargarPropios();
-        aviso.textContent = r.pendientesAntes === 0
-          ? "No hay partidas nuevas para revisar. Juega en Juegos o en la práctica de la clase y vuelve."
-          : "Listo: se revisaron " + r.partidas + (r.partidas === 1 ? " partida" : " partidas") + " y " +
-            (r.nuevos.length === 0 ? "no salió ningún error nuevo." : r.nuevos.length === 1 ? "salió 1 ejercicio nuevo." : "salieron " + r.nuevos.length + " ejercicios nuevos.");
+        if (solo) {
+          const lista = r.yaRevisada ? r.deEsa : r.nuevos;
+          primero = lista && lista[0];
+          aviso.textContent = r.noEncontrada ? "No encontré esa partida entre tus partidas terminadas de ajedrez normal."
+            : r.muyCorta ? "Esa partida es muy corta para revisarla (menos de 10 jugadas)."
+            : (r.yaRevisada ? "Esa partida ya estaba revisada: " : "Revisé tu partida: ") +
+              (lista.length ? plural(lista.length, "error", "errores") + " para practicar." : "no encontré ningún error grande. ¡Bien jugada!");
+        } else {
+          aviso.textContent = r.pendientesAntes === 0
+            ? "No hay partidas nuevas para revisar. Juega en Juegos o en la práctica de la clase y vuelve."
+            : "Listo: se revisaron " + plural(r.partidas, "partida", "partidas") + " y " +
+              (r.nuevos.length === 0 ? "no salió ningún error nuevo." : r.nuevos.length === 1 ? "salió 1 ejercicio nuevo." : "salieron " + r.nuevos.length + " ejercicios nuevos.");
+        }
       } catch (e) {
         console.error(e);
         aviso.textContent = "No se pudieron revisar las partidas. Intenta de nuevo en un momento.";
@@ -769,8 +783,24 @@
       const texto = aviso.textContent;
       U.repintarTipo("errores");
       const nuevo = $("tipo-extra").querySelector('[role="status"]');
-      if (nuevo) nuevo.textContent = texto;
-    });
+      if (nuevo) {
+        nuevo.textContent = texto;
+        if (primero) {
+          const ir = el("a", "block mt-2 font-semibold text-accent-700 dark:text-accent-400 underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "Ir al primero →");
+          ir.href = "#errores/" + primero.nivel + "/" + encodeURIComponent(primero.id);
+          nuevo.appendChild(ir);
+        }
+      }
+    }
+    buscar.addEventListener("click", () => buscarErrores(null));
+    // ?revisar=juego:<id>: se revisa esa partida sola, una vez, y se saca de la
+    // dirección (volver atrás o recargar no la vuelve a pedir).
+    const pedida = new URLSearchParams(location.search).get("revisar");
+    if (pedida && !revisarPedidaHecha) {
+      revisarPedidaHecha = true;
+      try { history.replaceState(null, "", location.pathname + location.hash); } catch (e) {}
+      setTimeout(() => buscarErrores(pedida), 0);
+    }
     cuadro.append(aviso, buscar, parar);
     caja.appendChild(cuadro);
   };

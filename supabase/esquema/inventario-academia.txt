@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20260929175618
+# al-dia-con: 20260929190705
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -1060,6 +1060,7 @@ funcion  equipo_docente()  definer  anon=false  auth=true
 funcion  equipo_entrenador_subgrupo()  definer  anon=false  auth=false
 funcion  equipo_lo_cree_yo(p_equipo uuid)  definer  anon=false  auth=true
 funcion  equipo_renombra_subgrupos()  definer  anon=false  auth=false
+funcion  errores_temas_del_grupo(p_alumnos uuid[])  invoker  anon=false  auth=true
 funcion  es_companero(p_otro uuid)  definer  anon=false  auth=true
 funcion  es_coordinador_de(p_persona uuid)  definer  anon=false  auth=true
 funcion  es_correo_interno(p_email text)  invoker  anon=true  auth=true
@@ -1114,6 +1115,7 @@ funcion  interno.coordinadores_de(p_persona uuid)  definer  anon=false  auth=fal
 funcion  interno.enlaces_de_sala_validos(p jsonb)  invoker  anon=true  auth=true
 funcion  interno.frenar_envio_publico(p_tipo text, p_ambito text, p_correo text, p_ip text)  invoker  anon=false  auth=false
 funcion  interno.gente_de_mis_academias()  definer  anon=false  auth=true
+funcion  interno.jsonb_o_nulo(p text)  invoker  anon=false  auth=true
 funcion  interno.nombre_libre_de_subgrupo(p_profesor uuid, p_base text, p_excepto uuid)  definer  anon=false  auth=false
 funcion  interno.pizarras_de_sala_validas(p jsonb)  invoker  anon=true  auth=true
 funcion  interno.profesores_de(p_alumno uuid)  definer  anon=false  auth=true

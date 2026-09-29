@@ -476,6 +476,32 @@ async function pruebaLosComandosDeSiempre(browser) {
   await ctx.close();
 }
 
+/* «Revisa tus errores en esta partida»: al terminar, quien jugó tiene el enlace a
+   «Tus propios errores» con ESA partida (?revisar=juego:<id>). Quien solo mira
+   no lo tiene, ni en una partida en curso ni en una de menos de 10 jugadas. Se
+   mide si se ve (checkVisibility), no la clase. */
+async function pruebaRevisarLaPartida(browser) {
+  console.log("\n— Revisa tus errores en esta partida —");
+  const JUGADAS = ["e4", "e5", "Nf3", "Nc6", "Bc4", "Nd4", "Nxe5", "Qg5", "Nxf7", "Qxg2", "Rf1", "Qxe4+"];
+  const terminada = (moves) => Object.assign(sala("r1", "estandar", INICIAL), { status: "finished", result: "black", moves });
+  const caso = async (room, usuario) => {
+    const { ctx, page, errores } = await abrir(browser, "/estandar.html?room=r1", { tablas: { game_rooms: [room], profiles: PERFILES } }, usuario, false);
+    const r = await page.evaluate(() => { const a = document.getElementById("revisar-partida"); return a ? [a.checkVisibility(), a.getAttribute("href")] : null; });
+    await ctx.close();
+    return { r, errores };
+  };
+  const jugo = await caso(terminada(JUGADAS), "u-ana");
+  ok("quien jugó ve el enlace al terminar", !!jugo.r && jugo.r[0] === true, JSON.stringify(jugo.r));
+  ok("y lleva a revisar ESA partida", !!jugo.r && jugo.r[1] === "entreno/tipos.html?revisar=juego%3Ar1#errores", jugo.r && jugo.r[1]);
+  ok("sin errores de la página", !jugo.errores.length, jugo.errores.join(" | "));
+  const mira = await caso(terminada(JUGADAS), "u-profe");
+  ok("quien solo mira no lo ve", !!mira.r && mira.r[0] === false, JSON.stringify(mira.r));
+  const enCurso = await caso(Object.assign(sala("r1", "estandar", INICIAL), { moves: JUGADAS }), "u-ana");
+  ok("en una partida en curso no se ve", !!enCurso.r && enCurso.r[0] === false, JSON.stringify(enCurso.r));
+  const corta = await caso(terminada(JUGADAS.slice(0, 4)), "u-ana");
+  ok("con menos de 10 jugadas no se ve", !!corta.r && corta.r[0] === false, JSON.stringify(corta.r));
+}
+
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
@@ -486,6 +512,7 @@ async function pruebaLosComandosDeSiempre(browser) {
     await pruebaLaAyuda(browser);
     await pruebaLaPosicionNoSeDicta(browser);
     await pruebaLosComandosDeSiempre(browser);
+    await pruebaRevisarLaPartida(browser);
   } finally {
     await browser.close();
   }
