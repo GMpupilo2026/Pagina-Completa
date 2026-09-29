@@ -863,6 +863,8 @@ function mostrarResultado(detalle, reciente) {
   eloEl.textContent = resumen.elo && resumen.elo.declarado
     ? `Elo: ${resumen.elo.lectura.texto} Nivel calculado combinando tu Elo con la prueba (${margen(resumen.elo.combinado, resumen.elo.errorCombinado)}).`
     : `Sin Elo registrado: el nivel sale solo de la prueba (${margen(resumen.elo.estimado, resumen.elo.error)}).${sesionActual ? ' Si tienes rating, agrégalo en Configuración › Perfil y el próximo diagnóstico lo tendrá en cuenta.' : ''}`;
+  const nota = PE.notaRecalibrado(resumen);
+  if (nota) eloEl.textContent += ' ' + nota;
   pintarEscalones(resumen);
 
   const areasBox = document.getElementById('result-areas');

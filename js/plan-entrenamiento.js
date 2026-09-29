@@ -582,6 +582,7 @@ window.PlanEntrenamiento = (function () {
         debilidades: porNota.filter((a) => a.nota < 60).slice(0, 3),
         fortalezas: porNota.slice().reverse().filter((a) => a.nota >= 80),
         perfil, fecha: (detalle && detalle.fecha) || null,
+        recalibrado: (detalle && detalle.recalibrado) || null,
       };
     }
     const conEscalones = detalle && detalle.dificultad
@@ -615,7 +616,24 @@ window.PlanEntrenamiento = (function () {
       fortalezas: ordenadas.slice().reverse().filter((a) => a.porcentaje >= 80),
       perfil: (detalle && detalle.perfil) || {},
       fecha: (detalle && detalle.fecha) || null,
+      recalibrado: (detalle && detalle.recalibrado) || null,
     };
+  }
+
+  /* Un resultado recalculado lo dice, con lo que decía antes: si un alumno vio
+     «Avanzado» y ahora ve «Intermedio», tiene que saber por qué cambió. El
+     `recalibrado` lo escribe quien recalcula (ver «La primera calibración con
+     la versión 5» en docs/decisiones/entrenamiento.md): { fecha, motivo,
+     medicion_anterior, nivel_etiqueta_anterior }. Texto plano: quien lo pinta
+     lo mete con textContent o escapado. */
+  function notaRecalibrado(resumen) {
+    const r = resumen && resumen.recalibrado;
+    if (!r || !r.fecha) return '';
+    let cuando = '';
+    try { cuando = new Date(r.fecha).toLocaleDateString('es-CR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'America/Costa_Rica' }); } catch (e) { cuando = ''; }
+    const antes = r.medicion_anterior && typeof r.medicion_anterior.elo === 'number'
+      ? ` Antes decía ≈${r.medicion_anterior.elo}${r.nivel_etiqueta_anterior ? ` (${r.nivel_etiqueta_anterior})` : ''}.` : '';
+    return `Resultado recalculado${cuando ? ' el ' + cuando : ''}: ${r.motivo || 'se corrigió la dificultad de las preguntas.'}${antes}`;
   }
 
   // Minutos diarios sugeridos según el nivel: ni pedirle una hora a quien recién
@@ -900,6 +918,6 @@ window.PlanEntrenamiento = (function () {
   return { AREAS, AREA_POR_ID, NIVELES, ESCALONES, nivelDe, nivelPorEscalones, porEscalon, resumir, generarPlan, enlace,
            claveDeAvance, avancePorClave, marcarAvance,
            recursoSeguro, planCompartido, semanaVigente, recursoPrincipal, hoyDelPlan,
-           ESCALON_ELO, escalonDeElo, azarDe, probabilidad, medir, combinar, notaDeArea, BANDAS_AREA, bandaDeNota,
+           ESCALON_ELO, escalonDeElo, azarDe, probabilidad, medir, combinar, notaRecalibrado, notaDeArea, BANDAS_AREA, bandaDeNota,
            ELO_TIPOS, ELO_TIPO_POR_ID, ELO_MIN, ELO_MAX, nivelDeElo, eloDeNivel, eloEstimado, eloValido, lecturaElo };
 })();
