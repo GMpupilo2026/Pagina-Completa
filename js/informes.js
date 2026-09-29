@@ -800,6 +800,7 @@
             document.getElementById("tiempo-report").classList.add("hidden");
             document.getElementById("evolucion-report").classList.add("hidden");
             document.getElementById("notas-report").classList.add("hidden");
+            document.getElementById("le-costo-report").hidden = true;
             document.getElementById("notas-alumno-report").classList.add("hidden");
             document.getElementById("topic-report").classList.add("hidden");
             document.getElementById("teacher-report").classList.add("hidden");
@@ -978,6 +979,9 @@
             renderErroresPartidas(studentId, name);
             renderAcceso(studentId, name);
             renderNotas(studentId);
+            // Lo que le costó en clase. Mirando a otra persona («Ver como») se ve, pero el plan no se arma: sería de quien mira.
+            LoQueCosto.pintarDelAlumno(sb, document.getElementById("le-costo-report"), studentId, name, session.user.id, !profile._persona)
+                .catch((e) => console.error(e));
             renderEncargados(studentId, name);
 
             const historyEl = document.getElementById("student-history");
