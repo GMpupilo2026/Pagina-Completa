@@ -361,6 +361,11 @@ el sitio adentro.
   con la mudanza y se quitaron, junto con la copia de `node_modules` que
   servían. Un verificador nuevo no necesita hacer nada: el sitio servido trae
   su chess.js.
+- **`qrcode-generator` (2.0.4) entró igual**, en `js/vendor/qrcode.js`, para
+  el código QR del proyector (ver «Entrar desde el celular con un código QR»).
+  Su `exports` no deja pedir `dist/qrcode.js` por la ruta, así que la lista lo
+  nombra por el paquete, que resuelve justo a ese archivo. `jsqr`, que lee el
+  código en el verificador, es solo de desarrollo: no se sirve.
 - **jsDelivr sigue en el `script-src` de `_headers`, pero ya solo por la
   transcripción** de `reportes.html`, que importa `@huggingface/transformers`
   desde ahí (fijado a 3.3.3). Si algún día se quita esa función, jsDelivr se va

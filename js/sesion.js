@@ -2761,7 +2761,7 @@
                 renderStudentsList();
                 pintarCuentaCalentamiento();
                 pintarEquiposProfe();
-                if (isTeacher) { anotarConectados(); revisarCallados(); }
+                if (isTeacher) { anotarConectados(); revisarCallados(); pintarQuienesEntraron(); }
                 pintarObservadores(mirando);
                 if (!isTeacher && !esObservador) pintarTeMiran(meMiran);
                 // El nombre del elegido sale de la presencia: al recargar llega después.

@@ -370,6 +370,8 @@ window.__deletes = [];
         }));
         return constructor(n, Object.values(suma));
       }
+      // Una semilla puede traer sus propias clases (un alumno con dos profes).
+      if (n === "mis_clases" && TABLAS.mis_clases) return constructor(n, TABLAS.mis_clases);
       return constructor(n, n === "mis_clases"
       ? [{ profesor_id: "u-profe", profesor: "Karina Rojas", es_principal: true,
            clase_abierta: SESIONES.some((c) => c.created_by === "u-profe" && !c.ended_at) }]

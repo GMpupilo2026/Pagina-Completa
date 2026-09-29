@@ -1251,6 +1251,46 @@ lo-que-costo`.** Está probado que fallan de verdad:
   - con el plan ofrecido mirando a otra persona;
   - con las jugadas en inglés.
 
+### Entrar desde el celular con un código QR
+
+En la clase presencial, «📱 Código para entrar», en la barra del proyector
+(`sesion.html?proyector=1`), muestra arriba del tablero un código QR grande.
+Al lado van la dirección escrita y cuántos alumnos ya entraron. El código
+abre `sesion.html?profe=<id del profe>` en el celular; el alumno entra con su
+cuenta de siempre y contesta ahí.
+
+- **`?profe=` elige la clase, no da permiso.** `ClaseElegida.resolver` lo usa
+  solo si ese profe está en `mis_clases()` del alumno, y la deja recordada. Si
+  el id no es de sus profes, no hace nada; y lo que se ve lo decide igual la
+  RLS. Lo del id en el código no es un dato que abra nada: sin la relación,
+  la base no entrega su clase.
+- **El parámetro se quita de la dirección** (`history.replaceState`). Si no,
+  al cambiar de clase con el selector (que recarga) volvería a mandar él.
+- **Quien no tenía sesión en ese celular pierde el `?profe=`.** La guardia de
+  sesión manda a `login.html?next=` solo con la ruta, y `next` no acepta
+  parámetros a propósito (una redirección abierta). No se tocó: después del
+  login cae en `sesion.html`, y en un celular nuevo no hay clase recordada, así
+  que entra a la que está abierta. Solo quedaría mal un alumno con dos profes
+  con clase abierta a la vez, en un celular donde nunca entró.
+- **El código va negro sobre blanco también en modo oscuro**, con su fondo
+  y su margen de 4 módulos dentro del dibujo, no puestos por la caja. Invertido
+  o sin margen, muchas cámaras no lo encuentran. La dirección escrita va sin el
+  id: quien la teclea entra igual a la clase abierta.
+- **La librería es `qrcode-generator`** (MIT, sin dependencias), en
+  `js/vendor/qrcode.js` como las demás (ver `herramientas/lib/librerias-vendor.js`).
+  `js/clase-qr.js` la pide recién al mostrar el código: solo la usa el
+  proyector.
+
+**Al tocar esto, correr `node herramientas/verificar-todo.js clase-qr`.** Lee
+el código de una captura de la pantalla con `jsqr` (solo de desarrollo), en
+modo claro y oscuro. Está probado que falla de verdad:
+- con la dirección sin el profe;
+- sin el margen o sin el fondo blanco del dibujo, o con la caja oscura;
+- sin quitar el parámetro, o aceptando el id de cualquiera;
+- sin contar a quien entra;
+- cargando la librería siempre;
+- con el botón sin `aria-expanded`.
+
 ### El modo sencillo de la clase en vivo
 
 Aun ordenada, la pantalla del profesor tiene catorce controles delante, y la

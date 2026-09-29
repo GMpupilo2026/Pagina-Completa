@@ -31,6 +31,19 @@
         } catch (e) {}
     }
 
+    function pedidaPorElQr() {
+        let id = null;
+        try {
+            const u = new URL(location.href);
+            id = u.searchParams.get("profe");
+            if (id) {
+                u.searchParams.delete("profe");
+                history.replaceState(history.state, "", u.pathname + u.search + u.hash);
+            }
+        } catch (e) {}
+        return id;
+    }
+
     // Devuelve { clases, elegida }. clases viene de public.mis_clases(): un
     // renglón por profesor, con si tiene clase abierta en este momento.
     async function resolver() {
@@ -38,6 +51,17 @@
         if (error) return { clases: [], elegida: null, error };
         const clases = data || [];
         if (!clases.length) return { clases, elegida: null };
+
+        /* Llegó por el código QR del proyector (sesion.html?profe=<id>): entra a
+           la clase de ese profe, si es uno de los suyos, y queda recordada. El
+           parámetro se quita de la dirección: si no, al cambiar de clase con el
+           selector (que recarga) volvería a mandar él. Un id que no es de sus
+           profes no hace nada; igual, lo que se ve lo decide la RLS. */
+        const pedida = pedidaPorElQr();
+        if (pedida && clases.some((c) => c.profesor_id === pedida)) {
+            recordar(pedida);
+            return { clases, elegida: pedida };
+        }
 
         const previa = guardada();
         if (previa && clases.some((c) => c.profesor_id === previa)) {
