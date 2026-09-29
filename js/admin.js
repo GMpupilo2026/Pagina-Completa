@@ -119,7 +119,7 @@
          * para que atrás/adelante y un enlace guardado lleven a la misma.
          * Todo lo que ya estaba sigue con sus mismos ids: solo cambia qué se ve.
          */
-        const SECCIONES = ["inicio", "cuentas", "crear", "profesores", "supervisores", "equipos", "novedades", "torneos", "preparacion", "herramientas"];
+        const SECCIONES = ["inicio", "supervision", "cuentas", "crear", "profesores", "supervisores", "equipos", "novedades", "torneos", "preparacion", "herramientas"];
 
         function seccionDelEnlace() {
             const h = location.hash.replace("#", "");
@@ -146,6 +146,8 @@
             if (!(opciones && opciones.sinHistoria) && location.hash !== "#" + nombre) {
                 history.pushState(null, "", "#" + nombre);
             }
+            // Se cambió un supervisor o un coordinador: lo urgente se vuelve a contar.
+            if ((nombre === "inicio" || nombre === "supervision") && coberturaVieja && allUsers.length) revisarPendientes();
         }
 
         document.querySelectorAll("[data-ir]").forEach((a) => a.addEventListener("click", (e) => {
@@ -244,10 +246,431 @@
                 li.appendChild(b);
                 lista.appendChild(li);
             });
+            pintarUrgentes();
             document.getElementById("admin-cuantas").textContent = allUsers.length
                 ? allUsers.length.toLocaleString("es-CR") + (allUsers.length === 1 ? " cuenta" : " cuentas")
                 : "";
         }
+
+        /* ================= Lo urgente =================
+         *
+         * El panel mostraba al entrar cuántas cuentas hay, y lo que esperaba a
+         * alguien —una solicitud sin responder, una justificación por revisar,
+         * un profesor que ningún supervisor ve— había que ir a buscarlo página
+         * por página. Ahora «Inicio» es la lista de pendientes, primero lo
+         * urgente y después lo que conviene vigilar, y cada uno lleva a donde
+         * se resuelve. Ver «Lo urgente primero» en docs/decisiones/paneles.md.
+         *
+         * Todo se CUENTA en la base (`count: "exact", head: true`, o una
+         * función que ya devuelve el número): PostgREST corta a mil filas sin
+         * avisar, y bajarse una lista para contarla es el error de siempre. Lo
+         * único que se cuenta acá es lo que sale de las cuentas que la página
+         * ya trae enteras (alumnos sin profesor, coordinadores vacíos).
+         *
+         * Un conteo que falla NO se pinta como cero: se dice que no se pudo
+         * revisar. Un «al día» falso es peor que no decir nada.
+         */
+        let cobertura = null;          // { supervisoresDe: Map(profesor -> [supervisor…]), inactivos: Set } | null
+        let coberturaVieja = true;     // se cambió un supervisor o un coordinador: hay que volver a preguntar
+        let conteosRemotos = {};       // clave -> número | null (null = no se pudo)
+        let revisando = null;
+
+        // Hoy y el primero del mes, en hora de Costa Rica ("AAAA-MM-DD").
+        function hoyCR() {
+            return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Costa_Rica", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+        }
+
+        async function contar(promesa) {
+            try {
+                const r = await promesa;
+                if (r.error) return null;
+                if (typeof r.count === "number") return r.count;
+                return typeof r.data === "number" ? r.data : null;
+            } catch (_) { return null; }
+        }
+
+        /* Quién supervisa a cada profesor lo contesta supervisores_de(), que
+           junta lo asignado a mano y lo que llega por la academia: armarlo acá
+           con supervisor_cuentas sería una segunda versión de la regla, y se
+           dejaría afuera a los de las academias. Una llamada por profesor, en
+           paralelo: son decenas, no miles. */
+        async function cargarCobertura() {
+            const profes = allUsers.filter((u) => u.role === "profesor" && !u.is_admin && !u.es_supervisor);
+            const supervisoresDe = new Map();
+            let fallo = false;
+            await Promise.all(profes.map(async (p) => {
+                try {
+                    const { data, error } = await sb.rpc("supervisores_de", { p_persona: p.id });
+                    if (error) { fallo = true; return; }
+                    supervisoresDe.set(p.id, (data || []).map((x) => (typeof x === "string" ? x : x.supervisores_de)).filter(Boolean));
+                } catch (_) { fallo = true; }
+            }));
+            /* Quién lleva 4 días sin entrenar, por id, para contarlos por
+               supervisor y por coordinador. Se pide de mil en mil. */
+            let inactivos = null;
+            try {
+                const filas = await traerTodo(() => sb.rpc("informes_inactivos", { p_dias: 4 }).order("id"));
+                inactivos = new Set(filas.map((f) => f.id));
+            } catch (_) { inactivos = null; }
+            cobertura = fallo ? null : { supervisoresDe, inactivos };
+            coberturaVieja = false;
+        }
+
+        // Los profesores a los que nadie ve: sin supervisor y fuera de toda coordinación.
+        function profesoresSinNadie() {
+            if (!cobertura) return null;
+            const coordinados = new Set();
+            coordinadosPor.forEach((lista, coord) => {
+                const c = allUsers.find((u) => u.id === coord);
+                if (c && c.es_coordinador) lista.forEach((id) => coordinados.add(id));
+            });
+            // Quien supervisa no cuenta: no hay supervisor de supervisores.
+            // Un coordinador sí: también lo revisa un supervisor.
+            return allUsers.filter((u) => u.role === "profesor" && !u.is_admin && !u.es_supervisor
+                && !(cobertura.supervisoresDe.get(u.id) || []).length && !coordinados.has(u.id))
+                .sort((a, b) => teacherLabel(a).localeCompare(teacherLabel(b), "es"));
+        }
+
+        function alumnosDeProfesores(ids) {
+            const set = new Set(ids);
+            const alumnos = new Set();
+            profesoresPorAlumno.forEach((profes, alumno) => { if (profes.some((t) => set.has(t))) alumnos.add(alumno); });
+            return alumnos;
+        }
+
+        function cuantosInactivos(alumnos) {
+            if (!cobertura || !cobertura.inactivos) return null;
+            let n = 0;
+            alumnos.forEach((id) => { if (cobertura.inactivos.has(id)) n += 1; });
+            return n;
+        }
+
+        // Lo que tiene a cargo cada supervisor y cada coordinador.
+        function filasDeMando() {
+            const supervisores = allUsers.filter((u) => u.es_supervisor)
+                .sort((a, b) => teacherLabel(a).localeCompare(teacherLabel(b), "es"))
+                .map((s) => {
+                    const profes = [];
+                    if (cobertura) cobertura.supervisoresDe.forEach((sups, prof) => { if (sups.includes(s.id)) profes.push(prof); });
+                    const alumnos = alumnosDeProfesores(profes);
+                    const porId = new Map(allUsers.map((u) => [u.id, u]));
+                    (cuentasPorSupervisor.get(s.id) || []).forEach((id) => { if (porId.get(id)?.role === "alumno") alumnos.add(id); });
+                    const directas = (cuentasPorSupervisor.get(s.id) || []).length;
+                    return { persona: s, profes: cobertura ? profes.length : null, alumnos: alumnos.size, inactivos: cuantosInactivos(alumnos), vacio: cobertura ? !profes.length && !directas : false };
+                });
+            const coordinadores = allUsers.filter((u) => u.es_coordinador)
+                .sort((a, b) => teacherLabel(a).localeCompare(teacherLabel(b), "es"))
+                .map((c) => {
+                    const profes = coordinadosPor.get(c.id) || [];
+                    const alumnos = alumnosDeProfesores(profes.concat([c.id]));
+                    return { persona: c, profes: profes.length, alumnos: alumnos.size, inactivos: cuantosInactivos(alumnos), vacio: !profes.length };
+                });
+            return { supervisores, coordinadores };
+        }
+
+        /* Los pendientes, en el orden en que se muestran. `n` es el número (o
+           null si no se pudo contar); `ir` cambia de sección y `href` abre otra
+           página. */
+        function pendientes() {
+            const sueltos = allUsers.filter((u) => u.role === "alumno" && !profesoresDe(u.id).length).length;
+            const sinNadie = profesoresSinNadie();
+            const { supervisores, coordinadores } = filasDeMando();
+            const supVacios = cobertura ? supervisores.filter((f) => f.vacio).length : null;
+            const coordVacios = coordinadores.filter((f) => f.vacio).length;
+            const pl = (n, uno, varios) => (n === 1 ? uno : varios);
+            return [
+                { clave: "solicitudes", nivel: "urgente", emoji: "📝", n: conteosRemotos.solicitudes,
+                  titulo: (n) => pl(n, "solicitud de ingreso sin responder", "solicitudes de ingreso sin responder"),
+                  porque: "Gente que pidió entrar a la Academia y está esperando una respuesta.",
+                  accion: "Responder", href: "solicitudes.html", alDia: "Solicitudes de ingreso" },
+                { clave: "justificaciones", nivel: "urgente", emoji: "🩺", n: conteosRemotos.justificaciones,
+                  titulo: (n) => pl(n, "justificación de ausencia por revisar", "justificaciones de ausencia por revisar"),
+                  porque: "La familia espera saber si se aceptó.",
+                  accion: "Revisar", href: "justificaciones.html", alDia: "Justificaciones de ausencia" },
+                { clave: "sin-profesor", nivel: "urgente", emoji: "🎒", n: sueltos,
+                  titulo: (n) => pl(n, "alumno sin profesor asignado", "alumnos sin profesor asignado"),
+                  porque: "No aparecen en los informes de nadie, así que ningún supervisor ni coordinador los ve.",
+                  accion: "Asignarles profesor", filtro: "sin-profesor", alDia: "Todos los alumnos tienen profesor" },
+                { clave: "profes-sin-nadie", nivel: "urgente", emoji: "🧭", n: sinNadie ? sinNadie.length : null,
+                  titulo: (n) => pl(n, "profesor que nadie supervisa ni coordina", "profesores que nadie supervisa ni coordina"),
+                  porque: "Nadie revisa sus clases ni sus informes.",
+                  accion: "Ver quiénes son", ir: "supervision", alDia: "Todos los profesores están a cargo de alguien" },
+                { clave: "sup-vacios", nivel: "vigilar", emoji: "🧭", n: supVacios,
+                  titulo: (n) => pl(n, "supervisor sin nadie a cargo", "supervisores sin nadie a cargo"),
+                  porque: "Tienen la marca pero ninguna cuenta asignada: su panel sale vacío.",
+                  accion: "Asignarles cuentas", ir: "supervisores", alDia: "Cada supervisor tiene gente a cargo" },
+                { clave: "coord-vacios", nivel: "vigilar", emoji: "🎓", n: coordVacios,
+                  titulo: (n) => pl(n, "coordinador sin profesores asignados", "coordinadores sin profesores asignados"),
+                  porque: "Solo ven a sus propios alumnos, y no tienen forma de saber por qué.",
+                  accion: "Asignarles profesores", ir: "profesores", alDia: "Cada coordinador tiene profesores" },
+                { clave: "se-van", nivel: "vigilar", emoji: "🚪", n: conteosRemotos.seVan,
+                  titulo: (n) => pl(n, "alumno dijo este mes que no sigue", "alumnos dijeron este mes que no siguen"),
+                  porque: "Lo contestaron en la encuesta de satisfacción con su profesor.",
+                  accion: "Ver quiénes", href: "satisfaccion.html", alDia: "Nadie dijo este mes que se va" },
+                { clave: "morosos", nivel: "vigilar", emoji: "💳", n: conteosRemotos.morosos,
+                  titulo: (n) => pl(n, "saldo vencido", "saldos vencidos"),
+                  porque: "Mensualidades sin pagar pasada la fecha (uno por alumno y moneda).",
+                  accion: "Ver cobros", href: "cobros.html", alDia: "Pagos al día" },
+                { clave: "inactivos", nivel: "vigilar", emoji: "💤", n: conteosRemotos.inactivos,
+                  titulo: (n) => pl(n, "alumno lleva 4 días o más sin entrenar", "alumnos llevan 4 días o más sin entrenar"),
+                  porque: "Por supervisor y por coordinador, en «Quién cubre a quién».",
+                  accion: "Ver por supervisor", ir: "supervision", alDia: "Todos entrenaron esta semana" },
+            ];
+        }
+
+        function irAlPendiente(p) {
+            if (p.filtro) {
+                irA("cuentas");
+                grupoAbierto = null;
+                document.getElementById("user-search").value = "";
+                document.getElementById("role-filter").value = p.filtro;
+                refiltrarCuentas();
+            } else {
+                irA(p.ir);
+            }
+            window.scrollTo({ top: 0 });
+        }
+
+        function pintarUrgentes() {
+            const lista = document.getElementById("urgentes");
+            const alDia = document.getElementById("urgentes-al-dia");
+            lista.innerHTML = "";
+            alDia.innerHTML = "";
+            const todos = pendientes();
+            const conAlgo = todos.filter((p) => p.n > 0 || p.n === null);
+            const urgentes = todos.filter((p) => p.nivel === "urgente" && p.n > 0);
+            conAlgo.forEach((p) => {
+                const li = document.createElement("li");
+                const urgente = p.nivel === "urgente" && p.n !== null;
+                li.dataset.pendiente = p.clave;
+                li.className = "flex flex-wrap items-center gap-4 rounded-2xl p-4 shadow-sm "
+                    + (urgente ? "bg-accent-50 dark:bg-brand-800 border-l-4 border-accent-500"
+                               : "bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800");
+                const icono = document.createElement("span");
+                icono.className = "text-2xl shrink-0";
+                icono.setAttribute("aria-hidden", "true");
+                icono.textContent = p.emoji;
+                const texto = document.createElement("div");
+                // Con 14rem de base, en el celular el botón baja a su propia línea
+                // en vez de dejar el texto en una columna de tres palabras.
+                texto.className = "min-w-0 flex-1 basis-56";
+                // El nivel va escrito, no solo en el color.
+                const nivel = document.createElement("p");
+                nivel.className = "text-xs font-bold uppercase tracking-wide " + (urgente ? "text-accent-700 dark:text-accent-400" : "text-brand-500 dark:text-brand-300");
+                nivel.textContent = p.n === null ? "No se pudo revisar" : urgente ? "Urgente" : "A vigilar";
+                const titulo = document.createElement("p");
+                titulo.className = "font-semibold text-brand-800 dark:text-white";
+                if (p.n === null) {
+                    titulo.textContent = p.alDia + ": no se pudo contar. Ábrelo para revisarlo.";
+                } else {
+                    const num = document.createElement("span");
+                    num.className = "text-xl font-bold";
+                    num.textContent = p.n.toLocaleString("es-CR");
+                    titulo.append(num, document.createTextNode(" " + p.titulo(p.n)));
+                }
+                const porque = document.createElement("p");
+                porque.className = "text-xs text-brand-600 dark:text-brand-200 mt-0.5";
+                porque.textContent = p.porque;
+                texto.append(nivel, titulo, porque);
+                const accion = document.createElement("a");
+                accion.href = p.href || "#" + (p.ir || "cuentas");
+                accion.className = "shrink-0 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 "
+                    + (urgente ? "bg-accent-500 hover:bg-accent-600 text-brand-900" : "bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white");
+                accion.textContent = p.accion;
+                if (!p.href) accion.addEventListener("click", (e) => { e.preventDefault(); irAlPendiente(p); });
+                li.append(icono, texto, accion);
+                lista.appendChild(li);
+            });
+            todos.filter((p) => p.n === 0).forEach((p) => {
+                const li = document.createElement("li");
+                li.className = "text-xs rounded-full bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 px-3 py-1 text-brand-600 dark:text-brand-200";
+                li.textContent = "✓ " + p.alDia;
+                alDia.appendChild(li);
+            });
+            document.getElementById("urgentes-al-dia-caja").hidden = !alDia.children.length;
+
+            const resumen = document.getElementById("urgentes-resumen");
+            const vigilar = conAlgo.length - urgentes.length;
+            if (revisando) {
+                resumen.textContent = "Revisando los pendientes…";
+            } else if (!conAlgo.length) {
+                resumen.textContent = "Todo al día: no hay nada esperando.";
+            } else {
+                const partes = [];
+                if (urgentes.length) partes.push(urgentes.length + (urgentes.length === 1 ? " cosa urgente" : " cosas urgentes"));
+                if (vigilar) partes.push(vigilar + (vigilar === 1 ? " para vigilar" : " para vigilar"));
+                // «6:41 a. m.» ya termina en punto: no se le pone otro.
+                const hora = new Intl.DateTimeFormat("es-CR", { hour: "numeric", minute: "2-digit", timeZone: "America/Costa_Rica" }).format(new Date()).replace(/\.$/, "");
+                resumen.textContent = partes.join(" y ") + ". Revisado a las " + hora + ".";
+            }
+            // En el menú: cuántas cosas urgentes hay, a la vista desde cualquier sección.
+            const enMenu = document.getElementById("nav-urgentes");
+            enMenu.classList.toggle("hidden", !urgentes.length);
+            enMenu.textContent = urgentes.length ? String(urgentes.length) : "";
+            enMenu.title = urgentes.length ? urgentes.length + (urgentes.length === 1 ? " cosa urgente" : " cosas urgentes") : "";
+            pintarMandoEnInicio();
+        }
+
+        // Los cuatro números de supervisión y coordinación, en «Inicio».
+        function pintarMandoEnInicio() {
+            const { supervisores, coordinadores } = filasDeMando();
+            const sinNadie = profesoresSinNadie();
+            const profes = allUsers.filter((u) => u.role === "profesor" && !u.is_admin && !u.es_supervisor).length;
+            const numeros = [
+                { emoji: "🧭", valor: supervisores.length, label: supervisores.length === 1 ? "supervisor" : "supervisores", ir: "supervisores" },
+                { emoji: "🎓", valor: coordinadores.length, label: coordinadores.length === 1 ? "coordinador" : "coordinadores", ir: "profesores" },
+                { emoji: "✅", valor: sinNadie ? profes - sinNadie.length : null, de: profes, label: "profesores con supervisor o coordinador", ir: "supervision" },
+                { emoji: "⚠️", valor: sinNadie ? sinNadie.length : null, label: "profesores sin supervisión ni coordinación", ir: "supervision", alerta: !!(sinNadie && sinNadie.length) },
+            ];
+            const lista = document.getElementById("inicio-mando");
+            lista.innerHTML = "";
+            numeros.forEach((n) => {
+                const li = document.createElement("li");
+                const a = document.createElement("a");
+                a.href = "#" + n.ir;
+                a.className = "w-full h-full flex items-center gap-3 rounded-xl p-3 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 "
+                    + (n.alerta ? "bg-accent-50 dark:bg-brand-800 border-2 border-accent-500" : "bg-brand-50 dark:bg-brand-950 border border-brand-100 dark:border-brand-800 hover:border-accent-500");
+                const icono = document.createElement("span");
+                icono.className = "text-xl shrink-0";
+                icono.setAttribute("aria-hidden", "true");
+                icono.textContent = n.emoji;
+                const texto = document.createElement("span");
+                texto.className = "min-w-0";
+                const valor = document.createElement("span");
+                valor.className = "block text-xl font-bold text-brand-800 dark:text-white leading-none";
+                valor.textContent = n.valor === null ? "—" : n.valor.toLocaleString("es-CR") + (n.de !== undefined ? " de " + n.de.toLocaleString("es-CR") : "");
+                const label = document.createElement("span");
+                label.className = "block text-xs text-brand-500 dark:text-brand-300 mt-1";
+                label.textContent = n.label;
+                texto.append(valor, label);
+                a.append(icono, texto);
+                a.addEventListener("click", (e) => { e.preventDefault(); irA(n.ir); window.scrollTo({ top: 0 }); });
+                li.appendChild(a);
+                lista.appendChild(li);
+            });
+        }
+
+        function celda(texto, clase) {
+            const td = document.createElement("td");
+            td.className = clase || "py-2 pr-3 text-right text-brand-600 dark:text-brand-300";
+            td.textContent = texto;
+            return td;
+        }
+
+        function botonIr(texto, seccion) {
+            const b = document.createElement("a");
+            b.href = "#" + seccion;
+            b.className = "text-xs font-semibold text-accent-700 dark:text-accent-400 underline underline-offset-2 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+            b.textContent = texto;
+            b.addEventListener("click", (e) => { e.preventDefault(); irA(seccion); window.scrollTo({ top: 0 }); });
+            return b;
+        }
+
+        /* «👁 Ver su panel»: el mismo enlace que trae supervision.html. Solo a
+           profesores y coordinadores; a otro supervisor no se le mira el panel
+           (personas_para_ver_como() no lo devuelve). */
+        function enlaceVerPanel(p) {
+            const a = document.createElement("a");
+            a.href = "clases.html?ver_como=" + encodeURIComponent(p.id);
+            a.className = "text-xs font-semibold text-accent-700 dark:text-accent-400 underline underline-offset-2 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+            a.textContent = "👁 Ver su panel";
+            a.setAttribute("aria-label", "Ver el panel de " + teacherLabel(p));
+            return a;
+        }
+
+        function filaDeMando(f, rol) {
+            const tr = document.createElement("tr");
+            tr.className = "border-b border-brand-50 dark:border-brand-800/60 last:border-0 align-middle";
+            const tdN = document.createElement("td");
+            tdN.className = "py-2 pr-3 font-medium text-brand-700 dark:text-brand-200";
+            tdN.textContent = teacherLabel(f.persona);
+            if (f.vacio) {
+                const aviso = document.createElement("span");
+                aviso.className = "block text-xs font-semibold text-accent-700 dark:text-accent-400";
+                aviso.textContent = rol === "sup" ? "⚠️ No tiene a nadie a cargo" : "⚠️ No coordina a ningún profesor";
+                tdN.appendChild(aviso);
+            }
+            tr.appendChild(tdN);
+            tr.appendChild(celda(f.profes === null ? "—" : String(f.profes)));
+            tr.appendChild(celda(f.alumnos.toLocaleString("es-CR")));
+            const tdI = celda(f.inactivos === null ? "—" : f.inactivos.toLocaleString("es-CR"));
+            if (f.inactivos > 0) tdI.className = "py-2 pr-3 text-right font-semibold text-red-600 dark:text-red-400";
+            tr.appendChild(tdI);
+            const tdA = document.createElement("td");
+            tdA.className = "py-2 text-right whitespace-nowrap space-x-3";
+            if (rol === "coord") tdA.appendChild(enlaceVerPanel(f.persona));
+            tdA.appendChild(botonIr(f.vacio ? "Asignar" : "Editar", rol === "sup" ? "supervisores" : "profesores"));
+            tr.appendChild(tdA);
+            return tr;
+        }
+
+        function pintarMando() {
+            document.getElementById("mando-cargando").hidden = !revisando && !!cobertura;
+            if (!revisando && !cobertura) document.getElementById("mando-cargando").textContent = "No se pudo revisar quién supervisa a cada profesor. Prueba «Volver a revisar» en Lo urgente.";
+            const { supervisores, coordinadores } = filasDeMando();
+            const tbS = document.getElementById("mando-supervisores");
+            const tbC = document.getElementById("mando-coordinadores");
+            tbS.innerHTML = ""; tbC.innerHTML = "";
+            supervisores.forEach((f) => tbS.appendChild(filaDeMando(f, "sup")));
+            coordinadores.forEach((f) => tbC.appendChild(filaDeMando(f, "coord")));
+            const vacia = (tb, texto) => {
+                if (tb.children.length) return;
+                const tr = document.createElement("tr");
+                const td = document.createElement("td");
+                td.colSpan = 5;
+                td.className = "py-4 text-xs text-brand-450 dark:text-brand-350";
+                td.textContent = texto;
+                tr.appendChild(td);
+                tb.appendChild(tr);
+            };
+            vacia(tbS, "Todavía no hay ningún supervisor. Se nombra en «Supervisores».");
+            vacia(tbC, "Todavía no hay ningún coordinador. Se marca en «Profesores y coordinación».");
+
+            const sinNadie = profesoresSinNadie() || [];
+            const caja = document.getElementById("mando-sin-nadie-caja");
+            const ul = document.getElementById("mando-sin-nadie");
+            ul.innerHTML = "";
+            caja.hidden = !sinNadie.length;
+            const porProfe = new Map();
+            profesoresPorAlumno.forEach((ps) => ps.forEach((t) => porProfe.set(t, (porProfe.get(t) || 0) + 1)));
+            sinNadie.forEach((p) => {
+                const li = document.createElement("li");
+                li.className = "flex flex-wrap items-center justify-between gap-2 py-2";
+                const n = document.createElement("span");
+                n.className = "text-sm text-brand-800 dark:text-white";
+                const alumnos = porProfe.get(p.id) || 0;
+                n.textContent = teacherLabel(p) + " · " + alumnos + (alumnos === 1 ? " alumno" : " alumnos");
+                const acc = document.createElement("span");
+                acc.className = "space-x-3";
+                acc.append(enlaceVerPanel(p), botonIr("Darle supervisor", "supervisores"), botonIr("Ponerlo con un coordinador", "profesores"));
+                li.append(n, acc);
+                ul.appendChild(li);
+            });
+        }
+
+        /* Pregunta todo lo que se cuenta en la base y vuelve a pintar. Lo de
+           las cuentas ya cargadas se pinta antes, sin esperar. */
+        async function revisarPendientes() {
+            if (revisando) return revisando;
+            const primeroDelMes = hoyCR().slice(0, 8) + "01";
+            revisando = (async () => {
+                pintarUrgentes(); pintarMando();
+                const cabeza = { count: "exact", head: true };
+                const [solicitudes, justificaciones, seVan, morosos, inactivos] = await Promise.all([
+                    contar(sb.from("solicitudes_academia").select("id", cabeza).eq("estado", "pendiente")),
+                    contar(sb.rpc("justificaciones_pendientes")),
+                    contar(sb.rpc("respuestas_satisfaccion", { p_desde: primeroDelMes, p_hasta: hoyCR(), p_profesor: null, p_solo_se_van: true }, cabeza)),
+                    contar(sb.rpc("cobros_morosos", {}, cabeza)),
+                    contar(sb.rpc("informes_inactivos", { p_dias: 4 }, cabeza)),
+                    cargarCobertura(),
+                ]);
+                conteosRemotos = { solicitudes, justificaciones, seVan, morosos, inactivos };
+            })();
+            try { await revisando; } finally { revisando = null; }
+            pintarUrgentes(); pintarMando();
+        }
+
+        document.getElementById("urgentes-actualizar").addEventListener("click", () => revisarPendientes());
 
         function fmtDate(iso) {
             return new Date(iso).toLocaleDateString("es-CR", { day: "2-digit", month: "short", year: "numeric" });
@@ -1163,6 +1586,7 @@
          * contador. Quien administra no tiene tope.
          */
         function renderProfesores() {
+            coberturaVieja = true;
             const body = document.getElementById("profesores-body");
             body.innerHTML = "";
             const profes = allUsers.filter((u) => u.role === "profesor")
@@ -1393,6 +1817,7 @@
         }
 
         function renderSupervisores() {
+            coberturaVieja = true;
             const caja = document.getElementById("sup-lista");
             caja.innerHTML = "";
             const supervisores = allUsers.filter((u) => u.es_supervisor)
@@ -1874,6 +2299,8 @@
             if (window.AdminPreparacion) AdminPreparacion.iniciar(() => allUsers);
             document.getElementById("app").classList.remove("hidden");
             irA(seccionDelEnlace() || "inicio", { sinHistoria: true });
+            // El número del menú hace falta en cualquier sección en que se entre.
+            if (!revisando) revisarPendientes();
         }
 
         init();

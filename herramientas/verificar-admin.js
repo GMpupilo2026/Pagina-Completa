@@ -97,7 +97,16 @@ window.__consultas = [];
     equipo_entrenadores: [],
     coordinador_profesores: [],
     preparacion_rivales_profesores: [],
+    /* Dos solicitudes esperando y una ya contestada: «Lo urgente» cuenta
+       solo las que esperan, y las cuenta en la base (head), no bajándolas. */
+    solicitudes_academia: [
+      { id: "s-1", estado: "pendiente" }, { id: "s-2", estado: "pendiente" }, { id: "s-3", estado: "aprobada" },
+    ],
   };
+  /* Quién supervisa a cada profesor (supervisores_de) y quién lleva 4 días
+     sin entrenar (informes_inactivos). Cada prueba pone los suyos. */
+  const SUPERVISA = window.__supervisa || {};
+  const INACTIVOS = (window.__inactivos || []).map((id) => ({ id: id }));
   const SUBGRUPOS_VISTA = [
     { id: "sg-1", nombre: "Los del martes", profesor_id: "u-profe", profesor: "Profe Vega",
       alumnos: ["u-1", "u-2"] },
@@ -107,9 +116,10 @@ window.__consultas = [];
   function constructor(tabla, filas) {
     const anotado = { tabla: tabla, range: null, eq: {} };
     window.__consultas.push(anotado);
-    let filas2 = (filas || []).slice(), unica = false;
+    let filas2 = (filas || []).slice(), unica = false, cabeza = false;
     const b = {
-      select() { return b; },
+      select(_c, op) { if (op && op.head) { cabeza = true; anotado.head = true; } return b; },
+      conCabeza(op) { if (op && op.head) { cabeza = true; anotado.head = true; } return b; },
       eq(col, val) { anotado.eq[col] = val; filas2 = filas2.filter((r) => String(r[col]) === String(val)); return b; },
       order() { return b; },
       range(a, z) { anotado.range = [a, z]; filas2 = filas2.slice(a, z + 1); return b; },
@@ -118,6 +128,7 @@ window.__consultas = [];
       then(res, rej) {
         let d = filas2;
         if (unica) d = filas2.length ? filas2[0] : null;
+        if (cabeza) return Promise.resolve({ data: null, count: filas2.length, error: null }).then(res, rej);
         return Promise.resolve({ data: d, error: null }).then(res, rej);
       },
     };
@@ -132,7 +143,18 @@ window.__consultas = [];
       signOut: () => Promise.resolve({}),
     },
     from: (t) => constructor(t, TABLAS[t] !== undefined ? TABLAS[t] : []),
-    rpc: (n, args) => {
+    rpc: (n, args, op) => {
+      if (n === "justificaciones_pendientes") {
+        return Promise.resolve(window.__fallarJustificaciones
+          ? { data: null, error: { message: "sin conexión" } } : { data: 3, error: null });
+      }
+      if (n === "supervisores_de") return constructor(n, (SUPERVISA[args.p_persona] || []).map((x) => ({ supervisores_de: x })));
+      if (n === "informes_inactivos") return constructor(n, INACTIVOS).conCabeza(op);
+      if (n === "respuestas_satisfaccion") {
+        window.__satisfaccion = args;
+        return constructor(n, args.p_solo_se_van ? [{ id: "e-1", seguir: "no" }] : []).conCabeza(op);
+      }
+      if (n === "cobros_morosos") return constructor(n, []).conCabeza(op);
       if (n === "soy_coordinador") {
         return Promise.resolve({ data: !!(USUARIO.is_admin || USUARIO.es_coordinador), error: null });
       }
@@ -165,7 +187,7 @@ function igual(nombre, hallado, esperado) {
 function mal(t) { console.log("  ✗ " + t); fallos += 1; }
 function bien(t) { console.log("  ✓ " + t); }
 
-async function abrir(browser, ruta, usuario, extra) {
+async function abrir(browser, ruta, usuario, extra, datos) {
   const ctx = await browser.newContext(extra || {});
   /* admin-manage-users es la Edge Function que de verdad escribe. Acá se dobla y
      se ANOTA lo que la página le manda: es lo único que se puede comprobar desde
@@ -180,7 +202,8 @@ async function abrir(browser, ruta, usuario, extra) {
   await ctx.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await ctx.route("**/fonts.gstatic.com/**", (r) => r.abort());
   await ctx.route("**/js/supabase-client.js", (r) =>
-    r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso(usuario, cuentasDeMentira(), parejasDeMentira()) }));
+    r.fulfill({ status: 200, contentType: "application/javascript",
+      body: (datos && datos.antes || "") + clienteFalso(usuario, datos ? datos.perfiles : cuentasDeMentira(), datos ? datos.parejas : parejasDeMentira()) }));
   llamadasDeAdmin = [];
   const page = await ctx.newPage();
   const errores = [];
@@ -323,6 +346,115 @@ async function pruebaSecciones(browser) {
 
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
+}
+
+/* ====================== admin.html · lo urgente ======================
+   Lo primero que se ve al entrar es lo que alguien está esperando, no cuántas
+   cuentas hay. Lo que se rompe callado: un conteo que falla y se pinta como
+   «al día», un número que se cuenta bajándose la lista (y se corta a las mil),
+   un pendiente que lleva a otro lado, o un profesor que nadie supervisa y no
+   sale. Quién supervisa a quién lo contesta la base (supervisores_de): si la
+   página lo armara con supervisor_cuentas, Karina saldría sin supervisora. */
+function genteDeMando() {
+  const base = { is_admin: false, es_coordinador: false, es_supervisor: false, email: "x@x.cr", grupo: null, created_at: "2026-02-01T10:00:00Z", invitaciones_max: 5, invitaciones_usadas: 0, teacher_id: null };
+  const perfiles = [
+    ADMIN,
+    Object.assign({}, base, { id: "u-profe", role: "profesor", full_name: "Karina Rojas" }),
+    Object.assign({}, base, { id: "u-sup", role: "profesor", full_name: "Marta Solano", es_supervisor: true }),
+    Object.assign({}, base, { id: "u-coord", role: "profesor", full_name: "Luis Coto", es_coordinador: true }),
+    Object.assign({}, base, { id: "u-pedro", role: "profesor", full_name: "Pedro Vega" }),
+    Object.assign({}, base, { id: "u-a1", role: "alumno", full_name: "Alumna Uno", grupo: "7B" }),
+    Object.assign({}, base, { id: "u-a2", role: "alumno", full_name: "Alumno Dos", grupo: "7B" }),
+    Object.assign({}, base, { id: "u-a3", role: "alumno", full_name: "Alumno Tres", grupo: "8A" }),
+    Object.assign({}, base, { id: "u-a4", role: "alumno", full_name: "Alumna Suelta", grupo: "8A" }),
+  ];
+  const parejas = [
+    { student_id: "u-a1", teacher_id: "u-profe" }, { student_id: "u-a2", teacher_id: "u-profe" },
+    { student_id: "u-a3", teacher_id: "u-pedro" },
+  ];
+  /* Marta supervisa a Karina POR LA ACADEMIA: no hay ninguna fila en
+     supervisor_cuentas. Solo supervisores_de() lo sabe. */
+  const antes = 'window.__supervisa = { "u-profe": ["u-sup"] }; window.__inactivos = ["u-a1", "u-a3"];';
+  return { perfiles, parejas, antes };
+}
+
+async function pruebaUrgente(browser) {
+  console.log("\n=== Lo urgente, lo primero que se ve ===");
+  const datos = genteDeMando();
+  const { page, ctx, errores } = await abrir(browser, "/admin.html", ADMIN, null, datos);
+  await page.goto(BASE + "/admin.html", { waitUntil: "networkidle" });
+  await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
+  await page.waitForFunction(() => /Revisado a las/.test(document.getElementById("urgentes-resumen").textContent), null, { timeout: 10000 });
+
+  const pendientes = await page.evaluate(() => Array.from(document.querySelectorAll("#urgentes li")).filter((li) => li.checkVisibility())
+    .map((li) => li.dataset.pendiente + " · " + li.querySelector("p").textContent + " · " + li.querySelector("p:nth-of-type(2)").textContent));
+  igual("los pendientes, lo urgente primero", pendientes, [
+    "solicitudes · Urgente · 2 solicitudes de ingreso sin responder",
+    "justificaciones · Urgente · 3 justificaciones de ausencia por revisar",
+    "sin-profesor · Urgente · 1 alumno sin profesor asignado",
+    "profes-sin-nadie · Urgente · 2 profesores que nadie supervisa ni coordina",
+    "coord-vacios · A vigilar · 1 coordinador sin profesores asignados",
+    "se-van · A vigilar · 1 alumno dijo este mes que no sigue",
+    "inactivos · A vigilar · 2 alumnos llevan 4 días o más sin entrenar",
+  ]);
+  igual("lo que está en cero se dice «al día», no desaparece",
+    await page.evaluate(() => Array.from(document.querySelectorAll("#urgentes-al-dia li")).filter((li) => li.checkVisibility()).map((li) => li.textContent)),
+    ["✓ Cada supervisor tiene gente a cargo", "✓ Pagos al día"]);
+  igual("el resumen lo cuenta", (await page.textContent("#urgentes-resumen")).replace(/ Revisado.*/, ""), "4 cosas urgentes y 3 para vigilar.");
+  igual("y el menú lleva el número de lo urgente",
+    await page.evaluate(() => { const b = document.getElementById("nav-urgentes"); return b.checkVisibility() ? b.textContent : "no se ve"; }), "4");
+
+  // Se cuenta en la base, no bajándose la lista.
+  const consultas = await page.evaluate(() => window.__consultas.filter((c) => ["solicitudes_academia", "cobros_morosos", "respuestas_satisfaccion"].includes(c.tabla)).map((c) => c.tabla + (c.head ? ":head" : ":LISTA")));
+  igual("solicitudes, cobros y satisfacción se cuentan con head", consultas.sort(), ["cobros_morosos:head", "respuestas_satisfaccion:head", "solicitudes_academia:head"]);
+  igual("«este mes» arranca el primero del mes", /-01$/.test((await page.evaluate(() => window.__satisfaccion)).p_desde), true);
+
+  // Supervisión y coordinación de un vistazo.
+  igual("los números de supervisión en Inicio",
+    await page.evaluate(() => Array.from(document.querySelectorAll("#inicio-mando a span.min-w-0")).map((a) => a.innerText.replace(/\s+/g, " ").trim())),
+    ["1 supervisor", "1 coordinador", "1 de 3 profesores con supervisor o coordinador", "2 profesores sin supervisión ni coordinación"]);
+
+  // Cada pendiente lleva a donde se resuelve.
+  igual("las solicitudes llevan a solicitudes.html",
+    await page.getAttribute('#urgentes li[data-pendiente="solicitudes"] a', "href"), "solicitudes.html");
+  await page.click('#urgentes li[data-pendiente="sin-profesor"] a');
+  await page.waitForFunction(() => /1 cuenta/.test(document.getElementById("users-summary").textContent), null, { timeout: 10000 });
+  igual("«sin profesor» lleva a Cuentas con ese filtro",
+    await page.evaluate(() => [document.getElementById("role-filter").value, Array.from(document.querySelectorAll("[data-seccion]")).filter((s) => s.checkVisibility()).map((s) => s.dataset.seccion)]),
+    ["sin-profesor", ["cuentas"]]);
+  await page.goBack();
+  await page.waitForFunction(() => document.querySelector('[data-seccion="inicio"]').checkVisibility(), null, { timeout: 5000 });
+  await page.click('#urgentes li[data-pendiente="profes-sin-nadie"] a');
+  await page.waitForFunction(() => document.querySelector('[data-seccion="supervision"]').checkVisibility(), null, { timeout: 5000 });
+  bien("«profesores sin nadie» lleva a «Quién cubre a quién»");
+
+  const tabla = (id) => page.evaluate((i) => Array.from(document.querySelectorAll("#" + i + " tr")).map((tr) =>
+    Array.from(tr.cells).slice(0, 4).map((td) => td.innerText.replace(/\s+/g, " ").trim()).join(" | ")), id);
+  igual("Marta supervisa a Karina (por la academia) y ve a sus 2 alumnos, 1 sin entrenar",
+    await tabla("mando-supervisores"), ["Marta Solano | 1 | 2 | 1"]);
+  igual("Luis coordina pero no tiene a nadie, y se le avisa",
+    await tabla("mando-coordinadores"), ["Luis Coto ⚠️ No coordina a ningún profesor | 0 | 0 | 0"]);
+  igual("los profesores que nadie ve, con cuántos alumnos (la supervisora no cuenta)",
+    await page.evaluate(() => Array.from(document.querySelectorAll("#mando-sin-nadie li")).filter((li) => li.checkVisibility()).map((li) => li.querySelector("span").textContent)),
+    ["Luis Coto · 0 alumnos", "Pedro Vega · 1 alumno"]);
+  igual("y se les puede mirar el panel",
+    await page.getAttribute("#mando-sin-nadie li:last-child a", "href"), "clases.html?ver_como=u-pedro");
+  igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+
+  /* Un conteo que falla NO es un cero. */
+  console.log("\n=== Un conteo que falla no dice «al día» ===");
+  const d2 = genteDeMando();
+  d2.antes += " window.__fallarJustificaciones = true;";
+  const r2 = await abrir(browser, "/admin.html", ADMIN, null, d2);
+  await r2.page.goto(BASE + "/admin.html", { waitUntil: "networkidle" });
+  await r2.page.waitForFunction(() => /Revisado a las/.test(document.getElementById("urgentes-resumen").textContent), null, { timeout: 10000 });
+  igual("las justificaciones dicen que no se pudieron revisar",
+    await r2.page.evaluate(() => { const li = document.querySelector('#urgentes li[data-pendiente="justificaciones"]'); return li && li.checkVisibility() ? li.querySelector("p").textContent : "no está"; }),
+    "No se pudo revisar");
+  igual("y no salen entre lo que está al día",
+    await r2.page.evaluate(() => Array.from(document.querySelectorAll("#urgentes-al-dia li")).some((li) => /Justificaciones/.test(li.textContent))), false);
+  await r2.ctx.close();
 }
 
 /* ============ admin.html · a quién se le activa la preparación de rivales ============ */
@@ -868,6 +1000,7 @@ async function pruebaVolcarEnUnEquipo(browser) {
   try {
     await pruebaAtajos(browser);
     await pruebaSecciones(browser);
+    await pruebaUrgente(browser);
     await pruebaPreparacionRivales(browser);
     await pruebaFichasDeGrupo(browser);
     await pruebaVolcarEnUnEquipo(browser);

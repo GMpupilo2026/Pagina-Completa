@@ -951,7 +951,8 @@ tarjetas.
   código siguió igual. Ya no hay `<details>`: una sección no se pliega.
 - **La dirección lleva la sección** (`admin.html#equipos`): atrás/adelante del
   navegador y un enlace guardado llevan a la misma.
-- **«Inicio» dice cómo está la plataforma de un vistazo**: cuántas cuentas,
+- **«Inicio» dice cómo está la plataforma de un vistazo** (hoy va debajo de
+  «Lo urgente»: ver «Lo urgente primero»): cuántas cuentas,
   estudiantes, profesores y **cuántos alumnos sin profesor** (resaltado, porque
   esos no salen en los informes de nadie). **Cada número lleva a esas
   cuentas**, con el filtro puesto: un número que no lleva a nadie obliga a ir a
@@ -977,6 +978,55 @@ tarjetas.
   que buscar desde otra sección lleve a Cuentas sin el filtro viejo y que
   `#supervisores` abra Supervisores. Las pruebas que tocan una sección van
   primero a ella con el menú, como una persona.
+
+### Lo urgente primero
+
+El dueño del sitio no encontraba lo importante ni lo urgente: al entrar, el
+panel decía cuántas cuentas había, y lo que esperaba a alguien había que ir a
+buscarlo página por página. **Quien administra está para ayudar a supervisores
+y coordinadores**, y el panel se reordenó alrededor de eso.
+
+- **«Inicio» ahora es «Lo urgente»**: una lista de pendientes, cada uno con su
+  número, por qué importa y un botón que lleva a donde se resuelve. Primero
+  lo **urgente** (alguien espera): solicitudes de ingreso sin responder,
+  justificaciones de ausencia por revisar, alumnos sin profesor y profesores
+  que nadie supervisa ni coordina. Después lo que hay que **vigilar**:
+  supervisores sin nadie a cargo, coordinadores sin profesores, quién dijo
+  este mes en la encuesta que no sigue, saldos vencidos y alumnos con 4 días o
+  más sin entrenar. El nivel va escrito («Urgente», «A vigilar»), no solo en
+  el color. El menú lleva cuántas cosas urgentes hay.
+- **Lo que está en cero no desaparece**: va en «Al día», para que se sepa que
+  se revisó. Y **un conteo que falla no se pinta como cero**: sale «No se pudo
+  revisar». Un «al día» falso es peor que no decir nada.
+- **Todo se cuenta en la base**: `solicitudes_academia` con `head`,
+  `justificaciones_pendientes()`, y `cobros_morosos()`,
+  `respuestas_satisfaccion(…, p_solo_se_van)` e `informes_inactivos()` con
+  `{ count: "exact", head: true }`. Lo único que se cuenta en la página es lo
+  que sale de las cuentas que ya trae enteras. Los saldos vencidos son filas
+  de `cobros_morosos()`: una por alumno **y moneda**, y así lo dice el texto.
+- **«Quién cubre a quién»** (`admin.html#supervision`) es la sección nueva:
+  cada supervisor y cada coordinador con cuántos profesores y alumnos tiene y
+  cuántos de esos alumnos llevan 4 días sin entrenar (a quién llamar), y
+  arriba, resaltados, los profesores que nadie ve, con «👁 Ver su panel»
+  (`clases.html?ver_como=`) y los botones para asignarlos.
+  - **Quién supervisa a un profesor lo contesta `supervisores_de()`**, una
+    llamada por profesor en paralelo (son decenas). Armarlo con
+    `supervisor_cuentas` dejaba afuera lo que llega por la academia: el
+    verificador tiene una supervisora que ve a su profesora solo por la
+    academia, y con la tabla saldría «sin supervisor».
+  - Quien supervisa no cuenta como «profesor sin nadie» (no hay supervisor de
+    supervisores); un coordinador sí, porque también lo revisa un supervisor.
+  - Al cambiar un supervisor o un coordinador, volver a «Lo urgente» o a
+    «Quién cubre a quién» vuelve a contar.
+- **El menú va por grupos**: «Hoy», «Supervisión y coordinación» (quién cubre
+  a quién, supervisores, profesores, equipos), «Personas» (cuentas, crear) y
+  «La plataforma» (herramientas, novedades, salas de torneos, preparación de
+  rivales). «Ver la plataforma como…» se fue a Herramientas; los números de
+  la plataforma quedaron al final de Inicio.
+- Lo prueba `pruebaUrgente` en `verificar-admin.js`: el orden, el «al día», el
+  número del menú, que se cuente con `head`, a dónde lleva cada pendiente, las
+  dos tablas, y que un conteo caído no diga «al día». Rompiendo a propósito
+  `supervisores_de` o haciendo que un error cuente como cero, salta.
 
 ### Los atajos, por grupos
 
