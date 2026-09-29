@@ -114,8 +114,23 @@
             const players = registrations.map((r) => r.player_id);
             let totalRounds;
             if (tournament.format === "swiss") {
+                /* Lo escrito se revisa acá: el min y el max del campo solo los mira
+                   el navegador al mandar un formulario, y esto no lo es. Con
+                   parseInt a secas, «-3» empezaba un torneo de -3 rondas que se
+                   quedaba sin ninguna, y «25» pasaba igual. */
                 const input = document.getElementById("rounds-input");
-                totalRounds = parseInt(input.value, 10) || TorneoEngine.suggestedTotalRounds("swiss", players.length);
+                const escrito = input.value.trim();
+                const n = Number(escrito);
+                const min = Number(input.min), max = Number(input.max);
+                if (escrito === "") {
+                    totalRounds = TorneoEngine.suggestedTotalRounds("swiss", players.length);
+                } else if (!Number.isInteger(n) || n < min || n > max) {
+                    Avisos.avisar("El número de rondas tiene que ser un número entero de " + min + " a " + max + ".", { tipo: "error" });
+                    input.focus();
+                    return;
+                } else {
+                    totalRounds = n;
+                }
             } else {
                 totalRounds = TorneoEngine.suggestedTotalRounds(tournament.format, players.length);
             }
@@ -330,8 +345,25 @@
                     document.getElementById("rounds-input").value = TorneoEngine.suggestedTotalRounds("swiss", Math.max(registrations.length, 2));
                     roundsField.dataset.filled = "1";
                 }
+                if (tournament.format === "swiss") avisoDeRondas();
             }
         }
+
+        /* Con N inscritos, un Suizo alcanza N - 1 rondas sin que nadie repita
+           rival (N si son impares: la que falta es el bye). Pedir más se puede
+           —el motor repite lo menos posible—, pero quien organiza lo tiene que
+           saber antes de empezar, no descubrirlo en la ronda 12. */
+        function avisoDeRondas() {
+            const aviso = document.getElementById("rounds-aviso");
+            const n = registrations.length;
+            const pedidas = Number(document.getElementById("rounds-input").value);
+            const alcanzan = n % 2 ? n : n - 1;
+            aviso.textContent = n >= 2 && Number.isInteger(pedidas) && pedidas > alcanzan
+                ? "Con " + n + " inscritos alcanzan " + alcanzan + (alcanzan === 1 ? " ronda" : " rondas") +
+                  " sin repetir rival; con " + pedidas + ", algunos se van a enfrentar más de una vez."
+                : "";
+        }
+        document.getElementById("rounds-input").addEventListener("input", avisoDeRondas);
 
         function renderPairingRow(p, round) {
             const row = document.createElement("div");
