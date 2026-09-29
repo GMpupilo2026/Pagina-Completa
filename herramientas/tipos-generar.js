@@ -60,7 +60,8 @@ const PUZZLES = Object.keys(TEMAS.puzzles).sort((a, b) => hash(a) - hash(b)).map
 /* `--solo con-lo-justo` rehace solo ese banco (no usa el motor: sale de las
    tablas de finales) y deja el resto de tipos.json como está. Así se puede
    ampliar sin Stockfish y sin tocar los demás. `--solo aguanta`, `--solo
-   remata` y `--solo tiempo` hacen lo mismo con esos tres, que sí usan el motor: los demás bancos no se vuelven a analizar,
+   remata`, `--solo tiempo` y `--solo tablas` hacen lo mismo con esos, que sí
+   usan el motor: los demás bancos no se vuelven a analizar,
    así que ningún id cambia y nadie pierde sus estrellas. */
 const SOLO = process.argv.includes("--solo") ? process.argv[process.argv.indexOf("--solo") + 1] : null;
 const MOTORES = SOLO === "con-lo-justo" ? [] : Array.from({ length: Math.max(1, Math.min(4, require("os").cpus().length)) }, () => new Motor());
@@ -1160,7 +1161,7 @@ async function generarRemata() {
     };
   })).filter(Boolean);
   const out = [];
-  for (const n of [1, 2, 3]) out.push(...buenos.filter((x) => x.nivel === n).sort((a, b) => a.rating - b.rating || (a.id < b.id ? -1 : 1)).slice(0, POR_NIVEL * 2));
+  for (const n of [1, 2]) out.push(...buenos.filter((x) => x.nivel === n).sort((a, b) => a.rating - b.rating || (a.id < b.id ? -1 : 1)).slice(0, POR_NIVEL * 2));
   return out;
 }
 
@@ -1256,6 +1257,111 @@ async function generarTiempo() {
   return out;
 }
 
+/* ---------- 19. Salva las tablas ----------
+   El espejo de Remata: posiciones donde al alumno le falta material pero el
+   motor dice que se aguanta. Tres fuentes del banco de «Ejercicios por tema»:
+     - el que perdió material al final de un ejercicio (le toca a él);
+     - los ejercicios de igualdad y de defensa (`equality`, `defensiveMove`)
+       después de la solución y de la mejor respuesta del rival: ya se salvó,
+       ahora hay que sostenerlo;
+     - esos mismos ejercicios desde el principio: hay que encontrar la línea
+       que salva.
+   Entra si nadie está en jaque, hay 6 piezas o más, al alumno le falta
+   material, y el motor le da entre −0,8 y +0,5 a profundidad
+   18, sin mate, habiendo dicho casi lo mismo a 12 (a menos de 1). El
+   material se cuenta en la primera posición TRANQUILA de la línea del motor
+   (posicionQuieta): una posición en medio de un cambio («falta» una dama que
+   se recaptura en la jugada siguiente) no tiene material de menos de verdad.
+   El nivel lo pone cuánto falta ahí: un peón (1), dos puntos o más (2). */
+/* La primera posición TRANQUILA de la línea del motor (desde la segunda media
+   jugada): nadie en jaque y la jugada siguiente de la línea no es una
+   captura. Contar el material en medio de un cambio miente para los dos
+   lados. null si la línea (6 medias jugadas) no llega a calmarse. */
+function posicionQuieta(fen, pv) {
+  const g = new Chess(fen);
+  for (let i = 0; i < pv.length; i++) {
+    const u = pv[i];
+    if (!g.move({ from: u.slice(0, 2), to: u.slice(2, 4), promotion: u[4] || undefined })) return null;
+    if (i < 1 || g.in_check()) continue;
+    const sig = pv[i + 1];
+    if (!sig) return null;
+    const m = new Chess(g.fen()).move({ from: sig.slice(0, 2), to: sig.slice(2, 4), promotion: sig[4] || undefined });
+    if (m && !m.captured && !m.promotion) return g.fen();
+  }
+  return null;
+}
+async function generarTablas() {
+  const cand = [];
+  const vistas = new Set();
+  const sumar = (pz, fen, origen) => {
+    const k = fen.split(" ").slice(0, 2).join(" ");
+    if (vistas.has(k)) return;
+    const g = new Chess();
+    if (!g.load(fen) || g.in_check() || g.game_over() || piezas(fen) < 6) return;
+    const yo = fen.split(" ")[1];
+    if (material(fen) * (yo === "w" ? 1 : -1) > -1) return;
+    vistas.add(k);
+    cand.push({ pz, fen, origen });
+  };
+  for (const pz of PUZZLES) {
+    if (pz.mate) continue;
+    const g = new Chess(pz.fen);
+    let ok = true;
+    for (const s of pz.solution) if (!g.move(s)) { ok = false; break; }
+    if (!ok) continue;
+    sumar(pz, g.fen(), "perdedor");
+    const t = pz.themes || [];
+    if (t.includes("equality") || t.includes("defensiveMove")) { sumar(pz, pz.fen, "desde-el-principio"); cand.push({ pz, fenRival: g.fen(), origen: "despues" }); }
+  }
+  const ST = {};
+  const st = (k) => { ST[k] = (ST[k] || 0) + 1; return null; };
+  const buenos = (await enParalelo(cand, async (c) => {
+    let fen = c.fen;
+    if (c.fenRival) {
+      const g = new Chess(c.fenRival);
+      if (g.game_over()) return st("fin");
+      const [rr] = await analizar(c.fenRival, 1, 16);
+      if (!rr) return st("sin-respuesta");
+      const m = g.move({ from: rr.uci.slice(0, 2), to: rr.uci.slice(2, 4), promotion: rr.uci[4] || undefined });
+      if (!m) return st("sin-respuesta");
+      fen = g.fen();
+      const k = fen.split(" ").slice(0, 2).join(" ");
+      if (vistas.has(k) || g.in_check() || g.game_over() || piezas(fen) < 6) return st("repetida-o-jaque");
+      if (material(fen) * (fen.split(" ")[1] === "w" ? 1 : -1) > -1) return st("material");
+      vistas.add(k);
+    }
+    const [a] = await analizar(fen, 1, 12);
+    if (!a || a.mate !== null) return st("mate-12");
+    if (a.score < -180 || a.score > 150) return st("fuera-12");
+    const [b] = await analizar(fen, 1, 18);
+    if (!b || b.mate !== null) return st("mate-18");
+    if (b.score < -80 || b.score > 50) return st("fuera-18");
+    if (Math.abs(a.score - b.score) > 100) return st("duda");
+    const yo = fen.split(" ")[1];
+    const quieta = posicionQuieta(fen, b.pv || []);
+    if (!quieta) return st("la-linea-no-se-calma");
+    const mat = material(quieta) * (yo === "w" ? 1 : -1);
+    if (mat > -1) return st("material-tras-la-linea");
+    const n = mat <= -2 ? 2 : 1;
+    const jugadas = R_CATALOGO.nivel("tablas", n).jugadas;
+    const numero = R.numeroBalanza(b.score / 100);
+    return {
+      id: "tab-" + n + "-" + c.pz.id + (c.origen === "desde-el-principio" ? "-p" : ""), nivel: n, fen, eval: b.score, material: mat, materialAhora: material(fen) * (yo === "w" ? 1 : -1), jugadas,
+      origen: c.origen, linea: lineaEs(fen, b.pv, 4), rating: c.pz.rating || null, partida: c.pz.game || null,
+      resumen: "Juegan las " + R.COLOR[yo] + " · material " + mat + " · " + numero,
+      respuesta: [
+        "El motor: " + numero + " para las " + R.COLOR[yo] + " (profundidad 18), con " + (-mat) + " puntos de material menos.",
+        "Cómo lo aguantaría el motor: " + lineaEs(fen, b.pv, 4) + ".",
+        "La meta: llegar a tablas, o aguantar " + jugadas + " jugadas sin bajar de −2,5.",
+      ],
+    };
+  })).filter(Boolean);
+  console.log("  tablas: " + cand.length + " candidatas; descartes " + JSON.stringify(ST) + "; por origen " + JSON.stringify(buenos.reduce((m, x) => { m[x.origen] = (m[x.origen] || 0) + 1; return m; }, {})));
+  const out = [];
+  for (const n of [1, 2, 3]) out.push(...buenos.filter((x) => x.nivel === n).sort((a, b) => (a.rating || 0) - (b.rating || 0) || (a.id < b.id ? -1 : 1)).slice(0, POR_NIVEL * 2));
+  return out;
+}
+
 /* ---------- solo un banco ---------- */
 if (SOLO === "aguanta") {
   (async () => {
@@ -1293,8 +1399,20 @@ if (SOLO === "aguanta") {
     console.log("tiempo        ", JSON.stringify(c));
     process.exit(0);
   })().catch((e) => { console.error(e); process.exit(1); });
+} else if (SOLO === "tablas") {
+  (async () => {
+    const datos = JSON.parse(fs.readFileSync(SALIDA, "utf8"));
+    console.log("Salva las tablas (motor)…");
+    datos.tablas = await generarTablas();
+    guardarCache();
+    MOTORES.forEach((m) => m.cerrar());
+    fs.writeFileSync(SALIDA, JSON.stringify(datos) + "\n");
+    const c = datos.tablas.reduce((m, x) => { m[x.nivel] = (m[x.nivel] || 0) + 1; return m; }, {});
+    console.log("tablas        ", JSON.stringify(c));
+    process.exit(0);
+  })().catch((e) => { console.error(e); process.exit(1); });
 } else if (SOLO) {
-  if (SOLO !== "con-lo-justo") { console.error("--solo solo sabe rehacer «con-lo-justo», «aguanta», «remata» o «tiempo»."); process.exit(2); }
+  if (SOLO !== "con-lo-justo") { console.error("--solo solo sabe rehacer «con-lo-justo», «aguanta», «remata», «tiempo» o «tablas»."); process.exit(2); }
   const datos = JSON.parse(fs.readFileSync(SALIDA, "utf8"));
   console.log("Con lo justo (tablas de finales, tarda un par de minutos)…");
   datos["con-lo-justo"] = generarConLoJusto();
@@ -1342,12 +1460,14 @@ if (!SOLO) (async () => {
   const remata = await generarRemata();
   console.log("Elige a tiempo…");
   const tiempo = await generarTiempo();
+  console.log("Salva las tablas…");
+  const tablas = await generarTablas();
   guardarCache();
   MOTORES.forEach((m) => m.cerrar());
   const datos = {
     fuente: "Posiciones de partidas reales de la base abierta de Lichess (CC0) y de js/aperturas-lineas.js; finales sorteados con su distancia exacta al mate. Generado por herramientas/tipos-generar.js: no se edita a mano.",
     detective, amenaza, descarte, diferencias, balanza, fotografia, "con-lo-justo": conLoJusto,
-    barrido, intercambios, construye, peones, maestro, apertura, ruta, aguanta, remata, tiempo,
+    barrido, intercambios, construye, peones, maestro, apertura, ruta, aguanta, remata, tiempo, tablas,
   };
   fs.writeFileSync(SALIDA, JSON.stringify(datos) + "\n");
   const cuenta = (l) => l.reduce((m, x) => { m[x.nivel] = (m[x.nivel] || 0) + 1; return m; }, {});

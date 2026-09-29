@@ -1692,6 +1692,22 @@
    "actividades": [
     "tipos"
    ]
+  },
+  {
+   "clave": "errores",
+   "label": "Tus propios errores",
+   "total": null,
+   "actividades": [
+    "tipos"
+   ]
+  },
+  {
+   "clave": "tablas",
+   "label": "Salva las tablas",
+   "total": 43,
+   "actividades": [
+    "tipos"
+   ]
   }
  ]
 }

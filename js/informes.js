@@ -1017,6 +1017,10 @@
                 ? pluralES(r.ejercicios.length, "error", "errores") + " (" + regalados + " en que regaló, " + escapados + " en que se le escapó la ventaja) · " + pluralES(resueltos, "ya resuelto", "ya resueltos") + "."
                 : "no salió ningún error."), "text-sm font-semibold text-brand-700 dark:text-brand-200 mb-3");
             if (!r.ejercicios.length) return;
+            // Los temas que más se repiten (el reconocedor de la preparación de rivales).
+            const TEMAS = window.PreparacionTactica ? PreparacionTactica.TEMAS : null;
+            const temas = TEMAS ? ErroresPropios.temasDe(r.ejercicios, TEMAS) : [];
+            if (temas.length) p("Lo que más se repite: " + temas.slice(0, 3).map((t) => t.plural + " (" + t.n + ")").join(", ") + ".", "text-sm text-brand-700 dark:text-brand-200 mb-3");
             const sanEs = (s) => (window.TiposReglas ? TiposReglas.sanEs(s) : s);
             const num = (cp) => (window.TiposReglas ? TiposReglas.numeroBalanza(cp / 100) : String(cp / 100));
             const ul = document.createElement("ul");
@@ -1027,7 +1031,8 @@
                 if (i >= ERRORES_A_LA_VISTA) li.dataset.extra = "1";
                 const cab = document.createElement("p");
                 cab.className = "font-semibold text-brand-700 dark:text-brand-200";
-                cab.textContent = String(x.resumen || fmtFecha(x.fecha)).slice(0, 80) + " — " + (x.nivel === 2 ? "se le escapó la ventaja" : "regaló");
+                cab.textContent = String(x.resumen || fmtFecha(x.fecha)).slice(0, 80) + " — " + (x.nivel === 2 ? "se le escapó la ventaja" : "regaló") +
+                    (x.tema && TEMAS && TEMAS[x.tema] ? " · " + TEMAS[x.tema].nombre.toLowerCase() : "");
                 const det = document.createElement("p");
                 det.className = "text-brand-600 dark:text-brand-300";
                 det.textContent = "Jugó " + sanEs(x.jugada) + " (" + num(x.antes) + " → " + num(x.despues) + "). Lo bueno: " + x.buenas.map(sanEs).join(" o ") + ".";

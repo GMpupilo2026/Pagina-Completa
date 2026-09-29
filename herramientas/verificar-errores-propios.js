@@ -15,6 +15,9 @@
  *     (empezó «desde el tablero») da null y no se analiza;
  *   - acierta(): cuenta cualquier jugada buena, con o sin «+», y reconoce la
  *     jugada de la partida;
+ *   - temaDelError() / temasDe(): el tema de cada error con el reconocedor de
+ *     la preparación de rivales (si regaló, el del castigo del rival; si se le
+ *     escapó, el de la mejor que no vio) y cuál se repite;
  *   - deFilas(): lo que lee Informes desde training_state. No le cree nada al
  *     navegador del alumno: descarta lo que no tiene forma de ejercicio (una
  *     «jugada» que es HTML, un nivel que no existe, un JSON roto) y cuenta las
@@ -106,6 +109,21 @@ console.log("\n=== acierta() ===");
   ok("una ilegal no es legal", !E.acierta(Chess, item, "Ke3").legal);
 }
 
+console.log("\n=== temaDelError() y temasDe() ===");
+{
+  const T = require("../js/preparacion-tactica.js");
+  ok("regaló (Tc1) y el rival lo castiga con una horquilla (Ce2+)", E.temaDelError(T, Chess, 1, "4k3/8/8/8/5n2/8/8/R5K1 w - - 0 1", null, "Rc1", "Ne2+") === "horquilla");
+  ok("se le escapó una horquilla (Cc7+): el tema es la mejor que no vio", E.temaDelError(T, Chess, 2, "r3k3/8/8/1N6/8/8/8/4K3 w - - 0 1", "Nc7+") === "horquilla");
+  ok("el mate se reconoce aunque el motor mande la jugada sin «#»", E.temaDelError(T, Chess, 2, "6k1/5ppp/8/8/8/8/8/R5K1 w - - 0 1", "Ra8") === "mate");
+  ok("una jugada que no es legal no inventa tema", E.temaDelError(T, Chess, 1, "4k3/8/8/8/5n2/8/8/R5K1 w - - 0 1", null, "Rc9", "Ne2+") === null);
+  ok("sin el reconocedor, sin tema", E.temaDelError(null, Chess, 2, "r3k3/8/8/1N6/8/8/8/4K3 w - - 0 1", "Nc7+") === null);
+  const x = E.ejercicio({ clave: "juego:t", origen: "juego", color: "w", fecha: "2026-09-20T15:00:00Z" }, { ply: 4, antes: 0, despues: -300, perdida: 300, nivel: 1 },
+    "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3", "Nxe5", [{ san: "Bb5", eval: 0.3 }, { san: "Nxe5", eval: -3 }], "otra");
+  ok("«otra» no se guarda como tema", x && x.tema === null);
+  const t = E.temasDe([{ tema: "clavada" }, { tema: "horquilla" }, { tema: "clavada" }, { tema: null }, { tema: "inventado" }], T.TEMAS);
+  ok("temasDe cuenta, ordena y trae el tema para practicar", t.map((y) => y.tema + ":" + y.n).join() === "clavada:2,horquilla:1" && t[0].practica === "pin" && t[0].plural === "clavadas", JSON.stringify(t));
+}
+
 console.log("\n=== deFilas() (lo que lee Informes) ===");
 {
   const bueno = (id, fecha, extra) => Object.assign({ id, nivel: 1, fen: "8/8/8/8/8/8/8/K6k w - - 0 1", jugada: "Nxf7", buenas: ["Bxf7+"], antes: 13, despues: -455, fecha }, extra || {});
@@ -127,6 +145,8 @@ console.log("\n=== deFilas() (lo que lee Informes) ===");
   const roto = E.deFilas([{ key: "errores_propios_v1", value: { raw: "{no es json" } }, { key: "errores_analizadas_v1", value: null }]);
   ok("un JSON roto o una fila vacía no rompen nada", roto.ejercicios.length === 0 && roto.revisadas === 0);
   ok("sin filas, vacío", E.deFilas([]).ejercicios.length === 0 && E.deFilas(null).revisadas === 0);
+  const conTema = E.deFilas([{ key: "errores_propios_v1", value: { raw: JSON.stringify({ a: bueno("a", "1", { tema: "clavada" }), b: bueno("b", "2", { tema: "<script>" }) }) } }]);
+  ok("el tema se lee, y uno que no tiene forma de tema se descarta", conTema.ejercicios.map((x) => x.id + ":" + x.tema).join() === "b:null,a:clavada", conTema.ejercicios.map((x) => x.id + ":" + x.tema).join());
 }
 
 console.log(fallos ? "\n✗ " + fallos + " de " + pruebas + " comprobaciones fallaron." : "\n✓ Las " + pruebas + " comprobaciones pasaron.");
