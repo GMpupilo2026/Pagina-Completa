@@ -42,17 +42,16 @@ const fila = (elegido) => ({ id: 7, owner_id: "u-profe", fen: null, moves: [], s
   active_player_color: "both", vista: null, comentarios: {}, elegido });
 
 function pruebaSinRepetir() {
-  console.log("\n=== Elegir sin repetir ===");
+  console.log("\n=== Elegir entre los que llevan menos ===");
   const w = {};
   new Function("window", fs.readFileSync(path.join(__dirname, "..", "js", "partidas-clase.js"), "utf8"))(w);
   const P = w.PartidasClase;
-  const ya = new Set();
-  const vuelta = [1, 2, 3].map(() => P.elegirSinRepetir(["a", "b", "c"], ya));
+  const cuentas = new Map();
+  const vuelta = [1, 2, 3].map(() => { const id = P.elegirConMenos(["a", "b", "c"], cuentas); cuentas.set(id, (cuentas.get(id) || 0) + 1); return id; });
   igual("en una vuelta sale cada uno una vez", vuelta.slice().sort(), ["a", "b", "c"]);
-  const cuarta = P.elegirSinRepetir(["a", "b", "c"], ya);
-  igual("después de la vuelta vuelve a empezar", ["a", "b", "c"].includes(cuarta) && ya.size === 1, true);
-  igual("el que ya no está conectado no sale", P.elegirSinRepetir(["b"], new Set(["a"])), "b");
-  igual("sin nadie conectado, nadie", P.elegirSinRepetir([], new Set()), null);
+  igual("quien lleva menos sale primero", P.elegirConMenos(["a", "b", "c"], new Map([["a", 2], ["b", 1], ["c", 2]])), "b");
+  igual("quien se conecta tarde (con cero) entra primero", P.elegirConMenos(["a", "d"], new Map([["a", 1]])), "d");
+  igual("sin nadie conectado, nadie", P.elegirConMenos([], new Map()), null);
 }
 
 async function pruebaProfesor(browser) {
@@ -79,6 +78,12 @@ async function pruebaProfesor(browser) {
   const segundo = await page.evaluate(() => window.__updates.filter((u) => u.tabla === "game_state" && u.campos.elegido).pop().campos.elegido);
   igual("«Elegir a otro» no repite mientras quede alguien", segundo.id !== primero.id, true);
 
+  igual("cada elección queda en la historia de ESTA clase", await page.evaluate(() =>
+    window.__inserts.filter((i) => i.tabla === "clase_elegidos").map((i) => i.fila.class_session_id)), ["c-viva", "c-viva"]);
+  igual("y el profe ve cuántas veces le tocó a cada uno", await page.evaluate(() =>
+    [...document.querySelectorAll("#elegidos-cuenta li")].map((li) => li.textContent).sort()), ["Ana Rojas1 vez", "Beto Mora1 vez"]);
+  igual("la cuenta se ve", await seVe(page, "#elegidos-cuenta"), true);
+
   await page.click("#elegido-insignia-btn");
   igual("las insignias se abren para ESE alumno", await page.textContent("#trofeos-en-clase-titulo"),
     "🏆 Trofeos e insignias de " + nombres[segundo.id]);
@@ -91,6 +96,32 @@ async function pruebaProfesor(browser) {
     return u[u.length - 1].campos.elegido;
   }), null);
   igual("y se va de su pantalla", await seVe(page, "#elegido-caja"), false);
+  igual("sin errores en consola", errores, []);
+  await ctx.close();
+}
+
+/* Al recargar, la cuenta vuelve de la base (no de la memoria de la página)
+   y el sorteo la usa: con Ana en 2 y Beto en 0, sale Beto. */
+async function pruebaTurnosGuardados(browser) {
+  console.log("\n=== La cuenta sobrevive a recargar y guía el sorteo ===");
+  const { page, ctx, errores } = await abrir(browser, "u-profe", CLASE, {
+    game_state: [fila(null)],
+    clase_elegidos: [
+      { id: "e1", class_session_id: "c-viva", student_id: "u-ana" },
+      { id: "e2", class_session_id: "c-viva", student_id: "u-ana" },
+      { id: "e0", class_session_id: "c-vieja", student_id: "u-beto" },
+    ],
+  });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.waitForSelector("#elegir-azar-btn", { state: "attached", timeout: 10000 });
+  await page.evaluate(() => { activateTeacherTab("alumnos"); window.__entraAlumno(); window.__entraOtroAlumno(); });
+  await page.waitForFunction(() => document.querySelectorAll("#elegidos-cuenta li").length === 2, null, { timeout: 5000 });
+  igual("la cuenta es la de ESTA clase, primero el que menos lleva", await page.evaluate(() =>
+    [...document.querySelectorAll("#elegidos-cuenta li")].map((li) => li.textContent)), ["Beto Moratodavía no", "Ana Rojas2 veces"]);
+  await page.click("#elegir-azar-btn");
+  await page.waitForFunction(() => window.__updates.some((u) => u.tabla === "game_state" && u.campos.elegido), null, { timeout: 5000 });
+  igual("el sorteo elige al que lleva menos", await page.evaluate(() =>
+    window.__updates.filter((u) => u.tabla === "game_state" && u.campos.elegido).pop().campos.elegido.id), "u-beto");
   igual("sin errores en consola", errores, []);
   await ctx.close();
 }
@@ -141,6 +172,7 @@ async function pruebaOtroAlumno(browser) {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
     await pruebaProfesor(browser);
+    await pruebaTurnosGuardados(browser);
     await pruebaAlumna(browser);
     await pruebaOtroAlumno(browser);
   } catch (e) {

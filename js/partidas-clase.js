@@ -61,23 +61,20 @@ window.PartidasClase = (function () {
         return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
     }
 
-    /* A quién le toca responder, al azar entre los conectados y sin repetir
-       hasta que les toque a todos: con el azar puro, el mismo alumno sale tres
-       veces seguidas y otro nunca. `yaElegidos` es un Set que esta función
-       va llenando; cuando no queda nadie nuevo conectado, se vacía y vuelve a
-       empezar la vuelta. Devuelve null si no hay nadie conectado. */
-    function elegirSinRepetir(conectados, yaElegidos, azar) {
+    /* A quién le toca responder: al azar, pero entre los conectados que llevan
+       MENOS turnos en esta clase. Con el azar puro el mismo alumno sale tres
+       veces seguidas y otro nunca; así nadie repite hasta que les toque a
+       todos, y quien se conecta tarde (con cero) entra primero. `cuentas` es
+       un Map id → veces, armado de clase_elegidos: sobrevive a recargar la
+       página. Devuelve null si no hay nadie conectado. */
+    function elegirConMenos(conectados, cuentas, azar) {
         if (!conectados.length) return null;
-        let pendientes = conectados.filter((id) => !yaElegidos.has(id));
-        if (!pendientes.length) {
-            yaElegidos.clear();
-            pendientes = conectados.slice();
-        }
+        const veces = (id) => (cuentas && cuentas.get(id)) || 0;
+        const minimo = Math.min(...conectados.map(veces));
+        const pendientes = conectados.filter((id) => veces(id) === minimo);
         const r = azar || Math.random;
-        const id = pendientes[Math.floor(r() * pendientes.length)];
-        yaElegidos.add(id);
-        return id;
+        return pendientes[Math.floor(r() * pendientes.length)];
     }
 
-    return { RITMOS, RELOJES_PRACTICA, emparejar, estado, reloj, elegirSinRepetir };
+    return { RITMOS, RELOJES_PRACTICA, emparejar, estado, reloj, elegirConMenos };
 })();
