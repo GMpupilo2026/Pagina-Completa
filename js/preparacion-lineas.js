@@ -241,6 +241,8 @@
     if (libro && Object.keys(libro).length) {
       out.libro = libro;
       out.elo = (r.elo && r.elo.reciente) || null;
+      // Si el libro pesa más lo reciente (los porcentajes son de lo que juega ahora).
+      out.reciente = !!(r.filtros && r.filtros.reciente);
     }
     return out;
   }

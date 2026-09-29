@@ -8,6 +8,12 @@
  * la lista de proveedores de privacidad.html.
  *
  *   descargar({ sitio, usuario, maximo, alAvanzar, senal }) → texto PGN
+ *   cuentasDe("pedro1, @pedro_2")  → ["pedro1", "pedro_2"] (las otras cuentas)
+ *   unirCuentas(texto, "pedro1", "PedroP") → el PGN con «pedro1» como «PedroP»
+ *
+ * Varias cuentas del mismo rival (en Lichess y en Chess.com, o dos en el mismo
+ * sitio) se bajan una tras otra y se juntan con el nombre de la primera: para
+ * el análisis son un solo jugador. Ver «Varias cuentas del rival».
  *
  * Lichess entrega las partidas en un solo flujo, las más nuevas primero, a unas
  * 20 por segundo sin cuenta: se va leyendo de a pedazos para decir cuántas van.
@@ -114,6 +120,26 @@
 
   // `ultimoTexto`: las partidas completas que ya llegaron, para analizar lo
   // bajado si se para a la mitad.
-  const api = { descargar, contarPartidas, primeras, USUARIO_VALIDO, ultimoTexto: "" };
+  // Las otras cuentas, escritas separadas por coma o espacio, sin @ y sin repetir.
+  function cuentasDe(texto) {
+    const vistas = new Set();
+    return String(texto || "").split(/[\s,;]+/).map((x) => x.replace(/^@/, "")).filter((x) => {
+      const k = x.toLowerCase();
+      if (!x || vistas.has(k)) return false;
+      vistas.add(k);
+      return true;
+    });
+  }
+
+  // En las etiquetas de jugador, el usuario de otra cuenta pasa a llamarse
+  // como la principal (sin distinguir mayúsculas: Lichess y Chess.com no las
+  // distinguen). El usuario ya pasó por USUARIO_VALIDO: no trae nada que
+  // escapar salvo el guion.
+  function unirCuentas(texto, otro, principal) {
+    const re = new RegExp('^\\[(White|Black) "' + otro.replace(/-/g, "\\-") + '"\\]', "gim");
+    return texto.replace(re, (m, lado) => "[" + lado + ' "' + principal + '"]');
+  }
+
+  const api = { descargar, contarPartidas, primeras, cuentasDe, unirCuentas, USUARIO_VALIDO, ultimoTexto: "" };
   window.PreparacionDescarga = api;
 })();

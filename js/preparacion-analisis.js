@@ -341,8 +341,14 @@
 
   // ------------------------------------------------------------ cuentas
 
-  function vacio() { return { n: 0, g: 0, t: 0, p: 0 }; }
-  function sumar(c, res) { c.n += 1; if (res === "G") c.g += 1; else if (res === "T") c.t += 1; else c.p += 1; }
+  // `w` es el peso: las partidas contadas, con más peso las recientes (ver
+  // pesoReciente). Sirve para decir QUÉ juega y cuánto (el orden y el reparto
+  // de sus jugadas); los resultados y los mínimos van con `n`, partidas enteras.
+  function vacio() { return { n: 0, g: 0, t: 0, p: 0, w: 0 }; }
+  function sumar(c, res, peso) {
+    c.n += 1; c.w += peso == null ? 1 : peso;
+    if (res === "G") c.g += 1; else if (res === "T") c.t += 1; else c.p += 1;
+  }
   function puntos(c) { return c.n ? (c.g + c.t / 2) / c.n : null; }
   function resumen(c) { return { n: c.n, g: c.g, t: c.t, p: c.p, puntos: puntos(c) }; }
 
@@ -368,14 +374,14 @@
   function armarArbol(lista) {
     const raiz = nuevoNodo();
     for (const x of lista) {
-      sumar(raiz.c, x.res);
+      sumar(raiz.c, x.res, x.peso);
       let nodo = raiz;
       const tope = Math.min(MAX_JUGADAS_ARBOL, x.jugadas.length);
       for (let i = 0; i < tope; i++) {
         const san = x.jugadas[i];
         if (!nodo.hijos.has(san)) nodo.hijos.set(san, nuevoNodo());
         nodo = nodo.hijos.get(san);
-        sumar(nodo.c, x.res);
+        sumar(nodo.c, x.res, x.peso);
       }
     }
     return aGrafo(raiz);
@@ -410,17 +416,20 @@
     return raiz;
   }
 
-  function sumarCuenta(a, b) { a.n += b.n; a.g += b.g; a.t += b.t; a.p += b.p; }
+  function sumarCuenta(a, b) { a.n += b.n; a.g += b.g; a.t += b.t; a.p += b.p; a.w += b.w; }
 
   // Las jugadas desde una posición, de la más jugada ahí a la menos. `nodo.c`
   // es la posición a la que lleva (todos los órdenes); `arista` es cuántas
   // veces se jugó esa jugada desde esta posición.
   function hijosOrdenados(nodo) {
     return [...nodo.hijos.entries()].map(([san, a]) => ({ san, nodo: a.nodo, arista: a.c }))
-      .sort((a, b) => b.arista.n - a.arista.n || b.nodo.c.n - a.nodo.c.n);
+      .sort((a, b) => b.arista.w - a.arista.w || b.arista.n - a.arista.n || b.nodo.c.n - a.nodo.c.n);
   }
 
   function totalAristas(nodo) { let n = 0; for (const a of nodo.hijos.values()) n += a.c.n; return n; }
+  // Qué parte de las veces juega esa jugada ahí, con el peso de lo reciente.
+  function totalPeso(nodo) { let w = 0; for (const a of nodo.hijos.values()) w += a.c.w; return w; }
+  function reparto(arista, nodo) { return arista.w / (totalPeso(nodo) || 1); }
 
   // ¿A quién le toca después de `profundidad` medias jugadas? El rival juega
   // en las pares si lleva blancas, en las impares si lleva negras.
@@ -477,7 +486,8 @@
       for (const nodo of nivel) {
         const total = totalAristas(nodo);
         if (leTocaAlRival(color, prof) && total >= LIBRO_MIN) {
-          out.push({ clave: nodo.clave, total, jugadas: hijosOrdenados(nodo).slice(0, 6).map((h) => [h.san, h.arista.n]) });
+          // [jugada, partidas, peso]: el sorteo va con el peso (lo reciente pesa más).
+          out.push({ clave: nodo.clave, total, jugadas: hijosOrdenados(nodo).slice(0, 6).map((h) => [h.san, h.arista.n, Math.round(h.arista.w * 100) / 100]) });
         }
         for (const a of nodo.hijos.values()) if (!vistos.has(a.nodo)) { vistos.add(a.nodo); sig.push(a.nodo); }
       }
@@ -525,7 +535,7 @@
       const hs = hijosOrdenados(nodo);
       if (!hs.length) break;
       const h = hs[0];
-      if (h.arista.n < minN || h.arista.n < 0.5 * totalAristas(nodo) || vistos.has(h.nodo)) break;
+      if (h.arista.n < minN || reparto(h.arista, nodo) < 0.5 || vistos.has(h.nodo)) break;
       sec.push(h.san);
       vistos.add(h.nodo);
       nodo = h.nodo;
@@ -542,8 +552,8 @@
       if (!leTocaAlRival(color, sec.length) || h.c.n < 2 * minN || sec.length > 8) return;
       const hs = hijosOrdenados(h);
       if (hs.length < 2) return;
-      const reparto = hs[0].arista.n / Math.max(totalAristas(h), 1);
-      if (reparto < 0.4) out.push({ color, sec, n: h.c.n, reparto, opciones: hs.slice(0, 4).map((x) => ({ san: x.san, n: x.arista.n })) });
+      const r = reparto(hs[0].arista, h);
+      if (r < 0.4) out.push({ color, sec, n: h.c.n, reparto: r, opciones: hs.slice(0, 4).map((x) => ({ san: x.san, n: x.arista.n })) });
     });
     out.sort((a, b) => b.n - a.n);
     return out.slice(0, 4);
@@ -561,10 +571,9 @@
     const out = [];
     // `veces[i]`: cuántas de sus partidas jugaron la jugada i de la línea.
     (function bajar(nodo, sec, veces, visitados) {
-      const total = Math.max(totalAristas(nodo), 1);
       const suyo = leTocaAlRival(color, sec.length);
       const siguen = sec.length >= 20 ? [] : hijosOrdenados(nodo)
-        .filter((x) => x.arista.n >= minN && x.arista.n / total >= (suyo ? 0.2 : 0.15) && !visitados.has(x.nodo))
+        .filter((x) => x.arista.n >= minN && reparto(x.arista, nodo) >= (suyo ? 0.2 : 0.15) && !visitados.has(x.nodo))
         .slice(0, suyo ? 2 : 3);
       if (!siguen.length) {
         if (sec.length >= 2) out.push({ color, sec, veces, n: veces[veces.length - 1], puntos: puntos(nodo.c) });
@@ -601,13 +610,12 @@
     // (sus dos primeras jugadas): 1.e4 y 1.d4 de un rival que abre con las
     // dos son dos preparaciones, no una y una nota al pie. El resto, dos
     // medias jugadas: la respuesta y la primera de él.
-    const total = Math.max(totalAristas(nodo), 1);
-    const respuestas = hs.filter((x) => x.arista.n >= minN && x.arista.n >= 0.1 * total).slice(0, 3);
+    const respuestas = hs.filter((x) => x.arista.n >= minN && reparto(x.arista, nodo) >= 0.1).slice(0, 3);
     return respuestas.map((x, i) => {
-      const reparto = x.arista.n / total;
-      const hondo = i === 0 || (reparto >= 0.25 && profundidadTotal <= 3);
+      const r = reparto(x.arista, nodo);
+      const hondo = i === 0 || (r >= 0.25 && profundidadTotal <= 3);
       return {
-        san: x.san, quien: "rival", reparto, ...resumen(x.nodo.c),
+        san: x.san, quien: "rival", reparto: r, ...resumen(x.nodo.c),
         hijos: plan(x.nodo, color, base, minN, hondo ? prof - 1 : Math.min(prof - 1, 2), profundidadTotal + 1),
       };
     });
@@ -895,14 +903,32 @@
   // Menos de esto, y la página avisa que dice poco.
   const POCAS = 30;
 
+  /* Lo reciente pesa más: una partida de hace un año cuenta la mitad que una
+     de su última fecha, una de hace dos, un cuarto. Solo para QUÉ juega (el
+     orden y el reparto de sus jugadas, su libro); cuánto saca y los mínimos
+     siguen con partidas enteras. Sin fecha, pesa como una de hace un año. Con
+     `activo` en falso, o si ninguna tiene fecha, todas pesan 1. */
+  const VIDA_MEDIA = 365;
+  function ponerPesos(lista, activo) {
+    let ref = null;
+    for (const x of lista) if (x.fecha && (!ref || x.fecha > ref)) ref = x.fecha;
+    for (const x of lista) {
+      if (!activo || !ref) x.peso = 1;
+      else if (!x.fecha) x.peso = 0.5;
+      else x.peso = Math.pow(0.5, Math.max(0, Date.parse(ref) - Date.parse(x.fecha)) / 86400000 / VIDA_MEDIA);
+    }
+  }
+
   function analizar(partidas, rival, opciones) {
     const o = opciones || {};
     const clave = claveNombre(rival);
     const todas = partidasDelRival(partidas, clave);
     if (!todas.length) return null;
     // `partida`: el ritmo de la partida que viene, si se dijo (lo usa el resumen).
-    const filtros = { ritmos: (o.ritmos || []).slice(), desde: o.desde || null, partida: o.partida || null };
+    // `reciente`: dar más peso a lo que juega ahora (ponerPesos); sí, si no se dice.
+    const filtros = { ritmos: (o.ritmos || []).slice(), desde: o.desde || null, partida: o.partida || null, reciente: o.reciente !== false };
     const lista = todas.filter((x) => pasaFiltros(x, filtros));
+    ponerPesos(lista, filtros.reciente);
     if (!lista.length) return { version: 4, vacio: true, rival: nombreDe(partidas, clave, rival), totalRival: todas.length, filtros, disponibles: disponibles(todas) };
     const total = lista.length;
     const minN = o.minimo || minimo(total);
@@ -957,10 +983,10 @@
         perdidasCortas, perdidasConJugadas: perdidas.length,
       },
       repertorio: {
-        blancas: hijosOrdenados(arbol.w).map((x) => ({ san: x.san, ...resumen(x.arista), reparto: x.arista.n / Math.max(totalAristas(arbol.w), 1) })).slice(0, 8),
+        blancas: hijosOrdenados(arbol.w).map((x) => ({ san: x.san, ...resumen(x.arista), reparto: reparto(x.arista, arbol.w) })).slice(0, 8),
         negras: hijosOrdenados(arbol.b).filter((x) => x.arista.n >= minN).slice(0, 6).map((x) => ({
           contra: x.san, n: x.arista.n,
-          respuestas: hijosOrdenados(x.nodo).slice(0, 5).map((y) => ({ san: y.san, ...resumen(y.arista), reparto: y.arista.n / Math.max(totalAristas(x.nodo), 1) })),
+          respuestas: hijosOrdenados(x.nodo).slice(0, 5).map((y) => ({ san: y.san, ...resumen(y.arista), reparto: reparto(y.arista, x.nodo) })),
         })),
       },
       principal: { w: lineaPrincipal(arbol.w, minN), b: lineaPrincipal(arbol.b, minN) },
@@ -975,7 +1001,7 @@
       conNegras: {
         // Tú con negras: el rival lleva blancas y empieza él.
         contra: hijosOrdenados(arbol.w).filter((x) => x.arista.n >= minN).slice(0, 5).map((x) => ({
-          san: x.san, n: x.arista.n, reparto: x.arista.n / Math.max(totalAristas(arbol.w), 1),
+          san: x.san, n: x.arista.n, reparto: reparto(x.arista, arbol.w),
           respuestas: opcionesNuestras(x.nodo, base.w, minN),
         })),
         plan: plan(arbol.w, "w", base.w, minN, PROFUNDIDAD_PLAN, 0),

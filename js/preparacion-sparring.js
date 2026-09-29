@@ -14,7 +14,7 @@
  * nada: es práctica. Ver «Juega contra él» en docs/decisiones/paneles.md.
  *
  *   const s = PreparacionSparring.montar(contenedor);
- *   s.empezar({ libro, plan, color: "w", elo: 1850, rival: "Pedro" });
+ *   s.empezar({ libro, plan, color: "w", elo: 1850, rival: "Pedro", reciente: true });
  */
 window.PreparacionSparring = (function () {
   "use strict";
@@ -94,7 +94,8 @@ window.PreparacionSparring = (function () {
           const x = Lb().elegir(cfg.libro, juego.fen());
           if (x) {
             estado.deLibro += 1;
-            return { san: x.san, nota: "La juega " + pctEntero(x.reparto) + " de las veces en esta posición (" + x.n + (x.n === 1 ? " partida)." : " partidas).") };
+            // Con lo reciente pesando más, el porcentaje es de lo que juega ahora.
+            return { san: x.san, nota: (cfg.reciente ? "Últimamente la juega " : "La juega ") + pctEntero(x.reparto) + " de las veces en esta posición (" + x.n + (x.n === 1 ? " partida)." : " partidas).") };
           }
           const primera = estado.salioEn == null;
           if (primera) estado.salioEn = i;
