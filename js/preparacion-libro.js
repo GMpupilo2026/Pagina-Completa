@@ -11,8 +11,8 @@
  *
  * La posición se busca por su huella (53 bits en base 36, unos 11 caracteres)
  * y no por la clave entera de js/preparacion-posiciones.js, que pesa unos 60:
- * con 1000 posiciones por color, el libro pasaría de unos 45 KB a 110. Con
- * 2000 posiciones, que dos compartan huella pasa menos de una vez en mil
+ * con 1500 posiciones por color, el libro pasaría de unos 80 KB a 150. Con
+ * 3000 posiciones, que dos compartan huella pasa menos de una vez en mil
  * millones.
  *
  *   huella(clave)              → "k3j9…"  (la clave de PreparacionPosiciones)

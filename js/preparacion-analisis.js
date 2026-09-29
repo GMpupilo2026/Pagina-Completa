@@ -38,10 +38,11 @@
 
   const { sanEs, lineaEs, pct, textoEval, fenDe } = L;
 
-  const MAX_JUGADAS_ARBOL = 16;     // medias jugadas que entran al árbol
+  const MAX_JUGADAS_ARBOL = 30;     // medias jugadas que entran al árbol (15 jugadas)
+  const PROFUNDIDAD_COMPLETA = 16;  // hasta acá entra todo; más allá, lo que vieron 2 o más (armarArbol)
   const MAX_PARTIDAS = 60000;       // lo que se lee de un PGN, como mucho
   const SUAVIZADO = 8;              // partidas «imaginarias» al promedio del rival
-  const PROFUNDIDAD_PLAN = 10;      // medias jugadas del plan principal
+  const PROFUNDIDAD_PLAN = 16;      // medias jugadas del plan principal
 
   // ------------------------------------------------------------ el PGN
 
@@ -371,20 +372,36 @@
   // nodo es una posición, con la cuenta de todas las partidas que pasaron por
   // ella (`c`), y cada arista es una jugada desde esa posición, con la cuenta
   // de las partidas que la jugaron AHÍ (`arista`).
+  //
+  // Hasta PROFUNDIDAD_COMPLETA medias jugadas entra todo. Más allá, una
+  // secuencia que vio UNA sola partida no se abre: el nodo guarda la partida
+  // (`solo`) y se abre recién cuando llega una segunda por el mismo camino.
+  // Allá abajo casi todas las partidas son distintas: abrirlas todas eran
+  // cientos de miles de nodos que nada usa (lo que menos pide algo es 2
+  // partidas, el libro). Lo que se pierde: dos partidas que llegan a la misma
+  // posición profunda por caminos distintos, una por cada uno.
   function armarArbol(lista) {
     const raiz = nuevoNodo();
     for (const x of lista) {
       sumar(raiz.c, x.res, x.peso);
-      let nodo = raiz;
-      const tope = Math.min(MAX_JUGADAS_ARBOL, x.jugadas.length);
-      for (let i = 0; i < tope; i++) {
-        const san = x.jugadas[i];
-        if (!nodo.hijos.has(san)) nodo.hijos.set(san, nuevoNodo());
-        nodo = nodo.hijos.get(san);
-        sumar(nodo.c, x.res, x.peso);
-      }
+      insertar(raiz, x, 0);
     }
     return aGrafo(raiz);
+  }
+
+  function insertar(nodo, x, desde) {
+    const tope = Math.min(MAX_JUGADAS_ARBOL, x.jugadas.length);
+    for (let i = desde; i < tope; i++) {
+      const san = x.jugadas[i];
+      let h = nodo.hijos.get(san);
+      if (!h) { h = nuevoNodo(); nodo.hijos.set(san, h); }
+      sumar(h.c, x.res, x.peso);
+      nodo = h;
+      if (i + 1 < PROFUNDIDAD_COMPLETA) continue;
+      if (h.c.n === 1) { h.solo = { x, i: i + 1 }; return; }
+      // La segunda que llega: la que esperaba sigue su camino.
+      if (h.solo) { const s = h.solo; h.solo = null; insertar(h, s.x, s.i); }
+    }
   }
 
   function nodoGrafo() { return { c: vacio(), hijos: new Map() }; }
@@ -475,7 +492,7 @@
      que las transposiciones llegan al mismo lugar. Se queda con las
      LIBRO_MAX posiciones más jugadas: con 30.000 partidas el árbol tiene
      decenas de miles, y el libro viaja con el análisis guardado. */
-  const LIBRO_MIN = 2, LIBRO_MAX = 1000;
+  const LIBRO_MIN = 2, LIBRO_MAX = 1500;
   function libroDe(raiz, color) {
     if (!Libro) return null;
     const out = [];

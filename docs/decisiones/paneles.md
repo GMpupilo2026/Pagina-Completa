@@ -2497,12 +2497,13 @@ leerlo):
   chess.js con `PreparacionPosiciones.desdeFen()`; el verificador comprueba en
   todas las jugadas de prueba que da la misma clave que el árbol.
 - Solo las posiciones donde le toca a él y que vio **2 veces o más**, con sus
-  seis jugadas más hechas, hasta donde llega el árbol (16 medias jugadas). Con
+  seis jugadas más hechas, hasta donde llega el árbol (30 medias jugadas desde
+  «El árbol más hondo»; antes, 16). Con
   una sola partida no hay repertorio: es una partida.
 - Cada posición va por una **huella de 53 bits** y no por su clave (unos 11
-  caracteres en vez de 60). Se queda con las **1000 posiciones más jugadas** de
-  cada color: con 8000 partidas de prueba el libro pesó unos 43 bytes por
-  posición, así que no pasa de 45 KB por color.
+  caracteres en vez de 60). Se queda con las **1500 posiciones más jugadas** de
+  cada color (eran 1000 hasta «El árbol más hondo»): con el peso de lo reciente
+  cada posición pesa unos 52 bytes, así que no pasa de 80 KB por color.
 - Viaja en el análisis guardado (`r.libro`) y en el plan del alumno (solo el
   color del rival en ese plan). **Un análisis guardado antes no lo trae**: la
   página lo dice en vez de abrir una partida que sería Stockfish desde la
@@ -2617,6 +2618,42 @@ no cambie nada. En la página, con Lichess y Chess.com de mentira: una cuenta de
 más inválida, el orden de lo que se pide (sin repetir), el rival único con 78
 partidas y la cuenta que no existe dicha; y el filtro marcado que, desmarcado,
 vuelve a analizar. Comprobado que falla sin pesos y sin juntar los nombres.
+
+### El árbol más hondo
+
+El árbol del rival llegaba a 16 medias jugadas (la jugada 8): el plan no veía
+sus líneas largas y «Juega contra él» salía siempre de su libro ahí, aunque él
+repitiera la misma Española hasta la jugada 15. Ahora llega a **30 medias
+jugadas** (`MAX_JUGADAS_ARBOL`), el plan principal a **16** (antes 10) y el
+libro guarda **1500 posiciones** por color (antes 1000).
+
+**Abrir todo hasta la 30 no se podía.** Allá abajo casi cada partida es
+distinta: con 6000 partidas de 40 medias jugadas de prueba, el análisis pasó de
+1,95 s y 107 MB a 3,74 s y 356 MB, casi todo en nodos que vio una sola partida y
+que nada usa (lo que menos pide algo es el libro, 2 partidas). Así que
+`armarArbol()` abre todo **hasta la media jugada 16** (`PROFUNDIDAD_COMPLETA`),
+como antes, y más allá **una secuencia que vio una sola partida no se abre**:
+el nodo guarda la partida (`solo`) y la sigue bajando recién cuando llega una
+segunda por el mismo camino. Con las mismas 6000 partidas: 1,94 s y 122 MB.
+
+- **Lo que se pierde**: dos partidas que llegan a la misma posición profunda
+  por caminos distintos, una por cada camino, no se juntan (cada una quedó
+  guardada en su nodo). Con dos o más por un camino, sí: la transposición se
+  junta como siempre (el verificador lo comprueba: la Española con …Ab7 y
+  …Cbd7 cambiados de orden llega a la misma posición en la jugada 11).
+- Hasta la media jugada 16 no cambia nada, ni para lo que vio una sola.
+- Todo lo que baja por el árbol (el plan, el libro, lo que juega, la certeza)
+  sigue igual: un nodo sin abrir no tiene hijos, como el final de una partida.
+- `lineasDeSuRepertorio()` sigue hasta la media jugada 20 y el cruce con el
+  alumno hasta la 14: más hondo, el explorador de maestros recibiría más
+  pedidos y el cruce casi nunca encuentra posiciones en común.
+
+Verificador (`preparacion-rivales`, «El árbol más hondo»): una Española
+cerrada de 24 medias jugadas, 6 veces, y una que se aparta en la jugada 10. Su
+libro llega a la jugada 11, sabe que una vez se apartó, el plan pasa de la
+jugada 5; la que se apartó no se abre, con una segunda se abre y se junta por
+transposición; y una Berlinesa que vio una sola entra entera hasta la media
+jugada 16 y no después.
 
 ## Las inscripciones a torneos en línea
 

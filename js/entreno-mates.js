@@ -169,15 +169,19 @@ async function loadPuzzlesThenStart(){
 
 /* La dificultad medida con los intentos reales (herramientas/mates-calibrar.js,
    js/mates-dificultad.js): una categoría con el 80 % de sus mates calibrados
-   va de fácil a difícil; si no, en el orden del libro. Sin el archivo, igual. */
+   va de fácil a difícil; si no, barajada por bloques de 50 con la semilla del
+   alumno (su id), para que los intentos se repartan entre todos los mates y
+   la calibración llegue antes. Sin sesión ni archivo, el orden del libro. */
 let DIFICULTAD = null;
 async function cargarDificultad(){
   try {
     const res = await fetch('data/mates-dificultad.json');
     if(res.ok) DIFICULTAD = await res.json();
   } catch (e) { DIFICULTAD = null; }
-  if(!DIFICULTAD || !window.MatesDificultad) return;
-  CATEGORY_ORDER.forEach((cat) => { PUZZLES[cat] = MatesDificultad.ordenar(PUZZLES[cat], DIFICULTAD, cat); });
+  if(!window.MatesDificultad) return;
+  let semilla = null;
+  try { const { data } = await sb.auth.getSession(); semilla = data && data.session ? data.session.user.id : null; } catch (e) { semilla = null; }
+  CATEGORY_ORDER.forEach((cat) => { PUZZLES[cat] = MatesDificultad.orden(PUZZLES[cat], DIFICULTAD, cat, semilla); });
 }
 function textoDificultad(puzzle){
   if(!DIFICULTAD || !window.MatesDificultad || !MatesDificultad.ordenada(DIFICULTAD, puzzle.category)) return '';
