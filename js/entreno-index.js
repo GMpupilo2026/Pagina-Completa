@@ -198,7 +198,36 @@ async function pintarMeta(){
   document.getElementById('hoy-meta').hidden = false;
   ofrecerAvisos(racha);
   if (hoy > 0) await pintarResumenHoy();
+  await pintarSemana();
   return true;
+}
+
+/* Tu semana: los últimos 7 días contra los 7 anteriores. «Esta semana: 48
+   ejercicios (la anterior, 31) · 70 % sin error ni pista (la anterior,
+   62 %).» El alumno veía el día y la racha, pero no si estaba mejorando. La
+   cuenta la hace la base (entreno_mi_semana, días de Costa Rica). Sin nada en
+   las dos semanas, o si la base no responde, no se pinta. */
+function textoSemana(s){
+  const n = (x) => `${x} ${x === 1 ? 'ejercicio' : 'ejercicios'}`;
+  const pct = (l, c) => Math.round(100 * l / c);
+  let t = `Esta semana: ${n(s.esta)}` + (s.anterior ? ` (la anterior, ${s.anterior})` : ' (la anterior no entrenaste)');
+  if (s.esta_con) {
+    t += ` · ${pct(s.esta_limpios, s.esta_con)} % sin error ni pista`;
+    if (s.anterior_con) t += ` (la anterior, ${pct(s.anterior_limpios, s.anterior_con)} %)`;
+  }
+  return t + '.';
+}
+async function pintarSemana(){
+  const caja = document.getElementById('hoy-semana');
+  if (!caja) return;
+  let s = null;
+  try {
+    const { data, error } = await sb.rpc('entreno_mi_semana');
+    if (!error && data && typeof data === 'object') s = data;
+  } catch (e) { s = null; }
+  if (!s || (!s.esta && !s.anterior)) return;
+  caja.textContent = textoSemana(s);
+  caja.hidden = false;
 }
 
 /* El resumen del día: antes cada página festejaba lo suyo y nadie juntaba el

@@ -60,6 +60,8 @@ function clienteFalso(sesion, stats) {
       getSession: () => Promise.resolve(${sesion ? '{ data: { session: { user: { id: "u-ana" }, access_token: "t" } } }' : "{ data: { session: null } }"}),
     },
     from: (t) => ({ select() { return this; }, eq() { return this; }, order() { return this; }, limit() { return this; },
+                   // Los tipos completos (entreno/tipos.html los anota en la cuenta): dos.
+                   maybeSingle() { return Promise.resolve({ data: t === "training_state" && ${JSON.stringify(!!stats)} ? { value: { raw: JSON.stringify({ detective: true, balanza: true, amenaza: false }) } } : null, error: null }); },
                    then(r) { return Promise.resolve({ data: t === "trofeos_ajustes" ? ${JSON.stringify(stats ? AJUSTES : [])} : [], error: null }).then(r); } }),
     rpc: (nombre) => {
       window.__rpcPedidos.push(nombre);
@@ -245,7 +247,7 @@ async function abrir(browser, ruta, sesion, stats, opts) {
       ["logros_hitos", "premios_de_alumno", "progreso_dias_y_racha", "trofeos_de"]);
 
     console.log("\n=== Los logros: la página pinta lo que el catálogo calcula ===");
-    const esperado = await page.evaluate((stats) => window.LogrosCatalogo.conEstado(stats), Object.assign({}, STATS, { trofeos: PREMIOS.trofeos_total, insignias: PREMIOS.insignias_total, hitos: HITOS }));
+    const esperado = await page.evaluate((stats) => window.LogrosCatalogo.conEstado(stats), Object.assign({}, STATS, { trofeos: PREMIOS.trofeos_total, insignias: PREMIOS.insignias_total, hitos: HITOS, tipos_completos: 2 }));
     const pintado = await page.evaluate(() =>
       Array.from(document.querySelectorAll("#logros-grid li")).map((li) => ({
         conseguido: li.textContent.includes("Conseguido ✔"),
@@ -265,7 +267,8 @@ async function abrir(browser, ruta, sesion, stats, opts) {
     igual("Batalla naval (1/2): el duelo ganado sí, las 10 partidas todavía no", cabeceras.find((t) => t.startsWith("Batalla")), "Batalla naval (1/2)");
     igual("Precisión posicional (0/1): 2 tandas con 70 % de 3", cabeceras.find((t) => t.startsWith("Precisión")), "Precisión posicional (0/1)");
     igual("Memoria (1/2): 12 piezas sin error sí (sale del hito, no de las 9 posiciones), las 10 posiciones todavía no", cabeceras.find((t) => t.startsWith("Memoria")), "Memoria (1/2)");
-    igual("Tipos de entrenamiento tiene su título, no la clave", cabeceras.some((t) => t.startsWith("Tipos de entrenamiento (")), "true");
+    igual("Tipos de entrenamiento (1/4): dos tipos completos dan «Tipo dominado», no los de 5 ni 10",
+      cabeceras.find((t) => t.startsWith("Tipos de entrenamiento (")), "Tipos de entrenamiento (1/4)");
     igual("trofeos (2/6): con 12 tiene el de 1 y el de 10", cabeceras.find((t) => t.startsWith("Trofeos")), "Trofeos de clase (2/6)");
     igual("insignias (2/5): con 7 tiene la de 1 y la de 5", cabeceras.find((t) => t.startsWith("Insignias")), "Insignias de clase (2/5)");
 

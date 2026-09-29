@@ -528,6 +528,47 @@ registro de tiempo).
   repaso de Practicar, el hub), `verificar-tipos-pagina.js` (que se anote el
   nivel) y `verificar-informes.js` (la tarjeta).
 
+## Mates barajados, «Tu semana», los tipos completos y «Salva las tablas» en el plan
+
+- **Mates se baraja por bloques de 50** mientras una categoría no tiene su
+  dificultad medida (`MatesDificultad.orden`/`barajar`).
+  - Antes todos los alumnos hacían los mismos primeros mates del libro, y la
+    calibración (ver «Calibrar los Mates con los intentos reales») juntaba
+    muchos intentos de pocos mates y ninguno del resto.
+  - La semilla es el id del alumno: cada uno ve siempre el mismo orden, en
+    cualquier aparato. Por bloques, el orden grueso del libro se mantiene.
+  - El avance es por id, así que no se pierde nada.
+  - Con la categoría calibrada, manda la dificultad y no se baraja; sin
+    sesión, queda el orden del libro.
+- **«Tu semana» en el hub**, debajo del resumen del día: «Esta semana: 48
+  ejercicios (la anterior, 31) · 70 % sin error ni pista (la anterior,
+  62 %)».
+  - Son los últimos 7 días contra los 7 anteriores, en hora de Costa Rica,
+    calculados por `entreno_mi_semana()` (migración `20260929185756`).
+  - Si la semana anterior no entrenó, lo dice. Sin nada en las dos semanas,
+    no se pinta.
+- **Logros por tipos completos**: «Tipo dominado» (1), «Cinco tipos
+  dominados» y «Diez tipos dominados».
+  - Un tipo completo tiene todos sus ejercicios con una estrella o más.
+  - Lo anota `entreno/tipos.html` en `tipos_completos_v1`, que viaja con la
+    cuenta (`unionObjeto`). Esa página es la única que tiene los ejercicios
+    de verdad; contarlo desde Logros pediría bajarse `tipos.json` entero.
+  - `js/logros.js` lo lee de `training_state`, dentro de un `.then`, así que
+    si falla cuenta cero y no tumba la racha.
+  - La ficha del tipo dice «completo 🏅».
+  - «Tus propios errores» no cuenta: sus ejercicios crecen con las partidas.
+- **«Salva las tablas»** (tipo 19) entra al plan del diagnóstico, en el área
+  de finales, con su avance contado (`tipo:tablas`).
+- Lo prueban:
+  - `verificar-mates-dificultad.js`: el barajado es el mismo para la misma
+    semilla, cambia con otra, respeta los bloques y cede ante la
+    dificultad;
+  - `verificar-entreno-repaso.js`: «Tu semana»;
+  - `verificar-tipos-pagina.js`: completo sí; con un ejercicio sin resolver,
+    no;
+  - `verificar-logros.js`: los logros de tipos completos;
+  - `verificar-plan-recursos.js`.
+
 ## El tipo más flojo en el hub, y el plan del diagnóstico con lo nuevo
 
 - **«Hoy te toca» propone el Tipo de entrenamiento más flojo** si queda por
