@@ -57,6 +57,11 @@
                  algo. -->
             <section id="hoy" aria-labelledby="hoy-titulo" class="hidden mb-10 rounded-2xl p-5 shadow-md bg-white dark:bg-brand-900">
                 <h2 id="hoy-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Hoy te toca</h2>
+                <!-- La meta del día (js/logros.js): la misma cuenta que Logros y el panel. -->
+                <div id="hoy-meta" class="mb-3" hidden>
+                    <p id="hoy-meta-texto" class="text-sm text-brand-600 dark:text-brand-200 mb-1"></p>
+                    <div id="hoy-meta-barra" class="h-2 w-full rounded bg-brand-100 dark:bg-brand-800 overflow-hidden" role="progressbar" aria-labelledby="hoy-meta-texto" aria-valuemin="0"><div id="hoy-meta-relleno" class="h-full bg-accent-500 rounded" style="width:0%"></div></div>
+                </div>
                 <ul id="hoy-lista" class="list-none p-0 m-0 space-y-2"></ul>
             </section>
             <div class="space-y-8">
@@ -158,6 +163,8 @@
     <script src="../js/repaso-espaciado.js"></script>
     <script src="../js/repaso-fallados.js"></script>
     <script src="../js/plan-entrenamiento.js"></script>
+    <script src="../js/logros-catalogo.js"></script>
+    <script src="../js/logros.js"></script>
     <script src="../js/main.js"></script>
     <script src="../js/entreno-index.js"></script>
 <!-- burbuja: inicio --><script src="../js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="../js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- acceso: inicio --><script src="../js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="../js/modo-vista.js" defer></script><!-- modo-vista: fin --><!-- marca: inicio --><script src="../js/marca-academia.js" defer></script><!-- marca: fin --><!-- ayuda: inicio --><script src="../js/ayuda-guia.js" defer></script><!-- ayuda: fin --><!-- atajo: inicio --><script src="../js/atajo-buscar.js" data-arriba="../" defer></script><!-- atajo: fin --></body>

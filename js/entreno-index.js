@@ -27,7 +27,8 @@ async function unlock(alumnoId){
    progreso que ya está en la cuenta (ProgresoUsuario lo acaba de bajar). Antes
    el hub solo ofrecía la lista de accesos y el alumno tenía que acordarse de
    qué tenía pendiente; los repasos vencidos, sobre todo, no los veía nadie.
-   Cada cosa dice cuántas son y a dónde lleva. Sin nada pendiente, no sale. */
+   Cada cosa dice cuántas son y a dónde lleva. Arriba va la meta del día
+   (pintarMeta); sin nada pendiente, queda solo esa. */
 function leerJSON(clave){
   try { return JSON.parse(localStorage.getItem(clave) || 'null'); } catch (e) { return null; }
 }
@@ -85,8 +86,35 @@ async function cosasDeHoy(alumnoId){
   }
   return cosas.slice(0, 3);
 }
+/* La meta del día: cuántos ejercicios lleva hoy de los que hacen falta para
+   que el día cuente en la racha, y la racha. La cuenta es la de Logros
+   (js/logros.js → progreso_dias_y_racha), no otra: dos pantallas que cuentan
+   lo mismo por su lado terminan diciendo cosas distintas. Antes esto solo se
+   veía entrando a Logros; acá es lo primero que ve quien viene a entrenar. */
+async function pintarMeta(){
+  if (!window.Logros) return false;
+  let r;
+  try { r = await Logros.cargar(); } catch (e) { return false; }
+  if (!r || !r.sesion || r.error) return false;
+  const meta = Logros.META_DIARIA;
+  const hoy = r.stats.hoy_ejercicios || 0;
+  const racha = r.stats.racha_actual || 0;
+  const dias = (n) => n === 1 ? '1 día' : `${n} días`;
+  const texto = hoy >= meta
+    ? `✅ Hoy ya cuenta para tu racha: ${hoy} ejercicios. Llevas ${dias(racha)} seguidos 🔥`
+    : `Hoy llevas ${hoy} de ${meta} ejercicios para que el día cuente.`
+      + (racha ? ` Tu racha: ${dias(racha)} 🔥 — no la cortes.` : ' Con eso empiezas una racha.');
+  document.getElementById('hoy-meta-texto').textContent = texto;
+  const barra = document.getElementById('hoy-meta-barra');
+  barra.setAttribute('aria-valuemax', String(meta));
+  barra.setAttribute('aria-valuenow', String(Math.min(hoy, meta)));
+  document.getElementById('hoy-meta-relleno').style.width = Math.round(100 * Math.min(hoy, meta) / meta) + '%';
+  document.getElementById('hoy-meta').hidden = false;
+  return true;
+}
+
 async function pintarHoy(alumnoId){
-  const cosas = await cosasDeHoy(alumnoId);
+  const [cosas, conMeta] = await Promise.all([cosasDeHoy(alumnoId), pintarMeta()]);
   const caja = document.getElementById('hoy');
   const lista = document.getElementById('hoy-lista');
   lista.innerHTML = '';
@@ -108,7 +136,8 @@ async function pintarHoy(alumnoId){
     li.appendChild(a);
     lista.appendChild(li);
   });
-  caja.classList.toggle('hidden', !cosas.length);
+  lista.hidden = !cosas.length;
+  caja.classList.toggle('hidden', !cosas.length && !conMeta);
 }
 
 // Línea de progreso de "Ejercicios por tema": temas.html guarda el total y los
