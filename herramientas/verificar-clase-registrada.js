@@ -143,7 +143,7 @@ window.__deletes = [];
   const TABLAS = {
     profiles: PERFILES, game_state: GAME_STATE, class_sessions: SESIONES,
     variant_nodes: [], questions: [], question_answers: [], question_engine_answers: [],
-    class_attendance: [], class_presence_log: [], practice_sessions: [], practice_games: [],
+    class_attendance: [], class_presence_log: [], practice_sessions: [], practice_games: [], game_rooms: [],
     class_chat_messages: [], saved_games: [], archivos_pgn: [], planes_clase: [], plan_items: [],
     notas_alumno: [], trofeos_ajustes: [], insignias: [],
     // El catálogo es de la base (insignias_tipos): dos de muestra alcanzan.
@@ -285,8 +285,15 @@ window.__deletes = [];
         const ps = TABLAS.practice_sessions.filter((q) => q.class_session_id === args.p_clase).map((q) => q.id);
         const resp = TABLAS.question_answers.filter((a) => pq.includes(a.question_id));
         const prac = TABLAS.practice_games.filter((g) => ps.includes(g.session_id));
+        // Cada partida entre alumnos cuenta para los dos, desde su lado.
+        const lados = [];
+        TABLAS.game_rooms.filter((r) => r.class_session_id === args.p_clase).forEach((r) => {
+          lados.push({ id: r.white_id, res: r.result === "white" ? "g" : r.result === "black" ? "p" : r.result === "draw" ? "t" : null });
+          lados.push({ id: r.black_id, res: r.result === "black" ? "g" : r.result === "white" ? "p" : r.result === "draw" ? "t" : null });
+        });
         const gente = [...new Set(TABLAS.class_attendance.filter((a) => a.session_id === args.p_clase).map((a) => a.student_id)
-          .concat(resp.map((a) => a.student_id), prac.map((g) => g.student_id)))];
+          .concat(resp.map((a) => a.student_id), prac.map((g) => g.student_id), lados.map((l) => l.id)))]
+          .filter((id) => id !== "u-profe");
         const filas = gente.map((id) => {
           const p = PERFILES.find((x) => x.id === id) || {};
           const r = resp.filter((a) => a.student_id === id), g = prac.filter((x) => x.student_id === id);
@@ -295,7 +302,9 @@ window.__deletes = [];
             incorrectas: r.filter((a) => a.is_correct === false).length, sin_calificar: r.filter((a) => a.is_correct == null).length,
             practicas: g.length, ganadas: g.filter((x) => x.status === "checkmate_win").length,
             tablas: g.filter((x) => x.status === "draw").length,
-            perdidas: g.filter((x) => x.status === "checkmate_loss" || x.status === "resigned").length };
+            perdidas: g.filter((x) => x.status === "checkmate_loss" || x.status === "resigned" || x.status === "timeout").length,
+            partidas: lados.filter((l) => l.id === id).length, partidas_ganadas: lados.filter((l) => l.id === id && l.res === "g").length,
+            partidas_tablas: lados.filter((l) => l.id === id && l.res === "t").length, partidas_perdidas: lados.filter((l) => l.id === id && l.res === "p").length };
         }).sort((a, b) => a.nombre.localeCompare(b.nombre));
         return constructor(n, filas);
       }

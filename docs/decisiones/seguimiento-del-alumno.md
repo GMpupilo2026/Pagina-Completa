@@ -867,9 +867,7 @@ contesta.
 - **La casilla de la privacidad se mira antes de subir nada** y la versión
   queda guardada (ver «El consentimiento queda guardado» en `legal.md`): una
   constancia médica es un dato sensible, y `privacidad.html` lo dice.
-- **Lo que NO hace todavía**: no toca la asistencia (una justificación
-  aceptada no cambia el «asistió a 4 de 5» del informe ni del reporte). Si se
-  pide, se calcula al contar, no se guarda.
+- **Una aceptada cuenta como falta justificada** (ver abajo).
 - Comprobado impersonando roles en SQL (revertido): el alumno manda y ve solo
   las suyas; el doble envío, una sin texto ni documento, una ruta de otra
   carpeta y una sin privacidad se rechazan; el `update` directo da permiso
@@ -887,3 +885,41 @@ justificación, que la lista se pida de a 50 y agrupada por mes, que el estado
 vaya escrito, que la foto se vea de verdad y que nombres y textos vayan como
 texto. Está probado que falla de verdad: subiendo a otra carpeta y
 contestando con otro id, saltan 2.
+
+### Las faltas justificadas en la asistencia
+
+Una justificación **aceptada** cuenta como falta justificada: se dice escrita al
+lado de la asistencia y no la baja.
+
+- **No se guarda: se cuenta.** `public.faltas_justificadas(desde, hasta)`
+  (INVOKER) da, por alumno, las clases **cerradas** de **sus profesores**
+  (`interno.profesores_de()`) cuyo día —en hora de Costa Rica— cae dentro de
+  una justificación aceptada y a las que **no fue** (sin fila en
+  `class_attendance`). No hay columna «justificada» en ninguna parte: si la
+  aceptan tarde, cambian de parecer o una ficha se corrige, el número sale bien
+  solo. La clase de otro grupo el mismo día no cuenta, ni una a la que sí fue,
+  ni una justificación por revisar o no aceptada.
+- **Informes** (`js/informes.js`): `cargarResumen()` la pide con las demás y le
+  pone `clases_justificadas` a cada fila; `asistenciaDe()` es la ÚNICA copia de
+  cómo se dice: «1/4 · 2 faltas justificadas», y el porcentaje se saca sobre
+  las clases que NO justificó (1 de 2 = 50 %). Sale igual en la tarjeta del
+  alumno, la del profesor, las dos tablas y el tema «Asistencia y tiempo», y
+  ordenar por asistencia ordena por ese porcentaje.
+- **Reporte de actividades** (`js/reportes.js` → `ReporteArmar.conFaltasJustificadas()`):
+  la del MISMO periodo, una fila «Faltas justificadas (aceptadas)» en el resumen
+  y una columna por estudiante, solo cuando hubo alguna. Quien faltó a todas
+  justificado no está en la lista de `reporte_actividades()` (sale de las
+  asistencias), así que se suma con cero clases.
+- **Pasar lista** (`asistencia.html`): al lado del nombre, «🩺 Falta
+  justificada» o «🩺 Justificación por revisar» si alguna cubre el día de la
+  ficha. Solo avisa; la cuenta es la de la base. Si la consulta falla, se dice
+  debajo de la lista.
+- Comprobado impersonando en SQL (revertido), con una clase real: el alumno
+  que faltó con una aceptada da 1; el que fue, 0 aunque tenga una aceptada; una
+  por revisar no cuenta; con un periodo que no la toca, nada; el alumno, su
+  profesor y su supervisora ven el 1; otro alumno y un profesor ajeno, nada.
+
+**Al tocarlo, correr `verificar-informes.js`, `verificar-reportes.js` y
+`verificar-asistencia.js`.** Probado que fallan de verdad: ignorando las
+justificadas en `asistenciaDe()` saltan 4 en Informes, y dejando pasar las no
+aceptadas en la ficha salta la de asistencia.

@@ -82,6 +82,7 @@ async function init() {
         agregarRenglon();
         document.getElementById("form-tarea").addEventListener("submit", enviarTarea);
         await desdeLaBitacora();
+        await desdeLaClase();
         await cargarEnviadas();
     } else {
         document.getElementById("vista-alumno").classList.remove("hidden");
@@ -157,6 +158,38 @@ async function desdeLaBitacora() {
     if (!data) return;
     const campo = document.getElementById("t-instrucciones");
     if (!campo.value) campo.value = data.texto;
+}
+
+/* Desde el cierre de la clase en vivo: `?clase=<id>` marca a los que
+   asistieron y propone el título. Viaja solo el id de la clase, como con la
+   bitácora: quiénes fueron lo lee la base (class_attendance), que ya se lo deja
+   leer a quien dio la clase. Un alumno que ya no es suyo no tiene casilla, y
+   se queda sin marcar sin decir nada. */
+async function desdeLaClase() {
+    const claseId = new URLSearchParams(location.search).get("clase");
+    if (!claseId) return;
+    const [{ data: asistencia }, { data: clase }] = await Promise.all([
+        sb.from("class_attendance").select("student_id").eq("session_id", claseId),
+        sb.from("class_sessions").select("title, started_at").eq("id", claseId).maybeSingle(),
+    ]);
+    let primera = null;
+    (asistencia || []).forEach((a) => {
+        const check = document.querySelector('.alumno-check[value="' + CSS.escape(a.student_id) + '"]');
+        if (!check) return;
+        check.checked = true;
+        if (!primera) primera = check;
+    });
+    if (primera) primera.closest("label").scrollIntoView({ block: "nearest" });
+    /* El de la clase le gana al que se propone del primer renglón, y queda
+       como elegido: cambiar los renglones no lo pisa (es lo que habría
+       escrito el profe a mano). */
+    const titulo = document.getElementById("t-titulo");
+    if (titulo && !tituloTocado) {
+        tituloTocado = true;
+        const fecha = clase && clase.started_at
+            ? new Date(clase.started_at).toLocaleDateString("es-CR", { day: "numeric", month: "long", timeZone: "America/Costa_Rica" }) : "";
+        titulo.value = "Repaso de la clase" + (clase && clase.title ? ": " + clase.title : fecha ? " del " + fecha : "");
+    }
 }
 
 // ---------- Vista profesor: los renglones ----------

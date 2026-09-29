@@ -90,7 +90,13 @@ window.__llamadas = [];
   const YO = ${JSON.stringify(usuarioId)};
 
   function tabla(nombre) {
-    let filas = (nombre === "profiles" ? PERFILES : []).slice();
+    // La clase de la que viene «Mandar una tarea» (tareas.html?clase=): su
+    // asistencia y su título, como los lee la página desde la base.
+    const CLASES = {
+      class_attendance: [{ session_id: "c-1", student_id: "u-beto" }],
+      class_sessions: [{ id: "c-1", title: "Finales de torre", started_at: "2026-09-28T21:00:00Z" }],
+    };
+    let filas = (nombre === "profiles" ? PERFILES : CLASES[nombre] || []).slice();
     let unica = false;
     const anotado = { tabla: nombre, eq: {}, order: null, update: null, delete: false };
     window.__llamadas.push(anotado);
@@ -105,6 +111,7 @@ window.__llamadas = [];
       // La página pide de mil en mil (traerTodo): el doble corta igual que PostgREST.
       range(desde, hasta) { filas = filas.slice(desde, hasta + 1); return b; },
       single() { unica = true; return b; },
+      maybeSingle() { unica = true; return b; },
       then(resolve) { resolve({ data: unica ? (filas[0] || null) : filas, error: null }); },
       update(cambios) {
         anotado.update = cambios;
@@ -492,6 +499,21 @@ async function main() {
     ok(/3/.test(tm), `?cat=mate3 no abrió esa categoría, abrió: ${JSON.stringify(tm)}`);
     await pm.close();
     await ctx.close();
+  }
+
+  // ---------- 4 bis) desde el cierre de la clase en vivo ----------
+  // Viaja solo el id de la clase: quiénes fueron lo lee la página de la base.
+  {
+    const pagina = await navegador.newPage();
+    await pagina.addInitScript(clienteFalso([PROFE, ALUMNA1, ALUMNA2], [], PROFE.id));
+    await pagina.goto(`${BASE}/tareas.html?clase=c-1`, { waitUntil: "networkidle" });
+    await pagina.waitForSelector("#app:not(.hidden)", { timeout: 10000 });
+    await pagina.waitForFunction(() => !!document.getElementById("t-titulo").value, null, { timeout: 5000 }).catch(() => {});
+    const marcados = await pagina.$$eval(".alumno-check", (els) => els.filter((e) => e.checked).map((e) => e.value));
+    ok(JSON.stringify(marcados) === JSON.stringify(["u-beto"]), `?clase= debería marcar solo a quien asistió (u-beto), marcó ${JSON.stringify(marcados)}`);
+    const titulo = await pagina.inputValue("#t-titulo");
+    ok(titulo === "Repaso de la clase: Finales de torre", `?clase= debería proponer el título de la clase, puso ${JSON.stringify(titulo)}`);
+    await pagina.close();
   }
 
   // ---------- 5) que la página se vea ----------

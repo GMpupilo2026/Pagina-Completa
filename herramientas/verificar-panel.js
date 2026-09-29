@@ -64,6 +64,8 @@ function clasesDeMentira() {
       notes: i === 0 ? "repasamos la posición de Lucena" : null,
       started_at: dia.toISOString(),
       ended_at: fin.toISOString(),
+      // En la base nunca es null (default 'en_linea'): «Tu última clase» filtra por ella.
+      modalidad: "en_linea",
     });
   }
   return filas;
@@ -98,6 +100,8 @@ window.__consultas = [];
       gte(col, val) { anotado.gte = { col: col, val: val }; filas2 = filas2.filter((r) => String(valor(r, col)) >= String(val)); return b; },
       lt(col, val) { anotado.lt = { col: col, val: val }; filas2 = filas2.filter((r) => String(valor(r, col)) < String(val)); return b; },
       is(col, val) { if (val === null) filas2 = filas2.filter((r) => r[col] === null || r[col] === undefined); return b; },
+      not(col, op, val) { if (op === "is" && val === null) filas2 = filas2.filter((r) => r[col] !== null && r[col] !== undefined); return b; },
+      in(col, vals) { filas2 = filas2.filter((r) => vals.map(String).includes(String(valor(r, col)))); return b; },
       or(expr) {
         anotado.or = expr;
         // title.ilike.%x%,notes.ilike.%x%
@@ -168,6 +172,9 @@ window.__consultas = [];
        donde la RLS decide cuál le toca—; esto es lo que ve el equipo docente
        de lo SUYO. */
     profesor_videollamada: DATOS.profesor_videollamada || [],
+    // Lo que se preguntó en una clase y lo que contestó cada uno («Tu última clase»).
+    questions: DATOS.questions || [],
+    question_answers: DATOS.question_answers || [],
   };
 
   window.sb = {
@@ -795,6 +802,40 @@ async function pruebaRegistroResumen(browser) {
   igual("se vuelve a cerrar", await page.evaluate(() => /contestadas/.test(document.getElementById("sessions-log").textContent)), "false");
   igual("sin errores en la página", errores, []);
   await ctx.close();
+}
+
+/* «Tu última clase» en el panel del alumno: su fila del resumen (la RLS le da
+   solo la suya) y lo que contestó en cada pregunta de ESA clase. */
+async function pruebaUltimaClase(browser) {
+  console.log("\n=== Tu última clase (alumno) ===");
+  const fila = { student_id: "u-ana", nombre: "Ana Rojas", preguntas: 2, respondidas: 1, correctas: 1, incorrectas: 0, sin_calificar: 0,
+    practicas: 1, ganadas: 0, tablas: 0, perdidas: 1, partidas: 0, partidas_ganadas: 0, partidas_tablas: 0, partidas_perdidas: 0 };
+  let r = await panel(browser, [ALUMNA], "u-ana", null, {
+    rpc: { resumen_de_la_clase: [fila] },
+    questions: [
+      { id: "q1", class_session_id: "c-0", prompt: "¿Qué jugarías?", tipo: "jugada", opciones: null, created_at: "1" },
+      { id: "q2", class_session_id: "c-0", prompt: "¿Quién está mejor?", tipo: "opciones", opciones: ["Blancas", "Iguales", "Negras"], created_at: "2" },
+      { id: "q9", class_session_id: "c-1", prompt: "De otra clase", tipo: "jugada", opciones: null, created_at: "3" },
+    ],
+    question_answers: [{ question_id: "q1", student_id: "u-ana", moves: ["Ra8#"], opcion: null, is_correct: true }],
+  });
+  await r.page.waitForFunction(() => !document.getElementById("ultima-clase").hidden, null, { timeout: 10000 });
+  igual("pide el resumen de la última clase en línea", JSON.stringify(await r.page.evaluate(() =>
+    window.__consultas.filter((c) => c.tabla === "resumen_de_la_clase").map((c) => c.args && c.args.p_clase))), JSON.stringify(["c-0"]));
+  igual("dice qué clase fue", /Finales de torre/.test(await r.page.textContent("#ultima-clase")), "true");
+  igual("y lo que hizo, escrito", await r.page.evaluate(() => [...document.querySelectorAll("#ultima-clase ul li")].map((l) => l.textContent).join(" | ")),
+    "Preguntas: 1 de 2 contestadas: 1 bien | Práctica contra el motor: 1 partida: 1 perdida");
+  igual("y lo que contestó en cada pregunta de ESA clase", await r.page.evaluate(() => [...document.querySelectorAll("#ultima-clase ol li")].map((l) => l.textContent).join(" | ")),
+    "¿Qué jugarías? Tu respuesta: Ra8# — ✅ correcta | ¿Quién está mejor? Sin contestar");
+  igual("sin errores en la página", r.errores, []);
+  await r.ctx.close();
+
+  // Si no aparece en el resumen (no estuvo ni hizo nada), la tarjeta no sale.
+  r = await panel(browser, [ALUMNA], "u-ana", null, { rpc: { resumen_de_la_clase: [] } });
+  await r.page.waitForTimeout(500);
+  igual("sin fila suya, no hay tarjeta", await r.page.evaluate(() => document.getElementById("ultima-clase").checkVisibility()), "false");
+  igual("sin errores en la página", r.errores, []);
+  await r.ctx.close();
 }
 
 async function pruebaRegistro(browser) {
@@ -2060,6 +2101,7 @@ if (require.main !== module) return;
     await pruebaCoordinadorRecortado(browser);
     await pruebaRegistro(browser);
     await pruebaRegistroResumen(browser);
+    await pruebaUltimaClase(browser);
     await pruebaPantalla(browser);
   } finally {
     await browser.close();

@@ -359,6 +359,90 @@ profe» y avise con `__cambioEnBase`. Está probado que falla de verdad: sin el
 tiempo en `crearPregunta` saltan dos comprobaciones, y rearmando la tarjeta en
 cada aviso salta la de «no se le borró lo que llevaba jugado».
 
+### Práctica con reloj, partidas entre alumnos y «a ciegas»
+
+Tres herramientas de entrenamiento que faltaban en la clase. Lo que cuenta
+está en la base (migración `partidas_y_reloj_de_la_clase`), comprobado
+impersonando roles.
+
+- **La práctica contra el motor puede llevar reloj** (1 a 10 minutos, con o
+  sin incremento): `practice_sessions.reloj_segundos` / `incremento_segundos`.
+  El reloj es del alumno —el motor juega al instante— y **lo lleva su
+  navegador**, a propósito: es entrenamiento contra una máquina, no una
+  partida puntuable, y validarlo en el servidor como las de `game_rooms`
+  sería mucho aparato para nada. Corre solo en su turno; al mover se le
+  descuenta lo que pensó y se le suma el incremento, y lo que le queda se
+  guarda en `practice_games.reloj_ms`. Al caer, la partida termina con
+  `status = 'timeout'`, que el resumen cuenta como derrota. Se le dice en voz
+  a los 10 s y al caer, desde una región viva aparte (el texto que cambia
+  cada segundo no lo es).
+- **Una sola puerta abre la práctica**, `crearPractica()`: había tres inserts
+  (el botón, los archivos y «Con lo justo»), y el reloj tenía que viajar en
+  todos.
+- **Partidas entre alumnos**: «Emparejar a los alumnos conectados» arma al azar
+  una partida por pareja, con el ritmo elegido, desde la posición inicial o
+  la del tablero de la clase. Son las partidas de siempre (`game_rooms`,
+  variante estándar, en `estandar.html`): mismo reloj que valida el servidor,
+  misma política de quién puede armar con quién (`puedo_armar_partida_con`) y
+  el mismo aviso de pareo que llega a cualquier página (`js/juego-aviso.js`,
+  que `sesion.html` ya carga). El que sobra con un número impar **se dice**,
+  por su nombre: dejarlo fuera callado es dejarlo sin jugar sin que nadie se
+  entere.
+  - Quedan ligadas a la clase con el MISMO trigger de las preguntas
+    (`ligar_a_la_clase_abierta` sobre `game_rooms`): cualquier partida que el
+    profe arme con la clase abierta —también desde Juegos o un torneo— cuenta
+    como de esa clase.
+  - Desde una posición que no es la inicial, la triple repetición no se
+    declara nunca: `js/repeticion.js` reproduce desde la posición estándar y,
+    si no llega a la FEN guardada, a propósito no declara nada.
+  - La lista de la pestaña dice cómo va cada una y trae «Mirar» (se abre en
+    otra pestaña, y el enlace lo dice). Se refresca por Realtime con el filtro
+    `created_by`.
+- **El resumen del cierre las cuenta**: `resumen_de_la_clase` suma partidas
+  (cada una para los dos, desde su lado) y la columna «Partidas con
+  compañeros» sale solo si hubo. El profe que jugó con un alumno no aparece
+  como alumno de su propia clase.
+- **A ciegas**: con «Ocultar» puesto, el alumno no tenía nada que seguir. Ahora
+  ve la partida escrita (`#jugadas-a-ciegas`) hasta la jugada que se está
+  mirando: eso es el ejercicio de visualización.
+
+**Al tocar esto, correr `node herramientas/verificar-todo.js clase-partidas`.**
+Está probado que falla de verdad: sin descontar el reloj al mover, o sin
+pintar la partida escrita, se cae.
+
+### Antes y después de la clase: el plan marcado, la tarea de repaso y «Tu última clase»
+
+La clase empezaba en «Mi plan» y terminaba en «Cerrar la clase», pero ninguno
+de los dos lados se enteraba del otro: el plan no sabía hasta dónde se llegó,
+el cierre pedía escribir de nuevo lo que se trabajó, y el alumno se iba de la
+clase sin nada en la mano.
+
+- **«☐ Ya lo di» en cada renglón del plan** (`aria-pressed`). Se guarda en
+  `clase_plan_hecho` —la clase y el renglón—, y no en el plan: el mismo plan se
+  da en varias clases y en cada una se llega hasta donde se llega. Es un hecho
+  que el profe afirma, no algo que se pueda deducir de otras filas, así que se
+  guarda. La RLS deja escribir solo a quien dio la clase (comprobado
+  impersonando: otro profesor no lee ni escribe, el alumno no lee).
+- **La nota del cierre se propone sola** con lo que se marcó («Del plan:
+  Lucena; Philidor.»), con los títulos y sin los emojis: esa nota termina
+  impresa en el reporte de actividades. Solo si está vacía: lo que el profe ya
+  escribió no se pisa.
+- **Al cerrar queda el enlace a la tarea de repaso**: `tareas.html?clase=<id>`
+  marca a los que asistieron (lo lee de `class_attendance`) y pone «Repaso de
+  la clase: …» como título. Viaja solo el id de la clase, como la bitácora
+  manda solo el id de la nota. El título de la clase le gana al que se propone
+  del primer renglón y queda como elegido: cambiar los renglones no lo pisa.
+- **«Tu última clase» en el panel del alumno** (`clases.html`): la última clase
+  en línea de las dos últimas semanas, con lo que hizo —su fila de
+  `resumen_de_la_clase`, que la RLS le da solo a él— y, plegado, lo que
+  contestó en cada pregunta de ESA clase, con la opción escrita y si estuvo
+  bien. Si no estuvo ni hizo nada en ella, la tarjeta no sale. Lo pinta
+  `js/resumen-clase.js`, la misma copia que el cierre y el registro.
+
+**Al tocar esto, correr `node herramientas/verificar-todo.js clase-resumen
+tareas panel`.** Está probado que falla de verdad: con el enlace sin el id de
+la clase salta la comprobación del cierre.
+
 ### Repasar mis clases: lo que pasó en la clase no se pierde al cerrarla
 
 La partida de la clase —con su arranque, sus variantes y lo que el profe
