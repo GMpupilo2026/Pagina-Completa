@@ -132,6 +132,17 @@
                     </div>
                     <div id="visor"></div>
                 </section>
+                <!-- «Juega contra él»: una partida de práctica contra su libro y,
+                     fuera de él, Stockfish a su nivel (js/preparacion-sparring.js).
+                     Se abre con «Jugar contra él», debajo de cada plan. -->
+                <section id="sparring-caja" hidden aria-labelledby="sparring-titulo" class="scroll-mt-28 bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
+                    <div class="flex flex-wrap items-center justify-between gap-3 mb-1">
+                        <h3 id="sparring-titulo" tabindex="-1" class="font-serif text-xl font-bold text-brand-800 dark:text-white focus:outline-none">Juega contra él</h3>
+                        <button id="sparring-cerrar" type="button" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Cerrar la partida</button>
+                    </div>
+                    <p class="text-sm text-brand-500 dark:text-brand-300 mb-3">Mientras la posición esté en sus partidas, juega lo que él juega, en la proporción en que lo juega. Cuando se sale, sigue Stockfish a su nivel.</p>
+                    <div id="sparring"></div>
+                </section>
                 <!-- Mandar el plan de un lado a uno o varios alumnos, con su tarea
                      (js/preparacion-rivales.js → mandar_plan_rival()). Se abre con
                      «Mandárselo a un alumno», debajo de cada plan. -->
@@ -235,6 +246,7 @@
     <script src="js/subgrupos-marcar.js"></script>
     <script src="js/preparacion-lineas.js"></script>
     <script src="js/preparacion-posiciones.js"></script>
+    <script src="js/preparacion-libro.js"></script>
     <script src="js/preparacion-tactica.js"></script>
     <script src="js/preparacion-teoria.js"></script>
     <script src="js/preparacion-analisis.js"></script>
@@ -243,6 +255,8 @@
     <script src="js/preparacion-descarga.js"></script>
     <script src="js/preparacion-pintar.js"></script>
     <script src="js/preparacion-motor.js"></script>
+    <script src="js/entrenador-linea.js"></script>
+    <script src="js/preparacion-sparring.js"></script>
     <script src="js/preparacion-rivales.js"></script>
 <!-- La hoja para imprimir (pintarHoja): solo se ve al imprimir. -->
 <div id="hoja" hidden></div>

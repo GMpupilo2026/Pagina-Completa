@@ -1025,6 +1025,7 @@
   function accionesPlan(lado, nombre) {
     const o = opcionesActuales;
     const fila = el("div", "mt-4 flex flex-wrap gap-2");
+    if (o.alJugar) fila.appendChild(botonPlan("Jugar contra él " + nombre, ["jugar", lado], (b) => o.alJugar(lado, b)));
     if (o.alBajarPgn) fila.appendChild(botonPlan("Bajar el plan " + nombre + " (PGN)", ["pgn", lado], () => o.alBajarPgn(lado)));
     if (o.alMandar) fila.appendChild(botonPlan("Mandárselo a un alumno", ["mandar", lado], (b) => o.alMandar(lado, b)));
     if (o.alArchivar) fila.appendChild(botonPlan("Guardar en Archivos (para la clase)", ["archivar", lado], (b) => o.alArchivar(lado, b)));

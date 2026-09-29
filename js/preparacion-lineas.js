@@ -19,8 +19,9 @@
  *                                     y en el tablero
  *   lineasDelPlan(plan)               cada línea del plan, de la raíz a una hoja
  *   lineaAPgn(resultado, lado, camino) una sola línea en PGN (para Archivos)
- *   planDelAlumno(resultado, lado)    solo el plan y lo que dijo Stockfish de
- *                                     sus jugadas: lo que se le manda al alumno
+ *   planDelAlumno(resultado, lado)    solo el plan, lo que dijo Stockfish de
+ *                                     sus jugadas y el libro del rival con ese
+ *                                     color: lo que se le manda al alumno
  *   planDe(resultado, lado)           EL plan de ese lado: el hecho a la medida
  *                                     del alumno si hay cruce, si no el general.
  *                                     Todo lo que usa «el plan» pasa por acá.
@@ -232,7 +233,16 @@
     const plan = copiar(planDe(r, lado), []);
     const suyo = (x) => claves.has(x.sec.concat(x.jugada).join(" "));
     const motor = r.motor ? { errores: r.motor.errores.filter(suyo), cuidado: r.motor.cuidado.filter(suyo) } : null;
-    return { plan, motor };
+    const out = { plan, motor };
+    // Para «Juega contra él» (js/preparacion-sparring.js): lo que él juega en
+    // cada posición, solo con el color que lleva en ese plan, y su Elo, que es
+    // la fuerza de Stockfish cuando se sale de lo suyo.
+    const libro = r.libro && r.libro[lado === "conBlancas" ? "b" : "w"];
+    if (libro && Object.keys(libro).length) {
+      out.libro = libro;
+      out.elo = (r.elo && r.elo.reciente) || null;
+    }
+    return out;
   }
 
   return { sanEs, lineaEs, pct, textoEval, fenDe, planAPgn, lineaDelPlan, notaJugada, erroresDelMotor,

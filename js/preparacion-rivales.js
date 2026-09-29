@@ -368,6 +368,7 @@
     // Otro análisis: el tablero mostraba una línea del anterior.
     $("visor-caja").hidden = true;
     $("mandar-caja").hidden = true;
+    $("sparring-caja").hidden = true;
     $("resultado").hidden = false;
     $("titulo-resultado").textContent = r.rival;
     pintarFiltros(r);
@@ -425,6 +426,7 @@
       },
       alBajarPgn: (lado) => bajarPgn(r, lado),
       alMandar: (lado, origen) => abrirMandar(r, lado, origen),
+      alJugar: (lado, origen) => abrirSparring(r, lado, origen),
       alArchivar: (lado, origen) => archivar(r, lado, origen),
       // Una jugada del plan: la línea hasta ahí y su continuación principal.
       alVerLinea: (camino, origen) => {
@@ -470,6 +472,35 @@
     $("visor-caja").hidden = true;
     if (volverA && document.body.contains(volverA)) volverA.focus();
     volverA = null;
+  }
+
+  // ------------------------------------------------------------ «Juega contra él»
+
+  /* Una partida contra su libro (r.libro, del color que lleva él) y, fuera
+     de él, Stockfish a su Elo. Un análisis guardado antes de esto no trae el
+     libro: se dice, en vez de abrir una partida que sería Stockfish desde la
+     primera jugada. */
+  let sparring = null;
+  let volverSparring = null;
+  function abrirSparring(r, lado, origen) {
+    const suyo = lado === "conBlancas" ? "b" : "w";
+    const libro = r.libro && r.libro[suyo];
+    if (!libro || !Object.keys(libro).length) {
+      Avisos.avisar("Este análisis no trae lo que él juega en cada posición (se hizo antes de «Juega contra él»). Vuelve a cargar sus partidas y analízalo otra vez.");
+      return;
+    }
+    if (!sparring) sparring = window.PreparacionSparring.montar($("sparring"));
+    volverSparring = origen || null;
+    $("sparring-caja").hidden = false;
+    $("sparring-caja").scrollIntoView({ block: "start" });
+    sparring.empezar({ libro, plan: L.planDe(r, lado), color: lado === "conBlancas" ? "w" : "b", elo: r.elo && r.elo.reciente, rival: r.rival });
+  }
+
+  function cerrarSparring() {
+    if (sparring) sparring.entrenador.terminar();
+    $("sparring-caja").hidden = true;
+    if (volverSparring && document.body.contains(volverSparring)) volverSparring.focus();
+    volverSparring = null;
   }
 
   function bajarPgn(r, lado) {
@@ -1000,6 +1031,7 @@
     $("motor-revisar").addEventListener("click", iniciarRevision);
     $("motor-parar").addEventListener("click", () => { if (revision) revision.parar = true; });
     $("visor-cerrar").addEventListener("click", cerrarVisor);
+    $("sparring-cerrar").addEventListener("click", cerrarSparring);
     $("mandar-cerrar").addEventListener("click", cerrarMandar);
     $("alumno-bajar-form").addEventListener("submit", bajarAlumno);
     $("alumno-leer").addEventListener("click", leerAlumno);
