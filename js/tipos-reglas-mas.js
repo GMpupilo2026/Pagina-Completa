@@ -409,7 +409,25 @@
     return minimo >= REMATA.gana ? 3 : 2;
   }
 
+  /* =====================================================================
+   * Elige a tiempo (tipo 17): posiciones tranquilas con varias candidatas
+   * razonables y un reloj. No hay «la única»: cuenta cuánto pierde la que
+   * eligió contra la mejor, medido con el motor (centipeones, desde el lado
+   * del alumno). Si se acaba el tiempo, cero: en una partida, se pierde.
+   * En Modo Adaptado el tiempo se triplica: leer la posición con lector de
+   * pantalla toma mucho más que mirarla.
+   * ===================================================================== */
+  const TIEMPO = { mejor: 30, buena: 110 };
+  function estrellasTiempo(perdida) {
+    if (perdida === null || perdida === undefined) return 0;   // se acabó el tiempo
+    if (perdida <= TIEMPO.mejor) return 3;
+    if (perdida <= TIEMPO.buena) return 2;
+    return 0;
+  }
+  function segundosTiempo(base, adaptado) { return adaptado ? base * 3 : base; }
+
   const TiposReglasMas = {
+    TIEMPO, estrellasTiempo, segundosTiempo,
     REMATA, cpDelAlumno, juicioRemata, estrellasRemata,
     aguantaAcertada, textoRefuta,
     VALOR, atacadas, atacantes, amenazados, barrido, corregirBarrido,

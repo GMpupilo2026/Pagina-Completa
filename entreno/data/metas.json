@@ -1684,6 +1684,14 @@
    "actividades": [
     "tipos"
    ]
+  },
+  {
+   "clave": "tiempo",
+   "label": "Elige a tiempo",
+   "total": 120,
+   "actividades": [
+    "tipos"
+   ]
   }
  ]
 }

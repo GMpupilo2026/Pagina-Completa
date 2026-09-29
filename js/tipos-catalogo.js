@@ -222,6 +222,18 @@
         { n: 3, titulo: "Sin material de más", desc: "El material está casi igual, pero tu posición gana: no la dejes enfriar. 12 jugadas.", jugadas: 12 },
       ],
     },
+    {
+      id: "tiempo", emoji: "⏱️", nombre: "Elige a tiempo",
+      pregunta: "El reloj corre. ¿Cuál juegas?",
+      entrena: "Decidir con el reloj en contra en posiciones tranquilas, donde no hay táctica que salve: elegir una jugada sana a tiempo vale más que buscar la perfecta y perder por tiempo.",
+      como: "Ves una posición de partida real sin golpes a la vista y dos, tres o cuatro jugadas candidatas. Elige una antes de que se acabe el reloj. No hay una sola buena: cuenta cuánto pierde la tuya contra la mejor, medido con el motor. Si se acaba el tiempo, es como perder por tiempo. En Modo Adaptado tienes el triple de tiempo.",
+      clase: "Pon la posición y cuenta en voz alta los segundos: que cada alumno levante la mano con su candidata antes de que termines. Después muestren cuánto pierde cada una.",
+      niveles: [
+        { n: 1, titulo: "Con calma", desc: "Tres candidatas y 30 segundos.", segundos: 30 },
+        { n: 2, titulo: "Ritmo rápido", desc: "Tres candidatas y 15 segundos.", segundos: 15 },
+        { n: 3, titulo: "Blitz", desc: "Cuatro candidatas y 8 segundos.", segundos: 8 },
+      ],
+    },
   ];
 
   function tipo(id) { return TIPOS.find((t) => t.id === id) || null; }
