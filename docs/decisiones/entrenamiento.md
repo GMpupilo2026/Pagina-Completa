@@ -910,9 +910,11 @@ táctica se apunte como `tactica`.
 ## Finales contra la máquina
 
 `entreno/finales.html`: los finales de libro que hay que saber de memoria
-—el peón pasado lejano, el alfil del color equivocado, dama contra peón en
-séptima (central, de torre y de alfil), torre contra peón, Philidor, Lucena,
-Vancura y torre contra alfil— jugados contra Stockfish a máxima fuerza
+—el peón pasado lejano, el rompimiento, la mayoría en el flanco de dama, el
+alfil del color equivocado y el correcto, alfiles de distinto color, caballo
+contra peón, dama contra peón en séptima (central, de torre y de alfil), dos
+peones en sexta contra la torre, torre contra peón, cortar al rey, Philidor,
+Lucena, Vancura y torre contra alfil (17)— jugados contra Stockfish a máxima fuerza
 (`PracticeEngine.getMove(fen, "max")`, el mismo Worker de la clase en vivo).
 Cada uno tiene una meta: **ganar** (dar mate) o **salvar** (hacer tablas).
 
