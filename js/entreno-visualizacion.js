@@ -47,7 +47,37 @@ const NIVELES = [
   { id:'l5', nombre:'Nivel 5', titulo:'Visualiza 5 jugadas o más', lenMin:11, propias:'6 o más', respuestas:'5 o más',
     desc:'Las líneas más largas del banco: seis jugadas tuyas o más, sin apoyarte en el tablero ni una vez.' },
 ];
-function nivelInfo(id){ return NIVELES.find((n) => n.id === id); }
+function nivelInfo(id){
+  if(id === REPASO) return { nombre: 'Repasar fallados', titulo: 'lo que te costó', desc: 'Los que resolviste con pista o con error, otra vez. Si sale limpio, vuelve más adelante; si no, vuelve pronto.' };
+  return NIVELES.find((n) => n.id === id);
+}
+
+/* «Repasar fallados» (js/repaso-fallados.js, lo mismo que Temas y Mates): un
+   ejercicio con pista o con error entra a una cola de repaso espaciado y
+   vuelve cuando toca. El repaso es un «nivel» más, con solo los de hoy. */
+const REPASO = '__repaso';
+const CLAVE_REPASO = window.RepasoFallados ? RepasoFallados.CLAVES.visualizacion : null;
+let repasoIds = [];
+function enRepaso(){ return currentLevel === REPASO; }
+function pendientesDeRepaso(){
+  if(!window.RepasoFallados || !DATA) return [];
+  return RepasoFallados.pendientes(CLAVE_REPASO, (id) => !!DATA.puzzles[id]);
+}
+function pintarRepaso(){
+  const caja = document.getElementById('repaso-caja');
+  const n = pendientesDeRepaso().length;
+  caja.style.display = n ? '' : 'none';
+  if(!n) return;
+  document.getElementById('repaso-texto').textContent = n === 1
+    ? 'Hoy toca repasar 1 ejercicio que te costó (lo resolviste con un error o con una pista).'
+    : `Hoy toca repasar ${n} ejercicios que te costaron (los resolviste con un error o con una pista).`;
+}
+function abrirRepaso(){
+  repasoIds = pendientesDeRepaso();
+  if(!repasoIds.length) return;
+  openLevel(REPASO);
+  const t = document.getElementById('play-title'); t.setAttribute('tabindex', '-1'); t.focus();
+}
 
 let DATA = null;                 // temas.json: {puzzles: {id: {fen, solution, rating, mate, ...}}}
 let POOLS = {};                  // nivel.id -> [ids] (orden estable)
@@ -83,7 +113,7 @@ function buildPools(){
   const r = (id) => (typeof DATA.puzzles[id].rating === 'number' ? DATA.puzzles[id].rating : Infinity);
   Object.keys(POOLS).forEach((k) => POOLS[k].sort((a, b) => (r(a) - r(b)) || (a < b ? -1 : a > b ? 1 : 0)));
 }
-function idsOf(nivelId){ return POOLS[nivelId] || []; }
+function idsOf(nivelId){ return nivelId === '__repaso' ? repasoIds : (POOLS[nivelId] || []); }
 
 /* ---------------- Progreso y racha (localStorage) ----------------
    Una sola lista de resueltos para los cinco niveles (igual que "Ejercicios
@@ -137,6 +167,7 @@ function buildLevels(){
   });
   wrap.appendChild(grid);
   updateOverall();
+  pintarRepaso();
 }
 
 function updateOverall(){
@@ -186,6 +217,12 @@ function openLevel(id){
   document.getElementById('play-desc').textContent = info.desc;
   document.getElementById('levels-view').style.display = 'none';
   document.getElementById('play-view').style.display = 'block';
+  if(id === REPASO){
+    currentIndex = 0;
+    loadPuzzle();
+    window.scrollTo({ top: 0 });
+    return;
+  }
   try{ localStorage.setItem('entreno_visualizacion_last', id); }catch(e){}
   if(solvedCountFor(id) >= idsOf(id).length){
     currentIndex = 0;
@@ -199,6 +236,11 @@ function openLevel(id){
 
 function updateProgressBar(){
   const total = idsOf(currentLevel).length;
+  if(enRepaso()){
+    document.getElementById('progress-fill').style.width = (total ? Math.round(100 * currentIndex / total) : 0) + '%';
+    document.getElementById('progress-label').textContent = `Repaso · ejercicio ${Math.min(currentIndex + 1, total)} de ${total}`;
+    return;
+  }
   const done = solvedCountFor(currentLevel);
   document.getElementById('progress-fill').style.width = (total ? Math.round(100 * done / total) : 0) + '%';
   document.getElementById('progress-label').textContent = `${done}/${total} resueltos · ejercicio ${currentIndex + 1} de ${total}`;
@@ -426,6 +468,8 @@ function finishPuzzle(){
     markSolved(id);
     if (window.EntrenoProgress) EntrenoProgress.log("visualizacion", { puzzle_id: id });
   }
+  // La cola de repaso: lo que costó entra; lo que se repasa se vuelve a programar.
+  if(window.RepasoFallados) RepasoFallados.anotar(CLAVE_REPASO, id, missedThisPuzzle, usedHintThisPuzzle);
   updateProgressBar();
   updateOverall();
   setTimeout(() => {
@@ -443,8 +487,12 @@ function finishLevel(){
   document.getElementById('celebration').style.display = 'block';
   const total = idsOf(currentLevel).length;
   const info = nivelInfo(currentLevel);
-  document.getElementById('celebration-stats').textContent =
-    `Resolviste los ${total} ejercicios de ${info.nombre} — ${info.titulo}.`;
+  const repaso = enRepaso();
+  document.getElementById('celebration-title').textContent = repaso ? '¡Repaso terminado!' : '¡Nivel completo!';
+  document.getElementById('celebration-replay-btn').style.display = repaso ? 'none' : '';
+  document.getElementById('celebration-stats').textContent = repaso
+    ? `Repasaste ${total} ${total === 1 ? 'ejercicio' : 'ejercicios'}. Los que salieron limpios vuelven más adelante.`
+    : `Resolviste los ${total} ejercicios de ${info.nombre} — ${info.titulo}.`;
   updateProgressBar();
 }
 
@@ -471,6 +519,7 @@ document.getElementById('celebration-replay-btn').addEventListener('click', () =
   loadPuzzle();
 });
 document.getElementById('celebration-back-btn').addEventListener('click', showLevels);
+document.getElementById('repaso-btn').addEventListener('click', abrirRepaso);
 document.getElementById('back-levels').addEventListener('click', (e) => { e.preventDefault(); showLevels(); });
 
 /* ---------------- Arranque ---------------- */
@@ -479,6 +528,8 @@ function initApp(){
   if(appInitialized) return;
   appInitialized = true;
   setStreak(getStreak());
+  // ?repaso=1 es el enlace de «Hoy te toca» del hub: abre la cola directo.
+  if(new URLSearchParams(location.search).has('repaso') && pendientesDeRepaso().length){ abrirRepaso(); return; }
   let last = null;
   try{ last = localStorage.getItem('entreno_visualizacion_last'); }catch(e){}
   const fromHash = (location.hash || '').replace('#', '');

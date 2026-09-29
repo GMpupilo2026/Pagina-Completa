@@ -81,11 +81,13 @@ falló.
   niveles (bronce, plata, oro, diamante): racha de días, ejercicios totales,
   variedad de tipos practicados, días de práctica acumulados (no hace falta
   que sean seguidos) y metas por cada tipo de ejercicio.
-- **`ACTIVIDADES_ALCANZABLES` es 14, no 15** (era 13 hasta que llegó
-  `finales`; nadie tenía todavía las 13, así que nadie perdió la medalla). El
-  CHECK de `training_progress` tiene 15 actividades, pero `desafios` está
+- **`ACTIVIDADES_ALCANZABLES` es 18, no 20** (era 13 hasta que llegó
+  `finales`, 15 con `tipos` y 18 con Precisión, el Sonar y Batalla naval;
+  nadie tenía ninguna de esas cifras, así que nadie perdió la medalla). El
+  CHECK de `training_progress` tiene 20 actividades, pero `desafios` está
   declarada sin ningún uso real
-  (`entreno/desafios.html` registra como `'practicar'`): pedir las 14 para el
+  (`entreno/desafios.html` registra como `'practicar'`) y `preparacion` solo
+  la tiene quien recibió un plan contra un rival: pedir las 20 para el
   logro "Las probaste todas" habría dejado un logro que nadie puede conseguir
   nunca, y eso no da ningún error —se queda gris para siempre sin que nadie
   sepa por qué—.
@@ -420,7 +422,67 @@ logros, no salían en «Cómo viene» y no se podían pedir como tarea. Todo eso
   queda en cero y nada avisa), y que los recortes de Tipos coincidan con
   `tipos.json`. `verificar-tipos-pagina.js` prueba el registro: una vez por
   ejercicio, y también lo resuelto antes.
-- Precisión posicional, el Sonar y la Batalla naval siguen sin escribir ahí.
+- Precisión posicional, el Sonar y la Batalla naval se sumaron después (ver
+  la sección siguiente).
+
+## Precisión, el Sonar y Batalla naval también cuentan
+
+Las tres guardaban su resultado solo en el progreso de la cuenta, así que
+quedaban fuera de la meta del día, la racha, los logros, «Cómo viene» y las
+tareas por cantidad. Ahora cada tanda o partida terminada escribe UNA fila en
+`training_progress` (migración `20260929060654`: `'precision-posicional'`,
+`'sonar'` y `'batalla-naval'` en el CHECK, el mismo nombre que ya usaba su
+registro de tiempo).
+
+- **Sin `puzzle_id` ni `nivel_id`, a propósito**: la tanda de Precisión se
+  sortea y el tesoro y la flota se esconden al azar, así que cada partida es
+  nueva. `tareas_con_avance()` cuenta distintos por esas claves y, sin ellas,
+  cae en `tp.id`: «5 partidas de Sonar» son cinco partidas jugadas, no cinco
+  niveles. El detalle lleva lo que sirve para leerla: `nivel`, `jugadas` o
+  `disparos`, `estrellas` y `con_pista`; el duelo de Batalla naval,
+  `duelo: true` y `gano` (se registra se gane o se pierda: se jugó); la
+  tanda de Precisión, `modo`, `cantidad`, `aciertos` y `porcentaje`.
+- **Tareas**: las tres están en `js/material-plataforma.js` con cantidad y
+  minutos (antes no estaban de ninguna forma).
+- **Logros**: «Las probaste todas» pasa de 15 a 18 actividades alcanzables
+  (el máximo de cualquier alumno seguía en 12).
+- `verificar-tareas.js` leía el CHECK con `'([a-z0-9_]+)'`, **sin el guion**:
+  habría dado por rechazadas `precision-posicional` y `batalla-naval`. Ahora
+  lo lee con guion. `verificar-sonar.js`, `verificar-batalla-naval.js` (también
+  el duelo) y `verificar-precision-posicional-pagina.js` prueban que se
+  registra una sola fila, con su detalle.
+
+## Repasar fallados también en Visualización y Practicar; y el hub propone más
+
+- **Visualización y Practicar tienen la cola de «Repasar fallados»**
+  (`js/repaso-fallados.js`, la misma de Temas y Mates, con sus claves
+  `entreno_visualizacion_repaso_v1` y `entreno_practicas_repaso_v1`, que viajan
+  con la cuenta). Lo que sale con error o con pista entra; lo repasado limpio
+  se reprograma y, a los tres limpios seguidos, sale.
+  - En **Visualización** el repaso es un «nivel» más (`__repaso`) con los de
+    hoy. Repasado limpio, cuenta como resuelto: con error no había contado.
+  - En **Practicar** la cola es **por ronda** (`serie:número`), no por serie:
+    lo que costó es una posición, no las cinco. El repaso es una serie armada
+    con esas rondas; cada una recuerda su serie (`_serie`), que es la que dice
+    qué motivo vale (`js/motivos-tacticos.js`): en el repaso de un descubierto
+    sigue valiendo cualquier salto que descubra el jaque. «Ver solución» cuenta
+    como pista. El repaso no guarda estrellas ni se registra como serie.
+  - Las dos abren la cola con `?repaso=1`, el enlace del hub.
+- **El «Hoy te toca» propone también**: los repasos de Visualización y de
+  Practicar, y **seguir el nivel de Tipos que quedó a medias**
+  («Seguir con El Detective, nivel 2 (7 de 20)» → `tipos.html#detective/2`).
+  Eso último lo anota la página de Tipos en `tipos_ultimo_v1` (tipo, nivel,
+  cuántos lleva y cuántos son) al abrir un nivel y al resolver; viaja con la
+  cuenta con `ultimaEscritura` (gana el aparato donde se jugó más tarde). Un
+  nivel completo no se propone. Siguen siendo tres cosas como mucho.
+- **Informes dice las casillas que más le cuestan en Coordenadas**
+  («b6 · g3 — falló 9 de 10, 4 de 7»). `informes_entreno_modulos()` manda los
+  contadores de las casillas falladas dos veces o más (`coord_casillas`,
+  migración `20260929054914`) y el orden lo pone `js/coordenadas-casillas.js`,
+  el mismo de la página: la fórmula no se escribe dos veces.
+- Lo prueban `verificar-entreno-repaso.js` (las dos colas, el motivo en el
+  repaso de Practicar, el hub), `verificar-tipos-pagina.js` (que se anote el
+  nivel) y `verificar-informes.js` (la tarjeta).
 
 ## El tema más flojo, en el hub
 
@@ -690,7 +752,8 @@ y el alumno practicaba otro motivo sin que nada fallara.
 
 `entreno/index.html` reparte los accesos en **Fundamentos** (Mates,
 Aprender, Coordenadas, Desafíos), **Practicar** (Ejercicios por tema, Practicar), **Entreno** (Aperturas y
-celadas, 4×4, Visualización, Precisión posicional, Finales contra la máquina) y
+celadas, 4×4, Visualización, Precisión posicional, Finales contra la máquina,
+Memoria) y
 **Tipos de entrenamiento** (una sola tarjeta que abre su ficha, ver «Los Tipos
 de entrenamiento»).
 
@@ -801,6 +864,61 @@ Cada uno tiene una meta: **ganar** (dar mate) o **salvar** (hacer tablas).
   mentira: ganar cuenta una vez, salvar con la posición en tablas cuenta, con
   la posición perdida o sin motor no, y la máquina empieza cuando la posición
   es del otro bando.
+
+## La ficha de Memoria
+
+`entreno/memoria.html` (tarjeta **"📷 Memoria"** del grupo Entreno del hub):
+ves una posición unos segundos, desaparece y la reconstruyes. Es la idea de
+thememorychess.com, donde la dificultad la pone quien juega: **eliges cuántas
+piezas (de 3 a 32) y cuántos segundos (de 3 a 60)**, y con «Una pieza más»
+—solo después de una reconstrucción sin errores— la vas subiendo de a una.
+`memoria.html?piezas=8&segundos=10` arranca directo con eso, así el profesor
+manda el enlace con la dificultad ya puesta; la página deja la dirección así
+al empezar, para que se pueda copiar.
+
+- **Es Fotografía sin niveles fijos, y comparte con ella todo lo que se
+  puede.** Fotografía (Tipos de entrenamiento) tiene cinco niveles con rangos
+  de piezas y segundos que no se eligen; esta ficha no reemplaza a esa, la
+  deja a medida. La corrección es la MISMA (`TiposReglas.compararFoto`,
+  `leerPiezas` y `estrellasFoto`, de `js/tipos-reglas.js`) y el tablero es el
+  común de Entrenamiento (`EjercicioTablero.dibujar`); lo propio vive en
+  `js/entreno-memoria.js`.
+- **Ninguna posición se inventa.** `herramientas/memoria-generar.js` arma
+  `entreno/data/memoria.json` del banco de Lichess de «Ejercicios por tema»:
+  la posición de cada ejercicio y las que se van dando al jugar su solución.
+  Así hay de 3 a 32 piezas, todas de partidas jugadas (de 32 piezas hay 53
+  en el banco). Un sorteo de piezas al azar, como hacen otros sitios, da
+  posiciones que no pasan en una partida, y memorizarlas no entrena ver el
+  tablero por grupos con sentido. Se guardan 40 por cantidad de piezas, sin
+  repetir la misma colocación; el archivo no se edita a mano. Al corregir, un
+  enlace lleva a la partida de Lichess de donde salió.
+- **Esconde de verdad**, igual que Fotografía: al reconstruir el tablero no
+  tiene piezas y la lectura escrita del Modo Adaptado desaparece (sería
+  soplar). Se reconstruye tocando casillas con una paleta o **escribiendo**
+  «Rg1 Tf1 a2» por color. Las marcas de la corrección llevan su signo escrito
+  (✓ − ✗ +).
+- **El récord vive en la cuenta**: `memoria_mejor_v1` (segundos → la mayor
+  cantidad de piezas reconstruida sin un error, `maxPorClave`). Solo una
+  perfecta lo mueve. El tiempo se anota con `data-activity="memoria"`, que
+  está en las dos tablas de nombres (`js/tiempo-secciones.js` y la de
+  `informes-encargados`); la función del correo tiene que volver a
+  desplegarse para que el correo a la casa la nombre (hasta entonces dice
+  «memoria» a secas).
+
+**Al tocar el banco o la página, correr**:
+
+    node herramientas/memoria-generar.js        # solo si cambia el banco
+    node herramientas/verificar-todo.js memoria memoria-pagina
+
+El primero comprueba sin navegador que cada posición tenga exactamente sus
+piezas, sea legal y sea una posición real del banco de Lichess, que el
+archivo sea lo que arma hoy el generador y que la corrección cuente bien. El
+segundo juega la página: la posición que se ve es la del banco, se esconde
+sola al terminar la cuenta, escrita entera sale perfecta y guarda el récord,
+«Una pieza más» sube a la siguiente, y con errores el récord no se mueve.
+Está probado que fallan: una FEN inventada en el banco hace saltar 2
+comprobaciones; dejar la lectura escrita al reconstruir, o guardar el récord
+de una con errores, las que corresponden.
 
 ## Aperturas y celadas: memorizar jugando, con repaso espaciado
 
@@ -1105,12 +1223,11 @@ eso se parece y se diferencia del resto de los bancos a la vez:
 - **El resultado se guarda en `training_state`** (claves
   `precision_posicional_resultado_v1` / `_historial_v1`), exactamente como el
   examen de arbitraje: esa tabla ya tiene su RLS (cada quien ve lo suyo) y no
-  hace falta ninguna tabla nueva. **No escribe en `training_progress`**, la
-  misma decisión que ya tomó Confites: esa tabla tiene el CHECK de
-  actividades permitidas y sumar una nueva ahí es una migración aparte que
-  esta tanda no pidió. El tiempo sí se registra, como en toda página de
-  Entreno: `js/tiempo-plataforma.js data-activity="precision-posicional"`, que
-  no tiene ningún CHECK.
+  hace falta ninguna tabla nueva. Además, cada tanda terminada escribe una
+  fila en `training_progress` (`'precision-posicional'`, ver «Precisión, el
+  Sonar y Batalla naval también cuentan»). El tiempo se registra, como en
+  toda página de Entreno: `js/tiempo-plataforma.js
+  data-activity="precision-posicional"`.
 - **El cuadro de comandos (`js/cuadro-comandos.js`) reutiliza `comandos.
   posicion(juego)`** para la lectura de la posición en Modo Adaptado, en vez
   de escribirla de nuevo: acá SÍ hay una partida de chess.js detrás de cada
@@ -1874,9 +1991,9 @@ el más cercano) y aguas turbias (solo dice «más cerca», «más lejos» o «i
 - El progreso son `sonar_estrellas_v1` (nivel → estrellas, `maxPorClave`) y
   `sonar_mejor_v1` (nivel → menos jugadas). Esa segunda necesitó una fusión
   nueva, **`minPorClave`**, en `js/progreso-usuario.js`: fundirla con el máximo
-  se quedaría con la PEOR marca de los dos aparatos. **No escribe en
-  `training_progress`** —esa tabla tiene el CHECK de actividades y sumar una es
-  una migración aparte—; el tiempo sí se registra con
+  se quedaría con la PEOR marca de los dos aparatos. Cada partida terminada
+  escribe una fila en `training_progress` (`'sonar'`, ver «Precisión, el Sonar
+  y Batalla naval también cuentan»); el tiempo se registra con
   `js/tiempo-plataforma.js data-activity="sonar"`.
 
 **Al tocar el motor o la página, correr `node herramientas/verificar-sonar.js`**
@@ -1937,8 +2054,10 @@ tiene flota y la computadora le dispara.
   tema.
 - El progreso son `batalla_estrellas_v1` (`maxPorClave`), `batalla_mejor_v1`
   (`minPorClave`) y `batalla_victorias_v1` (`maxNumero`), en CLAVES de
-  `js/progreso-usuario.js`. No escribe en `training_progress` (el CHECK de
-  actividades); el tiempo sí, con `data-activity="batalla-naval"`.
+  `js/progreso-usuario.js`. Cada partida terminada, también un duelo, escribe
+  una fila en `training_progress` (`'batalla-naval'`, ver «Precisión, el Sonar
+  y Batalla naval también cuentan»); el tiempo, con
+  `data-activity="batalla-naval"`.
 
 **Al tocar el motor o la página, correr `node herramientas/verificar-batalla-naval.js`**
 (`--sin-navegador` corre solo las reglas). Está probado que falla de verdad:

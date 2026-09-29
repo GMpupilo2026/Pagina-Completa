@@ -540,6 +540,9 @@ async function main() {
     await page.waitForSelector("#vista-juego:not(.hidden) #jugada-input");
     const aviso = () => page.evaluate(() => { const e = document.getElementById("nivel-completo"); return e.checkVisibility() ? e.textContent : ""; });
     ok("antes de resolver el último no dice nada", (await aviso()) === "");
+    const ult = await page.evaluate(() => JSON.parse(localStorage.getItem("tipos_ultimo_v1") || "null"));
+    ok("anota el nivel que se está jugando, para el «Hoy te toca» del hub",
+      !!ult && ult.tipo === "amenaza" && ult.nivel === 1 && ult.hechos === nivel.length - 1 && ult.total === nivel.length, JSON.stringify(ult));
     await page.fill("#jugada-input", ultimo.amenazaEs);
     await page.press("#jugada-input", "Enter");
     await esperarEstado(page, /Eso es lo que quiere/);

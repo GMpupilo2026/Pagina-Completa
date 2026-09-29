@@ -48,6 +48,7 @@ window.TiempoSecciones = (function () {
         "sonar":                { nombre: "El Sonar",              emoji: "🔊" },
         "batalla-naval":        { nombre: "Batalla naval",         emoji: "🚢" },
         "tipos":                { nombre: "Tipos de entrenamiento", emoji: "🧠" },
+        "memoria":              { nombre: "Memoria",               emoji: "📷" },
         "racha":                { nombre: "Racha táctica",         emoji: "⚔️" },
         "bot":                  { nombre: "El bot de Oscar",       emoji: "🤖" },
         "logros":               { nombre: "Logros",                emoji: "🏅" },

@@ -15,6 +15,10 @@
      semanas. Arriba, la meta del día (de Logros); sin nada pendiente queda
      solo esa.
 
+   - Visualización y Practicar tienen la misma cola (Practicar, por ronda,
+     y en el repaso vale el motivo de la serie de origen), y el hub la
+     propone.
+
    Nada de esto da un error si se rompe: el ejercicio fallado simplemente no
    vuelve nunca, que es lo que pasaba antes.
 
@@ -258,6 +262,40 @@ async function hub(browser) {
     igual("con 80 % limpio no lo propone", await page.evaluate(() => document.querySelectorAll("#hoy-lista a").length), "0");
     await ctx.close();
   }
+  /* Los repasos de Visualización y de Practicar también se proponen. */
+  {
+    const fresco = { diagnostico_resultado_v1: JSON.stringify({ fecha: new Date().toISOString() }) };
+    const ficha = (vence) => ({ facilidad: 2.5, intervalo: 1, repasos: 1, fallos: 0, vence, ultimo: "2026-01-01T00:00:00Z" });
+    const { page, ctx } = await abrir(browser, "/entreno/index.html", {}, Object.assign({}, fresco, {
+      entreno_visualizacion_repaso_v1: JSON.stringify({ a: ficha(hoy()), b: ficha(hoy()) }),
+      entreno_practicas_repaso_v1: JSON.stringify({ "pasillo:0": ficha(hoy()) }),
+    }));
+    await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
+    await page.waitForFunction(() => document.querySelectorAll("#hoy-lista a").length > 0, { timeout: 10000 });
+    igual("propone los repasos de Visualización y de Practicar, con a dónde ir", await page.evaluate(() =>
+      Array.from(document.querySelectorAll("#hoy-lista a")).map((a) => [a.textContent.replace("→", "").trim(), a.getAttribute("href")])),
+      [["👁️Repasar 2 ejercicios de Visualización que te costaron", "visualizacion.html?repaso=1"], ["♞Repasar 1 posición de Practicar que te costó", "practicas.html?repaso=1"]]);
+    await ctx.close();
+  }
+  /* El nivel de Tipos que quedó a medias (tipos_ultimo_v1, lo anota la página
+     al jugar): se propone seguirlo; uno completo, no. */
+  {
+    const fresco = { diagnostico_resultado_v1: JSON.stringify({ fecha: new Date().toISOString() }) };
+    const ultimo = (hechos) => Object.assign({}, fresco, { tipos_ultimo_v1: JSON.stringify({ tipo: "detective", nombre: "El Detective", nivel: 2, hechos, total: 20 }) });
+    let { page, ctx, errores } = await abrir(browser, "/entreno/index.html", {}, ultimo(7));
+    await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
+    await page.waitForFunction(() => document.querySelectorAll("#hoy-lista a").length > 0, { timeout: 10000 });
+    igual("propone seguir el nivel de Tipos a medias, con cuánto lleva", await page.evaluate(() =>
+      Array.from(document.querySelectorAll("#hoy-lista a")).map((a) => [a.textContent.replace("→", "").trim(), a.getAttribute("href")])),
+      [["🧩Seguir con El Detective, nivel 2 (7 de 20)", "tipos.html#detective/2"]]);
+    sinErrores(errores, "hub con Tipos a medias");
+    await ctx.close();
+    ({ page, ctx } = await abrir(browser, "/entreno/index.html", {}, ultimo(20)));
+    await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
+    await page.waitForTimeout(600);
+    igual("un nivel completo no se propone", await page.evaluate(() => document.querySelectorAll("#hoy-lista a").length), "0");
+    await ctx.close();
+  }
   /* La meta del día sale de progreso_dias_y_racha, la misma cuenta de Logros. */
   {
     const racha = (hoy, actual) => ({ "rpc:progreso_dias_y_racha": [{ dias_activos: 9, racha_actual: actual, racha_record: 7,
@@ -281,11 +319,66 @@ async function hub(browser) {
   }
 }
 
+async function visualizacion(browser) {
+  console.log("\n=== Visualización: la misma cola ===");
+  const C = "entreno_visualizacion_repaso_v1";
+  const { page, ctx, errores } = await abrir(browser, "/entreno/visualizacion.html");
+  await page.waitForFunction(() => typeof NIVELES !== "undefined" && DATA && typeof openLevel === "function", { timeout: 20000 });
+  await page.evaluate(() => openLevel(NIVELES[0].id));
+  await page.waitForFunction(() => game !== null && currentId() !== undefined, { timeout: 15000 });
+  const fallado = await page.evaluate(() => { const id = currentId(); missedThisPuzzle = true; finishPuzzle(); return id; });
+  igual("con un error entra a la cola, para hoy", await page.evaluate(([k, id]) => (JSON.parse(localStorage.getItem(k) || "{}")[id] || {}).vence, [C, fallado]), hoy());
+  await page.waitForFunction(() => !locked, { timeout: 5000 });
+  await page.evaluate(() => showLevels());
+  igual("la lista de niveles ofrece el repaso", await page.evaluate(() => [document.getElementById("repaso-caja").checkVisibility(), document.getElementById("repaso-texto").textContent]),
+    [true, "Hoy toca repasar 1 ejercicio que te costó (lo resolviste con un error o con una pista)."]);
+  await page.click("#repaso-btn");
+  igual("el repaso trae el que costó", await page.evaluate(() => [currentLevel, currentId(), document.getElementById("play-title").textContent]), ["__repaso", fallado, "Repasar fallados — lo que te costó"]);
+  const antes = await inserts(page);
+  await page.evaluate(() => { missedThisPuzzle = false; usedHintThisPuzzle = false; finishPuzzle(); });
+  igual("repasado limpio, vuelve más adelante", await page.evaluate(([k, id]) => JSON.parse(localStorage.getItem(k))[id].vence, [C, fallado]) > hoy(), "true");
+  igual("y ahora sí cuenta como resuelto (con error no había contado)", [await page.evaluate((id) => isSolved(id), fallado), (await inserts(page)) - antes], [true, 1]);
+  await page.waitForFunction(() => document.getElementById("celebration").checkVisibility(), { timeout: 5000 });
+  igual("al terminar, «¡Repaso terminado!» y sin «volver a empezar»", await page.evaluate(() =>
+    [document.getElementById("celebration-title").textContent, document.getElementById("celebration-replay-btn").checkVisibility()]), ["¡Repaso terminado!", false]);
+  sinErrores(errores, "visualización");
+  await ctx.close();
+}
+
+async function practicar(browser) {
+  console.log("\n=== Practicar: la cola por ronda ===");
+  const C = "entreno_practicas_repaso_v1";
+  const { page, ctx, errores } = await abrir(browser, "/entreno/practicas.html");
+  await page.waitForFunction(() => typeof SETS !== "undefined" && document.getElementById("set-list").children.length > 0, { timeout: 20000 });
+  // La primera ronda del descubierto, con un error: entra como "descubierto:0".
+  await page.evaluate(() => { openSet(SETS.find((x) => x.id === "descubierto")); errorsThisRound = 1; finishRound(false); });
+  igual("una ronda con error entra a la cola, con su serie y su número", await page.evaluate((k) => Object.keys(JSON.parse(localStorage.getItem(k) || "{}")), C), ["descubierto:0"]);
+  await page.evaluate(() => showList());
+  igual("la lista de series ofrece el repaso", await page.evaluate(() => [document.getElementById("repaso-caja").checkVisibility(), document.getElementById("repaso-texto").textContent]),
+    [true, "Hoy toca repasar 1 posición que te costó (la resolviste con un error o con una pista)."]);
+  await page.click("#repaso-btn");
+  igual("el repaso es una serie con esa ronda", await page.evaluate(() => [currentSet.id, currentSet.rounds.length, currentSet.rounds[0]._rid, game.fen() === SETS.find((x) => x.id === "descubierto").rounds[0].fen]),
+    ["__repaso", 1, "descubierto:0", true]);
+  // En el repaso vale el motivo de su serie: otro salto que descubre el jaque.
+  await page.click('#board [data-square="c3"]'); await page.click('#board [data-square="e4"]');
+  igual("otra jugada que cumple el motivo de su serie también vale en el repaso", await page.evaluate(() => /¡Correcto!/.test(document.getElementById("round-status").textContent)), "true");
+  igual("repasada limpia, vuelve más adelante", await page.evaluate((k) => JSON.parse(localStorage.getItem(k))["descubierto:0"].vence, C) > hoy(), "true");
+  await page.waitForFunction(() => document.getElementById("celebration").checkVisibility(), { timeout: 5000 });
+  igual("al terminar, «¡Repaso terminado!», sin «siguiente serie» ni estrellas guardadas", await page.evaluate(() =>
+    [document.getElementById("celebration-title").textContent, document.getElementById("celebration-next-btn").checkVisibility(), getSetStars("__repaso"),
+     window.__inserts.some((i) => i.tabla === "training_progress" && JSON.stringify(i.rows).includes("__repaso"))]),
+    ["¡Repaso terminado!", false, 0, false]);
+  sinErrores(errores, "practicar");
+  await ctx.close();
+}
+
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
     await temas(browser);
     await mates(browser);
+    await visualizacion(browser);
+    await practicar(browser);
     await hub(browser);
   } catch (e) {
     console.log("  ✗ " + (e && e.stack || e));

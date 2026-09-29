@@ -133,7 +133,8 @@ function reglas() {
 const CON_SESION = `
 (function () {
   window.sb = { auth: { getSession: () => Promise.resolve({ data: { session: { user: { id: "u-ana" } } } }) },
-    from: () => ({ select() { return this; }, eq() { return this; }, insert() { return this; }, upsert() { return this; },
+    from: (tabla) => ({ select() { return this; }, eq() { return this; }, upsert() { return this; },
+                   insert(filas) { (window.__inserts = window.__inserts || []).push({ tabla, fila: [].concat(filas)[0] }); return this; },
                    update() { return this; }, single() { return Promise.resolve({ data: null, error: null }); },
                    then(r) { return Promise.resolve({ data: [], error: null }).then(r); } }),
     rpc: () => ({ then(r) { return Promise.resolve({ data: [], error: null }).then(r); } }) };
@@ -235,6 +236,11 @@ async function navegador() {
       cierto("la casilla por donde pasó recuerda qué marcó el sonar", /ya estuviste, el sonar marcó \d/.test(et), et);
     }
     igual("las estrellas quedan guardadas", await page.evaluate(() => JSON.parse(localStorage.getItem("sonar_estrellas_v1"))), { 1: 3 });
+    // Y la partida queda en training_progress: meta del día, racha, logros, tareas.
+    await page.waitForFunction(() => (window.__inserts || []).length, null, { timeout: 3000 }).catch(() => {});
+    igual("la partida se registra UNA vez como actividad «sonar», con nivel, jugadas y estrellas",
+      await page.evaluate(() => (window.__inserts || []).filter((i) => i.tabla === "training_progress").map((i) => [i.fila.activity, i.fila.student_id, i.fila.detail.nivel, i.fila.detail.jugadas, i.fila.detail.estrellas])),
+      [["sonar", "u-ana", 1, K.distancia(est.pos, est.t[0]), 3]]);
     igual("y la mejor marca, en jugadas", await page.evaluate(() => JSON.parse(localStorage.getItem("sonar_mejor_v1"))), { 1: K.distancia(est.pos, est.t[0]) });
     const hist = await escribir(page, "historial");
     cierto("«historial» repasa las lecturas, empezando por la salida", /^Historial del sonar\. Empezaste en /.test(hist), hist.slice(0, 90));
