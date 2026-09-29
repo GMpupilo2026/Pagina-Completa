@@ -1665,6 +1665,7 @@ async function pruebaProgresoAlumna(browser) {
   await ctx.close();
 }
 
+const haceDias = (n) => new Date(Date.now() - n * 86400000 - 3600000).toISOString();
 async function pruebaSemanaProfesora(browser) {
   console.log("\n=== Tu semana, vista por una profesora ===");
   const { page, ctx, errores } = await panel(browser, [PROFE], "u-profe", {}, {
@@ -1678,7 +1679,16 @@ async function pruebaSemanaProfesora(browser) {
        cuenta por su lado. */
     rpc: { panel_profesor: [{ alumnos: 29, activos_7d: 11, tareas_pendientes: 6, tareas_vencidas: 2,
                               tareas_puestas: 9, clases_30d: 8, clases_dadas: 21,
-                              con_diagnostico: 29, con_plan: 29 }] },
+                              con_diagnostico: 29, con_plan: 29 }],
+           /* Quiénes se caen del plan: ocho, y se muestran seis. La primera
+              entrenó con el plan y paró; el segundo nunca lo empezó; el
+              tercero trae HTML en el nombre. */
+           se_caen_del_plan: [
+             { id: "u-1", nombre: "Ana Rojas", desde: haceDias(20), ultima: haceDias(3), entreno_con_plan: true },
+             { id: "u-2", nombre: "Beto Mora", desde: haceDias(8), ultima: null, entreno_con_plan: false },
+             { id: "u-3", nombre: '<img src=x onerror="window.__xss=1">', desde: haceDias(30), ultima: haceDias(5), entreno_con_plan: true },
+             ...[4, 5, 6, 7, 8].map((i) => ({ id: "u-" + i, nombre: "Alumno " + i, desde: haceDias(40), ultima: haceDias(10 + i), entreno_con_plan: true })),
+           ] },
   });
 
   const visto = await page.evaluate(() => ({
@@ -1704,6 +1714,23 @@ async function pruebaSemanaProfesora(browser) {
   igual("y con todo andando, ninguna franja de primer paso encima",
     await page.evaluate(() => getComputedStyle(document.getElementById("pendientes-aviso")).display), "none");
 
+  /* Quiénes se caen del plan: el número de arriba dice cuántos; esto dice
+     quiénes, con su informe a un clic. */
+  await page.waitForFunction(() => !document.getElementById("profe-caen").hidden, null, { timeout: 10000 });
+  const caen = await page.evaluate(() => ({
+    pidio: (window.__consultas || []).filter((c) => c.tabla === "se_caen_del_plan").map((c) => c.args),
+    filas: Array.from(document.querySelectorAll("#profe-caen-lista a")).map((a) => [a.getAttribute("href"), a.textContent]),
+    mas: document.getElementById("profe-caen-mas").textContent,
+    nodos: document.querySelectorAll("#profe-caen-lista img").length + (window.__xss || 0),
+  }));
+  igual("se pide a la base, con 3 días", caen.pidio, [{ p_dias: 3 }]);
+  igual("se muestran seis", caen.filas.length, "6");
+  igual("cada nombre lleva a su informe", caen.filas[0][0], "informes.html?alumno=u-1");
+  igual("con cuántos días lleva sin entrenar", caen.filas[0][1], "Ana Rojas3 días sin entrenar");
+  igual("y quien nunca empezó el plan lo dice", caen.filas[1][1], "Beto Morano empezó el plan (hace 8 días)");
+  igual("el nombre va como texto: no crea ningún nodo", caen.nodos, "0");
+  igual("y los que no caben, a Informes", caen.mas, "Y 2 más en Informes →");
+
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
 
@@ -1721,6 +1748,8 @@ async function pruebaSemanaProfesora(browser) {
   }));
   igual("con todos al día, ningún número se pinta en rojo", limpio.rojo, "false");
   igual("y una sola clase se dice en singular", limpio.clases, "Llevas 1 clase dada en los últimos 30 días.");
+  igual("y sin nadie que se caiga del plan, ese bloque no se pinta",
+    await r.page.evaluate(() => document.getElementById("profe-caen").hidden), "true");
   await r.ctx.close();
 
   await pruebaPrimerPasoProfesor(browser);

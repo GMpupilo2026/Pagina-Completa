@@ -2426,3 +2426,24 @@ estudiantes», «+120 artículos» cuando había 7) y no los respaldaba nada.
 - `verificar-cifras-portada.js` lo comprueba con las dos bases dobladas: que se
   pidan las funciones y nunca las tablas, que estudiantes sea la suma, que con
   una base caída no cambie y que con todo caído queden las del HTML.
+
+## Quiénes se están cayendo del plan
+
+- «Tu semana» decía CUÁNTOS alumnos llevan 4 días sin entrenar, pero no
+  QUIÉNES ni cuáles tenían un plan que seguir: el profe se enteraba revisando
+  uno por uno. En los datos, la mayoría de los que abandonan lo hacen en los
+  primeros días después del diagnóstico.
+- `public.se_caen_del_plan(p_dias)` (migración
+  `20260929153838_se_caen_del_plan.sql`, SECURITY INVOKER como
+  `informes_inactivos()`): alumnos con plan —el del diagnóstico o el
+  compartido, de los últimos 60 días— que llevan `p_dias` días o más sin
+  entrenar desde entonces. El diagnóstico no cuenta como entrenar. La RLS
+  decide de quién pregunta cada uno; probado impersonando a una profesora (ve
+  a los suyos) y a un alumno (no ve a nadie más).
+- `js/clases.js` → `cargarSeCaen()` pinta `#profe-caen` debajo de los
+  números: seis nombres (los que acaban de caerse primero: todavía se
+  recuperan con un mensaje), cada uno con su informe a un clic
+  (`informes.html?alumno=<id>`), y «Y N más en Informes». Sin nadie, no se
+  pinta. Mirando como otra persona («Ver como») tampoco: la RLS respondería
+  con la gente de quien mira.
+- Lo prueba `verificar-panel.js` (nombre por textContent incluido).
