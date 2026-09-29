@@ -13,6 +13,12 @@
  * la marca de `js/marca-agua.js`. Una segunda cuenta acá diría otro nivel que
  * la pantalla del mismo visitante.
  *
+ * CON LA MARCA DE UNA ACADEMIA. Si el diagnóstico llegó por el enlace del
+ * supervisor de una academia (opciones.academia), el PDF es de esa academia:
+ * su franja con logo y nombre arriba, su color en los títulos, su logo como
+ * marca de agua y su nombre y su WhatsApp en la firma y el pie. Ver «El PDF
+ * del diagnóstico con la marca de la academia» en docs/decisiones/informes.md.
+ *
  * El nombre, el correo y lo que la persona contó de sí misma los escribió ella:
  * en un PDF no se ejecuta nada, pero se pasan por String() porque tampoco está
  * garantizado que sean texto.
@@ -36,6 +42,15 @@ window.DiagnosticoVisitantePDF = (function () {
     const d = iso ? new Date(iso) : null;
     if (!d || isNaN(d)) return "";
     return d.toLocaleDateString("es-CR", { day: "numeric", month: "long", year: "numeric", timeZone: "America/Costa_Rica" });
+  }
+
+  /* Un número de Costa Rica se lee «+506 8455 4870», no «50684554870». Lo que
+     no tenga esa forma va tal cual lo escribieron. */
+  function telefonoLegible(n) {
+    const d = String(n || "").replace(/\D/g, "");
+    if (d.length === 11 && d.startsWith("506")) return "+506 " + d.slice(3, 7) + " " + d.slice(7);
+    if (d.length === 8) return d.slice(0, 4) + " " + d.slice(4);
+    return texto(n);
   }
 
   // La banda va ESCRITA: el PDF se imprime en blanco y negro, y un color solo
@@ -153,7 +168,35 @@ window.DiagnosticoVisitantePDF = (function () {
     }
     bloques.push({ tipo: "nota", texto: texto(plan.medicion) });
 
-    // --- quién lo firma
+    // --- quién lo firma: la academia del enlace, o Oscar
+    const ac = o.academia && o.academia.nombre ? o.academia : null;
+    if (ac) {
+      const suNombre = texto(ac.nombre);
+      bloques.push({ tipo: "separador" });
+      bloques.push({ tipo: "titulo", texto: "Preparado por " + suNombre });
+      bloques.push({
+        tipo: "parrafo",
+        texto: suNombre + ": clases de ajedrez con seguimiento del progreso, en la plataforma de " + ACADEMIA + ".",
+      });
+      const suContacto = [];
+      if (ac.whatsapp) suContacto.push("WhatsApp: " + telefonoLegible(ac.whatsapp));
+      suContacto.push("Diagnóstico de nivel hecho en " + WEB);
+      bloques.push({ tipo: "lista", items: suContacto });
+      bloques.push({
+        tipo: "nota",
+        texto: "El nivel y la fuerza estimada orientan el estudio: no son un rating oficial. " +
+          "Diagnóstico de nivel de " + ACADEMIA + ".",
+      });
+      return {
+        titulo: "Diagnóstico de nivel de ajedrez",
+        subtitulo: nombre + (fecha ? " · " + fecha : "") + " · " + suNombre,
+        autor: suNombre,
+        pie: suNombre + " · diagnóstico de " + WEB,
+        color: ac.color || null,
+        cabecera: { nombre: suNombre, color: ac.color || null, logo: o.logo || null },
+        bloques: bloques,
+      };
+    }
     bloques.push({ tipo: "separador" });
     bloques.push({ tipo: "titulo", texto: "Preparado por " + AUTOR });
     bloques.push({
@@ -190,8 +233,23 @@ window.DiagnosticoVisitantePDF = (function () {
      que se pidió es justo que vaya marcado, y uno sin marca que circula no se
      distingue de una copia. */
   async function descargar(v, opciones) {
-    const doc = documento(v, opciones);
-    doc.marca = await window.MarcaAgua.preparar();
+    const o = Object.assign({}, opciones || {});
+    const ac = o.academia && o.academia.nombre ? o.academia : null;
+    let marca;
+    if (ac) {
+      /* El logo de la academia va de cabecera y de marca de agua. Si no tiene
+         logo, o no se pudo bajar, el PDF sale con su franja y su nombre pero
+         sin marca de agua: la de Oscar no se le pone a otra marca. */
+      marca = null;
+      if (ac.logoUrl) {
+        try { marca = await window.MarcaAgua.prepararDesde(ac.logoUrl); } catch (e) { marca = null; }
+      }
+      o.logo = marca;
+    } else {
+      marca = await window.MarcaAgua.preparar();
+    }
+    const doc = documento(v, o);
+    doc.marca = marca;
     const blob = await window.ReportePDF.generar(doc);
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
