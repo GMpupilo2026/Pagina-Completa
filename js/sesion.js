@@ -4631,6 +4631,7 @@
                 rondaBtn.addEventListener("click", () => empezarRonda(RondaRapida.elegir(ids, RondaRapida.TAMANO)
                     .map((id) => ({ fen: tacticsData.puzzles[id].fen, solucion: tacticsData.puzzles[id].solution }))));
                 body.appendChild(barra);
+                let rondaFila = null;
                 if (ids.length) {
                     // El tiempo por posición, al lado del botón que la arranca.
                     const fila = document.createElement("div");
@@ -4650,7 +4651,7 @@
                         sel.appendChild(o);
                     });
                     fila.append(etiqueta, sel);
-                    body.append(fila, rondaBtn);
+                    rondaFila = fila;
                 }
                 const list = document.createElement("ul");
                 list.className = "space-y-2 mt-2 max-h-96 overflow-y-auto pr-1";
@@ -4714,6 +4715,9 @@
                     list.appendChild(li);
                 });
                 body.appendChild(list);
+                // La ronda va DEBAJO de la lista: arriba corría la galería ~80px hacia
+                // abajo, y en pantalla entraba un solo tablero (verificar-sesion-curso.js).
+                if (rondaFila) body.append(rondaFila, rondaBtn);
                 return;
             }
         }

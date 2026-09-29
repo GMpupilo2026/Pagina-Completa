@@ -1155,6 +1155,10 @@ del tema y la dificultad que se están mirando, sin repetir.
 - **El tiempo por posición se elige al lado del botón**, en Táctica mismo. Se
   pensó ponerlo en la pestaña Preguntar, pero entonces el profe tenía que ir y
   volver entre pestañas para arrancar una ronda.
+- **Los dos van debajo de la lista de ejercicios, no arriba.** Arriba corrían
+  la galería de «Ver todas las posiciones» unos 80 px hacia abajo; en la
+  pantalla del CI entraba un solo tablero y `verificar-sesion-curso.js` lo
+  marcó.
 - **Cada posición es una pregunta con tiempo**, la de siempre (`crearPregunta`
   con su `prompt` y su `tiempo_limite`), y el tablero de la clase la muestra.
   Se cierra sola un poco después del plazo (la base acepta hasta 5 s más), o
