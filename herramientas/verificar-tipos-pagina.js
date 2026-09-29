@@ -856,6 +856,57 @@ window.PreparacionMotor = {
     await ctx.close();
   }
 
+  console.log("\n=== Revisa esta partida (?revisar=juego:<id>) ===");
+  {
+    const JUGADAS = ["e4", "e5", "Nf3", "Nc6", "Bc4", "Nd4", "Nxe5", "Qg5", "Nxf7", "Qxg2", "Rf1", "Qxe4+"];
+    const g = new Chess();
+    const fens = [g.fen()];
+    JUGADAS.forEach((s) => { g.move(s); fens.push(g.fen()); });
+    const evals = {};
+    fens.forEach((f, i) => { evals[f] = i <= 6 ? 0 : -3; });
+    const opciones = { [fens[6]]: [{ san: "c3", eval: 0.2 }, { san: "O-O", eval: 0 }, { san: "Nxe5", eval: -3 }] };
+    const filas = {
+      game_rooms: [
+        { id: "g-pedida", variant: "estandar", status: "finished", white_id: "u-1", black_id: "u-2", moves: JUGADAS, updated_at: "2026-09-10T15:00:00Z" },
+        { id: "g-otra", variant: "estandar", status: "finished", white_id: "u-1", black_id: "u-2", moves: JUGADAS, updated_at: "2026-09-20T15:00:00Z" },
+        { id: "g-ajena", variant: "estandar", status: "finished", white_id: "u-3", black_id: "u-2", moves: JUGADAS, updated_at: "2026-09-21T15:00:00Z" },
+      ],
+      practice_games: [], practice_sessions: [],
+    };
+    const MOTOR = `window.PreparacionMotor = { disponible() { return true; },
+      async evaluar(fen) { return { eval: (window.__evals || {})[fen] || 0, mejor: null }; },
+      async opciones(fen) { return (window.__opciones || {})[fen] || []; } };`;
+    const preparar = async (ctx) => {
+      await ctx.route("**/js/preparacion-motor.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: MOTOR }));
+      await ctx.addInitScript((v) => { window.__filas = v.filas; window.__evals = v.evals; window.__opciones = v.opciones; }, { filas, evals, opciones });
+    };
+    const aviso = (page) => page.textContent('#tipo-extra [role="status"]');
+    {
+      const { page, ctx, errores } = await abrir(browser, true, "?revisar=juego%3Ag-pedida#errores", preparar);
+      await page.waitForFunction(() => /Revisé|ya estaba|No encontré|No se pudieron/.test((document.querySelector('#tipo-extra [role="status"]') || {}).textContent || ""), null, { timeout: 15000 }).catch(() => {});
+      const t = await aviso(page);
+      ok("revisa sola la partida pedida, sin tocar nada", /Revisé tu partida: 1 error para practicar/.test(t), t);
+      const vistas = await page.evaluate(() => Object.keys(JSON.parse(localStorage.getItem("errores_analizadas_v1") || "{}")));
+      ok("y SOLO esa (aunque haya otra más reciente sin revisar)", JSON.stringify(vistas) === JSON.stringify(["juego:g-pedida"]), JSON.stringify(vistas));
+      ok("la saca de la dirección: volver o recargar no la pide otra vez", !/revisar=/.test(page.url()), page.url());
+      const ir = await page.getAttribute('#tipo-extra [role="status"] a', "href").catch(() => null);
+      ok("y ofrece ir directo al error", ir === "#errores/1/juego-g-pedida-6", ir);
+      await page.click('#tipo-extra [role="status"] a');
+      await page.waitForSelector("#vista-juego:not(.hidden) #jugada-input");
+      await mismaPosicion(page, fens[6], "el enlace abre la posición del error");
+      ok("sin errores en consola", !errores.length, errores.join(" | "));
+      await ctx.close();
+    }
+    {
+      const { page, ctx, errores } = await abrir(browser, true, "?revisar=juego%3Ag-ajena#errores", preparar);
+      await page.waitForFunction(() => /Revisé|ya estaba|No encontré|No se pudieron/.test((document.querySelector('#tipo-extra [role="status"]') || {}).textContent || ""), null, { timeout: 15000 }).catch(() => {});
+      ok("una partida que no es suya no se encuentra (el doble filtra de verdad)", /No encontré esa partida/.test(await aviso(page)), await aviso(page));
+      ok("y no se marca nada como revisado", (await page.evaluate(() => localStorage.getItem("errores_analizadas_v1"))) === null);
+      ok("sin errores en consola", !errores.length, errores.join(" | "));
+      await ctx.close();
+    }
+  }
+
   console.log("\n=== Tipo completo: para los logros ===");
   {
     // Todos los ejercicios de Amenaza con estrella: la portada lo marca completo

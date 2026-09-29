@@ -2681,12 +2681,27 @@ hay lista: cada alumno tiene los suyos) y los verificadores.
   formulario lo ofrezca así.
 - **El profesor los ve en Informes**, en el informe de cada alumno (ver «Los
   errores de sus partidas» en informes.md): los lee de `training_state` con
-  `ErroresPropios.deFilas()`, que no le cree nada a lo que guardó el navegador.
+  `ErroresPropios.deFilas()`, que no le cree nada a lo que guardó el navegador. Desde
+  ahí los lleva a un plan de clase, y la vista de grupo suma los temas de
+  todos (ver «Llevar sus errores a un plan de clase» y «Los temas de los
+  errores de todo el grupo» en informes.md).
 - `herramientas/verificar-errores-propios.js` prueba la detección, el armado y
   la regla sin motor; `verificar-tipos-pagina.js` busca errores en partidas de
   mentira con un motor de mentira (el doble de Supabase filtra de verdad: la
   partida de otra variante, la ajena y la que sigue en curso ni llegan) y
   juega el ejercicio.
+- **«Revisa esta partida» al terminar una partida en Juegos**: `estandar.html`
+  muestra, a quien jugó (no a quien mira) una partida terminada de 10 jugadas o
+  más, el enlace «🪞 Revisa tus errores en esta partida» a
+  `entreno/tipos.html?revisar=juego:<id>#errores`. La ficha lo lee, lo borra de
+  la dirección (recargar no vuelve a revisar) y revisa **solo esa partida**:
+  `traerPartidas()` la pide por su id (validado) entre las del propio alumno, y
+  `analizar()` filtra otra vez las pendientes por esa clave. Las dos defensas
+  son a propósito: el verificador rompe las dos y salta; una sola no alcanza
+  para romperlo. Dice si no la encontró (la de otra persona, u otra variante),
+  si es muy corta, si ya estaba revisada, o cuántos errores salieron, con «Ir
+  al primero →». `verificar-juegos-accesible.js` prueba cuándo sale el enlace;
+  `verificar-tipos-pagina.js`, que se revise solo esa.
 
 ### El tipo 19: Salva las tablas
 

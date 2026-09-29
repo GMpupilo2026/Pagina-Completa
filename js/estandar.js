@@ -36,6 +36,14 @@
             readyBtn.classList.toggle("hidden", !myColor || room.status !== "playing" || myReady);
 
             let myTurnNow = false;
+            // Revisar ESTA partida con «Tus propios errores»: solo quien jugó, y solo
+            // si hubo partida (menos de 10 jugadas no se revisan).
+            const revisar = document.getElementById("revisar-partida");
+            if (revisar) {
+                const puede = room.status === "finished" && !!myColor && (room.moves || []).length >= 10;
+                revisar.classList.toggle("hidden", !puede);
+                if (puede) revisar.href = "entreno/tipos.html?revisar=" + encodeURIComponent("juego:" + ROOM_ID) + "#errores";
+            }
             if (room.status === "finished") {
                 const resultText = room.result === "draw" ? (esTripleRepeticion(room.moves, room.fen) ? "Tablas por triple repetición." : "Tablas.") : (room.result === "white" ? nameFor(room.white_id) + " ganó con blancas." : nameFor(room.black_id) + " ganó con negras.");
                 setStatus("Partida terminada — " + resultText);
