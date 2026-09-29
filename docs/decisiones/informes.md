@@ -246,6 +246,44 @@ administración.
   `verificar-diagnostico-enlace.js` (en el navegador) y
   `verificar-aviso-diagnostico.js` (el correo, sin red) lo comprueban.
 
+#### El tema de la academia en el diagnóstico
+
+Quien abre el enlace de un supervisor de **una** academia ve el diagnóstico
+**vestido con la marca de esa academia**: su logo y su nombre en el
+encabezado y en una franja arriba del título, su color en el encabezado, en
+la tarjeta de los datos, en los botones, en la barra de avance y en la
+tarjeta del nivel, y al final «¿Quieres entrenar con …?» con el WhatsApp de
+la academia. Lo pidió el dueño del sitio para que el diagnóstico que manda
+cada academia se vea suyo.
+
+- **La marca la da `enlace_diagnostico_marca(código)`** (`anon` puede
+  llamarla): nombre, color, logo y WhatsApp, **solo si el supervisor es de UNA
+  academia**, la misma regla que sus formularios (`formulario_publico`) y sus
+  correos. Con dos o ninguna, la página queda como siempre (sigue diciendo a
+  quién le llega el resultado).
+- **Los colores los pone `css/styles.css`**, bajo `html[data-marca-academia]`
+  con el color en `--marca-academia`; `js/entreno-diagnostico.js`
+  (`vestirConLaAcademia()`) solo decide si se puede. **El color se vuelve a
+  medir contra el blanco antes de usarlo** (`MarcaAcademia.contrasteConBlanco`):
+  la base ya lo exige al guardarlo, pero si no da 4,5 la página muestra el logo
+  y el nombre y conserva sus colores.
+- **Encima del color todo va en blanco y sin transparencia**: lo único medido
+  es blanco contra ese color. Por eso la tarjeta del nivel deja el ámbar y sus
+  textos al 80 %, y el botón de WhatsApp va al revés (fondo blanco, letra del
+  color de la academia: el mismo par).
+- **Lo que es de Ajedrez Integral se quita**: el menú del encabezado (cursos,
+  precios), «← Cursos» y «Ver los cursos». El pie con la política de
+  privacidad se queda: la página y los datos siguen siendo de la plataforma.
+- El nombre, el logo y el número vienen de la base: van con `textContent`, el
+  logo por `urlDelLogo()` (el bucket público de siempre) y si no carga se
+  esconde; el WhatsApp se queda con los dígitos y, si son 8, se le pone el 506.
+- **De paso**: a un visitante ya no se le ofrece «Ver mis Informes» ni el aviso
+  de que su profesor lo ve en Informes; no tiene cuenta ni profesor.
+- `verificar-diagnostico-enlace.js` lo mide en el navegador (colores con
+  `getComputedStyle`, lo que se ve con `checkVisibility`): con el tema, con un
+  color que no da 4,5 y con un supervisor sin academia. Con
+  `GUARDAR_CAPTURAS=<carpeta>` deja capturas de la portada y el resultado.
+
 #### El diagnóstico de un visitante se descarga en PDF
 
 Cada visitante del panel «🌐 Diagnósticos de visitantes» trae **«⬇ Descargar
