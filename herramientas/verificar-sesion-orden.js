@@ -47,7 +47,8 @@ const GRUPOS = [
   { rotulo: "Tu material — solo lo ves tú",
     botones: ["toggle-lesson-btn", "toggle-archivos-btn", "toggle-pdf-btn", "toggle-free-mode-btn"] },
   { rotulo: "El tablero — lo ve toda la clase",
-    botones: ["reset-board-btn", "clear-marks-btn", "toggle-hide-btn", "save-game-btn"] },
+    // El tiempo para pensar va al final: no toca el tablero, pero lo ve toda la clase.
+    botones: ["reset-board-btn", "clear-marks-btn", "toggle-hide-btn", "save-game-btn", "pensar-btn"] },
 ];
 
 // El orden de la clase: qué voy a dar, qué le pongo delante, qué le pido, a
@@ -73,11 +74,11 @@ async function pruebaProfesor(browser) {
   GRUPOS.forEach((esperado, i) => {
     igual("grupo " + (i + 1) + ": su rótulo dice quién lo ve",
       (grupos[i] || {}).rotulo, esperado.rotulo);
-    igual("grupo " + (i + 1) + ": sus cuatro botones y en su orden",
+    igual("grupo " + (i + 1) + ": sus botones y en su orden",
       ((grupos[i] || {}).botones || []).join(", "), esperado.botones.join(", "));
   });
   igual("y no quedó ningún botón fuera de los dos grupos",
-    await page.evaluate(() => document.querySelectorAll("#teacher-toolbar button").length), 8);
+    await page.evaluate(() => document.querySelectorAll("#teacher-toolbar button").length), 9);
 
   console.log("-- Las pestañas, en el orden de la clase");
   igual("el orden es el de la clase", await page.evaluate(() =>
