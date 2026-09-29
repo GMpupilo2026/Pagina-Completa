@@ -316,6 +316,9 @@
                     <p id="elegido-chip" hidden class="max-w-[560px] mx-auto mt-2 rounded-xl border-2 border-accent-500 bg-accent-50 dark:bg-brand-900 px-4 py-2 text-center text-sm font-bold text-brand-800 dark:text-white"><span aria-hidden="true">🎯 </span>Te toca responder: tu profe te eligió.</p>
                     <!-- Los demás alumnos: a quién eligió el profe para responder. -->
                     <p id="elegido-otro" hidden class="max-w-[560px] mx-auto mt-2 rounded-xl border-2 border-accent-500 bg-accent-50 dark:bg-brand-900 px-4 py-3 text-center text-lg text-brand-800 dark:text-white" aria-live="polite"><span aria-hidden="true">🎯 </span><span id="elegido-otro-antes">Tu profe eligió a </span><strong id="elegido-otro-nombre" class="font-bold"></strong><span id="elegido-otro-despues"> para responder.</span></p>
+                    <!-- Una pregunta dirigida a otro compañero: se ve para quién es, y no se contesta
+                         (lo rechaza la base: respuesta_calificar_y_plazo). -->
+                    <p id="pregunta-para-otro" hidden class="max-w-[560px] mx-auto mt-2 rounded-xl border-2 border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 px-4 py-2 text-center text-sm text-brand-700 dark:text-brand-200" aria-live="polite"><span aria-hidden="true">❓ </span>Tu profe le hizo una pregunta a <strong id="pregunta-para-otro-nombre" class="font-bold"></strong>. Piensa tu respuesta en silencio.</p>
                     <p id="jugadas-a-ciegas" hidden class="max-w-[560px] mx-auto mt-2 rounded-xl bg-brand-100 dark:bg-brand-900 px-4 py-2 text-sm font-mono text-brand-700 dark:text-brand-200"></p>
                     <p id="comentario-profe" hidden class="max-w-[560px] mx-auto mt-2 rounded-xl border border-accent-400/60 bg-white dark:bg-brand-900 px-4 py-2 text-sm text-brand-700 dark:text-brand-200"></p>
                     <p id="arrows-hint" class="hidden text-center text-brand-450 dark:text-brand-350 text-xs mt-1">Clic derecho + arrastrar dibuja una flecha (repetirla en el mismo color la borra) · clic derecho sobre una casilla la marca con un círculo · elige el color abajo</p>
@@ -354,6 +357,17 @@
                             <p id="practice-boards-hint" class="text-xs text-brand-450 dark:text-brand-350"></p>
                         </div>
                         <div id="practice-boards-grid" class="grid gap-3"></div>
+                    </div>
+
+                    <!-- Lo que cada alumno va jugando en la pregunta de «¿qué jugarías?» (solo profesor),
+                         en vivo, como los tableros de Practicar: las jugadas a medias llegan de
+                         respuestas_en_curso y la respuesta mandada, de question_answers. -->
+                    <div id="question-boards-section" hidden class="mt-6">
+                        <div class="flex flex-wrap items-baseline justify-between gap-2 mb-3">
+                            <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white">Respuestas en el tablero</h2>
+                            <p id="question-boards-hint" class="text-xs text-brand-450 dark:text-brand-350"></p>
+                        </div>
+                        <div id="question-boards-grid" class="grid gap-3"></div>
                     </div>
 
                     <!-- La partida de UN alumno, en grande (solo profesor): la mira en vivo sin poder
@@ -451,6 +465,7 @@
                                 <h2 id="question-titulo" tabindex="-1" class="font-serif font-bold text-brand-800 dark:text-white focus:outline-none"><span aria-hidden="true">❓ </span><span class="sr-only">Pregunta de tu profe: </span><span id="question-prompt-text"></span></h2>
                                 <button type="button" id="question-close-btn" class="shrink-0 w-6 h-6 flex items-center justify-center rounded-lg text-brand-400 hover:text-brand-700 dark:hover:text-brand-200 hover:bg-brand-100 dark:hover:bg-brand-800 transition-colors" title="Salir por ahora (la pregunta sigue abierta, puedes volver a contestarla)" aria-label="Salir por ahora">✖</button>
                             </div>
+                            <p id="question-para-ti" hidden class="text-sm font-semibold text-accent-700 dark:text-accent-400 mb-1"><span aria-hidden="true">🎯 </span>Esta pregunta es solo para ti: el resto de la clase mira cómo la resuelves.</p>
                             <p id="question-color-hint" class="text-sm font-semibold text-brand-700 dark:text-brand-200 mb-1"></p>
                             <p id="question-plies-hint" class="text-xs text-brand-500 dark:text-brand-300 mb-1"></p>
                             <p id="question-status-text" role="status" class="text-xs text-brand-450 dark:text-brand-350 mb-3">Mueve las piezas que jugarías.</p>
@@ -840,6 +855,7 @@
                                     <p id="elegido-nombre" class="font-serif text-2xl font-bold text-brand-800 dark:text-white break-words" aria-live="polite"></p>
                                     <div class="flex flex-wrap gap-2 mt-2">
                                         <button id="elegido-insignia-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🏅 </span>Darle una insignia o trofeos</button>
+                                        <button id="elegido-preguntar-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">❓ </span>Preguntarle con el tablero</button>
                                         <button id="elegido-otro-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🎲 </span>Elegir a otro</button>
                                     </div>
                                     <!-- Cómo respondió: queda en clase_elegidos.resultado y en el resumen

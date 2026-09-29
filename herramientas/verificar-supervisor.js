@@ -66,8 +66,15 @@ async function pruebaSupervisor(browser) {
   const { page, ctx, errores } = await panel(browser, [SUP], SUP.id, null, datos);
   await page.waitForFunction(() => document.getElementById("sup-inactivos").textContent !== "—", null, { timeout: 10000 });
   const g = await page.evaluate(LEER);
-  igual("grupos del supervisor", g.grupos, ["Cómo van tus estudiantes", "Tus profesores", "Qué están entrenando, tema por tema",
-                                           "Cuentas a tu cargo", "Administración", "Tu cuenta"]);
+  igual("grupos del supervisor", g.grupos, ["Mi academia", "Cómo van tus estudiantes", "Tus profesores",
+                                           "Qué están entrenando, tema por tema", "Administración", "Tu cuenta"]);
+  igual("«Mi academia» lleva a",
+        await page.evaluate(() => [...Array.from(document.querySelectorAll("#tile-grid section"))
+          .find((s) => s.querySelector("h2").textContent === "Mi academia")
+          .querySelectorAll("a[href]")].map((a) => a.getAttribute("href"))),
+        ["formularios.html?alta=1", "coordinacion.html", "solicitudes.html", "academias.html"]);
+  const repetidos = g.enlaces.filter((h, i) => g.enlaces.indexOf(h) !== i);
+  igual("ningún destino dos veces en el panel", repetidos, []);
   igual("rótulo", g.badge, "🧭 Supervisor");
   const colados = g.enlaces.filter((h) => PROHIBIDOS.test(h));
   igual("ningún acceso a entrenar, jugar ni dar clase", colados, []);
@@ -78,6 +85,7 @@ async function pruebaSupervisor(browser) {
     .find((s) => s.querySelector("h2").textContent.startsWith("Qué están"))
     .querySelectorAll('a[href^="informes.html?tema="]').length);
   igual("cada tema de entrenamiento abre Informes filtrado", temasBien, temas);
+  await pruebaPlegado(page);
   igual("«sin entrenar» cuenta solo a los suyos", await page.textContent("#sup-inactivos"), "1");
   igual("estudiantes a cargo (de mi_gente)", await page.textContent("#sup-alumnos"), "12");
   igual("el registro de clases no se le pinta",
@@ -85,6 +93,31 @@ async function pruebaSupervisor(browser) {
   igual("sin franja de modo de vista (no administra)", g.barra, false);
   igual("sin errores en consola", errores, []);
   await ctx.close();
+}
+
+/* «Qué están entrenando» arranca plegado: se ve el rótulo y su botón, no sus
+   tarjetas. Se abre con el botón, el aparato lo recuerda al recargar, y el
+   buscador encuentra sus tarjetas aunque esté cerrado. Se mide lo que se VE. */
+async function pruebaPlegado(page) {
+  const ESTADO = () => {
+    const sec = Array.from(document.querySelectorAll("#tile-grid section"))
+      .find((s) => s.querySelector("h2").textContent.startsWith("Qué están"));
+    const b = sec.querySelector("button[aria-controls]");
+    return { boton: b.checkVisibility() ? b.textContent : null, abierto: b.getAttribute("aria-expanded"),
+             tarjetas: [...sec.querySelectorAll("a[href]")].filter((a) => a.checkVisibility()).length };
+  };
+  igual("«Qué están entrenando» arranca plegado", await page.evaluate(ESTADO), { boton: "Mostrar", abierto: "false", tarjetas: 0 });
+  await page.click("#tile-grid button[aria-controls]");
+  igual("«Mostrar» lo despliega", await page.evaluate(ESTADO), { boton: "Ocultar", abierto: "true", tarjetas: 7 });
+  await page.reload({ waitUntil: "networkidle" });
+  await page.waitForSelector("#tile-grid button[aria-controls]");
+  igual("al recargar sigue desplegado", await page.evaluate(ESTADO), { boton: "Ocultar", abierto: "true", tarjetas: 7 });
+  await page.click("#tile-grid button[aria-controls]");
+  igual("«Ocultar» lo vuelve a plegar", await page.evaluate(ESTADO), { boton: "Mostrar", abierto: "false", tarjetas: 0 });
+  await page.fill("#buscar-panel-campo", "mates");
+  igual("buscando, se ven sus tarjetas que coinciden (y no el botón)", await page.evaluate(ESTADO), { boton: null, abierto: "false", tarjetas: 1 });
+  await page.press("#buscar-panel-campo", "Escape");
+  igual("al borrar la búsqueda, vuelve a quedar plegado", await page.evaluate(ESTADO), { boton: "Mostrar", abierto: "false", tarjetas: 0 });
 }
 
 async function pruebaModosDelAdmin(browser) {
@@ -135,7 +168,7 @@ async function pruebaModosDelAdmin(browser) {
     await page.waitForSelector("#modo-vista-barra", { timeout: 10000 });
     const g = await page.evaluate(LEER);
     igual("modo supervisor: rótulo", g.badge, "🧭 Supervisor");
-    igual("modo supervisor: su primer grupo", g.grupos[0], "Cómo van tus estudiantes");
+    igual("modo supervisor: su primer grupo", g.grupos[0], "Mi academia");
     igual("modo supervisor: dice que los números son de la cuenta que administra",
           await page.evaluate(() => document.getElementById("sup-aviso").checkVisibility()), true);
     await ctx.close();

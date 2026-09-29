@@ -145,7 +145,7 @@ window.__deletes = [];
     variant_nodes: [], questions: [], question_answers: [], question_engine_answers: [],
     class_attendance: [], class_presence_log: [], practice_sessions: [], practice_games: [], game_rooms: [],
     class_chat_messages: [], saved_games: [], archivos_pgn: [], planes_clase: [], plan_items: [],
-    notas_alumno: [], trofeos_ajustes: [], insignias: [],
+    notas_alumno: [], trofeos_ajustes: [], insignias: [], respuestas_en_curso: [],
     // El catálogo es de la base (insignias_tipos): dos de muestra alcanzan.
     insignias_tipos: [
       { tipo: "buen_estudiante", nombre: "Estrella de buen estudiante", emoji: "⭐", descripcion: "Por su actitud.", orden: 1 },
@@ -311,7 +311,9 @@ window.__deletes = [];
         const filas = gente.map((id) => {
           const p = PERFILES.find((x) => x.id === id) || {};
           const r = resp.filter((a) => a.student_id === id), g = prac.filter((x) => x.student_id === id);
-          return { student_id: id, nombre: p.full_name || p.email || "Alumno", preguntas: pq.length,
+          // Las preguntas de todos y las dirigidas a él; las de otro, no.
+          const suyas = TABLAS.questions.filter((q) => pq.includes(q.id) && (!q.para_alumno || q.para_alumno === id)).length;
+          return { student_id: id, nombre: p.full_name || p.email || "Alumno", preguntas: suyas,
             respondidas: r.length, correctas: r.filter((a) => a.is_correct === true).length,
             incorrectas: r.filter((a) => a.is_correct === false).length, sin_calificar: r.filter((a) => a.is_correct == null).length,
             practicas: g.length, ganadas: g.filter((x) => x.status === "checkmate_win").length,
