@@ -723,7 +723,10 @@ window.PracticeEngine = {
     await mismaPosicion(page, item.fen, "pinta la posición del ejercicio");
     const opciones = await page.$$eval('#controles [role="group"] button', (b) => b.map((x) => x.textContent.trim()));
     ok("muestra las candidatas del banco", JSON.stringify(opciones) === JSON.stringify(item.candidatas.map((c) => c.sanEs)), JSON.stringify(opciones));
-    ok("dice cuánto tiempo hay", /Tienes 30 segundos/.test(await estado(page)), await estado(page));
+    // Se ESPERA el texto: la página lo escribe un instante después de pintar
+    // los botones, y leerlo una sola vez fallaba en el CI.
+    const aviso = await esperarEstado(page, /Tienes 30 segundos/);
+    ok("dice cuánto tiempo hay", /Tienes 30 segundos/.test(aviso), aviso);
     await page.locator('#controles [role="group"] button', { hasText: mejor.sanEs }).first().click();
     const t = await esperarEstado(page, /La mejor/);
     ok("la mejor: tres estrellas", /La mejor/.test(t) && (await estrellas(page))["tiempo:" + item.id] === 3, t);
@@ -773,7 +776,8 @@ window.PracticeEngine = {
       await c.clock.install();
     });
     await page.waitForSelector("#vista-juego:not(.hidden) #controles button");
-    ok("en Modo Adaptado, el triple de tiempo", /Tienes 24 segundos \(el triple/.test(await estado(page)), await estado(page));
+    const avisoAdaptado = await esperarEstado(page, /Tienes 24 segundos \(el triple/);
+    ok("en Modo Adaptado, el triple de tiempo", /Tienes 24 segundos \(el triple/.test(avisoAdaptado), avisoAdaptado);
     await page.clock.fastForward("00:10");
     ok("a los 10 segundos todavía se puede elegir", !(await page.$eval('#controles [role="group"] button', (b) => b.disabled)));
     ok("sin errores en consola", !errores.length, errores.join(" | "));
