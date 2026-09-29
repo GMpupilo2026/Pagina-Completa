@@ -84,6 +84,7 @@
     nombreAlumno = (r.cruce && r.cruce.alumno) || "";
     c.textContent = "";
     if (R()) c.appendChild(pintarResumen(r));
+    if (R() && r.certeza) c.appendChild(pintarCerteza(r));
     c.appendChild(pintarCifras(r));
     c.appendChild(pintarPlanes(r));
     if (R() && (opcionesActuales.alAFondo || r.lineaFondo)) c.appendChild(pintarAFondo(r));
@@ -184,6 +185,33 @@
       d.appendChild(dos);
       s.appendChild(d);
     }
+    return s;
+  }
+
+  /* ¿Qué tan certera es esta preparación? (la prueba hacia atrás). La
+     confianza y cada veredicto van escritos; el borde de color acompaña. */
+  function pintarCerteza(r) {
+    const c = R().armar(r).certeza;
+    const s = tarjeta("¿Qué tan certera es esta preparación?", "certeza-titulo");
+    if (!c) return s;
+    const conf = el("p", "text-base font-bold text-brand-800 dark:text-white mb-1");
+    conf.dataset.confianza = c.confianza;
+    conf.textContent = "Confianza: " + c.confianza;
+    s.appendChild(conf);
+    const consejo = el("p", "text-sm font-semibold text-brand-800 dark:text-white mb-1", c.consejo);
+    consejo.dataset.consejo = "";
+    s.appendChild(consejo);
+    s.appendChild(nota(c.porque + " Es una prueba honesta: la preparación no sabía lo que venía después."));
+    const ul = el("ul", "space-y-2");
+    c.items.forEach((x) => {
+      const borde = x.bien === null ? "border-brand-300 dark:border-brand-600" : x.bien ? "border-green-600 dark:border-green-400" : "border-red-600 dark:border-red-400";
+      const li = el("li", "border-l-4 " + borde + " pl-3 py-1");
+      li.dataset.veredicto = x.veredicto;
+      li.appendChild(el("p", "text-sm font-semibold text-brand-800 dark:text-white", x.titulo + " " + x.veredicto + "."));
+      li.appendChild(el("p", "text-sm text-brand-600 dark:text-brand-200", x.texto));
+      ul.appendChild(li);
+    });
+    s.appendChild(ul);
     return s;
   }
 

@@ -781,6 +781,87 @@
     };
   }
 
+  /* ¿Qué tan certera es la preparación? Una prueba hacia atrás, honesta: con
+     sus partidas VIEJAS (todas menos las más recientes) se arma la
+     preparación como si fuera el día antes, y con las NUEVAS (el 20 % más
+     reciente, al menos 15) se comprueba:
+       - repertorio: en cada decisión suya que la preparación vieja conocía
+         (posición con minN partidas o más), ¿jugó su jugada más frecuente?
+         ¿o al menos una de sus dos más frecuentes?
+       - débiles y fuertes: en las nuevas que pasaron por las líneas que la
+         vieja marcó como débiles (o fuertes), ¿cuánto sacó, contra su
+         promedio en las nuevas con ese color?
+       - plan: en las nuevas donde le jugaron la primera jugada del plan
+         viejo (con blancas) o donde abrió con la que el plan viejo esperaba
+         (con negras), ¿cuánto sacó?
+     Con menos de 60 partidas con fecha no se hace: las dos mitades dirían
+     poco. Ver «Qué tan certera es la preparación» en docs/decisiones/paneles.md. */
+  function certezaDe(lista) {
+    const conFecha = lista.filter((x) => x.fecha).sort((a, b) => (a.fecha < b.fecha ? 1 : a.fecha > b.fecha ? -1 : 0));
+    if (conFecha.length < 60) return null;
+    const nNuevas = Math.max(15, Math.round(conFecha.length * 0.2));
+    // Las viejas son de ANTES del primer día de las nuevas: una partida del
+    // mismo día no puede servir para prepararse y para probar a la vez.
+    const corte = conFecha[nNuevas - 1].fecha;
+    const nuevas = conFecha.filter((x) => x.fecha >= corte), viejas = conFecha.filter((x) => x.fecha < corte);
+    if (viejas.length < 45) return null;
+    const minV = minimo(viejas.length);
+    const arbolV = { w: armarArbol(viejas.filter((x) => x.color === "w")), b: armarArbol(viejas.filter((x) => x.color === "b")) };
+    const cuentaDe = (xs) => { const c = vacio(); xs.forEach((x) => sumar(c, x.res)); return c; };
+    const baseV = { w: puntos(arbolV.w.c) ?? 0.5, b: puntos(arbolV.b.c) ?? 0.5 };
+
+    // Repertorio: se baja por el árbol viejo con sus jugadas nuevas.
+    let decisiones = 0, aciertos = 0, entreDos = 0;
+    for (const x of nuevas) {
+      let nodo = arbolV[x.color];
+      for (let i = 0; i < Math.min(x.jugadas.length, MAX_JUGADAS_ARBOL) && nodo; i++) {
+        const san = x.jugadas[i];
+        if (leTocaAlRival(x.color, i) && totalAristas(nodo) >= minV) {
+          const hs = hijosOrdenados(nodo);
+          decisiones += 1;
+          if (hs[0] && hs[0].san === san) aciertos += 1;
+          if (hs.slice(0, 2).some((h) => h.san === san)) entreDos += 1;
+        }
+        const a = nodo.hijos.get(san);
+        nodo = a ? a.nodo : null;
+      }
+    }
+
+    // Débiles y fuertes de la preparación vieja, en las partidas nuevas.
+    const enLineas = (lineas) => {
+      if (!lineas.length) return null;
+      const pasan = nuevas.filter((x) => lineas.some((l) => l.color === x.color && esPrefijo(l.sec, x.jugadas)));
+      const c = cuentaDe(pasan);
+      // La base: sus partidas nuevas con los colores que tienen alguna línea.
+      const conColor = cuentaDe(nuevas.filter((x) => lineas.some((l) => l.color === x.color)));
+      return { n: c.n, puntos: puntos(c), base: puntos(conColor), conColor: conColor.n };
+    };
+    const debV = lineasNotables(arbolV.w, "w", baseV.w, minV, -1).concat(lineasNotables(arbolV.b, "b", baseV.b, minV, -1));
+    const fueV = lineasNotables(arbolV.w, "w", baseV.w, minV, 1).concat(lineasNotables(arbolV.b, "b", baseV.b, minV, 1));
+
+    // El plan viejo: con blancas, su primera jugada; con negras, lo que él
+    // abría (se mide cuánto sacó cuando le jugaron la del plan o abrió así).
+    const planB = plan(arbolV.b, "b", baseV.b, minV, 2, 0);
+    const planN = plan(arbolV.w, "w", baseV.w, minV, 2, 0);
+    const conPlan = (color, sec) => {
+      if (!sec.length) return null;
+      const pasan = nuevas.filter((x) => x.color === color && esPrefijo(sec, x.jugadas));
+      const c = cuentaDe(pasan);
+      const conColor = cuentaDe(nuevas.filter((x) => x.color === color));
+      return { sec, n: c.n, puntos: puntos(c), base: puntos(conColor), conColor: conColor.n };
+    };
+    const principal = (nodos) => { const sec = []; let x = nodos && nodos[0]; while (x && sec.length < 2) { sec.push(x.san); x = x.hijos && x.hijos[0]; } return sec; };
+
+    return {
+      viejas: viejas.length, nuevas: nuevas.length,
+      desde: nuevas[nuevas.length - 1].fecha, hasta: nuevas[0].fecha,
+      repertorio: { decisiones, aciertos, entreDos },
+      debiles: enLineas(debV),
+      fuertes: enLineas(fueV),
+      plan: { conBlancas: conPlan("b", principal(planB)), conNegras: conPlan("w", principal(planN)) },
+    };
+  }
+
   // Menos de esto, y la página avisa que dice poco.
   const POCAS = 30;
 
@@ -872,6 +953,7 @@
       masAlla: masAllaDe(lista, puntos(global), minN),
       derrotas: derrotasDe(lista),
       reciente: formaReciente(lista),
+      certeza: certezaDe(lista),
       // Qué táctica hace y con cuál pierde (js/preparacion-tactica.js).
       tactica: Tactica ? Tactica.analizar(lista) : null,
       // Las líneas que se le consultan al explorador de maestros; lo que
