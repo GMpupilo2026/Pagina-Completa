@@ -141,6 +141,21 @@
            (informes.html?tema=…, el mismo enlace que usa Administración). */
         const TEMA = (tema) => "informes.html" + (tema ? "?tema=" + tema : "");
         const SUPERVISOR_GROUPS = [
+            /* Lo primero, a pedido del dueño de la Academia: lo que se hace
+               todos los días con la gente de la academia —dar de alta una
+               cuenta y corregir las que ya están— a un golpe de vista. «Cuenta
+               nueva» abre formularios.html ya con la caja de «＋ Alumno nuevo»
+               abierta (?alta=1); «Cuentas» es la ficha de coordinacion.html:
+               nombre, grupo, correo o usuario, profesores, rol y reenviar el
+               acceso. Cada destino está una sola vez en el panel. */
+            { title: "Mi academia", tiles: [
+                { emoji: "➕", label: "Cuenta nueva", desc: "Da de alta a un alumno: le llega su acceso por correo, o entra con un usuario si no tiene", href: "formularios.html?alta=1" },
+                { emoji: "✏️", label: "Cuentas", desc: "Corrige todos los datos de las cuentas a tu cargo: nombre, grupo, correo, profesores y rol, y reenvía el acceso", href: "coordinacion.html" },
+                { emoji: "📝", label: "Solicitudes de la Academia", desc: "Quien pidió unirse: aprobar crea la cuenta", href: "solicitudes.html" },
+                /* Su academia: quién está, su número y su correo, y qué puede
+                   hacer cada coordinador. */
+                { emoji: "🏫", label: "Tu academia", desc: "Quién está en tu academia, sus datos de contacto y qué puede hacer cada coordinador", href: "academias.html" },
+            ] },
             { title: "Cómo van tus estudiantes", tiles: [
                 { emoji: "📊", label: "Resumen general", desc: "Todos tus estudiantes a cargo, uno por fila, con su tiempo, asistencia y nivel", href: TEMA("") },
                 { emoji: "😴", label: "Sin entrenar", desc: "Quién lleva 4 días o más sin hacer nada en la plataforma", href: TEMA("inactivos") },
@@ -158,14 +173,15 @@
             { title: "Tus profesores", tiles: [
                 { emoji: "🧑‍🏫", label: "Supervisión de profesores", desc: "Qué hizo cada profesor en el mes —clases, tareas, exámenes— y su informe mensual", href: "supervision.html" },
                 { emoji: "⭐", label: "Satisfacción del alumnado", desc: "Qué opinan los estudiantes de cada profesor y quién dice que se va", href: "satisfaccion.html" },
-                /* Su academia: quién está, su número y su correo, y qué puede
-                   hacer cada coordinador. */
-                { emoji: "🏫", label: "Tu academia", desc: "Quién está en tu academia, sus datos de contacto y qué puede hacer cada coordinador", href: "academias.html" },
                 /* Las cifras del mes de su academia en una fila: clases,
                    alumnos, informes y cobros pendientes (sin nada de IA). */
                 { emoji: "📊", label: "Tablero de tu academia", desc: "Clases y horas del mes, alumnos que entrenaron, informes enviados y cobros pendientes", href: "tablero-academias.html" },
+                { emoji: "📄", label: "Reportes de actividades", desc: "El informe de lo que pasó en clase en un periodo, en Word y PDF", href: "reportes.html" },
             ] },
-            { title: "Qué están entrenando, tema por tema", tiles: [
+            /* Plegado: es lo que menos se mira, y siete tarjetas empujaban el
+               resto del panel una pantalla abajo. Se abre con su botón y el
+               aparato recuerda lo que eligió (ver `plegable` en renderTiles). */
+            { title: "Qué están entrenando, tema por tema", plegable: true, tiles: [
                 { emoji: "♚", label: "Mates", desc: "Mates en 1, 2 y 3 resueltos", href: TEMA("mates") },
                 { emoji: "⚔️", label: "Táctica", desc: "Ejercicios de táctica resueltos", href: TEMA("tactica") },
                 { emoji: "🧩", label: "4×4", desc: "Ejercicios del tablero de 4×4", href: TEMA("4x4") },
@@ -174,17 +190,12 @@
                 { emoji: "🏆", label: "Practicar", desc: "Series de Practicar y sus estrellas", href: TEMA("practicar") },
                 { emoji: "🧠", label: "Concentración", desc: "Niveles de Concentración superados", href: TEMA("concentracion") },
             ] },
-            { title: "Cuentas a tu cargo", tiles: [
-                { emoji: "🧭", label: "Cuentas", desc: "Corrige nombre, grupo, correo, profesores y rol de las cuentas que te asignaron", href: "coordinacion.html" },
-                { emoji: "📄", label: "Reportes de actividades", desc: "El informe de lo que pasó en clase en un periodo, en Word y PDF", href: "reportes.html" },
-            ] },
             { title: "Administración", tiles: [
                 { emoji: "💳", label: "Cobros", desc: "Mensualidades, pagos y morosidad de tus estudiantes", href: "cobros.html" },
                 /* Los cupos que compró su academia: los reparte ella entre sus
                    miembros. Sin un paquete de su academia, la página se lo dice. */
                 { emoji: "🎟️", label: "Cupos de tu academia", desc: "Reparte entre los alumnos de tu academia los cupos de acceso que compró", href: "accesos.html" },
                 { emoji: "📋", label: "Formularios de inscripción", desc: "Arma un formulario, compártelo por enlace y baja las respuestas", href: "formularios.html" },
-                { emoji: "📝", label: "Solicitudes de la Academia", desc: "Quien pidió unirse: aprobar crea la cuenta", href: "solicitudes.html" },
             ] },
             { title: "Tu cuenta", tiles: [
                 { emoji: "⚙️", label: "Configuración", desc: "Tu perfil y contraseña", href: "configuracion.html" },
@@ -709,11 +720,63 @@
                     caja.className = "flex flex-col gap-3";
                     tilesGrid.appendChild(caja);
                 });
-                section.append(heading, tilesGrid);
+                if (group.plegable) plegar(section, heading, tilesGrid, group.title);
+                else section.append(heading, tilesGrid);
                 grid.appendChild(section);
             });
             pintarClaseEnVivo();
             aplicarBusqueda();
+        }
+
+        /* ---------- Un grupo plegable ----------
+           Arranca cerrado y se abre con el botón de al lado del rótulo, que
+           dice lo que hace («Mostrar» u «Ocultar») y si está abierto
+           (aria-expanded). El rótulo sigue siendo solo el título: todo lo que
+           busca un grupo lo busca por ese texto. Lo que eligió se recuerda en
+           el aparato —es una comodidad de quien mira, no un dato—, y sin
+           almacenamiento (ventana privada) simplemente arranca cerrado.
+           Mientras se busca, el buscador lo abre solo si ahí hay algo
+           (aplicarBusqueda): lo plegado no se esconde de la búsqueda. */
+        const CLAVE_PLEGADO = "panel_grupo_abierto_v1:";
+        function plegar(section, heading, tilesGrid, titulo) {
+            let abierto = false;
+            try { abierto = localStorage.getItem(CLAVE_PLEGADO + titulo) === "1"; } catch (e) { /* sin almacenamiento: cerrado */ }
+            tilesGrid.id = "grupo-" + textoBuscable(titulo).trim().replace(/ /g, "-");
+            heading.classList.remove("mb-3");
+            const fila = document.createElement("div");
+            fila.className = "flex flex-wrap items-center gap-x-3 gap-y-1 mb-3";
+            const boton = document.createElement("button");
+            boton.type = "button";
+            boton.className = "border border-brand-200 dark:border-brand-700 hover:border-accent-400 text-brand-700 dark:text-brand-200 px-3 py-1 rounded-lg text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+            boton.setAttribute("aria-controls", tilesGrid.id);
+            boton.dataset.plegar = "1";
+            const pintar = () => {
+                boton.textContent = abierto ? "Ocultar" : "Mostrar";
+                boton.setAttribute("aria-expanded", abierto ? "true" : "false");
+                boton.setAttribute("aria-label", (abierto ? "Ocultar: " : "Mostrar: ") + titulo);
+                section.dataset.abierto = abierto ? "1" : "";
+                aplicarPlegado(section);
+            };
+            boton.addEventListener("click", () => {
+                abierto = !abierto;
+                try { localStorage.setItem(CLAVE_PLEGADO + titulo, abierto ? "1" : "0"); } catch (e) { /* no se recuerda */ }
+                pintar();
+            });
+            fila.append(heading, boton);
+            section.append(fila, tilesGrid);
+            pintar();
+        }
+        // Cerrado, sus tarjetas no se ven; buscando, se ven las que coinciden.
+        function aplicarPlegado(section) {
+            const grilla = section.querySelector(":scope > .grid");
+            const boton = section.querySelector("[data-plegar]");
+            if (!grilla || !boton) return;
+            const buscando = !!campoBusqueda.value.trim();
+            // `style.display` y no `hidden`: la clase `grid` le gana al
+            // atributo y la grilla seguiría viéndose.
+            grilla.style.display = section.dataset.abierto || buscando ? "" : "none";
+            // Buscando, el botón no pinta nada: los resultados ya están a la vista.
+            boton.style.display = buscando ? "none" : "";
         }
 
         /* ---------- El buscador de accesos ----------
@@ -757,7 +820,7 @@
             "guia-del-profesor-accesible.html": "ayuda manual como se hace",
             "coordinacion.html": "cuentas usuarios profesores alumnos",
             "solicitudes.html": "aprobar nuevos unirse inscripciones",
-            "formularios.html": "inscripcion inscripciones enlace respuestas",
+            "formularios.html": "inscripcion inscripciones enlace respuestas alta crear cuenta alumno nuevo",
             "satisfaccion.html": "encuesta satisfaccion opinion calificar profesores alumnos contentos se van",
             "encuesta-profesor.html": "encuesta opinion calificar profesor",
             "encuestas-curso.html": "encuesta anonima curso ciegos accesible desercion expectativas",
@@ -914,6 +977,7 @@
                 const video = sec.querySelector("#videollamada-wrap");
                 if (video) video.style.display = sesionVisible ? "" : "none";
                 sec.style.display = visibles ? "" : "none";
+                aplicarPlegado(sec);
                 total += visibles;
             });
 
