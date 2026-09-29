@@ -43,9 +43,27 @@ const PARTIDAS = [
   { id: "p2", title: "Una partida de antes", created_at: "2026-09-01T23:00:00Z", move_count: 2,
     class_session_id: "c0", class_sessions: { title: null, started_at: "2026-09-01T22:00:00Z" },
     pgn: '[Event "?"]\n\n1. d4 d5 *\n', datos: null },
+  // La compartió el profe con los que faltaron (class_sessions.para_ausentes), y Ana no fue.
+  { id: "p4", title: "Clase del 25", created_at: "2026-09-25T23:00:00Z", move_count: 3, created_by: "u-profe",
+    class_session_id: "c4", class_sessions: { title: "Finales de torre", started_at: "2026-09-25T22:00:00Z", para_ausentes: true },
+    pgn: "", datos: { inicio: null, jugadas: ["e4", "e5", "Nf3"], variantes: [], comentarios: {} } },
   // Guardada fuera de clase: la lista no la pide.
   { id: "p3", title: "Preparación", created_at: "2026-09-02T23:00:00Z", move_count: 1, class_session_id: null, pgn: "1. c4 *", datos: null },
 ];
+/* Las preguntas de la clase c4: una en la partida (después de 1… e5) y otra en
+   una posición aparte. La del motor llega porque la pregunta ya se cerró; la de
+   Ana es la que contestó en clase. */
+const TRAS_E5 = "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq e6 0 2";
+const PREGUNTAS = {
+  questions: [
+    { id: "q1", class_session_id: "c4", fen: TRAS_E5, prompt: "¿Qué jugarías?", tipo: "jugada", opciones: null, closed_at: "2026-09-25T22:30:00Z", created_at: "1" },
+    { id: "q2", class_session_id: "c4", fen: "6k1/5ppp/8/8/8/8/5PPP/3R2K1 w - - 0 1", prompt: "Mate en uno", tipo: "jugada", opciones: null, closed_at: "2026-09-25T22:40:00Z", created_at: "2" },
+    { id: "q9", class_session_id: "c9", fen: TRAS_E5, prompt: "De otra clase", tipo: "jugada", closed_at: "x", created_at: "3" },
+  ],
+  question_engine_answers: [{ question_id: "q1", answer: { moves: ["Nf3", "Nc6"] } }],
+  question_answers: [{ question_id: "q1", student_id: "u-ana", moves: ["d4"], opcion: null, is_correct: false }],
+  class_attendance: [{ session_id: "c1", student_id: "u-ana" }],
+};
 
 const texto = (page, sel) => page.evaluate((s) => { const e = document.querySelector(s); return e ? e.textContent : null; }, sel);
 
@@ -63,11 +81,14 @@ const texto = (page, sel) => page.evaluate((s) => { const e = document.querySele
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
     console.log("\n=== La lista ===");
-    const { page, ctx, errores } = await abrir(browser, "/repasar-clases.html", { saved_games: PARTIDAS });
+    const { page, ctx, errores } = await abrir(browser, "/repasar-clases.html", Object.assign({ saved_games: PARTIDAS }, PREGUNTAS));
     await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
     await page.waitForFunction(() => document.querySelectorAll("#lista-clases button").length > 0, null, { timeout: 10000 });
     const lista = await page.evaluate(() => Array.from(document.querySelectorAll("#lista-clases button")).map((b) => b.dataset.id));
-    igual("solo lo ligado a una clase", lista, ["p1", "p2"]);
+    igual("solo lo ligado a una clase", lista, ["p1", "p2", "p4"]);
+    await page.waitForFunction(() => /Te la perdiste/.test(document.getElementById("lista-clases").textContent), null, { timeout: 5000 });
+    igual("la que compartió con los que faltaron dice que se la perdió", /Te la perdiste/.test(await texto(page, '#lista-clases [data-id="p4"]')), "true");
+    igual("la otra no", /Te la perdiste/.test(await texto(page, '#lista-clases [data-id="p1"]')), "false");
     igual("con el nombre de la clase", await texto(page, '#lista-clases [data-id="p1"] span'), "La defensa de los dos caballos");
 
     console.log("\n=== El visor ===");
@@ -94,6 +115,33 @@ const texto = (page, sel) => page.evaluate((s) => { const e = document.querySele
     igual("⏭ desde el arranque va al final de la principal", await texto(page, "#visor-estado"), "Jugada 2… Cc6");
     await page.keyboard.press("ArrowLeft");
     igual("← retrocede", await texto(page, "#visor-estado"), "Jugada 2. Cf3");
+
+    igual("una clase sin preguntas no muestra la sección", await page.evaluate(() => document.getElementById("visor-preguntas").checkVisibility()), "false");
+
+    console.log("\n=== Las preguntas de la clase ===");
+    await page.click('#lista-clases [data-id="p4"]');
+    await page.waitForFunction(() => document.querySelectorAll("#visor-preguntas-lista li").length === 2, null, { timeout: 5000 });
+    igual("se ven, las de ESA clase", await page.evaluate(() => [document.getElementById("visor-preguntas").checkVisibility(),
+      [...document.querySelectorAll("#visor-preguntas-lista li")].map((li) => li.dataset.pregunta)]), [true, ["q1", "q2"]]);
+    igual("la primera dice dónde está en la partida", await texto(page, '#visor-preguntas-lista [data-pregunta="q1"] button'), "Ir a la posición (después de 1… e5)");
+    igual("y lo que contestó en clase", /Tu respuesta en clase: d4 · ❌ a revisar/.test(await texto(page, '#visor-preguntas-lista [data-pregunta="q1"]')), "true");
+    igual("la respuesta del motor, escondida", await page.evaluate(() =>
+      [...document.querySelectorAll('#visor-preguntas-lista [data-pregunta="q1"] p')].some((p) => /El motor/.test(p.textContent) && p.checkVisibility())), "false");
+    await page.getByRole("button", { name: "Ver la respuesta del motor" }).click();
+    igual("se ve cuando la pide", await page.evaluate(() =>
+      [...document.querySelectorAll('#visor-preguntas-lista [data-pregunta="q1"] p')].filter((p) => p.checkVisibility()).map((p) => p.textContent).pop()), "El motor juega: Nf3 Nc6");
+    igual("la segunda no tiene respuesta del motor guardada", await page.evaluate(() =>
+      document.querySelectorAll('#visor-preguntas-lista [data-pregunta="q2"] button').length), 1);
+    igual("en el arranque no hay aviso", await page.evaluate(() => document.getElementById("visor-pregunta").checkVisibility()), "false");
+    await page.click("#btn-siguiente"); await page.click("#btn-siguiente");
+    igual("al llegar a esa posición, avisa antes de seguir", await texto(page, "#visor-pregunta"),
+      "❓ Acá tu profe preguntó: «¿Qué jugarías?». Piénsalo antes de seguir; la respuesta está abajo, en «Las preguntas de la clase».");
+    await page.click("#btn-siguiente");
+    igual("y al pasar, se va", await page.evaluate(() => document.getElementById("visor-pregunta").checkVisibility()), "false");
+    await page.click('#visor-preguntas-lista [data-pregunta="q2"] button');
+    igual("una posición aparte se muestra en el tablero", await texto(page, "#visor-estado"), "Posición de la pregunta 2");
+    igual("con su aviso", /Mate en uno/.test(await texto(page, "#visor-pregunta")), "true");
+    igual("y el tablero es el de esa posición", await page.evaluate(() => !!document.querySelector('#board [data-square="d1"] span') && !document.querySelector('#board [data-square="e1"] span')), "true");
 
     console.log("\n=== Una partida de antes, sin `datos` ===");
     await page.click('#lista-clases [data-id="p2"]');

@@ -31,7 +31,11 @@
  * `renderStudentsList()` en la clase en vivo.
  */
 window.NotasAlumno = (function () {
-    const CAMPOS = "id, alumno_id, profesor_id, texto, etiqueta, compartida, created_at, updated_at";
+    const CAMPOS = "id, alumno_id, profesor_id, texto, etiqueta, compartida, class_session_id, fen, created_at, updated_at";
+
+    /* Las notas rápidas de la clase en vivo: un toque pone el comienzo y el
+       profe completa (o guarda así). */
+    const RAPIDAS = ["Le costó: ", "Lo hizo muy bien: ", "Hay que repasar: ", "Se distrajo"];
 
     /* Cuántas se pintan en la clase en vivo. Ahí el profesor está dando clase:
        lo que necesita es lo último que anotó, no el historial entero. */
@@ -55,6 +59,10 @@ window.NotasAlumno = (function () {
             etiqueta: nota.etiqueta || null,
             compartida: !!nota.compartida,
         };
+        // En la clase en vivo: la clase donde se escribió y, si el profe quiere,
+        // la posición del tablero. Que la clase sea suya lo revisa la base.
+        if (nota.claseId) fila.class_session_id = nota.claseId;
+        if (nota.fen) fila.fen = nota.fen;
         const { data, error } = await sb.from("notas_alumno").insert(fila).select(CAMPOS).single();
         if (error) throw error;
         return data;
@@ -100,6 +108,39 @@ window.NotasAlumno = (function () {
         return b;
     }
 
+    /* La posición guardada con la nota, dibujada sin chess.js ni tablero: la
+       bitácora también se lee en Informes, que no carga ninguno. Los colores y
+       las piezas son los del tablero elegido (las mismas clases de los
+       ejemplos de los artículos). */
+    const GLIFOS = { k: "♚", q: "♛", r: "♜", b: "♝", n: "♞", p: "♟" };
+    function diagrama(fen) {
+        const filas = String(fen || "").split(" ")[0].split("/");
+        if (filas.length !== 8) return null;
+        const caja = document.createElement("div");
+        caja.className = "nota-posicion grid grid-cols-8 w-40 aspect-square rounded-md overflow-hidden border border-brand-300 dark:border-brand-700 mt-1.5";
+        caja.setAttribute("role", "img");
+        caja.setAttribute("aria-label", "La posición del tablero cuando se anotó (le toca a las " + (String(fen).split(" ")[1] === "b" ? "negras" : "blancas") + ")");
+        filas.forEach((fila, r) => {
+            let c = 0;
+            for (const ch of fila) {
+                const vacias = parseInt(ch, 10);
+                const n = isFinite(vacias) ? vacias : 1;
+                for (let i = 0; i < n; i++, c++) {
+                    const sq = document.createElement("span");
+                    sq.className = "flex items-center justify-center text-base leading-none " + ((r + c) % 2 === 0 ? "example-sq-light" : "example-sq-dark");
+                    if (!isFinite(vacias) && GLIFOS[ch.toLowerCase()]) {
+                        const pieza = document.createElement("span");
+                        pieza.className = ch === ch.toUpperCase() ? "piece-white" : "piece-black";
+                        pieza.textContent = GLIFOS[ch.toLowerCase()];
+                        sq.appendChild(pieza);
+                    }
+                    caja.appendChild(sq);
+                }
+            }
+        });
+        return caja.childElementCount === 64 ? caja : null;
+    }
+
     /* Una nota pintada. `acciones` es false en la vista del alumno: ahí solo se
        lee. */
     function pintarNota(nota, opciones, alCambiar) {
@@ -133,6 +174,13 @@ window.NotasAlumno = (function () {
 
         /* Que esté compartida va ESCRITO, no solo con un color: es la misma
            regla de los gráficos de Informes y de las barras del diagnóstico. */
+        if (nota.class_session_id) {
+            const clase = document.createElement("span");
+            clase.className = "text-xs text-brand-500 dark:text-brand-300";
+            clase.textContent = "🏫 En clase";
+            cabecera.appendChild(clase);
+        }
+
         if (nota.compartida) {
             const vista = document.createElement("span");
             vista.className = "text-xs font-semibold text-accent-700 dark:text-accent-400";
@@ -145,6 +193,10 @@ window.NotasAlumno = (function () {
         texto.className = "text-sm text-brand-700 dark:text-brand-200 whitespace-pre-wrap break-words";
         texto.textContent = nota.texto;
         li.appendChild(texto);
+        if (nota.fen) {
+            const d = diagrama(nota.fen);
+            if (d) li.appendChild(d);
+        }
 
         if (!opciones.acciones) return li;
 
@@ -267,8 +319,49 @@ window.NotasAlumno = (function () {
         guardar.textContent = "Guardar";
         guardar.className = "bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
 
-        fila.append(etiqueta, compartirLabel, guardar);
-        form.append(etiquetaTexto, texto, etiquetaLabel, fila);
+        fila.append(etiqueta, compartirLabel);
+
+        /* En la clase en vivo (`opciones.enClase`): los comienzos rápidos y la
+           posición del tablero. La posición la da quien abre el panel: la del
+           tablero de la clase, o la del alumno si se abrió desde su tablero. */
+        const enClase = opciones.enClase || null;
+        let posicion = null;
+        if (enClase) {
+            const posicionId = "nota-posicion-" + opciones.alumnoId;
+            const posicionLabel = document.createElement("label");
+            posicionLabel.className = "flex items-center gap-1.5 text-xs text-brand-600 dark:text-brand-300 cursor-pointer";
+            posicionLabel.htmlFor = posicionId;
+            posicion = document.createElement("input");
+            posicion.id = posicionId;
+            posicion.type = "checkbox";
+            posicion.checked = !!enClase.conPosicion;
+            posicion.className = "rounded border-brand-300 text-accent-500 focus:ring-accent-400";
+            const posicionSpan = document.createElement("span");
+            posicionSpan.textContent = enClase.textoPosicion || "Con la posición del tablero";
+            posicionLabel.append(posicion, posicionSpan);
+            fila.appendChild(posicionLabel);
+        }
+        fila.appendChild(guardar);
+
+        const rapidas = document.createElement("div");
+        rapidas.className = "flex flex-wrap gap-1.5";
+        if (enClase) {
+            RAPIDAS.forEach((comienzo) => {
+                const b = boton(comienzo.replace(/: $/, ""), "Empezar la nota con «" + comienzo.trim() + "»");
+                b.addEventListener("click", () => {
+                    // Cambiar de comienzo no lo duplica: se quita el que ya estaba.
+                    let resto = texto.value;
+                    RAPIDAS.forEach((x) => { if (resto.startsWith(x)) resto = resto.slice(x.length); });
+                    texto.value = comienzo + resto;
+                    texto.focus();
+                    texto.setSelectionRange(texto.value.length, texto.value.length);
+                });
+                rapidas.appendChild(b);
+            });
+        }
+        form.append(etiquetaTexto, texto);
+        if (enClase) form.appendChild(rapidas);
+        form.append(etiquetaLabel, fila);
 
         const aviso = document.createElement("p");
         aviso.className = "text-xs text-brand-500 dark:text-brand-300 mt-1";
@@ -316,6 +409,8 @@ window.NotasAlumno = (function () {
                     texto: valor,
                     etiqueta: etiqueta.value.trim() || null,
                     compartida: compartir.checked,
+                    claseId: enClase && enClase.claseId ? enClase.claseId() : null,
+                    fen: enClase && posicion && posicion.checked && enClase.fen ? enClase.fen() : null,
                 });
                 notas.unshift(nueva);
                 if (opciones.compacto) notas = notas.slice(0, TOPE_COMPACTO);
