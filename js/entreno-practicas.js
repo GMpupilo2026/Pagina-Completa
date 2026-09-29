@@ -269,10 +269,44 @@ function starString(n){
   return full + empty;
 }
 
+/* «Repasar fallados» (js/repaso-fallados.js, lo mismo que Temas, Mates y
+   Visualización): cada RONDA que salió con error, pista o «Ver solución»
+   entra a una cola de repaso espaciado (id "serie:número") y vuelve cuando
+   toca. El repaso es una serie más, armada con las rondas de hoy: cada una
+   recuerda su serie (`_serie`), que es la que dice el motivo que vale. */
+const REPASO = '__repaso';
+const CLAVE_REPASO = window.RepasoFallados ? RepasoFallados.CLAVES.practicas : null;
+function rondaPorId(rid){
+  const i = rid.lastIndexOf(':');
+  const set = SETS.find((s) => s.id === rid.slice(0, i));
+  const r = set && set.rounds[+rid.slice(i + 1)];
+  return r ? Object.assign({}, r, { _rid: rid, _serie: set.id }) : null;
+}
+function pendientesDeRepaso(){
+  if(!window.RepasoFallados) return [];
+  return RepasoFallados.pendientes(CLAVE_REPASO, (rid) => !!rondaPorId(rid));
+}
+function pintarRepaso(){
+  const caja = document.getElementById('repaso-caja');
+  const n = pendientesDeRepaso().length;
+  caja.hidden = !n;
+  if(!n) return;
+  document.getElementById('repaso-texto').textContent = n === 1
+    ? 'Hoy toca repasar 1 posición que te costó (la resolviste con un error o con una pista).'
+    : `Hoy toca repasar ${n} posiciones que te costaron (las resolviste con un error o con una pista).`;
+}
+function abrirRepaso(){
+  const rondas = pendientesDeRepaso().map(rondaPorId);
+  if(!rondas.length) return;
+  openSet({ id: REPASO, cat: currentCategory, emoji: '🔁', title: 'Repasar fallados',
+    desc: 'Las que te costaron, otra vez. Si sale limpia, vuelve más adelante; si no, vuelve pronto.', rounds: rondas });
+}
+
 function showList(){
   document.getElementById('set-view').style.display = 'none';
   document.getElementById('list-view').style.display = 'block';
   buildTabs();
+  pintarRepaso();
   const list = setsFor(currentCategory);
   const box = document.getElementById('set-list');
   box.innerHTML = '';
@@ -411,7 +445,7 @@ function handleMoveResult(moveResult){
   // que cumpla el motivo (js/motivos-tacticos.js): en un descubierto, todo
   // salto del caballo descubre el jaque.
   const correct = (moveResult.from === round.from && moveResult.to === round.to) || game.in_checkmate() ||
-    (window.MotivosTacticos && MotivosTacticos.MOTIVOS.includes(currentSet.id) && MotivosTacticos.cumple(currentSet.id, round.fen, moveResult));
+    (window.MotivosTacticos && MotivosTacticos.MOTIVOS.includes(round._serie || currentSet.id) && MotivosTacticos.cumple(round._serie || currentSet.id, round.fen, moveResult));
   if(correct){
     finishRound();
   } else {
@@ -430,6 +464,10 @@ function finishRound(conSolucion){
   const seconds = ((Date.now() - roundStartTime) / 1000).toFixed(1);
   const stars = EntrenoProgress.estrellasDeLaRonda(hintsUsedThisRound, errorsThisRound);
   setStarsEarned.push(stars);
+  // La cola de repaso: lo que costó entra; lo que se repasa se reprograma.
+  const ronda = currentSet.rounds[currentRoundIndex];
+  if(window.RepasoFallados) RepasoFallados.anotar(CLAVE_REPASO, ronda._rid || (currentSet.id + ':' + currentRoundIndex),
+    errorsThisRound > 0, hintsUsedThisRound > 0 || !!conSolucion);
   if(!conSolucion) bumpStreak();
   const fast = !conSolucion && seconds < 4 && hintsUsedThisRound === 0 && errorsThisRound === 0;
   if(!conSolucion) setStatus(`✅ ¡Correcto!${fast ? ' ⚡ ¡Relámpago!' : ''} (${seconds}s)`, 'ok');
@@ -446,6 +484,19 @@ function finishRound(conSolucion){
 function finishSet(){
   document.getElementById('play-area').style.display = 'none';
   document.getElementById('celebration').style.display = 'block';
+  const enRepaso = currentSet.id === REPASO;
+  document.getElementById('celebration-next-btn').style.display = enRepaso ? 'none' : '';
+  if(enRepaso){
+    // El repaso no es una serie: no tiene estrellas propias ni se registra como serie terminada.
+    const n = currentSet.rounds.length;
+    document.getElementById('celebration-stars').innerHTML = '';
+    document.getElementById('celebration-title').textContent = '¡Repaso terminado!';
+    document.getElementById('celebration-stats').textContent =
+      `Repasaste ${n} ${n === 1 ? 'posición' : 'posiciones'}. Las que salieron limpias vuelven más adelante.`;
+    if(window.BlindNotation) window.BlindNotation.speak('¡Repaso terminado!');
+    document.getElementById('celebration-back-btn').focus();
+    return;
+  }
   const avg = setStarsEarned.reduce((a,b) => a+b, 0) / setStarsEarned.length;
   const stars = avg >= 2.6 ? 3 : (avg >= 1.6 ? 2 : 1);
   setSetStars(currentSet.id, stars);
@@ -519,6 +570,7 @@ function openSet(set){
 }
 
 document.getElementById('back-to-list').addEventListener('click', (e) => { e.preventDefault(); showList(); });
+document.getElementById('repaso-btn').addEventListener('click', abrirRepaso);
 document.getElementById('celebration-back-btn').addEventListener('click', showList);
 document.getElementById('celebration-next-btn').addEventListener('click', () => {
   const list = setsFor(currentCategory);
@@ -535,6 +587,8 @@ function initApp(){
   setStreak(getStreak());
   applyBlindModeUI();
   showList();
+  // ?repaso=1 es el enlace de «Hoy te toca» del hub: abre la cola directo.
+  if(new URLSearchParams(location.search).has('repaso') && pendientesDeRepaso().length) abrirRepaso();
 }
 
 async function requireLoginThenGate(){

@@ -1111,6 +1111,31 @@ footer li > a {
 .entrenador-turno { font-weight: 600; text-align: center; margin: 0; color: rgb(var(--c-brand-800, 36 59 83)); }
 .dark .entrenador-turno { color: #fff; }
 .entrenador-boton { padding: 0 0.9rem; font-size: 0.9rem; font-weight: 600; }
+/* La hoja para imprimir de la preparación de rivales (pintarHoja en
+   js/preparacion-pintar.js): en pantalla no se ve; al imprimir con
+   html.imprimir-hoja, es lo único que sale. Blanco y negro, letra chica,
+   una página. */
+#hoja { display: none; }
+@media print {
+  html.imprimir-hoja body > *:not(#hoja) { display: none !important; }
+  html.imprimir-hoja, html.imprimir-hoja body { background: #fff !important; color: #000 !important; }
+  html.imprimir-hoja #hoja { display: block !important; }
+  @page { margin: 12mm; }
+}
+.hoja { font-family: system-ui, sans-serif; font-size: 10pt; line-height: 1.35; color: #000; }
+.hoja h1 { font-size: 16pt; font-weight: 700; margin: 0; }
+.hoja h2 { font-size: 12pt; font-weight: 700; margin: 0 0 4pt; border-bottom: 1px solid #000; }
+.hoja h3 { font-size: 10pt; font-weight: 700; margin: 6pt 0 2pt; }
+.hoja ul { margin: 0; padding-left: 14pt; list-style: disc; }
+.hoja li { margin: 0 0 2pt; }
+.hoja p { margin: 0 0 2pt; }
+.hoja-sub { color: #333; margin-bottom: 8pt !important; }
+.hoja-aviso { font-weight: 700; border: 1px solid #000; padding: 3pt 5pt; margin: 4pt 0 !important; }
+.hoja-columnas { display: grid; grid-template-columns: 1fr 1fr; gap: 12pt; margin-top: 6pt; }
+.hoja-linea-titulo { font-weight: 700; margin-top: 4pt !important; }
+.hoja-linea { font-family: ui-monospace, monospace; }
+.hoja-general { margin-top: 10pt; }
+.hoja-pie { margin-top: 10pt !important; font-size: 8pt; color: #333; }
 
 /* ===== El tema de una academia en el diagnóstico de visitante =====
    entreno/diagnostico.html?s=<código> es el enlace que el supervisor de una

@@ -312,6 +312,38 @@
     d.appendChild(sel);
     caja.appendChild(d);
 
+    // El ritmo de la partida que viene. Con bastantes partidas a ese ritmo,
+    // el análisis se filtra a él; con pocas, se usan todos y el resumen lo
+    // avisa. En un análisis guardado no se vuelve a analizar: solo el aviso.
+    const dr = el("div");
+    const labR = el("label", "block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1", "Tu partida es a");
+    labR.htmlFor = "filtro-partida";
+    const selR = el("select", "px-3 py-1.5 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400");
+    selR.id = "filtro-partida";
+    [["", "Cualquier ritmo"], ["bullet", "Bullet"], ["blitz", "Blitz"], ["rápida", "Rápida"], ["clásica", "Clásica"]].forEach(([v, t]) => {
+      const op = el("option", "", t);
+      op.value = v;
+      selR.appendChild(op);
+    });
+    selR.value = (r.filtros && r.filtros.partida) || "";
+    dr.appendChild(labR);
+    dr.appendChild(selR);
+    caja.appendChild(dr);
+    selR.addEventListener("change", () => {
+      const partida = selR.value || null;
+      if (!editable) {
+        r.filtros = Object.assign({}, r.filtros, { partida });
+        pintar(r);
+        return;
+      }
+      const anios = parseInt(sel.value, 10);
+      const desde = anios ? haceAnios(anios) : null;
+      if (!partida) { calcular(rivalCargado, { ritmos: [], desde, partida: null }); return; }
+      const suyos = r.disponibles.ritmos.filter((x) => window.PreparacionResumen.mismoRitmo(x.ritmo, partida));
+      const n = suyos.reduce((a, x) => a + x.n, 0);
+      calcular(rivalCargado, n >= window.PreparacionAnalisis.POCAS ? { ritmos: suyos.map((x) => x.ritmo), desde, partida } : { ritmos: [], desde, partida });
+    });
+
     if (!editable) {
       caja.appendChild(el("p", "text-xs text-brand-450 dark:text-brand-350 basis-full",
         "Para cambiar los filtros de un análisis guardado, vuelve a cargar sus partidas."));
@@ -322,7 +354,7 @@
       if (!marcados.length) { $("filtros-aviso").textContent = "Marca al menos un ritmo."; return; }
       const todos = marcados.length === r.disponibles.ritmos.length;
       const anios = parseInt(sel.value, 10);
-      calcular(rivalCargado, { ritmos: todos ? [] : marcados, desde: anios ? haceAnios(anios) : null });
+      calcular(rivalCargado, { ritmos: todos ? [] : marcados, desde: anios ? haceAnios(anios) : null, partida: selR.value || null });
     };
     caja.querySelectorAll('input[name="filtro-ritmo"]').forEach((c) => c.addEventListener("change", alCambiar));
     sel.addEventListener("change", alCambiar);
@@ -380,6 +412,17 @@
   function pintar(r) {
     P.cuerpo(r, $("resultado-cuerpo"), {
       pendiente: pendientes(r),
+      // La hoja de una página: se arma en #hoja (fuera de todo lo demás) y
+      // solo ella sale al imprimir (css/styles.css, html.imprimir-hoja).
+      alImprimir: () => {
+        const h = $("hoja");
+        h.textContent = "";
+        h.appendChild(P.hoja(r));
+        document.documentElement.classList.add("imprimir-hoja");
+        const listo = () => { document.documentElement.classList.remove("imprimir-hoja"); window.removeEventListener("afterprint", listo); };
+        window.addEventListener("afterprint", listo);
+        window.print();
+      },
       alBajarPgn: (lado) => bajarPgn(r, lado),
       alMandar: (lado, origen) => abrirMandar(r, lado, origen),
       alArchivar: (lado, origen) => archivar(r, lado, origen),

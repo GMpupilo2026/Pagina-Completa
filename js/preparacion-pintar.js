@@ -106,6 +106,20 @@
     const s = tarjeta("Qué hacer contra él", "resumen-titulo");
     s.classList.add("ring-2", "ring-accent-400");
     s.appendChild(nota("Lo esencial del análisis. Cada consejo trae el dato que lo justifica; el detalle está en las tarjetas de abajo."));
+    if (opcionesActuales.alImprimir) {
+      const b = el("button", "mb-3 px-3 py-1.5 rounded-lg text-sm font-semibold bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "Hoja para imprimir (o guardar en PDF)");
+      b.type = "button";
+      b.id = "imprimir-hoja";
+      b.addEventListener("click", () => opcionesActuales.alImprimir(b));
+      s.appendChild(b);
+    }
+    // El ritmo de la partida que viene: si el análisis se filtró a él, o si
+    // hay muy pocas partidas a ese ritmo para filtrar.
+    if (res.ritmo) {
+      const p = el("p", "text-sm mb-3 " + (res.ritmo.aviso ? "font-semibold text-accent-700 dark:text-accent-400" : "text-brand-700 dark:text-brand-100"), res.ritmo.texto);
+      p.dataset.ritmo = res.ritmo.aviso ? "aviso" : "filtrado";
+      s.appendChild(p);
+    }
     const leer = el("details", "mb-4");
     leer.appendChild(el("summary", "cursor-pointer text-sm font-semibold text-brand-600 dark:text-brand-200 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "Cómo leer los porcentajes"));
     leer.appendChild(el("p", "text-sm text-brand-600 dark:text-brand-200 mt-2", "«Él saca 24 %» quiere decir que en esas partidas el rival sumó 24 de cada 100 puntos posibles (1 por ganada, ½ por tablas). Menos de 45 %: le cuesta, y esa línea te conviene. Más de 55 %: le va bien, y conviene evitarla. Entre las dos, parejo."));
@@ -121,6 +135,7 @@
       const d = el("div", "min-w-0");
       d.dataset.lado = l.clave;
       d.appendChild(el("h4", "font-bold text-lg text-brand-800 dark:text-white mb-2", l.titulo));
+      (l.avisos || []).forEach((x) => d.appendChild(avisoReciente(x)));
       if (!l.lineas.length) {
         d.appendChild(el("p", "text-sm text-brand-500 dark:text-brand-300 mb-3", "No hay suficientes partidas suyas con " + (l.clave === "conBlancas" ? "negras" : "blancas") + " para recomendar una línea."));
       }
@@ -157,10 +172,11 @@
     });
     s.appendChild(grilla);
     const g = res.general;
-    if (g.haz.length || g.evita.length) {
+    if (g.haz.length || g.evita.length || (g.avisos && g.avisos.length)) {
       const d = el("div", "mt-6");
       d.dataset.lado = "general";
       d.appendChild(el("h4", "font-bold text-lg text-brand-800 dark:text-white mb-2", "En toda la partida"));
+      (g.avisos || []).forEach((x) => d.appendChild(avisoReciente(x)));
       const dos = el("div", "grid lg:grid-cols-2 gap-6");
       if (g.haz.length) dos.appendChild(listaConsejos("Haz esto", "✅", g.haz, "haz"));
       if (g.evita.length) dos.appendChild(listaConsejos("No hagas esto", "⛔", g.evita, "evita"));
@@ -168,6 +184,68 @@
       s.appendChild(d);
     }
     return s;
+  }
+
+  // Un aviso de su forma reciente (cambió de repertorio, viene en racha).
+  function avisoReciente(x) {
+    const d = el("div", "rounded-xl border-2 border-accent-400 p-3 mb-3 flex flex-wrap items-start justify-between gap-x-4 gap-y-2");
+    d.dataset.reciente = "";
+    const t = el("div", "min-w-0 flex-1");
+    t.appendChild(el("p", "text-sm font-semibold text-brand-800 dark:text-white", x.texto));
+    if (x.porque) t.appendChild(el("p", "text-sm text-brand-600 dark:text-brand-200", x.porque));
+    d.appendChild(t);
+    if (x.sec && opcionesActuales.alVerSecuencia) d.appendChild(botonVer(x.sec, "Ver en el tablero: " + A.lineaEs(x.sec), x.texto));
+    return d;
+  }
+
+  /* La hoja para imprimir: una página con lo esencial, para llevar a la
+     partida o mirar en el celular antes de sentarse (guardada en PDF). Sale
+     del mismo resumen: la línea de cada color, tres cosas que hacer y tres
+     que no, lo de toda la partida, y los avisos de su forma reciente. Sin
+     botones ni plegables: en papel no se tocan. */
+  function pintarHoja(r) {
+    const res = R().armar(r);
+    const h = el("div", "hoja");
+    h.appendChild(el("h1", "hoja-titulo", "Contra " + r.rival));
+    const sub = [r.total + " partidas"];
+    if (r.fechas && r.fechas.desde) sub.push("del " + fecha(r.fechas.desde) + " al " + fecha(r.fechas.hasta));
+    if (r.filtros && r.filtros.partida) sub.push("partida a " + r.filtros.partida);
+    if (r.cruce && r.cruce.alumno) sub.push("para " + r.cruce.alumno);
+    h.appendChild(el("p", "hoja-sub", sub.join(" · ")));
+    if (res.ritmo && res.ritmo.aviso) h.appendChild(el("p", "hoja-aviso", res.ritmo.texto));
+    const lista = (titulo, items, max) => {
+      if (!items.length) return null;
+      const d = el("div", "hoja-bloque");
+      d.appendChild(el("h3", "", titulo));
+      const ul = el("ul");
+      items.slice(0, max).forEach((x) => ul.appendChild(el("li", "", x.texto)));
+      d.appendChild(ul);
+      return d;
+    };
+    const cols = el("div", "hoja-columnas");
+    res.lados.forEach((l) => {
+      const d = el("section", "hoja-lado");
+      d.appendChild(el("h2", "", l.titulo));
+      (l.avisos || []).forEach((x) => d.appendChild(el("p", "hoja-aviso", x.texto)));
+      l.lineas.forEach((x) => {
+        d.appendChild(el("p", "hoja-linea-titulo", x.titulo));
+        d.appendChild(el("p", "hoja-linea", A.lineaEs(x.sec)));
+        d.appendChild(el("p", "hoja-dato", "En esta línea " + x.texto));
+      });
+      [lista("Haz esto", l.haz, 3), lista("No hagas esto", l.evita, 3)].forEach((b) => b && d.appendChild(b));
+      cols.appendChild(d);
+    });
+    h.appendChild(cols);
+    const g = res.general;
+    if (g.haz.length || g.evita.length || g.avisos.length) {
+      const d = el("section", "hoja-general");
+      d.appendChild(el("h2", "", "En toda la partida"));
+      g.avisos.forEach((x) => d.appendChild(el("p", "hoja-aviso", x.texto + " " + x.porque)));
+      [lista("Haz esto", g.haz, 4), lista("No hagas esto", g.evita, 3)].forEach((b) => b && d.appendChild(b));
+      h.appendChild(d);
+    }
+    h.appendChild(el("p", "hoja-pie", "Ajedrez Integral · Preparación de rivales · " + fecha(new Date().toISOString())));
+    return h;
   }
 
   function ponerPendiente(p, lista) {
@@ -779,5 +857,5 @@
     return listaPlan(nodos, 0);
   }
 
-  window.PreparacionPintar = { cuerpo: pintarCuerpo, plan: pintarSoloPlan, pendiente, el, tabla, jugada, fecha };
+  window.PreparacionPintar = { cuerpo: pintarCuerpo, plan: pintarSoloPlan, pendiente, hoja: pintarHoja, el, tabla, jugada, fecha };
 })();

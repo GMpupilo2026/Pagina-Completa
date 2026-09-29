@@ -200,6 +200,12 @@ async function main() {
     const t2 = await esperarEstado(page, /Eso es lo que quiere/);
     ok("la amenaza, escrita en castellano, sí", /Eso es lo que quiere/.test(t2), t2);
     ok("dos estrellas (un error)", (await estrellas(page))["amenaza:" + item.id] === 2);
+    // Y queda en training_progress (meta del día, racha, logros, tareas).
+    const reg = await page.waitForFunction(() => window.__escrituras.filter((e) => e.tabla === "training_progress"), null, { timeout: 5000 })
+      .then(() => page.evaluate(() => window.__escrituras.filter((e) => e.tabla === "training_progress").map((e) => [].concat(e.fila)[0])), () => []);
+    ok("se registra como actividad «tipos», con el ejercicio y su tipo",
+      reg.length === 1 && reg[0].activity === "tipos" && reg[0].detail.puzzle_id === "amenaza:" + item.id && reg[0].detail.category === "amenaza" && reg[0].detail.nivel === 3,
+      JSON.stringify(reg));
     ok("sin errores en consola", !errores.length, errores.join(" | "));
     await ctx.close();
   }
@@ -534,6 +540,9 @@ async function main() {
     await page.waitForSelector("#vista-juego:not(.hidden) #jugada-input");
     const aviso = () => page.evaluate(() => { const e = document.getElementById("nivel-completo"); return e.checkVisibility() ? e.textContent : ""; });
     ok("antes de resolver el último no dice nada", (await aviso()) === "");
+    const ult = await page.evaluate(() => JSON.parse(localStorage.getItem("tipos_ultimo_v1") || "null"));
+    ok("anota el nivel que se está jugando, para el «Hoy te toca» del hub",
+      !!ult && ult.tipo === "amenaza" && ult.nivel === 1 && ult.hechos === nivel.length - 1 && ult.total === nivel.length, JSON.stringify(ult));
     await page.fill("#jugada-input", ultimo.amenazaEs);
     await page.press("#jugada-input", "Enter");
     await esperarEstado(page, /Eso es lo que quiere/);
@@ -552,6 +561,18 @@ async function main() {
     await page.press("#jugada-input", "Enter");
     await esperarEstado(page, /Eso es lo que quiere/);
     ok("repasar un nivel ya completo no vuelve a festejar", (await aviso()) === "");
+    const registros = () => page.evaluate(() => window.__escrituras.filter((e) => e.tabla === "training_progress").map((e) => [].concat(e.fila)[0].detail.puzzle_id));
+    ok("resolver otra vez el mismo ejercicio no lo registra dos veces", JSON.stringify(await registros()) === JSON.stringify(["amenaza:" + ultimo.id]), JSON.stringify(await registros()));
+    // El primero tenía estrellas de antes del registro: al resolverlo ahora, entra (una vez).
+    const primero = nivel[0];
+    await page.evaluate((id) => { location.hash = "#amenaza/1/" + id; }, primero.id);
+    await page.waitForFunction((id) => /Ejercicio 1 de/.test(document.getElementById("juego-progreso").textContent), primero.id, { timeout: 8000 });
+    await page.fill("#jugada-input", primero.amenazaEs);
+    await page.press("#jugada-input", "Enter");
+    await esperarEstado(page, /Eso es lo que quiere/);
+    await page.waitForTimeout(300);
+    ok("lo resuelto antes de que existiera el registro entra la próxima vez que se resuelve",
+      (await registros()).includes("amenaza:" + primero.id), JSON.stringify(await registros()));
     ok("sin errores en consola", !errores.length, errores.join(" | "));
     await ctx.close();
   }

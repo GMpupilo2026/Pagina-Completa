@@ -89,6 +89,26 @@ window.MaterialPlataforma = (function () {
     { slug: "finales", label: "Finales contra la máquina", href: "entreno/finales.html",
       actividades: ["finales"], metas: ["cantidad", "minutos"], unidad: "finales" },
 
+    /* Cada ejercicio resuelto se registra una vez como 'tipos', con el tipo en
+       detail.category: ese es el recorte («10 de Detective»), y el enlace
+       abre la ficha de ese tipo. */
+    { slug: "tipos", label: "Tipos de entrenamiento", href: "entreno/tipos.html",
+      actividades: ["tipos"], metas: ["cantidad", "minutos"],
+      unidad: "ejercicios", recortes: "tipos", recorteLabel: "Tipo",
+      hrefRecorte: (c) => `entreno/tipos.html#${encodeURIComponent(c)}` },
+
+    /* Precisión, el Sonar y Batalla naval registran cada tanda o partida
+       terminada con el mismo nombre que su tiempo. Sin puzzle_id: se sortean
+       cada vez, así que «5 partidas» son cinco partidas jugadas. */
+    { slug: "precision-posicional", label: "Precisión posicional", href: "entreno/precision-posicional.html",
+      actividades: ["precision-posicional"], metas: ["cantidad", "minutos"], unidad: "tandas" },
+
+    { slug: "sonar", label: "El Sonar", href: "sonar.html",
+      actividades: ["sonar"], metas: ["cantidad", "minutos"], unidad: "partidas" },
+
+    { slug: "batalla-naval", label: "Batalla naval", href: "batalla-naval.html",
+      actividades: ["batalla-naval"], metas: ["cantidad", "minutos"], unidad: "partidas" },
+
     { slug: "concentracion", label: "Concentración", href: "concentracion.html",
       actividades: ["concentracion"], metas: ["cantidad", "minutos"], unidad: "rondas" },
 

@@ -20,8 +20,9 @@
  * clave va en CLAVES de js/progreso-usuario.js con la fusión "srsPorLinea":
  * así la cola viaja con la cuenta, no con el aparato.
  *
- * No sabe de ajedrez ni de páginas: lo usan Ejercicios por tema y Mates
- * (anotar y repasar) y el hub de Entrenamiento (contar lo que toca hoy).
+ * No sabe de ajedrez ni de páginas: lo usan Ejercicios por tema, Mates,
+ * Visualización y Practicar (anotar y repasar) y el hub de Entrenamiento
+ * (contar lo que toca hoy).
  */
 (function () {
   "use strict";
@@ -31,6 +32,8 @@
   var CLAVES = {
     temas: "entreno_temas_repaso_v1",
     mates: "entreno_mates_repaso_v1",
+    visualizacion: "entreno_visualizacion_repaso_v1",
+    practicas: "entreno_practicas_repaso_v1",
   };
 
   function leer(clave) {
