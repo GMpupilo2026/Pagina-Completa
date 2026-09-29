@@ -365,6 +365,7 @@ async function aparatoDeMentira(p) {
     igual("al cargar NO se pide el permiso", await p.evaluate(() => window.__pedidos), 0);
     igual("el botón nombra la racha", await p.evaluate(() => document.getElementById("hoy-avisos-si").textContent),
       "🔔 Avísame si mi racha de 4 días está en juego");
+    igual("y la campana no se lee en voz alta", await p.evaluate(() => document.querySelector("#hoy-avisos-si [aria-hidden=true]").textContent), "🔔 ");
     await p.evaluate(() => {
       const b = new Uint8Array(65); b[0] = 4; crypto.getRandomValues(b.subarray(1));
       let s = ""; for (const x of b) s += String.fromCharCode(x);

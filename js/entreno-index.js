@@ -162,9 +162,10 @@ async function ofrecerAvisos(racha){
   let est;
   try { est = await Notificaciones.estado(); } catch (e) { return; }
   if (est !== 'apagado') return;
-  document.getElementById('hoy-avisos-si').textContent = racha
-    ? `🔔 Avísame si mi racha de ${racha === 1 ? '1 día' : racha + ' días'} está en juego`
-    : '🔔 Avísame por la tarde si me faltan ejercicios';
+  // El 🔔 va aparte, escondido del lector de pantalla: no lo lee en voz alta.
+  document.getElementById('hoy-avisos-si-texto').textContent = racha
+    ? `Avísame si mi racha de ${racha === 1 ? '1 día' : racha + ' días'} está en juego`
+    : 'Avísame por la tarde si me faltan ejercicios';
   caja.hidden = false;
 }
 document.getElementById('hoy-avisos-si').addEventListener('click', async () => {
