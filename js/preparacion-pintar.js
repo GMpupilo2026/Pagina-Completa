@@ -130,6 +130,12 @@
         t.appendChild(el("p", "font-mono text-sm text-brand-800 dark:text-white break-words", A.lineaEs(x.sec)));
         t.appendChild(el("p", "text-sm text-brand-600 dark:text-brand-200", "En esta línea " + x.texto));
         if (x.aviso) t.appendChild(el("p", "text-sm text-accent-700 dark:text-accent-400", x.aviso));
+        if (x.alumno) {
+          const a = el("p", "text-sm font-semibold text-brand-700 dark:text-brand-100 mt-1");
+          a.dataset.alumno = "";
+          a.textContent = x.alumno;
+          t.appendChild(a);
+        }
         caja.appendChild(t);
         if (opcionesActuales.alVerSecuencia) caja.appendChild(botonVer(x.sec, "Ver en el tablero: " + A.lineaEs(x.sec), x.titulo + ": en esta línea " + x.texto));
         d.appendChild(caja);
