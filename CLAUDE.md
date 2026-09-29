@@ -139,6 +139,38 @@ y hace otra cosa. Estas reglas existen por eso.
   título va en `<span aria-hidden="true">`, y todo ejercicio se puede contestar
   escribiendo (`js/cuadro-comandos.js`).
 
+**El diagnóstico de nivel** (detalle en «Versión 5: 60 preguntas y la fuerza en
+puntos Elo»)
+- **El nivel sale de la fuerza en puntos Elo, no del porcentaje ni de los
+  escalones.** Cada pregunta tiene su dificultad (`elo`) y
+  `PlanEntrenamiento.medir()` da la fuerza que mejor explica cuáles resolvió,
+  con su margen. Por qué: con escalones, un 1463 sacaba 92 % y un 2033 93 %;
+  la prueba no distinguía a nadie por encima de ~1450.
+- **Acertar por azar pesa distinto**: 0,2 en las de opción, 0 en las de mover.
+  **El Elo declarado se suma según su precisión** (FIDE ± 100, nacional ± 150,
+  en línea ± 250, del profesor ± 200), no con un peso fijo.
+- **Una pregunta de tablero tiene UNA sola jugada buena, comprobada con
+  Stockfish**, y las de opción llevan distractores que tientan (jaques,
+  capturas, la segunda idea del motor) y fallan por algo que la explicación
+  dice. Nada de opciones absurdas: se descartan sin saber ajedrez.
+- **La dificultad no se pone a ojo**: las preguntas de Lichess parten de su
+  rating y las demás se calibran con las respuestas reales y el Elo declarado
+  (`herramientas/diagnostico-calibrar.js`). `eloBase` no se toca nunca; `elo` y
+  `peso` los escribe el script. El bloque `LICHESS` del banco lo genera
+  `herramientas/diagnostico-lichess.js` y no se edita a mano. Los datos de
+  personas que se exportan para calibrar nunca van al repositorio.
+- **Un área se juzga contra lo esperable para la fuerza del alumno**
+  (`notaDeArea`), no por su porcentaje: con la mitad de la prueba difícil, un
+  1500 saca 30 % sin tener huecos, y el plan mandaría siempre a las áreas con
+  más preguntas duras. El tope por áreas también es relativo.
+- **Cambiar la forma de la prueba (`FORMA`) o la medición sube `VERSION`**, y
+  los resultados viejos se siguen leyendo con su regla de entonces: nunca se
+  vuelven a etiquetar. Al tocar el banco: `verificar-diagnostico.js` y volver a
+  generar el cuadernillo y el libro.
+- **Pendiente**: cuando haya diagnósticos de la versión 5 con Elo declarado,
+  correr `diagnostico-calibrar.js` (el descuento de −400/−550 al rating de
+  Lichess es una suposición, no una medida).
+
 **Código y despliegue**
 - **Una sola copia de cada cosa.** Lo que usan dos pantallas va en un módulo de
   `js/`; lo que se genera tiene su script en `herramientas/` y no se edita a
@@ -212,7 +244,7 @@ el archivo de cada tema dice cuál corresponde a cada pieza.
 | [`informes`](docs/decisiones/informes.md) | `informes.html`, «Cómo viene», tiempo por sección, informes a la casa, reportes de actividades | informes, informe-casa, tiempo-secciones, reportes, rls-auth-uid |
 | [`cobros-acceso-y-tienda`](docs/decisiones/cobros-acceso-y-tienda.md) | Cobros y avisos de morosidad, paquetes de acceso y cupos, la prueba gratis de 3 días, tienda | cobros, accesos, prueba-gratis, tienda |
 | [`cursos-y-material`](docs/decisiones/cursos-y-material.md) | Cursos (temario público, contenido con sesión y su candado en el worker), material de estudio, catálogo, guía del profesor, video, contenido abierto para admin | worker, curso-adaptado, material, guia-profesores, contenido-admin |
-| [`entrenamiento`](docs/decisiones/entrenamiento.md) | Progreso sincronizado, logros, trofeos e insignias de la clase, hub de Entrenamiento, finales contra la máquina, aperturas, Estudio, precisión posicional, diagnóstico, arbitraje, Confites, Sonar, Batalla naval, Tipos de entrenamiento (Detective, amenaza, Descarte, Siete diferencias, balanza, Fotografía, Con lo justo, Barrido, Intercambios, Constrúyela tú, Rey y peón, el maestro, aperturas, Ruta segura) | entreno, entreno-arreglos, entreno-nivel, entreno-repaso, finales, finales-pagina, aperturas, aperturas-pagina, fichas, estudio, precision-posicional, diagnostico, libro-diagnostico, arbitraje, logros, trofeos, sonar, batalla-naval, tipos, tipos-pagina |
+| [`entrenamiento`](docs/decisiones/entrenamiento.md) | Progreso sincronizado, logros, trofeos e insignias de la clase, hub de Entrenamiento, finales contra la máquina, aperturas, Estudio, precisión posicional, diagnóstico (fuerza en puntos Elo, preguntas de Lichess, calibración), arbitraje, Confites, Sonar, Batalla naval, Tipos de entrenamiento (Detective, amenaza, Descarte, Siete diferencias, balanza, Fotografía, Con lo justo, Barrido, Intercambios, Constrúyela tú, Rey y peón, el maestro, aperturas, Ruta segura) | entreno, entreno-arreglos, entreno-nivel, entreno-repaso, finales, finales-pagina, aperturas, aperturas-pagina, fichas, estudio, precision-posicional, diagnostico, libro-diagnostico, arbitraje, logros, trofeos, sonar, batalla-naval, tipos, tipos-pagina |
 | [`juegos-y-torneos`](docs/decisiones/juegos-y-torneos.md) | Bot de Oscar y el motor con mate en uno en contra, torneos en vivo y ritmos, la sala de cine de las transmisiones de Lichess y sus ambientes (teatro, estadio, planetario…), las salas que edita administración, sus posiciones de chess-results, el comentarista y la quiniela, retar en línea, el profesor juega, aviso de pareo, reloj y triple repetición | bot-oscar, bot-mate-en-uno, torneo-en-vivo, transmision, salas-torneo, pizarra-chess-results, quiniela, escenarios-sala, ritmos, profesor-juega, juego-aviso, reloj-y-repeticion |
 | [`paneles`](docs/decisiones/paneles.md) | Panel de la Academia (`clases.html`), primeros pasos, burbuja de conectados, `admin.html`, la preparación de rivales (activable por profesor), inscripciones a torneos y las cifras de la portada | panel, camino-entrenador, plan-recursos, burbuja, admin, preparacion-rivales, cifras-portada |
 | [`tableros-y-apariencia`](docs/decisiones/tableros-y-apariencia.md) | Coordenadas por fuera en todos los tableros, colores de casilla, el tablero elegido en todo el sitio, tema de la plataforma, contraste, arrastre táctil, elegir la pieza al coronar | tablero-preferido, coordenadas-fuera, temas-plataforma, arrastre-tactil, css, coronacion |
