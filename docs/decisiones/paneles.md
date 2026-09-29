@@ -1182,6 +1182,39 @@ su lugar y sin caminos repetidos.
   `pruebaCoordinadorRecortado` en `verificar-panel.js`. Rompiendo a propósito
   el filtro `soloAlumno` o dando el informe por enviado, saltan.
 
+### El panel del alumno, sin caminos repetidos
+
+El mismo pedido para el panel del alumno. Casi todo ya seguía el criterio, y
+se dejó como estaba:
+
+- **Su «Lo urgente» es la franja de arriba** (`#pendientes-aviso`): las tareas
+  y los exámenes con fecha (y rojo lo que ya venció), el diagnóstico que le
+  pidió su profe y, si no tiene nada, el primer paso. No se le agregó una
+  segunda tarjeta como la del profesor: la franja contesta la misma pregunta
+  («¿qué hago ahora?»), y dos bloques peleando el primer lugar es el problema
+  que este panel ya tuvo con «Estado de la clase». La clase en vivo, si está
+  abierta, va encima de todo.
+- **El orden de la página ya era el de las preguntas que uno se hace**: qué
+  me toca, por dónde iba, cómo voy y, después, a dónde puedo ir (lo dice el
+  comentario de `#progreso-alumno` en `clases.html`). El orden de «Tu cuenta»
+  lo pidió el dueño.
+- Los números de «Tu progreso» siguen llevando cada uno a lo suyo (la racha a
+  Logros, los ejercicios a su página): un número que no lleva a nada obliga a
+  ir a buscarlo.
+
+Lo que sí cambió, por ser dos puertas al mismo lugar:
+
+- «Tu progreso» ya no lleva «Ver informes completos →»: Informes es una
+  tarjeta de «Tu cuenta».
+- **«Tu última clase» abre el repaso de ESA clase**
+  (`repasar-clases.html?repaso=<clase>`, «🎞️ Repasar esta clase →»): lo que
+  no le salió, para resolverlo otra vez, y debajo la partida. Antes llevaba a
+  la lista general, que es la misma puerta que la tarjeta «Repasar mis
+  clases».
+- Lo prueban `pruebaProgresoAlumna` y `pruebaUltimaClase` en
+  `verificar-panel.js`; volviendo a poner el enlace viejo o el «Ver informes
+  completos», saltan.
+
 ### Las cuentas se ven por GRUPO, no todas de una
 
 Lo primero que muestra la página son **fichas de grupo**, no la lista de
