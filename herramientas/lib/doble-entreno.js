@@ -50,7 +50,12 @@ function clienteFalso(tablas) {
     },
     from: consulta,
     // Una función de la base devuelve lo que traiga tablas["rpc:<nombre>"].
-    rpc: (n) => ({ then(r) { return Promise.resolve({ data: TABLAS["rpc:" + n] || [], error: null }).then(r); } }),
+    // Anota con qué argumentos se llamó (window.__rpcArgs) y admite .range().
+    rpc: (n, args) => {
+      (window.__rpcArgs = window.__rpcArgs || []).push([n, args || null]);
+      const r = { range() { return r; }, then(res) { return Promise.resolve({ data: TABLAS["rpc:" + n] || [], error: null }).then(res); } };
+      return r;
+    },
     channel: () => ({ on() { return this; }, subscribe() { return this; } }),
     removeChannel() {},
   };

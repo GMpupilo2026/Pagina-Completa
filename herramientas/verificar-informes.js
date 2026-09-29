@@ -431,20 +431,21 @@ async function pruebaProfesor(browser) {
     [await page.inputValue("#student-filter"), await page.textContent("#student-report-title")].join(" | "),
     "a-1 | 🚩 Últimas asignaciones de Ana Rojas");
 
-  /* Veintiún números de golpe no los lee nadie: los trece de segunda fila nacen
-     escondidos (las ocho de siempre más las cinco de los módulos que se sumaron:
-     Temas, Visualización, Tipos, Aperturas y Precisión). Se mide el display que
+  /* Veintidós números de golpe no los lee nadie: los catorce de segunda fila
+     nacen escondidos (las ocho de siempre más las seis de los módulos que se
+     sumaron: Temas, Visualización, Tipos, Aperturas, Precisión y el tema más
+     flojo). Se mide el display que
      calcula el navegador, no la clase. */
   const escondidas = () => page.evaluate(() =>
     [...document.querySelectorAll("#stat-cards [data-extra]")]
       .filter((d) => getComputedStyle(d).display === "none").length);
-  igual("las trece secundarias nacen escondidas", await escondidas(), 13);
+  igual("las catorce secundarias nacen escondidas", await escondidas(), 14);
   igual("y las que se miran siguen a la vista", await page.evaluate(() =>
     [...document.querySelectorAll("#stat-cards > div")].filter((d) => getComputedStyle(d).display !== "none").length), 8);
   await page.click("#stat-cards-ver");
   igual("el botón las destapa todas", await escondidas(), 0);
   await page.click("#stat-cards-ver");
-  igual("y las vuelve a guardar", await escondidas(), 13);
+  igual("y las vuelve a guardar", await escondidas(), 14);
   await page.selectOption("#student-filter", "");
   await page.waitForFunction(() => !document.getElementById("teacher-report").classList.contains("hidden"));
 
@@ -744,6 +745,9 @@ async function pruebaAlumno(browser) {
       faltas_justificadas: [{ student_id: "a-1", clases_justificadas: 1 }],
       informes_cursos_alumnos: [CURSOS_ANA[0]],
       informes_entreno_modulos: [MODULOS_ANA],
+      // El tema más flojo (js/tema-flojo.js): la clave la pone la base, el nombre
+      // sale de entreno/data/temas-motivos.json.
+      informes_tema_mas_flojo: [{ student_id: "a-1", tema: "pin", intentos: 11, limpios: 4, porcentaje: 36 }],
       informes_diagnosticos_alumnos: [{ student_id: "a-1", detalle: DIAGNOSTICO, fecha: "2026-09-10T12:00:00Z", a_medias_pregunta: null, a_medias_fecha: null }],
       informes_totales: { clases_cerradas: 4, preguntas: 10, partidas: 2 },
       resumen_tareas_examenes: DEBERES,
@@ -777,6 +781,11 @@ async function pruebaAlumno(browser) {
   igual("Tipos de entrenamiento", await tarjeta(page, "Tipos de entrenamiento: ejercicios con estrellas"), "5 (12⭐)");
   igual("Aperturas", await tarjeta(page, "Líneas de Aperturas estudiadas"), "3 (1 firmes)");
   igual("Precisión posicional", await tarjeta(page, "Precisión posicional"), "75 % en la última · 2 rondas");
+  igual("el tema más flojo, con su nombre y cuántos limpios", await tarjeta(page, "Tema más flojo: limpio en 4 de 11"), "Clavada · 36 %");
+  const pedido = await page.evaluate(() => ((window.__rpcArgs || []).find((a) => a[0] === "informes_tema_mas_flojo") || [])[1]);
+  igual("a la base se le mandan los motivos, no «Mezcla» ni las fases",
+    pedido && [pedido.p_temas.includes("pin"), pedido.p_temas.includes("backRankMate"), pedido.p_temas.includes("mix"), pedido.p_temas.includes("middlegame")],
+    [true, true, false, false]);
   igual("historial", await page.evaluate(() => document.querySelectorAll("#student-history li").length), 2);
   igual("filtros de profesor escondidos",
     await page.evaluate(() => document.getElementById("teacher-filters").classList.contains("hidden")), "true");
