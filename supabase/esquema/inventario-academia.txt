@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20260929153838
+# al-dia-con: 20260929172549
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -13,6 +13,7 @@ tabla  archivos_pgn  rls=true
 tabla  avisos_cobro  rls=true
 tabla  avisos_ficha_faltante  rls=true
 tabla  avisos_ia_tope  rls=true
+tabla  avisos_racha  rls=true
 tabla  clase_elegidos  rls=true
 tabla  clase_plan_hecho  rls=true
 tabla  class_attendance  rls=true
@@ -67,6 +68,7 @@ tabla  planes_rival_alumno  rls=true
 tabla  platform_activity_log  rls=true
 tabla  practice_games  rls=true
 tabla  practice_sessions  rls=true
+tabla  preferencias_avisos  rls=true
 tabla  preguntas_clave  rls=true
 tabla  preparacion_rivales_profesores  rls=true
 tabla  preparaciones_rival  rls=true
@@ -184,6 +186,11 @@ columna  avisos_ia_tope.gasto_usd  numeric(12,6)
 columna  avisos_ia_tope.periodo  date
 columna  avisos_ia_tope.tope_usd  numeric(10,2)
 columna  avisos_ia_tope.umbral  smallint
+columna  avisos_racha.created_at  timestamp with time zone
+columna  avisos_racha.faltan  integer
+columna  avisos_racha.fecha  date
+columna  avisos_racha.racha  integer
+columna  avisos_racha.student_id  uuid
 columna  clase_elegidos.class_session_id  uuid
 columna  clase_elegidos.created_at  timestamp with time zone
 columna  clase_elegidos.id  uuid
@@ -658,6 +665,8 @@ columna  practice_games.id  uuid
 columna  practice_games.moves  jsonb
 columna  practice_games.pide_ayuda_at  timestamp with time zone
 columna  practice_games.reloj_ms  integer
+columna  practice_games.respuesta  text
+columna  practice_games.respuesta_at  timestamp with time zone
 columna  practice_games.session_id  uuid
 columna  practice_games.status  text
 columna  practice_games.student_color  text
@@ -672,6 +681,9 @@ columna  practice_sessions.id  uuid
 columna  practice_sessions.incremento_segundos  integer
 columna  practice_sessions.level  text
 columna  practice_sessions.reloj_segundos  integer
+columna  preferencias_avisos.racha  boolean
+columna  preferencias_avisos.updated_at  timestamp with time zone
+columna  preferencias_avisos.user_id  uuid
 columna  preguntas_clave.correcta  integer
 columna  preguntas_clave.question_id  uuid
 columna  preparacion_rivales_profesores.activado_por  uuid
@@ -998,6 +1010,7 @@ funcion  avisar_examen_asignado()  definer  anon=false  auth=false
 funcion  avisar_examen_reabierto()  definer  anon=false  auth=false
 funcion  avisar_fichas_faltantes()  definer  anon=false  auth=false
 funcion  avisar_push(p_a uuid[], p_titulo text, p_cuerpo text, p_url text, p_etiqueta text)  definer  anon=false  auth=false
+funcion  avisar_rachas()  definer  anon=false  auth=false
 funcion  avisar_tarea_asignada()  definer  anon=false  auth=false
 funcion  avisar_tope_ia()  definer  anon=false  auth=false
 funcion  bajo_mi_coordinacion(p_persona uuid)  definer  anon=true  auth=true
@@ -1147,6 +1160,7 @@ funcion  personas_para_ver_como()  definer  anon=false  auth=true
 funcion  plan_compartido_conmigo(p_plan uuid)  definer  anon=true  auth=true
 funcion  planes_compartidos_conmigo()  definer  anon=false  auth=true
 funcion  practica_ayuda_proteger()  invoker  anon=false  auth=false
+funcion  preguntas_que_costaron(p_dias integer)  invoker  anon=false  auth=true
 funcion  premios_de_alumno(p_alumno uuid, p_desde timestamp with time zone, p_hasta timestamp with time zone)  definer  anon=false  auth=true
 funcion  profesores_del_coordinador(p_coordinador uuid)  definer  anon=false  auth=true
 funcion  profile_teachers_suma_a_la_academia()  definer  anon=false  auth=false
@@ -1405,6 +1419,9 @@ politica  practice_sessions  practice_sessions_select  SELECT
 politica  practice_sessions  practice_sessions_select_coordinacion  SELECT
 politica  practice_sessions  practice_sessions_select_supervisor  SELECT
 politica  practice_sessions  practice_sessions_update  UPDATE
+politica  preferencias_avisos  preferencias_avisos_agrega  INSERT
+politica  preferencias_avisos  preferencias_avisos_cambia  UPDATE
+politica  preferencias_avisos  preferencias_avisos_lee  SELECT
 politica  preguntas_clave  preguntas_clave_de_quien_pregunta  ALL
 politica  preparacion_rivales_profesores  preparacion_rivales_profesores_ver  SELECT
 politica  preparaciones_rival  preparaciones_rival_borrar  DELETE
@@ -1597,6 +1614,7 @@ indice  avisos_cobro  avisos_cobro_pkey
 indice  avisos_cobro  avisos_cobro_una_vez
 indice  avisos_ficha_faltante  avisos_ficha_faltante_pkey
 indice  avisos_ia_tope  avisos_ia_tope_pkey
+indice  avisos_racha  avisos_racha_pkey
 indice  clase_elegidos  clase_elegidos_alumno_idx
 indice  clase_elegidos  clase_elegidos_clase_idx
 indice  clase_elegidos  clase_elegidos_pkey
@@ -1754,6 +1772,7 @@ indice  practice_games  practice_games_student_id_fk
 indice  practice_sessions  practice_sessions_class_session_idx
 indice  practice_sessions  practice_sessions_created_by_fk
 indice  practice_sessions  practice_sessions_pkey
+indice  preferencias_avisos  preferencias_avisos_pkey
 indice  preguntas_clave  preguntas_clave_pkey
 indice  preparacion_rivales_profesores  preparacion_rivales_profesores_activado_por_idx
 indice  preparacion_rivales_profesores  preparacion_rivales_profesores_pkey
@@ -1876,6 +1895,7 @@ realtime  trofeos_ajustes
 realtime  tv_settings
 realtime  variant_nodes
 cron  avisar-fichas-faltantes  10 * * * *
+cron  avisar-rachas  5 0 * * *
 cron  cobros-generar  30 11 * * *
 cron  cobros-recordatorios  30 12 * * *
 cron  cobros-recordatorios-programados  */5 * * * *
@@ -2376,6 +2396,13 @@ grant  practice_sessions  authenticated  SELECT
 grant  practice_sessions  authenticated  TRIGGER
 grant  practice_sessions  authenticated  TRUNCATE
 grant  practice_sessions  authenticated  UPDATE
+grant  preferencias_avisos  authenticated  DELETE
+grant  preferencias_avisos  authenticated  INSERT
+grant  preferencias_avisos  authenticated  REFERENCES
+grant  preferencias_avisos  authenticated  SELECT
+grant  preferencias_avisos  authenticated  TRIGGER
+grant  preferencias_avisos  authenticated  TRUNCATE
+grant  preferencias_avisos  authenticated  UPDATE
 grant  preguntas_clave  authenticated  DELETE
 grant  preguntas_clave  authenticated  INSERT
 grant  preguntas_clave  authenticated  REFERENCES

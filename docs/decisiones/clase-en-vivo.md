@@ -1084,6 +1084,69 @@ clase-juega`.** Está probado que fallan de verdad:
 - con el control remoto que no sigue al profe o que no muestra el estado;
 - con el alumno pidiendo los puntos de otro.
 
+### La clase en el celular del alumno
+
+Muchos alumnos entran desde el celular, y ahí lo que se rompe no da ningún
+error: la página funciona, pero el tablero queda abajo, la cuenta regresiva
+no se ve mientras se mira el tablero, o un botón no se acierta con el dedo.
+Medido en 375 × 740, con el mapa, el calentamiento, los equipos, el podio y
+el tiempo para pensar puestos a la vez.
+
+- **Lo de arriba va más junto en pantallas chicas** (`sm:` recupera lo de
+  siempre): el título, «Contraseña/Salir» y la franja de estado. El tablero
+  arrancaba a unos 300 px de arriba y ahora a 228: entra entero sin bajar.
+- **El turno y el tiempo para pensar van pegados al tablero**, antes del
+  mapa, el calentamiento, los equipos y el podio. Antes, en el celular, la
+  cuenta regresiva quedaba debajo de todo eso, y quien miraba el tablero no
+  la veía. En la computadora también queda mejor.
+- **Los botones para el dedo miden 44 px de alto en el celular**: Girar,
+  Coordenadas, Levantar la mano, y la ✕ que cierra la pregunta (medía 24).
+  En la computadora quedan como estaban.
+- Nada se sale a lo ancho, y la tarjeta de la pregunta muestra su tablero
+  entero.
+
+**Al tocar la pantalla de la clase, correr `node herramientas/verificar-todo.js
+clase-movil`.** Está probado que falla de verdad: con el `sesion.html` de
+antes saltan lo de arriba, el orden, la cuenta regresiva y los dos tamaños.
+
+### Lo que más le costó a tu clase
+
+En el panel del profe (`clases.html`), una tarjeta con las preguntas de jugada
+de los últimos 30 días que más falló su clase, con su posición. Un botón arma
+con ellas un plan de repaso. Así, lo que no quedó se repite en la clase
+siguiente sin buscarlo a mano.
+
+- **La cuenta la hace la base**: `preguntas_que_costaron(p_dias)`, `SECURITY
+  INVOKER`, solo con las preguntas de quien pregunta.
+  - Usa la misma regla de fallo que el repaso personal: marcada mal, o sin
+    calificar y distinta de la primera jugada del motor.
+  - Solo cuentan las preguntas ya cerradas y con al menos dos respuestas: con
+    una sola, el porcentaje no dice nada del grupo.
+  - Devuelve las diez que más costaron.
+  - Comprobado impersonando: el profe ve sus diez preguntas y el alumno,
+    ninguna.
+- **El plan de repaso** es uno nuevo, «Repaso: lo que más costó (al …)», con
+  un renglón de posición por pregunta, en el mismo orden, y el enunciado como
+  su `pregunta` (js/plan-clase.js).
+  - La tarjeta lleva a `planes.html?plan=<id>`, que ahora abre ese plan
+    directamente.
+  - En la clase, cada renglón trae sus botones de siempre: «Al tablero»,
+    «Preguntar», «Jugar votando» y «Calentamiento».
+- **Mirando a otra persona («Ver como») no se muestra**: la función contesta
+  con las preguntas de quien entra, no de la persona que se mira.
+- El diagrama es `NotasAlumno.diagrama`, que ahora se exporta: el mismo de
+  las notas con posición, una sola copia.
+- El doble de `verificar-panel.js` anotaba los insert y no devolvía nada: sin
+  id, no se podía probar un plan con sus renglones. Ahora los anota en
+  `window.__inserts` y devuelve la fila con su id, como PostgREST.
+
+**Al tocar esto, correr `node herramientas/verificar-todo.js lo-que-costo
+panel`.** Está probado que falla de verdad:
+- sin el enunciado;
+- con los renglones sin orden;
+- con `planes.html` que no abre el plan;
+- con la tarjeta vacía a la vista.
+
 ### El modo sencillo de la clase en vivo
 
 Aun ordenada, la pantalla del profesor tiene catorce controles delante, y la
@@ -1949,6 +2012,41 @@ alumno le aparece en su propio tablero.
     navegador se ignora; pedir otra vez o jugar no la corre; la ayuda del
     profe lo apaga; el profe no lo puede encender; sí apagarlo; la alumna lo
     cancela; al reintentar se apaga.
+
+- **El alumno le contesta a quien lo ayudó**: debajo de la ayuda, «💬
+  Contestarle» (hasta 280 caracteres). Vive en su fila
+  (`practice_games.respuesta`, `respuesta_at`, migración
+  `practica_el_alumno_contesta`) y **no en el chat privado**: el chat es solo
+  entre el alumno y su profe, y la ayuda la puede haber dado alguien de
+  supervisión o coordinación, que tiene que leer la respuesta ahí mismo donde
+  la mandó. El mismo trigger lo hace cumplir: solo el alumno la escribe, y
+  solo si tiene una ayuda a la que contestar (el campo tampoco sale sin ella);
+  la hora la pone la base; texto vacío la quita; quien no es el alumno no la
+  toca; **una ayuda nueva, o quitar la ayuda, la borra**, porque contestaba a
+  otra; reintentar también. Al profe le sale en la miniatura y en el diálogo,
+  siempre por `textContent` —es texto que escribe un alumno—, y se dice en voz
+  una vez por respuesta. Comprobado impersonando roles: sin ayuda no entra; la
+  hora falsa se ignora y los espacios se recortan; jugar no la borra; el profe
+  no la puede cambiar; 281 caracteres los rechaza el CHECK; la ayuda nueva, el
+  texto vacío y el reintento la borran.
+- **Una pista para todos a la vez**: arriba de «Tableros de los alumnos»,
+  «📣 Pista para todos». Va **solo texto**: cada alumno va en una posición
+  distinta, y una flecha dibujada en una señalaría otra cosa en las demás. Es
+  **un solo update filtrado por la ronda** (`session_id`), no un bucle por
+  alumno: la RLS decide a qué partidas llega (las del profe, o las que alcanza
+  quien observa) y el trigger le pone a cada una quién la dio y apaga los
+  pedidos de ayuda —no hizo falta migración—. La ayuda lleva `para_todos` y el
+  alumno la lee «Pista de tu profe para toda la clase». **Reemplaza** la ayuda
+  individual que tuviera cada uno, y la nota del campo lo dice. Se cuenta lo
+  que QUEDÓ guardado («Le llegó a los 12 alumnos», «a 10 de 12»), porque con la
+  ronda terminada la base la devuelve como estaba. Comprobado impersonando
+  roles: el profe la manda a las dos partidas de una vez, cada una con su `de`,
+  sin tocar las jugadas y apagando el pedido; una alumna no se la puede mandar
+  a nadie.
+  - El doble de `verificar-clase-registrada.js` cambiaba solo la PRIMERA fila
+    de un update; ahora cambia todas las que cumplen el filtro, como la base.
+    Con el de antes, «le llegó a los 2» se habría visto bien habiendo cambiado
+    una sola.
 
 Comprobado impersonando roles en SQL (revertido): el profe manda la ayuda y
 queda con su `de`, pero sus cambios a jugadas, estado, intentos y reloj se

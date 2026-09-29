@@ -16,10 +16,22 @@
  *
  *     const e = EntrenadorLinea.montar(contenedor, { nombre: "Tablero del entrenamiento" });
  *     e.empezar(["e4", "e5", "Nf3"], { color: "w", titulo: "…", notas: [...],
- *                                      alTerminar: ({ errores, pistas }) => … });
+ *                                      alTerminar: ({ errores, pistas, limpia, fallos }) => … });
+ *     (`fallos`: el índice de cada jugada de la línea donde hubo error o pista)
  *
  * Lo usa plan-rival.html. El entrenador de Aperturas (js/entreno-aperturas.js)
  * hace lo mismo con su propia pantalla, más vieja que este módulo.
+ *
+ * Partida libre («Juega contra él», js/preparacion-sparring.js): el alumno
+ * juega lo que quiera y el rival lo decide quien llama. Es el mismo tablero,
+ * con el mismo clic, teclado y cuadro de comandos; no hay pista ni jugada
+ * «equivocada».
+ *
+ *     e.jugarLibre({ color: "w", titulo: "…",
+ *                    rival: async (juego) => ({ san, nota }) | null,   // null: termina
+ *                    alJugar: (hecha, juego) => "nota de tu jugada",
+ *                    alTerminar: ({ sec, motivo }) => … });            // motivo: "mate", "tablas", "sin-jugada", "terminada"
+ *     e.terminar();   // «Terminar la partida»
  */
 window.EntrenadorLinea = (function () {
   "use strict";
@@ -38,7 +50,11 @@ window.EntrenadorLinea = (function () {
   function montar(contenedor, cfg) {
     const o = cfg || {};
     let jugadas = [], notas = [], color = "w", alTerminar = null;
+    // Partida libre: { rival, alJugar }; null en el modo de la línea.
+    let libre = null, partida = 0;
     let juego = null, indice = 0, errores = 0, pistas = 0;
+    // Las jugadas de la línea (su índice) donde hubo un error o una pista.
+    let fallos = new Set();
     let seleccion = null, esperandoRival = false, terminada = false, pistaDesde = null;
 
     contenedor.textContent = "";
@@ -55,14 +71,18 @@ window.EntrenadorLinea = (function () {
     bPista.type = "button";
     const bOtraVez = el("button", "visor-control entrenador-boton", "Empezar de nuevo");
     bOtraVez.type = "button";
-    controles.append(bPista, bOtraVez);
+    const bTerminar = el("button", "visor-control entrenador-boton", "Terminar la partida");
+    bTerminar.type = "button";
+    bTerminar.hidden = true;
+    controles.append(bPista, bOtraVez, bTerminar);
     const mensaje = el("p", "visor-nota");
     mensaje.setAttribute("role", "status");
     const hechas = el("p", "visor-escrita");
     const comandosCaja = el("div", "visor-comandos");
     [titulo, turno, marco, controles, mensaje, hechas, comandosCaja].forEach((x) => contenedor.appendChild(x));
 
-    const meToca = () => indice < jugadas.length && (color === "w") === (indice % 2 === 0);
+    const meToca = () => libre ? !terminada && juego.turn() === color
+      : indice < jugadas.length && (color === "w") === (indice % 2 === 0);
 
     function decir(texto) {
       mensaje.textContent = texto || "";
@@ -71,16 +91,17 @@ window.EntrenadorLinea = (function () {
     }
 
     function pintarTurno() {
-      turno.textContent = terminada ? "Línea completa."
+      turno.textContent = terminada ? (libre ? "Partida terminada." : "Línea completa.")
         : meToca() ? "Te toca: juegas con " + (color === "w" ? "blancas" : "negras") + "."
         : "Juega el rival…";
     }
 
     function pintarHechas() {
       const partes = [];
-      for (let i = 0; i < indice; i++) {
+      const sec = libre ? juego.history() : jugadas.slice(0, indice);
+      for (let i = 0; i < sec.length; i++) {
         const num = Math.floor(i / 2) + 1;
-        partes.push((i % 2 === 0 ? num + "." : "") + V().aEspanol(jugadas[i]));
+        partes.push((i % 2 === 0 ? num + "." : "") + V().aEspanol(sec[i]));
       }
       hechas.textContent = partes.length ? partes.join(" ") : "";
       hechas.hidden = !partes.length;
@@ -118,12 +139,13 @@ window.EntrenadorLinea = (function () {
           juego: () => juego,
           tablero: () => teclado,
           onEnviar: (texto, api) => {
-            if (/^pista$/i.test(String(texto).trim())) { api.limpiar(); pista(); return; }
+            if (!libre && /^pista$/i.test(String(texto).trim())) { api.limpiar(); pista(); return; }
             if (terminada || esperandoRival || !meToca()) { api.decir("Ahora no te toca mover."); return; }
             const mv = window.ComandosTablero && ComandosTablero.jugadaEscrita(juego, texto);
             if (!mv) { api.decir("«" + texto + "» no es una jugada legal en esta posición. Escribe «pista» si no la recuerdas."); return; }
             api.limpiar().decir("");
-            intentar({ from: mv.from, to: mv.to, promotion: mv.promotion });
+            if (libre) jugarLibreJugada({ from: mv.from, to: mv.to, promotion: mv.promotion });
+            else intentar({ from: mv.from, to: mv.to, promotion: mv.promotion });
           },
         });
         comandos.ayuda("Jugada: «Cf3», «Nf3», «e2 e4». «pista» si no la recuerdas. Pregunta: «caballos», «qué hay en e4».");
@@ -154,6 +176,16 @@ window.EntrenadorLinea = (function () {
         marcarMal(sq);
         return;
       }
+      if (libre) {
+        // En la partida libre la pieza la elige quien juega (js/coronacion.js).
+        const desde = seleccion;
+        if (posibles[0].promotion && window.Coronacion) {
+          Coronacion.pedir(color, (pieza) => { if (pieza) jugarLibreJugada({ from: desde, to: sq, promotion: pieza }); });
+          return;
+        }
+        jugarLibreJugada({ from: desde, to: sq, promotion: posibles[0].promotion ? "q" : undefined });
+        return;
+      }
       // Coronar: si la de la línea corona en esa casilla, esa pieza; si no, dama.
       let promo = posibles[0].promotion;
       if (promo) {
@@ -172,6 +204,7 @@ window.EntrenadorLinea = (function () {
         // Legal, pero no es la del plan: se deshace y cuenta.
         juego.undo();
         errores += 1;
+        fallos.add(indice);
         seleccion = null;
         dibujar();
         marcarMal(j.to);
@@ -211,6 +244,7 @@ window.EntrenadorLinea = (function () {
     function pista() {
       if (terminada || !meToca()) return;
       pistas += 1;
+      fallos.add(indice);
       const prueba = new Chess(juego.fen());
       const m = prueba.move(jugadas[indice], { sloppy: true });
       pistaDesde = m ? m.from : null;
@@ -222,7 +256,81 @@ window.EntrenadorLinea = (function () {
       terminada = true;
       pintarTurno();
       bPista.disabled = true;
-      if (alTerminar) alTerminar({ errores, pistas, limpia: errores === 0 && pistas === 0 });
+      if (alTerminar) alTerminar({ errores, pistas, limpia: errores === 0 && pistas === 0, fallos: [...fallos].sort((a, b) => a - b) });
+    }
+
+    // ---------------------------------------------------------- partida libre
+
+    function finDePartida() {
+      if (juego.in_checkmate()) return "mate";
+      if (juego.in_draw() || juego.in_stalemate() || juego.in_threefold_repetition()) return "tablas";
+      return null;
+    }
+
+    function terminarLibre(motivo) {
+      if (terminada) return;
+      terminada = true;
+      esperandoRival = false;
+      bTerminar.disabled = true;
+      pintarTurno();
+      if (alTerminar) alTerminar({ sec: juego.history(), motivo });
+    }
+
+    function jugarLibreJugada(j) {
+      if (terminada || esperandoRival || !meToca()) return;
+      const hecha = juego.move(j);
+      if (!hecha) { marcarMal(j.to); return; }
+      seleccion = null;
+      dibujar();
+      pintarHechas();
+      decir(libre.alJugar ? libre.alJugar(hecha, juego) || "" : "");
+      const fin = finDePartida();
+      if (fin) terminarLibre(fin);
+      else rivalLibre();
+    }
+
+    // El rival de la partida libre: lo decide quien llama (su libro, o el
+    // motor). Si mientras piensa se empieza otra partida, su jugada se tira.
+    async function rivalLibre() {
+      if (terminada || meToca()) { pintarTurno(); return; }
+      esperandoRival = true;
+      pintarTurno();
+      const esta = partida;
+      const pausa = new Promise((res) => setTimeout(res, o.pausa == null ? 550 : o.pausa));
+      let r = null;
+      try { r = await libre.rival(juego); } catch (e) { r = null; }
+      await pausa;
+      if (esta !== partida || terminada) return;
+      esperandoRival = false;
+      const hecha = r && r.san ? juego.move(r.san, { sloppy: true }) : null;
+      if (!hecha) { terminarLibre("sin-jugada"); return; }
+      dibujar();
+      pintarHechas();
+      decir("El rival: " + V().jugadaContada(hecha) + (r.nota ? " " + r.nota : ""));
+      const fin = finDePartida();
+      if (fin) terminarLibre(fin);
+      else pintarTurno();
+    }
+
+    function jugarLibre(opciones) {
+      const oc = opciones || {};
+      ultima = { libre: oc };
+      partida += 1;
+      libre = { rival: oc.rival, alJugar: oc.alJugar || null };
+      color = oc.color === "b" ? "b" : "w";
+      alTerminar = oc.alTerminar || null;
+      juego = new Chess();
+      jugadas = []; notas = []; indice = 0; errores = 0; pistas = 0;
+      seleccion = null; pistaDesde = null; esperandoRival = false; terminada = false;
+      titulo.textContent = oc.titulo || "";
+      titulo.hidden = !titulo.textContent;
+      bPista.hidden = true;
+      bTerminar.hidden = false;
+      bTerminar.disabled = false;
+      decir("");
+      dibujar();
+      pintarHechas();
+      if (!meToca()) rivalLibre(); else pintarTurno();
     }
 
     let ultima = null;
@@ -231,13 +339,17 @@ window.EntrenadorLinea = (function () {
       ultima = { sec, oc };
       // Solo lo que se puede jugar: una jugada ilegal corta la línea ahí.
       const g = new Chess();
+      partida += 1;
+      libre = null;
+      bPista.hidden = false;
+      bTerminar.hidden = true;
       jugadas = [];
       for (const san of sec || []) { if (!g.move(san, { sloppy: true })) break; jugadas.push(san); }
       notas = (oc.notas || []).slice(0, jugadas.length);
       color = oc.color === "b" ? "b" : "w";
       alTerminar = oc.alTerminar || null;
       juego = new Chess();
-      indice = 0; errores = 0; pistas = 0;
+      indice = 0; errores = 0; pistas = 0; fallos = new Set();
       seleccion = null; pistaDesde = null; esperandoRival = false; terminada = false;
       titulo.textContent = oc.titulo || "";
       titulo.hidden = !titulo.textContent;
@@ -249,10 +361,18 @@ window.EntrenadorLinea = (function () {
     }
 
     bPista.addEventListener("click", pista);
-    bOtraVez.addEventListener("click", () => { if (ultima) empezar(ultima.sec, ultima.oc); });
+    bOtraVez.addEventListener("click", () => {
+      if (!ultima) return;
+      if (ultima.libre) jugarLibre(ultima.libre);
+      else empezar(ultima.sec, ultima.oc);
+    });
+    bTerminar.addEventListener("click", () => { if (libre) terminarLibre("terminada"); });
 
     return {
       empezar,
+      jugarLibre,
+      terminar: () => { if (libre) terminarLibre("terminada"); },
+      get juego() { return juego; },
       enfocar: () => (titulo.textContent ? titulo : tablero).focus(),
       get indice() { return indice; },
       get errores() { return errores; },

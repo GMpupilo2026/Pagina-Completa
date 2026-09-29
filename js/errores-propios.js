@@ -21,8 +21,12 @@
  * (training_state). No se guarda el nombre del rival: solo la posición, la
  * jugada que se hizo y las buenas.
  *
- * `detectar()` y `ejercicio()` son puras (sin DOM ni motor): las prueba
- * herramientas/verificar-errores-propios.js en Node.
+ * `detectar()`, `ejercicio()` y `deFilas()` son puras (sin DOM ni motor): las
+ * prueba herramientas/verificar-errores-propios.js en Node.
+ *
+ * Informes (js/informes.js) lee lo mismo desde training_state para mostrárselo
+ * al profesor: `deFilas()` convierte esas filas en la lista, sin creerle nada
+ * (lo escribió el navegador del alumno).
  */
 (function (raiz) {
   "use strict";
@@ -203,6 +207,31 @@
     return { partidas: hechas, pendientesAntes: pendientes.length, nuevos };
   }
 
+  /* Para Informes: las filas de training_state del alumno (key, value.raw)
+     → { ejercicios, revisadas, resueltos }. Lo que no tenga la forma de un
+     ejercicio se ignora: el valor lo escribió el navegador del alumno y se
+     puede tocar desde la consola. Los textos se pintan con textContent. */
+  const SAN = /^(?:[KQRBN]?[a-h]?[1-8]?x?[a-h][1-8](?:=[QRBN])?|O-O(?:-O)?)[+#]?$/;
+  function deFilas(filas) {
+    const raw = {};
+    (filas || []).forEach((f) => {
+      const v = f && f.value;
+      if (v && typeof v.raw === "string") { try { raw[f.key] = JSON.parse(v.raw); } catch (e) { raw[f.key] = null; } }
+    });
+    const obj = (x) => (x && typeof x === "object" && !Array.isArray(x) ? x : {});
+    const ejercicios = Object.values(obj(raw[CLAVE_EJERCICIOS])).filter((x) =>
+      x && typeof x.id === "string" && typeof x.fen === "string" && x.fen.length < 100 &&
+      (x.nivel === 1 || x.nivel === 2) && typeof x.jugada === "string" && SAN.test(x.jugada) &&
+      Array.isArray(x.buenas) && x.buenas.length > 0 && x.buenas.length <= 6 && x.buenas.every((s) => typeof s === "string" && SAN.test(s)) &&
+      typeof x.antes === "number" && typeof x.despues === "number" && typeof x.fecha === "string")
+      .sort((a, b) => (a.fecha < b.fecha ? 1 : a.fecha > b.fecha ? -1 : (a.id < b.id ? -1 : 1)))
+      .slice(0, MAX_EJERCICIOS);
+    const estrellas = obj(raw.tipos_estrellas_v1);
+    const resueltos = {};
+    ejercicios.forEach((x) => { const n = Number(estrellas["errores:" + x.id]); if (n >= 1) resueltos[x.id] = Math.min(3, n); });
+    return { ejercicios, revisadas: Object.keys(obj(raw[CLAVE_VISTAS])).length, resueltos };
+  }
+
   /* ¿La jugada del alumno es una de las buenas? */
   function acierta(Chess, item, mov) {
     const g = new Chess(item.fen);
@@ -214,7 +243,7 @@
 
   const ErroresPropios = {
     CLAVE_EJERCICIOS, CLAVE_VISTAS, CORTE, MAX_PARTIDAS, MAX_EJERCICIOS,
-    detectar, ejercicio, posiciones, acierta, ejercicios, guardar, vistas, traerPartidas, analizar,
+    detectar, ejercicio, posiciones, acierta, ejercicios, guardar, vistas, traerPartidas, analizar, deFilas,
   };
   if (typeof module !== "undefined" && module.exports) module.exports = ErroresPropios;
   else raiz.ErroresPropios = ErroresPropios;

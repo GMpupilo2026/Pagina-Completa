@@ -70,6 +70,8 @@
     // Quién la dio lo pone la base (el profe o alguien de supervisión).
     if (typeof ayuda.de === "string") limpia.de = ayuda.de;
     if (typeof ayuda.nombre === "string" && ayuda.nombre.trim()) limpia.nombre = ayuda.nombre.trim().slice(0, 80);
+    // Una pista mandada a toda la ronda de una vez (solo texto).
+    if (ayuda.para_todos === true) limpia.para_todos = true;
     return limpia;
   }
 

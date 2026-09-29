@@ -124,7 +124,7 @@
             <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
                 <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Avisos en el celular</h2>
                 <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">
-                    Te avisamos cuando tu profe abre la clase y cuando alguien te reta a una partida.
+                    Te avisamos cuando tu profe abre la clase, cuando alguien te reta a una partida y, si entrenas, cuando tu racha está en juego.
                     Se enciende <strong>en cada aparato por separado</strong>: si lo prendes en el celular, la compu sigue igual.
                 </p>
                 <div class="flex flex-wrap items-center justify-between gap-3">
@@ -135,6 +135,13 @@
                     </div>
                 </div>
                 <p id="avisos-msg" class="text-xs mt-3" role="status" aria-live="polite"></p>
+                <!-- El aviso de racha (public.avisar_rachas()): se apaga por persona,
+                     no por aparato, en preferencias_avisos. Solo a quien entrena. -->
+                <label id="avisos-racha-caja" hidden class="mt-4 pt-4 border-t border-brand-100 dark:border-brand-800 flex items-start gap-3 text-sm text-brand-700 dark:text-brand-200 cursor-pointer">
+                    <input type="checkbox" id="avisos-racha" class="mt-0.5 h-4 w-4 accent-accent-500">
+                    <span>Avisarme a las 6 de la tarde si mi racha está en juego (tengo racha y ese día todavía no hice los 5 ejercicios).</span>
+                </label>
+                <p id="avisos-racha-msg" class="text-xs mt-2" role="status" aria-live="polite"></p>
             </div>
 
             <!-- Baja visión en modo normal: los ajustes que hacen falta viven repartidos

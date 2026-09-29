@@ -183,6 +183,15 @@
                 <div id="premios-body"></div>
             </div>
 
+            <!-- Los errores de sus partidas: los que encontró «Tus propios errores»
+                 (Tipos de entrenamiento) en el navegador del alumno y quedaron en
+                 su training_state. Solo mirando a UN alumno. -->
+            <div id="errores-report" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
+                <h2 id="errores-title" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1"><span aria-hidden="true">🪞</span> Errores de sus partidas</h2>
+                <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">Los que encontró «Tus propios errores» (Entrenamiento → Tipos de entrenamiento) en sus partidas de la Academia: Juegos, retos, torneos y la práctica en clase.</p>
+                <div id="errores-body"></div>
+            </div>
+
             <div id="student-report" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
                 <h2 id="student-report-title" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-4"><span aria-hidden="true">🚩</span> Tus últimas asignaciones</h2>
                 <ul id="student-history" class="space-y-2 text-sm"></ul>
@@ -446,6 +455,8 @@
     <script src="js/main.js"></script>
     <script src="js/tema-flojo.js"></script>
     <script src="js/coordenadas-casillas.js"></script>
+    <script src="js/tipos-reglas.js"></script>
+    <script src="js/errores-propios.js"></script>
     <script src="js/informes.js"></script>
 <!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- ayuda: inicio --><script src="js/ayuda-guia.js" defer></script><!-- ayuda: fin --><!-- atajo: inicio --><script src="js/atajo-buscar.js" data-arriba="" defer></script><!-- atajo: fin --></body>
 </html>

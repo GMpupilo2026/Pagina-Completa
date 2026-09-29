@@ -908,6 +908,39 @@ tarjeta más de segunda fila (eran catorce; con los Finales contra la máquina, 
   la función sea INVOKER; `verificar-informes.js`, la tarjeta y que a la base
   se le manden los motivos y no «Mezcla».
 
+## Los errores de sus partidas
+
+«Tus propios errores» (Tipos de entrenamiento, ver «El tipo 18: Tus propios
+errores» en entrenamiento.md) revisa las partidas del alumno en SU navegador y
+deja los ejercicios en su `training_state`. El informe de un alumno trae el
+panel **«🪞 Errores de las partidas de …»**: cuántas partidas revisó, cuántos
+errores salieron (en cuántos regaló y en cuántos se le escapó la ventaja),
+cuántos ya resolvió, y los cinco más recientes con «Ver todos»: cuándo, qué
+jugó, cómo cambió la evaluación, qué era lo bueno y si ya lo resolvió (con ✓ y
+✗ escritos, no solo en color).
+
+- **No hace falta nada nuevo en la base**: `training_state` ya la leen los
+  profesores del alumno, quien supervisa y administración (ver «La RLS de las
+  tablas de actividad arma el conjunto UNA vez»). Una consulta, acotada a ESE
+  alumno y a sus tres claves (`errores_propios_v1`, `errores_analizadas_v1` y
+  `tipos_estrellas_v1`, de donde salen las estrellas de cada uno).
+- **No se le cree nada a lo guardado**: lo escribió el navegador del alumno y
+  se puede tocar desde la consola. `ErroresPropios.deFilas()` descarta lo que no
+  tenga forma de ejercicio —una «jugada» que no es una jugada, un nivel que no
+  existe, un JSON roto— y todo se pinta con `textContent`. El verificador mete
+  una «jugada» que es `<img onerror>` y exige que ni aparezca.
+- **Si no revisó nunca sus partidas**, el panel lo dice y explica dónde se
+  hace, en vez de un «0 errores» que parecería una buena noticia.
+- Va solo en el informe del profesor: el alumno ya los ve, y los juega, en
+  Tipos de entrenamiento.
+- **De paso**: la regla «no pide ninguna tabla de actividad» de
+  `verificar-informes.js` **nunca podía saltar**: probaba la expresión contra
+  el objeto de cada consulta y no contra su etiqueta, y `"[object Object]"` no
+  calza con nada. Ahora mira la etiqueta y dice lo que quería decir: ninguna de
+  esas tablas se pide **sin acotarla a un alumno** (la comparación de
+  diagnósticos y este panel piden lo de uno, y está bien). Rota a propósito
+  —la consulta de diagnósticos sin `student_id`—, salta.
+
 ## Los informes que llegan a la casa
 
 En Informes, mirando a UN alumno, está "📧 Informes a la casa": a qué correos se

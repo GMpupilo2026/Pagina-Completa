@@ -118,7 +118,14 @@ window.__consultas = [];
       },
       limit(n) { anotado.limit = n; filas2 = filas2.slice(0, n); return b; },
       range(a, z) { anotado.range = [a, z]; anotado.total = filas2.length; filas2 = filas2.slice(a, z + 1); return b; },
-      insert() { return b; },
+      // Un insert queda anotado (window.__inserts) y devuelve la fila con su id,
+      // como PostgREST con .select(): sin id no se puede seguir (un plan y sus renglones).
+      insert(fila) {
+        window.__inserts = window.__inserts || [];
+        window.__inserts.push({ tabla: tabla, fila: fila });
+        filas2 = [Object.assign({ id: tabla + "-" + window.__inserts.length }, fila)];
+        return b;
+      },
       update() { return b; },
       delete() { return b; },
       maybeSingle() { unica = true; return b; },

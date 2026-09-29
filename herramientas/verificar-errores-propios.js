@@ -14,7 +14,11 @@
  *   - posiciones(): una partida que no se puede reproducir desde la inicial
  *     (empezó «desde el tablero») da null y no se analiza;
  *   - acierta(): cuenta cualquier jugada buena, con o sin «+», y reconoce la
- *     jugada de la partida.
+ *     jugada de la partida;
+ *   - deFilas(): lo que lee Informes desde training_state. No le cree nada al
+ *     navegador del alumno: descarta lo que no tiene forma de ejercicio (una
+ *     «jugada» que es HTML, un nivel que no existe, un JSON roto) y cuenta las
+ *     estrellas solo de sus ejercicios.
  *
  * Uso: node herramientas/verificar-errores-propios.js
  */
@@ -100,6 +104,29 @@ console.log("\n=== acierta() ===");
   const p = E.acierta(Chess, item, "Nxe5");
   ok("la de la partida no, y se reconoce", !p.ok && p.esLaDeLaPartida);
   ok("una ilegal no es legal", !E.acierta(Chess, item, "Ke3").legal);
+}
+
+console.log("\n=== deFilas() (lo que lee Informes) ===");
+{
+  const bueno = (id, fecha, extra) => Object.assign({ id, nivel: 1, fen: "8/8/8/8/8/8/8/K6k w - - 0 1", jugada: "Nxf7", buenas: ["Bxf7+"], antes: 13, despues: -455, fecha }, extra || {});
+  const ej = {
+    a: bueno("a", "2026-09-01"), b: bueno("b", "2026-09-03", { nivel: 2 }),
+    html: bueno("html", "2026-09-05", { jugada: "<img src=x onerror=alert(1)>" }),
+    nivel: bueno("nivel", "2026-09-05", { nivel: 7 }),
+    buena: bueno("buena", "2026-09-05", { buenas: ["<b>"] }),
+    num: bueno("num", "2026-09-05", { antes: "13" }),
+  };
+  const r = E.deFilas([
+    { key: "errores_propios_v1", value: { raw: JSON.stringify(ej) } },
+    { key: "errores_analizadas_v1", value: { raw: JSON.stringify({ "juego:1": "x", "juego:2": "x" }) } },
+    { key: "tipos_estrellas_v1", value: { raw: JSON.stringify({ "errores:a": 2, "errores:html": 3, "detective:q": 3, "errores:b": 0 }) } },
+  ]);
+  ok("solo los que tienen forma de ejercicio, del más reciente al más viejo", r.ejercicios.map((x) => x.id).join() === "b,a", r.ejercicios.map((x) => x.id).join());
+  ok("cuenta las partidas revisadas", r.revisadas === 2);
+  ok("las estrellas, solo de sus ejercicios y con una o más", JSON.stringify(r.resueltos) === JSON.stringify({ a: 2 }), JSON.stringify(r.resueltos));
+  const roto = E.deFilas([{ key: "errores_propios_v1", value: { raw: "{no es json" } }, { key: "errores_analizadas_v1", value: null }]);
+  ok("un JSON roto o una fila vacía no rompen nada", roto.ejercicios.length === 0 && roto.revisadas === 0);
+  ok("sin filas, vacío", E.deFilas([]).ejercicios.length === 0 && E.deFilas(null).revisadas === 0);
 }
 
 console.log(fallos ? "\n✗ " + fallos + " de " + pruebas + " comprobaciones fallaron." : "\n✓ Las " + pruebas + " comprobaciones pasaron.");
