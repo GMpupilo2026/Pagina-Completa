@@ -1264,6 +1264,74 @@ function pruebaArbolHondo() {
   igual("hasta la jugada 8 entra todo, aunque la vea una sola; después, no se abre", [bajar(tres, BERLINESA.slice(0, 16)).c.n, !!bajar(tres, BERLINESA.slice(0, 17))], [1, false]);
 }
 
+/* Su tipo de posición (js/preparacion-estructuras.js). Pedro, con blancas,
+   en tres aperturas que llegan enteras a la jugada 12 (comprobadas con
+   chess.js): contra la Tarrasch su rival queda con el peón aislado y Pedro
+   saca 25 %; en la Francesa del avance el centro queda cerrado y saca 85 %;
+   en la Española cerrada, ni una cosa ni la otra, 50 %. */
+const ESTRUCTURAS = {
+  tarrasch: "d4 d5 c4 e6 Nc3 c5 cxd5 exd5 Nf3 Nc6 g3 Nf6 Bg2 Be7 O-O O-O Bg5 cxd4 Nxd4 h6 Be3 Re8 Qb3 Na5",
+  francesa: "e4 e6 d4 d5 e5 c5 c3 Nc6 Nf3 Qb6 a3 c4 Nbd2 Bd7 Be2 Nge7 O-O Nf5 Re1 h6 Nf1 g5 h3 Bg7",
+  espanola: "e4 e5 Nf3 Nc6 Bb5 a6 Ba4 Nf6 O-O Be7 Re1 b5 Bb3 d6 c3 O-O h3 Nb8 d4 Nbd7 Nbd2 Bb7 Bc2 Re8",
+};
+function pgnDeEstructuras() {
+  const pgnDe = (sec) => sec.split(" ").map((m, i) => (i % 2 ? "" : (i / 2 + 1) + ". ") + m).join(" ").replace(/^1\. /, "");
+  let t = "";
+  for (let i = 0; i < 20; i++) t += partida("Pedro", "Otro " + i, i < 5 ? "1-0" : "0-1", pgnDe(ESTRUCTURAS.tarrasch));
+  for (let i = 0; i < 20; i++) t += partida("Pedro", "Otro " + i, i < 17 ? "1-0" : "0-1", pgnDe(ESTRUCTURAS.francesa));
+  for (let i = 0; i < 20; i++) t += partida("Pedro", "Otro " + i, i < 10 ? "1-0" : "0-1", pgnDe(ESTRUCTURAS.espanola));
+  return t;
+}
+
+function pruebaEstructuras() {
+  console.log("\n=== Su tipo de posición ===");
+  const E = require("../js/preparacion-estructuras.js");
+  const legales = Object.values(ESTRUCTURAS).every((sec) => { const g = new Chess(); return sec.split(" ").every((m) => g.move(m)) && g.history().length === 24; });
+  cierto("las tres aperturas de prueba son legales y llegan a la jugada 12 (chess.js)", legales);
+  // Cada línea se juega con chess.js: si una jugada no es legal, no hay posición que mirar.
+  const en = (sec, color) => { const g = new Chess(); return sec.split(" ").every((m) => g.move(m)) ? E.rasgos(Pos.desdeFen(g.fen()), color) : "jugada ilegal"; };
+  igual("Tarrasch: el peón aislado es del rival de Pedro", en(ESTRUCTURAS.tarrasch, "w"), ["aislado-rival"]);
+  igual("y si Pedro llevara las negras, sería suyo", en(ESTRUCTURAS.tarrasch, "b"), ["aislado-suyo"]);
+  igual("Francesa del avance: centro cerrado (e5 contra e6)", en(ESTRUCTURAS.francesa, "w"), ["centro-cerrado"]);
+  igual("Española cerrada: e4 contra e5 no cierra nada", en(ESTRUCTURAS.espanola, "w"), []);
+  igual("una Escocesa con las damas cambiadas y enroques opuestos: centro abierto, enroques opuestos y sin damas", en("e4 e5 Nf3 Nc6 d4 exd4 Nxd4 Nxd4 Qxd4 Qf6 Qxf6 Nxf6 Nc3 Bb4 Bd2 O-O O-O-O Re8 f3 d5 exd5 Bxc3 Bxc3 Nxd5", "w"), ["centro-abierto", "enroques-opuestos", "sin-damas"]);
+
+  const r = A.analizar(A.leerPgn(pgnDeEstructuras()), "Pedro");
+  const e = r.estructuras;
+  igual("se miran las 60 en la jugada 12", [e.momento, e.total], [12, 60]);
+  igual("con el peón aislado de su rival rinde menos; con el centro cerrado, más",
+    e.rasgos.map((x) => [x.clave, x.n, Math.round(x.puntos * 100), x.veredicto]), [["aislado-rival", 20, 25, -1], ["centro-cerrado", 20, 85, 1]]);
+  cierto("contra lo esperable para él con blancas (" + A.pct(e.rasgos[0].esperado) + ")", Math.abs(e.rasgos[0].esperado - r.porColor.w.puntos) < 1e-9);
+  const g = R.armar(r).general;
+  igual("el resumen dice qué buscar y qué evitar", [g.haz.filter((x) => x.estructura).map((x) => x.texto), g.evita.filter((x) => x.estructura).map((x) => x.texto)],
+    [["Busca quedarte con el peón aislado."], ["Evita cerrar el centro."]]);
+  igual("con el dato", g.haz.find((x) => x.estructura).porque, "En la jugada 12 le pasa en el 33 % de sus partidas; ahí él saca 25,0 % (le va mal) en 20 partidas (lo esperable para él, 53,3 %).");
+  // Con pocas partidas no se juzga, aunque la diferencia sea enorme: 6 Tarrasch
+  // perdidas y 6 Españolas ganadas (0 % contra 50 %) no llegan a las 8.
+  const pgnDe = (sec) => sec.split(" ").map((m, i) => (i % 2 ? "" : (i / 2 + 1) + ". ") + m).join(" ").replace(/^1\. /, "");
+  let seis = "";
+  for (let i = 0; i < 6; i++) seis += partida("Pedro", "Otro " + i, "0-1", pgnDe(ESTRUCTURAS.tarrasch)) + partida("Pedro", "Otro " + i, "1-0", pgnDe(ESTRUCTURAS.espanola));
+  const pocas = A.analizar(A.leerPgn(seis), "Pedro").estructuras.rasgos;
+  igual("con 6 partidas no se dice nada, aunque saque 0 % (hacen falta " + 8 + ")", pocas.map((x) => [x.clave, x.n, x.puntos, x.veredicto]), [["aislado-rival", 6, 0, 0]]);
+  cierto("una partida que no llega a la jugada 12 no cuenta", A.analizar(A.leerPgn(partida("Pedro", "X", "1-0", "e4 e5 2. Nf3 Nc6")), "Pedro").estructuras === null);
+  return r;
+}
+
+/* La tarjeta en la página: cada tipo con su veredicto escrito. */
+async function pruebaEstructurasEnLaPagina(browser, r) {
+  console.log("\n=== Su tipo de posición, en la página ===");
+  const { page, ctx, errores } = await abrir(browser, true, [{ id: "p-e", profesor_id: "u-profe", rival: "Pedro", partidas: r.total, created_at: "2026-09-29T01:00:00Z", analisis: JSON.parse(JSON.stringify(r)) }]);
+  await page.click('#guardados button[aria-label="Abrir el análisis de Pedro"]');
+  await page.waitForFunction(() => document.getElementById("titulo-resultado").textContent === "Pedro", null, { timeout: 10000 });
+  cierto("está la tarjeta, después de la táctica", await page.evaluate(() => { const hs = [...document.querySelectorAll("#resultado-cuerpo h3")].map((h) => h.textContent); return hs.indexOf("Su tipo de posición") === hs.indexOf("Su táctica: con qué gana y con qué pierde") + 1; }));
+  igual("cada tipo con su veredicto, escrito", await page.evaluate(() => [...document.querySelectorAll("[data-estructura] p:first-child")].map((p) => p.textContent)),
+    ["Su rival con el peón aislado. Ahí rinde menos: búscalo.", "Centro cerrado. Ahí rinde más: evítalo."]);
+  igual("y el dato", await page.textContent("[data-estructura='aislado-rival'] p:nth-child(2)"), "Le pasa en el 33 % de sus partidas (20); ahí saca 25,0 %, y lo esperable para él es 53,3 %.");
+  cierto("arriba, en qué hacer, sale «Busca quedarte con el peón aislado.»", await page.evaluate(() => document.querySelector("[aria-labelledby='resumen-titulo']").textContent.includes("Busca quedarte con el peón aislado.")));
+  igual("sin errores", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+}
+
 function pruebaPlanDelAlumno(r) {
   console.log("\n=== Etapa 4: lo que se le manda al alumno ===");
   const p = L.planDelAlumno(r, "conNegras");
@@ -2152,6 +2220,7 @@ async function pruebaMotorDeVerdad(browser) {
   pruebaRepasoEspaciado();
   pruebaReciente();
   pruebaArbolHondo();
+  const conEstructuras = pruebaEstructuras();
   const libro = pruebaTeoria();
   pruebaCruce();
   pruebaTiposDeFinal();
@@ -2183,6 +2252,7 @@ async function pruebaMotorDeVerdad(browser) {
     await pruebaAFondo(browser);
     await pruebaCertezaEnLaPagina(browser, conCerteza);
     await pruebaSparring(browser, conMotor);
+    await pruebaEstructurasEnLaPagina(browser, conEstructuras);
     await pruebaMotorDeVerdad(browser);
     await pruebaTacticaConMotorDeVerdad(browser);
   } finally {
