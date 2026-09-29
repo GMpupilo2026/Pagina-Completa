@@ -2160,7 +2160,7 @@ haciendo que un disparo al agua sume uno, saltan nueve comprobaciones.
 ## Los Tipos de entrenamiento
 
 `entreno/tipos.html` (grupo y tarjeta **"🧠 Tipos de entrenamiento"** del hub)
-es una ficha con diecisiete entrenamientos que no son «encuentra la mejor jugada»,
+es una ficha con dieciocho entrenamientos que no son «encuentra la mejor jugada»,
 cada uno con sus niveles: **El Detective** (¿qué jugada se acaba de hacer?,
 análisis retrógrado), **¿Qué quiere el rival?** (profilaxis: hacer la jugada
 que amenaza el rival), **Descarte** (tachar las candidatas que pierden),
@@ -2467,6 +2467,62 @@ reloj (30, 15 u 8 segundos). La regla vive en `js/tipos-reglas-mas.js`
 - El verificador de la página no espera el reloj: lo adelanta
   (`clock.fastForward` de Playwright).
 - `node herramientas/tipos-generar.js --solo tiempo` rehace solo este banco.
+
+### El tipo 18: Tus propios errores
+
+El único tipo **sin banco**: los ejercicios salen de las partidas de cada
+alumno. En la ficha del tipo, «🔎 Buscar errores en mis partidas» revisa hasta
+10 partidas nuevas con Stockfish en el navegador del alumno, y cada jugada
+donde se cayó la evaluación se vuelve un ejercicio: encontrar una jugada buena
+en esa posición. Todo vive en `js/errores-propios.js`; el juego y el botón, en
+`js/entreno-tipos-mas.js`. El catálogo lo marca `propio: true`, y así lo tratan
+la página (lo carga de la cuenta y no de `tipos.json`), la clase en vivo (no
+hay lista: cada alumno tiene los suyos) y los verificadores.
+
+- **De dónde salen las partidas**, las dos con la RLS de siempre (el alumno
+  lee las suyas; ninguna migración nueva):
+  - `game_rooms`: Juegos, retos, parejas de la clase y torneos. Solo
+    `variant = 'estandar'` y `status = 'finished'`. **No guarda la posición de
+    inicio**: se reproduce desde la inicial y, si una jugada no es legal (la
+    partida empezó «desde el tablero» en la clase), se deja fuera y se marca
+    como revisada para no volver a intentarlo.
+  - `practice_games`: la práctica contra el motor en la clase, con la posición
+    de `practice_sessions` (la leen los alumnos de quien la creó). Solo guarda
+    el último intento de cada práctica: los anteriores ya no existen.
+  - El Bot de Oscar y los ejercicios de Entrenamiento no guardan las jugadas
+    (a propósito): no entran.
+- **Cómo se decide que fue un error**, en centipeones desde el lado del alumno
+  (un mate cuenta ±10): una pasada a profundidad 10 por todas las posiciones;
+  una jugada del alumno es error si la evaluación cae **2 peones o más**, y es
+  «Lo que regalaste» (nivel 1) si estaba en −1,5 o mejor y quedó en −1 o peor,
+  o «Lo que se te escapó» (nivel 2) si estaba en +2 o más y quedó por debajo
+  de +1,5. Lo que ya estaba perdido no cuenta. De cada partida, los tres más
+  grandes.
+- **La mirada honda confirma**: en cada error, cuatro líneas a profundidad 14.
+  Las **buenas** son las que quedan a menos de 0,5 de la mejor, y vale
+  cualquiera. Si la honda pone la jugada de la partida entre las buenas, o si
+  la mejor no deja 2 peones por encima de lo que se jugó, **no hay ejercicio**:
+  la pasada corta se equivocó. Probado con la trampa Blackburne Shilling: no
+  marca Cxe5 (todavía se salva con Axf7+), sí Cxf7, de +0,1 a −4,6.
+- **Lo que se guarda**: dos claves que viajan con la cuenta
+  (`errores_propios_v1`, los ejercicios; `errores_analizadas_v1`, qué partidas
+  ya se miraron), fundidas por unión. Así el alumno los ve en cualquier aparato,
+  no se revisa dos veces la misma partida y el profesor las puede leer
+  (`training_state`). **No se guarda el nombre del rival**: solo la posición,
+  la jugada que se hizo y las buenas. Como mucho 60 ejercicios, los más
+  recientes.
+- **El juego** es como Aguanta: cualquier jugada buena gana; la de la partida
+  se reconoce («esa es la que jugaste: fue el error»); cada error y la pista
+  quitan una estrella; al tercero, la respuesta. Al final dice qué pasó en la
+  partida («jugaste Cxf7 y la evaluación pasó de +0,1 a −4,6»). Resolver uno
+  cuenta como cualquier Tipo (`activity = 'tipos'`, `category = 'errores'`).
+- **Sin metas de cantidad en Tareas**: como cada alumno tiene una cantidad
+  distinta, `metas-indice.py` no lo ofrece (se salta los tipos sin banco).
+- `herramientas/verificar-errores-propios.js` prueba la detección, el armado y
+  la regla sin motor; `verificar-tipos-pagina.js` busca errores en partidas de
+  mentira con un motor de mentira (el doble de Supabase filtra de verdad: la
+  partida de otra variante, la ajena y la que sigue en curso ni llegan) y
+  juega el ejercicio.
 
 **Al tocar los bancos, las reglas o la página, correr**:
 

@@ -234,6 +234,17 @@
         { n: 3, titulo: "Blitz", desc: "Cuatro candidatas y 8 segundos.", segundos: 8 },
       ],
     },
+    {
+      id: "errores", emoji: "🪞", nombre: "Tus propios errores", propio: true,
+      pregunta: "¿Qué debiste jugar en tu partida?",
+      entrena: "Aprender de lo que te pasó a ti: los errores de tus propias partidas son los que más se repiten, y los que más enseñan.",
+      como: "Busca errores en tus partidas terminadas (Juegos, retos, torneos de la Academia y la práctica en clase): el motor las revisa en tu computadora o celular y cada jugada donde se cayó la evaluación se vuelve un ejercicio. Encuentra una jugada buena en esa posición; vale cualquiera que el motor dé tan buena como la mejor.",
+      clase: "Cada alumno tiene los suyos: salen de sus partidas. Pídeles que busquen sus errores y que traigan uno a la clase para comentarlo juntos.",
+      niveles: [
+        { n: 1, titulo: "Lo que regalaste", desc: "Estabas bien y con esa jugada quedaste mal." },
+        { n: 2, titulo: "Lo que se te escapó", desc: "Ibas ganando y con esa jugada se te fue la ventaja." },
+      ],
+    },
   ];
 
   function tipo(id) { return TIPOS.find((t) => t.id === id) || null; }
@@ -241,6 +252,9 @@
     const t = tipo(tipoId);
     return t ? t.niveles.find((x) => x.n === +n) || null : null;
   }
+  /* Los tipos `propio` (Tus propios errores) no tienen banco en
+     entreno/data/tipos.json: sus ejercicios salen de las partidas de cada
+     alumno (js/errores-propios.js). */
   /* La clave de avance de un ejercicio: "tipo:id". */
   function clave(tipoId, itemId) { return tipoId + ":" + itemId; }
 
