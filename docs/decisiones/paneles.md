@@ -763,10 +763,12 @@ clase.
 - **Se le pinta OTRO panel, escrito entero en `ADMIN_GROUPS`**, igual que a
   quien supervisa (`SUPERVISOR_GROUPS`). No se le recorta el del profesor
   tarjeta por tarjeta: con cada tarjeta nueva del profesor habría que acordarse
-  de quitársela, y la que se olvide aparece. Los grupos son seis: «Cómo va la
-  plataforma», «Cuentas y personas», «Cobros y accesos», «Resultados de las
-  pruebas», «Revisar el contenido» y «Tu cuenta».
-- **Arriba va el resumen de toda la plataforma**: estudiantes, profesores y
+  de quitársela, y la que se olvide aparece. Los grupos van en el orden de
+  admin.html: «Supervisión y coordinación», «Cuentas y academias»,
+  «Formularios», «Cobros y accesos», «Resultados de las pruebas», «Revisar el
+  contenido» y «Tu cuenta» (ver «Lo urgente primero»).
+- **Arriba de todo va «Lo urgente»** (ver «Lo urgente primero») y después
+  **el resumen de toda la plataforma**: estudiantes, profesores y
   quiénes llevan 4 días sin entrenar. Es la misma tarjeta de quien supervisa,
   con el título «Toda la plataforma». Los números se cuentan en la base:
   `mi_gente()` trae el total, y `informes_inactivos()` se cuenta con
@@ -1023,10 +1025,29 @@ y coordinadores**, y el panel se reordenó alrededor de eso.
   «La plataforma» (herramientas, novedades, salas de torneos, preparación de
   rivales). «Ver la plataforma como…» se fue a Herramientas; los números de
   la plataforma quedaron al final de Inicio.
-- Lo prueba `pruebaUrgente` en `verificar-admin.js`: el orden, el «al día», el
+- **El panel de la Academia de quien administra (`clases.html`) sigue el
+  mismo criterio.** Arriba de todo, antes del resumen de la plataforma, va la
+  tarjeta «Lo urgente»: lo que se cuenta en la base, solo lo que tiene algo,
+  cada uno con su enlace, y «Ver todo lo urgente en Administración». Los
+  grupos arrancan con «Supervisión y coordinación» (quién cubre a quién,
+  supervisión, coordinación, informes, justificaciones, tablero por academia,
+  reportes); después «Cuentas y academias». «Actualizaciones» pasó al final
+  de «Revisar el contenido».
+  - **Los conteos de la base viven en `js/pendientes-admin.js`**, con sus
+    textos, y lo usan las dos pantallas: con dos copias, la primera que
+    cambie una consulta deja a la otra diciendo otra cosa.
+  - **La tarjeta de `clases.html` no dice «todo al día»**: lo que se cuenta
+    sobre todas las cuentas (alumnos sin profesor, quién cubre a quién) no
+    está ahí, sino en Administración, y la tarjeta lo dice con su enlace.
+    Cuando no hay nada, dice «Nada esperando respuesta en solicitudes,
+    justificaciones, cobros ni encuestas».
+- Lo prueban `pruebaUrgente` en `verificar-admin.js` (el orden, el «al día», el
   número del menú, que se cuente con `head`, a dónde lleva cada pendiente, las
-  dos tablas, y que un conteo caído no diga «al día». Rompiendo a propósito
-  `supervisores_de` o haciendo que un error cuente como cero, salta.
+  dos tablas y que un conteo caído no diga «al día») y `pruebaAdmin` en
+  `verificar-panel.js` (los grupos en su orden, la tarjeta antes de la grilla,
+  sus enlaces y que las solicitudes se cuenten con `head`). Rompiendo a
+  propósito `supervisores_de`, haciendo que un error cuente como cero o
+  bajando las solicitudes en vez de contarlas, saltan.
 
 ### Los atajos, por grupos
 

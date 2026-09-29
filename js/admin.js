@@ -261,11 +261,11 @@
          * urgente y después lo que conviene vigilar, y cada uno lleva a donde
          * se resuelve. Ver «Lo urgente primero» en docs/decisiones/paneles.md.
          *
-         * Todo se CUENTA en la base (`count: "exact", head: true`, o una
-         * función que ya devuelve el número): PostgREST corta a mil filas sin
-         * avisar, y bajarse una lista para contarla es el error de siempre. Lo
-         * único que se cuenta acá es lo que sale de las cuentas que la página
-         * ya trae enteras (alumnos sin profesor, coordinadores vacíos).
+         * Lo que se cuenta en la base (solicitudes, justificaciones, cobros…)
+         * está en js/pendientes-admin.js, que usa también el panel de
+         * clases.html. Lo único que se cuenta acá es lo que sale de las
+         * cuentas que la página ya trae enteras (alumnos sin profesor,
+         * coordinadores vacíos) y quién cubre a quién.
          *
          * Un conteo que falla NO se pinta como cero: se dice que no se pudo
          * revisar. Un «al día» falso es peor que no decir nada.
@@ -274,20 +274,6 @@
         let coberturaVieja = true;     // se cambió un supervisor o un coordinador: hay que volver a preguntar
         let conteosRemotos = {};       // clave -> número | null (null = no se pudo)
         let revisando = null;
-
-        // Hoy y el primero del mes, en hora de Costa Rica ("AAAA-MM-DD").
-        function hoyCR() {
-            return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Costa_Rica", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
-        }
-
-        async function contar(promesa) {
-            try {
-                const r = await promesa;
-                if (r.error) return null;
-                if (typeof r.count === "number") return r.count;
-                return typeof r.data === "number" ? r.data : null;
-            } catch (_) { return null; }
-        }
 
         /* Quién supervisa a cada profesor lo contesta supervisores_de(), que
            junta lo asignado a mano y lo que llega por la academia: armarlo acá
@@ -378,15 +364,17 @@
             const supVacios = cobertura ? supervisores.filter((f) => f.vacio).length : null;
             const coordVacios = coordinadores.filter((f) => f.vacio).length;
             const pl = (n, uno, varios) => (n === 1 ? uno : varios);
+            /* Los que se cuentan en la base: el texto es el de
+               js/pendientes-admin.js. Lo que lleva a otra sección de ESTA
+               página (admin.html#…) cambia de sección en vez de recargarla. */
+            const deLaBase = (clave) => {
+                const d = PendientesAdmin.EN_LA_BASE.find((x) => x.clave === clave);
+                const propia = d.href.startsWith("admin.html#") ? d.href.split("#")[1] : null;
+                return Object.assign({}, d, { n: conteosRemotos[clave], href: propia ? null : d.href, ir: propia });
+            };
             return [
-                { clave: "solicitudes", nivel: "urgente", emoji: "📝", n: conteosRemotos.solicitudes,
-                  titulo: (n) => pl(n, "solicitud de ingreso sin responder", "solicitudes de ingreso sin responder"),
-                  porque: "Gente que pidió entrar a la Academia y está esperando una respuesta.",
-                  accion: "Responder", href: "solicitudes.html", alDia: "Solicitudes de ingreso" },
-                { clave: "justificaciones", nivel: "urgente", emoji: "🩺", n: conteosRemotos.justificaciones,
-                  titulo: (n) => pl(n, "justificación de ausencia por revisar", "justificaciones de ausencia por revisar"),
-                  porque: "La familia espera saber si se aceptó.",
-                  accion: "Revisar", href: "justificaciones.html", alDia: "Justificaciones de ausencia" },
+                deLaBase("solicitudes"),
+                deLaBase("justificaciones"),
                 { clave: "sin-profesor", nivel: "urgente", emoji: "🎒", n: sueltos,
                   titulo: (n) => pl(n, "alumno sin profesor asignado", "alumnos sin profesor asignado"),
                   porque: "No aparecen en los informes de nadie, así que ningún supervisor ni coordinador los ve.",
@@ -403,18 +391,9 @@
                   titulo: (n) => pl(n, "coordinador sin profesores asignados", "coordinadores sin profesores asignados"),
                   porque: "Solo ven a sus propios alumnos, y no tienen forma de saber por qué.",
                   accion: "Asignarles profesores", ir: "profesores", alDia: "Cada coordinador tiene profesores" },
-                { clave: "se-van", nivel: "vigilar", emoji: "🚪", n: conteosRemotos.seVan,
-                  titulo: (n) => pl(n, "alumno dijo este mes que no sigue", "alumnos dijeron este mes que no siguen"),
-                  porque: "Lo contestaron en la encuesta de satisfacción con su profesor.",
-                  accion: "Ver quiénes", href: "satisfaccion.html", alDia: "Nadie dijo este mes que se va" },
-                { clave: "morosos", nivel: "vigilar", emoji: "💳", n: conteosRemotos.morosos,
-                  titulo: (n) => pl(n, "saldo vencido", "saldos vencidos"),
-                  porque: "Mensualidades sin pagar pasada la fecha (uno por alumno y moneda).",
-                  accion: "Ver cobros", href: "cobros.html", alDia: "Pagos al día" },
-                { clave: "inactivos", nivel: "vigilar", emoji: "💤", n: conteosRemotos.inactivos,
-                  titulo: (n) => pl(n, "alumno lleva 4 días o más sin entrenar", "alumnos llevan 4 días o más sin entrenar"),
-                  porque: "Por supervisor y por coordinador, en «Quién cubre a quién».",
-                  accion: "Ver por supervisor", ir: "supervision", alDia: "Todos entrenaron esta semana" },
+                deLaBase("seVan"),
+                deLaBase("morosos"),
+                deLaBase("inactivos"),
             ];
         }
 
@@ -652,19 +631,10 @@
            las cuentas ya cargadas se pinta antes, sin esperar. */
         async function revisarPendientes() {
             if (revisando) return revisando;
-            const primeroDelMes = hoyCR().slice(0, 8) + "01";
             revisando = (async () => {
                 pintarUrgentes(); pintarMando();
-                const cabeza = { count: "exact", head: true };
-                const [solicitudes, justificaciones, seVan, morosos, inactivos] = await Promise.all([
-                    contar(sb.from("solicitudes_academia").select("id", cabeza).eq("estado", "pendiente")),
-                    contar(sb.rpc("justificaciones_pendientes")),
-                    contar(sb.rpc("respuestas_satisfaccion", { p_desde: primeroDelMes, p_hasta: hoyCR(), p_profesor: null, p_solo_se_van: true }, cabeza)),
-                    contar(sb.rpc("cobros_morosos", {}, cabeza)),
-                    contar(sb.rpc("informes_inactivos", { p_dias: 4 }, cabeza)),
-                    cargarCobertura(),
-                ]);
-                conteosRemotos = { solicitudes, justificaciones, seVan, morosos, inactivos };
+                const [conteos] = await Promise.all([PendientesAdmin.contarEnLaBase(sb), cargarCobertura()]);
+                conteosRemotos = conteos;
             })();
             try { await revisando; } finally { revisando = null; }
             pintarUrgentes(); pintarMando();

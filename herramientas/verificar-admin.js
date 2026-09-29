@@ -394,7 +394,7 @@ async function pruebaUrgente(browser) {
     "sin-profesor · Urgente · 1 alumno sin profesor asignado",
     "profes-sin-nadie · Urgente · 2 profesores que nadie supervisa ni coordina",
     "coord-vacios · A vigilar · 1 coordinador sin profesores asignados",
-    "se-van · A vigilar · 1 alumno dijo este mes que no sigue",
+    "seVan · A vigilar · 1 alumno dijo este mes que no sigue",
     "inactivos · A vigilar · 2 alumnos llevan 4 días o más sin entrenar",
   ]);
   igual("lo que está en cero se dice «al día», no desaparece",

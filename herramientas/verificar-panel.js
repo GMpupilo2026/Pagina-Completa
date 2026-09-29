@@ -95,7 +95,7 @@ window.__consultas = [];
     // relacionada; sin resolver el punto, ese filtro no encuentra nunca nada.
     const valor = (fila, col) => String(col).split(".").reduce((o, k) => (o == null ? o : o[k]), fila);
     const b = {
-      select(_cols, opts) { if (opts && opts.count) anotado.count = true; return b; },
+      select(_cols, opts) { if (opts && opts.count) anotado.count = true; if (opts && opts.head) anotado.head = true; return b; },
       eq(col, val) { anotado.eq[col] = val; filas2 = filas2.filter((r) => cmp(valor(r, col), val)); return b; },
       gte(col, val) { anotado.gte = { col: col, val: val }; filas2 = filas2.filter((r) => String(valor(r, col)) >= String(val)); return b; },
       lt(col, val) { anotado.lt = { col: col, val: val }; filas2 = filas2.filter((r) => String(valor(r, col)) < String(val)); return b; },
@@ -175,6 +175,7 @@ window.__consultas = [];
     // Lo que se preguntó en una clase y lo que contestó cada uno («Tu última clase»).
     questions: DATOS.questions || [],
     question_answers: DATOS.question_answers || [],
+    solicitudes_academia: DATOS.solicitudes_academia || [],
   };
 
   window.sb = {
@@ -539,13 +540,42 @@ async function pruebaAdmin(browser) {
     rpc: {
       mi_gente: [{ id: "x", total: 312 }],
       informes_inactivos: [{ id: "a1" }, { id: "a2" }, { id: "a3" }],
+      justificaciones_pendientes: 2,
+      cobros_morosos: [],
+      respuestas_satisfaccion: [],
     },
+    solicitudes_academia: [{ id: "s-1", estado: "pendiente" }, { id: "s-2", estado: "aprobada" }],
   });
   const grupos = await page.evaluate(LEER_GRILLA);
   /* Quien administra se encarga de que toda la empresa vaya bien: su panel es
      el suyo, escrito entero en ADMIN_GROUPS, y no el de un profesor recortado. */
   igual("sus grupos, en su orden", grupos.map((g) => g.titulo),
-    ["Cómo va la plataforma", "Cuentas y personas", "Formularios", "Cobros y accesos", "Resultados de las pruebas", "Revisar el contenido", "Tu cuenta"]);
+    ["Supervisión y coordinación", "Cuentas y academias", "Formularios", "Cobros y accesos", "Resultados de las pruebas", "Revisar el contenido", "Tu cuenta"]);
+  /* Primero lo que necesitan supervisores y coordinadores, que es para lo que
+     existe quien administra: el mismo orden que el menú de admin.html. */
+  igual("Supervisión y coordinación, primero y con lo suyo",
+    grupos.find((g) => g.titulo === "Supervisión y coordinación").tiles.map((t) => t.enlace),
+    ["admin.html#supervision", "supervision.html", "coordinacion.html", "informes.html", "justificaciones.html", "tablero-academias.html", "reportes.html"]);
+  /* «Lo urgente», arriba de la grilla: solo lo que tiene algo, contado en la
+     base (js/pendientes-admin.js, el mismo de admin.html). */
+  igual("«Lo urgente» se ve y va antes de la grilla",
+    await page.evaluate(() => {
+      const u = document.getElementById("urgente-admin");
+      return u.checkVisibility() && !!(u.compareDocumentPosition(document.getElementById("tile-grid")) & Node.DOCUMENT_POSITION_FOLLOWING);
+    }), true);
+  igual("con lo que tiene algo, lo urgente primero y el nivel escrito",
+    await page.evaluate(() => Array.from(document.querySelectorAll("#urgente-admin-lista li")).filter((li) => li.checkVisibility())
+      .map((li) => li.dataset.pendiente + " · " + li.querySelector("a > span:nth-child(2)").innerText.replace(/\s+/g, " ").trim())),
+    ["solicitudes · URGENTE 1 solicitud de ingreso sin responder",
+     "justificaciones · URGENTE 2 justificaciones de ausencia por revisar",
+     "inactivos · A VIGILAR 3 alumnos llevan 4 días o más sin entrenar"]);
+  igual("y cada uno lleva a donde se resuelve",
+    await page.evaluate(() => Array.from(document.querySelectorAll("#urgente-admin-lista a")).map((a) => a.getAttribute("href"))),
+    ["solicitudes.html", "justificaciones.html", "admin.html#supervision"]);
+  igual("el resumen lo dice", await page.textContent("#urgente-admin-estado"), "2 cosas urgentes: alguien está esperando.");
+  igual("las solicitudes se cuentan en la base, sin bajarlas",
+    await page.evaluate(() => window.__consultas.filter((c) => c.tabla === "solicitudes_academia").map((c) => [c.count, !!c.head, c.eq.estado])),
+    [[true, true, "pendiente"]]);
   /* Todos los formularios juntos, los mismos cuatro de admin.html. */
   igual("Formularios: todos juntos, con la encuesta de satisfacción",
     grupos.find((g) => g.titulo === "Formularios").tiles.map((t) => t.enlace),
@@ -568,10 +598,10 @@ async function pruebaAdmin(browser) {
   igual("con los números de todos: estudiantes, profesores y sin entrenar",
     await page.evaluate(() => ["sup-alumnos", "sup-profes", "sup-inactivos"].map((i) => document.getElementById(i).textContent)),
     ["312", "312", "3"]);
-  igual("los que no entrenan se CUENTAN en la base, sin bajarse la lista",
+  igual("los que no entrenan se CUENTAN en la base, sin bajarse la lista (el resumen y «Lo urgente»)",
     await page.evaluate(() => window.__consultas.filter((c) => c.tabla === "informes_inactivos").map((c) => [c.count, !!c.head])),
-    [[true, true]]);
-  igual("el saludo dice para qué es el panel", await page.textContent("#panel-subtitulo"), "Desde aquí ves cómo va toda la plataforma.");
+    [[true, true], [true, true]]);
+  igual("el saludo dice para qué es el panel", await page.textContent("#panel-subtitulo"), "Primero lo urgente; después, lo que necesitan supervisores y coordinadores.");
   igual("sin errores en la página", errores, []);
   await ctx.close();
 

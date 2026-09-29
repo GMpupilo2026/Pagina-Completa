@@ -854,7 +854,7 @@ en SQL, como está dicho arriba.
 `justificaciones.html` (tarjeta **«🩺 Justificar una ausencia»** en «Tu
 cuenta» del panel del alumno; **«Justificaciones de ausencia»** en
 Herramientas del profesor —y de quien coordina, que da clase—, en «Cómo van tus
-estudiantes» de quien supervisa y en «Cómo va la plataforma» de quien
+estudiantes» de quien supervisa y en «Supervisión y coordinación» de quien
 administra). Una página, dos lados: el alumno cuenta por qué no llegó a clase
 —un texto, un documento o las dos cosas— y quien la recibe la lee y la
 contesta.
