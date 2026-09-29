@@ -1,8 +1,11 @@
 /* Preparación de rivales: pintar el análisis.
  *
  * Recibe el resultado de PreparacionAnalisis.analizar() y lo dibuja en un
- * contenedor de la página: cifras, FODA, qué jugarle, lo que dice Stockfish,
- * su repertorio, dónde rinde menos y más, y las tablas por ritmo, año y Elo.
+ * contenedor de la página. Primero la respuesta: qué hacer y qué no hacer
+ * contra él (js/preparacion-resumen.js). Después el detalle, de lo más útil
+ * para jugarle a lo más general: cifras, qué jugarle jugada por jugada, el
+ * cruce con el alumno, Stockfish, la teoría, el FODA, más allá de la
+ * apertura, su repertorio, dónde rinde menos y más, y las tablas.
  * Todo texto que viene del PGN (nombres, jugadas) va por textContent.
  *
  * Lee resultados de todas las versiones: la 1 (antes de los filtros y del
@@ -13,6 +16,7 @@
   "use strict";
 
   const A = window.PreparacionLineas;
+  const R = () => window.PreparacionResumen;
   let opcionesActuales = {};
 
   function el(tag, clase, texto) {
@@ -77,16 +81,114 @@
   function pintarCuerpo(r, c, opciones) {
     opcionesActuales = opciones || {};
     c.textContent = "";
+    if (R()) c.appendChild(pintarResumen(r));
     c.appendChild(pintarCifras(r));
-    c.appendChild(pintarFoda(r));
     c.appendChild(pintarPlanes(r));
     if (r.cruce) c.appendChild(pintarCruce(r));
     if (r.motor) c.appendChild(pintarMotor(r));
     if (r.teoria) c.appendChild(pintarTeoria(r));
+    c.appendChild(pintarFoda(r));
     if (r.masAlla) c.appendChild(pintarMasAlla(r));
     c.appendChild(pintarRepertorio(r));
     c.appendChild(pintarLineas(r));
     c.appendChild(pintarTablas(r));
+  }
+
+  /* Qué hacer y qué no hacer contra él: lo primero que se ve. Órdenes
+     cortas, cada una con el dato que la justifica debajo y, si es una
+     posición, «Ver» para abrirla en el tablero. Haz y No hagas se distinguen
+     por el título escrito, no solo por el color del borde. */
+  function pintarResumen(r) {
+    const res = R().armar(r);
+    const s = tarjeta("Qué hacer contra él", "resumen-titulo");
+    s.classList.add("ring-2", "ring-accent-400");
+    s.appendChild(nota("Lo esencial del análisis. Cada consejo trae el dato que lo justifica; el detalle está en las tarjetas de abajo."));
+    const leer = el("details", "mb-4");
+    leer.appendChild(el("summary", "cursor-pointer text-sm font-semibold text-brand-600 dark:text-brand-200 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "Cómo leer los porcentajes"));
+    leer.appendChild(el("p", "text-sm text-brand-600 dark:text-brand-200 mt-2", "«Él saca 24 %» quiere decir que en esas partidas el rival sumó 24 de cada 100 puntos posibles (1 por ganada, ½ por tablas). Menos de 45 %: le cuesta, y esa línea te conviene. Más de 55 %: le va bien, y conviene evitarla. Entre las dos, parejo."));
+    s.appendChild(leer);
+    // Lo que todavía corre (Stockfish, la teoría) lo dice la página, que
+    // sabe si está corriendo: un análisis sin motor puede no tenerlo nunca.
+    const pend = el("p", "text-sm text-accent-700 dark:text-accent-400 mb-4");
+    pend.dataset.pendiente = "";
+    s.appendChild(pend);
+    ponerPendiente(pend, opcionesActuales.pendiente || []);
+    const grilla = el("div", "grid lg:grid-cols-2 gap-6");
+    res.lados.forEach((l) => {
+      const d = el("div", "min-w-0");
+      d.dataset.lado = l.clave;
+      d.appendChild(el("h4", "font-bold text-lg text-brand-800 dark:text-white mb-2", l.titulo));
+      if (!l.lineas.length) {
+        d.appendChild(el("p", "text-sm text-brand-500 dark:text-brand-300 mb-3", "No hay suficientes partidas suyas con " + (l.clave === "conBlancas" ? "negras" : "blancas") + " para recomendar una línea."));
+      }
+      l.lineas.forEach((x) => {
+        const caja = el("div", "rounded-xl bg-brand-50 dark:bg-brand-950 p-3 mb-3 flex flex-wrap items-start justify-between gap-x-4 gap-y-2");
+        caja.dataset.linea = x.sec.join(" ");
+        const t = el("div", "min-w-0 flex-1");
+        // Sin mayúsculas: «1.E4» no es una jugada.
+        t.appendChild(el("p", "text-sm font-semibold text-brand-700 dark:text-brand-100", x.titulo));
+        t.appendChild(el("p", "font-mono text-sm text-brand-800 dark:text-white break-words", A.lineaEs(x.sec)));
+        t.appendChild(el("p", "text-sm text-brand-600 dark:text-brand-200", "En esta línea " + x.texto));
+        if (x.aviso) t.appendChild(el("p", "text-sm text-accent-700 dark:text-accent-400", x.aviso));
+        caja.appendChild(t);
+        if (opcionesActuales.alVerSecuencia) caja.appendChild(botonVer(x.sec, "Ver en el tablero: " + A.lineaEs(x.sec), x.titulo + ": en esta línea " + x.texto));
+        d.appendChild(caja);
+      });
+      d.appendChild(listaConsejos("Haz esto", "✅", l.haz, "haz", "Con estas partidas no aparece nada más que buscar."));
+      d.appendChild(listaConsejos("No hagas esto", "⛔", l.evita, "evita", "Con estas partidas no aparece nada claro que evitar."));
+      grilla.appendChild(d);
+    });
+    s.appendChild(grilla);
+    const g = res.general;
+    if (g.haz.length || g.evita.length) {
+      const d = el("div", "mt-6");
+      d.dataset.lado = "general";
+      d.appendChild(el("h4", "font-bold text-lg text-brand-800 dark:text-white mb-2", "En toda la partida"));
+      const dos = el("div", "grid lg:grid-cols-2 gap-6");
+      if (g.haz.length) dos.appendChild(listaConsejos("Haz esto", "✅", g.haz, "haz"));
+      if (g.evita.length) dos.appendChild(listaConsejos("No hagas esto", "⛔", g.evita, "evita"));
+      d.appendChild(dos);
+      s.appendChild(d);
+    }
+    return s;
+  }
+
+  function ponerPendiente(p, lista) {
+    p.textContent = lista.length ? "Todavía falta " + lista.join(" y ") + ". Este resumen se completa solo cuando termine." : "";
+    p.hidden = !lista.length;
+  }
+
+  // La página avisa que empezó algo sin volver a pintar todo.
+  function pendiente(c, lista) {
+    const p = c.querySelector("[data-pendiente]");
+    if (p) ponerPendiente(p, lista);
+  }
+
+  function listaConsejos(titulo, emoji, items, tipo, vacio) {
+    const caja = el("div", "mb-4 min-w-0");
+    caja.dataset.consejos = tipo;
+    const h = el("h5", "font-semibold text-brand-800 dark:text-white mb-1 flex items-center gap-2");
+    const ic = el("span", "", emoji);
+    ic.setAttribute("aria-hidden", "true");
+    h.append(ic, document.createTextNode(titulo));
+    caja.appendChild(h);
+    if (!items.length) {
+      caja.appendChild(el("p", "text-sm text-brand-500 dark:text-brand-300", vacio || ""));
+      return caja;
+    }
+    const borde = tipo === "haz" ? "border-green-600 dark:border-green-400" : "border-red-600 dark:border-red-400";
+    const ul = el("ul", "space-y-2");
+    items.forEach((x) => {
+      const li = el("li", "border-l-4 " + borde + " pl-3 py-1 flex flex-wrap items-start justify-between gap-x-4 gap-y-1");
+      const t = el("div", "min-w-0 flex-1");
+      t.appendChild(el("p", "text-sm font-semibold text-brand-800 dark:text-white", x.texto));
+      if (x.porque) t.appendChild(el("p", "text-sm text-brand-600 dark:text-brand-200", x.porque));
+      li.appendChild(t);
+      if (x.sec && opcionesActuales.alVerSecuencia) li.appendChild(botonVer(x.sec, "Ver en el tablero: " + A.lineaEs(x.sec), x.texto + " " + (x.porque || "")));
+      ul.appendChild(li);
+    });
+    caja.appendChild(ul);
+    return caja;
   }
 
   function pintarCifras(r) {
@@ -144,7 +246,10 @@
     return b;
   }
 
-  function renglonPlan(x, ply, camino) {
+  // Las cifras de un renglón solo se escriben cuando cambian: en una línea
+  // sin ramas, diez renglones seguidos decían «él saca 23,8 % en 21
+  // partidas» y lo que importaba se perdía entre números iguales.
+  function renglonPlan(x, ply, camino, anterior) {
     const li = el("li", "text-sm");
     const texto = el("p", "text-brand-700 dark:text-brand-200");
     const num = Math.floor(ply / 2) + 1;
@@ -155,9 +260,12 @@
     } else {
       texto.appendChild(document.createTextNode("Si él juega "));
       texto.appendChild(jugadaQueAbre(san, camino));
-      texto.appendChild(document.createTextNode(" (" + Math.round(100 * x.reparto) + " % de las veces)"));
+      texto.appendChild(document.createTextNode(x.reparto >= 0.995 ? " (siempre)" : " (" + Math.round(100 * x.reparto) + " % de las veces)"));
     }
-    texto.appendChild(el("span", "text-brand-450 dark:text-brand-350", " · él saca " + A.pct(x.puntos) + " en " + x.n + (x.n === 1 ? " partida" : " partidas")));
+    if (!anterior || anterior.n !== x.n || anterior.puntos !== x.puntos) {
+      const leVa = R() ? " (" + R().comoLeVa(x.puntos) + ")" : "";
+      texto.appendChild(el("span", "text-brand-450 dark:text-brand-350", " · él saca " + A.pct(x.puntos) + leVa + " en " + x.n + (x.n === 1 ? " partida" : " partidas")));
+    }
     li.appendChild(texto);
     return li;
   }
@@ -169,9 +277,10 @@
       // Cada rama es su propio bloque; adentro, la línea corre sin sangría.
       const rama = nodos.length > 1 ? el("li") : null;
       const destino = rama ? el("ul", "space-y-1.5") : ul;
-      let actual = x, p = ply, ultimo = null, camino = antes.concat(x);
+      let actual = x, p = ply, ultimo = null, camino = antes.concat(x), previoNodo = null;
       for (;;) {
-        ultimo = renglonPlan(actual, p, camino);
+        ultimo = renglonPlan(actual, p, camino, previoNodo);
+        previoNodo = actual;
         destino.appendChild(ultimo);
         if (!actual.hijos || actual.hijos.length !== 1) break;
         actual = actual.hijos[0];
@@ -185,7 +294,7 @@
   }
 
   function pintarPlanes(r) {
-    const s = tarjeta("Qué jugarle", "planes-titulo");
+    const s = tarjeta("Qué jugarle, jugada por jugada", "planes-titulo");
     s.appendChild(nota("Donde te toca, la jugada con la que él saca menos (con al menos " + r.minimo + " partidas). Donde le toca a él, sus respuestas más jugadas, cada una con la tuya. Antes de jugarla, mira la revisión de Stockfish: una jugada puede tener buenos números porque él no la supo castigar."));
     const grilla = el("div", "grid lg:grid-cols-2 gap-6");
 
@@ -527,5 +636,5 @@
     return listaPlan(nodos, 0);
   }
 
-  window.PreparacionPintar = { cuerpo: pintarCuerpo, plan: pintarSoloPlan, el, tabla, jugada, fecha };
+  window.PreparacionPintar = { cuerpo: pintarCuerpo, plan: pintarSoloPlan, pendiente, el, tabla, jugada, fecha };
 })();
