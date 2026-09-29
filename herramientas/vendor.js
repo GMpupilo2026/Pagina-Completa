@@ -19,7 +19,9 @@
  * Se corre después de `npm install` (package.json fija las versiones), y NO se
  * le pone ninguna cabecera a los archivos: se dejan byte a byte como vienen de
  * npm, para que `verificar-vendor.js` pueda compararlos contra el paquete y
- * decir si alguien los editó a mano.
+ * decir si alguien los editó a mano. Sentry no trae en npm un archivo para el
+ * navegador: ese lo arma esbuild (versión fijada también) desde el paquete, y
+ * se compara igual, armándolo de nuevo.
  */
 const fs = require("fs");
 const path = require("path");
@@ -31,9 +33,9 @@ const LIBRERIAS = require("./lib/librerias-vendor.js");
 
 let faltan = 0;
 for (const lib of LIBRERIAS) {
-  let origen;
+  let bytes;
   try {
-    origen = require.resolve(lib.npm, { paths: [raiz] });
+    bytes = LIBRERIAS.contenido(lib);
   } catch {
     console.error(`Falta el paquete de ${lib.nombre}. Corre primero:  npm install`);
     faltan += 1;
@@ -42,9 +44,9 @@ for (const lib of LIBRERIAS) {
   const destino = path.join(raiz, lib.archivo);
   const antes = fs.existsSync(destino) ? fs.readFileSync(destino) : null;
   fs.mkdirSync(path.dirname(destino), { recursive: true });
-  fs.copyFileSync(origen, destino);
+  fs.writeFileSync(destino, bytes);
   const version = require(path.join(raiz, "node_modules", lib.paquete, "package.json")).version;
-  console.log(antes && Buffer.compare(antes, fs.readFileSync(destino)) === 0
+  console.log(antes && Buffer.compare(antes, bytes) === 0
     ? `${lib.archivo} sigue en ${version} (sin cambios)`
     : `${lib.archivo}: ahora es la ${version}`);
 }

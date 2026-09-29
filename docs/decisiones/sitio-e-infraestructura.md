@@ -386,6 +386,65 @@ página se queda en «Comprobando tu sesión…» para siempre—, que toda pág
 use `js/supabase-client.js` cargue antes la librería, y que el archivo siga
 siendo el de npm sin editar a mano.
 
+## Los errores de la gente llegan a Sentry
+
+Hasta acá, cuando algo se caía en la computadora o el celular de alguien —un
+tablero que no carga en un Android viejo, un panel que revienta en Safari—,
+nadie se enteraba salvo que la persona escribiera. Los verificadores prueban con
+un navegador y datos de mentira; esto ve lo que pasa con aparatos, cuentas y
+datos de verdad. **Lo que no ve**: la mayoría de lo que se rompe en este sitio
+no da ningún error. Eso lo siguen cuidando los verificadores; Sentry no los
+reemplaza.
+
+- **`js/errores.js` va en todas las páginas** (lo pone `pwa-cabecera.py`, en el
+  mismo bloque que `pwa.js`) y **síncrono**: tiene que estar escuchando antes de
+  que corran los scripts del final del `<body>`. Con `defer` correría después
+  que ellos y sus errores no los vería nadie. Pesa 7 KB sin comprimir.
+  Quedan fuera las mismas páginas que no llevan la cabecera de app
+  (`inscripcion.html`, `formulario.html`, `offline.html` y los documentos
+  accesibles).
+- **La librería de Sentry no se baja al entrar**: `js/vendor/sentry.js` (92 KB,
+  32 comprimida) se pide recién cuando hay un error que mandar. Quien no tiene
+  ninguno —casi todos— no la descarga nunca. Los errores que pasan mientras
+  llega esperan en una cola.
+- **Sentry ya no publica en npm un archivo para el navegador** (solo en su CDN,
+  y un CDN es justo lo que se sacó del sitio: ver «Las librerías de terceros
+  tampoco vienen de un CDN»). Lo arma esbuild desde `@sentry/browser`, con las
+  dos versiones fijadas en `package.json`; la entrada es
+  `herramientas/lib/sentry-entrada.mjs` y lo corre `vendor.js` como a las demás.
+  Armar dos veces da los mismos bytes, así que `verificar-vendor.js` lo compara
+  igual.
+- **Sin datos de la gente**: `sendDefaultPii: false` (ni IP ni cuenta), sin las
+  migas de pan de clics, consola y pedidos (guardan textos y direcciones), y la
+  dirección —la de la página y la de cada línea de la pila— va **sin lo que
+  sigue al `?` ni al `#`**: el enlace de un correo de Supabase trae el token de
+  la sesión en el `#`. Eso lo encontró el verificador: un error de un script
+  escrito en la página lleva de archivo la dirección entera. Sentry está en la
+  lista de proveedores de `privacidad.html`. Conviene además activar en el
+  proyecto de Sentry «Prevent Storing of IP Addresses».
+- **Tope de 10 avisos por página**, y el mismo error cuenta una vez: un error en
+  un bucle no se come la cuota del mes (el plan gratis trae unos 5000).
+- **No se manda** lo que viene de una extensión del navegador ni «Script error.»
+  (un script de otro dominio, sin nada adentro): no es nuestro y no se puede
+  arreglar. Tampoco un recurso que no cargó (una imagen): no es un error de
+  código.
+- **Solo en el sitio publicado.** En localhost está apagado; los verificadores
+  lo prenden con `window.__erroresPrueba = { dsn }` y atrapan el envío.
+- **Para prenderlo hacen falta DOS cosas**: el DSN en `js/errores.js` y su
+  dirección (`oNNN.ingest.us.sentry.io`, exacta, no `*.sentry.io`: un comodín
+  dejaría a un script inyectado mandar datos a cualquier proyecto de Sentry) en
+  el `connect-src` de `_headers`. Sin la segunda, la CSP corta cada envío y
+  solo lo dice en la consola de la persona. `verificar-errores.js` revisa las
+  dos juntas.
+
+**Al tocar `js/errores.js` o su cabecera, correr
+`node herramientas/verificar-todo.js errores`**: que todas las páginas lo
+carguen síncrono y con una ruta que llega, que al cargar no se baje la
+librería, que lleguen un error del final del `<body>` y una promesa rechazada
+(también desde `entreno/`), que no viaje nada del `?` ni del `#`, que lo de una
+extensión no se mande y que el tope sea 10. Comprobado que discrimina: con
+`defer`, con el tope en 30 y sin limpiar la pila, salta.
+
 ## Lo pesado se baja cuando se usa, no al entrar
 
 La portada pesaba **7,9 MB** y tardaba 16 segundos en terminar de cargar con red
