@@ -123,9 +123,23 @@
     return r;
   }
 
+  /* El estado armado de nuevo desde lo que ya pasó, sin guardarlo aparte:
+     [{ id, nota, dia }] en el orden en que se jugó → { id → ficha }. Es para
+     quien ya registra cada intento (plan-rival.html, en training_progress):
+     lo que se deriva de otras filas no se guarda. `ultimo` queda con el día. */
+  function desdeHistoria(historia) {
+    var e = {};
+    (historia || []).forEach(function (h) {
+      var f = calificar(e[h.id] || null, h.nota, h.dia);
+      f.ultimo = h.dia;
+      e[h.id] = f;
+    });
+    return e;
+  }
+
   var api = {
     hoy: hoy, sumarDias: sumarDias, fichaNueva: fichaNueva,
-    calificar: calificar, toca: toca, pendientes: pendientes, resumen: resumen,
+    calificar: calificar, toca: toca, pendientes: pendientes, resumen: resumen, desdeHistoria: desdeHistoria,
     FACILIDAD_INICIAL: FACILIDAD_INICIAL, FACILIDAD_MINIMA: FACILIDAD_MINIMA,
     FACILIDAD_MAXIMA: FACILIDAD_MAXIMA, TOPE_DIAS: TOPE_DIAS,
   };

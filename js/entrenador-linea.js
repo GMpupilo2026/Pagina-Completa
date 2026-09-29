@@ -16,7 +16,8 @@
  *
  *     const e = EntrenadorLinea.montar(contenedor, { nombre: "Tablero del entrenamiento" });
  *     e.empezar(["e4", "e5", "Nf3"], { color: "w", titulo: "…", notas: [...],
- *                                      alTerminar: ({ errores, pistas }) => … });
+ *                                      alTerminar: ({ errores, pistas, limpia, fallos }) => … });
+ *     (`fallos`: el índice de cada jugada de la línea donde hubo error o pista)
  *
  * Lo usa plan-rival.html. El entrenador de Aperturas (js/entreno-aperturas.js)
  * hace lo mismo con su propia pantalla, más vieja que este módulo.
@@ -52,6 +53,8 @@ window.EntrenadorLinea = (function () {
     // Partida libre: { rival, alJugar }; null en el modo de la línea.
     let libre = null, partida = 0;
     let juego = null, indice = 0, errores = 0, pistas = 0;
+    // Las jugadas de la línea (su índice) donde hubo un error o una pista.
+    let fallos = new Set();
     let seleccion = null, esperandoRival = false, terminada = false, pistaDesde = null;
 
     contenedor.textContent = "";
@@ -201,6 +204,7 @@ window.EntrenadorLinea = (function () {
         // Legal, pero no es la del plan: se deshace y cuenta.
         juego.undo();
         errores += 1;
+        fallos.add(indice);
         seleccion = null;
         dibujar();
         marcarMal(j.to);
@@ -240,6 +244,7 @@ window.EntrenadorLinea = (function () {
     function pista() {
       if (terminada || !meToca()) return;
       pistas += 1;
+      fallos.add(indice);
       const prueba = new Chess(juego.fen());
       const m = prueba.move(jugadas[indice], { sloppy: true });
       pistaDesde = m ? m.from : null;
@@ -251,7 +256,7 @@ window.EntrenadorLinea = (function () {
       terminada = true;
       pintarTurno();
       bPista.disabled = true;
-      if (alTerminar) alTerminar({ errores, pistas, limpia: errores === 0 && pistas === 0 });
+      if (alTerminar) alTerminar({ errores, pistas, limpia: errores === 0 && pistas === 0, fallos: [...fallos].sort((a, b) => a - b) });
     }
 
     // ---------------------------------------------------------- partida libre
@@ -344,7 +349,7 @@ window.EntrenadorLinea = (function () {
       color = oc.color === "b" ? "b" : "w";
       alTerminar = oc.alTerminar || null;
       juego = new Chess();
-      indice = 0; errores = 0; pistas = 0;
+      indice = 0; errores = 0; pistas = 0; fallos = new Set();
       seleccion = null; pistaDesde = null; esperandoRival = false; terminada = false;
       titulo.textContent = oc.titulo || "";
       titulo.hidden = !titulo.textContent;
