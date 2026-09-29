@@ -7,6 +7,11 @@
  *
  *   revisar(r, { alAvanzar(hechas, total), parar() → bool })
  *     → { tareas, evals, hechas, detalle, error }
+ *
+ * Lo que ya se revisó (r.motor.lineas) no se vuelve a pedir: cuando el plan
+ * cambia (llega el cruce con un alumno y el plan pasa a ser a su medida),
+ * se revisa solo lo nuevo.
+ *   faltan(r) → cuántas tareas no tienen todavía su evaluación
  */
 (function () {
   "use strict";
@@ -69,10 +74,25 @@
 
   function disponible() { return !!(window.SharedEngine && window.Chess); }
 
+  // Las evaluaciones que ya trae el resultado, por clave de tarea.
+  function yaRevisadas(r) {
+    const hechas = {};
+    for (const x of (r.motor && r.motor.lineas) || []) {
+      hechas[x.sec.concat(x.jugada).join(" ")] = { antes: x.antes, mejor: x.mejor, despues: x.despues };
+    }
+    return hechas;
+  }
+
+  function faltan(r) {
+    const ya = yaRevisadas(r);
+    return A.tareasDelMotor(r).filter((t) => !ya[t.clave]).length;
+  }
+
   async function revisar(r, o) {
     const tareas = A.tareasDelMotor(r);
     const cache = new Map();
     const evals = {};
+    const ya = yaRevisadas(r);
     let hechas = 0, error = null;
     const cuando = (fen) => {
       if (!cache.has(fen)) cache.set(fen, evaluar(fen));
@@ -81,6 +101,7 @@
     try {
       for (const t of tareas) {
         if (o.parar && o.parar()) break;
+        if (ya[t.clave]) { evals[t.clave] = ya[t.clave]; hechas += 1; continue; }
         if (o.alAvanzar) o.alAvanzar(hechas, tareas.length);
         const antes = A.fenDe(t.sec);
         const despues = A.fenDe(t.sec.concat(t.jugada));
@@ -99,5 +120,5 @@
   }
 
   // `evaluar(fen)` sola también: el tablero de la línea la pide en cada paso.
-  window.PreparacionMotor = { revisar, evaluar, disponible, PROFUNDIDAD, MOTOR };
+  window.PreparacionMotor = { revisar, faltan, evaluar, disponible, PROFUNDIDAD, MOTOR };
 })();

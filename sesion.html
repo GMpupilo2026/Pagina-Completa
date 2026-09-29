@@ -85,8 +85,21 @@
                     <!-- Lo que contestó cada alumno en ESTA clase (resumen_de_la_clase, ver
                          js/resumen-clase.js): se ve antes de confirmar, que es cuando todavía
                          se pueden calificar las respuestas que faltan. -->
+                    <!-- La pregunta de salida (questions.de_salida): la última, sobre lo visto. El
+                         veredicto (salida_de_la_clase) queda en el registro y se le recuerda al
+                         profe al abrir la clase siguiente. -->
+                    <div id="salida-caja" class="sm:col-span-2 mt-1 rounded-lg border border-accent-400/60 bg-white dark:bg-brand-950 px-3 py-2">
+                        <p class="text-xs font-semibold text-brand-700 dark:text-brand-200"><span aria-hidden="true">🚪 </span>Pregunta de salida <span class="font-normal">(opcional): una última, sobre lo visto, para saber si el tema quedó o hay que repetirlo.</span></p>
+                        <div class="flex flex-wrap gap-2 mt-1.5">
+                            <button id="salida-termometro-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🌡️ </span>Preguntar: ¿lo entendiste?</button>
+                            <button id="salida-jugada-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">❓ </span>Preguntar: ¿qué jugarías? en el tablero</button>
+                        </div>
+                        <p id="salida-resultado" hidden class="text-sm text-brand-700 dark:text-brand-200 mt-1.5" aria-live="polite"></p>
+                    </div>
                     <div id="clase-resumen" class="sm:col-span-2 mt-1 rounded-lg bg-white dark:bg-brand-950 border border-brand-100 dark:border-brand-800 px-3 py-2" aria-live="polite"></div>
                 </div>
+                <!-- Lo que dijo la pregunta de salida de la clase anterior: se recuerda al empezar. -->
+                <p id="salida-pasada" hidden class="w-full text-sm text-brand-700 dark:text-brand-200"></p>
             </div>
 
             <div class="grid lg:grid-cols-[1fr_320px] gap-8 items-start">

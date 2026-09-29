@@ -89,6 +89,8 @@ window.__inserts = [];   // { tabla, fila }
       in(col, vals) { filas2 = filas2.filter((r) => vals.map(String).includes(String(r[col]))); return b; },
       gte() { return b; }, lte() { return b; }, or() { return b; },
       is(col, val) { if (val === null) filas2 = filas2.filter((r) => r[col] === null || r[col] === undefined); return b; },
+      // .not("ended_at", "is", null): las que sí tienen valor (la clase pasada).
+      not(col, op, val) { if (op === "is" && val === null) filas2 = filas2.filter((r) => r[col] !== null && r[col] !== undefined); return b; },
       order() { return b; }, limit() { return b; }, range() { return b; },
       insert(fila) { window.__inserts.push({ tabla: tabla, fila: fila }); pend = Object.assign({ id: 1 }, fila); filas2 = [pend]; return b; },
       /* Desde que la clase está abierta, la alumna marca su asistencia sola

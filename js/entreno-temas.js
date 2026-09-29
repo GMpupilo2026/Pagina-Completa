@@ -339,6 +339,7 @@ function showThemes(){
 let currentTheme = null;
 let currentIndex = 0;
 let game = null;
+let finEjercicio = null;   // «Siguiente» y «Ver la línea» del ejercicio terminado
 let orientation = 'w';
 let solutionStep = 0;
 let selectedSquare = null;
@@ -442,6 +443,12 @@ function refrescarComandos(){
 }
 
 function jugarEscribiendo(texto, api){
+  // Terminado el ejercicio, «siguiente» escrito hace lo mismo que el botón.
+  if(finEjercicio && finEjercicio.activo()){
+    if(/^\s*sig(uiente)?\s*$/i.test(texto)){ api.limpiar(); finEjercicio.siguiente(); }
+    else api.decir('Ejercicio terminado. Escribe "siguiente" para pasar al que sigue.');
+    return;
+  }
   if(locked){ api.decir('Espera: el rival está respondiendo.'); return; }
   // El intérprete busca la jugada entre las LEGALES y no toca la partida, así
   // que no hace falta ninguna copia: quien decide si entra es playMove(), la
@@ -464,6 +471,7 @@ function highlightTargets(square){ EjercicioTablero.marcarDestinos(document.getE
 
 function loadPuzzle(){
   const puzzle = currentPuzzle();
+  if(finEjercicio){ finEjercicio.cerrar(); finEjercicio = null; }
   document.getElementById('play-area').style.display = 'block';
   document.getElementById('celebration').style.display = 'none';
   if(!puzzle){
@@ -549,12 +557,15 @@ function playMove(from, to, promotion){
   const expected = puzzle.solution[solutionStep];
   // La de la solución o cualquier jugada que dé mate (js/ejercicio-tablero.js).
   if(!EjercicioTablero.esAcierto(game, moveResult, expected)){
+    // Qué contesta el rival, si chess.js lo puede afirmar (mate en una o una
+    // pieza que se pierde): el error se entiende mejor que con un «no».
+    const refuta = EjercicioTablero.refutacion(game);
     game.undo();
     drawBoard();
     missedThisPuzzle = true;
     resetStreak();
     EjercicioTablero.destello(document.querySelector('[data-square="' + to + '"]'));
-    setStatus(`${moveResult.san} es legal, pero no es la jugada de la solución.`, 'bad');
+    setStatus(`${EjercicioTablero.jugadaEs(moveResult.san)} es legal, pero no es la jugada de la solución.` + (refuta ? ' ' + refuta : ''), 'bad');
     return;
   }
   lastMove = { from, to };
@@ -614,19 +625,26 @@ function finishPuzzle(){
   }
   updateProgressBar();
   updateOverall();
-  setTimeout(() => {
-    if(enRepaso()){
-      if(currentIndex < repasoIds.length - 1){ currentIndex++; loadPuzzle(); }
-      else { currentIndex = repasoIds.length; terminarRepaso(); }
-      return;
-    }
-    if(solvedCountFor(currentTheme) < idsOf(currentTheme).length){
-      currentIndex = siguienteIndice(currentTheme, currentIndex + 1);
-      loadPuzzle();
-    } else {
-      finishTheme();
-    }
-  }, 1000);
+  // Antes saltaba al siguiente al segundo: no daba tiempo de ver la línea.
+  // Ahora el alumno decide cuándo, y puede recorrer lo que se jugó.
+  finEjercicio = EjercicioTablero.fin({
+    caja: '#fin-ejercicio', desde: puzzle.fen, jugadas: game.history(), orientacion: orientation,
+    siguiente: pasarAlSiguiente,
+  });
+}
+function pasarAlSiguiente(){
+  finEjercicio = null;
+  if(enRepaso()){
+    if(currentIndex < repasoIds.length - 1){ currentIndex++; loadPuzzle(); }
+    else { currentIndex = repasoIds.length; terminarRepaso(); }
+    return;
+  }
+  if(solvedCountFor(currentTheme) < idsOf(currentTheme).length){
+    currentIndex = siguienteIndice(currentTheme, currentIndex + 1);
+    loadPuzzle();
+  } else {
+    finishTheme();
+  }
 }
 
 function finishTheme(){
