@@ -156,6 +156,26 @@ errores (`material_slug` `plan-rival`, en el catálogo de
 `js/material-plataforma.js` con `noSeElige`: no se ofrece en Tareas, porque
 cada plan es de un alumno). Ver «Entrenar el plan: etapa 7».
 
+### El diagnóstico de nivel se pide como tarea, y solo cuenta el nuevo
+
+El profe le pide el diagnóstico a un alumno con un renglón «Diagnóstico de
+nivel» en Tareas. En el catálogo lleva `unaVez` (sin cantidad que elegir: va
+fija en 1 y el campo no se muestra) y `frase` («Hacer el diagnóstico de
+nivel», en vez de «Hacer 1 diagnósticos de…»), y ya **no ofrece
+`completar`**: que el alumno lo marque a mano sin rendirlo no mide nada.
+
+- **Es la única `cantidad` que cuenta desde que se asigna**, no desde siempre
+  (migración `diagnostico_asignado_cuenta_desde_la_tarea`). El diagnóstico es
+  una medición: si el profe lo pide es porque quiere una nueva, y uno de hace
+  meses daría el renglón por cumplido el día que nace — y la tarjeta no se
+  iluminaría nunca. El resto sigue contando lo ya resuelto.
+- Mientras el renglón no esté cumplido, el panel del alumno **ilumina la
+  tarjeta del diagnóstico** y la franja de arriba lo nombra (ver «La tarjeta
+  del diagnóstico se ilumina cuando el profe lo pide» en `paneles.md`).
+- `verificar-tareas.js` arma el renglón y pide que no ofrezca más meta que
+  `cantidad`, que esconda la cantidad con 1 puesto, que la frase se lea bien y
+  que al cambiar de material vuelva el 10 de siempre.
+
 Lo que se rompe acá no da error: un renglón que cuenta la actividad equivocada,
 un enlace sin su recorte, o una tarea que se le manda a todos los alumnos en
 vez de a los marcados.

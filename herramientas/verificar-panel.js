@@ -1062,6 +1062,94 @@ async function pruebaTareasAlumna(browser) {
   await r.ctx.close();
 }
 
+/* El diagnóstico que pidió el profe: se asigna como un renglón de una tarea
+   (material_slug «diagnostico») y, mientras no esté cumplido, la tarjeta del
+   diagnóstico se ILUMINA —anillo, un punto que late y la etiqueta escrita— y
+   lleva a la prueba con su `?tarea=`. Lo cumplido lo decide la base
+   (tareas_con_avance, que solo cuenta el rendido después de asignarlo): acá
+   no se vuelve a calcular. */
+function tareasConDiagnostico(cumplido, situacion) {
+  const dia = (n) => new Date(Date.now() + n * 86400000).toISOString();
+  return [
+    { id: "td", alumno_id: "u-ana", situacion: situacion || "pendiente", titulo: "Diagnóstico de nivel",
+      vence_at: dia(situacion === "vencida" ? -2 : 1), renglones: 1, cumplidos: cumplido ? 1 : 0,
+      items: [{ id: "r1", material_slug: "diagnostico", meta_tipo: "cantidad", meta_cantidad: 1,
+                material_href: "entreno/diagnostico.html", hecho: cumplido ? 1 : 0, cumplido: !!cumplido }] },
+    { id: "t2", alumno_id: "u-ana", situacion: "pendiente", titulo: "Mates en dos",
+      vence_at: dia(5), renglones: 1, cumplidos: 0, items: [] },
+  ];
+}
+
+async function pruebaDiagnosticoPedido(browser) {
+  console.log("\n=== El diagnóstico que pidió el profe ===");
+  const leer = (opciones, tareas) => panel(browser, [ALUMNA, PROFE], "u-ana", opciones || {}, {
+    rpc: { tareas_con_avance: tareas, informes_resumen_alumnos: RESUMEN_ANA,
+           informes_cursos_alumnos: CURSOS_ANA, progreso_dias_y_racha: RACHA_ANA },
+  });
+  const VER = () => {
+    const a = document.querySelector("#tile-grid a[href^='entreno/diagnostico.html']");
+    if (!a) return null;
+    const punto = a.querySelector("[aria-hidden=true].absolute");
+    const latido = punto && punto.querySelector(".animate-ping");
+    const etiqueta = Array.from(a.querySelectorAll("span")).filter((s) => /^Te lo pidió tu profe/.test(s.textContent)).pop();
+    return {
+      href: a.getAttribute("href"),
+      // Toda tarjeta lleva sombra: el anillo se nota en que la suya es
+      // DISTINTA de la de Tareas, que está al lado y no se ilumina nunca.
+      anillo: getComputedStyle(a).boxShadow
+        !== getComputedStyle(document.querySelector("#tile-grid a[href='tareas.html']")).boxShadow,
+      etiqueta: etiqueta && etiqueta.checkVisibility() ? etiqueta.textContent : "",
+      punto: !!(punto && punto.checkVisibility()),
+      latido: latido ? getComputedStyle(latido).animationName : "",
+      grupo: a.closest("section").querySelector("h2").textContent,
+      franja: document.getElementById("pendientes-aviso-texto").textContent,
+      franjaEnlace: document.getElementById("pendientes-aviso").getAttribute("href"),
+      franjaCta: document.getElementById("pendientes-aviso-cta").textContent,
+      cuantas: document.querySelectorAll("#tile-grid a[href^='entreno/diagnostico.html']").length,
+    };
+  };
+
+  let r = await leer({}, tareasConDiagnostico(false));
+  let v = await r.page.evaluate(VER);
+  igual("pendiente: la tarjeta sigue en «Lo que te pone tu profesor», y una sola vez",
+    [v.grupo, v.cuantas], ["Lo que te pone tu profesor", 1]);
+  igual("lleva a la prueba con su tarea, para que la franja de la tarea salga adentro",
+    v.href, "entreno/diagnostico.html?tarea=td");
+  igual("se ilumina: el anillo SE VE", v.anillo, "true");
+  igual("y dice por qué, escrito (el punto solo es adorno)", v.etiqueta, "Te lo pidió tu profe · vence mañana");
+  igual("el punto se ve y late", [v.punto, v.latido], [true, "ping"]);
+  igual("la franja de arriba lo nombra", v.franja, "Tu profe te pidió el diagnóstico de nivel. Vence mañana.");
+  igual("y lleva directo a la prueba", [v.franjaEnlace, v.franjaCta],
+    ["entreno/diagnostico.html?tarea=td", "Hacer el diagnóstico →"]);
+  igual("sin errores en consola", r.errores.join(" | ") || "ninguno", "ninguno");
+  await r.ctx.close();
+
+  // Con «reducir movimiento», el punto se queda quieto (pero sigue ahí).
+  r = await leer({ reducedMotion: "reduce" }, tareasConDiagnostico(false));
+  v = await r.page.evaluate(VER);
+  igual("con «reducir movimiento» el punto NO late", [v.punto, v.latido], [true, "none"]);
+  await r.ctx.close();
+
+  // Vencida: no dice «vence hoy», dice que se pasó la fecha.
+  r = await leer({}, tareasConDiagnostico(false, "vencida"));
+  v = await r.page.evaluate(VER);
+  igual("vencida: lo dice como es", v.etiqueta, "Te lo pidió tu profe · se pasó la fecha");
+  await r.ctx.close();
+
+  // Cumplido (ya lo rindió después de que se lo pidieron): se apaga solo.
+  r = await leer({}, tareasConDiagnostico(true));
+  v = await r.page.evaluate(VER);
+  igual("ya rendido: la tarjeta vuelve a ser la de siempre",
+    [v.href, v.anillo, v.etiqueta, v.punto], ["entreno/diagnostico.html", false, "", false]);
+  await r.ctx.close();
+
+  // Sin que nadie se lo pida, tampoco.
+  r = await leer({}, tareasDeMentira(false));
+  v = await r.page.evaluate(VER);
+  igual("sin pedido: nada iluminado", [v.href, v.anillo, v.punto], ["entreno/diagnostico.html", false, false]);
+  await r.ctx.close();
+}
+
 /* La franja de "Estado de la clase" ocupaba el primer lugar de la página para
    decirle a un alumno fuera del horario —casi siempre— que NO pasa nada, y le
    empujaba las tareas hacia abajo. Ahora solo sale cuando tiene algo que decir.
@@ -2084,6 +2172,7 @@ if (require.main !== module) return;
   try {
     await pruebaAlumna(browser);
     await pruebaTareasAlumna(browser);
+    await pruebaDiagnosticoPedido(browser);
     await pruebaExamenesEnLaFranja(browser);
     await pruebaPrimerPaso(browser);
     await pruebaFranjaDeClase(browser);

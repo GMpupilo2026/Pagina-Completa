@@ -56,6 +56,8 @@ function fraseDe(r) {
        enviadas seguirían diciendo la palabra vieja. Lo que sí es una foto es
        el nombre del material, que tiene que sobrevivir a que lo renombren. */
     const h = MaterialPlataforma.herramienta(r.material_slug);
+    // Lo que se pide una sola vez no dice «Hacer 1 diagnósticos de…».
+    if (h && h.frase) return h.frase;
     const unidad = (h && h.unidad) || "ejercicios";
     const verbo = VERBO[unidad] || "Hacer";
     return `${verbo} ${r.meta_cantidad} ${unidad} de ${nombre}`;
@@ -298,14 +300,26 @@ async function refrescarRenglon(div, cambioMaterial) {
     const meta = div.querySelector(".r-meta").value;
     const cantWrap = div.querySelector(".r-cantidad-wrap");
     const cant = div.querySelector(".r-cantidad");
-    cantWrap.classList.toggle("hidden", meta === "completar");
+    cantWrap.classList.toggle("hidden", meta === "completar" || !!(h && h.unaVez));
+    /* Lo que se pide una sola vez (el diagnóstico) no tiene cantidad que
+       elegir: va fija en 1. Al cambiar de material se devuelve el 10 de
+       siempre, o el renglón siguiente nacería pidiendo un ejercicio. */
+    if (h && h.unaVez) {
+        cant.value = "1";
+        cant.dataset.fija = "1";
+    } else if (cant.dataset.fija) {
+        cant.value = "10";
+        delete cant.dataset.fija;
+    }
 
     // El tope es de verdad: no se pueden pedir 300 ejercicios de un tema que
     // tiene 53. Pedir más de los que hay dejaría la tarea imposible de
     // terminar, y eso no daría ningún error — la barra se quedaría a un paso.
     const opc = div.querySelector(".r-recorte").selectedOptions[0];
     const total = opc && opc.dataset.total ? parseInt(opc.dataset.total, 10) : 0;
-    if (meta === "cantidad" && total > 0) {
+    if (h && h.unaVez) {
+        cant.max = "1";
+    } else if (meta === "cantidad" && total > 0) {
         cant.max = String(total);
         if (parseInt(cant.value, 10) > total) cant.value = String(total);
     } else {

@@ -299,7 +299,24 @@ async function main() {
     // Renglón 2: 10 minutos de coordenadas.
     await pagina.click("#agregar-renglon");
     await pagina.waitForSelector("#renglones .renglon:nth-of-type(2)", { timeout: 5000 });
+    /* De paso, el diagnóstico de nivel: se pide UNA vez y se cuenta solo al
+       rendirlo, así que no hay cantidad que elegir ni «terminarlo» que el
+       alumno marque a mano. Y al cambiar de material vuelve el 10 de
+       siempre: un renglón que heredara el 1 pediría un solo ejercicio. */
+    await pagina.selectOption("#renglones .renglon:nth-of-type(2) .r-material", "herramienta:diagnostico");
+    const metasDiag = await pagina.$$eval("#renglones .renglon:nth-of-type(2) .r-meta option", (e) => e.map((o) => o.value));
+    ok(JSON.stringify(metasDiag) === JSON.stringify(["cantidad"]),
+      `el diagnóstico solo puede pedirse por cantidad (se cuenta al rendirlo), ofreció ${JSON.stringify(metasDiag)}`);
+    ok(!(await pagina.isVisible("#renglones .renglon:nth-of-type(2) .r-cantidad-wrap")),
+      "el diagnóstico se pide una vez: no debería pedir una cantidad");
+    ok(await pagina.inputValue("#renglones .renglon:nth-of-type(2) .r-cantidad") === "1",
+      "el diagnóstico debería ir con cantidad 1");
+    const fraseDiag = await pagina.textContent("#renglones .renglon:nth-of-type(2) .r-frase");
+    ok(fraseDiag === "Hacer el diagnóstico de nivel", `la frase del diagnóstico no se lee bien: ${JSON.stringify(fraseDiag)}`);
+
     await pagina.selectOption("#renglones .renglon:nth-of-type(2) .r-material", "herramienta:coordenadas");
+    ok(await pagina.inputValue("#renglones .renglon:nth-of-type(2) .r-cantidad") === "10",
+      "al dejar el diagnóstico, la cantidad debería volver a 10");
     await pagina.selectOption("#renglones .renglon:nth-of-type(2) .r-meta", "minutos");
     await pagina.fill("#renglones .renglon:nth-of-type(2) .r-cantidad", "10");
 

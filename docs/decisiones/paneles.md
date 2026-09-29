@@ -101,6 +101,29 @@ lista, y el resto se acomoda solo.
     que en la grilla de ninguno de los dos quede ni un enlace a
     `arbitraje` —ni escondido: un enlace invisible pero presente sigue siendo
     una parada de tabulador—.
+- **La tarjeta del diagnóstico se ilumina cuando el profe lo pide.** El
+  profe lo asigna como un renglón de una tarea (ver «El diagnóstico de nivel se
+  pide como tarea, y solo cuenta el nuevo»). Mientras ese renglón no esté
+  cumplido y la tarea esté pendiente o vencida (una programada todavía no se
+  le muestra), `marcarDiagnosticoPedido()`:
+  - le pone a la tarjeta el anillo de «Sesión en vivo», un **punto que late**
+    en la esquina y la etiqueta **«Te lo pidió tu profe · vence mañana»** (o
+    «se pasó la fecha»). El punto es adorno (`aria-hidden`) y se queda quieto
+    con «reducir movimiento» (`motion-reduce:animate-none`): lo que importa va
+    escrito. La etiqueta usa el mismo par de colores que la llamada a la
+    acción de la franja, sobre el mismo fondo de tarjeta;
+  - cambia el enlace a `entreno/diagnostico.html?tarea=<id>`, así adentro sale
+    la franja de la tarea;
+  - si esa tarea es la más próxima y no hay nada urgente, la franja de arriba
+    dice «Tu profe te pidió el diagnóstico de nivel» y lleva directo a la
+    prueba.
+  - **Se repinta SOLO esa tarjeta**, no la grilla: repintarla cerraría lo que
+    estuviera abierto debajo. Y lo cumplido no se recalcula acá: sale de
+    `tareas_con_avance()`, así que al rendirlo se apaga solo.
+  - `verificar-panel.js` lo mira con los cinco casos (pendiente, «reducir
+    movimiento», vencida, ya rendido y sin pedido), midiendo lo que se ve: la
+    sombra contra la de Tareas, `checkVisibility()` de la etiqueta y el
+    `animationName` del punto.
 - **Un acceso apagado no es un enlace gris.** `renderTileCard()` le pone un
   `<div>` con `aria-disabled`, sin `href`: no promete un destino que no va a
   abrir. **Pero SÍ recibe el foco** (`tabindex="0"`, `role="link"`), y eso se

@@ -98,8 +98,16 @@ window.MaterialPlataforma = (function () {
     { slug: "confites", label: "Confites del caballo", href: "confites.html",
       actividades: ["confites"], metas: ["cantidad", "minutos"], unidad: "partidas" },
 
+    /* El diagnóstico se pide UNA vez (`unaVez`: sin cantidad que elegir) y se
+       cuenta solo al terminarlo. Solo vale el que rinde DESPUÉS de que se lo
+       asignan —tareas_con_avance() lo filtra por la fecha de la tarea—: si el
+       profe lo pide es porque quiere una medición nueva, y uno de hace meses
+       daría la tarea por hecha el día que nace. Ya no ofrece 'completar': que
+       el alumno lo marque a mano sin rendirlo no mide nada. Mientras esté
+       pendiente, el panel le ilumina la tarjeta del diagnóstico. */
     { slug: "diagnostico", label: "Diagnóstico de nivel", href: "entreno/diagnostico.html",
-      actividades: ["diagnostico"], metas: ["completar", "cantidad"], unidad: "diagnósticos" },
+      actividades: ["diagnostico"], metas: ["cantidad"], unidad: "diagnósticos",
+      unaVez: true, frase: "Hacer el diagnóstico de nivel" },
 
     { slug: "arbitraje", label: "Diagnóstico de arbitraje", href: "nivel-de-arbitraje.html",
       actividades: [], metas: ["completar"], unidad: "" },
