@@ -391,6 +391,37 @@ vuelve a crear la función porque cambia lo que devuelve, con sus permisos), e
 Informes la muestra en una tarjeta de segunda fila (ahora son quince). Lo
 prueba `verificar-informes.js`.
 
+## Tipos cuenta: racha, logros, Cómo viene y tareas
+
+Tipos de entrenamiento guardaba sus estrellas solo en el progreso de la cuenta:
+1211 ejercicios que no sumaban a la meta del día ni a la racha, no daban
+logros, no salían en «Cómo viene» y no se podían pedir como tarea. Todo eso lee
+`training_progress`, así que alcanzó con escribir ahí (migración
+`20260929052521`: `'tipos'` en el CHECK de actividades).
+
+- **Cada ejercicio va UNA vez**, la primera que se resuelve (con una estrella o
+  más): `detail.puzzle_id = "tipo:id"`, `category` = el tipo, `nivel` y
+  `estrellas`. Lo ya registrado se anota en `tipos_registrados_v1` (viaja con
+  la cuenta, `unionObjeto`) y NO se deduce de las estrellas: lo resuelto antes
+  de que existiera el registro se registra la próxima vez que se resuelve. Si
+  se mirara «¿ya tenía estrellas?», eso quedaría fuera para siempre, y una
+  tarea de «10 de Detective» podía quedar imposible para quien ya lo había
+  hecho todo.
+- **Tareas**: «Tipos de entrenamiento» está en `js/material-plataforma.js`, con
+  cantidad y minutos, y un recorte por tipo (`metas.json` → `tipos`, que arma
+  `herramientas/metas-indice.py` leyendo `tipos.json` y el catálogo). El
+  recorte es `detail.category`, que `tareas_con_avance()` ya filtraba: no hubo
+  que tocarla. El enlace abre la ficha del tipo (`tipos.html#detective`).
+- **Logros**: «De todos los tipos» (20 ejercicios), y las actividades
+  alcanzables para «Las probaste todas» pasan de 14 a 15. Nadie tenía 14 (el
+  máximo era 12): nadie pierde la medalla.
+- `verificar-tareas.js` comprueba ahora que **toda herramienta que ofrece
+  cantidad cuente una actividad que el CHECK acepta** (sin eso, la barra se
+  queda en cero y nada avisa), y que los recortes de Tipos coincidan con
+  `tipos.json`. `verificar-tipos-pagina.js` prueba el registro: una vez por
+  ejercicio, y también lo resuelto antes.
+- Precisión posicional, el Sonar y la Batalla naval siguen sin escribir ahí.
+
 ## El tema más flojo, en el hub
 
 El «Hoy te toca» propone el motivo que menos sale limpio («Tu tema más flojo,
@@ -2018,9 +2049,10 @@ enlace del profesor llevan a donde tienen que llevar.
   primero R D T A C al inglés y, si así no es legal, prueba lo demás.
 - **El avance vive en la cuenta**: `tipos_estrellas_v1` («tipo:id» → mejores
   estrellas, `maxPorClave`) y `tipos_mejor_v1` (final → menos jugadas,
-  `minPorClave`). Un ejercicio cuenta como resuelto con una estrella. **No
-  escribe en `training_progress`** (el CHECK de actividades, como Confites y el
-  Sonar); el tiempo sí, con `data-activity="tipos"`. Esa sección está en las
+  `minPorClave`). Un ejercicio cuenta como resuelto con una estrella. **Y
+  cada ejercicio resuelto va UNA vez a `training_progress`** como
+  `activity = 'tipos'` (ver «Tipos cuenta: racha, logros, Cómo viene y
+  tareas»); el tiempo, con `data-activity="tipos"`. Esa sección está en las
   dos tablas de nombres (`js/tiempo-secciones.js` y la de
   `informes-encargados`); la función del correo tiene que volver a
   desplegarse para que el correo a la casa la nombre.

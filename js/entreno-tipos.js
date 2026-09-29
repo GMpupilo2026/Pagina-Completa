@@ -20,6 +20,7 @@
   const R = window.TiposReglas;
   const CLAVE_ESTRELLAS = "tipos_estrellas_v1";
   const CLAVE_MEJOR = "tipos_mejor_v1";
+  const CLAVE_REGISTRADOS = "tipos_registrados_v1";
   const LISTA_TIPOS = ["detective", "amenaza", "descarte", "balanza", "fotografia", "con-lo-justo"];
 
   let DATOS = null;
@@ -39,6 +40,22 @@
     if ((o[k] || 0) >= n) return;
     o[k] = n;
     escribir(CLAVE_ESTRELLAS, o);
+  }
+  /* Cada ejercicio resuelto va UNA vez a training_progress (activity 'tipos'):
+     así cuenta para la meta del día, la racha, los logros, «Cómo viene» y las
+     tareas, que leen esa tabla. `puzzle_id` es "tipo:id" (para contar
+     distintos) y `category` el tipo, que es el recorte de una tarea
+     («10 de Detective»). Los ya registrados se anotan aparte
+     (CLAVE_REGISTRADOS, viaja con la cuenta) y no por las estrellas: lo resuelto
+     antes de que existiera el registro se registra la próxima vez que se
+     resuelve, en vez de quedar fuera para siempre y dejar imposible una tarea. */
+  function registrar(tipo, item, estrellas) {
+    const k = C.clave(tipo, item.id);
+    const hechos = leer(CLAVE_REGISTRADOS);
+    if (hechos[k] || !window.EntrenoProgress) return;
+    hechos[k] = true;
+    escribir(CLAVE_REGISTRADOS, hechos);
+    EntrenoProgress.log("tipos", { puzzle_id: k, category: tipo, nivel: item.nivel, estrellas });
   }
   function anotarMejor(id, jugadas) {
     const o = leer(CLAVE_MEJOR);
@@ -424,6 +441,7 @@
   function terminar(item, estrellas, extra) {
     const completoAntes = nivelCompleto();
     anotarEstrellas(partida.tipo, item.id, estrellas);
+    if (estrellas >= 1) registrar(partida.tipo, item, estrellas);
     const e = estrellasDe(partida.tipo, item.id);
     $("juego-progreso").textContent = "Ejercicio " + (partida.i + 1) + " de " + partida.items.length + (e ? " · tu mejor: " + textoEstrellas(e) : "");
     if (!completoAntes && nivelCompleto()) avisarNivelCompleto();

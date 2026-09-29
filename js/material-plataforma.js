@@ -89,6 +89,14 @@ window.MaterialPlataforma = (function () {
     { slug: "finales", label: "Finales contra la máquina", href: "entreno/finales.html",
       actividades: ["finales"], metas: ["cantidad", "minutos"], unidad: "finales" },
 
+    /* Cada ejercicio resuelto se registra una vez como 'tipos', con el tipo en
+       detail.category: ese es el recorte («10 de Detective»), y el enlace
+       abre la ficha de ese tipo. */
+    { slug: "tipos", label: "Tipos de entrenamiento", href: "entreno/tipos.html",
+      actividades: ["tipos"], metas: ["cantidad", "minutos"],
+      unidad: "ejercicios", recortes: "tipos", recorteLabel: "Tipo",
+      hrefRecorte: (c) => `entreno/tipos.html#${encodeURIComponent(c)}` },
+
     { slug: "concentracion", label: "Concentración", href: "concentracion.html",
       actividades: ["concentracion"], metas: ["cantidad", "minutos"], unidad: "rondas" },
 
