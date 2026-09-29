@@ -594,6 +594,9 @@
             comentariosClase = row.comentarios && typeof row.comentarios === "object" ? row.comentarios : {};
             if (!esObservador) pintarElegido(row.elegido || null);
             pintarPensar(row.pensar || null);
+            pintarEncuesta(row.encuesta || null);
+            pintarCalentamiento(row.calentamiento || null);
+            pintarPodio(row.podio || null);
             updateTurnIndicator();
             updateAccessForRole();
             renderMoveList();
@@ -1250,7 +1253,7 @@
             ultimaVistaEnviada = "null";
             const { error } = await sb.from("game_state").update({
                 fen, moves: [], start_fen: fen, last_move: null, vista: null, comentarios: {},
-                arrows: [], circles: [], active_player_id: null, active_player_color: "both",
+                arrows: [], circles: [], encuesta: null, active_player_id: null, active_player_color: "both",
                 updated_by: session.user.id, updated_at: new Date().toISOString(),
             }).eq("id", myGameStateId);
             if (error) { console.error(error); setStatus("No se pudo transmitir la posición: " + error.message); return false; }
@@ -1295,7 +1298,10 @@
         }
 
         async function pushMarksToServer(marks) {
-            const { error } = await sb.from("game_state").update({ arrows: marks.arrows, circles: marks.circles }).eq("id", myGameStateId);
+            // Borrar todas las flechas quita también el mapa de jugadas: su leyenda ya no diría nada.
+            const cambios = { arrows: marks.arrows, circles: marks.circles };
+            if (isTeacher && !marks.arrows.length && encuestaActual) { cambios.encuesta = null; pintarEncuesta(null); }
+            const { error } = await sb.from("game_state").update(cambios).eq("id", myGameStateId);
             if (error) console.error(error);
         }
 
@@ -1526,6 +1532,14 @@
             const { filas, error } = await ResumenClase.cargar(sb, claseId);
             if (error) { console.error(error); caja.textContent = "No se pudo contar lo que hizo cada alumno: " + error.message; return; }
             ResumenClase.pintar(caja, filas);
+            const podio = document.getElementById("cierre-podio-lista");
+            if (podio) {
+                pintarListaDePuntos(podio, filas);
+                const t = document.createElement("p");
+                t.className = "text-xs font-semibold text-brand-700 dark:text-brand-200 mb-1";
+                t.textContent = "🏆 Los puntos de la clase";
+                podio.prepend(t);
+            }
         }
 
         /* Lo que se ve tiene que decir la VERDAD sobre si se está registrando,
@@ -2368,6 +2382,14 @@
                 });
                 acciones.appendChild(alTablero);
 
+                const calentar = document.createElement("button");
+                calentar.type = "button";
+                calentar.className = clases;
+                calentar.textContent = "🔥 Calentamiento";
+                calentar.title = "Que cada alumno la resuelva en su propio tablero mientras empieza la clase";
+                calentar.addEventListener("click", () => mandarCalentamiento(item.fen, null, item.pregunta || null));
+                acciones.appendChild(calentar);
+
                 if (item.pregunta) {
                     const preguntar = document.createElement("button");
                     preguntar.type = "button";
@@ -2540,14 +2562,29 @@
             handAt = handRaised ? (handAt || new Date().toISOString()) : null;
             updateRaiseHandBtn();
             if (!presenceChannel) return;
-            await presenceChannel.track({
+            await presenceChannel.track(metaDePresencia());
+        }
+
+        /* Lo que cada uno anuncia de sí mismo en la presencia, armado SIEMPRE
+           entero: track() reemplaza todo lo anterior, así que tres llamadas que
+           mandaban cada una lo suyo se pisaban (levantar la mano borraba a quién
+           miraba el profe, y al revés). */
+        let calentamientoResuelto = null;   // el `at` del calentamiento que ya resolvió
+        function metaDePresencia() {
+            return {
                 email: profile.email,
                 full_name: profile.full_name || "",
-                role: profile.role,
+                // Quien observa entra como "supervision": no es alumno,
+                // así que no aparece en la lista de alumnos ni en el
+                // chat, y el profesor ve que está mirando.
+                role: esObservador ? "supervision" : profile.role,
+                como: esObservador ? observaDesde.etiqueta : undefined,
                 online_at: new Date().toISOString(),
+                mirando_a: mirandoA,
                 hand_raised: handRaised,
                 hand_at: handAt,
-            });
+                calentamiento: calentamientoResuelto,
+            };
         }
 
         function lowerStudentHand(studentId) {
@@ -2575,7 +2612,7 @@
                             : (meta && meta.full_name) || "Tu profe");
                     }
                     if (meta && meta.role === "alumno") {
-                        onlineStudents.set(key, { email: meta.email, full_name: meta.full_name, hand_raised: !!meta.hand_raised, hand_at: meta.hand_at || null });
+                        onlineStudents.set(key, { email: meta.email, full_name: meta.full_name, hand_raised: !!meta.hand_raised, hand_at: meta.hand_at || null, calentamiento: meta.calentamiento || null });
                     } else if (meta && meta.role === "supervision") {
                         // Si además está mirando la partida de un alumno, el profe lo sabe.
                         const suya = meta.mirando_a && practiceStudentBoards[meta.mirando_a];
@@ -2583,6 +2620,7 @@
                     }
                 }
                 renderStudentsList();
+                pintarCuentaCalentamiento();
                 pintarObservadores(mirando);
                 if (!isTeacher && !esObservador) pintarTeMiran(meMiran);
                 // El nombre del elegido sale de la presencia: al recargar llega después.
@@ -2609,17 +2647,7 @@
             });
             presenceChannel.subscribe(async (status) => {
                 if (status === "SUBSCRIBED") {
-                    await presenceChannel.track({
-                        email: profile.email,
-                        full_name: profile.full_name || "",
-                        // Quien observa entra como "supervision": no es alumno,
-                        // así que no aparece en la lista de alumnos ni en el
-                        // chat, y el profesor ve que está mirando.
-                        role: esObservador ? "supervision" : profile.role,
-                        como: esObservador ? observaDesde.etiqueta : undefined,
-                        online_at: new Date().toISOString(),
-                        mirando_a: mirandoA,
-                    });
+                    await presenceChannel.track(metaDePresencia());
                 }
             });
         }
@@ -2629,14 +2657,7 @@
             mirandoA = studentId || null;
             if (!presenceChannel || !veLaPractica()) return;
             try {
-                await presenceChannel.track({
-                    email: profile.email,
-                    full_name: profile.full_name || "",
-                    role: esObservador ? "supervision" : profile.role,
-                    como: esObservador ? observaDesde.etiqueta : undefined,
-                    online_at: new Date().toISOString(),
-                    mirando_a: mirandoA,
-                });
+                await presenceChannel.track(metaDePresencia());
             } catch (e) { console.error(e); }
         }
 
@@ -3696,6 +3717,346 @@
             });
         }
 
+        /* ---------- El mapa de jugadas (game_state.encuesta) ----------
+           Lo que contestó la clase en una pregunta de jugada, pasado al tablero
+           de todos: las cinco jugadas más elegidas como flechas, y debajo,
+           escrito, qué jugada es cada color y cuántos la eligieron. Sin
+           nombres: los números salen de resultados_de_la_pregunta(), como los
+           resultados que ya se le muestran a la clase. */
+        const COLORES_ENCUESTA = ["verde", "azul", "naranja", "rojo", "negro"];
+        const NOMBRE_COLOR = { verde: "Verde", azul: "Azul", naranja: "Naranja", rojo: "Rojo", negro: "Negro" };
+        let encuestaActual = null;
+
+        async function pasarEncuestaAlTablero() {
+            const q = currentQuestion;
+            if (!q || PreguntaClase.esDeOpciones(q)) return;
+            const filas = await cargarResultados(q);
+            if (!filas) { setStatus("No se pudo contar lo que contestó la clase."); return; }
+            const arrows = [], lineas = [];
+            filas.filter((f) => f.cuantos > 0).forEach((f) => {
+                if (arrows.length >= COLORES_ENCUESTA.length) return;
+                let m = null;
+                try { m = new Chess(q.fen).move(f.respuesta, { sloppy: true }); } catch (e) { m = null; }
+                if (!m) return;
+                const color = COLORES_ENCUESTA[arrows.length];
+                arrows.push({ from: m.from, to: m.to, color });
+                lineas.push({ jugada: m.san, cuantos: f.cuantos, color });
+            });
+            if (!lineas.length) { setStatus("Todavía nadie contestó con una jugada: no hay mapa que pasar."); return; }
+            // Las flechas van en el tablero de la clase, así que tiene que tener la posición de la pregunta.
+            let k = jugadaDeLaPosicion(q.fen);
+            if (k === -1) {
+                const seguir = await Avisos.confirmar("El tablero de la clase ya no tiene la posición de la pregunta. Para pasar el mapa hay que volver a mandarla, y la partida que está ahora se reemplaza.",
+                    { titulo: "¿Volver a la posición de la pregunta?", aceptar: "Mandar la posición y el mapa" });
+                if (!seguir || !(await aplicarPosicionEnClase(q.fen))) return;
+                k = 0;
+            }
+            if (k !== board.moves().length || board.isViewingHistory()) {
+                if (k === board.moves().length) board.viewLive(); else board.viewMainAt(k);
+                renderMoveList();
+                await transmitirVista();
+            }
+            board.setMarks(arrows, []);
+            const encuesta = { question_id: q.id, lineas };
+            const { error } = await sb.from("game_state").update({ arrows, circles: [], encuesta }).eq("id", myGameStateId);
+            if (error) { console.error(error); setStatus("No se pudo pasar el mapa: " + error.message); return; }
+            pintarEncuesta(encuesta);
+            setStatus("🗺️ La clase ve en el tablero lo que jugó: " + lineas.map((l) => l.jugada + " (" + l.cuantos + ")").join(", ") + ".");
+        }
+
+        function pintarEncuesta(encuesta) {
+            encuestaActual = encuesta && Array.isArray(encuesta.lineas) && encuesta.lineas.length ? encuesta : null;
+            const caja = document.getElementById("encuesta-caja");
+            if (!caja) return;
+            caja.hidden = !encuestaActual;
+            const ul = document.getElementById("encuesta-lineas");
+            ul.innerHTML = "";
+            if (!encuestaActual) return;
+            encuestaActual.lineas.forEach((l) => {
+                const li = document.createElement("li");
+                li.className = "flex items-center gap-2";
+                const color = ClasesBoard.MARK_COLORS[l.color] ? l.color : "naranja";
+                const muestra = document.createElement("span");
+                muestra.setAttribute("aria-hidden", "true");
+                muestra.className = "inline-block w-3 h-3 rounded-full shrink-0";
+                muestra.style.background = ClasesBoard.MARK_COLORS[color];
+                const t = document.createElement("span");
+                const n = Number(l.cuantos) || 0;
+                // El color va escrito: la flecha sola no dice cuál es cuál.
+                t.textContent = NOMBRE_COLOR[color] + ": " + String(l.jugada || "") + " — " + n + (n === 1 ? " alumno" : " alumnos");
+                li.append(muestra, t);
+                ul.appendChild(li);
+            });
+            document.getElementById("encuesta-quitar-btn").hidden = !isTeacher;
+        }
+
+        async function quitarEncuesta() {
+            board.setMarks([], []);
+            const { error } = await sb.from("game_state").update({ arrows: [], circles: [], encuesta: null }).eq("id", myGameStateId);
+            if (error) { console.error(error); setStatus("No se pudo quitar el mapa: " + error.message); return; }
+            pintarEncuesta(null);
+        }
+
+        if (document.getElementById("encuesta-btn")) {
+            document.getElementById("encuesta-btn").addEventListener("click", pasarEncuestaAlTablero);
+        }
+        document.getElementById("encuesta-quitar-btn").addEventListener("click", quitarEncuesta);
+
+        /* ---------- Posición de calentamiento (game_state.calentamiento) ----------
+           Una posición para resolver mientras empieza la clase: cada alumno la
+           juega en su propio tablero, sin que cuente como pregunta. La primera
+           jugada se compara con la solución (la del ejercicio de Táctica, o la
+           que calcula el motor en la computadora del profe al mandarla). Quién
+           la resolvió va en la presencia: es de ese rato, no se guarda. */
+        let calentamientoActual = null;
+        let calentamientoBoard = null;
+        let calentamientoPintadoPara = null;
+        let calentamientoAcc = null;
+
+        const aUci = (m) => m.from + m.to + (m.promotion || "");
+        function solucionEnUci(fen, jugadas) {
+            const g = new Chess(fen);
+            const out = [];
+            for (const j of jugadas || []) {
+                let m = null;
+                try { m = g.move(j, { sloppy: true }); } catch (e) { m = null; }
+                if (!m) break;
+                out.push(aUci(m));
+            }
+            return out;
+        }
+
+        async function mandarCalentamiento(fen, solucion, titulo) {
+            const motivo = motivoPosicionInvalida(fen);
+            if (motivo) { setStatus(motivo); return false; }
+            let uci = solucionEnUci(fen, solucion);
+            if (!uci.length && typeof PracticeEngine !== "undefined") {
+                setStatus("🔥 Buscando con el motor la mejor jugada del calentamiento…");
+                const mejor = await PracticeEngine.getMove(fen, "max");
+                uci = solucionEnUci(fen, mejor ? [mejor] : []);
+            }
+            const calentamiento = { at: new Date().toISOString(), fen, solucion: uci.length ? uci : null, titulo: (titulo || "").slice(0, 140) || null };
+            const { error } = await sb.from("game_state").update({ calentamiento }).eq("id", myGameStateId);
+            if (error) { console.error(error); setStatus("No se pudo mandar el calentamiento: " + error.message); return false; }
+            pintarCalentamiento(calentamiento);
+            setStatus("🔥 Calentamiento enviado: cada alumno lo resuelve en su propio tablero. Debajo del tablero ves cuántos ya lo resolvieron.");
+            return true;
+        }
+
+        function pintarCalentamiento(cal) {
+            calentamientoActual = cal && cal.fen ? cal : null;
+            const caja = document.getElementById("calentamiento-caja");
+            if (!caja) return;
+            caja.hidden = !calentamientoActual;
+            document.getElementById("calentamiento-titulo").textContent = calentamientoActual && calentamientoActual.titulo ? ": " + calentamientoActual.titulo : "";
+            document.getElementById("calentamiento-profe").hidden = !isTeacher;
+            document.getElementById("calentamiento-alumno").hidden = isTeacher || esObservador;
+            if (!calentamientoActual) { calentamientoPintadoPara = null; return; }
+            if (isTeacher) { pintarCuentaCalentamiento(); return; }
+            if (esObservador || calentamientoPintadoPara === calentamientoActual.at) return;
+            calentamientoPintadoPara = calentamientoActual.at;
+            empezarCalentamiento();
+        }
+
+        function empezarCalentamiento() {
+            const cal = calentamientoActual;
+            if (!cal) return;
+            if (!calentamientoBoard) {
+                calentamientoBoard = new ClasesBoard(document.getElementById("calentamiento-tablero"), {
+                    interactive: true, allowArrows: false, externalCoords: true,
+                    onMove: () => juzgarCalentamiento(),
+                });
+                calentamientoAcc = window.ClaseAdaptada ? ClaseAdaptada.montar(document.getElementById("calentamiento-cmd"), () => calentamientoBoard, {
+                    etiqueta: "Escribe tu jugada del calentamiento",
+                    porQueNoPuedes: () => calentamientoResuelto === (calentamientoActual && calentamientoActual.at)
+                        ? "Ya lo resolviste." : "Toca «Intentarlo otra vez» para volver a jugar.",
+                }) : null;
+            }
+            const color = cal.fen.split(" ")[1] === "b" ? "b" : "w";
+            calentamientoBoard.setFlipped(color === "b");
+            calentamientoBoard.loadFen(cal.fen);
+            calentamientoBoard.setInteractive(calentamientoResuelto !== cal.at);
+            if (calentamientoAcc) calentamientoAcc.actualizar();
+            document.getElementById("calentamiento-turno").textContent = (color === "b" ? "Juegan ⚫ Negras" : "Juegan ⚪ Blancas") + ": encuentra la mejor jugada.";
+            document.getElementById("calentamiento-msg").textContent = calentamientoResuelto === cal.at ? "✅ ¡Ya lo resolviste!" : "";
+            document.getElementById("calentamiento-otra-btn").hidden = true;
+            document.getElementById("calentamiento-solucion-btn").hidden = !cal.solucion || calentamientoResuelto === cal.at;
+        }
+
+        async function juzgarCalentamiento() {
+            const cal = calentamientoActual;
+            if (!cal) return;
+            calentamientoBoard.setInteractive(false);
+            const g = new Chess(cal.fen);
+            const jugada = calentamientoBoard.moves()[0];
+            const m = jugada ? g.move(jugada) : null;
+            const msg = document.getElementById("calentamiento-msg");
+            const bien = !!(m && cal.solucion && cal.solucion[0] === aUci(m));
+            if (bien) {
+                msg.textContent = "✅ ¡Bien! " + m.san + " es la jugada.";
+                document.getElementById("calentamiento-solucion-btn").hidden = true;
+                document.getElementById("calentamiento-otra-btn").hidden = true;
+                calentamientoResuelto = cal.at;
+                if (presenceChannel) await presenceChannel.track(metaDePresencia());
+            } else {
+                msg.textContent = cal.solucion ? "❌ " + (m ? m.san : "Esa") + " no es la mejor. Inténtalo otra vez." : "Tu profe no dejó la solución de esta posición: coméntala en la clase.";
+                document.getElementById("calentamiento-otra-btn").hidden = false;
+            }
+        }
+
+        document.getElementById("calentamiento-otra-btn").addEventListener("click", () => {
+            if (!calentamientoActual) return;
+            calentamientoBoard.loadFen(calentamientoActual.fen);
+            calentamientoBoard.setInteractive(true);
+            if (calentamientoAcc) calentamientoAcc.actualizar();
+            document.getElementById("calentamiento-msg").textContent = "";
+            document.getElementById("calentamiento-otra-btn").hidden = true;
+        });
+        document.getElementById("calentamiento-solucion-btn").addEventListener("click", () => {
+            const cal = calentamientoActual;
+            if (!cal || !cal.solucion) return;
+            const g = new Chess(cal.fen);
+            const sans = [];
+            for (const u of cal.solucion) {
+                const m = g.move({ from: u.slice(0, 2), to: u.slice(2, 4), promotion: u[4] || undefined });
+                if (!m) break;
+                sans.push(m.san);
+            }
+            calentamientoBoard.loadFen(cal.fen);
+            calentamientoBoard.setInteractive(false);
+            calentamientoBoard.setMarks([{ from: cal.solucion[0].slice(0, 2), to: cal.solucion[0].slice(2, 4), color: "verde" }], []);
+            document.getElementById("calentamiento-msg").textContent = "La solución: " + sans.join(" ") + ".";
+            document.getElementById("calentamiento-otra-btn").hidden = true;
+            document.getElementById("calentamiento-solucion-btn").hidden = true;
+        });
+
+        // Cuántos de los conectados ya lo resolvieron (lo dice la presencia de cada uno).
+        function pintarCuentaCalentamiento() {
+            const el = document.getElementById("calentamiento-cuenta");
+            if (!el || !isTeacher || !calentamientoActual) return;
+            const conectados = [...onlineStudents.values()];
+            const listos = conectados.filter((s) => s.calentamiento === calentamientoActual.at).length;
+            el.textContent = conectados.length
+                ? listos + " de " + conectados.length + (conectados.length === 1 ? " conectado ya lo resolvió." : " conectados ya lo resolvieron.")
+                : "Todavía no hay alumnos conectados.";
+        }
+
+        if (document.getElementById("calentamiento-terminar-btn")) {
+            document.getElementById("calentamiento-terminar-btn").addEventListener("click", async () => {
+                const { error } = await sb.from("game_state").update({ calentamiento: null }).eq("id", myGameStateId);
+                if (error) { console.error(error); setStatus("No se pudo terminar: " + error.message); return; }
+                pintarCalentamiento(null);
+            });
+        }
+
+        /* ---------- Los puntos de la clase y el podio (game_state.podio) ----------
+           Los puntos se cuentan de resumen_de_la_clase con la regla de
+           js/puntos-clase.js, escrita a la vista. El podio que ve la clase es
+           una foto que manda el profe: con nombres, o sin ellos (cada uno ve
+           igual su propio lugar, porque se reconoce por su id). */
+        let filasDePuntos = [];
+        let podioActual = null;
+
+        function pintarListaDePuntos(caja, filas) {
+            caja.innerHTML = "";
+            const ranking = PuntosClase.ranking(filas).filter((x) => x.puntos > 0);
+            if (!ranking.length) {
+                const p = document.createElement("p");
+                p.className = "text-brand-500 dark:text-brand-300";
+                p.textContent = "Todavía nadie sumó puntos en esta clase.";
+                caja.appendChild(p);
+                return;
+            }
+            const ol = document.createElement("ol");
+            ol.className = "space-y-1";
+            ranking.forEach((x) => {
+                const li = document.createElement("li");
+                const cab = document.createElement("p");
+                cab.className = "font-semibold text-brand-800 dark:text-brand-100";
+                // El nombre lo escribió una persona: textContent.
+                cab.textContent = (PuntosClase.medalla(x.puesto) ? PuntosClase.medalla(x.puesto) + " " : "") + x.puesto + ".º " + x.nombre + " — " + PuntosClase.textoPuntos(x.puntos);
+                const det = document.createElement("p");
+                det.className = "text-xs text-brand-500 dark:text-brand-300";
+                det.textContent = PuntosClase.desglose(x.fila);
+                li.append(cab, det);
+                ol.appendChild(li);
+            });
+            caja.appendChild(ol);
+        }
+
+        async function contarPuntos() {
+            const caja = document.getElementById("puntos-lista");
+            if (!caja) return;
+            document.getElementById("puntos-regla").textContent = "Cómo se cuentan: " + PuntosClase.reglaEscrita() + ".";
+            if (!currentOpenSessionId) {
+                filasDePuntos = [];
+                caja.textContent = "Los puntos se cuentan desde que se abre la clase, y todavía no hay una abierta.";
+                return;
+            }
+            caja.textContent = "Contando…";
+            const { filas, error } = await ResumenClase.cargar(sb, currentOpenSessionId);
+            if (error) { console.error(error); caja.textContent = "No se pudieron contar los puntos: " + error.message; return; }
+            filasDePuntos = filas;
+            pintarListaDePuntos(caja, filas);
+        }
+
+        async function mostrarPodio(conNombres) {
+            if (!currentOpenSessionId) { setStatus("Abre la clase para contar los puntos."); return; }
+            const { filas, error } = await ResumenClase.cargar(sb, currentOpenSessionId);
+            if (error) { console.error(error); setStatus("No se pudieron contar los puntos: " + error.message); return; }
+            filasDePuntos = filas;
+            const podio = PuntosClase.podioParaLaClase(filas, conNombres);
+            if (!podio.lineas.length) { setStatus("Todavía nadie sumó puntos: no hay podio que mostrar."); return; }
+            const { error: err2 } = await sb.from("game_state").update({ podio }).eq("id", myGameStateId);
+            if (err2) { console.error(err2); setStatus("No se pudo mostrar el podio: " + err2.message); return; }
+            pintarPodio(podio);
+            setStatus("🏆 La clase ve el podio" + (conNombres ? ", con los nombres." : ", sin nombres: cada uno ve su propio lugar."));
+        }
+
+        function pintarPodio(podio) {
+            podioActual = podio && Array.isArray(podio.lineas) && podio.lineas.length ? podio : null;
+            const caja = document.getElementById("podio-caja");
+            if (!caja) return;
+            caja.hidden = !podioActual;
+            const ol = document.getElementById("podio-lineas");
+            ol.innerHTML = "";
+            const tu = document.getElementById("podio-tu-lugar");
+            tu.hidden = true;
+            document.getElementById("podio-quitar-btn").hidden = !isTeacher;
+            if (!podioActual) return;
+            podioActual.lineas.filter((l) => l.puesto <= 3).forEach((l) => {
+                const li = document.createElement("li");
+                const mia = l.id === profile.id;
+                const quien = l.nombre ? String(l.nombre) : (mia ? "Tú" : "");
+                li.textContent = PuntosClase.medalla(l.puesto) + " " + l.puesto + ".º lugar" + (quien ? ": " + quien : "") + " — " + PuntosClase.textoPuntos(Number(l.puntos) || 0) + (mia && l.nombre ? " (tú)" : "");
+                if (mia) li.className = "font-bold";
+                ol.appendChild(li);
+            });
+            if (isTeacher || esObservador) return;
+            const mia = podioActual.lineas.find((l) => l.id === profile.id);
+            tu.hidden = false;
+            tu.textContent = mia
+                ? "Tú: " + mia.puesto + ".º lugar con " + PuntosClase.textoPuntos(Number(mia.puntos) || 0) + "."
+                : "Todavía no sumaste puntos en esta clase: contesta la próxima pregunta.";
+        }
+
+        if (document.getElementById("puntos-caja")) {
+            document.getElementById("puntos-caja").addEventListener("toggle", (e) => { if (e.target.open) contarPuntos(); });
+            document.getElementById("puntos-actualizar-btn").addEventListener("click", contarPuntos);
+            document.getElementById("podio-mostrar-btn").addEventListener("click", () => mostrarPodio(document.getElementById("podio-con-nombres").checked));
+        }
+        if (document.getElementById("cierre-podio-btn")) {
+            document.getElementById("cierre-podio-btn").addEventListener("click", () => {
+                const cb = document.getElementById("podio-con-nombres");
+                mostrarPodio(cb ? cb.checked : true);
+            });
+        }
+        document.getElementById("podio-quitar-btn").addEventListener("click", async () => {
+            const { error } = await sb.from("game_state").update({ podio: null }).eq("id", myGameStateId);
+            if (error) { console.error(error); setStatus("No se pudo quitar el podio: " + error.message); return; }
+            pintarPodio(null);
+        });
+
         /* Los demás ven para quién es la pregunta dirigida (el nombre viaja con
            el turno, en game_state.elegido). */
         function pintarPreguntaParaOtro() {
@@ -3852,6 +4213,7 @@
             // El motor solo tiene algo que decir de una jugada, no de una opinión.
             const esOp = PreguntaClase.esDeOpciones(currentQuestion);
             document.getElementById("engine-reference-answer").hidden = esOp;
+            document.getElementById("encuesta-btn").hidden = esOp;   // el mapa es de jugadas, no de opciones
             if (!esOp) {
                 renderEngineReferenceAnswer(null);
                 loadEngineAnswerFor(currentQuestion.id);
@@ -4414,7 +4776,13 @@
                     askBtn.type = "button";
                     askBtn.className = "text-xs font-semibold px-2 py-1 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors";
                     askBtn.textContent = "❓ Preguntar";
-                    actions.append(previewBtn, sendBtn, askBtn);
+                    const calentarBtn = document.createElement("button");
+                    calentarBtn.type = "button";
+                    calentarBtn.className = sendBtn.className;
+                    calentarBtn.textContent = "🔥 Calentamiento";
+                    calentarBtn.title = "Que cada alumno lo resuelva en su propio tablero, sin que cuente como pregunta";
+                    calentarBtn.addEventListener("click", () => mandarCalentamiento(ex.fen, ex.solution, ex.mate ? "mate en " + Math.ceil(ex.solution.length / 2) : null));
+                    actions.append(previewBtn, sendBtn, askBtn, calentarBtn);
                     li.appendChild(actions);
                     const previewWrap = document.createElement("div");
                     previewWrap.className = "hidden mt-2";
