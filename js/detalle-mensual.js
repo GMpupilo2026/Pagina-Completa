@@ -62,16 +62,10 @@ window.DetalleMensual = (function () {
         return envol;
     }
 
-    /* El CSV con punto y coma y BOM, que es lo que Excel en español abre de un
-       doble clic (la misma decisión de Formularios y Cobros). */
+    /* El CSV para Excel lo arma js/csv-excel.js, la copia que además desarma
+       las fórmulas de lo que escribió una persona. */
     function csv(nombre, cabeceras, filas) {
-        const q = (v) => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"';
-        const texto = "﻿" + [cabeceras].concat(filas).map((f) => f.map(q).join(";")).join("\r\n");
-        const url = URL.createObjectURL(new Blob([texto], { type: "text/csv;charset=utf-8" }));
-        const a = el("a");
-        a.href = url; a.download = nombre;
-        document.body.appendChild(a); a.click(); a.remove();
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        CsvExcel.bajar(nombre, cabeceras, filas);
     }
 
     function boton(texto, alClic) {
