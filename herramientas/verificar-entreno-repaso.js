@@ -279,6 +279,25 @@ async function hub(browser) {
       [true, false, "Hoy llevas 0 de 5 ejercicios para que el día cuente. Con eso empiezas una racha."]);
     await ctx.close();
   }
+  /* El tipo de entrenamiento más flojo (js/tipo-flojo.js): igual que el tema,
+     por debajo del 70 % y solo el del alumno de la sesión. */
+  {
+    const fresco = { diagnostico_resultado_v1: JSON.stringify({ fecha: new Date().toISOString() }) };
+    const flojo = (pct) => ({ "rpc:informes_tipo_mas_flojo": [
+      { student_id: "otra", tipo: "detective", intentos: 9, limpios: 1, porcentaje: 11 },
+      { student_id: "u-ana", tipo: "balanza", intentos: 8, limpios: Math.round(8 * pct / 100), porcentaje: pct }] });
+    const ver = async (pct) => {
+      const { page, ctx, errores } = await abrir(browser, "/entreno/index.html", flojo(pct), fresco);
+      await page.waitForFunction(() => { const l = document.getElementById("hoy-lista"); return l.hidden || l.querySelector("a"); }, { timeout: 20000 });
+      const items = await page.evaluate(() => Array.from(document.querySelectorAll("#hoy-lista a")).map((a) => [a.textContent.replace("→", "").trim(), a.getAttribute("href")]));
+      sinErrores(errores, "hub con tipo flojo");
+      await ctx.close();
+      return items;
+    };
+    igual("propone el tipo más flojo del alumno, con el nombre del catálogo y a su ficha", await ver(38),
+      [["📉Tu tipo de entrenamiento más flojo, «La balanza»: tres estrellas en 3 de 8", "tipos.html#balanza"]]);
+    igual("con 75 % no lo propone", await ver(75), []);
+  }
   /* El tema más flojo (js/tema-flojo.js): lo propone si está por debajo del 70 %,
      y solo el del alumno de la sesión (la base puede devolver más filas). */
   {
@@ -329,6 +348,62 @@ async function hub(browser) {
       Array.from(document.querySelectorAll("#hoy-lista a")).map((a) => [a.textContent.replace("→", "").trim(), a.getAttribute("href")])),
       [["🧩Repasar 2 ejercicios de Tipos que te costaron", "tipos.html#repaso"], ["🏁Volver a jugar 1 final que te costó", "finales.html?repaso=1"]]);
     await ctx.close();
+  }
+  /* Lo empezado que no vence: los finales contra la máquina a medias y una
+     tanda de Precisión si la última fue hace una semana o más. */
+  {
+    const fs = require("fs"), path = require("path");
+    const banco = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "entreno", "data", "finales.json"), "utf8")).finales;
+    const fresco = { diagnostico_resultado_v1: JSON.stringify({ fecha: new Date().toISOString() }) };
+    const historial = (dias) => [{ student_id: "u-ana", key: "precision_posicional_historial_v1",
+      value: { raw: JSON.stringify([{ fecha: new Date(Date.now() - dias * 86400000 - 3600000).toISOString(), porcentaje: 60 }]) } }];
+    const hoyTe = async (tablas, local) => {
+      const { page, ctx, errores } = await abrir(browser, "/entreno/index.html", tablas, Object.assign({}, fresco, local));
+      await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
+      // La lista ya se pintó cuando tiene enlaces o quedó `hidden` (vacía): al
+      // abrir no lleva el atributo. Si no, «no propone nada» pasaría solo por
+      // mirar antes de tiempo.
+      await page.waitForFunction(() => { const l = document.getElementById("hoy-lista"); return l.hidden || l.querySelector("a"); }, { timeout: 10000 });
+      const items = await page.evaluate(() => Array.from(document.querySelectorAll("#hoy-lista a")).map((a) => [a.textContent.replace("→", "").trim(), a.getAttribute("href")]));
+      sinErrores(errores, "hub");
+      await ctx.close();
+      return items;
+    };
+    igual("con un final logrado, propone seguir con el primero sin lograr, con cuántos lleva",
+      await hoyTe({}, { entreno_finales_solved: JSON.stringify({ [banco[0].id]: true }) }),
+      [[`🏁Seguir con los finales contra la máquina: «${banco[1].titulo}» (1 de ${banco.length} logrados)`, "finales.html?final=" + banco[1].id]]);
+    igual("a quien nunca jugó un final no se lo propone", await hoyTe({}, {}), []);
+    igual("con todos logrados, tampoco", await hoyTe({}, { entreno_finales_solved: JSON.stringify(Object.fromEntries(banco.map((f) => [f.id, true]))) }), []);
+    igual("la última tanda de Precisión fue hace 10 días: la propone",
+      await hoyTe({ training_state: historial(10) }, {}), [["🧭Una tanda de Precisión posicional: la última fue hace 10 días", "precision-posicional.html"]]);
+    igual("hace 3 días: todavía no", await hoyTe({ training_state: historial(3) }, {}), []);
+  }
+  /* El resumen del día, debajo de la meta: lo de hoy por actividad, cuántos
+     limpios y los repasos de mañana. */
+  {
+    const fresco = { diagnostico_resultado_v1: JSON.stringify({ fecha: new Date().toISOString() }) };
+    const dia = (n) => { const d = new Date(Date.now() + n * 86400000); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); };
+    const ficha = (vence) => ({ facilidad: 2.5, intervalo: 1, repasos: 1, fallos: 0, vence, ultimo: "2026-01-01T00:00:00Z" });
+    const local = Object.assign({}, fresco, {
+      // Mañana tocan dos: el que vence mañana y el de hoy (si no se hace); el de pasado mañana y el que ya salió, no.
+      entreno_mates_repaso_v1: JSON.stringify({ a: ficha(dia(1)), b: ficha(dia(2)), c: Object.assign(ficha(dia(1)), { fuera: true }) }),
+      entreno_tipos_repaso_v1: JSON.stringify({ "detective:x": ficha(dia(0)) }),
+    });
+    const resumen = async (tablas) => {
+      const { page, ctx, errores } = await abrir(browser, "/entreno/index.html", tablas, local);
+      await page.waitForFunction(() => { const l = document.getElementById("hoy-lista"); return l.hidden || l.querySelector("a"); }, { timeout: 10000 });
+      const r = await page.evaluate(() => { const p = document.getElementById("hoy-resumen"); return p.checkVisibility() ? p.textContent : null; });
+      sinErrores(errores, "hub (resumen)");
+      await ctx.close();
+      return r;
+    };
+    igual("con algo hecho hoy, el resumen dice qué, cuántos limpios y los repasos de mañana",
+      await resumen({ "rpc:progreso_dias_y_racha": [{ hoy_ejercicios: 3, racha_actual: 2 }],
+        "rpc:entreno_resumen_hoy": { total: 3, por_actividad: { memoria: 1, mates: 2 }, con_como_salio: 2, limpios: 1 } }),
+      "Hoy: 3 ejercicios (Mates 2, Memoria 1) · 1 de 2 sin error ni pista · Para mañana: 2 repasos.");
+    igual("sin nada hecho hoy, no hay resumen",
+      await resumen({ "rpc:progreso_dias_y_racha": [{ hoy_ejercicios: 0, racha_actual: 2 }],
+        "rpc:entreno_resumen_hoy": { total: 0, por_actividad: {}, con_como_salio: 0, limpios: 0 } }), null);
   }
   /* El nivel de Tipos que quedó a medias (tipos_ultimo_v1, lo anota la página
      al jugar): se propone seguirlo; uno completo, no. */

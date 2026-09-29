@@ -257,11 +257,16 @@ async function main() {
       // Tipos de entrenamiento: un recorte por tipo, con su total de tipos.json.
       const tipos = leer("entreno/data/tipos.json");
       const catalogo = require(path.join(RAIZ, "js/tipos-catalogo.js"));
-      const conEjercicios = catalogo.TIPOS.filter((t) => (tipos[t.id] || []).length).map((t) => t.id);
+      // Los tipos `propio` (Tus propios errores) no tienen banco: cada alumno
+      // tiene los suyos. Se ofrecen igual, sin total (no hay tope que dar).
+      const conEjercicios = catalogo.TIPOS.filter((t) => t.propio || (tipos[t.id] || []).length).map((t) => t.id);
       ok(JSON.stringify((metas.tipos || []).map((t) => t.clave)) === JSON.stringify(conEjercicios),
         `metas.json trae los tipos ${(metas.tipos || []).map((t) => t.clave).join(",")} y el catálogo tiene ${conEjercicios.join(",")}`);
-      (metas.tipos || []).forEach((t) => ok(t.total === (tipos[t.clave] || []).length && t.actividades.join() === "tipos",
-        `el tipo ${t.clave} dice ${t.total} y en tipos.json hay ${(tipos[t.clave] || []).length}`));
+      (metas.tipos || []).forEach((t) => {
+        const propio = catalogo.tipo(t.clave) && catalogo.tipo(t.clave).propio;
+        ok((propio ? t.total === null : t.total === (tipos[t.clave] || []).length) && t.actividades.join() === "tipos",
+          `el tipo ${t.clave} dice ${t.total} y ${propio ? "un tipo propio no tiene total" : "en tipos.json hay " + (tipos[t.clave] || []).length}`);
+      });
     }
   }
 
@@ -356,6 +361,20 @@ async function main() {
        rendirlo, así que no hay cantidad que elegir ni «terminarlo» que el
        alumno marque a mano. Y al cambiar de material vuelve el 10 de
        siempre: un renglón que heredara el 1 pediría un solo ejercicio. */
+    /* «Tus propios errores» (Tipos de entrenamiento) no tiene banco: cada alumno
+       tiene los suyos. Se puede pedir «resuelve N de tus errores», sin un tope
+       que salga de un banco (el de siempre, 1000) y sin «(N)» en el nombre. */
+    await pagina.selectOption("#renglones .renglon:nth-of-type(2) .r-material", "herramienta:tipos");
+    await pagina.waitForSelector("#renglones .renglon:nth-of-type(2) .r-recorte-wrap:not(.hidden)", { timeout: 5000 });
+    const errores = await pagina.$eval('#renglones .renglon:nth-of-type(2) .r-recorte option[value="errores"]', (o) => o.textContent.trim()).catch(() => null);
+    ok(errores === "Tus propios errores", `Tipos debería ofrecer «Tus propios errores» sin total, salió ${JSON.stringify(errores)}`);
+    await pagina.selectOption("#renglones .renglon:nth-of-type(2) .r-recorte", "errores");
+    await pagina.fill("#renglones .renglon:nth-of-type(2) .r-cantidad", "5");
+    ok(await pagina.getAttribute("#renglones .renglon:nth-of-type(2) .r-cantidad", "max") === "1000",
+      "«Tus propios errores» no tiene banco: el tope es el de siempre, no uno inventado");
+    const fraseErr = await pagina.textContent("#renglones .renglon:nth-of-type(2) .r-frase");
+    ok(/5/.test(fraseErr) && /Tus propios errores/.test(fraseErr), `la frase no dice lo que se pidió: ${JSON.stringify(fraseErr)}`);
+
     await pagina.selectOption("#renglones .renglon:nth-of-type(2) .r-material", "herramienta:diagnostico");
     const metasDiag = await pagina.$$eval("#renglones .renglon:nth-of-type(2) .r-meta option", (e) => e.map((o) => o.value));
     ok(JSON.stringify(metasDiag) === JSON.stringify(["cantidad"]),

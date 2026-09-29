@@ -528,6 +528,106 @@ registro de tiempo).
   repaso de Practicar, el hub), `verificar-tipos-pagina.js` (que se anote el
   nivel) y `verificar-informes.js` (la tarjeta).
 
+## El tipo más flojo en el hub, y el plan del diagnóstico con lo nuevo
+
+- **«Hoy te toca» propone el Tipo de entrenamiento más flojo** si queda por
+  debajo del 70 % (`TipoFlojo.FLOJO`, el mismo corte del tema). Por
+  ejemplo: «Tu tipo de entrenamiento más flojo, «La balanza»: tres estrellas
+  en 3 de 8» → `tipos.html#balanza`. Es la misma cuenta de Informes
+  (`informes_tipo_mas_flojo()`, ver «El tipo de entrenamiento más flojo» en
+  informes.md); el hub se queda con la fila del alumno de la sesión.
+- **El plan del diagnóstico propone lo nuevo**:
+  - Táctica: Aguanta.
+  - Estrategia: Remata la ventaja y Elige a tiempo.
+  - Cálculo: Memoria y el Sonar.
+
+  Van al final de cada área, así que el primer paso de cada semana no
+  cambia.
+- **Y cuenta lo que se hace ahí.** Antes, los enlaces del plan a un tipo
+  (`tipos.html#balanza`) decían «(todavía nada)» para siempre por dos
+  razones:
+  - `claveDeAvance` no entendía el `#`;
+  - `avance_del_plan()` juntaba todo Tipos en `actividad:tipos`.
+
+  Ahora cada tipo es `tipo:<id>` (migración `20260929174938`). Pasaba lo
+  mismo con Concentración, y también con Memoria, Precisión, el Sonar y
+  Batalla naval, que ya registran: `ACTIVIDAD_DE_PAGINA` las conoce.
+- `verificar-plan-recursos.js` comprueba ahora que **todo recurso del plan
+  que lleva a una página que registra pida la clave de lo que registra**.
+  Qué páginas registran lo dice Tareas: las herramientas con meta de
+  cantidad. Rota a propósito (sin Concentración, sin el `#`), salta.
+
+## Memoria cuenta, y el resumen del día en el hub
+
+- **Memoria** (`entreno/memoria.html`, #560) no registraba nada: ni en
+  `training_progress` ni el tiempo (le faltaba `js/tiempo-plataforma.js`,
+  aunque Informes ya tenía su sección). Ahora:
+  - cada posición reconstruida escribe una fila `memoria`, con `piezas`,
+    `segundos`, `aciertos`, `total`, `estrellas` y `limpio` (sin un error).
+    Va sin `puzzle_id`: la posición se sortea, así que en una tarea cada
+    ronda cuenta. La migración `20260929171852` suma `'memoria'` al CHECK;
+  - se puede pedir en Tareas, por cantidad o por minutos;
+  - tiene dos logros: «Retratista» (10 posiciones) y «Memoria fotográfica»
+    (una de 12 piezas sin un error). El segundo sale de `logros_hitos()`
+    (`memoria_max_limpia`: la mayor cantidad de piezas reconstruida limpia);
+  - «Las probaste todas» pasa a 19 actividades.
+- **Los tipos 15 a 18** (Aguanta, Remata la ventaja, Elige a tiempo y Tus
+  propios errores) ya contaban: los cuatro terminan en `terminar()`, así que
+  se registran como `tipos`, entran a la cola de repaso y suman a «De todos
+  los tipos». No hubo que tocarlos.
+- **El resumen del día**, debajo de la meta en el hub: «Hoy: 12 ejercicios
+  (Mates 6, Tipos de entrenamiento 4, Memoria 2) · 9 de 11 sin error ni
+  pista · Para mañana: 3 repasos».
+  - Antes cada página festejaba lo suyo y nadie juntaba el día.
+  - Lo de hoy lo cuenta la base: `entreno_resumen_hoy()`, migración
+    `20260929172621`, con el día de Costa Rica.
+  - Los nombres son los de `js/tiempo-secciones.js`, los mismos de
+    Informes.
+  - Los repasos de mañana salen de todas las colas de «Repasar fallados» y
+    de Aperturas.
+  - Solo sale con algo hecho hoy; si la base no responde, no se pinta nada.
+- Lo prueban `verificar-memoria-pagina.js` (el registro, limpio y no),
+  `verificar-logros.js` (los logros de Memoria, con números que distinguen
+  el hito del conteo) y `verificar-entreno-repaso.js` (el resumen, y que no
+  salga sin nada hecho).
+
+## Logros del Sonar, Batalla naval y Precisión; y el hub propone lo empezado
+
+- **Logros nuevos**:
+  - «Cazatesoros»: 10 partidas del Sonar.
+  - «Oído fino»: 5 tesoros con tres estrellas.
+  - «A toda vela»: 10 partidas de Batalla naval.
+  - «Almirante»: ganarle un duelo a la computadora.
+  - «Ojo de estratega»: 3 tandas de Precisión posicional con 70 % o más.
+
+  Los que no son «cuántos» salen de `public.logros_hitos()` (migración
+  `20260929165038`, SECURITY INVOKER: la RLS de `training_progress` decide).
+  No se agregaron claves a `por_actividad` de `progreso_dias_y_racha()`:
+  el panel suma todas esas claves para contar ejercicios y las inflaría.
+  `js/logros.js` pide los hitos a la par de la racha; si fallan, cuentan
+  cero y la racha no se cae. Se probó en la base con filas de prueba
+  (revertidas) e impersonando a un alumno:
+  - 70 % cuenta y 69,9 % no;
+  - un duelo perdido no cuenta;
+  - los hitos de otro alumno salen en cero.
+- La página de Logros **tenía «tipos» sin título** (salía la clave); ahora
+  dice «Tipos de entrenamiento», y las tres categorías nuevas tienen el
+  suyo.
+- **El «Hoy te toca» propone lo empezado que no vence**, al final de la
+  lista (así solo sale cuando hay lugar, tres como mucho):
+  - **los finales contra la máquina a medias**: «Seguir con los finales
+    contra la máquina: «El rompimiento de peones» (1 de 17 logrados)» →
+    `finales.html?final=<id>`. A quien nunca jugó uno no se le propone, y
+    con todos logrados tampoco.
+  - **una tanda de Precisión posicional** si ya hizo alguna y la última
+    fue hace 7 días o más (`DIAS_SIN_PRECISION`). La fecha sale del
+    historial de la cuenta (`training_state`,
+    `precision_posicional_historial_v1`), no de `training_progress`: así
+    cuenta también lo hecho antes de que las tandas se registraran ahí.
+- Lo prueban `verificar-logros.js` (los cinco logros, los títulos, que se
+  pida `logros_hitos`) y `verificar-entreno-repaso.js` (las dos propuestas,
+  con sus casos de no proponer).
+
 ## Repasar fallados también en Tipos y Finales; y `limpio` en Tipos, Practicar y 4×4
 
 - **Tipos de entrenamiento tiene la cola de «Repasar fallados»**
@@ -2160,7 +2260,7 @@ haciendo que un disparo al agua sume uno, saltan nueve comprobaciones.
 ## Los Tipos de entrenamiento
 
 `entreno/tipos.html` (grupo y tarjeta **"🧠 Tipos de entrenamiento"** del hub)
-es una ficha con dieciocho entrenamientos que no son «encuentra la mejor jugada»,
+es una ficha con diecinueve entrenamientos que no son «encuentra la mejor jugada»,
 cada uno con sus niveles: **El Detective** (¿qué jugada se acaba de hacer?,
 análisis retrógrado), **¿Qué quiere el rival?** (profilaxis: hacer la jugada
 que amenaza el rival), **Descarte** (tachar las candidatas que pierden),
@@ -2516,16 +2616,73 @@ hay lista: cada alumno tiene los suyos) y los verificadores.
   quitan una estrella; al tercero, la respuesta. Al final dice qué pasó en la
   partida («jugaste Cxf7 y la evaluación pasó de +0,1 a −4,6»). Resolver uno
   cuenta como cualquier Tipo (`activity = 'tipos'`, `category = 'errores'`).
+- **Cada error lleva su tema** («Lo que no viste: Horquilla», «Lo que te
+  hicieron: Clavada»), con el mismo reconocedor de patrones de la preparación
+  de rivales (`PreparacionTactica.temaDeJugada`, sin motor, con
+  `preparacion-posiciones.js`): si se le escapó la ventaja, el de la mejor
+  jugada que no vio; si regaló, el de la respuesta con que lo castiga el rival
+  (una evaluación más, la de la posición después de su jugada). «Otra» no se
+  guarda: no dice nada. El motor manda las jugadas sin «+» ni «#»; se
+  completan con chess.js antes de reconocerlas, porque el mate se reconoce por
+  el «#». `temasDe()` cuenta cuál se repite: la ficha del tipo dice «Lo que más
+  se repite en tus errores: clavadas (3 de 5)» con el enlace a practicarlas en
+  «Ejercicios por tema» (`temas.html?tema=pin`), cada ejercicio trae el suyo al
+  terminar, e Informes lo muestra al profesor. Los ejercicios de antes de esto
+  no tienen tema y se ven igual, sin él.
+- **Se puede pedir en Tareas**: «resuelve 5 de tus errores». `tareas_con_avance()`
+  ya contaba ejercicios distintos por `category` (`errores`) y nunca usó el
+  total, así que no hizo falta nada en la base: solo ofrecer el recorte.
+  `metas-indice.py` lo pone en `metas.json` con `total: null` (no hay un banco
+  que dé un tope; queda el de siempre, 1000, y el nombre va sin «(N)»), y
+  `verificar-tareas.js` acepta los tipos `propio` sin total y prueba que el
+  formulario lo ofrezca así.
 - **El profesor los ve en Informes**, en el informe de cada alumno (ver «Los
   errores de sus partidas» en informes.md): los lee de `training_state` con
   `ErroresPropios.deFilas()`, que no le cree nada a lo que guardó el navegador.
-- **Sin metas de cantidad en Tareas**: como cada alumno tiene una cantidad
-  distinta, `metas-indice.py` no lo ofrece (se salta los tipos sin banco).
 - `herramientas/verificar-errores-propios.js` prueba la detección, el armado y
   la regla sin motor; `verificar-tipos-pagina.js` busca errores en partidas de
   mentira con un motor de mentira (el doble de Supabase filtra de verdad: la
   partida de otra variante, la ajena y la que sigue en curso ni llegan) y
   juega el ejercicio.
+
+### El tipo 19: Salva las tablas
+
+El espejo de Remata la ventaja: al alumno le falta material, pero el motor
+dice que se aguanta. Juega contra Stockfish a toda su fuerza y lo logra si
+llega a **tablas por reglamento** (ahogado, repetición, 50 jugadas, material
+insuficiente: lo que en Remata es escaparse, aquí es ganar) o si **aguanta las
+jugadas del nivel sin bajar de −2,5**. Tres estrellas si nunca bajó de −1,5;
+dos si pasó por la cuerda floja y aguantó igual; una con pista. Las reglas
+están en `js/tipos-reglas-mas.js` (`juicioTablas`, `estrellasTablas`).
+
+- **Una sola función para los dos juegos contra el motor.** Remata y Salva las
+  tablas se juegan con `contraMotor(item, cfg)` en `js/entreno-tipos-mas.js`:
+  cambian las reglas y lo que se dice, no el juego. Una segunda copia habría
+  dejado a uno con los arreglos del otro a medias.
+- **El material se cuenta después de la línea del motor.** La primera versión
+  contaba el de la posición y se colaban posiciones en medio de un cambio:
+  «9 puntos de material menos» con la dama del rival colgando, que se come en
+  la jugada siguiente. Tampoco sirvió cortar la línea del motor en 4 medias
+  jugadas: la cuarta podía ser otra captura que se recaptura enseguida. Ahora
+  se recorre la línea hasta la **primera posición tranquila** (nadie en jaque
+  y la jugada siguiente no es una captura) y ahí tiene que seguir faltando
+  material; si la línea no se calma, no entra. El nivel lo pone lo que falta
+  ahí: un peón (1) o dos puntos o más (2). El verificador guarda y compara
+  los dos números (`materialAhora` y `material`).
+- **Son pocas a propósito: 43** (20 y 23). De casi 2800 candidatas, en 2100
+  el motor dice que ya están perdidas, y otras 65 solo «faltaba» material a
+  mitad de un cambio: aguantar con material de menos es raro, y la gracia es
+  que sea posible. Se sumó el nivel «Un peón menos» antes que bajar la
+  exigencia.
+- **De dónde salen**: los ejercicios de igualdad y de defensa de Lichess
+  (desde el principio: hay que encontrar la línea que salva; y después de la
+  solución, con la mejor respuesta del rival: hay que sostenerlo) y el que
+  perdió material al final de cualquier ejercicio. El motor tiene que dar
+  entre −0,8 y +0,5 a profundidad 18, sin mate, y a 12 casi lo mismo. Con el
+  corte en −2,5 queda un peón y medio de margen para la evaluación corta del
+  navegador (ver Remata).
+- `node herramientas/tipos-generar.js --solo tablas` rehace solo este banco. En
+  la clase en vivo trae «🎯 Practicar».
 
 **Al tocar los bancos, las reglas o la página, correr**:
 

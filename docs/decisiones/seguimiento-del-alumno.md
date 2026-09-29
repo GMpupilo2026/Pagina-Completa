@@ -96,6 +96,12 @@ alumno, que es justo lo que la tarea viene a evitar.
   tema, una categoría o una línea, correrlo**; el verificador compara el índice
   contra las fuentes, porque un índice viejo le ofrece al profesor un tema que
   ya no existe y eso solo lo descubre el alumno al abrir el enlace.
+- **Un recorte puede no tener total**: «Tus propios errores» (Tipos de
+  entrenamiento) no tiene banco, cada alumno tiene los suyos. Va en
+  `metas.json` con `total: null`: el formulario lo ofrece sin «(N)» y con el
+  tope de siempre (1000), y `tareas_con_avance()` lo cuenta igual, porque
+  nunca usó el total (cuenta ejercicios distintos de esa `category`). Ver
+  «El tipo 18: Tus propios errores» en entrenamiento.md.
 
 ### La franja de la tarea vive dentro del ejercicio
 

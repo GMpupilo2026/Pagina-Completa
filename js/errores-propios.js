@@ -15,6 +15,12 @@
  * mirada más honda con varias líneas, que decide cuáles jugadas «también
  * servían». Un error que la mirada honda no confirma se descarta.
  *
+ * Cada error lleva además su TEMA, con el mismo reconocedor de patrones de la
+ * preparación de rivales (PreparacionTactica.temaDeJugada, sin motor): si se
+ * le escapó la ventaja, el de la mejor jugada que no vio; si regaló, el de la
+ * respuesta con que lo castiga el rival. `temasDe()` cuenta cuál se repite y
+ * a qué tema de «Ejercicios por tema» manda a practicar.
+ *
  * Lo que queda (los ejercicios y qué partidas ya se miraron) va en dos claves
  * de localStorage que viajan con la cuenta (js/progreso-usuario.js): el
  * alumno las ve en cualquier aparato y su profesor las puede leer
@@ -79,7 +85,9 @@
      peones }], de la mejor a la peor), arma el ejercicio o dice que no:
      la jugada que se hizo no puede estar entre las buenas, y la mejor tiene
      que dejar al alumno 2 peones o más por encima de lo que jugó. */
-  function ejercicio(partida, error, fen, jugada, opciones) {
+  /* `tema` (opcional): la clave de PreparacionTactica.TEMAS que ya se calculó;
+     «otra» no se guarda (no dice nada). */
+  function ejercicio(partida, error, fen, jugada, opciones, tema) {
     if (!opciones || !opciones.length) return null;
     const s = partida.color === "w" ? 1 : -1;
     const cp = (o) => tope(s * o.eval * 100);
@@ -94,7 +102,36 @@
       fen, jugada: limpia(jugada), buenas, mejor: buenas[0],
       antes: mejor, despues: error.despues, fecha: partida.fecha, origen: partida.origen,
       resumen: (partida.origen === "practica" ? "Práctica en clase" : "Partida") + " del " + fechaCorta(partida.fecha) + " · jugada " + numero,
+      tema: tema && tema !== "otra" ? tema : null,
     };
+  }
+
+  /* El tema de un error, con el reconocedor de la preparación de rivales
+     (T = PreparacionTactica). Nivel 2: la mejor jugada, la que no vio.
+     Nivel 1: la respuesta del rival después de su jugada, la que lo castiga
+     (`castigo`, en SAN; con chess.js se le devuelve el «#» si da mate). */
+  function temaDelError(T, Chess, nivel, fen, mejor, jugada, castigo) {
+    if (!T) return null;
+    try {
+      if (nivel === 2) return T.temaDeJugada(fen, sanCompleta(Chess, fen, mejor));
+      const g = new Chess(fen);
+      if (!g.move(jugada) || !castigo) return null;
+      return T.temaDeJugada(g.fen(), sanCompleta(Chess, g.fen(), castigo));
+    } catch (e) { return null; }
+  }
+  function sanCompleta(Chess, fen, san) {
+    const m = new Chess(fen).move(san);
+    return m ? m.san : san;
+  }
+
+  /* Los temas de una lista de ejercicios, del que más se repite al que menos:
+     [{ tema, n, nombre, plural, practica }]. `TEMAS` es PreparacionTactica.TEMAS
+     (los nombres y el tema de «Ejercicios por tema» para practicar). */
+  function temasDe(ejercicios, TEMAS) {
+    const cuenta = {};
+    (ejercicios || []).forEach((x) => { if (x && x.tema && TEMAS && TEMAS[x.tema]) cuenta[x.tema] = (cuenta[x.tema] || 0) + 1; });
+    return Object.keys(cuenta).map((t) => Object.assign({ tema: t, n: cuenta[t] }, TEMAS[t]))
+      .sort((a, b) => b.n - a.n || (a.tema < b.tema ? -1 : 1));
   }
   function fechaCorta(iso) {
     try { return new Date(iso).toLocaleDateString("es-CR", { day: "numeric", month: "short", timeZone: "America/Costa_Rica" }); } catch (e) { return ""; }
@@ -109,6 +146,7 @@
   function ejercicios() {
     return Object.values(leer(CLAVE_EJERCICIOS))
       .filter((x) => x && x.id && x.fen && Array.isArray(x.buenas))
+      .map((x) => (x.tema && !/^[a-z-]{2,20}$/.test(x.tema) ? Object.assign({}, x, { tema: null }) : x))
       .sort((a, b) => (a.fecha < b.fecha ? 1 : a.fecha > b.fecha ? -1 : (a.id < b.id ? -1 : 1)))
       .slice(0, MAX_EJERCICIOS);
   }
@@ -196,7 +234,11 @@
       const deEsta = [];
       for (const e of detectar(evals, p.color, p.turno0)) {
         const ops = await motor.opciones(fens[e.ply], 4, PROF_HONDA);
-        const x = ejercicio(p, e, fens[e.ply], p.jugadas[e.ply], ops);
+        // Nivel 1: con qué lo castiga el rival (la mejor en la posición de después).
+        let castigo = null;
+        if (e.nivel === 1 && fens[e.ply + 1]) { const r = await motor.evaluar(fens[e.ply + 1], PROF_HONDA); castigo = r && r.mejor; }
+        const tema = ops && ops[0] ? temaDelError(o.tactica || raiz.PreparacionTactica, raiz.Chess, e.nivel, fens[e.ply], ops[0].san, p.jugadas[e.ply], castigo) : null;
+        const x = ejercicio(p, e, fens[e.ply], p.jugadas[e.ply], ops, tema);
         if (x) deEsta.push(x);
       }
       guardar(deEsta);
@@ -224,6 +266,7 @@
       (x.nivel === 1 || x.nivel === 2) && typeof x.jugada === "string" && SAN.test(x.jugada) &&
       Array.isArray(x.buenas) && x.buenas.length > 0 && x.buenas.length <= 6 && x.buenas.every((s) => typeof s === "string" && SAN.test(s)) &&
       typeof x.antes === "number" && typeof x.despues === "number" && typeof x.fecha === "string")
+      .map((x) => (x.tema && !/^[a-z-]{2,20}$/.test(x.tema) ? Object.assign({}, x, { tema: null }) : x))
       .sort((a, b) => (a.fecha < b.fecha ? 1 : a.fecha > b.fecha ? -1 : (a.id < b.id ? -1 : 1)))
       .slice(0, MAX_EJERCICIOS);
     const estrellas = obj(raw.tipos_estrellas_v1);
@@ -243,7 +286,7 @@
 
   const ErroresPropios = {
     CLAVE_EJERCICIOS, CLAVE_VISTAS, CORTE, MAX_PARTIDAS, MAX_EJERCICIOS,
-    detectar, ejercicio, posiciones, acierta, ejercicios, guardar, vistas, traerPartidas, analizar, deFilas,
+    detectar, ejercicio, temaDelError, temasDe, posiciones, acierta, ejercicios, guardar, vistas, traerPartidas, analizar, deFilas,
   };
   if (typeof module !== "undefined" && module.exports) module.exports = ErroresPropios;
   else raiz.ErroresPropios = ErroresPropios;

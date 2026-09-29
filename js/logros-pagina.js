@@ -38,6 +38,11 @@
             ilumina: "Ilumina el tablero",
             visualizacion: "Visualización",
             finales: "Finales contra la máquina",
+            tipos: "Tipos de entrenamiento",
+            sonar: "El Sonar",
+            "batalla-naval": "Batalla naval",
+            "precision-posicional": "Precisión posicional",
+            memoria: "Memoria",
         };
         const NIVEL_TEXTO = { bronce: "Bronce", plata: "Plata", oro: "Oro", diamante: "Diamante" };
 

@@ -1236,6 +1236,37 @@ solicitudes y saldos vencidos. Faltaba su pantalla propia, `coordinacion.html`:
 - Lo prueba `pruebaOrdenYNumeros` en `verificar-coordinacion.js`; volviendo a
   poner la suma, salta.
 
+### Equipos: lo que pide atención primero
+
+La sección Equipos de `coordinacion.html` pintaba cada equipo entero, con sus
+etiquetas, sus selectores y el volcado de grupos, uno debajo del otro y en el
+orden del nombre. Con varios equipos era una pared, y un equipo **sin
+entrenadores** —que no le da acceso a nadie: es una llave sin puerta— se veía
+igual que uno que funciona. Además, quien administra tenía dos puertas al mismo
+lugar: esta y `admin.html#equipos`.
+
+- **Arriba, cuántos piden atención** («3 equipos · ⚠️ 1 pide atención»), y
+  la lista en orden: primero los que les falta algo (sin entrenadores o sin
+  alumnos), después los que puede repartir y al final los que tienen gente de
+  otra coordinación, que solo se miran. Solo se dice «pide atención» de lo que
+  quien coordina puede arreglar.
+- **Cada equipo va plegado con su resumen**: nombre, cuántos entrenadores y
+  alumnos, y lo que le falta escrito («⚠️ sin entrenadores y sin alumnos»);
+  el borde lo marca, pero no va solo. Se abre solo el que pide atención, el
+  recién creado o el único que hay. **Lo que se abrió queda abierto** al
+  repintar: cada ✕ o cada volcado repinta la lista, y si se volviera a cerrar
+  habría que buscar el equipo otra vez.
+- **«Nuevo equipo» va al final**: se hace de vez en cuando. El equipo recién
+  creado queda abierto y primero (está vacío), que es donde se le ponen sus
+  entrenadores.
+- **Quien administra no tiene una segunda puerta**: en coordinación la sección
+  le dice que los equipos se arman en Administración › Equipos, con el enlace,
+  y no se baja ni los equipos ni la lista de todos los alumnos.
+- Lo prueban `pruebaEquipos` y `pruebaEquiposAdmin` en
+  `verificar-coordinacion.js`: el orden y qué está abierto (medido con
+  `checkVisibility()`), el resumen, que lo abierto sigue abierto después de
+  volcar, y que a quien administra no se le pinta otra lista.
+
 ### Las cuentas se ven por GRUPO, no todas de una
 
 Lo primero que muestra la página son **fichas de grupo**, no la lista de
@@ -2742,3 +2773,24 @@ estudiantes», «+120 artículos» cuando había 7) y no los respaldaba nada.
   pinta. Mirando como otra persona («Ver como») tampoco: la RLS respondería
   con la gente de quien mira.
 - Lo prueba `verificar-panel.js` (nombre por textContent incluido).
+
+## Hoy entrenaron
+
+- El alumno tiene su resumen del día en el hub; el profe no veía nada del
+  día: «Tu semana» cuenta a siete días. Debajo de «Se están cayendo del plan»
+  va `#profe-hoy`, que dice quién entrenó hoy, cuánto y cuántos salieron
+  limpios. Por ejemplo, «Ana Rojas — 12 ejercicios · 9 de 11 limpios». Cada
+  nombre lleva a su informe.
+- `public.entreno_hoy_de_mis_alumnos()` (migración `20260929175618`,
+  SECURITY INVOKER): una fila por alumno que entrenó hoy (día de Costa
+  Rica), de más a menos.
+  - «Limpios» cuenta solo lo que dice cómo salió; sin nada de eso, no se
+    menciona.
+  - La RLS decide de quién. Se probó impersonando a un profesor que no
+    administra, con filas de prueba revertidas: ve a su alumno y no al
+    ajeno. Administración ve a todos, a propósito.
+- `js/clases.js` → `cargarHoyEntrenaron()`: seis nombres y «Y N alumnos
+  más». Sin nadie, no se pinta, y mirando como otra persona («Ver como»)
+  tampoco, por lo mismo que la lista de los que se caen.
+- Lo prueba `verificar-panel.js` (nombre por textContent incluido, sin
+  «limpios» cuando no hay con qué, oculto sin nadie).

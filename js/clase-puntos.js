@@ -90,6 +90,8 @@ function pintarPodio(podio) {
     const tu = document.getElementById("podio-tu-lugar");
     tu.hidden = true;
     document.getElementById("podio-quitar-btn").hidden = !isTeacher;
+    // El de la ronda rápida trae su título (js/clase-ronda.js); el de la clase, no.
+    document.getElementById("podio-titulo").textContent = podioActual && podioActual.titulo ? String(podioActual.titulo) : "Podio de la clase";
     const olEq = document.getElementById("podio-equipos");
     olEq.innerHTML = "";
     olEq.hidden = !(podioActual && Array.isArray(podioActual.equipos) && podioActual.equipos.length);
@@ -116,7 +118,7 @@ function pintarPodio(podio) {
         ? "Tú: " + mia.puesto + ".º lugar con " + PuntosClase.textoPuntos(Number(mia.puntos) || 0) + "."
         : "Todavía no sumaste puntos en esta clase: contesta la próxima pregunta.";
     const primero = (podioActual.equipos || [])[0];
-    anunciarALaClase("podio", podioActual.at + ":" + tu.textContent, "Tu profe mostró el podio de la clase."
+    anunciarALaClase("podio", podioActual.at + ":" + tu.textContent, "Tu profe mostró el " + (podioActual.titulo ? String(podioActual.titulo).toLowerCase() : "podio de la clase") + "."
         + (primero ? " Va primero el equipo " + String(primero.nombre) + ", con " + PuntosClase.textoPuntos(Number(primero.puntos) || 0) + "." : "")
         + " " + tu.textContent);
 }

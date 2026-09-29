@@ -61,6 +61,9 @@
                 <div id="hoy-meta" class="mb-3" hidden>
                     <p id="hoy-meta-texto" class="text-sm text-brand-600 dark:text-brand-200 mb-1"></p>
                     <div id="hoy-meta-barra" class="h-2 w-full rounded bg-brand-100 dark:bg-brand-800 overflow-hidden" role="progressbar" aria-labelledby="hoy-meta-texto" aria-valuemin="0"><div id="hoy-meta-relleno" class="h-full bg-accent-500 rounded" style="width:0%"></div></div>
+                    <!-- El resumen del día (public.entreno_resumen_hoy): qué hizo hoy, cuántos
+                         salieron limpios y cuántos repasos tocan mañana. Solo con algo hecho. -->
+                    <p id="hoy-resumen" class="text-sm text-brand-600 dark:text-brand-200 mt-2" hidden></p>
                     <!-- El aviso de racha (public.avisar_rachas(), 6:05 p. m.): solo le
                          llega a quien tiene los avisos encendidos en el aparato, y casi
                          nadie los tenía. Se ofrece acá, donde se ve la racha, y no al
@@ -154,7 +157,7 @@
                     </ul>
                 </section>
                 <!-- Los Tipos de entrenamiento: UNA tarjeta que abre su ficha, con
-                     los dieciocho tipos adentro (entreno/tipos.html). Ver «Los Tipos de
+                     los diecinueve tipos adentro (entreno/tipos.html). Ver «Los Tipos de
                      entrenamiento» en docs/decisiones/entrenamiento.md. -->
                 <section aria-labelledby="g-tipos">
                     <h2 id="g-tipos" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Tipos de entrenamiento</h2>
@@ -162,7 +165,7 @@
                         <li class="group relative flex flex-col items-center text-center gap-2 rounded-2xl p-6 shadow-md bg-white dark:bg-brand-900 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200">
                             <span class="w-14 h-14 rounded-xl flex items-center justify-center text-3xl bg-brand-50 dark:bg-brand-800 group-hover:scale-105 transition-transform" aria-hidden="true">🧠</span>
                             <h3 class="font-semibold text-brand-800 dark:text-white text-sm"><a href="tipos.html" class="rounded after:absolute after:inset-0 after:rounded-2xl hover:text-accent-700 dark:hover:text-accent-400 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500">Tipos de entrenamiento</a></h3>
-                            <p class="text-xs text-brand-450 dark:text-brand-350">Dieciocho entrenamientos: el Detective, el Barrido, Aguanta, Remata la ventaja, Elige a tiempo, Tus propios errores, Constrúyela tú, Rey y peón, Adivina la jugada del maestro y más</p>
+                            <p class="text-xs text-brand-450 dark:text-brand-350">Diecinueve entrenamientos: el Detective, el Barrido, Aguanta, Remata la ventaja, Salva las tablas, Elige a tiempo, Tus propios errores, Constrúyela tú, Rey y peón, Adivina la jugada del maestro y más</p>
                         </li>
                     </ul>
                 </section>
@@ -178,8 +181,11 @@
     <script src="../js/repaso-fallados.js"></script>
     <script src="../js/plan-entrenamiento.js"></script>
     <script src="../js/tema-flojo.js"></script>
+    <script src="../js/tipos-catalogo.js"></script>
+    <script src="../js/tipo-flojo.js"></script>
     <script src="../js/logros-catalogo.js"></script>
     <script src="../js/logros.js"></script>
+    <script src="../js/tiempo-secciones.js"></script>
     <script src="../js/notificaciones.js"></script>
     <script src="../js/main.js"></script>
     <script src="../js/entreno-index.js"></script>
