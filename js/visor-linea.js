@@ -23,6 +23,10 @@
  *     });
  *     visor.cargar(["e4", "e5", "Nf3"], { titulo: "…", en: 2, notas: [...] });
  *
+ * `desde` (FEN) arranca la línea en esa posición y no en la inicial, y
+ * `orientacion: "b"` la mira desde las negras: así la usan Ejercicios por tema
+ * y Mates para «Ver la línea» de un ejercicio ya resuelto.
+ *
  * `notas[i]`, si viene, es un texto sobre la jugada i (cuánto saca el rival
  * ahí, lo que dijo Stockfish): se escribe debajo de la jugada contada.
  */
@@ -116,6 +120,8 @@ window.VisorLinea = (function () {
     const o = cfg || {};
     let jugadas = [];
     let notas = [];
+    let desde = null;          // FEN de salida; null = la posición inicial
+    let orientacion = "w";
     let indice = 0;
     let partida = null;
     let ultima = null;
@@ -150,7 +156,7 @@ window.VisorLinea = (function () {
     [titulo, marco, anuncio, controles, escrita, nota, motor, detalles, comandosCaja, lista].forEach((x) => contenedor.appendChild(x));
 
     function posicionEn(n) {
-      const g = new Chess();
+      const g = desde ? new Chess(desde) : new Chess();
       ultima = null;
       for (let i = 0; i < n; i++) ultima = g.move(jugadas[i], { sloppy: true });
       return g;
@@ -158,8 +164,10 @@ window.VisorLinea = (function () {
 
     function dibujar() {
       tablero.textContent = "";
-      for (let rank = 8; rank >= 1; rank--) {
-        for (let f = 0; f < 8; f++) {
+      const filas = orientacion === "b" ? [1, 2, 3, 4, 5, 6, 7, 8] : [8, 7, 6, 5, 4, 3, 2, 1];
+      const cols = orientacion === "b" ? [7, 6, 5, 4, 3, 2, 1, 0] : [0, 1, 2, 3, 4, 5, 6, 7];
+      for (const rank of filas) {
+        for (const f of cols) {
           const square = COLUMNAS[f] + rank;
           const c = document.createElement("button");
           c.type = "button";
@@ -201,10 +209,17 @@ window.VisorLinea = (function () {
 
     function pintarLista() {
       lista.textContent = "";
-      for (let i = 0; i < jugadas.length; i += 2) {
+      // Desde una posición a mitad de partida, la numeración sigue la de la FEN;
+      // si empiezan las negras, la primera jugada va sola: «24… Txe1».
+      const partes = desde ? desde.split(" ") : [];
+      const empiezanNegras = partes[1] === "b";
+      const primera = parseInt(partes[5], 10) || 1;
+      const corrimiento = empiezanNegras ? 1 : 0;
+      for (let i = -corrimiento; i < jugadas.length; i += 2) {
         const par = el("span", "visor-par");
-        par.appendChild(el("b", "", (i / 2 + 1) + "."));
+        par.appendChild(el("b", "", (primera + (i + corrimiento) / 2) + (i < 0 ? "…" : ".")));
         [i, i + 1].forEach((k) => {
+          if (k < 0) return;
           if (k >= jugadas.length) return;
           const b = el("button", "visor-jugada" + (k === indice - 1 ? " visor-actual" : ""), aEspanol(jugadas[k]));
           b.type = "button";
@@ -266,7 +281,9 @@ window.VisorLinea = (function () {
     // nunca se muestra una posición inventada.
     function cargar(sec, opciones) {
       const oc = opciones || {};
-      const g = new Chess();
+      desde = oc.desde || null;
+      orientacion = oc.orientacion === "b" ? "b" : "w";
+      const g = desde ? new Chess(desde) : new Chess();
       jugadas = [];
       for (const san of sec || []) { if (!g.move(san, { sloppy: true })) break; jugadas.push(san); }
       notas = (oc.notas || []).slice(0, jugadas.length);

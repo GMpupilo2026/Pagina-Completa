@@ -1901,6 +1901,14 @@
                     const { filas, error } = await ResumenClase.cargar(sb, s.id);
                     if (error) { td.textContent = "No se pudo contar: " + error.message; return; }
                     ResumenClase.pintar(td, filas, { titulo: "Lo que hizo cada alumno en la clase del " + fmtDate(s.started_at) });
+                    // Lo que dijo la pregunta de salida, si la hubo: arriba de la tabla.
+                    const { fila: salida } = await ResumenClase.cargarSalida(sb, s.id);
+                    if (salida) {
+                        const p = document.createElement("p");
+                        p.className = "salida-registro text-sm text-brand-700 dark:text-brand-200 mb-2";
+                        ResumenClase.pintarSalida(p, salida, "🚪 Pregunta de salida: ");
+                        td.prepend(p);
+                    }
                 });
                 tdActions.appendChild(verBtn);
             }

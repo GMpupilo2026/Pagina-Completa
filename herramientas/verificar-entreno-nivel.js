@@ -67,6 +67,7 @@ async function temas(browser) {
     igual("el detalle guarda cómo salió", detalle && [detalle.limpio, detalle.con_error, detalle.con_pista], [false, true, false]);
 
     // Cambiar el selector reubica el tema y queda guardado.
+    await page.click("#fin-ejercicio .primary");   // «Siguiente ejercicio →»: ya no salta solo
     await page.waitForFunction(() => !locked, { timeout: 5000 });
     await page.selectOption("#nivel-desde", "1800");
     igual("al elegir 1800, el ejercicio llega a 1800", (await ratingActual(page)) >= 1800, "true");

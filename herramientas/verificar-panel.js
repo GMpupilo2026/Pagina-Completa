@@ -785,7 +785,10 @@ async function pruebaRegistroResumen(browser) {
   console.log("\n=== Qué hicieron en una clase del registro ===");
   const { page, ctx, errores } = await panel(browser, [PROFE], "u-profe", null, { rpc: { resumen_de_la_clase: [
     { student_id: "u-ana", nombre: "Ana Rojas", preguntas: 3, respondidas: 2, correctas: 2, incorrectas: 0, sin_calificar: 0,
-      practicas: 0, ganadas: 0, tablas: 0, perdidas: 0 }] } });
+      practicas: 0, ganadas: 0, tablas: 0, perdidas: 0 }],
+    // La pregunta de salida de esa clase (salida_de_la_clase): 1 de 3 entendió.
+    salida_de_la_clase: [{ question_id: "q-s", prompt: "¿Entendiste?", tipo: "opciones", asistentes: 4, respondieron: 3,
+      bien: 1, medio: 0, mal: 2, sin_calificar: 0 }] } });
   await page.waitForSelector("#sessions-log tbody tr", { timeout: 10000 });
   const pedidas = () => page.evaluate(() => window.__consultas.filter((c) => c.tabla === "resumen_de_la_clase").map((c) => c.args && c.args.p_clase));
   igual("con la lista no se pide ningún resumen", JSON.stringify(await pedidas()), "[]");
@@ -798,6 +801,9 @@ async function pruebaRegistroResumen(browser) {
   igual("lo pinta escrito", await page.evaluate(() =>
     [...document.querySelectorAll("#sessions-log tbody td table tbody tr")].map((tr) => [...tr.children].map((c) => c.textContent).join(" | ")).join()),
     "Ana Rojas | 2 de 3 contestadas: 2 bien | —");
+  await page.waitForSelector("#sessions-log .salida-registro", { timeout: 5000 });
+  igual("y arriba, lo que dijo la pregunta de salida", await page.textContent("#sessions-log .salida-registro"),
+    "🚪 Pregunta de salida: 🔁 Conviene repetir el tema la próxima clase. 3 de 4 alumnos contestaron: 1 lo entendió, 2 no lo entendieron.");
   await btn.click();
   igual("se vuelve a cerrar", await page.evaluate(() => /contestadas/.test(document.getElementById("sessions-log").textContent)), "false");
   igual("sin errores en la página", errores, []);

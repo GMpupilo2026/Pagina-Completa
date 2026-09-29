@@ -644,6 +644,52 @@ clase-elegido`.** Está probado que falla de verdad: sin pintar qué pensar, con
 «+30» mandando un arranque nuevo, sin decir que se acabó, sin irse solo, o sin
 leer `pensar` de la fila, salta.
 
+### La pregunta de salida
+
+Al cerrar la clase, junto al título y la nota, el profe puede hacer una última
+pregunta sobre lo visto: «🌡️ ¿lo entendiste?» o «❓ ¿qué jugarías?» en la
+posición del tablero. Lo que contestan dice si el tema quedó o hay que
+repetirlo, y se lo recuerda al profe cuando abre la clase siguiente, que es
+cuando lo va a usar. Migraciones `pregunta_de_salida` y
+`question_answers_el_alumno_solo_la_suya`, comprobadas impersonando.
+
+- **Es una pregunta como cualquiera, marcada `questions.de_salida`**: los
+  alumnos la contestan igual, el plazo y la calificación son los mismos. El
+  termómetro sale por `hacer_pregunta_de_opciones` y se marca después con un
+  `update` (lo permite `questions_update` a quien la hizo); la de jugada lleva
+  `de_salida` en el insert.
+- **La cuenta la hace la base**: `salida_de_la_clase(clase)`, SECURITY
+  INVOKER, toma la ÚLTIMA de salida de esa clase y dice cuántos asistieron,
+  cuántos contestaron y cómo les fue. Del termómetro (opciones sin calificar)
+  cuenta la opción: la primera es «bien», la segunda «a medias», el resto
+  «mal»; de una de jugada, la calificación. Probado: el profe ve todo, otro
+  profe nada, una alumna solo lo suyo.
+- **El veredicto lo dice la página** (`ResumenClase.veredictoSalida`, una sola
+  copia): «más o menos» vale la mitad; con 70 % o más «✅ El tema quedó», con
+  40 % o más «🤔 Quedó a medias: conviene un repaso corto», y si no «🔁
+  Conviene repetir el tema la próxima clase». Siempre con los números escritos
+  («2 de 8 alumnos contestaron: 1 lo entendió, 1 no lo entendió»). Lo que falta
+  calificar no cuenta: se dice, y si falta todo, no adivina.
+- **Se ve en tres lugares**: en el cierre (cambia con cada respuesta: la
+  escucha de `question_answers` lo refresca aunque la pregunta vigente no se
+  haya cargado), en «Qué hicieron» del registro del panel, arriba de la tabla,
+  y al profe al entrar a la clase siguiente («📌 La clase pasada («…»), la
+  pregunta de salida dijo: …»). Al alumno no se le muestra: su cuenta sería
+  solo la suya.
+- **De paso se cerró un agujero**: desde 20260914 cualquier alumno podía LEER
+  las respuestas de sus compañeros a las preguntas de su profe, con el ✅/❌
+  que la pantalla promete «en privado». La política de 20260914 copió a
+  `question_answers` la condición de `questions` («creada por mi profesor») y
+  la de 20260915 la pasó a `es_mi_profesor()`. Ahora el alumno ve solo la
+  suya, como decía la original. El conteo sin nombres que ve la clase sale de
+  `resultados_de_la_pregunta()`, SECURITY DEFINER, que no depende de esto; las
+  funciones de informes (INVOKER) le dan a un alumno solo lo suyo.
+
+**Al tocar esto, correr `node herramientas/verificar-todo.js clase-salida
+panel`.** Está probado que falla de verdad: sin marcar la de jugada o el
+termómetro, sin el recordatorio al entrar, con «más o menos» valiendo cero, sin
+refrescar al llegar respuestas, o sin la línea del registro, salta.
+
 ### El modo sencillo de la clase en vivo
 
 Aun ordenada, la pantalla del profesor tiene catorce controles delante, y la

@@ -136,6 +136,12 @@ function montarComandos(){
 }
 
 function jugarEscribiendo(texto, api){
+  // Terminado el ejercicio, «siguiente» escrito hace lo mismo que el botón.
+  if(finEjercicio && finEjercicio.activo()){
+    if(/^\s*sig(uiente)?\s*$/i.test(texto)){ api.limpiar(); finEjercicio.siguiente(); }
+    else api.decir('Ejercicio terminado. Escribe "siguiente" para pasar al que sigue.');
+    return;
+  }
   if(locked){ api.decir('Espera un momento: el ejercicio está respondiendo.'); return; }
   // El intérprete busca la jugada entre las LEGALES y no toca la partida, así que
   // no hace falta ninguna copia.
@@ -188,6 +194,7 @@ let currentCategory = 'mate1';
 let currentIndex = 0;
 let game = null;
 let orientation = 'w'; // el bando que juega: el tablero se mira desde ahí
+let finEjercicio = null;   // «Siguiente» y «Ver la línea» del ejercicio terminado
 let lastMove = null;    // la última jugada del rival, marcada en el tablero
 let solutionStep = 0;   // cuántas jugadas de puzzle.solution ya se jugaron (propias + del rival)
 let selectedSquare = null;
@@ -294,6 +301,7 @@ function highlightTargets(square){ EjercicioTablero.marcarDestinos(document.getE
 
 function loadPuzzle(){
   const puzzle = currentPuzzle();
+  if(finEjercicio){ finEjercicio.cerrar(); finEjercicio = null; }
   document.getElementById('play-area').style.display = 'block';
   document.getElementById('celebration').style.display = 'none';
   if(!puzzle){
@@ -381,12 +389,14 @@ function playMove(from, to, promotion){
   // Cualquier jugada que dé mate también es correcta (como en Temas y en la
   // Racha): el banco guarda UNA solución, y a veces hay más de un mate.
   if(!EjercicioTablero.esAcierto(game, moveResult, expected)){
+    // Qué contesta el rival, si chess.js lo puede afirmar (js/ejercicio-tablero.js).
+    const refuta = EjercicioTablero.refutacion(game);
     game.undo();
     drawBoard();
     missedThisPuzzle = true;
     resetStreak();
     EjercicioTablero.destello(document.querySelector('[data-square="' + to + '"]'));
-    setStatus(`${moveResult.san} es legal, pero no lleva al mate en la cantidad de jugadas pedida.`, 'bad');
+    setStatus(`${EjercicioTablero.jugadaEs(moveResult.san)} es legal, pero no lleva al mate en la cantidad de jugadas pedida.` + (refuta ? ' ' + refuta : ''), 'bad');
     return;
   }
 
@@ -434,14 +444,21 @@ function finishPuzzle(){
   }
   updateProgressBar();
   buildTabs();
-  setTimeout(() => {
-    if(currentIndex < PUZZLES[currentCategory].length - 1){
-      currentIndex++;
-      loadPuzzle();
-    } else {
-      finishCategory();
-    }
-  }, 1000);
+  // Antes saltaba al siguiente al segundo: el alumno decide cuándo, y puede
+  // recorrer la línea del mate (js/ejercicio-tablero.js).
+  finEjercicio = EjercicioTablero.fin({
+    caja: '#fin-ejercicio', desde: puzzle.fen, jugadas: game.history(), orientacion: orientation,
+    siguiente: pasarAlSiguiente,
+  });
+}
+function pasarAlSiguiente(){
+  finEjercicio = null;
+  if(currentIndex < PUZZLES[currentCategory].length - 1){
+    currentIndex++;
+    loadPuzzle();
+  } else {
+    finishCategory();
+  }
 }
 
 function finishCategory(){

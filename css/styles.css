@@ -1069,6 +1069,8 @@ footer li > a {
    alumno (--sq-light / --sq-dark, ver «El tablero que eligió el alumno es el
    mismo en TODO el sitio»). La última jugada se marca con un borde, además de
    decirse en palabras: el color nunca va solo. */
+/* «Ver la línea» de un ejercicio terminado (js/ejercicio-tablero.js). */
+.fin-visor { margin-top: 16px; }
 .visor-linea { display: flex; flex-direction: column; align-items: center; gap: 0.6rem; }
 .visor-titulo { font-weight: 700; text-align: center; color: rgb(var(--c-brand-800, 36 59 83)); }
 .dark .visor-titulo { color: #fff; }

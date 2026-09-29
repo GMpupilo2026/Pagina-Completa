@@ -13,6 +13,8 @@
    - Visualización va de fácil a difícil; Racha táctica sin sesión manda al
      login con ?next=; Precisión posicional enlaza fichas en «a reforzar» y
      no repite la misma idea espejada en la ronda corta siguiente.
+   - Temas y Mates: al fallar dicen qué contesta el rival (si chess.js lo
+     puede afirmar); al terminar esperan a «Siguiente» y dejan ver la línea.
    - Diagnóstico: el plan sale entero (las cuatro semanas, con su meta), y si el
      profesor compartió el suyo se ve ese, con su texto escapado.
 
@@ -224,6 +226,96 @@ async function rapidos(browser) {
   }
 }
 
+/* Al fallar, qué contesta el rival (si chess.js lo puede afirmar); al terminar,
+   el ejercicio espera a «Siguiente» y deja recorrer la línea jugada. */
+async function verLaLinea(browser) {
+  console.log("\n=== La refutación del error ===");
+  {
+    const { page, ctx, errores } = await abrir(browser, "/entreno/temas.html?tema=fork&desde=0", null, { entreno_temas_desde: "0" });
+    await page.waitForFunction(() => typeof currentTheme !== "undefined" && currentTheme && game !== null, { timeout: 20000 });
+    const r = await page.evaluate(() => [
+      "r5k1/5ppp/8/8/8/8/5PPP/6K1 b - - 0 1",      // Ta1#
+      "6k1/5ppp/1b6/8/3Q4/8/5PPP/6K1 b - - 0 1",    // la dama de d4 queda sin defensa
+      "6k1/5ppp/1b6/1N6/3Q4/8/5PPP/6K1 b - - 0 1",  // la misma, pero el caballo recupera
+      "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1",
+    ].map((f) => { const g = new Chess(f); const t = EjercicioTablero.refutacion(g); return [t, g.fen() === f]; }));
+    igual("un mate en una se dice, en castellano", r[0], ["Así el rival da mate con Ta1#.", true]);
+    igual("una pieza que se pierde se dice", r[1], ["Así el rival se come la dama de d4 con Axd4, y ninguna pieza tuya puede volver a comer en d4.", true]);
+    igual("si se puede volver a comer, no se dice nada", r[2], [null, true]);
+    igual("y sin nada que afirmar, tampoco", r[3], [null, true]);
+
+    // En la página: una jugada equivocada que deja algo así lo dice en el aviso.
+    const caso = await page.evaluate(() => {
+      const ids = idsOf("fork");
+      for (let i = 0; i < Math.min(ids.length, 200); i++) {
+        const p = DATA.puzzles[ids[i]]; const g = new Chess(p.fen);
+        for (const m of g.moves({ verbose: true })) {
+          if (m.san === p.solution[0]) continue;
+          g.move(m); const t = g.in_checkmate() ? null : EjercicioTablero.refutacion(g); g.undo();
+          if (t) return { i, from: m.from, to: m.to, san: m.san, t };
+        }
+      }
+      return null;
+    });
+    if (!caso) igual("hay un ejercicio de horquilla con un error refutable", "ninguno", "alguno");
+    else {
+      await page.evaluate((c) => { currentIndex = c.i; loadPuzzle(); playMove(c.from, c.to, "q"); }, caso);
+      igual("el aviso del error dice la jugada en castellano y lo que contesta el rival",
+        await page.evaluate(() => document.getElementById("round-status").textContent),
+        await page.evaluate((c) => EjercicioTablero.jugadaEs(c.san) + " es legal, pero no es la jugada de la solución. " + c.t, caso));
+    }
+    sinErrores(errores, "refutación");
+    await ctx.close();
+  }
+
+  console.log("\n=== Mates: «Siguiente» y «Ver la línea» ===");
+  {
+    const { page, ctx, errores } = await abrir(browser, "/entreno/mates.html");
+    await page.waitForFunction(() => PUZZLES.mate2.length > 0 && game !== null, { timeout: 20000 });
+    // Un mate en dos con negras al turno, jugado entero desde la página.
+    const id = await page.evaluate(() => {
+      currentCategory = "mate2";
+      currentIndex = PUZZLES.mate2.findIndex((p) => p.fen.split(" ")[1] === "b");
+      loadPuzzle();
+      const j = jugadaEsperada(); playMove(j.from, j.to, j.promotion);
+      return currentPuzzle().id;
+    });
+    await page.waitForFunction(() => !locked, { timeout: 5000 });
+    await page.evaluate(() => { const j = jugadaEsperada(); playMove(j.from, j.to, j.promotion); });
+    await page.waitForFunction(() => document.getElementById("fin-ejercicio").checkVisibility(), { timeout: 5000 });
+    await page.waitForTimeout(1500);
+    igual("resuelto, ya no salta solo al siguiente", await page.evaluate(() => currentPuzzle().id), id);
+    igual("el foco queda en «Siguiente ejercicio →»", await page.evaluate(() => document.activeElement.textContent), "Siguiente ejercicio →");
+    const ver = '#fin-ejercicio button[aria-controls]';
+    igual("«Ver la línea» dice que está cerrado", await page.getAttribute(ver, "aria-expanded"), "false");
+    await page.click(ver);
+    igual("y al abrirlo, que está abierto", await page.getAttribute(ver, "aria-expanded"), "true");
+    const visor = await page.evaluate(() => {
+      const v = document.querySelector("#fin-ejercicio .fin-visor");
+      const casillas = v.querySelectorAll(".visor-sq");
+      return { visible: v.checkVisibility(), n: casillas.length, primera: casillas[0].dataset.square,
+               jugadas: v.querySelectorAll(".visor-jugada").length, numero: v.querySelector(".visor-par b").textContent,
+               historia: game.history().length };
+    });
+    igual("se ve un tablero de 64 casillas, mirado desde las negras (h1 arriba a la izquierda)",
+      [visor.visible, visor.n, visor.primera], [true, 64, "h1"]);
+    igual("con las jugadas del ejercicio", visor.jugadas, visor.historia);
+    igual("numeradas desde la posición, empezando por las negras", /^\d+…$/.test(visor.numero), "true");
+    await page.click('#fin-ejercicio .visor-control[aria-label="Ir a la última jugada"]');
+    await page.waitForTimeout(120);
+    igual("al final de la línea, el mate", await page.evaluate(() => /jaque mate/.test(document.querySelector("#fin-ejercicio .visor-escrita").textContent)), "true");
+    await page.click("#fin-ejercicio .primary");
+    igual("«Siguiente» pasa al que sigue", await page.evaluate((i) => currentPuzzle().id !== i, id), "true");
+    igual("y el panel del terminado se va", await page.evaluate(() => document.getElementById("fin-ejercicio").checkVisibility()), "false");
+    // Escribiendo, «siguiente» hace lo mismo que el botón.
+    const antes = await page.evaluate(() => { finishPuzzle(); return currentPuzzle().id; });
+    await page.evaluate(() => jugarEscribiendo("siguiente", { limpiar() { return this; }, decir() { return this; } }));
+    igual("escribir «siguiente» también pasa", await page.evaluate((i) => currentPuzzle().id !== i, antes), "true");
+    sinErrores(errores, "mates, ver la línea");
+    await ctx.close();
+  }
+}
+
 async function moduloComun(browser) {
   console.log("\n=== El módulo común de ejercicios (js/ejercicio-tablero.js) ===");
   {
@@ -400,6 +492,7 @@ async function diagnostico(browser) {
     await moduloComun(browser);
     await tableroYPistas(browser);
     await rapidos(browser);
+    await verLaLinea(browser);
   } catch (e) {
     console.log("  ✗ " + (e && e.stack || e));
     fallos += 1;

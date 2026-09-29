@@ -18,6 +18,7 @@
   const A = window.PreparacionLineas;
   const R = () => window.PreparacionResumen;
   let opcionesActuales = {};
+  let nombreAlumno = "";   // con cruce: el plan dice cuántas veces jugó él cada jugada
 
   function el(tag, clase, texto) {
     const e = document.createElement(tag);
@@ -80,6 +81,7 @@
   // recibe el lado ("conBlancas" / "conNegras") cuando se pide el plan en PGN.
   function pintarCuerpo(r, c, opciones) {
     opcionesActuales = opciones || {};
+    nombreAlumno = (r.cruce && r.cruce.alumno) || "";
     c.textContent = "";
     if (R()) c.appendChild(pintarResumen(r));
     c.appendChild(pintarCifras(r));
@@ -130,6 +132,12 @@
         t.appendChild(el("p", "font-mono text-sm text-brand-800 dark:text-white break-words", A.lineaEs(x.sec)));
         t.appendChild(el("p", "text-sm text-brand-600 dark:text-brand-200", "En esta línea " + x.texto));
         if (x.aviso) t.appendChild(el("p", "text-sm text-accent-700 dark:text-accent-400", x.aviso));
+        if (x.general) {
+          const g = el("p", "text-sm text-brand-600 dark:text-brand-200 mt-1");
+          g.dataset.general = "";
+          g.textContent = x.general;
+          t.appendChild(g);
+        }
         if (x.alumno) {
           const a = el("p", "text-sm font-semibold text-brand-700 dark:text-brand-100 mt-1");
           a.dataset.alumno = "";
@@ -272,6 +280,10 @@
       const leVa = R() ? " (" + R().comoLeVa(x.puntos) + ")" : "";
       texto.appendChild(el("span", "text-brand-450 dark:text-brand-350", " · él saca " + A.pct(x.puntos) + leVa + " en " + x.n + (x.n === 1 ? " partida" : " partidas")));
     }
+    // En el plan a la medida: si el alumno ya la juega, cuántas veces.
+    if (x.quien === "tu" && x.alumno && nombreAlumno) {
+      texto.appendChild(el("span", "text-brand-600 dark:text-brand-200", " · " + nombreAlumno + " la jugó " + x.alumno.n + (x.alumno.n === 1 ? " vez" : " veces")));
+    }
     li.appendChild(texto);
     return li;
   }
@@ -299,6 +311,31 @@
     return ul;
   }
 
+  /* El plan que vale (planDe): a la medida del alumno si hay cruce. Ese es
+     el que se baja, se manda y se archiva; el general queda a mano, plegado,
+     para comparar. */
+  function bloquePlan(r, lado) {
+    const d = el("div");
+    d.dataset.plan = lado;
+    const aMedida = A.esAMedida(r, lado);
+    d.appendChild(el("p", "text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mt-4 mb-2", aMedida ? "El plan, a la medida de " + nombreAlumno : "El plan"));
+    if (aMedida) d.appendChild(el("p", "text-sm text-brand-600 dark:text-brand-200 mb-2", "Donde las opciones se parecen, va con lo que " + nombreAlumno + " ya juega; una jugada claramente mejor contra él gana aunque sea nueva."));
+    d.appendChild(listaPlan(A.planDe(r, lado), 0));
+    const general = r[lado] && r[lado].plan;
+    const lineas = (plan) => A.lineasDelPlan(plan).map((c) => c.map((x) => x.san).join(" ")).join("|");
+    if (aMedida && general && general.length && lineas(general) !== lineas(A.planDe(r, lado))) {
+      const det = el("details", "mt-3");
+      det.dataset.planGeneral = lado;
+      det.appendChild(el("summary", "cursor-pointer text-sm font-semibold text-brand-600 dark:text-brand-200 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "El plan general, sin mirar a " + nombreAlumno));
+      const guardado = nombreAlumno;
+      nombreAlumno = "";           // el general no dice cuántas veces la jugó el alumno
+      det.appendChild(listaPlan(general, 0));
+      nombreAlumno = guardado;
+      d.appendChild(det);
+    }
+    return d;
+  }
+
   function pintarPlanes(r) {
     const s = tarjeta("Qué jugarle, jugada por jugada", "planes-titulo");
     s.appendChild(nota("Donde te toca, la jugada con la que él saca menos (con al menos " + r.minimo + " partidas). Donde le toca a él, sus respuestas más jugadas, cada una con la tuya. Antes de jugarla, mira la revisión de Stockfish: una jugada puede tener buenos números porque él no la supo castigar."));
@@ -310,9 +347,8 @@
       b.appendChild(tabla("Tu primera jugada con blancas y cuánto saca él", [{ titulo: "Tu primera jugada" }, { titulo: "Partidas", num: true }, { titulo: "Él saca", num: true }],
         r.conBlancas.primeras.map((x) => [jugada("1." + A.sanEs(x.san)), x.n, A.pct(x.puntos)])));
     }
-    if (r.conBlancas.plan.length) {
-      b.appendChild(el("p", "text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mt-4 mb-2", "El plan"));
-      b.appendChild(listaPlan(r.conBlancas.plan, 0));
+    if (A.planDe(r, "conBlancas").length) {
+      b.appendChild(bloquePlan(r, "conBlancas"));
       b.appendChild(accionesPlan("conBlancas", "con blancas"));
     } else {
       b.appendChild(el("p", "text-sm text-brand-500 dark:text-brand-300", "No hay suficientes partidas suyas con negras para recomendar algo."));
@@ -331,9 +367,8 @@
       n.appendChild(tabla("Contra cada primera jugada suya, la respuesta con la que él saca menos",
         [{ titulo: "Si abre" }, { titulo: "Lo juega", num: true }, { titulo: "Tu respuesta" }, { titulo: "Él saca", num: true }], filas));
     }
-    if (r.conNegras.plan.length) {
-      n.appendChild(el("p", "text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mt-4 mb-2", "El plan"));
-      n.appendChild(listaPlan(r.conNegras.plan, 0));
+    if (A.planDe(r, "conNegras").length) {
+      n.appendChild(bloquePlan(r, "conNegras"));
       n.appendChild(accionesPlan("conNegras", "con negras"));
     } else {
       n.appendChild(el("p", "text-sm text-brand-500 dark:text-brand-300", "No hay suficientes partidas suyas con blancas para recomendar algo."));
@@ -354,7 +389,11 @@
         m.errores.map((x) => [jugada(x.sec.length ? A.lineaEs(x.sec) : "el comienzo"), jugada(A.sanEs(x.jugada)), x.n, jugada(x.mejor ? A.sanEs(x.mejor) : "—"), A.textoEval(x.antes) + " → " + A.textoEval(x.despues)]
           .concat(opcionesActuales.alVerSecuencia ? [botonVer(x.sec.concat(x.jugada), "Ver en el tablero: " + A.lineaEs(x.sec.concat(x.jugada)), "Su error: " + A.sanEs(x.jugada) + " (" + A.textoEval(x.antes) + " → " + A.textoEval(x.despues) + "). Lo mejor era " + (x.mejor ? A.sanEs(x.mejor) : "otra jugada") + ".")] : []))));
     } else {
-      s.appendChild(el("p", "text-sm text-brand-600 dark:text-brand-200 mb-3", "En sus líneas más jugadas no se encontró ningún error claro suyo: sus aperturas se sostienen."));
+      // Cuánto se buscó: «no hay errores» en 3 jugadas no es lo mismo que en 40.
+      const suyas = m.lineas.filter((x) => x.quien === "rival").length;
+      s.appendChild(el("p", "text-sm text-brand-600 dark:text-brand-200 mb-3", suyas
+        ? "Se revisaron " + suyas + (suyas === 1 ? " jugada suya" : " jugadas suyas") + " de las que repite (en " + r.minimo + " partidas o más) y ninguna es un error claro: sus aperturas se sostienen. Para ganarle, más que una trampa, sirve llevarlo a donde rinde menos."
+        : "En sus líneas más jugadas no se encontró ningún error claro suyo: sus aperturas se sostienen."));
     }
     if (m.cuidado.length) {
       s.appendChild(el("h4", "font-bold text-brand-800 dark:text-white mt-4 mb-2", "Recomendaciones con números buenos pero dudosas para el motor"));
