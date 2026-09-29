@@ -798,6 +798,58 @@ clase-salida`.** Está probado que falla de verdad: sin decir que se la
 perdió, con la respuesta del motor a la vista, sin el aviso en la posición, o
 sin mandar `para_ausentes` al cerrar, salta.
 
+### El mapa de jugadas, el calentamiento y el podio
+
+Tres cosas que ve toda la clase y que, por eso, van en `game_state` como la
+vista, el elegido y el tiempo para pensar: quien recarga o entra tarde las ve
+igual. Solo el profe las pone: `protect_game_state_teacher_columns` le devuelve
+lo que había a cualquier otro (comprobado impersonando). Sus formas las revisan
+CHECK envueltos en `coalesce(…, false)`: **un CHECK que da NULL cuenta como
+aprobado**, y con una clave que falta (`{"lineas": []}` sin `question_id`)
+`jsonb_typeof` da NULL. Pasaba también en `elegido` y `pensar`; la migración
+`game_state_formas_sin_nulos` los arregló a los cinco.
+
+- **El mapa de jugadas** (`game_state.encuesta`). «🗺️ Pasar el mapa de jugadas
+  al tablero de la clase», en la pregunta activa (solo las de jugada): las
+  cinco jugadas más elegidas van como flechas al tablero de todos, por orden
+  de votos (verde, azul, naranja, rojo, negro), y debajo del tablero va
+  **escrito** qué jugada es cada color y cuántos la eligieron: la flecha sola
+  no dice cuál es cuál. Sin nombres; los números salen de
+  `resultados_de_la_pregunta()`. Si el tablero ya no tiene la posición de la
+  pregunta, se pregunta antes de mandarla (con `Avisos.confirmar`, como
+  «Mostrar a la clase»). Se quita con «Quitar el mapa», al borrar las flechas
+  o al mandar otra posición: una leyenda sin sus flechas mentiría.
+- **La posición de calentamiento** (`game_state.calentamiento`). «🔥
+  Calentamiento» en cada posición del plan y en cada ejercicio de Táctica.
+  Cada alumno la juega en su propio tablero, sin que cuente como pregunta ni
+  quede en ningún lado. La primera jugada se compara con la solución: la de
+  Táctica (viene en SAN y se guarda en UCI, que no depende de cómo se escriba)
+  o, en una posición del plan, la que calcula el motor en la computadora del
+  profe al mandarla. Así el alumno no carga el motor. Puede intentarlo otra vez
+  o ver la solución. **Quién lo resolvió va en la presencia** (el `at` del
+  calentamiento, en `metaDePresencia()`), no en una tabla: es de ese rato. El
+  profe ve «1 de 2 conectados ya lo resolvieron».
+  En Modo Adaptado se contesta escribiendo (`ClaseAdaptada.montar`, la misma
+  puerta que el clic).
+  `metaDePresencia()` junta todo lo que anuncia cada uno: antes había tres
+  `track()` con tres pedazos distintos, y **cada `track()` reemplaza el
+  anterior entero**: levantar la mano borraba a quién miraba el profe.
+- **Los puntos de la clase y el podio** (`js/puntos-clase.js`,
+  `game_state.podio`). Los puntos salen de `resumen_de_la_clase` (lo contesta
+  la base, con su RLS) con una regla que se lee escrita en la pantalla. No se
+  guardan: se derivan de las filas de la clase. Se ven en «🏆 Puntos de esta
+  clase» (pestaña Alumnos), con de dónde sale cada uno, y en el cierre. Los
+  empatados comparten puesto: nadie queda segundo por el orden alfabético.
+  «Mostrar el podio a la clase» manda una foto a `game_state.podio`, **con o
+  sin nombres**: sin nombres, cada alumno se reconoce por su id y ve igual
+  «Tú: 4.º lugar con 3 puntos», aunque no esté entre los tres primeros.
+
+**Al tocar esto, correr `node herramientas/verificar-todo.js clase-encuesta`.**
+Está probado que falla de verdad: con la leyenda sin el nombre del color, sin
+quitar el mapa al borrar las flechas, dando por buena cualquier jugada del
+calentamiento, guardando la solución en SAN, sin el cuadro para escribir, con el podio sin nombres que los
+lleva igual o con el lugar del alumno tomado de otro, salta.
+
 ### El modo sencillo de la clase en vivo
 
 Aun ordenada, la pantalla del profesor tiene catorce controles delante, y la

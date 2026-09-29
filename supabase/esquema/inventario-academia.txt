@@ -472,9 +472,11 @@ columna  game_rooms.white_time_left  numeric
 columna  game_state.active_player_color  text
 columna  game_state.active_player_id  uuid
 columna  game_state.arrows  jsonb
+columna  game_state.calentamiento  jsonb
 columna  game_state.circles  jsonb
 columna  game_state.comentarios  jsonb
 columna  game_state.elegido  jsonb
+columna  game_state.encuesta  jsonb
 columna  game_state.fen  text
 columna  game_state.id  integer
 columna  game_state.last_move  text
@@ -482,6 +484,7 @@ columna  game_state.moves  jsonb
 columna  game_state.owner_id  uuid
 columna  game_state.pensar  jsonb
 columna  game_state.pieces_hidden  boolean
+columna  game_state.podio  jsonb
 columna  game_state.shown_curso  text
 columna  game_state.shown_leccion  integer
 columna  game_state.start_fen  text

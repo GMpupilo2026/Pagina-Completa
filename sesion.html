@@ -103,6 +103,11 @@
                         <p id="salida-resultado" hidden class="text-sm text-brand-700 dark:text-brand-200 mt-1.5" aria-live="polite"></p>
                     </div>
                     <div id="clase-resumen" class="sm:col-span-2 mt-1 rounded-lg bg-white dark:bg-brand-950 border border-brand-100 dark:border-brand-800 px-3 py-2" aria-live="polite"></div>
+                    <!-- El podio al cerrar: los mismos puntos que en la pestaña Alumnos. -->
+                    <div id="cierre-podio" class="sm:col-span-2 mt-1 rounded-lg border border-accent-400/60 bg-white dark:bg-brand-950 px-3 py-2">
+                        <div id="cierre-podio-lista" class="text-sm"></div>
+                        <button id="cierre-podio-btn" type="button" class="mt-1.5 text-xs font-semibold px-3 py-2 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🏆 </span>Mostrar el podio a la clase</button>
+                    </div>
                 </div>
                 <!-- Lo que dijo la pregunta de salida de la clase anterior: se recuerda al empezar. -->
                 <p id="salida-pasada" hidden class="w-full text-sm text-brand-700 dark:text-brand-200"></p>
@@ -322,6 +327,48 @@
                     <!-- El recuadro del Modo Adaptado (js/clase-adaptada.js): solo se ve
                          con ese modo encendido, lo decide el CSS. -->
                     <div id="clase-cmd" class="max-w-[560px] mx-auto"></div>
+
+                    <!-- El mapa de jugadas de una pregunta (game_state.encuesta): las flechas van en el
+                         tablero de la clase y acá, escrito, qué jugada es cada color y cuántos la
+                         eligieron. Sin nombres. El color nunca va solo. -->
+                    <div id="encuesta-caja" hidden class="max-w-[560px] mx-auto mt-3 rounded-xl border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 px-4 py-3">
+                        <p class="text-sm font-semibold text-brand-700 dark:text-brand-200"><span aria-hidden="true">🗺️ </span>Lo que jugó la clase</p>
+                        <ul id="encuesta-lineas" class="mt-1 space-y-0.5 text-sm text-brand-700 dark:text-brand-200"></ul>
+                        <button id="encuesta-quitar-btn" type="button" hidden class="mt-2 text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Quitar el mapa</button>
+                    </div>
+
+                    <!-- Posición de calentamiento (game_state.calentamiento): una para resolver mientras
+                         empieza la clase. Cada alumno la juega en su propio tablero; el profe ve
+                         cuántos la resolvieron (va en la presencia, no en una tabla). -->
+                    <div id="calentamiento-caja" hidden class="max-w-[560px] mx-auto mt-3 rounded-xl border-2 border-accent-500 bg-accent-50 dark:bg-brand-900 px-4 py-3">
+                        <p class="text-sm font-semibold text-brand-700 dark:text-brand-200"><span aria-hidden="true">🔥 </span>Calentamiento<span id="calentamiento-titulo" class="font-normal"></span></p>
+                        <div id="calentamiento-alumno" hidden>
+                            <p id="calentamiento-turno" class="text-xs text-brand-600 dark:text-brand-300 mt-0.5"></p>
+                            <div class="flex justify-center mt-2">
+                                <div id="calentamiento-tablero" class="grid grid-cols-8 grid-rows-[repeat(8,minmax(0,1fr))] w-full max-w-[300px] aspect-square rounded-lg overflow-hidden shadow border-2 border-brand-700 select-none"></div>
+                            </div>
+                            <!-- En Modo Adaptado se contesta escribiendo (js/clase-adaptada.js). -->
+                            <div id="calentamiento-cmd" class="text-left"></div>
+                            <p id="calentamiento-msg" class="text-sm text-center font-semibold text-brand-800 dark:text-white mt-2 min-h-[1.25rem]" aria-live="polite"></p>
+                            <div class="flex flex-wrap justify-center gap-2 mt-1">
+                                <button id="calentamiento-otra-btn" type="button" hidden class="text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Intentarlo otra vez</button>
+                                <button id="calentamiento-solucion-btn" type="button" hidden class="text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Ver la solución</button>
+                            </div>
+                        </div>
+                        <div id="calentamiento-profe" hidden>
+                            <p id="calentamiento-cuenta" class="text-sm text-brand-700 dark:text-brand-200 mt-1" aria-live="polite"></p>
+                            <button id="calentamiento-terminar-btn" type="button" class="mt-2 text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Terminar el calentamiento</button>
+                        </div>
+                    </div>
+
+                    <!-- El podio de la clase (game_state.podio): una foto de los puntos que manda el
+                         profe. Con o sin nombres; cada uno ve igual su propio lugar. -->
+                    <div id="podio-caja" hidden class="max-w-[560px] mx-auto mt-3 rounded-xl border-2 border-accent-500 bg-white dark:bg-brand-900 px-4 py-3 text-center">
+                        <p class="text-sm font-semibold text-brand-700 dark:text-brand-200"><span aria-hidden="true">🏆 </span>Podio de la clase</p>
+                        <ol id="podio-lineas" class="mt-1 space-y-0.5 text-base text-brand-800 dark:text-white"></ol>
+                        <p id="podio-tu-lugar" hidden class="mt-2 text-sm font-semibold text-brand-700 dark:text-brand-200"></p>
+                        <button id="podio-quitar-btn" type="button" hidden class="mt-2 text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Quitar el podio</button>
+                    </div>
 
                     <!-- Tiempo para pensar (game_state.pensar): lo ven todos, también el profe, que
                          suele compartir su pantalla. El reloj cambia cada segundo, así que NO es región
@@ -808,6 +855,9 @@
                                  lo muestra a la clase: ven lo mismo, sin saber quién eligió qué. -->
                             <div id="question-resultados-profe" class="mb-2 rounded-lg bg-brand-50 dark:bg-brand-800/50 px-3 py-2 text-xs text-brand-700 dark:text-brand-200"></div>
                             <button id="mostrar-resultados-btn" type="button" aria-pressed="false" class="w-full mb-3 text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors"></button>
+                            <!-- El mapa: las jugadas más elegidas como flechas en el tablero de la clase
+                                 (game_state.encuesta). Solo en preguntas de jugada. -->
+                            <button id="encuesta-btn" type="button" class="w-full mb-3 text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🗺️ </span>Pasar el mapa de jugadas al tablero de la clase</button>
                             <ul id="answers-list" class="space-y-1.5 text-sm">
                                 <li class="text-brand-450 dark:text-brand-350">Todavía nadie respondió…</li>
                             </ul>
@@ -935,6 +985,18 @@
                                     <ul id="elegidos-cuenta" class="mt-2 space-y-1 text-sm"></ul>
                                 </details>
                             </div>
+                            <!-- Los puntos de ESTA clase (js/puntos-clase.js): salen de resumen_de_la_clase,
+                                 no se guardan. «Mostrar el podio» manda una foto a game_state.podio. -->
+                            <details id="puntos-caja" class="mb-3 rounded-lg border border-brand-100 dark:border-brand-800 px-3 py-2">
+                                <summary class="cursor-pointer text-xs font-semibold text-brand-700 dark:text-brand-200"><span aria-hidden="true">🏆 </span>Puntos de esta clase</summary>
+                                <div id="puntos-lista" class="mt-2 text-sm" aria-live="polite"></div>
+                                <p id="puntos-regla" class="mt-2 text-xs text-brand-500 dark:text-brand-300"></p>
+                                <div class="flex flex-wrap items-center gap-2 mt-2">
+                                    <button id="puntos-actualizar-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🔄 </span>Volver a contar</button>
+                                    <label class="text-xs text-brand-700 dark:text-brand-200 flex items-center gap-1"><input id="podio-con-nombres" type="checkbox" checked class="accent-accent-500"> Con nombres</label>
+                                    <button id="podio-mostrar-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🏆 </span>Mostrar el podio a la clase</button>
+                                </div>
+                            </details>
                             <ul id="students-list" class="space-y-2 text-sm">
                                 <li class="text-brand-450 dark:text-brand-350">Nadie conectado todavía…</li>
                             </ul>
@@ -1055,6 +1117,7 @@
     <script src="js/posicion-valida.js"></script>
     <script src="js/pgn-clase.js"></script>
     <script src="js/resumen-clase.js"></script>
+    <script src="js/puntos-clase.js"></script>
     <script src="js/pregunta-clase.js"></script>
     <script src="js/partidas-clase.js"></script>
     <script src="js/plan-clase.js"></script>
