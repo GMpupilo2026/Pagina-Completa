@@ -13,6 +13,7 @@ tabla  archivos_pgn  rls=true
 tabla  avisos_cobro  rls=true
 tabla  avisos_ficha_faltante  rls=true
 tabla  avisos_ia_tope  rls=true
+tabla  clase_elegidos  rls=true
 tabla  clase_plan_hecho  rls=true
 tabla  class_attendance  rls=true
 tabla  class_chat_messages  rls=true
@@ -181,6 +182,10 @@ columna  avisos_ia_tope.gasto_usd  numeric(12,6)
 columna  avisos_ia_tope.periodo  date
 columna  avisos_ia_tope.tope_usd  numeric(10,2)
 columna  avisos_ia_tope.umbral  smallint
+columna  clase_elegidos.class_session_id  uuid
+columna  clase_elegidos.created_at  timestamp with time zone
+columna  clase_elegidos.id  uuid
+columna  clase_elegidos.student_id  uuid
 columna  clase_plan_hecho.class_session_id  uuid
 columna  clase_plan_hecho.created_at  timestamp with time zone
 columna  clase_plan_hecho.plan_item_id  uuid
@@ -458,6 +463,7 @@ columna  game_state.active_player_id  uuid
 columna  game_state.arrows  jsonb
 columna  game_state.circles  jsonb
 columna  game_state.comentarios  jsonb
+columna  game_state.elegido  jsonb
 columna  game_state.fen  text
 columna  game_state.id  integer
 columna  game_state.last_move  text
@@ -1205,6 +1211,8 @@ politica  archivos_pgn  archivos_pgn_insert  INSERT
 politica  archivos_pgn  archivos_pgn_select  SELECT
 politica  archivos_pgn  archivos_pgn_update  UPDATE
 politica  avisos_cobro  avisos_lee_coordinacion  SELECT
+politica  clase_elegidos  clase_elegidos_insert  INSERT
+politica  clase_elegidos  clase_elegidos_select  SELECT
 politica  clase_plan_hecho  clase_plan_hecho_de_quien_da_la_clase  ALL
 politica  class_attendance  class_attendance_delete_profesor  DELETE
 politica  class_attendance  class_attendance_exige_acceso_ins  INSERT  restrictiva
@@ -1530,6 +1538,9 @@ indice  avisos_cobro  avisos_cobro_pkey
 indice  avisos_cobro  avisos_cobro_una_vez
 indice  avisos_ficha_faltante  avisos_ficha_faltante_pkey
 indice  avisos_ia_tope  avisos_ia_tope_pkey
+indice  clase_elegidos  clase_elegidos_alumno_idx
+indice  clase_elegidos  clase_elegidos_clase_idx
+indice  clase_elegidos  clase_elegidos_pkey
 indice  clase_plan_hecho  clase_plan_hecho_item_idx
 indice  clase_plan_hecho  clase_plan_hecho_pkey
 indice  class_attendance  class_attendance_pkey
@@ -1882,6 +1893,13 @@ grant  avisos_cobro  authenticated  SELECT
 grant  avisos_cobro  authenticated  TRIGGER
 grant  avisos_cobro  authenticated  TRUNCATE
 grant  avisos_cobro  authenticated  UPDATE
+grant  clase_elegidos  authenticated  DELETE
+grant  clase_elegidos  authenticated  INSERT
+grant  clase_elegidos  authenticated  REFERENCES
+grant  clase_elegidos  authenticated  SELECT
+grant  clase_elegidos  authenticated  TRIGGER
+grant  clase_elegidos  authenticated  TRUNCATE
+grant  clase_elegidos  authenticated  UPDATE
 grant  clase_plan_hecho  authenticated  DELETE
 grant  clase_plan_hecho  authenticated  INSERT
 grant  clase_plan_hecho  authenticated  REFERENCES

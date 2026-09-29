@@ -563,6 +563,7 @@
             activePlayerId = row.active_player_id || null;
             activePlayerColor = row.active_player_color || "both";
             comentariosClase = row.comentarios && typeof row.comentarios === "object" ? row.comentarios : {};
+            if (!esObservador) pintarElegido(row.elegido || null);
             updateTurnIndicator();
             updateAccessForRole();
             renderMoveList();
@@ -1535,6 +1536,7 @@
             const openSession = (data && data[0]) || null;
             currentOpenSessionId = openSession ? openSession.id : null;
             refrescarPlanHecho();
+            cargarTurnos();
             if (openSession) {
                 await markAttendance(openSession.id);
                 await startPresenceLog(openSession.id);
@@ -2497,6 +2499,10 @@
                 renderStudentsList();
                 pintarObservadores(mirando);
                 if (!isTeacher && !esObservador) pintarTeMiran(meMiran);
+                // El nombre del elegido sale de la presencia: al recargar llega después.
+                if (isTeacher && elegidoActual) pintarElegido(elegidoActual);
+                // Quien se acaba de conectar aparece en la cuenta, con cero.
+                if (isTeacher) pintarTurnos();
                 // La lista de "con quién chatear" solo muestra alumnos conectados ahora
                 // mismo a la clase (ver renderChatStudentOptions) — cada vez que cambia
                 // quién está conectado, se refresca también esa lista.
@@ -3230,6 +3236,163 @@
             myAnswer = data || { opcion: i, is_correct: null };
             pintarOpcionesAlumno();
             updateAnswerFeedbackUI();
+        }
+
+        /* ---------- El alumno elegido al azar para responder ----------
+           Queda en game_state.elegido ({id, at}) y no en un mensaje suelto de
+           Realtime: quien recarga justo en ese momento se entera igual. Solo el
+           profe lo cambia (protect_game_state_teacher_columns). Al elegido le sale
+           en grande; los demás no ven nada. */
+        // Cuántas veces le tocó a cada uno en ESTA clase (clase_elegidos).
+        let turnosEnLaClase = new Map();
+        let turnosDeLaClase = null;      // de qué clase son esas cuentas
+        let elegidoActual = null;        // {id, at} tal como está en la base
+        // El aviso se cierra una vez por elección (se recuerda en la pestaña:
+        // recargar no se lo vuelve a poner encima si ya lo cerró).
+        const ELEGIDO_VISTO = "sesion_elegido_visto_v1";
+        // Un aviso de hace más de 15 minutos es de otra pregunta: no se pinta.
+        const ELEGIDO_VIGENTE_MS = 15 * 60000;
+
+        function nombreDeConectado(id) {
+            const info = onlineStudents.get(id) || {};
+            return info.full_name || info.email || "Alumno";
+        }
+
+        /* La historia de la clase: una fila por elección. Son pocas por clase
+           (una por pregunta), así que se cuentan acá sin miedo al tope de mil. */
+        async function cargarTurnos() {
+            if (!isTeacher || !currentOpenSessionId) { turnosEnLaClase = new Map(); turnosDeLaClase = null; pintarTurnos(); return; }
+            const { data, error } = await sb.from("clase_elegidos").select("student_id").eq("class_session_id", currentOpenSessionId);
+            if (error) { console.error(error); return; }
+            turnosEnLaClase = new Map();
+            (data || []).forEach((f) => turnosEnLaClase.set(f.student_id, (turnosEnLaClase.get(f.student_id) || 0) + 1));
+            turnosDeLaClase = currentOpenSessionId;
+            pintarTurnos();
+        }
+
+        // Escrito, uno por renglón: los conectados (aunque tengan cero) y
+        // quien ya pasó aunque se haya ido. Primero los que menos llevan.
+        function pintarTurnos() {
+            const lista = document.getElementById("elegidos-cuenta");
+            if (!lista) return;
+            const ids = new Set([...onlineStudents.keys(), ...turnosEnLaClase.keys()]);
+            lista.innerHTML = "";
+            const filas = [...ids].map((id) => ({ id, veces: turnosEnLaClase.get(id) || 0, nombre: nombreDeConectado(id) }))
+                .sort((a, b) => a.veces - b.veces || a.nombre.localeCompare(b.nombre));
+            document.getElementById("elegidos-cuenta-caja").hidden = !filas.length;
+            filas.forEach((f) => {
+                const li = document.createElement("li");
+                li.className = "flex items-center justify-between gap-2";
+                const n = document.createElement("span");
+                n.className = "text-brand-700 dark:text-brand-200 break-words";
+                n.textContent = f.nombre;   // lo escribió una persona
+                const v = document.createElement("span");
+                v.className = "shrink-0 font-semibold text-brand-800 dark:text-white";
+                v.textContent = f.veces === 0 ? "todavía no" : f.veces === 1 ? "1 vez" : f.veces + " veces";
+                li.append(n, v);
+                lista.appendChild(li);
+            });
+        }
+
+        async function elegirAlAzar() {
+            const btn = document.getElementById("elegir-azar-btn");
+            const conectados = [...onlineStudents.keys()];
+            if (!conectados.length) { setStatus("No hay alumnos conectados para elegir."); return; }
+            if (!currentOpenSessionId) { setStatus("Abre la clase primero: cada turno queda en su registro."); return; }
+            if (turnosDeLaClase !== currentOpenSessionId) await cargarTurnos();
+            const id = PartidasClase.elegirConMenos(conectados, turnosEnLaClase);
+            const caja = document.getElementById("elegido-caja");
+            const nombreEl = document.getElementById("elegido-nombre");
+            caja.hidden = false;
+            btn.disabled = true;
+            /* Una ruleta corta con los nombres, salvo con «reducir movimiento».
+               Mientras gira, el nombre no es región viva: se anuncia solo el final. */
+            const reducir = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+            if (!reducir && conectados.length > 1) {
+                nombreEl.setAttribute("aria-live", "off");
+                for (let i = 0; i < 12; i++) {
+                    nombreEl.textContent = nombreDeConectado(conectados[i % conectados.length]);
+                    await new Promise((r) => setTimeout(r, 70 + i * 12));
+                }
+                nombreEl.setAttribute("aria-live", "polite");
+            }
+            nombreEl.textContent = nombreDeConectado(id);   // textContent: el nombre lo escribió una persona
+            // El nombre viaja con la elección: los demás alumnos lo ven (y al
+            // recargar no dependen de que la presencia ya haya llegado).
+            const elegido = { id, at: new Date().toISOString(), nombre: nombreDeConectado(id) };
+            const { error } = await sb.from("game_state").update({ elegido }).eq("id", myGameStateId);
+            btn.disabled = false;
+            if (error) { console.error(error); setStatus("No se pudo avisarle: " + error.message); return; }
+            elegidoActual = elegido;
+            // Queda en la historia de la clase: es lo que cuenta los turnos.
+            const { error: errTurno } = await sb.from("clase_elegidos").insert({ class_session_id: currentOpenSessionId, student_id: id });
+            if (errTurno) console.error(errTurno);
+            else turnosEnLaClase.set(id, (turnosEnLaClase.get(id) || 0) + 1);
+            pintarTurnos();
+            setStatus("🎯 Le toca responder a " + nombreDeConectado(id) + ": ya le salió el aviso en su pantalla.");
+        }
+
+        async function terminarElegido() {
+            const { error } = await sb.from("game_state").update({ elegido: null }).eq("id", myGameStateId);
+            if (error) { console.error(error); setStatus("No se pudo quitar el aviso: " + error.message); return; }
+            elegidoActual = null;
+            document.getElementById("elegido-caja").hidden = true;
+        }
+
+        if (document.getElementById("elegir-azar-btn")) {
+            document.getElementById("elegir-azar-btn").addEventListener("click", elegirAlAzar);
+            document.getElementById("elegido-otro-btn").addEventListener("click", elegirAlAzar);
+            document.getElementById("elegido-listo-btn").addEventListener("click", terminarElegido);
+            document.getElementById("elegido-insignia-btn").addEventListener("click", () => {
+                if (!elegidoActual) return;
+                abrirTrofeosEnClase(elegidoActual.id, nombreDeConectado(elegidoActual.id));
+                document.getElementById("trofeos-en-clase").scrollIntoView({ block: "nearest" });
+            });
+        }
+
+        function pintarElegido(elegido) {
+            elegidoActual = elegido || null;
+            if (isTeacher) {
+                // Al recargar, el profe vuelve a ver a quién había elegido.
+                const caja = document.getElementById("elegido-caja");
+                if (!caja) return;
+                caja.hidden = !elegidoActual;
+                if (elegidoActual) document.getElementById("elegido-nombre").textContent = nombreDeConectado(elegidoActual.id);
+                return;
+            }
+            const overlay = document.getElementById("elegido-overlay");
+            const chip = document.getElementById("elegido-chip");
+            if (!overlay) return;
+            const vigente = !!(elegidoActual && Date.now() - new Date(elegidoActual.at).getTime() < ELEGIDO_VIGENTE_MS);
+            const soyYo = vigente && elegidoActual.id === profile.id;
+            /* Los demás ven a quién eligieron, escrito y sin taparles nada: el
+               aviso grande es solo para quien tiene que responder. */
+            const otro = document.getElementById("elegido-otro");
+            if (otro) {
+                const nombre = vigente && !soyYo ? (elegidoActual.nombre || nombreDeConectado(elegidoActual.id)) : "";
+                const antes = otro.dataset.at || "";
+                document.getElementById("elegido-otro-nombre").textContent = nombre;   // lo escribió una persona
+                otro.hidden = !nombre;
+                otro.dataset.at = nombre ? elegidoActual.at : "";
+                if (nombre && antes !== elegidoActual.at && claseAcc) claseAcc.decir("Tu profe eligió a " + nombre + " para responder.");
+            }
+            let visto = null;
+            try { visto = sessionStorage.getItem(ELEGIDO_VISTO); } catch (e) {}
+            const mostrarGrande = soyYo && visto !== elegidoActual.at;
+            const estabaAbierto = !overlay.classList.contains("hidden");
+            overlay.classList.toggle("hidden", !mostrarGrande);
+            chip.hidden = !soyYo || mostrarGrande;
+            if (mostrarGrande && !estabaAbierto) {
+                enfocarCuandoSeVea(document.getElementById("elegido-overlay-ok"));
+                if (claseAcc) claseAcc.decir("¡Te eligieron para responder! Tu profe te va a hacer una pregunta.");
+            }
+        }
+
+        if (document.getElementById("elegido-overlay-ok")) {
+            document.getElementById("elegido-overlay-ok").addEventListener("click", () => {
+                if (elegidoActual) { try { sessionStorage.setItem(ELEGIDO_VISTO, elegidoActual.at); } catch (e) {} }
+                pintarElegido(elegidoActual);
+            });
         }
 
         function subscribeQuestions() {

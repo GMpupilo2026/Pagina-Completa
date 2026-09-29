@@ -61,5 +61,20 @@ window.PartidasClase = (function () {
         return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
     }
 
-    return { RITMOS, RELOJES_PRACTICA, emparejar, estado, reloj };
+    /* A quién le toca responder: al azar, pero entre los conectados que llevan
+       MENOS turnos en esta clase. Con el azar puro el mismo alumno sale tres
+       veces seguidas y otro nunca; así nadie repite hasta que les toque a
+       todos, y quien se conecta tarde (con cero) entra primero. `cuentas` es
+       un Map id → veces, armado de clase_elegidos: sobrevive a recargar la
+       página. Devuelve null si no hay nadie conectado. */
+    function elegirConMenos(conectados, cuentas, azar) {
+        if (!conectados.length) return null;
+        const veces = (id) => (cuentas && cuentas.get(id)) || 0;
+        const minimo = Math.min(...conectados.map(veces));
+        const pendientes = conectados.filter((id) => veces(id) === minimo);
+        const r = azar || Math.random;
+        return pendientes[Math.floor(r() * pendientes.length)];
+    }
+
+    return { RITMOS, RELOJES_PRACTICA, emparejar, estado, reloj, elegirConMenos };
 })();
