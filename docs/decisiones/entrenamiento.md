@@ -1139,7 +1139,7 @@ que encontró el de `informes.html`.
 
 `libro-de-diagnostico.pdf` es **otra cosa** que `diagnostico-de-nivel.pdf`, y
 conviene no confundirlos: aquel es UNA forma de la prueba, sorteada, para que el
-alumno la conteste en papel; este es el **banco entero** —todas las preguntas (583 desde la versión 5), área
+alumno la conteste en papel; este es el **banco entero** —todas las preguntas (696 desde la versión 6), área
 por área y escalón por escalón, con la respuesta marcada, el porqué y cómo se
 comprobó cada posición—, para estudiar y para corregir. Uno se reparte, el otro
 no. Lo genera `herramientas/diagnostico-libro.js`.
@@ -1424,11 +1424,46 @@ volver a etiquetarlos.
   `diagnostico-calibrar.js`: ajusta esas dificultades igual que ajustó las de
   las viejas.
 
+#### La primera calibración con la versión 5 (y la versión 6)
+
+El 29 de septiembre de 2026 había 17 diagnósticos de la versión 5, 16 con Elo
+declarado. **La prueba sobrestimaba a los jugadores de club en unos 350
+puntos**: un 1400 nacional salía ≈1899, un 1495 FIDE ≈2096, un 1634 ≈2142. El
+descuento que se le había puesto al rating de Lichess (−400 las de mover, −550
+las de opción) se quedaba corto: el rating de ejercicios de Lichess está más
+inflado respecto al Elo de lo que se supuso, y en el diagnóstico no hay reloj.
+
+- **El calibrador estima ahora un corrimiento por tipo para todas las de
+  Lichess juntas**, además del ajuste de cada pregunta. Cada pregunta de Lichess
+  la había contestado una a tres personas, y calibrada sola casi no se habría
+  movido; el corrimiento usa todas las respuestas a la vez. Salió **−380 las de
+  mover y −160 las de opción** (o sea, rating − 780 y rating − 710). Con eso, el
+  sesgo de la versión 5 contra el Elo declarado bajó de +349 a +59 puntos.
+- **Al bajar, el escalón 5 quedó vacío.** Se agregaron ejercicios de Lichess
+  de rating 2650 a 3060, tomados de mayor a menor rating y todos de mover
+  (casillero 6 del generador). El banco pasó de 583 a 696 preguntas, sin perder
+  ni cambiar ninguna de las publicadas.
+- **Reglas dejó el escalón 5**: ninguna pregunta de reglas pasó de ~1920 con los
+  datos (un jugador de 2000 conoce el reglamento), así que su casillero pasó a
+  un segundo de escalón 4. Como cambió `FORMA`, `VERSION` subió a 6.
+- **Los mates de escalón 5 son justos**: en toda la base hay solo 2 mates de
+  2780 o más con las blancas en turno. Si hay que repetir la prueba, esas dos se
+  repiten.
+- Simulación con las dificultades nuevas: el nivel se acierta el 90 % de las
+  veces en el centro de cada nivel, con un error típico de 70 a 90 puntos entre
+  1300 y 2100.
+- **Los 16 diagnósticos de la versión 5 ya rendidos se midieron con las
+  dificultades infladas** y quedaron guardados así (`detalle.medicion`): con las
+  de ahora, varios bajarían uno o dos niveles (un 1634 que salió «Muy avanzado»
+  sería «Intermedio»). No se recalcularon: cambiar el resultado que ya vio una
+  persona es una decisión de quien administra, no de la calibración.
+
 #### Cómo se rehace
 
 - Preguntas de Lichess: exportar candidatos (la consulta está en la cabecera
   del script) y `STOCKFISH=/usr/games/stockfish node
-  herramientas/diagnostico-lichess.js candidatos.json`. El análisis del motor
+  herramientas/diagnostico-lichess.js candidatos.json`. **Después, siempre la
+  calibración**: el generador escribe `elo = eloBase`, sin el corrimiento. El análisis del motor
   queda en `herramientas/.cache-lichess.json` (ignorado por git).
 - Calibración: exportar las respuestas (consulta en la cabecera) FUERA del
   repositorio y `node herramientas/diagnostico-calibrar.js respuestas.json`.

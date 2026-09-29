@@ -167,9 +167,11 @@ puntos Elo»)
   los resultados viejos se siguen leyendo con su regla de entonces: nunca se
   vuelven a etiquetar. Al tocar el banco: `verificar-diagnostico.js` y volver a
   generar el cuadernillo y el libro.
-- **Pendiente**: cuando haya diagnósticos de la versión 5 con Elo declarado,
-  correr `diagnostico-calibrar.js` (el descuento de −400/−550 al rating de
-  Lichess es una suposición, no una medida).
+- **Después de generar preguntas de Lichess, siempre calibrar**: el generador
+  escribe `elo = eloBase`, y el corrimiento de Lichess (−380 las de mover, −160
+  las de opción en la primera calibración) lo pone `diagnostico-calibrar.js`.
+  Conviene volver a calibrar cada vez que se junten unos 15-20 diagnósticos
+  nuevos con Elo declarado.
 
 **Código y despliegue**
 - **Una sola copia de cada cosa.** Lo que usan dos pantallas va en un módulo de

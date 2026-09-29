@@ -1913,6 +1913,10 @@
         }
 
         function eloLineaHTML(resumen, propio) {
+            return eloLineaSolaHTML(resumen, propio) + (PE.notaRecalibrado(resumen)
+                ? `<p class="text-xs text-brand-500 dark:text-brand-300 mt-1">${escVis(PE.notaRecalibrado(resumen))}</p>` : "");
+        }
+        function eloLineaSolaHTML(resumen, propio) {
             const e = resumen.elo || {};
             // Desde la versión 5 la prueba trae su margen de error («≈1720 ± 110»).
             const m = (v, err) => err ? `≈${v} ± ${err}` : `≈${v}`;

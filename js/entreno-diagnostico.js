@@ -41,10 +41,13 @@ const PENDIENTE_KEY = 'diagnostico_pendiente_v1';
      5 — 60 ítems, la mitad de escalones 4 y 5, muchos de resolver en el
          tablero; el nivel sale de la fuerza medida en puntos Elo
          (PlanEntrenamiento.medir), no de los escalones.
+     6 — reglas deja el escalón 5 por un segundo de escalón 4 (ninguna pregunta
+         de reglas llegó a 2000 con los datos), y las de Lichess se recalibraron:
+         eran unos 380 puntos más fáciles de lo que se había supuesto.
    Una prueba empezada con una versión anterior no se puede continuar: los
    ejercicios ya no son los mismos y el resultado mezclaría dos mediciones
    distintas. Se descarta y se avisa en la portada. */
-const VERSION = 5;
+const VERSION = 6;
 
 /* "No lo sé todavía" es una respuesta más, no un botón de saltar: vale cero
    puntos igual que fallar, pero se guarda aparte. Para el profesor no es lo
@@ -870,6 +873,8 @@ function mostrarResultado(detalle, reciente) {
   eloEl.textContent = resumen.elo && resumen.elo.declarado
     ? `Elo: ${resumen.elo.lectura.texto} Nivel calculado combinando tu Elo con la prueba (${margen(resumen.elo.combinado, resumen.elo.errorCombinado)}).`
     : `Sin Elo registrado: el nivel sale solo de la prueba (${margen(resumen.elo.estimado, resumen.elo.error)}).${sesionActual ? ' Si tienes rating, agrégalo en Configuración › Perfil y el próximo diagnóstico lo tendrá en cuenta.' : ''}`;
+  const nota = PE.notaRecalibrado(resumen);
+  if (nota) eloEl.textContent += ' ' + nota;
   pintarEscalones(resumen);
 
   const areasBox = document.getElementById('result-areas');
@@ -932,7 +937,7 @@ document.getElementById('repeat-btn').addEventListener('click', () => { borrarEs
 /* SOLO administración, no todo el equipo docente.
  *
  * Estos dos PDF traen las respuestas y la hoja de corrección: el cuadernillo es
- * la prueba que el alumno va a contestar y el libro es el banco entero, las 583
+ * la prueba que el alumno va a contestar y el libro es el banco entero, las 696
  * preguntas con su respuesta marcada. Cuanta más gente los tenga bajados, más
  * fácil es que terminen circulando y que el diagnóstico deje de medir nada.
  * Quien dé clase y los necesite se los pide a quien administra.

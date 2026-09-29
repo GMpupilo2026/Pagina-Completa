@@ -58,6 +58,16 @@ const ITEMS = global.window.DIAGNOSTICO_ITEMS;
    mano: el punto de partida de su dificultad. */
 const BASE_POR_PESO = { 1: 700, 2: 950, 3: 1200, 4: 1450, 5: 1700 };
 const DESVIO_ITEM = 250;
+/* Las preguntas de Lichess comparten además un CORRIMIENTO por tipo (uno para
+   las de mover, otro para las de opción): cuánto se equivocó el descuento que
+   les puso diagnostico-lichess.js al pasar del rating de Lichess a puntos Elo.
+   Es un solo número que se estima con TODAS las respuestas a esas preguntas, y
+   por eso se mueve con pocos diagnósticos; cada pregunta suelta, en cambio, la
+   contestan una a tres personas y casi no se movería. Se vio en la primera
+   calibración con la versión 5: el descuento se quedaba corto y la prueba
+   sobrestimaba a los jugadores de club en 300-400 puntos. */
+const DESVIO_CORRIMIENTO = 300;
+const grupoDe = (it) => (it.lichess ? it.tipo : null);
 const SIN_ELO = { media: 1200, desvio: 500 };
 const VUELTAS = 20;
 
@@ -68,9 +78,12 @@ const crudo = JSON.parse(fs.readFileSync(entrada, "utf8"));
 const porId = {};
 ITEMS.forEach((i) => {
   porId[i.id] = i;
+  i.eloAntes = i.elo;
   if (typeof i.eloBase !== "number") i.eloBase = BASE_POR_PESO[i.peso];
   i.elo = i.eloBase;
+  i.resto = 0;   // lo que la pregunta se aparta de su grupo
 });
+const corrimiento = { jugada: 0, opcion_tablero: 0 };
 
 const personas = crudo.map((c) => {
   const r = {};
@@ -79,7 +92,7 @@ const personas = crudo.map((c) => {
   const ns = Object.keys(c.ns || {}).length;
   const elo = PE.eloValido(c.elo);
   const tipo = PE.ELO_TIPO_POR_ID[c.tipo] ? c.tipo : "estimado";
-  return { r, n, ns, elo, tipo, partida: elo ? { media: elo, desvio: PE.ELO_TIPO_POR_ID[tipo].desvio } : SIN_ELO };
+  return { r, n, ns, elo, tipo, v: c.v, partida: elo ? { media: elo, desvio: PE.ELO_TIPO_POR_ID[tipo].desvio } : SIN_ELO };
 }).filter((p) => p.n >= 20 && p.ns / p.n <= 0.8);
 
 const respondidas = {};
@@ -87,12 +100,33 @@ personas.forEach((p, k) => Object.keys(p.r).forEach((id) => { (respondidas[id] =
 
 for (let v = 0; v < VUELTAS; v++) {
   personas.forEach((p) => { p.fuerza = PE.medir(ITEMS.filter((i) => i.id in p.r), p.r, p.partida).elo; });
+  // 1. El corrimiento de cada grupo de Lichess, con todas sus respuestas juntas.
+  Object.keys(corrimiento).forEach((g) => {
+    const ids = Object.keys(respondidas).filter((id) => grupoDe(porId[id]) === g);
+    if (!ids.length) return;
+    let mejor = corrimiento[g], max = -Infinity;
+    for (let d = -600; d <= 1000; d += 10) {
+      let lp = -0.5 * Math.pow(d / DESVIO_CORRIMIENTO, 2);
+      ids.forEach((id) => {
+        const it = porId[id];
+        const b = it.eloBase + d + it.resto, c = PE.azarDe(it);
+        respondidas[id].forEach((k) => {
+          const p = PE.probabilidad(personas[k].fuerza, b, c);
+          lp += Math.log(personas[k].r[id] ? p : 1 - p);
+        });
+      });
+      if (lp > max) { max = lp; mejor = d; }
+    }
+    corrimiento[g] = mejor;
+  });
+  // 2. Cada pregunta, partiendo de su base (más el corrimiento de su grupo).
   Object.keys(respondidas).forEach((id) => {
     const it = porId[id];
     const c = PE.azarDe(it);
-    let mejor = it.eloBase, max = -Infinity;
+    const centro = it.eloBase + (grupoDe(it) ? corrimiento[grupoDe(it)] : 0);
+    let mejor = centro, max = -Infinity;
     for (let b = 100; b <= 3200; b += 10) {
-      let lp = -0.5 * Math.pow((b - it.eloBase) / DESVIO_ITEM, 2);
+      let lp = -0.5 * Math.pow((b - centro) / DESVIO_ITEM, 2);
       respondidas[id].forEach((k) => {
         const p = PE.probabilidad(personas[k].fuerza, b, c);
         lp += Math.log(personas[k].r[id] ? p : 1 - p);
@@ -100,8 +134,11 @@ for (let v = 0; v < VUELTAS; v++) {
       if (lp > max) { max = lp; mejor = b; }
     }
     it.elo = mejor;
+    it.resto = mejor - centro;
   });
 }
+// Las de Lichess que nadie contestó también llevan el corrimiento de su grupo.
+ITEMS.forEach((it) => { if (grupoDe(it) && !respondidas[it.id]) it.elo = it.eloBase + corrimiento[grupoDe(it)]; });
 
 /* ---------- se escribe en el banco ---------- */
 let texto = fs.readFileSync(BANCO, "utf8");
@@ -120,6 +157,7 @@ const movidas = Object.keys(respondidas).map((id) => ({ id, n: respondidas[id].l
   .sort((x, y) => Math.abs(y.a - y.de) - Math.abs(x.a - x.de));
 console.log(`Diagnósticos que cuentan: ${personas.length} (${personas.filter((p) => p.elo).length} con Elo declarado).`);
 console.log(`Preguntas con respuestas: ${movidas.length} de ${ITEMS.length}. Cambiaron de escalón: ${cambiados}.`);
+console.log(`Corrimiento de las preguntas de Lichess: ${corrimiento.jugada >= 0 ? "+" : ""}${corrimiento.jugada} las de mover, ${corrimiento.opcion_tablero >= 0 ? "+" : ""}${corrimiento.opcion_tablero} las de opción.`);
 console.log("\nLas que más se movieron:");
 movidas.slice(0, 15).forEach((m) => console.log(`  ${m.id.padEnd(32)} ${String(m.n).padStart(3)} resp.  ${m.de} → ${m.a}`));
 
@@ -132,6 +170,17 @@ function pearson(xs, ys) {
   xs.forEach((x, i) => { sxy += (x - mx) * (ys[i] - my); sx += (x - mx) ** 2; sy += (ys[i] - my) ** 2; });
   return sxy / Math.sqrt(sx * sy);
 }
+/* Cuánto se aparta la prueba del Elo declarado, por versión: con las
+   dificultades de antes de esta calibración y con las de ahora. */
+["3", "4", "5"].forEach((v) => {
+  const grupo = personas.filter((p) => p.elo && String(p.v) === v);
+  if (!grupo.length) return;
+  const sesgo = (clave) => Math.round(grupo.reduce((s, p) => {
+    const items = ITEMS.filter((i) => i.id in p.r).map((i) => Object.assign({}, i, { elo: i[clave] }));
+    return s + PE.medir(items, p.r).elo - p.elo;
+  }, 0) / grupo.length);
+  console.log(`Versión ${v} (${grupo.length} con Elo): la prueba se aparta del Elo en ${sesgo("eloAntes")} puntos antes de calibrar y ${sesgo("elo")} después, en promedio.`);
+});
 const conElo = personas.filter((p) => p.elo);
 if (conElo.length >= 5) {
   const solo = conElo.map((p) => PE.medir(ITEMS.filter((i) => i.id in p.r), p.r));
