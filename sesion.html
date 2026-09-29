@@ -384,6 +384,9 @@
                             <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white">Tableros de los alumnos</h2>
                             <p id="practice-boards-hint" class="text-xs text-brand-450 dark:text-brand-350"></p>
                         </div>
+                        <!-- Quién acaba de pedir ayuda, dicho en voz: la tarjeta se marca y sube,
+                             pero quien no ve la pantalla no se entera de eso. -->
+                        <p id="practica-pedidos-aviso" class="sr-only" aria-live="polite"></p>
                         <div id="practice-boards-grid" class="grid gap-3"></div>
                     </div>
 
@@ -426,6 +429,8 @@
                                 <div class="flex flex-wrap gap-2">
                                     <button type="button" id="practica-mirar-mandar" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2 rounded-lg text-sm transition-colors">📨 Mandarle la ayuda</button>
                                     <button type="button" id="practica-mirar-quitar" class="bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">🧹 Quitarle la ayuda</button>
+                                    <!-- Solo cuando pidió ayuda: se atendió de palabra, sin mandarle nada. -->
+                                    <button type="button" id="practica-mirar-atendido" hidden class="bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">✔ Marcar como atendido</button>
                                 </div>
                                 <p id="practica-mirar-aviso" role="status" class="text-xs text-brand-600 dark:text-brand-300"></p>
                             </div>
@@ -541,6 +546,12 @@
                                  en la página, vacía cuando no hay nada: una que aparece no se anuncia. -->
                             <p id="practica-te-miran" hidden class="text-xs font-semibold text-brand-700 dark:text-brand-200 mt-3"></p>
                             <div id="practica-ayuda" role="status" class="text-left"></div>
+                            <!-- Pedir ayuda desde la propia partida: le llega a su profe (y a quien esté
+                                 observando la clase) en la tarjeta de su partida. -->
+                            <div class="flex justify-center mt-3">
+                                <button type="button" id="practica-pedir-ayuda" aria-pressed="false" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors">🙋 Pedir ayuda</button>
+                            </div>
+                            <p id="practica-pedido" role="status" class="text-xs text-brand-600 dark:text-brand-300 mt-1"></p>
                             <div class="flex justify-center gap-2 mt-3">
                                 <button id="practice-retry-engine-btn" class="hidden text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors">🔁 Pedir jugada del motor</button>
                                 <button id="practice-resign-btn" class="hidden text-xs font-semibold px-3 py-1.5 rounded-lg bg-red-100 hover:bg-red-200 dark:bg-red-900/40 dark:hover:bg-red-900/60 text-red-700 dark:text-red-300 transition-colors">🏳️ Rendirse</button>

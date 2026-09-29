@@ -649,6 +649,7 @@ columna  practice_games.eval_cp  integer
 columna  practice_games.fen  text
 columna  practice_games.id  uuid
 columna  practice_games.moves  jsonb
+columna  practice_games.pide_ayuda_at  timestamp with time zone
 columna  practice_games.reloj_ms  integer
 columna  practice_games.session_id  uuid
 columna  practice_games.status  text

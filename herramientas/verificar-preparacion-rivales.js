@@ -392,6 +392,92 @@ function pruebaPlanAMedida() {
   igual("un cruce guardado antes (sin planAlumno) usa el general", L.planDe(viejo, "conBlancas")[0].san, "c4");
 }
 
+/* Las partidas donde perdió (r.derrotas y derrotasEn): el resumen muestra,
+   en cada línea, cómo le ganaron ahí, con el enlace a la partida. El enlace
+   sale del PGN y termina en un href: solo https de Lichess o Chess.com. */
+function pruebaDerrotas() {
+  console.log("\n=== Las partidas donde perdió ===");
+  let t = "";
+  const sitios = ['[Site "https://lichess.org/abcd1234"]', '[Link "https://www.chess.com/game/live/123456"]', '[Site "javascript:alert(1)"]', '[Site "https://lichess.org.malo.com/x"]'];
+  for (let i = 0; i < 4; i++) t += partida("Otro " + i, "Pedro", "1-0", "e4 e5 2. Nf3 Nc6", sitios[i]).replace('[Date "2025.03.04"]', '[Date "2025.03.0' + (i + 1) + '"]');
+  for (let i = 0; i < 6; i++) t += partida("Otro " + i, "Pedro", "0-1", "e4 e5 2. Nf3 Nc6");
+  for (let i = 0; i < 2; i++) t += partida("Pedro", "Otro " + i, "0-1", "d4 d5");
+  const r = A.analizar(A.leerPgn(t), "Pedro");
+  const conNegras = r.derrotas.filter((x) => x.color === "b");
+  igual("se guardan sus derrotas, la más reciente primero", conNegras.map((x) => [x.color, x.fecha]).slice(0, 4),
+    [["b", "2025-03-04"], ["b", "2025-03-03"], ["b", "2025-03-02"], ["b", "2025-03-01"]]);
+  igual("el enlace solo si es https de Lichess o Chess.com (no «javascript:», no «lichess.org.malo.com»)", conNegras.slice(0, 4).map((x) => x.enlace || null),
+    [null, null, "https://www.chess.com/game/live/123456", "https://lichess.org/abcd1234"]);
+  const d = R.derrotasEn(r, ["e4", "e5"], "b");
+  igual("por 1.e4 e5, con él de negras: 4 derrotas, se muestran las 3 más recientes", [d.n, d.lista.length, d.lista[0].oponente], [4, 3, "Otro 3"]);
+  igual("las de otra línea o del otro color no se cuentan", [R.derrotasEn(r, ["d4"], "b").n, R.derrotasEn(r, ["d4"], "w").n], [0, 2]);
+  const linea = R.armar(r).lados[0].lineas[0];
+  igual("la línea del resumen trae cómo le ganaron ahí", [A.lineaEs(linea.sec), linea.derrotas.n], ["1.e4 e5 2.Cf3 Cc6", 4]);
+  const viejo = A.analizar(A.leerPgn(t), "Pedro");
+  delete viejo.derrotas;
+  igual("un análisis guardado sin derrotas no se rompe", R.armar(viejo).lados[0].lineas[0].derrotas.n, 0);
+  return r;
+}
+
+/* Los temas tácticos (js/preparacion-tactica.js). Cada posición y cada
+   jugada se comprueban con chess.js antes de usarlas: ninguna se inventa.
+   Después, partidas reales de trampas conocidas desde la posición inicial:
+   el mate de Légal y la trampa de la Petrov (5.Cc6+ a la descubierta). */
+const CASOS_TACTICOS = [
+  ["horquilla", "r3k3/8/8/3N4/8/8/8/4K3 w - - 0 1", "Nc7+ Kd7 Nxa8"],
+  ["clavada", "4k3/8/2q5/8/P7/3B4/8/6K1 w - - 0 1", "Bb5 Qxb5 axb5"],
+  ["enfilada", "8/8/8/2k3r1/8/8/7K/R7 w - - 0 1", "Ra5+ Kb4 Rxg5"],
+  ["descubierta", "3q3k/8/8/8/3N4/8/1B6/6K1 w - - 0 1", "Ne6+ Kg8 Nxd8"],
+  ["colgada", "4k3/8/8/8/8/8/1r6/4K2R b - - 0 1", "Rh2 Rxh2"],
+  ["mate-pasillo", "6k1/5ppp/8/8/8/8/8/R5K1 w - - 0 1", "Ra8#"],
+  ["defensor", "k7/6b1/8/4n3/8/8/8/K3R1R1 w - - 0 1", "Rxg7 Kb8 Rxe5"],
+];
+const LEGAL = "e4 e5 Nf3 d6 Bc4 Bg4 Nc3 g6 Nxe5 Bxd1 Bxf7+ Ke7 Nd5#";
+const PETROV = "e4 e5 Nf3 Nf6 Nxe5 Nxe4 Qe2 Nf6 Nc6+ Be7 Nxd8 Kxd8";
+const conNumeros = (sec) => sec.split(" ").map((m, i) => (i % 2 === 0 ? (i / 2 + 1) + ". " : "") + m).join(" ");
+
+function pruebaTactica() {
+  console.log("\n=== Su táctica: con qué gana y con qué pierde ===");
+  const T = require("../js/preparacion-tactica.js");
+  for (const [tema, fen, jugadas] of CASOS_TACTICOS) {
+    const g = new Chess(fen);
+    const js = jugadas.split(" ");
+    const legal = js.every((m) => g.move(m));
+    const mo = T.momento(js.map((m) => m.replace(/[+#]$/, "")), "b", /#$/.test(jugadas), fen);
+    igual(tema + ": " + jugadas + " (legal: " + legal + ")", [legal, mo && mo.tema], [true, tema]);
+  }
+  for (const [nombre, jugadas, tema, ply] of [["el mate de Légal", LEGAL, "mate", 13], ["la trampa de la Petrov", PETROV, "descubierta", 9]]) {
+    const g = new Chess();
+    cierto(nombre + " es legal", jugadas.split(" ").every((m) => g.move(m)));
+    const mo = T.momento(jugadas.split(" ").map((m) => m.replace(/[+#]$/, "")), "b", /#$/.test(jugadas));
+    igual(nombre + ": " + tema + ", en la jugada " + ply, [mo.tema, mo.ply], [tema, ply]);
+  }
+  // Una clavada sin importancia no se lleva el crédito: el patrón cuenta solo
+  // si después se cobra la pieza que atacaba.
+  const sin = T.momento(["Bb5", "Kd8", "Kh2"], "b", false, "3k4/8/2n5/8/8/3B4/8/7K w - - 0 1");
+  igual("sin material ganado no hay momento decisivo", sin, null);
+  const FEN_CLAVA = "4k3/8/2n5/8/8/3B4/1r6/4K2R w - - 0 1";
+  const gc = new Chess(FEN_CLAVA);
+  cierto("1.Ab5 Th2?? 2.Txh2 es legal", ["Bb5", "Rh2", "Rxh2"].every((m) => gc.move(m)));
+  igual("la clavada de 1.Ab5 no se lleva el crédito: se ganó la torre que dejó colgada", T.momento(["Bb5", "Rh2", "Rxh2"], "b", false, FEN_CLAVA).tema, "colgada");
+
+  // Pedro, con blancas: gana con Légal y con la Petrov, pierde con la
+  // Petrov del otro lado (él de negras) y en una partida por tiempo.
+  let t = "";
+  t += partida("Pedro", "Otro 1", "1-0", conNumeros(LEGAL), '[Termination "Normal"]');
+  t += partida("Pedro", "Otro 2", "1-0", conNumeros(PETROV), '[Site "https://lichess.org/petrov01"]');
+  t += partida("Otro 3", "Pedro", "1-0", conNumeros(PETROV));
+  t += partida("Otro 4", "Pedro", "1-0", "e4 e5", '[Termination "Time forfeit"]');
+  const r = A.analizar(A.leerPgn(t), "Pedro");
+  const tc = r.tactica;
+  igual("cuenta las revisadas y las que no se decidieron por material", [tc.revisadas, tc.sinMaterial], [{ ganadas: 2, perdidas: 2 }, { ganadas: 0, perdidas: 1 }]);
+  igual("con qué gana: descubierta y mate", tc.realiza.map((x) => [x.tema, x.n]).sort(), [["descubierta", 1], ["mate", 1]]);
+  igual("con qué pierde: la descubierta", tc.sufre.map((x) => [x.tema, x.n]), [["descubierta", 1]]);
+  const ej = tc.realiza.find((x) => x.tema === "descubierta").ejemplos[0];
+  igual("el ejemplo trae la partida hasta que termina de cobrar (6…Rxd8), la jugada del patrón (5.Cc6+) y el enlace", [ej.sec.length, ej.ply, ej.enlace], [12, 9, "https://lichess.org/petrov01"]);
+  return r;
+}
+
 /* Stockfish sobre lo que él juega de verdad (tareasDelMotor + jugadasSuyas).
    Con blancas el plan va por 1.e4: su 1.d4 d5 2.c4 e6 (20 partidas, 90 %)
    no está en el plan, pero sí en lo que él repite, y se revisa igual. */
@@ -712,7 +798,7 @@ async function pruebaConPermiso(browser) {
   igual("el foco va al título del resultado", await page.evaluate(() => document.activeElement.id), "titulo-resultado");
   const titulos = await page.evaluate(() => [...document.querySelectorAll("#resultado-cuerpo h3")].filter((h) => h.checkVisibility()).map((h) => h.textContent));
   igual("están todas las partes, en orden", titulos,
-    ["Qué hacer contra él", "Qué jugarle, jugada por jugada", "Lo que dice Stockfish", "Análisis FODA, visto desde quien quiere ganarle", "Más allá de la apertura", "Su repertorio", "Dónde rinde menos y dónde más", "Por ritmo, por año y por Elo"]);
+    ["Qué hacer contra él", "Qué jugarle, jugada por jugada", "Lo que dice Stockfish", "Análisis FODA, visto desde quien quiere ganarle", "Su táctica: con qué gana y con qué pierde", "Más allá de la apertura", "Su repertorio", "Dónde rinde menos y dónde más", "Por ritmo, por año y por Elo"]);
   igual("arriba de todo, qué hacer y qué no, con cada color", await page.evaluate(() => [...document.querySelectorAll("[aria-labelledby='resumen-titulo'] [data-lado] > h4")].map((h) => h.textContent)),
     ["Cuando tú llevas blancas", "Cuando tú llevas negras", "En toda la partida"]);
   igual("con blancas: la línea y lo que no hay que hacer", await page.evaluate(() => {
@@ -1488,6 +1574,49 @@ function pruebaArchivosDelMotor() {
 }
 
 // En un navegador de verdad: la página carga el 19 y contesta.
+async function pruebaDerrotasEnLaPagina(browser, r) {
+  console.log("\n=== Las partidas donde perdió, en la página ===");
+  const { page, ctx, errores } = await abrir(browser, true, [{ id: "p-d", profesor_id: "u-profe", rival: "Pedro", partidas: r.total, created_at: "2026-09-29T01:00:00Z", analisis: JSON.parse(JSON.stringify(r)) }]);
+  await page.click('#guardados button[aria-label="Abrir el análisis de Pedro"]');
+  await page.waitForFunction(() => document.getElementById("titulo-resultado").textContent === "Pedro", null, { timeout: 10000 });
+  const det = "[aria-labelledby='resumen-titulo'] [data-lado='conBlancas'] [data-linea] [data-derrotas]";
+  igual("la línea dice cuántas veces le ganaron ahí, plegado", await page.evaluate((s) => { const d = document.querySelector(s); return [d.querySelector("summary").textContent, d.open, d.querySelector("li").checkVisibility()]; }, det),
+    ["Cómo le ganaron aquí (4 partidas)", false, false]);
+  await page.click(det + " summary");
+  igual("al abrirlo: fecha, rival, cómo perdió y el enlace, que se abre aparte", await page.evaluate((s) => {
+    const lis = [...document.querySelectorAll(s + " li")];
+    const a = lis[2].querySelector("a");
+    return [lis[0].firstChild.textContent, lis[0].querySelector("a"), a.getAttribute("href"), a.target, a.rel, lis[2].checkVisibility(), lis[3].textContent];
+  }, det), ["04/03/2025 · contra Otro 3 (2000) · perdió de otra forma en 2 jugadas", null, "https://www.chess.com/game/live/123456", "_blank", "noopener noreferrer", true, "Y 1 más: aquí van las más recientes."]);
+  igual("ningún enlace sale del PGN sin pasar el filtro", await page.evaluate(() => [...document.querySelectorAll("#resultado-cuerpo a[href]")].filter((a) => !/^https:\/\/(lichess\.org|www\.chess\.com)\//.test(a.getAttribute("href"))).length), 0);
+  igual("sin errores", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+}
+
+async function pruebaTacticaEnLaPagina(browser, r) {
+  console.log("\n=== Su táctica, en la página ===");
+  // Para que pese en el resumen hacen falta 3 partidas de un tema: se repite
+  // la derrota de la Petrov.
+  const a = JSON.parse(JSON.stringify(r));
+  a.tactica.sufre[0].n = 3; a.tactica.revisadas.perdidas = 4;
+  const { page, ctx, errores } = await abrir(browser, true, [{ id: "p-t", profesor_id: "u-profe", rival: "Pedro", partidas: r.total, created_at: "2026-09-29T01:00:00Z", analisis: a }]);
+  await page.click('#guardados button[aria-label="Abrir el análisis de Pedro"]');
+  await page.waitForFunction(() => document.getElementById("titulo-resultado").textContent === "Pedro", null, { timeout: 10000 });
+  igual("la tarjeta: con qué gana y con qué pierde, tema por tema", await page.evaluate(() => [...document.querySelectorAll("[aria-labelledby='tactica-titulo'] [data-tactica] li > p")].map((p) => p.textContent)),
+    ["Ataque a la descubierta: 1 partida (50 %)", "Ataque de mate: 1 partida (50 %)", "Ataque a la descubierta: 3 partidas (100 %)"]);
+  igual("cada tema lleva a practicarlo en Entrenamiento", await page.evaluate(() => document.querySelector("[aria-labelledby='tactica-titulo'] [data-tactica='sufre'] [data-practica]").getAttribute("href")), "entreno/temas.html?tema=discoveredAttack");
+  igual("en el resumen: búscalo, con el dato y la práctica", await page.evaluate(() => {
+    const li = [...document.querySelectorAll("[aria-labelledby='resumen-titulo'] [data-lado='general'] [data-consejos='haz'] li")][0];
+    return [li.querySelector("p").textContent, li.querySelectorAll("p")[1].textContent, li.querySelector("[data-practica]").textContent];
+  }), ["Busca ataques a la descubierta: es con lo que más pierde.", "3 de sus 3 derrotas por material empezaron así (100 %).", "Practicar ataques a la descubierta"]);
+  await page.click("[aria-labelledby='tactica-titulo'] [data-tactica='realiza'] li[data-tema='descubierta'] button");
+  await page.waitForFunction(() => document.getElementById("visor-caja").checkVisibility(), null, { timeout: 5000 });
+  igual("«Ver ejemplo» abre el tablero en la jugada que decide (5.Cc6+)", await page.evaluate(() => [document.querySelector("#visor .visor-nota").textContent, [...document.querySelectorAll("#visor .visor-ultima")].map((c) => c.dataset.square).sort()]),
+    ["Ataque a la descubierta: la jugada que decide. Contra Otro 2.", ["c6", "e5"]]);
+  igual("sin errores", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+}
+
 async function pruebaMotorDeVerdad(browser) {
   console.log("\n=== Stockfish 19 lite, corriendo en la página ===");
   const ctx = await browser.newContext({ serviceWorkers: "block" });
@@ -1535,6 +1664,8 @@ async function pruebaMotorDeVerdad(browser) {
   pruebaResumen(conMotor, libro, pruebaComoPierde());
   pruebaPlanAMedida();
   pruebaMotorRepertorio();
+  const conDerrotas = pruebaDerrotas();
+  const conTactica = pruebaTactica();
   pruebaCsp();
   pruebaArchivosDelMotor();
   const browser = await chromium.launch({ executablePath: CHROME });
@@ -1548,6 +1679,8 @@ async function pruebaMotorDeVerdad(browser) {
     await pruebaEtapa5(browser, libro);
     await pruebaEtapa6(browser);
     await pruebaEtapa7(browser);
+    await pruebaDerrotasEnLaPagina(browser, conDerrotas);
+    await pruebaTacticaEnLaPagina(browser, conTactica);
     await pruebaMotorDeVerdad(browser);
   } finally {
     await browser.close();

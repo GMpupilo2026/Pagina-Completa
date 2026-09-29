@@ -5210,9 +5210,13 @@
                     .on("postgres_changes", { event: "UPDATE", schema: "public", table: "practice_games", filter: "student_id=eq." + profile.id }, (payload) => {
                         const row = payload.new;
                         if (!row || !("ayuda" in row) || !myPracticeGame || row.id !== myPracticeGame.id) return;
-                        if (JSON.stringify(row.ayuda || null) === JSON.stringify(myPracticeGame.ayuda || null)) return;
-                        myPracticeGame = Object.assign({}, myPracticeGame, { ayuda: row.ayuda || null });
+                        // Y su pedido de ayuda, que se apaga solo cuando alguien lo atiende.
+                        const pide = "pide_ayuda_at" in row ? row.pide_ayuda_at || null : myPracticeGame.pide_ayuda_at || null;
+                        if (JSON.stringify(row.ayuda || null) === JSON.stringify(myPracticeGame.ayuda || null)
+                            && pide === (myPracticeGame.pide_ayuda_at || null)) return;
+                        myPracticeGame = Object.assign({}, myPracticeGame, { ayuda: row.ayuda || null, pide_ayuda_at: pide });
                         pintarAyudaAlumno();
+                        pintarPedidoAlumno();
                     })
                     .subscribe();
             }
@@ -5290,6 +5294,8 @@
                         '<div class="practice-mini-bar bg-white h-full transition-all duration-500 ease-out" style="width:50%"></div>' +
                     "</div>" +
                     '<p class="practice-mini-status text-[11px] text-brand-450 dark:text-brand-350"></p>' +
+                    // Pidió ayuda: va escrito, no solo con el borde.
+                    '<p class="practice-mini-pide hidden text-xs font-bold text-brand-800 dark:text-white mt-1">🙋 Pide ayuda</p>' +
                     // Abre SU partida en grande: mirarla sin tocarla y mandarle una ayuda.
                     '<button type="button" class="practice-mini-mirar mt-2 w-full text-xs font-semibold px-2 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors" aria-haspopup="dialog">👁 Mirar y ayudar</button>';
                 grid.appendChild(wrap);
@@ -5330,7 +5336,25 @@
                     : conAyuda.de === profile.id ? " · 💡 con tu ayuda"
                     : conAyuda.nombre ? " · 💡 con ayuda de " + conAyuda.nombre
                     : " · 💡 con ayuda");
+            pintarPedidoEnMiniatura(entry, row);
             if (mirar.studentId === row.student_id) refrescarMirada(row);
+        }
+
+        // Quien pide ayuda se marca (con texto y con borde) y sube al principio de la
+        // grilla; y se dice en voz la primera vez que aparece cada pedido.
+        const pedidosAnunciados = new Set();
+        function pintarPedidoEnMiniatura(entry, row) {
+            const pide = !!row.pide_ayuda_at;
+            entry.el.style.order = pide ? "-1" : "";
+            entry.el.classList.toggle("ring-4", pide);
+            entry.el.classList.toggle("ring-accent-500", pide);
+            entry.el.querySelector(".practice-mini-pide").classList.toggle("hidden", !pide);
+            entry.el.querySelector(".practice-mini-mirar").setAttribute("aria-label",
+                "Mirar y ayudar a " + entry.nombre + (pide ? " (pide ayuda)" : ""));
+            if (pide && !pedidosAnunciados.has(row.id + ":" + row.pide_ayuda_at)) {
+                pedidosAnunciados.add(row.id + ":" + row.pide_ayuda_at);
+                document.getElementById("practica-pedidos-aviso").textContent = entry.nombre + " pide ayuda en su partida.";
+            }
         }
 
         // ---------- La partida de UN alumno, en grande (solo profesor) ----------
@@ -5392,7 +5416,8 @@
             mirarEl("info").textContent = "Juega con " + (row.student_color === "w" ? "blancas" : "negras")
                 + " · nivel " + practiceLevelLabel(latestPracticeSession.level)
                 + " · " + (moves.length === 1 ? "1 jugada" : moves.length + " jugadas");
-            let estado = practiceStatusLabelWithAttempts(row);
+            let estado = (row.pide_ayuda_at ? "🙋 Pidió ayuda. " : "") + practiceStatusLabelWithAttempts(row);
+            mirarEl("atendido").hidden = !row.pide_ayuda_at;
             if (row.status === "playing") {
                 estado += mirar.board.game.turn() === row.student_color ? ". Le toca mover." : ". Piensa el motor.";
             }
@@ -5429,7 +5454,7 @@
 
         async function guardarAyuda(ayuda) {
             const { data, error } = await sb.from("practice_games").update({ ayuda })
-                .eq("id", mirar.row.id).select("ayuda").maybeSingle();
+                .eq("id", mirar.row.id).select("ayuda, pide_ayuda_at").maybeSingle();
             if (error) return { error: error.message };
             // Se mira lo que QUEDÓ, no lo que se mandó: con la ronda terminada la base la
             // devuelve como estaba sin dar ningún error.
@@ -5437,7 +5462,8 @@
             if (data) {
                 // La miniatura no espera el eco de Realtime para decir que ya tiene ayuda.
                 const entry = practiceStudentBoards[mirar.studentId];
-                if (entry && entry.row) upsertPracticeStudentBoard(Object.assign({}, entry.row, { ayuda: data.ayuda }));
+                if (entry && entry.row) upsertPracticeStudentBoard(Object.assign({}, entry.row,
+                    { ayuda: data.ayuda, pide_ayuda_at: data.pide_ayuda_at || null }));
             }
             return { quedo, fila: !!data };
         }
@@ -5480,8 +5506,24 @@
             aviso.textContent = "Le quitaste la ayuda a " + nombre + ".";
         }
 
+        // Lo atendió de palabra (por la llamada), sin mandarle nada: se apaga el pedido.
+        async function marcarAtendido() {
+            if (!mirar.row) return;
+            const aviso = mirarEl("aviso");
+            const nombre = mirarEl("nombre").textContent;
+            const { data, error } = await sb.from("practice_games").update({ pide_ayuda_at: null })
+                .eq("id", mirar.row.id).select("ayuda, pide_ayuda_at").maybeSingle();
+            if (error) { aviso.textContent = "No se pudo marcar: " + error.message; return; }
+            // Se mira lo que QUEDÓ: si la base no lo apagó, no se dice que sí.
+            if (!data || data.pide_ayuda_at) { aviso.textContent = "No se pudo marcar como atendido."; return; }
+            const entry = practiceStudentBoards[mirar.studentId];
+            if (entry && entry.row) upsertPracticeStudentBoard(Object.assign({}, entry.row, { pide_ayuda_at: null }));
+            aviso.textContent = "Marcaste como atendido el pedido de " + nombre + ".";
+        }
+
         if (document.getElementById("practica-mirar")) {
             mirarEl("cerrar").addEventListener("click", cerrarMirada);
+            mirarEl("atendido").addEventListener("click", marcarAtendido);
             mirarEl("mandar").addEventListener("click", mandarAyuda);
             mirarEl("quitar").addEventListener("click", quitarAyuda);
             // Escribir marcas las dibuja en cuanto se entienden (a medio escribir, «g1-», no).
@@ -5532,8 +5574,10 @@
                 }
             });
             updatePracticeBoardsGridColumns(rows.length);
+            const piden = rows.filter((r) => r.pide_ayuda_at).length;
             document.getElementById("practice-boards-hint").textContent = rows.length
                 ? rows.length + (rows.length === 1 ? " alumno jugando" : " alumnos jugando")
+                    + (piden ? " · 🙋 " + piden + (piden === 1 ? " pide ayuda" : " piden ayuda") : "")
                 : "Esperando a que los alumnos empiecen a jugar…";
         }
 
@@ -5584,6 +5628,7 @@
                 practiceCardDismissedFor = null;
                 myPracticeGame = null;
                 pintarAyudaAlumno();
+                pintarPedidoAlumno();
                 return;
             }
             // El alumno cerró este mismo overlay con la ✖: la ronda sigue activa (la partida
@@ -5644,6 +5689,7 @@
             practiceBoard.setFlipped(myPracticeGame.student_color === "b");
             practiceBoard.loadMoves(myPracticeGame.moves || [], latestPracticeSession.fen);
             pintarAyudaAlumno();
+            pintarPedidoAlumno();
             if (practicaAcc) practicaAcc.actualizar();
             if (practicaRecienAbierta) enfocarCuandoSeVea(document.getElementById("practice-titulo"));
             updatePracticeCardInteractivity();
@@ -5810,9 +5856,10 @@
                 eval_cp: null, attempts: (myPracticeGame.attempts || 1) + 1, reloj_ms: null,
             });
             // La base borra la ayuda al reintentar: era de la partida anterior.
-            myPracticeGame = Object.assign({}, myPracticeGame, { ayuda: null });
+            myPracticeGame = Object.assign({}, myPracticeGame, { ayuda: null, pide_ayuda_at: null });
             practiceBoard.loadMoves([], latestPracticeSession.fen);
             pintarAyudaAlumno();
+            pintarPedidoAlumno();
             updatePracticeCardInteractivity();
         }
 
@@ -5820,6 +5867,31 @@
         // Las flechas se pintan SOLO en la posición para la que se dieron: después de la
         // siguiente jugada señalarían otra cosa. La pista sigue a la vista. Todo va
         // también en palabras: el color de una flecha no dice nada solo.
+        // ---------- Pedir ayuda desde la partida ----------
+        // El pedido vive en su fila (pide_ayuda_at): lo ve su profe y quien observa, y
+        // se apaga solo cuando alguien le manda una ayuda. La hora la pone la base.
+        let pedidoPintado = null;
+        function pintarPedidoAlumno() {
+            const boton = document.getElementById("practica-pedir-ayuda");
+            if (!boton || isTeacher || esObservador) return;
+            const pide = !!(myPracticeGame && myPracticeGame.pide_ayuda_at);
+            boton.setAttribute("aria-pressed", pide ? "true" : "false");
+            boton.textContent = pide ? "✋ Pediste ayuda · Cancelar" : "🙋 Pedir ayuda";
+            if (pedidoPintado === pide) return;   // la región viva no se reescribe igual
+            const antes = pedidoPintado;
+            pedidoPintado = pide;
+            document.getElementById("practica-pedido").textContent = pide
+                ? "Le avisamos a tu profe que necesitas ayuda. Sigue jugando si quieres: te va a llegar aquí."
+                : antes ? "Tu pedido de ayuda ya no está activo." : "";
+        }
+
+        document.getElementById("practica-pedir-ayuda").addEventListener("click", async () => {
+            if (!myPracticeGame) return;
+            const pide = !!myPracticeGame.pide_ayuda_at;
+            await savePracticeGameRow({ pide_ayuda_at: pide ? null : new Date().toISOString() });
+            pintarPedidoAlumno();
+        });
+
         let ayudaPintada = null; // lo último escrito en la región viva, para no repetirlo
         function pintarAyudaAlumno() {
             const caja = document.getElementById("practica-ayuda");

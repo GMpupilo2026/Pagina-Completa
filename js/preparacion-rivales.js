@@ -388,10 +388,12 @@
         const l = L.lineaDelPlan(r, camino);
         abrirVisor(l.sec, { en: l.en, notas: l.notas, titulo: "El plan: " + L.lineaEs(l.sec.slice(0, l.en)) }, origen);
       },
-      // Una línea suelta (un error de Stockfish): se abre en su última jugada.
-      alVerSecuencia: (sec, nota, origen) => {
-        const notas = sec.map((x, i) => (i === sec.length - 1 ? nota : ""));
-        abrirVisor(sec, { en: sec.length, notas, titulo: L.lineaEs(sec) }, origen);
+      // Una línea suelta (un error de Stockfish): se abre en su última jugada,
+      // o en `en` (el ejemplo de una táctica: en la jugada que decide).
+      alVerSecuencia: (sec, nota, origen, en) => {
+        const donde = en || sec.length;
+        const notas = sec.map((x, i) => (i === donde - 1 ? nota : ""));
+        abrirVisor(sec, { en: donde, notas, titulo: en ? L.lineaEs(sec.slice(0, Math.min(sec.length, 8))) + (sec.length > 8 ? "…" : "") : L.lineaEs(sec) }, origen);
       },
     });
   }

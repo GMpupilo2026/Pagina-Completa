@@ -56,11 +56,12 @@ lista, y el resto se acomoda solo.
   "Jugar y competir" va primero donde se juega contra otra persona (Juegos, y
   Competir, que es retar a quien está en línea y las listas de partidas; ver
   «Competir: retar y las listas de partidas tienen su propia página» en
-  `juegos-y-torneos.md`), después el torneo y al final el bot.
-- **"TV en vivo" y "Logros" están en "Tu cuenta"**, que va en este orden:
-  Configuración, Informes, Logros, TV en vivo y, solo al alumnado, "¿Cómo van
-  tus clases?". Lo pidió así el dueño de la Academia; antes las dos estaban al
-  final de "Jugar y competir".
+  `juegos-y-torneos.md`) y al final el bot. Torneos y TV en vivo ya no tienen
+  tarjeta: se entra a los dos desde Competir.
+- **"Logros" está en "Tu cuenta"**, que va en este orden: Configuración,
+  Informes, Logros y, solo al alumnado, "¿Cómo van tus clases?". Lo pidió así
+  el dueño de la Academia. "TV en vivo" estuvo ahí un tiempo y pasó a Competir,
+  junto a los torneos. A quien administra se le deja en «Revisar el contenido».
 - **Un mismo destino no va dos veces en el panel.** "Racha táctica" salió de
   "Jugar y competir" porque ya es lo PRIMERO que hay dentro de `juegos.html`,
   en una franja a todo el ancho: el segundo camino no se usa y de paso ensancha
@@ -1882,6 +1883,99 @@ El 2…e6 de Pedro contra 1.d4 d5 2.c4 no está en el plan con blancas:
   castigo.
 
 Falla si se ignoran las `jugadasSuyas`.
+
+### Las partidas donde perdió
+
+Un porcentaje dice dónde le va mal; ver cómo le ganaron dice qué hacer. Cada
+línea y cada consejo del resumen traen «Cómo le ganaron aquí (N partidas)»,
+plegado. Adentro van las más recientes: fecha, rival, cómo perdió y «Ver la
+partida ↗».
+
+**Qué se guarda.** El análisis guarda `derrotas`: las partidas que perdió, de
+la más reciente a la más vieja y hasta 300. De cada una, solo lo justo:
+- sus primeras 20 medias jugadas (para saber por qué línea fue);
+- la fecha, el rival, su Elo y cómo terminó;
+- el enlace.
+
+Así funciona también en un análisis guardado, que ya no tiene el PGN, y en el
+plan a la medida. `derrotasEn(r, sec, color)` (en `js/preparacion-resumen.js`)
+busca las que empiezan con esa línea exacta; las transposiciones no cuentan,
+así que pueden ser menos que las del árbol.
+
+**El enlace sale del PGN y termina en un `href`.** `enlaceDe()` solo acepta
+`https://lichess.org/…` o `https://www.chess.com/…`, de `Site` o de `Link`.
+Un `javascript:` o un `lichess.org.malo.com` no pasan. Se abre en otra pestaña,
+con `rel="noopener noreferrer"`, y lo dice su `aria-label`.
+
+**Cómo se comprueba.** «Las partidas donde perdió» (en Node y en la página)
+revisa:
+- el orden;
+- que el enlace malo no pase;
+- el conteo por línea y por color;
+- el plegado;
+- que ningún `href` de la página escape al filtro.
+
+Falla si se afloja el filtro de enlaces.
+
+### Los temas tácticos del rival
+
+Se pidió estudiar a fondo qué temas tácticos hace más y con cuáles pierde. Lo
+hace `js/preparacion-tactica.js`, que corre en el trabajador junto con el
+análisis.
+
+**El momento decisivo de cada partida.** Es la primera vez que un bando pierde
+2 puntos de material o más y no los recupera:
+- el material se mide solo en posiciones tranquilas (la jugada siguiente no
+  captura ni corona), así un cambio a medio hacer no cuenta como pérdida;
+- después se miran las jugadas del ganador desde 3 antes del cambio hasta
+  que cobra;
+- la primera con patrón es el tema, en este orden: jaque doble, descubierta,
+  horquilla, clavada, enfilada, eliminación del defensor;
+- si ninguna tiene patrón: coronación; si no, pieza sin defender (la dejó
+  colgada o atacada por una de menos valor); si no, «otra»;
+- las partidas que terminan en mate sin haber perdido material son «mate del
+  pasillo» (rey en su primera fila, encerrado por sus piezas, jaque por la
+  fila) o «ataque de mate».
+
+**El patrón tiene que ser el que cobró.** Cada patrón dice a qué piezas ataca,
+y cuenta solo si después se cobra una de ellas. Sin esto, una clavada sin
+importancia tres jugadas antes se llevaba el crédito de una torre que el
+rival dejó colgada. En partidas de prueba, las «clavadas» bajaron de 16 a 3.
+
+**En sus victorias es lo que él hace; en sus derrotas, lo que le hicieron.**
+- La tarjeta «Su táctica: con qué gana y con qué pierde» va después del FODA.
+  Cada tema trae cuántas partidas son, «Ver ejemplo» (el tablero se abre en la
+  jugada que decide), el enlace a la partida y «Practicar …», que lleva a
+  `entreno/temas.html?tema=` (fork, pin, skewer, discoveredAttack…).
+- El resumen, en «En toda la partida», suma los temas que pesan (3 partidas o
+  más y al menos el 15 % de las que se decidieron por material):
+  - con qué pierde va como «Busca horquillas: es con lo que más pierde»;
+  - con qué gana, como «Cuidado con sus clavadas».
+  - Si lo táctico ya dice que pierde por mate, «Ataca a su rey» no se repite.
+
+**Es un conteo por patrón, sin motor, y lo dice.** Stockfish sobre cientos de
+partidas enteras no entra en el navegador. Con 300 partidas el análisis tarda
+menos de 200 ms, y se miran las 2.000 más recientes como mucho. Sirve para ver
+tendencias, no para juzgar una partida. Las que se decidieron sin perder
+material (por tiempo, en lo posicional o por abandono) no entran, y la tarjeta
+dice cuántas son.
+
+**Ninguna posición se inventa.** Las pruebas usan posiciones armadas para
+cada tema, y cada jugada se comprueba con chess.js: horquilla de caballo,
+clavada de la dama contra el rey, enfilada, descubierta con jaque, torre
+colgada, mate del pasillo y eliminación del defensor. También usan dos
+partidas reales desde el inicio: el mate de Légal y la trampa de la Petrov
+(5.Cc6+ a la descubierta).
+
+**Cómo se comprueba.** «Su táctica: con qué gana y con qué pierde» y su
+versión en la página revisan:
+- cada tema;
+- la clavada que no se lleva el crédito;
+- el conteo de victorias y derrotas;
+- los ejemplos;
+- la tarjeta, el resumen, la práctica y «Ver ejemplo» en 5.Cc6+.
+
+Falla si se quita la regla de «el patrón tiene que ser el que cobró».
 
 ## Las inscripciones a torneos en línea
 
