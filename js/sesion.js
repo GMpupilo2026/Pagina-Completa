@@ -50,10 +50,13 @@
            solo de un profesor que supervisa). */
         let esObservador = false;
         let nombreObservado = "";
-        /* Quien observa puede venir de supervisión o de coordinación: mira lo
-           mismo (la base le da a cada uno su alcance), pero se nombra distinto y
-           vuelve a su propia pantalla. Supervisión gana si tiene las dos. */
+        /* Quien observa puede venir de administración, supervisión o
+           coordinación: mira lo mismo (la base le da a cada uno su alcance),
+           pero se nombra distinto y vuelve a su propia pantalla. Con más de un
+           papel, gana el más amplio. Quien administra entra por Supervisión,
+           que le lista a todos los profesores. */
         const OBSERVA_DESDE = {
+            administracion: { etiqueta: "administración", insignia: "👁 Administración", volver: "supervision.html", pantalla: "Supervisión" },
             supervision: { etiqueta: "supervisión", insignia: "👁 Supervisión", volver: "supervision.html", pantalla: "Supervisión" },
             coordinacion: { etiqueta: "coordinación", insignia: "👁 Coordinación", volver: "coordinacion.html", pantalla: "Coordinación" },
         };
@@ -5629,7 +5632,8 @@
             const observar = new URLSearchParams(location.search).get("observar");
             if (observar && observar !== profile.id && (profile.es_supervisor || profile.is_admin || profile.es_coordinador)) {
                 esObservador = true;
-                observaDesde = profile.es_supervisor || profile.is_admin ? OBSERVA_DESDE.supervision : OBSERVA_DESDE.coordinacion;
+                observaDesde = profile.is_admin ? OBSERVA_DESDE.administracion
+                    : profile.es_supervisor ? OBSERVA_DESDE.supervision : OBSERVA_DESDE.coordinacion;
                 isTeacher = false;
                 boardOwnerId = observar;
                 if (!(await prepararObservador())) return;

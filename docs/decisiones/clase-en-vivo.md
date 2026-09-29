@@ -750,6 +750,17 @@ desde el panel «Ver como» de ese profesor. Quien administra también puede.
     `supervision`, que quiere decir «observa»), y el profe y el alumno leen
     «Luis Vega (coordinación)». Vuelve a `coordinacion.html`, no a
     Supervisión. Quien supervisa y coordina a la vez entra como supervisión.
+- **Quien administra también mira y ayuda**, en todas las clases: la base ya
+  se lo daba (`is_admin` en las políticas de siempre de `game_state`,
+  `variant_nodes`, `profesor_videollamada`, `practice_sessions` y
+  `practice_games`; de la partida, el trigger le deja cambiar solo la ayuda) y
+  entra desde Supervisión, que le lista a todos los profesores con «En clase
+  ahora». Lo que faltaba era nombrarlo: entraba como «Supervisión» y el profe y
+  el alumno leían «(supervisión)». Ahora es «👁 Administración» y
+  «(administración)»; con varios papeles gana el más amplio (administración,
+  después supervisión, después coordinación). Comprobado impersonando a la
+  cuenta master: ve el tablero y la partida, y su ayuda entra con su nombre
+  sin tocar las jugadas.
   - Comprobado impersonando roles en SQL (revertido): la coordinadora ve la
     clase, el tablero y la partida del profesor de su academia, y su ayuda
     entra con su nombre sin tocar las jugadas; los de un profesor de otra
