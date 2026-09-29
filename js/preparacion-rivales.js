@@ -404,7 +404,7 @@
   // Lo que todavía corre sobre este análisis: el resumen de arriba lo avisa.
   function pendientes(r) {
     const l = [];
-    if (revision && actual === r) l.push("la revisión de Stockfish (sus errores y las jugadas del plan que no convienen)");
+    if (revision && actual === r) l.push(revision.tactica ? "la revisión de su táctica con Stockfish (sus errores y lo que no vio)" : "la revisión de Stockfish (sus errores y las jugadas del plan que no convienen)");
     if (buscandoTeoria === r) l.push("la comparación con los maestros (dónde deja la teoría)");
     return l;
   }
@@ -820,7 +820,34 @@
       pintar(r);
       // Si ya estaba guardado, lo revisado no está en la base: se puede guardar de nuevo.
       if (guardadoId) { guardadoId = null; $("guardar").disabled = false; $("guardar").textContent = "Guardar con la revisión"; }
-      if (!esta.parar && !res.error && clavesDe() !== pedidas) { iniciarRevision(); P.pendiente($("resultado-cuerpo"), pendientes(r)); }
+      if (!esta.parar && !res.error && clavesDe() !== pedidas) { iniciarRevision(); P.pendiente($("resultado-cuerpo"), pendientes(r)); return; }
+      if (!esta.parar && !res.error && r.tactica && r.tactica.momentos && !r.tacticaMotor) iniciarRevisionTactica(r);
+    });
+  }
+
+  /* Después de la revisión: la táctica con Stockfish (revisarTactica). Usa
+     el mismo «Parar» y el mismo estado que la revisión. */
+  function iniciarRevisionTactica(r) {
+    if (revision || actual !== r || !M.disponible()) return;
+    const esta = { parar: false, tactica: true };
+    revision = esta;
+    $("motor-revisar").disabled = true;
+    $("motor-parar").hidden = false;
+    P.pendiente($("resultado-cuerpo"), pendientes(r));
+    esta.promesa = M.revisarTactica(r, {
+      parar: () => esta.parar || actual !== r,
+      alAvanzar: (hechas, total) => { $("motor-estado").textContent = "Revisando su táctica con Stockfish: " + (hechas + 1) + " de " + total + " posiciones…"; },
+    }).then((res) => {
+      if (revision === esta) revision = null;
+      $("motor-revisar").disabled = false;
+      $("motor-parar").hidden = true;
+      if (actual !== r || !res || !res.hechas) { P.pendiente($("resultado-cuerpo"), pendientes(r)); return; }
+      // A medias (parada) no se guarda como revisada: la próxima revisión la completa.
+      if (!esta.parar && !res.error) r.tacticaMotor = res;
+      else r.tacticaMotorParcial = res;
+      $("motor-estado").textContent = (esta.parar ? "Revisión táctica parada: " : res.error ? "Stockfish se detuvo en la táctica: " : "Listo: táctica revisada con ") + res.detalle + ", " + res.hechas + " de " + res.total + " posiciones.";
+      pintar(r);
+      if (guardadoId) { guardadoId = null; $("guardar").disabled = false; $("guardar").textContent = "Guardar con la revisión"; }
     });
   }
 

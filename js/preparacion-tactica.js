@@ -25,6 +25,16 @@
  *   momento(jugadas, perdedor, terminoEnMate, fen) → { tema, ply, hasta } o
  *     null; `fen` para empezar en otra posición (las pruebas)
  *   TEMAS: nombre y tema de entrenamiento (entreno/temas.html) de cada uno
+ *   temaDeJugada(fen, san) → el tema de una jugada suelta (la mejor de
+ *     Stockfish en una táctica que no vio)
+ *
+ * Para revisar con Stockfish (js/preparacion-motor.js, revisarTactica) el
+ * resultado trae también:
+ *   momentos: los momentos decisivos de sus partidas más recientes, con la
+ *     posición antes del error del que perdió y la jugada que hizo;
+ *   candidatas: posiciones donde ÉL tenía con qué ganar material (una pieza
+ *     contraria atacada y mal defendida) y jugó otra cosa («no la vio»).
+ *     Stockfish decide cuáles lo eran de verdad y cuál era la táctica.
  *
  * Corre en js/preparacion-trabajador.js (y en Node, en el verificador).
  */
@@ -285,7 +295,80 @@
     return null;
   }
 
+  // La posición después de `ply` jugadas, como FEN completo (chess.js y
+  // Stockfish lo piden con los contadores).
+  function fenEn(jugadas, ply) {
+    let e = Pos.inicial();
+    for (let i = 0; i < ply; i++) { e = Pos.aplicar(e, jugadas[i]); if (!e) return null; }
+    return Pos.clave(e) + " 0 " + (Math.floor(ply / 2) + 1);
+  }
+  
+  /* El tema de una jugada suelta desde una posición: el de su patrón; si no
+     tiene, «colgada» si come una pieza sin defender; «mate» si da mate. */
+  function temaDeJugada(fen, san) {
+    const e = Pos.desdeFen(fen);
+    const d = e && Pos.aplicar(e, san);
+    if (!d) return "otra";
+    if (/#$/.test(san)) return "mate";
+    const pa = patron(e.t, d.t, e.turno, null);
+    if (pa) return pa.tema;
+    const m = movida(e.t, d.t, e.turno);
+    const comida = m && e.t[m.hasta];
+    if (comida && colorDe(comida) !== e.turno && valor(comida) >= 3) return "colgada";
+    return "otra";
+  }
+
+  /* ¿Tuvo con qué ganar material y no lo hizo? En cada posición donde le
+     toca a él (de la jugada 5 a la 45), sin estar en jaque: una pieza
+     contraria que vale 3 o más, atacada por una suya y sin defender (o
+     defendida pero que vale 2 o más que la que ataca). Si jugó otra cosa y
+     no ganó ese material en las 4 medias jugadas siguientes, es candidata.
+     Una por partida, la que más gana. Es barato (sin generar jugadas: con
+     chess.js, 100 partidas tardaban 8 segundos) y deja pasar alguna
+     jugada que no es legal: Stockfish confirma después con su propia mejor
+     jugada, que es la que pone el tema (revisarTactica). */
+  function candidataNoVio(x) {
+    const c = x.color, otro = c === "w" ? "b" : "w";
+    let e = Pos.inicial();
+    const estados = [e];
+    for (const san of x.jugadas.slice(0, 94)) {
+      e = Pos.aplicar(e, san);
+      if (!e) break;
+      estados.push(e);
+    }
+    const mats = estados.map((st) => material(st.t));
+    const signo = c === "w" ? 1 : -1;
+    let mejor = null;
+    for (let i = 8; i < estados.length - 1 && i < 90; i++) {
+      if ((i % 2 === 0) !== (c === "w")) continue;
+      const t = estados[i].t;
+      const rey = t.indexOf(c === "w" ? "K" : "k");
+      if (rey < 0 || atacantes(t, rey, otro).length) continue;
+      if (signo * (mats[Math.min(i + 4, mats.length - 1)] - mats[i]) >= DIFERENCIA) continue;
+      for (let s = 0; s < 64; s++) {
+        const p = t[s];
+        if (!p || colorDe(p) !== otro || valor(p) < 3) continue;
+        const suyos = atacantes(t, s, c);
+        if (!suyos.length) continue;
+        const menor = Math.min(...suyos.map((a) => valor(t[a]) || 100));
+        const defendida = atacantes(t, s, otro).length > 0;
+        const gana = valor(p) - (defendida ? menor : 0);
+        if (gana >= DIFERENCIA && (!mejor || gana > mejor.peso)) mejor = { peso: gana, i };
+      }
+    }
+    if (!mejor) return null;
+    const out = { fen: Pos.clave(estados[mejor.i]) + " 0 " + (Math.floor(mejor.i / 2) + 1), jugada: x.jugadas[mejor.i],
+      peso: mejor.peso, sec: x.jugadas.slice(0, mejor.i + 1), ply: mejor.i + 1 };
+    if (x.enlace) out.enlace = x.enlace;
+    if (x.fecha) out.fecha = x.fecha;
+    if (x.oponente) out.oponente = String(x.oponente).slice(0, 60);
+    return out;
+  }
+
   const MAX_PARTIDAS = 2000;     // las más recientes: con 30.000 no hace falta mirar todas
+  const MAX_MOMENTOS = 40;       // los que revisa Stockfish (los más recientes)
+  const MAX_CANDIDATAS = 40;
+  const PARTIDAS_NO_VIO = 100;   // en cuántas (las más recientes) se buscan
 
   function analizar(lista, maximo) {
     const recientes = lista.filter((x) => x.res === "G" || x.res === "P")
@@ -295,12 +378,25 @@
     const realiza = juntar(), sufre = juntar();
     const revisadas = { ganadas: 0, perdidas: 0 };
     const sinMaterial = { ganadas: 0, perdidas: 0 };
+    const momentos = [];
     for (const x of recientes) {
       const gano = x.res === "G";
       const perdedor = gano ? (x.color === "w" ? "b" : "w") : x.color;
       const mo = momento(x.jugadas, perdedor, x.fin === "mate");
       if (gano) revisadas.ganadas += 1; else revisadas.perdidas += 1;
       if (!mo) { if (gano) sinMaterial.ganadas += 1; else sinMaterial.perdidas += 1; continue; }
+      // El error del que perdió: su jugada justo antes de la del patrón.
+      const error = mo.ply - 1;
+      if (momentos.length < MAX_MOMENTOS && error >= 1) {
+        const fen = fenEn(x.jugadas, error - 1);
+        if (fen) {
+          const m = { gano, tema: mo.tema, fen, san: x.jugadas[error - 1], ply: error, sec: x.jugadas.slice(0, mo.hasta) };
+          if (x.enlace) m.enlace = x.enlace;
+          if (x.fecha) m.fecha = x.fecha;
+          if (x.oponente) m.oponente = String(x.oponente).slice(0, 60);
+          momentos.push(m);
+        }
+      }
       const mapa = gano ? realiza : sufre;
       if (!mapa.has(mo.tema)) mapa.set(mo.tema, { tema: mo.tema, n: 0, ejemplos: [] });
       const t = mapa.get(mo.tema);
@@ -314,13 +410,19 @@
       }
     }
     const orden = (m, total) => [...m.values()].map((t) => Object.assign(t, { parte: t.n / Math.max(total, 1) })).sort((a, b) => b.n - a.n || (a.tema < b.tema ? -1 : 1));
+    const candidatas = [];
+    recientes.slice(0, PARTIDAS_NO_VIO).forEach((x) => { const c = candidataNoVio(x); if (c) candidatas.push(c); });
+    candidatas.sort((a, b) => b.peso - a.peso);
     return {
       revisadas,
       sinMaterial,
+      momentos,
+      candidatas: candidatas.slice(0, MAX_CANDIDATAS),
+      buscadasNoVio: Math.min(recientes.length, PARTIDAS_NO_VIO),
       realiza: orden(realiza, revisadas.ganadas - sinMaterial.ganadas),
       sufre: orden(sufre, revisadas.perdidas - sinMaterial.perdidas),
     };
   }
 
-  return { analizar, momento, TEMAS };
+  return { analizar, momento, temaDeJugada, TEMAS };
 });

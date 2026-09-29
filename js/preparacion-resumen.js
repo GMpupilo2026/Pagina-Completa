@@ -287,6 +287,19 @@
         practica: tm.practica, tema: x.tema,
       });
     }
+    // Lo que no vio, confirmado por Stockfish (r.tacticaMotor): con 2 o más
+    // del mismo tema, es un punto ciego.
+    const tm = r.tacticaMotor;
+    if (tm && tm.noVio) {
+      tm.noVio.filter((x) => x.tema !== "otra" && x.n >= 2).slice(0, 1).forEach((x) => {
+        const tema = T.TEMAS[x.tema];
+        haz.push({
+          texto: "Juega posiciones con táctica: se le escapan " + tema.plural + ".",
+          porque: "Tuvo " + x.n + " y no las jugó, en sus " + tm.buscadas + " partidas más recientes (confirmado con Stockfish).",
+          practica: tema.practica, tema: x.tema,
+        });
+      });
+    }
     for (const x of pesan(t.realiza, "realiza")) {
       const tm = T.TEMAS[x.tema];
       evita.push({
