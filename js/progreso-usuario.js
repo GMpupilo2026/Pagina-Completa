@@ -174,6 +174,8 @@ window.ProgresoUsuario = (function () {
     { clave: "entreno_mates_repaso_v1",          fusion: "srsPorLinea" },  // Mates: la misma cola
     { clave: "entreno_visualizacion_repaso_v1",  fusion: "srsPorLinea" },  // Visualización: la misma cola
     { clave: "entreno_practicas_repaso_v1",      fusion: "srsPorLinea" },  // Practicar: la misma cola (por ronda)
+    { clave: "entreno_tipos_repaso_v1",          fusion: "srsPorLinea" },  // Tipos de entrenamiento: la misma cola ("tipo:id")
+    { clave: "entreno_finales_repaso_v1",        fusion: "srsPorLinea" },  // Finales contra la máquina: la misma cola
     { clave: "aperturas_vistas_v1",              fusion: "maxNumero" },
     { clave: "entreno_visualizacion_solved",     fusion: "unionObjeto" },   // Visualización
     { clave: "entreno_visualizacion_best",       fusion: "maxNumero" },

@@ -71,6 +71,12 @@ async function cosasDeHoy(alumnoId){
     const p = RepasoFallados.pendientes(RepasoFallados.CLAVES.practicas).length;
     if (p) cosas.push({ icono: '♞', href: 'practicas.html?repaso=1',
       texto: p === 1 ? 'Repasar 1 posición de Practicar que te costó' : `Repasar ${p} posiciones de Practicar que te costaron` });
+    const t = RepasoFallados.pendientes(RepasoFallados.CLAVES.tipos).length;
+    if (t) cosas.push({ icono: '🧩', href: 'tipos.html#repaso',
+      texto: t === 1 ? 'Repasar 1 ejercicio de Tipos que te costó' : `Repasar ${t} ejercicios de Tipos que te costaron` });
+    const f = RepasoFallados.pendientes(RepasoFallados.CLAVES.finales).length;
+    if (f) cosas.push({ icono: '🏁', href: 'finales.html?repaso=1',
+      texto: f === 1 ? 'Volver a jugar 1 final que te costó' : `Volver a jugar ${f} finales que te costaron` });
   }
 
   // El nivel de Tipos de entrenamiento que quedó a medias (lo anota

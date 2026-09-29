@@ -530,6 +530,53 @@ registro de tiempo).
   repaso de Practicar, el hub), `verificar-tipos-pagina.js` (que se anote el
   nivel) y `verificar-informes.js` (la tarjeta).
 
+## Repasar fallados también en Tipos y Finales; y `limpio` en Tipos, Practicar y 4×4
+
+- **Tipos de entrenamiento tiene la cola de «Repasar fallados»**
+  (`entreno_tipos_repaso_v1`, por `"tipo:id"`). Como cada tipo tiene su propia
+  forma de puntuar, lo que manda son las estrellas:
+  - tres (sin error ni pista, o perfecto en Con lo justo y Fotografía):
+    «bien», y a la primera no entra;
+  - dos: «regular»;
+  - una o ninguna: «mal», y vuelve hoy mismo.
+
+  La portada de los tipos ofrece el repaso cuando algo vence hoy
+  (`#repaso-tipos` → `tipos.html#repaso`). El repaso junta ejercicios de
+  TODOS los tipos (`partida.cola`), y cada uno se juega con el juego de su
+  tipo. Antes de abrirlo se cargan los tipos que traen algo aparte (el
+  maestro, rey y peón); si uno no carga, sus ejercicios quedan fuera hoy. El
+  repaso no pisa `tipos_ultimo_v1`, que sigue siendo «el nivel que quedó a
+  medias» del hub. Repasar no vuelve a registrar nada: ya contó la primera
+  vez.
+- **Finales tiene la misma cola** (`entreno_finales_repaso_v1`):
+  - un final perdido, o unas tablas cuando había que ganar, vuelve hoy mismo;
+  - uno logrado con pista vuelve pronto;
+  - uno logrado limpio a la primera no entra.
+
+  La pestaña de un final que toca repasar lo dice escrito («🔁» y «toca
+  repasarlo hoy» en su etiqueta), y la barra, cuántos toca repasar.
+  `?repaso=1` abre el primero, aunque haya otro sin lograr antes.
+- **El hub los propone**: «Repasar 2 ejercicios de Tipos que te costaron» →
+  `tipos.html#repaso` y «Volver a jugar 1 final que te costó» →
+  `finales.html?repaso=1`. Siguen siendo tres cosas como mucho.
+- **`limpio` en `training_progress`** en tres páginas más:
+  - **Tipos**: `limpio` = tres estrellas, en la primera vez que se resuelve,
+    como en Mates.
+  - **Practicar**: registra por serie, así que manda `rondas`,
+    `rondas_limpias` (tres estrellas: sin error, sin pista y sin «Ver
+    solución») y `limpio` (la serie entera).
+  - **4×4**: no tiene pistas ni jugadas rechazadas, así que el tropiezo es
+    quedarse sin capturas o reiniciar a medio camino. Volver a empezar un
+    ejercicio ya ganado, o pasar a otro, es un intento nuevo.
+
+  Hoy nada lee esos campos: son para el día que alcancen los intentos para
+  calibrarlos como Mates (ver «Calibrar los Mates con los intentos reales»).
+  «El tema más flojo» sigue contando solo Temas y Táctica, que son las que
+  tienen motivo.
+- Lo prueba `verificar-entreno-repaso.js`: las dos colas, el repaso de
+  Tipos de punta a punta, `?repaso=1` de Finales, el hub y el `limpio` de las
+  tres.
+
 ## El tema más flojo, en el hub
 
 El «Hoy te toca» propone el motivo que menos sale limpio («Tu tema más flojo,
