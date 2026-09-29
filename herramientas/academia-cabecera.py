@@ -428,6 +428,7 @@ TIEMPO_ACTIVIDAD = {
     "cuatro-jugadores.html": "partidas",
     "torneo.html": "torneos",
     "examen.html": "examen",
+    "plan-rival.html": "preparacion",
 }
 
 

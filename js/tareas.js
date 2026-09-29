@@ -167,7 +167,7 @@ function agregarRenglon() {
     const selMat = div.querySelector(".r-material");
     // Dos grupos, para no mezclar "Mates" con "Fundamentos del Ajedrez".
     const gH = document.createElement("optgroup"); gH.label = "Entrenamiento";
-    MaterialPlataforma.HERRAMIENTAS.forEach((h) => {
+    MaterialPlataforma.HERRAMIENTAS.filter((h) => !h.noSeElige).forEach((h) => {
         const o = document.createElement("option");
         o.value = "herramienta:" + h.slug; o.textContent = h.label;
         gH.appendChild(o);

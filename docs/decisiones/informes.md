@@ -512,6 +512,9 @@ Detalles que importan:
   una sección que la pantalla no conoce. Al sumar una página que cuenta tiempo
   con una actividad nueva, agregarla en las dos.
 - Sin `secciones` (una base de antes), el correo cae a los conteos de siempre.
+- **«Preparación de rivales»** (`preparacion`) cuenta el tiempo en
+  `plan-rival.html` y las líneas del plan que el alumno jugó de memoria (ver
+  «Entrenar el plan: etapa 7» en `paneles.md`).
 
 **Al tocar esto, correr `node herramientas/verificar-tiempo-secciones.js`** (sin
 navegador ni red): que las dos tablas digan lo mismo y los cursos se llamen como
