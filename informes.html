@@ -145,6 +145,9 @@
             <!-- La bitácora: lo que el profesor observa de este alumno.
                  Mirando a UN alumno y solo para quien da clase; el alumno ve
                  aparte las que le compartieron (#notas-alumno-report). -->
+            <!-- «Lo que le costó a <alumno>» (solo el profe, js/lo-que-costo.js): las preguntas de
+                 clase que contestó mal, qué jugó, y un plan de repaso para él. -->
+            <section id="le-costo-report" hidden aria-labelledby="le-costo-titulo" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6"></section>
             <div id="notas-report" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
                 <h2 id="notas-title" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1"><span aria-hidden="true">📝</span> Bitácora</h2>
                 <p id="notas-sub" class="text-xs text-brand-450 dark:text-brand-350 mb-4">Lo que vas viendo de este alumno. Es tuya: un colega que comparta el alumno no la ve. Marca "Que la vea el alumno" para que le aparezca a él en su propia página.</p>
@@ -446,6 +449,8 @@
     <script src="js/plan-entrenamiento.js"></script>
     <script src="js/arbitraje-nivel.js"></script>
     <script src="js/notas-alumno.js"></script>
+    <script src="js/plan-clase.js"></script>
+    <script src="js/lo-que-costo.js"></script>
     <script src="js/trofeos.js"></script>
     <script src="js/evolucion-alumno.js"></script>
     <script src="js/tiempo-secciones.js"></script>

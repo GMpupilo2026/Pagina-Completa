@@ -1147,6 +1147,110 @@ panel`.** Está probado que falla de verdad:
 - con `planes.html` que no abre el plan;
 - con la tarjeta vacía a la vista.
 
+### La ronda rápida
+
+«⚡ Ronda rápida con 5 de estos, al azar», en Táctica. Toma cinco ejercicios
+del tema y la dificultad que se están mirando, sin repetir.
+
+- **El tiempo por posición se elige al lado del botón**, en Táctica mismo. Se
+  pensó ponerlo en la pestaña Preguntar, pero entonces el profe tenía que ir y
+  volver entre pestañas para arrancar una ronda.
+- **Los dos van debajo de la lista de ejercicios, no arriba.** Arriba corrían
+  la galería de «Ver todas las posiciones» unos 80 px hacia abajo; en la
+  pantalla del CI entraba un solo tablero y `verificar-sesion-curso.js` lo
+  marcó.
+- **Cada posición es una pregunta con tiempo**, la de siempre (`crearPregunta`
+  con su `prompt` y su `tiempo_limite`), y el tablero de la clase la muestra.
+  Se cierra sola un poco después del plazo (la base acepta hasta 5 s más), o
+  con «Pasar a la siguiente».
+- **Se califica sola** (`RondaRapida.esBuena`), porque la solución del
+  ejercicio es conocida:
+  - vale la jugada de la solución (también escrita «a1a8») o cualquier mate;
+  - así cuenta para los puntos y los trofeos como si el profe la hubiera
+    marcado.
+- **Al terminar sale el resultado:** cuántas buenas tuvo cada uno, con el
+  puesto compartido en el empate. «Mostrar el podio de la ronda» usa el mismo
+  `game_state.podio` con un `titulo`, que la caja muestra en lugar de «Podio
+  de la clase»; su CHECK de forma admite claves de más.
+- No arranca si hay una partida votada en curso, y termina al cerrar la
+  clase.
+
+### La participación pareja
+
+Arriba de las pestañas del profe, y solo para él (nunca lo ve la clase):
+«🙋 Llevan un rato sin contestar», con quién no contestó 3 o más de las
+últimas 4 preguntas (`Callados.calcular`).
+
+- **Qué preguntas cuentan:**
+  - solo las de todos (una dirigida a otro no cuenta);
+  - solo las que se hicieron mientras el alumno estaba: a quien acaba de
+    entrar no se le cuenta lo de antes. Desde cuándo está lo anota la página
+    del profe al verlo llegar; el `online_at` de la presencia no sirve, porque
+    cambia con cada anuncio.
+- **«🎯 Darle el turno»** usa el turno de siempre (`darTurno`), con un origen
+  nuevo, `'profe'` (migración `clase_elegidos_origen_profe`). Sin él, ese
+  turno habría quedado en el registro como un sorteo que no fue. Al alumno se
+  le dice «Tu profe te eligió», sin mencionar que no contestaba.
+- Se vuelve a contar cuando cambia la presencia o una pregunta, juntando las
+  llamadas seguidas en una sola consulta.
+
+### Lo que le costó a cada alumno
+
+En su informe (`informes.html?alumno=`), «🧩 Lo que le costó a Ana»: las
+preguntas de clase de los últimos 30 días que contestó mal, qué jugó y cuál
+era la buena (en notación española), con su posición y cuántas falló de
+cuántas contestó. «Armar un plan de repaso para Ana» usa el mismo armado que
+la tarjeta de la clase (`LoQueCosto.armarPlan`), y cada renglón dice qué jugó.
+
+- **La base:** `preguntas_que_le_costaron(p_alumno, p_dias)`, `SECURITY
+  INVOKER`, con la misma regla de fallo que el repaso personal. Comprobado
+  impersonando:
+  - su profe ve sus preguntas falladas;
+  - un compañero y otro profe no ven ninguna;
+  - el propio alumno tampoco, porque su RLS no le da las preguntas de las
+    clases cerradas por esa vía. Por eso la sección es solo del informe que
+    mira el profe.
+- **Mirando a otra persona («Ver como») se ve**, pero no se ofrece armar el
+  plan: quedaría a nombre de quien mira.
+
+### «Ver como alumno»
+
+«👁️ Como alumno», junto a «Proyector», abre `sesion.html?como=alumno`. Es la
+clase del profe tal como la ve un alumno (la pregunta, el calentamiento, el
+podio con «Tú: …», los equipos…), para revisar antes de mostrar algo, sin
+otra cuenta. Una barra arriba lo dice siempre y da la salida.
+
+- **Nada se manda desde ahí**, y se corta en el cliente de Supabase mismo, no
+  en cada botón. En esa ventana:
+  - `insert`, `upsert`, `update` y `delete` no hacen nada;
+  - de las funciones de la base, solo corren las de lectura
+    (`RPC_DE_LECTURA`).
+  - Así, contestar una pregunta no deja respuesta, ni la «en curso».
+- **La asistencia y el tiempo en clase (`class_presence_log`) ni se
+  intentan.** Al principio se intentaban y, como la escritura devolvía vacío,
+  la página se caía antes de mostrarse: lo encontró la prueba.
+- **La presencia entra con otra clave y con el rol `vista-previa`**:
+  - no cuenta como alumno: ni asistencia, ni turno, ni aviso de quién no
+    contesta;
+  - con la misma clave, su anuncio se habría mezclado con el de la ventana del
+    profe.
+
+**Al tocar esto, correr `node herramientas/verificar-todo.js clase-ronda
+lo-que-costo`.** Está probado que fallan de verdad:
+- **ronda rápida:**
+  - sin aceptar un mate que no es el guardado, o sin calificar;
+  - con el podio sin título;
+- **aviso de quién no contesta:**
+  - contándole lo de antes a quien entró tarde;
+  - contando las dirigidas a otro;
+  - dando el turno como un sorteo;
+- **«Ver como alumno»:**
+  - con la vista de alumno que manda algo;
+  - o que entra a la presencia como alumno;
+- **lo que le costó a un alumno:**
+  - con el plan ofrecido mirando a otra persona;
+  - con las jugadas en inglés.
+
 ### El modo sencillo de la clase en vivo
 
 Aun ordenada, la pantalla del profesor tiene catorce controles delante, y la

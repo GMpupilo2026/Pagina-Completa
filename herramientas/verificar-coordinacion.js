@@ -56,6 +56,9 @@ const GENTE = [
 const EQUIPOS = [
   { id: "eq-1", nombre: "Los del martes", created_by: "u-coord" },
   { id: "eq-2", nombre: "Selección de la Academia", created_by: "u-oscar" },
+  // Recién armado y vacío: sin entrenadores no le da acceso a nadie, así que
+  // es lo que pide atención y va primero.
+  { id: "eq-3", nombre: "Los del viernes", created_by: "u-coord" },
 ];
 const EQUIPO_ALUMNOS = [
   { equipo_id: "eq-1", alumno_id: "u-caro" },     // ya está: volcar 7A no lo puede borrar
@@ -110,7 +113,7 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
     let unica = false;
     let datos = Array.isArray(filas) ? filas.slice() : filas;
     const b = {
-      select() { return b; },
+      select() { window.__llamadas.push({ tabla, verbo: "select" }); return b; },
       eq(col, val) { if (Array.isArray(datos)) datos = datos.filter((f) => String(f[col]) === String(val)); return b; },
       in() { return b; }, order() { return b; }, limit() { return b; },
       range() { return b; }, not() { return b; }, or() { return b; },
@@ -596,21 +599,33 @@ async function pruebaEquipos(browser) {
   console.log("\n=== Los equipos, desde coordinación ===");
   const { page, errores } = await abrir(browser, "coordinacion.html", COORD, GENTE);
   await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
-  await page.waitForFunction(() => document.querySelectorAll("#equipos-lista > div").length === 2, { timeout: 10000 });
+  await page.waitForFunction(() => document.querySelectorAll("#equipos-lista > details").length === 3, { timeout: 10000 });
 
   /* El nombre de un equipo propio vive en un <input> —se renombra ahí mismo—,
      así que buscarlo solo por textContent no lo encuentra: es el mismo tipo de
      descuido que daría verde sobre la tarjeta que no era. */
   const tarjeta = (nombre) => page.evaluateHandle((n) => {
-    return Array.from(document.querySelectorAll("#equipos-lista > div"))
-      .find((d) => d.textContent.indexOf(n) !== -1
-        || Array.from(d.querySelectorAll("input")).some((i) => i.value === n));
+    return Array.from(document.querySelectorAll("#equipos-lista > details"))
+      .find((d) => d.dataset.nombre === n);
   }, nombre);
 
-  igual("se ven los dos equipos, con su gente puesta",
-    await page.evaluate(() => Array.from(document.querySelectorAll("#equipos-lista > div"))
-      .map((d) => d.querySelector("input, p").value || d.querySelector("p").textContent)),
-    ["Los del martes", "Selección de la Academia"]);
+  /* Lo que pide atención primero y abierto; lo demás plegado con su resumen,
+     y lo que no puede repartir al final. Se mide lo que SE VE. */
+  const orden = () => page.evaluate(() => Array.from(document.querySelectorAll("#equipos-lista > details"))
+    .map((d) => d.querySelector("summary").textContent + (d.querySelector("h3").checkVisibility() ? " [abierto]" : "")));
+  igual("primero el que pide atención, abierto; los demás plegados, el ajeno al final", await orden(), [
+    "▶Los del viernes0 entrenadores · 0 alumnos⚠️ sin entrenadores y sin alumnos [abierto]",
+    "▶Los del martes1 entrenador · 1 alumno",
+    "▶Selección de la Academia0 entrenadores · 1 alumnotiene gente de otra coordinación",
+  ]);
+  igual("arriba se dice cuántos piden atención", await page.textContent("#equipos-resumen"),
+    "3 equipos · ⚠️ 1 pide atención");
+  igual("y adentro se dice por qué importa", await (await tarjeta("Los del viernes")).evaluate((d) =>
+    /no le da acceso a nadie/.test(d.textContent)), true);
+  igual("crear un equipo va después de la lista", await page.evaluate(() =>
+    !!(document.getElementById("equipos-lista").compareDocumentPosition(document.getElementById("equipo-nuevo")) & Node.DOCUMENT_POSITION_FOLLOWING)), true);
+  // Se abre el de martes: lo que sigue lo repinta, y tiene que quedar abierto.
+  await page.click('#equipos-lista details[data-equipo="eq-1"] summary');
 
   /* El equipo con gente de otra coordinación: se ve, se dice por qué no se
      toca, y no se pinta ni un control que vaya a fallar. */
@@ -650,6 +665,8 @@ async function pruebaEquipos(browser) {
   mio = await tarjeta("Los del martes");
   igual("y se dice cuántos entraron EN LA TARJETA QUE SE VE, no en la que se repintó",
     await mio.evaluate((d) => /Entraron 2 alumnos/.test(d.textContent)), "true");
+  igual("y el equipo que se abrió sigue abierto después de repintar",
+    await mio.evaluate((d) => d.querySelector("h3").checkVisibility()), true);
 
   // ------------------------------------- volcar lo que ya está no borra nada
   await page.evaluate(() => { window.__rpc = []; });
@@ -713,6 +730,23 @@ async function pruebaEquipos(browser) {
   await page.close();
 }
 
+/* Quien administra arma los equipos en admin.html#equipos. En coordinación
+   no tiene una segunda puerta al mismo lugar: se le dice dónde están. */
+async function pruebaEquiposAdmin(browser) {
+  console.log("\n=== Los equipos de quien administra: una sola puerta ===");
+  const { page, errores } = await abrir(browser, "coordinacion.html", MASTER, GENTE);
+  await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
+  await page.waitForFunction(() => document.getElementById("equipos-admin").checkVisibility(), { timeout: 10000 });
+  igual("se le dice dónde se arman", await page.getAttribute("#equipos-admin a", "href"), "admin.html#equipos");
+  igual("y no se le pinta otra lista ni otro «Crear equipo»", await page.evaluate(() =>
+    ["equipos-lista", "equipo-nuevo", "equipos-resumen"].map((id) => document.getElementById(id).checkVisibility())),
+    [false, false, false]);
+  igual("ni se bajan los equipos", await page.evaluate(() =>
+    window.__llamadas.some((l) => /^equipo/.test(l.tabla))), false);
+  igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+  await page.close();
+}
+
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
@@ -725,6 +759,7 @@ async function pruebaEquipos(browser) {
     await pruebaAlumna(browser);
     await pruebaSubgruposAjenos(browser);
     await pruebaEquipos(browser);
+    await pruebaEquiposAdmin(browser);
   } finally {
     await browser.close();
   }
