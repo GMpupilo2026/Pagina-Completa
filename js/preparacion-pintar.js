@@ -86,6 +86,7 @@
     if (R()) c.appendChild(pintarResumen(r));
     c.appendChild(pintarCifras(r));
     c.appendChild(pintarPlanes(r));
+    if (R() && (opcionesActuales.alAFondo || r.lineaFondo)) c.appendChild(pintarAFondo(r));
     if (r.cruce) c.appendChild(pintarCruce(r));
     if (r.motor) c.appendChild(pintarMotor(r));
     if (r.teoria) c.appendChild(pintarTeoria(r));
@@ -227,10 +228,15 @@
       const d = el("section", "hoja-lado");
       d.appendChild(el("h2", "", l.titulo));
       (l.avisos || []).forEach((x) => d.appendChild(el("p", "hoja-aviso", x.texto)));
-      l.lineas.forEach((x) => {
+      l.lineas.forEach((x, i) => {
         d.appendChild(el("p", "hoja-linea-titulo", x.titulo));
         d.appendChild(el("p", "hoja-linea", A.lineaEs(x.sec)));
         d.appendChild(el("p", "hoja-dato", "En esta línea " + x.texto));
+        // La continuación preparada, si se profundizó esta misma línea.
+        const f = i === 0 && r.lineaFondo && r.lineaFondo.lados[l.clave];
+        if (f && f.sec.join(" ") === x.sec.join(" ") && f.continuacion && f.continuacion.sec.length) {
+          d.appendChild(el("p", "hoja-dato", "Y después (Stockfish): " + A.lineaEs(f.continuacion.sec, f.sec.length)));
+        }
       });
       [lista("Haz esto", l.haz, 3), lista("No hagas esto", l.evita, 3)].forEach((b) => b && d.appendChild(b));
       cols.appendChild(d);
@@ -556,6 +562,81 @@
       if (rama) { rama.appendChild(destino); ul.appendChild(rama); }
     }
     return ul;
+  }
+
+  /* La línea a fondo (PreparacionMotor.aFondo): la línea principal de cada
+     color, del resumen. En cada jugada tuya, las 3 mejores de Stockfish a
+     profundidad 20 (¿la tuya es la mejor?), y al final una continuación de 8
+     medias jugadas para llegar sabiendo cómo seguir. Va en un botón: tarda
+     uno o dos minutos. Si la línea cambió (otro filtro, otro alumno), se
+     dice y se puede volver a profundizar. */
+  function pintarAFondo(r) {
+    const s = tarjeta("La línea a fondo", "fondo-titulo");
+    s.appendChild(nota("La línea principal de cada color, revisada jugada por jugada con Stockfish a profundidad 20: en cada jugada tuya, sus tres mejores opciones, y al final una continuación preparada para llegar sabiendo cómo seguir. Evaluación desde las blancas: + es ventaja blanca."));
+    const lineas = {};
+    R().armar(r).lados.forEach((l) => { if (l.lineas[0]) lineas[l.clave] = l.lineas[0].sec; });
+    const f = r.lineaFondo;
+    const igual = (a, b) => a && b && a.join(" ") === b.join(" ");
+    const vieja = f && Object.keys(lineas).some((k) => f.lados[k] && !igual(f.lados[k].sec, lineas[k]));
+    if (opcionesActuales.alAFondo && (!f || vieja)) {
+      if (vieja) s.appendChild(el("p", "text-sm font-semibold text-accent-700 dark:text-accent-400 mb-2", "La línea cambió desde que se profundizó: vuelve a hacerlo."));
+      const b = el("button", "mb-3 px-3 py-1.5 rounded-lg text-sm font-semibold bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "Profundizar con Stockfish (uno o dos minutos)");
+      b.type = "button";
+      b.id = "a-fondo";
+      b.addEventListener("click", () => opcionesActuales.alAFondo(lineas, b));
+      s.appendChild(b);
+    }
+    if (!f) return s;
+    s.appendChild(el("p", "text-xs text-brand-450 dark:text-brand-350 mb-3", f.detalle + "."));
+    const grilla = el("div", "grid lg:grid-cols-2 gap-6");
+    [["conBlancas", "Con blancas"], ["conNegras", "Con negras"]].forEach(([clave, titulo]) => {
+      const l = f.lados[clave];
+      if (!l) return;
+      const d = el("div", "min-w-0");
+      d.dataset.fondo = clave;
+      d.appendChild(el("h4", "font-bold text-brand-800 dark:text-white mb-1", titulo));
+      d.appendChild(el("p", "font-mono text-sm text-brand-800 dark:text-white mb-2 break-words", A.lineaEs(l.sec)));
+      const ul = el("ul", "space-y-2 mb-3");
+      const notas = l.sec.map(() => "");
+      l.jugadas.forEach((x) => {
+        const num = (x.ply % 2 === 1 ? Math.ceil(x.ply / 2) + "." : Math.ceil(x.ply / 2) + "…");
+        const ops = x.opciones.map((o) => A.sanEs(o.san) + " (" + A.textoEval(o.eval) + ")").join(" · ");
+        const mejor = x.opciones[0];
+        // Cuánto se pierde con la jugada del plan, dicho en palabras: menos
+        // de 0,3 peones es lo mismo en la práctica.
+        const dif = x.diferencia;
+        const juicio = dif == null ? "" : dif < 0.3 ? "casi igual, se puede jugar." : dif < 0.8 ? "un poco peor." : "claramente peor: piénsalo.";
+        const texto = x.puesto === 1 || !mejor ? num + A.sanEs(x.jugada) + ": la mejor para Stockfish" + (mejor ? " (" + A.textoEval(mejor.eval) + ")" : "") + "."
+          : num + A.sanEs(x.jugada) + ": Stockfish prefiere " + A.sanEs(mejor.san) + " (" + A.textoEval(mejor.eval) + ")" +
+            (x.evalJugada != null ? "; con " + A.sanEs(x.jugada) + " queda en " + A.textoEval(x.evalJugada) + ": " + juicio : ".");
+        const li = el("li", "text-sm text-brand-700 dark:text-brand-100");
+        li.dataset.puesto = x.puesto ? String(x.puesto) : "fuera";
+        li.appendChild(el("p", dif != null && dif >= 0.8 ? "font-semibold" : "", texto));
+        if (ops) li.appendChild(el("p", "text-xs text-brand-500 dark:text-brand-300", "Sus tres mejores: " + ops + "."));
+        ul.appendChild(li);
+        notas[x.ply - 1] = "Stockfish: " + (ops || "sin datos") + ".";
+      });
+      d.appendChild(ul);
+      const c = l.continuacion;
+      if (c && c.sec.length) {
+        const p = el("p", "text-sm text-brand-700 dark:text-brand-100");
+        p.dataset.continuacion = "";
+        p.appendChild(el("strong", "", "Continuación preparada: "));
+        p.appendChild(el("span", "font-mono", A.lineaEs(c.sec, l.sec.length)));
+        if (c.eval != null) p.appendChild(document.createTextNode(" (" + A.textoEval(c.eval) + ")"));
+        d.appendChild(p);
+        if (opcionesActuales.alVerConNotas) {
+          const toda = l.sec.concat(c.sec);
+          const n = notas.concat(c.sec.map((x, i) => (i === 0 ? "Desde aquí sigue Stockfish: la continuación preparada." : "")));
+          const b = botonPlan("Ver toda la línea en el tablero", ["fondo", clave], (btn) => opcionesActuales.alVerConNotas(toda, n, titulo + ": la línea a fondo", btn));
+          b.classList.add("mt-2");
+          d.appendChild(b);
+        }
+      }
+      grilla.appendChild(d);
+    });
+    s.appendChild(grilla);
+    return s;
   }
 
   /* El plan que vale (planDe): a la medida del alumno si hay cruce. Ese es

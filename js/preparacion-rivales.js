@@ -404,7 +404,7 @@
   // Lo que todavía corre sobre este análisis: el resumen de arriba lo avisa.
   function pendientes(r) {
     const l = [];
-    if (revision && actual === r) l.push(revision.tactica ? "la revisión de su táctica con Stockfish (sus errores y lo que no vio)" : "la revisión de Stockfish (sus errores y las jugadas del plan que no convienen)");
+    if (revision && actual === r) l.push(revision.fondo ? "la línea a fondo con Stockfish" : revision.tactica ? "la revisión de su táctica con Stockfish (sus errores y lo que no vio)" : "la revisión de Stockfish (sus errores y las jugadas del plan que no convienen)");
     if (buscandoTeoria === r) l.push("la comparación con los maestros (dónde deja la teoría)");
     return l;
   }
@@ -431,6 +431,10 @@
         const l = L.lineaDelPlan(r, camino);
         abrirVisor(l.sec, { en: l.en, notas: l.notas, titulo: "El plan: " + L.lineaEs(l.sec.slice(0, l.en)) }, origen);
       },
+      // Una línea con su nota en cada jugada (la línea a fondo), desde el comienzo.
+      alVerConNotas: (sec, notas, titulo, origen) => abrirVisor(sec, { en: 0, notas, titulo }, origen),
+      // La línea principal de cada color, a fondo con Stockfish (aFondo).
+      alAFondo: (lineas) => iniciarAFondo(r, lineas),
       // Una línea suelta (un error de Stockfish): se abre en su última jugada,
       // o en `en` (el ejemplo de una táctica: en la jugada que decide).
       alVerSecuencia: (sec, nota, origen, en) => {
@@ -822,6 +826,39 @@
       if (guardadoId) { guardadoId = null; $("guardar").disabled = false; $("guardar").textContent = "Guardar con la revisión"; }
       if (!esta.parar && !res.error && clavesDe() !== pedidas) { iniciarRevision(); P.pendiente($("resultado-cuerpo"), pendientes(r)); return; }
       if (!esta.parar && !res.error && r.tactica && r.tactica.momentos && !r.tacticaMotor) iniciarRevisionTactica(r);
+    });
+  }
+
+  /* La línea a fondo: a pedido (tarda uno o dos minutos). Usa el mismo
+     «Parar» y el mismo estado que la revisión; si la revisión está
+     corriendo, espera a que termine. */
+  function iniciarAFondo(r, lineas) {
+    if (!M.disponible()) { $("motor-estado").textContent = "Stockfish no está disponible en este navegador."; return; }
+    if (revision) { $("motor-estado").textContent = "Stockfish está revisando: cuando termine, vuelve a tocar «Profundizar con Stockfish»."; return; }
+    const esta = { parar: false, fondo: true };
+    revision = esta;
+    $("motor-revisar").disabled = true;
+    $("motor-parar").hidden = false;
+    P.pendiente($("resultado-cuerpo"), pendientes(r));
+    esta.promesa = M.aFondo(lineas, {
+      parar: () => esta.parar || actual !== r,
+      alAvanzar: (hechas, total) => { $("motor-estado").textContent = "Profundizando la línea con Stockfish: " + (hechas + 1) + " de " + total + " posiciones…"; },
+    }).then((res) => {
+      if (revision === esta) revision = null;
+      $("motor-revisar").disabled = false;
+      $("motor-parar").hidden = true;
+      if (actual !== r || !res) { $("motor-estado").textContent = "Profundización parada."; P.pendiente($("resultado-cuerpo"), pendientes(r)); return; }
+      r.lineaFondo = res;
+      $("motor-estado").textContent = "Listo: la línea a fondo, " + res.detalle + ".";
+      pintar(r);
+      if (guardadoId) { guardadoId = null; $("guardar").disabled = false; $("guardar").textContent = "Guardar con la línea a fondo"; }
+      const h = document.getElementById("fondo-titulo");
+      if (h) { h.tabIndex = -1; h.scrollIntoView({ block: "start" }); h.focus(); }
+    }, (e) => {
+      if (revision === esta) revision = null;
+      $("motor-revisar").disabled = false;
+      $("motor-parar").hidden = true;
+      $("motor-estado").textContent = "Stockfish se detuvo: " + (e.message || e) + ".";
     });
   }
 
