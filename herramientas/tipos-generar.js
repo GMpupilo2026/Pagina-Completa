@@ -36,6 +36,7 @@ const path = require("path");
 const { Chess } = require("chess.js");
 const { Motor } = require("./lib/motor-uci");
 const R = require("../js/tipos-reglas.js");
+const R_CATALOGO = require("../js/tipos-catalogo.js");
 const FinalesDTM = require("./lib/finales-dtm.js");
 
 const RAIZ = path.join(__dirname, "..");
@@ -58,8 +59,8 @@ const PUZZLES = Object.keys(TEMAS.puzzles).sort((a, b) => hash(a) - hash(b)).map
 /* ---------- motor: varios procesos a la vez ---------- */
 /* `--solo con-lo-justo` rehace solo ese banco (no usa el motor: sale de las
    tablas de finales) y deja el resto de tipos.json como está. Así se puede
-   ampliar sin Stockfish y sin tocar los demás. `--solo aguanta` hace lo mismo
-   con Aguanta, que sí usa el motor: los demás bancos no se vuelven a analizar,
+   ampliar sin Stockfish y sin tocar los demás. `--solo aguanta` y `--solo
+   remata` hacen lo mismo con esos dos, que sí usan el motor: los demás bancos no se vuelven a analizar,
    así que ningún id cambia y nadie pierde sus estrellas. */
 const SOLO = process.argv.includes("--solo") ? process.argv[process.argv.indexOf("--solo") + 1] : null;
 const MOTORES = SOLO === "con-lo-justo" ? [] : Array.from({ length: Math.max(1, Math.min(4, require("os").cpus().length)) }, () => new Motor());
@@ -1098,6 +1099,71 @@ function usadosPorAmenazaYDescarte(datos) {
   return ids;
 }
 
+/* ---------- 16. Remata la ventaja ----------
+   Posiciones de medio juego donde el alumno ya va ganando y tiene que
+   convertir. Salen de los ejercicios de «Ejercicios por tema» que ganan
+   material o posición (no los de mate): se juega la solución entera, se deja
+   que el rival conteste con la mejor jugada del motor (profundidad 16) y le
+   toca al alumno. Entra si:
+     - quedan 14 piezas o más (es medio juego, no un final de libro) y nadie
+       está en jaque;
+     - el motor da entre +4 y +8 al alumno a profundidad 18, sin mate, y a
+       profundidad 12 decía casi lo mismo (a menos de 1): una posición donde el
+       motor todavía duda no sirve para medir si se escapó. La meta es seguir
+       en +3: el peón de margen es para la evaluación del navegador, que es
+       más corta y se mueve (jugando la mejor del motor, un +3,3 se leía +2,1).
+   El nivel lo pone el material: una torre o más (1), una pieza (2) o casi
+   igual (3). Las jugadas de cada nivel están en el catálogo. */
+async function generarRemata() {
+  const cand = [];
+  const vistas = new Set();
+  for (const pz of PUZZLES) {
+    const t = pz.themes || [];
+    if (pz.mate || !(t.includes("crushing") || t.includes("advantage"))) continue;
+    const g = new Chess(pz.fen);
+    let ok = true;
+    for (const s of pz.solution) if (!g.move(s)) { ok = false; break; }
+    if (!ok || g.game_over() || piezas(g.fen()) < 15) continue;
+    cand.push({ pz, fenRival: g.fen(), alumno: new Chess(pz.fen).turn() });
+    if (cand.length >= 2000) break;
+  }
+  const buenos = (await enParalelo(cand, async ({ pz, fenRival, alumno }) => {
+    const [rr] = await analizar(fenRival, 1, 16);
+    if (!rr || rr.mate !== null) return null;
+    const g = new Chess(fenRival);
+    const resp = g.move({ from: rr.uci.slice(0, 2), to: rr.uci.slice(2, 4), promotion: rr.uci[4] || undefined });
+    if (!resp || g.game_over() || g.in_check()) return null;
+    const fen = g.fen();
+    const k = fen.split(" ").slice(0, 2).join(" ");
+    if (vistas.has(k) || piezas(fen) < 14) return null;
+    const [a] = await analizar(fen, 1, 12);
+    const [b] = await analizar(fen, 1, 18);
+    if (!a || !b || a.mate !== null || b.mate !== null) return null;
+    if (b.score < 400 || b.score > 800 || Math.abs(a.score - b.score) > 100) return null;
+    vistas.add(k);
+    const mat = material(fen) * (alumno === "w" ? 1 : -1);
+    const n = mat >= 5 ? 1 : mat >= 3 ? 2 : mat <= 2 && mat >= -1 ? 3 : null;
+    if (!n) return null;
+    const jugadas = R_CATALOGO.nivel("remata", n).jugadas;
+    const numero = R.numeroBalanza(b.score / 100);
+    const matTxt = mat === 0 ? "igual" : (mat > 0 ? "+" : "−") + Math.abs(mat);
+    return {
+      id: "rem-" + n + "-" + pz.id, nivel: n, fen, eval: b.score, material: mat, jugadas,
+      respuestaRival: R.sanEs(resp.san), linea: lineaEs(fen, b.pv, 4),
+      rating: pz.rating, partida: pz.game || null,
+      resumen: "Juegan las " + R.COLOR[alumno] + " · " + numero + " · material " + matTxt,
+      respuesta: [
+        "El motor: " + numero + " para las " + R.COLOR[alumno] + " (profundidad 18). Material: " + matTxt + ".",
+        "Lo que jugaría el motor: " + lineaEs(fen, b.pv, 4) + ".",
+        "La meta: dar mate, o seguir en +3 o más después de " + jugadas + " jugadas. Si baja de +1,5, se escapó.",
+      ],
+    };
+  })).filter(Boolean);
+  const out = [];
+  for (const n of [1, 2, 3]) out.push(...buenos.filter((x) => x.nivel === n).sort((a, b) => a.rating - b.rating || (a.id < b.id ? -1 : 1)).slice(0, POR_NIVEL * 2));
+  return out;
+}
+
 /* ---------- solo un banco ---------- */
 if (SOLO === "aguanta") {
   (async () => {
@@ -1111,8 +1177,20 @@ if (SOLO === "aguanta") {
     console.log("aguanta       ", JSON.stringify(c));
     process.exit(0);
   })().catch((e) => { console.error(e); process.exit(1); });
+} else if (SOLO === "remata") {
+  (async () => {
+    const datos = JSON.parse(fs.readFileSync(SALIDA, "utf8"));
+    console.log("Remata la ventaja (motor)…");
+    datos.remata = await generarRemata();
+    guardarCache();
+    MOTORES.forEach((m) => m.cerrar());
+    fs.writeFileSync(SALIDA, JSON.stringify(datos) + "\n");
+    const c = datos.remata.reduce((m, x) => { m[x.nivel] = (m[x.nivel] || 0) + 1; return m; }, {});
+    console.log("remata        ", JSON.stringify(c));
+    process.exit(0);
+  })().catch((e) => { console.error(e); process.exit(1); });
 } else if (SOLO) {
-  if (SOLO !== "con-lo-justo") { console.error("--solo solo sabe rehacer «con-lo-justo» o «aguanta»."); process.exit(2); }
+  if (SOLO !== "con-lo-justo") { console.error("--solo solo sabe rehacer «con-lo-justo», «aguanta» o «remata»."); process.exit(2); }
   const datos = JSON.parse(fs.readFileSync(SALIDA, "utf8"));
   console.log("Con lo justo (tablas de finales, tarda un par de minutos)…");
   datos["con-lo-justo"] = generarConLoJusto();
@@ -1156,12 +1234,14 @@ if (!SOLO) (async () => {
   const ruta = generarRuta(reales);
   console.log("Aguanta…");
   const aguanta = await generarAguanta(usadosPorAmenazaYDescarte({ amenaza, descarte }));
+  console.log("Remata la ventaja…");
+  const remata = await generarRemata();
   guardarCache();
   MOTORES.forEach((m) => m.cerrar());
   const datos = {
     fuente: "Posiciones de partidas reales de la base abierta de Lichess (CC0) y de js/aperturas-lineas.js; finales sorteados con su distancia exacta al mate. Generado por herramientas/tipos-generar.js: no se edita a mano.",
     detective, amenaza, descarte, diferencias, balanza, fotografia, "con-lo-justo": conLoJusto,
-    barrido, intercambios, construye, peones, maestro, apertura, ruta, aguanta,
+    barrido, intercambios, construye, peones, maestro, apertura, ruta, aguanta, remata,
   };
   fs.writeFileSync(SALIDA, JSON.stringify(datos) + "\n");
   const cuenta = (l) => l.reduce((m, x) => { m[x.nivel] = (m[x.nivel] || 0) + 1; return m; }, {});

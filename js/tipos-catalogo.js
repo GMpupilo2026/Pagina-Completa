@@ -210,6 +210,18 @@
         { n: 4, titulo: "Lo que no se ve", desc: "El rival amenaza mate en dos o más jugadas: la defensa está más lejos." },
       ],
     },
+    {
+      id: "remata", emoji: "🏁", nombre: "Remata la ventaja",
+      pregunta: "Vas ganando. ¿La puedes llevar a casa?",
+      entrena: "Convertir una ventaja: simplificar, cambiar piezas, no apurarse y no dejarle contrajuego al rival. Muchas partidas ganadas se escapan aquí.",
+      como: "Empiezas con +4 o más (medido con el motor) en una posición de partida real y juegas contra la máquina a toda su fuerza. Lo logras si das mate o si, al cumplir las jugadas del nivel, sigues en +3 o más. Si la ventaja baja de +1,5, se te escapó.",
+      clase: "Con «Practicar», cada alumno juega la posición contra el motor en su tablero. Antes, pregunten en voz alta cuál es el plan: ¿cambiar piezas, atacar al rey, avanzar un peón pasado?",
+      niveles: [
+        { n: 1, titulo: "Material de sobra", desc: "Tienes una torre o más de ventaja. 8 jugadas.", jugadas: 8 },
+        { n: 2, titulo: "Una pieza de más", desc: "Tienes una pieza de ventaja (o su equivalente). 10 jugadas.", jugadas: 10 },
+        { n: 3, titulo: "Sin material de más", desc: "El material está casi igual, pero tu posición gana: no la dejes enfriar. 12 jugadas.", jugadas: 12 },
+      ],
+    },
   ];
 
   function tipo(id) { return TIPOS.find((t) => t.id === id) || null; }

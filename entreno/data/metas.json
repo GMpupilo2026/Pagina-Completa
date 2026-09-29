@@ -1676,6 +1676,14 @@
    "actividades": [
     "tipos"
    ]
+  },
+  {
+   "clave": "remata",
+   "label": "Remata la ventaja",
+   "total": 120,
+   "actividades": [
+    "tipos"
+   ]
   }
  ]
 }

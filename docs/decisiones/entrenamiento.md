@@ -2160,7 +2160,7 @@ haciendo que un disparo al agua sume uno, saltan nueve comprobaciones.
 ## Los Tipos de entrenamiento
 
 `entreno/tipos.html` (grupo y tarjeta **"🧠 Tipos de entrenamiento"** del hub)
-es una ficha con quince entrenamientos que no son «encuentra la mejor jugada»,
+es una ficha con dieciséis entrenamientos que no son «encuentra la mejor jugada»,
 cada uno con sus niveles: **El Detective** (¿qué jugada se acaba de hacer?,
 análisis retrógrado), **¿Qué quiere el rival?** (profilaxis: hacer la jugada
 que amenaza el rival), **Descarte** (tachar las candidatas que pierden),
@@ -2388,11 +2388,55 @@ el juego en `js/entreno-tipos-mas.js`, como los tipos 8 a 14.
   tablero) y la respuesta para el profesor: la defensa, la amenaza, la línea y
   por qué la segunda mejor ya pierde.
 
+### El tipo 16: Remata la ventaja
+
+La otra mitad de lo que no se entrenaba: **convertir**. Muchas partidas
+ganadas se escapan después del golpe, cuando ya no hay nada que calcular y hay
+que simplificar, cambiar piezas y no dejarle contrajuego al rival. El alumno
+empieza con +4 o más en una posición de partida real y juega contra Stockfish
+a toda su fuerza (`PracticeEngine`, el mismo Worker de Finales contra la
+máquina y de la práctica en la clase). La regla vive en
+`js/tipos-reglas-mas.js` (`cpDelAlumno`, `juicioRemata`, `estrellasRemata`) y
+el juego en `js/entreno-tipos-mas.js`.
+
+- **No hay «la jugada buena»: decide el motor.** Después de cada jugada del
+  alumno, el motor mira la posición. Si baja de +1,5, **se escapó** y termina
+  ahí, diciendo con qué jugada y cuánto quedó. Al cumplir las jugadas del
+  nivel (8, 10 o 12, en el catálogo) tiene que seguir en **+3 o más**; el mate
+  lo gana antes. Tablas por reglamento (ahogado, repetición, 50 jugadas,
+  material insuficiente), las decide chess.js, son escaparse.
+- **Estrellas**: tres si nunca bajó de +3, dos si bajó y lo recuperó, una con
+  pista («💡 Pista»: la máquina marca la pieza con que jugaría).
+- **Si el motor no contesta, no cuenta** (como en Finales): sin evaluación no
+  se puede saber si se escapó, y regalarlo mentiría en Informes. Tampoco
+  cuenta si la máquina no pudo jugar.
+- **De dónde salen**: de los ejercicios de «Ejercicios por tema» que ganan
+  material o posición (`crushing`, `advantage`; no los de mate). Se juega la
+  solución, el rival contesta con la mejor del motor (profundidad 16) y le toca
+  al alumno. Entra si quedan 14 piezas o más (medio juego: los finales de libro
+  ya están en Finales contra la máquina), nadie está en jaque, y el motor da
+  entre +4 y +8 sin mate a profundidad 18, habiendo dicho casi lo mismo a
+  profundidad 12 (a menos de 1): con +9 ya no hay nada que rematar, y una
+  posición donde el motor duda no sirve para medir si se escapó.
+- **El nivel lo pone el material**: una torre o más (1), una pieza (2), casi
+  igual (3): esa es la más difícil, porque la ventaja es de posición y se
+  enfría si no se juega rápido.
+- **La evaluación del navegador es más corta** (medio segundo) que la del
+  banco (profundidad 18), y se mueve: probándolo con el Stockfish de verdad,
+  jugar la mejor jugada del motor en un +3,3 del banco se leyó +2,1. Con el
+  banco empezando en +3, alguien que juega perfecto podía «no lograrlo». Por
+  eso **el banco arranca en +4 y la meta es +3** (un peón de margen para ese
+  ruido), y el corte de «se escapó» está en +1,5: lo que se mide es que la
+  ventaja no se derrumbe, no décimas.
+- `node herramientas/tipos-generar.js --solo remata` rehace solo este banco.
+  En la clase en vivo trae «🎯 Practicar»: cada alumno la juega contra el
+  motor en su tablero.
+
 **Al tocar los bancos, las reglas o la página, correr**:
 
     node herramientas/tipos-generar.js          # solo si cambian los bancos (necesita Stockfish)
     node herramientas/verificar-tipos.js        # los bancos y las reglas, sin navegador (~1 min)
-    node herramientas/verificar-tipos-pagina.js # la página, jugada de punta a punta
+    node herramientas/verificar-tipos-pagina.js # la página, jugada de punta a punta (Remata, con un motor de mentira)
 
 El primero de los verificadores vuelve a comprobar con las reglas de la página
 todo lo que cada banco promete y recalcula las tablas de finales; el segundo
