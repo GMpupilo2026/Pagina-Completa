@@ -45,6 +45,13 @@
      dice en vez de «le llegó»; sin texto no manda nada;
    - la alumna la lee como «Pista de tu profe para toda la clase».
 
+   El alumno le contesta a quien lo ayudó
+   - el campo sale solo con una ayuda a la vista; manda SOLO su respuesta, a su
+     partida; sin texto no manda nada; se le dice qué contestó, y una ayuda
+     nueva (que la base le borra) la quita de la pantalla;
+   - al profe le aparece en la miniatura y en el diálogo, como texto (no como
+     HTML), y se dice en voz.
+
    Del lado de la alumna
    - la pista se pinta como texto, y las flechas en su tablero Y en palabras;
    - escucha SU partida con filtro;
@@ -430,6 +437,52 @@ async function pruebaPistaATodos(browser) {
   await ana.ctx.close();
 }
 
+async function pruebaRespuesta(browser) {
+  console.log("\n=== Ana le contesta a la ayuda ===");
+  const sinAyuda = await abrir(browser, "u-ana", CLASE, semilla());
+  await sinAyuda.page.waitForSelector("#practice-card:not(.hidden) #practice-board [data-square]", { timeout: 30000 });
+  cumple("sin ayuda no se ofrece contestar", !(await seVe(sinAyuda.page, "#practica-contestar-texto")));
+  await sinAyuda.ctx.close();
+
+  const { page, ctx, errores } = await abrir(browser, "u-ana", CLASE,
+    semilla({ jugadas: 2, flechas: [], circulos: [], texto: "Mira el caballo", de: "u-profe", nombre: "Karina Rojas" }));
+  await page.waitForSelector("#practice-card:not(.hidden) #practice-board [data-square]", { timeout: 30000 });
+  await page.waitForFunction(() => document.getElementById("practica-contestar-texto").checkVisibility(), null, { timeout: 5000 }).catch(() => {});
+  cumple("con ayuda se ofrece contestar", await seVe(page, "#practica-contestar-texto"));
+  await page.click("#practica-contestar-mandar");
+  igual("sin texto no manda nada", (await updatesDePartida(page)).length, 0);
+  await page.fill("#practica-contestar-texto", "¿El de f3?");
+  await page.click("#practica-contestar-mandar");
+  await page.waitForFunction(() => /Le contestaste/.test(document.getElementById("practica-contestado").textContent), null, { timeout: 5000 }).catch(() => {});
+  igual("manda SOLO su respuesta, a su partida", (await updatesDePartida(page)).map((u) => ({ campos: u.campos, donde: u.donde })),
+    [{ campos: { respuesta: "¿El de f3?" }, donde: [["id", "g-1"]] }]);
+  igual("se le dice qué contestó", await texto(page, "#practica-contestado"), "Le contestaste: «¿El de f3?».");
+  // Le llega una ayuda nueva: la base le borró la respuesta.
+  await page.evaluate(() => {
+    const g = Object.assign({}, window.__tablas.practice_games[0], { respuesta: null,
+      ayuda: { jugadas: 2, flechas: [], circulos: [], texto: "Sí, ese", de: "u-profe", nombre: "Karina Rojas" } });
+    window.__cambioEnBase("practice_games", g);
+  });
+  await page.waitForFunction(() => document.getElementById("practica-contestado").textContent === "", null, { timeout: 5000 }).catch(() => {});
+  igual("con la ayuda nueva la respuesta vieja se va", await texto(page, "#practica-contestado"), "");
+  igual("sin errores en la página", errores.filter((e) => !/stockfish|Worker|wasm/i.test(e)), []);
+  await ctx.close();
+
+  console.log("\n=== El profe lee lo que contestó Ana ===");
+  const sem = semilla({ jugadas: 2, flechas: [], circulos: [], texto: "Mira el caballo", de: "u-profe" });
+  sem.practice_games[0].respuesta = "¿El <b>de</b> f3?";
+  sem.practice_games[0].respuesta_at = new Date().toISOString();
+  const profe = await abrir(browser, "u-profe", CLASE, sem);
+  await profe.page.waitForSelector("#practice-boards-grid .practice-mini-mirar", { timeout: 30000 });
+  igual("la miniatura la muestra, como texto", await profe.page.$eval(".practice-mini-respuesta", (p) => ({ texto: p.textContent, seVe: p.checkVisibility(), etiquetas: p.querySelectorAll("*").length })),
+    { texto: "💬 «¿El <b>de</b> f3?»", seVe: true, etiquetas: 0 });
+  igual("se dice en voz", await texto(profe.page, "#practica-pedidos-aviso"), NOMBRE + " contestó: ¿El <b>de</b> f3?");
+  await profe.page.click("#practice-boards-grid .practice-mini-mirar");
+  igual("el diálogo la muestra", await texto(profe.page, "#practica-mirar-respuesta"), "💬 " + NOMBRE + " contestó: «¿El <b>de</b> f3?»");
+  igual("sin errores en la página", profe.errores.filter((e) => !/stockfish|Worker|wasm/i.test(e)), []);
+  await profe.ctx.close();
+}
+
 async function pruebaPedidoAlumna(browser) {
   console.log("\n=== Ana pide ayuda desde su partida ===");
   const { page, ctx, errores } = await abrir(browser, "u-ana", CLASE, semilla());
@@ -551,6 +604,7 @@ async function pruebaAlumna(browser) {
     await pruebaPedidoProfe(browser);
     await pruebaPedidoAlumna(browser);
     await pruebaPistaATodos(browser);
+    await pruebaRespuesta(browser);
     await pruebaAlumna(browser);
   } finally {
     await browser.close();

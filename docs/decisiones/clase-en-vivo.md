@@ -2013,6 +2013,22 @@ alumno le aparece en su propio tablero.
     profe lo apaga; el profe no lo puede encender; sí apagarlo; la alumna lo
     cancela; al reintentar se apaga.
 
+- **El alumno le contesta a quien lo ayudó**: debajo de la ayuda, «💬
+  Contestarle» (hasta 280 caracteres). Vive en su fila
+  (`practice_games.respuesta`, `respuesta_at`, migración
+  `practica_el_alumno_contesta`) y **no en el chat privado**: el chat es solo
+  entre el alumno y su profe, y la ayuda la puede haber dado alguien de
+  supervisión o coordinación, que tiene que leer la respuesta ahí mismo donde
+  la mandó. El mismo trigger lo hace cumplir: solo el alumno la escribe, y
+  solo si tiene una ayuda a la que contestar (el campo tampoco sale sin ella);
+  la hora la pone la base; texto vacío la quita; quien no es el alumno no la
+  toca; **una ayuda nueva, o quitar la ayuda, la borra**, porque contestaba a
+  otra; reintentar también. Al profe le sale en la miniatura y en el diálogo,
+  siempre por `textContent` —es texto que escribe un alumno—, y se dice en voz
+  una vez por respuesta. Comprobado impersonando roles: sin ayuda no entra; la
+  hora falsa se ignora y los espacios se recortan; jugar no la borra; el profe
+  no la puede cambiar; 281 caracteres los rechaza el CHECK; la ayuda nueva, el
+  texto vacío y el reintento la borran.
 - **Una pista para todos a la vez**: arriba de «Tableros de los alumnos»,
   «📣 Pista para todos». Va **solo texto**: cada alumno va en una posición
   distinta, y una flecha dibujada en una señalaría otra cosa en las demás. Es

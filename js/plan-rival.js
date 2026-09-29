@@ -105,16 +105,29 @@
      terminada queda en training_progress como 'preparacion' con su linea_id
      (el id del plan y las jugadas); SOLO si salió sin errores ni pistas lleva
      además theme = el id del plan, que es lo que cuenta la tarea
-     (tareas_con_avance(), filtro_clave). Lo que ya salió limpio se lee de la
-     base, no de este navegador: vale en la compu y en el celular. Se registra
-     solo cuando quien mira es el alumno del plan (un profesor que lo prueba
-     no suma a nadie). Ver «Entrenar el plan: etapa 7». */
-  async function lineasLimpias(fila, yo) {
-    if (fila.alumno_id !== yo) return new Set();
-    const { data } = await sb.from("training_progress").select("detail")
-      .eq("student_id", yo).eq("activity", "preparacion").eq("detail->>theme", fila.id).range(0, 999);
-    return new Set((data || []).map((x) => x.detail && x.detail.linea_id).filter(Boolean));
+     (tareas_con_avance(), filtro_clave). Se registra solo cuando quien mira es
+     el alumno del plan (un profesor que lo prueba no suma a nadie). Ver
+     «Entrenar el plan: etapa 7».
+
+     El repaso sale de esas mismas filas, no de este navegador ni de una tabla
+     aparte: cada intento, en orden, pasa por la repetición espaciada de
+     Aperturas (js/repaso-espaciado.js): limpia = «bien», solo con pistas =
+     «regular», con errores = «mal». Lo que se deriva no se guarda. Ver
+     «Repasar las líneas del plan». */
+  const diaCR = (iso) => new Date(iso).toLocaleDateString("en-CA", { timeZone: "America/Costa_Rica" });
+  const notaDe = (d) => (d.limpio ? "bien" : d.errores ? "mal" : "regular");
+
+  async function intentos(fila, yo) {
+    if (fila.alumno_id !== yo) return [];
+    const { data } = await sb.from("training_progress").select("detail, created_at")
+      .eq("student_id", yo).eq("activity", "preparacion").eq("detail->>plan", fila.id)
+      .order("created_at", { ascending: true }).range(0, 999);
+    return (data || []).filter((x) => x.detail && x.detail.linea_id)
+      .map((x) => ({ id: x.detail.linea_id, nota: notaDe(x.detail), dia: diaCR(x.created_at), limpia: x.detail.theme === fila.id, fallos: x.detail.fallos || [] }));
   }
+
+  const numerada = (i, san) => (i % 2 === 0 ? (i / 2 + 1) + "." : Math.floor(i / 2 + 1) + "…") + L.sanEs(san);
+  const fechaCorta = (dia) => new Date(dia + "T12:00:00Z").toLocaleDateString("es-CR", { timeZone: "UTC", day: "numeric", month: "long" });
 
   async function montarEntrenamiento(fila, r, yo) {
     const lado = fila.lado;
@@ -123,15 +136,34 @@
       const l = L.lineaDelPlan(r, camino);
       return { sec: l.sec, notas: l.notas, clave: fila.id + ":" + l.sec.join(" ") };
     });
-    let limpias = await lineasLimpias(fila, yo);
+    const suyo = fila.alumno_id === yo;
+    const historia = await intentos(fila, yo);
     let entrenador = null;
     let actual = null;
 
+    const limpias = () => new Set(historia.filter((h) => h.limpia).map((h) => h.id));
+    const fichas = () => RepasoEspaciado.desdeHistoria(historia);
+    const hoy = () => diaCR(new Date().toISOString());
+    // Las que toca hoy: solo las que ya se jugaron alguna vez (las nuevas son
+    // «la siguiente línea», no repaso). Primero las falladas y las más atrasadas.
+    const paraHoy = () => {
+      const f = fichas();
+      return RepasoEspaciado.pendientes(lineas.map((x) => x.clave).filter((k) => f[k]), f, hoy()).map((k) => lineas.find((x) => x.clave === k));
+    };
+
     function pintar() {
-      const hechas = lineas.filter((x) => limpias.has(x.clave)).length;
-      $("entrenar-progreso").textContent = fila.alumno_id === yo
+      const ok = limpias();
+      const f = fichas();
+      const hechas = lineas.filter((x) => ok.has(x.clave)).length;
+      $("entrenar-progreso").textContent = suyo
         ? "Te salen sin errores " + hechas + " de " + lineas.length + (lineas.length === 1 ? " línea." : " líneas.")
         : "Estás viendo el plan de un alumno: lo que entrenes acá no se le suma.";
+      const toca = suyo ? paraHoy() : [];
+      $("entrenar-repasar").hidden = !toca.length;
+      $("entrenar-repasar").textContent = "Repasar las de hoy (" + toca.length + ")";
+      $("entrenar-repaso").textContent = !suyo || !historia.length ? ""
+        : toca.length ? "Para repasar hoy: " + toca.length + (toca.length === 1 ? " línea." : " líneas.")
+        : "Hoy no te toca repasar ninguna: vuelve el día que dice cada una.";
       const ul = $("entrenar-lineas");
       ul.textContent = "";
       lineas.forEach((x, i) => {
@@ -144,9 +176,22 @@
         lin.className = "font-mono text-brand-800 dark:text-white";
         lin.textContent = L.lineaEs(x.sec);
         const estado = document.createElement("span");
-        estado.className = "block text-xs " + (limpias.has(x.clave) ? "text-green-700 dark:text-green-400" : "text-brand-500 dark:text-brand-300");
-        estado.textContent = limpias.has(x.clave) ? "✔ Ya te sale sin errores" : "Todavía no te sale sin errores";
+        estado.className = "block text-xs " + (ok.has(x.clave) ? "text-green-700 dark:text-green-400" : "text-brand-500 dark:text-brand-300");
+        estado.dataset.estado = "";
+        let texto = ok.has(x.clave) ? "✔ Ya te sale sin errores" : "Todavía no te sale sin errores";
+        const ficha = suyo && f[x.clave];
+        if (ficha) texto += ficha.vence <= hoy() ? " · Toca repasarla hoy" : " · Próximo repaso: " + fechaCorta(ficha.vence);
+        estado.textContent = texto + ".";
         t.append(lin, estado);
+        // Dónde se equivocó la última vez que la jugó, si se equivocó.
+        const ultima = suyo ? historia.filter((h) => h.id === x.clave).pop() : null;
+        if (ultima && ultima.fallos.length) {
+          const donde = document.createElement("span");
+          donde.className = "block text-xs text-brand-600 dark:text-brand-200";
+          donde.dataset.fallos = "";
+          donde.textContent = "La última vez fallaste en " + ultima.fallos.filter((k) => x.sec[k]).map((k) => numerada(k, x.sec[k])).join(", ") + ".";
+          t.appendChild(donde);
+        }
         const b = document.createElement("button");
         b.type = "button";
         b.className = "px-3 py-1.5 rounded-lg text-xs font-semibold bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
@@ -156,7 +201,7 @@
         li.append(t, b);
         ul.appendChild(li);
       });
-      const pendiente = lineas.find((x) => !limpias.has(x.clave));
+      const pendiente = lineas.find((x) => !ok.has(x.clave));
       $("entrenar-siguiente").textContent = pendiente ? "Entrenar la siguiente línea" : "Repasar una línea";
     }
 
@@ -179,20 +224,26 @@
       $("entrenador-resultado").textContent = res.limpia
         ? "¡Te salió sin errores ni pistas! Esta línea ya cuenta."
         : "Te salió con " + res.errores + (res.errores === 1 ? " error" : " errores") + " y " + res.pistas + (res.pistas === 1 ? " pista" : " pistas") + ": vuelve a jugarla hasta que te salga limpia.";
-      if (fila.alumno_id !== yo || !window.EntrenoProgress) return;
-      const detalle = { linea_id: x.clave, plan: fila.id, limpio: res.limpia, errores: res.errores, pistas: res.pistas };
+      if (!suyo || !window.EntrenoProgress) return;
+      const detalle = { linea_id: x.clave, plan: fila.id, limpio: res.limpia, errores: res.errores, pistas: res.pistas, fallos: res.fallos || [] };
       if (res.limpia) detalle.theme = fila.id;
       const hecho = await EntrenoProgress.log("preparacion", detalle);
       if (hecho && hecho.ok === false && hecho.motivo === "error") {
         $("entrenador-resultado").textContent += " (No se pudo guardar: revisa tu conexión.)";
         return;
       }
-      if (res.limpia) { limpias.add(x.clave); pintar(); }
+      historia.push({ id: x.clave, nota: notaDe(detalle), dia: hoy(), limpia: res.limpia, fallos: detalle.fallos });
+      pintar();
     }
 
     $("entrenar-siguiente").addEventListener("click", () => {
-      const pendiente = lineas.find((x) => !limpias.has(x.clave) && x !== actual) || lineas.find((x) => !limpias.has(x.clave)) || lineas[Math.floor(Math.random() * lineas.length)];
+      const ok = limpias();
+      const pendiente = lineas.find((x) => !ok.has(x.clave) && x !== actual) || lineas.find((x) => !ok.has(x.clave)) || lineas[Math.floor(Math.random() * lineas.length)];
       if (pendiente) empezar(pendiente);
+    });
+    $("entrenar-repasar").addEventListener("click", () => {
+      const toca = paraHoy();
+      if (toca.length) empezar(toca.find((x) => x !== actual) || toca[0]);
     });
     pintar();
   }
