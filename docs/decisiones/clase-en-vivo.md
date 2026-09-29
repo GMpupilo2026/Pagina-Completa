@@ -167,9 +167,10 @@ bien, funciona, y quien la abre por primera vez no sabe por dónde empezar. Para
 un entrenador nuevo, con la clase mirando, ese es el momento exacto en que se
 pierde.
 
-- **Los ocho botones van en dos grupos, y el rótulo dice QUIÉN LO VE**: «Tu
+- **Los nueve botones van en dos grupos, y el rótulo dice QUIÉN LO VE**: «Tu
   material — solo lo ves tú» (Curso, Archivos, PDF, Armar posición) y «El
-  tablero — lo ve toda la clase» (Reiniciar, Flechas, Ocultar, Guardar PGN). No
+  tablero — lo ve toda la clase» (Reiniciar, Flechas, Ocultar, Guardar PGN y
+  Tiempo para pensar). No
   es una agrupación estética: es **la misma línea que ordena toda la clase en
   vivo** —el material del profesor no es el de la clase— puesta donde de verdad
   hace falta saberla, que es antes de apretar. Sin ese rótulo son ocho botones
@@ -611,6 +612,38 @@ clase-preguntas clase-elegido`.** Está probado que falla de verdad: sin mandar
 sin mandar las jugadas en curso, o mostrando todos los tableros en una
 dirigida, salta.
 
+### Tiempo para pensar
+
+Una cuenta regresiva que ve toda la clase, sin abrir una pregunta: «2 minutos
+para analizar la posición». Está en «El tablero — lo ve toda la clase» (a la
+vista también en modo sencillo): cuánto tiempo, qué pensar (opcional, hasta 140
+letras) y «⏳ Tiempo para pensar». Migración `game_state_tiempo_para_pensar`,
+comprobada impersonando.
+
+- **Va en `game_state.pensar`** (`{at, segundos, texto}`), por lo mismo que la
+  vista y el elegido: quien recarga o entra tarde la ve igual. Un CHECK
+  acepta solo esa forma, de 5 segundos a una hora.
+- **Solo el profe lo pone** (`protect_game_state_teacher_columns`: al alumno
+  con el control se le devuelve lo que había).
+- **La hora de arranque la pone la base**: un `at` nuevo se cambia por
+  `now()`, y la pantalla del profe usa el que devuelve el `update`. «+30
+  segundos» manda el mismo `at` y se conserva: solo se alarga. Como en las
+  preguntas con tiempo, cada pantalla cuenta contra su propio reloj, así que
+  una computadora con la hora corrida lo ve corrido por lo mismo.
+- **Lo que falta se calcula, no se guarda**
+  (`PreguntaClase.estadoPensar`): se termina sola, dice «⏰ ¡Se acabó el
+  tiempo!» ocho segundos más y después se va. «Terminar ya» lo deja en null.
+- **Al profe, cuando se acaba, le ofrece «🎲 Elegir a alguien para
+  responder»**: quita el aviso y sortea igual que el botón de Alumnos.
+- **El aviso lo ven todos, también el profe**, que suele compartir su
+  pantalla. El reloj cambia cada segundo y por eso NO es región viva: se dice
+  en voz aparte (`#pensar-voz`) al empezar, a los 10 segundos y al terminar.
+
+**Al tocar esto, correr `node herramientas/verificar-todo.js clase-pensar
+clase-elegido`.** Está probado que falla de verdad: sin pintar qué pensar, con
+«+30» mandando un arranque nuevo, sin decir que se acabó, sin irse solo, o sin
+leer `pensar` de la fila, salta.
+
 ### El modo sencillo de la clase en vivo
 
 Aun ordenada, la pantalla del profesor tiene catorce controles delante, y la
@@ -618,7 +651,7 @@ primera clase se da con los alumnos mirando. El modo sencillo deja a la vista lo
 que hace falta para darla y guarda el resto a un clic.
 
 - **Qué se ve en modo sencillo**: el grupo «El tablero — lo ve toda la clase»
-  (Reiniciar, Flechas, Ocultar, Guardar PGN), el motor de análisis y las
+  (Reiniciar, Flechas, Ocultar, Guardar PGN, Tiempo para pensar), el motor de análisis y las
   pestañas «Mi plan», «Alumnos» e «Invitar». **Qué se guarda**: el grupo «Tu
   material» (Curso, Archivos, PDF, Armar posición) y las pestañas Táctica,
   Preguntar y Practicar. Una nota encima lo dice con esas palabras, y el
