@@ -661,6 +661,24 @@ function etiquetasDeEquipo(puestos, opciones, puedo, guardar, quePasa) {
     return caja;
 }
 
+/* Lo que le falta a un equipo para servir. Sin entrenadores no le da acceso a
+   nadie (es la llave sin puerta); sin alumnos no reparte a nadie. Solo se
+   dice sobre los que puede arreglar: de uno con gente ajena no es quien
+   coordina el que lo va a completar. */
+function loQueLeFalta(eq) {
+    if (!puedoRepartirle(eq)) return [];
+    const falta = [];
+    if (!(entrenadoresDeEquipo.get(eq.id) || []).length) falta.push("sin entrenadores");
+    if (!(alumnosDeEquipo.get(eq.id) || []).length) falta.push("sin alumnos");
+    return falta;
+}
+
+/* Qué equipos quedaron abiertos. Guardar repinta la lista entera, y si cada
+   repintada los volviera a cerrar habría que buscar el equipo otra vez
+   después de cada ✕. */
+const equipoAbierto = new Map();         // id de equipo -> abierto sí/no
+let equipoRecienCreado = null;
+
 function pintarEquipos() {
     const caja = document.getElementById("equipos-lista");
     caja.innerHTML = "";
@@ -669,18 +687,66 @@ function pintarEquipos() {
     const profesores = misProfesores.slice().sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
     const alumnos = misAlumnos.slice().sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
 
-    equipos.forEach((eq) => {
-        const puedo = puedoRepartirle(eq);
-        const card = el("div", "rounded-xl border border-brand-100 dark:border-brand-800 p-4");
+    /* Lo que pide atención primero, después los que puede repartir y al final
+       los que tienen gente de otra coordinación, que solo se miran. Dentro de
+       cada bloque, por nombre (así vienen de la base). */
+    const peso = (eq) => (loQueLeFalta(eq).length ? 0 : puedoRepartirle(eq) ? 1 : 2);
+    const ordenados = equipos.slice().sort((a, b) => peso(a) - peso(b));
+    const conFalta = ordenados.filter((eq) => loQueLeFalta(eq).length).length;
+    const resumen = document.getElementById("equipos-resumen");
+    resumen.textContent = !equipos.length ? ""
+        : (equipos.length === 1 ? "1 equipo" : equipos.length + " equipos")
+          + (conFalta ? " · ⚠️ " + (conFalta === 1 ? "1 pide atención" : conFalta + " piden atención") : " · todos con entrenadores y alumnos");
 
-        const arriba = el("div", "flex flex-wrap items-center gap-3 mb-3");
+    ordenados.forEach((eq) => {
+        const puedo = puedoRepartirle(eq);
+        const falta = loQueLeFalta(eq);
+        const ents = entrenadoresDeEquipo.get(eq.id) || [];
+        const als = alumnosDeEquipo.get(eq.id) || [];
+
+        const card = document.createElement("details");
+        card.className = "group rounded-xl border p-4 "
+            + (falta.length ? "border-accent-500" : "border-brand-100 dark:border-brand-800");
+        card.dataset.equipo = eq.id;
+        card.dataset.nombre = eq.nombre;
+        // Abierto si lo dejó abierto, si lo acaba de crear o si le falta algo
+        // (lo que hay que arreglar no puede quedar detrás de un clic más).
+        card.open = equipoAbierto.has(eq.id) ? equipoAbierto.get(eq.id)
+            : (eq.id === equipoRecienCreado || falta.length > 0 || equipos.length === 1);
+        card.addEventListener("toggle", () => equipoAbierto.set(eq.id, card.open));
+
+        /* El resumen dice lo que hace falta saber sin abrirlo: cuántos
+           entrenadores y alumnos tiene y qué le falta, escrito (el borde no va
+           solo). */
+        const sum = el("summary", "flex flex-wrap items-baseline gap-x-3 gap-y-1 cursor-pointer list-none rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400");
+        const flecha = el("span", "text-brand-450 dark:text-brand-350 text-xs transition-transform group-open:rotate-90", "▶");
+        flecha.setAttribute("aria-hidden", "true");
+        const nombre = el("span", "font-serif font-bold text-brand-800 dark:text-white");
+        nombre.textContent = eq.nombre;
+        const cifras = el("span", "text-xs text-brand-500 dark:text-brand-300",
+            ents.length + (ents.length === 1 ? " entrenador" : " entrenadores")
+            + " · " + als.length + (als.length === 1 ? " alumno" : " alumnos"));
+        sum.append(flecha, nombre, cifras);
+        if (falta.length) {
+            sum.appendChild(el("span", "text-xs font-semibold text-brand-800 dark:text-white", "⚠️ " + falta.join(" y ")));
+        } else if (!puedo) {
+            sum.appendChild(el("span", "text-xs text-brand-450 dark:text-brand-350", "tiene gente de otra coordinación"));
+        }
+        card.appendChild(sum);
+
+        const cuerpo = el("div", "mt-4");
+        if (falta.indexOf("sin entrenadores") !== -1) {
+            cuerpo.appendChild(el("p", "text-xs text-brand-700 dark:text-brand-200 mb-3",
+                "Sin entrenadores, este equipo no le da acceso a nadie: súmale al menos uno."));
+        }
         if (loCreeYo(eq)) {
-            const nombre = document.createElement("input");
-            nombre.type = "text";
-            nombre.value = eq.nombre;
-            nombre.setAttribute("aria-label", "Nombre del equipo");
-            nombre.className = "font-serif font-bold text-brand-800 dark:text-white bg-transparent border border-transparent hover:border-brand-200 dark:hover:border-brand-700 focus:border-accent-500 outline-none rounded px-2 py-1 text-sm flex-1 min-w-[10rem]";
-            nombre.addEventListener("change", () => renombrarEquipo(eq, nombre));
+            const arriba = el("div", "flex flex-wrap items-center gap-3 mb-3");
+            const input = document.createElement("input");
+            input.type = "text";
+            input.value = eq.nombre;
+            input.setAttribute("aria-label", "Nombre del equipo");
+            input.className = "font-serif font-bold text-brand-800 dark:text-white bg-transparent border border-brand-200 dark:border-brand-700 focus:border-accent-500 outline-none rounded px-2 py-1 text-sm flex-1 min-w-[10rem]";
+            input.addEventListener("change", () => renombrarEquipo(eq, input));
             const borrar = el("button", "text-xs text-brand-500 dark:text-brand-300 hover:text-red-600 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded", "Borrar equipo");
             borrar.type = "button";
             // Dos toques en el propio botón, no un diálogo del navegador: esto
@@ -694,33 +760,30 @@ function pintarEquipos() {
                 }
                 borrarEquipo(eq);
             });
-            arriba.append(nombre, borrar);
+            arriba.append(input, borrar);
+            cuerpo.appendChild(arriba);
         } else {
-            const nombre = el("p", "font-serif font-bold text-brand-800 dark:text-white text-sm flex-1 min-w-[10rem] px-2 py-1");
-            nombre.textContent = eq.nombre;
-            arriba.appendChild(nombre);
-            arriba.appendChild(el("span", "text-xs text-brand-450 dark:text-brand-350", "lo armó otra persona"));
+            cuerpo.appendChild(el("p", "text-xs text-brand-450 dark:text-brand-350 mb-2", "Lo armó otra persona."));
         }
-        card.appendChild(arriba);
 
         if (!puedo) {
-            card.appendChild(el("p", "text-xs text-brand-450 dark:text-brand-350 mb-2",
+            cuerpo.appendChild(el("p", "text-xs text-brand-450 dark:text-brand-350 mb-2",
                 "Este equipo tiene gente que no está bajo tu coordinación, así que no se reparte desde acá."));
         }
 
         const cajaEnt = el("div", "mb-3");
         cajaEnt.appendChild(el("h3", "text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1", "Entrenadores"));
         cajaEnt.appendChild(etiquetasDeEquipo(
-            entrenadoresDeEquipo.get(eq.id) || [], profesores, puedo,
+            ents, profesores, puedo,
             (lista) => guardarEntrenadores(eq, lista),
             "los entrenadores de " + eq.nombre,
         ));
-        card.appendChild(cajaEnt);
+        cuerpo.appendChild(cajaEnt);
 
         const cajaAl = el("div");
         cajaAl.appendChild(el("h3", "text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1", "Alumnos"));
         cajaAl.appendChild(etiquetasDeEquipo(
-            alumnosDeEquipo.get(eq.id) || [], alumnos, puedo,
+            als, alumnos, puedo,
             (lista) => guardarAlumnos(eq, lista),
             "los alumnos de " + eq.nombre,
         ));
@@ -728,7 +791,7 @@ function pintarEquipos() {
             // Lo que de verdad evita el uno por uno.
             cajaAl.appendChild(EquipoVolcar.montar({
                 nombre: eq.nombre,
-                yaEstan: alumnosDeEquipo.get(eq.id) || [],
+                yaEstan: als,
                 alumnos: misAlumnos,
                 subgrupos: subgruposAlaVista,
                 tope: 300,
@@ -740,7 +803,8 @@ function pintarEquipos() {
                 },
             }));
         }
-        card.appendChild(cajaAl);
+        cuerpo.appendChild(cajaAl);
+        card.appendChild(cuerpo);
         caja.appendChild(card);
     });
 }
@@ -791,6 +855,7 @@ async function renombrarEquipo(eq, input) {
         return;
     }
     eq.nombre = nombre;
+    pintarEquipos();
     avisar("Renombrado.");
 }
 
@@ -845,14 +910,24 @@ async function init() {
        un límite a ojo: es la lista de a quién puede repartir, y una que se
        corte deja alumnos fuera del selector sin que nada falle. Si esto se
        cae, el resto de la página sigue sirviendo. */
-    try {
+    // Quien administra no los reparte desde acá (ver abajo): no hace falta
+    // bajarse a todos los alumnos de la plataforma.
+    if (!perfil.is_admin) try {
         misAlumnos = (await traerGente("alumno"))
             .map((x) => ({ id: x.id, nombre: nombreDe(x), grupo: x.grupo || "" }));
     } catch (err) {
         misAlumnos = [];
         avisar("No se pudieron cargar tus alumnos para los equipos: " + err.message, true);
     }
-    if (conEquipos) await cargarEquipos();
+    /* Quien administra arma los equipos de toda la plataforma en
+       admin.html#equipos. Acá sería una segunda puerta al mismo lugar, con
+       otro camino a la base: se le dice dónde está y nada más. */
+    if (conEquipos && perfil.is_admin) {
+        ["equipos-resumen", "equipos-lista", "equipo-nuevo"].forEach((id) => { document.getElementById(id).hidden = true; });
+        document.getElementById("equipos-admin").hidden = false;
+    } else if (conEquipos) {
+        await cargarEquipos();
+    }
 
     document.getElementById("equipo-nuevo").addEventListener("submit", async (e) => {
         e.preventDefault();
@@ -861,13 +936,15 @@ async function init() {
         const nombre = input.value.trim();
         if (!nombre) return;
         msg.textContent = "";
-        const { error } = await sb.rpc("coord_equipo_create", { p_nombre: nombre });
+        const { data: creado, error } = await sb.rpc("coord_equipo_create", { p_nombre: nombre });
         if (error) {
             msg.textContent = error.message;
             msg.className = "text-xs text-red-600 dark:text-red-400";
             return;
         }
         input.value = "";
+        // Queda abierto: lo siguiente es ponerle sus entrenadores.
+        equipoRecienCreado = creado && creado.id ? creado.id : null;
         await cargarEquipos();
         avisar("Equipo creado. Ahora ponle sus entrenadores y vuélcale un grupo.");
     });
