@@ -212,8 +212,8 @@ def main():
 
     # En la presentación la portada no lleva marca de agua (tiene el logo en
     # grande); en el manual la primera página ya es contenido.
-    revisar_pdf("guia-del-profesor-presentacion.pdf", 1, "presentacion")
-    revisar_pdf("guia-del-profesor.pdf", 0, "manual")
+    revisar_pdf("material/guia-del-profesor/guia-del-profesor-presentacion.pdf", 1, "presentacion")
+    revisar_pdf("material/guia-del-profesor/guia-del-profesor.pdf", 0, "manual")
     revisar_accesible(contenido)
 
     if fallos:

@@ -106,6 +106,7 @@ async function cargarWorker() {
     const primero = (wr.assets && wr.assets.run_worker_first) || [];
     igual("wrangler.jsonc hace correr el worker en cursos/protegido/", primero.includes("/cursos/protegido/*"), true);
     igual("y en cursos/recursos/", primero.includes("/cursos/recursos/*"), true);
+    igual("y en material/ (los libros que se venden sueltos)", primero.includes("/material/*"), true);
   }
 
   const b64 = (o) => Buffer.from(JSON.stringify(o)).toString("base64url");
@@ -163,14 +164,43 @@ async function cargarWorker() {
     igual("con sesión y acceso vigente, se sirve", r.estado, 200);
     igual("desde los archivos", r.aArchivos, true);
     const p = r.preguntas[0] || { opciones: { headers: {} } };
-    igual("le pregunta a acceso_vigente() del proyecto", p.u, URL_SB + "/rest/v1/rpc/acceso_vigente");
+    // Un recurso de un curso se vende suelto: se pregunta por ESE producto, y
+    // con el acceso vigente basta (lo bajan también los alumnos).
+    igual("le pregunta a puede_bajar() del proyecto", p.u, URL_SB + "/rest/v1/rpc/puede_bajar");
+    igual("por el producto de la carpeta, y con el acceso basta", p.opciones.body,
+      JSON.stringify({ p_producto: "finales-practicos", p_basta_acceso: true }));
     igual("con el token de la persona", p.opciones.headers.Authorization, "Bearer " + bueno);
     igual("y con la clave pública", p.opciones.headers.apikey === valor(fuenteCliente, "SUPABASE_ANON_KEY"), true);
     igual("el navegador tiene que volver a preguntar antes de reusarlo", r.cache, "private, no-cache");
   }
   {
-    const r = await abrir("/cursos/protegido/finales-practicos.html", { cookie: bueno });
-    igual("el mismo token no vuelve a preguntar en cada archivo", r.estado + "/" + r.preguntas.length, "200/0");
+    const r = await abrir("/cursos/recursos/finales-practicos/02-otro-archivo.pdf", { cookie: bueno });
+    igual("el mismo token no vuelve a preguntar en cada archivo del producto", r.estado + "/" + r.preguntas.length, "200/0");
+  }
+  {
+    // La respuesta se guarda por token Y producto: guardada solo por token,
+    // haber comprado un material abría todos los demás.
+    const r = await abrir("/cursos/recursos/partidas-modelo/01.pdf", { cookie: bueno });
+    igual("otro producto vuelve a preguntar", r.preguntas.length, 1);
+    igual("por ESE producto", (r.preguntas[0] || {}).opciones && r.preguntas[0].opciones.body,
+      JSON.stringify({ p_producto: "partidas-modelo", p_basta_acceso: true }));
+  }
+  {
+    const r = await abrir("/cursos/protegido/finales-practicos.html", { cookie: token() });
+    igual("el contenido de los cursos sigue preguntando acceso_vigente()", (r.preguntas[0] || {}).u, URL_SB + "/rest/v1/rpc/acceso_vigente");
+  }
+  {
+    const r = await abrir("/material/libro-de-diagnostico/libro-de-diagnostico.pdf", { cookie: token() });
+    igual("un libro suelto pregunta por su compra, sin que el acceso baste", (r.preguntas[0] || {}).opciones && r.preguntas[0].opciones.body,
+      JSON.stringify({ p_producto: "libro-de-diagnostico", p_basta_acceso: false }));
+    const s2 = await abrir("/material/libro-de-diagnostico/libro-de-diagnostico.pdf");
+    igual("y sin sesión no se sirve", s2.estado + "/" + s2.aArchivos, "401/false");
+    const s3 = await abrir("/material/suelto.pdf", { cookie: token() });
+    igual("material/ sin carpeta de producto no es nada que se venda: no se sirve ni se pregunta", s3.estado + "/" + s3.preguntas.length, "403/0");
+    contesta = () => new Response("false", { status: 200 });
+    const n = await abrir("/material/examen-de-arbitraje/examen-de-arbitraje.pdf", { cookie: token(), pagina: true });
+    igual("sin compra, como página dice que se compra aparte", n.estado + "/" + n.cuerpo.includes("se compra aparte"), "403/true");
+    contesta = () => new Response("true", { status: 200 });
   }
   {
     contesta = () => new Response("false", { status: 200 });

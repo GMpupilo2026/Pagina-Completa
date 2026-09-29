@@ -29,8 +29,8 @@ import sys
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 AUTOR = "Oscar Angulo Cubero"
-PDF = os.path.join(RAIZ, "libro-de-diagnostico.pdf")
-ACC = os.path.join(RAIZ, "libro-de-diagnostico-accesible.html")
+PDF = os.path.join(RAIZ, "material", "libro-de-diagnostico", "libro-de-diagnostico.pdf")
+ACC = os.path.join(RAIZ, "material", "libro-de-diagnostico", "libro-de-diagnostico-accesible.html")
 
 try:
     from pypdf import PdfReader

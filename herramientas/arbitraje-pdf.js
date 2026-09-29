@@ -356,7 +356,7 @@ console.log(`Maqueta: ${htmlTemporal}\nTapa:    ${htmlPortadaTemporal}\n${BANCO.
 (async () => {
   const { chromium } = require("playwright");
   const navegador = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
-  const destino = path.join(RAIZ, "examen-de-arbitraje.pdf");
+  const destino = path.join(RAIZ, "material", "examen-de-arbitraje", "examen-de-arbitraje.pdf");
   const tapa = path.join(require("os").tmpdir(), "arbitraje-tapa.pdf");
   const cuerpo = path.join(require("os").tmpdir(), "arbitraje-cuerpo.pdf");
 

@@ -14,6 +14,7 @@
     <link rel="stylesheet" href="css/styles.css">
     <!-- oscuro: inicio --><script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');}catch(e){}})();</script><!-- oscuro: fin -->
     <script src="js/adaptive-mode.js"></script>
+    <script src="js/avisos.js"></script>
 <!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/errores.js"></script><script src="js/pwa.js" defer></script><!-- app: fin --><!-- tema: inicio --><script>(function(){try{var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');var f=localStorage.getItem('plataforma_tema_fuente_v1');if(!f||!/^[A-Za-z0-9 ]{2,32}$/.test(f))return;var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family='+f.replace(/ /g,'+')+':wght@400;500;600;700&display=swap';document.head.appendChild(l);}catch(e){}})();</script><!-- tema: fin --></head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
@@ -36,13 +37,11 @@
             <!-- ===== Lo que solo ve quien administra =====
                  No es una nota de estilo: mientras la tienda no esté abierta,
                  esto es lo único que separa "una página de venta lista" de
-                 "una página de venta publicada". Y lo de abajo —que el
-                 candado de cursos/recursos/ es el de la Academia, no uno por
-                 compra, y que los libros de la raíz no tienen ninguno— es un
-                 problema CALLADO: la tienda se ve perfecta y
-                 cualquiera con la dirección exacta se baja gratis lo que
-                 está a la venta. Va escrito acá, arriba de todo, porque es
-                 la decisión que hay que tomar ANTES de abrirla. -->
+                 "una página de venta publicada". Y lo de abajo dice qué
+                 candado tiene cada archivo, porque sin él la tienda se ve
+                 perfecta y cualquiera con la dirección exacta se baja
+                 gratis lo que está a la venta (ver «La tienda con permiso
+                 por producto» en docs/decisiones/cobros-acceso-y-tienda.md). -->
             <section class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
                 <div class="rounded-2xl border-2 border-dashed border-accent-500 bg-accent-50 dark:bg-brand-900 p-5 sm:p-6">
                     <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white flex items-center gap-2">
@@ -52,8 +51,38 @@
                         Está montada, con sus precios y su texto de venta, pero el candado es <strong>solo administración</strong>: ni el alumnado ni el equipo docente llegan acá, ni por el panel ni escribiendo la dirección. Sirve para revisarla entera antes de abrirla.
                     </p>
                     <p class="text-sm text-brand-600 dark:text-brand-200 mt-3">
-                        <strong>Antes de abrirla hay una cosa que resolver:</strong> el material de <code class="text-xs bg-white dark:bg-brand-800 px-1.5 py-0.5 rounded">cursos/recursos/</code> ya pide una cuenta de la Academia con el acceso al día, pero <strong>cualquier</strong> cuenta así lo baja, haya comprado o no; y los libros de la raíz siguen <strong>sin ningún candado</strong> — quien conozca la dirección exacta se los baja sin pagar, y eso no da ningún error ni queda registrado en ninguna parte. Mientras la entrega se haga a mano (por WhatsApp, después del pago) no cambia nada; el día que la tienda se abra al público, lo que se cobra aparte necesita un permiso por producto comprado.
+                        <strong>Cada material ya tiene su candado por compra.</strong> El de un curso (<code class="text-xs bg-white dark:bg-brand-800 px-1.5 py-0.5 rounded">cursos/recursos/</code>) lo baja quien tiene el acceso a la Academia al día <strong>o</strong> quien lo compró; los libros y las guías (<code class="text-xs bg-white dark:bg-brand-800 px-1.5 py-0.5 rounded">material/</code>), <strong>solo</strong> quien los compró. Lo decide el servidor, no esta página. La compra se registra abajo, después de cobrar: sin ella, la cuenta no abre el material aunque tenga el enlace.
                     </p>
+                </div>
+            </section>
+
+            <!-- ===== Las compras registradas =====
+                 Lo que abre el candado de cada material (compras_tienda). La
+                 escribe registrar_compra(), que es solo de administración; la
+                 pantalla nada más la llama. -->
+            <section class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-6" aria-labelledby="compras-titulo">
+                <div class="rounded-2xl bg-white dark:bg-brand-900 shadow-md p-5 sm:p-6">
+                    <h2 id="compras-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white flex items-center gap-2">
+                        <span aria-hidden="true">🧾</span> Compras registradas
+                    </h2>
+                    <p class="text-sm text-brand-600 dark:text-brand-200 mt-1">Después de cobrar, se registra acá quién compró qué. La persona tiene que tener cuenta: si no la tiene, se crea primero en Administración.</p>
+                    <form id="compra-form" class="mt-4 grid sm:grid-cols-[1fr_1fr_auto] gap-3 items-end">
+                        <div>
+                            <label for="compra-buscar" class="block text-sm font-semibold text-brand-700 dark:text-brand-100">Persona (nombre o correo)</label>
+                            <input id="compra-buscar" type="search" autocomplete="off" required class="mt-1 w-full rounded-lg border border-brand-300 dark:border-brand-600 bg-white dark:bg-brand-800 px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500" aria-describedby="compra-elegida">
+                            <ul id="compra-resultados" class="mt-1 rounded-lg border border-brand-200 dark:border-brand-700 divide-y divide-brand-100 dark:divide-brand-800 hidden" aria-label="Personas encontradas"></ul>
+                            <p id="compra-elegida" class="text-xs text-brand-500 dark:text-brand-300 mt-1" aria-live="polite">Todavía no elegiste a nadie.</p>
+                        </div>
+                        <div>
+                            <label for="compra-producto" class="block text-sm font-semibold text-brand-700 dark:text-brand-100">Material</label>
+                            <select id="compra-producto" required class="mt-1 w-full rounded-lg border border-brand-300 dark:border-brand-600 bg-white dark:bg-brand-800 px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500"></select>
+                        </div>
+                        <button type="submit" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-5 py-2.5 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-800 dark:focus-visible:ring-white">Registrar la compra</button>
+                    </form>
+                    <div class="mt-5">
+                        <p id="compras-vacia" class="hidden text-sm text-brand-500 dark:text-brand-300">Todavía no hay ninguna compra registrada. Cuando cobres un material, la registras con el formulario de arriba.</p>
+                        <ul id="compras-lista" class="divide-y divide-brand-100 dark:divide-brand-800"></ul>
+                    </div>
                 </div>
             </section>
 
@@ -207,6 +236,7 @@
     <script src="js/supabase-client.js"></script>
     <script src="js/tienda-catalogo.js"></script>
     <script src="js/main.js"></script>
+    <script src="js/tienda-compras.js"></script>
     <script src="js/tienda.js"></script>
 <!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="js/modo-vista.js" defer></script><!-- modo-vista: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- atajo: inicio --><script src="js/atajo-buscar.js" data-arriba="" defer></script><!-- atajo: fin --></body>
 </html>

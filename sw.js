@@ -20,7 +20,7 @@
  *     teléfono sería dejarlos ahí después de cerrar sesión;
  *   - las respuestas que no vengan bien (un 404 o un 500 no se guardan).
  */
-const VERSION = "ai-2026-09-3";
+const VERSION = "ai-2026-09-4";
 const CACHE = "ajedrez-integral-" + VERSION;
 
 /* El mínimo para que la app abra sin red y explique qué pasa. */
@@ -39,6 +39,10 @@ const CASCARON = [
 const NUNCA = [
   /^\/cursos\/protegido\//,
   /^\/cursos\/recursos\//,
+  // Lo que se vende suelto (ver «La tienda con permiso por producto»): el
+  // candado es por compra y lo pone el worker; una copia guardada acá se
+  // seguiría abriendo después de quitar la compra.
+  /^\/material\//,
   /^\/api\//,
   /^\/\.well-known\//,
   // El libro de aperturas (2,9 MB) y la procedencia de cada jugada (4,2 MB).
