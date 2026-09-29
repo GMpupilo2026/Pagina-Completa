@@ -783,6 +783,28 @@ profesor solo veía los minutos. Los cuenta `informes_entreno_modulos()`
 - Las tarjetas nuevas van todas en la segunda fila (`extra`): las ocho que se
   miran de verdad siguen siendo ocho. `verificar-informes.js` lo cuenta.
 
+### El tema más flojo
+
+Desde #491 cada ejercicio de Temas guarda si salió limpio; con eso
+`informes_tema_mas_flojo(p_temas)` (SECURITY INVOKER, una fila por alumno) dice
+en qué MOTIVO le cuesta más: «Clavada · 36 % — limpio en 4 de 11». Es una
+tarjeta más de segunda fila (ahora son catorce) y el mismo dato alimenta el
+«Hoy te toca» del hub (ver «El tema más flojo, en el hub» en entrenamiento.md).
+
+- **La lista de motivos la manda la página**, desde
+  `entreno/data/temas-motivos.json`, que genera `herramientas/temas-motivos.js`
+  desde `temas.json`. La base no guarda su copia: una lista escrita en SQL se
+  quedaría vieja el día que se sume un tema, sin ningún error. Quedan fuera
+  «Mezcla», las fases, las duraciones y el origen: no dicen qué practicar.
+- **Desde 5 ejercicios distintos del mismo motivo** con «cómo salió»: con
+  menos, un solo error lo pone en 0 % y lo haría el más flojo. Sin eso la
+  tarjeta dice qué falta, no un cero.
+- Permisos comprobados impersonando en SQL: cada alumno recibe solo su fila,
+  un profesor la de sus alumnos, `anon` no tiene execute.
+- `verificar-tema-flojo.js` (sin navegador) cuida que el JSON esté al día y que
+  la función sea INVOKER; `verificar-informes.js`, la tarjeta y que a la base
+  se le manden los motivos y no «Mezcla».
+
 ## Los informes que llegan a la casa
 
 En Informes, mirando a UN alumno, está "📧 Informes a la casa": a qué correos se

@@ -67,6 +67,17 @@ async function cosasDeHoy(alumnoId){
       texto: m === 1 ? 'Repasar 1 mate que te costó' : `Repasar ${m} mates que te costaron` });
   }
 
+  // El tema más flojo (js/tema-flojo.js): el motivo que menos sale limpio,
+  // si ya hay con qué medirlo y está por debajo de lo aceptable. Lo cuenta la
+  // base; si no responde, simplemente no se propone.
+  if (window.TemaFlojo && alumnoId) {
+    try {
+      const f = (await TemaFlojo.cargar(sb, '../'))[alumnoId];
+      if (f && f.porcentaje < TemaFlojo.FLOJO) cosas.push({ icono: '🎯', href: 'temas.html?tema=' + encodeURIComponent(f.tema),
+        texto: `Tu tema más flojo, «${f.nombre}»: limpio en ${f.limpios} de ${f.intentos}` });
+    } catch (e) { /* sin dato, sin propuesta */ }
+  }
+
   // Líneas de Aperturas ya empezadas cuyo repaso venció (las nuevas no cuentan:
   // eso es estudiar algo nuevo, no un repaso pendiente).
   const srs = leerJSON('aperturas_srs_v1');

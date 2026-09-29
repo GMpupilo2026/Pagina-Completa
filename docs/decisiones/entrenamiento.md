@@ -367,6 +367,16 @@ y Ver la línea») lo comprueba en un navegador.
 - Los verificadores que daban por hecho el salto (`entreno-nivel`,
   `entreno-repaso`) ahora aprietan «Siguiente».
 
+## El tema más flojo, en el hub
+
+El «Hoy te toca» propone el motivo que menos sale limpio («Tu tema más flojo,
+«Clavada»: limpio en 4 de 11», que lleva a `temas.html?tema=pin`) cuando
+está por debajo del 70 % (`TemaFlojo.FLOJO`). La cuenta es la misma de
+Informes (`js/tema-flojo.js` → `informes_tema_mas_flojo`, ver «El tema más
+flojo» en informes.md); el hub se queda con la fila del alumno de la sesión.
+Si la base no responde, no se propone nada. Lo prueba
+`verificar-entreno-repaso.js`.
+
 ## Repasar lo que costó y «Hoy te toca»
 
 `node herramientas/verificar-todo.js entreno-repaso` lo comprueba en un
