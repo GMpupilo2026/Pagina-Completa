@@ -16,6 +16,9 @@
  *               general: { haz: [...], evita: [...] } }
  *   cada orden: { texto, porque, sec? }  (sec: la línea para el tablero)
  *   comoLeVa(p) → «le va mal», «parejo»… : el porcentaje dicho en palabras
+ *   derrotasEn(r, sec, color) → { n, lista }: las partidas que perdió por esa
+ *               línea (las 3 más recientes en `lista`), de r.derrotas
+ *   cada orden y cada línea traen `derrotas` con eso
  *
  * Corre en la página y en Node (el verificador).
  */
@@ -243,25 +246,59 @@
     (r.fuertes || []).filter((l) => l.color === colorRival).sort((a, b) => peso(b) - peso(a))
       .forEach((l) => agregar(evita, Object.assign(lineaNotable(l, colorRival, false), { tipo: "linea", sec: l.sec }), MAX_EVITA));
 
+    const marcar = conDerrotas(r, colorRival);
     return {
       clave,
       titulo: clave === "conBlancas" ? "Cuando tú llevas blancas" : "Cuando tú llevas negras",
-      lineas,
-      haz,
-      evita,
+      lineas: lineas.map(marcar),
+      haz: haz.map(marcar),
+      evita: evita.map(marcar),
     };
   }
 
-  // En toda la partida: el reloj, cómo pierde, los finales.
+  /* Lo táctico (js/preparacion-tactica.js): con qué pierde va a «Haz esto»
+     (búscalo) y con qué gana, a «No hagas esto» (cuídate). Solo los temas
+     que pesan: 3 partidas o más y al menos el 15 % de las que se decidieron
+     por material. Cada uno trae el tema de entreno/temas.html para
+     practicarlo. */
+  const TACTICA = () => (typeof self !== "undefined" && self.PreparacionTactica) || (typeof require === "function" ? require("./preparacion-tactica.js") : null);
+  function tactica(r, haz, evita) {
+    const t = r.tactica, T = TACTICA();
+    if (!t || !T) return;
+    const decididas = (lado) => Math.max(1, lado === "sufre" ? t.revisadas.perdidas - t.sinMaterial.perdidas : t.revisadas.ganadas - t.sinMaterial.ganadas);
+    const pesan = (lista, lado) => lista.filter((x) => x.tema !== "otra" && x.n >= 3 && x.n / decididas(lado) >= 0.15).slice(0, 2);
+    for (const x of pesan(t.sufre, "sufre")) {
+      const tm = T.TEMAS[x.tema];
+      haz.push({
+        texto: x.tema === "colgada" ? "Presiona sus piezas: suele dejarlas sin defender." : "Busca " + tm.plural + ": es con lo que más pierde.",
+        porque: x.n + " de sus " + decididas("sufre") + " derrotas por material empezaron así (" + pctEntero(x.n / decididas("sufre")) + ").",
+        practica: tm.practica, tema: x.tema,
+      });
+    }
+    for (const x of pesan(t.realiza, "realiza")) {
+      const tm = T.TEMAS[x.tema];
+      evita.push({
+        texto: x.tema === "colgada" ? "No dejes piezas sin defender: las cobra." : "Cuidado con sus " + tm.plural + ": es su táctica más frecuente.",
+        porque: x.n + " de sus " + decididas("realiza") + " victorias por material empezaron así (" + pctEntero(x.n / decididas("realiza")) + ").",
+        practica: tm.practica, tema: x.tema,
+      });
+    }
+  }
+
+  // En toda la partida: el reloj, cómo pierde, los finales, la táctica.
   function general(r) {
     const haz = [], evita = [];
+    tactica(r, haz, evita);
     const senales = A.senalesMasAlla ? A.senalesMasAlla(r) : [];
     for (const x of senales) {
       if (x.tipo === "pierde-en-la-apertura") haz.push({ texto: "Llega con la apertura bien estudiada.", porque: "El " + pctEntero(x.parte) + " de sus derrotas se decide antes de la jugada 20." });
       else if (x.tipo === "pierde-por-tiempo") haz.push({ texto: "Complícale la posición y aprieta el reloj.", porque: "El " + pctEntero(x.parte) + " de sus derrotas son por tiempo (" + x.n + " de " + x.de + ")." });
       else if (x.tipo === "apuros-de-tiempo") haz.push({ texto: "Cuida tu reloj y lleva la partida a lo largo: él se apura al final.", porque: "Se queda con menos del 10 % de su tiempo en el " + pctEntero(x.parte) + " de sus partidas." });
       else if (x.tipo === "piensa-la-apertura") haz.push({ texto: "Sácalo de lo que conoce: en la apertura piensa mucho.", porque: "Gasta el " + pctEntero(x.el) + " de su reloj en las primeras 15 jugadas; sus rivales, el " + pctEntero(x.rivales) + "." });
-      else if (x.tipo === "pierde-con-mate") haz.push({ texto: "Ataca a su rey.", porque: "El " + pctEntero(x.parte) + " de sus derrotas terminan en mate." });
+      else if (x.tipo === "pierde-con-mate") {
+        // Si lo táctico ya dice que pierde por mate, no se repite.
+        if (!haz.some((h) => h.tema === "mate" || h.tema === "mate-pasillo")) haz.push({ texto: "Ataca a su rey.", porque: "El " + pctEntero(x.parte) + " de sus derrotas terminan en mate." });
+      }
       else if (x.tipo === "final-debil") haz.push({ texto: "Cambia piezas hacia un final " + x.final + ".", porque: ("En esos finales " + saca(x.puntos) + " en " + partidas(x.n) + "; su promedio es " + A.pct(x.base) + ". " + pocasPartidas(x.n, r)).trim() });
       else if (x.tipo === "no-convierte") haz.push({ texto: "Si quedas abajo en material en el final, sigue peleando.", porque: "Con ventaja en el final ganó solo " + x.ganadas + " de " + x.n + "." });
       else if (x.tipo === "final-fuerte") evita.push({ texto: "No cambies hacia un final " + x.final + ".", porque: ("En esos finales " + saca(x.puntos) + " en " + partidas(x.n) + ". " + pocasPartidas(x.n, r)).trim() });
@@ -270,9 +307,26 @@
     return { haz, evita };
   }
 
+  /* Las partidas que perdió por esa línea: las que empiezan con esas jugadas,
+     con él del color que corresponde. Es la secuencia exacta (no las
+     transposiciones), así que pueden ser menos que las partidas del árbol.
+     Se guardan 20 medias jugadas por partida: una línea más larga se compara
+     hasta ahí. */
+  function derrotasEn(r, sec, color) {
+    const d = r.derrotas || [];
+    if (!sec || !sec.length || !d.length) return { n: 0, lista: [] };
+    const hasta = sec.slice(0, 20);
+    const suyas = d.filter((x) => x.color === color && hasta.every((m, i) => x.sec[i] === m));
+    return { n: suyas.length, lista: suyas.slice(0, 3) };
+  }
+
+  function conDerrotas(r, colorRival) {
+    return (x) => { if (x.sec) x.derrotas = derrotasEn(r, x.sec, colorRival); return x; };
+  }
+
   function armar(r) {
     return { lados: [lado(r, "conBlancas"), lado(r, "conNegras")], general: general(r) };
   }
 
-  return { armar, comoLeVa, jugadaNumerada };
+  return { armar, comoLeVa, jugadaNumerada, derrotasEn };
 });

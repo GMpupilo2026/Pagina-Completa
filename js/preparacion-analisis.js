@@ -29,10 +29,11 @@
 (function (raiz, fabrica) {
   "use strict";
   const req = (nombre, global) => (raiz && raiz[global]) || (typeof require === "function" ? require(nombre) : null);
-  const api = fabrica(req("./preparacion-lineas.js", "PreparacionLineas"), req("./preparacion-posiciones.js", "PreparacionPosiciones"));
+  const api = fabrica(req("./preparacion-lineas.js", "PreparacionLineas"), req("./preparacion-posiciones.js", "PreparacionPosiciones"),
+    req("./preparacion-tactica.js", "PreparacionTactica"));
   if (typeof module === "object" && module.exports) module.exports = api;
   else raiz.PreparacionAnalisis = api;
-})(typeof self !== "undefined" ? self : this, function (L, Pos) {
+})(typeof self !== "undefined" ? self : this, function (L, Pos, Tactica) {
   "use strict";
 
   const { sanEs, lineaEs, pct, textoEval, fenDe } = L;
@@ -192,6 +193,19 @@
     return "sin dato";
   }
 
+  /* El enlace a la partida, para verla entera: solo de Lichess o Chess.com y
+     solo https. Lo que venga del PGN termina en un href: nada de
+     «javascript:» ni de sitios que nadie revisó. Lichess lo pone en Site;
+     Chess.com, en Link. */
+  const ENLACE = /^https:\/\/(lichess\.org|www\.chess\.com)\/[\w\-/.?=&#%]+$/;
+  function enlaceDe(etiquetas) {
+    for (const k of ["Link", "Site"]) {
+      const v = String(etiquetas[k] || "").trim();
+      if (ENLACE.test(v)) return v;
+    }
+    return null;
+  }
+
   function fechaDe(etiquetas) {
     const f = String(etiquetas.Date || etiquetas.UTCDate || "");
     const m = f.match(/^(\d{4})[.\-/](\d{2}|\?\?)[.\-/](\d{2}|\?\?)/);
@@ -317,6 +331,7 @@
         elo: numero(color === "w" ? e.WhiteElo : e.BlackElo),
         eloRival: numero(color === "w" ? e.BlackElo : e.WhiteElo),
         oponente: (color === "w" ? e.Black : e.White) || "",
+        enlace: enlaceDe(e),
         fecha: fechaDe(e),
         ritmo: ritmoDe(e),
       });
@@ -686,6 +701,27 @@
     };
   }
 
+  /* Las partidas que perdió, para mostrar cómo le ganaron en cada línea
+     (js/preparacion-resumen.js, derrotasEn). Lo justo de cada una: sus
+     primeras jugadas (para saber por qué línea fue), el enlace, la fecha, el
+     rival y cómo terminó. Las más recientes primero, hasta 300: con un
+     archivo de 30.000 partidas el resultado no puede crecer sin tope. */
+  const MAX_DERROTAS = 300;
+  const JUGADAS_DERROTA = 20;
+  function derrotasDe(lista) {
+    return lista.filter((x) => x.res === "P")
+      .sort((a, b) => ((a.fecha || "") < (b.fecha || "") ? 1 : (a.fecha || "") > (b.fecha || "") ? -1 : 0))
+      .slice(0, MAX_DERROTAS)
+      .map((x) => {
+        const d = { color: x.color, sec: x.jugadas.slice(0, JUGADAS_DERROTA), jugadas: x.jugadas.length, fin: x.fin };
+        if (x.enlace) d.enlace = x.enlace;
+        if (x.fecha) d.fecha = x.fecha;
+        if (x.oponente) d.oponente = String(x.oponente).slice(0, 60);
+        if (x.eloRival) d.elo = x.eloRival;
+        return d;
+      });
+  }
+
   // Menos de esto, y la página avisa que dice poco.
   const POCAS = 30;
 
@@ -774,6 +810,9 @@
         plan: plan(arbol.w, "w", base.w, minN, PROFUNDIDAD_PLAN, 0),
       },
       masAlla: masAllaDe(lista, puntos(global), minN),
+      derrotas: derrotasDe(lista),
+      // Qué táctica hace y con cuál pierde (js/preparacion-tactica.js).
+      tactica: Tactica ? Tactica.analizar(lista) : null,
       // Las líneas que se le consultan al explorador de maestros; lo que
       // contesta queda en `teoria` (ver js/preparacion-teoria.js).
       repertorioLineas: lineasDeSuRepertorio(arbol.w, "w", minN).concat(lineasDeSuRepertorio(arbol.b, "b", minN)),
