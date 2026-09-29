@@ -1141,6 +1141,17 @@ async function init() {
     document.getElementById("loading").classList.add("hidden");
     document.getElementById("app").classList.remove("hidden");
     mostrar("vista-lista");
+    /* formularios.html?alta=1 es el acceso directo «Cuenta nueva» del panel
+       de quien supervisa (js/clases.js, grupo «Mi academia»): abre ya la caja
+       de «＋ Alumno nuevo». Solo si esa función no le fue apagada —la base la
+       rechazaría igual—, y la dirección queda limpia para que recargar no la
+       vuelva a abrir. */
+    const url = new URL(location.href);
+    if (url.searchParams.get("alta") === "1") {
+        url.searchParams.delete("alta");
+        history.replaceState(null, "", url.pathname + url.search + url.hash);
+        if (FuncionesCoordinacion.puede("altas")) abrirAltaManual();
+    }
 }
 init();
     
