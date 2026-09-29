@@ -1434,17 +1434,36 @@
     return c;
   }
 
-  function armar(cantidadPorArea) {
+  /* La idea de un ítem: su id sin la marca del espejo (`_h`, `_v`, `_hv`).
+     pp_mejorar_01 y pp_mejorar_01_hv son la MISMA posición dada vuelta. */
+  function idea(id) { return String(id).replace(/_(h|v|hv)$/, ""); }
+
+  /* `evitar` (opcional): ids de la ronda anterior. En una tanda corta no sale
+     ninguna idea que ya estuvo ahí, ni espejada: con 3 ideas por área, dos
+     rondas cortas seguidas sacaban la misma posición dada vuelta y el alumno
+     la contestaba de memoria. Si en un área no queda otra, se usa igual. */
+  function armar(cantidadPorArea, evitar) {
     let elegidos;
     if (!cantidadPorArea) {
       elegidos = ITEMS.slice();
     } else {
+      const vistas = {};
+      (evitar || []).forEach((id) => { vistas[idea(id)] = true; });
       elegidos = [];
-      AREAS.forEach((a) => { elegidos = elegidos.concat(barajar(porArea(a)).slice(0, cantidadPorArea)); });
+      AREAS.forEach((a) => {
+        const todos = porArea(a);
+        const nuevos = todos.filter((i) => !vistas[idea(i.id)]);
+        const fuente = nuevos.length >= cantidadPorArea ? nuevos : todos;
+        const tomados = [], usadas = {};
+        barajar(fuente).forEach((i) => {
+          if (tomados.length < cantidadPorArea && !usadas[idea(i.id)]) { usadas[idea(i.id)] = true; tomados.push(i); }
+        });
+        elegidos = elegidos.concat(tomados);
+      });
     }
     return barajar(elegidos);
   }
 
   window.PRECISION_POSICIONAL_ITEMS = ITEMS;
-  window.PrecisionPosicionalPrueba = { AREAS: AREAS, TOTAL: ITEMS.length, porArea: porArea, armar: armar };
+  window.PrecisionPosicionalPrueba = { AREAS: AREAS, TOTAL: ITEMS.length, porArea: porArea, armar: armar, idea: idea };
 })();
