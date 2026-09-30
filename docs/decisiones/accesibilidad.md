@@ -1012,3 +1012,33 @@ Lo miden `verificar-juegos-accesible.js` (reloj, enroque, los tres mensajes),
 `verificar-examenes.js`, `verificar-panel.js`, `verificar-tareas.js`,
 `verificar-encuesta-profesor.js`, `verificar-informes.js`,
 `verificar-foto-perfil.js` y `verificar-curso-adaptado.js`.
+
+En Entrenamiento, la misma vuelta:
+
+- **Los tres mensajes en todos los ejercicios** (Mates, Temas, Practicar,
+  Desafíos, Visualización, Finales, Aprender, Aperturas, Habilidades,
+  Coordenadas, Memoria, Tus propios errores y el diagnóstico). En Habilidades
+  todo aviso que empezaba con «✗» dice «Respuesta incorrecta: …», en un solo
+  lugar (`estado()` de `entreno-tipos.js`), y Descarte distingue «no está
+  entre las candidatas» de «no es legal».
+- **La solución se dice**: la etapa «solución» de las pistas
+  (`ejercicio-tablero.js`) dice «La solución era: …» en palabras; antes
+  pintaba la jugada y no decía nada.
+- **El foco no salta a «Siguiente»** al terminar un ejercicio con la cuenta
+  ciega: se queda en el recuadro y el aviso dice «Escribe «siguiente»». Al
+  pasar de ejercicio se anuncia el enunciado nuevo (Habilidades) y en las
+  listas el foco va al título al llegar y al «volver».
+- **Las opciones se contestan escribiendo** (Detective, Rey y peón, ¿Qué
+  apertura es?, Intercambios, Aprender): la letra, el número o una palabra
+  que distinga la opción; si la palabra sirve para dos, se pregunta cuál. En
+  Detective también la jugada sola («Dd5»).
+- **Lo que se decía en inglés o de más**: Temas dice la jugada del rival y la
+  posición una sola vez (`posicionViva: false`); Desafíos pasa a palabras la
+  notación inglesa de sus explicaciones; Mates cambia de categoría escribiendo
+  («mate en 2»); Aprender entiende «rey f1», «e7 e8 dama» y «enroque».
+- **«cómo está la posición»** (y «describe la posición») se entienden igual
+  que «posición» en todos los recuadros.
+
+Lo miden `verificar-entreno-escribiendo.js` (nuevo), `verificar-tipos-pagina.js`,
+`verificar-cuadro-comandos.js`, `verificar-entreno-accesible.js`,
+`verificar-entreno-arreglos.js` y `verificar-preguntas-tablero.js`.
