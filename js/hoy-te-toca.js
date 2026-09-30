@@ -179,7 +179,7 @@ window.HoyTeToca = (function () {
        no: ahí las páginas de entrenamiento están justo debajo, y sin nada
        pendiente el bloque trae solo la meta del día. */
     if (!cosas.length && op.enPanel) {
-      const sug = sugerenciaDeHoy(op);
+      const sug = await sugerenciaDeHoy(op, diag);
       if (sug) cosas.push(sug);
     }
     return cosas.slice(0, 3);
@@ -199,18 +199,34 @@ window.HoyTeToca = (function () {
       texto: `${total === 1 ? '1 partida' : `${total} partidas`} sin revisar en «Tus propios errores»` + (web && r.juego ? ` (${partes.join(', ')})` : web ? ` (de ${E.SITIO_WEB[r.sitio]})` : '') };
   }
 
-  /* De dónde sale la sugerencia: las páginas de Entrenamiento cuyo trabajo
-     CUENTA (las que en js/material-plataforma.js ofrecen la meta «cantidad»,
-     o sea que escriben en training_progress), en su orden, una por día. Es la
-     misma lista con la que el profesor arma las tareas, así que una página
-     nueva entra sola y una que no cuenta nunca se sugiere. */
-  function sugerenciaDeHoy(op){
-    const MP = window.MaterialPlataforma;
+  /* De dónde sale la sugerencia, en este orden:
+     1. Del DIAGNÓSTICO: lo flojo, con dónde practicarlo, según
+        PlanEntrenamiento.paraPracticar() —la misma cuenta de la franja «Por
+        dónde empezar»—, una área por día si hay varias.
+     2. Sin diagnóstico (o sin nada flojo), las páginas de Entrenamiento cuyo
+        trabajo CUENTA (las que en js/material-plataforma.js ofrecen la meta
+        «cantidad»), en su orden, una por día.
+     A quien todavía no hizo ni un ejercicio no se le sugiere nada: la franja
+     de arriba ya le dice por dónde empezar, y el mismo destino dos veces en el
+     panel hace pensar que son dos cosas. */
+  async function sugerenciaDeHoy(op, diag){
+    const MP = window.MaterialPlataforma, PE = window.PlanEntrenamiento;
     if (!MP || !Array.isArray(MP.HERRAMIENTAS)) return null;
+    if (window.Logros) {
+      let r = null;
+      try { r = await (op.logros || Logros.cargar()); } catch (e) { r = null; }
+      if (r && r.stats && !(r.stats.total_ejercicios > 0)) return null;
+    }
+    const dia = Math.floor((Date.now() - 6 * 3600 * 1000) / 86400000);
+    const flojas = PE && PE.paraPracticar && diag && diag.detalle ? PE.paraPracticar(diag.detalle, MP.HERRAMIENTAS) : [];
+    if (flojas.length) {
+      const p = flojas[dia % flojas.length];
+      return { icono: '💡', href: op.arriba + p.href,
+        texto: `Sugerencia de hoy, por tu diagnóstico en ${String(p.area.nombre || '').toLowerCase()}: ${p.label}` };
+    }
     const opciones = MP.HERRAMIENTAS.filter((h) => h && /^entreno\//.test(h.href || '')
       && h.slug !== 'diagnostico' && Array.isArray(h.metas) && h.metas.includes('cantidad'));
     if (!opciones.length) return null;
-    const dia = Math.floor((Date.now() - 6 * 3600 * 1000) / 86400000);
     const h = opciones[dia % opciones.length];
     return { icono: '💡', href: op.entreno + h.href.replace(/^entreno\//, ''), texto: `Sugerencia de hoy: ${h.label}` };
   }
