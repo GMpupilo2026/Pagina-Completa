@@ -677,11 +677,13 @@ async function pruebaElNombreNoSeCorta(browser) {
       const td = document.querySelector("#users-body input[type=text]").closest("td");
       return !!td.querySelector('a[href^="mailto:"]');
     }), "true");
-  igual("la tabla bajó a 7 columnas",
+  // Bajó a 7 al juntar el correo con el nombre; la octava es la Visión
+  // (ver «La visión de la persona la marca administración»).
+  igual("la tabla tiene 8 columnas: el correo sin columna propia, y la visión",
     await page.evaluate(() => {
       const fila = document.querySelector("#users-body input[type=text]").closest("tr");
       return fila.querySelectorAll("td").length;
-    }), "7");
+    }), "8");
 
   await ctx.close();
 }

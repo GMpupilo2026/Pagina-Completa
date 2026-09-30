@@ -662,3 +662,86 @@ que a 360 px no saque nada de ancho y que la respuesta del recuadro no se corte.
 de verdad: sin mirar el botón propio, sin mirar lo que llega entero, sin la
 regla de los números y con el tablero callado salta cada uno.
 
+
+## La visión de la persona la marca administración
+
+Hasta acá todo dependía de que la persona **encontrara el botón**: el 🦯 del
+Modo Adaptado y el 🔇 de la voz, dos íconos de 36 px en el encabezado. La
+detección automática (el primer Tab, el contraste alto, la pregunta en el
+celular) acierta muchas veces, pero no siempre, y cuando falla no da ningún
+error: el alumno que no ve entra, oye un panel de cuarenta tarjetas, abre
+Crazyhouse y se encuentra con un tablero que no puede usar. Quien sí sabe cómo
+ve cada alumno es la Academia, así que ahora **lo marca administración** y la
+plataforma se acomoda sola en todas las páginas de esa persona.
+
+- **Dónde se marca:** `admin.html` → Cuentas, columna «Visión»: «Ve bien»,
+  «Baja visión: voz encendida» o «Ciega: todo adaptado». Lo guarda
+  `marcar_vision(persona, vision)` (solo `soy_admin()`, vuelve a leer la fila).
+- **Va en una tabla aparte, `public.vision_personas`, y no en `profiles`**: es
+  un dato de salud (sensible, artículo 9 de la Ley 8968), y `profiles` la leen
+  compañeros, colegas y rankings. La RLS deja leerla solo a la persona, a
+  administración y a sus profesores (`interno.alumnos_de()`); no tiene política
+  de escritura. Lleva el trigger de la bitácora (`VIGILADAS` de
+  `verificar-auditoria.js`): queda quién la marcó y cuándo. `privacidad.html`
+  ya decía que es un dato sensible; ahora dice también quién lo anota y quién
+  lo ve.
+- **Cómo llega a cada página:** `js/adaptive-mode.js` (que está en todas las
+  páginas con encabezado) carga `js/vision-cuenta.js`, que le pregunta a la
+  base por la cuenta con sesión y guarda la respuesta en el aparato
+  (`ai_vision_v1`). En el `<head>`, `adaptive-mode.js` ya pone la clase
+  `modo-ciego` con lo guardado, para no pintar primero el panel de siempre y
+  cambiarlo un instante después. **Manda la base**: si la marca se quitó, la
+  clase se va aunque el aparato dijera «ciego».
+- **Baja visión → la voz.** Se enciende «Activar voz» (la misma preferencia
+  `oscarSpeechMode_v1` de todo el sitio): con el botón de la página si ya está,
+  para que diga «Voz activada», o dejando la preferencia escrita. No se
+  enciende el Modo Adaptado: quien ve poco sí ve el tablero y lo usa con el
+  ratón; lo que le faltaba era enterarse de los avisos.
+- **Ciega → todo adaptado.** Se enciende el Modo Adaptado y la clase
+  `modo-ciego`, que trae tres cosas:
+  1. **Su panel es OTRO** (`PANEL_ADAPTADO` en `js/clases.js`), como el de
+     quien supervisa: no se le recorta el de siempre —esconder tarjetas una por
+     una deja la mitad a la vista—. Son las mismas tarjetas de `TILE_GROUPS`,
+     buscadas por destino (el mantenimiento y los textos valen igual), más las
+     de los juegos hechos para jugar sin ver (Sonar, Batalla naval) y la guía de
+     `ciegos.html`. Solo lo que se usa con lector de pantalla: tableros que se
+     recorren con el teclado, con su cuadro de comandos y la posición dicha. Las
+     cuatro fichas de Estudio por categoría van en una sola tarjeta: son cuatro
+     paradas más para llegar a lo mismo. Mirando «Ver como» a una alumna ciega
+     se ve su panel adaptado (se pregunta por ella, no por quien mira).
+  2. **Lo que no está adaptado no se ofrece.** `NO_ADAPTADAS` en
+     `js/vision-cuenta.js` es la lista: las modalidades de Juegos que no son
+     Estándar ni Niebla (Crazyhouse, Duelo, Cartas, Cuatro jugadores, las
+     variantes y el bot de modalidades), Confites, Ilumina el tablero,
+     Concentración y las salas de transmisión. Todo enlace a una de ellas se
+     esconde, también los que la página pinta después (un MutationObserver); y
+     si igual se llega (un marcador, el historial), la página lo dice arriba,
+     con el foco en el aviso, y ofrece volver al panel. El contenido se queda
+     debajo, escondido, por si alguien la acompaña. **Una página que se adapte
+     sale de esa lista** y entra en su grupo de `PANEL_ADAPTADO`.
+  3. **Accesos rápidos.** Al principio de cada página, justo después de
+     «Saltar al contenido» (por donde empieza quien la recorre con el lector),
+     un `<nav aria-label="Accesos rápidos">`: Tu panel, Clase en vivo, Tareas,
+     Entrenar (`clases.html#entrenar`) y la lista de atajos. Los atajos son
+     **Alt + Mayúscula + una letra** —P panel, V clase, T tareas, E entrenar,
+     M contenido, B tablero, C recuadro de comandos, H oír los atajos—, que no
+     chocan con los del lector (NVDA y JAWS usan Insert) ni con las letras
+     sueltas del tablero. Se lee `e.code` y no `e.key`: con Alt + Mayúscula, en
+     Mac `e.key` trae otro símbolo. En `sesion.html` y `examen.html` los atajos
+     solo mueven el foco, nunca cambian de página: salir de la clase cierra la
+     asistencia y salir del examen lo congela (la misma excepción que
+     `js/atajo-buscar.js`).
+- **Se aplica UNA vez por marca** (`ai_vision_aplicada_v1`): si después la
+  persona apaga la voz o el Modo Adaptado, se respeta. La clase `modo-ciego`,
+  en cambio, sigue a la marca: la quita solo administración.
+
+**Al tocar `js/vision-cuenta.js`, el panel adaptado o la columna de admin,
+correr `node herramientas/verificar-todo.js vision-cuenta panel admin`.**
+`verificar-vision-cuenta.js` usa el doble de `verificar-panel.js` (lo exporta)
+y mide la alumna ciega (las clases del `<html>`, los grupos del panel, que
+ninguna tarjeta lleve a `NO_ADAPTADAS`, los accesos rápidos a la vista y en su
+lugar, los atajos por la región viva y el foco, un enlace no adaptado que llega
+tarde), la base mandando sobre lo guardado, la baja visión (la voz encendida
+una vez, y respetada si la apaga), Juegos, una página no adaptada y el selector
+de admin. Está probado que falla de verdad: sin montar el modo en las páginas y
+sin el panel adaptado saltan 9 comprobaciones.
