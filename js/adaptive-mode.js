@@ -45,6 +45,9 @@
   "use strict";
 
   var KEY = "oscarBlindMode_v1";
+  /* De dónde se cargó este archivo: las páginas de entreno/ y cursos/ lo piden
+     con "../js/", y js/voz-pagina.js se pide desde el mismo lugar. */
+  var BASE_JS = (document.currentScript && document.currentScript.src || "").replace(/adaptive-mode\.js(\?.*)?$/, "");
 
   function getStored() {
     try {
@@ -274,9 +277,23 @@
     no.addEventListener("click", function () { responder(false); });
   }
 
+  /* «Activar voz» en el encabezado (js/voz-pagina.js): para quien ve poco y no
+     usa lector de pantalla, el navegador dice en voz alta los avisos de la
+     página. Se pide recién acá, después de pintar, y solo donde hay encabezado. */
+  function vozEnElEncabezado() {
+    if (!BASE_JS || !document.getElementById("theme-toggle")) return;
+    if (document.querySelector("#speech-toggle-btn, #btn-voz")) return;   // traen su propio botón de voz
+    if (window.VozPagina) { VozPagina.enElEncabezado(BASE_JS); return; }
+    var s = document.createElement("script");
+    s.src = BASE_JS + "voz-pagina.js";
+    s.onload = function () { if (window.VozPagina) VozPagina.enElEncabezado(BASE_JS); };
+    document.head.appendChild(s);
+  }
+
   function alCargar() {
     injectToggle();
     ofrecerEnCelular();
+    vozEnElEncabezado();
   }
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", alCargar);
