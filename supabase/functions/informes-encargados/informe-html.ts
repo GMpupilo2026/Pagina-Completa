@@ -233,10 +233,21 @@ function comoVa(d: Record<string, any>, frecuencia: Frecuencia) {
   };
 }
 
+/* La foto de perfil del alumno, al lado de su nombre. Solo se aceptan dos
+   formas: `cid:` (va adjunta DENTRO del correo, ver index.ts) o la imagen
+   pegada en `data:` (la vista previa y la descarga de la página). Nunca una
+   dirección: una que no venza sería un enlace a la foto de un menor suelto
+   fuera de la plataforma, y la firmada vence en una hora. */
+const FOTO_VALIDA = /^(cid:[a-z0-9-]{1,60}|data:image\/(jpeg|webp);base64,[A-Za-z0-9+/=]+)$/;
+export function fotoAceptada(foto: string | null | undefined): string | null {
+  return typeof foto === "string" && FOTO_VALIDA.test(foto) ? foto : null;
+}
+
 export function informeHtml(
   d: Record<string, any>, frecuencia: Frecuencia, sitio: string, contacto: Contacto | null | undefined,
-  cabecera: Cabecera,
+  cabecera: Cabecera, foto?: string | null,
 ) {
+  const fotoSrc = fotoAceptada(foto);
   const periodo = PERIODOS[frecuencia] ?? PERIODOS.semanal;
   const minutos = (Number(d.minutos_clase) || 0) + (Number(d.minutos_ejercicios) || 0);
   const entreno = (d.entreno ?? {}) as Record<string, { cuantos: number; mejor: number | null }>;
@@ -443,10 +454,16 @@ export function informeHtml(
   ${cabecera(`Informe ${escapar(periodo.titulo)}`)}
 
   <tr><td style="padding:24px">
+    ${fotoSrc ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 20px"><tr>
+      <td style="padding:0 14px 0 0;vertical-align:middle;width:64px">
+        <img src="${escapar(fotoSrc)}" width="64" height="64" alt="" style="display:block;width:64px;height:64px;border-radius:32px;object-fit:cover;border:0">
+      </td>
+      <td style="vertical-align:middle">` : ""}
     <p style="margin:0 0 4px;font-size:18px;font-weight:700;color:#102a43">${escapar(d.alumno)}</p>
-    <p style="margin:0 0 20px;font-size:13px;color:#55708a">
+    <p style="margin:0 0 ${fotoSrc ? "0" : "20px"};font-size:13px;color:#55708a">
       ${d.grupo ? escapar(d.grupo) + " · " : ""}del ${fecha(d.desde)} al ${fecha(d.hasta)}
     </p>
+    ${fotoSrc ? `</td></tr></table>` : ""}
 
     <div style="margin:0 0 20px;padding:14px 16px;background:${estado.fondo};border-left:4px solid ${estado.borde};border-radius:8px">
       <div style="font-size:15px;font-weight:700;color:#102a43">${escapar(estado.titulo)}</div>

@@ -337,6 +337,25 @@ async function pruebasClase(browser) {
   igual("la compañera ve la foto de Beto en «Tu profe eligió a…»", await fotoVisible(r.page, "#elegido-otro-foto"), true);
   igual("…y el aviso sigue diciendo el nombre escrito", (await r.page.textContent("#elegido-otro")).trim(), "🎯 Tu profe eligió a Beto Mora para responder.");
 
+  // El ranking de puntos (de la clase, del mes y del cierre: la misma
+  // pintarListaDePuntos), con la foto de cada uno al lado del nombre.
+  const puntos = await r.page.evaluate(() => {
+    const caja = document.createElement("div");
+    caja.id = "prueba-puntos";
+    document.body.appendChild(caja);
+    pintarListaDePuntos(caja, [
+      { student_id: "u-beto", nombre: "Beto Mora", correctas: 3, respuestas: 3 },
+      { student_id: "u-ana", nombre: "Ana Rojas", correctas: 1, respuestas: 2 },
+    ]);
+    return [...caja.querySelectorAll("li")].length;
+  });
+  await r.page.waitForFunction(() => document.querySelector("#prueba-puntos img"), null, { timeout: 5000 }).catch(() => {});
+  await r.page.waitForTimeout(150);
+  igual("en el ranking de puntos, Beto con su foto al lado del nombre",
+    [puntos > 0, await fotoVisible(r.page, '#prueba-puntos li:has([data-foto-de="u-beto"])')], [true, true]);
+  igual("…y el texto de cada puesto sigue igual (la inicial no se cuela)", await r.page.evaluate(() =>
+    [...document.querySelectorAll("#prueba-puntos li > p:first-child")].every((p) => /^\S*\s*\d+\.º /.test(p.textContent.trim()))), true);
+
   // El podio: con nombres, caras; sin nombres, ninguna.
   await r.page.evaluate(() => pintarPodio({ lineas: [{ id: "u-beto", nombre: "Beto Mora", puntos: 5, puesto: 1 }] }));
   await r.page.waitForTimeout(150);
