@@ -10,7 +10,7 @@ mapa de dónde vive cada cosa, porque no todo se recupera del mismo lado:
 | las 14 Edge Functions | `supabase/functions/` | desplegándolas |
 | la configuración de Cloudflare | `worker.js`, `_headers`, `_redirects`, `wrangler.jsonc` | `wrangler deploy` |
 | los datos de la gente | copias diarias de Supabase (plan Pro) + `respaldo-datos.sh` | ver «Los datos de la gente» |
-| los archivos subidos (Storage) | **en ninguna parte todavía** | ver «Lo que las copias diarias no cubren» |
+| los archivos subidos (Storage) | `respaldo-storage.js`, a mano (las copias diarias no los traen) | `restaurar-storage.js`, ver «Los archivos de Storage» |
 | los secretos (Resend, Vision, VAPID) | en Supabase y Cloudflare | se vuelven a poner a mano |
 
 **El estado bueno es un commit de `main`**, y hoy es
@@ -58,11 +58,18 @@ el plan y hay que mirarlo antes que cualquier otra cosa.
 
 1. **Los archivos de Storage.** La copia es de la base: de un archivo subido
    guarda la fila que lo describe, no el archivo. Si se borra un archivo,
-   restaurar una copia vieja no lo devuelve. Al 30 de setiembre de 2026 eso es
-   casi nada —`academia-marca` (5 logos, 157 kB) y `formulario-adjuntos` y
-   `justificaciones` vacíos—, pero cuando la gente empiece a mandar adjuntos
-   y justificaciones hay que respaldarlos aparte. `respaldo-datos.sh` tampoco
-   los baja: es `pg_dump`, solo la base.
+   restaurar una copia vieja no lo devuelve. `respaldo-datos.sh` tampoco los
+   baja: es `pg_dump`, solo la base. Por eso van aparte, con su propio script
+   (ver «Los archivos de Storage», más abajo):
+
+   ```
+   SUPABASE_URL='https://<ref>.supabase.co' \
+   SUPABASE_SERVICE_ROLE_KEY='<la service_role o la secret key>' \
+     node herramientas/respaldo-storage.js
+   ```
+
+   Se corre **junto con `respaldo-datos.sh`**, así la base y los archivos
+   quedan de la misma fecha.
 2. **Una copia fuera de Supabase.** Las copias diarias viven en el mismo lugar
    que la base: si se pierde la cuenta o el proyecto, se pierden con él. Por
    eso el volcado a mano sigue valiendo, cada tanto y sobre todo antes de
@@ -173,6 +180,33 @@ supabase functions deploy <nombre>
 `cobros-recordatorios`, `notificar` y `recuperar-acceso`. Desplegar una de esas
 con la verificación puesta la deja rechazando a su propio disparador, y eso no
 da ningún error: simplemente dejan de llegar los informes.
+
+### 4 bis. Los archivos de Storage
+
+```
+SUPABASE_URL='https://<ref>.supabase.co' \
+SUPABASE_SERVICE_ROLE_KEY='…' \
+  node herramientas/restaurar-storage.js respaldos/storage-<fecha>
+```
+
+- Crea los buckets que falten **con la misma configuración** del respaldo:
+  público o privado, tamaño máximo y tipos permitidos. Un bucket privado
+  recreado como público dejaría las justificaciones a la vista de cualquiera
+  sin ningún error.
+- **No pisa lo que ya está** (si hay un archivo con esa ruta, es más nuevo que
+  el respaldo). `--pisar` lo reemplaza.
+- Antes de subir nada comprueba el sha256 de cada archivo contra
+  `manifiesto.json`: si hay uno dañado, no sube ninguno.
+- Las **políticas** de Storage (quién lee qué) no van en este respaldo: son de
+  la base y vuelven con las migraciones (paso 2). Por eso este paso va
+  después.
+
+Para comprobar, lo que diga `manifiesto.json` tiene que coincidir con:
+
+```sql
+select bucket_id, count(*), sum((metadata->>'size')::bigint)
+from storage.objects group by 1 order by 1;
+```
 
 ### 5. Los secretos
 
