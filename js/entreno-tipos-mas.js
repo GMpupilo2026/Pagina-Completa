@@ -737,33 +737,47 @@
     }
     return p;
   }
-  /* Lichess y Chess.com: el descargador y el lector de PGN son los de la
-     preparación de rivales. Pesan (~100 KB), así que se cargan recién cuando
-     el alumno pide traer sus partidas, desde la misma carpeta que este archivo. */
-  const MODULOS_WEB = ["preparacion-lineas.js", "preparacion-libro.js", "preparacion-estructuras.js", "preparacion-analisis.js", "preparacion-descarga.js"];
-  let cargaWeb = null;
-  function cargarWeb() {
-    if (window.PreparacionAnalisis && window.PreparacionDescarga) return Promise.resolve();
-    if (cargaWeb) return cargaWeb;
-    const propio = document.querySelector('script[src$="entreno-tipos-mas.js"]');
-    const base = propio ? propio.src.replace(/entreno-tipos-mas\.js(\?.*)?$/, "") : "../js/";
-    cargaWeb = MODULOS_WEB.reduce((antes, nombre) => antes.then(() => new Promise((ok, mal) => {
-      const s = document.createElement("script");
-      s.src = base + nombre;
-      s.onload = ok;
-      s.onerror = () => mal(new Error("no cargó " + nombre));
-      document.head.appendChild(s);
-    })), Promise.resolve()).catch((e) => { cargaWeb = null; throw e; });
-    return cargaWeb;
+  /* Los finales del banco de Finales contra la máquina (entreno/data/
+     finales.json), para mandar un error del final al del mismo tipo
+     (?final=<id>). Se cargan antes de jugar (PREPARAR) y en la ficha. */
+  let finalesBanco = null;
+  function cargarFinales() {
+    if (finalesBanco) return Promise.resolve(finalesBanco);
+    return fetch("data/finales.json").then((r) => (r.ok ? r.json() : null)).then((d) => { finalesBanco = (d && d.finales) || []; return finalesBanco; }).catch(() => []);
   }
-  // El último usuario que se escribió, SOLO en este aparato: no viaja con la
-  // cuenta (no hace falta que su profesor lo vea para nada).
-  const CLAVE_CUENTA_WEB = "errores_cuenta_web_v1";
-  const MAX_WEB = 30;
-  const SITIO_WEB = { lichess: "Lichess", chesscom: "Chess.com" };
-  function cuentaWeb() {
-    try { const o = JSON.parse(localStorage.getItem(CLAVE_CUENTA_WEB) || "{}"); return SITIO_WEB[o.sitio] && typeof o.usuario === "string" ? o : { sitio: "lichess", usuario: "" }; } catch (e) { return { sitio: "lichess", usuario: "" }; }
+  U.PREPARAR.errores = () => cargarFinales();
+  function finalesLogrados() { try { return JSON.parse(localStorage.getItem("entreno_finales_solved") || "{}") || {}; } catch (e) { return {}; } }
+  function hrefDeFinal(grupo) {
+    const id = E.finalDelBanco(window.PreparacionPosiciones, finalesBanco || [], grupo, finalesLogrados());
+    return id ? "finales.html?final=" + encodeURIComponent(id) : "finales.html";
   }
+  /* Un error de un final: cuál y a practicarlo. Devuelve el párrafo, o null. */
+  function finalDe(item) {
+    const f = E && E.finalDelError(window.PreparacionPosiciones, item.fen);
+    if (!f) return null;
+    const p = el("p", "mb-2");
+    const ico = el("span", null, "♜ "); ico.setAttribute("aria-hidden", "true");
+    p.append(ico, "Fue en un final " + f.tipo + ": ahí cada tiempo cuenta, y se aprende practicándolos. ");
+    p.appendChild(enlaceAp("Practicar un final " + f.grupo + " →", hrefDeFinal(f.grupo)));
+    return p;
+  }
+  /* Si lo jugó con poco tiempo en el reloj (partidas de Lichess y Chess.com). */
+  function relojDe(item) {
+    if (!E || !E.apurado(item)) return null;
+    const p = el("p", "mb-2");
+    const ico = el("span", null, "⏱️ "); ico.setAttribute("aria-hidden", "true");
+    p.append(ico, "La jugaste con " + (item.reloj === 1 ? "1 segundo" : item.reloj + " segundos") + " en el reloj. Con poco tiempo se juega lo primero que se ve: guardar tiempo para los momentos difíciles también se practica.");
+    return p;
+  }
+
+  /* Lichess y Chess.com: el usuario guardado, la carga diferida del
+     descargador y del lector de PGN, y cuántas traer viven en
+     js/errores-propios.js (también los usa el hub, para avisar las partidas
+     sin revisar). */
+  const cargarWeb = () => E.cargarWeb();
+  const cuentaWeb = () => E.cuentaWeb();
+  const MAX_WEB = E ? E.MAX_WEB : 30;
+  const SITIO_WEB = E ? E.SITIO_WEB : { lichess: "Lichess", chesscom: "Chess.com" };
   // «hoy mismo», «mañana» o «el 3 de octubre»: la fecha (YYYY-MM-DD) en que un
   // ejercicio vuelve a tocar en «Repasar fallados».
   function cuandoVuelve(vence) {
@@ -812,6 +826,36 @@
         : enlaceAp("Repasar tus aperturas →", "aperturas.html"));
       cuadro.appendChild(linea);
     }
+    // Los del final: cuántos, el tipo que más se repite y a practicarlo.
+    const Pos = window.PreparacionPosiciones;
+    const deFinal = E && Pos ? E.ejercicios().map((x) => E.finalDelError(Pos, x.fen)).filter(Boolean) : [];
+    if (deFinal.length) {
+      const cuenta = {};
+      deFinal.forEach((f) => { cuenta[f.grupo] = (cuenta[f.grupo] || 0) + 1; });
+      const grupo = Object.keys(cuenta).sort((a, b) => cuenta[b] - cuenta[a] || (a < b ? -1 : 1))[0];
+      const linea = el("p", "text-sm text-brand-700 dark:text-brand-200 mb-3");
+      linea.appendChild(document.createTextNode((deFinal.length === 1 ? "1 de tus errores fue" : deFinal.length + " de tus errores fueron") +
+        " en un final" + (deFinal.length > 1 ? " (el que más: " + grupo + ")" : " " + grupo) + ". "));
+      const a = enlaceAp("Practicar un final " + grupo + " →", "finales.html");
+      linea.appendChild(a);
+      cargarFinales().then(() => { a.href = hrefDeFinal(grupo); });
+      cuadro.appendChild(linea);
+    }
+    // Con el reloj encima: solo cuentan los que traen reloj (Lichess y Chess.com).
+    const conReloj = E ? E.ejercicios().filter((x) => typeof x.reloj === "number") : [];
+    const apurados = conReloj.filter((x) => E.apurado(x)).length;
+    if (apurados) {
+      const linea = el("p", "text-sm text-brand-700 dark:text-brand-200 mb-3");
+      const ico = el("span", null, "⏱️ "); ico.setAttribute("aria-hidden", "true");
+      linea.append(ico, (apurados === 1 ? "1" : apurados) + " de tus " + conReloj.length + " errores con reloj " + (apurados === 1 ? "fue" : "fueron") +
+        " con poco tiempo (menos de " + E.APURADO.segundos + " segundos, o del " + Math.round(E.APURADO.parte * 100) + " % de tu tiempo). Además de la táctica, ojo con el reloj.");
+      cuadro.appendChild(linea);
+    }
+    // ¿Cometes menos errores? Errores por partida revisada, mes a mes.
+    const curvaCaja = E ? E.curvaEnPantalla(E.curva(E.vistas()), "tu") : null;
+    if (curvaCaja) cuadro.appendChild(curvaCaja);
+    // Los ejercicios guardados antes de contar las celadas: se miran una vez.
+    if (E && window.AperturasLineas) E.completarCeladas(AperturasLineas.LINEAS);
     const aviso = el("p", "text-sm font-semibold text-brand-700 dark:text-brand-200 mb-3");
     aviso.setAttribute("role", "status");
     const buscar = el("button", BTN_PRIMARIO, "🔎 Buscar errores en mis partidas");
@@ -916,11 +960,19 @@
       ev.preventDefault();
       const u = usuario.value.trim().replace(/^@/, "");
       if (!/^[A-Za-z0-9][A-Za-z0-9_-]{1,29}$/.test(u)) { aviso.textContent = "Escribe tu usuario tal como sale en tu perfil: letras, números, guion o guion bajo."; usuario.focus(); return; }
-      try { localStorage.setItem(CLAVE_CUENTA_WEB, JSON.stringify({ sitio: sitio.value, usuario: u })); } catch (e) {}
+      E.guardarCuentaWeb(sitio.value, u);
       buscarErrores(null, { sitio: sitio.value, usuario: u });
     });
     // ?revisar=juego:<id>: se revisa esa partida sola, una vez, y se saca de la
     // dirección (volver atrás o recargar no la vuelve a pedir).
+    // ?traer=web (el aviso del hub «partidas sin revisar»): se traen solas las
+    // de Lichess o Chess.com, con el usuario guardado, una vez.
+    const traerPedido = new URLSearchParams(location.search).get("traer");
+    if (traerPedido === "web" && !revisarPedidaHecha && E && E.cuentaWeb().usuario) {
+      revisarPedidaHecha = true;
+      try { history.replaceState(null, "", location.pathname + location.hash); } catch (e) {}
+      setTimeout(() => buscarErrores(null, E.cuentaWeb()), 0);
+    }
     const pedida = new URLSearchParams(location.search).get("revisar");
     if (pedida && !revisarPedidaHecha) {
       revisarPedidaHecha = true;
@@ -957,6 +1009,10 @@
       }
       const ap = aperturaDe(item);
       if (ap) partes.push(ap);
+      const fi = finalDe(item);
+      if (fi) partes.push(fi);
+      const rl = relojDe(item);
+      if (rl) partes.push(rl);
       // Todo error de una partida entra a «Repasar fallados», también el que
       // sale limpio: vuelve mañana y en unos días (RepasoFallados.anotar,
       // `entraLimpio`). Se dice cuándo, para que no parezca que desapareció.

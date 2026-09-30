@@ -1578,6 +1578,10 @@ elige a ese usuario como rival y analiza sola (`js/preparacion-descarga.js`).
   entrenamiento) usa este mismo descargador y `leerPgn()` para traer las
   partidas del propio alumno (ver «El tipo 18: Tus propios errores» en
   entrenamiento.md). Un cambio acá cambia las dos cosas.
+- `esFinal()` y `tipoDeFinal()` viven en `preparacion-posiciones.js` (los
+  usa también «Tus propios errores» para los errores del final), y el
+  análisis los toma de ahí al cargar: sin posiciones cargado antes, el
+  análisis no arranca (el trabajador ya lo cargaba en ese orden).
 
 Lo prueba `verificar-preparacion-rivales.js`, en dos partes. Sin navegador,
 con un PGN de patrones plantados (dónde pierde, dónde gana, dónde improvisa, un

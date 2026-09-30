@@ -130,6 +130,12 @@ async function cosasDeHoy(alumnoId){
     cosas.push({ icono: '🧭', href: 'diagnostico.html', texto: 'Repetir el diagnóstico: ya pasaron cuatro semanas' });
   }
 
+  // Partidas terminadas que todavía no revisó en «Tus propios errores»: las de
+  // la Academia y, si dejó su usuario, las de Lichess o Chess.com (a esos
+  // sitios se les pregunta como mucho cada 6 horas: ErroresPropios.sinRevisar).
+  const sin = await partidasSinRevisar(alumnoId);
+  if (sin) cosas.push(sin);
+
   // Lo que quedó empezado y no vence: van al final, así que solo se proponen
   // cuando hay lugar (tres como mucho).
   const finales = await finalesPendientes();
@@ -137,6 +143,20 @@ async function cosasDeHoy(alumnoId){
   const precision = await precisionOlvidada(alumnoId);
   if (precision) cosas.push(precision);
   return cosas.slice(0, 3);
+}
+
+async function partidasSinRevisar(alumnoId){
+  const E = window.ErroresPropios;
+  if (!E || !alumnoId || !window.sb) return null;
+  let r = null;
+  try { r = await E.sinRevisar(sb, alumnoId); } catch (e) { return null; }
+  const web = r.web || 0, total = r.juego + web;
+  if (!total) return null;
+  const partes = [];
+  if (web) partes.push(`${web} de ${E.SITIO_WEB[r.sitio]}`);
+  if (r.juego) partes.push(`${r.juego} de la Academia`);
+  return { icono: '🪞', href: web ? 'tipos.html?traer=web#errores' : 'tipos.html#errores',
+    texto: `${total === 1 ? '1 partida' : `${total} partidas`} sin revisar en «Tus propios errores»` + (web && r.juego ? ` (${partes.join(', ')})` : web ? ` (de ${E.SITIO_WEB[r.sitio]})` : '') };
 }
 
 /* Finales contra la máquina ya empezados y sin terminar: cuántos lleva y cuál

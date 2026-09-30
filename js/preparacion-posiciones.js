@@ -239,5 +239,40 @@
     return { t, turno: turno || "w", enroques: enroques && enroques !== "-" ? enroques : "", alPaso: alPaso && alPaso !== "-" ? casilla(alPaso) : -1 };
   }
 
-  return { inicial, aplicar, clave, piezas, desdeFen };
+  function valorPiezas(l) { return l.Q * 9 + l.R * 5 + l.B.length * 3 + l.N * 3; }
+  function cuantasPiezas(l) { return l.Q + l.R + l.B.length + l.N; }
+
+  // Un final: cada lado con 13 puntos de piezas o menos (sin contar peones) y
+  // dos piezas como mucho. Torre y alfil contra torre es un final; dama y
+  // torre contra dama, no.
+  function esFinal(pz) {
+    return valorPiezas(pz.w) <= 13 && valorPiezas(pz.b) <= 13 && cuantasPiezas(pz.w) <= 2 && cuantasPiezas(pz.b) <= 2;
+  }
+
+  function tipoDeFinal(pz) {
+    const tipos = new Set();
+    for (const l of [pz.w, pz.b]) {
+      if (l.Q) tipos.add("Q");
+      if (l.R) tipos.add("R");
+      if (l.B.length) tipos.add("B");
+      if (l.N) tipos.add("N");
+    }
+    const solo = (...t) => [...tipos].every((x) => t.includes(x));
+    if (!tipos.size) return "de peones";
+    if (solo("R")) return "de torres";
+    if (solo("Q")) return "de damas";
+    if (solo("B")) {
+      if (pz.w.B.length === 1 && pz.b.B.length === 1) return pz.w.B[0] !== pz.b.B[0] ? "de alfiles de distinto color" : "de alfiles del mismo color";
+      return "de alfiles";
+    }
+    if (solo("N")) return "de caballos";
+    if (solo("B", "N")) {
+      const unoContraUno = cuantasPiezas(pz.w) === 1 && cuantasPiezas(pz.b) === 1;
+      return unoContraUno ? "de alfil contra caballo" : "de piezas menores";
+    }
+    if (!tipos.has("Q")) return "de torre y pieza menor";
+    return "con dama y otras piezas";
+  }
+
+  return { inicial, aplicar, clave, piezas, desdeFen, valorPiezas, cuantasPiezas, esFinal, tipoDeFinal };
 });
