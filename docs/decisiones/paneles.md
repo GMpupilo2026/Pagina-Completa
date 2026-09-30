@@ -81,7 +81,15 @@ lista, y el resto se acomoda solo.
   el panel docente (`PANEL_DOCENTE`) entra todavía por las dos puertas de
   siempre, que están en la lista con `soloDocente` y al alumno se le QUITAN
   (`ordenarPanelDocente()`), no se esconden. El hub `entreno/index.html` sigue
-  existiendo: es adonde llevan las migas de cada página de entrenamiento.
+  existiendo, pero **solo como la puerta de quien da clase o administra**: su
+  panel entra a todo el entrenamiento con una tarjeta, y meterle las trece
+  sueltas lo alargaría otra vez. Las migas de cada página de entrenamiento ya
+  **no** pasan por el hub (`Panel › Mates`, no `Panel › Entrenamiento ›
+  Mates`): el alumno entra a cada una desde su tarjeta del panel, y la miga del
+  medio lo mandaba a un segundo menú que nunca había visto, con las mismas
+  tarjetas en otro orden. Por lo mismo, «Por dónde empezar» sin ningún hueco en
+  el diagnóstico lleva a Practicar y no al hub, y el «Volver» del resultado de
+  Precisión posicional vuelve al panel.
 - **«Hoy te toca», también en el panel.** Vivía solo arriba del hub de
   Entrenamiento: la meta del día, los repasos que vencieron, lo que quedó a
   medias. Desde que el panel abre el entrenamiento tarjeta por tarjeta, el

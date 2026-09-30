@@ -303,7 +303,9 @@ function pruebaMigasEstatica() {
 async function pruebaMigasEnPantalla(browser) {
   console.log("\n=== Las migas, en la pantalla ===");
   for (const [rel, esperado] of [
-    ["entreno/mates.html", ["Academia", "Entrenamiento", "Mates"]],
+    // Cuelga del panel, no del hub de Entrenamiento: el alumno entra desde su
+    // tarjeta del panel y nunca pasa por entreno/index.html.
+    ["entreno/mates.html", ["Academia", "Mates"]],
     ["niebla.html", ["Academia", "Juegos", "Niebla de Guerra"]],
     ["sesion.html", ["Academia", "Sesión en vivo"]],
   ]) {

@@ -1954,11 +1954,14 @@
                         icono: paso.emoji, urgente: false,
                     });
                 } else {
-                    // Diagnóstico sin ningún hueco marcado: no se le inventa uno.
+                    // Diagnóstico sin ningún hueco marcado: no se le inventa
+                    // uno. Tampoco se lo manda al hub de Entrenamiento: es un
+                    // segundo menú con las mismas tarjetas de este panel. Se
+                    // le da un lugar concreto, el que mezcla mates y táctica.
                     pintarFranja({
                         titulo: "Por dónde empezar",
-                        texto: "Ya sabes en qué nivel estás. Lo que falta es entrenar: escoge lo que quieras y empieza.",
-                        destino: "entreno/index.html", cta: "Ir a Entrenamiento →",
+                        texto: "Ya sabes en qué nivel estás. Lo que falta es entrenar: una serie de mates y táctica es buen comienzo.",
+                        destino: "entreno/practicas.html", cta: "Practicar →",
                         icono: "🎯", urgente: false,
                     });
                 }
