@@ -62,6 +62,11 @@ async function pruebaCiega(browser) {
   cierto("y ninguna de las puertas que no están adaptadas (Archivos, las fichas por categoría repetidas)",
     !enlaces.includes("partidas.html") && !enlaces.some((h) => h.includes("?cat=")));
   igual("el grupo de entrenar se alcanza con #entrenar", await page.evaluate(() => !!document.querySelector("section#entrenar h2")), true);
+  /* Se lee cuando el panel ya terminó de cargar: la racha llega en la misma
+     tanda que el récord de racha táctica, y el saludo con la racha pisaba este
+     subtítulo según quién llegara último. */
+  await page.waitForFunction(() => !/Cargando/.test((document.getElementById("tactics-record-text") || {}).textContent || ""), null, { timeout: 10000 }).catch(() => {});
+  await page.waitForTimeout(300);
   cierto("el subtítulo dice que es el panel adaptado y cómo oír los atajos",
     /adaptado.*Alt \+ Mayúscula \+ H/.test(await page.evaluate(() => document.getElementById("panel-subtitulo").textContent)));
 

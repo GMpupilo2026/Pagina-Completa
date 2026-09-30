@@ -220,15 +220,32 @@
                  js/hoy-te-toca.js, el mismo del hub de Entrenamiento.
 
                  Antes eran dos tarjetas seguidas que decían dos veces la racha
-                 de días, y «Tu progreso» traía tres números de cuando el
-                 entrenamiento era chico (ejercicios 4×4, lecciones, la mejor
-                 marca de Coordenadas). Ver «Hoy te toca y tu progreso, en una
-                 sola tarjeta» en docs/decisiones/paneles.md.
+                 de días. Ahora la racha va una vez (en la meta del día), y los
+                 tres totales de siempre (ejercicios 4×4, lecciones, la mejor
+                 marca de Coordenadas) debajo. Ver «Hoy te toca y tu progreso,
+                 en una sola tarjeta» en docs/decisiones/paneles.md.
 
                  Va después de lo que vence (la franja) y de «Continúa donde
                  ibas»: una fecha le gana a un repaso. -->
             <div id="progreso-alumno" hidden class="mb-8 rounded-2xl p-5 md:p-6 shadow-md bg-white dark:bg-brand-900">
                 <section id="hoy" aria-labelledby="hoy-titulo" class="hidden mb-4"></section>
+                <!-- Los totales de siempre, contados en la base (mi_entreno_resumen,
+                     ver loadEntrenoProgress en js/clases.js). La racha de días no
+                     va acá: ya la dice la meta del día, justo arriba. -->
+                <div class="grid grid-cols-3 gap-3 text-center mb-4 pt-4 border-t border-brand-100 dark:border-brand-800">
+                    <a href="entreno/4x4.html" class="rounded-xl p-2 hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        <div class="text-2xl font-bold text-brand-800 dark:text-white" id="entreno-puzzles">—</div>
+                        <div class="text-xs text-brand-450 dark:text-brand-350 mt-1"><span aria-hidden="true">🧩 </span>Ejercicios 4×4</div>
+                    </a>
+                    <a href="entreno/aprender.html" class="rounded-xl p-2 hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        <div class="text-2xl font-bold text-brand-800 dark:text-white" id="entreno-lessons">—</div>
+                        <div class="text-xs text-brand-450 dark:text-brand-350 mt-1"><span aria-hidden="true">🎓 </span>Lecciones</div>
+                    </a>
+                    <a href="entreno/coordenadas.html" class="rounded-xl p-2 hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        <div class="text-2xl font-bold text-brand-800 dark:text-white" id="entreno-coord">—</div>
+                        <div class="text-xs text-brand-450 dark:text-brand-350 mt-1"><span aria-hidden="true">⚡ </span>Mejor Coordenadas</div>
+                    </a>
+                </div>
                 <a href="racha-tactica.html" class="flex items-center gap-3 flex-wrap hover:opacity-80 transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded">
                     <span class="text-2xl" aria-hidden="true">🏆</span>
                     <p class="flex-1 min-w-[200px] text-sm text-brand-500 dark:text-brand-300"><span class="font-semibold text-brand-800 dark:text-white" id="tactics-record-title">Racha táctica</span> — <span id="tactics-record-text">Cargando…</span></p>

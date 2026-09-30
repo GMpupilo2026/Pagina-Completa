@@ -101,21 +101,31 @@ lista, y el resto se acomoda solo.
     usa el saludo, no una segunda consulta.
   - Solo al alumnado: a quien da clase no se le pinta ni se le arma.
     `verificar-panel.js` («Hoy te toca», en el panel del alumno) lo revisa.
-  - **Sin nada pendiente, una sugerencia** («💡 Sugerencia de hoy: Mates»),
-    solo en el panel: una página de entrenamiento cuyo trabajo CUENTA (las que
-    en `js/material-plataforma.js` ofrecen la meta `cantidad`, la lista de
-    Tareas), una por día de Costa Rica. Va dicha como sugerencia —no venció ni
-    la pidió nadie—. En el hub no: ahí las páginas están justo debajo, y sin
-    nada pendiente el bloque trae solo la meta del día.
+  - **Sin nada pendiente, una sugerencia**, solo en el panel, y dicha como
+    sugerencia —no venció ni la pidió nadie—:
+    1. **del diagnóstico**, si lo hizo: lo flojo, con dónde practicarlo
+       («💡 Sugerencia de hoy, por tu diagnóstico en mates y seguridad del
+       rey: Mates en 1»). La cuenta es `PlanEntrenamiento.paraPracticar()`,
+       LA MISMA de la franja «Por dónde empezar» (que toma la primera): por
+       cada área por debajo del 60 %, el primer recurso cuya página cuenta.
+       Con varias áreas flojas, una por día de Costa Rica.
+    2. sin diagnóstico (o sin nada flojo), una página de entrenamiento cuyo
+       trabajo CUENTA (las que en `js/material-plataforma.js` ofrecen la meta
+       `cantidad`), una por día.
+
+    A quien todavía no hizo ni un ejercicio no se le sugiere nada: la franja
+    ya le dice por dónde empezar, y el mismo destino dos veces en el panel
+    hace pensar que son dos cosas. En el hub no hay sugerencia: ahí las
+    páginas están justo debajo, y sin nada pendiente el bloque trae solo la
+    meta del día.
 - **Hoy te toca y tu progreso, en una sola tarjeta.** Eran dos tarjetas
   seguidas, y la racha de días salía en las dos (en la meta del día y en «Tu
-  progreso»). «Tu progreso» traía además tres números de cuando el
-  entrenamiento era chico: ejercicios 4×4, lecciones y la mejor marca de
-  Coordenadas. Ahora `#progreso-alumno` es UNA tarjeta con «Hoy te toca»
-  adentro (meta, racha, la semana, lo que toca) y el récord de racha táctica
-  al pie. Los tres números ya no se piden (`mi_entreno_resumen()` sigue en la
-  base, sin uso en el panel; ver «Los tres números de Entrenamiento los
-  contaba el navegador», abajo, por si vuelven).
+  progreso»). Ahora `#progreso-alumno` es UNA tarjeta: «Hoy te toca» arriba
+  (meta, racha, la semana, lo que toca), debajo los tres totales de siempre
+  (ejercicios 4×4, lecciones, la mejor marca de Coordenadas, contados en la
+  base por `mi_entreno_resumen()`) y al pie el récord de racha táctica. La
+  racha de días va UNA vez, en la meta. Los totales se quitaron un día y
+  volvieron a pedido del dueño de la Academia: al alumno le sirven.
 - **El saludo es «¡Hola, Ana!»** —el nombre de pila y sin género: decía
   «¡Bienvenido, Ana Rojas!», que a una alumna le habla en masculino—, y al
   alumno el subtítulo le dice su racha («Llevas 4 días seguidos entrenando:

@@ -840,6 +840,37 @@ window.PlanEntrenamiento = (function () {
     });
   }
 
+  /* Dónde practicar lo flojo del diagnóstico: por cada área por debajo del
+     60 %, de la más floja a la menos, el primer recurso del plan cuya página
+     CUENTA —la que en el catálogo de Tareas (`herramientas`, las HERRAMIENTAS
+     de js/material-plataforma.js) ofrece la meta «cantidad», o sea que
+     escribe en training_progress—. Un área sin ninguna así se salta: mandar a
+     la portada de un curso deja leyendo un temario y no cuenta nada.
+
+     Se compara la PÁGINA, no la dirección entera: los recursos llevan su
+     recorte puesto (`entreno/temas.html?tema=pin`) y el catálogo guarda la
+     página pelada. Y se devuelve la dirección CON el recorte: es lo que separa
+     «haz ejercicios de clavada» de «ahí tienes ochenta temas, busca».
+
+     La usan la franja «Por dónde empezar» del panel (la primera) y la
+     sugerencia de «Hoy te toca» (una por día). → [{ area, href, label, emoji }] */
+  function paraPracticar(detalle, herramientas) {
+    let resumen;
+    try { resumen = resumir(detalle || {}); } catch (e) { return []; }
+    const flojas = (resumen.porArea || [])
+      .filter((a) => a.porcentaje < 60)
+      .sort((a, b) => a.porcentaje - b.porcentaje);
+    const out = [];
+    for (const area of flojas) {
+      const ficha = AREA_POR_ID[area.id];
+      if (!ficha) continue;
+      const r = (ficha.recursos || []).find((x) => recursoSeguro(x) && (herramientas || []).some(
+        (t) => t.href === x.href.split('?')[0] && (t.metas || []).includes('cantidad')));
+      if (r) out.push({ area, href: r.href, label: r.texto, emoji: ficha.emoji });
+    }
+    return out;
+  }
+
   /* Los recursos son rutas del propio sitio ("entreno/temas.html?tema=fork");
      algo con esquema (javascript:, https:) o que empiece con // no sale de
      este repositorio y no se pinta. Lo que el profesor reescribe a mano en
@@ -938,7 +969,7 @@ window.PlanEntrenamiento = (function () {
 
   return { AREAS, AREA_POR_ID, NIVELES, ESCALONES, nivelDe, nivelPorEscalones, porEscalon, resumir, generarPlan, enlace,
            claveDeAvance, avancePorClave, marcarAvance,
-           recursoSeguro, planCompartido, semanaVigente, recursoPrincipal, hoyDelPlan,
+           recursoSeguro, paraPracticar, planCompartido, semanaVigente, recursoPrincipal, hoyDelPlan,
            ESCALON_ELO, escalonDeElo, azarDe, probabilidad, medir, combinar, notaRecalibrado, notaDeArea, BANDAS_AREA, bandaDeNota,
            ELO_TIPOS, ELO_TIPO_POR_ID, ELO_MIN, ELO_MAX, nivelDeElo, eloDeNivel, eloEstimado, eloValido, lecturaElo };
 })();
