@@ -84,6 +84,21 @@
                     <p id="elo-msg" role="status" class="text-xs mb-1"></p>
                     <p class="text-xs text-brand-450 dark:text-brand-350">El diagnóstico de nivel usa tu Elo para afinar el nivel estimado y el plan de entrenamiento. Si no tienes rating, déjalo vacío. Actualízalo cuando cambie.</p>
                 </fieldset>
+                <!-- El código FIDE: con él, la Edge Function elo-fide lee cada mes el
+                     Elo FIDE Estándar (ratings.fide.com) y el Nacional de Costa Rica
+                     (ajedrezcostarica.com), y el informe a la casa dice si subió o
+                     bajó. Se guarda con guardar_fide_id(). Ver «El Elo oficial, mes a
+                     mes» en docs/decisiones/informes.md. -->
+                <fieldset id="fide" class="mb-4">
+                    <legend class="block text-xs font-medium text-brand-500 dark:text-brand-300 mb-1">Tu código FIDE (FIDE ID)</legend>
+                    <div class="flex flex-wrap gap-2 mb-1">
+                        <input id="fide-input" type="text" inputmode="numeric" autocomplete="off" maxlength="10" placeholder="Ej. 6501435" aria-label="Código FIDE" aria-describedby="fide-ayuda" class="w-32 px-3 py-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500">
+                        <button id="save-fide-btn" type="button" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg transition-colors text-sm whitespace-nowrap">Guardar y leer mi Elo</button>
+                    </div>
+                    <p id="fide-msg" class="text-xs mb-1" role="status" aria-live="polite"></p>
+                    <p id="fide-elo" hidden class="text-sm text-brand-700 dark:text-brand-300 mb-1"></p>
+                    <p id="fide-ayuda" class="text-xs text-brand-450 dark:text-brand-350">Con tu código, la plataforma lee sola cada mes tu Elo FIDE Estándar y tu Elo Nacional de Costa Rica, y le cuenta a tu casa si subió o bajó. Lo encuentras buscando tu nombre en <a href="https://ratings.fide.com" target="_blank" rel="noopener" class="underline font-semibold text-accent-700 dark:text-accent-400">ratings.fide.com</a> (se abre en otra pestaña). Si no tienes código FIDE, déjalo vacío.</p>
+                </fieldset>
                 <!-- Un <p>, no un <label>: no hay campo que rotular (el correo no se cambia desde acá). -->
                 <p id="email-titulo" class="block text-xs font-medium text-brand-500 dark:text-brand-300 mb-1">Correo</p>
                 <p id="email-display" class="text-sm text-brand-700 dark:text-brand-300 mb-1"></p>

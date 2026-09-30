@@ -37,6 +37,68 @@
             msg.className = "text-xs text-green-600 dark:text-green-400 mb-1";
         });
 
+        /* ---------------- Tu código FIDE ----------------
+           guardar_fide_id() lo guarda (y borra el historial si el código
+           cambió: era de otra ficha); después elo-fide lee el Elo en ese
+           momento, así se ve enseguida si el código era el bueno. Ver «El Elo
+           oficial, mes a mes» en docs/decisiones/informes.md. */
+        const MESES_ELO = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+        function fideMensaje(texto, malo) {
+            const msg = document.getElementById("fide-msg");
+            msg.textContent = texto;
+            msg.className = "text-xs mb-1 " + (malo ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400");
+        }
+        function pintarEloOficial(fila) {
+            const el = document.getElementById("fide-elo");
+            const partes = [];
+            if (fila && fila.fide) partes.push("FIDE Estándar " + fila.fide);
+            if (fila && fila.nacional) partes.push("Nacional " + fila.nacional);
+            if (!partes.length) { el.hidden = true; el.textContent = ""; return; }
+            const mes = MESES_ELO[Number(String(fila.periodo || "").slice(5, 7)) - 1];
+            el.textContent = "Tu Elo oficial" + (mes ? " (" + mes + ")" : "") + ": " + partes.join(" · ") + ".";
+            el.hidden = false;
+        }
+        async function cargarEloOficial() {
+            const { data } = await sb.from("elo_historial").select("periodo, fide_estandar, nacional")
+                .eq("student_id", profile.id).order("periodo", { ascending: false }).limit(1).maybeSingle();
+            pintarEloOficial(data ? { periodo: data.periodo, fide: data.fide_estandar, nacional: data.nacional } : null);
+        }
+        document.getElementById("save-fide-btn").addEventListener("click", async () => {
+            const btn = document.getElementById("save-fide-btn");
+            const raw = document.getElementById("fide-input").value.replace(/\s/g, "");
+            if (raw && !/^[0-9]{4,10}$/.test(raw)) { fideMensaje("El código FIDE son solo números (entre 4 y 10 cifras).", true); return; }
+            btn.disabled = true;
+            try {
+                const { data: quedo, error } = await sb.rpc("guardar_fide_id", { p_persona: profile.id, p_fide_id: raw || null });
+                if (error) { fideMensaje(error.message, true); return; }
+                const cambio = (quedo || null) !== (profile.fide_id || null);
+                profile.fide_id = quedo || null;
+                document.getElementById("fide-input").value = profile.fide_id || "";
+                if (!profile.fide_id) { pintarEloOficial(null); fideMensaje(cambio ? "Código FIDE borrado." : "No tienes código FIDE guardado.", false); return; }
+                fideMensaje("Código guardado. Leyendo tu Elo en la FIDE y en la clasificación nacional…", false);
+                let { data: r, error: err2 } = await sb.functions.invoke("elo-fide", { body: { action: "actualizar", student_id: profile.id } });
+                if (err2 && err2.context && typeof err2.context.json === "function") {
+                    try { r = await err2.context.json(); } catch (e) { /* sin cuerpo */ }
+                }
+                if (err2 || !r || !r.ok) {
+                    fideMensaje("El código quedó guardado, pero ahora no se pudo leer tu Elo (" + ((r && r.error) || "las páginas no contestaron") + "). Revisa que sea el tuyo; si lo es, se vuelve a intentar solo en estos días.", true);
+                    return;
+                }
+                pintarEloOficial(r);
+                if (!r.fide && !r.nacional) {
+                    fideMensaje("Código guardado. Esa ficha" + (r.nombre ? " (" + r.nombre + ")" : "") + " todavía no tiene Elo FIDE Estándar ni Nacional.", false);
+                    return;
+                }
+                const elo = r.fide || r.nacional;
+                profile.elo = elo; profile.elo_tipo = r.fide ? "fide" : "nacional";
+                document.getElementById("elo-input").value = elo;
+                document.getElementById("elo-tipo").value = profile.elo_tipo;
+                fideMensaje("Listo" + (r.nombre ? ", " + r.nombre : "") + ". Tu Elo se va a actualizar solo cada mes.", false);
+            } finally {
+                btn.disabled = false;
+            }
+        });
+
         /* ---------------- Tu foto ----------------
            js/foto-perfil.js sube, guarda y borra; acá solo se pinta y se
            pregunta. La casilla se mira ANTES de subir: subir la foto ya es
@@ -861,6 +923,8 @@
             document.getElementById("full-name-input").value = profile.full_name || "";
             document.getElementById("elo-input").value = profile.elo || "";
             if (profile.elo_tipo) document.getElementById("elo-tipo").value = profile.elo_tipo;
+            document.getElementById("fide-input").value = profile.fide_id || "";
+            cargarEloOficial();
             document.getElementById("email-display").textContent = profile.email;
             pintarFoto();
             /* Quien da clase pone su sala de videollamada; quien administra
