@@ -147,7 +147,11 @@ window.VozPagina = (function () {
       ultimoMolde.set(region, { molde: molde, en: ahora });
       var urgente = region.getAttribute("aria-live") === "assertive" || region.getAttribute("role") === "alert";
       if (DICE_JUGADA.test(texto)) jugadaDichaEn = ahora;
-      decir(recortar(jugadasEnPalabras(texto)), urgente, recortar(texto));
+      /* La respuesta del recuadro de comandos se dice entera: ahí se pide
+         «posición», y cortarla a los 400 caracteres dejaba a las negras sin
+         decir. Lo demás se recorta (listas largas que se repintan). */
+      var entero = region.classList.contains("cc-msg");
+      decir(entero ? jugadasEnPalabras(texto) : recortar(jugadasEnPalabras(texto)), urgente, texto);
     });
   }
 
@@ -283,6 +287,7 @@ window.VozPagina = (function () {
   function revisarTableros(callar) {
     temporizadorTableros = null;
     var ahora = Date.now();
+    actualizarBotonPosicion();
     fotoDeTableros().forEach(function (despues, tablero) {
       var antes = fotos.get(tablero);
       fotos.set(tablero, despues);
@@ -293,6 +298,103 @@ window.VozPagina = (function () {
       if (!frase || ahora - jugadaDichaEn < 1500) return;
       decir(frase, false);
     });
+  }
+
+  /* ---- «Decir la posición», a pedido ----
+     Con la voz encendida y un tablero a la vista, en el encabezado, junto al
+     🗣️, aparece un ♙ que dice la posición entera del tablero más grande que
+     se ve:
+     «Blancas: rey en eva 1; torres en anna 1 y hector 1… Negras: …». Se arma
+     con lo mismo que las jugadas —lo que dice cada casilla—, así que lo que el
+     tablero oculta tampoco se cuenta acá. Solo se ve mientras la voz está
+     encendida y hay un tablero: a quien no la usa no le cambia nada.
+     Fuera del Modo Adaptado era la única forma de pedirla: el recuadro donde se
+     escribe «posición» y la tecla z del tablero son del Modo Adaptado. */
+  var ORDEN = ["rey", "dama", "torre", "alfil", "caballo", "peón"];
+  var PLURAL = { rey: "reyes", "peón": "peones", alfil: "alfiles" };
+  function lista(xs) { return xs.length < 2 ? xs.join("") : xs.slice(0, -1).join(", ") + " y " + xs[xs.length - 1]; }
+
+  function posicionDicha(foto) {
+    var casillas = Object.keys(foto).sort(function (a, b) {
+      return a[0] === b[0] ? a.slice(1) - b.slice(1) : (a < b ? -1 : 1);
+    });
+    var desconocidas = casillas.filter(function (sq) { return foto[sq] === null; }).length;
+    if (desconocidas === casillas.length) return "Las piezas están ocultas: el tablero no dice qué hay.";
+    var bandos = { Blancas: {}, Negras: {} }, otras = {};
+    casillas.forEach(function (sq) {
+      var p = foto[sq];
+      if (!p) return;
+      var bando = /\bblanc/.test(p) ? "Blancas" : /\bnegr/.test(p) ? "Negras" : null;
+      var nombre = bando ? p.replace(/\s+(blanc|negr)\S*.*$/, "") : p;
+      var grupo = bando ? bandos[bando] : otras;
+      (grupo[nombre] = grupo[nombre] || []).push(casillaDicha(sq));
+    });
+    function decirGrupo(g) {
+      var nombres = Object.keys(g).sort(function (a, b) {
+        var ia = ORDEN.indexOf(a), ib = ORDEN.indexOf(b);
+        return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+      });
+      return nombres.map(function (n) {
+        var cs = g[n];
+        return (cs.length > 1 ? (PLURAL[n] || n + "s") : n) + " en " + lista(cs);
+      }).join("; ");
+    }
+    var partes = ["Blancas", "Negras"].map(function (b) {
+      return b + ": " + (decirGrupo(bandos[b]) || "sin piezas") + ".";
+    });
+    if (Object.keys(otras).length) partes.push(mayuscula(decirGrupo(otras)) + ".");
+    if (desconocidas) partes.push("Hay casillas que no se ven.");
+    return partes.join(" ");
+  }
+
+  /* El tablero que se está mirando: el más grande de los que se ven. */
+  function tableroPrincipal() {
+    var mejor = null, area = 0;
+    fotoDeTableros().forEach(function (foto, t) {
+      if (!seVe(t) || t.closest('[aria-hidden="true"]')) return;
+      var r = t.getBoundingClientRect();
+      if (r.width < TABLERO_MIN || r.width * r.height <= area) return;
+      mejor = { tablero: t, foto: foto };
+      area = r.width * r.height;
+    });
+    return mejor;
+  }
+
+  var botonPosicion = null;
+  function asegurarBotonPosicion() {
+    if (botonPosicion) return botonPosicion;
+    botonPosicion = document.createElement("button");
+    botonPosicion.type = "button";
+    botonPosicion.id = "voz-posicion";
+    botonPosicion.hidden = true;
+    botonPosicion.setAttribute("aria-label", "Decir la posición del tablero");
+    botonPosicion.title = "Decir en voz alta la posición entera del tablero";
+    /* «♙» y no «♟️»: el emoji sale negro sobre el azul del encabezado y no se
+       ve; este se dibuja como letra, con el blanco de sus vecinos. */
+    botonPosicion.innerHTML = '<span aria-hidden="true" style="font-size:1.4em;line-height:1;font-family:\'Segoe UI Symbol\',\'DejaVu Sans\',sans-serif">♙</span>';
+    botonPosicion.addEventListener("click", function () {
+      var t = tableroPrincipal();
+      if (!t || !window.BlindNotation) return;
+      BlindNotation.speak(posicionDicha(t.foto));
+    });
+    /* En el encabezado, junto al 🗣️ y con su misma forma: el encabezado queda
+       siempre arriba y no tapa nada. Fijo sobre la página, en el celular tapaba
+       casillas del tablero. */
+    var voz = document.getElementById("voz-toggle");
+    if (voz && voz.parentElement) {
+      botonPosicion.className = voz.className;
+      voz.after(botonPosicion);
+    } else {
+      botonPosicion.style.cssText = "position:fixed;left:1rem;bottom:1rem;z-index:45;min-height:44px;min-width:44px;" +
+        "border-radius:.75rem;border:2px solid #f0b429;background:#102a43;color:#fff;font-size:1.25rem";
+      document.body.appendChild(botonPosicion);
+    }
+    return botonPosicion;
+  }
+  function actualizarBotonPosicion() {
+    var hay = hablando() && !!tableroPrincipal();
+    if (!hay && !botonPosicion) return;
+    asegurarBotonPosicion().hidden = !hay;
   }
 
   /* Espera a que el tablero termine de pintarse y a que una región que diga la
@@ -378,6 +480,7 @@ window.VozPagina = (function () {
     escuchar(raizActual);
     btn.addEventListener("click", function () {
       enFila = 0;
+      actualizarBotonPosicion();
       if (!hablando()) return;
       tomarFoto(raizActual);
       BlindNotation.speak("Voz activada. Te voy a decir en voz alta los avisos de esta página.");
@@ -414,5 +517,5 @@ window.VozPagina = (function () {
     else cargar(base + "blind-notation.js", poner);
   }
 
-  return { montar: montar, enElEncabezado: enElEncabezado };
+  return { montar: montar, enElEncabezado: enElEncabezado, posicionDicha: posicionDicha };
 })();
