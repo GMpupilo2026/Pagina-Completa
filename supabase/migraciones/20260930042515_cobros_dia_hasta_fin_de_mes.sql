@@ -1,13 +1,3 @@
--- ============================================================================
--- «Vence el día» acepta del 1 al 31; en los meses más cortos vence el último.
---
--- La base solo dejaba del 1 al 28 (para que todo mes tuviera ese día), pero la
--- página no lo decía y quien quería cobrar a fin de mes escribía 30 y recibía
--- «violates check constraint suscripciones_dia_cobro_check». Ahora el 29, 30 y
--- 31 valen: generar_cobros() recorta el vencimiento al último día del mes, así
--- que un 31 vence el 28 (o 29) de febrero y el 30 de abril.
--- ============================================================================
-
 alter table public.suscripciones drop constraint suscripciones_dia_cobro_check;
 alter table public.suscripciones add constraint suscripciones_dia_cobro_check
   check (dia_cobro between 1 and 31);

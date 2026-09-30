@@ -1,22 +1,3 @@
--- ============================================================================
--- Borrar un plan de cobro de verdad, no solo desactivarlo.
---
--- La tabla no se puede borrar desde la página: suscripciones.plan_id es
--- ON DELETE RESTRICT, y la RLS de suscripciones solo deja tocar las de la
--- gente bajo la coordinación de uno. Esta función lo hace de una vez y sin
--- dejar nada a medias: borra las suscripciones del plan y el plan.
---
--- Lo que NO borra son los cobros ya emitidos: son lo que pasó (el recibo con
--- su consecutivo y sus pagos). Se quedan con su concepto y su monto, y
--- cobros.suscripcion_id pasa a NULL solo (ON DELETE SET NULL). Si se pide
--- (p_anular_sin_pagos), los que todavía no tienen ningún pago se ANULAN con
--- su motivo — anular, no borrar: el consecutivo ya se usó.
---
--- Permiso: el mismo de escribir planes (coordinador_puede('cobros') y el plan
--- es de alguien bajo mi coordinación), y además toda la gente en el plan tiene
--- que estar bajo mi coordinación: si no, se niega entero en vez de borrarle a
--- otra coordinación suscripciones que no ve.
--- ============================================================================
 create or replace function public.eliminar_plan_cobro(p_plan uuid, p_anular_sin_pagos boolean default false)
 returns jsonb
 language plpgsql
