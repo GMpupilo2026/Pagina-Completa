@@ -17,7 +17,10 @@
  *   - lo de un panel escondido no se dice;
  *   - lo que ya estaba al cargar no se dice;
  *   - una cuenta atrás no se dice cada segundo;
- *   - el mismo cartel repintado no se repite.
+ *   - el mismo cartel repintado no se repite;
+ *   - las jugadas de un tablero se dicen (la captura, el enroque, la
+ *     coronación), pero no las de una miniatura, ni con las piezas ocultas, ni
+ *     cuando un aviso ya dijo la jugada.
  *
  * Cómo se corre (con el sitio en localhost:8777):
  *     node herramientas/verificar-todo.js voz-pagina
@@ -176,6 +179,59 @@ async function botonEn(browser, ruta) {
       await page.waitForTimeout(450);
     }
     igual("una cuenta atrás se dice una vez, no cada segundo", (await dichos(page)).filter((t) => /Quedan/.test(t)).length, 1);
+
+    console.log("\n=== Las jugadas del tablero ===");
+    /* Un tablero como los del sitio: 64 casillas con data-square y un
+       aria-label que dice qué hay («Casilla e2: peón blanco»). */
+    await page.evaluate(() => {
+      const piezas = { e1: "rey blanco", h1: "torre blanca", e2: "peón blanco", d7: "peón negro",
+                       e8: "rey negro", g1: "caballo blanco", b7: "peón blanco" };
+      window.__armar = (id, ancho, pos) => {
+        let t = document.getElementById(id);
+        if (!t) { t = document.createElement("div"); t.id = id; t.style.cssText = "display:grid;grid-template-columns:repeat(8,1fr);width:" + ancho + "px"; document.body.appendChild(t); }
+        t.innerHTML = "";
+        for (let r = 8; r >= 1; r--) for (const f of "abcdefgh") {
+          const b = document.createElement("button");
+          b.setAttribute("data-square", f + r);
+          const p = pos[f + r];
+          b.setAttribute("aria-label", "Casilla " + f + r + ": " + (p === null ? "oculta" : p || "vacía"));
+          b.textContent = ".";
+          t.appendChild(b);
+        }
+      };
+      window.__pos = Object.assign({}, piezas);
+      window.__armar("__tablero", 320, window.__pos);
+      window.__armar("__mini", 120, window.__pos);
+      window.__mover = (id, cambios) => {
+        Object.keys(cambios).forEach((k) => { if (cambios[k] === undefined) delete window.__pos[k]; else window.__pos[k] = cambios[k]; });
+        window.__armar(id, id === "__mini" ? 120 : 320, window.__pos);
+      };
+    });
+    await page.waitForTimeout(700);
+    const jugar = async (cambios, id) => {
+      await olvidar(page);
+      await page.evaluate(([c, i]) => window.__mover(i || "__tablero", c), [cambios, id]);
+      await page.waitForTimeout(700);
+      return (await dichos(page)).join(" | ") || "nada";
+    };
+    igual("una jugada se dice", await jugar({ e2: undefined, e4: "peón blanco" }), "Peón blanco de eva 2 a eva 4.");
+    igual("una captura dice qué se comió", await jugar({ g1: undefined, d7: "caballo blanco" }), "Caballo blanco de gustav 1 a david 7, captura peón negro.");
+    igual("el enroque se dice como enroque", await jugar({ e1: undefined, h1: undefined, g1: "rey blanco", f1: "torre blanca" }), "Enroque de las blancas.");
+    igual("la coronación dice en qué corona", await jugar({ b7: undefined, b8: "dama blanca" }), "Peón blanco de bella 7 a bella 8, corona dama.");
+    igual("una miniatura no habla", await jugar({ g1: undefined, h1: "rey blanco" }, "__mini"), "nada");
+    const todasOcultas = {};
+    "abcdefgh".split("").forEach((f) => { for (let r = 1; r <= 8; r++) todasOcultas[f + r] = null; });
+    igual("ocultar las piezas no es una jugada", await jugar(todasOcultas), "nada");
+    igual("y con las piezas ocultas no se dice nada", await jugar({ a1: null }), "nada");
+    await page.evaluate(() => { window.__pos = { e1: "rey blanco", e8: "rey negro", d2: "peón blanco" }; });
+    igual("volver a mostrarlas tampoco", await jugar({}), "nada");
+    await olvidar(page);
+    await page.evaluate(() => {
+      window.__mover("__tablero", { d2: undefined, d4: "peón blanco" });
+      document.getElementById("__aviso").textContent = "Jugaste peón david 4.";
+    });
+    await page.waitForTimeout(800);
+    igual("si un aviso ya dijo la jugada, el tablero se calla", (await dichos(page)).join(" | "), "Jugaste peón david 4.");
 
     await page.click("#voz-toggle");
     await olvidar(page);
