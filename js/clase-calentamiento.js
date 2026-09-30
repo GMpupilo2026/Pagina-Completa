@@ -124,7 +124,11 @@ async function juzgarCalentamiento() {
         calentamientoResuelto = cal.at;
         if (presenceChannel) await presenceChannel.track(metaDePresencia());
     } else {
-        msg.textContent = cal.solucion ? "❌ " + (m ? sanDelCalentamiento(m.san) : "Esa") + " no es la mejor. Inténtalo otra vez." : "Tu profe no dejó la solución de esta posición: coméntala en la clase.";
+        // Se pudo jugar pero no era: «Respuesta incorrecta», como en todo el sitio (js/comandos-tablero.js).
+        const dicha = m ? sanDelCalentamiento(m.san) : "esa jugada";
+        msg.textContent = cal.solucion
+            ? (window.ComandosTablero ? ComandosTablero.incorrecta(dicha, "Inténtalo otra vez.") : "Respuesta incorrecta: " + dicha + " no es la jugada que buscamos. Inténtalo otra vez.")
+            : "Tu profe no dejó la solución de esta posición: coméntala en la clase.";
         document.getElementById("calentamiento-otra-btn").hidden = false;
     }
 }

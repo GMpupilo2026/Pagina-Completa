@@ -158,6 +158,9 @@ async function pruebas(browser) {
   igual("…y «Quitar mi foto» no se ve",
     await r.page.evaluate(() => document.getElementById("foto-quitar").checkVisibility()), false);
 
+  // El selector de archivo tiene nombre en español: sin él, el lector decía «Choose File».
+  igual("el selector de la foto tiene nombre", await r.page.evaluate(() => document.getElementById("foto-archivo").getAttribute("aria-label")), "Elegir la foto de perfil");
+
   // 1. Sin la casilla no se sube.
   await r.page.click("#foto-elegir");
   await r.page.waitForTimeout(150);

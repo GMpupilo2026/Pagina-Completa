@@ -137,6 +137,7 @@ function tiempoQueQueda(){
 blindPanel.addEventListener('submit', (e) => {
   e.preventDefault();
   const escrito = sinTildes(blindInput.value).replace(/[.!¡¿?"«»]/g, '').trim();
+  blindInput.dataset.ultimo = blindInput.value.trim();
   blindInput.value = '';
   blindInput.focus();
   // Volver a oír la casilla sin perder la ronda: se dice con el tiempo que queda.
@@ -150,7 +151,8 @@ blindPanel.addEventListener('submit', (e) => {
   }
   const answer = RESPUESTAS[escrito];
   if(!answer){
-    announceBlind('Escribe «blanca» (o «b») si la casilla es blanca, o «negra» (o «n») si es negra. «repetir» vuelve a decir la casilla y «tiempo», cuánto queda.');
+    // Lo que no es un color se dice no entendido (regla del sitio para los recuadros).
+    announceBlind(`No entendí «${blindInput.dataset.ultimo || ''}». Escribe «blanca» (o «b») si la casilla es blanca, o «negra» (o «n») si es negra. «repetir» vuelve a decir la casilla y «tiempo», cuánto queda.`);
     return;
   }
   const missedColor = isLightSquare(currentTarget) ? 'blanca' : 'negra'; // antes de newTarget(), que cambia currentTarget
@@ -160,7 +162,8 @@ blindPanel.addEventListener('submit', (e) => {
   // nueva): speak() cancela cualquier frase anterior, así que lo último en anunciarse
   // debe ser la casilla que hay que resolver ahora, no "Correcto" (mismo criterio que
   // ya usa onSquareTimeout() más abajo).
-  announceBlind(correct ? '✅ Correcto.' : `❌ Incorrecto, era ${missedColor}.`);
+  // Un fallo empieza por «Respuesta incorrecta» (y dice cuál era), como en todo el sitio.
+  announceBlind(correct ? '✅ Correcto.' : `Respuesta incorrecta: era ${missedColor}.`);
   if(correct) newTarget();
 });
 

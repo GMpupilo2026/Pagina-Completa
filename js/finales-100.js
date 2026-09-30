@@ -381,9 +381,12 @@
         if (pendingPromo) { api.decir("Elige la pieza para coronar con los botones de debajo."); return; }
         if (game.turn() !== human) { api.decir("No es tu turno todavía."); return; }
         const mv = jugadaEscrita(game, texto);
-        if (!mv) { api.decir("Jugada no válida: «" + texto.trim() + "». Revísala e intenta de nuevo, o pregunta «posición» o «caballos»."); return; }
+        /* Lo mismo que en todo el sitio (ComandosTablero.noSePudoJugar): «no es
+           una jugada legal» solo si ES una jugada; si no («hola»), que no se entendió. */
+        const noSe = () => { api.decir(window.ComandosTablero ? ComandosTablero.noSePudoJugar(texto.trim()) : "«" + texto.trim() + "» no es una jugada legal en esta posición."); try { api.input.select(); } catch (e) {} };
+        if (!mv) { noSe(); return; }
         const hecha = game.move({ from: mv.from, to: mv.to, promotion: mv.promotion || undefined });
-        if (!hecha) { api.decir("Jugada no válida: «" + texto.trim() + "»."); return; }
+        if (!hecha) { noSe(); return; }
         api.limpiar().decir(""); sel = null; afterHuman();
         return;
       }

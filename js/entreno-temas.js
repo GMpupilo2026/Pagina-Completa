@@ -277,8 +277,10 @@ const { getStreak, getBestStreak, setStreak, bumpStreak, resetStreak } = Ejercic
 /* ---------------- Vista de temas ---------------- */
 function normalize(s){ return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); }
 
+let temasALaVista = 0;   // cuántos temas distintos dejó la búsqueda
 function buildThemes(){
   const q = normalize(document.getElementById('search').value.trim());
+  const vistos = new Set();
   const wrap = document.getElementById('groups');
   wrap.innerHTML = '';
   const solved = getSolved();
@@ -300,6 +302,7 @@ function buildThemes(){
       const done = ids.filter((id) => solved[id]).length;
       if(!seen.has(t.key)){ seen.add(t.key); totalThemes++; ids.forEach((id) => allIds.add(id)); }
       if(!ids.length) return;
+      vistos.add(t.key);
       const card = document.createElement('article');
       card.className = 'theme' + (done >= ids.length ? ' done' : '');
       card.innerHTML = `
@@ -319,6 +322,7 @@ function buildThemes(){
   if(!wrap.children.length){
     wrap.innerHTML = '<p class="text-center text-brand-450 dark:text-brand-350 py-10">Ningún tema coincide con la búsqueda.</p>';
   }
+  temasALaVista = vistos.size;
   updateOverall();
 }
 // Con un respiro: buildThemes() recorre todos los temas y, de paso,
@@ -326,9 +330,18 @@ function buildThemes(){
 // tecla mientras se escribe la búsqueda es trabajo (y escritura en disco)
 // de sobra que no cambia nada hasta que la persona deja de teclear.
 let buscarTemaTimer = null;
+/* Y se DICE cuántos quedaron: la lista cambia en silencio, y quien no la ve
+   escribía «mate» sin saber si había algo que recorrer con Tab. */
+function anunciarBusqueda(){
+  const q = document.getElementById('search').value.trim();
+  const n = temasALaVista;
+  document.getElementById('search-anuncio').textContent = !q
+    ? `Se muestran todos los temas: ${n}.`
+    : (n ? `${n} ${n === 1 ? 'tema coincide' : 'temas coinciden'} con «${q}». Tab para recorrerlos.` : `Ningún tema coincide con «${q}».`);
+}
 document.getElementById('search').addEventListener('input', () => {
   clearTimeout(buscarTemaTimer);
-  buscarTemaTimer = setTimeout(buildThemes, 200);
+  buscarTemaTimer = setTimeout(() => { buildThemes(); anunciarBusqueda(); }, 200);
 });
 
 function updateOverall(){
@@ -353,13 +366,17 @@ function updateOverall(){
   try{ localStorage.setItem('entreno_temas_total', String(total)); localStorage.setItem('entreno_temas_done', String(done)); }catch(e){}
 }
 
-function showThemes(){
+/* `enfocar`: el foco va al buscador. Al volver de un tema el botón que lo
+   tenía desaparece con el reproductor y el foco caía al <body>; con la cuenta
+   ciega, además, al llegar a la página (ahí se empieza buscando). */
+function showThemes(enfocar){
   document.getElementById('play-view').style.display = 'none';
   document.getElementById('themes-view').style.display = 'block';
   buildThemes();
   pintarRepaso();
   try{ localStorage.removeItem('entreno_temas_last'); }catch(e){}
   window.scrollTo({ top: 0 });
+  if(enfocar) document.getElementById('search').focus();
 }
 
 /* ---------------- Estado del ejercicio actual ---------------- */
@@ -463,6 +480,11 @@ function refrescarComandos(){
       juego: () => game,
       tablero: () => teclado,
       onEnviar: jugarEscribiendo,
+      /* Muda: la posición se dice UNA vez, al empezar el ejercicio (en el
+         aviso de loadPuzzle). Viva, se releían las treinta y dos piezas
+         después de cada jugada y de cada pista, y tapaban lo único que había
+         cambiado —la jugada del rival, la pista—. Se pide con «posición». */
+      posicionViva: false,
     });
     comandos.ayuda('Jugada: "Cf3", "Nf3", "e4", "Dxh7+", "e8=D". Pregunta: "caballos", "qué hay en e4". Escribe "ayuda" para todo.');
   }
@@ -481,18 +503,29 @@ function jugarEscribiendo(texto, api){
   // que no hace falta ninguna copia: quien decide si entra es playMove(), la
   // misma puerta por la que pasa el clic y la que corrige contra la solución.
   const mv = ComandosTablero.jugadaEscrita(game, texto);
-  if(!mv){ api.decir(`"${texto}" no es una jugada legal en esta posición. Escribe "ayuda" si no sabes qué se puede escribir.`); return; }
+  // No se entendió, o no es legal: js/comandos-tablero.js dice cuál de las dos.
+  if(!mv){ api.decir(ComandosTablero.noSePudoJugar(texto)); return; }
   api.limpiar().decir('');
   playMove(mv.from, mv.to, mv.promotion);
 }
 
+// Lo que se antepone al próximo aviso («La solución era: …»), que si no
+// quedaba tapado por el «¡Correcto!» que viene enseguida.
+let prefijoAviso = '';
 function setStatus(text, cls){
+  if(prefijoAviso){ text = prefijoAviso + ' ' + text; prefijoAviso = ''; }
   const el = document.getElementById('round-status');
   el.textContent = text;
   el.className = 'round-status' + (cls ? ' ' + cls : '');
   // El mismo aviso, repetido en el cuadro de comandos: quien contesta
   // escribiendo tiene el foco ahí y el renglón del tablero le queda lejos.
   if(comandos) comandos.decir(text);
+}
+// Una jugada como se oye: en palabras en Modo Adaptado («caballo felix 3»),
+// en castellano si no («Cf3»).
+function jugadaDicha(san){
+  return document.documentElement.classList.contains('adaptive-mode') && window.BlindNotation
+    ? window.BlindNotation.sanSpoken(san) : EjercicioTablero.jugadaEs(san);
 }
 function highlightTargets(square){ EjercicioTablero.marcarDestinos(document.getElementById('board'), game, square); }
 
@@ -530,8 +563,11 @@ function loadPuzzle(){
      había mate. Y la instrucción depende del modo: "haz clic" no le sirve a
      quien contesta escribiendo. */
   const objetivo = `Juegan ${turnColor}: ${puzzle.mate ? 'encuentra el mate' : 'encuentra la mejor jugada'}.`;
+  // En Modo Adaptado la posición va en este aviso y solo en este: el recuadro
+  // ya no la relee sola en cada jugada (posicionViva: false).
+  const posicion = window.CuadroComandos ? CuadroComandos.posicionEnPalabras(game) : '';
   setStatus(document.documentElement.classList.contains('adaptive-mode')
-    ? `${objetivo} Escribe tu jugada en el recuadro, o "posición" para oír el tablero.`
+    ? `${objetivo} ${posicion ? posicion + ' ' : ''}Escribe tu jugada en el recuadro, o "posición" para volver a oír el tablero.`
     : `${objetivo} Haz clic en la pieza que quieres mover.`);
 }
 
@@ -592,7 +628,8 @@ function playMove(from, to, promotion){
     missedThisPuzzle = true;
     resetStreak();
     EjercicioTablero.destello(document.querySelector('[data-square="' + to + '"]'));
-    setStatus(`${EjercicioTablero.jugadaEs(moveResult.san)} es legal, pero no es la jugada de la solución.` + (refuta ? ' ' + refuta : ''), 'bad');
+    // «Respuesta incorrecta» y no «no es legal»: la jugada se pudo hacer.
+    setStatus(ComandosTablero.incorrecta(jugadaDicha(moveResult.san), refuta || ''), 'bad');
     return;
   }
   lastMove = { from, to };
@@ -618,7 +655,10 @@ function playMove(from, to, promotion){
       finishPuzzle();
     } else {
       pistas.reiniciar();
-      setStatus('Sigue buscando la continuación.');
+      /* La jugada del rival se DICE (como en Mates): el tablero no es región
+         viva, y sin esto se oía «el rival responde…» y después «sigue
+         buscando», sin saber qué se había jugado. */
+      setStatus(`El rival juega ${jugadaDicha(replySan)}. Sigue buscando la continuación.`);
     }
   }, 650);
 }
@@ -720,7 +760,7 @@ const pistas = EjercicioTablero.pistas({
   decir: setStatus,
   enPalabras: () => document.documentElement.classList.contains('adaptive-mode'),
   alDar: () => { usedHintThisPuzzle = true; },
-  alResolver: (j) => { selectedSquare = null; playMove(j.from, j.to, j.promotion || undefined); },
+  alResolver: (j, frase) => { selectedSquare = null; prefijoAviso = frase || ''; playMove(j.from, j.to, j.promotion || undefined); },
 });
 function giveHint(){
   if(locked) return;
@@ -756,8 +796,8 @@ document.getElementById('celebration-replay-btn').addEventListener('click', () =
   currentIndex = 0;
   loadPuzzle();
 });
-document.getElementById('celebration-back-btn').addEventListener('click', showThemes);
-document.getElementById('back-themes').addEventListener('click', (e) => { e.preventDefault(); showThemes(); });
+document.getElementById('celebration-back-btn').addEventListener('click', () => showThemes(true));
+document.getElementById('back-themes').addEventListener('click', (e) => { e.preventDefault(); showThemes(true); });
 
 /* ---------------- Arranque ---------------- */
 let appInitialized = false;
@@ -782,7 +822,7 @@ function initApp(){
   // le vuelve a poner delante.
   // ?repaso=1 es el enlace de «Hoy te toca» del hub: abre la cola directo.
   if(new URLSearchParams(location.search).has('repaso') && pendientesDeRepaso().length){ abrirRepaso(); return; }
-  if(wanted) openTheme(wanted); else showThemes();
+  if(wanted) openTheme(wanted); else showThemes(document.documentElement.classList.contains('modo-ciego'));
 }
 
 async function requireLoginThenGate(){

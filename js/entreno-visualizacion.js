@@ -188,12 +188,16 @@ function updateOverall(){
   bar.setAttribute('aria-valuetext', `${done} de ${total} ejercicios resueltos, faltan ${total - done}`);
 }
 
-function showLevels(){
+/* `enfocar`: el foco va al título de la lista de niveles. Al volver de un
+   nivel el botón que lo tenía desaparece con el reproductor y el foco caía al
+   <body>; con la cuenta ciega, también al llegar a la página. */
+function showLevels(enfocar){
   document.getElementById('play-view').style.display = 'none';
   document.getElementById('levels-view').style.display = 'block';
   buildLevels();
   try{ localStorage.removeItem('entreno_visualizacion_last'); }catch(e){}
   window.scrollTo({ top: 0 });
+  if(enfocar){ const t = document.getElementById('overall-title'); t.setAttribute('tabindex', '-1'); t.focus(); }
 }
 
 /* ---------------- Estado del ejercicio actual ---------------- */
@@ -422,7 +426,12 @@ function jugarEscribiendo(texto){
   const puzzle = currentPuzzle();
   const mv = jugadaDeLaLinea(texto, puzzle.solution[solutionStep]);
   if(!mv){
-    setStatus(`"${texto}" no es una jugada legal en la posición que llevas calculada. Revísala e inténtalo de nuevo.`, 'bad');
+    /* No se entendió, o no es legal (js/comandos-tablero.js dice cuál). Si
+       era una jugada, se recuerda que la posición es la que se lleva
+       calculada, no la del tablero, que no se mueve. */
+    const dicho = window.ComandosTablero ? ComandosTablero.noSePudoJugar(texto) : `«${texto}» no es una jugada legal en esta posición.`;
+    const esJugada = window.ComandosTablero && ComandosTablero.pareceJugada ? ComandosTablero.pareceJugada(texto) : true;
+    setStatus(esJugada ? dicho.replace(/en esta posición\.$/, 'en la posición que llevas calculada. Revísala e inténtalo de nuevo.') : dicho, 'bad');
     flashWrongInput();
     return;
   }
@@ -433,7 +442,8 @@ function jugarEscribiendo(texto){
     missedThisPuzzle = true;
     resetStreak();
     flashWrongInput();
-    setStatus(`${jugadaDicha(mv.san)} es legal, pero no es la jugada de la línea. Vuelve a calcular desde donde ibas.`, 'bad');
+    // «Respuesta incorrecta» y no «no es legal»: la jugada se pudo hacer.
+    setStatus(ComandosTablero.incorrecta(jugadaDicha(mv.san), 'Vuelve a calcular desde donde ibas.'), 'bad');
     return;
   }
   document.getElementById('answer-input').value = '';
@@ -587,9 +597,9 @@ document.getElementById('celebration-replay-btn').addEventListener('click', () =
   currentIndex = 0;
   loadPuzzle();
 });
-document.getElementById('celebration-back-btn').addEventListener('click', showLevels);
+document.getElementById('celebration-back-btn').addEventListener('click', () => showLevels(true));
 document.getElementById('repaso-btn').addEventListener('click', abrirRepaso);
-document.getElementById('back-levels').addEventListener('click', (e) => { e.preventDefault(); showLevels(); });
+document.getElementById('back-levels').addEventListener('click', (e) => { e.preventDefault(); showLevels(true); });
 
 /* ---------------- Arranque ---------------- */
 let appInitialized = false;
@@ -603,7 +613,7 @@ function initApp(){
   try{ last = localStorage.getItem('entreno_visualizacion_last'); }catch(e){}
   const fromHash = (location.hash || '').replace('#', '');
   const wanted = fromHash && idsOf(fromHash).length ? fromHash : (last && idsOf(last).length ? last : null);
-  if(wanted) openLevel(wanted); else showLevels();
+  if(wanted) openLevel(wanted); else showLevels(document.documentElement.classList.contains('modo-ciego'));
 }
 
 async function requireLoginThenGate(){

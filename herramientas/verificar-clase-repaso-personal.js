@@ -145,7 +145,7 @@ async function elAlumno(browser) {
   }), [64, true]);
   const jugar = async (de, a) => { await page.click('#repaso-board [data-square="' + de + '"]'); await page.click('#repaso-board [data-square="' + a + '"]'); };
   await jugar("d2", "d4");
-  igual("una equivocada no cuenta", await page.textContent("#repaso-msg"), "❌ d4 no es la mejor. Inténtalo otra vez.");
+  igual("una equivocada no cuenta", await page.textContent("#repaso-msg"), "Respuesta incorrecta: d4 no es la jugada que buscamos. Inténtalo otra vez.");
   igual("y todavía no se marca nada", await page.evaluate(() => (window.__updates || []).length), 0);
   await page.click("#repaso-otra-btn");
   await jugar("g1", "f3");

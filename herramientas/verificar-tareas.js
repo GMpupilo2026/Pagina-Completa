@@ -546,11 +546,27 @@ async function main() {
     // Ojo: marcar UNO de tres no completa la tarea —eso lo decide la base
     // cuando están los tres—, así que lo que tiene que cambiar es el renglón,
     // no la lista de completadas.
-    await pagina.click("#pendientes-lista .marcar-item");
+    /* La casilla dice DE QUÉ punto es (eran varios «Ya lo hice» iguales), y
+       empieza por lo que se ve escrito. */
+    const nombreCasilla = await pagina.$eval("#pendientes-lista .marcar-item", (e) => e.getAttribute("aria-label"));
+    ok(/^Ya lo hice: .*Estudiar la lección 3/.test(nombreCasilla || ""), `la casilla «Ya lo hice» no dice de qué punto es: ${nombreCasilla}`);
+    // Con el teclado, como lo marca quien no ve: el foco en la casilla y Espacio.
+    await pagina.focus("#pendientes-lista .marcar-item");
+    await pagina.keyboard.press("Space");
     await pagina.waitForFunction(() => {
       const li = [...document.querySelectorAll("#pendientes-lista li")];
       return li.some((e) => /Estudiar la lección 3/.test(e.textContent) && /✔/.test(e.textContent));
     }, { timeout: 8000 });
+    await pagina.waitForTimeout(150);
+    /* Repintar la lista borra la casilla que tenía el foco: tiene que volver a la
+       MISMA casilla (la nueva), no quedarse en el <body>, y decir qué se marcó. */
+    const tras = await pagina.evaluate(() => ({
+      foco: document.activeElement && document.activeElement.matches(".marcar-item") ? document.activeElement.getAttribute("aria-label") : (document.activeElement || {}).tagName,
+      marcada: !!(document.activeElement && document.activeElement.checked),
+      aviso: document.getElementById("tareas-aviso").textContent,
+    }));
+    ok(/^Ya lo hice: .*Estudiar la lección 3/.test(tras.foco || "") && tras.marcada, `al marcar, el foco no vuelve a la misma casilla: ${JSON.stringify(tras)}`);
+    ok(/^Marcado como hecho: .*Estudiar la lección 3/.test(tras.aviso), `al marcar no se dice «Marcado como hecho: …»: ${tras.aviso}`);
     const sigueAbierta = await pagina.$$eval("#pendientes-lista > div", (e) => e.length);
     ok(sigueAbierta === 1, "marcar un renglón de tres no debería dar la tarea entera por hecha");
     const llamadas = await pagina.evaluate(() => window.__llamadas);

@@ -583,7 +583,8 @@ function montarTableroDelRepaso(){
       onEnviar: (texto, api) => {
         if (!repaso.juego || repaso.sel === 'hecha') { api.decir('Toca «Intentarlo otra vez» o pasa a la siguiente.'); return; }
         const mv = window.ComandosTablero ? ComandosTablero.jugadaEscrita(repaso.juego, texto) : null;
-        if (!mv) { api.decir('"' + texto.trim() + '" no es una jugada legal en esta posición.'); return; }
+        // «no es legal» solo si ES una jugada; si no («hola»), que no se entendió.
+        if (!mv) { api.decir(window.ComandosTablero ? ComandosTablero.noSePudoJugar(texto.trim()) : '"' + texto.trim() + '" no es una jugada legal en esta posición.'); try { api.input.select(); } catch (e) {} return; }
         api.limpiar();
         jugarRepaso(mv.from, mv.to, mv.promotion);
       },
@@ -660,7 +661,11 @@ function jugarRepaso(desde, hasta, pieza){
     terminarPreguntaDelRepaso();
   } else {
     repaso.conError.add(x.pregunta.id);
-    msg.textContent = '❌ ' + EjercicioTablero.jugadaEs(mv.san) + ' no es la mejor. Inténtalo otra vez.';
+    /* Se pudo jugar pero no era: empieza por «Respuesta incorrecta», como en
+       todo el sitio (js/comandos-tablero.js); «no es legal» es la que no se puede hacer. */
+    msg.textContent = window.ComandosTablero
+      ? ComandosTablero.incorrecta(EjercicioTablero.jugadaEs(mv.san), 'Inténtalo otra vez.')
+      : 'Respuesta incorrecta: ' + EjercicioTablero.jugadaEs(mv.san) + ' no es la jugada que buscamos. Inténtalo otra vez.';
     document.getElementById('repaso-otra-btn').hidden = false;
   }
   pintarRepaso();

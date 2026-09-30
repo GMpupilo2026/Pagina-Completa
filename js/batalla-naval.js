@@ -249,7 +249,7 @@ function terminar(texto) {
     e + (e === 1 ? " estrella" : " estrellas") + " de 3" + (partida.ayudas ? ", con pista" : "") +
     ". Tres estrellas son hasta " + n.estrellas3 + " disparos sin pista." +
     (record ? " ¡Es tu mejor marca en este nivel!" : "") +
-    " Escribe «nuevo» para otra partida" + (siguiente ? " o «nivel " + siguiente.id + "» para el siguiente." : "."));
+    (siguiente ? " Escribe «siguiente» para el nivel " + siguiente.id + ", o «nuevo» para otra partida de este." : " Escribe «nuevo» para otra partida."));
 }
 
 function decirHistorial() {
@@ -295,13 +295,25 @@ function acomodar() {
 }
 
 function ayuda() {
-  avisar("Escribe una casilla para disparar, como e4 o eva 4. Si cae en el agua, te dice cuántas piezas de la flota apuntan a esa casilla, contando cada pieza como si estuviera sola en el tablero. Comandos: flota dice qué queda a flote; historial repasa tus disparos; pista dice dónde pueden estar las piezas; mi flota, en el duelo, dice dónde están las tuyas; acomodar las cambia antes de empezar; nuevo empieza otra partida; nivel y un número cambia de nivel, del 1 al " + B.NIVELES.length + ".");
+  avisar("Escribe una casilla para disparar, como e4 o eva 4. Si cae en el agua, te dice cuántas piezas de la flota apuntan a esa casilla, contando cada pieza como si estuviera sola en el tablero. Comandos: flota dice qué queda a flote; historial repasa tus disparos; pista dice dónde pueden estar las piezas; mi flota, en el duelo, dice dónde están las tuyas; acomodar las cambia antes de empezar; nuevo empieza otra partida; siguiente, con la partida terminada, pasa al nivel que sigue; nivel y un número cambia de nivel, del 1 al " + B.NIVELES.length + ".");
 }
 
 $("cmd-form").addEventListener("submit", (e) => {
   e.preventDefault();
   const input = $("cmd-input");
   const texto = input.value;
+  /* «siguiente», como en el Sonar y en el resto del sitio: al hundir la flota
+     se escribía «siguiente» y no se entendía, porque esta página decía «nivel 2».
+     Con la partida terminada pasa al nivel que sigue (en el último, otra
+     partida del mismo); a mitad de partida no la tira: dice cómo dejarla. */
+  if (/^\s*(siguiente|el siguiente|siguiente nivel|proximo|próximo|proximo nivel|próximo nivel)\s*$/i.test(texto)) {
+    input.value = "";
+    const sig = B.nivel(nivelActual + 1);
+    if (partida.terminada) { empezar(sig ? sig.id : nivelActual); return; }
+    avisar("La partida sigue: todavía queda flota a flote. Para dejarla, escribe «nuevo» (otra partida de este nivel)" +
+      (sig ? " o «nivel " + sig.id + "» para el siguiente." : "."));
+    return;
+  }
   const c = B.leerComando(texto);
   input.value = "";
   if (!c) { avisar("No entendí «" + texto.trim() + "». Escribe una casilla, como e4 o eva 4, o «ayuda»."); return; }

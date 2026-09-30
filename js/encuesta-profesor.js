@@ -128,12 +128,22 @@
         P.PREGUNTAS.forEach((q) => { args["p_" + q.clave] = Number(valorDe(q.clave)); });
         const { error } = await sb.rpc("responder_encuesta_profesor", args);
         boton.disabled = false;
+        /* Deshabilitar el botón que tiene el foco lo tira al <body>: quien no ve
+           quedaba al principio de la página sin saber si se guardó. Si falló, el
+           foco vuelve al botón; si se guardó, al mensaje de guardado (abajo). */
         // El mensaje de la base dice qué arreglar: se enseña tal cual.
-        if (error) { Avisos.avisar("No se pudo guardar: " + error.message, { tipo: "error" }); return; }
+        if (error) { boton.focus(); Avisos.avisar("No se pudo guardar: " + error.message, { tipo: "error" }); return; }
         const prof = profesores.find((p) => p.id === elegido);
         prof.respondida = true;
         pintarProfesores();
-        document.getElementById("form-estado").textContent = "✅ Guardado. Si cambias algo y vuelves a enviar, se corrige.";
+        const estadoEl = document.getElementById("form-estado");
+        estadoEl.textContent = "";
+        const marca = document.createElement("span");
+        marca.setAttribute("aria-hidden", "true");
+        marca.textContent = "✅ ";
+        estadoEl.append(marca, "Guardado. Si cambias algo y vuelves a enviar, se corrige.");
+        estadoEl.setAttribute("tabindex", "-1");
+        estadoEl.focus();
         boton.textContent = "Guardar los cambios";
         Avisos.avisar("✅ ¡Gracias! Tu opinión sobre las clases con " + prof.nombre + " quedó guardada.", { tipo: "ok" });
     }

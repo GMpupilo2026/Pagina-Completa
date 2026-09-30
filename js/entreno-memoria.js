@@ -146,11 +146,12 @@
           if (/^(comprobar|corregir|revisar|listo|ya esta)$/.test(t)) { reconstruccion.comprobar(); return; }
           if (/^(colocadas|que puse|lo que puse)$/.test(t)) { api.decir(reconstruccion.resumen()); return; }
         }
-        api.decir(reloj
+        // Lo que no se entendió se dice así, primero (regla de los recuadros del sitio).
+        api.decir("No entendí «" + String(texto).trim() + "». " + (reloj
           ? "Pregunta por la posición, o escribe «ya la tengo» para taparla y empezar a reconstruir."
           : reconstruccion
             ? "Escribe «blancas: Rg1, Tf1, e4» o «negras: Rg8, Dd8» para colocar, «colocadas» para oír lo que pusiste y «comprobar» para corregir."
-            : "Para colocar piezas usa los campos «Piezas blancas» y «Piezas negras» de abajo, o la paleta y Enter en cada casilla.");
+            : "Para colocar piezas usa los campos «Piezas blancas» y «Piezas negras» de abajo, o la paleta y Enter en cada casilla."));
       },
     });
   }

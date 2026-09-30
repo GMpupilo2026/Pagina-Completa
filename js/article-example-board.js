@@ -178,8 +178,22 @@
     esperando.push(listo);
   }
 
+  /* Y js/comandos-tablero.js, que es el que pone la posición en palabras:
+     Alt + Mayúscula + B (js/vision-cuenta.js) le pide la posición al diagrama
+     a través de él, y los artículos no lo cargaban — el diagrama tenía su
+     partida y aun así se oía «no hay una posición que decir». */
+  function conComandosTablero() {
+    if (window.ComandosTablero || document.querySelector("script[data-comandos-tablero]")) return;
+    const s = document.createElement("script");
+    s.src = ESTE_SCRIPT ? new URL("comandos-tablero.js", ESTE_SCRIPT).href : "/js/comandos-tablero.js";
+    s.setAttribute("data-comandos-tablero", "");
+    document.head.appendChild(s);
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
-    document.querySelectorAll(".example-card[data-fen]").forEach(setupCard);
+    const tarjetas = document.querySelectorAll(".example-card[data-fen]");
+    tarjetas.forEach(setupCard);
+    if (tarjetas.length) conTableroAccesible(conComandosTablero);
   });
 
   // El diagrama en sí (tablero de 8x8, con el tamaño de pieza MEDIDO sobre la

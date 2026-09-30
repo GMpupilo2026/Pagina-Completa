@@ -114,8 +114,12 @@
             const input = document.getElementById("ciegas-input"), msg = document.getElementById("ciegas-msg");
             const texto = input.value.trim();
             if (!texto) return;
-            const r = engine.moveText(texto);
-            if (!r) { msg.textContent = "\u201c" + texto + "\u201d no es una jugada legal en esta posición. Prueba otra vez."; input.select(); return; }
+            // «enroque corto/largo», como se dice en voz; el motor solo entiende «O-O».
+            const dicho = texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ");
+            const r = engine.moveText(dicho === "enroque corto" ? "O-O" : dicho === "enroque largo" ? "O-O-O" : texto);
+            /* «no es una jugada legal» solo si lo escrito ES una jugada; si no
+               («hola»), que no se entendió (ComandosTablero.noSePudoJugar). */
+            if (!r) { msg.textContent = window.ComandosTablero ? ComandosTablero.noSePudoJugar(texto) : "\u201c" + texto + "\u201d no es una jugada legal en esta posición."; input.select(); return; }
             input.value = ""; msg.textContent = "";
             board.render();
             ciegasMostrarUltima(r.san, true);

@@ -256,8 +256,10 @@ window.ClaseAdaptada = (function () {
         var mv = window.ComandosTablero && ComandosTablero.jugadaEscrita
           ? ComandosTablero.jugadaEscrita(g, texto) : null;
         if (!mv) {
-          noSePudo(api, "\"" + texto.trim() + "\" no es una jugada legal en esta posición. "
-            + "Escribe \"posición\" para oírla, o \"ayuda\" para ver qué se puede escribir.");
+          /* Lo que se dice en todo el sitio (ComandosTablero.noSePudoJugar): «no
+             es una jugada legal» solo si lo escrito ES una jugada; si no («hola»),
+             que no se entendió. */
+          noSePudo(api, ComandosTablero.noSePudoJugar(texto.trim()));
           return;
         }
         var hecha = b.jugar(mv);

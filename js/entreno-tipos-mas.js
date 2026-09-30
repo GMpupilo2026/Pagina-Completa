@@ -23,15 +23,23 @@
   const CLASE_OPCION = "block w-full text-left p-3 rounded-lg bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 hover:border-accent-500 text-brand-800 dark:text-brand-100 font-semibold mb-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
 
   /* Opciones de una sola respuesta: primera vez bien, tres estrellas;
-     segunda, una; después se dice cuál era. */
+     segunda, una; después se dice cuál era.
+     Cada botón lleva su letra escrita («Opción A. Italiana»), y en Modo
+     Adaptado se contesta también escribiendo: la letra, el número o una
+     palabra que la distinga («italiana», «tablas», «ganan»). Si el juego ya
+     puso su propio recuadro (Intercambios: «+1», «pierdes 2»), lo deja: ese
+     prueba primero con las opciones escritas (U.responderConOpcion). */
   function opciones(item, lista, etiqueta, esBuena, alTerminar) {
     let intentos = 0, hecho = false;
     const caja = el("div");
     caja.setAttribute("role", "group");
     caja.setAttribute("aria-label", "Opciones");
-    lista.forEach((op) => {
-      const b = el("button", CLASE_OPCION, etiqueta(op));
+    const conLetra = (op, k) => "Opción " + U.letraDe(k) + ". " + etiqueta(op);
+    const botones = [];
+    lista.forEach((op, k) => {
+      const b = el("button", CLASE_OPCION, conLetra(op, k));
       b.type = "button";
+      botones.push(b);
       b.dataset.op = String(op);   // para contestar escribiendo (Intercambios)
       b.addEventListener("click", () => {
         if (hecho) return;
@@ -39,22 +47,30 @@
         if (esBuena(op)) {
           hecho = true;
           const n = intentos === 1 ? 3 : intentos === 2 ? 1 : 0;
-          b.textContent = "✓ " + etiqueta(op);
+          b.textContent = "✓ " + conLetra(op, k);
           caja.querySelectorAll("button").forEach((x) => { x.disabled = true; });
           alTerminar(true, n);
         } else {
           b.disabled = true;
-          b.textContent = "✗ " + etiqueta(op);
+          b.textContent = "✗ " + conLetra(op, k);
           if (intentos >= 2) {
             hecho = true;
             caja.querySelectorAll("button").forEach((x) => { x.disabled = true; });
             alTerminar(false, 0);
-          } else estado("✗ No. Te queda un intento.");
+          } else estado("Respuesta incorrecta: no es la opción " + U.letraDe(k) + ". Te queda un intento.");
         }
       });
       caja.appendChild(b);
     });
     $("controles").appendChild(caja);
+    U.ponerOpciones(lista.map((op, k) => ({ nombre: etiqueta(op), el: botones[k], elegir: () => botones[k].click() })));
+    if (U.adaptado() && !$("jugada-form").dataset.propio) {
+      U.pedirJugada("Escribe la letra de la opción o una palabra suya (por ejemplo «b»); «opciones» las dice", (txt) => {
+        if (hecho) { estado("Este ya lo resolviste."); return; }
+        if (!U.responderConOpcion(txt)) U.noEsOpcion(txt);
+      });
+    }
+    delete $("jugada-form").dataset.propio;
   }
 
   /* ================================================ 8. El Barrido */
@@ -129,7 +145,7 @@
     $("controles").appendChild(boton("Comprobar", BTN_PRIMARIO, comprobar));
     U.pedirJugada("O escribe una jugada y pulsa Intro", (txt) => {
       const m = U.jugadaEscrita(new Chess(item.fen), txt);
-      if (!m) { estado("No entendí «" + txt + "» como una jugada de las " + COLOR[yo] + "."); return; }
+      if (!m) { U.noSePudo(txt); return; }
       $("jugada-input").value = "";
       anotar({ from: m.from, to: m.to, promotion: m.promotion });
     });
@@ -149,7 +165,10 @@
     /* Contestar escribiendo: «+1», «-1», «ganas 1», «pierdes 1», «igual», o
        en los niveles 1 y 2 solo «ganas», «pierdes», «igual». Aprieta el botón
        de esa opción, así cuenta igual que el clic. */
-    U.pedirJugada("O escribe la respuesta («+1», «-1», «ganas 1», «pierdes 1», «igual»)", (txt) => {
+    $("jugada-form").dataset.propio = "1";   // opciones() no lo reemplaza
+    U.pedirJugada("O escribe la respuesta («+1», «-1», «ganas 1», «pierdes 1», «igual») o la letra de la opción", (txt) => {
+      // La letra de la opción («b», «opción b») también vale.
+      if (window.CuadroComandos && CuadroComandos.opcionPedida(txt, item.opciones.length) !== null && U.responderConOpcion(txt)) return;
       const t = txt.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[.!¡]/g, "").trim();
       let sg = null, num = null, m;
       if (/^(igual|queda igual|0|cero|empate|nada)$/.test(t)) { sg = 0; num = 0; }
@@ -171,7 +190,7 @@
     });
     opciones(item, item.opciones, etiqueta, (op) => (item.nivel <= 2 ? op === signo(item.valor) : +op === item.valor), (bien, n) => {
       const r = M.textoIntercambio(item.valor, yo);
-      estado((bien ? "✓ ¡Correcto! " : "Era: ") + r.charAt(0).toUpperCase() + r.slice(1) + ". " + (n ? textoEstrellas(n) : ""));
+      estado((bien ? "✓ ¡Correcto! " : "Respuesta incorrecta. Era: ") + r.charAt(0).toUpperCase() + r.slice(1) + ". " + (n ? textoEstrellas(n) : ""));
       explicar(item.respuesta);
       terminar(item, n);
     });
@@ -232,7 +251,7 @@
       $("juego-enunciado").textContent = item.nivel === 1 ? "¿El peón corona, o el rey negro lo alcanza?" : "¿Ganan las blancas, o son tablas?";
       if (item.nivel === 1) $("controles").appendChild(el("p", "text-sm text-brand-600 dark:text-brand-300 mb-3", "Pista de siempre: la regla del cuadrado. Si el rey negro entra en el cuadrado del peón, lo alcanza."));
       opciones(item, [true, false], (v) => (v ? "Ganan las blancas: el peón corona" : "Tablas: el rey negro lo para"), (v) => v === item.gana, (bien, n) => {
-        estado((bien ? "✓ ¡Correcto! " : "No: ") + (item.gana ? "ganan las blancas." : "son tablas.") + " " + (n ? textoEstrellas(n) : ""));
+        estado((bien ? "✓ ¡Correcto! " : "Respuesta incorrecta: ") + (item.gana ? "ganan las blancas." : "son tablas.") + " " + (n ? textoEstrellas(n) : ""));
         explicar(item.respuesta.concat(["Calculado con la tabla completa de rey y peón contra rey: no hay opinión, es el resultado con la mejor jugada de los dos."]));
         terminar(item, n);
       });
@@ -279,7 +298,7 @@
     redibujar(null);
     U.pedirJugada("O escribe tu jugada", (txt) => {
       const m = U.jugadaEscrita(juego, txt);
-      if (!m) { estado("No entendí «" + txt + "» como una jugada de las blancas."); return; }
+      if (!m) { U.noSePudo(txt); return; }
       $("jugada-input").value = "";
       jugar({ from: m.from, to: m.to, promotion: m.promotion });
     });
@@ -313,7 +332,7 @@
       if (U.adaptado()) U.leerPosicion(pos.fen);
       U.pedirJugada("O escribe tu jugada", (txt) => {
         const m = U.jugadaEscrita(new Chess(pos.fen), txt);
-        if (!m) { estado("No entendí «" + txt + "» como una jugada de las " + COLOR[lado] + "."); return; }
+        if (!m) { U.noSePudo(txt); return; }
         $("jugada-input").value = "";
         adivinar({ from: m.from, to: m.to, promotion: m.promotion });
       });
@@ -372,7 +391,7 @@
     }
     opciones(item, item.opciones, (o) => o, (o) => o === item.correcta, (bien, n) => {
       if (item.nivel === 3) U.tablero(item.fen, { orientacion: "w" });
-      estado((bien ? "✓ ¡Correcto! " : "Era: ") + item.correcta + ". " + (n ? textoEstrellas(n) : ""));
+      estado((bien ? "✓ ¡Correcto! " : "Respuesta incorrecta. Era: ") + item.correcta + ". " + (n ? textoEstrellas(n) : ""));
       explicar(item.respuesta.concat(["Las jugadas" + (item.orden ? " en su orden de siempre" : "") + ": " + lineaTexto(item.orden || item.jugadas) + "."]));
       terminar(item, n);
     });
@@ -508,7 +527,7 @@
     redibujar(null);
     U.pedirJugada("O escribe tu jugada (las " + COLOR[yo] + ")", (txt) => {
       const m = U.jugadaEscrita(juego, txt);
-      if (!m) { estado("No entendí «" + txt + "» como una jugada de las " + COLOR[yo] + "."); return; }
+      if (!m) { U.noSePudo(txt); return; }
       $("jugada-input").value = "";
       jugar({ from: m.from, to: m.to, promotion: m.promotion });
     });
@@ -641,7 +660,7 @@
     redibujar(null);
     U.pedirJugada("O escribe tu jugada (las " + COLOR[yo] + ")", (txt) => {
       const m = U.jugadaEscrita(juego, txt);
-      if (!m) { estado("No entendí «" + txt + "» como una jugada de las " + COLOR[yo] + "."); return; }
+      if (!m) { U.noSePudo(txt); return; }
       $("jugada-input").value = "";
       jugar({ from: m.from, to: m.to, promotion: m.promotion });
     });
@@ -715,7 +734,7 @@
     U.tablero(item.fen, { orientacion: yo, juego, clic: U.moverConClic(juego, elegir) });
     U.pedirJugada("O escribe tu jugada (las " + COLOR[yo] + ")", (txt) => {
       const m = U.jugadaEscrita(juego, txt);
-      if (!m) { estado("No entendí «" + txt + "» como una jugada de las " + COLOR[yo] + "."); return; }
+      if (!m) { U.noSePudo(txt); return; }
       $("jugada-input").value = "";
       elegir({ from: m.from, to: m.to, promotion: m.promotion });
     });
@@ -1063,7 +1082,9 @@
         estado("✗ " + R.sanEs(r.san) + " tampoco. La mejor era " + R.sanEs(item.mejor) + ".");
         return cerrar(0);
       }
-      estado("✗ " + (r.esLaDeLaPartida ? "Esa es la que jugaste en la partida: fue el error. " : R.sanEs(r.san) + " no es de las buenas. ") + "Busca otra.");
+      estado(r.esLaDeLaPartida
+        ? "Respuesta incorrecta: " + R.sanEs(r.san) + " es la que jugaste en la partida, y fue el error. Busca otra."
+        : U.incorrecta(R.sanEs(r.san), "No es de las buenas. Busca otra."));
       redibujar(null);
     }
     $("juego-turno").textContent = "Juegas con las " + COLOR[yo] + ". " + (item.resumen || "");
@@ -1088,7 +1109,7 @@
     redibujar(null);
     U.pedirJugada("O escribe tu jugada (las " + COLOR[yo] + ")", (txt) => {
       const m = U.jugadaEscrita(juego, txt);
-      if (!m) { estado("No entendí «" + txt + "» como una jugada de las " + COLOR[yo] + "."); return; }
+      if (!m) { U.noSePudo(txt); return; }
       $("jugada-input").value = "";
       jugar({ from: m.from, to: m.to, promotion: m.promotion });
     });

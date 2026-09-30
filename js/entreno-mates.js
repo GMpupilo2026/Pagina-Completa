@@ -135,7 +135,42 @@ function montarComandos(){
   comandos.ayuda('Jugada: "Cf3", "Nf3", "Dxh7+", "e1 g1". Pregunta: "caballos", "qué hay en e4". Escribe "ayuda" para todo.');
 }
 
+/* Cambiar de categoría escribiendo: «mate en 2», «categorías». Las pestañas
+   de arriba quedan lejos del recuadro, y quien hace todo escribiendo tenía que
+   salir a buscarlas con Tab (y volver). Va antes que todo lo demás: se puede
+   pedir en medio de un ejercicio o con uno terminado. */
+const NUMERO_ESCRITO = { '1': 1, uno: 1, '2': 2, dos: 2, '3': 3, tres: 3 };
+function categoriaEscrita(texto){
+  const t = String(texto || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim();
+  if(/^(las )?categorias?$/.test(t)) return 'lista';
+  if(/^(repasar|repaso|repasar fallados)$/.test(t)) return REPASO;
+  const m = t.match(/^(?:categoria )?mate ?en ?(1|2|3|uno|dos|tres)$/) || t.match(/^mate(1|2|3)$/);
+  return m ? 'mate' + NUMERO_ESCRITO[m[1]] : null;
+}
+function nombreCategoria(cat){ return CATEGORY_LABEL[cat].replace(/^\S+\s/, ''); }
+function listaDeCategorias(){
+  const partes = CATEGORY_ORDER.map((c) => `${nombreCategoria(c)}: ${solvedCountFor(c)} de ${PUZZLES[c].length} resueltos`);
+  const pendientes = pendientesDeRepaso().length;
+  if(pendientes) partes.push(`Repasar fallados: ${pendientes} para hoy`);
+  return `Categorías (estás en ${nombreCategoria(currentCategory)}). ${partes.join('. ')}. Escribe por ejemplo «mate en 2» para cambiar.`;
+}
+// Lo que se antepone al próximo aviso: la categoría recién elegida, o «La
+// solución era: …», que si no quedaban tapados por el aviso del ejercicio.
+let prefijoAviso = '';
+
 function jugarEscribiendo(texto, api){
+  const cat = categoriaEscrita(texto);
+  if(cat === 'lista'){ api.limpiar().decir(listaDeCategorias()); return; }
+  if(cat){
+    if(cat === REPASO && !pendientesDeRepaso().length && currentCategory !== REPASO){
+      api.decir('Hoy no te toca repasar ningún mate. ' + listaDeCategorias()); return;
+    }
+    api.limpiar();
+    prefijoAviso = `Categoría elegida: ${nombreCategoria(cat)}.`;
+    openCategory(cat);
+    if(prefijoAviso){ const p = prefijoAviso; prefijoAviso = ''; api.decir(p); }
+    return;
+  }
   // Terminado el ejercicio, «siguiente» escrito hace lo mismo que el botón.
   if(finEjercicio && finEjercicio.activo()){
     if(/^\s*sig(uiente)?\s*$/i.test(texto)){ api.limpiar(); finEjercicio.siguiente(); }
@@ -146,7 +181,9 @@ function jugarEscribiendo(texto, api){
   // El intérprete busca la jugada entre las LEGALES y no toca la partida, así que
   // no hace falta ninguna copia.
   const mv = ComandosTablero.jugadaEscrita(game, texto);
-  if(!mv){ api.decir(`"${texto}" no es una jugada legal en esta posición. Escribe "ayuda" si no sabes qué se puede escribir.`); return; }
+  // Tres casos que se decían igual: no se entendió, no es legal, o es legal
+  // pero no es la respuesta (ese lo dice playMove). js/comandos-tablero.js.
+  if(!mv){ api.decir(ComandosTablero.noSePudoJugar(texto)); return; }
   api.limpiar().decir('');
   playMove(mv.from, mv.to, mv.promotion);
 }
@@ -309,6 +346,7 @@ function montarTeclado(){
 }
 
 function setStatus(text, cls){
+  if(prefijoAviso){ text = prefijoAviso + ' ' + text; prefijoAviso = ''; }
   const el = document.getElementById('round-status');
   el.textContent = text;
   el.className = 'round-status' + (cls ? ' ' + cls : '');
@@ -419,7 +457,10 @@ function playMove(from, to, promotion){
     missedThisPuzzle = true;
     resetStreak();
     EjercicioTablero.destello(document.querySelector('[data-square="' + to + '"]'));
-    setStatus(`${EjercicioTablero.jugadaEs(moveResult.san)} es legal, pero no lleva al mate en la cantidad de jugadas pedida.` + (refuta ? ' ' + refuta : ''), 'bad');
+    // «Respuesta incorrecta» y no «no es legal»: la jugada se pudo hacer. En
+    // Modo Adaptado, en palabras («caballo felix 3»), como todo lo que se oye.
+    const dicha = blindMode && window.BlindNotation ? window.BlindNotation.sanSpoken(moveResult.san) : EjercicioTablero.jugadaEs(moveResult.san);
+    setStatus(ComandosTablero.incorrecta(dicha, 'No lleva al mate en la cantidad de jugadas pedida.' + (refuta ? ' ' + refuta : '')), 'bad');
     return;
   }
 
@@ -520,7 +561,7 @@ const pistas = EjercicioTablero.pistas({
   decir: setStatus,
   enPalabras: () => blindMode,
   alDar: () => { usedHintThisPuzzle = true; },
-  alResolver: (j) => { selectedSquare = null; playMove(j.from, j.to, j.promotion || undefined); },
+  alResolver: (j, frase) => { selectedSquare = null; prefijoAviso = frase || ''; playMove(j.from, j.to, j.promotion || undefined); },
 });
 function giveHint(){
   if(locked) return;

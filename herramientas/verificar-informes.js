@@ -555,6 +555,10 @@ async function pruebaProfesor(browser) {
   igual("Asignaciones respondidas", await tarjeta(page, "Asignaciones respondidas"), "10");
   igual("Correctas", await tarjeta(page, "Correctas"), "7");
   igual("Precisión", await tarjeta(page, "Precisión"), "78%");
+  /* El emoji de cada tarjeta es adorno: el lector lo leía delante de la cifra
+     («dardo 78% Precisión»). Va con aria-hidden. */
+  igual("el emoji de las tarjetas no lo lee el lector", await page.evaluate(() =>
+    [...document.querySelectorAll("#stat-cards > div")].filter((d) => d.children[0].getAttribute("aria-hidden") !== "true").length), 0);
   igual("Pendientes de revisar", await tarjeta(page, "Pendientes de revisar"), "1");
   igual("Asistencia", await tarjeta(page, "Asistencia (75%)"), "3/4");
   igual("Tiempo total en la plataforma", await tarjeta(page, "Tiempo total en la plataforma"), "1 h 35 min");
@@ -926,7 +930,7 @@ async function pruebaAlumno(browser) {
   igual("Temas de cursos estudiados", await tarjeta(page, "Temas de cursos estudiados"), "3");
   igual("Ejercicios por tema, con cuántos limpios", await tarjeta(page, "Ejercicios por tema resueltos (70 % sin error ni pista)"), "30");
   igual("Visualización", await tarjeta(page, "Ejercicios de Visualización resueltos"), "4");
-  igual("Habilidades (los Tipos de entrenamiento)", await tarjeta(page, "Habilidades: ejercicios con estrellas"), "5 (12⭐)");
+  igual("Habilidades (los Tipos de entrenamiento)", await tarjeta(page, "Habilidades: ejercicios con estrellas"), "5 (12⭐ estrellas)");
   igual("Aperturas", await tarjeta(page, "Líneas de Aperturas estudiadas"), "3 (1 firmes)");
   igual("Precisión posicional", await tarjeta(page, "Precisión posicional"), "75 % en la última · 2 rondas");
   igual("Finales contra la máquina", await tarjeta(page, "Finales contra la máquina logrados"), "3");

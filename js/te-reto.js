@@ -280,6 +280,16 @@
          * Ver js/cuadro-comandos.js. El tablero NO se esconde: quien ve poco usa
          * las dos cosas. */
         let comandos = null;
+        /* El reloj dicho en voz: «tiempo» en el recuadro, y en Modo Adaptado los
+           avisos de mitad de tiempo y de los 10 segundos, por la misma región viva
+           del recuadro (y en voz alta si la voz está encendida). */
+        const relojHablado = window.RelojHablado ? RelojHablado.crear({
+            hablar: () => modoAdaptado(),
+            decir: (texto) => {
+                if (comandos) comandos.decir(texto);
+                if (window.BlindNotation && BlindNotation.speak) { try { BlindNotation.speak(texto); } catch (e) {} }
+            },
+        }) : null;
 
         function refrescarComandos() {
             if (!window.CuadroComandos || !game) return;
@@ -306,6 +316,12 @@
         }
 
         function jugarEscribiendo(texto, api) {
+            // «tiempo», «reloj», «cuánto tiempo»: los segundos que quedan. Va antes que
+            // lo demás porque la barra que se achica no la oye nadie (js/reloj-hablado.js).
+            if (relojHablado && relojHablado.esPregunta(texto)) {
+                api.limpiar().decir(relojHablado.texto());
+                return;
+            }
             if (!running || resultLocked) { api.decir("Ahora mismo no se puede contestar."); return; }
             // El intérprete HACE la jugada sobre la partida que se le pasa, así
             // que se le pasa una copia: quien decide si entra es attemptMove(),
@@ -313,7 +329,12 @@
             const copia = new Chess(game.fen());
             const mv = CuadroComandos.jugadaPedida(copia, texto);
             if (!mv) {
-                api.decir('"' + texto + '" no es una jugada legal en esta posición. Revísala e inténtalo de nuevo.');
+                /* Tres casos distintos (ComandosTablero.noSePudoJugar): lo escrito no
+                   es una jugada («hola»), o es una jugada que no se puede hacer acá.
+                   Decirle «no es legal» a un «hola» lo manda a revisar una jugada
+                   que no escribió. */
+                api.decir(window.ComandosTablero ? ComandosTablero.noSePudoJugar(texto)
+                    : '"' + texto + '" no es una jugada legal en esta posición.');
                 // Seleccionado, lo siguiente que se escriba lo reemplaza en vez de pegarse detrás.
                 try { api.input.select(); } catch (e) {}
                 return;
@@ -337,7 +358,7 @@
             if (!move) { renderBoard(); return; }
             const isCorrect = (from + to) === currentSolution.slice(0, 4) &&
                 (currentSolution.length < 5 || currentSolution[4] === move.promotion);
-            if (isCorrect) onCorrect(); else onFail("wrong");
+            if (isCorrect) onCorrect(); else onFail("wrong", move.san);
         }
 
         function flashBoard(kind) {
@@ -352,6 +373,7 @@
             if (resultLocked) return;
             resultLocked = true;
             clearTimeout(failTimeoutId);
+            if (relojHablado) relojHablado.parar();
             streak++;
             updateStreakDisplay();
             flashBoard("correct");
@@ -366,15 +388,22 @@
             setTimeout(() => { if (running) loadPuzzle(); }, 350);
         }
 
-        async function onFail(reason) {
+        async function onFail(reason, sanJugada) {
             if (resultLocked) return;
             resultLocked = true;
             clearTimeout(failTimeoutId);
+            if (relojHablado) relojHablado.parar();
             stopTimerBar();
             flashBoard("wrong");
             renderBoard();
             const finalStreak = streak;
-            const reasonText = reason === "timeout" ? "⏱️ ¡Se acabó el tiempo!" : "❌ Esa no era la jugada.";
+            /* La jugada se pudo hacer pero no era la del ejercicio: el mensaje
+               EMPIEZA por «Respuesta incorrecta» (ComandosTablero.incorrecta), que es
+               lo que se dice en todo el sitio; «no es legal» queda para la que no se
+               puede hacer. La jugada, en palabras. */
+            const dicha = sanJugada && window.BlindNotation ? BlindNotation.sanSpoken(sanJugada) : (sanJugada || "");
+            const reasonText = reason === "timeout" ? "⏱️ ¡Se acabó el tiempo!"
+                : (window.ComandosTablero && dicha ? ComandosTablero.incorrecta(dicha) : "Respuesta incorrecta: esa no era la jugada.");
             // La jugada, dicha en palabras ("caballo efe 3", no "Nf3"): el SAN en
             // inglés lo deletrea el lector de pantalla y no se entiende.
             const correcta = window.BlindNotation ? BlindNotation.sanSpoken(currentSan) : currentSan;
@@ -422,6 +451,7 @@
             clearTimeout(failTimeoutId);
             startTimerBar();
             failTimeoutId = setTimeout(() => onFail("timeout"), limiteMs());
+            if (relojHablado) relojHablado.empezar(limiteMs());
         }
 
         // ---------- Elegir y cargar un ejercicio al azar ----------

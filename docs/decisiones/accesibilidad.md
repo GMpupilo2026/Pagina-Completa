@@ -970,3 +970,45 @@ Lo principal:
   el foco en el botón, TV en vivo y los logros de juegos no adaptados no se
   ofrecen.
 
+
+### La segunda recorrida: el reloj, el enroque dicho y lo que se dice al fallar
+
+Una segunda vuelta con la cuenta «ciego» dejó lo que faltaba alrededor de los
+ejercicios:
+
+- **Tres mensajes distintos cuando no se juega** (`ComandosTablero.noSePudoJugar`
+  y `ComandosTablero.incorrecta`, en `js/comandos-tablero.js`): «no es una
+  jugada legal» SOLO si lo escrito es una jugada que no se puede hacer; «No
+  entendí «hola»» si no es una jugada; y si se pudo jugar pero no era la
+  buscada, el mensaje EMPIEZA por «Respuesta incorrecta: …» (¡Te reto!, Racha
+  táctica, adivinar en los cursos, el calentamiento y el repaso de la clase,
+  lo que califica el profe). Antes las tres cosas se decían «Jugada no válida»
+  o «No es esa», y quien no ve revisaba una jugada que no había escrito.
+- **El reloj dicho** (`js/reloj-hablado.js`): en ¡Te reto! y Racha táctica
+  «tiempo», «reloj», «cuánto tiempo» y «segundos» dicen lo que queda, y en
+  Modo Adaptado se avisa solo a la mitad y a los 10 segundos. En el examen,
+  «tiempo» dice lo que le queda al examen.
+- **«enroque corto» / «enroque largo»** en Estándar, Niebla, contra Oscar, a
+  ciegas contra el bot y en las variantes: antes solo se entendía «O-O».
+- **«siguiente»** en Batalla naval, como en el Sonar.
+- **La pregunta de opciones de la clase**: las opciones van en una lista, así
+  que «leer» las dice con su letra; «opciones» y «repetir» las repiten, y el
+  texto de una opción la elige si nombra una sola. Al llegar la pregunta se
+  vacía lo que había a medias en el recuadro de la clase.
+- **El foco no cae al `<body>`**: al marcar «Ya lo hice» en Tareas (vuelve a
+  la misma casilla, que ahora dice de qué punto es, y se anuncia), al enviar
+  la encuesta al profesor (va al mensaje de guardado) y al cambiar a
+  `#entrenar` con el panel ya abierto (`hashchange`).
+- **Nombres y adornos**: el selector de la foto de perfil se llama «Elegir la
+  foto de perfil» (no «Choose File»), el «(cambiar)» de ¡Te reto! dice qué
+  cambia, los emojis de las cifras de Informes van con `aria-hidden`, el
+  nivel del motor en los cursos no se lee pegado («Nivel 15001800Máximo»:
+  «leer» lee los `<label>` y el select iba adentro), y los diagramas de los
+  artículos cargan `comandos-tablero.js` para que Alt + Mayúscula + B diga su
+  posición.
+
+Lo miden `verificar-juegos-accesible.js` (reloj, enroque, los tres mensajes),
+`verificar-batalla-naval.js`, `verificar-clase-adaptada.js`,
+`verificar-examenes.js`, `verificar-panel.js`, `verificar-tareas.js`,
+`verificar-encuesta-profesor.js`, `verificar-informes.js`,
+`verificar-foto-perfil.js` y `verificar-curso-adaptado.js`.

@@ -153,13 +153,16 @@ async function main() {
     await page.waitForSelector("#fichas li", { timeout: 15000 });
     const fichas = await page.$$eval("#fichas li", (lis) => lis.map((li) => ({
       titulo: li.querySelector("h2").textContent.trim(),
-      enlace: li.querySelector("h2 a").getAttribute("href"),
+      enlace: (li.querySelector("a[href^='#']") || { getAttribute: () => "" }).getAttribute("href"),
       visible: li.checkVisibility(),
+      // Las paradas de Tab de la tarjeta: antes eran dos (el título y «Empezar: …») al mismo lugar.
+      paradas: [...li.querySelectorAll("a[href], button, input, [tabindex]")].filter((x) => x.tabIndex >= 0 && x.checkVisibility()).length,
     })));
     ok("diecinueve fichas", fichas.length === 19, fichas.length);
     ok("cada una con su encabezado y su enlace", fichas.every((f) => f.titulo && /^#[a-z-]+$/.test(f.enlace) && f.visible), JSON.stringify(fichas));
+    ok("cada tarjeta es UNA sola parada de Tab", fichas.every((f) => f.paradas === 1), JSON.stringify(fichas.map((f) => f.paradas)));
     ok("un solo h1", (await page.$$eval("#vista-fichas h1", (h) => h.length)) === 1);
-    await page.click('#fichas li:first-child h2 a');
+    await page.click("#fichas li:first-child a[href^='#']");
     await page.waitForSelector("#vista-tipo:not(.hidden) #niveles li");
     const niveles = await page.$$eval("#niveles li", (l) => l.length);
     ok("el Detective abre sus 4 niveles", niveles === 4, niveles);
@@ -429,8 +432,8 @@ async function main() {
     const tab = R.tablero(item.fen);
     const vacia = Array.from({ length: 64 }, (_, i) => R.sq(i)).find((s) => !tab[R.idx(s)] && !item.soluciones.includes(s));
     await escribir(page, vacia);
-    const t1 = await esperarEstado(page, /✗/);
-    ok("una casilla que no sirve se explica", /✗/.test(t1), t1);
+    const t1 = await esperarEstado(page, /✗|Respuesta incorrecta/);
+    ok("una casilla que no sirve se explica, empezando por «Respuesta incorrecta»", /^Respuesta incorrecta/.test(t1), t1);
     await page.click('#tablero [data-square="' + item.soluciones[0] + '"]');
     const t2 = await esperarEstado(page, /Eso es/);
     ok("la casilla buena, tocada en el tablero", /Eso es/.test(t2), t2);
@@ -457,7 +460,7 @@ async function main() {
     ({ page, ctx, errores } = await abrir(browser, true, "#peones/3/" + b.id));
     await page.waitForSelector("#vista-juego:not(.hidden) #jugada-input");
     await escribir(page, R.sanEs(b.jugada));
-    ok("nivel 3: la única jugada que gana", /única que gana/.test(await esperarEstado(page, /única que gana|✗/)));
+    ok("nivel 3: la única jugada que gana", /única que gana/.test(await esperarEstado(page, /única que gana|✗|Respuesta incorrecta/)));
     await ctx.close();
     // nivel 4: se juega hasta coronar, siempre con una jugada que gana
     const c = DATOS.peones.find((x) => x.nivel === 4);
@@ -536,7 +539,7 @@ async function main() {
     const sinElla = tab.slice(); sinElla[R.idx(item.desde)] = null;
     const atacadas = M.atacadas(sinElla, R.otro(item.fen.split(" ")[1]));
     const mala = [...atacadas].map(R.sq).find((s) => !tab[R.idx(s)]);
-    if (mala) { await escribir(page, mala); ok("una casilla atacada se rechaza", /atacada|no llega/.test(await esperarEstado(page, /✗/))); }
+    if (mala) { await escribir(page, mala); ok("una casilla atacada se rechaza", /atacada|no llega/.test(await esperarEstado(page, /✗|Respuesta incorrecta/))); }
     for (const s of item.camino) await page.click('#tablero [data-square="' + s + '"]');
     const t = await esperarEstado(page, /Llegaste|camino más corto/);
     ok("por el camino más corto: tres estrellas", /camino más corto/.test(t) && (await estrellas(page))["ruta:" + item.id] === 3, t);
@@ -615,8 +618,8 @@ window.PracticeEngine = {
     async function jugarHasta(page, item, re) {
       const vistas = new Set();
       for (let k = 0; k < item.jugadas + 2; k++) {
-        const t = await esperarEstado(page, /Te toca|Remataste|Aguantaste|Salvaste|✗|no cuenta|Vas ganando|Vas con menos|^$/);
-        if (/Remataste|Aguantaste|Salvaste|✗|no cuenta/.test(t)) return t;
+        const t = await esperarEstado(page, /Te toca|Remataste|Aguantaste|Salvaste|✗|Respuesta incorrecta|no cuenta|Vas ganando|Vas con menos|^$/);
+        if (/Remataste|Aguantaste|Salvaste|✗|Respuesta incorrecta|no cuenta/.test(t)) return t;
         await page.waitForFunction(() => document.querySelector("#tablero button[data-square]"), null, { timeout: 5000 }).catch(() => {});
         const fen = await page.evaluate(() => TiposEntreno.fen());
         const g = new Chess(fen);
@@ -1243,14 +1246,25 @@ window.PreparacionMotor = {
     await page.waitForTimeout(800);
     await page.evaluate(() => document.documentElement.classList.add("modo-ciego", "adaptive-mode"));
     await escribirR(page, item.amenazaEs);
-    await esperarEstado(page, /Eso es lo que quiere/);
+    const acierto = await esperarEstado(page, /siguiente/);
+    await page.waitForTimeout(400);
     const antes = await page.evaluate(() => document.activeElement && document.activeElement.id);
-    ok("al acertar escribiendo, el foco va a «Siguiente →»", antes === "btn-siguiente", antes);
-    await page.keyboard.press("Enter");
+    /* Antes el foco saltaba a «Siguiente →» y «leer» + Intro pasaba de
+       ejercicio (el Intro apretaba el botón). Con la cuenta ciega se queda en
+       el recuadro y el aviso dice qué escribir. */
+    ok("al acertar escribiendo, el foco SE QUEDA en el recuadro", antes === "jugada-input", antes);
+    ok("y el aviso dice «Escribe «siguiente» para el próximo ejercicio»", /Escribe «siguiente» para el próximo ejercicio/.test(acierto), acierto);
+    await escribirR(page, "leer");
+    await page.waitForTimeout(400);
+    ok("«leer» + Intro no pasa de ejercicio", /Ejercicio 1 de/.test(await page.textContent("#juego-progreso")), await page.textContent("#juego-progreso"));
+    await escribirR(page, "siguiente");
     await page.waitForFunction(() => /Ejercicio 2 de/.test(document.getElementById("juego-progreso").textContent), null, { timeout: 5000 }).catch(() => {});
     await page.waitForTimeout(300);
     const despues = await page.evaluate(() => document.activeElement && document.activeElement.id);
-    ok("y con Intro, en el ejercicio nuevo, vuelve al recuadro (no se queda en el botón)", despues === "jugada-input", despues);
+    ok("«siguiente» pasa al ejercicio nuevo con el foco en el recuadro", despues === "jugada-input" && /Ejercicio 2 de/.test(await page.textContent("#juego-progreso")), despues);
+    const nuevo = await page.textContent("#juego-enunciado");
+    const dichoNuevo = await esperarEstado(page, /Ejercicio 2 de/);
+    ok("y el aviso dice el ejercicio nuevo (su enunciado), no solo «Listo»", !!nuevo && dichoNuevo.includes(nuevo.trim()), dichoNuevo);
     await escribirR(page, "niveles");
     await page.waitForFunction(() => !document.getElementById("vista-tipo").classList.contains("hidden"), null, { timeout: 5000 }).catch(() => {});
     await page.waitForTimeout(100);
@@ -1263,6 +1277,143 @@ window.PreparacionMotor = {
     await page.waitForFunction(() => !document.getElementById("vista-fichas").classList.contains("hidden"), null, { timeout: 5000 }).catch(() => {});
     const enFichas = await page.evaluate(() => document.activeElement && document.activeElement.id);
     ok("«todos los tipos» vuelve a la lista, con el foco en su título", enFichas === "titulo-fichas", enFichas);
+    ok("sin errores en consola", !errores.length, errores.join(" | "));
+    await ctx.close();
+  }
+
+  /* ======================= la segunda recorrida como alumna ciega =======================
+     Las opciones se contestan con su letra, una palabra suya o (Detective) la
+     jugada sola; un fallo empieza por «Respuesta incorrecta»; «leer» empieza
+     por el ejercicio y no por «← Niveles». La cuenta ciega se marca con la
+     clase del <html> (como el bloque de arriba) y el ejercicio se vuelve a
+     cargar con «Otra vez», que es cuando los juegos miran el Modo Adaptado. */
+  const comoCiega = async (page) => {
+    await page.waitForTimeout(800);
+    await page.evaluate(() => document.documentElement.classList.add("modo-ciego", "adaptive-mode"));
+    await page.click("#btn-otra-vez");
+    await page.waitForTimeout(250);
+  };
+  const clave = (o) => R.claveRetro(o);
+  const sinSigno = (x) => String(x).replace(/[+#]$/, "");
+  console.log("\n=== Con la cuenta ciega: Detective escribiendo la letra o la jugada ===");
+  {
+    const item = DATOS.detective.find((x) => x.nivel === 1);
+    const { page, ctx, errores } = await abrir(browser, true, "#detective/1/" + item.id);
+    await page.waitForSelector("#vista-juego:not(.hidden) #controles input[type=radio]");
+    await comoCiega(page);
+    const letras = await page.$$eval("#controles label", (ls) => ls.map((l) => l.textContent.trim().slice(0, 9)));
+    ok("cada opción lleva su letra escrita («Opción A. …»)", letras.every((t, k) => t === "Opción " + "ABCDEF"[k] + "."), JSON.stringify(letras));
+    await escribirR(page, "opciones");
+    const dichas = await esperarEstado(page, /Opción A:/);
+    ok("«opciones» las dice con su letra", /Opción A: .*Opción B: /.test(dichas), dichas);
+    const mala = item.opciones.findIndex((o) => clave(o) !== item.correcta);
+    const buena = item.opciones.findIndex((o) => clave(o) === item.correcta);
+    await escribirR(page, "abcdef"[mala]);
+    const t1 = await esperarEstado(page, /Respuesta incorrecta|Correcto/);
+    ok("la letra de una opción imposible: empieza por «Respuesta incorrecta»", /^Respuesta incorrecta/.test(t1) && !/no es (una jugada )?legal/.test(t1), t1);
+    await escribirR(page, "abcdef"[buena]);
+    const t2 = await esperarEstado(page, /Correcto/);
+    ok("«" + "abcdef"[buena] + "» (la letra de la buena) la elige y la comprueba", /Correcto/.test(t2) && (await estrellas(page))["detective:" + item.id] === 2, t2);
+    await page.waitForTimeout(300);
+    ok("al acertar, el foco sigue en el recuadro", (await page.evaluate(() => document.activeElement && document.activeElement.id)) === "jugada-input");
+    ok("sin errores en consola", !errores.length, errores.join(" | "));
+    await ctx.close();
+  }
+  {
+    // La jugada sola: un ejercicio donde la jugada de la partida nombra UNA opción.
+    const item = DATOS.detective.find((x) => x.nivel <= 2 && /^[RDTAC][a-h][1-8][+#]?$/.test(x.jugada) &&
+      x.opciones.filter((o) => o.a === x.jugada.slice(1, 3)).length === 1);
+    const { page, ctx, errores } = await abrir(browser, true, "#detective/" + item.nivel + "/" + item.id);
+    await page.waitForSelector("#vista-juego:not(.hidden) #controles input[type=radio]");
+    await comoCiega(page);
+    await escribirR(page, sinSigno(item.jugada));
+    const t = await esperarEstado(page, /Correcto|Respuesta incorrecta|No entendí|opciones/);
+    ok("la jugada sola («" + sinSigno(item.jugada) + "») elige su opción", /Correcto/.test(t), t);
+    ok("sin errores en consola", !errores.length, errores.join(" | "));
+    await ctx.close();
+  }
+
+  console.log("\n=== Con la cuenta ciega: ¿Qué apertura es? con una palabra ===");
+  {
+    const conPalabra = (x, w) => x.opciones.filter((o) => o.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().split(/[^a-z]+/).includes(w));
+    const item = DATOS.apertura.find((x) => x.nivel <= 2 && conPalabra(x, "italiana").length === 1 && conPalabra(x, "italiana")[0] === x.correcta);
+    const { page, ctx, errores } = await abrir(browser, true, "#apertura/" + item.nivel + "/" + item.id);
+    await page.waitForSelector("#vista-juego:not(.hidden) #controles button");
+    await comoCiega(page);
+    const primero = await page.textContent("#controles button");
+    ok("los botones llevan su letra («Opción A. …»)", /^Opción A\. /.test(primero.trim()), primero);
+    await escribirR(page, "italiana");
+    const t = await esperarEstado(page, /Correcto|Respuesta incorrecta|No entendí|puede ser/);
+    ok("«italiana» elige la única opción que la nombra", /Correcto/.test(t) && (await estrellas(page))["apertura:" + item.id] === 3, t);
+    ok("sin errores en consola", !errores.length, errores.join(" | "));
+    await ctx.close();
+    // Una palabra que nombra a dos opciones del mismo ejercicio («defensa», «gambito»…).
+    let doble = null, palabra = null;
+    for (const x of DATOS.apertura.filter((y) => y.nivel <= 2)) {
+      const w = ["italiana", "defensa", "gambito", "siciliana", "trampa", "apertura", "celada", "ataque"].find((p) => conPalabra(x, p).length >= 2);
+      if (w) { doble = x; palabra = w; break; }
+    }
+    ok("hay un ejercicio con una palabra que sirve para dos opciones (para probarlo)", !!doble);
+    if (doble) {
+      const { page, ctx } = await abrir(browser, true, "#apertura/" + doble.nivel + "/" + doble.id);
+      await page.waitForSelector("#vista-juego:not(.hidden) #controles button");
+      await comoCiega(page);
+      await escribirR(page, palabra);
+      const t2 = await esperarEstado(page, /puede ser|Correcto|incorrecta/);
+      ok("si la palabra («" + palabra + "») sirve para dos, lo dice y pide la letra (no marca ninguna)", /puede ser la opción [A-F] .* o la opción [A-F]/.test(t2) && !(await estrellas(page))["apertura:" + doble.id], t2);
+      await ctx.close();
+    }
+  }
+
+  console.log("\n=== Con la cuenta ciega: Rey y peón con una palabra, y «leer» ===");
+  {
+    const item = DATOS.peones.find((x) => x.nivel === 1);
+    const { page, ctx, errores } = await abrir(browser, true, "#peones/1/" + item.id);
+    await page.waitForSelector("#vista-juego:not(.hidden) #controles button");
+    await comoCiega(page);
+    await escribirR(page, "leer");
+    // «leer» lo contesta js/vision-cuenta.js en su región viva.
+    const leido = await page.waitForFunction(() => { const r = [...document.querySelectorAll("body > [role=status].sr-only")].pop(); return r && r.textContent; }, null, { timeout: 4000 }).then((h) => h.jsonValue(), () => "");
+    const enun = (await page.textContent("#juego-enunciado")).trim();
+    ok("«leer» empieza por el ejercicio, no por «← Niveles»", !!leido && !/^←|Niveles/.test(leido.slice(0, 20)) && leido.indexOf(enun) >= 0, leido.slice(0, 160));
+    ok("y el enunciado va antes que la posición escrita", leido.indexOf(enun) >= 0 && (leido.indexOf("Blancas:") < 0 || leido.indexOf(enun) < leido.indexOf("Blancas:")), leido.slice(0, 300));
+    await escribirR(page, item.gana ? "tablas" : "ganan");
+    const t1 = await esperarEstado(page, /Respuesta incorrecta|Correcto/);
+    ok("una palabra de la opción equivocada: «Respuesta incorrecta»", /^Respuesta incorrecta/.test(t1), t1);
+    await escribirR(page, item.gana ? "ganan" : "tablas");
+    const t2 = await esperarEstado(page, /Correcto/);
+    ok("«" + (item.gana ? "ganan" : "tablas") + "» elige la buena", /Correcto/.test(t2), t2);
+    ok("sin errores en consola", !errores.length, errores.join(" | "));
+    await ctx.close();
+  }
+
+  console.log("\n=== Con la cuenta ciega: Tus propios errores, todo escribiendo ===");
+  {
+    const g = new Chess(); ["e4", "e5", "Nf3", "Nc6"].forEach((m) => g.move(m));
+    const ej = { "lichess-Ciega000-4": { id: "lichess-Ciega000-4", nivel: 1, fen: g.fen(), jugada: "a3", buenas: ["Bc4", "Bb5"], mejor: "Bc4", antes: 30, despues: -250, fecha: "2026-09-12T10:00:00Z", origen: "lichess", resumen: "Partida de Lichess del 12 sept · jugada 3", tema: null } };
+    const sembrar = async (ctx) => {
+      await ctx.addInitScript((v) => { if (sessionStorage.getItem("__sembrado")) return; localStorage.setItem("errores_propios_v1", v); sessionStorage.setItem("__sembrado", "1"); }, JSON.stringify(ej));
+    };
+    const { page, ctx, errores } = await abrir(browser, true, "#errores/1/lichess-Ciega000-4", sembrar);
+    await page.waitForSelector("#vista-juego:not(.hidden) #jugada-input");
+    await comoCiega(page);
+    await escribirR(page, "hola");
+    let t = await esperarEstado(page, /No entendí|legal|incorrecta/);
+    ok("lo que no es jugada: «No entendí»", /^No entendí «hola»/.test(t), t);
+    await escribirR(page, "Dh8");
+    t = await esperarEstado(page, /no es una jugada legal|incorrecta|No entendí/);
+    ok("una jugada que no se puede hacer: «no es una jugada legal»", /«Dh8» no es una jugada legal/.test(t), t);
+    await escribirR(page, "a3");
+    t = await esperarEstado(page, /incorrecta|legal/);
+    ok("la de la partida: «Respuesta incorrecta», y que fue el error", /^Respuesta incorrecta: a3 es la que jugaste en la partida/.test(t), t);
+    await escribirR(page, "h3");
+    t = await esperarEstado(page, /h3/);
+    ok("otra que se puede jugar pero no sirve: «Respuesta incorrecta: h3 no es la jugada que buscamos»", /^Respuesta incorrecta: h3 no es la jugada que buscamos/.test(t), t);
+    await escribirR(page, "Ac4");
+    t = await esperarEstado(page, /buena/);
+    ok("«Ac4» escrita es buena", /Esa es buena/.test(t), t);
+    await page.waitForTimeout(300);
+    ok("y el foco sigue en el recuadro", (await page.evaluate(() => document.activeElement && document.activeElement.id)) === "jugada-input");
     ok("sin errores en consola", !errores.length, errores.join(" | "));
     await ctx.close();
   }

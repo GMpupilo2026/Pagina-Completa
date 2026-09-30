@@ -227,7 +227,8 @@ function jugarEscribiendo(texto, api) {
   // El intérprete busca la jugada entre las LEGALES y no toca la partida: quien
   // decide si es la de la línea es intentar(), la misma puerta que el clic.
   const mv = ComandosTablero.jugadaEscrita(juego, texto);
-  if (!mv) { api.decir(`"${texto}" no es una jugada legal en esta posición. Escribe "ayuda" si no sabes qué se puede escribir.`); return; }
+  // No se entendió, o no es legal: js/comandos-tablero.js dice cuál de las dos.
+  if (!mv) { api.decir(ComandosTablero.noSePudoJugar(texto)); return; }
   api.limpiar().decir("");
   intentar({ from: mv.from, to: mv.to, promotion: mv.promotion });
 }
@@ -346,7 +347,10 @@ function intentar(jugada) {
     errores += 1;
     seleccion = null;
     marcarMal(jugada.to);
-    decir("Esa no es la jugada de esta línea. Vuelve a intentarlo.", "bad");
+    // «Respuesta incorrecta» y no «no es legal»: la jugada se pudo hacer. En
+    // Modo Adaptado, en palabras.
+    const dicha = CuadroComandos.activo() && window.BlindNotation ? BlindNotation.sanSpoken(hecha.san) : aEspanol(hecha.san);
+    decir(ComandosTablero.incorrecta(dicha, "No es la jugada de esta línea: vuelve a intentarlo."), "bad");
     dibujar();
     return;
   }
@@ -521,5 +525,8 @@ async function init() {
   // Si el id no existe (línea borrada o mal escrita) se cae a la lista de
   // siempre, en vez de quedarse mostrando un tablero de mentira.
   if (idLinea && AperturasLineas.LINEAS.some((L) => L.id === idLinea)) empezar(idLinea);
+  // Con la cuenta ciega, el foco empieza en el título de la lista y no en el
+  // <body>: desde ahí, el siguiente Tab ya son los filtros y las líneas.
+  else if (document.documentElement.classList.contains("modo-ciego")) document.getElementById("lista-titulo").focus();
 }
 init();

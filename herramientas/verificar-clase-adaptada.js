@@ -304,6 +304,9 @@ async function pruebaSinVer(browser) {
   await page.waitForTimeout(400);
   const foco = await page.evaluate(() => ({ enRecuadro: !!document.activeElement.closest("#question-cmd") && document.activeElement.matches(".cc-input"), id: document.activeElement.id }));
   si("la pregunta se lleva el foco a SU recuadro", foco.enRecuadro, JSON.stringify(foco));
+  /* Lo que había a medias en el recuadro de la clase («Td8», que quedó
+     seleccionado) se vacía: al volver, lo siguiente se pegaba detrás. */
+  igual("lo que había a medias en el recuadro de la clase se vacía", await page.inputValue("#clase-cmd .cc-input"), "");
   const dicha = await aviso(page, "#question-cmd");
   si("y se dice entera, con las opciones y sus letras",
     /Pregunta de tu profe: ¿Quién está mejor\?/.test(dicha) && /A, Mejor las blancas; B, Están iguales; C, Mejor las negras/.test(dicha), dicha);
@@ -317,6 +320,26 @@ async function pruebaSinVer(browser) {
   await page.keyboard.press("Enter");
   await page.waitForTimeout(500);
   igual("y la letra que sigue lo reemplaza y se envía", await page.evaluate(() => JSON.stringify(window.__inserts.filter((i) => i.tabla === "question_answers").map((i) => i.fila.opcion))), "[1]");
+
+  /* «leer» (js/vision-cuenta.js) dice también las opciones con su letra: van
+     en una lista, y «leer» lee los renglones de lista de la sección. */
+  await escribir(page, "#question-cmd", "leer");
+  const leido = await aviso(page, "#question-cmd");
+  si("«leer» dice la pregunta y las opciones con su letra",
+    /¿Quién está mejor/.test(leido) && /Opción A\. Mejor las blancas\. Opción B\. Están iguales\. Opción C\. Mejor las negras/.test(leido), leido);
+  for (const pide of ["opciones", "repetir"]) {
+    await escribir(page, "#question-cmd", pide);
+    const ops = await aviso(page, "#question-cmd");
+    si("«" + pide + "» dice las opciones con su letra", /^Opciones: A, Mejor las blancas; B, Están iguales; C, Mejor las negras\./.test(ops), ops);
+  }
+  // El TEXTO de una opción la elige, si nombra una sola.
+  await escribir(page, "#question-cmd", "Mejor las negras");
+  await page.waitForTimeout(400);
+  igual("escribir el texto de una opción la elige", await page.evaluate(() => JSON.stringify(window.__inserts.filter((i) => i.tabla === "question_answers").map((i) => i.fila.opcion))), "[1,2]");
+  await escribir(page, "#question-cmd", "mejor");
+  await page.waitForTimeout(300);
+  const ambigua = await aviso(page, "#question-cmd");
+  si("un texto que está en dos opciones no elige ninguna", /^No entendí «mejor»/.test(ambigua) && (await page.evaluate(() => window.__inserts.filter((i) => i.tabla === "question_answers").length)) === 2, ambigua);
 
   await page.evaluate(() => {
     const cerrada = Object.assign({}, window.__tablas.questions[window.__tablas.questions.length - 1], { closed_at: new Date().toISOString() });

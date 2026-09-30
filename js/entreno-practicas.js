@@ -193,11 +193,25 @@ function montarComandos(){
   comandos.ayuda('Jugada: "Cf3", "Nf3", "Dxh7+", "e1 g1". Pregunta: "caballos", "qué hay en e4". Escribe "ayuda" para todo.');
 }
 
+function modoCiego(){ return document.documentElement.classList.contains('modo-ciego'); }
+function serieTerminada(){ return document.getElementById('celebration').style.display === 'block'; }
+
 function jugarEscribiendo(texto, api){
+  /* Con la serie terminada, el recuadro sigue (en modo ciego se muda a la
+     celebración, ver finishSet) y entiende lo mismo que los dos botones. */
+  if(serieTerminada()){
+    const t = texto.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    if(/^sig(uiente)?( serie)?$/.test(t)){ api.limpiar(); document.getElementById('celebration-next-btn').click(); }
+    else if(/^(volver|series|todas las series|lista)$/.test(t)){ api.limpiar(); document.getElementById('celebration-back-btn').click(); }
+    else api.decir('Serie terminada. Escribe «siguiente» para la próxima serie o «volver» para ver todas.');
+    return;
+  }
+  if(roundLocked){ api.decir('Espera un momento: ya viene la siguiente posición.'); return; }
   // El intérprete busca la jugada entre las LEGALES y no toca la partida, así que
   // no hace falta ninguna copia.
   const mv = ComandosTablero.jugadaEscrita(game, texto);
-  if(!mv){ api.decir(`"${texto}" no es una jugada legal en esta posición. Escribe "ayuda" si no sabes qué se puede escribir.`); return; }
+  // No se entendió, o no es legal: js/comandos-tablero.js dice cuál de las dos.
+  if(!mv){ api.decir(ComandosTablero.noSePudoJugar(texto)); return; }
   const moveResult = game.move({ from: mv.from, to: mv.to, promotion: mv.promotion || 'q' });
   if(!moveResult) return;
   api.limpiar().decir('');
@@ -258,7 +272,9 @@ function buildTabs(){
     btn.className = 'tab' + (cat === currentCategory ? ' active' : '');
     btn.style.setProperty('--tab-color', `var(${CATEGORY_VAR[cat]})`);
     btn.innerHTML = `${CATEGORY_LABEL[cat]} <span class="n">${done}/${list.length}</span>`;
-    btn.addEventListener('click', () => { currentCategory = cat; showList(); });
+    // El foco al título de la lista: la pestaña apretada se repinta y el foco
+    // se iba al <body>.
+    btn.addEventListener('click', () => { currentCategory = cat; showList(true); });
     tabs.appendChild(btn);
   });
 }
@@ -302,12 +318,19 @@ function abrirRepaso(){
     desc: 'Las que te costaron, otra vez. Si sale limpia, vuelve más adelante; si no, vuelve pronto.', rounds: rondas });
 }
 
-function showList(){
+/* `enfocar`: el foco va al título de la lista. Al volver de una serie el botón
+   que lo tenía desaparece y el foco caía al <body>; con la cuenta ciega,
+   también al llegar a la página. */
+function showList(enfocar){
   document.getElementById('set-view').style.display = 'none';
   document.getElementById('list-view').style.display = 'block';
   buildTabs();
   pintarRepaso();
   const list = setsFor(currentCategory);
+  const hechas = list.filter(s => getSetStars(s.id) > 0).length;
+  const titulo = document.getElementById('lista-titulo');
+  titulo.textContent = `${CATEGORY_LABEL[currentCategory].replace(/^\S+\s/, '')}: ${hechas} de ${list.length} series hechas`;
+  if(enfocar) titulo.focus();
   const box = document.getElementById('set-list');
   box.innerHTML = '';
   list.forEach((set) => {
@@ -366,6 +389,10 @@ function buildRoundDots(){
 
 function loadRound(){
   const round = currentSet.rounds[currentRoundIndex];
+  // El recuadro vuelve a su lugar si se había mudado a la celebración.
+  const lugar = document.getElementById('q-comandos');
+  const tenia = comandos && document.activeElement === comandos.input;
+  if(comandos && comandos.el.parentNode !== lugar){ lugar.appendChild(comandos.el); if(tenia) comandos.enfocar(); }
   game = new Chess(round.fen);
   selectedSquare = null;
   roundLocked = false;
@@ -451,7 +478,10 @@ function handleMoveResult(moveResult){
   } else {
     errorsThisRound++;
     resetStreak();
-    setStatus(`${moveResult.san} es legal, pero no es la jugada que buscamos.`, 'bad');
+    // «Respuesta incorrecta» y no «no es legal»: la jugada se pudo hacer. Y en
+    // palabras en Modo Adaptado (antes decía «Nf3», en inglés).
+    const dicha = blindMode && window.BlindNotation ? window.BlindNotation.sanSpoken(moveResult.san) : EjercicioTablero.jugadaEs(moveResult.san);
+    setStatus(ComandosTablero.incorrecta(dicha), 'bad');
     setTimeout(() => { game = new Chess(round.fen); drawBoard(); setStatus('Inténtalo de nuevo.'); }, 900);
   }
 }
@@ -525,7 +555,14 @@ function finishSet(){
     rondas: setStarsEarned.length, rondas_limpias: setStarsEarned.filter(s => s === 3).length, limpio: limpia });
   if(window.BlindNotation) window.BlindNotation.speak(titleText);
   anunciarResultado(`${titleText} ${stars} estrella${stars === 1 ? '' : 's'} de 3. ${document.getElementById('celebration-stats').textContent.replace(/([^.!?])$/, '$1.')}`);
-  if(blindMode){
+  if(modoCiego() && comandos){
+    /* Con la cuenta ciega, el foco NO sale del recuadro: se hace todo desde
+       ahí. El recuadro vivía en la zona de juego, que se esconde; se muda a la
+       celebración y vuelve a su lugar al abrir la serie siguiente. */
+    document.getElementById('celebration').appendChild(comandos.el);
+    comandos.enfocar();
+    comandos.decir('Escribe «siguiente» para seguir con la próxima serie, o «volver» para ver todas.');
+  } else if(blindMode){
     // El foco cae directo en "Siguiente serie" — así, en modo adaptado, basta con
     // presionar Enter para seguir en vez de tener que ir a buscar el botón a mano.
     document.getElementById('celebration-next-btn').focus();
@@ -542,16 +579,19 @@ const pistas = EjercicioTablero.pistas({
   boton: '#hint-btn',
   etapas: () => ['origen', 'destino', 'solucion'],
   jugada: () => { const r = currentSet && currentSet.rounds[currentRoundIndex]; return r ? { from: r.from, to: r.to, promotion: r.promotion } : null; },
+  juego: () => game,
   repintar: () => { drawBoard(); },
   decir: setStatus,
   enPalabras: () => blindMode,
   alDar: (n) => { hintsUsedThisRound = n; },
-  alResolver: (j) => {
+  alResolver: (j, frase) => {
     resetStreak();
     const moveResult = game.move({ from: j.from, to: j.to, promotion: j.promotion || 'q' });
     drawBoard();
     renderPositionReadout();
-    setStatus(`Solución: ${moveResult ? moveResult.san : j.from + '-' + j.to}.`);
+    // La frase la arma js/ejercicio-tablero.js: en palabras en Modo Adaptado
+    // (antes decía «Solución: Nf3.», en inglés).
+    setStatus(frase || `Solución: ${moveResult ? EjercicioTablero.jugadaEs(moveResult.san) : j.from + '-' + j.to}.`);
     finishRound(true);
   },
 });
@@ -583,18 +623,21 @@ function openSet(set){
   loadRound();
   // El botón de la serie desaparece con la lista y el foco se iba al <body>:
   // se lleva al título, que se lee primero, y el siguiente Tab ya es el ejercicio.
+  // Con la cuenta ciega y escribiendo en el recuadro («siguiente»), el foco se
+  // queda ahí: se hace todo desde el recuadro.
+  if(modoCiego() && comandos && document.activeElement === comandos.input) return;
   titulo.setAttribute('tabindex', '-1');
   titulo.focus();
 }
 
-document.getElementById('back-to-list').addEventListener('click', (e) => { e.preventDefault(); showList(); });
+document.getElementById('back-to-list').addEventListener('click', (e) => { e.preventDefault(); showList(true); });
 document.getElementById('repaso-btn').addEventListener('click', abrirRepaso);
-document.getElementById('celebration-back-btn').addEventListener('click', showList);
+document.getElementById('celebration-back-btn').addEventListener('click', () => showList(true));
 document.getElementById('celebration-next-btn').addEventListener('click', () => {
   const list = setsFor(currentCategory);
   const idx = list.findIndex(s => s.id === currentSet.id);
   if(idx >= 0 && idx < list.length - 1) openSet(list[idx + 1]);
-  else showList();
+  else showList(true);
 });
 
 /* ---------------- Arranque ---------------- */
@@ -604,7 +647,7 @@ function initApp(){
   appInitialized = true;
   setStreak(getStreak());
   applyBlindModeUI();
-  showList();
+  showList(modoCiego());
   // ?repaso=1 es el enlace de «Hoy te toca» del hub: abre la cola directo.
   if(new URLSearchParams(location.search).has('repaso') && pendientesDeRepaso().length) abrirRepaso();
 }

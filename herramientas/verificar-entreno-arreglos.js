@@ -105,7 +105,8 @@ async function practicar(browser) {
   await page.evaluate(() => { setStreak(4); giveHint(); giveHint(); giveHint(); });
   igual("con «Ver solución», la racha queda en 0 (antes quedaba en 1)", await page.evaluate(() => getStreak()), "0");
   igual("una estrella", await page.evaluate(() => setStarsEarned[2]), "1");
-  igual("y no se festeja como «¡Correcto!»", /^Solución:/.test(await estado(page)), "true");
+  // Dice cuál era (js/ejercicio-tablero.js, en castellano fuera del Modo Adaptado), sin festejar.
+  igual("y no se festeja como «¡Correcto!»: dice cuál era", /^La solución era: \S/.test(await estado(page)) && !/Correcto/.test(await estado(page)), "true");
   sinErrores(errores, "practicar");
   await ctx.close();
 }
@@ -264,7 +265,7 @@ async function verLaLinea(browser) {
       await page.evaluate((c) => { currentIndex = c.i; loadPuzzle(); playMove(c.from, c.to, "q"); }, caso);
       igual("el aviso del error dice la jugada en castellano y lo que contesta el rival",
         await page.evaluate(() => document.getElementById("round-status").textContent),
-        await page.evaluate((c) => EjercicioTablero.jugadaEs(c.san) + " es legal, pero no es la jugada de la solución. " + c.t, caso));
+        await page.evaluate((c) => ComandosTablero.incorrecta(EjercicioTablero.jugadaEs(c.san), c.t), caso));
     }
     sinErrores(errores, "refutación");
     await ctx.close();
