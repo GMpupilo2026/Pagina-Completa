@@ -1270,8 +1270,9 @@ mano (detalle en `RESTAURAR.md`, «Lo que las copias diarias no cubren»):
 
 - **Los archivos de Storage.** La copia guarda la fila que describe un archivo,
   no el archivo. Hoy casi no hay (los logos de `academia-marca`), pero los
-  adjuntos de formularios y las justificaciones van a necesitar su propio
-  respaldo cuando empiecen a llegar.
+  adjuntos de formularios y las justificaciones lo necesitan, y por eso
+  existe `herramientas/respaldo-storage.js` (ver «Los archivos de Storage se
+  respaldan aparte», abajo).
 - **Una copia fuera de Supabase.** Las copias diarias viven donde vive la base:
   si se pierde el proyecto o la cuenta, se pierden con él.
 
@@ -1295,6 +1296,40 @@ trabajo, no lo que hay en git.
   temprano no se corre.** Por eso lo principal son las copias diarias, que no
   dependen de nadie, y el volcado queda para antes de una migración que toque
   datos y para tener una copia afuera.
+
+### Los archivos de Storage se respaldan aparte
+
+Salió de la revisión para ISO 27001 (control 8.13, copias de seguridad): el
+cuadro de `RESTAURAR.md` decía «en ninguna parte todavía» en la fila de los
+archivos subidos, y eso lo nota cualquier auditor. Hoy son pocos (los logos),
+pero las justificaciones de ausencia traen constancias médicas y los adjuntos
+de formularios traen documentos de menores: cuando empiecen a llegar, no se
+puede empezar a respaldar recién ahí.
+
+- **`respaldo-storage.js` baja todos los buckets**, también los privados, con
+  la clave de servicio **por variable de entorno** (la misma regla que la
+  cadena de `respaldo-datos.sh`). Deja los archivos en
+  `respaldos/storage-<fecha>/` y un `manifiesto.json` con el sha256 de cada uno
+  y la configuración de cada bucket.
+- **Pagina siempre.** Storage lista por páginas, igual que PostgREST: una
+  carpeta con más archivos que una página se respaldaría a medias sin ningún
+  aviso. Y baja a las subcarpetas, porque Storage no tiene carpetas: una
+  entrada sin `id` es el prefijo de otras rutas.
+- **Comprueba lo que bajó**: si llegan menos bytes de los que dice Storage,
+  falla y dice cuál; y al terminar vuelve a leer del disco cada archivo y lo
+  compara con el manifiesto. Un respaldo cortado se ve igual que uno entero.
+- **`restaurar-storage.js` recrea cada bucket como era**: un bucket privado
+  recreado como público dejaría las constancias médicas a la vista, y eso no
+  da ningún error. No pisa lo que ya está (salvo con `--pisar`), y si un
+  archivo del respaldo no cuadra con su sha256, no sube ninguno.
+- **Las políticas de Storage no van en el respaldo**: son de la base y
+  vuelven con las migraciones.
+
+`verificar-respaldo-storage.js` prueba los dos scripts contra un Storage de
+mentira (un servidor local), sin red ni claves: subcarpetas, páginas, bytes
+iguales, una descarga cortada, el bucket privado que vuelve privado, no pisar
+y el respaldo dañado. Probado que falla: sin paginar y sin comparar el tamaño,
+saltan tres comprobaciones.
 
 ### Al aplicar una migración o desplegar una función, actualizar el respaldo
 
