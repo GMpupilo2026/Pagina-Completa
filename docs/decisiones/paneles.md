@@ -143,6 +143,41 @@ lista, y el resto se acomoda solo.
   hay otra lista que se pueda separar. Es la única lectura de esa tabla en el
   panel, y la prueba exige `limit(1)`: sumar ahí vuelve a chocar con el corte
   de PostgREST.
+- **Sin clase, la clase en vivo ocupa una línea.** «Sesión en vivo» y
+  «Videollamada» con candado ocupaban casi una pantalla del celular la mayor
+  parte del día. No se esconden del todo —el alumno tiene que saber que
+  existen antes de necesitarlas (ver «La videollamada de la clase»)—: quedan
+  en UNA línea («🔒 Sesión en vivo y videollamada: Se abre cuando tu profe
+  empiece la clase») que se alcanza con Tab y se anuncia como enlace no
+  disponible. Cuando el profe abre la clase, Realtime repinta y vuelven las
+  dos tarjetas grandes, solas (`claseCompacta()`). A quien da clase no le
+  toca.
+- **La tarjeta del diagnóstico, solo cuando hace falta.** Si lo hizo hace
+  menos de cuatro semanas y nadie se lo pidió, no está: no hay nada que hacer
+  ahí y el resultado está en Informes. A las cuatro semanas vuelve con «Toca
+  repetirlo»; si el profe lo pide, se ve iluminada; si nunca lo hizo, como
+  siempre. Si la base no contesta, se queda: callar es mejor que esconder algo
+  que hacía falta. La consulta del diagnóstico propio es UNA (`miDiagnostico()`)
+  y la comparten esta tarjeta y la franja «Por dónde empezar».
+- **La próxima medalla, en «Hoy te toca».** De las que ya empezó y no tiene,
+  la más cerca en proporción: «🎯 Te falta 1 para la medalla «Todoterreno»».
+  Sale de `Logros.cargar()`, sin consultas nuevas. Sin ninguna empezada no se
+  dice nada.
+- **La franja dice cuánto lleva de cada tarea** (tres como mucho): «Mates en
+  dos · 4 de 10», con su barra. Sale de los renglones de
+  `tareas_con_avance()` (`hecho` contra `meta_cantidad`); con varios
+  renglones, cuántos cumplió. La barra es adorno (`aria-hidden`): el número va
+  escrito.
+- **Tus clases, en un bloque que se pliega.** «Tu última clase» y «Tus puntos
+  del mes» van juntos en un `<details>` que en el celular arranca cerrado y en
+  la computadora abierto (se recuerda como los grupos). Sin ninguna de las dos
+  cosas no se pinta.
+- **El panel no espera a «Hoy te toca».** Sus diez scripts (~200 KB) se bajaban
+  uno detrás de otro y el panel esperaba por ellos hasta el tope de 6 s: con
+  una red lenta (3G simulada) el panel aparecía a los ~16 s. Ahora se bajan a
+  la vez y corren en orden (`async = false`), y el panel no los espera: se
+  pintan cuando llegan. Medido igual: el panel aparece a los ~9,9 s (lo que
+  queda es la carga de la propia página). Lo mismo «lo último que hiciste».
 - **Los grupos de entrenamiento se pliegan en el celular.** Con el
   entrenamiento abierto tarjeta por tarjeta, el panel del alumno medía en el
   celular unas nueve pantallas (7100 px) y «Jugar y competir» quedaba a casi
