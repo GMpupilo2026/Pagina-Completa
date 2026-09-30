@@ -38,6 +38,12 @@ function pintarListaDePuntos(caja, filas) {
         cab.className = "font-semibold text-brand-800 dark:text-brand-100";
         // El nombre lo escribió una persona: textContent.
         cab.textContent = (PuntosClase.medalla(x.puesto) ? PuntosClase.medalla(x.puesto) + " " : "") + x.puesto + ".º " + x.nombre + " — " + PuntosClase.textoPuntos(x.puntos);
+        // Su foto de perfil, o su inicial (js/foto-perfil.js). Esta lista la ve
+        // solo el profe, con los nombres: una cara no revela nada que no diga ya.
+        if (window.FotoPerfil && x.id) {
+            cab.classList.add("flex", "items-center", "gap-2");
+            cab.prepend(FotoPerfil.avatar(x.id, String(x.nombre || ""), "w-7 h-7 text-xs"));
+        }
         const det = document.createElement("p");
         det.className = "text-xs text-brand-500 dark:text-brand-300";
         det.textContent = PuntosClase.desglose(x.fila);

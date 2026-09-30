@@ -104,6 +104,10 @@ window.__inserts = [];
       }
       return constructor(n, DATOS.rpc[n] !== undefined ? DATOS.rpc[n] : []);
     },
+    /* Las fotos de perfil (js/foto-perfil.js): la «dirección firmada» es un
+       PNG de 1×1 que el navegador sí abre. */
+    storage: { from: () => ({ createSignedUrls: (rutas) => Promise.resolve({ data: rutas.map((r) => ({ path: r, error: null,
+      signedUrl: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==#" + r })), error: null }) }) },
     /* El canal de presencia de mentira ANUNCIA a quien le siembren y dispara
        el sync, que es lo único que pinta la lista de "en línea ahora". Con un
        presenceState siempre vacío —como estaba— la lista salía vacía y esta
@@ -418,9 +422,49 @@ async function pruebaTorneo(browser) {
   await ctx.close();
 }
 
+/* La tabla de posiciones de un torneo lleva la foto de perfil de cada uno
+   (js/foto-perfil.js), o su inicial. Ver «La foto de perfil» en
+   docs/decisiones/permisos-y-roles.md. */
+async function pruebaFotosEnPosiciones(browser) {
+  console.log("\n=== torneo.html · la foto en la tabla de posiciones ===");
+  const datos = {
+    rpc: {},
+    tablas: {
+      profiles: [PROFE, { ...ANA, foto_path: "u-ana/foto-aaaaaaaaaaaaaaaa.jpg" }, BRUNO, CARLA],
+      tournaments: [{ ...TORNEO, status: "in_progress", total_rounds: 3 }],
+      tournament_registrations: [
+        { tournament_id: "t-1", player_id: "u-ana", registered_at: "2026-09-11T00:00:00Z" },
+        { tournament_id: "t-1", player_id: "u-bruno", registered_at: "2026-09-11T00:00:01Z" },
+      ],
+      tournament_rounds: [], tournament_pairings: [],
+    },
+  };
+  const { page, ctx, errores } = await pagina(browser, "/torneo.html?id=t-1", clienteFalso(datos, "u-profe"));
+  await page.waitForFunction(() => document.querySelector("#standings-list img"), null, { timeout: 5000 }).catch(() => {});
+  await page.waitForTimeout(150);
+  const filas = await page.evaluate(() => [...document.querySelectorAll("#standings-list li")].map((li) => {
+    const img = li.querySelector("img");
+    const caja = li.querySelector("[data-foto-de]");
+    return {
+      texto: li.textContent.replace(/\s+/g, " ").trim(),
+      foto: !!(img && img.checkVisibility() && img.naturalWidth > 0),
+      inicial: caja && !img ? getComputedStyle(caja, "::before").content : null,
+    };
+  }));
+  igual("se ve la tabla de posiciones", await page.evaluate(() => document.getElementById("standings-section").checkVisibility()), "true");
+  igual("Ana con su foto, Bruno (sin foto) con su inicial",
+    filas.map((f) => [f.texto.indexOf("Ana") >= 0 ? "Ana" : "Bruno", f.foto, f.inicial]).sort(),
+    [["Ana", true, null], ["Bruno", false, '"B"']]);
+  igual("la inicial no se cuela en el texto de la fila",
+    filas.every((f) => /^\d+\. /.test(f.texto)), "true");
+  igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+}
+
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
+    await pruebaFotosEnPosiciones(browser);
     await pruebaFormulario(browser);
     await pruebaUnSoloAlumno(browser);
     await pruebaPartidaPropia(browser);
