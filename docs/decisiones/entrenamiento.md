@@ -820,6 +820,10 @@ verificador las lee donde están.
 
 ## Repasar lo que costó y «Hoy te toca»
 
+> «Hoy te toca» vive en `js/hoy-te-toca.js` y lo pintan el hub y el panel del
+> alumno (ver «Hoy te toca, también en el panel» en `paneles.md`). Un cambio
+> acá se ve en los dos.
+
 `node herramientas/verificar-todo.js entreno-repaso` lo comprueba en un
 navegador.
 
