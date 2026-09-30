@@ -481,6 +481,16 @@ function finishRound(conSolucion){
   }, fast ? 900 : 1100);
 }
 
+/* El resultado se DICE en su región viva: la celebración aparece de golpe, el
+   foco se iba con la zona de juego y el lector no leía nada (ni el título ni
+   las estrellas). Sin los emojis, que el lector lee por su nombre. */
+function anunciarResultado(texto){
+  const r = document.getElementById('celebration-anuncio');
+  if(!r) return;
+  r.textContent = '';
+  setTimeout(() => { r.textContent = texto.replace(/[^\p{L}\p{N}¡!¿?,.:;() —-]/gu, '').replace(/\s+/g, ' ').trim(); }, 60);
+}
+
 function finishSet(){
   document.getElementById('play-area').style.display = 'none';
   document.getElementById('celebration').style.display = 'block';
@@ -494,6 +504,7 @@ function finishSet(){
     document.getElementById('celebration-stats').textContent =
       `Repasaste ${n} ${n === 1 ? 'posición' : 'posiciones'}. Las que salieron limpias vuelven más adelante.`;
     if(window.BlindNotation) window.BlindNotation.speak('¡Repaso terminado!');
+    anunciarResultado('¡Repaso terminado! ' + document.getElementById('celebration-stats').textContent);
     document.getElementById('celebration-back-btn').focus();
     return;
   }
@@ -513,10 +524,14 @@ function finishSet(){
   EntrenoProgress.log('practicar', { set_id: currentSet.id, category: currentSet.cat, title: currentSet.title, stars, seconds: Number(totalSeconds),
     rondas: setStarsEarned.length, rondas_limpias: setStarsEarned.filter(s => s === 3).length, limpio: limpia });
   if(window.BlindNotation) window.BlindNotation.speak(titleText);
+  anunciarResultado(`${titleText} ${stars} estrella${stars === 1 ? '' : 's'} de 3. ${document.getElementById('celebration-stats').textContent}.`);
   if(blindMode){
     // El foco cae directo en "Siguiente serie" — así, en modo adaptado, basta con
     // presionar Enter para seguir en vez de tener que ir a buscar el botón a mano.
     document.getElementById('celebration-next-btn').focus();
+  } else {
+    // Sin el modo, al título: el botón que tenía el foco desapareció con la zona de juego.
+    document.getElementById('celebration-title').focus();
   }
 }
 

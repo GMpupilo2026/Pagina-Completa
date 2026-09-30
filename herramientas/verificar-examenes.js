@@ -394,6 +394,12 @@ async function main() {
     ok(await p.evaluate(() => { const c = document.querySelector("#q-comandos .cc-caja"); return !!c && getComputedStyle(c).display !== "none"; }),
       "en Modo Adaptado el examen no muestra el recuadro para contestar escribiendo");
     ok(/Pregunta 1 de 3/.test(await p.textContent("#q-comandos .cc-msg")), "el recuadro no dice la pregunta al empezar");
+    // Las opciones que ya terminan en punto no quedan «..», y sin tablero lo
+    // primero que se oye es la pregunta, no «Esta pregunta no tiene tablero».
+    ok(!/\.\./.test(await p.textContent("#q-comandos .cc-msg")), `las opciones se dicen con dos puntos seguidos: ${await p.textContent("#q-comandos .cc-msg")}`);
+    ok(!(await p.textContent("#q-comandos .cc-pos")).trim(), `sin tablero, la región de la posición dice algo antes de la pregunta: ${await p.textContent("#q-comandos .cc-pos")}`);
+    await escribir("posición");
+    ok(/no tiene tablero/.test(await p.textContent("#q-comandos .cc-msg")), "«posición» en una pregunta sin tablero no contesta que no hay tablero");
     await escribir("B");
     ok((await p.getAttribute("#q-opciones button >> nth=1", "aria-pressed")) === "true", "escribir «B» no marca la segunda opción (aria-pressed)");
     await escribir("responder");
@@ -406,8 +412,22 @@ async function main() {
       `en la segunda pregunta la casilla e3 no dice lo que hay: ${await p.getAttribute("#q-board [data-square='e3']", "aria-label")}`);
     await escribir("posición");
     ok(/rey/.test(await p.textContent("#q-comandos .cc-msg")), "«posición» no contesta en el examen");
+    // Lo que se contesta escribiendo se dice UNA vez, en el recuadro: la pista
+    // (región viva) cambia callada y la posición no se vuelve a leer.
+    await p.evaluate(() => {
+      window.__dichos = [];
+      new MutationObserver((ms) => ms.forEach((m) => {
+        const el = m.target.nodeType === 1 ? m.target : m.target.parentElement;
+        const r = el && el.closest && el.closest("[role=status],[aria-live]");
+        if (r && r.getAttribute("aria-live") !== "off" && r.textContent.trim()) window.__dichos.push(r.id || r.className);
+      })).observe(document.body, { subtree: true, childList: true, characterData: true });
+    });
     await escribir("eva 4");
     ok(/^Elegiste eva 4\./.test(await p.textContent("#q-pista")), `escribir «eva 4» no eligió la casilla: ${await p.textContent("#q-pista")}`);
+    ok(/^Elegiste eva 4\. Escribe «responder»/.test(await p.textContent("#q-comandos .cc-msg")), `el recuadro no dice lo elegido: ${await p.textContent("#q-comandos .cc-msg")}`);
+    const dichos = await p.evaluate(() => window.__dichos);
+    ok(!dichos.includes("q-pista"), `«Elegiste…» se dice dos veces (también la pista): ${dichos.join(", ")}`);
+    ok(!dichos.some((d) => /cc-pos/.test(d)), `después de contestar se vuelve a leer la posición entera: ${dichos.join(", ")}`);
     await escribir("responder");
     await p.waitForFunction(() => /Pregunta 3 de 3/.test(document.getElementById("q-num").textContent), { timeout: 5000 });
     // En la segunda pregunta cesar 4 estaba vacía; en esta hay un alfil.
@@ -420,6 +440,14 @@ async function main() {
     ll = await p.evaluate(() => window.__llamadas.filter((l) => l.rpc === "responder_examen"));
     ok(ll[1] && ll[1].args.p_respuesta.casilla === "e4", "la casilla escrita no se mandó");
     ok(ll[2] && ll[2].args.p_respuesta.san === "O-O", `la jugada escrita no se mandó: ${JSON.stringify(ll[2] && ll[2].args.p_respuesta)}`);
+    // Al entregar, el recuadro desaparece: el foco va al título del resultado
+    // y la nota se anuncia (antes caía al <body> y no se oía nada).
+    await p.waitForSelector("#resultado:not(.hidden)", { timeout: 8000 });
+    await p.waitForTimeout(300);
+    ok(await p.evaluate(() => document.activeElement && document.activeElement.id === "r-titulo"),
+      `al entregar, el foco no va al título del resultado: ${await p.evaluate(() => document.activeElement && (document.activeElement.id || document.activeElement.tagName))}`);
+    const anuncio = await p.evaluate(() => { const r = document.getElementById("r-anuncio"); return r && r.getAttribute("role") === "status" ? r.textContent : ""; });
+    ok(/Examen entregado/.test(anuncio) && /Tu nota: \d/.test(anuncio), `al entregar, la nota no se anuncia en una región viva: «${anuncio}»`);
     await ctx.close();
   }
 

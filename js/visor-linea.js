@@ -87,16 +87,37 @@ window.VisorLinea = (function () {
   }
 
   /* Recorrer ESCRIBIENDO: «siguiente», «anterior», «inicio», «final»,
-     «jugada 5». Devuelve a qué jugada ir, o null si el texto no es de
-     recorrer (entonces es una pregunta para js/comandos-tablero.js). */
-  function pasoPedido(texto, indice, total) {
+     «jugada 5». Devuelve a qué media jugada ir (el índice del visor), o null
+     si el texto no es de recorrer (entonces es una pregunta para
+     js/comandos-tablero.js).
+
+     Qué es «jugada 5» depende de cómo cuenta EN VOZ ALTA la página que
+     llama. Este visor, Estudio, Finales y los cursos dicen «Jugada 5 de 12»
+     contando medias jugadas, y ahí «jugada 5» es la quinta media jugada. Pero
+     una partida que se anuncia con el número de la partida («Jugada 2 de las
+     negras», Repasar mis clases) necesita `numeracion`: ahí «jugada 2» es la
+     jugada 2 de las BLANCAS y «jugada 2 negras» la de las negras. Contando
+     medias jugadas, «jugada 2» llevaba a la respuesta de las negras a la
+     jugada 1, que el visor anunciaba como «Jugada 1 de las negras».
+     `numeracion` = { primera: número de la primera jugada, empiezanNegras }
+     (lo que dice la FEN de salida; sin FEN, 1 y blancas). */
+  function pasoPedido(texto, indice, total, numeracion) {
     const t = String(texto).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
     if (/^(siguiente|sig|adelante|s|\+)$/.test(t)) return indice + 1;
     if (/^(anterior|atras|ant|a|-)$/.test(t)) return indice - 1;
     if (/^(inicio|principio|salida|empezar)$/.test(t)) return 0;
     if (/^(final|fin|ultima|ultimo)$/.test(t)) return total;
-    const m = t.match(/^(?:jugada|ir a la jugada|ir a)\s*(\d+)$/);
-    return m ? parseInt(m[1], 10) : null;
+    const m = t.match(/^(?:jugada|ir a la jugada|ir a)\s*(\d+)(?:\s*(?:de\s+)?(?:las\s+)?(blancas|blanco|negras|negro))?$/);
+    if (!m) return null;
+    const n = parseInt(m[1], 10);
+    if (!numeracion) return n;
+    const negras = /^negr/.test(m[2] || "");
+    const primera = numeracion.primera > 0 ? numeracion.primera : 1;
+    // Medias jugadas desde el principio de la partida hasta la de salida, y
+    // hasta la pedida: la resta es cuántas hay que avanzar desde la salida.
+    const salida = (primera - 1) * 2 + (numeracion.empiezanNegras ? 1 : 0);
+    const pedida = (n - 1) * 2 + (negras ? 2 : 1);
+    return pedida - salida;
   }
 
   // ------------------------------------------------------------ el visor
