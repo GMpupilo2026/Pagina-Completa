@@ -456,7 +456,7 @@ registro de clases.
 
 El 29 de septiembre, a las 6 p. m. (hora pico de clases), el panel se quedó en
 «Cargando tu panel…» y no dejaba entrar. La página no tenía ningún error: la
-base (tamaño Nano) estaba saturada y cortaba por *statement timeout* hasta las
+base (entonces tamaño Nano) estaba saturada y cortaba por *statement timeout* hasta las
 consultas mínimas. Dos cosas del panel lo empeoraban.
 
 **1. El alumno pedía a `informes_resumen_alumnos()` tres números suyos.** Esa
@@ -507,12 +507,15 @@ que lentas) y con una que **lanza**: el panel tiene que aparecer, y cuando ni
 lo imprescindible contesta, el aviso con «Volver a intentar» tiene que verse.
 Con el `clases.js` anterior esas pruebas fallan.
 
-**Lo que no se arregla desde el código:** la base es Nano (0,5 GB, procesador
-compartido) y en hora pico no le alcanza. El consumo más grande, con mucha
-diferencia, es el de Realtime (`realtime.list_changes`, millones de llamadas).
-Estos dos cambios quitan la consulta más pesada del panel y hacen que una base
-lenta no lo deje bloqueado, pero subir el tamaño de la base es lo que evita que
-se sature.
+**Lo que no se arreglaba desde el código:** la base era Nano (0,5 GB,
+procesador compartido) y en hora pico no le alcanzaba. Después de esto la base
+**subió a tamaño Small** (plan Pro), con el doble de memoria y 90 conexiones.
+Aun así, el consumo más grande, con mucha diferencia, sigue siendo el de
+Realtime (`realtime.list_changes`): el 30 de setiembre de 2026, recién hecho
+el cambio, era casi el 59 % del tiempo de la base, con 19 tablas publicadas. Una
+base más grande da margen, pero no quita esa carga. Y el tope de 8 s de
+`authenticated` **no se sube** por tener más base: es lo que avisa cuando una
+consulta se vuelve mala.
 
 ### Quien da clase no entra al panel del alumno
 

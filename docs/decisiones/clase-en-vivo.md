@@ -1469,6 +1469,36 @@ además con la voz del navegador para quien no tiene lector:
 - `numerarJugadas` y `describirVista` se mudaron de `sesion.js` a
   `js/clase-adaptada.js`, sin cambiar lo que dicen: las usan las dos páginas.
 
+#### El profe le enciende el modo adaptado
+
+Una persona ciega que entra con el enlace no siempre encuentra el botón del
+Modo Adaptado. Ahora lo puede encender el profe, de dos maneras:
+
+- **El enlace ya abre en modo adaptado**: la casilla «Que abra con el modo
+  adaptado» le suma `&adaptado=1` al enlace, y la página lo enciende antes de
+  pedir el nombre (y lo dice: «Tu profe te mandó este enlace con el modo
+  adaptado»). No va a la base: es parte del enlace que se copia.
+- **Desde la lista, en plena clase**: cada invitado lleva su botón «🦯
+  Adaptado» (`aria-pressed`, con el nombre del invitado en su etiqueta), y la
+  lista dice escrito quién lo tiene puesto. `clase_enlace_adaptado()` lo
+  cambia en `clase_espectadores.adaptado`, solo a los invitados de ese profe
+  (otro profe no puede, comprobado impersonando roles); `clase_invitado_ver()`
+  lo devuelve y la página del invitado lo aplica: con el foco en el recuadro y
+  «Tu profe te activó el modo adaptado» en la región viva y en la voz.
+- **Lo que la persona cambia ella misma también llega a la lista**
+  (`clase_invitado_modo()`, con su secreto), y al entrar se manda el modo que
+  ya traía.
+- **Solo se aplica el CAMBIO, y lo propio espera su confirmación.** Si la
+  página copiara lo de la base en cada vuelta, lo que la persona apaga a mano
+  se le volvería a encender. Y hay una carrera: una consulta que ya iba en
+  camino trae el valor VIEJO, que parecería un cambio del profe. Por eso lo
+  que la persona manda queda «por confirmar» y lo que traiga la base se
+  ignora hasta que devuelva ese mismo valor (o pasen 10 s). Con esto, si el
+  profe lo cambia en esos mismos segundos, su cambio se aplica recién al
+  confirmarse: puede tardar hasta 10 s, y es un caso raro.
+- El botón encendido lleva también su variante oscura
+  (`dark:aria-pressed:…`): sin ella, en modo oscuro se veía igual que apagado.
+
 **Al tocar esto, correr `node herramientas/verificar-todo.js clase-invitados
 envios-publicos`.** El primero comprueba, con un doble de las cuatro funciones,
 que sin la casilla no se entra, que el tablero muestra la posición y sigue la
@@ -1478,7 +1508,10 @@ de pedir el tablero, que al recargar sigue fuera, y del lado del profe los
 avisos, la lista y el enlace nuevo; a la alumna no se le pinta nada. Y sin ver
 la pantalla (con la voz interceptada para leer QUÉ diría): los dos botones,
 cada aviso en `#vc-voz` y en la voz, el recuadro que pregunta y no mueve, el
-foco, y que Esc no saque de la clase. Está probado que falla con el tablero
+foco, y que Esc no saque de la clase. Y el modo que pone el profe: el enlace
+con `&adaptado=1`, el botón de la lista, que se aplique el cambio sin pisar lo
+que la persona elige (falla sin esperar la confirmación, con la base que guarda
+tarde). Está probado que falla con el tablero
 movible, sin el freno de la salida doble, sin `cfg.anunciar`, contando la
 salida de pantalla completa en Modo Adaptado y leyendo los emojis.
 El segundo, que `clase_invitado_entrar` pase por el freno.

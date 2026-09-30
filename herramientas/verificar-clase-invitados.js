@@ -38,7 +38,7 @@ function dobleInvitado(opciones) {
   return `
 (function () {
   const O = ${JSON.stringify(opciones)};
-  const D = window.__doble = { llamadas: [], salidas: 0, bloqueado: false, ultima: 0, abierta: O.abierta !== false,
+  const D = window.__doble = { llamadas: [], salidas: 0, bloqueado: false, ultima: 0, abierta: O.abierta !== false, adaptado: !!O.adaptado,
     tablero: O.tablero || { start_fen: null, moves: ["e4", "e5", "Nf3"], vista: null, arrows: [{ from: "f3", to: "e5", color: "naranja" }], circles: [], pieces_hidden: false } };
   const r = (d) => Promise.resolve({ data: d, error: null });
   window.sb = { rpc(n, a) {
@@ -51,8 +51,15 @@ function dobleInvitado(opciones) {
     if (n === "clase_invitado_ver") {
       if (a.p_secreto !== "s-1") return r({ estado: "fuera" });
       if (D.bloqueado) return r({ estado: "bloqueado", salidas: D.salidas });
-      if (!D.abierta) return r({ estado: "esperando", salidas: D.salidas });
-      return r({ estado: "ok", salidas: D.salidas, tablero: D.tablero });
+      if (!D.abierta) return r({ estado: "esperando", salidas: D.salidas, adaptado: D.adaptado });
+      return r({ estado: "ok", salidas: D.salidas, adaptado: D.adaptado, tablero: D.tablero });
+    }
+    // Como la base: la persona cambia su modo y la lista del profe lo ve.
+    // «modoTarda»: la base guarda tarde, como cuando una consulta ya iba en camino.
+    if (n === "clase_invitado_modo") {
+      const poner = () => { if (a.p_secreto === "s-1" && !D.bloqueado) D.adaptado = !!a.p_adaptado; };
+      if (D.modoTarda) setTimeout(poner, D.modoTarda); else poner();
+      return r(null);
     }
     if (n === "clase_invitado_salio") {
       if (!D.bloqueado && Date.now() - D.ultima > 3000) { D.salidas += 1; D.ultima = Date.now(); D.bloqueado = D.salidas >= 2; }
@@ -296,6 +303,53 @@ async function pruebaSinVer(browser) {
   await ctx.close();
 }
 
+/* El profe maneja el modo adaptado del invitado: el enlace lo trae puesto, y
+   desde su lista se lo enciende o apaga en plena clase. */
+async function pruebaModoDelProfe(browser) {
+  console.log("\n=== El profe le enciende el modo adaptado ===");
+  const ctx = await browser.newContext({ serviceWorkers: "block", viewport: { width: 1280, height: 900 } });
+  await ctx.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
+  await ctx.route("**/fonts.gstatic.com/**", (r) => r.abort());
+  await ctx.route("**/js/supabase-client.js", (r) =>
+    r.fulfill({ status: 200, contentType: "application/javascript", body: dobleInvitado({}) }));
+  await ctx.addInitScript(VOZ_FALSA);
+  await ctx.addInitScript(() => { try { if (!sessionStorage.getItem("__listo")) { sessionStorage.setItem("__listo", "1"); localStorage.setItem("oscarBlindMode_v1", "0"); } } catch (e) {} });
+  const { page, errores } = await abrirInvitado(browser, "#t=tok-bueno&adaptado=1", null, ctx);
+  const modo = () => page.evaluate(() => document.documentElement.classList.contains("adaptive-mode"));
+  const modos = () => page.evaluate(() => window.__doble.llamadas.filter((l) => l.n === "clase_invitado_modo").map((l) => l.a.p_adaptado));
+
+  await esperarOido(page, /mandó este enlace con el modo adaptado/);
+  igual("el enlace con «adaptado=1» abre ya en el modo, y lo dice", [await modo(), await page.getAttribute("#vc-adaptado-btn", "aria-pressed")], [true, "true"]);
+
+  await page.click("#vc-voz-btn");
+  await page.fill("#vc-nombre", "Ana Solís");
+  await page.check("#vc-acepto");
+  await page.click("#vc-entrar");
+  await page.waitForFunction(() => document.getElementById("vc-clase").checkVisibility(), null, { timeout: 5000 });
+  await page.waitForFunction(() => window.__doble.adaptado === true, null, { timeout: 5000 });
+  igual("al entrar, la base se entera de que lo tiene puesto (para la lista del profe)", await modos(), [true]);
+  await page.waitForTimeout(2500);   // una vuelta: la página ve que la base lo confirmó
+
+  await page.evaluate(() => { window.__doble.adaptado = false; });
+  await esperarOido(page, /Tu profe apagó el modo adaptado/);
+  igual("el profe se lo apaga: se apaga y se dice", [await modo(), await seVe(page, "#vc-cmd .cc-caja")], [false, false]);
+  igual("sin volver a avisarle a la base lo que ella misma mandó", await modos(), [true]);
+
+  await page.evaluate(() => { window.__doble.adaptado = true; });
+  await esperarOido(page, /Tu profe te activó el modo adaptado/);
+  igual("el profe se lo enciende: aparece el recuadro con el cursor adentro", [await modo(), await seVe(page, "#vc-cmd .cc-caja"),
+    await page.evaluate(() => document.activeElement && document.activeElement.classList.contains("cc-input"))], [true, true, true]);
+  igual("y la voz lo dice", await page.evaluate(() => window.__dicho.some((t) => /Tu profe te activó el modo adaptado/.test(t))), true);
+
+  // La base guarda su cambio tarde: las consultas de mientras traen el valor viejo.
+  await page.evaluate(() => { window.__doble.modoTarda = 3000; });
+  await page.click("#vc-adaptado-btn2");
+  await page.waitForTimeout(4500);
+  igual("si ella lo apaga, queda apagado (la vuelta siguiente no se lo vuelve a poner)", [await modo(), await modos()], [false, [true, false]]);
+  igual("sin errores de la página", errores, []);
+  await ctx.close();
+}
+
 async function pruebaProfe(browser) {
   console.log("\n=== El profe: el enlace y los avisos ===");
   const CLASE = { id: "c-viva", created_by: "u-profe", started_at: new Date().toISOString(), ended_at: null };
@@ -311,8 +365,24 @@ async function pruebaProfe(browser) {
 
   const inv = { id: "esp-1", nombre: "Luis Mora", entro_at: new Date().toISOString(), visto_at: new Date().toISOString(), salidas: 0, bloqueado_at: null };
   await page.evaluate((f) => { window.__tablas.clase_espectadores.push(Object.assign({}, f)); window.__cambioEnBase("clase_espectadores", f, "INSERT"); }, inv);
-  igual("entra un invitado: aparece en la lista", await page.textContent("#invitados-lista"), "Luis Mora — mirandoSacar");
+  igual("entra un invitado: aparece en la lista", await page.textContent("#invitados-lista"), "Luis Mora — mirando🦯 AdaptadoSacar");
   igual("y se le avisa al profe", await page.evaluate(() => /Luis Mora entró a mirar la clase/.test(document.body.textContent)), true);
+
+  // El modo adaptado del invitado, desde la lista.
+  const botonAdaptado = '#invitados-lista button[aria-label="Modo adaptado para Luis Mora"]';
+  igual("cada invitado lleva su botón de modo adaptado, apagado", await page.getAttribute(botonAdaptado, "aria-pressed"), "false");
+  await page.click(botonAdaptado);
+  await page.waitForFunction((s) => document.querySelector(s).getAttribute("aria-pressed") === "true", botonAdaptado, { timeout: 5000 });
+  igual("al tocarlo se le enciende en la base", await page.evaluate(() => window.__rpcs.filter((x) => x.n === "clase_enlace_adaptado").map((x) => [x.args.p_espectador, x.args.p_adaptado])), [["esp-1", true]]);
+  igual("la lista lo dice escrito y el foco se queda en el botón", [/🦯 modo adaptado/.test(await page.textContent("#invitados-lista")),
+    await page.evaluate(() => document.activeElement && document.activeElement.getAttribute("aria-label"))], [true, "Modo adaptado para Luis Mora"]);
+  await page.evaluate((f) => window.__cambioEnBase("clase_espectadores", Object.assign({}, f, { adaptado: false }), "UPDATE"), inv);
+  igual("si el invitado lo apaga él, la lista también", [await page.getAttribute(botonAdaptado, "aria-pressed"), /modo adaptado/.test(await page.textContent("#invitados-lista"))], ["false", false]);
+
+  await page.check("#invitados-adaptado");
+  igual("la casilla hace que el enlace abra con el modo adaptado", await page.inputValue("#invitados-url"), BASE + "/ver-clase.html#t=tok1&adaptado=1");
+  await page.uncheck("#invitados-adaptado");
+  igual("y sin ella, como siempre", await page.inputValue("#invitados-url"), BASE + "/ver-clase.html#t=tok1");
 
   // visto_at cambia solo: eso no es un aviso.
   await page.evaluate((f) => window.__cambioEnBase("clase_espectadores", Object.assign({}, f, { visto_at: new Date().toISOString() }), "UPDATE"), inv);
@@ -321,7 +391,7 @@ async function pruebaProfe(browser) {
   await page.evaluate((f) => window.__cambioEnBase("clase_espectadores", Object.assign({}, f, { salidas: 1 }), "UPDATE"), inv);
   igual("primera salida: se le avisa al profe", await page.evaluate(() =>
     /Luis Mora \(invitado\) se salió de la pantalla\. Se le advirtió/.test(document.body.textContent)), true);
-  igual("y la lista lo dice escrito", await page.textContent("#invitados-lista"), "Luis Mora — mirando · ⚠️ se salió 1 vezSacar");
+  igual("y la lista lo dice escrito", await page.textContent("#invitados-lista"), "Luis Mora — mirando · ⚠️ se salió 1 vez🦯 AdaptadoSacar");
 
   await page.evaluate((f) => window.__cambioEnBase("clase_espectadores", Object.assign({}, f, { salidas: 2, bloqueado_at: new Date().toISOString() }), "UPDATE"), inv);
   igual("segunda salida: el profe sabe que ya no ve", await page.evaluate(() =>
@@ -350,6 +420,7 @@ async function pruebaProfe(browser) {
     await pruebaInvitado(browser);
     await pruebaEsperando(browser);
     await pruebaSinVer(browser);
+    await pruebaModoDelProfe(browser);
     await pruebaProfe(browser);
   } finally {
     await browser.close();
