@@ -353,7 +353,8 @@ window.VisionCuenta = (function () {
     reiniciar: ["reiniciar", "otra vez", "reintentar", "volver a intentar", "intentar de nuevo", "empezar de nuevo"],
     solucion: ["solucion", "ver respuesta", "la respuesta", "ensename la jugada", "mostrar la jugada", "ver la jugada"],
     comprobar: ["comprobar", "revisar", "corregir", "responder", "listo"],
-    pista: ["pista", "que jugaria la maquina", "ayudame"],
+    // Después de la primera pista, el botón de Mates y Temas pasa a llamarse «Ver solución»: es la pista siguiente.
+    pista: ["pista", "que jugaria la maquina", "ayudame", "ensename la jugada", "ver solucion"],
     volver: ["volver", "atras", "todos los", "todas las", "niveles"],
   };
   function tienePalabras(nombre, frase) {
@@ -379,7 +380,14 @@ window.VisionCuenta = (function () {
     var lista = SINONIMOS[t];
     if (!lista) return null;
     for (var i = 0; i < lista.length; i++) {
-      var hit = todas.filter(function (el) { return !el.matches("input[type=checkbox], input[type=radio]") && tienePalabras(nombreDe(el), lista[i]); });
+      /* «siguiente» es el ejercicio siguiente, no la jugada siguiente de una
+         línea: ▶ «Jugada siguiente» de los visores lo recorre la página con su
+         propio «siguiente», y apretarlo destapaba la solución en los cursos. */
+      var hit = todas.filter(function (el) {
+        var n = nombreDe(el);
+        return !el.matches("input[type=checkbox], input[type=radio]") && tienePalabras(n, lista[i]) &&
+          !(t === "siguiente" && /\bjugada\b/.test(n));
+      });
       if (hit.length) return hit[0];
     }
     return null;

@@ -537,6 +537,42 @@ window.ComandosTablero = (function () {
      ahí quien llama lo trata como una jugada, que es lo que se escribe casi
      siempre. Al revés —quedarse con todo— una jugada como "Ra1" se leería como
      la pregunta por el rey y la jugada no se haría nunca. */
+  /* ------------------------------------------------ qué decir cuando no se jugó
+     Tres casos distintos que se decían igual («"X" no es una jugada legal»), y
+     quien no ve el tablero se queda sin saber qué pasó:
+       - lo escrito ni siquiera es una jugada («solución», «hola»): no se
+         entendió — decirle «no es legal» lo manda a revisar una jugada que no
+         escribió;
+       - es una jugada, pero no se puede hacer en esta posición: «no es una
+         jugada legal»;
+       - es legal pero no es la respuesta: «Respuesta incorrecta» (eso lo dice
+         cada ejercicio con `incorrecta()`, que es el que sabe qué se buscaba).
+     Lo usan todos los recuadros del sitio, para que digan lo mismo. */
+  var HABLADAS = "anna|bella|cesar|david|eva|felix|gustav|hector";
+  function pareceJugada(texto) {
+    var t = sinTildes(String(texto || "")).toLowerCase().trim()
+      .replace(/^\d+\.(\.\.)?\s*/, "").replace(/[+#!?]+$/, "");
+    if (!t) return false;
+    if (/^(o-o(-o)?|0-0(-0)?|enroque( corto| largo)?)$/.test(t)) return true;
+    if (/^(?:[kqrbnrdtac]|rey|dama|torre|alfil|caballo|peon)?\s*[a-h]?[1-8]?\s*x?\s*[a-h][1-8](?:\s*=?\s*[qrbndtac])?$/.test(t)) return true;
+    if (/^[a-h][1-8]\s*[-x ]?\s*[a-h][1-8]/.test(t)) return true;
+    return new RegExp("(" + HABLADAS + ")\\s*[1-8]").test(t);
+  }
+  // Lo que se pide a un botón («solución», «pista»…) donde la página no lo tiene.
+  var ACCIONES_CONOCIDAS = /^(siguiente|anterior|solucion|la solucion|ver la solucion|pista|otra pista|otra vez|reiniciar|comprobar|volver|saltar|tiempo|reloj)$/;
+  function noSePudoJugar(texto) {
+    var dicho = String(texto || "").trim();
+    if (pareceJugada(dicho)) return "«" + dicho + "» no es una jugada legal en esta posición.";
+    if (ACCIONES_CONOCIDAS.test(normalizar(dicho))) {
+      return "En este ejercicio no hay «" + dicho + "». Escribe «acciones» para oír lo que sí puedes hacer.";
+    }
+    return "No entendí «" + dicho + "». Escribe tu jugada (por ejemplo «Cf3»), una pregunta como «posición», o «acciones» para oír qué más puedes hacer.";
+  }
+  // «Respuesta incorrecta: …»: la jugada se pudo hacer, pero no era la buscada.
+  function incorrecta(jugadaDicha, porque) {
+    return "Respuesta incorrecta: " + jugadaDicha + " no es la jugada que buscamos." + (porque ? " " + porque : "");
+  }
+
   function interpretar(texto, ctx) {
     ctx = ctx || {};
     // `juego` y `tablero` se aceptan como valor o como función: quien llama casi
@@ -633,6 +669,7 @@ window.ComandosTablero = (function () {
 
   return {
     interpretar: interpretar, jugadaEscrita: jugadaEscrita,
+    pareceJugada: pareceJugada, noSePudoJugar: noSePudoJugar, incorrecta: incorrecta,
     AYUDA: AYUDA, ayudaHTML: ayudaHTML, ayudaTexto: ayudaTexto,
     dondeEsta: dondeEsta, queHayEn: queHayEn, jugadasDe: jugadasDe,
     alrededorDe: alrededorDe, laLinea: laLinea, deQuienEsElTurno: deQuienEsElTurno,
