@@ -8,6 +8,9 @@
  *     (la partida empezó «desde el tablero»), la partida se deja fuera.
  *   - practice_games: la práctica contra el motor en la clase. La posición de
  *     inicio está en practice_sessions (la leen los alumnos de quien la creó).
+ *   - Lichess y Chess.com: si el alumno escribe su usuario, sus últimas
+ *     partidas públicas (PreparacionDescarga, la misma de la preparación de
+ *     rivales; solo sale el nombre de usuario). `deLaWeb()` las convierte.
  *
  * El análisis corre en el navegador del alumno (PreparacionMotor: el mismo
  * Stockfish de la preparación de rivales). Primero una pasada corta por
@@ -38,7 +41,7 @@
   "use strict";
 
   const CLAVE_EJERCICIOS = "errores_propios_v1";   // id → ejercicio
-  const CLAVE_VISTAS = "errores_analizadas_v1";    // "juego:<id>" / "practica:<id>" → cuándo se miró
+  const CLAVE_VISTAS = "errores_analizadas_v1";    // "juego:<id>" / "practica:<id>" / "lichess:<id>" / "chesscom:<id>" → cuándo se miró
   const MAX_PARTIDAS = 10;                         // por cada vez que se busca
   const MAX_EJERCICIOS = 60;                       // los más recientes
   const POR_PARTIDA = 3;                           // los errores más grandes de cada partida
@@ -101,7 +104,7 @@
       id: partida.clave.replace(":", "-") + "-" + error.ply, nivel: error.nivel,
       fen, jugada: limpia(jugada), buenas, mejor: buenas[0],
       antes: mejor, despues: error.despues, fecha: partida.fecha, origen: partida.origen,
-      resumen: (partida.origen === "practica" ? "Práctica en clase" : "Partida") + " del " + fechaCorta(partida.fecha) + " · jugada " + numero,
+      resumen: (ORIGEN[partida.origen] || "Partida") + " del " + fechaCorta(partida.fecha) + " · jugada " + numero,
       tema: tema && tema !== "otra" ? tema : null,
     };
   }
@@ -137,6 +140,59 @@
     try { return new Date(iso).toLocaleDateString("es-CR", { day: "numeric", month: "short", timeZone: "America/Costa_Rica" }); } catch (e) { return ""; }
   }
 
+  /* ---------- la apertura ----------
+     Un error de las primeras 10 jugadas es de la apertura: ahí lo que ayuda
+     no es tanto el tema táctico como saber la línea. Se mira con la POSICIÓN
+     (piezas, turno, enroques y al paso), no con las jugadas: así sirve también
+     para los ejercicios ya guardados, que no guardan la partida, y encuentra
+     la línea aunque se haya llegado por otro orden. */
+  const JUGADAS_DE_APERTURA = 10;
+  function enLaApertura(fen) {
+    const n = Number(String(fen || "").split(" ")[5]);
+    return n >= 1 && n <= JUGADAS_DE_APERTURA;
+  }
+  const claveFen = (fen) => String(fen).split(" ").slice(0, 4).join(" ");
+  const limpiaSan = (san) => String(san || "").replace(/[+#!?]+$/, "");
+  const posicionesDeLineas = new Map();   // LINEAS → Map(clave de posición → [{ linea, jugada }])
+  function indiceDeLineas(Chess, LINEAS) {
+    if (posicionesDeLineas.has(LINEAS)) return posicionesDeLineas.get(LINEAS);
+    const mapa = new Map();
+    (LINEAS || []).forEach((L) => {
+      const g = new Chess();
+      for (const san of L.jugadas || []) {
+        const k = claveFen(g.fen());
+        if (!mapa.has(k)) mapa.set(k, []);
+        mapa.get(k).push({ linea: L, jugada: limpiaSan(san) });
+        if (!g.move(san)) break;
+      }
+    });
+    posicionesDeLineas.set(LINEAS, mapa);
+    return mapa;
+  }
+  /* La línea del banco de Aperturas (js/aperturas-lineas.js, LINEAS) que pasa
+     por la posición de un error, o null:
+       { caso: "celada", linea }   cayó en una celada del rival: la línea es
+                                   del otro color y espera JUSTO la jugada que
+                                   hizo el alumno;
+       { caso: "teoria", linea, jugada, buena }   la línea es de su color y
+                                   ahí sigue con `jugada` (`buena`: está entre
+                                   las que el motor dio por buenas).
+     Primero la celada (es lo que explica el error), después la teoría con una
+     jugada buena, después cualquier teoría. Pura: sin DOM. */
+  function lineaDeApertura(Chess, item, LINEAS) {
+    if (!item || !item.fen || !LINEAS || !enLaApertura(item.fen)) return null;
+    const turno = item.fen.split(" ")[1];
+    const aca = indiceDeLineas(Chess, LINEAS).get(claveFen(item.fen)) || [];
+    const hizo = limpiaSan(item.jugada);
+    const buenas = (item.buenas || []).map(limpiaSan);
+    const celada = aca.find((x) => x.linea.color !== turno && x.linea.tipo === "celada" && x.jugada === hizo);
+    if (celada) return { caso: "celada", linea: celada.linea };
+    const propias = aca.filter((x) => x.linea.color === turno && x.jugada !== hizo);
+    const conBuena = propias.find((x) => buenas.indexOf(x.jugada) >= 0);
+    const t = conBuena || propias[0];
+    return t ? { caso: "teoria", linea: t.linea, jugada: t.jugada, buena: !!conBuena } : null;
+  }
+
   /* ---------- lo guardado ---------- */
   function leer(clave) {
     try { const v = JSON.parse(localStorage.getItem(clave) || "{}"); return v && typeof v === "object" ? v : {}; } catch (e) { return {}; }
@@ -159,6 +215,50 @@
     escribir(CLAVE_EJERCICIOS, out);
   }
   function vistas() { return leer(CLAVE_VISTAS); }
+
+  /* Cómo se nombra cada origen en el resumen de un ejercicio. */
+  const ORIGEN = { juego: "Partida", practica: "Práctica en clase", lichess: "Partida de Lichess", chesscom: "Partida de Chess.com" };
+
+  /* ---------- las partidas de Lichess o Chess.com ----------
+     `partidas`: lo que devuelve PreparacionAnalisis.leerPgn() del PGN que bajó
+     PreparacionDescarga ([{ etiquetas, jugadas }]). Devuelve las partidas en la
+     misma forma que traerPartidas(), solo las de ajedrez normal desde la
+     posición inicial en que jugó `usuario` (sin distinguir mayúsculas, como
+     esos dos sitios), de la más reciente a la más vieja y sin repetir.
+     La clave es el id del sitio («lichess:AbCd1234», «chesscom:123456»): es lo
+     que marca la partida como revisada. Pura: la prueba verificar-errores-propios.js. */
+  const ENLACE_WEB = {
+    lichess: /^https:\/\/lichess\.org\/([A-Za-z0-9]{8})(?:[/?#]|$)/,
+    chesscom: /^https:\/\/www\.chess\.com\/game\/(?:live|daily)\/(\d{1,15})(?:[/?#]|$)/,
+  };
+  function fechaDeEtiquetas(e) {
+    const d = String(e.UTCDate || e.Date || "").match(/^(\d{4})\.(\d{2})\.(\d{2})$/);
+    if (!d) return null;
+    const h = String(e.UTCTime || "").match(/^(\d{2}):(\d{2}):(\d{2})$/);
+    return d[1] + "-" + d[2] + "-" + d[3] + "T" + (h ? h[1] + ":" + h[2] + ":" + h[3] : "12:00:00") + "Z";
+  }
+  function deLaWeb(partidas, sitio, usuario) {
+    const re = ENLACE_WEB[sitio];
+    const yo = String(usuario || "").trim().replace(/^@/, "").toLowerCase();
+    if (!re || !yo) return [];
+    const vistas = {};
+    const out = [];
+    (partidas || []).forEach((p) => {
+      const e = (p && p.etiquetas) || {};
+      if (!/^(standard|chess)?$/i.test(String(e.Variant || "").trim())) return;     // Chess960, «From Position»…
+      if (e.SetUp === "1" || e.FEN) return;                                         // no empezó en la inicial
+      const color = String(e.White || "").toLowerCase() === yo ? "w" : String(e.Black || "").toLowerCase() === yo ? "b" : null;
+      if (!color) return;
+      const m = String(e.Link || e.Site || "").match(re);
+      const fecha = fechaDeEtiquetas(e);
+      if (!m || !fecha || !Array.isArray(p.jugadas)) return;
+      const clave = sitio + ":" + m[1];
+      if (vistas[clave]) return;
+      vistas[clave] = true;
+      out.push({ clave, origen: sitio, color, turno0: "w", fenInicial: null, jugadas: p.jugadas.slice(), fecha });
+    });
+    return out.sort((a, b) => (a.fecha < b.fecha ? 1 : a.fecha > b.fecha ? -1 : 0));
+  }
 
   /* ---------- las partidas ---------- */
   /* [{ clave, origen, color, turno0, fenInicial, jugadas, fecha }] de las
@@ -215,12 +315,14 @@
   }
 
   /* Busca errores en las partidas que todavía no se miraron.
-     o: { motor (PreparacionMotor), alAvanzar(texto, hechas, total), parar() }
+     o: { motor (PreparacionMotor), alAvanzar(texto, hechas, total), parar(),
+          solo (la clave de una partida de Juegos), externas (de deLaWeb) }
      → { partidas, nuevos } */
   async function analizar(sb, uid, o) {
     const motor = o.motor;
     const yaVistas = vistas();
-    const todas = await traerPartidas(sb, uid, o.solo);
+    // `o.externas`: las de Lichess o Chess.com, ya convertidas (deLaWeb).
+    const todas = o.externas ? o.externas : await traerPartidas(sb, uid, o.solo);
     if (o.solo) {
       // Revisar UNA partida: si no es suya (o no terminó, o no es estándar), no
       // llega; si ya se revisó, se dice cuáles salieron de ella.
@@ -300,6 +402,7 @@
   const ErroresPropios = {
     CLAVE_EJERCICIOS, CLAVE_VISTAS, CORTE, MAX_PARTIDAS, MAX_EJERCICIOS,
     detectar, ejercicio, temaDelError, temasDe, posiciones, acierta, ejercicios, guardar, vistas, traerPartidas, analizar, deFilas,
+    deLaWeb, ORIGEN, enLaApertura, lineaDeApertura, JUGADAS_DE_APERTURA,
   };
   if (typeof module !== "undefined" && module.exports) module.exports = ErroresPropios;
   else raiz.ErroresPropios = ErroresPropios;

@@ -311,8 +311,9 @@ async function pruebaAlumna(browser) {
      mantenimiento, así que el grupo entero era un encabezado con dos cuadros
      grises. Un grupo del que no queda ni un acceso utilizable no se pinta. */
   igual("los grupos, en su orden", grupos.map((g) => g.titulo),
-    ["Clase en vivo", "Lo que te pone tu profesor", "Aprender", "Jugar y competir",
-     "Tu cuenta"]);
+    ["Clase en vivo", "Lo que te pone tu profesor", "Aprender", "Estudiar",
+     "Entrenamiento básico", "Entrenamiento intermedio", "Entrenamiento avanzado",
+     "Mejorar por habilidades", "Jugar y competir", "Tu cuenta"]);
   /* Que no se pinte es que NO ESTÁ, no que esté escondido con una clase: un
      enlace invisible pero presente sigue siendo una parada de tabulador. */
   igual("y los accesos de ese grupo no quedaron escondidos en la página",
@@ -353,10 +354,37 @@ async function pruebaAlumna(browser) {
   /* Dentro de Aprender, el orden es el del trabajo de todos los días: lo que se
      hace, lo que se repasa de un vistazo, el curso entero y al final la
      lectura. */
-  igual("Aprender: lo que uno hace por su cuenta, ya sin Tareas",
+  /* Al alumnado, Entrenamiento y Estudio no son dos puertas: lo que hay
+     detrás está abierto en el panel, repartido por lo que es. Lo pidió así el
+     dueño de la Academia. Las dos puertas siguen siendo del equipo docente. */
+  igual("Aprender: las cuatro categorías de fichas, las lecciones, los desafíos y la lectura",
     grupo(grupos, "Aprender").tiles.map((t) => t.enlace),
-    ["entreno/index.html", "entreno/estudio.html", "repasar-clases.html", "cursos/academia/index.html",
-     "articulos.html"]);
+    ["entreno/estudio.html?cat=apertura", "entreno/estudio.html?cat=defensa",
+     "entreno/estudio.html?cat=tactica", "entreno/estudio.html?cat=concepto",
+     "entreno/aprender.html", "entreno/desafios.html", "articulos.html"]);
+  igual("Estudiar: lo que se estudia con el profe",
+    grupo(grupos, "Estudiar").tiles.map((t) => t.enlace),
+    ["cursos/academia/index.html", "repasar-clases.html"]);
+  igual("Entrenamiento básico",
+    grupo(grupos, "Entrenamiento básico").tiles.map((t) => t.enlace),
+    ["entreno/coordenadas.html", "entreno/memoria.html", "entreno/mates.html", "entreno/practicas.html", "entreno/4x4.html"]);
+  igual("Entrenamiento intermedio",
+    grupo(grupos, "Entrenamiento intermedio").tiles.map((t) => t.enlace),
+    ["entreno/temas.html", "entreno/aperturas.html"]);
+  igual("Entrenamiento avanzado",
+    grupo(grupos, "Entrenamiento avanzado").tiles.map((t) => t.enlace),
+    ["entreno/visualizacion.html", "entreno/precision-posicional.html", "entreno/finales.html"]);
+  /* Una por cada tipo del catálogo, en su orden: salen de js/tipos-catalogo.js,
+     así que un tipo nuevo aparece solo. */
+  const tiposCatalogo = require("../js/tipos-catalogo.js").TIPOS;
+  igual("Mejorar por habilidades: una tarjeta por cada tipo de entrenamiento",
+    grupo(grupos, "Mejorar por habilidades").tiles.map((t) => t.enlace),
+    tiposCatalogo.map((t) => "entreno/tipos.html#" + t.id));
+  igual("y las dos puertas del equipo docente no están, ni escondidas",
+    await page.evaluate(() => document.querySelectorAll(
+      "#tile-grid [href='entreno/index.html'], #tile-grid [href='entreno/estudio.html']").length), "0");
+  const enlacesAlumna = grupos.flatMap((g) => g.tiles).map((t) => t.enlace).filter(Boolean);
+  igual("a la alumna, cada destino una sola vez", enlacesAlumna.filter((h, i) => enlacesAlumna.indexOf(h) !== i), []);
   /* El diagnóstico de nivel se le ofrece UNA vez, en «Lo que te pone tu
      profesor». El de arbitraje sigue siendo SOLO de administración: su banco
      es un archivo estático y cuanta más gente lo resuelve por su cuenta, menos
@@ -600,7 +628,7 @@ async function pruebaTextosPorRol(browser) {
   /* Y lo que NO cambia: un texto que sirve igual para los dos no se duplica
      porque sí — dos versiones de la misma frase se van separando sola. */
   igual("lo que vale para los dos se queda igual", alumna["Configuración"], profe["Configuración"]);
-  igual("y también lo neutral de Entrenamiento", alumna["Entrenamiento"], profe["Entrenamiento"]);
+  igual("y también lo neutral de Artículos", alumna["Artículos"], profe["Artículos"]);
 }
 
 async function pruebaAdmin(browser) {

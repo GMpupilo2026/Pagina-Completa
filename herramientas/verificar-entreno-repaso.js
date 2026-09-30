@@ -100,6 +100,21 @@ async function temas(browser) {
   igual("marcado como fuera, no borrado", salida.ficha && salida.ficha.fuera, "true");
   const vuelve = await page.evaluate(([k, id]) => RepasoFallados.anotar(k, id, false, true) !== null, [CLAVE, fallado]);
   igual("y si se vuelve a sacar con pista, entra de nuevo", vuelve, "true");
+
+  // `entraLimpio` (Tus propios errores): la primera vez entra aunque salga
+  // limpio; uno que ya salió de la cola no vuelve a entrar por salir limpio.
+  const conLimpio = await page.evaluate((k) => {
+    const sin = RepasoFallados.anotar(k, "sin-opcion", false, false);
+    const con = RepasoFallados.anotar(k, "con-opcion", false, false, null, { entraLimpio: true });
+    ["x", "y", "z"].forEach(() => RepasoFallados.anotar(k, "ya-salio", false, false, null, { entraLimpio: true }));
+    const antes = localStorage.getItem(k) && JSON.stringify(JSON.parse(localStorage.getItem(k))["ya-salio"]);
+    const otraVez = RepasoFallados.anotar(k, "ya-salio", false, false, null, { entraLimpio: true });
+    const despues = JSON.stringify(JSON.parse(localStorage.getItem(k))["ya-salio"]);
+    return { sin, con: con && { intervalo: con.intervalo, racha: con.limpiosSeguidos }, otraVez, igual: antes === despues };
+  }, CLAVE);
+  igual("sin la opción, limpio a la primera no entra", conLimpio.sin, null);
+  igual("con entraLimpio entra, y vuelve en un día", conLimpio.con, { intervalo: 1, racha: 1 });
+  igual("y el que ya salió con su racha no vuelve a entrar por salir limpio (ni se toca su ficha)", [conLimpio.otraVez, conLimpio.igual], [null, true]);
   sinErrores(errores, "temas");
   await ctx.close();
 

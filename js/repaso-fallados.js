@@ -57,15 +57,21 @@
 
   /* Anota cómo salió un ejercicio. `extra` se guarda junto a la ficha (lo que
      la página necesite para volver a mostrarlo). Devuelve la ficha nueva, o
-     null si el ejercicio no está (o ya no está) en la cola. */
-  function anotar(clave, id, conError, conPista, extra) {
+     null si el ejercicio no está (o ya no está) en la cola.
+     `o.entraLimpio`: la PRIMERA vez que se ve, entra a la cola aunque salga
+     limpio (vuelve al día siguiente y a los tres días, y sale con la racha de
+     siempre). Es para Tus propios errores: un error que se cometió en una
+     partida ya se falló una vez, aunque el ejercicio salga bien a la primera.
+     Uno que ya salió de la cola no vuelve a entrar si se vuelve a hacer limpio. */
+  function anotar(clave, id, conError, conPista, extra, o) {
     var SRS = window.RepasoEspaciado;
     if (!SRS) return null;
     var estado = leer(clave);
     var antes = estado[id];
     var nota = notaDe(conError, conPista);
     var afuera = !antes || antes.fuera;
-    if (afuera && nota === "bien") return null;     // limpio y no estaba en la cola: nada que hacer
+    var entraLimpio = !!(o && o.entraLimpio) && !antes;
+    if (afuera && nota === "bien" && !entraLimpio) return null;     // limpio y no estaba en la cola: nada que hacer
     // Uno que ya había salido y se vuelve a fallar entra de nuevo, desde cero.
     var f = Object.assign(SRS.calificar(afuera ? null : antes, nota), extra || {});
     // Racha de repasos limpios: "mal" o "regular" la cortan.

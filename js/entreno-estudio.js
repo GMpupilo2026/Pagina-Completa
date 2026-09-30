@@ -31,14 +31,37 @@ const textoDe = (F) => [F.titulo, F.subtitulo, F.resumen, F.diagrama, F.centro.j
                         F.bloques.map((b) => b.join(' ')).join(' ')].join(' ');
 let busqueda = '';
 
+/* Con ?cat=<categoría> se ven solo las fichas de esa categoría: son las
+   cuatro tarjetas del panel del alumno (Aperturas, Defensas, Táctica,
+   Conceptos), que antes eran una sola, «Estudio», con las 56 adentro. Una
+   categoría que no existe cae a todas, no a una lista vacía. «Ver todas» la
+   suelta sin recargar. */
+let categoria = (() => {
+  const c = new URLSearchParams(window.location.search).get('cat');
+  return CATEGORIAS.some((x) => x.id === c) ? c : null;
+})();
+const etiquetaDe = (id) => (CATEGORIAS.find((c) => c.id === id) || {}).etiqueta || '';
+
 /* Buscar mira las cuatro categorías y va sin tildes: "peon pasado" tiene que
    encontrar la ficha aunque se escriba sin acento. Lo que sobrevive se sigue
    pintando dentro de su grupo, así el árbol de encabezados no cambia según lo
    que se escriba. */
 function loQueSeVe(){
-  if(!busqueda) return FICHAS;
+  const base = categoria ? FICHAS.filter((F) => F.categoria === categoria) : FICHAS;
+  if(!busqueda) return base;
   const q = sinTildes(busqueda);
-  return FICHAS.filter((F) => sinTildes(textoDe(F)).includes(q));
+  return base.filter((F) => sinTildes(textoDe(F)).includes(q));
+}
+
+function soltarCategoria(){
+  categoria = null;
+  if(window.history && window.history.replaceState){
+    const url = new URL(window.location.href);
+    url.searchParams.delete('cat');
+    window.history.replaceState({}, '', url);
+  }
+  pintarLista();
+  mostrarLista();
 }
 
 const GLYPH_B = { p:'♟', n:'♞', b:'♝', r:'♜', q:'♛', k:'♚' };
@@ -49,9 +72,14 @@ function pintarLista(){
   const box = document.getElementById('ficha-lista');
   box.innerHTML = '';
   const visibles = loQueSeVe();
+  const deCat = categoria ? ` de ${etiquetaDe(categoria)}` : '';
   document.getElementById('cuantas').textContent = busqueda
-    ? `${visibles.length} ficha${visibles.length === 1 ? '' : 's'} con «${busqueda}»`
-    : `${FICHAS.length} fichas`;
+    ? `${visibles.length} ficha${visibles.length === 1 ? '' : 's'}${deCat} con «${busqueda}»`
+    : `${categoria ? visibles.length : FICHAS.length} fichas${deCat}`;
+  const aviso = document.getElementById('solo-cat');
+  aviso.hidden = !categoria;
+  if(categoria) document.getElementById('solo-cat-texto').textContent = `Estás viendo solo las fichas de ${etiquetaDe(categoria)}.`;
+  document.getElementById('volver').textContent = categoria ? `← Las fichas de ${etiquetaDe(categoria)}` : '← Todas las fichas';
   if(!visibles.length){
     const p = document.createElement('p');
     p.className = 'vacio';
@@ -151,6 +179,7 @@ function abrirFicha(F){
 }
 
 document.getElementById('volver').addEventListener('click', (e) => { e.preventDefault(); mostrarLista(); });
+document.getElementById('solo-cat-todas').addEventListener('click', soltarCategoria);
 document.getElementById('b-imprimir').addEventListener('click', () => window.print());
 document.getElementById('buscar').addEventListener('input', (e) => {
   busqueda = e.target.value.trim();

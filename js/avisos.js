@@ -26,11 +26,12 @@
  *   await Avisos.pedir(texto, { valor, etiqueta, aceptar })
  *       → el texto escrito, o null si se canceló. En vez de `prompt()`.
  *
- *   await Avisos.formulario({ titulo, texto, campos, aceptar })
+ *   await Avisos.formulario({ titulo, texto, campos, aceptar, peligro })
  *       → { nombre: valor, … } o null. Varios datos de una vez (el pago de un
  *       cobro: monto, método y comprobante) en vez de tres `prompt()` seguidos.
  *       Cada campo: { nombre, etiqueta, tipo: "text"|"select", valor,
- *       opciones: [[valor, texto]…], ayuda, inputmode }.
+ *       opciones: [[valor, texto]…], ayuda, inputmode }. Con `peligro`, el
+ *       botón va en rojo y el foco arranca en «Cancelar» si no hay campos.
  *
  * Todo texto entra por `textContent`: lo que se muestra suele llevar el
  * nombre de un alumno o el mensaje de error de la base.
@@ -294,7 +295,7 @@
 
   function formulario(conf) {
     return abrir({ clase: "formulario", titulo: conf.titulo, texto: conf.texto, campos: conf.campos,
-                   aceptar: conf.aceptar || "Guardar", cancelar: conf.cancelar });
+                   aceptar: conf.aceptar || "Guardar", cancelar: conf.cancelar, peligro: !!conf.peligro });
   }
 
   window.Avisos = { avisar, confirmar, alerta, pedir, formulario };

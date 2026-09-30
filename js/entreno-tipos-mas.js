@@ -712,6 +712,67 @@
      motor dio tan buena como la mejor). */
   const E = window.ErroresPropios;
   let revisarPedidaHecha = false;
+  /* Un error de las primeras 10 jugadas es de la apertura. Si una línea del
+     banco de Aperturas pasa por esa posición, se dice cuál y se manda a
+     estudiarla (?linea=<id>); si no, a Aperturas en general. Ver
+     ErroresPropios.lineaDeApertura. Devuelve el párrafo, o null. */
+  const enlaceAp = (texto, href) => { const a = el("a", "font-semibold text-accent-700 dark:text-accent-400 underline", texto); a.href = href; return a; };
+  function aperturaDe(item) {
+    if (!E || !E.enLaApertura(item.fen)) return null;
+    const L = window.AperturasLineas ? AperturasLineas.LINEAS : null;
+    const r = L ? E.lineaDeApertura(Chess, item, L) : null;
+    const p = el("p", "mb-2");
+    const ico = el("span", null, "📖 "); ico.setAttribute("aria-hidden", "true");
+    p.appendChild(ico);
+    const numero = Number(item.fen.split(" ")[5]);
+    if (r && r.caso === "celada") {
+      p.append("Caíste en una celada conocida: «" + r.linea.nombre + "». " + r.linea.idea + " ");
+      p.appendChild(enlaceAp("Estudiarla en Aperturas →", "aperturas.html?linea=" + encodeURIComponent(r.linea.id)));
+    } else if (r) {
+      p.append("Esta posición es de «" + r.linea.nombre + "», en Aperturas" + (r.buena ? ": ahí se sigue con " + R.sanEs(r.jugada) + "." : ".") + " ");
+      p.appendChild(enlaceAp("Repasar esa línea →", "aperturas.html?linea=" + encodeURIComponent(r.linea.id)));
+    } else {
+      p.append("Fue en la apertura (jugada " + numero + "): saberte bien tus aperturas ayuda a no llegar a esto. ");
+      p.appendChild(enlaceAp("Ir a Aperturas →", "aperturas.html"));
+    }
+    return p;
+  }
+  /* Lichess y Chess.com: el descargador y el lector de PGN son los de la
+     preparación de rivales. Pesan (~100 KB), así que se cargan recién cuando
+     el alumno pide traer sus partidas, desde la misma carpeta que este archivo. */
+  const MODULOS_WEB = ["preparacion-lineas.js", "preparacion-libro.js", "preparacion-estructuras.js", "preparacion-analisis.js", "preparacion-descarga.js"];
+  let cargaWeb = null;
+  function cargarWeb() {
+    if (window.PreparacionAnalisis && window.PreparacionDescarga) return Promise.resolve();
+    if (cargaWeb) return cargaWeb;
+    const propio = document.querySelector('script[src$="entreno-tipos-mas.js"]');
+    const base = propio ? propio.src.replace(/entreno-tipos-mas\.js(\?.*)?$/, "") : "../js/";
+    cargaWeb = MODULOS_WEB.reduce((antes, nombre) => antes.then(() => new Promise((ok, mal) => {
+      const s = document.createElement("script");
+      s.src = base + nombre;
+      s.onload = ok;
+      s.onerror = () => mal(new Error("no cargó " + nombre));
+      document.head.appendChild(s);
+    })), Promise.resolve()).catch((e) => { cargaWeb = null; throw e; });
+    return cargaWeb;
+  }
+  // El último usuario que se escribió, SOLO en este aparato: no viaja con la
+  // cuenta (no hace falta que su profesor lo vea para nada).
+  const CLAVE_CUENTA_WEB = "errores_cuenta_web_v1";
+  const MAX_WEB = 30;
+  const SITIO_WEB = { lichess: "Lichess", chesscom: "Chess.com" };
+  function cuentaWeb() {
+    try { const o = JSON.parse(localStorage.getItem(CLAVE_CUENTA_WEB) || "{}"); return SITIO_WEB[o.sitio] && typeof o.usuario === "string" ? o : { sitio: "lichess", usuario: "" }; } catch (e) { return { sitio: "lichess", usuario: "" }; }
+  }
+  // «hoy mismo», «mañana» o «el 3 de octubre»: la fecha (YYYY-MM-DD) en que un
+  // ejercicio vuelve a tocar en «Repasar fallados».
+  function cuandoVuelve(vence) {
+    const SRS = window.RepasoEspaciado;
+    const hoy = SRS ? SRS.hoy() : new Date().toISOString().slice(0, 10);
+    if (vence <= hoy) return "hoy mismo";
+    if (SRS && vence === SRS.sumarDias(hoy, 1)) return "mañana";
+    return "el " + new Date(vence + "T12:00:00Z").toLocaleDateString("es-CR", { day: "numeric", month: "long", timeZone: "UTC" });
+  }
   U.EXTRA.errores = function (caja) {
     const cuadro = el("div", "rounded-xl p-5 mb-6 bg-white dark:bg-brand-900 shadow-sm");
     const cuantos = E ? E.ejercicios().length : 0;
@@ -736,6 +797,21 @@
       }
       cuadro.appendChild(linea);
     }
+    // Cuántos fueron en la apertura, y la línea de Aperturas por la que más pasan.
+    const deApertura = E ? E.ejercicios().filter((x) => E.enLaApertura(x.fen)) : [];
+    if (deApertura.length) {
+      const L = window.AperturasLineas ? AperturasLineas.LINEAS : null;
+      const porLinea = {};
+      if (L) deApertura.forEach((x) => { const r = E.lineaDeApertura(Chess, x, L); if (r) porLinea[r.linea.id] = (porLinea[r.linea.id] || 0) + 1; });
+      const masVeces = Object.keys(porLinea).sort((a, b) => porLinea[b] - porLinea[a] || (a < b ? -1 : 1))[0];
+      const linea = el("p", "text-sm text-brand-700 dark:text-brand-200 mb-3");
+      linea.appendChild(document.createTextNode((deApertura.length === 1 ? "1 de tus errores fue" : deApertura.length + " de tus errores fueron") +
+        " en la apertura (las primeras " + E.JUGADAS_DE_APERTURA + " jugadas). "));
+      const esa = masVeces && L.find((x) => x.id === masVeces);
+      linea.appendChild(esa ? enlaceAp("Repasar «" + esa.nombre + "» en Aperturas →", "aperturas.html?linea=" + encodeURIComponent(esa.id))
+        : enlaceAp("Repasar tus aperturas →", "aperturas.html"));
+      cuadro.appendChild(linea);
+    }
     const aviso = el("p", "text-sm font-semibold text-brand-700 dark:text-brand-200 mb-3");
     aviso.setAttribute("role", "status");
     const buscar = el("button", BTN_PRIMARIO, "🔎 Buscar errores en mis partidas");
@@ -747,17 +823,28 @@
     /* Busca errores: en las partidas nuevas, o en UNA (`solo`, «Revisa esta
        partida» al terminarla en Juegos: llega como ?revisar=juego:<id>). */
     const plural = (n, uno, varios) => n + " " + (n === 1 ? uno : varios);
-    async function buscarErrores(solo) {
+    /* `web`: { sitio, usuario } para traer las partidas de Lichess o Chess.com
+       en vez de las de la Academia. */
+    async function buscarErrores(solo, web) {
       if (!E || !window.PreparacionMotor || !PreparacionMotor.disponible()) { aviso.textContent = "El motor no está disponible en este navegador: sin él no se pueden revisar las partidas."; return; }
       let uid = null;
       try { const { data } = await sb.auth.getSession(); uid = data && data.session && data.session.user && data.session.user.id; } catch (e) { uid = null; }
       if (!uid) { aviso.textContent = "Necesitas iniciar sesión para revisar tus partidas."; return; }
-      buscar.disabled = true; parar.classList.remove("hidden"); detener = false;
-      aviso.textContent = solo ? "Buscando tu partida…" : "Buscando tus partidas terminadas…";
+      buscar.disabled = true; traer.disabled = true; parar.classList.remove("hidden"); detener = false;
+      aviso.textContent = solo ? "Buscando tu partida…" : web ? "Trayendo tus últimas partidas de " + SITIO_WEB[web.sitio] + "…" : "Buscando tus partidas terminadas…";
       let primero = null;
       try {
+        let externas = null;
+        if (web) {
+          await cargarWeb();
+          const pgn = await PreparacionDescarga.descargar({ sitio: web.sitio, usuario: web.usuario, maximo: MAX_WEB,
+            alAvanzar: (n) => { aviso.textContent = "Trayendo tus partidas de " + SITIO_WEB[web.sitio] + "… van " + n + "."; } });
+          externas = E.deLaWeb(PreparacionAnalisis.leerPgn(pgn), web.sitio, web.usuario);
+          if (!externas.length) throw Object.assign(new Error("sin partidas"), { paraMostrar: true,
+            message: "No encontré partidas de ajedrez normal de «" + web.usuario + "» en " + SITIO_WEB[web.sitio] + "." });
+        }
         const r = await E.analizar(sb, uid, {
-          motor: PreparacionMotor, solo,
+          motor: PreparacionMotor, solo, externas,
           parar: () => detener,
           alAvanzar: (texto) => { aviso.textContent = "Revisando… " + texto; },
         });
@@ -769,6 +856,11 @@
             : r.muyCorta ? "Esa partida es muy corta para revisarla (menos de 10 jugadas)."
             : (r.yaRevisada ? "Esa partida ya estaba revisada: " : "Revisé tu partida: ") +
               (lista.length ? plural(lista.length, "error", "errores") + " para practicar." : "no encontré ningún error grande. ¡Bien jugada!");
+        } else if (web) {
+          aviso.textContent = r.pendientesAntes === 0
+            ? (externas.length === 1 ? "Tu última partida de " + SITIO_WEB[web.sitio] + " ya estaba revisada." : "Tus últimas " + externas.length + " partidas de " + SITIO_WEB[web.sitio] + " ya estaban revisadas.") + " Juega más y vuelve."
+            : "Listo: " + (r.partidas === 1 ? "se revisó 1 partida" : "se revisaron " + r.partidas + " partidas") + " de " + SITIO_WEB[web.sitio] + " y " +
+              (r.nuevos.length === 0 ? "no salió ningún error nuevo." : r.nuevos.length === 1 ? "salió 1 ejercicio nuevo." : "salieron " + r.nuevos.length + " ejercicios nuevos.");
         } else {
           aviso.textContent = r.pendientesAntes === 0
             ? "No hay partidas nuevas para revisar. Juega en Juegos o en la práctica de la clase y vuelve."
@@ -776,10 +868,12 @@
               (r.nuevos.length === 0 ? "no salió ningún error nuevo." : r.nuevos.length === 1 ? "salió 1 ejercicio nuevo." : "salieron " + r.nuevos.length + " ejercicios nuevos.");
         }
       } catch (e) {
-        console.error(e);
-        aviso.textContent = "No se pudieron revisar las partidas. Intenta de nuevo en un momento.";
+        // Lo que dicen Lichess o Chess.com (usuario que no existe, «espera un
+        // minuto») se dice en palabras; no es un error de la página.
+        if (e && e.paraMostrar) aviso.textContent = e.message;
+        else { console.error(e); aviso.textContent = "No se pudieron revisar las partidas. Intenta de nuevo en un momento."; }
       }
-      buscar.disabled = false; parar.classList.add("hidden");
+      buscar.disabled = false; traer.disabled = false; parar.classList.add("hidden");
       const texto = aviso.textContent;
       U.repintarTipo("errores");
       const nuevo = $("tipo-extra").querySelector('[role="status"]');
@@ -793,6 +887,38 @@
       }
     }
     buscar.addEventListener("click", () => buscarErrores(null));
+    /* ¿Juegas en Lichess o Chess.com? Sus últimas partidas públicas, por el
+       nombre de usuario. Plegado: la mayoría arranca por las de la Academia. */
+    const web = el("details", "mt-4 border-t border-brand-100 dark:border-brand-800 pt-3");
+    const cab = el("summary", "cursor-pointer text-sm font-semibold text-brand-700 dark:text-brand-200 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "¿Juegas en Lichess o Chess.com? Trae tus partidas de ahí");
+    web.appendChild(cab);
+    const formWeb = el("form", "mt-3 flex flex-wrap items-end gap-3");
+    const guardada = cuentaWeb();
+    const campo = (texto, control) => { const l = el("label", "text-sm text-brand-700 dark:text-brand-200 flex flex-col gap-1"); l.append(texto, control); return l; };
+    const sitio = el("select", "border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-brand-900 text-brand-800 dark:text-brand-100");
+    Object.keys(SITIO_WEB).forEach((k) => { const o = el("option", null, SITIO_WEB[k]); o.value = k; sitio.appendChild(o); });
+    sitio.value = guardada.sitio;
+    const usuario = el("input", "border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-brand-900 text-brand-800 dark:text-brand-100");
+    usuario.type = "text"; usuario.autocomplete = "off"; usuario.spellcheck = false; usuario.maxLength = 30;
+    usuario.value = guardada.usuario;
+    const traer = el("button", BTN_PRIMARIO, "Traer y revisar");
+    traer.type = "submit";
+    formWeb.append(campo("Sitio", sitio), campo("Tu usuario", usuario), traer);
+    web.appendChild(formWeb);
+    const nota = el("p", "text-xs text-brand-500 dark:text-brand-300 mt-2",
+      "Se traen tus últimas " + MAX_WEB + " partidas públicas y se revisan hasta " + (E ? E.MAX_PARTIDAS : 10) + " nuevas cada vez, en tu computadora o celular. " +
+      "A Lichess o Chess.com solo se les manda tu nombre de usuario. ");
+    const priv = el("a", "underline", "Política de privacidad");
+    priv.href = "../privacidad.html";
+    nota.appendChild(priv);
+    web.appendChild(nota);
+    formWeb.addEventListener("submit", (ev) => {
+      ev.preventDefault();
+      const u = usuario.value.trim().replace(/^@/, "");
+      if (!/^[A-Za-z0-9][A-Za-z0-9_-]{1,29}$/.test(u)) { aviso.textContent = "Escribe tu usuario tal como sale en tu perfil: letras, números, guion o guion bajo."; usuario.focus(); return; }
+      try { localStorage.setItem(CLAVE_CUENTA_WEB, JSON.stringify({ sitio: sitio.value, usuario: u })); } catch (e) {}
+      buscarErrores(null, { sitio: sitio.value, usuario: u });
+    });
     // ?revisar=juego:<id>: se revisa esa partida sola, una vez, y se saca de la
     // dirección (volver atrás o recargar no la vuelve a pedir).
     const pedida = new URLSearchParams(location.search).get("revisar");
@@ -801,7 +927,7 @@
       try { history.replaceState(null, "", location.pathname + location.hash); } catch (e) {}
       setTimeout(() => buscarErrores(pedida), 0);
     }
-    cuadro.append(aviso, buscar, parar);
+    cuadro.append(aviso, buscar, parar, web);
     caja.appendChild(cuadro);
   };
   U.JUEGOS.errores = function (item) {
@@ -829,8 +955,14 @@
         }
         partes.push(p);
       }
+      const ap = aperturaDe(item);
+      if (ap) partes.push(ap);
+      // Todo error de una partida entra a «Repasar fallados», también el que
+      // sale limpio: vuelve mañana y en unos días (RepasoFallados.anotar,
+      // `entraLimpio`). Se dice cuándo, para que no parezca que desapareció.
+      const ficha = terminar(item, n);
+      if (ficha && ficha.vence) partes.push("🔁 Vuelve a salir en «Repasar fallados» " + cuandoVuelve(ficha.vence) + ", hasta que lo resuelvas limpio tres veces seguidas.");
       explicar(partes);
-      terminar(item, n);
     }
     function jugar(mov) {
       if (hecho) return;

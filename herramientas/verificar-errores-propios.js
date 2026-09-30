@@ -18,6 +18,12 @@
  *   - temaDelError() / temasDe(): el tema de cada error con el reconocedor de
  *     la preparación de rivales (si regaló, el del castigo del rival; si se le
  *     escapó, el de la mejor que no vio) y cuál se repite;
+ *   - deLaWeb(): de las partidas de Lichess o Chess.com, solo las de ajedrez
+ *     normal desde la inicial en que jugó el usuario, sin repetir, con el id
+ *     del sitio como clave;
+ *   - lineaDeApertura(): en las primeras 10 jugadas, la línea del banco de
+ *     Aperturas que pasa por la posición (por la posición, no por el orden):
+ *     la celada del rival en que cayó, o la teoría de su color;
  *   - deFilas(): lo que lee Informes desde training_state. No le cree nada al
  *     navegador del alumno: descarta lo que no tiene forma de ejercicio (una
  *     «jugada» que es HTML, un nivel que no existe, un JSON roto) y cuenta las
@@ -147,6 +153,62 @@ console.log("\n=== deFilas() (lo que lee Informes) ===");
   ok("sin filas, vacío", E.deFilas([]).ejercicios.length === 0 && E.deFilas(null).revisadas === 0);
   const conTema = E.deFilas([{ key: "errores_propios_v1", value: { raw: JSON.stringify({ a: bueno("a", "1", { tema: "clavada" }), b: bueno("b", "2", { tema: "<script>" }) }) } }]);
   ok("el tema se lee, y uno que no tiene forma de tema se descarta", conTema.ejercicios.map((x) => x.id + ":" + x.tema).join() === "b:null,a:clavada", conTema.ejercicios.map((x) => x.id + ":" + x.tema).join());
+}
+
+console.log("\n=== deLaWeb(): las partidas de Lichess y Chess.com ===");
+{
+  /* El PGN como lo manda cada sitio, leído con el MISMO lector de la
+     preparación de rivales. Se quedan solo las de ajedrez normal desde la
+     inicial en que jugó el usuario (sin distinguir mayúsculas). */
+  const A = require("../js/preparacion-analisis.js");
+  const partida = (et, cuerpo) => Object.entries(et).map(([k, v]) => "[" + k + ' "' + v + '"]').join("\n") + "\n\n" + cuerpo + "\n";
+  const JUEGO = "1. e4 { [%clk 0:03:00] } e5 { [%clk 0:03:00] } 2. Nf3 Nc6 3. Bc4 Nd4 4. Nxe5 Qg5 5. Nxf7 Qxg2 6. Rf1 Qxe4+ 0-1";
+  const pgnLichess = [
+    partida({ Event: "Rated blitz", Site: "https://lichess.org/AbCd1234", UTCDate: "2026.09.20", UTCTime: "15:00:00", White: "PepeRojas", Black: "otro", Variant: "Standard" }, JUEGO),
+    partida({ Event: "Rated blitz", Site: "https://lichess.org/Nuev0000", UTCDate: "2026.09.25", UTCTime: "08:30:00", White: "otro", Black: "peperojas", Variant: "Standard" }, JUEGO),
+    partida({ Event: "960", Site: "https://lichess.org/Chs96000", UTCDate: "2026.09.26", White: "PepeRojas", Black: "otro", Variant: "Chess960" }, JUEGO),
+    partida({ Event: "Desde posición", Site: "https://lichess.org/Posi0000", UTCDate: "2026.09.26", White: "PepeRojas", Black: "otro", Variant: "From Position", SetUp: "1", FEN: "8/8/8/8/8/8/8/K6k w - - 0 1" }, "1. Kb1 1/2-1/2"),
+    partida({ Event: "Ajena", Site: "https://lichess.org/Ajen0000", UTCDate: "2026.09.27", White: "alguien", Black: "otro", Variant: "Standard" }, JUEGO),
+    partida({ Event: "Enlace raro", Site: "https://evil.example/AbCd1234", UTCDate: "2026.09.27", White: "PepeRojas", Black: "otro" }, JUEGO),
+    partida({ Event: "Repetida", Site: "https://lichess.org/AbCd1234", UTCDate: "2026.09.20", UTCTime: "15:00:00", White: "PepeRojas", Black: "otro", Variant: "Standard" }, JUEGO),
+  ].join("\n");
+  const L = E.deLaWeb(A.leerPgn(pgnLichess), "lichess", "@peperojas");
+  ok("Lichess: solo las suyas, estándar y desde la inicial, sin repetir, la más nueva primero",
+    L.map((p) => p.clave + ":" + p.color).join() === "lichess:Nuev0000:b,lichess:AbCd1234:w", L.map((p) => p.clave + ":" + p.color).join());
+  ok("con las jugadas limpias (sin relojes ni «+») y la fecha del sitio",
+    L[1] && L[1].jugadas.length === 12 && L[1].jugadas[11] === "Qxe4" && L[1].fecha === "2026-09-20T15:00:00Z" && L[1].origen === "lichess" && L[1].fenInicial === null, JSON.stringify(L[1]));
+  const pgnCom = [
+    partida({ Event: "Live Chess", Site: "Chess.com", Date: "2026.09.21", White: "PepeRojas", Black: "x", Link: "https://www.chess.com/game/live/123456789", UTCDate: "2026.09.21", UTCTime: "20:10:05" }, JUEGO),
+    partida({ Event: "Daily", Site: "Chess.com", Date: "2026.09.22", White: "y", Black: "PEPEROJAS", Link: "https://www.chess.com/game/daily/555", UTCDate: "2026.09.22", UTCTime: "01:00:00" }, JUEGO),
+    partida({ Event: "960", Site: "Chess.com", Date: "2026.09.23", White: "PepeRojas", Black: "x", Link: "https://www.chess.com/game/live/777", Variant: "Chess960", UTCDate: "2026.09.23" }, JUEGO),
+  ].join("\n");
+  const Cc = E.deLaWeb(A.leerPgn(pgnCom), "chesscom", "PepeRojas");
+  ok("Chess.com: el id sale del Link (live y daily), sin Chess960", Cc.map((p) => p.clave + ":" + p.color).join() === "chesscom:555:b,chesscom:123456789:w", Cc.map((p) => p.clave + ":" + p.color).join());
+  ok("un sitio que no es ninguno de los dos, o sin usuario, no da nada", E.deLaWeb(A.leerPgn(pgnLichess), "otro", "PepeRojas").length === 0 && E.deLaWeb(A.leerPgn(pgnLichess), "lichess", "").length === 0);
+  ok("el ejercicio dice de dónde salió la partida", /^Partida de Lichess del /.test(E.ejercicio(L[1], { ply: 6, nivel: 1, despues: -300 }, "fen", "Nxe5", [{ san: "c3", eval: 0.2 }]).resumen)
+    && /^Partida de Chess\.com del /.test(E.ejercicio(Cc[1], { ply: 6, nivel: 1, despues: -300 }, "fen", "Nxe5", [{ san: "c3", eval: 0.2 }]).resumen));
+  ok("y su id no choca con las de Juegos", E.ejercicio(L[1], { ply: 6, nivel: 1, despues: -300 }, "fen", "Nxe5", [{ san: "c3", eval: 0.2 }]).id === "lichess-AbCd1234-6");
+}
+
+console.log("\n=== La apertura: lineaDeApertura() con el banco de Aperturas ===");
+{
+  const AP = require("../js/aperturas-lineas.js");
+  const fenTras = (jugadas) => { const g = new Chess(); jugadas.forEach((m) => g.move(m)); return g.fen(); };
+  const blackburne = fenTras(["e4", "e5", "Nf3", "Nc6", "Bc4", "Nd4"]);
+  const r1 = E.lineaDeApertura(Chess, { fen: blackburne, jugada: "Nxe5", buenas: ["c3", "O-O"] }, AP.LINEAS);
+  ok("con blancas, comer en e5 tras Cd4 es caer en la celada Blackburne (línea del otro color)", r1 && r1.caso === "celada" && r1.linea.id === "blackburne", JSON.stringify(r1 && [r1.caso, r1.linea.id]));
+  ok("si no jugó la jugada que la celada espera, no «cayó»", !E.lineaDeApertura(Chess, { fen: blackburne, jugada: "d3", buenas: ["c3"] }, AP.LINEAS));
+  const pastor = fenTras(["e4", "e5", "Bc4", "Nc6", "Qh5"]);
+  const r0 = E.lineaDeApertura(Chess, { fen: pastor, jugada: "Nf6", buenas: ["g6", "Qe7"] }, AP.LINEAS);
+  ok("con negras, Cf6 frente a Dh5 es caer en el mate del pastor", r0 && r0.caso === "celada" && r0.linea.id === "pastor-mate", JSON.stringify(r0 && [r0.caso, r0.linea.id]));
+  const r2 = E.lineaDeApertura(Chess, { fen: pastor, jugada: "d6", buenas: ["g6", "Qe7"] }, AP.LINEAS);
+  ok("con negras frente a Dh5: la teoría de su color, con la jugada de la línea si es de las buenas", r2 && r2.caso === "teoria" && r2.linea.id === "pastor-refutacion" && r2.jugada === "g6" && r2.buena === true, JSON.stringify(r2 && [r2.caso, r2.linea.id, r2.jugada, r2.buena]));
+  const r3 = E.lineaDeApertura(Chess, { fen: pastor, jugada: "d6", buenas: ["Qe7"] }, AP.LINEAS);
+  ok("y si la jugada de la línea no está entre las buenas del motor, no se la ofrece como respuesta", r3 && r3.caso === "teoria" && r3.buena === false, JSON.stringify(r3 && [r3.caso, r3.buena]));
+  ok("se reconoce por la posición, aunque se llegue en otro orden", !!E.lineaDeApertura(Chess, { fen: fenTras(["e4", "Nc6", "Bc4", "e5", "Qh5"]), jugada: "Nf6", buenas: ["g6"] }, AP.LINEAS));
+  ok("una posición que no está en ninguna línea no da nada", E.lineaDeApertura(Chess, { fen: fenTras(["a3", "h6", "h3", "a6"]), jugada: "b3", buenas: ["e4"] }, AP.LINEAS) === null);
+  ok("enLaApertura: hasta la jugada 10, sí; en la 11, no", E.enLaApertura("8/8/8/8/8/8/8/K6k w - - 0 10") && !E.enLaApertura("8/8/8/8/8/8/8/K6k w - - 0 11") && !E.enLaApertura("sin fen"));
+  ok("después de la jugada 10 no se busca línea", E.lineaDeApertura(Chess, { fen: blackburne.replace(/ \d+$/, " 11"), jugada: "Nxe5", buenas: ["c3"] }, AP.LINEAS) === null);
 }
 
 console.log(fallos ? "\n✗ " + fallos + " de " + pruebas + " comprobaciones fallaron." : "\n✓ Las " + pruebas + " comprobaciones pasaron.");

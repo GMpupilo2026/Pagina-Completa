@@ -31,6 +31,16 @@
  * Si la consulta FALLA, no se tapa nada, a propósito: una función que falta o
  * una red caída no pueden dejar fuera a todos los alumnos que sí pagaron.
  *
+ * Un «sí» se recuerda FRESCO_MS en sessionStorage (de esta pestaña y esta
+ * cuenta): la pregunta iba en cada página de la Academia, unas 500 veces por
+ * hora en la hora pico del 29/9, cuando la base se saturó, para contestar
+ * casi siempre lo mismo. Un «no» no se recuerda nunca: quien acaba de pagar
+ * entra en la página siguiente, no a los cinco minutos. Lo peor que puede
+ * pasar es que alguien a quien se le venció siga viendo las páginas cinco
+ * minutos más — sin poder guardar nada, porque el candado está en la base.
+ * Ver «Lo que cada página pedía de nuevo» en
+ * docs/decisiones/sitio-e-infraestructura.md.
+ *
  * Se autoarranca. La pone herramientas/academia-cabecera.py en las páginas de
  * la Academia, igual que la burbuja y el aviso de partida.
  */
@@ -38,6 +48,19 @@
   "use strict";
 
   const DIAS_AVISO = 7;
+  const FRESCO_MS = 5 * 60 * 1000;
+  const CLAVE = "acceso_vigente_v1";
+
+  function recordado(uid) {
+    try {
+      const g = JSON.parse(sessionStorage.getItem(CLAVE) || "null");
+      const edad = g ? Date.now() - g.t : Infinity;
+      return g && g.uid === uid && edad >= 0 && edad < FRESCO_MS && g.a && g.a.vigente === true ? g.a : null;
+    } catch (e) { return null; }
+  }
+  function recordar(uid, a) {
+    try { sessionStorage.setItem(CLAVE, JSON.stringify({ uid: uid, a: a, t: Date.now() })); } catch (e) { }
+  }
 
   function enPanel() {
     return /(^|\/)clases(\.html)?$/.test(location.pathname);
@@ -191,7 +214,13 @@
     const { data: ses } = await sb.auth.getSession();
     if (!ses || !ses.session) return;
 
-    const { data: a, error } = await sb.rpc("mi_acceso");
+    const uid = ses.session.user && ses.session.user.id;
+    let a = recordado(uid), error = null;
+    if (!a) {
+      const r = await sb.rpc("mi_acceso");
+      a = r.data; error = r.error;
+      if (!error && a && typeof a === "object" && a.vigente === true) recordar(uid, a);
+    }
     /* Solo se tapa cuando la base dice «no» con todas las letras. Cualquier
        otra respuesta —un error, un arreglo, un objeto sin `vigente`— se toma
        como que no se sabe, y ante la duda no se deja fuera a nadie. */
