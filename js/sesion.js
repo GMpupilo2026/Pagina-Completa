@@ -6626,7 +6626,8 @@
             session = data.session;
             if (!session) { window.location.href = "login.html"; return; }
 
-            const { data: profileData, error: profileError } = await sb.from("profiles").select("*").eq("id", session.user.id).single();
+            const { data: profileData, error: profileError } = window.MiPerfil ? await window.MiPerfil.obtener(session.user.id)
+                : await sb.from("profiles").select("*").eq("id", session.user.id).single();
             if (profileError || !profileData) { setStatus("No se pudo cargar tu perfil."); return; }
             profile = profileData;
             isTeacher = profile.role === "profesor" || profile.is_admin === true;

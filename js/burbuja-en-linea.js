@@ -302,8 +302,8 @@
     } catch (e) { return; }
     if (!sesion) return;
 
-    var perfil = await sb.from("profiles").select("id, full_name, email, role, is_admin")
-      .eq("id", sesion.user.id).single();
+    var perfil = window.MiPerfil ? await window.MiPerfil.obtener(sesion.user.id)
+      : await sb.from("profiles").select("id, full_name, email, role, is_admin").eq("id", sesion.user.id).single();
     if (perfil.error || !perfil.data) return;
     yo = { id: perfil.data.id, nombre: nombreDe(perfil.data), role: perfil.data.role, is_admin: !!perfil.data.is_admin };
     // La regla permanente de la casa: lo que se hace para los profesores se

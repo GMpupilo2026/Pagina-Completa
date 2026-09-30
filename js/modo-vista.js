@@ -236,7 +236,8 @@
       var s = await sb.auth.getSession();
       var uid = s && s.data && s.data.session ? s.data.session.user.id : null;
       if (!uid) return;
-      var r = await sb.from("profiles").select("id, is_admin, es_supervisor").eq("id", uid).maybeSingle();
+      var r = window.MiPerfil ? await window.MiPerfil.obtener(uid)
+        : await sb.from("profiles").select("id, is_admin, es_supervisor").eq("id", uid).maybeSingle();
       var yo = r && r.data;
       if (!yo) return;
       var p = personaDe(yo);
