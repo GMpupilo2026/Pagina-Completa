@@ -58,6 +58,36 @@ window.SesionCursos = (function () {
   return { guardar: guardar, borrar: borrar };
 })();
 
+// El perfil propio, UNA lectura por página. En la hora pico del 29 de
+// setiembre, cada carga pedía la misma fila de `profiles` cuatro veces —la
+// página con select("*"), y juego-aviso.js, burbuja-en-linea.js y
+// ayuda-guia.js cada uno con sus columnas—: ~1500 de los 13 600 pedidos de esa
+// hora. Todos preguntan por la fila de quien entró, así que se pide entera una
+// vez y se reparte. A cada uno le toca su propia copia: si una página le
+// cambia algo a su perfil en memoria, no se lo cambia a las demás. Si la
+// lectura falla, no se guarda, y el siguiente vuelve a intentar.
+// Se olvida al entrar, al salir o al cambiar la cuenta.
+window.MiPerfil = (function () {
+  var guardado = {};
+  function copia(r) {
+    return { data: r.data ? Object.assign({}, r.data) : r.data, error: r.error };
+  }
+  function obtener(uid) {
+    if (!uid || !window.sb) return Promise.resolve({ data: null, error: null });
+    if (!guardado[uid]) {
+      guardado[uid] = Promise.resolve(window.sb.from("profiles").select("*").eq("id", uid).maybeSingle())
+        .then(function (r) {
+          r = r || { data: null, error: null };
+          if (r.error || !r.data) delete guardado[uid];
+          return r;
+        }, function (e) { delete guardado[uid]; throw e; });
+    }
+    return guardado[uid].then(copia);
+  }
+  function olvidar() { guardado = {}; }
+  return { obtener: obtener, olvidar: olvidar };
+})();
+
 (function () {
   try {
     // La clave con que supabase-js guarda la sesión: sb-<proyecto>-auth-token.
@@ -71,6 +101,7 @@ window.SesionCursos = (function () {
     if (window.sb && window.sb.auth && typeof window.sb.auth.onAuthStateChange === "function") {
       window.sb.auth.onAuthStateChange(function (evento, session) {
         window.SesionCursos.guardar(session);
+        if (evento === "SIGNED_OUT" || evento === "SIGNED_IN" || evento === "USER_UPDATED") window.MiPerfil.olvidar();
       });
     }
   } catch (e) { }

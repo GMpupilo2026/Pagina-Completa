@@ -2434,7 +2434,8 @@
             session = data.session;
             if (!session) { window.location.href = "login.html"; return; }
 
-            const { data: profileData, error: profileError } = await sb.from("profiles").select("*").eq("id", session.user.id).single();
+            const { data: profileData, error: profileError } = window.MiPerfil ? await window.MiPerfil.obtener(session.user.id)
+                : await sb.from("profiles").select("*").eq("id", session.user.id).single();
             if (profileError || !profileData) {
                 // No basta con avisar y dejar la rueda de carga dando vueltas: si el
                 // perfil no carga (sesión caducada, fila borrada, error de red), se le

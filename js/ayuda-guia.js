@@ -32,7 +32,8 @@
       var s = await sb.auth.getSession();
       var uid = s && s.data && s.data.session ? s.data.session.user.id : null;
       if (!uid) return;
-      var r = await sb.from("profiles").select("is_admin").eq("id", uid).maybeSingle();
+      var r = window.MiPerfil ? await window.MiPerfil.obtener(uid)
+        : await sb.from("profiles").select("is_admin").eq("id", uid).maybeSingle();
       if (!(r && r.data && r.data.is_admin)) return;
       // La clase `hidden` y no el atributo: con `inline-flex` escrito en el
       // mismo elemento, el atributo `hidden` pierde contra la clase.

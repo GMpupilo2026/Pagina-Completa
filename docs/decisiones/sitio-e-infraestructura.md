@@ -1420,8 +1420,9 @@ abajo empieza a llegar seguido, es la señal para subir otro escalón.
 Cómo se decidió qué tocar: **por tiempo total de base, no por número de
 pedidos.** Leer el perfil propio se pedía unas 2400 veces por hora (cada página
 lo lee 4 o 5 veces, desde módulos distintos), pero cuesta 1-2 ms por la llave:
-juntarlas ahorra unos segundos por hora y obliga a tocar 45 archivos. Se dejó.
-Lo que pesaba era lo que tarda cientos de milisegundos y va en cada panel.
+juntarlas ahorra unos segundos de base por hora. Lo que pesaba era lo que tarda
+cientos de milisegundos y va en cada panel. (Después se juntaron igual, por
+otra razón: ver «El perfil propio, una lectura por página».)
 
 ### Lo que cada página pedía de nuevo
 
@@ -1473,10 +1474,51 @@ todas las filas) de 21 respuestas —7 cuentas, alumnos y profesores, con y sin
 base consume en total: cada cambio de una tabla escuchada se comprueba contra la
 RLS de cada suscriptor. Pasar lo más frecuente de la clase (el tablero, las
 partidas de práctica) a mensajes directos (*broadcast*) casi no toca la base.
-Es un cambio grande, que queda pendiente. Y la práctica con reloj vuelve a bajar
-la lista entera de partidas, con los nombres, por cada jugada (unas 800 veces por
-hora en la caída): aplicar el cambio que ya llega por Realtime en vez de
-volver a pedir la lista.
+Es un cambio grande, que queda pendiente. La práctica con reloj volvía a bajar
+la lista entera de partidas, con los nombres, por cada jugada (797 veces en la
+hora de la caída): eso ya lo arregló #606 (`aplicarCambioDePractica` usa la
+fila que trae Realtime), que entró a las 8:18 p. m. del 29, **después** de la
+caída. Desde entonces esa lectura casi no aparece en los registros.
+
+### El perfil propio, una lectura por página
+
+**`window.MiPerfil.obtener(uid)`** (en `js/supabase-client.js`, que cargan todas
+las páginas) pide la fila entera de `profiles` de quien entró **una vez** y se
+la reparte a quien la pida después, cada uno con su propia copia. La usan los
+tres módulos que van en casi todas las páginas —`juego-aviso.js` (66),
+`burbuja-en-linea.js` (65), `ayuda-guia.js` (55)—, `modo-vista.js` y los
+arranques de `clases.js` y `sesion.js`.
+
+- **Por qué, si cada lectura cuesta 1-2 ms de base:** no es por la base, es por
+  la página. Eran cuatro viajes de ida y vuelta al cargar cada una (en la hora
+  pico, ~1500 de los 13 600 pedidos), cada uno con su latencia y su lugar en la
+  fila de conexiones. Tocando 6 archivos, no 45: los demás que leen el perfil
+  propio se quedan como están, y conviene que uno nuevo use `MiPerfil`.
+- **Un error no se guarda**: el siguiente vuelve a pedir. Se olvida al entrar,
+  al salir o al cambiar la cuenta (`onAuthStateChange`).
+- **Cada módulo mantiene su lectura de antes como respaldo**, por si
+  `MiPerfil` no existe: hay verificadores que reemplazan `supabase-client.js`
+  entero por su doble.
+- `verificar-mi-perfil.js` (sin navegador) comprueba que cuatro pedidos a la
+  vez salgan como uno solo, que cada uno reciba su copia, que un error no se
+  guarde y que esos seis archivos lo usen. Rompiendo la memoria o sacándolo de
+  un módulo, salta.
+
+**Lo que se midió y se dejó como está:**
+
+- **Las 78 funciones de lectura que pide el sitio**, impersonando a cuatro
+  cuentas (un profesor con 52 alumnos que además supervisa, un coordinador con
+  65, administración y el alumno con más actividad), después del arreglo de
+  `tareas_con_avance` (ver «Una función SQL con CTE: el que se usa en varios
+  lados va `materialized`» en `informes.md`): **ninguna pasa de medio segundo**.
+  La más lenta es `mi_gente` (414 ms al coordinador, 221 a administración), que
+  se pide poco. Las que fallaron en la caída (`mis_clases`, `resumen_del_mes`,
+  `resumen_de_la_clase`, `informes_resumen_alumnos`) tardan entre 2 y 130 ms
+  en reposo: se cayeron por la base saturada, no por su propio costo.
+- **`class_presence_log`** (692 escrituras por hora en la caída) es el «sigo en
+  clase» de cada alumno cada 20 s, que hace exactos los minutos en clase. Cada
+  una es una fila por su llave, en una tabla que no está en Realtime: espaciarlo
+  ahorra casi nada y le quita precisión a los informes.
 
 ## El aviso de base saturada
 
