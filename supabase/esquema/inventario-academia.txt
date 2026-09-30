@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20260930061403
+# al-dia-con: 20260930064244
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -10,6 +10,7 @@ tabla  actualizaciones_plataforma  rls=true
 tabla  ajustes_academia  rls=true
 tabla  arbitrajes_publicos  rls=true
 tabla  archivos_pgn  rls=true
+tabla  auditoria  rls=true
 tabla  avisos_cobro  rls=true
 tabla  avisos_ficha_faltante  rls=true
 tabla  avisos_ia_tope  rls=true
@@ -177,6 +178,15 @@ columna  archivos_pgn.nombre_archivo  text
 columna  archivos_pgn.pgn  text
 columna  archivos_pgn.profesor_id  uuid
 columna  archivos_pgn.titulo  text
+columna  auditoria.antes  jsonb
+columna  auditoria.cuando  timestamp with time zone
+columna  auditoria.despues  jsonb
+columna  auditoria.id  bigint
+columna  auditoria.operacion  text
+columna  auditoria.quien  uuid
+columna  auditoria.sobre  uuid
+columna  auditoria.tabla  text
+columna  auditoria.via  text
 columna  avisos_cobro.cobro_id  uuid
 columna  avisos_cobro.correo  text
 columna  avisos_cobro.enviado_at  timestamp with time zone
@@ -1157,6 +1167,8 @@ funcion  iniciar_examen(p_examen uuid)  definer  anon=false  auth=true
 funcion  interno.academia_activa()  definer  anon=false  auth=true
 funcion  interno.academias_de(p_persona uuid)  definer  anon=false  auth=true
 funcion  interno.alumnos_de(p_profesor uuid)  definer  anon=false  auth=true
+funcion  interno.auditar()  definer  anon=false  auth=false
+funcion  interno.auditoria_intocable()  invoker  anon=false  auth=false
 funcion  interno.bajo_mi_coordinacion_conjunto()  definer  anon=false  auth=true
 funcion  interno.clases_donde_aparezco(p_desde timestamp with time zone)  definer  anon=false  auth=true
 funcion  interno.clases_que_coordino()  definer  anon=false  auth=true
@@ -1171,6 +1183,7 @@ funcion  interno.nombre_libre_de_subgrupo(p_profesor uuid, p_base text, p_except
 funcion  interno.pizarras_de_sala_validas(p jsonb)  invoker  anon=true  auth=true
 funcion  interno.profesores_de(p_alumno uuid)  definer  anon=false  auth=true
 funcion  interno.profesores_que_coordino()  definer  anon=false  auth=true
+funcion  interno.purgar_auditoria()  definer  anon=false  auth=false
 funcion  interno.salas_torneo_sello()  invoker  anon=false  auth=false
 funcion  interno.sesiones_de_supervisados()  definer  anon=false  auth=true
 funcion  interno.subgrupo_del_equipo_al_dia(p_equipo uuid, p_profesor uuid)  definer  anon=false  auth=false
@@ -1332,6 +1345,7 @@ politica  archivos_pgn  archivos_pgn_insert  INSERT
 politica  archivos_pgn  archivos_pgn_select  SELECT
 politica  archivos_pgn  archivos_pgn_update  UPDATE
 politica  archivos_pgn  verificacion_en_dos_pasos  ALL  restrictiva
+politica  auditoria  auditoria_select_admin  SELECT
 politica  avisos_cobro  avisos_lee_coordinacion  SELECT
 politica  clase_elegidos  clase_elegidos_insert  INSERT
 politica  clase_elegidos  clase_elegidos_select  SELECT
@@ -1634,15 +1648,27 @@ politica  variant_nodes  variant_nodes_select  SELECT
 politica  variant_nodes  variant_nodes_select_coordinacion  SELECT
 politica  variant_nodes  variant_nodes_select_supervisor  SELECT
 politica  variant_nodes  verificacion_en_dos_pasos  ALL  restrictiva
+trigger  academia_ia  auditar
+trigger  academia_miembros  auditar
+trigger  academias  auditar
+trigger  acceso_config  auditar
 trigger  ajustes_academia  ajustes_academia_protegido
+trigger  auditoria  auditoria_intocable
+trigger  auditoria  auditoria_sin_truncate
 trigger  class_presence_log  class_presence_log_protege_tiempos
 trigger  class_sessions  class_sessions_avisa_push
+trigger  cobros  auditar
 trigger  cobros_contacto  cobros_contacto_protegido
+trigger  coordinador_funciones_quitadas  auditar
+trigger  coordinador_profesores  auditar
 trigger  desafios  desafios_avisa_push
 trigger  diagnosticos_publicos  diagnosticos_publicos_avisa
 trigger  diagnosticos_publicos  diagnosticos_publicos_supervisor
+trigger  equipo_alumnos  auditar
 trigger  equipo_alumnos  equipo_alumnos_subgrupo
+trigger  equipo_entrenadores  auditar
 trigger  equipo_entrenadores  equipo_entrenadores_subgrupo
+trigger  equipos  auditar
 trigger  equipos  equipos_renombra_subgrupos
 trigger  examen_respuestas  examen_respuestas_exige_acceso
 trigger  examenes  avisar_examen_asignado
@@ -1657,19 +1683,30 @@ trigger  game_state  protect_game_state_teacher_columns_trigger
 trigger  ia_uso  ia_uso_avisa_tope
 trigger  notas_alumno  notas_alumno_clase_propia
 trigger  notas_alumno  notas_alumno_proteger
+trigger  pagos  auditar
+trigger  paquete_alumnos  auditar
+trigger  paquetes_acceso  auditar
 trigger  planes_clase  planes_clase_proteger
+trigger  planes_cobro  auditar
 trigger  platform_activity_log  platform_activity_log_protege_tiempos
 trigger  practice_games  practica_ayuda_proteger
 trigger  practice_sessions  practice_sessions_ligar_a_la_clase
+trigger  preparacion_rivales_profesores  auditar
 trigger  profesor_videollamada  profesor_videollamada_protege
+trigger  profile_teachers  auditar
 trigger  profile_teachers  profile_teachers_sincroniza_principal
 trigger  profile_teachers  profile_teachers_suma_a_la_academia
+trigger  profiles  auditar_alta_baja
+trigger  profiles  auditar_cambio
 trigger  profiles  protect_profiles_identity_columns_trigger
+trigger  pruebas_gratis  auditar
 trigger  question_answers  protect_answer_grading_trigger
 trigger  question_answers  respuesta_calificar_y_plazo_trigger
 trigger  questions  questions_ligar_a_la_clase
 trigger  salas_torneo  salas_torneo_sello
 trigger  saved_games  saved_games_ligar_a_la_clase
+trigger  supervisor_cuentas  auditar
+trigger  suscripciones  auditar
 trigger  tarea_items  proteger_tarea_items_alumno
 trigger  tareas  tareas_avisa_push
 trigger  tareas  tareas_protege_alumno
@@ -1699,6 +1736,10 @@ indice  arbitrajes_publicos  arbitrajes_publicos_pkey
 indice  arbitrajes_publicos  arbitrajes_publicos_revisado_por_fk
 indice  archivos_pgn  archivos_pgn_pkey
 indice  archivos_pgn  archivos_pgn_profesor_id_idx
+indice  auditoria  auditoria_cuando
+indice  auditoria  auditoria_pkey
+indice  auditoria  auditoria_sobre
+indice  auditoria  auditoria_tabla_cuando
 indice  avisos_cobro  avisos_cobro_pkey
 indice  avisos_cobro  avisos_cobro_una_vez
 indice  avisos_ficha_faltante  avisos_ficha_faltante_pkey
@@ -1999,6 +2040,7 @@ realtime  saved_games
 realtime  trofeos_ajustes
 realtime  tv_settings
 realtime  variant_nodes
+cron  auditoria-purga  17 9 1 * *
 cron  avisar-fichas-faltantes  10 * * * *
 cron  avisar-rachas  5 0 * * *
 cron  cobros-generar  30 11 * * *
@@ -2077,6 +2119,7 @@ grant  archivos_pgn  authenticated  SELECT
 grant  archivos_pgn  authenticated  TRIGGER
 grant  archivos_pgn  authenticated  TRUNCATE
 grant  archivos_pgn  authenticated  UPDATE
+grant  auditoria  authenticated  SELECT
 grant  avisos_cobro  authenticated  DELETE
 grant  avisos_cobro  authenticated  INSERT
 grant  avisos_cobro  authenticated  REFERENCES

@@ -1,0 +1,35 @@
+# Las dependencias con vulnerabilidades conocidas (npm audit).
+#
+# Corre en los PR que tocan package.json o su lock, cada lunes y a mano. No
+# corre en todos los PR a propósito: un aviso nuevo de npm aparece sin que
+# nadie cambie nada, y dejaría en rojo cualquier PR que no tiene que ver. El
+# de cada lunes es el que avisa (GitHub le escribe al dueño del repositorio
+# cuando falla), y el arreglo es un PR de Dependabot. Ver «Las dependencias se
+# vigilan solas» en docs/decisiones/sitio-e-infraestructura.md.
+name: Dependencias
+
+on:
+  pull_request:
+    branches: [main]
+    paths: ["package.json", "package-lock.json"]
+  schedule:
+    - cron: "23 13 * * 1"   # lunes 7:23 en Costa Rica
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  auditoria:
+    name: npm audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # Todo es devDependency, pero Supabase, chess.js, three, Sentry y qrcode
+      # se copian a js/vendor/ y llegan al navegador de la gente: se audita todo.
+      # «high» y no «moderate»: lo moderado se lee en el informe, lo alto frena.
+      - run: npm audit --audit-level=high

@@ -36,7 +36,7 @@
          * para que atrás/adelante y un enlace guardado lleven a la misma.
          * Todo lo que ya estaba sigue con sus mismos ids: solo cambia qué se ve.
          */
-        const SECCIONES = ["inicio", "cuentas", "crear", "profesores", "supervisores", "equipos", "novedades", "torneos", "preparacion"];
+        const SECCIONES = ["inicio", "cuentas", "crear", "profesores", "supervisores", "equipos", "novedades", "torneos", "preparacion", "auditoria"];
 
         function seccionDelEnlace() {
             const h = location.hash.replace("#", "");
@@ -60,6 +60,8 @@
                 a.classList.toggle("hover:bg-brand-800", !activa);
                 a.classList.toggle("text-brand-100", !activa);
             });
+            // El registro de cambios se pide al abrirlo, no al entrar al panel.
+            if (nombre === "auditoria" && window.AdminAuditoria) AdminAuditoria.abrir();
             if (!(opciones && opciones.sinHistoria) && location.hash !== "#" + nombre) {
                 history.pushState(null, "", "#" + nombre);
             }
@@ -2093,6 +2095,7 @@
             // A qué profesores se les activa la preparación de rivales
             // (js/admin-preparacion.js). Recibe la lista ya cargada.
             if (window.AdminPreparacion) AdminPreparacion.iniciar(() => allUsers);
+            if (window.AdminAuditoria) AdminAuditoria.iniciar(() => allUsers);
             document.getElementById("app").classList.remove("hidden");
             irA(seccionDelEnlace() || "inicio", { sinHistoria: true });
             // El número del menú hace falta en cualquier sección en que se entre.

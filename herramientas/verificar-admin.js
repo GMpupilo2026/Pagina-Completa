@@ -99,6 +99,14 @@ window.__consultas = [];
     preparacion_rivales_profesores: [],
     /* Dos solicitudes esperando y una ya contestada: «Lo urgente» cuenta
        solo las que esperan, y las cuenta en la base (head), no bajándolas. */
+    /* La bitácora (admin.html#auditoria): 62 filas, más de una página de
+       50. La primera es un cambio de rol; la segunda la hizo «el sistema»;
+       la tercera trae HTML en un dato guardado, que tiene que ir literal. */
+    auditoria: [
+      { id: 62, cuando: "2026-09-30T15:00:00Z", quien: "u-admin", via: "authenticated", tabla: "profiles", operacion: "cambio", sobre: "u-profe", antes: { role: "alumno" }, despues: { role: "profesor" } },
+      { id: 61, cuando: "2026-09-30T14:00:00Z", quien: null, via: "postgres", tabla: "profile_teachers", operacion: "alta", sobre: "u-1", antes: null, despues: { student_id: "u-1", teacher_id: "u-profe" } },
+      { id: 60, cuando: "2026-09-30T13:00:00Z", quien: "u-profe", via: "authenticated", tabla: "equipos", operacion: "cambio", sobre: null, antes: { nombre: "Sub-14" }, despues: { nombre: '<img src=x onerror="window.__xss=1">Sub-16' } },
+    ].concat(Array.from({ length: 59 }, (_, i) => ({ id: 59 - i, cuando: "2026-09-29T10:00:00Z", quien: "u-admin", via: "authenticated", tabla: "cobros", operacion: "alta", sobre: "u-" + i, antes: null, despues: { monto: 15000 } }))),
     solicitudes_academia: [
       { id: "s-1", estado: "pendiente" }, { id: "s-2", estado: "pendiente" }, { id: "s-3", estado: "aprobada" },
     ],
@@ -121,6 +129,7 @@ window.__consultas = [];
       select(_c, op) { if (op && op.head) { cabeza = true; anotado.head = true; } return b; },
       conCabeza(op) { if (op && op.head) { cabeza = true; anotado.head = true; } return b; },
       eq(col, val) { anotado.eq[col] = val; filas2 = filas2.filter((r) => String(r[col]) === String(val)); return b; },
+      in(col, vals) { anotado.in = { [col]: vals }; filas2 = filas2.filter((r) => vals.includes(r[col])); return b; },
       order() { return b; },
       range(a, z) { anotado.range = [a, z]; filas2 = filas2.slice(a, z + 1); return b; },
       single() { unica = true; return b; },
@@ -223,6 +232,41 @@ async function esperarLlamada(accion, ms = 10000) {
   }
 }
 
+/* ====================== admin.html · el registro de cambios ======================
+   La bitácora de auditoría la escribe la base; acá se comprueba que se pinte
+   bien: de 50 en 50 (range, nunca la tabla entera), con los nombres de las
+   personas, el cambio legible, «el sistema» cuando no hubo nadie, el filtro
+   que filtra en la base (in) y el texto guardado sin ejecutarse. */
+async function pruebaAuditoria(browser) {
+  console.log("\n=== El registro de cambios ===");
+  const { page, ctx, errores } = await abrir(browser, "/admin.html", ADMIN);
+  await page.goto(BASE + "/admin.html#auditoria", { waitUntil: "networkidle" });
+  await page.waitForSelector("#aud-lista li", { timeout: 20000 });
+  igual("la primera página trae 50", await page.locator("#aud-lista > li").count(), 50);
+  igual("se pidió con range, de 0 a 49",
+    await page.evaluate(() => window.__consultas.filter((c) => c.tabla === "auditoria").map((c) => c.range)), [[0, 49]]);
+  const primera = await page.locator("#aud-lista > li").first().innerText();
+  igual("el cambio de rol se lee: qué, quién, sobre quién y el cambio",
+    /Cambio en los permisos de una cuenta/.test(primera) && /Lo hizo: Oscar Angulo/.test(primera)
+      && /Sobre: Karina Rojas/.test(primera) && /role: alumno → profesor/.test(primera), true);
+  igual("sin nadie detrás, dice «el sistema»", /Lo hizo: El sistema/.test(await page.locator("#aud-lista > li").nth(1).innerText()), true);
+  igual("el HTML guardado va literal y no se ejecuta",
+    await page.evaluate(() => !window.__xss && /<img src=x/.test(document.querySelectorAll("#aud-lista > li")[2].textContent)), true);
+  await page.click("#aud-mas");
+  await page.waitForFunction(() => document.querySelectorAll("#aud-lista > li").length === 62);
+  igual("«Ver 50 más» trae el resto y se esconde",
+    [await page.locator("#aud-lista > li").count(), await page.locator("#aud-mas").isVisible()], [62, false]);
+  await page.selectOption("#aud-filtro", "cobros");
+  await page.waitForFunction(() => document.querySelectorAll("#aud-lista > li").length === 50);
+  igual("el filtro filtra en la base",
+    await page.evaluate(() => window.__consultas.filter((c) => c.tabla === "auditoria").pop().in),
+    { tabla: ["planes_cobro", "suscripciones", "cobros", "pagos"] });
+  igual("y solo quedan cobros",
+    await page.evaluate(() => Array.from(document.querySelectorAll("#aud-lista > li")).every((li) => /Cobro emitido/.test(li.textContent))), true);
+  igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+}
+
 /* ====================== admin.html · una sola puerta ======================
    Quien administra tiene dos pantallas: el panel de la Academia (clases.html),
    con TODAS las páginas, y ésta, con lo que se maneja adentro. Había una
@@ -238,7 +282,7 @@ async function pruebaUnaSolaPuerta(browser) {
   igual("el menú, por grupos y sin repetir",
     await page.evaluate(() => Array.from(document.querySelectorAll("nav[aria-label='Secciones de administración'] ul")).map((ul) =>
       document.getElementById(ul.getAttribute("aria-labelledby")).textContent + ": " + Array.from(ul.querySelectorAll("a")).map((a) => a.dataset.ir).join(", "))),
-    ["Hoy: inicio", "Supervisión y coordinación: supervisores, profesores, equipos", "Personas: cuentas, crear", "La plataforma: novedades, torneos, preparacion"]);
+    ["Hoy: inicio", "Supervisión y coordinación: supervisores, profesores, equipos", "Personas: cuentas, crear", "La plataforma: novedades, torneos, preparacion, auditoria"]);
   igual("cada sección del menú existe y hay una por entrada",
     await page.evaluate(() => {
       const menu = Array.from(document.querySelectorAll(".admin-nav")).map((a) => a.dataset.ir).sort();
@@ -978,6 +1022,7 @@ async function pruebaVolcarEnUnEquipo(browser) {
     await pruebaSecciones(browser);
     await pruebaUrgente(browser);
     await pruebaPreparacionRivales(browser);
+    await pruebaAuditoria(browser);
     await pruebaFichasDeGrupo(browser);
     await pruebaVolcarEnUnEquipo(browser);
     await pruebaCuentasDeUnGrupo(browser);

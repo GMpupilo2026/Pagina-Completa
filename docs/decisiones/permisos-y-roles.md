@@ -1826,6 +1826,75 @@ así que no alcanza con cerrarle la base.
   restaura el proyecto desde cero, revisar que siga así: apagado, la tarjeta
   de Configuración falla al activar.
 
+## La bitácora de auditoría
+
+Salió de la revisión para ISO 27001 (controles 8.15 y 8.17, registros): nadie
+podía contestar «¿quién le quitó el profesor a este alumno?» o «¿quién anuló
+este cobro?». Ahora **la base anota sola** cada cambio en lo que reparte
+permisos, accesos y dinero, en `public.auditoria`: cuándo, quién
+(`auth.uid()`, o nadie si fue una tarea automática), por dónde (`via`: el rol
+del token —`authenticated`, `service_role`— o el de la sesión, `postgres`
+para pg_cron), la tabla, alta/cambio/baja, sobre quién y los datos de antes y
+después.
+
+- **La escriben triggers**, `interno.auditar()`, en: `profile_teachers`, los
+  equipos y sus miembros, `coordinador_profesores`,
+  `coordinador_funciones_quitadas`, `supervisor_cuentas`, las academias y sus
+  miembros, `academia_ia`, `preparacion_rivales_profesores`, el acceso
+  (`acceso_config`, paquetes, pruebas gratis) y los cobros (planes,
+  suscripciones, cobros, pagos). **Una tabla nueva que reparta permisos,
+  accesos o dinero lleva el suyo** y va en `VIGILADAS` de
+  `verificar-auditoria.js`.
+- **De `profiles` solo lo que da o quita permisos** (`role`, `is_admin`,
+  `es_coordinador`, `es_supervisor`, `teacher_id`) y el correo con que se
+  entra. El trigger de cambio lleva `WHEN`: no corre en cada cambio de nombre
+  o de Elo, que son la mayoría. Al anotar un alta o una baja guarda solo esas
+  columnas: la bitácora no es otra copia de los datos personales.
+- **Un cambio que no cambió nada no se anota**: el trigger compara columna por
+  columna (y se salta `updated_at`). Como es `AFTER`, ve lo que quedó: si el
+  trigger de identidad revirtió un cambio de rol, no hay nada que anotar, y
+  así se comprobó.
+- `quitar_verificacion_en_dos_pasos()` escribe su propia fila
+  (`verificacion_en_dos_pasos`): `auth.mfa_factors` no es nuestra y no lleva
+  triggers.
+
+### Que no se pueda tocar
+
+Una bitácora que alguien puede escribir o borrar no prueba nada.
+
+- **Nadie escribe directo**: ni la página (`authenticated` solo tiene
+  `SELECT`) ni las Edge Functions (a `service_role` se le quitó todo). Los
+  triggers corren como dueño. Supabase da por defecto también `REFERENCES` y
+  `TRIGGER` a `authenticated`; acá se quitaron (migración aparte).
+- **No se cambia, no se borra, no se vacía**: `auditoria_intocable` corta
+  `UPDATE`, `DELETE` y `TRUNCATE`, también al dueño. Quien administre la
+  base con superusuario podría apagar el trigger: eso no lo evita nada dentro
+  de la base, y por eso Supabase guarda aparte su propio registro.
+- **Solo la lee quien administra** (`auditoria_select_admin`, con
+  `soy_admin()`).
+- **Se guarda dos años.** `interno.purgar_auditoria()` corre el día 1 de cada
+  mes (pg_cron `auditoria-purga`) y es lo único que puede borrar: levanta la
+  marca local `ajedrez.purgando_auditoria`, que solo vive en su transacción.
+- Comprobado impersonando roles en SQL: el cambio de `teacher_id` se anota
+  con quién y sobre quién; uno que no cambió nada, no; el profesor lee 0 filas
+  y administración todas; insertar como `authenticated` o `service_role` se
+  rechaza; `UPDATE` y `DELETE` como dueño también; un borrado hecho con la
+  clave de servicio queda anotado con `via = service_role`.
+
+### Dónde se ve
+
+`admin.html#auditoria`, «Registro de cambios» (`js/admin-auditoria.js`): lo más
+nuevo primero, de 50 en 50 con `range()`, con filtro (permisos y cuentas,
+accesos y academias, cobros y pagos) que filtra en la base. Cada fila dice qué
+pasó en palabras, quién y sobre quién (el nombre, no el id), el cambio campo
+por campo y, plegado, todo lo guardado. Todo va por `textContent`: adentro hay
+textos que escribió la gente. `verificar-admin.js` lo prueba y
+`verificar-auditoria.js` mira en el retrato del esquema que no falte ningún
+trigger ni sobre ningún permiso.
+
+- Las entradas y salidas de sesión no van acá: las guarda Supabase Auth en su
+  propio registro (Authentication › Logs).
+
 ## El nombre de un alumno es texto ajeno
 
 `profiles_update_own` deja a cada quien editar su propia fila y el trigger de

@@ -1,0 +1,45 @@
+# Dependabot: avisa (con un PR) cuando sale una versión nueva de lo que usa el
+# sitio. Salió de la revisión para ISO 27001 (control 8.8, vulnerabilidades
+# técnicas): las versiones se fijan en package.json y nadie se enteraba de un
+# arreglo de seguridad. Ver «Las dependencias se vigilan solas» en
+# docs/decisiones/sitio-e-infraestructura.md.
+#
+# Las librerías que el sitio sirve desde js/vendor/ (Supabase, chess.js,
+# three.js, Sentry, qrcode) salen de node_modules con `node herramientas/vendor.js`.
+# Un PR de Dependabot que las sube deja el CI en rojo a propósito
+# (verificar-vendor.js compara la copia con el paquete): se trae la rama, se
+# corre vendor.js y se commitea la copia nueva. Así la versión que corre en el
+# sitio no cambia sin que alguien lo mire.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "07:00"
+      timezone: America/Costa_Rica
+    open-pull-requests-limit: 5
+    groups:
+      # Las herramientas de desarrollo (no llegan al sitio) van juntas.
+      desarrollo:
+        patterns: ["playwright", "esbuild", "tailwindcss"]
+    ignore:
+      # Versiones fijadas a propósito: el sitio está escrito contra su API.
+      # chess.js 1.x cambió la API entera; three y tailwind 4 también.
+      - dependency-name: chess.js
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: three
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: tailwindcss
+        update-types: ["version-update:semver-major"]
+    commit-message:
+      prefix: "Dependencias"
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+      timezone: America/Costa_Rica
+    commit-message:
+      prefix: "CI"
