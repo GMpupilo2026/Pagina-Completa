@@ -69,6 +69,44 @@ function pruebaDominio() {
     "un usuario en el dominio raíz recibiría correo de verdad y se perdería la separación");
 }
 
+/* El archivo compartido de las Edge Functions, ejecutado de verdad. Los tipos
+   los quita el propio Node (22.13+): a mano, con expresiones regulares, cada
+   función nueva con un tipo un poco más largo rompía la prueba entera. */
+function moduloDelServidor() {
+  const { stripTypeScriptTypes } = require("node:module");
+  const ts = fs.readFileSync(path.join(RAIZ, "supabase/functions/_compartido/usuario-alumno.ts"), "utf8");
+  const js = stripTypeScriptTypes(ts).replace(/^export /gm, "");
+  return new Function(js + "\nreturn { baseDeUsuario, problemaDeContrasena, crearConContrasena };")();
+}
+
+/* ------------------------------------ 2b. la contraseña puesta al dar de alta
+   Las dos puertas de alta y «Su contraseña» usan la misma regla del servidor,
+   y la cuenta se crea confirmada: sin eso GoTrue no la deja entrar ni con la
+   contraseña buena, y el enlace que la confirmaría no sale nunca. */
+async function pruebaContrasenaServidor() {
+  console.log("\n=== La contraseña puesta al crear la cuenta ===");
+  const { problemaDeContrasena, crearConContrasena } = moduloDelServidor();
+  cierto("una de 7 caracteres no sirve", !!problemaDeContrasena("caballo"));
+  igual("una de 8 sirve", problemaDeContrasena("caballo4"), "null");
+  cierto("con un espacio al final no sirve", !!problemaDeContrasena("caballo482 "),
+    "en el celular el espacio se cuela solo y después nadie lo ve");
+  cierto("más de 72 bytes no sirve (bcrypt la cortaría callado)", !!problemaDeContrasena("ñ".repeat(37)));
+
+  let pedido = null;
+  const falso = { auth: { admin: { createUser: async (o) => { pedido = o; return { data: { user: { id: "u1" } }, error: null }; } } } };
+  const r = await crearConContrasena(falso, "sofia.munoz@alumno.ajedrez-integral.com", "caballo482", "Sofía Muñoz");
+  igual("devuelve la cuenta creada", r.user && r.user.id, "u1");
+  igual("la crea ya confirmada", pedido.email_confirm, "true");
+  igual("con esa contraseña", pedido.password, "caballo482");
+  igual("con el usuario, no con otro correo", pedido.email, "sofia.munoz@alumno.ajedrez-integral.com");
+
+  // Las tres funciones que ponen contraseña usan ESA regla, no una suya.
+  ["create-student", "inscribir-alumno", "correos-alumno"].forEach((f) => {
+    const src = fs.readFileSync(path.join(RAIZ, "supabase/functions", f, "index.ts"), "utf8");
+    cierto(f + " usa problemaDeContrasena()", /problemaDeContrasena\(clave\)/.test(src));
+  });
+}
+
 /* --------------------------------------------- 2. el usuario que se propone
    La pantalla propone el usuario y la Edge Function lo vuelve a armar si no
    viene. Si las dos reglas se separan, lo que el profesor ve enseñado no es lo
@@ -77,14 +115,7 @@ async function pruebaMismaRegla(browser) {
   console.log("\n=== La pantalla propone el mismo usuario que arma el servidor ===");
 
   // La de la Edge Function, ejecutada de verdad desde su propio archivo.
-  const ts = fs.readFileSync(path.join(RAIZ, "supabase/functions/_compartido/usuario-alumno.ts"), "utf8");
-  const js = ts
-    .replace(/export /g, "")
-    .replace(/type BuscadorDeCorreo[^;]*;/g, "")
-    .replace(/: Promise<[^>]*>/g, "").replace(/: BuscadorDeCorreo/g, "")
-    .replace(/: string \| null \| undefined/g, "").replace(/\?: string \| null/g, "")
-    .replace(/: boolean/g, "").replace(/: string/g, "").replace(/: number/g, "");
-  const delServidor = new Function(js + "\nreturn baseDeUsuario;")();
+  const delServidor = moduloDelServidor().baseDeUsuario;
 
   // La de la pantalla, sacada de la página tal como la carga el navegador.
   const page = await browser.newPage();
@@ -284,6 +315,9 @@ const RESPUESTAS = [
   // dada de alta deja de ofrecer el botón, así que no se puede reusar.
   { id: "resp-pedro", created_at: "2026-09-10T10:09:00Z", cuenta_id: null, cuenta_creada_at: null,
     respuestas: { nombre: "Pedro Muñoz Pérez", enc_nombre: "Ana Pérez", enc_correo: "mama@gmail.com" } },
+  // Una familia sin NINGÚN correo: solo entra si se le pone la contraseña.
+  { id: "resp-lucia", created_at: "2026-09-10T10:12:00Z", cuenta_id: null, cuenta_creada_at: null,
+    respuestas: { nombre: "Lucía Rojas Mora", enc_nombre: "Marta Mora" } },
 ];
 
 function clienteFalso(datos, usuarioId) {
@@ -305,7 +339,8 @@ window.SUPABASE_ANON_KEY = "anon-de-mentira";
       return Promise.resolve(new Response(JSON.stringify({
         ok: true, alumno_id: "u-nuevo", email: usuario, usuario: usuario,
         sin_correo: !!cuerpo.sin_correo, correo_destino: cuerpo.sin_correo ? cuerpo.encargado_email : usuario,
-        ya_tenia_cuenta: false, encargado_guardado: !!cuerpo.encargado_email, correo_enviado: true,
+        ya_tenia_cuenta: false, encargado_guardado: !!cuerpo.encargado_email,
+        con_contrasena: !!cuerpo.contrasena, correo_enviado: cuerpo.contrasena ? null : true,
       }), { status: 200, headers: { "Content-Type": "application/json" } }));
     }
     return original.apply(this, arguments);
@@ -445,8 +480,97 @@ async function pruebaAlta(browser) {
     avisosDePedro.some((a) => a.includes("pedro.munoz2@")),
     "enseñar el propuesto dejaría a la familia intentando entrar con uno que no es: " + JSON.stringify(avisosDePedro));
 
+  /* ---- una familia sin ningún correo: se le pone la contraseña ---- */
+  await page.evaluate(() => { window.__edge = []; window.__usuarioQueQueda = null; window.__avisos.length = 0; });
+  await abrirAltaDe("Lucía Rojas");
+  cierto("el campo de la contraseña SE VE",
+    await page.evaluate(() => document.getElementById("alta-contrasena").checkVisibility()));
+  igual("arranca vacío", await page.evaluate(() => document.getElementById("alta-contrasena").value), "");
+  await page.click("#alta-enviar");
+  cierto("sin correo de la casa ni contraseña, no se manda nada",
+    (await page.evaluate(() => window.__edge.length)) === 0,
+    "la cuenta quedaría creada y muda: no hay a dónde mandar el enlace");
+  igual("y dice que falta el correo o la contraseña",
+    await page.evaluate(() => /ponle tú la contraseña/.test(document.getElementById("alta-msg").textContent)), "true");
+
+  await page.fill("#alta-contrasena", "corta");
+  await page.click("#alta-enviar");
+  cierto("una contraseña corta no se manda", (await page.evaluate(() => window.__edge.length)) === 0);
+
+  await page.click("#alta-contrasena-proponer");
+  const propuesta = await page.evaluate(() => document.getElementById("alta-contrasena").value);
+  cierto("«Proponer una fácil» pone una de 8 o más", propuesta.length >= 8, propuesta);
+  igual("con la contraseña, el botón dice lo que hace",
+    await page.evaluate(() => document.getElementById("alta-enviar").textContent), "Crear la cuenta");
+  cierto("y la ayuda dice que la casa ya no hace falta para entrar",
+    await page.evaluate(() => /no hace falta para entrar/.test(document.getElementById("alta-encargado-ayuda").textContent)));
+
+  await page.click("#alta-enviar");
+  await page.waitForFunction(() => window.__edge.length > 0);
+  await esperarAviso(0);
+  const deLucia = await page.evaluate(() => window.__edge[0].cuerpo);
+  igual("se manda la contraseña", deLucia.contrasena, propuesta);
+  igual("sin correo de la casa", deLucia.encargado_email, "");
+  const avisosDeLucia = await avisos();
+  cierto("el aviso enseña el usuario SIN el dominio y la contraseña",
+    avisosDeLucia.some((a) => /Usuario: lucia\.rojas(?!@)/.test(a) && a.includes(propuesta)),
+    JSON.stringify(avisosDeLucia));
+  cierto("y no dice que salió un correo", !avisosDeLucia.some((a) => /salió a|NO salió/.test(a)),
+    JSON.stringify(avisosDeLucia));
+
+  /* Al abrir otra alta, la contraseña de la anterior no se le queda puesta.
+     Las respuestas ya tienen todas su cuenta: se abre «＋ Alumno nuevo». */
+  await page.evaluate(() => document.getElementById("alumno-nuevo-btn").click());
+  await page.waitForSelector("#alta-fondo:not(.hidden)");
+  await page.check("#alta-sin-correo");
+  igual("la contraseña se limpia al abrir otra alta",
+    await page.evaluate(() => document.getElementById("alta-contrasena").value), "");
+  igual("y el botón vuelve a decir que manda la invitación",
+    await page.evaluate(() => document.getElementById("alta-enviar").textContent), "Crear la cuenta y enviar la invitación");
+
   cierto("la página no tiró ningún error", errores.length === 0, errores.join("\n      "));
   await page.close();
+}
+
+/* ------------------------------ 6. invitar desde la clase, con contraseña
+   La otra puerta de alta: «Invitar a un alumno» de sesion.html. Se abre con
+   el doble de las pruebas de la clase, y create-student se contesta acá. */
+async function pruebaInvitarDesdeClase(browser) {
+  console.log("\n=== Invitar desde la clase con la contraseña puesta ===");
+  const R = require("./verificar-clase-registrada.js");
+  const CLASE = { id: "c-viva", created_by: "u-profe", started_at: new Date().toISOString(), ended_at: null };
+  const { page, ctx, errores } = await R.abrir(browser, "u-profe", CLASE);
+  const pedidos = [];
+  await page.route("**/functions/v1/create-student", async (r) => {
+    const cuerpo = JSON.parse(r.request().postData() || "{}");
+    pedidos.push(cuerpo);
+    await r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
+      ok: true, usuario: cuerpo.usuario + "@alumno.ajedrez-integral.com", sin_correo: true,
+      con_contrasena: !!cuerpo.contrasena, correo_enviado: null, correo_destino: null, restantes: null, ilimitado: true,
+    }) });
+  });
+  await page.click("#teacher-tab-controles");
+  await page.fill("#student-name", "Lucía Rojas Mora");
+  await page.check("#student-sin-correo");
+  cierto("el campo de la contraseña SE VE",
+    await page.evaluate(() => document.getElementById("student-contrasena").checkVisibility()));
+  igual("sin contraseña, el botón invita", await page.textContent("#create-student-btn"), "Enviar invitación");
+  await page.click("#create-student-btn");
+  cierto("sin correo de la casa ni contraseña, no se manda nada", pedidos.length === 0);
+  await page.click("#student-contrasena-proponer");
+  const clave = await page.inputValue("#student-contrasena");
+  igual("con la contraseña, el botón dice lo que hace", await page.textContent("#create-student-btn"), "Crear la cuenta");
+  await page.click("#create-student-btn");
+  await page.waitForFunction(() => /Listo/.test(document.getElementById("create-student-msg").textContent), null, { timeout: 5000 });
+  igual("se manda la contraseña", pedidos[0] && pedidos[0].contrasena, clave);
+  igual("y el usuario propuesto", pedidos[0] && pedidos[0].usuario, "lucia.rojas");
+  const texto = await page.textContent("#create-student-msg");
+  cierto("el aviso enseña el usuario sin el dominio y la contraseña",
+    texto.includes("«lucia.rojas»") && texto.includes("«" + clave + "»"), texto);
+  igual("el formulario queda limpio para el siguiente", await page.inputValue("#student-contrasena"), "");
+  igual("y el botón vuelve a invitar", await page.textContent("#create-student-btn"), "Enviar invitación");
+  cierto("la página no tiró ningún error", errores.length === 0, errores.join("\n      "));
+  await ctx.close();
 }
 
 (async () => {
@@ -454,9 +578,11 @@ async function pruebaAlta(browser) {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
     await pruebaMismaRegla(browser);
+    await pruebaContrasenaServidor();
     await pruebaLogin(browser);
     await pruebaOlvido(browser);
     await pruebaAlta(browser);
+    await pruebaInvitarDesdeClase(browser);
   } finally {
     await browser.close();
   }

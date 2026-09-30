@@ -685,6 +685,45 @@ pantalla decía «enviado». Ahora esas cuentas van por `reenviar-acceso` (al
 correo de la casa), y `admin-manage-users` rechaza el caso por si alguien lo
 llama directo.
 
+### La contraseña se puede poner al crear la cuenta
+
+Con «Su contraseña» el niño ya podía entrar sin abrir ningún correo, pero
+llegaba en dos pasos: crear la cuenta (que exigía el correo de la casa para
+mandar el enlace) y después ir a la ficha a ponerle la contraseña. Y hay
+familias que **no tienen ningún correo**: con eso, la cuenta no se podía ni
+crear. Así que las dos puertas de alta traen, junto al usuario, el campo
+**«Contraseña (si se la pones tú)»**, con su «Proponer una fácil»:
+
+- **Con la contraseña puesta la cuenta se crea con ella y confirmada**
+  (`crearConContrasena()` de `_compartido/usuario-alumno.ts`, con
+  `email_confirm: true`) y **no sale ningún correo**: el enlace para crearla
+  sobraría, y a la casa le llegaría uno que pide hacer algo ya hecho. Por eso
+  ahí **el correo de la casa pasa a ser opcional**; si viene, se guarda igual
+  para los informes. Sin contraseña todo sigue como antes: la casa es
+  obligatoria, que es a donde va el enlace.
+- **La regla de la contraseña es una sola**, `problemaDeContrasena()`: ocho
+  como mínimo, 72 bytes como máximo (bcrypt corta callado) y sin espacios en
+  las puntas. La usan `create-student`, `inscribir-alumno` y la acción
+  `contrasena` de `correos-alumno`. La pantalla la repite solo para avisar
+  antes; quien decide es el servidor.
+- **Solo con usuario de la Academia.** Con correo propio el servidor la
+  rechaza: esa contraseña es de la persona, y la crea con su enlace.
+- La respuesta trae `con_contrasena: true` (y `correo_enviado: null`), y el
+  aviso del final enseña **el usuario sin el dominio y la contraseña**, y dice
+  que no salió ningún correo: quien dio de alta es quien se los da al alumno.
+- En `inscribir-alumno`, un reintento sobre una cuenta ya creada **no le toca
+  la contraseña** y contesta `con_contrasena: false`: la pantalla no puede
+  decir «entra con esta» sin saber que es la que tiene.
+- El botón dice lo que hace: «Crear la cuenta» con la contraseña puesta,
+  «Enviar invitación» / «Crear la cuenta y enviar la invitación» sin ella.
+- Al abrir otra alta el campo se vacía: la contraseña de un alumno no se le
+  queda puesta al siguiente.
+
+Pide volver a desplegar `create-student`, `inscribir-alumno` y
+`correos-alumno` (armadas con `node herramientas/funciones-armar.js`). Hasta
+entonces, el servidor viejo ignora la contraseña: con correo de la casa manda
+el enlace como siempre, y sin él contesta que falta, sin crear nada.
+
 ### Las dos puertas de alta
 
 Las dos —`formularios.html` (el diálogo "Crear cuenta") y `sesion.html`
