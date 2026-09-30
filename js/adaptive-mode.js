@@ -103,8 +103,25 @@
   }
 
   function set(on) {
+    /* Los interruptores propios de las páginas («🔊 Adaptado») también pasan
+       por acá: con la cuenta marcada como ciega no se apaga, y el evento
+       devuelve cada interruptor a «activado». */
+    if (!on && document.documentElement.classList.contains("modo-ciego")) {
+      try { document.dispatchEvent(new CustomEvent("adaptivemode:change", { detail: { activo: true } })); } catch (e) {}
+      avisarFijo();
+      return;
+    }
     setStored(on);
     applyMode(on);
+  }
+  function avisarFijo() {
+    if (!document.body) return;
+    var nota = document.createElement("div");
+    nota.setAttribute("role", "status");
+    nota.className = "sr-only";
+    document.body.appendChild(nota);
+    setTimeout(function () { nota.textContent = "Tu cuenta tiene el modo adaptado fijo: solo lo puede cambiar administración."; }, 60);
+    setTimeout(function () { nota.remove(); }, 5000);
   }
 
   function announceAutoSwitch(reason) {
@@ -183,7 +200,13 @@
      confirma (o la quita) apenas carga la página. */
   try {
     var vision = JSON.parse(localStorage.getItem("ai_vision_v1") || "null");
-    if (vision && vision.vision === "ciego") document.documentElement.classList.add("modo-ciego");
+    /* Y a quien no ve, el Modo Adaptado siempre: sin él los tableros no
+       traen su recuadro para escribir la jugada. Se escribe ANTES de que
+       corran los scripts de la página, que leen la preferencia al cargar. */
+    if (vision && vision.vision === "ciego") {
+      document.documentElement.classList.add("modo-ciego");
+      if (!isOn()) { setStored(true); applyMode(true); }
+    }
   } catch (e) {}
 
   // El interruptor en el header se agrega solo en páginas que no traigan ya
@@ -202,7 +225,7 @@
     toggleBtn.className = themeBtn.className;
     themeBtn.parentElement.insertBefore(toggleBtn, themeBtn);
     toggleBtn.addEventListener("click", function () {
-      set(!isOn());
+      set(!isOn());   // con la cuenta marcada como ciega, set(false) no apaga (ver set)
     });
     updateToggleUI();
   }
