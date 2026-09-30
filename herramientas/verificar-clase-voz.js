@@ -132,6 +132,21 @@ async function empujar(page, f) {
     await page.waitForTimeout(400);
     si("lo que la clase anuncia en #clase-voz se dice", (await dichos(page)).some((t) => /hizo una pregunta/.test(t)), (await dichos(page)).join(" | "));
 
+    /* Lo que contesta el recuadro lo dice js/clase-adaptada.js (también lo usa
+       la página de los invitados, que no tiene esta voz del encabezado) Y
+       además queda en su región viva, que esta voz también lee: tiene que
+       oírse UNA vez. */
+    await page.evaluate(() => AdaptiveMode.set(true));
+    await page.waitForTimeout(300);
+    await olvidar(page);
+    await page.fill("#clase-cmd .cc-input", "Zz9");
+    await page.press("#clase-cmd .cc-input", "Enter");
+    await page.waitForTimeout(600);
+    d = await dichos(page);
+    const respuesta = await page.evaluate(() => document.querySelector("#clase-cmd .cc-msg").textContent.trim());
+    igual("la respuesta del recuadro se dice una sola vez", [!!respuesta, d.filter((t) => t === respuesta).length], [true, 1]);
+    await page.evaluate(() => AdaptiveMode.set(false));
+
     await page.reload({ waitUntil: "domcontentloaded" });
     await page.waitForSelector("#app:not(.hidden)", { timeout: 30000 });
     await page.waitForSelector("#voz-toggle", { timeout: 10000 });

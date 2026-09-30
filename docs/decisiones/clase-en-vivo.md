@@ -1394,6 +1394,13 @@ además con la voz del navegador para quien no tiene lector:
   pestaña u otra aplicación cuenta igual. La entrada lo dice.
 - La voz no lee los emojis (`ClaseAdaptada.hablar` los quita): diría
   «warning sign».
+- **Con la voz del encabezado** (`js/voz-pagina.js`, que lee las regiones
+  vivas de toda página con encabezado): esta página no tiene encabezado, así
+  que no la carga y dice sus avisos con `anunciar()`. En `sesion.html` sí está,
+  y lee la región del recuadro, así que lo que `ClaseAdaptada` además dice
+  directo se oiría dos veces; no pasa porque `BlindNotation.speak` descarta el
+  mismo texto repetido en 2 s. `verificar-clase-voz.js` comprueba que la
+  respuesta del recuadro se oiga una sola vez (falla sin ese descarte).
 - `numerarJugadas` y `describirVista` se mudaron de `sesion.js` a
   `js/clase-adaptada.js`, sin cambiar lo que dicen: las usan las dos páginas.
 
