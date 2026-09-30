@@ -252,6 +252,12 @@ html[data-pieza="aro"] .chess-piece-svg.pieza-b,
 .example-sq-light { background: var(--sq-light, #f0f4f8); }
 .example-sq-dark { background: var(--sq-dark, #486581); }
 .example-readout p { margin: 2px 0; }
+/* El diagrama chico de una posición (NotasAlumno.diagrama: bitácora, «Lo que
+   más le costó»…). Se usa de varios anchos (w-40, w-28), así que la pieza se
+   mide contra el ancho del diagrama y no con un tamaño fijo: un glifo más
+   alto que la casilla deformaba la fila. */
+.nota-posicion { container-type: inline-size; }
+.nota-posicion > span { min-width: 0; min-height: 0; overflow: hidden; font-size: 11.5cqw; }
 
 /* Coordenadas a-h/1-8 FUERA del tablero principal, como un tablero físico — siempre
    visibles (js/clases-board.js, opts.externalCoords). Grid de 2x2: números a la
