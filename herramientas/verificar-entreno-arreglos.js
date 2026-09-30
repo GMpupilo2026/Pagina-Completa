@@ -169,7 +169,8 @@ async function visualizacion(browser) {
     game = new Chess(fen); const ninguna = jugadaDeLaLinea("Rd2", "Kf2");
     return [rey && rey.san, torre && torre.san, ninguna && ninguna.san];
   });
-  igual("«Rd2» es el rey si la línea pide el rey, la torre si pide la torre, y si no, la de siempre", leida, ["Kd2", "Rd2", "Rd2"]);
+  // «La de siempre» es el rey: en todo el sitio la «R» es el rey (js/chess-move-parser.js).
+  igual("«Rd2» es el rey si la línea pide el rey, la torre si pide la torre, y si no, el rey", leida, ["Kd2", "Rd2", "Kd2"]);
 
   await page.evaluate(() => { openLevel(NIVELES[0].id); });
   await page.waitForFunction(() => game !== null && currentId() !== undefined, { timeout: 15000 });

@@ -449,12 +449,14 @@ async function pruebaLetrasNoSonPiezas(browser) {
   })(), true);
 
   /* "R" es Rey en español y Rook (torre) en inglés: dos jugadas distintas
-     escritas igual. Se prueban las dos y gana la que sea legal. Leído en un solo
-     idioma no fallaría nada: movería la pieza que no era, legalmente, y quien
-     escribió su jugada vería moverse otra cosa sin entender por qué. */
+     escritas igual. Si las dos son legales gana el REY, porque el sitio escribe
+     en español («Rf1» movía la torre, y en el examen era la pregunta perdida);
+     si solo una lo es, esa. */
   const torres = new Chess("4k3/8/8/8/8/8/8/R3K2R w KQ - 0 1");
   const rd1 = CT.jugadaEscrita(torres, "Rd1");
-  igual('"Rd1" donde la torre puede llegar es la TORRE (inglés)', rd1 && rd1.piece + rd1.from + rd1.to, "ra1d1");
+  igual('"Rd1" donde llegan el rey y la torre es el REY (español)', rd1 && rd1.piece + rd1.from + rd1.to, "ke1d1");
+  const rb1 = CT.jugadaEscrita(torres, "Rb1");
+  igual('"Rb1" donde solo llega la torre es la TORRE (inglés)', rb1 && rb1.piece + rb1.from + rb1.to, "ra1b1");
   const re2 = CT.jugadaEscrita(torres, "Re2");
   igual('"Re2" donde la torre NO puede llegar es el REY (español)', re2 && re2.piece + re2.from + re2.to, "ke1e2");
   const td1 = CT.jugadaEscrita(torres, "Td1");
