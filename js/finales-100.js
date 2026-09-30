@@ -277,7 +277,11 @@
       '<button type="button" data-act="flip" aria-label="Girar el tablero" title="Girar el tablero">⇅</button></div>' +
       '<div class="f100-moves" aria-label="Línea principal"></div>' +
       '<div class="f100-practice"><button type="button" data-act="practice" class="f100-btn">♟ Practicar contra el motor</button>' +
-      '<label class="f100-level">Nivel <select data-act="level"><option value="1500">1500</option><option value="1800" selected>1800</option><option value="max">Máximo</option></select></label>' +
+      /* Un <span> y no un <label>: «leer» (js/vision-cuenta.js) lee los
+         <label>, y uno con el select adentro juntaba todas sus opciones
+         («Nivel 15001800Máximo»). El nombre lo lleva el select. Igual que en
+         js/curso-partidas.js. */
+      '<span class="f100-level">Nivel <select data-act="level" aria-label="Nivel del motor"><option value="1500">1500</option><option value="1800" selected>1800</option><option value="max">Máximo</option></select></span>' +
       '<span class="f100-pstatus" aria-live="polite"></span></div>' +
       '<div class="f100-cmd" hidden></div>' +
       '<div class="f100-promo" hidden><span>Coronar:</span><button data-p="q">♕ Dama</button><button data-p="r">♖ Torre</button><button data-p="b">♗ Alfil</button><button data-p="n">♘ Caballo</button></div>' +
@@ -373,6 +377,122 @@
       return vista;
     }
 
+    /* ---------- las preguntas del examen, contestadas escribiendo ----------
+       Antes el recuadro de una pregunta («2.01 Juegan blancas. ¿Es tablas?»)
+       solo recorría la línea: «Cc4» (la solución), «sí» o «tablas» daban «No
+       entendí», y «siguiente» destapaba la solución sin decir nada. Ahora se
+       contesta con la jugada o con el resultado, y cada respuesta dice lo que
+       dice todo el sitio (js/comandos-tablero.js): «Respuesta incorrecta: …»
+       si se pudo jugar pero no era, «no es una jugada legal» si no se puede
+       hacer, y «No entendí» si no es ninguna de las dos. «solución» la DICE, y
+       «siguiente» pasa a la pregunta siguiente. */
+    const esPregunta = !!d.examen;
+    const turno0 = parseFen(startFen).turn;
+    const QUIEN = { "1-0": "blancas", "0-1": "negras" };
+    // Qué se contesta con «sí» o «no»: «¿Es tablas?» / «¿Pueden hacer tablas?» y «¿Pueden ganar?».
+    const tipoSiNo = (function () {
+      const q = sinTildes(d.titulo || "");
+      if (/se gana o/.test(q)) return null;
+      if (/\b(es|hacen|hacer|puede hacer|pueden hacer) tablas\b[^?]*\?\s*$/.test(q)) return "tablas";
+      if (/\bpueden? ganar\?\s*$/.test(q)) return "ganar";
+      return null;
+    })();
+    /* Las jugadas que valen: la primera de la línea y las que la respuesta da
+       como igual de buenas («(también 1.Ad2!)», «1...Ra3! (o 1...Ra2)»). */
+    const jugadasBuenas = (function () {
+      const buenas = [];
+      if (moves[0]) buenas.push(moves[0].uci);
+      const r = String(d.comentario || "");
+      const re = /(?:tambi[eé]n|\(o)\s+\d+\.(?:\.\.)?\s*([RDTACN]?[a-h]?[1-8]?x?[a-h][1-8](?:=[DTAC])?)/g;
+      let m;
+      while ((m = re.exec(r))) {
+        try {
+          const g = new Chess(startFen);
+          const mv = jugadaEscrita(g, m[1]);
+          if (mv) buenas.push(mv.from + mv.to + (mv.promotion || ""));
+        } catch (e) {}
+      }
+      return buenas;
+    })();
+    function resultadoDicho(t) {
+      t = t.replace(/[.!¡¿?,]/g, " ").replace(/\s+/g, " ").trim();
+      if (/^(1\/2|½|1\/2-1\/2|tablas|es tablas|son tablas|hacen tablas|se hacen tablas|empate|tablas muertas)$/.test(t)) return "½";
+      if (/^(1-0|ganan? (las )?blancas|ganan? el blanco|(las )?blancas ganan|se ganan? con blancas)$/.test(t)) return "1-0";
+      if (/^(0-1|ganan? (las )?negras|ganan? el negro|(las )?negras ganan|se ganan? con negras)$/.test(t)) return "0-1";
+      if (/^(ganan?|se gana|se ganan|ganar|ganan las que juegan|gana el que juega)$/.test(t)) return "?";
+      return null;
+    }
+    const SIGUE = " Escribe «solución» para oír la explicación, o «siguiente» para pasar a la siguiente pregunta.";
+    const OTRA_VEZ = " Vuelve a intentarlo, o escribe «solución» para oír la respuesta.";
+    function bienDicho(api, texto) { api.limpiar().decir(texto); hablar(texto); }
+    function malDicho(api, texto) { api.decir(texto); hablar(texto); try { api.input.select(); } catch (e) {} }
+    function hablar(texto) { if (window.BlindNotation && window.BlindNotation.speak) window.BlindNotation.speak(texto); }
+    function calificarResultado(res, api) {
+      if (res === "?") { malDicho(api, "¿Quién gana? Escribe «ganan blancas», «ganan negras» o «tablas»."); return; }
+      if (res === d.resultado) bienDicho(api, "¡Correcto! " + RES_TXT[d.resultado] + "." + SIGUE);
+      else malDicho(api, "Respuesta incorrecta: no es «" + RES_TXT[res].toLowerCase() + "»." + OTRA_VEZ);
+    }
+    function calificarSiNo(si, texto, api) {
+      if (!tipoSiNo) {
+        malDicho(api, "Esta pregunta no se contesta con «sí» o «no»: escribe el resultado («tablas», «ganan blancas» o «ganan negras») o la jugada.");
+        return;
+      }
+      const verdad = tipoSiNo === "tablas" ? d.resultado === "½" : QUIEN[d.resultado] === (turno0 === "w" ? "blancas" : "negras");
+      if (si === verdad) bienDicho(api, "¡Correcto! " + (si ? "Sí" : "No") + ": " + RES_TXT[d.resultado].toLowerCase() + "." + SIGUE);
+      else malDicho(api, "Respuesta incorrecta: la respuesta no es «" + texto.trim() + "»." + OTRA_VEZ);
+    }
+    function lineaEscrita() {
+      if (d.linea_es) return d.linea_es;
+      return moves.map((m, i) => {
+        const n = Math.floor((i + (turno0 === "b" ? 1 : 0)) / 2) + 1;
+        const pre = i === 0 && turno0 === "b" ? n + "… " : (i + (turno0 === "b" ? 1 : 0)) % 2 === 0 ? n + ". " : "";
+        return pre + esSan(m.san);
+      }).join(" ");
+    }
+    /* «solución»: se destapa la línea Y SE DICE. Antes el botón «Ver la
+       solución» solo pintaba la lista de jugadas, y quien no ve oía «Listo».
+       Se dice un momento después: el recuadro de la capa de la cuenta ciega
+       escribe su «Listo: …» en el mismo aviso. */
+    function decirSolucion(api) {
+      const destapar = hasSol && !state.showSol;
+      if (hasSol) { state.showSol = true; renderMoves(); renderView(); }
+      const sol = el.closest(".f100-item") && el.closest(".f100-item").nextElementSibling;
+      if (sol && sol.matches && sol.matches("details.f100-sol")) sol.open = true;
+      const partes = [];
+      if (esPregunta) partes.push("La solución: " + (d.resultado_texto || RES_TXT[d.resultado] || "") + ".");
+      if (d.comentario) partes.push(String(d.comentario));
+      if (hasSol) partes.push("La línea: " + lineaEscrita() + ".");
+      if (hasSol) partes.push("Para recorrerla escribe «adelante», «atrás» o «jugada 3»" + (esPregunta ? "; «siguiente» pasa a la siguiente pregunta." : "."));
+      const texto = partes.join(" ") || "Esta posición no trae solución escrita.";
+      const destino = api || cuadro;
+      setTimeout(() => { if (destino) destino.decir(texto); hablar(texto); }, destapar && !api ? 150 : 0);
+    }
+    function presentarPregunta(aviso) {
+      if (!cuadro || !cuadro.input) return false;
+      try { el.scrollIntoView({ block: "center" }); } catch (e) {}
+      cuadro.input.focus();
+      const num = String(d.n || d.id.replace(/^E[BF]-/, ""));
+      const texto = (aviso ? aviso + " " : "") + "Pregunta " + num + ": " + (d.titulo || "") + " Contesta escribiendo la jugada o el resultado.";
+      cuadro.limpiar().decir(texto);
+      hablar(texto);
+      return true;
+    }
+    el.__f100 = { presentar: presentarPregunta };
+    function irAPregunta(paso, api) {
+      const leccion = el.closest("details:not(.f100-sol)") || el.closest("section") || document;
+      const todas = Array.from(leccion.querySelectorAll('.f100-diag[data-id^="EB-"], .f100-diag[data-id^="EF-"]'));
+      const dest = todas[todas.indexOf(el) + paso];
+      if (!dest) { malDicho(api, paso > 0 ? "Esta es la última pregunta de la lección." : "Esta es la primera pregunta de la lección."); return; }
+      api.limpiar();
+      const t0 = Date.now();
+      (function esperar() {
+        if (dest.__f100 && dest.__f100.presentar(paso > 0 ? "Siguiente pregunta." : "Pregunta anterior.")) return;
+        if (Date.now() - t0 > 5000) { malDicho(api, "No se pudo abrir la pregunta " + (paso > 0 ? "siguiente." : "anterior.")); return; }
+        setTimeout(esperar, 100);
+      })();
+    }
+    const ES_SOLUCION = /^(solucion|la solucion|ver la solucion|ver solucion|respuesta|la respuesta|ver la respuesta|decir la solucion)$/;
+
     function alEscribir(texto, api) {
       const t = sinTildes(texto);
       if (state.mode === "practicar") {
@@ -392,17 +512,46 @@
       }
       if (/^(practicar|jugar|jugar contra el motor)$/.test(t)) { api.limpiar(); startPractice(); return; }
       if (/^girar( el tablero)?$/.test(t)) { api.limpiar(); state.flip = !state.flip; renderView(); api.decir(state.flip ? "Ahora ves el tablero desde las negras." : "Ahora ves el tablero desde las blancas."); return; }
-      const n = window.VisorLinea ? window.VisorLinea.pasoPedido(texto, state.ply, moves.length) : null;
-      if (n === null) { api.decir("No entendí «" + texto.trim() + "». Escribe «siguiente», «anterior», «jugada 5», «practicar» para jugar contra el motor, o una pregunta como «caballos»."); return; }
-      if (!hasSol) { api.decir("Esta posición no trae una línea para recorrer. Escribe «practicar» para jugarla contra el motor."); return; }
-      /* Con la solución tapada, recorrer la línea es pedir verla: se hace lo
-         que haría el botón «Ver la solución» y se va a la jugada pedida. Antes
-         contestaba «usa el botón», y quien no ve tenía que salir del recuadro
-         a buscarlo con Tab. */
+      if (ES_SOLUCION.test(t)) { api.limpiar(); decirSolucion(api); return; }
+      if (esPregunta) {
+        if (/^(siguiente|siguiente pregunta|otra pregunta|proxima pregunta|pasar)$/.test(t)) { irAPregunta(1, api); return; }
+        if (/^(pregunta anterior|anterior pregunta)$/.test(t)) { irAPregunta(-1, api); return; }
+        if (/^(pregunta|repetir|repetir la pregunta|la pregunta|cual es la pregunta)$/.test(t)) { bienDicho(api, "Pregunta " + (d.n || "") + ": " + (d.titulo || "")); return; }
+        const sn = t.replace(/[.!¡,]/g, " ").trim().match(/^(si|no)\b/);
+        if (sn) { calificarSiNo(sn[1] === "si", texto, api); return; }
+        const res = resultadoDicho(t);
+        if (res) { calificarResultado(res, api); return; }
+      }
+      // La jugada: en una pregunta es la respuesta; en un diagrama, aquí no se juega.
+      const g = juegoVisto();
+      const mv = g ? jugadaEscrita(g, texto) : null;
+      const pareceJugada = window.ComandosTablero && window.ComandosTablero.pareceJugada ? window.ComandosTablero.pareceJugada(texto) : false;
+      if (mv) {
+        if (esPregunta && state.ply === 0) {
+          const dicha = esSan(mv.san);
+          if (!jugadasBuenas.length) { malDicho(api, "Esta pregunta no se contesta con una jugada: escribe el resultado («tablas», «ganan blancas» o «ganan negras»)."); return; }
+          if (jugadasBuenas.indexOf(mv.from + mv.to + (mv.promotion || "")) !== -1) bienDicho(api, "¡Correcto! " + dicha + " es la jugada de la solución." + SIGUE);
+          else malDicho(api, window.ComandosTablero && ComandosTablero.incorrecta ? ComandosTablero.incorrecta(dicha, OTRA_VEZ.trim()) : "Respuesta incorrecta: " + dicha + " no es la jugada que buscamos." + OTRA_VEZ);
+          return;
+        }
+        malDicho(api, "Aquí no se juega: escribe «practicar» para jugar esta posición contra el motor" + (hasSol ? ", o «adelante» para recorrer la línea." : "."));
+        return;
+      }
+      if (pareceJugada) { malDicho(api, ComandosTablero.noSePudoJugar(texto.trim())); return; }
+      const pedido = t.replace(/^jugada (siguiente|anterior)$/, "$1").replace(/^(adelante|avanzar)$/, "siguiente").replace(/^(atras|retroceder)$/, "anterior");
+      // En una pregunta, «siguiente» es la pregunta siguiente (arriba); la línea se recorre con «adelante».
+      const n = window.VisorLinea ? window.VisorLinea.pasoPedido(pedido, state.ply, moves.length) : null;
+      if (n === null) {
+        malDicho(api, esPregunta
+          ? "No entendí «" + texto.trim() + "». Contesta con la jugada (por ejemplo «Cc4») o con el resultado (" + (tipoSiNo ? "«sí», «no», " : "") + "«tablas», «ganan blancas»). También: «solución», «siguiente» o «pregunta»."
+          : "No entendí «" + texto.trim() + "». Escribe «siguiente», «anterior», «jugada 5», «solución», «practicar» para jugar contra el motor, o una pregunta como «caballos».");
+        return;
+      }
+      if (!hasSol) { malDicho(api, "Esta posición no trae una línea para recorrer. Escribe «practicar» para jugarla contra el motor."); return; }
+      /* Con la solución tapada, recorrer la línea NO la destapa sin avisar: se
+         dice que está tapada y cómo oírla. */
       if (!state.showSol) {
-        state.showSol = true; renderMoves(); renderView();
-        api.limpiar().decir("Aquí está la solución: la línea tiene " + moves.length + (moves.length === 1 ? " jugada." : " jugadas."));
-        if (n >= 1) irA(Math.min(n, moves.length));
+        malDicho(api, "La solución está tapada. Contesta la pregunta, o escribe «solución» para oírla.");
         return;
       }
       if (n < 0) { api.decir("Ya estás en la posición inicial."); return; }
@@ -412,21 +561,25 @@
     }
 
     montarCuadro(cmdHost, {
-      etiqueta: "Escribe tu jugada, recorre la línea o pregunta por la posición",
+      etiqueta: esPregunta
+        ? "Escribe tu respuesta: la jugada o el resultado (" + (tipoSiNo ? "«sí», «no», " : "") + "«tablas», «ganan blancas»)"
+        : "Escribe tu jugada, recorre la línea o pregunta por la posición",
       juego: juegoVisto,
       // La posición no se dicta en cada jugada: se dice la jugada.
       posicionViva: false,
       onEnviar: alEscribir,
     }, (api) => {
       cuadro = api;
-      api.ayuda("Recorrer: «siguiente», «anterior», «jugada 5». Jugar contra el motor: «practicar», y luego la jugada («Cf3», «e4»). Preguntar: «posición», «caballos», «qué hay en e4».");
+      api.ayuda(esPregunta
+        ? "Contestar: la jugada («Cc4») o el resultado (" + (tipoSiNo ? "«sí», «no», " : "") + "«tablas», «ganan blancas», «ganan negras»). «solución» dice la respuesta; «siguiente» pasa a la siguiente pregunta; «pregunta» la repite. Con la solución a la vista: «adelante», «atrás», «jugada 5». Jugar contra el motor: «practicar». Preguntar: «posición», «caballos», «qué hay en e4»."
+        : "Recorrer: «siguiente», «anterior», «jugada 5». La explicación: «solución». Jugar contra el motor: «practicar», y luego la jugada («Cf3», «e4»). Preguntar: «posición», «caballos», «qué hay en e4».");
       mostrarCuadro();
     });
     mostrarCuadro();
 
     el.addEventListener("click", (ev) => {
       const b = ev.target.closest("button"); if (!b) return;
-      if (b.classList.contains("f100-showsol")) { state.showSol = true; renderMoves(); renderView(); return; }
+      if (b.classList.contains("f100-showsol")) { decirSolucion(null); return; }
       if (b.dataset.ply) { if (state.mode !== "ver") return; irA(parseInt(b.dataset.ply, 10)); return; }
       const act = b.dataset.act;
       // Recorrer la línea con ◀ ▶ muestra las jugadas en el tablero: es ver la

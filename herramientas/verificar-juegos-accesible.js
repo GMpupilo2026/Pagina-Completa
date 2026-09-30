@@ -82,6 +82,7 @@ window.__consultas = [];
       is() { return b; }, not() { return b; }, or() { return b; },
       order() { return b; }, limit(n) { filas2 = filas2.slice(0, n); return b; }, range() { return b; },
       insert(fila) { resultado = fila; return b; },
+      upsert(fila) { resultado = fila; return b; },   // Racha táctica guarda la mejor racha así
       // Como la base: devuelve las filas que cumplen los filtros, ya actualizadas.
       // Las páginas encadenan .eq("status", "playing").select("id") y miran si volvió
       // alguna: devolver el parche suelto las haría creer que no se guardó nada.
@@ -628,6 +629,28 @@ async function pruebaLasRachas(browser) {
     /* Legal pero no era la del ejercicio: empieza por «Respuesta incorrecta» y
        dice la jugada que se hizo, en palabras. */
     ok("    y empieza por «Respuesta incorrecta: caballo gustav 5»", /^Respuesta incorrecta: caballo gustav 5 /.test(fallo), fallo);
+    /* Terminada la racha, todo contestaba «Ahora mismo no se puede contestar» y
+       quien no ve tenía que salir a buscar el botón «Jugar de nuevo». El final
+       dice qué escribir, y «otra vez» / «siguiente» arrancan otra racha. */
+    ok("    el final dice qué escribir para seguir", /Escribe «otra vez» para jugar de nuevo\.$/.test(fallo), fallo);
+    const dice = async (texto, espera) => {
+      await page.fill(".cc-input", texto);
+      await page.press(".cc-input", "Enter");
+      await page.waitForTimeout(espera || 250);
+      return page.evaluate(() => ({ msg: (document.querySelector(".cc-msg") || {}).textContent || "",
+        res: document.getElementById("result-text").textContent }));
+    };
+    let d = await dice("Ac4");
+    ok("    una jugada con la racha terminada lo dice (no «Ahora mismo no se puede»)", /^La racha terminó\. Escribe «otra vez»/.test(d.msg), d.msg);
+    d = await dice("otra vez", 500);
+    ok("    «otra vez» empieza otra racha", /Ejercicio nuevo/.test(d.res) && !/no se puede/.test(d.msg), d);
+    // Un acierto y un fallo: con racha 1 se guarda el récord (Racha táctica, upsert).
+    await dice("Ac4", 700);
+    d = await dice("Cg5", 700);
+    ok("    se puede volver a fallar", /^Respuesta incorrecta/.test(d.res) && /Racha final: 1\./.test(d.res), d.res);
+    d = await dice("siguiente", 500);
+    ok("    y «siguiente» también empieza otra", /Ejercicio nuevo/.test(d.res), d);
+    igual("    sin errores de JavaScript en todo el ida y vuelta", errores.length, 0);
     await ctx.close();
   }
 

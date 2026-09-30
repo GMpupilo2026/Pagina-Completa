@@ -127,6 +127,13 @@ window.__consultas = [];
         filas2 = [Object.assign({ id: tabla + "-" + window.__inserts.length }, fila)];
         return b;
       },
+      // Como insert: Racha táctica guarda la mejor racha con upsert().
+      upsert(fila) {
+        window.__upserts = window.__upserts || [];
+        window.__upserts.push({ tabla: tabla, fila: fila });
+        filas2 = [fila];
+        return b;
+      },
       update() { return b; },
       delete() { return b; },
       maybeSingle() { unica = true; return b; },

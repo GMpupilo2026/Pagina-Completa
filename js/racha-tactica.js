@@ -197,6 +197,13 @@
             comandos.posicion(game);
         }
 
+        // Lo que se escribe para empezar otra racha al terminar (o la primera).
+        const PIDE_OTRA = /^(otra vez|otra|siguiente|de nuevo|jugar de nuevo|jugar otra vez|volver a jugar|otra racha|empezar|comenzar|empezar de nuevo|reiniciar|nueva racha)$/;
+        let yaTermino = false;
+        function normalizarPedido(t) {
+            return String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z ]+/g, " ").replace(/\s+/g, " ").trim();
+        }
+
         function jugarEscribiendo(texto, api) {
             // «tiempo», «reloj», «cuánto tiempo»: los segundos que quedan. Va antes que
             // lo demás porque la barra que se achica no la oye nadie (js/reloj-hablado.js).
@@ -204,7 +211,18 @@
                 api.limpiar().decir(relojHablado.texto());
                 return;
             }
-            if (!running || resultLocked) { api.decir("Ahora mismo no se puede contestar."); return; }
+            /* Terminada la racha (o antes de empezar), «otra vez», «siguiente» o
+               «jugar de nuevo» arrancan otra: antes todo contestaba «Ahora mismo no
+               se puede contestar» y quien no ve tenía que salir del recuadro a
+               buscar el botón. */
+            if (!running) {
+                if (PIDE_OTRA.test(normalizarPedido(texto))) { api.limpiar().decir(""); empezarRacha(); return; }
+                api.decir(yaTermino ? "La racha terminó. Escribe «otra vez» para jugar de nuevo."
+                    : "La racha no ha empezado. Escribe «empezar» para jugar.");
+                try { api.input.select(); } catch (e) {}
+                return;
+            }
+            if (resultLocked) { api.decir("Espera un momento: ya viene el ejercicio siguiente."); return; }
             // El intérprete HACE la jugada sobre la partida que se le pasa, así
             // que se le pasa una copia: quien decide si entra es attemptMove(),
             // la misma puerta por la que pasa el clic.
@@ -291,7 +309,11 @@
             // La jugada, dicha en palabras ("caballo efe 3", no "Nf3"): el SAN en
             // inglés lo deletrea el lector de pantalla y no se entiende.
             const correcta = window.BlindNotation ? BlindNotation.sanSpoken(currentSan) : currentSan;
-            setResultText(reasonText + " La respuesta correcta era " + correcta + ". Racha final: " + finalStreak + ".", "text-red-600 dark:text-red-400");
+            yaTermino = true;
+            /* Con el recuadro, el final dice qué escribir para seguir: el botón
+               «Jugar de nuevo» no lo encuentra quien no ve. */
+            setResultText(reasonText + " La respuesta correcta era " + correcta + ". Racha final: " + finalStreak + "."
+                + (modoAdaptado() ? " Escribe «otra vez» para jugar de nuevo." : ""), "text-red-600 dark:text-red-400");
             running = false;
             streak = 0;
             updateStreakDisplay();
@@ -406,7 +428,7 @@
             startTimer();
         }
 
-        document.getElementById("start-btn").addEventListener("click", () => {
+        function empezarRacha() {
             if (!window.PUZZLE_RUSH_DATA || !window.PUZZLE_RUSH_DATA.length) {
                 setResultText("No se pudieron cargar los ejercicios. Recarga la página.", "text-red-600 dark:text-red-400");
                 return;
@@ -418,7 +440,8 @@
             document.getElementById("start-btn").classList.add("hidden");
             running = true;
             loadPuzzle();
-        });
+        }
+        document.getElementById("start-btn").addEventListener("click", empezarRacha);
 
         // ---------- Guardar mejor racha (logro visible para toda la clase) ----------
         async function saveBestStreak(value) {

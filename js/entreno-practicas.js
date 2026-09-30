@@ -190,8 +190,27 @@ function montarComandos(){
     tablero: () => teclado,
     onEnviar: jugarEscribiendo,
   });
-  comandos.ayuda('Jugada: "Cf3", "Nf3", "Dxh7+", "e1 g1". Pregunta: "caballos", "qué hay en e4". Escribe "ayuda" para todo.');
+  comandos.ayuda(AYUDA_RECUADRO);
 }
+const AYUDA_RECUADRO = 'Jugada: «Cf3», «Nf3», «Dxh7+», «e1 g1». Pregunta: «caballos», «qué hay en e4». «pista», «solución» (dice la jugada; no cuenta como resuelta) o «saltar» (pasa a la siguiente). Escribe «ayuda» para todo.';
+
+/* «solución» y «saltar» / «siguiente» escritos: los contesta la página antes
+   que la capa de la cuenta ciega (js/vision-cuenta.js), que apretaría el
+   botón y diría «Listo: Saltar.» encima de la posición nueva. Antes no había
+   ninguna de las dos: una posición atascada no se podía pasar. */
+EjercicioTablero.palabrasPrimero(() => comandos && comandos.input, (texto) => {
+  if(!currentSet || serieTerminada() || document.getElementById('set-view').style.display === 'none') return false;
+  const que = EjercicioTablero.accionEscrita(texto);
+  if(!que) return false;
+  if(esperandoSiguiente){
+    if(que === 'saltar') avanzarRonda();
+    else setStatus('Ya tienes la solución de esta posición. Escribe «siguiente» para seguir.');
+    return true;
+  }
+  if(roundLocked){ setStatus('Espera un momento: ya viene la siguiente posición.'); return true; }
+  if(que === 'solucion') verSolucion(); else saltarRonda();
+  return true;
+});
 
 function modoCiego(){ return document.documentElement.classList.contains('modo-ciego'); }
 function serieTerminada(){ return document.getElementById('celebration').style.display === 'block'; }
@@ -258,6 +277,8 @@ let errorsThisRound = 0; // jugadas equivocadas en esta posición: también baja
 let roundStartTime = 0;
 let setStarsEarned = [];
 let setStartTime = 0;
+let saltadas = 0;             // posiciones de la serie que se pasaron sin resolver
+let esperandoSiguiente = false; // en Modo Adaptado, después de «solución»: espera «siguiente»
 
 function setsFor(cat){ return SETS.filter(s => s.cat === cat); }
 
@@ -396,6 +417,7 @@ function loadRound(){
   game = new Chess(round.fen);
   selectedSquare = null;
   roundLocked = false;
+  esperandoSiguiente = false;
   hintsUsedThisRound = 0;
   errorsThisRound = 0;
   roundStartTime = Date.now();
@@ -501,14 +523,50 @@ function finishRound(conSolucion){
   if(!conSolucion) bumpStreak();
   const fast = !conSolucion && seconds < 4 && hintsUsedThisRound === 0 && errorsThisRound === 0;
   if(!conSolucion) setStatus(`✅ ¡Correcto!${fast ? ' ⚡ ¡Relámpago!' : ''} (${seconds}s)`, 'ok');
-  setTimeout(() => {
-    if(currentRoundIndex < currentSet.rounds.length - 1){
-      currentRoundIndex++;
-      loadRound();
-    } else {
-      finishSet();
-    }
-  }, fast ? 900 : 1100);
+  /* Con la solución y en Modo Adaptado no se pasa sola: al segundo la
+     posición nueva pisaba «La solución era: …» a medio leer. */
+  if(conSolucion && blindMode){
+    esperandoSiguiente = true;
+    const dicha = document.getElementById('round-status').textContent;
+    setStatus(`${dicha} No cuenta como resuelta. Escribe «siguiente» para seguir.`);
+    return;
+  }
+  setTimeout(avanzarRonda, fast ? 900 : 1100);
+}
+function avanzarRonda(){
+  esperandoSiguiente = false;
+  if(currentRoundIndex < currentSet.rounds.length - 1){
+    currentRoundIndex++;
+    loadRound();
+  } else {
+    finishSet();
+  }
+}
+
+/* «Saltar →» (o «saltar», «siguiente» escritos antes de resolverla): pasa a
+   la siguiente sin resolverla. Cuenta como no resuelta: cero estrellas en la
+   serie, corta la racha y entra a «Repasar fallados». */
+function saltarRonda(){
+  if(!currentSet) return;
+  if(esperandoSiguiente){ avanzarRonda(); return; }
+  if(roundLocked) return;
+  roundLocked = true;
+  resetStreak();
+  saltadas++;
+  setStarsEarned.push(0);
+  const ronda = currentSet.rounds[currentRoundIndex];
+  if(window.RepasoFallados) RepasoFallados.anotar(CLAVE_REPASO, ronda._rid || (currentSet.id + ':' + currentRoundIndex), true, true);
+  const n = currentSet.rounds.length;
+  if(currentRoundIndex >= n - 1){ finishSet(); return; }
+  currentRoundIndex++;
+  loadRound();
+  const juegan = game.turn() === 'w' ? 'blancas' : 'negras';
+  setStatus(`Saltaste la posición: no cuenta como resuelta. Posición ${currentRoundIndex + 1} de ${n}, juegan ${juegan}. ` +
+    (blindMode ? 'Escribe la jugada que quieres hacer.' : 'Encuentra la jugada.'));
+}
+function verSolucion(){
+  if(roundLocked || !currentSet) return;
+  pistas.solucion();
 }
 
 /* El resultado se DICE en su región viva: la celebración aparece de golpe, el
@@ -544,8 +602,10 @@ function finishSet(){
   document.getElementById('celebration-stars').innerHTML = starString(stars);
   const totalSeconds = ((Date.now() - setStartTime) / 1000).toFixed(0);
   const limpia = setStarsEarned.every(s => s === 3);
+  const total = currentSet.rounds.length;
   document.getElementById('celebration-stats').textContent =
-    `${currentSet.rounds.length} de ${currentSet.rounds.length} posiciones en ${totalSeconds}s` +
+    `${total - saltadas} de ${total} posiciones en ${totalSeconds}s` +
+    (saltadas ? ` (saltaste ${saltadas})` : '') +
     (limpia ? ' — ¡sin pistas ni errores!' : '');
   const titleText = stars === 3 ? '¡Serie perfecta! 🏆' : (stars === 2 ? '¡Serie completada! 🎉' : 'Serie completada — ¡a repetirla para subir de estrellas!');
   document.getElementById('celebration-title').textContent = titleText;
@@ -601,10 +661,13 @@ function giveHint(){
 }
 document.getElementById('hint-btn').addEventListener('click', giveHint);
 document.getElementById('retry-round-btn').addEventListener('click', loadRound);
+document.getElementById('solution-btn').addEventListener('click', verSolucion);
+document.getElementById('skip-round-btn').addEventListener('click', saltarRonda);
 
 function openSet(set){
   currentSet = set;
   currentRoundIndex = 0;
+  saltadas = 0;
   setStarsEarned = [];
   setStartTime = Date.now();
   document.getElementById('list-view').style.display = 'none';
