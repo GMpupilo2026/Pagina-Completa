@@ -3400,6 +3400,7 @@ function areasFlojasArbitraje(fila) {
             conectarCompartirPlanes(contenedor);
         }
 
+        let alumnoDeLaPersona = null;
         async function init() {
             const { data } = await sb.auth.getSession();
             session = data.session;
@@ -3409,6 +3410,13 @@ function areasFlojasArbitraje(fila) {
             // En un modo de vista de administración ("como estudiante",
             // "como supervisor"…) se pinta la página de ese rol: ver js/modo-vista.js.
             profile = window.ModoVista ? ModoVista.perfilVisto(profileData) : profileData;
+            /* Mirando el panel de un estudiante («Panel de:»): su informe es el
+               que ve quien administra al elegirlo en la lista, con sus datos y
+               no con los de quien mira. Se abre ese, ya elegido. */
+            if (profile._persona && ModoVista.tipoDe(profile._persona) === "alumno") {
+                alumnoDeLaPersona = profile._persona.id;
+                profile = profileData;
+            }
             isTeacher = profile.role === "profesor" || profile.is_admin === true;
             // Quien administra ve a todo el mundo; un profesor, solo a los alumnos
             // que tiene asignados. No es un filtro de esta página: la base de datos
@@ -3466,7 +3474,7 @@ function areasFlojasArbitraje(fila) {
                 // Y a un alumno, informes.html?alumno=<id>: así lo abre el buscador
                 // del panel. Solo si está en la lista de quien mira —la que ya
                 // armó la base—; si no está, se queda el resumen de siempre.
-                const alumnoPedido = new URLSearchParams(location.search).get("alumno");
+                const alumnoPedido = new URLSearchParams(location.search).get("alumno") || alumnoDeLaPersona;
                 const selectorAlumno = document.getElementById("student-filter");
                 if (alumnoPedido && [...selectorAlumno.options].some((o) => o.value === alumnoPedido)) {
                     selectorAlumno.value = alumnoPedido;
