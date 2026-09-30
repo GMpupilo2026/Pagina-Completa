@@ -251,7 +251,7 @@ function terminar() {
     " con " + cuantas(partida.jugadas, p) + ". El camino más corto, sabiendo dónde estaba, era de " + cuantas(partida.minimo, p) + ". " +
     e + (e === 1 ? " estrella" : " estrellas") + " de 3" + (partida.ayudas ? ", con pista" : "") + "." +
     (record ? " ¡Es tu mejor marca en este nivel!" : "") +
-    " Escribe «nuevo» para otra partida" + (siguiente ? " o «nivel " + siguiente.id + "» para el siguiente." : "."));
+    (siguiente ? " Escribe «siguiente» para el nivel " + siguiente.id + ", o «nuevo» para otra partida de este." : " Escribe «nuevo» para otra partida."));
 }
 
 function decirDonde() {
@@ -283,7 +283,7 @@ function pista() {
 }
 
 function ayuda() {
-  avisar("Escribe una casilla para mover, como e4 o eva 4. Comandos: sonar repite la última lectura; dónde dice dónde estás; jugadas dice a dónde puedes ir; historial repasa todas las lecturas; pista cuenta las casillas posibles; nuevo empieza otra partida; nivel y un número cambia de nivel, del 1 al " + S.NIVELES.length + ".");
+  avisar("Escribe una casilla para mover, como e4 o eva 4. Comandos: sonar repite la última lectura; dónde dice dónde estás; jugadas dice a dónde puedes ir; historial repasa todas las lecturas; pista cuenta las casillas posibles; nuevo empieza otra partida; siguiente, con la partida terminada, pasa al nivel que sigue; nivel y un número cambia de nivel, del 1 al " + S.NIVELES.length + ".");
 }
 
 $("cmd-form").addEventListener("submit", (e) => {
@@ -291,6 +291,20 @@ $("cmd-form").addEventListener("submit", (e) => {
   ctx();
   const input = $("cmd-input");
   const texto = input.value;
+  /* «siguiente»: es lo que se escribe en el resto del sitio para pasar al
+     próximo ejercicio (js/vision-cuenta.js aprieta «Siguiente ejercicio» y
+     compañía), y acá no se entendía: al encontrar el tesoro había que saber que
+     esta página dice «nuevo» o «nivel 2». Con la partida terminada pasa al
+     nivel que sigue (en el último, otra partida del mismo); a mitad de partida
+     no la tira: dice cómo dejarla. */
+  if (/^\s*(siguiente|el siguiente|siguiente nivel|proximo|próximo|proximo nivel|próximo nivel)\s*$/i.test(texto)) {
+    input.value = "";
+    const sig = S.nivel(nivelActual + 1);
+    if (partida.terminada) { empezar(sig ? sig.id : nivelActual); return; }
+    avisar("La partida sigue: todavía no encontraste el tesoro. Para dejarla, escribe «nuevo» (otra partida de este nivel)" +
+      (sig ? " o «nivel " + sig.id + "» para el siguiente." : "."));
+    return;
+  }
   const c = S.leerComando(texto);
   input.value = "";
   if (!c) { error(); avisar("No entendí «" + texto.trim() + "». Escribe una casilla, como e4 o eva 4, o «ayuda»."); return; }

@@ -556,6 +556,116 @@ async function pruebaInterruptor(browser) {
   await ctx.close();
 }
 
+// ====================================================================== 8
+/* Lo que encontró la recorrida como una alumna ciega: todo se hace
+   escribiendo, y lo que pasa se DICE. Cada cosa de acá estaba rota sin dar
+   ningún error: el campo que cortaba lo escrito a una letra, la jugada bien
+   dicha que no se entendía, las opciones que nadie leía, el resultado que
+   aparecía en silencio. */
+async function escribirEn(page, sel, texto) {
+  await page.focus(sel);
+  await page.keyboard.type(texto);
+  const escrito = await page.inputValue(sel);
+  await page.keyboard.press("Enter");
+  return escrito;
+}
+async function pruebaRecorridaCiega(browser) {
+  console.log("\n=== Como la alumna ciega: todo escribiendo ===");
+  {
+    const { page, ctx, errores } = await abrir(browser, "/entreno/coordenadas.html", true);
+    await page.waitForSelector("#start-btn");
+    igual("Coordenadas: el botón dice el tiempo de verdad en Modo Adaptado", (await page.textContent("#start-btn")).includes("90 s"), true);
+    await page.click("#start-btn");
+    await page.waitForTimeout(200);
+    const leido = await escribirEn(page, "#blind-input", "leer");
+    igual("Coordenadas: «leer» llega entero (el campo no lo corta a una letra)", leido, "leer");
+    await escribirEn(page, "#blind-input", "repetir");
+    await page.waitForTimeout(100);
+    const dicho = await page.textContent("#blind-announcer");
+    const casilla = await page.evaluate(() => BlindNotation.squareSpoken(currentTarget));
+    igual("Coordenadas: «repetir» vuelve a decir la casilla y el tiempo", dicho.includes(casilla) && /Quedan \d+ segundos/.test(dicho), true);
+    const color = await page.evaluate(() => (isLightSquare(currentTarget) ? "blanca" : "negra"));
+    await escribirEn(page, "#blind-input", color);
+    await page.waitForTimeout(100);
+    igual("Coordenadas: «" + color + "» en palabras cuenta como acierto", await page.textContent("#hud-score"), "1");
+    if (errores.length) mal("Coordenadas: errores en consola: " + errores.join(" | "));
+    await ctx.close();
+  }
+  {
+    const { page, ctx, errores } = await abrir(browser, "/entreno/aprender.html", true);
+    await page.waitForFunction(() => typeof openLesson === "function" && document.getElementById("tabs").children.length > 0, null, { timeout: 8000 });
+    await page.click("#tabs button:nth-child(2)");
+    await page.waitForTimeout(100);
+    igual("Aprender: al elegir una categoría el foco va al título de la lista, no al <body>",
+      await page.evaluate(() => document.activeElement && document.activeElement.id), "list-title");
+    await page.evaluate(() => openLesson(LESSONS.find((l) => l.id === "reg_jaque")));
+    await page.waitForTimeout(200);
+    await escribirEn(page, "#q-comandos .cc-input", "Rf1");
+    await page.waitForTimeout(200);
+    igual("Aprender: «Rf1» (el rey, en español) resuelve la lección de jugada",
+      /Lección completada/.test(await page.textContent("#lesson-status")), true);
+    await page.evaluate(() => openLesson(LESSONS.find((l) => l.id === "mov_rey_1")));
+    igual("Aprender: en Modo Adaptado el enunciado dice «Escribe», no «Haz clic»",
+      await page.evaluate(() => /Escribe/.test(document.getElementById("lesson-text").textContent) && !/Haz clic/.test(document.getElementById("lesson-text").textContent)), true);
+    if (errores.length) mal("Aprender: errores en consola: " + errores.join(" | "));
+    await ctx.close();
+  }
+  {
+    const { page, ctx, errores } = await abrir(browser, "/entreno/precision-posicional.html", true);
+    await page.waitForSelector("#start-btn");
+    await page.waitForFunction(() => !document.getElementById("app").classList.contains("hidden"), null, { timeout: 8000 });
+    await page.click("#start-btn");
+    await page.waitForTimeout(200);
+    const aviso = await page.textContent("#q-comandos .cc-msg");
+    igual("Precisión: la pregunta nueva dice sus opciones con la letra", /Opción A: .+Opción B: /.test(aviso), true);
+    await escribirEn(page, "#q-comandos .cc-input", "b");
+    await page.waitForTimeout(100);
+    igual("Precisión: y la siguiente también", /Posición 2 de .*Opción A: /.test(await page.textContent("#q-comandos .cc-msg")), true);
+    await escribirEn(page, "#q-comandos .cc-input", "opciones");
+    await page.waitForTimeout(100);
+    igual("Precisión: «opciones» las vuelve a decir", /^Opción A: /.test(await page.textContent("#q-comandos .cc-msg")), true);
+    const n = await page.evaluate(() => tanda.length);
+    for (let i = 1; i < n; i++) await escribirEn(page, "#q-comandos .cc-input", "a");
+    await page.waitForTimeout(300);
+    igual("Precisión: al terminar, el foco va al título del resultado", await page.evaluate(() => document.activeElement && document.activeElement.id), "r-veredicto");
+    igual("Precisión: y el resultado se anuncia", /Ronda terminada\. \d+ de \d+/.test(await page.textContent("#pp-anuncio")), true);
+    if (errores.length) mal("Precisión: errores en consola: " + errores.join(" | "));
+    await ctx.close();
+  }
+  {
+    const { page, ctx, errores } = await abrir(browser, "/entreno/desafios.html", true);
+    await page.waitForFunction(() => typeof SETS !== "undefined" && SETS.length > 0 && typeof openSet === "function", null, { timeout: 8000 });
+    await page.evaluate(() => openSet(SETS.find((x) => x.rounds.some((r) => r.explain))));
+    await page.waitForTimeout(200);
+    const n = await page.evaluate(() => currentSet.rounds.length);
+    let espero = false, enPalabras = false;
+    for (let i = 0; i < n; i++) {
+      const uci = await page.evaluate(() => currentRound().moves[0]);
+      await escribirEn(page, "#q-comandos .cc-input", uci.slice(0, 2) + " " + uci.slice(2, 4));
+      await page.waitForTimeout(150);
+      const st = await page.textContent("#round-status");
+      if (/Correcto! [a-zñ]/.test(st) && !/Correcto! [KQRBN]?[a-h]?x?[a-h][1-8]/.test(st)) enPalabras = true;
+      if (await page.evaluate(() => esperandoSiguiente)) {
+        // La primera vez se espera más de los 3,2 s de antes: tiene que seguir esperando.
+        if (!espero) {
+          await page.waitForTimeout(3400);
+          igual("Desafíos: con explicación, en Modo Adaptado no pasa solo al siguiente", await page.evaluate(() => esperandoSiguiente), true);
+        }
+        espero = true;
+        await escribirEn(page, "#q-comandos .cc-input", "siguiente");
+        await page.waitForTimeout(150);
+      } else await page.waitForTimeout(1400);
+    }
+    igual("Desafíos: hubo una ronda con explicación que esperó «siguiente»", espero, true);
+    igual("Desafíos: «¡Correcto!» dice la jugada en palabras", enPalabras, true);
+    await page.waitForTimeout(300);
+    igual("Desafíos: al terminar la serie, el foco va al título del resultado", await page.evaluate(() => document.activeElement && document.activeElement.id), "celebration-title");
+    igual("Desafíos: y el resultado se anuncia", /Serie terminada\. .*estrellas? de 3/.test(await page.textContent("#celebration-anuncio")), true);
+    if (errores.length) mal("Desafíos: errores en consola: " + errores.join(" | "));
+    await ctx.close();
+  }
+}
+
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   await pruebaLetrasNoSonPiezas(browser);
@@ -566,6 +676,7 @@ async function pruebaInterruptor(browser) {
   await pruebaAtajos(browser);
   await pruebaModoNormal(browser);
   await pruebaInterruptor(browser);
+  await pruebaRecorridaCiega(browser);
   await browser.close();
   console.log(fallos ? `\n${fallos} comprobaciones fallaron.` : "\nTodo bien.");
   process.exit(fallos ? 1 : 0);

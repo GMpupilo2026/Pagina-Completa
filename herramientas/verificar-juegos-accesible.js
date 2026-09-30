@@ -695,6 +695,84 @@ async function pruebaElTurnoElRelojYLaUltima(browser) {
   }
 }
 
+// ============== 11. lo que no se entendió, el historial, y la coronación dicha
+async function pruebaLoQueQuedaEscritoYLoQueSeDice(browser) {
+  console.log("\n▶ Lo que no se pudo jugar queda seleccionado; historial; coronación y enroque dichos");
+
+  /* Lo que no se entiende (o no se puede jugar ahora) se queda en el recuadro,
+     pero SELECCIONADO: si no, lo siguiente se pegaba detrás («e4e5») y volvía a
+     fallar, y sin ver el recuadro no hay cómo saberlo. */
+  /* Se envía y se mira EN EL MISMO instante: js/vision-cuenta.js también
+     selecciona lo que quedó, pero 60 ms después y solo con la cuenta ciega. Lo
+     que se prueba acá es que la página lo haga sola. */
+  const enviarYVer = (page, texto) => page.evaluate((t) => {
+    const i = document.getElementById("move-input");
+    i.focus();
+    i.value = t;
+    i.form.requestSubmit();
+    return { valor: i.value, todo: i.selectionStart === 0 && i.selectionEnd === i.value.length && i.value.length > 0 };
+  }, texto);
+  let a = await abrir(browser, "/estandar.html?room=r1", { tablas: { game_rooms: [sala("r1", "estandar", INICIAL)], profiles: PERFILES } }, "u-bruno", true);
+  let sel = await enviarYVer(a.page, "e5");
+  ok("estandar: fuera de turno, lo escrito queda seleccionado", sel.valor === "e5" && sel.todo, sel);
+  await a.page.keyboard.type("reloj");
+  ok("  y lo siguiente lo reemplaza (no «e5reloj»)", (await a.page.inputValue("#move-input")) === "reloj", await a.page.inputValue("#move-input"));
+  await escribir(a.page, "mis jugadas");
+  const mias = await loQueDijoElRecuadro(a.page);
+  ok("«mis jugadas» fuera de turno no da las del rival", /le toca al rival/i.test(mias) && !/tienes \d+ jugadas/i.test(mias), mias);
+  await a.ctx.close();
+
+  a = await abrir(browser, "/estandar.html?room=r1", { tablas: { game_rooms: [sala("r1", "estandar", INICIAL)], profiles: PERFILES } }, "u-ana", true);
+  sel = await enviarYVer(a.page, "xx9");
+  ok("estandar: una jugada no válida queda seleccionada", sel.valor === "xx9" && sel.todo, sel);
+  await a.ctx.close();
+
+  /* El historial de Estándar: el tablero se carga desde la FEN, y load() borra
+     la historia de chess.js. Tiene que salir de las jugadas guardadas. */
+  const TRAS_E4_D5 = "rnbqkbnr/ppp1pppp/8/3p4/4P3/8/PPPP1PPP/RNBQKBNR w KQkq d6 0 2";
+  const conJugadas = (variant) => ({ tablas: { game_rooms: [Object.assign(sala("r1", variant, TRAS_E4_D5), { moves: ["e4", "d5"] })], profiles: PERFILES } });
+  a = await abrir(browser, "/estandar.html?room=r1", conJugadas("estandar"), "u-ana", true);
+  await escribir(a.page, "historial");
+  const hist = await loQueDijoElRecuadro(a.page);
+  ok("estandar: «historial» dice las jugadas de la partida", /2 jugadas/.test(hist) && /eva 4/.test(hist) && /david 5/.test(hist), hist);
+  await a.ctx.close();
+
+  // En la niebla: solo las tuyas, y no se toma como una jugada.
+  a = await abrir(browser, "/niebla.html?room=r1", conJugadas("niebla"), "u-ana", true);
+  await escribir(a.page, "historial");
+  const histN = await loQueDijoElRecuadro(a.page);
+  ok("niebla: «historial» dice solo tus jugadas", /eva 4/.test(histN) && !/david|no v[aá]lida/i.test(histN), histN);
+  await a.ctx.close();
+
+  /* Contra Oscar: la coronación dice la pieza nueva y el enroque su nombre. La
+     posición se pone con la partida que el tablero deja para Alt + Mayúscula + B
+     (__tableroAccesibleCfg.juego), que es la misma que juega la página. */
+  a = await abrir(browser, "/tablero.html", null, "u-ana", true);
+  sel = await enviarYVer(a.page, "xx9");
+  ok("tablero.html: una jugada que no se entiende queda seleccionada", sel.valor === "xx9" && sel.todo, sel);
+  const hayJuego = await a.page.evaluate(() => {
+    const t = document.getElementById("chessboard");
+    const g = t && t.__tableroAccesibleCfg && t.__tableroAccesibleCfg.juego();
+    return !!(g && g.fen);
+  });
+  ok("tablero.html: deja su partida para Alt + Mayúscula + B", hayJuego);
+  await a.page.evaluate(() => document.getElementById("chessboard").__tableroAccesibleCfg.juego().load("8/4P3/8/8/8/8/k7/4K3 w - - 0 1"));
+  await a.page.fill("#move-input", "e8=D");
+  await a.page.press("#move-input", "Enter");
+  let dicho = "";
+  for (let i = 0; i < 10 && !/corona/.test(dicho); i++) { await a.page.waitForTimeout(100); dicho = await loQueDijoElRecuadro(a.page); }
+  ok("tablero.html: la coronación dice la pieza nueva", /corona dama/.test(dicho), dicho);
+  await a.ctx.close();
+  a = await abrir(browser, "/tablero.html", null, "u-ana", true);
+  await a.page.evaluate(() => document.getElementById("chessboard").__tableroAccesibleCfg.juego().load("r3k2r/pppppppp/8/8/8/8/PPPPPPPP/R3K2R w KQkq - 0 1"));
+  await a.page.fill("#move-input", "O-O");
+  await a.page.press("#move-input", "Enter");
+  dicho = "";
+  for (let i = 0; i < 10 && !/enroque/.test(dicho); i++) { await a.page.waitForTimeout(100); dicho = await loQueDijoElRecuadro(a.page); }
+  ok("tablero.html: el enroque se dice como enroque corto", /enroque corto/.test(dicho), dicho);
+  await a.ctx.close();
+}
+
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
@@ -708,6 +786,7 @@ async function pruebaElTurnoElRelojYLaUltima(browser) {
     await pruebaRevisarLaPartida(browser);
     await pruebaLasRachas(browser);
     await pruebaElTurnoElRelojYLaUltima(browser);
+    await pruebaLoQueQuedaEscritoYLoQueSeDice(browser);
   } finally {
     await browser.close();
   }

@@ -392,7 +392,16 @@
       const n = window.VisorLinea ? window.VisorLinea.pasoPedido(texto, state.ply, moves.length) : null;
       if (n === null) { api.decir("No entendí «" + texto.trim() + "». Escribe «siguiente», «anterior», «jugada 5», «practicar» para jugar contra el motor, o una pregunta como «caballos»."); return; }
       if (!hasSol) { api.decir("Esta posición no trae una línea para recorrer. Escribe «practicar» para jugarla contra el motor."); return; }
-      if (!state.showSol) { api.decir("Primero piensa la respuesta. Para ver la línea, usa el botón «Ver la solución»."); return; }
+      /* Con la solución tapada, recorrer la línea es pedir verla: se hace lo
+         que haría el botón «Ver la solución» y se va a la jugada pedida. Antes
+         contestaba «usa el botón», y quien no ve tenía que salir del recuadro
+         a buscarlo con Tab. */
+      if (!state.showSol) {
+        state.showSol = true; renderMoves(); renderView();
+        api.limpiar().decir("Aquí está la solución: la línea tiene " + moves.length + (moves.length === 1 ? " jugada." : " jugadas."));
+        if (n >= 1) irA(Math.min(n, moves.length));
+        return;
+      }
       if (n < 0) { api.decir("Ya estás en la posición inicial."); return; }
       if (n > moves.length) { api.decir("Ya estás en la última jugada de la línea."); return; }
       api.limpiar().decir("");
@@ -417,6 +426,9 @@
       if (b.classList.contains("f100-showsol")) { state.showSol = true; renderMoves(); renderView(); return; }
       if (b.dataset.ply) { if (state.mode !== "ver") return; irA(parseInt(b.dataset.ply, 10)); return; }
       const act = b.dataset.act;
+      // Recorrer la línea con ◀ ▶ muestra las jugadas en el tablero: es ver la
+      // solución, así que la lista se destapa también (como «jugada 2» escrita).
+      if (state.mode === "ver" && hasSol && !state.showSol && /^(first|prev|next|last)$/.test(act || "")) { state.showSol = true; renderMoves(); }
       if (state.mode === "ver") {
         if (act === "first") { irA(0); return; }
         if (act === "prev") { irA(state.ply - 1); return; }

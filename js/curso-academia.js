@@ -74,6 +74,8 @@
     var prog = await progresoCursos(s.user.id);
     catalogo.querySelectorAll("[data-curso]").forEach(function (card) {
       var slug = card.dataset.curso, total = parseInt(card.dataset.total, 10) || 0;
+      var h = card.querySelector("h3");
+      var nombre = h ? h.textContent.replace(/\s+/g, " ").trim() : slug;
       var hechas = Object.keys(prog[slug] || {}).length;
       var p = pct(hechas, total);
       var box = card.querySelector(".ac-card-prog");
@@ -82,12 +84,23 @@
       var head = el("div", "ac-card-txt");
       head.textContent = hechas ? hechas + " de " + total + " temas · " + p + " %" : "Sin empezar · " + total + " temas";
       var track = el("div", "ac-track"); track.setAttribute("role", "progressbar");
+      // Una barra sin nombre se lee «barra de progreso, 0 de 12»: ¿de qué?
+      track.setAttribute("aria-label", "Avance en " + nombre);
       track.setAttribute("aria-valuemin", "0"); track.setAttribute("aria-valuemax", String(total)); track.setAttribute("aria-valuenow", String(hechas));
       track.setAttribute("aria-valuetext", hechas + " de " + total + " temas estudiados");
       var fill = el("div", "ac-fill"); fill.style.width = p + "%"; track.appendChild(fill);
       box.append(head, track);
+      /* Cada tarjeta tiene dos enlaces al mismo curso (el título y este). En la
+         lista de enlaces del lector salían doce «Empezar» sin decir de qué:
+         este lleva el nombre del curso, empezando por la palabra que se ve. */
       var link = card.querySelector(".ac-card-link");
-      if (link) link.textContent = hechas >= total && total ? "Repasar el curso →" : hechas ? "Continuar →" : "Empezar →";
+      if (link) {
+        var verbo = hechas >= total && total ? "Repasar el curso" : hechas ? "Continuar" : "Empezar";
+        link.textContent = verbo + " ";
+        var flecha = el("span", null, "→"); flecha.setAttribute("aria-hidden", "true");
+        link.appendChild(flecha);
+        link.setAttribute("aria-label", (verbo === "Repasar el curso" ? verbo : verbo + " el curso") + ": " + nombre);
+      }
       card.classList.toggle("ac-completo", total > 0 && hechas >= total);
     });
     catalogo.classList.add("ac-listo");
@@ -127,6 +140,7 @@
     } catch (e) { return false; }
   }
 
+  function modoCiego() { return document.documentElement.classList.contains("modo-ciego"); }
   function anunciar(msg) { if (live) { live.textContent = ""; setTimeout(function () { live.textContent = msg; }, 30); } }
 
   function estado(i) {
@@ -148,6 +162,11 @@
       var mark = sum.querySelector(".ac-marca");
       if (!mark) { mark = el("span", "ac-marca"); mark.setAttribute("aria-hidden", "true"); sum.insertBefore(mark, sum.firstChild); }
       mark.textContent = st === "hecha" ? "✔ " : st === "bloqueada" ? "🔒 " : "";
+      /* Una lección bloqueada no se abre: con la cuenta ciega sale del Tab
+         (eran doce paradas seguidas que solo contestan «bloqueada»; el camino
+         es «Continuar», arriba). Para el resto sigue alcanzable, como las
+         tarjetas apagadas del sitio, para leer por qué está cerrada. */
+      sum.tabIndex = st === "bloqueada" && modoCiego() ? -1 : 0;
       if (st === "bloqueada") {
         d.open = false;
         sum.setAttribute("aria-disabled", "true");
@@ -211,7 +230,8 @@
     L.el.open = true;
     var sum = L.el.querySelector(":scope > summary");
     L.el.scrollIntoView({ behavior: "smooth", block: "start" });
-    if (sum) { sum.setAttribute("tabindex", "-1"); sum.focus({ preventScroll: true }); }
+    // El <summary> ya se enfoca solo: un tabindex="-1" acá lo sacaba del Tab para siempre.
+    if (sum) sum.focus({ preventScroll: true });
   }
 
   function siguientePendiente() {
@@ -236,15 +256,27 @@
       head.appendChild(el("span", "ac-estado ac-ok", "🏁 Curso completo"));
     }
     var track = el("div", "ac-track"); track.setAttribute("role", "progressbar");
+    track.setAttribute("aria-label", "Avance del curso");
     track.setAttribute("aria-valuemin", "0"); track.setAttribute("aria-valuemax", String(t)); track.setAttribute("aria-valuenow", String(n));
     track.setAttribute("aria-valuetext", n + " de " + t + " temas estudiados");
     var fill = el("div", "ac-fill"); fill.style.width = p + "%"; track.appendChild(fill);
     var pasos = el("ol", "ac-pasos"); pasos.setAttribute("aria-label", "Temas del curso");
     lecciones.forEach(function (L, i) {
       var st = estado(i), li = el("li", "ac-paso ac-" + st);
-      var a = el("a", null, String(i + 1)); a.href = "#" + L.el.id;
+      var a = el("a", null, String(i + 1));
       a.setAttribute("aria-label", "Tema " + (i + 1) + ": " + L.titulo + " — " + (st === "hecha" ? "estudiada" : st === "disponible" ? "disponible" : "bloqueada"));
       a.title = L.titulo;
+      /* El paso de un tema bloqueado no lleva a ningún lado: sin href y con
+         aria-disabled, como las tarjetas apagadas del sitio. Con la cuenta
+         ciega, además, fuera del Tab. */
+      if (st === "bloqueada") {
+        a.setAttribute("role", "link");
+        a.setAttribute("aria-disabled", "true");
+        a.tabIndex = modoCiego() ? -1 : 0;
+        a.addEventListener("keydown", function (ev) { if (ev.key === "Enter") a.click(); });
+      } else {
+        a.href = "#" + L.el.id;
+      }
       a.addEventListener("click", function (ev) { ev.preventDefault(); if (st === "bloqueada") anunciar("El tema " + (i + 1) + " está bloqueado: primero marca como estudiada la anterior."); else abrir(i); });
       li.appendChild(a); pasos.appendChild(li);
     });

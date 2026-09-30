@@ -286,6 +286,12 @@ window.VozPagina = (function () {
 
   function revisarTableros(callar) {
     temporizadorTableros = null;
+    /* Si hay avisos de una región esperando a leerse, van primero: pueden ser la
+       jugada dicha («Se jugó…»), y entonces el tablero se calla. El temporizador
+       del tablero lo arranca CUALQUIER cambio de la página, así que a veces
+       vencía justo antes que el de las regiones y la jugada se oía dos veces
+       (una por el tablero, otra por el aviso). */
+    if (temporizador && !callar) { temporizadorTableros = setTimeout(revisarTableros, 200); return; }
     var ahora = Date.now();
     actualizarBotonPosicion();
     fotoDeTableros().forEach(function (despues, tablero) {

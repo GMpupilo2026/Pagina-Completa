@@ -124,6 +124,9 @@
      sobre lo que va colocado —nunca sobre la respuesta, como el tablero—.
      «Ya la tengo» también se puede escribir. */
   let comandos = null;
+  /* Mientras se reconstruye: cómo colocar lo escrito y cómo corregir, para el
+     recuadro. Lo pone ocultar() y lo quita corregir(). */
+  let reconstruccion = null;
   function montarComandos() {
     if (comandos || !window.CuadroComandos || !$("comandos")) return;
     comandos = CuadroComandos.montar($("comandos"), {
@@ -134,9 +137,20 @@
         api.limpiar();
         const t = CuadroComandos.normalizar(texto);
         if (reloj && /^(ya la tengo|listo|tapar|ocultar)$/.test(t)) { ocultar(); return; }
+        /* Quien no ve reconstruye desde el mismo recuadro, sin ir a buscar los
+           campos: «blancas: Rg1, Pe4» coloca esas piezas (la misma lectura que
+           los campos de abajo) y «comprobar» corrige. */
+        if (reconstruccion) {
+          const m = /^(blancas?|negras?)\s*:?\s*(.*)$/i.exec(String(texto).trim().normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
+          if (m) { api.decir(reconstruccion.colocar(/^b/i.test(m[1]) ? "w" : "b", m[2])); return; }
+          if (/^(comprobar|corregir|revisar|listo|ya esta)$/.test(t)) { reconstruccion.comprobar(); return; }
+          if (/^(colocadas|que puse|lo que puse)$/.test(t)) { api.decir(reconstruccion.resumen()); return; }
+        }
         api.decir(reloj
           ? "Pregunta por la posición, o escribe «ya la tengo» para taparla y empezar a reconstruir."
-          : "Para colocar piezas usa los campos «Piezas blancas» y «Piezas negras» de abajo, o la paleta y Enter en cada casilla.");
+          : reconstruccion
+            ? "Escribe «blancas: Rg1, Tf1, e4» o «negras: Rg8, Dd8» para colocar, «colocadas» para oír lo que pusiste y «comprobar» para corregir."
+            : "Para colocar piezas usa los campos «Piezas blancas» y «Piezas negras» de abajo, o la paleta y Enter en cada casilla.");
       },
     });
   }
@@ -152,6 +166,7 @@
   }
   function limpiar() {
     if (reloj) { clearInterval(reloj); reloj = null; }
+    reconstruccion = null;
     $("controles").innerHTML = "";
     $("acciones").innerHTML = "";
     explicar(null);
@@ -235,7 +250,6 @@
       paleta.appendChild(b);
       return b;
     });
-    $("controles").appendChild(paleta);
 
     // Escribirla: también sirve sin ver el tablero.
     const escr = el("div", "grid gap-2 mb-3");
@@ -247,25 +261,69 @@
       escr.append(lab, inp);
       return { c, inp };
     });
-    escr.appendChild(boton("Colocar lo escrito", BTN_SEGUNDO, () => {
+    /* Una sola lectura para los campos, su Intro, el botón y el recuadro de
+       comandos: coloca lo escrito para un color y dice qué quedó. */
+    function colocarTexto(c, texto) {
+      const r = R.leerPiezas(texto, c);
+      Object.keys(r.piezas).forEach((s) => { colocado[s] = r.piezas[s]; });
+      return r;
+    }
+    function colocarCampos() {
       const malas = [];
       campos.forEach(({ c, inp }) => {
-        const r = R.leerPiezas(inp.value, c);
-        Object.keys(r.piezas).forEach((s) => { colocado[s] = r.piezas[s]; });
-        malas.push(...r.malas);
+        if (!inp.value.trim()) return;
+        malas.push(...colocarTexto(c, inp.value).malas);
       });
       pintar();
-      estado(malas.length ? "No entendí: " + malas.join(", ") + "." : "Colocadas " + Object.keys(colocado).length + " piezas.");
+      return malas;
+    }
+    function dichoColocadas(malas) {
+      return (malas.length ? "No entendí: " + malas.join(", ") + ". " : "") + "Colocadas " + Object.keys(colocado).length + " piezas.";
+    }
+    const colocarBtn = boton("Colocar lo escrito", BTN_SEGUNDO, () => estado(dichoColocadas(colocarCampos())));
+    escr.appendChild(colocarBtn);
+    // Intro en un campo coloca, como el botón: nadie tiene que ir a buscarlo.
+    campos.forEach(({ inp }) => inp.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter" || e.isComposing) return;
+      e.preventDefault();
+      estado(dichoColocadas(colocarCampos()));
     }));
-    $("controles").appendChild(escr);
+    /* En Modo Adaptado se escribe: los campos van ANTES que la paleta (que se
+       toca con el mouse). Y con la cuenta ciega la paleta ni aparece: son trece
+       botones de más entre el enunciado y lo que sí se usa. */
+    if (adaptado()) {
+      $("controles").appendChild(escr);
+      $("controles").appendChild(paleta);
+    } else {
+      $("controles").appendChild(paleta);
+      $("controles").appendChild(escr);
+    }
+    if (document.documentElement.classList.contains("modo-ciego")) paleta.hidden = true;
     estado("Las piezas desaparecieron. Reconstruye la posición.");
-    const comprobar = boton("Comprobar", BTN_PRIMARIO, () => corregir(colocado));
+    /* «Comprobar» toma también lo escrito en los campos aunque no se haya
+       apretado «Colocar lo escrito»: quien escribió las piezas y fue directo a
+       comprobar perdía todo lo escrito y sacaba cero, sin ningún aviso. */
+    const comprobar = boton("Comprobar", BTN_PRIMARIO, () => { colocarCampos(); corregir(colocado); });
     comprobar.id = "btn-comprobar";
     $("controles").appendChild(comprobar);
+    reconstruccion = {
+      colocar: (c, texto) => {
+        const r = colocarTexto(c, texto);
+        pintar();
+        const puestas = Object.keys(r.piezas).map((s) => TableroAccesible.piezaDicha({ color: r.piezas[s][0], type: r.piezas[s][1] }) + " en " + TableroAccesible.casillaHablada(s));
+        return (puestas.length ? "Colocadas: " + puestas.join(", ") + ". " : "") + dichoColocadas(r.malas);
+      },
+      comprobar: () => { colocarCampos(); corregir(colocado); },
+      resumen: () => {
+        const xs = Object.keys(colocado).map((s) => TableroAccesible.piezaDicha({ color: colocado[s][0], type: colocado[s][1] }) + " en " + TableroAccesible.casillaHablada(s));
+        return xs.length ? "Pusiste " + xs.length + ": " + xs.join(", ") + "." : "Todavía no pusiste ninguna pieza.";
+      },
+    };
   }
 
   /* ------------------------------------------------------------ 3. corregir */
   function corregir(colocado) {
+    reconstruccion = null;
     $("controles").innerHTML = "";
     alTocar = null;
     const r = R.compararFoto(item.fen, colocado);
@@ -333,6 +391,10 @@
     const p = parseInt(q.get("piezas"), 10), s = parseInt(q.get("segundos"), 10);
     if (p >= DATOS.min && p <= DATOS.max) ajustes.piezas = p;
     if (SEGUNDOS.indexOf(s) >= 0) ajustes.segundos = s;
+    /* En Modo Adaptado la posición se OYE, pieza por pieza, y eso lleva más que
+       mirarla: el tiempo por defecto se triplica (mismo criterio que
+       Coordenadas y Fotografía). Si el enlace trae los segundos, mandan esos. */
+    else if (adaptado()) ajustes.segundos = 30;
     sp.value = String(ajustes.piezas);
     ss.value = String(ajustes.segundos);
     $("form-ajustes").addEventListener("submit", (e) => {

@@ -255,6 +255,96 @@ async function pruebaOpciones(browser) {
   await ctx.close();
 }
 
+/* Con la cuenta marcada como ciega (modo-ciego): todo desde el recuadro.
+   - la pregunta del profe se lleva el foco a SU recuadro (no al título: desde
+     ahí eran dos Tab, cinco en las de opciones) y se dice entera, con las
+     opciones y sus letras;
+   - «tiempo» dice cuánto queda; lo que no se entiende queda seleccionado (si
+     no, lo siguiente se pegaba detrás: «tiempob»);
+   - al cerrarse la pregunta se dice que se cerró;
+   - la franja de estado no se reescribe igual con cada jugada del profe;
+   - la Fotografía se dicta también a quien entra durante sus segundos. */
+async function pruebaSinVer(browser) {
+  console.log("\n=== Con la cuenta ciega: la pregunta, el tiempo, el cierre y la foto ===");
+  const { page, ctx, errores } = await abrir(browser, "u-ana", CLASE, { vision_personas: [{ persona_id: "u-ana", vision: "ciego" }], questions: [] });
+  await page.evaluate(() => {
+    localStorage.setItem("ai_vision_v1", JSON.stringify({ persona: "u-ana", vision: "ciego" }));
+    localStorage.setItem("ai_vision_aplicada_v1", "u-ana:ciego");
+  });
+  await enAdaptado(page);
+  igual("la página está en modo ciego", await page.evaluate(() => document.documentElement.classList.contains("modo-ciego")), true);
+  await page.evaluate((f) => window.__cambioEnBase("game_state", f), fila());
+  await page.waitForTimeout(300);
+
+  await page.evaluate(() => { window.__franja = 0; new MutationObserver(() => window.__franja++).observe(document.getElementById("status-banner"), { subtree: true, childList: true, characterData: true }); });
+  for (const m of [["Rd1+"], ["Rd1+", "Ke7"], ["Rd1+", "Ke7", "Re1+"]]) {
+    await page.evaluate((f) => window.__cambioEnBase("game_state", f), fila({ moves: m }));
+    await page.waitForTimeout(150);
+  }
+  igual("la franja de estado no se reescribe igual en cada jugada del profe", await page.evaluate(() => window.__franja), 0);
+
+  /* Se envía y se mira EN EL MISMO instante: js/vision-cuenta.js también
+     selecciona lo que quedó, pero 60 ms después. Lo que se prueba acá es que el
+     recuadro de la clase lo haga solo. */
+  const enviarYVer = (sel, texto) => page.evaluate(([s, t]) => {
+    const i = document.querySelector(s + " .cc-input");
+    i.focus();
+    i.value = t;
+    i.form.requestSubmit();
+    return i.value.length > 0 && i.selectionStart === 0 && i.selectionEnd === i.value.length ? i.value : "(no: «" + i.value + "» " + i.selectionStart + "-" + i.selectionEnd + ")";
+  }, [sel, texto]);
+  igual("sin el control, la jugada queda escrita y SELECCIONADA", await enviarYVer("#clase-cmd", "Td8"), "Td8");
+
+  const QUIEN = ["Mejor las blancas", "Están iguales", "Mejor las negras"];
+  const q = { id: "q-9", fen: LUCENA, created_by: "u-profe", expected_plies: 1, prompt: "¿Quién está mejor?",
+              tipo: "opciones", opciones: QUIEN, tiempo_limite: 60, resultados_visibles: false,
+              closed_at: null, created_at: new Date().toISOString() };
+  await page.evaluate((x) => { window.__tablas.questions.push(x); window.__cambioEnBase("questions", x, "INSERT"); }, q);
+  await page.waitForFunction(() => document.querySelectorAll("#question-opciones button").length === 3, null, { timeout: 10000 });
+  await page.waitForTimeout(400);
+  const foco = await page.evaluate(() => ({ enRecuadro: !!document.activeElement.closest("#question-cmd") && document.activeElement.matches(".cc-input"), id: document.activeElement.id }));
+  si("la pregunta se lleva el foco a SU recuadro", foco.enRecuadro, JSON.stringify(foco));
+  const dicha = await aviso(page, "#question-cmd");
+  si("y se dice entera, con las opciones y sus letras",
+    /Pregunta de tu profe: ¿Quién está mejor\?/.test(dicha) && /A, Mejor las blancas; B, Están iguales; C, Mejor las negras/.test(dicha), dicha);
+  await escribir(page, "#question-cmd", "tiempo");
+  const tiempo = await aviso(page, "#question-cmd");
+  si("«tiempo» dice cuánto queda", /Te quedan (\d+ segundos|1 minuto)/.test(tiempo), tiempo);
+  igual("y no queda escrito", await page.inputValue("#question-cmd .cc-input"), "");
+  igual("lo que no se entiende queda SELECCIONADO", await enviarYVer("#question-cmd", "la de arriba"), "la de arriba");
+  await page.waitForTimeout(250);
+  await page.keyboard.type("B");
+  await page.keyboard.press("Enter");
+  await page.waitForTimeout(500);
+  igual("y la letra que sigue lo reemplaza y se envía", await page.evaluate(() => JSON.stringify(window.__inserts.filter((i) => i.tabla === "question_answers").map((i) => i.fila.opcion))), "[1]");
+
+  await page.evaluate(() => {
+    const cerrada = Object.assign({}, window.__tablas.questions[window.__tablas.questions.length - 1], { closed_at: new Date().toISOString() });
+    window.__tablas.questions[window.__tablas.questions.length - 1] = cerrada;
+    window.__cambioEnBase("questions", cerrada, "UPDATE");
+  });
+  await page.waitForTimeout(500);
+  const cierre = await aviso(page, "#clase-cmd");
+  si("al cerrarse la pregunta se dice", /La pregunta se cerró\. Tu respuesta quedó enviada/.test(cierre), cierre);
+  si("y el foco vuelve al recuadro de la clase", await page.evaluate(() => !!document.activeElement.closest("#clase-cmd")), await page.evaluate(() => document.activeElement.outerHTML.slice(0, 80)));
+
+  // Entra (o recarga) durante los segundos de la Fotografía: el aviso suelto
+  // ya pasó, pero el profe la lleva en su presencia.
+  await page.evaluate((fen) => window.__presencia("u-profe", { full_name: "Profe", role: "profesor", online_at: new Date().toISOString(),
+    fotografia: { fen, segundos: 8, hasta: new Date(Date.now() + 6000).toISOString() } }), LUCENA);
+  await page.waitForTimeout(300);
+  const foto = await aviso(page, "#clase-cmd");
+  si("la Fotografía en curso se dicta al que entra, con los segundos que quedan",
+    /Fotografía: tu profe te muestra esta posición [56] segundos/.test(foto) && /Blancas: rey en bella 8/.test(foto), foto);
+  await page.evaluate(() => { document.querySelector("#clase-cmd .cc-msg").textContent = ""; });
+  await page.evaluate(() => window.__avisoDePresencia());
+  await page.waitForTimeout(300);
+  igual("y la misma foto no se dicta dos veces", await aviso(page, "#clase-cmd"), "");
+
+  igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+}
+
 async function pruebaCalentamiento(browser) {
   console.log("\n=== El calentamiento, sin ver la pantalla ===");
   const { page, ctx, errores } = await abrir(browser, "u-ana", CLASE);
@@ -383,6 +473,7 @@ function pruebaEmojis() {
     await pruebaClase(browser);
     await pruebaPregunta(browser);
     await pruebaOpciones(browser);
+    await pruebaSinVer(browser);
     await pruebaCalentamiento(browser);
     await pruebaTemas(browser);
     console.log("\n=== Abrir una lección no pierde el foco ===");

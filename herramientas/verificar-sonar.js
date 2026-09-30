@@ -244,6 +244,15 @@ async function navegador() {
     igual("y la mejor marca, en jugadas", await page.evaluate(() => JSON.parse(localStorage.getItem("sonar_mejor_v1"))), { 1: K.distancia(est.pos, est.t[0]) });
     const hist = await escribir(page, "historial");
     cierto("«historial» repasa las lecturas, empezando por la salida", /^Historial del sonar\. Empezaste en /.test(hist), hist.slice(0, 90));
+    /* «siguiente» es lo que se escribe en todo el sitio para pasar al próximo
+       ejercicio: acá no se entendía, y había que saber que esta página dice
+       «nuevo» o «nivel 2». Con la partida terminada pasa al nivel que sigue. */
+    cierto("el aviso del tesoro ofrece «siguiente»", /«siguiente» para el nivel 2/.test(ultimo), ultimo.slice(-120));
+    const sigN = await escribir(page, "siguiente");
+    cierto("«siguiente», con la partida terminada, pasa al nivel 2", /^Nivel 2,/.test(sigN) && (await page.evaluate(() => nivelActual)) === 2, sigN.slice(0, 80));
+    const aMedias = await escribir(page, "siguiente");
+    cierto("a mitad de partida, «siguiente» no la tira: dice cómo dejarla", /La partida sigue/.test(aMedias) && (await page.evaluate(() => nivelActual)) === 2, aMedias.slice(0, 80));
+    await escribir(page, "nivel 1");
     const nivelBtn = await page.$eval("#niveles button[aria-pressed='true']", (b) => b.textContent);
     cierto("el botón del nivel dice las estrellas en palabras", /3 de 3 estrellas/.test(nivelBtn), nivelBtn);
 

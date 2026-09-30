@@ -966,7 +966,7 @@
         async function renderStudentDetail(studentId) {
             const student = teacherData.resumenPorAlumno[studentId];
             const name = student ? (student.full_name || student.email) : "el alumno";
-            document.getElementById("student-report-title").textContent = "🚩 Últimas asignaciones de " + name;
+            tituloConEmoji("student-report-title", "🚩", "Últimas asignaciones de " + name);
             pintarPersonaDelInforme(student ? Object.assign({ id: studentId }, student) : { id: studentId });
 
             const fila = student || {};
@@ -1197,7 +1197,7 @@
             const caja = document.getElementById("errores-report");
             const body = document.getElementById("errores-body");
             if (!window.ErroresPropios) { caja.classList.add("hidden"); return; }
-            document.getElementById("errores-title").textContent = "🪞 Errores de las partidas de " + name;
+            tituloConEmoji("errores-title", "🪞", "Errores de las partidas de " + name);
             body.textContent = "Cargando…";
             caja.classList.remove("hidden");
             const { data, error } = await sb.from("training_state").select("key, value")
@@ -1416,7 +1416,7 @@
            una, la misma decisión que la bitácora. */
         async function renderEvolucion(studentId, propio, nombre) {
             const panel = document.getElementById("evolucion-report");
-            document.getElementById("evolucion-title").textContent = propio ? "📈 Cómo vienes" : "📈 Cómo viene " + nombre;
+            tituloConEmoji("evolucion-title", "📈", propio ? "Cómo vienes" : "Cómo viene " + nombre);
             document.getElementById("evolucion-sub").textContent = propio
                 ? "Tus últimas 12 semanas, para ver si vas subiendo o si te frenaste."
                 : "Las últimas 12 semanas. Las tarjetas de arriba son totales de siempre: solo suben, así que no dicen si se frenó.";
@@ -1468,6 +1468,20 @@
             });
         }
 
+        /* Un título con su emoji, reescrito: el emoji va en un <span
+           aria-hidden="true"> como en el HTML. Con textContent a secas el lector
+           volvía a decir «gráfico con tendencia al alza, Cómo viene…» en cada
+           título que la página cambiaba. El nombre (lo escribió una persona) va
+           como texto, nunca como HTML. */
+        function tituloConEmoji(id, emoji, texto) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const icono = document.createElement("span");
+            icono.setAttribute("aria-hidden", "true");
+            icono.textContent = emoji;
+            el.replaceChildren(icono, document.createTextNode(" " + texto));
+        }
+
         async function renderNotasDelAlumno(studentId) {
             const cuantas = await NotasAlumno.montarLectura(
                 document.getElementById("notas-alumno-body"), { sb, alumnoId: studentId });
@@ -1492,7 +1506,7 @@
         async function renderDeberes(studentId, propio) {
             const cuerpo = document.getElementById("deberes-body");
             cuerpo.innerHTML = "";
-            document.getElementById("deberes-title").textContent = "📋 Tareas y exámenes";
+            tituloConEmoji("deberes-title", "📋", "Tareas y exámenes");
 
             // Desde siempre, como el resto de los números de esta página. El
             // tope de arriba va un minuto adelante porque el filtro es `<`: sin

@@ -293,6 +293,11 @@
                     juego: () => game,
                     tablero: () => teclado,
                     onEnviar: jugarEscribiendo,
+                    /* Muda: la posición se dice UNA vez, al llegar el ejercicio
+                       (loadPuzzle). Viva, se volvía a dictar entera después de cada
+                       jugada propia —treinta piezas con el reloj corriendo— y tapaba
+                       el «¡Correcto!» y el aviso del ejercicio nuevo. */
+                    posicionViva: false,
                 });
             }
             comandos.ayuda('Jugada, en español o en inglés: "Cf3", "Nf3", "e4", "Dxh7+", "e8=D". Pregunta: "caballos", "qué hay en e4". Escribe "ayuda" para todo. '
@@ -307,7 +312,12 @@
             // la misma puerta por la que pasa el clic.
             const copia = new Chess(game.fen());
             const mv = CuadroComandos.jugadaPedida(copia, texto);
-            if (!mv) { api.decir('"' + texto + '" no es una jugada legal en esta posición. Revísala e inténtalo de nuevo.'); return; }
+            if (!mv) {
+                api.decir('"' + texto + '" no es una jugada legal en esta posición. Revísala e inténtalo de nuevo.');
+                // Seleccionado, lo siguiente que se escriba lo reemplaza en vez de pegarse detrás.
+                try { api.input.select(); } catch (e) {}
+                return;
+            }
             api.limpiar().decir("");
             attemptMove(mv.from, mv.to, mv.promotion);
         }
@@ -425,6 +435,19 @@
             return pool[idx];
         }
 
+        /* La posición del ejercicio nuevo, dicha una sola vez y en el mismo aviso
+           que «Ejercicio nuevo…» (el renglón del resultado es la región viva): dos
+           regiones hablando a la vez se pisan. Va en un <span> solo para el lector,
+           así que en pantalla el renglón sigue siendo corto. */
+        function decirPosicionNueva() {
+            if (!modoAdaptado() || !window.BlindNotation || !BlindNotation.positionSentence) return;
+            const el = document.getElementById("result-text");
+            const sr = document.createElement("span");
+            sr.className = "sr-only";
+            sr.textContent = " Posición: " + BlindNotation.positionSentence(game);
+            el.appendChild(sr);
+        }
+
         function loadPuzzle() {
             const [fen, uci, san] = pickRandomPuzzle();
             currentSolution = uci;
@@ -442,6 +465,7 @@
                   + "Ejercicio nuevo: juegan las " + (game.turn() === "w" ? "blancas" : "negras")
                   + ". Tienes " + (limiteMs() / 1000) + " segundos."
                 : "");
+            decirPosicionNueva();
             setMilestoneText("");
             renderBoard();
             startTimer();
@@ -500,7 +524,26 @@
             try { savedName = localStorage.getItem(NAME_KEY) || ""; } catch (e) {}
             if (savedName) document.getElementById("name-input").value = savedName;
             updateDayStreakUI();
+            enfocarNombreSiNoVe();
         }
+
+        /* Con la cuenta ciega (o el Modo Adaptado) el foco empieza en el campo del
+           nombre: la página abría con el foco en el <body>, y el nombre —lo único
+           que hay que hacer para empezar— quedaba a diecinueve Tab. Solo si el foco
+           no está en otro lado: no se le quita a nada que la persona haya elegido.
+           La marca de la cuenta puede llegar después de cargar (js/vision-cuenta.js
+           mira la sesión), así que se vuelve a probar cuando llega. */
+        function enfocarNombreSiNoVe() {
+            const raiz = document.documentElement.classList;
+            if (!raiz.contains("modo-ciego") && !raiz.contains("adaptive-mode")) return;
+            if (document.getElementById("name-gate").classList.contains("hidden")) return;
+            const a = document.activeElement;
+            if (a && a !== document.body) return;
+            const campo = document.getElementById("name-input");
+            try { campo.focus(); campo.select(); } catch (e) {}
+        }
+        document.addEventListener("vision:cambio", enfocarNombreSiNoVe);
+        document.addEventListener("adaptivemode:change", enfocarNombreSiNoVe);
         init();
     
 /* Coordenadas del tablero (js/coordenadas-tablero.js): la letra de columna abajo

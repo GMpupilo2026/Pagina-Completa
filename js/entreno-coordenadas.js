@@ -92,6 +92,20 @@ function applyBlindModeUI(){
     modeBlindBtn.classList.toggle('active', blindMode);
   }
   if(refreshSpeechToggle) refreshSpeechToggle();
+  pintarTiempos();
+}
+/* Los textos que dicen el tiempo dicen el de verdad: en Modo Adaptado la ronda
+   y el límite por casilla se triplican (ver startRound()), y el botón seguía
+   diciendo «Empezar (30 s)» a quien iba a tener 90. */
+function factorTiempo(){ return blindMode ? 3 : 1; }
+function pintarTiempos(){
+  const f = factorTiempo();
+  const btn = document.getElementById('start-btn');
+  if(btn) btn.textContent = `Empezar (${ROUND_SECONDS * f} s) →`;
+  const hint = document.getElementById('mode-hint');
+  if(hint && typeof MODES !== 'undefined' && MODES[modeSetting]) hint.textContent = MODES[modeSetting].hint(f);
+  const reloj = document.getElementById('hud-timer');
+  if(reloj && !playing) reloj.textContent = String(ROUND_SECONDS * f);
 }
 function setBlindMode(value){
   blindMode = !!value;
@@ -107,15 +121,36 @@ function setBlindMode(value){
 }
 if(modeNormalBtn) modeNormalBtn.addEventListener('click', () => setBlindMode(false));
 if(modeBlindBtn) modeBlindBtn.addEventListener('click', () => setBlindMode(true));
-applyBlindModeUI();
+
+/* La respuesta escrita, en palabras o con la letra. El campo tenía
+   maxlength="1": quien escribía «blanca» mandaba «b» sin saberlo, y ningún
+   comando del recuadro llegaba entero («leer» llegaba como «l»). */
+const RESPUESTAS = { b: 'b', blanca: 'b', blancas: 'b', blanco: 'b', n: 'n', negra: 'n', negras: 'n', negro: 'n' };
+function sinTildes(t){ return String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim(); }
+function casillaDicha(){
+  return currentTarget ? (window.BlindNotation ? window.BlindNotation.squareSpoken(currentTarget) : currentTarget) : '';
+}
+function tiempoQueQueda(){
+  return `Quedan ${timeLeft} segundo${timeLeft === 1 ? '' : 's'}.`;
+}
 
 blindPanel.addEventListener('submit', (e) => {
   e.preventDefault();
-  const answer = blindInput.value.trim().toLowerCase();
+  const escrito = sinTildes(blindInput.value).replace(/[.!¡¿?"«»]/g, '').trim();
   blindInput.value = '';
   blindInput.focus();
-  if(answer !== 'b' && answer !== 'n'){
-    announceBlind('Escribe "b" si la casilla es blanca, o "n" si es negra.');
+  // Volver a oír la casilla sin perder la ronda: se dice con el tiempo que queda.
+  if(/^(repetir|repite|otra vez la casilla|casilla|cual|cual era|que casilla)$/.test(escrito)){
+    announceBlind(playing ? `La casilla es ${casillaDicha()}. ${tiempoQueQueda()}` : 'La ronda no está en curso: escribe «empezar» para jugar.');
+    return;
+  }
+  if(/^(tiempo|cuanto queda|cuanto tiempo queda|reloj)$/.test(escrito)){
+    announceBlind(playing ? tiempoQueQueda() : 'La ronda no está en curso.');
+    return;
+  }
+  const answer = RESPUESTAS[escrito];
+  if(!answer){
+    announceBlind('Escribe «blanca» (o «b») si la casilla es blanca, o «negra» (o «n») si es negra. «repetir» vuelve a decir la casilla y «tiempo», cuánto queda.');
     return;
   }
   const missedColor = isLightSquare(currentTarget) ? 'blanca' : 'negra'; // antes de newTarget(), que cambia currentTarget
@@ -134,9 +169,9 @@ blindPanel.addEventListener('submit', (e) => {
 // tiempo, cuenta como error y salta sola a la siguiente. La mejor puntuación
 // se guarda aparte para cada modo, porque no son comparables entre sí.
 const MODES = {
-  classic: { label: 'Clásico', perSquareLimit: null, hint: 'Ronda de 30 segundos, sin apuro por casilla — busca todas las que alcances.' },
-  mode10: { label: '10s por casilla', perSquareLimit: 10, hint: 'Tienes 10 segundos para encontrar cada casilla. Si se acaban, cuenta como error y aparece otra.' },
-  mode3: { label: '3s por casilla', perSquareLimit: 3, hint: 'Solo 3 segundos por casilla — el modo más exigente. Si se acaban, cuenta como error y aparece otra.' },
+  classic: { label: 'Clásico', perSquareLimit: null, hint: (f) => `Ronda de ${ROUND_SECONDS * f} segundos, sin apuro por casilla — busca todas las que alcances.` },
+  mode10: { label: '10s por casilla', perSquareLimit: 10, hint: (f) => `Tienes ${10 * f} segundos para encontrar cada casilla. Si se acaban, cuenta como error y aparece otra.` },
+  mode3: { label: '3s por casilla', perSquareLimit: 3, hint: (f) => `Solo ${3 * f} segundos por casilla — el modo más exigente. Si se acaban, cuenta como error y aparece otra.` },
 };
 
 function getBest(mode){
@@ -158,6 +193,7 @@ let reactionTimes = [];
 let currentTarget = null;
 let lastPromptAt = 0;
 let playing = false;
+applyBlindModeUI();
 
 document.querySelectorAll('#orientation-switch .option-btn').forEach((btn) => {
   btn.addEventListener('click', () => {
@@ -172,7 +208,7 @@ document.querySelectorAll('#mode-switch .option-btn').forEach((btn) => {
     document.querySelectorAll('#mode-switch .option-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     modeSetting = btn.dataset.value;
-    document.getElementById('mode-hint').textContent = MODES[modeSetting].hint;
+    pintarTiempos();
     renderBestLine();
   });
 });

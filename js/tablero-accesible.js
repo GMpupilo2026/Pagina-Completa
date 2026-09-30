@@ -543,6 +543,8 @@ window.TableroAccesible = (function () {
       return document.documentElement.classList.contains("modo-ciego");
     }
     function rolSegunModo() {
+      // Cómo se anda por el tablero: para quien no lo recorre, es ruido.
+      if (paraElProfe()) comoSeAnda.setAttribute("aria-hidden", "true"); else comoSeAnda.removeAttribute("aria-hidden");
       if (paraElProfe()) tablero.setAttribute("aria-hidden", "true");
       else if (tablero.getAttribute("aria-hidden") === "true" && tablero.dataset.taOcultoPorCiego) tablero.removeAttribute("aria-hidden");
       if (paraElProfe()) tablero.dataset.taOcultoPorCiego = "1"; else delete tablero.dataset.taOcultoPorCiego;

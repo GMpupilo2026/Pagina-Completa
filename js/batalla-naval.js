@@ -157,6 +157,11 @@ function pintarNiveles() {
       : "bg-white dark:bg-brand-900 text-brand-700 dark:text-brand-200 border-brand-200 dark:border-brand-700 hover:border-accent-500");
     b.setAttribute("aria-pressed", activo ? "true" : "false");
     const t = document.createElement("span"); t.textContent = n.id + ". " + n.titulo; b.appendChild(t);
+    /* El nombre del botón se arma con el texto de sus dos renglones, y un
+       `display: block` no pone un espacio: «acciones» (js/vision-cuenta.js) y
+       el lector decían «…la computadorasin ganar todavía». La coma va escrita,
+       solo para el lector (lo de las estrellas ya la traía). */
+    const sep = document.createElement("span"); sep.className = "sr-only"; sep.textContent = ", "; b.appendChild(sep);
     const s = document.createElement("span"); s.className = "block text-xs font-normal";
     const e = Number(estrellas[n.id]) || 0;
     // Las estrellas van ESCRITAS: «2 de 3 estrellas», no solo dibujadas.
@@ -168,7 +173,7 @@ function pintarNiveles() {
       s.textContent = e ? "★".repeat(e) + "☆".repeat(3 - e) : "sin jugar";
       s.setAttribute("aria-hidden", "true"); b.appendChild(s);
       const sr = document.createElement("span"); sr.className = "sr-only";
-      sr.textContent = e ? ", " + e + " de 3 estrellas" : ", sin jugar"; b.appendChild(sr);
+      sr.textContent = e ? e + " de 3 estrellas" : "sin jugar"; b.appendChild(sr);
     }
     b.addEventListener("click", () => empezar(n.id));
     $("niveles").appendChild(b);

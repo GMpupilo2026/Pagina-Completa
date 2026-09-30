@@ -188,6 +188,11 @@ window.ClaseAdaptada = (function () {
     // Lo que contesta el recuadro se escribe en su región viva y, con la voz
     // encendida, además se dice (las preguntas ya las dice cuadro-comandos.js).
     function decirEnCaja(api, texto) { api.decir(texto); hablar(texto); }
+    /* Lo que no se entendió o no se puede jugar ahora se queda escrito, pero
+       SELECCIONADO: si no, lo siguiente se pegaba detrás («e4e5», «tiempob») y
+       volvía a fallar, y sin ver el recuadro no hay cómo saber que tenía texto.
+       Seleccionado, lo que se escriba lo reemplaza. */
+    function noSePudo(api, texto) { decirEnCaja(api, texto); try { api.input.select(); } catch (e) {} }
 
     /* Los avisos de lo que pasa en el tablero. Por defecto van a la región viva
        del recuadro; `cfg.anunciar(texto)` los manda a otra parte —la página de
@@ -230,28 +235,33 @@ window.ClaseAdaptada = (function () {
         }
         if (typeof cfg.contestar === "function") {
           var propia = cfg.contestar(texto, function (t) { api.limpiar(); decirEnCaja(api, t); });
+          // {texto, fallo: true}: no se entendió (o ya no se puede), y se selecciona.
+          if (propia && typeof propia === "object") {
+            if (propia.fallo) noSePudo(api, propia.texto); else { api.limpiar(); decirEnCaja(api, propia.texto); }
+            return;
+          }
           if (propia) { decirEnCaja(api, propia); return; }
           if (propia === "") return;   // ya contesta él, cuando termine
         }
         if (b.piecesHidden) {
-          decirEnCaja(api, "Las piezas están ocultas: el ejercicio es verlas de memoria. "
+          noSePudo(api, "Las piezas están ocultas: el ejercicio es verlas de memoria. "
             + "Las jugadas se siguen anunciando.");
           return;
         }
         if (!b.interactive) {
-          decirEnCaja(api, (cfg.porQueNoPuedes && cfg.porQueNoPuedes()) || "Ahora no te toca mover.");
+          noSePudo(api, (cfg.porQueNoPuedes && cfg.porQueNoPuedes()) || "Ahora no te toca mover.");
           return;
         }
         var g = b.viewGame || b.game;
         var mv = window.ComandosTablero && ComandosTablero.jugadaEscrita
           ? ComandosTablero.jugadaEscrita(g, texto) : null;
         if (!mv) {
-          decirEnCaja(api, "\"" + texto.trim() + "\" no es una jugada legal en esta posición. "
+          noSePudo(api, "\"" + texto.trim() + "\" no es una jugada legal en esta posición. "
             + "Escribe \"posición\" para oírla, o \"ayuda\" para ver qué se puede escribir.");
           return;
         }
         var hecha = b.jugar(mv);
-        if (!hecha) { decirEnCaja(api, "No se pudo hacer esa jugada."); return; }
+        if (!hecha) { noSePudo(api, "No se pudo hacer esa jugada."); return; }
         api.limpiar();
         decirEnCaja(api, "Jugaste " + hablarJugada(hecha.san) + ".");
         actualizar();

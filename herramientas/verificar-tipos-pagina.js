@@ -1126,6 +1126,147 @@ window.PreparacionMotor = {
     await ctx.close();
   }
 
+  /* ======================= todo desde el recuadro =======================
+     Quien no ve contesta escribiendo, también en los juegos que se contestan
+     con botones o con un deslizador. */
+  const escribirR = async (page, txt) => {
+    // Sin recuadro a la vista no hay dónde escribir: eso ya es el fallo, no un cuelgue de 30 s.
+    if (!(await page.isVisible("#jugada-input"))) { ok("hay recuadro para escribir «" + txt + "»", false); return; }
+    await page.fill("#jugada-input", txt); await page.press("#jugada-input", "Enter");
+  };
+
+  console.log("\n=== Descarte, escribiendo la jugada sola ===");
+  {
+    const item = DATOS.descarte.find((x) => x.nivel === 2);
+    const { page, ctx, errores } = await abrir(browser, true, "#descarte/2/" + item.id);
+    await page.waitForSelector("#vista-juego:not(.hidden) #controles input[type=checkbox]");
+    for (const c of item.candidatas.filter((x) => x.pierde)) await escribirR(page, c.sanEs);
+    const marcadas = await page.$$eval("#controles input[type=checkbox]", (cs) => cs.map((c) => c.checked));
+    ok("escribir «" + item.candidatas.find((x) => x.pierde).sanEs + "» la tacha (sin «tachar»)",
+      JSON.stringify(marcadas) === JSON.stringify(item.candidatas.map((c) => !!c.pierde)), JSON.stringify(marcadas));
+    await escribirR(page, "comprobar");
+    const t = await esperarEstado(page, /Perfecto|Acertaste/);
+    ok("y «comprobar» escrito corrige: perfecto", /Perfecto/.test(t), t);
+    ok("sin errores en consola", !errores.length, errores.join(" | "));
+    await ctx.close();
+  }
+
+  console.log("\n=== La balanza, escribiendo el número ===");
+  {
+    const item = DATOS.balanza.find((x) => x.nivel === 3);
+    const { page, ctx, errores } = await abrir(browser, true, "#balanza/3/" + item.id);
+    await page.waitForSelector("#vista-juego:not(.hidden) #aguja");
+    const v = Math.round(R.recortar(item.eval) * 2) / 2;
+    const escrito = (v > 0 ? "+" : v < 0 ? "-" : "") + String(Math.abs(v)).replace(".", ",");
+    await escribirR(page, escrito);
+    ok("escribir «" + escrito + "» mueve la aguja ahí", +(await page.inputValue("#aguja")) === v, await page.inputValue("#aguja"));
+    await escribirR(page, "aguja 7");
+    ok("fuera de rango se recorta a ±5", Math.abs(+(await page.inputValue("#aguja"))) === 5, await page.inputValue("#aguja"));
+    await escribirR(page, escrito);
+    await escribirR(page, "comprobar");
+    const t = await esperarEstado(page, /El motor dice/);
+    ok("«comprobar» escrito: tres estrellas", /El motor dice/.test(t) && (await estrellas(page))["balanza:" + item.id] === 3, t);
+    ok("sin errores en consola", !errores.length, errores.join(" | "));
+    await ctx.close();
+  }
+
+  console.log("\n=== Fotografía, reconstruida en el recuadro ===");
+  {
+    const item = DATOS.fotografia.find((x) => x.nivel === 2);
+    const { page, ctx, errores } = await abrir(browser, true, "#fotografia/2/" + item.id);
+    await page.waitForSelector("#vista-juego:not(.hidden) #controles button");
+    await page.getByRole("button", { name: "Ya la tengo" }).click();
+    await page.waitForSelector("#foto-w");
+    const L = { k: "R", q: "D", r: "T", b: "A", n: "C", p: "" };
+    const por = { w: [], b: [] };
+    R.tablero(item.fen).forEach((p, i) => { if (p) por[p.c].push(L[p.t] + R.sq(i)); });
+    await escribirR(page, "blancas: " + por.w.join(", "));
+    const t0 = await esperarEstado(page, /Colocadas/);
+    ok("«blancas: …» coloca esas piezas", /Colocadas/.test(t0) && !/Aquí solo se pregunta/.test(t0), t0);
+    await escribirR(page, "negras: " + por.b.join(", "));
+    await mismaPosicion(page, item.fen, "lo escrito en el recuadro queda en el tablero");
+    await escribirR(page, "comprobar");
+    const t = await esperarEstado(page, /Perfecta|Acertaste/);
+    ok("y «comprobar» la da por perfecta", /Perfecta/.test(t), t);
+    ok("sin errores en consola", !errores.length, errores.join(" | "));
+    await ctx.close();
+  }
+  {
+    const item = DATOS.fotografia.find((x) => x.nivel === 5);
+    const { page, ctx, errores } = await abrir(browser, true, "#fotografia/5/" + item.id);
+    await page.waitForSelector("#vista-juego:not(.hidden) #controles button");
+    await page.getByRole("button", { name: "Ya la tengo" }).click();
+    await page.waitForSelector("#controles fieldset");
+    for (const q of item.preguntas) await escribirR(page, q.correcta);
+    const marcadas = await page.$$eval("#controles fieldset input:checked", (xs) => xs.map((x) => x.value));
+    ok("nivel 5: las respuestas cortas («" + item.preguntas[1].correcta + "», «" + item.preguntas[2].correcta + "») marcan cada pregunta",
+      JSON.stringify(marcadas) === JSON.stringify(item.preguntas.map((q) => q.correcta)), JSON.stringify(marcadas));
+    await escribirR(page, "comprobar");
+    const t = await esperarEstado(page, /Acertaste/);
+    ok("y «comprobar» corrige: 3 de 3", /Acertaste 3 de 3/.test(t), t);
+    ok("sin errores en consola", !errores.length, errores.join(" | "));
+    await ctx.close();
+  }
+
+  console.log("\n=== Intercambios, escribiendo el resultado ===");
+  {
+    const item = DATOS.intercambios.find((x) => x.nivel === 3 && x.valor > 0) || DATOS.intercambios.find((x) => x.nivel === 3);
+    const { page, ctx, errores } = await abrir(browser, true, "#intercambios/3/" + item.id);
+    await page.waitForSelector("#vista-juego:not(.hidden) #controles button");
+    const dicho = item.valor > 0 ? "ganas " + item.valor : item.valor < 0 ? "pierdes " + (-item.valor) : "igual";
+    await escribirR(page, dicho);
+    const t = await esperarEstado(page, /Correcto|Era/);
+    ok("«" + dicho + "» escrito cuenta como el botón: tres estrellas", /Correcto/.test(t) && (await estrellas(page))["intercambios:" + item.id] === 3, t);
+    ok("sin errores en consola", !errores.length, errores.join(" | "));
+    await ctx.close();
+  }
+  {
+    const item = DATOS.intercambios.find((x) => x.nivel === 1);
+    const { page, ctx, errores } = await abrir(browser, true, "#intercambios/1/" + item.id);
+    await page.waitForSelector("#vista-juego:not(.hidden) #controles button");
+    const dicho = item.valor > 0 ? "+" : item.valor < 0 ? "-" : "igual";
+    await escribirR(page, dicho === "+" ? "ganas" : dicho === "-" ? "pierdes" : "igual");
+    const t = await esperarEstado(page, /Correcto|Era/);
+    ok("nivel 1: «ganas», «pierdes» o «igual» escrito", /Correcto/.test(t), t);
+    ok("sin errores en consola", !errores.length, errores.join(" | "));
+    await ctx.close();
+  }
+
+  console.log("\n=== Con la cuenta ciega, el foco vuelve al recuadro ===");
+  {
+    const item = DATOS.amenaza.find((x) => x.nivel === 1);
+    const { page, ctx, errores } = await abrir(browser, true, "#amenaza/1/" + item.id);
+    await page.waitForSelector("#vista-juego:not(.hidden) #jugada-input");
+    /* La marca de la cuenta ciega: la clase del <html>, como la pone
+       js/vision-cuenta.js. Se pone DESPUÉS de que ese módulo pregunta a la
+       base (el doble no trae la marca, y sin ella la quitaría). */
+    await page.waitForTimeout(800);
+    await page.evaluate(() => document.documentElement.classList.add("modo-ciego", "adaptive-mode"));
+    await escribirR(page, item.amenazaEs);
+    await esperarEstado(page, /Eso es lo que quiere/);
+    const antes = await page.evaluate(() => document.activeElement && document.activeElement.id);
+    ok("al acertar escribiendo, el foco va a «Siguiente →»", antes === "btn-siguiente", antes);
+    await page.keyboard.press("Enter");
+    await page.waitForFunction(() => /Ejercicio 2 de/.test(document.getElementById("juego-progreso").textContent), null, { timeout: 5000 }).catch(() => {});
+    await page.waitForTimeout(300);
+    const despues = await page.evaluate(() => document.activeElement && document.activeElement.id);
+    ok("y con Intro, en el ejercicio nuevo, vuelve al recuadro (no se queda en el botón)", despues === "jugada-input", despues);
+    await escribirR(page, "niveles");
+    await page.waitForFunction(() => !document.getElementById("vista-tipo").classList.contains("hidden"), null, { timeout: 5000 }).catch(() => {});
+    await page.waitForTimeout(100);
+    const enNiveles = await page.evaluate(() => [location.hash, document.activeElement && document.activeElement.id]);
+    ok("«niveles» escrito vuelve a los niveles, con el foco en su título", enNiveles[0] === "#amenaza" && enNiveles[1] === "titulo-tipo", JSON.stringify(enNiveles));
+    await page.click("#niveles a");
+    await page.waitForSelector("#vista-juego:not(.hidden) #jugada-input");
+    await page.waitForTimeout(200);
+    await escribirR(page, "todos los tipos");
+    await page.waitForFunction(() => !document.getElementById("vista-fichas").classList.contains("hidden"), null, { timeout: 5000 }).catch(() => {});
+    const enFichas = await page.evaluate(() => document.activeElement && document.activeElement.id);
+    ok("«todos los tipos» vuelve a la lista, con el foco en su título", enFichas === "titulo-fichas", enFichas);
+    ok("sin errores en consola", !errores.length, errores.join(" | "));
+    await ctx.close();
+  }
+
   await browser.close();
   console.log(fallos ? "\n✗ " + fallos + " comprobación(es) fallaron." : "\n✓ Todo bien.");
   process.exit(fallos ? 1 : 0);

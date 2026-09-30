@@ -32,6 +32,7 @@
     lista.forEach((op) => {
       const b = el("button", CLASE_OPCION, etiqueta(op));
       b.type = "button";
+      b.dataset.op = String(op);   // para contestar escribiendo (Intercambios)
       b.addEventListener("click", () => {
         if (hecho) return;
         intentos++;
@@ -145,6 +146,29 @@
     const signo = (v) => (v > 0 ? "gana" : v < 0 ? "pierde" : "igual");
     const etiqueta = (op) => ({ gana: "Ganas material", igual: "Queda igual", pierde: "Pierdes material" })[op] ||
       (+op > 0 ? "+" + op + " (ganas " + op + ")" : +op < 0 ? "−" + (-op) + " (pierdes " + (-op) + ")" : "0 (queda igual)");
+    /* Contestar escribiendo: «+1», «-1», «ganas 1», «pierdes 1», «igual», o
+       en los niveles 1 y 2 solo «ganas», «pierdes», «igual». Aprieta el botón
+       de esa opción, así cuenta igual que el clic. */
+    U.pedirJugada("O escribe la respuesta («+1», «-1», «ganas 1», «pierdes 1», «igual»)", (txt) => {
+      const t = txt.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[.!¡]/g, "").trim();
+      let sg = null, num = null, m;
+      if (/^(igual|queda igual|0|cero|empate|nada)$/.test(t)) { sg = 0; num = 0; }
+      else if ((m = /^(?:\+|ganas?|gano|ganan)\s*(\d+)?(?:\s*puntos?)?$/.exec(t))) { sg = 1; num = m[1] ? +m[1] : null; }
+      else if ((m = /^(?:-|−|pierdes?|pierdo|pierden)\s*(\d+)?(?:\s*puntos?)?$/.exec(t))) { sg = -1; num = m[1] ? -m[1] : null; }
+      else if ((m = /^(\d+)$/.exec(t))) { sg = 1; num = +m[1]; }
+      if (sg === null) { estado("No entendí «" + txt + "». Escribe «+1», «-1», «ganas 1», «pierdes 1» o «igual»."); return; }
+      let op;
+      if (item.nivel <= 2) op = sg > 0 ? "gana" : sg < 0 ? "pierde" : "igual";
+      else {
+        if (num === null) { estado("¿Por cuánto? Escribe el número: " + item.opciones.map((o) => (+o > 0 ? "+" + o : o)).join(", ") + "."); $("jugada-input").select(); return; }
+        op = item.opciones.find((o) => +o === num);
+        if (op === undefined) { estado("«" + txt + "» no es una de las opciones: " + item.opciones.map((o) => (+o > 0 ? "+" + o : o)).join(", ") + "."); $("jugada-input").select(); return; }
+      }
+      const b = Array.from($("controles").querySelectorAll("button[data-op]")).find((x) => x.dataset.op === String(op));
+      if (!b || b.disabled) { estado("Esa opción ya la probaste."); return; }
+      $("jugada-input").value = "";
+      b.click();
+    });
     opciones(item, item.opciones, etiqueta, (op) => (item.nivel <= 2 ? op === signo(item.valor) : +op === item.valor), (bien, n) => {
       const r = M.textoIntercambio(item.valor, yo);
       estado((bien ? "✓ ¡Correcto! " : "Era: ") + r.charAt(0).toUpperCase() + r.slice(1) + ". " + (n ? textoEstrellas(n) : ""));

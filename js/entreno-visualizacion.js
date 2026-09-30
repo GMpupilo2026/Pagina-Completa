@@ -326,6 +326,13 @@ function setStatus(text, cls){
   el.className = 'round-status' + (cls ? ' ' + cls : '');
 }
 
+function adaptado(){ return document.documentElement.classList.contains('adaptive-mode'); }
+/* La jugada en palabras para quien la oye («torre a de 8, jaque») y no «Rd8+»,
+   que es inglés y letras sueltas. Sin el Modo Adaptado, la notación de siempre. */
+function jugadaDicha(san){
+  return adaptado() && window.BlindNotation && BlindNotation.sanSpoken ? BlindNotation.sanSpoken(san) : san;
+}
+
 function flashWrongInput(){
   const input = document.getElementById('answer-input');
   input.classList.add('wrong-flash');
@@ -372,6 +379,9 @@ function loadPuzzle(){
   document.getElementById('hint-btn').textContent = '💡 Pista';
   document.getElementById('answer-input').value = '';
   document.getElementById('answer-input').disabled = false;
+  document.getElementById('answer-input').readOnly = false;
+  esperandoSiguiente = false;
+  document.getElementById('next-puzzle-btn').hidden = true;
   drawStaticBoard(puzzle.fen, orientation);
   updateProgressBar();
   const info = nivelInfo(currentLevel);
@@ -423,7 +433,7 @@ function jugarEscribiendo(texto){
     missedThisPuzzle = true;
     resetStreak();
     flashWrongInput();
-    setStatus(`${mv.san} es legal, pero no es la jugada de la línea. Vuelve a calcular desde donde ibas.`, 'bad');
+    setStatus(`${jugadaDicha(mv.san)} es legal, pero no es la jugada de la línea. Vuelve a calcular desde donde ibas.`, 'bad');
     return;
   }
   document.getElementById('answer-input').value = '';
@@ -436,7 +446,10 @@ function jugarEscribiendo(texto){
   }
 
   locked = true;
-  document.getElementById('answer-input').disabled = true;
+  /* Solo lectura y no desactivado mientras responde el rival: desactivar el
+     campo que tiene el foco lo tira al <body>, y quien no ve tenía que volver
+     a buscarlo en cada jugada. `locked` ya impide contestar mientras tanto. */
+  document.getElementById('answer-input').readOnly = true;
   setStatus('✓ Correcto — el rival responde…', 'ok');
   let rival = '';
   setTimeout(() => {
@@ -449,7 +462,7 @@ function jugarEscribiendo(texto){
     rival = hecha && window.BlindNotation && BlindNotation.sanSpoken ? 'El rival jugó ' + BlindNotation.sanSpoken(hecha.san).replace(/^\S/, (c) => c.toLowerCase()) + '. ' : '';
     solutionStep++;
     locked = false;
-    document.getElementById('answer-input').disabled = false;
+    document.getElementById('answer-input').readOnly = false;
     document.getElementById('answer-input').focus();
     if(solutionStep >= puzzle.solution.length){
       finishPuzzle();
@@ -462,6 +475,12 @@ function jugarEscribiendo(texto){
 document.getElementById('answer-form').addEventListener('submit', (e) => {
   e.preventDefault();
   const input = document.getElementById('answer-input');
+  if(esperandoSiguiente){
+    if(/^(siguiente|seguir|continuar|otro|otra)$/.test(String(input.value).trim().toLowerCase())){ input.value = ''; avanzarEjercicio(); return; }
+    input.value = '';
+    setStatus('Escribe «siguiente» para pasar al próximo ejercicio.');
+    return;
+  }
   /* Antes de tratarlo como jugada se mira si era una PREGUNTA sobre la posición
      del tablero ("caballos", "qué hay en e4", "posición"). Acá eso no es un
      extra: el ejercicio entero consiste en calcular sobre una posición que no se
@@ -479,9 +498,24 @@ document.getElementById('answer-form').addEventListener('submit', (e) => {
   jugarEscribiendo(input.value);
 });
 
+let esperandoSiguiente = false;
+function avanzarEjercicio(){
+  esperandoSiguiente = false;
+  document.getElementById('next-puzzle-btn').hidden = true;
+  if(currentIndex < idsOf(currentLevel).length - 1){
+    currentIndex++;
+    loadPuzzle();
+  } else {
+    finishLevel();
+  }
+}
+
 function finishPuzzle(){
   locked = true;
-  document.getElementById('answer-input').disabled = true;
+  const enAdaptado = adaptado();
+  // En Modo Adaptado el campo sigue vivo: ahí se escribe «siguiente».
+  if(enAdaptado) document.getElementById('answer-input').readOnly = false;
+  else document.getElementById('answer-input').disabled = true;
   document.getElementById('hint-btn').disabled = true;
   const id = currentId();
   const alreadySolved = isSolved(id);
@@ -501,14 +535,17 @@ function finishPuzzle(){
   if(window.RepasoFallados) RepasoFallados.anotar(CLAVE_REPASO, id, missedThisPuzzle, usedHintThisPuzzle);
   updateProgressBar();
   updateOverall();
-  setTimeout(() => {
-    if(currentIndex < idsOf(currentLevel).length - 1){
-      currentIndex++;
-      loadPuzzle();
-    } else {
-      finishLevel();
-    }
-  }, 1400);
+  /* En Modo Adaptado no se carga sola la siguiente: a los 1,4 s el ejercicio
+     nuevo pisaba el «¡Correcto!» a medio leer, y quien escribía «siguiente»
+     para seguir se saltaba uno que ni había oído. Se espera a que lo pida. */
+  if(enAdaptado){
+    esperandoSiguiente = true;
+    document.getElementById('next-puzzle-btn').hidden = false;
+    const st = document.getElementById('round-status');
+    st.textContent += ' Escribe «siguiente» para seguir.';
+    return;
+  }
+  setTimeout(avanzarEjercicio, 1400);
 }
 
 function finishLevel(){
@@ -523,6 +560,8 @@ function finishLevel(){
     ? `Repasaste ${total} ${total === 1 ? 'ejercicio' : 'ejercicios'}. Los que salieron limpios vuelven más adelante.`
     : `Resolviste los ${total} ejercicios de ${info.nombre} — ${info.titulo}.`;
   updateProgressBar();
+  // La zona de juego se esconde con el campo que tenía el foco: va al título.
+  document.getElementById('celebration-title').focus();
 }
 
 function giveHint(){
@@ -530,9 +569,10 @@ function giveHint(){
   usedHintThisPuzzle = true;
   const puzzle = currentPuzzle();
   const expected = puzzle.solution[solutionStep];
-  setStatus(`Pista: la jugada que buscas es ${expected}.`);
+  setStatus(`Pista: la jugada que buscas es ${jugadaDicha(expected)}.`);
 }
 document.getElementById('hint-btn').addEventListener('click', giveHint);
+document.getElementById('next-puzzle-btn').addEventListener('click', avanzarEjercicio);
 document.getElementById('retry-btn').addEventListener('click', loadPuzzle);
 document.getElementById('skip-btn').addEventListener('click', () => {
   resetStreak();
