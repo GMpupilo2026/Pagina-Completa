@@ -502,6 +502,8 @@ async function pruebaCoordinacion(browser) {
 
   // -------- qué dice el correo (asunto, mensaje y «Cómo pagar»)
   await page.waitForFunction(() => document.getElementById("tx-asunto-proximo").placeholder !== "");
+  igual("el marco de la vista previa no existe hasta que se pide",
+    await page.evaluate(() => document.querySelectorAll("iframe").length), 0);
   igual("el mensaje guardado arranca escrito en su casilla",
     await page.inputValue("#tx-mensaje-moroso"), "Texto guardado del aviso de moroso.");
   igual("lo que no está guardado queda en blanco, con el de fábrica de guía",
@@ -514,7 +516,7 @@ async function pruebaCoordinacion(browser) {
   await page.fill("#tx-mensaje-moroso", "");
   await page.evaluate(() => { window.__llamadas = []; });
   await page.locator(".tx-muestra[data-tipo='vencido']").click();
-  await page.waitForFunction(() => document.getElementById("tx-previa-marco").srcdoc !== "");
+  await page.waitForFunction(() => (document.getElementById("tx-previa-marco") || {}).srcdoc);
   const muestra = await page.evaluate(() => (window.__llamadas.find((l) => l.funcion && l.funcion.action === "muestra") || {}).funcion);
   igual("«Ver cómo queda» pide la muestra con lo escrito, sin guardar",
     muestra, { action: "muestra", tipo: "vencido", textos: {

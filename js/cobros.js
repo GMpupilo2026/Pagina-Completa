@@ -878,8 +878,21 @@ async function verMuestraCorreo(boton) {
     try {
         const r = await llamarCobros({ action: "muestra", tipo, textos: textosEscritos() });
         document.getElementById("tx-previa-asunto").textContent = "Asunto: " + r.asunto;
-        document.getElementById("tx-previa-marco").srcdoc = r.html;
         const caja = document.getElementById("tx-previa");
+        /* El marco se crea recién aquí, no en el HTML: un <iframe sandbox>
+           vacío en la página es un marco más donde corre lo que se le inyecte
+           a cada marco (y sin allow-same-origin, eso falla). Sin permisos a
+           propósito: el correo es HTML sin scripts y no tiene nada que hacer. */
+        let marco = document.getElementById("tx-previa-marco");
+        if (!marco) {
+            marco = document.createElement("iframe");
+            marco.id = "tx-previa-marco";
+            marco.title = "Vista previa del correo de cobro";
+            marco.setAttribute("sandbox", "");
+            marco.className = "w-full h-[36rem] rounded-xl border border-brand-200 dark:border-brand-700 bg-white";
+            caja.appendChild(marco);
+        }
+        marco.srcdoc = r.html;
         caja.hidden = false;
         estado.textContent = "Vista previa con un cobro de ejemplo. Todavía no se ha guardado nada.";
         caja.scrollIntoView({ behavior: "smooth", block: "nearest" });
