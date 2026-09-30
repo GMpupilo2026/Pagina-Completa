@@ -331,6 +331,56 @@ def juego_aviso(ruta):
             + JUEGO_AVISO_FIN)
 
 
+# El aviso del profe (js/aviso-profe.js): la ventana que el alumno tiene que
+# marcar como leída. En todas menos examen.html, por la misma razón que el aviso
+# de partida: una ventana encima de un examen con reloj es justo lo que el
+# antitrampa evita. El aviso lo ve al salir del examen, en la página que abra.
+AVISO_PROFE_INICIO = "<!-- aviso-profe: inicio -->"
+AVISO_PROFE_FIN = "<!-- aviso-profe: fin -->"
+SIN_AVISO_PROFE = {"examen.html"}
+
+
+def poner_aviso_profe(ruta, s):
+    i = s.find(AVISO_PROFE_INICIO)
+    if i >= 0:
+        j = s.find(AVISO_PROFE_FIN, i)
+        s = s[:i] + s[j + len(AVISO_PROFE_FIN):]
+    if ruta in SIN_AVISO_PROFE:
+        return s
+    cierre = s.rfind("</body>")
+    if cierre < 0:
+        print(f"⚠️  {ruta}: no tiene </body>, se queda sin el aviso del profe.")
+        return s
+    arriba = "../" * ruta.count("/")
+    return (s[:cierre] + AVISO_PROFE_INICIO
+            + f'<script src="{arriba}js/aviso-profe.js" defer></script>'
+            + AVISO_PROFE_FIN + s[cierre:])
+
+
+# La barra de «Entrenar 10 minutos» (js/tanda-diez.js): la tanda pasa por
+# varias páginas y la barra tiene que ir con ella. Fuera de examen.html, como el
+# aviso: ahí no se entrena y el examen no se interrumpe.
+TANDA_INICIO = "<!-- tanda: inicio -->"
+TANDA_FIN = "<!-- tanda: fin -->"
+
+
+def poner_tanda(ruta, s):
+    i = s.find(TANDA_INICIO)
+    if i >= 0:
+        j = s.find(TANDA_FIN, i)
+        s = s[:i] + s[j + len(TANDA_FIN):]
+    if ruta in SIN_AVISO_PROFE:
+        return s
+    cierre = s.rfind("</body>")
+    if cierre < 0:
+        print(f"⚠️  {ruta}: no tiene </body>, se queda sin la barra de la tanda.")
+        return s
+    arriba = "../" * ruta.count("/")
+    return (s[:cierre] + TANDA_INICIO
+            + f'<script src="{arriba}js/tanda-diez.js" defer></script>'
+            + TANDA_FIN + s[cierre:])
+
+
 def poner_juego_aviso(ruta, s):
     i = s.find(JUEGO_AVISO_INICIO)
     if i >= 0:
@@ -737,6 +787,8 @@ def procesar(ruta):
     s = poner_migas(ruta, s)
     s = poner_burbuja(ruta, s)
     s = poner_juego_aviso(ruta, s)
+    s = poner_aviso_profe(ruta, s)
+    s = poner_tanda(ruta, s)
     s = poner_acceso(ruta, s)
     s = poner_tiempo(ruta, s)
     s = poner_modo_vista(ruta, s)

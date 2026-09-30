@@ -243,7 +243,9 @@ async function abrir(browser, ruta, sesion, stats, opts) {
       // supervisa varias (js/marca-academia.js, igual en todas): ninguna es una
       // cuenta de progreso, así que no cuentan acá.
       // trofeos_de es la cuenta de los trofeos de la clase, también en la base.
-      await page.evaluate(() => Array.from(new Set(window.__rpcPedidos.filter((n) => !["mi_acceso", "mi_marca_academia", "mis_academias_supervisadas"].includes(n)))).sort()),
+      // mis_avisos_sin_leer es la ventana del aviso del profe (js/aviso-profe.js,
+      // también en toda página de la Academia).
+      await page.evaluate(() => Array.from(new Set(window.__rpcPedidos.filter((n) => !["mi_acceso", "mi_marca_academia", "mis_academias_supervisadas", "mis_avisos_sin_leer"].includes(n)))).sort()),
       ["logros_hitos", "premios_de_alumno", "progreso_dias_y_racha", "trofeos_de"]);
 
     console.log("\n=== Los logros: la página pinta lo que el catálogo calcula ===");

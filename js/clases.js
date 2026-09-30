@@ -566,12 +566,19 @@
             }
             const todas = TILE_GROUPS.flatMap((g) => g.tiles).filter((t) => !t.soloAlumno);
             const usadas = new Set();
+            /* Con la misma mano que el del alumno: en el celular los grupos
+               arrancan plegados (y se recuerda lo que cada quien abre), y «Tu
+               cuenta» va en tarjetas chicas. La clase en vivo, que es lo del
+               día, no se pliega. Ver «El panel del profe, con la misma mano»
+               en docs/decisiones/paneles.md. */
             const grupos = PANEL_DOCENTE.map((g) => ({
                 title: g.title, destacado: !!g.destacado,
+                plegable: !g.destacado && g.title !== "Tu cuenta",
+                compacto: g.title === "Tu cuenta",
                 tiles: g.hrefs.map((h) => todas.find((t) => t.href === h)).filter((t) => t && usadas.add(t)),
             })).filter((g) => g.tiles.length);
             const sueltas = todas.filter((t) => !usadas.has(t));
-            if (sueltas.length) grupos.push({ title: "Otras", tiles: sueltas });
+            if (sueltas.length) grupos.push({ title: "Otras", plegable: true, tiles: sueltas });
             TILE_GROUPS.splice(0, TILE_GROUPS.length, ...grupos);
         }
 
@@ -1696,32 +1703,191 @@
             const caja = document.getElementById("mas-usado");
             const lista = document.getElementById("mas-usado-lista");
             if (!caja || !lista) return;
+            filasDelMes = filas;
+            // Las favoritas son de quien usa ESTE aparato: mirando el panel de otra persona no cuentan.
+            const favs = new Set(profile._persona ? [] : favoritasGuardadas());
             const top = porTarjeta(filas)
-                .filter((x) => x.minutos >= 3 && !NO_ES_COSTUMBRE.has(x.href) && tarjetaEnPanel(x.href))
+                .filter((x) => x.minutos >= 3 && !NO_ES_COSTUMBRE.has(x.href) && !favs.has(x.href) && tarjetaEnPanel(x.href))
                 .sort((a, b) => b.minutos - a.minutos)
                 .slice(0, 4);
             // Con una sola no hay «lo que más usas»: es lo único que usa, y ya está en la grilla.
-            if (top.length < 2) return;
+            if (top.length < 2) { caja.hidden = true; return; }
             lista.replaceChildren();
-            top.forEach((x) => {
-                const t = tileDe(x.href);
-                if (!t) return;
-                const li = document.createElement("li");
-                const a = document.createElement("a");
-                a.href = x.href;
-                a.className = "flex items-center gap-2 rounded-xl p-3 h-full bg-white dark:bg-brand-900 shadow-sm hover:shadow-md transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
-                const icono = document.createElement("span");
-                icono.setAttribute("aria-hidden", "true");
-                icono.className = "text-xl shrink-0";
-                icono.textContent = t.emoji || "♟️";
-                const nombre = document.createElement("span");
-                nombre.className = "font-semibold text-sm text-brand-800 dark:text-white";
-                nombre.textContent = t.label;
-                a.append(icono, nombre);
-                li.appendChild(a);
-                lista.appendChild(li);
-            });
+            top.forEach((x) => { const li = chipDeTarjeta(x.href); if (li) lista.appendChild(li); });
             caja.hidden = false;
+        }
+        // Un acceso chico a una tarjeta del panel (lo que más usa, sus favoritas).
+        function chipDeTarjeta(href) {
+            const t = tileDe(href);
+            if (!t) return null;
+            const li = document.createElement("li");
+            const a = document.createElement("a");
+            a.href = href;
+            a.className = "flex items-center gap-2 rounded-xl p-3 h-full bg-white dark:bg-brand-900 shadow-sm hover:shadow-md transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+            const icono = document.createElement("span");
+            icono.setAttribute("aria-hidden", "true");
+            icono.className = "text-xl shrink-0";
+            icono.textContent = t.emoji || "♟️";
+            const nombre = document.createElement("span");
+            nombre.className = "font-semibold text-sm text-brand-800 dark:text-white";
+            nombre.textContent = t.label;
+            a.append(icono, nombre);
+            li.appendChild(a);
+            return li;
+        }
+
+        /* ---------- Lo que más usas, en el panel del profe ----------
+           Al alumno se le sacan de tiempo_por_seccion(), pero lo que hace
+           quien da clase (tareas, informes, pasar lista) no se mide por
+           sección. Se cuentan sus toques en las tarjetas de ESTE aparato
+           (panel_usos_v1): es una comodidad del aparato, no un dato de nadie.
+           Desde tres toques; las cuatro más tocadas. */
+        const CLAVE_USOS = "panel_usos_v1";
+        function usosGuardados() {
+            try { const o = JSON.parse(localStorage.getItem(CLAVE_USOS) || "{}"); return o && typeof o === "object" ? o : {}; }
+            catch (e) { return {}; }
+        }
+        function contarUsosDelPanel() {
+            const grilla = document.getElementById("tile-grid");
+            if (!grilla || grilla.dataset.cuentaUsos) return;
+            grilla.dataset.cuentaUsos = "1";
+            grilla.addEventListener("click", (ev) => {
+                const a = ev.target.closest && ev.target.closest("a[href]");
+                if (!a) return;
+                const o = usosGuardados();
+                const h = a.getAttribute("href");
+                o[h] = (Number(o[h]) || 0) + 1;
+                try { localStorage.setItem(CLAVE_USOS, JSON.stringify(o)); } catch (e) {}
+            });
+            const o = usosGuardados();
+            const top = Object.keys(o).filter((h) => Number(o[h]) >= 3 && tarjetaEnPanel(h) && h !== "sesion.html")
+                .sort((a, b) => o[b] - o[a]).slice(0, 4);
+            if (top.length < 2) return;
+            const lista = document.getElementById("mas-usado-lista");
+            lista.replaceChildren();
+            top.forEach((h) => { const li = chipDeTarjeta(h); if (li) lista.appendChild(li); });
+            document.getElementById("mas-usado").hidden = false;
+        }
+
+        /* ---------- Tus favoritas ----------
+           Además de «Lo que más usas» (automático), el alumno fija las que
+           quiera, hasta ocho, y salen primero. Se eligen en una ventana con
+           casillas —una estrella dentro de cada tarjeta sería un botón dentro
+           de un enlace, que el lector de pantalla no sabe decir—, y se guardan
+           con su cuenta (js/progreso-usuario.js, `panel_favoritas_v1`): las
+           elige una vez y le salen en el celular y en la computadora. Lo que
+           ya es favorita no se repite en «Lo que más usas». Ver «Tus
+           favoritas» en docs/decisiones/paneles.md. */
+        const CLAVE_FAVORITAS = "panel_favoritas_v1";
+        const MAX_FAVORITAS = 8;
+        let filasDelMes = null;
+        function favoritasGuardadas() {
+            try {
+                const a = JSON.parse(localStorage.getItem(CLAVE_FAVORITAS) || "[]");
+                return Array.isArray(a) ? a.filter((h) => typeof h === "string") : [];
+            } catch (e) { return []; }
+        }
+        let favoritasArmadas = false;
+        function pintarFavoritas() {
+            const caja = document.getElementById("favoritas");
+            if (!caja || panelAdaptado) return;
+            const lista = document.getElementById("favoritas-lista");
+            const favs = favoritasGuardadas().filter((h) => tileDe(h) && tarjetaEnPanel(h));
+            lista.replaceChildren();
+            favs.forEach((h) => { const li = chipDeTarjeta(h); if (li) lista.appendChild(li); });
+            // style.display y no `hidden`: la clase `grid` de Tailwind le gana a ese atributo.
+            lista.style.display = favs.length ? "" : "none";
+            document.getElementById("favoritas-vacio").hidden = !!favs.length;
+            const boton = document.getElementById("favoritas-elegir");
+            boton.textContent = favs.length ? "Cambiar favoritas" : "Elegir favoritas";
+            if (!favoritasArmadas) { favoritasArmadas = true; boton.addEventListener("click", elegirFavoritas); }
+            caja.hidden = false;
+            if (filasDelMes) pintarLoQueMasUsas(filasDelMes);
+        }
+        function elegirFavoritas() {
+            const elegidas = new Set(favoritasGuardadas());
+            const antes = document.activeElement;
+            const d = document.createElement("dialog");
+            d.className = "w-[calc(100%-2rem)] max-w-lg max-h-[85vh] rounded-2xl shadow-2xl p-0 bg-white dark:bg-brand-900 text-brand-800 dark:text-white backdrop:bg-black/50";
+            d.dataset.favoritas = "";
+            d.setAttribute("aria-labelledby", "favoritas-dialogo-titulo");
+            const form = document.createElement("form");
+            form.method = "dialog";
+            form.className = "p-6";
+            const h = document.createElement("h2");
+            h.id = "favoritas-dialogo-titulo";
+            h.className = "font-serif text-lg font-bold";
+            h.textContent = "Elige tus favoritas";
+            const ayuda = document.createElement("p");
+            ayuda.className = "text-sm text-brand-600 dark:text-brand-300 mt-1";
+            ayuda.setAttribute("role", "status");
+            const decirCuantas = () => { ayuda.textContent = "Llevas " + elegidas.size + " de " + MAX_FAVORITAS + ". Salen arriba del panel, en este orden."; };
+            decirCuantas();
+            form.append(h, ayuda);
+            const casillas = [];
+            TILE_GROUPS.forEach((g) => {
+                const tiles = g.tiles.filter((t) => t.href && !t.disabled && !t.videollamada);
+                if (!tiles.length) return;
+                const fs = document.createElement("fieldset");
+                fs.className = "mt-4";
+                const lg = document.createElement("legend");
+                lg.className = "text-sm font-semibold mb-1";
+                lg.textContent = g.title;
+                fs.appendChild(lg);
+                tiles.forEach((t) => {
+                    const lab = document.createElement("label");
+                    lab.className = "flex items-center gap-2 py-1 text-sm cursor-pointer";
+                    const c = document.createElement("input");
+                    c.type = "checkbox";
+                    c.value = t.href;
+                    c.checked = elegidas.has(t.href);
+                    c.className = "w-4 h-4";
+                    c.addEventListener("change", () => {
+                        if (c.checked) elegidas.add(t.href); else elegidas.delete(t.href);
+                        const lleno = elegidas.size >= MAX_FAVORITAS;
+                        casillas.forEach((x) => { x.disabled = lleno && !x.checked; });
+                        decirCuantas();
+                    });
+                    casillas.push(c);
+                    const ic = document.createElement("span");
+                    ic.setAttribute("aria-hidden", "true");
+                    ic.textContent = t.emoji || "♟️";
+                    lab.append(c, ic, document.createTextNode(t.label));
+                    fs.appendChild(lab);
+                });
+                form.appendChild(fs);
+            });
+            casillas.forEach((x) => { x.disabled = elegidas.size >= MAX_FAVORITAS && !x.checked; });
+            const botones = document.createElement("div");
+            botones.className = "mt-6 flex flex-wrap justify-end gap-2";
+            const cancelar = document.createElement("button");
+            cancelar.type = "button";
+            cancelar.className = "rounded-lg px-4 py-2 text-sm font-semibold border border-brand-200 dark:border-brand-700 text-brand-700 dark:text-brand-200 hover:border-accent-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+            cancelar.textContent = "Cancelar";
+            cancelar.addEventListener("click", () => d.close("cancelar"));
+            const guardar = document.createElement("button");
+            guardar.type = "submit";
+            guardar.value = "guardar";
+            guardar.dataset.favoritasGuardar = "";
+            guardar.className = "rounded-lg px-4 py-2 text-sm font-semibold bg-accent-500 hover:bg-accent-600 text-brand-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+            guardar.textContent = "Guardar favoritas";
+            botones.append(cancelar, guardar);
+            form.appendChild(botones);
+            d.appendChild(form);
+            d.addEventListener("close", () => {
+                if (d.returnValue === "guardar") {
+                    // En el orden del panel, que es el que ya conoce.
+                    const orden = casillas.filter((x) => x.checked).map((x) => x.value).slice(0, MAX_FAVORITAS);
+                    try { localStorage.setItem(CLAVE_FAVORITAS, JSON.stringify(orden)); } catch (e) {}
+                    pintarFavoritas();
+                }
+                d.remove();
+                if (antes && typeof antes.focus === "function" && document.contains(antes)) antes.focus();
+            });
+            document.body.appendChild(d);
+            d.returnValue = "";
+            d.showModal();
+            (casillas.find((x) => !x.disabled) || guardar).focus();
         }
 
         /* ---------- «Competir» avisa lo que lo espera ----------
@@ -1820,6 +1986,216 @@
                 a.addEventListener("click", () => { visto[href] = ids; guardar(); }, { once: true });
             });
             if (cambio) guardar();
+        }
+
+        /* ---------- Aviso a tus alumnos (quien da clase) ----------
+           El profe escribe un aviso para todos sus alumnos, un grupo o uno de
+           sus subgrupos; al alumno le sale en una ventana que no puede cerrar
+           hasta marcarlo como leído (js/aviso-profe.js), y acá se ve cuántos
+           lo leyeron y quiénes. Todo lo decide la base: enviar_aviso() arma
+           la lista de destinatarios con SUS alumnos, mis_avisos_enviados()
+           cuenta y lectores_de_aviso() dice quién (solo de un aviso propio).
+           A quien mira el panel de otra persona no se le ofrece: mandaría el
+           aviso a su propio nombre. Ver «El aviso del profe» en
+           docs/decisiones/paneles.md. */
+        const FECHA_AVISO = new Intl.DateTimeFormat("es-CR", { timeZone: "America/Costa_Rica", weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
+        let avisoArmado = false;
+        async function pintarAvisoAlumnos() {
+            const caja = document.getElementById("aviso-alumnos");
+            if (!caja || profile._persona || profile._modo_vista) return;
+            caja.hidden = false;
+            const sel = document.getElementById("aviso-para");
+            const texto = document.getElementById("aviso-texto");
+            const cuenta = document.getElementById("aviso-cuenta");
+            const estado = document.getElementById("aviso-estado");
+            const boton = document.getElementById("aviso-mandar");
+            if (!avisoArmado) {
+                avisoArmado = true;
+                try {
+                    const [g, sg] = await Promise.all([sb.rpc("grupos_de_mis_alumnos"), sb.rpc("mis_subgrupos")]);
+                    const grupos = ((g && g.data) || []).filter((x) => x.grupo);
+                    const subgrupos = (sg && sg.data) || [];
+                    const agregar = (etiqueta, filas, valor, texto) => {
+                        if (!filas.length) return;
+                        const og = document.createElement("optgroup");
+                        og.label = etiqueta;
+                        filas.forEach((x) => { const o = document.createElement("option"); o.value = valor(x); o.textContent = texto(x); og.appendChild(o); });
+                        sel.appendChild(og);
+                    };
+                    agregar("Grupos", grupos, (x) => "g:" + x.grupo, (x) => "Grupo " + x.grupo + " (" + x.alumnos + ")");
+                    agregar("Subgrupos", subgrupos, (x) => "s:" + x.id, (x) => x.nombre + " (" + (x.cuantos || 0) + ")");
+                } catch (e) { /* sin grupos: solo «Todos tus alumnos» */ }
+                texto.addEventListener("input", () => { cuenta.textContent = texto.value.length + " de 1000 caracteres"; });
+                document.getElementById("aviso-form").addEventListener("submit", async (ev) => {
+                    ev.preventDefault();
+                    const t = texto.value.trim();
+                    if (!t) { estado.textContent = "Escribe el aviso antes de mandarlo."; texto.focus(); return; }
+                    const para = sel.value;
+                    const nombrePara = sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].textContent : "tus alumnos";
+                    const ok = await Avisos.confirmar("Le va a salir en una ventana que no puede cerrar hasta marcarlo como leído.",
+                        { titulo: "¿Mandar el aviso a " + nombrePara + "?", aceptar: "Mandar aviso" });
+                    if (!ok) return;
+                    boton.disabled = true;
+                    estado.textContent = "Mandando…";
+                    const { error } = await sb.rpc("enviar_aviso", {
+                        p_texto: t,
+                        p_grupo: para.startsWith("g:") ? para.slice(2) : null,
+                        p_subgrupo: para.startsWith("s:") ? para.slice(2) : null,
+                    });
+                    boton.disabled = false;
+                    if (error) { estado.textContent = "No se pudo mandar: " + (error.message || "intenta de nuevo."); return; }
+                    texto.value = "";
+                    cuenta.textContent = "0 de 1000 caracteres";
+                    estado.textContent = "Listo: se lo mandaste a " + nombrePara + ".";
+                    pintarAvisosEnviados();
+                });
+            }
+            await pintarAvisosEnviados();
+        }
+        async function pintarAvisosEnviados() {
+            const zona = document.getElementById("aviso-enviados");
+            const lista = document.getElementById("aviso-lista");
+            let filas = [];
+            try {
+                const { data, error } = await sb.rpc("mis_avisos_enviados", { p_limite: 5 });
+                if (error) return;
+                filas = data || [];
+            } catch (e) { return; }
+            lista.replaceChildren();
+            zona.hidden = !filas.length;
+            filas.forEach((a) => {
+                const li = document.createElement("li");
+                li.className = "rounded-xl bg-brand-50 dark:bg-brand-800 p-3";
+                li.dataset.aviso = a.id;
+                const t = document.createElement("p");
+                t.className = "text-sm text-brand-800 dark:text-white whitespace-pre-line break-words line-clamp-3";
+                t.textContent = a.texto;
+                const meta = document.createElement("p");
+                meta.className = "text-xs text-brand-600 dark:text-brand-300 mt-1";
+                meta.textContent = a.para + " · " + FECHA_AVISO.format(new Date(a.created_at)) + " · ";
+                const leidos = document.createElement("strong");
+                leidos.dataset.leidos = "";
+                leidos.className = "font-semibold text-brand-800 dark:text-white";
+                leidos.textContent = a.leidos + " de " + a.total + " lo " + (a.total === 1 ? "leyó" : "leyeron");
+                meta.appendChild(leidos);
+                const ver = document.createElement("button");
+                ver.type = "button";
+                ver.className = "mt-2 text-xs font-semibold text-accent-700 dark:text-accent-400 underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded";
+                ver.textContent = "Ver quiénes";
+                ver.setAttribute("aria-expanded", "false");
+                const quienes = document.createElement("ul");
+                quienes.className = "mt-2 space-y-1 text-xs";
+                quienes.id = "aviso-quienes-" + a.id;
+                quienes.hidden = true;
+                ver.setAttribute("aria-controls", quienes.id);
+                ver.addEventListener("click", async () => {
+                    const abrir = ver.getAttribute("aria-expanded") !== "true";
+                    ver.setAttribute("aria-expanded", String(abrir));
+                    ver.textContent = abrir ? "Ocultar la lista" : "Ver quiénes";
+                    quienes.hidden = !abrir;
+                    if (!abrir || quienes.dataset.cargado) return;
+                    quienes.dataset.cargado = "1";
+                    const { data, error } = await sb.rpc("lectores_de_aviso", { p_aviso: a.id });
+                    if (error) { quienes.textContent = "No se pudo cargar la lista."; return; }
+                    (data || []).forEach((x) => {
+                        const q = document.createElement("li");
+                        q.className = x.leido_at ? "text-brand-800 dark:text-white" : "text-brand-600 dark:text-brand-300";
+                        q.textContent = (x.leido_at ? "✓ " : "○ ") + x.nombre + (x.leido_at ? " — lo leyó el " + FECHA_AVISO.format(new Date(x.leido_at)) : " — sin leer");
+                        quienes.appendChild(q);
+                    });
+                });
+                li.append(t, meta, ver, quienes);
+                lista.appendChild(li);
+            });
+        }
+
+        /* ---------- La campana: lo último que te pasó ----------
+           Lo que le llega al celular como aviso (tarea nueva, examen, un reto,
+           el aviso del profe) no quedaba en ninguna parte: si lo perdía, no
+           había dónde volver a verlo. La campana junta lo último de cada cosa
+           —cinco de cada una, lo que la RLS ya le deja leer, sin nada que
+           guardar aparte— y marca como nuevo lo que llegó desde la última vez
+           que la abrió en este aparato. Ver «La campana del alumno» en
+           docs/decisiones/paneles.md. */
+        const CLAVE_CAMPANA = "panel_campana_vista_v1";
+        const FECHA_CAMPANA = new Intl.DateTimeFormat("es-CR", { timeZone: "America/Costa_Rica", weekday: "short", day: "numeric", month: "short" });
+        async function cargarCampana() {
+            const boton = document.getElementById("campana");
+            const panelC = document.getElementById("campana-panel");
+            if (!boton || !panelC) return;
+            const hace30 = new Date(Date.now() - 30 * 86400000).toISOString();
+            const ahora = new Date().toISOString();
+            const pedir = (q) => q.then((r) => (r && !r.error && r.data) || []).catch(() => []);
+            const [tareas, examenes, retos, avisos, notas] = await Promise.all([
+                pedir(sb.from("tareas").select("id, titulo, disponible_desde").eq("alumno_id", profile.id)
+                    .gte("disponible_desde", hace30).lte("disponible_desde", ahora).order("disponible_desde", { ascending: false }).limit(5)),
+                pedir(sb.from("examenes").select("id, titulo, disponible_desde").eq("alumno_id", profile.id)
+                    .gte("disponible_desde", hace30).lte("disponible_desde", ahora).order("disponible_desde", { ascending: false }).limit(5)),
+                pedir(sb.from("desafios").select("id, created_at, estado").eq("para_id", profile.id)
+                    .gte("created_at", hace30).order("created_at", { ascending: false }).limit(5)),
+                pedir(sb.from("avisos_profesor").select("id, texto, created_at")
+                    .gte("created_at", hace30).order("created_at", { ascending: false }).limit(5)),
+                pedir(sb.from("notas_alumno").select("id, texto, created_at").eq("alumno_id", profile.id).eq("compartida", true)
+                    .gte("created_at", hace30).order("created_at", { ascending: false }).limit(5)),
+            ]);
+            const corto = (t) => { t = String(t || "").replace(/\s+/g, " ").trim(); return t.length > 90 ? t.slice(0, 89) + "…" : t; };
+            const cosas = [].concat(
+                tareas.map((x) => ({ icono: "📋", texto: "Tarea nueva: «" + corto(x.titulo) + "»", fecha: x.disponible_desde, href: "tareas.html" })),
+                examenes.map((x) => ({ icono: "📝", texto: "Examen asignado: «" + corto(x.titulo) + "»", fecha: x.disponible_desde, href: "examenes.html" })),
+                retos.map((x) => ({ icono: "⚔️", texto: x.estado === "pendiente" ? "Te retaron a una partida" : "Te retaron a una partida (ya " + (x.estado === "aceptado" ? "la aceptaste" : "no está") + ")", fecha: x.created_at, href: "competir.html" })),
+                avisos.map((x) => ({ icono: "📣", texto: "Aviso de tu profe: «" + corto(x.texto) + "»", fecha: x.created_at, href: null })),
+                notas.map((x) => ({ icono: "✏️", texto: "Tu profe anotó: «" + corto(x.texto) + "»", fecha: x.created_at, href: "informes.html" })),
+            ).filter((c) => c.fecha).sort((a, b) => String(b.fecha).localeCompare(String(a.fecha))).slice(0, 10);
+            if (!cosas.length) return;
+            let vista = null;
+            try { vista = localStorage.getItem(CLAVE_CAMPANA); } catch (e) { vista = null; }
+            // La primera vez, «nuevo» es lo de la última semana.
+            const desde = vista || new Date(Date.now() - 7 * 86400000).toISOString();
+            const nuevas = cosas.filter((c) => String(c.fecha) > desde).length;
+            const lista = document.getElementById("campana-lista");
+            lista.replaceChildren();
+            cosas.forEach((c) => {
+                const li = document.createElement("li");
+                const cont = document.createElement(c.href ? "a" : "div");
+                if (c.href) cont.href = c.href;
+                cont.className = "flex items-start gap-3 rounded-xl px-3 py-2 bg-brand-50 dark:bg-brand-800 text-sm text-brand-800 dark:text-white"
+                    + (c.href ? " hover:text-accent-700 dark:hover:text-accent-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" : "");
+                const ic = document.createElement("span");
+                ic.setAttribute("aria-hidden", "true");
+                ic.textContent = c.icono;
+                const cuerpo = document.createElement("span");
+                cuerpo.className = "flex-1 min-w-0 break-words";
+                cuerpo.textContent = c.texto;
+                const meta = document.createElement("span");
+                meta.className = "block text-xs text-brand-600 dark:text-brand-300";
+                meta.textContent = FECHA_CAMPANA.format(new Date(c.fecha));
+                if (String(c.fecha) > desde) {
+                    const nuevo = document.createElement("strong");
+                    nuevo.className = "ml-2 text-accent-700 dark:text-accent-400";
+                    nuevo.textContent = "Nuevo";
+                    meta.appendChild(nuevo);
+                }
+                cuerpo.appendChild(meta);
+                cont.append(ic, cuerpo);
+                li.appendChild(cont);
+                lista.appendChild(li);
+            });
+            const n = document.getElementById("campana-n");
+            n.textContent = nuevas === 1 ? "1 nueva" : nuevas + " nuevas";
+            n.hidden = !nuevas;
+            boton.hidden = false;
+            boton.addEventListener("click", () => {
+                const abrir = boton.getAttribute("aria-expanded") !== "true";
+                boton.setAttribute("aria-expanded", String(abrir));
+                panelC.hidden = !abrir;
+                if (abrir) {
+                    // Abrirla es haberlas visto: el número se va, el «Nuevo» de
+                    // cada una se queda hasta la próxima vez.
+                    try { localStorage.setItem(CLAVE_CAMPANA, new Date().toISOString()); } catch (e) {}
+                    n.hidden = true;
+                    panelC.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                }
+            });
         }
 
         /* ---------- Tus clases: la última y los puntos del mes ----------
@@ -2396,6 +2772,8 @@
                 await Promise.all(SCRIPTS_HOY.map((src) => traerScript(src, true)));
                 await ProgresoUsuario.init();
             } catch (e) { return; }
+            // Lo que trajo de la cuenta pudo cambiar sus favoritas.
+            pintarFavoritas();
             await HoyTeToca.pintar(document.getElementById("hoy"), {
                 alumnoId: profile.id, arriba: "", entreno: "entreno/", enPanel: true, logros: rachaP,
             });
@@ -2891,7 +3269,12 @@
                 sum.append(nombre, cuenta);
 
                 const envoltura = document.createElement("div");
-                envoltura.className = "overflow-x-auto px-4 pb-3";
+                /* `relative` porque la tabla trae texto solo para lector de
+                   pantalla (`sr-only`, que es `position: absolute`): sin un
+                   ancestro posicionado ADENTRO del que se desliza, ese texto se
+                   salía del desplazamiento y ensanchaba la página entera en el
+                   celular (494 px en uno de 390). */
+                envoltura.className = "relative overflow-x-auto px-4 pb-3";
                 const tabla = document.createElement("table");
                 tabla.className = "w-full text-sm";
                 tabla.innerHTML = '<caption class="sr-only">Clases de ' + nombreMes(filas[0].started_at) + '</caption>'
@@ -3497,6 +3880,8 @@
             if (isTeacher || profile.is_admin) {
                 document.getElementById("progreso-profe").hidden = false;
                 partes.push(cargarPanelProfe(), cargarUrgente(clavesUrgenteDocente(), { soloSiHayAlgo: true }));
+                pintarAvisoAlumnos().catch((e) => console.error(e));
+                contarUsosDelPanel();
             } else {
                 document.getElementById("progreso-alumno").hidden = false;
                 document.getElementById("registro-clases").hidden = true;
@@ -3525,14 +3910,17 @@
                    pintan en su lugar cuando llegan. Metidos en la tanda de
                    arriba, el panel esperaba por ellos hasta el tope de 6 s, y
                    con una red lenta aparecía recién a los ~14 s. */
-                /* Mirando el panel de un estudiante: «Hoy te toca» y «Nuevo»
-                   salen de ESTE aparato y «Tu próxima clase» de la cuenta de
-                   quien mira (mi_proxima_clase), así que no se pintan; «Lo que
-                   más usas» y los avisos de Competir se piden con su id. */
+                /* Mirando el panel de un estudiante: «Hoy te toca», «Nuevo» y
+                   sus favoritas salen de ESTE aparato, y «Tu próxima clase» y la
+                   campana de la cuenta de quien mira (mi_proxima_clase, lo que
+                   la RLS le da), así que no se pintan; «Lo que más usas» y los
+                   avisos de Competir se piden con su id. */
                 if (!profile._persona) cargarHoyTeToca(rachaP).catch((e) => console.error(e));
                 if (!profile._persona) cargarProximaClase();
+                if (!panelAdaptado && !profile._persona) pintarFavoritas();
                 if (!panelAdaptado) cargarLoQueMasUsas().catch((e) => console.error(e));
                 avisosDeCompetir().catch((e) => console.error(e));
+                if (!profile._persona) cargarCampana().catch((e) => console.error(e));
                 if (!panelAdaptado && !profile._persona) marcarContenidoNuevo().catch((e) => console.error(e));
                 marcarLoUltimo().catch((e) => console.error(e));
             }

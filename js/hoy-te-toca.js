@@ -38,12 +38,21 @@ window.HoyTeToca = (function () {
       <!-- Tu semana (public.entreno_mi_semana): los últimos 7 días contra los
            7 anteriores. Solo si entrenó en alguna de las dos. -->
       <p id="hoy-semana" class="text-sm text-brand-600 dark:text-brand-200 mt-1" hidden></p>
+      <!-- Y día por día (la clave «dias» de la misma función): siete barras con
+           el número escrito debajo. Las barras son adorno; el dato es el número. -->
+      <ol id="hoy-semana-dias" class="mt-2 grid grid-cols-7 gap-1 max-w-xs list-none p-0" aria-label="Ejercicios por día, los últimos 7 días" style="display:none"></ol>
       <!-- La próxima medalla (js/logros-catalogo.js): la más cerca de las que ya
            empezó, y cuánto le falta. Una meta a la vista engancha más que la
            lista entera en Logros. -->
       <a id="hoy-medalla" class="block text-sm text-brand-600 dark:text-brand-200 mt-1 underline underline-offset-2 hover:text-accent-700 dark:hover:text-accent-400 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500" hidden></a>
     </div>
     <ul id="hoy-lista" class="list-none p-0 m-0 space-y-2"></ul>
+    <!-- «Entrenar 10 minutos» (js/tanda-diez.js): arma una tanda con lo de
+         arriba y cuenta 10 minutos. -->
+    <div id="hoy-tanda" class="mt-3" hidden>
+      <button type="button" id="hoy-tanda-boton" class="bg-brand-800 hover:bg-brand-900 dark:bg-brand-700 dark:hover:bg-brand-600 text-white font-semibold px-3 py-1.5 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">⏱️ </span>Entrenar 10 minutos</button>
+      <p id="hoy-tanda-que" class="text-xs text-brand-600 dark:text-brand-300 mt-1"></p>
+    </div>
     <!-- El aviso de racha (public.avisar_rachas(), 6:05 p. m.): solo le llega a
          quien tiene los avisos encendidos en el aparato, y casi nadie los tenía.
          Se ofrece acá, junto a la racha, y no al cargar: el navegador deja pedir
@@ -350,6 +359,47 @@ window.HoyTeToca = (function () {
     if (!s || (!s.esta && !s.anterior)) return;
     caja.textContent = textoSemana(s);
     caja.hidden = false;
+    pintarDias(s.dias);
+  }
+
+  /* Las siete barras. La más alta llena la caja; hoy va en negrita y dice
+     «hoy». La altura es adorno (aria-hidden): el número va escrito debajo y el
+     lector de pantalla dice el día completo. */
+  const DIA_CORTO = new Intl.DateTimeFormat('es-CR', { weekday: 'short', timeZone: 'UTC' });
+  const DIA_LARGO = new Intl.DateTimeFormat('es-CR', { weekday: 'long', timeZone: 'UTC' });
+  function pintarDias(dias){
+    const lista = document.getElementById('hoy-semana-dias');
+    if (!lista || !Array.isArray(dias) || dias.length !== 7) return;
+    const max = Math.max(1, ...dias.map((d) => Number(d.n) || 0));
+    lista.replaceChildren();
+    dias.forEach((d, i) => {
+      const n = Number(d.n) || 0;
+      const fecha = new Date(String(d.dia) + 'T12:00:00Z');
+      const esHoy = i === dias.length - 1;
+      const li = document.createElement('li');
+      li.className = 'flex flex-col items-center gap-0.5';
+      const caja = document.createElement('span');
+      caja.className = 'flex items-end h-10 w-full rounded bg-brand-50 dark:bg-brand-800';
+      caja.setAttribute('aria-hidden', 'true');
+      const barra = document.createElement('span');
+      barra.className = 'block w-full rounded ' + (esHoy ? 'bg-accent-600' : 'bg-brand-600 dark:bg-brand-300');
+      barra.style.height = (n ? Math.max(8, Math.round(100 * n / max)) : 0) + '%';
+      caja.appendChild(barra);
+      const sr = document.createElement('span');
+      sr.className = 'sr-only';
+      sr.textContent = (esHoy ? 'hoy, ' : '') + DIA_LARGO.format(fecha) + ': ';
+      const num = document.createElement('span');
+      num.className = 'text-xs font-semibold text-brand-800 dark:text-white';
+      num.textContent = String(n);
+      const dia = document.createElement('span');
+      dia.className = 'text-[10px] ' + (esHoy ? 'font-bold text-brand-800 dark:text-white' : 'text-brand-600 dark:text-brand-300');
+      dia.setAttribute('aria-hidden', 'true');
+      dia.textContent = esHoy ? 'hoy' : DIA_CORTO.format(fecha).replace('.', '');
+      li.append(caja, sr, num, dia);
+      lista.appendChild(li);
+    });
+    // style.display y no `hidden`: la clase `grid` de Tailwind le gana a ese atributo.
+    lista.style.display = '';
   }
 
   /* El resumen del día: «Hoy: Mates 6, Habilidades 4, Memoria 2 ·
@@ -472,7 +522,21 @@ window.HoyTeToca = (function () {
       lista.appendChild(li);
     });
     lista.hidden = !cosas.length;
+    pintarTanda(cosas, op);
     caja.classList.toggle('hidden', !cosas.length && !conMeta);
+  }
+
+  /* «Entrenar 10 minutos»: las tres primeras cosas de hoy, o Mates si hoy
+     no toca nada en particular (siempre hay algo que hacer en 10 minutos). */
+  function pintarTanda(cosas, op){
+    const caja = document.getElementById('hoy-tanda');
+    if (!caja || !window.TandaDiez) return;
+    const pasos = cosas.slice(0, 3).map((c) => ({ href: c.href, texto: c.texto, icono: c.icono }));
+    if (pasos.length < 2) pasos.push({ href: op.entreno + 'mates.html', texto: 'Mates', icono: '♚' });
+    document.getElementById('hoy-tanda-que').textContent =
+      'Con ' + pasos.map((p) => p.texto).join(', ').replace(/, ([^,]*)$/, ' y $1') + '. La barra de abajo te lleva al siguiente.';
+    document.getElementById('hoy-tanda-boton').addEventListener('click', () => TandaDiez.empezar(pasos));
+    caja.hidden = false;
   }
 
   return { pintar, textoSemana, proximaMedalla };
