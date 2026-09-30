@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20260930064244
+# al-dia-con: 20260930135759
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -114,6 +114,7 @@ tabla  training_state  rls=true
 tabla  trofeos_ajustes  rls=true
 tabla  tv_settings  rls=true
 tabla  variant_nodes  rls=true
+tabla  vision_personas  rls=true
 columna  Ejercicios Lichess.DailyDate  text
 columna  Ejercicios Lichess.FEN  text
 columna  Ejercicios Lichess.GameUrl  text
@@ -1029,6 +1030,10 @@ columna  variant_nodes.parent_id  uuid
 columna  variant_nodes.root_ply  integer
 columna  variant_nodes.san  text
 columna  variant_nodes.teacher_id  uuid
+columna  vision_personas.actualizado  timestamp with time zone
+columna  vision_personas.actualizado_por  uuid
+columna  vision_personas.persona_id  uuid
+columna  vision_personas.vision  text
 vista  cobros_vista
 funcion  academia_borrar(p_id uuid)  definer  anon=false  auth=true
 funcion  academia_crear_desde_grupo(p_nombre text, p_supervisor uuid, p_personas uuid[])  definer  anon=false  auth=true
@@ -1202,6 +1207,7 @@ funcion  marca_de_alumno(p_alumno uuid)  definer  anon=false  auth=false
 funcion  marca_de_diagnostico(p_id uuid)  definer  anon=false  auth=true
 funcion  marcar_coordinador(p_profesor uuid, p_valor boolean)  definer  anon=false  auth=true
 funcion  marcar_supervisor(p_persona uuid, p_valor boolean)  definer  anon=false  auth=true
+funcion  marcar_vision(p_persona uuid, p_vision text)  definer  anon=false  auth=true
 funcion  mes_en_palabras(p_periodo date)  invoker  anon=false  auth=true
 funcion  mes_es(d date)  invoker  anon=true  auth=true
 funcion  mi_acceso()  definer  anon=false  auth=true
@@ -1648,6 +1654,7 @@ politica  variant_nodes  variant_nodes_select  SELECT
 politica  variant_nodes  variant_nodes_select_coordinacion  SELECT
 politica  variant_nodes  variant_nodes_select_supervisor  SELECT
 politica  variant_nodes  verificacion_en_dos_pasos  ALL  restrictiva
+politica  vision_personas  vision_personas_select  SELECT
 trigger  academia_ia  auditar
 trigger  academia_miembros  auditar
 trigger  academias  auditar
@@ -1712,6 +1719,7 @@ trigger  tareas  tareas_avisa_push
 trigger  tareas  tareas_protege_alumno
 trigger  tournaments  tournaments_proteger
 trigger  training_progress  training_progress_valida_marca
+trigger  vision_personas  auditar
 indice  Ejercicios Lichess  ejercicios_lichess_nbplays_idx
 indice  Ejercicios Lichess  ejercicios_lichess_pkey
 indice  academia_ia  academia_ia_academia_id_fk
@@ -2015,6 +2023,7 @@ indice  variant_nodes  variant_nodes_created_by_fk
 indice  variant_nodes  variant_nodes_parent_id_fk
 indice  variant_nodes  variant_nodes_pkey
 indice  variant_nodes  variant_nodes_teacher_id_fk
+indice  vision_personas  vision_personas_pkey
 extension  pg_cron  1.6.4
 extension  pg_net  0.20.4
 extension  pg_stat_statements  1.11
@@ -2909,3 +2918,6 @@ grant  variant_nodes  authenticated  SELECT
 grant  variant_nodes  authenticated  TRIGGER
 grant  variant_nodes  authenticated  TRUNCATE
 grant  variant_nodes  authenticated  UPDATE
+grant  vision_personas  authenticated  REFERENCES
+grant  vision_personas  authenticated  SELECT
+grant  vision_personas  authenticated  TRIGGER
