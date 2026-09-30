@@ -85,6 +85,7 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
       { clave: "cobros_dias_antes", valor: "3" },
       { clave: "cobros_dias_vencido", valor: "1" },
       { clave: "cobros_dias_moroso", valor: "15" },
+      { clave: "cobros_mensaje_moroso", valor: "Texto guardado del aviso de moroso." },
     ],
     cobros_contacto: [],
     cobros_recordatorios_programados: [
@@ -190,6 +191,12 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
       window.__llamadas.push({ funcion: cuerpo });
       const respuesta = String(url).indexOf("correos-alumno") !== -1
         ? RETRATO
+        : cuerpo.action === "muestra"
+        ? { ok: true, asunto: "Asunto de muestra (" + cuerpo.tipo + ")",
+            html: "<p id='muestra'>Correo de muestra</p>",
+            de_fabrica: { asunto: { proximo: "Asunto de fábrica próximo", vencido: "Asunto de fábrica vencido", moroso: "Asunto de fábrica moroso" },
+                          mensaje: { proximo: "Mensaje de fábrica próximo", vencido: "Mensaje de fábrica vencido", moroso: "Mensaje de fábrica moroso" },
+                          comoPagar: "Por SINPE Móvil o transferencia bancaria." } }
         : { ok: true, mandados: 2, correos: ["mama@x.cr", "ana@x.cr"] };
       return Promise.resolve(new Response(JSON.stringify(respuesta),
         { status: 200, headers: { "Content-Type": "application/json" } }));
@@ -492,6 +499,51 @@ async function pruebaCoordinacion(browser) {
   await page.fill("#av-antes", "3");
   await page.fill("#av-vencido", "1");
   await page.fill("#av-moroso", "15");
+
+  // -------- qué dice el correo (asunto, mensaje y «Cómo pagar»)
+  await page.waitForFunction(() => document.getElementById("tx-asunto-proximo").placeholder !== "");
+  igual("el mensaje guardado arranca escrito en su casilla",
+    await page.inputValue("#tx-mensaje-moroso"), "Texto guardado del aviso de moroso.");
+  igual("lo que no está guardado queda en blanco, con el de fábrica de guía",
+    await page.evaluate(() => [document.getElementById("tx-asunto-proximo").value, document.getElementById("tx-asunto-proximo").placeholder,
+                               document.getElementById("tx-como-pagar").placeholder]),
+    ["", "Asunto de fábrica próximo", "Por SINPE Móvil o transferencia bancaria."]);
+
+  await page.fill("#tx-asunto-vencido", "  Falta el pago de {alumno}  ");
+  await page.fill("#tx-como-pagar", "SINPE Móvil al 8888-8888");
+  await page.fill("#tx-mensaje-moroso", "");
+  await page.evaluate(() => { window.__llamadas = []; });
+  await page.locator(".tx-muestra[data-tipo='vencido']").click();
+  await page.waitForFunction(() => document.getElementById("tx-previa-marco").srcdoc !== "");
+  const muestra = await page.evaluate(() => (window.__llamadas.find((l) => l.funcion && l.funcion.action === "muestra") || {}).funcion);
+  igual("«Ver cómo queda» pide la muestra con lo escrito, sin guardar",
+    muestra, { action: "muestra", tipo: "vencido", textos: {
+      asunto: { proximo: null, vencido: "Falta el pago de {alumno}", moroso: null },
+      mensaje: { proximo: null, vencido: null, moroso: null },
+      comoPagar: "SINPE Móvil al 8888-8888" } });
+  igual("y no escribe nada en la base",
+    await page.evaluate(() => window.__llamadas.filter((l) => l.tabla === "ajustes_academia").length), 0);
+  igual("la vista previa se ve, con su asunto",
+    await page.evaluate(() => [document.getElementById("tx-previa-marco").checkVisibility(),
+                               document.getElementById("tx-previa-asunto").textContent]),
+    [true, "Asunto: Asunto de muestra (vencido)"]);
+  igual("el botón vuelve a decir lo que hace",
+    (await page.locator(".tx-muestra[data-tipo='vencido']").textContent()).trim(), "👁️ Ver cómo queda");
+
+  await page.evaluate(() => { window.__llamadas = []; });
+  await page.click("#tx-guardar");
+  await page.waitForTimeout(300);
+  const textos = await page.evaluate(() => window.__llamadas.find((l) => l.tabla === "ajustes_academia" && l.verbo === "upsert"));
+  igual("guardar manda las siete claves: lo escrito, y vacío (el de fábrica) lo demás",
+    textos && textos.datos, [
+      { clave: "cobros_como_pagar", valor: "SINPE Móvil al 8888-8888" },
+      { clave: "cobros_asunto_proximo", valor: null },
+      { clave: "cobros_mensaje_proximo", valor: null },
+      { clave: "cobros_asunto_vencido", valor: "Falta el pago de {alumno}" },
+      { clave: "cobros_mensaje_vencido", valor: null },
+      { clave: "cobros_asunto_moroso", valor: null },
+      { clave: "cobros_mensaje_moroso", valor: null },
+    ]);
 
   await page.evaluate(() => { window.__llamadas = []; });
   await page.locator("#morosos-lista button", { hasText: "Recordar ahora" }).click();

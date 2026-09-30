@@ -9,6 +9,9 @@
 //   "tanda"             {}              -> la corrida diaria
 //   "tanda_programados" {}              -> los recordatorios de cobros_recordatorios_programados
 //                                          que ya llegaron a su día y hora
+//   "muestra"           { tipo, textos } -> cómo queda el correo con unos textos
+//                                          todavía sin guardar, sobre un cobro de
+//                                          ejemplo (y los textos de fábrica)
 //
 // QUIÉN PUEDE QUÉ. Las dos primeras las llama una persona desde cobros.html con
 // su sesión, y el permiso NO se comprueba aquí a mano: se leen las filas con un
@@ -30,7 +33,7 @@
 // urgente que tenga.
 
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { avisoHtml, type Tipo, ASUNTOS } from "./aviso-html.ts";
+import { avisoHtml, asuntoDe, DE_FABRICA, type Tipo, type Textos } from "./aviso-html.ts";
 import { esCorreoInterno } from "./usuario-alumno.ts";
 import { contactoDeConsultas } from "./contacto-academia.ts";
 import { remitenteDe, type Remitente } from "./remitente-academia.ts";
@@ -78,6 +81,29 @@ async function parametrosAvisos(admin: { from: (t: string) => any }): Promise<Pa
     // manda con los valores de siempre, que es lo mismo que pasa si la fila
     // nunca se llegó a escribir.
     return porDefecto;
+  }
+}
+
+// Lo que dice el correo (asunto, entrada y «Cómo pagar»), si quien coordina lo
+// cambió desde la ficha «Morosidad». Lo que no esté puesto sale con el texto de
+// fábrica de aviso-html.ts; y si ni siquiera se pueden leer, también: igual
+// que con los días, un ajuste que no se lee nunca cuesta la tanda.
+const TIPOS: Tipo[] = ["proximo", "vencido", "moroso"];
+
+async function textosCorreo(admin: { from: (t: string) => any }): Promise<Textos> {
+  try {
+    const claves = ["cobros_como_pagar", ...TIPOS.flatMap((t) => [`cobros_asunto_${t}`, `cobros_mensaje_${t}`])];
+    const { data } = await admin.from("ajustes_academia").select("clave, valor").in("clave", claves);
+    const porClave: Record<string, string | null> = {};
+    for (const r of data ?? []) porClave[r.clave as string] = r.valor as string | null;
+    const textos: Textos = { asunto: {}, mensaje: {}, comoPagar: porClave.cobros_como_pagar ?? null };
+    for (const t of TIPOS) {
+      textos.asunto![t] = porClave[`cobros_asunto_${t}`] ?? null;
+      textos.mensaje![t] = porClave[`cobros_mensaje_${t}`] ?? null;
+    }
+    return textos;
+  } catch {
+    return {};
   }
 }
 
@@ -194,6 +220,7 @@ Deno.serve(async (req) => {
   // los pone quien coordina.
   const contacto = await contactoDeConsultas(admin);
   const parametros = await parametrosAvisos(admin);
+  const textos = await textosCorreo(admin);
 
   // -------------------------------------------------------------- la tanda
   if (accion === "tanda") {
@@ -234,8 +261,9 @@ Deno.serve(async (req) => {
 
         const remite = await remitenteDe(admin, studentId, DE);
         const html = avisoHtml({ tipo: g.tipo, alumno: nombre, destinatario: d.nombre, cobros: g.cobros, sitio: SITE_URL, contacto,
+          textos, firma: firmaDe(remite.marca),
           cabecera: (t, c) => cabeceraCorreo(remite.marca, t, c) });
-        const r = await mandar(d.email, ASUNTOS[g.tipo](nombre, firmaDe(remite.marca)), html, remite);
+        const r = await mandar(d.email, asuntoDe(g.tipo, nombre, firmaDe(remite.marca), textos), html, remite);
         hechos += 1;
         if (!r.ok) { fallos.push(`${d.email}: ${r.error}`); continue; }
         // Se apunta DESPUÉS de que Resend lo aceptó: si falla, mañana se
@@ -314,8 +342,9 @@ Deno.serve(async (req) => {
       for (const d of destinos) {
         const remite = await remitenteDe(admin, rec.student_id as string, DE);
         const html = avisoHtml({ tipo, alumno: nombre, destinatario: d.nombre, cobros: cobrosDelAlumno, sitio: SITE_URL, contacto,
+          textos, firma: firmaDe(remite.marca),
           cabecera: (t, c) => cabeceraCorreo(remite.marca, t, c) });
-        const r = await mandar(d.email, ASUNTOS[tipo](nombre, firmaDe(remite.marca)), html, remite);
+        const r = await mandar(d.email, asuntoDe(tipo, nombre, firmaDe(remite.marca), textos), html, remite);
         if (!r.ok) { fallos.push(`${rec.id} -> ${d.email}: ${r.error}`); continue; }
         // upsert a mano: si ya había un aviso de este tipo (por la tanda diaria
         // o por «Recordar ahora»), no se manda dos veces el mismo día por dos
@@ -351,6 +380,28 @@ Deno.serve(async (req) => {
   const { data: coordina } = await comoQuienLlama.rpc("coordinador_puede", { p_funcion: "cobros" });
   if (coordina !== true) return json({ error: "Los cobros no están entre tus funciones de coordinación" }, 403);
 
+  // Cómo queda el correo con los textos que quien coordina está escribiendo,
+  // ANTES de guardarlos: sobre un cobro de ejemplo, no el de nadie, así que no
+  // hace falta elegir un alumno con deudas para verlo. Es el mismo avisoHtml()
+  // que sale de verdad; una vista previa armada aparte en la página se iría
+  // separando del correo.
+  if (accion === "muestra") {
+    const tipo: Tipo = TIPOS.includes(body.tipo as Tipo) ? body.tipo as Tipo : "proximo";
+    const pedidos = (body.textos && typeof body.textos === "object" ? body.textos : {}) as Textos;
+    const alumno = "María Pérez";
+    const vence = new Date(Date.now() + (tipo === "proximo" ? 2 : tipo === "vencido" ? -3 : -20) * 86400000)
+      .toISOString().slice(0, 10);
+    const atraso = tipo === "proximo" ? 0 : tipo === "vencido" ? 3 : 20;
+    const ejemplo = [{ consecutivo: "AI-0000-000000", concepto: "Mensualidad (ejemplo)", monto: 25000, pagado: 0,
+      saldo: 25000, moneda: "CRC", vence, situacion: atraso ? "vencido" : "pendiente", dias_atraso: atraso }];
+    return json({
+      ok: true, de_fabrica: DE_FABRICA,
+      asunto: asuntoDe(tipo, alumno, firmaDe(null), pedidos),
+      html: avisoHtml({ tipo, alumno, destinatario: "Ana Pérez", cobros: ejemplo, sitio: SITE_URL, contacto,
+        textos: pedidos, firma: firmaDe(null), cabecera: (t, c) => cabeceraCorreo(null, t, c) }),
+    });
+  }
+
   const studentId = typeof body.student_id === "string" ? body.student_id : "";
   if (!studentId) return json({ error: "student_id es requerido" }, 400);
 
@@ -376,6 +427,7 @@ Deno.serve(async (req) => {
       ok: true, alumno: nombre,
       correos: destinos.map((d) => d.email),
       html: avisoHtml({ tipo, alumno: nombre, destinatario: "", cobros, sitio: SITE_URL, contacto,
+        textos, firma: firmaDe(remitePrevia.marca),
         cabecera: (t, c) => cabeceraCorreo(remitePrevia.marca, t, c) }),
     });
   }
@@ -389,8 +441,9 @@ Deno.serve(async (req) => {
     for (const d of destinos) {
       const remite = await remitenteDe(admin, studentId, DE);
       const html = avisoHtml({ tipo, alumno: nombre, destinatario: d.nombre, cobros, sitio: SITE_URL, contacto,
+        textos, firma: firmaDe(remite.marca),
         cabecera: (t, c) => cabeceraCorreo(remite.marca, t, c) });
-      const r = await mandar(d.email, ASUNTOS[tipo](nombre, firmaDe(remite.marca)), html, remite);
+      const r = await mandar(d.email, asuntoDe(tipo, nombre, firmaDe(remite.marca), textos), html, remite);
       if (!r.ok) { fallos.push(`${d.email}: ${r.error}`); continue; }
       // upsert a mano: si ya había un aviso de este tipo, no se duplica la fila.
       await admin.from("avisos_cobro")

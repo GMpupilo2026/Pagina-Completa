@@ -123,6 +123,43 @@ editar la función y volver a desplegarla. Ahora se editan desde la ficha
   `soy_coordinador()` escriba** (es la misma tabla del número de WhatsApp), así
   que no hizo falta ninguna política nueva.
 
+### Qué dice el correo de cobro
+
+El asunto y el párrafo de entrada de cada uno de los tres avisos (próximo,
+vencido, moroso) y el «Cómo pagar» estaban escritos dentro de
+`supabase/functions/cobros-recordatorios/aviso-html.ts`: cambiar una palabra
+era editar la función y volver a desplegarla. Ahora se editan desde la ficha
+«Morosidad» de `cobros.html`, en «✉️ Qué dice el correo».
+
+- **Mismo lugar y mismo alcance que los días**: `ajustes_academia`, para toda
+  la Academia, claves `cobros_asunto_<tipo>`, `cobros_mensaje_<tipo>` y
+  `cobros_como_pagar`. La escribe `soy_coordinador()` con la RLS que ya tenía
+  la tabla. El tope de la tabla subió de 300 a 1000 caracteres
+  (`ajustes_academia_textos_cobro`): 300 alcanzaba para un número de WhatsApp,
+  no para un párrafo con la cuenta bancaria.
+- **En blanco quiere decir «el de fábrica».** La página guarda `null` y
+  `textosCorreo()` / `elegido()` caen al texto de fábrica; igual con lo que no
+  se pueda leer: un ajuste nunca cuesta la tanda. Los textos de fábrica están
+  escritos con las mismas marcas `{alumno}` y `{academia}` que usa quien edita,
+  así pasan los dos por el mismo camino.
+- **Lo que se escribe es texto, no HTML**: se escapa entero y después se pone
+  el nombre en negrita y los saltos de línea como `<br>`. Los reemplazos van
+  con función (`replaceAll(x, () => …)`): con texto, un nombre con `$&`
+  adentro se tomaría como patrón. El asunto sale en una sola línea.
+- **Lo que no se deja editar** es lo que tiene que ser cierto siempre: el
+  saludo, la tabla de lo que se debe, el total y a dónde mandar el comprobante
+  (sale del WhatsApp de «Contacto» y se agrega solo después del «Cómo pagar»).
+- **La vista previa la arma la misma función que manda el correo** (acción
+  `muestra`, que exige `coordinador_puede('cobros')`), con los textos todavía
+  sin guardar y un cobro de ejemplo. Los textos de fábrica que se ven de guía
+  dentro de cada casilla también vienen de ahí: copiados en la página, se
+  separarían del correo a la primera corrección.
+
+**Al tocar esto, correr `node herramientas/verificar-aviso-cobro.js`** (sin
+navegador: el HTML del correo con textos propios, en blanco y con nombres
+raros) **y `verificar-cobros.js`** (qué manda la ficha al guardar y al pedir la
+vista previa).
+
 ### Un recordatorio para un día y una hora exactos
 
 Los tres avisos de arriba salen solos, en la hora que decide el cron. Pero

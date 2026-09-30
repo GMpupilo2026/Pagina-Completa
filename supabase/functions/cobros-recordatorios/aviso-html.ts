@@ -20,28 +20,69 @@ export type Tipo = "proximo" | "vencido" | "moroso";
    con la marca de la academia del alumno, y la firma del asunto es su nombre. */
 export type Cabecera = (tituloHtml: string, etiquetaColor?: string) => string;
 
-export const ASUNTOS: Record<Tipo, (alumno: string, firma?: string) => string> = {
-  proximo: (a, f = "Ajedrez Integral") => `Recordatorio de pago de ${a} — ${f}`,
-  vencido: (a, f = "Ajedrez Integral") => `Quedó pendiente el pago de ${a} — ${f}`,
-  moroso:  (a, f = "Ajedrez Integral") => `Sobre el pago pendiente de ${a} — ${f}`,
+/* LO QUE DICE EL CORREO LO PUEDE CAMBIAR QUIEN COORDINA, desde la ficha
+   «Morosidad» de cobros.html: el asunto y el párrafo de entrada de cada uno de
+   los tres avisos, y el «Cómo pagar» (claves `cobros_asunto_<tipo>`,
+   `cobros_mensaje_<tipo>` y `cobros_como_pagar` de `ajustes_academia`).
+   Lo que no está puesto sale con el texto de fábrica de aquí abajo, que está
+   escrito con las MISMAS marcas que usa quien lo edita — {alumno} y
+   {academia} — para que ambos pasen por el mismo camino y no se separen.
+
+   Lo que escribe quien coordina es texto, no HTML: se escapa entero y solo
+   después se ponen el nombre (en negrita) y los saltos de línea. Lo que no se
+   deja editar es lo que tiene que ser cierto siempre: la tabla con lo que se
+   debe, el total y a dónde mandar el comprobante (sale del número de
+   WhatsApp que se pone en «Contacto»). */
+export type Textos = {
+  asunto?: Partial<Record<Tipo, string | null>>;
+  mensaje?: Partial<Record<Tipo, string | null>>;
+  comoPagar?: string | null;
 };
 
-const CABECERA: Record<Tipo, { titulo: string; color: string; entrada: (a: string) => string }> = {
-  proximo: {
-    titulo: "Recordatorio de pago",
-    color: "#f0b429",
-    entrada: (a) => `Te escribimos para recordarte el pago de <strong>${a}</strong> que está por vencer. Si ya lo hiciste en estos días, no le hagas caso a este correo.`,
-  },
-  vencido: {
-    titulo: "Pago pendiente",
-    color: "#f0b429",
-    entrada: (a) => `El pago de <strong>${a}</strong> pasó su fecha y todavía no lo tenemos registrado. Si ya lo hiciste, mándanos el comprobante y lo acomodamos.`,
-  },
-  moroso: {
-    titulo: "Pago pendiente desde hace días",
-    color: "#cf5c1a",
-    entrada: (a) => `El pago de <strong>${a}</strong> lleva ya varios días pendiente. Si se complicó el mes, escríbenos: preferimos acomodar un arreglo antes que dejar a nadie fuera de clase.`,
-  },
+export const LARGO_ASUNTO = 150;
+export const LARGO_MENSAJE = 1000;
+
+export const DE_FABRICA = {
+  asunto: {
+    proximo: "Recordatorio de pago de {alumno} — {academia}",
+    vencido: "Quedó pendiente el pago de {alumno} — {academia}",
+    moroso:  "Sobre el pago pendiente de {alumno} — {academia}",
+  } as Record<Tipo, string>,
+  mensaje: {
+    proximo: "Te escribimos para recordarte el pago de {alumno} que está por vencer. Si ya lo hiciste en estos días, no le hagas caso a este correo.",
+    vencido: "El pago de {alumno} pasó su fecha y todavía no lo tenemos registrado. Si ya lo hiciste, mándanos el comprobante y lo acomodamos.",
+    moroso:  "El pago de {alumno} lleva ya varios días pendiente. Si se complicó el mes, escríbenos: preferimos acomodar un arreglo antes que dejar a nadie fuera de clase.",
+  } as Record<Tipo, string>,
+  comoPagar: "Por SINPE Móvil o transferencia bancaria.",
+};
+
+// El texto guardado si sirve; si no (vacío, o no es texto), el de fábrica.
+function elegido(guardado: unknown, fabrica: string, largo: number) {
+  return typeof guardado === "string" && guardado.trim() ? guardado.trim().slice(0, largo) : fabrica;
+}
+
+/** El asunto: texto plano, en una sola línea (un salto de línea en el asunto
+    lo cortan o lo rechazan los programas de correo). */
+export function asuntoDe(tipo: Tipo, alumno: string, firma = "Ajedrez Integral", textos?: Textos | null) {
+  const t = elegido(textos?.asunto?.[tipo], DE_FABRICA.asunto[tipo], LARGO_ASUNTO);
+  // Con función y no con texto: un nombre con «$&» adentro se tomaría como
+  // patrón de reemplazo.
+  return t.replaceAll("{alumno}", () => alumno).replaceAll("{academia}", () => firma).replace(/\s+/g, " ").trim();
+}
+
+/** Un párrafo escrito por una persona, ya escapado, con el nombre en negrita
+    y los saltos de línea como <br>. */
+function conDatos(texto: string, alumno: string, firma: string) {
+  return escapar(texto)
+    .replaceAll("{alumno}", () => `<strong>${escapar(alumno)}</strong>`)
+    .replaceAll("{academia}", () => escapar(firma))
+    .replace(/\r?\n/g, "<br>");
+}
+
+const CABECERA: Record<Tipo, { titulo: string; color: string }> = {
+  proximo: { titulo: "Recordatorio de pago", color: "#f0b429" },
+  vencido: { titulo: "Pago pendiente", color: "#f0b429" },
+  moroso:  { titulo: "Pago pendiente desde hace días", color: "#cf5c1a" },
 };
 
 function escapar(t: unknown) {
@@ -70,9 +111,13 @@ type Fila = {
 
 export function avisoHtml(o: {
   tipo: Tipo; alumno: string; destinatario: string; cobros: Fila[]; sitio: string;
-  contacto?: Contacto | null; cabecera: Cabecera;
+  contacto?: Contacto | null; cabecera: Cabecera; textos?: Textos | null; firma?: string;
 }) {
-  const cab = CABECERA[o.tipo] ?? CABECERA.proximo;
+  const tipo: Tipo = CABECERA[o.tipo] ? o.tipo : "proximo";
+  const cab = CABECERA[tipo];
+  const firma = o.firma || "Ajedrez Integral";
+  const entrada = conDatos(elegido(o.textos?.mensaje?.[tipo], DE_FABRICA.mensaje[tipo], LARGO_MENSAJE), o.alumno, firma);
+  const comoPagar = conDatos(elegido(o.textos?.comoPagar, DE_FABRICA.comoPagar, LARGO_MENSAJE), o.alumno, firma);
   const conSaldo = o.cobros.filter((c) => Number(c.saldo) > 0);
   const moneda = conSaldo[0]?.moneda || "CRC";
   const total = conSaldo.filter((c) => c.moneda === moneda)
@@ -117,7 +162,7 @@ export function avisoHtml(o: {
 
   <tr><td style="padding:24px">
     <p style="margin:0 0 12px;font-size:15px;color:#243b53">${saludo}</p>
-    <p style="margin:0 0 20px;font-size:15px;color:#243b53;line-height:1.6">${cab.entrada(escapar(o.alumno))}</p>
+    <p style="margin:0 0 20px;font-size:15px;color:#243b53;line-height:1.6">${entrada}</p>
 
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:8px">${filas}</table>
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
@@ -129,7 +174,7 @@ export function avisoHtml(o: {
 
     <p style="margin:16px 0 0;padding:16px;background:#f0f4f8;border-radius:10px;font-size:14px;color:#243b53;line-height:1.7">
       <strong>Cómo pagar</strong><br>
-      Por SINPE Móvil o transferencia bancaria. Cuando lo hagas, mándanos el
+      ${comoPagar} Cuando lo hagas, mándanos el
       comprobante ${porDonde} y lo registramos.
     </p>
 
