@@ -2904,6 +2904,17 @@
             document.getElementById("welcome-name").textContent =
                 (profile.full_name || "").trim().split(/\s+/)[0] || String(profile.email || "").split("@")[0];
             document.getElementById("avatar").textContent = displayName.trim().charAt(0).toUpperCase();
+            /* La foto de perfil, si la subió (Configuración), en lugar de la
+               inicial; también la de la persona que se está viendo con «Ver
+               como». Ver «La foto de perfil» en permisos-y-roles.md. */
+            if (window.FotoPerfil) {
+                const pintarAvatar = () => FotoPerfil.url(profile.id, "foto_path" in profile ? profile.foto_path : undefined)
+                    .then((url) => FotoPerfil.pintar(document.getElementById("avatar"), url, displayName));
+                pintarAvatar();
+                window.addEventListener("foto-perfil:cambio", (e) => {
+                    if (e.detail && e.detail.id === profile.id) { profile.foto_path = e.detail.ruta; pintarAvatar(); }
+                });
+            }
             const badge = document.getElementById("role-badge");
             badge.textContent = profile.is_admin ? "👑 Administrador"
                 : profile._persona ? (profile.es_coordinador ? "👁 Coordinación" : "👁 Profesor")

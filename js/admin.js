@@ -698,6 +698,18 @@
                 tdCuenta.className = "py-2 pr-3";
                 const nameLine = document.createElement("div");
                 nameLine.className = "flex items-center gap-1";
+                /* Su foto de perfil, si subió una: administración la ve para
+                   poder quitar una que no va (ver «La foto de perfil» en
+                   permisos-y-roles.md). Las firmas de toda la tabla salen en
+                   un solo pedido: FotoPerfil las junta. */
+                if (u.foto_path && window.FotoPerfil) {
+                    const foto = document.createElement("span");
+                    foto.setAttribute("aria-hidden", "true");
+                    foto.className = "w-7 h-7 rounded-full bg-brand-700 text-white flex items-center justify-center text-xs font-bold shrink-0 overflow-hidden";
+                    foto.textContent = (u.full_name || u.email || "").trim().charAt(0).toUpperCase();
+                    nameLine.appendChild(foto);
+                    FotoPerfil.url(u.id, u.foto_path).then((url) => FotoPerfil.pintar(foto, url, u.full_name || u.email));
+                }
                 const nameInput = document.createElement("input");
                 nameInput.type = "text";
                 nameInput.value = u.full_name || "";
@@ -851,6 +863,27 @@
                     }
                 });
                 tdActions.appendChild(resetBtn);
+
+                if (u.foto_path && window.FotoPerfil) {
+                    const fotoBtn = document.createElement("button");
+                    fotoBtn.type = "button";
+                    fotoBtn.className = "text-xs text-brand-500 dark:text-brand-300 hover:text-accent-500 hover:underline mr-3";
+                    fotoBtn.textContent = "Quitar foto";
+                    fotoBtn.setAttribute("aria-label", "Quitar la foto de " + (u.full_name || u.email));
+                    fotoBtn.addEventListener("click", async () => {
+                        if (!(await Avisos.confirmar("En su lugar vuelve la inicial de su nombre. Puede subir otra desde Configuración.", { titulo: `¿Quitar la foto de ${u.full_name || u.email}?`, aceptar: "Quitar la foto", peligro: true }))) return;
+                        try {
+                            await FotoPerfil.quitar(u.id);
+                        } catch (err) {
+                            Avisos.avisar("No se pudo quitar la foto: " + err.message, { tipo: "error" });
+                            return;
+                        }
+                        u.foto_path = null;
+                        Avisos.avisar("Listo: se quitó la foto.");
+                        pintarCuentas();
+                    });
+                    tdActions.appendChild(fotoBtn);
+                }
 
                 /* Quien perdió el celular con la app no puede entrar: se le quita
                    la verificación y entra con su contraseña. La base solo lo deja

@@ -37,6 +37,64 @@
             msg.className = "text-xs text-green-600 dark:text-green-400 mb-1";
         });
 
+        /* ---------------- Tu foto ----------------
+           js/foto-perfil.js sube, guarda y borra; acá solo se pinta y se
+           pregunta. La casilla se mira ANTES de subir: subir la foto ya es
+           tratar el dato (como los adjuntos de formulario.html). */
+        function fotoMensaje(texto, malo) {
+            const msg = document.getElementById("foto-msg");
+            msg.textContent = texto;
+            msg.className = "text-xs mt-1 " + (malo ? "text-red-600 dark:text-red-400" : "text-green-700 dark:text-green-400");
+        }
+        async function pintarFoto() {
+            const inicial = (profile.full_name || profile.email || "").trim();
+            const url = profile.foto_path ? await FotoPerfil.url(profile.id, profile.foto_path) : "";
+            FotoPerfil.pintar(document.getElementById("foto-vista"), url, inicial);
+            document.getElementById("foto-quitar").hidden = !profile.foto_path;
+            document.getElementById("foto-elegir").textContent = profile.foto_path ? "Cambiar la foto" : "Subir una foto";
+            if (profile.foto_privacidad_version) document.getElementById("foto-acepto").checked = true;
+        }
+        document.getElementById("foto-elegir").addEventListener("click", () => {
+            if (!document.getElementById("foto-acepto").checked) {
+                fotoMensaje("Para subir tu foto, marca la casilla de la Política de privacidad.", true);
+                document.getElementById("foto-acepto").focus();
+                return;
+            }
+            document.getElementById("foto-archivo").click();
+        });
+        document.getElementById("foto-archivo").addEventListener("change", async (e) => {
+            const archivo = e.target.files && e.target.files[0];
+            e.target.value = "";
+            if (!archivo) return;
+            const boton = document.getElementById("foto-elegir");
+            boton.disabled = true;
+            fotoMensaje("Subiendo tu foto…", false);
+            try {
+                profile.foto_path = await FotoPerfil.subir(profile.id, archivo, profile.foto_path);
+                profile.foto_privacidad_version = window.LegalVersion.PRIVACIDAD;
+                await pintarFoto();
+                fotoMensaje("Listo: tu foto ya se ve en la plataforma.", false);
+            } catch (err) {
+                fotoMensaje(err.message || String(err), true);
+            } finally {
+                boton.disabled = false;
+            }
+        });
+        document.getElementById("foto-quitar").addEventListener("click", async () => {
+            const si = await Avisos.confirmar("Tu foto deja de verse y en su lugar vuelve la inicial de tu nombre.",
+                { titulo: "¿Quitar tu foto?", aceptar: "Quitar mi foto", peligro: true });
+            if (!si) return;
+            try {
+                await FotoPerfil.quitar(profile.id);
+                profile.foto_path = null;
+                await pintarFoto();
+                document.getElementById("foto-elegir").focus();
+                fotoMensaje("Listo: quitaste tu foto.", false);
+            } catch (err) {
+                fotoMensaje(err.message || String(err), true);
+            }
+        });
+
         /* ---------------- Videollamada de tus clases ----------------
            Dónde vive: `profesor_videollamada`, una fila por (profesor, grupo).
            Es la SALA y no la clase porque la clase se abre sola —al entrar un
@@ -801,6 +859,7 @@
             document.getElementById("elo-input").value = profile.elo || "";
             if (profile.elo_tipo) document.getElementById("elo-tipo").value = profile.elo_tipo;
             document.getElementById("email-display").textContent = profile.email;
+            pintarFoto();
             /* Quien da clase pone su sala de videollamada; quien administra
                también, que la cuenta master también da clase — la regla
                permanente. */

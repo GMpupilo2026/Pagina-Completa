@@ -1934,3 +1934,81 @@ estaba en la página. **Y comprueba que el nombre se siga viendo, literal**:
 borrarlo también quitaría el ataque, y dejaría al profesor sin saber de quién es
 esa fila. Está probado que falla de verdad: contra el archivo de antes,
 `window.__xss` queda puesto y nacen cinco elementos que nadie pintó.
+
+## La foto de perfil
+
+Desde `20260930172140_foto_de_perfil`, cada persona puede subir su foto en
+**Configuración › Perfil**, y se ve donde antes iba la inicial de su nombre: el
+avatar del panel (`clases.html`, también con «Ver como»), la lista de la burbuja
+de conectados y la tabla de cuentas de `admin.html`. El módulo es uno solo,
+`js/foto-perfil.js` (`FotoPerfil.subir`, `quitar`, `url`, `urls`, `pintar`).
+
+### Quién la ve: la misma pregunta que el perfil
+
+- **El bucket `fotos-perfil` es PRIVADO**, al revés que el logo de una academia
+  (`academia-marca`, público porque es para verse sin cuenta). Son fotos de
+  personas, muchas menores de edad: no hay dirección pública, solo una firmada
+  que dura una hora.
+- La política de lectura de `storage.objects` pregunta
+  `exists (select 1 from public.profiles p where p.foto_path = objects.name)`.
+  Esa subconsulta pasa por la RLS de `profiles`, así que **ve la foto quien ya
+  ve el perfil** (sus profesores, sus compañeros de la misma academia, la
+  coordinación y la supervisión, administración), y las academias siguen siendo
+  privadas sin escribir otra regla. Una segunda copia del permiso se habría
+  desincronizado con la primera.
+- Solo se lee la foto **vigente**: una que se reemplazó ya no la ve nadie más
+  que su dueño, aunque el archivo tardara en borrarse.
+- Se comprobó impersonando roles en SQL: la alumna sube y guarda, su profesor
+  (sin `is_admin`) la ve pero no la puede quitar ni borrar, alguien de otra
+  academia no la ve, y un `update` directo de `foto_path` no cambia nada.
+
+### Cómo se guarda
+
+- Se sube a `<id>/foto-<16 al azar>.jpg`, sin `upsert`: el nombre cambia con
+  cada foto, así la caché del navegador nunca enseña la vieja como si fuera la
+  nueva. La restricción `profiles_foto_path_check` exige esa forma.
+- **Antes de subir, el navegador la rehace**: cuadrado de 320 px recortado al
+  centro, JPEG de menos de 300 KB (el tope del bucket). Pesa poco en una lista
+  y, de paso, **pierde los EXIF**, entre ellos el lugar donde se tomó.
+- `foto_path` solo se escribe con `guardar_mi_foto(ruta, version_privacidad)`
+  y `quitar_foto(persona)`: el trigger `profiles_foto_por_funcion` revierte en
+  silencio un update directo, como las columnas de identidad. Por eso
+  `guardar_mi_foto` vuelve a leer la fila y devuelve lo que QUEDÓ.
+- `guardar_mi_foto` exige que el archivo exista en el bucket (una ruta que no
+  apunta a nada pinta un círculo roto en cada pantalla) y **la versión de la
+  Política de privacidad** (`interno.version_legal_valida`), que guarda con la
+  hora del servidor en `foto_privacidad_version` y `foto_aceptada_en`. La
+  casilla se mira antes de subir: subir ya es tratar el dato. Está en la tabla
+  de «El consentimiento queda guardado» de `legal.md` a través de
+  `verificar-legal.js`.
+- Si guardar falla, la página borra lo que subió; al cambiarla, borra la
+  anterior. La base no puede borrar archivos (Storage no lo deja desde SQL),
+  por eso `quitar_foto` devuelve la ruta vieja y el borrado lo hace la página.
+- **Quitar**: la persona la suya, y administración cualquiera (el botón
+  «Quitar foto» de la tabla de cuentas), para una foto que no corresponde. Un
+  profesor no: si ve una, avisa a administración.
+
+### Cómo se pinta
+
+- `FotoPerfil.urls(ids)` son dos pedidos para toda una lista (las rutas de
+  `profiles` y las firmas). **Las firmas pedidas en el mismo momento salen
+  juntas**: la tabla de `admin.html` pinta fila por fila y aun así es un solo
+  `createSignedUrls`.
+- Las firmas se guardan en `sessionStorage` hasta 5 minutos antes de vencer:
+  la misma dirección de página en página deja que el navegador reuse la foto
+  que ya bajó.
+- La foto es **decoración** (`alt=""`, dentro de un avatar `aria-hidden`): el
+  nombre va escrito al lado en todos lados. Si la dirección no carga, vuelve la
+  inicial.
+- La burbuja de conectados va en 65 páginas y la lista solo la abre quien da
+  clase: carga `foto-perfil.js` recién cuando hay una foto que pintar, y la ruta
+  la trae en la misma lectura de `profiles` que ya hacía para los nombres.
+- Al cambiar la foto, `FotoPerfil` avisa con el evento `foto-perfil:cambio` y
+  olvida `MiPerfil`, para que lo ya pintado se ponga al día sin recargar.
+
+`verificar-foto-perfil.js` lo prueba en el navegador: sin la casilla no se
+sube; lo que se sube es un JPEG de 320×320 en la carpeta propia; se guarda con
+la versión vigente de la política; la vieja se borra; si la base rechaza, no
+queda archivo huérfano; se ve (y si no carga, vuelve la inicial); quitar
+pregunta con los avisos de la página; diez firmas a la vez son un pedido; y el
+avatar del panel lleva la foto.
