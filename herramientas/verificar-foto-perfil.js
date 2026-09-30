@@ -17,6 +17,9 @@
       borra el archivo.
    7. LAS FIRMAS SALEN JUNTAS: diez fotos pedidas a la vez son UN pedido.
    8. EL PANEL (clases.html) pinta la foto en su avatar.
+   9. LA CLASE EN VIVO (sesion.html): la lista de conectados del profe, el
+      elegido (al profe, grande; a los compañeros, en el aviso), los tableros
+      de respuesta y el podio — y en el podio SIN nombres, ninguna cara.
 
    Uso:  python3 -m http.server 8777    (desde la raíz del sitio)
          node herramientas/verificar-foto-perfil.js                            */
@@ -140,7 +143,10 @@ async function elegirFoto(page) {
 const vista = () => {
   const caja = document.getElementById("foto-vista");
   const img = caja.querySelector("img");
-  return { img: !!img && img.checkVisibility() && img.complete && img.naturalWidth > 0, texto: caja.textContent.trim() };
+  // La inicial la dibuja el CSS: se mide lo que pinta el ::before, no el texto.
+  const antes = getComputedStyle(caja, "::before").content;
+  return { img: !!img && img.checkVisibility() && img.complete && img.naturalWidth > 0,
+           texto: img ? "" : (antes && antes !== "none" ? antes.replace(/"/g, "") : "") };
 };
 
 async function pruebas(browser) {
@@ -248,9 +254,104 @@ async function pruebas(browser) {
   await r.ctx.close();
 }
 
+/* La clase usa el doble de verificar-clase-registrada.js, que no trae Storage:
+   se le pone uno después de cargar, y las fotos en su tabla de perfiles. Las
+   fotos se piden recién cuando alguien se conecta, así que llega a tiempo. */
+const R = require("./verificar-clase-registrada.js");
+const CLASE = { id: "c-viva", created_by: "u-profe", started_at: new Date().toISOString(), ended_at: null };
+const fila = (elegido) => ({ id: 7, owner_id: "u-profe", fen: null, moves: [], start_fen: null, arrows: [], circles: [],
+  active_player_color: "both", vista: null, comentarios: {}, elegido });
+async function conFotos(page, fotos) {
+  await page.evaluate(({ fotos, PNG }) => {
+    window.__firmas = [];
+    Object.keys(fotos).forEach((id) => {
+      let p = window.__tablas.profiles.find((x) => x.id === id);
+      if (!p) { p = { id, role: "alumno", full_name: id, email: id + "@x.cr" }; window.__tablas.profiles.push(p); }
+      p.foto_path = fotos[id];
+    });
+    window.sb.storage = { from: () => ({
+      createSignedUrls: (rutas) => { window.__firmas.push(rutas); return Promise.resolve({ data: rutas.map((r) => ({ path: r, signedUrl: PNG + "#" + r })), error: null }); },
+    }) };
+  }, { fotos, PNG });
+}
+const fotoVisible = (page, sel) => page.evaluate((s) => {
+  const i = document.querySelector(s + " img");
+  return !!(i && i.checkVisibility() && i.complete && i.naturalWidth > 0);
+}, sel);
+
+async function pruebasClase(browser) {
+  console.log("\n=== La foto en la clase en vivo (sesion.html) ===");
+  // El profe: la lista de conectados y el elegido.
+  let r = await R.abrir(browser, "u-profe", CLASE, { game_state: [fila(null)] });
+  await r.page.emulateMedia({ reducedMotion: "reduce" });
+  await r.page.waitForSelector("#elegir-azar-btn", { state: "attached", timeout: 10000 });
+  await conFotos(r.page, { "u-ana": "u-ana/foto-aaaaaaaaaaaaaaaa.jpg" });
+  await r.page.evaluate(() => { activateTeacherTab("alumnos"); window.__entraAlumno(); window.__entraOtroAlumno(); });
+  await r.page.waitForFunction(() => document.querySelector("#students-list img"), null, { timeout: 5000 }).catch(() => {});
+  await r.page.waitForTimeout(150);
+  const lista = await r.page.evaluate(() => [...document.querySelectorAll("#students-list li")].map((li) => {
+    const i = li.querySelector("img");
+    return [li.textContent.includes("Ana") ? "Ana" : "Beto", !!(i && i.checkVisibility() && i.naturalWidth > 0)];
+  }).sort());
+  igual("en la lista de conectados, Ana con su foto y Beto (sin foto) con su inicial", lista, [["Ana", true], ["Beto", false]]);
+  igual("…la inicial de Beto se ve (la dibuja el CSS)", await r.page.evaluate(() => {
+    const li = [...document.querySelectorAll("#students-list li")].find((x) => x.textContent.includes("Beto"));
+    const caja = li && li.querySelector("[data-foto-de]");
+    return caja ? getComputedStyle(caja, "::before").content : null;
+  }), '"B"');
+  igual("…y no se cuela en el texto de la fila", await r.page.evaluate(() =>
+    [...document.querySelectorAll("#students-list li")].some((x) => /^\s*B\s*Beto/.test(x.textContent) || /^\s*A\s*Ana/.test(x.textContent))), false);
+  const firmas = await r.page.evaluate(() => window.__firmas.length);
+  await r.page.evaluate(() => window.__avisoDePresencia());
+  await r.page.waitForTimeout(150);
+  igual("repintar la lista (cada latido de presencia) no vuelve a pedir la foto",
+    await r.page.evaluate(() => window.__firmas.length), firmas);
+  igual("…ni la hace parpadear: sigue ahí", await fotoVisible(r.page, "#students-list li"), true);
+
+  await r.page.click("#elegir-azar-btn");
+  await r.page.waitForFunction(() => window.__updates.some((u) => u.tabla === "game_state" && u.campos.elegido), null, { timeout: 5000 });
+  const quien = await r.page.evaluate(() => window.__updates.filter((u) => u.tabla === "game_state" && u.campos.elegido).pop().campos.elegido.id);
+  await r.page.waitForTimeout(150);
+  igual("el elegido sale con su foto (o su inicial) al lado del nombre, en grande",
+    [await fotoVisible(r.page, "#elegido-foto"), await r.page.evaluate(() => {
+      const c = document.getElementById("elegido-foto");
+      return c.querySelector("img") ? "" : getComputedStyle(c, "::before").content.replace(/"/g, "");
+    })],
+    quien === "u-ana" ? [true, ""] : [false, "B"]);
+  igual("…y la foto es decoración: aria-hidden", await r.page.getAttribute("#elegido-foto", "aria-hidden"), "true");
+  // Y siempre el caso con foto: darle el turno a Ana a mano.
+  await r.page.evaluate(() => darTurno("u-ana", "azar"));
+  await r.page.waitForTimeout(150);
+  igual("dándole el turno a Ana, su foto grande al lado de su nombre",
+    [await fotoVisible(r.page, "#elegido-foto"), await r.page.textContent("#elegido-nombre")], [true, "Ana Rojas"]);
+  igual("sin errores en la clase del profe", r.errores, []);
+  await r.ctx.close();
+
+  // Un compañero ve la foto del elegido en el aviso.
+  r = await R.abrir(browser, "u-ana", CLASE, { game_state: [fila(null)] });
+  await r.page.waitForSelector("#chessboard [data-square]", { timeout: 10000 });
+  await conFotos(r.page, { "u-beto": "u-beto/foto-bbbbbbbbbbbbbbbb.jpg" });
+  await r.page.evaluate((f) => window.__cambioEnBase("game_state", f), fila({ id: "u-beto", at: new Date().toISOString(), nombre: "Beto Mora" }));
+  await r.page.waitForFunction(() => document.querySelector("#elegido-otro-foto img"), null, { timeout: 5000 }).catch(() => {});
+  await r.page.waitForTimeout(150);
+  igual("la compañera ve la foto de Beto en «Tu profe eligió a…»", await fotoVisible(r.page, "#elegido-otro-foto"), true);
+  igual("…y el aviso sigue diciendo el nombre escrito", (await r.page.textContent("#elegido-otro")).trim(), "🎯 Tu profe eligió a Beto Mora para responder.");
+
+  // El podio: con nombres, caras; sin nombres, ninguna.
+  await r.page.evaluate(() => pintarPodio({ lineas: [{ id: "u-beto", nombre: "Beto Mora", puntos: 5, puesto: 1 }] }));
+  await r.page.waitForTimeout(150);
+  igual("en el podio con nombres, la foto del primero", await fotoVisible(r.page, "#podio-lineas li"), true);
+  await r.page.evaluate(() => pintarPodio({ lineas: [{ id: "u-beto", nombre: null, puntos: 5, puesto: 1 }] }));
+  await r.page.waitForTimeout(150);
+  igual("en el podio SIN nombres, ninguna foto (una cara diría quién es)",
+    await r.page.evaluate(() => document.querySelectorAll("#podio-lineas img, #podio-lineas [data-foto-de]").length), 0);
+  igual("sin errores en la clase de la alumna", r.errores, []);
+  await r.ctx.close();
+}
+
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
-  try { await pruebas(browser); }
+  try { await pruebas(browser); await pruebasClase(browser); }
   finally { await browser.close(); }
   console.log(fallos ? `\n${fallos} comprobación(es) fallaron.` : "\nTodo bien.");
   process.exit(fallos ? 1 : 0);

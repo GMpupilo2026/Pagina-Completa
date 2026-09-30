@@ -700,15 +700,10 @@
                 nameLine.className = "flex items-center gap-1";
                 /* Su foto de perfil, si subió una: administración la ve para
                    poder quitar una que no va (ver «La foto de perfil» en
-                   permisos-y-roles.md). Las firmas de toda la tabla salen en
-                   un solo pedido: FotoPerfil las junta. */
+                   permisos-y-roles.md). Las de toda la tabla salen en una
+                   lectura y un pedido de firmas: FotoPerfil las junta. */
                 if (u.foto_path && window.FotoPerfil) {
-                    const foto = document.createElement("span");
-                    foto.setAttribute("aria-hidden", "true");
-                    foto.className = "w-7 h-7 rounded-full bg-brand-700 text-white flex items-center justify-center text-xs font-bold shrink-0 overflow-hidden";
-                    foto.textContent = (u.full_name || u.email || "").trim().charAt(0).toUpperCase();
-                    nameLine.appendChild(foto);
-                    FotoPerfil.url(u.id, u.foto_path).then((url) => FotoPerfil.pintar(foto, url, u.full_name || u.email));
+                    nameLine.appendChild(FotoPerfil.avatar(u.id, u.full_name || u.email, "w-7 h-7 text-xs"));
                 }
                 const nameInput = document.createElement("input");
                 nameInput.type = "text";

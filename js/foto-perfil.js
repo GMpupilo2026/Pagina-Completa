@@ -126,24 +126,85 @@ window.FotoPerfil = (function () {
     return out;
   }
 
+  /* Para las pantallas que se vuelven a pintar a cada rato (la clase en vivo
+     repinta la lista de conectados con cada latido de presencia): la
+     dirección de cada persona se recuerda en la página, así repintar no pide
+     nada y la foto sale en el mismo instante, sin parpadear con la inicial.
+     Los ids pedidos en el mismo momento salen en UNA lectura de profiles. */
+  var memoria = new Map();   // id -> Promise<dirección | "">
+  var resueltas = new Map(); // id -> dirección | "" (ya llegó)
+  var colaIds = null;
+  function direccionDe(id) {
+    if (memoria.has(id)) return memoria.get(id);
+    if (!colaIds) {
+      var esta = colaIds = { ids: new Set() };
+      esta.promesa = Promise.resolve().then(function () {
+        colaIds = null;
+        return urls(Array.from(esta.ids));
+      });
+    }
+    colaIds.ids.add(id);
+    var p = colaIds.promesa.then(function (m) {
+      var u = m.get(id) || "";
+      resueltas.set(id, u);
+      return u;
+    }, function () { memoria.delete(id); return ""; });
+    memoria.set(id, p);
+    return p;
+  }
+  function olvidarDe(id) { memoria.delete(id); resueltas.delete(id); }
+
+  /* Pone en `caja` la foto de la persona `id` (o su inicial mientras llega, y
+     si no tiene). Devuelve la promesa de que quedó pintada. */
+  function poner(caja, id, nombre) {
+    if (!caja) return Promise.resolve();
+    if (!id) { pintar(caja, "", nombre); return Promise.resolve(); }
+    caja.dataset.fotoDe = id;
+    if (resueltas.has(id)) { pintar(caja, resueltas.get(id), nombre); return Promise.resolve(); }
+    pintar(caja, "", nombre);
+    return direccionDe(id).then(function (u) {
+      // Si mientras tanto la caja pasó a ser de otra persona, no se toca.
+      if (u && caja.dataset.fotoDe === id) pintar(caja, u, nombre);
+    });
+  }
+
+  /* Una caja redonda nueva, lista para poner(): la foto es decoración
+     (aria-hidden) porque el nombre siempre va escrito al lado. `clases` da el
+     tamaño y el color de fondo de la inicial. */
+  function avatar(id, nombre, clases) {
+    var caja = document.createElement("span");
+    caja.setAttribute("aria-hidden", "true");
+    caja.className = (clases || "w-7 h-7 text-xs") +
+      " rounded-full bg-brand-700 text-white flex items-center justify-center font-bold shrink-0 overflow-hidden";
+    poner(caja, id, nombre);
+    return caja;
+  }
+
   async function url(id, ruta) {
     var c = {};
     if (ruta !== undefined) c[id] = ruta;
     return (await urls([id], ruta !== undefined ? c : null)).get(id) || "";
   }
 
-  /* La foto dentro de la caja redonda del avatar; sin foto, la inicial. */
+  /* La foto dentro de la caja redonda del avatar; sin foto, la inicial.
+     La inicial NO va como texto: va en data-inicial y la dibuja el CSS
+     (before:content-[attr(data-inicial)]). Como texto se colaba en el
+     textContent de lo que la rodea —«BTu profe le dio la palabra a Beto»—,
+     que es lo que se copia y lo que leen otras partes de la página. */
+  var CLASE_INICIAL = "before:content-[attr(data-inicial)]";
   function pintar(caja, direccion, inicial) {
     if (!caja) return;
     var letra = String(inicial || "").trim().charAt(0).toUpperCase();
+    var ponerLetra = function () { caja.textContent = ""; caja.dataset.inicial = letra; };
+    caja.classList.add("overflow-hidden", CLASE_INICIAL);
+    if (!direccion) { ponerLetra(); return; }
     caja.textContent = "";
-    caja.classList.add("overflow-hidden");
-    if (!direccion) { caja.textContent = letra; return; }
+    delete caja.dataset.inicial;
     var img = document.createElement("img");
     img.alt = "";
     img.decoding = "async";
     img.className = "w-full h-full object-cover";
-    img.addEventListener("error", function () { caja.textContent = letra; }, { once: true });
+    img.addEventListener("error", ponerLetra, { once: true });
     img.src = direccion;
     caja.appendChild(img);
   }
@@ -197,6 +258,7 @@ window.FotoPerfil = (function () {
   }
 
   function avisarCambio(id, ruta) {
+    olvidarDe(id);
     if (window.MiPerfil && window.MiPerfil.olvidar) window.MiPerfil.olvidar();
     try { window.dispatchEvent(new CustomEvent("foto-perfil:cambio", { detail: { id: id, ruta: ruta || null } })); } catch (e) { }
   }
@@ -230,5 +292,5 @@ window.FotoPerfil = (function () {
     avisarCambio(persona, null);
   }
 
-  return { BUCKET: BUCKET, urls: urls, url: url, firmar: firmar, pintar: pintar, preparar: preparar, subir: subir, quitar: quitar };
+  return { BUCKET: BUCKET, urls: urls, url: url, firmar: firmar, pintar: pintar, poner: poner, avatar: avatar, preparar: preparar, subir: subir, quitar: quitar };
 })();

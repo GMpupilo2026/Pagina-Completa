@@ -1940,7 +1940,8 @@ esa fila. Está probado que falla de verdad: contra el archivo de antes,
 Desde `20260930172140_foto_de_perfil`, cada persona puede subir su foto en
 **Configuración › Perfil**, y se ve donde antes iba la inicial de su nombre: el
 avatar del panel (`clases.html`, también con «Ver como»), la lista de la burbuja
-de conectados y la tabla de cuentas de `admin.html`. El módulo es uno solo,
+de conectados, la tabla de cuentas de `admin.html` y la clase en vivo (ver
+abajo). El módulo es uno solo,
 `js/foto-perfil.js` (`FotoPerfil.subir`, `quitar`, `url`, `urls`, `pintar`).
 
 ### Quién la ve: la misma pregunta que el perfil
@@ -2000,15 +2001,41 @@ de conectados y la tabla de cuentas de `admin.html`. El módulo es uno solo,
 - La foto es **decoración** (`alt=""`, dentro de un avatar `aria-hidden`): el
   nombre va escrito al lado en todos lados. Si la dirección no carga, vuelve la
   inicial.
+- **La inicial no va como texto**: va en `data-inicial` y la dibuja el CSS
+  (`before:content-[attr(data-inicial)]`). Como texto, `aria-hidden` la
+  callaba para el lector pero se colaba en el `textContent` de lo que la
+  rodea: el aviso de la clase quedaba «BTu profe le dio la palabra a Beto
+  Mora», y así se copiaba. Lo encontraron `verificar-clase-elegido.js` y
+  `verificar-clase-participacion.js`.
 - La burbuja de conectados va en 65 páginas y la lista solo la abre quien da
   clase: carga `foto-perfil.js` recién cuando hay una foto que pintar, y la ruta
   la trae en la misma lectura de `profiles` que ya hacía para los nombres.
 - Al cambiar la foto, `FotoPerfil` avisa con el evento `foto-perfil:cambio` y
   olvida `MiPerfil`, para que lo ya pintado se ponga al día sin recargar.
 
+### En la clase en vivo
+
+`sesion.html` pone la foto en: la lista de conectados del profe, el elegido
+(grande al lado de su nombre en el panel del profe, y chica en el aviso «Tu
+profe eligió a…» de los compañeros), los tableros de respuesta de cada alumno
+y el podio.
+
+- **La lista de conectados se repinta con cada latido de presencia**, por eso
+  existe `FotoPerfil.poner(caja, id, nombre)` / `avatar(id, nombre)`: recuerda
+  la dirección de cada persona en la página, así repintar no pide nada y la
+  foto sale en el mismo instante, sin parpadear con la inicial. Los ids que se
+  piden juntos salen en una sola lectura de `profiles`.
+- **El podio SIN nombres no lleva fotos**: el profe lo elige así para que cada
+  uno vea solo su lugar, y una cara diría quién es igual que el nombre.
+- Un compañero ve la foto porque la RLS de `profiles` ya le deja ver a sus
+  compañeros de la misma academia. Un invitado sin cuenta
+  (`clase-invitados.js`) no ve ningún perfil: le sale la inicial.
+
 `verificar-foto-perfil.js` lo prueba en el navegador: sin la casilla no se
 sube; lo que se sube es un JPEG de 320×320 en la carpeta propia; se guarda con
 la versión vigente de la política; la vieja se borra; si la base rechaza, no
 queda archivo huérfano; se ve (y si no carga, vuelve la inicial); quitar
-pregunta con los avisos de la página; diez firmas a la vez son un pedido; y el
-avatar del panel lleva la foto.
+pregunta con los avisos de la página; diez firmas a la vez son un pedido; el
+avatar del panel lleva la foto; y en la clase, la lista de conectados (sin
+volver a pedir al repintar), el elegido para el profe y para los compañeros, y
+el podio con nombres —y sin nombres, ninguna cara—.

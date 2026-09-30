@@ -230,8 +230,10 @@
     var avatar = document.createElement("span");
     avatar.setAttribute("aria-hidden", "true");
     avatar.dataset.avatar = "";
-    avatar.className = "w-8 h-8 rounded-full bg-brand-700 text-white flex items-center justify-center text-sm font-bold shrink-0 overflow-hidden";
-    avatar.textContent = f.nombre.trim().charAt(0).toUpperCase();
+    // La inicial la dibuja el CSS (data-inicial), no va como texto: así no
+    // se cuela en el texto de la fila (ver js/foto-perfil.js).
+    avatar.className = "w-8 h-8 rounded-full bg-brand-700 text-white flex items-center justify-center text-sm font-bold shrink-0 overflow-hidden before:content-[attr(data-inicial)]";
+    avatar.dataset.inicial = f.nombre.trim().charAt(0).toUpperCase();
     var texto = document.createElement("span");
     texto.className = "min-w-0 flex-1";
     var nombre = document.createElement("span");
