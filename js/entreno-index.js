@@ -77,6 +77,10 @@ async function cosasDeHoy(alumnoId){
     const f = RepasoFallados.pendientes(RepasoFallados.CLAVES.finales).length;
     if (f) cosas.push({ icono: '🏁', href: 'finales.html?repaso=1',
       texto: f === 1 ? 'Volver a jugar 1 final que te costó' : `Volver a jugar ${f} finales que te costaron` });
+    // Las preguntas de clase en las que viste la respuesta en tu repaso: vuelven a la semana.
+    const c = RepasoFallados.pendientes(RepasoFallados.CLAVES.clase).length;
+    if (c) cosas.push({ icono: '📌', href: '../repasar-clases.html?vuelven=1',
+      texto: c === 1 ? 'Te vuelve 1 pregunta de tus clases' : `Te vuelven ${c} preguntas de tus clases` });
   }
 
   // El nivel de Tipos de entrenamiento que quedó a medias (lo anota

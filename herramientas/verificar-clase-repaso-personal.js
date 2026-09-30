@@ -166,6 +166,101 @@ async function elAlumno(browser) {
   await ctx.close();
 }
 
+/* Lo que vuelve: la que resolvió DESPUÉS de ver la respuesta vuelve a la
+   semana (cola clase_repaso_v1 de js/repaso-fallados.js, que viaja con la
+   cuenta), y se avisa en esta página y en el hub de Entrenamiento. */
+const CLASE_C4 = {
+  saved_games: [],
+  class_sessions: [{ id: "c4", title: "Finales", started_at: "2026-09-25T22:00:00Z" }],
+  questions: [{ id: "q1", class_session_id: "c4", fen: TRAS_E5, prompt: "¿Qué jugarías?", tipo: "jugada", para_alumno: null, closed_at: "x", created_at: "1" }],
+  question_engine_answers: [{ question_id: "q1", answer: { moves: ["Nf3", "Nc6"] } }],
+  question_answers: [{ question_id: "q1", student_id: "u-ana", moves: ["d4"], is_correct: false }],
+  tarea_items: [],
+};
+const cola = (page) => page.evaluate(() => JSON.parse(localStorage.getItem("clase_repaso_v1") || "{}"));
+const hoyYEn = (page, dias) => page.evaluate((d) => [RepasoEspaciado.hoy(), RepasoEspaciado.sumarDias(RepasoEspaciado.hoy(), d)], dias);
+const jugarEn = (page) => async (de, a) => { await page.click('#repaso-board [data-square="' + de + '"]'); await page.click('#repaso-board [data-square="' + a + '"]'); };
+
+async function loQueVuelve(browser) {
+  console.log("\n=== Lo que vio la respuesta vuelve a la semana ===");
+  {
+    const { page, ctx, errores } = await doble.abrir(browser, "/repasar-clases.html?repaso=c4", CLASE_C4);
+    await page.waitForFunction(() => { const e = document.getElementById("repaso-ejercicio"); return e && e.checkVisibility(); }, null, { timeout: 15000 });
+    igual("la cola viaja con la cuenta (está en las claves de ProgresoUsuario)", await page.evaluate(() => ProgresoUsuario.claves().some((c) => c.clave === "clase_repaso_v1")), true);
+    await page.click("#repaso-ver-btn");
+    igual("al ver la respuesta, se le dice que vuelve", /en una semana te vuelve a salir/.test(await page.textContent("#repaso-msg")), true);
+    const [, enSiete] = await hoyYEn(page, 7);
+    let c = await cola(page);
+    igual("y entra a la cola para dentro de 7 días, con la pregunta guardada",
+      [c.q1 && c.q1.vence, c.q1 && c.q1.fen, c.q1 && c.q1.jugada, c.q1 && c.q1.prompt, c.q1 && c.q1.clase],
+      [enSiete, TRAS_E5, "Nf3", "¿Qué jugarías?", "Finales del " + await page.evaluate(() => fechaCR("2026-09-25T22:00:00Z"))]);
+    await page.click("#repaso-otra-btn");
+    await jugarEn(page)("g1", "f3");
+    c = await cola(page);
+    igual("resolverla recién vista no la saca: sigue para dentro de 7 días", [c.q1.vence, !!c.q1.fuera], [enSiete, false]);
+    igual("hoy no se avisa nada (todavía no vuelve)", await page.evaluate(() => document.getElementById("vuelven-aviso").checkVisibility()), false);
+    // Vuelve a abrir el repaso de esa clase (la tarea) y ahora la resuelve limpia:
+    // eso tampoco prueba nada, la tiene fresca. La semana no se mueve.
+    await page.reload();
+    await page.waitForFunction(() => { const e = document.getElementById("repaso-ejercicio"); return e && e.checkVisibility(); }, null, { timeout: 15000 });
+    await jugarEn(page)("g1", "f3");
+    c = await cola(page);
+    igual("resolverla limpia en el repaso de la clase tampoco la adelanta", [c.q1.vence, c.q1.limpiosSeguidos], [enSiete, 0]);
+    igual("sin errores en la página", errores, []);
+    await ctx.close();
+  }
+  // Una semana después: la ficha vencida, tal como la dejó la página.
+  const vencida = (extra) => JSON.stringify({ q1: Object.assign({ facilidad: 2.35, intervalo: 7, repasos: 1, fallos: 0, vence: "2026-01-01", ultimo: null,
+    fen: TRAS_E5, jugada: "Nf3", prompt: "¿Qué jugarías?", clase: "Finales del 25 de septiembre", limpiosSeguidos: 0, fuera: false }, extra || {}) });
+  {
+    // Solo en la cuenta (se vio la respuesta en OTRO aparato): se trae antes de contar.
+    const { page, ctx, errores } = await doble.abrir(browser, "/repasar-clases.html", { saved_games: [],
+      training_state: [{ student_id: "u-ana", key: "clase_repaso_v1", value: { raw: vencida() }, updated_at: "2026-09-23T12:00:00Z" }] });
+    await page.waitForFunction(() => document.getElementById("vuelven-aviso").checkVisibility(), null, { timeout: 15000 }).catch(() => {});
+    igual("una semana después se avisa en Repasar mis clases, aunque la viera en otro aparato", [await page.evaluate(() => document.getElementById("vuelven-aviso").checkVisibility()),
+      await page.textContent("#vuelven-enlace"), await page.getAttribute("#vuelven-enlace", "href")],
+      [true, "🔁 Te vuelve 1 pregunta de tus clases", "repasar-clases.html?vuelven=1"]);
+    igual("sin errores en la página", errores, []);
+    await ctx.close();
+  }
+  {
+    const { page, ctx, errores } = await doble.abrir(browser, "/repasar-clases.html?vuelven=1", { saved_games: [] }, { clase_repaso_v1: vencida() });
+    await page.waitForFunction(() => { const e = document.getElementById("repaso-ejercicio"); return e && e.checkVisibility(); }, null, { timeout: 15000 });
+    igual("se abre con su título y la clase de donde viene", [await page.textContent("#repaso-titulo"), await page.textContent("#repaso-pregunta")],
+      ["🔁 Lo que vuelve de tus clases", "¿Qué jugarías? (Finales del 25 de septiembre)"]);
+    igual("y el aviso no se repite arriba", await page.evaluate(() => document.getElementById("vuelven-aviso").checkVisibility()), false);
+    await jugarEn(page)("d2", "d4");
+    await page.click("#repaso-otra-btn");
+    await jugarEn(page)("g1", "f3");
+    const [hoy] = await hoyYEn(page, 0);
+    const c = await cola(page);
+    igual("con un error antes de la buena, vuelve hoy mismo (y empieza de cero)", [c.q1.vence, c.q1.repasos], [hoy, 0]);
+    igual("al terminar lo dice, y que esa vuelve hoy", await page.textContent("#repaso-fin"), "🎉 Resolviste todas. Las que tuvieron un error te vuelven a salir hoy mismo, para que queden.");
+    igual("y no toca ninguna tarea", await page.evaluate(() => (window.__updates || []).length), 0);
+    igual("sin errores en la página", errores, []);
+    await ctx.close();
+  }
+  {
+    const { page, ctx, errores } = await doble.abrir(browser, "/repasar-clases.html?vuelven=1", { saved_games: [] }, { clase_repaso_v1: vencida() });
+    await page.waitForFunction(() => { const e = document.getElementById("repaso-ejercicio"); return e && e.checkVisibility(); }, null, { timeout: 15000 });
+    await jugarEn(page)("g1", "f3");
+    const [hoy] = await hoyYEn(page, 0);
+    const c = await cola(page);
+    igual("limpia, avanza: ya no toca hoy, y suma a la racha", [c.q1.vence > hoy, c.q1.limpiosSeguidos], [true, 1]);
+    igual("y al terminar: listo por hoy", await page.textContent("#repaso-fin"), "🎉 Listo por hoy: resolviste todas las preguntas que te volvían.");
+    igual("sin errores en la página", errores, []);
+    await ctx.close();
+  }
+  {
+    const { page, ctx, errores } = await doble.abrir(browser, "/entreno/index.html", {}, { clase_repaso_v1: vencida() });
+    await page.waitForFunction(() => /Te vuelve 1 pregunta de tus clases/.test(document.body.textContent), null, { timeout: 15000 }).catch(() => {});
+    const enlace = await page.evaluate(() => { const a = [...document.querySelectorAll("a")].find((x) => /Te vuelve 1 pregunta de tus clases/.test(x.textContent)); return a ? [a.getAttribute("href"), a.checkVisibility()] : null; });
+    igual("el hub de Entrenamiento también lo propone", enlace, ["../repasar-clases.html?vuelven=1", true]);
+    igual("sin errores en la página", errores, []);
+    await ctx.close();
+  }
+}
+
 (async () => {
   laRegla();
   const browser = await chromium.launch({ executablePath: CHROME });
@@ -173,6 +268,7 @@ async function elAlumno(browser) {
     await desdeLaClase(browser, false);
     await desdeLaClase(browser, true);
     await elAlumno(browser);
+    await loQueVuelve(browser);
   } catch (e) {
     console.log("  ✗ la prueba se cayó: " + (e && e.stack || e));
     fallos += 1;

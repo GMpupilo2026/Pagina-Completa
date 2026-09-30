@@ -34,10 +34,18 @@
 // usuario del dominio de la academia (ver `usuario-alumno.ts`) y el enlace para
 // crear la contraseña sale hacia el correo de la casa. Así los dos hermanos
 // tienen cuentas separadas y todo le llega a la misma bandeja.
+//
+// CON LA CONTRASEÑA YA PUESTA
+// Hay familias sin ningún correo, y otras que lo tienen y no abren el enlace:
+// el niño llega a la clase sin poder entrar. Con `sin_correo` y `contrasena`,
+// la cuenta se crea con la contraseña puesta (`crearConContrasena()`) y no
+// sale ningún correo: quien le da clase le da el usuario y la contraseña en
+// la mano. Por eso ahí el correo de la casa deja de ser obligatorio —ya no
+// hay enlace que mandar—, aunque si viene se guarda igual para los informes.
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { invitarConBienvenida } from "./invitacion-email.ts";
-import { esCorreoInterno, usuarioLibre } from "./usuario-alumno.ts";
+import { crearConContrasena, esCorreoInterno, problemaDeContrasena, usuarioLibre } from "./usuario-alumno.ts";
 import { profesorElegido } from "./profesor-elegido.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -98,6 +106,7 @@ Deno.serve(async (req) => {
     email?: string; full_name?: string;
     sin_correo?: boolean; encargado_email?: string; encargado_nombre?: string;
     usuario?: string; grupo?: string; frecuencia?: string; profesor_id?: string;
+    contrasena?: string;
   };
   try {
     body = await req.json();
@@ -114,15 +123,31 @@ Deno.serve(async (req) => {
   const CORREO = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
   const FRECUENCIAS = new Set(["diario", "semanal", "mensual", "anual"]);
   const frecuencia = FRECUENCIAS.has(String(body.frecuencia)) ? String(body.frecuencia) : "semanal";
+  // Vacía es lo mismo que no mandarla: se invita por correo como siempre.
+  const clave = typeof body.contrasena === "string" && body.contrasena !== "" ? body.contrasena : null;
+
+  if (clave !== null) {
+    // La contraseña de quien tiene correo propio es de esa persona: la crea
+    // con su enlace. Esto es solo para el usuario de la academia.
+    if (!sinCorreo) {
+      return json({
+        error: "La contraseña se pone solo con un usuario de la Academia. " +
+               "Con correo propio, el alumno la crea con el enlace que le llega.",
+      }, 400);
+    }
+    const problema = problemaDeContrasena(clave);
+    if (problema) return json({ error: problema }, 400);
+  }
 
   if (sinCorreo) {
-    // Sin buzón propio, el de la casa NO es opcional: es a donde va el enlace
-    // para crear la contraseña. Sin él la cuenta quedaría creada y muda, y de
-    // eso nadie se entera hasta que el alumno nunca aparece.
+    // Sin buzón propio y sin contraseña, el de la casa NO es opcional: es a
+    // donde va el enlace para crear la contraseña. Sin él la cuenta quedaría
+    // creada y muda, y de eso nadie se entera hasta que el alumno nunca
+    // aparece. Con la contraseña puesta ya entra: la casa es opcional.
     if (!full_name) {
       return json({ error: "Para armarle un usuario hace falta el nombre del alumno" }, 400);
     }
-    if (!CORREO.test(encargadoEmail)) {
+    if (clave === null && !CORREO.test(encargadoEmail)) {
       return json({
         error: "Sin correo propio, hace falta el correo de la casa: " +
                "es a donde llega el enlace para crear la contraseña.",
@@ -222,10 +247,15 @@ Deno.serve(async (req) => {
     usuarioFinal = usuario;
   }
 
-  const invitacion = await invitarConBienvenida(
-    adminClient, usuarioFinal, full_name,
-    sinCorreo ? { destino: encargadoEmail, nombre: encargadoNombre } : null,
-  );
+  // Con la contraseña puesta no sale ningún correo: el enlace para crearla
+  // sobra, y a la casa le llegaría uno que pide hacer algo ya hecho.
+  const invitacion = clave !== null
+    ? { ...(await crearConContrasena(adminClient, usuarioFinal, clave, full_name)),
+        correoEnviado: null, destino: null }
+    : await invitarConBienvenida(
+        adminClient, usuarioFinal, full_name,
+        sinCorreo ? { destino: encargadoEmail, nombre: encargadoNombre } : null,
+      );
 
   if (invitacion.error || !invitacion.user) {
     // No se llegó a invitar a nadie: se devuelve la invitación gastada.
@@ -282,6 +312,9 @@ Deno.serve(async (req) => {
     email: usuarioFinal,
     usuario: usuarioFinal,
     sin_correo: sinCorreo,
+    // Si ya entra con la contraseña que se le puso: entonces no salió correo
+    // y la pantalla tiene que decir que se la den en la mano.
+    con_contrasena: clave !== null,
     // A qué bandeja salió el correo: con un alumno sin buzón no es la suya.
     correo_destino: invitacion.destino,
     encargado_guardado: encargadoGuardado,
@@ -289,7 +322,8 @@ Deno.serve(async (req) => {
     asignado: !!profesorId,
     profesor_id: profesorId,
     // La cuenta pudo quedar creada y el correo no salir: quien invitó tiene que
-    // poder enterarse en el momento, no cuando el alumno no aparezca.
+    // poder enterarse en el momento, no cuando el alumno no aparezca. Con la
+    // contraseña puesta es null: no había correo que mandar.
     correo_enviado: invitacion.correoEnviado,
     restantes: cupo.ilimitado ? null : cupo.restantes,
     ilimitado: !!cupo.ilimitado,

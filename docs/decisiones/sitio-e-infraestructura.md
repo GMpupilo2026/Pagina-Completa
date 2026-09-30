@@ -1256,16 +1256,26 @@ demás**, y no daba ningún error porque la plataforma funcionaba igual.
   trigger. Un esquema al que le falta una política se ve perfecto y deja
   abierto —o cerrado— algo que no era.
 
-### Lo que sigue sin red, y es lo caro
+### Los datos de la gente: copias diarias del plan Pro, y una copia afuera
 
-**Los datos de la gente no están respaldados en ninguna parte.** El esquema se
-reconstruye en minutos; los 105 perfiles, las 3.976 filas de progreso, los 80
-encargados a los que llegan los informes y los 53 planes de clase, no. Y la
-organización de Supabase está en el plan **gratuito**, que no hace copias
-automáticas de la base — igual que no deja encender la protección contra
-contraseñas filtradas, que este archivo ya tenía anotada por lo mismo.
+**Los datos de la gente están en las copias diarias de Supabase.** La
+organización pasó al plan **Pro** (la base, a tamaño **Small**), que guarda una
+copia automática por día con **siete días** de ventana. Comprobado el 30 de
+setiembre de 2026 en Database › Backups: ocho copias seguidas, del 23 al 30.
+Antes, en el plan gratuito, debajo de los datos no había nada, y lo que se
+borraba se perdía.
 
-`herramientas/respaldo-datos.sh` es la salida mientras tanto: `pg_dump` con la
+Las copias diarias no cubren dos cosas, y por eso queda también el volcado a
+mano (detalle en `RESTAURAR.md`, «Lo que las copias diarias no cubren»):
+
+- **Los archivos de Storage.** La copia guarda la fila que describe un archivo,
+  no el archivo. Hoy casi no hay (los logos de `academia-marca`), pero los
+  adjuntos de formularios y las justificaciones van a necesitar su propio
+  respaldo cuando empiecen a llegar.
+- **Una copia fuera de Supabase.** Las copias diarias viven donde vive la base:
+  si se pierde el proyecto o la cuenta, se pierden con él.
+
+`herramientas/respaldo-datos.sh` es esa copia de afuera: `pg_dump` con la
 cadena de conexión por variable de entorno (nunca escrita en el repositorio) y
 la salida en `respaldos/`, que está en `.gitignore` **y** en `.assetsignore`.
 Los dos candados son para el mismo descuido: ahí adentro van cédulas y correos
@@ -1281,10 +1291,10 @@ trabajo, no lo que hay en git.
   se excluye todo MENOS `herramientas/cursos/`, porque su `catalogo.json` lo
   piden `planes.html`, la tienda y el catálogo de Tareas — excluir la carpeta
   entera les dejaría la lista de cursos vacía, sin ningún error.
-- **Un respaldo que depende de que alguien se acuerde de correrlo, tarde o
-  temprano no se corre.** La salida de verdad es el plan Pro, con sus copias
-  diarias. Queda escrito acá porque un pendiente que solo vive en la cabeza de
-  alguien no existe.
+- **Un volcado que depende de que alguien se acuerde de correrlo, tarde o
+  temprano no se corre.** Por eso lo principal son las copias diarias, que no
+  dependen de nadie, y el volcado queda para antes de una migración que toque
+  datos y para tener una copia afuera.
 
 ### Al aplicar una migración o desplegar una función, actualizar el respaldo
 

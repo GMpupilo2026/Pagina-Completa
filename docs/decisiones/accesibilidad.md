@@ -585,8 +585,8 @@ hacer nada.
   cada 10 s; lo que ya estaba al cargar no se dice: se espera a que `#app` se
   vea, y lo que aparece en el primer segundo y medio cuenta como página.
 - **También dice las jugadas del tablero**, de cualquier tablero: la jugada
-  propia hecha con clics, la del rival en Juegos, los ejemplos que avanzan en un
-  artículo. No se le pidió a cada tablero que avise: cada casilla ya dice en su
+  propia hecha con clics, la del rival en Juegos, la respuesta del rival en los
+  ejercicios. No se le pidió a cada tablero que avise: cada casilla ya dice en su
   `aria-label` qué hay en ella (es lo que lee el lector al recorrerla), y
   `js/voz-pagina.js` compara esa foto antes y después de un cambio: «Caballo
   blanco de gustav 1 a felix 3», «…, captura peón negro», «Enroque de las
@@ -601,9 +601,25 @@ hacer nada.
     que `/jugó\b/` no calza nunca; va con `(?![a-záéíóúñ])`.
   - **Las miniaturas no hablan** (menos de 180 px de ancho): en el panel del
     profe hay una por alumno y se oirían todas a la vez.
-  - Un tablero cuyas casillas no dicen qué hay (`js/ejercicio-tablero.js`,
-    `js/tablero-pregunta.js`) no se puede leer así; hoy van en páginas con su
-    propia voz o sin jugadas de otro.
+  - **Cada casilla tiene que decir qué hay**, con la columna hablada y
+    «vacía» cuando lo está: «e4» a secas se deletrea, y una casilla vacía que
+    no lo dice queda como «no se sabe» y la jugada no se puede armar. Los
+    tableros de ejercicios y del examen lo reciben de `js/tablero-accesible.js`
+    al montarse (el examen carga ahora `js/blind-notation.js` para decir «eva
+    4» y no «e4»); Visualización y los diagramas de los artículos
+    (`js/article-example-board.js`, que hasta ahora eran mudos fuera del Modo
+    Adaptado) escriben el suyo. Un tablero nuevo va por `TableroAccesible` o
+    escribe lo mismo.
+- **La jugada escrita en un aviso se dice en palabras.** Los ejercicios avisan
+  «Dxf7+ es legal, pero…», y la voz del navegador lo deletreaba. `jugadasEnPalabras()` lo dice como el resto del sitio: «dama
+  captura felix 7 jaque», «eva 4», «enroque corto». Solo con las letras en
+  español (R D T A C): la R en inglés es torre y en español es rey, y el sitio
+  muestra la notación en español. Como el texto cambia, `speak()` recibe también
+  el escrito (`igualA`) para no repetir lo que el recuadro de comandos ya dijo.
+  El examen (`js/tablero-pregunta.js`) y el diagnóstico escriben la pista en
+  palabras («Elegiste eva 4.», «Jugaste enroque corto.»), también para el
+  lector: el diagnóstico escribía «Jugaste Nf3», en notación inglesa, que ni
+  la voz ni una persona que no la conoce entiende.
 - **No sale donde ya hay un botón de voz** (`#speech-toggle-btn`, `#btn-voz`):
   esas páginas dicen cada jugada a su manera, y dos botones para lo mismo es uno
   de más. La preferencia es la misma (`oscarSpeechMode_v1`) en todos lados.
@@ -620,7 +636,11 @@ no esté donde hay voz propia, que el encabezado no se salga en el celular, y qu
 dice y qué no (apagada, un aviso nuevo, el cartel repetido, la caja nueva, el
 panel escondido, la cuenta atrás, lo que estaba al cargar), y las jugadas de un
 tablero de prueba (la jugada, la captura, el enroque, la coronación, la
-miniatura, las piezas ocultas, el aviso que ya la dijo). Está probado que falla
+miniatura, las piezas ocultas, el aviso que ya la dijo), la jugada escrita en
+un aviso dicha en palabras, y que Temas, Visualización y el diagrama de un
+artículo digan qué hay en cada casilla (en Temas, además, que la jugada del
+alumno se oiga sin deletrear notación). El examen lo mira
+`verificar-examenes.js`: sus casillas y su pista en palabras. Está probado que falla
 de verdad: sin mirar el botón propio, sin mirar lo que llega entero, sin la
 regla de los números y con el tablero callado salta cada uno.
 

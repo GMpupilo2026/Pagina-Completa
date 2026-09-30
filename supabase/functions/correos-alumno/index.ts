@@ -34,7 +34,7 @@
 // que es quien se la da en la clase.
 
 import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2";
-import { esCorreoInterno, usuarioLibre } from "./usuario-alumno.ts";
+import { esCorreoInterno, problemaDeContrasena, usuarioLibre } from "./usuario-alumno.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -234,11 +234,9 @@ Deno.serve(async (req) => {
       }, 400);
     }
     const clave = String(body.contrasena ?? "");
-    // Lo mismo que pide bienvenida.html: ocho como mínimo. El tope es el de
-    // bcrypt, que corta en silencio lo que pase de 72 bytes.
-    if (clave.length < 8) return json({ error: "La contraseña tiene que tener al menos 8 caracteres" }, 400);
-    if (new TextEncoder().encode(clave).length > 72) return json({ error: "Esa contraseña es demasiado larga" }, 400);
-    if (clave.trim() !== clave) return json({ error: "La contraseña no puede empezar ni terminar con espacios" }, 400);
+    // La misma regla que las dos puertas de alta (ver usuario-alumno.ts).
+    const problema = problemaDeContrasena(clave);
+    if (problema) return json({ error: problema }, 400);
 
     // email_confirm: una cuenta invitada que nunca abrió su enlace queda sin
     // confirmar, y sin confirmar GoTrue no la deja entrar ni con la contraseña
