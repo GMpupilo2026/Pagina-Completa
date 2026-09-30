@@ -53,6 +53,14 @@ igual("el peón ataca en diagonal, no hacia adelante", pregunta(new Chess("4k3/8
 igual("una pieza clavada sigue defendiendo", pregunta(new Chess("4k3/8/8/b7/8/5P2/3N4/4K3 w - - 0 1"), "quién defiende f3"),
   "peón blanco en f3: La defiende caballo blanco en d2. Nadie la ataca.");
 
+console.log("\nTodas las jugadas, sin mirar el tablero");
+const inicio = new Chess();
+const todas = pregunta(inicio, "mis jugadas");
+igual("«mis jugadas» cuenta las veinte de la salida", /^Tienes 20 jugadas\. /.test(todas) ? "sí" : todas, "sí");
+igual("agrupadas por pieza", /caballo blanco en g1: f3, h3/.test(todas) ? "sí" : todas, "sí");
+igual("con el jaque y la captura dichos",
+  pregunta(new Chess("4k3/8/8/8/8/8/3q4/R3K3 w Q - 0 1"), "mis jugadas").includes("d2 capturando"), true);
+
 console.log("\nLa partida");
 igual("última jugada", pregunta(g, "última jugada"), "La última jugada fue de las blancas: Bb5.");
 igual("historial numerado", pregunta(g, "historial"), "5 jugadas. 1: e4, e5; 2: Nf3, Nc6; 3: Bb5.");

@@ -596,21 +596,26 @@ NOMBRE_Y_PADRE = {
     "variante.html": ("Partida", "juegos.html"),
     "sonar.html": ("El Sonar", "juegos.html"),
     "batalla-naval.html": ("Batalla naval", "juegos.html"),
+    # Las páginas de entrenamiento cuelgan del panel, no del hub: el alumno
+    # entra a cada una por su tarjeta del panel y nunca pasa por
+    # entreno/index.html; unas migas que lo mandaban ahí lo dejaban en un
+    # segundo menú con lo mismo. El hub queda como la puerta de quien da clase
+    # o administra (ver «El hub de Entrenamiento y sus grupos»).
     "entreno/index.html": ("Entrenamiento", "clases.html"),
     "entreno/estudio.html": ("Estudio", "clases.html"),
-    "entreno/4x4.html": ("4×4", "entreno/index.html"),
-    "entreno/aprender.html": ("Aprende", "entreno/index.html"),
-    "entreno/coordenadas.html": ("Coordenadas", "entreno/index.html"),
-    "entreno/desafios.html": ("Desafíos", "entreno/index.html"),
-    "entreno/mates.html": ("Mates", "entreno/index.html"),
-    "entreno/practicas.html": ("Practicar", "entreno/index.html"),
-    "entreno/temas.html": ("Ejercicios por tema", "entreno/index.html"),
-    "entreno/visualizacion.html": ("Visualización", "entreno/index.html"),
-    "entreno/aperturas.html": ("Aperturas y celadas", "entreno/index.html"),
-    "entreno/precision-posicional.html": ("Precisión posicional", "entreno/index.html"),
-    "entreno/tipos.html": ("Habilidades", "entreno/index.html"),
-    "entreno/finales.html": ("Finales contra la máquina", "entreno/index.html"),
-    "entreno/memoria.html": ("Memoria", "entreno/index.html"),
+    "entreno/4x4.html": ("4×4", "clases.html"),
+    "entreno/aprender.html": ("Aprende", "clases.html"),
+    "entreno/coordenadas.html": ("Coordenadas", "clases.html"),
+    "entreno/desafios.html": ("Desafíos", "clases.html"),
+    "entreno/mates.html": ("Mates", "clases.html"),
+    "entreno/practicas.html": ("Practicar", "clases.html"),
+    "entreno/temas.html": ("Ejercicios por tema", "clases.html"),
+    "entreno/visualizacion.html": ("Visualización", "clases.html"),
+    "entreno/aperturas.html": ("Aperturas y celadas", "clases.html"),
+    "entreno/precision-posicional.html": ("Precisión posicional", "clases.html"),
+    "entreno/tipos.html": ("Habilidades", "clases.html"),
+    "entreno/finales.html": ("Finales contra la máquina", "clases.html"),
+    "entreno/memoria.html": ("Memoria", "clases.html"),
     "cursos/academia/index.html": ("Mis cursos", "clases.html"),
 }
 

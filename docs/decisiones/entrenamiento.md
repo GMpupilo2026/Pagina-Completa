@@ -1011,6 +1011,11 @@ Memoria) y
 **Tipos de entrenamiento** (una sola tarjeta que abre su ficha, ver «Los Tipos
 de entrenamiento»).
 
+Es la puerta de quien da clase o administra. El alumno no pasa por él: su
+panel tiene una tarjeta por entrenamiento, y las migas de cada página cuelgan
+del panel, no del hub (ver «El alumno ve el entrenamiento abierto» en
+`paneles.md`).
+
 - **Cada acceso es un encabezado de verdad (`<h3>`), no un `<span>`**, y eso es
   el punto, no un detalle de maqueta: quien usa lector de pantalla se mueve
   saltando de encabezado en encabezado. Con el nombre metido en un `<span>`

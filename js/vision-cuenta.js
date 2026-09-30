@@ -165,8 +165,8 @@ window.VisionCuenta = (function () {
     { tecla: "s", que: "Ir a la siguiente sección de esta página", foco: "seccion" },
     { tecla: "a", que: "Volver a la página anterior", foco: "atras" },
     { tecla: "m", que: "Saltar al contenido de esta página", foco: "contenido" },
-    { tecla: "b", que: "Ir al tablero de esta página", foco: "tablero" },
-    { tecla: "c", que: "Ir al recuadro donde se escribe la jugada", foco: "comandos" },
+    { tecla: "b", que: "Oír la posición del tablero", foco: "posicion" },
+    { tecla: "c", que: "Volver al recuadro donde se escribe la jugada", foco: "comandos" },
     { tecla: "h", que: "Oír esta lista de atajos", foco: "ayuda" },
   ];
 
@@ -249,15 +249,218 @@ window.VisionCuenta = (function () {
       return;
     }
     if (que === "comandos") {
-      /* Todos los recuadros donde se escribe la jugada del sitio: el común
-         (.cc-input) y los propios de Tablero, Juegos, Sonar, Batalla naval,
-         4×4, Visualización, Tipos y los cursos. Si hay un diálogo abierto (la
-         pregunta de la clase), primero el suyo. */
-      var SEL = ".cc-input, #blind-input, #move-input, #cmd-input, #blind-move-input, #answer-input, #jugada-input, .f100-cmd-input, .cp-cmd-input, [data-cuadro-comandos] input";
-      var campos = Array.prototype.slice.call(document.querySelectorAll(SEL)).filter(function (c) { return visible(c) && !c.disabled; });
-      var campo = campos.filter(function (c) { return c.closest("dialog[open], [role=dialog]:not([hidden]), [role=alertdialog]:not([hidden])"); })[0] || campos[0];
+      var campo = campoPrincipal();
       if (!campo || !enfocar(campo)) anunciar("En esta página no hay un recuadro para escribir la jugada.");
     }
+    if (que === "posicion") {
+      /* La posición, dicha, sin salir del recuadro: la del tablero más grande a
+         la vista, con la misma frase que «posición» (js/comandos-tablero.js). */
+      var tabs = Array.prototype.slice.call(document.querySelectorAll('[aria-roledescription="tablero de ajedrez"]'))
+        .filter(function (t) { return t.getBoundingClientRect().width > 150; });
+      tabs.sort(function (a, b) { return b.getBoundingClientRect().width - a.getBoundingClientRect().width; });
+      var cfg = tabs.length && tabs[0].__tableroAccesibleCfg, juego = null;
+      try { juego = cfg && typeof cfg.juego === "function" ? cfg.juego() : null; } catch (e) {}
+      var r = juego && window.ComandosTablero ? ComandosTablero.interpretar("posición", { juego: juego }) : null;
+      responder(r && r.manejado ? r.respuesta : "En esta página no hay una posición que decir.", campoPrincipal());
+    }
+  }
+
+  /* Todos los recuadros donde se escribe la jugada del sitio: el común
+     (.cc-input) y los propios de Tablero, Juegos, Sonar, Batalla naval, 4×4,
+     Visualización, Tipos y los cursos. */
+  var SEL = ".cc-input, #blind-input, #move-input, #cmd-input, #blind-move-input, #answer-input, #jugada-input, .f100-cmd-input, .cp-cmd-input, [data-cuadro-comandos] input";
+  // El recuadro de esta página: si hay un diálogo abierto (la pregunta de la clase), el suyo.
+  function campoPrincipal() {
+    var campos = Array.prototype.slice.call(document.querySelectorAll(SEL)).filter(function (c) { return visible(c) && !c.disabled; });
+    return campos.filter(function (c) { return c.closest("dialog[open], [role=dialog]:not([hidden]), [role=alertdialog]:not([hidden])"); })[0] || campos[0] || null;
+  }
+
+  /* ================================================ TODO DESDE EL RECUADRO
+     Quien no ve casi no usa el tablero: se guía por la posición y las
+     jugadas escritas, y hace todo en el recuadro de comandos. Salir de él
+     para buscar el botón de «Pista» o «Siguiente» —Tab, Tab, Tab, ¿era este?,
+     y volver— es lo que más cuesta. Así que en modo ciego lo escrito en
+     CUALQUIER recuadro del sitio pasa primero por acá:
+
+       acciones            dice qué botones y casillas para marcar hay
+       leer                lee el ejercicio (el enunciado y lo que dice la página)
+       «Pista», «Reiniciar», el nombre de cualquier botón a la vista → lo aprieta
+       siguiente / otra vez / solución → el botón que hace eso, se llame como se llame
+       dónde estoy, atajos, panel
+
+     Si no es nada de eso, sigue como siempre: la página lo recibe como
+     jugada o como su propio comando. Los botones se buscan en la MISMA
+     sección que el recuadro (o en el diálogo abierto): una página con dos
+     recuadros no aprieta el botón del otro. Después de cada acción el foco
+     vuelve al recuadro. */
+  function norm(t) {
+    return String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
+      .replace(/[^a-z0-9ñ ]+/g, " ").replace(/\s+/g, " ").trim();
+  }
+  // Los interruptores de la página no son acciones del ejercicio.
+  var NO_SON_ACCIONES = "#mode-normal-btn, #mode-blind-btn, #speech-toggle-btn, #btn-voz, #voz-toggle, #adaptive-toggle, #theme-toggle";
+  function zonaDe(campo) {
+    return campo.closest("dialog[open], [role=dialog], [role=alertdialog]") ||
+      campo.closest("section") || document.getElementById("main-content") || document.querySelector("main") || document.body;
+  }
+  function nombreDe(el) {
+    if (el.matches("input[type=checkbox], input[type=radio]")) {
+      var lab = el.labels && el.labels[0];
+      return norm(lab ? textoDe(lab) : el.getAttribute("aria-label"));
+    }
+    return norm(el.getAttribute("aria-label") || textoDe(el) || el.value);
+  }
+  function accionesDe(campo) {
+    var zona = zonaDe(campo);
+    var form = campo.form;
+    return Array.prototype.slice.call(zona.querySelectorAll("button, [role=button], input[type=button], input[type=submit], input[type=checkbox], input[type=radio], a[href]"))
+      .filter(function (el) {
+        if (form && form.contains(el)) return false;              // el «Enviar» del propio recuadro
+        if (el.closest("#accesos-rapidos, header, [data-square], [aria-hidden=true]")) return false;
+        if (el.matches("[data-square]") || el.matches(NO_SON_ACCIONES)) return false;
+        if (el.disabled || el.getAttribute("aria-disabled") === "true") return false;
+        var ve = el.matches("input[type=checkbox], input[type=radio]") && el.labels && el.labels[0] ? el.labels[0] : el;
+        return visible(ve) && !!nombreDe(el);
+      });
+  }
+  /* Lo que se pide por lo que HACE y no por cómo se llama el botón en cada
+     página: «siguiente» aprieta «Saltar →», «Otra posición» o «Siguiente
+     ejercicio», lo que haya. */
+  var SINONIMOS = {
+    siguiente: ["siguiente", "saltar", "otro ejercicio", "otra posicion", "otro", "otra", "continuar", "seguir", "nuevo ejercicio"],
+    "otra vez": ["reiniciar", "otra vez", "reintentar", "volver a intentar", "intentar de nuevo", "de nuevo", "empezar de nuevo"],
+    reiniciar: ["reiniciar", "otra vez", "reintentar", "volver a intentar", "empezar de nuevo"],
+    solucion: ["ver la solucion", "solucion", "ver respuesta", "ver la respuesta", "mostrar la solucion", "mostrar la respuesta"],
+    comprobar: ["comprobar", "revisar", "responder", "listo"],
+    pista: ["pista", "dame una pista"],
+  };
+  function buscarAccion(t, campo) {
+    var todas = accionesDe(campo);
+    var exacta = todas.filter(function (el) { return nombreDe(el) === t; });
+    if (exacta.length) return exacta[0];
+    // Las primeras palabras del nombre («pista» → «Pista (cuesta una estrella)»), si es uno solo.
+    if (t.length >= 4) {
+      var empieza = todas.filter(function (el) { return (nombreDe(el) + " ").indexOf(t + " ") === 0; });
+      if (empieza.length === 1) return empieza[0];
+    }
+    var lista = SINONIMOS[t];
+    if (!lista) return null;
+    for (var i = 0; i < lista.length; i++) {
+      var hit = todas.filter(function (el) { var n = nombreDe(el) + " "; return n.indexOf(lista[i] + " ") === 0; });
+      if (hit.length) return hit[0];
+    }
+    return null;
+  }
+  function listaDeAcciones(campo) {
+    var vistos = {}, botones = [], marcas = [];
+    accionesDe(campo).forEach(function (el) {
+      var n = el.getAttribute("aria-label") || textoDe(el) || el.value;
+      if (el.matches("input[type=checkbox], input[type=radio]")) n = el.labels && el.labels[0] ? textoDe(el.labels[0]) : n;
+      n = String(n).replace(/\s+/g, " ").trim().replace(/^[^0-9A-Za-zÁÉÍÓÚÑáéíóúñ¿¡]+/, "").replace(/[^0-9A-Za-zÁÉÍÓÚÑáéíóúñ.?!)]+$/, "").trim();
+      if (!n || vistos[n]) return;
+      vistos[n] = true;
+      if (el.matches("input[type=checkbox], input[type=radio]")) marcas.push(n + (el.checked ? " (marcada)" : ""));
+      else if (!el.matches("a[href]")) botones.push(n);
+    });
+    if (!botones.length && !marcas.length) return "Aquí no hay botones: todo se contesta escribiendo en el recuadro.";
+    return (botones.length ? "Puedes escribir el nombre de un botón para apretarlo: " + botones.slice(0, 20).join("; ") + ". " : "") +
+      (marcas.length ? "Para marcar, escribe su texto: " + marcas.slice(0, 20).join("; ") + ". " : "") +
+      "También: «leer» (el ejercicio), «siguiente», «otra vez», «solución».";
+  }
+  // Lo que dice el ejercicio: los títulos, párrafos y avisos de su sección, sin el recuadro ni el tablero.
+  function leerEjercicio(campo) {
+    var zona = zonaDe(campo), vistos = {}, partes = [];
+    Array.prototype.forEach.call(zona.querySelectorAll("h1, h2, h3, p, li, [role=status], legend, label"), function (el) {
+      if (el.closest(".cc-caja, form, [data-square], [aria-roledescription], #accesos-rapidos, .ta-voz, [aria-hidden=true]")) return;
+      if (!visible(el) || el.querySelector("p, li, h2, h3")) return;
+      var t = textoDe(el);
+      if (!t || vistos[t]) return;
+      vistos[t] = true;
+      partes.push(t.replace(/[.:]?$/, "."));
+    });
+    var todo = partes.join(" ");
+    return todo ? (todo.length > 900 ? todo.slice(0, 900) + "…" : todo) : "No encontré texto del ejercicio en esta sección.";
+  }
+  // La respuesta va al aviso del propio recuadro si tiene (el común: .cc-msg), si no a una región viva.
+  function responder(texto, campo) {
+    var caja = campo && campo.closest(".cc-caja");
+    var msg = caja && caja.querySelector(".cc-msg");
+    if (msg) { msg.textContent = ""; setTimeout(function () { msg.textContent = texto; }, 40); }
+    else anunciar(texto);
+    if (window.BlindNotation && BlindNotation.speak) BlindNotation.speak(texto, { encolar: true });
+  }
+  function volverAlRecuadro(campo) {
+    setTimeout(function () {
+      var a = document.activeElement;
+      if (a && a.matches && a.matches("input, textarea, select")) return;   // otro recuadro que se llevó el foco a propósito
+      var c = campo && document.contains(campo) && visible(campo) && !campo.disabled ? campo : campoPrincipal();
+      if (c) c.focus();
+    }, 300);
+  }
+  function comandoGeneral(texto, campo) {
+    var t = norm(texto);
+    if (!t || t.length < 3) return false;          // letras sueltas: opciones y atajos de cada página
+    if (/^(acciones|botones|que puedo hacer|que hay aqui|opciones de la pagina)$/.test(t)) { responder(listaDeAcciones(campo), campo); return true; }
+    if (/^(leer|leer todo|leer ejercicio|leer el ejercicio|enunciado|que dice|que pide)$/.test(t)) { responder(leerEjercicio(campo), campo); return true; }
+    if (/^(donde estoy|donde estas)$/.test(t)) { responder(dondeEstas(), campo); return true; }
+    if (/^(atajos|atajos del teclado)$/.test(t)) { responder(textoAtajos(), campo); return true; }
+    if (/^(panel|ir al panel|mi panel|volver al panel)$/.test(t)) {
+      if (!puedeSalir()) { responder("Desde aquí no se sale escribiendo: usa el enlace de la página para salir.", campo); return true; }
+      location.href = ruta("clases.html");
+      return true;
+    }
+    var el = buscarAccion(t, campo);
+    if (!el) return false;
+    var nombre = el.matches("input[type=checkbox], input[type=radio]") && el.labels && el.labels[0] ? textoDe(el.labels[0]) : (el.getAttribute("aria-label") || textoDe(el) || el.value);
+    // Sin los adornos del botón («💡 Pista», «Saltar →»): el lector los lee en voz alta.
+    nombre = String(nombre).replace(/^[^0-9A-Za-zÁÉÍÓÚÑáéíóúñ¿¡]+/, "").replace(/[^0-9A-Za-zÁÉÍÓÚÑáéíóúñ.?!)]+$/, "").trim();
+    el.click();
+    if (el.matches("input[type=checkbox], input[type=radio]")) responder((el.checked ? "Marcada: " : "Desmarcada: ") + nombre + ".", campo);
+    else responder("Listo: " + nombre + ".", campo);
+    volverAlRecuadro(campo);
+    return true;
+  }
+  // Enter en un recuadro: en fase de captura, ANTES que la página.
+  function alEnviar(e) {
+    if (!esCiego()) return;
+    var form = e.target;
+    var campo = form && form.querySelector ? form.querySelector(SEL) : null;
+    if (!campo || !campo.value) return;
+    if (comandoGeneral(campo.value, campo)) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      campo.value = "";
+    }
+  }
+  function alEnterSinForm(e) {
+    if (!esCiego() || e.key !== "Enter" || e.altKey || e.ctrlKey || e.metaKey) return;
+    var campo = e.target;
+    if (!campo || !campo.matches || !campo.matches(SEL) || campo.form || !campo.value) return;
+    if (comandoGeneral(campo.value, campo)) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      campo.value = "";
+    }
+  }
+  document.addEventListener("submit", alEnviar, true);
+  document.addEventListener("keydown", alEnterSinForm, true);
+
+  /* El foco, al recuadro. Al cargar un ejercicio y cada vez que el foco se
+     queda sin lugar (la página repintó lo que lo tenía y cayó al <body>): así
+     quien no ve empieza escribiendo y no buscando dónde. No se lo quita a
+     nada que la persona haya elegido (otro recuadro, un botón, un enlace). */
+  var buscandoFoco = null;
+  function llevarAlRecuadro() {
+    if (!esCiego()) return;
+    clearTimeout(buscandoFoco);
+    buscandoFoco = setTimeout(function () {
+      var a = document.activeElement;
+      var sinLugar = !a || a === document.body || a === document.documentElement ||
+        a.id === "main-content" || a.tagName === "MAIN";
+      if (!sinLugar) return;
+      var c = campoPrincipal();
+      if (c) c.focus();
+    }, 200);
   }
 
   function alTeclear(e) {
@@ -383,11 +586,14 @@ window.VisionCuenta = (function () {
   var observador = null;
   function montarCiego() {
     if (!document.body) return;
+    llevarAlRecuadro();
+    setTimeout(llevarAlRecuadro, 1200);   // lo que la página pinta después de cargar
     ponerAccesos();
     ocultarNoAdaptado(document);
     avisarPaginaNoAdaptada();
     if (!observador && window.MutationObserver) {
       observador = new MutationObserver(function (registros) {
+        llevarAlRecuadro();
         registros.forEach(function (r) {
           Array.prototype.forEach.call(r.addedNodes, function (n) {
             if (n.nodeType !== 1) return;
@@ -425,5 +631,7 @@ window.VisionCuenta = (function () {
     NO_ADAPTADAS: NO_ADAPTADAS,
     ATAJOS: ATAJOS,
     textoAtajos: textoAtajos,
+    comandoGeneral: comandoGeneral,
+    campoPrincipal: campoPrincipal,
   };
 })();

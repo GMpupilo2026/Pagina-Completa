@@ -81,7 +81,15 @@ lista, y el resto se acomoda solo.
   el panel docente (`PANEL_DOCENTE`) entra todavía por las dos puertas de
   siempre, que están en la lista con `soloDocente` y al alumno se le QUITAN
   (`ordenarPanelDocente()`), no se esconden. El hub `entreno/index.html` sigue
-  existiendo: es adonde llevan las migas de cada página de entrenamiento.
+  existiendo, pero **solo como la puerta de quien da clase o administra**: su
+  panel entra a todo el entrenamiento con una tarjeta, y meterle las trece
+  sueltas lo alargaría otra vez. Las migas de cada página de entrenamiento ya
+  **no** pasan por el hub (`Panel › Mates`, no `Panel › Entrenamiento ›
+  Mates`): el alumno entra a cada una desde su tarjeta del panel, y la miga del
+  medio lo mandaba a un segundo menú que nunca había visto, con las mismas
+  tarjetas en otro orden. Por lo mismo, «Por dónde empezar» sin ningún hueco en
+  el diagnóstico lleva a Practicar y no al hub, y el «Volver» del resultado de
+  Precisión posicional vuelve al panel.
 - **«Hoy te toca», también en el panel.** Vivía solo arriba del hub de
   Entrenamiento: la meta del día, los repasos que vencieron, lo que quedó a
   medias. Desde que el panel abre el entrenamiento tarjeta por tarjeta, el
@@ -178,6 +186,60 @@ lista, y el resto se acomoda solo.
   la vez y corren en orden (`async = false`), y el panel no los espera: se
   pintan cuando llegan. Medido igual: el panel aparece a los ~9,9 s (lo que
   queda es la carga de la propia página). Lo mismo «lo último que hiciste».
+- **Tu próxima clase.** La línea de la clase en vivo decía «Se abre cuando tu
+  profe empiece la clase», pero no cuándo. Si el profe tiene puesto su horario
+  (asistencia.html → «Tu horario»), ahora dice «Tu próxima clase («Finales»)
+  es mañana a las 4:00 p. m., presencial», y a la hora de la clase, «es ahora,
+  hasta las…». El horario del profe **no se le abre al alumno** (vería los de
+  todos sus grupos): `mi_proxima_clase()`, SECURITY DEFINER, le contesta solo
+  la SUYA con la misma regla con que se pasa lista (`alumnosDelHorario`): la
+  de su subgrupo o la de un grupo igual al suyo (sin tildes ni mayúsculas), de
+  uno de SUS profesores (`interno.profesores_de`). Una clase sin grupo ni
+  subgrupo no es de nadie en particular y no cuenta. Cuándo tocaba lo cuenta
+  `ocurrencias_horario()`, la misma del informe. Comprobado en SQL
+  (revertido): cada alumno ve la de su grupo aunque esté escrito «adapz» o
+  «Cénfo», otro alumno no ve ninguna, el alumno sigue sin leer
+  `horario_clases` (0 filas) y `anon` no la puede llamar.
+- **Lo que más usas y cuánto llevas.** Con los grupos plegados, llegar a Mates
+  en el celular era abrir un grupo primero. Arriba de la grilla van las cuatro
+  tarjetas donde más tiempo pasó en 30 días (con menos de dos no se pinta; el
+  diagnóstico y Logros no son costumbre y no entran), y cada tarjeta de la
+  grilla dice cuánto lleva desde siempre: «Llevas 120 mates», con la unidad de
+  Informes (`TiempoSecciones.SECCIONES`), o el tiempo si esa sección no cuenta
+  ejercicios. Todo sale de `tiempo_por_seccion()`, la cuenta de Informes
+  (SECURITY INVOKER: la RLS le da solo lo suyo); dos llamadas, desde siempre y
+  30 días, de ~20 ms con el alumno de más filas. Los cursos no dicen cuánto:
+  eso lo dice «Sigue con tu curso». Mientras se busca, «Lo que más usas» se
+  hace a un lado como el resto de lo que no es la grilla.
+- **Competir avisa lo que lo espera.** Un reto de alguien en línea o un torneo
+  de su profe no se veían hasta entrar a Competir. La tarjeta dice «Te
+  retaron: 1 reto sin contestar» (y se ilumina) con los retos de los últimos
+  dos días —un reto no vence solo y uno de la semana pasada ya no espera a
+  nadie; los viejos siguen en Competir—, «Juegas «X»: va en curso» si está
+  inscrito en un torneo en curso e «Inscripción abierta: «X»» si hay uno de
+  las últimas dos semanas en el que no se inscribió. Los retos se cuentan con
+  `head` (sin traer filas); lo que ve lo decide la RLS de siempre
+  (`desafios_select`, `tournaments_select`: los torneos de SUS profes).
+- **El final del panel, en tarjetas chicas.** «Tu cuenta» (Configuración,
+  Informes, Logros, justificar una ausencia y la encuesta) no se usa todos los
+  días y eran tres filas de tarjetas grandes al final. Al alumno le van en
+  tarjetas chicas (`compacto`), de a dos por fila en el celular y sin la
+  descripción —el nombre ya dice a dónde lleva—, que vuelve desde la tableta.
+  «Herramientas» no se juntó: su única tarjeta (Archivos) está en
+  mantenimiento para el alumnado, así que el grupo ni se pinta, y metida en
+  «Tu cuenta» sería un cuadro gris para siempre. A quien da clase no le toca.
+- **La marca «Nuevo».** Un artículo, un curso, una lección de Aprender o una
+  ficha de Estudio nuevos no se enteraba nadie. `data/contenido-panel.json`
+  dice qué hay detrás de cada una de esas siete tarjetas —los
+  IDENTIFICADORES, no una cuenta: quitar una ficha y agregar otra el mismo día
+  no movería la cuenta— y este aparato recuerda qué había la última vez
+  (`panel_contenido_visto_v1`): lo que no estaba lleva «Nuevo» (o «Nuevo
+  (3)») hasta que abre la tarjeta. La primera vez no marca nada: todo sería
+  nuevo, que es lo mismo que nada. Es una comodidad de este aparato: en otro
+  celular arranca de cero. El JSON **no se escribe a mano**: lo arma
+  `herramientas/contenido-panel.js` de los mismos archivos que pintan cada
+  página, y `verificar-contenido-panel.js` falla si alguien agrega contenido
+  y no lo vuelve a armar.
 - **Los grupos de entrenamiento se pliegan en el celular.** Con el
   entrenamiento abierto tarjeta por tarjeta, el panel del alumno medía en el
   celular unas nueve pantallas (7100 px) y «Jugar y competir» quedaba a casi
