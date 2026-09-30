@@ -1980,8 +1980,8 @@ esa fila. Está probado que falla de verdad: contra el archivo de antes,
 Desde `20260930172140_foto_de_perfil`, cada persona puede subir su foto en
 **Configuración › Perfil**, y se ve donde antes iba la inicial de su nombre: el
 avatar del panel (`clases.html`, también con «Ver como»), la lista de la burbuja
-de conectados, la tabla de cuentas de `admin.html`, la clase en vivo, Informes y el
-informe que llega a la casa (ver abajo). El módulo es uno solo,
+de conectados, la tabla de cuentas de `admin.html`, la clase en vivo, Informes, los rankings
+y el informe que llega a la casa (ver abajo). El módulo es uno solo,
 `js/foto-perfil.js` (`FotoPerfil.subir`, `quitar`, `url`, `urls`, `pintar`).
 
 ### Quién la ve: la misma pregunta que el perfil
@@ -2078,6 +2078,22 @@ alumnos», y arriba del informe de UN alumno (`#informe-persona`: foto, nombre y
 grupo), tanto para quien lo mira como para el propio alumno en el suyo. Al
 volver a «Todos los alumnos» esa cabecera se va (`hideAllReportPanels`).
 Lo prueba `pruebaFotos` de `verificar-informes.js`.
+
+### En los rankings
+
+- **La tabla de posiciones de un torneo** (`torneo.html`) y **los rankings de
+  puntos** (los de la clase, los del mes y los del cierre: los tres los pinta
+  `pintarListaDePuntos()` de `js/clase-puntos.js`) llevan la foto al lado de
+  cada nombre, con `FotoPerfil.avatar()`.
+- En el torneo la foto sale para quien ya puede ver ese perfil: un jugador de
+  otra academia (en Juegos se puede retar entre academias) sale con su
+  inicial, sin escribir otra regla.
+- **Los rankings públicos no la llevan**, a propósito: «¡Te reto!», el Salón de
+  la Fama (`campeones.html`) y la TV se abren sin cuenta, y ahí no hay perfil
+  detrás (en «¡Te reto!» y el Salón de la Fama solo un nombre escrito). La foto
+  de un menor no se muestra a quien entra sin cuenta.
+- Lo prueban `pruebaFotosEnPosiciones` de `verificar-profesor-juega.js` y la
+  parte de la clase de `verificar-foto-perfil.js`.
 
 ### En el informe que llega a la casa
 
