@@ -161,7 +161,8 @@ window.JuegoAviso = (function () {
       const r = await cliente.auth.getSession();
       const sesion = r && r.data && r.data.session;
       if (!sesion) return;
-      const perfil = await cliente.from("profiles").select("role, is_admin").eq("id", sesion.user.id).single();
+      const perfil = window.MiPerfil ? await window.MiPerfil.obtener(sesion.user.id)
+        : await cliente.from("profiles").select("role, is_admin").eq("id", sesion.user.id).single();
       if (perfil.error || !perfil.data) return;
       // La regla permanente de la casa: lo que se hace para los profesores
       // se hace también para quien administra — y acá eso es NO trasladarlos.

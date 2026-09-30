@@ -106,7 +106,22 @@
       antes: mejor, despues: error.despues, fecha: partida.fecha, origen: partida.origen,
       resumen: (ORIGEN[partida.origen] || "Partida") + " del " + fechaCorta(partida.fecha) + " · jugada " + numero,
       tema: tema && tema !== "otra" ? tema : null,
+      // El reloj, si la partida lo trae (Lichess y Chess.com): los segundos que
+      // le quedaban DESPUÉS de hacer la jugada, y el tiempo con que empezó.
+      ...(relojDe(partida, error.ply) || {}),
     };
+  }
+  function relojDe(partida, ply) {
+    const r = partida.relojes && partida.relojes[ply];
+    const base = partida.control && partida.control.base;
+    return typeof r === "number" && r >= 0 && typeof base === "number" && base > 0 ? { reloj: r, base } : null;
+  }
+  /* ¿Lo jugó apurado? Con menos de 30 segundos, o con menos del 10 % del
+     tiempo con que empezó (en una de 3 minutos, 18 segundos). */
+  const APURADO = { segundos: 30, parte: 0.1 };
+  function apurado(x) {
+    return !!x && typeof x.reloj === "number" && typeof x.base === "number" && x.base > 0 &&
+      (x.reloj < APURADO.segundos || x.reloj < x.base * APURADO.parte);
   }
 
   /* El tema de un error, con el reconocedor de la preparación de rivales
@@ -193,6 +208,191 @@
     return t ? { caso: "teoria", linea: t.linea, jugada: t.jugada, buena: !!conBuena } : null;
   }
 
+  /* La celada del banco de Aperturas en que cayó, guardada en el ejercicio
+     (`celada`: el id de la línea, o null si no fue una) para que Informes pueda
+     contar en la base las del grupo. Que la clave esté, aunque sea null, dice
+     que ya se miró: completarCeladas() mira las que se guardaron antes. */
+  function conCelada(x, LINEAS) {
+    if (!x || !LINEAS || !raiz.Chess || Object.prototype.hasOwnProperty.call(x, "celada")) return x;
+    const r = lineaDeApertura(raiz.Chess, x, LINEAS);
+    return Object.assign({}, x, { celada: r && r.caso === "celada" ? r.linea.id : null });
+  }
+  function completarCeladas(LINEAS) {
+    if (!LINEAS) return 0;
+    const faltan = ejercicios().filter((x) => !Object.prototype.hasOwnProperty.call(x, "celada"));
+    if (faltan.length) guardar(faltan.map((x) => conCelada(x, LINEAS)));
+    return faltan.length;
+  }
+
+  /* ---------- el final ----------
+     Un error con poco material (esFinal de PreparacionPosiciones: cada lado
+     con 13 puntos de piezas o menos y dos piezas como mucho) es de un final, y
+     el tipo (de torres, de peones…) dice cuál practicar en Finales contra la
+     máquina. Los de la apertura no cuentan acá. `Pos` = PreparacionPosiciones. */
+  function finalDelError(Pos, fen) {
+    if (!Pos || !fen || enLaApertura(fen)) return null;
+    try {
+      const pz = Pos.piezas(Pos.desdeFen(fen));
+      if (!Pos.esFinal(pz)) return null;
+      const tipo = Pos.tipoDeFinal(pz);
+      return { tipo, grupo: grupoDeFinal(tipo) };
+    } catch (e) { return null; }
+  }
+  // Los alfiles del mismo color, de distinto color o sueltos son «de alfiles»:
+  // en el banco hay pocos de cada uno.
+  function grupoDeFinal(tipo) { return /^de alfiles/.test(tipo) ? "de alfiles" : tipo; }
+  /* El final del banco (entreno/data/finales.json) del mismo grupo, para el
+     enlace ?final=<id>: el primero que todavía no logró, o si ya los logró
+     todos, el primero. null si en el banco no hay de ese tipo. */
+  function finalDelBanco(Pos, FINALES, grupo, logrados) {
+    const delGrupo = (FINALES || []).filter((f) => { const r = finalDelErrorSinApertura(Pos, f.fen); return r && r.grupo === grupo; });
+    if (!delGrupo.length) return null;
+    return (delGrupo.find((f) => !(logrados && logrados[f.id])) || delGrupo[0]).id;
+  }
+  // Los del banco empiezan en la jugada 1 del FEN: no se les aplica el corte de la apertura.
+  function finalDelErrorSinApertura(Pos, fen) {
+    try { const pz = Pos.piezas(Pos.desdeFen(fen)); return Pos.esFinal(pz) ? { grupo: grupoDeFinal(Pos.tipoDeFinal(pz)) } : null; } catch (e) { return null; }
+  }
+
+  /* ---------- la curva: ¿cometes menos errores? ----------
+     Por mes de la partida (la hora de Costa Rica), cuántas partidas se
+     revisaron y cuántos errores salieron de cada nivel. Sale de lo que guarda
+     marcar() en las revisadas (ver arriba): las viejas, sin cuenta, no entran.
+     Devuelve los últimos `meses` que tienen alguna partida, del más viejo al
+     más nuevo: [{ mes: "2026-09", partidas, regalados, escapados, porPartida }].
+     Pura (la prueba verificar-errores-propios.js). */
+  const MES_CR = (iso) => { try { return new Date(new Date(iso).getTime() - 6 * 3600000).toISOString().slice(0, 7); } catch (e) { return null; } };
+  function curva(vistasObj, meses) {
+    const por = {};
+    Object.values(vistasObj || {}).forEach((v) => {
+      if (!v || typeof v !== "object" || typeof v.f !== "string") return;
+      const e1 = Number(v.e1), e2 = Number(v.e2);
+      if (!Number.isInteger(e1) || !Number.isInteger(e2) || e1 < 0 || e2 < 0 || e1 + e2 > 10) return;
+      const mes = MES_CR(v.f);
+      if (!mes || !/^\d{4}-\d{2}$/.test(mes)) return;
+      const m = por[mes] || (por[mes] = { mes, partidas: 0, regalados: 0, escapados: 0 });
+      m.partidas += 1; m.regalados += e1; m.escapados += e2;
+    });
+    return Object.keys(por).sort().slice(-(meses || 6)).map((k) => Object.assign(por[k], { porPartida: (por[k].regalados + por[k].escapados) / por[k].partidas }));
+  }
+  /* Qué dice la curva, en una frase, o null si no hay con qué comparar: el
+     último mes contra el promedio de los anteriores, con 3 partidas o más en
+     cada lado (con menos, un mes malo lo decide todo). */
+  function tendencia(c) {
+    if (!c || c.length < 2) return null;
+    const ultimo = c[c.length - 1];
+    const antes = c.slice(0, -1);
+    const nAntes = antes.reduce((t, m) => t + m.partidas, 0);
+    if (ultimo.partidas < 3 || nAntes < 3) return null;
+    const pAntes = antes.reduce((t, m) => t + m.regalados + m.escapados, 0) / nAntes;
+    const d = ultimo.porPartida - pAntes;
+    return { antes: pAntes, ahora: ultimo.porPartida, sentido: Math.abs(d) < 0.25 ? "igual" : d < 0 ? "mejor" : "peor" };
+  }
+
+  /* La curva en pantalla, para la ficha del alumno (habla "tu") y para
+     Informes (habla "su"): una fila por mes con la barra (decorativa: el
+     número va escrito) y la frase de tendencia(). null con menos de dos meses. */
+  function curvaEnPantalla(c, habla) {
+    if (typeof document === "undefined" || !c || c.length < 2) return null;
+    const su = habla === "su";
+    const num = (n) => n.toLocaleString("es-CR", { maximumFractionDigits: 1, minimumFractionDigits: n % 1 ? 1 : 0 });
+    const nodo = (tag, cls, texto) => { const e = document.createElement(tag); if (cls) e.className = cls; if (texto != null) e.textContent = texto; return e; };
+    const caja = nodo("div", "mb-3");
+    caja.setAttribute("data-curva", "");
+    caja.appendChild(nodo("p", "text-sm font-semibold text-brand-700 dark:text-brand-200 mb-1", su ? "¿Comete menos errores? Errores por partida revisada, mes a mes:" : "¿Cometes menos errores? Errores por partida revisada, mes a mes:"));
+    const max = Math.max.apply(null, c.map((m) => m.porPartida)) || 1;
+    const ul = nodo("ul", "space-y-1");
+    c.forEach((m) => {
+      const li = nodo("li", "flex items-center gap-2 text-sm text-brand-700 dark:text-brand-200");
+      const nombre = new Date(m.mes + "-15T12:00:00Z").toLocaleDateString("es-CR", { month: "long", year: "numeric", timeZone: "UTC" });
+      li.appendChild(nodo("span", "w-36 shrink-0", nombre));
+      const barra = nodo("span", "h-2 rounded bg-accent-500 inline-block");
+      barra.style.width = Math.max(2, Math.round((m.porPartida / max) * 100)) + "px";
+      barra.setAttribute("aria-hidden", "true");
+      li.appendChild(barra);
+      li.appendChild(nodo("span", null, num(m.porPartida) + " por partida · " + m.partidas + (m.partidas === 1 ? " partida" : " partidas")));
+      ul.appendChild(li);
+    });
+    caja.appendChild(ul);
+    const t = tendencia(c);
+    if (t) caja.appendChild(nodo("p", "text-sm text-brand-700 dark:text-brand-200 mt-1",
+      t.sentido === "mejor" ? (su ? "Va" : "Vas") + " mejorando: de " + num(t.antes) + " a " + num(t.ahora) + " errores por partida."
+        : t.sentido === "peor" ? "Este mes salieron más errores por partida (de " + num(t.antes) + " a " + num(t.ahora) + "). Revisarlos es justo lo que ayuda."
+        : "Parejo: alrededor de " + num(t.ahora) + " errores por partida."));
+    return caja;
+  }
+
+  /* ---------- Lichess y Chess.com, en el navegador ----------
+     El usuario que se escribió queda SOLO en ese aparato (no va en
+     progreso-usuario.js: no hace falta que viaje con la cuenta ni que lo vea su
+     profesor). El descargador y el lector de PGN son los de la preparación de
+     rivales; pesan (~100 KB), así que se cargan recién al pedirlos, desde la
+     misma carpeta que este archivo. */
+  const CLAVE_CUENTA_WEB = "errores_cuenta_web_v1";
+  const CLAVE_WEB_MIRADA = "errores_web_mirada_v1";   // lo último que se miró para el aviso del hub
+  const SITIO_WEB = { lichess: "Lichess", chesscom: "Chess.com" };
+  const MAX_WEB = 30;
+  // En orden, con el nombre con que queda cada uno: se carga solo el que falta
+  // (Tipos ya trae posiciones y táctica; el hub, no).
+  const MODULOS_WEB = [["preparacion-lineas.js", "PreparacionLineas"], ["preparacion-posiciones.js", "PreparacionPosiciones"],
+    ["preparacion-libro.js", "PreparacionLibro"], ["preparacion-tactica.js", "PreparacionTactica"], ["preparacion-estructuras.js", "PreparacionEstructuras"],
+    ["preparacion-analisis.js", "PreparacionAnalisis"], ["preparacion-descarga.js", "PreparacionDescarga"]];
+  const esteArchivo = typeof document !== "undefined" && document.currentScript ? document.currentScript.src : "";
+  function cuentaWeb() {
+    try { const o = JSON.parse(localStorage.getItem(CLAVE_CUENTA_WEB) || "{}"); return SITIO_WEB[o.sitio] && typeof o.usuario === "string" ? o : { sitio: "lichess", usuario: "" }; } catch (e) { return { sitio: "lichess", usuario: "" }; }
+  }
+  function guardarCuentaWeb(sitio, usuario) {
+    try { localStorage.setItem(CLAVE_CUENTA_WEB, JSON.stringify({ sitio, usuario })); localStorage.removeItem(CLAVE_WEB_MIRADA); } catch (e) {}
+  }
+  let cargaWeb = null;
+  function cargarWeb() {
+    if (raiz.PreparacionAnalisis && raiz.PreparacionDescarga) return Promise.resolve();
+    if (cargaWeb) return cargaWeb;
+    const base = esteArchivo ? esteArchivo.replace(/errores-propios\.js(\?.*)?$/, "") : "../js/";
+    cargaWeb = MODULOS_WEB.filter(([, global]) => !raiz[global]).reduce((antes, [nombre]) => antes.then(() => new Promise((ok, mal) => {
+      const s = document.createElement("script");
+      s.src = base + nombre;
+      s.onload = ok;
+      s.onerror = () => mal(new Error("no cargó " + nombre));
+      document.head.appendChild(s);
+    })), Promise.resolve()).catch((e) => { cargaWeb = null; throw e; });
+    return cargaWeb;
+  }
+
+  /* ---------- el aviso del hub: partidas sin revisar ----------
+     Cuántas partidas terminadas de 10 jugadas o más todavía no se revisaron:
+     las de la Academia (Juegos y la práctica de la clase, las mismas de
+     traerPartidas) y, si guardó su usuario, las de Lichess o Chess.com.
+     A esos sitios se les pregunta como mucho cada `HORAS_WEB` horas: entre
+     tanto se usa la lista de lo último que se miró (las claves), así que lo
+     que se revisa deja de contar sin volver a preguntar.
+     → { juego, web, sitio } (web null si no hay usuario o no contestó). */
+  const HORAS_WEB = 6;
+  const MAX_AVISO_WEB = 15;
+  async function sinRevisar(sb, uid, o) {
+    const vistasYa = vistas();
+    const cuenta = (lista) => lista.filter((p) => !vistasYa[p.clave] && p.jugadas.length >= 10).length;
+    let juego = 0;
+    try { juego = cuenta(await traerPartidas(sb, uid)); } catch (e) { juego = 0; }
+    const c = cuentaWeb();
+    if (!c.usuario) return { juego, web: null, sitio: null };
+    let mirada = null;
+    try { mirada = JSON.parse(localStorage.getItem(CLAVE_WEB_MIRADA) || "null"); } catch (e) { mirada = null; }
+    const ahora = (o && o.ahora) || Date.now();
+    const vigente = mirada && mirada.sitio === c.sitio && mirada.usuario === c.usuario && Array.isArray(mirada.claves) &&
+      ahora - Date.parse(mirada.cuando) < HORAS_WEB * 3600000;
+    if (!vigente) {
+      try {
+        await cargarWeb();
+        const pgn = await raiz.PreparacionDescarga.descargar({ sitio: c.sitio, usuario: c.usuario, maximo: MAX_AVISO_WEB });
+        const claves = deLaWeb(raiz.PreparacionAnalisis.leerPgn(pgn), c.sitio, c.usuario).filter((p) => p.jugadas.length >= 10).map((p) => p.clave);
+        mirada = { cuando: new Date(ahora).toISOString(), sitio: c.sitio, usuario: c.usuario, claves };
+        try { localStorage.setItem(CLAVE_WEB_MIRADA, JSON.stringify(mirada)); } catch (e) {}
+      } catch (e) { return { juego, web: null, sitio: c.sitio }; }
+    }
+    return { juego, web: mirada.claves.filter((k) => !vistasYa[k]).length, sitio: c.sitio };
+  }
+
   /* ---------- lo guardado ---------- */
   function leer(clave) {
     try { const v = JSON.parse(localStorage.getItem(clave) || "{}"); return v && typeof v === "object" ? v : {}; } catch (e) { return {}; }
@@ -255,7 +455,10 @@
       const clave = sitio + ":" + m[1];
       if (vistas[clave]) return;
       vistas[clave] = true;
-      out.push({ clave, origen: sitio, color, turno0: "w", fenInicial: null, jugadas: p.jugadas.slice(), fecha });
+      const ritmo = String(e.TimeControl || "").trim().match(/^(\d+)(?:\+(\d+))?$/);
+      out.push({ clave, origen: sitio, color, turno0: "w", fenInicial: null, jugadas: p.jugadas.slice(), fecha,
+        relojes: Array.isArray(p.relojes) ? p.relojes.slice() : null,
+        control: ritmo ? { base: Number(ritmo[1]), inc: Number(ritmo[2] || 0) } : null });
     });
     return out.sort((a, b) => (a.fecha < b.fecha ? 1 : a.fecha > b.fecha ? -1 : 0));
   }
@@ -336,7 +539,12 @@
     let hechas = 0;
     for (const p of pendientes) {
       if (o.parar && o.parar()) break;
-      const marcar = () => { const v = vistas(); v[p.clave] = new Date().toISOString(); escribir(CLAVE_VISTAS, v); };
+      /* Qué partidas ya se miraron: cuándo (r), de cuándo es la partida (f) y,
+         si se pudo revisar, cuántos errores salieron de cada nivel (e1, e2).
+         Con eso se arma la curva de curva(), que no puede salir de los
+         ejercicios (se guardan solo los últimos 60). Las viejas son un texto
+         con la fecha: siguen contando como revisadas, pero no en la curva. */
+      const marcar = (cuenta) => { const v = vistas(); v[p.clave] = Object.assign({ r: new Date().toISOString(), f: p.fecha || null }, cuenta || {}); escribir(CLAVE_VISTAS, v); };
       const fens = posiciones(raiz.Chess, p);
       if (!fens || p.jugadas.length < 10) { marcar(); hechas++; continue; }   // no se puede reproducir, o muy corta
       const evals = [];
@@ -354,11 +562,11 @@
         if (e.nivel === 1 && fens[e.ply + 1]) { const r = await motor.evaluar(fens[e.ply + 1], PROF_HONDA); castigo = r && r.mejor; }
         const tema = ops && ops[0] ? temaDelError(o.tactica || raiz.PreparacionTactica, raiz.Chess, e.nivel, fens[e.ply], ops[0].san, p.jugadas[e.ply], castigo) : null;
         const x = ejercicio(p, e, fens[e.ply], p.jugadas[e.ply], ops, tema);
-        if (x) deEsta.push(x);
+        if (x) deEsta.push(conCelada(x, o.lineas || (raiz.AperturasLineas && raiz.AperturasLineas.LINEAS)));
       }
       guardar(deEsta);
       nuevos.push(...deEsta);
-      marcar();
+      marcar({ e1: deEsta.filter((x) => x.nivel === 1).length, e2: deEsta.filter((x) => x.nivel === 2).length });
       hechas++;
     }
     return { partidas: hechas, pendientesAntes: pendientes.length, nuevos };
@@ -382,12 +590,14 @@
       Array.isArray(x.buenas) && x.buenas.length > 0 && x.buenas.length <= 6 && x.buenas.every((s) => typeof s === "string" && SAN.test(s)) &&
       typeof x.antes === "number" && typeof x.despues === "number" && typeof x.fecha === "string")
       .map((x) => (x.tema && !/^[a-z-]{2,20}$/.test(x.tema) ? Object.assign({}, x, { tema: null }) : x))
+      .map((x) => (x.celada != null && !/^[a-z0-9-]{2,40}$/.test(x.celada) ? Object.assign({}, x, { celada: null }) : x))
+      .map((x) => (x.reloj !== undefined && !(typeof x.reloj === "number" && x.reloj >= 0 && typeof x.base === "number" && x.base > 0) ? Object.assign({}, x, { reloj: undefined, base: undefined }) : x))
       .sort((a, b) => (a.fecha < b.fecha ? 1 : a.fecha > b.fecha ? -1 : (a.id < b.id ? -1 : 1)))
       .slice(0, MAX_EJERCICIOS);
     const estrellas = obj(raw.tipos_estrellas_v1);
     const resueltos = {};
     ejercicios.forEach((x) => { const n = Number(estrellas["errores:" + x.id]); if (n >= 1) resueltos[x.id] = Math.min(3, n); });
-    return { ejercicios, revisadas: Object.keys(obj(raw[CLAVE_VISTAS])).length, resueltos };
+    return { ejercicios, revisadas: Object.keys(obj(raw[CLAVE_VISTAS])).length, resueltos, curva: curva(obj(raw[CLAVE_VISTAS])) };
   }
 
   /* ¿La jugada del alumno es una de las buenas? */
@@ -403,6 +613,8 @@
     CLAVE_EJERCICIOS, CLAVE_VISTAS, CORTE, MAX_PARTIDAS, MAX_EJERCICIOS,
     detectar, ejercicio, temaDelError, temasDe, posiciones, acierta, ejercicios, guardar, vistas, traerPartidas, analizar, deFilas,
     deLaWeb, ORIGEN, enLaApertura, lineaDeApertura, JUGADAS_DE_APERTURA,
+    apurado, APURADO, conCelada, completarCeladas, finalDelError, finalDelBanco, curva, tendencia, curvaEnPantalla,
+    SITIO_WEB, MAX_WEB, HORAS_WEB, cuentaWeb, guardarCuentaWeb, cargarWeb, sinRevisar,
   };
   if (typeof module !== "undefined" && module.exports) module.exports = ErroresPropios;
   else raiz.ErroresPropios = ErroresPropios;

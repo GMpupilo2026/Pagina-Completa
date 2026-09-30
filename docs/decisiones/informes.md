@@ -1097,6 +1097,35 @@ uno en «Ejercicios por tema». Sirve para decidir la próxima clase.
 - Una respuesta vieja no pisa a la nueva si se cambia de grupo antes de que
   conteste (`erroresGrupoVez`).
 
+### Las celadas en que más cae el grupo
+
+Debajo de los temas, la vista de grupo dice en qué celadas del banco de
+Aperturas cae más el grupo («Celada Blackburne · 3 veces en 2 alumnos»), con el
+enlace a la línea en Aperturas.
+
+- **Lo cuenta la base**: `errores_celadas_del_grupo(p_alumnos)` (migración
+  `20260930050951`), `SECURITY INVOKER` sobre `training_state`, igual que la de
+  los temas: suma el campo `celada` que «Tus propios errores» anota en cada
+  ejercicio. Comprobado impersonando a un profesor (el alumno de otra academia
+  no suma) y a un alumno (solo lo suyo). Solo cuentan un id con forma de id y
+  una posición con forma de FEN; en la página, además, solo se pinta una
+  celada que esté en el banco.
+- Devuelve también la posición de **una** de esas veces, para el plan: quien
+  da clase tiene «Armar un plan de clase con esta celada», que crea un plan con
+  dos posiciones: donde cayó el grupo (si es una posición legal,
+  `PosicionValida`) y cómo termina la línea del banco, reproducida con
+  chess.js. En las notas, la idea, la clave y la línea entera en castellano.
+  Ninguna posición se inventa.
+- Sigue al filtro de grupo, como los temas; el verificador lo rompe a propósito
+  (mandar siempre a todos) y salta.
+
+### La curva de sus errores
+
+El informe de cada alumno trae, al final del panel de sus errores, la misma
+curva que ve él en su ficha: errores por partida revisada, mes a mes, y si
+mejora (ver «¿Cometes menos errores?» en entrenamiento.md). Sale de
+`ErroresPropios.deFilas()`, que la arma con las revisadas que traen cuenta.
+
 ## Los informes que llegan a la casa
 
 En Informes, mirando a UN alumno, está "📧 Informes a la casa": a qué correos se

@@ -1703,33 +1703,128 @@ solo `js/plan-clase.js`, en páginas con sesión.) Las que quedan a propósito p
 `solicitud_para_elegir_plan` y `elegir_plan` ya no: ver «Elegir un plan pide
 sesión» en `cuentas-y-formularios.md`.
 
-### Lo que queda pendiente y se hace en el panel, no desde acá
+### Lo que se hace en el panel, no desde acá
 
-**La protección contra contraseñas filtradas ya se puede encender, y hay que
-hacerlo.** Supabase puede comparar cada contraseña nueva contra HaveIBeenPwned
-y rechazar las que ya se filtraron; el sitio es de menores de edad y hoy acepta
-cualquiera. Es un interruptor del panel, no SQL, así que no entra en ninguna
-migración. Era de plan Pro y estuvo con candado mientras la organización
-estaba en el gratuito; ya está en Pro, pero el 30 de setiembre de 2026 el
-revisor de seguridad de Supabase (`auth_leaked_password_protection`) la
-seguía marcando apagada.
+**La protección contra contraseñas filtradas está encendida** desde el 30 de
+setiembre de 2026. Supabase compara cada contraseña nueva contra
+HaveIBeenPwned y rechaza las que ya se filtraron; el sitio es de menores de
+edad y antes aceptaba cualquiera. Es un interruptor del panel, no SQL, así que
+no entra en ninguna migración: si algún día se restaura el proyecto desde cero,
+**hay que volver a encenderlo a mano**. Es de plan Pro: mientras la
+organización estuvo en el gratuito, el interruptor aparecía con candado.
 
 - Está en **Authentication › Sign In / Providers › Email › "Prevent use of
-  leaked passwords"**. No es «Authentication › Policies» —ahí no hay nada de
-  esto— y mucho menos **Database › Policies**, que son las reglas RLS de las
-  tablas y es otra pantalla completamente distinta.
-- Lo que hay mientras tanto es el mínimo de 6 caracteres de
-  `bienvenida.html`, que es lo que trae Supabase por omisión. Subirlo a 8 es
-  otro campo de esa misma pantalla, pero un mínimo más largo no distingue una
-  contraseña filtrada de una nueva: son cosas distintas y conviene no
-  confundirlas.
-- En la misma línea: **las conexiones de Auth están fijas en 10** (Project
-  Settings › Database › Connection pooling). Así no crecen con la base, y el
-  inicio de sesión de toda una clase a la vez sigue igual de apretado. Hay que
-  pasarlas a porcentaje (aviso `auth_db_connections_absolute`).
+  leaked passwords"**, y hay que apretar **Save** al final de ese panel:
+  encender el interruptor solo no lo guarda. No es «Authentication ›
+  Policies» —ahí no hay nada de esto— y mucho menos **Database › Policies**,
+  que son las reglas RLS de las tablas.
+- Se comprueba con el revisor de seguridad de Supabase: el aviso
+  `auth_leaked_password_protection` desaparece.
+- Las cuentas que ya existían siguen entrando; al que tenga una contraseña
+  filtrada, Supabase se la marca como débil al iniciar sesión, y el rechazo
+  vale al crear una o al cambiarla.
+- El mínimo sigue en 6 caracteres (`bienvenida.html`, lo que trae Supabase).
+  Subirlo a 8 es otro campo de esa misma pantalla, pero un mínimo más largo no
+  distingue una contraseña filtrada de una nueva: son cosas distintas.
 
-Queda escrito acá porque un pendiente que solo vive en la cabeza de alguien no
-existe.
+**Las conexiones de Auth van en porcentaje: 15 %** (desde el 30 de setiembre
+de 2026). Estaban fijas en 10, y así no crecían con la base. Con la base Small
+(90 conexiones) son unas 13; no van apartadas, Auth las usa en la hora pico y
+las devuelve. **No poner 10 %**: con 90 da 9, menos que antes. Está en
+**Authentication › Performance › Connection management** («Allocation
+strategy»), no en Database. Se comprueba con el aviso
+`auth_db_connections_absolute`, que desaparece. Tampoco está en ninguna
+migración: si se restaura el proyecto, se vuelve a poner a mano.
+
+## La verificación en dos pasos
+
+Salió de la revisión para ISO 27001 (control 8.5, autenticación segura): las
+cuentas que ven a otras personas —quien da clase, coordina, supervisa o
+administra— entraban con la contraseña sola. Ahora pueden activar un segundo
+paso: el código de 6 números de una app del celular (TOTP, Google
+Authenticator o cualquiera). Lo hace Supabase Auth (`sb.auth.mfa`); la página
+solo pone la pantalla (`js/dos-pasos.js`).
+
+- **Se activa en `configuracion.html`**, tarjeta «Verificación en dos pasos»,
+  que solo ven quien no es alumno o tiene `es_supervisor`. QR y la clave para
+  escribirla a mano; queda activada recién con el primer código bueno. Un
+  intento que quedó a medias se borra antes de empezar otro: Supabase los
+  guarda y se irían acumulando. **Quitarla pide dos toques**, y Supabase solo
+  la deja quitar desde una sesión que ya pasó el segundo paso: con la
+  contraseña robada no se desarma.
+- **Al entrar, `login.html` pide el código** después de la contraseña. Y si la
+  página abre con una sesión a medias (entró con la contraseña y no puso el
+  código), pide el código en vez de mandarla a `next`: si no, la guardia de la
+  página la devolvía al login, el login a la página, y así en rueda.
+- **La guardia de la sesión a medias está en `js/supabase-client.js`**, que
+  cargan todas las páginas: en las de la Academia (las que llevan el comentario
+  `guardia: inicio`, más `cobros.html`) manda a `/login.html?next=<la página>`.
+  No va en la guardia de sesión del `<head>` porque esa va por hash en la CSP y
+  no tiene la librería: esta necesita `getAuthenticatorAssuranceLevel()`, que
+  lo saca del token guardado, sin ir a la red.
+
+### Quien la exige es la base, no la pantalla
+
+La regla de siempre: la pantalla no decide nada. **Con la contraseña sola, una
+cuenta que la activó no lee ni escribe nada**, llame como llame.
+
+- **`public.antes_de_cada_pedido()`**, puesta como `pgrst.db_pre_request` del
+  rol `authenticator`: PostgREST la corre antes de CADA pedido, a tablas y a
+  funciones. Si la sesión está a medias, corta con `42501` y el mensaje «Falta
+  el segundo paso…». Un solo candado cubre todas las tablas y todas las
+  funciones `SECURITY DEFINER`, incluidas las que no pasan por `soy_admin()`.
+  - **La corren `anon`, `authenticated` y `service_role`**, así que los tres
+    tienen que poder ejecutarla: sin ese permiso se cae la API entera. Por eso
+    vive en `public` y no en `interno` (`anon` no tiene uso de `interno`).
+  - Cuesta una búsqueda por índice en `auth.mfa_factors` por pedido, y nada con
+    `aal2` (lo resuelve el token).
+  - **Probado contra la API de verdad** (pg_net, desde la base): con la
+    condición forzada, PostgREST contestó 401 con ese mensaje; sin ella, 200.
+  - Para apagarla de urgencia: `alter role authenticator reset
+    pgrst.db_pre_request; notify pgrst, 'reload config';`.
+- **Realtime y Storage no pasan por PostgREST**: leen con la RLS. Cada tabla
+  de Realtime y `storage.objects` llevan la política **restrictiva**
+  `verificacion_en_dos_pasos`, con `(select interno.verificacion_al_dia())`
+  (una vez por consulta, no por fila). **Una tabla que se sume a Realtime
+  necesita la suya**: `verificar-dos-pasos-base.js` lo revisa en el retrato.
+- **Las Edge Functions que miran el permiso con el JWT de quien llama** (un
+  cliente con `Authorization: Bearer <jwt>`) pasan por PostgREST y quedan
+  cubiertas solas. **Las que lo miran con la clave de servicio no**:
+  `prueba-gratis` (solo administración) comprueba a mano el `aal` del token
+  (`sesionAMedias`). `mejorar-informe` también usa la clave de servicio, pero
+  lo peor que hace con una contraseña robada es gastar el tope de la IA: queda
+  pendiente.
+- `interno.verificacion_al_dia()` es la única pregunta: sí si no hay sesión, si
+  el token dice `aal2` o si la cuenta no tiene ningún factor verificado.
+  Comprobado impersonando roles en SQL: sin factor pasa; con factor y `aal1`
+  la función corta y Realtime devuelve 0 filas; con `aal2` pasa; `anon` y
+  `service_role` pasan.
+
+### Perdió el celular
+
+Sin la app no hay código, y sin código no entra. **Quien administra se la
+quita** desde `admin.html` («Quitar verificación», junto a la cuenta con el
+🔐), con `quitar_verificacion_en_dos_pasos(persona)`:
+
+- **Solo quien administra, y entrando con SU propio código (`aal2`).** Con una
+  contraseña de administración robada no se desarma la de nadie. La
+  consecuencia: para poder ayudar a otros, quien administra tiene que tenerla
+  activada.
+- La suya no se quita por ahí: se quita en Configuración.
+- `personas_con_dos_pasos()` dice quién la tiene (solo a administración):
+  sirve también para la revisión periódica de accesos.
+- También se puede desde el panel de Supabase (Authentication › Users).
+
+### Todavía es voluntaria
+
+Hoy la activa quien quiere. **Hacerla obligatoria para administración y
+quienes dan clase es el paso siguiente**, y se decide aparte: una cuenta
+obligada que no la tiene tiene que poder llegar a Configuración a activarla,
+así que no alcanza con cerrarle la base.
+
+- TOTP viene encendido en Supabase (Authentication › Multi-Factor). Si se
+  restaura el proyecto desde cero, revisar que siga así: apagado, la tarjeta
+  de Configuración falla al activar.
 
 ## El nombre de un alumno es texto ajeno
 

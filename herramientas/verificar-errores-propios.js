@@ -211,5 +211,76 @@ console.log("\n=== La apertura: lineaDeApertura() con el banco de Aperturas ==="
   ok("después de la jugada 10 no se busca línea", E.lineaDeApertura(Chess, { fen: blackburne.replace(/ \d+$/, " 11"), jugada: "Nxe5", buenas: ["c3"] }, AP.LINEAS) === null);
 }
 
+console.log("\n=== El final: finalDelError() y finalDelBanco() ===");
+{
+  const P = require("../js/preparacion-posiciones.js");
+  const F = require("../entreno/data/finales.json").finales;
+  // Posiciones del banco de Finales, con el número de jugada de una partida.
+  const deBanco = (id, jugada) => F.find((f) => f.id === id).fen.replace(/ \d+$/, " " + jugada);
+  const r = E.finalDelError(P, deBanco("philidor", 45));
+  ok("un error con torre contra torre es de un final de torres", r && r.tipo === "de torres" && r.grupo === "de torres", JSON.stringify(r));
+  ok("los de alfiles del mismo o distinto color van juntos", E.finalDelError(P, deBanco("distinto-color", 50)).grupo === "de alfiles");
+  ok("con mucho material no es un final", E.finalDelError(P, "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 13") === null);
+  ok("y en la apertura no se cuenta como final", E.finalDelError(P, deBanco("philidor", 8)) === null);
+  const torres = F.filter((f) => E.finalDelError(P, f.fen.replace(/ \d+$/, " 40")) && E.finalDelError(P, f.fen.replace(/ \d+$/, " 40")).grupo === "de torres").map((f) => f.id);
+  ok("finalDelBanco: el primero del grupo que todavía no logró", E.finalDelBanco(P, F, "de torres", { [torres[0]]: true }) === torres[1], torres.join());
+  ok("si ya los logró todos, el primero", E.finalDelBanco(P, F, "de torres", Object.fromEntries(torres.map((t) => [t, true]))) === torres[0]);
+  ok("un grupo que el banco no tiene da null", E.finalDelBanco(P, F, "con dama y otras piezas", {}) === null);
+}
+
+console.log("\n=== El reloj: apurado() y lo que guarda el ejercicio ===");
+{
+  ok("con menos de 30 segundos, apurado", E.apurado({ reloj: 29, base: 600 }) && !E.apurado({ reloj: 30, base: 300 }));
+  ok("con menos del 10 % de lo que tenía, apurado aunque sean más de 30", E.apurado({ reloj: 50, base: 600 }) && !E.apurado({ reloj: 61, base: 600 }));
+  ok("sin reloj o sin ritmo, nunca", !E.apurado({ reloj: 5 }) && !E.apurado({}) && !E.apurado(null));
+  const A = require("../js/preparacion-analisis.js");
+  const pgn = '[Event "x"]\n[Site "https://lichess.org/Reloj000"]\n[UTCDate "2026.09.20"]\n[UTCTime "10:00:00"]\n[White "yo"]\n[Black "otro"]\n[TimeControl "180+2"]\n\n' +
+    "1. e4 { [%clk 0:03:00] } e5 { [%clk 0:03:00] } 2. Nf3 { [%clk 0:02:55] } Nc6 { [%clk 0:02:50] } 3. Bc4 { [%clk 0:02:40] } Nd4 { [%clk 0:02:30] } 4. Nxe5 { [%clk 0:00:12] } 1-0\n";
+  const w = E.deLaWeb(A.leerPgn(pgn), "lichess", "yo")[0];
+  ok("deLaWeb guarda los relojes y el ritmo", w && w.relojes && w.relojes[6] === 12 && w.control && w.control.base === 180 && w.control.inc === 2, JSON.stringify(w && [w.relojes, w.control]));
+  const x = E.ejercicio(w, { ply: 6, nivel: 1, despues: -300 }, "fen", "Nxe5", [{ san: "c3", eval: 0.2 }]);
+  ok("el ejercicio lleva con cuánto tiempo se jugó el error", x.reloj === 12 && x.base === 180 && E.apurado(x), JSON.stringify([x.reloj, x.base]));
+  const sin = E.ejercicio({ clave: "juego:1", origen: "juego", color: "w", fecha: "2026-09-20T10:00:00Z" }, { ply: 6, nivel: 1, despues: -300 }, "fen", "Nxe5", [{ san: "c3", eval: 0.2 }]);
+  ok("y el de una partida sin reloj, no", !("reloj" in sin));
+}
+
+console.log("\n=== La curva: curva() y tendencia() ===");
+{
+  const v = {
+    a: { r: "x", f: "2026-07-05T15:00:00Z", e1: 2, e2: 1 }, b: { r: "x", f: "2026-07-20T15:00:00Z", e1: 3, e2: 0 },
+    c: { r: "x", f: "2026-08-02T15:00:00Z", e1: 1, e2: 1 },
+    d: { r: "x", f: "2026-09-01T03:00:00Z", e1: 0, e2: 0 },   // 31 de agosto en Costa Rica
+    e: { r: "x", f: "2026-09-10T15:00:00Z", e1: 1, e2: 0 }, f: { r: "x", f: "2026-09-12T15:00:00Z", e1: 0, e2: 0 }, g: { r: "x", f: "2026-09-20T15:00:00Z", e1: 0, e2: 1 },
+    vieja: "2026-09-21T10:00:00Z", sinCuenta: { r: "x", f: "2026-09-22T10:00:00Z" }, rara: { r: "x", f: "2026-09-22T10:00:00Z", e1: -1, e2: 0 },
+  };
+  const c = E.curva(v);
+  ok("por mes de la partida en hora de Costa Rica; las viejas y las raras no cuentan",
+    c.map((m) => m.mes + ":" + m.partidas + ":" + m.regalados + "+" + m.escapados).join() === "2026-07:2:5+1,2026-08:2:1+1,2026-09:3:1+1", c.map((m) => m.mes + ":" + m.partidas + ":" + m.regalados + "+" + m.escapados).join());
+  ok("y los errores por partida", c[0].porPartida === 3 && Math.abs(c[2].porPartida - 2 / 3) < 1e-9);
+  const t = E.tendencia(c);
+  ok("tendencia: el último mes contra el promedio de los anteriores", t && t.sentido === "mejor" && t.antes === 2 && Math.abs(t.ahora - 2 / 3) < 1e-9, JSON.stringify(t));
+  ok("con pocas partidas en el último mes no se dice nada", E.tendencia(E.curva({ a: v.a, b: v.b, e: v.e })) === null);
+  ok("peor, si subió", E.tendencia([{ partidas: 3, regalados: 1, escapados: 0, porPartida: 1 / 3 }, { partidas: 3, regalados: 5, escapados: 1, porPartida: 2 }]).sentido === "peor");
+  ok("se queda con los últimos 6 meses", E.curva(Object.fromEntries(Array.from({ length: 9 }, (_, i) => ["k" + i, { f: "2026-0" + (i + 1) + "-15T12:00:00Z", e1: 1, e2: 0 }]))).length === 6);
+  const r = E.deFilas([{ key: "errores_analizadas_v1", value: { raw: JSON.stringify(v) } }]);
+  ok("Informes: deFilas trae la curva y sigue contando todas las revisadas", r.curva.length === 3 && r.revisadas === 10, JSON.stringify([r.curva.length, r.revisadas]));
+}
+
+console.log("\n=== La celada, guardada en el ejercicio ===");
+{
+  global.Chess = Chess;
+  const AP = require("../js/aperturas-lineas.js");
+  const g = new Chess(); ["e4", "e5", "Nf3", "Nc6", "Bc4", "Nd4"].forEach((m) => g.move(m));
+  const x = E.conCelada({ id: "a", fen: g.fen(), jugada: "Nxe5", buenas: ["c3"] }, AP.LINEAS);
+  ok("conCelada anota el id de la línea", x.celada === "blackburne");
+  const y = E.conCelada({ id: "b", fen: g.fen(), jugada: "d3", buenas: ["c3"] }, AP.LINEAS);
+  ok("y null si no fue una celada (la clave queda: ya se miró)", "celada" in y && y.celada === null);
+  ok("uno ya mirado no se vuelve a mirar", E.conCelada({ id: "c", fen: g.fen(), jugada: "Nxe5", buenas: ["c3"], celada: null }, AP.LINEAS).celada === null);
+  const bien = (id, extra) => Object.assign({ id, fen: g.fen(), nivel: 1, jugada: "Nxe5", buenas: ["c3"], antes: 20, despues: -300, fecha: "2026-09-0" + id.length + "T00:00:00Z" }, extra);
+  const r = E.deFilas([{ key: "errores_propios_v1", value: { raw: JSON.stringify({ a: bien("a", { celada: "blackburne", reloj: 12, base: 180 }), bb: bien("bb", { celada: "<img>", reloj: "x", base: 180 }) }) } }]);
+  const porId = Object.fromEntries(r.ejercicios.map((e) => [e.id, e]));
+  ok("deFilas: la celada y el reloj se leen, y lo que no tiene forma se descarta", porId.a.celada === "blackburne" && porId.a.reloj === 12 && porId.bb.celada === null && porId.bb.reloj === undefined, JSON.stringify(r.ejercicios.map((e) => [e.id, e.celada, e.reloj])));
+}
+
 console.log(fallos ? "\n✗ " + fallos + " de " + pruebas + " comprobaciones fallaron." : "\n✓ Las " + pruebas + " comprobaciones pasaron.");
 process.exit(fallos ? 1 : 0);

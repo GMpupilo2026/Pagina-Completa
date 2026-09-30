@@ -1052,14 +1052,21 @@
             const p = (texto, cls) => { const x = document.createElement("p"); x.className = cls || "text-sm text-brand-600 dark:text-brand-300"; x.textContent = texto; body.appendChild(x); return x; };
             if (!students.length) { p("No hay alumnos en este grupo."); return; }
             p("Cargando…");
-            const { data, error } = await sb.rpc("errores_temas_del_grupo", { p_alumnos: students.map((s) => s.id) });
+            const ids = students.map((s) => s.id);
+            const [{ data, error }, celadasR] = await Promise.all([
+                sb.rpc("errores_temas_del_grupo", { p_alumnos: ids }),
+                sb.rpc("errores_celadas_del_grupo", { p_alumnos: ids }),
+            ]);
             if (vez !== erroresGrupoVez) return;
             body.textContent = "";
             if (error) { p("No se pudieron cargar los errores del grupo. Intenta de nuevo en un momento."); return; }
             // Solo los temas que la página sabe nombrar: la clave la escribió el
             // navegador de cada alumno.
             const filas = (data || []).filter((f) => f && TEMAS[f.tema] && f.tema !== "otra" && f.errores > 0).slice(0, 6);
-            if (!filas.length) {
+            // Y solo las celadas que están en el banco de Aperturas.
+            const LINEAS = window.AperturasLineas ? AperturasLineas.LINEAS : null;
+            const celadas = LINEAS && !celadasR.error ? (celadasR.data || []).map((f) => ({ f, L: LINEAS.find((l) => l.id === f.linea && l.tipo === "celada") })).filter((x) => x.L && x.f.errores > 0).slice(0, 4) : [];
+            if (!filas.length && !celadas.length) {
                 p("Todavía no hay errores con tema en las partidas de este grupo. Aparecen cuando tus alumnos las revisan en Entrenamiento → Habilidades → «Tus propios errores».");
                 return;
             }
@@ -1084,7 +1091,84 @@
                 }
                 ol.appendChild(li);
             });
+            if (filas.length) body.appendChild(ol);
+            if (celadas.length) pintarCeladasDelGrupo(body, celadas);
+        }
+
+        /* Las celadas del banco de Aperturas en que más cae el grupo (las cuenta
+           errores_celadas_del_grupo()): cuántas veces y cuántos alumnos, el
+           enlace a la línea y, para quien da clase, un plan de clase con ella. */
+        function pintarCeladasDelGrupo(body, celadas) {
+            const h = document.createElement("h3");
+            h.className = "text-sm font-semibold text-brand-700 dark:text-brand-200 mt-5 mb-2";
+            h.textContent = "Las celadas en que más cae el grupo";
+            body.appendChild(h);
+            const puedePlan = window.PlanClase && window.PosicionValida && window.Chess && profile.role === "profesor" && !profile._persona;
+            const ol = document.createElement("ol");
+            ol.className = "space-y-2";
+            ol.setAttribute("data-celadas", "");
+            celadas.forEach(({ f, L }) => {
+                const li = document.createElement("li");
+                li.className = "border-b border-brand-50 dark:border-brand-800/60 last:border-0 pb-2";
+                const fila = document.createElement("div");
+                fila.className = "flex flex-wrap items-baseline justify-between gap-2";
+                const izq = document.createElement("span");
+                izq.className = "text-sm text-brand-700 dark:text-brand-200";
+                const nombre = document.createElement("strong");
+                nombre.textContent = "«" + L.nombre + "»";
+                izq.append(nombre, " · " + (f.errores === 1 ? "1 vez" : f.errores + " veces") + " en " + pluralES(f.alumnos, "alumno", "alumnos"));
+                const a = document.createElement("a");
+                a.href = "entreno/aperturas.html?linea=" + encodeURIComponent(L.id);
+                a.className = "text-sm font-semibold text-accent-700 dark:text-accent-400 underline";
+                a.textContent = "La línea en Aperturas →";
+                fila.append(izq, a);
+                li.appendChild(fila);
+                if (puedePlan) {
+                    const btn = document.createElement("button");
+                    btn.type = "button";
+                    btn.className = "mt-2 text-sm font-semibold px-3 py-1.5 rounded-lg border border-brand-200 dark:border-brand-700 text-brand-700 dark:text-brand-200 hover:border-accent-500 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+                    const ic = document.createElement("span"); ic.setAttribute("aria-hidden", "true"); ic.textContent = "📋 ";
+                    btn.append(ic, document.createTextNode("Armar un plan de clase con esta celada"));
+                    const msg = document.createElement("p");
+                    msg.className = "text-sm mt-1 text-brand-600 dark:text-brand-300";
+                    msg.setAttribute("role", "status");
+                    btn.addEventListener("click", () => planDeCelada(L, f.fen, btn, msg));
+                    li.append(btn, msg);
+                }
+                ol.appendChild(li);
+            });
             body.appendChild(ol);
+        }
+
+        /* El plan de una celada: la posición de una de las partidas del grupo
+           donde se cayó (si es una posición legal) y cómo termina la línea del
+           banco, reproducida con chess.js. Ninguna posición se inventa. */
+        async function planDeCelada(L, fen, btn, msg) {
+            btn.disabled = true;
+            msg.textContent = "Armando el plan…";
+            const sanEs = (x) => (window.TiposReglas ? TiposReglas.sanEs(x) : x);
+            try {
+                const g = new Chess();
+                const texto = [];
+                L.jugadas.forEach((m, i) => { const r = g.move(m); if (r) texto.push((i % 2 === 0 ? (i / 2 + 1) + "." : "") + sanEs(r.san)); });
+                const items = [];
+                if (fen && !PosicionValida.motivo(fen)) items.push({ tipo: "posicion", fen, titulo: ("Aquí se cae en la «" + L.nombre + "»").slice(0, 200),
+                    pregunta: ("¿Qué jugarías? De esta posición sale la «" + L.nombre + "»: la jugada que parece natural pierde.").slice(0, 500) });
+                items.push({ tipo: "posicion", fen: g.fen(), titulo: ("Así termina la «" + L.nombre + "»").slice(0, 200), pregunta: ("¿Qué pasó? " + L.idea).slice(0, 500) });
+                const plan = await PlanClase.crearPlan(sb, profile.id, ("Celada: «" + L.nombre + "»").slice(0, 200),
+                    (L.idea + " " + L.clave + " La línea: " + texto.join(" ") + ".").slice(0, 2000));
+                for (let i = 0; i < items.length; i += 1) await PlanClase.agregarItem(sb, plan.id, Object.assign({ orden: i }, items[i]));
+                msg.textContent = "Listo: el plan quedó en tus Planes de clase. ";
+                const a = document.createElement("a");
+                a.href = "planes.html?plan=" + encodeURIComponent(plan.id);
+                a.className = "font-semibold text-accent-700 dark:text-accent-400 underline";
+                a.textContent = "Abrir el plan";
+                msg.appendChild(a);
+            } catch (e) {
+                console.error(e);
+                msg.textContent = "No se pudo armar el plan. Intenta de nuevo en un momento.";
+                btn.disabled = false;
+            }
         }
 
         const ERRORES_A_LA_VISTA = 5;
@@ -1156,6 +1240,9 @@
                 });
                 body.appendChild(ver);
             }
+            // ¿Comete menos errores? La misma curva que ve en su ficha, mes a mes.
+            const curva = ErroresPropios.curvaEnPantalla ? ErroresPropios.curvaEnPantalla(r.curva, "su") : null;
+            if (curva) { curva.classList.add("mt-4"); body.appendChild(curva); }
             botonPlanDeErrores(body, name, r);
         }
 

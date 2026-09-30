@@ -195,6 +195,56 @@ async function hub(browser) {
       await page.evaluate(() => document.querySelector("#hoy-lista a").textContent.includes("Repetir el diagnóstico")), "true");
     await ctx.close();
   }
+  /* Partidas sin revisar en «Tus propios errores»: las de la Academia (el
+     doble filtra de verdad: la ajena, la de otra variante y la que sigue en
+     curso no cuentan; la ya revisada tampoco) y las de Lichess del usuario
+     guardado, a quien se le pregunta una sola vez cada 6 horas. */
+  {
+    const J = ["e4", "e5", "Nf3", "Nc6", "Bc4", "Bc5", "c3", "Nf6", "d4", "exd4", "cxd4", "Bb4+"];
+    const sala = (id, extra) => Object.assign({ id, variant: "estandar", status: "finished", white_id: "u-ana", black_id: "u-otro", moves: J, updated_at: "2026-09-20T10:00:00Z" }, extra);
+    const tablas = {
+      game_rooms: [sala("g-nueva"), sala("g-negras", { white_id: "u-otro", black_id: "u-ana" }), sala("g-revisada"), sala("g-corta", { moves: J.slice(0, 8) }),
+        sala("g-ajena", { white_id: "u-x", black_id: "u-y" }), sala("g-crazy", { variant: "crazyhouse" }), sala("g-curso", { status: "playing" })],
+      practice_games: [],
+    };
+    const cuerpo = J.map((m, i) => (i % 2 ? "" : (i / 2 + 1) + ". ") + m).join(" ") + " 1-0";
+    const pgn = ["Nuev0001", "Nuev0002", "Visto000"].map((id) => '[Event "x"]\n[Site "https://lichess.org/' + id + '"]\n[UTCDate "2026.09.25"]\n[UTCTime "10:00:00"]\n[White "Ana_R"]\n[Black "otro"]\n[Variant "Standard"]\n\n' + cuerpo + "\n").join("\n");
+    let pedidos = 0;
+    const lichess = async (ctx) => {
+      await ctx.route("https://lichess.org/api/games/user/**", (r) => { pedidos++; r.fulfill({ status: 200, contentType: "application/x-chess-pgn", headers: { "Access-Control-Allow-Origin": "*" }, body: pgn }); });
+    };
+    const localErr = {
+      errores_analizadas_v1: JSON.stringify({ "juego:g-revisada": { r: "x", f: "2026-09-20T10:00:00Z", e1: 0, e2: 0 }, "lichess:Visto000": "2026-09-26T00:00:00Z" }),
+      errores_cuenta_web_v1: JSON.stringify({ sitio: "lichess", usuario: "Ana_R" }),
+    };
+    const verAviso = (page) => page.evaluate(() => { const a = [...document.querySelectorAll("#hoy-lista a")].find((x) => /sin revisar/.test(x.textContent)); return a ? [a.textContent.replace("→", "").trim(), a.getAttribute("href")] : null; });
+    const { page, ctx, errores } = await abrir(browser, "/entreno/index.html", tablas, localErr, lichess);
+    await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
+    await page.waitForFunction(() => [...document.querySelectorAll("#hoy-lista a")].some((a) => /sin revisar/.test(a.textContent)), null, { timeout: 15000 }).catch(() => {});
+    igual("avisa las partidas sin revisar: 2 de Lichess y 2 de la Academia (ni la revisada, ni la corta, ni la ajena, ni otra variante, ni en curso)",
+      await verAviso(page), ["🪞4 partidas sin revisar en «Tus propios errores» (2 de Lichess, 2 de la Academia)", "tipos.html?traer=web#errores"]);
+    igual("a Lichess se le preguntó una vez", pedidos, 1);
+    // Revisa una de Lichess: al volver a pintar deja de contar, sin volver a preguntar.
+    await page.evaluate(() => { const v = JSON.parse(localStorage.getItem("errores_analizadas_v1")); v["lichess:Nuev0001"] = { r: "x", f: "2026-09-25T10:00:00Z", e1: 0, e2: 0 }; localStorage.setItem("errores_analizadas_v1", JSON.stringify(v)); });
+    // (Sin recargar: el doble vuelve a escribir el localStorage en cada carga.)
+    await page.evaluate(() => pintarHoy("u-ana"));
+    await page.waitForFunction(() => [...document.querySelectorAll("#hoy-lista a")].some((a) => /3 partidas sin revisar/.test(a.textContent)), null, { timeout: 15000 }).catch(() => {});
+    igual("al volver, la revisada ya no cuenta", (await verAviso(page) || [""])[0], "🪞3 partidas sin revisar en «Tus propios errores» (1 de Lichess, 2 de la Academia)");
+    igual("y a Lichess no se le volvió a preguntar (una vez cada 6 horas)", pedidos, 1);
+    sinErrores(errores, "hub con partidas sin revisar");
+    await ctx.close();
+  }
+  {
+    // Sin usuario guardado no se le pregunta a nadie de afuera.
+    let pedidos = 0;
+    const { page, ctx } = await abrir(browser, "/entreno/index.html", { game_rooms: [], practice_games: [] }, {},
+      async (c) => { await c.route("https://lichess.org/**", (r) => { pedidos++; r.abort(); }); await c.route("https://api.chess.com/**", (r) => { pedidos++; r.abort(); }); });
+    await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
+    await page.waitForTimeout(1500);
+    igual("sin usuario guardado, ni Lichess ni Chess.com reciben nada", pedidos, 0);
+    igual("y sin partidas nuevas no hay aviso", await page.evaluate(() => [...document.querySelectorAll("#hoy-lista a")].some((a) => /sin revisar/.test(a.textContent))), "false");
+    await ctx.close();
+  }
   /* La semana del plan. El diagnóstico se guarda como lo deja
      entreno/diagnostico.html ({ fecha, detalle: { areas, fecha } }), y lo
      esperado se lee de PlanEntrenamiento, no se escribe a mano. */

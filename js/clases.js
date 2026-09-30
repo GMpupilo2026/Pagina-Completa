@@ -1730,7 +1730,7 @@
            racha es la misma promesa que usa «Tu progreso». */
         const SCRIPTS_HOY = ["js/repaso-espaciado.js", "js/repaso-fallados.js", "js/tema-flojo.js",
             "js/tipos-catalogo.js", "js/tipo-flojo.js", "js/tiempo-secciones.js",
-            "js/progreso-usuario.js", "js/hoy-te-toca.js"];
+            "js/errores-propios.js", "js/progreso-usuario.js", "js/hoy-te-toca.js"];
         async function cargarHoyTeToca(rachaP) {
             try {
                 for (const src of SCRIPTS_HOY) await traerScript(src);
@@ -2462,7 +2462,8 @@
             session = data.session;
             if (!session) { window.location.href = "login.html"; return; }
 
-            const { data: profileData, error: profileError } = await sb.from("profiles").select("*").eq("id", session.user.id).single();
+            const { data: profileData, error: profileError } = window.MiPerfil ? await window.MiPerfil.obtener(session.user.id)
+                : await sb.from("profiles").select("*").eq("id", session.user.id).single();
             if (profileError || !profileData) {
                 // No basta con avisar y dejar la rueda de carga dando vueltas: si el
                 // perfil no carga (sesión caducada, fila borrada, error de red), se le

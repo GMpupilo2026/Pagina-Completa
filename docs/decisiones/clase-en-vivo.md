@@ -1478,6 +1478,16 @@ Modo Adaptado. Ahora lo puede encender el profe, de dos maneras:
   adaptado» le suma `&adaptado=1` al enlace, y la página lo enciende antes de
   pedir el nombre (y lo dice: «Tu profe te mandó este enlace con el modo
   adaptado»). No va a la base: es parte del enlace que se copia.
+- **El enlace ya abre con la voz encendida**: la casilla «Que abra con la voz
+  encendida» le suma `&voz=1`, para quien ve poco y no usa lector de pantalla.
+  La página enciende la voz del navegador (la misma preferencia de todo el
+  sitio) y lo deja escrito en `#vc-voz`. **Ningún navegador deja hablar a una
+  página antes del primer toque o tecla**: lo que se diga antes se pierde sin
+  error. Por eso el aviso se dice con el primer toque (`pointerup`, que es
+  cuando el celular da el permiso, no `pointerdown`), salvo que ese toque sea
+  el mismo botón de la voz. Se puede combinar con `&adaptado=1`, y los dos
+  avisos salen juntos. La prueba lleva su propia cuenta del permiso: el
+  navegador de prueba ya arranca con `navigator.userActivation` dado.
 - **Desde la lista, en plena clase**: cada invitado lleva su botón «🦯
   Adaptado» (`aria-pressed`, con el nombre del invitado en su etiqueta), y la
   lista dice escrito quién lo tiene puesto. `clase_enlace_adaptado()` lo

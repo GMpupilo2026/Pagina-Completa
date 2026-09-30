@@ -584,6 +584,8 @@
         // Todas las cuentas cargadas la última vez (para poder reagrupar sin
         // volver a pedirlas a la base de datos cada vez que cambia el select).
         let allUsers = [];
+        // Quién tiene activada la verificación en dos pasos (personas_con_dos_pasos()).
+        let conDosPasos = new Set();
         /* Quién coordina a quién. Se lee directo por PostgREST, como los
            equipos: la tabla tiene política de SELECT y escribirla es cosa de
            set_profesores_del_coordinador(), que exige is_admin. Va declarada
@@ -715,6 +717,13 @@
                     corona.title = "Administrador";
                     nameLine.appendChild(corona);
                 }
+                if (conDosPasos.has(u.id)) {
+                    const candado = document.createElement("span");
+                    candado.className = "shrink-0 text-xs";
+                    candado.innerHTML = '<span aria-hidden="true">🔐</span><span class="sr-only">Con verificación en dos pasos</span>';
+                    candado.title = "Con verificación en dos pasos";
+                    nameLine.appendChild(candado);
+                }
                 tdCuenta.append(nameLine, renderCorreoCelda(u));
 
                 const tdRole = document.createElement("td");
@@ -804,6 +813,26 @@
                     }
                 });
                 tdActions.appendChild(resetBtn);
+
+                /* Quien perdió el celular con la app no puede entrar: se le quita
+                   la verificación y entra con su contraseña. La base solo lo deja
+                   si quien administra entró con SU código (ver «La verificación
+                   en dos pasos» en permisos-y-roles.md). */
+                if (conDosPasos.has(u.id) && !isSelf) {
+                    const quitarBtn = document.createElement("button");
+                    quitarBtn.type = "button";
+                    quitarBtn.className = "text-xs text-brand-500 dark:text-brand-300 hover:text-accent-500 hover:underline mr-3";
+                    quitarBtn.textContent = "Quitar verificación";
+                    quitarBtn.addEventListener("click", async () => {
+                        if (!(await Avisos.confirmar("Desde ese momento entra solo con su contraseña, hasta que la vuelva a activar en Configuración. Hazlo solo si te lo pidió esa persona.", { titulo: `¿Quitarle la verificación en dos pasos a ${u.full_name || u.email}?`, aceptar: "Quitar la verificación", peligro: true }))) return;
+                        const { error } = await sb.rpc("quitar_verificacion_en_dos_pasos", { p_persona: u.id });
+                        if (error) { Avisos.avisar("No se pudo quitar: " + error.message, { tipo: "error" }); return; }
+                        conDosPasos.delete(u.id);
+                        Avisos.avisar("Listo: ya entra solo con su contraseña.");
+                        pintarCuentas();
+                    });
+                    tdActions.appendChild(quitarBtn);
+                }
 
                 // Transferir la administración es de una vez cada tanto, no de todos
                 // los días: pasó de tener columna propia a vivir acá. La corona
@@ -1953,6 +1982,10 @@
                 return;
             }
             allUsers = data;
+            try {
+                const { data: dp, error: dpError } = await sb.rpc("personas_con_dos_pasos");
+                conDosPasos = new Set(dpError ? [] : (dp || []).map((x) => (typeof x === "string" ? x : Object.values(x)[0])));
+            } catch (e) { conDosPasos = new Set(); }
             profesoresPorAlumno = new Map();
             (parejas || []).forEach((r) => {
                 if (!profesoresPorAlumno.has(r.student_id)) profesoresPorAlumno.set(r.student_id, []);

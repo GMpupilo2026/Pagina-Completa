@@ -1270,8 +1270,9 @@ mano (detalle en `RESTAURAR.md`, «Lo que las copias diarias no cubren»):
 
 - **Los archivos de Storage.** La copia guarda la fila que describe un archivo,
   no el archivo. Hoy casi no hay (los logos de `academia-marca`), pero los
-  adjuntos de formularios y las justificaciones van a necesitar su propio
-  respaldo cuando empiecen a llegar.
+  adjuntos de formularios y las justificaciones lo necesitan, y por eso
+  existe `herramientas/respaldo-storage.js` (ver «Los archivos de Storage se
+  respaldan aparte», abajo).
 - **Una copia fuera de Supabase.** Las copias diarias viven donde vive la base:
   si se pierde el proyecto o la cuenta, se pierden con él.
 
@@ -1295,6 +1296,40 @@ trabajo, no lo que hay en git.
   temprano no se corre.** Por eso lo principal son las copias diarias, que no
   dependen de nadie, y el volcado queda para antes de una migración que toque
   datos y para tener una copia afuera.
+
+### Los archivos de Storage se respaldan aparte
+
+Salió de la revisión para ISO 27001 (control 8.13, copias de seguridad): el
+cuadro de `RESTAURAR.md` decía «en ninguna parte todavía» en la fila de los
+archivos subidos, y eso lo nota cualquier auditor. Hoy son pocos (los logos),
+pero las justificaciones de ausencia traen constancias médicas y los adjuntos
+de formularios traen documentos de menores: cuando empiecen a llegar, no se
+puede empezar a respaldar recién ahí.
+
+- **`respaldo-storage.js` baja todos los buckets**, también los privados, con
+  la clave de servicio **por variable de entorno** (la misma regla que la
+  cadena de `respaldo-datos.sh`). Deja los archivos en
+  `respaldos/storage-<fecha>/` y un `manifiesto.json` con el sha256 de cada uno
+  y la configuración de cada bucket.
+- **Pagina siempre.** Storage lista por páginas, igual que PostgREST: una
+  carpeta con más archivos que una página se respaldaría a medias sin ningún
+  aviso. Y baja a las subcarpetas, porque Storage no tiene carpetas: una
+  entrada sin `id` es el prefijo de otras rutas.
+- **Comprueba lo que bajó**: si llegan menos bytes de los que dice Storage,
+  falla y dice cuál; y al terminar vuelve a leer del disco cada archivo y lo
+  compara con el manifiesto. Un respaldo cortado se ve igual que uno entero.
+- **`restaurar-storage.js` recrea cada bucket como era**: un bucket privado
+  recreado como público dejaría las constancias médicas a la vista, y eso no
+  da ningún error. No pisa lo que ya está (salvo con `--pisar`), y si un
+  archivo del respaldo no cuadra con su sha256, no sube ninguno.
+- **Las políticas de Storage no van en el respaldo**: son de la base y
+  vuelven con las migraciones.
+
+`verificar-respaldo-storage.js` prueba los dos scripts contra un Storage de
+mentira (un servidor local), sin red ni claves: subcarpetas, páginas, bytes
+iguales, una descarga cortada, el bucket privado que vuelve privado, no pisar
+y el respaldo dañado. Probado que falla: sin paginar y sin comparar el tamaño,
+saltan tres comprobaciones.
 
 ### Al aplicar una migración o desplegar una función, actualizar el respaldo
 
@@ -1420,8 +1455,9 @@ abajo empieza a llegar seguido, es la señal para subir otro escalón.
 Cómo se decidió qué tocar: **por tiempo total de base, no por número de
 pedidos.** Leer el perfil propio se pedía unas 2400 veces por hora (cada página
 lo lee 4 o 5 veces, desde módulos distintos), pero cuesta 1-2 ms por la llave:
-juntarlas ahorra unos segundos por hora y obliga a tocar 45 archivos. Se dejó.
-Lo que pesaba era lo que tarda cientos de milisegundos y va en cada panel.
+juntarlas ahorra unos segundos de base por hora. Lo que pesaba era lo que tarda
+cientos de milisegundos y va en cada panel. (Después se juntaron igual, por
+otra razón: ver «El perfil propio, una lectura por página».)
 
 ### Lo que cada página pedía de nuevo
 
@@ -1473,10 +1509,51 @@ todas las filas) de 21 respuestas —7 cuentas, alumnos y profesores, con y sin
 base consume en total: cada cambio de una tabla escuchada se comprueba contra la
 RLS de cada suscriptor. Pasar lo más frecuente de la clase (el tablero, las
 partidas de práctica) a mensajes directos (*broadcast*) casi no toca la base.
-Es un cambio grande, que queda pendiente. Y la práctica con reloj vuelve a bajar
-la lista entera de partidas, con los nombres, por cada jugada (unas 800 veces por
-hora en la caída): aplicar el cambio que ya llega por Realtime en vez de
-volver a pedir la lista.
+Es un cambio grande, que queda pendiente. La práctica con reloj volvía a bajar
+la lista entera de partidas, con los nombres, por cada jugada (797 veces en la
+hora de la caída): eso ya lo arregló #606 (`aplicarCambioDePractica` usa la
+fila que trae Realtime), que entró a las 8:18 p. m. del 29, **después** de la
+caída. Desde entonces esa lectura casi no aparece en los registros.
+
+### El perfil propio, una lectura por página
+
+**`window.MiPerfil.obtener(uid)`** (en `js/supabase-client.js`, que cargan todas
+las páginas) pide la fila entera de `profiles` de quien entró **una vez** y se
+la reparte a quien la pida después, cada uno con su propia copia. La usan los
+tres módulos que van en casi todas las páginas —`juego-aviso.js` (66),
+`burbuja-en-linea.js` (65), `ayuda-guia.js` (55)—, `modo-vista.js` y los
+arranques de `clases.js` y `sesion.js`.
+
+- **Por qué, si cada lectura cuesta 1-2 ms de base:** no es por la base, es por
+  la página. Eran cuatro viajes de ida y vuelta al cargar cada una (en la hora
+  pico, ~1500 de los 13 600 pedidos), cada uno con su latencia y su lugar en la
+  fila de conexiones. Tocando 6 archivos, no 45: los demás que leen el perfil
+  propio se quedan como están, y conviene que uno nuevo use `MiPerfil`.
+- **Un error no se guarda**: el siguiente vuelve a pedir. Se olvida al entrar,
+  al salir o al cambiar la cuenta (`onAuthStateChange`).
+- **Cada módulo mantiene su lectura de antes como respaldo**, por si
+  `MiPerfil` no existe: hay verificadores que reemplazan `supabase-client.js`
+  entero por su doble.
+- `verificar-mi-perfil.js` (sin navegador) comprueba que cuatro pedidos a la
+  vez salgan como uno solo, que cada uno reciba su copia, que un error no se
+  guarde y que esos seis archivos lo usen. Rompiendo la memoria o sacándolo de
+  un módulo, salta.
+
+**Lo que se midió y se dejó como está:**
+
+- **Las 78 funciones de lectura que pide el sitio**, impersonando a cuatro
+  cuentas (un profesor con 52 alumnos que además supervisa, un coordinador con
+  65, administración y el alumno con más actividad), después del arreglo de
+  `tareas_con_avance` (ver «Una función SQL con CTE: el que se usa en varios
+  lados va `materialized`» en `informes.md`): **ninguna pasa de medio segundo**.
+  La más lenta es `mi_gente` (414 ms al coordinador, 221 a administración), que
+  se pide poco. Las que fallaron en la caída (`mis_clases`, `resumen_del_mes`,
+  `resumen_de_la_clase`, `informes_resumen_alumnos`) tardan entre 2 y 130 ms
+  en reposo: se cayeron por la base saturada, no por su propio costo.
+- **`class_presence_log`** (692 escrituras por hora en la caída) es el «sigo en
+  clase» de cada alumno cada 20 s, que hace exactos los minutos en clase. Cada
+  una es una fila por su llave, en una tabla que no está en Realtime: espaciarlo
+  ahorra casi nada y le quita precisión a los informes.
 
 ## El aviso de base saturada
 

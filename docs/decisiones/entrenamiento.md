@@ -2790,6 +2790,62 @@ hay lista: cada alumno tiene los suyos) y los verificadores.
   además, cuenta cuántos errores fueron en la apertura y manda a la línea por
   la que más pasan. `verificar-errores-propios.js` prueba la búsqueda con
   posiciones del banco reproducidas con chess.js (ninguna inventada).
+- **Los errores del final mandan a Finales.** Es el espejo de la apertura. Un
+  error con poco material (cada lado con 13 puntos de piezas o menos y dos
+  piezas como mucho, sin contar la apertura) es de un final, y su tipo (de
+  torres, de peones, de damas…) sale del mismo clasificador de la preparación
+  de rivales. Al cerrar se dice «Fue en un final de torres» con el enlace a un
+  final del banco de Finales contra la máquina del mismo tipo
+  (`finales.html?final=<id>`): el primero que todavía no logró, o el primero si
+  ya los logró todos. Los de alfiles (mismo color, distinto color) van juntos:
+  hay pocos de cada uno. La ficha cuenta cuántos fueron en un final y el tipo
+  que más se repite.
+  - **Una sola copia**: `esFinal()` y `tipoDeFinal()` se mudaron de
+    `preparacion-analisis.js` a `preparacion-posiciones.js`, que carga Tipos
+    (el análisis los toma de ahí). Como el análisis ahora los necesita al
+    cargar, la carga diferida de `ErroresPropios.cargarWeb()` trae también
+    posiciones y táctica si la página no las tiene (el hub no las tiene).
+- **Los errores con el reloj encima.** Las partidas de Lichess y Chess.com
+  traen el reloj de cada jugada, y `leerPgn()` ya lo leía. `deLaWeb()` guarda
+  los relojes y el ritmo (`TimeControl`), y cada ejercicio, con cuántos
+  segundos le quedaban **después** de hacer la jugada y con cuánto empezó
+  (`reloj`, `base`). `apurado()`: con menos de 30 segundos o menos del 10 % del
+  tiempo inicial (en una de 3 minutos, 18 segundos). Al cerrar: «La jugaste con
+  12 segundos en el reloj…»; en la ficha: cuántos de los errores **con reloj**
+  fueron apurados. Las partidas de la Academia no guardan el reloj, y sus
+  errores no cuentan (ni a favor ni en contra).
+- **«¿Cometes menos errores?»** La curva de errores por partida revisada, mes
+  a mes (por el mes de la partida, en hora de Costa Rica), los últimos seis
+  meses con alguna partida, y una frase si mejora o empeora: el último mes
+  contra el promedio de los anteriores, con 3 partidas o más en cada lado (con
+  menos, un mes malo lo decidiría todo).
+  - **No sale de los ejercicios**: se guardan solo los últimos 60, así que los
+    meses viejos darían de menos. Sale de las revisadas: cada una guarda ahora
+    `{ r: cuándo se revisó, f: de cuándo es la partida, e1, e2: cuántos
+    errores de cada nivel salieron }`. Las viejas (un texto con la fecha)
+    siguen contando como revisadas pero no entran a la curva, y las que no se
+    pudieron revisar (muy cortas, «desde el tablero») guardan `r` y `f` sin
+    cuenta. Nada más lee el valor, solo que la clave esté.
+  - `ErroresPropios.curvaEnPantalla()` la dibuja para la ficha (habla «tu») y
+    para Informes (habla «su»): una sola copia. La barra es decorativa
+    (`aria-hidden`): el número va escrito.
+- **El hub avisa las partidas sin revisar.** «Hoy te toca» propone «4
+  partidas sin revisar en «Tus propios errores» (2 de Lichess, 2 de la
+  Academia)» (`ErroresPropios.sinRevisar`). Las de la Academia son las mismas
+  de `traerPartidas()`; las de Lichess o Chess.com, solo si el alumno dejó su
+  usuario, y a esos sitios se les pregunta **como mucho cada 6 horas**
+  (`errores_web_mirada_v1` guarda cuándo y qué claves había): entre tanto se
+  cuenta con esa lista, así que lo que revisa deja de contar sin volver a
+  preguntar. Sin usuario guardado no sale nada hacia afuera. Si hay de la web,
+  el enlace es `tipos.html?traer=web#errores`, que las trae y revisa solas una
+  vez y saca el pedido de la dirección. El doble de `lib/doble-entreno.js`
+  aprendió `.or()` y `.neq()` (filtrando de verdad) para probarlo, y `abrir()`
+  acepta rutas de más (el Lichess de mentira).
+- **La celada queda anotada en el ejercicio** (`celada`: el id de la línea del
+  banco, o `null`), para que Informes cuente en la base las del grupo (ver
+  «Las celadas en que más cae el grupo» en informes.md). Se anota al crearlo, y
+  la ficha completa una vez los que se guardaron antes (`completarCeladas`):
+  que la clave esté, aunque sea `null`, dice que ya se miró.
 
 ### El tipo 19: Salva las tablas
 

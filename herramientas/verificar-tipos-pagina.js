@@ -932,8 +932,9 @@ window.PreparacionMotor = {
       /* Lichess de mentira: la misma partida (la alumna, PepeRojas, con
          blancas), una de Chess960 que no se revisa, y un usuario que no existe. */
       const et = (o) => Object.entries(o).map(([k, v]) => "[" + k + ' "' + v + '"]').join("\n");
-      const cuerpo = JUGADAS.map((s, i) => (i % 2 === 0 ? (i / 2 + 1) + ". " : "") + s).join(" ") + " 0-1";
-      const PGN = et({ Event: "Rated blitz", Site: "https://lichess.org/AbCd1234", UTCDate: "2026.09.20", UTCTime: "15:00:00", White: "PepeRojas", Black: "rival", Variant: "Standard" }) + "\n\n" + cuerpo + "\n\n" +
+      // Con reloj: Cxe5 (la media jugada 6) se jugó con 12 segundos, en una de 3 minutos.
+      const cuerpo = JUGADAS.map((s, i) => (i % 2 === 0 ? (i / 2 + 1) + ". " : "") + s + (i === 6 ? " { [%clk 0:00:12] }" : " { [%clk 0:02:00] }")).join(" ") + " 0-1";
+      const PGN = et({ Event: "Rated blitz", Site: "https://lichess.org/AbCd1234", UTCDate: "2026.09.20", UTCTime: "15:00:00", White: "PepeRojas", Black: "rival", Variant: "Standard", TimeControl: "180+0" }) + "\n\n" + cuerpo + "\n\n" +
         et({ Event: "Casual Chess960", Site: "https://lichess.org/Chs96000", UTCDate: "2026.09.21", UTCTime: "15:00:00", White: "PepeRojas", Black: "rival", Variant: "Chess960" }) + "\n\n" + cuerpo + "\n";
       const pedidos = [];
       const prepararWeb = async (ctx) => {
@@ -959,7 +960,11 @@ window.PreparacionMotor = {
       ok("revisa su partida de Lichess y saca el error", /Listo: se revisó 1 partida de Lichess y salió 1 ejercicio nuevo/.test(await aviso(page)), await aviso(page));
       const ultimo = new URL(pedidos[pedidos.length - 1] || "https://x/");
       ok("a Lichess solo se le pide el usuario, con las últimas 30", ultimo.pathname === "/api/games/user/PepeRojas" && ultimo.searchParams.get("max") === "30", ultimo.href);
-      const g2 = await page.evaluate(() => ({ vistas: Object.keys(JSON.parse(localStorage.getItem("errores_analizadas_v1") || "{}")), ej: Object.values(JSON.parse(localStorage.getItem("errores_propios_v1") || "{}")) }));
+      const g2 = await page.evaluate(() => ({ vistas: Object.keys(JSON.parse(localStorage.getItem("errores_analizadas_v1") || "{}")), v: JSON.parse(localStorage.getItem("errores_analizadas_v1") || "{}"), ej: Object.values(JSON.parse(localStorage.getItem("errores_propios_v1") || "{}")) }));
+      const vl = g2.v["lichess:AbCd1234"] || {};
+      ok("la revisada guarda de cuándo es la partida y cuántos errores salieron (para la curva)", vl.f === "2026-09-20T15:00:00Z" && vl.e1 === 1 && vl.e2 === 0 && typeof vl.r === "string", JSON.stringify(vl));
+      ok("el ejercicio guarda con cuánto tiempo se jugó el error", g2.ej[0] && g2.ej[0].reloj === 12 && g2.ej[0].base === 180, JSON.stringify(g2.ej[0] && [g2.ej[0].reloj, g2.ej[0].base]));
+      ok("y si fue una celada del banco (acá, la Blackburne)", g2.ej[0] && g2.ej[0].celada === "blackburne", JSON.stringify(g2.ej[0] && g2.ej[0].celada));
       ok("queda revisada con el id de Lichess; la de Chess960 ni se mira", JSON.stringify(g2.vistas) === JSON.stringify(["lichess:AbCd1234"]), JSON.stringify(g2.vistas));
       ok("el ejercicio es la posición del error y dice de dónde salió", g2.ej.length === 1 && g2.ej[0].fen === fens[6] && g2.ej[0].id === "lichess-AbCd1234-6" && /^Partida de Lichess del /.test(g2.ej[0].resumen), JSON.stringify(g2.ej));
       ok("el usuario queda escrito para la próxima vez", (await page.getByLabel("Tu usuario").inputValue()) === "PepeRojas");
@@ -969,7 +974,80 @@ window.PreparacionMotor = {
       ok("otra vez: no revisa lo ya revisado", /^Tu última partida de Lichess ya estaba revisada\. Juega más y vuelve\.$/.test(await aviso(page)), await aviso(page));
       ok("sin errores en consola", !errores.length, errores.join(" | "));
       await ctx.close();
+      {
+      // ?traer=web (el enlace del aviso del hub): con el usuario guardado, se
+      // traen y revisan solas, una vez, y el pedido sale de la dirección.
+      const pedidosAntes = pedidos.length;
+      const conCuenta = async (ctx) => { await prepararWeb(ctx); await ctx.addInitScript(() => { if (!sessionStorage.getItem("__c")) { localStorage.setItem("errores_cuenta_web_v1", JSON.stringify({ sitio: "lichess", usuario: "PepeRojas" })); sessionStorage.setItem("__c", "1"); } }); };
+      const { page, ctx, errores } = await abrir(browser, true, "?traer=web#errores", conCuenta);
+      await page.waitForFunction(() => /Listo|No existe|No se pudieron/.test((document.querySelector('#tipo-extra [role="status"]') || {}).textContent || ""), null, { timeout: 20000 }).catch(() => {});
+      ok("?traer=web revisa solas las de Lichess del usuario guardado", /Listo: se revisó 1 partida de Lichess/.test(await aviso(page)) && pedidos.length === pedidosAntes + 1, await aviso(page));
+      ok("y el pedido sale de la dirección", !/traer=/.test(page.url()), page.url());
+      ok("sin errores en consola", !errores.length, errores.join(" | "));
+      await ctx.close();
+      }
     }
+  }
+
+  console.log("\n=== Tus propios errores: el final, el reloj y la curva ===");
+  {
+    /* Ejercicios ya guardados: uno en una posición del banco de Finales (la de
+       Philidor, en la jugada 45 de una partida) y uno de Lichess jugado con 12
+       segundos; y partidas revisadas en tres meses para la curva. */
+    const F = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "entreno", "data", "finales.json"), "utf8")).finales;
+    const fenFinal = F.find((f) => f.id === "philidor").fen.replace(/ \d+$/, " 45");
+    const legales = new Chess(fenFinal).moves().map((m) => m.replace(/[+#]$/, ""));
+    const torres = ["peones-en-sexta", "torre-contra-peon", "cortar-al-rey", "philidor"].filter((id) => F.some((f) => f.id === id));
+    const g = new Chess(); ["e4", "e5", "Nf3", "Nc6"].forEach((m) => g.move(m));
+    const ej = {
+      "juego-f-90": { id: "juego-f-90", nivel: 1, fen: fenFinal, jugada: legales[0], buenas: [legales[1]], mejor: legales[1], antes: 0, despues: -300, fecha: "2026-09-10T10:00:00Z", origen: "juego", resumen: "Partida del 10 sept · jugada 45", tema: null },
+      "lichess-Reloj000-4": { id: "lichess-Reloj000-4", nivel: 2, fen: g.fen().replace(/ \d+$/, " 20"), jugada: "a3", buenas: ["Bc4"], mejor: "Bc4", antes: 250, despues: 0, fecha: "2026-09-12T10:00:00Z", origen: "lichess", resumen: "Partida de Lichess del 12 sept · jugada 20", tema: null, reloj: 12, base: 180 },
+    };
+    const vistas = {
+      "juego:a": { r: "x", f: "2026-07-05T15:00:00Z", e1: 2, e2: 1 }, "juego:b": { r: "x", f: "2026-07-20T15:00:00Z", e1: 3, e2: 0 }, "juego:c": { r: "x", f: "2026-07-25T15:00:00Z", e1: 1, e2: 0 },
+      "juego:d": { r: "x", f: "2026-08-10T15:00:00Z", e1: 1, e2: 1 },
+      "juego:e": { r: "x", f: "2026-09-10T15:00:00Z", e1: 1, e2: 0 }, "juego:f": { r: "x", f: "2026-09-12T15:00:00Z", e1: 0, e2: 0 }, "juego:g": { r: "x", f: "2026-09-20T15:00:00Z", e1: 0, e2: 0 },
+      "juego:vieja": "2026-06-01T00:00:00Z",
+    };
+    const sembrar = async (ctx) => {
+      await ctx.addInitScript((v) => {
+        if (sessionStorage.getItem("__sembrado")) return;
+        localStorage.setItem("errores_propios_v1", v.ej);
+        localStorage.setItem("errores_analizadas_v1", v.vistas);
+        localStorage.setItem("entreno_finales_solved", JSON.stringify({ [v.logrado]: true }));
+        sessionStorage.setItem("__sembrado", "1");
+      }, { ej: JSON.stringify(ej), vistas: JSON.stringify(vistas), logrado: torres[0] });
+    };
+    const { page, ctx, errores } = await abrir(browser, true, "#errores", sembrar);
+    await page.waitForSelector("#vista-tipo:not(.hidden) #tipo-extra summary");
+    const lineas = await page.$$eval("#tipo-extra p", (ps) => ps.map((p) => [p.textContent, p.querySelector("a") ? p.querySelector("a").getAttribute("href") : null]));
+    const conTexto = (re) => lineas.find((l) => re.test(l[0]));
+    await page.waitForFunction(() => { const a = [...document.querySelectorAll("#tipo-extra p a")].find((x) => /Practicar un final/.test(x.textContent)); return a && a.getAttribute("href") !== "finales.html"; }, null, { timeout: 8000 }).catch(() => {});
+    const hrefFinal = await page.evaluate(() => { const a = [...document.querySelectorAll("#tipo-extra p a")].find((x) => /Practicar un final/.test(x.textContent)); return a && a.getAttribute("href"); });
+    ok("la ficha cuenta los errores del final y manda al primero de torres que todavía no logró",
+      !!conTexto(/^1 de tus errores fue en un final de torres\. Practicar un final de torres →$/) && hrefFinal === "finales.html?final=" + torres[1], JSON.stringify([conTexto(/final/), hrefFinal]));
+    ok("y los que fueron con el reloj encima, de los que traen reloj", !!conTexto(/1 de tus 1 errores con reloj fue con poco tiempo \(menos de 30 segundos, o del 10 % de tu tiempo\)/), JSON.stringify(conTexto(/reloj/)));
+    const curva = await page.evaluate(() => { const c = document.querySelector("#tipo-extra [data-curva]"); return c && c.checkVisibility() ? [...c.querySelectorAll("li")].map((li) => li.textContent).concat([c.lastElementChild.textContent]) : null; });
+    ok("la curva: errores por partida de cada mes (las viejas sin cuenta no entran) y si va mejorando",
+      !!curva && curva.length === 4 && /^julio de 2026\s*2,3 por partida · 3 partidas$/.test(curva[0]) && /^agosto de 2026\s*2 por partida · 1 partida$/.test(curva[1]) && /^septiembre de 2026\s*0,3 por partida · 3 partidas$/.test(curva[2]) && curva[3] === "Vas mejorando: de 2,3 a 0,3 errores por partida.", JSON.stringify(curva));
+    const mirados = await page.evaluate(() => Object.values(JSON.parse(localStorage.getItem("errores_propios_v1") || "{}")).map((x) => ("celada" in x) + ":" + x.celada));
+    ok("los ejercicios guardados antes de contar las celadas quedan mirados (acá, ninguna)", mirados.join() === "true:null,true:null", mirados.join());
+    // Jugar el del final: al cerrar dice de qué final fue y a cuál ir.
+    await page.evaluate(() => { location.hash = "#errores/1/juego-f-90"; });
+    await page.waitForSelector("#vista-juego:not(.hidden) #jugada-input");
+    await page.fill("#jugada-input", R.sanEs ? legales[1] : legales[1]);
+    await page.press("#jugada-input", "Enter");
+    await esperarEstado(page, /buena/);
+    ok("al cerrar: fue en un final de torres, con el enlace al del banco", /Fue en un final de torres/.test(await page.textContent("#explicacion")) && (await page.getAttribute('#explicacion a[href^="finales.html"]', "href")) === "finales.html?final=" + torres[1], await page.textContent("#explicacion"));
+    // El de Lichess: con cuántos segundos se jugó.
+    await page.evaluate(() => { location.hash = "#errores/2/lichess-Reloj000-4"; });
+    await page.waitForSelector("#vista-juego:not(.hidden) #jugada-input");
+    await page.fill("#jugada-input", "Ac4");
+    await page.press("#jugada-input", "Enter");
+    await esperarEstado(page, /buena/);
+    ok("y el que jugó apurado dice con cuánto tiempo", /La jugaste con 12 segundos en el reloj/.test(await page.textContent("#explicacion")), await page.textContent("#explicacion"));
+    ok("sin errores en consola", !errores.length, errores.join(" | "));
+    await ctx.close();
   }
 
   console.log("\n=== Tipo completo: para los logros ===");

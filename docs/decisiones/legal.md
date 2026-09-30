@@ -28,8 +28,9 @@ cambiar algo en el sitio, revisar si contradice lo que ya prometen:
   (Supabase, Cloudflare, Resend, Google —tipografías, Vision del Lector de
   planilla, notificaciones—, Anthropic para mejorar informes, Meet o Zoom, la
   consulta de cédula de Hacienda, y Lichess y Chess.com para bajar las partidas
-  públicas de un rival —o las del propio alumno en «Tus propios errores»—, a
-  los que solo se les manda el usuario, y Sentry para
+  públicas de un rival —o las del propio alumno en «Tus propios errores», y si
+  lo dejó guardado el hub les pregunta como mucho cada 6 horas si hay nuevas—,
+  a los que solo se les manda el usuario, y Sentry para
   los errores técnicos, sin nombre, correo ni lo que la persona escribe). **Un servicio nuevo que reciba datos de
   alumnos va a la lista**: sin eso, el envío al extranjero no está consentido
   (artículo 14).
