@@ -1554,6 +1554,10 @@ elige a ese usuario como rival y analiza sola (`js/preparacion-descarga.js`).
   quedó a medias.
 - Un usuario que no existe, un 429 o un error del sitio se dicen en palabras
   en la página; no van a la consola como error, porque no lo son.
+- **No es solo de la preparación**: «Tus propios errores» (Tipos de
+  entrenamiento) usa este mismo descargador y `leerPgn()` para traer las
+  partidas del propio alumno (ver «El tipo 18: Tus propios errores» en
+  entrenamiento.md). Un cambio acá cambia las dos cosas.
 
 Lo prueba `verificar-preparacion-rivales.js`, en dos partes. Sin navegador,
 con un PGN de patrones plantados (dónde pierde, dónde gana, dónde improvisa, un

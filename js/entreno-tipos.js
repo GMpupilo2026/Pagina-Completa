@@ -66,11 +66,15 @@
   /* «Repasar fallados» (js/repaso-fallados.js, la misma cola de Temas y
      Mates): lo que sale con menos de tres estrellas vuelve a salir. Con una
      estrella o ninguna cuenta como error ("mal": vuelve hoy mismo); con dos,
-     como pista ("regular"). Tres estrellas a la primera no entra nunca. */
+     como pista ("regular"). Tres estrellas a la primera no entra nunca, salvo
+     en Tus propios errores: ese error ya se cometió una vez, en una partida. */
   const CLAVE_REPASO = window.RepasoFallados ? RepasoFallados.CLAVES.tipos : null;
   function anotarRepaso(tipo, item, estrellas) {
     if (!CLAVE_REPASO) return;
-    RepasoFallados.anotar(CLAVE_REPASO, C.clave(tipo, item.id), estrellas < 2, estrellas === 2, { tipo, nivel: item.nivel });
+    // Los tipos `propio` (Tus propios errores) entran aunque salgan limpios:
+    // el error ya se cometió en una partida (ver RepasoFallados.anotar).
+    return RepasoFallados.anotar(CLAVE_REPASO, C.clave(tipo, item.id), estrellas < 2, estrellas === 2, { tipo, nivel: item.nivel },
+      { entraLimpio: !!(C.tipo(tipo) && C.tipo(tipo).propio) });
   }
   function itemDeClave(k) {
     const i = k.indexOf(":");
@@ -353,7 +357,7 @@
     const ico = el("span", null, "🔁 "); ico.setAttribute("aria-hidden", "true");
     t.append(ico, n === 1 ? "Hoy toca repasar 1 ejercicio que te costó" : "Hoy toca repasar " + n + " ejercicios que te costaron");
     caja.appendChild(t);
-    caja.appendChild(el("p", "text-sm text-brand-500 dark:text-brand-300 mt-1", "Lo que sale con menos de tres estrellas vuelve a salir hasta que lo resuelvas limpio tres veces seguidas."));
+    caja.appendChild(el("p", "text-sm text-brand-500 dark:text-brand-300 mt-1", "Lo que sale con menos de tres estrellas, y todo error de tus partidas, vuelve a salir hasta que lo resuelvas limpio tres veces seguidas."));
     const ir = el("a", BTN_PRIMARIO + " inline-block mt-3", "Repasar fallados");
     ir.href = "#repaso";
     caja.appendChild(ir);
@@ -542,7 +546,7 @@
     const completoAntes = nivelCompleto();
     anotarEstrellas(partida.tipo, item.id, estrellas);
     if (estrellas >= 1) registrar(partida.tipo, item, estrellas);
-    anotarRepaso(partida.tipo, item, estrellas);
+    const repaso = anotarRepaso(partida.tipo, item, estrellas);
     anotarUltimo();
     const e = estrellasDe(partida.tipo, item.id);
     $("juego-progreso").textContent = "Ejercicio " + (partida.i + 1) + " de " + partida.items.length + (e ? " · tu mejor: " + textoEstrellas(e) : "");
@@ -550,6 +554,8 @@
     anotarCompletos();
     rotularSiguiente();
     if (extra !== false) $("btn-siguiente").focus();
+    // La ficha de «Repasar fallados», si quedó en la cola (null si no).
+    return repaso || null;
   }
   $("btn-siguiente").addEventListener("click", () => {
     const otro = siguienteNivel();
