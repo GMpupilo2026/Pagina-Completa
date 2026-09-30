@@ -195,6 +195,20 @@ const texto = (page, sel) => page.evaluate((s) => { const e = document.querySele
     igual("sin errores en la página", errores.join(" | ") || "ninguno", "ninguno");
     await ctx.close();
 
+    console.log("\n=== Con la cuenta ciega, el foco al abrir ===");
+    {
+      /* Al abrir con la cuenta ciega el foco quedaba en el <body>: el lector
+         no decía nada. Va al título principal (tabindex=-1). */
+      const r = await abrir(browser, "/repasar-clases.html", Object.assign({ saved_games: PARTIDAS, vision_personas: [{ persona_id: "u-ana", vision: "ciego" }] }, PREGUNTAS));
+      await r.page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
+      await r.page.waitForFunction(() => document.activeElement && document.activeElement.tagName === "H1", null, { timeout: 5000 }).catch(() => {});
+      igual("con la cuenta ciega, el foco va al título «Repasar mis clases» (tabindex=-1)", await r.page.evaluate(() => {
+        const a = document.activeElement;
+        return [document.documentElement.classList.contains("modo-ciego"), a.tagName, a.textContent.replace(/\s+/g, " ").trim(), a.getAttribute("tabindex")];
+      }), [true, "H1", "Repasar mis clases 🎞️", "-1"]);
+      await r.ctx.close();
+    }
+
     console.log("\n=== Sin clases ===");
     {
       const r = await abrir(browser, "/repasar-clases.html", { saved_games: [] });

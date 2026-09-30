@@ -116,6 +116,8 @@ window.__llamadas = [];
     const CLASES = {
       class_attendance: [{ session_id: "c-1", student_id: "u-beto" }],
       class_sessions: [{ id: "c-1", title: "Finales de torre", started_at: "2026-09-28T21:00:00Z" }],
+      // La marca de la cuenta (js/vision-cuenta.js): ciega si la prueba lo pide.
+      vision_personas: window.__VISION_PERSONAS || [],
     };
     let filas = (nombre === "profiles" ? PERFILES : CLASES[nombre] || []).slice();
     let unica = false;
@@ -702,6 +704,28 @@ async function main() {
     const d = await armado("alumno=u-beto&material=no-existe&cantidad=10");
     ok(d.material !== "herramienta:no-existe" && JSON.stringify(d.marcados) === JSON.stringify(["u-beto"]),
       `un material que no existe se ignora y el alumno queda marcado igual, quedó ${JSON.stringify(d)}`);
+  }
+
+  // ---------- 4b) con la cuenta ciega, el foco va al título ----------
+  /* Al abrir Tareas con la cuenta ciega el foco se quedaba en el <body>: el
+     lector no decía nada y quien no ve no sabía dónde había caído. */
+  {
+    const pagina = await navegador.newPage();
+    await pagina.addInitScript((id) => { window.__VISION_PERSONAS = [{ persona_id: id, vision: "ciego" }]; }, ALUMNA2.id);
+    await pagina.addInitScript(clienteFalso([ALUMNA2], [], ALUMNA2.id));
+    await pagina.goto(`${BASE}/tareas.html`, { waitUntil: "networkidle" });
+    await pagina.waitForSelector("#app:not(.hidden)", { timeout: 10000 });
+    await pagina.waitForFunction(() => document.activeElement && document.activeElement.tagName === "H1", null, { timeout: 5000 }).catch(() => {});
+    const foco = await pagina.evaluate(() => ({
+      ciega: document.documentElement.classList.contains("modo-ciego"),
+      tag: document.activeElement ? document.activeElement.tagName : null,
+      texto: document.activeElement ? document.activeElement.textContent.trim() : "",
+      tab: document.activeElement ? document.activeElement.getAttribute("tabindex") : null,
+    }));
+    ok(foco.ciega, "la cuenta de prueba no quedó marcada como ciega (modo-ciego)");
+    ok(foco.tag === "H1" && /Tareas/.test(foco.texto) && foco.tab === "-1",
+      `con la cuenta ciega el foco debería ir al título «Tareas» (tabindex=-1), quedó en ${JSON.stringify(foco)}`);
+    await pagina.close();
   }
 
   // ---------- 5) que la página se vea ----------

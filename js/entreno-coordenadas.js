@@ -145,6 +145,14 @@ blindPanel.addEventListener('submit', (e) => {
     announceBlind(playing ? `La casilla es ${casillaDicha()}. ${tiempoQueQueda()}` : 'La ronda no está en curso: escribe «empezar» para jugar.');
     return;
   }
+  // «volver»: deja la ronda y vuelve a donde se vino, diciendo adónde. Antes: «No entendí».
+  if(/^(volver|salir|atras|volver a entrenar)$/.test(escrito)){
+    clearInterval(timerId);
+    clearTimeout(perSquareTimeoutId);
+    playing = false;
+    EntrenoProgress.volver(announceBlind);
+    return;
+  }
   if(/^(tiempo|cuanto queda|cuanto tiempo queda|reloj)$/.test(escrito)){
     announceBlind(playing ? tiempoQueQueda() : 'La ronda no está en curso.');
     return;
@@ -152,7 +160,7 @@ blindPanel.addEventListener('submit', (e) => {
   const answer = RESPUESTAS[escrito];
   if(!answer){
     // Lo que no es un color se dice no entendido (regla del sitio para los recuadros).
-    announceBlind(`No entendí «${blindInput.dataset.ultimo || ''}». Escribe «blanca» (o «b») si la casilla es blanca, o «negra» (o «n») si es negra. «repetir» vuelve a decir la casilla y «tiempo», cuánto queda.`);
+    announceBlind(`No entendí «${blindInput.dataset.ultimo || ''}». Escribe «blanca» (o «b») si la casilla es blanca, o «negra» (o «n») si es negra. «repetir» vuelve a decir la casilla, «tiempo», cuánto queda, y «volver» sale de la ronda.`);
     return;
   }
   const missedColor = isLightSquare(currentTarget) ? 'blanca' : 'negra'; // antes de newTarget(), que cambia currentTarget

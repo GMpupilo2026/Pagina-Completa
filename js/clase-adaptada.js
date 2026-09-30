@@ -243,6 +243,14 @@ window.ClaseAdaptada = (function () {
           if (propia) { decirEnCaja(api, propia); return; }
           if (propia === "") return;   // ya contesta él, cuando termine
         }
+        /* Lo que no es una jugada («hola») no se entendió, tenga o no el control:
+           decirle «Ahora mueve tu profe» a un «hola» le hace creer que escribió
+           una jugada a destiempo. Lo de esperar al profe es solo para las jugadas. */
+        if (!b.piecesHidden && !b.interactive && window.ComandosTablero && ComandosTablero.pareceJugada
+            && !ComandosTablero.pareceJugada(texto.trim())) {
+          noSePudo(api, ComandosTablero.noSePudoJugar(texto.trim()));
+          return;
+        }
         if (b.piecesHidden) {
           noSePudo(api, "Las piezas están ocultas: el ejercicio es verlas de memoria. "
             + "Las jugadas se siguen anunciando.");

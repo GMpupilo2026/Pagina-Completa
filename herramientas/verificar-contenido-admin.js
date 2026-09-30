@@ -109,8 +109,9 @@ const CASOS = [
     ruta: "/entreno/aprender.html",
     listo: () => document.querySelectorAll("#lesson-list .lesson-item").length > 0,
     contar: () => {
+      // Una lección cerrada va con aria-disabled (sigue en el Tab, dice por qué está cerrada).
       const b = [...document.querySelectorAll("#lesson-list .lesson-item")];
-      return { total: b.length, abiertas: b.filter((x) => !x.disabled).length };
+      return { total: b.length, abiertas: b.filter((x) => !x.disabled && x.getAttribute("aria-disabled") !== "true").length };
     },
   },
   {

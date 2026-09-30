@@ -2381,6 +2381,31 @@ async function pruebaEntrenarConLaPaginaAbierta(browser) {
   igual("el panel de la cuenta ciega tiene el grupo #entrenar", salto.hay, true);
   igual("#entrenar con la página abierta lleva el foco al título del grupo", salto.enGrupo, true);
   igual("…y lo dice", salto.aviso, "Estás en «Entrenar».");
+  /* ¡Te reto! está adaptado y la alumna ciega no lo encontraba ni en el
+     panel ni en Juegos. Y Alt + Mayúscula + M (el foco a <main>) leía el
+     «Cargando tu panel… Está tardando…» que ya no se mostraba: tiene que
+     estar fuera del árbol que se lee (atributo hidden, display: none). */
+  const jugar = await page.evaluate(() => {
+    const carga = document.getElementById("loading");
+    return {
+      teReto: !!document.querySelector('#tile-grid section#jugar a[href="te-reto.html"]'),
+      cargaOculta: carga.hidden === true && getComputedStyle(carga).display === "none",
+      mainNoLoLee: !/Cargando tu panel|Está tardando/.test(document.getElementById("main-content").innerText),
+    };
+  });
+  igual("el grupo «Jugar» de la cuenta ciega trae ¡Te reto!", jugar.teReto, true);
+  igual("«Cargando tu panel…» queda oculto de verdad (hidden y display: none) al mostrarse el panel", [jugar.cargaOculta, jugar.mainNoLoLee], [true, true]);
+  const juegosHtml = require("fs").readFileSync(require("path").join(__dirname, "..", "juegos.html"), "utf8");
+  igual("y Juegos (juegos.html) también lleva a ¡Te reto!", /<a href="te-reto\.html"/.test(juegosHtml), true);
+  /* ciegos.html (la tarjeta «Cómo se usa el modo adaptado» de este panel)
+     explicaba el Tablero y Entrenamiento, pero no la clase en vivo, los cursos
+     ni los exámenes: justo lo que el profe le pide a la alumna. */
+  const ciegosHtml = require("fs").readFileSync(require("path").join(__dirname, "..", "ciegos.html"), "utf8");
+  igual("ciegos.html explica la clase en vivo, los cursos y los exámenes, con su enlace",
+    [["h-clase", "sesion.html"], ["h-cursos", "cursos/academia/index.html"], ["h-examenes", "examenes.html"]].map(([id, href]) => {
+      const sec = (ciegosHtml.match(new RegExp('<section aria-labelledby="' + id + '"[\\s\\S]*?</section>')) || [""])[0];
+      return sec.includes('href="' + href + '"') && /«[^»]+»/.test(sec);
+    }), [true, true, true]);
   await r.ctx.close();
 }
 

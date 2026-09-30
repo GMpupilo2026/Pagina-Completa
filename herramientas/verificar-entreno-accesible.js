@@ -121,7 +121,7 @@ const CON_TABLERO = [
     } },
   { nombre: "Mates", ruta: "/entreno/mates.html", sel: "#board" },
   { nombre: "Aprender", ruta: "/entreno/aprender.html", sel: "#board", antes: async (p) => {
-      await p.click(".lesson-item:not([disabled])", { timeout: 4000 }).catch(() => {});
+      await p.click(".lesson-item:not([disabled]):not([aria-disabled=true])", { timeout: 4000 }).catch(() => {});
     } },
   { nombre: "Practicar", ruta: "/entreno/practicas.html", sel: "#board", antes: async (p) => {
       await p.click(".set-card, [data-set]", { timeout: 4000 }).catch(() => {});

@@ -345,7 +345,11 @@
       moves.forEach((m, i) => {
         const n = Math.floor((i + (t0 === "b" ? 1 : 0)) / 2) + 1;
         const pre = i === 0 && t0 === "b" ? n + "…" : (i + (t0 === "b" ? 1 : 0)) % 2 === 0 ? n + "." : "";
-        html += '<button type="button" data-ply="' + (i + 1) + '">' + pre + esSan(m.san) + "</button>";
+        /* «Ir a la jugada 2 de las negras: Rg2», no «Rg2» a secas: con la cuenta
+           ciega, lo escrito aprieta el botón que se llama igual
+           (js/vision-cuenta.js), y escribir la jugada saltaba a ella. */
+        const nombre = "Ir a la jugada " + n + ((i + (t0 === "b" ? 1 : 0)) % 2 === 1 ? " de las negras" : "") + ": " + esSan(m.san);
+        html += '<button type="button" data-ply="' + (i + 1) + '" aria-label="' + esc(nombre) + '">' + pre + esSan(m.san) + "</button>";
       });
       movesEl.innerHTML = html;
     }

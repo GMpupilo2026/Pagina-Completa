@@ -416,6 +416,49 @@ function respuestaDelQuiz(texto){
   return null;
 }
 
+function ayudaPedida(texto){
+  const t = CuadroComandos.normalizar(texto).replace(/[.!¡?¿«»"]/g, '').trim();
+  if(/^(pista|una pista|dame una pista|otra pista|ayudame)$/.test(t)) return 'pista';
+  if(/^((ver|dame|dime) )?(la )?(solucion|respuesta)$|^me rindo$/.test(t)) return 'solucion';
+  return null;
+}
+const dichaCasilla = (sq) => (window.BlindNotation && BlindNotation.squareSpoken ? BlindNotation.squareSpoken(sq) : sq);
+function listaDicha(xs){ return xs.length <= 1 ? xs.join('') : xs.slice(0, -1).join(', ') + ' y ' + xs[xs.length - 1]; }
+/* La jugada de la solución en palabras («rey a gustav 1»), sobre una copia. */
+function solucionDicha(){
+  const s = currentLesson.solution;
+  if(!s) return null;
+  try{
+    const m = new Chess(currentLesson.fen).move({ from: s.from, to: s.to, promotion: 'q' });
+    if(m) return window.BlindNotation && BlindNotation.sanSpoken ? BlindNotation.sanSpoken(m.san) : m.san;
+  }catch(e){}
+  return 'de ' + dichaCasilla(s.from) + ' a ' + dichaCasilla(s.to);
+}
+function pistaDeLeccion(){
+  const l = currentLesson;
+  if(l.type === 'squares'){
+    const faltan = (l.targets || []).filter((sq) => !foundSet.has(sq));
+    if(!faltan.length) return 'Ya encontraste todas las casillas.';
+    const col = faltan[0][0];
+    const colDicha = window.BlindNotation && BlindNotation.fileName ? BlindNotation.fileName(col) : col;
+    return `Pista: te ${faltan.length === 1 ? 'falta 1 casilla' : `faltan ${faltan.length} casillas`}; una está en la columna ${colDicha}.`;
+  }
+  if(l.type === 'quiz') return 'Pista: fíjate si el rey que no se puede mover está en jaque. Si lo está, es jaque mate; si no, es ahogado. Escribe «jaques» o «posición» para revisarlo.';
+  if(l.anyLegalMove || !l.solution) return 'En esta lección no hay pista: vale cualquier jugada legal. Escribe «mis jugadas» para oír las que puedes hacer.';
+  return `Pista: mueve la pieza de ${dichaCasilla(l.solution.from)}.`;
+}
+function solucionDeLeccion(){
+  const l = currentLesson;
+  if(l.type === 'squares'){
+    const faltan = (l.targets || []).filter((sq) => !foundSet.has(sq));
+    if(!faltan.length) return 'Ya encontraste todas las casillas.';
+    return `La solución: ${faltan.length === 1 ? 'la casilla que falta es' : 'las casillas que faltan son'} ${listaDicha(faltan.map(dichaCasilla))}. Escríbelas para terminar la lección.`;
+  }
+  if(l.type === 'quiz') return 'En esta lección no hay solución: la respuesta la das tú. Escribe «pista» para una ayuda, o «mate» o «ahogado».';
+  if(l.anyLegalMove || !l.solution) return 'En esta lección no hay solución: vale cualquier jugada legal. Escribe «mis jugadas» para oír las que puedes hacer.';
+  return `La solución es: ${solucionDicha()}. Escríbela para terminar la lección.`;
+}
+
 function responderEscribiendo(texto, api){
   if(!currentLesson) return;
   // Terminada la lección, lo mismo que los botones: «siguiente», «otra vez».
@@ -425,6 +468,15 @@ function responderEscribiendo(texto, api){
     if(/^sig(uiente)?( leccion)?$/.test(t)){ api.limpiar(); nextBtn.click(); return; }
     if(/^(otra vez|de nuevo|repetir|reiniciar)$/.test(t)){ api.limpiar(); document.getElementById('retry-btn').click(); return; }
     api.decir('Lección terminada. Escribe «siguiente» para la próxima lección, u «otra vez» para repetirla.');
+    return;
+  }
+  /* «pista» y «solución»: antes, en las lecciones de casillas contestaba «Esa
+     no es una casilla», y en las de jugada «No entendí». */
+  const pide = ayudaPedida(texto);
+  if(pide){
+    api.limpiar();
+    if(lessonLocked){ api.decir('Espera: ya viene la siguiente posición.'); return; }
+    setStatus(pide === 'pista' ? pistaDeLeccion() : solucionDeLeccion());
     return;
   }
   if(currentLesson.type === 'quiz'){
@@ -529,7 +581,10 @@ function showList(enfocar){
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'lesson-item';
-    btn.disabled = !unlocked;
+    /* Bloqueada con aria-disabled y no con `disabled`: un <button disabled>
+       no se alcanza con Tab, y quien no ve ni se enteraba de que la lección
+       existía. Al activarla dice por qué está cerrada. */
+    if(!unlocked) btn.setAttribute('aria-disabled', 'true');
     btn.innerHTML = `
       <span class="mark">${solved ? '✅' : (unlocked ? '♟️' : '🔒')}</span>
       <span class="info">
@@ -537,8 +592,20 @@ function showList(enfocar){
         <span class="desc">${lesson.type === 'squares' ? 'Encuentra todas las casillas' : (lesson.type === 'quiz' ? 'Identifica la posición' : 'Encuentra la jugada')}</span>
       </span>`;
     if(unlocked) btn.addEventListener('click', () => openLesson(lesson));
+    else btn.addEventListener('click', () => avisarBloqueada(lesson, list));
     box.appendChild(btn);
   });
+}
+
+function avisarBloqueada(lesson, list){
+  const idx = list.findIndex((l) => l.id === lesson.id);
+  const antes = idx > 0 ? list[idx - 1] : null;
+  const nota = document.getElementById('list-status');
+  if(!nota) return;
+  nota.textContent = '';
+  setTimeout(() => {
+    nota.textContent = `«${lesson.title}» está bloqueada: se abre cuando termines ${antes ? `«${antes.title}»` : 'la lección anterior'}.`;
+  }, 60);
 }
 
 // Las asignaciones se abren en su propia página, así que la ficha son enlaces

@@ -67,5 +67,35 @@ window.EntrenoProgress = (function () {
     return { limpio: !conError && !conPista, con_error: !!conError, con_pista: !!conPista };
   }
 
-  return { init, log, estrellasDeLaRonda, comoSalio, hasSession: () => !!userId };
+  /* «volver» escrito en un ejercicio (4×4, Coordenadas, Memoria, Mates): a
+     donde se vino, y DICIENDO adónde. Antes unas contestaban «No entendí» y
+     el 4×4 decía «Volviendo…» a secas. Sin una página anterior del sitio, a
+     la lista de Entrenar: la del panel con la cuenta ciega (la adaptada), el
+     índice de Entrenamiento si no. `decir(texto)` es el aviso de la página;
+     se espera un momento antes de irse para que alcance a oírse. */
+  function volver(decir) {
+    let ref = null;
+    try { ref = document.referrer ? new URL(document.referrer) : null; } catch (e) { ref = null; }
+    const ciego = document.documentElement.classList.contains("modo-ciego");
+    let donde, ir;
+    if (ref && ref.origin === location.origin && ref.href !== location.href && history.length > 1) {
+      const p = ref.pathname;
+      donde = /\/clases\.html$/.test(p) ? "a tu panel"
+        : /\/entreno\/(index\.html)?$/.test(p) ? "a Entrenamiento"
+        : "a la página anterior";
+      ir = () => history.back();
+    } else if (ciego) {
+      donde = "a Entrenar, en tu panel";
+      ir = () => { location.href = new URL("../clases.html#entrenar", location.href).href; };
+    } else {
+      donde = "a Entrenamiento";
+      ir = () => { location.href = new URL("index.html", location.href).href; };
+    }
+    const texto = `Volviendo ${donde}…`;
+    if (typeof decir === "function") decir(texto);
+    setTimeout(ir, 600);
+    return texto;
+  }
+
+  return { init, log, estrellasDeLaRonda, comoSalio, volver, hasSession: () => !!userId };
 })();

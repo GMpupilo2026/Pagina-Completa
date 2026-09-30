@@ -158,7 +158,7 @@ async function pruebaHub(browser) {
   igual("los cuatro grupos, en su orden", grupos.map((g) => g.titulo),
     ["Fundamentos", "Practicar", "Entreno", "Habilidades"]);
   igual("Fundamentos", grupos[0].accesos.map((a) => a.nombre),
-    ["Mates", "Aprender", "Coordenadas", "Desafíos"]);
+    ["Mates", "Aprender", "Coordenadas", "Desafíos", "Estudio"]);
   igual("Practicar", grupos[1].accesos.map((a) => a.nombre),
     ["Ejercicios por tema", "Practicar"]);
   igual("Entreno", grupos[2].accesos.map((a) => a.nombre),

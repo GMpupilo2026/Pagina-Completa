@@ -33,6 +33,16 @@ window.Trofeos = (function () {
 
   function fmt(n) { return new Intl.NumberFormat("es-CR").format(n); }
   function texto(n) { return fmt(n) + (n === 1 ? " trofeo" : " trofeos"); }
+  /* «🏆 3 trofeos», con la copa fuera del lector: decía «trofeo, 3 trofeos»
+     (y en Logros, «🏆 0 trofeos» se leía entero). Lo escrito no cambia. */
+  function ponerTotal(el, n) { conAdorno(el, "🏆", texto(n)); }
+  // El emoji delante, fuera del lector (aria-hidden); el texto, para todos.
+  function conAdorno(el, emoji, txt) {
+    const adorno = document.createElement("span");
+    adorno.setAttribute("aria-hidden", "true");
+    adorno.textContent = emoji + " ";
+    el.replaceChildren(adorno, document.createTextNode(txt));
+  }
   function conSigno(n) { return (n > 0 ? "+" : n < 0 ? "−" : "") + fmt(Math.abs(n)); }
 
   async function cargar(sb, alumnoId) {
@@ -253,7 +263,7 @@ window.Trofeos = (function () {
     insSec.className = "mt-5 pt-4 border-t border-brand-100 dark:border-brand-800";
     const insTit = document.createElement("h4");
     insTit.className = "text-sm font-semibold text-brand-700 dark:text-brand-200";
-    insTit.textContent = "🏅 Dar una insignia";
+    conAdorno(insTit, "🏅", "Dar una insignia");
     const insAyuda = document.createElement("p");
     insAyuda.className = "text-xs text-brand-500 dark:text-brand-300 mt-0.5";
     insAyuda.textContent = "Para premiar lo que no da trofeo. La ven el alumno, su página de logros y el informe que llega a su casa.";
@@ -336,7 +346,7 @@ window.Trofeos = (function () {
         return;
       }
       ultimo = t;
-      total.textContent = "🏆 " + texto(t.total);
+      ponerTotal(total, t.total);
       detalle.textContent = desglose(t, "profesor");
       menos.disabled = t.total < 1;
       menos.classList.toggle("opacity-50", t.total < 1);
@@ -396,7 +406,7 @@ window.Trofeos = (function () {
       contenedor.append(total, detalle);
       return null;
     }
-    total.textContent = "🏆 " + texto(t.total);
+    ponerTotal(total, t.total);
     detalle.textContent = t.total || t.ajustes ? desglose(t, quien)
       : (quien === "profesor" ? "Todavía no tiene trofeos: cada respuesta marcada correcta en clase le da uno."
         : "Todavía no tienes trofeos: cada respuesta que tu profesor marque correcta en clase te da uno.");
@@ -418,13 +428,13 @@ window.Trofeos = (function () {
     insTotal.className = "text-lg font-bold text-brand-800 dark:text-white";
     ins.appendChild(insTotal);
     if (!p) {
-      insTotal.textContent = "🏅 —";
+      conAdorno(insTotal, "🏅", "—");
       const x = document.createElement("p");
       x.className = "text-sm text-brand-500 dark:text-brand-300";
       x.textContent = "No se pudieron cargar las insignias.";
       ins.appendChild(x);
     } else if (!p.insignias_total) {
-      insTotal.textContent = "🏅 " + textoInsignias(0);
+      conAdorno(insTotal, "🏅", textoInsignias(0));
       const x = document.createElement("p");
       x.className = "text-sm text-brand-500 dark:text-brand-300 mt-1";
       x.textContent = quien === "profesor"
@@ -432,7 +442,7 @@ window.Trofeos = (function () {
         : "Todavía no tienes insignias: tu profesor te las da en clase cuando haces algo que vale la pena, como un buen comentario o un ejercicio bien resuelto.";
       ins.appendChild(x);
     } else {
-      insTotal.textContent = "🏅 " + textoInsignias(p.insignias_total);
+      conAdorno(insTotal, "🏅", textoInsignias(p.insignias_total));
       ins.appendChild(chipsInsignias(p.insignias, "total"));
       if (p.ultimas.length) {
         const tit = document.createElement("p");

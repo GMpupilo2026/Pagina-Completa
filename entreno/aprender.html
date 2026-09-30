@@ -74,9 +74,9 @@
     font-family:'Inter', sans-serif; padding:14px 16px; cursor:pointer;
     transition:border-color .15s, transform .12s ease-out;
   }
-  .lesson-item:hover:not(:disabled){border-color:var(--brass);}
-  .lesson-item:active:not(:disabled){transform:scale(0.99);}
-  .lesson-item:disabled{opacity:0.4; cursor:not-allowed;}
+  .lesson-item:hover:not(:disabled):not([aria-disabled="true"]){border-color:var(--brass);}
+  .lesson-item:active:not(:disabled):not([aria-disabled="true"]){transform:scale(0.99);}
+  .lesson-item:disabled, .lesson-item[aria-disabled="true"]{opacity:0.4; cursor:not-allowed;}
   .lesson-item .mark{font-size:1.2rem; width:1.4em; text-align:center; flex-shrink:0;}
   .lesson-item .info{flex:1;}
   .lesson-item .info .name{font-weight:600;}
@@ -195,6 +195,8 @@
     <div id="list-view">
       <h2 id="list-title" class="sr-only" tabindex="-1"></h2>
       <div class="lesson-list" id="lesson-list"></div>
+      <!-- Por qué una lección está cerrada, al activarla (js/entreno-aprender.js). -->
+      <p class="lesson-status" id="list-status" role="status"></p>
     </div>
 
     <div id="lesson-view">

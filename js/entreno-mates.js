@@ -159,6 +159,12 @@ function listaDeCategorias(){
 let prefijoAviso = '';
 
 function jugarEscribiendo(texto, api){
+  // «volver»: a donde se vino, diciendo adónde (js/entreno-progress.js). Antes: «No entendí».
+  if(/^(volver|atras|salir|volver a entrenar)$/.test(CuadroComandos.normalizar(texto).replace(/[.!¡]/g, ''))){
+    api.limpiar();
+    EntrenoProgress.volver((t) => api.decir(t));
+    return;
+  }
   const cat = categoriaEscrita(texto);
   if(cat === 'lista'){ api.limpiar().decir(listaDeCategorias()); return; }
   if(cat){

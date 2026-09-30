@@ -729,6 +729,25 @@ document.getElementById('repaso-siguiente-btn').addEventListener('click', () => 
   }
 });
 
+/* Con la cuenta ciega, al abrir la página el foco quedaba en el <body>: el
+   lector no decía nada y quien no ve no sabía dónde estaba. Se lleva al
+   título (con tabindex=-1, que no suma una parada de Tab), salvo que algo ya
+   lo tenga (abrir una clase o el repaso lo llevan a su propio título). La
+   marca de la cuenta llega de la base después de cargar: si todavía no está,
+   se espera a `vision:cambio` (js/vision-cuenta.js). */
+function tituloAlAbrir(){
+  const h1 = app.querySelector('h1');
+  const intentar = () => {
+    if (!modoCiego() || !h1) return false;
+    const a = document.activeElement;
+    if (a && a !== document.body && a.id !== 'main-content') return true;
+    h1.setAttribute('tabindex', '-1');
+    h1.focus();
+    return true;
+  };
+  if (!intentar()) document.addEventListener('vision:cambio', intentar, { once: true });
+}
+
 /* ---------------- Arranque ---------------- */
 async function requireLoginThenGate(){
   let hay = false;
@@ -740,6 +759,7 @@ async function requireLoginThenGate(){
   }
   gate.classList.add('hidden');
   app.classList.remove('hidden');
+  tituloAlAbrir();
   cargarLista();
   // La cola de lo que vuelve viaja con la cuenta: se trae antes de contarla.
   if (window.ProgresoUsuario) { try { await ProgresoUsuario.init(); } catch (e) {} }

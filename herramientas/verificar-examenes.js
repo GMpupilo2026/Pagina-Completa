@@ -405,13 +405,28 @@ async function main() {
     const quedaDicho = await p.textContent("#q-comandos .cc-msg");
     ok(/^Te quedan (3 minutos|2 minutos y \d+ segundos?|2 minutos) para terminar el examen\.$/.test(quedaDicho), `«tiempo» no dice cuánto queda: ${quedaDicho}`);
     ok(!(await p.evaluate(() => document.querySelector("#q-opciones [aria-pressed='true']"))), "«tiempo» se tomó como una opción");
+    // «hola» en una de opciones: no se entendió, con lo escrito.
+    await escribir("hola");
+    const holaOp = await p.textContent("#q-comandos .cc-msg");
+    ok(/^No entendí «hola»\. Escribe la letra de una opción, de la A a la D/.test(holaOp), `«hola» en una pregunta de opciones no dice «No entendí «hola»»: ${holaOp}`);
+    await escribir("E");
+    const opE = await p.textContent("#q-comandos .cc-msg");
+    ok(opE === "No hay opción E: las opciones son A, B, C y D.", `una letra que no es opción no dice cuáles hay: ${opE}`);
+    /* «siguiente» sin nada elegido no entrega vacía: lo dice. Con algo elegido
+       entrega y dice QUÉ entregó (antes pasaba callado). */
+    await escribir("siguiente");
+    const vacia = await p.textContent("#q-comandos .cc-msg");
+    ok(/^Todavía no elegiste ninguna respuesta, así que no se entrega\./.test(vacia), `«siguiente» sin elegir no avisa: ${vacia}`);
+    ok((await p.evaluate(() => window.__llamadas.filter((l) => l.rpc === "responder_examen").length)) === 0, "«siguiente» sin elegir entregó igual");
     await escribir("B");
     ok((await p.getAttribute("#q-opciones button >> nth=1", "aria-pressed")) === "true", "escribir «B» no marca la segunda opción (aria-pressed)");
-    await escribir("responder");
+    await escribir("siguiente");
     await p.waitForFunction(() => /Pregunta 2 de 3/.test(document.getElementById("q-num").textContent), { timeout: 5000 });
     let ll = await p.evaluate(() => window.__llamadas.filter((l) => l.rpc === "responder_examen"));
     ok(ll.length === 1 && ll[0].args.p_respuesta.opcion === "1", `«B» + «responder» no mandó la opción 1: ${JSON.stringify(ll.map((l) => l.args.p_respuesta))}`);
     ok(/Pregunta 2 de 3/.test(await p.textContent("#q-comandos .cc-msg")), "la pregunta nueva no se dice sola en el recuadro");
+    ok(/^Entregada: la opción B, El que quedó clavado por un alfil\. Pregunta 2 de 3/.test(await p.textContent("#q-comandos .cc-msg")),
+      `«siguiente» no dice qué entregó: ${await p.textContent("#q-comandos .cc-msg")}`);
     // Las casillas dicen lo de ESTA pregunta.
     ok((await p.getAttribute("#q-board [data-square='e3']", "aria-label")) === "eva 3, rey blanco",
       `en la segunda pregunta la casilla e3 no dice lo que hay: ${await p.getAttribute("#q-board [data-square='e3']", "aria-label")}`);
@@ -458,6 +473,18 @@ async function main() {
       `al entregar, el foco no va al título del resultado: ${await p.evaluate(() => document.activeElement && (document.activeElement.id || document.activeElement.tagName))}`);
     const anuncio = await p.evaluate(() => { const r = document.getElementById("r-anuncio"); return r && r.getAttribute("role") === "status" ? r.textContent : ""; });
     ok(/Examen entregado/.test(anuncio) && /Tu nota: \d/.test(anuncio), `al entregar, la nota no se anuncia en una región viva: «${anuncio}»`);
+    /* Entregado, el recuadro sigue ahí y contesta: antes se iba con la pantalla
+       de preguntas y «tiempo» o «acciones» no le llegaban a nadie. */
+    ok(await p.evaluate(() => { const i = document.querySelector("#resultado #q-comandos .cc-input"); return !!i && i.checkVisibility(); }),
+      "con el examen entregado no queda recuadro para escribir");
+    await escribir("tiempo");
+    const tiempoFin = await p.textContent("#q-comandos .cc-msg");
+    ok(/^El examen ya está entregado/.test(tiempoFin), `«tiempo» con el examen entregado no contesta: ${tiempoFin}`);
+    await escribir("acciones");
+    const accionesFin = await p.textContent("#q-comandos .cc-msg");
+    ok(/^El examen ya está entregado/.test(accionesFin) && /«mis exámenes»/.test(accionesFin), `«acciones» con el examen entregado no contesta: ${accionesFin}`);
+    await escribir("nota");
+    ok(/Tu nota: \d/.test(await p.textContent("#q-comandos .cc-msg")), `«nota» no repite el resultado: ${await p.textContent("#q-comandos .cc-msg")}`);
     await ctx.close();
   }
 

@@ -352,6 +352,18 @@ async function navegador() {
     await escribir(page, "nuevo");
     const raro = await escribir(page, "hola");
     cierto("lo que no se entiende se dice", /No entendí/.test(raro), raro);
+    /* «tiempo» y «posición»: antes daban «No entendí». Acá no hay reloj; la
+       posición es lo que se sabe del mar. */
+    const tiempo = await escribir(page, "tiempo");
+    cierto("«tiempo» dice que no hay reloj", /^En este ejercicio no hay «tiempo»/.test(tiempo), tiempo);
+    // Un disparo al agua (una casilla sin pieza), para que haya algo que contar.
+    const alAgua = await page.evaluate(() => BatallaNavalMotor.TODAS.find((c) => !partida.mar.flota.some((p) => p.casilla === c)));
+    await escribir(page, alAgua);
+    const pos = await escribir(page, "cómo está la posición");
+    cierto("«cómo está la posición» dice los disparos y lo que queda a flote",
+      /^Nivel \d\. Llevas 1 disparo\./.test(pos) && pos.indexOf("Agua en " + hablar(alAgua)) !== -1 && /A flote: /.test(pos), pos.slice(0, 160));
+    const pos2 = await escribir(page, "posición");
+    cierto("y «posición» también contesta", /A flote: /.test(pos2) && !/No entendí/.test(pos2), pos2.slice(0, 80));
 
     console.log("\n— Que la página se vea —");
     igual("no hay CSS impreso como texto", await page.evaluate(() => /\{[^}]*:[^}]*\}/.test(document.body.innerText)), false);

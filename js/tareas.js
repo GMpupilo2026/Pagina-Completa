@@ -94,6 +94,25 @@ async function init() {
 
     document.getElementById("loading").classList.add("hidden");
     document.getElementById("app").classList.remove("hidden");
+    tituloAlAbrir();
+}
+
+/* Con la cuenta ciega, al abrir Tareas el foco quedaba en el <body>: el lector
+   no decía nada. Se lleva al título (tabindex=-1: no suma una parada de Tab),
+   salvo que algo ya lo tenga. La marca de la cuenta llega de la base después
+   de cargar: si todavía no está, se espera a `vision:cambio`
+   (js/vision-cuenta.js). */
+function tituloAlAbrir() {
+    const h1 = document.querySelector("#app h1");
+    const intentar = () => {
+        if (!document.documentElement.classList.contains("modo-ciego") || !h1) return false;
+        const a = document.activeElement;
+        if (a && a !== document.body && a.id !== "main-content") return true;
+        h1.setAttribute("tabindex", "-1");
+        h1.focus();
+        return true;
+    };
+    if (!intentar()) document.addEventListener("vision:cambio", intentar, { once: true });
 }
 
 // PostgREST corta la respuesta a partir de cierta cantidad de filas sin dar

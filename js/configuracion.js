@@ -10,6 +10,62 @@
 
         let session = null, profile = null;
 
+        /* ---------------- Los grupos de opciones, con flechas ----------------
+           Cada rejilla de temas y colores es un role="radiogroup" con botones
+           role="radio", pero cada botón era una parada de Tab: unas noventa
+           antes de llegar a «Voz». Ahora es como un grupo de radios de verdad:
+           una sola parada (la opción marcada), las flechas eligen la anterior
+           o la siguiente, e Inicio y Fin la primera y la última. Y como elegir
+           repinta la rejilla, el foco vuelve a la opción marcada en vez de
+           caer al <body>. */
+        function radiosConFlechas(grid) {
+            if (!grid) return;
+            const radios = Array.from(grid.querySelectorAll('[role="radio"]'));
+            if (!radios.length) return;
+            const marcado = radios.find((r) => r.getAttribute("aria-checked") === "true") || radios[0];
+            radios.forEach((r) => { r.tabIndex = r === marcado ? 0 : -1; });
+            if (!grid.__flechas) {
+                grid.__flechas = true;
+                grid.addEventListener("focusin", () => { grid.__conFoco = true; });
+                grid.addEventListener("focusout", (e) => { if (e.relatedTarget && !grid.contains(e.relatedTarget)) grid.__conFoco = false; });
+                grid.addEventListener("keydown", (e) => {
+                    const lista = Array.from(grid.querySelectorAll('[role="radio"]'));
+                    const i = lista.indexOf(e.target.closest && e.target.closest('[role="radio"]'));
+                    if (i < 0) return;
+                    let j = null;
+                    if (e.key === "ArrowRight" || e.key === "ArrowDown") j = (i + 1) % lista.length;
+                    else if (e.key === "ArrowLeft" || e.key === "ArrowUp") j = (i - 1 + lista.length) % lista.length;
+                    else if (e.key === "Home") j = 0;
+                    else if (e.key === "End") j = lista.length - 1;
+                    if (j === null) return;
+                    e.preventDefault();
+                    lista[j].click();
+                    const nuevos = Array.from(grid.querySelectorAll('[role="radio"]'));
+                    (nuevos[j] || nuevos[0]).focus();
+                });
+            }
+            const a = document.activeElement;
+            if (grid.__conFoco && (!a || a === document.body)) marcado.focus();
+        }
+
+        /* ---------------- Con la cuenta ciega ----------------
+           Las tarjetas de temas, colores y estilos de pieza (data-solo-visual)
+           se ocultan con el CSS ([.modo-ciego_&]:hidden, display: none) y la de
+           la voz sube arriba de todo: es la única de las preferencias que le
+           sirve a quien no ve. La marca de la cuenta puede llegar después de
+           cargar (js/vision-cuenta.js avisa con `vision:cambio`). */
+        const vozTarjeta = document.getElementById("voz-tarjeta");
+        const vozLugar = vozTarjeta ? { padre: vozTarjeta.parentElement, antes: vozTarjeta.nextElementSibling } : null;
+        function vozPrimeroSiCiega() {
+            if (!vozTarjeta) return;
+            const ciega = document.documentElement.classList.contains("modo-ciego");
+            const intro = document.querySelector("#app h1 + p");
+            if (ciega && intro && intro.nextElementSibling !== vozTarjeta) intro.after(vozTarjeta);
+            else if (!ciega && vozLugar && vozTarjeta.nextElementSibling !== vozLugar.antes) vozLugar.padre.insertBefore(vozTarjeta, vozLugar.antes);
+        }
+        vozPrimeroSiCiega();
+        document.addEventListener("vision:cambio", vozPrimeroSiCiega);
+
         document.getElementById("save-name-btn").addEventListener("click", async () => {
             const msg = document.getElementById("name-msg");
             const value = document.getElementById("full-name-input").value.trim();
@@ -377,6 +433,7 @@
                 });
                 grid.appendChild(btn);
             });
+            radiosConFlechas(grid);
         }
         renderBoardThemeGrid();
 
@@ -428,6 +485,7 @@
                 });
                 grid.appendChild(btn);
             });
+            radiosConFlechas(grid);
         }
 
         // ---------- Colores del tablero, normal y Modo Adaptado (preferencia local,
@@ -489,6 +547,7 @@
                 });
                 grid.appendChild(btn);
             });
+            radiosConFlechas(grid);
         }
 
         function renderBoardColorThemeGrids() {
@@ -591,6 +650,7 @@
                 });
                 grid.appendChild(btn);
             });
+            radiosConFlechas(grid);
         }
         renderPieceStyleThemeGrid();
 

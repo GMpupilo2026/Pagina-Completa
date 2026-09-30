@@ -70,8 +70,33 @@
             div.className = "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 text-center";
             if (extra) { div.dataset.extra = "1"; div.classList.add("hidden"); }
             // El emoji es adorno: el lector lo leía delante de la cifra («🎯 0% Precisión», «dardo…»).
-            div.innerHTML = `<div class="text-3xl mb-1" aria-hidden="true">${emoji}</div><div class="text-2xl font-bold text-brand-800 dark:text-white">${value}</div><div class="text-xs text-brand-450 dark:text-brand-350 mt-1">${label}</div>`;
+            /* Y cada cifra es un elemento de la lista (#stat-cards es role="list")
+               que se lee «Precisión: 0 %», con el nombre delante: antes salían
+               todas en un texto corrido («0% Precisión 0/0 Asistencia…») y no se
+               sabía qué número iba con qué. Lo que se ve queda igual, fuera del
+               lector; lo que se lee va en un párrafo sr-only. */
+            div.setAttribute("role", "listitem");
+            div.innerHTML = `<div class="text-3xl mb-1" aria-hidden="true">${emoji}</div><div class="text-2xl font-bold text-brand-800 dark:text-white" aria-hidden="true">${value}</div><div class="text-xs text-brand-450 dark:text-brand-350 mt-1" aria-hidden="true">${label}</div><p class="sr-only"></p>`;
+            const [, valor, rotulo] = div.children;
+            div.querySelector("p.sr-only").textContent = textoParaLeer(rotulo) + ": " + textoParaLeer(valor);
             return div;
+        }
+        // El texto de un pedazo de la tarjeta como lo diría el lector: sin lo que va con
+        // aria-hidden (la ⭐ tiene su «estrellas» aparte) y con el % separado («0 %»).
+        function textoParaLeer(el) {
+            const copia = el.cloneNode(true);
+            copia.querySelectorAll('[aria-hidden="true"]').forEach((x) => x.remove());
+            return copia.textContent.replace(/\s+/g, " ").replace(/(\d)\s*%/g, "$1 %").trim();
+        }
+        /* El título del resumen desplegable del diagnóstico: la brújula es adorno
+           (el lector decía «brújula, Tu nivel…»), así que va aparte y con
+           aria-hidden; el «+» de al lado ya lo lleva. */
+        function tituloDiagnostico(texto) {
+            const h = document.getElementById("diagnostico-title");
+            const ico = document.createElement("span");
+            ico.setAttribute("aria-hidden", "true");
+            ico.textContent = "🧭 ";
+            h.replaceChildren(ico, document.createTextNode(texto));
         }
 
         /* Ejercicios por tema, Visualización, Tipos, Aperturas y Precisión
@@ -2652,7 +2677,7 @@
         function renderDiagnosticoProfesor(studentId, nombre, entreno) {
             const panel = document.getElementById("diagnostico-report");
             const body = document.getElementById("diagnostico-body");
-            document.getElementById("diagnostico-title").textContent = "🧭 Diagnóstico y plan de entrenamiento — " + nombre;
+            tituloDiagnostico("Diagnóstico y plan de entrenamiento — " + nombre);
             panel.classList.remove("hidden");
             /* Plegado cuando lo mira quien da clase: es el bloque más largo del
                informe y casi nunca es a lo que se venía —el nivel ya se lee en el
@@ -2766,7 +2791,7 @@
         function renderDiagnosticoAlumno(entreno, planCompartido) {
             const panel = document.getElementById("diagnostico-report");
             const body = document.getElementById("diagnostico-body");
-            document.getElementById("diagnostico-title").textContent = "🧭 Tu nivel y tu plan de entrenamiento";
+            tituloDiagnostico("Tu nivel y tu plan de entrenamiento");
             panel.classList.remove("hidden");
             // Para el alumno va ABIERTO: su plan es a lo que viene a esta página.
             panel.open = true;

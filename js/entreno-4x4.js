@@ -720,8 +720,14 @@ function checkWin(){
   });
   if(!anyMove){
     intentoLimpio = false;
-    setStatus('No quedan capturas posibles. Pulsa "Reiniciar" para intentarlo de nuevo.');
-    announce('No quedan capturas posibles. Pulsa Reiniciar para intentarlo de nuevo.');
+    /* Se pudo capturar, pero el camino no era ese: «Respuesta incorrecta», y
+       lo que se puede ESCRIBIR para seguir (nada de «pulsa»: quien no ve no
+       tiene qué pulsar). */
+    const quedan = Object.keys(boardState).length;
+    setStatus(blindMode
+      ? `Respuesta incorrecta: quedan ${quedan} piezas y no quedan capturas. Escribe «otra vez» para empezar de nuevo.`
+      : `No quedan capturas posibles con ${quedan} piezas. Usa «Reiniciar» para intentarlo de nuevo.`);
+    announce(`Respuesta incorrecta: quedan ${quedan} piezas y no quedan capturas. Escribe «otra vez» para empezar de nuevo.`);
   }
 }
 
@@ -823,7 +829,7 @@ const LETRA_TIPO = { K:['K'], Q:['Q'], B:['B'], N:['N'], P:['P'], D:['Q'], T:['R
 function announcePieceType(letter){
   const tipos = LETRA_TIPO[String(letter).toUpperCase()] || (PIECE_NAME[letter] ? [letter] : null);
   if(!tipos){
-    cmdAnnounce(`No entendí "${letter}" como tipo de pieza. Usa R (rey), D (dama), T (torre), A (alfil), C (caballo) o P (peón); también K, Q, B y N.`);
+    cmdAnnounce(`No entendí «${letter}» como tipo de pieza. Usa R (rey), D (dama), T (torre), A (alfil), C (caballo) o P (peón); también K, Q, B y N.`);
     return;
   }
   if(tipos.length > 1){
@@ -863,7 +869,7 @@ function announceLine(token){
     const r = 4 - parseInt(t,10);
     for(let c=0;c<4;c++) cells.push([r,c]);
   } else {
-    cmdAnnounce(`No entendí "${token}". Usa una letra de columna (a-d) o un número de fila (1-4).`);
+    cmdAnnounce(`No entendí «${token}». Usa una letra de columna (a-d) o un número de fila (1-4).`);
     return;
   }
   const found = cells.filter(([r,c]) => boardState[boardKey(r,c)])
@@ -1148,7 +1154,8 @@ function handleCmdFormSubmit(e){
      quien venía de otro ejercicio escribía «posición» o «caballos» y oía
      «no se entendió». */
   const plano = trimmed.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[¿?¡!.]/g, '').trim();
-  if(/^(posicion|la posicion|tablero|el tablero|todo|todas las piezas|piezas)$/.test(plano)){ input.value=''; announcePosition(); return; }
+  // Las mismas formas que «posición» en js/comandos-tablero.js: «cómo está la posición» daba «no se entendió».
+  if(/^(posicion|la posicion|como esta la posicion|cual es la posicion|que hay en el tablero|tablero|el tablero|todo|todas las piezas|piezas|leer la posicion|lee la posicion|describe la posicion|describir la posicion|dime la posicion)$/.test(plano)){ input.value=''; announcePosition(); return; }
   if(/^(mis jugadas|jugadas|jugadas posibles|capturas|capturas posibles|que puedo capturar|que puedo jugar|todas mis jugadas)$/.test(plano)){
     input.value=''; announceAllCaptures(); return;
   }
@@ -1299,13 +1306,9 @@ function cambiarNivel(cat){
     if(h){ h.setAttribute('tabindex', '-1'); h.focus(); }
   }
 }
-// «volver»: a donde se vino (Entrenamiento), o al panel si se entró directo.
+// «volver»: a donde se vino, diciendo adónde (js/entreno-progress.js).
 function volverAEntrenar(){
-  cmdAnnounce('Volviendo…', false);
-  let mismoSitio = false;
-  try{ mismoSitio = !!document.referrer && new URL(document.referrer).origin === location.origin; }catch(e){}
-  if(mismoSitio && history.length > 1) history.back();
-  else location.href = '../clases.html#entrenar';
+  EntrenoProgress.volver((texto) => cmdAnnounce(texto, true));
 }
 
 function speakableCaptureList(){

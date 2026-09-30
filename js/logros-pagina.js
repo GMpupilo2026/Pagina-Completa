@@ -102,7 +102,13 @@
             nivel.textContent = NIVEL_TEXTO[l.nivel] || l.nivel;
             const progreso = document.createElement("span");
             progreso.className = "text-xs font-medium " + (l.conseguido ? "text-accent-700 dark:text-accent-400" : "text-brand-450 dark:text-brand-350");
-            progreso.textContent = l.conseguido ? "Conseguido ✔" : `${fmt(l.valor)} / ${fmt(l.meta)}`;
+            // La marca ✔ es adorno (el lector decía «Conseguido, marca de verificación»).
+            if (l.conseguido) {
+                const marca = document.createElement("span");
+                marca.setAttribute("aria-hidden", "true");
+                marca.textContent = " ✔";
+                progreso.append("Conseguido", marca);
+            } else progreso.textContent = `${fmt(l.valor)} / ${fmt(l.meta)}`;
             pie.append(nivel, progreso);
 
             const barra = document.createElement("div");
