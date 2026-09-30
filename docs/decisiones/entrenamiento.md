@@ -2718,6 +2718,66 @@ hay lista: cada alumno tiene los suyos) y los verificadores.
   si es muy corta, si ya estaba revisada, o cuántos errores salieron, con «Ir
   al primero →». `verificar-juegos-accesible.js` prueba cuándo sale el enlace;
   `verificar-tipos-pagina.js`, que se revise solo esa.
+- **Un error de partida vuelve al repaso aunque salga limpio.** En los demás
+  tipos, lo que sale con tres estrellas a la primera no entra a «Repasar
+  fallados»; un error de partida ya se falló una vez, jugando, y resolverlo
+  bien una vez no es saberlo. `RepasoFallados.anotar()` tiene la opción
+  `entraLimpio` (solo la primera vez que se ve: uno que ya salió de la cola con
+  su racha no vuelve a entrar por salir limpio), y `entreno-tipos.js` la usa
+  para los tipos `propio`. Vuelve al día siguiente y a los tres días, y sale
+  con los tres limpios seguidos de siempre. Al cerrar el ejercicio se le dice
+  cuándo vuelve («mañana», «el 3 de octubre»): si no, parecería que
+  desapareció. `verificar-entreno-repaso.js` prueba la opción (rota a
+  propósito la guarda de «solo la primera vez», salta: por eso compara la
+  ficha antes y después, porque con la racha de siempre el resultado era el
+  mismo), y `verificar-tipos-pagina.js` que un error resuelto limpio quede con
+  su ficha para mañana.
+- **Sus partidas de Lichess o Chess.com.** La mayoría de los alumnos juega
+  mucho más afuera que en Juegos. Debajo del botón de buscar, plegado,
+  «¿Juegas en Lichess o Chess.com?»: el sitio, el usuario y «Traer y revisar»
+  bajan sus últimas 30 partidas públicas y revisan hasta 10 nuevas, igual que
+  las de la Academia.
+  - **Nada nuevo para bajar ni para leer**: el descargador
+    (`PreparacionDescarga`) y el lector de PGN (`PreparacionAnalisis.leerPgn`)
+    son los de la preparación de rivales (ver «Bajar las partidas de Lichess o
+    Chess.com» en paneles.md). Pesan unos 100 KB, así que se cargan recién al
+    pedirlo, desde la misma carpeta que `entreno-tipos-mas.js`; el verificador
+    comprueba que antes no estén.
+  - `ErroresPropios.deLaWeb()` (pura) se queda con las de ajedrez normal desde
+    la inicial (ni Chess960 ni «From Position») en que jugó ese usuario, sin
+    distinguir mayúsculas, sin repetir y la más nueva primero. La clave es el
+    id del sitio (`lichess:AbCd1234`, `chesscom:123456`, del `Site` o el
+    `Link`): es lo que la marca como revisada, así que no choca con las de
+    Juegos. El resumen del ejercicio dice «Partida de Lichess del …».
+  - **Solo sale el nombre de usuario**; `privacidad.html` ya nombraba a los dos
+    sitios y ahora dice también este uso. El usuario queda escrito **solo en
+    ese aparato** (`errores_cuenta_web_v1`, fuera de `progreso-usuario.js`): no
+    hace falta que viaje con la cuenta ni que lo lea su profesor.
+  - Un usuario que no existe o un «espera un minuto» se dicen en palabras, no
+    como error de la página. `verificar-tipos-pagina.js` lo prueba con un
+    Lichess de mentira: qué se le pide (solo el usuario, las últimas 30), que
+    la de Chess960 ni se mire, el ejercicio que sale y que la segunda vez no
+    revise lo ya revisado.
+- **Los errores de la apertura mandan a Aperturas.** Un error de las primeras
+  10 jugadas (`enLaApertura`, por el número de jugada del FEN) es de la
+  apertura, y ahí ayuda más saber la línea que el tema táctico.
+  `ErroresPropios.lineaDeApertura()` busca en el banco de Aperturas
+  (`js/aperturas-lineas.js`, que ahora carga Tipos) la línea que pasa por **la
+  posición** del error —piezas, turno, enroques y al paso, no el orden de las
+  jugadas—, así que sirve también para los ejercicios ya guardados, que no
+  guardan la partida:
+  - **«Caíste en una celada conocida»**: una celada del otro color que espera
+    JUSTO la jugada que hizo el alumno (con blancas, 4.Cxe5 tras 3…Cd4 es la
+    celada Blackburne; con negras, Cf6 frente a Dh5 es el mate del pastor). Se
+    muestra la `idea` de la línea, que en todas las celadas está en tercera
+    persona (la `clave` a veces le habla a quien pone la trampa).
+  - **La teoría de su color**: una línea suya pasa por ahí; la jugada de la
+    línea se dice solo si está entre las buenas del motor.
+  - Si no hay línea, «Fue en la apertura (jugada N)» y el enlace a Aperturas.
+  El enlace abre la línea directo (`aperturas.html?linea=<id>`). La ficha,
+  además, cuenta cuántos errores fueron en la apertura y manda a la línea por
+  la que más pasan. `verificar-errores-propios.js` prueba la búsqueda con
+  posiciones del banco reproducidas con chess.js (ninguna inventada).
 
 ### El tipo 19: Salva las tablas
 
