@@ -73,6 +73,13 @@
     border-bottom:1px solid var(--line);
   }
   .study-group-title:first-of-type{margin-top:16px;}
+  /* Solo una categoría (?cat=, desde el panel del alumno) y cómo soltarla.
+     El botón va subrayado y en el color del texto: el dorado de los enlaces
+     no llega al contraste AA sobre el fondo claro. */
+  .solo-cat{color:var(--text-muted); font-size:0.9rem; margin:16px 0 0;}
+  .solo-cat[hidden]{display:none;}
+  .solo-cat button{background:none; border:0; padding:4px 2px; min-height:44px; font:inherit; font-weight:600;
+    color:var(--text); text-decoration:underline; text-underline-offset:2px; cursor:pointer;}
   /* ---------- El buscador ---------- */
   .buscador{max-width:1000px; margin:14px auto 0; padding:0 24px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
   .buscador input{
@@ -260,6 +267,7 @@
 
     <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
       <div id="lista-vista">
+        <p id="solo-cat" class="solo-cat" hidden><span id="solo-cat-texto"></span> <button type="button" id="solo-cat-todas">Ver todas las fichas</button></p>
         <div id="ficha-lista"></div>
       </div>
 
