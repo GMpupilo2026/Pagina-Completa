@@ -649,7 +649,7 @@ function casillaDicha(sq) {
   return window.BlindNotation && BlindNotation.squareSpoken ? BlindNotation.squareSpoken(sq) : sq;
 }
 function jugadaDicha(san) {
-  return window.BlindNotation && BlindNotation.sanSpoken ? BlindNotation.sanSpoken(san).replace(/^\S/, (c) => c.toLowerCase()) : san;
+  return window.BlindNotation && BlindNotation.sanSpoken ? BlindNotation.sanSpoken(san).replace(/^\S/, (c) => c.toLowerCase()) : ComandosTablero.sanEspanol(san);
 }
 
 function responderJugada(juego, intento) {

@@ -334,7 +334,7 @@ function adaptado(){ return document.documentElement.classList.contains('adaptiv
 /* La jugada en palabras para quien la oye («torre a de 8, jaque») y no «Rd8+»,
    que es inglés y letras sueltas. Sin el Modo Adaptado, la notación de siempre. */
 function jugadaDicha(san){
-  return adaptado() && window.BlindNotation && BlindNotation.sanSpoken ? BlindNotation.sanSpoken(san) : san;
+  return adaptado() && window.BlindNotation && BlindNotation.sanSpoken ? BlindNotation.sanSpoken(san) : ComandosTablero.sanEspanol(san);
 }
 
 function flashWrongInput(){
@@ -349,11 +349,11 @@ function renderLog(){
     '<span class="pending">Todavía no escribiste ninguna jugada.</span>';
 }
 function logJugadaPropia(san){
-  logLineas.push(`<b>${san}</b>`);
+  logLineas.push(`<b>${ComandosTablero.sanEspanol(san)}</b>`);
   renderLog();
 }
 function logRespuestaRival(san){
-  logLineas.push(`<span class="reply">${san}</span>`);
+  logLineas.push(`<span class="reply">${ComandosTablero.sanEspanol(san)}</span>`);
   renderLog();
 }
 
