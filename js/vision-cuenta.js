@@ -490,8 +490,14 @@ window.VisionCuenta = (function () {
      burbuja, un momento después), si quedó algo se SELECCIONA: escribir de
      nuevo lo reemplaza, y con las flechas se puede corregir igual. */
   function seleccionarLoQueQuedo(campo) {
+    /* Solo si sigue EXACTAMENTE lo que se envió: quien escribe rápido ya
+       empezó lo siguiente, y seleccionarlo a mitad se comía letras («reloj»
+       quedaba «eloj»). */
+    var enviado = campo ? campo.value : "";
     setTimeout(function () {
-      if (campo && campo.value && document.activeElement === campo && campo.select) campo.select();
+      if (!campo || !campo.value || campo.value !== enviado || document.activeElement !== campo || !campo.select) return;
+      if (campo.selectionStart === 0 && campo.selectionEnd === campo.value.length) return;
+      campo.select();
     }, 60);
   }
   document.addEventListener("submit", function (e) {
