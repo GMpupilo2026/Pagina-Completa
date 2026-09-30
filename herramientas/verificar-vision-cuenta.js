@@ -119,6 +119,25 @@ async function pruebaCiega(browser) {
   cierto("Alt + Mayúscula + B, sin tablero a la vista, dice que no hay posición en vez de callarse",
     await page.evaluate(() => Array.from(document.querySelectorAll('[role="status"]')).some((r) => /no hay una posición/.test(r.textContent))));
 
+  /* El panel no tiene recuadro de ejercicio: el de «Ir a…», en los accesos
+     rápidos, entiende lo mismo que los demás y lleva a una sección o enlace
+     por parte de su nombre. */
+  await page.waitForSelector("#vc-ir", { timeout: 5000 }).catch(() => {});
+  await page.keyboard.press("Alt+Shift+KeyC");
+  igual("Alt + Mayúscula + C, sin ejercicio, lleva al recuadro «Ir a»", await page.evaluate(() => document.activeElement && document.activeElement.id), "vc-ir");
+  const oidoIr = async (t) => {
+    await page.fill("#vc-ir", t);
+    await page.press("#vc-ir", "Enter");
+    await esperar(300);
+    return page.evaluate(() => Array.from(document.querySelectorAll('[role="status"]')).map((r) => r.textContent).join(" ‖ "));
+  };
+  cierto("«dónde estoy» en «Ir a» dice la página", /Estás en ¡Hola, Ana!/.test(await oidoIr("dónde estoy")));
+  await page.fill("#vc-ir", "entrenar");
+  await page.press("#vc-ir", "Enter");
+  await esperar(250);
+  igual("«entrenar» lleva el foco a la sección Entrenar", await page.evaluate(() => document.activeElement && document.activeElement.tagName + ":" + document.activeElement.textContent.trim()), "H2:Entrenar");
+  cierto("lo que no está en la página se dice", /No encontré «zzqq»/.test(await oidoIr("zzqq")));
+
   /* Lo que la página pinta después también pasa por el filtro. */
   await page.evaluate(() => {
     const a = document.createElement("a");
@@ -274,6 +293,24 @@ async function pruebaTodoDesdeElRecuadro(browser) {
   await decir("solución");
   igual("«solución» aprieta «Ver solución» de SU ejercicio, no el del otro recuadro",
     await page.evaluate(() => [window.__sol || 0, window.__otraSol || 0]), [1, 0]);
+  /* Una OPCIÓN de la pregunta no es una acción: en el diagnóstico «volver»
+     marcó la opción D, «Una jugada ilegal que hay que volver atrás». */
+  await page.evaluate(() => {
+    const g = document.createElement("div");
+    g.setAttribute("role", "group"); g.setAttribute("aria-labelledby", "cc-titulo-x");
+    const op = document.createElement("button"); op.type = "button"; op.id = "op-d";
+    op.textContent = "Una jugada ilegal que hay que volver atrás";
+    op.addEventListener("click", () => { window.__opcion = 1; });
+    g.append(op);
+    const suelta = document.createElement("button"); suelta.type = "button";
+    suelta.textContent = "Siguiente idea: otra vez el caballo salta a la casilla";
+    suelta.addEventListener("click", () => { window.__frase = 1; });
+    document.querySelector(".cc-caja").parentNode.append(g, suelta);
+  });
+  await decir("volver");
+  await decir("otra vez");
+  igual("«volver» y «otra vez» no aprietan una opción ni una frase larga que las contengan",
+    await page.evaluate(() => [window.__opcion || 0, window.__frase || 0]), [0, 0]);
   await page.fill(".cc-caja .cc-input", "zzqq");
   await page.press(".cc-caja .cc-input", "Enter");
   await esperar(250);

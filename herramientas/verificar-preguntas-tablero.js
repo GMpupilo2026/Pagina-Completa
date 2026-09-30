@@ -80,5 +80,25 @@ console.log("\nQue no se coma jugadas ni letras");
 igual("«Axb5» sigue siendo una jugada", pregunta(g, "Axb5"), "(no la entendió)");
 igual("«d» sola no es pregunta (es una letra de opción)", pregunta(g, "d"), "(no la entendió)");
 
+console.log("\n«R» es el rey (el sitio escribe en español)");
+// El rey de e1 y la torre de h1 llegan los dos a f1: «Rf1» es el rey. Antes
+// movía la torre, y en el examen eso era la pregunta perdida.
+const reyYTorre = () => new Chess("4k3/8/8/8/8/8/8/4K2R w K - 0 1");
+const jugada = (g, t) => { const m = CT.jugadaEscrita(g, t); return m ? m.piece + m.from + m.to + (m.promotion || "") : "(ninguna)"; };
+igual("«Rf1» con rey y torre que llegan: el rey", jugada(reyYTorre(), "Rf1"), "ke1f1");
+igual("«Tf1» es la torre", jugada(reyYTorre(), "Tf1"), "rh1f1");
+igual("«Rh4», adonde solo llega la torre: la torre (quien escribe en inglés)", jugada(reyYTorre(), "Rh4"), "rh1h4");
+igual("coronar «=R» es a torre, nunca a rey", jugada(new Chess("8/4P3/8/8/8/8/k7/4K3 w - - 0 1"), "e8=R"), "pe7e8r");
+
+// La misma regla en el lector de jugadas de las páginas (js/chess-move-parser.js).
+const ctx2 = { window: {}, console };
+ctx2.window.window = ctx2.window;
+vm.createContext(ctx2);
+vm.runInContext(fs.readFileSync(path.join(__dirname, "..", "js", "chess-move-parser.js"), "utf8"), ctx2);
+const parser = (t) => { const m = ctx2.window.ChessMoveParser.tryParseMove(reyYTorre(), t); return m ? m.piece + m.from + m.to : "(ninguna)"; };
+igual("ChessMoveParser: «Rf1» es el rey", parser("Rf1"), "ke1f1");
+igual("ChessMoveParser: «Tf1» es la torre", parser("Tf1"), "rh1f1");
+igual("ChessMoveParser: «Rh4» (solo la torre llega) sigue siendo la torre", parser("Rh4"), "rh1h4");
+
 console.log(fallos ? `\n${fallos} fallo(s)` : "\nLas preguntas de ataque y de la partida contestan lo que hay.");
 process.exit(fallos ? 1 : 0);

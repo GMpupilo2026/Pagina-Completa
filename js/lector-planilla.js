@@ -43,6 +43,8 @@
             if (!s) return [];
 
             const candidates = new Set();
+            // «R» es rey en español (y torre en inglés): el rey se prueba antes que el texto tal cual.
+            if (/^R[a-h1-8x]/i.test(s) && s.length >= 3) candidates.add("K" + s.slice(1));
             candidates.add(s);
 
             if (/^0-0-0[+#]?$/.test(s) || /^0-0[+#]?$/.test(s)) candidates.add(s.replace(/0/g, "O"));
@@ -52,8 +54,8 @@
 
             const first = s[0];
             if (first && SAN_PIECE_LETTERS.indexOf(first.toUpperCase()) !== -1 && s.length >= 3) {
-                candidates.add(first.toUpperCase() + s.slice(1));
                 candidates.add(mapSpanishPieceLetter(first) + s.slice(1));
+                candidates.add(first.toUpperCase() + s.slice(1));
             }
 
             const promoMatch = s.match(/=([a-zA-Z])([+#]?)$/);
