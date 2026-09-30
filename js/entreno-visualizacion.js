@@ -273,7 +273,10 @@ function drawStaticBoard(fen, orientation){
       cell.className = 'sq ' + (isLightSquare(square) ? 'light' : 'dark');
       cell.dataset.square = square;
       const piece = snapshot.get(square);
-      let label = square;
+      // Como en todo el sitio: «eva 4, caballo blanco» / «eva 4, vacía» (el
+      // lector de pantalla y «Activar voz» leen esto). «e4» a secas se leía
+      // letra por letra y una casilla vacía no decía que lo estaba.
+      let label = window.BlindNotation && BlindNotation.squareSpoken ? BlindNotation.squareSpoken(square) : square;
       if(piece){
         const span = document.createElement('span');
         if (window.PiezaPreferida) PiezaPreferida.pintar(span, piece.type, piece.color);
@@ -285,6 +288,8 @@ function drawStaticBoard(fen, orientation){
         cell.appendChild(span);
         label += ', ' + PIECE_NAME[piece.type] + (piece.color === 'w' ? ' blanco' : ' negro');
         if(piece.type === 'q' || piece.type === 'r') label = label.replace('blanco', 'blanca').replace('negro', 'negra');
+      } else {
+        label += ', vacía';
       }
       cell.setAttribute('role', 'img');
       cell.setAttribute('aria-label', label);

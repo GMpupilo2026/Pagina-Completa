@@ -241,7 +241,10 @@ window.BlindNotation = (function () {
     opts = opts || {};
     if (!hasSpeechApi || !isSpeechEnabled() || !text) return false;
     const ahora = Date.now();
-    if (opts.encolar && String(text) === ultimoDicho && ahora - ultimoDichoEn < 2000) return false;
+    // `opts.igualA`: el mismo aviso escrito de otra forma (js/voz-pagina.js dice
+    // «eva 4» donde el aviso escribe «e4»), que también cuenta como ya dicho.
+    const yaDicho = String(text) === ultimoDicho || (opts.igualA != null && String(opts.igualA) === ultimoDicho);
+    if (opts.encolar && yaDicho && ahora - ultimoDichoEn < 2000) return false;
     ultimoDicho = String(text);
     ultimoDichoEn = ahora;
     try {
