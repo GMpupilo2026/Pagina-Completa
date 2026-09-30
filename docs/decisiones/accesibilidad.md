@@ -1042,3 +1042,60 @@ En Entrenamiento, la misma vuelta:
 Lo miden `verificar-entreno-escribiendo.js` (nuevo), `verificar-tipos-pagina.js`,
 `verificar-cuadro-comandos.js`, `verificar-entreno-accesible.js`,
 `verificar-entreno-arreglos.js` y `verificar-preguntas-tablero.js`.
+
+### La tercera recorrida: «R» es rey, las palabras no aprietan respuestas y todo se destraba
+
+Lo que dejó la tercera vuelta con la cuenta «ciego»:
+
+- **«R» es el rey.** En español R es rey y T torre; en inglés R es torre. Con
+  el rey y una torre que llegan a la misma casilla, «Rf1» movía la TORRE (en
+  el examen, la pregunta perdida sin haberse equivocado). Ahora se prueba
+  primero el rey (`LETRA_AMBIGUA` en `comandos-tablero.js`, y
+  `chess-move-parser.js`, `tablero-board.js`, `lector-planilla.js`); si el rey
+  no puede ir, queda la torre para quien escribe en inglés. Coronar «=R» es
+  siempre torre. Las páginas que traducían T a la R inglesa antes de llamar al
+  parser (Habilidades, Visualización) ahora le pasan la T tal cual.
+- **Una palabra suelta no aprieta una respuesta.** En el diagnóstico,
+  «volver» marcó la opción D, «Una jugada ilegal que hay que volver atrás».
+  Los sinónimos de `vision-cuenta.js` («siguiente», «volver», «otra vez»…)
+  solo aprietan ACCIONES: nunca un botón con `role=radio`/`option`,
+  `aria-pressed`, dentro de un `role=group` con título, que empiece por
+  «Opción», ni uno cuyo nombre pase de cinco palabras (`esRespuesta`). Por su
+  nombre exacto se sigue pudiendo.
+- **Las páginas sin ejercicio también se manejan escribiendo**: en los
+  accesos rápidos va el recuadro «Ir a…» (`#vc-ir`) cuando la página no tiene
+  recuadro de comandos (panel, Tareas, Informes, Logros). Entiende lo mismo
+  que los demás y, además, parte de un nombre: «entrenar» lleva el foco a esa
+  sección, «tareas» abre ese enlace. Alt + Mayúscula + C lleva a él. Y al
+  cargar, sin recuadro, el foco va al título y no se queda en el `<body>`.
+- **Los atajos de salida** solo se bloquean en la clase y el examen mientras
+  hay algo en marcha (un recuadro para contestar): con «Todavía no hay clase»
+  o el examen entregado, Alt + Mayúscula + P lleva al panel.
+- **Nada se tranca sin salida**: Practicar y Desafíos tienen «solución» y
+  «saltar» (no cuentan como resueltos; lo saltado va a «Repasar fallados»);
+  Visualización y Habilidades tienen «solución»; ¡Te reto! y Racha táctica
+  empiezan otra vez con «otra vez» o «siguiente» y lo dicen al terminar; el
+  calentamiento de la clase acepta otra jugada después de fallar; Finales 100
+  se contesta escribiendo (la jugada o «sí», «tablas», «ganan blancas»).
+  Para que la página conteste «siguiente» o «solución» antes que la capa,
+  `EjercicioTablero.palabrasPrimero(campo, fn)`; «volver» dice adónde va
+  (`EntrenoProgress.volver`).
+- **Ningún verbo de mirar** en lo que se oye («Pulsa Reiniciar», «Toca
+  «Intentarlo otra vez»», «usa el botón»): se dice qué escribir.
+- **Lo que se lee de más**: los emojis de Logros, Informes y la clase van con
+  `aria-hidden`; las cifras de Informes son una lista («Precisión: 78 %»);
+  Configuración oculta con la cuenta ciega las diez tarjetas de apariencia y
+  pone la voz arriba, con los grupos de opciones como `radiogroup` (una parada
+  de Tab, flechas para elegir); las lecciones bloqueadas de Aprender llevan
+  `aria-disabled` y se alcanzan con Tab (dicen qué hay que terminar antes).
+- **El curso de Fundamentos** enseña la notación española (R, D, T, A, C;
+  Cf3), como el resto del sitio. Queda pendiente regenerar su PDF, su
+  presentación y sus ejercicios, que siguen en inglés.
+
+Lo miden `verificar-preguntas-tablero.js` («R» y la coronación),
+`verificar-vision-cuenta.js` (las opciones y el recuadro «Ir a»),
+`verificar-entreno-escribiendo.js`, `verificar-juegos-accesible.js`,
+`verificar-sonar.js`, `verificar-batalla-naval.js`,
+`verificar-clase-adaptada.js`, `verificar-examenes.js`,
+`verificar-curso-adaptado.js`, `verificar-temas-plataforma.js`,
+`verificar-informes.js`, `verificar-logros.js` y `verificar-panel.js`.
