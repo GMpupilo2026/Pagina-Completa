@@ -69,6 +69,42 @@ export function lineaComparacion(c: Record<string, any> | null | undefined, frec
   return t + ".";
 }
 
+/* ---- Su Elo oficial, mes a mes ----
+   El FIDE Estándar y el Nacional de Costa Rica que la Edge Function elo-fide
+   lee cada mes con el código FIDE que el alumno puso en Configuración
+   (public.elo_de_alumno(), dentro de informe_de_alumno()). Se compara el mes
+   más reciente con el anterior que haya: «2152 · subió 12 desde agosto».
+   Sin código FIDE, o sin ningún Elo leído, el bloque no sale; y un rating que
+   no tiene (un alumno sin FIDE todavía) no se nombra: nada de «FIDE: 0».
+   El número va siempre escrito, con «subió»/«bajó» en palabras: el color de
+   una flecha no le dice nada a quien no lo distingue. */
+const MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio",
+  "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+function mesDe(periodo: unknown): string {
+  const m = /^(\d{4})-(\d{2})/.exec(String(periodo ?? ""));
+  return m ? MESES[Number(m[2]) - 1] ?? "" : "";
+}
+export function filasElo(e: Record<string, any> | null | undefined): Array<[string, string]> {
+  if (!e || !e.actual) return [];
+  const antes = e.anterior ?? null;
+  const mesAntes = mesDe(antes?.periodo);
+  const fila = (etiqueta: string, ahora: unknown, previo: unknown): [string, string] | null => {
+    const n = Number(ahora);
+    if (!(n > 0)) return null;
+    const p = Number(previo);
+    let cambio = "";
+    if (p > 0 && mesAntes) {
+      const d = n - p;
+      cambio = d > 0 ? ` · subió ${d} desde ${mesAntes}` : d < 0 ? ` · bajó ${-d} desde ${mesAntes}` : ` · igual que en ${mesAntes}`;
+    }
+    return [etiqueta, `${n}${cambio}`];
+  };
+  return [
+    fila("FIDE Estándar", e.actual.fide, antes?.fide),
+    fila("Nacional (Costa Rica)", e.actual.nacional, antes?.nacional),
+  ].filter((f): f is [string, string] => f !== null);
+}
+
 // Cómo se llama cada actividad cuando se la cuenta alguien de la casa.
 const ACTIVIDADES: Record<string, { nombre: string; unidad: string; emoji: string }> = {
   "4x4":           { nombre: "Ejercicios 4×4",        unidad: "resueltos",   emoji: "🧩" },
@@ -401,6 +437,22 @@ export function informeHtml(
       </p>` : ""}
     </div>` : "";
 
+  const elo = (d.elo ?? null) as Record<string, any> | null;
+  const eloFilas = filasElo(elo);
+  const bloqueElo = eloFilas.length ? `
+    <div style="margin:0 0 20px;padding:16px;background:#ffffff;border:1px solid #d9e2ec;border-radius:10px">
+      <p style="margin:0 0 10px;font-size:13px;font-weight:700;color:#243b53">♟️ Su Elo oficial${mesDe(elo!.actual.periodo) ? ` (${mesDe(elo!.actual.periodo)})` : ""}</p>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px">
+        ${eloFilas.map(([izq, der]) => `<tr>
+          <td style="padding:6px 0;color:#243b53">${escapar(izq)}</td>
+          <td style="padding:6px 0;text-align:right;color:#102a43;font-weight:600;white-space:nowrap">${escapar(der)}</td>
+        </tr>`).join("")}
+      </table>
+      <p style="margin:10px 0 0;font-size:12px;color:#55708a;line-height:1.5">
+        Código FIDE ${escapar(elo!.fide_id)}. Se lee solo cada mes de la lista de la FIDE y de la clasificación nacional; sube o baja según los torneos que juegue.
+      </p>
+    </div>` : "";
+
   /* ---- Sus premios en clase ----
      Los trofeos (una respuesta correcta en clase = uno, más los que el profe
      ajusta) y las insignias que el profe da a mano: «Estrella de buen
@@ -483,6 +535,8 @@ export function informeHtml(
 
     ${comparacion ? `
     <p style="margin:0 0 20px;font-size:14px;color:#243b53;line-height:1.5">📈 ${escapar(comparacion)}</p>` : ""}
+
+    ${bloqueElo}
 
     ${bloquePremios}
 

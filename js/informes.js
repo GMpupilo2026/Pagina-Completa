@@ -2319,12 +2319,76 @@
                     <button type="button" id="elo-alumno-guardar" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">Guardar Elo</button>
                     <span id="elo-alumno-msg" class="text-xs text-brand-450 dark:text-brand-350" aria-live="polite"></span>
                 </div>
+                <p class="text-sm font-semibold text-brand-800 dark:text-white mt-4 mb-1"><label for="fide-alumno">Código FIDE</label></p>
+                <p class="text-xs text-brand-450 dark:text-brand-350 mb-2">Con el código, la plataforma lee sola cada mes su Elo FIDE Estándar y Nacional de Costa Rica, y el informe a la casa dice si subió o bajó.</p>
+                <div class="flex flex-wrap gap-2 items-center">
+                    <input id="fide-alumno" type="text" inputmode="numeric" autocomplete="off" maxlength="10" placeholder="Ej. 6501435" class="w-28 bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100">
+                    <button type="button" id="fide-alumno-guardar" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">Guardar y leer su Elo</button>
+                    <span id="fide-alumno-msg" class="text-xs text-brand-450 dark:text-brand-350" aria-live="polite"></span>
+                </div>
             </div>`;
+        }
+
+        /* El código FIDE del alumno, también desde acá: guardar_fide_id() deja a
+           cualquiera de sus profesores y a administración, y elo-fide lee el Elo
+           en ese momento. El resumen del grupo no trae el código, así que se lee
+           al abrir. Ver «El Elo oficial, mes a mes» en docs/decisiones/informes.md. */
+        const MESES_ELO = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+        function textoEloOficial(f) {
+            const partes = [];
+            if (f && f.fide) partes.push("FIDE Estándar " + f.fide);
+            if (f && f.nacional) partes.push("Nacional " + f.nacional);
+            if (!partes.length) return "";
+            const mes = MESES_ELO[Number(String(f.periodo || "").slice(5, 7)) - 1];
+            return "Elo oficial" + (mes ? " (" + mes + ")" : "") + ": " + partes.join(" · ") + ".";
+        }
+        async function conectarFideAlumno(student) {
+            const btn = document.getElementById("fide-alumno-guardar");
+            if (!btn) return;
+            const input = document.getElementById("fide-alumno");
+            const msg = document.getElementById("fide-alumno-msg");
+            const [{ data: p }, { data: h }] = await Promise.all([
+                sb.from("profiles").select("fide_id").eq("id", student.id).maybeSingle(),
+                sb.from("elo_historial").select("periodo, fide_estandar, nacional").eq("student_id", student.id)
+                    .order("periodo", { ascending: false }).limit(1).maybeSingle(),
+            ]);
+            if (!document.body.contains(btn)) return;
+            input.value = (p && p.fide_id) || "";
+            if (h) msg.textContent = textoEloOficial({ periodo: h.periodo, fide: h.fide_estandar, nacional: h.nacional });
+            btn.addEventListener("click", async () => {
+                const raw = input.value.replace(/\s/g, "");
+                if (raw && !/^[0-9]{4,10}$/.test(raw)) { msg.textContent = "El código FIDE son solo números (entre 4 y 10 cifras)."; return; }
+                btn.disabled = true;
+                try {
+                    msg.textContent = "Guardando…";
+                    const { data: quedo, error } = await sb.rpc("guardar_fide_id", { p_persona: student.id, p_fide_id: raw || null });
+                    if (error) { msg.textContent = "No se pudo guardar: " + error.message; return; }
+                    input.value = quedo || "";
+                    if (!quedo) { msg.textContent = "Código FIDE borrado."; return; }
+                    msg.textContent = "Código guardado. Leyendo su Elo…";
+                    let { data: r, error: err2 } = await sb.functions.invoke("elo-fide", { body: { action: "actualizar", student_id: student.id } });
+                    if (err2 && err2.context && typeof err2.context.json === "function") {
+                        try { r = await err2.context.json(); } catch (e) { /* sin cuerpo */ }
+                    }
+                    if (err2 || !r || !r.ok) { msg.textContent = "El código quedó guardado, pero ahora no se pudo leer su Elo (" + ((r && r.error) || "las páginas no contestaron") + ")."; return; }
+                    msg.textContent = textoEloOficial(r) || "Código guardado. Esa ficha todavía no tiene Elo FIDE Estándar ni Nacional.";
+                    const elo = r.fide || r.nacional;
+                    if (elo) {
+                        student.elo = elo; student.elo_tipo = r.fide ? "fide" : "nacional"; student.elo_actualizado = new Date().toISOString();
+                        const campo = document.getElementById("elo-alumno"), tipo = document.getElementById("elo-alumno-tipo");
+                        if (campo) campo.value = elo;
+                        if (tipo) tipo.value = student.elo_tipo;
+                    }
+                } finally {
+                    btn.disabled = false;
+                }
+            });
         }
 
         function conectarEloEditor(student) {
             const btn = document.getElementById("elo-alumno-guardar");
             if (!btn) return;
+            conectarFideAlumno(student);
             btn.addEventListener("click", async () => {
                 const msg = document.getElementById("elo-alumno-msg");
                 const raw = document.getElementById("elo-alumno").value.trim();

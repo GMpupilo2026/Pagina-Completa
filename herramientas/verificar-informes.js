@@ -183,6 +183,12 @@ window.__funcion = [];
       if (porArgs) return constructor(porArgs[JSON.stringify(args || null)] || [], "rpc:" + n);
       return constructor(DATOS.rpc[n] !== undefined ? DATOS.rpc[n] : [], "rpc:" + n);
     },
+    /* La lectura del Elo (elo-fide): anota qué se pidió y contesta lo que la
+       función devuelve de verdad. */
+    functions: { invoke: (nombre, opts) => {
+      window.__funcion.push(Object.assign({ funcion: nombre }, (opts && opts.body) || {}));
+      return Promise.resolve({ data: { ok: true, periodo: "2026-09-01", fide: 2152, nacional: 2268, nombre: "Rojas, Ana" }, error: null });
+    } },
     /* Las fotos de perfil (js/foto-perfil.js): la «dirección firmada» es un
        PNG de 1×1 que el navegador sí abre. Anota cada pedido de firmas. */
     storage: { from: () => ({ createSignedUrls: (rutas) => {
@@ -373,6 +379,7 @@ async function pruebaProfesor(browser) {
   }));
   const { page, errores } = await abrir(browser, {
     rpc: {
+      guardar_fide_id: "6530133",
       informes_resumen_alumnos: [ANA, BRUNO, CARLA],
       informes_cursos_alumnos: CURSOS_ANA,
       informes_entreno_modulos: [MODULOS_ANA, { student_id: "a-2", temas: 8, con_como_salio: 0, limpios: 0 }],
@@ -419,7 +426,10 @@ async function pruebaProfesor(browser) {
       },
     },
     tablas: {
-      profiles: [{ id: "prof-1", role: "profesor", is_admin: true, full_name: "Oscar", email: "o@x.cr" }],
+      profiles: [{ id: "prof-1", role: "profesor", is_admin: true, full_name: "Oscar", email: "o@x.cr" },
+                 { id: "a-1", role: "alumno", is_admin: false, full_name: "Ana Rojas", fide_id: "6501435" }],
+      elo_historial: [{ student_id: "a-1", periodo: "2026-08-01", fide_estandar: 2140, nacional: 2275 },
+                      { student_id: "a-1", periodo: "2026-07-01", fide_estandar: 2100, nacional: 2250 }],
       training_plans: [], diagnosticos_publicos: [], arbitrajes_publicos: arbitrajes,
       question_answers: RESPUESTAS,
       training_progress: DIAGNOSTICOS,
@@ -596,6 +606,32 @@ async function pruebaProfesor(browser) {
     ].join(",");
   }), "2,true,true,true,true");
   igual("ficha de diagnóstico visible", await page.evaluate(() => !document.getElementById("diagnostico-report").classList.contains("hidden")), "true");
+
+  /* El código FIDE también lo pone el profesor, junto al Elo del alumno: se
+     lee el guardado y el último Elo oficial (el mes más reciente, no el
+     primero), y guardar va por guardar_fide_id() y después pide la lectura a
+     elo-fide para ESE alumno. Ver «El Elo oficial, mes a mes». */
+  console.log("-- El código FIDE desde Informes");
+  await page.waitForFunction(() => /Elo oficial/.test((document.getElementById("fide-alumno-msg") || {}).textContent || ""), null, { timeout: 5000 });
+  igual("se ve el código guardado del alumno", await page.inputValue("#fide-alumno"), "6501435");
+  igual("y su último Elo oficial", await page.textContent("#fide-alumno-msg"), "Elo oficial (agosto): FIDE Estándar 2140 · Nacional 2275.");
+  // Vive dentro de la ficha plegada del diagnóstico: se abre como lo haría el profe.
+  await page.click("#diagnostico-report > summary");
+  igual("al abrir la ficha, el campo se ve", await page.evaluate(() => document.getElementById("fide-alumno").checkVisibility()), true);
+  await page.fill("#fide-alumno", "65a");
+  await page.click("#fide-alumno-guardar");
+  igual("un código con letras no llega a la base", [await page.textContent("#fide-alumno-msg"),
+    await page.evaluate(() => (window.__rpcArgs || []).filter(([n]) => n === "guardar_fide_id").length)],
+    ["El código FIDE son solo números (entre 4 y 10 cifras).", 0]);
+  await page.fill("#fide-alumno", " 6530133 ");
+  await page.click("#fide-alumno-guardar");
+  await page.waitForFunction(() => /septiembre/.test(document.getElementById("fide-alumno-msg").textContent), null, { timeout: 5000 });
+  igual("se guarda para ese alumno, sin espacios", await page.evaluate(() =>
+    JSON.stringify((window.__rpcArgs || []).filter(([n]) => n === "guardar_fide_id").map(([, a]) => a))), JSON.stringify([{ p_persona: "a-1", p_fide_id: "6530133" }]));
+  igual("y se pide la lectura a elo-fide para ese alumno", await page.evaluate(() =>
+    JSON.stringify(window.__funcion.filter((f) => f.funcion === "elo-fide"))), JSON.stringify([{ funcion: "elo-fide", action: "actualizar", student_id: "a-1" }]));
+  igual("lo leído se ve", await page.textContent("#fide-alumno-msg"), "Elo oficial (septiembre): FIDE Estándar 2152 · Nacional 2268.");
+  igual("y pasa al Elo del alumno", [await page.inputValue("#elo-alumno"), await page.inputValue("#elo-alumno-tipo")], ["2152", "fide"]);
 
   /* En qué usó su tiempo. Lo que se rompe callado acá: un curso que no sale
      porque no tiene ejercicios (que es justo lo que el pedido vino a sumar), un

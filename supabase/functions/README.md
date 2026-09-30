@@ -84,3 +84,13 @@ Supabase. Los que usan estas funciones son `RESEND_API_KEY` y, opcionalmente,
 `RESEND_FROM` (por omisión, `informes@ajedrez-integral.com`, que es el dominio
 verificado). **Sin `RESEND_API_KEY` la invitación sigue saliendo**, solo que la
 manda Supabase con su propia plantilla en vez del correo de bienvenida.
+
+## `elo-fide` va con `verify_jwt` en **false**
+
+La tanda la dispara `public.disparar_tanda_elo()` (pg_cron
+`elo-fide-nacional`, cada día), sin sesión de persona. A cambio exige el
+secreto `tanda_elo_secreto` de la bóveda. La otra acción, «actualizar» (la
+llama Configuración al guardar el código FIDE), pregunta el permiso con el JWT
+de quien llama (`puedo_cambiar_fide_id()`). Con `verify_jwt` en true la tanda
+recibe un 401 y el Elo deja de leerse sin que nada falle a la vista. Ver «El
+Elo oficial, mes a mes» en `docs/decisiones/informes.md`.

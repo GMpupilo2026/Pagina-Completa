@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20260930172218
+# al-dia-con: 20260930194828
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -33,6 +33,7 @@ tabla  course_unlocks  rls=true
 tabla  datos_facturacion  rls=true
 tabla  desafios  rls=true
 tabla  diagnosticos_publicos  rls=true
+tabla  elo_historial  rls=true
 tabla  encargados  rls=true
 tabla  encuesta_curso_respuestas  rls=true
 tabla  encuestas_curso  rls=true
@@ -341,6 +342,13 @@ columna  diagnosticos_publicos.nombre  text
 columna  diagnosticos_publicos.porcentaje  integer
 columna  diagnosticos_publicos.supervisor_id  uuid
 columna  diagnosticos_publicos.telefono  text
+columna  elo_historial.fide_estandar  integer
+columna  elo_historial.fide_id  text
+columna  elo_historial.leido_at  timestamp with time zone
+columna  elo_historial.nacional  integer
+columna  elo_historial.nombre  text
+columna  elo_historial.periodo  date
+columna  elo_historial.student_id  uuid
 columna  encargados.activo  boolean
 columna  encargados.creado_por  uuid
 columna  encargados.created_at  timestamp with time zone
@@ -756,6 +764,7 @@ columna  profiles.elo_tipo  text
 columna  profiles.email  text
 columna  profiles.es_coordinador  boolean
 columna  profiles.es_supervisor  boolean
+columna  profiles.fide_id  text
 columna  profiles.foto_aceptada_en  timestamp with time zone
 columna  profiles.foto_path  text
 columna  profiles.foto_privacidad_version  text
@@ -1110,9 +1119,11 @@ funcion  diagnosticos_publicos_supervisor()  definer  anon=false  auth=false
 funcion  disparar_informes_encargados()  definer  anon=false  auth=false
 funcion  disparar_recordatorios_cobro()  definer  anon=false  auth=false
 funcion  disparar_recordatorios_programados()  definer  anon=false  auth=false
+funcion  disparar_tanda_elo()  definer  anon=false  auth=false
 funcion  elegir_academia_activa(p_academia uuid)  definer  anon=false  auth=true
 funcion  elegir_plan(p_id uuid, p_plan text, p_version_terminos text, p_version_privacidad text)  definer  anon=false  auth=true
 funcion  eliminar_plan_cobro(p_plan uuid, p_anular_sin_pagos boolean)  definer  anon=false  auth=true
+funcion  elo_de_alumno(p_alumno uuid)  invoker  anon=false  auth=true
 funcion  encuesta_curso_publica(p_slug text)  definer  anon=true  auth=true
 funcion  encuesta_mis_profesores()  invoker  anon=false  auth=true
 funcion  enlace_diagnostico_marca(p_codigo text)  definer  anon=true  auth=true
@@ -1153,6 +1164,7 @@ funcion  gente_de_mi_coordinacion()  definer  anon=false  auth=true
 funcion  grupo_para_academia(p_grupo text)  definer  anon=false  auth=true
 funcion  grupos_de_mis_alumnos()  invoker  anon=false  auth=true
 funcion  guardar_clase_presencial(p_titulo text, p_inicio timestamp with time zone, p_minutos integer, p_notas text, p_alumnos uuid[], p_id uuid, p_tarde jsonb)  invoker  anon=false  auth=true
+funcion  guardar_fide_id(p_persona uuid, p_fide_id text)  definer  anon=false  auth=true
 funcion  guardar_informe_mensual(p_periodo date, p_resumen text, p_logros text, p_dificultades text, p_proximo text, p_enviar boolean)  definer  anon=false  auth=true
 funcion  guardar_mi_foto(p_ruta text, p_version_privacidad text)  definer  anon=false  auth=true
 funcion  hacer_pregunta_de_opciones(p_fen text, p_prompt text, p_opciones jsonb, p_correcta integer, p_tiempo_limite integer)  invoker  anon=false  auth=true
@@ -1274,6 +1286,7 @@ funcion  puede_ver_equipo(p_equipo uuid)  definer  anon=false  auth=true
 funcion  puede_ver_paquete(p_paquete uuid)  definer  anon=false  auth=true
 funcion  pueden_jugar_entre_si(a uuid, b uuid)  definer  anon=false  auth=true
 funcion  puedo_armar_partida_con(p_jugadores uuid[])  definer  anon=false  auth=true
+funcion  puedo_cambiar_fide_id(p_persona uuid)  invoker  anon=false  auth=true
 funcion  puedo_preparar_rivales()  definer  anon=false  auth=true
 funcion  push_llaves_guardar(p_publica text, p_privada text)  definer  anon=false  auth=false
 funcion  push_llaves_leer()  definer  anon=false  auth=false
@@ -1311,6 +1324,7 @@ funcion  se_caen_del_plan(p_dias integer)  invoker  anon=false  auth=true
 funcion  secreto_alerta_base()  definer  anon=false  auth=false
 funcion  secreto_aviso_diagnostico()  definer  anon=false  auth=false
 funcion  secreto_tanda_cobros()  definer  anon=false  auth=false
+funcion  secreto_tanda_elo()  definer  anon=false  auth=false
 funcion  secreto_tanda_informes()  definer  anon=false  auth=false
 funcion  secreto_tanda_push()  definer  anon=false  auth=false
 funcion  sesion_de_supervisado(p_sesion uuid)  definer  anon=false  auth=true
@@ -1422,6 +1436,7 @@ politica  desafios  verificacion_en_dos_pasos  ALL  restrictiva
 politica  diagnosticos_publicos  diagnosticos_publicos_insert  INSERT
 politica  diagnosticos_publicos  diagnosticos_publicos_select  SELECT
 politica  diagnosticos_publicos  diagnosticos_publicos_update  UPDATE
+politica  elo_historial  elo_historial_select  SELECT
 politica  encargados  encargados_delete  DELETE
 politica  encargados  encargados_insert  INSERT
 politica  encargados  encargados_select  SELECT
@@ -1819,6 +1834,7 @@ indice  desafios  desafios_pkey
 indice  desafios  desafios_room_id_fk
 indice  diagnosticos_publicos  diagnosticos_publicos_pkey
 indice  diagnosticos_publicos  diagnosticos_publicos_supervisor_idx
+indice  elo_historial  elo_historial_pkey
 indice  encargados  encargados_creado_por_fk
 indice  encargados  encargados_pendientes_idx
 indice  encargados  encargados_pkey
@@ -2073,6 +2089,7 @@ cron  avisar-rachas  5 0 * * *
 cron  cobros-generar  30 11 * * *
 cron  cobros-recordatorios  30 12 * * *
 cron  cobros-recordatorios-programados  */5 * * * *
+cron  elo-fide-nacional  10 9 * * *
 cron  informes-a-encargados  0 * * * *
 cron  limpiar-invitados-de-clase  20 7 * * *
 cron  recordar-informes-mensuales  0 14 * * *
@@ -2303,6 +2320,9 @@ grant  desafios  authenticated  UPDATE
 grant  diagnosticos_publicos  anon  INSERT
 grant  diagnosticos_publicos  authenticated  INSERT
 grant  diagnosticos_publicos  authenticated  SELECT
+grant  elo_historial  authenticated  REFERENCES
+grant  elo_historial  authenticated  SELECT
+grant  elo_historial  authenticated  TRIGGER
 grant  encargados  authenticated  DELETE
 grant  encargados  authenticated  INSERT
 grant  encargados  authenticated  REFERENCES

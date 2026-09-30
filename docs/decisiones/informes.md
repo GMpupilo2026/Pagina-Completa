@@ -1384,6 +1384,84 @@ Lleva un ayudante, `herramientas/casos-informe-casa.mts`, porque
 `--experimental-strip-types`; el verificador lo lanza como subproceso para poder
 seguir siendo un `.js` como el resto de `herramientas/`.
 
+### El Elo oficial, mes a mes
+
+La casa sabía cuánto practicó, pero no si el alumno **juega mejor**. El
+número que lo dice es el Elo oficial, y ya es público: la FIDE lo publica en
+ratings.fide.com y la clasificación nacional de Costa Rica en
+ajedrezcostarica.com. Faltaba leerlo solo, guardarlo mes a mes y decirlo.
+
+- **El alumno pone su código FIDE en Configuración** («Tu código FIDE»), y
+  su profesor (o administración) también desde Informes, en el recuadro
+  «Elo del alumno» de la ficha del diagnóstico, que lee el código y el último
+  Elo oficial al abrirse (el resumen del grupo no trae el código). Lo
+  guarda `guardar_fide_id(persona, código)`, que deja hacerlo a la propia
+  persona, a cualquiera de sus profesores y a administración
+  (`puedo_cambiar_fide_id()`, que es la misma pregunta que se hace la Edge
+  Function). Solo números, de 4 a 10 cifras; un código con letras no llega a
+  la base.
+- **La Edge Function `elo-fide`** lee dos cosas: la ficha de la FIDE
+  (Estándar, y el nombre como lo tiene la FIDE) y la clasificación nacional
+  (Nacional). Guarda **una fila por alumno y mes** en `elo_historial` (el mes
+  de Costa Rica en que se leyó; leer dos veces en el mismo mes pisa la fila,
+  así vale lo último que publicó cada lista ese mes).
+- **Se lee sola**: `pg_cron` (`elo-fide-nacional`, 9:10 UTC = 3:10 a. m. en
+  Costa Rica) dispara la tanda todos los días, firmada con el secreto
+  `tanda_elo_secreto` de la bóveda (misma idea que la tanda de los informes,
+  por eso `verify_jwt` va en false). La tanda solo lee a quien no tiene
+  lectura este mes o la tiene de hace más de una semana: la FIDE publica el
+  día 1 y la nacional cuando sale, así que a más tardar en una semana se ve
+  el cambio, sin pedirle nada a nadie más de una vez por semana. Y al
+  guardar el código en Configuración se lee en ese momento, para que se vea
+  enseguida si era el bueno.
+- **La lista nacional no se deja buscar por código, solo por nombre.** Se
+  busca por los apellidos tal como los tiene la FIDE («Angulo Cubero» de
+  «Angulo Cubero, Oscar»), después el nombre entero y por último el primer
+  apellido, y de lo que vuelve **se elige la fila con ESE código FIDE**: por
+  nombre hay homónimos (verificado: «Angulo Cubero» trae dos personas).
+- **Nunca se inventa un número.** La página es Next.js y trae los jugadores
+  como JSON escapado dentro de un `<script>`; la ficha de la FIDE, el
+  Estándar en un `<p>` del bloque `profile-standart`. Si el formato cambia, el
+  lector (`elo-fide/leer-elo.ts`) devuelve null, no 0. Un rating de 0 («sin
+  rating» en la lista nacional) o «Not rated» en la FIDE es null. Y **un
+  código que no existe contesta 200** en ratings.fide.com, con el título
+  genérico «Chess Players Arbiters Trainers Database FIDE Profile»: por eso lo
+  que manda es el bloque de ratings, no el título. Si ninguna de las dos
+  páginas encuentra el código, no se escribe nada y la tanda lo reintenta.
+- **Cambiar el código borra el historial.** Era de otra ficha (casi siempre
+  un número mal copiado), y comparar el Elo de dos personas le diría a la
+  casa que subió o bajó sin que pasara nada.
+- **El Elo leído pasa a `profiles.elo`**, el que usa el diagnóstico de nivel:
+  el FIDE si lo tiene (`elo_tipo = 'fide'`, ± 100), si no el nacional (± 150).
+  Uno declarado a mano o «en línea» es menos preciso que estos.
+- **En el informe a la casa**, `elo_de_alumno()` (INVOKER, dentro de
+  `informe_de_alumno()` como los premios y la comparación) da el mes más
+  reciente y el anterior que haya, y el correo dice «♟️ Su Elo oficial
+  (septiembre) · FIDE Estándar 1523 · subió 12 desde agosto · Nacional (Costa
+  Rica) 1610 · bajó 7 desde agosto». Con «subió» y «bajó» escritos: una
+  flecha de color no le dice nada a quien no distingue el color. Sin código
+  FIDE, o sin ningún Elo leído, el bloque no sale; un rating que no tiene no
+  se nombra (nada de «FIDE Estándar 0»).
+- **Quién lo ve**: la RLS de `elo_historial` (solo SELECT) deja ver al propio
+  alumno, sus profesores, administración, su coordinación y su supervisión.
+  Nadie escribe desde afuera: solo la función, con la service role.
+  Comprobado impersonando roles en SQL: el alumno y una profesora suya ven la
+  fila y pueden cambiar el código; un profesor que no lo tiene no ve nada y
+  se lleva una excepción al intentar cambiarlo; un insert directo da
+  «permission denied».
+- **Es un proveedor nuevo que recibe datos**: la FIDE recibe el código y
+  ajedrezcostarica.com los apellidos. Está en la lista de `privacidad.html`, y
+  el código FIDE en «Qué datos».
+- Comprobado de punta a punta en la base: con el código 6501435 la tanda
+  guardó FIDE 2152 y Nacional 2268, igual que lo que publican las dos
+  páginas; y con una firma inventada responde 401.
+
+`herramientas/verificar-elo-fide.js` prueba el lector contra extractos del
+HTML real de las dos páginas (sin red), `verificar-elo-configuracion.js` la
+pantalla de Configuración con su doble, `verificar-informes.js` el campo del
+profesor en Informes, y `verificar-informe-casa.js` el
+bloque del correo (subió, bajó, igual, sin FIDE, primer mes, sin datos).
+
 ## Reportes de actividades para presentar
 
 `reportes.html` (botón "📄 Reportes de actividades" en `admin.html`) arma el

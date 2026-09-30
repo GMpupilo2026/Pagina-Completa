@@ -251,7 +251,7 @@ async function proveedores(ctx) {
   const t = leer("privacidad.html");
   const plegado = (t.match(/<details id="proveedores"[\s\S]*?<\/details>/) || [""])[0];
   igual("los proveedores siguen nombrados dentro de la lista plegada",
-    ["Supabase", "Cloudflare", "Resend", "Google", "Anthropic", "Meet", "Hacienda", "Lichess", "Chess.com"].filter((x) => !plegado.includes(x)), []);
+    ["Supabase", "Cloudflare", "Resend", "Google", "Anthropic", "Meet", "Hacienda", "Lichess", "Chess.com", "FIDE", "Ajedrez Costa Rica"].filter((x) => !plegado.includes(x)), []);
   const page = await ctx.newPage();
   await page.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await page.route("**/fonts.gstatic.com/**", (r) => r.abort());

@@ -133,6 +133,22 @@ const CASOS = [
       tareas: SIN_DEBERES, examenes: { rendidos: 0, sin_hacer_hoy: 0, pendientes: 0 } } },
   { nombre: "foto-inyectada", frecuencia: "semanal", foto: 'cid:x" onerror="alert(1)', datos: { ...BASE, dias_activos: 5,
       tareas: SIN_DEBERES, examenes: { rendidos: 0, sin_hacer_hoy: 0, pendientes: 0 } } },
+  /* Su Elo oficial (public.elo_de_alumno(), dentro de informe_de_alumno()):
+     el mes más reciente contra el anterior que haya. */
+  { nombre: "elo", frecuencia: "mensual", datos: { ...BASE, dias_activos: 9,
+      tareas: SIN_DEBERES, examenes: { rendidos: 0, sin_hacer_hoy: 0, pendientes: 0 },
+      elo: { fide_id: "6501435", actual: { periodo: "2026-09-01", fide: 1523, nacional: 1610 },
+             anterior: { periodo: "2026-08-01", fide: 1511, nacional: 1617 } } } },
+  { nombre: "elo-igual-sin-fide", frecuencia: "semanal", datos: { ...BASE, dias_activos: 5,
+      tareas: SIN_DEBERES, examenes: { rendidos: 0, sin_hacer_hoy: 0, pendientes: 0 },
+      elo: { fide_id: "6530133", actual: { periodo: "2026-10-01", fide: 0, nacional: 1400 },
+             anterior: { periodo: "2026-09-01", fide: null, nacional: 1400 } } } },
+  { nombre: "elo-primer-mes", frecuencia: "semanal", datos: { ...BASE, dias_activos: 5,
+      tareas: SIN_DEBERES, examenes: { rendidos: 0, sin_hacer_hoy: 0, pendientes: 0 },
+      elo: { fide_id: "6501435", actual: { periodo: "2026-09-01", fide: 2152, nacional: 2268 }, anterior: null } } },
+  { nombre: "elo-vacio", frecuencia: "semanal", datos: { ...BASE, dias_activos: 5,
+      tareas: SIN_DEBERES, examenes: { rendidos: 0, sin_hacer_hoy: 0, pendientes: 0 },
+      elo: { fide_id: "1<b>2", actual: { periodo: "2026-09-01", fide: null, nacional: null }, anterior: null } } },
   { nombre: "diario-si", frecuencia: "diario", datos: { ...BASE, dias_del_periodo: 1, dias_activos: 1,
       tareas: SIN_DEBERES, examenes: { rendidos: 0, sin_hacer_hoy: 0, pendientes: 0 } } },
   { nombre: "diario-no", frecuencia: "diario", datos: { ...BASE, dias_del_periodo: 1, dias_activos: 0,
@@ -291,6 +307,21 @@ ok(!/fotos-perfil|supabase\.co\/storage/.test(html["foto-direccion"]) && imgs("f
 ok(imgs("foto-inyectada").length === 0 && !/onerror/.test(html["foto-inyectada"]),
   "un src con comillas no puede colar atributos");
 ok(imgs("va-bien").length === 0, "sin foto no hay <img> del alumno");
+
+// ---------- Su Elo oficial ----------
+const el = texto("elo");
+ok(/Su Elo oficial \(septiembre\)/.test(el), "falta el bloque del Elo con el mes de la lectura: " + el.slice(0, 400));
+ok(/FIDE Estándar 1523 · subió 12 desde agosto/.test(el), "no dice que el FIDE subió 12 desde agosto");
+ok(/Nacional \(Costa Rica\) 1610 · bajó 7 desde agosto/.test(el), "no dice que el nacional bajó 7 desde agosto");
+ok(/Código FIDE 6501435/.test(el), "no dice con qué código FIDE se lee");
+const ei = texto("elo-igual-sin-fide");
+ok(/Nacional \(Costa Rica\) 1400 · igual que en septiembre/.test(ei), "sin cambio debería decir «igual que en septiembre»");
+ok(!/FIDE Estándar/.test(ei), "quien no tiene FIDE Estándar no puede leer «FIDE Estándar» (ni un 0)");
+const ep = texto("elo-primer-mes");
+ok(/FIDE Estándar 2152/.test(ep) && /Nacional \(Costa Rica\) 2268/.test(ep), "el primer mes dice los dos números");
+ok(!/(subió|bajó) \d|igual que en/.test(ep), "el primer mes no tiene contra qué comparar: no dice subió ni bajó");
+ok(!/Su Elo oficial/.test(texto("elo-vacio")) && !/<b>2/.test(html["elo-vacio"]), "sin ningún Elo leído el bloque no sale");
+ok(!/Su Elo oficial/.test(texto("va-bien")), "sin la clave elo (sin código FIDE, o una base de antes) el bloque no sale");
 
 if (fallos.length) {
   console.error(`❌ ${fallos.length} fallo(s):\n` + fallos.map((f) => "  - " + f).join("\n"));

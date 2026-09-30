@@ -1,5 +1,5 @@
 # Tareas de pg_cron, proyecto AjedrezIntegral. Las crea su migracion; esto es
-# el retrato para comprobar despues de restaurar que las seis siguen puestas.
+# el retrato para comprobar despues de restaurar que todas siguen puestas.
 # La hora va en UTC: Costa Rica es UTC-6 todo el ano.
 cobros-generar          30 11 * * *   activo=true   (5:30 a.m. CR — emite los cobros del mes)
 cobros-recordatorios    30 12 * * *   activo=true   (6:30 a.m. CR — los avisos de morosidad)
@@ -8,3 +8,4 @@ cobros-recordatorios-programados  */5 * * * *  activo=true   (cada 5 min — los
 recordar-informes-mensuales  0 14 * * *   activo=true   (8:00 a.m. CR — pide el informe mensual los dias 1 y 3, y avisa a la supervision el 5)
 avisar-fichas-faltantes      10 * * * *   activo=true   (cada hora — avisa al profesor de una clase de su horario que paso sin ficha)
 limpiar-invitados-de-clase  20 7 * * *   activo=true   (1:20 a.m. CR — borra los invitados de una clase de hace más de dos días)
+elo-fide-nacional       10 9 * * *   activo=true   (3:10 a.m. CR — lee el Elo FIDE y Nacional de quien tiene código FIDE)

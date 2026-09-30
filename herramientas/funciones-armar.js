@@ -62,6 +62,9 @@ const FUNCIONES = {
   // El correo a administración cuando la base está al límite (verify_jwt en
   // false: la llama public.vigilar_base()). Ver su cabecera.
   "alerta-base": ["marca-correo.ts"],
+  // El Elo FIDE y Nacional de cada mes (verify_jwt en false: la tanda la
+  // dispara pg_cron). Su leer-elo.ts es suyo. Ver su cabecera.
+  "elo-fide": [],
 };
 
 function armar(nombre) {
