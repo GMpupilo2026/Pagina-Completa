@@ -545,6 +545,64 @@
             TILE_GROUPS.splice(0, TILE_GROUPS.length, ...grupos);
         }
 
+        /* ---------- El panel ADAPTADO: el alumno que no ve ----------
+           Quien administra marca en admin.html que una persona es ciega
+           (public.vision_personas). A ese alumno no se le recorta el panel de
+           siempre —esconder tarjetas una por una deja la mitad a la vista—:
+           se le arma OTRO, como a quien supervisa, solo con lo que se usa con
+           lector de pantalla (tableros que se recorren con el teclado, con su
+           recuadro de comandos y la posición dicha). Lo demás no se ofrece.
+           Las tarjetas son las mismas de TILE_GROUPS, buscadas por destino, así
+           que el mantenimiento y los textos valen igual; las de juegos hechos
+           para jugar sin ver se suman acá. Una página que se adapte se agrega
+           a su grupo. Ver «La visión de la persona la marca administración»
+           en docs/decisiones/accesibilidad.md. */
+        const PANEL_ADAPTADO = [
+            { title: "Clase en vivo", destacado: true, hrefs: ["sesion.html"] },
+            { title: "Lo que te pone tu profesor", id: "tareas", hrefs: ["tareas.html", "examenes.html", "entreno/diagnostico.html"] },
+            { title: "Aprender y estudiar", id: "aprender", hrefs: ["entreno/aprender.html", "entreno/estudio.html", "cursos/academia/index.html", "repasar-clases.html", "articulos.html"] },
+            { title: "Entrenar", id: "entrenar", hrefs: ["entreno/mates.html", "entreno/practicas.html", "entreno/desafios.html", "entreno/4x4.html", "entreno/coordenadas.html", "entreno/temas.html", "entreno/aperturas.html", "entreno/memoria.html", "entreno/visualizacion.html", "entreno/precision-posicional.html", "entreno/finales.html", "entreno/tipos.html"] },
+            { title: "Jugar", id: "jugar", hrefs: ["sonar.html", "batalla-naval.html", "tablero.html", "juegos.html", "competir.html"] },
+            { title: "Tu cuenta", id: "cuenta", hrefs: ["ciegos.html", "configuracion.html", "informes.html", "logros.html", "justificaciones.html", "encuesta-profesor.html"] },
+        ];
+        const TILES_SOLO_ADAPTADO = [
+            { emoji: "🔊", label: "El Sonar", desc: "Busca el tesoro escondido escribiendo casillas: el sonar dice a cuántas jugadas está", href: "sonar.html" },
+            { emoji: "🚢", label: "Batalla naval", desc: "Dispara escribiendo casillas a la flota de piezas escondida", href: "batalla-naval.html" },
+            { emoji: "🦯", label: "Cómo se usa el modo adaptado", desc: "Cómo se dicen las casillas, los atajos del teclado y qué está adaptado", href: "ciegos.html" },
+        ];
+        /* Lo que en el panel de siempre dice otra cosa: acá se dice qué se
+           encuentra adentro con lector de pantalla. */
+        const DESC_ADAPTADO = {
+            "juegos.html": "Ajedrez estándar y Niebla de guerra contra otro alumno, escribiendo la jugada: las demás modalidades todavía no están adaptadas",
+            "competir.html": "Retos a quien esté en línea y los torneos; la partida se juega escribiendo la jugada",
+            "tablero.html": "Juega contra Oscar, nuestro motor, escribiendo la jugada y oyendo la suya",
+            "entreno/estudio.html": "Las fichas de aperturas, defensas, táctica y conceptos, con la posición dicha y la línea que se recorre escribiendo",
+        };
+        function armarPanelAdaptado() {
+            const todas = TILE_GROUPS.flatMap((g) => g.tiles).concat(TILES_SOLO_ADAPTADO);
+            const grupos = PANEL_ADAPTADO.map((g) => ({
+                title: g.title, id: g.id, destacado: !!g.destacado, adaptado: true,
+                tiles: g.hrefs.map((h) => todas.find((t) => t.href === h))
+                    .filter(Boolean)
+                    .map((t) => (DESC_ADAPTADO[t.href] ? { ...t, desc: DESC_ADAPTADO[t.href] } : t)),
+            })).filter((g) => g.tiles.length);
+            TILE_GROUPS.splice(0, TILE_GROUPS.length, ...grupos);
+        }
+        /* ¿Es ciego el alumno de este panel? Lo dice la base; si tarda (la base
+           saturada), vale lo último que se supo en este aparato. Mirando el
+           panel de otra persona se pregunta por ESA persona. */
+        async function alumnoCiego() {
+            const id = profile._persona ? profile._persona.id : profile.id;
+            const guardado = !profile._persona && document.documentElement.classList.contains("modo-ciego");
+            try {
+                const consulta = sb.from("vision_personas").select("vision").eq("persona_id", id).maybeSingle();
+                const tope = new Promise((listo) => setTimeout(() => listo(null), 4000));
+                const r = await Promise.race([consulta, tope]);
+                if (r && !r.error) return !!(r.data && r.data.vision === "ciego");
+            } catch (e) { console.error(e); }
+            return guardado;
+        }
+
         /* Lo urgente de quien da clase: lo que se resuelve en una tarjeta que
            SÍ tiene. A quien no coordina no se le cuentan solicitudes ni
            cobros; sería decirle «al día» sobre algo que no puede ver. Su
@@ -875,6 +933,8 @@
                    por otra cosa y de paso se entera de que eso vuelve. */
                 if (group.tiles.length === 0 || group.tiles.every((t) => t.disabled)) return;
                 const section = document.createElement("section");
+                // Para llegar directo desde los accesos rápidos (clases.html#entrenar).
+                if (group.id) section.id = group.id;
                 const heading = document.createElement("h2");
                 heading.className = "font-serif text-lg font-bold text-brand-800 dark:text-white mb-3";
                 /* El rótulo tiene los mismos dos públicos que la descripción de
@@ -897,8 +957,12 @@
                 // botón de la videollamada: 1fr para la tarjeta y lo que pida el
                 // botón. En el celular se apilan, que es donde un botón al lado
                 // dejaría las dos cosas ilegibles.
+                /* En el panel adaptado, dos columnas como mucho: quien ve
+                   poco y acompaña a quien no ve lee la tarjeta entera. */
                 tilesGrid.className = group.destacado
                     ? "grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-4 md:gap-5"
+                    : group.adaptado
+                    ? "grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-5"
                     : "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5";
                 group.tiles.forEach((t) => {
                     if (!t.videollamada) {
@@ -2803,8 +2867,16 @@
             // Después de armar la lista y antes de pintarla: apaga para el
             // alumnado lo que está en mantenimiento, sin tocar lo del equipo
             // docente.
+            const ciego = !esEquipoDocente() && profile.role === "alumno" && await alumnoCiego();
             textosDelEquipoDocente();
-            ordenarPanelDocente();
+            if (ciego) {
+                armarPanelAdaptado();
+                document.getElementById("panel-subtitulo").textContent = profile._persona
+                    ? "Su panel adaptado: está marcado como ciego, así que ve solo lo que se usa con lector de pantalla."
+                    : "Tu panel adaptado: solo lo que se usa con lector de pantalla. Alt + Mayúscula + H dice los atajos del teclado.";
+            } else {
+                ordenarPanelDocente();
+            }
             apagarEnMantenimiento();
             renderTiles();
 

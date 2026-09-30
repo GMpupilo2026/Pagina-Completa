@@ -177,6 +177,15 @@
   // visual y "saltar" al adaptado un instante después.
   applyMode(isOn());
 
+  /* La visión que administración marcó en la cuenta (js/vision-cuenta.js), la
+     última que se supo: con «ciego», la clase va desde ya, antes de pintar,
+     para que el panel adaptado no salga después del de siempre. La base la
+     confirma (o la quita) apenas carga la página. */
+  try {
+    var vision = JSON.parse(localStorage.getItem("ai_vision_v1") || "null");
+    if (vision && vision.vision === "ciego") document.documentElement.classList.add("modo-ciego");
+  } catch (e) {}
+
   // El interruptor en el header se agrega solo en páginas que no traigan ya
   // el suyo propio (Tablero, 4×4, Aprender, Coordenadas, Practicar tienen
   // "mode-blind-btn" con una interacción completa, no un simple botón).
@@ -290,10 +299,20 @@
     document.head.appendChild(s);
   }
 
+  /* La visión de la cuenta (js/vision-cuenta.js): la voz para quien ve poco y
+     el modo completo para quien no ve, sin buscar ningún botón. */
+  function visionDeLaCuenta() {
+    if (!BASE_JS || window.VisionCuenta || !document.getElementById("theme-toggle")) return;
+    var s = document.createElement("script");
+    s.src = BASE_JS + "vision-cuenta.js";
+    document.head.appendChild(s);
+  }
+
   function alCargar() {
     injectToggle();
     ofrecerEnCelular();
     vozEnElEncabezado();
+    visionDeLaCuenta();
   }
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", alCargar);
