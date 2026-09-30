@@ -14,6 +14,12 @@
      se le advierte; la segunda, la base lo bloquea y ya no ve el tablero.
    - Un invitado mira: el tablero no es interactivo ni dibuja flechas, y no
      hay ningún enlace en la pantalla de la clase (tocarlo sería salirse).
+   - El profe también maneja el Modo Adaptado del invitado: el enlace puede
+     traer «&adaptado=1» (abre ya en ese modo), y desde su lista se lo enciende
+     o apaga en plena clase: clase_invitado_ver() trae `adaptado` y acá se
+     aplica solo cuando CAMBIA (lo que la persona elige a mano no se le pisa en
+     la vuelta siguiente). Lo que la persona cambia ella misma se le avisa a la
+     base (clase_invitado_modo) para que la lista del profe diga la verdad.
    - Se puede seguir sin ver la pantalla: el Modo Adaptado pone debajo del
      tablero el recuadro de la clase (js/clase-adaptada.js: «posición»,
      «caballos», «qué hay en e4»), y TODO lo que pasa se anuncia por una sola
@@ -33,7 +39,9 @@
     const GRACIA_MS = 1500;
     const $ = (id) => document.getElementById(id);
 
-    const token = (new URLSearchParams(location.hash.slice(1)).get("t") || "").trim();
+    const params = new URLSearchParams(location.hash.slice(1));
+    const token = (params.get("t") || "").trim();
+    const enlaceAdaptado = params.get("adaptado") === "1";
     const CLAVE = "ver_clase_v1:" + token;
 
     let secreto = null;
@@ -48,6 +56,9 @@
     let claseAcc = null;
     let primerEstadoVisto = false;
     let bienvenida = null;
+    let adaptadoEnLaBase = null;   // lo último que dijo la base (null: todavía nada)
+    let cambioDelProfe = false;    // el próximo cambio de modo lo pidió el profe
+    let porElEnlace = false;       // …o venía en el enlace
     function decirBienvenida() { if (bienvenida) { anunciar(bienvenida); bienvenida = null; } }
     let estadoAntes = null;
     let vistaAntes = "null";
@@ -82,6 +93,41 @@
     const adaptado = () => document.documentElement.classList.contains("adaptive-mode");
     const casillaDicha = (c) => (window.BlindNotation ? BlindNotation.squareSpoken(c) : c);
 
+    /* El modo que la persona eligió y la base todavía no confirmó. Mientras
+       tanto, lo que traiga la base es VIEJO (una consulta que ya iba en camino):
+       contra lo anotado parecería un cambio del profe y le volvería a poner lo
+       que ella acaba de quitar. Cuando la base lo devuelve, queda anotado; si
+       no llega en 10 s, se da por anotado igual. */
+    let porConfirmar = null, porConfirmarDesde = 0;
+    function avisarModo(on) {
+        porConfirmar = on;
+        porConfirmarDesde = Date.now();
+        sb.rpc("clase_invitado_modo", { p_token: token, p_secreto: secreto, p_adaptado: on }).then(() => {}, () => {});
+    }
+
+    /* Lo que el profe pidió para este invitado. La primera vez manda lo que la
+       persona ya tiene (lo eligió al entrar, o venía en el enlace): se le
+       avisa a la base. Después, solo el CAMBIO que venga de la base. */
+    function seguirModoDelProfe(enLaBase) {
+        if (typeof enLaBase !== "boolean") return;
+        if (porConfirmar !== null) {
+            if (enLaBase === porConfirmar || Date.now() - porConfirmarDesde > 10000) {
+                adaptadoEnLaBase = porConfirmar;
+                porConfirmar = null;
+            } else return;
+        }
+        if (adaptadoEnLaBase === null) {
+            adaptadoEnLaBase = enLaBase;
+            if (enLaBase !== adaptado()) avisarModo(adaptado());
+            return;
+        }
+        if (enLaBase === adaptadoEnLaBase) return;
+        adaptadoEnLaBase = enLaBase;
+        if (enLaBase === adaptado() || !window.AdaptiveMode) return;
+        cambioDelProfe = true;
+        AdaptiveMode.set(enLaBase);
+    }
+
     function montarAccesibilidad() {
         const botones = () => document.querySelectorAll(".vc-adaptado-btn");
         const pintar = () => botones().forEach((b) => b.setAttribute("aria-pressed", adaptado() ? "true" : "false"));
@@ -91,6 +137,22 @@
         document.addEventListener("adaptivemode:change", (e) => {
             pintar();
             const on = !!(e.detail && e.detail.activo);
+            if (cambioDelProfe) {
+                cambioDelProfe = false;
+                // El foco va al recuadro: quien no ve la pantalla no tiene que buscarlo.
+                if (on && claseAcc) { try { claseAcc.enfocar(); } catch (err) {} }
+                anunciar(on
+                    ? "Tu profe te activó el modo adaptado: vas a oír cada jugada y cada aviso, y el cursor quedó en el recuadro para preguntarle a la posición. Escribe «ayuda» para ver qué se puede preguntar."
+                    : "Tu profe apagó el modo adaptado.");
+                return;
+            }
+            if (porElEnlace) {
+                porElEnlace = false;
+                anunciar("Tu profe te mandó este enlace con el modo adaptado: vas a oír cada jugada y cada aviso de la clase. Escribe tu nombre para entrar.");
+                return;
+            }
+            // Lo cambió la persona: que la lista del profe lo sepa.
+            if (secreto) avisarModo(on);
             // En la clase, el recuadro dice solo qué apareció (cuadro-comandos.js):
             // acá se dice lo demás, sin repetirlo.
             if (on && claseAcc) { hablar("Modo adaptado. Debajo del tablero tienes un recuadro para preguntarle a la posición."); return; }
@@ -287,6 +349,7 @@
         }
         decirBienvenida();
         pintarSalidas(data.salidas || 0);
+        seguirModoDelProfe(data.adaptado);
         const estado = data.estado;
         const cambio = estado !== estadoAntes;
         const yaHabiaEstado = primerEstadoVisto;
@@ -393,6 +456,9 @@
     }
 
     montarAccesibilidad();
+    // El profe mandó el enlace con el modo adaptado: se enciende antes de
+    // pedir el nombre, que es justo lo que hace falta oír.
+    if (enlaceAdaptado && !adaptado() && window.AdaptiveMode) { porElEnlace = true; AdaptiveMode.set(true); }
     arrancar();
 
     window.VerClase = { turno };

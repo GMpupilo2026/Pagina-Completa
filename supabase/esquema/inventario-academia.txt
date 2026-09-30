@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20260930013250
+# al-dia-con: 20260930034541
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -206,6 +206,7 @@ columna  clase_enlaces.creado_at  timestamp with time zone
 columna  clase_enlaces.id  uuid
 columna  clase_enlaces.owner_id  uuid
 columna  clase_enlaces.token  text
+columna  clase_espectadores.adaptado  boolean
 columna  clase_espectadores.bloqueado_at  timestamp with time zone
 columna  clase_espectadores.enlace_id  uuid
 columna  clase_espectadores.entro_at  timestamp with time zone
@@ -1047,11 +1048,13 @@ funcion  cambiar_rol(p_persona uuid, p_rol text)  definer  anon=false  auth=true
 funcion  cerrar_examen(p_examen uuid, p_motivo text)  definer  anon=false  auth=true
 funcion  cifras_academia()  definer  anon=true  auth=true
 funcion  clase_abierta_de(p_profesor uuid)  definer  anon=false  auth=true
+funcion  clase_enlace_adaptado(p_espectador uuid, p_adaptado boolean)  definer  anon=false  auth=true
 funcion  clase_enlace_apagar()  definer  anon=false  auth=true
 funcion  clase_enlace_obtener(p_nuevo boolean)  definer  anon=false  auth=true
 funcion  clase_enlace_sacar(p_espectador uuid)  definer  anon=false  auth=true
 funcion  clase_invitado_entrar(p_token text, p_nombre text, p_privacidad text)  definer  anon=true  auth=true
 funcion  clase_invitado_info(p_token text)  definer  anon=true  auth=true
+funcion  clase_invitado_modo(p_token text, p_secreto text, p_adaptado boolean)  definer  anon=true  auth=true
 funcion  clase_invitado_salio(p_token text, p_secreto text)  definer  anon=true  auth=true
 funcion  clase_invitado_ver(p_token text, p_secreto text)  definer  anon=true  auth=true
 funcion  cobros_morosos()  invoker  anon=true  auth=true

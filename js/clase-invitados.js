@@ -8,17 +8,24 @@
    qué ve el invitado es la base (clase_invitado_ver), no esta pantalla.
    Ver «La clase vista por invitados sin cuenta» en docs/decisiones/clase-en-vivo.md.
 
+   El Modo Adaptado del invitado también se maneja desde acá: el enlace puede
+   abrir ya en ese modo (#t=…&adaptado=1), y en la lista cada invitado lleva
+   su botón para encendérselo o apagárselo durante la clase
+   (clase_enlace_adaptado). La lista dice quién lo tiene puesto, también si lo
+   puso él. Ver «El profe le enciende el modo adaptado».
+
    Como las demás partes de la clase (ver «sesion.js en partes»), un script
    clásico cargado ANTES que sesion.js: lo monta init() solo para quien da la
    clase, en la ventana de siempre (ni el proyector ni el control remoto). */
 
 window.ClaseInvitados = (function () {
-    const COLUMNAS = "id, nombre, entro_at, visto_at, salidas, bloqueado_at";
+    const COLUMNAS = "id, nombre, entro_at, visto_at, salidas, bloqueado_at, adaptado";
     // Sin noticias de un invitado en un minuto: cerró la página.
     const SE_FUE_MS = 60 * 1000;
 
-    function enlace(origen, token) {
-        return String(origen).replace(/\/+$/, "") + "/ver-clase.html#t=" + encodeURIComponent(token);
+    function enlace(origen, token, adaptado) {
+        return String(origen).replace(/\/+$/, "") + "/ver-clase.html#t=" + encodeURIComponent(token)
+            + (adaptado ? "&adaptado=1" : "");
     }
 
     // Lo que se escribe al lado de cada nombre: el dato va escrito, no en un color.
@@ -26,6 +33,7 @@ window.ClaseInvitados = (function () {
         if (inv.bloqueado_at) return inv.salidas >= 2 ? "🚫 se salió dos veces: ya no ve el tablero" : "🚫 lo sacaste: ya no ve el tablero";
         const partes = [ahora - new Date(inv.visto_at).getTime() > SE_FUE_MS ? "se fue" : "mirando"];
         if (inv.salidas === 1) partes.push("⚠️ se salió 1 vez");
+        if (inv.adaptado) partes.push("🦯 modo adaptado");
         return partes.join(" · ");
     }
 
@@ -42,7 +50,7 @@ window.ClaseInvitados = (function () {
         function pintarEnlace() {
             $("invitados-crear").hidden = !!token;
             $("invitados-enlace").hidden = !token;
-            $("invitados-url").value = token ? enlace(location.origin, token) : "";
+            $("invitados-url").value = token ? enlace(location.origin, token, $("invitados-adaptado").checked) : "";
         }
 
         function pintarLista() {
@@ -67,13 +75,26 @@ window.ClaseInvitados = (function () {
                 txt.append(nom, " — " + estado(inv, ahora));
                 li.appendChild(txt);
                 if (!inv.bloqueado_at) {
+                    const botones = document.createElement("span");
+                    botones.className = "shrink-0 flex gap-1";
+                    // El modo adaptado de ESE invitado: el botón dice si está puesto.
+                    const a = document.createElement("button");
+                    a.type = "button";
+                    a.className = "text-xs font-semibold px-2 py-1 rounded bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 aria-pressed:bg-accent-500 aria-pressed:text-brand-900 dark:aria-pressed:bg-accent-500 dark:aria-pressed:text-brand-900";
+                    a.innerHTML = '<span aria-hidden="true">🦯 </span>Adaptado';
+                    a.setAttribute("aria-pressed", inv.adaptado ? "true" : "false");
+                    a.setAttribute("aria-label", "Modo adaptado para " + inv.nombre);
+                    a.title = inv.adaptado ? "Apagarle el modo adaptado" : "Encenderle el modo adaptado (oye cada jugada y escribe para preguntar)";
+                    a.addEventListener("click", () => cambiarAdaptado(inv));
+                    botones.appendChild(a);
                     const b = document.createElement("button");
                     b.type = "button";
                     b.className = "shrink-0 text-xs font-semibold px-2 py-1 rounded bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200";
                     b.textContent = "Sacar";
                     b.setAttribute("aria-label", "Sacar a " + inv.nombre + " de la clase");
                     b.addEventListener("click", () => sacar(inv));
-                    li.appendChild(b);
+                    botones.appendChild(b);
+                    li.appendChild(botones);
                 }
                 ul.appendChild(li);
             }
@@ -100,6 +121,20 @@ window.ClaseInvitados = (function () {
             pintarEnlace();
             pintarLista();
             return true;
+        }
+
+        async function cambiarAdaptado(inv) {
+            const on = !inv.adaptado;
+            const { error } = await sb.rpc("clase_enlace_adaptado", { p_espectador: inv.id, p_adaptado: on });
+            if (error) { Avisos.avisar("No se pudo: " + error.message, { tipo: "error" }); return; }
+            invitados.set(inv.id, Object.assign({}, inv, { adaptado: on }));
+            pintarLista();
+            // El foco vuelve a su botón: la lista se repintó entera.
+            const btn = [...$("invitados-lista").querySelectorAll("button[aria-pressed]")]
+                .find((x) => x.getAttribute("aria-label") === "Modo adaptado para " + inv.nombre);
+            if (btn) btn.focus();
+            msg(on ? "Le encendiste el modo adaptado a " + inv.nombre + ": en unos segundos lo tiene puesto."
+                : "Le apagaste el modo adaptado a " + inv.nombre + ".");
         }
 
         async function sacar(inv) {
@@ -139,6 +174,12 @@ window.ClaseInvitados = (function () {
 
         $("invitados-crear").addEventListener("click", async () => {
             if (await obtener(false)) msg("Listo: copia el enlace y compártelo. Funciona mientras la clase esté abierta.");
+        });
+        $("invitados-adaptado").addEventListener("change", () => {
+            pintarEnlace();
+            msg($("invitados-adaptado").checked
+                ? "El enlace ahora abre con el modo adaptado. Cópialo de nuevo si ya lo habías mandado."
+                : "El enlace abre como siempre.");
         });
         $("invitados-copiar").addEventListener("click", async () => {
             const url = $("invitados-url").value;
