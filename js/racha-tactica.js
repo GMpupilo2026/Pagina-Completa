@@ -192,7 +192,7 @@
                     posicionViva: false,
                 });
             }
-            comandos.ayuda('Jugada, en español o en inglés: "Cf3", "Nf3", "e4", "Dxh7+", "e8=D". Pregunta: "caballos", "qué hay en e4". Escribe "ayuda" para todo. '
+            comandos.ayuda('Jugada: "Cf3", "e4", "Dxh7+", "e8=D". Pregunta: "caballos", "qué hay en e4". Escribe "ayuda" para todo. '
                 + "Tienes " + (limiteMs() / 1000) + " segundos por ejercicio.");
             comandos.posicion(game);
         }
@@ -302,13 +302,13 @@
             /* La jugada se pudo hacer pero no era la del ejercicio: el mensaje
                EMPIEZA por «Respuesta incorrecta» (ComandosTablero.incorrecta), que es
                lo que se dice en todo el sitio; «no es legal» queda para la que no se
-               puede hacer. La jugada, en palabras. */
-            const dicha = sanJugada && window.BlindNotation ? BlindNotation.sanSpoken(sanJugada) : (sanJugada || "");
+               puede hacer. La jugada, en español (en palabras para quien no ve). */
+            const dicha = sanJugada ? ComandosTablero.jugadaParaMostrar(sanJugada) : "";
             const reasonText = reason === "timeout" ? "⏱️ ¡Se acabó el tiempo!"
                 : (window.ComandosTablero && dicha ? ComandosTablero.incorrecta(dicha) : "Respuesta incorrecta: esa no era la jugada.");
-            // La jugada, dicha en palabras ("caballo efe 3", no "Nf3"): el SAN en
-            // inglés lo deletrea el lector de pantalla y no se entiende.
-            const correcta = window.BlindNotation ? BlindNotation.sanSpoken(currentSan) : currentSan;
+            // La jugada en algebraica española («Cf3»), y en palabras para quien
+            // no ve («caballo felix 3»): el SAN en inglés no va nunca en pantalla.
+            const correcta = ComandosTablero.jugadaParaMostrar(currentSan);
             yaTermino = true;
             /* Con el recuadro, el final dice qué escribir para seguir: el botón
                «Jugar de nuevo» no lo encuentra quien no ve. */

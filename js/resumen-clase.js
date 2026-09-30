@@ -16,6 +16,15 @@ window.ResumenClase = (function () {
         return { filas: data || [], error };
     }
 
+    /* La jugada del alumno (se guarda como la da chess.js, en inglés) va en
+       algebraica española; en palabras para quien no ve si la página carga
+       js/comandos-tablero.js. */
+    const LETRA_ES = { K: "R", Q: "D", R: "T", B: "A", N: "C" };
+    function jugadaVista(san) {
+        if (window.ComandosTablero && ComandosTablero.jugadaParaMostrar) return ComandosTablero.jugadaParaMostrar(san);
+        return String(san == null ? "" : san).replace(/[KQRBN]/g, (l) => LETRA_ES[l]);
+    }
+
     function plural(n, uno, varios) { return n + " " + (n === 1 ? uno : varios); }
 
     function textoPreguntas(f) {
@@ -171,7 +180,7 @@ window.ResumenClase = (function () {
                 const r = (respuestas || []).find((x) => x.question_id === q.id);
                 let tuya = "Sin contestar";
                 if (r) {
-                    const texto = q.tipo === "opciones" && Array.isArray(q.opciones) ? "«" + (q.opciones[r.opcion] || "") + "»" : (r.moves || []).join(" ");
+                    const texto = q.tipo === "opciones" && Array.isArray(q.opciones) ? "«" + (q.opciones[r.opcion] || "") + "»" : (r.moves || []).map(jugadaVista).join(" ");
                     tuya = "Tu respuesta: " + texto + (r.is_correct === true ? " — ✅ correcta" : r.is_correct === false ? " — ❌ a revisar" : "");
                 }
                 const li = el("li", "");

@@ -116,5 +116,67 @@ igual("ChessMoveParser: «Tf1» es la torre", parser("Tf1"), "rh1f1");
 igual("ChessMoveParser: «Rh4» (solo la torre llega) no es nada: R es el rey", parser("Rh4"), "(ninguna)");
 igual("ChessMoveParser: «Th4» es la torre", parser("Th4"), "rh1h4");
 
+/* Lo que el sitio escribe en pantalla va en algebraica española (Cf3, Axc6,
+   Txe8+, e8=D): nunca «Nf3». Los bancos guardan el SAN de chess.js en inglés,
+   pero sin espacios (["e4", "Nf3"]) y se convierten al mostrarlos; lo que se
+   revisa acá son los TEXTOS fijos —ayudas con ejemplos, avisos, etiquetas—
+   del JavaScript y del HTML de las páginas. La R no se mira (en español es
+   el rey); N, B, Q, K y la coronación «=Q» son solo inglesas. */
+console.log("\nEn pantalla, las jugadas en algebraica española");
+{
+  const RAIZ = path.join(__dirname, "..");
+  const INGLESA = /(?<![\w/@&#-])(?:[NBQK][a-h]?[1-8]?x?[a-h][1-8]|[a-h](?:x[a-h])?[18]=[QRBN])(?![\w/])/;
+  const FEN = /[rnbqkpRNBQKP1-8]{1,8}\/[rnbqkpRNBQKP1-8]{1,8}\//;
+  // El lector de jugadas acepta el inglés a propósito (y lo explica en sus
+  // comentarios); los motores y los bancos no escriben en pantalla.
+  const NO_ES_PANTALLA = /^(comandos-tablero|chess-move-parser|tablero-board|lector-planilla|blind-notation|.*engine.*|oscar-book|pdf.*|chess-bot|practice-engine)\.js$/;
+  // Pegar un PGN: el PGN estándar se escribe en inglés, y así se pega.
+  const PERMITIDAS = [/free-mode-pgn-input/];
+  const halladas = [];
+  const js = fs.readdirSync(path.join(RAIZ, "js")).filter((f) => f.endsWith(".js") && !NO_ES_PANTALLA.test(f));
+  for (const f of js) {
+    const lineas = fs.readFileSync(path.join(RAIZ, "js", f), "utf8").split("\n");
+    let enComentario = false;
+    lineas.forEach((l, i) => {
+      let codigo = l;
+      if (enComentario) { const fin = codigo.indexOf("*/"); if (fin < 0) return; codigo = codigo.slice(fin + 2); enComentario = false; }
+      codigo = codigo.replace(/\/\*.*?\*\//g, "");
+      const abre = codigo.indexOf("/*");
+      if (abre >= 0) { codigo = codigo.slice(0, abre); enComentario = true; }
+      if (/^\s*\/\//.test(codigo)) return;
+      for (const m of codigo.matchAll(/"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|`(?:[^`\\]|\\.)*`/g)) {
+        const cadena = m[0];
+        if (!/\s/.test(cadena) || FEN.test(cadena)) continue;   // un SAN suelto o una posición
+        const t = cadena.match(INGLESA);
+        if (t) halladas.push("js/" + f + ":" + (i + 1) + " «" + t[0] + "» en " + cadena.slice(0, 90));
+      }
+    });
+  }
+  const paginas = fs.readdirSync(RAIZ).filter((f) => f.endsWith(".html"))
+    .concat(fs.readdirSync(path.join(RAIZ, "entreno")).filter((f) => f.endsWith(".html")).map((f) => "entreno/" + f));
+  for (const p of paginas) {
+    const html = fs.readFileSync(path.join(RAIZ, p), "utf8")
+      .replace(/<script[\s\S]*?<\/script>/gi, "").replace(/<style[\s\S]*?<\/style>/gi, "").replace(/<!--[\s\S]*?-->/g, "");
+    html.split("\n").forEach((l, i) => {
+      if (PERMITIDAS.some((r) => r.test(l))) return;
+      const visible = l.replace(/<[^>]*?\b(placeholder|aria-label|title|alt|value)="([^"]*)"[^>]*>/gi, " $2 ").replace(/<[^>]*>/g, " ");
+      if (FEN.test(visible)) return;
+      const t = visible.match(INGLESA);
+      if (t) halladas.push(p + ":" + (i + 1) + " «" + t[0] + "» en " + visible.trim().slice(0, 90));
+    });
+  }
+  igual("ningún texto fijo de las páginas escribe una jugada en inglés", halladas.length ? halladas.join("\n                 ") : "ninguno", "ninguno");
+
+  // Las tablas que pasan el SAN al español: la R inglesa (torre) es la T, y la K (rey) es la R.
+  const malas = [];
+  for (const f of fs.readdirSync(path.join(RAIZ, "js")).filter((x) => x.endsWith(".js"))) {
+    const src = fs.readFileSync(path.join(RAIZ, "js", f), "utf8");
+    for (const m of src.matchAll(/\{[^{}]*\bN\s*:\s*["']C["'][^{}]*\}/g)) {
+      if (!/\bR\s*:\s*["']T["']/.test(m[0]) || (/\bK\s*:/.test(m[0]) && !/\bK\s*:\s*["']R["']/.test(m[0]))) malas.push("js/" + f + ": " + m[0].replace(/\s+/g, " "));
+    }
+  }
+  igual("las tablas de letras pasan R→T y K→R", malas.length ? malas.join("\n                 ") : "todas", "todas");
+}
+
 console.log(fallos ? `\n${fallos} fallo(s)` : "\nLas preguntas de ataque y de la partida contestan lo que hay.");
 process.exit(fallos ? 1 : 0);

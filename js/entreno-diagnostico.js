@@ -379,7 +379,7 @@ function prepararComandos(esOpcion) {
     comandos.posicion(new Chess(itemActual.fen));
   } else {
     comandos.etiqueta('Escribe tu jugada');
-    comandos.ayuda('Una sola jugada, en español o en inglés: «Cf3», «Nf3», «e4», «Dxh7+», «e8=D». También vale «no lo sé».' + queHace);
+    comandos.ayuda('Una sola jugada, en algebraica española: «Cf3», «e4», «Dxh7+», «e8=D». También vale «no lo sé».' + queHace);
     comandos.posicion(new Chess(itemActual.fen));
   }
   // Con el recuadro a la vista, la pregunta (y sus opciones) se dice ahí, también al llegar con «Siguiente».
@@ -642,14 +642,18 @@ function clicEnCasilla(square) {
   responderJugada(juego, intento);
 }
 
-/* La pista se lee en voz alta (lector de pantalla o «Activar voz»): la jugada y
-   la casilla van en palabras, como en todo el sitio («Jugaste caballo felix 3»,
-   «Elegiste eva 4»), no en la notación inglesa, que se deletrea letra por letra. */
+/* La pista: para quien no ve, la jugada va en palabras, como en todo el sitio
+   («Jugaste caballo felix 3»); para los demás, en algebraica española
+   («Jugaste Cf3»), nunca en la notación inglesa. La casilla, en palabras. */
 function casillaDicha(sq) {
   return window.BlindNotation && BlindNotation.squareSpoken ? BlindNotation.squareSpoken(sq) : sq;
 }
 function jugadaDicha(san) {
-  return window.BlindNotation && BlindNotation.sanSpoken ? BlindNotation.sanSpoken(san).replace(/^\S/, (c) => c.toLowerCase()) : ComandosTablero.sanEspanol(san);
+  if (window.ComandosTablero && ComandosTablero.jugadaParaMostrar) {
+    const vista = ComandosTablero.jugadaParaMostrar(san);
+    return vista === ComandosTablero.sanEspanol(san) ? vista : vista.replace(/^\S/, (c) => c.toLowerCase());
+  }
+  return window.BlindNotation && BlindNotation.sanSpoken ? BlindNotation.sanSpoken(san).replace(/^\S/, (c) => c.toLowerCase()) : san;
 }
 
 function responderJugada(juego, intento) {

@@ -318,7 +318,7 @@ function prepararComandos(it, numero, total) {
 let entregadaDicha = "";
 function respuestaDicha(it) {
   const r = respuestaActual || {};
-  const sanDicha = (san) => (window.BlindNotation && BlindNotation.sanSpoken ? BlindNotation.sanSpoken(san) : san);
+  const sanDicha = (san) => ComandosTablero.jugadaParaMostrar(san);
   if (r.opcion != null) {
     const i = Number(r.opcion);
     return `la opción ${String.fromCharCode(65 + i)}, ${conPunto((it.visible.opciones || [])[i])}`;
@@ -519,7 +519,7 @@ function prepararLinea(it) {
       const mov = g.move(jugadas[dadas.length]);
       if (!mov) break;
       dadas.push(mov.san);
-      suyas.push(window.BlindNotation && BlindNotation.sanSpoken ? BlindNotation.sanSpoken(mov.san) : mov.san);
+      suyas.push(ComandosTablero.jugadaParaMostrar(mov.san));
     }
     return suyas.length ? " El rival jugó " + suyas.join(", ") + "." : "";
   }

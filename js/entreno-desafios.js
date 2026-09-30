@@ -349,7 +349,7 @@ function montarComandos(){
   });
   comandos.ayuda(AYUDA_RECUADRO);
 }
-const AYUDA_RECUADRO = 'Jugada: «Cf3», «Nf3», «Dxh7+», «e2 e4». Pregunta: «caballos», «qué hay en e4». «pista», «solución» (dice la jugada; no cuenta como resuelto) o «saltar» (pasa al siguiente). Escribe «ayuda» para todo.';
+const AYUDA_RECUADRO = 'Jugada: «Cf3», «Dxh7+», «e2 e4». Pregunta: «caballos», «qué hay en e4». «pista», «solución» (dice la jugada; no cuenta como resuelto) o «saltar» (pasa al siguiente). Escribe «ayuda» para todo.';
 
 /* «solución» y «saltar» / «siguiente» escritos: los contesta la página antes
    que la capa de la cuenta ciega (js/vision-cuenta.js), que apretaría el
@@ -539,7 +539,7 @@ function loadRound(){
   roundStartTime = Date.now();
   document.getElementById('hint-btn').disabled = false;
   pistas.reiniciar();
-  document.getElementById('round-text').textContent = round.text;
+  document.getElementById('round-text').textContent = textoDicho(round.text);
   document.getElementById('round-source').textContent = round.source;
   drawBoard();
   buildRoundDots();
@@ -647,20 +647,23 @@ function finishRound(moveResult){
 }
 
 /* La jugada como la oye quien usa Modo Adaptado: «alfil a ce 5» y no «Bc5»,
-   que en inglés y en letras sueltas no dice nada. Con el modo normal, la de
-   siempre. */
+   que en inglés y en letras sueltas no dice nada. Con el modo normal, en
+   algebraica española («Ac5»). */
 function jugadaDicha(san){
-  return blindMode && window.BlindNotation && BlindNotation.sanSpoken ? BlindNotation.sanSpoken(san) : san;
+  if(blindMode && window.BlindNotation && BlindNotation.sanSpoken) return BlindNotation.sanSpoken(san);
+  return ComandosTablero.jugadaParaMostrar(san);
 }
 /* Lo mismo dentro de un texto: más de la mitad de las explicaciones y pistas
    del banco (entreno/data/desafios.json) traen jugadas en SAN inglés («Primero
    Be6 y después…»), que el lector deletrea: «be seis». En Modo Adaptado cada
    jugada y cada casilla sueltas pasan a palabras («alfil eva 6», «cesar 8»).
-   El banco no se toca: con el modo normal se ven como están. */
+   El banco no se toca: con el modo normal, cada jugada pasa a algebraica
+   española («Ae6»), o a palabras si la cuenta es de quien no ve. */
 const TOKEN_SAN = /\b(O-O-O|O-O|[KQRBN][a-h]?[1-8]?x?[a-h][1-8](?:=[QRBN])?[+#]?|[a-h]x[a-h][1-8](?:=[QRBN])?[+#]?|[a-h][1-8](?:=[QRBN])?[+#]?)(?![\w-])/g;
 function textoDicho(texto){
-  if(!texto || !blindMode || !window.BlindNotation || !BlindNotation.sanSpoken) return texto;
-  return String(texto).replace(TOKEN_SAN, (t) => BlindNotation.sanSpoken(t));
+  if(!texto) return texto;
+  if(blindMode && window.BlindNotation && BlindNotation.sanSpoken) return String(texto).replace(TOKEN_SAN, (t) => BlindNotation.sanSpoken(t));
+  return ComandosTablero.textoParaMostrar(texto);
 }
 
 let esperandoSiguiente = false;

@@ -31,12 +31,16 @@ window.TableroPregunta = (function () {
 
   /* Lo que se escribe en la pista se lee en voz alta (lector de pantalla o
      «Activar voz»): «Jugaste enroque corto», no «Jugaste O-O», que se lee
-     letra por letra. Si la página no carga js/blind-notation.js, queda la
-     notación de siempre. */
+     letra por letra. Quien ve la lee en algebraica española («Cf3»): lo
+     decide ComandosTablero.jugadaParaMostrar. */
   function casillaDicha(sq) {
     return window.BlindNotation && BlindNotation.squareSpoken ? BlindNotation.squareSpoken(sq) : sq;
   }
   function jugadaDicha(san) {
+    if (window.ComandosTablero && ComandosTablero.jugadaParaMostrar) {
+      const vista = ComandosTablero.jugadaParaMostrar(san);
+      return vista === ComandosTablero.sanEspanol(san) ? vista : vista.replace(/^\S/, (c) => c.toLowerCase());
+    }
     return window.BlindNotation && BlindNotation.sanSpoken ? BlindNotation.sanSpoken(san).replace(/^\S/, (c) => c.toLowerCase()) : san;
   }
 

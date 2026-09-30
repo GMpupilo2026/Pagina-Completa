@@ -269,7 +269,10 @@
   }
 
   const PIEZAS_ES = { N: "C", B: "A", R: "T", Q: "D", K: "R" };
+  /* La jugada para la pantalla: en algebraica española («Cf3»), o en palabras
+     para quien no ve (ComandosTablero.jugadaParaMostrar, la de todo el sitio). */
   function jugadaEs(san) {
+    if (typeof window !== "undefined" && window.ComandosTablero && ComandosTablero.jugadaParaMostrar) return ComandosTablero.jugadaParaMostrar(san);
     if (typeof window !== "undefined" && window.VisorLinea) return VisorLinea.aEspanol(san);
     return String(san).replace(/[NBRQK]/g, (l) => PIEZAS_ES[l]);
   }

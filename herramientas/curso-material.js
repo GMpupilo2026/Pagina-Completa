@@ -63,6 +63,18 @@ const AREA_DEL_CURSO = {
 };
 
 // ------------------------------------------------------------------ ayudas
+/* Las jugadas se escriben en algebraica española en el cuadernillo («Cf3») y
+   en el formato de ajedrez para ciegos en la versión accesible («caballo felix
+   3»). Los archivos de datos guardan SAN inglés para chess.js y no se tocan:
+   se convierte acá, al escribir (ver lib/notacion.js). Lo que ENSEÑA a anotar
+   —el concepto de notación, la lección de notación— se deja tal cual: ahí
+   «Cf3» es lo que hay que aprender a escribir, no una jugada que decir. */
+const N = require("./lib/notacion.js");
+const es = (t, origen) => N.textoEspanol(t, origen || "auto");
+const oido = (t, origen) => (N.ensenaNotacion(t) ? t : N.textoHablado(t, origen || "auto"));
+// Lo que queda escrito a propósito lleva la marca que respeta
+// verificar-notacion-espanola.js: sin ella, ese verificador lo toma por olvido.
+const ESCRITA = ' data-notacion="escrita"';
 const escapar = (t) => String(t == null ? "" : t)
   .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
@@ -196,22 +208,22 @@ function cuadernilloHtml(curso, leccion, conceptos, posics, partida) {
   const cuerpo = textoDe(leccion, partida);
   const fuentes = fuentesDe(curso, conceptos, posics.length > 0);
   const lecturas = lecturasDe(conceptos);
-  const diag = (p) => tablero(p.fen, { titulo: p.titulo || "Posición de la lección" });
+  const diag = (p) => tablero(p.fen, { titulo: es(p.titulo, p.tituloOrigen) || "Posición de la lección" });
 
   const secciones = [];
 
   secciones.push(`<section><h2>1. De qué trata esta lección</h2>
-    ${cuerpo.ficha ? `<p class="nota">${escapar(cuerpo.ficha)}</p>` : ""}
-    ${cuerpo.parrafos.map((t) => `<p>${escapar(t)}</p>`).join("") || "<p>Esta lección se trabaja en clase y con la presentación; acá va el material de apoyo.</p>"}
-    ${cuerpo.ideas.length ? `<h3>Lo que deja esta partida</h3><ul>${cuerpo.ideas.map((i) => `<li>${escapar(i)}</li>`).join("")}</ul>` : ""}
+    ${cuerpo.ficha ? `<p class="nota">${escapar(es(cuerpo.ficha))}</p>` : ""}
+    ${cuerpo.parrafos.map((t) => `<p>${escapar(es(t))}</p>`).join("") || "<p>Esta lección se trabaja en clase y con la presentación; acá va el material de apoyo.</p>"}
+    ${cuerpo.ideas.length ? `<h3>Lo que deja esta partida</h3><ul>${cuerpo.ideas.map((i) => `<li>${escapar(es(i))}</li>`).join("")}</ul>` : ""}
   </section>`);
 
   secciones.push(`<section><h2>2. Conceptos clave</h2>
     ${conceptos.map((c) => `<div class="concepto">
       <h3>${escapar(c.nombre)}</h3>
-      <p>${escapar(c.definicion)}</p>
-      <p class="error"><strong>El error de siempre.</strong> ${escapar(c.error)}</p>
-      <p class="ejemplo"><strong>Para verlo.</strong> ${escapar(c.ejemplo)}</p>
+      <p>${escapar(es(c.definicion))}</p>
+      <p class="error"><strong>El error de siempre.</strong> ${escapar(es(c.error))}</p>
+      <p class="ejemplo"><strong>Para verlo.</strong> ${escapar(es(c.ejemplo))}</p>
     </div>`).join("")}
   </section>`);
 
@@ -223,13 +235,13 @@ function cuadernilloHtml(curso, leccion, conceptos, posics, partida) {
         return `<div class="ejemplo-pos">
           <div class="diag">${diag(p)}</div>
           <div class="txt">
-            <h3>${escapar(p.titulo || "Posición")}</h3>
+            <h3>${escapar(es(p.titulo, p.tituloOrigen) || "Posición")}</h3>
             ${p.prestada && p.deCurso ? `<p class="nota">Posición del curso «${escapar(p.deCurso)}» de la Academia.</p>` : ""}
             <p class="fen">Blancas: ${escapar(d.blancas)}.<br>Negras: ${escapar(d.negras)}.<br>${escapar(d.turno)}</p>
-            ${p.pregunta ? `<p><strong>¿Qué harías?</strong> ${escapar(p.pregunta)}</p>` : ""}
-            ${p.linea ? `<p class="linea"><strong>La línea:</strong> ${escapar(p.linea)}</p>` : ""}
-            ${p.resultado ? `<p class="linea"><strong>Resultado:</strong> ${escapar(p.resultado)}</p>` : ""}
-            ${p.comentario ? `<p>${escapar(p.comentario)}</p>` : ""}
+            ${p.pregunta ? `<p><strong>¿Qué harías?</strong> ${escapar(es(p.pregunta))}</p>` : ""}
+            ${p.linea ? `<p class="linea"><strong>La línea:</strong> ${escapar(es(p.linea, p.lineaOrigen))}</p>` : ""}
+            ${p.resultado ? `<p class="linea"><strong>Resultado:</strong> ${escapar(es(p.resultado))}</p>` : ""}
+            ${p.comentario ? `<p>${escapar(es(p.comentario))}</p>` : ""}
           </div>
         </div>`;
       }).join("")}
@@ -241,7 +253,7 @@ function cuadernilloHtml(curso, leccion, conceptos, posics, partida) {
   if (leccion.tarea) ejercicios.push(leccion.tarea);
   conceptos.forEach((c) => c.ejercicios.forEach((e) => ejercicios.push(e)));
   secciones.push(`<section><h2>${nEj}. Ejercicios</h2>
-    <ol class="ejercicios">${ejercicios.map((e) => `<li>${escapar(e)}</li>`).join("")}</ol>
+    <ol class="ejercicios">${ejercicios.map((e) => `<li>${escapar(es(e))}</li>`).join("")}</ol>
   </section>`);
 
   const preguntas = [];
@@ -249,7 +261,7 @@ function cuadernilloHtml(curso, leccion, conceptos, posics, partida) {
   secciones.push(`<section class="corte"><h2>${nEj + 1}. Preguntas con su respuesta</h2>
     <p class="nota">Tapa la respuesta, contesta en voz alta y después compara.</p>
     <ol class="preguntas">${preguntas.map((q) =>
-      `<li><p class="p">${escapar(q.p)}</p><p class="r"><strong>Respuesta.</strong> ${escapar(q.r)}</p></li>`).join("")}</ol>
+      `<li><p class="p">${escapar(es(q.p))}</p><p class="r"><strong>Respuesta.</strong> ${escapar(es(q.r))}</p></li>`).join("")}</ol>
   </section>`);
 
   secciones.push(`<section><h2>${nEj + 2}. Fuentes</h2>
@@ -329,7 +341,11 @@ function accesibleHtml(curso, leccion, conceptos, posics, partida) {
   if (leccion.tarea) ejercicios.push(leccion.tarea);
   conceptos.forEach((c) => c.ejercicios.forEach((e) => ejercicios.push(e)));
   const preguntas = [];
-  conceptos.forEach((c) => c.preguntas.forEach((q) => preguntas.push(q)));
+  conceptos.forEach((c) => c.preguntas.forEach((q) => preguntas.push(Object.assign({}, q, { notacion: c.id === "notacion" }))));
+  // La lección que enseña a anotar se deja como está escrita.
+  const leccionDeNotacion = /notaci[oó]n/i.test(leccion.titulo);
+  const oidoLeccion = leccionDeNotacion ? (t) => t : oido;
+  const marcaLeccion = leccionDeNotacion ? ESCRITA : "";
 
   return `<!doctype html>
 <html lang="es">
@@ -383,46 +399,49 @@ ${volverA(curso, "Volver a la plataforma")}
 </header>
 
 <h2>1. De qué trata esta lección</h2>
-${cuerpo.ficha ? `<p>${escapar(cuerpo.ficha)}</p>` : ""}
-${cuerpo.parrafos.map((t) => `<p>${escapar(t)}</p>`).join("\n") || "<p>Esta lección se trabaja en clase y con la presentación.</p>"}
-${cuerpo.ideas.length ? `<h3>Lo que deja esta partida</h3>\n<ul>\n${cuerpo.ideas.map((i) => `  <li>${escapar(i)}</li>`).join("\n")}\n</ul>` : ""}
+${cuerpo.ficha ? `<p>${escapar(oido(cuerpo.ficha))}</p>` : ""}
+${cuerpo.parrafos.map((t) => `<p${marcaLeccion}>${escapar(oidoLeccion(t))}</p>`).join("\n") || "<p>Esta lección se trabaja en clase y con la presentación.</p>"}
+${cuerpo.ideas.length ? `<h3>Lo que deja esta partida</h3>\n<ul>\n${cuerpo.ideas.map((i) => `  <li>${escapar(oido(i))}</li>`).join("\n")}\n</ul>` : ""}
 
 <h2>2. Conceptos clave</h2>
 <dl>
-${conceptos.map((c) => `  <dt>${escapar(c.nombre)}</dt>
-  <dd>${escapar(c.definicion)}</dd>
-  <dd><strong>El error de siempre:</strong> ${escapar(c.error)}</dd>
-  <dd><strong>Para verlo:</strong> ${escapar(c.ejemplo)}</dd>`).join("\n")}
+${conceptos.map((c) => {
+  const escrita = c.id === "notacion";
+  const o = escrita ? (t) => t : oido, m = escrita ? ESCRITA : "";
+  return `  <dt>${escapar(c.nombre)}</dt>
+  <dd${m}>${escapar(o(c.definicion))}</dd>
+  <dd${m}><strong>El error de siempre:</strong> ${escapar(o(c.error))}</dd>
+  <dd${m}><strong>Para verlo:</strong> ${escapar(o(c.ejemplo))}</dd>`; }).join("\n")}
 </dl>
 
 ${posics.length ? `<h2>3. Ejemplos del curso</h2>
 ${posics.map((p, i) => {
   const d = describir(p.fen);
   return `<div class="posicion">
-  <h3>Posición ${i + 1}${p.titulo ? ": " + escapar(p.titulo) : ""}</h3>
+  <h3>Posición ${i + 1}${p.titulo ? ": " + escapar(oido(p.titulo, p.tituloOrigen)) : ""}</h3>
   ${p.prestada && p.deCurso ? `<p>Esta posición viene del curso ${escapar(p.deCurso)} de la Academia.</p>` : ""}
   <p>Piezas blancas: ${escapar(d.blancas) || "ninguna"}.</p>
   <p>Piezas negras: ${escapar(d.negras) || "ninguna"}.</p>
   <p>${escapar(d.turno)}</p>
-  ${p.pregunta ? `<p>Pregunta: ${escapar(p.pregunta)}</p>` : ""}
-  ${p.linea ? `<p>La línea, jugada por jugada: ${escapar(p.linea)}</p>` : ""}
-  ${p.resultado ? `<p>Resultado: ${escapar(p.resultado)}</p>` : ""}
-  ${p.comentario ? `<p>${escapar(p.comentario)}</p>` : ""}
+  ${p.pregunta ? `<p>Pregunta: ${escapar(oido(p.pregunta))}</p>` : ""}
+  ${p.linea ? `<p>La línea, jugada por jugada: ${escapar(oido(p.linea, p.lineaOrigen))}</p>` : ""}
+  ${p.resultado ? `<p>Resultado: ${escapar(oido(p.resultado))}</p>` : ""}
+  ${p.comentario ? `<p>${escapar(oido(p.comentario))}</p>` : ""}
   <p>Posición en notación FEN, por si la quieres cargar en un programa: ${escapar(p.fen)}</p>
 </div>`;
 }).join("\n")}` : ""}
 
 <h2>${posics.length ? 4 : 3}. Ejercicios</h2>
 <ol>
-${ejercicios.map((e) => `  <li>${escapar(e)}</li>`).join("\n")}
+${ejercicios.map((e) => `  <li${marcaLeccion}>${escapar(oidoLeccion(e))}</li>`).join("\n")}
 </ol>
 
 <h2>${posics.length ? 5 : 4}. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
-${preguntas.map((q) => `  <li>
-    <p>${escapar(q.p)}</p>
-    <p class="respuesta"><strong>Respuesta.</strong> ${escapar(q.r)}</p>
+${preguntas.map((q) => `  <li${q.notacion ? ESCRITA : ""}>
+    <p>${escapar(q.notacion ? q.p : oido(q.p))}</p>
+    <p class="respuesta"><strong>Respuesta.</strong> ${escapar(q.notacion ? q.r : oido(q.r))}</p>
   </li>`).join("\n")}
 </ol>
 

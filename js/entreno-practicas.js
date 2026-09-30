@@ -192,7 +192,7 @@ function montarComandos(){
   });
   comandos.ayuda(AYUDA_RECUADRO);
 }
-const AYUDA_RECUADRO = 'Jugada: «Cf3», «Nf3», «Dxh7+», «e1 g1». Pregunta: «caballos», «qué hay en e4». «pista», «solución» (dice la jugada; no cuenta como resuelta) o «saltar» (pasa a la siguiente). Escribe «ayuda» para todo.';
+const AYUDA_RECUADRO = 'Jugada: «Cf3», «Dxh7+», «e1 g1». Pregunta: «caballos», «qué hay en e4». «pista», «solución» (dice la jugada; no cuenta como resuelta) o «saltar» (pasa a la siguiente). Escribe «ayuda» para todo.';
 
 /* «solución» y «saltar» / «siguiente» escritos: los contesta la página antes
    que la capa de la cuenta ciega (js/vision-cuenta.js), que apretaría el

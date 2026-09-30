@@ -51,7 +51,17 @@
     }
     return filas.join("/");
   }
+  /* Para quien no ve (Modo Adaptado o cuenta ciega), la jugada en palabras
+     («caballo felix 3»), la de ComandosTablero en todo el sitio; para los
+     demás, en algebraica española. Sin página (los generadores y los
+     verificadores en Node) siempre la española. */
+  function paraQuienNoVe() {
+    const doc = raiz.document && raiz.document.documentElement;
+    return !!(doc && doc.classList && (doc.classList.contains("adaptive-mode") || doc.classList.contains("modo-ciego"))
+      && raiz.ComandosTablero && raiz.ComandosTablero.jugadaParaMostrar);
+  }
   function sanEs(san) {
+    if (paraQuienNoVe()) return raiz.ComandosTablero.jugadaParaMostrar(String(san));
     return String(san).replace(/^[KQRBN]/, (c) => LETRA_ES[c]).replace(/=([QRBN])/, (_, c) => "=" + LETRA_ES[c]).replace(/^O-O-O/, "0-0-0").replace(/^O-O/, "0-0");
   }
 

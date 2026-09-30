@@ -534,7 +534,7 @@
       if (errores >= 3) {
         const m = juego.move(item.defensa);
         redibujar([m.from, m.to]);
-        estado("✗ Con " + R.sanEs(r.san) + " tampoco. " + castigo + " La única que aguantaba era " + item.defensaEs + ".");
+        estado("✗ Con " + R.sanEs(r.san) + " tampoco. " + castigo + " La única que aguantaba era " + R.sanEs(item.defensa) + ".");
         cerrar(0);
         return;
       }
@@ -550,7 +550,7 @@
       const m = new Chess(item.fenRival).move(item.amenaza);
       marcas[m.from] = { cls: "m-mal", signo: "!", dicho: "la pieza con que amenaza el rival" };
       marcas[m.to] = { cls: "m-mal", signo: "✕", dicho: "adonde quiere ir el rival" };
-      estado("El rival amenaza " + item.amenazaEs + (item.mateAmenaza ? " (mate en " + item.mateAmenaza + ")" : "") + ". " + (item.motivo || "") + " Una estrella menos.");
+      estado("El rival amenaza " + R.sanEs(item.amenaza) + (item.mateAmenaza ? " (mate en " + item.mateAmenaza + ")" : "") + ". " + (item.motivo || "") + " Una estrella menos.");
       redibujar(null);
     });
     const bPista = boton("💡 Pista", BTN_SEGUNDO + " mt-1 ml-2", () => {
@@ -566,7 +566,7 @@
       if (hecho) return;
       const m = juego.move(item.defensa);
       redibujar([m.from, m.to]);
-      estado("La única que aguantaba era " + item.defensaEs + ".");
+      estado("La única que aguantaba era " + R.sanEs(item.defensa) + ".");
       cerrar(0);
     });
     $("controles").append(bAmenaza, bPista, bVer);
@@ -738,17 +738,17 @@
       const mejor = item.candidatas.find((c) => c.clase === "mejor");
       let n = 0;
       if (!elegida) {
-        estado("⌛ Se acabó el tiempo: en una partida, habrías perdido. La mejor era " + mejor.sanEs + ".");
+        estado("⌛ Se acabó el tiempo: en una partida, habrías perdido. La mejor era " + R.sanEs(mejor.san) + ".");
       } else {
         n = M.estrellasTiempo(elegida.perdida);
         const m = juego.move(elegida.san);
         U.tablero(juego.fen(), { orientacion: yo, juego, ultima: [m.from, m.to] });
-        const que = elegida.clase === "mejor" ? "✓ ¡La mejor! " : n ? "✓ Buena elección: pierde poco (" + R.numeroBalanza(elegida.perdida / 100).replace("+", "") + "). " : "✗ Esa pierde " + R.numeroBalanza(elegida.perdida / 100).replace("+", "") + " contra la mejor, " + mejor.sanEs + ". ";
+        const que = elegida.clase === "mejor" ? "✓ ¡La mejor! " : n ? "✓ Buena elección: pierde poco (" + R.numeroBalanza(elegida.perdida / 100).replace("+", "") + "). " : "✗ Esa pierde " + R.numeroBalanza(elegida.perdida / 100).replace("+", "") + " contra la mejor, " + R.sanEs(mejor.san) + ". ";
         estado(que + "Elegiste en " + usados + " s. " + (n ? textoEstrellas(n) : ""));
       }
       botones.forEach((b) => {
         const c = b._cand;
-        b.textContent = (c.clase === "mejor" ? "✓ " : c.perdida <= M.TIEMPO.buena ? "≈ " : "✗ ") + c.sanEs + " — " +
+        b.textContent = (c.clase === "mejor" ? "✓ " : c.perdida <= M.TIEMPO.buena ? "≈ " : "✗ ") + R.sanEs(c.san) + " — " +
           (c.clase === "mejor" ? "la mejor" : "pierde " + R.numeroBalanza(c.perdida / 100).replace("+", ""));
       });
       explicar(item.respuesta);
@@ -759,7 +759,7 @@
       const m = new Chess(item.fen).move(mov);
       if (!m) { estado("Esa jugada no es legal."); return; }
       const c = item.candidatas.find((x) => x.san === m.san);
-      if (!c) { estado(R.sanEs(m.san) + " no es una de las candidatas. Elige entre: " + item.candidatas.map((x) => x.sanEs).join(", ") + "."); U.tablero(item.fen, { orientacion: yo, juego, clic: U.moverConClic(juego, elegir) }); return; }
+      if (!c) { estado(R.sanEs(m.san) + " no es una de las candidatas. Elige entre: " + item.candidatas.map((x) => R.sanEs(x.san)).join(", ") + "."); U.tablero(item.fen, { orientacion: yo, juego, clic: U.moverConClic(juego, elegir) }); return; }
       cerrar(c);
     }
     $("juego-turno").textContent = "Juegan las " + COLOR[yo] + ".";
@@ -769,7 +769,7 @@
     caja.setAttribute("role", "group");
     caja.setAttribute("aria-label", "Candidatas");
     item.candidatas.forEach((c) => {
-      const b = el("button", CLASE_OPCION, c.sanEs);
+      const b = el("button", CLASE_OPCION, R.sanEs(c.san));
       b.type = "button";
       b._cand = c;
       b.addEventListener("click", () => cerrar(c));
@@ -784,7 +784,7 @@
       $("jugada-input").value = "";
       elegir({ from: m.from, to: m.to, promotion: m.promotion });
     });
-    estado("Tienes " + total + " segundos" + (total !== item.segundos ? " (el triple, por el Modo Adaptado)" : "") + ". Candidatas: " + item.candidatas.map((c) => c.sanEs).join(", ") + ".");
+    estado("Tienes " + total + " segundos" + (total !== item.segundos ? " (el triple, por el Modo Adaptado)" : "") + ". Candidatas: " + item.candidatas.map((c) => R.sanEs(c.san)).join(", ") + ".");
     const mitad = Math.floor(total / 2);
     reloj = setInterval(() => {
       quedan--;

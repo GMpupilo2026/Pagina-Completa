@@ -192,7 +192,7 @@ function updateBlindInputVisibility(){
     comandos.ayuda('Casilla: "e4", "eva 4". Pregunta: "caballos", "qué hay en e4". Escribe "ayuda" para todo.');
   } else {
     comandos.etiqueta('Escribe tu jugada, o una pregunta sobre la posición');
-    comandos.ayuda('Jugada: "Cf3", "Nf3", "Dxh7+", "e1 g1". Pregunta: "caballos", "qué hay en e4". Escribe "ayuda" para todo.');
+    comandos.ayuda('Jugada: "Cf3", "Dxh7+", "e1 g1". Pregunta: "caballos", "qué hay en e4". Escribe "ayuda" para todo.');
   }
 }
 
@@ -430,7 +430,7 @@ function solucionDicha(){
   if(!s) return null;
   try{
     const m = new Chess(currentLesson.fen).move({ from: s.from, to: s.to, promotion: 'q' });
-    if(m) return window.BlindNotation && BlindNotation.sanSpoken ? BlindNotation.sanSpoken(m.san) : m.san;
+    if(m) return window.BlindNotation && BlindNotation.sanSpoken ? BlindNotation.sanSpoken(m.san) : ComandosTablero.sanEspanol(m.san);
   }catch(e){}
   return 'de ' + dichaCasilla(s.from) + ' a ' + dichaCasilla(s.to);
 }

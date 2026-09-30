@@ -103,6 +103,10 @@ function posiciones(slug) {
         pregunta: nodo.pregunta || "",
         comentario: nodo.comentario || nodo.nota || nodo.resumen || "",
         linea: nodo.linea_es || nodo.linea || "",
+        // «linea» se guarda en SAN inglés (la lee chess.js) y «linea_es» en
+        // español: quien la escriba tiene que saber cuál le tocó, porque la R
+        // es la torre en una y el rey en la otra (ver lib/notacion.js).
+        lineaOrigen: nodo.linea_es ? "espanol" : "ingles",
         resultado: nodo.resultado_texto || nodo.resultado || "",
         leccion: contexto.leccion,
         capitulo: contexto.capitulo,

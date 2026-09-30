@@ -132,7 +132,7 @@ function montarComandos(){
     tablero: () => teclado,
     onEnviar: jugarEscribiendo,
   });
-  comandos.ayuda('Jugada: "Cf3", "Nf3", "Dxh7+", "e1 g1". Pregunta: "caballos", "qué hay en e4". Escribe "ayuda" para todo.');
+  comandos.ayuda('Jugada: "Cf3", "Dxh7+", "e1 g1". Pregunta: "caballos", "qué hay en e4". Escribe "ayuda" para todo.');
 }
 
 /* Cambiar de categoría escribiendo: «mate en 2», «categorías». Las pestañas

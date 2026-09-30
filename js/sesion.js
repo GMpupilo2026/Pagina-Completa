@@ -283,13 +283,21 @@
 
         // La jugada con su signo (!, ?…) y un 💬 si tiene comentario, que también
         // se dice al lector de pantalla (el 💬 solo no le dice nada).
+        /* Las jugadas se guardan como las da chess.js (en inglés) y se muestran
+           en algebraica española («Cf3»), o en palabras para quien no ve. */
+        function jugadasVista(lista, sep) {
+            return (lista || []).map((m) => ComandosTablero.jugadaParaMostrar(m)).join(sep || " ");
+        }
+
         function ponerTextoDeJugada(btn, san, camino) {
             const c = PgnClase.comentarioDe(comentariosClase, camino);
-            btn.textContent = san + (c && c.nag ? PgnClase.signoDe(c.nag) : "") + (c && c.texto ? " 💬" : "");
+            // Se guarda en inglés (chess.js) y se ve en algebraica española.
+            const vista = ComandosTablero.jugadaParaMostrar(san);
+            btn.textContent = vista + (c && c.nag ? PgnClase.signoDe(c.nag) : "") + (c && c.texto ? " 💬" : "");
             if (c) {
                 const dicho = [c.nag ? PgnClase.nombreDelSigno(c.nag) : "", c.texto].filter(Boolean).join(": ");
                 btn.title = dicho;
-                btn.setAttribute("aria-label", san + ", comentada: " + dicho);
+                btn.setAttribute("aria-label", vista + ", comentada: " + dicho);
             }
         }
 
@@ -461,7 +469,7 @@
             if (error) { console.error(error); ultimaVistaEnviada = null; }
         }
 
-        // "12. Nf3 Nc6 13. e4", o "12… Nc6 13. e4" si arranca con negras.
+        // "12. Cf3 Cc6 13. e4", o "12… Cc6 13. e4" si arranca con negras.
         // Las jugadas numeradas y qué muestra el profe: js/clase-adaptada.js,
         // que también usa la página de los invitados (ver-clase.html).
         function numerarJugadas(path, desde) {
@@ -2942,7 +2950,7 @@
                 const sans = ClasesEngine.pvToSan(fen, line.pvUci, 6);
                 const li = document.createElement("li");
                 li.innerHTML = '<span class="font-semibold text-brand-800 dark:text-white">' + line.multipv + ') ' +
-                    formatScore(line, turnAtEval) + '</span> — ' + (sans.join(" ") || "—");
+                    formatScore(line, turnAtEval) + '</span> — ' + (jugadasVista(sans) || "—");
                 linesEl.appendChild(li);
             }
         }
@@ -4478,10 +4486,10 @@
             const suyas = Math.ceil(moves.length / 2);
             const total = q.expected_plies || 1;
             if (fin) {
-                t.estadoEl.textContent = "Respondió: " + (moves.join(" ") || "—")
+                t.estadoEl.textContent = "Respondió: " + (jugadasVista(moves) || "—")
                     + (fin.is_correct === true ? " · ✅ correcta" : fin.is_correct === false ? " · ❌ a revisar" : " · sin calificar");
             } else if (moves.length) {
-                t.estadoEl.textContent = "Pensando… lleva " + suyas + " de " + total + (total === 1 ? " jugada" : " jugadas") + ": " + moves.join(" ");
+                t.estadoEl.textContent = "Pensando… lleva " + suyas + " de " + total + (total === 1 ? " jugada" : " jugadas") + ": " + jugadasVista(moves);
             } else {
                 t.estadoEl.textContent = "Todavía no mueve.";
             }
@@ -4565,7 +4573,7 @@
                 movesEl.className = "text-brand-500 dark:text-brand-300 font-mono text-xs break-words";
                 movesEl.textContent = PreguntaClase.esDeOpciones(currentQuestion)
                     ? (a.opcion != null ? PreguntaClase.textoDeOpcion(currentQuestion, a.opcion) : "—")
-                    : (a.moves || []).join(" ") || "—";
+                    : jugadasVista(a.moves) || "—";
                 const actions = document.createElement("span");
                 actions.className = "flex items-center gap-1 shrink-0";
                 const correctBtn = document.createElement("button");
@@ -4629,7 +4637,7 @@
             const scoreText = answer.score.type === "mate"
                 ? "mate en " + Math.abs(answer.score.value)
                 : (answer.score.value >= 0 ? "+" : "") + (answer.score.value / 100).toFixed(1);
-            el.textContent = "Mejor respuesta del motor: " + answer.moves.join(" ") + " (" + scoreText + ")";
+            el.textContent = "Mejor respuesta del motor: " + jugadasVista(answer.moves) + " (" + scoreText + ")";
             if (retryBtn) retryBtn.classList.add("hidden");
         }
 
@@ -5372,7 +5380,7 @@
                 ? "«" + PreguntaClase.textoDeOpcion(currentQuestion, myAnswer.opcion) + "»"
                 : enPalabras
                     ? (myAnswer.moves || []).map(ClaseAdaptada.hablarJugada).join(", ")
-                    : (myAnswer.moves || []).join(" ");
+                    : jugadasVista(myAnswer.moves);
             let text = "Tu respuesta: " + movesText + " ✓ enviada";
             if (myAnswer.is_correct === true) text = "Tu respuesta: " + movesText + " — ✅ ¡Correcto!";
             else if (myAnswer.is_correct === false) text = "Respuesta incorrecta: " + movesText + " no era la que buscaba tu profe. Revisa de nuevo.";

@@ -39,7 +39,10 @@ window.VisorLinea = (function () {
   };
   const COLUMNAS = ["a", "b", "c", "d", "e", "f", "g", "h"];
   const PIEZAS_ES = { N: "C", B: "A", R: "T", Q: "D", K: "R" };
-  const aEspanol = (san) => String(san).replace(/[NBRQK]/g, (l) => PIEZAS_ES[l]);
+  // En algebraica española («Cf3»), o en palabras para quien no ve si la página
+  // carga js/comandos-tablero.js (ComandosTablero.jugadaParaMostrar).
+  const aEspanol = (san) => (window.ComandosTablero && ComandosTablero.jugadaParaMostrar
+    ? ComandosTablero.jugadaParaMostrar(san) : String(san).replace(/[NBRQK]/g, (l) => PIEZAS_ES[l]));
   const esClara = (sq) => ((sq.charCodeAt(0) - 97) + (parseInt(sq[1], 10) - 1)) % 2 === 1;
 
   // ------------------------------------------------------------ lo compartido

@@ -72,8 +72,8 @@ window.ClaseAdaptada = (function () {
     var textos = [];
     path.forEach(function (san, i) {
       if (i >= desde) {
-        if (turno === "w") textos.push(numero + ". " + san);
-        else textos.push(i === desde ? numero + "… " + san : san);
+        if (turno === "w") textos.push(numero + ". " + mostrarJugada(san));
+        else textos.push(i === desde ? numero + "… " + mostrarJugada(san) : mostrarJugada(san));
       }
       if (turno === "b") numero++;
       turno = turno === "w" ? "b" : "w";
@@ -102,8 +102,15 @@ window.ClaseAdaptada = (function () {
     return "Tu profe está mostrando una variante: " + numerarJugadas(vista.path, root, startFen) + ".";
   }
 
+  /* La jugada escrita para la pantalla: en algebraica española («Cf3»), o en
+     palabras si quien mira no ve (lo decide ComandosTablero). */
+  function mostrarJugada(san) {
+    return window.ComandosTablero ? ComandosTablero.jugadaParaMostrar(san) : hablarJugada(san);
+  }
+
   function hablarJugada(san) {
-    return window.BlindNotation && BlindNotation.sanSpoken ? BlindNotation.sanSpoken(san) : san;
+    return window.BlindNotation && BlindNotation.sanSpoken ? BlindNotation.sanSpoken(san)
+      : (window.ComandosTablero ? ComandosTablero.sanEspanol(san) : san);
   }
 
   function casillaDicha(sq) {

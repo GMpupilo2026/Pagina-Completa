@@ -161,6 +161,12 @@
             checkFlagFall();
         }, 250);
 
+        // Las jugadas se guardan como las da el motor (con letras inglesas) y se
+        // muestran en algebraica española: solo la letra de la pieza del
+        // principio («N@f3» → «C@f3», «Rxe8» → «Txe8») y la de la coronación.
+        const LETRA_ES = { K: "R", Q: "D", R: "T", B: "A", N: "C" };
+        const jugadaVista = (san) => String(san == null ? "" : san)
+            .replace(/^[KQRBN](?=[a-h1-8x@])/, (l) => LETRA_ES[l]).replace(/=([QRBN])/, (_, l) => "=" + LETRA_ES[l]);
         function renderMoveHistory(moves) {
             const listEl = document.getElementById("moves-list");
             const emptyEl = document.getElementById("moves-empty");
@@ -176,7 +182,7 @@
             for (let i = 0; i < moves.length; i += 2) {
                 const li = document.createElement("li");
                 const num = Math.floor(i / 2) + 1;
-                li.textContent = num + ". " + moves[i] + (moves[i + 1] ? " " + moves[i + 1] : "");
+                li.textContent = num + ". " + jugadaVista(moves[i]) + (moves[i + 1] ? " " + jugadaVista(moves[i + 1]) : "");
                 listEl.appendChild(li);
             }
         }

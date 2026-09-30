@@ -41,9 +41,10 @@ function textoConEmojiMudo(el, texto) {
 const aUci = (m) => m.from + m.to + (m.promotion || "");
 /* En Modo Adaptado la jugada se escribe en palabras («caballo felix 3»): la
    notación inglesa de chess.js («Nf3») el lector de pantalla la deletrea, y
-   quien no ve el tablero no sabe qué le están diciendo que jugó. */
+   quien no ve el tablero no sabe qué le están diciendo que jugó. Los demás la
+   ven en algebraica española («Cf3»). */
 const sanDelCalentamiento = (san) => (window.ClaseAdaptada && window.CuadroComandos && CuadroComandos.activo()
-    ? ClaseAdaptada.hablarJugada(san) : san);
+    ? ClaseAdaptada.hablarJugada(san) : (window.ComandosTablero ? ComandosTablero.jugadaParaMostrar(san) : san));
 function solucionEnUci(fen, jugadas) {
     const g = new Chess(fen);
     const out = [];
@@ -189,7 +190,7 @@ document.getElementById("calentamiento-solucion-btn").addEventListener("click", 
     calentamientoBoard.setInteractive(false);
     calentamientoBoard.setMarks([{ from: cal.solucion[0].slice(0, 2), to: cal.solucion[0].slice(2, 4), color: "verde" }], []);
     document.getElementById("calentamiento-msg").textContent = "La solución: "
-        + (CuadroComandos.activo() ? sans.map(sanDelCalentamiento).join(", ") : sans.join(" ")) + ".";
+        + (CuadroComandos.activo() ? sans.map(sanDelCalentamiento).join(", ") : sans.map(sanDelCalentamiento).join(" ")) + ".";
     document.getElementById("calentamiento-otra-btn").hidden = true;
     document.getElementById("calentamiento-solucion-btn").hidden = true;
 });

@@ -880,10 +880,10 @@
     });
   };
   /* ¿Lo escrito es la jugada de esta opción de Detective? «Dd5», «Dxd5»,
-     «Dd1d5», «d1-d5», «Qd5», «e8=D», «0-0». La R es el rey en castellano y la
-     torre en inglés: se prueban las dos lecturas, y si con eso sirve para dos
-     opciones, responderConOpcion() lo dice y pide la letra. */
-  const PIEZAS_ESCRITAS = { R: ["k", "r"], D: ["q"], T: ["r"], A: ["b"], C: ["n"], K: ["k"], Q: ["q"], N: ["n"], B: ["b"], P: ["p"] };
+     «Dd1d5», «d1-d5», «Qd5», «e8=D», «0-0». La R es SIEMPRE el rey, como en
+     todo el sitio (la torre es la T); si lo escrito sirve para dos opciones,
+     responderConOpcion() lo dice y pide la letra. */
+  const PIEZAS_ESCRITAS = { R: ["k"], D: ["q"], T: ["r"], A: ["b"], C: ["n"], K: ["k"], Q: ["q"], N: ["n"], B: ["b"], P: ["p"] };
   function jugadaRetroEscrita(txt, op) {
     const t = String(txt || "").trim().replace(/[+#!?]+$/, "").replace(/\s+/g, "");
     const mueve = op.tipo === "normal" ? op.p : op.tipo === "enroque" ? "k" : "p";
@@ -919,7 +919,7 @@
         tablero(juego.fen(), { orientacion: yo, ultima: [juego.history({ verbose: true }).slice(-1)[0].from, juego.history({ verbose: true }).slice(-1)[0].to] });
         const n = pista ? 1 : Math.max(1, 3 - errores);
         estado("✓ ¡Eso es lo que quiere! " + R.sanEs(r.san) + ". " + textoEstrellas(n));
-        const partes = ["La amenaza: " + item.amenazaEs + (item.mate ? " (mate en " + item.mate + ")" : "") + ". " + (item.motivo || "")];
+        const partes = ["La amenaza: " + R.sanEs(item.amenaza) + (item.mate ? " (mate en " + item.mate + ")" : "") + ". " + (item.motivo || "")];
         if (item.linea) partes.push("La línea: " + item.linea + ".");
         partes.push("Ahora que la viste, en la partida te toca a ti: ¿cómo la frenarías?");
         explicar(partes);
@@ -951,7 +951,7 @@
     const ver = boton("Ver la respuesta", BTN_SEGUNDO + " mt-1 ml-2", () => {
       if (hecho) return;
       hecho = true;
-      estado("La amenaza era " + item.amenazaEs + ".");
+      estado("La amenaza era " + R.sanEs(item.amenaza) + ".");
       explicar([(item.motivo || "") + (item.linea ? " La línea: " + item.linea + "." : "")]);
       pedirJugada("", null);
     });
@@ -971,7 +971,7 @@
       const cb = el("input", "mt-1");
       cb.type = "checkbox"; cb.id = "des-" + k; cb.value = c.san;
       const cuerpo = el("span", "flex-1");
-      cuerpo.appendChild(el("span", "font-semibold", "✂️ Tachar " + c.sanEs));
+      cuerpo.appendChild(el("span", "font-semibold", "✂️ Tachar " + R.sanEs(c.san)));
       const nota = el("span", "block text-xs mt-1");
       cuerpo.appendChild(nota);
       lab.append(cb, cuerpo);
@@ -995,7 +995,7 @@
       if (m) fila = filas.find((f) => limpia(f.c.san) === limpia(m.san));
       if (!fila) fila = filas.find((f) => limpia(f.c.sanEs) === limpia(sinPalabra) || limpia(f.c.san) === limpia(sinPalabra));
       if (!fila) {
-        const candidatas = "Las candidatas: " + filas.map((f) => f.c.sanEs).join(", ") + ".";
+        const candidatas = "Las candidatas: " + filas.map((f) => R.sanEs(f.c.san)).join(", ") + ".";
         // Una jugada que se puede hacer pero no está en la lista no es «no legal».
         if (m) estado("«" + txt + "» no está entre las candidatas. " + candidatas);
         else noSePudo(txt, candidatas);
@@ -1003,8 +1003,8 @@
       }
       $("jugada-input").value = "";
       fila.cb.checked = !fila.cb.checked;
-      const marcadas = filas.filter((f) => f.cb.checked).map((f) => f.c.sanEs);
-      estado((fila.cb.checked ? "Tachada: " : "Destachada: ") + fila.c.sanEs + ". " +
+      const marcadas = filas.filter((f) => f.cb.checked).map((f) => R.sanEs(f.c.san));
+      estado((fila.cb.checked ? "Tachada: " : "Destachada: ") + R.sanEs(fila.c.san) + ". " +
         (marcadas.length ? "Tachadas ahora: " + marcadas.join(", ") + "." : "Ninguna tachada.") + " Escribe «comprobar» cuando termines.");
     });
     const comprobar = boton("Comprobar", BTN_PRIMARIO + " mt-3", () => {
@@ -1032,10 +1032,10 @@
     const turno = item.fen.split(" ")[1], rival = R.otro(turno);
     const quien = (v, mate) => mate ? (mate > 0 ? "mate en " + mate : "recibe mate en " + (-mate)) : R.numeroBalanza(v / 100);
     // En B el golpe ya no es mate ni jaque de la misma forma: se nombra sin + ni #.
-    const golpe = item.golpeEs.replace(/[+#]$/, "");
+    const golpe = R.sanEs(item.golpe.replace(/[+#]$/, ""));
     let errores = 0, hecho = false;
     $("tablero-a-caja").classList.remove("hidden");
-    $("tablero-a-titulo").textContent = "A: aquí " + item.golpeEs + " gana";
+    $("tablero-a-titulo").textContent = "A: aquí " + R.sanEs(item.golpe) + " gana";
     tableroFijo("tablero-a", item.fenA, turno);
     if (adaptado()) { $("lectura-a").textContent = "Posición A: " + $("tablero-a").getAttribute("aria-label"); $("lectura-a").classList.remove("hidden"); }
     $("juego-turno").textContent = "B: casi igual, y aquí " + golpe + " ya no gana. Juegan las " + COLOR[turno] + " en las dos.";
@@ -1089,7 +1089,7 @@
       estado(texto + " " + textoEstrellas(n));
       explicar([
         item.texto,
-        "En A, " + item.golpeEs + " queda " + quien(item.evalA, item.mateA) + " para las " + COLOR[turno] + ".",
+        "En A, " + R.sanEs(item.golpe) + " queda " + quien(item.evalA, item.mateA) + " para las " + COLOR[turno] + ".",
         "En B, " + golpe + " queda " + quien(item.evalB, item.mateB) + " para las " + COLOR[turno] + ": " + item.lineaB + ".",
       ]);
       terminar(item, n);

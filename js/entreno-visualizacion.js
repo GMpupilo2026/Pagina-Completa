@@ -331,10 +331,10 @@ function setStatus(text, cls){
 }
 
 function adaptado(){ return document.documentElement.classList.contains('adaptive-mode'); }
-/* La jugada en palabras para quien la oye («torre a de 8, jaque») y no «Rd8+»,
-   que es inglés y letras sueltas. Sin el Modo Adaptado, la notación de siempre. */
+/* La jugada en palabras para quien no ve («torre a de 8, jaque») y no letras
+   sueltas; para los demás, en algebraica española («Td8+»), nunca en inglés. */
 function jugadaDicha(san){
-  return adaptado() && window.BlindNotation && BlindNotation.sanSpoken ? BlindNotation.sanSpoken(san) : ComandosTablero.sanEspanol(san);
+  return ComandosTablero.jugadaParaMostrar(san);
 }
 
 function flashWrongInput(){
@@ -349,11 +349,11 @@ function renderLog(){
     '<span class="pending">Todavía no escribiste ninguna jugada.</span>';
 }
 function logJugadaPropia(san){
-  logLineas.push(`<b>${ComandosTablero.sanEspanol(san)}</b>`);
+  logLineas.push(`<b>${ComandosTablero.jugadaParaMostrar(san)}</b>`);
   renderLog();
 }
 function logRespuestaRival(san){
-  logLineas.push(`<span class="reply">${ComandosTablero.sanEspanol(san)}</span>`);
+  logLineas.push(`<span class="reply">${ComandosTablero.jugadaParaMostrar(san)}</span>`);
   renderLog();
 }
 
@@ -504,7 +504,7 @@ document.getElementById('answer-form').addEventListener('submit', (e) => {
     const r = ComandosTablero.interpretar(input.value, { juego: () => posicionDeSalida, tablero: () => teclado });
     if(r.manejado){
       input.value = '';
-      setStatus(r.tipo === 'ayuda' ? 'Jugada: «Cf3», «Nf3», «Dxh7+». Pregunta sobre la posición del tablero: «caballos», «qué hay en e4», «posición». También «pista», «solución» (dice la línea; no cuenta como resuelto) y «saltar».' : r.respuesta);
+      setStatus(r.tipo === 'ayuda' ? 'Jugada: «Cf3», «Dxh7+». Pregunta sobre la posición del tablero: «caballos», «qué hay en e4», «posición». También «pista», «solución» (dice la línea; no cuenta como resuelto) y «saltar».' : r.respuesta);
       return;
     }
   }

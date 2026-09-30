@@ -822,14 +822,13 @@ const PIEZA_DICHA = {
   rey:'K', reyes:'K', dama:'Q', damas:'Q', reina:'Q', reinas:'Q', torre:'R', torres:'R',
   alfil:'B', alfiles:'B', caballo:'N', caballos:'N', peon:'P', peones:'P',
 };
-/* La letra de «P <letra>», en español o en inglés. OJO CON LA R: es Rey en
-   español y Rook (torre) en inglés; como las dos lecturas son razonables, «P R»
-   dice las dos. D, T, A y C son solo españolas; K, Q, B y N, solo inglesas. */
-const LETRA_TIPO = { K:['K'], Q:['Q'], B:['B'], N:['N'], P:['P'], D:['Q'], T:['R'], A:['B'], C:['N'], R:['K','R'] };
+/* La letra de «P <letra>», en español (y K, Q, B, N, que no chocan con nada).
+   La R es SIEMPRE el rey, como en todo el sitio: la torre es la T. */
+const LETRA_TIPO = { K:['K'], Q:['Q'], B:['B'], N:['N'], P:['P'], D:['Q'], T:['R'], A:['B'], C:['N'], R:['K'] };
 function announcePieceType(letter){
   const tipos = LETRA_TIPO[String(letter).toUpperCase()] || (PIECE_NAME[letter] ? [letter] : null);
   if(!tipos){
-    cmdAnnounce(`No entendí «${letter}» como tipo de pieza. Usa R (rey), D (dama), T (torre), A (alfil), C (caballo) o P (peón); también K, Q, B y N.`);
+    cmdAnnounce(`No entendí «${letter}» como tipo de pieza. Usa R (rey), D (dama), T (torre), A (alfil), C (caballo) o P (peón).`);
     return;
   }
   if(tipos.length > 1){
@@ -1071,7 +1070,7 @@ const HELP_SECTIONS = [
     title: 'Comandos',
     text:
       'L o last (última captura), T o posición (posición completa), b o board seguido de una casilla (ir ahí, por ejemplo a1), ' +
-      'p seguido de la letra de una pieza, en español (R, D, T, A, C, P) o en inglés (K, Q, R, B, N) — la R dice el rey y las torres —, ' +
+      'p seguido de la letra de una pieza: R (rey), D (dama), T (torre), A (alfil), C (caballo) o P (peón), ' +
       'o el nombre de la pieza: caballos, torres, mi rey (dónde está esa pieza), mis jugadas (todas las capturas posibles), ' +
       's seguido de una columna a-d o fila 1-4 (piezas en esa línea), reiniciar (empezar de nuevo este ejercicio), ayuda (esta lista).',
   },
