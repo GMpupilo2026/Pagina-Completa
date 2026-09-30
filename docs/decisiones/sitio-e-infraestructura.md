@@ -1556,6 +1556,38 @@ hora de la caída): eso ya lo arregló #606 (`aplicarCambioDePractica` usa la
 fila que trae Realtime), que entró a las 8:18 p. m. del 29, **después** de la
 caída. Desde entonces esa lectura casi no aparece en los registros.
 
+### Lo que se escucha por Realtime tiene que estar publicado
+
+Una tabla que el sitio escucha con `postgres_changes` **y que no está en la
+publicación `supabase_realtime` no manda nada**: la suscripción se abre sin
+error y la página se queda con lo que cargó. Y una tabla publicada que nadie
+escucha le da trabajo a Realtime en cada cambio, para nada. Las dos pasaron
+(migración `20260930145834`):
+
+- `torneo.js` escuchaba `tournaments`, `tournament_registrations`,
+  `tournament_rounds` y `tournament_pairings`, filtradas por torneo, y ninguna
+  estaba publicada. Quien miraba un torneo interno no veía el resultado de una
+  partida ni la ronda nueva hasta recargar (las jugadas sí llegaban, por
+  `game_rooms`). Se publicaron: la RLS de cada una decide qué le llega a cada
+  uno, igual que al leerla, y cambian poco (una inscripción, una ronda, un
+  resultado).
+- `class_attendance` estaba publicada y **nadie la escucha**: solo se escribe
+  (`upsert`) y se lee (`select`). Se sacó.
+
+**Una tabla que entra a Realtime lleva, en la misma migración, la política
+restrictiva `verificacion_en_dos_pasos`** (ver «La verificación en dos pasos» en
+`permisos-y-roles.md`): Realtime no pasa por el candado de PostgREST, lee con la
+RLS de cada tabla. Las cuatro de torneos entraron sin ella y quedaron así unos
+siete minutos, hasta `20260930150549` (estaban vacías: no se filtró nada).
+`verificar-dos-pasos-base.js` lo detectó en el CI.
+
+`verificar-realtime-publicadas.js` (sin navegador) compara las tablas que
+nombran los `postgres_changes` de `js/` —también las que se recorren en una
+lista, como en `competir.js` y `torneo.js`— con las líneas `realtime` del
+retrato del esquema. Una tabla nueva que se escuche va a la publicación en su
+misma migración; una que se deje de escuchar, sale. Con el retrato de antes de
+este arreglo, salta en las cinco.
+
 ### El perfil propio, una lectura por página
 
 **`window.MiPerfil.obtener(uid)`** (en `js/supabase-client.js`, que cargan todas

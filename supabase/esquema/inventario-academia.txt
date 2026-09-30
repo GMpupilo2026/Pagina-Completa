@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20260930135759
+# al-dia-con: 20260930150549
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -1613,17 +1613,21 @@ politica  tareas  tareas_update  UPDATE
 politica  tournament_pairings  tournament_pairings_insert  INSERT
 politica  tournament_pairings  tournament_pairings_select  SELECT
 politica  tournament_pairings  tournament_pairings_update  UPDATE
+politica  tournament_pairings  verificacion_en_dos_pasos  ALL  restrictiva
 politica  tournament_registrations  tournament_registrations_delete  DELETE
 politica  tournament_registrations  tournament_registrations_exige_acceso_ins  INSERT  restrictiva
 politica  tournament_registrations  tournament_registrations_insert  INSERT
 politica  tournament_registrations  tournament_registrations_select  SELECT
+politica  tournament_registrations  verificacion_en_dos_pasos  ALL  restrictiva
 politica  tournament_rounds  tournament_rounds_insert  INSERT
 politica  tournament_rounds  tournament_rounds_select  SELECT
 politica  tournament_rounds  tournament_rounds_update  UPDATE
+politica  tournament_rounds  verificacion_en_dos_pasos  ALL  restrictiva
 politica  tournaments  tournaments_delete  DELETE
 politica  tournaments  tournaments_insert  INSERT
 politica  tournaments  tournaments_select  SELECT
 politica  tournaments  tournaments_update  UPDATE
+politica  tournaments  verificacion_en_dos_pasos  ALL  restrictiva
 politica  training_plans  training_plans_insert_teacher  INSERT
 politica  training_plans  training_plans_select_student  SELECT
 politica  training_plans  training_plans_select_supervisor  SELECT
@@ -2032,7 +2036,6 @@ extension  supabase_vault  0.3.1
 extension  uuid-ossp  1.1
 realtime  archivos_pgn
 realtime  clase_espectadores
-realtime  class_attendance
 realtime  class_chat_messages
 realtime  class_sessions
 realtime  desafios
@@ -2046,6 +2049,10 @@ realtime  question_answers
 realtime  questions
 realtime  respuestas_en_curso
 realtime  saved_games
+realtime  tournament_pairings
+realtime  tournament_registrations
+realtime  tournament_rounds
+realtime  tournaments
 realtime  trofeos_ajustes
 realtime  tv_settings
 realtime  variant_nodes
