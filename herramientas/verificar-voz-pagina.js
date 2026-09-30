@@ -18,6 +18,9 @@
  *   - lo que ya estaba al cargar no se dice;
  *   - una cuenta atrás no se dice cada segundo;
  *   - el mismo cartel repintado no se repite;
+ *   - con la voz encendida, «Decir la posición» dice la del tablero principal
+ *     entera y agrupada, sin contar lo que el tablero oculta, y la respuesta a
+ *     «posición» del recuadro no se corta;
  *   - una jugada escrita en un aviso («Dxf7+», «e4», «O-O») se dice en palabras;
  *   - los tableros de los ejercicios (Temas, Visualización) y el diagrama de un
  *     artículo dicen qué hay en cada casilla, y en Temas la jugada del alumno
@@ -199,7 +202,8 @@ async function botonEn(browser, ruta) {
                        e8: "rey negro", g1: "caballo blanco", b7: "peón blanco" };
       window.__armar = (id, ancho, pos) => {
         let t = document.getElementById(id);
-        if (!t) { t = document.createElement("div"); t.id = id; t.style.cssText = "display:grid;grid-template-columns:repeat(8,1fr);width:" + ancho + "px"; document.body.appendChild(t); }
+        if (!t) { t = document.createElement("div"); t.id = id; t.style.cssText = "display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr)"; document.body.appendChild(t); }
+        t.style.width = t.style.height = ancho + "px";   // cuadrado, como un tablero de verdad
         t.innerHTML = "";
         for (let r = 8; r >= 1; r--) for (const f of "abcdefgh") {
           const b = document.createElement("button");
@@ -244,7 +248,43 @@ async function botonEn(browser, ruta) {
     await page.waitForTimeout(800);
     igual("si un aviso ya dijo la jugada, el tablero se calla", (await dichos(page)).join(" | "), "Jugaste peón david 4.");
 
+    console.log("\n=== La posición completa, a pedido ===");
+    const posBtn = () => page.evaluate(() => { const b = document.getElementById("voz-posicion"); return b ? b.checkVisibility() : null; });
+    igual("con la voz encendida y un tablero a la vista, está el ♙ «Decir la posición»", await posBtn(), true);
+    await page.evaluate(() => {
+      window.__pos = { e1: "rey blanco", a1: "torre blanca", h1: "torre blanca", d2: "peón blanco", e2: "peón blanco", e8: "rey negro", g8: "caballo negro" };
+      // Más grande que el tablero de la portada: el botón dice el que más se ve.
+      window.__armar("__tablero", 1000, window.__pos);
+    });
+    await page.waitForTimeout(700);
+    await olvidar(page);
+    await page.click("#voz-posicion");
+    await page.waitForTimeout(200);
+    igual("dice la posición entera del tablero, agrupada (y no la de la miniatura)", (await dichos(page)).join(" | "),
+      "Blancas: rey en eva 1; torres en anna 1 y hector 1; peones en david 2 y eva 2. Negras: rey en eva 8; caballo en gustav 8.");
+    await page.evaluate(() => { window.__pos = Object.assign({}, window.__pos, { a8: null }); window.__armar("__tablero", 1000, window.__pos); });
+    await page.waitForTimeout(700);
+    await olvidar(page);
+    await page.click("#voz-posicion");
+    await page.waitForTimeout(200);
+    igual("lo que el tablero oculta no se cuenta: dice que hay casillas que no se ven", /Hay casillas que no se ven\.$/.test((await dichos(page)).join(" | ")), true);
+
+    /* La respuesta a «posición» en el recuadro de comandos es larga: se dice
+       entera, no cortada a los 400 caracteres. */
+    await olvidar(page);
+    const larga = "Blancas: " + Array.from({ length: 40 }, (_, i) => "peón en la casilla número " + i).join("; ") + ". Negras: rey en eva 8.";
+    await page.evaluate((t) => {
+      const cont = document.createElement("div");
+      cont.innerHTML = '<div class="cc-caja" style="display:none"><p class="cc-msg" role="status"></p></div>';
+      document.body.appendChild(cont);
+      setTimeout(() => { cont.querySelector(".cc-msg").textContent = t; }, 50);
+    }, larga);
+    await page.waitForTimeout(600);
+    igual("la respuesta del recuadro se dice entera", (await dichos(page)).some((t) => t.endsWith("Negras: rey en eva 8.")), true);
+
     await page.click("#voz-toggle");
+    await page.waitForTimeout(200);
+    igual("con la voz apagada, el botón no está", await posBtn(), false);
     await olvidar(page);
     await escribir("Otro aviso, ya apagada");
     await page.waitForTimeout(400);
@@ -291,6 +331,14 @@ async function botonEn(browser, ruta) {
       igual("Ejercicios por tema: la jugada del alumno se dice",
         d.some((x) => /^(Rey|Dama|Torre|Alfil|Caballo|Peón) (blanc|negr)[oa] de [a-z]+ [1-8] a [a-z]+ [1-8]/.test(x)), true);
       igual("y nada se deletrea en notación («Dxf7+»)", d.filter((x) => /(^|[^A-Za-z])[RDTAC]?x?[a-h][1-8]/.test(x)).join(" | ") || "nada", "nada");
+      await olvidar(t.page);
+      await t.page.click("#voz-posicion");
+      await t.page.waitForTimeout(200);
+      await t.page.setViewportSize({ width: 360, height: 740 });
+      await t.page.waitForTimeout(300);
+      igual("con el ♙ en el encabezado, a 360 px nada se sale a lo ancho",
+        await t.page.evaluate(() => document.getElementById("voz-posicion").checkVisibility() && document.documentElement.scrollWidth <= innerWidth), true);
+      igual("Ejercicios por tema: «Decir la posición» la dice entera", /^Blancas: .*\. Negras: .*\.$/.test((await dichos(t.page)).join(" | ")), true);
       igual("sin errores en la página", t.errores.join(" | ") || "ninguno", "ninguno");
       await t.ctx.close();
     }
