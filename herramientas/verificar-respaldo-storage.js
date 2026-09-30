@@ -30,10 +30,9 @@ let fallos = 0;
 const ok = (c, m) => { console.log(`  ${c ? "✓" : "✗"} ${m}`); if (!c) fallos++; };
 
 /* ---------------------------------------------------------- Storage de mentira */
-function storage() {
+function storage(CLAVE = "clave-de-prueba") {
   const buckets = new Map(); // id -> { conf, archivos: Map(ruta -> {buf, tipo}) }
   let cortar = null;         // ruta cuya descarga llega cortada
-  const CLAVE = "clave-de-prueba";
 
   const srv = http.createServer((req, res) => {
     const partes = [];
@@ -41,7 +40,13 @@ function storage() {
     req.on("end", () => {
       const cuerpo = Buffer.concat(partes);
       const json = (st, o) => { res.writeHead(st, { "Content-Type": "application/json" }); res.end(JSON.stringify(o)); };
-      if (req.headers.apikey !== CLAVE || req.headers.authorization !== `Bearer ${CLAVE}`) return json(401, { message: "sin clave" });
+      // Como Supabase: una clave JWT va también de Bearer; una sb_secret_ NO
+      // (en Authorization, Storage contesta «Invalid Compact JWS»).
+      const auth = req.headers.authorization;
+      if (req.headers.apikey !== CLAVE) return json(401, { message: "sin clave" });
+      if (CLAVE.startsWith("sb_") ? auth !== undefined : auth !== `Bearer ${CLAVE}`) {
+        return json(400, { statusCode: "403", error: "Unauthorized", message: "Invalid Compact JWS" });
+      }
       const u = new URL(req.url, "http://x");
       const p = u.pathname;
 
@@ -171,6 +176,15 @@ async function main() {
   const r6 = await correr("restaurar-storage.js", envD, [carpeta, "--pisar"]);
   ok(r6.codigo === 1 && /dañado/.test(r6.salida) && !destino.buckets.has("vacio") && destino.buckets.get("justificaciones").archivos.size === antes,
     "un respaldo dañado no se sube: ni un archivo ni un bucket");
+
+  console.log("\nCon la clave nueva de Supabase (sb_secret_…)");
+  const nueva = storage("sb_secret_de_prueba");
+  await new Promise((r) => nueva.srv.listen(0, "127.0.0.1", r));
+  nueva.poner("academia-marca", { public: true });
+  nueva.archivo("academia-marca", "logo.png", binario, "image/png");
+  const r7 = await correr("respaldo-storage.js", { SUPABASE_URL: `http://127.0.0.1:${nueva.srv.address().port}`, SUPABASE_SERVICE_ROLE_KEY: nueva.CLAVE, RESPALDOS_DIR: path.join(tmp, "nueva") });
+  ok(r7.codigo === 0, `respalda sin mandarla como Bearer${r7.codigo ? ": " + r7.salida : ""}`);
+  nueva.srv.close();
 
   origen.srv.close(); destino.srv.close();
   fs.rmSync(tmp, { recursive: true, force: true });

@@ -47,7 +47,14 @@ function config() {
   return { url, clave };
 }
 
-const cabeceras = (clave, extra) => Object.assign({ apikey: clave, Authorization: `Bearer ${clave}` }, extra || {});
+// La clave va en `apikey`. La service_role vieja es un JWT y va también como
+// Bearer; la «secret key» nueva (sb_secret_…) NO es un JWT, y Storage la
+// rechaza en Authorization con «Invalid Compact JWS»: con ella, solo `apikey`
+// (la puerta de Supabase arma el token por dentro).
+const cabeceras = (clave, extra) => Object.assign(
+  { apikey: clave },
+  clave.startsWith("sb_") ? {} : { Authorization: `Bearer ${clave}` },
+  extra || {});
 
 // Cada tramo de la ruta va codificado por separado: la «/» separa carpetas y
 // un nombre con espacios, tildes o «#» se pediría mal si se codifica entero.

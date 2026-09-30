@@ -408,6 +408,16 @@ seguridad de Supabase o de Sentry, nadie se entera.
   `verificar-vendor.js` compara la copia con el paquete. Se trae la rama, se
   corre `node herramientas/vendor.js` y se commitea la copia. La versión que
   llega al navegador de la gente no cambia sin que alguien la mire.
+- **Subir Playwright rompía los verificadores en las sesiones de Claude
+  Code, no en el CI.** Cada versión de Playwright busca SU Chromium
+  (`chromium-1243` para la 1.63). El CI lo instala; una sesión de Claude Code
+  trae uno fijo en `/opt/pw-browsers`, de otra versión, y ahí no se puede
+  instalar otro. Los verificadores que lanzan el navegador sin decir dónde
+  fallaban todos con «Executable doesn't exist». `verificar-todo.js` carga en
+  cada uno `lib/navegador-local.js` (`NODE_OPTIONS=--require`): si el Chromium
+  de Playwright no está, les pone el de `CHROME_PATH` o el de
+  `/opt/pw-browsers`; si está, no toca nada. Por eso los verificadores se
+  corren con `verificar-todo.js` y no sueltos.
 - **`npm audit`** corre en `.github/workflows/dependencias.yml`: en los PR que
   tocan `package.json` o su lock, cada lunes y a mano. **No en todos los PR**:
   un aviso nuevo de npm aparece sin que nadie cambie nada y dejaría en rojo
