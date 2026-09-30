@@ -853,8 +853,23 @@ contra la política de cada persona suscrita. Pasó a
 (`tareas_con_avance_materializada_y_practice_games_conjunto_una_vez`).
 Comprobado en una transacción revertida antes de aplicarlo: las 148 cuentas
 ven las mismas filas (cero diferencias); un profesor pasó de 175 a 116 ms y
-otro de 82 a 30 ms. `game_rooms_select` sigue con `soy_profesor_de_alguno()` y
-`es_companero()` por fila: es la siguiente.
+otro de 82 a 30 ms. **Realtime revisa la política con UNA fila** (cada cambio,
+contra cada suscriptor que pasa el filtro), y ahí `practice_games` quedó igual:
+6,5 ms por revisión antes y después.
+
+**`game_rooms_select` se queda fila por fila, a propósito.** Pregunta
+`soy_profesor_de_alguno()` y `es_companero()` por fila, y armado como conjunto
+(los compañeros como `alumnos_de(profesores_de(yo)) ∩ gente_de_mis_academias()`)
+contestaba igual para las 148 cuentas y leía la tabla entera 13 veces más
+rápido (121 → 9 ms). Pero nadie la lee entera: las consultas reales de la hora
+pico filtran por jugador («mi partida en curso», 298 por hora: 0,38 ms fila por
+fila, 0,56 ms con conjunto) o por clase (63 por hora: 1,7 y 1,1 ms). Y en
+Realtime, donde van las suscripciones sin filtro de `tv.js` y `torneo.js`, el
+conjunto se arma entero para revisar una fila: **2,6 → 6,9 ms** por revisión.
+Con `comparten_academia()` por candidato era peor: 89 ms. Regla: antes de
+pasar una política a conjunto, medir **una fila sola** además de la tabla
+entera; si la tabla está en Realtime y sus lecturas ya vienen filtradas, fila
+por fila puede ser lo más barato.
 
 ### Una función SQL con CTE: el que se usa en varios lados va `materialized`
 
