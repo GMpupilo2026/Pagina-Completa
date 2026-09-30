@@ -99,3 +99,58 @@ export async function usuarioLibre(
   }
   return null;
 }
+
+/**
+ * Qué tiene de malo esa contraseña, o null si sirve. La misma regla en las
+ * tres puertas que le ponen contraseña a un alumno con usuario —las dos de
+ * alta y «Su contraseña» de `correos-alumno`—: escrita tres veces, una se
+ * aflojaría y la otra rechazaría lo que la primera dejó pasar.
+ *
+ * Ocho como mínimo, lo mismo que pide bienvenida.html. El tope es el de
+ * bcrypt, que corta en silencio lo que pase de 72 bytes: la contraseña
+ * "funcionaría" escrita a medias. Y sin espacios en las puntas, que en el
+ * celular se cuelan solos y después no se ven.
+ */
+export function problemaDeContrasena(clave: string): string | null {
+  if (clave.length < 8) return "La contraseña tiene que tener al menos 8 caracteres";
+  if (new TextEncoder().encode(clave).length > 72) return "Esa contraseña es demasiado larga";
+  if (clave.trim() !== clave) return "La contraseña no puede empezar ni terminar con espacios";
+  return null;
+}
+
+type ClienteAdminCrear = {
+  auth: {
+    admin: {
+      createUser: (opts: unknown) => Promise<{ data: { user: unknown } | null; error: { message: string } | null }>;
+    };
+  };
+};
+
+/**
+ * Crea la cuenta de un alumno con usuario de la academia y la contraseña ya
+ * puesta: entra hoy mismo, sin que nadie abra ningún correo.
+ *
+ * Es la salida para la familia que no tiene correo, o que lo tiene y no lo
+ * abre: quien le da clase le pone usuario y contraseña al crearlo y se los da
+ * en la clase. `email_confirm: true` porque sin confirmar GoTrue no la deja
+ * entrar ni con la contraseña buena, y el enlace que la confirmaría no sale.
+ * `full_name` va en la metadata igual que en la invitación; el perfil lo
+ * escribe después quien llama, como con la invitación.
+ */
+export async function crearConContrasena(
+  adminClient: ClienteAdminCrear,
+  usuario: string,
+  clave: string,
+  fullName?: string | null,
+): Promise<{ user: { id: string; email?: string } | null; error: string | null }> {
+  const { data, error } = await adminClient.auth.admin.createUser({
+    email: usuario,
+    password: clave,
+    email_confirm: true,
+    user_metadata: fullName ? { full_name: fullName } : undefined,
+  });
+  return {
+    user: (data?.user as { id: string; email?: string } | null) ?? null,
+    error: error?.message ?? (data?.user ? null : "No se pudo crear la cuenta"),
+  };
+}

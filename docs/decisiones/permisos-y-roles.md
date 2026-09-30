@@ -1703,26 +1703,30 @@ solo `js/plan-clase.js`, en páginas con sesión.) Las que quedan a propósito p
 `solicitud_para_elegir_plan` y `elegir_plan` ya no: ver «Elegir un plan pide
 sesión» en `cuentas-y-formularios.md`.
 
-### Lo que queda pendiente y NO se puede hacer desde acá
+### Lo que queda pendiente y se hace en el panel, no desde acá
 
-**La protección contra contraseñas filtradas está apagada, y hoy no se puede
-encender.** Supabase puede comparar cada contraseña nueva contra
-HaveIBeenPwned y rechazar las que ya se filtraron; el sitio es de menores de
-edad y hoy acepta cualquiera. Es un interruptor del panel, no SQL, así que no
-entra en ninguna migración — pero además **es de plan Pro**, y la organización
-(`Base de Colegios`, donde viven los dos proyectos) está en el gratuito: en el
-panel el interruptor aparece con candado.
+**La protección contra contraseñas filtradas ya se puede encender, y hay que
+hacerlo.** Supabase puede comparar cada contraseña nueva contra HaveIBeenPwned
+y rechazar las que ya se filtraron; el sitio es de menores de edad y hoy acepta
+cualquiera. Es un interruptor del panel, no SQL, así que no entra en ninguna
+migración. Era de plan Pro y estuvo con candado mientras la organización
+estaba en el gratuito; ya está en Pro, pero el 30 de setiembre de 2026 el
+revisor de seguridad de Supabase (`auth_leaked_password_protection`) la
+seguía marcando apagada.
 
-- Cuando se pague el plan, está en **Authentication › Sign In / Providers ›
-  Email › "Prevent use of leaked passwords"**. No es «Authentication ›
-  Policies» —ahí no hay nada de esto— y mucho menos **Database › Policies**,
-  que son las reglas RLS de las tablas y es otra pantalla completamente
-  distinta.
-- Mientras tanto lo único que hay es el mínimo de 6 caracteres de
-  `bienvenida.html`, que es lo que trae Supabase por omisión. Subirlo a 8 sí se
-  puede sin pagar (es otro campo de esa misma pantalla), pero un mínimo más
-  largo no distingue una contraseña filtrada de una nueva: son cosas distintas
-  y conviene no confundirlas.
+- Está en **Authentication › Sign In / Providers › Email › "Prevent use of
+  leaked passwords"**. No es «Authentication › Policies» —ahí no hay nada de
+  esto— y mucho menos **Database › Policies**, que son las reglas RLS de las
+  tablas y es otra pantalla completamente distinta.
+- Lo que hay mientras tanto es el mínimo de 6 caracteres de
+  `bienvenida.html`, que es lo que trae Supabase por omisión. Subirlo a 8 es
+  otro campo de esa misma pantalla, pero un mínimo más largo no distingue una
+  contraseña filtrada de una nueva: son cosas distintas y conviene no
+  confundirlas.
+- En la misma línea: **las conexiones de Auth están fijas en 10** (Project
+  Settings › Database › Connection pooling). Así no crecen con la base, y el
+  inicio de sesión de toda una clase a la vez sigue igual de apretado. Hay que
+  pasarlas a porcentaje (aviso `auth_db_connections_absolute`).
 
 Queda escrito acá porque un pendiente que solo vive en la cabeza de alguien no
 existe.

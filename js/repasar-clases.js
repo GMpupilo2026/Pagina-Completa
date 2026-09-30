@@ -378,7 +378,57 @@ document.addEventListener('keydown', (e) => {
    jugada se compara con la del motor (o un mate cualquiera). Al resolverlas
    todas, el renglón de la tarea se marca solo (tarea_items.completada_at: lo
    único que el alumno puede escribir de su tarea). */
-const repaso = { claseId: null, tareaId: null, lista: [], i: 0, juego: null, sel: null, ultima: null, resueltas: new Set(), comandos: null, teclado: null };
+const repaso = { claseId: null, tareaId: null, lista: [], i: 0, juego: null, sel: null, ultima: null, resueltas: new Set(), comandos: null, teclado: null,
+  // «Lo que vuelve» (?vuelven=1): la cola de RepasoFallados, no una clase.
+  vuelven: false, vistas: new Set(), conError: new Set() };
+
+/* ---------------- Lo que vuelve ----------------
+   Una pregunta resuelta DESPUÉS de ver la respuesta no queda sabida: jugarla
+   recién vista no prueba nada. Entra a la cola del repaso espaciado (la
+   misma de Entrenamiento, js/repaso-fallados.js, que viaja con la cuenta) y
+   vuelve en una semana. Ahí, limpia avanza; con error vuelve hoy; y si otra
+   vez mira la respuesta, otra semana. La pregunta va guardada en la ficha
+   (posición, jugada, texto): la clase ya pasó. */
+const VUELVE_EN_DIAS = 7;
+const COLA_CLASE = window.RepasoFallados ? RepasoFallados.CLAVES.clase : null;
+
+function pendientesQueVuelven(){
+  if (!COLA_CLASE) return [];
+  const estado = RepasoFallados.leer(COLA_CLASE);
+  return RepasoFallados.pendientes(COLA_CLASE, (id) => estado[id] && estado[id].fen && estado[id].jugada)
+    .map((id) => ({ pregunta: { id, fen: estado[id].fen, prompt: estado[id].prompt || null }, jugada: estado[id].jugada, clase: estado[id].clase || null }));
+}
+
+function pintarAvisoDeLoQueVuelve(){
+  const n = pendientesQueVuelven().length;
+  const aviso = document.getElementById('vuelven-aviso');
+  aviso.hidden = !n || repaso.vuelven;
+  document.getElementById('vuelven-enlace').textContent = n === 1
+    ? '🔁 Te vuelve 1 pregunta de tus clases'
+    : '🔁 Te vuelven ' + n + ' preguntas de tus clases';
+}
+
+function anotarQueVuelve(x){
+  if (!COLA_CLASE) return;
+  RepasoFallados.volverEn(COLA_CLASE, x.pregunta.id, VUELVE_EN_DIAS, {
+    fen: x.pregunta.fen, jugada: x.jugada, prompt: x.pregunta.prompt || null, clase: x.clase || repaso.tituloClase || null,
+  });
+}
+
+async function abrirLoQueVuelve(){
+  repaso.vuelven = true;
+  const caja = document.getElementById('repaso');
+  caja.hidden = false;
+  const titulo = document.getElementById('repaso-titulo');
+  titulo.firstChild.textContent = '🔁 ';
+  titulo.lastChild.textContent = 'Lo que vuelve de tus clases';
+  repaso.lista = pendientesQueVuelven();
+  const intro = document.getElementById('repaso-intro');
+  if (!repaso.lista.length) { intro.textContent = 'Hoy no te vuelve ninguna pregunta de tus clases. 🎉'; return; }
+  intro.textContent = (repaso.lista.length === 1 ? 'Una pregunta de tus clases vuelve' : repaso.lista.length + ' preguntas de tus clases vuelven')
+    + ': en tu repaso viste la respuesta. Resuélvelas sin mirarla.';
+  montarTableroDelRepaso();
+}
 
 async function abrirRepaso(claseId){
   repaso.claseId = claseId;
@@ -406,6 +456,11 @@ async function abrirRepaso(claseId){
   intro.textContent = repaso.lista.length === 1
     ? 'Una pregunta de la clase no te salió: resuélvela otra vez en el tablero.'
     : repaso.lista.length + ' preguntas de la clase no te salieron: resuélvelas otra vez en el tablero.';
+  repaso.tituloClase = ((clase && clase.title) || 'La clase') + cuando;
+  montarTableroDelRepaso();
+}
+
+function montarTableroDelRepaso(){
   document.getElementById('repaso-ejercicio').hidden = false;
   if (!repaso.comandos && window.CuadroComandos) {
     repaso.comandos = CuadroComandos.montar(document.getElementById('repaso-cmd'), {
@@ -435,7 +490,8 @@ function mostrarPreguntaDelRepaso(i){
   repaso.sel = null;
   repaso.ultima = null;
   document.getElementById('repaso-progreso').textContent = 'Pregunta ' + (i + 1) + ' de ' + repaso.lista.length;
-  document.getElementById('repaso-pregunta').textContent = textoDePregunta(x.pregunta);   // la escribió una persona
+  document.getElementById('repaso-pregunta').textContent = textoDePregunta(x.pregunta)   // la escribió una persona
+    + (repaso.vuelven && x.clase ? ' (' + x.clase + ')' : '');
   document.getElementById('repaso-turno').textContent = repaso.juego.turn() === 'w' ? 'Juegan ⚪ blancas.' : 'Juegan ⚫ negras.';
   document.getElementById('repaso-msg').textContent = '';
   document.getElementById('repaso-otra-btn').hidden = true;
@@ -477,10 +533,16 @@ function jugarRepaso(desde, hasta, pieza){
   const msg = document.getElementById('repaso-msg');
   if (bien) {
     repaso.resueltas.add(x.pregunta.id);
+    // Lo que vuelve: limpia avanza en la cola; con error, vuelve hoy. Si antes
+    // vio la respuesta, ya quedó para dentro de una semana.
+    if (repaso.vuelven && COLA_CLASE && !repaso.vistas.has(x.pregunta.id)) {
+      RepasoFallados.anotar(COLA_CLASE, x.pregunta.id, repaso.conError.has(x.pregunta.id), false);
+    }
     msg.textContent = '✅ ¡Bien! ' + EjercicioTablero.jugadaEs(mv.san) + ' es la jugada.';
     document.getElementById('repaso-ver-btn').hidden = true;
     terminarPreguntaDelRepaso();
   } else {
+    repaso.conError.add(x.pregunta.id);
     msg.textContent = '❌ ' + EjercicioTablero.jugadaEs(mv.san) + ' no es la mejor. Inténtalo otra vez.';
     document.getElementById('repaso-otra-btn').hidden = false;
   }
@@ -494,8 +556,12 @@ function terminarPreguntaDelRepaso(){
   if (!quedan) {
     const fin = document.getElementById('repaso-fin');
     fin.hidden = false;
-    fin.textContent = '🎉 Terminaste tu repaso: resolviste todas las preguntas que te habían quedado.';
-    marcarTareaHecha();
+    fin.textContent = repaso.vuelven
+      ? (repaso.conError.size
+        ? '🎉 Resolviste todas. Las que tuvieron un error te vuelven a salir hoy mismo, para que queden.'
+        : '🎉 Listo por hoy: resolviste todas las preguntas que te volvían.')
+      : '🎉 Terminaste tu repaso: resolviste todas las preguntas que te habían quedado.';
+    if (!repaso.vuelven) marcarTareaHecha();
   }
 }
 
@@ -524,8 +590,10 @@ document.getElementById('repaso-ver-btn').addEventListener('click', () => {
   if (mv) repaso.juego.move(mv.san);
   repaso.sel = 'hecha';
   repaso.ultima = mv ? { from: mv.from, to: mv.to } : null;
+  repaso.vistas.add(x.pregunta.id);
+  anotarQueVuelve(x);
   document.getElementById('repaso-msg').textContent = 'La respuesta: ' + EjercicioTablero.jugadaEs(mv ? mv.san : x.jugada)
-    + '. Esta no cuenta como resuelta: vuelve a ella después.';
+    + '. Esta no cuenta como resuelta: vuelve a ella después. Y como la viste, en una semana te vuelve a salir.';
   document.getElementById('repaso-ver-btn').hidden = true;
   document.getElementById('repaso-otra-btn').hidden = false;
   document.getElementById('repaso-siguiente-btn').hidden = repaso.lista.length < 2;
@@ -551,8 +619,13 @@ async function requireLoginThenGate(){
   gate.classList.add('hidden');
   app.classList.remove('hidden');
   cargarLista();
-  const claseDelRepaso = new URLSearchParams(location.search).get('repaso');
+  // La cola de lo que vuelve viaja con la cuenta: se trae antes de contarla.
+  if (window.ProgresoUsuario) { try { await ProgresoUsuario.init(); } catch (e) {} }
+  const params = new URLSearchParams(location.search);
+  const claseDelRepaso = params.get('repaso');
   if (claseDelRepaso) abrirRepaso(claseDelRepaso);
+  else if (params.get('vuelven') === '1') abrirLoQueVuelve();
+  pintarAvisoDeLoQueVuelve();
 }
 requireLoginThenGate();
 

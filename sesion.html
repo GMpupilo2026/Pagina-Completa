@@ -350,10 +350,10 @@
                         <button id="control-btn" type="button" class="hidden text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors min-h-[44px] sm:min-h-0" aria-expanded="false" aria-controls="control-enlace" title="Manejar la clase desde tu celular">📱 Control remoto</button>
                         <button id="raise-hand-btn" type="button" class="hidden text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors min-h-[44px] sm:min-h-0" aria-pressed="false" title="Pedirle la palabra al profesor">🖐️ Levantar la mano</button>
                         <span id="move-nav" class="hidden items-center gap-1 ml-1">
-                            <button id="move-nav-first" type="button" class="text-xs font-semibold w-8 h-8 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors" title="Primera jugada">⏮</button>
-                            <button id="move-nav-prev" type="button" class="text-xs font-semibold w-8 h-8 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors" title="Jugada anterior">◀</button>
-                            <button id="move-nav-next" type="button" class="text-xs font-semibold w-8 h-8 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors" title="Jugada siguiente">▶</button>
-                            <button id="move-nav-last" type="button" class="text-xs font-semibold w-8 h-8 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors" title="Última jugada">⏭</button>
+                            <button id="move-nav-first" type="button" class="text-xs font-semibold w-11 h-11 sm:w-8 sm:h-8 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors" title="Primera jugada">⏮</button>
+                            <button id="move-nav-prev" type="button" class="text-xs font-semibold w-11 h-11 sm:w-8 sm:h-8 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors" title="Jugada anterior">◀</button>
+                            <button id="move-nav-next" type="button" class="text-xs font-semibold w-11 h-11 sm:w-8 sm:h-8 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors" title="Jugada siguiente">▶</button>
+                            <button id="move-nav-last" type="button" class="text-xs font-semibold w-11 h-11 sm:w-8 sm:h-8 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors" title="Última jugada">⏭</button>
                         </span>
                     </div>
 
@@ -475,7 +475,7 @@
                     <p id="pregunta-para-otro" hidden class="max-w-[560px] mx-auto mt-2 rounded-xl border-2 border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 px-4 py-2 text-center text-sm text-brand-700 dark:text-brand-200" aria-live="polite"><span aria-hidden="true">❓ </span>Tu profe le hizo una pregunta a <strong id="pregunta-para-otro-nombre" class="font-bold"></strong>. Piensa tu respuesta en silencio.</p>
                     <p id="jugadas-a-ciegas" hidden class="max-w-[560px] mx-auto mt-2 rounded-xl bg-brand-100 dark:bg-brand-900 px-4 py-2 text-sm font-mono text-brand-700 dark:text-brand-200"></p>
                     <p id="comentario-profe" hidden class="max-w-[560px] mx-auto mt-2 rounded-xl border border-accent-400/60 bg-white dark:bg-brand-900 px-4 py-2 text-sm text-brand-700 dark:text-brand-200"></p>
-                    <p id="arrows-hint" class="hidden text-center text-brand-450 dark:text-brand-350 text-xs mt-1">Clic derecho + arrastrar dibuja una flecha (repetirla en el mismo color la borra) · clic derecho sobre una casilla la marca con un círculo · elige el color abajo</p>
+                    <p id="arrows-hint" class="hidden text-center text-brand-450 dark:text-brand-350 text-xs mt-1"><span class="solo-raton">Clic derecho + arrastrar dibuja una flecha (repetirla en el mismo color la borra) · clic derecho sobre una casilla la marca con un círculo · elige el color abajo</span><span class="solo-tactil">Mantén el dedo sobre una casilla y arrástralo: dibuja una flecha (repetirla en el mismo color la borra) · sin moverlo, la marca con un círculo · elige el color abajo</span></p>
                     <!-- Color con el que se dibujan las PRÓXIMAS flechas/círculos (ver
                          js/clases-board.js#MARK_COLORS y setMarkColor). Los botones los arma
                          initMarksColorPicker() leyendo esa misma tabla, para no repetir los
@@ -728,7 +728,7 @@
 
                     <!-- Chat privado con el profesor: cada alumno solo ve su propia conversación;
                          el profesor elige con quién está hablando. Nadie más ve estos mensajes. -->
-                    <div class="mt-6 bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
+                    <div id="chat-caja" class="mt-6 bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
                         <div class="flex items-center justify-between gap-2 mb-1 flex-wrap">
                             <h2 class="font-serif font-bold text-brand-800 dark:text-white"><span aria-hidden="true">💬</span> Chat privado con el profesor</h2>
                             <button id="clear-chat-btn" type="button" class="hidden text-xs font-semibold text-red-600 dark:text-red-400 hover:underline shrink-0">Vaciar esta conversación</button>
@@ -875,7 +875,7 @@
                                     <input type="checkbox" id="student-sin-correo" class="mt-0.5 rounded border-brand-300 dark:border-brand-600 text-accent-500 focus:ring-accent-400">
                                     <span class="text-xs text-brand-600 dark:text-brand-300">
                                         <strong class="text-brand-800 dark:text-white">No tiene correo propio</strong>
-                                        — se le arma un usuario y el correo va a la casa.
+                                        — se le arma un usuario; la contraseña se la pones tú o la crea la casa con el correo.
                                     </span>
                                 </label>
 
@@ -888,6 +888,17 @@
                                         </div>
                                         <p class="text-xs text-brand-450 dark:text-brand-350 mt-1">Sale del nombre; corrígelo si hace falta.</p>
                                     </div>
+                                    <!-- Con la contraseña puesta entra hoy mismo, sin que nadie
+                                         abra un correo: se la das en la clase. De texto y no de
+                                         contraseña a propósito, para poder dictársela. -->
+                                    <div>
+                                        <label for="student-contrasena" class="block text-xs font-semibold text-brand-700 dark:text-brand-200 mb-1">Contraseña (si se la pones tú)</label>
+                                        <div class="flex items-center gap-2">
+                                            <input id="student-contrasena" type="text" maxlength="72" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" class="flex-1 min-w-0 bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
+                                            <button type="button" id="student-contrasena-proponer" class="text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 whitespace-nowrap transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Proponer una fácil</button>
+                                        </div>
+                                        <p class="text-xs text-brand-450 dark:text-brand-350 mt-1">Al menos 8 caracteres. Con ella entra hoy mismo: dale el usuario y la contraseña en la clase. Si la dejas en blanco, el enlace para crearla sale al correo de la casa.</p>
+                                    </div>
                                     <div>
                                         <label for="student-encargado-nombre" class="block text-xs font-semibold text-brand-700 dark:text-brand-200 mb-1">Nombre de la persona encargada</label>
                                         <input id="student-encargado-nombre" type="text" maxlength="120" class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
@@ -895,7 +906,7 @@
                                     <div>
                                         <label for="student-encargado-correo" class="block text-xs font-semibold text-brand-700 dark:text-brand-200 mb-1">Correo de la casa</label>
                                         <input id="student-encargado-correo" type="email" maxlength="200" placeholder="correo@ejemplo.com" class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
-                                        <p class="text-xs text-brand-450 dark:text-brand-350 mt-1">Ahí llega el enlace para crear la contraseña. Sin esto no hay forma de escribirle a esta familia.</p>
+                                        <p id="student-encargado-ayuda" class="text-xs text-brand-450 dark:text-brand-350 mt-1">Ahí llega el enlace para crear la contraseña. Sin esto no hay forma de escribirle a esta familia.</p>
                                     </div>
                                 </div>
 
@@ -1340,6 +1351,7 @@
     <script src="js/avisos.js"></script>
     <script src="js/main.js"></script>
     <script src="js/usuario-alumno.js"></script>
+    <script src="js/contrasena-alumno.js"></script>
     <script src="js/clase-elegida.js"></script>
     <!-- Partes de la clase en vivo con vida propia: van ANTES que sesion.js (ver «sesion.js en partes»). -->
     <script src="js/clase-votacion.js"></script>

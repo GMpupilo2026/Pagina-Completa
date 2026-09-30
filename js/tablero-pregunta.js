@@ -29,6 +29,17 @@ window.TableroPregunta = (function () {
     b: { p: "♟", n: "♞", b: "♝", r: "♜", q: "♛", k: "♚" },
   };
 
+  /* Lo que se escribe en la pista se lee en voz alta (lector de pantalla o
+     «Activar voz»): «Jugaste enroque corto», no «Jugaste O-O», que se lee
+     letra por letra. Si la página no carga js/blind-notation.js, queda la
+     notación de siempre. */
+  function casillaDicha(sq) {
+    return window.BlindNotation && BlindNotation.squareSpoken ? BlindNotation.squareSpoken(sq) : sq;
+  }
+  function jugadaDicha(san) {
+    return window.BlindNotation && BlindNotation.sanSpoken ? BlindNotation.sanSpoken(san).replace(/^\S/, (c) => c.toLowerCase()) : san;
+  }
+
   function esClara(sq) {
     return ((sq.charCodeAt(0) - 97) + (parseInt(sq[1], 10) - 1)) % 2 === 1;
   }
@@ -103,7 +114,7 @@ window.TableroPregunta = (function () {
       if (tipo === "casilla") {
         respuesta = { casilla: sq };
         pintar([sq]);
-        if (op.alSeleccionar) op.alSeleccionar(respuesta, "Elegiste " + sq + ".");
+        if (op.alSeleccionar) op.alSeleccionar(respuesta, "Elegiste " + casillaDicha(sq) + ".");
         return;
       }
 
@@ -141,7 +152,7 @@ window.TableroPregunta = (function () {
       respuesta = { from: mov.from, to: mov.to, promotion: mov.promotion || null, san: mov.san };
       origen = null;
       pintar([mov.from, mov.to]);
-      if (op.alSeleccionar) op.alSeleccionar(respuesta, "Jugaste " + mov.san + ".");
+      if (op.alSeleccionar) op.alSeleccionar(respuesta, "Jugaste " + jugadaDicha(mov.san) + ".");
     }
 
     /* Avanzar la posición sin recoger respuesta: lo usa la línea de

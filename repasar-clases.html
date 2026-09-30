@@ -182,6 +182,11 @@
     <p class="text-sm text-brand-500 dark:text-brand-300 mt-2 mb-6">La partida de cada clase a la que fuiste (y de las que tu profe compartió con los que faltaron), jugada por jugada, con lo que comentó tu profe, las variantes que armó y las preguntas que hizo. Se recorre con los botones o con las flechas del teclado.</p>
     <!-- El repaso personal (repasar-clases.html?repaso=<clase>, js/repaso-clase.js): las preguntas
          de la clase que a este alumno no le salieron, para resolverlas otra vez. -->
+    <!-- Lo que vuelve (js/repaso-fallados.js, clave clase_repaso_v1): las preguntas en las que vio la
+         respuesta en su repaso personal, una semana después. -->
+    <p id="vuelven-aviso" hidden class="mb-6">
+      <a id="vuelven-enlace" href="repasar-clases.html?vuelven=1" class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></a>
+    </p>
     <section id="repaso" aria-labelledby="repaso-titulo" hidden class="mb-8 rounded-2xl border-2 border-accent-500 bg-white dark:bg-brand-900 p-5">
       <h2 id="repaso-titulo" tabindex="-1" class="font-serif text-xl font-bold text-brand-800 dark:text-white"><span aria-hidden="true">📌 </span>Tu repaso de la clase</h2>
       <p id="repaso-intro" class="text-sm text-brand-600 dark:text-brand-300 mt-1"></p>
@@ -255,6 +260,9 @@
 <script src="js/tablero-accesible.js"></script>
 <script src="js/comandos-tablero.js"></script>
 <script src="js/cuadro-comandos.js"></script>
+<script src="js/progreso-usuario.js"></script>
+<script src="js/repaso-espaciado.js"></script>
+<script src="js/repaso-fallados.js"></script>
 <script src="js/repaso-clase.js"></script>
 <script src="js/repasar-clases.js"></script>
 <!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="js/modo-vista.js" defer></script><!-- modo-vista: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- atajo: inicio --><script src="js/atajo-buscar.js" data-arriba="" defer></script><!-- atajo: fin --></body>

@@ -18,6 +18,10 @@
  *   - lo que ya estaba al cargar no se dice;
  *   - una cuenta atrás no se dice cada segundo;
  *   - el mismo cartel repintado no se repite;
+ *   - una jugada escrita en un aviso («Dxf7+», «e4», «O-O») se dice en palabras;
+ *   - los tableros de los ejercicios (Temas, Visualización) y el diagrama de un
+ *     artículo dicen qué hay en cada casilla, y en Temas la jugada del alumno
+ *     se oye sin deletrear notación;
  *   - las jugadas de un tablero se dicen (la captura, el enroque, la
  *     coronación), pero no las de una miniatura, ni con las piezas ocultas, ni
  *     cuando un aviso ya dijo la jugada.
@@ -180,6 +184,13 @@ async function botonEn(browser, ruta) {
     }
     igual("una cuenta atrás se dice una vez, no cada segundo", (await dichos(page)).filter((t) => /Quedan/.test(t)).length, 1);
 
+    await olvidar(page);
+    await escribir("Dxf7+ es legal, pero no es la jugada. Elegiste e4. Jugaste O-O.");
+    await page.waitForTimeout(400);
+    igual("la jugada escrita en un aviso se dice en palabras", (await dichos(page)).join(" | "),
+      "dama captura felix 7 jaque es legal, pero no es la jugada. Elegiste eva 4. Jugaste enroque corto.");
+    await page.waitForTimeout(1600);   // ese «Jugaste» calla al tablero un momento, a propósito
+
     console.log("\n=== Las jugadas del tablero ===");
     /* Un tablero como los del sitio: 64 casillas con data-square y un
        aria-label que dice qué hay («Casilla e2: peón blanco»). */
@@ -248,6 +259,55 @@ async function botonEn(browser, ruta) {
     igual("sale encendida", await c.page.getAttribute("#voz-toggle", "aria-pressed"), "true");
     igual("y no lee lo que ya estaba", (await dichos(c.page)).some((t) => /ya estaba al cargar/.test(t)), false);
     await c.ctx.close();
+
+    console.log("\n=== Los tableros de los ejercicios dicen qué hay en cada casilla ===");
+    /* Lo que lee el lector de pantalla y de donde «Activar voz» saca la jugada:
+       una casilla muda, o «e4» a secas, deja al tablero sin nada que decir. */
+    const casillasDe = (p, sel) => p.evaluate((s) => {
+      const cs = [...document.querySelectorAll(s + " [data-square]")];
+      const et = cs.map((c) => c.getAttribute("aria-label") || "");
+      return { casillas: cs.length, mudas: et.filter((t) => !t.trim()).length,
+               habladas: et.filter((t) => /^[a-z]+ [1-8], /.test(t)).length, vacia: et.some((t) => /, vacía$/.test(t)) };
+    }, sel);
+    const bienRotulado = { casillas: 64, mudas: 0, habladas: 64, vacia: true };
+
+    {
+      const t = await abrir(browser, "/entreno/temas.html", { voz: "1" });
+      await t.page.waitForSelector("#voz-toggle", { timeout: 8000 });
+      await t.page.click(".theme-card, [data-theme]", { timeout: 8000 });
+      await t.page.waitForFunction(() => typeof game !== "undefined" && game && document.querySelectorAll("#board [data-square]").length === 64, null, { timeout: 15000 });
+      await t.page.waitForTimeout(2000);
+      igual("Ejercicios por tema: cada casilla dice qué hay", await casillasDe(t.page, "#board"), bienRotulado);
+      const mv = await t.page.evaluate(() => {
+        const exp = currentPuzzle().solution[solutionStep];
+        const g = new Chess(game.fen());
+        return g.move(exp, { sloppy: true }) || g.move({ from: exp.slice(0, 2), to: exp.slice(2, 4), promotion: exp[4] });
+      });
+      await olvidar(t.page);
+      await t.page.click('#board [data-square="' + mv.from + '"]');
+      await t.page.click('#board [data-square="' + mv.to + '"]');
+      await t.page.waitForTimeout(2500);
+      const d = await dichos(t.page);
+      igual("Ejercicios por tema: la jugada del alumno se dice",
+        d.some((x) => /^(Rey|Dama|Torre|Alfil|Caballo|Peón) (blanc|negr)[oa] de [a-z]+ [1-8] a [a-z]+ [1-8]/.test(x)), true);
+      igual("y nada se deletrea en notación («Dxf7+»)", d.filter((x) => /(^|[^A-Za-z])[RDTAC]?x?[a-h][1-8]/.test(x)).join(" | ") || "nada", "nada");
+      igual("sin errores en la página", t.errores.join(" | ") || "ninguno", "ninguno");
+      await t.ctx.close();
+    }
+    {
+      const v = await abrir(browser, "/entreno/visualizacion.html");
+      await v.page.waitForFunction(() => typeof NIVELES !== "undefined" && typeof openLevel === "function", null, { timeout: 15000 });
+      await v.page.evaluate(() => openLevel(NIVELES[0].id));
+      await v.page.waitForFunction(() => document.querySelectorAll("#board [data-square]").length === 64, null, { timeout: 15000 });
+      igual("Visualización: cada casilla dice qué hay («eva 4, vacía»)", await casillasDe(v.page, "#board"), bienRotulado);
+      await v.ctx.close();
+    }
+    {
+      const a = await abrir(browser, "/articulos/la-oposicion.html");
+      await a.page.waitForSelector(".example-board [data-square]", { timeout: 8000 });
+      igual("El diagrama de un artículo: cada casilla dice qué hay", await casillasDe(a.page, ".example-board"), bienRotulado);
+      await a.ctx.close();
+    }
 
     console.log("\n=== Juegos ===");
     const html = fs.readFileSync(path.join(RAIZ, "juegos.html"), "utf8");

@@ -354,11 +354,24 @@ async function main() {
 
     // Segunda pregunta: es de casilla y el tablero tiene que estar.
     ok(await p.isVisible("#q-board"), "la pregunta de casilla no muestra el tablero");
+    // Cada casilla dice qué hay, con la columna hablada: es lo que lee el
+    // lector de pantalla y de donde «Activar voz» saca la jugada.
+    const rotulos = await p.$$eval("#q-board [data-square]", (cs) => cs.map((c) => c.getAttribute("aria-label") || ""));
+    ok(rotulos.length === 64 && rotulos.every((t) => /^[a-z]+ [1-8], /.test(t)),
+      `hay casillas que no dicen qué hay (o dicen «e4» a secas): ${rotulos.filter((t) => !/^[a-z]+ [1-8], /.test(t)).slice(0, 3).join(" | ")}`);
+    ok(rotulos.includes("eva 3, rey blanco"), `la casilla del rey no lo dice: ${rotulos.find((t) => /^eva 3/.test(t))}`);
     await p.click("#q-board button[data-square='e4']");
+    ok(/^Elegiste eva 4\./.test(await p.textContent("#q-pista")), `la pista no dice la casilla en palabras: ${await p.textContent("#q-pista")}`);
     await p.click("#responder-btn");
     await p.waitForFunction(() => /Pregunta 3 de 3/.test(document.getElementById("q-num").textContent), { timeout: 5000 });
     const l2 = await p.evaluate(() => window.__llamadas.filter((l) => l.rpc === "responder_examen"));
     ok(l2[1].args.p_respuesta.casilla === "e4", `la casilla que mandó no es la que se tocó: ${JSON.stringify(l2[1].args.p_respuesta)}`);
+
+    // Tercera, de jugada: la pista la dice en palabras («enroque corto»,
+    // no «O-O», que la voz deletrea).
+    await p.click("#q-board button[data-square='e1']");
+    await p.click("#q-board button[data-square='g1']");
+    ok(/^Jugaste enroque corto\./.test(await p.textContent("#q-pista")), `la pista no dice la jugada en palabras: ${await p.textContent("#q-pista")}`);
 
     await ctx.close();
   }

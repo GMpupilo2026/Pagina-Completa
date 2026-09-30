@@ -16,6 +16,15 @@
     r: { w: "♖", b: "♜" }, q: { w: "♕", b: "♛" }, k: { w: "♔", b: "♚" },
   };
   const BLIND_MODE_KEY = "oscarBlindMode_v1";
+  const NOMBRE = { k: "rey", q: "dama", r: "torre", b: "alfil", n: "caballo", p: "peón" };
+
+  function casillaDicha(sq) {
+    return window.BlindNotation && BlindNotation.squareSpoken ? BlindNotation.squareSpoken(sq) : sq;
+  }
+  function piezaDicha(p) {
+    const fem = p.type === "q" || p.type === "r";
+    return NOMBRE[p.type] + " " + (p.color === "w" ? (fem ? "blanca" : "blanco") : (fem ? "negra" : "negro"));
+  }
 
   function renderBoard(el, game) {
     el.innerHTML = "";
@@ -31,6 +40,11 @@
         sq.className = "example-sq " + (light ? "example-sq-light" : "example-sq-dark");
         sq.dataset.square = square;   // de aquí lee js/coordenadas-tablero.js
         const piece = game.get(square);
+        /* Qué hay en la casilla, dicho como en todo el sitio («eva 4, caballo
+           blanco»): sin esto, fuera del Modo Adaptado el diagrama era mudo para
+           el lector de pantalla, y «Activar voz» no tenía qué leer. */
+        sq.setAttribute("role", "img");
+        sq.setAttribute("aria-label", casillaDicha(square) + ", " + (piece ? piezaDicha(piece) : "vacía"));
         if (piece) {
           const span = document.createElement("span");
           span.setAttribute("aria-hidden", "true");

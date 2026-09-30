@@ -6605,6 +6605,22 @@
             return true;
         }
 
+        /* En el celular, lo del profe va antes que el chat: sus herramientas (la
+           columna de al lado) quedaban debajo del chat, a 1500 px del tablero. En
+           la computadora las dos columnas van lado a lado y el chat vuelve a su
+           lugar. Ver «La clase en el celular del profe». */
+        function acomodarChatDelProfe() {
+            const chat = document.getElementById("chat-caja");
+            const aside = document.querySelector(".proyector-contenido > aside");
+            if (!chat || !aside) return;
+            const marca = document.createComment("acá va el chat en la computadora");
+            chat.before(marca);
+            const angosta = matchMedia("(max-width: 1023px)");
+            const poner = () => { if (angosta.matches) aside.after(chat); else marca.after(chat); };
+            poner();
+            angosta.addEventListener("change", poner);
+        }
+
         async function init() {
             const { data } = await sb.auth.getSession();
             session = data.session;
@@ -6661,6 +6677,7 @@
 
             if (isTeacher) {
                 document.getElementById("teacher-toolbar").classList.remove("hidden");
+                acomodarChatDelProfe();
                 document.getElementById("modo-sencillo-fila").classList.remove("hidden");
                 document.getElementById("engine-panel").classList.remove("hidden");
                 document.getElementById("teacher-tabs-wrap").classList.remove("hidden");
@@ -6809,6 +6826,13 @@
             correo.classList.toggle("opacity-50", sinCorreo);
             document.getElementById("student-casa").classList.toggle("hidden", !sinCorreo);
             document.getElementById("student-usuario-dominio").textContent = "@" + UsuarioAlumno.DOMINIO;
+            // Con la contraseña puesta no sale ningún correo: la casa pasa a
+            // ser opcional y el botón dice lo que de verdad va a hacer.
+            const conClave = sinCorreo && document.getElementById("student-contrasena").value !== "";
+            document.getElementById("student-encargado-ayuda").textContent = conClave
+                ? "Opcional: ahí llegan los informes de cómo le va. Con la contraseña puesta no hace falta para entrar."
+                : "Ahí llega el enlace para crear la contraseña. Sin esto no hay forma de escribirle a esta familia.";
+            document.getElementById("create-student-btn").textContent = textoBotonAlta();
             // Se propone desde el nombre, pero lo escrito a mano no se pisa.
             if (sinCorreo && !usuario.dataset.tocado) {
                 usuario.value = baseDeUsuarioEnPantalla(document.getElementById("student-name").value);
@@ -6828,7 +6852,20 @@
             return [pedazos[0], apellido].filter(Boolean).join(".").slice(0, 40);
         }
 
+        function textoBotonAlta() {
+            return document.getElementById("student-sin-correo").checked
+                && document.getElementById("student-contrasena").value !== ""
+                ? "Crear la cuenta" : "Enviar invitación";
+        }
+
         document.getElementById("student-sin-correo").addEventListener("change", pintarModoAlumno);
+        document.getElementById("student-contrasena").addEventListener("input", pintarModoAlumno);
+        document.getElementById("student-contrasena-proponer").addEventListener("click", () => {
+            const campo = document.getElementById("student-contrasena");
+            campo.value = ContrasenaAlumno.claveFacil();
+            campo.focus();
+            pintarModoAlumno();
+        });
         document.getElementById("student-name").addEventListener("input", () => {
             if (!document.getElementById("student-usuario").dataset.tocado) pintarModoAlumno();
         });
@@ -6850,16 +6887,26 @@
             const encargadoEmail = document.getElementById("student-encargado-correo").value.trim();
             const encargadoNombre = document.getElementById("student-encargado-nombre").value.trim();
             const usuario = document.getElementById("student-usuario").value.trim();
+            // Sin recortar: un espacio al final se dice, no se arregla callado.
+            const contrasena = sinCorreo ? document.getElementById("student-contrasena").value : "";
 
-            // Sin buzón propio, el correo de la casa es la ÚNICA forma de
-            // mandar el enlace: sin él la cuenta queda creada y muda.
-            if (sinCorreo && (!full_name || !encargadoEmail || !usuario)) {
-                msg.textContent = !full_name
-                    ? "Para armarle un usuario hace falta el nombre del alumno."
-                    : (!usuario ? "Falta el usuario con el que va a entrar."
-                                : "Falta el correo de la casa: es a donde va el enlace para crear la contraseña.");
+            // Sin buzón propio y sin contraseña, el correo de la casa es la
+            // ÚNICA forma de mandar el enlace: sin él la cuenta queda creada y
+            // muda. Con la contraseña puesta ya entra, y la casa es opcional.
+            const problema = !sinCorreo ? ""
+                : !full_name ? "Para armarle un usuario hace falta el nombre del alumno."
+                : !usuario ? "Falta el usuario con el que va a entrar."
+                : contrasena && contrasena.length < ContrasenaAlumno.MINIMO
+                    ? `La contraseña tiene que tener al menos ${ContrasenaAlumno.MINIMO} caracteres.`
+                : contrasena && contrasena.trim() !== contrasena
+                    ? "La contraseña no puede empezar ni terminar con espacios."
+                : !contrasena && !encargadoEmail
+                    ? "Falta el correo de la casa: es a donde va el enlace para crear la contraseña. O ponle tú la contraseña."
+                : "";
+            if (problema) {
+                msg.textContent = problema;
                 msg.className = "text-xs text-red-600 dark:text-red-400";
-                btn.disabled = false; btn.textContent = "Enviar invitación";
+                btn.disabled = false; btn.textContent = textoBotonAlta();
                 return;
             }
 
@@ -6878,6 +6925,7 @@
                         usuario: sinCorreo ? usuario : "",
                         encargado_email: sinCorreo ? encargadoEmail : "",
                         encargado_nombre: sinCorreo ? encargadoNombre : "",
+                        contrasena,
                     }),
                 });
                 const result = await res.json();
@@ -6885,7 +6933,14 @@
                 // Con qué entra lo dice el servidor: el usuario pudo salir con
                 // un número al final si ya estaba tomado.
                 const entra = result.usuario || result.email;
-                if (result.correo_enviado === false) {
+                if (result.con_contrasena) {
+                    // No salió ningún correo: el usuario y la contraseña se los
+                    // da quien lo invitó, así que se enseñan los dos, y el
+                    // usuario sin el dominio, que es lo que el niño escribe.
+                    msg.textContent = `Listo: ${full_name} entra con el usuario «${UsuarioAlumno.soloUsuario(entra)}» ` +
+                        `y la contraseña «${contrasena}». Dáselos en la clase; no salió ningún correo.`;
+                    msg.className = "text-xs text-green-600 dark:text-green-400";
+                } else if (result.correo_enviado === false) {
                     msg.textContent = `La cuenta quedó creada (entra con ${entra}), pero el correo NO salió. ` +
                         "Vuelve a intentarlo más tarde o dile que entre con «¿Olvidaste tu contraseña?» en la pantalla de acceso.";
                     msg.className = "text-xs font-semibold text-accent-700 dark:text-accent-400";
@@ -6919,7 +6974,7 @@
                 // vuelve a leer para que la pantalla diga lo mismo que la base.
                 if (/invitaciones/i.test(err.message)) cargarCupoInvitaciones();
             } finally {
-                btn.textContent = "Enviar invitación";
+                btn.textContent = textoBotonAlta();
                 // Se vuelve a habilitar solo si de verdad queda cupo: si no, el
                 // botón tiene que quedarse apagado después de la última invitación.
                 btn.disabled = cupoRestante !== null && cupoRestante <= 0;

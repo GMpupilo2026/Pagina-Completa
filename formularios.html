@@ -178,7 +178,7 @@
                                 <span class="text-xs text-brand-600 dark:text-brand-300">
                                     <strong class="text-brand-800 dark:text-white">No tiene correo propio</strong>
                                     — es pequeño, o comparte el de la casa con un hermano.
-                                    Se le arma un usuario y todo le llega a la persona encargada.
+                                    Se le arma un usuario, y la contraseña se la pones tú o la crea la casa con el correo.
                                 </span>
                             </label>
                         </div>
@@ -194,6 +194,16 @@
                                 <span id="alta-usuario-dominio" class="text-xs text-brand-450 dark:text-brand-350 whitespace-nowrap"></span>
                             </div>
                             <p class="text-xs text-brand-450 dark:text-brand-350 mt-1">Sale del nombre; corrígelo si el apellido no quedó bien. Si ya lo tiene otro alumno, se le pone un número al final.</p>
+
+                            <!-- Con la contraseña puesta entra hoy mismo, sin que nadie
+                                 abra un correo. De texto y no de contraseña a propósito:
+                                 es para dictársela al alumno. -->
+                            <label for="alta-contrasena" class="block text-xs font-semibold text-brand-700 dark:text-brand-200 mt-3 mb-1">Contraseña (si se la pones tú)</label>
+                            <div class="flex items-center gap-2">
+                                <input id="alta-contrasena" type="text" maxlength="72" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" class="flex-1 min-w-0 bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                <button type="button" id="alta-contrasena-proponer" class="text-xs font-semibold px-3 py-2 rounded-lg border border-brand-200 dark:border-brand-700 hover:border-accent-400 text-brand-700 dark:text-brand-200 whitespace-nowrap transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Proponer una fácil</button>
+                            </div>
+                            <p class="text-xs text-brand-450 dark:text-brand-350 mt-1">Al menos 8 caracteres. Con ella entra hoy mismo: dale el usuario y la contraseña en la clase. Si la dejas en blanco, el enlace para crearla sale al correo de la persona encargada.</p>
                         </div>
                         <div>
                             <label for="alta-encargado-nombre" class="block text-xs font-semibold text-brand-700 dark:text-brand-200 mb-1">Nombre de la persona encargada</label>
@@ -249,6 +259,7 @@
     <script src="js/avisos.js"></script>
     <script src="js/main.js"></script>
     <script src="js/usuario-alumno.js"></script>
+    <script src="js/contrasena-alumno.js"></script>
     <script src="js/adjuntos.js"></script>
     <script src="js/formularios.js"></script>
 <!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="js/modo-vista.js" defer></script><!-- modo-vista: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- ayuda: inicio --><script src="js/ayuda-guia.js" defer></script><!-- ayuda: fin --><!-- atajo: inicio --><script src="js/atajo-buscar.js" data-arriba="" defer></script><!-- atajo: fin --></body>

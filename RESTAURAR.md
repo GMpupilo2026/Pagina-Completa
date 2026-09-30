@@ -9,7 +9,8 @@ mapa de dónde vive cada cosa, porque no todo se recupera del mismo lado:
 | el esquema de las dos bases | `supabase/migraciones*/` | aplicando las migraciones |
 | las 14 Edge Functions | `supabase/functions/` | desplegándolas |
 | la configuración de Cloudflare | `worker.js`, `_headers`, `_redirects`, `wrangler.jsonc` | `wrangler deploy` |
-| **los datos de la gente** | **en ninguna parte todavía** | **ver abajo — esto es lo urgente** |
+| los datos de la gente | copias diarias de Supabase (plan Pro) + `respaldo-datos.sh` | ver «Los datos de la gente» |
+| los archivos subidos (Storage) | **en ninguna parte todavía** | ver «Lo que las copias diarias no cubren» |
 | los secretos (Resend, Vision, VAPID) | en Supabase y Cloudflare | se vuelven a poner a mano |
 
 **El estado bueno es un commit de `main`**, y hoy es
@@ -30,19 +31,42 @@ existan se listan con `git tag -l 'restauracion-*'`.
 
 ---
 
-## Lo urgente: los datos no tienen red
+## Los datos de la gente
 
 El esquema entero está respaldado, así que una base vacía se reconstruye en
-minutos. Lo que no se reconstruye es lo que la gente hizo adentro: los 105
-perfiles, las 3.976 filas de progreso, los 80 encargados a los que llegan los
-informes, los 53 planes de clase, la bitácora, los cobros.
+minutos. Lo que no se reconstruye es lo que la gente hizo adentro: los
+perfiles, el progreso, los encargados a los que llegan los informes, los
+planes de clase, la bitácora, los cobros.
 
-**La organización de Supabase está en el plan gratuito, que no hace copias
-automáticas de la base.** O sea que hoy, debajo de esos datos, no hay nada. Lo
-que se borre, se borró. Hay dos salidas y conviene tomar las dos:
+**La organización de Supabase está en el plan Pro** (y la base, en tamaño
+Small), así que Supabase hace **una copia diaria automática** de la base, cerca
+de la medianoche de la región, y guarda las de los **últimos 7 días**. Se ven
+y se restauran en **Database › Backups › Scheduled backups**. Comprobado el 30
+de setiembre de 2026: había ocho copias seguidas, del 23 al 30, todas
+«PHYSICAL». Si esa lista algún día aparece vacía o con huecos, algo cambió en
+el plan y hay que mirarlo antes que cualquier otra cosa.
 
-1. **Correr el volcado a mano**, cada tanto y sobre todo antes de cualquier
-   migración que toque datos:
+- **Restaurar una copia pisa la base entera** con la de ese día: se pierde
+  todo lo que la gente hizo después. Para rescatar una sola tabla o unas
+  filas, mejor **«Restore to new project»** (restaura en un proyecto aparte) y
+  de ahí se copia lo que haga falta.
+- **Con copias diarias, en el peor caso se pierde un día.** Volver a
+  cualquier minuto es el complemento **Point in time** (PITR), que se paga
+  aparte y hoy no está contratado.
+
+### Lo que las copias diarias no cubren
+
+1. **Los archivos de Storage.** La copia es de la base: de un archivo subido
+   guarda la fila que lo describe, no el archivo. Si se borra un archivo,
+   restaurar una copia vieja no lo devuelve. Al 30 de setiembre de 2026 eso es
+   casi nada —`academia-marca` (5 logos, 157 kB) y `formulario-adjuntos` y
+   `justificaciones` vacíos—, pero cuando la gente empiece a mandar adjuntos
+   y justificaciones hay que respaldarlos aparte. `respaldo-datos.sh` tampoco
+   los baja: es `pg_dump`, solo la base.
+2. **Una copia fuera de Supabase.** Las copias diarias viven en el mismo lugar
+   que la base: si se pierde la cuenta o el proyecto, se pierden con él. Por
+   eso el volcado a mano sigue valiendo, cada tanto y sobre todo antes de
+   cualquier migración que toque datos:
 
    ```
    PGURL='postgresql://postgres.<ref>:<clave>@<host>:5432/postgres' \
@@ -58,14 +82,8 @@ que se borre, se borró. Hay dos salidas y conviene tomar las dos:
 
    Deja tres archivos en `respaldos/`, que **no se commitea**: ahí adentro van
    cédulas, correos y progreso de menores de edad, y de git no se borra nada.
-
-2. **Pagar el plan Pro**, que trae copias diarias automáticas con siete días de
-   ventana (y de paso habilita la protección contra contraseñas filtradas que
-   CLAUDE.md tiene anotada como pendiente por lo mismo). Un respaldo que
-   depende de que alguien se acuerde de correrlo, tarde o temprano no se corre.
-
-Y en los dos casos: **la copia va fuera de esta computadora.** Un respaldo que
-vive en el mismo lugar que lo respaldado no es un respaldo.
+   **La copia va fuera de esta computadora.** Un respaldo que vive en el mismo
+   lugar que lo respaldado no es un respaldo.
 
 ---
 

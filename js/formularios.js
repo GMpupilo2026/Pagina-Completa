@@ -712,6 +712,8 @@ function abrirAlta(r, boton) {
     const campoUsuario = document.getElementById("alta-usuario");
     delete campoUsuario.dataset.tocado;
     campoUsuario.value = "";
+    // La contraseña del alumno de antes no se le queda puesta al siguiente.
+    document.getElementById("alta-contrasena").value = "";
     document.getElementById("alta-sin-correo").checked = !dato("alumno_correo");
     document.getElementById("alta-usuario-dominio").textContent = "@" + UsuarioAlumno.DOMINIO;
     pintarModoAlta();
@@ -743,6 +745,8 @@ function abrirAltaManual() {
     const campoUsuario = document.getElementById("alta-usuario");
     delete campoUsuario.dataset.tocado;
     campoUsuario.value = "";
+    // La contraseña del alumno de antes no se le queda puesta al siguiente.
+    document.getElementById("alta-contrasena").value = "";
     document.getElementById("alta-sin-correo").checked = false;
     document.getElementById("alta-usuario-dominio").textContent = "@" + UsuarioAlumno.DOMINIO;
     pintarModoAlta();
@@ -828,9 +832,16 @@ function pintarModoAlta() {
     document.getElementById("alta-correo-obligatorio").classList.toggle("hidden", sinCorreo);
     fila.classList.toggle("hidden", !sinCorreo);
 
-    document.getElementById("alta-encargado-ayuda").textContent = sinCorreo
+    // Con la contraseña puesta no sale ningún correo: la casa vuelve a ser
+    // opcional y el botón dice lo que de verdad va a hacer.
+    const conClave = sinCorreo && document.getElementById("alta-contrasena").value !== "";
+    document.getElementById("alta-encargado-ayuda").textContent = conClave
+        ? "Ahí llega el informe de cómo le va. Con la contraseña puesta no hace falta para entrar; si se deja en blanco, no se apunta a nadie."
+        : sinCorreo
         ? "Ahí llega el enlace para crear la contraseña Y el informe de cómo le va. Sin esto no hay forma de escribirle a esta familia."
         : "Ahí llega el informe de cómo le va. Si se deja en blanco, no se apunta a nadie.";
+    document.getElementById("alta-enviar").textContent = conClave
+        ? "Crear la cuenta" : "Crear la cuenta y enviar la invitación";
 
     // Se propone desde el nombre, pero lo escrito a mano no se pisa: quien lo
     // corrigió no quiere que se le deshaga al volver a tocar la casilla.
@@ -873,6 +884,8 @@ async function enviarAlta() {
     const alumnoNombre = v("alta-alumno-nombre");
     const alumnoCorreo = sinCorreo ? "" : v("alta-alumno-correo");
     const usuario = sinCorreo ? v("alta-usuario") : "";
+    // Sin recortar: un espacio al final se dice, no se arregla callado.
+    const contrasena = sinCorreo ? document.getElementById("alta-contrasena").value : "";
     const encargadoNombre = v("alta-encargado-nombre");
     const encargadoCorreo = v("alta-encargado-correo");
     const frecuencia = document.getElementById("alta-frecuencia").value;
@@ -893,6 +906,7 @@ async function enviarAlta() {
         encargado_email: encargadoCorreo,
         frecuencia,
         grupo,
+        contrasena,
     } : {
         respuesta_id: altaRespuesta.id,
         alumno_nombre: alumnoNombre,
@@ -903,6 +917,7 @@ async function enviarAlta() {
         encargado_email: encargadoCorreo,
         frecuencia,
         grupo,
+        contrasena,
     };
 
     // Solo viaja si se eligió a alguien: sin él, la función decide como siempre.
@@ -915,14 +930,21 @@ async function enviarAlta() {
     };
 
     if (sinCorreo) {
-        // Sin buzón propio, el de la casa es la ÚNICA forma de mandarle el
-        // enlace: sin él la cuenta queda creada y muda, y de eso nadie se
-        // entera hasta que el alumno nunca aparece.
+        // Sin buzón propio y sin contraseña, el de la casa es la ÚNICA forma
+        // de mandarle el enlace: sin él la cuenta queda creada y muda, y de
+        // eso nadie se entera hasta que el alumno nunca aparece. Con la
+        // contraseña puesta ya entra, y la casa es opcional.
         if (!alumnoNombre) {
             return fallar("Para armarle un usuario hace falta el nombre del alumno.", "alta-alumno-nombre");
         }
-        if (!encargadoCorreo) {
-            return fallar("Sin correo propio, el de la persona encargada es obligatorio: es a donde va el enlace para crear la contraseña.", "alta-encargado-correo");
+        if (contrasena && contrasena.length < ContrasenaAlumno.MINIMO) {
+            return fallar(`La contraseña tiene que tener al menos ${ContrasenaAlumno.MINIMO} caracteres.`, "alta-contrasena");
+        }
+        if (contrasena && contrasena.trim() !== contrasena) {
+            return fallar("La contraseña no puede empezar ni terminar con espacios.", "alta-contrasena");
+        }
+        if (!contrasena && !encargadoCorreo) {
+            return fallar("Sin correo propio, el de la persona encargada es obligatorio: es a donde va el enlace para crear la contraseña. O ponle tú la contraseña.", "alta-encargado-correo");
         }
         if (!usuario) {
             return fallar("Falta el usuario con el que va a entrar.", "alta-usuario");
@@ -974,6 +996,13 @@ async function enviarAlta() {
         if (out.ya_tenia_cuenta) {
             await Avisos.alerta(`Esta respuesta ya tenía su cuenta creada, así que no se mandó otra invitación. ` +
                   `Entra con ${entra}.${encargado}`, { titulo: "Ya tenía cuenta" });
+        } else if (out.con_contrasena) {
+            // No salió ningún correo: el usuario y la contraseña los da quien
+            // lo dio de alta, así que se enseñan los dos. El usuario sin el
+            // dominio, que es lo que el niño escribe en la pantalla de acceso.
+            await Avisos.alerta(`${alumnoNombre || "El alumno"} ya puede entrar con:\n\n` +
+                  `    Usuario: ${UsuarioAlumno.soloUsuario(entra)}\n    Contraseña: ${contrasena}\n\n` +
+                  `Dáselos en la clase: no salió ningún correo.${encargado}`, { titulo: "Cuenta creada" });
         } else if (out.correo_enviado === false) {
             // La cuenta quedó creada y el correo no salió: se dice, o el alumno
             // nunca aparece y nadie sabe por qué.
@@ -1043,6 +1072,13 @@ document.getElementById("buscar-respuestas").addEventListener("input", pintarRes
 document.getElementById("alta-enviar").addEventListener("click", enviarAlta);
 document.getElementById("alta-cancelar").addEventListener("click", cerrarAlta);
 document.getElementById("alta-sin-correo").addEventListener("change", pintarModoAlta);
+document.getElementById("alta-contrasena").addEventListener("input", pintarModoAlta);
+document.getElementById("alta-contrasena-proponer").addEventListener("click", () => {
+    const campo = document.getElementById("alta-contrasena");
+    campo.value = ContrasenaAlumno.claveFacil();
+    campo.focus();
+    pintarModoAlta();
+});
 // Corregir el nombre vuelve a proponer el usuario, mientras nadie lo haya
 // escrito a mano: arreglar una tilde del nombre no tiene por qué dejar el
 // usuario apuntando al nombre viejo.
