@@ -7,7 +7,9 @@
    sin la casilla de la privacidad, una salida que no se anota (o que se anota
    dos veces por el blur y el visibilitychange de la misma salida), la
    advertencia que no sale, un bloqueado que sigue viendo el tablero al
-   recargar, y al profe que no le llega el aviso.
+   recargar, y al profe que no le llega el aviso. Y para quien no ve la
+   pantalla: un aviso que no llega a la región viva ni a la voz, un recuadro
+   que no aparece o que deja «mover», o la tecla Esc sacándolo de la clase.
 
    Las reglas de verdad —quién ve qué, el bloqueo, el freno, la IP— las pone la
    base y se probaron impersonando roles en SQL: ver «La clase vista por
@@ -120,26 +122,26 @@ async function pruebaInvitado(browser) {
   await page.waitForFunction(() => document.getElementById("vc-clase").checkVisibility(), null, { timeout: 5000 });
   const entrar = (await llamadas(page, "clase_invitado_entrar"))[0];
   igual("entra con su nombre y la versión de la política", [entrar.a.p_nombre, /^\d{4}-\d{2}-\d{2}$/.test(entrar.a.p_privacidad)], ["Luis Mora", true]);
-  await page.waitForFunction(() => document.querySelector('#vc-tablero [aria-label*="e5"]'), null, { timeout: 5000 });
+  await page.waitForFunction(() => document.querySelector('#vc-tablero [data-square="e5"]'), null, { timeout: 5000 });
   igual("el tablero muestra la posición de la clase (caballo en f3)",
-    await page.evaluate(() => /caballo blanco/i.test((document.querySelector('#vc-tablero [aria-label^="f3"]') || {}).getAttribute?.("aria-label") || "")), true);
+    await page.evaluate(() => /caballo blanco/i.test((document.querySelector('#vc-tablero [data-square="f3"]') || {}).getAttribute?.("aria-label") || "")), true);
   igual("con la flecha del profe", await page.evaluate(() => document.querySelectorAll("#vc-tablero svg line, #vc-tablero svg path, #vc-tablero svg polyline").length > 0), true);
   igual("dice de quién es el turno", await page.textContent("#vc-estado"), "Juegan las negras");
   igual("en la pantalla de la clase no hay NINGÚN enlace (ni el pie)",
     await page.evaluate(() => [...document.querySelectorAll("a[href]")].filter((a) => a.checkVisibility()).length), 0);
 
   // No se puede mover: tocar el peón de d7 y después d6 (jugada legal) no cambia nada.
-  const casillas = () => page.evaluate(() => ["d7", "d6"].map((c) => document.querySelector('#vc-tablero [aria-label^="' + c + '"]').getAttribute("aria-label")));
+  const casillas = () => page.evaluate(() => ["d7", "d6"].map((c) => document.querySelector('#vc-tablero [data-square="' + c + '"]').getAttribute("aria-label")));
   const antes = await casillas();
-  await page.click('#vc-tablero [aria-label^="d7"]').catch(() => {});
-  await page.click('#vc-tablero [aria-label^="d6"]').catch(() => {});
+  await page.click('#vc-tablero [data-square="d7"]').catch(() => {});
+  await page.click('#vc-tablero [data-square="d6"]').catch(() => {});
   igual("tocar el tablero no mueve nada (d7 → d6 es legal)", await casillas(), antes);
 
   // El profe muestra una jugada anterior: se sigue su vista.
   await page.evaluate(() => { window.__doble.tablero = Object.assign({}, window.__doble.tablero, { vista: { path: ["e4"], parent: null, root: 1 }, arrows: [] }); });
   await page.waitForFunction(() => /otra posición/.test(document.getElementById("vc-estado").textContent), null, { timeout: 5000 });
   igual("sigue lo que mira el profe (e5 vacía, sin caballo en f3)", await page.evaluate(() =>
-    !/caballo/i.test(document.querySelector('#vc-tablero [aria-label^="f3"]').getAttribute("aria-label"))), true);
+    !/caballo/i.test(document.querySelector('#vc-tablero [data-square="f3"]').getAttribute("aria-label"))), true);
 
   console.log("  — primera salida —");
   await salirse(page);
@@ -181,6 +183,115 @@ async function pruebaEsperando(browser) {
   await page.evaluate(() => { window.__doble.abierta = true; });
   await page.waitForFunction(() => document.getElementById("vc-tablero").checkVisibility({ visibilityProperty: true }), null, { timeout: 5000 });
   igual("al abrirse la clase, el tablero aparece solo", await seVe(page, "#vc-tablero"), true);
+  igual("sin errores de la página", errores, []);
+  await ctx.close();
+}
+
+/* Para quien no ve la pantalla: el Modo Adaptado (el recuadro de la clase y
+   cada aviso en la región viva #vc-voz) y la voz del navegador, que se
+   intercepta para ver QUÉ diría. */
+const VOZ_FALSA = () => {
+  window.__dicho = [];
+  const falsa = { speak: (u) => window.__dicho.push(u.text), cancel() {}, getVoices: () => [] };
+  Object.defineProperty(window, "speechSynthesis", { configurable: true, get: () => falsa });
+  window.SpeechSynthesisUtterance = function (t) { this.text = t; };
+};
+const oido = (page) => page.evaluate(() => document.getElementById("vc-voz").textContent);
+const esperarOido = (page, re) => page.waitForFunction((r) => new RegExp(r).test(document.getElementById("vc-voz").textContent), re.source, { timeout: 6000 });
+
+async function pruebaSinVer(browser) {
+  console.log("\n=== Sin ver la pantalla: modo adaptado, recuadro y voz ===");
+  const ctx = await browser.newContext({ serviceWorkers: "block", viewport: { width: 1280, height: 900 } });
+  await ctx.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
+  await ctx.route("**/fonts.gstatic.com/**", (r) => r.abort());
+  await ctx.route("**/js/supabase-client.js", (r) =>
+    r.fulfill({ status: 200, contentType: "application/javascript", body: dobleInvitado({ abierta: false }) }));
+  await ctx.addInitScript(VOZ_FALSA);
+  await ctx.addInitScript(() => { try { localStorage.setItem("oscarBlindMode_v1", "0"); } catch (e) {} });
+  const { page, errores } = await abrirInvitado(browser, "#t=tok-bueno", null, ctx);
+
+  igual("en la entrada están los dos botones, apagados", [await seVe(page, "#vc-adaptado-btn"), await page.getAttribute("#vc-adaptado-btn", "aria-pressed"),
+    await seVe(page, "#vc-voz-btn"), await page.getAttribute("#vc-voz-btn", "aria-pressed")], [true, "false", true, "false"]);
+  igual("la voz dice para quién es (nombre fijo)", await page.getAttribute("#vc-voz-btn", "aria-label"), "Voz del navegador, solo si no usas lector de pantalla");
+
+  await page.click("#vc-adaptado-btn");
+  await esperarOido(page, /Modo adaptado activado/);
+  igual("encender el modo lo dice y lo marca", [await page.getAttribute("#vc-adaptado-btn", "aria-pressed"),
+    await page.evaluate(() => document.documentElement.classList.contains("adaptive-mode"))], ["true", true]);
+  await page.click("#vc-voz-btn");
+  igual("la voz se enciende y lo dice", [await page.getAttribute("#vc-voz-btn", "aria-pressed"),
+    await page.evaluate(() => window.__dicho.some((t) => /Voz activada/.test(t)))], ["true", true]);
+
+  await page.fill("#vc-nombre", "Ana Solís");
+  await page.click("#vc-entrar");
+  await page.waitForTimeout(150);
+  igual("un error de la entrada también se dice en voz", await page.evaluate(() => window.__dicho.some((t) => /aceptar la Política de privacidad/.test(t))), true);
+  await page.check("#vc-acepto");
+  await page.click("#vc-entrar");
+  await page.waitForFunction(() => document.getElementById("vc-clase").checkVisibility(), null, { timeout: 5000 });
+  await esperarOido(page, /todavía no abre la clase/);
+  igual("al entrar: bienvenida y que la clase no abrió, en UN aviso", await oido(page),
+    "Estás mirando la clase de Karina Rojas. Solo para mirar: no se puede mover. Escribe «posición» para oír el tablero, o «ayuda» para ver todo lo que se puede preguntar. Karina Rojas todavía no abre la clase. Te avisamos cuando empiece.");
+  igual("el foco va al recuadro, que se ve", [await seVe(page, "#vc-cmd .cc-caja"),
+    await page.evaluate(() => document.activeElement && document.activeElement.classList.contains("cc-input"))], [true, true]);
+  igual("los botones siguen a mano en la clase, marcados", [await page.getAttribute("#vc-adaptado-btn2", "aria-pressed"), await page.getAttribute("#vc-voz-btn2", "aria-pressed")], ["true", "true"]);
+
+  await page.evaluate(() => { window.__doble.abierta = true; });
+  await esperarOido(page, /abrió la clase/);
+  igual("al abrir la clase se dice, con el tablero", await oido(page), "Karina Rojas abrió la clase. Tablero de la clase. Juegan negras.");
+
+  // Preguntarle a la posición y tratar de mover.
+  await page.fill("#vc-cmd .cc-input", "qué hay en f3");
+  await page.press("#vc-cmd .cc-input", "Enter");
+  igual("se le pregunta a la posición", /caballo blanco/i.test(await page.textContent("#vc-cmd .cc-msg")), true);
+  await page.fill("#vc-cmd .cc-input", "Cc6");
+  await page.press("#vc-cmd .cc-input", "Enter");
+  igual("escribir una jugada dice que solo se mira", await page.textContent("#vc-cmd .cc-msg"),
+    "Estás mirando como invitado: no se puede mover. Para jugar con tu profe hace falta tu cuenta.");
+  igual("y la voz lo dice también", await page.evaluate(() => window.__dicho.some((t) => /Estás mirando como invitado/.test(t))), true);
+  igual("y el tablero no cambió (c6 sigue vacía)", /vacía/.test(await page.getAttribute('#vc-tablero [data-square="c6"]', "aria-label")), true);
+
+  // Lo que hace el profe, dicho.
+  const tab = (extra) => page.evaluate((x) => { window.__doble.tablero = Object.assign({}, window.__doble.tablero, x); }, extra);
+  await tab({ moves: ["e4", "e5", "Nf3", "Nc6"] });
+  await esperarOido(page, /Se jugó/);
+  igual("la jugada del profe", await oido(page), "Se jugó caballo cesar 6. Juegan blancas.");
+  await tab({ vista: { path: ["e4"], parent: null, root: 1 } });
+  await esperarOido(page, /volvió a una jugada anterior/);
+  igual("lo que muestra el profe", await oido(page), "Tu profe volvió a una jugada anterior: 1. e4.");
+  await tab({ vista: null, arrows: [{ from: "f3", to: "e5", color: "naranja" }, { from: "b1", to: "c3", color: "azul" }], circles: [{ square: "e5", color: "rojo" }] });
+  await esperarOido(page, /marcó/);
+  igual("vuelve a la partida y dice las marcas NUEVAS (la de f3 ya estaba)", await oido(page),
+    "Tu profe volvió a la posición de la partida. Tu profe marcó una flecha de bella 1 a cesar 3, la casilla eva 5.");
+  await tab({ pieces_hidden: true });
+  await esperarOido(page, /ocultó las piezas/);
+  igual("ocultar las piezas", await oido(page), "Tu profe ocultó las piezas: ahora hay que ver el tablero de memoria.");
+  igual("la voz dijo lo mismo que el lector", await page.evaluate(() => window.__dicho[window.__dicho.length - 1]), "Tu profe ocultó las piezas: ahora hay que ver el tablero de memoria.");
+
+  // En Modo Adaptado, salir de pantalla completa (la tecla Esc) no cuenta.
+  await page.waitForTimeout(1600);
+  // Salir de verdad si el navegador la puso; si no, el aviso que manda al salir.
+  const habiaPantallaCompleta = await page.evaluate(async () => {
+    if (document.fullscreenElement) { await document.exitFullscreen(); return true; }
+    document.dispatchEvent(new Event("fullscreenchange"));
+    return false;
+  });
+  console.log("    (pantalla completa puesta por el navegador: " + habiaPantallaCompleta + ")");
+  await page.waitForTimeout(300);
+  igual("salir de pantalla completa no cuenta como salida", (await llamadas(page, "clase_invitado_salio")).length, 0);
+  await salirse(page);
+  await page.waitForSelector("dialog[open]", { timeout: 5000 });
+  igual("irse a otra pestaña sí cuenta, y la advertencia se dice en voz", [(await llamadas(page, "clase_invitado_salio")).length,
+    await page.evaluate(() => window.__dicho.some((t) => t === "Saliste de la pantalla. Tu profe ya sabe que te saliste de la pantalla de la clase. Si vuelves a salir, ya no vas a poder ver más el tablero."))], [1, true]);
+  await page.click("dialog[open] [data-avisos-aceptar]");
+  await page.waitForTimeout(1700);
+  await page.evaluate(() => { window.__doble.ultima = 0; });
+  await salirse(page);
+  await page.waitForFunction(() => document.getElementById("vc-fin").checkVisibility(), null, { timeout: 5000 });
+  await esperarOido(page, /cuenta/);
+  igual("al quedar fuera, el foco va al título", await page.evaluate(() => document.activeElement && document.activeElement.id), "vc-fin-titulo");
+  igual("y la voz dice el título y qué hacer", await page.evaluate(() => /^Ya no puedes ver el tablero\. .*probar gratis/.test(window.__dicho[window.__dicho.length - 1])), true);
+  igual("la voz no lee los emojis", await page.evaluate(() => { ClaseAdaptada.hablar("⚠️ Saliste 📺 1 vez"); return window.__dicho[window.__dicho.length - 1]; }), "Saliste 1 vez");
   igual("sin errores de la página", errores, []);
   await ctx.close();
 }
@@ -238,6 +349,7 @@ async function pruebaProfe(browser) {
     await pruebaEnlaceMalo(browser);
     await pruebaInvitado(browser);
     await pruebaEsperando(browser);
+    await pruebaSinVer(browser);
     await pruebaProfe(browser);
   } finally {
     await browser.close();

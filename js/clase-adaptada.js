@@ -51,6 +51,57 @@
 window.ClaseAdaptada = (function () {
   "use strict";
 
+  /* La voz del navegador (js/blind-notation.js): solo habla si la persona la
+     encendió con «Activar voz». Con lector de pantalla se deja apagada, y
+     entonces esto no hace nada. */
+  function hablar(texto) {
+    if (!texto || !window.BlindNotation || !BlindNotation.speak) return;
+    // Los emojis son adorno: la voz los leería en inglés ("warning sign").
+    BlindNotation.speak(String(texto).replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{200D}]/gu, "").replace(/\s+/g, " ").trim());
+  }
+
+  /* "12. Cf3 Cc6 13. Ab5": las jugadas de `path` desde la número `desde`,
+     numeradas según la posición de salida (`startFen`). */
+  function numerarJugadas(path, desde, startFen) {
+    var numero = 1, turno = "w";
+    try {
+      var partes = (startFen || "").split(" ");
+      if (partes[1] === "b") turno = "b";
+      if (parseInt(partes[5], 10) > 0) numero = parseInt(partes[5], 10);
+    } catch (e) {}
+    var textos = [];
+    path.forEach(function (san, i) {
+      if (i >= desde) {
+        if (turno === "w") textos.push(numero + ". " + san);
+        else textos.push(i === desde ? numero + "… " + san : san);
+      }
+      if (turno === "b") numero++;
+      turno = turno === "w" ? "b" : "w";
+    });
+    return textos.join(" ");
+  }
+
+  /* Qué está mostrando el profe (game_state.vista), dicho para quien lo sigue.
+     `principal` son las jugadas de la partida en vivo. null = la posición en
+     vivo. Lo usan la clase (sesion.js) y la de los invitados (ver-clase.js). */
+  function describirVista(vista, principal, startFen) {
+    if (!vista || !Array.isArray(vista.path)) return null;
+    var root = Math.max(0, Math.min(vista.root || 0, vista.path.length));
+    // Una respuesta que el profe le muestra a la clase.
+    if (vista.respuesta && typeof vista.respuesta === "object") {
+      var quien = vista.respuesta.nombre ? String(vista.respuesta.nombre) : "un compañero";
+      return "📺 Así lo resolvió " + quien + ": " + numerarJugadas(vista.path, root, startFen) + ".";
+    }
+    principal = principal || [];
+    var esVariante = vista.path.length > root || vista.path.some(function (san, i) { return principal[i] !== san; });
+    if (!esVariante) {
+      return vista.path.length
+        ? "Tu profe volvió a una jugada anterior: " + numerarJugadas(vista.path, vista.path.length - 1, startFen) + "."
+        : "Tu profe volvió a la posición de salida.";
+    }
+    return "Tu profe está mostrando una variante: " + numerarJugadas(vista.path, root, startFen) + ".";
+  }
+
   function hablarJugada(san) {
     return window.BlindNotation && BlindNotation.sanSpoken ? BlindNotation.sanSpoken(san) : san;
   }
@@ -88,6 +139,20 @@ window.ClaseAdaptada = (function () {
       },
     };
 
+    // Lo que contesta el recuadro se escribe en su región viva y, con la voz
+    // encendida, además se dice (las preguntas ya las dice cuadro-comandos.js).
+    function decirEnCaja(api, texto) { api.decir(texto); hablar(texto); }
+
+    /* Los avisos de lo que pasa en el tablero. Por defecto van a la región viva
+       del recuadro; `cfg.anunciar(texto)` los manda a otra parte —la página de
+       los invitados tiene una sola región para todos sus avisos, que habla
+       también fuera del Modo Adaptado—. */
+    function avisar(texto) {
+      if (typeof cfg.anunciar === "function") { cfg.anunciar(texto); return; }
+      cmd.decir("");
+      window.setTimeout(function () { cmd.decir(texto); }, 60);
+    }
+
     var cmd = CuadroComandos.montar(destino, {
       etiqueta: cfg.etiqueta || "Escribe tu jugada o una pregunta sobre la posición",
       posicionViva: false,
@@ -97,26 +162,26 @@ window.ClaseAdaptada = (function () {
         var b = board();
         if (!b) return;
         if (b.piecesHidden) {
-          api.decir("Las piezas están ocultas: el ejercicio es verlas de memoria. "
+          decirEnCaja(api, "Las piezas están ocultas: el ejercicio es verlas de memoria. "
             + "Las jugadas se siguen anunciando.");
           return;
         }
         if (!b.interactive) {
-          api.decir((cfg.porQueNoPuedes && cfg.porQueNoPuedes()) || "Ahora no te toca mover.");
+          decirEnCaja(api, (cfg.porQueNoPuedes && cfg.porQueNoPuedes()) || "Ahora no te toca mover.");
           return;
         }
         var g = b.viewGame || b.game;
         var mv = window.ComandosTablero && ComandosTablero.jugadaEscrita
           ? ComandosTablero.jugadaEscrita(g, texto) : null;
         if (!mv) {
-          api.decir("\"" + texto.trim() + "\" no es una jugada legal en esta posición. "
+          decirEnCaja(api, "\"" + texto.trim() + "\" no es una jugada legal en esta posición. "
             + "Escribe \"posición\" para oírla, o \"ayuda\" para ver qué se puede escribir.");
           return;
         }
         var hecha = b.jugar(mv);
-        if (!hecha) { api.decir("No se pudo hacer esa jugada."); return; }
+        if (!hecha) { decirEnCaja(api, "No se pudo hacer esa jugada."); return; }
         api.limpiar();
-        api.decir("Jugaste " + hablarJugada(hecha.san) + ".");
+        decirEnCaja(api, "Jugaste " + hablarJugada(hecha.san) + ".");
         actualizar();
       },
     });
@@ -160,8 +225,7 @@ window.ClaseAdaptada = (function () {
       if (b.piecesHidden && /posición nueva/.test(texto)) {
         texto = "Tu profe puso una posición nueva, con las piezas ocultas. " + turnoDicho(g);
       }
-      cmd.decir("");
-      window.setTimeout(function () { cmd.decir(texto); }, 60);
+      avisar(texto);
       actualizar();
     }
 
@@ -170,10 +234,11 @@ window.ClaseAdaptada = (function () {
       cmd: cmd,
       actualizar: actualizar,
       anunciarCambio: anunciarCambio,
-      decir: function (t) { cmd.decir(""); window.setTimeout(function () { cmd.decir(t); }, 60); },
+      decir: avisar,
       enfocar: function () { cmd.enfocar(); },
     };
   }
 
-  return { montar: montar, hablarJugada: hablarJugada };
+  return { montar: montar, hablarJugada: hablarJugada, hablar: hablar,
+    numerarJugadas: numerarJugadas, describirVista: describirVista };
 })();
