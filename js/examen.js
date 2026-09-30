@@ -351,6 +351,7 @@ function contestarEscribiendo(texto, api) {
      región viva (cambia cada segundo) y quien no ve no tenía cómo saberlo sin
      salir del recuadro a buscarlo; escrito, se tomaba como una opción. */
   if (/^(tiempo|el tiempo|reloj|el reloj|cuanto tiempo|cuanto tiempo queda|cuanto tiempo me queda|cuanto queda|cuanto me queda)$/.test(t.replace(/[?¿!¡.]/g, "").trim())) {
+    api.decir(tiempoDelExamenDicho());
     return;
   }
   if (/^(repetir|pregunta|enunciado|la pregunta)$/.test(t)) {
@@ -376,7 +377,7 @@ function contestarEscribiendo(texto, api) {
       ? "No entendí la casilla. Escríbela con su letra y su número, por ejemplo «e4»."
       /* Lo mismo que en todo el sitio: «no es una jugada legal» solo si lo
          escrito ES una jugada; si no («hola»), que no se entendió. */
-      : (false ? ComandosTablero.noSePudoJugar(texto)
+      : (window.ComandosTablero ? ComandosTablero.noSePudoJugar(texto)
           + (ComandosTablero.pareceJugada(texto) ? " Escríbela como «Cf3», «e4» o «enroque corto»." : "")
         : "Esa jugada no es posible en esta posición."));
     return;

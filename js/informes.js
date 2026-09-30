@@ -70,7 +70,7 @@
             div.className = "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 text-center";
             if (extra) { div.dataset.extra = "1"; div.classList.add("hidden"); }
             // El emoji es adorno: el lector lo leía delante de la cifra («🎯 0% Precisión», «dardo…»).
-            div.innerHTML = `<div class="text-3xl mb-1">${emoji}</div><div class="text-2xl font-bold text-brand-800 dark:text-white">${value}</div><div class="text-xs text-brand-450 dark:text-brand-350 mt-1">${label}</div>`;
+            div.innerHTML = `<div class="text-3xl mb-1" aria-hidden="true">${emoji}</div><div class="text-2xl font-bold text-brand-800 dark:text-white">${value}</div><div class="text-xs text-brand-450 dark:text-brand-350 mt-1">${label}</div>`;
             return div;
         }
 

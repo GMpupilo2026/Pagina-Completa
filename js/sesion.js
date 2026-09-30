@@ -3615,7 +3615,9 @@
                 b.textContent = "Opción " + CuadroComandos.letra(i) + ". " + String(texto);   // la escribió una persona
                 b.disabled = vencida;
                 b.addEventListener("click", () => enviarOpcion(i));
-                listaOp.appendChild(b);
+                const li = document.createElement("li");
+                li.appendChild(b);
+                listaOp.appendChild(li);
             });
         }
 
@@ -3705,7 +3707,7 @@
             if (!PreguntaClase.esDeOpciones(currentQuestion)) return null;
             const n = currentQuestion.opciones.length;
             // «opciones», «repetir»: las opciones con su letra (como al llegar la pregunta).
-            if (/^(opcionesX|las opciones|leer opciones|di las opciones|repetirX|repite|repetir opciones|otra vez las opciones)$/.test(pedido)) {
+            if (/^(opciones|las opciones|leer opciones|di las opciones|repetir|repite|repetir opciones|otra vez las opciones)$/.test(pedido)) {
                 return { texto: opcionesDichas(currentQuestion) };
             }
             let i = CuadroComandos.opcionPedida(texto, n);
@@ -3713,7 +3715,7 @@
                elige, si nombra una sola: quien acaba de oír las opciones repite lo
                que oyó, no la letra. Primero el texto entero; si no, una opción que
                lo contenga (con tres letras o más, para no tomar «a» de «Están»). */
-            
+            if (i === null) i = opcionPorSuTexto(currentQuestion, pedido);
             if (i === null) {
                 return { fallo: true, texto: "No entendí «" + String(texto).trim() + "». Escribe la letra de una opción, de la A a la "
                     + CuadroComandos.letra(n - 1) + ", o su texto; «opciones» te las dice, y «posición», la posición." };
@@ -5552,7 +5554,7 @@
                 /* Lo que había a medias en el recuadro de la clase se borra: el foco
                    se va a la pregunta y, al volver, lo siguiente que se escribía se
                    pegaba detrás («e4Cf3») sin que quien no ve supiera que quedaba texto. */
-                
+                if (claseAcc && claseAcc.cmd) claseAcc.cmd.limpiar();
                 enfocarCuandoSeVea(preguntaAcc.cmd.input);
                 preguntaAcc.cmd.limpiar();
                 preguntaAcc.decir(preguntaDicha(currentQuestion));

@@ -593,7 +593,7 @@ window.ComandosTablero = (function () {
     /* Las palabras van enteras y nunca una letra suelta, por lo mismo que la
        tabla de arriba: "t" y "z" serían letras de opción, y "m" y "x" pueden ser
        el principio de una jugada mal escrita. */
-    if (/^(posicion|la posicion|todo|todas las piezas|tablero|el tablero)$/.test(t)) {
+    if (/^(posicion|la posicion|como esta la posicion|cual es la posicion|que hay en el tablero|todo|todas las piezas|tablero|el tablero|leer la posicion|lee la posicion|describe la posicion|describir la posicion)$/.test(t)) {
       /* La posición en palabras sale de BlindNotation y de ningún otro lado:
          ahí viven los plurales escritos ("alfiles", no "alfils") y la forma
          hablada de las columnas, y una segunda versión acá diría la posición de
