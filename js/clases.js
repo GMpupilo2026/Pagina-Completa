@@ -67,22 +67,59 @@
                dentro de esta lista y nada más: todo lo que después retoca la
                grilla (administración, coordinación, el equipo docente) busca su
                grupo POR NOMBRE, nunca por la posición. */
-            /* Dentro del grupo, el orden es el del trabajo de todos los días:
-               primero lo que se HACE (Entrenamiento), después lo que se mira de
-               un vistazo para repasarlo (Estudio), después el curso completo, y
-               al final la lectura. Cursos estaba primero y es lo más largo de
-               los cuatro: quien entra a practicar veinte minutos tenía delante
-               lo que menos se parece a eso. */
+            /* Al alumnado, lo que antes eran dos puertas (Entrenamiento y
+               Estudio) se abre en el panel mismo, repartido por lo que es: lo
+               que se lee y se aprende, lo que se estudia con el profe, y el
+               entrenamiento por escalones —básico, intermedio, avanzado— y por
+               habilidades. Lo pidió así el dueño de la Academia: con dos
+               tarjetas genéricas, el alumno tenía que entrar para saber qué
+               había adentro. Las fichas de Estudio abren su categoría
+               (?cat=), y cada tipo de entrenamiento su propia ficha (#id).
+
+               Todas estas son `soloAlumno`: el panel de quien da clase se arma
+               aparte (PANEL_DOCENTE) y sigue entrando por las dos puertas de
+               siempre, que por eso están acá con `soloDocente`. Ver «El
+               alumno ve el entrenamiento abierto» en docs/decisiones/paneles.md. */
             { title: "Aprender", tiles: [
-                { emoji: "🏋️", label: "Entrenamiento", desc: "Ejercicios tácticos y lecciones interactivas", href: "entreno/index.html" },
-                { emoji: "📚", label: "Estudio", desc: "Aperturas, defensas, temas tácticos y conceptos: cada uno en una ficha de una pantalla", href: "entreno/estudio.html" },
-                /* Lo que pasó en la clase no se pierde al cerrarla: la partida se
-                   guarda sola y la ven, jugada por jugada, quienes fueron. Va
-                   junto a Estudio porque es lo mismo: repasar. */
-                { emoji: "🎞️", label: "Repasar mis clases", desc: "La partida de cada clase, jugada por jugada, con lo que comentó tu profe", descProfe: "Las partidas de tus clases, como las repasan tus alumnos", href: "repasar-clases.html" },
-                { emoji: "🏛️", label: "Cursos", desc: "Tus cursos completos, con tu línea de progreso", descProfe: "Los cursos de la Academia y el temario de cada uno", href: "cursos/academia/index.html" },
+                { emoji: "🏰", label: "Aperturas", desc: "Las fichas de las aperturas que juegas con blancas", href: "entreno/estudio.html?cat=apertura", soloAlumno: true },
+                { emoji: "🛡️", label: "Defensas", desc: "Las fichas de las defensas que juegas con negras", href: "entreno/estudio.html?cat=defensa", soloAlumno: true },
+                { emoji: "⚡", label: "Táctica", desc: "Las fichas de los motivos tácticos que se repiten", href: "entreno/estudio.html?cat=tactica", soloAlumno: true },
+                { emoji: "💡", label: "Conceptos", desc: "Las fichas de las ideas que deciden la partida", href: "entreno/estudio.html?cat=concepto", soloAlumno: true },
+                { emoji: "🎓", label: "Aprende", desc: "Lecciones interactivas paso a paso", href: "entreno/aprender.html", soloAlumno: true },
+                { emoji: "🧠", label: "Desafíos", desc: "Coronación, ganar material, salir del apuro y jaque mate", href: "entreno/desafios.html", soloAlumno: true },
                 { emoji: "📖", label: "Artículos", desc: "Lecturas técnicas y pedagógicas", href: "articulos.html" },
+                { emoji: "🏋️", label: "Entrenamiento", desc: "Ejercicios tácticos y lecciones interactivas", href: "entreno/index.html", soloDocente: true },
+                { emoji: "📚", label: "Estudio", desc: "Aperturas, defensas, temas tácticos y conceptos: cada uno en una ficha de una pantalla", href: "entreno/estudio.html", soloDocente: true },
             ] },
+            /* Lo que se estudia con el profe: el curso entero y lo que pasó en
+               cada clase, que no se pierde al cerrarla —la partida se guarda
+               sola y la ven, jugada por jugada, quienes fueron—. */
+            { title: "Estudiar", tiles: [
+                { emoji: "🏛️", label: "Cursos", desc: "Tus cursos completos, con tu línea de progreso", descProfe: "Los cursos de la Academia y el temario de cada uno", href: "cursos/academia/index.html" },
+                { emoji: "🎞️", label: "Repasar mis clases", desc: "La partida de cada clase, jugada por jugada, con lo que comentó tu profe", descProfe: "Las partidas de tus clases, como las repasan tus alumnos", href: "repasar-clases.html" },
+            ] },
+            { title: "Entrenamiento básico", tiles: [
+                { emoji: "🎯", label: "Coordenadas", desc: "Reconoce las casillas a toda velocidad", href: "entreno/coordenadas.html", soloAlumno: true },
+                { emoji: "📷", label: "Memoria", desc: "Mira una posición unos segundos y reconstrúyela", href: "entreno/memoria.html", soloAlumno: true },
+                { emoji: "♚", label: "Mates", desc: "Mate en 1, 2 o 3 jugadas", href: "entreno/mates.html", soloAlumno: true },
+                { emoji: "🏆", label: "Practicar", desc: "Series de mates y tácticas, con racha y estrellas", href: "entreno/practicas.html", soloAlumno: true },
+                { emoji: "🧩", label: "4×4", desc: "Ejercicios tácticos por nivel", href: "entreno/4x4.html", soloAlumno: true },
+            ] },
+            { title: "Entrenamiento intermedio", tiles: [
+                { emoji: "🗂️", label: "Ejercicios por tema", desc: "Clavadas, ataques dobles, mates, finales y táctica de ataque", href: "entreno/temas.html", soloAlumno: true },
+                { emoji: "♞", label: "Aperturas y celadas", desc: "Líneas para memorizar jugándolas, con repaso espaciado", href: "entreno/aperturas.html", soloAlumno: true },
+            ] },
+            { title: "Entrenamiento avanzado", tiles: [
+                { emoji: "👁️", label: "Visualización", desc: "Encuentra la línea sin mover ni una pieza", href: "entreno/visualizacion.html", soloAlumno: true },
+                { emoji: "🧭", label: "Precisión posicional", desc: "Sin táctica inmediata: elige el plan correcto a largo plazo", href: "entreno/precision-posicional.html", soloAlumno: true },
+                { emoji: "🏁", label: "Finales contra la máquina", desc: "Lucena, Philidor y los finales de libro, contra Stockfish", href: "entreno/finales.html", soloAlumno: true },
+            ] },
+            /* Una tarjeta por cada Tipo de entrenamiento, sacadas del catálogo
+               (js/tipos-catalogo.js), que es la única copia: un tipo nuevo
+               aparece acá solo. La pregunta del tipo es lo que se entrena. */
+            { title: "Mejorar por habilidades", tiles: (window.TiposCatalogo ? TiposCatalogo.TIPOS : []).map((t) => (
+                { emoji: t.emoji, label: t.nombre, desc: t.pregunta, href: "entreno/tipos.html#" + t.id, soloAlumno: true }
+            )) },
             /* Primero donde se juega de verdad contra otra persona, después el
                torneo, y al final el bot. «TV en vivo» y «Logros» ya no viven
                acá: están en «Tu cuenta» (ver el grupo, más abajo).
@@ -482,7 +519,14 @@
             { title: "Tu cuenta", hrefs: ["configuracion.html", "logros.html"] },
         ];
         function ordenarPanelDocente() {
-            if (!esEquipoDocente()) return;
+            /* Al alumnado se le quitan las dos puertas del equipo docente
+               (Entrenamiento y Estudio): lo que hay detrás ya está abierto en
+               su panel, tarjeta por tarjeta. Se QUITAN, no se esconden: un
+               enlace invisible sigue siendo una parada de tabulador. */
+            if (!esEquipoDocente()) {
+                TILE_GROUPS.forEach((g) => { g.tiles = g.tiles.filter((t) => !t.soloDocente); });
+                return;
+            }
             const todas = TILE_GROUPS.flatMap((g) => g.tiles).filter((t) => !t.soloAlumno);
             const usadas = new Set();
             const grupos = PANEL_DOCENTE.map((g) => ({
@@ -900,6 +944,17 @@
             "examenes.html": "prueba pruebas evaluacion evaluaciones nota notas",
             "entreno/index.html": "ejercicios practicar tactica mates coordenadas lecciones problemas",
             "entreno/estudio.html": "fichas aperturas defensas repasar conceptos",
+            "entreno/estudio.html?cat=apertura": "fichas blancas italiana espanola",
+            "entreno/estudio.html?cat=defensa": "fichas negras siciliana francesa caro kann",
+            "entreno/estudio.html?cat=tactica": "fichas clavada horquilla ataque doble motivos",
+            "entreno/estudio.html?cat=concepto": "fichas estrategia plan peon pasado",
+            "entreno/aprender.html": "lecciones aprender",
+            "entreno/mates.html": "mate jaque mate en uno en dos",
+            "entreno/coordenadas.html": "casillas letras numeros",
+            "entreno/practicas.html": "series racha estrellas tactica",
+            "entreno/temas.html": "tactica clavadas ataque doble finales",
+            "entreno/aperturas.html": "celadas trampas lineas repertorio",
+            "entreno/finales.html": "motor stockfish lucena philidor",
             "cursos/academia/index.html": "curso temario lecciones",
             "articulos.html": "leer lecturas blog",
             "juegos.html": "partidas jugar rival crazyhouse niebla variantes modalidades",

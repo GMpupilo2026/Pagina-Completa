@@ -318,6 +318,56 @@ correo fijado a mano), `informes-encargados` e `informe-examen`. Se arman con
 repositorio en esta tanda**: antes vivía solo desplegada, así que cambiarle una
 línea era bajarla, editarla a ciegas y volver a subirla.
 
+### «Vence el día» va del 1 al 31
+
+La base solo aceptaba del 1 al 28, para que todo mes tuviera ese día, pero la
+página no lo decía (el `max="28"` del campo no frena el botón): quien quería
+cobrar a fin de mes escribía 30 y le volvía «violates check constraint
+suscripciones_dia_cobro_check», en inglés. Ahora la restricción es 1–31 y
+`generar_cobros()` recorta el vencimiento al último día del mes
+(`least(periodo_inicio + dia - 1, fin de ese mes)`): un 31 vence el 30 de abril
+y el 28 (o 29) de febrero. La página revisa el número antes de mandarlo y lo
+dice en español (`verificar-cobros.js`).
+
+### Poner a muchos en un plan, cambiarlos en grupo y borrar un plan
+
+**La asignación va con casillas.** «Quién paga qué» ya no tiene un selector
+de un alumno: trae la lista de todos, con buscador, filtro por grupo, «Solo
+los que no tienen ningún plan» y «Marcar los que se ven». Los filtros solo
+deciden qué se VE: lo marcado sigue marcado aunque se esconda, y el contador
+dice cuántos van. Se agregan todos en UN insert. Quien ya está activo en ese
+plan se saca de la tanda antes de mandarla, porque el índice único
+`suscripciones_una_activa_por_plan` rechazaría la tanda entera por uno solo, y
+el aviso dice cuántos se dejaron igual. Con cobro personalizado y varios
+marcados, **cada uno lleva su propio plan**: así se le puede cambiar el monto
+a uno sin tocar a los demás.
+
+**Cambios en grupo.** La lista de abajo tiene una casilla por suscripción,
+buscador, filtro por plan y «Marcar todos los que se ven». Con lo marcado se
+cambia la beca o el día de vencimiento (un `update … in (ids)`) o se da de
+baja. La baja manda en UNA llamada a los que terminan hoy y, aparte, a cada
+uno que todavía no arranca con su propia fecha de fin (`fin >= inicio`). Todo
+vale de acá en adelante: lo ya emitido no cambia.
+
+**Editar un plan** cambia nombre, monto y detalle; la periodicidad y la
+moneda no, porque los cobros emitidos las llevan (para cambiarlas se crea
+otro plan). El monto nuevo lo toma `generar_cobros()` en los cobros que salgan
+después.
+
+**Borrar un plan** lo hace `eliminar_plan_cobro(plan, anular_sin_pagos)`, en
+la base y de una vez: `suscripciones.plan_id` es `ON DELETE RESTRICT`, y la RLS
+de suscripciones solo deja tocar las de la propia coordinación, así que
+borrarlo desde la página habría dejado cosas a medias. La función pide el
+mismo permiso que escribir planes, y se niega entera si en el plan hay
+alumnos de otra coordinación. Saca a todos del plan y borra el plan. **Los
+cobros ya emitidos no se borran**: son el recibo, con su consecutivo y sus
+pagos, y se quedan con `suscripcion_id` en NULL (`ON DELETE SET NULL`). Si se
+elige, los que no tienen ningún pago se **anulan** con el motivo «Se borró el
+plan…»; no se borran, porque el consecutivo ya se usó. Se comprobó
+impersonando roles: una alumna y una llamada sin sesión reciben «Solo quien
+coordina…», `anon` no tiene execute, y como administración borra el plan y
+anula el cobro sin pagos.
+
 ### Pasarela y factura electrónica
 
 **No hay pasarela de pago, por decisión explícita**: el cobro se registra a mano

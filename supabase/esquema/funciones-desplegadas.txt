@@ -6,6 +6,7 @@
 # se restaura, y eso no da ningun error — simplemente esa funcion deja de existir.
 #
 # funcion                      verify_jwt   que hace
+alerta-base                    false        el correo a administracion cuando la base esta al limite (pg_cron vigilar-base, secreto de la boveda)
 admin-manage-users             true         el panel de administracion: cuentas, cupo, equipos
 avisar-diagnostico             false        el correo al supervisor por un diagnostico de su enlace (trigger, secreto de la boveda)
 bootstrap-admin                true         deshabilitada (410): la cuenta master ya existe
