@@ -92,6 +92,17 @@ igual("«Th4» sí es la torre", jugada(reyYTorre(), "Th4"), "rh1h4");
 igual("coronar «=T» es a torre", jugada(new Chess("8/4P3/8/8/8/8/k7/4K3 w - - 0 1"), "e8=T"), "pe7e8r");
 igual("«=R» no corona a nada (no se corona a rey)", jugada(new Chess("8/4P3/8/8/8/8/k7/4K3 w - - 0 1"), "e8=R"), "(ninguna)");
 igual("«Rh4» que no se pudo: dice que R es el rey", CT.noSePudoJugar("Rh4"), "«Rh4» no es una jugada legal en esta posición. R es el rey; la torre se escribe con T.");
+// Para quien ve: algebraica española; para quien no ve: el formato de ciegos.
+ctx.window.document = { documentElement: { classList: { contains: () => false } } };
+ctx.document = ctx.window.document;
+igual("para quien ve, la jugada en algebraica española", CT.jugadaParaMostrar("Nf3"), "Cf3");
+igual("y dentro de un texto", CT.textoParaMostrar("Tras Nf3 y Bxc6+ viene e8=Q."), "Tras Cf3 y Axc6+ viene e8=D.");
+ctx.window.BlindNotation = { sanSpoken: (s) => "dicha(" + s + ")" };
+ctx.BlindNotation = ctx.window.BlindNotation;
+ctx.window.document.documentElement.classList.contains = (c) => c === "modo-ciego";
+igual("para quien no ve, el formato de ciegos (blind-notation)", CT.jugadaParaMostrar("Nf3"), "dicha(Nf3)");
+igual("también dentro de un texto", CT.textoParaMostrar("Tras Nf3 viene exd5."), "Tras dicha(Nf3) viene dicha(exd5).");
+ctx.window.document.documentElement.classList.contains = () => false;
 igual("todo lo escrito, en algebraica española", CT.sanEspanol("Nf3 Bxc6 Rxe8+ Qd1 Kf1 e8=Q O-O"), "Cf3 Axc6 Txe8+ Dd1 Rf1 e8=D O-O");
 
 // La misma regla en el lector de jugadas de las páginas (js/chess-move-parser.js).

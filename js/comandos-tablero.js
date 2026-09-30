@@ -348,6 +348,28 @@ window.ComandosTablero = (function () {
   function sanEspanol(san) {
     return String(san == null ? "" : san).replace(/[KQRBN]/g, function (l) { return PIEZA_ES[l]; });
   }
+  /* LA regla para mostrar o decir una jugada, en todo el sitio:
+     - quien no ve (Modo Adaptado o cuenta ciega) la oye en el formato de
+       ajedrez para ciegos, con las columnas dichas: «caballo felix 3»,
+       «alfil captura cesar 6 jaque» (js/blind-notation.js). «Cf3» el lector
+       lo deletrea y no se entiende;
+     - los demás la leen en algebraica española: «Cf3», «Axc6+».
+     Los bancos guardan el SAN inglés que necesita chess.js; se convierte acá,
+     al mostrar. */
+  function paraQuienNoVe() {
+    var c = document.documentElement.classList;
+    return (c.contains("adaptive-mode") || c.contains("modo-ciego")) && !!(window.BlindNotation && BlindNotation.sanSpoken);
+  }
+  function jugadaParaMostrar(san) {
+    if (san == null || san === "") return san;
+    return paraQuienNoVe() ? BlindNotation.sanSpoken(String(san)) : sanEspanol(san);
+  }
+  // Lo mismo dentro de un texto («Tras Nf3 las negras…»): cada jugada de la prosa.
+  var JUGADA_EN_TEXTO = /\b(?:[KQRBN][a-h]?[1-8]?x?[a-h][1-8](?:=[QRBN])?|[a-h]x[a-h][1-8](?:=[QRBN])?|[a-h][1-8]=[QRBN])[+#]?/g;
+  function textoParaMostrar(texto) {
+    if (texto == null) return texto;
+    return String(texto).replace(JUGADA_EN_TEXTO, function (j) { return jugadaParaMostrar(j); });
+  }
   function sanHablada(san) {
     return window.BlindNotation && BlindNotation.sanSpoken ? BlindNotation.sanSpoken(san) : sanEspanol(san);
   }
@@ -684,6 +706,7 @@ window.ComandosTablero = (function () {
 
   return {
     interpretar: interpretar, jugadaEscrita: jugadaEscrita, sanEspanol: sanEspanol,
+    jugadaParaMostrar: jugadaParaMostrar, textoParaMostrar: textoParaMostrar,
     pareceJugada: pareceJugada, noSePudoJugar: noSePudoJugar, incorrecta: incorrecta,
     AYUDA: AYUDA, ayudaHTML: ayudaHTML, ayudaTexto: ayudaTexto,
     dondeEsta: dondeEsta, queHayEn: queHayEn, jugadasDe: jugadasDe,
