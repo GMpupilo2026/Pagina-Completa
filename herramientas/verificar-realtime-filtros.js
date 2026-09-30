@@ -29,7 +29,6 @@ const SIN_FILTRO = {
   "competir.js · fourplayer_games · INSERT": "ídem, cuatro jugadores",
   "juego-aviso.js · fourplayer_games · INSERT": "los asientos son un jsonb: no hay columna que filtrar; solo la arma quien da clase",
   "sesion.js · question_answers · *": "solo del lado de quien da clase; una respuesta por alumno y pregunta",
-  "sesion.js · practice_games · *": "solo del lado de quien da clase, durante la práctica",
   "tv.js · game_rooms · *": "pantalla de TV: una o dos abiertas, no una por alumno",
   "tv.js · fourplayer_games · *": "ídem",
   "tv.js · tv_settings · UPDATE": "tabla de una fila",
