@@ -171,6 +171,14 @@
       this._onTouchEnd = this._onTouchEnd.bind(this);
       this._onTouchCancel = this._onTouchCancel.bind(this);
       this.el.addEventListener("keydown", this._onKeydown);
+      /* La casilla con el foco es la parada de tabulador del próximo repintado.
+         Cuando las flechas las lleva js/tablero-accesible.js (ver _onKeydown),
+         es él quien mueve el foco: sin esto, el siguiente render() devolvía el
+         foco a la casilla vieja y quien estaba en e4 aparecía de nuevo en e1. */
+      this.el.addEventListener("focusin", (e) => {
+        const sq = e.target && e.target.getAttribute ? e.target.getAttribute("data-square") : null;
+        if (sq) this.focusSquare = sq;
+      });
       this.el.addEventListener("contextmenu", this._onContextMenu);
       this.el.addEventListener("mousedown", this._onMouseDown);
       this.el.addEventListener("mouseup", this._onMouseUp);
@@ -623,6 +631,9 @@
         btn.className = this._squareClasses(square, canInteract);
         btn.setAttribute("data-square", square);
         btn.setAttribute("aria-label", this._squareAriaLabel(square, g));
+        // Lo que dice la casilla es de este tablero, no de js/tablero-accesible.js:
+        // solo acá se sabe si las piezas están ocultas (y entonces no se dicen).
+        btn.dataset.etiquetaPropia = "1";
         /* Una sola parada de tabulador, TAMBIÉN cuando no se puede mover: el
            alumno que mira la clase tiene que poder recorrer el tablero con las
            flechas para saber qué hay. Antes, sin el control, las 64 casillas
@@ -905,6 +916,11 @@
       // Mirar no es mover: las flechas recorren el tablero siempre; solo el
       // clic (y la jugada escrita) piden el control.
       if (this.compact) return;
+      /* En la clase el tablero lleva además el teclado de todo el sitio
+         (js/tablero-accesible.js, lo monta js/clase-adaptada.js), que ya anda
+         con las flechas, Inicio/Fin y las teclas de una letra. Con los dos
+         moviendo, cada flecha repintaba el tablero dos veces. */
+      if (this.el.__tableroAccesible) return;
       const current = e.target && e.target.getAttribute ? e.target.getAttribute("data-square") : null;
       if (!current) return;
       const arrows = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"];

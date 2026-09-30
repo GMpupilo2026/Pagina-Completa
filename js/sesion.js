@@ -41,6 +41,11 @@
 
         // El recuadro del Modo Adaptado de cada tablero (js/clase-adaptada.js).
         let claseAcc = null, preguntaAcc = null, practicaAcc = null;
+        /* Las flechas y los círculos que el profe dibuja, dichos al alumno
+           (ClaseAdaptada.vigiaDeMarcas, la misma que usan los invitados): antes se
+           pintaban en silencio, y para quien no ve el tablero son la mitad de la
+           explicación. */
+        const marcasDelProfe = window.ClaseAdaptada ? ClaseAdaptada.vigiaDeMarcas() : null;
         let primerEstadoCargado = false;
         let isTeacher = false;
         // La ventana del proyector (sesion.html?proyector=1): el tablero solo, para la tele del aula.
@@ -564,6 +569,11 @@
             lastPiecesHidden = !!row.pieces_hidden;
             if (claseAcc) {
                 if (!editando) claseAcc.anunciarCambio(antes, { inicio: row.start_fen || "", jugadas: row.moves || [] });
+                // Al cargar (`antes` nulo) solo se anota lo que ya estaba dibujado.
+                if (!isTeacher && marcasDelProfe) {
+                    const marcas = marcasDelProfe(row.arrows, row.circles, !antes);
+                    if (marcas) claseAcc.decir(marcas);
+                }
                 if (!isTeacher && antes && vistaCambio) {
                     claseAcc.decir((describirVista(vistaQueSeVe()) || "Tu profe volvió a la posición de la partida.")
                         + " Escribe \"posición\" para oírla.");
@@ -2698,6 +2708,23 @@
             };
         }
 
+        /* La Fotografía (Tipos de entrenamiento) dicha: la posición entera, ANTES
+           de que se oculten las piezas, y cuántos segundos hay para memorizarla.
+           Es el único momento en que dictar las treinta y dos piezas es lo que
+           corresponde —en una jugada normal tapa lo que cambió, por eso el
+           recuadro no lo hace solo—: el ejercicio ES verlas. Va al aviso del
+           recuadro, que se lee en Modo Adaptado y con «Activar voz». */
+        function dictarFotografia(p) {
+            if (!p || !p.fen || !claseAcc || !window.BlindNotation || !BlindNotation.positionSentence) return;
+            let g = null;
+            try { g = new Chess(p.fen); } catch (e) { g = null; }
+            if (!g) return;
+            const seg = Math.max(0, parseInt(p.segundos, 10) || 0);
+            claseAcc.decir("Fotografía: tu profe te muestra esta posición"
+                + (seg ? " " + seg + (seg === 1 ? " segundo" : " segundos") : "")
+                + " y después oculta las piezas. Memorízala. " + BlindNotation.positionSentence(g));
+        }
+
         function lowerStudentHand(studentId) {
             if (!presenceChannel) return;
             presenceChannel.send({ type: "broadcast", event: "lower_hand", payload: { studentId } });
@@ -2753,6 +2780,9 @@
                    conectarse, y el único que llegaba a dispararlo era el rastro
                    de la clase recién cerrada. Reabrir por ahí dejaba una clase
                    fantasma que crecía sola hasta el día siguiente. */
+            });
+            presenceChannel.on("broadcast", { event: "fotografia" }, (msg) => {
+                if (!isTeacher) dictarFotografia(msg.payload);
             });
             presenceChannel.on("broadcast", { event: "lower_hand" }, (msg) => {
                 if (!isTeacher && handRaised && msg.payload && msg.payload.studentId === profile.id) {
@@ -3539,7 +3569,11 @@
                 b.className = "w-full text-left px-4 py-3 rounded-lg border-2 text-sm font-semibold transition-colors "
                     + (mia ? "border-accent-600 bg-accent-500 text-brand-900" : "border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 hover:bg-brand-100 dark:hover:bg-brand-800");
                 b.setAttribute("aria-pressed", mia ? "true" : "false");
-                b.textContent = String(texto);   // la escribió una persona
+                /* La letra va ESCRITA en el botón (no con CSS): es la que se
+                   escribe en el recuadro del Modo Adaptado para contestar, y el
+                   lector de pantalla solo dice lo que es texto. Ver «En los
+                   ejercicios de opción, cada opción dice su letra». */
+                b.textContent = "Opción " + CuadroComandos.letra(i) + ". " + String(texto);   // la escribió una persona
                 b.disabled = vencida;
                 b.addEventListener("click", () => enviarOpcion(i));
                 caja.appendChild(b);
@@ -3547,7 +3581,7 @@
         }
 
         async function enviarOpcion(i) {
-            if (!currentQuestion || currentQuestion.closed_at) return;
+            if (!currentQuestion || currentQuestion.closed_at) return false;
             const { data, error } = await sb.from("question_answers").upsert({
                 question_id: currentQuestion.id, student_id: profile.id, moves: [], resulting_fen: currentQuestion.fen, opcion: i,
             }, { onConflict: "question_id,student_id" }).select().single();
@@ -3555,11 +3589,39 @@
                 console.error(error);
                 document.getElementById("question-status-text").textContent = /tiempo/i.test(error.message)
                     ? "Se acabó el tiempo: tu respuesta no alcanzó a llegar." : "No se pudo enviar tu respuesta: " + error.message;
-                return;
+                return false;
             }
             myAnswer = data || { opcion: i, is_correct: null };
             pintarOpcionesAlumno();
             updateAnswerFeedbackUI();
+            return true;
+        }
+
+        /* La pregunta de opciones contestada ESCRIBIENDO la letra en el recuadro
+           del Modo Adaptado: «B», «opción b», «2». Va por enviarOpcion(), la misma
+           función del botón, para que escrita y tocada sean la misma respuesta.
+           Antes el recuadro se escondía en estas preguntas, y con él la única
+           forma de preguntarle a la posición de la que se hablaba. Devuelve lo que
+           hay que decir, "" si lo dice después (al llegar a la base), o null si
+           no es una pregunta de opciones. */
+        function contestarOpcionEscrita(texto, responder) {
+            if (!currentQuestion || !PreguntaClase.esDeOpciones(currentQuestion)) return null;
+            const n = currentQuestion.opciones.length;
+            const i = CuadroComandos.opcionPedida(texto, n);
+            if (i === null) {
+                return "No entendí «" + String(texto).trim() + "». Escribe la letra de una opción, de la A a la "
+                    + CuadroComandos.letra(n - 1) + ", o «posición» para oír la posición.";
+            }
+            if (currentQuestion.closed_at || PreguntaClase.segundosRestantes(currentQuestion) === 0) {
+                return "Ya no se puede contestar: la pregunta se cerró o se acabó el tiempo.";
+            }
+            enviarOpcion(i).then((ok) => {
+                responder(ok
+                    ? "Enviaste la opción " + CuadroComandos.letra(i) + ": " + PreguntaClase.textoDeOpcion(currentQuestion, i)
+                        + ". Puedes cambiarla mientras la pregunta siga abierta."
+                    : document.getElementById("question-status-text").textContent || "No se pudo enviar tu respuesta.");
+            });
+            return "";
         }
 
         /* ---------- El alumno elegido al azar para responder ----------
@@ -4853,6 +4915,14 @@
             lastPiecesHidden = false;
             updateHideBoardBtn();
             await sb.from("game_state").update({ pieces_hidden: false }).eq("id", myGameStateId);
+            /* Quien no ve la pantalla no tiene cómo «mirar» la foto: se le dicta
+               la posición entera antes de que se oculte, y cuántos segundos hay.
+               Va por el canal de la presencia (como «bajar la mano») y no por
+               game_state: es un aviso de ese momento, no algo que haya que
+               guardar, y la fila no dice que esta posición sea una Fotografía. */
+            if (presenceChannel && presenceChannel.send) {
+                presenceChannel.send({ type: "broadcast", event: "fotografia", payload: { fen: item.fen, segundos } });
+            }
             setStatus("📸 La clase ve la posición: " + segundos + " segundos.");
             btn.textContent = "⏳ " + segundos + " s…";
             fotoTimer = setTimeout(async () => {
@@ -5104,9 +5174,15 @@
         // ---------- Tarjeta de pregunta del alumno (overlay sobre el tablero) ----------
         function updateAnswerFeedbackUI() {
             if (!myAnswer) return;
+            /* En Modo Adaptado las jugadas van en palabras («caballo felix 3») y no
+               en la notación inglesa de chess.js («Nf3»), que el lector de pantalla
+               deletrea: la confirmación de lo que se mandó tiene que entenderse. */
+            const enPalabras = window.ClaseAdaptada && CuadroComandos.activo();
             const movesText = PreguntaClase.esDeOpciones(currentQuestion)
                 ? "«" + PreguntaClase.textoDeOpcion(currentQuestion, myAnswer.opcion) + "»"
-                : (myAnswer.moves || []).join(" ");
+                : enPalabras
+                    ? (myAnswer.moves || []).map(ClaseAdaptada.hablarJugada).join(", ")
+                    : (myAnswer.moves || []).join(" ");
             let text = "Tu respuesta: " + movesText + " ✓ enviada";
             if (myAnswer.is_correct === true) text = "Tu respuesta: " + movesText + " — ✅ ¡Correcto!";
             else if (myAnswer.is_correct === false) text = "Tu respuesta: " + movesText + " — ❌ Revisa de nuevo";
@@ -5284,6 +5360,7 @@
                 });
                 preguntaAcc = window.ClaseAdaptada ? ClaseAdaptada.montar(document.getElementById("question-cmd"), () => questionBoard, {
                     etiqueta: "Escribe tu jugada, o una pregunta sobre la posición",
+                    contestar: contestarOpcionEscrita,
                     porQueNoPuedes: () => myAnswer
                         ? "Ya enviaste tu respuesta. Si quieres cambiarla, usa el botón «Cambiar respuesta»."
                         : (questionEngineBusy ? "El motor está pensando su respuesta: espera un momento." : "Ahora no te toca mover."),
@@ -5314,7 +5391,15 @@
             const esOp = PreguntaClase.esDeOpciones(currentQuestion);
             const esTermometro = esOp && JSON.stringify(currentQuestion.opciones) === JSON.stringify(PreguntaClase.TERMOMETRO.opciones);
             document.getElementById("question-board-caja").hidden = esTermometro;
-            document.getElementById("question-cmd").hidden = esOp;
+            /* El recuadro queda también en las de opciones: ahí se escribe la
+               letra, y se le pregunta a la posición de la que se habla. */
+            document.getElementById("question-cmd").hidden = false;
+            if (preguntaAcc) preguntaAcc.cmd.etiqueta(esOp
+                ? "Escribe la letra de tu opción (" + currentQuestion.opciones.map((_, i) => CuadroComandos.letra(i)).join(", ") + ")"
+                    + (esTermometro ? "" : ", o una pregunta sobre la posición")
+                : "Escribe tu jugada, o una pregunta sobre la posición");
+            // El termómetro no trae posición de la que hablar: no se escribe una.
+            if (preguntaAcc && esTermometro) preguntaAcc.cmd.posicion("");
             if (esOp) {
                 document.getElementById("question-color-hint").textContent = "";
                 document.getElementById("question-plies-hint").textContent = esTermometro

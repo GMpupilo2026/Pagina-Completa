@@ -45,6 +45,16 @@
  *       nada más que "es tu turno" (usar null en variantes que ocultan la
  *       jugada del rival, como Niebla de Guerra).
  *   });
+ *   Opcionales, para dos preguntas que el tablero no sabe contestar:
+ *     reloj: () => null (partida sin reloj) o
+ *       { blancas: segundos, negras: segundos, miColor: "w"|"b"|null, corre: "w"|"b"|null }
+ *       — contesta "reloj" / "tiempo" y avisa cuando te quedan 30 y 10 segundos.
+ *     miColor: () => "w" | "b" | null (quien mira) — para decir por qué no
+ *       se puede mover cuando no se puede.
+ *     ultimaJugada: () => null (nada jugado) o { san, color: "w"|"b", oculta: bool }
+ *       — contesta "última jugada". `oculta` es para Niebla de Guerra: se dice
+ *       que el rival jugó, no qué.
+ *
  *   blind.announceOwnMove(san);       // después de una jugada propia
  *   blind.announceOpponentMove(san);  // al llegar una jugada del rival por Realtime
  *   blind.refreshPositionReadout();   // si la posición cambió por otro motivo
@@ -61,10 +71,24 @@ window.JuegosBlind = (function () {
     return document.documentElement.classList.contains("adaptive-mode");
   }
 
+  /* "4 minutos y 5 segundos", no "4:05": leído en voz alta, "cuatro dos
+     puntos cero cinco" no es algo que se entienda a la primera, y con el
+     reloj corriendo no hay tiempo para descifrarlo. */
+  function tiempoDicho(segundos) {
+    if (segundos == null) return "sin reloj";
+    const s = Math.max(0, Math.ceil(segundos));
+    const m = Math.floor(s / 60), r = s % 60;
+    const min = m ? m + (m === 1 ? " minuto" : " minutos") : "";
+    const seg = r || !m ? r + (r === 1 ? " segundo" : " segundos") : "";
+    return min && seg ? min + " y " + seg : (min || seg);
+  }
+
   function init(opts) {
     opts = opts || {};
     const tryMove = opts.tryMove || function () { return { ok: false }; };
     const getVisibleGame = opts.getVisibleGame;
+    const leerReloj = typeof opts.reloj === "function" ? opts.reloj : null;
+    const leerUltima = typeof opts.ultimaJugada === "function" ? opts.ultimaJugada : null;
     const describeOpponentMove = opts.describeOpponentMove || function (san) {
       return typeof BlindNotation !== "undefined" ? "El rival jugó: " + BlindNotation.sanSpoken(san) : null;
     };
@@ -191,12 +215,51 @@ window.JuegosBlind = (function () {
       });
     }
 
+    /* El foco no se puede perder en cada repintado. El tablero de las partidas
+       (js/niebla-board.js) se vacía y se vuelve a llenar en cada clic, y al
+       sacar del documento la casilla que tenía el foco el navegador lo manda al
+       <body>: elegías la pieza con Intro y te quedabas fuera del tablero, sin
+       saber dónde, justo a mitad de la jugada. No daba ningún error, y con el
+       ratón no se nota. Se recuerda en qué casilla estaba y, si el foco se
+       perdió por el repintado —no porque saliste a otro lado—, vuelve ahí.
+       Pasa lo mismo al cerrar el diálogo de la coronación: devuelve el foco a
+       la casilla, y la jugada que sigue la repinta. */
+    if (tableroEl) {
+      let casillaConFoco = null;
+      tableroEl.addEventListener("focusin", function (e) {
+        const c = e.target.closest ? e.target.closest("[data-square]") : null;
+        casillaConFoco = c ? c.dataset.square : null;
+      });
+      tableroEl.addEventListener("focusout", function (e) {
+        const quien = e.target;
+        // Si la casilla sigue en la página, el foco se fue porque te fuiste tú.
+        if (e.relatedTarget && !tableroEl.contains(e.relatedTarget)) { casillaConFoco = null; return; }
+        window.setTimeout(function () { if (quien.isConnected && !tableroEl.contains(document.activeElement)) casillaConFoco = null; }, 0);
+      });
+      new MutationObserver(function () {
+        if (!casillaConFoco) return;
+        const activo = document.activeElement;
+        if (activo && activo !== document.body && activo.isConnected) return;
+        const celda = tableroEl.querySelector('[data-square="' + casillaConFoco + '"]');
+        if (celda) { try { celda.focus({ preventScroll: true }); } catch (e) {} }
+      }).observe(tableroEl, { childList: true, subtree: true });
+    }
+
     /* La ayuda, plegada y con encabezados de verdad — la misma de todo el sitio
        (ComandosTablero), no una segunda lista que se iría separando. Plegada
        porque quien entra a una partida quiere jugarla, no oír el manual; con
        encabezados porque así se salta directo a la sección que hace falta. Se
        escribe al montar aunque esté cerrada: si solo se escribiera al pedirla
        con el comando, abrirla a mano mostraría una caja vacía. */
+    /* A la ayuda de todo el sitio se le suma lo que solo existe en una partida:
+       el reloj y la última jugada. Un comando que no sale en la ayuda no
+       existe para quien no puede descubrirlo mirando la pantalla. */
+    function ayudaDeLaPartida() {
+      return ComandosTablero.ayudaHTML()
+        + "<h3>La partida</h3><p>\"reloj\" o \"tiempo\": cuánto les queda a cada uno. "
+        + "\"última jugada\": la jugada que se acaba de hacer."
+        + (leerReloj ? " Cuando a tu reloj le quedan 30 y 10 segundos, se avisa solo." : "") + "</p>";
+    }
     let detAyuda = null, cuerpoAyuda = null;
     if (moveFormEl && window.ComandosTablero) {
       detAyuda = document.createElement("details");
@@ -207,7 +270,7 @@ window.JuegosBlind = (function () {
       cuerpoAyuda = document.createElement("div");
       cuerpoAyuda.setAttribute("role", "region");
       cuerpoAyuda.setAttribute("aria-label", "Qué se puede escribir");
-      cuerpoAyuda.innerHTML = ComandosTablero.ayudaHTML();
+      cuerpoAyuda.innerHTML = ayudaDeLaPartida();
       detAyuda.appendChild(cuerpoAyuda);
       (positionReadoutEl && positionReadoutEl.parentNode ? positionReadoutEl.parentNode : moveFormEl.parentNode)
         .appendChild(detAyuda);
@@ -217,10 +280,64 @@ window.JuegosBlind = (function () {
       detAyuda.open = true;
       // Vaciar y repoblar: pedir "ayuda" dos veces seguidas tiene que volver a
       // leerla, y una región viva solo reacciona cuando el texto cambia.
-      const html = ComandosTablero.ayudaHTML();
+      const html = ayudaDeLaPartida();
       cuerpoAyuda.innerHTML = "";
       window.setTimeout(function () { cuerpoAyuda.innerHTML = html; }, 50);
     }
+
+    function normalizarPedido(texto) {
+      return String(texto || "").toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/[¿?¡!.,]/g, " ").replace(/\s+/g, " ").trim();
+    }
+
+    function textoDelReloj() {
+      const r = leerReloj ? leerReloj() : null;
+      if (!r) return "Esta partida no tiene reloj.";
+      const corre = r.corre === "w" ? " Corre el de las blancas." : r.corre === "b" ? " Corre el de las negras." : " Los relojes están parados.";
+      if (r.miColor === "w" || r.miColor === "b") {
+        const mio = r.miColor === "w" ? r.blancas : r.negras;
+        const suyo = r.miColor === "w" ? r.negras : r.blancas;
+        return "Te quedan " + tiempoDicho(mio) + ". Al rival, " + tiempoDicho(suyo) + "." + corre;
+      }
+      return "Blancas: " + tiempoDicho(r.blancas) + ". Negras: " + tiempoDicho(r.negras) + "." + corre;
+    }
+
+    function textoUltimaJugada() {
+      const u = leerUltima ? leerUltima() : null;
+      if (!u || !u.san) return "Todavía no se ha jugado nada.";
+      const quien = u.color === "w" ? "las blancas" : "las negras";
+      /* En Niebla de Guerra la jugada del rival NO se dice: la lista de jugadas
+         también se esconde mientras dura la partida, y decirla acá sería
+         levantar la niebla por el recuadro. */
+      if (u.oculta) return "La última jugada fue del rival, con " + quien + ": con la niebla no se ve cuál fue.";
+      const dicha = typeof BlindNotation !== "undefined" ? BlindNotation.sanSpoken(u.san) : u.san;
+      return "La última jugada fue de " + quien + ": " + dicha + ".";
+    }
+
+    /* Los avisos de tiempo: a los 30 y a los 10 segundos de TU reloj, una vez
+       cada uno. En pantalla el reloj se pone rojo; sin verla no había ningún
+       aviso, y la partida se perdía por tiempo con la jugada ya pensada. Si el
+       incremento te devuelve por encima del umbral, el aviso se rearma. */
+    const UMBRALES = [30, 10];
+    const avisados = {};
+    function vigilarReloj() {
+      const r = leerReloj ? leerReloj() : null;
+      if (!r || (r.miColor !== "w" && r.miColor !== "b")) return;
+      const mio = r.miColor === "w" ? r.blancas : r.negras;
+      if (mio == null) return;
+      let cruzado = false;
+      UMBRALES.forEach(function (u) {
+        if (mio > u) { avisados[u] = false; return; }
+        if (avisados[u] || r.corre !== r.miColor || mio <= 0) return;
+        // Se marcan todos los que ya se pasaron: si tu turno empieza con 8
+        // segundos, se dice UNA vez cuánto queda, no "30" y después "10".
+        avisados[u] = true;
+        cruzado = true;
+      });
+      if (cruzado) announce("Te quedan " + tiempoDicho(mio) + " en el reloj.");
+    }
+    if (leerReloj) window.setInterval(vigilarReloj, 500);
 
     if (moveFormEl && moveInputEl) {
       moveFormEl.addEventListener("submit", function (e) {
@@ -233,6 +350,24 @@ window.JuegosBlind = (function () {
            `manejado: false` cuando no es ninguna de las suyas y entonces sigue
            el camino de siempre — al revés, quedarse con todo, una jugada como
            "Ra1" se leería como la pregunta por el rey y no se jugaría nunca. */
+        /* Dos preguntas que el tablero no sabe contestar y la pantalla sí: el
+           reloj y la última jugada. Quien ve, los mira de reojo; quien no, no
+           tenía forma de saber cuánto le quedaba hasta que se le caía la
+           bandera, ni de volver a oír la jugada del rival si se le pasó el
+           aviso. Van antes de las preguntas del tablero y de la jugada: son
+           solo lectura y tienen que contestar también fuera de turno. */
+        const pedido = normalizarPedido(raw);
+        if (/^(reloj|relojes|tiempo|cuanto tiempo( me queda| queda)?|cuanto me queda)$/.test(pedido)) {
+          moveInputEl.value = "";
+          announce(textoDelReloj());
+          return;
+        }
+        if (/^(ultima|ultima jugada|la ultima|la ultima jugada|que jugo|que jugo el rival|jugada anterior)$/.test(pedido)) {
+          moveInputEl.value = "";
+          announce(textoUltimaJugada());
+          return;
+        }
+
         if (window.ComandosTablero && getVisibleGame) {
           const r = ComandosTablero.interpretar(raw, { juego: getVisibleGame, tablero: tableroApi });
           if (r.manejado) {
@@ -248,6 +383,17 @@ window.JuegosBlind = (function () {
           moveInputEl.value = "";
           announce(typeof BlindNotation !== "undefined" ? BlindNotation.sanSpoken(result.san) : result.san);
           renderPositionReadout();
+        } else if (result && result.reason === "no_turn") {
+          /* Fuera de turno la jugada no es "no válida": puede ser perfecta y
+             solo hay que esperar. Decir "Jugada no válida" mandaba a revisar
+             algo que estaba bien, y quien no ve la pantalla no tenía cómo
+             saber que el problema era el turno (o que la partida no había
+             empezado, o que ya terminó). */
+          const g = getVisibleGame ? getVisibleGame() : null;
+          const mio = typeof opts.miColor === "function" ? opts.miColor() : undefined;
+          if (mio === null) announce("Estás mirando esta partida: solo pueden mover quienes la juegan.");
+          else if (mio && g && g.turn && g.turn() === mio) announce("Ahora no se puede mover: la partida todavía no empezó o ya terminó.");
+          else announce("No es tu turno: espera la jugada del rival.");
         } else {
           announce('Jugada no válida: "' + raw + '". Revísala e intenta de nuevo. Escribe "ayuda" para ver qué más se puede escribir.');
         }
@@ -273,5 +419,5 @@ window.JuegosBlind = (function () {
     };
   }
 
-  return { init: init, modoPuesto: modoPuesto };
+  return { init: init, modoPuesto: modoPuesto, tiempoDicho: tiempoDicho };
 })();

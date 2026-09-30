@@ -160,12 +160,104 @@
      posición inicial sino la jugada a la que llegó recorriendo la partida. */
   function publicarFen(el, fen) { el.dataset.fenActual = fen; }
 
+  /* ---------- el recuadro donde se escribe (compartido) ----------
+     Era un <form> propio que solo entendía jugadas: con lector de pantalla no
+     había forma de preguntarle nada a la posición («caballos», «qué hay en
+     e4») ni de recorrer la partida sin salir a buscar los botones. Ahora es el
+     mismo cuadro de comandos de Entrenamiento (js/cuadro-comandos.js), igual
+     que en js/finales-100.js. Las piezas las trae js/curso-adaptado.js
+     (CursoAdaptado.piezas); donde esa página no está (la vista pública del
+     curso) queda un recuadro sencillo que entiende jugadas, lo que había. */
+  function conPiezas(listo) {
+    if (window.CursoAdaptado && window.CursoAdaptado.piezas) window.CursoAdaptado.piezas(listo);
+    else listo();
+  }
+  function cuadroSencillo(host, cfg) {
+    const form = document.createElement("form");
+    const id = "cp-cmd-" + (++cmdSeq);
+    const lab = document.createElement("label");
+    lab.setAttribute("for", id);
+    lab.textContent = cfg.etiqueta;
+    const input = document.createElement("input");
+    input.type = "text"; input.id = id; input.autocomplete = "off";
+    // `.cc-input`: así lo encuentra Alt + Mayúscula + C (js/vision-cuenta.js).
+    input.className = "cc-input cp-cmd-input";
+    input.placeholder = "ej. Cf3, e4, Dxh7+, e8=D";
+    const btn = document.createElement("button");
+    btn.type = "submit"; btn.className = "cp-mini"; btn.textContent = "Enviar";
+    const msg = document.createElement("span");
+    msg.setAttribute("role", "status");
+    form.append(lab, input, btn, msg);
+    host.appendChild(form);
+    const api = {
+      el: form, input,
+      decir(t) { msg.textContent = t || ""; return api; },
+      limpiar() { input.value = ""; return api; },
+      ayuda() { return api; },
+    };
+    form.addEventListener("submit", (ev) => { ev.preventDefault(); if (input.value.trim()) cfg.onEnviar(input.value, api); });
+    return api;
+  }
+  /* Monta el recuadro en `host` (el .cp-cmd, que es flex) y lo deja visible en
+     Modo Adaptado —lo decide el CSS del cuadro— y, para todos, mientras se
+     juega (`activo()`): escribir la jugada en vez de hacer clic en el SVG era
+     lo que ya ofrecía. Devuelve `mostrar`, para llamarlo al cambiar de modo. */
+  function montarCuadro(host, cfg, activo, listo) {
+    let api = null;
+    function mostrar() {
+      const a = activo();
+      host.hidden = !(a || document.documentElement.classList.contains("adaptive-mode"));
+      if (api && api.el) api.el.style.display = a ? "block" : "";
+    }
+    document.addEventListener("adaptivemode:change", mostrar);
+    conPiezas(() => {
+      api = window.CuadroComandos ? window.CuadroComandos.montar(host, cfg) : cuadroSencillo(host, cfg);
+      if (api && api.el) api.el.style.flex = "1 1 100%";
+      if (listo) listo(api);
+      mostrar();
+    });
+    mostrar();
+    return mostrar;
+  }
+  function jugadaEscrita(game, texto) {
+    if (window.ComandosTablero && window.ComandosTablero.jugadaEscrita) return window.ComandosTablero.jugadaEscrita(game, texto);
+    if (typeof ChessMoveParser === "undefined") return null;
+    return ChessMoveParser.tryParseMove(new Chess(game.fen()), texto);
+  }
+  /* Una jugada CONTADA, para decirla: «el caballo negro va de gustav 8 a felix
+     6». Sin js/visor-linea.js, al menos la jugada en palabras. */
+  function contar(mv) {
+    if (!mv) return "";
+    if (window.VisorLinea && window.VisorLinea.jugadaContada) {
+      const t = window.VisorLinea.jugadaContada(mv);
+      return t.charAt(0).toLowerCase() + t.slice(1).replace(/\.$/, "");
+    }
+    return spokenSan(mv.san);
+  }
+  // La jugada `san` jugada desde `fen`, como objeto de chess.js (para contarla).
+  function jugadaDesde(fen, san) {
+    try { return new Chess(fen).move(san, { sloppy: true }); } catch (e) { return null; }
+  }
+  function sinTildes(t) { return String(t).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim(); }
+  // Una sola copia de «qué partida de chess.js corresponde a esta FEN».
+  function chessDe(cache, fen) {
+    if (cache.g && cache.fen === fen) return cache.g;
+    try { cache.g = new Chess(fen); cache.fen = fen; } catch (e) { cache.g = null; }
+    return cache.g;
+  }
+  function anunciador(el) {
+    return function (texto) {
+      el.textContent = "";
+      setTimeout(() => { el.textContent = texto; }, 50);
+      if (window.BlindNotation && window.BlindNotation.speak) window.BlindNotation.speak(texto);
+    };
+  }
+
   // ---------- 1. partida comentada ----------
   function makeGame(el, g) {
     const moves = g.moves, claves = g.claves || [];
     const claveAt = {}; claves.forEach((c) => { claveAt[c.ply] = c; });
     const state = { ply: 0, flip: g.orientacion === "b", mode: "ver", guess: null, intentos: 0, aciertos: 0, fallos: 0, pendientes: null };
-    const cmdId = "cp-cmd-" + (++cmdSeq);
     el.classList.add("cp-viewer");
     el.innerHTML =
       '<div class="cp-head"><span class="cp-players">' + esc(g.blancas) + " – " + esc(g.negras) + '</span><span class="cp-event">' + esc(g.evento || "") + '</span><span class="cp-res" data-res="' + esc(g.resultado) + '">' + esc(g.resultado || "") + "</span></div>" +
@@ -173,24 +265,25 @@
       '<div class="cp-side">' +
       '<div class="cp-controls" role="group" aria-label="Recorrer la partida">' +
       '<button type="button" data-act="first" aria-label="Posición inicial">⏮</button><button type="button" data-act="prev" aria-label="Jugada anterior">◀</button>' +
-      '<span class="cp-ply" aria-live="polite"></span>' +
+      '<span class="cp-ply"></span><span class="cp-anuncio sr-only" role="status"></span>' +
       '<button type="button" data-act="next" aria-label="Jugada siguiente">▶</button><button type="button" data-act="last" aria-label="Última jugada">⏭</button>' +
       '<button type="button" data-act="flip" aria-label="Girar el tablero" title="Girar el tablero">⇅</button></div>' +
       '<div class="cp-comment" aria-live="polite"></div>' +
       '<div class="cp-actions"><button type="button" data-act="guess" class="cp-btn">🎯 Adivinar las jugadas clave</button>' +
       '<button type="button" data-act="practice" class="cp-btn cp-btn2">♟ Jugar desde aquí contra el motor</button>' +
       '<label class="cp-level">Nivel <select data-act="level"><option value="1500">1500</option><option value="1800" selected>1800</option><option value="max">Máximo</option></select></label></div>' +
-      '<form class="cp-cmd" hidden><label for="' + cmdId + '">Escribe tu jugada</label> ' +
-      '<input type="text" id="' + cmdId + '" class="cp-cmd-input" autocomplete="off" placeholder="ej. Cf3, e4, Dxh7+, e8=D"> ' +
-      '<button type="submit" class="cp-mini">Jugar</button></form>' +
+      '<div class="cp-cmd" hidden></div>' +
       '<div class="cp-promo" hidden><span>Coronar:</span><button type="button" data-p="q">♕ Dama</button><button type="button" data-p="r">♖ Torre</button><button type="button" data-p="b">♗ Alfil</button><button type="button" data-p="n">♘ Caballo</button></div>' +
       '<div class="cp-msg" aria-live="polite"></div></div>' +
       '<div class="cp-moves" aria-label="Jugadas de la partida"></div>' +
-      '<p class="cp-desc sr-only" aria-live="polite" aria-atomic="true"></p>';
+      // La posición escrita NO es región viva: lo que se dice solo en cada
+      // paso es la jugada (.cp-anuncio); la posición se pide con «posición».
+      '<p class="cp-desc sr-only"></p>';
     const boardEl = el.querySelector(".cp-board"), movesEl = el.querySelector(".cp-moves"), plyEl = el.querySelector(".cp-ply");
     const comEl = el.querySelector(".cp-comment"), msgEl = el.querySelector(".cp-msg"), descEl = el.querySelector(".cp-desc"), promoEl = el.querySelector(".cp-promo");
     const guessBtn = el.querySelector('[data-act="guess"]'), practBtn = el.querySelector('[data-act="practice"]');
-    const cmdForm = el.querySelector(".cp-cmd"), cmdInput = cmdForm.querySelector("input");
+    const cmdHost = el.querySelector(".cp-cmd");
+    const anunciar = anunciador(el.querySelector(".cp-anuncio"));
 
     function fenAt(ply) { return ply === 0 ? g.start_fen : moves[ply - 1].fen; }
     function lastSquares(ply) { if (ply === 0) return []; const u = moves[ply - 1].uci; return [u.slice(0, 2), u.slice(2, 4)]; }
@@ -226,31 +319,69 @@
     }
     renderMoves(); renderView();
 
+    /* Ir a una jugada y DECIRLA («Jugada 12 de 40: el caballo blanco va de…»).
+       Antes solo cambiaba el «12/40» y se volvía a dictar la posición entera;
+       lo que cambió era la jugada. */
+    function irA(ply) {
+      state.ply = Math.max(0, Math.min(moves.length, ply));
+      renderView();
+      if (state.ply === 0) { anunciar("Posición inicial."); return; }
+      const m = moves[state.ply - 1];
+      anunciar("Jugada " + state.ply + " de " + moves.length + ": " + (contar(jugadaDesde(fenAt(state.ply - 1), m.san)) || spokenSan(m.san)) + ".");
+    }
+
     // ----- modo "adivinar la jugada" -----
     let game = null;
+    let puedeJugar = false;   // si el recuadro acepta una jugada ahora (adivinar/practicar)
+    let esperaSeguir = false; // en adivinar, tras acertar o ver la jugada: falta «seguir»
+    const vista = {};
     const input = boardInput(boardEl, promoEl, () => game, onHumanMove, (sel) => {
       const fen = game.fen(), dots = sel ? game.moves({ square: sel, verbose: true }).map((m) => m.to) : [];
       const h = game.history({ verbose: true }), lm = h.length ? h[h.length - 1] : null;
       boardEl.innerHTML = boardSvg(fen, { flip: state.flip, sel, dots, last: lm ? [lm.from, lm.to] : [], label: describe(fen) });
       descEl.textContent = describe(fen);
     });
-    const cmdBtn = cmdForm.querySelector('button[type="submit"]');
-    function setMoveInputEnabled(v) { input.enable(v); cmdInput.disabled = !v; cmdBtn.disabled = !v; }
-    // Alternativa a clicar en el tablero: escribir la jugada (ej. "Cf3", "e4", "Dxh7+", "e8=D")
-    // y que ChessMoveParser la interprete — así se puede adivinar/practicar sin arrastrar ni
-    // hacer clic en el SVG, que no es operable por teclado ni por lector de pantalla.
-    cmdForm.addEventListener("submit", (ev) => {
-      ev.preventDefault();
-      if (cmdInput.disabled) return;
-      const raw = cmdInput.value;
-      if (!raw.trim()) return;
-      if (!game) return;
-      if (typeof ChessMoveParser === "undefined") { msgEl.textContent = "Falta cargar el intérprete de jugadas."; return; }
-      const probe = new Chess(game.fen());
-      const mv = ChessMoveParser.tryParseMove(probe, raw);
-      if (!mv) { msgEl.textContent = 'Jugada no válida: "' + raw + '". Revísala e intenta de nuevo.'; return; }
-      cmdInput.value = "";
-      onHumanMove(mv.from + mv.to + (mv.promotion || ""));
+    /* El recuadro ya no se deshabilita cuando no toca jugar: sigue sirviendo
+       para preguntar por la posición. Lo que se apaga es aceptar jugadas. */
+    function setMoveInputEnabled(v) { input.enable(v); puedeJugar = v; if (v) esperaSeguir = false; }
+    function juegoVisto() { return state.mode !== "ver" && game ? game : chessDe(vista, fenAt(state.ply)); }
+    // Alternativa a clicar en el tablero: escribir la jugada (ej. "Cf3", "e4", "Dxh7+", "e8=D"),
+    // recorrer la partida («siguiente», «jugada 12») o preguntar por la posición.
+    function alEscribir(texto, api) {
+      const t = sinTildes(texto);
+      if (state.mode === "adivinar") {
+        if (/^(pista|ayudame)$/.test(t)) { api.limpiar(); darPista(); return; }
+        if (/^(ver la jugada|rendirme|me rindo|saltar)$/.test(t) && puedeJugar) { api.limpiar(); revealGuess(true); return; }
+        if (/^(seguir|continuar|siguiente)$/.test(t) && esperaSeguir) { api.limpiar().decir(""); nextGuess(); return; }
+        if (/^(salir|terminar)$/.test(t)) { api.limpiar(); stopGuess(); api.decir("Saliste del modo adivinar."); return; }
+      } else if (state.mode === "practicar") {
+        if (/^(salir|terminar|parar)( la practica)?$/.test(t)) { api.limpiar(); stopPractice(); api.decir("Terminaste la práctica."); return; }
+      }
+      if (state.mode !== "ver") {
+        if (!puedeJugar) { api.decir(esperaSeguir ? "Escribe «seguir» para el próximo momento clave." : "Espera: el motor está pensando."); return; }
+        const mv = jugadaEscrita(game, texto);
+        if (!mv) { api.decir("Jugada no válida: «" + texto.trim() + "». Revísala e intenta de nuevo, o pregunta «posición» o «caballos»."); return; }
+        api.limpiar().decir("");
+        onHumanMove(mv.from + mv.to + (mv.promotion || ""));
+        return;
+      }
+      if (/^(adivinar|adivinar las jugadas( clave)?)$/.test(t)) { api.limpiar(); startGuess(); return; }
+      if (/^(practicar|jugar|jugar contra el motor)$/.test(t)) { api.limpiar(); startPractice(); return; }
+      if (/^girar( el tablero)?$/.test(t)) { api.limpiar(); state.flip = !state.flip; renderView(); api.decir(state.flip ? "Ahora ves el tablero desde las negras." : "Ahora ves el tablero desde las blancas."); return; }
+      const n = window.VisorLinea ? window.VisorLinea.pasoPedido(texto, state.ply, moves.length) : null;
+      if (n === null) { api.decir("No entendí «" + texto.trim() + "». Escribe «siguiente», «anterior», «jugada 12», «adivinar», «practicar», o una pregunta como «caballos»."); return; }
+      if (n < 0) { api.decir("Ya estás en la posición inicial."); return; }
+      if (n > moves.length) { api.decir("Ya estás en la última jugada de la partida."); return; }
+      api.limpiar().decir("");
+      irA(n);
+    }
+    const mostrarCuadro = montarCuadro(cmdHost, {
+      etiqueta: "Escribe tu jugada, recorre la partida o pregunta por la posición",
+      juego: juegoVisto,
+      posicionViva: false,
+      onEnviar: alEscribir,
+    }, () => state.mode !== "ver", (api) => {
+      api.ayuda("Recorrer: «siguiente», «anterior», «jugada 12». Jugar: «adivinar» o «practicar», y luego la jugada («Cf3», «e4»); «pista», «seguir». Preguntar: «posición», «caballos», «qué hay en e4».");
     });
 
     function startGuess() {
@@ -268,9 +399,14 @@
       game = new Chess(); game.load(fenAt(ply - 1));
       renderMoves(ply); renderView();
       const m = moves[ply - 1];
-      comEl.innerHTML = '<p class="cp-c cp-ask"><strong>Momento clave ' + (claves.length - state.pendientes.length) + "/" + claves.length + " · juegan " + (m.color === "w" ? "blancas" : "negras") + ".</strong> " + esc(state.guess.pregunta || "¿Qué jugarías aquí?") + " Haz la jugada en el tablero.</p>";
+      const pregunta = "Momento clave " + (claves.length - state.pendientes.length) + " de " + claves.length + ", juegan " + (m.color === "w" ? "blancas" : "negras") + ". " + (state.guess.pregunta || "¿Qué jugarías aquí?");
+      comEl.innerHTML = '<p class="cp-c cp-ask"><strong>Momento clave ' + (claves.length - state.pendientes.length) + "/" + claves.length + " · juegan " + (m.color === "w" ? "blancas" : "negras") + ".</strong> " + esc(state.guess.pregunta || "¿Qué jugarías aquí?") + " Haz la jugada en el tablero o escríbela en el recuadro.</p>";
       msgEl.innerHTML = '<button type="button" data-act="hint" class="cp-mini">Pista</button> <button type="button" data-act="skip" class="cp-mini">Ver la jugada</button>';
-      cmdForm.hidden = false; setMoveInputEnabled(true);
+      setMoveInputEnabled(true); mostrarCuadro();
+      // La jugada anterior de la partida, dicha, y la pregunta: es lo que
+      // cambió al saltar a este momento.
+      const antes = ply > 1 ? contar(jugadaDesde(fenAt(ply - 2), moves[ply - 2].san)) : "";
+      anunciar((antes ? "Se jugó: " + antes + ". " : "") + pregunta);
     }
     function onHumanMove(uci) {
       if (state.mode === "adivinar") {
@@ -278,7 +414,7 @@
         const exp = m.uci.length > 4 ? m.uci : m.uci; const ok = uci === exp || (uci.slice(0, 4) === exp.slice(0, 4) && exp.length === 4);
         const alt = (state.guess.alternativas || []).indexOf(uci) !== -1 || (state.guess.alternativas || []).indexOf(uci.slice(0, 4)) !== -1;
         if (ok || alt) {
-          state.aciertos++; setMoveInputEnabled(false); state.ply = ply;
+          state.aciertos++; setMoveInputEnabled(false); esperaSeguir = true; state.ply = ply;
           renderMoves(); renderView({ good: [uci.slice(0, 2), uci.slice(2, 4)] });
           comEl.innerHTML = '<p class="cp-c cp-good"><strong>' + (ok ? "¡Correcto! " : "¡Muy bien! Esa jugada también es buena; en la partida se jugó " + esc(spokenSan(m.san)) + ". ") + "</strong> " + esc(state.guess.explicacion || m.comentario || "") + "</p>";
           msgEl.innerHTML = '<button type="button" data-act="continue" class="cp-btn">Seguir ▶</button>';
@@ -292,34 +428,43 @@
       }
       if (state.mode === "practicar") { game.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci.length > 4 ? uci[4] : undefined }); afterHumanPractice(); }
     }
+    function darPista() {
+      if (!state.guess) return;
+      const pista = state.guess.pista || "Busca la jugada que cumple el plan de la lección.";
+      comEl.innerHTML = '<p class="cp-c cp-ask"><strong>Pista:</strong> ' + esc(pista) + "</p>";
+      anunciar("Pista: " + pista);
+    }
     function revealGuess(failed) {
       const ply = state.ply + 1, m = moves[ply - 1];
       if (failed) state.fallos++;
-      setMoveInputEnabled(false); state.ply = ply; renderMoves(); renderView();
+      setMoveInputEnabled(false); esperaSeguir = true; state.ply = ply; renderMoves(); renderView();
       comEl.innerHTML = '<p class="cp-c ' + (failed ? "cp-bad" : "") + '"><strong>La jugada de la partida fue ' + esc(spokenSan(m.san)) + ".</strong> " + esc(state.guess.explicacion || m.comentario || "") + "</p>";
       msgEl.innerHTML = '<button type="button" data-act="continue" class="cp-btn">Seguir ▶</button>';
     }
     function finishGuess() {
       const total = claves.length, pct = total ? Math.round((100 * state.aciertos) / total) : 0;
-      state.mode = "ver"; setMoveInputEnabled(false); cmdForm.hidden = true; guessBtn.textContent = "🎯 Adivinar las jugadas clave"; practBtn.disabled = false;
+      state.mode = "ver"; setMoveInputEnabled(false); esperaSeguir = false; mostrarCuadro(); guessBtn.textContent = "🎯 Adivinar las jugadas clave"; practBtn.disabled = false;
       renderMoves(); renderView();
       msgEl.innerHTML = "";
       comEl.innerHTML = '<p class="cp-c cp-good"><strong>Resultado: ' + state.aciertos + " de " + total + " momentos clave (" + pct + "%).</strong> " + (pct >= 80 ? "Excelente: entendiste el hilo de la partida." : pct >= 50 ? "Bien. Repasa los comentarios de los momentos que fallaste y vuelve a intentarlo." : "Vuelve a recorrer la partida leyendo los comentarios y repite el ejercicio.") + "</p>";
       guardar(g.id, { tipo: "adivinar", aciertos: state.aciertos, total: total, pct: pct });
     }
-    function stopGuess() { state.mode = "ver"; setMoveInputEnabled(false); cmdForm.hidden = true; guessBtn.textContent = "🎯 Adivinar las jugadas clave"; practBtn.disabled = false; msgEl.innerHTML = ""; renderMoves(); renderView(); }
+    function stopGuess() { state.mode = "ver"; setMoveInputEnabled(false); esperaSeguir = false; mostrarCuadro(); guessBtn.textContent = "🎯 Adivinar las jugadas clave"; practBtn.disabled = false; msgEl.innerHTML = ""; renderMoves(); renderView(); }
 
     // ----- práctica contra el motor desde la posición actual -----
-    let human = "w";
+    // `thinking` no estaba declarada: con "use strict", la primera jugada de la
+    // práctica tiraba un ReferenceError y el motor no respondía nunca.
+    let human = "w", thinking = false;
     function levelKey() { return el.querySelector('[data-act="level"]').value; }
     function startPractice() {
       if (typeof Chess !== "function" || !window.PracticeEngine) { msgEl.textContent = "El motor no está disponible en este navegador."; return; }
       game = new Chess(); if (!game.load(fenAt(state.ply))) { msgEl.textContent = "No se pudo cargar la posición."; return; }
       human = game.turn(); state.mode = "practicar";
       practBtn.textContent = "✕ Terminar la práctica"; guessBtn.disabled = true;
-      comEl.innerHTML = '<p class="cp-c">Juegas con ' + (human === "w" ? "blancas" : "negras") + " desde la posición de la jugada " + state.ply + ". Intenta seguir el plan de la partida; el motor responde por el otro bando.</p>";
+      comEl.innerHTML = '<p class="cp-c">Juegas con ' + (human === "w" ? "blancas" : "negras") + " desde la posición de la jugada " + state.ply + ". Intenta seguir el plan de la partida; el motor responde por el otro bando. Haz la jugada en el tablero o escríbela en el recuadro.</p>";
       msgEl.textContent = "";
-      cmdForm.hidden = false;
+      mostrarCuadro();
+      anunciar("Juegas con " + (human === "w" ? "blancas" : "negras") + " contra el motor. Te toca.");
       PracticeEngine.preload(); setMoveInputEnabled(true); renderPractice();
     }
     function renderPractice(txt) {
@@ -338,6 +483,8 @@
     }
     async function afterHumanPractice() {
       renderPractice();
+      const hist = game.history({ verbose: true });
+      if (hist.length) anunciar("Jugaste: " + contar(hist[hist.length - 1]) + ".");
       const r = resultOf(); if (r) { endPractice(r); return; }
       thinking = true; setMoveInputEnabled(false); msgEl.textContent = "El motor piensa…";
       let uci = null;
@@ -347,7 +494,8 @@
       if (state.mode !== "practicar") return;
       if (!uci) { renderPractice("El motor no respondió. Prueba de nuevo o recarga la página."); setMoveInputEnabled(true); return; }
       const rival = game.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci.length > 4 ? uci[4] : undefined });
-      msgEl.textContent = "El motor jugó " + spokenSan(rival.san) + ". Te toca."; setMoveInputEnabled(true); renderPractice();
+      // La jugada del motor, contada: qué pieza, de dónde a dónde.
+      msgEl.textContent = "El motor jugó: " + contar(rival) + ". Te toca."; setMoveInputEnabled(true); renderPractice();
       const r2 = resultOf(); if (r2) endPractice(r2);
     }
     function endPractice(res) {
@@ -356,28 +504,27 @@
       guardar(g.id, { tipo: "practica", resultado: res, jugaste: human, desde: state.ply, nivel: levelKey(), jugadas: game.history().length });
       stopPractice(); msgEl.textContent = txt;
     }
-    function stopPractice() { state.mode = "ver"; setMoveInputEnabled(false); cmdForm.hidden = true; practBtn.textContent = "♟ Jugar desde aquí contra el motor"; guessBtn.disabled = false; msgEl.textContent = ""; renderMoves(); renderView(); }
+    function stopPractice() { state.mode = "ver"; setMoveInputEnabled(false); mostrarCuadro(); practBtn.textContent = "♟ Jugar desde aquí contra el motor"; guessBtn.disabled = false; msgEl.textContent = ""; renderMoves(); renderView(); }
 
     el.addEventListener("click", (ev) => {
       const b = ev.target.closest("button"); if (!b) return;
       const act = b.dataset.act;
-      if (b.dataset.ply) { if (state.mode !== "ver") return; state.ply = parseInt(b.dataset.ply, 10); renderView(); return; }
+      if (b.dataset.ply) { if (state.mode !== "ver") return; irA(parseInt(b.dataset.ply, 10)); return; }
       if (state.mode === "ver" && ["first", "prev", "next", "last"].includes(act)) {
-        if (act === "first") state.ply = 0; else if (act === "prev") state.ply = Math.max(0, state.ply - 1);
-        else if (act === "next") state.ply = Math.min(moves.length, state.ply + 1); else state.ply = moves.length;
-        renderView(); return;
+        irA(act === "first" ? 0 : act === "prev" ? state.ply - 1 : act === "next" ? state.ply + 1 : moves.length);
+        return;
       }
       if (act === "flip") { state.flip = !state.flip; if (state.mode === "practicar") renderPractice(); else renderView(); return; }
       if (act === "guess") { state.mode === "adivinar" ? stopGuess() : startGuess(); return; }
       if (act === "practice") { state.mode === "practicar" ? stopPractice() : startPractice(); return; }
-      if (act === "hint" && state.guess) { comEl.innerHTML = '<p class="cp-c cp-ask"><strong>Pista:</strong> ' + esc(state.guess.pista || "Busca la jugada que cumple el plan de la lección.") + "</p>"; return; }
+      if (act === "hint" && state.guess) { darPista(); return; }
       if (act === "skip") { revealGuess(true); return; }
       if (act === "continue") { nextGuess(); return; }
     });
     boardEl.addEventListener("keydown", (ev) => {
       if (state.mode !== "ver") return;
-      if (ev.key === "ArrowRight") { state.ply = Math.min(moves.length, state.ply + 1); renderView(); ev.preventDefault(); }
-      if (ev.key === "ArrowLeft") { state.ply = Math.max(0, state.ply - 1); renderView(); ev.preventDefault(); }
+      if (ev.key === "ArrowRight") { irA(state.ply + 1); ev.preventDefault(); }
+      if (ev.key === "ArrowLeft") { irA(state.ply - 1); ev.preventDefault(); }
     });
   }
 
@@ -385,22 +532,21 @@
   function makeExercise(el, x) {
     const sol = x.solucion || [];
     const state = { ply: 0, flip: parseFen(x.fen).turn === "b", solved: false, tries: 0 };
-    const cmdId = "cp-cmd-" + (++cmdSeq);
     el.classList.add("cp-viewer", "cp-ej");
     el.innerHTML =
       '<div class="cp-head"><span class="cp-players">' + esc(x.titulo || ("Ejercicio " + x.n)) + '</span><span class="cp-res">' + (parseFen(x.fen).turn === "w" ? "Juegan blancas" : "Juegan negras") + "</span></div>" +
       '<div class="cp-board" tabindex="0" aria-label="Tablero del ejercicio"></div>' +
-      '<div class="cp-side"><div class="cp-comment"><p class="cp-c">' + esc(x.pregunta || "Encuentra la mejor jugada.") + " Juégala en el tablero.</p></div>" +
-      '<div class="cp-controls" role="group" aria-label="Recorrer la solución" hidden><button type="button" data-act="first">⏮</button><button type="button" data-act="prev">◀</button><span class="cp-ply"></span><button type="button" data-act="next">▶</button><button type="button" data-act="last">⏭</button></div>' +
+      '<div class="cp-side"><div class="cp-comment" aria-live="polite"><p class="cp-c">' + esc(x.pregunta || "Encuentra la mejor jugada.") + " Juégala en el tablero o escríbela en el recuadro.</p></div>" +
+      '<div class="cp-controls" role="group" aria-label="Recorrer la solución" hidden><button type="button" data-act="first" aria-label="Posición inicial">⏮</button><button type="button" data-act="prev" aria-label="Jugada anterior">◀</button><span class="cp-ply"></span><span class="cp-anuncio sr-only" role="status"></span><button type="button" data-act="next" aria-label="Jugada siguiente">▶</button><button type="button" data-act="last" aria-label="Última jugada">⏭</button></div>' +
       '<div class="cp-actions"><button type="button" data-act="hint" class="cp-mini">Pista</button><button type="button" data-act="show" class="cp-mini">Ver la solución</button></div>' +
-      '<form class="cp-cmd"><label for="' + cmdId + '">Escribe tu jugada</label> ' +
-      '<input type="text" id="' + cmdId + '" class="cp-cmd-input" autocomplete="off" placeholder="ej. Cf3, e4, Dxh7+, e8=D"> ' +
-      '<button type="submit" class="cp-mini">Jugar</button></form>' +
+      '<div class="cp-cmd"></div>' +
       '<div class="cp-promo" hidden><span>Coronar:</span><button type="button" data-p="q">♕ Dama</button><button type="button" data-p="r">♖ Torre</button><button type="button" data-p="b">♗ Alfil</button><button type="button" data-p="n">♘ Caballo</button></div>' +
-      '<div class="cp-msg" aria-live="polite"></div></div><div class="cp-moves"></div><p class="cp-desc sr-only" aria-live="polite" aria-atomic="true"></p>';
+      '<div class="cp-msg" aria-live="polite"></div></div><div class="cp-moves"></div><p class="cp-desc sr-only"></p>';
     const boardEl = el.querySelector(".cp-board"), comEl = el.querySelector(".cp-comment"), movesEl = el.querySelector(".cp-moves"), ctr = el.querySelector(".cp-controls"), plyEl = el.querySelector(".cp-ply"), promoEl = el.querySelector(".cp-promo"), descEl = el.querySelector(".cp-desc");
-    const cmdForm = el.querySelector(".cp-cmd"), cmdInput = cmdForm.querySelector("input"), msgEl = el.querySelector(".cp-msg");
+    const cmdHost = el.querySelector(".cp-cmd"), msgEl = el.querySelector(".cp-msg");
+    const anunciar = anunciador(el.querySelector(".cp-anuncio"));
     let game = null;
+    const vista = {};
     function fenAt(p) { return p === 0 ? x.fen : sol[p - 1].fen; }
     function render(extra) {
       const fen = state.solved ? fenAt(state.ply) : (game ? game.fen() : x.fen);
@@ -430,27 +576,53 @@
       const dots = sel ? game.moves({ square: sel, verbose: true }).map((m) => m.to) : [];
       boardEl.innerHTML = boardSvg(game.fen(), { flip: state.flip, sel, dots, label: describe(game.fen()) });
     });
-    const cmdBtn = cmdForm.querySelector('button[type="submit"]');
     // Misma idea que en la partida comentada: escribir la jugada en vez de hacer clic en el
-    // SVG del tablero, que no es operable por teclado ni por lector de pantalla.
-    cmdForm.addEventListener("submit", (ev) => {
-      ev.preventDefault();
-      if (state.solved || !game) return;
-      const raw = cmdInput.value;
-      if (!raw.trim()) return;
-      if (typeof ChessMoveParser === "undefined") { msgEl.textContent = "Falta cargar el intérprete de jugadas."; return; }
-      const probe = new Chess(game.fen());
-      const mv = ChessMoveParser.tryParseMove(probe, raw);
-      if (!mv) { msgEl.textContent = 'Jugada no válida: "' + raw + '". Revísala e intenta de nuevo.'; return; }
-      cmdInput.value = "";
-      onExerciseMove(mv.from + mv.to + (mv.promotion || ""));
+    // SVG del tablero, que no es operable por teclado ni por lector de pantalla; y, ya
+    // resuelto, recorrer la solución escribiendo o preguntar por la posición.
+    function irA(ply) {
+      state.ply = Math.max(0, Math.min(sol.length, ply));
+      render();
+      if (state.ply === 0) { anunciar("Posición inicial."); return; }
+      const m = sol[state.ply - 1];
+      anunciar("Jugada " + state.ply + " de " + sol.length + ": " + (contar(jugadaDesde(fenAt(state.ply - 1), m.san)) || spokenSan(m.san)) + ".");
+    }
+    function alEscribir(texto, api) {
+      const t = sinTildes(texto);
+      if (/^(pista|ayudame)$/.test(t) && !state.solved) { api.limpiar(); darPista(); return; }
+      if (/^(solucion|ver la solucion|me rindo|rendirme)$/.test(t) && !state.solved) { api.limpiar(); solve(false); return; }
+      if (!state.solved) {
+        if (!game) return;
+        const mv = jugadaEscrita(game, texto);
+        if (!mv) { api.decir("Jugada no válida: «" + texto.trim() + "». Revísala e intenta de nuevo, o pregunta «posición» o «caballos»."); return; }
+        api.limpiar().decir("");
+        onExerciseMove(mv.from + mv.to + (mv.promotion || ""));
+        return;
+      }
+      const n = window.VisorLinea ? window.VisorLinea.pasoPedido(texto, state.ply, sol.length) : null;
+      if (n === null) { api.decir("No entendí «" + texto.trim() + "». Escribe «siguiente», «anterior», «jugada 2», o una pregunta como «caballos»."); return; }
+      if (n < 0) { api.decir("Ya estás en la posición inicial."); return; }
+      if (n > sol.length) { api.decir("Ya estás en la última jugada de la solución."); return; }
+      api.limpiar().decir("");
+      irA(n);
+    }
+    montarCuadro(cmdHost, {
+      etiqueta: "Escribe tu jugada o pregunta por la posición",
+      juego: () => (state.solved ? chessDe(vista, fenAt(state.ply)) : game),
+      posicionViva: false,
+      onEnviar: alEscribir,
+    }, () => !state.solved, (api) => {
+      api.ayuda("Contestar: la jugada («Cf3», «e4»), «pista» o «solución». Ya resuelto: «siguiente», «anterior». Preguntar: «posición», «caballos», «qué hay en e4».");
     });
+    function darPista() {
+      const pista = x.pista || "Piensa en el desequilibrio de material y en qué pieza está mal colocada.";
+      comEl.innerHTML = '<p class="cp-c cp-ask"><strong>Pista:</strong> ' + esc(pista) + "</p>";
+    }
     function solve(byUser) {
-      state.solved = true; input.enable(false); cmdForm.hidden = true; cmdInput.disabled = true; cmdBtn.disabled = true;
+      state.solved = true; input.enable(false);
       ctr.hidden = false; el.querySelector('[data-act="show"]').hidden = true; el.querySelector('[data-act="hint"]').hidden = true;
       movesEl.innerHTML = sol.map((m, i) => '<button type="button" data-ply="' + (i + 1) + '">' + esc(moveLabel(m)) + "</button>").join("") + (x.resultado ? '<span class="cp-h"> ' + esc(x.resultado) + "</span>" : "");
       state.ply = 1; render(byUser ? { good: [sol[0].uci.slice(0, 2), sol[0].uci.slice(2, 4)] } : {});
-      comEl.innerHTML = '<p class="cp-c ' + (byUser ? "cp-good" : "") + '"><strong>' + (byUser ? "¡Correcto! " : "Solución: ") + esc(spokenSan(sol[0].san)) + ".</strong> " + esc(x.explicacion || sol[0].comentario || "") + " Recorre la línea completa con las flechas.</p>";
+      comEl.innerHTML = '<p class="cp-c ' + (byUser ? "cp-good" : "") + '"><strong>' + (byUser ? "¡Correcto! " : "Solución: ") + esc(spokenSan(sol[0].san)) + ".</strong> " + esc(x.explicacion || sol[0].comentario || "") + " Recorre la línea completa con los botones o escribiendo «siguiente».</p>";
       guardar(x.id, { tipo: "ejercicio", ok: !!byUser, intentos: state.tries });
     }
     if (typeof Chess === "function") { game = new Chess(); game.load(x.fen); input.enable(true); }
@@ -458,13 +630,12 @@
     el.addEventListener("click", (ev) => {
       const b = ev.target.closest("button"); if (!b) return;
       const act = b.dataset.act;
-      if (b.dataset.ply) { state.ply = parseInt(b.dataset.ply, 10); render(); return; }
-      if (act === "hint") { comEl.innerHTML = '<p class="cp-c cp-ask"><strong>Pista:</strong> ' + esc(x.pista || "Piensa en el desequilibrio de material y en qué pieza está mal colocada.") + "</p>"; return; }
+      if (b.dataset.ply) { irA(parseInt(b.dataset.ply, 10)); return; }
+      if (act === "hint") { darPista(); return; }
       if (act === "show") { solve(false); return; }
       if (!state.solved) return;
-      if (act === "first") state.ply = 0; else if (act === "prev") state.ply = Math.max(0, state.ply - 1);
-      else if (act === "next") state.ply = Math.min(sol.length, state.ply + 1); else if (act === "last") state.ply = sol.length;
-      render();
+      if (act === "first") irA(0); else if (act === "prev") irA(state.ply - 1);
+      else if (act === "next") irA(state.ply + 1); else if (act === "last") irA(sol.length);
     });
   }
 

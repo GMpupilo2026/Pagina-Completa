@@ -1,6 +1,11 @@
 /* Comprueba, en un navegador de verdad, que las TRES páginas de Juegos se
    puedan jugar sin ver la pantalla: estandar.html, niebla.html y tablero.html.
 
+   Desde que ¡Te reto! y Racha táctica montan el mismo teclado, también las
+   comprueba a ellas (una parada de Tab, las preguntas, el tiempo del Modo
+   Adaptado), y en las partidas el turno, el reloj, la última jugada y la
+   coronación.
+
    Existe porque todo lo que se rompe acá se rompe callado y no lo ve ningún
    otro verificador — estandar.html y niebla.html están detrás del login y de
    una sala, así que verificar-css.js no las abre nunca, y lo que se mide no es
@@ -296,6 +301,11 @@ async function pruebaElTeclado(browser) {
     await page.focus(pag.tablero + ' [data-square="g1"]');
     await page.keyboard.press("Enter");
     await page.waitForTimeout(150);
+    /* Elegir la pieza repinta el tablero entero, y la casilla que tenía el foco
+       sale del documento: sin cuidarlo, el foco se iba al <body> y quien juega
+       con el teclado quedaba fuera del tablero a mitad de la jugada. */
+    const trasElegir = await page.evaluate(() => (document.activeElement && document.activeElement.dataset || {}).square || document.activeElement.tagName);
+    igual("    al elegir la pieza, el foco se queda en su casilla", trasElegir, "g1");
     await page.focus(pag.tablero + ' [data-square="f3"]');
     await page.keyboard.press("Enter");
     await page.waitForTimeout(400);
@@ -502,6 +512,189 @@ async function pruebaRevisarLaPartida(browser) {
   ok("con menos de 10 jugadas no se ve", !!corta.r && corta.r[0] === false, JSON.stringify(corta.r));
 }
 
+// ====================== 9. ¡Te reto! y Racha táctica: el mismo teclado y el recuadro
+/* Las dos páginas de racha pintaban 64 botones sueltos, cada uno una parada de
+   Tab con un rótulo en inglés ("Casilla e4: Blanco n"), y su recuadro no sabía
+   contestar preguntas. Con diez segundos por ejercicio, además, quien usa lector
+   de pantalla perdía por tiempo antes de terminar de oír la posición. Nada de eso
+   daba error: la página se veía perfecta. */
+const RACHA_FEN = "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3";
+const RACHA_EJERCICIO = [RACHA_FEN, "f1c4", "Bc4", 500];
+
+async function pruebaLasRachas(browser) {
+  console.log("\n▶ ¡Te reto! y Racha táctica: una parada de Tab, preguntas y tiempo");
+  const RACHAS = [
+    { nombre: "te-reto.html", url: "/te-reto.html",
+      datos: { tablas: { public_streak_leaderboard: [] } },
+      empezar: async (page) => { await page.fill("#name-input", "Ana"); await page.press("#name-input", "Enter"); } },
+    { nombre: "racha-tactica.html", url: "/racha-tactica.html",
+      datos: { tablas: { profiles: PERFILES, puzzle_rush_scores: [] } },
+      empezar: async (page) => { await page.click("#start-btn"); } },
+  ];
+  for (const r of RACHAS) {
+    console.log("  — " + r.nombre);
+    const { ctx, page, errores } = await abrir(browser, r.url, r.datos, "u-ana", true);
+    // Un solo ejercicio conocido, para que lo que se pregunta tenga respuesta fija.
+    await page.evaluate((ej) => { window.PUZZLE_RUSH_DATA = [ej]; }, RACHA_EJERCICIO);
+    await r.empezar(page);
+    await page.waitForTimeout(500);
+    igual("    carga sin errores de JavaScript", errores.length, 0);
+
+    const t = await page.evaluate(() => {
+      const cs = Array.from(document.querySelectorAll("#board [data-square]"));
+      const e4 = document.querySelector('#board [data-square="e4"]');
+      const res = document.getElementById("result-text");
+      const bar = document.getElementById("timer-bar");
+      return {
+        casillas: cs.length,
+        paradas: cs.filter((c) => c.tabIndex === 0).length,
+        eningles: cs.filter((c) => /Casilla|Blanco [a-z]\b|Negro [a-z]\b/.test(c.getAttribute("aria-label") || "")).length,
+        e4: e4 ? e4.getAttribute("aria-label") : null,
+        rolTablero: document.getElementById("board").getAttribute("role"),
+        rolResultado: res ? res.getAttribute("role") : null,
+        resultado: res ? res.textContent : "",
+        barra: bar ? bar.style.transition : "",
+      };
+    });
+    igual("    el tablero tiene sus 64 casillas", t.casillas, 64);
+    igual("    y UNA sola parada de tabulador", t.paradas, 1);
+    igual("    ninguna casilla habla en inglés ni deletreada", t.eningles, 0);
+    ok("    la casilla dice su pieza en español", /eva 4/.test(t.e4 || "") && /pe[oó]n blanco/.test(t.e4 || ""), t.e4);
+    igual("    en Modo Adaptado el tablero es application", t.rolTablero, "application");
+    igual("    el renglón del resultado es región viva", t.rolResultado, "status");
+    /* Diez segundos alcanzan para MIRAR un tablero, no para oírlo. */
+    ok("    en Modo Adaptado el ejercicio da 60 segundos", /60000ms/.test(t.barra), t.barra);
+    ok("    y lo dice", /60 segundos/.test(t.resultado), t.resultado);
+
+    await page.fill(".cc-input", "caballos");
+    await page.press(".cc-input", "Enter");
+    await page.waitForTimeout(250);
+    const cab = await page.evaluate(() => (document.querySelector(".cc-msg") || {}).textContent || "");
+    ok("    «caballos» contesta dónde están", /caballo/i.test(cab) && /bella/i.test(cab) && /felix/i.test(cab), cab);
+
+    // Las flechas mueven el foco de verdad, también acá.
+    await page.focus('#board [data-square="a1"]');
+    await page.keyboard.press("ArrowRight");
+    await page.waitForTimeout(120);
+    const tras = await page.evaluate(() => (document.activeElement && document.activeElement.dataset || {}).square || null);
+    ok("    la flecha derecha mueve el foco", tras === "b1", tras);
+
+    // Elegir una pieza con Intro repinta el tablero: el foco no se puede ir al <body>.
+    await page.focus('#board [data-square="f1"]');
+    await page.keyboard.press("Enter");
+    await page.waitForTimeout(150);
+    const elegida = await page.evaluate(() => {
+      const a = document.activeElement;
+      return { sq: (a && a.dataset || {}).square || a.tagName, rotulo: a && a.getAttribute ? a.getAttribute("aria-label") : "" };
+    });
+    ok("    al elegir la pieza, el foco se queda en su casilla", elegida.sq === "f1", elegida);
+    ok("    y la casilla dice que está elegida", /elegida/.test(elegida.rotulo || ""), elegida.rotulo);
+    await page.keyboard.press("Enter");   // se suelta, para seguir con el recuadro
+    await page.waitForTimeout(150);
+
+    /* Fallar a propósito: la respuesta correcta tiene que llegar DICHA, "alfil
+       cesar 4", no "Bc4", que el lector de pantalla deletrea en inglés. */
+    await page.fill(".cc-input", "Cg5");
+    await page.press(".cc-input", "Enter");
+    await page.waitForTimeout(400);
+    const fallo = await page.evaluate(() => document.getElementById("result-text").textContent);
+    ok("    al fallar, la jugada correcta va en palabras", /alfil cesar 4/.test(fallo) && !/Bc4/.test(fallo), fallo);
+    await ctx.close();
+  }
+
+  // Fuera del Modo Adaptado el reloj sigue siendo de diez segundos.
+  const { ctx, page } = await abrir(browser, RACHAS[1].url, RACHAS[1].datos, "u-ana", false);
+  await page.evaluate((ej) => { window.PUZZLE_RUSH_DATA = [ej]; }, RACHA_EJERCICIO);
+  await page.click("#start-btn");
+  await page.waitForTimeout(300);
+  const barra = await page.evaluate(() => document.getElementById("timer-bar").style.transition);
+  ok("  fuera del modo, siguen siendo 10 segundos", /10000ms/.test(barra), barra);
+  await ctx.close();
+}
+
+// ======================= 10. estandar y niebla: turno, reloj, última jugada, coronar
+async function pruebaElTurnoElRelojYLaUltima(browser) {
+  console.log("\n▶ Partidas: fuera de turno, el reloj, la última jugada y la coronación");
+
+  /* Fuera de turno la jugada no es «no válida»: decirlo manda a revisar una
+     jugada que estaba bien, y quien no ve no sabe que solo tenía que esperar. */
+  const datosInicial = { tablas: { game_rooms: [sala("r1", "estandar", INICIAL)], profiles: PERFILES } };
+  let a = await abrir(browser, "/estandar.html?room=r1", datosInicial, "u-bruno", true);
+  await escribir(a.page, "e5");
+  const turno = await loQueDijoElRecuadro(a.page);
+  ok("fuera de turno se dice que no es tu turno", /no es tu turno/i.test(turno) && !/no v[aá]lida/i.test(turno), turno);
+
+  await escribir(a.page, "reloj");
+  const reloj = await loQueDijoElRecuadro(a.page);
+  ok("«reloj» dice cuánto le queda a cada uno", /te quedan 10 minutos/i.test(reloj) && /rival, 10 minutos/i.test(reloj), reloj);
+  await escribir(a.page, "tiempo");
+  ok("y «tiempo» también", /te quedan/i.test(await loQueDijoElRecuadro(a.page)));
+
+  const rotulo = await a.page.evaluate(() => (document.getElementById("bottom-clock") || {}).getAttribute("aria-label"));
+  ok("el reloj de abajo dice de quién es", /tu reloj/i.test(rotulo || "") && /negras/.test(rotulo || ""), rotulo);
+  const rotulo2 = await a.page.evaluate(() => (document.getElementById("top-clock") || {}).getAttribute("aria-label"));
+  ok("y el de arriba también", /rival/i.test(rotulo2 || "") && /blancas/.test(rotulo2 || ""), rotulo2);
+
+  await escribir(a.page, "ultima jugada");
+  ok("«última jugada» sin jugadas dice que no hay", /todav[ií]a no/i.test(await loQueDijoElRecuadro(a.page)));
+  await a.ctx.close();
+
+  const TRAS_E4_D5 = "rnbqkbnr/ppp1pppp/8/3p4/4P3/8/PPPP1PPP/RNBQKBNR w KQkq d6 0 2";
+  const conJugadas = (variant) => ({ tablas: { game_rooms: [Object.assign(sala("r1", variant, TRAS_E4_D5), { moves: ["e4", "d5"] })], profiles: PERFILES } });
+  a = await abrir(browser, "/estandar.html?room=r1", conJugadas("estandar"), "u-ana", true);
+  await escribir(a.page, "última jugada");
+  const ult = await loQueDijoElRecuadro(a.page);
+  ok("«última jugada» la dice en palabras", /negras/.test(ult) && /david 5/.test(ult), ult);
+  await a.ctx.close();
+
+  /* En la niebla la jugada del rival no se dice: sería levantarla por el recuadro. */
+  a = await abrir(browser, "/niebla.html?room=r1", conJugadas("niebla"), "u-ana", true);
+  await escribir(a.page, "ultima");
+  const ultN = await loQueDijoElRecuadro(a.page);
+  ok("en la niebla, la del rival NO se dice", /niebla/i.test(ultN) && !/david|d5/i.test(ultN), ultN);
+  await a.ctx.close();
+
+  /* El aviso de tiempo: con 32 segundos y el reloj corriendo, al pasar de 30 se
+     tiene que oír, sin que nadie pregunte. */
+  const apurada = Object.assign(sala("r1", "estandar", INICIAL), { white_time_left: 32, clock_updated_at: new Date().toISOString() });
+  a = await abrir(browser, "/estandar.html?room=r1", { tablas: { game_rooms: [apurada], profiles: PERFILES } }, "u-ana", true);
+  let aviso = "";
+  for (let i = 0; i < 20 && !/te quedan/i.test(aviso); i++) { await a.page.waitForTimeout(250); aviso = await loQueDijoElRecuadro(a.page); }
+  ok("a los 30 segundos se avisa solo", /te quedan (30|29|28) segundos/i.test(aviso), aviso);
+  await a.ctx.close();
+
+  /* La coronación: el diálogo de todo el sitio (js/coronacion.js), con el foco
+     adentro, cada pieza con su nombre, y el foco de vuelta al tablero. */
+  const CORONA = "8/4P3/8/8/8/8/k7/4K3 w - - 0 1";
+  for (const pagina of ["estandar", "niebla"]) {
+    a = await abrir(browser, "/" + pagina + ".html?room=r1", { tablas: { game_rooms: [sala("r1", pagina, CORONA)], profiles: PERFILES } }, "u-ana", true);
+    await a.page.focus('#board [data-square="e7"]');
+    await a.page.keyboard.press("Enter");
+    await a.page.waitForTimeout(150);
+    await a.page.focus('#board [data-square="e8"]');
+    await a.page.keyboard.press("Enter");
+    await a.page.waitForTimeout(250);
+    const d = await a.page.evaluate(() => {
+      const dlg = document.querySelector("dialog[open]");
+      const f = document.activeElement;
+      return { abierto: !!dlg, focoAdentro: !!(dlg && dlg.contains(f)), foco: f ? f.textContent.trim() : "",
+        nombres: dlg ? Array.from(dlg.querySelectorAll("button")).map((b) => b.textContent.trim()) : [] };
+    });
+    ok(pagina + ": coronar abre un diálogo con el foco adentro", d.abierto && d.focoAdentro, d);
+    ok(pagina + ": y cada pieza dice su nombre", ["Dama", "Torre", "Alfil", "Caballo"].every((n) => d.nombres.includes(n)), d.nombres);
+    await a.page.keyboard.press("ArrowRight");
+    await a.page.keyboard.press("Enter");
+    await a.page.waitForTimeout(400);
+    const tras = await a.page.evaluate(() => ({
+      e8: (document.querySelector('#board [data-square="e8"]') || {}).getAttribute("aria-label"),
+      foco: document.activeElement && document.activeElement.closest ? !!document.activeElement.closest("#board") : false,
+    }));
+    ok(pagina + ": se corona en la pieza elegida (torre)", /torre blanca/.test(tras.e8 || ""), tras.e8);
+    ok(pagina + ": y el foco vuelve al tablero", tras.foco === true, tras);
+    await a.ctx.close();
+  }
+}
+
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
@@ -513,6 +706,8 @@ async function pruebaRevisarLaPartida(browser) {
     await pruebaLaPosicionNoSeDicta(browser);
     await pruebaLosComandosDeSiempre(browser);
     await pruebaRevisarLaPartida(browser);
+    await pruebaLasRachas(browser);
+    await pruebaElTurnoElRelojYLaUltima(browser);
   } finally {
     await browser.close();
   }

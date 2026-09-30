@@ -6,7 +6,8 @@
  * pantalla para enterarse: en cuanto la partida aparece en la base (realtime
  * de Supabase) se le muestra un aviso ("Tu profesor te asignó…") EN
  * CUALQUIER PÁGINA de la Academia en la que esté, y unos segundos después —o
- * al tocar "Entrar ahora"— se lo lleva directo al tablero. También sirve si
+ * al tocar "Entrar ahora"— se lo lleva directo al tablero (en Modo Adaptado,
+ * solo al tocar "Entrar ahora": ver mostrarAviso). También sirve si
  * el alumno abre una página y ya tiene una partida en curso que todavía no
  * empezó (los dos sin marcar "listo").
  *
@@ -67,6 +68,11 @@ window.JuegoAviso = (function () {
     yaAvisado = true;
     marcarVista(row.id);
     const destino = destinoDe(row, tabla);
+    /* En Modo Adaptado NO se traslada solo. Quien usa lector de pantalla oye el
+       aviso en su turno, a veces a mitad de otra frase, y en 4 s la página
+       cambiaba debajo de sus manos: quedaba en otro lado sin saber cómo ni
+       dónde. Ahí se espera a que active «Entrar ahora». */
+    const adaptado = document.documentElement.classList.contains("adaptive-mode");
     let box = document.getElementById("juego-aviso");
     if (!box) {
       box = document.createElement("div");
@@ -79,12 +85,14 @@ window.JuegoAviso = (function () {
       '<div class="max-w-xl mx-auto bg-brand-800 text-white rounded-2xl shadow-2xl border-2 border-accent-500 p-4 sm:p-5">' +
       '<p class="text-accent-400 text-xs font-semibold uppercase tracking-wide">Partida asignada</p>' +
       '<p class="font-serif text-lg font-bold mt-1">Tu profesor te asignó una partida de ' + etiqueta(row, tabla) + '.</p>' +
-      '<p class="text-sm text-brand-200 mt-1">Te llevamos al tablero en unos segundos…</p>' +
+      '<p class="text-sm text-brand-200 mt-1">' + (adaptado
+        ? "Cuando estés listo, activa «Entrar ahora» para ir al tablero."
+        : "Te llevamos al tablero en unos segundos…") + '</p>' +
       '<div class="flex flex-wrap gap-2 mt-3">' +
       '<a id="juego-aviso-ir" href="' + destino + '" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">Entrar ahora →</a>' +
       '<button type="button" id="juego-aviso-quedarme" class="border border-brand-400 hover:border-accent-400 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors">Quedarme aquí</button>' +
       "</div></div>";
-    const timer = setTimeout(() => { window.location.href = destino; }, ESPERA_MS);
+    const timer = adaptado ? null : setTimeout(() => { window.location.href = destino; }, ESPERA_MS);
     document.getElementById("juego-aviso-quedarme").addEventListener("click", () => { clearTimeout(timer); box.remove(); yaAvisado = false; });
     document.getElementById("juego-aviso-ir").focus();
   }

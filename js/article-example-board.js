@@ -2,20 +2,32 @@
  * Cada artículo puede incluir una "tarjeta de ejemplo" con la posición que
  * ilustra su tema: <div class="example-card" data-fen="..."> con un
  * <div class="example-board"></div> y un <div class="example-readout">
- * dentro. En Modo normal se ve el tablero; en Modo Adaptado se reemplaza por
- * la misma descripción de posición agrupada por color y tipo de pieza que ya
- * usa Ciegos/Entrenamiento (BlindNotation, js/blind-notation.js) — la
- * notación de columnas es la misma en todas partes del sitio.
+ * dentro. El tablero se ve siempre; en Modo Adaptado se le suma debajo la
+ * misma descripción de posición agrupada por color y tipo de pieza que ya usa
+ * Ciegos/Entrenamiento (BlindNotation, js/blind-notation.js) — la notación de
+ * columnas es la misma en todas partes del sitio.
+ *
+ * El diagrama SE RECORRE con el teclado (js/tablero-accesible.js, solo para
+ * mirar): el contenedor era `role="img"`, y los hijos de una imagen no le
+ * llegan al lector de pantalla, así que las 64 casillas rotuladas no se oían.
+ * Ahora es una parada de Tab y adentro se anda con las flechas, igual que el
+ * tablero de una ficha de Estudio. Y ya no se esconde en Modo Adaptado (ver
+ * «El tablero ya no se esconde en Modo Adaptado»): un tablero se MIRA.
  *
  * Requiere chess.js y js/blind-notation.js cargados antes que este archivo.
+ * js/tablero-accesible.js lo trae él mismo si la página no lo cargó: son
+ * decenas de artículos, y sumar la línea a mano en cada uno es la clase de
+ * cosa que se olvida en el siguiente.
  */
 (function () {
+  // De dónde se cargó este archivo: tablero-accesible.js vive al lado, y los
+  // artículos están un nivel más abajo que el resto (../js/).
+  const ESTE_SCRIPT = document.currentScript && document.currentScript.src;
   const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
   const GLYPH = {
     p: { w: "♙", b: "♟" }, n: { w: "♘", b: "♞" }, b: { w: "♗", b: "♝" },
     r: { w: "♖", b: "♜" }, q: { w: "♕", b: "♛" }, k: { w: "♔", b: "♚" },
   };
-  const BLIND_MODE_KEY = "oscarBlindMode_v1";
   const NOMBRE = { k: "rey", q: "dama", r: "torre", b: "alfil", n: "caballo", p: "peón" };
 
   function casillaDicha(sq) {
@@ -26,7 +38,12 @@
     return NOMBRE[p.type] + " " + (p.color === "w" ? (fem ? "blanca" : "blanco") : (fem ? "negra" : "negro"));
   }
 
-  function renderBoard(el, game) {
+  /* `opciones.accesible`: el tablero lo va a rotular js/tablero-accesible.js,
+     que les da a las casillas su rol de control y el foco. Sin eso (la vista
+     previa de sesion.html, Precisión posicional) cada casilla se queda como
+     imagen con su nombre, que es lo mejor que se puede sin teclado. */
+  function renderBoard(el, game, opciones) {
+    const accesible = !!(opciones && opciones.accesible);
     el.innerHTML = "";
     for (let rank = 8; rank >= 1; rank--) {
       for (let f = 0; f < 8; f++) {
@@ -43,7 +60,7 @@
         /* Qué hay en la casilla, dicho como en todo el sitio («eva 4, caballo
            blanco»): sin esto, fuera del Modo Adaptado el diagrama era mudo para
            el lector de pantalla, y «Activar voz» no tenía qué leer. */
-        sq.setAttribute("role", "img");
+        if (!accesible) sq.setAttribute("role", "img");
         sq.setAttribute("aria-label", casillaDicha(square) + ", " + (piece ? piezaDicha(piece) : "vacía"));
         if (piece) {
           const span = document.createElement("span");
@@ -107,10 +124,20 @@
     const adaptedBtn = card.querySelector('[data-mode="adaptado"]');
     if (!boardEl || !readoutEl) return;
 
-    renderBoard(boardEl, game);
+    /* Un `role="img"` en el contenedor tapa todo lo de adentro: se quita aunque
+       el HTML lo traiga, para que ningún artículo viejo vuelva a dejar el
+       diagrama mudo. El nombre ("Diagrama de ejemplo") se queda: pasa a ser el
+       del tablero. */
+    if (boardEl.getAttribute("role") === "img") boardEl.removeAttribute("role");
+    renderBoard(boardEl, game, { accesible: true });
+    conTableroAccesible(function () {
+      TableroAccesible.montar(boardEl, { nombre: "Diagrama de ejemplo", juego: () => game });
+    });
 
     function applyMode(adapted) {
-      if (boardWrap) boardWrap.classList.toggle("hidden", adapted);
+      // El tablero se queda a la vista en los dos modos: lo que suma el
+      // adaptado es la posición escrita debajo.
+      if (boardWrap) boardWrap.classList.remove("hidden");
       readoutEl.classList.toggle("hidden", !adapted);
       if (adapted && window.BlindNotation) {
         readoutEl.innerHTML = window.BlindNotation.groupedReadoutHTML(game);
@@ -122,12 +149,33 @@
     if (normalBtn) normalBtn.addEventListener("click", () => applyMode(false));
     if (adaptedBtn) adaptedBtn.addEventListener("click", () => applyMode(true));
 
-    // Respeta la preferencia de Modo Adaptado ya elegida en el resto del sitio (Tablero,
-    // Entrenamiento, Ciegos) para quien ya la activó — sin forzarla de vuelta si la
-    // cambia aquí, esto es solo un ejemplo dentro del artículo, no la página principal.
-    let initialAdapted = false;
-    try { initialAdapted = localStorage.getItem(BLIND_MODE_KEY) === "1"; } catch (e) {}
-    applyMode(initialAdapted);
+    /* Arranca como está el Modo Adaptado del sitio AHORA, leído de la clase del
+       <html> (la pone js/adaptive-mode.js) y no del localStorage: así vale
+       también el modo que se adivinó solo (contraste del sistema, primer Tab),
+       que no se guarda. Y sigue al modo cuando se cambia desde la cabecera u
+       otra pestaña. Los dos botones de la tarjeta siguen siendo solo de este
+       ejemplo: no cambian el modo del sitio. */
+    applyMode(document.documentElement.classList.contains("adaptive-mode"));
+    document.addEventListener("adaptivemode:change", function (ev) {
+      const activo = ev.detail && typeof ev.detail.activo === "boolean"
+        ? ev.detail.activo
+        : document.documentElement.classList.contains("adaptive-mode");
+      applyMode(activo);
+    });
+  }
+
+  // Trae js/tablero-accesible.js si la página no lo cargó, una sola vez.
+  let esperando = null;
+  function conTableroAccesible(listo) {
+    if (window.TableroAccesible) { listo(); return; }
+    if (!esperando) {
+      esperando = [];
+      const s = document.createElement("script");
+      s.src = ESTE_SCRIPT ? new URL("tablero-accesible.js", ESTE_SCRIPT).href : "/js/tablero-accesible.js";
+      s.onload = function () { const xs = esperando; esperando = []; xs.forEach(function (f) { f(); }); };
+      document.head.appendChild(s);
+    }
+    esperando.push(listo);
   }
 
   document.addEventListener("DOMContentLoaded", function () {

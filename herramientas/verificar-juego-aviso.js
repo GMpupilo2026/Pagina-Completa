@@ -20,6 +20,8 @@
    5. QUE UNA PARTIDA AJENA NO DISPARE NADA.
    6. QUE UN CLIENTE RECORTADO (sin canales) no deje ni un error en la
       consola de una página que no tiene nada que ver con esto.
+   7. QUE EN MODO ADAPTADO NO TRASLADE SOLO: quien usa lector de pantalla
+      oye el aviso en su turno, y la página no le puede cambiar debajo.
 
    Uso:  python3 -m http.server 8777    (desde la raíz del sitio)
          node herramientas/verificar-juego-aviso.js                          */
@@ -119,6 +121,7 @@ async function abrir(browser, cfg, capturarErrores) {
   await ctx.route("**/fonts.gstatic.com/**", (r) => r.abort());
   await ctx.route("**/js/supabase-client.js", (r) =>
     r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso(cfg) }));
+  if (cfg.adaptado) await ctx.addInitScript(() => { try { localStorage.setItem("oscarBlindMode_v1", "1"); } catch (e) {} });
   const page = await ctx.newPage();
   if (capturarErrores) {
     page.on("pageerror", (e) => errores.push(String(e)));
@@ -188,6 +191,22 @@ async function pruebaAlumnaEnOtraPagina(browser) {
   await r.ctx.close();
 }
 
+async function pruebaAdaptado(browser) {
+  console.log("\n=== En Modo Adaptado espera a «Entrar ahora» ===");
+  const r = await abrir(browser, { yo: "u-ana", perfiles: [ANA], adaptado: true });
+  await r.page.evaluate(() => window.__insertar("game_rooms", {
+    id: "sala-2", status: "playing", variant: "estandar", white_id: "u-ana", black_id: "u-profe",
+  }));
+  await r.page.waitForTimeout(300);
+  const v = await r.page.evaluate(LEER);
+  igual("aparece el aviso", v.hayAviso, "true");
+  igual("dice que se entra al activar «Entrar ahora», no «en unos segundos»",
+    /activa «Entrar ahora»/.test(v.texto) && !/en unos segundos/.test(v.texto), "true");
+  await r.page.waitForTimeout(4600);
+  igual("pasados los 4 s sigue en la misma página", new URL(r.page.url()).pathname, PAGINA);
+  await r.ctx.close();
+}
+
 async function pruebaCuatroJugadores(browser) {
   console.log("\n=== También avisa de una partida de 4 jugadores ===");
   const r = await abrir(browser, { yo: "u-ana", perfiles: [ANA] });
@@ -252,6 +271,7 @@ async function pruebaNoEnsucia(browser) {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
     await pruebaAlumnaEnOtraPagina(browser);
+    await pruebaAdaptado(browser);
     await pruebaCuatroJugadores(browser);
     await pruebaPartidaAjena(browser);
     await pruebaProfesorYAdmin(browser);

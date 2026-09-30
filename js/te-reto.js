@@ -21,6 +21,19 @@
         let playerName = "";
 
         const TIME_LIMIT_MS = 10000;
+        /* En Modo Adaptado, seis veces más: 60 segundos. Diez segundos alcanzan
+           para mirar un tablero, no para oírlo — solo escuchar la posición entera
+           ya se lleva más que eso, y después hay que recorrerla y escribir la
+           jugada. Con el mismo reloj para todos, quien usa lector de pantalla
+           perdía todos los ejercicios por tiempo y no fallaba nada. Se mira en
+           cada ejercicio, así que encender el modo vale desde el siguiente. */
+        const FACTOR_ADAPTADO = 6;
+        function modoAdaptado() {
+            return window.CuadroComandos ? CuadroComandos.activo() : document.documentElement.classList.contains("adaptive-mode");
+        }
+        function limiteMs() {
+            return modoAdaptado() ? TIME_LIMIT_MS * FACTOR_ADAPTADO : TIME_LIMIT_MS;
+        }
         const NAME_KEY = "demuestraNivelName_v1";
         const BEST_KEY_PREFIX = "demuestraNivelBest_v1_";
         const DAY_STREAK_KEY = "demuestraNivelDias_v1";
@@ -156,6 +169,12 @@
         function renderBoard() {
             refrescarComandos();
             const boardEl = document.getElementById("board");
+            /* Vaciar el tablero saca del documento la casilla que tenía el foco, y
+               el navegador lo manda al <body>: elegías la pieza con Intro y te
+               quedabas fuera del tablero, a mitad de la jugada. Se recuerda en qué
+               casilla estaba para devolverlo ahí al terminar de pintar. */
+            const activa = document.activeElement;
+            const casillaConFoco = activa && boardEl.contains(activa) && activa.dataset ? activa.dataset.square : null;
             boardEl.innerHTML = "";
             const flipped = game.turn() === "b";
             const squares = [];
@@ -176,8 +195,14 @@
                 btn.className = cls;
                 btn.setAttribute("data-square", square);
                 const piece = game.get(square);
-                const pieceName = piece ? ((piece.color === "w" ? "Blanco" : "Negro") + " " + (piece.type)) : "vacía";
-                btn.setAttribute("aria-label", "Casilla " + square + ": " + pieceName);
+                /* El rótulo de la casilla lo escribe js/tablero-accesible.js ("eva 4,
+                   caballo blanco"), no esta página: antes decía "Casilla e4: Blanco n",
+                   deletreado y con la letra de la pieza en inglés, o sea un tablero que
+                   con lector de pantalla no se entendía. Lo que sí decide la página es
+                   el ESTADO de la casilla, y va en data-estado para que el módulo lo
+                   sume al final. */
+                if (selected === square) btn.dataset.estado = "elegida";
+                else if (legalTargets.indexOf(square) !== -1) btn.dataset.estado = piece ? "puedes capturar ahí" : "puedes ir ahí";
                 if (piece) {
                     const span = document.createElement("span");
                     if (window.PiezaPreferida) PiezaPreferida.pintar(span, piece.type, piece.color);
@@ -198,6 +223,26 @@
                 }
                 btn.addEventListener("click", () => onSquareClick(square));
                 boardEl.appendChild(btn);
+            });
+            if (casillaConFoco) {
+                const celda = boardEl.querySelector('[data-square="' + casillaConFoco + '"]');
+                if (celda) celda.focus({ preventScroll: true });
+            }
+            montarTeclado();
+        }
+
+        /* Una sola parada de tabulador para todo el tablero y las flechas por
+           dentro, más los atajos de una tecla en Modo Adaptado (o, z, m, x,
+           k q r b n p). Eran 64 botones sueltos: sesenta y cinco Tab para llegar
+           al botón de abajo, y sin forma de MIRAR el tablero. Se monta una vez y
+           a partir de ahí se repone solo en cada repintado (js/tablero-accesible.js). */
+        let teclado = null;
+        function montarTeclado() {
+            if (teclado || !window.TableroAccesible) return;
+            teclado = TableroAccesible.montar(document.getElementById("board"), {
+                nombre: "Tablero del ejercicio",
+                juego: () => game,
+                cuadro: () => (comandos ? comandos.input : null),
             });
         }
 
@@ -239,12 +284,19 @@
         function refrescarComandos() {
             if (!window.CuadroComandos || !game) return;
             if (!comandos) {
+                /* Con `juego` y `tablero`, el recuadro contesta también las preguntas
+                   de todo el sitio ("posición", "caballos", "qué hay en e4") antes de
+                   tratar el texto como jugada (js/comandos-tablero.js). Sin ellos, quien
+                   no ve la pantalla solo podía oír la posición entera de corrido. */
                 comandos = CuadroComandos.montar(document.getElementById("q-comandos"), {
-                    etiqueta: "Escribe tu jugada",
+                    etiqueta: "Escribe tu jugada, o una pregunta sobre la posición",
+                    juego: () => game,
+                    tablero: () => teclado,
                     onEnviar: jugarEscribiendo,
                 });
-                comandos.ayuda('En español o en inglés: "Cf3", "Nf3", "e4", "Dxh7+", "e8=D".');
             }
+            comandos.ayuda('Jugada, en español o en inglés: "Cf3", "Nf3", "e4", "Dxh7+", "e8=D". Pregunta: "caballos", "qué hay en e4". Escribe "ayuda" para todo. '
+                + "Tienes " + (limiteMs() / 1000) + " segundos por ejercicio.");
             comandos.posicion(game);
         }
 
@@ -313,7 +365,10 @@
             renderBoard();
             const finalStreak = streak;
             const reasonText = reason === "timeout" ? "⏱️ ¡Se acabó el tiempo!" : "❌ Esa no era la jugada.";
-            setResultText(reasonText + " La respuesta correcta era " + currentSan + ". Racha final: " + finalStreak + ".", "text-red-600 dark:text-red-400");
+            // La jugada, dicha en palabras ("caballo efe 3", no "Nf3"): el SAN en
+            // inglés lo deletrea el lector de pantalla y no se entiende.
+            const correcta = window.BlindNotation ? BlindNotation.sanSpoken(currentSan) : currentSan;
+            setResultText(reasonText + " La respuesta correcta era " + correcta + ". Racha final: " + finalStreak + ".", "text-red-600 dark:text-red-400");
             setMilestoneText("");
             running = false;
             streak = 0;
@@ -344,7 +399,7 @@
             bar.style.transition = "none";
             bar.style.width = "100%";
             void bar.offsetWidth;
-            bar.style.transition = "width " + TIME_LIMIT_MS + "ms linear";
+            bar.style.transition = "width " + limiteMs() + "ms linear";
             bar.style.width = "0%";
         }
         function stopTimerBar() {
@@ -356,7 +411,7 @@
         function startTimer() {
             clearTimeout(failTimeoutId);
             startTimerBar();
-            failTimeoutId = setTimeout(() => onFail("timeout"), TIME_LIMIT_MS);
+            failTimeoutId = setTimeout(() => onFail("timeout"), limiteMs());
         }
 
         // ---------- Elegir y cargar un ejercicio al azar ----------
@@ -377,7 +432,16 @@
             game = new Chess(fen);
             selected = null;
             resultLocked = false;
-            setResultText("");
+            /* En Modo Adaptado el renglón del resultado (región viva) dice que llegó
+               un ejercicio nuevo, de qué color se juega y cuánto tiempo hay. Sin
+               esto, el "¡Correcto!" se borraba a los 350 ms, antes de que el lector
+               de pantalla lo dijera, y el ejercicio siguiente llegaba sin aviso: el
+               reloj ya corría y quien no ve la pantalla no sabía que había cambiado. */
+            setResultText(modoAdaptado()
+                ? (streak > 0 ? "✅ ¡Correcto! Racha: " + streak + ". " : "")
+                  + "Ejercicio nuevo: juegan las " + (game.turn() === "w" ? "blancas" : "negras")
+                  + ". Tienes " + (limiteMs() / 1000) + " segundos."
+                : "");
             setMilestoneText("");
             renderBoard();
             startTimer();

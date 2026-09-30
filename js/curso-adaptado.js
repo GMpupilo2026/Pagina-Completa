@@ -43,12 +43,65 @@
  *    cuadro y, en Modo Adaptado, se hace visible: la posición y el lugar donde
  *    se contesta, juntos.
  *
+ *    Ese párrafo ya NO es región viva: dictar las treinta y dos piezas en cada
+ *    jugada tapaba lo único que cambió, que es la jugada. Los visores anuncian
+ *    la jugada en palabras («El motor jugó caballo a felix 3») y la posición se
+ *    lee cuando se quiere o se pide escribiendo «posición».
+ *
+ * Y trae las PIEZAS del recuadro (CursoAdaptado.piezas): el cuadro de comandos
+ * de Entrenamiento (js/cuadro-comandos.js), lo que se le puede preguntar a la
+ * posición (js/comandos-tablero.js) y cómo se cuenta una jugada
+ * (js/visor-linea.js). Las páginas de los cursos no los cargaban, y el recuadro
+ * de los visores solo entendía jugadas — ni «caballos» ni «qué hay en e4». Se
+ * cargan desde acá y no con una línea en cada página: son once cursos escritos
+ * a mano, y la línea que falte en uno deja ese curso con el recuadro de antes
+ * sin que nada avise.
+ *
  * Lo que decide qué se ve es el CSS (`html.adaptive-mode` en css/styles.css), no
  * este archivo: así encender y apagar el modo surte efecto al instante, sin
  * volver a pasar por el contenido.
  */
 (function () {
   "use strict";
+
+  /* ---------- 0. Las piezas del recuadro ---------- */
+
+  // Van en este orden: comandos-tablero.js lee TableroAccesible al cargarse, y
+  // cuadro-comandos.js usa ComandosTablero al montar.
+  var PIEZAS = [
+    ["BlindNotation", "blind-notation.js"],
+    ["ChessMoveParser", "chess-move-parser.js"],
+    ["TableroAccesible", "tablero-accesible.js"],
+    ["ComandosTablero", "comandos-tablero.js"],
+    ["CuadroComandos", "cuadro-comandos.js"],
+    ["VisorLinea", "visor-linea.js"],
+  ];
+  // Relativo a ESTE archivo y no a la página: el curso está en cursos/academia/.
+  var AQUI = document.currentScript && document.currentScript.src;
+  var listas = false, esperando = [];
+  function cargarPiezas() {
+    var i = 0;
+    (function siguiente() {
+      while (i < PIEZAS.length && window[PIEZAS[i][0]]) i += 1;
+      if (i >= PIEZAS.length) {
+        listas = true;
+        var xs = esperando; esperando = [];
+        xs.forEach(function (f) { try { f(); } catch (e) { setTimeout(function () { throw e; }); } });
+        return;
+      }
+      var s = document.createElement("script");
+      s.src = AQUI ? new URL(PIEZAS[i][1], AQUI).href : "/js/" + PIEZAS[i][1];
+      // Si una no carga, se sigue con las demás: el visor tiene su recuadro
+      // sencillo de respaldo, y mejor ese que ninguno.
+      s.onload = s.onerror = function () { i += 1; siguiente(); };
+      document.head.appendChild(s);
+    })();
+  }
+  cargarPiezas();
+  function piezas(listo) {
+    if (listas) listo(); else esperando.push(listo);
+  }
+  window.CursoAdaptado = { piezas: piezas };
 
   /* ---------- 1. Encabezados ---------- */
 

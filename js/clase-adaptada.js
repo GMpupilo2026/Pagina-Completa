@@ -106,6 +106,52 @@ window.ClaseAdaptada = (function () {
     return window.BlindNotation && BlindNotation.sanSpoken ? BlindNotation.sanSpoken(san) : san;
   }
 
+  function casillaDicha(sq) {
+    return window.BlindNotation && BlindNotation.squareSpoken ? BlindNotation.squareSpoken(sq) : sq;
+  }
+
+  /* Las flechas y los círculos del profe, dichos: para quien no ve el tablero
+     son la mitad de la explicación, y dibujados no hacen ningún ruido. Se dicen
+     solo los que se AGREGARON: repetir las tres flechas que ya estaban cada vez
+     que el profe suma una tapa la nueva. Devuelve una función con su propia
+     memoria —cada tablero lleva la suya—; `reiniciar` olvida lo que había (la
+     primera carga: lo que ya estaba dibujado al entrar no es noticia).
+     La usan la clase (sesion.js) y la de los invitados (ver-clase.js): con una
+     copia en cada una, una diría la flecha y la otra no. */
+  function vigiaDeMarcas() {
+    var antes = null;
+    return function (arrows, circles, reiniciar) {
+      if (reiniciar) antes = null;
+      arrows = arrows || [];
+      circles = circles || [];
+      var cuadroDe = function (c) { return typeof c === "string" ? c : c && c.square; };
+      var ahora = arrows.map(function (a) { return "f:" + a.from + a.to; })
+        .concat(circles.map(function (c) { return "c:" + cuadroDe(c); }));
+      var previas = antes;
+      antes = ahora;
+      if (!previas) return null;
+      var textos = [];
+      arrows.forEach(function (a) {
+        if (previas.indexOf("f:" + a.from + a.to) < 0) textos.push("una flecha de " + casillaDicha(a.from) + " a " + casillaDicha(a.to));
+      });
+      circles.forEach(function (c) {
+        if (previas.indexOf("c:" + cuadroDe(c)) < 0) textos.push("la casilla " + casillaDicha(cuadroDe(c)));
+      });
+      return textos.length ? "Tu profe marcó " + textos.join(", ") + "." : null;
+    };
+  }
+
+  /* «última jugada» y «jugadas»: el alumno no tiene la lista de jugadas a la
+     vista (es del profe), y quien no ve el tablero se pierde con una sola
+     jugada que no alcanzó a oír. Las contesta js/comandos-tablero.js, como en
+     todo el sitio; acá solo se cubren los dos casos en que el recuadro no se
+     las llega a pasar: «jugadas» a secas (fuera de la clase es el principio de
+     «jugadas de f3») y las piezas OCULTAS, donde el recuadro no le da la
+     partida para que no cuente piezas. Las jugadas se anuncian igual con las
+     piezas ocultas, así que decirlas no es trampa. */
+  var PIDE_ULTIMA = /^(la )?ultima( jugada)?$|^que se jugo$/;
+  var PIDE_JUGADAS = /^(las )?jugadas( de la partida)?$|^(la )?partida$|^lista de jugadas$/;
+
   function turnoDicho(g) {
     if (!g || !g.turn) return "";
     try {
@@ -147,10 +193,22 @@ window.ClaseAdaptada = (function () {
        del recuadro; `cfg.anunciar(texto)` los manda a otra parte —la página de
        los invitados tiene una sola región para todos sus avisos, que habla
        también fuera del Modo Adaptado—. */
+    /* Lo que llega junto se dice junto: la jugada, la variante que muestra el
+       profe y sus flechas suelen llegar en el MISMO cambio de la base, y dos
+       cambios seguidos de una región viva se pisan —el lector dice solo el
+       último—. Se juntan los avisos de 60 ms en un solo texto. */
+    var porDecir = [];
     function avisar(texto) {
+      if (!texto) return;
       if (typeof cfg.anunciar === "function") { cfg.anunciar(texto); return; }
+      porDecir.push(texto);
+      if (porDecir.length > 1) return;
       cmd.decir("");
-      window.setTimeout(function () { cmd.decir(texto); }, 60);
+      window.setTimeout(function () {
+        var junto = porDecir.join(" ");
+        porDecir = [];
+        cmd.decir(junto);
+      }, 60);
     }
 
     var cmd = CuadroComandos.montar(destino, {
@@ -161,6 +219,20 @@ window.ClaseAdaptada = (function () {
       onEnviar: function (texto, api) {
         var b = board();
         if (!b) return;
+        /* Lo propio de cada tablero va primero: en una pregunta de opciones lo
+           que se escribe es la LETRA de la opción, no una jugada. Devuelve el
+           texto de la respuesta si lo manejó, o null para seguir como siempre. */
+        var pedido = CuadroComandos.normalizar(texto).replace(/[.!¡¿?]+/g, "").trim();
+        var pideUltima = PIDE_ULTIMA.test(pedido);
+        if ((pideUltima || PIDE_JUGADAS.test(pedido)) && window.ComandosTablero) {
+          var r = ComandosTablero.interpretar(pideUltima ? "ultima jugada" : "historial", { juego: b.viewGame || b.game });
+          if (r && r.manejado && r.respuesta) { api.limpiar(); decirEnCaja(api, r.respuesta); return; }
+        }
+        if (typeof cfg.contestar === "function") {
+          var propia = cfg.contestar(texto, function (t) { api.limpiar(); decirEnCaja(api, t); });
+          if (propia) { decirEnCaja(api, propia); return; }
+          if (propia === "") return;   // ya contesta él, cuando termine
+        }
         if (b.piecesHidden) {
           decirEnCaja(api, "Las piezas están ocultas: el ejercicio es verlas de memoria. "
             + "Las jugadas se siguen anunciando.");
@@ -229,6 +301,47 @@ window.ClaseAdaptada = (function () {
       actualizar();
     }
 
+    /* El tablero mismo, con el teclado de todo el sitio (js/tablero-accesible.js):
+       `aria-roledescription="tablero de ajedrez"`, el rol de aplicación en Modo
+       Adaptado —sin él, NVDA y JAWS se quedan con las teclas de una letra— y los
+       atajos o, z, m, x, las letras de las piezas e i para volver al recuadro.
+       Antes el de la clase era un `role="group"` sin nada de eso: se recorría con
+       las flechas, pero para saber qué había alrededor de una pieza había que
+       salir del tablero a escribir, y Alt + Mayúscula + B (js/vision-cuenta.js,
+       que busca justo ese roledescription) decía que en la página no había
+       ningún tablero. Las flechas las lleva ese módulo y ClasesBoard le cede las
+       suyas (ver `_onKeydown`); lo que dice cada casilla sigue siendo de
+       ClasesBoard, que es quien sabe si las piezas están ocultas. */
+    function montarTeclado() {
+      var b = board();
+      if (!b || !b.el || b.compact || !window.TableroAccesible) return;
+      TableroAccesible.montar(b.el, {
+        nombre: b.el.getAttribute("aria-label") || "Tablero de la clase",
+        juego: function () { var x = board(); return x && !x.piecesHidden ? (x.viewGame || x.game) : null; },
+        cuadro: function () { return cmd.input; },
+      });
+      /* Con las piezas OCULTAS los atajos que cuentan piezas no contestan —la
+         misma regla que el recuadro—. Va en la fase de captura para llegar antes
+         que el módulo, que sin partida diría «esta página no lleva la cuenta de
+         la posición», que es falso. */
+      b.el.addEventListener("keydown", function (e) {
+        var x = board();
+        if (!x || !x.piecesHidden || !CuadroComandos.activo()) return;
+        if (e.ctrlKey || e.metaKey || !e.key || e.key.length !== 1) return;
+        if ("ozmxtkqrbnp".indexOf(e.key.toLowerCase()) < 0) return;
+        e.preventDefault();
+        e.stopPropagation();
+        var ta = b.el.__tableroAccesible;
+        var t = "Las piezas están ocultas: el ejercicio es verlas de memoria.";
+        if (ta && ta.decir) ta.decir(t); else avisar(t);
+      }, true);
+    }
+    montarTeclado();
+
+    /* Lo que el recuadro de la clase entiende además de lo de Entrenamiento. Va
+       escrito debajo del cuadro: la ayuda plegada es la de todo el sitio. */
+    cmd.ayuda("También puedes escribir «última jugada» o «jugadas» para oír lo que se jugó.");
+
     actualizar();
     return {
       cmd: cmd,
@@ -240,5 +353,6 @@ window.ClaseAdaptada = (function () {
   }
 
   return { montar: montar, hablarJugada: hablarJugada, hablar: hablar,
-    numerarJugadas: numerarJugadas, describirVista: describirVista };
+    numerarJugadas: numerarJugadas, describirVista: describirVista,
+    vigiaDeMarcas: vigiaDeMarcas, casillaDicha: casillaDicha };
 })();

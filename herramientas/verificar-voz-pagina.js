@@ -354,6 +354,32 @@ async function botonEn(browser, ruta) {
       const a = await abrir(browser, "/articulos/la-oposicion.html");
       await a.page.waitForSelector(".example-board [data-square]", { timeout: 8000 });
       igual("El diagrama de un artículo: cada casilla dice qué hay", await casillasDe(a.page, ".example-board"), bienRotulado);
+      /* Y que eso LLEGUE al lector: dentro de un role="img" los hijos no
+         existen para él, por bien rotulados que estén. Se recorre como el de
+         Estudio: una parada de Tab y las flechas adentro. */
+      await a.page.waitForFunction(() => document.querySelector(".example-board [data-square][tabindex='0']"), null, { timeout: 8000 });
+      igual("El diagrama de un artículo: ni el contenedor ni sus casillas son una imagen", await a.page.evaluate(() => {
+        const b = document.querySelector(".example-board");
+        return b.getAttribute("role") !== "img" && !b.querySelector("[data-square][role=img]");
+      }), true);
+      igual("El diagrama de un artículo: una sola parada de Tab", await a.page.evaluate(() =>
+        [...document.querySelectorAll(".example-board")].map((b) => [...b.querySelectorAll("[data-square]")].filter((c) => c.tabIndex === 0).length).every((n) => n === 1)), true);
+      await a.page.focus(".example-board [data-square][tabindex='0']");
+      await a.page.keyboard.press("ArrowRight");
+      igual("El diagrama de un artículo: → pasa a la casilla de al lado", await a.page.evaluate(() => document.activeElement.dataset.square), "b8");
+      await a.ctx.close();
+    }
+    {
+      /* El Modo Adaptado se lee del <html> (lo pone js/adaptive-mode.js), no
+         del localStorage, y el tablero ya no se esconde: la posición escrita
+         se SUMA debajo. */
+      const a = await abrir(browser, "/articulos/la-oposicion.html");
+      await a.page.waitForSelector(".example-board [data-square]", { timeout: 8000 });
+      await a.page.evaluate(() => { document.documentElement.classList.add("adaptive-mode"); document.dispatchEvent(new CustomEvent("adaptivemode:change", { detail: { activo: true } })); });
+      igual("Artículo en Modo Adaptado: el tablero se queda y la posición escrita aparece", await a.page.evaluate(() => {
+        const c = document.querySelector(".example-card");
+        return [c.querySelector(".example-board").checkVisibility(), c.querySelector(".example-readout").checkVisibility()];
+      }), [true, true]);
       await a.ctx.close();
     }
 

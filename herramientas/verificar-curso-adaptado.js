@@ -18,6 +18,9 @@
       párrafo sr-only al final del visor. Tiene que quedar JUNTO al cuadro donde
       se escribe la jugada, y verse en Modo Adaptado. Se mide el `position` que
       calcula el navegador, no la clase: una clase puesta no garantiza nada.
+      Y ya NO es región viva: lo que se dice en cada paso es la jugada, en
+      palabras, y la del motor también («El motor jugó: …»). El recuadro es el
+      cuadro de comandos de Entrenamiento: contesta «caballos».
 
    4. LOS VIDEOS. Las lecciones ya no ofrecen ninguno. Un enlace que vuelva a
       colarse en un fragmento no falla: simplemente reaparece en la lección, y
@@ -223,13 +226,17 @@ async function pruebaVisores(browser) {
           position: desc ? getComputedStyle(desc).position : "no está",
           texto: desc ? desc.textContent.trim() : "",
           vivo: desc ? desc.getAttribute("aria-live") : null,
+          anuncio: !!v.querySelector(".f100-anuncio[role=status], .cp-anuncio[role=status]"),
+          ccInput: !!(cmd && cmd.querySelector(".cc-input")),
         };
       }, caso);
       const etiqueta = caso.curso + " · " + (adaptado ? "adaptado" : "normal");
       igual(etiqueta + " · la posición va justo encima del cuadro de comandos", r.pegadaAlCuadro, "true");
       igual(etiqueta + " · " + (adaptado ? "y se ve en pantalla" : "y fuera del modo no se ve (solo la oye el lector)"),
         r.position, adaptado ? "static" : "absolute");
-      igual(etiqueta + " · sigue siendo región viva: cada jugada se vuelve a leer", r.vivo, "polite");
+      igual(etiqueta + " · la posición ya no se dicta sola en cada jugada (no es región viva)", r.vivo, "null");
+      igual(etiqueta + " · lo que se dice en cada paso (la jugada) va en su región viva", r.anuncio, "true");
+      igual(etiqueta + " · el recuadro tiene la clase .cc-input (Alt + Mayúscula + C lo encuentra)", r.ccInput, "true");
       if (adaptado) {
         // Lo que de verdad importa: que la posición esté CONTADA, no dibujada.
         if (!/rey en /.test(r.texto)) mal(etiqueta + ": la posición no dice dónde está el rey");
@@ -286,6 +293,69 @@ async function pruebaPluralesEnPantalla(browser) {
   await ctx.close();
 }
 
+/* ============ 3b. Al recuadro se le pregunta, y la jugada del motor se dice ============ */
+
+// Las piezas en español, para escribir la jugada como la escribe un alumno.
+const ES = { K: "R", Q: "D", R: "T", B: "A", N: "C" };
+const aEspanol = (san) => san.replace(/^([KQRBN])/, (m, p) => ES[p]).replace(/=([QRBN])/, (m, p) => "=" + ES[p]);
+
+async function pruebaRecuadro(browser) {
+  console.log("\n=== El recuadro contesta y la jugada del motor se dice ===");
+  const casos = [
+    { curso: "el-mapa-de-los-finales", visor: ".f100-viewer", anuncio: ".f100-anuncio", motor: ".f100-pstatus" },
+    { curso: "partidas-modelo", visor: ".cp-viewer", anuncio: ".cp-anuncio", motor: ".cp-msg" },
+  ];
+  for (const caso of casos) {
+    const { page, ctx, errores } = await abrirCurso(browser, caso.curso, true);
+    await page.evaluate(() => { const d = document.querySelector("#course-content-body details"); if (d) d.open = true; });
+    await page.waitForSelector(caso.visor + " .cc-input", { timeout: 20000 });
+    // El motor de verdad tarda y aquí no se mide: contesta con la primera jugada legal.
+    await page.evaluate(() => {
+      window.PracticeEngine.preload = () => {};
+      window.PracticeEngine.getMove = (fen) => { const m = new Chess(fen).moves({ verbose: true })[0]; return Promise.resolve(m ? m.from + m.to + (m.promotion || "") : null); };
+    });
+    const input = page.locator(caso.visor + " .cc-input").first();
+    const msg = page.locator(caso.visor + " .cc-msg").first();
+    const et = caso.curso;
+
+    await input.fill("caballos"); await input.press("Enter");
+    await page.waitForTimeout(150);
+    const dijo = (await msg.textContent()) || "";
+    igual(et + " · «caballos» se contesta (y no se toma por jugada)", /caballo/i.test(dijo) && !/no válida/i.test(dijo), true);
+
+    await input.fill("rey"); await input.press("Enter");
+    await page.waitForTimeout(150);
+    igual(et + " · «rey» dice dónde está, con la casilla hablada", /rey (blanco|negro) en [a-z]+ [1-8]/.test((await msg.textContent()) || ""), true);
+
+    if (caso.curso === "partidas-modelo") {
+      await input.fill("siguiente"); await input.press("Enter");
+      await page.waitForTimeout(250);
+      igual(et + " · «siguiente» avanza y dice la jugada en palabras",
+        /^Jugada 1 de \d+: (el|la) [a-zó]+ (blanc|negr)[oa] va de [a-z]+ [1-8] a [a-z]+ [1-8]/.test((await page.locator(caso.visor + " " + caso.anuncio).first().textContent()) || ""), true);
+    }
+
+    await input.fill("practicar"); await input.press("Enter");
+    await page.waitForTimeout(200);
+    const jugada = await page.evaluate((sel) => {
+      const v = document.querySelector(sel);
+      const g = new Chess(v.dataset.fenActual);
+      const m = g.moves({ verbose: true }).find((x) => !x.promotion) || g.moves({ verbose: true })[0];
+      return m ? m.san : null;
+    }, caso.visor);
+    await input.fill(aEspanol(jugada)); await input.press("Enter");
+    await page.waitForFunction((sel) => /El motor jugó: /.test(document.querySelector(sel).textContent), caso.visor + " " + caso.motor, { timeout: 10000 }).catch(() => {});
+    const motor = (await page.locator(caso.visor + " " + caso.motor).first().textContent()) || "";
+    igual(et + " · la jugada del motor se DICE en palabras, no solo «Te toca»",
+      /El motor jugó: (el|la) [a-zó]+ (blanc|negr)[oa] va de [a-z]+ [1-8] a [a-z]+ [1-8]|El motor jugó: enroque/i.test(motor), true);
+    // La región viva se vacía y se repuebla (50 ms) para que hable aunque el texto se repita.
+    await page.waitForTimeout(200);
+    const propia = (await page.locator(caso.visor + " " + caso.anuncio).first().textContent()) || "";
+    igual(et + " · y la propia también («Jugaste: …»)", /^Jugaste: /.test(propia) ? true : propia, true);
+    igual(et + " · sin errores en consola", errores.filter((e) => !/Failed to load resource/.test(e)).join(" | ") || "ninguno", "ninguno");
+    await ctx.close();
+  }
+}
+
 (async () => {
   pruebaPlurales();
   pruebaSinVideos();
@@ -295,6 +365,7 @@ async function pruebaPluralesEnPantalla(browser) {
     await pruebaEncabezados(browser);
     await pruebaMaterial(browser);
     await pruebaVisores(browser);
+    await pruebaRecuadro(browser);
     await pruebaPluralesEnPantalla(browser);
   } finally {
     await browser.close();

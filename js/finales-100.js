@@ -181,30 +181,97 @@
      inicial o la jugada de la línea a la que llegó, no siempre la primera. */
   function publicarFen(el, fen) { el.dataset.fenActual = fen; }
 
+  /* ---------- el recuadro donde se escribe ----------
+     Era un <form> propio que solo entendía jugadas y solo aparecía al
+     practicar: con lector de pantalla no había forma de preguntarle nada a la
+     posición («caballos», «qué hay en e4») ni de recorrer la línea sin salir a
+     buscar los botones. Ahora es el mismo cuadro de comandos de Entrenamiento
+     (js/cuadro-comandos.js), con sus preguntas, y además recorre la línea
+     escribiendo («siguiente», «jugada 5»), como el tablero de Estudio.
+     Las piezas las trae js/curso-adaptado.js (CursoAdaptado.piezas); donde esa
+     página no está (la vista pública del curso) queda un recuadro sencillo que
+     entiende jugadas, que es lo que había. */
+  function conPiezas(listo) {
+    if (window.CursoAdaptado && window.CursoAdaptado.piezas) window.CursoAdaptado.piezas(listo);
+    else listo();
+  }
+  function cuadroSencillo(host, cfg) {
+    const form = document.createElement("form");
+    const id = "f100-cmd-" + (++cmdSeq);
+    const lab = document.createElement("label");
+    lab.setAttribute("for", id);
+    lab.textContent = cfg.etiqueta;
+    const input = document.createElement("input");
+    input.type = "text"; input.id = id; input.autocomplete = "off";
+    // `.cc-input`: así lo encuentra Alt + Mayúscula + C (js/vision-cuenta.js).
+    input.className = "cc-input f100-cmd-input";
+    input.placeholder = "ej. Cf3, e4, Dxh7+, e8=D";
+    const btn = document.createElement("button");
+    btn.type = "submit"; btn.className = "f100-btn f100-btn2"; btn.textContent = "Enviar";
+    const msg = document.createElement("span");
+    msg.setAttribute("role", "status");
+    form.append(lab, input, btn, msg);
+    host.appendChild(form);
+    const api = {
+      el: form, input,
+      decir(t) { msg.textContent = t || ""; return api; },
+      limpiar() { input.value = ""; return api; },
+      ayuda() { return api; },
+    };
+    form.addEventListener("submit", (ev) => { ev.preventDefault(); if (input.value.trim()) cfg.onEnviar(input.value, api); });
+    return api;
+  }
+  function montarCuadro(host, cfg, listo) {
+    conPiezas(() => {
+      const api = window.CuadroComandos ? window.CuadroComandos.montar(host, cfg) : cuadroSencillo(host, cfg);
+      // Dentro del .f100-cmd (que es flex), el recuadro ocupa todo el ancho.
+      if (api && api.el) api.el.style.flex = "1 1 100%";
+      listo(api);
+    });
+  }
+  // La jugada escrita, buscada entre las legales (js/comandos-tablero.js); sin
+  // ese módulo, el intérprete de siempre sobre una copia de la partida.
+  function jugadaEscrita(game, texto) {
+    if (window.ComandosTablero && window.ComandosTablero.jugadaEscrita) return window.ComandosTablero.jugadaEscrita(game, texto);
+    if (typeof ChessMoveParser === "undefined") return null;
+    return ChessMoveParser.tryParseMove(new Chess(game.fen()), texto);
+  }
+  /* Una jugada CONTADA, para decirla: «el caballo negro va de gustav 8 a felix
+     6». Sin js/visor-linea.js, al menos la jugada en palabras. */
+  function contar(mv) {
+    if (!mv) return "";
+    if (window.VisorLinea && window.VisorLinea.jugadaContada) {
+      const t = window.VisorLinea.jugadaContada(mv);
+      return t.charAt(0).toLowerCase() + t.slice(1).replace(/\.$/, "");
+    }
+    return window.BlindNotation ? window.BlindNotation.sanSpoken(mv.san) : esSan(mv.san);
+  }
+  function sinTildes(t) { return String(t).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim(); }
+
   function makeViewer(el, d) {
     const startFen = d.fenInicio || d.fen;
     const moves = d.jugadas || [];
     const state = { ply: 0, flip: false, mode: "ver", practice: null, showSol: !d.examen };
     const hasSol = moves.length > 0 && !d.ilustracion;
-    const cmdId = "f100-cmd-" + (++cmdSeq);
     el.classList.add("f100-viewer");
     el.innerHTML =
       '<div class="f100-head"><span class="f100-num">' + esc(d.id.replace(/^F(\d+)-(\d+)$/, "Final $1 · diagrama $2").replace(/^EB-/, "Pregunta ").replace(/^EF-/, "Pregunta ").replace(/^FT-/, "Fortaleza ")) + "</span>" +
       '<span class="f100-res" data-res="' + esc(d.resultado) + '">' + esc(d.examen ? "Juegan " + (d.turno === "w" ? "blancas" : "negras") : RES_TXT[d.resultado] + (d.fin ? " → " + RES_TXT[d.fin] : "")) + "</span></div>" +
       '<div class="f100-board" tabindex="0" aria-label="Diagrama"></div>' +
-      '<p class="f100-desc sr-only" aria-live="polite" aria-atomic="true"></p>' +
+      // La posición escrita NO es región viva: se lee cuando se quiere (o se
+      // pide con «posición»); lo que se dice solo en cada paso es la jugada,
+      // en .f100-anuncio.
+      '<p class="f100-desc sr-only"></p>' +
       '<div class="f100-controls" role="group" aria-label="Recorrer la línea">' +
       '<button type="button" data-act="first" aria-label="Posición inicial">⏮</button><button type="button" data-act="prev" aria-label="Jugada anterior">◀</button>' +
-      '<span class="f100-ply" aria-live="polite"></span>' +
+      '<span class="f100-ply"></span><span class="f100-anuncio sr-only" role="status"></span>' +
       '<button type="button" data-act="next" aria-label="Jugada siguiente">▶</button><button type="button" data-act="last" aria-label="Última jugada">⏭</button>' +
       '<button type="button" data-act="flip" aria-label="Girar el tablero" title="Girar el tablero">⇅</button></div>' +
       '<div class="f100-moves" aria-label="Línea principal"></div>' +
       '<div class="f100-practice"><button type="button" data-act="practice" class="f100-btn">♟ Practicar contra el motor</button>' +
       '<label class="f100-level">Nivel <select data-act="level"><option value="1500">1500</option><option value="1800" selected>1800</option><option value="max">Máximo</option></select></label>' +
       '<span class="f100-pstatus" aria-live="polite"></span></div>' +
-      '<form class="f100-cmd" hidden><label for="' + cmdId + '">Escribe tu jugada</label> ' +
-      '<input type="text" id="' + cmdId + '" class="f100-cmd-input" autocomplete="off" placeholder="ej. Cf3, e4, Dxh7+, e8=D"> ' +
-      '<button type="submit" class="f100-btn f100-btn2">Jugar</button></form>' +
+      '<div class="f100-cmd" hidden></div>' +
       '<div class="f100-promo" hidden><span>Coronar:</span><button data-p="q">♕ Dama</button><button data-p="r">♖ Torre</button><button data-p="b">♗ Alfil</button><button data-p="n">♘ Caballo</button></div>' +
       '<div class="f100-msg" aria-live="polite"></div>';
     const boardEl = el.querySelector(".f100-board");
@@ -213,8 +280,26 @@
     const msgEl = el.querySelector(".f100-msg");
     const pst = el.querySelector(".f100-pstatus");
     const descEl = el.querySelector(".f100-desc");
-    const cmdForm = el.querySelector(".f100-cmd");
-    const cmdInput = cmdForm.querySelector("input");
+    const anuncioEl = el.querySelector(".f100-anuncio");
+    const cmdHost = el.querySelector(".f100-cmd");
+    let cuadro = null;
+
+    /* Vaciar y repoblar: una región viva no habla si el texto no cambió
+       (volver a la misma jugada desde el otro lado). */
+    function anunciar(texto) {
+      anuncioEl.textContent = "";
+      setTimeout(() => { anuncioEl.textContent = texto; }, 50);
+      if (window.BlindNotation && window.BlindNotation.speak) window.BlindNotation.speak(texto);
+    }
+    /* El recuadro se ve en Modo Adaptado (lo decide el CSS de
+       js/cuadro-comandos.js) y, para todos, mientras se practica: escribir la
+       jugada en vez de hacer clic en el tablero era lo que ya ofrecía. */
+    function mostrarCuadro() {
+      const practicando = state.mode === "practicar";
+      cmdHost.hidden = !(practicando || document.documentElement.classList.contains("adaptive-mode"));
+      if (cuadro && cuadro.el) cuadro.el.style.display = practicando ? "block" : "";
+    }
+    document.addEventListener("adaptivemode:change", mostrarCuadro);
 
     function currentFen() { return state.ply === 0 ? startFen : moves[state.ply - 1].fen; }
     function lastSquares() {
@@ -244,15 +329,77 @@
     }
     renderMoves(); renderView();
 
+    /* Ir a una jugada de la línea y DECIRLA: «Jugada 3 de 12: el rey blanco va
+       de eva 5 a david 6». Antes solo cambiaba el «3/12» y la posición entera
+       se volvía a dictar; lo que cambió era la jugada. */
+    function irA(ply) {
+      state.ply = Math.max(0, Math.min(moves.length, ply));
+      renderView();
+      if (state.ply === 0) { anunciar("Posición inicial."); return; }
+      let mv = null;
+      try { mv = new Chess(state.ply === 1 ? startFen : moves[state.ply - 2].fen).move(moves[state.ply - 1].san, { sloppy: true }); } catch (e) {}
+      const t = contar(mv) || esSan(moves[state.ply - 1].san);
+      anunciar("Jugada " + state.ply + " de " + moves.length + ": " + t + ".");
+    }
+
+    // La posición que se está mirando, para las preguntas del recuadro.
+    let vista = null;
+    function juegoVisto() {
+      if (state.mode === "practicar" && game) return game;
+      const fen = currentFen();
+      if (!vista || vista.__fen !== fen) { try { vista = new Chess(fen); vista.__fen = fen; } catch (e) { vista = null; } }
+      return vista;
+    }
+
+    function alEscribir(texto, api) {
+      const t = sinTildes(texto);
+      if (state.mode === "practicar") {
+        if (/^(terminar|salir|parar)( la practica)?$/.test(t)) { stopPractice(); api.limpiar().decir("Terminaste la práctica."); return; }
+        if (thinking) { api.decir("El motor está pensando: espera su jugada."); return; }
+        if (pendingPromo) { api.decir("Elige la pieza para coronar con los botones de debajo."); return; }
+        if (game.turn() !== human) { api.decir("No es tu turno todavía."); return; }
+        const mv = jugadaEscrita(game, texto);
+        if (!mv) { api.decir("Jugada no válida: «" + texto.trim() + "». Revísala e intenta de nuevo, o pregunta «posición» o «caballos»."); return; }
+        const hecha = game.move({ from: mv.from, to: mv.to, promotion: mv.promotion || undefined });
+        if (!hecha) { api.decir("Jugada no válida: «" + texto.trim() + "»."); return; }
+        api.limpiar().decir(""); sel = null; afterHuman();
+        return;
+      }
+      if (/^(practicar|jugar|jugar contra el motor)$/.test(t)) { api.limpiar(); startPractice(); return; }
+      if (/^girar( el tablero)?$/.test(t)) { api.limpiar(); state.flip = !state.flip; renderView(); api.decir(state.flip ? "Ahora ves el tablero desde las negras." : "Ahora ves el tablero desde las blancas."); return; }
+      const n = window.VisorLinea ? window.VisorLinea.pasoPedido(texto, state.ply, moves.length) : null;
+      if (n === null) { api.decir("No entendí «" + texto.trim() + "». Escribe «siguiente», «anterior», «jugada 5», «practicar» para jugar contra el motor, o una pregunta como «caballos»."); return; }
+      if (!hasSol) { api.decir("Esta posición no trae una línea para recorrer. Escribe «practicar» para jugarla contra el motor."); return; }
+      if (!state.showSol) { api.decir("Primero piensa la respuesta. Para ver la línea, usa el botón «Ver la solución»."); return; }
+      if (n < 0) { api.decir("Ya estás en la posición inicial."); return; }
+      if (n > moves.length) { api.decir("Ya estás en la última jugada de la línea."); return; }
+      api.limpiar().decir("");
+      irA(n);
+    }
+
+    montarCuadro(cmdHost, {
+      etiqueta: "Escribe tu jugada, recorre la línea o pregunta por la posición",
+      juego: juegoVisto,
+      // La posición no se dicta en cada jugada: se dice la jugada.
+      posicionViva: false,
+      onEnviar: alEscribir,
+    }, (api) => {
+      cuadro = api;
+      api.ayuda("Recorrer: «siguiente», «anterior», «jugada 5». Jugar contra el motor: «practicar», y luego la jugada («Cf3», «e4»). Preguntar: «posición», «caballos», «qué hay en e4».");
+      mostrarCuadro();
+    });
+    mostrarCuadro();
+
     el.addEventListener("click", (ev) => {
       const b = ev.target.closest("button"); if (!b) return;
       if (b.classList.contains("f100-showsol")) { state.showSol = true; renderMoves(); renderView(); return; }
-      if (b.dataset.ply) { if (state.mode !== "ver") return; state.ply = parseInt(b.dataset.ply, 10); renderView(); return; }
+      if (b.dataset.ply) { if (state.mode !== "ver") return; irA(parseInt(b.dataset.ply, 10)); return; }
       const act = b.dataset.act;
       if (state.mode === "ver") {
-        if (act === "first") state.ply = 0; else if (act === "prev") state.ply = Math.max(0, state.ply - 1);
-        else if (act === "next") state.ply = Math.min(moves.length, state.ply + 1); else if (act === "last") state.ply = moves.length;
-        if (["first", "prev", "next", "last"].includes(act)) { renderView(); return; }
+        if (act === "first") { irA(0); return; }
+        if (act === "prev") { irA(state.ply - 1); return; }
+        if (act === "next") { irA(state.ply + 1); return; }
+        if (act === "last") { irA(moves.length); return; }
       }
       if (act === "flip") { state.flip = !state.flip; state.mode === "ver" ? renderView() : renderPractice(); return; }
       if (act === "practice") { state.mode === "ver" ? startPractice() : stopPractice(); return; }
@@ -260,8 +407,8 @@
     });
     boardEl.addEventListener("keydown", (ev) => {
       if (state.mode !== "ver") return;
-      if (ev.key === "ArrowRight") { state.ply = Math.min(moves.length, state.ply + 1); renderView(); ev.preventDefault(); }
-      if (ev.key === "ArrowLeft") { state.ply = Math.max(0, state.ply - 1); renderView(); ev.preventDefault(); }
+      if (ev.key === "ArrowRight") { irA(state.ply + 1); ev.preventDefault(); }
+      if (ev.key === "ArrowLeft") { irA(state.ply - 1); ev.preventDefault(); }
     });
 
     // ----- práctica contra el motor -----
@@ -277,8 +424,9 @@
       expected = state.ply > 0 && d.fin && state.ply === moves.length ? d.fin : state.ply > 0 && d.fin ? d.fin : d.resultado;
       practBtn.textContent = "✕ Terminar la práctica";
       msgEl.textContent = "";
-      pst.textContent = "Juegas con " + (human === "w" ? "blancas" : "negras") + ". Objetivo: " + objetivo();
-      cmdForm.hidden = false;
+      pst.textContent = "Juegas con " + (human === "w" ? "blancas" : "negras") + ". Objetivo: " + objetivo()
+        + ". Haz la jugada en el tablero o escríbela en el recuadro.";
+      mostrarCuadro();
       PracticeEngine.preload();
       renderPractice();
     }
@@ -289,7 +437,8 @@
     }
     function stopPractice(final) {
       state.mode = "ver"; practBtn.textContent = "♟ Practicar contra el motor"; pst.textContent = "";
-      el.querySelector(".f100-promo").hidden = true; cmdForm.hidden = true; thinking = false;
+      el.querySelector(".f100-promo").hidden = true; thinking = false;
+      mostrarCuadro();
       if (!final) msgEl.textContent = "";
       renderView();
     }
@@ -321,17 +470,6 @@
       sel = p && p.color === human ? sq : null;
       renderPractice();
     });
-    cmdForm.addEventListener("submit", (ev) => {
-      ev.preventDefault();
-      if (state.mode !== "practicar" || thinking || pendingPromo) return;
-      const raw = cmdInput.value;
-      if (!raw.trim()) return;
-      if (game.turn() !== human) { msgEl.textContent = "No es tu turno todavía."; return; }
-      if (typeof ChessMoveParser === "undefined") { msgEl.textContent = "Falta cargar el intérprete de jugadas."; return; }
-      const mv = ChessMoveParser.tryParseMove(game, raw);
-      if (!mv) { msgEl.textContent = 'Jugada no válida: "' + raw + '". Revísala e intenta de nuevo.'; return; }
-      cmdInput.value = ""; sel = null; afterHuman();
-    });
     function finishPromotion(piece) {
       if (!pendingPromo) return;
       game.move({ from: pendingPromo.from, to: pendingPromo.to, promotion: piece });
@@ -357,6 +495,10 @@
     }
     async function afterHuman() {
       renderPractice();
+      // La jugada propia también se dice: quien la escribió oye que entró, y
+      // quien la hizo con el ratón y la lupa, cuál quedó.
+      const hist = game.history({ verbose: true });
+      if (hist.length) anunciar("Jugaste: " + contar(hist[hist.length - 1]) + ".");
       if (checkEnd()) return;
       thinking = true; pst.textContent = "El motor piensa…";
       let uci = null;
@@ -365,8 +507,11 @@
       thinking = false;
       if (state.mode !== "practicar") return;
       if (!uci) { renderPractice("El motor no respondió. Prueba de nuevo o recarga la página."); return; }
-      game.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci.length > 4 ? uci[4] : undefined });
-      pst.textContent = "Juegas con " + (human === "w" ? "blancas" : "negras") + ". Te toca.";
+      const rival = game.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci.length > 4 ? uci[4] : undefined });
+      /* La jugada del motor, DICHA. Antes solo decía «Te toca», y quien no ve
+         el tablero no tenía forma de saber qué había cambiado sin volver a oír
+         la posición entera. */
+      pst.textContent = "El motor jugó: " + contar(rival) + ". Te toca.";
       renderPractice();
       checkEnd();
     }
