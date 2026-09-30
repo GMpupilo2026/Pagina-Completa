@@ -391,6 +391,37 @@ página se queda en «Comprobando tu sesión…» para siempre—, que toda pág
 use `js/supabase-client.js` cargue antes la librería, y que el archivo siga
 siendo el de npm sin editar a mano.
 
+### Las dependencias se vigilan solas
+
+Salió de la revisión para ISO 27001 (control 8.8, vulnerabilidades técnicas).
+Las versiones están fijadas en `package.json` —a propósito: lo que corre es lo
+que está commiteado—, y eso tiene la contracara: si sale un arreglo de
+seguridad de Supabase o de Sentry, nadie se entera.
+
+- **Dependabot** (`.github/dependabot.yml`) abre un PR cada lunes con lo que
+  tenga versión nueva (npm) y una vez al mes con las acciones del CI. Las
+  herramientas de desarrollo (Playwright, esbuild, Tailwind) van en un solo PR.
+  **chess.js y three quedan fijados**: el sitio está escrito contra su API
+  (chess.js 1.x la cambió entera), así que solo se ofrecen parches; Tailwind,
+  sin saltar a la 4.
+- **Un PR que sube una librería de `js/vendor/` sale en rojo, y está bien**:
+  `verificar-vendor.js` compara la copia con el paquete. Se trae la rama, se
+  corre `node herramientas/vendor.js` y se commitea la copia. La versión que
+  llega al navegador de la gente no cambia sin que alguien la mire.
+- **`npm audit`** corre en `.github/workflows/dependencias.yml`: en los PR que
+  tocan `package.json` o su lock, cada lunes y a mano. **No en todos los PR**:
+  un aviso nuevo de npm aparece sin que nadie cambie nada y dejaría en rojo
+  cualquier PR que no tiene que ver. Frena desde «high»; lo moderado se lee en
+  el informe. Al 30 de setiembre de 2026 daba 0 vulnerabilidades.
+- **Lo que no se puede encender desde el repositorio**: las alertas de
+  Dependabot y sus arreglos de seguridad automáticos son un interruptor de
+  GitHub (Settings › Code security › Dependabot alerts y Dependabot security
+  updates). Hay que encenderlos a mano, una vez; sin eso Dependabot abre
+  los PR de versiones nuevas pero no avisa de una vulnerabilidad publicada.
+- Queda fuera el modelo de transcripción de `reportes.html`
+  (`@huggingface/transformers@3.3.3`, desde jsDelivr): va con la versión
+  exacta, que en npm no se puede volver a publicar, pero sin `integrity`.
+
 ## Los errores de la gente llegan a Sentry
 
 Hasta acá, cuando algo se caía en la computadora o el celular de alguien —un

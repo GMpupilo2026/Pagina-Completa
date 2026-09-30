@@ -84,6 +84,7 @@
                                     <li><a href="#novedades" data-ir="novedades" class="admin-nav flex items-center gap-3 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold text-brand-100 hover:bg-brand-800 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true" class="w-5 text-center">📣</span><span>Avisos internos</span></a></li>
                                     <li><a href="#torneos" data-ir="torneos" class="admin-nav flex items-center gap-3 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold text-brand-100 hover:bg-brand-800 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true" class="w-5 text-center">🏆</span><span>Salas de torneos</span></a></li>
                                     <li><a href="#preparacion" data-ir="preparacion" class="admin-nav flex items-center gap-3 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold text-brand-100 hover:bg-brand-800 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true" class="w-5 text-center">🔭</span><span>Preparación de rivales</span></a></li>
+                                    <li><a href="#auditoria" data-ir="auditoria" class="admin-nav flex items-center gap-3 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold text-brand-100 hover:bg-brand-800 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true" class="w-5 text-center">🧾</span><span>Registro de cambios</span></a></li>
                                 </ul>
                             </div>
                         </div>
@@ -464,6 +465,34 @@
                     </div>
                 </section>
 
+                <!-- ===== Registro de cambios =====
+                     La bitácora de auditoría (public.auditoria): quién cambió
+                     permisos, cuentas, accesos y cobros, y cuándo. La escriben
+                     triggers en la base; nadie la puede cambiar ni borrar. La
+                     pinta js/admin-auditoria.js. Ver «La bitácora de auditoría»
+                     en docs/decisiones/permisos-y-roles.md. -->
+                <section data-seccion="auditoria" aria-labelledby="titulo-auditoria" hidden>
+                    <h2 id="titulo-auditoria" class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-1">Registro de cambios</h2>
+                    <p class="text-sm text-brand-500 dark:text-brand-300 mb-5">Quién cambió qué en los permisos, las cuentas, los accesos y los cobros, y cuándo. Lo anota la base sola y no se puede cambiar ni borrar; se guarda dos años.</p>
+                    <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
+                        <div class="flex flex-wrap items-end gap-3 mb-4">
+                            <div>
+                                <label for="aud-filtro" class="block text-xs font-medium text-brand-500 dark:text-brand-300 mb-1">Mostrar</label>
+                                <select id="aud-filtro" class="px-3 py-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500">
+                                    <option value="">Todo</option>
+                                    <option value="permisos">Permisos y cuentas</option>
+                                    <option value="acceso">Accesos y academias</option>
+                                    <option value="cobros">Cobros y pagos</option>
+                                </select>
+                            </div>
+                            <button type="button" id="aud-actualizar" class="text-sm font-semibold text-accent-700 dark:text-accent-400 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded py-2">↻ Actualizar</button>
+                        </div>
+                        <p id="aud-estado" role="status" aria-live="polite" class="text-sm text-brand-500 dark:text-brand-300 mb-3">Cargando…</p>
+                        <ol id="aud-lista" class="divide-y divide-brand-100 dark:divide-brand-800"></ol>
+                        <button type="button" id="aud-mas" hidden class="mt-4 border border-brand-200 dark:border-brand-700 hover:border-accent-400 text-brand-600 dark:text-brand-300 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Ver 50 más</button>
+                    </div>
+                </section>
+
                 <!-- ===== Preparación de rivales =====
                      A qué profesores se les activa preparacion-rivales.html. La
                      lista la escribe activar_preparacion_rivales() en la base;
@@ -509,6 +538,7 @@
     <script src="js/escenarios-sala.js"></script>
     <script src="js/admin-salas-torneo.js"></script>
     <script src="js/admin-preparacion.js"></script>
+    <script src="js/admin-auditoria.js"></script>
     <script src="js/pendientes.js"></script>
     <script src="js/admin.js"></script>
 <!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- ayuda: inicio --><script src="js/ayuda-guia.js" defer></script><!-- ayuda: fin --><!-- atajo: inicio --><script src="js/atajo-buscar.js" data-arriba="" defer></script><!-- atajo: fin --></body>
