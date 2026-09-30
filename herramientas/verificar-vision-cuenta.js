@@ -231,8 +231,8 @@ async function pruebaTodoDesdeElRecuadro(browser) {
     await page.evaluate(() => { const t = document.getElementById("board"); return [t.checkVisibility(), t.getAttribute("aria-hidden"), t.querySelectorAll("[tabindex='0']").length]; }),
     [true, "true", 0]);
   const decir = async (t) => {
-    await page.fill(".cc-input", t);
-    await page.press(".cc-input", "Enter");
+    await page.fill(".cc-caja .cc-input", t);
+    await page.press(".cc-caja .cc-input", "Enter");
     await esperar(250);
     return page.evaluate(() => document.querySelector(".cc-msg").textContent);
   };
@@ -250,6 +250,36 @@ async function pruebaTodoDesdeElRecuadro(browser) {
   cierto("«ir a e4» contesta qué hay ahí sin mover el foco (" + casilla + ")", /eva 4|e4/.test(casilla) && await page.evaluate(() => document.activeElement.className === "cc-input"));
   cierto("«Nf3» o una jugada sigue llegando a la página (no la come la capa de acciones)",
     !/^Listo:/.test(await decir("Nf3")));
+  /* Lo que encontró la recorrida como alumna ciega: «posición» apretaba ⏮
+     («Posición inicial») porque el nombre empezaba igual; «solución» no
+     encontraba «Ver solución»; un recuadro apretaba el botón de OTRO
+     ejercicio de la misma sección; y lo mal escrito se quedaba y lo siguiente
+     se pegaba detrás. */
+  await page.evaluate(() => {
+    const cerca = document.querySelector(".cc-caja").parentNode;
+    const b1 = document.createElement("button"); b1.type = "button"; b1.id = "p-ini"; b1.setAttribute("aria-label", "Posición inicial"); b1.textContent = "⏮";
+    b1.addEventListener("click", () => { window.__inicial = 1; });
+    const b2 = document.createElement("button"); b2.type = "button"; b2.id = "p-sol"; b2.textContent = "💡 Ver solución";
+    b2.addEventListener("click", () => { window.__sol = 1; });
+    cerca.append(b1, b2);
+    // Otro ejercicio en la misma página, con su recuadro y su propio «Ver solución».
+    const otro = document.createElement("div");
+    otro.innerHTML = '<form><input class="cc-input" aria-label="otro recuadro"></form><button type="button" id="otra-sol">Ver solución</button>';
+    otro.querySelector("#otra-sol").addEventListener("click", () => { window.__otraSol = 1; });
+    // ANTES en el documento: con la zona mal tomada, sería el primero en encontrarse.
+    document.querySelector("main").prepend(otro);
+  });
+  const posi = await decir("posición");
+  igual("«posición» dice la posición y NO aprieta «Posición inicial»", [await page.evaluate(() => window.__inicial || 0), /Blancas/.test(posi)], [0, true]);
+  await decir("solución");
+  igual("«solución» aprieta «Ver solución» de SU ejercicio, no el del otro recuadro",
+    await page.evaluate(() => [window.__sol || 0, window.__otraSol || 0]), [1, 0]);
+  await page.fill(".cc-caja .cc-input", "zzqq");
+  await page.press(".cc-caja .cc-input", "Enter");
+  await esperar(250);
+  igual("lo que no se entendió queda seleccionado: lo siguiente lo reemplaza",
+    await page.evaluate(() => { const c = document.querySelector(".cc-caja .cc-input"); return c.value && c.selectionStart === 0 && c.selectionEnd === c.value.length; }), true);
+
   await page.keyboard.press("Alt+Shift+KeyB");
   await esperar(250);
   cierto("Alt + Mayúscula + B dice la posición en el recuadro", /Blancas|blancas/.test(await page.evaluate(() => document.querySelector(".cc-msg").textContent)));

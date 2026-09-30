@@ -738,6 +738,10 @@ async function cargarMios() {
   if (error) { $("mios-vacia").textContent = "No se pudieron cargar: " + error.message; $("mios-vacia").classList.remove("hidden"); }
 }
 
+/* El título va de encabezado (h3) para saltar de examen en examen, y el
+   enlace dice cuál abre: con lector de pantalla la lista de enlaces era
+   «Empezar, Empezar, Seguir». La nota sola («—», «6.67») tampoco decía qué
+   era. */
 function tarjetaAlumno(e, pendiente) {
   const div = document.createElement("div");
   const vencido = pendiente && new Date(e.vence_at) < new Date() && e.estado === "asignado";
@@ -746,16 +750,16 @@ function tarjetaAlumno(e, pendiente) {
   div.innerHTML = `
     <div class="flex items-start justify-between gap-3">
       <div class="min-w-0">
-        <p class="font-semibold text-brand-800 dark:text-white text-sm">${escapeHtml(e.titulo)}</p>
+        <h3 class="font-semibold text-brand-800 dark:text-white text-sm">${escapeHtml(e.titulo)}</h3>
         <p class="text-xs text-brand-450 dark:text-brand-350">De ${escapeHtml(e.profesor_nombre || "tu profe")} · ${e.preguntas} preguntas · ${e.minutos} minutos</p>
         <p class="text-xs ${vencido ? "text-red-600 dark:text-red-400 font-semibold" : "text-brand-450 dark:text-brand-350"}">
           ${vencido ? "Se pasó la fecha: " : "Se puede hacer hasta "}${fecha(e.vence_at)}</p>
       </div>
       <div class="shrink-0 text-right">
         ${pendiente
-          ? (vencido ? "" : `<a href="examen.html?id=${encodeURIComponent(e.id)}" class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">${e.estado === "en_curso" ? "Seguir" : "Empezar"}</a>`)
+          ? (vencido ? "" : `<a href="examen.html?id=${encodeURIComponent(e.id)}" class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" aria-label="${e.estado === "en_curso" ? "Seguir" : "Empezar"} el examen: ${escapeHtml(e.titulo)}">${e.estado === "en_curso" ? "Seguir" : "Empezar"}</a>`)
           : `<p class="text-xs font-semibold ${COLOR_ESTADO[e.estado]}">${TEXTO_ESTADO[e.estado]}</p>
-             <p class="font-serif text-2xl font-bold text-brand-800 dark:text-white">${nota}</p>`}
+             <p class="font-serif text-2xl font-bold text-brand-800 dark:text-white"><span aria-hidden="true">${nota}</span><span class="sr-only">${e.nota != null ? "Nota: " + nota : "Sin nota"}</span></p>`}
       </div>
     </div>`;
   return div;

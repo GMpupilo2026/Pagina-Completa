@@ -132,14 +132,32 @@ const texto = (page, sel) => page.evaluate((s) => { const e = document.querySele
     igual("«siguiente» avanza", await texto(page, "#visor-estado"), "Jugada 1. e4");
     await page.waitForTimeout(150);
     igual("y la jugada se dice en palabras, no «e4» deletreado", await texto(page, "#visor-anuncio"), "Jugada 1: el peón blanco va de eva 2 a eva 4.");
-    await page.fill("#visor-cmd .cc-input", "jugada 3"); await page.press("#visor-cmd .cc-input", "Enter");
-    igual("«jugada 3» va a esa jugada", await texto(page, "#visor-estado"), "Jugada 2. Cf3");
+    /* La partida se anuncia con su número («Jugada 1 de las negras»), así que
+       «jugada 2» es la jugada 2 de las BLANCAS, no la segunda media jugada
+       (que es 1… e5): contando medias jugadas, llevaba a otra que la pedida. */
+    await page.fill("#visor-cmd .cc-input", "jugada 1 negras"); await page.press("#visor-cmd .cc-input", "Enter");
+    igual("«jugada 1 negras» va a la de las negras", await texto(page, "#visor-estado"), "Jugada 1… e5");
+    await page.fill("#visor-cmd .cc-input", "jugada 2 de las negras"); await page.press("#visor-cmd .cc-input", "Enter");
+    igual("«jugada 2 de las negras» también", await texto(page, "#visor-estado"), "Jugada 2… Cc6");
+    await page.fill("#visor-cmd .cc-input", "jugada 2"); await page.press("#visor-cmd .cc-input", "Enter");
+    igual("«jugada 2» es la jugada 2 de las blancas", await texto(page, "#visor-estado"), "Jugada 2. Cf3");
     await page.fill("#visor-cmd .cc-input", "caballos"); await page.press("#visor-cmd .cc-input", "Enter");
     igual("«caballos» se contesta sobre la posición que se ve", /caballos blancos en bella 1 y felix 3/.test(await texto(page, "#visor-cmd .cc-msg")), "true");
     await page.focus('#board [data-square="e4"]');
     await page.keyboard.press("ArrowRight");
     igual("con el foco en el tablero, → mueve de casilla y no cambia de jugada",
       [await texto(page, "#visor-estado"), await page.evaluate(() => document.activeElement.dataset.square)], ["Jugada 2. Cf3", "f4"]);
+    // Con la cuenta ciega, abrir una clase deja el foco en el recuadro (del
+    // título había veinte paradas de Tab hasta él) y dice qué clase se abrió.
+    await page.evaluate(() => document.documentElement.classList.add("modo-ciego"));
+    await page.click('#lista-clases [data-id="p1"]');
+    igual("con la cuenta ciega, al abrir una clase el foco va al recuadro",
+      await page.evaluate(() => !!document.activeElement && document.activeElement.matches("#visor-cmd .cc-input")), "true");
+    igual("y el recuadro dice qué clase se abrió",
+      /^La defensa de los dos caballos/.test(await texto(page, "#visor-cmd .cc-msg")), "true");
+    await page.evaluate(() => document.documentElement.classList.remove("modo-ciego"));
+    await page.click('#lista-clases [data-id="p1"]');
+    igual("sin la cuenta ciega, sigue yendo al título", await page.evaluate(() => document.activeElement && document.activeElement.id), "visor-titulo");
     await page.evaluate(() => { document.documentElement.classList.remove("adaptive-mode"); document.dispatchEvent(new CustomEvent("adaptivemode:change", { detail: { activo: false } })); });
 
     igual("una clase sin preguntas no muestra la sección", await page.evaluate(() => document.getElementById("visor-preguntas").checkVisibility()), "false");

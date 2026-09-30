@@ -1080,12 +1080,24 @@
 
   // Describe una jugada del historial (verbose de chess.js) en español hablado, para los
   // anuncios de "repetir jugadas" y del comando "L" (escuchar la jugada anterior).
+  /* El enroque y la coronación se dicen con su nombre. Antes el enroque sonaba
+     «rey de eva 1 a gustav 1» (sin decir que la torre también se movió) y la
+     coronación «peón de eva 7 a eva 8», sin la pieza nueva: quien no ve el
+     tablero creía que seguía teniendo un peón en la octava. Los flags de
+     chess.js lo dicen: «k» corto, «q» largo, y `promotion` la pieza. */
   function describeMove(m, moveNum) {
     const colorTxt = m.color === "w" ? "blancas" : "negras";
     const pieceName = (PIECE_INFO[m.piece] && PIECE_INFO[m.piece].name) || "pieza";
     const captureTxt = m.captured ? ", captura" : "";
     const checkTxt = /#/.test(m.san) ? ", jaque mate" : /\+/.test(m.san) ? ", jaque" : "";
-    return `Jugada ${moveNum}, ${colorTxt}: ${pieceName} de ${spokenSquare(m.from)} a ${spokenSquare(m.to)}${captureTxt}${checkTxt}.`;
+    const flags = m.flags || "";
+    if (flags.indexOf("k") >= 0 || flags.indexOf("q") >= 0) {
+      return `Jugada ${moveNum}, ${colorTxt}: enroque ${flags.indexOf("k") >= 0 ? "corto" : "largo"}${checkTxt}.`;
+    }
+    const coronaTxt = m.promotion
+      ? ", corona " + ((PIECE_INFO[m.promotion] && PIECE_INFO[m.promotion].name) || "pieza")
+      : "";
+    return `Jugada ${moveNum}, ${colorTxt}: ${pieceName} de ${spokenSquare(m.from)} a ${spokenSquare(m.to)}${captureTxt}${coronaTxt}${checkTxt}.`;
   }
 
   // Comando "L" (escuchar la jugada anterior): anuncia sólo la última jugada realizada,
@@ -1655,19 +1667,26 @@
 
     if (isBotThinking) {
       announceMoveInput("Espera a que Oscar termine de pensar.");
+      moveInputEl.select();
       return true;
     }
     if (isGameOver()) {
       announceMoveInput("La partida ya terminó.");
       return true;
     }
+    /* Lo que no se pudo jugar se queda en el recuadro, pero SELECCIONADO: si
+       no, lo siguiente que se escribía se pegaba detrás («e4e5») y volvía a
+       fallar, y sin ver el recuadro no hay cómo saber que tenía texto.
+       Seleccionado, lo nuevo lo reemplaza (y una flecha deja corregirlo). */
     if (game.turn() !== userColor) {
       announceMoveInput("No es tu turno todavía.");
+      moveInputEl.select();
       return true;
     }
     const result = tryParseMove(raw);
     if (!result) {
       announceMoveInput(`No se entendió la jugada "${raw.trim()}". Revisa la notación e intenta de nuevo.`);
+      moveInputEl.select();
       return true;
     }
     moveInputEl.value = "";
@@ -2248,6 +2267,16 @@
   // tablero compacto de index.html, que comparten este mismo script.
   boardEl.setAttribute("aria-label", "Tablero de ajedrez");
   boardEl.setAttribute("aria-roledescription", "tablero de ajedrez");
+  /* Alt + Mayúscula + B dice la posición en todo el sitio (js/vision-cuenta.js):
+     busca el tablero más grande y le pide la partida a la configuración que deja
+     TableroAccesible (`__tableroAccesibleCfg.juego`). Este tablero no monta
+     TableroAccesible —tiene su propio teclado, más rico, y montarlo encima
+     haría que cada flecha moviera el foco dos veces—, así que se deja solo esa
+     configuración, con la misma forma. Sin ella, acá el atajo contestaba «En
+     esta página no hay una posición que decir» con una partida en juego. */
+  if (!boardEl.__tableroAccesibleCfg) {
+    boardEl.__tableroAccesibleCfg = { nombre: "Tablero de ajedrez", juego: () => game };
+  }
 
   /* EN MODO ADAPTADO EL TABLERO SE ANUNCIA COMO `application`, y no es un adorno:
      con el rol de siempre, NVDA y JAWS están en su modo de lectura y se quedan

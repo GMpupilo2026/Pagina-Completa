@@ -525,6 +525,23 @@ async function main() {
     ok(enlaces.some((h) => /entreno\/temas\.html\?tema=ultima-linea&tarea=t-vencida/.test(h)),
       `el enlace no lleva al tema con su tarea: ${JSON.stringify(enlaces)}`);
 
+    // Con lector de pantalla, cada enlace dice a qué va y de qué tarea es (la
+    // lista de enlaces era «Ir, Ir, Ir»), el título es un encabezado para
+    // saltar de tarea en tarea, y el avance se dice «1 de 3», no «1/3».
+    const nombres = await pagina.$$eval("#pendientes-lista a", (els) => els.map((e) => e.getAttribute("aria-label") || e.textContent.trim()));
+    ok(nombres.length && nombres.every((n) => /^(Ir|Repasar): .{8,} \(tarea «.+»\)$/.test(n)),
+      `los enlaces no dicen a qué van: ${JSON.stringify(nombres)}`);
+    ok(await pagina.$$eval("#pendientes-lista > div h3, #completadas-lista > div h3", (e) => e.length) === 2,
+      "el título de cada tarea no es un encabezado");
+    const avance = await pagina.$eval("#pendientes-lista > div", (d) => {
+      // Lo que llega al lector: el texto sin lo que va con aria-hidden.
+      const w = document.createTreeWalker(d, NodeFilter.SHOW_TEXT);
+      let t = "", n;
+      while ((n = w.nextNode())) if (!n.parentElement.closest("[aria-hidden=true]")) t += n.textContent + " ";
+      return t.replace(/\s+/g, " ");
+    });
+    ok(/\d de \d hechas?/.test(avance) && !/\d\/\d/.test(avance), `el avance no se dice «1 de 3 hechas»: ${avance.slice(0, 200)}`);
+
     // Marcar el renglón de curso manda el update a tarea_items, por su id.
     // Ojo: marcar UNO de tres no completa la tarea —eso lo decide la base
     // cuando están los tres—, así que lo que tiene que cambiar es el renglón,

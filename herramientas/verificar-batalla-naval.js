@@ -290,6 +290,10 @@ async function navegador() {
     cierto("«historial» repasa los disparos", /^Tus disparos\. /.test(hist) && hist.indexOf(hablar(agua) + ": agua, " + n) !== -1, hist.slice(0, 90));
     const nivelBtn = await page.$eval("#niveles button[aria-pressed='true']", (b) => b.textContent);
     cierto("el botón del nivel dice las estrellas en palabras", /3 de 3 estrellas/.test(nivelBtn), nivelBtn);
+    /* El nombre del botón junta sus dos renglones sin espacio: «acciones» y el
+       lector decían «…contra la computadorasin ganar todavía». */
+    const pegados = await page.$$eval("#niveles button", (bs) => bs.map((b) => b.textContent).filter((t) => /[a-záéíóú][A-Za-z]*[a-záéíóú](sin |\d de 3)/.test(t) && !/, (sin |\d de 3)/.test(t)));
+    cierto("el nombre de cada nivel no se pega con lo que dice debajo", !pegados.length, pegados.join(" | "));
 
     console.log("\n— La pista y el teclado —");
     await escribir(page, "nivel 2");

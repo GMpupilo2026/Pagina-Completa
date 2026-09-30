@@ -222,6 +222,7 @@ function applyBlindModeUI(){
   if(refreshSpeechToggle) refreshSpeechToggle();
   renderPositionReadout();
   if(currentLesson) updateBlindInputVisibility();
+  if(currentLesson) document.getElementById('lesson-text').textContent = textoDeLeccion(currentLesson);
 }
 function setBlindMode(value){
   blindMode = !!value;
@@ -268,13 +269,40 @@ function blindHandleSquareGuess(square){
   }
 }
 
-// Jugadas: se escribe origen y destino separados por espacio (o pegados,
-// ej. "e1g1"); acepta ambas formas.
+/* Las dos casillas dichas como se oyen: «eva 1 felix 1» → ["e1", "f1"]. Cada
+   pedazo pasa por CuadroComandos.casillaPedida(), que es donde vive la forma
+   hablada de las columnas. */
+function casillasDichas(raw){
+  if(!window.CuadroComandos) return [];
+  const t = CuadroComandos.normalizar(raw).replace(/[,.\-]/g, ' ');
+  const partes = t.match(/[a-zñ]+\s?[1-8]/g) || [];
+  return partes.map((x) => CuadroComandos.casillaPedida(x)).filter(Boolean);
+}
+
+// Jugadas: la notación de siempre en español o en inglés («Rf1», «Cf3»,
+// «O-O», «enroque corto»), el origen y el destino («e1 g1», «e1g1») y las
+// casillas dichas («eva 1 felix 1»).
 function blindHandleMoveGuess(raw){
   if(lessonLocked) return;
-  const clean = raw.trim().toLowerCase().replace(/[^a-h1-8]/g, '');
+  /* Antes se borraba todo lo que no fuera a-h o 1-8 y se exigían cuatro
+     caracteres: «Rf1» quedaba en «f1» y la respuesta era «escribe el origen y
+     el destino», aunque fuera la jugada correcta dicha como se dice. La jugada
+     la resuelve ComandosTablero.jugadaEscrita(), la misma de todo el sitio, que
+     la busca entre las legales sin tocar la partida. */
+  let mv = window.ComandosTablero ? ComandosTablero.jugadaEscrita(game, raw) : null;
+  if(!mv){
+    const dichas = casillasDichas(raw);
+    if(dichas.length === 2 && window.ComandosTablero) mv = ComandosTablero.jugadaEscrita(game, dichas[0] + dichas[1]);
+  }
+  if(mv){
+    moverPreguntandoCoronacion(mv.from, mv.to, blindResolverJugada);
+    return;
+  }
+  // No se entendió como jugada legal: se dice por qué, con las casillas si las hay.
+  const dichas = casillasDichas(raw);
+  const clean = dichas.length === 2 ? dichas.join('') : raw.trim().toLowerCase().replace(/[^a-h1-8]/g, '');
   if(clean.length !== 4){
-    setStatus('Escribe la casilla de origen y la de destino, por ejemplo "e1 g1".', 'bad');
+    setStatus('No entendí esa jugada. Escríbela como «Rf1», «Cf3», «enroque corto» o con el origen y el destino, por ejemplo «e1 g1».', 'bad');
     return;
   }
   const from = clean.slice(0, 2), to = clean.slice(2, 4);
@@ -395,17 +423,28 @@ function buildTabs(){
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'tab' + (cat === currentCategory ? ' active' : '');
+    btn.setAttribute('aria-pressed', cat === currentCategory ? 'true' : 'false');
     btn.style.setProperty('--tab-color', `var(${CATEGORY_VAR[cat]})`);
     btn.innerHTML = `${CATEGORY_LABEL[cat]} <span class="n">${hechas}/${total}</span>`;
-    btn.addEventListener('click', () => { currentCategory = cat; showList(); });
+    btn.addEventListener('click', () => { currentCategory = cat; showList(true); });
     tabs.appendChild(btn);
   });
 }
 
-function showList(){
+/* `enfocar`: al elegir una categoría (o volver de una lección) las pestañas y
+   la lección se repintan y el foco caía al <body>: quien no ve se quedaba sin
+   saber dónde estaba. Va al título de la lista, que dice qué se abrió. */
+function showList(enfocar){
   document.getElementById('lesson-view').style.display = 'none';
   document.getElementById('list-view').style.display = 'block';
   buildTabs();
+  const titulo = document.getElementById('list-title');
+  if(titulo){
+    const lista = currentCategory === 'asignaciones' ? ASIGNACIONES : lessonsFor(currentCategory);
+    const hechas = currentCategory === 'asignaciones' ? asignacionesHechas() : countSolved(lista);
+    titulo.textContent = `${CATEGORY_LABEL[currentCategory]}: ${hechas} de ${lista.length} hechas`;
+    if(enfocar) titulo.focus();
+  }
   const box = document.getElementById('lesson-list');
   box.innerHTML = '';
   if(currentCategory === 'asignaciones'){ showAsignaciones(box); return; }
@@ -668,12 +707,22 @@ function resetLesson(){
   updateBlindInputVisibility();
 }
 
+/* En Modo Adaptado no se hace clic: se escribe. El enunciado decía «Haz clic
+   en todas las casillas…» a quien contesta en el recuadro. */
+function textoDeLeccion(lesson){
+  if(!blindMode) return lesson.text;
+  return lesson.text
+    .replace('Haz clic en todas las casillas a las que puede llegar.', 'Escribe en el recuadro, de a una, todas las casillas a las que puede llegar.')
+    .replace('Haz clic en el rey y luego dos casillas a la derecha.', 'Escribe la jugada del rey dos casillas a la derecha: «enroque corto», «O-O» o «e1 g1».')
+    .replace(/Haz clic en /g, 'Escribe ');
+}
+
 function openLesson(lesson){
   currentLesson = lesson;
   document.getElementById('list-view').style.display = 'none';
   document.getElementById('lesson-view').style.display = 'block';
   document.getElementById('lesson-title').textContent = lesson.title;
-  document.getElementById('lesson-text').textContent = lesson.text;
+  document.getElementById('lesson-text').textContent = textoDeLeccion(lesson);
   resetLesson();
   /* El botón de la lección desaparece con la lista y el foco se iba al <body>:
      quien usa teclado se quedaba sin saber dónde estaba. El título se lee
@@ -686,7 +735,7 @@ function openLesson(lesson){
 
 document.getElementById('back-to-list').addEventListener('click', (e) => {
   e.preventDefault();
-  showList();
+  showList(true);
 });
 document.getElementById('retry-btn').addEventListener('click', resetLesson);
 document.getElementById('next-btn').addEventListener('click', () => {
@@ -695,7 +744,7 @@ document.getElementById('next-btn').addEventListener('click', () => {
   if(idx >= 0 && idx < list.length - 1){
     openLesson(list[idx + 1]);
   } else {
-    showList();
+    showList(true);
   }
 });
 document.getElementById('quiz-mate-btn').addEventListener('click', () => answerQuiz('mate'));

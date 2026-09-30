@@ -265,7 +265,7 @@
 
       <div id="celebration">
         <span class="big-emoji" aria-hidden="true">🎉</span>
-        <h3 id="celebration-title" class="font-serif text-xl font-bold text-brand-800 dark:text-white">¡Serie completada!</h3>
+        <h3 id="celebration-title" tabindex="-1" class="font-serif text-xl font-bold text-brand-800 dark:text-white">¡Serie completada!</h3>
         <div class="confetti-row" aria-hidden="true">🎊✨🎊✨🎊</div>
         <div class="stars-big" id="celebration-stars"></div>
         <p class="stats" id="celebration-stats"></p>
@@ -274,6 +274,9 @@
           <button type="button" class="bctrl primary" id="celebration-next-btn">Siguiente serie →</button>
         </div>
       </div>
+      <!-- El resultado de la serie, dicho: la celebración aparece de golpe y el
+           lector no lee lo que aparece si no es una región viva ya presente. -->
+      <p id="celebration-anuncio" class="sr-only" role="status"></p>
     </div>
   </main>
 </div>
@@ -306,5 +309,5 @@
 <script src="../js/repaso-espaciado.js"></script>
 <script src="../js/repaso-fallados.js"></script>
 <script src="../js/entreno-practicas.js"></script>
-<!-- burbuja: inicio --><script src="../js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="../js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- acceso: inicio --><script src="../js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="../js/modo-vista.js" defer></script><!-- modo-vista: fin --><!-- marca: inicio --><script src="../js/marca-academia.js" defer></script><!-- marca: fin --><!-- ayuda: inicio --><script src="../js/ayuda-guia.js" defer></script><!-- ayuda: fin --><!-- atajo: inicio --><script src="../js/atajo-buscar.js" data-arriba="../" defer></script><!-- atajo: fin --></body>
+<!-- burbuja: inicio --><script src="../js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="../js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- aviso-profe: inicio --><script src="../js/aviso-profe.js" defer></script><!-- aviso-profe: fin --><!-- tanda: inicio --><script src="../js/tanda-diez.js" defer></script><!-- tanda: fin --><!-- acceso: inicio --><script src="../js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="../js/modo-vista.js" defer></script><!-- modo-vista: fin --><!-- marca: inicio --><script src="../js/marca-academia.js" defer></script><!-- marca: fin --><!-- ayuda: inicio --><script src="../js/ayuda-guia.js" defer></script><!-- ayuda: fin --><!-- atajo: inicio --><script src="../js/atajo-buscar.js" data-arriba="../" defer></script><!-- atajo: fin --></body>
 </html>

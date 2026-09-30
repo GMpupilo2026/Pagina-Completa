@@ -356,8 +356,10 @@ async function pruebaDiagnostico(browser) {
     // propio aviso, que es región viva.
     const aviso = await enPantalla(page, "#q-comandos .cc-msg");
     igual("el aviso dice qué quedó anotado", /Anotado: opción B/.test(aviso), "true");
+    // El enunciado va dicho: sus jugadas escritas («…Tc2», «O-O») en palabras.
+    const dichoAsi = (t) => page.evaluate((x) => (typeof enPalabras === "function" ? enPalabras(x) : x), t);
     igual("y lee la pregunta nueva, que si no nadie anunciaría",
-      aviso.includes(await enPantalla(page, "#q-text")) && !aviso.includes(enunciadoViejo), "true");
+      aviso.includes(await dichoAsi(await enPantalla(page, "#q-text"))) && !aviso.includes(await dichoAsi(enunciadoViejo)), "true");
     igual("y el foco se queda en el cuadro, listo para la siguiente",
       await page.evaluate(() => document.activeElement === document.querySelector("#q-comandos .cc-input")), "true");
 
@@ -409,7 +411,9 @@ async function pruebaDiagnostico(browser) {
         await page.evaluate((san) => {
           const t = document.querySelector("#q-comandos .cc-msg").textContent.toLowerCase();
           const dicha = BlindNotation.sanSpoken(san).toLowerCase();
-          return t.includes(dicha) && t.includes(document.getElementById("q-text").textContent.trim().toLowerCase());
+          // El enunciado también va dicho: sus jugadas escritas («…Tc2», «O-O») en palabras.
+          const q = document.getElementById("q-text").textContent.trim();
+          return t.includes(dicha) && t.includes((typeof enPalabras === "function" ? enPalabras(q) : q).toLowerCase());
         }, mv.san), "true");
     }
   }

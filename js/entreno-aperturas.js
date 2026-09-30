@@ -212,6 +212,14 @@ function montarComandos() {
 }
 
 function jugarEscribiendo(texto, api) {
+  /* «pista» escrita: el botón se llama «Enséñame la jugada», y quien no ve
+     escribe «pista» como en el resto de Entrenamiento. */
+  if (/^(pista|dame una pista|ensename la jugada|ensename)$/.test(CuadroComandos.normalizar(texto))) {
+    api.limpiar();
+    if (!meToca() || esperandoRival) { api.decir("Ahora no te toca mover."); return; }
+    pista();
+    return;
+  }
   if (esperandoRival || promoPendiente || indice >= linea.jugadas.length || !meToca()) {
     api.decir("Ahora no te toca mover.");
     return;
@@ -377,7 +385,12 @@ function pista() {
   if (!meToca() || indice >= linea.jugadas.length) return;
   pistas += 1;
   const esperada = linea.jugadas[indice];
-  decir("La jugada es " + aEspanol(esperada) + ". Hazla en el tablero.", "");
+  /* En Modo Adaptado se contesta escribiendo, y la jugada se dice en palabras:
+     «Hazla en el tablero» mandaba a quien no ve a un tablero que no usa. */
+  const adaptado = document.documentElement.classList.contains("adaptive-mode");
+  decir(adaptado
+    ? "La jugada es " + (window.BlindNotation && BlindNotation.sanSpoken ? BlindNotation.sanSpoken(esperada) : aEspanol(esperada)) + ". Escríbela en el recuadro."
+    : "La jugada es " + aEspanol(esperada) + ". Hazla en el tablero.", "");
   // Se marca de dónde sale, que es la mitad del trabajo de encontrarla.
   const prueba = new Chess(juego.fen());
   const m = prueba.move(esperada, { sloppy: true });
@@ -460,6 +473,8 @@ document.getElementById("volver-btn").addEventListener("click", () => {
   mostrar("vista-lista");
   pintarLista(document.getElementById("btn-repaso").classList.contains("active"));
   pintarResumen();
+  // El botón se escondió con el tablero: el foco va al título de la lista, no al <body>.
+  document.getElementById("lista-titulo").focus();
 });
 document.getElementById("pista-btn").addEventListener("click", pista);
 document.getElementById("reiniciar-btn").addEventListener("click", () => empezar(linea.id));

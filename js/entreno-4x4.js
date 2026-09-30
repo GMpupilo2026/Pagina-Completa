@@ -530,7 +530,17 @@ function renderBoard(){
       el.appendChild(sq);
     }
   }
+  /* Con la cuenta ciega el tablero es para quien acompaña: fuera del lector y
+     del Tab, como los que monta js/tablero-accesible.js (este no lo usa: es
+     de 4×4). Todo se hace desde el recuadro. */
+  if(modoCiego()){
+    el.setAttribute('aria-hidden', 'true');
+    el.querySelectorAll('.sq').forEach((s) => { s.tabIndex = -1; });
+  } else {
+    el.removeAttribute('aria-hidden');
+  }
 }
+function modoCiego(){ return document.documentElement.classList.contains('modo-ciego'); }
 
 function focusSquare(r,c){
   focusedCell = [r,c];
@@ -787,21 +797,45 @@ function announcePosition(){
 }
 
 // ---------- Comando "p <letra>": dónde están las piezas de un tipo ----------
+/* Los nombres de las piezas, en singular y plural, para «caballos», «mis
+   torres», «dónde está el rey». */
+const PIEZA_DICHA = {
+  rey:'K', reyes:'K', dama:'Q', damas:'Q', reina:'Q', reinas:'Q', torre:'R', torres:'R',
+  alfil:'B', alfiles:'B', caballo:'N', caballos:'N', peon:'P', peones:'P',
+};
+/* La letra de «P <letra>», en español o en inglés. OJO CON LA R: es Rey en
+   español y Rook (torre) en inglés; como las dos lecturas son razonables, «P R»
+   dice las dos. D, T, A y C son solo españolas; K, Q, B y N, solo inglesas. */
+const LETRA_TIPO = { K:['K'], Q:['Q'], B:['B'], N:['N'], P:['P'], D:['Q'], T:['R'], A:['B'], C:['N'], R:['K','R'] };
 function announcePieceType(letter){
-  const type = letter.toUpperCase();
-  if(!PIECE_NAME[type]){
-    cmdAnnounce(`No entendí "${letter}" como tipo de pieza. Usa K, Q, R, B, N o P.`);
+  const tipos = LETRA_TIPO[String(letter).toUpperCase()] || (PIECE_NAME[letter] ? [letter] : null);
+  if(!tipos){
+    cmdAnnounce(`No entendí "${letter}" como tipo de pieza. Usa R (rey), D (dama), T (torre), A (alfil), C (caballo) o P (peón); también K, Q, B y N.`);
     return;
   }
-  const squares = piecesByType()[type];
-  if(!squares.length){
-    cmdAnnounce(`No quedan ${PIECE_NAME_PLURAL[type].toLowerCase()} en el tablero.`);
+  if(tipos.length > 1){
+    cmdAnnounce(tipos.map((t) => lineaDeTipo(t)).join(' '));
     return;
   }
-  const label = squares.length === 1 ? PIECE_NAME[type] : PIECE_NAME_PLURAL[type];
-  cmdAnnounce(`${label}: ${joinSpanishList(squares)}.`);
+  cmdAnnounce(lineaDeTipo(tipos[0]));
 }
-
+function lineaDeTipo(type){
+  const squares = piecesByType()[type];
+  if(!squares.length) return `No quedan ${PIECE_NAME_PLURAL[type].toLowerCase()} en el tablero.`;
+  const label = squares.length === 1 ? PIECE_NAME[type] : PIECE_NAME_PLURAL[type];
+  return `${label}: ${joinSpanishList(squares)}.`;
+}
+// «mis jugadas»: todas las capturas que se pueden hacer ahora, pieza por pieza.
+function announceAllCaptures(){
+  const partes = [];
+  Object.keys(boardState).forEach((key) => {
+    const [r,c] = key.split(',').map(Number);
+    const piece = boardState[key];
+    const t = captureTargets(piece, r, c, boardState);
+    if(t.length) partes.push(`${PIECE_NAME[piece]} de ${squareSpokenRC(r,c)} captura en ${joinSpanishList(t.map(([tr,tc]) => squareSpokenRC(tr,tc)))}`);
+  });
+  cmdAnnounce(partes.length ? `Capturas posibles: ${partes.join('; ')}.` : 'No queda ninguna captura posible: escribe «reiniciar» para volver a empezar.');
+}
 // ---------- Comando "s <columna|fila>": piezas de una fila o columna ----------
 function announceLine(token){
   const t = token.toLowerCase();
@@ -1017,9 +1051,10 @@ const HELP_SECTIONS = [
   {
     title: 'Comandos',
     text:
-      'L o last (última captura), T (posición completa), b o board seguido de una casilla (ir ahí, por ejemplo a1), ' +
-      'p seguido de una letra K, Q, R, B, N o P (dónde está esa pieza), s seguido de una columna a-d o fila 1-4 ' +
-      '(piezas en esa línea), reiniciar (empezar de nuevo este ejercicio), ayuda (esta lista).',
+      'L o last (última captura), T o posición (posición completa), b o board seguido de una casilla (ir ahí, por ejemplo a1), ' +
+      'p seguido de la letra de una pieza, en español (R, D, T, A, C, P) o en inglés (K, Q, R, B, N) — la R dice el rey y las torres —, ' +
+      'o el nombre de la pieza: caballos, torres, mi rey (dónde está esa pieza), mis jugadas (todas las capturas posibles), ' +
+      's seguido de una columna a-d o fila 1-4 (piezas en esa línea), reiniciar (empezar de nuevo este ejercicio), ayuda (esta lista).',
   },
   {
     title: 'Atajos con el tablero enfocado',
@@ -1095,6 +1130,17 @@ function handleCmdFormSubmit(e){
 
   if(upper === 'L' || upper === 'LAST'){ input.value=''; announceLastCapture(); return; }
   if(upper === 'T'){ input.value=''; announcePosition(); return; }
+  /* Las mismas preguntas que en el resto del sitio (js/comandos-tablero.js),
+     dichas como se dicen: acá solo se entendían las letras («T», «P N»), y
+     quien venía de otro ejercicio escribía «posición» o «caballos» y oía
+     «no se entendió». */
+  const plano = trimmed.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[¿?¡!.]/g, '').trim();
+  if(/^(posicion|la posicion|tablero|el tablero|todo|todas las piezas|piezas)$/.test(plano)){ input.value=''; announcePosition(); return; }
+  if(/^(mis jugadas|jugadas|jugadas posibles|capturas|capturas posibles|que puedo capturar|que puedo jugar|todas mis jugadas)$/.test(plano)){
+    input.value=''; announceAllCaptures(); return;
+  }
+  const tipoDicho = PIEZA_DICHA[plano.replace(/^(?:donde (?:esta|estan)|mis|mi|los|las|el|la)\s+/, '').replace(/^(?:mis|mi|los|las|el|la)\s+/, '')];
+  if(tipoDicho){ input.value=''; cmdAnnounce(lineaDeTipo(tipoDicho)); return; }
   if(upper === 'AYUDA' || upper === 'HELP' || upper === '?'){ input.value=''; announceHelp(); return; }
   if(upper === 'REINICIAR' || upper === 'RESET'){
     input.value = '';
@@ -1110,7 +1156,8 @@ function handleCmdFormSubmit(e){
     const targetRaw = tokens[1];
     const rc = targetRaw ? squareToRC(targetRaw) : null;
     if(!rc){ cmdAnnounce(`Casilla inválida: "${targetRaw || ''}".`); return; }
-    focusSquare(rc[0], rc[1]);
+    // Con la cuenta ciega el tablero no está en el camino del lector: se dice qué hay, sin mover el foco.
+    if(!modoCiego()) focusSquare(rc[0], rc[1]);
     announceCurrentSquare(rc[0], rc[1]);
     return;
   }

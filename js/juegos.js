@@ -99,7 +99,17 @@
             document.getElementById("student-view").classList.remove("hidden");
             const grid = document.getElementById("variant-grid");
             grid.innerHTML = "";
-            VARIANTS.forEach((v) => {
+            /* Con la cuenta ciega solo se describen las modalidades que se
+               juegan con el tablero accesible (Estándar y Niebla: ver «Las tres
+               páginas de Juegos, con el mismo teclado» en
+               docs/decisiones/accesibilidad.md). Las
+               demás no tienen cómo jugarse escribiendo, y leerle diez
+               descripciones de lo que no puede jugar era una lista de puertas
+               cerradas. */
+            const ciega = document.documentElement.classList.contains("modo-ciego");
+            const nota = document.getElementById("variantes-nota");
+            if (nota) nota.hidden = !ciega;
+            VARIANTS.filter((v) => !ciega || v.id === "estandar" || v.id === "niebla").forEach((v) => {
                 const card = document.createElement("div");
                 card.className = "bg-white dark:bg-brand-900 rounded-xl shadow-md p-4 " + (v.disabled ? "opacity-60" : "");
                 card.innerHTML =
@@ -261,5 +271,13 @@
             document.getElementById("loading").classList.add("hidden");
             document.getElementById("app").classList.remove("hidden");
         }
+        /* La Racha táctica da 60 segundos por ejercicio en Modo Adaptado
+           (js/racha-tactica.js): la tarjeta decía 10 también ahí, y quien usa
+           lector de pantalla no se animaba a entrar. Se sigue al interruptor. */
+        function segundosDeRacha() {
+            const el = document.getElementById("racha-segundos");
+            if (el) el.textContent = document.documentElement.classList.contains("adaptive-mode") ? "60 segundos" : "10 segundos";
+        }
+        segundosDeRacha();
+        document.addEventListener("adaptivemode:change", segundosDeRacha);
         init();
-    

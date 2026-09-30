@@ -917,3 +917,56 @@ jugadas», «leer», «ir a e4», que una jugada siga llegando a la página y Al
 Mayúscula + B. Sin la capa de acciones saltan dos comprobaciones; sin el
 `aria-hidden`, otras dos.
 
+### La recorrida como alumna ciega, y lo que se arregló
+
+Se recorrió la plataforma entera como una alumna ciega (cuenta «ciego»,
+todo por teclado y escribiendo en el recuadro), con un arnés de Playwright
+que escucha las regiones vivas y mide dónde queda el foco. Casi todos los
+ejercicios se podían resolver escribiendo; lo que fallaba era lo de alrededor.
+Lo principal:
+
+- **La capa del recuadro apretaba botones que no eran.** «posición» apretaba
+  ⏮ («Posición inicial») y devolvía el visor al principio, porque se buscaban
+  botones por el principio del nombre; y en un curso, «solución» en la
+  pregunta 2.03 abría la de la 2.01, porque la zona era la `<section>` de la
+  lección entera. Ahora: (1) lo que el recuadro entiende como pregunta al
+  tablero NUNCA aprieta un botón (se pregunta a `ComandosTablero` con una
+  partida vacía); (2) la zona es el contenedor más grande que tiene el recuadro
+  y ningún otro; (3) se aprieta un botón por su nombre exacto o por lo que
+  hace (sinónimos buscados como palabras dentro del nombre: «Ver solución»,
+  «Otra pista», «Enséñame la jugada»), y una casilla para marcar también por
+  el final de su texto; (4) lo corto («e1», «4») solo si nombra exactamente
+  una opción. «acciones» ofrece solo los «siguiente/otra vez/solución» que de
+  verdad existen en la página.
+- **Lo que no se entendía se quedaba en el recuadro** y lo siguiente se pegaba
+  detrás («e4e5», «tiempob», «O-Oúltima jugada»): desde ahí nada funcionaba.
+  Ahora queda SELECCIONADO (`js/vision-cuenta.js` en Modo Adaptado, y cada
+  página en sus propios errores): escribir de nuevo lo reemplaza.
+- **Los finales se anuncian y el foco no cae al `<body>`**: el resultado del
+  examen, de Precisión posicional, de Desafíos, de Practicar y de Finales; el
+  título al elegir categoría en Aprender o volver a la lista en Aperturas y
+  Estudio; el recuadro al abrir una clase en Repasar y al llegar una pregunta
+  en la clase en vivo.
+- **Todo escribiendo, sin salir**: Coordenadas sin `maxlength` («blanca»,
+  «repetir», «tiempo»); Memoria («blancas: Rg1, Pe4», «comprobar» toma lo
+  escrito); Aprender acepta «Rf1» y «enroque corto»; Habilidades acepta la
+  balanza con el número, las piezas de la Fotografía, la jugada sola en
+  Descarte y «+1» en Intercambios; «opciones» y «repetir» en Precisión y el
+  diagnóstico; «tiempo» y «pregunta» en la clase; «siguiente» en el Sonar;
+  «historial» en Estándar (la partida visible conserva su historia) y en
+  Niebla (solo las tuyas); «mis jugadas» fuera de turno lo dice.
+- **Nada que se salte solo**: en Modo Adaptado, Visualización y Desafíos no
+  pasan solos al siguiente; esperan «siguiente» (antes «siguiente» se saltaba
+  uno que ni se había oído).
+- **En palabras, no en notación inglesa**: las pistas de Visualización, los
+  aciertos de Desafíos, las opciones del diagnóstico, la coronación y el
+  enroque contra Oscar.
+- **Menos ruido**: ¡Te reto! y Racha táctica no releen la posición entera
+  después de cada jugada; el examen no relee la posición al contestar; la
+  franja de la clase no se reescribe si no cambió.
+- **Acceso más rápido**: enlaces con nombre en tareas y exámenes («Ir: … (tarea
+  «X»)»), títulos como encabezados, lecciones bloqueadas fuera del Tab en los
+  cursos, `#entrenar` lleva el foco a su grupo, Competir anuncia el reto y deja
+  el foco en el botón, TV en vivo y los logros de juegos no adaptados no se
+  ofrecen.
+

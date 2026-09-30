@@ -212,7 +212,10 @@
       <div class="resumen" id="resumen"></div>
 
       <!-- ------- Lista ------- -->
-      <section id="vista-lista">
+      <section id="vista-lista" aria-labelledby="lista-titulo">
+        <!-- A dónde va el foco al volver del tablero: el botón «Volver» desaparece
+             con su vista y el foco caía al <body>. -->
+        <p id="lista-titulo" role="heading" aria-level="2" class="sr-only" tabindex="-1">Lista de aperturas y celadas</p>
         <div class="mode-bar" role="group" aria-label="Qué estudiar">
           <button type="button" class="mode-btn" id="btn-repaso">🔁 Repasar lo de hoy</button>
           <button type="button" class="mode-btn" id="btn-todas">📚 Ver todas</button>
@@ -315,5 +318,5 @@
 <script src="../js/aperturas-lineas.js"></script>
 <script src="../js/repaso-espaciado.js"></script>
 <script src="../js/entreno-aperturas.js"></script>
-<!-- burbuja: inicio --><script src="../js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="../js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- acceso: inicio --><script src="../js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="../js/modo-vista.js" defer></script><!-- modo-vista: fin --><!-- marca: inicio --><script src="../js/marca-academia.js" defer></script><!-- marca: fin --><!-- ayuda: inicio --><script src="../js/ayuda-guia.js" defer></script><!-- ayuda: fin --><!-- atajo: inicio --><script src="../js/atajo-buscar.js" data-arriba="../" defer></script><!-- atajo: fin --></body>
+<!-- burbuja: inicio --><script src="../js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="../js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- aviso-profe: inicio --><script src="../js/aviso-profe.js" defer></script><!-- aviso-profe: fin --><!-- tanda: inicio --><script src="../js/tanda-diez.js" defer></script><!-- tanda: fin --><!-- acceso: inicio --><script src="../js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="../js/modo-vista.js" defer></script><!-- modo-vista: fin --><!-- marca: inicio --><script src="../js/marca-academia.js" defer></script><!-- marca: fin --><!-- ayuda: inicio --><script src="../js/ayuda-guia.js" defer></script><!-- ayuda: fin --><!-- atajo: inicio --><script src="../js/atajo-buscar.js" data-arriba="../" defer></script><!-- atajo: fin --></body>
 </html>

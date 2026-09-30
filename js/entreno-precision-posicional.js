@@ -39,9 +39,31 @@ const $ = (id) => document.getElementById(id);
 const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const fechaCorta = (iso) => new Date(iso).toLocaleDateString('es-CR', { day: 'numeric', month: 'long', year: 'numeric' });
 
-function irA(vista) {
+/* `foco`: lo que recibe el foco en la vista nueva. La vista de antes se
+   esconde con el botón que lo tenía, y el foco caía al <body>: quien no ve no
+   sabía que había terminado la ronda ni dónde estaba. */
+function irA(vista, foco) {
   ['intro-view', 'pregunta-view', 'resultado-view'].forEach((id) => $(id).classList.toggle('hidden', id !== vista));
   window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (foco) { try { foco.focus({ preventScroll: true }); } catch (e) {} }
+}
+
+// Aviso para el lector (y la voz, si está encendida), vaciando antes para que se relea.
+function anunciar(texto) {
+  const r = $('pp-anuncio');
+  if (r) { r.textContent = ''; setTimeout(() => { r.textContent = texto; }, 40); }
+  if (window.BlindNotation && BlindNotation.speak) BlindNotation.speak(texto);
+}
+
+/* Las opciones dichas con su letra. Quien no ve contestaba escribiendo la
+   letra de una opción que nadie le había dicho: el recuadro solo leía el
+   enunciado, y las opciones había que ir a buscarlas con Tab. */
+function opcionesDichas(item) {
+  return item.__orden.map((original, i) => `Opción ${CuadroComandos.letra(i)}: ${String(item.opciones[original]).replace(/[.\s]+$/, '')}`).join('. ') + '.';
+}
+function preguntaDicha() {
+  const item = tanda[idx];
+  return `Posición ${idx + 1} de ${tanda.length}. ${item.turno === 'blancas' ? 'Juegan las blancas' : 'Juegan las negras'}. ${item.enunciado} ${opcionesDichas(item)}`;
 }
 
 function barajar(lista) {
@@ -69,6 +91,8 @@ function empezar() {
   idx = 0;
   irA('pregunta-view');
   pintarPregunta();
+  // Con el recuadro a la vista (Modo Adaptado), la pregunta y sus opciones se dicen ahí.
+  if (comandos && CuadroComandos.activo()) { comandos.decir(preguntaDicha()); comandos.enfocar(); }
 }
 
 function pintarPregunta() {
@@ -155,7 +179,7 @@ function prepararComandos(item) {
   }
   comandos.posicion(juego);
   comandos.etiqueta('Escribe la letra del plan que elegiste');
-  comandos.ayuda(`Opciones de la A a la ${CuadroComandos.letra(item.opciones.length - 1)}. Puedes escribir solo la letra ("B") o "opción B". También puedes preguntar por la posición: "caballos", "qué hay en e4".`
+  comandos.ayuda(`Opciones de la A a la ${CuadroComandos.letra(item.opciones.length - 1)}. Puedes escribir solo la letra ("B") o "opción B"; «opciones» las vuelve a decir y «repetir», la pregunta entera. También puedes preguntar por la posición: "caballos", "qué hay en e4".`
     + (idx === tanda.length - 1
         ? ' Es la última: al responder se termina la ronda y se muestra el resultado.'
         : ' Al responder se pasa sola a la siguiente.'));
@@ -165,15 +189,18 @@ function avanzarEscribiendo(resumen) {
   if (idx === tanda.length - 1) { terminar(); return; }
   idx += 1;
   pintarPregunta();
-  comandos.decir(`${resumen} Posición ${idx + 1} de ${tanda.length}: ${tanda[idx].enunciado}`);
+  comandos.decir(`${resumen} ${preguntaDicha()}`);
   comandos.enfocar();
 }
 
 function responderEscribiendo(texto, api) {
   const item = tanda[idx];
+  const t = CuadroComandos.normalizar(texto);
+  if (/^(opciones|las opciones|cuales son las opciones)$/.test(t)) { api.limpiar(); api.decir(opcionesDichas(item)); return; }
+  if (/^(repetir|repite|pregunta|la pregunta|otra vez la pregunta)$/.test(t)) { api.limpiar(); api.decir(preguntaDicha()); return; }
   const i = CuadroComandos.opcionPedida(texto, item.opciones.length);
   if (i === null) {
-    api.decir(`No entendí "${texto}". Escribe la letra de una opción, de la A a la ${CuadroComandos.letra(item.opciones.length - 1)}.`);
+    api.decir(`No entendí "${texto}". Escribe la letra de una opción, de la A a la ${CuadroComandos.letra(item.opciones.length - 1)}. «opciones» las vuelve a decir.`);
     return;
   }
   // `i` es la POSICIÓN en la lista barajada; lo que se guarda es cuál opción
@@ -257,7 +284,8 @@ async function leerEstado(clave) {
 }
 
 function mostrarResultado(detalle, resumen) {
-  irA('resultado-view');
+  irA('resultado-view', $('r-veredicto'));
+  anunciar(`Ronda terminada. ${resumen.aciertos} de ${resumen.total} planes correctos, ${resumen.porcentaje} por ciento. ${resumen.veredicto.etiqueta}.`);
   $('r-veredicto').textContent = resumen.veredicto.etiqueta;
   $('r-texto').textContent = resumen.veredicto.texto;
   $('r-marcador').textContent = `${resumen.aciertos} de ${resumen.total} planes correctos · ${resumen.porcentaje}%.`;
@@ -344,11 +372,13 @@ async function pintarPrevio() {
 
 /* ---------------- Arranque ---------------- */
 $('start-btn').addEventListener('click', empezar);
-$('repeat-btn').addEventListener('click', () => { irA('intro-view'); pintarPrevio(); });
-$('prev-btn').addEventListener('click', () => { if (idx > 0) { idx--; pintarPregunta(); } });
+$('repeat-btn').addEventListener('click', () => { irA('intro-view', $('intro-titulo')); pintarPrevio(); });
+// Con el recuadro a la vista, la pregunta nueva se dice ahí (también si se llegó escribiendo «siguiente»).
+function decirPregunta() { if (comandos && CuadroComandos.activo()) comandos.decir(preguntaDicha()); }
+$('prev-btn').addEventListener('click', () => { if (idx > 0) { idx--; pintarPregunta(); decirPregunta(); } });
 $('next-btn').addEventListener('click', () => {
   if (idx === tanda.length - 1) { terminar(); return; }
-  idx++; pintarPregunta();
+  idx++; pintarPregunta(); decirPregunta();
 });
 
 async function init() {

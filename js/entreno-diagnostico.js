@@ -148,8 +148,14 @@ function pintarPerfil() {
   const box = document.getElementById('perfil-form');
   box.innerHTML = '';
   PERFIL_PREGUNTAS.forEach((p) => {
+    /* Cada pregunta es un grupo con nombre: sin eso, quien usa lector oía
+       «Menos de un año, botón» sin saber a qué pregunta contestaba. Y cada
+       respuesta dice si está elegida (aria-pressed): el color solo no lo dice. */
     const grupo = document.createElement('div');
-    grupo.innerHTML = `<p class="text-sm font-medium text-brand-700 dark:text-brand-200 mb-2">${p.texto}</p>`;
+    const idTexto = 'perfil-q-' + p.id;
+    grupo.setAttribute('role', 'group');
+    grupo.setAttribute('aria-labelledby', idTexto);
+    grupo.innerHTML = `<p id="${idTexto}" class="text-sm font-medium text-brand-700 dark:text-brand-200 mb-2">${p.texto}</p>`;
     const fila = document.createElement('div');
     fila.className = 'flex flex-wrap gap-2';
     p.opciones.forEach((op) => {
@@ -158,10 +164,16 @@ function pintarPerfil() {
       btn.textContent = op;
       btn.dataset.valor = op;
       btn.className = claseOpcionPerfil(estado.perfil[p.id] === op);
+      btn.setAttribute('aria-pressed', estado.perfil[p.id] === op ? 'true' : 'false');
       btn.addEventListener('click', () => {
         estado.perfil[p.id] = op;
         guardarEstado();
         pintarPerfil();
+        /* pintarPerfil() repinta todo y el botón que tenía el foco desaparece:
+           el foco caía al <body>. Vuelve al mismo, ya marcado. */
+        const igual = Array.from(box.querySelectorAll('[role=group][aria-labelledby="' + idTexto + '"] button'))
+          .find((b) => b.dataset.valor === op);
+        if (igual) igual.focus();
       });
       fila.appendChild(btn);
     });
@@ -370,9 +382,35 @@ function prepararComandos(esOpcion) {
     comandos.ayuda('Una sola jugada, en español o en inglés: "Cf3", "Nf3", "e4", "Dxh7+", "e8=D". También vale "no lo sé".' + queHace);
     comandos.posicion(new Chess(itemActual.fen));
   }
+  // Con el recuadro a la vista, la pregunta (y sus opciones) se dice ahí, también al llegar con «Siguiente».
+  if (CuadroComandos.activo()) comandos.decir(preguntaDicha());
 }
 
 function esUltima() { return estado.idx === ITEMS.length - 1; }
+
+/* Las jugadas escritas en el enunciado o en las opciones («Ag3», «O-O», «Rd2»)
+   dichas en palabras para el aviso del recuadro: leídas tal cual, un lector
+   dice «a g tres» o «o guion o». El banco no se toca: esto solo cambia lo que
+   se DICE. Van en español (R rey, D dama, T torre, A alfil, C caballo). */
+const ES_A_EN = { R: 'K', D: 'Q', T: 'R', A: 'B', C: 'N' };
+function enPalabras(texto) {
+  if (!window.BlindNotation || !BlindNotation.sanSpoken) return texto;
+  return String(texto).replace(/(^|[\s(«"¿¡,;:.…])(O-O-O|O-O|[RDTAC]?[a-h]?[1-8]?x?[a-h][1-8](?:=[DTAC])?[+#]?)(?=$|[\s).,;:!?»"])/g,
+    (todo, antes, san) => {
+      const en = san.replace(/^[RDTAC]/, (l) => ES_A_EN[l]).replace(/=([DTAC])/, (_, l) => '=' + ES_A_EN[l]);
+      return antes + BlindNotation.sanSpoken(en).replace(/^\S/, (c) => c.toLowerCase());
+    });
+}
+function opcionesDichas() {
+  if (!ordenOpciones || !(itemActual.tipo === 'opcion' || itemActual.tipo === 'opcion_tablero')) return '';
+  return ' ' + ordenOpciones.map((original, i) => `Opción ${CuadroComandos.letra(i)}: ${enPalabras(String(itemActual.opciones[original]).replace(/[.\s]+$/, ''))}.`).join(' ');
+}
+/* La pregunta entera, como se oye: el enunciado y, si es de opción, las
+   opciones con su letra. Antes el aviso decía solo el enunciado, y quien no ve
+   contestaba «B» a una opción que nadie le había leído. */
+function preguntaDicha() {
+  return `Pregunta ${estado.idx + 1} de ${ITEMS.length}: ${enPalabras(itemActual.enunciado)}${opcionesDichas()}`;
+}
 
 /* Contestar por el cuadro PASA SOLA a la siguiente pregunta: quien contesta
    escribiendo no tiene por qué ir a buscar el botón "Siguiente", que es
@@ -387,11 +425,14 @@ function avanzarEscribiendo(resumen) {
   const ultima = esUltima();
   siguiente();
   if (ultima) return;   // la prueba terminó: ya no hay cuadro que llenar
-  comandos.decir(`${resumen} Pregunta ${estado.idx + 1} de ${ITEMS.length}: ${itemActual.enunciado}`);
+  comandos.decir(`${resumen} ${preguntaDicha()}`);
   comandos.enfocar();
 }
 
 function responderEscribiendo(texto, api) {
+  const t = CuadroComandos.normalizar(texto);
+  if (/^(opciones|las opciones)$/.test(t) && opcionesDichas()) { api.limpiar(); api.decir(opcionesDichas().trim()); return; }
+  if (/^(repetir|repite|pregunta|la pregunta)$/.test(t)) { api.limpiar(); api.decir(preguntaDicha()); return; }
   if (CuadroComandos.esNoSe(texto)) {
     const noSe = document.getElementById('no-se-btn');
     if (noSe) noSe.click();
@@ -405,7 +446,7 @@ function responderEscribiendo(texto, api) {
       api.decir(`No entendí "${texto}". Escribe la letra de una opción, de la A a la ${CuadroComandos.letra(itemActual.opciones.length - 1)}.`);
       return;
     }
-    const dicho = `Anotado: opción ${CuadroComandos.letra(i)}, ${itemActual.opciones[ordenOpciones[i]]}.`;
+    const dicho = `Anotado: opción ${CuadroComandos.letra(i)}, ${enPalabras(itemActual.opciones[ordenOpciones[i]])}.`;
     elegirOpcion(i);
     api.limpiar();
     avanzarEscribiendo(dicho);

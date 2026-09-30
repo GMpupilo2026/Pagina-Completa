@@ -374,6 +374,24 @@
                            recuadro levantaría la niebla. La propia sí: ya la sabes. */
                         return { san: jugadas[jugadas.length - 1], color, oculta: room.status === "playing" && !!myColor && color !== myColor };
                     },
+                    /* «historial»: con la niebla, solo TUS jugadas mientras se juega (las
+                       del rival las tapa también el panel de jugadas, ver
+                       renderMovesPanel). Terminada la partida, o mirando, todas. */
+                    historial: () => {
+                        const jugadas = (room && room.moves) || [];
+                        const dicha = (san) => (window.BlindNotation ? BlindNotation.sanSpoken(san) : san);
+                        const tapar = room.status === "playing" && !!myColor;
+                        if (!tapar) {
+                            if (!jugadas.length) return "Todavía no hay jugadas.";
+                            const partes = [];
+                            for (let i = 0; i < jugadas.length; i += 2) partes.push((i / 2 + 1) + ": " + dicha(jugadas[i]) + (jugadas[i + 1] ? ", " + dicha(jugadas[i + 1]) : ""));
+                            return jugadas.length + (jugadas.length === 1 ? " jugada. " : " jugadas. ") + partes.join("; ") + ".";
+                        }
+                        const propias = [];
+                        jugadas.forEach((san, i) => { if ((i % 2 === 0 ? "w" : "b") === myColor) propias.push((propias.length + 1) + ": " + dicha(san)); });
+                        if (!propias.length) return "Todavía no has jugado. Con la niebla, las jugadas del rival no se dicen.";
+                        return "Tus jugadas (con la niebla, las del rival no se dicen): " + propias.join("; ") + ".";
+                    },
                     getVisibleGame: () => {
                         if (!myColor) return board.game;
                         /* Se guarda la vista y se rehace solo cuando cambia la posición. Desde
