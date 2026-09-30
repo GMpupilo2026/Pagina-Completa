@@ -183,6 +183,18 @@ las partidas, «adivinar», «pista», «seguir» y «solución». Las páginas 
 falten. La vista pública (`cursos/*.html`, sin `curso-adaptado.js`) se queda
 con un recuadro sencillo que solo entiende jugadas.
 
+**5. En Modo Adaptado, el tablero es de casillas y no un dibujo.** El SVG no
+tiene casillas que se recorran (los `<rect>` no tienen `.click()` y el foco no
+se ve): `CursoAdaptado.tablero(host, fen, opts)` dibuja las 64 con
+`EjercicioTablero.dibujar` y monta `TableroAccesible` (una parada de Tab,
+flechas, o/z/m/x, Intro para elegir la pieza y el destino donde el curso pide
+una jugada). El estado de cada casilla va escrito en `data-estado` («puedes
+capturar ahí», «tu jugada, correcta»…). Las casillas cuentan la posición
+DIBUJADA, no la partida del visor: al adivinar, la partida se queda en la
+pregunta mientras el tablero ya muestra la jugada. Fuera del Modo Adaptado sigue
+el SVG de siempre, y al cambiar el modo en caliente se repinta. `sesion.html` no
+carga `curso-adaptado.js`: ahí los visores siguen con el SVG.
+
 **Lo que decide qué se ve es el CSS** (`html.adaptive-mode` en `css/styles.css`),
 no el JavaScript: así encender y apagar el modo surte efecto al instante, sin
 volver a recorrer el contenido del curso.
