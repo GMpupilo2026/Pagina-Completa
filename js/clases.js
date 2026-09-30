@@ -85,7 +85,7 @@
                aparte (PANEL_DOCENTE) y sigue entrando por las dos puertas de
                siempre, que por eso están acá con `soloDocente`. Ver «El
                alumno ve el entrenamiento abierto» en docs/decisiones/paneles.md. */
-            { title: "Aprender", tiles: [
+            { title: "Aprender", plegable: true, tiles: [
                 { emoji: "🏰", label: "Fichas de aperturas", desc: "Las que juegas con blancas: la idea, los planes y la posición que lo explica", href: "entreno/estudio.html?cat=apertura", soloAlumno: true },
                 { emoji: "🛡️", label: "Defensas", desc: "Las fichas de las defensas que juegas con negras", href: "entreno/estudio.html?cat=defensa", soloAlumno: true },
                 { emoji: "⚡", label: "Táctica", desc: "Las fichas de los motivos tácticos que se repiten", href: "entreno/estudio.html?cat=tactica", soloAlumno: true },
@@ -99,22 +99,22 @@
             /* Lo que se estudia con el profe: el curso entero y lo que pasó en
                cada clase, que no se pierde al cerrarla —la partida se guarda
                sola y la ven, jugada por jugada, quienes fueron—. */
-            { title: "Estudiar", tiles: [
+            { title: "Estudiar", plegable: true, tiles: [
                 { emoji: "🏛️", label: "Cursos", desc: "Tus cursos completos, con tu línea de progreso", descProfe: "Los cursos de la Academia y el temario de cada uno", href: "cursos/academia/index.html" },
                 { emoji: "🎞️", label: "Repasar mis clases", desc: "La partida de cada clase, jugada por jugada, con lo que comentó tu profe", descProfe: "Las partidas de tus clases, como las repasan tus alumnos", href: "repasar-clases.html" },
             ] },
-            { title: "Entrenamiento básico", tiles: [
+            { title: "Entrenamiento básico", plegable: true, tiles: [
                 { emoji: "🎯", label: "Coordenadas", desc: "Reconoce las casillas a toda velocidad", href: "entreno/coordenadas.html", soloAlumno: true },
                 { emoji: "📷", label: "Memoria", desc: "Mira una posición unos segundos y reconstrúyela", href: "entreno/memoria.html", soloAlumno: true },
                 { emoji: "♚", label: "Mates", desc: "Mate en 1, 2 o 3 jugadas", href: "entreno/mates.html", soloAlumno: true },
                 { emoji: "🏆", label: "Practicar", desc: "Series de mates y tácticas, con racha y estrellas", href: "entreno/practicas.html", soloAlumno: true },
                 { emoji: "🧩", label: "4×4", desc: "Ejercicios tácticos por nivel", href: "entreno/4x4.html", soloAlumno: true },
             ] },
-            { title: "Entrenamiento intermedio", tiles: [
+            { title: "Entrenamiento intermedio", plegable: true, tiles: [
                 { emoji: "🗂️", label: "Ejercicios por tema", desc: "Clavadas, ataques dobles, mates, finales y táctica de ataque", href: "entreno/temas.html", soloAlumno: true },
                 { emoji: "♞", label: "Aperturas y celadas", desc: "Líneas para memorizar jugándolas, con repaso espaciado", href: "entreno/aperturas.html", soloAlumno: true },
             ] },
-            { title: "Entrenamiento avanzado", tiles: [
+            { title: "Entrenamiento avanzado", plegable: true, tiles: [
                 { emoji: "👁️", label: "Visualización", desc: "Encuentra la línea sin mover ni una pieza", href: "entreno/visualizacion.html", soloAlumno: true },
                 { emoji: "🧭", label: "Precisión posicional", desc: "Sin táctica inmediata: elige el plan correcto a largo plazo", href: "entreno/precision-posicional.html", soloAlumno: true },
                 { emoji: "🏁", label: "Finales contra la máquina", desc: "Lucena, Philidor y los finales de libro, contra Stockfish", href: "entreno/finales.html", soloAlumno: true },
@@ -124,7 +124,7 @@
                con su tarjeta en el panel y lo alargaban el doble: en el celular
                había que bajar un buen rato para llegar a «Jugar y competir».
                Lo pidió así el dueño de la Academia. */
-            { title: "Mejorar por habilidades", tiles: [
+            { title: "Mejorar por habilidades", plegable: true, tiles: [
                 { emoji: "💪", label: "Habilidades", desc: "El Detective, el Barrido, Aguanta, Salva las tablas y muchas más: cada habilidad con sus niveles", href: "entreno/tipos.html", soloAlumno: true },
             ] },
             /* Primero donde se juega de verdad contra otra persona, después el
@@ -929,11 +929,86 @@
                     caja.className = "flex flex-col gap-3";
                     tilesGrid.appendChild(caja);
                 });
-                section.append(heading, tilesGrid);
+                if (group.plegable) armarPlegable(section, heading, tilesGrid, group);
+                else section.append(heading, tilesGrid);
                 grid.appendChild(section);
             });
             pintarClaseEnVivo();
             aplicarBusqueda();
+        }
+
+        /* ---------- Los grupos de entrenamiento se pliegan ----------
+           Con el entrenamiento abierto tarjeta por tarjeta, el panel del alumno
+           medía en el celular unas nueve pantallas, y «Jugar y competir»
+           quedaba a seis de distancia. Los seis grupos de entrenamiento
+           (`plegable`) llevan su título como botón, con cuántos accesos tiene
+           cada uno al lado: en el celular arrancan CERRADOS y en la computadora
+           abiertos, que ahí sí caben. Lo que cada quien abre o cierra se
+           recuerda en este aparato.
+
+           El título sigue siendo un <h2> —se salta de grupo en grupo con lector
+           de pantalla— y adentro va el botón con `aria-expanded`, que es lo que
+           dice si está abierto. La grilla se esconde con `style.display` y no
+           con `hidden`: la clase `grid` de Tailwind le gana a ese atributo.
+           Mientras se busca, los grupos se abren solos (aplicarBusqueda): un
+           resultado dentro de un grupo cerrado no se vería. Ver «Los grupos de
+           entrenamiento se pliegan en el celular» en docs/decisiones/paneles.md. */
+        const CLAVE_GRUPOS = "panel_grupos_abiertos_v1";
+        function gruposGuardados() {
+            try { const o = JSON.parse(localStorage.getItem(CLAVE_GRUPOS) || "{}"); return o && typeof o === "object" ? o : {}; }
+            catch (e) { return {}; }
+        }
+        const enCelular = () => !!(window.matchMedia && window.matchMedia("(max-width: 639px)").matches);
+        let plegables = 0;
+        function armarPlegable(section, heading, tilesGrid, group) {
+            const id = "grupo-plegable-" + (++plegables);
+            tilesGrid.id = id;
+            const titulo = heading.textContent;
+            heading.textContent = "";
+            heading.dataset.titulo = titulo;
+            heading.className = "font-serif text-lg font-bold text-brand-800 dark:text-white";
+            const boton = document.createElement("button");
+            boton.type = "button";
+            boton.setAttribute("aria-controls", id);
+            boton.className = "flex items-center gap-2 text-left rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+            const flecha = document.createElement("span");
+            flecha.setAttribute("aria-hidden", "true");
+            flecha.className = "inline-flex transition-transform";
+            flecha.innerHTML = '<svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path d="M7 4l7 6-7 6z"/></svg>';
+            const nombre = document.createElement("span");
+            nombre.textContent = titulo;
+            boton.append(flecha, nombre);
+            heading.appendChild(boton);
+
+            // Cuántos accesos tiene, y (si toca) que ahí está lo último que hizo.
+            const n = group.tiles.length;
+            const cuenta = document.createElement("span");
+            cuenta.className = "text-xs text-brand-500 dark:text-brand-300";
+            cuenta.textContent = n === 1 ? "1 acceso" : n + " accesos";
+            const ultimo = document.createElement("span");
+            ultimo.dataset.ultimo = "1";
+            ultimo.className = "text-xs font-semibold text-brand-700 dark:text-brand-200";
+            ultimo.hidden = true;
+            ultimo.textContent = "· aquí está lo último que hiciste";
+            const cabeza = document.createElement("div");
+            cabeza.className = "flex items-baseline flex-wrap gap-x-2 gap-y-1 mb-3";
+            cabeza.append(heading, cuenta, ultimo);
+
+            const guardado = gruposGuardados()[group.title];
+            const poner = (abierto) => {
+                boton.setAttribute("aria-expanded", abierto ? "true" : "false");
+                section.dataset.abierto = abierto ? "1" : "";
+                flecha.style.transform = abierto ? "rotate(90deg)" : "";
+                tilesGrid.style.display = abierto || campoBusqueda.value.trim() ? "" : "none";
+            };
+            section.dataset.plegable = "1";
+            poner(guardado !== undefined ? !!guardado : !enCelular());
+            boton.addEventListener("click", () => {
+                const abierto = section.dataset.abierto !== "1";
+                poner(abierto);
+                try { const o = gruposGuardados(); o[group.title] = abierto; localStorage.setItem(CLAVE_GRUPOS, JSON.stringify(o)); } catch (e) {}
+            });
+            section.append(cabeza, tilesGrid);
         }
 
         /* ---------- El buscador de accesos ----------
@@ -1131,7 +1206,13 @@
             const palabras = textoBuscable(escrito).split(" ").filter(Boolean);
             let total = 0;
             primeroDeLaBusqueda = null;
+            const buscandoAlgo = palabras.length > 0;
             document.querySelectorAll("#tile-grid > section").forEach((sec) => {
+                // Un grupo plegado se abre mientras se busca, y vuelve a como estaba al borrar.
+                if (sec.dataset.plegable) {
+                    const g = sec.querySelector(".grid");
+                    if (g) g.style.display = buscandoAlgo || sec.dataset.abierto === "1" ? "" : "none";
+                }
                 let visibles = 0, sesionVisible = true;
                 sec.querySelectorAll(".grid > [data-buscar]").forEach((celda) => {
                     // Todas las palabras tienen que estar, en la tarjeta o en
@@ -1290,35 +1371,65 @@
             el.textContent = name + " lleva el récord con " + data.best_streak + " aciertos seguidos.";
         }
 
-        // ---------- Tu progreso: los tres números y la racha de días ----------
-        // Los números NO se cuentan acá. Esta página se bajaba training_progress
-        // ENTERA (select * where student_id = …) y sumaba en el navegador, y eso
-        // tenía el techo invisible de siempre: PostgREST corta la respuesta a
-        // partir de cierta cantidad de filas y no da ningún error, así que a un
-        // alumno con bastante entrenamiento encima el panel le pintaba un número
-        // que ya no subía. Los cuenta la base: mi_entreno_resumen(), SECURITY
-        // INVOKER, con las mismas tres cuentas de informes_resumen_alumnos()
-        // (verificar-mi-entreno.js revisa que no se separen). Antes se usaba esa
-        // misma, pero arma el renglón de todo el grupo —a un alumno, también el
-        // de sus compañeros— para usar uno: 7 s en hora pico, y con la base
-        // cargada se cortaba y el panel no terminaba de cargar.
-        async function loadEntrenoProgress() {
-            const { data, error } = await sb.rpc("mi_entreno_resumen");
-            if (error) return;   // deja los guiones en vez de romper el resto del panel
-            const fila = (data || [])[0];
-            if (!fila) return;
-            document.getElementById("entreno-puzzles").textContent = String(fila.puzzles || 0);
-            document.getElementById("entreno-lessons").textContent = String(fila.lecciones || 0);
-            document.getElementById("entreno-coord").textContent = fila.mejor_coord || "—";
+        /* ---------- Lo último que hiciste ----------
+           Con treinta tarjetas, volver a lo que uno estaba haciendo era
+           buscarlo. Se pide a la base UNA fila —el último ejercicio que el
+           alumno registró en training_progress, que la RLS solo le deja leer a
+           él—, y la tarjeta de esa página lleva escrito «Lo último que
+           hiciste». Qué página es cada actividad lo dice
+           js/material-plataforma.js (`actividades`), la misma tabla de Tareas:
+           no hay una segunda lista que se pueda separar. Si el grupo de esa
+           tarjeta está plegado, su título también lo dice. */
+        async function marcarLoUltimo() {
+            let fila = null;
+            try {
+                const { data, error } = await sb.from("training_progress").select("activity, created_at")
+                    .eq("student_id", profile.id).order("created_at", { ascending: false }).limit(1).maybeSingle();
+                if (error) return;
+                fila = data;
+            } catch (e) { return; }
+            if (!fila || !fila.activity) return;
+            try { await traerScript("js/material-plataforma.js"); } catch (e) { return; }
+            const MP = window.MaterialPlataforma;
+            if (!MP || !Array.isArray(MP.HERRAMIENTAS)) return;
+            const tarjeta = MP.HERRAMIENTAS
+                .filter((h) => (h.actividades || []).includes(fila.activity))
+                .map((h) => Array.from(document.querySelectorAll("#tile-grid a[href]")).find((a) => a.getAttribute("href") === h.href))
+                .find(Boolean);
+            if (!tarjeta) return;
+            const marca = document.createElement("span");
+            marca.dataset.loUltimo = "1";
+            marca.className = "text-[11px] font-semibold px-2 py-0.5 rounded-full bg-brand-100 dark:bg-brand-800 text-brand-700 dark:text-brand-200";
+            marca.textContent = "Lo último que hiciste";
+            (tarjeta.lastElementChild || tarjeta).appendChild(marca);
+            const aviso = tarjeta.closest("section") && tarjeta.closest("section").querySelector("[data-ultimo]");
+            if (aviso) aviso.hidden = false;
         }
 
-        // La racha de días la cuenta la base (public.progreso_dias_y_racha, ver
-        // js/logros.js): acá solo se pone el número en su lugar.
-        async function loadRachaWidget(rachaP) {
-            const el = document.getElementById("progreso-racha");
-            const { stats, error } = await rachaP;
-            if (error || !stats) { el.textContent = "—"; return; }
-            el.textContent = String(stats.racha_actual || 0);
+        /* ---------- El saludo del alumno dice su racha ----------
+           «Este es tu panel de Clases. Elige a dónde quieres ir» no le decía
+           nada. Ahora dice cuántos días seguidos lleva, o cuánto le falta hoy
+           para empezar una racha: la misma cuenta que Logros y la meta del día
+           (js/logros.js, progreso_dias_y_racha), con la promesa que ya se pidió
+           para lo demás. Si no contesta, se queda el texto de siempre.
+
+           Los tres números que había en «Tu progreso» (ejercicios 4×4,
+           lecciones, la mejor marca de Coordenadas) ya no se piden: eran de
+           cuando el entrenamiento era chico, y lo que se hace en la semana ya
+           lo dice «Hoy te toca». Ver «Hoy te toca y tu progreso, en una sola
+           tarjeta» en docs/decisiones/paneles.md. */
+        async function pintarSaludoAlumno(rachaP) {
+            let r = null;
+            try { r = await rachaP; } catch (e) { return; }
+            if (!r || r.error || !r.stats) return;
+            const racha = r.stats.racha_actual || 0;
+            const hoy = r.stats.hoy_ejercicios || 0;
+            const meta = window.Logros ? Logros.META_DIARIA : 5;
+            const dias = (n) => (n === 1 ? "1 día" : n + " días");
+            document.getElementById("panel-subtitulo").textContent = racha
+                ? (hoy >= meta ? "Llevas " + dias(racha) + " seguidos entrenando, y hoy ya cuenta. 🔥"
+                               : "Llevas " + dias(racha) + " seguidos entrenando: hoy te faltan " + (meta - hoy) + " ejercicios para no cortarla.")
+                : "Hoy es buen día para empezar una racha: bastan " + meta + " ejercicios.";
         }
 
         /* ---------- Lo que te toca: tareas Y exámenes ----------
@@ -1566,8 +1677,7 @@
             const { data, error } = await sb.rpc("informes_diagnosticos_alumnos");
             if (error) return;
             // SECURITY INVOKER: a un alumno la RLS le devuelve solo su renglón,
-            // pero se busca el suyo igual — es la misma precaución que en
-            // loadEntrenoProgress().
+            // pero se busca el suyo igual, por precaución.
             const mio = (data || []).find((f) => f.student_id === profile.id) || null;
 
             // 0. Ya arrancó: lo que sigue guiando es la semana de su plan.
@@ -1730,7 +1840,7 @@
            racha es la misma promesa que usa «Tu progreso». */
         const SCRIPTS_HOY = ["js/repaso-espaciado.js", "js/repaso-fallados.js", "js/tema-flojo.js",
             "js/tipos-catalogo.js", "js/tipo-flojo.js", "js/tiempo-secciones.js",
-            "js/errores-propios.js", "js/progreso-usuario.js", "js/hoy-te-toca.js"];
+            "js/errores-propios.js", "js/material-plataforma.js", "js/progreso-usuario.js", "js/hoy-te-toca.js"];
         async function cargarHoyTeToca(rachaP) {
             try {
                 for (const src of SCRIPTS_HOY) await traerScript(src);
@@ -2269,6 +2379,11 @@
         }
 
         async function cargarSesiones({ mas = false } = {}) {
+            /* El alumno no tiene registro de clases: lo que pasó en cada clase
+               lo repasa en «Repasar mis clases», que es lo suyo. Acá veía la
+               lista de clases de su profe, al final de todo, donde en el
+               celular no llegaba nadie. */
+            if (!esEquipoDocente()) return;
             const masBtn = document.getElementById("sessions-more");
             if (!boardOwnerId) {
                 sesionesCargadas = []; sesionesTotal = 0;
@@ -2542,7 +2657,10 @@
             }
 
             const displayName = profile.full_name || profile.email;
-            document.getElementById("welcome-name").textContent = displayName;
+            /* «¡Hola, Ana!»: el nombre de pila y sin género. Decía «¡Bienvenido,
+               Ana Rojas!», que a una alumna le habla en masculino. */
+            document.getElementById("welcome-name").textContent =
+                (profile.full_name || "").trim().split(/\s+/)[0] || String(profile.email || "").split("@")[0];
             document.getElementById("avatar").textContent = displayName.trim().charAt(0).toUpperCase();
             const badge = document.getElementById("role-badge");
             badge.textContent = profile.is_admin ? "👑 Administrador"
@@ -2743,6 +2861,7 @@
                 partes.push(cargarPanelProfe(), cargarUrgente(clavesUrgenteDocente(), { soloSiHayAlgo: true }));
             } else {
                 document.getElementById("progreso-alumno").hidden = false;
+                document.getElementById("registro-clases").hidden = true;
                 /* La racha se pide UNA vez y la promesa se reparte: la usan
                    el número de "Tu progreso" y el primer paso, que necesita
                    saber si ya resolvió algo. Dos llamadas serían dos veces la
@@ -2753,9 +2872,9 @@
                     PuntosClase.pintarDelMesDelAlumno(sb, document.getElementById("puntos-mes")),
                     cargarPendientes(rachaP),
                     cargarSeguirCurso(),
-                    loadEntrenoProgress(),
                     loadTacticsRecord(),
-                    loadRachaWidget(rachaP),
+                    pintarSaludoAlumno(rachaP),
+                    marcarLoUltimo(),
                     cargarHoyTeToca(rachaP),
                 );
             }

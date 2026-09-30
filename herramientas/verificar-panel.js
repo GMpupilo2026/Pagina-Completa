@@ -169,7 +169,8 @@ window.__consultas = [];
            started_at: new Date(Date.now() - 20 * 60000).toISOString(), ended_at: null }]
       : []).concat(CLASES),
     puzzle_rush_scores: DATOS.puzzle_rush_scores || [],
-    training_progress: [],
+    // El último ejercicio de la alumna (marcarLoUltimo pide UNA fila).
+    training_progress: DATOS.training_progress || [],
     // El plan que el profesor le compartió (la RLS solo lo devuelve compartido).
     training_plans: DATOS.training_plans || [],
     /* La sala de videollamada del profesor. Al equipo docente se la sirve esta
@@ -1726,46 +1727,67 @@ async function pruebaFranjaDeClase(browser) {
 }
 
 async function pruebaProgresoAlumna(browser) {
-  console.log("\n=== Tu progreso, y de dónde salen los números ===");
-  const { page, ctx, errores } = await panel(browser, [ALUMNA, PROFE], "u-ana", {}, datosAlumna(false));
+  console.log("\n=== Hoy te toca y tu progreso, en una sola tarjeta ===");
+  const datos = datosAlumna(false);
+  // Lo último que entrenó fue Visualización (una fila vieja de Mates, antes).
+  datos.training_progress = [
+    { student_id: "u-ana", activity: "mates", created_at: new Date(Date.now() - 3 * 86400000).toISOString() },
+    { student_id: "u-ana", activity: "visualizacion", created_at: new Date(Date.now() - 3600000).toISOString() },
+  ];
+  const { page, ctx, errores } = await panel(browser, [ALUMNA, PROFE], "u-ana", {}, datos);
+  await page.waitForFunction(() => document.querySelector("[data-lo-ultimo]"), null, { timeout: 8000 }).catch(() => {});
 
   const visto = await page.evaluate(() => ({
-    alumno: getComputedStyle(document.getElementById("progreso-alumno")).display,
-    profe: getComputedStyle(document.getElementById("progreso-profe")).display,
-    racha: document.getElementById("progreso-racha").textContent,
-    puzzles: document.getElementById("entreno-puzzles").textContent,
-    lecciones: document.getElementById("entreno-lessons").textContent,
-    coord: document.getElementById("entreno-coord").textContent,
+    alumno: document.getElementById("progreso-alumno").checkVisibility(),
+    profe: document.getElementById("progreso-profe").checkVisibility(),
+    hoyDentro: document.getElementById("progreso-alumno").contains(document.getElementById("hoy")),
+    numeros: ["progreso-racha", "entreno-puzzles", "entreno-lessons", "entreno-coord"].filter((id) => document.getElementById(id)),
     record: document.getElementById("tactics-record-text").textContent,
     tituloRecord: document.getElementById("tactics-record-title").textContent,
+    saludo: document.getElementById("panel-titulo").textContent.replace(/\s+/g, " ").trim(),
+    subtitulo: document.getElementById("panel-subtitulo").textContent,
+    meta: window.Logros.META_DIARIA,
+    registro: document.getElementById("registro-clases").checkVisibility(),
+    marcas: Array.from(document.querySelectorAll("[data-lo-ultimo]")).map((m) => m.closest("a").getAttribute("href")),
+    placeholder: document.getElementById("buscar-panel-campo").placeholder,
   }));
-  igual("a la alumna se le muestra «Tu progreso»", visto.alumno !== "none", "true");
-  igual("y no el panel del equipo docente", visto.profe, "none");
-  igual("los tres números salen tal cual los contó la base",
-    [visto.puzzles, visto.lecciones, visto.coord], ["37", "9", "24"]);
-  igual("y la racha de días también", visto.racha, "4");
-  /* Informes es una tarjeta de «Tu cuenta»: «Tu progreso» no lleva otra
-     puerta al mismo lugar («Ver informes completos», que se quitó). */
-  igual("«Tu progreso» no repite la puerta a Informes",
-    await page.evaluate(() => document.querySelectorAll('#progreso-alumno a[href="informes.html"]').length), 0);
+  igual("a la alumna se le muestra su tarjeta", visto.alumno, true);
+  igual("y no el panel del equipo docente", visto.profe, false);
+  igual("«Hoy te toca» va DENTRO de esa tarjeta: una sola, no dos seguidas", visto.hoyDentro, true);
+  /* La racha de días ya la dice la meta del día («Tu racha: 4 días»): la
+     tarjeta de al lado la repetía. Y los tres números (4×4, lecciones, la
+     mejor marca de Coordenadas) eran de cuando el entrenamiento era chico. */
+  igual("sin los tres números viejos ni la racha repetida", visto.numeros, []);
   igual("el récord de racha táctica se compara dentro de su grupo",
     visto.tituloRecord, "Racha táctica del grupo 7B");
   igual("con quién lo tiene", visto.record, "Bruno Mora lleva el récord con 14 aciertos seguidos.");
+  igual("«Tu progreso» no repite la puerta a Informes",
+    await page.evaluate(() => document.querySelectorAll('#progreso-alumno a[href="informes.html"]').length), 0);
 
-  /* Lo que de verdad importa de este cambio: que los números vengan CONTADOS.
-     Si alguien vuelve a sumar en el navegador, la página se ve igual de bien
-     hasta que un alumno pasa las mil filas de training_progress, y ahí empieza
-     a mostrar un número que ya no sube, sin que nada falle. */
-  const consultas = await page.evaluate(() => window.__consultas.map((c) => c.tabla));
-  igual("los números se le piden contados a mi_entreno_resumen()",
-    consultas.includes("mi_entreno_resumen"), "true");
-  /* Y no a informes_resumen_alumnos(): cuenta lo mismo, pero arma el renglón
-     de todo el grupo para usar uno. En hora pico tardaba 7 s y, con la base
-     cargada, se cortaba y el panel se quedaba en «Cargando tu panel…». */
+  // El saludo: el nombre de pila y sin género; el subtítulo, su racha.
+  igual("«¡Hola, Ana!», no «¡Bienvenido, Ana Rojas!»", visto.saludo, "¡Hola, Ana! 👋");
+  igual("el subtítulo dice su racha y cuánto le falta hoy", visto.subtitulo,
+    "Llevas 4 días seguidos entrenando: hoy te faltan " + (visto.meta - 2) + " ejercicios para no cortarla.");
+  igual("el buscador le sugiere cosas que tiene (no «Cobros»)", visto.placeholder, "Mates, tareas, aperturas…");
+  /* El registro de clases del profe, al final de todo: al alumno no le toca.
+     Lo suyo es «Repasar mis clases». */
+  igual("sin el registro de clases", visto.registro, false);
+  const consultas = await page.evaluate(() => window.__consultas);
+  igual("y ni lo pide a la base", consultas.filter((c) => c.tabla === "class_sessions" && c.range).length, 0);
+
+  /* Lo último que hizo: la tarjeta de esa página lo dice, una sola. */
+  igual("«Lo último que hiciste» va en la tarjeta de Visualización, y en ninguna otra",
+    visto.marcas, ["entreno/visualizacion.html"]);
+  /* Lo que de verdad importa: los números NUNCA se suman en el navegador. Si
+     alguien vuelve a bajarse training_progress para contar, la página se ve
+     igual de bien hasta que un alumno pasa las mil filas, y ahí PostgREST
+     corta sin avisar. La única lectura permitida es la de «lo último»: una
+     fila, la suya. */
+  const deTraining = consultas.filter((c) => c.tabla === "training_progress");
+  igual("training_progress solo se pide para «lo último»: una fila y la suya",
+    deTraining.map((c) => [c.limit, c.eq.student_id]), [[1, "u-ana"]]);
   igual("y no a informes_resumen_alumnos(), que arma el renglón de todo el grupo",
-    consultas.includes("informes_resumen_alumnos"), "false");
-  igual("y NADIE se baja training_progress para sumarla acá",
-    consultas.includes("training_progress"), "false");
+    consultas.some((c) => c.tabla === "informes_resumen_alumnos"), false);
 
   // Continúa donde ibas: el curso a medias más reciente, no el terminado.
   const seguir = await page.evaluate(() => ({
@@ -2378,6 +2400,67 @@ async function page_vacio(page) {
 module.exports = { panel, igual, mal, bien, datosAlumna, ALUMNA, PROFE, ADMIN, CHROME, BASE, fallos: () => fallos };
 if (require.main !== module) return;
 
+/* ---------- Los grupos de entrenamiento se pliegan en el celular ----------
+   El panel del alumno medía en el celular unas nueve pantallas y «Jugar y
+   competir» quedaba a seis. Los seis grupos de entrenamiento arrancan
+   cerrados en el celular y abiertos en la computadora; se recuerda lo que
+   cada quien abre; y el buscador los abre mientras busca, o un resultado
+   dentro de un grupo cerrado no se vería. */
+async function pruebaPlegables(browser) {
+  console.log("\n=== Los grupos de entrenamiento se pliegan en el celular ===");
+  const PLEGABLES = ["Aprender", "Estudiar", "Entrenamiento básico", "Entrenamiento intermedio",
+    "Entrenamiento avanzado", "Mejorar por habilidades"];
+  const estado = (page) => page.evaluate(() => Array.from(document.querySelectorAll("#tile-grid > section")).map((s) => {
+    const h = s.querySelector("h2"), b = h.querySelector("button"), g = s.querySelector(".grid");
+    return { titulo: h.textContent, boton: b ? b.getAttribute("aria-expanded") : null, grilla: g.checkVisibility() };
+  }));
+  const celular = { viewport: { width: 390, height: 800 } };
+  let { page, ctx, errores } = await panel(browser, [ALUMNA, PROFE], "u-ana", celular, datosAlumna(false));
+  let e = await estado(page);
+  igual("en el celular, los seis grupos de entrenamiento arrancan cerrados",
+    e.filter((x) => x.boton === "false" && !x.grilla).map((x) => x.titulo), PLEGABLES);
+  igual("el resto no se pliega: se ve como siempre",
+    e.filter((x) => !PLEGABLES.includes(x.titulo)).every((x) => x.boton === null && x.grilla), true);
+  igual("el título sigue siendo un encabezado, y dice cuántos accesos tiene",
+    await page.evaluate(() => document.querySelector("#tile-grid [aria-controls]").closest("section").querySelector("h2 + span").textContent),
+    "7 accesos");
+  const jugar = await page.evaluate(() => {
+    const s = Array.from(document.querySelectorAll("#tile-grid > section")).find((x) => x.querySelector("h2").textContent === "Jugar y competir");
+    return Math.round(s.getBoundingClientRect().top + scrollY);
+  });
+  cierto("«Jugar y competir» queda a menos de cuatro pantallas (" + jugar + " px; antes, unos 5000)", jugar < 3200);
+
+  // Abrir uno: se ve, lo dice, y se recuerda al volver.
+  await page.click('#tile-grid h2 button:has-text("Entrenamiento básico")');
+  e = await estado(page);
+  igual("al tocarlo se abre y lo dice (aria-expanded)", e.find((x) => x.titulo === "Entrenamiento básico"), { titulo: "Entrenamiento básico", boton: "true", grilla: true });
+  await page.reload({ waitUntil: "networkidle" });
+  await page.waitForSelector("#app:not(.hidden)");
+  e = await estado(page);
+  igual("y sigue abierto al volver al panel, en este aparato",
+    e.filter((x) => x.boton === "true").map((x) => x.titulo), ["Entrenamiento básico"]);
+
+  // Buscar abre los grupos; borrar los deja como estaban.
+  await buscar(page, "visualizacion");
+  igual("buscando, el resultado se ve aunque su grupo esté cerrado",
+    await page.evaluate(() => document.querySelector('#tile-grid a[href="entreno/visualizacion.html"]').checkVisibility()), true);
+  await buscar(page, "");
+  igual("y al borrar vuelve a cerrarse", await page.evaluate(() => document.querySelector('#tile-grid a[href="entreno/visualizacion.html"]').checkVisibility()), false);
+  igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+
+  ({ page, ctx } = await panel(browser, [ALUMNA, PROFE], "u-ana", { viewport: { width: 1280, height: 900 } }, datosAlumna(false)));
+  e = await estado(page);
+  igual("en la computadora arrancan abiertos, que ahí sí caben",
+    e.filter((x) => PLEGABLES.includes(x.titulo)).every((x) => x.boton === "true" && x.grilla), true);
+  await ctx.close();
+
+  // A quien da clase no se le pliega nada: su panel es otro.
+  ({ page, ctx } = await panel(browser, [PROFE], "u-profe", celular));
+  igual("a la profesora, ningún grupo plegable", await page.evaluate(() => document.querySelectorAll("#tile-grid [aria-controls]").length), 0);
+  await ctx.close();
+}
+
 /* ---------- «Hoy te toca», también en el panel ----------
    Vivía solo en el hub de Entrenamiento, y desde que el panel abre el
    entrenamiento tarjeta por tarjeta el alumno ya no pasa por el hub. Es el
@@ -2405,6 +2488,21 @@ async function pruebaHoyEnElPanel(browser) {
     return !!(document.getElementById("pendientes-aviso").compareDocumentPosition(hoy) & Node.DOCUMENT_POSITION_FOLLOWING)
       && !!(hoy.compareDocumentPosition(document.getElementById("tile-grid")) & Node.DOCUMENT_POSITION_FOLLOWING);
   }), "true");
+  igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+
+  /* Sin nada pendiente, una sugerencia: una página cuyo trabajo cuenta, de
+     la lista de Tareas (MaterialPlataforma), y dicha como sugerencia. */
+  ({ page, ctx, errores } = await panel(browser, [ALUMNA, PROFE], "u-ana", {}, {}));
+  await page.waitForFunction(() => document.querySelectorAll("#hoy-lista a").length > 0, null, { timeout: 15000 }).catch(() => {});
+  const sug = await page.evaluate(() => {
+    const a = document.querySelector("#hoy-lista a");
+    const h = a && window.MaterialPlataforma.HERRAMIENTAS.find((x) => x.href === a.getAttribute("href"));
+    return a ? { texto: a.textContent.replace("→", "").trim(), cuenta: !!h && h.metas.includes("cantidad"), nombre: h && h.label, n: document.querySelectorAll("#hoy-lista a").length } : null;
+  });
+  igual("sin nada pendiente, UNA sugerencia, dicha como sugerencia",
+    sug && [sug.n, sug.texto], sug && [1, "💡Sugerencia de hoy: " + sug.nombre]);
+  igual("y es de una página cuyo trabajo cuenta", sug && sug.cuenta, true);
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
 
@@ -2442,8 +2540,8 @@ async function pruebaBaseLenta(browser) {
   }, id);
   const esperarPanel = (page) => page.waitForFunction(() => document.getElementById("app").checkVisibility(), null, { timeout: 12000 }).catch(() => {});
 
-  // Una alumna: sus tres números no contestan nunca, lo demás sí.
-  let { ctx, page, errores } = await abrir([ALUMNA, PROFE], "u-ana", { colgar: ["mi_entreno_resumen"], rpc: { progreso_dias_y_racha: [] } });
+  // Una alumna: su racha no contesta nunca, lo demás sí.
+  let { ctx, page, errores } = await abrir([ALUMNA, PROFE], "u-ana", { colgar: ["progreso_dias_y_racha"] });
   const t0 = Date.now();
   await esperarPanel(page);
   igual("a la alumna se le muestra el panel aunque una consulta no conteste", await seVe(page, "app"), "true");
@@ -2494,6 +2592,7 @@ async function pruebaBaseLenta(browser) {
     await pruebaLectorDePantalla(browser);
     await pruebaProgresoAlumna(browser);
     await pruebaHoyEnElPanel(browser);
+    await pruebaPlegables(browser);
     await pruebaBaseLenta(browser);
     await pruebaSemanaProfesora(browser);
     await pruebaProfesora(browser);

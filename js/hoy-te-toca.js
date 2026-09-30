@@ -22,7 +22,7 @@
    datos de este aparato los baja ProgresoUsuario.init(), que la página tiene
    que haber esperado antes. Depende de: sb, RepasoEspaciado, RepasoFallados,
    PlanEntrenamiento, TemaFlojo, TipoFlojo (con TiposCatalogo), ErroresPropios,
-   Logros, TiempoSecciones y Notificaciones; el que falte, simplemente no aporta. */
+   MaterialPlataforma, Logros, TiempoSecciones y Notificaciones; el que falte, simplemente no aporta. */
 window.HoyTeToca = (function () {
   "use strict";
 
@@ -173,6 +173,15 @@ window.HoyTeToca = (function () {
     if (finales) cosas.push(finales);
     const precision = await precisionOlvidada(op);
     if (precision) cosas.push(precision);
+    /* Sin nada pendiente, en el panel, una sugerencia: una sola cosa concreta
+       en vez de la tarjeta vacía. Va escrita como sugerencia —no es algo que
+       venció ni que pidió nadie— y cambia cada día (de Costa Rica). En el hub
+       no: ahí las páginas de entrenamiento están justo debajo, y sin nada
+       pendiente el bloque trae solo la meta del día. */
+    if (!cosas.length && op.enPanel) {
+      const sug = sugerenciaDeHoy(op);
+      if (sug) cosas.push(sug);
+    }
     return cosas.slice(0, 3);
   }
 
@@ -188,6 +197,22 @@ window.HoyTeToca = (function () {
     if (r.juego) partes.push(`${r.juego} de la Academia`);
     return { icono: '🪞', href: op.entreno + (web ? 'tipos.html?traer=web#errores' : 'tipos.html#errores'),
       texto: `${total === 1 ? '1 partida' : `${total} partidas`} sin revisar en «Tus propios errores»` + (web && r.juego ? ` (${partes.join(', ')})` : web ? ` (de ${E.SITIO_WEB[r.sitio]})` : '') };
+  }
+
+  /* De dónde sale la sugerencia: las páginas de Entrenamiento cuyo trabajo
+     CUENTA (las que en js/material-plataforma.js ofrecen la meta «cantidad»,
+     o sea que escriben en training_progress), en su orden, una por día. Es la
+     misma lista con la que el profesor arma las tareas, así que una página
+     nueva entra sola y una que no cuenta nunca se sugiere. */
+  function sugerenciaDeHoy(op){
+    const MP = window.MaterialPlataforma;
+    if (!MP || !Array.isArray(MP.HERRAMIENTAS)) return null;
+    const opciones = MP.HERRAMIENTAS.filter((h) => h && /^entreno\//.test(h.href || '')
+      && h.slug !== 'diagnostico' && Array.isArray(h.metas) && h.metas.includes('cantidad'));
+    if (!opciones.length) return null;
+    const dia = Math.floor((Date.now() - 6 * 3600 * 1000) / 86400000);
+    const h = opciones[dia % opciones.length];
+    return { icono: '💡', href: op.entreno + h.href.replace(/^entreno\//, ''), texto: `Sugerencia de hoy: ${h.label}` };
   }
 
   /* Finales contra la máquina ya empezados y sin terminar: cuántos lleva y cuál

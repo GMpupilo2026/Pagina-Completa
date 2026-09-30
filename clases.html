@@ -69,7 +69,7 @@
                 <div class="flex items-center gap-4">
                     <div id="avatar" aria-hidden="true" class="w-14 h-14 rounded-full bg-gradient-to-br from-brand-600 to-brand-800 text-white flex items-center justify-center font-serif text-xl font-bold shrink-0"></div>
                     <div>
-                        <h1 id="panel-titulo" tabindex="-1" class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white focus:outline-none">¡Bienvenido, <span id="welcome-name">alumno</span>! <span aria-hidden="true">👋</span></h1>
+                        <h1 id="panel-titulo" tabindex="-1" class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white focus:outline-none">¡Hola, <span id="welcome-name">alumno</span>! <span aria-hidden="true">👋</span></h1>
                         <p id="panel-subtitulo" class="text-brand-500 dark:text-brand-300 text-sm mt-0.5">Este es tu panel de Clases. Elige a dónde quieres ir.</p>
                     </div>
                 </div>
@@ -101,7 +101,7 @@
                 <div class="relative max-w-xl">
                     <span aria-hidden="true" class="absolute left-3 top-1/2 -translate-y-1/2 text-base pointer-events-none">🔎</span>
                     <input id="buscar-panel-campo" type="search" autocomplete="off" spellcheck="false" enterkeyhint="go"
-                           placeholder="Cobros, tareas, contraseña…" aria-describedby="buscar-panel-ayuda"
+                           placeholder="Mates, tareas, aperturas…" aria-describedby="buscar-panel-ayuda"
                            class="w-full rounded-xl border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 text-brand-800 dark:text-white placeholder:text-brand-450 dark:placeholder:text-brand-350 pl-10 pr-3 py-2.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
                 </div>
                 <p id="buscar-panel-ayuda" class="text-xs text-brand-450 dark:text-brand-350 mt-1.5">El panel deja solo lo que coincide; Enter abre el primero.<span class="hidden sm:inline"> Atajo: Ctrl + K.</span></p>
@@ -213,13 +213,29 @@
                 <span class="text-sm font-semibold text-accent-700 dark:text-accent-400 whitespace-nowrap">Seguir el curso →</span>
             </a>
 
-            <!-- «Hoy te toca» (solo alumno, js/hoy-te-toca.js): la meta del día y los
-                 repasos que vencieron, lo mismo que arriba del hub de Entrenamiento.
-                 Desde que el panel abre el entrenamiento tarjeta por tarjeta, el alumno
-                 ya no pasa por el hub, y esto se quedaba sin nadie que lo viera. Va
-                 después de lo que vence (la franja) y de «Continúa donde ibas»: una
-                 fecha le gana a un repaso. Solo sale si hay algo. -->
-            <section id="hoy" aria-labelledby="hoy-titulo" class="hidden mb-8 rounded-2xl p-5 md:p-6 shadow-md bg-white dark:bg-brand-900"></section>
+            <!-- ===== Hoy te toca (solo alumno) =====
+                 UNA tarjeta con lo que da ganas de volver: la meta del día y la
+                 racha, lo que toca hoy (repasos vencidos, lo que quedó a medias)
+                 y el récord de racha táctica. «Hoy te toca» lo arma
+                 js/hoy-te-toca.js, el mismo del hub de Entrenamiento.
+
+                 Antes eran dos tarjetas seguidas que decían dos veces la racha
+                 de días, y «Tu progreso» traía tres números de cuando el
+                 entrenamiento era chico (ejercicios 4×4, lecciones, la mejor
+                 marca de Coordenadas). Ver «Hoy te toca y tu progreso, en una
+                 sola tarjeta» en docs/decisiones/paneles.md.
+
+                 Va después de lo que vence (la franja) y de «Continúa donde
+                 ibas»: una fecha le gana a un repaso. -->
+            <div id="progreso-alumno" hidden class="mb-8 rounded-2xl p-5 md:p-6 shadow-md bg-white dark:bg-brand-900">
+                <section id="hoy" aria-labelledby="hoy-titulo" class="hidden mb-4"></section>
+                <a href="racha-tactica.html" class="flex items-center gap-3 flex-wrap hover:opacity-80 transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded">
+                    <span class="text-2xl" aria-hidden="true">🏆</span>
+                    <p class="flex-1 min-w-[200px] text-sm text-brand-500 dark:text-brand-300"><span class="font-semibold text-brand-800 dark:text-white" id="tactics-record-title">Racha táctica</span> — <span id="tactics-record-text">Cargando…</span></p>
+                    <span class="text-sm font-semibold text-accent-700 dark:text-accent-400 whitespace-nowrap">Jugar →</span>
+                </a>
+            </div>
+
 
             <!-- «Tu última clase» (solo alumno): lo que hizo y contestó en la última clase
                  en línea, de las dos últimas semanas. Ver js/resumen-clase.js. -->
@@ -229,54 +245,6 @@
                  js/puntos-clase.js. Solo lo suyo: resumen_del_mes no le da a nadie más. -->
             <section id="puntos-mes" hidden aria-labelledby="puntos-mes-titulo" class="mb-8 bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6"></section>
 
-            <!-- El resumen va ARRIBA del grid, no al final. Estaba después de las
-                 seis secciones de accesos, o sea que la racha y los números
-                 —que son lo que da ganas de volver— solo los veía quien hacía
-                 scroll hasta el fondo. El orden de la página es el de las
-                 preguntas que uno se hace al entrar: qué me toca, por dónde
-                 iba, cómo voy, y recién entonces a dónde puedo ir. -->
-            <!-- ===== Tu progreso (alumno) =====
-                 Antes esto eran TRES tarjetas anchas apiladas —récord de racha
-                 táctica, racha de días y los tres números de Entrenamiento—,
-                 o sea mucho scroll para tres datos y para llegar al registro de
-                 clases. Van juntas en una franja, cada número con su enlace.
-
-                 Los números NO se cuentan acá: los da informes_resumen_alumnos(),
-                 que es SECURITY INVOKER y a un alumno le devuelve solo su propio
-                 renglón. Antes esta página se bajaba training_progress entera y
-                 sumaba en el navegador, y eso tenía el techo invisible de
-                 siempre: PostgREST corta la respuesta a partir de cierta
-                 cantidad de filas sin dar ningún error, así que a un alumno con
-                 un año de entrenamiento encima el panel le mostraba un número
-                 que ya no subía. -->
-            <div id="progreso-alumno" hidden class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-10">
-                <div class="flex items-center justify-between flex-wrap gap-2 mb-4">
-                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white">Tu progreso</h2>
-                </div>
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-                    <a href="logros.html" class="rounded-xl p-2 hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
-                        <div class="text-2xl font-bold text-brand-800 dark:text-white" id="progreso-racha">—</div>
-                        <div class="text-xs text-brand-450 dark:text-brand-350 mt-1"><span aria-hidden="true">🔥 </span>Racha de días</div>
-                    </a>
-                    <a href="entreno/4x4.html" class="rounded-xl p-2 hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
-                        <div class="text-2xl font-bold text-brand-800 dark:text-white" id="entreno-puzzles">0</div>
-                        <div class="text-xs text-brand-450 dark:text-brand-350 mt-1"><span aria-hidden="true">🧩 </span>Ejercicios 4×4</div>
-                    </a>
-                    <a href="entreno/aprender.html" class="rounded-xl p-2 hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
-                        <div class="text-2xl font-bold text-brand-800 dark:text-white" id="entreno-lessons">0</div>
-                        <div class="text-xs text-brand-450 dark:text-brand-350 mt-1"><span aria-hidden="true">🎓 </span>Lecciones</div>
-                    </a>
-                    <a href="entreno/coordenadas.html" class="rounded-xl p-2 hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
-                        <div class="text-2xl font-bold text-brand-800 dark:text-white" id="entreno-coord">—</div>
-                        <div class="text-xs text-brand-450 dark:text-brand-350 mt-1"><span aria-hidden="true">⚡ </span>Mejor Coordenadas</div>
-                    </a>
-                </div>
-                <a href="racha-tactica.html" class="mt-4 pt-4 border-t border-brand-100 dark:border-brand-800 flex items-center gap-3 flex-wrap hover:opacity-80 transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded">
-                    <span class="text-2xl" aria-hidden="true">🏆</span>
-                    <p class="flex-1 min-w-[200px] text-sm text-brand-500 dark:text-brand-300"><span class="font-semibold text-brand-800 dark:text-white" id="tactics-record-title">Racha táctica</span> — <span id="tactics-record-text">Cargando…</span></p>
-                    <span class="text-sm font-semibold text-accent-700 dark:text-accent-400 whitespace-nowrap">Jugar →</span>
-                </a>
-            </div>
 
             <!-- ===== Lo urgente (quien supervisa y quien da clase) =====
                  Lo que alguien está esperando (solicitudes, justificaciones,
