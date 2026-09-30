@@ -94,7 +94,7 @@ window.VozPagina = (function () {
     return (corte > 80 ? t.slice(0, corte + 1) : t.slice(0, MAX_LARGO) + "…");
   }
 
-  function decir(texto, urgente) {
+  function decir(texto, urgente, escrito) {
     if (!hablando()) return;
     if (urgente || enFila >= MAX_EN_FILA) {
       try { window.speechSynthesis.cancel(); } catch (e) {}
@@ -102,6 +102,7 @@ window.VozPagina = (function () {
     }
     var dicho = BlindNotation.speak(texto, {
       encolar: true,
+      igualA: escrito,
       alTerminar: function () { enFila = Math.max(0, enFila - 1); },
     });
     if (dicho) enFila += 1;
@@ -146,8 +147,34 @@ window.VozPagina = (function () {
       ultimoMolde.set(region, { molde: molde, en: ahora });
       var urgente = region.getAttribute("aria-live") === "assertive" || region.getAttribute("role") === "alert";
       if (DICE_JUGADA.test(texto)) jugadaDichaEn = ahora;
-      decir(recortar(texto), urgente);
+      decir(recortar(jugadasEnPalabras(texto)), urgente, recortar(texto));
     });
+  }
+
+  /* ---- Las jugadas escritas en un aviso, dichas en palabras ----
+     Los avisos de los ejercicios escriben la jugada como se ve en una planilla
+     («Dxf7+ es legal, pero…», «Elegiste e4.», «Jugaste O-O»), y la voz del
+     navegador la deletrea: «de equis efe siete más». Acá se dice como en el
+     resto del sitio: «dama captura felix 7 jaque», «eva 4», «enroque corto».
+     Solo las letras en español (R D T A C), que son las que se ven en el sitio:
+     la R en inglés es torre y en español es rey, y el sitio habla español. */
+  var LETRA = { R: "rey", D: "dama", T: "torre", A: "alfil", C: "caballo" };
+  var JUGADA_ESCRITA = /(^|[^0-9A-Za-zÁÉÍÓÚáéíóúÑñ])([RDTAC]?)([a-h]?[1-8]?)(x?)([a-h][1-8])(=[DTAC])?([+#]?)(?=$|[^0-9A-Za-zÁÉÍÓÚáéíóúÑñ])/g;
+  function jugadasEnPalabras(texto) {
+    if (!BlindNotation.squareSpoken) return texto;
+    return texto
+      .replace(/(^|[^A-Za-z0-9-])O-O-O([+#]?)/g, function (m, a, j) { return a + "enroque largo" + (j === "#" ? " jaque mate" : j ? " jaque" : ""); })
+      .replace(/(^|[^A-Za-z0-9-])O-O(?!-)([+#]?)/g, function (m, a, j) { return a + "enroque corto" + (j === "#" ? " jaque mate" : j ? " jaque" : ""); })
+      .replace(JUGADA_ESCRITA, function (m, antes, pieza, desde, x, destino, corona, jaque) {
+        var partes = [];
+        if (pieza) partes.push(LETRA[pieza]);
+        if (desde) partes.push(/^[a-h]/.test(desde) ? BlindNotation.squareSpoken(desde[0] + "1").replace(/ 1$/, "") + desde.slice(1) : desde);
+        if (x) partes.push("captura");
+        partes.push(BlindNotation.squareSpoken(destino));
+        if (corona) partes.push("corona " + LETRA[corona[1]]);
+        if (jaque) partes.push(jaque === "#" ? "jaque mate" : "jaque");
+        return antes + partes.join(" ");
+      });
   }
 
   /* ---- Las jugadas del tablero ----
@@ -189,7 +216,7 @@ window.VozPagina = (function () {
     var i = t.indexOf(":");
     var resto = i >= 0 ? t.slice(i + 1) : (t.indexOf(",") >= 0 ? t.slice(t.indexOf(",") + 1) : "");
     resto = resto.split(",")[0].trim();
-    if (!resto || /oculta/.test(resto)) return null;
+    if (!resto || /oculta|cubierta|niebla/.test(resto)) return null;
     if (/^(casilla )?vac[ií]a$/.test(resto)) return "";
     return resto;
   }

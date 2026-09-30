@@ -409,10 +409,10 @@ function responderEscribiendo(texto, api) {
     pintarTablero(new Chess(itemActual.fen), [sq]);
     const noSe = document.getElementById('no-se-btn');
     if (noSe) noSe.className = claseNoSe(false);
-    document.getElementById('q-hint').textContent = `Elegiste ${sq}.`;
+    document.getElementById('q-hint').textContent = `Elegiste ${casillaDicha(sq)}.`;
     document.getElementById('next-btn').disabled = false;
     api.limpiar();
-    avanzarEscribiendo(`Anotado: ${sq}.`);
+    avanzarEscribiendo(`Anotado: ${casillaDicha(sq)}.`);
     return;
   }
   if (itemActual.tipo === 'jugada') {
@@ -427,7 +427,7 @@ function responderEscribiendo(texto, api) {
     pintarTablero(juego, [mv.from, mv.to]);
     const noSe = document.getElementById('no-se-btn');
     if (noSe) noSe.className = claseNoSe(false);
-    document.getElementById('q-hint').textContent = `Jugaste ${mv.san}: esa es tu respuesta y no hace falta jugar más.`;
+    document.getElementById('q-hint').textContent = `Jugaste ${jugadaDicha(mv.san)}: esa es tu respuesta y no hace falta jugar más.`;
     document.getElementById('next-btn').disabled = false;
     api.limpiar();
     avanzarEscribiendo(`Anotado: ${mv.san}.`);
@@ -548,7 +548,7 @@ function clicEnCasilla(square) {
   if (itemActual.tipo === 'casilla') {
     seleccion = square;
     pintarTablero(juego, [square]);
-    document.getElementById('q-hint').textContent = `Elegiste ${square}. Puedes cambiarla o seguir.`;
+    document.getElementById('q-hint').textContent = `Elegiste ${casillaDicha(square)}. Puedes cambiarla o seguir.`;
     document.getElementById('next-btn').disabled = false;
     return;
   }
@@ -587,12 +587,22 @@ function clicEnCasilla(square) {
   responderJugada(juego, intento);
 }
 
+/* La pista se lee en voz alta (lector de pantalla o «Activar voz»): la jugada y
+   la casilla van en palabras, como en todo el sitio («Jugaste caballo felix 3»,
+   «Elegiste eva 4»), no en la notación inglesa, que se deletrea letra por letra. */
+function casillaDicha(sq) {
+  return window.BlindNotation && BlindNotation.squareSpoken ? BlindNotation.squareSpoken(sq) : sq;
+}
+function jugadaDicha(san) {
+  return window.BlindNotation && BlindNotation.sanSpoken ? BlindNotation.sanSpoken(san).replace(/^\S/, (c) => c.toLowerCase()) : san;
+}
+
 function responderJugada(juego, intento) {
   if (!intento) return;
   seleccion = { from: intento.from, to: intento.to, promotion: intento.promotion, san: intento.san };
   pintarTablero(juego, [intento.from, intento.to]);
   document.getElementById('q-hint').textContent =
-    `Jugaste ${intento.san}: esa es tu respuesta y no hace falta jugar más. Puedes cambiarla tocando otra pieza, o seguir.`;
+    `Jugaste ${jugadaDicha(intento.san)}: esa es tu respuesta y no hace falta jugar más. Puedes cambiarla tocando otra pieza, o seguir.`;
   origenElegido = null;
   document.getElementById('next-btn').disabled = false;
 }
