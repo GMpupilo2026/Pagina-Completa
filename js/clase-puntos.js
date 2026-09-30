@@ -109,6 +109,12 @@ function pintarPodio(podio) {
         const quien = l.nombre ? String(l.nombre) : (mia ? "Tú" : "");
         li.textContent = PuntosClase.medalla(l.puesto) + " " + l.puesto + ".º lugar" + (quien ? ": " + quien : "") + " — " + PuntosClase.textoPuntos(Number(l.puntos) || 0) + (mia && l.nombre ? " (tú)" : "");
         if (mia) li.className = "font-bold";
+        /* La foto solo en el podio CON nombres: sin nombres, una cara diría
+           quién es igual que el nombre que se quiso callar. */
+        if (l.nombre && window.FotoPerfil) {
+            li.classList.add("flex", "items-center", "gap-2");
+            li.prepend(FotoPerfil.avatar(l.id, String(l.nombre), "w-8 h-8 text-sm"));
+        }
         ol.appendChild(li);
     });
     if (isTeacher || esObservador) return;
