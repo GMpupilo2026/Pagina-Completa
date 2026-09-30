@@ -610,6 +610,22 @@ hacer nada.
     (`js/article-example-board.js`, que hasta ahora eran mudos fuera del Modo
     Adaptado) escriben el suyo. Un tablero nuevo va por `TableroAccesible` o
     escribe lo mismo.
+- **La posición entera, a pedido: el ♙ del encabezado.** Con la voz encendida
+  y un tablero a la vista aparece, junto al 🗣️, un ♙ («Decir la posición del
+  tablero») que dice la del tablero más grande que se ve, agrupada como en el
+  resto del sitio: «Blancas: rey en eva 1; torres en anna 1 y hector 1…
+  Negras: …». Fuera del Modo Adaptado no había forma de pedirla: el recuadro
+  donde se escribe «posición» y la tecla z del tablero son del Modo Adaptado.
+  - Se arma con lo que dice cada casilla, igual que las jugadas: lo que el
+    tablero oculta no se cuenta («Hay casillas que no se ven», «Las piezas
+    están ocultas»). El turno no se dice: las casillas no lo saben.
+  - Va en el encabezado y no fijo sobre la página: fijo abajo, en el celular
+    tapaba casillas del tablero. Es «♙» y no «♟️»: el emoji sale negro sobre
+    el azul del encabezado y no se ve; el otro se dibuja como letra, en blanco.
+  - La respuesta del recuadro de comandos (`.cc-msg`, donde contesta
+    «posición») ya no se corta a los 400 caracteres: dejaba a las negras sin
+    decir. Y `igualA` va con el texto entero, que es lo que el recuadro ya dijo;
+    recortado no coincidía y se oía dos veces.
 - **La jugada escrita en un aviso se dice en palabras.** Los ejercicios avisan
   «Dxf7+ es legal, pero…», y la voz del navegador lo deletreaba. `jugadasEnPalabras()` lo dice como el resto del sitio: «dama
   captura felix 7 jaque», «eva 4», «enroque corto». Solo con las letras en
@@ -639,7 +655,9 @@ tablero de prueba (la jugada, la captura, el enroque, la coronación, la
 miniatura, las piezas ocultas, el aviso que ya la dijo), la jugada escrita en
 un aviso dicha en palabras, y que Temas, Visualización y el diagrama de un
 artículo digan qué hay en cada casilla (en Temas, además, que la jugada del
-alumno se oiga sin deletrear notación). El examen lo mira
+alumno se oiga sin deletrear notación), y el ♙: que aparezca con la voz y un
+tablero, que diga la posición del tablero principal agrupada y sin lo oculto,
+que a 360 px no saque nada de ancho y que la respuesta del recuadro no se corte. El examen lo mira
 `verificar-examenes.js`: sus casillas y su pista en palabras. Está probado que falla
 de verdad: sin mirar el botón propio, sin mirar lo que llega entero, sin la
 regla de los números y con el tablero callado salta cada uno.

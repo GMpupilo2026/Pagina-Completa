@@ -367,6 +367,11 @@ window.__deletes = [];
         if (!e) { e = { id: "enl-" + (TABLAS.clase_enlaces.length + 1), owner_id: QUIEN, token: "tok" + (TABLAS.clase_enlaces.length + 1), apagado_at: null }; TABLAS.clase_enlaces.push(e); }
         return objeto({ token: e.token });
       }
+      if (n === "clase_enlace_adaptado") {
+        const i = TABLAS.clase_espectadores.find((x) => x.id === args.p_espectador && !x.bloqueado_at);
+        if (i) i.adaptado = !!args.p_adaptado;
+        return objeto(null);
+      }
       if (n === "clase_enlace_sacar") {
         const i = TABLAS.clase_espectadores.find((x) => x.id === args.p_espectador);
         if (i && !i.bloqueado_at) i.bloqueado_at = new Date().toISOString();
