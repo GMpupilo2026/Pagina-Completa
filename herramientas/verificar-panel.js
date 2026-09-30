@@ -981,6 +981,7 @@ async function pruebaUltimaClase(browser) {
     await r.page.evaluate(() => { const a = [...document.querySelectorAll("#ultima-clase a")].find((x) => /Repasar/.test(x.textContent)); return a ? a.getAttribute("href") : "no está"; }),
     "repasar-clases.html?repaso=c-0");
   /* Va dentro de «Tus clases», que en la computadora arranca abierto. */
+  await r.page.waitForFunction(() => !document.getElementById("tus-clases").hidden, null, { timeout: 10000 });
   igual("va dentro de «Tus clases», abierto en la computadora",
     await r.page.evaluate(() => { const d = document.getElementById("tus-clases"); return [d.contains(document.getElementById("ultima-clase")), d.checkVisibility(), d.open]; }),
     [true, true, true]);
@@ -995,15 +996,19 @@ async function pruebaUltimaClase(browser) {
     question_answers: [],
   };
   r = await panel(browser, [ALUMNA], "u-ana", { viewport: { width: 390, height: 800 } }, datosClase);
-  await r.page.waitForFunction(() => !document.getElementById("ultima-clase").hidden, null, { timeout: 10000 });
+  await r.page.waitForFunction(() => !document.getElementById("tus-clases").hidden, null, { timeout: 10000 });
   const cel = await r.page.evaluate(() => { const d = document.getElementById("tus-clases");
     return [d.checkVisibility(), d.open, document.getElementById("ultima-clase").checkVisibility(), d.querySelector("summary").textContent.replace(/\s+/g, " ").trim()]; });
   igual("en el celular, «Tus clases» arranca cerrado, con su título a la vista", cel,
     [true, false, false, "Tus clases tu última clase y tus puntos del mes"]);
   await r.page.click("#tus-clases summary");
   igual("al tocarlo se abre", await r.page.evaluate(() => document.getElementById("ultima-clase").checkVisibility()), true);
+  /* El evento «toggle» llega en otra vuelta: se espera a que quede guardado
+     antes de recargar, y después a que la caja esté ARMADA (lo guardado se
+     aplica en el .finally, que puede llegar después de que se vea la tarjeta). */
+  await r.page.waitForFunction(() => /"Tus clases":true/.test(localStorage.getItem("panel_grupos_abiertos_v1") || ""), null, { timeout: 5000 });
   await r.page.reload({ waitUntil: "networkidle" });
-  await r.page.waitForFunction(() => !document.getElementById("ultima-clase").hidden, null, { timeout: 10000 });
+  await r.page.waitForFunction(() => document.getElementById("tus-clases").dataset.armado === "1", null, { timeout: 10000 });
   igual("y sigue abierto al volver, en este aparato", await r.page.evaluate(() => document.getElementById("tus-clases").open), true);
   await r.ctx.close();
 
