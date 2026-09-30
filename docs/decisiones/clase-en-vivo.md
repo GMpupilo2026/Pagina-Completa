@@ -2141,6 +2141,42 @@ con el tablero y que el tablero siga cuadrado. Su doble acepta **filas de
 arranque** para sembrar una pregunta abierta o una ronda de práctica: sin eso los
 dos overlays del alumno no se pueden ni ver.
 
+### La práctica no recarga la lista en cada jugada
+
+El 29 de setiembre, de 6:00 a 6:35 p. m., la base se quedó sin CPU y el sitio
+dejó de cargar para todos: 240 consultas cortadas por el tope de 8 s, y hasta
+`hora_servidor_ms()`, que solo devuelve la hora, tardaba 5,9 s. A las 5:46 había
+arrancado una ronda de práctica con 13 alumnos contra el motor. La pantalla del
+profe escuchaba `practice_games` y, **con cada cambio de cualquier fila** —cada
+jugada del alumno y cada respuesta del motor—, volvía a pedir la lista entera
+con los perfiles (`select("*, profiles(…)")`, que además pasa por la RLS de
+`profiles`). Esa sola computadora hizo 466 pedidos en 15 minutos, y quien
+supervisaba la clase hacía lo mismo. Sumado a unas 40 personas abriendo sus
+paneles, el tráfico pasó de ~700 pedidos cada 15 minutos a casi 8000, en el
+servidor más chico de Supabase.
+
+Ahora (`aplicarCambioDePractica()` en `sesion.js`):
+
+- **Un UPDATE de un alumno que ya está en la grilla se pinta con la fila del
+  evento**, sin consultar. Se **mezcla** con la que ya estaba: Realtime no manda
+  las columnas grandes que no cambiaron (con la identidad de réplica por
+  omisión, un `moves` o un `ayuda` sin tocar no viene), y el nombre sale del
+  join de la primera carga, que el evento no trae.
+- **La lista se vuelve a pedir solo cuando entra o sale un alumno** (INSERT,
+  DELETE o una fila que la grilla no conoce), y las altas que llegan juntas
+  —la clase entera arrancando la ronda— se juntan: mientras hay una consulta en
+  vuelo, las demás esperan y dan una sola más.
+- **Una consulta que vuelve tarde no pisa una jugada más nueva.**
+  `practice_games.updated_at` no sirve para ordenar (nada lo actualiza), así
+  que cada fila pintada por un evento lleva un número de orden, y la carga
+  completa salta las que recibieron un evento después de salir.
+
+`verificar-practica-ayuda.js` manda tres jugadas como las manda Realtime (sin el
+perfil) y exige cero consultas de la lista, la última jugada pintada y el nombre
+intacto. También manda un evento sin `moves` (no puede vaciar el tablero) y tres
+avisos de alta seguidos (a lo sumo dos consultas). Con el código viejo salta: 3
+consultas con tres jugadas y 7 con tres altas.
+
 ### El profe mira la partida de un alumno y lo ayuda
 
 Las miniaturas dicen a quién ayudar, pero a 190 px no se lee una partida, y
