@@ -1122,6 +1122,95 @@ async function guardarParametrosAvisos() {
     avisar("Días de aviso actualizados.");
 }
 
+/* Qué dice el correo de cobro: el asunto y el mensaje de cada uno de los tres
+ * avisos y el «Cómo pagar», en ajustes_academia como los días de arriba. Lo
+ * que se deja en blanco se guarda vacío y sale con el texto de fábrica; ese
+ * texto no está copiado aquí: lo manda cobros-recordatorios junto con la vista
+ * previa, que arma la MISMA función que manda el correo.
+ */
+const TIPOS_AVISO = ["proximo", "vencido", "moroso"];
+const CLAVES_TEXTOS = ["cobros_como_pagar",
+    ...TIPOS_AVISO.flatMap((t) => ["cobros_asunto_" + t, "cobros_mensaje_" + t])];
+let textosCargados = false;
+
+function campoDeClave(clave) {
+    if (clave === "cobros_como_pagar") return document.getElementById("tx-como-pagar");
+    const [, que, tipo] = clave.split("_");
+    return document.getElementById("tx-" + que + "-" + tipo);
+}
+
+function textosEscritos() {
+    const t = { asunto: {}, mensaje: {}, comoPagar: document.getElementById("tx-como-pagar").value.trim() || null };
+    TIPOS_AVISO.forEach((tipo) => {
+        t.asunto[tipo] = document.getElementById("tx-asunto-" + tipo).value.trim() || null;
+        t.mensaje[tipo] = document.getElementById("tx-mensaje-" + tipo).value.trim() || null;
+    });
+    return t;
+}
+
+async function cargarTextosCorreo() {
+    if (textosCargados) return;
+    const estado = document.getElementById("tx-estado");
+    const { data, error } = await sb.from("ajustes_academia").select("clave, valor").in("clave", CLAVES_TEXTOS);
+    if (error) { estado.textContent = "No se pudieron leer los textos guardados: " + error.message; return; }
+    textosCargados = true;
+    for (const r of data || []) campoDeClave(r.clave).value = r.valor || "";
+    // Los de fábrica van de guía dentro de cada casilla vacía.
+    try {
+        const r = await llamarCobros({ action: "muestra", tipo: "proximo" });
+        const f = r.de_fabrica || {};
+        document.getElementById("tx-como-pagar").placeholder = f.comoPagar || "";
+        TIPOS_AVISO.forEach((tipo) => {
+            document.getElementById("tx-asunto-" + tipo).placeholder = (f.asunto || {})[tipo] || "";
+            document.getElementById("tx-mensaje-" + tipo).placeholder = (f.mensaje || {})[tipo] || "";
+        });
+    } catch (e) { /* Sin guía no se pierde nada: en blanco sigue siendo «el de fábrica». */ }
+}
+
+async function guardarTextosCorreo() {
+    const boton = document.getElementById("tx-guardar");
+    const estado = document.getElementById("tx-estado");
+    const filas = CLAVES_TEXTOS.map((clave) => ({ clave, valor: campoDeClave(clave).value.trim() || null }));
+    boton.disabled = true; boton.textContent = "Guardando…";
+    const { error } = await sb.from("ajustes_academia").upsert(filas, { onConflict: "clave" });
+    boton.disabled = false; boton.textContent = "Guardar los textos";
+    if (error) { estado.textContent = "No se pudo guardar: " + error.message; return; }
+    estado.textContent = "Guardado. Los próximos correos de cobro ya salen con estos textos.";
+    avisar("Textos del correo de cobro guardados.");
+}
+
+async function verMuestraCorreo(boton) {
+    const tipo = boton.dataset.tipo;
+    const estado = document.getElementById("tx-estado");
+    const antes = boton.innerHTML; // es el del HTML, con su emoji escondido del lector
+    boton.disabled = true; boton.textContent = "Armando…";
+    try {
+        const r = await llamarCobros({ action: "muestra", tipo, textos: textosEscritos() });
+        document.getElementById("tx-previa-asunto").textContent = "Asunto: " + r.asunto;
+        const caja = document.getElementById("tx-previa");
+        /* El marco se crea recién aquí, no en el HTML: un <iframe sandbox>
+           vacío en la página es un marco más donde corre lo que se le inyecte
+           a cada marco (y sin allow-same-origin, eso falla). Sin permisos a
+           propósito: el correo es HTML sin scripts y no tiene nada que hacer. */
+        let marco = document.getElementById("tx-previa-marco");
+        if (!marco) {
+            marco = document.createElement("iframe");
+            marco.id = "tx-previa-marco";
+            marco.title = "Vista previa del correo de cobro";
+            marco.setAttribute("sandbox", "");
+            marco.className = "w-full h-[36rem] rounded-xl border border-brand-200 dark:border-brand-700 bg-white";
+            caja.appendChild(marco);
+        }
+        marco.srcdoc = r.html;
+        caja.hidden = false;
+        estado.textContent = "Vista previa con un cobro de ejemplo. Todavía no se ha guardado nada.";
+        caja.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    } catch (err) {
+        estado.textContent = "No se pudo armar la vista previa: " + err.message;
+    }
+    boton.disabled = false; boton.innerHTML = antes;
+}
+
 async function llamarCorreos(cuerpo) {
     const res = await fetch(FUNCION_CORREOS, {
         method: "POST",
@@ -1287,7 +1376,7 @@ function mostrarFicha(cual) {
     // obliga a buscar otra vez dónde se estaba.
     try { localStorage.setItem("cobros_ficha", cual); } catch (e) {}
     if (cual === "contacto") cargarContacto();
-    if (cual === "morosidad") cargarParametrosAvisos();
+    if (cual === "morosidad") { cargarParametrosAvisos(); cargarTextosCorreo(); }
     document.querySelectorAll(".ficha-btn").forEach((b) => {
         const activa = b.dataset.ficha === cual;
         b.setAttribute("aria-selected", activa ? "true" : "false");
@@ -1410,6 +1499,8 @@ document.getElementById("cobros-mas").addEventListener("click", () => cargarCobr
 document.getElementById("csv-btn").addEventListener("click", bajarCsv);
 document.getElementById("wa-guardar").addEventListener("click", guardarWhatsapp);
 document.getElementById("av-guardar").addEventListener("click", guardarParametrosAvisos);
+document.getElementById("tx-guardar").addEventListener("click", guardarTextosCorreo);
+document.querySelectorAll(".tx-muestra").forEach((b) => b.addEventListener("click", () => verMuestraCorreo(b)));
 document.getElementById("c-alumno").addEventListener("change", pintarCorreos);
 document.getElementById("generar-btn").addEventListener("click", async () => {
     const btn = document.getElementById("generar-btn");
