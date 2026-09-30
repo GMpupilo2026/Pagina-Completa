@@ -269,7 +269,8 @@ async function pruebaSinVer(browser) {
   igual("la jugada del profe", await oido(page), "Se jugó caballo cesar 6. Juegan blancas.");
   await tab({ vista: { path: ["e4"], parent: null, root: 1 } });
   await esperarOido(page, /volvió a una jugada anterior/);
-  igual("lo que muestra el profe", await oido(page), "Tu profe volvió a una jugada anterior: 1. e4.");
+  // En Modo Adaptado, la jugada en el formato de ciegos («eva 4»), como todo lo que se oye.
+  igual("lo que muestra el profe", await oido(page), "Tu profe volvió a una jugada anterior: 1. eva 4.");
   await tab({ vista: null, arrows: [{ from: "f3", to: "e5", color: "naranja" }, { from: "b1", to: "c3", color: "azul" }], circles: [{ square: "e5", color: "rojo" }] });
   await esperarOido(page, /marcó/);
   igual("vuelve a la partida y dice las marcas NUEVAS (la de f3 ya estaba)", await oido(page),

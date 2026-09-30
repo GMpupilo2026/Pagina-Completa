@@ -47,6 +47,8 @@ const casos = [
   [N.textoHablado("Tras 15.Axd5+ Rg7 16.Cxc6.", "espanol"), "Tras 15. alfil captura david 5 jaque, rey gustav 7, 16. caballo captura cesar 6."],
   [N.textoHablado("tras Rd1", "ingles"), "tras torre david 1"],
   [N.textoHablado("el peón de e4", "espanol"), "el peón de e4"],
+  [N.textoEspanol("la maniobra ...Bg5-d2-b4", "auto"), "la maniobra ...Ag5-d2-b4"],
+  [N.textoHablado("la maniobra Ce4-d2-b1", "espanol"), "la maniobra caballo eva 4, david 2, bella 1"],
 ];
 let convierteBien = true;
 casos.forEach(([dio, esperado]) => {
@@ -107,10 +109,12 @@ function bloquesVisibles(html) {
 }
 
 const ANTES = "(?<![\\w/\\-–])", DESPUES = "(?![\\w/\\-–=])";
+// Después de la jugada: nada pegado, o el camino de una maniobra («Bg5-d2»).
+const FIN = "[+#]?(?:" + DESPUES + "|(?=-[a-h][1-8]))";
 // Inglesa sin duda: N, B, Q o K de pieza, o una coronación a Q, R, B o N.
-const INGLESA = new RegExp(ANTES + "(?:[NBQK][a-h]?[1-8]?x?[a-h][1-8]|[a-h]x?[a-h]?[1-8]=[QRBN])[+#]?" + DESPUES, "g");
+const INGLESA = new RegExp(ANTES + "(?:[NBQK][a-h]?[1-8]?x?[a-h][1-8]|[a-h]x?[a-h]?[1-8]=[QRBN])" + FIN, "g");
 // Escrita (cualquier notación): lo que en un archivo accesible tendría que ir dicho.
-const ESCRITA = new RegExp(ANTES + "(?:[KQRBNCADT][a-h]?[1-8]?x?[a-h][1-8](?:=[QRBNDTAC])?|[a-h]x[a-h][1-8](?:=[QRBNDTAC])?|[a-h][1-8]=[QRBNDTAC]|O-O(?:-O)?)[+#]?" + DESPUES, "g");
+const ESCRITA = new RegExp(ANTES + "(?:[KQRBNCADT][a-h]?[1-8]?x?[a-h][1-8](?:=[QRBNDTAC])?|[a-h]x[a-h][1-8](?:=[QRBNDTAC])?|[a-h][1-8]=[QRBNDTAC]|O-O(?:-O)?)" + FIN, "g");
 
 let revisados = 0, accesibles = 0;
 const porArchivo = [];

@@ -68,8 +68,12 @@ const SIN_PEON_SOLO = new RegExp(ANTES + "(?:\\.\\.\\.|…)?" +
 const LINEA = new RegExp(ANTES + "(?:(?:" + NUMERO + ")?(?:\\.\\.\\.|…)?" + JUGADA_CUERPO + ANOT + DESPUES + ")" +
   "(?:[ \\t]+(?:" + NUMERO + ")?(?:\\.\\.\\.|…)?" + JUGADA_CUERPO + ANOT + DESPUES + ")*", "g");
 
-const INGLESA = new RegExp(ANTES + "(?:[NBQK][a-h]?[1-8]?x?[a-h][1-8]|[a-h]x?[a-h]?[1-8]=[QRBN])" + DESPUES);
-const ESPANOLA = new RegExp(ANTES + "(?:[CADT][a-h]?[1-8]?x?[a-h][1-8]|[a-h]x?[a-h]?[1-8]=[DTAC])" + DESPUES);
+// Una maniobra: la pieza y su camino, «Ce4-d2-b1».
+const MANIOBRA = new RegExp(ANTES + "(\\.\\.\\.|…)?(" + PIEZA + ")([a-h][1-8](?:-[a-h][1-8])+)" + DESPUES, "g");
+
+// Una letra que decide también en una maniobra («Bg5-d2»).
+const INGLESA = new RegExp(ANTES + "(?:[NBQK][a-h]?[1-8]?x?[a-h][1-8]|[a-h]x?[a-h]?[1-8]=[QRBN])(?:" + DESPUES + "|(?=-[a-h][1-8]))");
+const ESPANOLA = new RegExp(ANTES + "(?:[CADT][a-h]?[1-8]?x?[a-h][1-8]|[a-h]x?[a-h]?[1-8]=[DTAC])(?:" + DESPUES + "|(?=-[a-h][1-8]))");
 
 /* ¿En qué notación está este texto? "ingles", "espanol", "ninguna" (sin
    letras que decidan: solo peones, enroques o la R) o "mezcla". */
@@ -124,7 +128,8 @@ function textoEspanol(texto, origen) {
   const t = String(texto);
   const o = resolver(t, origen);
   if (o === "espanol") return t;
-  return t.replace(SIN_PEON_SOLO, (todo, j, jaque) => todo.replace(j, aEspanol(j, origenDeJugada(j, o, t))));
+  return t.replace(SIN_PEON_SOLO, (todo, j, jaque) => todo.replace(j, aEspanol(j, origenDeJugada(j, o, t))))
+    .replace(MANIOBRA, (todo, puntos, pieza, camino) => (puntos || "") + aEspanol(pieza, origenDeJugada(pieza + camino.slice(0, 2), o, t)) + camino);
 }
 
 /* El texto, con cada jugada en el formato de ajedrez para ciegos. */
@@ -139,8 +144,15 @@ function textoHablado(texto, origen) {
     guardados.push(signo);
     return antes + "\u0003" + (guardados.length - 1) + "\u0004";
   });
+  // Una maniobra se dice pieza y camino: «caballo eva 4, david 2, bella 1».
+  const conManiobras = protegido.replace(MANIOBRA, (todo, puntos, pieza, camino, donde, entero) => {
+    const [primera, ...resto] = camino.split("-");
+    const dicha = hablada(pieza + primera, o, t) + resto.map((c) => ", " + blind().squareSpoken(c)).join("");
+    const trasNumero = /\d(?:\.|…)$/.test(entero.slice(0, donde)) ? " " : "";
+    return trasNumero + "\u0001" + (puntos ? "… " : "") + dicha + "\u0002";
+  });
   // Primero las líneas numeradas: ahí cada palabra es una jugada, también «e4».
-  const marcado = protegido.replace(LINEA, (linea) => {
+  const marcado = conManiobras.split(/(\u0001[^\u0002]*\u0002)/).map((parte) => parte.startsWith("\u0001") ? parte : parte.replace(LINEA, (linea) => {
     const trozos = linea.trim().split(/[ \t]+/);
     const numerada = trozos.some((x) => /^\d+\s?(?:\.|…)/.test(x));
     const unaSola = trozos.length === 1;
@@ -165,7 +177,7 @@ function textoHablado(texto, origen) {
       pendienteNumero = "";
     });
     return "\u0001" + salida.join(", ") + "\u0002";
-  });
+  })).join("");
   // Lo que quedó fuera de las líneas: las jugadas de pieza sueltas en la prosa.
   const dicho = marcado.split(/(\u0001[^\u0002]*\u0002)/).map((parte) => {
     if (parte.startsWith("\u0001")) return parte;
@@ -175,7 +187,7 @@ function textoHablado(texto, origen) {
   // Una jugada que abría la oración («Df7 es el ahogado…») arranca con
   // mayúscula también dicha: «Dama felix 7 es el ahogado…».
   return dicho
-    .replace(/(^|[.!?¡¿]\s+)\u0001([a-záéíóú])/g, (todo, antes, letra) => antes + letra.toUpperCase())
+    .replace(/(^|(?<!\d)[.!?¡¿]\s+)\u0001([a-záéíóú])/g, (todo, antes, letra) => antes + letra.toUpperCase())
     .replace(/[\u0001\u0002]/g, "")
     .replace(/\u0003(\d+)\u0004/g, (todo, i) => guardados[Number(i)]);
 }

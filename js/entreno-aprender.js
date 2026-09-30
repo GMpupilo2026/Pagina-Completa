@@ -429,7 +429,7 @@ function solucionDicha(){
   const s = currentLesson.solution;
   if(!s) return null;
   try{
-    const m = new Chess(currentLesson.fen).move({ from: s.from, to: s.to, promotion: 'q' });
+    const m = new Chess(currentLesson.fen).move({ from: s.from, to: s.to, promotion: s.promotion || 'q' });
     if(m) return window.BlindNotation && BlindNotation.sanSpoken ? BlindNotation.sanSpoken(m.san) : ComandosTablero.sanEspanol(m.san);
   }catch(e){}
   return 'de ' + dichaCasilla(s.from) + ' a ' + dichaCasilla(s.to);
