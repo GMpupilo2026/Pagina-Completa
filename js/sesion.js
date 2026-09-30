@@ -457,23 +457,10 @@
         }
 
         // "12. Nf3 Nc6 13. e4", o "12… Nc6 13. e4" si arranca con negras.
+        // Las jugadas numeradas y qué muestra el profe: js/clase-adaptada.js,
+        // que también usa la página de los invitados (ver-clase.html).
         function numerarJugadas(path, desde) {
-            let numero = 1, turno = "w";
-            try {
-                const partes = (board.startFen || "").split(" ");
-                if (partes[1] === "b") turno = "b";
-                if (parseInt(partes[5], 10) > 0) numero = parseInt(partes[5], 10);
-            } catch (e) {}
-            const textos = [];
-            path.forEach((san, i) => {
-                if (i >= desde) {
-                    if (turno === "w") textos.push(numero + ". " + san);
-                    else textos.push(i === desde ? numero + "… " + san : san);
-                }
-                if (turno === "b") numero++;
-                turno = turno === "w" ? "b" : "w";
-            });
-            return textos.join(" ");
+            return ClaseAdaptada.numerarJugadas(path, desde, board.startFen);
         }
 
         /* La vista que llegó de la base trae lo que el tablero no guarda (de
@@ -490,21 +477,7 @@
 
         // Qué está mostrando el profe, dicho para el alumno (null = la posición en vivo).
         function describirVista(vista) {
-            if (!vista || !Array.isArray(vista.path)) return null;
-            // Una respuesta que el profe le muestra a la clase.
-            if (vista.respuesta && typeof vista.respuesta === "object") {
-                const quien = vista.respuesta.nombre ? String(vista.respuesta.nombre) : "un compañero";
-                return "📺 Así lo resolvió " + quien + ": " + numerarJugadas(vista.path, Math.max(0, Math.min(vista.root || 0, vista.path.length))) + ".";
-            }
-            const principal = board.moves();
-            const root = Math.max(0, Math.min(vista.root || 0, vista.path.length));
-            const esVariante = vista.path.length > root || vista.path.some((san, i) => principal[i] !== san);
-            if (!esVariante) {
-                return vista.path.length
-                    ? "Tu profe volvió a una jugada anterior: " + numerarJugadas(vista.path, vista.path.length - 1) + "."
-                    : "Tu profe volvió a la posición de salida.";
-            }
-            return "Tu profe está mostrando una variante: " + numerarJugadas(vista.path, root) + ".";
+            return ClaseAdaptada.describirVista(vista, board.moves(), board.startFen);
         }
 
         /* A ciegas: con las piezas ocultas el alumno no tenía nada que seguir.

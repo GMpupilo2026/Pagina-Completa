@@ -1230,3 +1230,7 @@ html.modo-control .proyector-contenido { display: block; }
 @supports (height: 100dvh) {
     .vc-tablero { width: min(calc(100vw - 3rem), calc(100dvh - 6.5rem)); }
 }
+/* En Modo Adaptado va el recuadro de comandos debajo del tablero: la clase
+   deja de ser una sola pantalla fija y el tablero se achica para que quepa. */
+html.adaptive-mode #vc-clase { height: auto; min-height: 100vh; }
+html.adaptive-mode .vc-tablero { width: min(calc(100vw - 3rem), 60vh); }

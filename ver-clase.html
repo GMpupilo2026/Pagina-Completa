@@ -46,9 +46,21 @@
                 <p class="text-center text-brand-600 dark:text-brand-300 mb-4">Clase de <strong id="vc-profe" class="text-brand-800 dark:text-white"></strong></p>
                 <ul class="text-sm text-brand-600 dark:text-brand-300 space-y-2 mb-5 list-disc pl-5">
                     <li>Vas a ver el tablero de la clase <strong>en pantalla completa</strong>, siguiendo lo que tu profe va explicando.</li>
-                    <li><strong>Solo se mira:</strong> no puedes mover piezas ni escribir. Para jugar y resolver ejercicios hace falta una cuenta.</li>
+                    <li><strong>Solo se mira:</strong> no puedes mover piezas. Para jugar y resolver ejercicios hace falta una cuenta.</li>
                     <li><strong>No salgas de la pantalla</strong> (otra pestaña, otra aplicación o la tecla Esc). Tu profe se entera. La primera vez te advertimos; <strong>la segunda, ya no puedes ver más el tablero</strong>.</li>
                 </ul>
+                <!-- Para quien no ve la pantalla: el Modo Adaptado (el recuadro de
+                     comandos y cada jugada anunciada) y la voz del navegador. Esta
+                     página no tiene el encabezado del sitio, que es donde vive el
+                     interruptor de siempre. -->
+                <div class="mb-5 rounded-xl border border-brand-100 dark:border-brand-800 p-3" role="group" aria-labelledby="vc-acc-titulo">
+                    <p id="vc-acc-titulo" class="text-sm font-semibold text-brand-800 dark:text-white mb-1">¿No ves la pantalla o ves poco?</p>
+                    <p class="text-xs text-brand-600 dark:text-brand-300 mb-2">Con el modo adaptado oyes cada jugada y cada aviso, y escribes para preguntarle a la posición («posición», «caballos», «qué hay en e4»). En modo adaptado, la tecla Esc no te saca de la clase.</p>
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" id="vc-adaptado-btn" class="vc-adaptado-btn text-sm font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" aria-pressed="false"><span aria-hidden="true">🦯 </span>Modo adaptado</button>
+                        <button type="button" id="vc-voz-btn" class="text-sm font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></button>
+                    </div>
+                </div>
                 <form id="vc-form" class="space-y-4" novalidate>
                     <div>
                         <label for="vc-nombre" class="block text-sm font-semibold text-brand-700 dark:text-brand-200 mb-1">Tu nombre</label>
@@ -73,22 +85,30 @@
 
         <!-- La clase: el tablero y nada más. Se muestra en pantalla completa. -->
         <section id="vc-clase" class="hidden vc-pantalla h-screen flex flex-col items-center bg-brand-900 text-brand-100 px-2 py-2" aria-labelledby="vc-clase-titulo">
-            <h1 id="vc-clase-titulo" class="sr-only">Clase en vivo, solo para mirar</h1>
+            <h1 id="vc-clase-titulo" class="sr-only" tabindex="-1">Clase en vivo, solo para mirar</h1>
             <div class="w-full max-w-5xl flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-sm mb-2">
                 <p><span aria-hidden="true">👀 </span>Clase de <strong id="vc-clase-profe" class="text-white"></strong> · solo para mirar</p>
                 <p id="vc-avisos" class="font-semibold"></p>
+                <div class="flex flex-wrap gap-2">
+                    <button type="button" id="vc-adaptado-btn2" class="vc-adaptado-btn text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-brand-800 hover:bg-brand-700 text-brand-100 border border-brand-600 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" aria-pressed="false"><span aria-hidden="true">🦯 </span>Modo adaptado</button>
+                    <button type="button" id="vc-voz-btn2" class="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-brand-800 hover:bg-brand-700 text-brand-100 border border-brand-600 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></button>
+                </div>
             </div>
-            <p id="vc-estado" class="text-sm text-accent-400 font-semibold mb-2 min-h-[1.25rem] text-center" role="status" aria-live="polite"></p>
+            <!-- Escrito, no hablado: lo que se oye va por #vc-voz, una sola región
+                 para todos los avisos (si hablaran las dos, se oiría dos veces). -->
+            <p id="vc-estado" class="text-sm text-accent-400 font-semibold mb-2 min-h-[1.25rem] text-center"></p>
             <div class="flex-1 min-h-0 w-full flex items-center justify-center">
                 <div id="vc-tablero" class="vc-tablero grid grid-cols-8 grid-rows-[repeat(8,minmax(0,1fr))] aspect-square rounded-xl overflow-hidden shadow-2xl border-4 border-brand-700 select-none"></div>
             </div>
+            <!-- El recuadro de comandos (js/clase-adaptada.js): solo se ve en Modo Adaptado. -->
+            <div id="vc-cmd" class="w-full max-w-xl"></div>
         </section>
 
         <!-- Se acabó: salió dos veces, el profe lo sacó o cambió el enlace. -->
         <section id="vc-fin" class="hidden vc-pantalla min-h-screen flex items-center justify-center px-4 py-10">
             <div class="max-w-md w-full bg-white dark:bg-brand-900 rounded-2xl shadow-xl p-6 sm:p-8 text-center">
                 <p class="text-4xl mb-3" aria-hidden="true">🚫</p>
-                <h1 id="vc-fin-titulo" class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-2"></h1>
+                <h1 id="vc-fin-titulo" tabindex="-1" class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-2"></h1>
                 <p id="vc-fin-texto" class="text-brand-600 dark:text-brand-300 mb-6"></p>
                 <p class="font-semibold text-brand-800 dark:text-white mb-3">Con tu propia cuenta ves la clase entera, juegas y resuelves los ejercicios con tu profe.</p>
                 <div class="flex flex-col sm:flex-row gap-3 justify-center">
@@ -97,6 +117,8 @@
                 </div>
             </div>
         </section>
+        <!-- Todos los avisos de la página, para el lector de pantalla (y la voz). -->
+        <div id="vc-voz" class="sr-only" role="status"></div>
     </main>
     <footer id="vc-pie" class="text-center text-xs text-brand-450 dark:text-brand-350 pb-6">
         <p>&copy; 2026 Ajedrez Integral</p><!-- legal: inicio --><p class="mt-2"><a href="privacidad.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Política de privacidad</a> <span aria-hidden="true">·</span> <a href="terminos.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Términos y condiciones</a></p><!-- legal: fin -->
@@ -112,6 +134,10 @@
     <script src="js/coordenadas-tablero.js"></script>
     <script src="js/board-drag.js"></script>
     <script src="js/clases-board.js"></script>
+    <script src="js/blind-notation.js"></script>
+    <script src="js/comandos-tablero.js"></script>
+    <script src="js/cuadro-comandos.js"></script>
+    <script src="js/clase-adaptada.js"></script>
     <script src="js/vendor/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
     <script src="js/legal-version.js"></script>

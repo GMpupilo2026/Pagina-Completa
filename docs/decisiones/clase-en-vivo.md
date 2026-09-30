@@ -1357,14 +1357,58 @@ su cuenta: al terminar, la pantalla le ofrece la prueba gratis y los planes.
 - El formulario lleva su casilla de privacidad y manda la versión aceptada;
   la política dice qué se guarda de un invitado.
 
+#### El invitado que no ve la pantalla
+
+La página del invitado se sigue igual que la clase con lector de pantalla, y
+además con la voz del navegador para quien no tiene lector:
+
+- **Los dos botones van en la página misma** («🦯 Modo adaptado» con
+  `aria-pressed`, y «Activar voz» de `BlindNotation.setupSpeechToggle`, con
+  su nombre fijo «solo si no usas lector de pantalla»), en la entrada y en la
+  barra de la clase: esta página no tiene el encabezado del sitio, que es
+  donde vive el interruptor de siempre. Tocar uno repinta su gemelo.
+- **El recuadro es el de la clase** (`ClaseAdaptada.montar` en `#vc-cmd`):
+  «posición», «caballos», «qué hay en e4», «ir a e4». Una jugada escrita dice
+  que solo se mira y que para jugar hace falta la cuenta, y no cambia nada.
+- **Todos los avisos van a UNA región viva, `#vc-voz`**, fuera del recuadro
+  (que con el modo apagado va con `display: none` y no habla), y la voz dice
+  lo mismo (`anunciar()`): la bienvenida, si la clase está abierta o cuándo
+  abre, cada jugada, lo que muestra el profe (`ClaseAdaptada.describirVista`,
+  la misma frase que oye un alumno), las piezas ocultas, **las flechas y
+  círculos nuevos del profe** («Tu profe marcó una flecha de bella 1 a cesar
+  3»), la advertencia al salirse y la pantalla final. Para eso `ClaseAdaptada`
+  aceptó `cfg.anunciar`: sin él, sus avisos seguían yendo a su propia región y
+  se oían dos veces o ninguna.
+- **Lo que llega junto se dice junto**: `anunciar()` junta lo de 80 ms en un
+  solo texto. Dos cambios seguidos de la misma región se pisan, y la voz
+  (`speechSynthesis.cancel()`) cortaba el primero a la mitad. Por lo mismo la
+  bienvenida espera al primer estado del tablero y sale con él.
+- `#vc-estado` quedó escrito pero mudo: si hablara, cada aviso se oiría dos
+  veces.
+- **El foco**: al entrar, al recuadro (con el modo) o al título de la clase;
+  al quedar fuera, al título de la pantalla final, porque el tablero donde
+  estaba se fue. La voz dice también ese título, que el lector lee solo.
+- **En Modo Adaptado, salir de pantalla completa no cuenta como salirse.** Con
+  lector de pantalla la tecla Esc es de todos los días (NVDA la usa para salir
+  del modo foco) y sacaría de la clase a quien no hizo nada. Irse a otra
+  pestaña u otra aplicación cuenta igual. La entrada lo dice.
+- La voz no lee los emojis (`ClaseAdaptada.hablar` los quita): diría
+  «warning sign».
+- `numerarJugadas` y `describirVista` se mudaron de `sesion.js` a
+  `js/clase-adaptada.js`, sin cambiar lo que dicen: las usan las dos páginas.
+
 **Al tocar esto, correr `node herramientas/verificar-todo.js clase-invitados
 envios-publicos`.** El primero comprueba, con un doble de las cuatro funciones,
 que sin la casilla no se entra, que el tablero muestra la posición y sigue la
 vista del profe, que no hay enlaces en la clase, que tocar d7 y d6 no mueve,
 que la primera salida se anota una vez y advierte, que la segunda saca y deja
 de pedir el tablero, que al recargar sigue fuera, y del lado del profe los
-avisos, la lista y el enlace nuevo; a la alumna no se le pinta nada. Está
-probado que falla con el tablero movible y sin el freno de la salida doble.
+avisos, la lista y el enlace nuevo; a la alumna no se le pinta nada. Y sin ver
+la pantalla (con la voz interceptada para leer QUÉ diría): los dos botones,
+cada aviso en `#vc-voz` y en la voz, el recuadro que pregunta y no mueve, el
+foco, y que Esc no saque de la clase. Está probado que falla con el tablero
+movible, sin el freno de la salida doble, sin `cfg.anunciar`, contando la
+salida de pantalla completa en Modo Adaptado y leyendo los emojis.
 El segundo, que `clase_invitado_entrar` pase por el freno.
 
 ### El modo sencillo de la clase en vivo
