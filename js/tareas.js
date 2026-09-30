@@ -579,7 +579,7 @@ async function cargarMisTareas() {
    lo deja DENTRO del ejercicio. El enlace lleva de qué tarea viene, así que la
    propia página de entreno puede decirle cuánto le falta (ver
    js/tarea-en-curso.js). */
-function renglonAlumno(r, tareaId) {
+function renglonAlumno(r, tareaId, tareaTitulo) {
     const li = document.createElement("li");
     const meta = r.meta_tipo === "completar" ? 1 : r.meta_cantidad;
     const pct = Math.min(100, Math.round((100 * r.hecho) / (meta || 1)));
@@ -598,11 +598,15 @@ function renglonAlumno(r, tareaId) {
     } catch (e) {}
     const enlace = seguro ? href + (href.includes("?") ? "&" : "?") + "tarea=" + encodeURIComponent(tareaId) : "tareas.html";
 
+    /* Con lector de pantalla, la lista de enlaces de la página era «Ir, Ir,
+       Repasar, Ir»: el nombre dice a qué va y de qué tarea es. Empieza con la
+       palabra que se ve («Ir», «Repasar»), para quien lo dice en voz alta. */
+    const nombreEnlace = `${r.cumplido ? "Repasar" : "Ir"}: ${fraseDe(r)}${tareaTitulo ? ` (tarea «${tareaTitulo}»)` : ""}`;
     li.className = "border-l-2 pl-3 py-1 " + (r.cumplido ? "border-green-500" : "border-brand-200 dark:border-brand-700");
     li.innerHTML = `
         <div class="flex items-center justify-between gap-2 flex-wrap">
             <span class="text-sm ${r.cumplido ? "text-green-700 dark:text-green-400" : "text-brand-700 dark:text-brand-100"}">${r.cumplido ? "✔ " : ""}${escapeHtml(fraseDe(r))}</span>
-            <a href="${escapeHtml(enlace)}" class="text-xs font-semibold text-accent-700 dark:text-accent-400 hover:underline shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded">${r.cumplido ? "Repasar" : "Ir"} →</a>
+            <a href="${escapeHtml(enlace)}" aria-label="${escapeHtml(nombreEnlace)}" class="text-xs font-semibold text-accent-700 dark:text-accent-400 hover:underline shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded">${r.cumplido ? "Repasar" : "Ir"} <span aria-hidden="true">→</span></a>
         </div>`;
 
     if (r.meta_tipo === "completar") {
@@ -622,7 +626,7 @@ function renglonAlumno(r, tareaId) {
                  aria-label="${escapeHtml(fraseDe(r))}" aria-valuemin="0" aria-valuemax="${meta}" aria-valuenow="${r.hecho}">
                 <i class="block h-full ${r.cumplido ? "bg-green-500" : "bg-accent-500"}" style="width:${pct}%"></i>
             </div>
-            <span class="text-xs text-brand-450 dark:text-brand-350 tabular-nums">${r.hecho}/${meta}</span>`;
+            <span class="text-xs text-brand-450 dark:text-brand-350 tabular-nums"><span aria-hidden="true">${r.hecho}/${meta}</span><span class="sr-only">${r.hecho} de ${meta} hechos</span></span>`;
         li.appendChild(barra);
     }
     return li;
@@ -636,8 +640,8 @@ function tarjetaAlumno(t) {
     const vencePrefijo = vencida ? '<span class="text-red-600 dark:text-red-400 font-semibold">Venció</span>' : "Vence";
     div.innerHTML = `
         <div class="flex items-start justify-between gap-3 mb-1">
-            <p class="font-semibold text-brand-800 dark:text-white text-sm">${escapeHtml(t.titulo)}</p>
-            <span class="text-xs font-semibold shrink-0 ${COLOR_SITUACION[t.situacion]}">${t.cumplidos}/${t.renglones}</span>
+            <h3 class="font-semibold text-brand-800 dark:text-white text-sm">${escapeHtml(t.titulo)}</h3>
+            <span class="text-xs font-semibold shrink-0 ${COLOR_SITUACION[t.situacion]}"><span aria-hidden="true">${t.cumplidos}/${t.renglones}</span><span class="sr-only">${t.cumplidos} de ${t.renglones} ${t.renglones === 1 ? "hecha" : "hechas"}</span></span>
         </div>
         <p class="text-xs text-brand-450 dark:text-brand-350 mb-2">De ${escapeHtml(profeNombre)} · ${vencePrefijo} ${formatoFecha(t.vence_at)}</p>`;
     if (t.instrucciones) {
@@ -648,7 +652,7 @@ function tarjetaAlumno(t) {
     }
     const ul = document.createElement("ul");
     ul.className = "grid gap-2";
-    (t.items || []).forEach((r) => ul.appendChild(renglonAlumno(r, t.id)));
+    (t.items || []).forEach((r) => ul.appendChild(renglonAlumno(r, t.id, t.titulo)));
     div.appendChild(ul);
     return div;
 }

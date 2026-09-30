@@ -524,7 +524,7 @@ function finishSet(){
   EntrenoProgress.log('practicar', { set_id: currentSet.id, category: currentSet.cat, title: currentSet.title, stars, seconds: Number(totalSeconds),
     rondas: setStarsEarned.length, rondas_limpias: setStarsEarned.filter(s => s === 3).length, limpio: limpia });
   if(window.BlindNotation) window.BlindNotation.speak(titleText);
-  anunciarResultado(`${titleText} ${stars} estrella${stars === 1 ? '' : 's'} de 3. ${document.getElementById('celebration-stats').textContent}.`);
+  anunciarResultado(`${titleText} ${stars} estrella${stars === 1 ? '' : 's'} de 3. ${document.getElementById('celebration-stats').textContent.replace(/([^.!?])$/, '$1.')}`);
   if(blindMode){
     // El foco cae directo en "Siguiente serie" — así, en modo adaptado, basta con
     // presionar Enter para seguir en vez de tener que ir a buscar el botón a mano.

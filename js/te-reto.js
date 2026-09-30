@@ -524,7 +524,26 @@
             try { savedName = localStorage.getItem(NAME_KEY) || ""; } catch (e) {}
             if (savedName) document.getElementById("name-input").value = savedName;
             updateDayStreakUI();
+            enfocarNombreSiNoVe();
         }
+
+        /* Con la cuenta ciega (o el Modo Adaptado) el foco empieza en el campo del
+           nombre: la página abría con el foco en el <body>, y el nombre —lo único
+           que hay que hacer para empezar— quedaba a diecinueve Tab. Solo si el foco
+           no está en otro lado: no se le quita a nada que la persona haya elegido.
+           La marca de la cuenta puede llegar después de cargar (js/vision-cuenta.js
+           mira la sesión), así que se vuelve a probar cuando llega. */
+        function enfocarNombreSiNoVe() {
+            const raiz = document.documentElement.classList;
+            if (!raiz.contains("modo-ciego") && !raiz.contains("adaptive-mode")) return;
+            if (document.getElementById("name-gate").classList.contains("hidden")) return;
+            const a = document.activeElement;
+            if (a && a !== document.body) return;
+            const campo = document.getElementById("name-input");
+            try { campo.focus(); campo.select(); } catch (e) {}
+        }
+        document.addEventListener("vision:cambio", enfocarNombreSiNoVe);
+        document.addEventListener("adaptivemode:change", enfocarNombreSiNoVe);
         init();
     
 /* Coordenadas del tablero (js/coordenadas-tablero.js): la letra de columna abajo

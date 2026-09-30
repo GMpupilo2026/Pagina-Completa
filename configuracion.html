@@ -63,9 +63,9 @@
                 <label for="full-name-input" class="block text-xs font-medium text-brand-500 dark:text-brand-300 mb-1">Nombre para mostrar</label>
                 <div class="flex gap-2 mb-4">
                     <input id="full-name-input" type="text" class="flex-1 px-3 py-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500">
-                    <button id="save-name-btn" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg transition-colors text-sm whitespace-nowrap">Guardar</button>
+                    <button id="save-name-btn" type="button" aria-label="Guardar el nombre" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg transition-colors text-sm whitespace-nowrap">Guardar</button>
                 </div>
-                <p id="name-msg" class="text-xs mb-4"></p>
+                <p id="name-msg" role="status" class="text-xs mb-4"></p>
                 <!-- Elo del alumno: lo usa el diagnóstico de nivel (entreno/diagnostico.html y
                      js/plan-entrenamiento.js) para ajustar el nivel estimado y el plan. Columnas
                      profiles.elo / elo_tipo / elo_actualizado. -->
@@ -79,12 +79,13 @@
                             <option value="online">En línea (Lichess, Chess.com)</option>
                             <option value="estimado">Estimado por mi profesor</option>
                         </select>
-                        <button id="save-elo-btn" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg transition-colors text-sm whitespace-nowrap">Guardar</button>
+                        <button id="save-elo-btn" type="button" aria-label="Guardar el Elo" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg transition-colors text-sm whitespace-nowrap">Guardar</button>
                     </div>
-                    <p id="elo-msg" class="text-xs mb-1"></p>
+                    <p id="elo-msg" role="status" class="text-xs mb-1"></p>
                     <p class="text-xs text-brand-450 dark:text-brand-350">El diagnóstico de nivel usa tu Elo para afinar el nivel estimado y el plan de entrenamiento. Si no tienes rating, déjalo vacío. Actualízalo cuando cambie.</p>
                 </fieldset>
-                <label class="block text-xs font-medium text-brand-500 dark:text-brand-300 mb-1">Correo</label>
+                <!-- Un <p>, no un <label>: no hay campo que rotular (el correo no se cambia desde acá). -->
+                <p id="email-titulo" class="block text-xs font-medium text-brand-500 dark:text-brand-300 mb-1">Correo</p>
                 <p id="email-display" class="text-sm text-brand-700 dark:text-brand-300 mb-1"></p>
                 <p class="text-xs text-brand-450 dark:text-brand-350">Por seguridad, el correo y el rol de la cuenta no se pueden cambiar desde aquí.</p>
             </div>
@@ -108,12 +109,12 @@
 
             <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
                 <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-4">Seguridad</h2>
-                <label class="block text-xs font-medium text-brand-500 dark:text-brand-300 mb-1">Nueva contraseña</label>
+                <label for="new-password" class="block text-xs font-medium text-brand-500 dark:text-brand-300 mb-1">Nueva contraseña</label>
                 <div class="flex gap-2 mb-1">
-                    <input id="new-password" type="password" placeholder="Mínimo 8 caracteres" class="flex-1 px-3 py-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500">
-                    <button id="pw-save-btn" class="bg-brand-700 hover:bg-brand-800 text-white font-semibold px-4 py-2 rounded-lg transition-colors text-sm whitespace-nowrap">Actualizar</button>
+                    <input id="new-password" type="password" autocomplete="new-password" placeholder="Mínimo 8 caracteres" class="flex-1 px-3 py-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500">
+                    <button id="pw-save-btn" type="button" aria-label="Guardar la contraseña nueva" class="bg-brand-700 hover:bg-brand-800 text-white font-semibold px-4 py-2 rounded-lg transition-colors text-sm whitespace-nowrap">Actualizar</button>
                 </div>
-                <p id="pw-msg" class="text-xs"></p>
+                <p id="pw-msg" role="status" class="text-xs"></p>
             </div>
 
             <!-- Solo para quien da clase, coordina, supervisa o administra: son las

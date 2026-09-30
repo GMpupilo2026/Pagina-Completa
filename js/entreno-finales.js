@@ -415,14 +415,14 @@ function logrado(texto){
     EntrenoProgress.log('finales', Object.assign({ final_id: f.id, meta: f.meta, jugadas: jugadasPropias },
       EntrenoProgress.comoSalio(false, usedHint)));
   }
-  mostrarResultado('🎉', texto, usedHint ? 'Lo lograste con pista: la próxima vez, intenta sin ella.' : '');
+  mostrarResultado('🎉', texto, usedHint ? 'Lo lograste con pista: la próxima vez, intenta sin ella.' : '', true);
 }
 function fallado(texto){
   terminado = true;
   anotarRepaso(true, usedHint);
   mostrarResultado('♟️', texto, finalActual().pista ? `Pista: ${finalActual().pista}` : '');
 }
-function mostrarResultado(emoji, titulo, detalle){
+function mostrarResultado(emoji, titulo, detalle, ganado){
   buildTabs();
   document.getElementById('celebration-emoji').textContent = emoji;
   document.getElementById('celebration-title').textContent = titulo;
@@ -430,8 +430,12 @@ function mostrarResultado(emoji, titulo, detalle){
   document.getElementById('celebration').style.display = 'block';
   document.getElementById('hint-btn').disabled = true;
   setStatus(titulo);
-  document.getElementById('celebration-next-btn').style.display = actual < FINALES.length - 1 ? '' : 'none';
-  if(blindMode) document.getElementById('celebration-retry-btn').focus();
+  const hayOtro = actual < FINALES.length - 1;
+  document.getElementById('celebration-next-btn').style.display = hayOtro ? '' : 'none';
+  /* Al ganarlo, lo que sigue es el siguiente final, no repetir el mismo: el
+     foco iba a «Intentar de nuevo» y un Intro de más volvía a empezar el que
+     ya estaba resuelto. Al perderlo, sí: intentar de nuevo. */
+  if(blindMode) document.getElementById(ganado && hayOtro ? 'celebration-next-btn' : 'celebration-retry-btn').focus();
 }
 
 /* Dos pistas: la idea del final, y después la jugada que haría el motor en tu

@@ -142,6 +142,24 @@
     // vaciar y volver a poner: si el texto se repite, el lector lo vuelve a leer
     e.textContent = "";
     setTimeout(() => { e.textContent = texto; }, 30);
+    /* Lo que el recuadro no entendió queda SELECCIONADO: lo siguiente que se
+       escribe lo reemplaza, sin tener que borrarlo letra por letra a ciegas. */
+    if (/^(No entendí|Aquí solo se pregunta|«[^»]*» no es)/.test(texto)) {
+      const i = $("jugada-input");
+      if (i && document.activeElement === i && i.value) i.select();
+    }
+  }
+  function modoCiego() { return document.documentElement.classList.contains("modo-ciego"); }
+  /* Con la cuenta ciega, todo se hace desde el recuadro: al cargar un
+     ejercicio (también con «Siguiente →», que se quedaba con el foco) vuelve
+     ahí. Espera un momento: algunos juegos piden la jugada después de pintar. */
+  function alRecuadro() {
+    if (!modoCiego()) return;
+    setTimeout(() => {
+      const i = $("jugada-input");
+      if (i && !$("jugada-form").classList.contains("hidden") && i.checkVisibility()) i.focus();
+      else { const t = $("titulo-juego"); t.setAttribute("tabindex", "-1"); t.focus(); }
+    }, 60);
   }
   function explicar(nodos) {
     const e = $("explicacion");
@@ -364,8 +382,13 @@
     e.preventDefault();
     const txt = $("jugada-input").value.trim();
     if (!txt) return;
+    /* Volver escribiendo: el enlace «← Niveles» queda lejos del recuadro, y
+       quien no ve no tiene por qué salir a buscarlo. */
+    const nav = txt.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[.!¡]/g, "").trim();
+    if (/^(niveles|volver|volver a los niveles|los niveles)$/.test(nav)) { $("jugada-input").value = ""; location.hash = $("volver-tipo").getAttribute("href") || "#"; return; }
+    if (/^(todos los tipos|todas las habilidades|habilidades|tipos)$/.test(nav)) { $("jugada-input").value = ""; location.hash = "#"; return; }
     if (preguntaAlTablero(txt)) { $("jugada-input").value = ""; return; }
-    if (!alEscribir) { estado("Aquí solo se pregunta por la posición: este ejercicio se contesta con los botones de abajo."); return; }
+    if (!alEscribir) { estado("Aquí solo se pregunta por la posición: este ejercicio se contesta con los botones de abajo. «niveles» vuelve a los niveles."); return; }
     alEscribir(txt);
   });
 
@@ -538,6 +561,7 @@
     JUEGOS[partida.tipo](item);
     // La apertura sin tablero (nivel 3) tampoco: la posición es la respuesta.
     if (adaptado() && partida.tipo !== "fotografia" && !tab.oculto) leerPosicion(item.fen);
+    // alRecuadro();
   }
   /* Nivel completo: todos sus ejercicios con al menos una estrella. Antes, al
      terminar el último, «Siguiente» volvía a la lista de niveles sin decir
@@ -722,7 +746,31 @@
     });
     $("controles").appendChild(fs);
     let hecho = false;
-    $("controles").appendChild(boton("Comprobar", BTN_PRIMARIO + " mt-3", () => {
+    /* Escribir la jugada sola («Ae4+») la tacha, o la destacha si ya estaba:
+       antes había que escribir «tachar Ae4», que nadie adivina. La jugada se
+       resuelve contra la posición (español o inglés, con o sin «+») y se busca
+       entre las candidatas por su SAN. */
+    (()=>{})("Escribe una jugada para tacharla (o destacharla) y «comprobar» para corregir", (txt) => {
+      if (hecho) return;
+      const plano = txt.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+      if (/^(comprobar|corregir|listo)$/.test(plano)) { comprobar.click(); return; }
+      const sinPalabra = txt.replace(/^\s*(tachar|destachar|quitar)\s+/i, "");
+      const limpia = (x) => String(x || "").replace(/[+#!?\s]/g, "");
+      let fila = null;
+      const m = jugadaEscrita(new Chess(item.fen), sinPalabra);
+      if (m) fila = filas.find((f) => limpia(f.c.san) === limpia(m.san));
+      if (!fila) fila = filas.find((f) => limpia(f.c.sanEs) === limpia(sinPalabra) || limpia(f.c.san) === limpia(sinPalabra));
+      if (!fila) {
+        estado("No entendí «" + txt + "» como una de las candidatas: " + filas.map((f) => f.c.sanEs).join(", ") + ".");
+        return;
+      }
+      $("jugada-input").value = "";
+      fila.cb.checked = !fila.cb.checked;
+      const marcadas = filas.filter((f) => f.cb.checked).map((f) => f.c.sanEs);
+      estado((fila.cb.checked ? "Tachada: " : "Destachada: ") + fila.c.sanEs + ". " +
+        (marcadas.length ? "Tachadas ahora: " + marcadas.join(", ") + "." : "Ninguna tachada.") + " Escribe «comprobar» cuando termines.");
+    });
+    const comprobar = boton("Comprobar", BTN_PRIMARIO + " mt-3", () => {
       if (hecho) return;
       hecho = true;
       const r = R.corregirDescarte(item, filas.filter((f) => f.cb.checked).map((f) => f.c.san));
@@ -738,7 +786,8 @@
       estado((r.perfecto ? "✓ ¡Perfecto! " : "Acertaste " + r.aciertos + " de " + r.total + ". ") + (n ? textoEstrellas(n) : "Sin estrellas: prueba otra vez."));
       explicar("Las evaluaciones son de Stockfish: una jugada «pierde» si queda 2,5 peones o más peor que la mejor.");
       terminar(item, n);
-    }));
+    });
+    $("controles").appendChild(comprobar);
   };
 
   /* ---------- 4. Siete diferencias ---------- */
@@ -839,7 +888,23 @@
     caja.append(lab, aguja, extremos, lectura);
     $("controles").appendChild(caja);
     let hecho = false;
-    $("controles").appendChild(boton("Comprobar", BTN_PRIMARIO + " mt-3", () => {
+    /* La evaluación también se escribe: «+2», «-3», «5», «aguja 1,5». Mover un
+       deslizador con flechas sin verlo es contar pulsaciones a ciegas; con el
+       número escrito, la aguja queda donde se dijo. */
+    (()=>{})("O escribe tu evaluación, de -5 a +5 («+2», «-3», «aguja 1,5») y «comprobar»", (txt) => {
+      if (hecho) return;
+      const plano = txt.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+      if (/^(comprobar|corregir|listo)$/.test(plano)) { comprobar.click(); return; }
+      const m = /^(?:aguja|evaluacion|eval|mi evaluacion)?\s*(?:en\s+)?([+\-−]?)\s*(\d+(?:[.,]\d+)?)$/.exec(plano);
+      if (!m) { estado("No entendí «" + txt + "». Escribe un número de -5 a +5, por ejemplo «+2» o «-1,5»."); return; }
+      let v = parseFloat(m[2].replace(",", ".")) * (m[1] === "-" || m[1] === "−" ? -1 : 1);
+      v = Math.max(-5, Math.min(5, Math.round(v * 2) / 2));
+      aguja.value = String(v);
+      decir();
+      $("jugada-input").value = "";
+      estado("Aguja en " + R.numeroBalanza(v) + ": " + R.veredictoBalanza(v) + ". Escribe «comprobar» para ver qué dice el motor.");
+    });
+    const comprobar = boton("Comprobar", BTN_PRIMARIO + " mt-3", () => {
       if (hecho) return;
       hecho = true;
       aguja.disabled = true;
@@ -849,7 +914,8 @@
       const mat = item.material === 0 ? "igual" : (item.material > 0 ? "+" + item.material + " para las blancas" : "+" + (-item.material) + " para las negras");
       explicar(["Material: " + mat + ".", item.linea ? "Lo que ve el motor: " + item.linea + "." : "", item.nombre ? "Posición de la línea «" + item.nombre + "»." : ""].filter(Boolean));
       terminar(item, r.estrellas);
-    }));
+    });
+    $("controles").appendChild(comprobar);
   };
 
   /* ---------- 6. Fotografía ---------- */
@@ -900,8 +966,30 @@
         $("controles").appendChild(fs);
         return { q, fs, nota };
       });
-      estado("Las piezas desaparecieron. Contesta las tres preguntas.");
-      $("controles").appendChild(boton("Comprobar", BTN_PRIMARIO + " mt-2", function () {
+      estado("Las piezas desaparecieron. Contesta las tres preguntas." + (adaptado() ? " Puedes escribir cada respuesta en el recuadro, en orden: " + grupos[0].q.texto + " " + grupos[0].q.opciones.join(", ") + "." : ""));
+      /* Las respuestas cortas en el recuadro («e1», «4», «peón blanco»): van a
+         la primera pregunta sin contestar que tenga esa opción. Así quien no ve
+         contesta las tres sin salir del recuadro. */
+      const normal = (x) => String(x).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[.!¡¿?]/g, "").trim();
+      pedirJugada("Escribe la respuesta («e1», «4», «peón blanco») y «comprobar» al final", (txt) => {
+        const t = normal(txt);
+        if (/^(comprobar|corregir|listo)$/.test(t)) { comprobarFoto.click(); return; }
+        const sinResp = grupos.filter((g) => !g.fs.querySelector("input:checked"));
+        const g = sinResp.find((x) => x.q.opciones.some((o) => normal(o) === t)) || grupos.find((x) => x.q.opciones.some((o) => normal(o) === t));
+        if (!g) {
+          const falta = sinResp[0];
+          estado("No entendí «" + txt + "»." + (falta ? " " + falta.q.texto + " Opciones: " + falta.q.opciones.join(", ") + "." : ""));
+          return;
+        }
+        const r = Array.from(g.fs.querySelectorAll("input")).find((x) => normal(x.value) === t);
+        if (r.disabled) return;
+        r.checked = true;
+        $("jugada-input").value = "";
+        const otra = grupos.find((x) => !x.fs.querySelector("input:checked"));
+        estado(g.q.texto + " Marcaste: " + r.value + "." + (otra ? " Ahora: " + otra.q.texto + " Opciones: " + otra.q.opciones.join(", ") + "." : " Ya contestaste las tres: escribe «comprobar»."));
+      });
+      const comprobarFoto = boton("Comprobar", BTN_PRIMARIO + " mt-2", function () {
+        if (this.disabled) return;
         this.disabled = true;
         let bien = 0;
         grupos.forEach((g) => {
@@ -914,7 +1002,8 @@
         tablero(item.fen, { orientacion: "w" });
         estado("Acertaste " + bien + " de 3. " + (bien ? textoEstrellas(bien) : "Sin estrellas."));
         terminar(item, bien);
-      }));
+      });
+      $("controles").appendChild(comprobarFoto);
     }
     function reconstruir() {
       const colocado = {};
@@ -956,19 +1045,44 @@
         escr.append(lab, inp);
         return { c, inp };
       });
-      escr.appendChild(boton("Colocar lo escrito", BTN_SEGUNDO, () => {
+      /* Una sola lectura para los campos y el recuadro de abajo (R.leerPiezas). */
+      function colocarTexto(c, texto) {
+        const r = R.leerPiezas(texto, c);
+        Object.keys(r.piezas).forEach((s) => { colocado[s] = r.piezas[s]; });
+        return r;
+      }
+      function colocarCampos() {
         const malas = [];
-        campos.forEach(({ c, inp }) => {
-          const r = R.leerPiezas(inp.value, c);
-          Object.keys(r.piezas).forEach((s) => { colocado[s] = r.piezas[s]; });
-          malas.push(...r.malas);
-        });
+        campos.forEach(({ c, inp }) => { if (inp.value.trim()) malas.push(...colocarTexto(c, inp.value).malas); });
         pintar();
+        return malas;
+      }
+      escr.appendChild(boton("Colocar lo escrito", BTN_SEGUNDO, () => {
+        const malas = colocarCampos();
         estado(malas.length ? "No entendí: " + malas.join(", ") + "." : "Colocadas " + Object.keys(colocado).length + " piezas.");
       }));
       $("controles").appendChild(escr);
       estado("Las piezas desaparecieron. Reconstruye la posición.");
-      $("controles").appendChild(boton("Comprobar", BTN_PRIMARIO, function () {
+      /* En el recuadro, tras «Ya la tengo»: «blancas: Rc2, Pa5», «negras: Rg8»
+         o las piezas solas («Rc2 a5», que son las blancas). Antes contestaba
+         «Aquí solo se pregunta…» y quien no ve tenía que salir a los campos. */
+      (()=>{})("Escribe las piezas: «blancas: Rc2, Pa5», «negras: Rg8, h7»; «comprobar» al final", (txt) => {
+        const plano = txt.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+        if (/^(comprobar|corregir|listo)$/i.test(plano)) { comprobarFoto.click(); return; }
+        const m = /^(blancas?|negras?)\s*:?\s*(.*)$/i.exec(plano);
+        const color = m ? (/^b/i.test(m[1]) ? "w" : "b") : "w";
+        const r = colocarTexto(color, m ? m[2] : plano);
+        pintar();
+        const puestas = Object.keys(r.piezas);
+        if (!puestas.length) { estado("No entendí «" + txt + "». Escribe, por ejemplo, «blancas: Rc2, Pa5» o «negras: Rg8, h7»."); return; }
+        $("jugada-input").value = "";
+        estado("Colocadas: " + puestas.map((s) => TableroAccesible.piezaDicha({ color: r.piezas[s][0], type: r.piezas[s][1] }) + " en " + TableroAccesible.casillaHablada(s)).join(", ") + "." +
+          (r.malas.length ? " No entendí: " + r.malas.join(", ") + "." : "") + " En total, " + Object.keys(colocado).length + " piezas.");
+      });
+      // «Comprobar» toma también lo escrito en los campos aunque no se haya apretado «Colocar».
+      const comprobarFoto = boton("Comprobar", BTN_PRIMARIO, function () {
+        if (this.disabled) return;
+        colocarCampos();
         this.disabled = true;
         const r = R.compararFoto(item.fen, colocado);
         const marcas = {};
@@ -990,7 +1104,8 @@
         partes.push("En el tablero: ✓ bien, − faltaba, ✗ otra pieza, + sobraba.");
         explicar(partes);
         terminar(item, n);
-      }));
+      });
+      $("controles").appendChild(comprobarFoto);
     }
   };
 
@@ -1070,12 +1185,26 @@
       if (limpiarJuego) { limpiarJuego(); limpiarJuego = null; }
       mostrar("vista-tipo");
       pintarTipo(tipo);
+      enfocarTitulo("titulo-tipo");
     } else {
       if (limpiarJuego) { limpiarJuego(); limpiarJuego = null; }
       mostrar("vista-fichas");
       pintarFichas();
+      enfocarTitulo("titulo-fichas");
     }
     window.scrollTo({ top: 0 });
+  }
+  /* Cambiar de vista esconde lo que tenía el foco (el enlace de la ficha, el
+     recuadro) y el foco caía al <body>: quien no ve no sabía qué se había
+     abierto. Va al título de la vista nueva, que lo dice. Al cargar la página
+     también, pero solo si el foco no está en otra cosa. */
+  function enfocarTitulo(id) {
+    const a = document.activeElement;
+    const sinLugar = !a || a === document.body || a.closest("#vista-fichas, #vista-tipo, #vista-juego");
+    if (!sinLugar) return;
+    const t = $(id);
+    t.setAttribute("tabindex", "-1");
+    t.focus({ preventScroll: true });
   }
   window.addEventListener("hashchange", rutear);
 

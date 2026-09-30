@@ -653,7 +653,7 @@ function finishSet(){
      enteraba de que la serie había terminado ni de cuántas estrellas sacó. */
   const titulo = document.getElementById('celebration-title');
   const anuncio = document.getElementById('celebration-anuncio');
-  const dicho = `Serie terminada. ${titulo.textContent.replace(/[^\p{L}\p{N}¡!¿?,. —-]/gu, '').trim()} ${stars} estrella${stars === 1 ? '' : 's'} de 3. ${document.getElementById('celebration-stats').textContent}.`;
+  const dicho = `Serie terminada. ${titulo.textContent.replace(/[^\p{L}\p{N}¡!¿?,. —-]/gu, '').trim()} ${stars} estrella${stars === 1 ? '' : 's'} de 3. ${document.getElementById('celebration-stats').textContent.replace(/([^.!?])$/, '$1.')}`;
   titulo.focus();
   if(anuncio){ anuncio.textContent = ''; setTimeout(() => { anuncio.textContent = dicho; }, 60); }
   if(window.BlindNotation && BlindNotation.speak){ try{ BlindNotation.speak(dicho); }catch(e){} }

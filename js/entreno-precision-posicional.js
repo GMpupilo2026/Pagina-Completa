@@ -59,7 +59,7 @@ function anunciar(texto) {
    letra de una opción que nadie le había dicho: el recuadro solo leía el
    enunciado, y las opciones había que ir a buscarlas con Tab. */
 function opcionesDichas(item) {
-  return item.__orden.map((original, i) => `Opción ${CuadroComandos.letra(i)}: ${item.opciones[original]}`).join('. ') + '.';
+  return item.__orden.map((original, i) => `Opción ${CuadroComandos.letra(i)}: ${String(item.opciones[original]).replace(/[.\s]+$/, '')}`).join('. ') + '.';
 }
 function preguntaDicha() {
   const item = tanda[idx];
