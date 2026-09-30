@@ -58,8 +58,7 @@ cierto("y en singular cuando es una", out.una.senales.join(" ").includes("Una ta
 cierto("con la hora de Costa Rica (00:05 UTC son las 6:05 p. m. del 29)",
   /29 de septiembre[^<]*6:05/.test(c) && c.includes("hora de Costa Rica"), c.match(/medido el [^)]*/));
 cierto("dice qué hacer: que no hace falta reiniciar", c.includes("no hay nada que reiniciar"));
-cierto("y cómo evitar que se repita (el tamaño de la base, que el plan gratuito no deja)",
-  c.includes("Compute and Disk") && c.includes("plan Pro"));
+cierto("y cómo evitar que se repita (subir el tamaño de la base)", c.includes("Compute and Disk"));
 cierto("con el enlace al proyecto en Supabase", c.includes('href="https://supabase.com/dashboard/project/bgtijpimpcokxatxxbki"'));
 
 console.log("\nLos umbrales");

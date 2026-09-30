@@ -57,7 +57,7 @@ ${cabeceraHtml}
   <p style="margin:0 0 6px;font-weight:700">Qué hacer</p>
   <ul style="margin:0 0 16px;padding-left:20px">
     <li style="margin:0 0 6px">Ahora: no hay nada que reiniciar. La base se recupera sola cuando baja la carga; mientras tanto, las páginas cargan con lo que alcanzan a traer.</li>
-    <li style="margin:0 0 6px">Para que no se repita: subir el tamaño de la base en Supabase (Settings → Compute and Disk). En el plan gratuito no se puede; hace falta el plan Pro.</li>
+    <li style="margin:0 0 6px">Si pasa seguido, a la base le quedó chico su tamaño: se sube en Supabase (Settings → Compute and Disk). Desde el 30/9 está en Small.</li>
   </ul>
   <p style="margin:0 0 20px"><a href="${PANEL}" style="display:inline-block;background:#102a43;color:#ffffff;text-decoration:none;font-weight:700;font-size:14px;padding:12px 20px;border-radius:8px">Abrir el proyecto en Supabase</a></p>
   <p style="margin:0;color:#486581;font-size:13px">Este aviso lo manda la propia base cada vez que lo detecta, como mucho uno cada dos horas.</p>

@@ -507,12 +507,13 @@ que lentas) y con una que **lanza**: el panel tiene que aparecer, y cuando ni
 lo imprescindible contesta, el aviso con «Volver a intentar» tiene que verse.
 Con el `clases.js` anterior esas pruebas fallan.
 
-**Lo que no se arregla desde el código:** la base es Nano (0,5 GB, procesador
-compartido) y en hora pico no le alcanza. El consumo más grande, con mucha
-diferencia, es el de Realtime (`realtime.list_changes`, millones de llamadas).
-Estos dos cambios quitan la consulta más pesada del panel y hacen que una base
-lenta no lo deje bloqueado, pero subir el tamaño de la base es lo que evita que
-se sature.
+**Lo que no se arregla desde el código:** la base era Nano (0,5 GB, procesador
+compartido) y en hora pico no le alcanzaba. Esa misma noche se pasó a Pro con la
+base Small. El consumo más grande, con mucha diferencia, es el de Realtime
+(`realtime.list_changes`, millones de llamadas). Estos dos cambios quitan la
+consulta más pesada del panel y hacen que una base lenta no lo deje bloqueado,
+pero el tamaño de la base es lo que evita que se sature. Ver «La base saturada
+del 29/9: qué la cargaba y qué se hizo» en `sitio-e-infraestructura.md`.
 
 ### Quien da clase no entra al panel del alumno
 

@@ -1400,10 +1400,12 @@ El 29 de setiembre, a las 6 p. m., con 4 clases abiertas, unos 25 alumnos en
 clase y otras 17 personas en la plataforma, la base cortó consultas por
 *statement timeout* y tres grupos no pudieron dar clase. Eran solo unas **4
 consultas por segundo**: el problema no es el volumen, es la máquina. El
-proyecto está en el **plan gratuito** (base Nano, procesador compartido), que
-aguanta ratos de actividad pero frena cuando la carga se sostiene. **Subir el
-tamaño de la base (plan Pro + Small o más) es lo que lo resuelve**; lo de abajo
-baja la carga y hace que una base lenta no bloquee, pero no la reemplaza.
+proyecto estaba en el **plan gratuito** (base Nano, procesador compartido), que
+aguanta ratos de actividad pero frena cuando la carga se sostiene. **Esa misma
+noche se pasó a Pro con la base Small** (de 224 MB a 512 MB de `shared_buffers`,
+de 60 a 90 conexiones): eso es lo que lo resuelve. Lo de abajo baja la carga y
+hace que una base lenta no bloquee, pero no reemplaza el tamaño: si el aviso de
+abajo empieza a llegar seguido, es la señal para subir otro escalón.
 
 Cómo se decidió qué tocar: **por tiempo total de base, no por número de
 pedidos.** Leer el perfil propio se pedía unas 2400 veces por hora (cada página
