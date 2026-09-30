@@ -29,6 +29,12 @@
         <div id="loading-spinner" role="status" class="flex flex-col items-center gap-3 text-center text-brand-500 dark:text-brand-300">
             <span aria-hidden="true" class="w-8 h-8 rounded-full border-4 border-brand-200 dark:border-brand-700 border-t-accent-500 animate-spin motion-reduce:animate-none"></span>
             <p class="text-sm">Cargando tu panel…</p>
+            <!-- js/clases.js lo destapa si a los 15 s todavía no cargó, o si
+                 la carga se cayó: la rueda sola no dice nada ni da salida. -->
+            <div id="loading-lento" hidden class="max-w-sm">
+                <p id="loading-lento-texto" class="text-sm mb-3">Está tardando más de lo normal: la plataforma está muy ocupada en este momento.</p>
+                <button type="button" id="loading-reintentar" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2.5 rounded-lg transition-colors">Volver a intentar</button>
+            </div>
         </div>
         <div id="loading-error" class="hidden w-full max-w-sm text-center">
             <p class="text-5xl mb-4" aria-hidden="true">⚠️</p>

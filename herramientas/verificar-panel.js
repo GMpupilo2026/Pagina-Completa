@@ -197,11 +197,16 @@ window.__consultas = [];
     /* Los RPC contestan lo que la prueba les puso, y pasan por el MISMO
        constructor que las tablas: así quedan anotados en window.__consultas y
        se puede exigir, por ejemplo, que los tres números de Entrenamiento
-       salgan de informes_resumen_alumnos() y no de bajarse training_progress.
+       salgan de mi_entreno_resumen() y no de bajarse training_progress.
 
        Un solo profesor en mis_clases: el selector de clase no aparece, que es
        lo correcto. */
     rpc: (n, args, opciones) => {
+      /* Una base saturada: la consulta no contesta nunca (colgar) o revienta
+         antes de salir (lanzar). pruebaBaseLenta() exige que el panel igual
+         aparezca, o que al menos diga qué pasa y ofrezca volver a intentar. */
+      if ((DATOS.colgar || []).includes(n)) return new Promise(() => {});
+      if ((DATOS.lanzar || []).includes(n)) throw new Error("se cayó " + n);
       if (n === "mis_funciones_coordinacion") {
         return Promise.resolve({ data: (window.__misFunciones || ["formularios","altas","solicitudes","cuentas","acceso","roles","cobros","equipos","subgrupos"]), error: null });
       }
@@ -1059,10 +1064,8 @@ function tareasDeMentira(conVencida) {
   return filas;
 }
 
-const RESUMEN_ANA = [{
-  id: "u-ana", full_name: "Ana Rojas", grupo: "7B",
-  puzzles: 37, lecciones: 9, mejor_coord: 24,
-}];
+// Lo que devuelve mi_entreno_resumen(): un solo renglón, el de quien llama.
+const RESUMEN_ANA = [{ puzzles: 37, lecciones: 9, mejor_coord: 24 }];
 const CURSOS_ANA = [
   // El más reciente de los dos a medias es el que hay que ofrecer, y el
   // terminado no se ofrece nunca: no hay nada que continuar ahí.
@@ -1086,7 +1089,7 @@ function datosAlumna(conVencida) {
     puzzle_rush_scores: [{ best_streak: 14, profiles: { full_name: "Bruno Mora", email: "b@x.cr", grupo: "7B" } }],
     rpc: {
       tareas_con_avance: tareasDeMentira(conVencida),
-      informes_resumen_alumnos: RESUMEN_ANA,
+      mi_entreno_resumen: RESUMEN_ANA,
       informes_cursos_alumnos: CURSOS_ANA,
       progreso_dias_y_racha: RACHA_ANA,
     },
@@ -1163,7 +1166,7 @@ async function pruebaTareasAlumna(browser) {
 
   // --- Sin ninguna tarea: la franja no existe en pantalla ---
   r = await panel(browser, [ALUMNA, PROFE], "u-ana", {},
-    { rpc: { informes_resumen_alumnos: RESUMEN_ANA, progreso_dias_y_racha: RACHA_ANA } });
+    { rpc: { mi_entreno_resumen: RESUMEN_ANA, progreso_dias_y_racha: RACHA_ANA } });
   igual("sin tareas y con el entrenamiento ya empezado, la franja NO se destapa",
 
     await r.page.evaluate(() => getComputedStyle(document.getElementById("pendientes-aviso")).display), "none");
@@ -1193,7 +1196,7 @@ function tareasConDiagnostico(cumplido, situacion) {
 async function pruebaDiagnosticoPedido(browser) {
   console.log("\n=== El diagnóstico que pidió el profe ===");
   const leer = (opciones, tareas) => panel(browser, [ALUMNA, PROFE], "u-ana", opciones || {}, {
-    rpc: { tareas_con_avance: tareas, informes_resumen_alumnos: RESUMEN_ANA,
+    rpc: { tareas_con_avance: tareas, mi_entreno_resumen: RESUMEN_ANA,
            informes_cursos_alumnos: CURSOS_ANA, progreso_dias_y_racha: RACHA_ANA },
   });
   const VER = () => {
@@ -1282,7 +1285,7 @@ async function franja(browser, tareas, examenes) {
     rpc: {
       tareas_con_avance: tareas,
       examenes_con_nota: examenes,
-      informes_resumen_alumnos: RESUMEN_ANA,
+      mi_entreno_resumen: RESUMEN_ANA,
       informes_cursos_alumnos: CURSOS_ANA,
       progreso_dias_y_racha: RACHA_ANA,
     },
@@ -1379,7 +1382,7 @@ async function pruebaExamenesEnLaFranja(browser) {
      sin franja por la consulta que falló sería perder también la que sí se
      pudo leer. */
   const r = await panel(browser, [ALUMNA, PROFE], "u-ana", {}, {
-    rpc: { tareas_con_avance: tareasDeMentira(false), informes_resumen_alumnos: RESUMEN_ANA,
+    rpc: { tareas_con_avance: tareasDeMentira(false), mi_entreno_resumen: RESUMEN_ANA,
            informes_cursos_alumnos: CURSOS_ANA, progreso_dias_y_racha: RACHA_ANA },
   });
   igual("sin exámenes, la franja de siempre sigue igual",
@@ -1487,7 +1490,7 @@ async function pruebaPrimerPaso(browser) {
 
   // --- Recién llegado: sin tareas, sin exámenes y sin diagnóstico ---
   let r = await panel(browser, [ALUMNA, PROFE], "u-ana", {}, {
-    rpc: { informes_resumen_alumnos: RESUMEN_ANA, progreso_dias_y_racha: rachaSinEjercicios(false) },
+    rpc: { mi_entreno_resumen: RESUMEN_ANA, progreso_dias_y_racha: rachaSinEjercicios(false) },
   });
   let v = await leer(r.page);
   // Se mide el display que calcula el navegador, no el atributo: la lección que
@@ -1502,7 +1505,7 @@ async function pruebaPrimerPaso(browser) {
   // --- Lo empezó y lo dejó a medias ---
   r = await panel(browser, [ALUMNA, PROFE], "u-ana", {}, {
     rpc: {
-      informes_resumen_alumnos: RESUMEN_ANA,
+      mi_entreno_resumen: RESUMEN_ANA,
       progreso_dias_y_racha: rachaSinEjercicios(false),
       informes_diagnosticos_alumnos: [{ student_id: "u-ana", detalle: null, fecha: null,
                                         a_medias_pregunta: 23, a_medias_fecha: new Date().toISOString() }],
@@ -1525,7 +1528,7 @@ async function pruebaPrimerPaso(browser) {
      NUNCA y nadie se enteraría. */
   r = await panel(browser, [ALUMNA, PROFE], "u-ana", {}, {
     rpc: {
-      informes_resumen_alumnos: RESUMEN_ANA,
+      mi_entreno_resumen: RESUMEN_ANA,
       progreso_dias_y_racha: rachaSinEjercicios(true),
       informes_diagnosticos_alumnos: [{ student_id: "u-ana", fecha: new Date().toISOString(),
         detalle: diagnosticoCon({ finales: 10, mate: 30, tactica: 90, reglas: 95 }),
@@ -1560,7 +1563,7 @@ async function pruebaPrimerPaso(browser) {
   const semana1 = SEMANA_1_DEL_PLAN(diagnosticoCon({ mate: 30 }));
   r = await panel(browser, [ALUMNA, PROFE], "u-ana", {}, {
     rpc: {
-      informes_resumen_alumnos: RESUMEN_ANA, progreso_dias_y_racha: RACHA_ANA,
+      mi_entreno_resumen: RESUMEN_ANA, progreso_dias_y_racha: RACHA_ANA,
       informes_diagnosticos_alumnos: [{ student_id: "u-ana", fecha: new Date().toISOString(),
         detalle: diagnosticoCon({ mate: 30 }), a_medias_pregunta: null, a_medias_fecha: null }],
       avance_del_plan: [{ clave: semana1.clave, hechos: 4 }],
@@ -1582,7 +1585,7 @@ async function pruebaPrimerPaso(browser) {
   const hace = (dias) => new Date(Date.now() - dias * 86400000).toISOString();
   r = await panel(browser, [ALUMNA, PROFE], "u-ana", {}, {
     rpc: {
-      informes_resumen_alumnos: RESUMEN_ANA, progreso_dias_y_racha: RACHA_ANA,
+      mi_entreno_resumen: RESUMEN_ANA, progreso_dias_y_racha: RACHA_ANA,
       informes_diagnosticos_alumnos: [{ student_id: "u-ana", fecha: hace(9),
         detalle: diagnosticoCon({ mate: 30 }), a_medias_pregunta: null, a_medias_fecha: null }],
     },
@@ -1603,7 +1606,7 @@ async function pruebaPrimerPaso(browser) {
   /* --- Un recurso con esquema no se vuelve enlace, ni en la franja --- */
   r = await panel(browser, [ALUMNA, PROFE], "u-ana", {}, {
     rpc: {
-      informes_resumen_alumnos: RESUMEN_ANA, progreso_dias_y_racha: RACHA_ANA,
+      mi_entreno_resumen: RESUMEN_ANA, progreso_dias_y_racha: RACHA_ANA,
       informes_diagnosticos_alumnos: [{ student_id: "u-ana", fecha: hace(1),
         detalle: diagnosticoCon({ mate: 30 }), a_medias_pregunta: null, a_medias_fecha: null }],
     },
@@ -1617,7 +1620,7 @@ async function pruebaPrimerPaso(browser) {
   // --- Con el plan ya terminado (más de cuatro semanas), el panel se calla ---
   r = await panel(browser, [ALUMNA, PROFE], "u-ana", {}, {
     rpc: {
-      informes_resumen_alumnos: RESUMEN_ANA, progreso_dias_y_racha: RACHA_ANA,
+      mi_entreno_resumen: RESUMEN_ANA, progreso_dias_y_racha: RACHA_ANA,
       informes_diagnosticos_alumnos: [{ student_id: "u-ana", fecha: hace(40),
         detalle: diagnosticoCon({ mate: 30 }), a_medias_pregunta: null, a_medias_fecha: null }],
     },
@@ -1632,7 +1635,7 @@ async function pruebaPrimerPaso(browser) {
   r = await panel(browser, [ALUMNA, PROFE], "u-ana", {}, {
     rpc: {
       tareas_con_avance: tareasDeMentira(false),
-      informes_resumen_alumnos: RESUMEN_ANA,
+      mi_entreno_resumen: RESUMEN_ANA,
       progreso_dias_y_racha: rachaSinEjercicios(false),
     },
   });
@@ -1719,8 +1722,13 @@ async function pruebaProgresoAlumna(browser) {
      hasta que un alumno pasa las mil filas de training_progress, y ahí empieza
      a mostrar un número que ya no sube, sin que nada falle. */
   const consultas = await page.evaluate(() => window.__consultas.map((c) => c.tabla));
-  igual("los números se le piden contados a informes_resumen_alumnos()",
-    consultas.includes("informes_resumen_alumnos"), "true");
+  igual("los números se le piden contados a mi_entreno_resumen()",
+    consultas.includes("mi_entreno_resumen"), "true");
+  /* Y no a informes_resumen_alumnos(): cuenta lo mismo, pero arma el renglón
+     de todo el grupo para usar uno. En hora pico tardaba 7 s y, con la base
+     cargada, se cortaba y el panel se quedaba en «Cargando tu panel…». */
+  igual("y no a informes_resumen_alumnos(), que arma el renglón de todo el grupo",
+    consultas.includes("informes_resumen_alumnos"), "false");
   igual("y NADIE se baja training_progress para sumarla acá",
     consultas.includes("training_progress"), "false");
 
@@ -2335,6 +2343,70 @@ async function page_vacio(page) {
 module.exports = { panel, igual, mal, bien, datosAlumna, ALUMNA, PROFE, ADMIN, CHROME, BASE, fallos: () => fallos };
 if (require.main !== module) return;
 
+/* ---------- Con la base saturada, el panel no se queda cargando ----------
+   En hora pico la base cortaba las consultas por statement timeout y el panel
+   no aparecía hasta que terminaba la última: «Cargando tu panel…» durante
+   minutos, y si algo reventaba a mitad, para siempre. Se simula con consultas
+   que no contestan nunca, que es peor que lento. */
+async function pruebaBaseLenta(browser) {
+  console.log("\n=== Con la base saturada, el panel no se queda cargando ===");
+  const abrir = async (perfiles, quien, datos) => {
+    const ctx = await browser.newContext({ serviceWorkers: "block" });
+    await ctx.route("**/cdn.jsdelivr.net/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
+    await ctx.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
+    await ctx.route("**/fonts.gstatic.com/**", (r) => r.abort());
+    await ctx.route("**/js/supabase-client.js", (r) =>
+      r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso(perfiles, quien, clasesDeMentira(), datos) }));
+    const page = await ctx.newPage();
+    const errores = [];
+    page.on("pageerror", (e) => errores.push(String(e)));
+    await page.goto(BASE + "/clases.html", { waitUntil: "domcontentloaded" });
+    return { ctx, page, errores };
+  };
+  const seVe = (page, id) => page.evaluate((i) => {
+    const el = document.getElementById(i);
+    return !!el && el.checkVisibility();
+  }, id);
+  const esperarPanel = (page) => page.waitForFunction(() => document.getElementById("app").checkVisibility(), null, { timeout: 12000 }).catch(() => {});
+
+  // Una alumna: sus tres números no contestan nunca, lo demás sí.
+  let { ctx, page, errores } = await abrir([ALUMNA, PROFE], "u-ana", { colgar: ["mi_entreno_resumen"], rpc: { progreso_dias_y_racha: [] } });
+  const t0 = Date.now();
+  await esperarPanel(page);
+  igual("a la alumna se le muestra el panel aunque una consulta no conteste", await seVe(page, "app"), "true");
+  cierto("y a los pocos segundos (tope de 6 s), no cuando la base se digne", Date.now() - t0 < 10000);
+  igual("con su «Tu progreso»", await seVe(page, "progreso-alumno"), "true");
+  await ctx.close();
+
+  // La profesora: «Tu semana» no contesta nunca.
+  ({ ctx, page } = await abrir([PROFE], "u-profe", { colgar: ["panel_profesor"] }));
+  await esperarPanel(page);
+  igual("a la profesora también, con «Tu semana» colgada", await seVe(page, "app"), "true");
+  await ctx.close();
+
+  /* Algo revienta a mitad de la carga (acá, mis_clases lanza en vez de
+     devolver un error). Antes la promesa de init() se caía sin que nadie la
+     atajara y la rueda seguía girando para siempre. */
+  ({ ctx, page, errores } = await abrir([ALUMNA, PROFE], "u-ana", { lanzar: ["mis_clases"] }));
+  await esperarPanel(page);
+  igual("si algo revienta después del perfil, se muestra el panel con lo que haya", await seVe(page, "app"), "true");
+  igual("y el error no se traga: sigue saliendo (y así llega a Sentry)",
+    errores.some((e) => e.includes("se cayó mis_clases")), "true");
+  await ctx.close();
+
+  /* Y si ni lo imprescindible contesta (las clases de la alumna), no se deja
+     la rueda sola: a los 15 s dice qué pasa y ofrece volver a intentar. */
+  ({ ctx, page } = await abrir([ALUMNA, PROFE], "u-ana", { colgar: ["mis_clases"] }));
+  igual("antes de los 15 s todavía no se asusta a nadie", await seVe(page, "loading-lento"), "false");
+  await page.waitForFunction(() => document.getElementById("loading-lento").checkVisibility(), null, { timeout: 20000 }).catch(() => {});
+  igual("a los 15 s dice que está tardando", await seVe(page, "loading-lento"), "true");
+  igual("y ofrece volver a intentar",
+    await page.evaluate(() => document.getElementById("loading-reintentar").textContent), "Volver a intentar");
+  igual("el aviso está dentro de la región que se anuncia (role=status)",
+    await page.evaluate(() => !!document.getElementById("loading-lento").closest("[role=status]")), "true");
+  await ctx.close();
+}
+
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
@@ -2348,6 +2420,7 @@ if (require.main !== module) return;
     await pruebaSesionEnVivo(browser);
     await pruebaLectorDePantalla(browser);
     await pruebaProgresoAlumna(browser);
+    await pruebaBaseLenta(browser);
     await pruebaSemanaProfesora(browser);
     await pruebaProfesora(browser);
     await pruebaPreparacionRivales(browser);

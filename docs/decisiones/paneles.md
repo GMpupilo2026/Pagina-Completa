@@ -443,15 +443,76 @@ sin dar ningún error**, y `training_progress` crece unas 5 filas por alumno y
 por día: a un alumno con bastante entrenamiento encima el panel le pintaba un
 número **que ya no subía**, sin que nada fallara.
 
-Los tres números ya los devuelve `informes_resumen_alumnos()` —`puzzles`,
-`lecciones`, `mejor_coord`— y, siendo `SECURITY INVOKER`, a un alumno le
-devuelve **solo su propio renglón**: la misma función que usa `informes.html`,
-así que la cuenta tampoco queda escrita dos veces.
+Los tres números los cuenta la base. Primero se pidieron a
+`informes_resumen_alumnos()`, pero eso resultó caro: ver «Con la base saturada,
+el panel no se queda cargando», abajo. Hoy los da `mi_entreno_resumen()`.
 
 De paso, **las tres tarjetas anchas apiladas** —récord de racha táctica, racha
 de días y los tres números— quedaron en **una sola franja "Tu progreso"**, cada
 número con su enlace. Eran mucho scroll para tres datos y para llegar al
 registro de clases.
+
+### Con la base saturada, el panel no se queda cargando
+
+El 29 de septiembre, a las 6 p. m. (hora pico de clases), el panel se quedó en
+«Cargando tu panel…» y no dejaba entrar. La página no tenía ningún error: la
+base (tamaño Nano) estaba saturada y cortaba por *statement timeout* hasta las
+consultas mínimas. Dos cosas del panel lo empeoraban.
+
+**1. El alumno pedía a `informes_resumen_alumnos()` tres números suyos.** Esa
+función arma el renglón de cada alumno que la RLS deja ver —a un alumno,
+también a sus compañeros—, con respuestas, asistencia y minutos
+(`minutos_por_tramos`). Impersonando a un alumno en SQL en plena hora pico:
+**7,3 s y 51 renglones para usar uno**. Ahora el panel llama a
+`mi_entreno_resumen()` (migración `20260930001504`): solo esos tres números,
+solo de una persona, **0,5 s en la misma hora**.
+
+- **`SECURITY INVOKER`**: quién ve a quién lo sigue decidiendo la RLS de
+  `training_progress`. Comprobado impersonando: el alumno recibe los mismos
+  números que le daba la función de antes (209, 0, 6), y pidiendo los de otro
+  alumno recibe ceros. `anon` no la puede ejecutar.
+- **Son dos copias de las mismas tres cuentas**, y eso se separa callado: si
+  Informes cambia cómo cuenta los puzzles, el panel seguiría mostrando un
+  número creíble y distinto. `verificar-mi-entreno.js` exige que las tres
+  expresiones estén, tal cual, en la última versión de las dos funciones. No
+  se reescribió `informes_resumen_alumnos()` para que use la nueva: la usan
+  también Informes, Cobros, Formularios y Subgrupos, y cambiarla en plena
+  saturación era arriesgar todo eso por un panel.
+
+**2. El panel esperaba cada consulta en fila, y a la última.** `init()` pedía el
+estado de la clase, después el registro, después el resumen, y mostraba el
+panel recién cuando terminaba todo. Con la base lenta se sumaban los cortes de
+cada una: minutos de rueda girando. Y si algo lanzaba un error a mitad de la
+carga (no un `{ error }`, un error de verdad), la promesa de `init()` se caía
+sin que nadie la atajara y la rueda seguía **para siempre**.
+
+- **Todo lo que no depende de lo otro va a la par, con tope**
+  (`sinEsperarDeMas`, 6 s): el panel se muestra cuando llega todo o cuando pasa
+  el tope, lo que ocurra primero. Lo que llega después se pinta igual en su
+  lugar (cada parte escribe en su propio elemento), y lo que falla deja su
+  guion. El tope vale para los cuatro caminos: alumno, docente, supervisión y
+  administración.
+- **`init().catch`**: si ya cargó el perfil, se muestra el panel con lo que haya;
+  si no, se dice que no se pudo cargar. El error **se vuelve a lanzar** para
+  que siga llegando a Sentry (`js/errores.js` escucha los rechazos sueltos):
+  atajarlo en silencio lo habría escondido.
+- **A los 15 s sin panel**, dentro de la misma región `role="status"` de la
+  rueda, aparece «Está tardando más de lo normal…» con **Volver a intentar**.
+  Antes la rueda sola no decía nada ni daba salida.
+- Lo imprescindible sigue esperándose entero (la sesión, el perfil, las clases
+  del alumno, «Ver como»): sin eso el panel pintaría otra cosa.
+
+`verificar-panel.js` lo simula con consultas que **no contestan nunca** (peor
+que lentas) y con una que **lanza**: el panel tiene que aparecer, y cuando ni
+lo imprescindible contesta, el aviso con «Volver a intentar» tiene que verse.
+Con el `clases.js` anterior esas pruebas fallan.
+
+**Lo que no se arregla desde el código:** la base es Nano (0,5 GB, procesador
+compartido) y en hora pico no le alcanza. El consumo más grande, con mucha
+diferencia, es el de Realtime (`realtime.list_changes`, millones de llamadas).
+Estos dos cambios quitan la consulta más pesada del panel y hacen que una base
+lenta no lo deje bloqueado, pero subir el tamaño de la base es lo que evita que
+se sature.
 
 ### Quien da clase no entra al panel del alumno
 
