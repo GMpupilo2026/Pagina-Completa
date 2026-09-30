@@ -845,6 +845,40 @@ de las cuatro claves foráneas que faltaban (`compras_tienda.otorgado_por`,
 `notas_alumno.class_session_id`, `questions.para_alumno`,
 `respuestas_en_curso.student_id`).
 
+`practice_games_select` quedaba con `soy_profesor_de(student_id)` fila por
+fila, y `practice_games` es la tabla publicada en Realtime que más se escribe
+(703 cambios en la hora pico del 29 de setiembre): cada cambio se revisa
+contra la política de cada persona suscrita. Pasó a
+`student_id in (select interno.alumnos_de((select auth.uid())))`
+(`tareas_con_avance_materializada_y_practice_games_conjunto_una_vez`).
+Comprobado en una transacción revertida antes de aplicarlo: las 148 cuentas
+ven las mismas filas (cero diferencias); un profesor pasó de 175 a 116 ms y
+otro de 82 a 30 ms. `game_rooms_select` sigue con `soy_profesor_de_alguno()` y
+`es_companero()` por fila: es la siguiente.
+
+### Una función SQL con CTE: el que se usa en varios lados va `materialized`
+
+`tareas_con_avance()` tardaba **~5,9 s** a un profesor con 52 alumnos y a
+quien administra (el tope es 8 s), y en la hora pico del 29 de setiembre dio
+13 errores. **No era la RLS**: el mismo cuerpo, pegado como consulta suelta,
+tardaba 80 ms. Llamado como función, Postgres lo planifica con los
+parámetros sin valor (plan genérico) y **mete el CTE `avance` adentro de
+`marcado` y `resumen`**: como lo lee uno solo, lo incrusta, y la expresión de
+`hecho` —con su subconsulta a `training_progress`— se copia en cada lugar que
+la usa. La subconsulta corría **15 785 veces en vez de 340**.
+
+- **`avance as materialized`** lo calcula una vez por renglón. Comprobado antes
+  de aplicarlo con copias temporales de las dos versiones: 148 cuentas × las 4
+  formas en que la llama el sitio = 592 llamadas, **cero diferencias** en lo
+  que devuelven (huella md5), y la peor pasó de 6 551 a 98 ms.
+- **Cómo se detecta**: medir la función de verdad, impersonando, y compararla
+  con su cuerpo pegado como consulta. Si la función es mucho más lenta, es el
+  plan genérico; `set plan_cache_mode = force_generic_plan` + `prepare` lo
+  reproduce y `explain analyze` muestra el `loops=` inflado.
+- Un CTE que calcula algo caro y se lee más abajo en otra expresión va
+  `materialized` desde el principio: con pocos datos no se nota, y el día que
+  crece se cae por statement timeout.
+
 ### `auth.uid()` va envuelto: `(select auth.uid())`
 
 La otra mitad del mismo costo: **150 políticas** llamaban a `auth.uid()` tal
