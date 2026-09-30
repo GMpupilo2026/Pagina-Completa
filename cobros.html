@@ -196,7 +196,8 @@
             <!-- ---------------- Suscripciones ---------------- -->
             <section id="ficha-suscripciones" class="hidden">
                 <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6">
-                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Poner a un alumno en un plan</h2>
+                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Poner alumnos en un plan</h2>
+                    <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">Marca a todos los que van en el mismo plan y se agregan de una vez.</p>
                     <!-- Personalizado: un cobro armado a mano para ESTE alumno, sin pasar
                          por el catálogo. Crea un plan igual que cualquier otro (mismo
                          generar_cobros(), mismo cobros_resumen()) pero marcado
@@ -204,13 +205,29 @@
                          este mismo selector — es de un alumno, no del catálogo. -->
                     <label class="flex items-center gap-2 text-sm text-brand-600 dark:text-brand-300 mb-4">
                         <input type="checkbox" id="s-personalizado" class="rounded border-brand-300 dark:border-brand-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
-                        Cobro personalizado (un monto solo para este alumno, sin elegir un plan del catálogo)
+                        Cobro personalizado (un monto aparte para cada alumno marcado, sin elegir un plan del catálogo)
                     </label>
-                    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-                        <div class="lg:col-span-2">
-                            <label for="s-alumno" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Alumno</label>
-                            <select id="s-alumno" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
+                    <!-- La lista con casillas: se marca a varios y se agregan todos juntos.
+                         La pintan pintarListaAlumnos() y los filtros de arriba solo
+                         deciden qué se VE: lo marcado sigue marcado aunque se esconda. -->
+                    <fieldset class="mb-4">
+                        <legend class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Alumnos</legend>
+                        <div class="grid gap-2 sm:grid-cols-3 mb-2">
+                            <input id="s-buscar" type="search" autocomplete="off" placeholder="Buscar por nombre o correo" aria-label="Buscar alumno por nombre o correo" class="sm:col-span-2 w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            <select id="s-grupo" aria-label="Mostrar solo un grupo" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
                         </div>
+                        <div class="flex flex-wrap items-center gap-2 mb-2">
+                            <button type="button" id="s-marcar" class="text-sm font-semibold px-3 py-1.5 rounded-lg border border-brand-200 dark:border-brand-700 hover:border-accent-400 text-brand-600 dark:text-brand-300 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Marcar los que se ven</button>
+                            <button type="button" id="s-desmarcar" class="text-sm font-semibold px-3 py-1.5 rounded-lg border border-brand-200 dark:border-brand-700 hover:border-accent-400 text-brand-600 dark:text-brand-300 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Desmarcar todos</button>
+                            <label class="flex items-center gap-2 text-sm text-brand-600 dark:text-brand-300">
+                                <input type="checkbox" id="s-sin-plan" class="rounded border-brand-300 dark:border-brand-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                Solo los que no tienen ningún plan
+                            </label>
+                            <span id="s-contador" class="sm:ml-auto text-sm font-semibold text-brand-700 dark:text-brand-200" aria-live="polite">Ninguno marcado</span>
+                        </div>
+                        <div id="s-alumnos" class="max-h-72 overflow-y-auto rounded-lg border border-brand-200 dark:border-brand-700 divide-y divide-brand-100 dark:divide-brand-800"></div>
+                    </fieldset>
+                    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                         <div id="s-plan-cell">
                             <label for="s-plan" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Plan</label>
                             <select id="s-plan" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
@@ -240,7 +257,7 @@
                             <label for="s-descuento" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Beca (%)</label>
                             <input id="s-descuento" type="number" min="0" max="100" value="0" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
                         </div>
-                        <div class="sm:col-span-2 lg:col-span-4">
+                        <div class="sm:col-span-2">
                             <label for="s-inicio" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Desde</label>
                             <input id="s-inicio" type="date" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
                             <p id="s-dia-ayuda" class="text-xs text-brand-450 dark:text-brand-350 mt-1">El primer cobro cubre el mes entero de esta fecha, aunque entre a mitad de mes. Si el mes no tiene el día de vencimiento (un 31 en abril), vence el último día del mes.</p>
@@ -248,6 +265,25 @@
                         <div class="flex items-end">
                             <button type="button" id="s-guardar" class="w-full bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Agregar</button>
                         </div>
+                    </div>
+                </div>
+                <!-- Herramientas para cambiar a muchos de una vez: se marcan en la
+                     lista de abajo (o todos los que se ven) y se aplica. -->
+                <div id="sl-herramientas" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4 mb-3">
+                    <h2 class="font-serif text-base font-bold text-brand-800 dark:text-white mb-2">Quién está en cada plan</h2>
+                    <div class="grid gap-2 sm:grid-cols-3 mb-3">
+                        <input id="sl-buscar" type="search" autocomplete="off" placeholder="Buscar por nombre" aria-label="Buscar en la lista por nombre" class="sm:col-span-2 w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        <select id="sl-plan" aria-label="Mostrar solo un plan" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <label class="flex items-center gap-2 text-sm text-brand-600 dark:text-brand-300 mr-2">
+                            <input type="checkbox" id="sl-todos" class="rounded border-brand-300 dark:border-brand-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            Marcar todos los que se ven
+                        </label>
+                        <button type="button" id="sl-beca" class="text-sm font-semibold px-3 py-1.5 rounded-lg border border-brand-200 dark:border-brand-700 hover:border-accent-400 text-brand-600 dark:text-brand-300 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Cambiar la beca</button>
+                        <button type="button" id="sl-dia" class="text-sm font-semibold px-3 py-1.5 rounded-lg border border-brand-200 dark:border-brand-700 hover:border-accent-400 text-brand-600 dark:text-brand-300 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Cambiar el día de vencimiento</button>
+                        <button type="button" id="sl-baja" class="text-sm font-semibold px-3 py-1.5 rounded-lg border border-brand-200 dark:border-brand-700 hover:border-red-400 text-brand-600 dark:text-brand-300 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Dar de baja a los marcados</button>
+                        <span id="sl-contador" class="sm:ml-auto text-sm font-semibold text-brand-700 dark:text-brand-200" aria-live="polite"></span>
                     </div>
                 </div>
                 <div id="suscripciones-lista" class="space-y-3"></div>
