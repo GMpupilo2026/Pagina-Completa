@@ -1498,10 +1498,14 @@
             document.getElementById("entreno-coord").textContent = fila.mejor_coord || "—";
         }
 
+        /* El panel adaptado (quien administración marcó como ciega) trae su
+           propio subtítulo —que es el panel adaptado y cómo oír los atajos—, y
+           ese le gana: la racha llega después y lo pisaba. */
+        let panelAdaptado = false;
         async function pintarSaludoAlumno(rachaP) {
             let r = null;
             try { r = await rachaP; } catch (e) { return; }
-            if (!r || r.error || !r.stats) return;
+            if (!r || r.error || !r.stats || panelAdaptado) return;
             const racha = r.stats.racha_actual || 0;
             const hoy = r.stats.hoy_ejercicios || 0;
             const meta = window.Logros ? Logros.META_DIARIA : 5;
@@ -2865,6 +2869,7 @@
             const ciego = !esEquipoDocente() && profile.role === "alumno" && await alumnoCiego();
             textosDelEquipoDocente();
             if (ciego) {
+                panelAdaptado = true;
                 armarPanelAdaptado();
                 document.getElementById("panel-subtitulo").textContent = profile._persona
                     ? "Su panel adaptado: está marcado como ciego, así que ve solo lo que se usa con lector de pantalla."
