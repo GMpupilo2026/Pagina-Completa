@@ -719,10 +719,11 @@ crear. Así que las dos puertas de alta traen, junto al usuario, el campo
 - Al abrir otra alta el campo se vacía: la contraseña de un alumno no se le
   queda puesta al siguiente.
 
-Pide volver a desplegar `create-student`, `inscribir-alumno` y
-`correos-alumno` (armadas con `node herramientas/funciones-armar.js`). Hasta
-entonces, el servidor viejo ignora la contraseña: con correo de la casa manda
-el enlace como siempre, y sin él contesta que falta, sin crear nada.
+`create-student` (v16), `inscribir-alumno` (v9) y `correos-alumno` (v6) ya
+están desplegadas con esto, armadas con `node herramientas/funciones-armar.js`
+y con `verify_jwt` en true como antes. Si alguna vuelve a quedar atrás, el
+servidor viejo ignora la contraseña: con correo de la casa manda el enlace
+como siempre, y sin él contesta que falta, sin crear nada.
 
 ### Las dos puertas de alta
 
