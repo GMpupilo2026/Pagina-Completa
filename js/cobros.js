@@ -93,7 +93,9 @@ async function cargarTodo() {
     suscripciones = s.data || [];
     pintarTarjetas(r.data || []);
     pintarPlanes();
+    llenarSelectorPlanes();
     pintarSuscripciones();
+    pintarListaAlumnos();
     await cargarCobros(true);
     await pintarMorosos();
     await cargarRecordatoriosProgramados();
@@ -150,22 +152,132 @@ function pintarPlanes() {
             cuantos === 1 ? "1 alumno en este plan" : cuantos + " alumnos en este plan"));
         d.appendChild(izq);
 
-        const btn = el("button", "text-sm font-semibold px-3 py-1.5 rounded-lg border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 "
-            + (p.activo ? "border-brand-200 dark:border-brand-700 hover:border-red-400 text-brand-600 dark:text-brand-300"
-                        : "border-accent-400 text-accent-700 dark:text-accent-400"),
+        const botones = el("div", "flex flex-wrap gap-2");
+        const editar = el("button", BTN_CHICO + " border-brand-200 dark:border-brand-700 hover:border-accent-400 text-brand-600 dark:text-brand-300", "Editar");
+        editar.type = "button";
+        editar.dataset.accion = "editar";
+        editar.setAttribute("aria-label", "Editar el plan " + p.nombre);
+        editar.addEventListener("click", () => editarPlan(p));
+        botones.appendChild(editar);
+
+        const btn = el("button", BTN_CHICO
+            + (p.activo ? " border-brand-200 dark:border-brand-700 hover:border-red-400 text-brand-600 dark:text-brand-300"
+                        : " border-accent-400 text-accent-700 dark:text-accent-400"),
             p.activo ? "Desactivar" : "Reactivar");
         btn.type = "button";
+        btn.dataset.accion = "activar";
+        btn.setAttribute("aria-label", (p.activo ? "Desactivar" : "Reactivar") + " el plan " + p.nombre);
         btn.addEventListener("click", async () => {
             const { error } = await sb.from("planes_cobro").update({ activo: !p.activo }).eq("id", p.id);
             if (error) return avisar("No se pudo cambiar el plan: " + error.message, true);
             p.activo = !p.activo;
             avisar(p.activo ? "Plan reactivado." : "Plan desactivado: deja de emitir cobros nuevos, los que ya salieron se quedan.");
             pintarPlanes();
+            llenarSelectorPlanes();
         });
-        d.appendChild(btn);
-        if (!p.activo) d.classList.add("opacity-60");
+        botones.appendChild(btn);
+
+        const borrar = el("button", BTN_CHICO + " border-brand-200 dark:border-brand-700 hover:border-red-400 text-red-700 dark:text-red-300", "Borrar");
+        borrar.type = "button";
+        borrar.dataset.accion = "borrar";
+        borrar.setAttribute("aria-label", "Borrar el plan " + p.nombre);
+        borrar.addEventListener("click", () => borrarPlan(p));
+        botones.appendChild(borrar);
+        d.appendChild(botones);
+        if (!p.activo) izq.classList.add("opacity-60");
         caja.appendChild(d);
     });
+}
+
+const CASILLA = "h-4 w-4 shrink-0 rounded border-brand-300 dark:border-brand-600 text-accent-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+const BTN_CHICO = "text-sm font-semibold px-3 py-1.5 rounded-lg border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+
+/* El selector de plan de «Quién paga qué» (y el filtro de la lista). Se vuelve
+   a llenar cada vez que cambian los planes: antes se llenaba una sola vez al
+   abrir la página, y un plan recién creado no salía hasta recargar. Sin los
+   personalizados: son de un solo alumno, no del catálogo. */
+function llenarSelectorPlanes() {
+    const sel = document.getElementById("s-plan");
+    const antes = sel.value;
+    sel.innerHTML = "";
+    planes.filter((x) => x.activo && !x.personalizado).forEach((x) => {
+        const o = el("option", null, x.nombre + " · " + plata(x.monto, x.moneda));
+        o.value = x.id;
+        sel.appendChild(o);
+    });
+    if ([...sel.options].some((o) => o.value === antes)) sel.value = antes;
+
+    const filtro = document.getElementById("sl-plan");
+    const antesFiltro = filtro.value;
+    filtro.innerHTML = "";
+    const todos = el("option", null, "Todos los planes");
+    todos.value = "";
+    filtro.appendChild(todos);
+    const conGente = new Set(suscripciones.map((x) => x.plan_id));
+    planes.filter((x) => conGente.has(x.id)).forEach((x) => {
+        const o = el("option", null, x.nombre + (x.personalizado ? " (personalizado)" : ""));
+        o.value = x.id;
+        filtro.appendChild(o);
+    });
+    if ([...filtro.options].some((o) => o.value === antesFiltro)) filtro.value = antesFiltro;
+}
+
+/* Cambiar nombre, monto o detalle. La periodicidad y la moneda no: los cobros
+   que ya salieron las llevan, y un plan que cambia de colones a dólares a
+   mitad de camino es otro plan (se crea uno nuevo). El monto nuevo vale para
+   los cobros que salgan de acá en adelante: generar_cobros() lee el monto
+   del plan al emitir, y lo ya emitido es lo que pasó. */
+async function editarPlan(p) {
+    const r = await Avisos.formulario({
+        titulo: "Editar «" + p.nombre + "»",
+        texto: "El monto nuevo vale para los cobros que salgan de ahora en adelante. Los que ya salieron no cambian.",
+        campos: [
+            { nombre: "nombre", etiqueta: "Nombre", valor: p.nombre },
+            { nombre: "monto", etiqueta: "Monto (" + (p.moneda === "USD" ? "$" : "₡") + ")", valor: p.monto, inputmode: "decimal" },
+            { nombre: "descripcion", etiqueta: "Detalle (opcional)", valor: p.descripcion || "" },
+        ],
+        aceptar: "Guardar los cambios",
+    });
+    if (!r) return;
+    const nombre = String(r.nombre || "").trim();
+    const monto = Number(String(r.monto || "").replace(",", "."));
+    if (!nombre) return avisar("El plan necesita un nombre.", true);
+    if (String(r.monto || "").trim() === "" || !(monto >= 0)) return avisar("El monto tiene que ser un número (0 o más).", true);
+    const { error } = await sb.from("planes_cobro")
+        .update({ nombre, monto, descripcion: String(r.descripcion || "").trim() || null }).eq("id", p.id);
+    if (error) return avisar("No se pudo guardar el plan: " + error.message, true);
+    avisar("Plan actualizado.");
+    await cargarTodo();
+}
+
+/* Borrar de verdad, no solo desactivar. Lo hace eliminar_plan_cobro() en la
+   base, de una vez: saca a todos del plan y borra el plan. Los cobros que ya
+   salieron NO se borran (son el recibo, con su consecutivo y sus pagos); si
+   se elige, los que no tienen ningún pago se anulan. */
+async function borrarPlan(p) {
+    const cuantos = suscripciones.filter((s) => s.plan_id === p.id).length;
+    const r = await Avisos.formulario({
+        titulo: "¿Borrar el plan «" + p.nombre + "»?",
+        texto: (cuantos === 0 ? "Nadie está en este plan."
+                : cuantos === 1 ? "Hay 1 alumno en este plan: se le saca."
+                : "Hay " + cuantos + " alumnos en este plan: se les saca a todos.")
+            + " Esto no se puede deshacer.\n\nLos cobros que ya salieron no se borran: son el registro de lo que pasó.",
+        campos: [{
+            nombre: "cobros", tipo: "select", etiqueta: "Los cobros de este plan que todavía no tienen ningún pago",
+            opciones: [["dejar", "Se quedan y se siguen cobrando"], ["anular", "Se anulan"]],
+        }],
+        aceptar: "Borrar el plan",
+        peligro: true,
+    });
+    if (!r) return;
+    const { data, error } = await sb.rpc("eliminar_plan_cobro", { p_plan: p.id, p_anular_sin_pagos: r.cobros === "anular" });
+    if (error) return avisar("No se pudo borrar el plan: " + error.message, true);
+    const partes = ["Plan borrado."];
+    const n = data && Number(data.suscripciones), a = data && Number(data.anulados);
+    if (n) partes.push(n === 1 ? "Se sacó de él a 1 alumno." : "Se sacó de él a " + n + " alumnos.");
+    if (a) partes.push(a === 1 ? "Se anuló 1 cobro sin pagos." : "Se anularon " + a + " cobros sin pagos.");
+    avisar(partes.join(" "));
+    await cargarTodo();
 }
 
 async function crearPlan() {
@@ -190,34 +302,126 @@ async function crearPlan() {
 }
 
 // ---------------------------------------------------------- suscripciones
+/* Los marcados de las dos listas con casillas de «Quién paga qué»: los
+   alumnos que se van a poner en un plan (arriba) y las suscripciones a las que
+   se les aplica un cambio en grupo (abajo). Los filtros solo deciden qué se VE:
+   lo marcado sigue marcado aunque la búsqueda lo esconda, y el contador dice
+   cuántos van de verdad. */
+const marcados = new Set();
+const marcadosLista = new Set();
+const cuantosTexto = (n, uno, varios) => n === 1 ? "1 " + uno : n + " " + varios;
+
+function planesDe(studentId) {
+    return suscripciones.filter((s) => s.student_id === studentId)
+        .map((s) => { const p = planes.find((x) => x.id === s.plan_id); return p ? p.nombre : "Plan borrado"; });
+}
+
+function pintarListaAlumnos() {
+    const caja = document.getElementById("s-alumnos");
+    const texto = document.getElementById("s-buscar").value.trim().toLowerCase();
+    const grupo = document.getElementById("s-grupo").value;
+    const sinPlan = document.getElementById("s-sin-plan").checked;
+    // Quien ya no está en la lista (se le quitó a uno de la coordinación) no
+    // puede seguir contado como marcado.
+    [...marcados].forEach((id) => { if (!alumnos.some((a) => a.id === id)) marcados.delete(id); });
+    caja.innerHTML = "";
+    const visibles = alumnos.filter((a) =>
+        (!texto || (a.full_name || "").toLowerCase().includes(texto) || (a.email || "").toLowerCase().includes(texto))
+        && (!grupo || (a.grupo || "") === grupo)
+        && (!sinPlan || !suscripciones.some((s) => s.student_id === a.id)));
+    visibles.forEach((a) => {
+        const fila = el("label", "flex items-start gap-3 px-3 py-2 cursor-pointer hover:bg-brand-50 dark:hover:bg-brand-800");
+        const c = el("input", CASILLA + " mt-0.5");
+        c.type = "checkbox";
+        c.value = a.id;
+        c.checked = marcados.has(a.id);
+        c.addEventListener("change", () => {
+            if (c.checked) marcados.add(a.id); else marcados.delete(a.id);
+            contarMarcados();
+        });
+        fila.appendChild(c);
+        const txt = el("span", "min-w-0 text-sm");
+        txt.appendChild(el("span", "block font-semibold text-brand-800 dark:text-white", a.full_name || a.email || "Sin nombre"));
+        // El espacio no se ve (los dos van en bloque) pero separa el nombre del
+        // detalle en lo que lee el lector de pantalla.
+        txt.append(" ");
+        const suyos = planesDe(a.id);
+        const detalle = [a.grupo ? "Grupo " + a.grupo : "", suyos.length ? "Ya en: " + suyos.join(", ") : "Sin plan todavía"].filter(Boolean);
+        txt.appendChild(el("span", "block text-xs text-brand-450 dark:text-brand-350", detalle.join(" · ")));
+        fila.appendChild(txt);
+        caja.appendChild(fila);
+    });
+    if (!visibles.length) {
+        caja.appendChild(el("p", "px-3 py-4 text-sm text-center text-brand-450 dark:text-brand-350",
+            alumnos.length ? "Nadie coincide con lo que buscas." : "Todavía no tienes alumnos."));
+    }
+    contarMarcados();
+}
+
+function contarMarcados() {
+    const n = marcados.size;
+    document.getElementById("s-contador").textContent = n ? cuantosTexto(n, "alumno marcado", "alumnos marcados") : "Ninguno marcado";
+    document.getElementById("s-guardar").textContent = n > 1 ? "Agregar a los " + n : "Agregar";
+}
+
+function llenarGrupos() {
+    const sel = document.getElementById("s-grupo");
+    sel.innerHTML = "";
+    const todos = el("option", null, "Todos los grupos");
+    todos.value = "";
+    sel.appendChild(todos);
+    [...new Set(alumnos.map((a) => a.grupo).filter(Boolean))].sort((x, y) => x.localeCompare(y, "es", { numeric: true }))
+        .forEach((g) => { const o = el("option", null, "Grupo " + g); o.value = g; sel.appendChild(o); });
+    // Sin grupos no hay nada que filtrar: el selector solo estorbaría.
+    sel.classList.toggle("hidden", sel.options.length < 2);
+}
+
+function suscripcionesVisibles() {
+    const texto = document.getElementById("sl-buscar").value.trim().toLowerCase();
+    const plan = document.getElementById("sl-plan").value;
+    return suscripciones.filter((s) =>
+        (!texto || nombreDe(s.student_id).toLowerCase().includes(texto))
+        && (!plan || s.plan_id === plan));
+}
+
 function pintarSuscripciones() {
     const caja = document.getElementById("suscripciones-lista");
     caja.innerHTML = "";
     document.getElementById("suscripciones-vacio").classList.toggle("hidden", suscripciones.length > 0);
-    const ordenadas = suscripciones.slice().sort((a, b) => nombreDe(a.student_id).localeCompare(nombreDe(b.student_id), "es"));
+    document.getElementById("sl-herramientas").classList.toggle("hidden", suscripciones.length === 0);
+    [...marcadosLista].forEach((id) => { if (!suscripciones.some((s) => s.id === id)) marcadosLista.delete(id); });
+    const ordenadas = suscripcionesVisibles().sort((a, b) => nombreDe(a.student_id).localeCompare(nombreDe(b.student_id), "es"));
     ordenadas.forEach((s) => {
         const plan = planes.find((p) => p.id === s.plan_id);
         const d = el("div", "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4 flex flex-wrap items-center justify-between gap-3");
-        const izq = el("div");
-        izq.appendChild(el("p", "font-semibold text-brand-800 dark:text-white", nombreDe(s.student_id)));
+        const izq = el("div", "flex items-start gap-3 min-w-0");
+        const c = el("input", CASILLA + " mt-1");
+        c.type = "checkbox";
+        c.value = s.id;
+        c.checked = marcadosLista.has(s.id);
+        c.setAttribute("aria-label", "Marcar a " + nombreDe(s.student_id) + " (" + (plan ? plan.nombre : "plan borrado") + ")");
+        c.addEventListener("change", () => {
+            if (c.checked) marcadosLista.add(s.id); else marcadosLista.delete(s.id);
+            contarMarcadosLista();
+        });
+        izq.appendChild(c);
+        const txt = el("div", "min-w-0");
+        txt.appendChild(el("p", "font-semibold text-brand-800 dark:text-white", nombreDe(s.student_id)));
         const detalle = [plan ? plan.nombre : "Plan borrado",
                          plan ? plata(plan.monto * (1 - (Number(s.descuento_pct) || 0) / 100), plan.moneda) : "",
                          "vence el " + s.dia_cobro,
                          Number(s.descuento_pct) > 0 ? "beca " + Number(s.descuento_pct) + " %" : ""].filter(Boolean);
-        izq.appendChild(el("p", "text-sm text-brand-500 dark:text-brand-300", detalle.join(" · ")));
-        izq.appendChild(el("p", "text-xs text-brand-450 dark:text-brand-350", "Desde " + fecha(s.inicio)));
+        txt.appendChild(el("p", "text-sm text-brand-500 dark:text-brand-300", detalle.join(" · ")));
+        txt.appendChild(el("p", "text-xs text-brand-450 dark:text-brand-350", "Desde " + fecha(s.inicio)));
+        izq.appendChild(txt);
         d.appendChild(izq);
 
         const btn = el("button", "text-sm font-semibold px-3 py-1.5 rounded-lg border border-brand-200 dark:border-brand-700 hover:border-red-400 text-brand-600 dark:text-brand-300 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "Dar de baja");
         btn.type = "button";
+        btn.setAttribute("aria-label", "Dar de baja a " + nombreDe(s.student_id) + " de " + (plan ? plan.nombre : "este plan"));
         btn.addEventListener("click", async () => {
             if (!(await Avisos.confirmar("Los cobros ya emitidos se quedan como están.", { titulo: "¿Dar de baja a " + nombreDe(s.student_id) + " de este plan?", aceptar: "Dar de baja", peligro: true }))) return;
-            // Una suscripción que todavía no arranca (inicio en el futuro) no
-            // puede terminar hoy: la base exige fin >= inicio. Termina el día
-            // en que iba a empezar. Las fechas "AAAA-MM-DD" se comparan como texto.
-            const hoy = hoyCR();
-            const { error } = await sb.from("suscripciones")
-                .update({ activa: false, fin: s.inicio > hoy ? s.inicio : hoy }).eq("id", s.id);
+            const error = await darDeBaja([s]);
             if (error) return avisar("No se pudo: " + error.message, true);
             avisar("Dado de baja.");
             await cargarTodo();
@@ -225,13 +429,106 @@ function pintarSuscripciones() {
         d.appendChild(btn);
         caja.appendChild(d);
     });
+    if (suscripciones.length && !ordenadas.length) {
+        caja.appendChild(el("p", "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-6 text-center text-brand-450 dark:text-brand-350 text-sm",
+            "Nadie coincide con lo que buscas."));
+    }
+    const todos = document.getElementById("sl-todos");
+    todos.checked = ordenadas.length > 0 && ordenadas.every((s) => marcadosLista.has(s.id));
+    contarMarcadosLista();
+}
+
+function contarMarcadosLista() {
+    const n = marcadosLista.size;
+    document.getElementById("sl-contador").textContent = n ? cuantosTexto(n, "marcado", "marcados") : "";
+}
+
+/* Una suscripción que todavía no arranca (inicio en el futuro) no puede
+   terminar hoy: la base exige fin >= inicio. Termina el día en que iba a
+   empezar. Las fechas "AAAA-MM-DD" se comparan como texto. Las que terminan
+   hoy van en UNA sola llamada; las que no arrancan, cada una con su fecha. */
+async function darDeBaja(lista) {
+    const hoy = hoyCR();
+    const deHoy = lista.filter((s) => !(s.inicio > hoy)).map((s) => s.id);
+    if (deHoy.length) {
+        const { error } = await sb.from("suscripciones").update({ activa: false, fin: hoy }).in("id", deHoy);
+        if (error) return error;
+    }
+    for (const s of lista.filter((x) => x.inicio > hoy)) {
+        const { error } = await sb.from("suscripciones").update({ activa: false, fin: s.inicio }).eq("id", s.id);
+        if (error) return error;
+    }
+    return null;
+}
+
+function marcadasDeLaLista() {
+    const lista = suscripciones.filter((s) => marcadosLista.has(s.id));
+    if (!lista.length) avisar("Marca al menos a uno en la lista de abajo (o «Marcar todos los que se ven»).", true);
+    return lista;
+}
+
+// Los cambios en grupo. Todos valen de acá en adelante: lo ya emitido no cambia.
+async function cambiarEnGrupo(campo) {
+    const lista = marcadasDeLaLista();
+    if (!lista.length) return;
+    const beca = campo === "descuento_pct";
+    const valor = await Avisos.pedir(beca
+        ? "La beca nueva vale para los cobros que salgan de ahora en adelante. Los que ya salieron no cambian."
+        : "Del 1 al 31. En los meses que no tienen ese día, vence el último. Vale para los cobros que salgan de ahora en adelante.", {
+        titulo: (beca ? "Beca para " : "Día de vencimiento para ") + cuantosTexto(lista.length, "alumno", "alumnos"),
+        etiqueta: beca ? "Beca (%)" : "Vence el día",
+        valor: beca ? "0" : "5",
+        inputmode: "numeric",
+        aceptar: beca ? "Cambiar la beca" : "Cambiar el día",
+    });
+    if (valor === null) return;
+    const n = Number(String(valor).replace(",", "."));
+    if (String(valor).trim() === "" || (beca ? !(n >= 0 && n <= 100) : !(Number.isInteger(n) && n >= 1 && n <= 31))) {
+        return avisar(beca ? "La beca tiene que ser un número del 0 al 100." : "El día tiene que ser un número del 1 al 31.", true);
+    }
+    const { error } = await sb.from("suscripciones").update({ [campo]: n }).in("id", lista.map((s) => s.id));
+    if (error) return avisar("No se pudo: " + error.message, true);
+    avisar((beca ? "Beca cambiada a " + n + " %" : "Ahora vence el día " + n) + " para " + cuantosTexto(lista.length, "alumno.", "alumnos."));
+    marcadosLista.clear();
+    await cargarTodo();
+}
+
+async function bajaEnGrupo() {
+    const lista = marcadasDeLaLista();
+    if (!lista.length) return;
+    const nombres = lista.slice(0, 8).map((s) => "• " + nombreDe(s.student_id)).join("\n")
+        + (lista.length > 8 ? "\n… y " + (lista.length - 8) + " más" : "");
+    if (!(await Avisos.confirmar(nombres + "\n\nLos cobros ya emitidos se quedan como están.", {
+        titulo: "¿Dar de baja a " + cuantosTexto(lista.length, "alumno", "alumnos") + "?",
+        aceptar: "Dar de baja a " + (lista.length === 1 ? "1" : "los " + lista.length), peligro: true }))) return;
+    const error = await darDeBaja(lista);
+    if (error) {
+        avisar("No se pudo dar de baja a todos: " + error.message, true);
+    } else {
+        avisar(lista.length === 1 ? "Dado de baja." : "Dados de baja " + lista.length + ".");
+    }
+    marcadosLista.clear();
+    await cargarTodo();
 }
 
 async function crearSuscripcion() {
-    const studentId = document.getElementById("s-alumno").value;
-    if (!studentId) return avisar("Elige un alumno.", true);
+    const ids = alumnos.map((a) => a.id).filter((id) => marcados.has(id));
+    if (!ids.length) return avisar("Marca al menos un alumno en la lista.", true);
+    // La base acepta del 1 al 31 (un 31 en abril vence el 30): se revisa acá
+    // antes, para no mostrar el mensaje en inglés de la restricción.
+    const diaCobro = Number(document.getElementById("s-dia").value || 5);
+    if (!Number.isInteger(diaCobro) || diaCobro < 1 || diaCobro > 31) {
+        return avisar("El día de vencimiento tiene que ser un número del 1 al 31.", true);
+    }
+    const descuento = Number(document.getElementById("s-descuento").value || 0);
+    if (!(descuento >= 0 && descuento <= 100)) return avisar("La beca tiene que ser un número del 0 al 100.", true);
     const personalizado = document.getElementById("s-personalizado").checked;
-    let planId = document.getElementById("s-plan").value;
+    const inicio = document.getElementById("s-inicio").value || hoyCR();
+    const fila = (studentId, planId) => ({
+        student_id: studentId, plan_id: planId, inicio, dia_cobro: diaCobro,
+        descuento_pct: descuento, creado_por: session.user.id,
+    });
+    let filas = [], saltados = 0, nombrePlan = "";
 
     if (personalizado) {
         const nombre = document.getElementById("s-manual-nombre").value.trim();
@@ -243,34 +540,46 @@ async function crearSuscripcion() {
            los dos, así que no hace falta ninguna tubería nueva. Lo único que
            cambia es que se crea acá, de una vez con la suscripción, y que
            pintarPlanes() y el selector de arriba lo dejan afuera: es de este
-           alumno, no del catálogo de la Academia. */
-        const { data: nuevoPlan, error: errorPlan } = await sb.from("planes_cobro").insert({
-            nombre, monto,
-            moneda: document.getElementById("s-manual-moneda").value,
-            periodicidad: "mensual",
-            personalizado: true,
-            creado_por: session.user.id,
-        }).select().single();
-        if (errorPlan) return avisar("No se pudo crear el cobro personalizado: " + errorPlan.message, true);
-        planId = nuevoPlan.id;
-    } else if (!planId) {
-        return avisar("Elige un plan.", true);
+           alumno, no del catálogo de la Academia. Con varios marcados, cada
+           uno lleva EL SUYO: así se le puede cambiar a uno sin tocar a los
+           demás. */
+        for (const studentId of ids) {
+            const { data: nuevoPlan, error: errorPlan } = await sb.from("planes_cobro").insert({
+                nombre, monto,
+                moneda: document.getElementById("s-manual-moneda").value,
+                periodicidad: "mensual",
+                personalizado: true,
+                creado_por: session.user.id,
+            }).select().single();
+            if (errorPlan) return avisar("No se pudo crear el cobro personalizado: " + errorPlan.message, true);
+            filas.push(fila(studentId, nuevoPlan.id));
+        }
+        nombrePlan = nombre;
+    } else {
+        const planId = document.getElementById("s-plan").value;
+        if (!planId) return avisar("Elige un plan.", true);
+        const plan = planes.find((p) => p.id === planId);
+        nombrePlan = plan ? plan.nombre : "";
+        // Quien ya está en ESE plan se deja igual: el índice único (alumno,
+        // plan) rechazaría la tanda entera por uno solo.
+        const yaEstan = new Set(suscripciones.filter((s) => s.plan_id === planId).map((s) => s.student_id));
+        filas = ids.filter((id) => !yaEstan.has(id)).map((id) => fila(id, planId));
+        saltados = ids.length - filas.length;
+        if (!filas.length) {
+            return avisar(ids.length === 1 ? "Ese alumno ya está en ese plan." : "Todos los marcados ya están en ese plan.", true);
+        }
     }
 
-    const { error } = await sb.from("suscripciones").insert({
-        student_id: studentId,
-        plan_id: planId,
-        inicio: document.getElementById("s-inicio").value || hoyCR(),
-        dia_cobro: Number(document.getElementById("s-dia").value) || 5,
-        descuento_pct: Number(document.getElementById("s-descuento").value) || 0,
-        creado_por: session.user.id,
-    });
+    const { error } = await sb.from("suscripciones").insert(filas);
     if (error) {
         return avisar(error.code === "23505"
-            ? "Ese alumno ya está en ese plan."
+            ? "Alguno de los marcados ya está en ese plan. Recarga la página y vuelve a intentarlo."
             : "No se pudo: " + error.message, true);
     }
-    avisar("Listo. Los cobros de los periodos que correspondan salen con «Emitir los que falten» o solos mañana.");
+    avisar("Listo: " + cuantosTexto(filas.length, "alumno", "alumnos") + " en «" + nombrePlan + "»."
+        + (saltados ? " " + (saltados === 1 ? "1 ya estaba y se dejó igual." : saltados + " ya estaban y se dejaron igual.") : "")
+        + " Los cobros de los periodos que correspondan salen con «Emitir los que falten» o solos mañana.");
+    marcados.clear();
     if (personalizado) {
         document.getElementById("s-manual-nombre").value = "";
         document.getElementById("s-manual-monto").value = "";
@@ -1028,12 +1337,12 @@ async function init() {
     // Los alumnos que uno ve: la misma función de Informes, así que el filtro
     // de quién sale es el de la RLS y no está escrito dos veces.
     const { data: gente } = await traerTodo(() => sb.rpc("informes_resumen_alumnos").order("id"));
-    alumnos = (gente || []).map((a) => ({ id: a.student_id || a.id, full_name: a.full_name, email: a.email }))
+    alumnos = (gente || []).map((a) => ({ id: a.student_id || a.id, full_name: a.full_name, email: a.email, grupo: a.grupo || "" }))
         .sort((a, b) => (a.full_name || "").localeCompare(b.full_name || "", "es"));
     const opciones = (vacio) => '<option value="">' + vacio + "</option>"
         + alumnos.map((a) => `<option value="${a.id}">${(a.full_name || a.email || "Sin nombre").replace(/[<>&"]/g, "")}</option>`).join("");
     document.getElementById("f-alumno").innerHTML = opciones("Todos");
-    document.getElementById("s-alumno").innerHTML = opciones("— Elige —");
+    llenarGrupos();
     document.getElementById("c-alumno").innerHTML = opciones("— Elige —");
     document.getElementById("s-inicio").value = hoyCR();
 
@@ -1043,11 +1352,6 @@ async function init() {
         document.getElementById("loading").textContent = "No se pudieron cargar los cobros: " + (err.message || err);
         return;
     }
-    // El selector de plan se llena después de cargar, que es cuando hay planes.
-    // Sin los personalizados: son de un solo alumno, no del catálogo que este
-    // selector ofrece para "elegir un plan ya hecho".
-    document.getElementById("s-plan").innerHTML = planes.filter((x) => x.activo && !x.personalizado)
-        .map((x) => `<option value="${x.id}">${x.nombre.replace(/[<>&"]/g, "")} · ${plata(x.monto, x.moneda)}</option>`).join("");
 
     document.getElementById("loading").classList.add("hidden");
     document.getElementById("app").classList.remove("hidden");
@@ -1067,6 +1371,27 @@ document.getElementById("s-guardar").addEventListener("click", async (ev) => {
     btn.disabled = true;
     try { await crearSuscripcion(); } finally { btn.disabled = false; }
 });
+["s-buscar", "s-grupo", "s-sin-plan"].forEach((id) => {
+    document.getElementById(id).addEventListener(id === "s-buscar" ? "input" : "change", pintarListaAlumnos);
+});
+document.getElementById("s-marcar").addEventListener("click", () => {
+    document.querySelectorAll("#s-alumnos input[type=checkbox]").forEach((c) => { c.checked = true; marcados.add(c.value); });
+    contarMarcados();
+});
+document.getElementById("s-desmarcar").addEventListener("click", () => {
+    marcados.clear();
+    document.querySelectorAll("#s-alumnos input[type=checkbox]").forEach((c) => { c.checked = false; });
+    contarMarcados();
+});
+document.getElementById("sl-buscar").addEventListener("input", pintarSuscripciones);
+document.getElementById("sl-plan").addEventListener("change", pintarSuscripciones);
+document.getElementById("sl-todos").addEventListener("change", (e) => {
+    suscripcionesVisibles().forEach((s) => { if (e.target.checked) marcadosLista.add(s.id); else marcadosLista.delete(s.id); });
+    pintarSuscripciones();
+});
+document.getElementById("sl-beca").addEventListener("click", () => cambiarEnGrupo("descuento_pct"));
+document.getElementById("sl-dia").addEventListener("click", () => cambiarEnGrupo("dia_cobro"));
+document.getElementById("sl-baja").addEventListener("click", bajaEnGrupo);
 document.getElementById("s-personalizado").addEventListener("change", (e) => {
     document.getElementById("s-plan-cell").classList.toggle("hidden", e.target.checked);
     document.getElementById("s-manual-cell").classList.toggle("hidden", !e.target.checked);

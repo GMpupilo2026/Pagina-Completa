@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20260930043210
+# al-dia-con: 20260930043255
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -1093,6 +1093,7 @@ funcion  disparar_recordatorios_cobro()  definer  anon=false  auth=false
 funcion  disparar_recordatorios_programados()  definer  anon=false  auth=false
 funcion  elegir_academia_activa(p_academia uuid)  definer  anon=false  auth=true
 funcion  elegir_plan(p_id uuid, p_plan text, p_version_terminos text, p_version_privacidad text)  definer  anon=false  auth=true
+funcion  eliminar_plan_cobro(p_plan uuid, p_anular_sin_pagos boolean)  definer  anon=false  auth=true
 funcion  encuesta_curso_publica(p_slug text)  definer  anon=true  auth=true
 funcion  encuesta_mis_profesores()  invoker  anon=false  auth=true
 funcion  enlace_diagnostico_marca(p_codigo text)  definer  anon=true  auth=true
