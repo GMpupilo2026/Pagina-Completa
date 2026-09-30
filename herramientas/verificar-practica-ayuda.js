@@ -134,6 +134,10 @@ async function pruebaProfesor(browser) {
   const boton = await page.getAttribute("#practice-boards-grid .practice-mini-mirar", "aria-label");
   igual("la miniatura trae «Mirar y ayudar» con su nombre", boton, "Mirar y ayudar a " + NOMBRE);
   cumple("el diálogo no se ve antes de abrirlo", !(await seVe(page, "#practica-mirar")));
+  // Escucha las partidas de SU ronda, no las de toda la plataforma (ver «Realtime
+  // escucha solo lo que la pantalla muestra»).
+  igual("escucha las partidas de su ronda, con filtro", await page.evaluate(() => (window.__escuchas || [])
+    .filter((e) => e.tabla === "practice_games").map((e) => e.filtro)), ["session_id=eq.p-1"]);
 
   await page.click("#practice-boards-grid .practice-mini-mirar");
   cumple("al tocarlo se ve su partida en grande", await seVe(page, "#practica-mirar"));

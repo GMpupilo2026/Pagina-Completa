@@ -1446,9 +1446,20 @@ lecturas.
   quién se puede retar, y eso lo decide el dueño del sitio, no el rendimiento.
   Lo que sí se hizo: la lista se pinta a lo sumo una vez cada medio segundo,
   porque con mucha gente llegan varios `sync` por segundo.
+- **La práctica, del lado de quien da clase** (`escucharPartidasDeLaRonda()` en
+  `js/sesion.js`) escuchaba todas las partidas de práctica de la plataforma, y
+  cada jugada actualiza su fila: en la hora pico del 29/9 fueron 703 jugadas,
+  y Realtime revisaba cada una contra cada profe y supervisor conectado en
+  cualquier clase. Ahora filtra `session_id=eq.<su ronda>`: al empezar otra se
+  cierra ese canal y se abre el nuevo, y al quedar suscrito se recarga la lista
+  una vez, por si una partida nació mientras tanto o se cortó la conexión. Los
+  DELETE no traen `session_id`, así que no llegaban antes tampoco
+  (`aplicarCambioDePractica` los descartaba). Un canal viejo que todavía no
+  terminó de cerrarse no pinta nada: cada oyente compara su ronda con la que se
+  escucha. `verificar-practica-ayuda.js` comprueba el filtro.
 - **Quedan sin filtro, anotadas con su porqué**, las escuchas que abren pocas
   pantallas (la TV, el panel de partidas guardadas, el lado del profesor en
-  preguntas y práctica) y `torneo.js` sobre `game_rooms`, que no lleva
+  las preguntas) y `torneo.js` sobre `game_rooms`, que no lleva
   `tournament_id`. Esa es la siguiente candidata si los torneos crecen: acotarla
   con `id=in.(<mesas de la ronda>)`.
 
