@@ -1,8 +1,8 @@
 /* ===== Comprobación: «Activar voz» en la clase en vivo =====
  *
- * Quien ve poco y no usa lector de pantalla enciende «Activar voz» en
- * sesion.html, y el navegador le dice en voz alta lo que pasa en la clase (ver
- * js/clase-voz.js). Si se rompe no da ningún error: la voz simplemente no
+ * Quien ve poco y no usa lector de pantalla enciende «Activar voz» (el 🔇 del
+ * encabezado) en sesion.html, y el navegador le dice en voz alta lo que pasa en
+ * la clase (ver js/voz-pagina.js). Si se rompe no da ningún error: la voz simplemente no
  * habla. Por eso se reemplaza speechSynthesis por uno que anota lo que dice y
  * se mira, como alumna y SIN Modo Adaptado (quien ve poco no suele usarlo):
  *
@@ -75,17 +75,18 @@ async function empujar(page, f) {
     });
     await page.reload({ waitUntil: "domcontentloaded" });
     await page.waitForSelector("#app:not(.hidden)", { timeout: 30000 });
+    await page.waitForSelector("#voz-toggle", { timeout: 10000 });
     await page.waitForTimeout(800);
     await empujar(page, fila());
 
     const b = await page.evaluate(() => {
-      const btn = document.getElementById("voz-clase-btn");
+      const btn = document.getElementById("voz-toggle");
       return { ve: !!btn && btn.checkVisibility(), nombre: btn && btn.getAttribute("aria-label"),
                pulsado: btn && btn.getAttribute("aria-pressed"),
                adaptado: document.documentElement.classList.contains("adaptive-mode") };
     });
     igual("sin Modo Adaptado (como entra quien ve poco)", b.adaptado, false);
-    igual("el botón se ve", b.ve, true);
+    igual("el botón del encabezado se ve", b.ve, true);
     si("y dice para quién es", /solo si no usas lector de pantalla/.test(b.nombre || ""), b.nombre);
     igual("arranca apagado", b.pulsado, "false");
 
@@ -93,9 +94,9 @@ async function empujar(page, f) {
     await empujar(page, fila({ moves: ["Rd1+"] }));
     igual("apagado, la jugada del profe no se dice", (await dichos(page)).join(" | ") || "nada", "nada");
 
-    await page.click("#voz-clase-btn");
+    await page.click("#voz-toggle");
     await page.waitForTimeout(200);
-    igual("al encenderlo queda pulsado", await page.getAttribute("#voz-clase-btn", "aria-pressed"), "true");
+    igual("al encenderlo queda pulsado", await page.getAttribute("#voz-toggle", "aria-pressed"), "true");
     si("y confirma en voz", (await dichos(page)).some((t) => /Voz activada/.test(t)), (await dichos(page)).join(" | "));
 
     await olvidar(page);
@@ -133,14 +134,15 @@ async function empujar(page, f) {
 
     await page.reload({ waitUntil: "domcontentloaded" });
     await page.waitForSelector("#app:not(.hidden)", { timeout: 30000 });
-    await page.waitForTimeout(1500);
-    igual("al recargar sigue encendida", await page.getAttribute("#voz-clase-btn", "aria-pressed"), "true");
+    await page.waitForSelector("#voz-toggle", { timeout: 10000 });
+    await page.waitForTimeout(2000);
+    igual("al recargar sigue encendida", await page.getAttribute("#voz-toggle", "aria-pressed"), "true");
     // «Tablero de la clase. Juegan…» sí puede oírse: es la posición que llega
     // (lo primero que anuncia el recuadro), no un cartel que ya estaba.
     igual("y no lee de golpe los carteles que ya estaban",
       (await dichos(page)).filter((t) => !/^Tablero de la clase\./.test(t)).join(" | ") || "nada", "nada");
 
-    await page.click("#voz-clase-btn");
+    await page.click("#voz-toggle");
     await olvidar(page);
     await empujar(page, fila({ moves: ["Rd1+"] }));
     igual("apagada otra vez, no dice nada", (await dichos(page)).join(" | ") || "nada", "nada");

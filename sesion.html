@@ -49,10 +49,8 @@
         <section class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             <!-- En el celular lo de arriba va más junto: el tablero es lo que el alumno vino a ver. -->
             <div class="flex items-center justify-between flex-wrap gap-3 mb-3 sm:mb-6">
-                <h1 class="font-serif text-xl sm:text-3xl font-bold text-brand-800 dark:text-white">Sesión en vivo <span aria-hidden="true" class="hidden sm:inline">♟️</span></h1>
-                <div class="flex items-center flex-wrap gap-2 sm:gap-3">
-                    <!-- «Activar voz» (js/clase-voz.js): el navegador dice en voz alta lo que pasa en la clase, para quien ve poco y no usa lector de pantalla. -->
-                    <button type="button" id="voz-clase-btn" aria-pressed="false" class="border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-3 py-2 rounded-lg text-sm hover:border-accent-500 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Activar voz</button>
+                <h1 class="font-serif text-2xl sm:text-3xl font-bold text-brand-800 dark:text-white">Sesión en vivo <span aria-hidden="true">♟️</span></h1>
+                <div class="flex items-center gap-3">
                     <span id="role-badge" class="hidden sm:inline-block text-xs font-bold uppercase tracking-wide px-3 py-1 rounded-full"></span>
                     <span id="selector-clase-wrap" class="hidden items-center gap-2"></span>
                     <button id="change-pw-btn" class="text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors">Contraseña</button>
@@ -1319,7 +1317,6 @@
     <script src="js/comandos-tablero.js"></script>
     <script src="js/cuadro-comandos.js"></script>
     <script src="js/clase-adaptada.js"></script>
-    <script src="js/clase-voz.js"></script>
     <script src="js/shared-engine.js"></script>
     <script src="js/clases-engine.js"></script>
     <script src="js/practice-engine.js"></script>

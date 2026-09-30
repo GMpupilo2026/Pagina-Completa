@@ -2559,50 +2559,29 @@ estaban: están vacías hasta que se marca una lección, así que no hablan sola
 ## «Activar voz»: la clase dicha en voz alta para quien ve poco
 
 Quien ve poco muchas veces **no usa lector de pantalla**: agranda la letra y se
-acerca, y el tablero de la clase cambia sin que se entere. Todo lo de la clase
-ya se escribía en regiones vivas para el lector, pero sin lector nadie las
-decía. El botón «Activar voz» del renglón del título (`js/clase-voz.js`) hace que
-el navegador las lea con la Web Speech API (`BlindNotation.speak`).
+acerca, y el tablero de la clase cambia sin que se entere. El 🔇 del encabezado
+(«Activar voz», el mismo de todo el sitio: ver «“Activar voz” en todo el sitio»
+en accesibilidad.md) hace que el navegador diga en voz alta las regiones vivas
+de la clase: la jugada del profe, «te dio el control», la pregunta, el tiempo.
 
-- **Se lee lo que ya se anuncia, no una lista propia.** Un MutationObserver sobre
-  `#app` escucha las regiones vivas (`aria-live`, `role="status"`/`"alert"`). Un
-  aviso nuevo de la clase que se escriba en una región viva, como debe, se oye
-  también con la voz sin tocar nada. No hay un segundo juego de textos «para la
-  voz» que se vaya separando del primero.
-- **Solo lo que esa persona tiene a la vista**: una región dentro de un panel
-  escondido (el del profe, para un alumno) no habla, como no la leería un
-  lector. La excepción es el aviso del recuadro de comandos (`.cc-msg`): fuera
-  del Modo Adaptado el recuadro es `display:none`, pero ahí se anuncian las
-  jugadas del profesor, lo primero que necesita oír quien ve poco. Para él
-  cuenta que se vea el lugar donde está montado.
-- **Lo que llega junto se dice en fila**: `speak(texto, { encolar: true })` no
-  corta la frase anterior (el `speak` de siempre sí, y la jugada del profe se
-  comía el «te dio el control»). Con más de tres en fila se corta todo y se dice
-  lo último: oír avisos viejos con un minuto de atraso es peor. Lo `assertive`
-  (el tiempo que se acaba) corta. En modo encolar, la misma frase dicha hace
-  menos de 2 s no se repite: el recuadro de comandos dice su respuesta Y la
-  escribe en una región viva.
-- **El mismo texto en la misma región no se repite** (el cartel de arriba se
-  repinta con cada eco de Realtime), salvo que antes haya quedado vacía o
-  escondida. Las `sr-only` (`#clase-voz`, `#pensar-voz`…) existen solo para
-  anunciar: esas se dicen siempre.
-- **Al cargar no se lee nada de lo que ya estaba**: se empieza a escuchar
-  cuando `#app` se destapa, y lo escrito hasta ahí se anota como dicho. Si no,
-  el destape leía de golpe todos los carteles. Lo mismo al encenderla.
-- El nombre accesible dice para quién es («solo si no usas lector de
-  pantalla»: con lector, esta voz habla encima de la suya) y la preferencia es
-  la misma de Entrenamiento (`oscarSpeechMode_v1`): quien la encendió en Mates la
-  tiene encendida en la clase.
-- **En el celular el botón es solo el ícono** (`claseTexto: "hidden sm:inline"`,
-  opción nueva de `setupSpeechToggle`) y el título va más chico y sin ♟️: con la
-  palabra, el renglón del título se partía en dos y el tablero bajaba de los
-  240 px que mide `verificar-clase-movil.js`.
+Lo propio de la clase:
 
-**Al tocarlo, correr `node herramientas/verificar-todo.js clase-voz clase-movil`.**
-El verificador cambia `speechSynthesis` por uno que anota lo que dice y
-comprueba, como alumna sin Modo Adaptado: que apagada no diga nada, que al
-encenderla confirme, que la jugada del profe se diga una sola vez, que «te dio
-el control» se diga y el eco no lo repita, que un panel escondido no hable, que
-`#clase-voz` se oiga, que al recargar no lea los carteles y que apagarla la
-calle. Está probado que falla de verdad: sin la excepción de `.cc-msg` salta la
-jugada del profe, y sin la regla del mismo texto salta el eco.
+- **La jugada del profe se dice aunque el Modo Adaptado esté apagado.** Se
+  anuncia en el aviso del recuadro de comandos (`.cc-msg`), que fuera del modo
+  es `display:none`; `js/voz-pagina.js` lo juzga por el lugar donde está
+  montado, no por la caja.
+- **El destape de `#app` no es un aviso**: se empieza a escuchar cuando `#app`
+  se ve, y lo que ya estaba escrito se anota como dicho.
+- Al principio el botón vivía en el renglón del título, y en el celular lo
+  partía en dos y el tablero bajaba de los 240 px de `verificar-clase-movil.js`.
+  En el encabezado, como ícono, no ocupa lugar nuevo.
+
+**Al tocarlo, correr `node herramientas/verificar-todo.js clase-voz voz-pagina
+clase-movil`.** `verificar-clase-voz.js` cambia `speechSynthesis` por uno que
+anota lo que dice y comprueba, como alumna sin Modo Adaptado: que apagada no
+diga nada, que al encenderla confirme, que la jugada del profe se diga una sola
+vez, que «te dio el control» se diga y el eco no lo repita, que un panel
+escondido no hable, que `#clase-voz` se oiga, que al recargar no lea los
+carteles y que apagarla la calle. Está probado que falla de verdad: sin la
+excepción de `.cc-msg` salta la jugada del profe, y sin la regla del mismo
+texto salta el eco.

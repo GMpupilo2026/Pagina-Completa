@@ -231,9 +231,9 @@ window.BlindNotation = (function () {
   // se irían acumulando en cola y se escucharían con retraso.
   //
   // `{ encolar: true }` NO corta lo que se está diciendo: lo pone detrás. Es para
-  // quien lee avisos que llegan juntos de lugares distintos (la clase en vivo,
-  // js/clase-voz.js), donde cortar haría que solo se oyera el último. Y en ese
-  // modo lo que se acaba de decir igual no se repite: el recuadro de comandos ya
+  // quien lee avisos que llegan juntos de lugares distintos («Activar voz» del
+  // encabezado, js/voz-pagina.js), donde cortar haría que solo se oyera el
+  // último. Y en ese modo lo que se acaba de decir igual no se repite: el recuadro de comandos ya
   // dice su respuesta y además la escribe en una región viva que también se lee.
   // `alTerminar` avisa cuando termina (o falla) esa frase.
   let ultimoDicho = '', ultimoDichoEn = 0;
@@ -272,9 +272,9 @@ window.BlindNotation = (function () {
   // alguna página necesita ocultarlo en algún caso (normalmente devuelve `true`
   // sin condición).
   //
-  // `opts.claseTexto` le pone una clase a la palabra (no al ícono): la clase en
-  // vivo la esconde en el celular, donde el renglón de arriba no da para más y el
-  // nombre accesible ya lo pone aria-label.
+  // `opts.claseTexto` le pone una clase a la palabra (no al ícono): el botón del
+  // encabezado (js/voz-pagina.js) la deja en "sr-only", solo ícono como sus
+  // vecinos; el nombre accesible ya lo pone aria-label.
   function setupSpeechToggle(buttonId, getVisible, opts) {
     opts = opts || {};
     const btn = document.getElementById(buttonId);
