@@ -631,7 +631,9 @@ async function pruebaTemas(browser) {
     await vigilar(page, "#round-status");
     await page.fill(".cc-input", mv.san);
     await page.press(".cc-input", "Enter");
-    await page.waitForTimeout(700);
+    // Con la máquina cargada (el CI corre varios a la vez) 700 ms no alcanzan:
+    // se espera a que el renglón cambie, con tope.
+    await page.waitForFunction(() => (window.__vistos || []).slice(1).some((t) => t !== window.__vistos[0]), null, { timeout: 5000 }).catch(() => {});
     const vistos = await loVisto(page);
     igual(`escribir una jugada legal (${mv.san}) se contesta como el clic`,
       vistos.length > 1 && vistos.slice(1).some((t) => t !== vistos[0]), "true");
@@ -701,7 +703,7 @@ async function pruebaContrarreloj(browser, ruta, nombre) {
     await vigilar(page, "#result-text");
     await page.fill(".cc-input", mv.san);
     await page.press(".cc-input", "Enter");
-    await page.waitForTimeout(800);
+    await page.waitForFunction(() => (window.__vistos || []).some((t) => /Correcto|❌|✅|^Respuesta incorrecta: /.test(t)), null, { timeout: 5000 }).catch(() => {});
     const vistos = await loVisto(page);
     igual(`escribir una jugada legal (${mv.san}) se contesta como el clic`,
       vistos.some((t) => /Correcto|❌|✅|^Respuesta incorrecta: /.test(t)), "true");
