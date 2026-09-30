@@ -22,9 +22,18 @@
         }
         const destination = safeNextPath();
 
+        // Con la sesión entera, a la página; con la sesión a medias (entró con la
+        // contraseña y la cuenta tiene la verificación en dos pasos), a pedir el
+        // código. Sin esto, la guardia de cada página mandaba acá, esto mandaba
+        // de vuelta, y así en rueda.
+        async function entrarOPedirCodigo() {
+            if (window.DosPasos && await DosPasos.necesitaCodigo()) return pedirCodigo();
+            window.location.href = destination;
+        }
+
         (async () => {
             const { data: { session } } = await sb.auth.getSession();
-            if (session) window.location.href = destination;
+            if (session) await entrarOPedirCodigo();
         })();
 
         const form = document.getElementById("login-form");
@@ -53,6 +62,41 @@
                 return;
             }
 
-            window.location.href = destination;
+            await entrarOPedirCodigo();
+        });
+
+        /* ---------------- El segundo paso ---------------- */
+        const codigoForm = document.getElementById("codigo-form");
+        const codigoInput = document.getElementById("codigo");
+        const codigoMsg = document.getElementById("codigo-msg");
+        const codigoBtn = document.getElementById("codigo-btn");
+
+        function pedirCodigo() {
+            form.hidden = true;
+            codigoForm.hidden = false;
+            codigoInput.focus();
+        }
+
+        codigoForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            codigoMsg.textContent = "";
+            codigoBtn.disabled = true;
+            codigoBtn.textContent = "Revisando…";
+            const r = await DosPasos.verificar(codigoInput.value);
+            if (r.ok) { window.location.href = destination; return; }
+            codigoMsg.textContent = r.error;
+            codigoBtn.disabled = false;
+            codigoBtn.textContent = "Entrar con el código";
+            codigoInput.select();
+        });
+
+        document.getElementById("codigo-salir").addEventListener("click", async () => {
+            try { await sb.auth.signOut(); } catch (e) { }
+            codigoForm.hidden = true;
+            codigoInput.value = "";
+            form.hidden = false;
+            submitBtn.disabled = false;
+            submitBtn.textContent = "Iniciar sesión";
+            document.getElementById("email").focus();
         });
     

@@ -808,12 +808,94 @@
                 document.getElementById("videollamada").hidden = false;
                 cargarVll();
             }
+            /* La verificación en dos pasos, para las cuentas que ven a otras
+               personas: quien da clase, coordina, supervisa o administra. */
+            if (profile.role !== "alumno" || profile.is_admin || profile.es_supervisor) {
+                document.getElementById("dos-pasos").hidden = false;
+                pintarDosPasos();
+            }
             document.getElementById("loading").classList.add("hidden");
             document.getElementById("app").classList.remove("hidden");
             pintarAvisos();
             pintarAvisoRacha();
             Notificaciones.atenderRenovaciones();
         }
+
+        /* ---------------- Verificación en dos pasos ----------------
+           Todo lo hace Supabase Auth (js/dos-pasos.js); quien la exige al entrar
+           es la base. Quitarla pide dos toques en el propio botón (como cambiar
+           el rol en coordinación), y Supabase la deja quitar solo desde una
+           sesión que ya pasó el segundo paso. */
+        const dpEstado = document.getElementById("dos-pasos-estado");
+        const dpActivar = document.getElementById("dos-pasos-activar");
+        const dpAlta = document.getElementById("dos-pasos-alta");
+        const dpQuitar = document.getElementById("dos-pasos-quitar");
+        const dpMsg = document.getElementById("dos-pasos-msg");
+        const dpCodigo = document.getElementById("dos-pasos-codigo");
+        let dpFactorNuevo = null, dpActivo = null, dpQuitarArmado = false;
+
+        function decirDosPasos(texto, malo) {
+            dpMsg.textContent = texto;
+            dpMsg.className = "text-sm mt-3 " + (malo
+                ? "text-red-600 dark:text-red-400" : "text-green-700 dark:text-green-400");
+        }
+
+        async function pintarDosPasos() {
+            dpAlta.hidden = true;
+            dpQuitarArmado = false;
+            dpQuitar.textContent = "Quitar la verificación en dos pasos";
+            try {
+                const activos = await DosPasos.activos();
+                dpActivo = activos[0] || null;
+            } catch (e) {
+                dpEstado.textContent = "No se pudo revisar: recarga la página.";
+                return;
+            }
+            dpEstado.textContent = dpActivo
+                ? "✓ Activada: al entrar se te pide el código de la app."
+                : "No está activada: entras solo con tu contraseña.";
+            dpActivar.hidden = !!dpActivo;
+            dpQuitar.hidden = !dpActivo;
+        }
+
+        dpActivar.addEventListener("click", async () => {
+            dpActivar.disabled = true;
+            decirDosPasos("", false);
+            try {
+                const f = await DosPasos.empezar();
+                dpFactorNuevo = f.id;
+                document.getElementById("dos-pasos-qr").src = f.qr;
+                document.getElementById("dos-pasos-secreto").textContent = f.secreto;
+                dpActivar.hidden = true;
+                dpAlta.hidden = false;
+                dpCodigo.value = "";
+                dpCodigo.focus();
+            } catch (e) {
+                decirDosPasos("No se pudo empezar: " + ((e && e.message) || "inténtalo otra vez") + ".", true);
+            }
+            dpActivar.disabled = false;
+        });
+
+        document.getElementById("dos-pasos-confirmar").addEventListener("click", async () => {
+            const r = await DosPasos.confirmar(dpFactorNuevo, dpCodigo.value);
+            if (r.error) { decirDosPasos(r.error, true); dpCodigo.select(); return; }
+            await pintarDosPasos();
+            decirDosPasos("Listo: la verificación en dos pasos quedó activada. Guarda bien el celular con la app; si lo pierdes, quien administra te la puede quitar.", false);
+        });
+
+        dpQuitar.addEventListener("click", async () => {
+            if (!dpActivo) return;
+            if (!dpQuitarArmado) {
+                dpQuitarArmado = true;
+                dpQuitar.textContent = "Toca otra vez para quitarla";
+                decirDosPasos("Sin la verificación, con tu contraseña sola ya se entra a tu cuenta.", true);
+                return;
+            }
+            const r = await DosPasos.quitar(dpActivo.id);
+            if (r.error) { decirDosPasos(r.error, true); return; }
+            await pintarDosPasos();
+            decirDosPasos("Quitada: desde ahora entras solo con tu contraseña.", false);
+        });
 
         /* ---------------- Avisos en el celular ----------------
            El permiso se pide SOLO al apretar el botón: el navegador deja

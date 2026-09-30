@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20260930050951
+# al-dia-con: 20260930061403
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -1038,6 +1038,7 @@ funcion  ajustar_trofeos(p_alumno uuid, p_cantidad integer, p_motivo text)  defi
 funcion  alumnos_de_para_ver_como(p_profesor uuid)  definer  anon=false  auth=true
 funcion  alumnos_del_profesor(p_profesor uuid)  invoker  anon=false  auth=true
 funcion  alumnos_del_profesor_con_nombre(p_profesor uuid)  invoker  anon=true  auth=true
+funcion  antes_de_cada_pedido()  definer  anon=true  auth=true
 funcion  avance_del_plan(p_alumno uuid, p_desde timestamp with time zone)  invoker  anon=false  auth=true
 funcion  avisar_clase_abierta()  definer  anon=false  auth=false
 funcion  avisar_desafio()  definer  anon=false  auth=false
@@ -1174,6 +1175,7 @@ funcion  interno.salas_torneo_sello()  invoker  anon=false  auth=false
 funcion  interno.sesiones_de_supervisados()  definer  anon=false  auth=true
 funcion  interno.subgrupo_del_equipo_al_dia(p_equipo uuid, p_profesor uuid)  definer  anon=false  auth=false
 funcion  interno.supervisados_por_mi()  definer  anon=false  auth=true
+funcion  interno.verificacion_al_dia()  definer  anon=false  auth=true
 funcion  interno.version_legal_valida(p text)  invoker  anon=false  auth=false
 funcion  json_seguro(p_texto text)  invoker  anon=false  auth=true
 funcion  jugadores_de_asientos(p_asientos jsonb)  invoker  anon=false  auth=true
@@ -1214,6 +1216,7 @@ funcion  paquete_borrar(p_id uuid)  definer  anon=false  auth=true
 funcion  paquete_guardar(p_id uuid, p_nombre text, p_titular uuid, p_academia uuid, p_cupos integer, p_desde date, p_hasta date, p_precio numeric, p_moneda text, p_notas text)  definer  anon=false  auth=true
 funcion  paquete_set_alumnos(p_id uuid, p_alumnos uuid[])  definer  anon=false  auth=true
 funcion  paquetes_con_uso()  invoker  anon=false  auth=true
+funcion  personas_con_dos_pasos()  definer  anon=false  auth=true
 funcion  personas_para_ver_como()  definer  anon=false  auth=true
 funcion  plan_compartido_conmigo(p_plan uuid)  definer  anon=true  auth=true
 funcion  planes_compartidos_conmigo()  definer  anon=false  auth=true
@@ -1253,6 +1256,7 @@ funcion  quiniela_tabla(p_sala uuid)  invoker  anon=false  auth=true
 funcion  quiniela_unirse(p_sala uuid, p_nombre text, p_correo text, p_privacidad text, p_ip text)  definer  anon=false  auth=false
 funcion  quiniela_yo(p_sala uuid, p_token text)  definer  anon=false  auth=false
 funcion  quitar_insignia(p_id uuid)  definer  anon=false  auth=true
+funcion  quitar_verificacion_en_dos_pasos(p_persona uuid)  definer  anon=false  auth=true
 funcion  recordar_informes_mensuales(p_hoy date)  definer  anon=false  auth=false
 funcion  registrar_arbitraje_publico(p_nombre text, p_email text, p_porcentaje integer, p_nivel text, p_detalle jsonb)  definer  anon=true  auth=true
 funcion  registrar_compra(p_profile uuid, p_producto text, p_registrar boolean)  definer  anon=false  auth=true
@@ -1327,6 +1331,7 @@ politica  archivos_pgn  archivos_pgn_delete  DELETE
 politica  archivos_pgn  archivos_pgn_insert  INSERT
 politica  archivos_pgn  archivos_pgn_select  SELECT
 politica  archivos_pgn  archivos_pgn_update  UPDATE
+politica  archivos_pgn  verificacion_en_dos_pasos  ALL  restrictiva
 politica  avisos_cobro  avisos_lee_coordinacion  SELECT
 politica  clase_elegidos  clase_elegidos_insert  INSERT
 politica  clase_elegidos  clase_elegidos_select  SELECT
@@ -1334,6 +1339,7 @@ politica  clase_elegidos  clase_elegidos_select_propio  SELECT
 politica  clase_elegidos  clase_elegidos_update  UPDATE
 politica  clase_enlaces  clase_enlaces_select  SELECT
 politica  clase_espectadores  clase_espectadores_select  SELECT
+politica  clase_espectadores  verificacion_en_dos_pasos  ALL  restrictiva
 politica  clase_plan_hecho  clase_plan_hecho_de_quien_da_la_clase  ALL
 politica  class_attendance  class_attendance_delete_profesor  DELETE
 politica  class_attendance  class_attendance_exige_acceso_ins  INSERT  restrictiva
@@ -1343,9 +1349,11 @@ politica  class_attendance  class_attendance_insert_profesor  INSERT
 politica  class_attendance  class_attendance_select  SELECT
 politica  class_attendance  class_attendance_select_supervisor  SELECT
 politica  class_attendance  class_attendance_update_profesor  UPDATE
+politica  class_attendance  verificacion_en_dos_pasos  ALL  restrictiva
 politica  class_chat_messages  class_chat_messages_delete  DELETE
 politica  class_chat_messages  class_chat_messages_insert  INSERT
 politica  class_chat_messages  class_chat_messages_select  SELECT
+politica  class_chat_messages  verificacion_en_dos_pasos  ALL  restrictiva
 politica  class_presence_log  class_presence_log_delete_profesor  DELETE
 politica  class_presence_log  class_presence_log_exige_acceso_ins  INSERT  restrictiva
 politica  class_presence_log  class_presence_log_exige_acceso_upd  UPDATE  restrictiva
@@ -1360,6 +1368,7 @@ politica  class_sessions  class_sessions_select  SELECT
 politica  class_sessions  class_sessions_select_coordinacion  SELECT
 politica  class_sessions  class_sessions_select_supervisor  SELECT
 politica  class_sessions  class_sessions_update  UPDATE
+politica  class_sessions  verificacion_en_dos_pasos  ALL  restrictiva
 politica  cobros  cobros_coordinacion  ALL
 politica  cobros  cobros_lee_alumno  SELECT
 politica  cobros_contacto  cobros_contacto_coordinacion  ALL
@@ -1380,6 +1389,7 @@ politica  desafios  desafios_exige_acceso_upd  UPDATE  restrictiva
 politica  desafios  desafios_insert  INSERT
 politica  desafios  desafios_select  SELECT
 politica  desafios  desafios_update  UPDATE
+politica  desafios  verificacion_en_dos_pasos  ALL  restrictiva
 politica  diagnosticos_publicos  diagnosticos_publicos_insert  INSERT
 politica  diagnosticos_publicos  diagnosticos_publicos_select  SELECT
 politica  diagnosticos_publicos  diagnosticos_publicos_update  UPDATE
@@ -1417,18 +1427,21 @@ politica  fourplayer_games  fourplayer_games_exige_acceso_upd  UPDATE  restricti
 politica  fourplayer_games  fourplayer_games_insert  INSERT
 politica  fourplayer_games  fourplayer_games_select  SELECT
 politica  fourplayer_games  fourplayer_games_update  UPDATE
+politica  fourplayer_games  verificacion_en_dos_pasos  ALL  restrictiva
 politica  game_rooms  game_rooms_delete  DELETE
 politica  game_rooms  game_rooms_exige_acceso_ins  INSERT  restrictiva
 politica  game_rooms  game_rooms_exige_acceso_upd  UPDATE  restrictiva
 politica  game_rooms  game_rooms_insert  INSERT
 politica  game_rooms  game_rooms_select  SELECT
 politica  game_rooms  game_rooms_update  UPDATE
+politica  game_rooms  verificacion_en_dos_pasos  ALL  restrictiva
 politica  game_state  game_state_exige_acceso_sel  SELECT  restrictiva
 politica  game_state  game_state_insert  INSERT
 politica  game_state  game_state_select  SELECT
 politica  game_state  game_state_select_coordinacion  SELECT
 politica  game_state  game_state_select_supervisor  SELECT
 politica  game_state  game_state_update  UPDATE
+politica  game_state  verificacion_en_dos_pasos  ALL  restrictiva
 politica  horario_clases  horario_clases_delete  DELETE
 politica  horario_clases  horario_clases_insert  INSERT
 politica  horario_clases  horario_clases_select  SELECT
@@ -1436,6 +1449,7 @@ politica  horario_clases  horario_clases_update  UPDATE
 politica  ia_uso  ia_uso_select  SELECT
 politica  informes_profesor  informes_profesor_select  SELECT
 politica  insignias  insignias_ver  SELECT
+politica  insignias  verificacion_en_dos_pasos  ALL  restrictiva
 politica  insignias_tipos  insignias_tipos_ver  SELECT
 politica  justificaciones_ausencia  justificaciones_select  SELECT
 politica  notas_alumno  notas_alumno_delete  DELETE
@@ -1479,12 +1493,14 @@ politica  practice_games  practice_games_select_supervisor  SELECT
 politica  practice_games  practice_games_update  UPDATE
 politica  practice_games  practice_games_update_coordinacion  UPDATE
 politica  practice_games  practice_games_update_supervisor  UPDATE
+politica  practice_games  verificacion_en_dos_pasos  ALL  restrictiva
 politica  practice_sessions  practice_sessions_exige_acceso_sel  SELECT  restrictiva
 politica  practice_sessions  practice_sessions_insert  INSERT
 politica  practice_sessions  practice_sessions_select  SELECT
 politica  practice_sessions  practice_sessions_select_coordinacion  SELECT
 politica  practice_sessions  practice_sessions_select_supervisor  SELECT
 politica  practice_sessions  practice_sessions_update  UPDATE
+politica  practice_sessions  verificacion_en_dos_pasos  ALL  restrictiva
 politica  preferencias_avisos  preferencias_avisos_agrega  INSERT
 politica  preferencias_avisos  preferencias_avisos_cambia  UPDATE
 politica  preferencias_avisos  preferencias_avisos_lee  SELECT
@@ -1522,6 +1538,7 @@ politica  question_answers  question_answers_insert_own  INSERT
 politica  question_answers  question_answers_select  SELECT
 politica  question_answers  question_answers_select_supervisor  SELECT
 politica  question_answers  question_answers_update  UPDATE
+politica  question_answers  verificacion_en_dos_pasos  ALL  restrictiva
 politica  question_engine_answers  question_engine_answers_exige_acceso_ins  INSERT  restrictiva
 politica  question_engine_answers  question_engine_answers_insert  INSERT
 politica  question_engine_answers  question_engine_answers_select  SELECT
@@ -1530,6 +1547,7 @@ politica  questions  questions_exige_acceso_sel  SELECT  restrictiva
 politica  questions  questions_insert  INSERT
 politica  questions  questions_select  SELECT
 politica  questions  questions_update  UPDATE
+politica  questions  verificacion_en_dos_pasos  ALL  restrictiva
 politica  quiniela_participantes  quiniela_participantes_admin  SELECT
 politica  quiniela_partidas  quiniela_partidas_admin  SELECT
 politica  quiniela_pronosticos  quiniela_pronosticos_admin  SELECT
@@ -1538,6 +1556,7 @@ politica  respuestas_en_curso  respuestas_en_curso_exige_acceso_upd  UPDATE  res
 politica  respuestas_en_curso  respuestas_en_curso_insert  INSERT
 politica  respuestas_en_curso  respuestas_en_curso_select  SELECT
 politica  respuestas_en_curso  respuestas_en_curso_update  UPDATE
+politica  respuestas_en_curso  verificacion_en_dos_pasos  ALL  restrictiva
 politica  salas_torneo  salas_torneo_borrar  DELETE
 politica  salas_torneo  salas_torneo_crear  INSERT
 politica  salas_torneo  salas_torneo_editar  UPDATE
@@ -1548,6 +1567,7 @@ politica  saved_games  saved_games_insert  INSERT
 politica  saved_games  saved_games_select  SELECT
 politica  saved_games  saved_games_select_asistentes  SELECT
 politica  saved_games  saved_games_select_ausentes  SELECT
+politica  saved_games  verificacion_en_dos_pasos  ALL  restrictiva
 politica  solicitudes_academia  solicitudes_academia_select  SELECT
 politica  solicitudes_academia  solicitudes_academia_update  UPDATE
 politica  subgrupo_alumnos  subgrupo_alumnos_delete  DELETE
@@ -1603,14 +1623,17 @@ politica  training_state  training_state_select_supervisor  SELECT
 politica  training_state  training_state_select_teacher  SELECT
 politica  training_state  training_state_update_own  UPDATE
 politica  trofeos_ajustes  trofeos_ajustes_ver  SELECT
+politica  trofeos_ajustes  verificacion_en_dos_pasos  ALL  restrictiva
 politica  tv_settings  tv_settings_select_public  SELECT
 politica  tv_settings  tv_settings_update_profesor  UPDATE
+politica  tv_settings  verificacion_en_dos_pasos  ALL  restrictiva
 politica  variant_nodes  variant_nodes_delete  DELETE
 politica  variant_nodes  variant_nodes_exige_acceso_sel  SELECT  restrictiva
 politica  variant_nodes  variant_nodes_insert  INSERT
 politica  variant_nodes  variant_nodes_select  SELECT
 politica  variant_nodes  variant_nodes_select_coordinacion  SELECT
 politica  variant_nodes  variant_nodes_select_supervisor  SELECT
+politica  variant_nodes  verificacion_en_dos_pasos  ALL  restrictiva
 trigger  ajustes_academia  ajustes_academia_protegido
 trigger  class_presence_log  class_presence_log_protege_tiempos
 trigger  class_sessions  class_sessions_avisa_push

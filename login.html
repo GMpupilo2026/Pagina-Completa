@@ -78,6 +78,24 @@
                     <button type="submit" id="submit-btn" class="w-full bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2.5 rounded-lg transition-colors">Iniciar sesión</button>
                 </form>
 
+                <!-- El segundo paso: solo para quien activó la verificación en dos
+                     pasos (configuracion.html). Ver «La verificación en dos pasos»
+                     en docs/decisiones/permisos-y-roles.md. -->
+                <form id="codigo-form" class="space-y-4" hidden novalidate>
+                    <p class="text-sm text-brand-700 dark:text-brand-200">Tu cuenta tiene la verificación en dos pasos. Abre tu app de códigos (Google Authenticator, Microsoft Authenticator u otra) y escribe el código de 6 números de Ajedrez Integral.</p>
+                    <div>
+                        <label for="codigo" class="block text-sm font-medium text-brand-600 dark:text-brand-300 mb-1">Código de 6 números</label>
+                        <input id="codigo" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}"
+                            aria-describedby="codigo-msg"
+                            class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-lg tracking-widest font-mono text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500"
+                            placeholder="123456">
+                    </div>
+                    <p id="codigo-msg" class="text-sm text-red-600 dark:text-red-400" role="alert"></p>
+                    <button type="submit" id="codigo-btn" class="w-full bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2.5 rounded-lg transition-colors">Entrar con el código</button>
+                    <p class="text-xs text-brand-500 dark:text-brand-300">¿Perdiste el celular con la app? Pídele a quien administra la Academia que te quite la verificación; después entras solo con tu contraseña.</p>
+                    <button type="button" id="codigo-salir" class="w-full text-sm text-brand-600 dark:text-brand-300 underline hover:text-accent-500 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Salir y entrar con otra cuenta</button>
+                </form>
+
                 <p class="text-sm text-center mt-4">
                     <a href="bienvenida.html?recuperar=1" class="text-brand-600 dark:text-brand-300 hover:text-accent-500 underline transition-colors">¿Olvidaste tu contraseña?</a>
                 </p>
@@ -101,6 +119,7 @@
     <script src="js/marca-academia.js"></script>
     <script src="js/main.js"></script>
     <script src="js/usuario-alumno.js"></script>
+    <script src="js/dos-pasos.js"></script>
     <script src="js/login.js"></script>
 </body>
 </html>

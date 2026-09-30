@@ -224,12 +224,15 @@ No están en el repositorio ni pueden estarlo. Hay que volver a ponerlos:
   tenga los avisos encendidos deja de recibirlos sin enterarse. Si se están
   restaurando datos viejos, las llaves viejas van con ellos.
 
-**Dos ajustes de Auth que tampoco están en ninguna migración** (detalle en
+**Tres ajustes de Auth que tampoco están en ninguna migración** (detalle en
 `permisos-y-roles.md`, «Lo que se hace en el panel, no desde acá»). Un proyecto
 nuevo arranca sin ellos y no da ningún error:
 
 - **Authentication › Sign In / Providers › Email** › «Prevent use of leaked
   passwords» encendido, y **Save**.
+- **Authentication › Multi-Factor**: TOTP encendido (viene así). Sin él, la
+  verificación en dos pasos no se puede activar. El candado que la exige
+  (`pgrst.db_pre_request`) sí está en una migración.
 - **Authentication › Performance › Connection management**: «Allocation
   strategy» en **Percentage**, al **15 %**.
 
