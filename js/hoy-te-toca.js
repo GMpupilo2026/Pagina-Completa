@@ -38,6 +38,10 @@ window.HoyTeToca = (function () {
       <!-- Tu semana (public.entreno_mi_semana): los últimos 7 días contra los
            7 anteriores. Solo si entrenó en alguna de las dos. -->
       <p id="hoy-semana" class="text-sm text-brand-600 dark:text-brand-200 mt-1" hidden></p>
+      <!-- La próxima medalla (js/logros-catalogo.js): la más cerca de las que ya
+           empezó, y cuánto le falta. Una meta a la vista engancha más que la
+           lista entera en Logros. -->
+      <a id="hoy-medalla" class="block text-sm text-brand-600 dark:text-brand-200 mt-1 underline underline-offset-2 hover:text-accent-700 dark:hover:text-accent-400 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500" hidden></a>
     </div>
     <ul id="hoy-lista" class="list-none p-0 m-0 space-y-2"></ul>
     <!-- El aviso de racha (public.avisar_rachas(), 6:05 p. m.): solo le llega a
@@ -215,7 +219,11 @@ window.HoyTeToca = (function () {
     if (window.Logros) {
       let r = null;
       try { r = await (op.logros || Logros.cargar()); } catch (e) { r = null; }
-      if (r && r.stats && !(r.stats.total_ejercicios > 0)) return null;
+      /* El diagnóstico también es una fila de training_progress: no cuenta como
+         ejercicio. La misma regla de la franja (mostrarPrimerPaso). */
+      const pa = (r && r.stats && r.stats.por_actividad) || {};
+      const ejercicios = Object.keys(pa).filter((a) => a !== 'diagnostico').reduce((n, a) => n + (Number(pa[a]) || 0), 0);
+      if (r && r.stats && !(ejercicios > 0)) return null;
     }
     const dia = Math.floor((Date.now() - 6 * 3600 * 1000) / 86400000);
     const flojas = PE && PE.paraPracticar && diag && diag.detalle ? PE.paraPracticar(diag.detalle, MP.HERRAMIENTAS) : [];
@@ -295,7 +303,26 @@ window.HoyTeToca = (function () {
     ofrecerAvisos(racha);
     if (hoy > 0) await pintarResumenHoy();
     await pintarSemana();
+    pintarMedalla(r, op);
     return true;
+  }
+
+  /* La próxima medalla: de las que ya empezó (algo hecho) y no tiene, la que
+     está más cerca en proporción; a igual avance, la que pide menos. Se dice
+     cuánto le falta y qué pide la medalla, con el enlace a Logros. Sin
+     ninguna empezada no se dice nada: «te faltan 50» no engancha a nadie. */
+  function proximaMedalla(logros){
+    return (logros || []).filter((l) => l && !l.conseguido && l.valor > 0 && l.meta > l.valor)
+      .sort((a, b) => b.progreso - a.progreso || (a.meta - a.valor) - (b.meta - b.valor))[0] || null;
+  }
+  function pintarMedalla(r, op){
+    const el = document.getElementById('hoy-medalla');
+    const l = proximaMedalla(r && r.logros);
+    if (!el || !l) return;
+    const falta = l.meta - l.valor;
+    el.href = op.arriba + 'logros.html';
+    el.textContent = `${l.emoji || '🏅'} Te ${falta === 1 ? 'falta 1' : 'faltan ' + falta} para la medalla «${l.nombre}»: ${String(l.descripcion || '').replace(/\.$/, '')}.`;
+    el.hidden = false;
   }
 
   /* Tu semana: los últimos 7 días contra los 7 anteriores. «Esta semana: 48
@@ -448,5 +475,5 @@ window.HoyTeToca = (function () {
     caja.classList.toggle('hidden', !cosas.length && !conMeta);
   }
 
-  return { pintar, textoSemana };
+  return { pintar, textoSemana, proximaMedalla };
 })();

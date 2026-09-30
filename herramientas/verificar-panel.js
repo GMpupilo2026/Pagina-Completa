@@ -428,7 +428,7 @@ async function pruebaAlumna(browser) {
   // Lo apagado, que es lo que se pidió: apagado para ELLA.
   const apagados = await page.evaluate(() =>
     Array.from(document.querySelectorAll("#tile-grid [aria-disabled=true]"))
-      .filter((el) => !el.closest("#videollamada-wrap") && !el.closest("#sesion-wrap"))
+      .filter((el) => !el.closest("#videollamada-wrap") && !el.closest("#sesion-wrap") && !el.dataset.claseCompacta)
       .map((el) => ({
       etiqueta: el.querySelector("span > span").textContent,
       enlace: el.getAttribute("href"),
@@ -475,7 +475,7 @@ async function pruebaProfesora(browser) {
       "#tile-grid [href*='entreno/diagnostico'], #tile-grid [href*='arbitraje']").length), "0");
   const apagados = await page.evaluate(() =>
     Array.from(document.querySelectorAll("#tile-grid [aria-disabled=true]"))
-      .filter((el) => !el.closest("#videollamada-wrap") && !el.closest("#sesion-wrap"))
+      .filter((el) => !el.closest("#videollamada-wrap") && !el.closest("#sesion-wrap") && !el.dataset.claseCompacta)
       .map((el) => el.querySelector("span > span").textContent));
   igual("a ella no se le apaga NADA: no hay mantenimiento que le aplique ni tarjetas en espera",
     apagados, []);
@@ -980,7 +980,36 @@ async function pruebaUltimaClase(browser) {
   igual("«Repasar esta clase» abre el repaso de ESA clase",
     await r.page.evaluate(() => { const a = [...document.querySelectorAll("#ultima-clase a")].find((x) => /Repasar/.test(x.textContent)); return a ? a.getAttribute("href") : "no está"; }),
     "repasar-clases.html?repaso=c-0");
+  /* Va dentro de «Tus clases», que en la computadora arranca abierto. */
+  await r.page.waitForFunction(() => !document.getElementById("tus-clases").hidden, null, { timeout: 10000 });
+  igual("va dentro de «Tus clases», abierto en la computadora",
+    await r.page.evaluate(() => { const d = document.getElementById("tus-clases"); return [d.contains(document.getElementById("ultima-clase")), d.checkVisibility(), d.open]; }),
+    [true, true, true]);
   igual("sin errores en la página", r.errores, []);
+  await r.ctx.close();
+
+  /* En el celular, «Tus clases» arranca cerrado: se ve el título (con qué
+     trae adentro) y se abre al tocarlo; se recuerda en este aparato. */
+  const datosClase = {
+    rpc: { resumen_de_la_clase: [fila] },
+    questions: [{ id: "q1", class_session_id: "c-0", prompt: "¿Qué jugarías?", tipo: "jugada", opciones: null, created_at: "1" }],
+    question_answers: [],
+  };
+  r = await panel(browser, [ALUMNA], "u-ana", { viewport: { width: 390, height: 800 } }, datosClase);
+  await r.page.waitForFunction(() => !document.getElementById("tus-clases").hidden, null, { timeout: 10000 });
+  const cel = await r.page.evaluate(() => { const d = document.getElementById("tus-clases");
+    return [d.checkVisibility(), d.open, document.getElementById("ultima-clase").checkVisibility(), d.querySelector("summary").textContent.replace(/\s+/g, " ").trim()]; });
+  igual("en el celular, «Tus clases» arranca cerrado, con su título a la vista", cel,
+    [true, false, false, "Tus clases tu última clase y tus puntos del mes"]);
+  await r.page.click("#tus-clases summary");
+  igual("al tocarlo se abre", await r.page.evaluate(() => document.getElementById("ultima-clase").checkVisibility()), true);
+  /* El evento «toggle» llega en otra vuelta: se espera a que quede guardado
+     antes de recargar, y después a que la caja esté ARMADA (lo guardado se
+     aplica en el .finally, que puede llegar después de que se vea la tarjeta). */
+  await r.page.waitForFunction(() => /"Tus clases":true/.test(localStorage.getItem("panel_grupos_abiertos_v1") || ""), null, { timeout: 5000 });
+  await r.page.reload({ waitUntil: "networkidle" });
+  await r.page.waitForFunction(() => document.getElementById("tus-clases").dataset.armado === "1", null, { timeout: 10000 });
+  igual("y sigue abierto al volver, en este aparato", await r.page.evaluate(() => document.getElementById("tus-clases").open), true);
   await r.ctx.close();
 
   // Si no aparece en el resumen (no estuvo ni hizo nada), la tarjeta no sale.
@@ -2153,7 +2182,10 @@ async function pruebaVideollamada(browser) {
   // 1. Sin clase abierta: con candado, y diciendo cuándo se abre.
   let r = await panel(browser, [ALUMNA, PROFE], "u-ana", { viewport: { width: 1280, height: 900 } }, datosAlumna(false));
   let b = await botonListo(r.page);
-  igual("sin clase abierta, el botón está y se ve", b.hay && b.seVe, "true");
+  /* Sin clase, las dos tarjetas grandes se quedan en una línea (ver la
+     prueba de «Sesión en vivo»): el botón está, pero no se ve hasta que se
+     abre la clase. */
+  igual("sin clase abierta, el botón está pero en la línea compacta, no a la vista", [b.hay, b.seVe], [true, false]);
   igual("…y va al lado derecho de «Sesión en vivo»", b.aLaDerecha, "true");
   /* Bloqueado no es un enlace gris: sin href no recibe el foco del teclado ni
      promete un destino que no va a abrir. La misma regla de los accesos
@@ -2284,6 +2316,17 @@ const LEER_SESION = () => {
   };
 };
 
+/* Sin clase abierta, al alumno la clase en vivo le ocupa UNA línea: las dos
+   tarjetas grandes siguen en el documento (se destapan solas al abrirse la
+   clase) pero no se ven. */
+const LEER_LINEA = () => {
+  const l = document.querySelector("#tile-grid [data-clase-compacta]");
+  const g = document.getElementById("sesion-wrap").parentElement;
+  return l ? { seVe: l.checkVisibility(), texto: l.innerText.replace(/\s+/g, " ").trim(), tabindex: l.tabIndex,
+    role: l.getAttribute("role"), bloqueada: l.getAttribute("aria-disabled") === "true", grandes: g.checkVisibility(),
+    alto: Math.round(l.closest("section").getBoundingClientRect().height) } : { seVe: false, grandes: g.checkVisibility() };
+};
+
 async function sesionLista(page) {
   await page.waitForFunction(() => {
     const c = document.getElementById("sesion-wrap");
@@ -2339,7 +2382,16 @@ async function pruebaSesionEnVivo(browser) {
   // 1. Sin clase abierta: bloqueada, y diciendo por qué.
   let r = await panel(browser, [ALUMNA, PROFE], "u-ana", { viewport: { width: 1280, height: 900 } }, datosAlumna(false));
   let t = await sesionLista(r.page);
-  igual("sin clase abierta, la tarjeta está y se ve", t.hay && t.seVe, "true");
+  /* Las dos tarjetas con candado ocupaban casi una pantalla del celular la
+     mayor parte del día. Sin clase, queda UNA línea que dice lo mismo, y que
+     se sigue alcanzando con Tab y anunciando como enlace no disponible. */
+  let linea = await r.page.evaluate(LEER_LINEA);
+  igual("sin clase abierta, una sola línea en vez de las dos tarjetas grandes", [linea.seVe, linea.grandes], [true, false]);
+  igual("…que dice qué es y cuándo se abre",
+    linea.texto, "🔒 Sesión en vivo y videollamada: Se abre cuando tu profe empiece la clase");
+  igual("…y se alcanza con Tab, anunciada como enlace no disponible", [linea.tabindex, linea.role, linea.bloqueada], [0, "link", true]);
+  cierto("…y ocupa poco: " + linea.alto + " px", linea.alto < 110);
+  igual("la tarjeta sigue en el documento, lista para destaparse", t.hay, true);
   /* Bloqueada no es un enlace gris: sin href no recibe el foco del teclado ni
      promete un destino que no va a abrir. La misma regla de los apagados. */
   igual("…bloqueada, sin enlace y sin prometer destino", [t.tag, t.href, t.bloqueada], ["DIV", null, true]);
@@ -2360,6 +2412,8 @@ async function pruebaSesionEnVivo(browser) {
   t = await r.page.evaluate(LEER_SESION);
   igual("al abrirse la clase se destapa sola, sin recargar",
     [t.tag, t.href, t.bloqueada], ["A", "sesion.html", false]);
+  linea = await r.page.evaluate(LEER_LINEA);
+  igual("…vuelven las dos tarjetas grandes y la línea se va", [linea.seVe, linea.grandes], [false, true]);
   /* Quien ve la pantalla nota que la tarjeta cambió; quien no la ve, solo se
      entera si una región viva se lo dice. */
   igual("…y se le AVISA en la región viva, con el nombre de quien la abrió",
@@ -2378,6 +2432,7 @@ async function pruebaSesionEnVivo(browser) {
   t = await sesionLista(r.page);
   igual("sin ningún profesor, se nombra el motivo de verdad",
     [t.bloqueada, /Pide que te asignen un profesor/.test(t.texto)], [true, true]);
+  igual("…también en la línea compacta", /Pide que te asignen un profesor/.test((await r.page.evaluate(LEER_LINEA)).texto), true);
   await r.ctx.close();
 
   /* 4. A quien da clase NO se le bloquea: la abre él, así que un candado ahí
@@ -2405,6 +2460,107 @@ async function page_vacio(page) {
 module.exports = { panel, clienteFalso, igual, mal, bien, datosAlumna, ALUMNA, PROFE, ADMIN, CHROME, BASE, fallos: () => fallos };
 if (require.main !== module) return;
 
+/* ---------- Solo lo que hace falta, y el panel sin esperar de más ----------
+   El diagnóstico se esconde si se hizo hace poco (y vuelve a las cuatro
+   semanas, o si el profe lo pide); «Hoy te toca» dice la próxima medalla; la
+   franja dice cuánto lleva de cada tarea; «Tus clases» se pliega; y el panel
+   ya no espera a que lleguen los diez scripts de «Hoy te toca». */
+async function pruebaLoQueHaceFalta(browser) {
+  console.log("\n=== Solo lo que hace falta ===");
+  const hace = (d) => new Date(Date.now() - d * 86400000).toISOString();
+  const conDiag = (dias, extra) => Object.assign(datosAlumna(false), extra || {}, {
+    rpc: Object.assign({}, datosAlumna(false).rpc, (extra && extra.rpc) || {},
+      { informes_diagnosticos_alumnos: [{ student_id: "u-ana", fecha: hace(dias), detalle: diagnosticoCon({}) }] }),
+  });
+  const tarjeta = (pg) => pg.evaluate(() => {
+    const a = document.querySelector("#tile-grid a[href^='entreno/diagnostico.html']");
+    return a ? { seVe: a.checkVisibility(), texto: a.innerText.replace(/\s+/g, " ").trim() } : null;
+  });
+  const esperarDiag = (pg) => pg.waitForFunction(() => window.__consultas.some((c) => c.tabla === "informes_diagnosticos_alumnos"), null, { timeout: 10000 }).then(() => pg.waitForTimeout(300)).catch(() => {});
+
+  // 2. El diagnóstico: escondido si lo hizo hace poco, «Toca repetirlo» a las cuatro semanas.
+  let { page, ctx, errores } = await panel(browser, [ALUMNA, PROFE], "u-ana", {}, conDiag(5));
+  await esperarDiag(page);
+  igual("hecho hace 5 días, la tarjeta del diagnóstico no está", await tarjeta(page), null);
+  igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+  ({ page, ctx } = await panel(browser, [ALUMNA, PROFE], "u-ana", {}, conDiag(40)));
+  await esperarDiag(page);
+  const t40 = await tarjeta(page);
+  igual("hecho hace 40 días, vuelve y dice que toca repetirlo",
+    t40 && [t40.seVe, /Toca repetirlo: ya pasaron cuatro semanas/.test(t40.texto)], [true, true]);
+  await ctx.close();
+  ({ page, ctx } = await panel(browser, [ALUMNA, PROFE], "u-ana", {}, conDiag(5, { rpc: { tareas_con_avance: tareasConDiagnostico(false) } })));
+  await esperarDiag(page);
+  const tPedido = await tarjeta(page);
+  igual("hecho hace 5 días pero el profe se lo pidió: se ve, iluminada",
+    tPedido && [tPedido.seVe, /Te lo pidió tu profe/.test(tPedido.texto)], [true, true]);
+  await ctx.close();
+
+  // 3. La próxima medalla: la más cerca de las empezadas, con cuánto le falta.
+  ({ page, ctx, errores } = await panel(browser, [ALUMNA, PROFE], "u-ana", {}, datosAlumna(false)));
+  await page.waitForFunction(() => { const m = document.getElementById("hoy-medalla"); return m && !m.hidden; }, null, { timeout: 15000 }).catch(() => {});
+  const medalla = await page.evaluate(() => {
+    const el = document.getElementById("hoy-medalla");
+    const r = { seVe: !!el && el.checkVisibility(), texto: el ? el.textContent : "", href: el ? el.getAttribute("href") : null };
+    return r;
+  });
+  const esperada = await page.evaluate(() => window.Logros.cargar().then((r) => {
+    const l = window.HoyTeToca.proximaMedalla(r.logros);
+    return l ? { nombre: l.nombre, falta: l.meta - l.valor, empezada: l.valor > 0 && !l.conseguido } : null;
+  }));
+  igual("«Hoy te toca» dice la próxima medalla, con cuánto le falta y a Logros",
+    [medalla.seVe, esperada && new RegExp("para la medalla «" + esperada.nombre.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "»").test(medalla.texto),
+     esperada && medalla.texto.includes(String(esperada.falta)), medalla.href],
+    [true, true, true, "logros.html"]);
+  igual("y es una que ya empezó y no tiene", esperada && esperada.empezada, true);
+
+  // 5. «Tus clases»: en la computadora, abierto; sin nada que mostrar, no está.
+  igual("sin última clase ni puntos del mes, «Tus clases» no se pinta",
+    await page.evaluate(() => document.getElementById("tus-clases").checkVisibility()), false);
+  igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+
+  // 4. La franja dice cuánto lleva de cada tarea.
+  const conAvance = tareasDeMentira(false).map((t, i) => Object.assign({}, t, {
+    items: i === 0 ? [{ meta_tipo: "cantidad", meta_cantidad: 10, hecho: 4 }]
+      : [{ meta_tipo: "cantidad", meta_cantidad: 5, hecho: 5 }, { meta_tipo: "completar", meta_cantidad: 1, hecho: 0 }],
+    cumplidos: i === 0 ? 0 : 1,
+  }));
+  ({ page, ctx } = await panel(browser, [ALUMNA, PROFE], "u-ana", {}, Object.assign(datosAlumna(false), {
+    rpc: Object.assign({}, datosAlumna(false).rpc, { tareas_con_avance: conAvance }) })));
+  await page.waitForFunction(() => !document.getElementById("pendientes-aviso-tareas").hidden, null, { timeout: 10000 }).catch(() => {});
+  const avance = await page.evaluate(() => Array.from(document.querySelectorAll("#pendientes-aviso-tareas li")).map((li) => {
+    const sp = li.querySelectorAll("span"), barra = li.querySelector("[aria-hidden=true] > div");
+    return [sp[0].textContent, sp[1].textContent, barra.style.width];
+  }));
+  igual("la franja dice cuánto lleva de cada tarea (tres como mucho), con su barra",
+    avance, [["Finales de rey y peón", "4 de 10", "40%"], ["Mates en dos", "1 de 2 partes", "50%"], ["Repaso largo", "1 de 2 partes", "50%"]]);
+  await ctx.close();
+
+  // 6. El panel no espera a «Hoy te toca»: sus scripts colgados no lo detienen.
+  const ctx2 = await browser.newContext({ serviceWorkers: "block" });
+  await ctx2.route("**/js/hoy-te-toca.js", () => {});   // no contesta nunca
+  await ctx2.route("**/cdn.jsdelivr.net/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
+  await ctx2.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
+  await ctx2.route("**/fonts.gstatic.com/**", (r) => r.abort());
+  await ctx2.route("**/js/supabase-client.js", (r) =>
+    r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso([ALUMNA, PROFE], "u-ana", clasesDeMentira(), datosAlumna(false)) }));
+  const p2 = await ctx2.newPage();
+  const t0 = Date.now();
+  await p2.goto(BASE + "/clases.html", { waitUntil: "domcontentloaded" });
+  await p2.waitForSelector("#app:not(.hidden)", { timeout: 20000 }).catch(() => {});
+  const tarda = Date.now() - t0;
+  cierto("con «Hoy te toca» sin llegar, el panel aparece igual y sin esperar el tope de 6 s (" + tarda + " ms)", tarda < 4000);
+  await ctx2.close();
+
+  // A quien da clase, la clase en vivo se le ve entera: la abre él.
+  ({ page, ctx } = await panel(browser, [PROFE, ALUMNA], "u-profe", {}, { profesor_videollamada: [] }));
+  igual("a la profesora no se le compacta la clase en vivo",
+    await page.evaluate(() => { const l = document.querySelector("[data-clase-compacta]"); return !l || !l.checkVisibility(); }), true);
+  await ctx.close();
+}
+
 /* ---------- Los grupos de entrenamiento se pliegan en el celular ----------
    El panel del alumno medía en el celular unas nueve pantallas y «Jugar y
    competir» quedaba a seis. Los seis grupos de entrenamiento arrancan
@@ -2424,8 +2580,8 @@ async function pruebaPlegables(browser) {
   let e = await estado(page);
   igual("en el celular, los seis grupos de entrenamiento arrancan cerrados",
     e.filter((x) => x.boton === "false" && !x.grilla).map((x) => x.titulo), PLEGABLES);
-  igual("el resto no se pliega: se ve como siempre",
-    e.filter((x) => !PLEGABLES.includes(x.titulo)).every((x) => x.boton === null && x.grilla), true);
+  igual("el resto no se pliega: se ve como siempre (la clase en vivo, sin clase, va en su línea)",
+    e.filter((x) => !PLEGABLES.includes(x.titulo) && x.titulo !== "Clase en vivo").every((x) => x.boton === null && x.grilla), true);
   igual("el título sigue siendo un encabezado, y dice cuántos accesos tiene",
     await page.evaluate(() => document.querySelector("#tile-grid [aria-controls]").closest("section").querySelector("h2 + span").textContent),
     "7 accesos");
@@ -2626,6 +2782,7 @@ async function pruebaBaseLenta(browser) {
     await pruebaProgresoAlumna(browser);
     await pruebaHoyEnElPanel(browser);
     await pruebaPlegables(browser);
+    await pruebaLoQueHaceFalta(browser);
     await pruebaBaseLenta(browser);
     await pruebaSemanaProfesora(browser);
     await pruebaProfesora(browser);

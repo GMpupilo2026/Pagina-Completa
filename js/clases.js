@@ -697,6 +697,12 @@
                 pedido.textContent = t.pedido;
                 texto.appendChild(pedido);
             }
+            if (t.aviso && !t.disabled) {
+                const aviso = document.createElement("span");
+                aviso.className = "text-[11px] font-semibold px-2 py-0.5 rounded-full bg-brand-100 dark:bg-brand-800 text-brand-700 dark:text-brand-200";
+                aviso.textContent = t.aviso;
+                texto.appendChild(aviso);
+            }
             if (t.nota) {
                 const nota = document.createElement("span");
                 nota.className = "text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-brand-100 dark:bg-brand-800 text-brand-500 dark:text-brand-300";
@@ -881,6 +887,51 @@
                 if (tarjeta) wrap.appendChild(tarjeta);
             }
             pintarVideollamada();
+            claseCompacta();
+        }
+
+        /* ---------- Sin clase, la clase en vivo ocupa una línea ----------
+           Al alumno, «Sesión en vivo» y «Videollamada» con candado ocupaban
+           casi una pantalla del celular la mayor parte del día, cuando no hay
+           clase. No se esconden del todo —está decidido que el alumno sepa que
+           existen antes de necesitarlas (ver «La videollamada de la clase»)—:
+           se quedan en UNA línea que dice lo mismo que el candado, y que sigue
+           alcanzándose con Tab y anunciándose como enlace no disponible. Cuando
+           el profe abre la clase, Realtime repinta y vuelven las dos tarjetas
+           grandes, solas. A quien da clase no le toca: la abre él. */
+        function claseCompacta() {
+            const wrap = document.getElementById("sesion-wrap");
+            const grilla = wrap && wrap.parentElement;
+            const seccion = grilla && grilla.closest("section");
+            if (!seccion) return;
+            const compacta = !esEquipoDocente() && !misClases.some((c) => c.clase_abierta);
+            let linea = seccion.querySelector("[data-clase-compacta]");
+            if (!linea) {
+                linea = document.createElement("div");
+                linea.dataset.claseCompacta = "1";
+                linea.tabIndex = 0;
+                linea.setAttribute("role", "link");
+                linea.setAttribute("aria-disabled", "true");
+                linea.className = "items-center gap-3 rounded-xl px-4 py-3 bg-brand-50 dark:bg-brand-800 text-sm text-brand-600 dark:text-brand-200 cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+                seccion.appendChild(linea);
+            }
+            const motivo = !videollamadaLista ? "Viendo si hay clase…"
+                : !misClases.length ? "Pide que te asignen un profesor"
+                : "Se abre cuando tu profe empiece la clase";
+            linea.replaceChildren();
+            const candado = document.createElement("span");
+            candado.setAttribute("aria-hidden", "true");
+            candado.textContent = "🔒";
+            const texto = document.createElement("span");
+            const quien = document.createElement("strong");
+            quien.className = "font-semibold text-brand-800 dark:text-white";
+            quien.textContent = "Sesión en vivo y videollamada";
+            texto.append(quien, document.createTextNode(": " + motivo));
+            linea.append(candado, texto);
+            // style.display y no `hidden`: la clase `flex`/`grid` de Tailwind le gana a ese atributo.
+            linea.style.display = compacta ? "flex" : "none";
+            grilla.style.display = compacta ? "none" : "";
+            seccion.dataset.compacta = compacta ? "1" : "";
         }
 
         function pintarVideollamada() {
@@ -1470,6 +1521,27 @@
             if (aviso) aviso.hidden = false;
         }
 
+        /* ---------- Tus clases: la última y los puntos del mes ----------
+           Van juntos en un <details> que en el celular arranca cerrado y en la
+           computadora abierto; lo que cada quien abre o cierra se recuerda en
+           este aparato, igual que los grupos plegables. Sin ninguna de las dos
+           cosas no se pinta. Ver «Tus clases, en un bloque que se pliega» en
+           docs/decisiones/paneles.md. */
+        function ajustarTusClases() {
+            const caja = document.getElementById("tus-clases");
+            if (!caja) return;
+            const hay = ["ultima-clase", "puntos-mes"].some((id) => !document.getElementById(id).hidden);
+            if (!caja.dataset.armado) {
+                caja.dataset.armado = "1";
+                const guardado = gruposGuardados()["Tus clases"];
+                caja.open = guardado !== undefined ? !!guardado : !enCelular();
+                caja.addEventListener("toggle", () => {
+                    try { const o = gruposGuardados(); o["Tus clases"] = caja.open; localStorage.setItem(CLAVE_GRUPOS, JSON.stringify(o)); } catch (e) {}
+                });
+            }
+            caja.hidden = !hay;
+        }
+
         /* ---------- El saludo del alumno dice su racha ----------
            «Este es tu panel de Clases. Elige a dónde quieres ir» no le decía
            nada. Ahora dice cuántos días seguidos lleva, o cuánto le falta hoy
@@ -1549,6 +1621,50 @@
             return new Date(e.vence_at) > ahora ? "por_hacer" : "perdido";
         }
 
+        /* El diagnóstico propio se pide UNA vez y lo comparten la franja «Por
+           dónde empezar» y la tarjeta del diagnóstico. SECURITY INVOKER: a un
+           alumno la RLS le devuelve solo su renglón. */
+        let miDiagnosticoP = null;
+        function miDiagnostico() {
+            if (!miDiagnosticoP) miDiagnosticoP = Promise.resolve(sb.rpc("informes_diagnosticos_alumnos")).catch((e) => ({ data: null, error: e }));
+            return miDiagnosticoP;
+        }
+
+        /* ---------- La tarjeta del diagnóstico solo cuando hace falta ----------
+           Se veía igual lo hubiera hecho o no. Ahora:
+           - si el profe se lo pidió, se ve iluminada (marcarDiagnosticoPedido);
+           - si nunca lo hizo, como siempre;
+           - si lo hizo hace menos de cuatro semanas, NO se ve: no hay nada que
+             hacer ahí, y el resultado está en Informes;
+           - a las cuatro semanas vuelve, diciendo «Toca repetirlo» (es lo que
+             pide la última semana del plan, la misma cuenta de «Hoy te toca»).
+           Si la base no contesta, se queda como siempre: callar es mejor que
+           esconder algo que sí hacía falta. */
+        const DIAS_PARA_REPETIR = 28;
+        async function estadoDelDiagnostico(pedido) {
+            if (pedido) return;
+            const { data, error } = await miDiagnostico();
+            if (error) return;
+            const mio = (data || []).find((f) => f.student_id === profile.id);
+            const fecha = mio && Date.parse(mio.fecha || "");
+            if (!fecha) return;
+            const grupo = TILE_GROUPS.find((g) => g.tiles.some((t) => t.href === "entreno/diagnostico.html"));
+            const tile = grupo && grupo.tiles.find((t) => t.href === "entreno/diagnostico.html");
+            const viejo = document.querySelector('#tile-grid a[href="entreno/diagnostico.html"]');
+            if (!tile) return;
+            if (Date.now() - fecha < DIAS_PARA_REPETIR * 86400000) {
+                grupo.tiles.splice(grupo.tiles.indexOf(tile), 1);
+                if (viejo) viejo.remove();
+                return;
+            }
+            tile.aviso = "Toca repetirlo: ya pasaron cuatro semanas";
+            if (viejo) {
+                const nuevo = renderTileCard(tile, false);
+                nuevo.dataset.buscar = viejo.dataset.buscar;
+                viejo.replaceWith(nuevo);
+            }
+        }
+
         /* ---------- El diagnóstico que pidió el profe ----------
            El profe lo asigna como un renglón de una tarea (Tareas → «Diagnóstico
            de nivel»), y mientras ese renglón no esté cumplido la tarjeta del
@@ -1589,6 +1705,7 @@
             ]);
             const tareas = (t.error ? [] : t.data) || [];
             const diagnosticoPedido = marcarDiagnosticoPedido(tareas);
+            estadoDelDiagnostico(diagnosticoPedido);
             /* Si los exámenes no llegan se siguen mostrando las tareas: quedarse
                sin franja por la mitad que falló sería perder también la que sí
                se pudo leer. */
@@ -1685,6 +1802,8 @@
             pintarFranja({
                 titulo: tituloPendientes(tareas.length, porHacer.length + corriendo.length),
                 texto: msg, destino, cta, icono, urgente,
+                // El diagnóstico pedido ya tiene su tarjeta iluminada: acá, lo demás.
+                tareas: tareas.filter((t) => !(diagnosticoPedido && diagnosticoPedido.tarea.id === t.id)),
             });
         }
 
@@ -1692,7 +1811,60 @@
            vence (arriba) y el primer paso de quien todavía no tiene nada (abajo).
            Con dos pintados, el que se olvidara de quitar el rojo dejaría una
            sugerencia con pinta de entrega vencida — y no daría ningún error. */
-        function pintarFranja({ titulo: tit, texto: msg, destino, cta, icono, urgente }) {
+        /* Cuánto lleva de una tarea, de sus renglones (`items` de
+           tareas_con_avance): cada renglón pesa lo mismo, y dentro de él lo
+           hecho contra lo pedido (una meta «completar» es 0 o 1). Con un solo
+           renglón se dice «4 de 10»; con varios, cuántos renglones cumplió. */
+        function avanceDeTarea(t) {
+            const items = Array.isArray(t.items) ? t.items : [];
+            if (!items.length) return null;
+            const parte = (i) => i.meta_tipo === "completar" ? (Number(i.hecho) >= 1 ? 1 : 0)
+                : Math.min(1, (Number(i.hecho) || 0) / Math.max(1, Number(i.meta_cantidad) || 1));
+            const pct = Math.round(100 * items.reduce((n, i) => n + parte(i), 0) / items.length);
+            let texto;
+            if (items.length === 1 && items[0].meta_tipo !== "completar") {
+                const meta = Number(items[0].meta_cantidad) || 0;
+                texto = Math.min(Number(items[0].hecho) || 0, meta) + " de " + meta + (items[0].meta_tipo === "minutos" ? " min" : "");
+            } else if (items.length === 1) {
+                texto = pct === 100 ? "hecha" : "por hacer";
+            } else {
+                texto = (Number(t.cumplidos) || 0) + " de " + items.length + " partes";
+            }
+            return { pct, texto };
+        }
+
+        function pintarAvanceDeTareas(tareas, urgente) {
+            const lista = document.getElementById("pendientes-aviso-tareas");
+            if (!lista) return;
+            lista.replaceChildren();
+            (tareas || []).slice(0, 3).forEach((t) => {
+                const av = avanceDeTarea(t);
+                if (!av) return;
+                const li = document.createElement("li");
+                const fila = document.createElement("div");
+                fila.className = "flex items-baseline justify-between gap-3 text-xs " + (urgente ? "text-red-700 dark:text-red-300" : "text-brand-600 dark:text-brand-200");
+                const nombre = document.createElement("span");
+                nombre.className = "truncate";
+                nombre.textContent = t.titulo || "Tarea";
+                const num = document.createElement("span");
+                num.className = "font-semibold whitespace-nowrap";
+                num.textContent = av.texto;
+                fila.append(nombre, num);
+                const barra = document.createElement("div");
+                barra.setAttribute("aria-hidden", "true");
+                barra.className = "mt-1 h-1.5 w-full rounded-full bg-brand-100 dark:bg-brand-800 overflow-hidden";
+                const relleno = document.createElement("div");
+                relleno.className = "h-full rounded-full bg-accent-500";
+                relleno.style.width = av.pct + "%";
+                barra.appendChild(relleno);
+                li.append(fila, barra);
+                lista.appendChild(li);
+            });
+            lista.hidden = !lista.children.length;
+        }
+
+        function pintarFranja({ titulo: tit, texto: msg, destino, cta, icono, urgente, tareas }) {
+            pintarAvanceDeTareas(tareas, urgente);
             const caja = document.getElementById("pendientes-aviso");
             const titulo = document.getElementById("pendientes-aviso-titulo");
             const texto = document.getElementById("pendientes-aviso-texto");
@@ -1758,7 +1930,7 @@
                 .filter((a) => a !== "diagnostico")
                 .reduce((n, a) => n + (porActividad[a] || 0), 0);
 
-            const { data, error } = await sb.rpc("informes_diagnosticos_alumnos");
+            const { data, error } = await miDiagnostico();
             if (error) return;
             // SECURITY INVOKER: a un alumno la RLS le devuelve solo su renglón,
             // pero se busca el suyo igual, por precaución.
@@ -1906,7 +2078,11 @@
             "js/progreso-usuario.js", "js/hoy-te-toca.js"];
         async function cargarHoyTeToca(rachaP) {
             try {
-                for (const src of SCRIPTS_HOY) await traerScript(src);
+                /* Todos a la vez y en orden: se bajan en paralelo y corren en
+                   el orden de la lista (`async = false`). Uno detrás de otro,
+                   con una red lenta (3G), «Hoy te toca» tardaba ~16 s en
+                   aparecer: diez viajes seguidos. */
+                await Promise.all(SCRIPTS_HOY.map((src) => traerScript(src, true)));
                 await ProgresoUsuario.init();
             } catch (e) { return; }
             await HoyTeToca.pintar(document.getElementById("hoy"), {
@@ -1914,11 +2090,14 @@
             });
         }
 
-        function traerScript(src) {
+        function traerScript(src, enOrden) {
             if (!scriptsPedidos[src]) {
                 scriptsPedidos[src] = new Promise((listo, falla) => {
                     const s = document.createElement("script");
                     s.src = src;
+                    // Un script agregado por código corre apenas llega; con
+                    // async = false, corre en el orden en que se agregó.
+                    if (enOrden) s.async = false;
                     s.onload = listo;
                     s.onerror = () => falla(new Error("No se pudo cargar " + src));
                     document.head.appendChild(s);
@@ -2949,16 +3128,21 @@
                    misma consulta para pintar el mismo dato. */
                 const rachaP = window.Logros.cargar();
                 partes.push(
-                    ResumenClase.pintarUltimaClaseDelAlumno(sb, document.getElementById("ultima-clase"), profile.id),
-                    PuntosClase.pintarDelMesDelAlumno(sb, document.getElementById("puntos-mes")),
+                    Promise.resolve(ResumenClase.pintarUltimaClaseDelAlumno(sb, document.getElementById("ultima-clase"), profile.id)).finally(ajustarTusClases),
+                    Promise.resolve(PuntosClase.pintarDelMesDelAlumno(sb, document.getElementById("puntos-mes"))).finally(ajustarTusClases),
                     cargarPendientes(rachaP),
                     cargarSeguirCurso(),
                     loadEntrenoProgress(),
                     loadTacticsRecord(),
                     pintarSaludoAlumno(rachaP),
-                    marcarLoUltimo(),
-                    cargarHoyTeToca(rachaP),
                 );
+                /* «Hoy te toca» (diez scripts, ~200 KB) y «lo último que
+                   hiciste» arrancan a la vez pero el panel NO los espera: se
+                   pintan en su lugar cuando llegan. Metidos en la tanda de
+                   arriba, el panel esperaba por ellos hasta el tope de 6 s, y
+                   con una red lenta aparecía recién a los ~14 s. */
+                cargarHoyTeToca(rachaP).catch((e) => console.error(e));
+                marcarLoUltimo().catch((e) => console.error(e));
             }
             await sinEsperarDeMas(...partes);
             subscribeSessions();

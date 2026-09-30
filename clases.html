@@ -194,6 +194,10 @@
                 <div class="flex-1 min-w-[200px]">
                     <h2 class="font-serif text-lg font-bold" id="pendientes-aviso-titulo"></h2>
                     <p class="text-sm" id="pendientes-aviso-texto"></p>
+                    <!-- Cuánto lleva de cada tarea (tareas_con_avance: `hecho` de cada
+                         renglón contra lo pedido). La barra es adorno: el número va
+                         escrito al lado. -->
+                    <ul id="pendientes-aviso-tareas" class="mt-3 space-y-2" hidden></ul>
                 </div>
                 <span class="text-sm font-semibold whitespace-nowrap" id="pendientes-aviso-cta">Ver tus tareas →</span>
             </a>
@@ -254,13 +258,23 @@
             </div>
 
 
-            <!-- «Tu última clase» (solo alumno): lo que hizo y contestó en la última clase
-                 en línea, de las dos últimas semanas. Ver js/resumen-clase.js. -->
-            <section id="ultima-clase" hidden aria-labelledby="ultima-clase-titulo" class="mb-8 bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6"></section>
+            <!-- ===== Tus clases (solo alumno) =====
+                 «Tu última clase» y «Tus puntos del mes» juntos, en un bloque que
+                 se pliega: en el celular arranca cerrado —estaban entre «Hoy te
+                 toca» y los accesos, y alargaban el panel— y en la computadora
+                 abierto. <details> dice solo si está abierto. Si no hay ninguna
+                 de las dos cosas, el bloque no se pinta (ajustarTusClases en
+                 js/clases.js). -->
+            <details id="tus-clases" hidden class="mb-8">
+                <summary class="flex items-center gap-2 cursor-pointer select-none font-serif text-lg font-bold text-brand-800 dark:text-white mb-3 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Tus clases <span class="font-sans text-xs font-normal text-brand-500 dark:text-brand-300">tu última clase y tus puntos del mes</span></summary>
+                <!-- «Tu última clase» (solo alumno): lo que hizo y contestó en la última clase
+                     en línea, de las dos últimas semanas. Ver js/resumen-clase.js. -->
+                <section id="ultima-clase" hidden aria-labelledby="ultima-clase-titulo" class="mb-8 bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6"></section>
 
-            <!-- «Tus puntos del mes» (solo alumno): las clases del mes, con la regla de
-                 js/puntos-clase.js. Solo lo suyo: resumen_del_mes no le da a nadie más. -->
-            <section id="puntos-mes" hidden aria-labelledby="puntos-mes-titulo" class="mb-8 bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6"></section>
+                <!-- «Tus puntos del mes» (solo alumno): las clases del mes, con la regla de
+                     js/puntos-clase.js. Solo lo suyo: resumen_del_mes no le da a nadie más. -->
+                <section id="puntos-mes" hidden aria-labelledby="puntos-mes-titulo" class="mb-8 bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6"></section>
+            </details>
 
 
             <!-- ===== Lo urgente (quien supervisa y quien da clase) =====
