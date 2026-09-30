@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20260930001504
+# al-dia-con: 20260930013250
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -1158,6 +1158,7 @@ funcion  interno.pizarras_de_sala_validas(p jsonb)  invoker  anon=true  auth=tru
 funcion  interno.profesores_de(p_alumno uuid)  definer  anon=false  auth=true
 funcion  interno.profesores_que_coordino()  definer  anon=false  auth=true
 funcion  interno.salas_torneo_sello()  invoker  anon=false  auth=false
+funcion  interno.sesiones_de_supervisados()  definer  anon=false  auth=true
 funcion  interno.subgrupo_del_equipo_al_dia(p_equipo uuid, p_profesor uuid)  definer  anon=false  auth=false
 funcion  interno.supervisados_por_mi()  definer  anon=false  auth=true
 funcion  interno.version_legal_valida(p text)  invoker  anon=false  auth=false
@@ -1701,6 +1702,7 @@ indice  cobros_recordatorios_programados  cobros_recordatorios_programados_cread
 indice  cobros_recordatorios_programados  cobros_recordatorios_programados_pendientes_idx
 indice  cobros_recordatorios_programados  cobros_recordatorios_programados_pkey
 indice  cobros_recordatorios_programados  cobros_recordatorios_programados_student_id_fk
+indice  compras_tienda  compras_tienda_otorgado_por_fk
 indice  compras_tienda  compras_tienda_pkey
 indice  coordinador_funciones_quitadas  coordinador_funciones_quitadas_coordinador_id_fk
 indice  coordinador_funciones_quitadas  coordinador_funciones_quitadas_pkey
@@ -1800,6 +1802,7 @@ indice  justificaciones_ausencia  justificaciones_por_fecha
 indice  justificaciones_ausencia  justificaciones_revisada_por_fk
 indice  justificaciones_ausencia  justificaciones_una_por_dias
 indice  notas_alumno  notas_alumno_alumno_compartida_idx
+indice  notas_alumno  notas_alumno_class_session_id_fk
 indice  notas_alumno  notas_alumno_pkey
 indice  notas_alumno  notas_alumno_profesor_alumno_idx
 indice  pagos  pagos_pkey
@@ -1861,6 +1864,7 @@ indice  question_answers  question_answers_student_idx
 indice  question_engine_answers  question_engine_answers_pkey
 indice  questions  questions_class_session_idx
 indice  questions  questions_created_by_fk
+indice  questions  questions_para_alumno_fk
 indice  questions  questions_pkey
 indice  quiniela_participantes  quiniela_participantes_pkey
 indice  quiniela_participantes  quiniela_participantes_token_hash_key
@@ -1871,6 +1875,7 @@ indice  quiniela_pronosticos  quiniela_pronosticos_sala
 indice  recordatorios_informe  recordatorios_informe_persona_id_fk
 indice  recordatorios_informe  recordatorios_informe_pkey
 indice  respuestas_en_curso  respuestas_en_curso_pkey
+indice  respuestas_en_curso  respuestas_en_curso_student_id_fk
 indice  salas_torneo  salas_torneo_clave_key
 indice  salas_torneo  salas_torneo_pkey
 indice  salas_torneo  salas_torneo_updated_by_fk
