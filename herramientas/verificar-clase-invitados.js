@@ -350,6 +350,47 @@ async function pruebaModoDelProfe(browser) {
   await ctx.close();
 }
 
+/* El enlace trae la voz encendida («&voz=1»). La voz de mentira imita al
+   navegador: no dice nada hasta que la página recibió un toque o una tecla. */
+/* El navegador de prueba ya arranca con navigator.userActivation dado, así
+   que el permiso se lleva acá: hasta el primer toque o tecla que llega a la
+   ventana (antes que a la página), no se habla. */
+const VOZ_CON_PERMISO = () => {
+  window.__dicho = [];
+  let permiso = false;
+  const dar = () => { permiso = true; };
+  window.addEventListener("pointerup", dar, true);
+  window.addEventListener("keydown", dar, true);
+  const falsa = {
+    speak: (u) => { if (permiso) window.__dicho.push(u.text); },
+    cancel() {}, getVoices: () => [],
+  };
+  Object.defineProperty(window, "speechSynthesis", { configurable: true, get: () => falsa });
+  window.SpeechSynthesisUtterance = function (t) { this.text = t; };
+};
+
+async function pruebaVozDelEnlace(browser) {
+  console.log("\n=== El enlace trae la voz encendida ===");
+  const ctx = await browser.newContext({ serviceWorkers: "block", viewport: { width: 1280, height: 900 } });
+  await ctx.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
+  await ctx.route("**/fonts.gstatic.com/**", (r) => r.abort());
+  await ctx.route("**/js/supabase-client.js", (r) =>
+    r.fulfill({ status: 200, contentType: "application/javascript", body: dobleInvitado({}) }));
+  await ctx.addInitScript(VOZ_CON_PERMISO);
+  await ctx.addInitScript(() => { try { localStorage.setItem("oscarBlindMode_v1", "0"); localStorage.removeItem("oscarSpeechMode_v1"); } catch (e) {} });
+  const { page, errores } = await abrirInvitado(browser, "#t=tok-bueno&adaptado=1&voz=1", null, ctx);
+  await esperarOido(page, /voz encendida/);
+  igual("la voz queda encendida y el botón lo dice", [await page.getAttribute("#vc-voz-btn", "aria-pressed"),
+    await page.evaluate(() => localStorage.getItem("oscarSpeechMode_v1"))], ["true", "1"]);
+  igual("el aviso queda escrito, junto con el del modo adaptado", [/modo adaptado/.test(await oido(page)), /voz encendida/.test(await oido(page))], [true, true]);
+  igual("antes de tocar nada, el navegador no deja hablar", await page.evaluate(() => window.__dicho.length), 0);
+  await page.click("#vc-nombre");
+  await page.waitForTimeout(200);
+  igual("con el primer toque, la voz dice el aviso", await page.evaluate(() => window.__dicho.some((t) => /mandó este enlace con la voz encendida/.test(t))), true);
+  igual("sin errores de la página", errores, []);
+  await ctx.close();
+}
+
 async function pruebaProfe(browser) {
   console.log("\n=== El profe: el enlace y los avisos ===");
   const CLASE = { id: "c-viva", created_by: "u-profe", started_at: new Date().toISOString(), ended_at: null };
@@ -381,8 +422,11 @@ async function pruebaProfe(browser) {
 
   await page.check("#invitados-adaptado");
   igual("la casilla hace que el enlace abra con el modo adaptado", await page.inputValue("#invitados-url"), BASE + "/ver-clase.html#t=tok1&adaptado=1");
+  await page.check("#invitados-voz");
+  igual("y la de la voz le suma «voz=1»", await page.inputValue("#invitados-url"), BASE + "/ver-clase.html#t=tok1&adaptado=1&voz=1");
   await page.uncheck("#invitados-adaptado");
-  igual("y sin ella, como siempre", await page.inputValue("#invitados-url"), BASE + "/ver-clase.html#t=tok1");
+  await page.uncheck("#invitados-voz");
+  igual("y sin ellas, como siempre", await page.inputValue("#invitados-url"), BASE + "/ver-clase.html#t=tok1");
 
   // visto_at cambia solo: eso no es un aviso.
   await page.evaluate((f) => window.__cambioEnBase("clase_espectadores", Object.assign({}, f, { visto_at: new Date().toISOString() }), "UPDATE"), inv);
@@ -421,6 +465,7 @@ async function pruebaProfe(browser) {
     await pruebaEsperando(browser);
     await pruebaSinVer(browser);
     await pruebaModoDelProfe(browser);
+    await pruebaVozDelEnlace(browser);
     await pruebaProfe(browser);
   } finally {
     await browser.close();
