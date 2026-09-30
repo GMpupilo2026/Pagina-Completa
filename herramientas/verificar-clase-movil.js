@@ -140,6 +140,8 @@ async function pruebaProfeCelular(browser) {
   }), [true, false]);
   // Si la ventana se agranda (una tablet que se gira), el chat vuelve a su columna.
   await page.setViewportSize({ width: 1280, height: 800 });
+  // El aviso de matchMedia llega en el cuadro siguiente, no en el acto: se espera.
+  await page.waitForFunction(() => document.getElementById("chat-caja").parentElement.classList.contains("proyector-columna"), null, { timeout: 5000 }).catch(() => {});
   igual("en pantalla ancha, el chat vuelve a su columna", await page.evaluate(() => document.getElementById("chat-caja").parentElement.classList.contains("proyector-columna")), true);
   igual("sin errores en la página", errores, []);
   await ctx.close();
