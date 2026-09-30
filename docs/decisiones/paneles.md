@@ -98,9 +98,53 @@ lista, y el resto se acomoda solo.
     (`cargarHoyTeToca()`), en orden, y antes de contar se espera
     `ProgresoUsuario.init()`, igual que en el hub: sin eso, lo entrenado en el
     celular no se vería en la computadora. La racha es la misma promesa que
-    usa «Tu progreso», no una segunda consulta.
+    usa el saludo, no una segunda consulta.
   - Solo al alumnado: a quien da clase no se le pinta ni se le arma.
     `verificar-panel.js` («Hoy te toca», en el panel del alumno) lo revisa.
+  - **Sin nada pendiente, una sugerencia** («💡 Sugerencia de hoy: Mates»),
+    solo en el panel: una página de entrenamiento cuyo trabajo CUENTA (las que
+    en `js/material-plataforma.js` ofrecen la meta `cantidad`, la lista de
+    Tareas), una por día de Costa Rica. Va dicha como sugerencia —no venció ni
+    la pidió nadie—. En el hub no: ahí las páginas están justo debajo, y sin
+    nada pendiente el bloque trae solo la meta del día.
+- **Hoy te toca y tu progreso, en una sola tarjeta.** Eran dos tarjetas
+  seguidas, y la racha de días salía en las dos (en la meta del día y en «Tu
+  progreso»). «Tu progreso» traía además tres números de cuando el
+  entrenamiento era chico: ejercicios 4×4, lecciones y la mejor marca de
+  Coordenadas. Ahora `#progreso-alumno` es UNA tarjeta con «Hoy te toca»
+  adentro (meta, racha, la semana, lo que toca) y el récord de racha táctica
+  al pie. Los tres números ya no se piden (`mi_entreno_resumen()` sigue en la
+  base, sin uso en el panel; ver «Los tres números de Entrenamiento los
+  contaba el navegador», abajo, por si vuelven).
+- **El saludo es «¡Hola, Ana!»** —el nombre de pila y sin género: decía
+  «¡Bienvenido, Ana Rojas!», que a una alumna le habla en masculino—, y al
+  alumno el subtítulo le dice su racha («Llevas 4 días seguidos entrenando:
+  hoy te faltan 3 ejercicios para no cortarla»), con la misma cuenta que
+  Logros. El buscador le sugiere cosas que tiene («Mates, tareas,
+  aperturas…»): decía «Cobros», que el alumno no tiene.
+- **El alumno no tiene registro de clases.** Veía, al final de todo, la lista
+  de clases de su profe; lo suyo es «Repasar mis clases». Ni se le pinta ni
+  se le pide a la base.
+- **«Lo último que hiciste».** Con treinta tarjetas, volver a lo que uno
+  estaba haciendo era buscarlo. Se pide UNA fila de `training_progress` (la
+  más reciente, la suya) y la tarjeta de esa página lo lleva escrito; si su
+  grupo está plegado, el título lo dice. Qué página es cada actividad sale de
+  `MaterialPlataforma.HERRAMIENTAS` (`actividades`), la tabla de Tareas: no
+  hay otra lista que se pueda separar. Es la única lectura de esa tabla en el
+  panel, y la prueba exige `limit(1)`: sumar ahí vuelve a chocar con el corte
+  de PostgREST.
+- **Los grupos de entrenamiento se pliegan en el celular.** Con el
+  entrenamiento abierto tarjeta por tarjeta, el panel del alumno medía en el
+  celular unas nueve pantallas (7100 px) y «Jugar y competir» quedaba a casi
+  5000 px. Los seis grupos de entrenamiento (`plegable`) llevan el título
+  como botón con `aria-expanded` —dentro del `<h2>`, que se sigue pudiendo
+  saltar con lector de pantalla— y al lado cuántos accesos tiene. En el
+  celular (hasta 639 px) arrancan cerrados; en la computadora, abiertos. Lo
+  que cada quien abre o cierra se recuerda en este aparato
+  (`panel_grupos_abiertos_v1`). Mientras se busca se abren solos: un
+  resultado en un grupo cerrado no se vería. La grilla se esconde con
+  `style.display`, no con `hidden`: la clase `grid` de Tailwind le gana a ese
+  atributo. Al panel docente no le toca: sus grupos son otros.
 - **"Logros" está en "Tu cuenta"**, que va en este orden: Configuración,
   Informes, Logros y, solo al alumnado, "¿Cómo van tus clases?". Lo pidió así
   el dueño de la Academia. "TV en vivo" estuvo ahí un tiempo y pasó a Competir,
