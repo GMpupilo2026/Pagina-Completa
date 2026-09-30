@@ -1240,6 +1240,65 @@ del tema y la dificultad que se están mirando, sin repetir.
 - No arranca si hay una partida votada en curso, y termina al cerrar la
   clase.
 
+### El cuestionario al estilo Kahoot
+
+«🎯 Cuestionario al estilo Kahoot», en la pestaña Preguntar
+(`js/clase-cuestionario.js`). El profe arma una lista de preguntas con
+opciones (de 2 a 4, con su correcta y su tiempo), la guarda y la juega con
+cualquier clase. La ronda rápida ya encadenaba posiciones de Táctica; esto es
+lo mismo con preguntas propias, de ajedrez o no, y con puntos por rapidez.
+
+- **Se guarda en `cuestionarios`** (migración `cuestionarios`), una fila por
+  cuestionario con sus preguntas en `jsonb`. Es solo del profe que lo
+  escribió: la correcta de cada pregunta vive ahí, así que ni sus alumnos ni
+  otro profe leen la tabla (comprobado impersonando: el alumno ve 0 filas y
+  no puede firmar uno con el id del profe). Lo que se guarda son las
+  preguntas limpias (`Cuestionario.limpiar`): sin opciones vacías y con la
+  correcta renumerada, igual que «una pregunta con tus opciones».
+- **Cada pregunta es una de opciones de las de siempre**
+  (`hacer_pregunta_de_opciones`): la correcta va a `preguntas_clave`, la base
+  califica sola y cobra el plazo, y cuenta para los puntos de la clase y los
+  trofeos. No hay otra forma de preguntar ni otra forma de calificar.
+- **Sin posición, sin tablero.** Una pregunta que no habla de una posición
+  («¿qué pieza salta?») no le muestra al alumno un tablero que no viene al
+  caso: `questions.sin_tablero`, que pone la versión de seis argumentos de
+  `hacer_pregunta_de_opciones`. La de cinco quedó como un pasamanos a la
+  nueva, **sin valor por omisión** en el sexto: con uno, la llamada de cinco
+  sería ambigua entre las dos. La que sí lleva posición la toma del tablero de
+  la clase al armarla («📌 Usar la posición del tablero de ahora»), y al
+  jugarla se manda con `aplicarPosicionEnClase`: ninguna posición se inventa.
+- **Los puntos: de 500 a 1000 por acertar, más cuanto antes; 0 al fallar**
+  (`Cuestionario.puntos`, la regla escrita en `REGLA` y a la vista del profe).
+  Se calculan con las horas que pone **la base**: la de la pregunta y la de la
+  última respuesta. `created_at`/`updated_at` de `question_answers` los podía
+  mandar el alumno desde la consola (un `created_at` igual al de la pregunta
+  eran 1000 puntos siempre); el trigger `respuesta_hora_de_la_base` los pisa
+  con `now()`. Cuenta la **última** respuesta: contestar rápido cualquier cosa
+  y cambiarla después no da puntos de rapidez. Calificar a mano no mueve la
+  hora. No se guardan: se derivan de las respuestas.
+- **El plazo se cuenta con el reloj de la computadora del profe**, desde que
+  llegó la pregunta, más 6 s de la gracia de la base. El de la base puede
+  estar corrido unos segundos respecto al del profe.
+- **«Ya contestaron: cerrar esta pregunta» acorta el plazo EN LA BASE**
+  (`tiempo_limite`, nunca menos de 10 s, que es lo que admite). Cerrarla
+  (`closed_at`) no servía: la tarjeta del alumno desaparece al cerrarse, y con
+  ella lo que contestó el grupo. Y mostrar la correcta con el plazo abierto
+  dejaría cambiar la respuesta.
+- **Al terminar cada pregunta** la clase ve qué contestó el grupo, con la
+  correcta marcada (`resultados_visibles`), y el podio de cómo va, con su
+  título, en el mismo `game_state.podio` de la clase y la ronda (con o sin
+  nombres, según «Con nombres» de Puntos de esta clase). Al lanzar la
+  siguiente, el podio se quita. El último es «Podio final de…». El profe ve
+  además los cinco primeros con lo que sumó cada uno en esa pregunta.
+- No arranca con una ronda rápida o una partida votada en curso (ni la ronda
+  con un cuestionario), y termina al cerrar la clase. Terminarlo a mitad de una
+  pregunta no la suma: no se llegó a ver cuál era.
+
+**Al tocar esto, correr `node herramientas/verificar-todo.js
+clase-cuestionario`.** Está probado que falla de verdad: contando la hora de
+la primera respuesta en vez de la última, sin mandar `p_sin_tablero` o con el
+tablero a la vista en una pregunta sin posición, salta.
+
 ### La participación pareja
 
 Arriba de las pestañas del profe, y solo para él (nunca lo ve la clase):

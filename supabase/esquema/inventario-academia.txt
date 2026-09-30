@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20260930194828
+# al-dia-con: 20260930222921
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -32,6 +32,7 @@ tabla  compras_tienda  rls=true
 tabla  coordinador_funciones_quitadas  rls=true
 tabla  coordinador_profesores  rls=true
 tabla  course_unlocks  rls=true
+tabla  cuestionarios  rls=true
 tabla  datos_facturacion  rls=true
 tabla  desafios  rls=true
 tabla  diagnosticos_publicos  rls=true
@@ -320,6 +321,14 @@ columna  course_unlocks.hasta_leccion  integer
 columna  course_unlocks.id  uuid
 columna  course_unlocks.student_id  uuid
 columna  course_unlocks.updated_at  timestamp with time zone
+columna  cuestionarios.created_at  timestamp with time zone
+columna  cuestionarios.id  uuid
+columna  cuestionarios.listo  boolean
+columna  cuestionarios.nivel  text
+columna  cuestionarios.preguntas  jsonb
+columna  cuestionarios.profesor_id  uuid
+columna  cuestionarios.titulo  text
+columna  cuestionarios.updated_at  timestamp with time zone
 columna  datos_facturacion.actividad_economica  text
 columna  datos_facturacion.actualizado_at  timestamp with time zone
 columna  datos_facturacion.cedula  text
@@ -843,6 +852,7 @@ columna  questions.opciones  jsonb
 columna  questions.para_alumno  uuid
 columna  questions.prompt  text
 columna  questions.resultados_visibles  boolean
+columna  questions.sin_tablero  boolean
 columna  questions.tiempo_limite  integer
 columna  questions.tipo  text
 columna  quiniela_participantes.correo  text
@@ -1179,6 +1189,7 @@ funcion  guardar_fide_id(p_persona uuid, p_fide_id text)  definer  anon=false  a
 funcion  guardar_informe_mensual(p_periodo date, p_resumen text, p_logros text, p_dificultades text, p_proximo text, p_enviar boolean)  definer  anon=false  auth=true
 funcion  guardar_mi_foto(p_ruta text, p_version_privacidad text)  definer  anon=false  auth=true
 funcion  hacer_pregunta_de_opciones(p_fen text, p_prompt text, p_opciones jsonb, p_correcta integer, p_tiempo_limite integer)  invoker  anon=false  auth=true
+funcion  hacer_pregunta_de_opciones(p_fen text, p_prompt text, p_opciones jsonb, p_correcta integer, p_tiempo_limite integer, p_sin_tablero boolean)  invoker  anon=false  auth=true
 funcion  handle_new_user()  definer  anon=false  auth=false
 funcion  hora_servidor_ms()  invoker  anon=false  auth=true
 funcion  ia_disponible()  definer  anon=false  auth=true
@@ -1326,6 +1337,7 @@ funcion  responder_examen(p_item uuid, p_respuesta jsonb, p_segundos integer)  d
 funcion  responder_formulario(p_slug text, p_respuestas jsonb, p_version_privacidad text)  definer  anon=true  auth=true
 funcion  responder_justificacion(p_id uuid, p_estado text, p_respuesta text)  definer  anon=false  auth=true
 funcion  respuesta_calificar_y_plazo()  definer  anon=false  auth=false
+funcion  respuesta_hora_de_la_base()  invoker  anon=false  auth=false
 funcion  respuestas_satisfaccion(p_desde date, p_hasta date, p_profesor uuid, p_solo_se_van boolean)  invoker  anon=false  auth=true
 funcion  resultados_de_la_pregunta(p_pregunta uuid)  definer  anon=false  auth=true
 funcion  resumen_de_la_clase(p_clase uuid)  invoker  anon=false  auth=true
@@ -1444,6 +1456,10 @@ politica  course_unlocks  course_unlocks_insert  INSERT
 politica  course_unlocks  course_unlocks_select  SELECT
 politica  course_unlocks  course_unlocks_select_supervisor  SELECT
 politica  course_unlocks  course_unlocks_update  UPDATE
+politica  cuestionarios  cuestionarios_delete  DELETE
+politica  cuestionarios  cuestionarios_insert  INSERT
+politica  cuestionarios  cuestionarios_select  SELECT
+politica  cuestionarios  cuestionarios_update  UPDATE
 politica  datos_facturacion  facturacion_coordinacion  ALL
 politica  datos_facturacion  facturacion_lee_alumno  SELECT
 politica  desafios  desafios_exige_acceso_ins  INSERT  restrictiva
@@ -1757,6 +1773,7 @@ trigger  profiles  protect_profiles_identity_columns_trigger
 trigger  pruebas_gratis  auditar
 trigger  question_answers  protect_answer_grading_trigger
 trigger  question_answers  respuesta_calificar_y_plazo_trigger
+trigger  question_answers  respuesta_hora_de_la_base_trigger
 trigger  questions  questions_ligar_a_la_clase
 trigger  salas_torneo  salas_torneo_sello
 trigger  saved_games  saved_games_ligar_a_la_clase
@@ -1850,6 +1867,9 @@ indice  coordinador_profesores  coordinador_profesores_por_profesor
 indice  course_unlocks  course_unlocks_granted_by_fk
 indice  course_unlocks  course_unlocks_pkey
 indice  course_unlocks  course_unlocks_student_id_curso_key
+indice  cuestionarios  cuestionarios_listo_titulo_unico
+indice  cuestionarios  cuestionarios_pkey
+indice  cuestionarios  cuestionarios_profesor_idx
 indice  datos_facturacion  datos_facturacion_pkey
 indice  desafios  desafios_de_pendiente
 indice  desafios  desafios_para_pendiente
@@ -2325,6 +2345,13 @@ grant  course_unlocks  authenticated  SELECT
 grant  course_unlocks  authenticated  TRIGGER
 grant  course_unlocks  authenticated  TRUNCATE
 grant  course_unlocks  authenticated  UPDATE
+grant  cuestionarios  authenticated  DELETE
+grant  cuestionarios  authenticated  INSERT
+grant  cuestionarios  authenticated  REFERENCES
+grant  cuestionarios  authenticated  SELECT
+grant  cuestionarios  authenticated  TRIGGER
+grant  cuestionarios  authenticated  TRUNCATE
+grant  cuestionarios  authenticated  UPDATE
 grant  datos_facturacion  authenticated  DELETE
 grant  datos_facturacion  authenticated  INSERT
 grant  datos_facturacion  authenticated  REFERENCES

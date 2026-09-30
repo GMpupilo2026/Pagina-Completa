@@ -1583,6 +1583,7 @@
         async function limpiarLoDeLaClase() {
             if (partidaClase) await terminarPartidaClase("La partida de la clase terminó al cerrar la clase.");
             if (ronda) await terminarRonda("La ronda rápida terminó al cerrar la clase.");
+            if (cuestionarioEnJuego) await terminarCuestionario("El cuestionario terminó al cerrar la clase.");
             const cambios = { encuesta: null, calentamiento: null, podio: null, equipos: null, pensar: null, elegido: null };
             // Las flechas del mapa se van con él; las que dibujó el profe, no.
             if (encuestaActual) { cambios.arrows = []; cambios.circles = []; }
@@ -5594,16 +5595,18 @@
                con los botones, y cambiar de opción es tocar otra. */
             const esOp = PreguntaClase.esDeOpciones(currentQuestion);
             const esTermometro = esOp && JSON.stringify(currentQuestion.opciones) === JSON.stringify(PreguntaClase.TERMOMETRO.opciones);
-            document.getElementById("question-board-caja").hidden = esTermometro;
+            // Una del cuestionario que no habla de una posición tampoco la muestra (questions.sin_tablero).
+            const sinTablero = esTermometro || !!currentQuestion.sin_tablero;
+            document.getElementById("question-board-caja").hidden = sinTablero;
             /* El recuadro queda también en las de opciones: ahí se escribe la
                letra, y se le pregunta a la posición de la que se habla. */
             document.getElementById("question-cmd").hidden = false;
             if (preguntaAcc) preguntaAcc.cmd.etiqueta(esOp
                 ? "Escribe la letra de tu opción (" + currentQuestion.opciones.map((_, i) => CuadroComandos.letra(i)).join(", ") + ")"
-                    + (esTermometro ? "" : ", o una pregunta sobre la posición")
+                    + (sinTablero ? "" : ", o una pregunta sobre la posición")
                 : "Escribe tu jugada, o una pregunta sobre la posición");
             // El termómetro no trae posición de la que hablar: no se escribe una.
-            if (preguntaAcc && esTermometro) preguntaAcc.cmd.posicion("");
+            if (preguntaAcc && sinTablero) preguntaAcc.cmd.posicion("");
             if (esOp) {
                 document.getElementById("question-color-hint").textContent = "";
                 document.getElementById("question-plies-hint").textContent = esTermometro
