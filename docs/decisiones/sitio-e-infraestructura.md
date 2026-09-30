@@ -1404,6 +1404,114 @@ Del asesor de rendimiento de Supabase (28 de setiembre de 2026, 143 cuentas):
   un mes y sus estadísticas de uso son de un puñado de personas. Un índice que
   hoy nadie usa puede ser el que sostiene un informe con mil alumnos.
 
+## La base saturada del 29/9: qué la cargaba y qué se hizo
+
+El 29 de setiembre, a las 6 p. m., con 4 clases abiertas, unos 25 alumnos en
+clase y otras 17 personas en la plataforma, la base cortó consultas por
+*statement timeout* y tres grupos no pudieron dar clase. Eran solo unas **4
+consultas por segundo**: el problema no es el volumen, es la máquina. El
+proyecto estaba en el **plan gratuito** (base Nano, procesador compartido), que
+aguanta ratos de actividad pero frena cuando la carga se sostiene. **Esa misma
+noche se pasó a Pro con la base Small** (de 224 MB a 512 MB de `shared_buffers`,
+de 60 a 90 conexiones): eso es lo que lo resuelve. Lo de abajo baja la carga y
+hace que una base lenta no bloquee, pero no reemplaza el tamaño: si el aviso de
+abajo empieza a llegar seguido, es la señal para subir otro escalón.
+
+Cómo se decidió qué tocar: **por tiempo total de base, no por número de
+pedidos.** Leer el perfil propio se pedía unas 2400 veces por hora (cada página
+lo lee 4 o 5 veces, desde módulos distintos), pero cuesta 1-2 ms por la llave:
+juntarlas ahorra unos segundos por hora y obliga a tocar 45 archivos. Se dejó.
+Lo que pesaba era lo que tarda cientos de milisegundos y va en cada panel.
+
+### Lo que cada página pedía de nuevo
+
+`mi_acceso()`, `mi_marca_academia()` y `mis_academias_supervisadas()` iban en
+**cada página de la Academia** (unas 500 veces por hora cada una) para contestar
+casi siempre lo mismo.
+
+- **`js/acceso-vigente.js` recuerda un «sí» 5 minutos** (sessionStorage, por
+  pestaña y por cuenta). **Un «no» no se recuerda nunca**: quien acaba de pagar
+  entra en la página siguiente. Lo peor que puede pasar es que a alguien a quien
+  se le venció le siga abriendo las páginas cinco minutos más, sin poder guardar
+  nada: el candado de verdad está en la base (`acceso_vigente()`).
+- **`js/marca-academia.js` no vuelve a preguntar la marca durante 10 minutos**
+  (localStorage, donde ya la guardaba para pintarla sin parpadeo). Se da por
+  fresca solo si llegaron las dos respuestas: sin la lista de academias, quien
+  supervisa varias se quedaría sin su franja. **Cambiar de academia activa y
+  guardar la marca en `academias.html` la olvidan** (`MarcaAcademia.olvidar()`),
+  así quien hizo el cambio lo ve enseguida; los demás, en unos minutos.
+
+### Dos funciones del panel, más livianas (mismo resultado)
+
+Migración `20260930040202`. Comprobadas impersonando en SQL: la huella (md5 de
+todas las filas) de 21 respuestas —7 cuentas, alumnos y profesores, con y sin
+`p_profesor`— es **idéntica antes y después**.
+
+- **`resumen_del_mes()`** (los puntos del mes en el panel del alumno): para un
+  alumno armaba el resumen COMPLETO de cada clase del mes de sus profesores y
+  después se quedaba con su renglón. Ahora solo entran las clases que dio quien
+  llama o en las que aparece, que las junta `interno.clases_donde_aparezco()`
+  (las mismas cinco fuentes de `resumen_de_la_clase()`: asistencia, respuestas,
+  práctica, partidas y turnos). Alumnos: de 100-180 a **13-20 ms**; un profesor
+  con 23 alumnos en el mes: de 289 a 76 ms.
+  - Probado primero con las cinco como `EXISTS` dentro de la consulta: al alumno
+    le daba lo mismo, pero **al profesor le sumaba 10-20 ms** en cada llamada
+    (planificar las políticas de cinco tablas). Por eso van en una función
+    `SECURITY DEFINER` aparte, que devuelve **solo ids de clases de quien
+    llama**.
+- **`mis_clases()`** (la pide cada página del alumno): buscaba «mi fila» con
+  `auth.uid()` sin envolver, **sin índice**, y recorría `profiles` entera
+  evaluando su política (cuatro subconsultas) en cada fila. Ahora «yo» sale por
+  la llave: de 16-22 a 2-11 ms. Sigue `SECURITY INVOKER`: la videollamada la
+  decide la RLS de `profesor_videollamada`.
+- `panel_profesor()` (87 ms con la base tranquila) se midió y se dejó: se pide
+  una vez por panel de profesor, pocas veces por hora.
+
+### Lo que falta, y es lo más grande
+
+**Realtime** (`realtime.list_changes`) es, con diferencia, lo que más tiempo de
+base consume en total: cada cambio de una tabla escuchada se comprueba contra la
+RLS de cada suscriptor. Pasar lo más frecuente de la clase (el tablero, las
+partidas de práctica) a mensajes directos (*broadcast*) casi no toca la base.
+Es un cambio grande, que queda pendiente. Y la práctica con reloj vuelve a bajar
+la lista entera de partidas, con los nombres, por cada jugada (unas 800 veces por
+hora en la caída): aplicar el cambio que ya llega por Realtime en vez de
+volver a pedir la lista.
+
+## El aviso de base saturada
+
+El 29/9 los registros de Supabase decían desde las 6:00 p. m. que la base
+cortaba consultas, pero nadie los estaba mirando: nos enteramos cuando ya no
+entraba nadie. Ahora la base se vigila sola (migración `20260930040604`,
+Edge Function `alerta-base`).
+
+- **Cada cinco minutos** (pg_cron `vigilar-base`) `public.vigilar_base()` mide
+  tres señales y guarda una fila en `interno.salud_base` (dos semanas, sin
+  acceso desde la web):
+  - **una consulta de prueba** fija (contar `profiles` y las clases abiertas),
+    que con la base tranquila tarda 0-3 ms: salta a **250 ms**;
+  - **consultas de la web** (rol `authenticator`) activas hace más de 3 s:
+    salta con **3**;
+  - **tareas de pg_cron que fallaron** en los últimos 10 minutos: salta con
+    **1**. Es la señal más limpia: en los 7 días anteriores no había fallado
+    ninguna, salvo 3 «job startup timeout» justo durante la caída.
+- Si salta alguna, llama a `alerta-base`, que le escribe **a cada cuenta con
+  `is_admin`** (se leen en la base; el pedido no elige destinatario). **Como
+  mucho un correo cada dos horas**: una caída de una hora no son doce correos.
+  Va por correo y no por push porque la cuenta de administración no tiene
+  avisos push encendidos en ningún aparato.
+- **Si la base está tan saturada que la propia vigilancia no arranca**, su
+  fallo queda en `cron.job_run_details` y la vuelta siguiente lo ve.
+- `alerta-base` va con **`verify_jwt` en false** (la llama la base, sin sesión)
+  y exige el secreto `alerta_base_secreto` de la bóveda, que genera la propia
+  migración y lee solo la service role: igual que `avisar-diagnostico`.
+  Probado de punta a punta: con el secreto, 200 y un correo real a
+  administración; con uno inventado, 401.
+- `verificar-alerta-base.js` revisa el correo (una línea por señal, la hora de
+  Costa Rica, qué hacer), que la función compare el secreto antes de leer nada,
+  y en la migración los umbrales, el máximo de un correo cada dos horas y los
+  permisos.
+
 ## El aviso de racha
 
 - La racha (días seguidos con al menos 5 ejercicios, la de Logros) solo se veía

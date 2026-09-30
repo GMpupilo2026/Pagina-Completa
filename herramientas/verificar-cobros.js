@@ -40,8 +40,10 @@ const mesAtras = (atras, diaDelMes) => {
 const VENCE_C2 = HOY_ISO < mesAtras(0) ? HOY_ISO
   : new Date(Date.parse(HOY_ISO) - 86400000).toISOString().slice(0, 10);
 
-const ANA   = { id: "u-ana",   full_name: "Ana Rojas",  email: "ana@x.cr" };
-const BRUNO = { id: "u-bruno", full_name: "Bruno Mena", email: "bruno@x.cr" };
+const ANA   = { id: "u-ana",   full_name: "Ana Rojas",  email: "ana@x.cr",   grupo: "7A" };
+const BRUNO = { id: "u-bruno", full_name: "Bruno Mena", email: "bruno@x.cr", grupo: "7A" };
+// Carla no está en ningún plan: es la que se agrega en tanda con la lista de casillas.
+const CARLA = { id: "u-carla", full_name: "Carla Soto", email: "carla@x.cr", grupo: "8B" };
 
 const PLANES = [
   { id: "p-mes", nombre: "Mensualidad", monto: 25000, moneda: "CRC", periodicidad: "mensual", personalizado: false, activo: true, descripcion: "Dos clases por semana", created_at: "2026-01-01T00:00:00Z" },
@@ -95,7 +97,8 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
   const RPC = {
     cobros_resumen: ${JSON.stringify(RESUMEN)},
     cobros_morosos: ${JSON.stringify(MOROSOS)},
-    informes_resumen_alumnos: ${JSON.stringify([ANA, BRUNO])},
+    informes_resumen_alumnos: ${JSON.stringify([ANA, BRUNO, CARLA])},
+    eliminar_plan_cobro: { suscripciones: 2, anulados: 1 },
     generar_cobros: 3,
   };
   /* Este doble FILTRA, ORDENA, CUENTA Y RECORTA de verdad.
@@ -104,7 +107,10 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
      techo de PostgREST que esta pantalla acaba de dejar de cruzar, y el fallo
      no se ve: la lista se pinta igual de bien hasta que hay más de mil. */
   function constructor(filas, tabla) {
-    let unica = false, conCuenta = false, insertados = null;
+    let unica = false, conCuenta = false, insertados = null, escritura = null;
+    // Los filtros de un update/delete se apuntan al RESOLVER (then), no en
+    // update(): el .eq/.in llega después, y es lo que dice A QUIÉN se tocó.
+    const filtros = [];
     let datos = Array.isArray(filas) ? filas.slice() : filas;
     const aplicar = (fn) => { if (Array.isArray(datos)) datos = datos.filter(fn); };
     const b = {
@@ -113,9 +119,9 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
         window.__consultas.push({ tabla, verbo: "select", cuenta: conCuenta });
         return b;
       },
-      eq(col, val) { window.__consultas.push({ tabla, verbo: "eq", col, val });
+      eq(col, val) { window.__consultas.push({ tabla, verbo: "eq", col, val }); filtros.push({ col, eq: val });
                      aplicar((f) => String(f[col]) === String(val)); return b; },
-      in(col, vals) { window.__consultas.push({ tabla, verbo: "in", col });
+      in(col, vals) { window.__consultas.push({ tabla, verbo: "in", col }); filtros.push({ col, in: vals.slice() });
                       aplicar((f) => vals.includes(f[col])); return b; },
       or(expr) { window.__consultas.push({ tabla, verbo: "or", expr });
                  // Solo se entiende lo que la página manda: col.ilike.%texto%
@@ -133,7 +139,7 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
       is() { return b; }, not() { return b; },
       insert(v) { window.__llamadas.push({ tabla, verbo: "insert", datos: v });
                   insertados = Array.isArray(v) ? v : [v]; return b; },
-      update(v) { window.__llamadas.push({ tabla, verbo: "update", datos: v }); return b; },
+      update(v) { escritura = { tabla, verbo: "update", datos: v }; window.__llamadas.push(escritura); return b; },
       upsert(v) { window.__llamadas.push({ tabla, verbo: "upsert", datos: v }); return b; },
       delete() { window.__llamadas.push({ tabla, verbo: "delete" }); return b; },
       maybeSingle() { unica = true; return b; },
@@ -141,6 +147,7 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
       then(res, rej) {
         // El total es el de ANTES de recortar, como hace PostgREST con
         // count: "exact": si fuera el de la página, "de N cobros" mentiría.
+        if (escritura) escritura.filtros = filtros.slice();
         const total = Array.isArray(filas) ? filas.length : null;
         // Un .insert(...).select().single() devuelve lo que se insertó, con un
         // id nuevo — no la tabla de siempre. Sin esto, crearSuscripcion() con
@@ -330,18 +337,71 @@ async function pruebaCoordinacion(browser) {
     plan && { nombre: plan.datos.nombre, monto: plan.datos.monto, moneda: plan.datos.moneda, periodicidad: plan.datos.periodicidad },
     { nombre: "Mensualidad nueva", monto: 30000, moneda: "CRC", periodicidad: "trimestral" });
 
-  // -------- poner a un alumno en un plan
+  // -------- poner alumnos en un plan: la lista con casillas
   await page.click('[data-ficha="suscripciones"]');
-  await page.selectOption("#s-alumno", "u-bruno");
-  await page.fill("#s-dia", "10");
+  const casilla = (id) => '#s-alumnos input[value="' + id + '"]';
+  igual("la lista trae a los tres, con su grupo y el plan en que ya están",
+    await page.evaluate(() => [...document.querySelectorAll("#s-alumnos label")].map((l) => l.textContent.replace(/\s+/g, " ").trim())),
+    ["Ana Rojas Grupo 7A · Ya en: Mensualidad", "Bruno Mena Grupo 7A · Ya en: Mensualidad", "Carla Soto Grupo 8B · Sin plan todavía"]);
+  await page.click("#s-guardar");
+  await page.waitForTimeout(200);
+  igual("sin nadie marcado no se manda nada y se dice por qué",
+    await page.evaluate(() => window.__avisos.some((a) => a.includes("Marca al menos un alumno"))), "true");
+  // Los filtros solo esconden: lo marcado sigue marcado.
+  await page.check(casilla("u-ana"));
+  await page.fill("#s-buscar", "carl");
+  await page.waitForTimeout(100);
+  igual("buscar deja ver solo a quien coincide",
+    await page.evaluate(() => document.querySelectorAll("#s-alumnos input").length), 1);
+  igual("y el contador sigue contando a la que quedó escondida",
+    await page.evaluate(() => document.getElementById("s-contador").textContent), "1 alumno marcado");
+  await page.fill("#s-buscar", "");
+  await page.check("#s-sin-plan");
+  igual("«Solo los que no tienen ningún plan» deja a Carla",
+    await page.evaluate(() => [...document.querySelectorAll("#s-alumnos input")].map((c) => c.value)), ["u-carla"]);
+  await page.uncheck("#s-sin-plan");
+  await page.selectOption("#s-grupo", "7A");
+  await page.click("#s-marcar");
+  igual("«Marcar los que se ven» marca al grupo entero",
+    await page.evaluate(() => document.getElementById("s-contador").textContent), "2 alumnos marcados");
+  await page.selectOption("#s-grupo", "");
+  await page.click("#s-desmarcar");
+  igual("«Desmarcar todos» los desmarca aunque no se vean",
+    await page.evaluate(() => [document.getElementById("s-contador").textContent,
+      document.querySelectorAll("#s-alumnos input:checked").length]), ["Ninguno marcado", 0]);
+
+  // Ana y Bruno ya están en Mensualidad: se agrega solo a Carla, en la misma
+  // tanda, y los otros dos se dejan igual (el índice único rechazaría todo).
+  await page.check(casilla("u-ana"));
+  await page.check(casilla("u-bruno"));
+  await page.check(casilla("u-carla"));
+  igual("el botón dice a cuántos agrega",
+    await page.evaluate(() => document.getElementById("s-guardar").textContent), "Agregar a los 3");
   await page.fill("#s-descuento", "25");
+  // Un día fuera del 1 al 31 no se manda: antes llegaba a la base y volvía el
+  // «violates check constraint» en inglés.
+  await page.fill("#s-dia", "40");
+  await page.evaluate(() => { window.__llamadas = []; window.__avisos = []; });
+  await page.click("#s-guardar");
+  await page.waitForTimeout(300);
+  igual("un día 40 no se manda y se dice por qué",
+    await page.evaluate(() => ({
+      mando: window.__llamadas.some((l) => l.tabla === "suscripciones" && l.verbo === "insert"),
+      aviso: window.__avisos.some((a) => a.includes("del 1 al 31")),
+    })), { mando: false, aviso: true });
+  // El 31 sí vale (la base lo recorta al último día de los meses cortos).
+  await page.fill("#s-dia", "31");
   await page.evaluate(() => { window.__llamadas = []; });
   await page.click("#s-guardar");
   await page.waitForTimeout(300);
   const sus = await page.evaluate(() => window.__llamadas.find((l) => l.tabla === "suscripciones" && l.verbo === "insert"));
-  igual("lo que manda al poner a alguien en un plan",
-    sus && { student_id: sus.datos.student_id, plan_id: sus.datos.plan_id, dia_cobro: sus.datos.dia_cobro, descuento_pct: sus.datos.descuento_pct },
-    { student_id: "u-bruno", plan_id: "p-mes", dia_cobro: 10, descuento_pct: 25 });
+  igual("manda UNA tanda, sin los que ya estaban en ese plan",
+    sus && sus.datos.map((d) => ({ student_id: d.student_id, plan_id: d.plan_id, dia_cobro: d.dia_cobro, descuento_pct: d.descuento_pct })),
+    [{ student_id: "u-carla", plan_id: "p-mes", dia_cobro: 31, descuento_pct: 25 }]);
+  igual("y dice que los otros dos se dejaron igual",
+    await page.evaluate(() => window.__avisos.some((a) => a.includes("1 alumno en «Mensualidad»") && a.includes("2 ya estaban"))), "true");
+  igual("después de agregar, la lista queda sin marcar",
+    await page.evaluate(() => document.querySelectorAll("#s-alumnos input:checked").length), 0);
 
   // La beca se ve en la lista: 25000 menos 10 % son 22.500.
   const textoSus = sinSeparadores(await page.evaluate(() => document.querySelector("#suscripciones-lista").textContent));
@@ -355,7 +415,7 @@ async function pruebaCoordinacion(browser) {
       manual: document.getElementById("s-manual-cell").classList.contains("hidden"),
     })), { plan: true, manual: false });
 
-  await page.selectOption("#s-alumno", "u-ana");
+  await page.check(casilla("u-ana"));
   await page.fill("#s-manual-nombre", "Mensualidad con beca especial");
   await page.fill("#s-manual-monto", "12000");
   await page.selectOption("#s-manual-moneda", "USD");
@@ -370,7 +430,7 @@ async function pruebaCoordinacion(browser) {
     { nombre: "Mensualidad con beca especial", monto: 12000, moneda: "USD", personalizado: true });
   const susPersonalizada = await page.evaluate(() => window.__llamadas.find((l) => l.tabla === "suscripciones" && l.verbo === "insert"));
   igual("y la suscripción usa el id de ESE plan recién creado, no el de otro",
-    susPersonalizada && { student_id: susPersonalizada.datos.student_id, plan_id: susPersonalizada.datos.plan_id, dia_cobro: susPersonalizada.datos.dia_cobro },
+    susPersonalizada && { student_id: susPersonalizada.datos[0].student_id, plan_id: susPersonalizada.datos[0].plan_id, dia_cobro: susPersonalizada.datos[0].dia_cobro },
     { student_id: "u-ana", plan_id: "nuevo-planes_cobro-0", dia_cobro: 20 });
   igual("y después de guardar se destapa el selector de plan y se apaga la casilla",
     await page.evaluate(() => ({
@@ -380,6 +440,7 @@ async function pruebaCoordinacion(browser) {
 
   // Sin concepto ni monto, no se manda nada.
   await page.check("#s-personalizado");
+  await page.check(casilla("u-ana"));
   await page.fill("#s-manual-nombre", "");
   await page.fill("#s-manual-monto", "");
   await page.evaluate(() => { window.__llamadas = []; });
@@ -390,6 +451,7 @@ async function pruebaCoordinacion(browser) {
   // Doble clic en «Agregar» con un cobro personalizado: un solo plan, una sola
   // suscripción. El índice único (alumno, plan) no lo atajaría, porque cada
   // clic crea un plan distinto.
+  await page.check(casilla("u-ana"));
   await page.fill("#s-manual-nombre", "Doble clic");
   await page.fill("#s-manual-monto", "1000");
   await page.evaluate(() => { window.__llamadas = []; window.__demora = 150; });
@@ -401,6 +463,22 @@ async function pruebaCoordinacion(browser) {
       planes: window.__llamadas.filter((l) => l.tabla === "planes_cobro" && l.verbo === "insert").length,
       suscripciones: window.__llamadas.filter((l) => l.tabla === "suscripciones" && l.verbo === "insert").length,
     })), { planes: 1, suscripciones: 1 });
+
+  // Personalizado con dos marcados: cada uno lleva SU plan, para poder
+  // cambiarle el monto a uno sin tocar al otro.
+  await page.check("#s-personalizado");
+  await page.check(casilla("u-bruno"));
+  await page.check(casilla("u-carla"));
+  await page.fill("#s-manual-nombre", "Beca de hermanos");
+  await page.fill("#s-manual-monto", "8000");
+  await page.evaluate(() => { window.__llamadas = []; });
+  await page.click("#s-guardar");
+  await page.waitForTimeout(400);
+  igual("dos marcados con cobro personalizado: dos planes y una tanda con los dos",
+    await page.evaluate(() => ({
+      planes: window.__llamadas.filter((l) => l.tabla === "planes_cobro" && l.verbo === "insert").length,
+      alumnos: (window.__llamadas.find((l) => l.tabla === "suscripciones" && l.verbo === "insert") || { datos: [] }).datos.map((d) => d.student_id),
+    })), { planes: 2, alumnos: ["u-bruno", "u-carla"] });
   await page.check("#s-personalizado");
   await page.uncheck("#s-personalizado");
 
@@ -417,6 +495,83 @@ async function pruebaCoordinacion(browser) {
     await bajaDe("s-1"), { activa: false, fin: new Date().toLocaleDateString("en-CA", { timeZone: "America/Costa_Rica" }) });
   igual("la baja de una que aún no arranca termina el día de inicio (fin >= inicio)",
     await bajaDe("s-2"), { activa: false, fin: "2099-10-15" });
+
+  // -------- cambios en grupo sobre la lista de «Quién está en cada plan»
+  const marcarEnLista = (id) => page.check('#suscripciones-lista input[value="' + id + '"]');
+  await page.evaluate(() => { window.__llamadas = []; window.__avisos = []; });
+  await page.click("#sl-beca");
+  await page.waitForTimeout(200);
+  igual("sin nadie marcado en la lista, el cambio en grupo no manda nada",
+    await page.evaluate(() => [window.__llamadas.length, window.__avisos.some((a) => a.includes("Marca al menos a uno"))]), [0, true]);
+  await marcarEnLista("s-1");
+  await marcarEnLista("s-2");
+  igual("el contador de la lista cuenta los marcados",
+    await page.evaluate(() => document.getElementById("sl-contador").textContent), "2 marcados");
+  await page.evaluate(() => { window.__llamadas = []; window.__respuestas = ["15"]; });
+  await page.click("#sl-beca");
+  await page.waitForTimeout(300);
+  const beca = await page.evaluate(() => window.__llamadas.find((l) => l.tabla === "suscripciones" && l.verbo === "update"));
+  igual("cambiar la beca en grupo: una sola llamada, a los dos marcados",
+    beca && { datos: beca.datos, filtros: beca.filtros }, { datos: { descuento_pct: 15 }, filtros: [{ col: "id", in: ["s-1", "s-2"] }] });
+  await marcarEnLista("s-1");
+  await page.evaluate(() => { window.__llamadas = []; window.__respuestas = ["45"]; });
+  await page.click("#sl-dia");
+  await page.waitForTimeout(300);
+  igual("un día 45 en grupo no se manda",
+    await page.evaluate(() => window.__llamadas.filter((l) => l.tabla === "suscripciones").length), 0);
+  await page.evaluate(() => { window.__respuestas = ["30"]; });
+  await page.click("#sl-dia");
+  await page.waitForTimeout(300);
+  const dia = await page.evaluate(() => window.__llamadas.find((l) => l.tabla === "suscripciones" && l.verbo === "update"));
+  igual("cambiar el día en grupo",
+    dia && { datos: dia.datos, filtros: dia.filtros }, { datos: { dia_cobro: 30 }, filtros: [{ col: "id", in: ["s-1"] }] });
+  // Buscar esconde, y «Marcar todos los que se ven» marca solo lo visible.
+  await page.fill("#sl-buscar", "bruno");
+  await page.waitForTimeout(100);
+  await page.check("#sl-todos");
+  await page.fill("#sl-buscar", "");
+  await page.waitForTimeout(100);
+  igual("«Marcar todos los que se ven» marca solo lo que deja la búsqueda",
+    await page.evaluate(() => [...document.querySelectorAll("#suscripciones-lista input:checked")].map((c) => c.value)), ["s-2"]);
+  await marcarEnLista("s-1");
+  await page.evaluate(() => { window.__llamadas = []; });
+  await page.click("#sl-baja");
+  await page.waitForTimeout(400);
+  igual("dar de baja en grupo: los de hoy juntos, el que no arranca con su fecha",
+    await page.evaluate(() => window.__llamadas.filter((l) => l.tabla === "suscripciones" && l.verbo === "update")
+      .map((l) => ({ datos: l.datos, filtros: l.filtros }))),
+    [{ datos: { activa: false, fin: new Date().toLocaleDateString("en-CA", { timeZone: "America/Costa_Rica" }) }, filtros: [{ col: "id", in: ["s-1"] }] },
+     { datos: { activa: false, fin: "2099-10-15" }, filtros: [{ col: "id", eq: "s-2" }] }]);
+
+  // -------- editar y borrar un plan
+  await page.click('[data-ficha="planes"]');
+  const botonPlan = (accion) => page.locator("#planes-lista > div").filter({ hasText: "Mensualidad" }).first().locator('[data-accion="' + accion + '"]');
+  await page.evaluate(() => { window.__llamadas = []; window.__respuestas = [{ nombre: "Mensualidad 2027", monto: "27500", descripcion: "" }]; });
+  await botonPlan("editar").click();
+  await page.waitForTimeout(300);
+  const edita = await page.evaluate(() => window.__llamadas.find((l) => l.tabla === "planes_cobro" && l.verbo === "update"));
+  igual("editar un plan manda nombre, monto y detalle, a ESE plan",
+    edita && { datos: edita.datos, filtros: edita.filtros },
+    { datos: { nombre: "Mensualidad 2027", monto: 27500, descripcion: null }, filtros: [{ col: "id", eq: "p-mes" }] });
+  await page.evaluate(() => { window.__llamadas = []; window.__respuestas = [{ nombre: "Mensualidad", monto: "mucho", descripcion: "" }]; });
+  await botonPlan("editar").click();
+  await page.waitForTimeout(300);
+  igual("un monto que no es número no se guarda",
+    await page.evaluate(() => window.__llamadas.filter((l) => l.tabla === "planes_cobro").length), 0);
+  // Cancelar el borrado no manda nada; aceptarlo llama a la función de la base.
+  await page.evaluate(() => { window.__llamadas = []; window.__respuestas = [null]; });
+  await botonPlan("borrar").click();
+  await page.waitForTimeout(300);
+  igual("cancelar el borrado no manda nada",
+    await page.evaluate(() => window.__llamadas.filter((l) => l.rpc === "eliminar_plan_cobro").length), 0);
+  await page.evaluate(() => { window.__llamadas = []; window.__avisos = []; window.__respuestas = [{ cobros: "anular" }]; });
+  await botonPlan("borrar").click();
+  await page.waitForTimeout(400);
+  igual("borrar el plan lo hace la base, con lo que se eligió para los cobros sin pagos",
+    await page.evaluate(() => (window.__llamadas.find((l) => l.rpc === "eliminar_plan_cobro") || {}).args),
+    { p_plan: "p-mes", p_anular_sin_pagos: true });
+  igual("el borrado se hace con el botón rojo y dice qué pasó",
+    await page.evaluate(() => window.__avisos.some((a) => a.includes("Plan borrado. Se sacó de él a 2 alumnos. Se anuló 1 cobro sin pagos."))), "true");
 
   // -------- registrar un pago parcial
   await page.click('[data-ficha="cobros"]');

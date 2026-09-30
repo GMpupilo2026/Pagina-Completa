@@ -21,6 +21,14 @@
  * pintarla enseguida en la siguiente página en vez de parpadear del azul al
  * color de la academia. Si entra otra cuenta, no se usa.
  *
+ * Y durante FRESCA_MS no se vuelve a pedir: estas dos consultas iban en cada
+ * página de la Academia (unas 500 por hora cada una en la hora pico del
+ * 29/9, cuando la base se saturó) para contestar casi siempre lo mismo. Una
+ * marca recién cambiada se ve a los pocos minutos; quien la cambia
+ * (academias.html) y quien cambia de academia activa la ven enseguida,
+ * porque ahí se olvida la guardada. Ver «Lo que cada página pedía de nuevo»
+ * en docs/decisiones/sitio-e-infraestructura.md.
+ *
  * Como la burbuja, se agrega a decenas de páginas que ya funcionaban: todo lo
  * que falle se queda en una línea de consola y el encabezado queda como estaba.
  */
@@ -28,6 +36,7 @@
   // Se carga dos veces en academias.html (en el <head> y al final): una basta.
   if (typeof window !== "undefined" && window.MarcaAcademia) return;
   var CLAVE = "academia_marca_v1";
+  var FRESCA_MS = 10 * 60 * 1000;
   var BUCKET = "academia-marca";
 
   function luminancia(hex) {
@@ -114,15 +123,27 @@
     return true;
   }
 
+  // Lo guardado de ESTA cuenta ({ marca, sup, t }), o undefined.
   function guardada(uid) {
     try {
       var g = JSON.parse(localStorage.getItem(CLAVE) || "null");
-      return g && g.uid === uid ? g.marca : undefined;
+      return g && g.uid === uid ? g : undefined;
     } catch (e) { return undefined; }
   }
 
-  function guardar(uid, marca) {
-    try { localStorage.setItem(CLAVE, JSON.stringify({ uid: uid, marca: marca || null })); } catch (e) { /* sin almacenamiento, se pide cada vez */ }
+  function guardar(uid, marca, sup) {
+    try {
+      localStorage.setItem(CLAVE, JSON.stringify({ uid: uid, marca: marca || null, sup: sup || null, t: Date.now() }));
+    } catch (e) { /* sin almacenamiento, se pide cada vez */ }
+  }
+
+  /* Se deja la cuenta pero sin marca y vencida: la próxima página la vuelve a
+     pedir. La usan el cambio de academia activa y academias.html al guardar. */
+  function olvidar() {
+    try {
+      var g = JSON.parse(localStorage.getItem(CLAVE) || "null");
+      if (g) localStorage.setItem(CLAVE, JSON.stringify({ uid: g.uid, marca: null, sup: null, t: 0 }));
+    } catch (e) { }
   }
 
   async function init() {
@@ -133,19 +154,28 @@
     if (!sesion) return;
     var uid = sesion.user.id;
 
-    var antes = guardada(uid);
+    var g = guardada(uid);
+    var antes = g && g.marca;
     if (antes) aplicar(antes);
+    // Reciente: no se vuelve a preguntar.
+    if (g && typeof g.t === "number" && Date.now() - g.t < FRESCA_MS && Date.now() >= g.t) {
+      if (Array.isArray(g.sup) && g.sup.length > 1) montarSelectorAcademia(sb, uid, g.sup);
+      return;
+    }
 
     var pedidos = await Promise.all([sb.rpc("mi_marca_academia"), sb.rpc("mis_academias_supervisadas")]);
     var res = pedidos[0];
+    var sup = pedidos[1];
+    var academias = !sup.error && Array.isArray(sup.data) ? sup.data : null;
     if (!res.error) {
       var fila = Array.isArray(res.data) ? res.data[0] : res.data;
       var marca = fila && fila.nombre ? fila : null;
-      guardar(uid, marca);
+      // Solo se da por fresca si llegaron las dos: sin la lista de academias,
+      // quien supervisa varias se quedaría sin su franja por diez minutos.
+      if (academias) guardar(uid, marca, academias);
       if (marca || antes) aplicar(marca);
     }
-    var sup = pedidos[1];
-    if (!sup.error && Array.isArray(sup.data) && sup.data.length > 1) montarSelectorAcademia(sb, uid, sup.data);
+    if (academias && academias.length > 1) montarSelectorAcademia(sb, uid, academias);
   }
 
   /* Quien supervisa DOS o más academias las ve de una en una: la «academia
@@ -188,7 +218,7 @@
         return;
       }
       // La marca guardada era la de la otra academia: se vuelve a pedir.
-      guardar(uid, undefined);
+      olvidar();
       location.reload();
     });
     barra.append(texto, etiqueta, sel);
@@ -232,7 +262,7 @@
     });
   }
 
-  var api = { contrasteConBlanco: contrasteConBlanco, urlDelLogo: urlDelLogo, aplicar: aplicar, montarSelectorAcademia: montarSelectorAcademia, pintarLogin: pintarLogin, BUCKET: BUCKET };
+  var api = { contrasteConBlanco: contrasteConBlanco, urlDelLogo: urlDelLogo, aplicar: aplicar, montarSelectorAcademia: montarSelectorAcademia, pintarLogin: pintarLogin, olvidar: olvidar, BUCKET: BUCKET };
   if (typeof window !== "undefined") {
     window.MarcaAcademia = api;
     if (typeof document !== "undefined" && !window.__marcaAcademiaSinArranque) {
