@@ -116,8 +116,8 @@ async function pruebaCiega(browser) {
   igual("Alt + Mayúscula + M lleva el foco al contenido", await page.evaluate(() => document.activeElement && document.activeElement.id), "main-content");
   await page.keyboard.press("Alt+Shift+KeyB");
   await esperar(250);
-  cierto("Alt + Mayúscula + B, sin tablero a la vista, lo dice en vez de callarse",
-    await page.evaluate(() => Array.from(document.querySelectorAll('[role="status"]')).some((r) => /no hay un tablero/.test(r.textContent))));
+  cierto("Alt + Mayúscula + B, sin tablero a la vista, dice que no hay posición en vez de callarse",
+    await page.evaluate(() => Array.from(document.querySelectorAll('[role="status"]')).some((r) => /no hay una posición/.test(r.textContent))));
 
   /* Lo que la página pinta después también pasa por el filtro. */
   await page.evaluate(() => {
@@ -217,6 +217,45 @@ async function pruebaPaginaNoAdaptada(browser) {
   await ctx.close();
 }
 
+/* Quien no ve casi no usa el tablero: hace todo desde el recuadro. Se mide en
+   Mates, con la cuenta ciega: el foco empieza en el recuadro, el tablero queda
+   a la vista pero fuera del lector y del tabulador (es para el profe que
+   ayuda), y los botones de la página se aprietan escribiendo su nombre o lo
+   que hacen, sin que el foco se vaya del recuadro. */
+async function pruebaTodoDesdeElRecuadro(browser) {
+  console.log("\n=== Todo desde el recuadro (Mates, cuenta ciega) ===");
+  const { page, ctx } = await abrir(browser, "/entreno/mates.html", { ai_vision_v1: JSON.stringify({ persona: "u-ana", vision: "ciego" }) });
+  await page.waitForFunction(() => document.activeElement && document.activeElement.classList.contains("cc-input"), null, { timeout: 8000 }).catch(() => {});
+  igual("el foco empieza en el recuadro", await page.evaluate(() => document.activeElement && document.activeElement.className), "cc-input");
+  igual("el tablero se ve, pero no está en el camino del lector ni del Tab",
+    await page.evaluate(() => { const t = document.getElementById("board"); return [t.checkVisibility(), t.getAttribute("aria-hidden"), t.querySelectorAll("[tabindex='0']").length]; }),
+    [true, "true", 0]);
+  const decir = async (t) => {
+    await page.fill(".cc-input", t);
+    await page.press(".cc-input", "Enter");
+    await esperar(250);
+    return page.evaluate(() => document.querySelector(".cc-msg").textContent);
+  };
+  const acciones = await decir("acciones");
+  cierto("«acciones» dice los botones del ejercicio, sin los interruptores del modo (" + acciones.slice(0, 90) + "…)",
+    /Pista/.test(acciones) && /Reiniciar/.test(acciones) && /Saltar/.test(acciones) && !/Modo normal|Adaptado/.test(acciones));
+  await page.evaluate(() => { window.__salto = 0; document.getElementById("skip-btn").addEventListener("click", () => { window.__salto++; }); });
+  const salto = await decir("siguiente");
+  igual("«siguiente» aprieta el botón que pasa al siguiente (aquí se llama «Saltar →»)", [await page.evaluate(() => window.__salto), salto], [1, "Listo: Saltar."]);
+  await esperar(400);
+  igual("y el foco sigue en el recuadro", await page.evaluate(() => document.activeElement && document.activeElement.className), "cc-input");
+  cierto("«mis jugadas» dice todas las que se pueden hacer", /^Tienes \d+ jugadas?\./.test(await decir("mis jugadas")) || /una sola jugada/.test(await decir("mis jugadas")));
+  cierto("«leer» lee el ejercicio", (await decir("leer")).length > 20);
+  const casilla = await decir("ir a e4");
+  cierto("«ir a e4» contesta qué hay ahí sin mover el foco (" + casilla + ")", /eva 4|e4/.test(casilla) && await page.evaluate(() => document.activeElement.className === "cc-input"));
+  cierto("«Nf3» o una jugada sigue llegando a la página (no la come la capa de acciones)",
+    !/^Listo:/.test(await decir("Nf3")));
+  await page.keyboard.press("Alt+Shift+KeyB");
+  await esperar(250);
+  cierto("Alt + Mayúscula + B dice la posición en el recuadro", /Blancas|blancas/.test(await page.evaluate(() => document.querySelector(".cc-msg").textContent)));
+  await ctx.close();
+}
+
 async function pruebaAdmin(browser) {
   console.log("\n=== admin.html: la columna Visión ===");
   const { page, ctx } = await abrir(browser, "/admin.html", { __quien: "u-admin" });
@@ -256,6 +295,7 @@ async function pruebaAdmin(browser) {
     await pruebaBajaVision(browser);
     await pruebaJuegos(browser);
     await pruebaPaginaNoAdaptada(browser);
+    await pruebaTodoDesdeElRecuadro(browser);
     await pruebaAdmin(browser);
   } finally {
     await browser.close();

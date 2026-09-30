@@ -105,7 +105,7 @@ window.ComandosTablero = (function () {
       texto: "posición (todo lo que hay); caballos, torres, mi rey… (dónde está esa pieza); " +
         "\"qué hay en e4\" (una casilla); \"jugadas de f3\" (a dónde puede ir esa pieza); " +
         "\"alrededor de e4\" (sus vecinas); \"fila 4\" o \"columna e\"; \"ir a e4\" (lleva el foco " +
-        "del teclado a esa casilla); \"qué ataca e4\" (a qué piezas apunta); \"quién ataca e4\" y " +
+        "del teclado a esa casilla); \"mis jugadas\" (todas las que puedes hacer); \"qué ataca e4\" (a qué piezas apunta); \"quién ataca e4\" y " +
         "\"quién defiende e4\" (quién le apunta a esa casilla); \"última jugada\"; historial (las jugadas " +
         "de la partida); turno (a quién le toca); ayuda (esta lista).",
     },
@@ -124,11 +124,24 @@ window.ComandosTablero = (function () {
     },
   ];
 
+  /* Con la cuenta ciega (js/vision-cuenta.js) el recuadro hace además todo lo
+     de la página: se dice primero, porque es lo que más se usa. */
+  var AYUDA_CIEGO = {
+    titulo: "Todo desde el recuadro",
+    texto: "acciones (qué botones hay); el nombre de un botón para apretarlo, por ejemplo \"pista\"; " +
+      "siguiente, otra vez, solución; leer (el ejercicio); dónde estoy; atajos; panel (volver a tu panel).",
+  };
+  function modoCiego() {
+    return typeof document !== "undefined" && document.documentElement.classList.contains("modo-ciego");
+  }
+  function ayudaSecciones() {
+    return modoCiego() ? [AYUDA_CIEGO].concat(AYUDA) : AYUDA;
+  }
   function ayudaHTML() {
-    return AYUDA.map(function (s) { return "<h3>" + s.titulo + "</h3><p>" + s.texto + "</p>"; }).join("");
+    return ayudaSecciones().map(function (s) { return "<h3>" + s.titulo + "</h3><p>" + s.texto + "</p>"; }).join("");
   }
   function ayudaTexto() {
-    return AYUDA.map(function (s) { return s.titulo + ". " + s.texto; }).join(" ");
+    return ayudaSecciones().map(function (s) { return s.titulo + ". " + s.texto; }).join(" ");
   }
 
   // --------------------------------------------------------------- respuestas
@@ -342,6 +355,28 @@ window.ComandosTablero = (function () {
     } catch (e) {}
     return "La última jugada fue de las " + quien + ": " + sanHablada(h[h.length - 1]) + ".";
   }
+  /* Todas las jugadas que se pueden hacer ahora, por pieza y en palabras. Quien
+     no ve el tablero no puede «mirar» qué tiene: así elige entre lo que hay,
+     sin probar jugadas a ciegas. Solo las del bando al que le toca. */
+  function todasLasJugadas(juego) {
+    var ms = [];
+    try { ms = juego.moves ? (juego.moves({ verbose: true }) || []) : []; } catch (e) {}
+    if (!ms.length) return "Ahora no hay jugadas para hacer.";
+    var porPieza = {}, orden = [];
+    ms.forEach(function (mv) {
+      var k = mv.from;
+      if (!porPieza[k]) { porPieza[k] = []; orden.push(k); }
+      porPieza[k].push(hablada(mv.to) + (mv.flags.indexOf("c") >= 0 || mv.flags.indexOf("e") >= 0 ? " capturando" : "") +
+        (/[+#]$/.test(mv.san || "") ? (/#$/.test(mv.san) ? " con mate" : " con jaque") : ""));
+    });
+    var partes = orden.map(function (sq) {
+      var p = null;
+      try { p = juego.get(sq); } catch (e) {}
+      return (p ? dicha(p) : "La pieza") + " en " + hablada(sq) + ": " + lista(porPieza[sq]);
+    });
+    return (ms.length === 1 ? "Tienes una sola jugada. " : "Tienes " + ms.length + " jugadas. ") + partes.join(". ") + ".";
+  }
+
   function historial(juego) {
     var h = historiaDe(juego);
     if (!h || !h.length) return "Todavía no hay jugadas: la partida (o el ejercicio) empieza en esta posición.";
@@ -539,6 +574,11 @@ window.ComandosTablero = (function () {
     var m;
     if ((m = t.match(/^(?:ir(?: a)?|foco|vete a|llevame a)\s+([a-h])\s?([1-8])$/))) {
       var destino = m[1] + m[2];
+      /* Con la cuenta ciega el tablero no está en el camino del lector (es para
+         quien acompaña): «ir a» contesta lo que hay ahí, sin mover el foco. */
+      if (modoCiego()) {
+        return { manejado: true, tipo: "casilla", respuesta: queHayEn(juego, destino) };
+      }
       if (tablero && tablero.enfocar && tablero.enfocar(destino)) {
         return { manejado: true, tipo: "ir", respuesta: "" };  // el foco ya lo anuncia
       }
@@ -561,6 +601,9 @@ window.ComandosTablero = (function () {
     }
     if ((m = t.match(/^(?:quien defiende|quienes defienden|quien defiende a|quienes defienden a|defensores de|quien protege)\s+([a-h])\s?([1-8])$/))) {
       return { manejado: true, tipo: "defienden", respuesta: quienAtaca(juego, m[1] + m[2], true) };
+    }
+    if (/^(mis jugadas|jugadas posibles|jugadas legales|que puedo jugar|todas mis jugadas|que jugadas tengo)$/.test(t)) {
+      return { manejado: true, tipo: "legales", respuesta: todasLasJugadas(juego) };
     }
     if (!conNiebla(juego) && historiaDe(juego) && /^(ultima jugada|la ultima jugada|ultima|que se jugo|que jugo|jugada anterior)$/.test(t)) {
       return { manejado: true, tipo: "ultima", respuesta: ultimaJugada(juego) };

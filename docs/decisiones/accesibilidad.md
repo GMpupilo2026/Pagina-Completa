@@ -869,3 +869,51 @@ entreno-accesible examenes cuadro-comandos preguntas-tablero vision-cuenta`.
 Memoria a `CON_TABLERO`; Visualización salta la prueba del recuadro común
 porque contesta en el suyo (`sinRecuadroComun`).
 
+## Quien no ve hace todo desde el recuadro
+
+Lo pidió la Academia después de ver a sus alumnos ciegos usarlo: **casi no
+usan el tablero**. Se guían por la posición y las jugadas escritas y quieren
+hacer todo en el recuadro de comandos, sin salir de él hasta cambiar de
+ejercicio o de sección. Recorrer el tablero, ir a buscar el botón de «Pista»
+con Tab y volver, era lo que más les costaba. Con la cuenta marcada como ciega
+(`modo-ciego`):
+
+- **El tablero es para quien acompaña.** Se queda a la vista (el profe que
+  ayuda, alguien al lado), pero `js/tablero-accesible.js` le pone `aria-hidden`
+  y ninguna casilla queda en el tabulador: sesenta y cuatro paradas de más
+  entre el enunciado y el recuadro. «ir a e4» contesta qué hay ahí en vez de
+  mover el foco, y Alt + Mayúscula + B **dice la posición** (ya no lleva al
+  tablero). Sin la marca, el tablero sigue como siempre.
+- **El foco empieza en el recuadro** y vuelve a él cuando se queda sin lugar
+  (la página repintó lo que lo tenía y cayó al `<body>`). No se lo quita a nada
+  que la persona haya elegido.
+- **Lo escrito en CUALQUIER recuadro pasa primero por `js/vision-cuenta.js`**
+  (en fase de captura del `submit`, o del Enter si el recuadro no va en un
+  formulario), antes que la página:
+  - «acciones»: los botones y las casillas para marcar que hay, sin los
+    interruptores del modo;
+  - el **nombre de un botón** lo aprieta («pista», «reiniciar»), y también
+    lo que hace, se llame como se llame en cada página: «siguiente» aprieta
+    «Saltar →», «Otra posición» o «Siguiente ejercicio»; igual «otra vez»,
+    «solución», «comprobar»; el texto de una casilla la marca;
+  - «leer» lee el ejercicio (títulos, párrafos y avisos de su sección, sin el
+    recuadro ni el tablero); «dónde estoy», «atajos», «panel».
+  Si no es nada de eso sigue a la página, como siempre (una jugada, o su
+  propio comando). Los botones se buscan en la MISMA sección que el recuadro
+  (o en el diálogo abierto), así que una página con dos recuadros no aprieta
+  el botón del otro; las letras sueltas y lo de menos de tres letras nunca
+  pasan por acá (son las opciones y los atajos de cada página). Después de
+  apretar, el foco vuelve al recuadro.
+- **«mis jugadas»** (`js/comandos-tablero.js`, en todo el sitio): todas las
+  jugadas que se pueden hacer ahora, por pieza y con capturas y jaques. Sin
+  mirar el tablero, es la forma de elegir entre lo que hay.
+- La ayuda del recuadro trae primero «Todo desde el recuadro» en modo ciego, y
+  `ciegos.html` lo explica.
+
+`verificar-vision-cuenta.js` lo mide en Mates con la cuenta ciega: el foco al
+empezar, el tablero visible pero fuera del lector y del Tab, «acciones»,
+«siguiente» apretando «Saltar →» con el foco quedándose en el recuadro, «mis
+jugadas», «leer», «ir a e4», que una jugada siga llegando a la página y Alt +
+Mayúscula + B. Sin la capa de acciones saltan dos comprobaciones; sin el
+`aria-hidden`, otras dos.
+
