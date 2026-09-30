@@ -1477,15 +1477,35 @@
            (js/logros.js, progreso_dias_y_racha), con la promesa que ya se pidió
            para lo demás. Si no contesta, se queda el texto de siempre.
 
-           Los tres números que había en «Tu progreso» (ejercicios 4×4,
-           lecciones, la mejor marca de Coordenadas) ya no se piden: eran de
-           cuando el entrenamiento era chico, y lo que se hace en la semana ya
-           lo dice «Hoy te toca». Ver «Hoy te toca y tu progreso, en una sola
-           tarjeta» en docs/decisiones/paneles.md. */
+           Ver «Hoy te toca y tu progreso, en una sola tarjeta» en
+           docs/decisiones/paneles.md. */
+        // ---------- Los tres totales de «Tu progreso» ----------
+        // Los números NO se cuentan acá. Esta página se bajaba training_progress
+        // ENTERA (select * where student_id = …) y sumaba en el navegador, y eso
+        // tenía el techo invisible de siempre: PostgREST corta la respuesta a
+        // partir de cierta cantidad de filas y no da ningún error, así que a un
+        // alumno con bastante entrenamiento encima el panel le pintaba un número
+        // que ya no subía. Los cuenta la base: mi_entreno_resumen(), SECURITY
+        // INVOKER, con las mismas tres cuentas de informes_resumen_alumnos()
+        // (verificar-mi-entreno.js revisa que no se separen).
+        async function loadEntrenoProgress() {
+            const { data, error } = await sb.rpc("mi_entreno_resumen");
+            if (error) return;   // deja los guiones en vez de romper el resto del panel
+            const fila = (data || [])[0];
+            if (!fila) return;
+            document.getElementById("entreno-puzzles").textContent = String(fila.puzzles || 0);
+            document.getElementById("entreno-lessons").textContent = String(fila.lecciones || 0);
+            document.getElementById("entreno-coord").textContent = fila.mejor_coord || "—";
+        }
+
+        /* El panel adaptado (quien administración marcó como ciega) trae su
+           propio subtítulo —que es el panel adaptado y cómo oír los atajos—, y
+           ese le gana: la racha llega después y lo pisaba. */
+        let panelAdaptado = false;
         async function pintarSaludoAlumno(rachaP) {
             let r = null;
             try { r = await rachaP; } catch (e) { return; }
-            if (!r || r.error || !r.stats) return;
+            if (!r || r.error || !r.stats || panelAdaptado) return;
             const racha = r.stats.racha_actual || 0;
             const hoy = r.stats.hoy_ejercicios || 0;
             const meta = window.Logros ? Logros.META_DIARIA : 5;
@@ -1861,32 +1881,10 @@
             const PE = window.PlanEntrenamiento, MP = window.MaterialPlataforma;
             if (!PE || !MP) return null;
 
-            let resumen;
-            try { resumen = PE.resumir(detalle || {}); } catch (e) { return null; }
-            const flojas = (resumen.porArea || [])
-                .filter((a) => a.porcentaje < 60)
-                .sort((a, b) => a.porcentaje - b.porcentaje);
-
-            for (const area of flojas) {
-                const ficha = PE.AREA_POR_ID[area.id];
-                if (!ficha) continue;
-                for (const r of ficha.recursos || []) {
-                    /* Se compara la PÁGINA, no la dirección entera: los recursos
-                       del plan llevan su recorte puesto
-                       (`entreno/temas.html?tema=pin`) y el catálogo de Tareas
-                       guarda la página pelada. Comparando la dirección completa
-                       no coincidiría ni uno solo y el paso caería siempre al
-                       genérico, sin que nada fallara. */
-                    const pagina = r.href.split("?")[0];
-                    const h = (MP.HERRAMIENTAS || []).find(
-                        (t) => t.href === pagina && (t.metas || []).includes("cantidad"));
-                    /* Y se manda la dirección CON el recorte: es lo que separa
-                       "haz ejercicios de clavada" de "ahí tienes ochenta temas,
-                       busca". La misma decisión que el enlace de una tarea. */
-                    if (h) return { area, href: r.href, label: r.texto, emoji: ficha.emoji };
-                }
-            }
-            return null;
+            /* La cuenta vive en PlanEntrenamiento.paraPracticar(): la misma
+               que usa la sugerencia de «Hoy te toca». Acá va la primera: el
+               área más floja que tenga dónde practicarla. */
+            return PE.paraPracticar(detalle, MP.HERRAMIENTAS)[0] || null;
         }
 
         /* Los dos archivos de arriba se bajan CUANDO hacen falta y no en cada
@@ -1904,7 +1902,8 @@
            racha es la misma promesa que usa «Tu progreso». */
         const SCRIPTS_HOY = ["js/repaso-espaciado.js", "js/repaso-fallados.js", "js/tema-flojo.js",
             "js/tipos-catalogo.js", "js/tipo-flojo.js", "js/tiempo-secciones.js",
-            "js/errores-propios.js", "js/material-plataforma.js", "js/progreso-usuario.js", "js/hoy-te-toca.js"];
+            "js/errores-propios.js", "js/material-plataforma.js", "js/plan-entrenamiento.js",
+            "js/progreso-usuario.js", "js/hoy-te-toca.js"];
         async function cargarHoyTeToca(rachaP) {
             try {
                 for (const src of SCRIPTS_HOY) await traerScript(src);
@@ -2870,6 +2869,7 @@
             const ciego = !esEquipoDocente() && profile.role === "alumno" && await alumnoCiego();
             textosDelEquipoDocente();
             if (ciego) {
+                panelAdaptado = true;
                 armarPanelAdaptado();
                 /* En un párrafo propio, debajo del subtítulo: el subtítulo lo
                    reescribe después la racha del día (pintarSaludoAlumno). */
@@ -2953,6 +2953,7 @@
                     PuntosClase.pintarDelMesDelAlumno(sb, document.getElementById("puntos-mes")),
                     cargarPendientes(rachaP),
                     cargarSeguirCurso(),
+                    loadEntrenoProgress(),
                     loadTacticsRecord(),
                     pintarSaludoAlumno(rachaP),
                     marcarLoUltimo(),

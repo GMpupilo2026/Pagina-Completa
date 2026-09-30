@@ -5705,9 +5705,7 @@
                 })
                 .subscribe();
             if (veLaPractica()) {
-                sb.channel("practice-games-changes:" + boardOwnerId)
-                    .on("postgres_changes", { event: "*", schema: "public", table: "practice_games" }, aplicarCambioDePractica)
-                    .subscribe();
+                escucharPartidasDeLaRonda();
             } else if (!esObservador) {
                 // El alumno escucha SU partida solo por la ayuda que le manda el profe:
                 // las jugadas las lleva este navegador, y un eco atrasado de la base las
@@ -5731,6 +5729,41 @@
             }
         }
 
+        /* Quien da clase (o la mira) escucha las partidas de SU ronda, no las de toda
+           la plataforma. Sin filtro, Realtime revisaba la RLS de cada jugada de
+           cualquier práctica contra cada profe y supervisor conectado en cualquier
+           clase (703 jugadas en la hora pico del 29/9). La ronda cambia: al empezar
+           otra se cierra este canal y se abre uno nuevo, y al quedar suscrito se
+           recarga la lista una vez, por si una partida nació mientras tanto (o
+           mientras se cortó la conexión). Los DELETE no traen session_id, así que
+           con o sin filtro no llegan: aplicarCambioDePractica ya los ignoraba. Ver
+           «Realtime escucha solo lo que la pantalla muestra». */
+        let canalPartidasPractica = null, rondaEscuchada = null;
+        function escucharPartidasDeLaRonda() {
+            if (!veLaPractica()) return;
+            const ronda = latestPracticeSession && !latestPracticeSession.ended_at ? latestPracticeSession.id : null;
+            if (ronda === rondaEscuchada) return;
+            if (canalPartidasPractica) {
+                try {
+                    if (typeof sb.removeChannel === "function") sb.removeChannel(canalPartidasPractica);
+                    else if (typeof canalPartidasPractica.unsubscribe === "function") canalPartidasPractica.unsubscribe();
+                } catch (e) { console.error(e); }
+            }
+            canalPartidasPractica = null;
+            rondaEscuchada = ronda;
+            if (!ronda) return;
+            canalPartidasPractica = sb.channel("practice-games-changes:" + boardOwnerId + ":" + ronda)
+                .on("postgres_changes", { event: "*", schema: "public", table: "practice_games", filter: "session_id=eq." + ronda }, (payload) => {
+                    // Un canal viejo que todavía no terminó de cerrarse no pinta nada.
+                    if (rondaEscuchada === ronda) aplicarCambioDePractica(payload);
+                })
+                .subscribe((estado) => {
+                    if (estado === "SUBSCRIBED" && rondaEscuchada === ronda && latestPracticeSession && latestPracticeSession.id === ronda) {
+                        recargarPracticasPronto(ronda);
+                    }
+                });
+        }
+
         // Carga inicial al entrar a la página: sí hace falta preguntarle a la base de datos
         // cuál es la ronda más reciente (no hay ningún evento de Realtime del que partir).
         // Para los cambios en vivo mientras la página ya está abierta, ver
@@ -5741,6 +5774,7 @@
             const { data, error } = await sb.from("practice_sessions").select("*").eq("created_by", boardOwnerId).order("created_at", { ascending: false }).limit(1).maybeSingle();
             if (error) { console.error(error); return; }
             latestPracticeSession = data || null;
+            escucharPartidasDeLaRonda();
             if (veLaPractica()) renderTeacherPracticePanel();
             else await renderStudentPracticeCard();
         }
@@ -5759,6 +5793,7 @@
         function applyPracticeSessionUpdate(row) {
             if (!row) return;
             latestPracticeSession = row;
+            escucharPartidasDeLaRonda();
             if (veLaPractica()) renderTeacherPracticePanel();
             else renderStudentPracticeCard();
         }

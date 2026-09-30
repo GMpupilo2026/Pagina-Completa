@@ -408,6 +408,16 @@ seguridad de Supabase o de Sentry, nadie se entera.
   `verificar-vendor.js` compara la copia con el paquete. Se trae la rama, se
   corre `node herramientas/vendor.js` y se commitea la copia. La versión que
   llega al navegador de la gente no cambia sin que alguien la mire.
+- **Subir Playwright rompía los verificadores en las sesiones de Claude
+  Code, no en el CI.** Cada versión de Playwright busca SU Chromium
+  (`chromium-1243` para la 1.63). El CI lo instala; una sesión de Claude Code
+  trae uno fijo en `/opt/pw-browsers`, de otra versión, y ahí no se puede
+  instalar otro. Los verificadores que lanzan el navegador sin decir dónde
+  fallaban todos con «Executable doesn't exist». `verificar-todo.js` carga en
+  cada uno `lib/navegador-local.js` (`NODE_OPTIONS=--require`): si el Chromium
+  de Playwright no está, les pone el de `CHROME_PATH` o el de
+  `/opt/pw-browsers`; si está, no toca nada. Por eso los verificadores se
+  corren con `verificar-todo.js` y no sueltos.
 - **`npm audit`** corre en `.github/workflows/dependencias.yml`: en los PR que
   tocan `package.json` o su lock, cada lunes y a mano. **No en todos los PR**:
   un aviso nuevo de npm aparece sin que nadie cambie nada y dejaría en rojo
@@ -1436,9 +1446,20 @@ lecturas.
   quién se puede retar, y eso lo decide el dueño del sitio, no el rendimiento.
   Lo que sí se hizo: la lista se pinta a lo sumo una vez cada medio segundo,
   porque con mucha gente llegan varios `sync` por segundo.
+- **La práctica, del lado de quien da clase** (`escucharPartidasDeLaRonda()` en
+  `js/sesion.js`) escuchaba todas las partidas de práctica de la plataforma, y
+  cada jugada actualiza su fila: en la hora pico del 29/9 fueron 703 jugadas,
+  y Realtime revisaba cada una contra cada profe y supervisor conectado en
+  cualquier clase. Ahora filtra `session_id=eq.<su ronda>`: al empezar otra se
+  cierra ese canal y se abre el nuevo, y al quedar suscrito se recarga la lista
+  una vez, por si una partida nació mientras tanto o se cortó la conexión. Los
+  DELETE no traen `session_id`, así que no llegaban antes tampoco
+  (`aplicarCambioDePractica` los descartaba). Un canal viejo que todavía no
+  terminó de cerrarse no pinta nada: cada oyente compara su ronda con la que se
+  escucha. `verificar-practica-ayuda.js` comprueba el filtro.
 - **Quedan sin filtro, anotadas con su porqué**, las escuchas que abren pocas
   pantallas (la TV, el panel de partidas guardadas, el lado del profesor en
-  preguntas y práctica) y `torneo.js` sobre `game_rooms`, que no lleva
+  las preguntas) y `torneo.js` sobre `game_rooms`, que no lleva
   `tournament_id`. Esa es la siguiente candidata si los torneos crecen: acotarla
   con `id=in.(<mesas de la ronda>)`.
 
@@ -1545,6 +1566,38 @@ la lista entera de partidas, con los nombres, por cada jugada (797 veces en la
 hora de la caída): eso ya lo arregló #606 (`aplicarCambioDePractica` usa la
 fila que trae Realtime), que entró a las 8:18 p. m. del 29, **después** de la
 caída. Desde entonces esa lectura casi no aparece en los registros.
+
+### Lo que se escucha por Realtime tiene que estar publicado
+
+Una tabla que el sitio escucha con `postgres_changes` **y que no está en la
+publicación `supabase_realtime` no manda nada**: la suscripción se abre sin
+error y la página se queda con lo que cargó. Y una tabla publicada que nadie
+escucha le da trabajo a Realtime en cada cambio, para nada. Las dos pasaron
+(migración `20260930145834`):
+
+- `torneo.js` escuchaba `tournaments`, `tournament_registrations`,
+  `tournament_rounds` y `tournament_pairings`, filtradas por torneo, y ninguna
+  estaba publicada. Quien miraba un torneo interno no veía el resultado de una
+  partida ni la ronda nueva hasta recargar (las jugadas sí llegaban, por
+  `game_rooms`). Se publicaron: la RLS de cada una decide qué le llega a cada
+  uno, igual que al leerla, y cambian poco (una inscripción, una ronda, un
+  resultado).
+- `class_attendance` estaba publicada y **nadie la escucha**: solo se escribe
+  (`upsert`) y se lee (`select`). Se sacó.
+
+**Una tabla que entra a Realtime lleva, en la misma migración, la política
+restrictiva `verificacion_en_dos_pasos`** (ver «La verificación en dos pasos» en
+`permisos-y-roles.md`): Realtime no pasa por el candado de PostgREST, lee con la
+RLS de cada tabla. Las cuatro de torneos entraron sin ella y quedaron así unos
+siete minutos, hasta `20260930150549` (estaban vacías: no se filtró nada).
+`verificar-dos-pasos-base.js` lo detectó en el CI.
+
+`verificar-realtime-publicadas.js` (sin navegador) compara las tablas que
+nombran los `postgres_changes` de `js/` —también las que se recorren en una
+lista, como en `competir.js` y `torneo.js`— con las líneas `realtime` del
+retrato del esquema. Una tabla nueva que se escuche va a la publicación en su
+misma migración; una que se deje de escuchar, sale. Con el retrato de antes de
+este arreglo, salta en las cinco.
 
 ### El perfil propio, una lectura por página
 

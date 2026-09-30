@@ -62,6 +62,10 @@ async function pruebaCiega(browser) {
   cierto("y ninguna de las puertas que no están adaptadas (Archivos, las fichas por categoría repetidas)",
     !enlaces.includes("partidas.html") && !enlaces.some((h) => h.includes("?cat=")));
   igual("el grupo de entrenar se alcanza con #entrenar", await page.evaluate(() => !!document.querySelector("section#entrenar h2")), true);
+  /* Se lee cuando el panel ya terminó de cargar. La nota va en su propio
+     párrafo (#panel-adaptado-nota): el subtítulo lo reescribe la racha. */
+  await page.waitForFunction(() => !/Cargando/.test((document.getElementById("tactics-record-text") || {}).textContent || ""), null, { timeout: 10000 }).catch(() => {});
+  await page.waitForTimeout(300);
   cierto("debajo del saludo dice que es el panel adaptado y cómo oír los atajos",
     /adaptado.*Alt \+ Mayúscula \+ H/.test(await page.evaluate(() => { const n = document.getElementById("panel-adaptado-nota"); return n && n.checkVisibility() ? n.textContent : ""; })));
 
