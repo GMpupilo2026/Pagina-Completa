@@ -111,13 +111,16 @@ window.NotasAlumno = (function () {
     /* La posición guardada con la nota, dibujada sin chess.js ni tablero: la
        bitácora también se lee en Informes, que no carga ninguno. Los colores y
        las piezas son los del tablero elegido (las mismas clases de los
-       ejemplos de los artículos). */
+       ejemplos de los artículos). Las 8 filas son iguales (grid-rows-8) y la
+       pieza se mide contra el ancho del diagrama (.nota-posicion en
+       css/styles.css): con filas automáticas, la que tenía pieza crecía con el
+       glifo, la vacía se encogía y el tablero salía cortado abajo. */
     const GLIFOS = { k: "♚", q: "♛", r: "♜", b: "♝", n: "♞", p: "♟" };
     function diagrama(fen) {
         const filas = String(fen || "").split(" ")[0].split("/");
         if (filas.length !== 8) return null;
         const caja = document.createElement("div");
-        caja.className = "nota-posicion grid grid-cols-8 w-40 aspect-square rounded-md overflow-hidden border border-brand-300 dark:border-brand-700 mt-1.5";
+        caja.className = "nota-posicion grid grid-cols-8 grid-rows-8 w-40 aspect-square rounded-md overflow-hidden border border-brand-300 dark:border-brand-700 mt-1.5";
         caja.setAttribute("role", "img");
         caja.setAttribute("aria-label", "La posición del tablero cuando se anotó (le toca a las " + (String(fen).split(" ")[1] === "b" ? "negras" : "blancas") + ")");
         filas.forEach((fila, r) => {
@@ -127,7 +130,7 @@ window.NotasAlumno = (function () {
                 const n = isFinite(vacias) ? vacias : 1;
                 for (let i = 0; i < n; i++, c++) {
                     const sq = document.createElement("span");
-                    sq.className = "flex items-center justify-center text-base leading-none " + ((r + c) % 2 === 0 ? "example-sq-light" : "example-sq-dark");
+                    sq.className = "flex items-center justify-center leading-none " + ((r + c) % 2 === 0 ? "example-sq-light" : "example-sq-dark");
                     if (!isFinite(vacias) && GLIFOS[ch.toLowerCase()]) {
                         const pieza = document.createElement("span");
                         pieza.className = ch === ch.toUpperCase() ? "piece-white" : "piece-black";
