@@ -154,7 +154,9 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
 }
 
 async function abrir(browser, pagina, cfg) {
-  const page = await browser.newPage();
+  // Sin service worker: al volver a cargar en la misma pestaña (lo que se
+  // recuerda del acceso) sería él quien sirve js/supabase-client.js, y no el doble.
+  const page = await browser.newPage({ serviceWorkers: "block" });
   const errores = [];
   page.on("pageerror", (e) => errores.push(String(e)));
   await page.route("**/cdn.jsdelivr.net/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
@@ -452,6 +454,45 @@ async function pruebaControl(browser) {
     const { page } = await abrir(browser, "logros.html", base({ __error: "function mi_acceso() does not exist" }));
     await page.waitForTimeout(400);
     igual("si la consulta falla, NO se tapa (no se deja fuera a quien pagó)", await vis(page, "#acceso-aviso"), false);
+    await page.close();
+  }
+  {
+    /* Lo que se recuerda (ver «Lo que cada página pedía de nuevo» en
+       docs/decisiones/sitio-e-infraestructura.md): la pregunta iba en cada
+       página, unas 500 veces por hora en la hora pico en que la base se
+       saturó. Un «sí» vale 5 minutos en esta pestaña; un «no», nunca. */
+    const { page } = await abrir(browser, "logros.html", base({ vigente: true, motivo: "equipo" }));
+    await page.waitForTimeout(300);
+    igual("la primera página pregunta el acceso", (await rpcs(page, "mi_acceso")).length, 1);
+    await page.goto(BASE + "/logros.html", { waitUntil: "networkidle" });
+    await page.waitForTimeout(300);
+    igual("con un «sí», la página siguiente de la misma pestaña no vuelve a preguntar", (await rpcs(page, "mi_acceso")).length, 0);
+    igual("y deja AccesoVigente igual que si hubiera preguntado", await page.evaluate(() => window.AccesoVigente && window.AccesoVigente.vigente), true);
+    await page.evaluate(() => {
+      const g = JSON.parse(sessionStorage.getItem("acceso_vigente_v1"));
+      g.t = Date.now() - 6 * 60 * 1000;
+      sessionStorage.setItem("acceso_vigente_v1", JSON.stringify(g));
+    });
+    await page.goto(BASE + "/logros.html", { waitUntil: "networkidle" });
+    await page.waitForTimeout(300);
+    igual("pasados cinco minutos, vuelve a preguntar", (await rpcs(page, "mi_acceso")).length, 1);
+    await page.evaluate(() => {
+      const g = JSON.parse(sessionStorage.getItem("acceso_vigente_v1"));
+      g.uid = "otra-cuenta";
+      sessionStorage.setItem("acceso_vigente_v1", JSON.stringify(g));
+    });
+    await page.goto(BASE + "/logros.html", { waitUntil: "networkidle" });
+    await page.waitForTimeout(300);
+    igual("y el «sí» de otra cuenta no sirve", (await rpcs(page, "mi_acceso")).length, 1);
+    await page.close();
+  }
+  {
+    const { page } = await abrir(browser, "logros.html", base({ vigente: false, motivo: "vencido", exigido: true, hasta: "2026-09-01" }));
+    await page.waitForTimeout(300);
+    await page.goto(BASE + "/logros.html", { waitUntil: "networkidle" });
+    await page.waitForTimeout(300);
+    igual("un «no» no se recuerda: la página siguiente vuelve a preguntar (quien acaba de pagar entra enseguida)",
+      (await rpcs(page, "mi_acceso")).length, 1);
     await page.close();
   }
   {

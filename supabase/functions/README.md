@@ -49,6 +49,16 @@ de la bóveda y solo recibe el `id` del diagnóstico: a quién se le escribe y q
 dice sale de la fila. Con `verify_jwt` en true el trigger recibe un 401 y el
 supervisor simplemente no se entera, sin que nada falle a la vista.
 
+## `alerta-base` va con `verify_jwt` en **false**
+
+La llama `public.vigilar_base()` (pg_cron, cada cinco minutos) cuando la base
+está al límite, sin sesión de persona. A cambio exige el secreto
+`alerta_base_secreto` de la bóveda, y a quién le escribe (las cuentas con
+`is_admin`) lo lee de la base: el pedido solo trae los números medidos. Con
+`verify_jwt` en true la base recibe un 401 y el aviso no llega, sin que nada
+falle a la vista. Ver «El aviso de base saturada» en
+`docs/decisiones/sitio-e-infraestructura.md`.
+
 ## `prueba-gratis` va con `verify_jwt` en **true**, y solo para administración
 
 La prueba gratis se pide por WhatsApp y la crea quien administra desde

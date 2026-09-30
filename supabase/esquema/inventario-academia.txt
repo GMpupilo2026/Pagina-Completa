@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20260930013250
+# al-dia-con: 20260930040604
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -58,6 +58,7 @@ tabla  insignias  rls=true
 tabla  insignias_tipos  rls=true
 tabla  interno.clase_espectadores_ip  rls=true
 tabla  interno.envios_publicos  rls=true
+tabla  interno.salud_base  rls=true
 tabla  justificaciones_ausencia  rls=true
 tabla  notas_alumno  rls=true
 tabla  pagos  rls=true
@@ -206,6 +207,7 @@ columna  clase_enlaces.creado_at  timestamp with time zone
 columna  clase_enlaces.id  uuid
 columna  clase_enlaces.owner_id  uuid
 columna  clase_enlaces.token  text
+columna  clase_espectadores.adaptado  boolean
 columna  clase_espectadores.bloqueado_at  timestamp with time zone
 columna  clase_espectadores.enlace_id  uuid
 columna  clase_espectadores.entro_at  timestamp with time zone
@@ -587,6 +589,12 @@ columna  interno.envios_publicos.creado  timestamp with time zone
 columna  interno.envios_publicos.id  bigint
 columna  interno.envios_publicos.ip  text
 columna  interno.envios_publicos.tipo  text
+columna  interno.salud_base.aviso_enviado  boolean
+columna  interno.salud_base.cron_fallidos  integer
+columna  interno.salud_base.lenta  boolean
+columna  interno.salud_base.lentas  integer
+columna  interno.salud_base.medido_at  timestamp with time zone
+columna  interno.salud_base.pulso_ms  integer
 columna  justificaciones_ausencia.adjuntos  jsonb
 columna  justificaciones_ausencia.created_at  timestamp with time zone
 columna  justificaciones_ausencia.detalle  text
@@ -1047,11 +1055,13 @@ funcion  cambiar_rol(p_persona uuid, p_rol text)  definer  anon=false  auth=true
 funcion  cerrar_examen(p_examen uuid, p_motivo text)  definer  anon=false  auth=true
 funcion  cifras_academia()  definer  anon=true  auth=true
 funcion  clase_abierta_de(p_profesor uuid)  definer  anon=false  auth=true
+funcion  clase_enlace_adaptado(p_espectador uuid, p_adaptado boolean)  definer  anon=false  auth=true
 funcion  clase_enlace_apagar()  definer  anon=false  auth=true
 funcion  clase_enlace_obtener(p_nuevo boolean)  definer  anon=false  auth=true
 funcion  clase_enlace_sacar(p_espectador uuid)  definer  anon=false  auth=true
 funcion  clase_invitado_entrar(p_token text, p_nombre text, p_privacidad text)  definer  anon=true  auth=true
 funcion  clase_invitado_info(p_token text)  definer  anon=true  auth=true
+funcion  clase_invitado_modo(p_token text, p_secreto text, p_adaptado boolean)  definer  anon=true  auth=true
 funcion  clase_invitado_salio(p_token text, p_secreto text)  definer  anon=true  auth=true
 funcion  clase_invitado_ver(p_token text, p_secreto text)  definer  anon=true  auth=true
 funcion  cobros_morosos()  invoker  anon=true  auth=true
@@ -1145,6 +1155,7 @@ funcion  interno.academia_activa()  definer  anon=false  auth=true
 funcion  interno.academias_de(p_persona uuid)  definer  anon=false  auth=true
 funcion  interno.alumnos_de(p_profesor uuid)  definer  anon=false  auth=true
 funcion  interno.bajo_mi_coordinacion_conjunto()  definer  anon=false  auth=true
+funcion  interno.clases_donde_aparezco(p_desde timestamp with time zone)  definer  anon=false  auth=true
 funcion  interno.clases_que_coordino()  definer  anon=false  auth=true
 funcion  interno.clases_que_superviso()  definer  anon=false  auth=true
 funcion  interno.comparten_academia(p_a uuid, p_b uuid)  definer  anon=false  auth=true
@@ -1263,6 +1274,7 @@ funcion  retirar_justificacion(p_id uuid)  definer  anon=false  auth=true
 funcion  revisar_informe_mensual(p_id uuid, p_comentario text)  definer  anon=false  auth=true
 funcion  salida_de_la_clase(p_clase uuid)  invoker  anon=false  auth=true
 funcion  se_caen_del_plan(p_dias integer)  invoker  anon=false  auth=true
+funcion  secreto_alerta_base()  definer  anon=false  auth=false
 funcion  secreto_aviso_diagnostico()  definer  anon=false  auth=false
 funcion  secreto_tanda_cobros()  definer  anon=false  auth=false
 funcion  secreto_tanda_informes()  definer  anon=false  auth=false
@@ -1294,6 +1306,7 @@ funcion  tiempo_por_seccion(p_alumno uuid, p_desde timestamp with time zone, p_h
 funcion  trofeos_de(p_alumno uuid)  definer  anon=false  auth=true
 funcion  uuid_seguro(p_texto text)  invoker  anon=false  auth=true
 funcion  validar_marca_training_progress()  definer  anon=false  auth=false
+funcion  vigilar_base()  definer  anon=false  auth=false
 politica  Ejercicios Lichess  Ejercicios Lichess: lectura publica  SELECT
 politica  academia_ia  academia_ia_select  SELECT
 politica  academia_miembros  academia_miembros_select  SELECT
@@ -1797,6 +1810,7 @@ indice  interno.envios_publicos  envios_publicos_creado
 indice  interno.envios_publicos  envios_publicos_ip
 indice  interno.envios_publicos  envios_publicos_pkey
 indice  interno.envios_publicos  envios_publicos_tipo_ambito
+indice  interno.salud_base  salud_base_pkey
 indice  justificaciones_ausencia  justificaciones_ausencia_pkey
 indice  justificaciones_ausencia  justificaciones_por_fecha
 indice  justificaciones_ausencia  justificaciones_revisada_por_fk
@@ -1968,6 +1982,7 @@ cron  cobros-recordatorios-programados  */5 * * * *
 cron  informes-a-encargados  0 * * * *
 cron  limpiar-invitados-de-clase  20 7 * * *
 cron  recordar-informes-mensuales  0 14 * * *
+cron  vigilar-base  */5 * * * *
 grant  Ejercicios Lichess  anon  DELETE
 grant  Ejercicios Lichess  anon  INSERT
 grant  Ejercicios Lichess  anon  REFERENCES
