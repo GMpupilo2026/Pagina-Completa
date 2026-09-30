@@ -188,6 +188,10 @@ window.__consultas = [];
     informes_profesor: DATOS.informes_profesor || [],
     /* La visión que marcó administración (verificar-vision-cuenta.js). */
     vision_personas: DATOS.vision_personas || [],
+    // Lo que avisa la tarjeta de Competir: retos sin contestar y torneos de su profe.
+    desafios: DATOS.desafios || [],
+    tournaments: DATOS.tournaments || [],
+    tournament_registrations: DATOS.tournament_registrations || [],
   };
 
   window.sb = {
@@ -2767,6 +2771,163 @@ async function pruebaBaseLenta(browser) {
   await ctx.close();
 }
 
+/* Las seis de «qué más le falta al panel»: la próxima clase en la línea de la
+   clase en vivo, lo que más usa arriba, cuánto lleva en cada tarjeta, los
+   avisos de Competir, «Tu cuenta» en tarjetas chicas y la marca «Nuevo». */
+async function pruebaMasDelPanel(browser) {
+  console.log("\n=== Tu próxima clase ===");
+  const diaCR = (d) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Costa_Rica" }).format(d);
+  const manana = diaCR(new Date(Date.now() + 86400000));
+  // Las 4 p. m. de Costa Rica (UTC−6, sin horario de verano) son las 22:00 UTC.
+  const inicio = manana + "T22:00:00Z", fin = manana + "T23:30:00Z";
+  const LINEA = () => { const l = document.querySelector("[data-clase-compacta]"); return l ? l.textContent.replace(/\s+/g, " ").trim() : ""; };
+  let r = await panel(browser, [ALUMNA, PROFE], "u-ana", null,
+    { rpc: { mi_proxima_clase: [{ inicio, fin, titulo: "Finales", modalidad: "presencial", profesor: "Karina Rojas" }] } });
+  await r.page.waitForFunction(() => /próxima/.test((document.querySelector("[data-clase-compacta]") || {}).textContent || ""), null, { timeout: 10000 }).catch(() => {});
+  igual("sin clase abierta, la línea dice cuándo es la próxima", await r.page.evaluate(LINEA),
+    "🔒Sesión en vivo y videollamada: Tu próxima clase («Finales») es mañana a las 4:00 p. m., presencial");
+  igual("la pide a la base una vez, sin argumentos (la base sabe quién es)",
+    await r.page.evaluate(() => window.__consultas.filter((c) => c.tabla === "mi_proxima_clase").length), 1);
+  igual("sin errores en la página", r.errores, []);
+  await r.ctx.close();
+
+  const ya = new Date(Date.now() - 10 * 60000).toISOString(), luego = new Date(Date.now() + 50 * 60000).toISOString();
+  r = await panel(browser, [ALUMNA, PROFE], "u-ana", null,
+    { rpc: { mi_proxima_clase: [{ inicio: ya, fin: luego, titulo: null, modalidad: "en_linea", profesor: "Karina Rojas" }] } });
+  await r.page.waitForFunction(() => /ahora/.test((document.querySelector("[data-clase-compacta]") || {}).textContent || ""), null, { timeout: 10000 }).catch(() => {});
+  cierto("a la hora de la clase dice que es ahora y que se abre cuando el profe la empiece",
+    /Tu clase es ahora, hasta las .+, en línea\. Se abre cuando tu profe la empiece$/.test(await r.page.evaluate(LINEA)));
+  await r.ctx.close();
+
+  // Sin horario puesto la base no contesta nada, y la línea dice lo de siempre.
+  r = await panel(browser, [ALUMNA, PROFE], "u-ana", null, {});
+  await r.page.waitForTimeout(400);
+  igual("sin horario, la línea dice lo de siempre", await r.page.evaluate(LINEA),
+    "🔒Sesión en vivo y videollamada: Se abre cuando tu profe empiece la clase");
+  await r.ctx.close();
+
+  console.log("\n=== Lo que más usas, y cuánto llevas en cada tarjeta ===");
+  const SECCIONES = [
+    { seccion: "mates", minutos: 50, ejercicios: 120 },
+    { seccion: "diagnostico", minutos: 40, ejercicios: 1 },
+    { seccion: "curso:finales-practicos", minutos: 30, ejercicios: 0 },
+    { seccion: "temas", minutos: 20, ejercicios: 1 },
+    { seccion: "aprender", minutos: 10, ejercicios: 3 },
+    { seccion: "coordenadas", minutos: 8, ejercicios: 0 },
+    { seccion: "visualizacion", minutos: 2, ejercicios: 0 },
+  ];
+  r = await panel(browser, [ALUMNA, PROFE], "u-ana", null, { rpc: { tiempo_por_seccion: SECCIONES } });
+  await r.page.waitForFunction(() => !document.getElementById("mas-usado").hidden, null, { timeout: 10000 }).catch(() => {});
+  igual("arriba, las cuatro donde más tiempo pasó (el diagnóstico no es costumbre)",
+    await r.page.evaluate(() => Array.from(document.querySelectorAll("#mas-usado-lista a")).map((a) => a.getAttribute("href"))),
+    ["entreno/mates.html", "cursos/academia/index.html", "entreno/temas.html", "entreno/aprender.html"]);
+  igual("y se ven de verdad", await r.page.evaluate(() => document.getElementById("mas-usado").checkVisibility()), true);
+  igual("los pide a la base: desde siempre y los últimos 30 días, de ESTA alumna",
+    await r.page.evaluate(() => window.__consultas.filter((c) => c.tabla === "tiempo_por_seccion").map((c) => [c.args.p_alumno, !!c.args.p_desde])),
+    [["u-ana", false], ["u-ana", true]]);
+  const avance = (href) => r.page.evaluate((h) => { const a = document.querySelector('#tile-grid a[href="' + h + '"]'); const x = a && a.querySelector("[data-avance]"); return x ? x.textContent : null; }, href);
+  igual("en la tarjeta, cuánto lleva, con la unidad de Informes", await avance("entreno/mates.html"), "Llevas 120 mates");
+  igual("en singular cuando es uno", await avance("entreno/temas.html"), "Llevas 1 ejercicio");
+  igual("sin ejercicios contados, el tiempo", await avance("entreno/coordenadas.html"), "Llevas 8 min");
+  igual("con menos de 5 minutos y nada hecho, no dice nada", await avance("entreno/visualizacion.html"), null);
+  igual("los cursos no: eso lo dice «Sigue con tu curso»", await avance("cursos/academia/index.html"), null);
+  await buscar(r.page, "mates");
+  igual("mientras se busca, se hace a un lado", await r.page.evaluate(() => document.getElementById("mas-usado").checkVisibility()), false);
+  await buscar(r.page, "");
+  igual("sin errores en la página", r.errores, []);
+  await r.ctx.close();
+
+  r = await panel(browser, [ALUMNA, PROFE], "u-ana", null, { rpc: { tiempo_por_seccion: [{ seccion: "mates", minutos: 50, ejercicios: 12 }] } });
+  await r.page.waitForTimeout(600);
+  igual("con una sola, no hay «lo que más usas»", await r.page.evaluate(() => document.getElementById("mas-usado").checkVisibility()), false);
+  await r.ctx.close();
+
+  console.log("\n=== Competir avisa lo que lo espera ===");
+  const ahora = new Date().toISOString(), hace5 = new Date(Date.now() - 5 * 86400000).toISOString();
+  const chips = (page) => page.evaluate(() => { const a = document.querySelector('#tile-grid a[href="competir.html"]');
+    return Array.from(a.querySelectorAll("[data-competir]")).map((x) => x.textContent); });
+  r = await panel(browser, [ALUMNA, PROFE], "u-ana", null, {
+    desafios: [
+      { id: "d1", de_id: "u-bruno", para_id: "u-ana", estado: "pendiente", created_at: ahora },
+      { id: "d2", de_id: "u-bruno", para_id: "u-ana", estado: "pendiente", created_at: hace5 },
+      { id: "d3", de_id: "u-bruno", para_id: "u-ana", estado: "rechazado", created_at: ahora },
+      { id: "d4", de_id: "u-bruno", para_id: "u-otro", estado: "pendiente", created_at: ahora },
+    ],
+    tournaments: [{ id: "t1", name: "Relámpago de octubre", status: "registration", created_at: ahora },
+                  { id: "t0", name: "Viejo", status: "registration", created_at: hace5.replace(/^\d{4}/, (y) => String(Number(y) - 1)) }],
+  });
+  await r.page.waitForFunction(() => document.querySelectorAll('#tile-grid a[href="competir.html"] [data-competir]').length > 1, null, { timeout: 10000 }).catch(() => {});
+  igual("dice los retos sin contestar de los últimos dos días, y el torneo abierto", await chips(r.page),
+    ["Te retaron: 1 reto sin contestar", "Inscripción abierta: «Relámpago de octubre»"]);
+  igual("los retos se CUENTAN, sin traer filas", await r.page.evaluate(() => window.__consultas.filter((c) => c.tabla === "desafios").map((c) => [!!c.count, !!c.head])), [[true, true]]);
+  igual("con un reto, la tarjeta se ilumina", await r.page.evaluate(() => document.querySelector('#tile-grid a[href="competir.html"]').classList.contains("ring-accent-500")), true);
+  await r.ctx.close();
+
+  r = await panel(browser, [ALUMNA, PROFE], "u-ana", null, {
+    tournaments: [{ id: "t1", name: "Relámpago", status: "in_progress", created_at: ahora }],
+    tournament_registrations: [{ tournament_id: "t1", player_id: "u-ana" }],
+  });
+  await r.page.waitForFunction(() => document.querySelector('#tile-grid a[href="competir.html"] [data-competir]'), null, { timeout: 10000 }).catch(() => {});
+  igual("si juega un torneo en curso, lo dice (y sin retos no se ilumina)",
+    [await chips(r.page), await r.page.evaluate(() => document.querySelector('#tile-grid a[href="competir.html"]').classList.contains("ring-accent-500"))],
+    [["Juegas «Relámpago»: va en curso"], false]);
+  await r.ctx.close();
+
+  r = await panel(browser, [ALUMNA, PROFE], "u-ana", null, {
+    tournaments: [{ id: "t1", name: "Relámpago", status: "in_progress", created_at: ahora }],
+  });
+  await r.page.waitForTimeout(600);
+  igual("un torneo en curso en el que no juega no se le anuncia", await chips(r.page), []);
+  await r.ctx.close();
+
+  console.log("\n=== «Tu cuenta», en tarjetas chicas ===");
+  const cuenta = (page) => page.evaluate(() => {
+    const s = Array.from(document.querySelectorAll("#tile-grid > section")).find((x) => x.querySelector("h2").textContent === "Tu cuenta");
+    const as = Array.from(s.querySelectorAll(".grid > *"));
+    const cols = new Set(as.map((a) => Math.round(a.getBoundingClientRect().left))).size;
+    return { cols, desc: as.map((a) => a.querySelectorAll("span > span")[1].checkVisibility()), alto: Math.round(s.getBoundingClientRect().height), n: as.length };
+  });
+  r = await panel(browser, [ALUMNA, PROFE], "u-ana", { viewport: { width: 390, height: 800 } }, datosAlumna(false));
+  let c = await cuenta(r.page);
+  igual("en el celular van de a dos por fila", c.cols, 2);
+  igual("y sin la descripción, que el nombre ya dice a dónde lleva", c.desc.every((v) => !v), true);
+  cierto("el grupo entero mide menos de 300 px (" + c.alto + " px, con " + c.n + " tarjetas)", c.alto < 300);
+  await r.ctx.close();
+  r = await panel(browser, [ALUMNA, PROFE], "u-ana", null, datosAlumna(false));
+  c = await cuenta(r.page);
+  igual("en la computadora la descripción sí se ve", c.desc.every(Boolean), true);
+  await r.ctx.close();
+  r = await panel(browser, [PROFE], "u-profe", null, {});
+  igual("a quien da clase no le cambia: sus tarjetas siguen grandes",
+    await r.page.evaluate(() => { const a = document.querySelector('#tile-grid a[href="configuracion.html"]'); return a.classList.contains("p-5"); }), true);
+  await r.ctx.close();
+
+  console.log("\n=== La marca «Nuevo» ===");
+  const contenido = require("../data/contenido-panel.json");
+  r = await panel(browser, [ALUMNA, PROFE], "u-ana", null, {});
+  await r.page.waitForFunction(() => localStorage.getItem("panel_contenido_visto_v1"), null, { timeout: 10000 }).catch(() => {});
+  igual("la primera vez no marca nada (todo sería nuevo)", await r.page.evaluate(() => document.querySelectorAll("[data-nuevo]").length), 0);
+  igual("y recuerda lo que había", await r.page.evaluate(() => Object.keys(JSON.parse(localStorage.getItem("panel_contenido_visto_v1") || "{}")).length), Object.keys(contenido).length);
+  await r.ctx.close();
+
+  const visto = JSON.parse(JSON.stringify(contenido));
+  visto["articulos.html"] = visto["articulos.html"].slice(1);
+  visto["entreno/estudio.html?cat=tactica"] = visto["entreno/estudio.html?cat=tactica"].slice(2);
+  r = await panel(browser, [ALUMNA, PROFE], "u-ana", null, { local: { panel_contenido_visto_v1: JSON.stringify(visto) } });
+  await r.page.waitForFunction(() => document.querySelectorAll("[data-nuevo]").length >= 2, null, { timeout: 10000 }).catch(() => {});
+  igual("marca «Nuevo» donde hay algo que no estaba, y cuántos",
+    await r.page.evaluate(() => Array.from(document.querySelectorAll("[data-nuevo]")).map((x) => [x.closest("a").getAttribute("href"), x.textContent])),
+    [["entreno/estudio.html?cat=tactica", "Nuevo (2)"], ["articulos.html", "Nuevo"]]);
+  /* Sin irse de la página: lo que la prueba dejó guardado se vuelve a poner en
+     cada página que abre este contexto, y en articulos.html pisaría lo que se
+     acaba de guardar. El nuestro se agrega después, así que corre después. */
+  await r.page.evaluate(() => document.querySelector('#tile-grid a[href="articulos.html"]').addEventListener("click", (e) => e.preventDefault()));
+  await r.page.click('#tile-grid a[href="articulos.html"]');
+  igual("al abrir la tarjeta, deja de ser nuevo (en este aparato)",
+    await r.page.evaluate(() => JSON.parse(localStorage.getItem("panel_contenido_visto_v1"))["articulos.html"].length), contenido["articulos.html"].length);
+  await r.ctx.close();
+}
+
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
@@ -2783,6 +2944,7 @@ async function pruebaBaseLenta(browser) {
     await pruebaHoyEnElPanel(browser);
     await pruebaPlegables(browser);
     await pruebaLoQueHaceFalta(browser);
+    await pruebaMasDelPanel(browser);
     await pruebaBaseLenta(browser);
     await pruebaSemanaProfesora(browser);
     await pruebaProfesora(browser);
