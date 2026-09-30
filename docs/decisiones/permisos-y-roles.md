@@ -1940,7 +1940,7 @@ esa fila. Está probado que falla de verdad: contra el archivo de antes,
 Desde `20260930172140_foto_de_perfil`, cada persona puede subir su foto en
 **Configuración › Perfil**, y se ve donde antes iba la inicial de su nombre: el
 avatar del panel (`clases.html`, también con «Ver como»), la lista de la burbuja
-de conectados, la tabla de cuentas de `admin.html` y la clase en vivo (ver
+de conectados, la tabla de cuentas de `admin.html`, la clase en vivo e Informes (ver
 abajo). El módulo es uno solo,
 `js/foto-perfil.js` (`FotoPerfil.subir`, `quitar`, `url`, `urls`, `pintar`).
 
@@ -2030,6 +2030,20 @@ y el podio.
 - Un compañero ve la foto porque la RLS de `profiles` ya le deja ver a sus
   compañeros de la misma academia. Un invitado sin cuenta
   (`clase-invitados.js`) no ve ningún perfil: le sale la inicial.
+
+### En Informes
+
+`informes.html` pone la foto al lado de cada nombre del índice «👥 Tus
+alumnos», y arriba del informe de UN alumno (`#informe-persona`: foto, nombre y
+grupo), tanto para quien lo mira como para el propio alumno en el suyo. Al
+volver a «Todos los alumnos» esa cabecera se va (`hideAllReportPanels`).
+Lo prueba `pruebaFotos` de `verificar-informes.js`.
+
+**El informe que llega a la casa por correo NO lleva la foto**, a propósito:
+la dirección firmada vence en una hora (el correo se lee días después), una
+dirección que no venza sería un enlace a la foto de un menor que viaja fuera de
+la plataforma, y Gmail no muestra imágenes pegadas en `data:`. Si algún día se
+quiere, tendría que ir como adjunto dentro del correo, con su decisión aparte.
 
 `verificar-foto-perfil.js` lo prueba en el navegador: sin la casilla no se
 sube; lo que se sube es un JPEG de 320×320 en la carpeta propia; se guarda con
