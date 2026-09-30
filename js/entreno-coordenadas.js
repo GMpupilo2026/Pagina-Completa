@@ -365,10 +365,14 @@ function tick(){
 function startRound(){
   score = 0; misses = 0; streak = 0; bestStreak = 0;
   reactionTimes = [];
-  timeLeft = ROUND_SECONDS;
+  /* En Modo Adaptado, el triple: la casilla se OYE y la respuesta se
+     escribe, y eso lleva más que tocarla con el dedo. Mismo criterio que
+     Elige a tiempo y Fotografía. */
+  const factor = blindMode ? 3 : 1;
+  timeLeft = ROUND_SECONDS * factor;
   currentTarget = null;
   playing = true;
-  perSquareLimit = MODES[modeSetting].perSquareLimit;
+  perSquareLimit = MODES[modeSetting].perSquareLimit ? MODES[modeSetting].perSquareLimit * factor : null;
   roundOrientation = orientationSetting === 'random'
     ? (Math.random() < 0.5 ? 'white' : 'black')
     : orientationSetting;

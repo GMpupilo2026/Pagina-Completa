@@ -196,7 +196,12 @@ window.VisionCuenta = (function () {
       return visible(h) && h.textContent.trim() && !h.closest("#accesos-rapidos");
     });
   }
-  function textoDe(el) { return el.textContent.replace(/\s+/g, " ").trim(); }
+  // Lo que se lee, sin lo que es adorno (los emojis van en aria-hidden).
+  function textoDe(el) {
+    var copia = el.cloneNode(true);
+    Array.prototype.forEach.call(copia.querySelectorAll('[aria-hidden="true"]'), function (x) { x.remove(); });
+    return copia.textContent.replace(/\s+/g, " ").trim();
+  }
 
   function dondeEstas() {
     var hs = secciones();
@@ -244,7 +249,13 @@ window.VisionCuenta = (function () {
       return;
     }
     if (que === "comandos") {
-      var campo = Array.prototype.slice.call(document.querySelectorAll(".cc-input, #blind-input, [data-cuadro-comandos] input")).filter(visible)[0];
+      /* Todos los recuadros donde se escribe la jugada del sitio: el común
+         (.cc-input) y los propios de Tablero, Juegos, Sonar, Batalla naval,
+         4×4, Visualización, Tipos y los cursos. Si hay un diálogo abierto (la
+         pregunta de la clase), primero el suyo. */
+      var SEL = ".cc-input, #blind-input, #move-input, #cmd-input, #blind-move-input, #answer-input, #jugada-input, .f100-cmd-input, .cp-cmd-input, [data-cuadro-comandos] input";
+      var campos = Array.prototype.slice.call(document.querySelectorAll(SEL)).filter(function (c) { return visible(c) && !c.disabled; });
+      var campo = campos.filter(function (c) { return c.closest("dialog[open], [role=dialog]:not([hidden]), [role=alertdialog]:not([hidden])"); })[0] || campos[0];
       if (!campo || !enfocar(campo)) anunciar("En esta página no hay un recuadro para escribir la jugada.");
     }
   }

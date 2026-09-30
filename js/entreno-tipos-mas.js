@@ -96,7 +96,8 @@
       "Toca la pieza y la casilla (no se mueve nada: solo se anota) o escribe cada jugada." + (item.pide.includes("amenazas") ? " Amenaza: una jugada sin jaque ni captura que ataca algo sin defensa, o que vale más que la pieza que lo ataca." : "")));
     $("controles").appendChild(lista);
     pintarLista();
-    let quedan = item.nivel === 4 ? 90 : 0;
+    // Nivel 4 con reloj; en Modo Adaptado, el triple (como Elige a tiempo).
+    let quedan = item.nivel === 4 ? (U.adaptado() ? 270 : 90) : 0;
     const cuenta = el("p", "text-sm font-semibold text-brand-700 dark:text-brand-200 mb-2");
     if (quedan) {
       cuenta.textContent = "Te quedan " + quedan + " s.";

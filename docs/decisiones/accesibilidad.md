@@ -731,9 +731,29 @@ plataforma se acomoda sola en todas las páginas de esa persona.
      solo mueven el foco, nunca cambian de página: salir de la clase cierra la
      asistencia y salir del examen lo congela (la misma excepción que
      `js/atajo-buscar.js`).
-- **Se aplica UNA vez por marca** (`ai_vision_aplicada_v1`): si después la
-  persona apaga la voz o el Modo Adaptado, se respeta. La clase `modo-ciego`,
-  en cambio, sigue a la marca: la quita solo administración.
+- **La voz se enciende UNA vez por marca** (`ai_vision_aplicada_v1`): si
+  después la persona la apaga, se respeta. **El Modo Adaptado, en cambio, es
+  fijo con la cuenta ciega**: sin él los tableros no traen su recuadro de
+  comandos, y quien no ve no tiene cómo notar que se apagó (se apagaba con el
+  🦯 del encabezado o con el «🔊 Adaptado» de una página, sin querer).
+  `AdaptiveMode.set(false)` no apaga con `modo-ciego` puesto: dice «Tu cuenta
+  tiene el modo adaptado fijo» y dispara `adaptivemode:change` con `activo:
+  true`, que devuelve cada interruptor propio a «activado». En el `<head>`,
+  con la marca guardada, la preferencia se escribe ANTES de que corran los
+  scripts de la página, que la leen al cargar. La clase y el modo los quita
+  solo administración.
+- **Más atajos para orientarse** (también Alt + Mayúscula): **D** dice dónde
+  estás —el título de la página sin sus emojis, el camino de las migas, sus
+  secciones y si hay tablero—, **S** salta al título de la siguiente sección
+  y **A** vuelve a la página anterior (salvo en la clase y el examen). C busca
+  TODOS los recuadros del sitio (el común y los propios de Tablero, Juegos,
+  Sonar, 4×4, Visualización, Tipos y los cursos), primero el de un diálogo
+  abierto. La nota del panel adaptado va en su propio párrafo
+  (`#panel-adaptado-nota`): el subtítulo lo reescribe después la racha del día.
+- **Competir** a quien no ve le ofrece retar solo en Estándar y Niebla (las que
+  se juegan escribiendo); un reto que le llega en otra modalidad no trae
+  «Aceptar»: dice que no está adaptada. Los retos que llegan están en una
+  región viva y cada «Retar» dice a quién.
 
 **Al tocar `js/vision-cuenta.js`, el panel adaptado o la columna de admin,
 correr `node herramientas/verificar-todo.js vision-cuenta panel admin`.**
@@ -745,3 +765,68 @@ tarde), la base mandando sobre lo guardado, la baja visión (la voz encendida
 una vez, y respetada si la apaga), Juegos, una página no adaptada y el selector
 de admin. Está probado que falla de verdad: sin montar el modo en las páginas y
 sin el panel adaptado saltan 9 comprobaciones.
+
+## Todos los tableros, sin verlos
+
+Con las cuentas ciegas marcadas se revisó UNO por UNO cada tablero al que
+llega un alumno desde su panel adaptado: cómo se entera de la posición, cómo
+contesta sin ratón y si puede preguntarle al tablero. Lo que faltaba, y cómo
+quedó:
+
+- **Examen** (`examen.html`): era el peor. No tenía recuadro, la posición no
+  estaba escrita en ninguna parte y la jugada se marcaba casilla por casilla.
+  Ahora todo se contesta en el recuadro común: la letra de la opción, la
+  casilla («eva 4» o «e4»), la jugada («Cf3», «enroque corto») y
+  **«responder»** para entregarla; «repetir» vuelve a decir la pregunta. La
+  pregunta nueva se dice sola con sus opciones. `TableroPregunta.escribir()`
+  resuelve lo escrito con la misma puerta que el clic. Las opciones llevan
+  `aria-pressed`, y en la línea de apertura se dice lo que jugó el rival.
+  - **El tablero bloqueado ya no es `disabled`** (examen y diagnóstico): un
+    botón deshabilitado no recibe el foco, y el tablero de una pregunta de
+    opción —justo el que hay que mirar— no se podía recorrer. Va con
+    `aria-disabled`.
+  - **En Modo Adaptado el `blur` de la ventana no cuenta como salida.** El
+    lector abre sus propias ventanas (la lista de encabezados de NVDA, el
+    rotor, un menú de JAWS) y cada una le quita el foco a la página: a la
+    tercera se le congelaba el examen a quien no ve. Cambiar de pestaña o de
+    aplicación sigue contando (`visibilitychange`).
+- **`TableroAccesible.montar()` sobre un tablero ya montado pone la
+  configuración nueva encima** (`__tableroAccesibleCfg`). Devolvía el api con
+  la del primer montaje, y en el examen, desde la segunda pregunta, **las
+  casillas decían lo que había en la pregunta anterior** —sin ningún error y
+  con el tablero viéndose bien—. `verificar-examenes.js` lo mira en la
+  tercera pregunta (cesar 4 vacía en la segunda, con un alfil en la tercera).
+- **Tipos de entrenamiento**: en Modo Adaptado el recuadro está SIEMPRE, también
+  en los que se contestan con botones (Detective, Descarte, Balanza,
+  Intercambios…), para preguntar por la posición; la posición escrita debajo
+  del tablero sigue a la partida (antes contaba la del principio en los que se
+  juegan); con las piezas tapadas las casillas dicen «oculta» y no «vacía»; la
+  apertura sin tablero no regala la posición; Fotografía y el Barrido de nivel
+  4 tienen el triple de tiempo, como Elige a tiempo.
+- **Memoria**: recuadro de preguntas (mientras se mira, sobre la posición;
+  mientras se reconstruye, sobre lo colocado), y «ya la tengo» se escribe.
+- **Visualización**: `tablero-accesible.js` se cargaba y nunca se montaba; ahora
+  se recorre y contesta sobre la posición que enseña. La respuesta del rival
+  se dice en palabras (la bitácora ya no es región viva: se reescribía entera
+  y en notación inglesa).
+- **Precisión posicional**: el tablero estaba en un `aria-hidden` (no existía
+  para el lector); ahora se recorre, y elegir una opción devuelve el foco a esa
+  opción en vez de perderlo.
+- **Diagnóstico**: una pregunta sin tablero contestaba «caballos» con el
+  tablero de la ANTERIOR; «Anotado» dice la jugada en palabras.
+- **Coordenadas**: en Modo Adaptado, el triple de tiempo por ronda y por
+  casilla.
+- **Preguntas nuevas del recuadro** (`js/comandos-tablero.js`, valen en todo el
+  sitio): «qué ataca e4», «quién ataca e4», «quién defiende e4», «última
+  jugada» e «historial». Se calculan con la geometría de cada pieza sobre
+  `get()` y no con las jugadas legales: una pieza clavada igual defiende, y a
+  una pieza propia no se la "captura". Con niebla, «última jugada» e
+  «historial» no se contestan ahí (la jugada del rival no se ve). Las mira
+  `verificar-preguntas-tablero.js`, sin navegador.
+
+**Al tocar un tablero, correr** `node herramientas/verificar-todo.js
+entreno-accesible examenes cuadro-comandos preguntas-tablero vision-cuenta`.
+`verificar-entreno-accesible.js` suma Precisión posicional, Visualización y
+Memoria a `CON_TABLERO`; Visualización salta la prueba del recuadro común
+porque contesta en el suyo (`sinRecuadroComun`).
+

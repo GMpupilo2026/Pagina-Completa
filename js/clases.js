@@ -2871,9 +2871,18 @@
             textosDelEquipoDocente();
             if (ciego) {
                 armarPanelAdaptado();
-                document.getElementById("panel-subtitulo").textContent = profile._persona
+                /* En un párrafo propio, debajo del subtítulo: el subtítulo lo
+                   reescribe después la racha del día (pintarSaludoAlumno). */
+                let nota = document.getElementById("panel-adaptado-nota");
+                if (!nota) {
+                    nota = document.createElement("p");
+                    nota.id = "panel-adaptado-nota";
+                    nota.className = "text-brand-600 dark:text-brand-300 text-sm mt-1";
+                    document.getElementById("panel-subtitulo").after(nota);
+                }
+                nota.textContent = profile._persona
                     ? "Su panel adaptado: está marcado como ciego, así que ve solo lo que se usa con lector de pantalla."
-                    : "Tu panel adaptado: solo lo que se usa con lector de pantalla. Alt + Mayúscula + H dice los atajos del teclado.";
+                    : "Tu panel adaptado: solo lo que se usa con lector de pantalla. Alt + Mayúscula + D dice dónde estás y Alt + Mayúscula + H, todos los atajos.";
             } else {
                 ordenarPanelDocente();
             }

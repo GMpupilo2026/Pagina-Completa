@@ -205,10 +205,17 @@
             return !!otro && !!otro.id && otro.id !== profile.id;
         }
 
+        const MODALIDADES_ADAPTADAS = ["estandar", "niebla"];
+
         function prepararSelectoresDeReto() {
             const mod = document.getElementById("reto-modalidad");
             mod.innerHTML = "";
-            VARIANTS.filter((v) => !v.disabled && v.id.indexOf("4") !== 0).forEach((v) => {
+            /* A quien no ve (cuenta marcada como ciega, js/vision-cuenta.js)
+               solo se le ofrecen las modalidades que se juegan escribiendo la
+               jugada: retar a Crazyhouse lo mandaría a un tablero que no puede
+               usar. */
+            const ciego = document.documentElement.classList.contains("modo-ciego");
+            VARIANTS.filter((v) => !v.disabled && v.id.indexOf("4") !== 0 && (!ciego || MODALIDADES_ADAPTADAS.includes(v.id))).forEach((v) => {
                 const o = document.createElement("option");
                 o.value = v.id; o.textContent = v.emoji + " " + v.label;
                 mod.appendChild(o);
@@ -275,6 +282,8 @@
                 boton.dataset.retar = p.id;
                 boton.className = "bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-1.5 rounded-lg text-sm transition-colors";
                 boton.textContent = "Retar";
+                // Diez botones «Retar» seguidos no dicen a quién: el nombre va en el accesible.
+                boton.setAttribute("aria-label", "Retar a " + p.nombre);
                 boton.addEventListener("click", () => retar(p, boton));
                 fila.append(quien, boton);
                 lista.appendChild(fila);
@@ -375,6 +384,17 @@
                 '</div>';
             caja.querySelector("[data-aceptar]").addEventListener("click", () => aceptar(reto, caja));
             caja.querySelector("[data-rechazar]").addEventListener("click", () => rechazar(reto, caja));
+            /* Un reto a una modalidad que no se puede jugar sin ver: a quien no
+               ve no se le ofrece aceptarlo (lo llevaría a un tablero que no
+               puede usar); se le dice y puede contestar «Ahora no». */
+            const ciego = document.documentElement.classList.contains("modo-ciego");
+            if (ciego && !MODALIDADES_ADAPTADAS.includes(reto.modalidad)) {
+                caja.querySelector("[data-aceptar]").remove();
+                const nota = document.createElement("p");
+                nota.className = "text-sm text-brand-600 dark:text-brand-300 mb-2";
+                nota.textContent = "Esta modalidad todavía no está adaptada para jugar sin ver. Puedes pedirle una de ajedrez estándar o de niebla de guerra.";
+                caja.insertBefore(nota, caja.querySelector("div.flex"));
+            }
             document.getElementById("retos-recibidos").appendChild(caja);
         }
 

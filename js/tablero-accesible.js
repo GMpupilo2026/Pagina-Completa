@@ -94,8 +94,21 @@ window.TableroAccesible = (function () {
 
   function montar(tablero, cfg) {
     if (!tablero) return null;
-    if (tablero.__tableroAccesible) return tablero.__tableroAccesible;
-    cfg = cfg || {};
+    /* Montar de nuevo el MISMO tablero pone la configuración nueva encima de la
+       vieja. Hay páginas que montan con cada posición (el examen, con cada
+       pregunta: `juego` es una función de ESA pregunta), y devolver el api con
+       la configuración de la primera dejaba a las casillas diciendo lo que había
+       en la posición anterior — sin ningún error, y con el tablero viéndose
+       bien. */
+    if (tablero.__tableroAccesible) {
+      if (cfg && tablero.__tableroAccesibleCfg) {
+        Object.assign(tablero.__tableroAccesibleCfg, cfg);
+        try { tablero.__tableroAccesible.refrescar(); } catch (e) {}
+      }
+      return tablero.__tableroAccesible;
+    }
+    cfg = Object.assign({}, cfg || {});
+    tablero.__tableroAccesibleCfg = cfg;
     asegurarEstilo();
 
     var voz = document.createElement("p");

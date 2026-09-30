@@ -143,6 +143,18 @@ const CON_TABLERO = [
   { nombre: "Estudio", ruta: "/entreno/estudio.html", sel: "#tablero", antes: async (p) => {
       await p.click(".ficha-item", { timeout: 4000 }).catch(() => {});
     } },
+  /* Precisión posicional tenía el tablero dentro de un aria-hidden y
+     Visualización cargaba js/tablero-accesible.js sin montarlo nunca: para el
+     lector de pantalla, en las dos, el tablero no existía o era una imagen. */
+  { nombre: "Precisión posicional", ruta: "/entreno/precision-posicional.html", sel: "#q-board", antes: async (p) => {
+      await p.click("#start-btn", { timeout: 4000 }).catch(() => {});
+    } },
+  // Visualización contesta en su propio formulario (#answer-form), no en el recuadro común.
+  { nombre: "Visualización", ruta: "/entreno/visualizacion.html", sel: "#board", sinRecuadroComun: true, antes: async (p) => {
+      await p.click("[data-nivel]", { timeout: 4000 }).catch(() => {});
+    } },
+  // Memoria no tenía recuadro: mientras se mira no había cómo preguntarle al tablero.
+  { nombre: "Memoria", ruta: "/entreno/memoria.html?piezas=6&segundos=60", sel: "#tablero" },
 ];
 
 async function pruebaTableros(browser) {
@@ -213,6 +225,7 @@ async function pruebaRecuadro(browser) {
   console.log("\n=== El recuadro contesta preguntas y jugadas ===");
   for (const caso of CON_TABLERO) {
     if (caso.nombre === "Coordenadas") continue;   // su Modo Adaptado cambia el ejercicio entero
+    if (caso.sinRecuadroComun) continue;
     const { page, ctx } = await abrir(browser, caso.ruta, true);
     if (caso.antes) { await caso.antes(page); await page.waitForTimeout(500); }
     const visible = await page.evaluate(() => {

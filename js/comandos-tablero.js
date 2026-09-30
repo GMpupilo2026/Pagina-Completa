@@ -16,6 +16,11 @@
  *     alrededor de e4     las vecinas que tienen algo
  *     fila 4 / columna e  lo que hay en esa línea
  *     ir a e4             lleva el foco del teclado a esa casilla del tablero
+ *     qué ataca e4        a qué piezas apunta la pieza de esa casilla
+ *     quién ataca e4      qué piezas rivales le apuntan a esa casilla
+ *     quién defiende e4   qué piezas propias la cuidan
+ *     última jugada       la última jugada de la partida
+ *     historial           todas las jugadas de la partida
  *     ayuda               esta lista
  *
  * Está escrito UNA vez, acá, y no dentro de cada ejercicio: son diez páginas, y
@@ -69,7 +74,7 @@ window.ComandosTablero = (function () {
   function dicha(p) {
     if (!p) return "";
     if (TA.piezaDicha) return TA.piezaDicha(p);
-    return NOMBRE[p.type] + (p.color === "w" ? " blanco" : " negro");
+    return NOMBRE[p.type] + (p.color === "w" ? (FEMENINA[p.type] ? " blanca" : " blanco") : (FEMENINA[p.type] ? " negra" : " negro"));
   }
   function lista(xs) {
     if (TA.listaEspanola) return TA.listaEspanola(xs);
@@ -100,7 +105,9 @@ window.ComandosTablero = (function () {
       texto: "posición (todo lo que hay); caballos, torres, mi rey… (dónde está esa pieza); " +
         "\"qué hay en e4\" (una casilla); \"jugadas de f3\" (a dónde puede ir esa pieza); " +
         "\"alrededor de e4\" (sus vecinas); \"fila 4\" o \"columna e\"; \"ir a e4\" (lleva el foco " +
-        "del teclado a esa casilla); turno (a quién le toca); ayuda (esta lista).",
+        "del teclado a esa casilla); \"qué ataca e4\" (a qué piezas apunta); \"quién ataca e4\" y " +
+        "\"quién defiende e4\" (quién le apunta a esa casilla); \"última jugada\"; historial (las jugadas " +
+        "de la partida); turno (a quién le toca); ayuda (esta lista).",
     },
     {
       titulo: "Moverse por el tablero con el teclado",
@@ -221,6 +228,131 @@ window.ComandosTablero = (function () {
     return (partes.length
       ? "Alrededor de " + hablada(sq) + " — " + partes.join("; ") + "."
       : "Alrededor de " + hablada(sq) + " no hay ninguna pieza a la vista.") + niebla;
+  }
+
+  /* ------------------------------------------------ quién le apunta a quién
+     Lo que un tablero dice de un vistazo —esa torre está clavada, ese peón no
+     tiene quien lo cuide— y que casilla por casilla no se ve nunca: hay que
+     preguntarlo. Se calcula con la geometría de cada pieza sobre lo que dice
+     `get()`, no con las jugadas legales: una pieza clavada igual DEFIENDE, y la
+     que defiende a una propia no tiene una "jugada" para capturarla. Así vale
+     también para los tableros que no son una partida (Memoria, Estudio). */
+  var SALTOS = {
+    n: [[1, 2], [2, 1], [2, -1], [1, -2], [-1, -2], [-2, -1], [-2, 1], [-1, 2]],
+    k: [[1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]],
+  };
+  var RAYOS = {
+    r: [[1, 0], [-1, 0], [0, 1], [0, -1]],
+    b: [[1, 1], [1, -1], [-1, 1], [-1, -1]],
+    q: [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]],
+  };
+  function casillaEn(f, r) { return f < 0 || f > 7 || r < 1 || r > 8 ? null : "abcdefgh"[f] + r; }
+  function piezaEn(juego, sq) {
+    if (tapada(juego, sq)) return null;
+    try { return juego.get(sq); } catch (e) { return null; }
+  }
+  // Las casillas a las que apunta la pieza `p` puesta en `sq`.
+  function apuntaA(juego, sq, p) {
+    var f = sq.charCodeAt(0) - 97, r = parseInt(sq[1], 10), out = [];
+    if (p.type === "p") {
+      var d = p.color === "w" ? 1 : -1;
+      [casillaEn(f - 1, r + d), casillaEn(f + 1, r + d)].forEach(function (c) { if (c) out.push(c); });
+      return out;
+    }
+    if (SALTOS[p.type]) {
+      SALTOS[p.type].forEach(function (s) { var c = casillaEn(f + s[0], r + s[1]); if (c) out.push(c); });
+      return out;
+    }
+    (RAYOS[p.type] || []).forEach(function (s) {
+      for (var i = 1; i < 8; i++) {
+        var c = casillaEn(f + s[0] * i, r + s[1] * i);
+        if (!c) break;
+        out.push(c);
+        if (tapada(juego, c) || piezaEn(juego, c)) break;   // lo que hay (o no se ve) corta la línea
+      }
+    });
+    return out;
+  }
+  function todasLasPiezas(juego) {
+    var out = [];
+    "abcdefgh".split("").forEach(function (f) {
+      for (var r = 1; r <= 8; r++) {
+        var sq = f + r, p = piezaEn(juego, sq);
+        if (p) out.push({ sq: sq, p: p });
+      }
+    });
+    return out;
+  }
+  function quienesApuntan(juego, sq, color) {
+    return todasLasPiezas(juego).filter(function (x) {
+      return x.sq !== sq && x.p.color === color && apuntaA(juego, x.sq, x.p).indexOf(sq) >= 0;
+    });
+  }
+  function nombrarTodas(xs) {
+    return lista(xs.map(function (x) { return dicha(x.p) + " en " + hablada(x.sq); }));
+  }
+
+  function queAtaca(juego, sq) {
+    if (tapada(juego, sq)) return hablada(sq) + " está cubierta por la niebla: no sabes qué hay ahí.";
+    var p = piezaEn(juego, sq);
+    if (!p) return hablada(sq) + " está vacía: no hay pieza que ataque.";
+    var blancos = apuntaA(juego, sq, p).map(function (c) { return { sq: c, p: piezaEn(juego, c) }; })
+      .filter(function (x) { return x.p; });
+    var rivales = blancos.filter(function (x) { return x.p.color !== p.color; });
+    var propias = blancos.filter(function (x) { return x.p.color === p.color; });
+    var frase = dicha(p) + " en " + hablada(sq) + " " + (rivales.length ? "ataca a " + nombrarTodas(rivales) : "no ataca ninguna pieza rival");
+    frase += propias.length ? "; y defiende a " + nombrarTodas(propias) + "." : ".";
+    return frase + soloLoQueVes(juego);
+  }
+
+  function quienAtaca(juego, sq, defender) {
+    if (tapada(juego, sq)) return hablada(sq) + " está cubierta por la niebla.";
+    var p = piezaEn(juego, sq);
+    if (!p) {
+      var bl = quienesApuntan(juego, sq, "w"), ng = quienesApuntan(juego, sq, "b");
+      return hablada(sq) + " está vacía. " +
+        (bl.length ? "Las blancas le apuntan con " + nombrarTodas(bl) + ". " : "Ninguna pieza blanca le apunta. ") +
+        (ng.length ? "Las negras le apuntan con " + nombrarTodas(ng) + "." : "Ninguna pieza negra le apunta.") + soloLoQueVes(juego);
+    }
+    var mismo = p.color, rival = p.color === "w" ? "b" : "w";
+    var atacan = quienesApuntan(juego, sq, rival), defienden = quienesApuntan(juego, sq, mismo);
+    var sobre = dicha(p) + " en " + hablada(sq);
+    var a = atacan.length ? (atacan.length === 1 ? "La ataca " : "La atacan ") + nombrarTodas(atacan) + "." : "Nadie la ataca.";
+    var d = defienden.length ? (defienden.length === 1 ? "La defiende " : "La defienden ") + nombrarTodas(defienden) + "." : "Nadie la defiende.";
+    return sobre + ": " + (defender ? d + " " + a : a + " " + d) + soloLoQueVes(juego);
+  }
+
+  /* La última jugada y la partida entera, en palabras. Solo si la partida
+     lleva historia (chess.js la guarda desde que se armó); un ejercicio que
+     arrancó en la posición no tiene jugadas previas, y se dice. Con niebla no
+     se contesta acá: la jugada del rival no se ve, y eso lo sabe la página. */
+  function historiaDe(juego) {
+    try { return juego.history ? (juego.history() || []) : null; } catch (e) { return null; }
+  }
+  function sanHablada(san) {
+    return window.BlindNotation && BlindNotation.sanSpoken ? BlindNotation.sanSpoken(san) : san;
+  }
+  function ultimaJugada(juego) {
+    var h = historiaDe(juego);
+    if (!h || !h.length) return "Todavía no hay jugadas: la partida (o el ejercicio) empieza en esta posición.";
+    var quien = h.length % 2 === 1 ? "blancas" : "negras";
+    try {
+      var inicio = juego.history({ verbose: true })[0];
+      if (inicio && inicio.color === "b") quien = h.length % 2 === 1 ? "negras" : "blancas";
+    } catch (e) {}
+    return "La última jugada fue de las " + quien + ": " + sanHablada(h[h.length - 1]) + ".";
+  }
+  function historial(juego) {
+    var h = historiaDe(juego);
+    if (!h || !h.length) return "Todavía no hay jugadas: la partida (o el ejercicio) empieza en esta posición.";
+    var negrasPrimero = false;
+    try { var v = juego.history({ verbose: true }); negrasPrimero = v[0] && v[0].color === "b"; } catch (e) {}
+    var partes = [], n = 1, i = 0;
+    if (negrasPrimero) { partes.push("1, negras: " + sanHablada(h[0])); i = 1; n = 2; }
+    for (; i < h.length; i += 2, n++) {
+      partes.push(n + ": " + sanHablada(h[i]) + (h[i + 1] ? ", " + sanHablada(h[i + 1]) : ""));
+    }
+    return h.length + (h.length === 1 ? " jugada. " : " jugadas. ") + partes.join("; ") + ".";
   }
 
   function laLinea(juego, cual) {
@@ -420,6 +552,21 @@ window.ComandosTablero = (function () {
     }
     if ((m = t.match(/^(?:alrededor(?: de)?|vecinas(?: de)?)\s+([a-h])\s?([1-8])$/))) {
       return { manejado: true, tipo: "alrededor", respuesta: alrededorDe(juego, m[1] + m[2]) };
+    }
+    if ((m = t.match(/^(?:que ataca|a que ataca|ataques de|que amenaza)\s+([a-h])\s?([1-8])$/))) {
+      return { manejado: true, tipo: "ataca", respuesta: queAtaca(juego, m[1] + m[2]) };
+    }
+    if ((m = t.match(/^(?:quien ataca|quienes atacan|quien ataca a|quienes atacan a|atacantes de)\s+([a-h])\s?([1-8])$/))) {
+      return { manejado: true, tipo: "atacan", respuesta: quienAtaca(juego, m[1] + m[2], false) };
+    }
+    if ((m = t.match(/^(?:quien defiende|quienes defienden|quien defiende a|quienes defienden a|defensores de|quien protege)\s+([a-h])\s?([1-8])$/))) {
+      return { manejado: true, tipo: "defienden", respuesta: quienAtaca(juego, m[1] + m[2], true) };
+    }
+    if (!conNiebla(juego) && historiaDe(juego) && /^(ultima jugada|la ultima jugada|ultima|que se jugo|que jugo|jugada anterior)$/.test(t)) {
+      return { manejado: true, tipo: "ultima", respuesta: ultimaJugada(juego) };
+    }
+    if (!conNiebla(juego) && historiaDe(juego) && /^(historial|jugadas de la partida|las jugadas|la partida|todas las jugadas)$/.test(t)) {
+      return { manejado: true, tipo: "historial", respuesta: historial(juego) };
     }
     if ((m = t.match(/^(?:fila|rank)\s*([1-8])$/))) {
       return { manejado: true, tipo: "linea", respuesta: laLinea(juego, m[1]) };

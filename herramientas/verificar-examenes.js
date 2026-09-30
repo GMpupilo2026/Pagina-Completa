@@ -376,6 +376,53 @@ async function main() {
     await ctx.close();
   }
 
+  // ---------- 2b) Todo el examen se contesta ESCRIBIENDO (Modo Adaptado) ----------
+  // Quien no ve el tablero contesta desde el recuadro: la letra, la casilla,
+  // la jugada y «responder». Antes no había recuadro, la posición no estaba
+  // escrita en ninguna parte y las casillas de la segunda pregunta decían lo
+  // que había en la PRIMERA (el tablero accesible se quedaba con la
+  // configuración del primer montaje).
+  {
+    const ctx = await contexto(navegador, clienteFalso(ALUMNA, EXAMEN));
+    await ctx.addInitScript(() => { try { localStorage.setItem("oscarBlindMode_v1", "1"); } catch (e) {} });
+    const p = await ctx.newPage();
+    await p.goto(`${BASE}/examen.html?id=ex-1`, { waitUntil: "networkidle" });
+    await p.waitForSelector("#antesala:not(.hidden)", { timeout: 10000 });
+    await p.click("#empezar-btn");
+    await p.waitForSelector("#prueba:not(.hidden)", { timeout: 10000 });
+    const escribir = async (t) => { await p.fill("#q-comandos .cc-input", t); await p.press("#q-comandos .cc-input", "Enter"); await p.waitForTimeout(150); };
+    ok(await p.evaluate(() => { const c = document.querySelector("#q-comandos .cc-caja"); return !!c && getComputedStyle(c).display !== "none"; }),
+      "en Modo Adaptado el examen no muestra el recuadro para contestar escribiendo");
+    ok(/Pregunta 1 de 3/.test(await p.textContent("#q-comandos .cc-msg")), "el recuadro no dice la pregunta al empezar");
+    await escribir("B");
+    ok((await p.getAttribute("#q-opciones button >> nth=1", "aria-pressed")) === "true", "escribir «B» no marca la segunda opción (aria-pressed)");
+    await escribir("responder");
+    await p.waitForFunction(() => /Pregunta 2 de 3/.test(document.getElementById("q-num").textContent), { timeout: 5000 });
+    let ll = await p.evaluate(() => window.__llamadas.filter((l) => l.rpc === "responder_examen"));
+    ok(ll.length === 1 && ll[0].args.p_respuesta.opcion === "1", `«B» + «responder» no mandó la opción 1: ${JSON.stringify(ll.map((l) => l.args.p_respuesta))}`);
+    ok(/Pregunta 2 de 3/.test(await p.textContent("#q-comandos .cc-msg")), "la pregunta nueva no se dice sola en el recuadro");
+    // Las casillas dicen lo de ESTA pregunta.
+    ok((await p.getAttribute("#q-board [data-square='e3']", "aria-label")) === "eva 3, rey blanco",
+      `en la segunda pregunta la casilla e3 no dice lo que hay: ${await p.getAttribute("#q-board [data-square='e3']", "aria-label")}`);
+    await escribir("posición");
+    ok(/rey/.test(await p.textContent("#q-comandos .cc-msg")), "«posición» no contesta en el examen");
+    await escribir("eva 4");
+    ok(/^Elegiste eva 4\./.test(await p.textContent("#q-pista")), `escribir «eva 4» no eligió la casilla: ${await p.textContent("#q-pista")}`);
+    await escribir("responder");
+    await p.waitForFunction(() => /Pregunta 3 de 3/.test(document.getElementById("q-num").textContent), { timeout: 5000 });
+    // En la segunda pregunta cesar 4 estaba vacía; en esta hay un alfil.
+    ok((await p.getAttribute("#q-board [data-square='c4']", "aria-label")) === "cesar 4, alfil blanco",
+      `en la tercera pregunta la casilla c4 dice lo de la pregunta anterior: ${await p.getAttribute("#q-board [data-square='c4']", "aria-label")}`);
+    await escribir("enroque corto");
+    ok(/^Jugaste enroque corto\./.test(await p.textContent("#q-pista")), `escribir «enroque corto» no jugó: ${await p.textContent("#q-pista")}`);
+    await escribir("responder");
+    await p.waitForTimeout(400);
+    ll = await p.evaluate(() => window.__llamadas.filter((l) => l.rpc === "responder_examen"));
+    ok(ll[1] && ll[1].args.p_respuesta.casilla === "e4", "la casilla escrita no se mandó");
+    ok(ll[2] && ll[2].args.p_respuesta.san === "O-O", `la jugada escrita no se mandó: ${JSON.stringify(ll[2] && ll[2].args.p_respuesta)}`);
+    await ctx.close();
+  }
+
   // ---------- 3) El reloj sale del SERVIDOR ----------
   // Con el reloj de la computadora adelantado una hora, la cuenta atrás
   // tiene que seguir siendo la del servidor. Si la página restara con

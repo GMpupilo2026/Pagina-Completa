@@ -62,7 +62,12 @@ window.TableroPregunta = (function () {
           const btn = document.createElement("button");
           btn.type = "button";
           btn.dataset.square = sq;
-          btn.disabled = bloqueado;
+          /* Bloqueado NO es `disabled`: un botón deshabilitado no recibe el
+             foco, y el tablero de una pregunta de opción (o ya contestada)
+             quedaba imposible de recorrer con el teclado — justo el tablero
+             que hay que mirar para contestar. Se dice con aria-disabled y el
+             clic simplemente no hace nada. */
+          if (bloqueado) btn.setAttribute("aria-disabled", "true");
           let cls = "flex items-center justify-center select-none w-full h-full text-2xl sm:text-3xl md:text-4xl " +
             (esClara(sq) ? "bg-brand-100 " : "bg-brand-500 ") +
             (bloqueado ? "cursor-default " : "cursor-pointer ");
@@ -166,13 +171,36 @@ window.TableroPregunta = (function () {
       return mov;
     }
 
+    /* La respuesta ESCRITA (el recuadro de comandos del examen): «e4» o
+       «eva 4» en una de casilla, «Cf3» o «enroque corto» en una de jugada.
+       Devuelve lo que se entendió, o null. La jugada se busca entre las
+       legales (ComandosTablero.jugadaEscrita), igual que en Entrenamiento. */
+    function escribir(texto) {
+      if (bloqueado) return null;
+      if (tipo === "casilla") {
+        const sq = window.CuadroComandos ? CuadroComandos.casillaPedida(texto) : null;
+        if (!sq) return null;
+        clic(sq);
+        return respuesta;
+      }
+      if (tipo !== "jugada" || !window.ComandosTablero) return null;
+      const g = juego();
+      const mv = ComandosTablero.jugadaEscrita(g, texto);
+      if (!mv) return null;
+      origen = null;
+      responder(g, g.move({ from: mv.from, to: mv.to, promotion: mv.promotion || undefined }));
+      return respuesta;
+    }
+
     function cargar(nuevoFen) { fen = nuevoFen; origen = null; respuesta = null; pintar(); }
     function bloquear() { bloqueado = true; origen = null; pintar(respuesta ? destacadasDe(respuesta) : null); }
     function destacadasDe(r) { return r.casilla ? [r.casilla] : [r.from, r.to]; }
 
     pintar();
     return {
-      pintar, aplicar, cargar, bloquear,
+      pintar, aplicar, cargar, bloquear, escribir,
+      teclado: () => teclado,
+      tipo: () => tipo,
       fen: () => fen,
       respuesta: () => respuesta,
       turno: () => juego().turn(),
