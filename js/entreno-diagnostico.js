@@ -471,7 +471,9 @@ function responderEscribiendo(texto, api) {
     // posición nueva.
     const juego = new Chess(itemActual.fen);
     const mv = CuadroComandos.jugadaPedida(juego, texto);
-    if (!mv) { api.decir(`"${texto}" no es una jugada legal en esta posición. Revísala e inténtalo de nuevo.`); return; }
+    /* «no es una jugada legal» solo si parece una jugada; si no, «No entendí»
+       (ComandosTablero.noSePudoJugar, la misma frase en todo el sitio). */
+    if (!mv) { api.decir(window.ComandosTablero && ComandosTablero.noSePudoJugar ? ComandosTablero.noSePudoJugar(texto) : `"${texto}" no es una jugada legal en esta posición.`); return; }
     seleccion = { from: mv.from, to: mv.to, promotion: mv.promotion, san: mv.san };
     origenElegido = null;
     pintarTablero(juego, [mv.from, mv.to]);
@@ -955,6 +957,23 @@ async function pintarPrimerPaso(detalle) {
   caja.hidden = false;
 }
 
+/* El resultado se dice y el foco va a su título. Al contestar la pregunta 60
+   (escribiendo o con el botón) la prueba se escondía, el foco caía al <body>
+   y nada se anunciaba: quien no ve no sabía que había terminado ni su nivel.
+   El título lleva tabindex="-1" (entreno/diagnostico.html) y el aviso es una
+   región viva aparte, que se vacía y se llena para que se lea aunque se
+   repita. Va también al ver un resultado viejo: la vista cambia igual. */
+function anunciarResultado(resumen, reciente) {
+  const titulo = document.getElementById('result-titulo');
+  if (titulo) titulo.focus({ preventScroll: true });
+  const aviso = document.getElementById('result-aviso');
+  if (!aviso) return;
+  const texto = `${reciente ? 'Terminaste el diagnóstico. ' : ''}Tu nivel estimado: ${resumen.nivel.etiqueta}. ` +
+    `${resumen.aciertos} de ${resumen.total} respuestas correctas. Debajo están tus resultados por área y tu plan.`;
+  aviso.textContent = '';
+  setTimeout(() => { aviso.textContent = texto; }, 60);
+}
+
 function mostrarResultado(detalle, reciente) {
   const resumen = PE.resumir(detalle);
   const plan = PE.generarPlan(resumen);
@@ -1008,6 +1027,7 @@ function mostrarResultado(detalle, reciente) {
 
   pintarPlan(plan, resumen);
   pintarAvance(detalle.fecha);
+  anunciarResultado(resumen, reciente);
   pintarPrimerPaso(detalle);
   // Si el profesor ya revisó ESTE diagnóstico y le compartió su plan (el que
   // edita en Informes), el alumno ve ese y no uno recalculado aparte. La

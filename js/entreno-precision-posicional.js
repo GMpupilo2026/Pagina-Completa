@@ -198,6 +198,14 @@ function responderEscribiendo(texto, api) {
   const t = CuadroComandos.normalizar(texto);
   if (/^(opciones|las opciones|cuales son las opciones)$/.test(t)) { api.limpiar(); api.decir(opcionesDichas(item)); return; }
   if (/^(repetir|repite|pregunta|la pregunta|otra vez la pregunta)$/.test(t)) { api.limpiar(); api.decir(preguntaDicha()); return; }
+  // «saltar» la deja en blanco a propósito; «siguiente» avisa si no se contestó.
+  if (/^(saltar|saltarla|dejar en blanco|en blanco)$/.test(t)) { api.limpiar(); pasarALaSiguiente(); return; }
+  if (/^(siguiente|sig)$/.test(t)) {
+    api.limpiar();
+    if (sinContestar() && avisadoSinContestar !== idx) { avisarSinContestar(); return; }
+    pasarALaSiguiente();
+    return;
+  }
   const i = CuadroComandos.opcionPedida(texto, item.opciones.length);
   if (i === null) {
     api.decir(`No entendí "${texto}". Escribe la letra de una opción, de la A a la ${CuadroComandos.letra(item.opciones.length - 1)}. «opciones» las vuelve a decir.`);
@@ -376,9 +384,26 @@ $('repeat-btn').addEventListener('click', () => { irA('intro-view', $('intro-tit
 // Con el recuadro a la vista, la pregunta nueva se dice ahí (también si se llegó escribiendo «siguiente»).
 function decirPregunta() { if (comandos && CuadroComandos.activo()) comandos.decir(preguntaDicha()); }
 $('prev-btn').addEventListener('click', () => { if (idx > 0) { idx--; pintarPregunta(); decirPregunta(); } });
-$('next-btn').addEventListener('click', () => {
+/* «Siguiente» sin haber contestado: en Modo Adaptado se avisa la primera vez
+   (quien no ve escribía «siguiente» creyendo que pasaba a la otra, y la dejaba
+   en blanco sin saberlo). Una segunda vez seguida, o «saltar», sí pasa. El
+   aviso va con un respiro: la capa del recuadro (js/vision-cuenta.js) escribe
+   «Listo: Siguiente.» enseguida del clic y lo taparía. */
+let avisadoSinContestar = -1;
+function sinContestar() { return respuestas[tanda[idx].id] === undefined; }
+function avisarSinContestar() {
+  avisadoSinContestar = idx;
+  const texto = `Todavía no contestaste esta; escribe la letra (de la A a la ${CuadroComandos.letra(tanda[idx].opciones.length - 1)}) o «saltar» para dejarla en blanco.`;
+  setTimeout(() => { if (comandos) comandos.decir(texto); }, 150);
+}
+function pasarALaSiguiente() {
+  avisadoSinContestar = -1;
   if (idx === tanda.length - 1) { terminar(); return; }
   idx++; pintarPregunta(); decirPregunta();
+}
+$('next-btn').addEventListener('click', () => {
+  if (comandos && CuadroComandos.activo() && sinContestar() && avisadoSinContestar !== idx) { avisarSinContestar(); return; }
+  pasarALaSiguiente();
 });
 
 async function init() {

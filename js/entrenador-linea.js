@@ -142,7 +142,14 @@ window.EntrenadorLinea = (function () {
             if (!libre && /^pista$/i.test(String(texto).trim())) { api.limpiar(); pista(); return; }
             if (terminada || esperandoRival || !meToca()) { api.decir("Ahora no te toca mover."); return; }
             const mv = window.ComandosTablero && ComandosTablero.jugadaEscrita(juego, texto);
-            if (!mv) { api.decir("«" + texto + "» no es una jugada legal en esta posición. Escribe «pista» si no la recuerdas."); return; }
+            // No se entendió, o no es legal: js/comandos-tablero.js dice cuál de
+            // las dos (y si era una jugada, se recuerda la pista).
+            if (!mv) {
+              const dicho = window.ComandosTablero && ComandosTablero.noSePudoJugar
+                ? ComandosTablero.noSePudoJugar(texto) : "«" + texto + "» no es una jugada legal en esta posición.";
+              api.decir(/no es una jugada legal/.test(dicho) && !libre ? dicho + " Escribe «pista» si no la recuerdas." : dicho);
+              return;
+            }
             api.limpiar().decir("");
             if (libre) jugarLibreJugada({ from: mv.from, to: mv.to, promotion: mv.promotion });
             else intentar({ from: mv.from, to: mv.to, promotion: mv.promotion });
@@ -208,7 +215,11 @@ window.EntrenadorLinea = (function () {
         seleccion = null;
         dibujar();
         marcarMal(j.to);
-        decir("Esa no es la jugada del plan. Vuelve a intentarlo" + (errores >= 2 ? ", o pide una pista." : "."));
+        // «Respuesta incorrecta» y no «no es legal»: la jugada se pudo hacer.
+        const dicha = window.CuadroComandos && CuadroComandos.activo() && window.BlindNotation
+          ? BlindNotation.sanSpoken(hecha.san) : V().aEspanol(hecha.san);
+        const porque = "No es la del plan: vuelve a intentarlo" + (errores >= 2 ? ", o pide una pista." : ".");
+        decir(window.ComandosTablero && ComandosTablero.incorrecta ? ComandosTablero.incorrecta(dicha, porque) : "Esa no es la jugada del plan. " + porque);
         return;
       }
       indice += 1;

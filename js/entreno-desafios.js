@@ -360,7 +360,8 @@ function jugarEscribiendo(texto, api){
   // El intérprete busca la jugada entre las LEGALES y no toca la partida, así que
   // no hace falta ninguna copia.
   const mv = ComandosTablero.jugadaEscrita(game, texto);
-  if(!mv){ api.decir(`"${texto}" no es una jugada legal en esta posición. Escribe "ayuda" si no sabes qué se puede escribir.`); return; }
+  // No se entendió, o no es legal: js/comandos-tablero.js dice cuál de las dos.
+  if(!mv){ api.decir(ComandosTablero.noSePudoJugar(texto)); return; }
   const moveResult = game.move({ from: mv.from, to: mv.to, promotion: mv.promotion || 'q' });
   api.limpiar().decir('');
   drawBoard();
@@ -422,7 +423,9 @@ function buildTabs(){
     btn.className = 'tab' + (cat === currentCategory ? ' active' : '');
     btn.style.setProperty('--tab-color', CAT_COLOR[cat] || 'var(--brass)');
     btn.innerHTML = `${CATEGORY_LABEL[cat]} <span class="n">${done}/${list.length}</span>`;
-    btn.addEventListener('click', () => { currentCategory = cat; showList(); });
+    // El foco al título de la lista: la pestaña apretada se repinta y el foco
+    // se iba al <body>.
+    btn.addEventListener('click', () => { currentCategory = cat; showList(true); });
     tabs.appendChild(btn);
   });
 }
@@ -433,11 +436,18 @@ function starString(n){
   return full + empty;
 }
 
-function showList(){
+/* `enfocar`: el foco va al título de la lista. Al volver de una serie el botón
+   que lo tenía desaparece y el foco caía al <body>; con la cuenta ciega,
+   también al llegar a la página. */
+function showList(enfocar){
   document.getElementById('set-view').style.display = 'none';
   document.getElementById('list-view').style.display = 'block';
   buildTabs();
   const list = setsFor(currentCategory);
+  const titulo = document.getElementById('lista-titulo');
+  const hechas = list.filter(s => getSetStars(s.id) > 0).length;
+  titulo.textContent = `${(CATEGORY_LABEL[currentCategory] || '').replace(/^\S+\s/, '')}: ${hechas} de ${list.length} series hechas`;
+  if(enfocar) titulo.focus();
   const box = document.getElementById('set-list');
   box.innerHTML = '';
   list.forEach((set) => {
@@ -577,7 +587,8 @@ function handleMoveResult(moveResult){
   } else {
     errorsThisRound++;
     resetStreak();
-    setStatus(`${jugadaDicha(moveResult.san)} es legal, pero no es la jugada que buscamos.`, 'bad');
+    // «Respuesta incorrecta» y no «no es legal»: la jugada se pudo hacer.
+    setStatus(ComandosTablero.incorrecta(jugadaDicha(moveResult.san)), 'bad');
     setTimeout(() => { game = new MiniChess(round.fen); drawBoard(); setStatus('Inténtalo de nuevo.'); }, 900);
   }
 }
@@ -596,9 +607,10 @@ function finishRound(moveResult){
   const fast = !conSolucion && seconds < 4 && hintsUsedThisRound === 0 && errorsThisRound === 0;
   const san = jugadaDicha(moveResult ? moveResult.san : round.san[0]);
   const inicio = conSolucion ? 'Solución:' : '✅ ¡Correcto!';
-  setStatus(`${inicio} ${san}${round.explain ? ' — ' + round.explain : ''}${fast ? ' ⚡' : ''}`, conSolucion ? '' : 'ok');
+  const explicacion = textoDicho(round.explain || '');
+  setStatus(`${inicio} ${san}${explicacion ? ' — ' + explicacion : ''}${fast ? ' ⚡' : ''}`, conSolucion ? '' : 'ok');
   if(window.BlindNotation && window.BlindNotation.speak){
-    try{ window.BlindNotation.speak((conSolucion ? 'Solución. ' : 'Correcto. ') + (round.explain || '')); }catch(e){}
+    try{ window.BlindNotation.speak((conSolucion ? 'Solución. ' : 'Correcto. ') + explicacion); }catch(e){}
   }
   /* En Modo Adaptado, con explicación, no se pasa sola: a los 3,2 s el
      ejercicio nuevo pisaba la explicación a medio leer, y el lector de
@@ -619,6 +631,16 @@ function finishRound(moveResult){
    siempre. */
 function jugadaDicha(san){
   return blindMode && window.BlindNotation && BlindNotation.sanSpoken ? BlindNotation.sanSpoken(san) : san;
+}
+/* Lo mismo dentro de un texto: más de la mitad de las explicaciones y pistas
+   del banco (entreno/data/desafios.json) traen jugadas en SAN inglés («Primero
+   Be6 y después…»), que el lector deletrea: «be seis». En Modo Adaptado cada
+   jugada y cada casilla sueltas pasan a palabras («alfil eva 6», «cesar 8»).
+   El banco no se toca: con el modo normal se ven como están. */
+const TOKEN_SAN = /\b(O-O-O|O-O|[KQRBN][a-h]?[1-8]?x?[a-h][1-8](?:=[QRBN])?[+#]?|[a-h]x[a-h][1-8](?:=[QRBN])?[+#]?|[a-h][1-8](?:=[QRBN])?[+#]?)(?![\w-])/g;
+function textoDicho(texto){
+  if(!texto || !blindMode || !window.BlindNotation || !BlindNotation.sanSpoken) return texto;
+  return String(texto).replace(TOKEN_SAN, (t) => BlindNotation.sanSpoken(t));
 }
 
 let esperandoSiguiente = false;
@@ -672,7 +694,7 @@ function jugadaDelDesafio(){
 const pistas = EjercicioTablero.pistas({
   boton: '#hint-btn',
   etapas: () => (currentRound() && currentRound().hint ? ['texto', 'origen', 'solucion'] : ['origen', 'destino', 'solucion']),
-  texto: () => currentRound().hint,
+  texto: () => textoDicho(currentRound().hint),
   jugada: jugadaDelDesafio,
   repintar: () => { drawBoard(); },
   decir: setStatus,
@@ -718,13 +740,13 @@ function openSet(set){
   titulo.focus();
 }
 
-document.getElementById('back-to-list').addEventListener('click', (e) => { e.preventDefault(); showList(); });
-document.getElementById('celebration-back-btn').addEventListener('click', showList);
+document.getElementById('back-to-list').addEventListener('click', (e) => { e.preventDefault(); showList(true); });
+document.getElementById('celebration-back-btn').addEventListener('click', () => showList(true));
 document.getElementById('celebration-next-btn').addEventListener('click', () => {
   const list = setsFor(currentCategory);
   const idx = list.findIndex(s => s.id === currentSet.id);
   if(idx >= 0 && idx < list.length - 1) openSet(list[idx + 1]);
-  else showList();
+  else showList(true);
 });
 
 /* ---------------- Arranque ---------------- */
@@ -734,7 +756,7 @@ function initApp(){
   appInitialized = true;
   setStreak(getStreak());
   applyBlindModeUI();
-  showList();
+  showList(document.documentElement.classList.contains('modo-ciego'));
 }
 
 async function requireLoginThenGate(){

@@ -139,7 +139,7 @@ async function pruebaAlumnaOpciones(browser) {
     QUIEN.map((t, i) => "Opción " + "ABC"[i] + ". " + t));
   igual("se ve el tablero de la posición", await seVe(page, "#question-board"), true);
   igual("y la cuenta regresiva", /⏱️ Quedan 0:5\d|⏱️ Quedan 1:00/.test(await page.textContent("#question-tiempo-alumno")), true);
-  await page.click("#question-opciones button:nth-child(2)");
+  await page.click("#question-opciones li:nth-child(2) button");
   await page.waitForFunction(() => window.__inserts.some((i) => i.tabla === "question_answers"), null, { timeout: 5000 });
   igual("manda la opción, sin jugadas", await page.evaluate(() => {
     const f = window.__inserts.filter((i) => i.tabla === "question_answers").pop().fila;

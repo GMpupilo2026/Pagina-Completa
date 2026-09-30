@@ -388,13 +388,24 @@ async function pruebaDiagnostico(browser) {
     const juego = new Chess(fen);
     const mv = juego.moves({ verbose: true })[0];
 
-    // Primero la ilegal: tiene que decirlo y NO pasar de pregunta.
+    // Primero la ilegal: tiene que decirlo y NO pasar de pregunta. Una jugada
+    // bien escrita que no se puede hacer (un caballo o una torre a donde no
+    // llega) dice «no es una jugada legal»; lo que ni es jugada («Txz9»),
+    // «No entendí» (regla del sitio: ComandosTablero.noSePudoJugar).
     const contador = await enPantalla(page, "#q-counter");
-    await page.fill("#q-comandos .cc-input", "Txz9");
+    const destinos = new Set(juego.moves({ verbose: true }).filter((m) => m.piece === "n" || m.piece === "r").map((m) => m.to));
+    const ilegal = ["Ca1", "Ch1", "Ca8", "Ch8", "Ta4", "Th5", "Ce5", "Cd4", "Cb3"].find((x) => !destinos.has(x.slice(1)));
+    await page.fill("#q-comandos .cc-input", ilegal);
     await page.press("#q-comandos .cc-input", "Enter");
-    igual("una jugada ilegal se rechaza diciéndolo",
+    igual("una jugada ilegal (" + ilegal + ") se rechaza diciéndolo",
       await page.evaluate(() => /no es una jugada legal/.test(document.querySelector("#q-comandos .cc-msg").textContent)), "true");
     igual("y no pasa de pregunta", await enPantalla(page, "#q-counter"), contador);
+    await page.fill("#q-comandos .cc-input", "Txz9");
+    await page.press("#q-comandos .cc-input", "Enter");
+    await page.waitForTimeout(100);
+    igual("lo que no es una jugada («Txz9») se dice no entendido, no «ilegal»",
+      await page.evaluate(() => { const t = document.querySelector("#q-comandos .cc-msg").textContent; return /No entendí/.test(t) && !/legal/.test(t); }), "true");
+    igual("y tampoco pasa de pregunta", await enPantalla(page, "#q-counter"), contador);
 
     if (!mv) mal("no se pudo leer la posición del tablero para probar una jugada (" + fen + ")");
     else {
@@ -497,6 +508,18 @@ async function pruebaUltimaPregunta(browser) {
   await page.press("#q-comandos .cc-input", "Enter");
   await page.waitForSelector("#result-view:not(.hidden)", { timeout: 15000 });
   bien("contestar la última por el cuadro termina la prueba y muestra el resultado");
+  /* Al terminar, la prueba se esconde con el foco adentro: caía al <body> y
+     nada decía el resultado. El foco va al título del resultado y el nivel
+     se dice en una región viva. */
+  await page.waitForTimeout(300);
+  igual("el foco queda en el título del resultado, no en el <body>",
+    await page.evaluate(() => (document.activeElement && document.activeElement.id) || document.activeElement.tagName), "result-titulo");
+  const avisoFinal = await page.evaluate(() => {
+    const a = document.getElementById("result-aviso");
+    return a && a.closest("[role=status],[aria-live]") ? a.textContent : "";
+  });
+  igual("y el nivel se anuncia en una región viva",
+    /Terminaste el diagnóstico/.test(avisoFinal) && avisoFinal.includes(await enPantalla(page, "#result-level")), "true");
   await ctx.close();
 }
 
@@ -608,16 +631,36 @@ async function pruebaTemas(browser) {
     await vigilar(page, "#round-status");
     await page.fill(".cc-input", mv.san);
     await page.press(".cc-input", "Enter");
-    await page.waitForTimeout(700);
+    // Con la máquina cargada (el CI corre varios a la vez) 700 ms no alcanzan:
+    // se espera a que el renglón cambie, con tope.
+    await page.waitForFunction(() => (window.__vistos || []).slice(1).some((t) => t !== window.__vistos[0]), null, { timeout: 5000 }).catch(() => {});
     const vistos = await loVisto(page);
     igual(`escribir una jugada legal (${mv.san}) se contesta como el clic`,
       vistos.length > 1 && vistos.slice(1).some((t) => t !== vistos[0]), "true");
+    // Legal pero no la de la solución: «Respuesta incorrecta», nunca «no es legal».
     igual("y si no era la de la solución, lo dice",
-      vistos.some((t) => /no es la jugada de la solución/.test(t)) || vistos.length > 2, "true");
+      vistos.some((t) => /^Respuesta incorrecta: .* no es la jugada que buscamos\./.test(t)) || vistos.length > 2, "true");
   }
+  /* Tres casos que antes se decían igual (js/comandos-tablero.js): lo que no
+     es una jugada no se entendió; una jugada que no se puede hacer no es legal. */
   await page.fill(".cc-input", "Txz9");
   await page.press(".cc-input", "Enter");
-  igual("una jugada ilegal se rechaza diciéndolo",
+  igual("lo que no es una jugada dice que no se entendió",
+    await page.evaluate(() => /^No entendí «Txz9»/.test(document.querySelector(".cc-msg").textContent)), "true");
+  const ilegal = await page.evaluate(() => {
+    // Una pieza propia a una casilla adonde no puede ir: «e2 e5».
+    const todas = [];
+    for (const f of "abcdefgh") for (let r = 1; r <= 8; r++) todas.push(f + r);
+    for (const desde of todas.filter((c) => { const x = game.get(c); return x && x.color === game.turn(); })) {
+      const legales = game.moves({ square: desde, verbose: true }).map((m) => m.to);
+      const hasta = ["a1", "h8", "a8", "h1", "d4", "e5"].find((c) => c !== desde && !legales.includes(c) && !game.get(c));
+      if (hasta) return desde + " " + hasta;
+    }
+    return "a1 a1";
+  });
+  await page.fill(".cc-input", ilegal);
+  await page.press(".cc-input", "Enter");
+  igual(`una jugada que no se puede hacer («${ilegal}») se rechaza diciendo que no es legal`,
     await page.evaluate(() => /no es una jugada legal/i.test(document.querySelector(".cc-msg").textContent)), "true");
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
@@ -660,10 +703,10 @@ async function pruebaContrarreloj(browser, ruta, nombre) {
     await vigilar(page, "#result-text");
     await page.fill(".cc-input", mv.san);
     await page.press(".cc-input", "Enter");
-    await page.waitForTimeout(800);
+    await page.waitForFunction(() => (window.__vistos || []).some((t) => /Correcto|❌|✅|^Respuesta incorrecta: /.test(t)), null, { timeout: 5000 }).catch(() => {});
     const vistos = await loVisto(page);
     igual(`escribir una jugada legal (${mv.san}) se contesta como el clic`,
-      vistos.some((t) => /Correcto|❌|✅/.test(t)), "true");
+      vistos.some((t) => /Correcto|❌|✅|^Respuesta incorrecta: /.test(t)), "true");
   }
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();

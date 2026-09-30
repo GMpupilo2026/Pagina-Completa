@@ -295,6 +295,15 @@ async function navegador() {
     const pegados = await page.$$eval("#niveles button", (bs) => bs.map((b) => b.textContent).filter((t) => /[a-záéíóú][A-Za-z]*[a-záéíóú](sin |\d de 3)/.test(t) && !/, (sin |\d de 3)/.test(t)));
     cierto("el nombre de cada nivel no se pega con lo que dice debajo", !pegados.length, pegados.join(" | "));
 
+    /* «siguiente», como en el Sonar y en el resto del sitio: con la partida
+       terminada pasa al nivel que sigue. Antes no se entendía y había que
+       saber que acá se decía «nivel 2». */
+    cierto("al terminar, ofrece «siguiente»", /Escribe «siguiente» para el nivel 2/.test(ultimo), ultimo.slice(-120));
+    await escribir(page, "siguiente");
+    igual("«siguiente» pasa al nivel 2", await page.evaluate(() => nivelActual), 2);
+    const sigue = await escribir(page, "siguiente");
+    cierto("a mitad de partida, «siguiente» no la tira: dice cómo dejarla", /^La partida sigue/.test(sigue) && (await page.evaluate(() => nivelActual)) === 2, sigue.slice(0, 90));
+
     console.log("\n— La pista y el teclado —");
     await escribir(page, "nivel 2");
     // Un disparo al agua, no a «a1» a ciegas: con la flota al azar, a veces la

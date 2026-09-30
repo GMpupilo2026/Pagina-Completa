@@ -462,7 +462,11 @@ async function pruebaTableroTeclado(browser) {
       await page.keyboard.press("Enter");
       await page.waitForTimeout(200);
       const juzgo = await page.evaluate((c) => !!document.querySelector(c.visor + " .cp-comment .cp-good, " + c.visor + " .cp-comment .cp-bad"), caso);
-      igual(et + " · al adivinar, la jugada hecha con Intro se juzga (bien o «No es esa»)", juzgo, true);
+      igual(et + " · al adivinar, la jugada hecha con Intro se juzga (bien o «Respuesta incorrecta»)", juzgo, true);
+      /* Legal pero no era la de la partida: empieza por «Respuesta incorrecta» y
+         dice la jugada en palabras («no es legal» es la que no se puede hacer). */
+      const mal = await page.evaluate((c) => { const b = document.querySelector(c.visor + " .cp-comment .cp-bad"); return b ? b.textContent : null; }, caso);
+      if (mal !== null) igual(et + " · la equivocada empieza por «Respuesta incorrecta:»", /^Respuesta incorrecta: \S.* no es la jugada que buscamos\./.test(mal), true);
       await page.click(caso.visor + ' [data-act="guess"]');   // salir del modo adivinar
       await page.waitForTimeout(150);
     }

@@ -835,8 +835,18 @@ function jugarEscrita() {
     if (!ad || terminada || pensando || ad.turno() !== miColor) return;
     const texto = $("ciegas-input").value.trim();
     if (!texto) return;
-    const hecho = ad.motor.moveText(texto);
-    if (!hecho) { avisar("Esa jugada no es legal. Prueba otra vez.", "error"); return; }
+    // «enroque corto/largo», como se dice en voz; el motor solo entiende «O-O».
+    const dicho = texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ");
+    const aJugar = dicho === "enroque corto" ? "O-O" : dicho === "enroque largo" ? "O-O-O" : texto;
+    const hecho = ad.motor.moveText(aJugar);
+    /* Lo mismo que en todo el sitio (ComandosTablero.noSePudoJugar): «no es una
+       jugada legal» solo si lo escrito ES una jugada; si no, que no se entendió. */
+    if (!hecho) {
+        avisar(window.ComandosTablero ? ComandosTablero.noSePudoJugar(texto)
+            : "«" + texto + "» no es una jugada legal en esta posición.", "error");
+        try { $("ciegas-input").select(); } catch (e) {}
+        return;
+    }
     $("ciegas-input").value = "";
     anotar(hecho, {});
     refrescar();

@@ -2350,6 +2350,33 @@ async function sesionLista(page) {
  * al terminar de cargar no se decía nada, y «Contraseña» abría un recuadro al
  * final de la página sin llevarse el foco, sin cerrar con Escape y con un campo
  * sin etiqueta. Nada de eso da ningún error: quien ve la pantalla no lo nota. */
+/* Con el panel ya abierto, Alt + Mayúscula + E o el enlace «Entrenar» solo
+   cambian la dirección a #entrenar: el navegador hacía scroll, pero el foco se
+   quedaba donde estaba y quien no ve no se enteraba. El grupo «Entrenar» (con
+   su id) es el del panel de la cuenta ciega. */
+async function pruebaEntrenarConLaPaginaAbierta(browser) {
+  console.log("\n=== #entrenar con el panel ya abierto (cuenta ciega) ===");
+  const datos = Object.assign(datosAlumna(false), {
+    vision_personas: [{ persona_id: "u-ana", vision: "ciego" }],
+    local: { ai_vision_v1: JSON.stringify({ persona: "u-ana", vision: "ciego" }), ai_vision_aplicada_v1: "u-ana:ciego" },
+  });
+  const r = await panel(browser, [ALUMNA, PROFE], "u-ana", {}, datos);
+  const { page } = r;
+  await page.waitForTimeout(800);
+  await page.focus("#panel-titulo").catch(() => {});
+  await page.evaluate(() => { location.hash = "entrenar"; });
+  await page.waitForTimeout(300);
+  const salto = await page.evaluate(() => ({
+    hay: !!document.querySelector("#tile-grid section#entrenar"),
+    enGrupo: !!(document.activeElement && document.activeElement.closest("section#entrenar h2")),
+    aviso: document.getElementById("aviso-clase").textContent,
+  }));
+  igual("el panel de la cuenta ciega tiene el grupo #entrenar", salto.hay, true);
+  igual("#entrenar con la página abierta lleva el foco al título del grupo", salto.enGrupo, true);
+  igual("…y lo dice", salto.aviso, "Estás en «Entrenar».");
+  await r.ctx.close();
+}
+
 async function pruebaLectorDePantalla(browser) {
   console.log("\n=== El panel, recorrido con lector de pantalla ===");
   const r = await panel(browser, [ALUMNA, PROFE], "u-ana", {}, datosAlumna(false));
@@ -2384,6 +2411,7 @@ async function pruebaLectorDePantalla(browser) {
   }));
   igual("Escape lo cierra y el foco vuelve al botón que lo abrió",
     [cerrado.oculto, cerrado.foco], [true, "change-pw-btn"]);
+
   await r.ctx.close();
 }
 
@@ -3084,6 +3112,7 @@ async function pruebaTercera(browser) {
     await pruebaVideollamada(browser);
     await pruebaSesionEnVivo(browser);
     await pruebaLectorDePantalla(browser);
+    await pruebaEntrenarConLaPaginaAbierta(browser);
     await pruebaProgresoAlumna(browser);
     await pruebaHoyEnElPanel(browser);
     await pruebaPlegables(browser);

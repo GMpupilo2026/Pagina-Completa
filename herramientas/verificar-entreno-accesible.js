@@ -588,6 +588,16 @@ async function pruebaRecorridaCiega(browser) {
     await escribirEn(page, "#blind-input", color);
     await page.waitForTimeout(100);
     igual("Coordenadas: «" + color + "» en palabras cuenta como acierto", await page.textContent("#hud-score"), "1");
+    /* Un fallo empieza por «Respuesta incorrecta» y dice cuál era (regla del
+       sitio: «no es legal» solo para lo que no se puede hacer). */
+    const real = await page.evaluate(() => (isLightSquare(currentTarget) ? "blanca" : "negra"));
+    await escribirEn(page, "#blind-input", real === "blanca" ? "negra" : "blanca");
+    await page.waitForTimeout(100);
+    const fallo = await page.textContent("#blind-announcer");
+    igual("Coordenadas: el color equivocado dice «Respuesta incorrecta: era " + real + "»", fallo.startsWith("Respuesta incorrecta: era " + real), true);
+    await escribirEn(page, "#blind-input", "azul");
+    await page.waitForTimeout(100);
+    igual("Coordenadas: lo que no es un color se dice no entendido", /^No entendí «azul»/.test(await page.textContent("#blind-announcer")), true);
     if (errores.length) mal("Coordenadas: errores en consola: " + errores.join(" | "));
     await ctx.close();
   }

@@ -279,11 +279,48 @@ function casillasDichas(raw){
   return partes.map((x) => CuadroComandos.casillaPedida(x)).filter(Boolean);
 }
 
+/* Lo que se dice con palabras y el intérprete común no toma: «rey f1» (la
+   pieza con su nombre), «rey felix 1», «e7 e8 dama» (la coronación dicha). Se
+   pasa a la notación inglesa, que no es ambigua: «R» es rey en castellano y
+   torre en inglés, y «Rf1» en una posición con torre movía la torre. Devuelve
+   { texto, corona } —`corona`, la pieza si se dijo— o null si no había nada
+   que traducir. */
+const PIEZA_DICHA = { rey: 'K', dama: 'Q', torre: 'R', alfil: 'B', caballo: 'N', peon: '' };
+const CORONA_DICHA = { dama: 'q', torre: 'r', alfil: 'b', caballo: 'n', d: 'q', t: 'r', a: 'b', c: 'n', q: 'q', r: 'r', b: 'b', n: 'n' };
+function jugadaDicha(raw){
+  if(!window.CuadroComandos) return null;
+  let t = CuadroComandos.normalizar(raw).replace(/[.,]/g, ' ').replace(/\s+/g, ' ').trim();
+  t = t.replace(/\b(anna|bella|cesar|david|eva|felix|gustav|hector)\s?([1-8])\b/g, (m, c, n) => c[0] + n);
+  let corona = null;
+  const conCorona = t.match(/^(.*[a-h][1-8])\s*(?:=|\s|corona(?:ndo)?(?: a| en)?\s*)\s*(dama|torre|alfil|caballo|[dtacqrbn])$/);
+  if(conCorona){ t = conCorona[1]; corona = CORONA_DICHA[conCorona[2]]; }
+  const conPieza = t.match(/^(rey|dama|torre|alfil|caballo|peon)\s*(?:de\s+|a\s+)?(.+)$/);
+  if(conPieza) t = PIEZA_DICHA[conPieza[1]] + conPieza[2].replace(/\s+(a|hasta)\s+/, ' ');
+  if(t === CuadroComandos.normalizar(raw) && !corona) return null;
+  return { texto: t + (corona ? '=' + corona.toUpperCase() : ''), corona };
+}
+
 // Jugadas: la notación de siempre en español o en inglés («Rf1», «Cf3»,
 // «O-O», «enroque corto»), el origen y el destino («e1 g1», «e1g1») y las
-// casillas dichas («eva 1 felix 1»).
+// casillas dichas («eva 1 felix 1»), y dichas con palabras («rey f1»,
+// «enroque» a secas, «e7 e8 dama»).
 function blindHandleMoveGuess(raw){
   if(lessonLocked) return;
+  /* «enroque» a secas: si hay uno solo posible, es ese; si hay dos, se
+     pregunta cuál (antes: «no entendí»). */
+  if(/^\s*(el\s+)?enroque\s*$/i.test(raw)){
+    const enroques = game.moves({ verbose: true }).filter((m) => m.flags.includes('k') || m.flags.includes('q'));
+    if(enroques.length === 1){ moverPreguntandoCoronacion(enroques[0].from, enroques[0].to, blindResolverJugada); return; }
+    setStatus(enroques.length ? 'Hay dos enroques posibles: escribe «enroque corto» o «enroque largo».' : 'Ahora no se puede enrocar.', 'bad');
+    return;
+  }
+  const dicha = jugadaDicha(raw);
+  const mvDicha = dicha && window.ComandosTablero ? ComandosTablero.jugadaEscrita(game, dicha.texto) : null;
+  if(mvDicha){
+    // Con la pieza dicha («e7 e8 dama») se corona sin preguntar: ya la eligió.
+    moverPreguntandoCoronacion(mvDicha.from, mvDicha.to, blindResolverJugada, dicha.corona || undefined);
+    return;
+  }
   /* Antes se borraba todo lo que no fuera a-h o 1-8 y se exigían cuatro
      caracteres: «Rf1» quedaba en «f1» y la respuesta era «escribe el origen y
      el destino», aunque fuera la jugada correcta dicha como se dice. La jugada
@@ -295,14 +332,21 @@ function blindHandleMoveGuess(raw){
     if(dichas.length === 2 && window.ComandosTablero) mv = ComandosTablero.jugadaEscrita(game, dichas[0] + dichas[1]);
   }
   if(mv){
-    moverPreguntandoCoronacion(mv.from, mv.to, blindResolverJugada);
+    // «e7e8=D» también trae la pieza: si se escribió, no se pregunta.
+    const escrita = /[1-8]\s*=?\s*[qrbndtac]\s*[+#]?\s*$/i.test(raw.trim()) ? mv.promotion : undefined;
+    moverPreguntandoCoronacion(mv.from, mv.to, blindResolverJugada, escrita);
     return;
   }
   // No se entendió como jugada legal: se dice por qué, con las casillas si las hay.
   const dichas = casillasDichas(raw);
   const clean = dichas.length === 2 ? dichas.join('') : raw.trim().toLowerCase().replace(/[^a-h1-8]/g, '');
   if(clean.length !== 4){
-    setStatus('No entendí esa jugada. Escríbela como «Rf1», «Cf3», «enroque corto» o con el origen y el destino, por ejemplo «e1 g1».', 'bad');
+    /* Tres casos distintos (js/comandos-tablero.js): una jugada que no se puede
+       hacer, un botón que acá no hay («solución»), o algo que no se entendió. */
+    const dicho = window.ComandosTablero ? ComandosTablero.noSePudoJugar(raw) : 'No entendí.';
+    setStatus(/^No entendí/.test(dicho)
+      ? `No entendí «${raw.trim()}». Escribe la jugada como «Rf1», «rey f1», «Cf3», «enroque corto» o con el origen y el destino, por ejemplo «e1 g1».`
+      : dicho, 'bad');
     return;
   }
   const from = clean.slice(0, 2), to = clean.slice(2, 4);
@@ -338,7 +382,8 @@ function blindResolverJugada(moveResult){
     setStatus(`✅ ${sanText}. ¡Correcto!`, 'ok');
     finishLesson();
   } else {
-    setStatus(`${sanText} es legal, pero no es la jugada buscada. Se reinicia la posición.`, 'bad');
+    // «Respuesta incorrecta» y no «no es legal»: la jugada se pudo hacer.
+    setStatus(ComandosTablero.incorrecta(sanText, 'Se reinicia la posición.'), 'bad');
     setTimeout(() => { resetLesson(); }, 1200);
   }
 }
@@ -359,8 +404,37 @@ function montarComandos(){
   });
 }
 
+function modoCiego(){ return document.documentElement.classList.contains('modo-ciego'); }
+
+/* La respuesta del «¿Jaque mate o ahogado?» escrita: la palabra, «tablas»
+   (el ahogado lo es), o la letra o el número del botón (A/1 mate, B/2
+   ahogado). Antes el recuadro no contestaba nada en esta lección. */
+function respuestaDelQuiz(texto){
+  const t = CuadroComandos.normalizar(texto).replace(/[.!¡?¿]/g, '').replace(/^(es|es un|es una)\s+/, '').trim();
+  if(/^(jaque ?mate|mate|a|1|opcion a)$/.test(t)) return 'mate';
+  if(/^(ahogado|rey ahogado|tablas|tablas por ahogado|b|2|opcion b)$/.test(t)) return 'ahogado';
+  return null;
+}
+
 function responderEscribiendo(texto, api){
   if(!currentLesson) return;
+  // Terminada la lección, lo mismo que los botones: «siguiente», «otra vez».
+  const nextBtn = document.getElementById('next-btn');
+  if(lessonLocked && nextBtn.style.display !== 'none'){
+    const t = CuadroComandos.normalizar(texto);
+    if(/^sig(uiente)?( leccion)?$/.test(t)){ api.limpiar(); nextBtn.click(); return; }
+    if(/^(otra vez|de nuevo|repetir|reiniciar)$/.test(t)){ api.limpiar(); document.getElementById('retry-btn').click(); return; }
+    api.decir('Lección terminada. Escribe «siguiente» para la próxima lección, u «otra vez» para repetirla.');
+    return;
+  }
+  if(currentLesson.type === 'quiz'){
+    const r = respuestaDelQuiz(texto);
+    if(!r){ api.decir('Escribe «mate» (o A) si es jaque mate, o «ahogado» (o B) si es ahogado.'); return; }
+    if(lessonLocked){ api.decir('Espera: ya viene la siguiente posición.'); return; }
+    api.limpiar().decir('');
+    answerQuiz(r);
+    return;
+  }
   if(currentLesson.type === 'squares'){
     // "eva 4" tiene que llegar a e4: es como el sitio dicta las casillas, así
     // que escribir lo que uno acaba de oír tiene que funcionar.
@@ -559,9 +633,16 @@ function finishLesson(){
   lessonLocked = true;
   markSolved(currentLesson.id);
   EntrenoProgress.log('aprender', { lesson_id: currentLesson.id, category: currentLesson.cat, title: currentLesson.title });
-  setStatus('✅ ¡Muy bien! Lección completada.', 'ok');
   const nextBtn = document.getElementById('next-btn');
   nextBtn.style.display = '';
+  /* Con la cuenta ciega el foco NO sale del recuadro: se hace todo desde ahí,
+     y se dice cómo seguir escribiendo. */
+  if(modoCiego() && comandos){
+    setStatus('✅ ¡Muy bien! Lección completada. Escribe «siguiente» para seguir con la próxima lección.', 'ok');
+    comandos.enfocar();
+    return;
+  }
+  setStatus('✅ ¡Muy bien! Lección completada.', 'ok');
   // En modo adaptado, el foco cae directo en "Siguiente lección" — sin esto, quien usa
   // el campo de texto (o un lector de pantalla) tendría que ir a buscar el botón a mano
   // cada vez que termina una lección, en vez de solo presionar Enter para seguir.
@@ -632,14 +713,17 @@ function resolverJugada(moveResult){
   if(correct){
     finishLesson();
   } else {
-    setStatus('Esa jugada es legal, pero no es la que buscamos. Intenta de nuevo.', 'bad');
+    setStatus(ComandosTablero.incorrecta(blindMode && window.BlindNotation ? BlindNotation.sanSpoken(moveResult.san)
+      : moveResult.san.replace(/[NBRQK]/g, (l) => ({ N: 'C', B: 'A', R: 'T', Q: 'D', K: 'R' })[l]), 'Intenta de nuevo.'), 'bad');
     setTimeout(() => { resetLesson(); }, 900);
   }
 }
 
 /* Hace la jugada; si el peón corona, primero pregunta en qué pieza
    (js/coronacion.js). alHacer(jugada) no se llama si se cancela. */
-function moverPreguntandoCoronacion(from, to, alHacer){
+function moverPreguntandoCoronacion(from, to, alHacer, pieza){
+  // La pieza ya dicha («e7 e8 dama»): se corona sin abrir el diálogo.
+  if(pieza){ alHacer(game.move({ from, to, promotion: pieza })); return; }
   if(window.Coronacion && Coronacion.hayQueElegir(game, from, to)){
     Coronacion.pedir(game.turn(), (elegida) => {
       if(elegida && !lessonLocked) alHacer(game.move({ from, to, promotion: elegida }));
@@ -678,7 +762,8 @@ function loadQuizRound(){
   const round = currentLesson.rounds[quizRoundIndex];
   game = new Chess(round.fen);
   drawBoard();
-  setStatus(`Posición ${quizRoundIndex + 1} de ${currentLesson.rounds.length}.`);
+  setStatus(`Posición ${quizRoundIndex + 1} de ${currentLesson.rounds.length}.` +
+    (blindMode ? ' ¿Es jaque mate o ahogado? Escribe «mate» o «ahogado».' : ''));
 }
 
 function resetLesson(){
@@ -730,6 +815,9 @@ function openLesson(lesson){
      tablero y después el recuadro donde se contesta. */
   const titulo = document.getElementById('lesson-title');
   titulo.setAttribute('tabindex', '-1');
+  // Con la cuenta ciega, si se pasó escribiendo «siguiente», el foco se queda
+  // en el recuadro: se hace todo desde ahí.
+  if(modoCiego() && comandos && document.activeElement === comandos.input) return;
   titulo.focus();
 }
 
@@ -791,7 +879,8 @@ function initApp(){
   if(appInitialized) return;
   appInitialized = true;
   applyBlindModeUI();
-  showList();
+  // Con la cuenta ciega, el foco empieza en el título de la lista (no en el <body>).
+  showList(modoCiego());
 }
 
 // Entrenamiento exige sesión iniciada en el sitio (Academia) — así el

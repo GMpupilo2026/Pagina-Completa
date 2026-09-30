@@ -3546,6 +3546,26 @@
             return true;
         }
 
+        /* Con el panel YA abierto, Alt + Mayúscula + E o el enlace «Entrenar»
+           cambian la dirección a #entrenar sin volver a cargar: el navegador
+           salta con el scroll, pero el foco se quedaba donde estaba (o en el
+           <body>, si el grupo se pinta después) y quien no ve no se enteraba de
+           que había llegado. Se lleva el foco al título del grupo, que el lector
+           dice al recibirlo, y se deja dicho a dónde se fue. */
+        window.addEventListener("hashchange", () => {
+            if (!panelMostrado) return;
+            const id = decodeURIComponent((location.hash || "").slice(1));
+            if (!enfocarGrupo(id)) return;
+            const seccion = document.getElementById(id);
+            const h = seccion && seccion.querySelector("h2");
+            const nombre = h ? h.textContent.replace(/[^\p{L}\p{N}\s«»,.:-]/gu, " ").replace(/\s+/g, " ").trim() : "";
+            const aviso = document.getElementById("aviso-clase");
+            if (aviso && nombre) {
+                aviso.textContent = "";
+                setTimeout(() => { aviso.textContent = "Estás en «" + nombre + "»."; }, 60);
+            }
+        });
+
         async function init() {
             const { data } = await sb.auth.getSession();
             session = data.session;

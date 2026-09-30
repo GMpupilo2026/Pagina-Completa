@@ -615,8 +615,11 @@ function renglonAlumno(r, tareaId, tareaTitulo) {
         // nada y por eso no se ofrece.
         const label = document.createElement("label");
         label.className = "flex items-center gap-1.5 text-xs text-brand-500 dark:text-brand-300 mt-1 cursor-pointer";
-        label.innerHTML = `<input type="checkbox" class="rounded border-brand-300 text-accent-500 focus:ring-accent-400 marcar-item" ${r.cumplido ? "checked" : ""}> Ya lo hice`;
-        label.querySelector("input").addEventListener("change", (ev) => marcarItem(r.id, ev.target.checked));
+        /* El nombre dice DE QUÉ punto es: con lector de pantalla, una tarea con
+           tres puntos a mano eran tres «Ya lo hice, casilla» iguales. El texto
+           visible sigue siendo «Ya lo hice» y va al principio del nombre. */
+        label.innerHTML = `<input type="checkbox" class="rounded border-brand-300 text-accent-500 focus:ring-accent-400 marcar-item" data-item="${escapeHtml(String(r.id))}" aria-label="${escapeHtml("Ya lo hice: " + fraseDe(r))}" ${r.cumplido ? "checked" : ""}> Ya lo hice`;
+        label.querySelector("input").addEventListener("change", (ev) => marcarItem(r.id, ev.target.checked, fraseDe(r)));
         li.appendChild(label);
     } else {
         const barra = document.createElement("div");
@@ -657,13 +660,25 @@ function tarjetaAlumno(t) {
     return div;
 }
 
-async function marcarItem(id, hecha) {
+async function marcarItem(id, hecha, que) {
     // La hora la pone el servidor (proteger_tarea_items_alumno): acá solo se
     // dice si va marcado o no.
     const { error } = await sb.from("tarea_items")
         .update({ completada_at: hecha ? new Date().toISOString() : null }).eq("id", id);
     if (error) { Avisos.avisar("No se pudo actualizar: " + error.message, { tipo: "error" }); return; }
     await cargarMisTareas();
+    /* Repintar la lista borra la casilla que tenía el foco, y el foco caía al
+       <body>: quien no ve quedaba al principio de la página sin saber si se
+       marcó. Se devuelve a la MISMA casilla (la nueva, del mismo punto; si el
+       punto se pasó a «Completadas», ahí la encuentra) y se dice qué pasó. */
+    const casilla = Array.from(document.querySelectorAll("input.marcar-item"))
+        .find((c) => c.dataset.item === String(id));
+    if (casilla) casilla.focus();
+    const aviso = document.getElementById("tareas-aviso");
+    if (aviso) {
+        aviso.textContent = "";
+        setTimeout(() => { aviso.textContent = (hecha ? "Marcado como hecho: " : "Desmarcado: ") + (que || "el punto") + "."; }, 60);
+    }
 }
 
 init();

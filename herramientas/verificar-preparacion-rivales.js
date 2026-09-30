@@ -1625,7 +1625,7 @@ async function pruebaEtapa7(browser) {
   await tocar("d2", "d4");
   igual("una jugada que no es la del plan se deshace y lo dice", await page.evaluate(() => [
     document.querySelector("#entrenador .visor-nota").textContent, !!document.querySelector("#entrenador [data-square='d4'] span")]),
-    ["Esa no es la jugada del plan. Vuelve a intentarlo.", false]);
+    ["Respuesta incorrecta: d4 no es la jugada que buscamos. No es la del plan: vuelve a intentarlo.", false]);
   await tocar("e2", "e4");
   await page.waitForFunction(() => /^Te toca/.test(document.querySelector("#entrenador .entrenador-turno").textContent), null, { timeout: 5000 });
   cierto("el rival contesta solo, y se dice qué jugó (" + await page.textContent("#entrenador .visor-nota") + ")",

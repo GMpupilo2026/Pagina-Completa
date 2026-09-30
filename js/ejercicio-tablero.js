@@ -50,7 +50,11 @@
  *         "texto"    una frase (el motivo, la pista escrita del desafío);
  *         "origen"   marca la pieza que se mueve;
  *         "destino"  marca también la casilla adonde va;
- *         "solucion" la juega (`alResolver(jugada)`).
+ *         "solucion" la dice («La solución era: …») y la juega
+ *                    (`alResolver(jugada, frase)`; la página antepone `frase`
+ *                    a lo que diga después, que si no la pisa).
+ *       Con `juego()` (la partida), la frase dice la jugada aunque la página
+ *       solo dé las casillas.
  *       Cada página dice cuáles usa (`etapas()`) y cuál es la jugada
  *       (`jugada()` → { from, to, promotion }). El botón dice lo que va a
  *       hacer: «Pista», «Otra pista», «Ver solución». Devuelve
@@ -194,7 +198,14 @@
       if (o.alDar) o.alDar(n, tipo);
       if (tipo === "solucion") {
         marcas = {};
-        if (j && o.alResolver) o.alResolver(j);
+        /* La solución se DICE antes de jugarla. Antes se jugaba sola: quien no
+           ve el tablero oía «¡Correcto!» o «el rival responde» sin enterarse
+           nunca de cuál había sido la jugada, que es justo lo que pidió. La
+           frase también va a `alResolver`, porque lo que la página dice
+           enseguida («¡Jaque mate!») pisa este aviso: la página la antepone. */
+        const frase = j ? fraseSolucion(j) : "";
+        if (frase) o.decir(frase);
+        if (j && o.alResolver) o.alResolver(j, frase);
         rotular();
         return;
       }
@@ -212,6 +223,25 @@
       }
       if (o.repintar) o.repintar();
       rotular();
+    }
+    /* «La solución era: caballo felix 3.» En Modo Adaptado, en palabras
+       (BlindNotation.sanSpoken, lo mismo que el resto del sitio); si no, en
+       castellano («Cf3»). Si la página solo da casillas (Practicar, Desafíos),
+       la jugada se arma con `juego()` sobre una copia, sin tocar la partida. */
+    function fraseSolucion(j) {
+      let san = j.san || null;
+      if (!san && o.juego && typeof Chess !== "undefined") {
+        try {
+          const g = o.juego();
+          const copia = g && g.fen ? new Chess(g.fen()) : null;
+          const m = copia && copia.move({ from: j.from, to: j.to, promotion: j.promotion || "q" });
+          san = m ? m.san : null;
+        } catch (e) { san = null; }
+      }
+      const enPalabras = o.enPalabras && o.enPalabras() && window.BlindNotation;
+      if (san) return "La solución era: " + (enPalabras && BlindNotation.sanSpoken ? BlindNotation.sanSpoken(san) : jugadaEs(san)) + ".";
+      const casilla = (sq) => (enPalabras && BlindNotation.squareSpoken ? BlindNotation.squareSpoken(sq) : sq);
+      return j.from && j.to ? "La solución era: de " + casilla(j.from) + " a " + casilla(j.to) + "." : "";
     }
     return { dar, reiniciar, marcas: () => marcas, usadas: () => n };
   }
@@ -285,8 +315,11 @@
     sig.addEventListener("click", () => { cerrar(); if (o.siguiente) o.siguiente(); });
     // El foco va a «Siguiente», salvo que el alumno esté escribiendo en el
     // cuadro de comandos: ahí sigue, y «siguiente» escrito también avanza.
+    // Con la cuenta marcada como ciega, nunca: esa persona hace todo desde el
+    // recuadro, y sacarla de ahí a un botón la obliga a volver con Tab.
     const a = document.activeElement;
-    if (!(a && (a.tagName === "INPUT" || a.tagName === "TEXTAREA"))) sig.focus();
+    const ciego = document.documentElement.classList.contains("modo-ciego");
+    if (!ciego && !(a && (a.tagName === "INPUT" || a.tagName === "TEXTAREA"))) sig.focus();
     return { cerrar, activo: () => activo, siguiente: () => sig.click() };
   }
 

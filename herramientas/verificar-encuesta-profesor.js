@@ -173,6 +173,10 @@ async function pruebaAlumna(browser) {
     p_explica: 5, p_aprende: 5, p_claridad: 2, p_creatividad: 3, p_resuelve: 4, p_contento: 5,
   }]);
   igual("queda marcado como contestado", await page.evaluate(() => [...document.querySelectorAll("#profesores label")].map((l) => l.textContent.includes("Ya contestaste"))), [true, true]);
+  /* Deshabilitar el botón mientras se guarda lo dejaba sin foco (al <body>):
+     el foco va al mensaje de guardado, que el lector dice al recibirlo. */
+  igual("después de enviar, el foco va al mensaje de guardado", await page.evaluate(() => [document.activeElement.id, document.activeElement.textContent]),
+    ["form-estado", "✅ Guardado. Si cambias algo y vuelves a enviar, se corrige."]);
 
   // El que ya contestó este mes: se le enseña lo que mandó.
   await page.check('input[name="profesor"][value="p-2"]');

@@ -572,6 +572,32 @@ async function pruebaLasRachas(browser) {
     const cab = await page.evaluate(() => (document.querySelector(".cc-msg") || {}).textContent || "");
     ok("    «caballos» contesta dónde están", /caballo/i.test(cab) && /bella/i.test(cab) && /felix/i.test(cab), cab);
 
+    /* «tiempo»: la barra que se achica no la oye nadie. Los segundos que
+       quedan, dichos (js/reloj-hablado.js), con cualquiera de las formas de
+       preguntarlo. */
+    for (const pide of ["tiempo", "cuánto tiempo", "segundos"]) {
+      await page.fill(".cc-input", pide);
+      await page.press(".cc-input", "Enter");
+      await page.waitForTimeout(200);
+      const t2 = await page.evaluate(() => (document.querySelector(".cc-msg") || {}).textContent || "");
+      ok("    «" + pide + "» dice los segundos que quedan", /^Te quedan (5\d|60) segundos\.$/.test(t2), t2);
+    }
+    // Lo que no es una jugada no es «ilegal»: no se entendió.
+    await page.fill(".cc-input", "hola");
+    await page.press(".cc-input", "Enter");
+    await page.waitForTimeout(200);
+    const hola = await page.evaluate(() => (document.querySelector(".cc-msg") || {}).textContent || "");
+    ok("    «hola» dice que no se entendió (no «no es legal»)", /^No entendí «hola»/.test(hola) && !/legal/.test(hola), hola);
+    await page.fill(".cc-input", "Dh5");
+    await page.press(".cc-input", "Enter");
+    await page.waitForTimeout(200);
+    const ilegal = await page.evaluate(() => (document.querySelector(".cc-msg") || {}).textContent || "");
+    ok("    una jugada que no se puede hacer: «no es una jugada legal»", /«Dh5» no es una jugada legal/.test(ilegal), ilegal);
+    if (r.nombre === "te-reto.html") {
+      const cambiar = await page.evaluate(() => (document.getElementById("change-name-btn") || {}).getAttribute("aria-label"));
+      igual("    el botón «(cambiar)» dice qué cambia", cambiar, "Cambiar el nombre");
+    }
+
     // Las flechas mueven el foco de verdad, también acá.
     await page.focus('#board [data-square="a1"]');
     await page.keyboard.press("ArrowRight");
@@ -599,6 +625,9 @@ async function pruebaLasRachas(browser) {
     await page.waitForTimeout(400);
     const fallo = await page.evaluate(() => document.getElementById("result-text").textContent);
     ok("    al fallar, la jugada correcta va en palabras", /alfil cesar 4/.test(fallo) && !/Bc4/.test(fallo), fallo);
+    /* Legal pero no era la del ejercicio: empieza por «Respuesta incorrecta» y
+       dice la jugada que se hizo, en palabras. */
+    ok("    y empieza por «Respuesta incorrecta: caballo gustav 5»", /^Respuesta incorrecta: caballo gustav 5 /.test(fallo), fallo);
     await ctx.close();
   }
 
@@ -610,6 +639,59 @@ async function pruebaLasRachas(browser) {
   const barra = await page.evaluate(() => document.getElementById("timer-bar").style.transition);
   ok("  fuera del modo, siguen siendo 10 segundos", /10000ms/.test(barra), barra);
   await ctx.close();
+}
+
+/* Los avisos de mitad de tiempo y de los 10 segundos (js/reloj-hablado.js),
+   medidos sin esperar un minuto: se carga el módulo con un setTimeout que
+   anota cuándo se pidió cada aviso. */
+function pruebaElRelojHablado() {
+  console.log("\n▶ ¡Te reto! y Racha táctica: los avisos del reloj");
+  const vm = require("vm");
+  const pedidos = [];
+  const caja = { window: {}, Date, setTimeout: (f, ms) => { pedidos.push({ f, ms }); return pedidos.length; }, clearTimeout: () => {} };
+  vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "js", "reloj-hablado.js"), "utf8"), caja);
+  const dichos = [];
+  const reloj = caja.window.RelojHablado.crear({ hablar: () => true, decir: (t) => dichos.push(t) });
+  reloj.empezar(60000);
+  igual("  con 60 segundos avisa a la mitad y a los 10 que quedan", pedidos.map((p) => p.ms), [30000, 50000]);
+  pedidos.forEach((p) => p.f());
+  ok("  y lo dice", /^Mitad del tiempo\. Te quedan/.test(dichos[0] || "") && dichos[1] === "Quedan 10 segundos.", dichos);
+  ok("  «¿cuánto tiempo me queda?» se reconoce", reloj.esPregunta("¿Cuánto tiempo me queda?") && reloj.esPregunta("reloj") && !reloj.esPregunta("Cf3"));
+  pedidos.length = 0;
+  caja.window.RelojHablado.crear({ hablar: () => false, decir: () => {} }).empezar(60000);
+  igual("  fuera del Modo Adaptado no avisa solo", pedidos.length, 0);
+}
+
+/* «enroque corto» y «enroque largo», dichos como se dicen, en Estándar y
+   contra Oscar; y los tres mensajes de lo que no se jugó. */
+async function pruebaElEnroqueDichoYLosMensajes(browser) {
+  console.log("\n▶ Partidas: «enroque corto» y lo que se dice cuando no se juega");
+  const ENROQUES = "r3k2r/pppppppp/8/8/8/8/PPPPPPPP/R3K2R w KQkq - 0 1";
+  let a = await abrir(browser, "/estandar.html?room=r1", { tablas: { game_rooms: [sala("r1", "estandar", ENROQUES)], profiles: PERFILES } }, "u-ana", true);
+  await escribir(a.page, "hola");
+  let d = await loQueDijoElRecuadro(a.page);
+  ok("estandar: «hola» no se entendió (no es «no válida» ni «no legal»)", /^No entendí «hola»/.test(d) && !/v[aá]lida|legal/.test(d), d);
+  await escribir(a.page, "Dh5");
+  d = await loQueDijoElRecuadro(a.page);
+  ok("estandar: una jugada imposible, «no es una jugada legal»", /«Dh5» no es una jugada legal/.test(d), d);
+  await escribir(a.page, "enroque corto");
+  d = await loQueDijoElRecuadro(a.page);
+  const rey = await a.page.evaluate(() => (document.querySelector('#board [data-square="g1"]') || {}).getAttribute("aria-label"));
+  ok("estandar: «enroque corto» enroca", /rey blanco/.test(rey || "") && !/legal|no entend/i.test(d), { rey, d });
+  await a.ctx.close();
+
+  a = await abrir(browser, "/tablero.html", null, "u-ana", true);
+  await a.page.evaluate((f) => document.getElementById("chessboard").__tableroAccesibleCfg.juego().load(f), ENROQUES);
+  await escribir(a.page, "hola");
+  d = await loQueDijoElRecuadro(a.page);
+  ok("tablero.html: «hola» no se entendió", /^No entendí «hola»/.test(d), d);
+  await a.page.fill("#move-input", "enroque largo");
+  await a.page.press("#move-input", "Enter");
+  d = "";
+  for (let i = 0; i < 10 && !/enroque/.test(d); i++) { await a.page.waitForTimeout(100); d = await loQueDijoElRecuadro(a.page); }
+  const reyC1 = await a.page.evaluate(() => { const p = document.getElementById("chessboard").__tableroAccesibleCfg.juego().get("c1"); return p ? p.type + p.color : null; });
+  ok("tablero.html: «enroque largo» enroca contra Oscar", reyC1 === "kw" && /enroque largo/.test(d) && !/legal|entend/i.test(d), { reyC1, d });
+  await a.ctx.close();
 }
 
 // ======================= 10. estandar y niebla: turno, reloj, última jugada, coronar
@@ -785,6 +867,8 @@ async function pruebaLoQueQuedaEscritoYLoQueSeDice(browser) {
     await pruebaLosComandosDeSiempre(browser);
     await pruebaRevisarLaPartida(browser);
     await pruebaLasRachas(browser);
+    pruebaElRelojHablado();
+    await pruebaElEnroqueDichoYLosMensajes(browser);
     await pruebaElTurnoElRelojYLaUltima(browser);
     await pruebaLoQueQuedaEscritoYLoQueSeDice(browser);
   } finally {

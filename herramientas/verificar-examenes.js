@@ -400,6 +400,11 @@ async function main() {
     ok(!(await p.textContent("#q-comandos .cc-pos")).trim(), `sin tablero, la región de la posición dice algo antes de la pregunta: ${await p.textContent("#q-comandos .cc-pos")}`);
     await escribir("posición");
     ok(/no tiene tablero/.test(await p.textContent("#q-comandos .cc-msg")), "«posición» en una pregunta sin tablero no contesta que no hay tablero");
+    // «tiempo»: el reloj de arriba no es región viva; escrito, se dice cuánto queda.
+    await escribir("tiempo");
+    const quedaDicho = await p.textContent("#q-comandos .cc-msg");
+    ok(/^Te quedan (3 minutos|2 minutos y \d+ segundos?|2 minutos) para terminar el examen\.$/.test(quedaDicho), `«tiempo» no dice cuánto queda: ${quedaDicho}`);
+    ok(!(await p.evaluate(() => document.querySelector("#q-opciones [aria-pressed='true']"))), "«tiempo» se tomó como una opción");
     await escribir("B");
     ok((await p.getAttribute("#q-opciones button >> nth=1", "aria-pressed")) === "true", "escribir «B» no marca la segunda opción (aria-pressed)");
     await escribir("responder");
@@ -433,6 +438,10 @@ async function main() {
     // En la segunda pregunta cesar 4 estaba vacía; en esta hay un alfil.
     ok((await p.getAttribute("#q-board [data-square='c4']", "aria-label")) === "cesar 4, alfil blanco",
       `en la tercera pregunta la casilla c4 dice lo de la pregunta anterior: ${await p.getAttribute("#q-board [data-square='c4']", "aria-label")}`);
+    // Lo que no es una jugada no es «ilegal»: no se entendió.
+    await escribir("hola");
+    const holaDicho = await p.textContent("#q-comandos .cc-msg");
+    ok(/^No entendí «hola»/.test(holaDicho) && !/legal|posible/.test(holaDicho), `«hola» en una pregunta de jugada no dice que no se entendió: ${holaDicho}`);
     await escribir("enroque corto");
     ok(/^Jugaste enroque corto\./.test(await p.textContent("#q-pista")), `escribir «enroque corto» no jugó: ${await p.textContent("#q-pista")}`);
     await escribir("responder");

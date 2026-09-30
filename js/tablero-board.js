@@ -1018,6 +1018,13 @@
     s = s.replace(/\s+/g, "");
     if (!s) return [];
 
+    /* «enroque corto» / «enroque largo», como se dice: antes había que saber
+       escribir «O-O», y quien juega de oído (lector de pantalla, voz) dice el
+       nombre. Los espacios ya se quitaron arriba. */
+    const dicho = s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    if (dicho === "enroquecorto") s = "O-O";
+    else if (dicho === "enroquelargo") s = "O-O-O";
+
     const candidates = new Set();
     candidates.add(s);
 
@@ -1685,7 +1692,11 @@
     }
     const result = tryParseMove(raw);
     if (!result) {
-      announceMoveInput(`No se entendió la jugada "${raw.trim()}". Revisa la notación e intenta de nuevo.`);
+      /* Lo que se dice en todo el sitio (ComandosTablero.noSePudoJugar): «no es
+         una jugada legal» si lo escrito ES una jugada que acá no se puede hacer,
+         y «no entendí» si no es una jugada («hola»). */
+      announceMoveInput(window.ComandosTablero ? ComandosTablero.noSePudoJugar(raw.trim())
+        : `«${raw.trim()}» no es una jugada legal en esta posición.`);
       moveInputEl.select();
       return true;
     }

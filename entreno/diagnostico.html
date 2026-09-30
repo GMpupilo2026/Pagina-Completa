@@ -187,7 +187,11 @@
 
             <!-- ---------- Resultado ---------- -->
             <section id="result-view" class="hidden">
-                <h1 class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white mb-1">Tu diagnóstico</h1>
+                <!-- Al terminar, el foco viene a este título (tabindex="-1") y el
+                     nivel se dice en #result-aviso: la prueba desaparecía y el
+                     foco caía al <body> sin que nada dijera el resultado. -->
+                <h1 id="result-titulo" tabindex="-1" class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white mb-1 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500">Tu diagnóstico</h1>
+                <p id="result-aviso" role="status" class="sr-only"></p>
                 <p id="result-saved" class="text-xs text-brand-450 dark:text-brand-350 mb-5"></p>
 
                 <div class="marca-fondo bg-gradient-to-r from-accent-500 to-accent-600 text-brand-900 rounded-2xl shadow-md p-5 mb-6">

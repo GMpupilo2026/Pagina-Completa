@@ -165,6 +165,18 @@ function pintarReloj() {
   if (restan <= 0) { clearInterval(tickReloj); cerrar("tiempo"); }
 }
 
+// Lo que queda del examen, dicho: «Te quedan 12 minutos y 5 segundos».
+function tiempoDelExamenDicho() {
+  const seg = Math.max(0, Math.floor((terminaEn - ahora()) / 1000));
+  if (!seg) return "Se acabó el tiempo del examen.";
+  const h = Math.floor(seg / 3600), m = Math.floor((seg % 3600) / 60), sg = seg % 60;
+  const partes = [];
+  if (h) partes.push(h + (h === 1 ? " hora" : " horas"));
+  if (m) partes.push(m + (m === 1 ? " minuto" : " minutos"));
+  if (sg && !h) partes.push(sg + (sg === 1 ? " segundo" : " segundos"));
+  return "Te quedan " + partes.join(" y ") + " para terminar el examen.";
+}
+
 /* ---------------- Antitrampa ---------------- */
 function vigilar() {
   if (vigilando) return;
@@ -335,6 +347,13 @@ function contestarEscribiendo(texto, api) {
     responder();
     return;
   }
+  /* «tiempo»: cuánto le queda al examen, en palabras. El reloj de arriba no es
+     región viva (cambia cada segundo) y quien no ve no tenía cómo saberlo sin
+     salir del recuadro a buscarlo; escrito, se tomaba como una opción. */
+  if (/^(tiempo|el tiempo|reloj|el reloj|cuanto tiempo|cuanto tiempo queda|cuanto tiempo me queda|cuanto queda|cuanto me queda)$/.test(t.replace(/[?¿!¡.]/g, "").trim())) {
+    api.decir(tiempoDelExamenDicho());
+    return;
+  }
   if (/^(repetir|pregunta|enunciado|la pregunta)$/.test(t)) {
     prepararComandos(it, (examen.items || []).length - pendientes.length + indice + 1, (examen.items || []).length);
     return;
@@ -356,7 +375,11 @@ function contestarEscribiendo(texto, api) {
   if (!r) {
     api.decir(it.tipo === "casilla"
       ? "No entendí la casilla. Escríbela con su letra y su número, por ejemplo «e4»."
-      : "Esa jugada no es posible en esta posición. Escríbela como «Cf3», «e4» o «enroque corto».");
+      /* Lo mismo que en todo el sitio: «no es una jugada legal» solo si lo
+         escrito ES una jugada; si no («hola»), que no se entendió. */
+      : (window.ComandosTablero ? ComandosTablero.noSePudoJugar(texto)
+          + (ComandosTablero.pareceJugada(texto) ? " Escríbela como «Cf3», «e4» o «enroque corto»." : "")
+        : "Esa jugada no es posible en esta posición."));
     return;
   }
   /* Se dice UNA vez lo que eligió y qué sigue. La posición no se vuelve a

@@ -480,7 +480,10 @@ function loadPuzzleAt(exIndex, prefijo){
   // quedarse en el botón que se acaba de tocar (Siguiente/Anterior/Reiniciar, que en
   // el HTML quedan DESPUÉS del tablero) — así se llega directo, sin tener que ir a
   // buscarlo con Tab, y ya desde ahí las flechas funcionan (ver el keydown de abajo).
-  if(blindMode) document.getElementById('piezas-heading').focus();
+  // Con la cuenta ciega, en cambio, al recuadro: el tablero no está en su camino
+  // (aria-hidden) y todo se hace escribiendo.
+  if(modoCiego() && document.getElementById('cmd-input')) document.getElementById('cmd-input').focus();
+  else if(blindMode) document.getElementById('piezas-heading').focus();
 }
 
 function setStatus(text){ document.getElementById('board-status').textContent = text; }
@@ -696,6 +699,16 @@ function checkWin(){
     // con solo presionar Enter, en vez de tener que ir a buscar el botón a mano. Si no
     // hay otro ejercicio después (winNextBtn.disabled), se queda en "Reintentar" — un
     // botón deshabilitado nunca debería quedarse con el foco.
+    // Con la cuenta ciega el foco NO sale del recuadro (se hace todo desde
+    // ahí): se dice cómo seguir escribiendo. Los botones siguen ahí.
+    const cmdInputEl = document.getElementById('cmd-input');
+    if(modoCiego() && cmdInputEl){
+      cmdInputEl.focus();
+      announce(winNextBtn.disabled
+        ? '¡Muy bien! Nivel completado. Era el último de este nivel: escribe «otra vez» para repetirlo, o «nivel» y el nombre para cambiar de nivel.'
+        : '¡Muy bien! Nivel completado. Escribe «siguiente» para seguir.');
+      return;
+    }
     if(blindMode && !winNextBtn.disabled) winNextBtn.focus();
     else document.getElementById('win-retry').focus();
     announce('¡Muy bien! Nivel completado.');
@@ -1142,6 +1155,21 @@ function handleCmdFormSubmit(e){
   const tipoDicho = PIEZA_DICHA[plano.replace(/^(?:donde (?:esta|estan)|mis|mi|los|las|el|la)\s+/, '').replace(/^(?:mis|mi|los|las|el|la)\s+/, '')];
   if(tipoDicho){ input.value=''; cmdAnnounce(lineaDeTipo(tipoDicho)); return; }
   if(upper === 'AYUDA' || upper === 'HELP' || upper === '?'){ input.value=''; announceHelp(); return; }
+  /* Pasar de ejercicio y de nivel escribiendo, sin salir del recuadro: los
+     botones quedan lejos, y quien no ve tenía que ir a buscarlos con Tab. */
+  if(/^(siguiente|sig|siguiente ejercicio)$/.test(plano)){ input.value = ''; pasarAlSiguiente(); return; }
+  if(/^(anterior|ejercicio anterior)$/.test(plano)){
+    input.value = '';
+    const prev = document.getElementById('board-prev-puzzle');
+    if(prev.disabled) cmdAnnounce('Este es el primer ejercicio: no hay uno anterior.');
+    else prev.click();
+    return;
+  }
+  if(/^(otra vez|de nuevo|reintentar|repetir)$/.test(plano)){ input.value = ''; reiniciarEjercicio(); cmdAnnounce('Ejercicio reiniciado.', false); return; }
+  if(/^(niveles|nivel|categorias)$/.test(plano)){ input.value = ''; cmdAnnounce(textoNiveles()); return; }
+  const nivelPedido = nivelEscrito(plano);
+  if(nivelPedido){ input.value = ''; cambiarNivel(nivelPedido); return; }
+  if(/^(volver|salir|volver a entrenar|atras)$/.test(plano)){ input.value = ''; volverAEntrenar(); return; }
   if(upper === 'REINICIAR' || upper === 'RESET'){
     input.value = '';
     reiniciarEjercicio();
@@ -1227,7 +1255,57 @@ function handleCmdFormSubmit(e){
     return;
   }
 
-  cmdAnnounce(`No se entendió "${trimmed}". Escribe "ayuda" para ver los comandos.`);
+  cmdAnnounce(`No entendí «${trimmed}». Escribe una captura (por ejemplo «a1 b2» o «Ta3»), «siguiente», «niveles» o «ayuda» para ver los comandos.`);
+}
+
+/* «siguiente»: con el ejercicio resuelto, lo mismo que «Siguiente ›» del
+   aviso de victoria; sin resolver, se dice por qué no (antes: «no se entendió»). */
+function pasarAlSiguiente(){
+  const ganado = document.getElementById('win-overlay').classList.contains('open');
+  const winNext = document.getElementById('win-next');
+  const next = document.getElementById('board-next-puzzle');
+  if(ganado && !winNext.disabled){ winNext.click(); return; }
+  if(!ganado && !next.disabled){ next.click(); return; }
+  cmdAnnounce(ganado
+    ? 'Era el último ejercicio de este nivel. Escribe «niveles» para oír los otros.'
+    : 'Primero resuelve este ejercicio: el siguiente se abre al resolverlo. Escribe «otra vez» para empezarlo de nuevo.');
+}
+// «nivel fácil», «medio», «difícil», «gran maestro»… → la categoría.
+const NIVEL_DICHO = {
+  facil: 'FACIL', medio: 'INTERMEDIO', intermedio: 'INTERMEDIO', dificil: 'AVANZADO', avanzado: 'AVANZADO',
+  especialista: 'ESPECIALISTA', maestro: 'MAESTRO', 'gran maestro': 'GRANMAESTRO', granmaestro: 'GRANMAESTRO',
+};
+function nivelEscrito(plano){
+  const m = plano.match(/^(?:nivel |categoria )?(facil|medio|intermedio|dificil|avanzado|especialista|gran ?maestro|maestro)$/);
+  return m ? NIVEL_DICHO[m[1].replace('granmaestro', 'gran maestro')] : null;
+}
+function textoNiveles(){
+  const partes = CATEGORY_ORDER.map((cat) => {
+    const lista = EXERCISES.filter(e => e.category === cat);
+    return `${CATEGORY_LABEL[cat]}: ${countSolved(lista)} de ${lista.length} resueltos`;
+  });
+  return `Niveles (estás en ${CATEGORY_LABEL[currentCategory]}). ${partes.join('. ')}. Escribe por ejemplo «nivel medio» para cambiar.`;
+}
+function cambiarNivel(cat){
+  const lista = EXERCISES.filter(e => e.category === cat);
+  if(!lista.length || !puzzleForExercise(lista[0])){ cmdAnnounce(`El nivel ${CATEGORY_LABEL[cat]} todavía no tiene ejercicios para jugar.`); return; }
+  showCategory(cat);
+  const cmdInputEl = document.getElementById('cmd-input');
+  if(cmdInputEl && !document.getElementById('solo-panel').hidden) cmdInputEl.focus();
+  else {
+    // Nivel ya resuelto entero: el recuadro se esconde con el tablero; el foco
+    // va al aviso de «¡Completaste todos los ejercicios!», que se lee al llegar.
+    const h = document.querySelector('#solo-complete h2');
+    if(h){ h.setAttribute('tabindex', '-1'); h.focus(); }
+  }
+}
+// «volver»: a donde se vino (Entrenamiento), o al panel si se entró directo.
+function volverAEntrenar(){
+  cmdAnnounce('Volviendo…', false);
+  let mismoSitio = false;
+  try{ mismoSitio = !!document.referrer && new URL(document.referrer).origin === location.origin; }catch(e){}
+  if(mismoSitio && history.length > 1) history.back();
+  else location.href = '../clases.html#entrenar';
 }
 
 function speakableCaptureList(){

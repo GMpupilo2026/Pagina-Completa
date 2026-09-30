@@ -415,7 +415,12 @@ window.JuegosBlind = (function () {
           }
         }
 
-        const result = tryMove(raw);
+        /* «enroque corto» y «enroque largo», dicho como se dice: el intérprete de
+           cada página (tryMove) solo entendía «O-O», que en voz o escrito de
+           oído nadie dice. Se traduce acá, antes, para las tres partidas. */
+        const aJugar = /^enroque corto$/.test(pedido) ? "O-O"
+          : /^enroque largo$/.test(pedido) ? "O-O-O" : raw;
+        const result = tryMove(aJugar);
         if (result && result.ok) {
           moveInputEl.value = "";
           announce(typeof BlindNotation !== "undefined" ? BlindNotation.sanSpoken(result.san) : result.san);
@@ -433,7 +438,11 @@ window.JuegosBlind = (function () {
           else announce("No es tu turno: espera la jugada del rival.");
           seleccionarLoEscrito();
         } else {
-          announce('Jugada no válida: "' + raw + '". Revísala e intenta de nuevo. Escribe "ayuda" para ver qué más se puede escribir.');
+          /* Lo mismo que en todo el sitio (ComandosTablero.noSePudoJugar): «no
+             es una jugada legal» solo si ES una jugada; si no («hola»), que no
+             se entendió. */
+          announce(window.ComandosTablero ? ComandosTablero.noSePudoJugar(raw)
+            : '«' + raw + '» no es una jugada legal en esta posición.');
           seleccionarLoEscrito();
         }
       });

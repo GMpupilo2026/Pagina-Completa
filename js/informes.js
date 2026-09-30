@@ -69,7 +69,8 @@
             const div = document.createElement("div");
             div.className = "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 text-center";
             if (extra) { div.dataset.extra = "1"; div.classList.add("hidden"); }
-            div.innerHTML = `<div class="text-3xl mb-1">${emoji}</div><div class="text-2xl font-bold text-brand-800 dark:text-white">${value}</div><div class="text-xs text-brand-450 dark:text-brand-350 mt-1">${label}</div>`;
+            // El emoji es adorno: el lector lo leía delante de la cifra («🎯 0% Precisión», «dardo…»).
+            div.innerHTML = `<div class="text-3xl mb-1" aria-hidden="true">${emoji}</div><div class="text-2xl font-bold text-brand-800 dark:text-white">${value}</div><div class="text-xs text-brand-450 dark:text-brand-350 mt-1">${label}</div>`;
             return div;
         }
 
@@ -138,7 +139,7 @@
             return [
                 tarjetaTemaFlojo(e),
                 statCard("👁️", e.visualizacion, "Ejercicios de Visualización resueltos", true),
-                statCard("🧩", `${e.tiposEjercicios} (${e.tiposEstrellas}⭐)`, "Habilidades: ejercicios con estrellas", true),
+                statCard("🧩", `${e.tiposEjercicios} (${e.tiposEstrellas}<span aria-hidden="true">⭐</span><span class="sr-only"> estrellas</span>)`, "Habilidades: ejercicios con estrellas", true),
                 tarjetaTipoFlojo(e, alumnoId),
                 statCard("📖", `${e.aperturasEmpezadas} (${e.aperturasFirmes} firmes)`, "Líneas de Aperturas estudiadas", true),
                 statCard("🎯", textoPrecision(e), "Precisión posicional", true),
@@ -406,7 +407,7 @@
                 statCard("⏱️", fmtDuration(totalMinutes), "Tiempo en clase", true),
                 statCard("⏱️", fmtDuration(exerciseMinutesStudent), "Tiempo en ejercicios", true),
                 statCard("⚡", entreno.bestCoord, "Mejor puntuación en Coordenadas", true),
-                statCard("🏆", `${entreno.practiceCompleted} (${entreno.practiceStars}⭐)`, "Series de Practicar completadas", true),
+                statCard("🏆", `${entreno.practiceCompleted} (${entreno.practiceStars}<span aria-hidden="true">⭐</span><span class="sr-only"> estrellas</span>)`, "Series de Practicar completadas", true),
                 statCard("🧠", entreno.concentracionTotal, "Ejercicios de Concentración resueltos", true),
                 ...tarjetasDeModulos(entreno)
             );
@@ -429,8 +430,8 @@
                     li.className = "flex items-center justify-between border-b border-brand-50 dark:border-brand-800/60 last:border-0 pb-2";
                     const date = new Date(a.created_at).toLocaleDateString("es-CR", { day: "2-digit", month: "short", year: "numeric" });
                     let badge = "Pendiente";
-                    if (a.is_correct === true) badge = "✅ Correcta";
-                    else if (a.is_correct === false) badge = "❌ Incorrecta";
+                    if (a.is_correct === true) badge = "<span aria-hidden=\"true\">✅ </span>Correcta";
+                    else if (a.is_correct === false) badge = "<span aria-hidden=\"true\">❌ </span>Incorrecta";
                     li.innerHTML = `<span class="text-brand-500 dark:text-brand-300">${date}</span><span class="font-medium text-brand-700 dark:text-brand-200">${badge}</span>`;
                     historyEl.appendChild(li);
                 });
@@ -712,7 +713,7 @@
                     <td class="py-2 pr-4 text-brand-500 dark:text-brand-300">${fmtDuration((s.minutos_clase || 0) + (s.minutos_ejercicios || 0))}</td>
                     <td class="py-2 pr-4 text-brand-500 dark:text-brand-300">${pct === null ? "—" : `${s.correctas}/${s.respuestas} · ${pct}%`}</td>
                     <td class="py-2 pr-4 text-brand-500 dark:text-brand-300">${resumen ? escVis(resumen.nivel.etiqueta) : "<span class=\"text-brand-450 dark:text-brand-350\">Sin diagnóstico</span>"}</td>
-                    <td class="py-2 ${i ? "text-red-600 dark:text-red-400" : "text-brand-500 dark:text-brand-300"}">${i ? (dias ? `⚠️ Hace ${dias} ${dias === 1 ? "día" : "días"}` : "⚠️ Nunca entrenó") : "✅ Esta semana"}</td>`;
+                    <td class="py-2 ${i ? "text-red-600 dark:text-red-400" : "text-brand-500 dark:text-brand-300"}">${i ? (dias ? `<span aria-hidden="true">⚠️ </span>Hace ${dias} ${dias === 1 ? "día" : "días"}` : "<span aria-hidden=\"true\">⚠️ </span>Nunca entrenó") : "<span aria-hidden=\"true\">✅ </span>Esta semana"}</td>`;
                 tr.querySelector("[data-abrir]").addEventListener("click", (ev) => { ev.stopPropagation(); abrirInformeDe(s.id); });
                 // Su foto de perfil, o su inicial (js/foto-perfil.js).
                 if (window.FotoPerfil) tr.querySelector("[data-foto-fila]").replaceWith(FotoPerfil.avatar(s.id, nombre, "w-8 h-8 text-sm"));
@@ -1006,7 +1007,7 @@
                 statCard("⏱️", fmtDuration(totalMinutes), "Tiempo en clase", true),
                 statCard("⏱️", fmtDuration(exerciseMinutesDetail), "Tiempo en ejercicios", true),
                 statCard("⚡", entreno.bestCoord, "Mejor puntuación en Coordenadas", true),
-                statCard("🏆", `${entreno.practiceCompleted} (${entreno.practiceStars}⭐)`, "Series de Practicar completadas", true),
+                statCard("🏆", `${entreno.practiceCompleted} (${entreno.practiceStars}<span aria-hidden="true">⭐</span><span class="sr-only"> estrellas</span>)`, "Series de Practicar completadas", true),
                 statCard("🧠", entreno.concentracionTotal, "Ejercicios de Concentración resueltos", true),
                 ...tarjetasDeModulos(entreno, studentId)
             );
@@ -1036,8 +1037,8 @@
                     li.className = "flex items-center justify-between border-b border-brand-50 dark:border-brand-800/60 last:border-0 pb-2";
                     const date = new Date(a.created_at).toLocaleDateString("es-CR", { day: "2-digit", month: "short", year: "numeric" });
                     let badge = "Pendiente";
-                    if (a.is_correct === true) badge = "✅ Correcta";
-                    else if (a.is_correct === false) badge = "❌ Incorrecta";
+                    if (a.is_correct === true) badge = "<span aria-hidden=\"true\">✅ </span>Correcta";
+                    else if (a.is_correct === false) badge = "<span aria-hidden=\"true\">❌ </span>Incorrecta";
                     li.innerHTML = `<span class="text-brand-500 dark:text-brand-300">${date}</span><span class="font-medium text-brand-700 dark:text-brand-200">${badge}</span>`;
                     historyEl.appendChild(li);
                 });

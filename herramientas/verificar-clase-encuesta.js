@@ -130,7 +130,7 @@ async function pruebaCalentamientoDelAlumno(browser) {
   const jugar = async (de, a) => { await page.click('#calentamiento-tablero [data-square="' + de + '"]'); await page.click('#calentamiento-tablero [data-square="' + a + '"]'); };
   await jugar("g1", "f1");
   igual("una jugada que no es: lo dice y deja intentarlo otra vez", [await page.textContent("#calentamiento-msg"), await seVe(page, "#calentamiento-otra-btn")],
-    ["❌ Kf1 no es la mejor. Inténtalo otra vez.", true]);
+    ["Respuesta incorrecta: Kf1 no es la jugada que buscamos. Inténtalo otra vez.", true]);
   igual("y todavía no se anuncia como resuelto", await page.evaluate(() => (window.__tracks || []).some((t) => t.calentamiento)), false);
   await page.click("#calentamiento-otra-btn");
   await jugar("a1", "a8");

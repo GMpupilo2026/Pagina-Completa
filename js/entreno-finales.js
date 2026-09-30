@@ -101,9 +101,18 @@ function montarComandos(){
 }
 function jugarEscribiendo(texto, api){
   if(locked){ api.decir('Espera un momento: la máquina está pensando.'); return; }
-  if(terminado){ api.decir('Este final ya terminó. Reinícialo o pasa al siguiente.'); return; }
+  if(terminado){
+    // Terminado, el recuadro entiende lo mismo que los dos botones del final.
+    const t = CuadroComandos.normalizar(texto);
+    const sig = document.getElementById('celebration-next-btn');
+    if(/^sig(uiente)?( final)?$/.test(t) && sig.style.display !== 'none'){ api.limpiar(); sig.click(); return; }
+    if(/^(otra vez|de nuevo|intentar de nuevo|repetir|reiniciar)$/.test(t)){ api.limpiar(); document.getElementById('celebration-retry-btn').click(); return; }
+    api.decir(textoParaSeguir());
+    return;
+  }
   const mv = ComandosTablero.jugadaEscrita(game, texto);
-  if(!mv){ api.decir(`"${texto}" no es una jugada legal en esta posición. Escribe "ayuda" si no sabes qué se puede escribir.`); return; }
+  // No se entendió, o no es legal: js/comandos-tablero.js dice cuál de las dos.
+  if(!mv){ api.decir(ComandosTablero.noSePudoJugar(texto)); return; }
   api.limpiar().decir('');
   playMove(mv.from, mv.to, mv.promotion);
 }
@@ -435,7 +444,17 @@ function mostrarResultado(emoji, titulo, detalle, ganado){
   /* Al ganarlo, lo que sigue es el siguiente final, no repetir el mismo: el
      foco iba a «Intentar de nuevo» y un Intro de más volvía a empezar el que
      ya estaba resuelto. Al perderlo, sí: intentar de nuevo. */
-  if(blindMode) document.getElementById(ganado && hayOtro ? 'celebration-next-btn' : 'celebration-retry-btn').focus();
+  if(document.documentElement.classList.contains('modo-ciego') && comandos){
+    /* Con la cuenta ciega el foco NO sale del recuadro (se hace todo desde
+       ahí, y el recuadro sigue a la vista): se dice cómo seguir escribiendo. */
+    comandos.enfocar();
+    comandos.decir(titulo + ' ' + textoParaSeguir());
+  } else if(blindMode) document.getElementById(ganado && hayOtro ? 'celebration-next-btn' : 'celebration-retry-btn').focus();
+}
+function textoParaSeguir(){
+  const hayOtro = document.getElementById('celebration-next-btn').style.display !== 'none';
+  return hayOtro ? 'Escribe «siguiente» para pasar al próximo final, u «otra vez» para repetir este.'
+    : 'Escribe «otra vez» para repetir este final.';
 }
 
 /* Dos pistas: la idea del final, y después la jugada que haría el motor en tu

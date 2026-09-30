@@ -3594,6 +3594,13 @@
             if (!esOp) { caja.innerHTML = ""; return; }
             const vencida = PreguntaClase.segundosRestantes(currentQuestion) === 0;
             caja.innerHTML = "";
+            /* Cada botón va en un <li>: así «leer» (js/vision-cuenta.js, que lee los
+               títulos, párrafos y renglones de lista de la sección) dice también las
+               opciones con su letra. Antes leía la pregunta sin sus opciones, y
+               quien no ve no sabía qué letra escribir. */
+            const listaOp = document.createElement("ul");
+            listaOp.className = "grid gap-2";
+            caja.appendChild(listaOp);
             currentQuestion.opciones.forEach((texto, i) => {
                 const b = document.createElement("button");
                 b.type = "button";
@@ -3608,7 +3615,9 @@
                 b.textContent = "Opción " + CuadroComandos.letra(i) + ". " + String(texto);   // la escribió una persona
                 b.disabled = vencida;
                 b.addEventListener("click", () => enviarOpcion(i));
-                caja.appendChild(b);
+                const li = document.createElement("li");
+                li.appendChild(b);
+                listaOp.appendChild(li);
             });
         }
 
@@ -3671,6 +3680,20 @@
             if (quedan !== null && quedan > 0) t += " " + tiempoDeLaPreguntaDicho() + " «tiempo» te dice cuánto queda.";
             return t;
         }
+        function opcionesDichas(q) {
+            return "Opciones: " + q.opciones.map((o, i) => CuadroComandos.letra(i) + ", " + PreguntaClase.textoDeOpcion(q, i)).join("; ")
+                + ". Escribe la letra de tu opción, o su texto.";
+        }
+        function opcionPorSuTexto(q, pedido) {
+            const limpio = (t) => CuadroComandos.normalizar(t).replace(/[.!¡¿?,;:«»"]+/g, "").replace(/\s+/g, " ").trim();
+            const p = limpio(pedido).replace(/^(la )?opcion /, "");
+            if (p.length < 3) return null;
+            const textos = q.opciones.map((o, i) => limpio(PreguntaClase.textoDeOpcion(q, i)));
+            const exactas = textos.map((t, i) => t === p ? i : -1).filter((i) => i >= 0);
+            if (exactas.length === 1) return exactas[0];
+            const contienen = textos.map((t, i) => (" " + t + " ").includes(" " + p + " ") ? i : -1).filter((i) => i >= 0);
+            return contienen.length === 1 ? contienen[0] : null;
+        }
         const PIDE_TIEMPO = /^(tiempo|reloj|cuanto tiempo|cuanto tiempo queda|cuanto tiempo me queda|cuanto queda|cuanto me queda)$/;
 
         function contestarOpcionEscrita(texto, responder) {
@@ -3683,10 +3706,19 @@
             }
             if (!PreguntaClase.esDeOpciones(currentQuestion)) return null;
             const n = currentQuestion.opciones.length;
-            const i = CuadroComandos.opcionPedida(texto, n);
+            // «opciones», «repetir»: las opciones con su letra (como al llegar la pregunta).
+            if (/^(opciones|las opciones|leer opciones|di las opciones|repetir|repite|repetir opciones|otra vez las opciones)$/.test(pedido)) {
+                return { texto: opcionesDichas(currentQuestion) };
+            }
+            let i = CuadroComandos.opcionPedida(texto, n);
+            /* El TEXTO de una opción («Están iguales», o «iguales») también la
+               elige, si nombra una sola: quien acaba de oír las opciones repite lo
+               que oyó, no la letra. Primero el texto entero; si no, una opción que
+               lo contenga (con tres letras o más, para no tomar «a» de «Están»). */
+            if (i === null) i = opcionPorSuTexto(currentQuestion, pedido);
             if (i === null) {
                 return { fallo: true, texto: "No entendí «" + String(texto).trim() + "». Escribe la letra de una opción, de la A a la "
-                    + CuadroComandos.letra(n - 1) + ", o «posición» para oír la posición." };
+                    + CuadroComandos.letra(n - 1) + ", o su texto; «opciones» te las dice, y «posición», la posición." };
             }
             if (currentQuestion.closed_at || PreguntaClase.segundosRestantes(currentQuestion) === 0) {
                 return { fallo: true, texto: "Ya no se puede contestar: la pregunta se cerró o se acabó el tiempo." };
@@ -5273,7 +5305,10 @@
                 retryBtn.classList.add("hidden");
             } else {
                 toast.className = "fixed bottom-4 left-1/2 -translate-x-1/2 z-[70] w-[min(92vw,420px)] rounded-xl shadow-2xl p-4 text-center bg-red-500 text-white";
-                text.textContent = stillOpen ? "❌ Esa no era la jugada correcta — vuelve a intentarlo." : "❌ Esa no era la jugada correcta.";
+                /* Se pudo contestar pero no era: el aviso EMPIEZA por «Respuesta
+                   incorrecta», como en todo el sitio («no es legal» es otra cosa: la
+                   jugada que no se puede hacer). */
+                text.textContent = "Respuesta incorrecta: no era la que buscaba tu profe." + (stillOpen ? " Vuelve a intentarlo." : "");
                 retryBtn.classList.toggle("hidden", !stillOpen);
             }
             toast.classList.remove("hidden");
@@ -5311,7 +5346,7 @@
                     : (myAnswer.moves || []).join(" ");
             let text = "Tu respuesta: " + movesText + " ✓ enviada";
             if (myAnswer.is_correct === true) text = "Tu respuesta: " + movesText + " — ✅ ¡Correcto!";
-            else if (myAnswer.is_correct === false) text = "Tu respuesta: " + movesText + " — ❌ Revisa de nuevo";
+            else if (myAnswer.is_correct === false) text = "Respuesta incorrecta: " + movesText + " no era la que buscaba tu profe. Revisa de nuevo.";
             document.getElementById("question-status-text").textContent = text;
         }
 
@@ -5516,6 +5551,10 @@
             const paraQuienNoVe = document.documentElement.classList.contains("modo-ciego") && preguntaAcc;
             if (paraQuienNoVe && preguntaAnunciada !== currentQuestion.id) {
                 preguntaAnunciada = currentQuestion.id;
+                /* Lo que había a medias en el recuadro de la clase se borra: el foco
+                   se va a la pregunta y, al volver, lo siguiente que se escribía se
+                   pegaba detrás («e4Cf3») sin que quien no ve supiera que quedaba texto. */
+                if (claseAcc && claseAcc.cmd) claseAcc.cmd.limpiar();
                 enfocarCuandoSeVea(preguntaAcc.cmd.input);
                 preguntaAcc.cmd.limpiar();
                 preguntaAcc.decir(preguntaDicha(currentQuestion));

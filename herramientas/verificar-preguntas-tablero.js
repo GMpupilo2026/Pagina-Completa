@@ -71,6 +71,11 @@ igual("un ejercicio que arranca en la posición lo dice",
 const niebla = Object.assign(new Chess(g.fen()), { oculta: () => false, miColor: "w" });
 igual("con niebla, «última jugada» no se contesta acá", pregunta(niebla, "última jugada"), "(no la entendió)");
 
+console.log("\nLa posición, dicha de varias formas");
+const dichaPos = (t) => { const r = CT.interpretar(t, { juego: () => g }); return r.manejado ? r.tipo : "(no la entendió)"; };
+igual("«cómo está la posición»", dichaPos("¿Cómo está la posición?"), "posicion");
+igual("«describe la posición»", dichaPos("describe la posición"), "posicion");
+
 console.log("\nQue no se coma jugadas ni letras");
 igual("«Axb5» sigue siendo una jugada", pregunta(g, "Axb5"), "(no la entendió)");
 igual("«d» sola no es pregunta (es una letra de opción)", pregunta(g, "d"), "(no la entendió)");

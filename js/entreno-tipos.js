@@ -137,17 +137,52 @@
     if (fn) b.addEventListener("click", fn);
     return b;
   }
+  /* Un fallo se dice con palabras y al principio: «Respuesta incorrecta: …».
+     Los juegos escriben «✗ …», que el lector de pantalla lee como «signo de
+     multiplicación» o no lee, y quien no ve no se enteraba de que había
+     fallado hasta el final de la frase. Se cambia acá, en un solo lugar, para
+     que ningún juego nuevo se quede con el signo solo. (Regla del sitio: «no
+     es una jugada legal» SOLO si de verdad no se puede jugar; si se puede y
+     no es la respuesta, «Respuesta incorrecta».) */
+  function conPalabras(texto) {
+    return String(texto).replace(/^✗\s*/, "Respuesta incorrecta: ");
+  }
+  /* El texto se pone un momento después (ver abajo); lo que se quiera decir
+     pegado detrás («Escribe «siguiente»…») se suma a ese mismo aviso en vez de
+     pisarlo. */
+  let estadoPendiente = null, estadoSufijo = "";
   function estado(texto) {
     const e = $("estado");
+    texto = conPalabras(texto);
     // vaciar y volver a poner: si el texto se repite, el lector lo vuelve a leer
     e.textContent = "";
-    setTimeout(() => { e.textContent = texto; }, 30);
+    estadoSufijo = "";
+    clearTimeout(estadoPendiente);
+    estadoPendiente = setTimeout(() => { estadoPendiente = null; e.textContent = texto + estadoSufijo; estadoSufijo = ""; }, 30);
     /* Lo que el recuadro no entendió queda SELECCIONADO: lo siguiente que se
        escribe lo reemplaza, sin tener que borrarlo letra por letra a ciegas. */
-    if (/^(No entendí|Aquí solo se pregunta|«[^»]*» no es)/.test(texto)) {
+    if (/^(No entendí|Aquí solo se pregunta|En este ejercicio no hay|«[^»]*» (no es|no está|puede ser))/.test(texto)) {
       const i = $("jugada-input");
       if (i && document.activeElement === i && i.value) i.select();
     }
+  }
+  // Suma una frase al aviso que se está diciendo (o al último, si ya se dijo).
+  function sumarAlEstado(frase) {
+    if (estadoPendiente) { estadoSufijo += " " + frase; return; }
+    estado((($("estado").textContent || "").trim() + " " + frase).trim());
+  }
+  /* Lo escrito que no se pudo jugar: ComandosTablero.noSePudoJugar dice «no es
+     una jugada legal» solo si parece una jugada, y «No entendí» si no. */
+  function noSePudo(txt, extra) {
+    const base = window.ComandosTablero && ComandosTablero.noSePudoJugar
+      ? ComandosTablero.noSePudoJugar(txt) : "No entendí «" + txt + "».";
+    estado(base + (extra ? " " + extra : ""));
+  }
+  // «Respuesta incorrecta: Cf3 no es la jugada que buscamos. …»: se pudo jugar, pero no era.
+  function incorrecta(jugada, porque) {
+    return window.ComandosTablero && ComandosTablero.incorrecta
+      ? ComandosTablero.incorrecta(jugada, porque)
+      : "Respuesta incorrecta: " + jugada + " no es la jugada que buscamos." + (porque ? " " + porque : "");
   }
   function modoCiego() { return document.documentElement.classList.contains("modo-ciego"); }
   /* Con la cuenta ciega, todo se hace desde el recuadro: al cargar un
@@ -387,10 +422,100 @@
     const nav = txt.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[.!¡]/g, "").trim();
     if (/^(niveles|volver|volver a los niveles|los niveles)$/.test(nav)) { $("jugada-input").value = ""; location.hash = $("volver-tipo").getAttribute("href") || "#"; return; }
     if (/^(todos los tipos|todas las habilidades|habilidades|tipos)$/.test(nav)) { $("jugada-input").value = ""; location.hash = "#"; return; }
+    /* «siguiente» lo aprieta js/vision-cuenta.js cuando el botón se llama así;
+       en el último ejercicio se llama «Nivel 2 →» o «Volver a los niveles», y
+       ahí lo aprieta la página, que es la que sabe qué es «el siguiente». */
+    if (/^(siguiente|el siguiente|siguiente ejercicio|proximo|el proximo|proximo ejercicio|otro ejercicio)$/.test(nav)) { $("jugada-input").value = ""; $("btn-siguiente").click(); return; }
+    // Las opciones con su letra, y el ejercicio otra vez: lo mismo que se oye al llegar.
+    if (/^(opciones|las opciones|cuales son las opciones|decir las opciones)$/.test(nav)) {
+      $("jugada-input").value = "";
+      estado(opcionesActuales ? opcionesDichas() : "Este ejercicio no tiene opciones para elegir: " + ($("jugada-label").textContent || "contesta en el recuadro") + ".");
+      return;
+    }
+    if (/^(repetir|repite|pregunta|la pregunta|repetir la pregunta|ejercicio)$/.test(nav)) { $("jugada-input").value = ""; estado(anuncioEjercicio()); return; }
+    // La letra o el número de una opción («b», «2», «opción b») va antes que las preguntas al tablero.
+    if (opcionesActuales && window.CuadroComandos && CuadroComandos.opcionPedida(txt, opcionesActuales.length) !== null && responderConOpcion(txt)) return;
     if (preguntaAlTablero(txt)) { $("jugada-input").value = ""; return; }
     if (!alEscribir) { estado("Aquí solo se pregunta por la posición: este ejercicio se contesta con los botones de abajo. «niveles» vuelve a los niveles."); return; }
     alEscribir(txt);
   });
+
+  /* ------------------------------------------------------------ las opciones escritas
+     Los ejercicios de elegir (Detective, Rey y peón 1 y 2, ¿Qué apertura es?,
+     Intercambios) se contestan también escribiendo, sin repetir el nombre
+     entero del botón: la letra o el número («b», «2», «opción b»), una
+     palabra que la distinga («italiana», «tablas», «ganan») o, en Detective,
+     la jugada sola («Dd5»). Si la palabra sirve para dos, se dice cuáles y se
+     pide la letra: mejor preguntar que marcar la que no era. Cada juego pone
+     sus opciones con ponerOpciones(): { nombre, el, elegir(), coincide(txt)? }. */
+  let opcionesActuales = null;
+  function ponerOpciones(lista) { opcionesActuales = lista && lista.length ? lista : null; }
+  function letraDe(i) { return window.CuadroComandos ? CuadroComandos.letra(i) : "ABCDEFGHIJ"[i]; }
+  function plano(t) {
+    return String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
+      .replace(/[^a-z0-9ñ ]+/g, " ").replace(/\s+/g, " ").trim();
+  }
+  function opcionesDichas() {
+    if (!opcionesActuales) return "";
+    const usadas = opcionesActuales.filter((o) => o.el && o.el.disabled).length;
+    const todas = usadas === opcionesActuales.length;
+    return opcionesActuales.map((o, i) => "Opción " + letraDe(i) + ": " + o.nombre.replace(/[.\s]+$/, "") +
+      (!todas && o.el && o.el.disabled ? " (ya la probaste)" : "") + ".").join(" ") +
+      (todas ? "" : " Escribe la letra de la que elijas.");
+  }
+  // Las palabras que no distinguen una opción de otra.
+  const VACIAS = new Set(["el", "la", "los", "las", "de", "del", "y", "a", "al", "en", "con", "que", "lo", "un", "una", "es", "son", "opcion", "por"]);
+  function cualesOpciones(txt) {
+    const n = opcionesActuales.length;
+    const i = window.CuadroComandos ? CuadroComandos.opcionPedida(txt, n) : null;
+    if (i !== null) return [i];
+    const t = plano(txt).replace(/^(la |el )?opcion /, "");
+    const indices = [...Array(n).keys()];
+    const exactas = indices.filter((k) => plano(opcionesActuales[k].nombre) === t);
+    if (exactas.length) return exactas;
+    const porJugada = indices.filter((k) => opcionesActuales[k].coincide && opcionesActuales[k].coincide(txt));
+    if (porJugada.length) return porJugada;
+    const palabras = t.split(" ").filter((w) => w && !VACIAS.has(w));
+    if (!palabras.length) return [];
+    return indices.filter((k) => {
+      const suyas = plano(opcionesActuales[k].nombre).split(" ");
+      // la palabra entera, o el principio de una larga («sicil» → «siciliana»)
+      return palabras.every((w) => suyas.some((x) => x === w || (w.length >= 4 && x.startsWith(w))));
+    });
+  }
+  /* true si lo escrito nombró una opción (y la eligió, o dijo por qué no). */
+  function responderConOpcion(txt) {
+    if (!opcionesActuales) return false;
+    const r = cualesOpciones(txt);
+    if (!r.length) return false;
+    if (r.length > 1) {
+      estado("«" + txt + "» puede ser " + r.map((k) => "la opción " + letraDe(k) + " (" + opcionesActuales[k].nombre.replace(/[.\s]+$/, "") + ")").join(" o ") + ". Escribe la letra.");
+      return true;
+    }
+    const o = opcionesActuales[r[0]];
+    $("jugada-input").value = "";
+    // Con todas apagadas el ejercicio ya terminó: «ya la probaste» confundía.
+    if (opcionesActuales.every((x) => x.el && x.el.disabled)) { estado("Este ejercicio ya terminó. " + textoSiguiente()); return true; }
+    if (o.el && o.el.disabled) { estado("La opción " + letraDe(r[0]) + " ya la probaste. " + opcionesDichas()); return true; }
+    o.elegir();
+    return true;
+  }
+  // Lo que se contesta cuando lo escrito no es ninguna opción.
+  function noEsOpcion(txt, ejemplo) {
+    const n = opcionesActuales ? opcionesActuales.length : 0;
+    estado((window.ComandosTablero && ComandosTablero.pareceJugada && ComandosTablero.pareceJugada(txt)
+      ? "«" + txt + "» no es ninguna de las opciones."
+      : "No entendí «" + txt + "».") +
+      " Escribe la letra de una opción" + (n ? ", de la A a la " + letraDe(n - 1) : "") + (ejemplo ? ", " + ejemplo : "") + ", o «opciones» para oírlas.");
+  }
+  /* El ejercicio dicho entero: dónde va, el turno, lo que pide y sus opciones.
+     Se dice al pasar de ejercicio con «siguiente» (antes solo se oía «Listo:
+     Siguiente.» y el ejercicio nuevo quedaba sin decir) y con «repetir». */
+  function anuncioEjercicio() {
+    return [$("juego-progreso").textContent.replace(/ · tu mejor: .*$/, ""), $("juego-turno").textContent,
+      $("juego-enunciado").textContent, opcionesDichas()]
+      .map((x) => String(x || "").trim()).filter(Boolean).map((x) => /[.?!:]$/.test(x) ? x : x + ".").join(" ");
+  }
 
   /* ------------------------------------------------------------ las vistas */
   function mostrar(vista) {
@@ -425,10 +550,10 @@
       ico.setAttribute("aria-hidden", "true");
       cab.appendChild(ico);
       const tit = el("div");
-      const h = el("h2", "font-serif text-lg font-bold text-brand-800 dark:text-white");
-      const enlace = el("a", "rounded hover:text-accent-700 dark:hover:text-accent-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500", t.nombre);
-      enlace.href = "#" + t.id;
-      h.appendChild(enlace);
+      /* El título es texto y no enlace: la tarjeta tenía dos paradas de Tab que
+         llevaban al mismo lugar (el título y «Empezar: …»). Queda una sola, la
+         de abajo, que dice qué hace y con qué habilidad. */
+      const h = el("h2", "font-serif text-lg font-bold text-brand-800 dark:text-white", t.nombre);
       tit.appendChild(h);
       tit.appendChild(el("p", "text-sm font-semibold text-brand-600 dark:text-brand-300", t.pregunta));
       cab.appendChild(tit);
@@ -533,8 +658,12 @@
     const t = C.tipo(partida.tipo), a = avance(partida.tipo, partida.nivel);
     escribir(CLAVE_ULTIMO, { tipo: partida.tipo, nombre: t.nombre, nivel: partida.nivel, hechos: a.hechos, total: a.total });
   }
-  function cargarItem() {
+  /* `anunciar`: se llegó con «Siguiente», «Anterior» u «Otra vez». Con la
+     cuenta ciega el foco se queda en el recuadro, así que nada dice que el
+     ejercicio cambió: se dice el ejercicio nuevo en el aviso. */
+  function cargarItem(anunciar) {
     if (limpiarJuego) { limpiarJuego(); limpiarJuego = null; }
+    opcionesActuales = null;
     const item = partida.items[partida.i];
     if (partida.cola && partida.cola[partida.i]) { partida.tipo = partida.cola[partida.i].tipo; partida.nivel = item.nivel; }
     $("controles").innerHTML = "";
@@ -562,6 +691,7 @@
     // La apertura sin tablero (nivel 3) tampoco: la posición es la respuesta.
     if (adaptado() && partida.tipo !== "fotografia" && !tab.oculto) leerPosicion(item.fen);
     alRecuadro();
+    if (anunciar === true && modoCiego()) sumarAlEstado(anuncioEjercicio());
   }
   /* Nivel completo: todos sus ejercicios con al menos una estrella. Antes, al
      terminar el último, «Siguiente» volvía a la lista de niveles sin decir
@@ -577,6 +707,12 @@
     if (partida.i < partida.items.length - 1) b.textContent = "Siguiente →";
     else if (otro && nivelCompleto()) b.textContent = "Nivel " + otro.n + " →";
     else b.textContent = partida.cola ? "Terminar el repaso" : "Volver a los niveles";
+  }
+  function textoSiguiente() {
+    const otro = siguienteNivel();
+    if (partida.i < partida.items.length - 1) return "Escribe «siguiente» para el próximo ejercicio.";
+    if (otro && nivelCompleto()) return "Escribe «siguiente» para ir al Nivel " + otro.n + ".";
+    return "Escribe «siguiente» para " + (partida.cola ? "terminar el repaso." : "volver a los niveles.");
   }
   function avisarNivelCompleto() {
     const caja = $("nivel-completo"), otro = siguienteNivel(), t = C.tipo(partida.tipo);
@@ -604,18 +740,24 @@
     if (!completoAntes && nivelCompleto()) avisarNivelCompleto();
     anotarCompletos();
     rotularSiguiente();
-    if (extra !== false) $("btn-siguiente").focus();
+    /* Con la cuenta ciega el foco NO salta a «Siguiente →»: todo se hace desde
+       el recuadro, y con el foco en el botón, «leer» + Intro pasaba de
+       ejercicio sin querer (el Intro apretaba el botón). Se dice qué escribir. */
+    if (extra !== false) {
+      if (modoCiego()) sumarAlEstado(textoSiguiente());
+      else $("btn-siguiente").focus();
+    }
     // La ficha de «Repasar fallados», si quedó en la cola (null si no).
     return repaso || null;
   }
   $("btn-siguiente").addEventListener("click", () => {
     const otro = siguienteNivel();
-    if (partida.i < partida.items.length - 1) { partida.i++; cargarItem(); }
+    if (partida.i < partida.items.length - 1) { partida.i++; cargarItem(true); }
     else if (otro && nivelCompleto()) { location.hash = "#" + partida.tipo + "/" + otro.n; }
     else { location.hash = partida.cola ? "#" : "#" + partida.tipo; }
   });
-  $("btn-anterior").addEventListener("click", () => { if (partida.i > 0) { partida.i--; cargarItem(); } });
-  $("btn-otra-vez").addEventListener("click", () => cargarItem());
+  $("btn-anterior").addEventListener("click", () => { if (partida.i > 0) { partida.i--; cargarItem(true); } });
+  $("btn-otra-vez").addEventListener("click", () => cargarItem(true));
 
   /* ============================================================ los juegos */
   const JUEGOS = {};
@@ -636,7 +778,8 @@
       const lab = el("label", "flex items-start gap-2 p-3 rounded-lg bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 cursor-pointer");
       const r = el("input", "mt-1");
       r.type = "radio"; r.name = "det-op"; r.value = R.claveRetro(op); r.id = "det-op-" + k;
-      const txt = el("span", null, R.etiquetaRetro(op));
+      // La letra va escrita: se contesta escribiéndola («b») y así se oye en «opciones».
+      const txt = el("span", null, "Opción " + letraDe(k) + ". " + R.etiquetaRetro(op));
       const nota = el("span", "block text-xs mt-1");
       const cuerpo = el("span", "flex-1");
       cuerpo.append(txt, nota);
@@ -668,7 +811,43 @@
       }
     });
     $("controles").appendChild(comp);
+    // Escribir la opción la elige y la comprueba de una vez: la letra, una
+    // palabra que la distinga o la jugada sola («Dd5», «Dd1d5», «0-0»).
+    ponerOpciones(item.opciones.map((op) => ({
+      nombre: R.etiquetaRetro(op), el: op._radio,
+      elegir: () => { op._radio.checked = true; comp.click(); },
+      coincide: (txt) => jugadaRetroEscrita(txt, op),
+    })));
+    // El recuadro, en Modo Adaptado (fuera de él se contesta con las opciones, como siempre).
+    if (adaptado()) pedirJugada("Escribe la letra de la opción o la jugada (por ejemplo «b» o «Dd5»); «opciones» las dice", (txt) => {
+      if (hecho) { estado("Este ya lo resolviste. " + textoSiguiente()); return; }
+      if (!responderConOpcion(txt)) noEsOpcion(txt, "la jugada como «Dd5»");
+    });
   };
+  /* ¿Lo escrito es la jugada de esta opción de Detective? «Dd5», «Dxd5»,
+     «Dd1d5», «d1-d5», «Qd5», «e8=D», «0-0». La R es el rey en castellano y la
+     torre en inglés: se prueban las dos lecturas, y si con eso sirve para dos
+     opciones, responderConOpcion() lo dice y pide la letra. */
+  const PIEZAS_ESCRITAS = { R: ["k", "r"], D: ["q"], T: ["r"], A: ["b"], C: ["n"], K: ["k"], Q: ["q"], N: ["n"], B: ["b"], P: ["p"] };
+  function jugadaRetroEscrita(txt, op) {
+    const t = String(txt || "").trim().replace(/[+#!?]+$/, "").replace(/\s+/g, "");
+    const mueve = op.tipo === "normal" ? op.p : op.tipo === "enroque" ? "k" : "p";
+    if (/^(0-0-0|o-o-o|enroquelargo)$/i.test(t)) return op.tipo === "enroque" && op.a[0] === "c";
+    if (/^(0-0|o-o|enroquecorto|enroque)$/i.test(t)) return op.tipo === "enroque" && op.a[0] === "g";
+    const m = /^([A-Za-z]?)([a-h]?[1-8]?)[x:-]?([a-h][1-8])(?:=?([DTACQRBN]))?(?:ep|a\.?p\.?)?$/.exec(t);
+    if (!m) return false;
+    // Una letra minúscula de columna (a-h) puede ser el origen de un peón: «cd5».
+    const lecturas = [];
+    if (m[1]) {
+      const L = m[1] === "b" ? null : m[1].toUpperCase();
+      if (L && PIEZAS_ESCRITAS[L]) lecturas.push({ piezas: PIEZAS_ESCRITAS[L], de: m[2] });
+      if (/^[a-h]$/.test(m[1]) && !m[2]) lecturas.push({ piezas: ["p"], de: m[1] });
+    } else lecturas.push({ piezas: ["p"], de: m[2] });
+    const corona = m[4] ? PIEZAS_ESCRITAS[m[4].toUpperCase()] : null;
+    return lecturas.some((l) => l.piezas.indexOf(mueve) >= 0 && op.a === m[3] &&
+      (!l.de || op.de === l.de || op.de[0] === l.de || op.de[1] === l.de) &&
+      (corona ? op.tipo === "corona" && corona.indexOf(op.p) >= 0 : true));
+  }
 
   /* ---------- 2. ¿Qué quiere el rival? ---------- */
   JUEGOS.amenaza = function (item) {
@@ -693,7 +872,7 @@
         terminar(item, n);
       } else {
         errores++;
-        estado("✗ " + R.sanEs(r.san) + " es legal, pero no es lo que más le conviene al rival. Busca otra vez.");
+        estado(incorrecta(R.sanEs(r.san), "Se puede jugar, pero no es lo que más le conviene al rival. Busca otra vez."));
         tablero(item.fenRival, { orientacion: yo, clic: moverConClic(juego, jugar), juego });
       }
     };
@@ -702,7 +881,7 @@
     $("juego-enunciado").textContent = "Antes de mover: ¿qué amenaza el rival? Haz la jugada de las " + COLOR[rival] + ".";
     pedirJugada("O escribe la jugada del rival (las " + COLOR[rival] + ")", (txt) => {
       const m = jugadaEscrita(new Chess(item.fenRival), txt);
-      if (!m) { estado("No entendí «" + txt + "» como una jugada de las " + COLOR[rival] + "."); return; }
+      if (!m) { noSePudo(txt, "Recuerda: juegas por las " + COLOR[rival] + "."); return; }
       $("jugada-input").value = "";
       jugar({ from: m.from, to: m.to, promotion: m.promotion });
     });
@@ -761,7 +940,10 @@
       if (m) fila = filas.find((f) => limpia(f.c.san) === limpia(m.san));
       if (!fila) fila = filas.find((f) => limpia(f.c.sanEs) === limpia(sinPalabra) || limpia(f.c.san) === limpia(sinPalabra));
       if (!fila) {
-        estado("No entendí «" + txt + "» como una de las candidatas: " + filas.map((f) => f.c.sanEs).join(", ") + ".");
+        const candidatas = "Las candidatas: " + filas.map((f) => f.c.sanEs).join(", ") + ".";
+        // Una jugada que se puede hacer pero no está en la lista no es «no legal».
+        if (m) estado("«" + txt + "» no está entre las candidatas. " + candidatas);
+        else noSePudo(txt, candidatas);
         return;
       }
       $("jugada-input").value = "";
@@ -830,7 +1012,7 @@
       $("juego-enunciado").textContent = "Haz la jugada de las " + COLOR[rival] + " que refuta " + golpe + " en B.";
       pedirJugada("O escribe la jugada de las " + COLOR[rival], (txt) => {
         const m = jugadaEscrita(new Chess(g.fen()), txt);
-        if (!m) { estado("No entendí «" + txt + "» como una jugada de las " + COLOR[rival] + "."); return; }
+        if (!m) { noSePudo(txt, "Recuerda: juegas por las " + COLOR[rival] + "."); return; }
         $("jugada-input").value = "";
         refutar({ from: m.from, to: m.to, promotion: m.promotion });
       });
@@ -1150,7 +1332,7 @@
     redibujar(null);
     pedirJugada("O escribe tu jugada", (txt) => {
       const m = jugadaEscrita(juego, txt);
-      if (!m) { estado("No entendí «" + txt + "» como una jugada de las blancas."); return; }
+      if (!m) { noSePudo(txt); return; }
       $("jugada-input").value = "";
       jugar({ from: m.from, to: m.to, promotion: m.promotion });
     });
@@ -1255,6 +1437,7 @@
     pedirJugada, jugadaEscrita, moverConClic, COLOR, BTN_PRIMARIO, BTN_SEGUNDO,
     datos: () => DATOS, ponerDatos: (k, v) => { DATOS[k] = v; }, alLimpiar: (fn) => { limpiarJuego = fn; },
     cargarPropios, repintarTipo: (id) => pintarTipo(id),
+    noSePudo, incorrecta, ponerOpciones, responderConOpcion, noEsOpcion, letraDe,
   };
   requireLoginThenGate();
 })();

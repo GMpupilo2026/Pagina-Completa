@@ -267,6 +267,22 @@
   function jugadaDesde(fen, san) {
     try { return new Chess(fen).move(san, { sloppy: true }); } catch (e) { return null; }
   }
+  /* Lo que se dice cuando no se jugó, igual que en todo el sitio
+     (js/comandos-tablero.js): «no es una jugada legal» solo si lo escrito ES
+     una jugada que acá no se puede hacer; si no («hola»), que no se entendió;
+     y si se pudo jugar pero no era, «Respuesta incorrecta: …». */
+  function noSePudoJugar(texto) {
+    return window.ComandosTablero ? ComandosTablero.noSePudoJugar(texto)
+      : "«" + String(texto).trim() + "» no es una jugada legal en esta posición.";
+  }
+  function incorrectaHtml(g, uci, resto) {
+    let dicha = uci;
+    try { const m = g && new Chess(g.fen()).move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci[4] || "q" }); if (m) dicha = spokenSan(m.san); } catch (e) {}
+    const txt = window.ComandosTablero ? ComandosTablero.incorrecta(dicha) : "Respuesta incorrecta: " + dicha + " no es la jugada que buscamos.";
+    // «Respuesta incorrecta» en negrita, como iba «No es esa.»; lo demás, normal.
+    const i = txt.indexOf(":");
+    return "<strong>" + esc(txt.slice(0, i + 1)) + "</strong>" + esc(txt.slice(i + 1)) + (resto ? " " + esc(resto) : "");
+  }
   function sinTildes(t) { return String(t).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim(); }
   // Una sola copia de «qué partida de chess.js corresponde a esta FEN».
   function chessDe(cache, fen) {
@@ -300,7 +316,11 @@
       '<div class="cp-comment" aria-live="polite"></div>' +
       '<div class="cp-actions"><button type="button" data-act="guess" class="cp-btn">🎯 Adivinar las jugadas clave</button>' +
       '<button type="button" data-act="practice" class="cp-btn cp-btn2">♟ Jugar desde aquí contra el motor</button>' +
-      '<label class="cp-level">Nivel <select data-act="level"><option value="1500">1500</option><option value="1800" selected>1800</option><option value="max">Máximo</option></select></label></div>' +
+      /* Un <span> con el nombre en el select, y no un <label> que lo envuelve:
+         «leer» (js/vision-cuenta.js) lee los <label> de la sección, y el texto
+         de un label con el select adentro junta todas sus opciones («Nivel
+         15001800Máximo»). */
+      '<span class="cp-level">Nivel <select data-act="level" aria-label="Nivel del motor"><option value="1500">1500</option><option value="1800" selected>1800</option><option value="max">Máximo</option></select></span></div>' +
       '<div class="cp-cmd" hidden></div>' +
       '<div class="cp-promo" hidden><span>Coronar:</span><button type="button" data-p="q">♕ Dama</button><button type="button" data-p="r">♖ Torre</button><button type="button" data-p="b">♗ Alfil</button><button type="button" data-p="n">♘ Caballo</button></div>' +
       '<div class="cp-msg" aria-live="polite"></div></div>' +
@@ -394,7 +414,7 @@
       if (state.mode !== "ver") {
         if (!puedeJugar) { api.decir(esperaSeguir ? "Escribe «seguir» para el próximo momento clave." : "Espera: el motor está pensando."); return; }
         const mv = jugadaEscrita(game, texto);
-        if (!mv) { api.decir("Jugada no válida: «" + texto.trim() + "». Revísala e intenta de nuevo, o pregunta «posición» o «caballos»."); return; }
+        if (!mv) { api.decir(noSePudoJugar(texto.trim())); try { api.input.select(); } catch (e) {} return; }
         api.limpiar().decir("");
         onHumanMove(mv.from + mv.to + (mv.promotion || ""));
         return;
@@ -456,7 +476,7 @@
           state.intentos++;
           renderView({ bad: [uci.slice(0, 2), uci.slice(2, 4)] });
           if (state.intentos >= 2) { revealGuess(true); return; }
-          comEl.innerHTML = '<p class="cp-c cp-bad"><strong>No es esa.</strong> ' + esc(state.guess.pista || "Prueba otra vez: piensa en el plan de la lección.") + "</p>";
+          comEl.innerHTML = '<p class="cp-c cp-bad">' + incorrectaHtml(game, uci, state.guess.pista || "Prueba otra vez: piensa en el plan de la lección.") + "</p>";
         }
         return;
       }
@@ -604,8 +624,8 @@
       if (ok) { solve(true); }
       else {
         render({ bad: [uci.slice(0, 2), uci.slice(2, 4)] });
-        if (state.tries >= 3) { comEl.innerHTML = '<p class="cp-c cp-bad"><strong>No es esa.</strong> Mira la solución y estudia la idea.</p>'; }
-        else comEl.innerHTML = '<p class="cp-c cp-bad"><strong>No es esa.</strong> ' + esc(x.pista || "Busca la idea principal de la lección.") + " Intento " + state.tries + " de 3.</p>";
+        if (state.tries >= 3) { comEl.innerHTML = '<p class="cp-c cp-bad">' + incorrectaHtml(game, uci, "Mira la solución y estudia la idea.") + "</p>"; }
+        else comEl.innerHTML = '<p class="cp-c cp-bad">' + incorrectaHtml(game, uci, (x.pista || "Busca la idea principal de la lección.") + " Intento " + state.tries + " de 3.") + "</p>";
       }
     }
     const input = boardInput(boardEl, promoEl, () => game, onExerciseMove, (sel) => {
@@ -629,7 +649,7 @@
       if (!state.solved) {
         if (!game) return;
         const mv = jugadaEscrita(game, texto);
-        if (!mv) { api.decir("Jugada no válida: «" + texto.trim() + "». Revísala e intenta de nuevo, o pregunta «posición» o «caballos»."); return; }
+        if (!mv) { api.decir(noSePudoJugar(texto.trim())); try { api.input.select(); } catch (e) {} return; }
         api.limpiar().decir("");
         onExerciseMove(mv.from + mv.to + (mv.promotion || ""));
         return;
