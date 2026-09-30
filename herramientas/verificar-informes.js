@@ -263,7 +263,7 @@ const ERRORES_ANA = {};
  errorDeAna(7, 1, { id: "malo", jugada: "<img src=x onerror=alert(1)>" })].forEach((x) => { ERRORES_ANA[x.id] = x; });
 const ESTADO_ERRORES = [
   { student_id: "a-1", key: "errores_propios_v1", value: { raw: JSON.stringify(ERRORES_ANA) } },
-  { student_id: "a-1", key: "errores_analizadas_v1", value: { raw: JSON.stringify({ "juego:g1": "x", "juego:g2": "x", "practica:p1": "x", "juego:g3": "x" }) } },
+  { student_id: "a-1", key: "errores_analizadas_v1", value: { raw: JSON.stringify({ "juego:g1": { r: "x", f: "2026-08-10T15:00:00Z", e1: 2, e2: 1 }, "juego:g2": { r: "x", f: "2026-09-10T15:00:00Z", e1: 1, e2: 0 }, "practica:p1": "x", "juego:g3": { r: "x", f: "2026-09-20T15:00:00Z", e1: 0, e2: 0 } }) } },
   { student_id: "a-1", key: "tipos_estrellas_v1", value: { raw: JSON.stringify({ "errores:juego-g6-16": 3, "errores:juego-g5-15": 2, "detective:x": 3 }) } },
   { student_id: "a-2", key: "errores_propios_v1", value: { raw: JSON.stringify({ z: errorDeAna(9, 1, { id: "de-bea", resumen: "De Bea" }) }) } },
 ];
@@ -401,6 +401,15 @@ async function pruebaProfesor(browser) {
         ],
         '{"p_alumnos":["a-2"]}': [{ tema: "colgada", errores: 2, alumnos: 1 }],
       },
+      /* Las celadas del grupo: solo las del banco de Aperturas (una que no está
+         y una con id de HTML no se pintan); en 7B, ninguna. */
+      errores_celadas_del_grupo: {
+        '{"p_alumnos":["a-1","a-2","a-3"]}': [
+          { linea: "blackburne", errores: 3, alumnos: 2, fen: "r1bqkbnr/pppp1ppp/8/4p3/2BnP3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4" },
+          { linea: "no-esta-en-el-banco", errores: 2, alumnos: 1, fen: "r1bqkbnr/pppp1ppp/8/4p3/2BnP3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4" },
+          { linea: "<img src=x>", errores: 1, alumnos: 1, fen: "x" },
+        ],
+      },
     },
     tablas: {
       profiles: [{ id: "prof-1", role: "profesor", is_admin: true, full_name: "Oscar", email: "o@x.cr" }],
@@ -430,13 +439,26 @@ async function pruebaProfesor(browser) {
 
   console.log("-- Los errores de las partidas del grupo");
   await page.waitForFunction(() => document.querySelectorAll("#errores-grupo-body li").length > 0);
-  const temasGrupo = () => page.evaluate(() => [...document.querySelectorAll("#errores-grupo-body li")].map((li) => {
+  const temasGrupo = () => page.evaluate(() => [...document.querySelectorAll("#errores-grupo-body > ol:not([data-celadas]) > li")].map((li) => {
     const a = li.querySelector("a");
     return li.querySelector("span").textContent + (a ? " → " + a.getAttribute("href") : "");
   }).join(" // "));
   igual("los temas de todo el grupo, con su nombre y a dónde practicarlos; lo desconocido y «otra» no salen", await temasGrupo(),
     "Clavada · 5 errores en 2 alumnos → entreno/temas.html?tema=pin // Horquilla (ataque doble) · 1 error en 1 alumno → entreno/temas.html?tema=fork");
   igual("y se ve de verdad", await page.evaluate(() => document.getElementById("errores-grupo-body").checkVisibility()), true);
+  igual("las celadas en que más cae el grupo: solo las del banco, con el enlace a la línea", await page.evaluate(() =>
+    [...document.querySelectorAll("#errores-grupo-body [data-celadas] > li")].map((li) => li.querySelector("span").textContent + " → " + li.querySelector("a").getAttribute("href")).join(" // ")),
+    "«Celada Blackburne» · 3 veces en 2 alumnos → entreno/aperturas.html?linea=blackburne");
+  const antesCelada = await page.evaluate(() => window.__escrituras.length);
+  await page.getByRole("button", { name: "Armar un plan de clase con esta celada" }).click();
+  await page.waitForFunction(() => /Listo|No se pudo/.test((document.querySelector('#errores-grupo-body [role="status"]') || {}).textContent || ""), null, { timeout: 8000 }).catch(() => {});
+  const planC = await page.evaluate((desde) => window.__escrituras.slice(desde).map((e) => ({ t: e.etiqueta, f: e.fila })), antesCelada);
+  const cabC = planC.filter((e) => e.t === "from:planes_clase"), itemsC = planC.filter((e) => e.t === "from:plan_items").map((e) => e.f);
+  igual("el plan de la celada: uno, a nombre de quien da clase, con la línea en las notas", cabC.length === 1 && cabC[0].f.profesor_id === "prof-1" && cabC[0].f.titulo === "Celada: «Celada Blackburne»" && /La línea: 1\.e4 e5 2\.Cf3 Cc6 3\.Ac4 Cd4 4\.Cxe5 Dg5 5\.Cxf7/.test(cabC[0].f.notas || ""), true);
+  // La posición final, reproducida desde el banco con chess.js (no escrita a mano).
+  const finalBlackburne = (() => { const { Chess } = require("chess.js"); const g = new Chess(); require("../js/aperturas-lineas.js").LINEAS.find((l) => l.id === "blackburne").jugadas.forEach((m) => g.move(m)); return g.fen(); })();
+  igual("dos posiciones: donde cayó el grupo y cómo termina la línea (reproducida con chess.js)", itemsC.map((x) => x.tipo + ":" + x.titulo + ":" + x.fen).join(" | "),
+    "posicion:Aquí se cae en la «Celada Blackburne»:r1bqkbnr/pppp1ppp/8/4p3/2BnP3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4 | posicion:Así termina la «Celada Blackburne»:" + finalBlackburne);
 
   /* EL ÍNDICE DE LA CLASE. Antes acá salían tres listas de los mismos alumnos
      —precisión, asistencia y entrenamiento— una detrás de otra y sin corte: con
@@ -692,8 +714,12 @@ async function pruebaProfesor(browser) {
     "4 partidas revisadas · 6 errores (4 en que regaló, 2 en que se le escapó la ventaja) · 2 ya resueltos.");
   igual("y lo que más se repite, por tema", await page.evaluate(() =>
     document.querySelectorAll("#errores-body > p")[1].textContent.trim()), "Lo que más se repite: clavadas (3), horquillas (1).");
+  igual("la curva de errores por partida, mes a mes, hablando de él (las viejas sin cuenta no entran)", await page.evaluate(() => {
+    const c = document.querySelector("#errores-body [data-curva]");
+    return c && c.checkVisibility() ? [c.firstElementChild.textContent].concat([...c.querySelectorAll("li")].map((li) => li.textContent)).join(" // ") : null;
+  }), "¿Comete menos errores? Errores por partida revisada, mes a mes: // agosto de 20263 por partida · 1 partida // septiembre de 20260,5 por partida · 2 partidas");
   igual("se ven los 5 más recientes", await page.evaluate(() =>
-    [...document.querySelectorAll("#errores-body li")].filter((li) => li.checkVisibility()).length), 5);
+    [...document.querySelectorAll("#errores-body > ul > li")].filter((li) => li.checkVisibility()).length), 5);
   igual("el primero, con la jugada en castellano y las buenas", await page.evaluate(() =>
     document.querySelector("#errores-body li").innerText.replace(/\s+/g, " ").trim()),
     "Partida del 26 sept · jugada 11 — regaló · clavada Jugó Cxf7 (+0,1 → −4,5). Lo bueno: Axf7+ o 0-0. ✓ Ya lo resolvió ★★★");
@@ -701,7 +727,7 @@ async function pruebaProfesor(browser) {
     document.querySelectorAll("#errores-body li")[2].innerText.includes("✗ Todavía no lo resolvió")), "true");
   await page.click("#errores-body button");
   igual("«Ver todos» abre el resto y dice que está abierto", await page.evaluate(() =>
-    [[...document.querySelectorAll("#errores-body li")].filter((li) => li.checkVisibility()).length,
+    [[...document.querySelectorAll("#errores-body > ul > li")].filter((li) => li.checkVisibility()).length,
      document.querySelector("#errores-body button").getAttribute("aria-expanded")].join()), "6,true");
   igual("lo que no tiene forma de ejercicio no se pinta (ni se ejecuta)", await page.evaluate(() =>
     [document.getElementById("errores-body").innerHTML.includes("onerror"), !!document.querySelector("#errores-body img")].join()), "false,false");
@@ -815,6 +841,7 @@ async function pruebaProfesor(browser) {
   await page.waitForFunction(() => document.querySelectorAll("#attendance-table-body tr").length === 1);
   igual("solo 7B", await fila(page, "attendance-table-body", 0), "Bruno Mena | 7B | 1/4 · 2 faltas justificadas | 10 min | 0 min | 10 min");
   await page.waitForFunction(() => document.getElementById("errores-grupo-body").textContent.includes("Pieza sin defender"));
+  igual("en 7B no hay celadas: el bloque no aparece", await page.evaluate(() => !!document.querySelector("#errores-grupo-body [data-celadas]")), false);
   igual("los errores del grupo siguen al filtro: a la base se le mandan solo los de 7B", await temasGrupo(),
     "Pieza sin defender · 2 errores en 1 alumno → entreno/temas.html?tema=hangingPiece");
   await page.selectOption("#group-filter", "");

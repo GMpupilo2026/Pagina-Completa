@@ -30,6 +30,9 @@ function clienteFalso(tablas) {
       // .in(c, valores): filtra de verdad, como los demás.
       in(c, vals) { filtros.push([c, (vals || []).map(String), "en"]); return q; },
       eq(c, v) { filtros.push([c, v]); return q; },
+      neq(c, v) { filtros.push([c, v, "distinto"]); return q; },
+      // .or("white_id.eq.u,black_id.eq.u"): basta con que pase uno (solo .eq).
+      or(expr) { filtros.push([null, String(expr).split(",").map((t) => { const m = t.match(/^([a-z_]+)\.eq\.(.*)$/); return m ? [m[1], m[2]] : null; }).filter(Boolean), "o"]); return q; },
       // .is(c, null): las que no tienen nada en c.
       is(c, v) { if (v === null) filtros.push([c, undefined, "nulo"]); return q; },
       // .not(c, "is", null): solo las filas que tienen algo en c.
@@ -43,7 +46,7 @@ function clienteFalso(tablas) {
       // El filtro se apunta al RESOLVER: .update(x).eq(...) encadena, y acá
       // todavía no hay ninguno. Se anota en window.__updates y cambia las filas.
       update(campos) { porActualizar = campos; return q; },
-      filas() { return (TABLAS[tabla] || []).filter((f) => filtros.every(([c, v, modo]) => modo === "noNulo" ? f[c] != null : modo === "nulo" ? f[c] == null : modo === "en" ? v.includes(String(f[c])) : f[c] === v)); },
+      filas() { return (TABLAS[tabla] || []).filter((f) => filtros.every(([c, v, modo]) => modo === "noNulo" ? f[c] != null : modo === "nulo" ? f[c] == null : modo === "en" ? v.includes(String(f[c])) : modo === "distinto" ? f[c] !== v : modo === "o" ? v.some(([k, x]) => String(f[k]) === x) : f[c] === v)); },
       maybeSingle() { return Promise.resolve({ data: q.filas()[0] || null, error: null }); },
       single() { return Promise.resolve({ data: q.filas()[0] || null, error: null }); },
       then(r) {
@@ -81,8 +84,10 @@ function clienteFalso(tablas) {
 `;
 }
 
-async function abrir(browser, ruta, tablas, local) {
+// `preparar(ctx)`, opcional: rutas de más (un Lichess de mentira, por ejemplo).
+async function abrir(browser, ruta, tablas, local, preparar) {
   const ctx = await browser.newContext({ serviceWorkers: "block" });
+  if (preparar) await preparar(ctx);
   if (local) await ctx.addInitScript((l) => { for (const k in l) localStorage.setItem(k, l[k]); }, local);
   const page = await ctx.newPage();
   const errores = [];
