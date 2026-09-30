@@ -635,7 +635,10 @@
                     : "¡El profesor te dio el control del tablero! Ya puedes mover piezas.";
                 if (profeMuestraOtra) text = "Tienes el control, pero tu profe está mostrando otra posición: cuando vuelva a la partida, vas a poder mover.";
             }
-            setStatus(text);
+            /* Se llama con CADA jugada del profe, y la franja es una región viva:
+               reescribirla con el mismo «Bienvenido a la clase…» lo hacía decir otra
+               vez en cada jugada, encima del aviso de la jugada. Solo si cambió. */
+            if (document.getElementById("status-banner").textContent !== text) setStatus(text);
         }
 
         // ---------- Tener un curso a mano mientras se da la clase (solo el profesor) ----------
@@ -2707,6 +2710,8 @@
                 hand_raised: handRaised,
                 hand_at: handAt,
                 calentamiento: calentamientoResuelto,
+                // La Fotografía en curso (solo el profe): ver dictarFotografiaDeLaPresencia.
+                fotografia: fotoEnCurso || undefined,
             };
         }
 
@@ -2716,15 +2721,39 @@
            corresponde —en una jugada normal tapa lo que cambió, por eso el
            recuadro no lo hace solo—: el ejercicio ES verlas. Va al aviso del
            recuadro, que se lee en Modo Adaptado y con «Activar voz». */
+        let fotoEnCurso = null;         // profe: {fen, segundos, hasta} mientras se ve la foto
+        let ultimaFotoDictada = null;   // alumno: {fen, hasta}, para no dictar la misma dos veces
         function dictarFotografia(p) {
             if (!p || !p.fen || !claseAcc || !window.BlindNotation || !BlindNotation.positionSentence) return;
             let g = null;
             try { g = new Chess(p.fen); } catch (e) { g = null; }
             if (!g) return;
             const seg = Math.max(0, parseInt(p.segundos, 10) || 0);
+            const hasta = p.hasta ? new Date(p.hasta).getTime() : Date.now() + seg * 1000;
+            if (ultimaFotoDictada && ultimaFotoDictada.fen === p.fen && Math.abs(ultimaFotoDictada.hasta - hasta) < 5000) return;
+            ultimaFotoDictada = { fen: p.fen, hasta };
             claseAcc.decir("Fotografía: tu profe te muestra esta posición"
                 + (seg ? " " + seg + (seg === 1 ? " segundo" : " segundos") : "")
                 + " y después oculta las piezas. Memorízala. " + BlindNotation.positionSentence(g));
+        }
+
+        /* El aviso de la Fotografía llega por un mensaje suelto del canal: quien
+           recargaba (o entraba) durante esos segundos no lo oía, y se quedaba con
+           las piezas por ocultarse sin saber que era una foto. Por eso el profe la
+           lleva también en SU presencia mientras dura ({fen, segundos, hasta}), que
+           sí le llega entera a quien se conecta: se dicta con los segundos que
+           quedan. La misma foto no se dicta dos veces (ultimaFotoDictada). */
+        function dictarFotografiaDeLaPresencia(state) {
+            if (isTeacher || esObservador) return;
+            for (const key of Object.keys(state || {})) {
+                if (key === profile.id) continue;
+                const f = (state[key] || []).map((m) => m && m.fotografia).find((x) => x && x.fen && x.hasta);
+                if (!f) continue;
+                const quedan = Math.ceil((new Date(f.hasta).getTime() - Date.now()) / 1000);
+                if (!(quedan > 0)) continue;
+                dictarFotografia({ fen: f.fen, segundos: Math.min(quedan, parseInt(f.segundos, 10) || quedan), hasta: f.hasta });
+                return;
+            }
         }
 
         function lowerStudentHand(studentId) {
@@ -2760,6 +2789,7 @@
                         mirando.push({ nombre: meta.full_name || "Alguien", como: meta.como || "supervisión", partida: suya ? suya.nombre : null });
                     }
                 }
+                dictarFotografiaDeLaPresencia(state);
                 renderStudentsList();
                 pintarCuentaCalentamiento();
                 pintarEquiposProfe();
@@ -3606,16 +3636,60 @@
            forma de preguntarle a la posición de la que se hablaba. Devuelve lo que
            hay que decir, "" si lo dice después (al llegar a la base), o null si
            no es una pregunta de opciones. */
+        /* «tiempo» (o «reloj», «cuánto queda») dentro de la pregunta: cuánto le
+           queda, en palabras. En pantalla es la cuenta que baja; sin verla solo
+           se oía a los 10 segundos, y escribirlo se tomaba como una opción que
+           no se entendía (y quedaba escrito: «tiempob»). Vale también en las de
+           jugada, que pueden tener tiempo. */
+        function tiempoDeLaPreguntaDicho() {
+            const quedan = PreguntaClase.segundosRestantes(currentQuestion);
+            if (quedan === null) return "Esta pregunta no tiene tiempo límite.";
+            if (quedan <= 0) return "Se acabó el tiempo de esta pregunta.";
+            const m = Math.floor(quedan / 60), sg = quedan % 60;
+            const partes = [];
+            if (m) partes.push(m + (m === 1 ? " minuto" : " minutos"));
+            if (sg) partes.push(sg + (sg === 1 ? " segundo" : " segundos"));
+            return "Te quedan " + partes.join(" y ") + " para contestar.";
+        }
+        /* La pregunta entera, dicha: lo que el profe escribió, con qué se contesta
+           y cuánto tiempo hay. Con las opciones y su LETRA, que es lo que se
+           escribe para contestar. */
+        function preguntaDicha(q) {
+            if (!q) return "";
+            let t = "Pregunta de tu profe" + (q.para_alumno ? ", solo para ti" : "") + ": " + String(q.prompt || "").trim();   // la escribió una persona
+            if (!/[.?!…]$/.test(t)) t += ".";
+            if (PreguntaClase.esDeOpciones(q)) {
+                t += " Opciones: " + q.opciones.map((o, i) => CuadroComandos.letra(i) + ", " + PreguntaClase.textoDeOpcion(q, i)).join("; ")
+                    + ". Escribe la letra de tu opción.";
+            } else {
+                const color = String(q.fen || "").split(" ")[1] === "b" ? "negras" : "blancas";
+                t += " Juegas con " + color + ". " + (q.expected_plies > 1
+                    ? "Mueve " + q.expected_plies + " veces: el motor responde entre cada una de tus jugadas."
+                    : "Escribe tu mejor jugada.") + " «posición» te dice la posición.";
+            }
+            const quedan = PreguntaClase.segundosRestantes(q);
+            if (quedan !== null && quedan > 0) t += " " + tiempoDeLaPreguntaDicho() + " «tiempo» te dice cuánto queda.";
+            return t;
+        }
+        const PIDE_TIEMPO = /^(tiempo|reloj|cuanto tiempo|cuanto tiempo queda|cuanto tiempo me queda|cuanto queda|cuanto me queda)$/;
+
         function contestarOpcionEscrita(texto, responder) {
-            if (!currentQuestion || !PreguntaClase.esDeOpciones(currentQuestion)) return null;
+            if (!currentQuestion) return null;
+            const pedido = CuadroComandos.normalizar(texto).replace(/[.!¡¿?]+/g, "").trim();
+            if (PIDE_TIEMPO.test(pedido)) return { texto: tiempoDeLaPreguntaDicho() };
+            // «pregunta»: la vuelve a decir, con sus opciones (la dijo al llegar, una vez).
+            if (/^(pregunta|la pregunta|repetir pregunta|repite la pregunta|leer pregunta)$/.test(pedido)) {
+                return { texto: preguntaDicha(currentQuestion) };
+            }
+            if (!PreguntaClase.esDeOpciones(currentQuestion)) return null;
             const n = currentQuestion.opciones.length;
             const i = CuadroComandos.opcionPedida(texto, n);
             if (i === null) {
-                return "No entendí «" + String(texto).trim() + "». Escribe la letra de una opción, de la A a la "
-                    + CuadroComandos.letra(n - 1) + ", o «posición» para oír la posición.";
+                return { fallo: true, texto: "No entendí «" + String(texto).trim() + "». Escribe la letra de una opción, de la A a la "
+                    + CuadroComandos.letra(n - 1) + ", o «posición» para oír la posición." };
             }
             if (currentQuestion.closed_at || PreguntaClase.segundosRestantes(currentQuestion) === 0) {
-                return "Ya no se puede contestar: la pregunta se cerró o se acabó el tiempo.";
+                return { fallo: true, texto: "Ya no se puede contestar: la pregunta se cerró o se acabó el tiempo." };
             }
             enviarOpcion(i).then((ok) => {
                 responder(ok
@@ -4120,17 +4194,47 @@
             }
         }
 
+        let preguntaAnunciada = null;   // la última pregunta dicha entera (modo ciego)
+        let preguntaAntesCerrada = false; // si la pregunta vigente ya estaba cerrada la vez anterior
+
+        /* Cuando el profe cierra la pregunta la tarjeta desaparece sin más: quien
+           no la ve se quedaba escribiendo en un recuadro que ya no estaba (el foco
+           caía al <body>). Se dice que se cerró, con lo que se sabe de la propia
+           respuesta, en el recuadro de la clase —adonde vuelve el foco si lo tenía
+           la tarjeta— o, fuera del Modo Adaptado, en la franja de estado. */
+        function avisarPreguntaCerrada(q, respuesta) {
+            let t = "La pregunta se cerró.";
+            if (!respuesta) t += " Esta vez no contestaste.";
+            else if (respuesta.is_correct === true) t += " Tu respuesta era correcta.";
+            else if (respuesta.is_correct === false) t += " Tu respuesta no era la correcta.";
+            else t += " Tu respuesta quedó enviada.";
+            const tarjeta = document.getElementById("question-card");
+            const teniaElFoco = tarjeta && tarjeta.contains(document.activeElement);
+            if (claseAcc && window.CuadroComandos && CuadroComandos.activo()) {
+                if (teniaElFoco || document.activeElement === document.body) claseAcc.enfocar();
+                claseAcc.decir(t);
+            } else setStatus(t);
+        }
+
         async function loadCurrentQuestion() {
             const { data, error } = await sb.from("questions").select("*").eq("created_by", boardOwnerId).order("created_at", { ascending: false }).limit(1).maybeSingle();
             if (error) { console.error(error); return; }
             const antes = currentQuestion;
+            // Copias: la fila que llega puede ser el MISMO objeto que ya se tenía
+            // (el doble de las pruebas, o una caché), y entonces «antes» ya vendría cerrada.
+            const antesCerrada = preguntaAntesCerrada;
+            const antesAbierta = !!(antes && !antesCerrada);
             currentQuestion = data || null;
+            preguntaAntesCerrada = !!(currentQuestion && currentQuestion.closed_at);
             pintarTiempoDeLaPregunta();
             if (isTeacher) { renderTeacherQuestionPanel(); return; }
+            const seCerro = antesAbierta && (!currentQuestion || (currentQuestion.id === antes.id && !!currentQuestion.closed_at));
+            const eraParaMi = antes && (!antes.para_alumno || antes.para_alumno === profile.id);
+            if (seCerro && eraParaMi) avisarPreguntaCerrada(antes, myAnswer);
             /* La MISMA pregunta, sin cerrarse: solo cambió si la clase ve los
                resultados (o llegó una respuesta nueva y el profe los refrescó).
                Volver a armar la tarjeta le borraría al alumno las jugadas que lleva. */
-            if (antes && currentQuestion && antes.id === currentQuestion.id && !antes.closed_at === !currentQuestion.closed_at
+            if (antes && currentQuestion && antes.id === currentQuestion.id && antesCerrada === !!currentQuestion.closed_at
                 && !document.getElementById("question-card").classList.contains("hidden")) {
                 await pintarResultadosAlumno();
                 return;
@@ -4940,10 +5044,15 @@
             if (presenceChannel && presenceChannel.send) {
                 presenceChannel.send({ type: "broadcast", event: "fotografia", payload: { fen: item.fen, segundos } });
             }
+            // Y en la presencia, para quien entra o recarga en estos segundos.
+            fotoEnCurso = { fen: item.fen, segundos, hasta: new Date(Date.now() + segundos * 1000).toISOString() };
+            if (presenceChannel && presenceChannel.track) presenceChannel.track(metaDePresencia()).catch((e) => console.error(e));
             setStatus("📸 La clase ve la posición: " + segundos + " segundos.");
             btn.textContent = "⏳ " + segundos + " s…";
             fotoTimer = setTimeout(async () => {
                 fotoTimer = null;
+                fotoEnCurso = null;
+                if (presenceChannel && presenceChannel.track) presenceChannel.track(metaDePresencia()).catch((e) => console.error(e));
                 lastPiecesHidden = true;
                 updateHideBoardBtn();
                 const { error } = await sb.from("game_state").update({ pieces_hidden: true }).eq("id", myGameStateId);
@@ -5399,7 +5508,18 @@
             // El foco va a la pregunta en cuanto aparece: sin eso, quien usa lector de
             // pantalla se queda donde estaba —debajo de un overlay que no ve— y no se
             // entera de que el profesor le preguntó algo.
-            if (recienAbierta) enfocarCuandoSeVea(document.getElementById("question-titulo"));
+            /* Con la cuenta ciega el foco va directo al RECUADRO de la pregunta, y la
+               pregunta se dice en su aviso: desde el título quedaban dos Tab hasta
+               el recuadro (cinco en las de opciones, pasando por los botones), con
+               el reloj corriendo. Se dice una vez por pregunta, también si llegó
+               una nueva con la tarjeta todavía abierta. */
+            const paraQuienNoVe = document.documentElement.classList.contains("modo-ciego") && preguntaAcc;
+            if (paraQuienNoVe && preguntaAnunciada !== currentQuestion.id) {
+                preguntaAnunciada = currentQuestion.id;
+                enfocarCuandoSeVea(preguntaAcc.cmd.input);
+                preguntaAcc.cmd.limpiar();
+                preguntaAcc.decir(preguntaDicha(currentQuestion));
+            } else if (recienAbierta && !paraQuienNoVe) enfocarCuandoSeVea(document.getElementById("question-titulo"));
 
             const retryBtn = document.getElementById("question-retry-btn");
             /* Una de opciones no se contesta moviendo: el tablero es la posición de

@@ -116,7 +116,15 @@
             return card;
         }
 
+        /* Con la cuenta ciega (js/vision-cuenta.js) no se ofrecen los logros de
+           los juegos que todavía no se pueden jugar sin ver: una meta que no se
+           puede alcanzar no es una meta. Se quitan de la lista, no se esconden. */
+        const NO_ADAPTADOS = ["concentracion", "confites", "ilumina"];
+
         function pintarLogros(logros) {
+            if (document.documentElement.classList.contains("modo-ciego")) {
+                logros = logros.filter((l) => !NO_ADAPTADOS.includes(l.categoria));
+            }
             const cont = document.getElementById("logros-grid");
             cont.innerHTML = "";
             let categoriaActual = null, ul = null;

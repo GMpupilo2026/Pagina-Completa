@@ -189,7 +189,7 @@
         let canalPresencia = null, canalDesafios = null;
         let gente = [];              // quién está conectado, sin contarme
         let retosPendientes = [];    // los que me llegaron y no he respondido
-        let retosEnviados = {};      // id de reto -> {boton, timeoutId}: los míos, mientras espero respuesta
+        let retosEnviados = {};      // id de reto -> {boton, timeoutId, para, nombre}: los míos, mientras espero respuesta
 
         /* Con quién puedo jugar: cualquiera de la Academia, que es la misma
            regla que aplica la base (public.pueden_jugar_entre_si). Acá es solo
@@ -232,6 +232,9 @@
                también la lista de profesores de cada quien, que servía para
                decidir si eran compañeros — ahora no hace falta y, de paso, era
                repartirle a toda la página con quién estudia cada alumno. */
+            // La marca de la cuenta (js/vision-cuenta.js) puede llegar después
+            // del primer pintado: la frase de la lista vacía depende de ella.
+            document.addEventListener("vision:cambio", pintarEnLineaPronto);
             canalPresencia = sb.channel(CANAL_PRESENCIA, { config: { presence: { key: profile.id } } });
             canalPresencia.on("presence", { event: "sync" }, () => {
                 const estado = canalPresencia.presenceState();
@@ -266,9 +269,20 @@
             const cuenta = document.getElementById("en-linea-cuenta");
             const disponibles = gente.filter(puedoJugarCon);
             cuenta.textContent = disponibles.length ? disponibles.length + (disponibles.length === 1 ? " persona" : " personas") : "";
+            /* La lista se repinta con cada entrada o salida de alguien. Si el
+               foco estaba en un «Retar», vuelve al de la MISMA persona; sin
+               esto caía al <body> cada vez que alguien entraba a la página. */
+            const enfocado = document.activeElement && lista.contains(document.activeElement)
+                ? document.activeElement.dataset.retar || null : null;
             lista.innerHTML = "";
             if (!disponibles.length) {
-                lista.innerHTML = '<p class="text-sm text-brand-450 dark:text-brand-350">Ahora mismo no hay nadie más en esta página. Si quieres jugar ya, está <a href="bot.html" class="underline">el bot de Oscar</a>.</p>';
+                /* bot.html no se le ofrece a la cuenta ciega (se esconde: no
+                   está adaptado), así que la frase se quedaba con un enlace que
+                   no lleva a ningún lado. A ella se le ofrece jugar contra
+                   Oscar en el Tablero, que sí se juega escribiendo. */
+                lista.innerHTML = document.documentElement.classList.contains("modo-ciego")
+                    ? '<p class="text-sm text-brand-450 dark:text-brand-350">Ahora mismo no hay nadie más en esta página. Si quieres jugar ya, puedes <a href="tablero.html" class="underline">jugar contra Oscar en el Tablero</a>.</p>'
+                    : '<p class="text-sm text-brand-450 dark:text-brand-350">Ahora mismo no hay nadie más en esta página. Si quieres jugar ya, está <a href="bot.html" class="underline">el bot de Oscar</a>.</p>';
                 return;
             }
             disponibles.forEach((p) => {
@@ -285,33 +299,67 @@
                 // Diez botones «Retar» seguidos no dicen a quién: el nombre va en el accesible.
                 boton.setAttribute("aria-label", "Retar a " + p.nombre);
                 boton.addEventListener("click", () => retar(p, boton));
+                // Un reto mío que sigue esperando se pinta igual después de repintar.
+                const pendiente = Object.values(retosEnviados).find((r) => r.para === p.id);
+                if (pendiente) { pendiente.boton = boton; botonEsperando(boton, p.nombre); }
                 fila.append(quien, boton);
                 lista.appendChild(fila);
+                if (enfocado === p.id) boton.focus();
             });
+        }
+
+        /* «Esperando…» NO es `disabled`: un botón deshabilitado suelta el foco,
+           que caía al <body> justo después de retar, sin que se oyera nada. Se
+           dice con aria-disabled, y el nombre accesible cambia con el texto:
+           quedaba «Retar a Bruno» sobre un botón que decía «Esperando…». */
+        function botonEsperando(boton, nombre) {
+            boton.setAttribute("aria-disabled", "true");
+            boton.classList.add("opacity-60", "cursor-not-allowed");
+            boton.textContent = "Esperando…";
+            boton.setAttribute("aria-label", "Esperando a que " + nombre + " acepte");
+        }
+        function botonRetar(boton, nombre) {
+            boton.removeAttribute("aria-disabled");
+            boton.classList.remove("opacity-60", "cursor-not-allowed");
+            boton.textContent = "Retar";
+            boton.setAttribute("aria-label", "Retar a " + nombre);
+        }
+        // Lo que pasa con el reto se dice en una región viva: el foco se queda en el botón.
+        function anunciarReto(texto) {
+            const viva = document.getElementById("reto-anuncio");
+            if (!viva) return;
+            viva.textContent = "";
+            setTimeout(() => { viva.textContent = texto; }, 60);
         }
 
         async function retar(quien, boton) {
             const modalidad = document.getElementById("reto-modalidad").value;
             const tc = ritmoReto.leer();
             if (tc.error) { Avisos.avisar(tc.error, { tipo: "error" }); return; }
-            boton.disabled = true;
-            boton.textContent = "Enviado…";
+            if (boton.getAttribute("aria-disabled") === "true") return;   // ya hay uno esperando
+            botonEsperando(boton, quien.nombre);
+            boton.textContent = "Enviando…";
             const { data, error } = await sb.from("desafios").insert({
                 de_id: profile.id, para_id: quien.id, modalidad: modalidad,
                 initial_seconds: tc.initial, increment_seconds: tc.increment,
             }).select("id").single();
             if (error || !data) {
-                boton.disabled = false; boton.textContent = "Retar";
+                botonRetar(boton, quien.nombre);
                 Avisos.avisar("No se pudo enviar el reto: " + (error ? error.message : "intenta de nuevo"), { tipo: "error" });
                 return;
             }
             boton.textContent = "Esperando…";
+            anunciarReto("Reto enviado a " + quien.nombre + ". Te avisamos cuando conteste.");
             // Si tarda en contestar, el botón se libera solo a los 20s; si
             // contesta antes (sobre todo si rechaza), reactivarBoton() de
             // escucharDesafios() ya lo habrá liberado y este timeout no
             // encuentra nada que hacer.
-            const timeoutId = setTimeout(() => { reactivarBoton(data.id); }, 20000);
-            retosEnviados[data.id] = { boton: boton, timeoutId: timeoutId };
+            const timeoutId = setTimeout(() => {
+                if (!retosEnviados[data.id]) return;
+                reactivarBoton(data.id);
+                anunciarReto(quien.nombre + " no contestó todavía. Puedes volver a retar.");
+            }, 20000);
+            retosEnviados[data.id] = { boton: boton, timeoutId: timeoutId, para: quien.id, nombre: quien.nombre };
         }
 
         // Libera el botón "Retar" de un reto mío, sea porque contestaron o
@@ -322,8 +370,7 @@
             const pendiente = retosEnviados[retoId];
             if (!pendiente) return;
             clearTimeout(pendiente.timeoutId);
-            pendiente.boton.disabled = false;
-            pendiente.boton.textContent = "Retar";
+            botonRetar(pendiente.boton, pendiente.nombre);
             delete retosEnviados[retoId];
         }
 

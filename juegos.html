@@ -41,7 +41,7 @@
                     <span class="text-4xl" aria-hidden="true">🔥</span>
                     <div>
                         <h2 class="font-serif text-lg font-bold">Racha táctica</h2>
-                        <p class="text-sm opacity-90">Encuentra la jugada correcta en 10 segundos y suma tu racha — juega solo, cuando quieras.</p>
+                        <p class="text-sm opacity-90">Encuentra la jugada correcta en <span id="racha-segundos">10 segundos</span> y suma tu racha — juega solo, cuando quieras.</p>
                     </div>
                 </div>
             </a>
@@ -127,6 +127,7 @@
             <!-- Vista del alumno: el catálogo de modalidades -->
             <div id="student-view" class="hidden">
                 <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Modalidades</h2>
+                <p id="variantes-nota" hidden class="text-sm text-brand-500 dark:text-brand-300 mb-3">Estas dos se juegan escribiendo las jugadas, con el tablero accesible. Tu profe te asigna el rival.</p>
                 <div id="variant-grid" class="grid sm:grid-cols-2 gap-4"></div>
             </div>
 

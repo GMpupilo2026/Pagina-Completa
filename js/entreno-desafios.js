@@ -351,6 +351,11 @@ function montarComandos(){
 }
 
 function jugarEscribiendo(texto, api){
+  if(esperandoSiguiente){
+    if(/^(siguiente|seguir|continuar|otro|otra)$/.test(CuadroComandos.normalizar(texto))){ api.limpiar(); avanzarRonda(); return; }
+    api.decir('Escribe «siguiente» para pasar al próximo desafío, o «leer» para volver a oír la explicación.');
+    return;
+  }
   if(roundLocked){ api.decir('Espera un momento.'); return; }
   // El intérprete busca la jugada entre las LEGALES y no toca la partida, así que
   // no hace falta ninguna copia.
@@ -493,6 +498,9 @@ function currentRound(){ return currentSet.rounds[currentRoundIndex]; }
 
 function loadRound(){
   const round = currentRound();
+  esperandoSiguiente = false;
+  document.getElementById('next-round-btn').hidden = true;
+  if(comandos) comandos.ayuda('Jugada: "Cf3", "Nf3", "Dxh7+", "e2 e4". Pregunta: "caballos", "qué hay en e4". Escribe "ayuda" para todo.');
   game = new MiniChess(round.fen);
   selectedSquare = null;
   roundLocked = false;
@@ -569,7 +577,7 @@ function handleMoveResult(moveResult){
   } else {
     errorsThisRound++;
     resetStreak();
-    setStatus(`${moveResult.san} es legal, pero no es la jugada que buscamos.`, 'bad');
+    setStatus(`${jugadaDicha(moveResult.san)} es legal, pero no es la jugada que buscamos.`, 'bad');
     setTimeout(() => { game = new MiniChess(round.fen); drawBoard(); setStatus('Inténtalo de nuevo.'); }, 900);
   }
 }
@@ -586,20 +594,44 @@ function finishRound(moveResult){
   const conSolucion = hintsUsedThisRound >= 3;
   if(!conSolucion) bumpStreak();
   const fast = !conSolucion && seconds < 4 && hintsUsedThisRound === 0 && errorsThisRound === 0;
-  const san = moveResult ? moveResult.san : round.san[0];
+  const san = jugadaDicha(moveResult ? moveResult.san : round.san[0]);
   const inicio = conSolucion ? 'Solución:' : '✅ ¡Correcto!';
   setStatus(`${inicio} ${san}${round.explain ? ' — ' + round.explain : ''}${fast ? ' ⚡' : ''}`, conSolucion ? '' : 'ok');
   if(window.BlindNotation && window.BlindNotation.speak){
     try{ window.BlindNotation.speak((conSolucion ? 'Solución. ' : 'Correcto. ') + (round.explain || '')); }catch(e){}
   }
-  setTimeout(() => {
-    if(currentRoundIndex < currentSet.rounds.length - 1){
-      currentRoundIndex++;
-      loadRound();
-    } else {
-      finishSet();
-    }
-  }, round.explain ? 3200 : 1200);
+  /* En Modo Adaptado, con explicación, no se pasa sola: a los 3,2 s el
+     ejercicio nuevo pisaba la explicación a medio leer, y el lector de
+     pantalla la cortaba. Se espera a que la persona diga «siguiente». */
+  if(blindMode && round.explain){
+    esperandoSiguiente = true;
+    const b = document.getElementById('next-round-btn');
+    b.textContent = currentRoundIndex < currentSet.rounds.length - 1 ? 'Siguiente desafío →' : 'Ver el resultado →';
+    b.hidden = false;
+    if(comandos) comandos.ayuda('Escribe «siguiente» para seguir, o «leer» para volver a oír la explicación.');
+    return;
+  }
+  setTimeout(avanzarRonda, round.explain ? 3200 : 1200);
+}
+
+/* La jugada como la oye quien usa Modo Adaptado: «alfil a ce 5» y no «Bc5»,
+   que en inglés y en letras sueltas no dice nada. Con el modo normal, la de
+   siempre. */
+function jugadaDicha(san){
+  return blindMode && window.BlindNotation && BlindNotation.sanSpoken ? BlindNotation.sanSpoken(san) : san;
+}
+
+let esperandoSiguiente = false;
+function avanzarRonda(){
+  esperandoSiguiente = false;
+  document.getElementById('next-round-btn').hidden = true;
+  if(!currentSet) return;
+  if(currentRoundIndex < currentSet.rounds.length - 1){
+    currentRoundIndex++;
+    loadRound();
+  } else {
+    finishSet();
+  }
 }
 
 function finishSet(){
@@ -616,6 +648,15 @@ function finishSet(){
     (limpia ? ' — ¡sin pistas ni errores!' : '');
   document.getElementById('celebration-title').textContent =
     stars === 3 ? '¡Desafíos perfectos! 🏆' : (stars === 2 ? '¡Desafíos completados! 🎉' : 'Completados — ¡a repetirlos para subir de estrellas!');
+  /* El resultado se DICE y el foco va a su título: la zona de juego se esconde
+     con el recuadro que tenía el foco, que caía al <body>, y quien no ve no se
+     enteraba de que la serie había terminado ni de cuántas estrellas sacó. */
+  const titulo = document.getElementById('celebration-title');
+  const anuncio = document.getElementById('celebration-anuncio');
+  const dicho = `Serie terminada. ${titulo.textContent.replace(/[^\p{L}\p{N}¡!¿?,. —-]/gu, '').trim()} ${stars} estrella${stars === 1 ? '' : 's'} de 3. ${document.getElementById('celebration-stats').textContent.replace(/([^.!?])$/, '$1.')}`;
+  titulo.focus();
+  if(anuncio){ anuncio.textContent = ''; setTimeout(() => { anuncio.textContent = dicho; }, 60); }
+  if(window.BlindNotation && BlindNotation.speak){ try{ BlindNotation.speak(dicho); }catch(e){} }
   EntrenoProgress.log('practicar', { set_id: 'desafio_' + currentSet.id, category: currentSet.cat, title: 'Desafíos: ' + currentSet.title, stars, seconds: Number(totalSeconds) });
 }
 
@@ -650,6 +691,7 @@ function giveHint(){
 }
 document.getElementById('hint-btn').addEventListener('click', giveHint);
 document.getElementById('retry-round-btn').addEventListener('click', loadRound);
+document.getElementById('next-round-btn').addEventListener('click', avanzarRonda);
 
 function openSet(set){
   currentSet = set;

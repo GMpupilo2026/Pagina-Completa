@@ -136,7 +136,16 @@ function abrir(p){
   preguntas = [];
   document.getElementById('visor-preguntas').hidden = true;
   mirar(null);
-  document.getElementById('visor-titulo').focus();
+  /* Con la cuenta ciega el foco va al RECUADRO, no al título: del título al
+     recuadro había veinte paradas de Tab (los botones de ⏮ ◀ ▶ ⏭, el tablero,
+     la lista de jugadas), y quien no ve recorre la clase escribiendo. Lo que
+     el título decía al recibir el foco lo dice el recuadro. */
+  if (modoCiego() && comandos && comandos.input.checkVisibility()) {
+    comandos.enfocar().decir(`${document.getElementById('visor-titulo').textContent}, ${document.getElementById('visor-fecha').textContent}. `
+      + 'Estás en la posición de arranque: escribe «siguiente», o «jugada 5» para ir a la jugada 5 de las blancas.');
+  } else {
+    document.getElementById('visor-titulo').focus();
+  }
   cargarPreguntas(p);
 }
 
@@ -365,7 +374,7 @@ function montarAccesible(){
       posicionViva: false,
       onEnviar: recorrerEscribiendo,
     });
-    if (comandos) comandos.ayuda('Recorrer: «siguiente», «anterior», «inicio», «final», «jugada 5», «girar». Preguntar: «posición», «caballos», «qué hay en e4». Escribe «ayuda» para todo.');
+    if (comandos) comandos.ayuda('Recorrer: «siguiente», «anterior», «inicio», «final», «jugada 5» (la de las blancas; «jugada 5 negras», la de las negras), «girar». Preguntar: «posición», «caballos», «qué hay en e4». Escribe «ayuda» para todo.');
   }
 }
 
@@ -395,7 +404,12 @@ function recorrerEscribiendo(texto, api){
   }
   const linea = lineaActual();
   const indice = nodo ? linea.indexOf(nodo) + 1 : 0;
-  const n = window.VisorLinea ? VisorLinea.pasoPedido(texto, indice, linea.length) : null;
+  // La partida se anuncia con su número («Jugada 2 de las negras»): «jugada 2»
+  // es la de las blancas, contada desde la FEN de arranque de la clase.
+  const partes = String(actual.inicio).split(' ');
+  const n = window.VisorLinea ? VisorLinea.pasoPedido(texto, indice, linea.length, {
+    primera: parseInt(partes[5], 10) || 1, empiezanNegras: partes[1] === 'b',
+  }) : null;
   if (n === null) { api.decir('No entendí «' + texto.trim() + '». Escribe «siguiente», «anterior», «jugada 5», o una pregunta como «caballos». Escribe «ayuda» para la lista.'); return; }
   if (n < 0) { api.decir('Ya estás en la posición de arranque.'); return; }
   if (n > linea.length) { api.decir('Ya estás en la última jugada de esta línea.'); return; }
@@ -579,8 +593,12 @@ function montarTableroDelRepaso(){
     repaso.teclado = TableroAccesible.montar(document.getElementById('repaso-board'), { nombre: 'Tablero del repaso', juego: () => repaso.juego });
   }
   mostrarPreguntaDelRepaso(0);
-  document.getElementById('repaso-titulo').focus();
+  // Igual que al abrir una clase: con la cuenta ciega, al recuadro.
+  if (modoCiego() && repaso.comandos && repaso.comandos.input.checkVisibility()) repaso.comandos.enfocar();
+  else document.getElementById('repaso-titulo').focus();
 }
+
+function modoCiego(){ return document.documentElement.classList.contains('modo-ciego'); }
 
 function mostrarPreguntaDelRepaso(i){
   repaso.i = i;

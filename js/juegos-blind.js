@@ -54,6 +54,9 @@
  *     ultimaJugada: () => null (nada jugado) o { san, color: "w"|"b", oculta: bool }
  *       — contesta "última jugada". `oculta` es para Niebla de Guerra: se dice
  *       que el rival jugó, no qué.
+ *     historial: () => texto que contesta "historial", para las variantes en
+ *       que ComandosTablero no puede contestarlo (Niebla de Guerra: solo tus
+ *       jugadas).
  *
  *   blind.announceOwnMove(san);       // después de una jugada propia
  *   blind.announceOpponentMove(san);  // al llegar una jugada del rival por Realtime
@@ -339,6 +342,15 @@ window.JuegosBlind = (function () {
     }
     if (leerReloj) window.setInterval(vigilarReloj, 500);
 
+    /* Lo que no se pudo jugar se queda en el recuadro (para corregirlo), pero
+       SELECCIONADO: si no, lo siguiente que se escribía se pegaba detrás
+       («e4e5», «tiempob») y volvía a fallar, y sin ver el recuadro no hay cómo
+       saber que ya tenía texto. Seleccionado, lo nuevo lo reemplaza, y con
+       una flecha se puede corregir lo que estaba. */
+    function seleccionarLoEscrito() {
+      try { moveInputEl.select(); } catch (e) {}
+    }
+
     if (moveFormEl && moveInputEl) {
       moveFormEl.addEventListener("submit", function (e) {
         e.preventDefault();
@@ -368,6 +380,31 @@ window.JuegosBlind = (function () {
           return;
         }
 
+        /* «mis jugadas» fuera de turno: la partida visible solo sabe las jugadas
+           del bando al que le toca, así que en el turno del rival contestaba
+           con las jugadas DEL RIVAL, dichas como si fueran tuyas («Tienes 29
+           jugadas…»). Sin ver el tablero no hay cómo darse cuenta. */
+        if (/^(mis jugadas|jugadas posibles|jugadas legales|que puedo jugar|todas mis jugadas|que jugadas tengo)$/.test(pedido)
+            && typeof opts.miColor === "function" && getVisibleGame) {
+          const mioColor = opts.miColor();
+          const gv = getVisibleGame();
+          if ((mioColor === "w" || mioColor === "b") && gv && gv.turn && gv.turn() !== mioColor) {
+            moveInputEl.value = "";
+            announce("Ahora le toca al rival: tus jugadas se pueden ver cuando te toque.");
+            return;
+          }
+        }
+        /* «historial» con una lista que decide la página. Hace falta en Niebla
+           de Guerra: ComandosTablero no contesta el historial con niebla (diría
+           las jugadas del rival), y sin esto «historial» caía como jugada y se
+           oía «Jugada no válida». La página devuelve solo lo que se puede decir. */
+        if (typeof opts.historial === "function"
+            && /^(historial|jugadas de la partida|las jugadas|la partida|todas las jugadas|mis jugadas hechas)$/.test(pedido)) {
+          moveInputEl.value = "";
+          announce(opts.historial());
+          return;
+        }
+
         if (window.ComandosTablero && getVisibleGame) {
           const r = ComandosTablero.interpretar(raw, { juego: getVisibleGame, tablero: tableroApi });
           if (r.manejado) {
@@ -394,8 +431,10 @@ window.JuegosBlind = (function () {
           if (mio === null) announce("Estás mirando esta partida: solo pueden mover quienes la juegan.");
           else if (mio && g && g.turn && g.turn() === mio) announce("Ahora no se puede mover: la partida todavía no empezó o ya terminó.");
           else announce("No es tu turno: espera la jugada del rival.");
+          seleccionarLoEscrito();
         } else {
           announce('Jugada no válida: "' + raw + '". Revísala e intenta de nuevo. Escribe "ayuda" para ver qué más se puede escribir.');
+          seleccionarLoEscrito();
         }
       });
     }

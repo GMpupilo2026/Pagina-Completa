@@ -62,6 +62,8 @@ function soltarCategoria(){
   }
   pintarLista();
   mostrarLista();
+  // El aviso con «Ver todas» se escondió con el botón que tenía el foco: al buscador, no al <body>.
+  document.getElementById('buscar').focus();
 }
 
 const GLYPH_B = { p:'♟', n:'♞', b:'♝', r:'♜', q:'♛', k:'♚' };
@@ -178,7 +180,10 @@ function abrirFicha(F){
   window.scrollTo({ top: 0 });
 }
 
-document.getElementById('volver').addEventListener('click', (e) => { e.preventDefault(); mostrarLista(); });
+/* «← Todas las fichas» desaparece con la ficha y el foco caía al <body>:
+   quien no ve no sabía que había vuelto a la lista. Va al buscador, que es
+   lo primero de la lista y dice qué es. */
+document.getElementById('volver').addEventListener('click', (e) => { e.preventDefault(); mostrarLista(); document.getElementById('buscar').focus(); });
 document.getElementById('solo-cat-todas').addEventListener('click', soltarCategoria);
 document.getElementById('b-imprimir').addEventListener('click', () => window.print());
 document.getElementById('buscar').addEventListener('input', (e) => {

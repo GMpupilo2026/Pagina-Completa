@@ -212,7 +212,10 @@
       <div class="resumen" id="resumen"></div>
 
       <!-- ------- Lista ------- -->
-      <section id="vista-lista">
+      <section id="vista-lista" aria-labelledby="lista-titulo">
+        <!-- A dónde va el foco al volver del tablero: el botón «Volver» desaparece
+             con su vista y el foco caía al <body>. -->
+        <p id="lista-titulo" role="heading" aria-level="2" class="sr-only" tabindex="-1">Lista de aperturas y celadas</p>
         <div class="mode-bar" role="group" aria-label="Qué estudiar">
           <button type="button" class="mode-btn" id="btn-repaso">🔁 Repasar lo de hoy</button>
           <button type="button" class="mode-btn" id="btn-todas">📚 Ver todas</button>

@@ -216,10 +216,15 @@
 
     <!-- El resultado del final: aparece debajo del tablero, que se queda como
          terminó para poder mirar la posición. -->
-    <div id="celebration" role="status">
+    <!-- La región viva abarca solo el resultado y no los botones: con el
+         role="status" en toda la caja, el lector leía también «Intentar de
+         nuevo Siguiente final» cada vez. -->
+    <div id="celebration">
       <span class="big-emoji" id="celebration-emoji" aria-hidden="true">🎉</span>
-      <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white" id="celebration-title"></h2>
-      <p class="stats" id="celebration-stats"></p>
+      <div role="status">
+        <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white" id="celebration-title"></h2>
+        <p class="stats" id="celebration-stats"></p>
+      </div>
       <div class="round-controls">
         <button type="button" class="bctrl" id="celebration-retry-btn">Intentar de nuevo</button>
         <button type="button" class="bctrl primary" id="celebration-next-btn">Siguiente final →</button>

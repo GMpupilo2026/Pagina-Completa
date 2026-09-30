@@ -190,6 +190,25 @@
             return !!window.Repeticion && Repeticion.esTriple("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", jugadas, (f) => new Chess(f), fen);
         }
 
+        /* El tablero se recarga desde la FEN con cada jugada del rival, y
+           `load()` borra la historia de chess.js: en Modo Adaptado «historial»
+           contestaba «Todavía no hay jugadas» en plena partida. Después de
+           cargar, se vuelven a jugar las jugadas guardadas sobre la MISMA
+           partida del tablero (la posición es igual, solo gana la historia).
+           Si la lista no lleva a esa posición (una sala que no arrancó de la
+           inicial), se deja como estaba: una historia equivocada es peor que
+           ninguna. */
+        function cargarConHistoria(fen, jugadas) {
+            board.loadFen(fen);
+            if (!jugadas || !jugadas.length) return;
+            const prueba = new Chess();
+            for (const san of jugadas) { if (!prueba.move(san)) return; }
+            const pos = (f) => String(f).split(" ").slice(0, 4).join(" ");
+            if (pos(prueba.fen()) !== pos(board.game.fen())) return;
+            board.game.reset();
+            jugadas.forEach((san) => board.game.move(san));
+        }
+
         async function handleLocalMove(info) {
             const newMoves = (room.moves || []).concat([info.san]);
             const patch = { fen: info.fen, moves: newMoves, updated_at: new Date().toISOString() };
@@ -227,7 +246,7 @@
         function applyRemoteRoom(row, forzarTablero) {
             const positionChanged = row.fen !== room.fen;
             room = row;
-            if (positionChanged || forzarTablero) board.loadFen(row.fen);
+            if (positionChanged || forzarTablero) cargarConHistoria(row.fen, row.moves);
             board.setInteractive(!!myColor && row.status === "playing" && bothReady(row));
             renderMoveHistory(row.moves);
             updateStatusText();
@@ -316,7 +335,7 @@
                 onMove: handleLocalMove,
                 onPromotionNeeded: showPromotionPicker,
             });
-            board.loadFen(room.fen);
+            cargarConHistoria(room.fen, room.moves);
             renderMoveHistory(room.moves);
             updateStatusText();
             renderClocks();

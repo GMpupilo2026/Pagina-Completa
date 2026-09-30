@@ -43,7 +43,7 @@ window.VisionCuenta = (function () {
   var NO_ADAPTADAS = [
     "bot.html", "cartas.html", "concentracion.html", "confites.html", "crazyhouse.html",
     "cuatro-jugadores.html", "duelo.html", "ilumina-tablero.html", "variante.html",
-    "transmision.html", "torneos-en-vivo.html", "lector-planilla.html",
+    "transmision.html", "torneos-en-vivo.html", "lector-planilla.html", "tv.html",
   ];
 
   /* De dónde se cargó este archivo: la raíz del sitio es su carpeta de arriba. */
@@ -200,6 +200,8 @@ window.VisionCuenta = (function () {
   function textoDe(el) {
     var copia = el.cloneNode(true);
     Array.prototype.forEach.call(copia.querySelectorAll('[aria-hidden="true"]'), function (x) { x.remove(); });
+    // Un espacio después de cada bloque: «computadora» y «sin ganar» venían pegados.
+    Array.prototype.forEach.call(copia.querySelectorAll("p, div, li, br, h1, h2, h3, h4, span.block, small"), function (x) { x.after(" "); });
     return copia.textContent.replace(/\s+/g, " ").trim();
   }
 
@@ -212,7 +214,7 @@ window.VisionCuenta = (function () {
     if (migas.length > 1) partes.push("Camino: " + migas.join(", ") + ".");
     var h2 = hs.filter(function (h) { return h.tagName === "H2"; }).map(textoDe);
     if (h2.length) partes.push(h2.length === 1 ? "Tiene una sección: " + h2[0] + "." : "Tiene " + h2.length + " secciones: " + h2.join("; ") + ".");
-    if (document.querySelector('[aria-roledescription="tablero de ajedrez"]')) partes.push("Hay un tablero: Alt más Mayúscula más B lo enfoca.");
+    if (document.querySelector('[aria-roledescription="tablero de ajedrez"]')) partes.push("Hay un tablero: Alt más Mayúscula más B dice su posición.");
     return partes.join(" ");
   }
 
@@ -256,7 +258,7 @@ window.VisionCuenta = (function () {
       /* La posición, dicha, sin salir del recuadro: la del tablero más grande a
          la vista, con la misma frase que «posición» (js/comandos-tablero.js). */
       var tabs = Array.prototype.slice.call(document.querySelectorAll('[aria-roledescription="tablero de ajedrez"]'))
-        .filter(function (t) { return t.getBoundingClientRect().width > 150; });
+        .filter(function (t) { return t.getBoundingClientRect().width > 0 && t.__tableroAccesibleCfg; });
       tabs.sort(function (a, b) { return b.getBoundingClientRect().width - a.getBoundingClientRect().width; });
       var cfg = tabs.length && tabs[0].__tableroAccesibleCfg, juego = null;
       try { juego = cfg && typeof cfg.juego === "function" ? cfg.juego() : null; } catch (e) {}
@@ -271,6 +273,9 @@ window.VisionCuenta = (function () {
   var SEL = ".cc-input, #blind-input, #move-input, #cmd-input, #blind-move-input, #answer-input, #jugada-input, .f100-cmd-input, .cp-cmd-input, [data-cuadro-comandos] input";
   // El recuadro de esta página: si hay un diálogo abierto (la pregunta de la clase), el suyo.
   function campoPrincipal() {
+    // Si ya está en un recuadro, ese: con dos en la página, el que usa.
+    var a = document.activeElement;
+    if (a && a.matches && a.matches(SEL) && visible(a) && !a.disabled) return a;
     var campos = Array.prototype.slice.call(document.querySelectorAll(SEL)).filter(function (c) { return visible(c) && !c.disabled; });
     return campos.filter(function (c) { return c.closest("dialog[open], [role=dialog]:not([hidden]), [role=alertdialog]:not([hidden])"); })[0] || campos[0] || null;
   }
@@ -299,9 +304,23 @@ window.VisionCuenta = (function () {
   }
   // Los interruptores de la página no son acciones del ejercicio.
   var NO_SON_ACCIONES = "#mode-normal-btn, #mode-blind-btn, #speech-toggle-btn, #btn-voz, #voz-toggle, #adaptive-toggle, #theme-toggle";
+  /* La zona del recuadro: el contenedor más grande que lo tiene a él y a
+     NINGÚN otro recuadro. Con la <section> a secas, en un curso la sección es
+     la lección entera, con veinticuatro visores: «solución» en la pregunta
+     2.03 abría la de la 2.01. Se sube de padre en padre y se para antes del
+     que ya incluye otro recuadro (o en el diálogo, la sección o el main). */
   function zonaDe(campo) {
-    return campo.closest("dialog[open], [role=dialog], [role=alertdialog]") ||
-      campo.closest("section") || document.getElementById("main-content") || document.querySelector("main") || document.body;
+    var dialogo = campo.closest("dialog[open], [role=dialog], [role=alertdialog]");
+    var zona = campo.form || campo.parentElement, el = zona;
+    while (el && el.parentElement && el !== document.body) {
+      var padre = el.parentElement;
+      var otro = Array.prototype.some.call(padre.querySelectorAll(SEL), function (c) { return c !== campo && visible(c); });
+      if (otro) break;
+      zona = padre;
+      if (padre === dialogo || padre.matches("section, main, [role=main]")) break;
+      el = padre;
+    }
+    return zona || document.body;
   }
   function nombreDe(el) {
     if (el.matches("input[type=checkbox], input[type=radio]")) {
@@ -326,27 +345,41 @@ window.VisionCuenta = (function () {
   /* Lo que se pide por lo que HACE y no por cómo se llama el botón en cada
      página: «siguiente» aprieta «Saltar →», «Otra posición» o «Siguiente
      ejercicio», lo que haya. */
+  /* Se buscan como PALABRAS dentro del nombre, no solo al principio: el botón
+     de Mates se llama «Ver solución» y el de la segunda pista «Otra pista». */
   var SINONIMOS = {
-    siguiente: ["siguiente", "saltar", "otro ejercicio", "otra posicion", "otro", "otra", "continuar", "seguir", "nuevo ejercicio"],
-    "otra vez": ["reiniciar", "otra vez", "reintentar", "volver a intentar", "intentar de nuevo", "de nuevo", "empezar de nuevo"],
-    reiniciar: ["reiniciar", "otra vez", "reintentar", "volver a intentar", "empezar de nuevo"],
-    solucion: ["ver la solucion", "solucion", "ver respuesta", "ver la respuesta", "mostrar la solucion", "mostrar la respuesta"],
-    comprobar: ["comprobar", "revisar", "responder", "listo"],
-    pista: ["pista", "dame una pista"],
+    siguiente: ["siguiente", "saltar", "otro ejercicio", "otra posicion", "siguiente serie", "siguiente final", "nuevo ejercicio", "otra partida", "continuar", "seguir"],
+    "otra vez": ["reiniciar", "otra vez", "reintentar", "volver a intentar", "intentar de nuevo", "de nuevo", "empezar de nuevo", "volver a empezar"],
+    reiniciar: ["reiniciar", "otra vez", "reintentar", "volver a intentar", "intentar de nuevo", "empezar de nuevo"],
+    solucion: ["solucion", "ver respuesta", "la respuesta", "ensename la jugada", "mostrar la jugada", "ver la jugada"],
+    comprobar: ["comprobar", "revisar", "corregir", "responder", "listo"],
+    pista: ["pista", "que jugaria la maquina", "ayudame"],
+    volver: ["volver", "atras", "todos los", "todas las", "niveles"],
   };
+  function tienePalabras(nombre, frase) {
+    return (" " + nombre + " ").indexOf(" " + frase + " ") >= 0;
+  }
+  /* «posición», «caballos», «mis jugadas»… son preguntas al tablero y las
+     contesta el recuadro: NUNCA aprietan un botón. «posición» apretaba ⏮
+     («Posición inicial») y devolvía el visor al principio. */
+  var JUEGO_VACIO = { get: function () { return null; }, turn: function () { return "w"; }, moves: function () { return []; }, history: function () { return []; } };
+  function esPreguntaAlTablero(texto) {
+    if (!window.ComandosTablero) return false;
+    try { return !!ComandosTablero.interpretar(texto, { juego: JUEGO_VACIO }).manejado; } catch (e) { return false; }
+  }
   function buscarAccion(t, campo) {
     var todas = accionesDe(campo);
     var exacta = todas.filter(function (el) { return nombreDe(el) === t; });
     if (exacta.length) return exacta[0];
-    // Las primeras palabras del nombre («pista» → «Pista (cuesta una estrella)»), si es uno solo.
-    if (t.length >= 4) {
-      var empieza = todas.filter(function (el) { return (nombreDe(el) + " ").indexOf(t + " ") === 0; });
-      if (empieza.length === 1) return empieza[0];
-    }
+    /* Una opción para marcar se puede nombrar por su final («Ae4» marca
+       «Tachar Ae4+»), si es una sola. Solo las casillas para marcar: un botón
+       nombrado a medias puede ser otro que el que se quería. */
+    var marcas = todas.filter(function (el) { return el.matches("input[type=checkbox], input[type=radio]") && (" " + nombreDe(el)).slice(-(t.length + 1)) === " " + t; });
+    if (marcas.length === 1) return marcas[0];
     var lista = SINONIMOS[t];
     if (!lista) return null;
     for (var i = 0; i < lista.length; i++) {
-      var hit = todas.filter(function (el) { var n = nombreDe(el) + " "; return n.indexOf(lista[i] + " ") === 0; });
+      var hit = todas.filter(function (el) { return !el.matches("input[type=checkbox], input[type=radio]") && tienePalabras(nombreDe(el), lista[i]); });
       if (hit.length) return hit[0];
     }
     return null;
@@ -365,7 +398,8 @@ window.VisionCuenta = (function () {
     if (!botones.length && !marcas.length) return "Aquí no hay botones: todo se contesta escribiendo en el recuadro.";
     return (botones.length ? "Puedes escribir el nombre de un botón para apretarlo: " + botones.slice(0, 20).join("; ") + ". " : "") +
       (marcas.length ? "Para marcar, escribe su texto: " + marcas.slice(0, 20).join("; ") + ". " : "") +
-      "También: «leer» (el ejercicio), «siguiente», «otra vez», «solución».";
+      "También: «leer» (el ejercicio)" + ["siguiente", "otra vez", "solucion", "pista", "volver"].filter(function (w) { return buscarAccion(w, campo); })
+        .map(function (w) { return ", «" + (w === "solucion" ? "solución" : w) + "»"; }).join("") + ".";
   }
   // Lo que dice el ejercicio: los títulos, párrafos y avisos de su sección, sin el recuadro ni el tablero.
   function leerEjercicio(campo) {
@@ -399,7 +433,9 @@ window.VisionCuenta = (function () {
   }
   function comandoGeneral(texto, campo) {
     var t = norm(texto);
-    if (!t || t.length < 3) return false;          // letras sueltas: opciones y atajos de cada página
+    // Una letra o un número solos son las opciones y los atajos de cada página.
+    if (!t || t.length < 2) return false;
+    if (esPreguntaAlTablero(texto)) return false;
     if (/^(acciones|botones|que puedo hacer|que hay aqui|opciones de la pagina)$/.test(t)) { responder(listaDeAcciones(campo), campo); return true; }
     if (/^(leer|leer todo|leer ejercicio|leer el ejercicio|enunciado|que dice|que pide)$/.test(t)) { responder(leerEjercicio(campo), campo); return true; }
     if (/^(donde estoy|donde estas)$/.test(t)) { responder(dondeEstas(), campo); return true; }
@@ -410,6 +446,8 @@ window.VisionCuenta = (function () {
       return true;
     }
     var el = buscarAccion(t, campo);
+    // Lo corto («e1», «4») solo vale si nombra EXACTAMENTE una opción: si no, es una jugada o una letra de la página.
+    if (el && t.length < 3 && nombreDe(el) !== t) el = null;
     if (!el) return false;
     var nombre = el.matches("input[type=checkbox], input[type=radio]") && el.labels && el.labels[0] ? textoDe(el.labels[0]) : (el.getAttribute("aria-label") || textoDe(el) || el.value);
     // Sin los adornos del botón («💡 Pista», «Saltar →»): el lector los lee en voz alta.
@@ -444,6 +482,34 @@ window.VisionCuenta = (function () {
   }
   document.addEventListener("submit", alEnviar, true);
   document.addEventListener("keydown", alEnterSinForm, true);
+
+  /* Lo que la página NO entendió se queda en el recuadro (para poder
+     corregirlo), y lo siguiente que se escribía se pegaba detrás: «e4e5»,
+     «tiempob», «O-Oúltima jugada». Quien no ve no sabe que quedó texto, y
+     desde ahí nada funciona. Después de que la página lo trató (fase de
+     burbuja, un momento después), si quedó algo se SELECCIONA: escribir de
+     nuevo lo reemplaza, y con las flechas se puede corregir igual. */
+  function seleccionarLoQueQuedo(campo) {
+    /* Solo si sigue EXACTAMENTE lo que se envió: quien escribe rápido ya
+       empezó lo siguiente, y seleccionarlo a mitad se comía letras («reloj»
+       quedaba «eloj»). */
+    var enviado = campo ? campo.value : "";
+    setTimeout(function () {
+      if (!campo || !campo.value || campo.value !== enviado || document.activeElement !== campo || !campo.select) return;
+      if (campo.selectionStart === 0 && campo.selectionEnd === campo.value.length) return;
+      campo.select();
+    }, 60);
+  }
+  document.addEventListener("submit", function (e) {
+    if (!document.documentElement.classList.contains("adaptive-mode")) return;
+    var campo = e.target && e.target.querySelector ? e.target.querySelector(SEL) : null;
+    seleccionarLoQueQuedo(campo);
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key !== "Enter" || !document.documentElement.classList.contains("adaptive-mode")) return;
+    var campo = e.target;
+    if (campo && campo.matches && campo.matches(SEL) && !campo.form) seleccionarLoQueQuedo(campo);
+  });
 
   /* El foco, al recuadro. Al cargar un ejercicio y cada vez que el foco se
      queda sin lugar (la página repintó lo que lo tenía y cayó al <body>): así

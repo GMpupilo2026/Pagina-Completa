@@ -342,8 +342,46 @@ async function pruebaEnLineaAbierto(browser) {
   const fila = await page.evaluate(() => window.__inserts.filter((i) => i.tabla === "desafios").pop().fila);
   igual("el reto sale a nombre de quien lo manda", fila.de_id, "u-ana");
   igual("y va dirigido al de la otra clase", fila.para_id, "u-bruno");
+  /* Después de retar: el foco se queda en el botón (antes el botón quedaba
+     `disabled`, soltaba el foco al <body> y no se oía nada), el botón dice que
+     espera y la región viva dice que el reto salió. */
+  await page.waitForFunction(() => /Reto enviado/.test((document.getElementById("reto-anuncio") || {}).textContent || ""), { timeout: 3000 }).catch(() => {});
+  const tras = await page.evaluate(() => {
+    const b = document.querySelector("#en-linea-lista [data-retar='u-bruno']");
+    const viva = document.getElementById("reto-anuncio");
+    return {
+      foco: document.activeElement === b,
+      nombre: b && b.getAttribute("aria-label"),
+      anuncio: viva && viva.getAttribute("role") === "status" ? viva.textContent : "",
+    };
+  });
+  igual("después de retar, el foco sigue en el botón", String(tras.foco), "true");
+  igual("y el botón dice a quién espera", tras.nombre, "Esperando a que Bruno Mena acepte");
+  igual("y el reto se anuncia", tras.anuncio, "Reto enviado a Bruno Mena. Te avisamos cuando conteste.");
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
+}
+
+/* Con la lista vacía se ofrece jugar contra Oscar. bot.html no se le ofrece a
+   la cuenta ciega (se esconde: no está adaptado), así que a ella la frase la
+   manda al Tablero, que sí se juega escribiendo. */
+async function pruebaListaVaciaCiega(browser) {
+  console.log("\n=== competir.html · la lista vacía, con la cuenta ciega ===");
+  const datos = DATOS_JUEGOS(3, []);
+  datos._enLinea = [{ id: "u-ana", nombre: "Ana Rojas", is_admin: false, role: "alumno" }];
+  const enlace = async (ciega) => {
+    // La marca la pone js/vision-cuenta.js con lo que diga la base.
+    const d = JSON.parse(JSON.stringify(datos));
+    d.tablas.vision_personas = ciega ? [{ persona_id: "u-ana", vision: "ciego" }] : [];
+    const { page, ctx } = await pagina(browser, "/competir.html", clienteFalso(d, "u-ana"));
+    await page.waitForFunction((c) => document.documentElement.classList.contains("modo-ciego") === c, ciega, { timeout: 10000 }).catch(() => {});
+    await page.waitForFunction(() => /no hay nadie/.test(document.getElementById("en-linea-lista").textContent), { timeout: 10000 });
+    const a = await page.evaluate(() => { const x = document.querySelector("#en-linea-lista a"); return x ? x.getAttribute("href") + " · " + x.textContent : ""; });
+    await ctx.close();
+    return a;
+  };
+  igual("sin la marca, la lista vacía ofrece el bot", await enlace(false), "bot.html · el bot de Oscar");
+  igual("con la cuenta ciega, ofrece jugar contra Oscar en el Tablero", await enlace(true), "tablero.html · jugar contra Oscar en el Tablero");
 }
 
 async function pruebaTorneos(browser) {
@@ -433,6 +471,7 @@ async function pruebaFotosEnPosiciones(browser) {
     await pruebaAlumnoIntacto(browser);
     await pruebaAlumnoSinPartidas(browser);
     await pruebaEnLineaAbierto(browser);
+    await pruebaListaVaciaCiega(browser);
     await pruebaTorneos(browser);
     await pruebaTorneo(browser);
   } finally {

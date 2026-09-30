@@ -265,7 +265,7 @@
 
       <div id="celebration">
         <span class="big-emoji" aria-hidden="true">🎉</span>
-        <h3 id="celebration-title" class="font-serif text-xl font-bold text-brand-800 dark:text-white">¡Serie completada!</h3>
+        <h3 id="celebration-title" tabindex="-1" class="font-serif text-xl font-bold text-brand-800 dark:text-white">¡Serie completada!</h3>
         <div class="confetti-row" aria-hidden="true">🎊✨🎊✨🎊</div>
         <div class="stars-big" id="celebration-stars"></div>
         <p class="stats" id="celebration-stats"></p>
@@ -274,6 +274,9 @@
           <button type="button" class="bctrl primary" id="celebration-next-btn">Siguiente serie →</button>
         </div>
       </div>
+      <!-- El resultado de la serie, dicho: la celebración aparece de golpe y el
+           lector no lee lo que aparece si no es una región viva ya presente. -->
+      <p id="celebration-anuncio" class="sr-only" role="status"></p>
     </div>
   </main>
 </div>

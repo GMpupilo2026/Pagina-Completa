@@ -159,6 +159,8 @@
             const guardar = document.createElement("button");
             guardar.className = "bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg transition-colors text-sm whitespace-nowrap";
             guardar.textContent = "Guardar";
+            // Con varias salas hay varios «Guardar»: el nombre dice cuál guarda.
+            guardar.setAttribute("aria-label", "Guardar la sala: " + titulo);
             guardar.dataset.guardar = grupo;
             guardar.addEventListener("click", () => guardarVll(grupo));
 
@@ -167,6 +169,7 @@
                 const quitar = document.createElement("button");
                 quitar.className = "border border-brand-200 dark:border-brand-700 hover:border-accent-400 text-brand-600 dark:text-brand-300 font-semibold px-4 py-2 rounded-lg transition-colors text-sm whitespace-nowrap";
                 quitar.textContent = "Quitar";
+                quitar.setAttribute("aria-label", "Quitar la sala: " + titulo);
                 quitar.dataset.quitar = grupo;
                 quitar.addEventListener("click", () => quitarVll(grupo));
                 caja.appendChild(quitar);

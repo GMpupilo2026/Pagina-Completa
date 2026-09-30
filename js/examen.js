@@ -285,16 +285,51 @@ function prepararComandos(it, numero, total) {
     : it.tipo === "casilla" ? "la casilla, por ejemplo «e4»"
     : "la jugada, por ejemplo «Cf3»";
   comandos.ayuda(`Escribe ${que}, y después «responder» para entregarla. Pregunta: «posición», «caballos», «qué hay en e4».`);
-  comandos.posicion(tablero ? new Chess(tablero.fen()) : "Esta pregunta no tiene tablero.");
+  /* Sin tablero, la línea de la posición queda vacía: es una región viva, y
+     escribir ahí «Esta pregunta no tiene tablero» hacía que eso fuera lo
+     primero que se oía, antes de la pregunta. Se contesta solo si lo pide
+     («posición», en contestarEscribiendo). */
+  comandos.posicion(tablero ? new Chess(tablero.fen()) : "");
   // La pregunta nueva se dice sola: el foco sigue en el recuadro.
-  const opciones = (it.visible.opciones || []).map((t, i) => `Opción ${String.fromCharCode(65 + i)}: ${t}.`).join(" ");
+  // El punto se pone solo si la opción no termina ya en uno: «e4..» se oía.
+  const opciones = (it.visible.opciones || []).map((t, i) => `Opción ${String.fromCharCode(65 + i)}: ${conPunto(t)}`).join(" ");
   comandos.decir(`Pregunta ${numero} de ${total}. ${it.visible.enunciado || ""} ${opciones} ${$("q-pista").textContent}`.replace(/\s+/g, " ").trim());
 }
 
+function conPunto(t) {
+  const limpio = String(t == null ? "" : t).trim();
+  return /[.!?…:;]$/.test(limpio) ? limpio : limpio + ".";
+}
+
+/* Cambiar un texto de una región viva SIN que se lea: lo que se contesta
+   escribiendo lo dice el recuadro, una sola vez. Sin esto, «Elegiste e4» se
+   oía dos veces (la pista y el aviso del recuadro) y después la posición
+   entera otra vez, aunque no había cambiado nada. La región vuelve a hablar
+   un rato después, para lo que haga el ratón o el tablero. */
+const mudas = new Map();
+function sinAnunciar(el, cambiar) {
+  if (!el) { cambiar(); return; }
+  if (!mudas.has(el)) mudas.set(el, { valor: el.getAttribute("aria-live"), timer: null });
+  const m = mudas.get(el);
+  clearTimeout(m.timer);
+  el.setAttribute("aria-live", "off");
+  cambiar();
+  m.timer = setTimeout(() => {
+    if (m.valor == null) el.removeAttribute("aria-live"); else el.setAttribute("aria-live", m.valor);
+    mudas.delete(el);
+  }, 1500);
+}
+
+let eleccionEscrita = "";
 function contestarEscribiendo(texto, api) {
   const it = pendientes[indice];
   const t = CuadroComandos.normalizar(texto);
   api.limpiar();
+  // Con tablero, «posición» la contesta el recuadro antes de llegar acá.
+  if (!tablero && /^(posicion|la posicion|tablero|el tablero)$/.test(t)) {
+    api.decir("Esta pregunta no tiene tablero.");
+    return;
+  }
   if (/^(responder|entregar|listo|siguiente|responder y seguir)$/.test(t)) {
     if ($("responder-btn").disabled) { api.decir("Todavía no elegiste ninguna respuesta."); return; }
     responder();
@@ -312,15 +347,25 @@ function contestarEscribiendo(texto, api) {
     return;
   }
   if (!tablero) return;
-  const r = tablero.escribir(texto);
+  eleccionEscrita = "";
+  let r = null;
+  sinAnunciar($("q-pista"), () => {
+    if (it.tipo === "linea") sinAnunciar(comandos && comandos.el.querySelector(".cc-pos"), () => { r = tablero.escribir(texto); });
+    else r = tablero.escribir(texto);
+  });
   if (!r) {
     api.decir(it.tipo === "casilla"
       ? "No entendí la casilla. Escríbela con su letra y su número, por ejemplo «e4»."
       : "Esa jugada no es posible en esta posición. Escríbela como «Cf3», «e4» o «enroque corto».");
     return;
   }
-  api.decir($("q-pista").textContent + (it.tipo === "linea" ? "" : " Escribe «responder» para entregarla."));
-  api.posicion(new Chess(tablero.fen()));
+  /* Se dice UNA vez lo que eligió y qué sigue. La posición no se vuelve a
+     leer: en una de casilla o de jugada no cambió (solo se marca la elegida),
+     y quien la quiera escribe «posición». En la línea sí cambia —contestó el
+     rival—, y lo que jugó ya va dicho en la pista. */
+  api.decir(it.tipo === "linea"
+    ? $("q-pista").textContent
+    : `${eleccionEscrita} Escribe «responder» para entregarla, o escribe otra para cambiarla.`.trim());
 }
 
 function montarTablero(fen, tipo, alSeleccionar) {
@@ -331,6 +376,7 @@ function montarTablero(fen, tipo, alSeleccionar) {
     fen: fen, tipo: tipo,
     alSeleccionar: alSeleccionar || function (r, texto) {
       respuestaActual = r;
+      eleccionEscrita = texto;
       $("q-pista").textContent = texto + " Puedes cambiarla, o responder para seguir.";
       $("responder-btn").disabled = false;
     },
@@ -401,6 +447,8 @@ function prepararLinea(it) {
     dadas.push(mov.san);
     const rival = avanzarRival();
     tablero.cargar(g.fen());
+    // La posición escrita sigue a la del tablero (la lee quien pide «posición»).
+    if (comandos) comandos.posicion(new Chess(g.fen()));
 
     // Entregar una línea a medias es una respuesta —vale cero— pero
     // quedarse trabado sin poder pasar a la pregunta siguiente sería
@@ -469,7 +517,11 @@ async function mostrarResultado(motivo) {
   $("resultado").classList.remove("hidden");
 
   const { data: inf, error } = await sb.rpc("examen_informe", { p_examen: EXAMEN_ID });
-  if (error || !inf) { $("r-detalle").textContent = "No se pudo cargar tu resultado."; return; }
+  if (error || !inf) {
+    $("r-detalle").textContent = "No se pudo cargar tu resultado.";
+    anunciarResultado("No se pudo cargar tu resultado.");
+    return;
+  }
 
   const congelado = inf.motivo_cierre === "congelado" || inf.estado === "congelado";
   $("r-emoji").textContent = congelado ? "🔒" : (inf.motivo_cierre === "tiempo" ? "⏰" : "✅");
@@ -496,6 +548,24 @@ async function mostrarResultado(motivo) {
       <span class="text-xs text-brand-500 dark:text-brand-300 tabular-nums w-20 text-right">${pct}% · ${a.aciertos}/${a.preguntas}</span>`;
     cont.appendChild(fila);
   });
+
+  const nota = inf.nota != null ? `Tu nota: ${Number(inf.nota).toFixed(2)}.` : "Todavía no tiene nota.";
+  anunciarResultado(`${$("r-titulo").textContent}. ${$("r-motivo").textContent} ${nota} ${$("r-detalle").textContent}`);
+}
+
+/* Al entregar, la pantalla de preguntas desaparece con el recuadro que tenía
+   el foco adentro: el foco caía al <body> y quien no ve no se enteraba de que
+   había terminado ni de su nota. El foco va al título del resultado y la nota
+   se dice en la región viva, una sola vez. */
+function anunciarResultado(texto) {
+  const titulo = $("r-titulo");
+  titulo.setAttribute("tabindex", "-1");
+  try { titulo.focus({ preventScroll: false }); } catch (e) {}
+  const viva = $("r-anuncio");
+  if (!viva) return;
+  viva.textContent = "";
+  // Vaciar y escribir en dos tiempos: una región viva solo habla si cambia.
+  setTimeout(() => { viva.textContent = texto.replace(/\s+/g, " ").trim(); }, 80);
 }
 
 document.addEventListener("DOMContentLoaded", () => {

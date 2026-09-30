@@ -1060,6 +1060,12 @@
             // Quien puede buscar gente lo ve escrito en el campo.
             if (buscaPersonas()) campoBusqueda.placeholder = "Cobros, tareas, el nombre de un alumno…";
             const grid = document.getElementById("tile-grid");
+            /* Si el foco estaba en el título de un grupo (se llegó con
+               #entrenar), repintar la grilla lo tiraba al <body>: vuelve al
+               título del mismo grupo. */
+            const conFoco = document.activeElement && grid.contains(document.activeElement)
+                && document.activeElement.closest("h2") ? document.activeElement.closest("section") : null;
+            const grupoConFoco = conFoco && conFoco.id;
             grid.innerHTML = "";
             TILE_GROUPS.forEach((group) => {
                 /* Un grupo del que no queda ni un acceso utilizable no se
@@ -1140,6 +1146,7 @@
             });
             pintarClaseEnVivo();
             aplicarBusqueda();
+            if (grupoConFoco && (!document.activeElement || document.activeElement === document.body)) enfocarGrupo(grupoConFoco);
         }
 
         /* ---------- Los grupos de entrenamiento se pliegan ----------
@@ -2230,6 +2237,10 @@
         // que ya no subía. Los cuenta la base: mi_entreno_resumen(), SECURITY
         // INVOKER, con las mismas tres cuentas de informes_resumen_alumnos()
         // (verificar-mi-entreno.js revisa que no se separen).
+        /* La cifra que falta: el guion se ve, pero dicho suelto era «— Lecciones»
+           (el lector lo calla o lo dice «raya»). Se oye «Todavía sin datos». Es
+           lo mismo que trae clases.html antes de cargar. */
+        const SIN_DATOS = '<span aria-hidden="true">—</span><span class="sr-only">Todavía sin datos:</span>';
         async function loadEntrenoProgress() {
             const { data, error } = await sb.rpc("mi_entreno_resumen", { p_alumno: alumnoDelPanel() });
             if (error) return;   // deja los guiones en vez de romper el resto del panel
@@ -2237,7 +2248,9 @@
             if (!fila) return;
             document.getElementById("entreno-puzzles").textContent = String(fila.puzzles || 0);
             document.getElementById("entreno-lessons").textContent = String(fila.lecciones || 0);
-            document.getElementById("entreno-coord").textContent = fila.mejor_coord || "—";
+            const coord = document.getElementById("entreno-coord");
+            if (fila.mejor_coord) coord.textContent = fila.mejor_coord;
+            else coord.innerHTML = SIN_DATOS;
         }
 
         /* El panel adaptado (quien administración marcó como ciega) trae su
@@ -3490,9 +3503,47 @@
                pero solo si nadie lo movió antes: arrancarle el foco a quien ya
                estaba navegando sería peor que el silencio. */
             if (!document.activeElement || document.activeElement === document.body) {
-                document.getElementById("panel-titulo").focus({ preventScroll: true });
+                if (!enfocarGrupoPedido()) document.getElementById("panel-titulo").focus({ preventScroll: true });
             }
             abrirBusquedaPedida();
+        }
+
+        /* Llegar con un grupo en la dirección (clases.html#entrenar, desde los
+           accesos rápidos o el «panel» del recuadro): quien ve salta hasta ahí
+           con el scroll, pero el foco se quedaba en el título del panel y a
+           quien no ve le tocaba recorrer todo lo de arriba. Con la cuenta ciega
+           el foco va al título de ESE grupo (al botón, si el grupo se pliega, y
+           abierto). Los grupos se pintan después de cargar la página, así que el
+           salto del navegador tampoco llegaba. */
+        function enfocarGrupoPedido() {
+            if (!document.documentElement.classList.contains("modo-ciego")) return false;
+            return enfocarGrupo(decodeURIComponent((location.hash || "").slice(1)));
+        }
+        function enfocarGrupo(id) {
+            if (!id) return false;
+            const seccion = document.getElementById(id);
+            if (!seccion || !seccion.closest("#tile-grid")) return false;
+            const titulo = seccion.querySelector("h2");
+            if (!titulo) return false;
+            const boton = titulo.querySelector("button[aria-expanded]");
+            if (boton && boton.getAttribute("aria-expanded") === "false") boton.click();
+            const destino = boton || titulo;
+            if (!boton) titulo.setAttribute("tabindex", "-1");
+            destino.focus({ preventScroll: true });
+            seccion.scrollIntoView({ block: "start" });
+            /* Al terminar de pintar el panel, el navegador suelta el foco una
+               vez (el <body> se lo queda, sin que ningún código lo mueva): si
+               ahí quedó, se devuelve al mismo título. Solo si nadie lo movió. */
+            setTimeout(() => {
+                if (!document.activeElement || document.activeElement === document.body) {
+                    const otra = document.getElementById(id);
+                    const h = otra && otra.querySelector("h2");
+                    const b = h && h.querySelector("button[aria-expanded]");
+                    if (b) b.focus({ preventScroll: true });
+                    else if (h) { h.setAttribute("tabindex", "-1"); h.focus({ preventScroll: true }); }
+                }
+            }, 400);
+            return true;
         }
 
         async function init() {
