@@ -9,7 +9,7 @@
    Ver «La clase vista por invitados sin cuenta» en docs/decisiones/clase-en-vivo.md.
 
    El Modo Adaptado del invitado también se maneja desde acá: el enlace puede
-   abrir ya en ese modo (#t=…&adaptado=1), y en la lista cada invitado lleva
+   abrir ya en ese modo (#t=…&adaptado=1) o con la voz encendida (&voz=1), y en la lista cada invitado lleva
    su botón para encendérselo o apagárselo durante la clase
    (clase_enlace_adaptado). La lista dice quién lo tiene puesto, también si lo
    puso él. Ver «El profe le enciende el modo adaptado».
@@ -23,9 +23,9 @@ window.ClaseInvitados = (function () {
     // Sin noticias de un invitado en un minuto: cerró la página.
     const SE_FUE_MS = 60 * 1000;
 
-    function enlace(origen, token, adaptado) {
+    function enlace(origen, token, adaptado, voz) {
         return String(origen).replace(/\/+$/, "") + "/ver-clase.html#t=" + encodeURIComponent(token)
-            + (adaptado ? "&adaptado=1" : "");
+            + (adaptado ? "&adaptado=1" : "") + (voz ? "&voz=1" : "");
     }
 
     // Lo que se escribe al lado de cada nombre: el dato va escrito, no en un color.
@@ -50,7 +50,7 @@ window.ClaseInvitados = (function () {
         function pintarEnlace() {
             $("invitados-crear").hidden = !!token;
             $("invitados-enlace").hidden = !token;
-            $("invitados-url").value = token ? enlace(location.origin, token, $("invitados-adaptado").checked) : "";
+            $("invitados-url").value = token ? enlace(location.origin, token, $("invitados-adaptado").checked, $("invitados-voz").checked) : "";
         }
 
         function pintarLista() {
@@ -180,6 +180,12 @@ window.ClaseInvitados = (function () {
             msg($("invitados-adaptado").checked
                 ? "El enlace ahora abre con el modo adaptado. Cópialo de nuevo si ya lo habías mandado."
                 : "El enlace abre como siempre.");
+        });
+        $("invitados-voz").addEventListener("change", () => {
+            pintarEnlace();
+            msg($("invitados-voz").checked
+                ? "El enlace ahora abre con la voz encendida. Cópialo de nuevo si ya lo habías mandado."
+                : "El enlace abre sin la voz.");
         });
         $("invitados-copiar").addEventListener("click", async () => {
             const url = $("invitados-url").value;

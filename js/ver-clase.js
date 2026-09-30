@@ -15,7 +15,9 @@
    - Un invitado mira: el tablero no es interactivo ni dibuja flechas, y no
      hay ningún enlace en la pantalla de la clase (tocarlo sería salirse).
    - El profe también maneja el Modo Adaptado del invitado: el enlace puede
-     traer «&adaptado=1» (abre ya en ese modo), y desde su lista se lo enciende
+     traer «&adaptado=1» (abre ya en ese modo) o «&voz=1» (con la voz del
+     navegador encendida: los navegadores no dejan hablar antes del primer
+     toque, así que empieza a hablar con el primero), y desde su lista se lo enciende
      o apaga en plena clase: clase_invitado_ver() trae `adaptado` y acá se
      aplica solo cuando CAMBIA (lo que la persona elige a mano no se le pisa en
      la vuelta siguiente). Lo que la persona cambia ella misma se le avisa a la
@@ -42,6 +44,7 @@
     const params = new URLSearchParams(location.hash.slice(1));
     const token = (params.get("t") || "").trim();
     const enlaceAdaptado = params.get("adaptado") === "1";
+    const enlaceVoz = params.get("voz") === "1";
     const CLAVE = "ver_clase_v1:" + token;
 
     let secreto = null;
@@ -59,6 +62,7 @@
     let adaptadoEnLaBase = null;   // lo último que dijo la base (null: todavía nada)
     let cambioDelProfe = false;    // el próximo cambio de modo lo pidió el profe
     let porElEnlace = false;       // …o venía en el enlace
+    let repintarVoz = () => {};
     function decirBienvenida() { if (bienvenida) { anunciar(bienvenida); bienvenida = null; } }
     let estadoAntes = null;
     let vistaAntes = "null";
@@ -128,6 +132,31 @@
         AdaptiveMode.set(enLaBase);
     }
 
+    /* El enlace trae «&voz=1»: la voz del navegador queda encendida (la misma
+       preferencia de todo el sitio, js/blind-notation.js). Ningún navegador
+       deja hablar a una página antes de que la persona toque algo o apriete
+       una tecla: lo que se diga antes se pierde callado. Así que el aviso queda
+       escrito en la región viva (el lector de pantalla sí lo lee) y la voz lo
+       dice con el primer toque o tecla, si para entonces no se apagó. */
+    function encenderVozDelEnlace() {
+        if (!window.BlindNotation || !("speechSynthesis" in window)) return;
+        if (!BlindNotation.isSpeechEnabled()) BlindNotation.setSpeechEnabled(true);
+        repintarVoz();
+        const aviso = "Tu profe te mandó este enlace con la voz encendida: vas a oír cada jugada y cada aviso de la clase. Si usas lector de pantalla, apágala con el botón «Voz activada».";
+        // Por anunciar(): si el enlace trae también el modo adaptado, sale junto con su aviso.
+        anunciar(aviso);
+        const alPrimerToque = (ev) => {
+            document.removeEventListener("pointerup", alPrimerToque, true);
+            document.removeEventListener("keydown", alPrimerToque, true);
+            // Si el primer toque es justo el botón de la voz, lo que diga ese botón manda.
+            if (ev.target && ev.target.closest && ev.target.closest("#vc-voz-btn, #vc-voz-btn2")) return;
+            if (BlindNotation.isSpeechEnabled()) hablar(aviso);
+        };
+        // pointerup y no pointerdown: en el celular el permiso para hablar llega al soltar el dedo.
+        document.addEventListener("pointerup", alPrimerToque, true);
+        document.addEventListener("keydown", alPrimerToque, true);
+    }
+
     function montarAccesibilidad() {
         const botones = () => document.querySelectorAll(".vc-adaptado-btn");
         const pintar = () => botones().forEach((b) => b.setAttribute("aria-pressed", adaptado() ? "true" : "false"));
@@ -165,6 +194,7 @@
         // veces (en la entrada y en la clase); al tocar uno se repintan los dos.
         const ids = ["vc-voz-btn", "vc-voz-btn2"];
         const pintores = window.BlindNotation ? ids.map((id) => BlindNotation.setupSpeechToggle(id, () => true)) : [];
+        repintarVoz = () => pintores.forEach((f) => f && f());
         ids.forEach((id, i) => {
             const b = $(id);
             if (!pintores[i]) { b.style.display = "none"; return; }  // navegador sin voz
@@ -459,6 +489,7 @@
     // El profe mandó el enlace con el modo adaptado: se enciende antes de
     // pedir el nombre, que es justo lo que hace falta oír.
     if (enlaceAdaptado && !adaptado() && window.AdaptiveMode) { porElEnlace = true; AdaptiveMode.set(true); }
+    if (enlaceVoz) encenderVozDelEnlace();
     arrancar();
 
     window.VerClase = { turno };
