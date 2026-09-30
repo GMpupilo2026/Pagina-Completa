@@ -81,6 +81,8 @@
                          mirar el panel de uno de sus profesores o coordinadores.
                          Sin entrar a la cuenta de nadie (js/modo-vista.js). -->
                     <span id="modo-vista-wrap" hidden class="inline-flex items-center gap-2"></span>
+                    <!-- La campana del alumno: lo último que le pasó. Ver cargarCampana(). -->
+                    <button id="campana" hidden type="button" aria-expanded="false" aria-controls="campana-panel" class="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-700 dark:text-brand-200 hover:text-accent-700 dark:hover:text-accent-400 rounded-lg px-2 py-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🔔</span><span>Novedades</span><span id="campana-n" hidden class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-accent-500 text-brand-900"></span></button>
                     <button id="change-pw-btn" type="button" aria-haspopup="dialog" class="text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors">Contraseña</button>
                     <button id="logout-btn" class="text-sm font-semibold text-brand-600 dark:text-brand-300 hover:text-accent-500 transition-colors">Cerrar sesión</button>
                 </div>
@@ -107,6 +109,14 @@
                 <p id="buscar-panel-ayuda" class="text-xs text-brand-450 dark:text-brand-350 mt-1.5">El panel deja solo lo que coincide; Enter abre el primero.<span class="hidden sm:inline"> Atajo: Ctrl + K.</span></p>
                 <p id="buscar-panel-estado" role="status" class="text-sm text-brand-600 dark:text-brand-300 mt-2 empty:hidden"></p>
             </form>
+
+            <!-- ===== Novedades (alumno): lo último que le pasó —tareas, exámenes,
+                 retos, avisos y notas de su profe—, lo nuevo marcado. ===== -->
+            <section id="campana-panel" hidden aria-labelledby="campana-titulo" class="mb-6 bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
+                <h2 id="campana-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Lo último que te pasó</h2>
+                <ul id="campana-lista" class="space-y-2"></ul>
+            </section>
+
 
             <!-- Las personas que coinciden: solo para quien da clase, coordina,
                  supervisa o administra, y solo las que la base le deja ver
@@ -352,6 +362,35 @@
 
             <!-- «Lo que más le costó a tu clase» (solo profe): las preguntas del último mes que más
                  fallaron sus alumnos, y un plan de repaso con ellas. Ver js/lo-que-costo.js. -->
+            <!-- ===== Aviso a tus alumnos (quien da clase): una ventana que el
+                 alumno tiene que marcar como leída, y quiénes lo leyeron.
+                 Ver pintarAvisoAlumnos() y js/aviso-profe.js. ===== -->
+            <section id="aviso-alumnos" hidden aria-labelledby="aviso-alumnos-titulo" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-10">
+                <h2 id="aviso-alumnos-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white"><span aria-hidden="true">📣 </span>Aviso a tus alumnos</h2>
+                <p class="text-sm text-brand-600 dark:text-brand-300 mt-1">Les sale en una ventana que no pueden cerrar hasta marcarlo como leído, en la página de la Academia que abran. Aquí ves quién lo leyó.</p>
+                <form id="aviso-form" class="mt-4 space-y-3" novalidate>
+                    <div>
+                        <label for="aviso-para" class="block text-sm font-semibold text-brand-800 dark:text-white mb-1">Para</label>
+                        <select id="aviso-para" class="w-full sm:w-auto rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            <option value="">Todos tus alumnos</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="aviso-texto" class="block text-sm font-semibold text-brand-800 dark:text-white mb-1">Qué les quieres decir</label>
+                        <textarea id="aviso-texto" rows="3" maxlength="1000" aria-describedby="aviso-cuenta" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" placeholder="Mañana no hay clase: nos vemos el jueves."></textarea>
+                        <p id="aviso-cuenta" class="text-xs text-brand-600 dark:text-brand-300 mt-1">0 de 1000 caracteres</p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-3">
+                        <button id="aviso-mandar" type="submit" class="rounded-lg px-4 py-2 text-sm font-semibold bg-accent-500 hover:bg-accent-600 text-brand-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-accent-400 disabled:opacity-60">Mandar aviso</button>
+                        <p id="aviso-estado" role="status" class="text-sm text-brand-600 dark:text-brand-300"></p>
+                    </div>
+                </form>
+                <div id="aviso-enviados" hidden class="mt-6 pt-4 border-t border-brand-100 dark:border-brand-800">
+                    <h3 class="text-sm font-semibold text-brand-800 dark:text-white mb-2">Tus últimos avisos</h3>
+                    <ul id="aviso-lista" class="space-y-3"></ul>
+                </div>
+            </section>
+
             <section id="lo-que-costo" hidden aria-labelledby="lo-que-costo-titulo" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-10"></section>
 
             <!-- ===== El resumen de quien SUPERVISA =====
@@ -379,6 +418,17 @@
                 </div>
                 <p id="sup-aviso" hidden class="mt-4 pt-4 border-t border-brand-100 dark:border-brand-800 text-sm text-brand-600 dark:text-brand-300"></p>
             </div>
+
+            <!-- ===== Tus favoritas (alumno): las que eligió fijar arriba, con
+                 su cuenta. Ver pintarFavoritas(). ===== -->
+            <section id="favoritas" hidden aria-labelledby="favoritas-titulo" class="mb-8">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                    <h2 id="favoritas-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white"><span aria-hidden="true">⭐ </span>Tus favoritas</h2>
+                    <button id="favoritas-elegir" type="button" class="text-sm font-semibold text-accent-700 dark:text-accent-400 underline underline-offset-2 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Elegir favoritas</button>
+                </div>
+                <p id="favoritas-vacio" class="text-sm text-brand-600 dark:text-brand-300">Fija aquí las páginas que más usas: salen primero, en el celular y en la computadora.</p>
+                <ul id="favoritas-lista" class="grid grid-cols-2 sm:grid-cols-4 gap-3" style="display:none"></ul>
+            </section>
 
             <!-- ===== Lo que más usas (alumno): las cuatro tarjetas donde más
                  tiempo pasó en 30 días. Ver cargarLoQueMasUsas(). ===== -->
@@ -460,5 +510,5 @@
     <script src="js/plan-clase.js"></script>
     <script src="js/lo-que-costo.js"></script>
     <script src="js/clases.js"></script>
-<!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- ayuda: inicio --><script src="js/ayuda-guia.js" defer></script><!-- ayuda: fin --></body>
+<!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- aviso-profe: inicio --><script src="js/aviso-profe.js" defer></script><!-- aviso-profe: fin --><!-- tanda: inicio --><script src="js/tanda-diez.js" defer></script><!-- tanda: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- ayuda: inicio --><script src="js/ayuda-guia.js" defer></script><!-- ayuda: fin --></body>
 </html>

@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20260930172218
+# al-dia-con: 20260930181415
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -11,9 +11,11 @@ tabla  ajustes_academia  rls=true
 tabla  arbitrajes_publicos  rls=true
 tabla  archivos_pgn  rls=true
 tabla  auditoria  rls=true
+tabla  aviso_destinatarios  rls=true
 tabla  avisos_cobro  rls=true
 tabla  avisos_ficha_faltante  rls=true
 tabla  avisos_ia_tope  rls=true
+tabla  avisos_profesor  rls=true
 tabla  avisos_racha  rls=true
 tabla  clase_elegidos  rls=true
 tabla  clase_enlaces  rls=true
@@ -188,6 +190,9 @@ columna  auditoria.quien  uuid
 columna  auditoria.sobre  uuid
 columna  auditoria.tabla  text
 columna  auditoria.via  text
+columna  aviso_destinatarios.alumno_id  uuid
+columna  aviso_destinatarios.aviso_id  uuid
+columna  aviso_destinatarios.leido_at  timestamp with time zone
 columna  avisos_cobro.cobro_id  uuid
 columna  avisos_cobro.correo  text
 columna  avisos_cobro.enviado_at  timestamp with time zone
@@ -202,6 +207,11 @@ columna  avisos_ia_tope.gasto_usd  numeric(12,6)
 columna  avisos_ia_tope.periodo  date
 columna  avisos_ia_tope.tope_usd  numeric(10,2)
 columna  avisos_ia_tope.umbral  smallint
+columna  avisos_profesor.created_at  timestamp with time zone
+columna  avisos_profesor.id  uuid
+columna  avisos_profesor.para  text
+columna  avisos_profesor.profesor_id  uuid
+columna  avisos_profesor.texto  text
 columna  avisos_racha.created_at  timestamp with time zone
 columna  avisos_racha.faltan  integer
 columna  avisos_racha.fecha  date
@@ -1121,6 +1131,7 @@ funcion  entreno_comparado(p_alumno uuid, p_desde timestamp with time zone, p_ha
 funcion  entreno_hoy_de_mis_alumnos()  invoker  anon=false  auth=true
 funcion  entreno_mi_semana(alumno uuid)  invoker  anon=false  auth=true
 funcion  entreno_resumen_hoy(alumno uuid)  invoker  anon=false  auth=true
+funcion  enviar_aviso(p_texto text, p_grupo text, p_subgrupo uuid)  definer  anon=false  auth=true
 funcion  equipo_alumno_subgrupo()  definer  anon=false  auth=false
 funcion  equipo_bajo_mi_coordinacion(p_equipo uuid)  definer  anon=false  auth=true
 funcion  equipo_docente()  definer  anon=false  auth=true
@@ -1178,6 +1189,8 @@ funcion  interno.academias_de(p_persona uuid)  definer  anon=false  auth=true
 funcion  interno.alumnos_de(p_profesor uuid)  definer  anon=false  auth=true
 funcion  interno.auditar()  definer  anon=false  auth=false
 funcion  interno.auditoria_intocable()  invoker  anon=false  auth=false
+funcion  interno.avisos_que_mande()  definer  anon=false  auth=true
+funcion  interno.avisos_que_recibi()  definer  anon=false  auth=true
 funcion  interno.bajo_mi_coordinacion_conjunto()  definer  anon=false  auth=true
 funcion  interno.clases_donde_aparezco(p_desde timestamp with time zone)  definer  anon=false  auth=true
 funcion  interno.clases_que_coordino()  definer  anon=false  auth=true
@@ -1206,11 +1219,13 @@ funcion  jugadores_de_asientos(p_asientos jsonb)  invoker  anon=false  auth=true
 funcion  justificaciones_pendientes()  invoker  anon=false  auth=true
 funcion  justificaciones_recibidas(p_estado text, p_busqueda text, p_limite integer, p_desde integer)  invoker  anon=false  auth=true
 funcion  justificar_ausencia(p_desde date, p_hasta date, p_motivo text, p_detalle text, p_adjuntos jsonb, p_privacidad text)  definer  anon=false  auth=true
+funcion  lectores_de_aviso(p_aviso uuid)  definer  anon=false  auth=true
 funcion  ligar_a_la_clase_abierta()  invoker  anon=false  auth=false
 funcion  logros_hitos(alumno uuid)  invoker  anon=false  auth=true
 funcion  mandar_plan_rival(p_alumnos uuid[], p_rival text, p_lado text, p_plan jsonb, p_nota text, p_vence timestamp with time zone)  invoker  anon=false  auth=true
 funcion  marca_de_alumno(p_alumno uuid)  definer  anon=false  auth=false
 funcion  marca_de_diagnostico(p_id uuid)  definer  anon=false  auth=true
+funcion  marcar_aviso_leido(p_aviso uuid)  definer  anon=false  auth=true
 funcion  marcar_coordinador(p_profesor uuid, p_valor boolean)  definer  anon=false  auth=true
 funcion  marcar_supervisor(p_persona uuid, p_valor boolean)  definer  anon=false  auth=true
 funcion  marcar_vision(p_persona uuid, p_vision text)  definer  anon=false  auth=true
@@ -1226,6 +1241,8 @@ funcion  mi_proxima_clase()  definer  anon=false  auth=true
 funcion  minutos_minimos_por_ejercicio(p_grupo text)  invoker  anon=false  auth=true
 funcion  minutos_por_tramos(p_tramos tramo_crudo[])  invoker  anon=true  auth=true
 funcion  mis_academias_supervisadas()  definer  anon=false  auth=true
+funcion  mis_avisos_enviados(p_limite integer)  invoker  anon=false  auth=true
+funcion  mis_avisos_sin_leer()  definer  anon=false  auth=true
 funcion  mis_clases()  invoker  anon=false  auth=true
 funcion  mis_funciones_coordinacion()  definer  anon=false  auth=true
 funcion  mis_subgrupos()  invoker  anon=false  auth=true
@@ -1361,7 +1378,9 @@ politica  archivos_pgn  archivos_pgn_select  SELECT
 politica  archivos_pgn  archivos_pgn_update  UPDATE
 politica  archivos_pgn  verificacion_en_dos_pasos  ALL  restrictiva
 politica  auditoria  auditoria_select_admin  SELECT
+politica  aviso_destinatarios  aviso_destinatarios_select  SELECT
 politica  avisos_cobro  avisos_lee_coordinacion  SELECT
+politica  avisos_profesor  avisos_profesor_select  SELECT
 politica  clase_elegidos  clase_elegidos_insert  INSERT
 politica  clase_elegidos  clase_elegidos_select  SELECT
 politica  clase_elegidos  clase_elegidos_select_propio  SELECT
@@ -1762,10 +1781,14 @@ indice  auditoria  auditoria_cuando
 indice  auditoria  auditoria_pkey
 indice  auditoria  auditoria_sobre
 indice  auditoria  auditoria_tabla_cuando
+indice  aviso_destinatarios  aviso_destinatarios_alumno
+indice  aviso_destinatarios  aviso_destinatarios_pkey
 indice  avisos_cobro  avisos_cobro_pkey
 indice  avisos_cobro  avisos_cobro_una_vez
 indice  avisos_ficha_faltante  avisos_ficha_faltante_pkey
 indice  avisos_ia_tope  avisos_ia_tope_pkey
+indice  avisos_profesor  avisos_profesor_pkey
+indice  avisos_profesor  avisos_profesor_profesor
 indice  avisos_racha  avisos_racha_pkey
 indice  clase_elegidos  clase_elegidos_alumno_idx
 indice  clase_elegidos  clase_elegidos_clase_idx
@@ -2147,6 +2170,9 @@ grant  archivos_pgn  authenticated  TRIGGER
 grant  archivos_pgn  authenticated  TRUNCATE
 grant  archivos_pgn  authenticated  UPDATE
 grant  auditoria  authenticated  SELECT
+grant  aviso_destinatarios  authenticated  REFERENCES
+grant  aviso_destinatarios  authenticated  SELECT
+grant  aviso_destinatarios  authenticated  TRIGGER
 grant  avisos_cobro  authenticated  DELETE
 grant  avisos_cobro  authenticated  INSERT
 grant  avisos_cobro  authenticated  REFERENCES
@@ -2154,6 +2180,9 @@ grant  avisos_cobro  authenticated  SELECT
 grant  avisos_cobro  authenticated  TRIGGER
 grant  avisos_cobro  authenticated  TRUNCATE
 grant  avisos_cobro  authenticated  UPDATE
+grant  avisos_profesor  authenticated  REFERENCES
+grant  avisos_profesor  authenticated  SELECT
+grant  avisos_profesor  authenticated  TRIGGER
 grant  clase_elegidos  authenticated  DELETE
 grant  clase_elegidos  authenticated  INSERT
 grant  clase_elegidos  authenticated  REFERENCES

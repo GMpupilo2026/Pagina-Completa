@@ -192,6 +192,12 @@ window.ProgresoUsuario = (function () {
     { clave: "memoria_mejor_v1",                 fusion: "maxPorClave" },   // Memoria: segundos → más piezas sin un error
     { clave: "errores_propios_v1",               fusion: "unionObjeto" },   // Tus propios errores: id → ejercicio (salen de sus partidas)
     { clave: "errores_analizadas_v1",            fusion: "unionObjeto" },   // y qué partidas ya se miraron
+    /* La única que no es progreso: las favoritas del panel. Van con la
+       cuenta a propósito —el alumno las elige una vez y las quiere en el
+       celular y en la computadora—, y no son de «dónde se mira» como el tema
+       o el modo adaptado. Gana la última que eligió. Ver «Tus favoritas» en
+       docs/decisiones/paneles.md. */
+    { clave: "panel_favoritas_v1",               fusion: "ultimaEscritura" },
   ];
 
   // Cuándo se escribió en ESTE aparato cada clave que se funde por fecha.

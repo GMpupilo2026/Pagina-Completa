@@ -240,6 +240,70 @@ lista, y el resto se acomoda solo.
   `herramientas/contenido-panel.js` de los mismos archivos que pintan cada
   página, y `verificar-contenido-panel.js` falla si alguien agrega contenido
   y no lo vuelve a armar.
+- **El aviso del profe.** El profe no tenía cómo decirle algo a todo su grupo
+  («Mañana no hay clase»). Ahora lo escribe en su panel (caja «📣 Aviso a tus
+  alumnos»: para todos, un grupo o uno de sus subgrupos) y al alumno le sale
+  **en una ventana que no puede saltarse**, en la página de la Academia que
+  abra, hasta apretar «Marcar como leído» —así lo pidió el dueño de la
+  Academia—. El profe ve «8 de 12 lo leyeron» y, con «Ver quiénes», la lista
+  con la hora de cada uno.
+  - **La base.** `avisos_profesor` (qué dijo, para quién) y
+    `aviso_destinatarios` (una fila por alumno, con `leido_at`). Los
+    destinatarios se fijan **al mandarlo**: el que entra al grupo después no
+    sale como que no lo leyó. No hay políticas de escritura: manda
+    `enviar_aviso()` (SECURITY DEFINER; arma la lista con
+    `interno.alumnos_de()`, un subgrupo tiene que ser SUYO; tope de 10 por
+    hora), marca `marcar_aviso_leido()` (solo la fila propia y solo la primera
+    vez: la hora no se reescribe), y leen `mis_avisos_sin_leer()`,
+    `mis_avisos_enviados()` (INVOKER) y `lectores_de_aviso()` (solo de un
+    aviso propio). Las dos políticas de lectura se necesitan una a la otra y
+    con subconsultas directas la base corta con «infinite recursion»: arman el
+    conjunto `interno.avisos_que_recibi()` / `interno.avisos_que_mande()`.
+    También sale por push al celular (`avisar_push`); si eso falla, el aviso
+    queda igual.
+  - **La ventana** (`js/aviso-profe.js`, la pone `academia-cabecera.py` en
+    toda página de la Academia menos `examen.html`): un `<dialog>` con
+    `showModal()` —lo de afuera queda inerte y el foco encerrado—, Escape no
+    la cierra, el texto va por `textContent`, y si hay varios van uno detrás
+    del otro, el más viejo primero. Si la base no contesta al marcarlo, se
+    cierra igual (nadie queda encerrado por un corte de red) y vuelve la
+    próxima vez. También mira al volver a la pestaña.
+  - Comprobado en SQL (revertido): el aviso al grupo le llega a los del grupo
+    y no a los del otro; el del subgrupo, solo al subgrupo; el alumno ve solo
+    lo suyo, no puede insertar ni actualizar filas ni mandar avisos; marcar dos
+    veces no cambia la hora; otro profe no ve el aviso ni sus lectores y no
+    puede usar un subgrupo ajeno; `anon` no llama nada. `verificar-aviso-profe.js`.
+- **Entrenar 10 minutos.** Un botón en «Hoy te toca» arma una tanda con las
+  tres primeras cosas de hoy (o Mates, si hoy no toca nada en particular) y
+  cuenta 10 minutos; una barra abajo (`js/tanda-diez.js`, en toda página de la
+  Academia menos el examen) dice cuánto queda, en qué paso va y lleva al
+  siguiente. El reloj no se anuncia cada segundo: se anuncian el paso y el
+  final. Es de este aparato (`tanda_diez_v1`): una tanda es de un rato.
+- **Tus favoritas.** Hasta ocho tarjetas fijadas arriba, elegidas en una
+  ventana con casillas por grupo (una estrella dentro de cada tarjeta sería un
+  botón dentro de un enlace). Viajan con la cuenta: `panel_favoritas_v1` está
+  en la lista de `js/progreso-usuario.js` —la única clave de esa lista que no
+  es progreso, a propósito: el alumno las elige una vez y las quiere en el
+  celular y en la computadora—. Lo que es favorita no se repite en «Lo que más
+  usas».
+- **La semana en barras.** Debajo de «Esta semana: 30 ejercicios», siete
+  barras con el número escrito debajo y el día («hoy» en la última). Salen de
+  la misma `entreno_mi_semana()`, que ahora trae también `dias` (siete números,
+  la misma cuenta y los mismos días de Costa Rica, así que la gráfica y el
+  texto no pueden decir cosas distintas). La barra es adorno; el dato es el
+  número, y el lector de pantalla dice el día completo. Sale también en el hub.
+- **La campana del alumno.** «🔔 Novedades · 3 nuevas» junto al saludo abre
+  «Lo último que te pasó»: tareas y exámenes nuevos, retos, avisos del profe y
+  las notas que el profe le compartió —lo que le llega como push y, si lo
+  perdía, no quedaba en ninguna parte—. Cinco de cada cosa y del último mes,
+  lo que la RLS ya le deja leer, sin nada que guardar aparte. «Nuevo» es lo
+  llegado desde la última vez que la abrió en este aparato
+  (`panel_campana_vista_v1`); la primera vez, lo de la última semana.
+- **El panel del profe, con la misma mano.** Sus grupos se pliegan en el
+  celular como los del alumno (menos la clase en vivo y «Tu cuenta», que va en
+  tarjetas chicas), y arriba sale «Lo que más usas»: como lo que hace quien da
+  clase no se mide por sección, se cuentan sus toques en las tarjetas de este
+  aparato (`panel_usos_v1`, desde tres).
 - **Los grupos de entrenamiento se pliegan en el celular.** Con el
   entrenamiento abierto tarjeta por tarjeta, el panel del alumno medía en el
   celular unas nueve pantallas (7100 px) y «Jugar y competir» quedaba a casi

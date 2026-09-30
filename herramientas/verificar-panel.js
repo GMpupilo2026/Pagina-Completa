@@ -100,6 +100,7 @@ window.__consultas = [];
       neq(col, val) { anotado.neq = Object.assign(anotado.neq || {}, { [col]: val }); filas2 = filas2.filter((r) => !cmp(valor(r, col), val)); return b; },
       gte(col, val) { anotado.gte = { col: col, val: val }; filas2 = filas2.filter((r) => String(valor(r, col)) >= String(val)); return b; },
       lt(col, val) { anotado.lt = { col: col, val: val }; filas2 = filas2.filter((r) => String(valor(r, col)) < String(val)); return b; },
+      lte(col, val) { anotado.lte = { col: col, val: val }; filas2 = filas2.filter((r) => String(valor(r, col)) <= String(val)); return b; },
       is(col, val) { if (val === null) filas2 = filas2.filter((r) => r[col] === null || r[col] === undefined); return b; },
       not(col, op, val) { if (op === "is" && val === null) filas2 = filas2.filter((r) => r[col] !== null && r[col] !== undefined); return b; },
       in(col, vals) { filas2 = filas2.filter((r) => vals.map(String).includes(String(valor(r, col)))); return b; },
@@ -192,6 +193,11 @@ window.__consultas = [];
     desafios: DATOS.desafios || [],
     tournaments: DATOS.tournaments || [],
     tournament_registrations: DATOS.tournament_registrations || [],
+    // Lo que junta la campana del alumno (la RLS le da solo lo suyo).
+    tareas: DATOS.tareas || [],
+    examenes: DATOS.examenes || [],
+    avisos_profesor: DATOS.avisos_profesor || [],
+    notas_alumno: DATOS.notas_alumno || [],
   };
 
   window.sb = {
@@ -1218,8 +1224,9 @@ async function pruebaTareasAlumna(browser) {
      rpcTareas && rpcTareas.args && rpcTareas.args.p_pendientes], ["u-ana", true]);
   igual("y se acota cuántas se piden: el panel solo pinta la más próxima",
     rpcTareas && rpcTareas.args && rpcTareas.args.p_limite, 50);
-  igual("y nadie se baja la tabla `tareas` a mano",
-    await r.page.evaluate(() => window.__consultas.some((c) => c.tabla === "tareas")), "false");
+  // La campana sí lee `tareas`, pero cinco y de un mes: nunca la tabla entera.
+  igual("y nadie se baja la tabla `tareas` a mano (la campana pide cinco)",
+    await r.page.evaluate(() => window.__consultas.some((c) => c.tabla === "tareas" && !(c.limit && c.limit <= 5))), "false");
   igual("sin errores en consola", r.errores.join(" | ") || "ninguno", "ninguno");
   await r.ctx.close();
 
@@ -2620,9 +2627,12 @@ async function pruebaPlegables(browser) {
     e.filter((x) => PLEGABLES.includes(x.titulo)).every((x) => x.boton === "true" && x.grilla), true);
   await ctx.close();
 
-  // A quien da clase no se le pliega nada: su panel es otro.
+  // A quien da clase también se le pliegan, menos la clase en vivo y «Tu cuenta».
   ({ page, ctx } = await panel(browser, [PROFE], "u-profe", celular));
-  igual("a la profesora, ningún grupo plegable", await page.evaluate(() => document.querySelectorAll("#tile-grid [aria-controls]").length), 0);
+  igual("a la profesora se le pliegan sus grupos en el celular, menos la clase en vivo y «Tu cuenta»",
+    await page.evaluate(() => Array.from(document.querySelectorAll("#tile-grid > section")).map((s) =>
+      [s.querySelector("h2").textContent, !!s.querySelector("h2 button[aria-expanded=false]")])),
+    [["Clase en vivo", false], ["Tus alumnos", true], ["Tus clases", true], ["Aprender", true], ["Jugar y competir", true], ["Tu cuenta", false]]);
   await ctx.close();
 }
 
@@ -2859,7 +2869,7 @@ async function pruebaMasDelPanel(browser) {
   await r.page.waitForFunction(() => document.querySelectorAll('#tile-grid a[href="competir.html"] [data-competir]').length > 1, null, { timeout: 10000 }).catch(() => {});
   igual("dice los retos sin contestar de los últimos dos días, y el torneo abierto", await chips(r.page),
     ["Te retaron: 1 reto sin contestar", "Inscripción abierta: «Relámpago de octubre»"]);
-  igual("los retos se CUENTAN, sin traer filas", await r.page.evaluate(() => window.__consultas.filter((c) => c.tabla === "desafios").map((c) => [!!c.count, !!c.head])), [[true, true]]);
+  igual("los retos se CUENTAN, sin traer filas", await r.page.evaluate(() => window.__consultas.filter((c) => c.tabla === "desafios" && c.eq.estado === "pendiente").map((c) => [!!c.count, !!c.head])), [[true, true]]);
   igual("con un reto, la tarjeta se ilumina", await r.page.evaluate(() => document.querySelector('#tile-grid a[href="competir.html"]').classList.contains("ring-accent-500")), true);
   await r.ctx.close();
 
@@ -2898,8 +2908,8 @@ async function pruebaMasDelPanel(browser) {
   igual("en la computadora la descripción sí se ve", c.desc.every(Boolean), true);
   await r.ctx.close();
   r = await panel(browser, [PROFE], "u-profe", null, {});
-  igual("a quien da clase no le cambia: sus tarjetas siguen grandes",
-    await r.page.evaluate(() => { const a = document.querySelector('#tile-grid a[href="configuracion.html"]'); return a.classList.contains("p-5"); }), true);
+  igual("a quien da clase también: «Tu cuenta» en tarjetas chicas",
+    await r.page.evaluate(() => { const a = document.querySelector('#tile-grid a[href="configuracion.html"]'); return a.classList.contains("p-3"); }), true);
   await r.ctx.close();
 
   console.log("\n=== La marca «Nuevo» ===");
@@ -2928,6 +2938,131 @@ async function pruebaMasDelPanel(browser) {
   await r.ctx.close();
 }
 
+/* La tercera tanda: favoritas, la campana, la semana en barras, «Entrenar 10
+   minutos» y lo que más usa quien da clase. (El aviso del profe tiene su
+   propio verificador: verificar-aviso-profe.js.) */
+async function pruebaTercera(browser) {
+  console.log("\n=== Tus favoritas ===");
+  let r = await panel(browser, [ALUMNA, PROFE], "u-ana", null, {});
+  await r.page.waitForFunction(() => !document.getElementById("favoritas").hidden, null, { timeout: 10000 }).catch(() => {});
+  igual("sin favoritas, invita a elegirlas", await r.page.evaluate(() => [document.getElementById("favoritas-vacio").checkVisibility(), document.getElementById("favoritas-elegir").textContent]),
+    [true, "Elegir favoritas"]);
+  await r.page.click("#favoritas-elegir");
+  igual("se eligen en una ventana modal, con casillas por grupo",
+    await r.page.evaluate(() => { const d = document.querySelector("dialog[data-favoritas]"); return d && [d.matches(":modal"), d.querySelectorAll("fieldset").length > 3, !!d.querySelector('input[value="entreno/mates.html"]')]; }), [true, true, true]);
+  await r.page.check('dialog[data-favoritas] input[value="entreno/mates.html"]');
+  await r.page.check('dialog[data-favoritas] input[value="juegos.html"]');
+  await r.page.click("[data-favoritas-guardar]");
+  igual("quedan arriba, en el orden del panel",
+    await r.page.evaluate(() => Array.from(document.querySelectorAll("#favoritas-lista a")).map((a) => a.getAttribute("href"))), ["entreno/mates.html", "juegos.html"]);
+  igual("se ven de verdad, y el botón ahora dice «Cambiar»",
+    await r.page.evaluate(() => [document.getElementById("favoritas-lista").checkVisibility(), document.getElementById("favoritas-elegir").textContent]), [true, "Cambiar favoritas"]);
+  igual("se guardan con la clave que viaja con la cuenta",
+    await r.page.evaluate(() => localStorage.getItem("panel_favoritas_v1")), JSON.stringify(["entreno/mates.html", "juegos.html"]));
+  await r.page.click("#favoritas-elegir");
+  const tope = await r.page.evaluate(() => {
+    const cs = Array.from(document.querySelectorAll("dialog[data-favoritas] input[type=checkbox]"));
+    cs.filter((c) => !c.checked).slice(0, 6).forEach((c) => c.click());
+    return [cs.filter((c) => c.checked).length, cs.filter((c) => !c.checked && !c.disabled).length];
+  });
+  igual("hasta ocho: con ocho, las demás casillas se apagan", tope, [8, 0]);
+  await r.page.keyboard.press("Escape");
+  igual("cancelar no cambia nada", await r.page.evaluate(() => JSON.parse(localStorage.getItem("panel_favoritas_v1")).length), 2);
+  igual("sin errores en la página", r.errores, []);
+  await r.ctx.close();
+  const sync = require("fs").readFileSync(require("path").join(__dirname, "../js/progreso-usuario.js"), "utf8");
+  igual("la clave está en la lista de lo que viaja con la cuenta", /clave: "panel_favoritas_v1"/.test(sync), true);
+
+  // Una favorita no se repite en «Lo que más usas».
+  r = await panel(browser, [ALUMNA, PROFE], "u-ana", null, {
+    local: { panel_favoritas_v1: JSON.stringify(["entreno/mates.html"]) },
+    rpc: { tiempo_por_seccion: [{ seccion: "mates", minutos: 50, ejercicios: 1 }, { seccion: "temas", minutos: 20, ejercicios: 1 }, { seccion: "aprender", minutos: 10, ejercicios: 1 }] },
+  });
+  await r.page.waitForFunction(() => !document.getElementById("mas-usado").hidden, null, { timeout: 10000 }).catch(() => {});
+  igual("lo que ya es favorita no se repite en «Lo que más usas»",
+    await r.page.evaluate(() => Array.from(document.querySelectorAll("#mas-usado-lista a")).map((a) => a.getAttribute("href"))), ["entreno/temas.html", "entreno/aprender.html"]);
+  await r.ctx.close();
+
+  console.log("\n=== La campana ===");
+  const dias = (n) => new Date(Date.now() - n * 86400000).toISOString();
+  r = await panel(browser, [ALUMNA, PROFE], "u-ana", null, {
+    local: { panel_campana_vista_v1: dias(2) },
+    tareas: [{ id: "t1", alumno_id: "u-ana", titulo: "Finales de torre", disponible_desde: dias(1) },
+             { id: "t2", alumno_id: "u-ana", titulo: "Vieja <b>x</b>", disponible_desde: dias(5) },
+             { id: "t3", alumno_id: "u-ana", titulo: "Todavía no", disponible_desde: new Date(Date.now() + 86400000).toISOString() }],
+    examenes: [{ id: "e1", alumno_id: "u-ana", titulo: "Examen de mates", disponible_desde: dias(0.5) }],
+    desafios: [{ id: "d1", para_id: "u-ana", estado: "pendiente", created_at: dias(3) }],
+    avisos_profesor: [{ id: "a1", texto: "Mañana no hay clase.", created_at: dias(0.2) }],
+    notas_alumno: [{ id: "n1", alumno_id: "u-ana", compartida: true, texto: "Muy bien la clase", created_at: dias(4) },
+                   { id: "n2", alumno_id: "u-ana", compartida: false, texto: "privada", created_at: dias(1) }],
+  });
+  await r.page.waitForFunction(() => !document.getElementById("campana").hidden, null, { timeout: 10000 }).catch(() => {});
+  igual("la campana dice cuántas nuevas hay desde la última vez", await r.page.evaluate(() => [document.getElementById("campana").checkVisibility(), document.getElementById("campana-n").textContent]),
+    [true, "3 nuevas"]);
+  igual("arranca cerrada y lo dice", await r.page.getAttribute("#campana", "aria-expanded"), "false");
+  await r.page.click("#campana");
+  igual("al abrirla lo dice, y el número se va", await r.page.evaluate(() => [document.getElementById("campana").getAttribute("aria-expanded"), document.getElementById("campana-panel").checkVisibility(), document.getElementById("campana-n").hidden]),
+    ["true", true, true]);
+  igual("lo último primero; lo que todavía no está disponible y la nota privada no salen; el texto va como texto",
+    await r.page.evaluate(() => Array.from(document.querySelectorAll("#campana-lista li")).map((li) => li.textContent.replace(/(«[^»]*»|partida|clase\.»).*$/, "$1"))),
+    ["📣Aviso de tu profe: «Mañana no hay clase.»", "📝Examen asignado: «Examen de mates»", "📋Tarea nueva: «Finales de torre»",
+     "⚔️Te retaron a una partida", "✏️Tu profe anotó: «Muy bien la clase»", "📋Tarea nueva: «Vieja <b>x</b>»"]);
+  igual("lo nuevo lo dice escrito", await r.page.evaluate(() => Array.from(document.querySelectorAll("#campana-lista li")).map((li) => /Nuevo$/.test(li.textContent))),
+    [true, true, true, false, false, false]);
+  igual("abrirla es haberlas visto (se guarda en este aparato)",
+    await r.page.evaluate(() => Date.now() - new Date(localStorage.getItem("panel_campana_vista_v1")).getTime() < 60000), true);
+  igual("cada fuente se pide acotada: cinco y de un mes",
+    await r.page.evaluate(() => window.__consultas.filter((c) => ["tareas", "examenes", "avisos_profesor", "notas_alumno"].includes(c.tabla)).every((c) => c.limit === 5 && c.gte)), true);
+  igual("sin errores en la página", r.errores, []);
+  await r.ctx.close();
+  r = await panel(browser, [ALUMNA, PROFE], "u-ana", null, {});
+  await r.page.waitForTimeout(500);
+  igual("sin nada, no hay campana", await r.page.evaluate(() => document.getElementById("campana").checkVisibility()), false);
+  await r.ctx.close();
+
+  console.log("\n=== La semana en barras ===");
+  const dia = (k) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Costa_Rica" }).format(new Date(Date.now() - k * 86400000));
+  const semana = { esta: 30, anterior: 10, dias: [6, 5, 4, 3, 2, 1, 0].map((k, i) => ({ dia: dia(k), n: [0, 5, 10, 0, 3, 12, 0][i] })) };
+  r = await panel(browser, [ALUMNA, PROFE], "u-ana", null, Object.assign(datosAlumna(false), {}, { rpc: Object.assign(datosAlumna(false).rpc, { entreno_mi_semana: semana }) }));
+  await r.page.waitForFunction(() => { const o = document.getElementById("hoy-semana-dias"); return o && o.checkVisibility(); }, null, { timeout: 15000 }).catch(() => {});
+  const barras = await r.page.evaluate(() => Array.from(document.querySelectorAll("#hoy-semana-dias li")).map((li) => ({
+    n: li.querySelector(".text-xs").textContent, alto: li.querySelector("[aria-hidden] > span").style.height, sr: li.querySelector(".sr-only").textContent })));
+  igual("siete barras, con el número escrito debajo", barras.map((b) => b.n), ["0", "5", "10", "0", "3", "12", "0"]);
+  igual("la más alta llena la caja; la de cero no se dibuja", barras.map((b) => b.alto), ["0%", "42%", "83%", "0%", "25%", "100%", "0%"]);
+  igual("el lector de pantalla oye el día completo, y hoy dice «hoy»", /^hoy, [^:]+: $/.test(barras[6].sr) && !/hoy/.test(barras[0].sr), true);
+  await r.ctx.close();
+
+  console.log("\n=== Entrenar 10 minutos ===");
+  r = await panel(browser, [ALUMNA, PROFE], "u-ana", null, datosAlumna(false));
+  await r.page.waitForFunction(() => { const b = document.getElementById("hoy-tanda"); return b && !b.hidden; }, null, { timeout: 15000 }).catch(() => {});
+  igual("el botón está en «Hoy te toca» y dice con qué se arma",
+    await r.page.evaluate(() => [document.getElementById("hoy-tanda-boton").checkVisibility(), /^Con .+\. La barra de abajo te lleva al siguiente\.$/.test(document.getElementById("hoy-tanda-que").textContent)]), [true, true]);
+  await r.page.click("#hoy-tanda-boton");
+  await r.page.waitForLoadState("domcontentloaded");
+  await r.page.waitForSelector("#tanda-diez", { timeout: 15000 }).catch(() => {});
+  const t = await r.page.evaluate(() => { const x = JSON.parse(localStorage.getItem("tanda_diez_v1") || "null"); const b = document.getElementById("tanda-diez");
+    return { pasos: x && x.pasos.length, dura: x && Math.round((x.fin - x.inicio) / 60000), primera: x && location.pathname === x.pasos[0].href.split("?")[0], barra: b && b.checkVisibility(),
+             paso: b && b.querySelector("[role=status]").textContent, reloj: b && /^⏱️ (10:00|9:5\d)$/.test(b.querySelector("[data-tanda-reloj]").textContent) }; });
+  igual("arma la tanda, lleva a la primera y la barra cuenta 10 minutos",
+    [t.pasos >= 2, t.dura, t.primera, t.barra, /^Paso 1 de \d: /.test(t.paso || ""), t.reloj], [true, 10, true, true, true, true]);
+  await r.page.click("[data-tanda-salir]");
+  igual("«Dejar la tanda» la quita", await r.page.evaluate(() => [!!document.getElementById("tanda-diez"), localStorage.getItem("tanda_diez_v1")]), [false, null]);
+  await r.ctx.close();
+
+  console.log("\n=== Lo que más usa quien da clase ===");
+  r = await panel(browser, [PROFE, ALUMNA], "u-profe", null, { local: { panel_usos_v1: JSON.stringify({ "tareas.html": 9, "informes.html": 5, "asistencia.html": 2, "sesion.html": 20 }) } });
+  await r.page.waitForTimeout(500);
+  igual("las más tocadas en este aparato (desde tres; la clase en vivo ya está arriba)",
+    await r.page.evaluate(() => [document.getElementById("mas-usado").checkVisibility(), Array.from(document.querySelectorAll("#mas-usado-lista a")).map((a) => a.getAttribute("href"))]),
+    [true, ["tareas.html", "informes.html"]]);
+  await r.page.evaluate(() => document.querySelector('#tile-grid a[href="asistencia.html"]').addEventListener("click", (e) => e.preventDefault()));
+  await r.page.evaluate(() => { const s = document.querySelector('#tile-grid a[href="asistencia.html"]').closest("section"); const b = s.querySelector("h2 button[aria-expanded=false]"); if (b) b.click(); });
+  await r.page.click('#tile-grid a[href="asistencia.html"]');
+  igual("cada toque en una tarjeta se cuenta", await r.page.evaluate(() => JSON.parse(localStorage.getItem("panel_usos_v1"))["asistencia.html"]), 3);
+  igual("sin errores en la página", r.errores, []);
+  await r.ctx.close();
+}
+
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
@@ -2945,6 +3080,7 @@ async function pruebaMasDelPanel(browser) {
     await pruebaPlegables(browser);
     await pruebaLoQueHaceFalta(browser);
     await pruebaMasDelPanel(browser);
+    await pruebaTercera(browser);
     await pruebaBaseLenta(browser);
     await pruebaSemanaProfesora(browser);
     await pruebaProfesora(browser);
