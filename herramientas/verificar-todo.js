@@ -110,7 +110,11 @@ if (parte) {
 function correr(cmd, argv, extraEnv) {
   return new Promise((resolve) => {
     let salida = "";
-    const hijo = spawn(cmd, argv, { cwd: RAIZ, env: Object.assign({}, process.env, extraEnv) });
+    // lib/navegador-local.js: si el Chromium de esta versión de Playwright no
+    // está (las sesiones de Claude Code traen otro), usa el de la máquina.
+    const env = Object.assign({}, process.env, extraEnv);
+    env.NODE_OPTIONS = ((env.NODE_OPTIONS || "") + " --require " + JSON.stringify(path.join(CARPETA, "lib", "navegador-local.js"))).trim();
+    const hijo = spawn(cmd, argv, { cwd: RAIZ, env });
     const tope = setTimeout(() => { salida += "\n[verificar-todo] pasó de 10 minutos, se cortó\n"; hijo.kill("SIGKILL"); }, TOPE_MS);
     hijo.stdout.on("data", (d) => { salida += d; });
     hijo.stderr.on("data", (d) => { salida += d; });

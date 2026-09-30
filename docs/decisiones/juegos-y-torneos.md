@@ -245,6 +245,11 @@ partidas»: no hay que salir de la página ni entrar y volver por cada tablero.
   cruces en cada jugada de cada tablero son tres consultas por jugada y el
   parpadeo de toda la lista. Lo que sí recarga es que la partida **termine**, que
   llega por `tournament_pairings` con su resultado.
+  **Eso no llegaba** hasta el 30 de setiembre de 2026: las cuatro tablas de
+  torneos no estaban en la publicación de Realtime, así que el resultado, la
+  inscripción y la ronda nueva se veían solo al recargar. Ver «Lo que se
+  escucha por Realtime tiene que estar publicado» en
+  `sitio-e-infraestructura.md`.
 - **Ese canal no se puede filtrar del lado del servidor**: `game_rooms` no lleva
   `tournament_id`, así que llegan todas y se descartan acá — una sala que no esté
   en `tablerosEnVivo` no pinta nada.
