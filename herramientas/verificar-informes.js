@@ -183,6 +183,13 @@ window.__funcion = [];
       if (porArgs) return constructor(porArgs[JSON.stringify(args || null)] || [], "rpc:" + n);
       return constructor(DATOS.rpc[n] !== undefined ? DATOS.rpc[n] : [], "rpc:" + n);
     },
+    /* Las fotos de perfil (js/foto-perfil.js): la «dirección firmada» es un
+       PNG de 1×1 que el navegador sí abre. Anota cada pedido de firmas. */
+    storage: { from: () => ({ createSignedUrls: (rutas) => {
+      (window.__firmas = window.__firmas || []).push(rutas);
+      return Promise.resolve({ data: rutas.map((r) => ({ path: r, error: null,
+        signedUrl: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==#" + r })), error: null });
+    } }) },
   };
 })();
 `;
@@ -1690,10 +1697,73 @@ async function pruebaContrasenaProfesor(browser) {
   await page.close();
 }
 
+/* La foto de perfil en Informes: al lado de cada nombre del índice, y arriba
+   del informe de UN alumno (y del propio). Ver «La foto de perfil» en
+   docs/decisiones/permisos-y-roles.md. */
+async function pruebaFotos(browser) {
+  console.log("\n=== La foto de perfil en Informes ===");
+  const fotoSeVe = (page, sel) => page.evaluate((s) => {
+    const i = document.querySelector(s + " img");
+    return !!(i && i.checkVisibility() && i.complete && i.naturalWidth > 0);
+  }, sel);
+  let { page, errores } = await abrir(browser, {
+    rpc: { informes_resumen_alumnos: [ANA, BRUNO], informes_totales: { clases_cerradas: 4, preguntas: 10, partidas: 2 } },
+    tablas: {
+      profiles: [
+        { id: "prof-1", role: "profesor", is_admin: false, full_name: "Oscar", email: "o@x.cr" },
+        { id: "a-1", role: "alumno", full_name: "Ana Rojas", email: "ana@x.cr", foto_path: "a-1/foto-aaaaaaaaaaaaaaaa.jpg" },
+        { id: "a-2", role: "alumno", full_name: "Bruno Mena", email: "bruno@x.cr", foto_path: null },
+      ],
+    },
+  }, "prof-1");
+  await page.waitForFunction(() => document.querySelector("#alumnos-tbody img"), null, { timeout: 5000 }).catch(() => {});
+  await page.waitForTimeout(150);
+  igual("en el índice, Ana lleva su foto al lado del nombre", await fotoSeVe(page, "#alumnos-tbody tr:nth-child(1)"), true);
+  igual("…y Bruno, sin foto, su inicial (la dibuja el CSS)", await page.evaluate(() => {
+    const c = document.querySelector('#alumnos-tbody [data-foto-de="a-2"]');
+    return c ? getComputedStyle(c, "::before").content : null;
+  }), '"B"');
+  igual("…sin colarse en el texto de la fila", await filaLimpia(page, "alumnos-tbody", 1).then((t) => t.indexOf("Bruno Mena") === 0), true);
+  igual("todas las fotos del índice en UN pedido de firmas", await page.evaluate(() => (window.__firmas || []).length), 1);
+  igual("sin mirar a nadie no hay cabecera de persona",
+    await page.evaluate(() => document.getElementById("informe-persona").checkVisibility()), false);
+  await page.click('#alumnos-tbody button[data-abrir="a-1"]');
+  await page.waitForFunction(() => document.querySelector("#informe-persona img"), null, { timeout: 5000 }).catch(() => {});
+  await page.waitForTimeout(150);
+  igual("al abrir el informe de Ana, arriba su foto y su nombre",
+    [await fotoSeVe(page, "#informe-persona"), await page.textContent("#informe-persona-nombre")], [true, "Ana Rojas"]);
+  await page.selectOption("#student-filter", "a-2");
+  await page.waitForTimeout(200);
+  igual("al pasar a Bruno, su nombre y su inicial (no la foto de Ana)", [
+    await page.textContent("#informe-persona-nombre"),
+    await page.evaluate(() => !document.querySelector("#informe-persona img")),
+    await page.evaluate(() => getComputedStyle(document.getElementById("informe-persona-foto"), "::before").content),
+  ], ["Bruno Mena", true, '"B"']);
+  await page.selectOption("#student-filter", "");
+  await page.waitForTimeout(150);
+  igual("al volver a «Todos los alumnos», la cabecera se va",
+    await page.evaluate(() => document.getElementById("informe-persona").checkVisibility()), false);
+  if (errores.length) { console.log("  ✗ errores en la página: " + errores.join(" | ")); fallos += 1; }
+  await page.close();
+
+  // El propio alumno ve su foto arriba de su informe.
+  ({ page, errores } = await abrir(browser, {
+    rpc: { informes_resumen_alumnos: [ANA], informes_totales: { clases_cerradas: 4, preguntas: 10, partidas: 2 } },
+    tablas: { profiles: [{ id: "a-1", role: "alumno", is_admin: false, full_name: "Ana Rojas", email: "ana@x.cr", foto_path: "a-1/foto-aaaaaaaaaaaaaaaa.jpg" }] },
+  }, "a-1"));
+  await page.waitForFunction(() => document.querySelector("#informe-persona img"), null, { timeout: 5000 }).catch(() => {});
+  await page.waitForTimeout(150);
+  igual("la alumna ve su foto y su nombre arriba de su informe",
+    [await fotoSeVe(page, "#informe-persona"), await page.textContent("#informe-persona-nombre")], [true, "Ana Rojas"]);
+  if (errores.length) { console.log("  ✗ errores en la página: " + errores.join(" | ")); fallos += 1; }
+  await page.close();
+}
+
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
     pruebaVeredicto();
+    await pruebaFotos(browser);
     await pruebaVerComoPersona(browser);
     await pruebaProfesor(browser);
     await pruebaClaseGrande(browser);

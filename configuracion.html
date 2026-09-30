@@ -38,6 +38,28 @@
 
             <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
                 <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-4">Perfil</h2>
+                <!-- La foto de perfil: js/foto-perfil.js. Se ve donde iba la
+                     inicial (el panel, la burbuja de conectados). Ver «La foto
+                     de perfil» en docs/decisiones/permisos-y-roles.md. -->
+                <fieldset id="foto-perfil" class="mb-5">
+                    <legend class="block text-xs font-medium text-brand-500 dark:text-brand-300 mb-2">Tu foto</legend>
+                    <div class="flex items-center gap-4 flex-wrap">
+                        <div id="foto-vista" aria-hidden="true" class="w-20 h-20 rounded-full bg-gradient-to-br from-brand-600 to-brand-800 text-white flex items-center justify-center font-serif text-2xl font-bold shrink-0 overflow-hidden"></div>
+                        <div class="flex-1 min-w-[14rem]">
+                            <input id="foto-archivo" type="file" accept="image/jpeg,image/png,image/webp" class="sr-only" aria-describedby="foto-ayuda">
+                            <div class="flex flex-wrap gap-2 mb-2">
+                                <button type="button" id="foto-elegir" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg transition-colors text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Subir una foto</button>
+                                <button type="button" id="foto-quitar" hidden class="border border-brand-200 dark:border-brand-700 hover:border-red-400 text-brand-600 dark:text-brand-300 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Quitar mi foto</button>
+                            </div>
+                            <label class="flex items-start gap-2 text-xs text-brand-600 dark:text-brand-300">
+                                <input id="foto-acepto" type="checkbox" class="mt-0.5 w-4 h-4 shrink-0 accent-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                <span>Acepto que mi foto se guarde, que la vean mis profesores, mis compañeros de clase y la coordinación de mi academia, y que vaya en los informes que le llegan a mi casa, según la <a href="privacidad.html#que-datos" target="_blank" rel="noopener" class="underline font-semibold text-accent-700 dark:text-accent-400">Política de privacidad</a> (se abre en otra pestaña).</span>
+                            </label>
+                            <p id="foto-ayuda" class="text-xs text-brand-450 dark:text-brand-350 mt-1">JPG, PNG o WebP. Se recorta en un cuadrado y se le quitan los datos ocultos de la foto (como el lugar donde se tomó).</p>
+                            <p id="foto-msg" class="text-xs mt-1" role="status" aria-live="polite"></p>
+                        </div>
+                    </div>
+                </fieldset>
                 <label for="full-name-input" class="block text-xs font-medium text-brand-500 dark:text-brand-300 mb-1">Nombre para mostrar</label>
                 <div class="flex gap-2 mb-4">
                     <input id="full-name-input" type="text" class="flex-1 px-3 py-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500">
@@ -309,6 +331,9 @@
     <script src="js/blind-notation.js"></script>
     <script src="js/videollamada.js"></script>
     <script src="js/main.js"></script>
+    <script src="js/avisos.js"></script>
+    <script src="js/legal-version.js"></script>
+    <script src="js/foto-perfil.js"></script>
     <script src="js/configuracion.js"></script>
 <!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- aviso-profe: inicio --><script src="js/aviso-profe.js" defer></script><!-- aviso-profe: fin --><!-- tanda: inicio --><script src="js/tanda-diez.js" defer></script><!-- tanda: fin --><!-- modo-vista: inicio --><script src="js/modo-vista.js" defer></script><!-- modo-vista: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- ayuda: inicio --><script src="js/ayuda-guia.js" defer></script><!-- ayuda: fin --><!-- atajo: inicio --><script src="js/atajo-buscar.js" data-arriba="" defer></script><!-- atajo: fin --></body>
 </html>

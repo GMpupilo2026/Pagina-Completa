@@ -367,6 +367,7 @@
             // le devuelvan únicamente su propio renglón.
             const { alumnos, cursosPorAlumno, diagnosticoPorAlumno, modulosPorAlumno } = await cargarResumen();
             const fila = alumnos.find((a) => a.id === profile.id) || {};
+            pintarPersonaDelInforme(profile);
             const entreno = entrenoDeFila(fila, cursosPorAlumno[profile.id], diagnosticoPorAlumno[profile.id], modulosPorAlumno[profile.id]);
 
             const respondidas = fila.respuestas || 0;
@@ -704,7 +705,7 @@
                 const pct = s.respuestas ? Math.round((s.correctas / s.respuestas) * 100) : null;
                 tr.innerHTML = `
                     <td class="py-2 pr-4">
-                        <button type="button" data-abrir="${escVis(s.id)}" class="font-medium text-brand-700 dark:text-brand-200 hover:text-accent-600 dark:hover:text-accent-400 transition-colors text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded">${escVis(nombre)}</button>
+                        <span class="flex items-center gap-2"><span data-foto-fila="${escVis(s.id)}"></span><button type="button" data-abrir="${escVis(s.id)}" class="font-medium text-brand-700 dark:text-brand-200 hover:text-accent-600 dark:hover:text-accent-400 transition-colors text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded">${escVis(nombre)}</button></span>
                         ${s.grupo ? `<span class="block text-xs text-brand-450 dark:text-brand-350">${escVis(s.grupo)}</span>` : ""}
                     </td>
                     <td class="py-2 pr-4 text-brand-500 dark:text-brand-300">${escVis(asistenciaDe(s, teacherData.closedSessions).texto)}</td>
@@ -713,6 +714,9 @@
                     <td class="py-2 pr-4 text-brand-500 dark:text-brand-300">${resumen ? escVis(resumen.nivel.etiqueta) : "<span class=\"text-brand-450 dark:text-brand-350\">Sin diagnóstico</span>"}</td>
                     <td class="py-2 ${i ? "text-red-600 dark:text-red-400" : "text-brand-500 dark:text-brand-300"}">${i ? (dias ? `⚠️ Hace ${dias} ${dias === 1 ? "día" : "días"}` : "⚠️ Nunca entrenó") : "✅ Esta semana"}</td>`;
                 tr.querySelector("[data-abrir]").addEventListener("click", (ev) => { ev.stopPropagation(); abrirInformeDe(s.id); });
+                // Su foto de perfil, o su inicial (js/foto-perfil.js).
+                if (window.FotoPerfil) tr.querySelector("[data-foto-fila]").replaceWith(FotoPerfil.avatar(s.id, nombre, "w-8 h-8 text-sm"));
+                else tr.querySelector("[data-foto-fila]").remove();
                 // La fila entera lleva al informe; el botón de arriba es lo que
                 // la hace alcanzable con el teclado, así que no hay dos paradas
                 // de tabulador para el mismo destino.
@@ -805,7 +809,23 @@
             if (publico) publico.remove();
         }
 
+        /* De quién es el informe que se está mirando: su foto (o su inicial)
+           y su nombre, arriba de los números. Sin persona, se esconde. */
+        function pintarPersonaDelInforme(persona) {
+            const caja = document.getElementById("informe-persona");
+            if (!caja) return;
+            caja.hidden = !persona;
+            if (!persona) return;
+            const nombre = persona.full_name || persona.email || "";
+            document.getElementById("informe-persona-nombre").textContent = nombre;   // lo escribió una persona
+            document.getElementById("informe-persona-grupo").textContent = persona.grupo ? "Grupo " + persona.grupo : "";
+            const foto = document.getElementById("informe-persona-foto");
+            if (window.FotoPerfil) FotoPerfil.poner(foto, persona.id, nombre);
+            else foto.dataset.inicial = nombre.trim().charAt(0).toUpperCase();
+        }
+
         function hideAllReportPanels() {
+            pintarPersonaDelInforme(null);
             document.getElementById("stat-cards").innerHTML = "";
             document.getElementById("stat-cards").classList.add("hidden");
             document.getElementById("stat-cards-mas").classList.add("hidden");
@@ -947,6 +967,7 @@
             const student = teacherData.resumenPorAlumno[studentId];
             const name = student ? (student.full_name || student.email) : "el alumno";
             document.getElementById("student-report-title").textContent = "🚩 Últimas asignaciones de " + name;
+            pintarPersonaDelInforme(student ? Object.assign({ id: studentId }, student) : { id: studentId });
 
             const fila = student || {};
             const respondidas = fila.respuestas || 0;
@@ -3379,6 +3400,7 @@ function areasFlojasArbitraje(fila) {
             conectarCompartirPlanes(contenedor);
         }
 
+        let alumnoDeLaPersona = null;
         async function init() {
             const { data } = await sb.auth.getSession();
             session = data.session;
@@ -3388,6 +3410,13 @@ function areasFlojasArbitraje(fila) {
             // En un modo de vista de administración ("como estudiante",
             // "como supervisor"…) se pinta la página de ese rol: ver js/modo-vista.js.
             profile = window.ModoVista ? ModoVista.perfilVisto(profileData) : profileData;
+            /* Mirando el panel de un estudiante («Panel de:»): su informe es el
+               que ve quien administra al elegirlo en la lista, con sus datos y
+               no con los de quien mira. Se abre ese, ya elegido. */
+            if (profile._persona && ModoVista.tipoDe(profile._persona) === "alumno") {
+                alumnoDeLaPersona = profile._persona.id;
+                profile = profileData;
+            }
             isTeacher = profile.role === "profesor" || profile.is_admin === true;
             // Quien administra ve a todo el mundo; un profesor, solo a los alumnos
             // que tiene asignados. No es un filtro de esta página: la base de datos
@@ -3445,7 +3474,7 @@ function areasFlojasArbitraje(fila) {
                 // Y a un alumno, informes.html?alumno=<id>: así lo abre el buscador
                 // del panel. Solo si está en la lista de quien mira —la que ya
                 // armó la base—; si no está, se queda el resumen de siempre.
-                const alumnoPedido = new URLSearchParams(location.search).get("alumno");
+                const alumnoPedido = new URLSearchParams(location.search).get("alumno") || alumnoDeLaPersona;
                 const selectorAlumno = document.getElementById("student-filter");
                 if (alumnoPedido && [...selectorAlumno.options].some((o) => o.value === alumnoPedido)) {
                     selectorAlumno.value = alumnoPedido;

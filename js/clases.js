@@ -427,7 +427,29 @@
            administración (salvo que esté mirando "como supervisor"). */
         function esSupervisorSolo() { return !!(profile && profile.es_supervisor && !profile.is_admin); }
 
+        /* Mirando el panel de otra persona («Panel de:», js/modo-vista.js):
+           qué es —profesor, coordinador, supervisor o estudiante— y, en el
+           panel del estudiante, de quién son los datos. `profile.id` sigue
+           siendo el de quien mira (lo que se escriba va a su nombre); lo que
+           se LEE del estudiante se pide con su id. */
+        function tipoPersona() { return profile && profile._persona ? ModoVista.tipoDe(profile._persona) : null; }
+        function alumnoDelPanel() { return profile._persona ? profile._persona.id : profile.id; }
+
         async function cargarPanelSupervisor() {
+            /* El panel de UN supervisor, mirado por quien administra: sus tres
+               números los cuenta la base sobre lo que ÉL supervisa
+               (panel_supervisor_de). mi_gente y mis_supervisados contestarían
+               con los de quien mira. */
+            if (profile._persona) {
+                const { data, error } = await sb.rpc("panel_supervisor_de", { p_supervisor: profile._persona.id });
+                const f = !error && data && data[0];
+                document.getElementById("sup-alumnos").textContent = f ? String(f.alumnos) : "—";
+                document.getElementById("sup-profes").textContent = f ? String(f.profesores) : "—";
+                const inac = document.getElementById("sup-inactivos");
+                inac.textContent = f ? String(f.inactivos) : "—";
+                inac.className = "text-2xl font-bold " + (f && f.inactivos > 0 ? "text-red-600 dark:text-red-400" : "text-brand-800 dark:text-white");
+                return;
+            }
             const conteo = async (rol) => {
                 const { data } = await sb.rpc("mi_gente", { p_busqueda: null, p_rol: rol, p_limite: 1, p_desde: 0 });
                 return data && data.length ? Number(data[0].total) : 0;
@@ -445,7 +467,7 @@
             inac.textContent = idsRes.error || inacRes.error ? "—" : String(inactivos);
             inac.className = "text-2xl font-bold " + (inactivos > 0 ? "text-red-600 dark:text-red-400" : "text-brand-800 dark:text-white");
             const aviso = document.getElementById("sup-aviso");
-            if (profile._admin_real) {
+            if (profile._admin_real && !profile._persona) {
                 aviso.textContent = "Estás mirando como supervisor desde la cuenta que administra: los números son los de esa cuenta, que no tiene ninguna asignada. Así se ve el panel; los datos los ve cada supervisor.";
                 aviso.hidden = false;
             } else if (!nAlumnos && !nProfes) {
@@ -864,6 +886,7 @@
            primero. */
         let tileSesion = null;
 
+        const CLASE_DE_OTRA_PERSONA = "Su clase en vivo se ve solo desde su cuenta";
         function tarjetaSesionEnVivo() {
             const t = tileSesion;
             if (!t) return null;
@@ -871,6 +894,10 @@
                 Object.assign({}, t, { disabled: true, desc, nota, apagado: VLL_APAGADO }), true);
             if (esEquipoDocente()) return renderTileCard(t, true);
             if (!videollamadaLista) return apagada(t.desc, "Viendo si hay clase…");
+            /* Mirando el panel de un estudiante no se sabe si tiene clase
+               (mis_clases() es de quien mira), y decir «pide que te asignen un
+               profesor» sería inventarle un problema. */
+            if (profile._persona) return apagada(CLASE_DE_OTRA_PERSONA, "Desde su cuenta");
             // Sin ningún profesor no hay clase que esperar, y el panel ya se lo
             // dice con todas las letras: acá se nombra el motivo de verdad en
             // vez de un candado que parecería que se va a abrir solo.
@@ -975,6 +1002,7 @@
                 seccion.appendChild(linea);
             }
             const motivo = !videollamadaLista ? "Viendo si hay clase…"
+                : profile._persona ? CLASE_DE_OTRA_PERSONA
                 : !misClases.length ? "Pide que te asignen un profesor"
                 : proximaClase ? textoProximaClase(proximaClase)
                 : "Se abre cuando tu profe empiece la clase";
@@ -1561,7 +1589,7 @@
             let fila = null;
             try {
                 const { data, error } = await sb.from("training_progress").select("activity, created_at")
-                    .eq("student_id", profile.id).order("created_at", { ascending: false }).limit(1).maybeSingle();
+                    .eq("student_id", alumnoDelPanel()).order("created_at", { ascending: false }).limit(1).maybeSingle();
                 if (error) return;
                 fila = data;
             } catch (e) { return; }
@@ -1640,8 +1668,8 @@
             let siempre, mes;
             try {
                 [siempre, mes] = await Promise.all([
-                    sb.rpc("tiempo_por_seccion", { p_alumno: profile.id }),
-                    sb.rpc("tiempo_por_seccion", { p_alumno: profile.id, p_desde: hace30 }),
+                    sb.rpc("tiempo_por_seccion", { p_alumno: alumnoDelPanel() }),
+                    sb.rpc("tiempo_por_seccion", { p_alumno: alumnoDelPanel(), p_desde: hace30 }),
                 ]);
             } catch (e) { return; }
             if (siempre && !siempre.error) pintarAvanceDeTarjetas(TS, siempre.data || []);
@@ -1669,7 +1697,8 @@
             const lista = document.getElementById("mas-usado-lista");
             if (!caja || !lista) return;
             filasDelMes = filas;
-            const favs = new Set(favoritasGuardadas());
+            // Las favoritas son de quien usa ESTE aparato: mirando el panel de otra persona no cuentan.
+            const favs = new Set(profile._persona ? [] : favoritasGuardadas());
             const top = porTarjeta(filas)
                 .filter((x) => x.minutos >= 3 && !NO_ES_COSTUMBRE.has(x.href) && !favs.has(x.href) && tarjetaEnPanel(x.href))
                 .sort((a, b) => b.minutos - a.minutos)
@@ -1876,7 +1905,7 @@
             try {
                 const [r, t] = await Promise.all([
                     sb.from("desafios").select("id", { count: "exact", head: true })
-                        .eq("para_id", profile.id).eq("estado", "pendiente").gte("created_at", hace2),
+                        .eq("para_id", alumnoDelPanel()).eq("estado", "pendiente").gte("created_at", hace2),
                     sb.from("tournaments").select("id, name, status")
                         .in("status", ["registration", "in_progress"]).gte("created_at", hace14)
                         .order("created_at", { ascending: false }).limit(5),
@@ -1885,7 +1914,7 @@
                 const lista = (t && !t.error && t.data) || [];
                 if (lista.length) {
                     const { data: ins } = await sb.from("tournament_registrations").select("tournament_id")
-                        .eq("player_id", profile.id).in("tournament_id", lista.map((x) => x.id));
+                        .eq("player_id", alumnoDelPanel()).in("tournament_id", lista.map((x) => x.id));
                     const inscrito = new Set((ins || []).map((x) => x.tournament_id));
                     torneo = lista.find((x) => x.status === "in_progress" && inscrito.has(x.id))
                         || lista.find((x) => x.status === "registration" && !inscrito.has(x.id)) || null;
@@ -2202,7 +2231,7 @@
         // INVOKER, con las mismas tres cuentas de informes_resumen_alumnos()
         // (verificar-mi-entreno.js revisa que no se separen).
         async function loadEntrenoProgress() {
-            const { data, error } = await sb.rpc("mi_entreno_resumen");
+            const { data, error } = await sb.rpc("mi_entreno_resumen", { p_alumno: alumnoDelPanel() });
             if (error) return;   // deja los guiones en vez de romper el resto del panel
             const fila = (data || [])[0];
             if (!fila) return;
@@ -2218,7 +2247,8 @@
         async function pintarSaludoAlumno(rachaP) {
             let r = null;
             try { r = await rachaP; } catch (e) { return; }
-            if (!r || r.error || !r.stats || panelAdaptado) return;
+            // Mirando el de otra persona se queda el subtítulo que dice de quién es.
+            if (!r || r.error || !r.stats || panelAdaptado || profile._persona) return;
             const racha = r.stats.racha_actual || 0;
             const hoy = r.stats.hoy_ejercicios || 0;
             const meta = window.Logros ? Logros.META_DIARIA : 5;
@@ -2286,7 +2316,7 @@
             if (pedido) return;
             const { data, error } = await miDiagnostico();
             if (error) return;
-            const mio = (data || []).find((f) => f.student_id === profile.id);
+            const mio = (data || []).find((f) => f.student_id === alumnoDelPanel());
             const fecha = mio && Date.parse(mio.fecha || "");
             if (!fecha) return;
             const grupo = TILE_GROUPS.find((g) => g.tiles.some((t) => t.href === "entreno/diagnostico.html"));
@@ -2341,8 +2371,8 @@
 
         async function cargarPendientes(rachaP) {
             const [t, x] = await Promise.all([
-                sb.rpc("tareas_con_avance", { p_alumno: profile.id, p_pendientes: true, p_limite: 50 }),
-                sb.rpc("examenes_con_nota", { p_alumno: profile.id, p_limite: 50 }),
+                sb.rpc("tareas_con_avance", { p_alumno: alumnoDelPanel(), p_pendientes: true, p_limite: 50 }),
+                sb.rpc("examenes_con_nota", { p_alumno: alumnoDelPanel(), p_limite: 50 }),
             ]);
             const tareas = (t.error ? [] : t.data) || [];
             const diagnosticoPedido = marcarDiagnosticoPedido(tareas);
@@ -2575,7 +2605,7 @@
             if (error) return;
             // SECURITY INVOKER: a un alumno la RLS le devuelve solo su renglón,
             // pero se busca el suyo igual, por precaución.
-            const mio = (data || []).find((f) => f.student_id === profile.id) || null;
+            const mio = (data || []).find((f) => f.student_id === alumnoDelPanel()) || null;
 
             // 0. Ya arrancó: lo que sigue guiando es la semana de su plan.
             if (ejercicios > 0) return mostrarSemanaDelPlan(mio);
@@ -2653,7 +2683,7 @@
             if (!PE || !PE.hoyDelPlan) return;
             const detalle = mio.detalle.fecha ? mio.detalle : Object.assign({}, mio.detalle, { fecha: mio.fecha });
             let hoy = null;
-            try { hoy = await PE.hoyDelPlan(sb, profile.id, detalle); } catch (e) { return; }
+            try { hoy = await PE.hoyDelPlan(sb, alumnoDelPanel(), detalle); } catch (e) { return; }
             if (!hoy) return;
             const avance = hoy.hechos === null ? ""
                 : hoy.hechos ? ` Llevas ${hoy.hechos} ${hoy.hechos === 1 ? "hecho" : "hechos"} ahí desde el diagnóstico.`
@@ -2788,7 +2818,7 @@
         async function cargarSeguirCurso() {
             const { data, error } = await sb.rpc("informes_cursos_alumnos");
             if (error || !data || !data.length) return;
-            const mios = data.filter((c) => (!c.student_id || c.student_id === profile.id) && c.hechos > 0 && c.hechos < c.total);
+            const mios = data.filter((c) => (!c.student_id || c.student_id === alumnoDelPanel()) && c.hechos > 0 && c.hechos < c.total);
             if (!mios.length) return;   // sin ningún curso a medias no hay nada que retomar
             mios.sort((a, b) => new Date(b.ultima_fecha || 0) - new Date(a.ultima_fecha || 0));
             const c = mios[0];
@@ -3538,6 +3568,16 @@
             isTeacher = profile.role === "profesor" || profile.is_admin === true;
             if (isTeacher) {
                 boardOwnerId = profile.id;
+            } else if (profile._persona) {
+                /* El panel de un estudiante, mirado por quien administra: nada
+                   de entrar a su clase (mis_clases() contestaría con las de
+                   quien mira). Su grupo sí hace falta: con él se pinta su
+                   récord de Racha táctica. */
+                boardOwnerId = null;
+                misClases = [];
+                videollamadaLista = true;
+                const { data: suyo } = await sb.from("profiles").select("grupo").eq("id", profile._persona.id).maybeSingle();
+                profile.grupo = suyo ? suyo.grupo : null;
             } else {
                 // Con más de un profesor, el alumno elige a cuál clase entra.
                 const { clases, elegida } = await ClaseElegida.resolver();
@@ -3555,13 +3595,27 @@
             document.getElementById("welcome-name").textContent =
                 (profile.full_name || "").trim().split(/\s+/)[0] || String(profile.email || "").split("@")[0];
             document.getElementById("avatar").textContent = displayName.trim().charAt(0).toUpperCase();
+            /* La foto de perfil, si la subió (Configuración), en lugar de la
+               inicial; también la de la persona que se está viendo con «Ver
+               como». Ver «La foto de perfil» en permisos-y-roles.md. */
+            if (window.FotoPerfil) {
+                const pintarAvatar = () => FotoPerfil.url(profile.id, "foto_path" in profile ? profile.foto_path : undefined)
+                    .then((url) => FotoPerfil.pintar(document.getElementById("avatar"), url, displayName));
+                pintarAvatar();
+                window.addEventListener("foto-perfil:cambio", (e) => {
+                    if (e.detail && e.detail.id === profile.id) { profile.foto_path = e.detail.ruta; pintarAvatar(); }
+                });
+            }
             const badge = document.getElementById("role-badge");
             badge.textContent = profile.is_admin ? "👑 Administrador"
-                : profile._persona ? (profile.es_coordinador ? "👁 Coordinación" : "👁 Profesor")
+                : profile._persona ? ({ coordinador: "👁 Coordinación", supervisor: "👁 Supervisión", alumno: "👁 Estudiante" }[tipoPersona()] || "👁 Profesor")
                 : esSupervisorSolo() ? "🧭 Supervisor" : (isTeacher ? "Profesor" : "Alumno");
             if (profile._persona) {
-                document.getElementById("panel-subtitulo").textContent =
-                    "Así ve " + (profile.full_name || "esta persona") + " su panel: sus tarjetas y los números de su semana.";
+                const quien = profile.full_name || "esta persona";
+                document.getElementById("panel-subtitulo").textContent = {
+                    alumno: "Así ve " + quien + " su panel: sus tareas, su progreso y por dónde seguir.",
+                    supervisor: "Así ve " + quien + " su panel: lo que supervisa y sus números.",
+                }[tipoPersona()] || "Así ve " + quien + " su panel: sus tarjetas y los números de su semana.";
             }
             badge.classList.add(isTeacher ? "bg-accent-500" : "bg-brand-600", isTeacher ? "text-brand-900" : "text-white");
 
@@ -3683,12 +3737,15 @@
                pinta el suyo, entero, y nada de la clase en vivo ni del
                registro de clases — no da clase. */
             if (esSupervisorSolo()) {
-                document.getElementById("panel-subtitulo").textContent = "Primero lo urgente; después, tus profesores y tus estudiantes.";
+                if (!profile._persona) document.getElementById("panel-subtitulo").textContent = "Primero lo urgente; después, tus profesores y tus estudiantes.";
                 TILE_GROUPS.splice(0, TILE_GROUPS.length, ...SUPERVISOR_GROUPS);
                 renderTiles();
                 document.getElementById("registro-clases").hidden = true;
                 document.getElementById("progreso-supervisor").hidden = false;
-                await sinEsperarDeMas(cargarPanelSupervisor(), cargarUrgente(URGENTE_SUPERVISOR));
+                /* «Lo urgente» (js/pendientes.js) lo cuenta la base para quien
+                   mira: mirando el panel de un supervisor, esos números serían
+                   los de administración, así que no se pinta. */
+                await sinEsperarDeMas(cargarPanelSupervisor(), profile._persona ? null : cargarUrgente(URGENTE_SUPERVISOR));
                 mostrarPanel();
                 return;
             }
@@ -3723,7 +3780,7 @@
                SUS números, y nada de la clase en vivo ni del registro de
                clases — abrir una clase desde acá la abriría a nombre de quien
                mira, que no da clase. */
-            if (profile._persona) {
+            if (profile._persona && tipoPersona() !== "alumno") {
                 document.querySelector("#progreso-profe h2").textContent = "Su semana";
                 document.getElementById("registro-clases").hidden = true;
                 document.getElementById("progreso-profe").hidden = false;
@@ -3756,7 +3813,9 @@
                consultas independientes, y en serie —como estaban— una base
                lenta sumaba el tiempo de cada una antes de mostrar nada. Lo que
                llega después del tope se pinta igual, en su lugar. */
-            const partes = [refreshSessionStatus(), cargarSesiones()];
+            /* Del panel de un estudiante que se mira no se pide nada de la
+               clase en vivo: sería la de quien mira. */
+            const partes = profile._persona ? [] : [refreshSessionStatus(), cargarSesiones()];
 
             /* Dos resúmenes distintos, no uno solo con los números del alumno
                para todo el mundo. Quien da clase veía acá SUS ejercicios 4×4
@@ -3779,10 +3838,16 @@
                    el número de "Tu progreso" y el primer paso, que necesita
                    saber si ya resolvió algo. Dos llamadas serían dos veces la
                    misma consulta para pintar el mismo dato. */
-                const rachaP = window.Logros.cargar();
-                partes.push(
+                const rachaP = window.Logros.cargar(profile._persona ? profile._persona.id : undefined);
+                /* Mirando el panel de un estudiante quedan fuera «Tus clases» y
+                   «Hoy te toca»: la primera sale de las clases que puede leer
+                   quien mira, y la segunda del progreso guardado en ESTE
+                   aparato. Las dos dirían lo de quien mira, no lo suyo. */
+                if (!profile._persona) partes.push(
                     Promise.resolve(ResumenClase.pintarUltimaClaseDelAlumno(sb, document.getElementById("ultima-clase"), profile.id)).finally(ajustarTusClases),
                     Promise.resolve(PuntosClase.pintarDelMesDelAlumno(sb, document.getElementById("puntos-mes"))).finally(ajustarTusClases),
+                );
+                partes.push(
                     cargarPendientes(rachaP),
                     cargarSeguirCurso(),
                     loadEntrenoProgress(),
@@ -3794,16 +3859,22 @@
                    pintan en su lugar cuando llegan. Metidos en la tanda de
                    arriba, el panel esperaba por ellos hasta el tope de 6 s, y
                    con una red lenta aparecía recién a los ~14 s. */
-                cargarHoyTeToca(rachaP).catch((e) => console.error(e));
-                cargarProximaClase();
-                if (!panelAdaptado) { pintarFavoritas(); cargarLoQueMasUsas().catch((e) => console.error(e)); }
+                /* Mirando el panel de un estudiante: «Hoy te toca», «Nuevo» y
+                   sus favoritas salen de ESTE aparato, y «Tu próxima clase» y la
+                   campana de la cuenta de quien mira (mi_proxima_clase, lo que
+                   la RLS le da), así que no se pintan; «Lo que más usas» y los
+                   avisos de Competir se piden con su id. */
+                if (!profile._persona) cargarHoyTeToca(rachaP).catch((e) => console.error(e));
+                if (!profile._persona) cargarProximaClase();
+                if (!panelAdaptado && !profile._persona) pintarFavoritas();
+                if (!panelAdaptado) cargarLoQueMasUsas().catch((e) => console.error(e));
                 avisosDeCompetir().catch((e) => console.error(e));
-                cargarCampana().catch((e) => console.error(e));
-                if (!panelAdaptado) marcarContenidoNuevo().catch((e) => console.error(e));
+                if (!profile._persona) cargarCampana().catch((e) => console.error(e));
+                if (!panelAdaptado && !profile._persona) marcarContenidoNuevo().catch((e) => console.error(e));
                 marcarLoUltimo().catch((e) => console.error(e));
             }
             await sinEsperarDeMas(...partes);
-            subscribeSessions();
+            if (!profile._persona) subscribeSessions();
             mostrarPanel();
         }
 

@@ -2239,6 +2239,8 @@
                 // Nunca innerHTML aquí: full_name/email vienen de datos que el propio usuario
                 // controla (presence.track), textContent los trata siempre como texto plano.
                 name.textContent = info.full_name || info.email;
+                // Su foto de perfil, o su inicial (js/foto-perfil.js).
+                if (window.FotoPerfil) label.appendChild(FotoPerfil.avatar(studentId, info.full_name || info.email));
                 label.appendChild(name);
                 const actions = document.createElement("span");
                 actions.className = "flex flex-wrap items-center gap-1";
@@ -3717,6 +3719,7 @@
             elegidoActual = elegido;
             document.getElementById("elegido-caja").hidden = false;
             document.getElementById("elegido-nombre").textContent = nombre;   // textContent: lo escribió una persona
+            fotoDelElegido(id, nombre);
             document.getElementById("elegido-titulo").textContent = origen === "mano" ? "Tiene la palabra:" : "Le toca responder a:";
             const { data, error: errTurno } = await sb.from("clase_elegidos")
                 .insert({ class_session_id: currentOpenSessionId, student_id: id, origen }).select("id").single();
@@ -3745,6 +3748,7 @@
                 nombreEl.setAttribute("aria-live", "off");
                 for (let i = 0; i < 12; i++) {
                     nombreEl.textContent = nombreDeConectado(conectados[i % conectados.length]);
+                    fotoDelElegido(conectados[i % conectados.length], nombreEl.textContent);
                     await new Promise((r) => setTimeout(r, 70 + i * 12));
                 }
                 nombreEl.setAttribute("aria-live", "polite");
@@ -3992,6 +3996,14 @@
             if (antes && claseAcc) claseAcc.decir("Tu profe le hizo una pregunta a " + nombre + ".");
         }
 
+        /* La foto del elegido, grande al lado de su nombre (en el panel del
+           profe). Mientras gira la ruleta cambia con cada nombre: después de la
+           primera vuelta ya están todas en la memoria de la página. */
+        function fotoDelElegido(id, nombre) {
+            const caja = document.getElementById("elegido-foto");
+            if (caja && window.FotoPerfil) FotoPerfil.poner(caja, id, nombre);
+        }
+
         function pintarElegido(elegido) {
             elegidoActual = elegido || null;
             if (isTeacher) {
@@ -4001,6 +4013,7 @@
                 caja.hidden = !elegidoActual;
                 if (elegidoActual) {
                     document.getElementById("elegido-nombre").textContent = nombreDeConectado(elegidoActual.id);
+                    fotoDelElegido(elegidoActual.id, nombreDeConectado(elegidoActual.id));
                     document.getElementById("elegido-titulo").textContent = elegidoActual.motivo === "mano" ? "Tiene la palabra:" : "Le toca responder a:";
                 }
                 return;
@@ -4021,6 +4034,9 @@
                 document.getElementById("elegido-otro-antes").textContent = porMano ? "Tu profe le dio la palabra a " : "Tu profe eligió a ";
                 document.getElementById("elegido-otro-despues").textContent = porMano ? "." : " para responder.";
                 document.getElementById("elegido-otro-nombre").textContent = nombre;   // lo escribió una persona
+                // La foto del compañero: la ve solo quien ya puede ver su perfil
+                // (un invitado sin cuenta, su inicial).
+                if (nombre && window.FotoPerfil) FotoPerfil.poner(document.getElementById("elegido-otro-foto"), elegidoActual.id, nombre);
                 otro.hidden = !nombre;
                 otro.dataset.at = nombre ? elegidoActual.at : "";
                 if (nombre && antes !== elegidoActual.at && claseAcc) {
@@ -4243,7 +4259,7 @@
                 wrap.className = "bg-white dark:bg-brand-900 rounded-xl shadow-md p-3";
                 wrap.dataset.alumno = id;
                 wrap.innerHTML =
-                    '<p class="respuesta-mini-nombre text-xs font-semibold text-brand-700 dark:text-brand-200 truncate mb-1"></p>' +
+                    '<p class="flex items-center gap-1.5 mb-1 min-w-0"><span class="respuesta-mini-foto w-6 h-6 rounded-full bg-brand-700 text-white flex items-center justify-center text-[10px] font-bold shrink-0 overflow-hidden" aria-hidden="true"></span><span class="respuesta-mini-nombre min-w-0 text-xs font-semibold text-brand-700 dark:text-brand-200 truncate"></span></p>' +
                     '<div class="respuesta-mini-tablero grid grid-cols-8 grid-rows-[repeat(8,minmax(0,1fr))] w-full aspect-square rounded-lg overflow-hidden shadow border-2 border-brand-700 select-none mb-2"></div>' +
                     '<p class="respuesta-mini-estado text-[11px] text-brand-450 dark:text-brand-350 break-words" aria-live="polite"></p>' +
                     '<div class="respuesta-mini-calificar hidden flex gap-1 mt-1.5">' +
@@ -4281,6 +4297,7 @@
             t.el.querySelector(".respuesta-mini-anotar").setAttribute("aria-label", "Anotar en la bitácora de " + nombre);
             t.nombreEl.textContent = nombre;   // textContent: lo escribió una persona
             t.nombreEl.title = nombre;
+            if (window.FotoPerfil) FotoPerfil.poner(t.el.querySelector(".respuesta-mini-foto"), id, nombre);
             t.calificarEl.querySelectorAll("[data-nota]").forEach((btn) =>
                 btn.setAttribute("aria-label", (btn.dataset.nota === "bien" ? "Marcar correcta la respuesta de " : "Marcar a revisar la respuesta de ") + nombre));
             const fin = respuestasFinales.get(id);

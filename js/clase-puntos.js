@@ -38,6 +38,12 @@ function pintarListaDePuntos(caja, filas) {
         cab.className = "font-semibold text-brand-800 dark:text-brand-100";
         // El nombre lo escribió una persona: textContent.
         cab.textContent = (PuntosClase.medalla(x.puesto) ? PuntosClase.medalla(x.puesto) + " " : "") + x.puesto + ".º " + x.nombre + " — " + PuntosClase.textoPuntos(x.puntos);
+        // Su foto de perfil, o su inicial (js/foto-perfil.js). Esta lista la ve
+        // solo el profe, con los nombres: una cara no revela nada que no diga ya.
+        if (window.FotoPerfil && x.id) {
+            cab.classList.add("flex", "items-center", "gap-2");
+            cab.prepend(FotoPerfil.avatar(x.id, String(x.nombre || ""), "w-7 h-7 text-xs"));
+        }
         const det = document.createElement("p");
         det.className = "text-xs text-brand-500 dark:text-brand-300";
         det.textContent = PuntosClase.desglose(x.fila);
@@ -109,6 +115,12 @@ function pintarPodio(podio) {
         const quien = l.nombre ? String(l.nombre) : (mia ? "Tú" : "");
         li.textContent = PuntosClase.medalla(l.puesto) + " " + l.puesto + ".º lugar" + (quien ? ": " + quien : "") + " — " + PuntosClase.textoPuntos(Number(l.puntos) || 0) + (mia && l.nombre ? " (tú)" : "");
         if (mia) li.className = "font-bold";
+        /* La foto solo en el podio CON nombres: sin nombres, una cara diría
+           quién es igual que el nombre que se quiso callar. */
+        if (l.nombre && window.FotoPerfil) {
+            li.classList.add("flex", "items-center", "gap-2");
+            li.prepend(FotoPerfil.avatar(l.id, String(l.nombre), "w-8 h-8 text-sm"));
+        }
         ol.appendChild(li);
     });
     if (isTeacher || esObservador) return;

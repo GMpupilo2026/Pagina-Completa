@@ -79,6 +79,7 @@
   var canales = [];           // los de presencia
   var conectados = new Map(); // id -> {pagina, desde}
   var alumnos = new Map();    // id -> nombre, SEGÚN LA BASE (no según el canal)
+  var fotos = {};             // id -> foto_path (o null), de la misma lectura
   var abierta = false;
   var ultimaActividad = Date.now();
   var anunciado = false;
@@ -186,12 +187,55 @@
       return;
     }
     filas.forEach(function (f) { cuerpo.appendChild(filaAlumno(f)); });
+    pintarFotos(cuerpo, filas);
+  }
+
+  /* La foto de cada uno en lugar de su inicial (js/foto-perfil.js). Se carga
+     solo cuando hace falta: la burbuja va en 65 páginas y la lista solo la
+     abre quien da clase. La ruta ya vino con el nombre; acá solo se firma. */
+  var cargandoFotos = null;
+  function moduloFotos() {
+    if (window.FotoPerfil) return Promise.resolve(window.FotoPerfil);
+    if (!cargandoFotos) {
+      cargandoFotos = new Promise(function (ok) {
+        var s = document.createElement("script");
+        s.src = (script && script.src ? script.src : "js/burbuja-en-linea.js").replace(/burbuja-en-linea\.js(\?.*)?$/, "foto-perfil.js");
+        s.onload = function () { ok(window.FotoPerfil || null); };
+        s.onerror = function () { ok(null); };
+        document.head.appendChild(s);
+      });
+    }
+    return cargandoFotos;
+  }
+  function pintarFotos(cuerpo, filas) {
+    var ids = filas.map(function (f) { return f.id; }).filter(function (id) { return fotos[id]; });
+    if (!ids.length) return;
+    moduloFotos().then(function (FP) {
+      if (!FP) return;
+      return FP.urls(ids, fotos).then(function (urls) {
+        filas.forEach(function (f) {
+          if (!urls.get(f.id)) return;
+          var caja = cuerpo.querySelector('[data-alumno="' + f.id + '"] [data-avatar]');
+          if (caja) FP.pintar(caja, urls.get(f.id), f.nombre);
+        });
+      });
+    }).catch(function () { });
   }
 
   function filaAlumno(f) {
     var fila = document.createElement("li");
     fila.dataset.alumno = f.id;
-    fila.className = "rounded-xl px-3 py-2 border border-brand-100 dark:border-brand-800";
+    fila.className = "flex items-center gap-3 rounded-xl px-3 py-2 border border-brand-100 dark:border-brand-800";
+    // La inicial (o la foto) es decoración: el nombre va escrito al lado.
+    var avatar = document.createElement("span");
+    avatar.setAttribute("aria-hidden", "true");
+    avatar.dataset.avatar = "";
+    // La inicial la dibuja el CSS (data-inicial), no va como texto: así no
+    // se cuela en el texto de la fila (ver js/foto-perfil.js).
+    avatar.className = "w-8 h-8 rounded-full bg-brand-700 text-white flex items-center justify-center text-sm font-bold shrink-0 overflow-hidden before:content-[attr(data-inicial)]";
+    avatar.dataset.inicial = f.nombre.trim().charAt(0).toUpperCase();
+    var texto = document.createElement("span");
+    texto.className = "min-w-0 flex-1";
     var nombre = document.createElement("span");
     nombre.className = "block text-sm font-medium text-brand-700 dark:text-brand-200 truncate";
     // El nombre lo escribe una persona: siempre textContent.
@@ -199,7 +243,8 @@
     var donde = document.createElement("span");
     donde.className = "block text-xs text-brand-450 dark:text-brand-350 truncate";
     donde.textContent = (f.pagina || "La Academia") + (f.desde ? " · " + haceCuanto(f.desde) : "");
-    fila.append(nombre, donde);
+    texto.append(nombre, donde);
+    fila.append(avatar, texto);
     return fila;
   }
 
@@ -277,8 +322,8 @@
     var faltan = [];
     conectados.forEach(function (_, id) { if (!alumnos.has(id)) faltan.push(id); });
     if (faltan.length) {
-      var res = await sb.from("profiles").select("id, full_name, email").in("id", faltan);
-      if (!res.error) (res.data || []).forEach(function (p) { alumnos.set(p.id, nombreDe(p)); });
+      var res = await sb.from("profiles").select("id, full_name, email, foto_path").in("id", faltan);
+      if (!res.error) (res.data || []).forEach(function (p) { alumnos.set(p.id, nombreDe(p)); fotos[p.id] = p.foto_path || null; });
     }
     // Los que el canal trajo y la base no reconoce, fuera de la lista.
     var intrusos = [];

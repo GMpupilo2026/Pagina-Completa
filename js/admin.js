@@ -340,9 +340,10 @@
             return b;
         }
 
-        /* «👁 Ver su panel»: el mismo enlace que trae supervision.html. Solo a
-           profesores y coordinadores; a otro supervisor no se le mira el panel
-           (personas_para_ver_como() no lo devuelve). */
+        /* «👁 Ver su panel»: el mismo enlace que trae supervision.html. Acá va
+           en los profesores y coordinadores; el panel de un supervisor o de un
+           estudiante se elige en «Panel de:», arriba del panel
+           (personas_para_ver_como() se los da solo a quien administra). */
         function enlaceVerPanel(p) {
             const a = document.createElement("a");
             a.href = "clases.html?ver_como=" + encodeURIComponent(p.id);
@@ -698,6 +699,13 @@
                 tdCuenta.className = "py-2 pr-3";
                 const nameLine = document.createElement("div");
                 nameLine.className = "flex items-center gap-1";
+                /* Su foto de perfil, si subió una: administración la ve para
+                   poder quitar una que no va (ver «La foto de perfil» en
+                   permisos-y-roles.md). Las de toda la tabla salen en una
+                   lectura y un pedido de firmas: FotoPerfil las junta. */
+                if (u.foto_path && window.FotoPerfil) {
+                    nameLine.appendChild(FotoPerfil.avatar(u.id, u.full_name || u.email, "w-7 h-7 text-xs"));
+                }
                 const nameInput = document.createElement("input");
                 nameInput.type = "text";
                 nameInput.value = u.full_name || "";
@@ -851,6 +859,27 @@
                     }
                 });
                 tdActions.appendChild(resetBtn);
+
+                if (u.foto_path && window.FotoPerfil) {
+                    const fotoBtn = document.createElement("button");
+                    fotoBtn.type = "button";
+                    fotoBtn.className = "text-xs text-brand-500 dark:text-brand-300 hover:text-accent-500 hover:underline mr-3";
+                    fotoBtn.textContent = "Quitar foto";
+                    fotoBtn.setAttribute("aria-label", "Quitar la foto de " + (u.full_name || u.email));
+                    fotoBtn.addEventListener("click", async () => {
+                        if (!(await Avisos.confirmar("En su lugar vuelve la inicial de su nombre. Puede subir otra desde Configuración.", { titulo: `¿Quitar la foto de ${u.full_name || u.email}?`, aceptar: "Quitar la foto", peligro: true }))) return;
+                        try {
+                            await FotoPerfil.quitar(u.id);
+                        } catch (err) {
+                            Avisos.avisar("No se pudo quitar la foto: " + err.message, { tipo: "error" });
+                            return;
+                        }
+                        u.foto_path = null;
+                        Avisos.avisar("Listo: se quitó la foto.");
+                        pintarCuentas();
+                    });
+                    tdActions.appendChild(fotoBtn);
+                }
 
                 /* Quien perdió el celular con la app no puede entrar: se le quita
                    la verificación y entra con su contraseña. La base solo lo deja

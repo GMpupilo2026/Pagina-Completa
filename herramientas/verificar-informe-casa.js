@@ -21,6 +21,9 @@
  *    no rompe nada: la sección simplemente no aparece.
  *  - Que el periodo diario no hable de "practicó 1 día de 1", que se lee como
  *    un error de cuentas.
+ *  - Que la foto de perfil salga al lado del nombre solo como `cid:` (adjunta
+ *    en el correo) o `data:` (la vista previa), y que una DIRECCIÓN se rechace:
+ *    sería un enlace a la foto de un menor suelto fuera de la plataforma.
  */
 "use strict";
 
@@ -120,6 +123,16 @@ const CASOS = [
       clases: 0, respuestas: 0, correctas: 0, minutos_clase: 0, minutos_ejercicios: 0, entreno: {},
       tareas: SIN_DEBERES, examenes: { rendidos: 0, sin_hacer_hoy: 0, pendientes: 0 },
       comparacion: { esta: 0, esta_con: 0, esta_limpios: 0, anterior: 12, anterior_con: 10, anterior_limpios: 5 } } },
+  // La foto de perfil: adjunta al correo (cid:), pegada en la vista previa
+  // (data:), y una dirección de afuera o un atributo inyectado, rechazados.
+  { nombre: "foto-cid", frecuencia: "semanal", foto: "cid:foto-alumno", datos: { ...BASE, dias_activos: 5,
+      tareas: SIN_DEBERES, examenes: { rendidos: 0, sin_hacer_hoy: 0, pendientes: 0 } } },
+  { nombre: "foto-data", frecuencia: "semanal", foto: "data:image/jpeg;base64,/9j/4AAQSkZJRg==", datos: { ...BASE, dias_activos: 5,
+      tareas: SIN_DEBERES, examenes: { rendidos: 0, sin_hacer_hoy: 0, pendientes: 0 } } },
+  { nombre: "foto-direccion", frecuencia: "semanal", foto: "https://bgtijpimpcokxatxxbki.supabase.co/storage/v1/object/sign/fotos-perfil/x.jpg?token=abc", datos: { ...BASE, dias_activos: 5,
+      tareas: SIN_DEBERES, examenes: { rendidos: 0, sin_hacer_hoy: 0, pendientes: 0 } } },
+  { nombre: "foto-inyectada", frecuencia: "semanal", foto: 'cid:x" onerror="alert(1)', datos: { ...BASE, dias_activos: 5,
+      tareas: SIN_DEBERES, examenes: { rendidos: 0, sin_hacer_hoy: 0, pendientes: 0 } } },
   { nombre: "diario-si", frecuencia: "diario", datos: { ...BASE, dias_del_periodo: 1, dias_activos: 1,
       tareas: SIN_DEBERES, examenes: { rendidos: 0, sin_hacer_hoy: 0, pendientes: 0 } } },
   { nombre: "diario-no", frecuencia: "diario", datos: { ...BASE, dias_del_periodo: 1, dias_activos: 0,
@@ -264,6 +277,20 @@ ok(/Este mes: 1 ejercicio \(el anterior no entrenó\)\./.test(texto("comparacion
 ok(!/sin error ni pista/.test(texto("comparacion-sin-anterior")), "sin ejercicios que digan cómo salieron no se inventa un porcentaje");
 ok(!/Esta semana:/.test(texto("comparacion-en-cero")), "sin ejercicios en el periodo la línea no sale (el veredicto ya lo dice)");
 ok(!/Esta semana:/.test(texto("va-bien")), "sin la clave comparacion (una base de antes) la línea no sale");
+
+// ---------- La foto de perfil ----------
+const imgs = (k) => (html[k].match(/<img\b[^>]*>/g) || []).filter((t) => !/logo/i.test(t));
+ok(imgs("foto-cid").length === 1 && /src="cid:foto-alumno"/.test(imgs("foto-cid")[0]),
+  "con la foto adjunta, el informe tiene que mostrarla con src=\"cid:foto-alumno\": " + imgs("foto-cid").join(" "));
+ok(/alt=""/.test(imgs("foto-cid")[0] || ""), "la foto es decoración (el nombre va escrito al lado): alt vacío");
+ok(/Sofía Muñoz/.test(texto("foto-cid")), "con la foto, el nombre sigue escrito");
+ok(imgs("foto-data").length === 1 && /src="data:image\/jpeg;base64,/.test(imgs("foto-data")[0]),
+  "en la vista previa la foto va pegada en data:");
+ok(!/fotos-perfil|supabase\.co\/storage/.test(html["foto-direccion"]) && imgs("foto-direccion").length === 0,
+  "una DIRECCIÓN a la foto no puede llegar al correo");
+ok(imgs("foto-inyectada").length === 0 && !/onerror/.test(html["foto-inyectada"]),
+  "un src con comillas no puede colar atributos");
+ok(imgs("va-bien").length === 0, "sin foto no hay <img> del alumno");
 
 if (fallos.length) {
   console.error(`❌ ${fallos.length} fallo(s):\n` + fallos.map((f) => "  - " + f).join("\n"));

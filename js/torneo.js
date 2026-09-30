@@ -544,9 +544,16 @@
             listEl.innerHTML = "";
             sorted.forEach((id, i) => {
                 const li = document.createElement("li");
-                li.className = "flex justify-between py-1 border-b border-brand-100 dark:border-brand-800 last:border-0";
+                li.className = "flex items-center justify-between gap-2 py-1 border-b border-brand-100 dark:border-brand-800 last:border-0";
                 const left = document.createElement("span");
-                left.textContent = (i + 1) + ". " + nameFor(id);
+                left.className = "flex items-center gap-2 min-w-0";
+                // Su foto de perfil, o su inicial (js/foto-perfil.js): la ve
+                // quien ya puede ver ese perfil; a los demás, la inicial.
+                if (window.FotoPerfil) left.appendChild(FotoPerfil.avatar(id, nameFor(id), "w-7 h-7 text-xs"));
+                const nombre = document.createElement("span");
+                nombre.className = "truncate";
+                nombre.textContent = (i + 1) + ". " + nameFor(id);
+                left.appendChild(nombre);
                 const right = document.createElement("span");
                 right.className = "font-mono font-semibold";
                 right.textContent = String(score[id]);

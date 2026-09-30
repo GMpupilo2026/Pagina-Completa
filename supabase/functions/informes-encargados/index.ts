@@ -75,7 +75,42 @@ function diaSemanaCostaRica(ahora: Date): number {
   return new Date(ahora.getTime() - 6 * 3600 * 1000).getUTCDay();
 }
 
-async function armar(studentId: string, frecuencia: Frecuencia, cliente = admin) {
+/* La foto de perfil del alumno (bucket privado `fotos-perfil`), para ponerla
+   al lado de su nombre. Se lee con la service role, pero SOLO después de que
+   informe_de_alumno() ya contestó: en la vista previa esa llamada va con el
+   JWT de quien mira, así que si no puede ver al alumno, nunca se llega acá.
+   Cualquier falla deja el informe sin foto: la foto nunca frena un informe.
+   Ver «La foto de perfil» en docs/decisiones/permisos-y-roles.md. */
+const BUCKET_FOTOS = "fotos-perfil";
+const CID_FOTO = "foto-alumno";
+const MAX_FOTO = 400 * 1024;   // el bucket admite 300 KB: esto es solo un techo de cordura
+
+type Foto = { base64: string; tipo: string };
+async function fotoDe(studentId: string): Promise<Foto | null> {
+  try {
+    const { data: p } = await admin.from("profiles").select("foto_path").eq("id", studentId).maybeSingle();
+    const ruta = p?.foto_path as string | undefined;
+    if (!ruta) return null;
+    const { data: archivo, error } = await admin.storage.from(BUCKET_FOTOS).download(ruta);
+    if (error || !archivo) return null;
+    const bytes = new Uint8Array(await archivo.arrayBuffer());
+    if (!bytes.length || bytes.length > MAX_FOTO) return null;
+    let bin = "";
+    for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+    return { base64: btoa(bin), tipo: ruta.endsWith(".webp") ? "image/webp" : "image/jpeg" };
+  } catch {
+    return null;
+  }
+}
+
+/* En el correo la foto va ADJUNTA dentro del mensaje y el HTML la muestra con
+   `cid:` (Resend: attachments con content_id). No va una dirección: una que no
+   venza sería un enlace a la foto de un menor suelto fuera de la plataforma, y
+   la firmada vence en una hora, cuando el correo se lee días después. En la
+   vista previa (lo que se ve y se descarga en la página) va pegada en `data:`. */
+type Adjunto = { filename: string; content: string; content_id: string };
+
+async function armar(studentId: string, frecuencia: Frecuencia, cliente = admin, modo: "correo" | "pantalla" = "correo") {
   // El número al que la casa escribe sale de `ajustes_academia` y lo pone
   // quien coordina; se lee siempre con la service role, porque el informe se
   // arma igual para la tanda de pg_cron que para la vista previa.
@@ -92,11 +127,16 @@ async function armar(studentId: string, frecuencia: Frecuencia, cliente = admin)
   // El remitente trae la marca de la academia: el correo sale con su nombre,
   // su logo y su color, y la vista previa enseña exactamente eso.
   const remite = await remitenteDe(admin, studentId, DE);
-  return { datos: data, remite,
-    html: informeHtml(data, frecuencia, SITE_URL, contacto, (t, c) => cabeceraCorreo(remite.marca, t, c)) };
+  const foto = await fotoDe(studentId);
+  const src = !foto ? null : modo === "correo" ? `cid:${CID_FOTO}` : `data:${foto.tipo};base64,${foto.base64}`;
+  const adjuntos: Adjunto[] = foto && modo === "correo"
+    ? [{ filename: foto.tipo === "image/webp" ? "foto.webp" : "foto.jpg", content: foto.base64, content_id: CID_FOTO }]
+    : [];
+  return { datos: data, remite, adjuntos,
+    html: informeHtml(data, frecuencia, SITE_URL, contacto, (t, c) => cabeceraCorreo(remite.marca, t, c), src) };
 }
 
-async function mandar(para: string, asunto: string, html: string, remite?: Remitente) {
+async function mandar(para: string, asunto: string, html: string, remite?: Remitente, adjuntos: Adjunto[] = []) {
   const apiKey = Deno.env.get("RESEND_API_KEY");
   if (!apiKey) return { ok: false, error: "Falta configurar RESEND_API_KEY" };
   const res = await fetch("https://api.resend.com/emails", {
@@ -105,6 +145,7 @@ async function mandar(para: string, asunto: string, html: string, remite?: Remit
     body: JSON.stringify({
       from: remite?.from ?? DE, to: [para], subject: asunto, html,
       ...(remite?.replyTo.length ? { reply_to: remite.replyTo } : {}),
+      ...(adjuntos.length ? { attachments: adjuntos } : {}),
     }),
   });
   if (!res.ok) return { ok: false, error: `Resend respondió ${res.status}: ${await res.text()}` };
@@ -164,8 +205,8 @@ Deno.serve(async (req) => {
         if (dias < cada - 0.5) { saltados += 1; continue; }
       }
       try {
-        const { datos, html, remite } = await armar(e.student_id, e.frecuencia as Frecuencia);
-        const r = await mandar(e.email, asuntoDe(datos.alumno ?? "tu hijo o hija", e.frecuencia as Frecuencia, remite), html, remite);
+        const { datos, html, remite, adjuntos } = await armar(e.student_id, e.frecuencia as Frecuencia);
+        const r = await mandar(e.email, asuntoDe(datos.alumno ?? "tu hijo o hija", e.frecuencia as Frecuencia, remite), html, remite, adjuntos);
         if (!r.ok) { fallos.push(`${e.email}: ${r.error}`); continue; }
         // Solo se marca después de que Resend lo aceptó: si falló, la próxima
         // tanda lo vuelve a intentar en vez de darlo por mandado.
@@ -205,7 +246,7 @@ Deno.serve(async (req) => {
     try {
       // Con el cliente de quien llama: si no es profesor de ese alumno, la RLS
       // no le devuelve nada y la función falla sola.
-      const { html, datos } = await armar(studentId, frecuencia, comoQuienLlama);
+      const { html, datos } = await armar(studentId, frecuencia, comoQuienLlama, "pantalla");
       return json({ ok: true, html, alumno: datos.alumno });
     } catch (err) {
       return json({ error: "No se pudo armar el informe de ese alumno" }, 403);
@@ -227,8 +268,8 @@ Deno.serve(async (req) => {
     if (!enc) return json({ error: "No se encontró ese encargado, o no es de un alumno tuyo" }, 403);
 
     try {
-      const { datos, html, remite } = await armar(enc.student_id, enc.frecuencia as Frecuencia);
-      const r = await mandar(enc.email, asuntoDe(datos.alumno ?? "tu hijo o hija", enc.frecuencia as Frecuencia, remite), html, remite);
+      const { datos, html, remite, adjuntos } = await armar(enc.student_id, enc.frecuencia as Frecuencia);
+      const r = await mandar(enc.email, asuntoDe(datos.alumno ?? "tu hijo o hija", enc.frecuencia as Frecuencia, remite), html, remite, adjuntos);
       if (!r.ok) return json({ error: r.error }, 502);
       await admin.from("encargados").update({ ultimo_envio_at: new Date().toISOString() }).eq("id", enc.id);
       return json({ ok: true, email: enc.email });

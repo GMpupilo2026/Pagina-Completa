@@ -26,16 +26,21 @@
  * en un modo que no es el suyo.
  *
  * «VER COMO» UNA PERSONA. Quien supervisa (y quien administra) puede mirar el
- * panel de UNO de sus profesores o coordinadores para revisarlo:
+ * panel de UNO de sus profesores o coordinadores para revisarlo; quien
+ * administra, además, el de un supervisor o el de un estudiante, para darle
+ * soporte a quien pide ayuda:
  *
- *     ModoVista.persona()               // {id, nombre, es_coordinador, de} | null
+ *     ModoVista.persona()               // {id, nombre, es_coordinador, tipo, de} | null
  *     ModoVista.fijarPersona(p, miId)   // p de personas_para_ver_como(); null la quita
+ *     ModoVista.tipoDe(p)               // "profesor" | "coordinador" | "supervisor" | "alumno"
  *
  * Tampoco entra a su cuenta: la sesión sigue siendo la de quien mira. Lo que
  * cambia es que las pantallas que lo saben (el panel e Informes) piden SUS
  * números a funciones de la base que preguntan antes si quien llama lo
- * supervisa: panel_profesor_de(), funciones_coordinador_de() y
- * alumnos_de_para_ver_como(). La persona se guarda con el id de quien la
+ * supervisa: panel_profesor_de(), funciones_coordinador_de(),
+ * panel_supervisor_de() y alumnos_de_para_ver_como(). Los de un estudiante
+ * se piden con su id a las mismas funciones que usa su panel, que la RLS le
+ * deja leer a quien administra. La persona se guarda con el id de quien la
  * eligió (`de`), así una computadora compartida no le deja a la siguiente
  * cuenta mirando a alguien.
  */
@@ -74,6 +79,15 @@
     } catch (e) { return null; }
   }
 
+  /* Qué es la persona que se mira. Lo dice la base (`tipo` de
+     personas_para_ver_como); una guardada antes de que existiera, sin
+     `tipo`, era siempre del equipo docente. */
+  var TIPOS = { profesor: 1, coordinador: 1, supervisor: 1, alumno: 1 };
+  function tipoDe(p) {
+    if (p && TIPOS[p.tipo]) return p.tipo;
+    return p && p.es_coordinador ? "coordinador" : "profesor";
+  }
+
   /* Mirar a una persona deja el modo de rol en «admin»: son dos formas de
      mirar y no se suman (¿«como estudiante» el panel de un profesor?). */
   function fijarPersona(p, miId) {
@@ -81,17 +95,21 @@
       if (!p || !miId) { localStorage.removeItem(CLAVE_PERSONA); return; }
       localStorage.removeItem(CLAVE);
       localStorage.setItem(CLAVE_PERSONA, JSON.stringify({
-        id: p.id, nombre: p.nombre || "", es_coordinador: !!p.es_coordinador, de: miId,
+        id: p.id, nombre: p.nombre || "", es_coordinador: !!p.es_coordinador, tipo: tipoDe(p), de: miId,
       }));
     } catch (e) {}
   }
 
   /* La persona que ESTA cuenta está mirando, o null. Solo cuenta si la eligió
      ella y si administra o supervisa: a cualquier otra cuenta no le cambia
-     nada, aunque quedara guardada en el aparato. */
+     nada, aunque quedara guardada en el aparato. Un supervisor o un
+     estudiante, solo si administra (la base tampoco se los ofrece a nadie
+     más). */
   function personaDe(perfil) {
     var p = persona();
     if (!p || !perfil || p.de !== perfil.id) return null;
+    var t = tipoDe(p);
+    if (t === "supervisor" || t === "alumno") return perfil.is_admin ? p : null;
     return perfil.is_admin || perfil.es_supervisor ? p : null;
   }
 
@@ -106,10 +124,11 @@
          escriba con profile.id se escribe a su nombre (y la base rechaza lo
          que no le toca), nunca al de la persona. Sus datos se piden con
          `_persona.id`, explícito, a las funciones que lo permiten. */
+      var t = tipoDe(p0);
       return Object.assign({}, perfil, {
         _persona: p0, _admin_real: !!perfil.is_admin, _supervisor_real: !!perfil.es_supervisor,
-        full_name: p0.nombre, role: "profesor", is_admin: false, es_supervisor: false,
-        es_coordinador: !!p0.es_coordinador,
+        full_name: p0.nombre, role: t === "alumno" ? "alumno" : "profesor", is_admin: false,
+        es_supervisor: t === "supervisor", es_coordinador: t === "coordinador",
       });
     }
     if (!perfil || !perfil.is_admin) return perfil;
@@ -138,9 +157,10 @@
     return sel;
   }
 
-  /* El selector de personas: «Mi vista» y, agrupados, los coordinadores y los
-     profesores que devuelve personas_para_ver_como(). Sin nadie, no se pinta
-     (devuelve null): un selector con una sola opción no ofrece nada. */
+  /* El selector de personas: «Mi vista» y, agrupados, las personas que
+     devuelve personas_para_ver_como() (a quien administra, también los
+     supervisores y los estudiantes). Sin nadie, no se pinta (devuelve null):
+     un selector con una sola opción no ofrece nada. */
   async function selectorPersonas(sb, miId, id) {
     var r = await sb.rpc("personas_para_ver_como");
     var lista = (r && r.data) || [];
@@ -152,8 +172,9 @@
     mia.value = "";
     mia.textContent = "Mi vista";
     sel.appendChild(mia);
-    [["Coordinadores", true], ["Profesores", false]].forEach(function (g) {
-      var deGrupo = lista.filter(function (x) { return !!x.es_coordinador === g[1]; });
+    [["Supervisores", "supervisor"], ["Coordinadores", "coordinador"], ["Profesores", "profesor"],
+     ["Estudiantes", "alumno"]].forEach(function (g) {
+      var deGrupo = lista.filter(function (x) { return tipoDe(x) === g[1]; });
       if (!deGrupo.length) return;
       var og = document.createElement("optgroup");
       og.label = g[0];
@@ -175,6 +196,8 @@
     return sel;
   }
 
+  var ETIQUETA_TIPO = { profesor: "profesor", coordinador: "coordinación", supervisor: "supervisión", alumno: "estudiante" };
+
   /* La franja de «Ver como» una persona: de quién es el panel y qué no cambia. */
   function montarBarraPersona(p) {
     if (document.getElementById("modo-vista-barra")) return;
@@ -185,9 +208,12 @@
     barra.className = "bg-accent-500 text-brand-900 text-sm px-4 py-2 flex flex-wrap items-center justify-center gap-x-4 gap-y-2";
     var texto = document.createElement("p");
     texto.className = "font-semibold";
+    var t = tipoDe(p);
     texto.textContent = "👁 Estás viendo el panel de " + (p.nombre || "otra persona")
-      + (p.es_coordinador ? " (coordinación)" : " (profesor)")
-      + ". Sus números y sus alumnos en Informes son los suyos; lo que abras o guardes se hace con tu cuenta.";
+      + " (" + ETIQUETA_TIPO[t] + "). "
+      + (t === "alumno" ? "Sus tareas, su progreso y su informe son los suyos"
+                        : "Sus números y sus alumnos en Informes son los suyos")
+      + "; lo que abras o guardes se hace con tu cuenta.";
     var volver = document.createElement("button");
     volver.type = "button";
     volver.className = "font-semibold underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-900 rounded";
@@ -253,6 +279,7 @@
     perfilVisto: perfilVisto,
     persona: persona,
     personaDe: personaDe,
+    tipoDe: tipoDe,
     fijarPersona: fijarPersona,
     selectorModos: selectorModos,
     selectorPersonas: selectorPersonas,
