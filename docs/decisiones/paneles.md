@@ -60,15 +60,20 @@ lista, y el resto se acomoda solo.
   Academia: con dos tarjetas genéricas (Entrenamiento y Estudio), el alumno
   tenía que entrar para saber qué había adentro. Ahora, después de "Lo que te
   pone tu profesor", van seis grupos:
-  - **Aprender**: las cuatro categorías de fichas de Estudio (Aperturas,
-    Defensas, Táctica, Conceptos), Aprende (las lecciones), Desafíos y
-    Artículos.
+  - **Aprender**: las cuatro categorías de fichas de Estudio (Fichas de
+    aperturas, Defensas, Táctica, Conceptos), Lecciones, Desafíos y Artículos.
   - **Estudiar**: Cursos y Repasar mis clases, lo que se estudia con el profe.
   - **Entrenamiento básico / intermedio / avanzado**: las páginas del hub,
     por escalón.
-  - **Mejorar por habilidades**: una tarjeta por cada Tipo de entrenamiento,
-    sacadas de `js/tipos-catalogo.js` (la única copia: un tipo nuevo aparece
-    solo). Cada una abre su ficha (`entreno/tipos.html#<id>`).
+  - **Mejorar por habilidades**: UNA tarjeta, «Habilidades», que abre
+    `entreno/tipos.html` con los diecinueve tipos adentro. Estuvieron un día
+    cada uno con su tarjeta y el panel se alargaba el doble: en el celular
+    había que bajar un buen rato para llegar a «Jugar y competir».
+
+  **Los nombres no se confunden con sus vecinas.** «Aperturas» a secas se leía
+  igual que «Aperturas y celadas» (una se lee, la otra se practica), y «Aprende»
+  dentro del grupo «Aprender» no decía qué era: por eso «Fichas de aperturas» y
+  «Lecciones».
 
   Cada ficha de Estudio abre **solo su categoría** con `?cat=<id>`
   (`js/entreno-estudio.js`), con "Ver todas las fichas" para soltarla; una
@@ -76,8 +81,26 @@ lista, y el resto se acomoda solo.
   el panel docente (`PANEL_DOCENTE`) entra todavía por las dos puertas de
   siempre, que están en la lista con `soloDocente` y al alumno se le QUITAN
   (`ordenarPanelDocente()`), no se esconden. El hub `entreno/index.html` sigue
-  existiendo: es donde vive «Hoy te toca» y adonde llevan las migas de cada
-  página de entrenamiento.
+  existiendo: es adonde llevan las migas de cada página de entrenamiento.
+- **«Hoy te toca», también en el panel.** Vivía solo arriba del hub de
+  Entrenamiento: la meta del día, los repasos que vencieron, lo que quedó a
+  medias. Desde que el panel abre el entrenamiento tarjeta por tarjeta, el
+  alumno ya no pasa por el hub y eso se quedaba sin nadie que lo viera. Ahora
+  es UN módulo, `js/hoy-te-toca.js` (lógica y marcado), que pintan los dos: el
+  hub con direcciones relativas a `entreno/` y el panel desde la raíz.
+  - En el panel va **después de la franja y de «Continúa donde ibas»**: una
+    fecha le gana a un repaso.
+  - **No repite lo que ya dice la franja** (`enPanel: true`): ni la semana del
+    plan ni «hacer el diagnóstico», que ya ofrecen «Por dónde empezar» y la
+    tarjeta del diagnóstico. «Repetir el diagnóstico» a las cuatro semanas sí
+    va: eso no lo dice nadie más.
+  - Sus scripts se piden recién al pintar el panel del alumno
+    (`cargarHoyTeToca()`), en orden, y antes de contar se espera
+    `ProgresoUsuario.init()`, igual que en el hub: sin eso, lo entrenado en el
+    celular no se vería en la computadora. La racha es la misma promesa que
+    usa «Tu progreso», no una segunda consulta.
+  - Solo al alumnado: a quien da clase no se le pinta ni se le arma.
+    `verificar-panel.js` («Hoy te toca», en el panel del alumno) lo revisa.
 - **"Logros" está en "Tu cuenta"**, que va en este orden: Configuración,
   Informes, Logros y, solo al alumnado, "¿Cómo van tus clases?". Lo pidió así
   el dueño de la Academia. "TV en vivo" estuvo ahí un tiempo y pasó a Competir,

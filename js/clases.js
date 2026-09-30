@@ -74,18 +74,23 @@
                habilidades. Lo pidió así el dueño de la Academia: con dos
                tarjetas genéricas, el alumno tenía que entrar para saber qué
                había adentro. Las fichas de Estudio abren su categoría
-               (?cat=), y cada tipo de entrenamiento su propia ficha (#id).
+               (?cat=); las habilidades van juntas en una sola tarjeta.
+
+               «Fichas de aperturas» y «Lecciones» se llaman así para no
+               confundirse con sus vecinas: «Aperturas» a secas se leía igual
+               que «Aperturas y celadas» (una se lee, la otra se practica), y
+               «Aprende» dentro del grupo «Aprender» no decía qué era.
 
                Todas estas son `soloAlumno`: el panel de quien da clase se arma
                aparte (PANEL_DOCENTE) y sigue entrando por las dos puertas de
                siempre, que por eso están acá con `soloDocente`. Ver «El
                alumno ve el entrenamiento abierto» en docs/decisiones/paneles.md. */
             { title: "Aprender", tiles: [
-                { emoji: "🏰", label: "Aperturas", desc: "Las fichas de las aperturas que juegas con blancas", href: "entreno/estudio.html?cat=apertura", soloAlumno: true },
+                { emoji: "🏰", label: "Fichas de aperturas", desc: "Las que juegas con blancas: la idea, los planes y la posición que lo explica", href: "entreno/estudio.html?cat=apertura", soloAlumno: true },
                 { emoji: "🛡️", label: "Defensas", desc: "Las fichas de las defensas que juegas con negras", href: "entreno/estudio.html?cat=defensa", soloAlumno: true },
                 { emoji: "⚡", label: "Táctica", desc: "Las fichas de los motivos tácticos que se repiten", href: "entreno/estudio.html?cat=tactica", soloAlumno: true },
                 { emoji: "💡", label: "Conceptos", desc: "Las fichas de las ideas que deciden la partida", href: "entreno/estudio.html?cat=concepto", soloAlumno: true },
-                { emoji: "🎓", label: "Aprende", desc: "Lecciones interactivas paso a paso", href: "entreno/aprender.html", soloAlumno: true },
+                { emoji: "🎓", label: "Lecciones", desc: "Interactivas, paso a paso", href: "entreno/aprender.html", soloAlumno: true },
                 { emoji: "🧠", label: "Desafíos", desc: "Coronación, ganar material, salir del apuro y jaque mate", href: "entreno/desafios.html", soloAlumno: true },
                 { emoji: "📖", label: "Artículos", desc: "Lecturas técnicas y pedagógicas", href: "articulos.html" },
                 { emoji: "🏋️", label: "Entrenamiento", desc: "Ejercicios tácticos y lecciones interactivas", href: "entreno/index.html", soloDocente: true },
@@ -114,12 +119,14 @@
                 { emoji: "🧭", label: "Precisión posicional", desc: "Sin táctica inmediata: elige el plan correcto a largo plazo", href: "entreno/precision-posicional.html", soloAlumno: true },
                 { emoji: "🏁", label: "Finales contra la máquina", desc: "Lucena, Philidor y los finales de libro, contra Stockfish", href: "entreno/finales.html", soloAlumno: true },
             ] },
-            /* Una tarjeta por cada Tipo de entrenamiento, sacadas del catálogo
-               (js/tipos-catalogo.js), que es la única copia: un tipo nuevo
-               aparece acá solo. La pregunta del tipo es lo que se entrena. */
-            { title: "Mejorar por habilidades", tiles: (window.TiposCatalogo ? TiposCatalogo.TIPOS : []).map((t) => (
-                { emoji: t.emoji, label: t.nombre, desc: t.pregunta, href: "entreno/tipos.html#" + t.id, soloAlumno: true }
-            )) },
+            /* UNA tarjeta, y los diecinueve Tipos de entrenamiento adentro, en
+               su propia página (entreno/tipos.html). Estuvieron un día cada uno
+               con su tarjeta en el panel y lo alargaban el doble: en el celular
+               había que bajar un buen rato para llegar a «Jugar y competir».
+               Lo pidió así el dueño de la Academia. */
+            { title: "Mejorar por habilidades", tiles: [
+                { emoji: "💪", label: "Habilidades", desc: "El Detective, el Barrido, Aguanta, Salva las tablas y muchas más: cada habilidad con sus niveles", href: "entreno/tipos.html", soloAlumno: true },
+            ] },
             /* Primero donde se juega de verdad contra otra persona, después el
                torneo, y al final el bot. «TV en vivo» y «Logros» ya no viven
                acá: están en «Tu cuenta» (ver el grupo, más abajo).
@@ -948,7 +955,8 @@
             "entreno/estudio.html?cat=defensa": "fichas negras siciliana francesa caro kann",
             "entreno/estudio.html?cat=tactica": "fichas clavada horquilla ataque doble motivos",
             "entreno/estudio.html?cat=concepto": "fichas estrategia plan peon pasado",
-            "entreno/aprender.html": "lecciones aprender",
+            "entreno/aprender.html": "aprende aprender interactivas",
+            "entreno/tipos.html": "tipos de entrenamiento detective barrido aguanta tablas maestro",
             "entreno/mates.html": "mate jaque mate en uno en dos",
             "entreno/coordenadas.html": "casillas letras numeros",
             "entreno/practicas.html": "series racha estrellas tactica",
@@ -1713,6 +1721,26 @@
            lo hicieron, que son justamente los que más van a ver esta franja—.
            Mismo criterio que el libro de aperturas del bot. */
         const scriptsPedidos = {};
+        /* «Hoy te toca», el mismo del hub de Entrenamiento (js/hoy-te-toca.js):
+           la meta del día y los repasos que vencieron. Sus scripts se piden
+           recién acá, y en orden —unos usan a los otros—: al equipo docente no
+           le hacen falta. Antes de contar, ProgresoUsuario baja a este aparato
+           el progreso de la cuenta, igual que en el hub; sin eso, los repasos
+           de lo entrenado en el celular no se verían en la computadora. La
+           racha es la misma promesa que usa «Tu progreso». */
+        const SCRIPTS_HOY = ["js/repaso-espaciado.js", "js/repaso-fallados.js", "js/tema-flojo.js",
+            "js/tipos-catalogo.js", "js/tipo-flojo.js", "js/tiempo-secciones.js",
+            "js/errores-propios.js", "js/progreso-usuario.js", "js/hoy-te-toca.js"];
+        async function cargarHoyTeToca(rachaP) {
+            try {
+                for (const src of SCRIPTS_HOY) await traerScript(src);
+                await ProgresoUsuario.init();
+            } catch (e) { return; }
+            await HoyTeToca.pintar(document.getElementById("hoy"), {
+                alumnoId: profile.id, arriba: "", entreno: "entreno/", enPanel: true, logros: rachaP,
+            });
+        }
+
         function traerScript(src) {
             if (!scriptsPedidos[src]) {
                 scriptsPedidos[src] = new Promise((listo, falla) => {
@@ -2728,6 +2756,7 @@
                     loadEntrenoProgress(),
                     loadTacticsRecord(),
                     loadRachaWidget(rachaP),
+                    cargarHoyTeToca(rachaP),
                 );
             }
             await sinEsperarDeMas(...partes);

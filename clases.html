@@ -213,6 +213,14 @@
                 <span class="text-sm font-semibold text-accent-700 dark:text-accent-400 whitespace-nowrap">Seguir el curso →</span>
             </a>
 
+            <!-- «Hoy te toca» (solo alumno, js/hoy-te-toca.js): la meta del día y los
+                 repasos que vencieron, lo mismo que arriba del hub de Entrenamiento.
+                 Desde que el panel abre el entrenamiento tarjeta por tarjeta, el alumno
+                 ya no pasa por el hub, y esto se quedaba sin nadie que lo viera. Va
+                 después de lo que vence (la franja) y de «Continúa donde ibas»: una
+                 fecha le gana a un repaso. Solo sale si hay algo. -->
+            <section id="hoy" aria-labelledby="hoy-titulo" class="hidden mb-8 rounded-2xl p-5 md:p-6 shadow-md bg-white dark:bg-brand-900"></section>
+
             <!-- «Tu última clase» (solo alumno): lo que hizo y contestó en la última clase
                  en línea, de las dos últimas semanas. Ver js/resumen-clase.js. -->
             <section id="ultima-clase" hidden aria-labelledby="ultima-clase-titulo" class="mb-8 bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6"></section>
@@ -445,7 +453,6 @@
     <script src="js/notas-alumno.js"></script>
     <script src="js/plan-clase.js"></script>
     <script src="js/lo-que-costo.js"></script>
-    <script src="js/tipos-catalogo.js"></script>
     <script src="js/clases.js"></script>
 <!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- ayuda: inicio --><script src="js/ayuda-guia.js" defer></script><!-- ayuda: fin --></body>
 </html>

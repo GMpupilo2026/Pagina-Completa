@@ -23,10 +23,17 @@
     --bg-panel-2:#f0f4f8;
     --line:#d9e2ec;
     --text:#102a43;
-    --text-muted:#627d98;
+    /* Medidos contra el fondo real (#f0f4f8, bg-brand-50) y el blanco de las
+       tarjetas: el gris de antes (#627d98) daba 3,9 : 1 y el dorado de los
+       enlaces (#f0b429) 1,7 : 1, los dos por debajo del 4,5 : 1 del AA.
+       Ahora son brand-500 (5,5 : 1) y accent-700 (4,6 : 1), el mismo par que
+       usa el resto del sitio en modo claro. El foco va en el color del
+       enlace: el dorado claro tampoco llegaba al 3 : 1 de un borde. */
+    --text-muted:#486581;
     --text-cuerpo:#334e68;
     --brass:#de911d;
     --brass-bright:#f0b429;
+    --enlace:#a85a0d;
     /* Un color por categoría y otro por bloque del mapa. El color NUNCA dice
        nada solo: cada bloque lleva su título escrito y cada ficha su etiqueta
        de categoría, así que quien no distingue verde de ámbar no se pierde
@@ -47,6 +54,7 @@
     --line:#243b53;
     --text:#f0f4f8;
     --text-muted:#9fb3c8;
+    --enlace:#f0b429;
     --text-cuerpo:#d9e2ec;
     --cat-apertura:#e5b567;
     --cat-defensa:#7fb3d3;
@@ -60,12 +68,14 @@
   html,body{margin:0;padding:0;}
   body{font-family:'Inter', sans-serif; min-height:100vh; min-height:100dvh;}
   h1,h2,h3,h4{font-family:'Merriweather', serif; font-weight:700; margin:0;}
-  a{color:var(--brass-bright);}
-  *:focus-visible{outline:3px solid var(--brass-bright); outline-offset:2px;}
+  a{color:var(--enlace);}
+  *:focus-visible{outline:3px solid var(--enlace); outline-offset:2px;}
   .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
 
   main{max-width:1000px; margin:0 auto; padding:18px 24px 60px;}
   .intro{color:var(--text-muted); line-height:1.6; font-size:0.95rem; max-width:620px; margin:16px auto 0;}
+  /* Dentro del párrafo, el enlace no se distingue solo por el color. */
+  .intro a{text-decoration:underline; text-underline-offset:2px;}
 
   /* ---------- La lista, agrupada en Aperturas y Defensas ---------- */
   .study-group-title{

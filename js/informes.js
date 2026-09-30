@@ -108,8 +108,8 @@
         const EJERCICIOS_DEL_TIPO_FLOJO = 10;
         function tarjetaTipoFlojo(e, alumnoId) {
             const f = e.tipoFlojo;
-            if (!f) return statCard("📉", "—", "Tipo de entrenamiento más flojo (hace falta resolver 5 de un mismo tipo)", true);
-            const card = statCard("📉", `${escVis(f.nombre)} · ${f.porcentaje} %`, `Tipo más flojo: tres estrellas en ${f.limpios} de ${f.intentos}`, true);
+            if (!f) return statCard("📉", "—", "Habilidad más floja (hace falta resolver 5 de una misma habilidad)", true);
+            const card = statCard("📉", `${escVis(f.nombre)} · ${f.porcentaje} %`, `Habilidad más floja: tres estrellas en ${f.limpios} de ${f.intentos}`, true);
             if (alumnoId && puedeMandarTareas()) {
                 const a = document.createElement("a");
                 a.href = "tareas.html?" + new URLSearchParams({ alumno: alumnoId, material: "tipos", recorte: f.tipo, cantidad: String(EJERCICIOS_DEL_TIPO_FLOJO) });
@@ -138,7 +138,7 @@
             return [
                 tarjetaTemaFlojo(e),
                 statCard("👁️", e.visualizacion, "Ejercicios de Visualización resueltos", true),
-                statCard("🧩", `${e.tiposEjercicios} (${e.tiposEstrellas}⭐)`, "Tipos de entrenamiento: ejercicios con estrellas", true),
+                statCard("🧩", `${e.tiposEjercicios} (${e.tiposEstrellas}⭐)`, "Habilidades: ejercicios con estrellas", true),
                 tarjetaTipoFlojo(e, alumnoId),
                 statCard("📖", `${e.aperturasEmpezadas} (${e.aperturasFirmes} firmes)`, "Líneas de Aperturas estudiadas", true),
                 statCard("🎯", textoPrecision(e), "Precisión posicional", true),
@@ -1067,7 +1067,7 @@
             const LINEAS = window.AperturasLineas ? AperturasLineas.LINEAS : null;
             const celadas = LINEAS && !celadasR.error ? (celadasR.data || []).map((f) => ({ f, L: LINEAS.find((l) => l.id === f.linea && l.tipo === "celada") })).filter((x) => x.L && x.f.errores > 0).slice(0, 4) : [];
             if (!filas.length && !celadas.length) {
-                p("Todavía no hay errores con tema en las partidas de este grupo. Aparecen cuando tus alumnos las revisan en Entrenamiento → Tipos de entrenamiento → «Tus propios errores».");
+                p("Todavía no hay errores con tema en las partidas de este grupo. Aparecen cuando tus alumnos las revisan en Entrenamiento → Habilidades → «Tus propios errores».");
                 return;
             }
             const ol = document.createElement("ol");
@@ -1187,7 +1187,7 @@
             if (error) { p("No se pudieron cargar sus errores. Intenta de nuevo en un momento."); return; }
             const r = ErroresPropios.deFilas(data);
             if (!r.revisadas) {
-                p("Todavía no revisó sus partidas. Se hace desde Entrenamiento → Tipos de entrenamiento → «Tus propios errores», con el botón «Buscar errores en mis partidas».");
+                p("Todavía no revisó sus partidas. Se hace desde Entrenamiento → Habilidades → «Tus propios errores», con el botón «Buscar errores en mis partidas».");
                 return;
             }
             const regalados = r.ejercicios.filter((x) => x.nivel === 1).length;
@@ -1940,7 +1940,7 @@
             concentracion: "🧠 Concentración — ejercicios resueltos",
             temas: "🗂️ Ejercicios por tema — resueltos y cuántos sin error ni pista",
             visualizacion: "👁️ Visualización — ejercicios resueltos",
-            tipos: "🧩 Tipos de entrenamiento — ejercicios con estrellas",
+            tipos: "🧩 Habilidades — ejercicios con estrellas",
             aperturas: "📖 Aperturas — líneas estudiadas (firmes: aguantan tres semanas sin repasar)",
             precision: "🎯 Precisión posicional — porcentaje de la última ronda",
             cursos: "🏛️ Cursos — temas estudiados por alumno",

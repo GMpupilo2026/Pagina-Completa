@@ -250,6 +250,8 @@ async function panel(browser, perfiles, quien, opciones, datos) {
   const ctx = await browser.newContext(Object.assign({ serviceWorkers: "block" }, opciones || {}));
   // Lo que el supervisor de su academia le dejó a un coordinador.
   if (datos && datos.misFunciones) await ctx.addInitScript((f) => { window.__misFunciones = f; }, datos.misFunciones);
+  // Lo que ya estaba guardado en este aparato (las colas de repaso, el diagnóstico).
+  if (datos && datos.local) await ctx.addInitScript((l) => { Object.entries(l).forEach(([k, v]) => localStorage.setItem(k, v)); }, datos.local);
   await ctx.route("**/cdn.jsdelivr.net/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
   await ctx.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await ctx.route("**/fonts.gstatic.com/**", (r) => r.abort());
@@ -374,12 +376,17 @@ async function pruebaAlumna(browser) {
   igual("Entrenamiento avanzado",
     grupo(grupos, "Entrenamiento avanzado").tiles.map((t) => t.enlace),
     ["entreno/visualizacion.html", "entreno/precision-posicional.html", "entreno/finales.html"]);
-  /* Una por cada tipo del catálogo, en su orden: salen de js/tipos-catalogo.js,
-     así que un tipo nuevo aparece solo. */
-  const tiposCatalogo = require("../js/tipos-catalogo.js").TIPOS;
-  igual("Mejorar por habilidades: una tarjeta por cada tipo de entrenamiento",
-    grupo(grupos, "Mejorar por habilidades").tiles.map((t) => t.enlace),
-    tiposCatalogo.map((t) => "entreno/tipos.html#" + t.id));
+  /* Una sola tarjeta y las diecinueve habilidades adentro: cada una con su
+     tarjeta alargaba el panel el doble. */
+  igual("Mejorar por habilidades: una sola tarjeta, «Habilidades»",
+    grupo(grupos, "Mejorar por habilidades").tiles.map((t) => [t.etiqueta, t.enlace]),
+    [["Habilidades", "entreno/tipos.html"]]);
+  igual("y ninguna habilidad suelta en el panel",
+    await page.evaluate(() => document.querySelectorAll("#tile-grid [href^='entreno/tipos.html#']").length), "0");
+  /* Los nombres que no se confunden con sus vecinas. */
+  igual("«Fichas de aperturas» y «Lecciones», no «Aperturas» ni «Aprende»",
+    grupo(grupos, "Aprender").tiles.map((t) => t.etiqueta).filter((e) => /apertura|lecci|aprende/i.test(e)),
+    ["Fichas de aperturas", "Lecciones"]);
   igual("y las dos puertas del equipo docente no están, ni escondidas",
     await page.evaluate(() => document.querySelectorAll(
       "#tile-grid [href='entreno/index.html'], #tile-grid [href='entreno/estudio.html']").length), "0");
@@ -2371,6 +2378,44 @@ async function page_vacio(page) {
 module.exports = { panel, igual, mal, bien, datosAlumna, ALUMNA, PROFE, ADMIN, CHROME, BASE, fallos: () => fallos };
 if (require.main !== module) return;
 
+/* ---------- «Hoy te toca», también en el panel ----------
+   Vivía solo en el hub de Entrenamiento, y desde que el panel abre el
+   entrenamiento tarjeta por tarjeta el alumno ya no pasa por el hub. Es el
+   mismo módulo (js/hoy-te-toca.js): acá se mira que salga, con las direcciones
+   bien armadas desde la raíz, que no repita lo que ya dice la franja (el plan y
+   hacer el diagnóstico) y que a quien da clase no le salga. */
+async function pruebaHoyEnElPanel(browser) {
+  console.log("\n=== «Hoy te toca», en el panel del alumno ===");
+  const d = (dias) => new Date(Date.now() + dias * 86400000).toLocaleDateString("en-CA", { timeZone: "America/Costa_Rica" });
+  const ficha = (vence) => ({ facilidad: 2.5, intervalo: 1, repasos: 1, fallos: 0, vence, ultimo: "2026-01-01T00:00:00Z" });
+  const local = {
+    entreno_temas_repaso_v1: JSON.stringify({ a: Object.assign(ficha(d(-1)), { tema: "fork" }), b: Object.assign(ficha(d(3)), { tema: "pin" }) }),
+    aperturas_srs_v1: JSON.stringify({ l1: ficha(d(-1)) }),
+  };
+  let { page, ctx, errores } = await panel(browser, [ALUMNA, PROFE], "u-ana", {}, { local });
+  await page.waitForFunction(() => document.querySelectorAll("#hoy-lista a").length > 0, null, { timeout: 15000 }).catch(() => {});
+  const items = await page.evaluate(() => Array.from(document.querySelectorAll("#hoy-lista a")).map((a) => [a.textContent.replace("→", "").trim(), a.getAttribute("href")]));
+  igual("se ve", await page.evaluate(() => document.getElementById("hoy").checkVisibility()), "true");
+  igual("con las direcciones desde la raíz del sitio", items,
+    [["🔁Repasar 1 ejercicio que te costó", "entreno/temas.html?repaso=1"], ["📖1 línea de aperturas para repasar", "entreno/aperturas.html"]]);
+  igual("sin diagnóstico, no lo propone: ya lo ofrecen la franja y su tarjeta",
+    items.filter(([t]) => /diagn/i.test(t)).length, "0");
+  igual("va después de lo que vence y antes de la grilla", await page.evaluate(() => {
+    const hoy = document.getElementById("hoy");
+    return !!(document.getElementById("pendientes-aviso").compareDocumentPosition(hoy) & Node.DOCUMENT_POSITION_FOLLOWING)
+      && !!(hoy.compareDocumentPosition(document.getElementById("tile-grid")) & Node.DOCUMENT_POSITION_FOLLOWING);
+  }), "true");
+  igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+
+  ({ page, ctx } = await panel(browser, [PROFE], "u-profe", {}, { local }));
+  igual("a quien da clase no le sale", await page.evaluate(() => {
+    const h = document.getElementById("hoy");
+    return !h.checkVisibility() && !h.children.length;
+  }), "true");
+  await ctx.close();
+}
+
 /* ---------- Con la base saturada, el panel no se queda cargando ----------
    En hora pico la base cortaba las consultas por statement timeout y el panel
    no aparecía hasta que terminaba la última: «Cargando tu panel…» durante
@@ -2448,6 +2493,7 @@ async function pruebaBaseLenta(browser) {
     await pruebaSesionEnVivo(browser);
     await pruebaLectorDePantalla(browser);
     await pruebaProgresoAlumna(browser);
+    await pruebaHoyEnElPanel(browser);
     await pruebaBaseLenta(browser);
     await pruebaSemanaProfesora(browser);
     await pruebaProfesora(browser);
