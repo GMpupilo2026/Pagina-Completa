@@ -608,7 +608,7 @@ NOMBRE_Y_PADRE = {
     "entreno/visualizacion.html": ("Visualización", "entreno/index.html"),
     "entreno/aperturas.html": ("Aperturas y celadas", "entreno/index.html"),
     "entreno/precision-posicional.html": ("Precisión posicional", "entreno/index.html"),
-    "entreno/tipos.html": ("Tipos de entrenamiento", "entreno/index.html"),
+    "entreno/tipos.html": ("Habilidades", "entreno/index.html"),
     "entreno/finales.html": ("Finales contra la máquina", "entreno/index.html"),
     "entreno/memoria.html": ("Memoria", "entreno/index.html"),
     "cursos/academia/index.html": ("Mis cursos", "clases.html"),

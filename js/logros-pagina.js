@@ -38,7 +38,7 @@
             ilumina: "Ilumina el tablero",
             visualizacion: "Visualización",
             finales: "Finales contra la máquina",
-            tipos: "Tipos de entrenamiento",
+            tipos: "Habilidades",
             sonar: "El Sonar",
             "batalla-naval": "Batalla naval",
             "precision-posicional": "Precisión posicional",

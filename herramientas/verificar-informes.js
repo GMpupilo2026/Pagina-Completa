@@ -892,7 +892,7 @@ async function pruebaAlumno(browser) {
   igual("Temas de cursos estudiados", await tarjeta(page, "Temas de cursos estudiados"), "3");
   igual("Ejercicios por tema, con cuántos limpios", await tarjeta(page, "Ejercicios por tema resueltos (70 % sin error ni pista)"), "30");
   igual("Visualización", await tarjeta(page, "Ejercicios de Visualización resueltos"), "4");
-  igual("Tipos de entrenamiento", await tarjeta(page, "Tipos de entrenamiento: ejercicios con estrellas"), "5 (12⭐)");
+  igual("Habilidades (los Tipos de entrenamiento)", await tarjeta(page, "Habilidades: ejercicios con estrellas"), "5 (12⭐)");
   igual("Aperturas", await tarjeta(page, "Líneas de Aperturas estudiadas"), "3 (1 firmes)");
   igual("Precisión posicional", await tarjeta(page, "Precisión posicional"), "75 % en la última · 2 rondas");
   igual("Finales contra la máquina", await tarjeta(page, "Finales contra la máquina logrados"), "3");
@@ -900,7 +900,7 @@ async function pruebaAlumno(browser) {
     await tarjeta(page, "Coordenadas, las que más le cuestan: b6 (falló 9 de 10), g3 (falló 4 de 7)"), "b6 · g3");
   igual("el tema más flojo, con su nombre y cuántos limpios", await tarjeta(page, "Tema más flojo: limpio en 4 de 11"), "Clavada · 36 %");
   igual("el tipo de entrenamiento más flojo, con el nombre del catálogo y cuántos con tres estrellas",
-    await tarjeta(page, "Tipo más flojo: tres estrellas en 3 de 8"), "La balanza · 38 %");
+    await tarjeta(page, "Habilidad más floja: tres estrellas en 3 de 8"), "La balanza · 38 %");
   igual("el alumno no se manda tareas: su tarjeta no trae el enlace",
     await page.evaluate(() => document.querySelectorAll("#stat-cards a[data-tipo-flojo]").length), 0);
   const pedido = await page.evaluate(() => ((window.__rpcArgs || []).find((a) => a[0] === "informes_tema_mas_flojo") || [])[1]);

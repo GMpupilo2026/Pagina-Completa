@@ -2611,6 +2611,9 @@ golpe saltan 3 comprobaciones, sin la persistencia 1 y cruzando las posiciones 8
 
 ### Los Tipos de entrenamiento, en la clase
 
+> En pantalla, la pestaña y el panel se llaman «Habilidades» (ver «Los Tipos
+> de entrenamiento» en `entrenamiento.md`).
+
 La pestaña **"🧠 Entrenamientos"** del profesor lista los diecinueve Tipos de
 entrenamiento de `entreno/tipos.html` (ver «Los Tipos de entrenamiento» en
 entrenamiento.md) en cascada tipo → nivel → ejercicio, con las mismas

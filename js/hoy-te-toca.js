@@ -102,7 +102,7 @@ window.HoyTeToca = (function () {
         texto: p === 1 ? 'Repasar 1 posición de Practicar que te costó' : `Repasar ${p} posiciones de Practicar que te costaron` });
       const t = RepasoFallados.pendientes(RepasoFallados.CLAVES.tipos).length;
       if (t) cosas.push({ icono: '🧩', href: E + 'tipos.html#repaso',
-        texto: t === 1 ? 'Repasar 1 ejercicio de Tipos que te costó' : `Repasar ${t} ejercicios de Tipos que te costaron` });
+        texto: t === 1 ? 'Repasar 1 ejercicio de Habilidades que te costó' : `Repasar ${t} ejercicios de Habilidades que te costaron` });
       const f = RepasoFallados.pendientes(RepasoFallados.CLAVES.finales).length;
       if (f) cosas.push({ icono: '🏁', href: E + 'finales.html?repaso=1',
         texto: f === 1 ? 'Volver a jugar 1 final que te costó' : `Volver a jugar ${f} finales que te costaron` });
@@ -137,7 +137,7 @@ window.HoyTeToca = (function () {
       try {
         const f = (await TipoFlojo.cargar(sb))[alumnoId];
         if (f && f.porcentaje < TipoFlojo.FLOJO) cosas.push({ icono: '📉', href: E + 'tipos.html#' + encodeURIComponent(f.tipo),
-          texto: `Tu tipo de entrenamiento más flojo, «${f.nombre}»: tres estrellas en ${f.limpios} de ${f.intentos}` });
+          texto: `Tu habilidad más floja, «${f.nombre}»: tres estrellas en ${f.limpios} de ${f.intentos}` });
       } catch (e) { /* sin dato, sin propuesta */ }
     }
 
@@ -264,7 +264,7 @@ window.HoyTeToca = (function () {
     caja.hidden = false;
   }
 
-  /* El resumen del día: «Hoy: Mates 6, Tipos de entrenamiento 4, Memoria 2 ·
+  /* El resumen del día: «Hoy: Mates 6, Habilidades 4, Memoria 2 ·
      9 de 11 limpios · Para mañana: 3 repasos.» Lo de hoy lo cuenta la base
      (entreno_resumen_hoy, día de Costa Rica); los nombres son los de
      js/tiempo-secciones.js, los mismos de Informes; los repasos de mañana, las

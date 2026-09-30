@@ -2322,6 +2322,14 @@ haciendo que un disparo al agua sume uno, saltan nueve comprobaciones.
 
 ## Los Tipos de entrenamiento
 
+> **En pantalla se llaman «Habilidades»** (pedido del dueño de la Academia): la
+> página, las migas, el hub, el panel, Informes, Logros, Tareas, el plan del
+> diagnóstico y la pestaña de la clase en vivo. Por dentro todo sigue igual:
+> `entreno/tipos.html`, `js/tipos-*.js`, la actividad `tipos` y las claves de
+> progreso (`tipos_estrellas_v1`, `tipos_20`…) no se renombran, porque son
+> las que guardan el avance de cada alumno. Este título se queda porque el
+> código lo cita.
+
 `entreno/tipos.html` (grupo y tarjeta **"🧠 Tipos de entrenamiento"** del hub)
 es una ficha con diecinueve entrenamientos que no son «encuentra la mejor jugada»,
 cada uno con sus niveles: **El Detective** (¿qué jugada se acaba de hacer?,

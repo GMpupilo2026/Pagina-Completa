@@ -310,7 +310,7 @@ async function hub(browser) {
       return items;
     };
     igual("propone el tipo más flojo del alumno, con el nombre del catálogo y a su ficha", await ver(38),
-      [["📉Tu tipo de entrenamiento más flojo, «La balanza»: tres estrellas en 3 de 8", "tipos.html#balanza"]]);
+      [["📉Tu habilidad más floja, «La balanza»: tres estrellas en 3 de 8", "tipos.html#balanza"]]);
     igual("con 75 % no lo propone", await ver(75), []);
   }
   /* El tema más flojo (js/tema-flojo.js): lo propone si está por debajo del 70 %,
@@ -361,7 +361,7 @@ async function hub(browser) {
     await page.waitForFunction(() => document.querySelectorAll("#hoy-lista a").length > 0, { timeout: 10000 });
     igual("propone los repasos de Tipos y de Finales, con a dónde ir", await page.evaluate(() =>
       Array.from(document.querySelectorAll("#hoy-lista a")).map((a) => [a.textContent.replace("→", "").trim(), a.getAttribute("href")])),
-      [["🧩Repasar 2 ejercicios de Tipos que te costaron", "tipos.html#repaso"], ["🏁Volver a jugar 1 final que te costó", "finales.html?repaso=1"]]);
+      [["🧩Repasar 2 ejercicios de Habilidades que te costaron", "tipos.html#repaso"], ["🏁Volver a jugar 1 final que te costó", "finales.html?repaso=1"]]);
     await ctx.close();
   }
   /* Lo empezado que no vence: los finales contra la máquina a medias y una

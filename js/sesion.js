@@ -4913,7 +4913,7 @@
             }
             const t = C.tipo(tiposView.tipo);
             if (!tiposView.nivel) {
-                body.appendChild(tacticsBackBtn("‹ Tipos", () => { tiposView = { tipo: null, nivel: null }; renderTiposView(); }));
+                body.appendChild(tacticsBackBtn("‹ Habilidades", () => { tiposView = { tipo: null, nivel: null }; renderTiposView(); }));
                 const tit = document.createElement("p");
                 tit.className = "font-semibold text-brand-800 dark:text-white text-sm mt-2";
                 tit.textContent = t.nombre;

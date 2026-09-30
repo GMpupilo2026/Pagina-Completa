@@ -115,7 +115,7 @@ export const SECCIONES: Record<string, { nombre: string; emoji: string; unidad?:
   "precision-posicional": { nombre: "Precisión posicional",  emoji: "🧭" },
   "sonar":                { nombre: "El Sonar",              emoji: "🔊" },
   "batalla-naval":        { nombre: "Batalla naval",         emoji: "🚢" },
-  "tipos":                { nombre: "Tipos de entrenamiento", emoji: "🧠" },
+  "tipos":                { nombre: "Habilidades",           emoji: "🧠" },
   "memoria":              { nombre: "Memoria",               emoji: "📷" },
   "racha":                { nombre: "Racha táctica",         emoji: "⚔️" },
   "bot":                  { nombre: "El bot de Oscar",       emoji: "🤖" },

@@ -474,7 +474,7 @@
     partida.i = 0;
     $("titulo-juego").textContent = "🔁 Repasar fallados";
     $("juego-desc").textContent = cola.length
-      ? "Los ejercicios que te costaron y que hoy toca repasar, de todos los tipos."
+      ? "Los ejercicios que te costaron y que hoy toca repasar, de todas las habilidades."
       : "Hoy no te toca repasar nada. Lo que salga con menos de tres estrellas vuelve a aparecer acá.";
     $("volver-tipo").href = "#";
     cargarItem();
@@ -537,7 +537,7 @@
     caja.appendChild(el("p", "text-sm mt-1", otro
       ? "Resolviste los " + partida.items.length + " ejercicios del nivel " + partida.nivel + ". Sigue con el Nivel " + otro.n + ": " + otro.titulo + "."
       : "Resolviste los " + partida.items.length + " ejercicios del último nivel de " + t.nombre + "."));
-    const ir = el("a", BTN_PRIMARIO + " inline-block mt-3", otro ? "Ir al Nivel " + otro.n : "Elegir otro tipo de entrenamiento");
+    const ir = el("a", BTN_PRIMARIO + " inline-block mt-3", otro ? "Ir al Nivel " + otro.n : "Elegir otra habilidad");
     ir.href = otro ? "#" + partida.tipo + "/" + otro.n : "#";
     caja.appendChild(ir);
     caja.classList.remove("hidden");
@@ -1033,7 +1033,7 @@
         console.error(e);
         $("titulo-juego").textContent = C.tipo(tipo).nombre;
         $("juego-desc").textContent = "";
-        estado(e && e.mensaje ? e.mensaje : "No se pudo cargar este tipo de entrenamiento. Intenta recargar la página.");
+        estado(e && e.mensaje ? e.mensaje : "No se pudo cargar esta habilidad. Intenta recargar la página.");
       });
     } else if (tipo && C.tipo(tipo)) {
       if (limpiarJuego) { limpiarJuego(); limpiarJuego = null; }
@@ -1079,7 +1079,7 @@
     let hay = false;
     try { const { data } = await sb.auth.getSession(); hay = !!(data && data.session); } catch (e) { hay = false; }
     if (!hay) {
-      $("gate-checking").textContent = "Necesitas iniciar sesión para entrar a los Tipos de entrenamiento. Redirigiendo…";
+      $("gate-checking").textContent = "Necesitas iniciar sesión para entrar a Habilidades. Redirigiendo…";
       window.location.href = "../login.html?next=" + encodeURIComponent(NEXT_PATH);
       return;
     }

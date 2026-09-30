@@ -267,8 +267,8 @@ async function abrir(browser, ruta, sesion, stats, opts) {
     igual("Batalla naval (1/2): el duelo ganado sí, las 10 partidas todavía no", cabeceras.find((t) => t.startsWith("Batalla")), "Batalla naval (1/2)");
     igual("Precisión posicional (0/1): 2 tandas con 70 % de 3", cabeceras.find((t) => t.startsWith("Precisión")), "Precisión posicional (0/1)");
     igual("Memoria (1/2): 12 piezas sin error sí (sale del hito, no de las 9 posiciones), las 10 posiciones todavía no", cabeceras.find((t) => t.startsWith("Memoria")), "Memoria (1/2)");
-    igual("Tipos de entrenamiento (1/4): dos tipos completos dan «Tipo dominado», no los de 5 ni 10",
-      cabeceras.find((t) => t.startsWith("Tipos de entrenamiento (")), "Tipos de entrenamiento (1/4)");
+    igual("Habilidades (1/4): dos completas dan «Habilidad dominada», no las de 5 ni 10",
+      cabeceras.find((t) => t.startsWith("Habilidades (")), "Habilidades (1/4)");
     igual("trofeos (2/6): con 12 tiene el de 1 y el de 10", cabeceras.find((t) => t.startsWith("Trofeos")), "Trofeos de clase (2/6)");
     igual("insignias (2/5): con 7 tiene la de 1 y la de 5", cabeceras.find((t) => t.startsWith("Insignias")), "Insignias de clase (2/5)");
 
