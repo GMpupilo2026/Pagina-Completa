@@ -326,15 +326,27 @@ async function pruebaCoordinacion(browser) {
   // -------- poner a un alumno en un plan
   await page.click('[data-ficha="suscripciones"]');
   await page.selectOption("#s-alumno", "u-bruno");
-  await page.fill("#s-dia", "10");
   await page.fill("#s-descuento", "25");
+  // Un día fuera del 1 al 31 no se manda: antes llegaba a la base y volvía el
+  // «violates check constraint» en inglés.
+  await page.fill("#s-dia", "40");
+  await page.evaluate(() => { window.__llamadas = []; window.__avisos = []; });
+  await page.click("#s-guardar");
+  await page.waitForTimeout(300);
+  igual("un día 40 no se manda y se dice por qué",
+    await page.evaluate(() => ({
+      mando: window.__llamadas.some((l) => l.tabla === "suscripciones" && l.verbo === "insert"),
+      aviso: window.__avisos.some((a) => a.includes("del 1 al 31")),
+    })), { mando: false, aviso: true });
+  // El 31 sí vale (la base lo recorta al último día de los meses cortos).
+  await page.fill("#s-dia", "31");
   await page.evaluate(() => { window.__llamadas = []; });
   await page.click("#s-guardar");
   await page.waitForTimeout(300);
   const sus = await page.evaluate(() => window.__llamadas.find((l) => l.tabla === "suscripciones" && l.verbo === "insert"));
   igual("lo que manda al poner a alguien en un plan",
     sus && { student_id: sus.datos.student_id, plan_id: sus.datos.plan_id, dia_cobro: sus.datos.dia_cobro, descuento_pct: sus.datos.descuento_pct },
-    { student_id: "u-bruno", plan_id: "p-mes", dia_cobro: 10, descuento_pct: 25 });
+    { student_id: "u-bruno", plan_id: "p-mes", dia_cobro: 31, descuento_pct: 25 });
 
   // La beca se ve en la lista: 25000 menos 10 % son 22.500.
   const textoSus = sinSeparadores(await page.evaluate(() => document.querySelector("#suscripciones-lista").textContent));

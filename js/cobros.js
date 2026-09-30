@@ -230,6 +230,12 @@ function pintarSuscripciones() {
 async function crearSuscripcion() {
     const studentId = document.getElementById("s-alumno").value;
     if (!studentId) return avisar("Elige un alumno.", true);
+    // La base acepta del 1 al 31 (un 31 en abril vence el 30): se revisa acá
+    // antes, para no mostrar el mensaje en inglés de la restricción.
+    const diaCobro = Number(document.getElementById("s-dia").value || 5);
+    if (!Number.isInteger(diaCobro) || diaCobro < 1 || diaCobro > 31) {
+        return avisar("El día de vencimiento tiene que ser un número del 1 al 31.", true);
+    }
     const personalizado = document.getElementById("s-personalizado").checked;
     let planId = document.getElementById("s-plan").value;
 
@@ -261,7 +267,7 @@ async function crearSuscripcion() {
         student_id: studentId,
         plan_id: planId,
         inicio: document.getElementById("s-inicio").value || hoyCR(),
-        dia_cobro: Number(document.getElementById("s-dia").value) || 5,
+        dia_cobro: diaCobro,
         descuento_pct: Number(document.getElementById("s-descuento").value) || 0,
         creado_por: session.user.id,
     });

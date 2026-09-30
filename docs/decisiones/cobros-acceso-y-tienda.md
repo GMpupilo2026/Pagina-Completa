@@ -318,6 +318,17 @@ correo fijado a mano), `informes-encargados` e `informe-examen`. Se arman con
 repositorio en esta tanda**: antes vivía solo desplegada, así que cambiarle una
 línea era bajarla, editarla a ciegas y volver a subirla.
 
+### «Vence el día» va del 1 al 31
+
+La base solo aceptaba del 1 al 28, para que todo mes tuviera ese día, pero la
+página no lo decía (el `max="28"` del campo no frena el botón): quien quería
+cobrar a fin de mes escribía 30 y le volvía «violates check constraint
+suscripciones_dia_cobro_check», en inglés. Ahora la restricción es 1–31 y
+`generar_cobros()` recorta el vencimiento al último día del mes
+(`least(periodo_inicio + dia - 1, fin de ese mes)`): un 31 vence el 30 de abril
+y el 28 (o 29) de febrero. La página revisa el número antes de mandarlo y lo
+dice en español (`verificar-cobros.js`).
+
 ### Pasarela y factura electrónica
 
 **No hay pasarela de pago, por decisión explícita**: el cobro se registra a mano
