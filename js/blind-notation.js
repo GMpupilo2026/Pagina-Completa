@@ -229,11 +229,28 @@ window.BlindNotation = (function () {
   // Habla el texto si el modo Speech está activo. Cancela cualquier frase anterior
   // todavía en curso — si no, jugadas seguidas (la propia y la respuesta del motor)
   // se irían acumulando en cola y se escucharían con retraso.
-  function speak(text) {
-    if (!hasSpeechApi || !isSpeechEnabled() || !text) return;
+  //
+  // `{ encolar: true }` NO corta lo que se está diciendo: lo pone detrás. Es para
+  // quien lee avisos que llegan juntos de lugares distintos (la clase en vivo,
+  // js/clase-voz.js), donde cortar haría que solo se oyera el último. Y en ese
+  // modo lo que se acaba de decir igual no se repite: el recuadro de comandos ya
+  // dice su respuesta y además la escribe en una región viva que también se lee.
+  // `alTerminar` avisa cuando termina (o falla) esa frase.
+  let ultimoDicho = '', ultimoDichoEn = 0;
+  function speak(text, opts) {
+    opts = opts || {};
+    if (!hasSpeechApi || !isSpeechEnabled() || !text) return false;
+    const ahora = Date.now();
+    if (opts.encolar && String(text) === ultimoDicho && ahora - ultimoDichoEn < 2000) return false;
+    ultimoDicho = String(text);
+    ultimoDichoEn = ahora;
     try {
-      window.speechSynthesis.cancel();
+      if (!opts.encolar) window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(String(text));
+      if (typeof opts.alTerminar === 'function') {
+        utterance.onend = opts.alTerminar;
+        utterance.onerror = opts.alTerminar;
+      }
       const chosen = findChosenVoice();
       if (chosen) {
         // El idioma de la propia voz, no "es-ES" a la fuerza: una voz elegida a
@@ -244,7 +261,8 @@ window.BlindNotation = (function () {
         utterance.lang = 'es-ES';
       }
       window.speechSynthesis.speak(utterance);
-    } catch (e) {}
+      return true;
+    } catch (e) { return false; }
   }
 
   // Botón "🗣️ Voz" reutilizable: se coloca junto al interruptor normal/adaptado de
@@ -253,7 +271,12 @@ window.BlindNotation = (function () {
   // comandos de texto de Modo Adaptado. `getVisible()` sigue existiendo por si
   // alguna página necesita ocultarlo en algún caso (normalmente devuelve `true`
   // sin condición).
-  function setupSpeechToggle(buttonId, getVisible) {
+  //
+  // `opts.claseTexto` le pone una clase a la palabra (no al ícono): la clase en
+  // vivo la esconde en el celular, donde el renglón de arriba no da para más y el
+  // nombre accesible ya lo pone aria-label.
+  function setupSpeechToggle(buttonId, getVisible, opts) {
+    opts = opts || {};
     const btn = document.getElementById(buttonId);
     if (!btn || !hasSpeechApi) return null;
     function render() {
@@ -270,7 +293,9 @@ window.BlindNotation = (function () {
       // anuncio se oye dos veces. "Activar voz" a secas invita justo a quien no
       // le conviene. Nombre fijo con aria-pressed, que es lo que dice si está
       // puesto: un nombre que cambia con el estado se anuncia al revés.
-      btn.innerHTML = '<span aria-hidden="true">' + (on ? '🗣️ ' : '🔇 ') + '</span>' + (on ? 'Voz activada' : 'Activar voz');
+      const palabra = on ? 'Voz activada' : 'Activar voz';
+      btn.innerHTML = '<span aria-hidden="true">' + (on ? '🗣️ ' : '🔇 ') + '</span>'
+        + (opts.claseTexto ? '<span class="' + opts.claseTexto + '">' + palabra + '</span>' : palabra);
       btn.setAttribute('aria-label', 'Voz del navegador, solo si no usas lector de pantalla');
       btn.title = on
         ? 'El navegador lee en voz alta cada anuncio — clic para apagarlo'
