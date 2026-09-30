@@ -1,5 +1,6 @@
 /* Preparación de rivales: bajar las partidas públicas de un usuario de Lichess
- * o de Chess.com, directo desde el navegador de quien prepara.
+ * o de Chess.com, directo desde el navegador de quien prepara. También lo usa
+ * «Tus propios errores» (js/entreno-tipos-mas.js) para traer las del alumno.
  *
  * Las dos APIs son públicas, sin clave, y aceptan pedidos desde otra página
  * (CORS). Lo único que sale de acá es el nombre de usuario que se escribió; las
