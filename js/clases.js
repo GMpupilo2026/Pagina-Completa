@@ -578,7 +578,11 @@
             "tablero.html": "Juega contra Oscar, nuestro motor, escribiendo la jugada y oyendo la suya",
             "entreno/estudio.html": "Las fichas de aperturas, defensas, táctica y conceptos, con la posición dicha y la línea que se recorre escribiendo",
         };
+        // El subtítulo del panel adaptado dice cómo oír los atajos; el saludo de
+        // la racha (pintarSaludoAlumno) llega después y lo pisaba. Con esto, no.
+        let panelAdaptadoArmado = false;
         function armarPanelAdaptado() {
+            panelAdaptadoArmado = true;
             const todas = TILE_GROUPS.flatMap((g) => g.tiles).concat(TILES_SOLO_ADAPTADO);
             const grupos = PANEL_ADAPTADO.map((g) => ({
                 title: g.title, id: g.id, destacado: !!g.destacado, adaptado: true,
@@ -1485,7 +1489,7 @@
         async function pintarSaludoAlumno(rachaP) {
             let r = null;
             try { r = await rachaP; } catch (e) { return; }
-            if (!r || r.error || !r.stats) return;
+            if (!r || r.error || !r.stats || panelAdaptadoArmado) return;
             const racha = r.stats.racha_actual || 0;
             const hoy = r.stats.hoy_ejercicios || 0;
             const meta = window.Logros ? Logros.META_DIARIA : 5;
