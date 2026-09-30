@@ -307,6 +307,9 @@ async function pruebaTodoDesdeElRecuadro(browser) {
     suelta.addEventListener("click", () => { window.__frase = 1; });
     document.querySelector(".cc-caja").parentNode.append(g, suelta);
   });
+  // «volver» en Mates vuelve de verdad a donde se vino (js/entreno-progress.js):
+  // acá solo importa que la capa no apriete la opción, así que no se va.
+  await page.evaluate(() => { if (window.EntrenoProgress) EntrenoProgress.volver = () => ""; });
   await decir("volver");
   await decir("otra vez");
   igual("«volver» y «otra vez» no aprietan una opción ni una frase larga que las contengan",

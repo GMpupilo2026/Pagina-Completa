@@ -120,7 +120,7 @@ async function desafios(browser) {
     [3, 2, 2, 1, 1]);
   await page.evaluate(() => { openSet(SETS[0]); setStreak(4); giveHint(); giveHint(); giveHint(); });
   igual("con «Ver solución» la racha no sube", await page.evaluate(() => getStreak()), "0");
-  igual("y el aviso dice «Solución», no «¡Correcto!»", /^Solución:/.test(await estado(page)), "true");
+  igual("y el aviso dice «Solución» (y que no cuenta), no «¡Correcto!»", /^Solución( \(no cuenta como resuelto\))?:/.test(await estado(page)), "true");
   sinErrores(errores, "desafíos");
   await ctx.close();
 }
