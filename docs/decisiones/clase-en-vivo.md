@@ -2606,6 +2606,10 @@ Lo propio de la clase:
   anuncia en el aviso del recuadro de comandos (`.cc-msg`), que fuera del modo
   es `display:none`; `js/voz-pagina.js` lo juzga por el lugar donde está
   montado, no por la caja.
+- **La jugada propia hecha con clics la dice el tablero** («Torre blanca de
+  david 1 a david 5»: ver las jugadas del tablero en accesibilidad.md), y **la
+  del profe no se oye dos veces**: la dice el aviso («Se jugó…») y el tablero se
+  calla. La prueba de que no se repite atrapó que `/jugó\b/` no calzaba nunca.
 - **El destape de `#app` no es un aviso**: se empieza a escuchar cuando `#app`
   se ve, y lo que ya estaba escrito se anota como dicho.
 - Al principio el botón vivía en el renglón del título, y en el celular lo

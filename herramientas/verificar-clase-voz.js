@@ -12,6 +12,8 @@
  *   - la jugada del profesor se dice aunque el recuadro de comandos no se vea;
  *   - «te dio el control» se dice, y el eco de Realtime con el mismo cartel no
  *     lo repite;
+ *   - la jugada propia hecha con clics la dice el tablero, y la del profe no
+ *     se oye dos veces (la dice el aviso y el tablero se calla);
  *   - lo de un panel escondido no se dice;
  *   - al recargar con la voz encendida no se leen de golpe todos los carteles;
  *   - apagarla corta lo que está diciendo y ya no dice nada.
@@ -100,23 +102,35 @@ async function empujar(page, f) {
     si("y confirma en voz", (await dichos(page)).some((t) => /Voz activada/.test(t)), (await dichos(page)).join(" | "));
 
     await olvidar(page);
-    await empujar(page, fila({ moves: ["Rd1+", "Kc7"] }));
+    await empujar(page, fila({ moves: ["Rd1+", "Ke7"] }));
     let d = await dichos(page);
-    si("la jugada del profe se dice aunque el recuadro no se vea", d.some((t) => /Se jugó rey cesar 7/.test(t)), d.join(" | "));
+    si("la jugada del profe se dice aunque el recuadro no se vea", d.some((t) => /Se jugó rey eva 7/.test(t)), d.join(" | "));
     igual("una sola vez", d.filter((t) => /Se jugó/.test(t)).length, 1);
+    await page.waitForTimeout(500);
+    d = await dichos(page);
+    si("y el tablero no la repite («Rey negro de…»)", !d.some((t) => /^Rey negro de/.test(t)), d.join(" | "));
 
     await olvidar(page);
-    await empujar(page, fila({ moves: ["Rd1+", "Kc7"], active_player_id: "u-ana", active_player_color: "w" }));
+    await empujar(page, fila({ moves: ["Rd1+", "Ke7"], active_player_id: "u-ana", active_player_color: "w" }));
     d = await dichos(page);
     si("«te dio el control» se dice", d.some((t) => /control/i.test(t)), d.join(" | "));
     const cartel = await page.evaluate(() => document.getElementById("status-banner").textContent);
 
     await olvidar(page);
-    await empujar(page, fila({ moves: ["Rd1+", "Kc7"], active_player_id: "u-ana", active_player_color: "w", arrows: ["e2e4"] }));
+    await empujar(page, fila({ moves: ["Rd1+", "Ke7"], active_player_id: "u-ana", active_player_color: "w", arrows: ["e2e4"] }));
     d = await dichos(page);
     const sigue = await page.evaluate(() => document.getElementById("status-banner").textContent);
     igual("el cartel sigue igual tras el eco", sigue === cartel, true);
     si("y el eco no lo repite", !d.some((t) => t.includes(cartel.trim().slice(0, 20))), d.join(" | "));
+
+    /* La jugada propia, con clics: ninguna región la dice, así que la dice el
+       tablero (js/voz-pagina.js compara lo que dicen sus casillas). */
+    await olvidar(page);
+    await page.click('#chessboard [data-square="d1"]');
+    await page.click('#chessboard [data-square="d5"]');
+    await page.waitForTimeout(900);
+    d = await dichos(page);
+    si("la jugada propia con clics se dice", d.some((t) => t === "Torre blanca de david 1 a david 5."), d.join(" | "));
 
     await olvidar(page);
     const escondido = await page.evaluate(() => {

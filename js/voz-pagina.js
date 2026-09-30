@@ -6,7 +6,8 @@
  * Pero quien ve poco muchas veces NO usa lector: agranda la letra y se acerca a
  * la pantalla, y lo que cambia no se entera. El botón 🔇/🗣️ del encabezado
  * hace que el propio navegador (Web Speech API, `BlindNotation.speak`) diga en
- * voz alta esas mismas regiones, en cualquier página.
+ * voz alta esas mismas regiones, en cualquier página, y las jugadas de sus
+ * tableros (ver «Las jugadas del tablero», más abajo).
  *
  * Lo carga js/adaptive-mode.js (que ya está en todas las páginas con el
  * encabezado del sitio), así que una página nueva lo tiene sin hacer nada. No
@@ -144,13 +145,140 @@ window.VozPagina = (function () {
       ultimo.set(region, texto);
       ultimoMolde.set(region, { molde: molde, en: ahora });
       var urgente = region.getAttribute("aria-live") === "assertive" || region.getAttribute("role") === "alert";
+      if (DICE_JUGADA.test(texto)) jugadaDichaEn = ahora;
       decir(recortar(texto), urgente);
     });
   }
 
+  /* ---- Las jugadas del tablero ----
+     Cada tablero del sitio ya dice en el aria-label de cada casilla qué hay en
+     ella («Casilla e4: caballo blanco», «eva 4, torre blanca»): es lo que lee el
+     lector al recorrerlo. Acá se compara esa foto antes y después de un cambio y
+     se dice qué se movió: «Caballo blanco de gustav 1 a felix 3». Así sirve para
+     todos los tableros (la clase, Juegos, los ejemplos de los artículos…) sin
+     que cada uno tenga que avisar, y lo que el tablero oculta (piezas escondidas,
+     la niebla) tampoco se dice, porque su casilla tampoco lo cuenta.
+     - Si una región ya dijo la jugada («Se jugó…», «Jugaste…», «El motor
+       jugó…»), el tablero se calla: la misma jugada no se oye dos veces.
+     - Las miniaturas no hablan (menos de 180 px): en el panel del profe hay una
+       por alumno, y se oirían todas a la vez.
+     - Un tablero con las piezas ocultas, o que las vuelve a mostrar, no dice
+       nada: pasar de todo a nada no es una jugada. */
+  /* Sin \b al final: en JavaScript la «ó» no cuenta como letra, y «jugó» no
+     calzaba nunca. */
+  var DICE_JUGADA = /\bjug(?:ó|o|aste|aron)(?![a-záéíóúñ])|se deshizo|posición nueva|cambió la línea/i;
+  var TABLERO_MIN = 180;
+  var jugadaDichaEn = 0;
+  var tableros = new WeakSet();
+  var fotos = new WeakMap();   // tablero → { casilla: "caballo blanco" | "" | null (no se sabe) }
+  var temporizadorTableros = null;
+
+  function raizDeTablero(casilla) {
+    var el = casilla.parentElement;
+    while (el && el !== document.body) {
+      if (tableros.has(el)) return el;
+      if (el.querySelectorAll("[data-square][aria-label]").length >= 32) { tableros.add(el); return el; }
+      el = el.parentElement;
+    }
+    return null;
+  }
+
+  /* Lo que hay en la casilla, según su nombre: "" vacía, null si no se sabe. */
+  function piezaDe(etiqueta) {
+    var t = limpio(etiqueta).toLowerCase();
+    var i = t.indexOf(":");
+    var resto = i >= 0 ? t.slice(i + 1) : (t.indexOf(",") >= 0 ? t.slice(t.indexOf(",") + 1) : "");
+    resto = resto.split(",")[0].trim();
+    if (!resto || /oculta/.test(resto)) return null;
+    if (/^(casilla )?vac[ií]a$/.test(resto)) return "";
+    return resto;
+  }
+
+  function fotoDeTableros() {
+    var porTablero = new Map();
+    document.querySelectorAll("[data-square][aria-label]").forEach(function (c) {
+      var t = raizDeTablero(c);
+      if (!t) return;
+      if (!porTablero.has(t)) porTablero.set(t, {});
+      porTablero.get(t)[c.getAttribute("data-square")] = piezaDe(c.getAttribute("aria-label"));
+    });
+    return porTablero;
+  }
+
+  function casillaDicha(sq) {
+    return /^[a-h][1-8]$/.test(sq) && BlindNotation.squareSpoken ? BlindNotation.squareSpoken(sq) : sq;
+  }
+  function mayuscula(t) { return t.charAt(0).toUpperCase() + t.slice(1); }
+
+  /* Qué se movió entre dos fotos del mismo tablero, en una frase (o null). */
+  function describirJugada(antes, despues) {
+    var sale = [], entra = [], cambia = [], piezasAntes = 0, piezasDespues = 0;
+    Object.keys(despues).forEach(function (sq) {
+      var a = antes[sq], d = despues[sq];
+      if (a) piezasAntes += 1;
+      if (d) piezasDespues += 1;
+      if (a === null || d === null || a === undefined || a === d) return;
+      if (a && !d) sale.push(sq);
+      else if (!a && d) entra.push(sq);
+      else cambia.push(sq);
+    });
+    var total = sale.length + entra.length + cambia.length;
+    if (!total || !piezasAntes || !piezasDespues) return null;
+    if (sale.length === 1 && entra.length + cambia.length === 1) {
+      var de = sale[0], a2 = entra[0] || cambia[0];
+      var pieza = despues[a2], movida = antes[de];
+      var frase = mayuscula(movida) + " de " + casillaDicha(de) + " a " + casillaDicha(a2);
+      if (cambia.length) frase += ", captura " + antes[a2];
+      if (/^pe[oó]n/.test(movida) && !/^pe[oó]n/.test(pieza)) frase += ", corona " + pieza.split(" ")[0];
+      return frase + ".";
+    }
+    if (sale.length === 2 && entra.length === 2 && !cambia.length) {
+      var rey = sale.filter(function (sq) { return /^rey\b/.test(antes[sq]); })[0];
+      if (rey) {
+        var color = antes[rey].replace(/^rey\s*/, "");
+        return "Enroque" + (color ? " de " + (/blanc/.test(color) ? "las blancas" : /negr/.test(color) ? "las negras" : color) : "") + ".";
+      }
+    }
+    if (sale.length === 2 && entra.length === 1 && !cambia.length) {
+      var llega = entra[0], vino = sale.filter(function (sq) { return antes[sq] === despues[llega]; })[0];
+      var comida = sale.filter(function (sq) { return sq !== vino; })[0];
+      if (vino && comida) {
+        return mayuscula(despues[llega]) + " de " + casillaDicha(vino) + " a " + casillaDicha(llega)
+          + ", captura " + antes[comida] + " al paso.";
+      }
+    }
+    if (!sale.length && entra.length === 1 && !cambia.length) {
+      return "Se puso " + despues[entra[0]] + " en " + casillaDicha(entra[0]) + ".";
+    }
+    return total > 2 ? "Cambió la posición del tablero." : null;
+  }
+
+  function revisarTableros(callar) {
+    temporizadorTableros = null;
+    var ahora = Date.now();
+    fotoDeTableros().forEach(function (despues, tablero) {
+      var antes = fotos.get(tablero);
+      fotos.set(tablero, despues);
+      if (callar || !antes || !hablando()) return;
+      if (!seVe(tablero) || tablero.getBoundingClientRect().width < TABLERO_MIN) return;
+      if (tablero.closest('[aria-hidden="true"]')) return;
+      var frase = describirJugada(antes, despues);
+      if (!frase || ahora - jugadaDichaEn < 1500) return;
+      decir(frase, false);
+    });
+  }
+
+  /* Espera a que el tablero termine de pintarse y a que una región que diga la
+     jugada tenga tiempo de decirla primero. */
+  function tableroCambio() {
+    if (!temporizadorTableros) temporizadorTableros = setTimeout(revisarTableros, 400);
+  }
+
   function alCambiar(registros) {
     if (!hablando()) return;
+    tableroCambio();
     registros.forEach(function (r) {
+      if (r.type === "attributes" && r.attributeName === "aria-label") return;   // una casilla que cambia de pieza: la mira revisarTableros
       if (r.type === "attributes") {
         /* Algo que aparece o desaparece (hidden, la clase "hidden"): cuentan las
            regiones de adentro y la región que lo contiene. */
@@ -177,6 +305,7 @@ window.VozPagina = (function () {
     raiz.querySelectorAll(REGION).forEach(function (reg) {
       ultimo.set(reg, visible(reg) ? limpio(reg.textContent) : "");
     });
+    revisarTableros(true);
   }
 
   /* Se empieza a escuchar cuando la página ya se ve: `#app` se destapa después
@@ -196,15 +325,16 @@ window.VozPagina = (function () {
     tomarFoto(raiz);
     var empezo = Date.now();
     observador = new MutationObserver(function (registros) {
-      if (Date.now() - empezo < CALMA_AL_CARGAR) { tomarFoto(raiz); return; }
+      /* Con la voz apagada no se mira nada: al encenderla se toma la foto. */
+      if (Date.now() - empezo < CALMA_AL_CARGAR) { if (hablando()) tomarFoto(raiz); return; }
       alCambiar(registros);
     });
     observador.observe(raiz, {
       subtree: true, childList: true, characterData: true,
-      attributes: true, attributeFilter: ["hidden", "class"],
+      attributes: true, attributeFilter: ["hidden", "class", "aria-label"],
     });
     /* Lo que terminó de llegar justo en la calma también es parte de la página. */
-    setTimeout(function () { tomarFoto(raiz); }, CALMA_AL_CARGAR + 50);
+    setTimeout(function () { if (hablando()) tomarFoto(raiz); }, CALMA_AL_CARGAR + 50);
   }
 
   /* `boton`: el elemento del botón (o su id). `opts.claseTexto` le pone una

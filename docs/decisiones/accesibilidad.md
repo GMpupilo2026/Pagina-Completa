@@ -584,6 +584,26 @@ hacer nada.
   región que cambia solo en los números (una cuenta atrás) se dice como mucho
   cada 10 s; lo que ya estaba al cargar no se dice: se espera a que `#app` se
   vea, y lo que aparece en el primer segundo y medio cuenta como página.
+- **También dice las jugadas del tablero**, de cualquier tablero: la jugada
+  propia hecha con clics, la del rival en Juegos, los ejemplos que avanzan en un
+  artículo. No se le pidió a cada tablero que avise: cada casilla ya dice en su
+  `aria-label` qué hay en ella (es lo que lee el lector al recorrerla), y
+  `js/voz-pagina.js` compara esa foto antes y después de un cambio: «Caballo
+  blanco de gustav 1 a felix 3», «…, captura peón negro», «Enroque de las
+  blancas», «…, corona dama», «… al paso». Un tablero nuevo que etiquete sus
+  casillas, como debe, habla solo.
+  - **Lo que el tablero oculta tampoco se dice**, porque su casilla tampoco lo
+    cuenta (las piezas ocultas de la clase, «oculta» en las variantes). Pasar de
+    todas las piezas a ninguna, o volver a mostrarlas, no es una jugada.
+  - **Si un aviso ya dijo la jugada, el tablero se calla**: «Se jugó…»,
+    «Jugaste…», «El motor jugó…». Sin eso la jugada del profe se oía dos veces.
+    Ojo con la regla: en JavaScript la «ó» no cuenta como letra para `\b`, así
+    que `/jugó\b/` no calza nunca; va con `(?![a-záéíóúñ])`.
+  - **Las miniaturas no hablan** (menos de 180 px de ancho): en el panel del
+    profe hay una por alumno y se oirían todas a la vez.
+  - Un tablero cuyas casillas no dicen qué hay (`js/ejercicio-tablero.js`,
+    `js/tablero-pregunta.js`) no se puede leer así; hoy van en páginas con su
+    propia voz o sin jugadas de otro.
 - **No sale donde ya hay un botón de voz** (`#speech-toggle-btn`, `#btn-voz`):
   esas páginas dicen cada jugada a su manera, y dos botones para lo mismo es uno
   de más. La preferencia es la misma (`oscarSpeechMode_v1`) en todos lados.
@@ -598,7 +618,9 @@ clase-voz`.** `verificar-voz-pagina.js` comprueba que el botón esté en la raí
 en subcarpetas (la ruta de `js/` sale de dónde se cargó `adaptive-mode.js`), que
 no esté donde hay voz propia, que el encabezado no se salga en el celular, y qué
 dice y qué no (apagada, un aviso nuevo, el cartel repetido, la caja nueva, el
-panel escondido, la cuenta atrás, lo que estaba al cargar). Está probado que
-falla de verdad: sin mirar el botón propio, sin mirar lo que llega entero y sin
-la regla de los números salta cada uno.
+panel escondido, la cuenta atrás, lo que estaba al cargar), y las jugadas de un
+tablero de prueba (la jugada, la captura, el enroque, la coronación, la
+miniatura, las piezas ocultas, el aviso que ya la dijo). Está probado que falla
+de verdad: sin mirar el botón propio, sin mirar lo que llega entero, sin la
+regla de los números y con el tablero callado salta cada uno.
 
