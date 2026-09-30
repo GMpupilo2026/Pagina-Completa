@@ -48,16 +48,36 @@ lista, y el resto se acomoda solo.
     nuevo le pondría a la profesora un encabezado que habla de su profesor**,
     así que la regla de "a quien da clase ninguna tarjeta le habla de «tu
     profesor»" vale ahora también para los rótulos, y la prueba los mira.
-- **Dentro de un grupo el orden también dice algo.** En "Aprender" va primero
-  lo que se HACE (Entrenamiento), después lo que se mira de un vistazo para
-  repasarlo (Estudio), después el curso completo y al final la lectura: Cursos
-  estaba primero y es lo más largo de los cuatro, así que quien entra a
-  practicar veinte minutos tenía delante lo que menos se parece a eso. En
+- **Al alumno, el entrenamiento se le abre en el panel mismo** (ver «El
+  alumno ve el entrenamiento abierto», abajo). A quien da clase, "Aprender"
+  sigue siendo Entrenamiento, Estudio, Cursos y Artículos. En
   "Jugar y competir" va primero donde se juega contra otra persona (Juegos, y
   Competir, que es retar a quien está en línea y las listas de partidas; ver
   «Competir: retar y las listas de partidas tienen su propia página» en
   `juegos-y-torneos.md`) y al final el bot. Torneos y TV en vivo ya no tienen
   tarjeta: se entra a los dos desde Competir.
+- **El alumno ve el entrenamiento abierto.** Lo pidió así el dueño de la
+  Academia: con dos tarjetas genéricas (Entrenamiento y Estudio), el alumno
+  tenía que entrar para saber qué había adentro. Ahora, después de "Lo que te
+  pone tu profesor", van seis grupos:
+  - **Aprender**: las cuatro categorías de fichas de Estudio (Aperturas,
+    Defensas, Táctica, Conceptos), Aprende (las lecciones), Desafíos y
+    Artículos.
+  - **Estudiar**: Cursos y Repasar mis clases, lo que se estudia con el profe.
+  - **Entrenamiento básico / intermedio / avanzado**: las páginas del hub,
+    por escalón.
+  - **Mejorar por habilidades**: una tarjeta por cada Tipo de entrenamiento,
+    sacadas de `js/tipos-catalogo.js` (la única copia: un tipo nuevo aparece
+    solo). Cada una abre su ficha (`entreno/tipos.html#<id>`).
+
+  Cada ficha de Estudio abre **solo su categoría** con `?cat=<id>`
+  (`js/entreno-estudio.js`), con "Ver todas las fichas" para soltarla; una
+  categoría que no existe cae a todas. Las tarjetas nuevas son `soloAlumno`:
+  el panel docente (`PANEL_DOCENTE`) entra todavía por las dos puertas de
+  siempre, que están en la lista con `soloDocente` y al alumno se le QUITAN
+  (`ordenarPanelDocente()`), no se esconden. El hub `entreno/index.html` sigue
+  existiendo: es donde vive «Hoy te toca» y adonde llevan las migas de cada
+  página de entrenamiento.
 - **"Logros" está en "Tu cuenta"**, que va en este orden: Configuración,
   Informes, Logros y, solo al alumnado, "¿Cómo van tus clases?". Lo pidió así
   el dueño de la Academia. "TV en vivo" estuvo ahí un tiempo y pasó a Competir,
