@@ -833,6 +833,8 @@ window.PreparacionMotor = {
     ok("el panel dice qué se repite y manda a practicarlo", !!lineaTema && /Lo que más se repite en tus errores: clavadas \(1 de 1\)/.test(lineaTema[0]) && lineaTema[1] === "temas.html?tema=pin", JSON.stringify(lineaTema));
     ok("la que no se puede reproducir también queda como revisada (no se vuelve a intentar)", Object.keys(guardado.vistas).sort().join() === "juego:g-buena,juego:g-tablero", JSON.stringify(guardado.vistas));
     ok("la de otra variante, la ajena y la que sigue en curso ni se piden", !Object.keys(guardado.vistas).some((k) => /otra|ajena|curso/.test(k)));
+    const lineaAp = await page.evaluate(() => { const p = [...document.querySelectorAll("#tipo-extra p")].find((x) => /en la apertura/.test(x.textContent)); return p ? [p.textContent, p.querySelector("a") && p.querySelector("a").getAttribute("href")] : null; });
+    ok("la ficha cuenta los errores de la apertura y manda a la línea por la que pasan", !!lineaAp && /^1 de tus errores fue en la apertura \(las primeras 10 jugadas\)\. Repasar «Celada Blackburne» en Aperturas →$/.test(lineaAp[0]) && lineaAp[1] === "aperturas.html?linea=blackburne", JSON.stringify(lineaAp));
     const nivel1 = await page.textContent("#niveles li:first-child");
     ok("el nivel 1 ya tiene su ejercicio", /0 de 1 resueltos/.test(nivel1), nivel1);
     // Otra vez: no hay nada nuevo.
@@ -852,6 +854,11 @@ window.PreparacionMotor = {
     ok("una buena: con un error, dos estrellas", /Esa es buena/.test(t) && (await estrellas(page))["errores:" + ej[0].id] === 2, t + " " + JSON.stringify(await estrellas(page)));
     ok("y cuenta qué pasó en la partida", /En tu partida jugaste Cxe5 y la evaluación pasó de \+0,2 a −3,0/.test(await page.textContent("#explicacion")), await page.textContent("#explicacion"));
     ok("y qué le hicieron, con el enlace para practicarlo", /Lo que te hicieron: Clavada/.test(await page.textContent("#explicacion")) && (await page.getAttribute('#explicacion a[href^="temas.html"]', "href")) === "temas.html?tema=pin");
+    // Jugada 4 de la partida: es de la apertura, y es la celada Blackburne del
+    // banco de Aperturas (una línea de las negras que espera justo Cxe5).
+    ok("es un error de la apertura: cayó en la celada Blackburne, con el enlace a estudiarla",
+      /Caíste en una celada conocida: «Celada Blackburne»/.test(await page.textContent("#explicacion")) && (await page.getAttribute('#explicacion a[href^="aperturas.html"]', "href")) === "aperturas.html?linea=blackburne",
+      await page.textContent("#explicacion"));
     ok("sin errores en consola", !errores.length, errores.join(" | "));
     await ctx.close();
   }
@@ -894,6 +901,20 @@ window.PreparacionMotor = {
       await page.click('#tipo-extra [role="status"] a');
       await page.waitForSelector("#vista-juego:not(.hidden) #jugada-input");
       await mismaPosicion(page, fens[6], "el enlace abre la posición del error");
+      /* Limpio a la primera: en cualquier otro tipo no entraría a «Repasar
+         fallados»; un error de partida sí (ya se falló una vez, jugando). */
+      await page.fill("#jugada-input", "c3");
+      await page.press("#jugada-input", "Enter");
+      await esperarEstado(page, /buena/);
+      const cola = await page.evaluate(() => {
+        const e = JSON.parse(localStorage.getItem("entreno_tipos_repaso_v1") || "{}");
+        const f = e["errores:juego-g-pedida-6"];
+        const d = new Date(); d.setDate(d.getDate() + 1);
+        const man = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+        return f ? { vence: f.vence === man, fuera: !!f.fuera, racha: f.limpiosSeguidos } : null;
+      });
+      ok("limpio a la primera, igual entra al repaso y vuelve mañana", !!cola && cola.vence && !cola.fuera && cola.racha === 1, JSON.stringify(cola));
+      ok("y se le dice cuándo vuelve", /Vuelve a salir en «Repasar fallados» mañana/.test(await page.textContent("#explicacion")), await page.textContent("#explicacion"));
       ok("sin errores en consola", !errores.length, errores.join(" | "));
       await ctx.close();
     }
@@ -902,6 +923,50 @@ window.PreparacionMotor = {
       await page.waitForFunction(() => /Revisé|ya estaba|No encontré|No se pudieron/.test((document.querySelector('#tipo-extra [role="status"]') || {}).textContent || ""), null, { timeout: 15000 }).catch(() => {});
       ok("una partida que no es suya no se encuentra (el doble filtra de verdad)", /No encontré esa partida/.test(await aviso(page)), await aviso(page));
       ok("y no se marca nada como revisado", (await page.evaluate(() => localStorage.getItem("errores_analizadas_v1"))) === null);
+      ok("sin errores en consola", !errores.length, errores.join(" | "));
+      await ctx.close();
+    }
+
+    console.log("\n=== Traer las partidas de Lichess ===");
+    {
+      /* Lichess de mentira: la misma partida (la alumna, PepeRojas, con
+         blancas), una de Chess960 que no se revisa, y un usuario que no existe. */
+      const et = (o) => Object.entries(o).map(([k, v]) => "[" + k + ' "' + v + '"]').join("\n");
+      const cuerpo = JUGADAS.map((s, i) => (i % 2 === 0 ? (i / 2 + 1) + ". " : "") + s).join(" ") + " 0-1";
+      const PGN = et({ Event: "Rated blitz", Site: "https://lichess.org/AbCd1234", UTCDate: "2026.09.20", UTCTime: "15:00:00", White: "PepeRojas", Black: "rival", Variant: "Standard" }) + "\n\n" + cuerpo + "\n\n" +
+        et({ Event: "Casual Chess960", Site: "https://lichess.org/Chs96000", UTCDate: "2026.09.21", UTCTime: "15:00:00", White: "PepeRojas", Black: "rival", Variant: "Chess960" }) + "\n\n" + cuerpo + "\n";
+      const pedidos = [];
+      const prepararWeb = async (ctx) => {
+        await preparar(ctx);
+        await ctx.route("https://lichess.org/api/games/user/**", (r) => {
+          pedidos.push(r.request().url());
+          if (/\/NoExiste\?/.test(r.request().url())) return r.fulfill({ status: 404, body: "" });
+          return r.fulfill({ status: 200, contentType: "application/x-chess-pgn", headers: { "Access-Control-Allow-Origin": "*" }, body: PGN });
+        });
+      };
+      const { page, ctx, errores } = await abrir(browser, true, "#errores", prepararWeb);
+      await page.waitForSelector("#vista-tipo:not(.hidden) #tipo-extra summary");
+      ok("el lector de PGN y el descargador no se cargan hasta que se piden", await page.evaluate(() => !window.PreparacionAnalisis && !window.PreparacionDescarga));
+      await page.click("#tipo-extra summary");
+      await page.getByLabel("Tu usuario").fill("NoExiste");
+      await page.getByRole("button", { name: "Traer y revisar" }).click();
+      await page.waitForFunction(() => /No existe|Listo|No se pudieron/.test(document.querySelector('#tipo-extra [role="status"]').textContent), null, { timeout: 15000 }).catch(() => {});
+      ok("un usuario que no existe se dice en palabras", /No existe el usuario «NoExiste» en Lichess/.test(await aviso(page)), await aviso(page));
+      await page.click("#tipo-extra summary");
+      await page.getByLabel("Tu usuario").fill("PepeRojas");
+      await page.getByRole("button", { name: "Traer y revisar" }).click();
+      await page.waitForFunction(() => /Listo|No existe|No encontré|No se pudieron/.test(document.querySelector('#tipo-extra [role="status"]').textContent), null, { timeout: 20000 }).catch(() => {});
+      ok("revisa su partida de Lichess y saca el error", /Listo: se revisó 1 partida de Lichess y salió 1 ejercicio nuevo/.test(await aviso(page)), await aviso(page));
+      const ultimo = new URL(pedidos[pedidos.length - 1] || "https://x/");
+      ok("a Lichess solo se le pide el usuario, con las últimas 30", ultimo.pathname === "/api/games/user/PepeRojas" && ultimo.searchParams.get("max") === "30", ultimo.href);
+      const g2 = await page.evaluate(() => ({ vistas: Object.keys(JSON.parse(localStorage.getItem("errores_analizadas_v1") || "{}")), ej: Object.values(JSON.parse(localStorage.getItem("errores_propios_v1") || "{}")) }));
+      ok("queda revisada con el id de Lichess; la de Chess960 ni se mira", JSON.stringify(g2.vistas) === JSON.stringify(["lichess:AbCd1234"]), JSON.stringify(g2.vistas));
+      ok("el ejercicio es la posición del error y dice de dónde salió", g2.ej.length === 1 && g2.ej[0].fen === fens[6] && g2.ej[0].id === "lichess-AbCd1234-6" && /^Partida de Lichess del /.test(g2.ej[0].resumen), JSON.stringify(g2.ej));
+      ok("el usuario queda escrito para la próxima vez", (await page.getByLabel("Tu usuario").inputValue()) === "PepeRojas");
+      await page.click("#tipo-extra summary");
+      await page.getByRole("button", { name: "Traer y revisar" }).click();
+      await page.waitForFunction(() => /ya estaba revisada|Listo|No se pudieron/.test(document.querySelector('#tipo-extra [role="status"]').textContent), null, { timeout: 15000 }).catch(() => {});
+      ok("otra vez: no revisa lo ya revisado", /^Tu última partida de Lichess ya estaba revisada\. Juega más y vuelve\.$/.test(await aviso(page)), await aviso(page));
       ok("sin errores en consola", !errores.length, errores.join(" | "));
       await ctx.close();
     }
