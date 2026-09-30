@@ -1233,14 +1233,16 @@
         // tenía el techo invisible de siempre: PostgREST corta la respuesta a
         // partir de cierta cantidad de filas y no da ningún error, así que a un
         // alumno con bastante entrenamiento encima el panel le pintaba un número
-        // que ya no subía. informes_resumen_alumnos() ya trae esos tres contados
-        // por la base y, siendo SECURITY INVOKER, a un alumno le devuelve
-        // únicamente su propio renglón — la misma función que usa informes.html,
-        // así que la cuenta tampoco queda escrita dos veces.
+        // que ya no subía. Los cuenta la base: mi_entreno_resumen(), SECURITY
+        // INVOKER, con las mismas tres cuentas de informes_resumen_alumnos()
+        // (verificar-mi-entreno.js revisa que no se separen). Antes se usaba esa
+        // misma, pero arma el renglón de todo el grupo —a un alumno, también el
+        // de sus compañeros— para usar uno: 7 s en hora pico, y con la base
+        // cargada se cortaba y el panel no terminaba de cargar.
         async function loadEntrenoProgress() {
-            const { data, error } = await sb.rpc("informes_resumen_alumnos");
+            const { data, error } = await sb.rpc("mi_entreno_resumen");
             if (error) return;   // deja los guiones en vez de romper el resto del panel
-            const fila = (data || []).find((f) => f.id === profile.id);
+            const fila = (data || [])[0];
             if (!fila) return;
             document.getElementById("entreno-puzzles").textContent = String(fila.puzzles || 0);
             document.getElementById("entreno-lessons").textContent = String(fila.lecciones || 0);
@@ -2330,6 +2332,48 @@
             setTimeout(cerrarPw, 1200);
         });
 
+        /* ---------- La carga no se queda girando para siempre ----------
+           Con la base saturada (hora pico, statement timeout) cada consulta
+           tardaba hasta que la cortaban, y el panel no aparecía hasta que
+           terminaba la última: «Cargando tu panel…» durante minutos. Ahora el
+           panel se muestra cuando llega todo O cuando pasa el tope, lo que
+           ocurra primero; lo que llegue tarde se pinta igual en su lugar, y lo
+           que falle deja su guion. Un error en una parte no tumba las demás. */
+        const TOPE_CARGA_MS = 6000;
+        function sinEsperarDeMas(...promesas) {
+            const todas = Promise.all(promesas.map((p) => Promise.resolve(p).catch((e) => console.error(e))));
+            return Promise.race([todas, new Promise((r) => setTimeout(r, TOPE_CARGA_MS))]);
+        }
+
+        /* Si ni siquiera llegó lo imprescindible (la sesión, el perfil, las
+           clases del alumno), se dice que está tardando y se ofrece volver a
+           intentar, en vez de dejar la rueda sola. */
+        let panelMostrado = false;
+        function avisarCargaLenta(texto) {
+            if (panelMostrado) return;
+            if (texto) document.getElementById("loading-lento-texto").textContent = texto;
+            document.getElementById("loading-lento").hidden = false;
+        }
+        const avisoLento = setTimeout(() => avisarCargaLenta(), 15000);
+        document.getElementById("loading-reintentar").addEventListener("click", () => location.reload());
+
+        function mostrarPanel() {
+            if (panelMostrado) return;
+            panelMostrado = true;
+            clearTimeout(avisoLento);
+            document.getElementById("loading").classList.add("hidden");
+            document.getElementById("app").classList.remove("hidden");
+            /* «Cargando tu panel…» desaparece y, sin esto, el lector de
+               pantalla no dice nada: quien no ve la página no sabe que ya
+               cargó. El foco va al título —que dice de quién es el panel—,
+               pero solo si nadie lo movió antes: arrancarle el foco a quien ya
+               estaba navegando sería peor que el silencio. */
+            if (!document.activeElement || document.activeElement === document.body) {
+                document.getElementById("panel-titulo").focus({ preventScroll: true });
+            }
+            abrirBusquedaPedida();
+        }
+
         async function init() {
             const { data } = await sb.auth.getSession();
             session = data.session;
@@ -2535,13 +2579,8 @@
                 renderTiles();
                 document.getElementById("registro-clases").hidden = true;
                 document.getElementById("progreso-supervisor").hidden = false;
-                await cargarPanelAdmin();
-                document.getElementById("loading").classList.add("hidden");
-                document.getElementById("app").classList.remove("hidden");
-                if (!document.activeElement || document.activeElement === document.body) {
-                    document.getElementById("panel-titulo").focus({ preventScroll: true });
-                }
-                abrirBusquedaPedida();
+                await sinEsperarDeMas(cargarPanelAdmin());
+                mostrarPanel();
                 return;
             }
 
@@ -2554,13 +2593,8 @@
                 renderTiles();
                 document.getElementById("registro-clases").hidden = true;
                 document.getElementById("progreso-supervisor").hidden = false;
-                await Promise.all([cargarPanelSupervisor(), cargarUrgente(URGENTE_SUPERVISOR)]);
-                document.getElementById("loading").classList.add("hidden");
-                document.getElementById("app").classList.remove("hidden");
-                if (!document.activeElement || document.activeElement === document.body) {
-                    document.getElementById("panel-titulo").focus({ preventScroll: true });
-                }
-                abrirBusquedaPedida();
+                await sinEsperarDeMas(cargarPanelSupervisor(), cargarUrgente(URGENTE_SUPERVISOR));
+                mostrarPanel();
                 return;
             }
 
@@ -2580,7 +2614,7 @@
                 document.querySelector("#progreso-profe h2").textContent = "Su semana";
                 document.getElementById("registro-clases").hidden = true;
                 document.getElementById("progreso-profe").hidden = false;
-                await cargarPanelProfe();
+                await sinEsperarDeMas(cargarPanelProfe());
                 /* Si está dando clase ahora, se puede mirar en vivo
                    (sesion.html?observar=<id>, solo lectura). */
                 const { data: abierta } = await sb.from("class_sessions").select("id")
@@ -2593,12 +2627,7 @@
                     vivo.textContent = "🔴 Está dando clase ahora: mirar la clase en vivo";
                     document.getElementById("profe-clases").appendChild(vivo);
                 }
-                document.getElementById("loading").classList.add("hidden");
-                document.getElementById("app").classList.remove("hidden");
-                if (!document.activeElement || document.activeElement === document.body) {
-                    document.getElementById("panel-titulo").focus({ preventScroll: true });
-                }
-                abrirBusquedaPedida();
+                mostrarPanel();
                 return;
             }
             // El equipo docente no pasa por mis_clases() —esos son SUS
@@ -2610,8 +2639,11 @@
             if (window.Notificaciones) Notificaciones.atenderRenovaciones();
             // El aviso de partida asignada (js/juego-aviso.js) se autoarranca solo
             // en todas las páginas de la Academia — ver herramientas/academia-cabecera.py.
-            await refreshSessionStatus();
-            await cargarSesiones();
+            /* Todo lo de abajo va A LA PAR y con tope (sinEsperarDeMas): son
+               consultas independientes, y en serie —como estaban— una base
+               lenta sumaba el tiempo de cada una antes de mostrar nada. Lo que
+               llega después del tope se pinta igual, en su lugar. */
+            const partes = [refreshSessionStatus(), cargarSesiones()];
 
             /* Dos resúmenes distintos, no uno solo con los números del alumno
                para todo el mundo. Quien da clase veía acá SUS ejercicios 4×4
@@ -2624,40 +2656,37 @@
                para los profesores. */
             if (isTeacher || profile.is_admin) {
                 document.getElementById("progreso-profe").hidden = false;
-                await Promise.all([cargarPanelProfe(), cargarUrgente(clavesUrgenteDocente(), { soloSiHayAlgo: true })]);
+                partes.push(cargarPanelProfe(), cargarUrgente(clavesUrgenteDocente(), { soloSiHayAlgo: true }));
             } else {
                 document.getElementById("progreso-alumno").hidden = false;
-                // Van en paralelo: son cinco consultas independientes y en
-                // serie se nota al abrir el panel desde el celular.
                 /* La racha se pide UNA vez y la promesa se reparte: la usan
                    el número de "Tu progreso" y el primer paso, que necesita
                    saber si ya resolvió algo. Dos llamadas serían dos veces la
                    misma consulta para pintar el mismo dato. */
                 const rachaP = window.Logros.cargar();
-                await Promise.all([
-                    ResumenClase.pintarUltimaClaseDelAlumno(sb, document.getElementById("ultima-clase"), profile.id).catch((e) => console.error(e)),
-                    PuntosClase.pintarDelMesDelAlumno(sb, document.getElementById("puntos-mes")).catch((e) => console.error(e)),
+                partes.push(
+                    ResumenClase.pintarUltimaClaseDelAlumno(sb, document.getElementById("ultima-clase"), profile.id),
+                    PuntosClase.pintarDelMesDelAlumno(sb, document.getElementById("puntos-mes")),
                     cargarPendientes(rachaP),
                     cargarSeguirCurso(),
                     loadEntrenoProgress(),
                     loadTacticsRecord(),
                     loadRachaWidget(rachaP),
-                ]);
+                );
             }
+            await sinEsperarDeMas(...partes);
             subscribeSessions();
-
-            document.getElementById("loading").classList.add("hidden");
-            document.getElementById("app").classList.remove("hidden");
-            /* «Cargando tu panel…» desaparece y, sin esto, el lector de
-               pantalla no dice nada: quien no ve la página no sabe que ya
-               cargó. El foco va al título —que dice de quién es el panel—,
-               pero solo si nadie lo movió antes: arrancarle el foco a quien ya
-               estaba navegando sería peor que el silencio. */
-            if (!document.activeElement || document.activeElement === document.body) {
-                document.getElementById("panel-titulo").focus({ preventScroll: true });
-            }
-            abrirBusquedaPedida();
+            mostrarPanel();
         }
 
-        init();
+        init().catch((e) => {
+            /* Un error que nadie atajó a mitad de la carga dejaba la rueda
+               girando para siempre, sin explicación ni salida. Si ya se
+               alcanzó a armar el panel, se muestra con lo que haya; si no, se
+               ofrece volver a intentar. Se vuelve a lanzar para que siga
+               llegando a Sentry (js/errores.js escucha los rechazos sueltos). */
+            if (profile) mostrarPanel();
+            else avisarCargaLenta("No se pudo cargar tu panel.");
+            throw e;
+        });
     

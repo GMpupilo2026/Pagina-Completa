@@ -33,6 +33,12 @@ const mesAtras = (atras, diaDelMes) => {
   const d = new Date(Date.UTC(HOY.getUTCFullYear(), HOY.getUTCMonth() - atras + (diaDelMes ? 0 : 1), diaDelMes || 0));
   return d.toISOString().slice(0, 10);
 };
+/* c-2 vence HOY, pero siempre ANTES que c-1 (el último día del mes): la lista
+   va por vencimiento, del más nuevo al más viejo, y el último día de cada mes
+   los dos caían en la misma fecha y el orden entre ellos quedaba al azar. La
+   prueba fallaba solo esos días, por el almanaque y no por la página. */
+const VENCE_C2 = HOY_ISO < mesAtras(0) ? HOY_ISO
+  : new Date(Date.parse(HOY_ISO) - 86400000).toISOString().slice(0, 10);
 
 const ANA   = { id: "u-ana",   full_name: "Ana Rojas",  email: "ana@x.cr" };
 const BRUNO = { id: "u-bruno", full_name: "Bruno Mena", email: "bruno@x.cr" };
@@ -54,12 +60,12 @@ const SUSCRIPCIONES = [
 // Las cuatro situaciones, ya calculadas por la base. La página solo las pinta.
 const COBROS = [
   { id: "c-1", student_id: "u-ana",   consecutivo: "AI-2026-000001", concepto: "Mensualidad · setiembre 2026", periodo_inicio: "2026-09-01", periodo_fin: "2026-09-30", monto: 22500, pagado: 0,     saldo: 22500, moneda: "CRC", vence: mesAtras(0), situacion: "pendiente", dias_atraso: 0,  estado: "emitido" },
-  { id: "c-2", student_id: "u-ana",   consecutivo: "AI-2026-000002", concepto: "Mensualidad · agosto 2026",    periodo_inicio: "2026-08-01", periodo_fin: "2026-08-31", monto: 22500, pagado: 10000, saldo: 12500, moneda: "CRC", vence: HOY_ISO, situacion: "vencido",   dias_atraso: 20, estado: "emitido" },
+  { id: "c-2", student_id: "u-ana",   consecutivo: "AI-2026-000002", concepto: "Mensualidad · agosto 2026",    periodo_inicio: "2026-08-01", periodo_fin: "2026-08-31", monto: 22500, pagado: 10000, saldo: 12500, moneda: "CRC", vence: VENCE_C2, situacion: "vencido",   dias_atraso: 20, estado: "emitido" },
   { id: "c-3", student_id: "u-bruno", consecutivo: "AI-2026-000003", concepto: "Mensualidad · agosto 2026",    periodo_inicio: "2026-08-01", periodo_fin: "2026-08-31", monto: 25000, pagado: 25000, saldo: 0,     moneda: "CRC", vence: mesAtras(1, 10), situacion: "pagado",    dias_atraso: 0,  estado: "emitido" },
   { id: "c-4", student_id: "u-bruno", consecutivo: "AI-2026-000004", concepto: "Mensualidad · julio 2026",     periodo_inicio: "2026-07-01", periodo_fin: "2026-07-31", monto: 25000, pagado: 0,     saldo: 25000, moneda: "CRC", vence: mesAtras(2, 10), situacion: "anulado",   dias_atraso: 0,  estado: "anulado" },
 ];
 const RESUMEN = [{ moneda: "CRC", cobrado_mes: 35000, pendiente: 22500, vencido: 12500, alumnos_morosos: 1 }];
-const MOROSOS = [{ student_id: "u-ana", alumno: "Ana Rojas", correo: "ana@x.cr", grupo: "7A", moneda: "CRC", deuda: 12500, cobros: 1, dias_atraso: 20, vence_mas_viejo: HOY_ISO }];
+const MOROSOS = [{ student_id: "u-ana", alumno: "Ana Rojas", correo: "ana@x.cr", grupo: "7A", moneda: "CRC", deuda: 12500, cobros: 1, dias_atraso: 20, vence_mas_viejo: VENCE_C2 }];
 
 function clienteFalso(perfil, cobrosVisibles) {
   return `
@@ -635,7 +641,7 @@ async function pruebaCoordinacion(browser) {
   igual("el CSV va con punto y coma", csv.split("\r\n")[0].split(";").length, 11);
   const filaAna = csv.split("\r\n").find((l) => l.indexOf("AI-2026-000002") !== -1);
   igual("la fila del cobro vencido", filaAna.split(";").slice(4, 11).join("|"),
-    "22500|10000|12500|CRC|" + HOY_ISO + "|Vencido|20");
+    "22500|10000|12500|CRC|" + VENCE_C2 + "|Vencido|20");
 
   if (errores.length) { console.log("  ✗ errores en la página: " + errores.join(" | ")); fallos += 1; }
   await page.close();

@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20260929213024
+# al-dia-con: 20260930001504
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -1177,6 +1177,7 @@ funcion  mes_en_palabras(p_periodo date)  invoker  anon=false  auth=true
 funcion  mes_es(d date)  invoker  anon=true  auth=true
 funcion  mi_acceso()  definer  anon=false  auth=true
 funcion  mi_enlace_diagnostico()  definer  anon=false  auth=true
+funcion  mi_entreno_resumen(p_alumno uuid)  invoker  anon=false  auth=true
 funcion  mi_gente(p_busqueda text, p_rol text, p_limite integer, p_desde integer)  invoker  anon=true  auth=true
 funcion  mi_grupo()  definer  anon=false  auth=true
 funcion  mi_marca_academia()  definer  anon=false  auth=true
