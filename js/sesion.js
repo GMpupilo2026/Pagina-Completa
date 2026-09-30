@@ -5648,11 +5648,7 @@
                 .subscribe();
             if (veLaPractica()) {
                 sb.channel("practice-games-changes:" + boardOwnerId)
-                    .on("postgres_changes", { event: "*", schema: "public", table: "practice_games" }, (payload) => {
-                        const row = (payload.new && payload.new.session_id) ? payload.new : payload.old;
-                        if (!latestPracticeSession || !row || row.session_id !== latestPracticeSession.id) return;
-                        loadPracticeGamesForSession(latestPracticeSession.id);
-                    })
+                    .on("postgres_changes", { event: "*", schema: "public", table: "practice_games" }, aplicarCambioDePractica)
                     .subscribe();
             } else if (!esObservador) {
                 // El alumno escucha SU partida solo por la ayuda que le manda el profe:
@@ -6070,7 +6066,43 @@
             grid.style.justifyContent = "center";
         }
 
+        // Cada jugada de un alumno (y cada respuesta del motor) es un UPDATE de su fila.
+        // Antes cada uno volvía a pedir la lista ENTERA con los perfiles: con 13 alumnos
+        // contra el motor, la pantalla del profe hizo 466 pedidos en 15 minutos, y junto
+        // con los paneles de la clase dejó la base sin CPU para todo el sitio (ver «La
+        // práctica no recarga la lista en cada jugada»). Ahora la fila del evento se pinta
+        // tal cual, mezclada con la que ya estaba: Realtime no manda las columnas grandes
+        // que no cambiaron (moves, ayuda), y el nombre viene de la primera carga. Solo se
+        // vuelve a pedir la lista cuando entra o sale un alumno.
+        let practicaEventos = 0;
+        function aplicarCambioDePractica(payload) {
+            const row = (payload.new && payload.new.session_id) ? payload.new : payload.old;
+            if (!latestPracticeSession || !row || row.session_id !== latestPracticeSession.id) return;
+            const entry = practiceStudentBoards[row.student_id];
+            if (payload.eventType === "UPDATE" && entry && entry.row && entry.row.id === row.id) {
+                entry.eventos = ++practicaEventos;
+                upsertPracticeStudentBoard(Object.assign({}, entry.row, row));
+                return;
+            }
+            recargarPracticasPronto(latestPracticeSession.id);
+        }
+
+        // Varias altas juntas (la clase entera arrancando la ronda) dan UNA consulta más,
+        // no una por alumno: mientras hay una en vuelo, las siguientes esperan y se juntan.
+        let practicaCargando = null, practicaPendiente = false;
+        function recargarPracticasPronto(sessionId) {
+            if (practicaCargando) { practicaPendiente = true; return; }
+            practicaCargando = loadPracticeGamesForSession(sessionId).finally(() => {
+                practicaCargando = null;
+                if (practicaPendiente && latestPracticeSession) {
+                    practicaPendiente = false;
+                    recargarPracticasPronto(latestPracticeSession.id);
+                }
+            });
+        }
+
         async function loadPracticeGamesForSession(sessionId) {
+            const desde = practicaEventos;
             const { data, error } = await sb.from("practice_games").select("*, profiles(full_name, email)").eq("session_id", sessionId).order("created_at");
             if (error) { console.error(error); return; }
             // La ronda pudo cerrarse (o cambiar) mientras esta consulta estaba en vuelo.
@@ -6079,6 +6111,10 @@
             const seen = new Set();
             for (const row of rows) {
                 seen.add(row.student_id);
+                // Si mientras la consulta viajaba llegó una jugada suya por Realtime, la
+                // fila de la consulta es más vieja: no la pisa.
+                const e = practiceStudentBoards[row.student_id];
+                if (e && e.row && e.row.id === row.id && (e.eventos || 0) > desde) continue;
                 upsertPracticeStudentBoard(row);
             }
             // Por si alguna fila se borró manualmente: quita su tarjeta de la grilla.

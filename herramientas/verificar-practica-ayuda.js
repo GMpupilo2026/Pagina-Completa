@@ -223,6 +223,61 @@ async function pruebaProfesor(browser) {
   igual("su presencia vuelve a no mirar a nadie", (await ultimoTrack(page) || {}).mirando_a, null);
   igual("el foco vuelve a su botón", await page.evaluate(() => document.activeElement && document.activeElement.classList.contains("practice-mini-mirar")), true);
 
+  // Cada jugada llega por Realtime y se pinta con esa fila: NO se vuelve a pedir la
+  // lista entera (con 13 alumnos eso dejó la base sin CPU). Ver «La práctica no
+  // recarga la lista en cada jugada» en docs/decisiones/clase-en-vivo.md.
+  await page.evaluate(() => {
+    window.__listasPedidas = 0;
+    const f = window.sb.from;
+    window.sb.from = (t) => {
+      const b = f(t);
+      if (t === "practice_games") { const s = b.select; b.select = function () { window.__listasPedidas += 1; return s.apply(this, arguments); }; }
+      return b;
+    };
+  });
+  const jugadas = [["e4", "e5", "Nf3", "Nc6"], ["e4", "e5", "Nf3", "Nc6", "Bc4"], ["e4", "e5", "Nf3", "Nc6", "Bc4", "Bc5"]];
+  for (const m of jugadas) {
+    await page.evaluate((mv) => {
+      // Como la manda Realtime: la fila sola, sin el perfil del join.
+      const g = Object.assign({}, window.__tablas.practice_games[0], { moves: mv, eval_cp: 80 });
+      delete g.profiles;
+      window.__cambioEnBase("practice_games", g);
+    }, m);
+  }
+  await page.waitForTimeout(300);
+  igual("tres jugadas no piden la lista de nuevo", await page.evaluate(() => window.__listasPedidas), 0);
+  igual("la miniatura pinta la última (alfil en c5)", await page.getAttribute('#practice-boards-grid [data-square="c5"]', "aria-label").then((s) => /alfil negro/.test(s || "")), true);
+  igual("y conserva el nombre, que no viene en el evento", await texto(page, "#practice-boards-grid .practice-mini-name"), NOMBRE);
+  cumple("la barra usa la evaluación nueva", /Va mejor el blanco/.test(await page.getAttribute("#practice-boards-grid .practice-mini-eval", "aria-label") || ""));
+  // Realtime no manda las columnas grandes que no cambiaron: sin «moves», se
+  // quedan las que ya estaban (no se vacía el tablero).
+  await page.evaluate(() => {
+    const g = window.__tablas.practice_games[0];
+    window.__cambioEnBase("practice_games", { id: g.id, session_id: g.session_id, student_id: g.student_id, eval_cp: -90 });
+  });
+  await page.waitForTimeout(200);
+  igual("un evento sin «moves» no borra sus jugadas", await page.getAttribute('#practice-boards-grid [data-square="c5"]', "aria-label").then((s) => /alfil negro/.test(s || "")), true);
+  cumple("pero sí pinta lo que cambió", /Va mejor el negro/.test(await page.getAttribute("#practice-boards-grid .practice-mini-eval", "aria-label") || ""));
+  // Un alumno que entra sí pide la lista (trae su nombre), y UNA sola vez aunque
+  // lleguen varios avisos juntos.
+  await page.evaluate(() => {
+    const b = { id: "g-3", session_id: "p-1", student_id: "u-beto", student_color: "b", fen: null, moves: [], status: "playing",
+      eval_cp: null, attempts: 1, reloj_ms: null, ayuda: null, created_at: new Date().toISOString(), profiles: { full_name: "Beto Mora", email: "beto@x.cr" } };
+    window.__tablas.practice_games.push(b);
+    const sinPerfil = Object.assign({}, b); delete sinPerfil.profiles;
+    window.__cambioEnBase("practice_games", sinPerfil, "INSERT");
+    window.__cambioEnBase("practice_games", sinPerfil, "INSERT");
+    window.__cambioEnBase("practice_games", sinPerfil, "INSERT");
+  });
+  await page.waitForFunction(() => document.querySelectorAll("#practice-boards-grid .practice-mini-name").length === 2, null, { timeout: 5000 }).catch(() => {});
+  igual("el que entra aparece con su nombre", await page.evaluate(() => [...document.querySelectorAll("#practice-boards-grid .practice-mini-name")].map((e) => e.textContent)), [NOMBRE, "Beto Mora"]);
+  cumple("tres avisos de alta piden la lista a lo sumo dos veces", await page.evaluate(() => window.__listasPedidas) <= 2,
+    await page.evaluate(() => window.__listasPedidas));
+  await page.evaluate(() => {
+    window.__tablas.practice_games = window.__tablas.practice_games.filter((g) => g.id !== "g-3");
+    window.sb.from = window.__fromOriginal;
+  });
+
   // Si la ronda termina mientras la mira, se deja de mirar.
   await page.click("#practice-boards-grid .practice-mini-mirar");
   cumple("se vuelve a abrir", await seVe(page, "#practica-mirar"));
