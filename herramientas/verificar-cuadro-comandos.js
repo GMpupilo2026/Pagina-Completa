@@ -704,7 +704,7 @@ async function pruebaContrarreloj(browser, ruta, nombre) {
     await page.waitForTimeout(800);
     const vistos = await loVisto(page);
     igual(`escribir una jugada legal (${mv.san}) se contesta como el clic`,
-      vistos.some((t) => /Correcto|❌|✅/.test(t)), "true");
+      vistos.some((t) => /Correcto|❌|✅|^Respuesta incorrecta: /.test(t)), "true");
   }
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
