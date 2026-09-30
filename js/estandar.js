@@ -108,6 +108,10 @@
             const bottomSeconds = liveTimeLeft(bottomColor);
             topEl.textContent = formatClock(topSeconds);
             bottomEl.textContent = formatClock(bottomSeconds);
+            /* De quién es cada reloj, dicho: "4:05" suelto no dice si es el tuyo o
+               el del rival, y quien no ve la pantalla no sabe cuál está arriba. */
+            rotularReloj(topEl, topColor, topSeconds);
+            rotularReloj(bottomEl, bottomColor, bottomSeconds);
             topEl.classList.remove("hidden");
             bottomEl.classList.remove("hidden");
             const LOW_SECONDS = 30;
@@ -116,6 +120,15 @@
                 el.classList.toggle("text-red-600", isLow);
                 el.classList.toggle("dark:text-red-400", isLow);
             });
+        }
+
+        function rotularReloj(el, color, segundos) {
+            const lado = color === "w" ? "blancas" : "negras";
+            const dueno = myColor ? (color === myColor ? "tu reloj" : "reloj del rival")
+                : "reloj de " + nameFor(color === "w" ? room.white_id : room.black_id);
+            const tiempo = window.JuegosBlind && JuegosBlind.tiempoDicho ? JuegosBlind.tiempoDicho(segundos) : formatClock(segundos);
+            const etiqueta = dueno.charAt(0).toUpperCase() + dueno.slice(1) + ", " + lado + ": " + tiempo;
+            if (el.getAttribute("aria-label") !== etiqueta) el.setAttribute("aria-label", etiqueta);
         }
 
         async function checkFlagFall() {
@@ -157,20 +170,17 @@
             }
         }
 
+        /* La pieza al coronar la pregunta js/coronacion.js, el mismo diálogo de
+           todos los tableros del sitio. Esta página tenía el suyo: cuatro botones
+           con solo el dibujo de la pieza (el lector de pantalla decía "botón" o
+           el nombre del carácter Unicode, "black chess queen"), sin rol de
+           diálogo y sin llevar el foco adentro, así que con el teclado no había
+           forma de llegar a él y la jugada se quedaba a medias. El de
+           Coronacion es un <dialog> modal con el nombre escrito en cada botón,
+           el foco en la dama, Escape para cancelar y el foco de vuelta al cerrar. */
         function showPromotionPicker(from, to, callback) {
-            const modal = document.getElementById("promotion-modal");
-            const optionsEl = document.getElementById("promotion-options");
-            optionsEl.innerHTML = "";
-            let resolved = false;
-            [["q", "♛"], ["r", "♜"], ["b", "♝"], ["n", "♞"]].forEach(([type, glyph]) => {
-                const btn = document.createElement("button");
-                btn.type = "button";
-                btn.className = "w-12 h-12 text-3xl rounded-lg border-2 border-brand-200 dark:border-brand-700 hover:border-accent-500 bg-white dark:bg-brand-800 transition-colors";
-                btn.textContent = glyph;
-                btn.addEventListener("click", () => { if (resolved) return; resolved = true; modal.classList.add("hidden"); callback(type); });
-                optionsEl.appendChild(btn);
-            });
-            modal.classList.remove("hidden");
+            if (!window.Coronacion) { callback("q"); return; }
+            Coronacion.pedir(myColor || board.game.turn(), callback);
         }
 
         // Triple repetición: el tablero se recarga desde la FEN con cada jugada del
@@ -319,6 +329,21 @@
                     tablero: document.getElementById("board"),
                     nombreTablero: "Tablero de la partida",
                     tryMove: (text) => board.tryMove(text),
+                    miColor: () => myColor,
+                    // "reloj" / "tiempo" en el recuadro, y los avisos de 30 y 10 segundos.
+                    reloj: () => {
+                        if (!room || room.initial_seconds == null) return null;
+                        const corre = room.status === "playing" && bothReady(room) && room.clock_updated_at ? board.game.turn() : null;
+                        return { blancas: liveTimeLeft("w"), negras: liveTimeLeft("b"), miColor: myColor, corre };
+                    },
+                    // "última jugada". Las jugadas se guardan desde la posición inicial,
+                    // así que una lista de largo impar terminó en una jugada de blancas.
+                    ultimaJugada: () => {
+                        const jugadas = (room && room.moves) || [];
+                        if (!jugadas.length) return null;
+                        const color = jugadas.length % 2 ? "w" : "b";
+                        return { san: jugadas[jugadas.length - 1], color, oculta: false };
+                    },
                     getVisibleGame: () => board.game,
                 });
             }

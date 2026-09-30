@@ -111,7 +111,7 @@
             <div class="text-center mb-8">
                 <span class="inline-block bg-accent-500/20 text-accent-700 dark:text-accent-400 text-sm font-semibold px-4 py-1.5 rounded-full mb-4">🎮 Sin cuenta, sin contraseña — solo tu nombre</span>
                 <h1 class="font-serif text-3xl md:text-4xl font-bold text-brand-800 dark:text-white mb-2"><span aria-hidden="true">🏆</span> ¡Te reto!</h1>
-                <p class="text-brand-500 dark:text-brand-300 max-w-xl mx-auto">Encuentra la única jugada correcta en 10 segundos. Cada acierto suma tu racha; un fallo o quedarte sin tiempo la reinicia a cero. ¿Hasta dónde llegas?</p>
+                <p class="text-brand-500 dark:text-brand-300 max-w-xl mx-auto">Encuentra la única jugada correcta en 10 segundos. Cada acierto suma tu racha; un fallo o quedarte sin tiempo la reinicia a cero. ¿Hasta dónde llegas? En Modo Adaptado tienes 60 segundos por ejercicio.</p>
             </div>
 
             <div class="grid lg:grid-cols-[1fr_320px] gap-6 items-start">
@@ -160,7 +160,7 @@
 
                         <!-- El cuadro de comandos del Modo Adaptado (js/cuadro-comandos.js). -->
                         <div id="q-comandos"></div>
-                        <p id="result-text" class="text-center text-sm mt-4 min-h-[1.5em] text-brand-600 dark:text-brand-300"></p>
+                        <p id="result-text" role="status" aria-atomic="true" class="text-center text-sm mt-4 min-h-[1.5em] text-brand-600 dark:text-brand-300"></p>
                         <p id="milestone-text" class="text-center text-base font-bold mt-1 min-h-[1.5em] text-accent-700 dark:text-accent-400"></p>
 
                         <div class="text-center mt-4">
@@ -207,6 +207,8 @@
     <script src="js/board-drag.js"></script>
     <script src="js/blind-notation.js"></script>
     <script src="js/chess-move-parser.js"></script>
+    <script src="js/tablero-accesible.js"></script>
+    <script src="js/comandos-tablero.js"></script>
     <script src="js/cuadro-comandos.js"></script>
     <script src="data/puzzle-rush-data.js"></script>
     <script src="js/main.js"></script>

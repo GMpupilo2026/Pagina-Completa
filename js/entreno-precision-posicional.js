@@ -85,6 +85,13 @@ function pintarPregunta() {
   $('next-btn').textContent = idx === tanda.length - 1 ? 'Terminar y ver el resultado →' : 'Siguiente →';
 
   window.ExampleBoard.render($('q-board'), juego);
+  /* El tablero se recorre con el teclado y se le pregunta (o, z, m, x): era
+     aria-hidden, o sea que para el lector de pantalla no existía, en una
+     pregunta que consiste justamente en mirar la estructura. */
+  if (window.TableroAccesible) {
+    teclado = TableroAccesible.montar($('q-board'), { nombre: 'Tablero de la posición', juego: () => juego, cuadro: () => (comandos ? comandos.input : null) });
+    if (teclado) teclado.refrescar();
+  }
 
   const caja = $('q-options');
   caja.innerHTML = '';
@@ -103,7 +110,17 @@ function botonOpcion(item, original, elegida) {
   // decir para contestar por el cuadro de comandos (misma regla que el
   // examen de arbitraje y el diagnóstico de nivel).
   b.textContent = `Opción ${CuadroComandos.letra(item.__orden.indexOf(original))}. ${item.opciones[original]}`;
-  b.addEventListener('click', () => { respuestas[item.id] = original; pintarPregunta(); });
+  b.setAttribute('aria-pressed', elegida ? 'true' : 'false');
+  /* Repintar las opciones borra el botón que tenía el foco: se devuelve al
+     mismo, ya marcado. Sin esto el foco caía al principio de la página y quien
+     usa teclado o lector tenía que volver a buscar dónde estaba. */
+  b.dataset.original = String(original);
+  b.addEventListener('click', () => {
+    respuestas[item.id] = original;
+    pintarPregunta();
+    const igual = $('q-options').querySelector('[data-original="' + original + '"]');
+    if (igual) igual.focus();
+  });
   return b;
 }
 
@@ -119,6 +136,7 @@ const claseOpcion = (sel) => 'w-full text-left px-4 py-3 rounded-xl border-2 tra
  * escribirla de nuevo porque hay una partida de chess.js detrás de cada
  * pregunta, cosa que el examen de arbitraje no tiene. */
 let comandos = null;
+let teclado = null;
 
 function prepararComandos(item) {
   if (!window.CuadroComandos) return;
@@ -131,6 +149,7 @@ function prepararComandos(item) {
          letras de las opciones no chocan con nada: preguntar por una pieza pide
          su nombre entero, nunca una inicial (ver js/comandos-tablero.js). */
       juego: () => juego,
+      tablero: () => teclado,
       onEnviar: responderEscribiendo,
     });
   }

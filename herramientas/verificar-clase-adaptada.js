@@ -16,7 +16,15 @@
  *      - con el control, la jugada escrita llega a la base como la del clic;
  *      - con las piezas OCULTAS ni las casillas ni el recuadro las cuentan;
  *      - la pregunta del profesor es un diálogo que se lleva el foco y se
- *        contesta escribiendo.
+ *        contesta escribiendo; la de opciones también, con la LETRA («B»), y
+ *        cada botón lleva escrito «Opción A.», «Opción B.»…;
+ *      - las flechas y los círculos que dibuja el profe se dicen (solo los
+ *        nuevos), y «última jugada» y «jugadas» dicen lo que se jugó;
+ *      - el tablero es un «tablero de ajedrez» (aria-roledescription, que es lo
+ *        que busca Alt + Mayúscula + B) con rol de aplicación y los atajos
+ *        z / o, que con las piezas ocultas no cuentan nada;
+ *      - la Fotografía dicta la posición y los segundos antes de ocultarla;
+ *      - el calentamiento se lleva el foco a su recuadro y confirma en palabras.
  *   2. Ejercicios por tema: un solo "Saltar al contenido", cada botón dice qué
  *      tema abre, y al abrir uno se anuncia quién juega y qué buscar —nunca
  *      "haz clic"— con el foco en el recuadro.
@@ -106,6 +114,55 @@ async function pruebaClase(browser) {
   si("la jugada del profesor se anuncia", /Se jugó torre david 1 jaque\. Juegan negras\./.test(jugada), jugada);
   si("sin dictar la posición entera", !/Blancas:/.test(jugada), jugada);
 
+  // El alumno no tiene la lista de jugadas a la vista: la pide escribiendo.
+  await escribir(page, "#clase-cmd", "última jugada");
+  const ultima = await aviso(page, "#clase-cmd");
+  si("«última jugada» la dice en palabras", /La última jugada fue de las blancas: torre david 1 jaque/.test(ultima), ultima);
+  await escribir(page, "#clase-cmd", "jugadas");
+  const todas = await aviso(page, "#clase-cmd");
+  si("«jugadas» a secas dice la partida, numerada y en palabras", /^1 jugada\. 1: torre david 1 jaque/.test(todas), todas);
+
+  // El tablero de la clase es un tablero de ajedrez para el lector, y se le
+  // pregunta con una tecla (js/tablero-accesible.js montado sobre ClasesBoard).
+  const tb = await page.evaluate(() => {
+    const b = document.getElementById("chessboard");
+    return { desc: b.getAttribute("aria-roledescription"), rol: b.getAttribute("role"),
+             loHalla: document.querySelector('[aria-roledescription="tablero de ajedrez"]') === b };
+  });
+  igual("el tablero de la clase se anuncia como tablero de ajedrez", tb.desc, "tablero de ajedrez");
+  igual("con rol de aplicación en Modo Adaptado (si no, el lector se queda con las teclas)", tb.rol, "application");
+  igual("y Alt + Mayúscula + B lo encuentra (es el primero con ese roledescription)", tb.loHalla, true);
+  const dice = () => page.evaluate(() => (document.getElementById("chessboard").parentNode.querySelector(".ta-dice") || {}).textContent || "");
+  await page.focus("#chessboard [tabindex='0']");
+  await page.keyboard.press("z");
+  await page.waitForTimeout(200);
+  si("la z sobre el tablero dice la posición", /Blancas: rey en bella 8/.test(await dice()), await dice());
+  await escribir(page, "#clase-cmd", "ir a e4");
+  const f0 = await page.evaluate(() => document.activeElement.dataset.square);
+  await page.keyboard.press("ArrowDown");
+  const f1 = await page.evaluate(() => document.activeElement.dataset.square);
+  igual("«ir a e4» y una flecha abajo: UNA casilla (no dos: el tablero le cede las suyas)", f0 + " → " + f1, "e4 → e3");
+
+  // Las flechas y los círculos del profe se DICEN, solo los nuevos.
+  await page.evaluate((f) => window.__cambioEnBase("game_state", f),
+    fila({ moves: ["Rd1+"], arrows: [{ from: "c1", to: "c8", color: "verde" }], circles: [{ square: "b7", color: "rojo" }] }));
+  await page.waitForTimeout(300);
+  const marcas = await aviso(page, "#clase-cmd");
+  si("la flecha y el círculo del profe se anuncian", /Tu profe marcó una flecha de cesar 1 a cesar 8, la casilla bella 7\./.test(marcas), marcas);
+  await page.evaluate(() => { document.querySelector("#clase-cmd .cc-msg").textContent = ""; });
+  await page.evaluate((f) => window.__cambioEnBase("game_state", f),
+    fila({ moves: ["Rd1+"], arrows: [{ from: "c1", to: "c8", color: "verde" }, { from: "a2", to: "a8", color: "rojo" }], circles: [{ square: "b7", color: "rojo" }] }));
+  await page.waitForTimeout(300);
+  const otra = await aviso(page, "#clase-cmd");
+  si("al sumar una, se dice solo la nueva", /^Tu profe marcó una flecha de anna 2 a anna 8\.$/.test(otra), otra);
+
+  // Fotografía: la posición entera y los segundos, ANTES de que se oculte.
+  await page.evaluate((fen) => window.__difundir("fotografia", { fen, segundos: 8 }), LUCENA);
+  await page.waitForTimeout(300);
+  const foto = await aviso(page, "#clase-cmd");
+  si("la Fotografía dicta la posición y cuántos segundos hay",
+    /Fotografía: tu profe te muestra esta posición 8 segundos/.test(foto) && /Blancas: rey en bella 8/.test(foto), foto);
+
   // Le da el control con negras: la jugada escrita tiene que llegar a la base.
   await page.evaluate((f) => window.__cambioEnBase("game_state", f),
     fila({ moves: ["Rd1+"], active_player_id: "u-ana", active_player_color: "b" }));
@@ -127,6 +184,15 @@ async function pruebaClase(browser) {
   si("ni el recuadro las cuenta", /ocultas/.test(oc.pos) && !/rey/.test(oc.pos), oc.pos);
   await escribir(page, "#clase-cmd", "caballos");
   si("ni contesta preguntas sobre ellas", /ocultas/.test(await aviso(page, "#clase-cmd")), await aviso(page, "#clase-cmd"));
+  await page.focus("#chessboard [tabindex='0']");
+  await page.keyboard.press("z");
+  await page.waitForTimeout(200);
+  si("ni la z sobre el tablero", /ocultas/.test(await dice()) && !/rey/.test(await dice()), await dice());
+  // Las jugadas sí: se anuncian igual con las piezas ocultas.
+  await page.evaluate((f) => window.__cambioEnBase("game_state", f), fila({ pieces_hidden: true, moves: ["Rd1+"] }));
+  await page.waitForTimeout(300);
+  await escribir(page, "#clase-cmd", "última jugada");
+  si("con las piezas ocultas, «última jugada» contesta igual", /torre david 1 jaque/.test(await aviso(page, "#clase-cmd")), await aviso(page, "#clase-cmd"));
 
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
@@ -152,6 +218,58 @@ async function pruebaPregunta(browser) {
   await page.waitForTimeout(400);
   const r = await page.evaluate(() => window.__inserts.filter((i) => i.tabla === "question_answers").map((i) => i.fila.moves));
   si("la jugada escrita se envía como respuesta", r.length && JSON.stringify(r[0]) === JSON.stringify(["Rd1+"]), JSON.stringify(r));
+  igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+}
+
+async function pruebaOpciones(browser) {
+  console.log("\n=== La pregunta de opciones se contesta escribiendo la letra ===");
+  const QUIEN = ["Mejor las blancas", "Están iguales", "Mejor las negras"];
+  const pregunta = { id: "q-2", fen: LUCENA, created_by: "u-profe", expected_plies: 1, prompt: "¿Quién está mejor?",
+                     tipo: "opciones", opciones: QUIEN, tiempo_limite: null, resultados_visibles: false,
+                     closed_at: null, created_at: new Date().toISOString() };
+  const { page, ctx, errores } = await abrir(browser, "u-ana", CLASE, { questions: [pregunta] });
+  await enAdaptado(page);
+  await page.waitForFunction(() => document.querySelectorAll("#question-opciones button").length === 3, null, { timeout: 10000 });
+  const d = await page.evaluate(() => ({
+    botones: [...document.querySelectorAll("#question-opciones button")].map((b) => b.textContent),
+    caja: !!document.querySelector("#question-cmd .cc-caja") && document.querySelector("#question-cmd .cc-caja").checkVisibility(),
+    etiqueta: document.querySelector("#question-cmd .cc-etiqueta").textContent,
+  }));
+  igual("cada botón lleva escrita su letra", JSON.stringify(d.botones), JSON.stringify(QUIEN.map((t, i) => "Opción " + "ABC"[i] + ". " + t)));
+  igual("el recuadro se queda en las de opciones", d.caja, true);
+  si("y pide la letra", /letra de tu opción \(A, B, C\)/.test(d.etiqueta), d.etiqueta);
+  await escribir(page, "#question-cmd", "posición");
+  si("se le puede preguntar la posición de la que se habla", /Blancas: rey en bella 8/.test(await aviso(page, "#question-cmd")), await aviso(page, "#question-cmd"));
+  await escribir(page, "#question-cmd", "la de arriba");
+  si("lo que no se entiende se dice, no se marca cualquier cosa", /No entendí/.test(await aviso(page, "#question-cmd")), await aviso(page, "#question-cmd"));
+  igual("…y no manda nada", await page.evaluate(() => window.__inserts.filter((i) => i.tabla === "question_answers").length), 0);
+  await escribir(page, "#question-cmd", "B");
+  await page.waitForTimeout(400);
+  const env = await page.evaluate(() => window.__inserts.filter((i) => i.tabla === "question_answers").map((i) => i.fila.opcion));
+  igual("escribir «B» manda la opción B, como el botón", JSON.stringify(env), "[1]");
+  si("y lo confirma", /Enviaste la opción B: Están iguales/.test(await aviso(page, "#question-cmd")), await aviso(page, "#question-cmd"));
+  igual("el botón B queda marcado", await page.evaluate(() =>
+    [...document.querySelectorAll("#question-opciones button")].map((b) => b.getAttribute("aria-pressed")).join(",")), "false,true,false");
+  igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+}
+
+async function pruebaCalentamiento(browser) {
+  console.log("\n=== El calentamiento, sin ver la pantalla ===");
+  const { page, ctx, errores } = await abrir(browser, "u-ana", CLASE);
+  await enAdaptado(page);
+  await page.evaluate((f) => window.__cambioEnBase("game_state", f), fila());
+  await page.waitForTimeout(300);
+  await page.evaluate((f) => window.__cambioEnBase("game_state", f),
+    fila({ calentamiento: { at: new Date().toISOString(), fen: LUCENA, solucion: ["c1d1"], titulo: null } }));
+  await page.waitForTimeout(800);
+  igual("el foco va al recuadro del calentamiento", await page.evaluate(() =>
+    !!document.activeElement && !!document.activeElement.closest("#calentamiento-cmd")), true);
+  await escribir(page, "#calentamiento-cmd", "Td1");
+  await page.waitForTimeout(300);
+  const msg = await page.textContent("#calentamiento-msg");
+  si("y la confirmación dice la jugada en palabras, no «Rd1+»", /torre david 1/.test(msg) && !/Rd1/.test(msg), msg);
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
 }
@@ -264,6 +382,8 @@ function pruebaEmojis() {
   try {
     await pruebaClase(browser);
     await pruebaPregunta(browser);
+    await pruebaOpciones(browser);
+    await pruebaCalentamiento(browser);
     await pruebaTemas(browser);
     console.log("\n=== Abrir una lección no pierde el foco ===");
     await pruebaFocoAlAbrir(browser, "/entreno/aprender.html", "#lesson-list button", "lesson-title");

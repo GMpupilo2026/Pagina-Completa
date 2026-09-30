@@ -116,6 +116,32 @@ const texto = (page, sel) => page.evaluate((s) => { const e = document.querySele
     await page.keyboard.press("ArrowLeft");
     igual("← retrocede", await texto(page, "#visor-estado"), "Jugada 2. Cf3");
 
+    console.log("\n=== El visor, con lector de pantalla ===");
+    /* Era role="img" con 64 <div> sin nombre: la partida no existía para el
+       lector. Ahora es como el tablero de Estudio: una parada de Tab, cada
+       casilla dice qué hay, y un recuadro recorre la partida escribiendo. */
+    igual("el tablero ya no es una imagen (sus casillas llegan al lector)", await page.evaluate(() => document.getElementById("board").getAttribute("role") !== "img"), "true");
+    igual("una sola parada de Tab en todo el tablero", await page.evaluate(() =>
+      [...document.querySelectorAll("#board [data-square]")].filter((c) => c.tabIndex === 0).length), 1);
+    igual("cada casilla dice qué hay", await page.evaluate(() =>
+      [...document.querySelectorAll("#board [data-square]")].filter((c) => /^[a-z]+ [1-8], /.test(c.getAttribute("aria-label") || "")).length), 64);
+    await page.evaluate(() => { document.documentElement.classList.add("adaptive-mode"); document.dispatchEvent(new CustomEvent("adaptivemode:change", { detail: { activo: true } })); });
+    await page.click("#btn-inicio");
+    igual("en Modo Adaptado se ve el recuadro", await page.evaluate(() => { const i = document.querySelector("#visor-cmd .cc-input"); return !!i && i.checkVisibility(); }), "true");
+    await page.fill("#visor-cmd .cc-input", "siguiente"); await page.press("#visor-cmd .cc-input", "Enter");
+    igual("«siguiente» avanza", await texto(page, "#visor-estado"), "Jugada 1. e4");
+    await page.waitForTimeout(150);
+    igual("y la jugada se dice en palabras, no «e4» deletreado", await texto(page, "#visor-anuncio"), "Jugada 1: el peón blanco va de eva 2 a eva 4.");
+    await page.fill("#visor-cmd .cc-input", "jugada 3"); await page.press("#visor-cmd .cc-input", "Enter");
+    igual("«jugada 3» va a esa jugada", await texto(page, "#visor-estado"), "Jugada 2. Cf3");
+    await page.fill("#visor-cmd .cc-input", "caballos"); await page.press("#visor-cmd .cc-input", "Enter");
+    igual("«caballos» se contesta sobre la posición que se ve", /caballos blancos en bella 1 y felix 3/.test(await texto(page, "#visor-cmd .cc-msg")), "true");
+    await page.focus('#board [data-square="e4"]');
+    await page.keyboard.press("ArrowRight");
+    igual("con el foco en el tablero, → mueve de casilla y no cambia de jugada",
+      [await texto(page, "#visor-estado"), await page.evaluate(() => document.activeElement.dataset.square)], ["Jugada 2. Cf3", "f4"]);
+    await page.evaluate(() => { document.documentElement.classList.remove("adaptive-mode"); document.dispatchEvent(new CustomEvent("adaptivemode:change", { detail: { activo: false } })); });
+
     igual("una clase sin preguntas no muestra la sección", await page.evaluate(() => document.getElementById("visor-preguntas").checkVisibility()), "false");
 
     console.log("\n=== Las preguntas de la clase ===");

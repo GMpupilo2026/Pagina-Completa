@@ -177,6 +177,11 @@ window.__deletes = [];
   window.__cambioEnBase = function (tabla, fila, evento) {
     (oyentes.pg[tabla] || []).forEach((f) => f({ eventType: evento || "UPDATE", new: fila, old: {} }));
   };
+  // Un mensaje difundido por el canal de la presencia (lo que manda el profe
+  // con send({type:"broadcast"}): bajar una mano, la Fotografía), como Realtime.
+  window.__difundir = function (evento, payload) {
+    oyentes.broadcast.forEach((o) => { if (!o.evento || o.evento === evento) o.f({ event: evento, payload }); });
+  };
   window.__entraAlumno = function () {
     estado["u-ana"] = [{ email: "ana@x.cr", full_name: "Ana Rojas", role: "alumno", online_at: new Date().toISOString() }];
     oyentes.presence.forEach((f) => f());
@@ -407,7 +412,7 @@ window.__deletes = [];
     channel: (nombre) => ({
       on(tipo, ev, f) {
         if (tipo === "presence") oyentes.presence.push(typeof ev === "function" ? ev : f);
-        if (tipo === "broadcast") oyentes.broadcast.push(f);
+        if (tipo === "broadcast") oyentes.broadcast.push({ evento: ev && ev.event, f });
         // Los cambios de la base también se pueden empujar desde la prueba
         // (window.__cambioEnBase), como haría Realtime: así se comprueba lo que
         // pasa en la pantalla del ALUMNO cuando el profesor mueve.
@@ -422,7 +427,8 @@ window.__deletes = [];
       // Lo que cada uno anuncia de sí mismo al conectarse: con qué rol entra.
       track(meta) { (window.__tracks = window.__tracks || []).push(meta); return Promise.resolve(); },
       untrack() { return Promise.resolve(); },
-      send() { return Promise.resolve(); },
+      // Lo que se difunde queda anotado (window.__difusiones), para ver qué mandó el profe.
+      send(msg) { (window.__difusiones = window.__difusiones || []).push(msg); return Promise.resolve(); },
       presenceState: () => estado,
     }),
     removeChannel: () => {},

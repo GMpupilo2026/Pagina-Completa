@@ -114,8 +114,31 @@
       if (c) c.dataset.marca = marcas[s].signo;
     });
     if (!teclado && window.TableroAccesible) {
-      teclado = TableroAccesible.montar(t, { nombre: "Tablero de la memoria", juego: () => juego });
+      teclado = TableroAccesible.montar(t, { nombre: "Tablero de la memoria", juego: () => juego, cuadro: () => (comandos ? comandos.input : null) });
     }
+    montarComandos();
+  }
+
+  /* El recuadro de preguntas (Modo Adaptado): mientras se mira, «caballos» o
+     «qué hay en e4» se contestan sobre la posición; mientras se reconstruye,
+     sobre lo que va colocado —nunca sobre la respuesta, como el tablero—.
+     «Ya la tengo» también se puede escribir. */
+  let comandos = null;
+  function montarComandos() {
+    if (comandos || !window.CuadroComandos || !$("comandos")) return;
+    comandos = CuadroComandos.montar($("comandos"), {
+      etiqueta: "Pregunta sobre el tablero («posición», «caballos», «qué hay en e4»)",
+      juego: () => ({ get: (s) => piezaEn(s), turn: () => "w", moves: () => [] }),
+      tablero: () => teclado,
+      onEnviar: (texto, api) => {
+        api.limpiar();
+        const t = CuadroComandos.normalizar(texto);
+        if (reloj && /^(ya la tengo|listo|tapar|ocultar)$/.test(t)) { ocultar(); return; }
+        api.decir(reloj
+          ? "Pregunta por la posición, o escribe «ya la tengo» para taparla y empezar a reconstruir."
+          : "Para colocar piezas usa los campos «Piezas blancas» y «Piezas negras» de abajo, o la paleta y Enter en cada casilla.");
+      },
+    });
   }
   function desdeFen(fen) {
     const tab = R.tablero(fen);
@@ -188,7 +211,7 @@
       if (colocado[s] === elegida || elegida === "x") delete colocado[s];
       else colocado[s] = elegida;
       pintar();
-      if (teclado) teclado.decir(s + ": " + (colocado[s] ? TableroAccesible.piezaDicha({ color: colocado[s][0], type: colocado[s][1] }) : "vacía"));
+      if (teclado) teclado.decir(TableroAccesible.casillaHablada(s) + ": " + (colocado[s] ? TableroAccesible.piezaDicha({ color: colocado[s][0], type: colocado[s][1] }) : "vacía"));
     };
     pintar();
     $("juego-enunciado").textContent = "Reconstrúyela: elige una pieza y toca las casillas.";

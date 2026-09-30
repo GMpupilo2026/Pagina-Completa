@@ -23,6 +23,11 @@ let calentamientoPintadoPara = null;
 let calentamientoAcc = null;
 
 const aUci = (m) => m.from + m.to + (m.promotion || "");
+/* En Modo Adaptado la jugada se escribe en palabras («caballo felix 3»): la
+   notación inglesa de chess.js («Nf3») el lector de pantalla la deletrea, y
+   quien no ve el tablero no sabe qué le están diciendo que jugó. */
+const sanDelCalentamiento = (san) => (window.ClaseAdaptada && window.CuadroComandos && CuadroComandos.activo()
+    ? ClaseAdaptada.hablarJugada(san) : san);
 function solucionEnUci(fen, jugadas) {
     const g = new Chess(fen);
     const out = [];
@@ -93,6 +98,14 @@ function empezarCalentamiento() {
     document.getElementById("calentamiento-msg").textContent = calentamientoResuelto === cal.at ? "✅ ¡Ya lo resolviste!" : "";
     document.getElementById("calentamiento-otra-btn").hidden = true;
     document.getElementById("calentamiento-solucion-btn").hidden = !cal.solucion || calentamientoResuelto === cal.at;
+    /* En Modo Adaptado el foco va a su recuadro: la caja aparece debajo del
+       tablero de la clase, y el aviso de #clase-voz dice que está pero no lleva
+       a ella. Sin esto, quien no ve la pantalla tenía que salir a buscarla
+       tabulando por toda la página. Solo con un calentamiento NUEVO (esto no
+       corre con «Intentarlo otra vez»), y solo si falta resolverlo. */
+    if (calentamientoAcc && CuadroComandos.activo() && calentamientoResuelto !== cal.at) {
+        enfocarCuandoSeVea(calentamientoAcc.cmd.input);
+    }
 }
 
 async function juzgarCalentamiento() {
@@ -105,13 +118,13 @@ async function juzgarCalentamiento() {
     const msg = document.getElementById("calentamiento-msg");
     const bien = !!(m && cal.solucion && cal.solucion[0] === aUci(m));
     if (bien) {
-        msg.textContent = "✅ ¡Bien! " + m.san + " es la jugada.";
+        msg.textContent = "✅ ¡Bien! " + sanDelCalentamiento(m.san) + " es la jugada.";
         document.getElementById("calentamiento-solucion-btn").hidden = true;
         document.getElementById("calentamiento-otra-btn").hidden = true;
         calentamientoResuelto = cal.at;
         if (presenceChannel) await presenceChannel.track(metaDePresencia());
     } else {
-        msg.textContent = cal.solucion ? "❌ " + (m ? m.san : "Esa") + " no es la mejor. Inténtalo otra vez." : "Tu profe no dejó la solución de esta posición: coméntala en la clase.";
+        msg.textContent = cal.solucion ? "❌ " + (m ? sanDelCalentamiento(m.san) : "Esa") + " no es la mejor. Inténtalo otra vez." : "Tu profe no dejó la solución de esta posición: coméntala en la clase.";
         document.getElementById("calentamiento-otra-btn").hidden = false;
     }
 }
@@ -137,7 +150,8 @@ document.getElementById("calentamiento-solucion-btn").addEventListener("click", 
     calentamientoBoard.loadFen(cal.fen);
     calentamientoBoard.setInteractive(false);
     calentamientoBoard.setMarks([{ from: cal.solucion[0].slice(0, 2), to: cal.solucion[0].slice(2, 4), color: "verde" }], []);
-    document.getElementById("calentamiento-msg").textContent = "La solución: " + sans.join(" ") + ".";
+    document.getElementById("calentamiento-msg").textContent = "La solución: "
+        + (CuadroComandos.activo() ? sans.map(sanDelCalentamiento).join(", ") : sans.join(" ")) + ".";
     document.getElementById("calentamiento-otra-btn").hidden = true;
     document.getElementById("calentamiento-solucion-btn").hidden = true;
 });

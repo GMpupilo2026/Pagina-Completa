@@ -265,6 +265,10 @@ function pintarItem() {
   wrap.classList.toggle('hidden', !conTablero);
   wrap.classList.toggle('flex', conTablero);
   if (conTablero) pintarTablero(new Chess(itemActual.fen));
+  /* Sin tablero, las preguntas «caballos» o «posición» no tienen nada que
+     contestar: antes contestaban sobre el tablero de la pregunta ANTERIOR, que
+     ya no se ve. */
+  else juegoDelItem = null;
 
   const esOpcion = itemActual.tipo === 'opcion' || itemActual.tipo === 'opcion_tablero';
   if (esOpcion) {
@@ -281,6 +285,7 @@ function pintarItem() {
       // ::before: es lo que se dice para contestar por el cuadro de comandos,
       // así que quien la oye tiene que oírla de la misma lista que lee.
       btn.textContent = `Opción ${CuadroComandos.letra(posicion)}. ${itemActual.opciones[original]}`;
+      btn.setAttribute('aria-pressed', 'false');
       btn.addEventListener('click', () => elegirOpcion(posicion));
       opciones.appendChild(btn);
     });
@@ -306,7 +311,11 @@ function elegirOpcion(posicion) {
   seleccion = ordenOpciones[posicion];
   [...opciones.children].forEach((b, j) => {
     if (b.id === 'no-se-btn') b.className = claseNoSe(false);
-    else b.className = claseOpcion(j === posicion);
+    else {
+      b.className = claseOpcion(j === posicion);
+      // La elegida se DICE, no solo se pinta de otro color.
+      b.setAttribute('aria-pressed', j === posicion ? 'true' : 'false');
+    }
   });
   document.getElementById('next-btn').disabled = false;
 }
@@ -430,7 +439,7 @@ function responderEscribiendo(texto, api) {
     document.getElementById('q-hint').textContent = `Jugaste ${jugadaDicha(mv.san)}: esa es tu respuesta y no hace falta jugar más.`;
     document.getElementById('next-btn').disabled = false;
     api.limpiar();
-    avanzarEscribiendo(`Anotado: ${mv.san}.`);
+    avanzarEscribiendo(`Anotado: ${jugadaDicha(mv.san)}.`);
   }
 }
 
@@ -455,7 +464,7 @@ function botonNoSe() {
     seleccion = NO_SE;
     origenElegido = null;
     const caja = document.getElementById('q-options');
-    [...caja.children].forEach((b) => { if (b !== btn) b.className = claseOpcion(false); });
+    [...caja.children].forEach((b) => { if (b !== btn) { b.className = claseOpcion(false); b.setAttribute('aria-pressed', 'false'); } });
     btn.className = claseNoSe(true);
     if (itemActual.fen) pintarTablero(new Chess(itemActual.fen));
     document.getElementById('q-hint').textContent = 'Anotado: no lo sabías. Al final te explicamos esta.';
@@ -499,7 +508,10 @@ function pintarTablero(juego, destacadas) {
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.dataset.square = square;
-      btn.disabled = !interactivo;
+      /* Sin `disabled`: un botón deshabilitado no recibe el foco, y el tablero
+         de una pregunta de opción no se podía recorrer con el teclado, justo el
+         que hay que mirar para elegir. Se dice con aria-disabled. */
+      if (!interactivo) btn.setAttribute('aria-disabled', 'true');
       let cls = 'flex items-center justify-center select-none w-full h-full text-2xl sm:text-3xl md:text-4xl ' +
         (esCasillaClara(square) ? 'bg-brand-100 ' : 'bg-brand-500 ') + (interactivo ? 'cursor-pointer ' : 'cursor-default ');
       if (destacadas && destacadas.includes(square)) cls += 'outline outline-4 -outline-offset-4 outline-accent-500 ';

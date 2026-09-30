@@ -209,12 +209,15 @@
       t.appendChild(celda);
     }));
     if (window.Coordenadas) Coordenadas.aplicar(t);
+    refrescarLectura();
     if (!accesible && window.TableroAccesible) {
       accesible = TableroAccesible.montar(t, {
         nombre: "Tablero del ejercicio",
         // la partida de verdad cuando hay una (para «m», a dónde puede ir);
         // si no, solo lo que se ve pintado
-        juego: () => tab.juego || { get: piezaEn, turn: () => (tab.fen ? tab.fen.split(" ")[1] : "w"), moves: () => [] },
+        // `oculta`: con las piezas tapadas (Fotografía, la apertura sin
+        // tablero) las casillas dicen «oculta» y no «vacía», que sería falso.
+        juego: () => tab.juego || { get: piezaEn, turn: () => (tab.fen ? tab.fen.split(" ")[1] : "w"), moves: () => [], oculta: () => !!tab.oculto },
         cuadro: () => (!$("jugada-form").classList.contains("hidden") ? "jugada-input" : null),
       });
     }
@@ -253,12 +256,30 @@
     t.setAttribute("aria-label", window.BlindNotation ? BlindNotation.positionSentence(new Chess(fen)) : fen);
     if (window.Coordenadas) Coordenadas.aplicar(t);
   }
+  /* La posición escrita debajo del tablero SIGUE a la partida: antes se
+     escribía una vez al cargar, y en los ejercicios que se juegan (Con lo
+     justo, Rey y peón, Aguanta, Remata…) quedaba contando la posición del
+     principio mientras el tablero ya era otro. No es región viva a propósito:
+     cada jugada ya se dice sola, y releer las treinta y dos piezas en cada una
+     taparía todo lo demás. */
+  let lecturaActiva = false;
   function leerPosicion(fen) {
+    lecturaActiva = !!fen;
     const p = $("lectura");
     if (!fen) { p.classList.add("hidden"); p.textContent = ""; return; }
     const g = new Chess(fen);
     p.textContent = window.BlindNotation ? BlindNotation.positionSentence(g) : fen;
     p.classList.remove("hidden");
+  }
+  function refrescarLectura() {
+    if (!lecturaActiva) return;
+    const fen = tab.juego && tab.juego.fen ? tab.juego.fen() : tab.fen;
+    const p = $("lectura");
+    if (!fen || tab.oculto || tab.piezasLibres) { p.classList.add("hidden"); p.textContent = ""; return; }
+    try {
+      p.textContent = window.BlindNotation ? BlindNotation.positionSentence(new Chess(fen)) : fen;
+      p.classList.remove("hidden");
+    } catch (e) {}
   }
   /* En Modo Adaptado la posición va también escrita debajo del tablero:
      quien no lo ve la necesita leída (menos en Fotografía mientras se
@@ -303,10 +324,15 @@
     return ChessMoveParser.tryParseMove(new Chess(juego.fen()), t);
   }
   let alEscribir = null;
+  /* En Modo Adaptado el recuadro está SIEMPRE: aunque el ejercicio se
+     conteste con botones (Detective, Descarte, Balanza, Intercambios…), la
+     posición hay que poder preguntarla — «posición», «caballos», «qué hay en
+     e4» — y sin recuadro no había dónde. */
   function pedirJugada(etiqueta, fn) {
     alEscribir = fn;
-    $("jugada-label").textContent = etiqueta;
-    $("jugada-form").classList.toggle("hidden", !fn);
+    const soloPreguntas = !fn && adaptado();
+    $("jugada-label").textContent = soloPreguntas ? "Pregunta sobre la posición («posición», «caballos», «qué hay en e4»); se contesta con los botones de abajo" : etiqueta;
+    $("jugada-form").classList.toggle("hidden", !fn && !soloPreguntas);
     $("jugada-input").value = "";
   }
   /* Antes de tratarlo como respuesta, se mira si era una PREGUNTA sobre el
@@ -336,10 +362,10 @@
   }
   $("jugada-form").addEventListener("submit", (e) => {
     e.preventDefault();
-    if (!alEscribir) return;
     const txt = $("jugada-input").value.trim();
     if (!txt) return;
     if (preguntaAlTablero(txt)) { $("jugada-input").value = ""; return; }
+    if (!alEscribir) { estado("Aquí solo se pregunta por la posición: este ejercicio se contesta con los botones de abajo."); return; }
     alEscribir(txt);
   });
 
@@ -510,7 +536,8 @@
       "Ejercicio " + (partida.i + 1) + " de " + partida.items.length + (e ? " · tu mejor: " + textoEstrellas(e) : "");
     $("btn-anterior").disabled = partida.i === 0;
     JUEGOS[partida.tipo](item);
-    if (adaptado() && partida.tipo !== "fotografia") leerPosicion(item.fen);
+    // La apertura sin tablero (nivel 3) tampoco: la posición es la respuesta.
+    if (adaptado() && partida.tipo !== "fotografia" && !tab.oculto) leerPosicion(item.fen);
   }
   /* Nivel completo: todos sus ejercicios con al menos una estrella. Antes, al
      terminar el último, «Siguiente» volvía a la lista de niveles sin decir
@@ -828,15 +855,19 @@
   /* ---------- 6. Fotografía ---------- */
   JUEGOS.fotografia = function (item) {
     const n = C.nivel("fotografia", item.nivel);
-    let quedan = n.segundos, reloj = null;
+    /* En Modo Adaptado, el triple: la posición se LEE casilla por casilla (o
+       se oye entera), y eso lleva más que mirarla. Lo mismo que Elige a
+       tiempo (tipos-reglas-mas.js, segundosTiempo). */
+    const segundos = adaptado() ? n.segundos * 3 : n.segundos;
+    let quedan = segundos, reloj = null;
     tablero(item.fen, { orientacion: "w" });
     $("juego-turno").textContent = item.piezas + " piezas en el tablero.";
-    $("juego-enunciado").textContent = "Mírala bien: tienes " + n.segundos + " segundos.";
+    $("juego-enunciado").textContent = "Mírala bien: tienes " + segundos + " segundos" + (segundos !== n.segundos ? " (el triple, por el Modo Adaptado)" : "") + ".";
     const cuenta = el("p", "text-3xl font-bold text-center text-brand-800 dark:text-white my-3 tabular-nums", String(quedan));
     cuenta.setAttribute("aria-hidden", "true");
     $("controles").appendChild(cuenta);
     if (adaptado()) leerPosicion(item.fen);
-    estado("Tienes " + n.segundos + " segundos para memorizar la posición.");
+    estado("Tienes " + segundos + " segundos para memorizar la posición." + (adaptado() ? " Está escrita debajo del tablero, y «Ya la tengo» la tapa antes." : ""));
     const listo = boton("Ya la tengo", BTN_PRIMARIO, () => ocultar());
     $("controles").appendChild(listo);
     reloj = setInterval(() => {

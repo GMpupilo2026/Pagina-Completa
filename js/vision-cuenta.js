@@ -17,10 +17,11 @@
  *         (Alt + Mayúscula + una letra) para ir al panel, a la clase, a las
  *         tareas, al tablero o al recuadro donde se escribe la jugada.
  *
- * Se aplica UNA vez por cada marca nueva (la clave `ai_vision_aplicada_v1`):
- * si después la persona apaga la voz o el Modo Adaptado a mano, se respeta.
- * La clase `modo-ciego`, en cambio, sigue a la marca: la quita solo quien
- * administra.
+ * La voz se enciende UNA vez por cada marca nueva (la clave
+ * `ai_vision_aplicada_v1`): si después la persona la apaga, se respeta. La
+ * clase `modo-ciego` y el Modo Adaptado, en cambio, siguen a la marca: sin
+ * ellos los tableros no traen su recuadro, y quien no ve no tiene cómo
+ * notarlo. Los quita solo quien administra.
  *
  * js/adaptive-mode.js lo carga en todas las páginas con encabezado, y en el
  * <head> ya pone la clase con lo guardado, para no pintar primero el panel de
@@ -88,8 +89,13 @@ window.VisionCuenta = (function () {
     var html = document.documentElement;
     html.classList.toggle("modo-ciego", vision === "ciego");
     try { document.dispatchEvent(new CustomEvent("vision:cambio", { detail: { vision: vision } })); } catch (e) {}
-    if (vision === "ciego") montarCiego();
-    else desmontarCiego();
+    if (vision === "ciego") {
+      /* Siempre, no solo la primera vez: sin el Modo Adaptado los tableros
+         no traen su recuadro de comandos, y quien no ve no tiene cómo
+         notarlo para volver a encenderlo. */
+      if (window.AdaptiveMode && !AdaptiveMode.isOn()) AdaptiveMode.set(true);
+      montarCiego();
+    } else desmontarCiego();
   }
 
   /* La primera vez que llega una marca (o cuando cambia) se encienden las
@@ -102,7 +108,6 @@ window.VisionCuenta = (function () {
       encenderVoz();
       anunciar("Tu cuenta tiene la voz encendida: el navegador te dice en voz alta los avisos y las jugadas. Se apaga con el botón de la voz, arriba.");
     } else if (vision === "ciego") {
-      if (window.AdaptiveMode && !AdaptiveMode.isOn()) AdaptiveMode.set(true);
       anunciar("Tu cuenta tiene el modo adaptado completo: el panel trae solo lo que se usa con lector de pantalla. Alt más Mayúscula más H dice los atajos del teclado.");
     }
   }
@@ -156,6 +161,9 @@ window.VisionCuenta = (function () {
     { tecla: "v", que: "Ir a la clase en vivo", corto: "Clase en vivo", ir: "sesion.html" },
     { tecla: "t", que: "Ir a tus tareas", corto: "Tareas", ir: "tareas.html" },
     { tecla: "e", que: "Ir a entrenar (la lista adaptada de tu panel)", corto: "Entrenar", ir: "clases.html#entrenar" },
+    { tecla: "d", que: "Oír dónde estás: la página, el camino y sus secciones", foco: "donde" },
+    { tecla: "s", que: "Ir a la siguiente sección de esta página", foco: "seccion" },
+    { tecla: "a", que: "Volver a la página anterior", foco: "atras" },
     { tecla: "m", que: "Saltar al contenido de esta página", foco: "contenido" },
     { tecla: "b", que: "Ir al tablero de esta página", foco: "tablero" },
     { tecla: "c", que: "Ir al recuadro donde se escribe la jugada", foco: "comandos" },
@@ -179,8 +187,54 @@ window.VisionCuenta = (function () {
     return !!el && (el.checkVisibility ? el.checkVisibility() : el.offsetParent !== null);
   }
 
+  /* Los títulos de sección que se ven: con ellos se arma «dónde estás» y se
+     salta de una sección a la otra. Los del encabezado y los accesos rápidos
+     no cuentan. */
+  function secciones() {
+    var main = document.getElementById("main-content") || document.querySelector("main") || document.body;
+    return Array.prototype.slice.call(main.querySelectorAll("h1, h2")).filter(function (h) {
+      return visible(h) && h.textContent.trim() && !h.closest("#accesos-rapidos");
+    });
+  }
+  // Lo que se lee, sin lo que es adorno (los emojis van en aria-hidden).
+  function textoDe(el) {
+    var copia = el.cloneNode(true);
+    Array.prototype.forEach.call(copia.querySelectorAll('[aria-hidden="true"]'), function (x) { x.remove(); });
+    return copia.textContent.replace(/\s+/g, " ").trim();
+  }
+
+  function dondeEstas() {
+    var hs = secciones();
+    var h1 = hs.filter(function (h) { return h.tagName === "H1"; })[0];
+    var titulo = h1 ? textoDe(h1) : document.title.replace(/ — Ajedrez Integral$/, "");
+    var migas = Array.prototype.slice.call(document.querySelectorAll("#migas li")).map(textoDe).filter(Boolean);
+    var partes = ["Estás en " + titulo + "."];
+    if (migas.length > 1) partes.push("Camino: " + migas.join(", ") + ".");
+    var h2 = hs.filter(function (h) { return h.tagName === "H2"; }).map(textoDe);
+    if (h2.length) partes.push(h2.length === 1 ? "Tiene una sección: " + h2[0] + "." : "Tiene " + h2.length + " secciones: " + h2.join("; ") + ".");
+    if (document.querySelector('[aria-roledescription="tablero de ajedrez"]')) partes.push("Hay un tablero: Alt más Mayúscula más B lo enfoca.");
+    return partes.join(" ");
+  }
+
+  function siguienteSeccion() {
+    var hs = secciones();
+    if (!hs.length) { anunciar("Esta página no tiene secciones con título."); return; }
+    var actual = document.activeElement;
+    var sig = hs.filter(function (h) {
+      return actual && actual !== document.body && (actual.compareDocumentPosition(h) & Node.DOCUMENT_POSITION_FOLLOWING) && !actual.contains(h);
+    })[0] || hs[0];
+    enfocar(sig);
+  }
+
   function irAFoco(que) {
     if (que === "ayuda") { anunciar(textoAtajos()); return; }
+    if (que === "donde") { anunciar(dondeEstas()); return; }
+    if (que === "seccion") { siguienteSeccion(); return; }
+    if (que === "atras") {
+      if (!puedeSalir()) { anunciar("Desde aquí no se sale con un atajo: usa el enlace de la página para salir."); return; }
+      history.back();
+      return;
+    }
     if (que === "contenido") {
       if (!enfocar(document.getElementById("main-content") || document.querySelector("main"))) anunciar("Esta página no tiene contenido principal marcado.");
       return;
@@ -195,7 +249,13 @@ window.VisionCuenta = (function () {
       return;
     }
     if (que === "comandos") {
-      var campo = Array.prototype.slice.call(document.querySelectorAll(".cc-input, #blind-input, [data-cuadro-comandos] input")).filter(visible)[0];
+      /* Todos los recuadros donde se escribe la jugada del sitio: el común
+         (.cc-input) y los propios de Tablero, Juegos, Sonar, Batalla naval,
+         4×4, Visualización, Tipos y los cursos. Si hay un diálogo abierto (la
+         pregunta de la clase), primero el suyo. */
+      var SEL = ".cc-input, #blind-input, #move-input, #cmd-input, #blind-move-input, #answer-input, #jugada-input, .f100-cmd-input, .cp-cmd-input, [data-cuadro-comandos] input";
+      var campos = Array.prototype.slice.call(document.querySelectorAll(SEL)).filter(function (c) { return visible(c) && !c.disabled; });
+      var campo = campos.filter(function (c) { return c.closest("dialog[open], [role=dialog]:not([hidden]), [role=alertdialog]:not([hidden])"); })[0] || campos[0];
       if (!campo || !enfocar(campo)) anunciar("En esta página no hay un recuadro para escribir la jugada.");
     }
   }

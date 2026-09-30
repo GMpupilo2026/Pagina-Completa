@@ -143,6 +143,18 @@ const CON_TABLERO = [
   { nombre: "Estudio", ruta: "/entreno/estudio.html", sel: "#tablero", antes: async (p) => {
       await p.click(".ficha-item", { timeout: 4000 }).catch(() => {});
     } },
+  /* Precisión posicional tenía el tablero dentro de un aria-hidden y
+     Visualización cargaba js/tablero-accesible.js sin montarlo nunca: para el
+     lector de pantalla, en las dos, el tablero no existía o era una imagen. */
+  { nombre: "Precisión posicional", ruta: "/entreno/precision-posicional.html", sel: "#q-board", antes: async (p) => {
+      await p.click("#start-btn", { timeout: 4000 }).catch(() => {});
+    } },
+  // Visualización contesta en su propio formulario (#answer-form), no en el recuadro común.
+  { nombre: "Visualización", ruta: "/entreno/visualizacion.html", sel: "#board", sinRecuadroComun: true, antes: async (p) => {
+      await p.click("[data-nivel]", { timeout: 4000 }).catch(() => {});
+    } },
+  // Memoria no tenía recuadro: mientras se mira no había cómo preguntarle al tablero.
+  { nombre: "Memoria", ruta: "/entreno/memoria.html?piezas=6&segundos=60", sel: "#tablero" },
 ];
 
 async function pruebaTableros(browser) {
@@ -194,6 +206,34 @@ async function pruebaTableros(browser) {
     else if (derecha === antes || abajo === derecha) mal(`${caso.nombre}: las flechas no mueven el foco (${antes} → ${derecha} → ${abajo})`);
     else bien(`${caso.nombre}: las flechas mueven el foco de verdad (${antes} → ${derecha} → ${abajo})`);
 
+    /* Elegir una pieza con Intro: la página repinta el tablero entero y el foco
+       tiene que quedar en la MISMA casilla. Se iba al <body>: el observador de
+       js/tablero-accesible.js preguntaba si el foco seguía en el tablero cuando
+       la casilla ya había salido de la página. Solo donde hay una partida con
+       jugadas (los ejercicios que se juegan). */
+    const origen = await page.evaluate((s) => {
+      const t = document.querySelector(s);
+      const cfg = t && t.__tableroAccesibleCfg;
+      let g = null;
+      try { g = cfg && cfg.juego ? cfg.juego() : null; } catch (e) {}
+      let ms = [];
+      try { ms = g && g.moves ? g.moves({ verbose: true }) : []; } catch (e) {}
+      if (!ms.length) return null;
+      const api = t.__tableroAccesible;
+      api.enfocar(ms[0].from);
+      return ms[0].from;
+    }, caso.sel);
+    if (origen && adaptado) {
+      await page.keyboard.press("Enter");
+      await page.waitForTimeout(150);
+      const donde = await page.evaluate((s) => {
+        const a = document.activeElement;
+        return a && a.closest && a.closest(s) ? a.dataset.square : (a ? a.tagName : null);
+      }, caso.sel);
+      igual(`${caso.nombre}: elegir la pieza con Intro deja el foco en su casilla`, donde, origen);
+      await page.keyboard.press("Escape");
+    }
+
     // Y después de moverse, el tabulador sigue teniendo UNA sola parada: si el
     // roving tabindex no se reparte, vuelven las 64.
     const t2 = await mirarTablero(page, caso.sel);
@@ -213,6 +253,7 @@ async function pruebaRecuadro(browser) {
   console.log("\n=== El recuadro contesta preguntas y jugadas ===");
   for (const caso of CON_TABLERO) {
     if (caso.nombre === "Coordenadas") continue;   // su Modo Adaptado cambia el ejercicio entero
+    if (caso.sinRecuadroComun) continue;
     const { page, ctx } = await abrir(browser, caso.ruta, true);
     if (caso.antes) { await caso.antes(page); await page.waitForTimeout(500); }
     const visible = await page.evaluate(() => {

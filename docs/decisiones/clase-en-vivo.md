@@ -2754,6 +2754,44 @@ interruptor del encabezado, porque esas páginas los usan para más cosas que
 encender el modo; y las regiones vivas de cada lección de un curso siguen como
 estaban: están vacías hasta que se marca una lección, así que no hablan solas.
 
+### Todo lo que lanza el profe, contestado sin ver
+
+Con las cuentas ciegas marcadas se repasó cada cosa que el profe puede lanzar
+en la clase. Lo que faltaba:
+
+- **Las flechas y los círculos del profe se dicen** («Tu profe marcó una flecha
+  de cesar 1 a cesar 8, la casilla bella 7.»), solo los nuevos. Lo hacía
+  `ver-clase.js` y el alumno de la clase no: la lógica vive ahora UNA vez en
+  `ClaseAdaptada.vigiaDeMarcas()`, que usan las dos páginas. `ClaseAdaptada`
+  junta en un solo aviso lo que llega en 60 ms (jugada, variante, marcas) para
+  que un aviso no pise al otro.
+- **Las preguntas de opciones se contestan escribiendo** («B», «opción b»,
+  «2»): el recuadro ya no se esconde en ellas y manda por `enviarOpcion()`, la
+  misma función del botón. Los botones llevan escrito «Opción A. …».
+- **Fotografía**: al mostrarla, el profe manda un aviso `fotografia` por el
+  canal de la presencia y el alumno oye cuántos segundos tiene y la posición
+  entera. Va por la presencia porque la fila de `game_state` no dice que sea
+  una Fotografía; si el alumno recarga en esos segundos, no oye el dictado.
+- **El calentamiento** se lleva el foco a su recuadro en Modo Adaptado, y sus
+  avisos (y la confirmación de «¿Qué jugarías?») dicen la jugada en palabras.
+- **El tablero de la clase se recorre como los demás**: `ClaseAdaptada.montar`
+  monta `TableroAccesible` sobre los tableros de la clase (no las miniaturas):
+  `aria-roledescription`, rol de aplicación, los atajos o/z/m/x e «i» para
+  volver al recuadro; Alt + Mayúscula + B lo encuentra. `ClasesBoard` le deja
+  las flechas (si no, cada flecha repintaba dos veces), sigue la casilla con el
+  foco al repintar y conserva el texto de sus casillas, porque solo él sabe si
+  las piezas están ocultas: con ellas ocultas, las teclas que cuentan piezas
+  contestan «Las piezas están ocultas».
+- **«última jugada» y «jugadas»** en el recuadro de la clase: los contesta
+  `js/comandos-tablero.js`; `ClaseAdaptada` solo le pasa «jugadas» a secas y el
+  caso de las piezas ocultas.
+- **El aviso de partida asignada** (`js/juego-aviso.js`) no manda al tablero a
+  los 4 s en Modo Adaptado: con lector no alcanza para oírlo. Dice «Cuando
+  estés listo, activa «Entrar ahora»».
+
+Lo miran `verificar-clase-adaptada.js` (y `clase-invitados`, `juego-aviso`,
+`clase-preguntas`, `clase-encuesta`).
+
 ## «Activar voz»: la clase dicha en voz alta para quien ve poco
 
 Quien ve poco muchas veces **no usa lector de pantalla**: agranda la letra y se

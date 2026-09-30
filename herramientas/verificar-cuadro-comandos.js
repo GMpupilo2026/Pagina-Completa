@@ -403,10 +403,13 @@ async function pruebaDiagnostico(browser) {
       const anotada = await respuestaGuardada(page, 1);
       igual("y queda anotada esa jugada, no otra",
         anotada && anotada.dada && anotada.dada.from + anotada.dada.to, mv.from + mv.to);
-      igual("y el aviso la nombra y lee la pregunta nueva",
+      // La nombra EN PALABRAS («Anotado: peón a bruno 4.»): en notación
+      // inglesa («Nf3») la voz la deletreaba y no la entiende quien no la conoce.
+      igual("y el aviso la nombra en palabras y lee la pregunta nueva",
         await page.evaluate((san) => {
-          const t = document.querySelector("#q-comandos .cc-msg").textContent;
-          return t.includes(san) && t.includes(document.getElementById("q-text").textContent.trim());
+          const t = document.querySelector("#q-comandos .cc-msg").textContent.toLowerCase();
+          const dicha = BlindNotation.sanSpoken(san).toLowerCase();
+          return t.includes(dicha) && t.includes(document.getElementById("q-text").textContent.trim().toLowerCase());
         }, mv.san), "true");
     }
   }

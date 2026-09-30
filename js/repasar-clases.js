@@ -113,6 +113,7 @@ function abrir(p){
       h.padre = padre;
       h.fen = mv ? g.fen() : fenPadre;
       h.ultima = mv ? { from: mv.from, to: mv.to } : null;
+      h.jugada = mv || null;    // la jugada entera, para contarla en palabras al mirarla
       h.valida = !!mv;
       // Una alternativa (no el primer hijo) abre una variante, y todo lo que
       // cuelga de ella también es variante.
@@ -235,6 +236,8 @@ function mirarPosicion(fen, texto){
   document.getElementById('visor-comentario').hidden = true;
   document.getElementById('visor-estado').textContent = texto;
   pintarAvisoDePregunta(fen);
+  const aviso = document.getElementById('visor-pregunta');
+  anunciar(texto + '.' + (aviso.hidden ? '' : ' ' + aviso.textContent));
 }
 
 function pintarAvisoDePregunta(fen){
@@ -303,8 +306,16 @@ function pintarJugadas(){
 
 /* ---------------- El tablero ---------------- */
 function isLight(sq){ return ((sq.charCodeAt(0) - 97) + (parseInt(sq[1], 10) - 1)) % 2 === 1; }
+/* La posición que se está mirando, como partida de chess.js: de ahí contestan
+   el tablero accesible («o», «z», «m») y el recuadro («caballos», «qué hay en
+   e4»). Se guarda al pintar, así vale también para una posición que no está en
+   la partida (la de una pregunta que salió de Táctica). */
+let posicionVista = null;
+let teclado = null;       // js/tablero-accesible.js sobre #board
+let comandos = null;      // js/cuadro-comandos.js en #visor-cmd
 function pintarTablero(fen, ultima){
   const g = new Chess(fen);
+  posicionVista = g;
   const board = document.getElementById('board');
   board.innerHTML = '';
   for (const sq of EjercicioTablero.casillas(orientacion)) {
@@ -328,6 +339,78 @@ function pintarTablero(fen, ultima){
   const adaptado = document.documentElement.classList.contains('adaptive-mode');
   lectura.style.display = adaptado && window.BlindNotation ? 'block' : 'none';
   if (adaptado && window.BlindNotation) lectura.innerHTML = BlindNotation.groupedReadoutHTML(g);
+  montarAccesible();
+}
+
+/* El visor era una imagen (role="img") con 64 <div> sin nombre: para un lector
+   de pantalla, la partida de la clase no existía más allá del «Jugada 2. Cf3»
+   de abajo. Ahora es como el tablero de Estudio (js/ficha-render.js): cada
+   casilla se nombra y el tablero es UNA parada de Tab (js/tablero-accesible.js),
+   y al lado hay un recuadro donde se recorre la partida escribiendo y se le
+   pregunta a la posición. Se montan una vez: el tablero es siempre el mismo
+   nodo y lo que cambia es lo que tiene adentro. */
+function montarAccesible(){
+  if (!teclado && window.TableroAccesible) {
+    teclado = TableroAccesible.montar(document.getElementById('board'), {
+      nombre: 'Tablero de la clase', juego: () => posicionVista, cuadro: () => comandos && comandos.input,
+    });
+  }
+  if (!comandos && window.CuadroComandos) {
+    comandos = CuadroComandos.montar(document.getElementById('visor-cmd'), {
+      etiqueta: 'Recorre la partida o pregunta por la posición',
+      juego: () => posicionVista,
+      tablero: () => teclado,
+      // La posición entera no se dicta en cada paso: se lee la JUGADA
+      // (#visor-anuncio) y la posición se pide con «posición».
+      posicionViva: false,
+      onEnviar: recorrerEscribiendo,
+    });
+    if (comandos) comandos.ayuda('Recorrer: «siguiente», «anterior», «inicio», «final», «jugada 5», «girar». Preguntar: «posición», «caballos», «qué hay en e4». Escribe «ayuda» para todo.');
+  }
+}
+
+/* La línea que se está mirando, de punta a punta: el camino desde el arranque
+   hasta la jugada actual y, de ahí, su continuación. Dentro de una variante es
+   la variante; así «jugada 5» y «final» van a donde se ve en la lista. */
+function lineaActual(){
+  if (!actual) return [];
+  const atras = [];
+  for (let x = nodo; x; x = x.padre) atras.unshift(x);
+  let x = nodo || actual.raiz;
+  while (x.hijos[0]) { x = x.hijos[0]; atras.push(x); }
+  return atras;
+}
+
+/* Recorrer ESCRIBIENDO, con las mismas palabras que Estudio y la preparación
+   de rivales (VisorLinea.pasoPedido): quien está en el recuadro no tiene que
+   salir de él y tabular hasta ▶ en cada jugada. Las preguntas («caballos»)
+   ya las contestó js/comandos-tablero.js antes de llegar acá. */
+function recorrerEscribiendo(texto, api){
+  if (!actual) { api.decir('Primero elige una clase de la lista.'); return; }
+  if (/^\s*girar( el tablero)?\s*$/i.test(texto)) {
+    api.limpiar();
+    document.getElementById('btn-girar').click();
+    api.decir(orientacion === 'w' ? 'Ahora ves el tablero desde las blancas.' : 'Ahora ves el tablero desde las negras.');
+    return;
+  }
+  const linea = lineaActual();
+  const indice = nodo ? linea.indexOf(nodo) + 1 : 0;
+  const n = window.VisorLinea ? VisorLinea.pasoPedido(texto, indice, linea.length) : null;
+  if (n === null) { api.decir('No entendí «' + texto.trim() + '». Escribe «siguiente», «anterior», «jugada 5», o una pregunta como «caballos». Escribe «ayuda» para la lista.'); return; }
+  if (n < 0) { api.decir('Ya estás en la posición de arranque.'); return; }
+  if (n > linea.length) { api.decir('Ya estás en la última jugada de esta línea.'); return; }
+  api.limpiar().decir('');
+  mirar(n === 0 ? null : linea[n - 1]);
+}
+
+/* Qué se lee solo en cada paso: la jugada CONTADA, el comentario del profe y
+   el aviso de pregunta. Vaciar y repoblar con un retraso porque una región
+   viva no habla si el texto no cambió (volver a la misma jugada). */
+function anunciar(texto){
+  const a = document.getElementById('visor-anuncio');
+  if (!a) return;
+  a.textContent = '';
+  window.setTimeout(() => { a.textContent = texto; }, 50);
 }
 
 function mirar(n){
@@ -346,7 +429,19 @@ function mirar(n){
   const estado = document.getElementById('visor-estado');
   estado.textContent = n ? `Jugada ${nombreDe(n)}${n.enVariante ? ' (variante)' : ''}` : 'Posición de arranque';
   pintarAvisoDePregunta(fen);
-  if (window.BlindNotation) BlindNotation.speak(estado.textContent + (c ? '. ' + caja.textContent : ''));
+  /* Dicho, la jugada va CONTADA y sin la notación: «Cf3» el lector lo deletrea
+     («C, f, 3»), y quien no ve el tablero necesita saber qué pieza fue de dónde
+     a dónde. El «Jugada 2. Cf3» se queda escrito en pantalla. */
+  let dicho = estado.textContent + '.';
+  if (n && n.jugada && window.VisorLinea) {
+    const { numero, turno } = numeroDe(n.camino);
+    dicho = 'Jugada ' + numero + (turno === 'b' ? ' de las negras' : '') + (n.enVariante ? ', en una variante' : '') + ': '
+      + VisorLinea.jugadaContada(n.jugada).replace(/^./, (x) => x.toLowerCase());
+  }
+  const aviso = document.getElementById('visor-pregunta');
+  dicho += (c ? ' ' + caja.textContent : '') + (aviso.hidden ? '' : ' ' + aviso.textContent);
+  anunciar(dicho);
+  if (window.BlindNotation) BlindNotation.speak(dicho);
 }
 function anterior(){ if (nodo) mirar(nodo.padre); }
 function siguiente(){ const hijos = (nodo || actual.raiz).hijos; if (hijos[0]) mirar(hijos[0]); }
@@ -361,10 +456,14 @@ document.getElementById('btn-girar').addEventListener('click', () => {
   orientacion = orientacion === 'w' ? 'b' : 'w';
   mirar(nodo);
 });
-// Las flechas recorren la partida, salvo mientras se escribe en algún campo.
+// Las flechas recorren la partida, salvo mientras se escribe en algún campo
+// o se anda por un tablero: ahí las flechas mueven de casilla en casilla
+// (js/tablero-accesible.js), y robárselas dejaba el tablero sin poder mirarse
+// —cada flecha cambiaba de jugada en vez de pasar a la casilla de al lado—.
 document.addEventListener('keydown', (e) => {
   if (!actual || document.getElementById('visor').hidden) return;
   if (/^(INPUT|TEXTAREA|SELECT)$/.test((e.target && e.target.tagName) || '')) return;
+  if (e.target && e.target.closest && e.target.closest('#board, #repaso-board, .cc-caja, [role="application"]')) return;
   if (e.key === 'ArrowLeft') { e.preventDefault(); anterior(); }
   else if (e.key === 'ArrowRight') { e.preventDefault(); siguiente(); }
   else if (e.key === 'Home') { e.preventDefault(); alPrincipio(); }

@@ -67,7 +67,6 @@
     let estadoAntes = null;
     let vistaAntes = "null";
     let ocultasAntes = false;
-    let marcasAntes = null;
 
     function guardar(v) { try { if (v) localStorage.setItem(CLAVE, JSON.stringify(v)); else localStorage.removeItem(CLAVE); } catch (e) {} }
     function leer() { try { return JSON.parse(localStorage.getItem(CLAVE) || "null"); } catch (e) { return null; } }
@@ -95,7 +94,6 @@
     }
     function hablar(texto) { if (window.ClaseAdaptada) ClaseAdaptada.hablar(texto); }
     const adaptado = () => document.documentElement.classList.contains("adaptive-mode");
-    const casillaDicha = (c) => (window.BlindNotation ? BlindNotation.squareSpoken(c) : c);
 
     /* El modo que la persona eligió y la base todavía no confirmó. Mientras
        tanto, lo que traiga la base es VIEJO (una consulta que ya iba en camino):
@@ -308,23 +306,10 @@
     }
 
     /* Las flechas y los círculos del profe, dichos: para quien no ve el
-       tablero son la mitad de la explicación. Solo los que se agregaron. */
-    function marcasNuevas(t) {
-        const flechas = (t.arrows || []).map((a) => "f:" + a.from + a.to);
-        const circulos = (t.circles || []).map((c) => "c:" + c.square);
-        const ahora = flechas.concat(circulos);
-        const antes = marcasAntes;
-        marcasAntes = ahora;
-        if (!antes) return null;
-        const textos = [];
-        for (const a of t.arrows || []) {
-            if (!antes.includes("f:" + a.from + a.to)) textos.push("una flecha de " + casillaDicha(a.from) + " a " + casillaDicha(a.to));
-        }
-        for (const c of t.circles || []) {
-            if (!antes.includes("c:" + c.square)) textos.push("la casilla " + casillaDicha(c.square));
-        }
-        return textos.length ? "Tu profe marcó " + textos.join(", ") + "." : null;
-    }
+       tablero son la mitad de la explicación. Solo los que se agregaron. La
+       cuenta vive en ClaseAdaptada.vigiaDeMarcas, la misma de la clase de los
+       alumnos (sesion.js). */
+    const marcasNuevas = window.ClaseAdaptada ? ClaseAdaptada.vigiaDeMarcas() : () => null;
 
     function turno(fen) {
         const lado = String(fen || "").split(" ")[1];
@@ -342,7 +327,6 @@
         board.showView(t.vista || null);
         board.setMarks(t.arrows || [], t.circles || []);
         board.setPiecesHidden(!!t.pieces_hidden);
-        if (primera) marcasAntes = null;
         /* Lo que cambió, en orden: la jugada (o la posición nueva), lo que
            muestra el profe, las piezas ocultas y sus marcas. anunciar() junta
            todo en un solo aviso. */
@@ -358,7 +342,7 @@
                 : "Tu profe volvió a mostrar las piezas. Escribe «posición» para oírla.");
         }
         ocultasAntes = !!t.pieces_hidden;
-        anunciar(marcasNuevas(t));
+        anunciar(marcasNuevas(t.arrows, t.circles, primera));
         const g = board.viewGame || board.game;
         const partes = [];
         if (t.vista && Array.isArray(t.vista.path)) partes.push("Tu profe está mostrando otra posición");

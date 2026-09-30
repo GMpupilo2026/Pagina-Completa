@@ -94,8 +94,21 @@ window.TableroAccesible = (function () {
 
   function montar(tablero, cfg) {
     if (!tablero) return null;
-    if (tablero.__tableroAccesible) return tablero.__tableroAccesible;
-    cfg = cfg || {};
+    /* Montar de nuevo el MISMO tablero pone la configuración nueva encima de la
+       vieja. Hay páginas que montan con cada posición (el examen, con cada
+       pregunta: `juego` es una función de ESA pregunta), y devolver el api con
+       la configuración de la primera dejaba a las casillas diciendo lo que había
+       en la posición anterior — sin ningún error, y con el tablero viéndose
+       bien. */
+    if (tablero.__tableroAccesible) {
+      if (cfg && tablero.__tableroAccesibleCfg) {
+        Object.assign(tablero.__tableroAccesibleCfg, cfg);
+        try { tablero.__tableroAccesible.refrescar(); } catch (e) {}
+      }
+      return tablero.__tableroAccesible;
+    }
+    cfg = Object.assign({}, cfg || {});
+    tablero.__tableroAccesibleCfg = cfg;
     asegurarEstilo();
 
     var voz = document.createElement("p");
@@ -462,11 +475,26 @@ window.TableroAccesible = (function () {
        esto, el tabindex se pierde —vuelven las 64 paradas— y, peor, el foco se
        va al <body>: quien estaba en e4 se queda sin saber dónde quedó, que es
        justo el momento en que más falta hace. */
+    /* Si el foco estaba en el tablero hay que saberlo ANTES del repintado: el
+       observador corre después, cuando la casilla enfocada ya salió de la
+       página y el foco ya cayó al <body>. Preguntarlo ahí daba siempre «no», y
+       quien elegía una pieza con Intro (la página repinta el tablero entero)
+       quedaba fuera del tablero a mitad de la jugada. Se anota al entrar y se
+       borra al irse A OTRA COSA: con Tab (relatedTarget) o con un clic fuera. */
+    var focoDentro = false;
+    tablero.addEventListener("focusin", function () { focoDentro = true; });
+    tablero.addEventListener("focusout", function (e) {
+      if (e.relatedTarget && !tablero.contains(e.relatedTarget)) focoDentro = false;
+    });
+    document.addEventListener("mousedown", function (e) {
+      if (!tablero.contains(e.target)) focoDentro = false;
+    }, true);
     var observador = new MutationObserver(function () {
       if (pintando) return;
       pintando = true;
       observador.disconnect();
-      var teniaFoco = tablero.contains(document.activeElement);
+      var activo = document.activeElement;
+      var teniaFoco = tablero.contains(activo) || (focoDentro && (!activo || activo === document.body));
       repartirTabindex();
       if (teniaFoco && enfocada) { var c = celdaDe(enfocada); if (c) { try { c.focus(); } catch (e) {} } }
       observador.observe(tablero, { childList: true, subtree: true });

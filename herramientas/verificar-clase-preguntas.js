@@ -134,7 +134,9 @@ async function pruebaAlumnaOpciones(browser) {
     questions: [pregunta({ tipo: "opciones", opciones: QUIEN, prompt: "¿Quién está mejor en esta posición?", tiempo_limite: 60 })],
   });
   await page.waitForFunction(() => document.querySelectorAll("#question-opciones button").length === 3, null, { timeout: 10000 });
-  igual("una opción por botón", await page.evaluate(() => [...document.querySelectorAll("#question-opciones button")].map((b) => b.textContent)), QUIEN);
+  // Con su letra ESCRITA: es la que se escribe en el recuadro del Modo Adaptado.
+  igual("una opción por botón, con su letra escrita", await page.evaluate(() => [...document.querySelectorAll("#question-opciones button")].map((b) => b.textContent)),
+    QUIEN.map((t, i) => "Opción " + "ABC"[i] + ". " + t));
   igual("se ve el tablero de la posición", await seVe(page, "#question-board"), true);
   igual("y la cuenta regresiva", /⏱️ Quedan 0:5\d|⏱️ Quedan 1:00/.test(await page.textContent("#question-tiempo-alumno")), true);
   await page.click("#question-opciones button:nth-child(2)");

@@ -201,6 +201,8 @@ let currentLevel = null;
 let currentIndex = 0;
 let game = null;              // avanza de verdad con cada jugada, aunque el tablero no se repinte
 let posicionDeSalida = null;  // la que el tablero enseña: contra ella se contestan las preguntas
+let teclado = null;           // js/tablero-accesible.js sobre el tablero
+let tableroPintado = null;    // lo que el tablero enseña ahora (la salida, o el final al terminar)
 let solutionStep = 0;
 let missedThisPuzzle = false;
 let usedHintThisPuzzle = false;
@@ -264,6 +266,7 @@ function drawStaticBoard(fen, orientation){
   const board = document.getElementById('board');
   board.innerHTML = '';
   const snapshot = new Chess(fen);
+  tableroPintado = snapshot;
   const ranks = orientation === 'w' ? [8,7,6,5,4,3,2,1] : [1,2,3,4,5,6,7,8];
   const files = orientation === 'w' ? [0,1,2,3,4,5,6,7] : [7,6,5,4,3,2,1,0];
   ranks.forEach((rank) => {
@@ -291,12 +294,28 @@ function drawStaticBoard(fen, orientation){
       } else {
         label += ', vacía';
       }
-      cell.setAttribute('role', 'img');
+      // Sin role="img" cuando el tablero se recorre con el teclado: lo rotula
+      // js/tablero-accesible.js, como Estudio (una casilla se MIRA, no se juega).
+      if (!window.TableroAccesible) cell.setAttribute('role', 'img');
       cell.setAttribute('aria-label', label);
       board.appendChild(cell);
     });
   });
   if (window.Coordenadas) Coordenadas.aplicar(board);
+  /* Se recorre con las flechas y se le pregunta con o, z, m, x, igual que el
+     resto de Entrenamiento: antes el archivo se cargaba y nunca se montaba, y
+     el tablero solo se podía leer en el modo exploración del lector, casilla
+     por casilla. Contesta sobre la posición DE SALIDA, la que enseña. */
+  if (window.TableroAccesible) {
+    teclado = TableroAccesible.montar(board, {
+      nombre: 'Tablero de la posición de salida',
+      // Por variable y no por la de esta llamada: el tablero se monta una sola
+      // vez y se repinta con cada ejercicio.
+      juego: () => tableroPintado,
+      cuadro: () => 'answer-input',
+    });
+    if (teclado && teclado.refrescar) teclado.refrescar();
+  }
   const readout = document.getElementById('position-readout');
   readout.textContent = window.BlindNotation ? BlindNotation.positionSentence(snapshot) : '';
 }
@@ -419,10 +438,15 @@ function jugarEscribiendo(texto){
   locked = true;
   document.getElementById('answer-input').disabled = true;
   setStatus('✓ Correcto — el rival responde…', 'ok');
+  let rival = '';
   setTimeout(() => {
     const replySan = puzzle.solution[solutionStep];
-    game.move(replySan);
+    const hecha = game.move(replySan);
     logRespuestaRival(replySan);
+    /* La respuesta del rival se DICE, en palabras: la bitácora ya no es región
+       viva (se reescribe entera y el lector la releía de principio a fin, en
+       notación inglesa). */
+    rival = hecha && window.BlindNotation && BlindNotation.sanSpoken ? 'El rival jugó ' + BlindNotation.sanSpoken(hecha.san).replace(/^\S/, (c) => c.toLowerCase()) + '. ' : '';
     solutionStep++;
     locked = false;
     document.getElementById('answer-input').disabled = false;
@@ -430,7 +454,7 @@ function jugarEscribiendo(texto){
     if(solutionStep >= puzzle.solution.length){
       finishPuzzle();
     } else {
-      setStatus('Sigue calculando la continuación.');
+      setStatus(rival + 'Sigue calculando la continuación.');
     }
   }, 750);
 }
@@ -445,7 +469,7 @@ document.getElementById('answer-form').addEventListener('submit', (e) => {
      forma de repasarla salvo oír las treinta y dos de corrido otra vez.
      Se contesta contra la posición DE SALIDA, que es la que el tablero enseña. */
   if(window.ComandosTablero && posicionDeSalida){
-    const r = ComandosTablero.interpretar(input.value, { juego: () => posicionDeSalida });
+    const r = ComandosTablero.interpretar(input.value, { juego: () => posicionDeSalida, tablero: () => teclado });
     if(r.manejado){
       input.value = '';
       setStatus(r.tipo === 'ayuda' ? 'Jugada: "Cf3", "Nf3", "Dxh7+". Pregunta sobre la posición del tablero: "caballos", "qué hay en e4", "posición".' : r.respuesta);

@@ -172,7 +172,13 @@ function vigilar() {
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) salio(); else volvio();
   });
-  window.addEventListener("blur", salio);
+  /* En Modo Adaptado el `blur` de la ventana no cuenta: el lector de
+     pantalla abre sus propias ventanas (la lista de encabezados de NVDA, el
+     rotor de VoiceOver, un menú de JAWS) y cada una le quita el foco a la
+     página sin que la persona se haya ido a ningún lado. Contándolas, a la
+     tercera se le congelaba el examen a quien no ve. Cambiar de pestaña o de
+     aplicación sí sigue contando: eso lo dice `visibilitychange`. */
+  window.addEventListener("blur", () => { if (!adaptado()) salio(); });
   window.addEventListener("focus", volvio);
   // Salirse de pantalla completa cuenta como salida: es la forma más
   // cómoda de poner otra ventana al lado.
@@ -233,18 +239,88 @@ function pintarPregunta() {
   wrap.classList.add("hidden");
   wrap.classList.remove("flex");
 
+  tablero = null;
   if (it.tipo === "opcion" || it.tipo === "opcion_tablero") {
     if (it.visible.fen) montarTablero(it.visible.fen, "mirar");
     pintarOpciones(it);
   } else if (it.tipo === "jugada") {
     montarTablero(it.visible.fen, "jugada");
-    $("q-pista").textContent = "Haz clic en la pieza y después en su casilla de destino. Se responde con una sola jugada.";
+    $("q-pista").textContent = adaptado()
+      ? "Escribe tu jugada en el recuadro, por ejemplo «Cf3», o recorre el tablero con las flechas y marca la pieza y su destino con Enter. Se responde con una sola jugada."
+      : "Haz clic en la pieza y después en su casilla de destino. Se responde con una sola jugada.";
   } else if (it.tipo === "casilla") {
     montarTablero(it.visible.fen, "casilla");
-    $("q-pista").textContent = "Haz clic en la casilla que contestas.";
+    $("q-pista").textContent = adaptado()
+      ? "Escribe la casilla en el recuadro, por ejemplo «e4», o llega a ella con las flechas y marca Enter."
+      : "Haz clic en la casilla que contestas.";
   } else if (it.tipo === "linea") {
     prepararLinea(it);
   }
+  prepararComandos(it, numero, total);
+}
+
+/* ---------------- Contestar escribiendo ----------------
+   Todo el examen se puede contestar desde un recuadro, como el resto del
+   sitio (js/cuadro-comandos.js): la letra de la opción, la casilla o la
+   jugada, y «responder» para entregarla. En el mismo recuadro se le pregunta
+   a la posición («posición», «caballos», «qué hay en e4»). Sin esto, quien
+   no ve tenía que marcar la jugada casilla por casilla en un tablero sin la
+   posición escrita en ninguna parte. El recuadro se ve solo en Modo
+   Adaptado (lo decide el CSS del cuadro); fuera de él, nada cambia. */
+let comandos = null;
+function adaptado() { return document.documentElement.classList.contains("adaptive-mode"); }
+
+function prepararComandos(it, numero, total) {
+  if (!window.CuadroComandos) return;
+  if (!comandos) {
+    comandos = CuadroComandos.montar($("q-comandos"), {
+      etiqueta: "Escribe tu respuesta, o una pregunta sobre la posición",
+      juego: () => (tablero ? new Chess(tablero.fen()) : null),
+      tablero: () => (tablero ? tablero.teclado() : null),
+      onEnviar: contestarEscribiendo,
+    });
+    if (!comandos) return;
+  }
+  const que = it.tipo === "opcion" || it.tipo === "opcion_tablero" ? "la letra de la opción, por ejemplo «B»"
+    : it.tipo === "casilla" ? "la casilla, por ejemplo «e4»"
+    : "la jugada, por ejemplo «Cf3»";
+  comandos.ayuda(`Escribe ${que}, y después «responder» para entregarla. Pregunta: «posición», «caballos», «qué hay en e4».`);
+  comandos.posicion(tablero ? new Chess(tablero.fen()) : "Esta pregunta no tiene tablero.");
+  // La pregunta nueva se dice sola: el foco sigue en el recuadro.
+  const opciones = (it.visible.opciones || []).map((t, i) => `Opción ${String.fromCharCode(65 + i)}: ${t}.`).join(" ");
+  comandos.decir(`Pregunta ${numero} de ${total}. ${it.visible.enunciado || ""} ${opciones} ${$("q-pista").textContent}`.replace(/\s+/g, " ").trim());
+}
+
+function contestarEscribiendo(texto, api) {
+  const it = pendientes[indice];
+  const t = CuadroComandos.normalizar(texto);
+  api.limpiar();
+  if (/^(responder|entregar|listo|siguiente|responder y seguir)$/.test(t)) {
+    if ($("responder-btn").disabled) { api.decir("Todavía no elegiste ninguna respuesta."); return; }
+    responder();
+    return;
+  }
+  if (/^(repetir|pregunta|enunciado|la pregunta)$/.test(t)) {
+    prepararComandos(it, (examen.items || []).length - pendientes.length + indice + 1, (examen.items || []).length);
+    return;
+  }
+  if (it.tipo === "opcion" || it.tipo === "opcion_tablero") {
+    const i = CuadroComandos.opcionPedida(texto, (it.visible.opciones || []).length);
+    if (i === null) { api.decir("No entendí la opción. Escribe su letra, por ejemplo «B»."); return; }
+    elegirOpcion(i);
+    api.decir(`Elegiste la opción ${String.fromCharCode(65 + i)}. Escribe «responder» para entregarla, o elige otra.`);
+    return;
+  }
+  if (!tablero) return;
+  const r = tablero.escribir(texto);
+  if (!r) {
+    api.decir(it.tipo === "casilla"
+      ? "No entendí la casilla. Escríbela con su letra y su número, por ejemplo «e4»."
+      : "Esa jugada no es posible en esta posición. Escríbela como «Cf3», «e4» o «enroque corto».");
+    return;
+  }
+  api.decir($("q-pista").textContent + (it.tipo === "linea" ? "" : " Escribe «responder» para entregarla."));
+  api.posicion(new Chess(tablero.fen()));
 }
 
 function montarTablero(fen, tipo, alSeleccionar) {
@@ -270,13 +346,21 @@ function pintarOpciones(it) {
     // La letra va ESCRITA dentro del botón, no puesta con CSS: con un
     // ::before se vería igual y el lector de pantalla no la diría.
     btn.innerHTML = `<span class="font-semibold">Opción ${String.fromCharCode(65 + i)}.</span> ${escapeHtml(texto)}`;
-    btn.addEventListener("click", () => {
-      respuestaActual = { opcion: String(i) };
-      [...ops.children].forEach((b, j) => { b.className = claseOpcion(j === i); });
-      $("responder-btn").disabled = false;
-    });
+    btn.setAttribute("aria-pressed", "false");
+    btn.addEventListener("click", () => elegirOpcion(i));
     ops.appendChild(btn);
   });
+}
+
+// La elegida se ve (el color) y se DICE (aria-pressed): el color solo no llega al lector.
+function elegirOpcion(i) {
+  const ops = $("q-opciones");
+  respuestaActual = { opcion: String(i) };
+  [...ops.children].forEach((b, j) => {
+    b.className = claseOpcion(j === i);
+    b.setAttribute("aria-pressed", j === i ? "true" : "false");
+  });
+  $("responder-btn").disabled = false;
 }
 
 function claseOpcion(activa) {
@@ -297,20 +381,25 @@ function prepararLinea(it) {
 
   // Las jugadas del rival se ponen solas, tanto al empezar (si abre él)
   // como después de cada jugada del alumno.
+  /* Lo que contesta el rival se DICE: el tablero cambia solo, y quien no lo
+     ve no se enteraba de qué jugó. */
   function avanzarRival() {
+    const suyas = [];
     while (dadas.length < jugadas.length && g.turn() !== miColor) {
       const mov = g.move(jugadas[dadas.length]);
       if (!mov) break;
       dadas.push(mov.san);
+      suyas.push(window.BlindNotation && BlindNotation.sanSpoken ? BlindNotation.sanSpoken(mov.san) : mov.san);
     }
+    return suyas.length ? " El rival jugó " + suyas.join(", ") + "." : "";
   }
-  avanzarRival();
+  const empieza = avanzarRival();
 
   montarTablero(g.fen(), "jugada", function (r) {
     const mov = g.move({ from: r.from, to: r.to, promotion: r.promotion || "q" });
     if (!mov) return;
     dadas.push(mov.san);
-    avanzarRival();
+    const rival = avanzarRival();
     tablero.cargar(g.fen());
 
     // Entregar una línea a medias es una respuesta —vale cero— pero
@@ -319,15 +408,15 @@ function prepararLinea(it) {
     respuestaActual = { jugadas: dadas.slice() };
     $("responder-btn").disabled = false;
     if (dadas.length >= jugadas.length) {
-      $("q-pista").textContent = "Terminaste la línea. Responde para entregarla.";
+      $("q-pista").textContent = "Terminaste la línea." + rival + " Responde para entregarla.";
       tablero.bloquear();
     } else {
-      $("q-pista").textContent = `Van ${dadas.length} de ${jugadas.length} jugadas.`;
+      $("q-pista").textContent = `Van ${dadas.length} de ${jugadas.length} jugadas.` + rival;
     }
   });
 
   $("q-pista").textContent =
-    `La línea tiene ${jugadas.length} jugadas en total. Da las tuyas: no hay pistas y no se puede deshacer.`;
+    `La línea tiene ${jugadas.length} jugadas en total. Da las tuyas: no hay pistas y no se puede deshacer.` + empieza;
 }
 
 /* ---------------- Responder ---------------- */

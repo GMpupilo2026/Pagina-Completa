@@ -35,7 +35,7 @@
     <div id="app" class="hidden pt-10 pb-16">
         <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
             <h1 class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white mb-1"><span aria-hidden="true">🔥</span> Racha táctica</h1>
-            <p class="text-brand-500 dark:text-brand-300 text-sm mb-6">Encuentra la única jugada correcta en 10 segundos. Cada acierto te da un ejercicio nuevo al instante, un poco más difícil que el anterior; un fallo o quedarte sin tiempo reinicia tu racha a cero.</p>
+            <p class="text-brand-500 dark:text-brand-300 text-sm mb-6">Encuentra la única jugada correcta en 10 segundos. Cada acierto te da un ejercicio nuevo al instante, un poco más difícil que el anterior; un fallo o quedarte sin tiempo reinicia tu racha a cero. En Modo Adaptado tienes 60 segundos por ejercicio.</p>
 
             <!-- Marcadores -->
             <div class="grid grid-cols-3 gap-3 mb-4">
@@ -64,7 +64,7 @@
 
             <!-- El cuadro de comandos del Modo Adaptado (js/cuadro-comandos.js). -->
             <div id="q-comandos"></div>
-            <p id="result-text" class="text-center text-sm mt-4 min-h-[1.5em] text-brand-600 dark:text-brand-300"></p>
+            <p id="result-text" role="status" aria-atomic="true" class="text-center text-sm mt-4 min-h-[1.5em] text-brand-600 dark:text-brand-300"></p>
 
             <div class="text-center mt-4">
                 <button id="start-btn" type="button" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-6 py-3 rounded-xl text-base transition-all hover:scale-105 shadow-lg">▶️ Empezar</button>
@@ -90,6 +90,8 @@
     <script src="js/board-drag.js"></script>
     <script src="js/blind-notation.js"></script>
     <script src="js/chess-move-parser.js"></script>
+    <script src="js/tablero-accesible.js"></script>
+    <script src="js/comandos-tablero.js"></script>
     <script src="js/cuadro-comandos.js"></script>
     <script src="data/puzzle-rush-data.js"></script>
     <script src="js/main.js"></script>

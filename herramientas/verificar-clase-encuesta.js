@@ -154,7 +154,8 @@ async function pruebaCalentamientoEscrito(browser) {
   await inp.fill("Ta8");
   await inp.press("Enter");
   await page.waitForFunction(() => /Bien/.test(document.getElementById("calentamiento-msg").textContent), null, { timeout: 5000 });
-  igual("la jugada escrita cuenta igual que el clic", await page.textContent("#calentamiento-msg"), "✅ ¡Bien! Ra8# es la jugada.");
+  // En Modo Adaptado la jugada se dice en palabras, no en la notación inglesa.
+  igual("la jugada escrita cuenta igual que el clic (y se dice en palabras)", /^✅ ¡Bien! torre anna 8 .*es la jugada\.$/.test(await page.textContent("#calentamiento-msg")), true);
   igual("sin errores en consola", errores, []);
   await ctx.close();
 }

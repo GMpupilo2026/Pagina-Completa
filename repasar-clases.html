@@ -176,10 +176,11 @@
 
 <!-- ===== MAIN APP ===== -->
 
+<main id="main-content" tabindex="-1">
 <div id="app" class="hidden pt-10 pb-16">
   <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
     <h1 class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white">Repasar mis clases <span aria-hidden="true">🎞️</span></h1>
-    <p class="text-sm text-brand-500 dark:text-brand-300 mt-2 mb-6">La partida de cada clase a la que fuiste (y de las que tu profe compartió con los que faltaron), jugada por jugada, con lo que comentó tu profe, las variantes que armó y las preguntas que hizo. Se recorre con los botones o con las flechas del teclado.</p>
+    <p class="text-sm text-brand-500 dark:text-brand-300 mt-2 mb-6">La partida de cada clase a la que fuiste (y de las que tu profe compartió con los que faltaron), jugada por jugada, con lo que comentó tu profe, las variantes que armó y las preguntas que hizo. Se recorre con los botones, con las flechas del teclado o escribiendo «siguiente» en el recuadro del Modo Adaptado.</p>
     <!-- El repaso personal (repasar-clases.html?repaso=<clase>, js/repaso-clase.js): las preguntas
          de la clase que a este alumno no le salieron, para resolverlas otra vez. -->
     <!-- Lo que vuelve (js/repaso-fallados.js, clave clase_repaso_v1): las preguntas en las que vio la
@@ -215,9 +216,14 @@
         <h2 id="visor-titulo" tabindex="-1" class="font-serif text-xl font-bold text-brand-800 dark:text-white"></h2>
         <p id="visor-fecha" class="text-xs text-brand-500 dark:text-brand-300 mb-2"></p>
         <p id="visor-sin-datos" class="text-xs text-brand-500 dark:text-brand-300 mb-2" hidden>Esta partida se guardó antes de que las clases guardaran sus comentarios y variantes: solo trae las jugadas.</p>
-        <div class="board-wrap"><div class="board8" id="board" role="img" aria-label="Tablero de la clase"></div></div>
+        <!-- Sin role="img": los hijos de una imagen no le llegan al lector de pantalla, y el
+             tablero se recorre casilla por casilla (js/tablero-accesible.js). -->
+        <div class="board-wrap"><div class="board8" id="board"></div></div>
         <div id="position-readout" class="position-readout" role="region" aria-label="Posición actual"></div>
-        <p id="visor-estado" class="round-status" role="status" aria-live="polite"></p>
+        <p id="visor-estado" class="round-status"></p>
+        <!-- Lo que se lee solo en cada paso: la jugada contada en palabras («El caballo blanco va
+             de gustav 1 a felix 3»), no el «Cf3» de la vista ni la posición entera. -->
+        <p id="visor-anuncio" class="sr-only" role="status"></p>
         <p id="visor-comentario" class="mt-2 rounded-xl px-4 py-3 bg-white dark:bg-brand-900 text-sm text-brand-800 dark:text-brand-100 shadow-sm" hidden></p>
         <!-- En esta posición el profe hizo una pregunta en la clase: se dice antes de seguir. -->
         <p id="visor-pregunta" class="mt-2 rounded-xl px-4 py-3 border-2 border-accent-500 bg-accent-50 dark:bg-brand-900 text-sm text-brand-800 dark:text-brand-100" hidden></p>
@@ -228,6 +234,9 @@
           <button type="button" class="bctrl" id="btn-final" aria-label="Al final">⏭</button>
           <button type="button" class="bctrl" id="btn-girar">Girar el tablero</button>
         </div>
+        <!-- El recuadro donde se recorre la partida escribiendo («siguiente», «jugada 5») y se le
+             pregunta a la posición («caballos»). Lo destapa el Modo Adaptado (js/cuadro-comandos.js). -->
+        <div id="visor-cmd"></div>
         <h3 class="font-semibold text-brand-800 dark:text-white mt-4 mb-1">Jugadas</h3>
         <div id="visor-jugadas" class="text-sm"></div>
         <!-- Las preguntas que hizo el profe en esta clase: pensarlas antes de ver la respuesta. -->
@@ -240,6 +249,7 @@
     </div>
   </div>
 </div>
+</main>
 
 <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p><!-- legal: inicio --><p class="mt-2"><a href="privacidad.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Política de privacidad</a> <span aria-hidden="true">·</span> <a href="terminos.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Términos y condiciones</a></p><!-- legal: fin --></div></footer>
 <!-- tablero-js: inicio -->
@@ -260,6 +270,7 @@
 <script src="js/tablero-accesible.js"></script>
 <script src="js/comandos-tablero.js"></script>
 <script src="js/cuadro-comandos.js"></script>
+<script src="js/visor-linea.js"></script>
 <script src="js/progreso-usuario.js"></script>
 <script src="js/repaso-espaciado.js"></script>
 <script src="js/repaso-fallados.js"></script>

@@ -133,6 +133,10 @@ async function pruebaInvitado(browser) {
   igual("el tablero muestra la posición de la clase (caballo en f3)",
     await page.evaluate(() => /caballo blanco/i.test((document.querySelector('#vc-tablero [data-square="f3"]') || {}).getAttribute?.("aria-label") || "")), true);
   igual("con la flecha del profe", await page.evaluate(() => document.querySelectorAll("#vc-tablero svg line, #vc-tablero svg path, #vc-tablero svg polyline").length > 0), true);
+  // El tablero es un «tablero de ajedrez» para el lector (js/tablero-accesible.js,
+  // montado por ClaseAdaptada): es lo que busca Alt + Mayúscula + B.
+  igual("el tablero se anuncia como tablero de ajedrez", await page.evaluate(() =>
+    document.querySelector('[aria-roledescription="tablero de ajedrez"]') === document.getElementById("vc-tablero")), true);
   igual("dice de quién es el turno", await page.textContent("#vc-estado"), "Juegan las negras");
   igual("en la pantalla de la clase no hay NINGÚN enlace (ni el pie)",
     await page.evaluate(() => [...document.querySelectorAll("a[href]")].filter((a) => a.checkVisibility()).length), 0);

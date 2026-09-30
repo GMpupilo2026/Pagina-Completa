@@ -62,13 +62,12 @@ async function pruebaCiega(browser) {
   cierto("y ninguna de las puertas que no están adaptadas (Archivos, las fichas por categoría repetidas)",
     !enlaces.includes("partidas.html") && !enlaces.some((h) => h.includes("?cat=")));
   igual("el grupo de entrenar se alcanza con #entrenar", await page.evaluate(() => !!document.querySelector("section#entrenar h2")), true);
-  /* Se lee cuando el panel ya terminó de cargar: la racha llega en la misma
-     tanda que el récord de racha táctica, y el saludo con la racha pisaba este
-     subtítulo según quién llegara último. */
+  /* Se lee cuando el panel ya terminó de cargar. La nota va en su propio
+     párrafo (#panel-adaptado-nota): el subtítulo lo reescribe la racha. */
   await page.waitForFunction(() => !/Cargando/.test((document.getElementById("tactics-record-text") || {}).textContent || ""), null, { timeout: 10000 }).catch(() => {});
   await page.waitForTimeout(300);
-  cierto("el subtítulo dice que es el panel adaptado y cómo oír los atajos",
-    /adaptado.*Alt \+ Mayúscula \+ H/.test(await page.evaluate(() => document.getElementById("panel-subtitulo").textContent)));
+  cierto("debajo del saludo dice que es el panel adaptado y cómo oír los atajos",
+    /adaptado.*Alt \+ Mayúscula \+ H/.test(await page.evaluate(() => { const n = document.getElementById("panel-adaptado-nota"); return n && n.checkVisibility() ? n.textContent : ""; })));
 
   const accesos = await page.evaluate(() => {
     const nav = document.getElementById("accesos-rapidos");
@@ -85,13 +84,34 @@ async function pruebaCiega(browser) {
   igual("los accesos rápidos: se ven, primeros después de «Saltar al contenido», con sus enlaces",
     accesos, { seVe: true, nombre: "Accesos rápidos", despuesDelSalto: true,
       enlaces: ["Tu panel → /clases.html", "Clase en vivo → /sesion.html", "Tareas → /tareas.html", "Entrenar → /clases.html#entrenar"].map((x) => x.replace("→ /", "→ " + BASE + "/")),
-      atajos: 8 });
+      atajos: 11 });
 
   /* Lo que oye quien usa lector de pantalla es lo que sale por la región viva. */
   await page.keyboard.press("Alt+Shift+KeyH");
   await esperar(250);
   cierto("Alt + Mayúscula + H dice los atajos por una región viva",
     await page.evaluate(() => Array.from(document.querySelectorAll('[role="status"]')).some((r) => /^Atajos: Alt más Mayúscula más P/.test(r.textContent))));
+  await page.keyboard.press("Alt+Shift+KeyD");
+  await esperar(250);
+  cierto("Alt + Mayúscula + D dice dónde está: la página y sus secciones",
+    await page.evaluate(() => Array.from(document.querySelectorAll('[role="status"]')).some((r) => /^Estás en ¡Hola, Ana!\. Tiene \d+ secciones: .*Clase en vivo; Lo que te pone tu profesor/.test(r.textContent))));
+  // Desde el saludo (el panel le pone el foco al cargar), la primera sección y la siguiente.
+  await page.evaluate(() => document.getElementById("panel-titulo").focus());
+  await page.keyboard.press("Alt+Shift+KeyS");
+  const primera = await page.evaluate(() => document.activeElement && document.activeElement.tagName + ":" + document.activeElement.textContent.trim());
+  await page.keyboard.press("Alt+Shift+KeyS");
+  const segunda = await page.evaluate(() => document.activeElement && document.activeElement.tagName + ":" + document.activeElement.textContent.trim());
+  cierto("Alt + Mayúscula + S salta de título en título (" + primera + " → " + segunda + ")",
+    /^H2:/.test(primera) && /^H2:/.test(segunda) && primera !== segunda);
+
+  /* El Modo Adaptado es fijo con la cuenta ciega: sin él los tableros no traen
+     su recuadro, y quien no ve no tiene cómo notar que se apagó. */
+  await page.evaluate(() => { const b = document.getElementById("adaptive-toggle"); if (b) b.click(); else AdaptiveMode.set(false); });
+  await esperar(200);
+  igual("apretar el interruptor no apaga el Modo Adaptado (y lo dice)", await page.evaluate(() => [
+    document.documentElement.classList.contains("adaptive-mode"), localStorage.getItem("oscarBlindMode_v1"),
+    Array.from(document.querySelectorAll('[role="status"]')).some((r) => /modo adaptado fijo/.test(r.textContent))]), [true, "1", true]);
+
   await page.keyboard.press("Alt+Shift+KeyM");
   igual("Alt + Mayúscula + M lleva el foco al contenido", await page.evaluate(() => document.activeElement && document.activeElement.id), "main-content");
   await page.keyboard.press("Alt+Shift+KeyB");
