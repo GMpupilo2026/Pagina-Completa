@@ -404,22 +404,15 @@ function loadPuzzle(){
   document.getElementById('answer-input').focus();
 }
 
-/* "R" es el rey en castellano y la torre (rook) en inglés; ChessMoveParser
-   prueba primero el inglés. Con rey y torre que pueden ir a la misma casilla,
-   quien escribía «Rd2» queriendo mover el rey movía la torre, y la página le
-   decía que no era la jugada de la línea (y le cortaba la racha). Como acá se
-   sabe qué jugada pide la línea, se prueban las dos lecturas y, si una es la
-   esperada, gana esa. Si ninguna lo es, queda la de siempre. Las pruebas se
-   hacen sobre copias: la partida solo se mueve con la jugada elegida. */
-/* La T se deja en castellano: js/chess-move-parser.js ya lee «R» como rey
-   también en inglés. Para la «R» se prueba además la torre («Rd2» en inglés),
-   y gana la que pida la línea. */
+/* En el sitio R es SIEMPRE el rey y la torre es T (algebraica española).
+   Se prueban la lectura tal cual y la traducida; si una es la que pide la
+   línea, gana esa. Las pruebas se hacen sobre copias: la partida solo se
+   mueve con la jugada elegida. */
 const ES_EN = { R: 'K', D: 'Q', T: 'T', A: 'B', C: 'N' };
 function jugadaDeLaLinea(texto, esperada){
   const t = String(texto || '').trim();
   const lecturas = [t];
   if(ES_EN[t[0]]) lecturas.push(ES_EN[t[0]] + t.slice(1).replace(/=([DTAC])/i, (_, c) => '=' + ES_EN[c.toUpperCase()]));
-  if(t[0] === 'R') lecturas.push('T' + t.slice(1));
   let primera = null;
   for(const l of lecturas){
     const m = ChessMoveParser.tryParseMove(new Chess(game.fen()), l);

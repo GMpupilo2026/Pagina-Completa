@@ -1026,8 +1026,10 @@
     else if (dicho === "enroquelargo") s = "O-O-O";
 
     const candidates = new Set();
-    // «R» es rey en español (y torre en inglés): el rey se prueba antes que el texto tal cual.
-    if (/^R[a-h1-8x]/i.test(s) && s.length >= 3) candidates.add("K" + s.slice(1));
+    // En el sitio R es SIEMPRE el rey (algebraica española); la torre es T.
+    // Leída en inglés, «Rf1» movía la torre.
+    if (/^R/i.test(s)) s = "K" + s.slice(1);
+    s = s.replace(/=R([+#]?)$/i, "=K$1");   // no se corona a rey (y «=R» no es la torre)
     candidates.add(s);
 
     if (/^0-0-0[+#]?$/.test(s) || /^0-0[+#]?$/.test(s)) candidates.add(s.replace(/0/g, "O"));

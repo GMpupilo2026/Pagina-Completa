@@ -62,8 +62,8 @@ igual("con el jaque y la captura dichos",
   pregunta(new Chess("4k3/8/8/8/8/8/3q4/R3K3 w Q - 0 1"), "mis jugadas").includes("d2 capturando"), true);
 
 console.log("\nLa partida");
-igual("última jugada", pregunta(g, "última jugada"), "La última jugada fue de las blancas: Bb5.");
-igual("historial numerado", pregunta(g, "historial"), "5 jugadas. 1: e4, e5; 2: Nf3, Nc6; 3: Bb5.");
+igual("última jugada", pregunta(g, "última jugada"), "La última jugada fue de las blancas: Ab5.");
+igual("historial numerado", pregunta(g, "historial"), "5 jugadas. 1: e4, e5; 2: Cf3, Cc6; 3: Ab5.");
 igual("un ejercicio que arranca en la posición lo dice",
   pregunta(new Chess("4k3/8/8/8/8/8/8/4K2R w K - 0 1"), "última jugada"),
   "Todavía no hay jugadas: la partida (o el ejercicio) empieza en esta posición.");
@@ -87,8 +87,12 @@ const reyYTorre = () => new Chess("4k3/8/8/8/8/8/8/4K2R w K - 0 1");
 const jugada = (g, t) => { const m = CT.jugadaEscrita(g, t); return m ? m.piece + m.from + m.to + (m.promotion || "") : "(ninguna)"; };
 igual("«Rf1» con rey y torre que llegan: el rey", jugada(reyYTorre(), "Rf1"), "ke1f1");
 igual("«Tf1» es la torre", jugada(reyYTorre(), "Tf1"), "rh1f1");
-igual("«Rh4», adonde solo llega la torre: la torre (quien escribe en inglés)", jugada(reyYTorre(), "Rh4"), "rh1h4");
-igual("coronar «=R» es a torre, nunca a rey", jugada(new Chess("8/4P3/8/8/8/8/k7/4K3 w - - 0 1"), "e8=R"), "pe7e8r");
+igual("«Rh4», adonde solo llega la torre: nada (R es el rey; la torre es T)", jugada(reyYTorre(), "Rh4"), "(ninguna)");
+igual("«Th4» sí es la torre", jugada(reyYTorre(), "Th4"), "rh1h4");
+igual("coronar «=T» es a torre", jugada(new Chess("8/4P3/8/8/8/8/k7/4K3 w - - 0 1"), "e8=T"), "pe7e8r");
+igual("«=R» no corona a nada (no se corona a rey)", jugada(new Chess("8/4P3/8/8/8/8/k7/4K3 w - - 0 1"), "e8=R"), "(ninguna)");
+igual("«Rh4» que no se pudo: dice que R es el rey", CT.noSePudoJugar("Rh4"), "«Rh4» no es una jugada legal en esta posición. R es el rey; la torre se escribe con T.");
+igual("todo lo escrito, en algebraica española", CT.sanEspanol("Nf3 Bxc6 Rxe8+ Qd1 Kf1 e8=Q O-O"), "Cf3 Axc6 Txe8+ Dd1 Rf1 e8=D O-O");
 
 // La misma regla en el lector de jugadas de las páginas (js/chess-move-parser.js).
 const ctx2 = { window: {}, console };
@@ -98,7 +102,8 @@ vm.runInContext(fs.readFileSync(path.join(__dirname, "..", "js", "chess-move-par
 const parser = (t) => { const m = ctx2.window.ChessMoveParser.tryParseMove(reyYTorre(), t); return m ? m.piece + m.from + m.to : "(ninguna)"; };
 igual("ChessMoveParser: «Rf1» es el rey", parser("Rf1"), "ke1f1");
 igual("ChessMoveParser: «Tf1» es la torre", parser("Tf1"), "rh1f1");
-igual("ChessMoveParser: «Rh4» (solo la torre llega) sigue siendo la torre", parser("Rh4"), "rh1h4");
+igual("ChessMoveParser: «Rh4» (solo la torre llega) no es nada: R es el rey", parser("Rh4"), "(ninguna)");
+igual("ChessMoveParser: «Th4» es la torre", parser("Th4"), "rh1h4");
 
 console.log(fallos ? `\n${fallos} fallo(s)` : "\nLas preguntas de ataque y de la partida contestan lo que hay.");
 process.exit(fallos ? 1 : 0);

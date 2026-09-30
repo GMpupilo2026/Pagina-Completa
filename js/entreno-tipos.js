@@ -366,8 +366,8 @@
      escribe «Rc3» queriendo mover el rey movía la torre. Acá la R es el rey,
      la T la torre, la D la dama, la A el alfil y la C el caballo; si así no es
      legal, se prueba lo demás (inglés, sin x, etc.). */
-  /* La T se deja en castellano: js/chess-move-parser.js ya lee «R» como rey
-     también en inglés, y traducirla a «R» movía el rey en vez de la torre. */
+  /* La T se deja en castellano (js/chess-move-parser.js la traduce): R es
+     SIEMPRE el rey en el sitio, y traducir la T a «R» movía el rey. */
   const ES_EN = { R: "K", D: "Q", T: "T", A: "B", C: "N" };
   function jugadaEscrita(juego, txt) {
     const t = String(txt || "").trim();

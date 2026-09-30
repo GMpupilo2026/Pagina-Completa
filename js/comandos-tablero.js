@@ -342,8 +342,14 @@ window.ComandosTablero = (function () {
   function historiaDe(juego) {
     try { return juego.history ? (juego.history() || []) : null; } catch (e) { return null; }
   }
+  /* La jugada escrita en algebraica española: «Nf3» → «Cf3», «Rxe8» → «Txe8»,
+     «e8=Q» → «e8=D». Las mayúsculas de una jugada (SAN) son solo piezas. */
+  var PIEZA_ES = { K: "R", Q: "D", R: "T", B: "A", N: "C" };
+  function sanEspanol(san) {
+    return String(san == null ? "" : san).replace(/[KQRBN]/g, function (l) { return PIEZA_ES[l]; });
+  }
   function sanHablada(san) {
-    return window.BlindNotation && BlindNotation.sanSpoken ? BlindNotation.sanSpoken(san) : san;
+    return window.BlindNotation && BlindNotation.sanSpoken ? BlindNotation.sanSpoken(san) : sanEspanol(san);
   }
   function ultimaJugada(juego) {
     var h = historiaDe(juego);
@@ -448,11 +454,12 @@ window.ComandosTablero = (function () {
      orden al revés, escribir la jugada que la propia página acaba de nombrar
      movería el rey en vez de la torre, y sería legal las dos veces. */
   var LETRA_PIEZA = { t: "r", c: "n", a: "b", d: "q", n: "n", q: "q", k: "k" };
-  /* «R» es rey en español y torre en inglés. El sitio escribe en español, así
-     que primero el REY: con el rey y una torre que llegan a f1, «Rf1» movía la
-     torre, y en el examen eso es la pregunta perdida sin haberse equivocado.
-     Si el rey no puede ir, queda la torre (quien escribe en inglés). */
-  var LETRA_AMBIGUA = { r: ["k", "r"], b: ["b"] };
+  /* En el sitio todo va en algebraica española: R es SIEMPRE el rey y la
+     torre es T. «Rf1» movía la torre (en inglés R es torre) y en el examen eso
+     era la pregunta perdida sin haberse equivocado. Las demás iniciales
+     inglesas (N, Q, K) no chocan con nada y se siguen entendiendo; la R no,
+     porque es una jugada distinta. */
+  var LETRA_AMBIGUA = { r: ["k"], b: ["b"] };
   function tiposDe(inicial) {
     var l = String(inicial || "").toLowerCase();
     if (LETRA_AMBIGUA[l]) return LETRA_AMBIGUA[l];
@@ -489,7 +496,8 @@ window.ComandosTablero = (function () {
     // quien va leyendo el tablero casilla por casilla.
     var m = t.toLowerCase().match(/^([a-h][1-8])[x\-,]?([a-h][1-8])([tcadqrbn])?$/);
     if (m) {
-      var coronaA = m[3] ? (/^r$/i.test(m[3]) ? "r" : (tiposDe(m[3])[0] || null)) : null;
+      var coronaA = m[3] ? (tiposDe(m[3])[0] || null) : null;
+      if (coronaA === "k") return null;
       var caben = legales.filter(function (j) {
         return j.from === m[1] && j.to === m[2] && (!coronaA || j.promotion === coronaA);
       });
@@ -512,8 +520,8 @@ window.ComandosTablero = (function () {
     var tipos = esPieza ? tiposDe(inicial) : ["p"];
     if (inicial && !esPieza && !m[2] && !m[3]) { m[2] = inicial.toLowerCase(); }
     var destino = m[4].toLowerCase();
-    // Se corona a torre, nunca a rey: ahí «R» solo puede ser la torre inglesa.
-    var corona = m[5] ? (/^r$/i.test(m[5]) ? "r" : (tiposDe(m[5])[0] || null)) : null;
+    var corona = m[5] ? (tiposDe(m[5])[0] || null) : null;
+    if (corona === "k") return null;   // no se corona a rey: «=R» no es una jugada
 
     /* Se prueba tipo por tipo y gana el PRIMERO que dé exactamente una jugada.
        Así "Rd4" sale bien tanto cuando quien escribe piensa en la torre como
@@ -567,7 +575,9 @@ window.ComandosTablero = (function () {
   var ACCIONES_CONOCIDAS = /^(siguiente|anterior|solucion|la solucion|ver la solucion|pista|otra pista|otra vez|reiniciar|comprobar|volver|saltar|tiempo|reloj)$/;
   function noSePudoJugar(texto) {
     var dicho = String(texto || "").trim();
-    if (pareceJugada(dicho)) return "«" + dicho + "» no es una jugada legal en esta posición.";
+    if (pareceJugada(dicho)) return "«" + dicho + "» no es una jugada legal en esta posición." +
+      // Quien viene del inglés escribe R por la torre: aquí R es el rey.
+      (/^R[a-h1-8x]/.test(dicho) ? " R es el rey; la torre se escribe con T." : "");
     if (ACCIONES_CONOCIDAS.test(normalizar(dicho))) {
       return "En este ejercicio no hay «" + dicho + "». Escribe «acciones» para oír lo que sí puedes hacer.";
     }
@@ -673,7 +683,7 @@ window.ComandosTablero = (function () {
   }
 
   return {
-    interpretar: interpretar, jugadaEscrita: jugadaEscrita,
+    interpretar: interpretar, jugadaEscrita: jugadaEscrita, sanEspanol: sanEspanol,
     pareceJugada: pareceJugada, noSePudoJugar: noSePudoJugar, incorrecta: incorrecta,
     AYUDA: AYUDA, ayudaHTML: ayudaHTML, ayudaTexto: ayudaTexto,
     dondeEsta: dondeEsta, queHayEn: queHayEn, jugadasDe: jugadasDe,
