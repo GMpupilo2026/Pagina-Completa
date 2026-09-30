@@ -168,8 +168,20 @@ qué: si no, parecería que a las lecciones les faltan cosas.
 dejaban escribir la jugada en vez de arrastrarla — pero lo contado vivía en un
 párrafo `sr-only` al final del visor, lejísimos del cuadro donde se escribe. Ese
 párrafo se mueve justo encima del cuadro y, en Modo Adaptado, se hace visible:
-leer la posición y contestarla son el mismo gesto. Sigue siendo región viva
-(`aria-live`), así que cada jugada se vuelve a leer.
+leer la posición y contestarla son el mismo gesto. **Ya no es región viva**:
+releer las treinta y dos piezas con cada jugada tapaba todo lo demás. Lo que
+se anuncia es la JUGADA, en palabras, en `.f100-anuncio` / `.cp-anuncio`
+(«Jugaste: …», «El motor jugó: el caballo negro va de gustav 8 a felix 6. Te
+toca.»; antes solo decía «Te toca»), y la posición se pide con «posición».
+
+**4. El recuadro es el común** (`CuadroComandos`, con `.cc-input`): entiende
+jugadas, las preguntas al tablero («caballos», «qué ataca e4»…), recorrer
+escribiendo («siguiente», «jugada 5»), «practicar», «girar», «terminar» y, en
+las partidas, «adivinar», «pista», «seguir» y «solución». Las páginas de
+`cursos/academia/` están escritas a mano y no cargaban esas piezas:
+`CursoAdaptado.piezas(cb)` las trae en orden, con ruta relativa, solo las que
+falten. La vista pública (`cursos/*.html`, sin `curso-adaptado.js`) se queda
+con un recuadro sencillo que solo entiende jugadas.
 
 **Lo que decide qué se ve es el CSS** (`html.adaptive-mode` en `css/styles.css`),
 no el JavaScript: así encender y apagar el modo surte efecto al instante, sin

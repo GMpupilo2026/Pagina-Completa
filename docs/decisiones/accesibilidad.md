@@ -824,6 +824,23 @@ quedó:
   «historial» no se contestan ahí (la jugada del rival no se ve). Las mira
   `verificar-preguntas-tablero.js`, sin navegador.
 
+- **Repasar mis clases**: el visor de la partida era un `role="img"` con
+  casillas mudas y sin recuadro. Ahora se recorre como Estudio: `TableroAccesible`,
+  el recuadro sobre la posición que se ve, y la línea se recorre escribiendo
+  (`VisorLinea.pasoPedido`: siguiente, anterior, inicio, final, jugada N,
+  girar); cada paso dice la jugada contada, el comentario del profe y si hay
+  pregunta. Las flechas globales del visor no roban las teclas con el foco en
+  un tablero, un recuadro o un `[role=application]`.
+- **Los diagramas de los artículos**: el contenedor era `role="img"`, y los
+  hijos de una imagen no llegan al lector: las 64 casillas rotuladas no se oían.
+  Sin ese rol, con `TableroAccesible` para mirar, y el Modo Adaptado leído de la
+  clase del `<html>` (no de localStorage) sin esconder el tablero.
+- **Cursos**: ver «Los cursos, recorridos con lector de pantalla» en
+  `cursos-y-material.md` (el recuadro común con preguntas y la jugada del motor
+  dicha).
+- **La clase en vivo**: ver «Todo lo que lanza el profe, contestado sin ver» en
+  `clase-en-vivo.md`.
+
 **Al tocar un tablero, correr** `node herramientas/verificar-todo.js
 entreno-accesible examenes cuadro-comandos preguntas-tablero vision-cuenta`.
 `verificar-entreno-accesible.js` suma Precisión posicional, Visualización y
