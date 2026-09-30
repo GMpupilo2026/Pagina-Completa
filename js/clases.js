@@ -1482,10 +1482,14 @@
            cuando el entrenamiento era chico, y lo que se hace en la semana ya
            lo dice «Hoy te toca». Ver «Hoy te toca y tu progreso, en una sola
            tarjeta» en docs/decisiones/paneles.md. */
+        let panelAdaptado = false;
         async function pintarSaludoAlumno(rachaP) {
             let r = null;
             try { r = await rachaP; } catch (e) { return; }
             if (!r || r.error || !r.stats) return;
+            // El panel adaptado tiene su propio subtítulo (cómo oír los atajos):
+            // la racha llega después y lo pisaba.
+            if (panelAdaptado) return;
             const racha = r.stats.racha_actual || 0;
             const hoy = r.stats.hoy_ejercicios || 0;
             const meta = window.Logros ? Logros.META_DIARIA : 5;
@@ -2868,6 +2872,7 @@
             // alumnado lo que está en mantenimiento, sin tocar lo del equipo
             // docente.
             const ciego = !esEquipoDocente() && profile.role === "alumno" && await alumnoCiego();
+            panelAdaptado = !!ciego;
             textosDelEquipoDocente();
             if (ciego) {
                 armarPanelAdaptado();
