@@ -532,6 +532,14 @@
                enlace invisible sigue siendo una parada de tabulador. */
             if (!esEquipoDocente()) {
                 TILE_GROUPS.forEach((g) => { g.tiles = g.tiles.filter((t) => !t.soloDocente); });
+                /* «Tu cuenta» (Configuración, Informes, Logros, justificar
+                   una ausencia y la encuesta) no se usa todos los días: va en
+                   tarjetas chicas, de a dos por fila en el celular. Con las
+                   grandes eran tres filas de casi una pantalla al final del
+                   panel. Ver «El final del panel, en tarjetas chicas» en
+                   docs/decisiones/paneles.md. */
+                const cuenta = TILE_GROUPS.find((g) => g.title === "Tu cuenta");
+                if (cuenta) cuenta.compacto = true;
                 return;
             }
             const todas = TILE_GROUPS.flatMap((g) => g.tiles).filter((t) => !t.soloAlumno);
@@ -616,8 +624,10 @@
                 : tiene("cobros.html"));
         }
 
-        function renderTileCard(t, destacado) {
-            const base = "group flex flex-col items-center text-center gap-2 rounded-2xl p-5 shadow-md transition-all duration-200"
+        function renderTileCard(t, destacado, compacto) {
+            const base = compacto
+                ? "group flex flex-row items-center text-left gap-3 rounded-xl p-3 shadow-sm transition-all duration-200"
+                : "group flex flex-col items-center text-center gap-2 rounded-2xl p-5 shadow-md transition-all duration-200"
                 + (destacado ? " sm:flex-row sm:items-center sm:text-left sm:gap-5" : "");
             let el;
             if (t.disabled) {
@@ -663,7 +673,7 @@
                 el.appendChild(punto);
             }
             const iconWrap = document.createElement("div");
-            iconWrap.className = "w-14 h-14 rounded-xl flex items-center justify-center text-3xl overflow-hidden shrink-0 " + (t.primary ? "bg-accent-500/20" : "bg-brand-50 dark:bg-brand-800") + " group-hover:scale-105 transition-transform";
+            iconWrap.className = (compacto ? "w-10 h-10 rounded-lg text-xl " : "w-14 h-14 rounded-xl text-3xl ") + "flex items-center justify-center overflow-hidden shrink-0 " + (t.primary ? "bg-accent-500/20" : "bg-brand-50 dark:bg-brand-800") + " group-hover:scale-105 transition-transform";
             if (t.photo) {
                 // Foto real de Oscar en vez de un emoji genérico, igual que en tablero.html
                 // ("Juega contra Oscar"): la etiqueta de al lado ya dice de qué se trata,
@@ -681,12 +691,15 @@
                 iconWrap.setAttribute("aria-hidden", "true");
             }
             const texto = document.createElement("span");
-            texto.className = "flex flex-col items-center gap-1" + (destacado ? " sm:items-start" : "");
+            texto.className = "flex flex-col gap-1 " + (compacto ? "items-start min-w-0" : "items-center" + (destacado ? " sm:items-start" : ""));
             const label = document.createElement("span");
             label.className = "font-semibold text-sm " + ((t.apagado && t.apagado.tituloClases) || "text-brand-800 dark:text-white");
             label.textContent = t.label;
             const desc = document.createElement("span");
-            desc.className = "text-xs " + ((t.apagado && t.apagado.notaClases) || "text-brand-450 dark:text-brand-350");
+            /* En una tarjeta compacta la descripción va solo desde la
+               tableta: en el celular el nombre («Configuración», «Logros»)
+               ya dice a dónde lleva, y así caben dos por fila. */
+            desc.className = "text-xs " + (compacto ? "hidden sm:block " : "") + ((t.apagado && t.apagado.notaClases) || "text-brand-450 dark:text-brand-350");
             desc.textContent = t.desc;
             texto.append(label, desc);
             if (t.pedido && !t.disabled) {
@@ -899,6 +912,45 @@
            alcanzándose con Tab y anunciándose como enlace no disponible. Cuando
            el profe abre la clase, Realtime repinta y vuelven las dos tarjetas
            grandes, solas. A quien da clase no le toca: la abre él. */
+        /* ---------- Tu próxima clase ----------
+           La línea de la clase en vivo, sin clase abierta, decía «Se abre
+           cuando tu profe empiece la clase», pero no CUÁNDO. Si su profe tiene
+           el horario puesto (asistencia.html → «Tu horario»), ahora lo dice:
+           «Tu próxima clase: mañana a las 4:00 p. m., presencial».
+
+           El horario del profe no se le abre al alumno —vería los de todos
+           sus grupos—: mi_proxima_clase() le contesta solo la SUYA, con la
+           misma regla con que se pasa lista (su subgrupo o su grupo). Sin
+           horario no contesta nada y la línea dice lo de siempre. No se
+           espera: llega y se repinta la línea. Ver «Tu próxima clase» en
+           docs/decisiones/paneles.md. */
+        let proximaClase = null;
+        async function cargarProximaClase() {
+            try {
+                const { data, error } = await sb.rpc("mi_proxima_clase");
+                if (error || !Array.isArray(data) || !data.length || !data[0].inicio) return;
+                proximaClase = data[0];
+                claseCompacta();
+            } catch (e) { /* sin horario, la línea dice lo de siempre */ }
+        }
+        const FORMATO_DIA_CR = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Costa_Rica" });
+        const FORMATO_HORA_CR = new Intl.DateTimeFormat("es-CR", { timeZone: "America/Costa_Rica", hour: "numeric", minute: "2-digit" });
+        const FORMATO_SEMANA_CR = new Intl.DateTimeFormat("es-CR", { timeZone: "America/Costa_Rica", weekday: "long" });
+        function textoProximaClase(c, ahora) {
+            ahora = ahora || new Date();
+            const inicio = new Date(c.inicio), fin = new Date(c.fin);
+            const donde = c.modalidad === "en_linea" ? "en línea" : "presencial";
+            const que = c.titulo ? " («" + c.titulo + "»)" : "";
+            if (inicio <= ahora && ahora < fin) {
+                return "Tu clase" + que + " es ahora, hasta las " + FORMATO_HORA_CR.format(fin) + ", " + donde + ". Se abre cuando tu profe la empiece";
+            }
+            const dia = FORMATO_DIA_CR.format(inicio);
+            const hoy = FORMATO_DIA_CR.format(ahora);
+            const manana = FORMATO_DIA_CR.format(new Date(ahora.getTime() + 86400000));
+            const cuando = dia === hoy ? "hoy" : dia === manana ? "mañana" : "el " + FORMATO_SEMANA_CR.format(inicio);
+            return "Tu próxima clase" + que + " es " + cuando + " a las " + FORMATO_HORA_CR.format(inicio) + ", " + donde;
+        }
+
         function claseCompacta() {
             const wrap = document.getElementById("sesion-wrap");
             const grilla = wrap && wrap.parentElement;
@@ -917,6 +969,7 @@
             }
             const motivo = !videollamadaLista ? "Viendo si hay clase…"
                 : !misClases.length ? "Pide que te asignen un profesor"
+                : proximaClase ? textoProximaClase(proximaClase)
                 : "Se abre cuando tu profe empiece la clase";
             linea.replaceChildren();
             const candado = document.createElement("span");
@@ -1012,12 +1065,14 @@
                    poco y acompaña a quien no ve lee la tarjeta entera. */
                 tilesGrid.className = group.destacado
                     ? "grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-4 md:gap-5"
+                    : group.compacto
+                    ? "grid grid-cols-2 lg:grid-cols-3 gap-3"
                     : group.adaptado
                     ? "grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-5"
                     : "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5";
                 group.tiles.forEach((t) => {
                     if (!t.videollamada) {
-                        const tarjeta = renderTileCard(t, !!group.destacado);
+                        const tarjeta = renderTileCard(t, !!group.destacado, !!group.compacto);
                         tarjeta.dataset.buscar = buscableDeTile(t);
                         tilesGrid.appendChild(tarjeta);
                         return;
@@ -1519,6 +1574,217 @@
             (tarjeta.lastElementChild || tarjeta).appendChild(marca);
             const aviso = tarjeta.closest("section") && tarjeta.closest("section").querySelector("[data-ultimo]");
             if (aviso) aviso.hidden = false;
+        }
+
+        /* ---------- Lo que más usas, y cuánto llevas en cada tarjeta ----------
+           Con los grupos plegados en el celular, llegar a Mates era abrir
+           «Entrenamiento básico» primero. Arriba de la grilla van las cuatro
+           tarjetas donde más tiempo pasó en los últimos 30 días, y en cada
+           tarjeta de la grilla, cuánto lleva desde siempre («Llevas 120
+           mates»), para que se vea lo que tiene a medias.
+
+           Las dos cosas salen de tiempo_por_seccion(), la misma cuenta de
+           Informes (SECURITY INVOKER: la RLS le da solo lo suyo), con los
+           mismos nombres y unidades (TiempoSecciones.SECCIONES). Nada se
+           cuenta en el navegador. No se espera: llega y se pinta. Ver «Lo que
+           más usas y cuánto llevas» en docs/decisiones/paneles.md. */
+        // La sección de tiempo_por_seccion() → la tarjeta del panel. Las que
+        // no están acá son entreno/<sección>.html.
+        const TARJETA_DE_SECCION = {
+            "practicar": "entreno/practicas.html",
+            "partidas": "juegos.html",
+            "torneos": "competir.html",
+            "logros": "logros.html",
+            "curso": "cursos/academia/index.html",
+        };
+        // Destinos que no son costumbre: se cuentan, pero no van en «lo que más usas».
+        const NO_ES_COSTUMBRE = new Set(["entreno/diagnostico.html", "logros.html"]);
+        function tarjetaDeSeccion(seccion) {
+            const clave = String(seccion || "").startsWith("curso:") ? "curso" : String(seccion || "");
+            if (!clave || clave === "clase" || clave === "estudio") return null;
+            return TARJETA_DE_SECCION[clave] || "entreno/" + clave + ".html";
+        }
+        function tarjetaEnPanel(href) {
+            return Array.from(document.querySelectorAll("#tile-grid a[href]")).find((a) => a.getAttribute("href") === href) || null;
+        }
+        function tileDe(href) {
+            for (const g of TILE_GROUPS) for (const t of g.tiles) if (t.href === href) return t;
+            return null;
+        }
+        // Suma las filas por tarjeta (los cursos son varias secciones y una tarjeta).
+        function porTarjeta(filas) {
+            const m = new Map();
+            (filas || []).forEach((f) => {
+                const href = tarjetaDeSeccion(f.seccion);
+                if (!href) return;
+                const x = m.get(href) || { href, secciones: [], minutos: 0, ejercicios: 0 };
+                x.secciones.push(f.seccion);
+                x.minutos += Number(f.minutos) || 0;
+                x.ejercicios += Number(f.ejercicios) || 0;
+                m.set(href, x);
+            });
+            return Array.from(m.values());
+        }
+        async function cargarLoQueMasUsas() {
+            try { await traerScript("js/tiempo-secciones.js"); } catch (e) { return; }
+            const TS = window.TiempoSecciones;
+            if (!TS) return;
+            const hace30 = new Date(Date.now() - 30 * 86400000).toISOString();
+            let siempre, mes;
+            try {
+                [siempre, mes] = await Promise.all([
+                    sb.rpc("tiempo_por_seccion", { p_alumno: profile.id }),
+                    sb.rpc("tiempo_por_seccion", { p_alumno: profile.id, p_desde: hace30 }),
+                ]);
+            } catch (e) { return; }
+            if (siempre && !siempre.error) pintarAvanceDeTarjetas(TS, siempre.data || []);
+            if (mes && !mes.error) pintarLoQueMasUsas(mes.data || []);
+        }
+        function pintarAvanceDeTarjetas(TS, filas) {
+            porTarjeta(filas).forEach((x) => {
+                if (x.href === "cursos/academia/index.html") return; // lo dice «Sigue con tu curso»
+                const a = tarjetaEnPanel(x.href);
+                if (!a || a.querySelector("[data-avance]")) return;
+                const d = x.secciones.length === 1 && TS.SECCIONES[x.secciones[0]];
+                let texto = "";
+                if (d && d.unidad && x.ejercicios > 0) texto = "Llevas " + x.ejercicios + " " + (x.ejercicios === 1 ? d.unidad[0] : d.unidad[1]);
+                else if (x.minutos >= 5) texto = "Llevas " + TS.duracion(x.minutos);
+                if (!texto) return;
+                const linea = document.createElement("span");
+                linea.dataset.avance = "1";
+                linea.className = "text-[11px] font-semibold text-brand-600 dark:text-brand-300";
+                linea.textContent = texto;
+                (a.lastElementChild || a).appendChild(linea);
+            });
+        }
+        function pintarLoQueMasUsas(filas) {
+            const caja = document.getElementById("mas-usado");
+            const lista = document.getElementById("mas-usado-lista");
+            if (!caja || !lista) return;
+            const top = porTarjeta(filas)
+                .filter((x) => x.minutos >= 3 && !NO_ES_COSTUMBRE.has(x.href) && tarjetaEnPanel(x.href))
+                .sort((a, b) => b.minutos - a.minutos)
+                .slice(0, 4);
+            // Con una sola no hay «lo que más usas»: es lo único que usa, y ya está en la grilla.
+            if (top.length < 2) return;
+            lista.replaceChildren();
+            top.forEach((x) => {
+                const t = tileDe(x.href);
+                if (!t) return;
+                const li = document.createElement("li");
+                const a = document.createElement("a");
+                a.href = x.href;
+                a.className = "flex items-center gap-2 rounded-xl p-3 h-full bg-white dark:bg-brand-900 shadow-sm hover:shadow-md transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+                const icono = document.createElement("span");
+                icono.setAttribute("aria-hidden", "true");
+                icono.className = "text-xl shrink-0";
+                icono.textContent = t.emoji || "♟️";
+                const nombre = document.createElement("span");
+                nombre.className = "font-semibold text-sm text-brand-800 dark:text-white";
+                nombre.textContent = t.label;
+                a.append(icono, nombre);
+                li.appendChild(a);
+                lista.appendChild(li);
+            });
+            caja.hidden = false;
+        }
+
+        /* ---------- «Competir» avisa lo que lo espera ----------
+           Un reto de alguien en línea o un torneo de su profe no se veían
+           hasta entrar a Competir. Ahora la tarjeta lo dice:
+           - «Te retaron: 1 reto sin contestar» (los de los últimos dos días:
+             un reto no vence solo y uno de la semana pasada ya no espera a
+             nadie; los viejos siguen en Competir);
+           - «Juegas «X»: va en curso» si está inscrito en un torneo en curso;
+           - «Inscripción abierta: «X»» si hay uno de su profe esperando
+             jugadores y no se inscribió (de las últimas dos semanas).
+           Lo que ve lo decide la RLS de siempre (desafios_select,
+           tournaments_select: los torneos de SUS profes). Contar va con
+           `head`, sin traer filas. Ver «Competir avisa lo que lo espera» en
+           docs/decisiones/paneles.md. */
+        async function avisosDeCompetir() {
+            const a = tarjetaEnPanel("competir.html");
+            if (!a) return;
+            const hace2 = new Date(Date.now() - 2 * 86400000).toISOString();
+            const hace14 = new Date(Date.now() - 14 * 86400000).toISOString();
+            let retos = 0, torneo = null;
+            try {
+                const [r, t] = await Promise.all([
+                    sb.from("desafios").select("id", { count: "exact", head: true })
+                        .eq("para_id", profile.id).eq("estado", "pendiente").gte("created_at", hace2),
+                    sb.from("tournaments").select("id, name, status")
+                        .in("status", ["registration", "in_progress"]).gte("created_at", hace14)
+                        .order("created_at", { ascending: false }).limit(5),
+                ]);
+                if (r && !r.error) retos = r.count || 0;
+                const lista = (t && !t.error && t.data) || [];
+                if (lista.length) {
+                    const { data: ins } = await sb.from("tournament_registrations").select("tournament_id")
+                        .eq("player_id", profile.id).in("tournament_id", lista.map((x) => x.id));
+                    const inscrito = new Set((ins || []).map((x) => x.tournament_id));
+                    torneo = lista.find((x) => x.status === "in_progress" && inscrito.has(x.id))
+                        || lista.find((x) => x.status === "registration" && !inscrito.has(x.id)) || null;
+                    if (torneo) torneo = { ...torneo, inscrito: inscrito.has(torneo.id) };
+                }
+            } catch (e) { return; }
+            const texto = a.lastElementChild || a;
+            texto.querySelectorAll("[data-competir]").forEach((x) => x.remove());
+            const chip = (clave, frase, fuerte) => {
+                const c = document.createElement("span");
+                c.dataset.competir = clave;
+                c.className = "text-[11px] font-semibold px-2 py-0.5 rounded-full "
+                    + (fuerte ? "border border-accent-500 text-accent-700 dark:text-accent-400" : "bg-brand-100 dark:bg-brand-800 text-brand-700 dark:text-brand-200");
+                c.textContent = frase;
+                texto.appendChild(c);
+            };
+            if (retos) chip("retos", "Te retaron: " + retos + (retos === 1 ? " reto sin contestar" : " retos sin contestar"), true);
+            if (torneo) {
+                const nombre = String(torneo.name || "").trim() || "un torneo";
+                chip("torneo", torneo.inscrito ? "Juegas «" + nombre + "»: va en curso" : "Inscripción abierta: «" + nombre + "»", false);
+            }
+            if (retos) a.classList.add("ring-2", "ring-accent-500");
+        }
+
+        /* ---------- La marca «Nuevo» ----------
+           Un artículo, un curso, una lección de Aprender o una ficha de
+           Estudio que se agregan no se enteraba nadie. data/contenido-panel.json
+           (lo arma herramientas/contenido-panel.js) dice qué hay detrás de
+           cada una de esas tarjetas, y este aparato recuerda qué había la
+           última vez: lo que no estaba lleva «Nuevo» hasta que abre la
+           tarjeta. La primera vez no se marca nada —todo sería nuevo, que es
+           lo mismo que nada—.
+
+           Es una comodidad de este aparato y nada más: en otro celular, o sin
+           almacenamiento, arranca de cero y no marca nada. Ver «La marca
+           «Nuevo»» en docs/decisiones/paneles.md. */
+        const CLAVE_VISTO = "panel_contenido_visto_v1";
+        async function marcarContenidoNuevo() {
+            let contenido;
+            try {
+                const r = await fetch("data/contenido-panel.json", { cache: "no-cache" });
+                if (!r.ok) return;
+                contenido = await r.json();
+            } catch (e) { return; }
+            if (!contenido || typeof contenido !== "object") return;
+            let visto = {};
+            try { visto = JSON.parse(localStorage.getItem(CLAVE_VISTO) || "{}") || {}; } catch (e) { visto = {}; }
+            const guardar = () => { try { localStorage.setItem(CLAVE_VISTO, JSON.stringify(visto)); } catch (e) {} };
+            let cambio = false;
+            Object.entries(contenido).forEach(([href, ids]) => {
+                if (!Array.isArray(ids)) return;
+                if (!Array.isArray(visto[href])) { visto[href] = ids; cambio = true; return; }
+                const antes = new Set(visto[href]);
+                const nuevos = ids.filter((id) => !antes.has(id)).length;
+                const a = nuevos && tarjetaEnPanel(href);
+                if (!a || a.querySelector("[data-nuevo]")) return;
+                const marca = document.createElement("span");
+                marca.dataset.nuevo = String(nuevos);
+                marca.className = "text-[11px] font-semibold px-2 py-0.5 rounded-full border border-accent-500 text-accent-700 dark:text-accent-400";
+                marca.textContent = nuevos === 1 ? "Nuevo" : "Nuevo (" + nuevos + ")";
+                (a.lastElementChild || a).appendChild(marca);
+                a.addEventListener("click", () => { visto[href] = ids; guardar(); }, { once: true });
+            });
+            if (cambio) guardar();
         }
 
         /* ---------- Tus clases: la última y los puntos del mes ----------
@@ -3142,6 +3408,10 @@
                    arriba, el panel esperaba por ellos hasta el tope de 6 s, y
                    con una red lenta aparecía recién a los ~14 s. */
                 cargarHoyTeToca(rachaP).catch((e) => console.error(e));
+                cargarProximaClase();
+                if (!panelAdaptado) cargarLoQueMasUsas().catch((e) => console.error(e));
+                avisosDeCompetir().catch((e) => console.error(e));
+                if (!panelAdaptado) marcarContenidoNuevo().catch((e) => console.error(e));
                 marcarLoUltimo().catch((e) => console.error(e));
             }
             await sinEsperarDeMas(...partes);
