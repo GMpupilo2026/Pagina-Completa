@@ -494,6 +494,8 @@
     }
     const o = opcionesActuales[r[0]];
     $("jugada-input").value = "";
+    // Con todas apagadas el ejercicio ya terminó: «ya la probaste» confundía.
+    if (opcionesActuales.every((x) => x.el && x.el.disabled)) { estado("Este ejercicio ya terminó. " + textoSiguiente()); return true; }
     if (o.el && o.el.disabled) { estado("La opción " + letraDe(r[0]) + " ya la probaste. " + opcionesDichas()); return true; }
     o.elegir();
     return true;

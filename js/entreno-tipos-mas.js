@@ -175,7 +175,9 @@
       else if ((m = /^(?:\+|ganas?|gano|ganan)\s*(\d+)?(?:\s*puntos?)?$/.exec(t))) { sg = 1; num = m[1] ? +m[1] : null; }
       else if ((m = /^(?:-|−|pierdes?|pierdo|pierden)\s*(\d+)?(?:\s*puntos?)?$/.exec(t))) { sg = -1; num = m[1] ? -m[1] : null; }
       else if ((m = /^(\d+)$/.exec(t))) { sg = 1; num = +m[1]; }
-      if (sg === null) { estado("No entendí «" + txt + "». Escribe «+1», «-1», «ganas 1», «pierdes 1» o «igual»."); return; }
+      // El nombre del botón («ganas material»), o una palabra que lo distinga.
+      if (sg === null && U.responderConOpcion(txt)) return;
+      if (sg === null) { estado("No entendí «" + txt + "». Escribe «+1», «-1», «ganas 1», «pierdes 1», «igual» o la letra de la opción."); return; }
       let op;
       if (item.nivel <= 2) op = sg > 0 ? "gana" : sg < 0 ? "pierde" : "igual";
       else {
@@ -184,7 +186,7 @@
         if (op === undefined) { estado("«" + txt + "» no es una de las opciones: " + item.opciones.map((o) => (+o > 0 ? "+" + o : o)).join(", ") + "."); $("jugada-input").select(); return; }
       }
       const b = Array.from($("controles").querySelectorAll("button[data-op]")).find((x) => x.dataset.op === String(op));
-      if (!b || b.disabled) { estado("Esa opción ya la probaste."); return; }
+      if (!b || b.disabled) { U.responderConOpcion(U.letraDe(Array.from($("controles").querySelectorAll("button[data-op]")).indexOf(b))) || estado("Esa opción ya la probaste."); return; }
       $("jugada-input").value = "";
       b.click();
     });

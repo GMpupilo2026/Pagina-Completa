@@ -306,7 +306,7 @@ $("cmd-form").addEventListener("submit", (e) => {
      se escribía «siguiente» y no se entendía, porque esta página decía «nivel 2».
      Con la partida terminada pasa al nivel que sigue (en el último, otra
      partida del mismo); a mitad de partida no la tira: dice cómo dejarla. */
-  if (/^\s*(siguiente|el siguiente|siguiente nivel|proximo|próximo|proximo nivel|próximo nivel)\s*$/i.test(texto)) {
+  if (/^\s*(siguienteX|el siguiente|siguiente nivel|proximo|próximo|proximo nivel|próximo nivel)\s*$/i.test(texto)) {
     input.value = "";
     const sig = B.nivel(nivelActual + 1);
     if (partida.terminada) { empezar(sig ? sig.id : nivelActual); return; }

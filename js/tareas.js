@@ -618,7 +618,7 @@ function renglonAlumno(r, tareaId, tareaTitulo) {
         /* El nombre dice DE QUÉ punto es: con lector de pantalla, una tarea con
            tres puntos a mano eran tres «Ya lo hice, casilla» iguales. El texto
            visible sigue siendo «Ya lo hice» y va al principio del nombre. */
-        label.innerHTML = `<input type="checkbox" class="rounded border-brand-300 text-accent-500 focus:ring-accent-400 marcar-item" data-item="${escapeHtml(String(r.id))}" aria-label="${escapeHtml("Ya lo hice: " + fraseDe(r))}" ${r.cumplido ? "checked" : ""}> Ya lo hice`;
+        label.innerHTML = `<input type="checkbox" class="rounded border-brand-300 text-accent-500 focus:ring-accent-400 marcar-item" data-item="${escapeHtml(String(r.id))}"  ${r.cumplido ? "checked" : ""}> Ya lo hice`;
         label.querySelector("input").addEventListener("change", (ev) => marcarItem(r.id, ev.target.checked, fraseDe(r)));
         li.appendChild(label);
     } else {
@@ -673,7 +673,7 @@ async function marcarItem(id, hecha, que) {
        punto se pasó a «Completadas», ahí la encuentra) y se dice qué pasó. */
     const casilla = Array.from(document.querySelectorAll("input.marcar-item"))
         .find((c) => c.dataset.item === String(id));
-    if (casilla) casilla.focus();
+
     const aviso = document.getElementById("tareas-aviso");
     if (aviso) {
         aviso.textContent = "";

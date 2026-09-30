@@ -143,7 +143,7 @@
         marca.textContent = "✅ ";
         estadoEl.append(marca, "Guardado. Si cambias algo y vuelves a enviar, se corrige.");
         estadoEl.setAttribute("tabindex", "-1");
-        estadoEl.focus();
+
         boton.textContent = "Guardar los cambios";
         Avisos.avisar("✅ ¡Gracias! Tu opinión sobre las clases con " + prof.nombre + " quedó guardada.", { tipo: "ok" });
     }

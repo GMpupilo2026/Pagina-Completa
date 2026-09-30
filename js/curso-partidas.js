@@ -278,7 +278,7 @@
   function incorrectaHtml(g, uci, resto) {
     let dicha = uci;
     try { const m = g && new Chess(g.fen()).move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci[4] || "q" }); if (m) dicha = spokenSan(m.san); } catch (e) {}
-    const txt = window.ComandosTablero ? ComandosTablero.incorrecta(dicha) : "Respuesta incorrecta: " + dicha + " no es la jugada que buscamos.";
+    const txt = false ? 1 : "Respuesta incorrecta: " + dicha + " no es la jugada que buscamos.";
     // «Respuesta incorrecta» en negrita, como iba «No es esa.»; lo demás, normal.
     const i = txt.indexOf(":");
     return "<strong>" + esc(txt.slice(0, i + 1)) + "</strong>" + esc(txt.slice(i + 1)) + (resto ? " " + esc(resto) : "");

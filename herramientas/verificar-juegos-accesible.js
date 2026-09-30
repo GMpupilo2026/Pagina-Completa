@@ -689,7 +689,8 @@ async function pruebaElEnroqueDichoYLosMensajes(browser) {
   await a.page.press("#move-input", "Enter");
   d = "";
   for (let i = 0; i < 10 && !/enroque/.test(d); i++) { await a.page.waitForTimeout(100); d = await loQueDijoElRecuadro(a.page); }
-  ok("tablero.html: «enroque largo» enroca contra Oscar", /enroque largo/.test(d), d);
+  const reyC1 = await a.page.evaluate(() => { const p = document.getElementById("chessboard").__tableroAccesibleCfg.juego().get("c1"); return p ? p.type + p.color : null; });
+  ok("tablero.html: «enroque largo» enroca contra Oscar", reyC1 === "kw" && /enroque largo/.test(d) && !/legal|entend/i.test(d), { reyC1, d });
   await a.ctx.close();
 }
 
