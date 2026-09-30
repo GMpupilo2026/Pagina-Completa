@@ -601,7 +601,9 @@ document.getElementById("form-marca").addEventListener("submit", async (e) => {
     abierta = data;
     academias = academias.map((a) => a.id === abierta.id ? abierta : a);
     pintarMarca();
-    avisar("Marca guardada. Su gente la ve la próxima vez que abra una página.");
+    // La de este aparato se olvida: quien la cambió la ve en la próxima página.
+    if (MarcaAcademia.olvidar) MarcaAcademia.olvidar();
+    avisar("Marca guardada. Su gente la ve en unos minutos, al abrir una página.");
 });
 
 async function cargarPersonas() {

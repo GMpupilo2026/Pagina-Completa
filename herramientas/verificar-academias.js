@@ -148,7 +148,8 @@ window.SUPABASE_URL = "https://bgtijpimpcokxatxxbki.supabase.co";
 }
 
 async function abrir(browser, pagina, datos, yo, esperar) {
-  const page = await browser.newPage();
+  // Sin service worker: al recargar sería él quien sirve js/supabase-client.js, y no el doble.
+  const page = await browser.newPage({ serviceWorkers: "block" });
   const errores = [];
   page.on("pageerror", (e) => errores.push(String(e)));
   await page.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
@@ -437,6 +438,18 @@ async function pruebaVariasAcademias(browser) {
     page.selectOption("#academia-activa-sel", "ac1"),
   ]);
   igual("cambiar manda ESA academia y recarga", anotadas.filter(([n]) => n === "elegir_academia_activa"), [["elegir_academia_activa", { p_academia: "ac1" }]]);
+  /* La marca y la lista de academias se recuerdan 10 minutos (ver «Lo que
+     cada página pedía de nuevo» en docs/decisiones/sitio-e-infraestructura.md):
+     cambiar de academia las olvida, así que la página que recarga pregunta. */
+  await page.waitForFunction(() => window.__rpc && window.__rpc.some((r) => r.n === "mi_marca_academia"), null, { timeout: 5000 }).catch(() => {});
+  igual("después de cambiar de academia, la marca se vuelve a pedir", (await llamadas(page, "mi_marca_academia")).length, 1);
+  await page.reload({ waitUntil: "networkidle" });
+  await page.waitForSelector("#academia-activa-barra", { timeout: 10000 }).catch(() => {});
+  // (mis_academias_supervisadas la pide también academias.js por su cuenta:
+  // acá solo se mira la de la marca.)
+  igual("en la página siguiente la marca ya no se pide: se recuerda diez minutos",
+    (await llamadas(page, "mi_marca_academia")).length, 0);
+  igual("y la franja de las dos academias sigue estando", await seVe(page, "#academia-activa-barra"), "sí");
   igual("sin errores en la página", errores, []);
   await page.close();
 

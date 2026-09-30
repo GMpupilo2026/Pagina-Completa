@@ -59,6 +59,9 @@ const FUNCIONES = {
   // El correo al supervisor por un diagnóstico de su enlace (verify_jwt en
   // false: la llama la base). Ver su cabecera.
   "avisar-diagnostico": ["usuario-alumno.ts", "marca-correo.ts"],
+  // El correo a administración cuando la base está al límite (verify_jwt en
+  // false: la llama public.vigilar_base()). Ver su cabecera.
+  "alerta-base": ["marca-correo.ts"],
 };
 
 function armar(nombre) {

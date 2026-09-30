@@ -516,6 +516,8 @@ el cambio, era casi el 59 % del tiempo de la base, con 19 tablas publicadas. Una
 base más grande da margen, pero no quita esa carga. Y el tope de 8 s de
 `authenticated` **no se sube** por tener más base: es lo que avisa cuando una
 consulta se vuelve mala.
+Ver «La base saturada del 29/9: qué la cargaba y qué se hizo» en
+`sitio-e-infraestructura.md`.
 
 ### Quien da clase no entra al panel del alumno
 
