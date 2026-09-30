@@ -21,8 +21,8 @@
  * así la cola viaja con la cuenta, no con el aparato.
  *
  * No sabe de ajedrez ni de páginas: lo usan Ejercicios por tema, Mates,
- * Visualización, Practicar, Tipos de entrenamiento y Finales (anotar y
- * repasar) y el hub de Entrenamiento (contar lo que toca hoy).
+ * Visualización, Practicar, Tipos de entrenamiento, Finales y el repaso de
+ * la clase (anotar y repasar) y el hub de Entrenamiento (contar lo que toca hoy).
  */
 (function () {
   "use strict";
@@ -36,6 +36,9 @@
     practicas: "entreno_practicas_repaso_v1",
     tipos: "entreno_tipos_repaso_v1",
     finales: "entreno_finales_repaso_v1",
+    // Las preguntas de clase en las que el alumno VIO la respuesta en su
+    // repaso personal (repasar-clases.html): vuelven a la semana.
+    clase: "clase_repaso_v1",
   };
 
   function leer(clave) {
@@ -73,6 +76,25 @@
     return f.fuera ? null : f;
   }
 
+  /* Vuelve en `dias`, aunque se haya resuelto: para lo que se resolvió
+     después de VER la respuesta. Jugarla recién vista no prueba nada; una
+     semana después, sí. Entra como "regular" (la facilidad baja) y la racha
+     de limpios empieza de cero. Devuelve la ficha. */
+  function volverEn(clave, id, dias, extra) {
+    var SRS = window.RepasoEspaciado;
+    if (!SRS) return null;
+    var estado = leer(clave);
+    var antes = estado[id];
+    var f = Object.assign(SRS.calificar(antes && !antes.fuera ? antes : null, "regular"), extra || {});
+    f.intervalo = dias;
+    f.vence = SRS.sumarDias(SRS.hoy(), dias);
+    f.limpiosSeguidos = 0;
+    f.fuera = false;
+    estado[id] = f;
+    guardar(clave, estado);
+    return f;
+  }
+
   /* Los ids que toca repasar hoy, en el orden de RepasoEspaciado (lo más
      atrasado primero). `existe` descarta los que la página ya no tiene. */
   function pendientes(clave, existe) {
@@ -88,7 +110,7 @@
     return Object.keys(estado).filter(function (id) { return !estado[id].fuera; }).length;
   }
 
-  var api = { CLAVES: CLAVES, SALE_CON: SALE_CON, leer: leer, anotar: anotar, pendientes: pendientes, enLaCola: enLaCola, notaDe: notaDe };
+  var api = { CLAVES: CLAVES, SALE_CON: SALE_CON, leer: leer, anotar: anotar, volverEn: volverEn, pendientes: pendientes, enLaCola: enLaCola, notaDe: notaDe };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (typeof window !== "undefined") window.RepasoFallados = api;
 })();

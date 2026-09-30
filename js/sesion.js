@@ -6605,6 +6605,22 @@
             return true;
         }
 
+        /* En el celular, lo del profe va antes que el chat: sus herramientas (la
+           columna de al lado) quedaban debajo del chat, a 1500 px del tablero. En
+           la computadora las dos columnas van lado a lado y el chat vuelve a su
+           lugar. Ver «La clase en el celular del profe». */
+        function acomodarChatDelProfe() {
+            const chat = document.getElementById("chat-caja");
+            const aside = document.querySelector(".proyector-contenido > aside");
+            if (!chat || !aside) return;
+            const marca = document.createComment("acá va el chat en la computadora");
+            chat.before(marca);
+            const angosta = matchMedia("(max-width: 1023px)");
+            const poner = () => { if (angosta.matches) aside.after(chat); else marca.after(chat); };
+            poner();
+            angosta.addEventListener("change", poner);
+        }
+
         async function init() {
             const { data } = await sb.auth.getSession();
             session = data.session;
@@ -6661,6 +6677,7 @@
 
             if (isTeacher) {
                 document.getElementById("teacher-toolbar").classList.remove("hidden");
+                acomodarChatDelProfe();
                 document.getElementById("modo-sencillo-fila").classList.remove("hidden");
                 document.getElementById("engine-panel").classList.remove("hidden");
                 document.getElementById("teacher-tabs-wrap").classList.remove("hidden");

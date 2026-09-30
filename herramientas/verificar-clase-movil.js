@@ -44,14 +44,14 @@ function igual(nombre, hallado, esperado) {
   else console.log("  ✓ " + nombre + ": " + a);
 }
 
-async function abrirEn(browser, semilla, tam, movil) {
+async function abrirEn(browser, semilla, tam, movil, quien) {
   const ctx = await browser.newContext({ serviceWorkers: "block", viewport: tam, isMobile: movil, hasTouch: movil });
   await ctx.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await ctx.route("**/fonts.gstatic.com/**", (r) => r.abort());
   await ctx.route("**/cdn.jsdelivr.net/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
-  await ctx.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: R.clienteFalso("u-ana", CLASE, semilla) }));
+  await ctx.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: R.clienteFalso(quien || "u-ana", CLASE, semilla) }));
   // Quien ya contestó la oferta del Modo Adaptado: la franja de la primera vez no está.
-  await ctx.addInitScript(() => { try { localStorage.setItem("oscarBlindMode_v1", "0"); } catch (e) {} });
+  await ctx.addInitScript(() => { try { localStorage.setItem("oscarBlindMode_v1", "0"); localStorage.setItem("sesion_modo_sencillo_v1", "0"); } catch (e) {} });
   const page = await ctx.newPage();
   const errores = [];
   page.on("pageerror", (e) => errores.push(String(e)));
@@ -112,10 +112,61 @@ async function pruebaComputadora(browser) {
   await ctx.close();
 }
 
+/* El profe que da la clase presencial caminando por el aula, con el celular:
+   sus herramientas antes que el chat, los botones para el dedo y la ayuda de
+   las flechas que habla del dedo, no del clic derecho. */
+async function pruebaProfeCelular(browser) {
+  console.log("\n=== El profe, en el celular ===");
+  const { page, ctx, errores } = await abrirEn(browser, { game_state: [fila()] }, { width: 375, height: 740 }, true, "u-profe");
+  await page.waitForFunction(() => document.getElementById("teacher-tabs-wrap").checkVisibility(), null, { timeout: 10000 });
+  igual("nada se sale a lo ancho", await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+  igual("el tablero se ve entero sin bajar", (await caja(page, "chessboard")).bottom <= 740, true);
+  const [barra, pestanas, chat] = await Promise.all(["teacher-toolbar", "teacher-tabs-wrap", "chat-caja"].map((i) => caja(page, i)));
+  igual("sus herramientas y las pestañas van antes que el chat", barra.top < chat.top && pestanas.top < chat.top, true);
+  igual("◀ ▶ para recorrer la partida miden 44 px", await page.evaluate(() => ["move-nav-first", "move-nav-prev", "move-nav-next", "move-nav-last"]
+    .every((i) => document.getElementById(i).getBoundingClientRect().height >= 44)), true);
+  // Pestaña por pestaña: lo de adentro también se toca con el dedo.
+  const chicos = [];
+  for (const t of ["plan", "tactica", "preguntar", "practicar", "alumnos", "controles"]) {
+    await page.click("#teacher-tab-" + t);
+    (await page.evaluate(() => [...document.querySelectorAll(".proyector-contenido > aside button, .proyector-contenido > aside select, .proyector-contenido > aside summary")]
+      .filter((e) => e.checkVisibility()).filter((e) => e.getBoundingClientRect().height < 44).map((e) => (e.textContent || e.id).trim().slice(0, 25))))
+      .forEach((x) => { if (!chicos.includes(x)) chicos.push(x); });
+  }
+  igual("todo lo que se toca en sus herramientas, en cada pestaña, mide al menos 44 px de alto", chicos, []);
+  igual("la ayuda de las flechas habla del dedo, no del clic derecho", await page.evaluate(() => {
+    const h = document.getElementById("arrows-hint");
+    return [h.querySelector(".solo-tactil").checkVisibility(), h.querySelector(".solo-raton").checkVisibility()];
+  }), [true, false]);
+  // Si la ventana se agranda (una tablet que se gira), el chat vuelve a su columna.
+  await page.setViewportSize({ width: 1280, height: 800 });
+  igual("en pantalla ancha, el chat vuelve a su columna", await page.evaluate(() => document.getElementById("chat-caja").parentElement.classList.contains("proyector-columna")), true);
+  igual("sin errores en la página", errores, []);
+  await ctx.close();
+}
+
+async function pruebaProfeComputadora(browser) {
+  console.log("\n=== El profe, en la computadora, como antes ===");
+  const { page, ctx, errores } = await abrirEn(browser, { game_state: [fila()] }, { width: 1280, height: 800 }, false, "u-profe");
+  await page.waitForFunction(() => document.getElementById("teacher-tabs-wrap").checkVisibility(), null, { timeout: 10000 });
+  igual("el chat sigue en la columna del tablero", await page.evaluate(() => document.getElementById("chat-caja").parentElement.classList.contains("proyector-columna")), true);
+  igual("◀ ▶ y las pestañas, de su tamaño de siempre", await page.evaluate(() => [
+    Math.round(document.getElementById("move-nav-prev").getBoundingClientRect().height),
+    [...document.querySelectorAll("#teacher-tabs-wrap button")].filter((e) => e.checkVisibility()).every((e) => e.getBoundingClientRect().height < 44)]), [32, true]);
+  igual("y la ayuda de las flechas habla del clic derecho", await page.evaluate(() => {
+    const h = document.getElementById("arrows-hint");
+    return [h.querySelector(".solo-raton").checkVisibility(), h.querySelector(".solo-tactil").checkVisibility()];
+  }), [true, false]);
+  igual("sin errores en la página", errores, []);
+  await ctx.close();
+}
+
 (async () => {
   const browser = await chromium.launch({ executablePath: R.CHROME });
   try {
     await pruebaCelular(browser);
+    await pruebaProfeCelular(browser);
+    await pruebaProfeComputadora(browser);
     await pruebaPreguntaEnCelular(browser);
     await pruebaComputadora(browser);
   } catch (e) {

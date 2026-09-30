@@ -909,6 +909,43 @@ de jugada que a él no le salieron**.
   anota y cambia las filas de verdad (antes no hacía nada), con el filtro
   apuntado en el resolver.
 
+#### Lo que vio la respuesta vuelve a la semana
+
+«Ver la respuesta» deja volver a intentarla y resolverla ahí mismo, recién
+vista: eso no prueba nada. Ahora esa pregunta entra a una cola de repaso
+espaciado y **vuelve a los 7 días**.
+
+- **Es la cola de Entrenamiento**, no una nueva: `RepasoFallados` con la clave
+  `clase_repaso_v1`, en `CLAVES` de `js/progreso-usuario.js` con
+  `srsPorLinea`. Viaja con la cuenta (`training_state`): quien la vio en el
+  celular la ve volver en la computadora. `repasar-clases.html` hace
+  `ProgresoUsuario.init()` antes de contarla.
+- **`RepasoFallados.volverEn(clave, id, días)`** la deja para dentro de esos
+  días aunque se haya resuelto. Entra como «regular» (baja la facilidad) y
+  la racha de limpios empieza de cero. Resolverla después en el mismo repaso
+  de la clase, aunque sea limpia, **no la adelanta**: la tiene fresca.
+- **La pregunta va guardada en la ficha** (posición, jugada del motor, texto
+  del profe y de qué clase era): cuando vuelve, la clase ya pasó. La jugada ya
+  la había visto, así que guardarla en su aparato no le cuenta nada nuevo. El
+  texto del profe se pinta con `textContent`.
+- **Cuando vuelve**, `repasar-clases.html?vuelven=1` («🔁 Lo que vuelve de tus
+  clases») la muestra con el mismo tablero y las mismas reglas del repaso.
+  Limpia, avanza en la cola; con un error antes de la buena, vuelve hoy mismo
+  (como en Entrenamiento); si otra vez mira la respuesta, otra semana. Esta
+  vista no marca ninguna tarea.
+- **Se avisa** arriba de «Repasar mis clases» («🔁 Te vuelven N preguntas de
+  tus clases») y en el hub de Entrenamiento, junto a las otras colas.
+
+**Al tocar esto, correr `node herramientas/verificar-todo.js
+clase-repaso-personal`.** Está probado que falla de verdad:
+- sin anotarla al ver la respuesta, o para el día siguiente;
+- adelantándola al resolverla limpia en el repaso de la clase;
+- sin contar el error cuando vuelve;
+- marcando una tarea desde lo que vuelve;
+- sin el aviso, sin traer la cola de la cuenta, o sin la clave en
+  `ProgresoUsuario`;
+- sin el aviso del hub, o sin decir de qué clase viene.
+
 ### El modo proyector
 
 «📽️ Proyector» (junto a Girar) abre otra ventana, `sesion.html?proyector=1`,
@@ -1108,6 +1145,34 @@ el tiempo para pensar puestos a la vez.
 **Al tocar la pantalla de la clase, correr `node herramientas/verificar-todo.js
 clase-movil`.** Está probado que falla de verdad: con el `sesion.html` de
 antes saltan lo de arriba, el orden, la cuenta regresiva y los dos tamaños.
+
+### La clase en el celular del profe
+
+Para quien da la clase presencial caminando por el aula, con el celular
+(además del control remoto, que es para manejar el proyector). Medido en
+375 × 740, con todas las herramientas.
+
+- **Sus herramientas van antes que el chat.** En una columna, el chat (que
+  vive en la columna del tablero) quedaba antes que la barra del profe y las
+  pestañas: Preguntar o Alumnos arrancaban a unos 2000 px del tablero.
+  `acomodarChatDelProfe()` lo pasa después de la columna de herramientas
+  mientras la pantalla es angosta (`max-width: 1023px`, donde las dos
+  columnas se apilan), y lo devuelve a su lugar si se agranda (una tablet que
+  se gira). Se mueve el nodo, así que sus eventos siguen igual. Solo para el
+  profe: el orden del alumno ya estaba medido y no cambia.
+- **Lo que se toca mide 44 px de alto en el celular**: ⏮ ◀ ▶ ⏭ (medían 32) y
+  todo botón, selector o desplegable de la columna de herramientas, en cada
+  pestaña (una regla en `css/styles.css`, `max-width: 639px`). En la
+  computadora queda como estaba.
+- **La ayuda de las flechas habla del dedo en una pantalla táctil**: con el
+  dedo no hay clic derecho. El tablero ya dibujaba con un toque largo
+  (`js/clases-board.js`); ahora la ayuda lo dice. Van los dos textos, y
+  `.solo-tactil`/`.solo-raton` (`pointer: coarse`) eligen cuál se ve.
+
+**Al tocar esto, correr `node herramientas/verificar-todo.js clase-movil`.**
+Está probado que falla de verdad: sin mover el chat, o sin devolverlo; con ◀
+chico; sin los 44 px de las herramientas o con ellos también en la
+computadora; con la ayuda del clic derecho en el celular.
 
 ### Lo que más le costó a tu clase
 
