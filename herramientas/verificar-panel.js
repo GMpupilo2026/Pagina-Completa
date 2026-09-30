@@ -3049,6 +3049,13 @@ async function pruebaTercera(browser) {
   igual("«Dejar la tanda» la quita", await r.page.evaluate(() => [!!document.getElementById("tanda-diez"), localStorage.getItem("tanda_diez_v1")]), [false, null]);
   await r.ctx.close();
 
+  console.log("\n=== El registro de clases no ensancha la página en el celular ===");
+  r = await panel(browser, [PROFE, ALUMNA], "u-profe", { viewport: { width: 390, height: 800 } }, {});
+  await r.page.waitForSelector("#sessions-log table", { timeout: 10000 }).catch(() => {});
+  igual("la tabla se desliza dentro de su caja y la página no se sale del ancho del celular",
+    await r.page.evaluate(() => [!!document.querySelector("#sessions-log table"), document.documentElement.scrollWidth <= window.innerWidth]), [true, true]);
+  await r.ctx.close();
+
   console.log("\n=== Lo que más usa quien da clase ===");
   r = await panel(browser, [PROFE, ALUMNA], "u-profe", null, { local: { panel_usos_v1: JSON.stringify({ "tareas.html": 9, "informes.html": 5, "asistencia.html": 2, "sesion.html": 20 }) } });
   await r.page.waitForTimeout(500);

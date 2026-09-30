@@ -3226,7 +3226,12 @@
                 sum.append(nombre, cuenta);
 
                 const envoltura = document.createElement("div");
-                envoltura.className = "overflow-x-auto px-4 pb-3";
+                /* `relative` porque la tabla trae texto solo para lector de
+                   pantalla (`sr-only`, que es `position: absolute`): sin un
+                   ancestro posicionado ADENTRO del que se desliza, ese texto se
+                   salía del desplazamiento y ensanchaba la página entera en el
+                   celular (494 px en uno de 390). */
+                envoltura.className = "relative overflow-x-auto px-4 pb-3";
                 const tabla = document.createElement("table");
                 tabla.className = "w-full text-sm";
                 tabla.innerHTML = '<caption class="sr-only">Clases de ' + nombreMes(filas[0].started_at) + '</caption>'

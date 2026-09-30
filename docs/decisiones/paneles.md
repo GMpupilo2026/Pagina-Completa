@@ -304,6 +304,13 @@ lista, y el resto se acomoda solo.
   tarjetas chicas), y arriba sale «Lo que más usas»: como lo que hace quien da
   clase no se mide por sección, se cuentan sus toques en las tarjetas de este
   aparato (`panel_usos_v1`, desde tres).
+- **El registro de clases no ensancha la página en el celular.** La tabla ya
+  iba en una caja que se desliza (`overflow-x-auto`), pero el panel del profe
+  medía 494 px en un celular de 390: el «Acciones» solo para lector de
+  pantalla (`sr-only`, que es `position: absolute`) no tenía un ancestro
+  posicionado dentro de esa caja, así que se salía del desplazamiento y
+  empujaba la página entera. La caja lleva `relative`. `verificar-panel.js`
+  mide que la página no pase del ancho del celular.
 - **Los grupos de entrenamiento se pliegan en el celular.** Con el
   entrenamiento abierto tarjeta por tarjeta, el panel del alumno medía en el
   celular unas nueve pantallas (7100 px) y «Jugar y competir» quedaba a casi
