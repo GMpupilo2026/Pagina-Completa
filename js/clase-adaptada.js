@@ -192,7 +192,7 @@ window.ClaseAdaptada = (function () {
        SELECCIONADO: si no, lo siguiente se pegaba detrás («e4e5», «tiempob») y
        volvía a fallar, y sin ver el recuadro no hay cómo saber que tenía texto.
        Seleccionado, lo que se escriba lo reemplaza. */
-    function noSePudo(api, texto) { decirEnCaja(api, texto); }
+    function noSePudo(api, texto) { decirEnCaja(api, texto); try { api.input.select(); } catch (e) {} }
 
     /* Los avisos de lo que pasa en el tablero. Por defecto van a la región viva
        del recuadro; `cfg.anunciar(texto)` los manda a otra parte —la página de

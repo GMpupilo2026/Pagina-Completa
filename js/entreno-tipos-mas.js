@@ -149,7 +149,7 @@
     /* Contestar escribiendo: «+1», «-1», «ganas 1», «pierdes 1», «igual», o
        en los niveles 1 y 2 solo «ganas», «pierdes», «igual». Aprieta el botón
        de esa opción, así cuenta igual que el clic. */
-    (()=>{})("O escribe la respuesta («+1», «-1», «ganas 1», «pierdes 1», «igual»)", (txt) => {
+    U.pedirJugada("O escribe la respuesta («+1», «-1», «ganas 1», «pierdes 1», «igual»)", (txt) => {
       const t = txt.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[.!¡]/g, "").trim();
       let sg = null, num = null, m;
       if (/^(igual|queda igual|0|cero|empate|nada)$/.test(t)) { sg = 0; num = 0; }

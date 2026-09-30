@@ -1129,7 +1129,11 @@ window.PreparacionMotor = {
   /* ======================= todo desde el recuadro =======================
      Quien no ve contesta escribiendo, también en los juegos que se contestan
      con botones o con un deslizador. */
-  const escribirR = async (page, txt) => { await page.fill("#jugada-input", txt); await page.press("#jugada-input", "Enter"); };
+  const escribirR = async (page, txt) => {
+    // Sin recuadro a la vista no hay dónde escribir: eso ya es el fallo, no un cuelgue de 30 s.
+    if (!(await page.isVisible("#jugada-input"))) { ok("hay recuadro para escribir «" + txt + "»", false); return; }
+    await page.fill("#jugada-input", txt); await page.press("#jugada-input", "Enter");
+  };
 
   console.log("\n=== Descarte, escribiendo la jugada sola ===");
   {

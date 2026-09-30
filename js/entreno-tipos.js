@@ -561,7 +561,7 @@
     JUEGOS[partida.tipo](item);
     // La apertura sin tablero (nivel 3) tampoco: la posición es la respuesta.
     if (adaptado() && partida.tipo !== "fotografia" && !tab.oculto) leerPosicion(item.fen);
-    // alRecuadro();
+    alRecuadro();
   }
   /* Nivel completo: todos sus ejercicios con al menos una estrella. Antes, al
      terminar el último, «Siguiente» volvía a la lista de niveles sin decir
@@ -750,7 +750,7 @@
        antes había que escribir «tachar Ae4», que nadie adivina. La jugada se
        resuelve contra la posición (español o inglés, con o sin «+») y se busca
        entre las candidatas por su SAN. */
-    (()=>{})("Escribe una jugada para tacharla (o destacharla) y «comprobar» para corregir", (txt) => {
+    pedirJugada("Escribe una jugada para tacharla (o destacharla) y «comprobar» para corregir", (txt) => {
       if (hecho) return;
       const plano = txt.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
       if (/^(comprobar|corregir|listo)$/.test(plano)) { comprobar.click(); return; }
@@ -891,7 +891,7 @@
     /* La evaluación también se escribe: «+2», «-3», «5», «aguja 1,5». Mover un
        deslizador con flechas sin verlo es contar pulsaciones a ciegas; con el
        número escrito, la aguja queda donde se dijo. */
-    (()=>{})("O escribe tu evaluación, de -5 a +5 («+2», «-3», «aguja 1,5») y «comprobar»", (txt) => {
+    pedirJugada("O escribe tu evaluación, de -5 a +5 («+2», «-3», «aguja 1,5») y «comprobar»", (txt) => {
       if (hecho) return;
       const plano = txt.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
       if (/^(comprobar|corregir|listo)$/.test(plano)) { comprobar.click(); return; }
@@ -1066,7 +1066,7 @@
       /* En el recuadro, tras «Ya la tengo»: «blancas: Rc2, Pa5», «negras: Rg8»
          o las piezas solas («Rc2 a5», que son las blancas). Antes contestaba
          «Aquí solo se pregunta…» y quien no ve tenía que salir a los campos. */
-      (()=>{})("Escribe las piezas: «blancas: Rc2, Pa5», «negras: Rg8, h7»; «comprobar» al final", (txt) => {
+      pedirJugada("Escribe las piezas: «blancas: Rc2, Pa5», «negras: Rg8, h7»; «comprobar» al final", (txt) => {
         const plano = txt.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
         if (/^(comprobar|corregir|listo)$/i.test(plano)) { comprobarFoto.click(); return; }
         const m = /^(blancas?|negras?)\s*:?\s*(.*)$/i.exec(plano);

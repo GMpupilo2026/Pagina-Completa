@@ -443,7 +443,8 @@ async function main() {
     // Al entregar, el recuadro desaparece: el foco va al título del resultado
     // y la nota se anuncia (antes caía al <body> y no se oía nada).
     await p.waitForSelector("#resultado:not(.hidden)", { timeout: 8000 });
-    await p.waitForTimeout(300);
+    // La nota llega después (examen_informe): se espera a que se diga, con margen.
+    await p.waitForFunction(() => /Tu nota/.test((document.getElementById("r-anuncio") || {}).textContent || ""), null, { timeout: 5000 }).catch(() => {});
     ok(await p.evaluate(() => document.activeElement && document.activeElement.id === "r-titulo"),
       `al entregar, el foco no va al título del resultado: ${await p.evaluate(() => document.activeElement && (document.activeElement.id || document.activeElement.tagName))}`);
     const anuncio = await p.evaluate(() => { const r = document.getElementById("r-anuncio"); return r && r.getAttribute("role") === "status" ? r.textContent : ""; });
@@ -757,6 +758,30 @@ async function main() {
     ok(/Salió de la ventana 2 veces/.test(inf), "el informe no dice que salió de la ventana");
     await ctx.close();
   }
+
+  // ---------- La lista del alumno: cada examen, un encabezado y un enlace con nombre ----------
+  // Con lector de pantalla, la lista de enlaces era «Empezar, Empezar» y la
+  // nota suelta («6.67») no decía qué era.
+  {
+    const lista = [
+      { id: "ex-1", titulo: "Examen de finales", profesor_nombre: "Karina Rojas", preguntas: 3, minutos: 3, estado: "asignado", vence_at: new Date(Date.now() + 86400000).toISOString(), nota: null },
+      { id: "ex-2", titulo: "Examen de aperturas", profesor_nombre: "Karina Rojas", preguntas: 5, minutos: 10, estado: "entregado", vence_at: new Date(Date.now() - 86400000).toISOString(), nota: 6.67 },
+    ];
+    const ctx = await contexto(navegador, clienteFalso(ALUMNA, EXAMEN, { lista }));
+    const p = await ctx.newPage();
+    await p.goto(`${BASE}/examenes.html`, { waitUntil: "networkidle" });
+    await p.waitForFunction(() => document.querySelectorAll("#mios-pendientes h3, #mios-hechos h3").length === 2, null, { timeout: 10000 }).catch(() => {});
+    const v = await p.evaluate(() => ({
+      titulos: Array.from(document.querySelectorAll("#mios-pendientes h3, #mios-hechos h3")).map((h) => h.textContent.trim()),
+      enlace: (document.querySelector("#mios-pendientes a") || { getAttribute: () => null }).getAttribute("aria-label"),
+      nota: (document.querySelector("#mios-hechos .sr-only") || {}).textContent || "",
+    }));
+    ok(v.titulos.join(" | ") === "Examen de finales | Examen de aperturas", `el título de cada examen no es un encabezado: ${JSON.stringify(v.titulos)}`);
+    ok(v.enlace === "Empezar el examen: Examen de finales", `el enlace «Empezar» no dice qué examen abre: ${v.enlace}`);
+    ok(/^Nota: 6\.67$/.test(v.nota), `la nota no se dice como nota: «${v.nota}»`);
+    await ctx.close();
+  }
+
 
   // ---------- 7) Que las dos páginas SE VEAN ----------
   // Las dos se armaron clonando la cabecera de tareas.html, y clonar una

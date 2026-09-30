@@ -218,6 +218,46 @@ async function main() {
     await ctx.close();
   }
 
+  console.log("\n=== Comprobar sin «Colocar», y todo desde el recuadro ===");
+  {
+    const { page, ctx, errores } = await abrir(browser, true, "memoria.html?piezas=6&segundos=60", (c) => c.addInitScript(() => {
+      try { localStorage.setItem("oscarBlindMode_v1", "1"); } catch (e) {}
+    }));
+    await page.waitForSelector("#vista-juego:not(.hidden) #cuenta", { timeout: 10000 });
+    const it = await itemActual(page);
+    await page.getByRole("button", { name: "Ya la tengo" }).click();
+    await page.waitForSelector("#mem-w");
+    const orden = await page.evaluate(() => {
+      const c = document.getElementById("mem-w"), p = document.querySelector(".mem-paleta");
+      return !!(c.compareDocumentPosition(p) & Node.DOCUMENT_POSITION_FOLLOWING);
+    });
+    ok("en Modo Adaptado los campos van antes que la paleta", orden);
+    const L = { k: "R", q: "D", r: "T", b: "A", n: "C", p: "" };
+    const por = { w: [], b: [] };
+    R.tablero(it.fen).forEach((p, i) => { if (p) por[p.c].push(L[p.t] + R.sq(i)); });
+    // Las blancas, por el recuadro de comandos; las negras, en su campo SIN apretar «Colocar lo escrito».
+    const cc = page.locator("#comandos .cc-input");
+    await cc.fill("blancas: " + por.w.join(", "));
+    await cc.press("Enter");
+    await page.waitForFunction(() => /Colocadas/.test(document.querySelector("#comandos .cc-msg").textContent), null, { timeout: 5000 }).catch(() => {});
+    ok("«blancas: …» en el recuadro coloca esas piezas", (await ocupadasVistas(page)).split(",").filter(Boolean).length === por.w.length,
+      await page.textContent("#comandos .cc-msg"));
+    await page.fill("#mem-b", por.b.join(" "));
+    await page.getByRole("button", { name: "Comprobar" }).click();
+    const t = await estado(page, /Perfecta|Acertaste/);
+    ok("«Comprobar» toma también lo escrito en el campo sin «Colocar»: perfecta", /Perfecta/.test(t), t);
+    ok("sin errores en consola", !errores.length, errores.join(" | "));
+    await ctx.close();
+  }
+  {
+    const { page, ctx } = await abrir(browser, true, "memoria.html", (c) => c.addInitScript(() => {
+      try { localStorage.setItem("oscarBlindMode_v1", "1"); } catch (e) {}
+    }));
+    await page.waitForFunction(() => document.querySelectorAll("#sel-segundos option").length > 0 && !document.getElementById("vista-ajustes").classList.contains("hidden"), null, { timeout: 10000 });
+    ok("en Modo Adaptado el tiempo por defecto es el triple (30 s)", (await page.inputValue("#sel-segundos")) === "30", await page.inputValue("#sel-segundos"));
+    await ctx.close();
+  }
+
   await browser.close();
   console.log(fallos ? "\n✗ " + fallos + " comprobación(es) fallaron." : "\n✓ Todo bien.");
   process.exit(fallos ? 1 : 0);
