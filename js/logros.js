@@ -57,7 +57,9 @@ window.Logros = (function () {
     };
   }
 
-  async function cargar() {
+  /* `alumnoId`: los de OTRA persona —el panel de un estudiante que mira quien
+     administra—. Sin él, los de la cuenta con sesión. */
+  async function cargar(alumnoId) {
     if (!window.sb) return vacio(false, false);
     let sesion = null;
     try {
@@ -67,26 +69,27 @@ window.Logros = (function () {
       return vacio(false, true);
     }
     if (!sesion) return vacio(false, false);
+    const alumno = alumnoId || sesion.user.id;
     try {
       // Los premios van aparte y no tumban la racha si fallan: se piden a la
       // par y, sin respuesta, cuentan cero.
-      const premiosP = Promise.resolve(sb.rpc("premios_de_alumno", { p_alumno: sesion.user.id }))
+      const premiosP = Promise.resolve(sb.rpc("premios_de_alumno", { p_alumno: alumno }))
         .then((r) => (r && !r.error && r.data && r.data.premios ? r.data.premios : {}))
         .catch(() => ({}));
-      const hitosP = Promise.resolve(sb.rpc("logros_hitos"))
+      const hitosP = Promise.resolve(alumnoId ? sb.rpc("logros_hitos", { alumno }) : sb.rpc("logros_hitos"))
         .then((r) => (r && !r.error && r.data && typeof r.data === "object" && !Array.isArray(r.data) ? r.data : {}))
         .catch(() => ({}));
       // Dentro de .then: si esta consulta tropieza, cuenta cero y no tumba la racha.
       const completosP = Promise.resolve()
         .then(() => sb.from("training_state").select("value")
-          .eq("student_id", sesion.user.id).eq("key", "tipos_completos_v1").maybeSingle())
+          .eq("student_id", alumno).eq("key", "tipos_completos_v1").maybeSingle())
         .then((r) => {
           const raw = r && !r.error && r.data && r.data.value && r.data.value.raw;
           const o = typeof raw === "string" ? JSON.parse(raw) : null;
           return o && typeof o === "object" ? Object.keys(o).filter((k) => o[k]).length : 0;
         })
         .catch(() => 0);
-      const { data, error } = await sb.rpc("progreso_dias_y_racha");
+      const { data, error } = await (alumnoId ? sb.rpc("progreso_dias_y_racha", { alumno }) : sb.rpc("progreso_dias_y_racha"));
       if (error) throw error;
       const fila = (data && data[0]) || {};
       const stats = Object.assign({}, STATS_VACIAS, fila, {

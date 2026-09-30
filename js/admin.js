@@ -340,9 +340,10 @@
             return b;
         }
 
-        /* «👁 Ver su panel»: el mismo enlace que trae supervision.html. Solo a
-           profesores y coordinadores; a otro supervisor no se le mira el panel
-           (personas_para_ver_como() no lo devuelve). */
+        /* «👁 Ver su panel»: el mismo enlace que trae supervision.html. Acá va
+           en los profesores y coordinadores; el panel de un supervisor o de un
+           estudiante se elige en «Panel de:», arriba del panel
+           (personas_para_ver_como() se los da solo a quien administra). */
         function enlaceVerPanel(p) {
             const a = document.createElement("a");
             a.href = "clases.html?ver_como=" + encodeURIComponent(p.id);

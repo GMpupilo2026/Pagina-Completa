@@ -1,13 +1,3 @@
--- La visión de cada persona: quien administra marca si alguien ve poco
--- (baja_vision) o no ve (ciego), y la plataforma se acomoda sola en todas sus
--- pantallas: con baja visión se enciende la voz; a quien no ve, el panel del
--- alumno se le cambia por el adaptado. Ver «La visión de la persona la marca
--- administración» en docs/decisiones/accesibilidad.md.
---
--- Va en una tabla APARTE y no en profiles: es un dato de salud (sensible, Ley
--- 8968), y profiles la leen compañeros, colegas y rankings. Acá la lee solo la
--- persona, quien administra y sus profesores.
-
 create table public.vision_personas (
   persona_id uuid primary key references public.profiles (id) on delete cascade,
   vision text not null check (vision in ('baja_vision', 'ciego')),
@@ -25,16 +15,13 @@ create policy vision_personas_select on public.vision_personas
     or persona_id in (select interno.alumnos_de((select auth.uid())))
   );
 
--- Sin política de escritura: la escribe marcar_vision(), que valida.
 revoke all on public.vision_personas from anon;
 revoke insert, update, delete, truncate on public.vision_personas from authenticated;
 grant select on public.vision_personas to authenticated;
 
--- Quién la marcó o la quitó, y cuándo: es un dato sensible.
 create trigger auditar after insert or update or delete on public.vision_personas
   for each row execute function interno.auditar();
 
--- p_vision: 'baja_vision', 'ciego' o null (ninguna: se borra la marca).
 create or replace function public.marcar_vision(p_persona uuid, p_vision text)
 returns text
 language plpgsql
@@ -63,7 +50,6 @@ begin
       set vision = excluded.vision, actualizado = now(), actualizado_por = auth.uid();
   end if;
 
-  -- Se vuelve a leer: que un trigger que lo deshaga se note aquí.
   select vision into quedo from public.vision_personas where persona_id = p_persona;
   if quedo is distinct from p_vision then
     raise exception 'No se pudo guardar la visión de esa persona';

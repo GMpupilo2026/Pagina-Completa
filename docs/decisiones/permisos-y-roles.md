@@ -809,6 +809,46 @@ enlace `?ver_como=`; `verificar-informes.js`, que Informes pida los alumnos de
 esa persona. Está probado que fallan de verdad: pidiendo con el id de quien mira,
 saltan.
 
+### «Panel de:» un supervisor o un estudiante (solo quien administra)
+
+Para dar soporte —«no me aparece la tarea», «no veo a mis profesores»— quien
+administra necesita mirar también el panel de un supervisor y el de un
+estudiante, no solo el del equipo docente. El mismo selector «Panel de:» de
+`clases.html` los trae en dos grupos más, «Supervisores» y «Estudiantes»
+(migración `ver_como_supervisor_y_alumno`). Todo lo de arriba sigue valiendo:
+no se entra a la cuenta de nadie, `profile.id` sigue siendo el de quien mira y
+solo se LEEN sus datos, con su id.
+
+- **`personas_para_ver_como()` devuelve `tipo`** (`profesor`, `coordinador`,
+  `supervisor`, `alumno`) y la persona se guarda con él; `ModoVista.tipoDe()`
+  lo lee (una guardada sin `tipo` era del equipo docente). A quien supervisa la
+  base le sigue dando solo sus profesores y coordinadores, y `personaDe()`
+  descarta un supervisor o un estudiante guardado si quien mira no administra.
+- **El panel de un supervisor**: sus tres números los cuenta
+  `panel_supervisor_de()` sobre `interno.supervisados_de()`, que es la cuenta
+  de `supervisados_por_mi()` + `mis_supervisados()` escrita para otra persona,
+  **con su academia activa** (la que eligió, o la primera por nombre).
+  Comprobado en SQL contra lo que cada supervisor ve por su cuenta: los mismos
+  68 y 7 ids. Sin academia activa salían 64 donde él ve 7. «Lo urgente» no se
+  pinta: `Pendientes` cuenta para quien mira. En Informes,
+  `alumnos_de_para_ver_como()` da los estudiantes a cargo de ese supervisor.
+- **El panel de un estudiante**: tareas, exámenes, racha y logros
+  (`Logros.cargar(id)`), «Tu progreso» (`mi_entreno_resumen(p_alumno)`), el
+  diagnóstico, el curso a medias y lo último que hizo se piden con SU id
+  (`alumnoDelPanel()`), a las mismas funciones de su panel: la RLS se lo deja
+  leer a quien administra. **Quedan fuera** la clase en vivo y el selector de
+  clase (`mis_clases()` es de quien mira), «Tus clases» (sale de las clases que
+  puede leer quien mira) y «Hoy te toca» (sale del progreso guardado en ESTE
+  aparato): las tres dirían lo de quien mira. Informes, desde ahí, abre el
+  informe de ese estudiante ya elegido, con la cuenta real de quien administra.
+
+`verificar-ver-como.js` lo comprueba: los cuatro grupos, que el panel del
+supervisor pida `panel_supervisor_de` con SU id (y no `mi_gente` ni
+`mis_supervisados`), que el del estudiante pida sus tareas, exámenes, racha,
+progreso y lo último con SU id y nada de la clase ni de «Hoy te toca», y que a
+quien solo supervisa un estudiante guardado no le cambie nada. Está probado que
+falla de verdad: pidiendo con el id de quien mira, salta.
+
 ### Academias: la unidad del negocio
 
 El negocio se reparte en **academias**. Cada una tiene **un solo supervisor**
