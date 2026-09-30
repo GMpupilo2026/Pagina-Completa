@@ -70,14 +70,10 @@ if (informes && mia) {
   else bien("mi_entreno_resumen() es SECURITY INVOKER: la RLS decide qué se cuenta");
 }
 
-/* Desde que «Hoy te toca» y «Tu progreso» son una sola tarjeta, el panel ya
-   no pinta esos tres números (ver «Hoy te toca y tu progreso, en una sola
-   tarjeta» en docs/decisiones/paneles.md). Si vuelven, que sea desde la
-   función liviana y nunca sumando en el navegador. */
-console.log("\n=== El panel no cuenta en el navegador ===");
+console.log("\n=== El panel pide sus números a la función liviana ===");
 const js = fs.readFileSync(path.join(RAIZ, "js", "clases.js"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
-if (/rpc\(\s*["']mi_entreno_resumen["']/.test(js)) bien("clases.js pide los números a mi_entreno_resumen()");
-else bien("clases.js ya no pinta los tres números (van en «Hoy te toca»)");
+if (/rpc\(\s*["']mi_entreno_resumen["']/.test(js)) bien("clases.js llama a mi_entreno_resumen()");
+else mal("clases.js no llama a mi_entreno_resumen()");
 if (/rpc\(\s*["']informes_resumen_alumnos["']/.test(js)) mal("clases.js volvió a llamar a informes_resumen_alumnos(): arma el renglón de todo el grupo para usar uno");
 else bien("y no a informes_resumen_alumnos()");
 

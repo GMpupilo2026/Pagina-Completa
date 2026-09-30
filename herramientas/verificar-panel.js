@@ -1741,7 +1741,8 @@ async function pruebaProgresoAlumna(browser) {
     alumno: document.getElementById("progreso-alumno").checkVisibility(),
     profe: document.getElementById("progreso-profe").checkVisibility(),
     hoyDentro: document.getElementById("progreso-alumno").contains(document.getElementById("hoy")),
-    numeros: ["progreso-racha", "entreno-puzzles", "entreno-lessons", "entreno-coord"].filter((id) => document.getElementById(id)),
+    racha: !!document.getElementById("progreso-racha"),
+    numeros: ["entreno-puzzles", "entreno-lessons", "entreno-coord"].map((id) => document.getElementById(id).textContent),
     record: document.getElementById("tactics-record-text").textContent,
     tituloRecord: document.getElementById("tactics-record-title").textContent,
     saludo: document.getElementById("panel-titulo").textContent.replace(/\s+/g, " ").trim(),
@@ -1755,9 +1756,9 @@ async function pruebaProgresoAlumna(browser) {
   igual("y no el panel del equipo docente", visto.profe, false);
   igual("«Hoy te toca» va DENTRO de esa tarjeta: una sola, no dos seguidas", visto.hoyDentro, true);
   /* La racha de días ya la dice la meta del día («Tu racha: 4 días»): la
-     tarjeta de al lado la repetía. Y los tres números (4×4, lecciones, la
-     mejor marca de Coordenadas) eran de cuando el entrenamiento era chico. */
-  igual("sin los tres números viejos ni la racha repetida", visto.numeros, []);
+     tarjeta de al lado la repetía. Los tres totales siguen, dentro. */
+  igual("sin la racha repetida", visto.racha, false);
+  igual("los tres totales salen tal cual los contó la base", visto.numeros, ["37", "9", "24"]);
   igual("el récord de racha táctica se compara dentro de su grupo",
     visto.tituloRecord, "Racha táctica del grupo 7B");
   igual("con quién lo tiene", visto.record, "Bruno Mora lleva el récord con 14 aciertos seguidos.");
@@ -1786,6 +1787,8 @@ async function pruebaProgresoAlumna(browser) {
   const deTraining = consultas.filter((c) => c.tabla === "training_progress");
   igual("training_progress solo se pide para «lo último»: una fila y la suya",
     deTraining.map((c) => [c.limit, c.eq.student_id]), [[1, "u-ana"]]);
+  igual("los totales se le piden contados a mi_entreno_resumen()",
+    consultas.some((c) => c.tabla === "mi_entreno_resumen"), true);
   igual("y no a informes_resumen_alumnos(), que arma el renglón de todo el grupo",
     consultas.some((c) => c.tabla === "informes_resumen_alumnos"), false);
 
@@ -2491,19 +2494,47 @@ async function pruebaHoyEnElPanel(browser) {
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
 
-  /* Sin nada pendiente, una sugerencia: una página cuyo trabajo cuenta, de
-     la lista de Tareas (MaterialPlataforma), y dicha como sugerencia. */
-  ({ page, ctx, errores } = await panel(browser, [ALUMNA, PROFE], "u-ana", {}, {}));
-  await page.waitForFunction(() => document.querySelectorAll("#hoy-lista a").length > 0, null, { timeout: 15000 }).catch(() => {});
+  /* Sin nada pendiente, una sugerencia. Primero, la del DIAGNÓSTICO: lo
+     flojo, con dónde practicarlo (el primer recurso que cuenta del área,
+     leído del plan de verdad: PRIMER_RECURSO). Mates al 30 %: es lo único
+     flojo, así que la sugerencia es esa, cualquier día. */
+  const leerSug = (pg) => pg.evaluate(() => Array.from(document.querySelectorAll("#hoy-lista a"))
+    .map((a) => [a.textContent.replace("→", "").trim(), a.getAttribute("href")]));
+  const esperar = (pg) => pg.waitForFunction(() => document.querySelectorAll("#hoy-lista a").length > 0, null, { timeout: 15000 }).catch(() => {});
+  const conDiag = { rpc: { progreso_dias_y_racha: RACHA_ANA },
+    local: { diagnostico_resultado_v1: JSON.stringify({ fecha: new Date().toISOString(), detalle: diagnosticoCon({ mate: 30 }) }) } };
+  ({ page, ctx, errores } = await panel(browser, [ALUMNA, PROFE], "u-ana", {}, conDiag));
+  await esperar(page);
+  const mate = PRIMER_RECURSO.mate;
+  const nombreMate = await page.evaluate(() => window.PlanEntrenamiento.AREA_POR_ID.mate.nombre);
+  igual("sin nada pendiente, la sugerencia sale de su diagnóstico: lo flojo, con dónde practicarlo",
+    await leerSug(page), [["💡Sugerencia de hoy, por tu diagnóstico en " + nombreMate.toLowerCase() + ": " + mate.texto, mate.href]]);
+  igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+
+  /* Sin diagnóstico: una página cuyo trabajo cuenta, de la lista de Tareas
+     (MaterialPlataforma), dicha como sugerencia. */
+  ({ page, ctx, errores } = await panel(browser, [ALUMNA, PROFE], "u-ana", {}, { rpc: { progreso_dias_y_racha: RACHA_ANA } }));
+  await esperar(page);
   const sug = await page.evaluate(() => {
     const a = document.querySelector("#hoy-lista a");
-    const h = a && window.MaterialPlataforma.HERRAMIENTAS.find((x) => x.href === a.getAttribute("href"));
+    const h = a && window.MaterialPlataforma.HERRAMIENTAS.find((x) => x.href === "entreno/" + a.getAttribute("href").replace(/^entreno\//, ""));
     return a ? { texto: a.textContent.replace("→", "").trim(), cuenta: !!h && h.metas.includes("cantidad"), nombre: h && h.label, n: document.querySelectorAll("#hoy-lista a").length } : null;
   });
-  igual("sin nada pendiente, UNA sugerencia, dicha como sugerencia",
+  igual("sin diagnóstico, UNA sugerencia, dicha como sugerencia",
     sug && [sug.n, sug.texto], sug && [1, "💡Sugerencia de hoy: " + sug.nombre]);
   igual("y es de una página cuyo trabajo cuenta", sug && sug.cuenta, true);
-  igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+
+  /* Sin ni un ejercicio hecho, nada: la franja de arriba («Por dónde
+     empezar») ya le dice a dónde ir, y el mismo destino dos veces en el panel
+     hace pensar que son dos cosas. */
+  const sinNada = JSON.parse(JSON.stringify(RACHA_ANA));
+  Object.assign(sinNada[0], { total_ejercicios: 0, hoy_ejercicios: 0, racha_actual: 0, por_actividad: {} });
+  ({ page, ctx } = await panel(browser, [ALUMNA, PROFE], "u-ana", {}, { rpc: { progreso_dias_y_racha: sinNada }, local: conDiag.local }));
+  await page.waitForFunction(() => document.getElementById("hoy-meta") && !document.getElementById("hoy-meta").hidden, null, { timeout: 15000 }).catch(() => {});
+  await page.waitForTimeout(800);
+  igual("sin ningún ejercicio hecho, no hay sugerencia (ya la dice la franja)", await leerSug(page), []);
   await ctx.close();
 
   ({ page, ctx } = await panel(browser, [PROFE], "u-profe", {}, { local }));
