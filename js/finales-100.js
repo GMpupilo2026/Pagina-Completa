@@ -224,8 +224,16 @@
   function montarCuadro(host, cfg, listo) {
     conPiezas(() => {
       const api = window.CuadroComandos ? window.CuadroComandos.montar(host, cfg) : cuadroSencillo(host, cfg);
-      // Dentro del .f100-cmd (que es flex), el recuadro ocupa todo el ancho.
-      if (api && api.el) api.el.style.flex = "1 1 100%";
+      /* Dentro del contenedor (que es flex), el recuadro ocupa todo el ancho y
+         puede encogerse; y su etiqueta se parte en renglones: la hoja del curso
+         deja las etiquetas de ese contenedor en una sola línea, y la del
+         recuadro, larga, lo empujaba fuera de la columna. */
+      if (api && api.el) {
+        api.el.style.flex = "1 1 100%";
+        api.el.style.minWidth = "0";
+        const lab = api.el.querySelector("label");
+        if (lab) lab.style.whiteSpace = "normal";
+      }
       listo(api);
     });
   }

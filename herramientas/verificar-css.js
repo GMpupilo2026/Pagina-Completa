@@ -57,6 +57,9 @@ const SIN_ESTILO = new Set([
     "practice-level-btn", "edit-piece-btn", "edit-turn-btn", "cf-turnstile",
     "lesson-send-btn", "cp-static-texto", "tx-muestra",
     "ficha-btn", "plan-btn",
+    // La región viva de js/tablero-accesible.js: `ta-voz` la esconde (estilo
+    // inyectado) y `ta-dice` solo la distingue de la línea fija de ayuda.
+    "ta-dice",
     // El editor a mano del plan de entrenamiento (informes.html): cada campo
     // de cada semana lleva su marca para que leerEdicionPlan() lo encuentre con
     // querySelector, no para pintarlo distinto.
