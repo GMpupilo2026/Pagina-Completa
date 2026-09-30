@@ -200,8 +200,9 @@ window.TableroAccesible = (function () {
       if (!cs.length) return;
       var hay = enfocada && cs.some(function (c) { return c.dataset.square === enfocada; });
       if (!hay) enfocada = cs[0].dataset.square;
+      var sinParada = paraElProfe();
       cs.forEach(function (c) {
-        c.tabIndex = c.dataset.square === enfocada ? 0 : -1;
+        c.tabIndex = !sinParada && c.dataset.square === enfocada ? 0 : -1;
         if (c.tagName !== "BUTTON" && !c.getAttribute("role")) c.setAttribute("role", "button");
         rotular(c);
       });
@@ -531,7 +532,20 @@ window.TableroAccesible = (function () {
       + "e i vuelve al recuadro donde se escribe.";
     (tablero.parentNode || document.body).insertBefore(comoSeAnda, tablero);
 
+    /* Con la cuenta marcada como ciega (js/vision-cuenta.js) el tablero es
+       para quien acompaña —el profe que ayuda, alguien al lado—: quien no ve
+       hace todo desde el recuadro de comandos, con la posición y las jugadas
+       escritas, y el tablero en el camino del lector son sesenta y cuatro
+       paradas de más entre el enunciado y el recuadro. Se queda a la vista,
+       fuera del lector y del tabulador; «posición», «caballos» o Alt +
+       Mayúscula + B dicen lo mismo que él. */
+    function paraElProfe() {
+      return document.documentElement.classList.contains("modo-ciego");
+    }
     function rolSegunModo() {
+      if (paraElProfe()) tablero.setAttribute("aria-hidden", "true");
+      else if (tablero.getAttribute("aria-hidden") === "true" && tablero.dataset.taOcultoPorCiego) tablero.removeAttribute("aria-hidden");
+      if (paraElProfe()) tablero.dataset.taOcultoPorCiego = "1"; else delete tablero.dataset.taOcultoPorCiego;
       var adaptado = document.documentElement.classList.contains("adaptive-mode");
       tablero.setAttribute("role", adaptado ? "application" : "group");
       tablero.setAttribute("aria-roledescription", "tablero de ajedrez");
@@ -543,6 +557,7 @@ window.TableroAccesible = (function () {
     }
     rolSegunModo();
     document.addEventListener("adaptivemode:change", rolSegunModo);
+    document.addEventListener("vision:cambio", function () { rolSegunModo(); repartirTabindex(); });
 
     var api = {
       el: tablero,
