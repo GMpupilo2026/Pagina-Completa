@@ -320,7 +320,7 @@ window.__deletes = [];
         TABLAS.questions.forEach((q) => { if (q.created_by === ${JSON.stringify(quien)} && !q.closed_at) q.closed_at = new Date().toISOString(); });
         const q = { id: "qo-" + (TABLAS.questions.length + 1), fen: args.p_fen, prompt: args.p_prompt, created_by: ${JSON.stringify(quien)},
           expected_plies: 1, tipo: "opciones", opciones: args.p_opciones, tiempo_limite: args.p_tiempo_limite,
-          resultados_visibles: false, created_at: new Date().toISOString(), closed_at: null,
+          resultados_visibles: false, sin_tablero: !!args.p_sin_tablero, created_at: new Date().toISOString(), closed_at: null,
           class_session_id: (SESIONES.find((c) => !c.ended_at) || {}).id || null };
         TABLAS.questions.push(q);
         if (args.p_correcta !== null && args.p_correcta !== undefined) TABLAS.preguntas_clave.push({ question_id: q.id, correcta: args.p_correcta });

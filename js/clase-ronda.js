@@ -69,6 +69,7 @@ function pintarRonda(estado) {
 async function empezarRonda(ejercicios) {
     if (ronda) { setStatus("Ya hay una ronda en curso: termínala antes de empezar otra."); return; }
     if (partidaClase) { setStatus("Hay una partida de la clase en curso: termínala antes de empezar una ronda."); return; }
+    if (cuestionarioEnJuego) { setStatus("Hay un cuestionario en juego: termínalo antes de empezar una ronda."); return; }
     if (!ejercicios.length) return;
     const sel = document.getElementById("ronda-segundos");
     ronda = { ejercicios, i: -1, segundos: (sel && parseInt(sel.value, 10)) || 30, preguntas: [], cierre: null };
