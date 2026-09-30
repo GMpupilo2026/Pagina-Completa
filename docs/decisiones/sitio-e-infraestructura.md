@@ -1564,6 +1564,13 @@ escucha le da trabajo a Realtime en cada cambio, para nada. Las dos pasaron
 - `class_attendance` estaba publicada y **nadie la escucha**: solo se escribe
   (`upsert`) y se lee (`select`). Se sacó.
 
+**Una tabla que entra a Realtime lleva, en la misma migración, la política
+restrictiva `verificacion_en_dos_pasos`** (ver «La verificación en dos pasos» en
+`permisos-y-roles.md`): Realtime no pasa por el candado de PostgREST, lee con la
+RLS de cada tabla. Las cuatro de torneos entraron sin ella y quedaron así unos
+siete minutos, hasta `20260930150549` (estaban vacías: no se filtró nada).
+`verificar-dos-pasos-base.js` lo detectó en el CI.
+
 `verificar-realtime-publicadas.js` (sin navegador) compara las tablas que
 nombran los `postgres_changes` de `js/` —también las que se recorren en una
 lista, como en `competir.js` y `torneo.js`— con las líneas `realtime` del
