@@ -393,13 +393,14 @@ async function pruebaAlta(page) {
   const envio = await page.evaluate(() => window.__edge[0]);
   igual("llama a la función que da de alta", envio.url.replace(/^.*\/functions/, "/functions"),
     "/functions/v1/inscribir-alumno");
-  /* `sin_correo: false` y `usuario: ""` van SIEMPRE, también en el alta normal:
-     el servidor decide por ese campo y no por la ausencia del otro. */
+  /* `sin_correo: false`, `usuario: ""` y `contrasena: ""` van SIEMPRE, también
+     en el alta normal: el servidor decide por ese campo y no por la ausencia
+     del otro. Con correo propio la contraseña va vacía: es de la persona. */
   igual("manda el alumno, el encargado y de qué respuesta sale", envio.cuerpo,
     { respuesta_id: "resp-1", alumno_nombre: "Ana Rojas", alumno_email: "ana@x.cr",
       sin_correo: false, usuario: "",
       encargado_nombre: "Gina Rojas", encargado_email: "mama@x.cr",
-      frecuencia: "semanal", grupo: "7A" });
+      frecuencia: "semanal", grupo: "7A", contrasena: "" });
   igual("va firmada con la sesión de quien lo hace", envio.auth, "Bearer t");
 
   await page.waitForFunction(() =>
