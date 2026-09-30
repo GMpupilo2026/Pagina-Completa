@@ -1047,14 +1047,18 @@ Lo miden `verificar-entreno-escribiendo.js` (nuevo), `verificar-tipos-pagina.js`
 
 Lo que dejó la tercera vuelta con la cuenta «ciego»:
 
-- **«R» es el rey.** En español R es rey y T torre; en inglés R es torre. Con
-  el rey y una torre que llegan a la misma casilla, «Rf1» movía la TORRE (en
-  el examen, la pregunta perdida sin haberse equivocado). Ahora se prueba
-  primero el rey (`LETRA_AMBIGUA` en `comandos-tablero.js`, y
-  `chess-move-parser.js`, `tablero-board.js`, `lector-planilla.js`); si el rey
-  no puede ir, queda la torre para quien escribe en inglés. Coronar «=R» es
-  siempre torre. Las páginas que traducían T a la R inglesa antes de llamar al
-  parser (Habilidades, Visualización) ahora le pasan la T tal cual.
+- **«R» es SIEMPRE el rey y la torre es T.** Todo el sitio escribe y lee en
+  algebraica española (R rey, D dama, T torre, A alfil, C caballo). Leída en
+  inglés, «Rf1» movía la TORRE cuando el rey y una torre llegaban a f1 (en el
+  examen, la pregunta perdida sin haberse equivocado). Ahora R es el rey en
+  `LETRA_AMBIGUA` de `comandos-tablero.js` y en `chess-move-parser.js`,
+  `tablero-board.js` y `lector-planilla.js`, aunque solo la torre pueda ir:
+  «Rh4» con la torre en h1 es «no es una jugada legal… R es el rey; la torre
+  se escribe con T». Las otras iniciales inglesas (N, Q, K) no chocan con nada
+  y se siguen entendiendo. No se corona a rey: «=R» no es nada, «=T» es torre.
+  Lo que el sitio escribe de una jugada sale en español
+  (`ComandosTablero.sanEspanol`: «Nf3» → «Cf3»); los bancos siguen guardando
+  el SAN inglés que necesita chess.js y se convierte al mostrar.
 - **Una palabra suelta no aprieta una respuesta.** En el diagnóstico,
   «volver» marcó la opción D, «Una jugada ilegal que hay que volver atrás».
   Los sinónimos de `vision-cuenta.js` («siguiente», «volver», «otra vez»…)
