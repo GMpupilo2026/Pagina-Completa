@@ -132,13 +132,20 @@
     let sel = null, pendingPromo = null, enabled = false;
     boardEl.addEventListener("click", (ev) => {
       if (!enabled || pendingPromo) return;
-      const r = ev.target.closest("[data-sq]"); if (!r) return;
+      // `data-sq` en el SVG; `data-square` en el tablero de casillas del Modo Adaptado.
+      const r = ev.target.closest("[data-sq],[data-square]"); if (!r) return;
       const game = getGame(); if (!game) return;
-      const sq = r.dataset.sq;
+      const sq = r.dataset.sq || r.dataset.square;
       if (sel) {
         const mv = game.moves({ square: sel, verbose: true }).find((m) => m.to === sq);
         if (mv) {
-          if (mv.flags.indexOf("p") !== -1) { pendingPromo = { from: sel, to: sq }; promoEl.hidden = false; render(sel); return; }
+          if (mv.flags.indexOf("p") !== -1) {
+            const conTeclado = boardEl.contains(document.activeElement);
+            pendingPromo = { from: sel, to: sq }; promoEl.hidden = false; render(sel);
+            // Con el teclado, la pregunta de la coronación se contesta donde aparece.
+            if (conTeclado) promoEl.querySelector("button").focus();
+            return;
+          }
           const from = sel; sel = null; onMove(from + sq); return;
         }
       }
@@ -149,6 +156,9 @@
     promoEl.addEventListener("click", (ev) => {
       const b = ev.target.closest("button[data-p]"); if (!b || !pendingPromo) return;
       const mv = pendingPromo.from + pendingPromo.to + b.dataset.p; pendingPromo = null; sel = null; promoEl.hidden = true; onMove(mv);
+      // Y el foco vuelve al tablero, que es donde estaba.
+      const casilla = boardEl.querySelector('[data-square][tabindex="0"]');
+      if (casilla) casilla.focus();
     });
     return { enable(v) { enabled = v; sel = null; pendingPromo = null; promoEl.hidden = true; }, get sel() { return sel; } };
   }
@@ -159,6 +169,16 @@
      de la clase en vivo lo que el profesor está viendo, que casi nunca es la
      posición inicial sino la jugada a la que llegó recorriendo la partida. */
   function publicarFen(el, fen) { el.dataset.fenActual = fen; }
+
+  /* El tablero de un visor: el SVG de siempre, o en Modo Adaptado el de casillas
+     que se recorre con el teclado y donde se juega con Intro, primero la pieza y
+     después el destino (js/curso-adaptado.js, CursoAdaptado.tablero). Todas las
+     formas de repintar pasan por acá, así ninguna se olvida del Modo Adaptado. */
+  function pintarTablero(el, boardEl, nombre, fen, opts) {
+    const o = Object.assign({ nombre, cuadro: () => el.querySelector(".cc-input") }, opts);
+    if (window.CursoAdaptado && window.CursoAdaptado.tablero && window.CursoAdaptado.tablero(boardEl, fen, o)) return;
+    boardEl.innerHTML = boardSvg(fen, opts);
+  }
 
   /* ---------- el recuadro donde se escribe (compartido) ----------
      Era un <form> propio que solo entendía jugadas: con lector de pantalla no
@@ -306,7 +326,7 @@
     function renderView(extra) {
       const fen = fenAt(state.ply);
       publicarFen(el, fen);
-      boardEl.innerHTML = boardSvg(fen, Object.assign({ flip: state.flip, last: lastSquares(state.ply), label: describe(fen) }, extra || {}));
+      pintarTablero(el, boardEl, "Tablero de la partida", fen, Object.assign({ flip: state.flip, last: lastSquares(state.ply), label: describe(fen) }, extra || {}));
       descEl.textContent = describe(fen);
       plyEl.textContent = state.ply + "/" + moves.length;
       movesEl.querySelectorAll("button").forEach((b, i) => b.classList.toggle("on", i + 1 === state.ply));
@@ -327,6 +347,10 @@
       movesEl.innerHTML = html;
     }
     renderMoves(); renderView();
+    // Encender o apagar el Modo Adaptado cambia de tablero en el momento; y las
+    // piezas del de casillas llegan después del primer dibujo.
+    function repintar() { if (state.mode === "practicar" && game) renderPractice(); else renderView(); }
+    document.addEventListener("adaptivemode:change", repintar);
 
     /* Ir a una jugada y DECIRLA («Jugada 12 de 40: el caballo blanco va de…»).
        Antes solo cambiaba el «12/40» y se volvía a dictar la posición entera;
@@ -347,9 +371,10 @@
     const input = boardInput(boardEl, promoEl, () => game, onHumanMove, (sel) => {
       const fen = game.fen(), dots = sel ? game.moves({ square: sel, verbose: true }).map((m) => m.to) : [];
       const h = game.history({ verbose: true }), lm = h.length ? h[h.length - 1] : null;
-      boardEl.innerHTML = boardSvg(fen, { flip: state.flip, sel, dots, last: lm ? [lm.from, lm.to] : [], label: describe(fen) });
+      pintarTablero(el, boardEl, "Tablero de la partida", fen, { flip: state.flip, sel, dots, last: lm ? [lm.from, lm.to] : [], label: describe(fen) });
       descEl.textContent = describe(fen);
     });
+    conPiezas(repintar);
     /* El recuadro ya no se deshabilita cuando no toca jugar: sigue sirviendo
        para preguntar por la posición. Lo que se apaga es aceptar jugadas. */
     function setMoveInputEnabled(v) { input.enable(v); puedeJugar = v; if (v) esperaSeguir = false; }
@@ -479,7 +504,7 @@
     function renderPractice(txt) {
       const fen = game.fen(), h = game.history({ verbose: true }), lm = h.length ? h[h.length - 1] : null;
       publicarFen(el, fen);
-      boardEl.innerHTML = boardSvg(fen, { flip: state.flip, last: lm ? [lm.from, lm.to] : [], label: describe(fen) });
+      pintarTablero(el, boardEl, "Tablero de la partida", fen, { flip: state.flip, last: lm ? [lm.from, lm.to] : [], label: describe(fen) });
       descEl.textContent = describe(fen);
       movesEl.innerHTML = h.map((m, i) => '<span class="cp-h">' + esSan(m.san) + "</span>").join(" ");
       plyEl.textContent = "práctica";
@@ -531,7 +556,9 @@
       if (act === "continue") { nextGuess(); return; }
     });
     boardEl.addEventListener("keydown", (ev) => {
-      if (state.mode !== "ver") return;
+      // Sobre una casilla, las flechas son de js/tablero-accesible.js (mover el
+      // foco), no de la partida: si no, cada flecha haría las dos cosas.
+      if (state.mode !== "ver" || (ev.target.closest && ev.target.closest("[data-square]"))) return;
       if (ev.key === "ArrowRight") { irA(state.ply + 1); ev.preventDefault(); }
       if (ev.key === "ArrowLeft") { irA(state.ply - 1); ev.preventDefault(); }
     });
@@ -561,7 +588,7 @@
       const fen = state.solved ? fenAt(state.ply) : (game ? game.fen() : x.fen);
       publicarFen(el, fen);
       const last = state.solved && state.ply ? [sol[state.ply - 1].uci.slice(0, 2), sol[state.ply - 1].uci.slice(2, 4)] : [];
-      boardEl.innerHTML = boardSvg(fen, Object.assign({ flip: state.flip, last, label: describe(fen) }, extra || {}));
+      pintarTablero(el, boardEl, "Tablero del ejercicio", fen, Object.assign({ flip: state.flip, last, label: describe(fen) }, extra || {}));
       descEl.textContent = describe(fen);
       if (state.solved) {
         plyEl.textContent = state.ply + "/" + sol.length;
@@ -583,7 +610,7 @@
     }
     const input = boardInput(boardEl, promoEl, () => game, onExerciseMove, (sel) => {
       const dots = sel ? game.moves({ square: sel, verbose: true }).map((m) => m.to) : [];
-      boardEl.innerHTML = boardSvg(game.fen(), { flip: state.flip, sel, dots, label: describe(game.fen()) });
+      pintarTablero(el, boardEl, "Tablero del ejercicio", game.fen(), { flip: state.flip, sel, dots, label: describe(game.fen()) });
     });
     // Misma idea que en la partida comentada: escribir la jugada en vez de hacer clic en el
     // SVG del tablero, que no es operable por teclado ni por lector de pantalla; y, ya
@@ -636,6 +663,10 @@
     }
     if (typeof Chess === "function") { game = new Chess(); game.load(x.fen); input.enable(true); }
     render();
+    // Encender o apagar el Modo Adaptado cambia de tablero en el momento; y las
+    // piezas del de casillas llegan después del primer dibujo.
+    document.addEventListener("adaptivemode:change", () => render());
+    conPiezas(() => render());
     el.addEventListener("click", (ev) => {
       const b = ev.target.closest("button"); if (!b) return;
       const act = b.dataset.act;

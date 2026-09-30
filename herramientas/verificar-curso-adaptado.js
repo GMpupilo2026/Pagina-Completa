@@ -31,6 +31,11 @@
       del diagnóstico, que es justo lo único que esas personas pueden leer. Se
       revisa el texto que sale de los tres describir/describe del sitio.
 
+   6. EL TABLERO CON EL TECLADO. En Modo Adaptado el tablero es de casillas:
+      una sola parada de Tab, las flechas mueven el foco, cada casilla dice qué
+      hay, y con Intro (pieza y destino) se juega en la práctica. Fuera del
+      modo, el SVG de siempre.
+
    Uso:  python3 -m http.server 8777    (desde la raíz del sitio)
          npm install chess.js@0.10.3
          node herramientas/verificar-curso-adaptado.js                         */
@@ -356,6 +361,167 @@ async function pruebaRecuadro(browser) {
   }
 }
 
+/* ============ 6. El tablero, recorrible con el teclado ============ */
+
+/* En Modo Adaptado el tablero del curso es de casillas (js/curso-adaptado.js,
+   CursoAdaptado.tablero) y no el SVG de solo mirar. Lo que se rompe sin ningún
+   error: que vuelvan las 64 paradas de Tab (o la del contenedor, además de la
+   de la casilla), que las flechas muevan otra cosa (la línea) en vez del foco,
+   que las casillas se queden mudas, y que Intro no juegue. Se prueba con el
+   TECLADO de verdad —Tab, flechas, Intro—, no llamando a funciones. */
+async function pruebaTableroTeclado(browser) {
+  console.log("\n=== El tablero se recorre y se juega con el teclado ===");
+  const casos = [
+    { curso: "el-mapa-de-los-finales", visor: ".f100-viewer", tablero: ".f100-board", practicar: '[data-act="practice"]', anuncio: ".f100-anuncio" },
+    { curso: "partidas-modelo", visor: ".cp-viewer", tablero: ".cp-board", practicar: '[data-act="practice"]', anuncio: ".cp-anuncio" },
+  ];
+  for (const caso of casos) {
+    const et = caso.curso;
+    const { page, ctx, errores } = await abrirCurso(browser, caso.curso, true);
+    await page.evaluate(() => { const d = document.querySelector("#course-content-body details"); if (d) d.open = true; });
+    await page.waitForSelector(caso.visor + " " + caso.tablero + " [data-square]", { timeout: 20000 });
+    await page.evaluate(() => {
+      window.PracticeEngine.preload = () => {};
+      window.PracticeEngine.getMove = (fen) => { const m = new Chess(fen).moves({ verbose: true })[0]; return Promise.resolve(m ? m.from + m.to + (m.promotion || "") : null); };
+    });
+
+    const r = await page.evaluate((c) => {
+      const v = document.querySelector(c.visor);
+      const t = v.querySelector(c.tablero);
+      const cs = t.querySelectorAll("[data-square]");
+      const paradas = Array.from(v.querySelectorAll(c.tablero + ", " + c.tablero + " *")).filter((e) => e.tabIndex >= 0 && !e.disabled);
+      return {
+        casillas: cs.length,
+        // El SVG del tablero (las piezas dibujadas también son <svg>, adentro de las casillas).
+        svg: !!t.querySelector("svg.f100-svg, svg.cp-svg"),
+        paradas: paradas.length,
+        botones: Array.from(cs).every((b) => b.tagName === "BUTTON"),
+      };
+    }, caso);
+    igual(et + " · en Modo Adaptado el tablero son 64 casillas, no el SVG", [r.casillas, r.svg], [64, false]);
+    igual(et + " · y es UNA sola parada de Tab (ni 64, ni la del contenedor además)", r.paradas, "1");
+
+    // Tab hasta el tablero, con el teclado de verdad.
+    await page.evaluate((c) => {
+      const v = document.querySelector(c.visor);
+      const antes = v.querySelector(".f100-head, .cp-head");
+      antes.tabIndex = -1; antes.focus();
+    }, caso);
+    let llego = null;
+    for (let i = 0; i < 40 && !llego; i += 1) {
+      await page.keyboard.press("Tab");
+      llego = await page.evaluate((c) => {
+        const a = document.activeElement;
+        return a && a.closest(c.tablero) && a.dataset.square ? a.dataset.square : null;
+      }, caso);
+    }
+    if (!llego) { mal(et + ": con Tab no se llega a ninguna casilla"); await ctx.close(); continue; }
+    bien(et + " · con Tab se llega al tablero, a la casilla " + llego);
+
+    await page.keyboard.press("ArrowRight");
+    const trasFlecha = await page.evaluate(() => document.activeElement.dataset.square || null);
+    await page.keyboard.press("ArrowDown");
+    const trasAbajo = await page.evaluate(() => document.activeElement.dataset.square || null);
+    const fila = (sq) => sq ? Number(sq[1]) : 0;
+    igual(et + " · la flecha derecha mueve el foco a la casilla de al lado",
+      !!trasFlecha && trasFlecha !== llego && fila(trasFlecha) === fila(llego), true);
+    igual(et + " · y la de abajo, a la fila de abajo", !!trasAbajo && trasAbajo[0] === trasFlecha[0] && trasAbajo !== trasFlecha, true);
+
+    // Qué dice una casilla: su nombre hablado y lo que hay.
+    const etiquetas = await page.evaluate((c) => {
+      const t = document.querySelector(c.visor + " " + c.tablero);
+      const g = new Chess(document.querySelector(c.visor).dataset.fenActual);
+      const conPieza = Array.from(t.querySelectorAll("[data-square]")).find((b) => g.get(b.dataset.square));
+      const vacia = Array.from(t.querySelectorAll("[data-square]")).find((b) => !g.get(b.dataset.square));
+      return { pieza: conPieza.getAttribute("aria-label"), vacia: vacia.getAttribute("aria-label"),
+        rol: t.querySelector(".ca-tablero").getAttribute("role") };
+    }, caso);
+    igual(et + " · una casilla con pieza dice qué hay («eva 4, caballo blanco»)",
+      /^[a-z]+ [1-8], (rey|dama|torre|alfil|caballo|peón) (blanc|negr)[oa]/.test(etiquetas.pieza) ? true : etiquetas.pieza, true);
+    igual(et + " · y una vacía, que está vacía", /^[a-z]+ [1-8], vacía/.test(etiquetas.vacia) ? true : etiquetas.vacia, true);
+    igual(et + " · el tablero se anuncia como aplicación (los atajos llegan)", etiquetas.rol, "application");
+
+    // El atajo «z» dice la posición entera.
+    await page.keyboard.press("z");
+    await page.waitForTimeout(200);
+    const dijoZ = await page.evaluate((c) => { const d = document.querySelector(c.visor + " .ta-dice"); return d ? d.textContent : ""; }, caso);
+    igual(et + " · la «z» dice la posición", /rey/i.test(dijoZ) ? true : dijoZ, true);
+
+    // «Adivina la jugada» (partidas modelo): la respuesta también se da con Intro.
+    if (caso.curso === "partidas-modelo") {
+      await page.click(caso.visor + ' [data-act="guess"]');
+      await page.waitForTimeout(150);
+      const intento = await page.evaluate((c) => {
+        const g = new Chess(document.querySelector(c.visor).dataset.fenActual);
+        const m = g.moves({ verbose: true }).find((x) => !x.promotion);
+        return { from: m.from, to: m.to };
+      }, caso);
+      await page.focus(caso.visor + ' [data-square="' + intento.from + '"]');
+      await page.keyboard.press("Enter");
+      await page.focus(caso.visor + ' [data-square="' + intento.to + '"]');
+      await page.keyboard.press("Enter");
+      await page.waitForTimeout(200);
+      const juzgo = await page.evaluate((c) => !!document.querySelector(c.visor + " .cp-comment .cp-good, " + c.visor + " .cp-comment .cp-bad"), caso);
+      igual(et + " · al adivinar, la jugada hecha con Intro se juzga (bien o «No es esa»)", juzgo, true);
+      await page.click(caso.visor + ' [data-act="guess"]');   // salir del modo adivinar
+      await page.waitForTimeout(150);
+    }
+
+    // Jugar con Intro: a practicar, pieza y destino con el teclado.
+    await page.click(caso.visor + " " + caso.practicar);
+    await page.waitForTimeout(150);
+    const jugada = await page.evaluate((c) => {
+      // La primera legal que no corona (la coronación abre sus botones aparte).
+      // Las posiciones del curso son fijas, así que la jugada también.
+      const g = new Chess(document.querySelector(c.visor).dataset.fenActual);
+      const m = g.moves({ verbose: true }).find((x) => !x.promotion);
+      return m ? { from: m.from, to: m.to, san: m.san } : null;
+    }, caso);
+    await page.focus(caso.visor + ' [data-square="' + jugada.from + '"]');
+    await page.keyboard.press("Enter");
+    await page.waitForTimeout(150);
+    const elegida = await page.evaluate(({ c, sq }) => {
+      const b = document.querySelector(c.visor + ' [data-square="' + sq + '"]');
+      return { label: b.getAttribute("aria-label"), foco: document.activeElement === b };
+    }, { c: caso, sq: jugada.from });
+    igual(et + " · Intro sobre la pieza la elige (y lo dice la casilla)", /seleccionada/.test(elegida.label) ? true : elegida.label, true);
+    igual(et + " · el foco se queda en la casilla tras repintar", elegida.foco, true);
+    await page.focus(caso.visor + ' [data-square="' + jugada.to + '"]');
+    await page.keyboard.press("Enter");
+    await page.waitForTimeout(300);
+    const propia = (await page.locator(caso.visor + " " + caso.anuncio).first().textContent()) || "";
+    igual(et + " · e Intro sobre el destino hace la jugada (" + jugada.san + ")", /^Jugaste: /.test(propia) ? true : propia, true);
+    // La casilla de salida quedó vacía en lo que el tablero dice, no solo en el anuncio.
+    const salida = await page.evaluate(({ c, sq }) => document.querySelector(c.visor + ' [data-square="' + sq + '"]').getAttribute("aria-label"), { c: caso, sq: jugada.from });
+    igual(et + " · y la casilla de donde salió ahora dice que está vacía", /vacía/.test(salida) ? true : salida, true);
+    igual(et + " · sin errores en consola", errores.filter((e) => !/Failed to load resource/.test(e)).join(" | ") || "ninguno", "ninguno");
+    await ctx.close();
+  }
+
+  // Y fuera del Modo Adaptado, el SVG de siempre: a quien ve no le cambia nada.
+  const { page, ctx } = await abrirCurso(browser, "el-mapa-de-los-finales", false);
+  await page.evaluate(() => { const d = document.querySelector("#course-content-body details"); if (d) d.open = true; });
+  await page.waitForSelector(".f100-viewer .f100-board svg", { timeout: 20000 });
+  const normal = await page.evaluate(() => ({
+    svg: !!document.querySelector(".f100-viewer .f100-board svg"),
+    casillas: document.querySelectorAll(".f100-viewer .f100-board [data-square]").length,
+  }));
+  igual("normal · el tablero sigue siendo el SVG, sin casillas de botón", [normal.svg, normal.casillas], [true, 0]);
+  // Encender el modo en caliente cambia el tablero sin recargar.
+  await page.evaluate(() => { document.documentElement.classList.add("adaptive-mode"); document.dispatchEvent(new CustomEvent("adaptivemode:change", { detail: { activo: true } })); });
+  await page.waitForTimeout(150);
+  const encendido = await page.evaluate(() => document.querySelector(".f100-viewer .f100-board").querySelectorAll("[data-square]").length);
+  igual("al encender el Modo Adaptado en caliente, el tablero pasa a casillas", encendido, "64");
+  await page.evaluate(() => { document.documentElement.classList.remove("adaptive-mode"); document.dispatchEvent(new CustomEvent("adaptivemode:change", { detail: { activo: false } })); });
+  await page.waitForTimeout(150);
+  const apagado = await page.evaluate(() => {
+    const t = document.querySelector(".f100-viewer .f100-board");
+    return { svg: !!t.querySelector("svg"), tab: t.getAttribute("tabindex") };
+  });
+  igual("y al apagarlo vuelve el SVG, con su parada de Tab", apagado, { svg: true, tab: "0" });
+  await ctx.close();
+}
+
 (async () => {
   pruebaPlurales();
   pruebaSinVideos();
@@ -367,6 +533,7 @@ async function pruebaRecuadro(browser) {
     await pruebaVisores(browser);
     await pruebaRecuadro(browser);
     await pruebaPluralesEnPantalla(browser);
+    await pruebaTableroTeclado(browser);
   } finally {
     await browser.close();
   }

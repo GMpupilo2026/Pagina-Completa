@@ -309,6 +309,16 @@
     }
     document.addEventListener("adaptivemode:change", mostrarCuadro);
 
+    /* El tablero: el SVG de siempre, o en Modo Adaptado el de casillas que se
+       recorre con el teclado (js/curso-adaptado.js, CursoAdaptado.tablero). Las
+       dos van por acá para que ninguna de las formas de repintar se olvide de
+       una. */
+    function pintarTablero(fen, opts) {
+      const o = Object.assign({ nombre: "Tablero del diagrama", cuadro: () => el.querySelector(".cc-input") }, opts);
+      if (window.CursoAdaptado && window.CursoAdaptado.tablero && window.CursoAdaptado.tablero(boardEl, fen, o)) return;
+      boardEl.innerHTML = boardSvg(fen, opts);
+    }
+
     function currentFen() { return state.ply === 0 ? startFen : moves[state.ply - 1].fen; }
     function lastSquares() {
       if (state.ply === 0) return [];
@@ -317,7 +327,7 @@
     function renderView() {
       const fen = currentFen();
       publicarFen(el, fen);
-      boardEl.innerHTML = boardSvg(fen, { flip: state.flip, marks: state.ply === 0 ? d.marcas : [], last: lastSquares(), label: describe(fen) });
+      pintarTablero(fen, { flip: state.flip, marks: state.ply === 0 ? d.marcas : [], last: lastSquares(), label: describe(fen) });
       descEl.textContent = describe(fen);
       plyEl.textContent = moves.length ? state.ply + "/" + moves.length : "";
       movesEl.querySelectorAll("button").forEach((b, i) => b.classList.toggle("on", i + 1 === state.ply));
@@ -336,6 +346,10 @@
       movesEl.innerHTML = html;
     }
     renderMoves(); renderView();
+    // Encender o apagar el Modo Adaptado cambia de tablero en el momento; y las
+    // piezas del de casillas llegan después del primer dibujo.
+    function repintar() { if (state.mode === "practicar" && game) renderPractice(); else renderView(); }
+    document.addEventListener("adaptivemode:change", repintar);
 
     /* Ir a una jugada de la línea y DECIRLA: «Jugada 3 de 12: el rey blanco va
        de eva 5 a david 6». Antes solo cambiaba el «3/12» y la posición entera
@@ -414,7 +428,9 @@
       if (b.dataset.p) { finishPromotion(b.dataset.p); return; }
     });
     boardEl.addEventListener("keydown", (ev) => {
-      if (state.mode !== "ver") return;
+      // Sobre una casilla, las flechas son de js/tablero-accesible.js (mover el
+      // foco), no de la línea: si no, cada flecha haría las dos cosas.
+      if (state.mode !== "ver" || (ev.target.closest && ev.target.closest("[data-square]"))) return;
       if (ev.key === "ArrowRight") { irA(state.ply + 1); ev.preventDefault(); }
       if (ev.key === "ArrowLeft") { irA(state.ply - 1); ev.preventDefault(); }
     });
@@ -422,6 +438,7 @@
     // ----- práctica contra el motor -----
     let game = null, human = "w", sel = null, pendingPromo = null, thinking = false, expected = d.resultado;
     const practBtn = el.querySelector('[data-act="practice"]');
+    conPiezas(repintar);
     function levelKey() { return el.querySelector('[data-act="level"]').value; }
 
     function startPractice() {
@@ -455,7 +472,7 @@
       publicarFen(el, fen);
       const dots = sel ? game.moves({ square: sel, verbose: true }).map((m) => m.to) : [];
       const h = game.history({ verbose: true }); const lm = h.length ? h[h.length - 1] : null;
-      boardEl.innerHTML = boardSvg(fen, { flip: state.flip, sel, dots, last: lm ? [lm.from, lm.to] : [], label: describe(fen) });
+      pintarTablero(fen, { flip: state.flip, sel, dots, last: lm ? [lm.from, lm.to] : [], label: describe(fen) });
       descEl.textContent = describe(fen);
       const t0 = human;
       movesEl.innerHTML = h.map((m, i) => '<span class="f100-h">' + (i % 2 === 0 ? Math.floor(i / 2) + 1 + (t0 === "b" ? "…" : ".") : "") + esSan(m.san) + "</span>").join(" ");
@@ -464,13 +481,19 @@
     }
     boardEl.addEventListener("click", (ev) => {
       if (state.mode !== "practicar" || thinking || pendingPromo) return;
-      const r = ev.target.closest("[data-sq]"); if (!r) return;
-      const sq = r.dataset.sq;
+      // `data-sq` en el SVG; `data-square` en el tablero de casillas del Modo Adaptado.
+      const r = ev.target.closest("[data-sq],[data-square]"); if (!r) return;
+      const sq = r.dataset.sq || r.dataset.square;
       if (game.turn() !== human) return;
       if (sel) {
         const mv = game.moves({ square: sel, verbose: true }).find((m) => m.to === sq);
         if (mv) {
-          if (mv.flags.indexOf("p") !== -1) { pendingPromo = { from: sel, to: sq }; el.querySelector(".f100-promo").hidden = false; return; }
+          if (mv.flags.indexOf("p") !== -1) {
+            pendingPromo = { from: sel, to: sq }; el.querySelector(".f100-promo").hidden = false;
+            // Con el teclado, la pregunta de la coronación se contesta donde aparece.
+            if (boardEl.contains(document.activeElement)) el.querySelector(".f100-promo button").focus();
+            return;
+          }
           game.move({ from: sel, to: sq }); sel = null; afterHuman(); return;
         }
       }
@@ -481,7 +504,11 @@
     function finishPromotion(piece) {
       if (!pendingPromo) return;
       game.move({ from: pendingPromo.from, to: pendingPromo.to, promotion: piece });
+      const volver = el.querySelector(".f100-promo").contains(document.activeElement);
       pendingPromo = null; sel = null; el.querySelector(".f100-promo").hidden = true; afterHuman();
+      // Y el foco vuelve al tablero, que es donde estaba.
+      const casilla = volver && boardEl.querySelector('[data-square][tabindex="0"]');
+      if (casilla) casilla.focus();
     }
     function resultOf() {
       if (game.in_checkmate()) return game.turn() === "w" ? "0-1" : "1-0";

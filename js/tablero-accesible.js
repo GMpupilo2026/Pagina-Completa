@@ -475,11 +475,26 @@ window.TableroAccesible = (function () {
        esto, el tabindex se pierde —vuelven las 64 paradas— y, peor, el foco se
        va al <body>: quien estaba en e4 se queda sin saber dónde quedó, que es
        justo el momento en que más falta hace. */
+    /* Si el foco estaba en el tablero hay que saberlo ANTES del repintado: el
+       observador corre después, cuando la casilla enfocada ya salió de la
+       página y el foco ya cayó al <body>. Preguntarlo ahí daba siempre «no», y
+       quien elegía una pieza con Intro (la página repinta el tablero entero)
+       quedaba fuera del tablero a mitad de la jugada. Se anota al entrar y se
+       borra al irse A OTRA COSA: con Tab (relatedTarget) o con un clic fuera. */
+    var focoDentro = false;
+    tablero.addEventListener("focusin", function () { focoDentro = true; });
+    tablero.addEventListener("focusout", function (e) {
+      if (e.relatedTarget && !tablero.contains(e.relatedTarget)) focoDentro = false;
+    });
+    document.addEventListener("mousedown", function (e) {
+      if (!tablero.contains(e.target)) focoDentro = false;
+    }, true);
     var observador = new MutationObserver(function () {
       if (pintando) return;
       pintando = true;
       observador.disconnect();
-      var teniaFoco = tablero.contains(document.activeElement);
+      var activo = document.activeElement;
+      var teniaFoco = tablero.contains(activo) || (focoDentro && (!activo || activo === document.body));
       repartirTabindex();
       if (teniaFoco && enfocada) { var c = celdaDe(enfocada); if (c) { try { c.focus(); } catch (e) {} } }
       observador.observe(tablero, { childList: true, subtree: true });

@@ -824,6 +824,28 @@ quedó:
   «historial» no se contestan ahí (la jugada del rival no se ve). Las mira
   `verificar-preguntas-tablero.js`, sin navegador.
 
+- **Elegir una pieza con Intro sacaba el foco del tablero** en casi todos los
+  ejercicios (Mates, Practicar, Desafíos, Temas, Aperturas…): la página repinta
+  el tablero entero, y el observador de `js/tablero-accesible.js` preguntaba si
+  el foco seguía adentro DESPUÉS del repintado, cuando la casilla ya había
+  salido de la página y el foco había caído al `<body>`. Quien jugaba con el
+  teclado quedaba fuera del tablero a mitad de la jugada, sin ningún error. Ahora
+  se anota al entrar (`focusin`) y se borra solo al irse a otra cosa (Tab con
+  `relatedTarget`, o un clic fuera). `verificar-entreno-accesible.js` elige una
+  pieza con Intro en cada tablero y mira dónde quedó el foco (sin el arreglo
+  saltan cuatro de nueve).
+- **¡Te reto! y Racha táctica**: sus 64 casillas eran 64 paradas de Tab
+  rotuladas en inglés («Casilla e4: Blanco n») y el recuadro no contestaba
+  preguntas. Ahora van con `TableroAccesible` y el recuadro con `juego` y
+  `tablero`; `#result-text` es región viva; en Modo Adaptado hay 60 s por
+  ejercicio (no 10: oír la posición y escribir no cabe en 10) y la respuesta
+  correcta se dice en palabras.
+- **Estándar y Niebla** (`js/juegos-blind.js`): fuera de turno dice «No es tu
+  turno» (decía «Jugada no válida»); «reloj» o «tiempo» dicen lo que le queda a
+  cada uno en palabras, y a tu reloj se le avisa a los 30 y a los 10 s; cada
+  reloj dice de quién es; «última jugada» (en Niebla, la del rival no mientras
+  dura la partida); la coronación usa el diálogo común (`js/coronacion.js`),
+  con el foco adentro y de vuelta al tablero.
 - **Repasar mis clases**: el visor de la partida era un `role="img"` con
   casillas mudas y sin recuadro. Ahora se recorre como Estudio: `TableroAccesible`,
   el recuadro sobre la posición que se ve, y la línea se recorre escribiendo
