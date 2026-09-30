@@ -818,6 +818,33 @@ cero diferencias. Leer `profiles` pasó de ~200 ms a menos de 10 ms, y con eso
 `informes_inactivos()` bajó a 27 ms y `mis_clases()` a 14 ms. Quedan con
 función por fila solo tablas chicas que no crecen con cada alumno.
 
+**«Tablas chicas» no quería decir «baratas»** (30 de setiembre). Con una
+cuenta de coordinación que también supervisa, `panel_profesor()` seguía en
+~530 ms. Medido parte por parte con `EXPLAIN ANALYZE`, no eran
+`tareas_con_avance()` (13 ms) ni `informes_diagnosticos_alumnos()` (30 ms):
+eran tres `count(*)` sobre `tareas` (104 filas, 133 ms) y `class_sessions`
+(24 filas, 175 y 153 ms). Sus políticas de SELECT llamaban por fila a
+`supervisado_por_mi(alumno_id)`, `sesion_de_supervisado(id)` y
+`es_mi_profesor(created_by)`, y cada llamada a `sesion_de_supervisado()` vuelve
+a llamar a `supervisado_por_mi()` por cada asistencia: ~7 ms por clase. Se
+armaron como conjuntos (`rls_tareas_y_clases_conjunto_una_vez`):
+
+- `supervisado_por_mi(s)` ⇔ `s in (select interno.supervisados_por_mi())`
+- `sesion_de_supervisado(id)` ⇔ `id in (select interno.sesiones_de_supervisados())`,
+  el inverso exacto nuevo: las clases con asistencia de alguien que superviso o
+  dadas por alguien que superviso.
+- `es_mi_profesor(p)` ⇔ `p in (select interno.profesores_de((select auth.uid())))`
+
+Antes de aplicarlo, cada forma nueva se comparó con la vieja para las 149
+cuentas y sin sesión: cero diferencias. Después, lo que ve cada cuenta en las
+dos tablas con la RLS de verdad dio la misma huella md5 que antes (1476 filas
+de `class_sessions` y 370 de `tareas`). Medido tres veces seguidas con la misma
+cuenta, el panel pasó de ~530 ms a ~150 ms, y `mis_clases()` quedó en ~20 ms
+con un alumno y ~14 ms con un profesor. En la misma migración van los índices
+de las cuatro claves foráneas que faltaban (`compras_tienda.otorgado_por`,
+`notas_alumno.class_session_id`, `questions.para_alumno`,
+`respuestas_en_curso.student_id`).
+
 ### `auth.uid()` va envuelto: `(select auth.uid())`
 
 La otra mitad del mismo costo: **150 políticas** llamaban a `auth.uid()` tal
