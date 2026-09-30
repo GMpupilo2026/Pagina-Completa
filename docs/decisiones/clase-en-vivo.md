@@ -2591,3 +2591,33 @@ y Coordenadas («Modo normal», «Adaptado», «Activar voz») siguen ahí en ve
 interruptor del encabezado, porque esas páginas los usan para más cosas que
 encender el modo; y las regiones vivas de cada lección de un curso siguen como
 estaban: están vacías hasta que se marca una lección, así que no hablan solas.
+
+## «Activar voz»: la clase dicha en voz alta para quien ve poco
+
+Quien ve poco muchas veces **no usa lector de pantalla**: agranda la letra y se
+acerca, y el tablero de la clase cambia sin que se entere. El 🔇 del encabezado
+(«Activar voz», el mismo de todo el sitio: ver «“Activar voz” en todo el sitio»
+en accesibilidad.md) hace que el navegador diga en voz alta las regiones vivas
+de la clase: la jugada del profe, «te dio el control», la pregunta, el tiempo.
+
+Lo propio de la clase:
+
+- **La jugada del profe se dice aunque el Modo Adaptado esté apagado.** Se
+  anuncia en el aviso del recuadro de comandos (`.cc-msg`), que fuera del modo
+  es `display:none`; `js/voz-pagina.js` lo juzga por el lugar donde está
+  montado, no por la caja.
+- **El destape de `#app` no es un aviso**: se empieza a escuchar cuando `#app`
+  se ve, y lo que ya estaba escrito se anota como dicho.
+- Al principio el botón vivía en el renglón del título, y en el celular lo
+  partía en dos y el tablero bajaba de los 240 px de `verificar-clase-movil.js`.
+  En el encabezado, como ícono, no ocupa lugar nuevo.
+
+**Al tocarlo, correr `node herramientas/verificar-todo.js clase-voz voz-pagina
+clase-movil`.** `verificar-clase-voz.js` cambia `speechSynthesis` por uno que
+anota lo que dice y comprueba, como alumna sin Modo Adaptado: que apagada no
+diga nada, que al encenderla confirme, que la jugada del profe se diga una sola
+vez, que «te dio el control» se diga y el eco no lo repita, que un panel
+escondido no hable, que `#clase-voz` se oiga, que al recargar no lea los
+carteles y que apagarla la calle. Está probado que falla de verdad: sin la
+excepción de `.cc-msg` salta la jugada del profe, y sin la regla del mismo
+texto salta el eco.

@@ -547,3 +547,58 @@ contexto, así que volvía el `js/supabase-client.js` de verdad y la página mor
 es la misma piedra que ya documentó `verificar-reportes.js`— y las páginas
 contrarreloj se miran **por la posición del tablero y no por el renglón de
 resultado**, que al acertar lo borra el ejercicio siguiente a los 350 ms.
+
+## «Activar voz» en todo el sitio
+
+Quien ve poco muchas veces **no usa lector de pantalla**: agranda la letra y se
+acerca a la pantalla. Todo lo que el sitio avisa ya se escribía en regiones
+vivas para el lector, pero sin lector nadie lo decía: el rival movía, llegaba
+«Partida asignada», se guardaba un cambio, y no se enteraba. Solo las páginas
+con su propio «Activar voz» (Mates, Aprender, las partidas de Juegos, Sonar…)
+hablaban.
+
+Ahora el encabezado de **todas** las páginas trae un 🔇 junto al del Modo
+Adaptado. Lo pone `js/adaptive-mode.js` (que ya está en todas las páginas con el
+encabezado), que después de pintar pide `js/voz-pagina.js`, y este pide
+`js/blind-notation.js` si la página no lo tenía. Una página nueva lo tiene sin
+hacer nada.
+
+- **Se lee lo que ya se anuncia, no una lista propia.** Un MutationObserver
+  escucha las regiones vivas (`aria-live`, `role="status"`/`"alert"`), también
+  las que llegan enteras (el aviso de «Partida asignada» se agrega al `<body>`
+  con `role="alert"`: la región no es el padre, es lo que llegó). Un aviso
+  nuevo que se escriba en una región viva, como debe, se oye sin tocar nada. Por
+  eso lo que no era región viva no se oye: el «¡Partida creada!» de
+  `juegos.html` tampoco lo oía el lector, y ahora es `role="status"`.
+- **Solo lo que esa persona tiene a la vista**: una región escondida no habla,
+  como no la leería un lector. La excepción es el aviso del recuadro de comandos
+  (`.cc-msg`), que se juzga por dónde está montado (ver la clase en vivo).
+- **Lo que llega junto se dice en fila**: `BlindNotation.speak(texto, { encolar:
+  true })` no corta la frase anterior. Con más de tres en fila se corta todo y
+  se dice lo último; lo `assertive` corta. En modo encolar, la misma frase dicha
+  hace menos de 2 s no se repite (el recuadro de comandos dice su respuesta Y la
+  escribe en una región viva).
+- **No habla de más:** el mismo texto en la misma región no se repite (un cartel
+  repintado con cada eco de Realtime) salvo que antes haya quedado vacía o
+  escondida, y las `sr-only` se dicen siempre (existen solo para anunciar); una
+  región que cambia solo en los números (una cuenta atrás) se dice como mucho
+  cada 10 s; lo que ya estaba al cargar no se dice: se espera a que `#app` se
+  vea, y lo que aparece en el primer segundo y medio cuenta como página.
+- **No sale donde ya hay un botón de voz** (`#speech-toggle-btn`, `#btn-voz`):
+  esas páginas dicen cada jugada a su manera, y dos botones para lo mismo es uno
+  de más. La preferencia es la misma (`oscarSpeechMode_v1`) en todos lados.
+- El nombre accesible dice para quién es («solo si no usas lector de
+  pantalla»: con lector, esta voz habla encima de la suya), con `aria-pressed`
+  para el estado. Se ve solo el ícono, como sus vecinos del encabezado, y cabe
+  a 360 px.
+
+**Al tocar `js/voz-pagina.js`, `js/adaptive-mode.js` o `speak`/`setupSpeechToggle`
+de `js/blind-notation.js`, correr `node herramientas/verificar-todo.js voz-pagina
+clase-voz`.** `verificar-voz-pagina.js` comprueba que el botón esté en la raíz y
+en subcarpetas (la ruta de `js/` sale de dónde se cargó `adaptive-mode.js`), que
+no esté donde hay voz propia, que el encabezado no se salga en el celular, y qué
+dice y qué no (apagada, un aviso nuevo, el cartel repetido, la caja nueva, el
+panel escondido, la cuenta atrás, lo que estaba al cargar). Está probado que
+falla de verdad: sin mirar el botón propio, sin mirar lo que llega entero y sin
+la regla de los números salta cada uno.
+
