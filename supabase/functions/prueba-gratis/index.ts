@@ -39,6 +39,18 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+// Tiene la verificación en dos pasos y el token todavía no la pasó (aal1).
+// El token ya lo validó getUser(); acá solo se lee su «aal».
+function sesionAMedias(factores: { status: string }[] | undefined, jwt: string): boolean {
+  if (!(factores ?? []).some((f) => f.status === "verified")) return false;
+  try {
+    const b = jwt.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+    return JSON.parse(atob(b + "=".repeat((4 - (b.length % 4)) % 4))).aal !== "aal2";
+  } catch {
+    return true;
+  }
+}
+
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -57,6 +69,12 @@ Deno.serve(async (req) => {
   const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
   const { data: quien, error: quienError } = await admin.auth.getUser(jwt);
   if (quienError || !quien?.user) return json({ error: "La sesión no es válida." }, 401);
+  // La verificación en dos pasos: esta función mira el permiso con la clave de
+  // servicio, así que el candado de la base (public.antes_de_cada_pedido) no
+  // la alcanza. Con la contraseña sola de una cuenta que la activó, no.
+  if (sesionAMedias(quien.user.factors, jwt)) {
+    return json({ error: "Falta el segundo paso de la verificación: vuelve a entrar y escribe el código de tu app." }, 401);
+  }
   const { data: perfil } = await admin.from("profiles").select("is_admin").eq("id", quien.user.id).maybeSingle();
   if (!perfil?.is_admin) return json({ error: "Solo quien administra crea pruebas gratis." }, 403);
 

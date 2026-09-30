@@ -94,6 +94,31 @@
                 <p id="pw-msg" class="text-xs"></p>
             </div>
 
+            <!-- Solo para quien da clase, coordina, supervisa o administra: son las
+                 cuentas que ven a otras personas. Ver «La verificación en dos
+                 pasos» en docs/decisiones/permisos-y-roles.md. -->
+            <div id="dos-pasos" hidden class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
+                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Verificación en dos pasos <span aria-hidden="true">🔐</span></h2>
+                <p class="text-sm text-brand-600 dark:text-brand-300 mb-3">Además de tu contraseña, al entrar se te pide un código de 6 números que da una app del celular (Google Authenticator, Microsoft Authenticator u otra). Si alguien averigua tu contraseña, sin tu celular no entra, y tu cuenta ve los datos de tus alumnos.</p>
+                <p id="dos-pasos-estado" class="text-sm font-semibold text-brand-800 dark:text-white mb-3" role="status" aria-live="polite">Revisando…</p>
+                <button type="button" id="dos-pasos-activar" hidden class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Activar la verificación en dos pasos</button>
+                <div id="dos-pasos-alta" hidden class="mt-2">
+                    <ol class="list-decimal pl-5 space-y-2 text-sm text-brand-700 dark:text-brand-200 mb-3">
+                        <li>Abre tu app de códigos y agrega una cuenta nueva escaneando este código QR.</li>
+                        <li>Si no puedes escanearlo, escribe esta clave en la app: <span id="dos-pasos-secreto" class="font-mono break-all bg-brand-50 dark:bg-brand-800 px-1 rounded"></span></li>
+                        <li>Escribe abajo el código de 6 números que te muestra la app.</li>
+                    </ol>
+                    <img id="dos-pasos-qr" alt="Código QR para agregar Ajedrez Integral a tu app de códigos" width="180" height="180" class="bg-white p-2 rounded-lg mb-3">
+                    <label for="dos-pasos-codigo" class="block text-xs font-medium text-brand-500 dark:text-brand-300 mb-1">Código de 6 números</label>
+                    <div class="flex flex-wrap gap-2">
+                        <input id="dos-pasos-codigo" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" aria-describedby="dos-pasos-msg" class="w-40 px-3 py-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 font-mono tracking-widest focus:outline-none focus:ring-2 focus:ring-accent-500">
+                        <button type="button" id="dos-pasos-confirmar" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Confirmar y activar</button>
+                    </div>
+                </div>
+                <button type="button" id="dos-pasos-quitar" hidden class="border border-brand-200 dark:border-brand-700 hover:border-red-400 text-brand-600 dark:text-brand-300 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Quitar la verificación en dos pasos</button>
+                <p id="dos-pasos-msg" class="text-sm mt-3" role="status" aria-live="polite"></p>
+            </div>
+
             <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
                 <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-4">Preferencias</h2>
                 <div class="flex items-center justify-between">
@@ -277,6 +302,7 @@
     <!-- tablero-js: fin -->
     <script src="js/vendor/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
+    <script src="js/dos-pasos.js"></script>
     <script src="js/notificaciones.js"></script>
     <script src="js/board-themes.js"></script>
     <script src="js/chess-piece-svg.js"></script>

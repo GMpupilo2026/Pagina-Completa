@@ -106,3 +106,30 @@ window.MiPerfil = (function () {
     }
   } catch (e) { }
 })();
+
+// La sesión a medias: entró con la contraseña y la cuenta tiene la
+// verificación en dos pasos, pero todavía no puso el código. La base ya no le
+// contesta nada (public.antes_de_cada_pedido), así que la página se vería
+// vacía o llena de errores sin decir por qué: se manda al login a poner el
+// código y se vuelve. Solo en las páginas de la Academia —las que llevan la
+// guardia de sesión—; una página pública se ve igual con o sin sesión.
+// Ver «La verificación en dos pasos» en docs/decisiones/permisos-y-roles.md.
+(function () {
+  try {
+    if (/\/login\.html$/.test(location.pathname)) return;
+    var academia = false;
+    var nodos = document.head ? document.head.childNodes : [];
+    for (var i = 0; i < nodos.length; i++) {
+      if (nodos[i].nodeType === 8 && /guardia: inicio/.test(nodos[i].nodeValue)) { academia = true; break; }
+    }
+    if (!academia && !/\/cobros\.html$/.test(location.pathname)) return;
+    var mfa = window.sb && window.sb.auth && window.sb.auth.mfa;
+    if (!mfa || typeof mfa.getAuthenticatorAssuranceLevel !== "function") return;
+    mfa.getAuthenticatorAssuranceLevel().then(function (r) {
+      var d = r && r.data;
+      if (!d || d.currentLevel !== "aal1" || d.nextLevel !== "aal2") return;
+      var aca = location.pathname.replace(/^\/+/, "") || "clases.html";
+      location.replace("/login.html?next=" + encodeURIComponent(aca));
+    }, function () { });
+  } catch (e) { }
+})();
