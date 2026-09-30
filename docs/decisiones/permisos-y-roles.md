@@ -1940,8 +1940,8 @@ esa fila. Está probado que falla de verdad: contra el archivo de antes,
 Desde `20260930172140_foto_de_perfil`, cada persona puede subir su foto en
 **Configuración › Perfil**, y se ve donde antes iba la inicial de su nombre: el
 avatar del panel (`clases.html`, también con «Ver como»), la lista de la burbuja
-de conectados, la tabla de cuentas de `admin.html`, la clase en vivo e Informes (ver
-abajo). El módulo es uno solo,
+de conectados, la tabla de cuentas de `admin.html`, la clase en vivo, Informes y el
+informe que llega a la casa (ver abajo). El módulo es uno solo,
 `js/foto-perfil.js` (`FotoPerfil.subir`, `quitar`, `url`, `urls`, `pintar`).
 
 ### Quién la ve: la misma pregunta que el perfil
@@ -2039,11 +2039,30 @@ grupo), tanto para quien lo mira como para el propio alumno en el suyo. Al
 volver a «Todos los alumnos» esa cabecera se va (`hideAllReportPanels`).
 Lo prueba `pruebaFotos` de `verificar-informes.js`.
 
-**El informe que llega a la casa por correo NO lleva la foto**, a propósito:
-la dirección firmada vence en una hora (el correo se lee días después), una
-dirección que no venza sería un enlace a la foto de un menor que viaja fuera de
-la plataforma, y Gmail no muestra imágenes pegadas en `data:`. Si algún día se
-quiere, tendría que ir como adjunto dentro del correo, con su decisión aparte.
+### En el informe que llega a la casa
+
+El correo de `informes-encargados` lleva la foto al lado del nombre del
+alumno. Al principio se dejó afuera, y la forma de meterla es lo que importa:
+
+- **Va ADJUNTA dentro del correo**, no como dirección: Resend la manda como
+  `attachments` con `content_id: "foto-alumno"` y el HTML la muestra con
+  `<img src="cid:foto-alumno">`. Una dirección firmada vence en una hora (el
+  correo se lee días después) y una que no venza sería un enlace a la foto de un
+  menor que circula fuera de la plataforma. Gmail tampoco muestra `data:`.
+- En la **vista previa y la descarga** de la página (acción `vista_previa`) va
+  pegada en `data:image/jpeg;base64,…`, que el navegador sí muestra.
+- La lee la función con la service role (`fotoDe()`), pero **solo después** de
+  que `informe_de_alumno()` contestó: en la vista previa esa llamada va con el
+  JWT de quien mira, así que quien no puede ver al alumno nunca llega a la foto.
+- **La foto nunca frena un informe**: si no hay, no se puede bajar o pesa de
+  más, el informe sale sin ella.
+- `informe-html.ts` solo acepta `cid:` o `data:image/(jpeg|webp);base64,`
+  (`fotoAceptada()`); cualquier otra cosa se descarta. Lo prueba
+  `verificar-informe-casa.js`, también con una dirección y con un `src` que
+  intenta colar un atributo.
+- El empujoncito de «invitar a practicar» no la lleva: es otro correo.
+- Que la foto va en el correo a la casa lo dicen la casilla de Configuración y
+  «Qué datos recogemos» de `privacidad.html`.
 
 `verificar-foto-perfil.js` lo prueba en el navegador: sin la casilla no se
 sube; lo que se sube es un JPEG de 320×320 en la carpeta propia; se guarda con

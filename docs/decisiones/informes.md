@@ -1175,6 +1175,9 @@ de arbitraje).
 - Comprobado de punta a punta contra Resend con `delivered@resend.dev` (su
   dirección de pruebas, que no llega a ninguna bandeja real): la primera corrida
   mandó 1 y la segunda saltó 1, que es exactamente lo que tiene que pasar.
+- **Lleva la foto de perfil del alumno** al lado de su nombre, adjunta dentro
+  del correo (`cid:`), nunca como dirección. Ver «En el informe que llega a la
+  casa» en `permisos-y-roles.md`.
 - **La función vive en el repositorio**, en `supabase/functions/informes-encargados/`.
   Antes solo existía desplegada en Supabase: para cambiarle una línea había que
   bajarla, editarla a ciegas y volver a subirla, sin que quedara rastro de qué
