@@ -2953,6 +2953,8 @@ async function pruebaTercera(browser) {
   await r.page.check('dialog[data-favoritas] input[value="entreno/mates.html"]');
   await r.page.check('dialog[data-favoritas] input[value="juegos.html"]');
   await r.page.click("[data-favoritas-guardar]");
+  // El `close` del <dialog> llega en otra vuelta: se espera a que se pinten.
+  await r.page.waitForFunction(() => document.querySelectorAll("#favoritas-lista a").length === 2, null, { timeout: 10000 }).catch(() => {});
   igual("quedan arriba, en el orden del panel",
     await r.page.evaluate(() => Array.from(document.querySelectorAll("#favoritas-lista a")).map((a) => a.getAttribute("href"))), ["entreno/mates.html", "juegos.html"]);
   igual("se ven de verdad, y el botón ahora dice «Cambiar»",
