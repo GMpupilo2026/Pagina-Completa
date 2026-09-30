@@ -588,6 +588,10 @@
         let allUsers = [];
         // Quién tiene activada la verificación en dos pasos (personas_con_dos_pasos()).
         let conDosPasos = new Set();
+        /* La visión de cada persona (public.vision_personas): quién ve poco y
+           quién no ve. La marca quien administra y la plataforma se acomoda
+           sola en la cuenta de esa persona (js/vision-cuenta.js). */
+        let visionPorPersona = new Map();
         /* Quién coordina a quién. Se lee directo por PostgREST, como los
            equipos: la tabla tiene política de SELECT y escribirla es cosa de
            set_profesores_del_coordinador(), que exige is_admin. Va declarada
@@ -775,6 +779,38 @@
                     tdTeacher.innerHTML = '<span class="text-xs text-brand-450 dark:text-brand-350">—</span>';
                 }
 
+                /* Visión: con «Baja visión» se le enciende la voz en toda la
+                   plataforma; con «Ciega», el Modo Adaptado y el panel
+                   adaptado, sin lo que no se puede usar sin ver. Es un dato de
+                   salud: lo ven solo esa persona, administración y sus
+                   profesores (la RLS de vision_personas). */
+                const tdVision = document.createElement("td");
+                tdVision.className = "py-2 pr-3";
+                const visionSelect = document.createElement("select");
+                visionSelect.className = "px-2 py-1 rounded bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm";
+                visionSelect.setAttribute("aria-label", "Visión de " + (u.full_name || u.email));
+                visionSelect.dataset.vision = u.id;
+                visionSelect.innerHTML = '<option value="">Ve bien</option><option value="baja_vision">Baja visión: voz encendida</option><option value="ciego">Ciega: todo adaptado</option>';
+                visionSelect.value = visionPorPersona.get(u.id) || "";
+                visionSelect.addEventListener("change", async () => {
+                    const antes = visionPorPersona.get(u.id) || "";
+                    const nueva = visionSelect.value || null;
+                    const { error } = await sb.rpc("marcar_vision", { p_persona: u.id, p_vision: nueva });
+                    if (error) {
+                        Avisos.avisar("No se pudo guardar la visión: " + error.message, { tipo: "error" });
+                        visionSelect.value = antes;
+                        return;
+                    }
+                    if (nueva) visionPorPersona.set(u.id, nueva); else visionPorPersona.delete(u.id);
+                    const nombre = u.full_name || u.email;
+                    Avisos.avisar(nueva === "ciego"
+                        ? `Listo: la próxima vez que ${nombre} abra la plataforma le sale todo adaptado, con su panel solo con lo que se usa con lector de pantalla.`
+                        : nueva === "baja_vision"
+                        ? `Listo: la próxima vez que ${nombre} abra la plataforma se le enciende la voz en todas las páginas.`
+                        : `Listo: ${nombre} ya no tiene marcada ninguna ayuda de visión.`);
+                });
+                tdVision.appendChild(visionSelect);
+
                 const tdCreated = document.createElement("td");
                 tdCreated.className = "py-2 pr-3 text-brand-450 dark:text-brand-350 text-xs whitespace-nowrap";
                 tdCreated.textContent = u.created_at ? fmtDate(u.created_at) : "—";
@@ -873,7 +909,7 @@
                     tdActions.appendChild(delBtn);
                 }
 
-                tr.append(tdCuenta, tdRole, tdGrupo, tdTeacher, tdCreated, tdActions);
+                tr.append(tdCuenta, tdRole, tdGrupo, tdTeacher, tdVision, tdCreated, tdActions);
                 return tr;
         }
 
@@ -883,7 +919,7 @@
         function groupHeaderRow(label, cuantas, alumnosDelGrupo) {
             const tr = document.createElement("tr");
             const td = document.createElement("td");
-            td.colSpan = 7;
+            td.colSpan = 8;
             td.className = "pt-4 pb-1 text-xs font-bold uppercase tracking-wide text-accent-700 dark:text-accent-400";
             const texto = document.createElement("span");
             texto.textContent = label + " · " + cuantas;
@@ -1213,7 +1249,7 @@
             if (!visibles.length) {
                 const tr = document.createElement("tr");
                 const td = document.createElement("td");
-                td.colSpan = 7;
+                td.colSpan = 8;
                 td.className = "py-6 text-center text-brand-450 dark:text-brand-350";
                 td.textContent = allUsers.length
                     ? "Ninguna cuenta coincide con la búsqueda."
@@ -1979,7 +2015,7 @@
                 // administra las recibe todas.
                 parejas = await traerTodo(() => sb.from("profile_teachers").select("student_id, teacher_id"));
             } catch (err) {
-                body.innerHTML = '<tr><td colspan="7" class="py-4 text-brand-450 dark:text-brand-350">No se pudo cargar la lista de cuentas: ' + escapeHtml(err.message || err) + '</td></tr>';
+                body.innerHTML = '<tr><td colspan="8" class="py-4 text-brand-450 dark:text-brand-350">No se pudo cargar la lista de cuentas: ' + escapeHtml(err.message || err) + '</td></tr>';
                 document.getElementById("users-summary").textContent = "No se pudo cargar la lista de cuentas.";
                 return;
             }
@@ -1988,6 +2024,10 @@
                 const { data: dp, error: dpError } = await sb.rpc("personas_con_dos_pasos");
                 conDosPasos = new Set(dpError ? [] : (dp || []).map((x) => (typeof x === "string" ? x : Object.values(x)[0])));
             } catch (e) { conDosPasos = new Set(); }
+            try {
+                const vs = await traerTodo(() => sb.from("vision_personas").select("persona_id, vision"));
+                visionPorPersona = new Map((vs || []).map((v) => [v.persona_id, v.vision]));
+            } catch (e) { visionPorPersona = new Map(); }
             profesoresPorAlumno = new Map();
             (parejas || []).forEach((r) => {
                 if (!profesoresPorAlumno.has(r.student_id)) profesoresPorAlumno.set(r.student_id, []);

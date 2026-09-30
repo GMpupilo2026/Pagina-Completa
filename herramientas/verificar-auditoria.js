@@ -32,6 +32,8 @@ const VIGILADAS = [
   "academias", "academia_miembros", "academia_ia", "preparacion_rivales_profesores",
   "acceso_config", "paquetes_acceso", "paquete_alumnos", "pruebas_gratis",
   "planes_cobro", "suscripciones", "cobros", "pagos",
+  // No reparte permisos: es un dato de salud, y quién lo marcó queda anotado.
+  "vision_personas",
 ];
 
 let fallos = 0;

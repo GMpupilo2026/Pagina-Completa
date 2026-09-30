@@ -186,6 +186,8 @@ window.__consultas = [];
     question_answers: DATOS.question_answers || [],
     solicitudes_academia: DATOS.solicitudes_academia || [],
     informes_profesor: DATOS.informes_profesor || [],
+    /* La visión que marcó administración (verificar-vision-cuenta.js). */
+    vision_personas: DATOS.vision_personas || [],
   };
 
   window.sb = {
@@ -2397,7 +2399,7 @@ async function page_vacio(page) {
 /* Se exporta para que otro verificador reuse este Supabase de mentira en vez de
    escribir una segunda copia: dos dobles del mismo panel se irían separando a la
    primera corrección. Al importarlo, las pruebas de abajo no corren. */
-module.exports = { panel, igual, mal, bien, datosAlumna, ALUMNA, PROFE, ADMIN, CHROME, BASE, fallos: () => fallos };
+module.exports = { panel, clienteFalso, igual, mal, bien, datosAlumna, ALUMNA, PROFE, ADMIN, CHROME, BASE, fallos: () => fallos };
 if (require.main !== module) return;
 
 /* ---------- Los grupos de entrenamiento se pliegan en el celular ----------
