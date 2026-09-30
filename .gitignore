@@ -13,6 +13,9 @@ __pycache__/
 # Salida de herramientas/planes-semilla.js: se regenera con el script.
 herramientas/planes/
 
+# Salida de herramientas/cuestionarios-listos.js: se regenera con el script.
+herramientas/cuestionarios/
+
 # Los volcados de la base: adentro van cédulas, correos y progreso de menores
 # de edad. De git no se borra nada, así que ahí no entran ni una vez.
 respaldos/
