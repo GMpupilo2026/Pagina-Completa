@@ -367,11 +367,14 @@ async function main() {
     const l2 = await p.evaluate(() => window.__llamadas.filter((l) => l.rpc === "responder_examen"));
     ok(l2[1].args.p_respuesta.casilla === "e4", `la casilla que mandó no es la que se tocó: ${JSON.stringify(l2[1].args.p_respuesta)}`);
 
-    // Tercera, de jugada: la pista la dice en palabras («enroque corto»,
-    // no «O-O», que la voz deletrea).
+    // Tercera, de jugada: quien ve la lee en algebraica española («O-O»); en
+    // palabras («enroque corto») va solo para quien no ve (Modo Adaptado o
+    // cuenta ciega), que es ComandosTablero.jugadaParaMostrar.
     await p.click("#q-board button[data-square='e1']");
     await p.click("#q-board button[data-square='g1']");
-    ok(/^Jugaste enroque corto\./.test(await p.textContent("#q-pista")), `la pista no dice la jugada en palabras: ${await p.textContent("#q-pista")}`);
+    ok(/^Jugaste O-O\./.test(await p.textContent("#q-pista")), `la pista no dice la jugada en algebraica española: ${await p.textContent("#q-pista")}`);
+    ok(await p.evaluate(() => { document.documentElement.classList.add("adaptive-mode"); const r = ComandosTablero.jugadaParaMostrar("O-O"); document.documentElement.classList.remove("adaptive-mode"); return /enroque corto/i.test(r); }),
+      "con Modo Adaptado la jugada no se dice en palabras");
 
     await ctx.close();
   }

@@ -991,7 +991,7 @@ async function pruebaUltimaClase(browser) {
   igual("y lo que hizo, escrito", await r.page.evaluate(() => [...document.querySelectorAll("#ultima-clase ul li")].map((l) => l.textContent).join(" | ")),
     "Preguntas: 1 de 2 contestadas: 1 bien | Práctica contra el motor: 1 partida: 1 perdida");
   igual("y lo que contestó en cada pregunta de ESA clase", await r.page.evaluate(() => [...document.querySelectorAll("#ultima-clase ol li")].map((l) => l.textContent).join(" | ")),
-    "¿Qué jugarías? Tu respuesta: Ra8# — ✅ correcta | ¿Quién está mejor? Sin contestar");
+    "¿Qué jugarías? Tu respuesta: Ta8# — ✅ correcta | ¿Quién está mejor? Sin contestar");
   /* Repasar ESA clase, no la lista general: esa ya es la tarjeta «Repasar
      mis clases» de la grilla. */
   igual("«Repasar esta clase» abre el repaso de ESA clase",
