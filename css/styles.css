@@ -1252,6 +1252,25 @@ html.adaptive-mode .vc-tablero { width: min(calc(100vw - 3rem), 60vh); }
     .proyector-contenido > aside select,
     .proyector-contenido > aside summary { min-height: 44px; }
 }
+/* ===== Las herramientas en grande (sesion.html, solo el profe) =====
+   «🔎 Herramientas en grande» vuelve la columna de herramientas una ventana
+   por encima del tablero (js/clase-herramientas-grandes.js). Es la MISMA
+   columna con otra clase, no una copia: se agranda con zoom, que agranda
+   también los text-xs y los px de Tailwind. Encima del encabezado (z-50) y
+   debajo de los avisos y la pregunta al alumno (z-60 en adelante). Ver «Las
+   herramientas en grande» en docs/decisiones/clase-en-vivo.md. */
+.grandes-barra { display: none; }
+.proyector-contenido > aside.herramientas-en-grande {
+    position: fixed; inset: 0; z-index: 55; margin: 0;
+    overflow-y: auto; overscroll-behavior: contain;
+    padding: 0 max(1rem, calc(50vw - 32rem)) 2rem;
+}
+.herramientas-en-grande > .grandes-barra { display: flex; position: sticky; top: 0; z-index: 1; }
+.herramientas-en-grande > :not(.grandes-barra) { zoom: 1.15; }
+@media (min-width: 640px) { .herramientas-en-grande > :not(.grandes-barra) { zoom: 1.3; } }
+@media (min-width: 1024px) { .herramientas-en-grande > :not(.grandes-barra) { zoom: 1.45; } }
+.herramientas-en-grande #grandes-abrir-btn { display: none; }
+html.con-herramientas-en-grande { overflow: hidden; }
 .solo-tactil { display: none; }
 @media (pointer: coarse) {
     .solo-tactil { display: inline; }

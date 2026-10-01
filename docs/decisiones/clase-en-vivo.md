@@ -1687,6 +1687,41 @@ que hace falta para darla y guarda el resto a un clic.
   `abrir()` entra por defecto con todas las herramientas (preferencia `"0"`),
   para que las pruebas de siempre encuentren cada botón.
 
+### Las herramientas en grande
+
+En la columna de 320 px, con letra de 11-12 px, a veces cuesta encontrar lo que
+se busca. «🔎 Herramientas en grande» (en la fila del modo sencillo, fuera de la
+barra) vuelve esa columna una ventana por encima del tablero, con todo más
+grande; «✕ Volver al tablero» o Esc la cierran.
+
+- **Es la MISMA columna, no una copia**: el `<aside id="herramientas-profe">`
+  recibe la clase `herramientas-en-grande` (fija, encima de todo) y se le
+  quita al cerrar. No se mueve ni se clona ningún nodo, así que cada botón
+  sigue con sus eventos y lo que se cambia adentro (la pestaña abierta, lo
+  escrito en Preguntar) sigue igual al volver. Una copia serían dos juegos de
+  botones que se irían separando.
+- **Se agranda con `zoom`** (1,15 en el celular, 1,3 en la tablet, 1,45 en la
+  computadora), porque los `text-xs` y los px de Tailwind no crecen con el
+  `font-size` del contenedor. Se mide: los botones de la barra salen al menos
+  1,3 veces más altos.
+- **Encima del encabezado (z-55) y debajo de lo que sí tiene que verse**: la
+  pregunta al alumno (z-60), los avisos (z-70 y la capa superior de
+  `<dialog>`).
+- **Es un diálogo de verdad**: `role="dialog"` con `aria-modal`, el foco entra
+  al título, lo de atrás queda `inert` (cada hermano del camino de la columna
+  hasta `<body>`, y solo lo que no estaba inerte ya) y al cerrar el foco
+  vuelve al botón que la abrió.
+- **Lo que pasa fuera de la ventana la cierra**, para que se vea: un botón de
+  la barra («El tablero» cambia el tablero de la clase; «Tu material» abre su
+  panel al lado) y cualquier panel o diálogo que aparezca en la columna del
+  tablero mientras está abierta (el panel del curso, mirar la práctica de un
+  alumno…). Si no, quedaría tapado por la ventana e inerte. Cambiar de pestaña
+  adentro no la cierra.
+
+**Al tocar esto, correr `node herramientas/verificar-todo.js
+herramientas-grandes`.** Está probado que falla de verdad: sin el zoom, sin que
+la barra la cierre, y sin dejar inerte lo de atrás.
+
 ### La sesión en vivo se abre cuando el profesor la abre
 
 El alumno entraba al tablero a cualquier hora. Veía la posición que hubiera
