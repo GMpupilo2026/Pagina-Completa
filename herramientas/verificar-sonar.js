@@ -275,6 +275,15 @@ async function navegador() {
     cierto("la flecha mueve el foco a la casilla de al lado", antes !== despues && despues, antes + " → " + despues);
     const raro = await escribir(page, "hola");
     cierto("lo que no se entiende se dice", /No entendí/.test(raro), raro);
+    /* «tiempo» y «cómo está la posición», lo que se pregunta en todo el sitio:
+       antes daban «No entendí». Acá no hay reloj; la posición es lo que se sabe. */
+    const tiempo = await escribir(page, "tiempo");
+    cierto("«tiempo» dice que no hay reloj", /^En este ejercicio no hay «tiempo»/.test(tiempo), tiempo);
+    const comoEsta = await escribir(page, "cómo está la posición");
+    cierto("«cómo está la posición» dice dónde está la pieza y por dónde pasó",
+      /^Nivel 3\. Tu caballo está en /.test(comoEsta) && /Ya pasaste por /.test(comoEsta), comoEsta.slice(0, 120));
+    const pos2 = await escribir(page, "posición");
+    cierto("y «posición» también contesta", /está en /.test(pos2) && !/No entendí/.test(pos2), pos2.slice(0, 80));
 
     console.log("\n— Que la página se vea —");
     igual("no hay CSS impreso como texto", await page.evaluate(() => /\{[^}]*:[^}]*\}/.test(document.body.innerText)), false);

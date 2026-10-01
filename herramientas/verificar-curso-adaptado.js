@@ -62,20 +62,22 @@ window.SUPABASE_URL = "https://ejemplo.supabase.co";
 window.SUPABASE_ANON_KEY = "clave-de-mentira";
 window.sb = {
   auth: { getSession: () => Promise.resolve({ data: { session: { user: { id: "u-1" }, access_token: "t" } } }) },
-  from: () => { const b = { select: () => b, eq: () => b, order: () => b, limit: () => b, range: () => b,
+  // Con window.__CIEGA la cuenta viene marcada como ciega (js/vision-cuenta.js pregunta a vision_personas).
+  from: (tabla) => { const b = { select: () => b, eq: () => b, order: () => b, limit: () => b, range: () => b,
     maybeSingle: () => b, insert: () => b,
-    then: (r) => Promise.resolve({ data: [], error: null }).then(r) }; return b; },
+    then: (r) => Promise.resolve({ data: tabla === "vision_personas" && window.__CIEGA ? { vision: "ciego" } : [], error: null }).then(r) }; return b; },
   rpc: () => Promise.resolve({ data: null, error: null }),
   channel: () => ({ on() { return this; }, subscribe() { return this; } }),
 };`;
 
-async function abrirCurso(browser, curso, adaptado) {
+async function abrirCurso(browser, curso, adaptado, ciega) {
   const ctx = await browser.newContext();
   await ctx.route("**/cdn.jsdelivr.net/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
   await ctx.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await ctx.route("**/fonts.gstatic.com/**", (r) => r.abort());
   await ctx.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: STUB }));
   if (adaptado) await ctx.addInitScript(() => localStorage.setItem("oscarBlindMode_v1", "1"));
+  if (ciega) await ctx.addInitScript(() => { window.__CIEGA = true; });
   const page = await ctx.newPage();
   const errores = [];
   page.on("pageerror", (e) => errores.push(String(e)));
@@ -526,8 +528,156 @@ async function pruebaTableroTeclado(browser) {
   await ctx.close();
 }
 
+/* ============ 7. Las preguntas del examen, contestadas escribiendo (cuenta ciega) ============ */
+
+/* En «El mapa de los finales» la pregunta 2.01 («Juegan blancas. ¿Es tablas?»)
+   no se podía contestar: «Cc4» (la solución), «sí» y «tablas» daban «No
+   entendí», «siguiente» destapaba la solución sin decir nada, «a1a8» no decía
+   que no era legal y «leer» leía «Nivel 15001800Máximo». Se prueba como la
+   alumna ciega: escribiendo en el recuadro y oyendo el aviso. */
+async function pruebaPreguntasEscritas(browser) {
+  console.log("\n=== Las preguntas del examen se contestan escribiendo (cuenta ciega) ===");
+  const { page, ctx, errores } = await abrirCurso(browser, "el-mapa-de-los-finales", true, true);
+  await page.waitForFunction(() => document.documentElement.classList.contains("modo-ciego"), null, { timeout: 10000 }).catch(() => {});
+  igual("la cuenta de prueba es ciega (modo-ciego)", await page.evaluate(() => document.documentElement.classList.contains("modo-ciego")), true);
+  await page.evaluate(() => { document.getElementById("lec-examen-inicial").open = true; });
+  const P1 = '.f100-diag[data-id="EB-2.01"]', P2 = '.f100-diag[data-id="EB-2.02"]';
+  await page.waitForSelector(P1 + " .cc-input", { timeout: 20000 });
+  await page.waitForSelector(P2 + " .cc-input", { timeout: 20000 });
+  const input = page.locator(P1 + " .cc-input");
+  const msg = page.locator(P1 + " .cc-msg");
+  async function decir(texto, espera) {
+    await input.focus(); await input.fill(texto); await input.press("Enter");
+    await page.waitForTimeout(espera || 250);
+    return ((await msg.textContent()) || "").trim();
+  }
+  let r = await decir("Cc4");
+  igual("2.01 · «Cc4» (la solución) se da por buena", /^¡Correcto! Cc4 es la jugada de la solución/.test(r) ? true : r, true);
+  r = await decir("Cc6");
+  igual("2.01 · «Cc6» (legal, pero no es) empieza por «Respuesta incorrecta:»", /^Respuesta incorrecta: Cc6 no es la jugada que buscamos/.test(r) ? true : r, true);
+  r = await decir("a1a8");
+  igual("2.01 · «a1a8» dice que no es una jugada legal", /«a1a8» no es una jugada legal/.test(r) ? true : r, true);
+  r = await decir("hola");
+  igual("2.01 · «hola» dice que no se entendió", /^No entendí «hola»/.test(r) ? true : r, true);
+  r = await decir("sí");
+  igual("2.01 · «sí» (¿es tablas?) se da por bueno", /^¡Correcto! Sí: tablas/.test(r) ? true : r, true);
+  r = await decir("no");
+  igual("2.01 · «no» es «Respuesta incorrecta»", /^Respuesta incorrecta:/.test(r) ? true : r, true);
+  r = await decir("tablas");
+  igual("2.01 · «tablas» se da por bueno", /^¡Correcto! Tablas/.test(r) ? true : r, true);
+  r = await decir("ganan negras");
+  igual("2.01 · «ganan negras» es «Respuesta incorrecta»", /^Respuesta incorrecta:/.test(r) ? true : r, true);
+  igual("2.01 · contestar no destapa la solución", await page.evaluate((s) => !!document.querySelector(s + " .f100-showsol"), P1), true);
+
+  r = await decir("leer");
+  igual("2.01 · «leer» dice la pregunta", /¿Es tablas\?/.test(r) ? true : r, true);
+  igual("2.01 · y no lee el nivel del motor pegado («15001800»)", /15001800/.test(r), false);
+
+  await decir("siguiente", 700);
+  const tras = await page.evaluate(({ a, b }) => ({
+    foco: !!document.activeElement.closest(b),
+    dijo: (document.querySelector(b + " .cc-msg").textContent || "").trim(),
+    tapada: !!document.querySelector(a + " .f100-showsol"),
+  }), { a: P1, b: P2 });
+  igual("«siguiente» lleva el foco al recuadro de la pregunta 2.02", tras.foco, true);
+  igual("y lo dice («Siguiente pregunta. Pregunta 2.02: …»)", /^Siguiente pregunta\. Pregunta 2\.02: Juegan blancas\. ¿Es tablas\?/.test(tras.dijo) ? true : tras.dijo, true);
+  igual("y la solución de la 2.01 sigue tapada", tras.tapada, true);
+
+  const input2 = page.locator(P2 + " .cc-input");
+  await input2.fill("solución"); await input2.press("Enter");
+  await page.waitForTimeout(600);
+  const sol = await page.evaluate((b) => ({
+    dijo: (document.querySelector(b + " .cc-msg").textContent || "").trim(),
+    lista: document.querySelectorAll(b + " .f100-moves button[data-ply]").length,
+  }), P2);
+  igual("«solución» la DICE (resultado, explicación y línea)", /^La solución: Ganan negras\. .*La línea: 1\.Cf3\+/.test(sol.dijo) ? true : sol.dijo, true);
+  igual("y destapa la línea para recorrerla", sol.lista > 0, true);
+  igual("sin errores en consola", errores.filter((e) => !/Failed to load resource/.test(e)).join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+}
+
+/* ============ 8. Partidas del curso con la cuenta ciega ============ */
+
+/* «leer» leía la introducción del curso (la zona del recuadro era la lección
+   entera) y escribir «e4» fuera de «adivinar» apretaba el botón de la jugada
+   10 «e4?!» (la capa aprieta el botón que se llama igual que lo escrito). */
+async function pruebaPartidasCiega(browser) {
+  console.log("\n=== Partidas del curso con la cuenta ciega ===");
+  const { page, ctx, errores } = await abrirCurso(browser, "partidas-modelo", true, true);
+  await page.waitForFunction(() => document.documentElement.classList.contains("modo-ciego"), null, { timeout: 10000 }).catch(() => {});
+  await page.evaluate(() => { const d = document.querySelector("#course-content-body details"); if (d) d.open = true; });
+  const V = ".cp-viewer:not(.cp-ej)";
+  await page.waitForSelector(V + " .cc-input", { timeout: 20000 });
+  const r0 = await page.evaluate((v) => {
+    const el = document.querySelector(v);
+    const botones = Array.from(el.querySelectorAll(".cp-moves button[data-ply]"));
+    return {
+      enSection: !!(el.parentElement && el.parentElement.tagName === "SECTION"),
+      nombres: botones.length > 0 && botones.every((b) => /^Ir a la jugada \d+( de las negras)?: \S/.test(b.getAttribute("aria-label") || "")),
+      primera: botones[0] ? botones[0].textContent.trim().replace(/^\d+\.(\.\.|…)?/, "").replace(/[!?]+$/, "") : null,
+      // Una jugada de las negras: su botón muestra solo la jugada («d5»), sin número.
+      negra: (botones.find((b) => /^[a-hRDTAC]/.test(b.textContent.trim()) && !/^\d/.test(b.textContent.trim())) || {}).textContent || null,
+      resumen: (el.querySelector(".cp-comment").textContent || "").trim().slice(0, 40),
+    };
+  }, V);
+  igual("cada visor va en su propia <section> (la zona de «leer»)", r0.enSection, true);
+  igual("los botones de la lista se llaman «Ir a la jugada N: …»", r0.nombres, true);
+  const input = page.locator(V + " .cc-input").first();
+  const msg = page.locator(V + " .cc-msg").first();
+  await input.focus(); await input.fill("leer"); await input.press("Enter");
+  await page.waitForTimeout(300);
+  const leido = ((await msg.textContent()) || "").trim();
+  igual("«leer» lee el ejercicio (el comentario del visor)", leido.includes(r0.resumen.slice(0, 25)) ? true : leido.slice(0, 160), true);
+  const fuera = await page.evaluate((v) => {
+    // Un párrafo de la lección que NO es del visor: no tiene que leerse.
+    const d = document.querySelector("main") || document.body;
+    const p = Array.from(d.querySelectorAll("p")).find((x) => !x.closest(".cp-zona") && x.textContent.trim().length > 30);
+    return p ? p.textContent.trim().replace(/\s+/g, " ").slice(0, 30) : null;
+  }, V);
+  if (fuera) igual("y no la introducción del curso («" + fuera + "…»)", leido.replace(/\s+/g, " ").includes(fuera), false);
+
+  await input.fill(r0.primera); await input.press("Enter");
+  await page.waitForTimeout(300);
+  const tras = await page.evaluate((v) => ({ ply: document.querySelector(v + " .cp-ply").textContent.trim(), dijo: (document.querySelector(v + " .cc-msg").textContent || "").trim() }), V);
+  igual("escribir la primera jugada («" + r0.primera + "») no salta a ella", /^0\//.test(tras.ply) ? true : tras.ply, true);
+  igual("y dice qué hacer («Aquí no se juega: escribe «adivinar»…»)", /^Aquí no se juega: escribe «adivinar»/.test(tras.dijo) ? true : tras.dijo, true);
+  if (r0.negra) {
+    await input.fill(r0.negra.trim()); await input.press("Enter");
+    await page.waitForTimeout(300);
+    const ply = await page.evaluate((v) => document.querySelector(v + " .cp-ply").textContent.trim(), V);
+    igual("escribir «" + r0.negra.trim() + "» (el texto de un botón de la lista) no aprieta ese botón", /^0\//.test(ply) ? true : ply, true);
+  }
+  await input.fill("a1a8"); await input.press("Enter");
+  await page.waitForTimeout(300);
+  const ilegal = ((await msg.textContent()) || "").trim();
+  igual("«a1a8» dice que no es una jugada legal", /«a1a8» no es una jugada legal/.test(ilegal) ? true : ilegal, true);
+  igual("sin errores en consola", errores.filter((e) => !/Failed to load resource/.test(e)).join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+}
+
+/* La lección 1 de Fundamentos enseñaba la notación inglesa («K=rey, Q=dama…
+   Nf3») y el resto del sitio usa la española: quien aprende con esa lección
+   escribe «Nf3» en el recuadro. Que no vuelva, ni en la lección ni en su
+   material accesible (que se genera de ella). */
+function pruebaNotacionEspanola() {
+  console.log("\n=== Fundamentos, lección 1: la notación en español ===");
+  const frag = fs.readFileSync(path.join(RAIZ, "cursos/protegido/fundamentos-del-ajedrez.html"), "utf8");
+  const leccion = (frag.match(/<details[^>]*>\s*<summary[^>]*>1\. El tablero[\s\S]*?<\/details>/) || [""])[0];
+  const accesible = fs.readFileSync(path.join(RAIZ, "cursos/recursos/fundamentos-del-ajedrez/01-el-tablero-y-la-notacion-algebraica-material-accesible.html"), "utf8");
+  const INGLES = /\b[KQBN][a-h]?x?[a-h][1-8]\b|\bK\s*=\s*rey\b(?![^.]*inglés)/;
+  [["la lección", leccion], ["su material accesible", accesible]].forEach(([nombre, texto]) => {
+    const sinEtiquetas = texto.replace(/<[^>]+>/g, " ");
+    // La mención a la notación inglesa va en la frase que dice «inglés».
+    const frases = sinEtiquetas.split(/(?<=\.)\s/).filter((f) => !/inglés/.test(f));
+    const mala = frases.find((f) => INGLES.test(f));
+    igual("Fundamentos 1 · " + nombre + " no enseña jugadas en notación inglesa", mala ? mala.trim().slice(0, 120) : "ninguna", "ninguna");
+    igual("Fundamentos 1 · " + nombre + " enseña las letras en español (C = caballo, Cf3)", /C = caballo/.test(sinEtiquetas) && /\bCf3\b/.test(sinEtiquetas), true);
+  });
+}
+
 (async () => {
   pruebaPlurales();
+  pruebaNotacionEspanola();
   pruebaSinVideos();
   pruebaSinTemarioDuplicado();
   const browser = await chromium.launch({ executablePath: CHROME });
@@ -538,6 +688,8 @@ async function pruebaTableroTeclado(browser) {
     await pruebaRecuadro(browser);
     await pruebaPluralesEnPantalla(browser);
     await pruebaTableroTeclado(browser);
+    await pruebaPreguntasEscritas(browser);
+    await pruebaPartidasCiega(browser);
   } finally {
     await browser.close();
   }

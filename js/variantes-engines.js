@@ -317,7 +317,7 @@
       const mv = this.game.move({ from: m.from, to: m.to, promotion: m.promotion || "q" });
       return mv ? this._terminar(mv) : null;
     }
-    // Jugada escrita: notación inglesa (Nf3), española (Cf3), o casillas (g1f3 / g1-f3).
+    // Jugada escrita: algebraica española (Cf3, Rf1 = rey), o casillas (g1f3 / g1-f3).
     moveText(texto) {
       const t = (texto || "").trim().replace(/\s+/g, "").replace(/0-0-0/i, "O-O-O").replace(/0-0/i, "O-O");
       if (!t) return null;
@@ -328,9 +328,11 @@
         const mv = this.game.move({ from: coord[1], to: coord[2], promotion: prom ? prom.toLowerCase() : "q" });
         return mv ? this._terminar(mv) : null;
       }
-      const intentos = [t];
+      /* Lo escrito en español va primero y SOLO: la R es siempre el rey, como en
+         todo el sitio («Rf1» no mueve nunca una torre). Lo que no cambia al
+         pasarlo (Nf3, Bb5, e4) se prueba tal cual. */
       const es = t.replace(/^([RDTAC])(?=[a-h1-8x])/, (_, c) => ES_A_EN[c]).replace(/=([DTAC])$/, (_, c) => "=" + ES_A_EN[c]).replace(/=([DTAC])([+#])$/, (_, c, x) => "=" + ES_A_EN[c] + x);
-      if (es !== t) intentos.push(es);
+      const intentos = [es];
       for (const s of intentos) {
         const mv = this.game.move(s, { sloppy: true });
         if (mv) return this._terminar(mv);
@@ -374,8 +376,9 @@
         }
       }
       // El san de chess.js puede traer una corona ("=Q") y un jaque ("+"/"#")
-      // que ya no valen tras la transformación: se recalculan desde cero.
-      let san = mv.san.replace(/=[QRBN]/, "").replace(/[+#]$/, "");
+      // que ya no valen tras la transformación: se recalculan desde cero. Y se
+      // anota en español (Cf3), como las demás variantes.
+      let san = Ciegas.sanEs(mv.san.replace(/=[QRBN]/, "").replace(/[+#]$/, ""));
       if (transformo && LETRA[tipoFinal]) san += "=" + LETRA[tipoFinal];
       const jaqueMate = this.game.in_checkmate();
       const jaque = !jaqueMate && this.game.in_check();

@@ -83,7 +83,7 @@ async function pruebaContraElMotor(browser) {
   await page.waitForFunction(() => window.__tablas.game_state[0].moves.length === 4, null, { timeout: 5000 });
   const tras = await jugadas(page);
   igual("con empate se juega una de las empatadas", ["Nf3", "Bc4"].includes(tras[2]), true);
-  igual("y se dice que se sorteó", /hubo empate entre Bc4, Nf3 y se sorteó/.test(await page.textContent("#partida-ultima")), true);
+  igual("y se dice que se sorteó", /hubo empate entre Ac4, Cf3 y se sorteó/.test(await page.textContent("#partida-ultima")), true);
   await page.waitForFunction(() => window.__inserts.filter((i) => i.tabla === "questions").length === 3, null, { timeout: 5000 });
   await page.click("#partida-jugar-ya-btn");
   await page.waitForFunction(() => /Nadie votó/.test(document.getElementById("partida-estado").textContent), null, { timeout: 5000 });

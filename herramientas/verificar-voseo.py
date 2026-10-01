@@ -20,7 +20,7 @@ Lo que NO es voseo y por eso está en la lista blanca: los futuros ("quedará",
 "entendí", "tomé"), los nombres propios ("Elistá", "Andrés", "Valdés") y las
 palabras que solo terminan parecido ("además", "inglés", "país").
 """
-import glob, html, os, re, sys, unicodedata
+import glob, html, os, re, sys, unicodedata, zipfile
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 os.chdir(RAIZ)
@@ -86,6 +86,8 @@ ENCLITICOS = {
     "jugala": "juégala", "jugalos": "juégalos", "marcala": "márcala",
     "reducile": "redúcele", "usalo": "úsalo",
     "respondele": "respóndele", "respondenos": "respóndenos",
+    "asegurate": "asegúrate", "comparala": "compárala", "ejecutalo": "ejecútalo",
+    "preguntate": "pregúntate", "preparalo": "prepáralo",
 }
 
 OTROS = {"sos": "eres"}           # "vos" se trata aparte: puede ser "tú" o "ti"
@@ -120,7 +122,34 @@ dará hará podrá dispondrá será tendrá tendrás vendrá verá verás sabrá
 pondrá querrá irá
 """.split())
 
+# Las presentaciones (.pptx) y los documentos (.docx) de cursos/recursos/ son
+# lo que el alumno se descarga, y no se revisaban: son un zip, y el detector
+# solo leía archivos de texto. Ahí se quedaron casi mil formas de voseo
+# —"Pensá", "Recorré", "podés"— en 75 presentaciones mientras esta comprobación
+# decía que todo el sitio tuteaba. Por dentro el texto va en <a:t> (PowerPoint)
+# o <w:t> (Word), y un mismo renglón puede venir partido en varios de esos
+# trozos ("Pen" + "sá") según el formato; por eso se une el párrafo entero
+# antes de buscar, y cada párrafo va en su propia línea.
+ZIPS = (".pptx", ".docx")
+PARRAFO_XML = re.compile(r"<(a|w):p\b.*?</\1:p>", re.S)
+TROZO_XML = re.compile(r"<(?:a|w):t(?:\s[^>]*)?>([^<]*)</(?:a|w):t>")
+
+def texto_de_zip(ruta):
+    lineas = []
+    with zipfile.ZipFile(ruta) as z:
+        for nombre in z.namelist():
+            if not (nombre.endswith(".xml") and nombre.startswith(("ppt/", "word/"))):
+                continue
+            xml = z.read(nombre).decode("utf-8", "replace")
+            for p in PARRAFO_XML.finditer(xml):
+                t = "".join(TROZO_XML.findall(p.group(0)))
+                if t.strip():
+                    lineas.append(html.unescape(t))
+    return "\n".join(lineas)
+
 def texto_visible(ruta):
+    if ruta.endswith(ZIPS):
+        return texto_de_zip(ruta)
     s = open(ruta, encoding="utf-8").read()
     if ruta.endswith(".html"):
         # Las hojas de estilo no tienen prosa; los <script>, SÍ, y es la que más
@@ -144,12 +173,15 @@ def archivos():
     # nadie del equipo, porque ese texto solo aparece en la bandeja de alguien.
     vistos = sorted(set(glob.glob("**/*.html", recursive=True) +
                         glob.glob("js/*.js") + glob.glob("**/*.json", recursive=True) +
-                        glob.glob("supabase/functions/**/*.ts", recursive=True)))
+                        glob.glob("supabase/functions/**/*.ts", recursive=True) +
+                        glob.glob("**/*.pptx", recursive=True) +
+                        glob.glob("**/*.docx", recursive=True)))
     # Los .min.js son librerías de fuera, minificadas: no tienen prosa que
     # revisar y sí nombres propios que el detector marca sin razón (pdf.js trae
     # una tabla de fuentes con "Trinité"). Revisarlos es ruido garantizado.
     return [f for f in vistos
-            if os.path.getsize(f) < 2_000_000
+            # (los zips pesan más por las imágenes, no por el texto)
+            if (f.endswith(ZIPS) or os.path.getsize(f) < 2_000_000)
             and not f.startswith("herramientas/verificar")
             # node_modules son las librerías que se instalan para compilar el
             # CSS o correr las comprobaciones: no son del sitio y vienen llenas
@@ -207,6 +239,11 @@ def main():
     if modo_arreglo:
         tocados = 0
         for f in archivos():
+            # Un .pptx o .docx no se reescribe desde acá: el texto viene
+            # partido en trozos y el zip hay que rearmarlo entero. Se avisa
+            # abajo, en la revisión, para arreglarlo aparte.
+            if f.endswith(ZIPS):
+                continue
             s = open(f, encoding="utf-8").read()
             t, n = arreglar(s)
             if n:

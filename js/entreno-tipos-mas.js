@@ -29,7 +29,11 @@
      palabra que la distinga («italiana», «tablas», «ganan»). Si el juego ya
      puso su propio recuadro (Intercambios: «+1», «pierdes 2»), lo deja: ese
      prueba primero con las opciones escritas (U.responderConOpcion). */
-  function opciones(item, lista, etiqueta, esBuena, alTerminar) {
+  /* `pista`: el texto de la pista que ya trae el ejercicio, si tiene (si no,
+     «pista» dice que no hay). «solución» marca la buena, la dice y cuenta como
+     fallado: `alTerminar(false, 0, true)`, y cada juego antepone «La
+     solución:» en vez de «Respuesta incorrecta». */
+  function opciones(item, lista, etiqueta, esBuena, alTerminar, pista) {
     let intentos = 0, hecho = false;
     const caja = el("div");
     caja.setAttribute("role", "group");
@@ -64,6 +68,17 @@
     });
     $("controles").appendChild(caja);
     U.ponerOpciones(lista.map((op, k) => ({ nombre: etiqueta(op), el: botones[k], elegir: () => botones[k].click() })));
+    U.ponerAyudas({
+      pista: pista ? () => estado("Pista: " + pista) : null,
+      solucion: () => {
+        if (hecho) { estado("Este ya lo resolviste. " + U.textoSiguiente()); return; }
+        hecho = true;
+        const k = lista.findIndex((op) => esBuena(op));
+        caja.querySelectorAll("button").forEach((x) => { x.disabled = true; });
+        if (k >= 0) botones[k].textContent = "✓ " + conLetra(lista[k], k);
+        alTerminar(false, 0, true);
+      },
+    });
     if (U.adaptado() && !$("jugada-form").dataset.propio) {
       U.pedirJugada("Escribe la letra de la opción o una palabra suya (por ejemplo «b»); «opciones» las dice", (txt) => {
         if (hecho) { estado("Este ya lo resolviste."); return; }
@@ -190,12 +205,12 @@
       $("jugada-input").value = "";
       b.click();
     });
-    opciones(item, item.opciones, etiqueta, (op) => (item.nivel <= 2 ? op === signo(item.valor) : +op === item.valor), (bien, n) => {
+    opciones(item, item.opciones, etiqueta, (op) => (item.nivel <= 2 ? op === signo(item.valor) : +op === item.valor), (bien, n, sol) => {
       const r = M.textoIntercambio(item.valor, yo);
-      estado((bien ? "✓ ¡Correcto! " : "Respuesta incorrecta. Era: ") + r.charAt(0).toUpperCase() + r.slice(1) + ". " + (n ? textoEstrellas(n) : ""));
+      estado((bien ? "✓ ¡Correcto! " : sol ? "La solución: " : "Respuesta incorrecta. Era: ") + r.charAt(0).toUpperCase() + r.slice(1) + ". " + (n ? textoEstrellas(n) : sol ? "Cuenta como no resuelto." : ""));
       explicar(item.respuesta);
       terminar(item, n);
-    });
+    }, "cuenta las capturas en " + item.casilla + " por turnos, siempre con la pieza de menos valor, y cada bando para cuando ya no le conviene seguir. Peón 1, caballo y alfil 3, torre 5, dama 9.");
   };
 
   /* ================================================ 10. Constrúyela tú */
@@ -252,17 +267,17 @@
       U.tablero(item.fen, { orientacion: "w" });
       $("juego-enunciado").textContent = item.nivel === 1 ? "¿El peón corona, o el rey negro lo alcanza?" : "¿Ganan las blancas, o son tablas?";
       if (item.nivel === 1) $("controles").appendChild(el("p", "text-sm text-brand-600 dark:text-brand-300 mb-3", "Pista de siempre: la regla del cuadrado. Si el rey negro entra en el cuadrado del peón, lo alcanza."));
-      opciones(item, [true, false], (v) => (v ? "Ganan las blancas: el peón corona" : "Tablas: el rey negro lo para"), (v) => v === item.gana, (bien, n) => {
-        estado((bien ? "✓ ¡Correcto! " : "Respuesta incorrecta: ") + (item.gana ? "ganan las blancas." : "son tablas.") + " " + (n ? textoEstrellas(n) : ""));
+      opciones(item, [true, false], (v) => (v ? "Ganan las blancas: el peón corona" : "Tablas: el rey negro lo para"), (v) => v === item.gana, (bien, n, sol) => {
+        estado((bien ? "✓ ¡Correcto! " : sol ? "La solución: " : "Respuesta incorrecta: ") + (item.gana ? "ganan las blancas." : "son tablas.") + " " + (n ? textoEstrellas(n) : sol ? "Cuenta como no resuelto." : ""));
         explicar(item.respuesta.concat(["Calculado con la tabla completa de rey y peón contra rey: no hay opinión, es el resultado con la mejor jugada de los dos."]));
         terminar(item, n);
-      });
+      }, item.nivel === 1 ? "la regla del cuadrado. Si el rey negro entra en el cuadrado del peón, lo alcanza." : null);
       return;
     }
     const juego = new Chess(item.fen);
-    let errores = 0, hecho = false, ocupado = false, jugadas = 0;
+    let errores = 0, hecho = false, ocupado = false, jugadas = 0, conSolucion = false;
     const redibujar = (ultima) => U.tablero(juego.fen(), { orientacion: "w", juego, ultima, clic: hecho || ocupado ? null : U.moverConClic(juego, jugar) });
-    function fin(texto, n) { hecho = true; U.pedirJugada("", null); redibujar(tab.ultima); estado(texto + (n ? " " + textoEstrellas(n) : "")); if (n) terminar(item, n); }
+    function fin(texto, n) { hecho = true; U.pedirJugada("", null); redibujar(tab.ultima); estado(texto + (n ? " " + textoEstrellas(n) : "")); if (n || conSolucion) terminar(item, n); }
     function jugar(mov) {
       if (hecho || ocupado) return;
       const m = juego.move(mov);
@@ -272,6 +287,7 @@
         const comen = juego.moves({ verbose: true }).some((x) => x.to === m.to);
         if (juego.in_stalemate()) return fin("✗ Coronaste, pero el rey negro quedó ahogado: tablas. Prueba otra vez.", 0);
         if (comen) return fin("✗ Coronaste, pero el rey negro se come la pieza nueva: tablas. Prueba otra vez.", 0);
+        if (conSolucion) return fin("Coronaste en " + jugadas + " jugadas, con la solución: cuenta como no resuelto.", 0);
         return fin("✓ ¡Coronaste! En " + jugadas + " jugadas.", Math.max(1, 3 - errores));
       }
       if (!M.kpkGana(bitsKpk, juego.fen())) {
@@ -284,7 +300,8 @@
         }
         return fin("✗ Con " + R.sanEs(m.san) + " se escapó: ahora son tablas. Prueba otra vez.", 0);
       }
-      if (item.nivel === 3) return fin("✓ ¡Esa es la única que gana! " + R.sanEs(m.san) + ".", Math.max(1, 3 - errores));
+      if (item.nivel === 3) return conSolucion ? fin("Jugaste la solución, " + R.sanEs(m.san) + ": cuenta como no resuelto.", 0)
+        : fin("✓ ¡Esa es la única que gana! " + R.sanEs(m.san) + ".", Math.max(1, 3 - errores));
       ocupado = true;
       redibujar([m.from, m.to]);
       setTimeout(() => {
@@ -298,6 +315,33 @@
     }
     $("juego-enunciado").textContent = item.nivel === 3 ? "Solo UNA jugada gana. ¿Cuál?" : "Esta posición se gana: llévalo a coronar sin dejar escapar la victoria.";
     redibujar(null);
+    /* «pista» y «solución» escritas (antes: «No entendí»). La pista dice qué
+       pieza mueve una jugada que gana; la solución dice la jugada entera y el
+       ejercicio ya no da estrellas. Las que ganan salen de la misma tabla de
+       rey y peón que corrige. */
+    const queGana = () => {
+      if (item.nivel === 3 && juego.fen() === item.fen) return juego.moves({ verbose: true }).find((x) => x.san === item.jugada) || null;
+      return juego.moves({ verbose: true }).find((x) => {
+        const g = new Chess(juego.fen()); g.move(x);
+        return (x.promotion && !g.in_stalemate() && !g.moves({ verbose: true }).some((y) => y.to === x.to)) || (!x.promotion && M.kpkGana(bitsKpk, g.fen()));
+      }) || null;
+    };
+    U.ponerAyudas({
+      pista: () => {
+        if (hecho || ocupado) { estado(hecho ? "Este ejercicio ya terminó." : "Espera: el rey negro está jugando."); return; }
+        const x = queGana();
+        if (!x) { estado("En este ejercicio no hay pista ahora."); return; }
+        errores++;
+        estado("Pista: juega con " + piezaDicha(x.color + x.piece) + " de " + x.from + ". Con pista, una estrella menos.");
+      },
+      solucion: () => {
+        if (hecho || ocupado) { estado(hecho ? "Este ejercicio ya terminó." : "Espera: el rey negro está jugando."); return; }
+        const x = queGana();
+        if (!x) { estado("En este ejercicio no hay solución para decir ahora."); return; }
+        conSolucion = true;
+        estado((item.nivel === 3 ? "La solución: la única jugada que gana es " : "La solución: una jugada que gana es ") + R.sanEs(x.san) + ". Juégala para seguir; cuenta como no resuelto.");
+      },
+    });
     U.pedirJugada("O escribe tu jugada", (txt) => {
       const m = U.jugadaEscrita(juego, txt);
       if (!m) { U.noSePudo(txt); return; }
@@ -391,9 +435,9 @@
       $("juego-turno").textContent = "Después de " + item.jugadas.length + " jugadas.";
       $("juego-enunciado").textContent = item.nivel === 1 ? "¿Qué apertura es?" : "¿Qué línea es exactamente?";
     }
-    opciones(item, item.opciones, (o) => o, (o) => o === item.correcta, (bien, n) => {
+    opciones(item, item.opciones, (o) => o, (o) => o === item.correcta, (bien, n, sol) => {
       if (item.nivel === 3) U.tablero(item.fen, { orientacion: "w" });
-      estado((bien ? "✓ ¡Correcto! " : "Respuesta incorrecta. Era: ") + item.correcta + ". " + (n ? textoEstrellas(n) : ""));
+      estado((bien ? "✓ ¡Correcto! " : sol ? "La solución: " : "Respuesta incorrecta. Era: ") + item.correcta + ". " + (n ? textoEstrellas(n) : sol ? "Cuenta como no resuelto." : ""));
       explicar(item.respuesta.concat(["Las jugadas" + (item.orden ? " en su orden de siempre" : "") + ": " + lineaTexto(item.orden || item.jugadas) + "."]));
       terminar(item, n);
     });
@@ -490,7 +534,7 @@
       if (errores >= 3) {
         const m = juego.move(item.defensa);
         redibujar([m.from, m.to]);
-        estado("✗ Con " + R.sanEs(r.san) + " tampoco. " + castigo + " La única que aguantaba era " + item.defensaEs + ".");
+        estado("✗ Con " + R.sanEs(r.san) + " tampoco. " + castigo + " La única que aguantaba era " + R.sanEs(item.defensa) + ".");
         cerrar(0);
         return;
       }
@@ -506,7 +550,7 @@
       const m = new Chess(item.fenRival).move(item.amenaza);
       marcas[m.from] = { cls: "m-mal", signo: "!", dicho: "la pieza con que amenaza el rival" };
       marcas[m.to] = { cls: "m-mal", signo: "✕", dicho: "adonde quiere ir el rival" };
-      estado("El rival amenaza " + item.amenazaEs + (item.mateAmenaza ? " (mate en " + item.mateAmenaza + ")" : "") + ". " + (item.motivo || "") + " Una estrella menos.");
+      estado("El rival amenaza " + R.sanEs(item.amenaza) + (item.mateAmenaza ? " (mate en " + item.mateAmenaza + ")" : "") + ". " + (item.motivo || "") + " Una estrella menos.");
       redibujar(null);
     });
     const bPista = boton("💡 Pista", BTN_SEGUNDO + " mt-1 ml-2", () => {
@@ -522,7 +566,7 @@
       if (hecho) return;
       const m = juego.move(item.defensa);
       redibujar([m.from, m.to]);
-      estado("La única que aguantaba era " + item.defensaEs + ".");
+      estado("La única que aguantaba era " + R.sanEs(item.defensa) + ".");
       cerrar(0);
     });
     $("controles").append(bAmenaza, bPista, bVer);
@@ -694,17 +738,17 @@
       const mejor = item.candidatas.find((c) => c.clase === "mejor");
       let n = 0;
       if (!elegida) {
-        estado("⌛ Se acabó el tiempo: en una partida, habrías perdido. La mejor era " + mejor.sanEs + ".");
+        estado("⌛ Se acabó el tiempo: en una partida, habrías perdido. La mejor era " + R.sanEs(mejor.san) + ".");
       } else {
         n = M.estrellasTiempo(elegida.perdida);
         const m = juego.move(elegida.san);
         U.tablero(juego.fen(), { orientacion: yo, juego, ultima: [m.from, m.to] });
-        const que = elegida.clase === "mejor" ? "✓ ¡La mejor! " : n ? "✓ Buena elección: pierde poco (" + R.numeroBalanza(elegida.perdida / 100).replace("+", "") + "). " : "✗ Esa pierde " + R.numeroBalanza(elegida.perdida / 100).replace("+", "") + " contra la mejor, " + mejor.sanEs + ". ";
+        const que = elegida.clase === "mejor" ? "✓ ¡La mejor! " : n ? "✓ Buena elección: pierde poco (" + R.numeroBalanza(elegida.perdida / 100).replace("+", "") + "). " : "✗ Esa pierde " + R.numeroBalanza(elegida.perdida / 100).replace("+", "") + " contra la mejor, " + R.sanEs(mejor.san) + ". ";
         estado(que + "Elegiste en " + usados + " s. " + (n ? textoEstrellas(n) : ""));
       }
       botones.forEach((b) => {
         const c = b._cand;
-        b.textContent = (c.clase === "mejor" ? "✓ " : c.perdida <= M.TIEMPO.buena ? "≈ " : "✗ ") + c.sanEs + " — " +
+        b.textContent = (c.clase === "mejor" ? "✓ " : c.perdida <= M.TIEMPO.buena ? "≈ " : "✗ ") + R.sanEs(c.san) + " — " +
           (c.clase === "mejor" ? "la mejor" : "pierde " + R.numeroBalanza(c.perdida / 100).replace("+", ""));
       });
       explicar(item.respuesta);
@@ -715,7 +759,7 @@
       const m = new Chess(item.fen).move(mov);
       if (!m) { estado("Esa jugada no es legal."); return; }
       const c = item.candidatas.find((x) => x.san === m.san);
-      if (!c) { estado(R.sanEs(m.san) + " no es una de las candidatas. Elige entre: " + item.candidatas.map((x) => x.sanEs).join(", ") + "."); U.tablero(item.fen, { orientacion: yo, juego, clic: U.moverConClic(juego, elegir) }); return; }
+      if (!c) { estado(R.sanEs(m.san) + " no es una de las candidatas. Elige entre: " + item.candidatas.map((x) => R.sanEs(x.san)).join(", ") + "."); U.tablero(item.fen, { orientacion: yo, juego, clic: U.moverConClic(juego, elegir) }); return; }
       cerrar(c);
     }
     $("juego-turno").textContent = "Juegan las " + COLOR[yo] + ".";
@@ -725,7 +769,7 @@
     caja.setAttribute("role", "group");
     caja.setAttribute("aria-label", "Candidatas");
     item.candidatas.forEach((c) => {
-      const b = el("button", CLASE_OPCION, c.sanEs);
+      const b = el("button", CLASE_OPCION, R.sanEs(c.san));
       b.type = "button";
       b._cand = c;
       b.addEventListener("click", () => cerrar(c));
@@ -740,7 +784,7 @@
       $("jugada-input").value = "";
       elegir({ from: m.from, to: m.to, promotion: m.promotion });
     });
-    estado("Tienes " + total + " segundos" + (total !== item.segundos ? " (el triple, por el Modo Adaptado)" : "") + ". Candidatas: " + item.candidatas.map((c) => c.sanEs).join(", ") + ".");
+    estado("Tienes " + total + " segundos" + (total !== item.segundos ? " (el triple, por el Modo Adaptado)" : "") + ". Candidatas: " + item.candidatas.map((c) => R.sanEs(c.san)).join(", ") + ".");
     const mitad = Math.floor(total / 2);
     reloj = setInterval(() => {
       quedan--;

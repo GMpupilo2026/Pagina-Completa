@@ -170,8 +170,8 @@ async function cerrarVotacion() {
     }
     // Los votos quedan como comentario de la jugada: van con la partida de la clase al PGN y a «Repasar mis clases».
     anotarVotos(board.moves(), conVotos.map((f) => ({ san: sanDe(f.respuesta), cuantos: f.cuantos })), total, empatadas.length > 1);
-    document.getElementById("partida-ultima").textContent = "La clase jugó " + jugada.san + " (" + max + " de " + total + (total === 1 ? " voto" : " votos")
-        + (empatadas.length > 1 ? "; hubo empate entre " + empatadas.map((f) => sanDe(f.respuesta)).join(", ") + " y se sorteó" : "") + ").";
+    document.getElementById("partida-ultima").textContent = "La clase jugó " + ComandosTablero.jugadaParaMostrar(jugada.san) + " (" + max + " de " + total + (total === 1 ? " voto" : " votos")
+        + (empatadas.length > 1 ? "; hubo empate entre " + empatadas.map((f) => ComandosTablero.jugadaParaMostrar(sanDe(f.respuesta))).join(", ") + " y se sorteó" : "") + ").";
     // board.jugar avisa a onMove, que sigue la partida (ver despuesDeJugarEnLaPartida).
 }
 
@@ -181,7 +181,7 @@ async function cerrarVotacion() {
 async function anotarVotos(camino, filas, total, sorteo) {
     if (!camino.length) return;
     const k = PgnClase.clave(camino);
-    const texto = ("Votos de la clase: " + filas.map((f) => f.san + " " + f.cuantos).join(", ")
+    const texto = ("Votos de la clase: " + filas.map((f) => ComandosTablero.sanEspanol(f.san) + " " + f.cuantos).join(", ")
         + " (" + total + (total === 1 ? " voto" : " votos") + (sorteo ? "; hubo empate y se sorteó" : "") + ").").slice(0, 300);
     const nuevos = Object.assign({}, comentariosClase, { [k]: { nag: null, texto } });
     const { error } = await sb.from("game_state").update({ comentarios: nuevos }).eq("id", myGameStateId);
@@ -216,7 +216,7 @@ async function jugarMotorEnLaPartida() {
         return;
     }
     const ultima = document.getElementById("partida-ultima");
-    ultima.textContent = (ultima.textContent ? ultima.textContent + " " : "") + "El motor contestó " + jugada.san + ".";
+    ultima.textContent = (ultima.textContent ? ultima.textContent + " " : "") + "El motor contestó " + ComandosTablero.jugadaParaMostrar(jugada.san) + ".";
 }
 
 // Después de cada jugada en el tablero del profe (la de la clase, la del motor o la suya).

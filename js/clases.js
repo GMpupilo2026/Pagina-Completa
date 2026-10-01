@@ -599,12 +599,16 @@
             { title: "Lo que te pone tu profesor", id: "tareas", hrefs: ["tareas.html", "examenes.html", "entreno/diagnostico.html"] },
             { title: "Aprender y estudiar", id: "aprender", hrefs: ["entreno/aprender.html", "entreno/estudio.html", "cursos/academia/index.html", "repasar-clases.html", "articulos.html"] },
             { title: "Entrenar", id: "entrenar", hrefs: ["entreno/mates.html", "entreno/practicas.html", "entreno/desafios.html", "entreno/4x4.html", "entreno/coordenadas.html", "entreno/temas.html", "entreno/aperturas.html", "entreno/memoria.html", "entreno/visualizacion.html", "entreno/precision-posicional.html", "entreno/finales.html", "entreno/tipos.html"] },
-            { title: "Jugar", id: "jugar", hrefs: ["sonar.html", "batalla-naval.html", "tablero.html", "juegos.html", "competir.html"] },
+            { title: "Jugar", id: "jugar", hrefs: ["sonar.html", "batalla-naval.html", "te-reto.html", "tablero.html", "juegos.html", "competir.html"] },
             { title: "Tu cuenta", id: "cuenta", hrefs: ["ciegos.html", "configuracion.html", "informes.html", "logros.html", "justificaciones.html", "encuesta-profesor.html"] },
         ];
         const TILES_SOLO_ADAPTADO = [
             { emoji: "🔊", label: "El Sonar", desc: "Busca el tesoro escondido escribiendo casillas: el sonar dice a cuántas jugadas está", href: "sonar.html" },
             { emoji: "🚢", label: "Batalla naval", desc: "Dispara escribiendo casillas a la flota de piezas escondida", href: "batalla-naval.html" },
+            /* ¡Te reto! está adaptado (la jugada se escribe, el reloj se pide con
+               «tiempo») y en el panel de siempre se llega desde Juegos; acá va
+               a la mano, como el Sonar: la alumna ciega no lo encontraba. */
+            { emoji: "🏆", label: "¡Te reto!", desc: "Encuentra la jugada en 10 segundos escribiéndola y encadena tu racha; «tiempo» dice cuánto te queda", href: "te-reto.html" },
             { emoji: "🦯", label: "Cómo se usa el modo adaptado", desc: "Cómo se dicen las casillas, los atajos del teclado y qué está adaptado", href: "ciegos.html" },
         ];
         /* Lo que en el panel de siempre dice otra cosa: acá se dice qué se
@@ -3496,7 +3500,14 @@
             if (panelMostrado) return;
             panelMostrado = true;
             clearTimeout(avisoLento);
-            document.getElementById("loading").classList.add("hidden");
+            /* Y con el atributo `hidden`, no solo la clase: Alt + Mayúscula + M
+               lleva el foco a <main> y el lector leía, además del panel,
+               «Cargando tu panel… Está tardando más de lo normal…». Lo que ya
+               no se muestra no queda en el árbol que se lee. */
+            const carga = document.getElementById("loading");
+            carga.classList.add("hidden");
+            carga.hidden = true;
+            document.getElementById("loading-lento").hidden = true;
             document.getElementById("app").classList.remove("hidden");
             /* «Cargando tu panel…» desaparece y, sin esto, el lector de
                pantalla no dice nada: quien no ve la página no sabe que ya

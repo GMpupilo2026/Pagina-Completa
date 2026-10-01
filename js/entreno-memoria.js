@@ -137,6 +137,8 @@
         api.limpiar();
         const t = CuadroComandos.normalizar(texto);
         if (reloj && /^(ya la tengo|listo|tapar|ocultar)$/.test(t)) { ocultar(); return; }
+        // «volver»: al inicio de Memoria (las piezas y los segundos), diciéndolo. Antes: «No entendí».
+        if (/^(volver|atras|salir|ajustes|cambiar|cambiar piezas o segundos|volver a los ajustes)$/.test(t)) { volverAjustes(true); return; }
         /* Quien no ve reconstruye desde el mismo recuadro, sin ir a buscar los
            campos: «blancas: Rg1, Pe4» coloca esas piezas (la misma lectura que
            los campos de abajo) y «comprobar» corrige. */
@@ -348,12 +350,22 @@
       piezas: ajustes.piezas, segundos: ajustes.segundos, aciertos: r.aciertos, total: r.total, estrellas: n, limpio: !r.errores,
     });
     $("juego-enunciado").textContent = r.errores ? "Así era la posición." : "¡Perfecta!";
-    estado((r.errores ? "Acertaste " + r.aciertos + " de " + r.total + " piezas. " : "✓ ¡Perfecta! ") +
+    /* CUÁLES faltaron o sobraron, con la pieza y la casilla dichas: «Acertaste
+       7 de 8» a secas no decía cuál, y quien no ve el tablero corregido no
+       tenía cómo saberlo. */
+    const dicha = (c, t, s) => TableroAccesible.piezaDicha({ color: c, type: t }) + " en " + TableroAccesible.casillaHablada(s);
+    const deReal = (s) => { const p = real[R.idx(s)]; return dicha(p.c, p.t, s); };
+    const dePuesta = (s) => dicha(colocado[s][0], colocado[s][1], s);
+    const faltaron = r.faltan.map(deReal);
+    const sobraron = r.sobran.map(dePuesta);
+    const cambiadas = r.cambiadas.map((s) => { const p = real[R.idx(s)]; return "en " + TableroAccesible.casillaHablada(s) + " iba " + TableroAccesible.piezaDicha({ color: p.c, type: p.t }) + " y pusiste " + TableroAccesible.piezaDicha({ color: colocado[s][0], type: colocado[s][1] }); });
+    const detalle = [];
+    if (faltaron.length) detalle.push((faltaron.length === 1 ? "Te faltó: " : "Te faltaron: ") + faltaron.join("; ") + ".");
+    if (cambiadas.length) detalle.push("Pieza equivocada: " + cambiadas.join("; ") + ".");
+    if (sobraron.length) detalle.push((sobraron.length === 1 ? "Sobró: " : "Sobraron: ") + sobraron.join("; ") + ".");
+    estado((r.errores ? "Acertaste " + r.aciertos + " de " + r.total + " piezas. " + detalle.join(" ") + " " : "✓ ¡Perfecta! ") +
       (n ? textoEstrellas(n) : "Sin estrellas.") + (record ? " Nuevo récord con " + ajustes.segundos + " segundos." : ""));
-    const partes = [];
-    if (r.faltan.length) partes.push("Te faltaron: " + r.faltan.join(", ") + ".");
-    if (r.cambiadas.length) partes.push("Pieza equivocada en: " + r.cambiadas.join(", ") + ".");
-    if (r.sobran.length) partes.push("Pusiste de más en: " + r.sobran.join(", ") + ".");
+    const partes = detalle.slice();
     if (r.errores) partes.push("En el tablero: ✓ bien, − faltaba, ✗ otra pieza, + sobraba.");
     explicar(partes.length ? partes : null);
     if (item.partida && /^https:\/\/lichess\.org\//.test(item.partida)) {
@@ -372,15 +384,20 @@
         empezar();
       }));
     }
-    acc.appendChild(boton("Cambiar piezas o segundos", BTN_SEGUNDO, volverAjustes));
+    acc.appendChild(boton("Cambiar piezas o segundos", BTN_SEGUNDO, () => volverAjustes()));
   }
 
-  function volverAjustes() {
+  /* `dicho`: se llegó escribiendo «volver» y se dice adónde. */
+  function volverAjustes(dicho) {
     limpiar();
     leerPosicion(null);
     pintarRecords();
     mostrar("ajustes");
     $("sel-piezas").focus();
+    if (dicho === true) {
+      const a = $("aviso-ajustes");
+      if (a) { a.textContent = ""; setTimeout(() => { a.textContent = "Volviste al inicio de Memoria: elige cuántas piezas y cuántos segundos, y «Empezar» arranca otra posición."; }, 60); }
+    }
   }
 
   /* ------------------------------------------------------------ arranque */
@@ -403,7 +420,7 @@
       ajustes = { piezas: +sp.value, segundos: +ss.value };
       empezar();
     });
-    $("btn-cambiar").addEventListener("click", volverAjustes);
+    $("btn-cambiar").addEventListener("click", () => volverAjustes());
     pintarRecords();
     // Con el enlace ya armado (?piezas=…&segundos=…), directo a mirar.
     if (q.has("piezas") || q.has("segundos")) empezar(); else mostrar("ajustes");

@@ -458,13 +458,13 @@
       fen: "r4rk1/1p1q1p1p/2p1p1p1/3n4/4P3/2N2N2/PPPQ1PPP/R4RK1 w - - 0 16",
       enunciado: "El caballo negro de d5 controla el centro; a cambio, las blancas tienen un peón de más espacio. ¿Cuál es el plan correcto respecto a ese caballo?",
       opciones: [
-        "Cambiarlo cuanto antes con Nxd5, aunque eso sane la estructura rival.",
+        "Cambiarlo cuanto antes con Cxd5, aunque eso sane la estructura rival.",
         "Dejarlo ahí para siempre y jugar en otro sector del tablero.",
         "Presionarlo con c2-c4 y decidir después cómo se resuelve.",
         "Avanzar e4-e5 de inmediato, sin mirar qué pasa con el propio centro.",
       ],
       correcta: 2,
-      explica: "Un caballo centralizado en un puesto fuerte no siempre conviene cambiarlo de cualquier manera: c2-c4 lo presiona y obliga a que sea el rival quien decida —retirarlo, perdiendo tiempo, o dejarse cambiar en la casilla y del modo que más le convenga a las blancas—. Cambiarlo directo con Nxd5 (A) puede regalarle al rival una estructura de peones sana después de …exd5 o …cxd5; ignorarlo (B) deja esa pieza controlando el centro toda la partida; e4-e5 sin más (D) abre líneas sin haber resuelto primero qué pasa con el caballo.",
+      explica: "Un caballo centralizado en un puesto fuerte no siempre conviene cambiarlo de cualquier manera: c2-c4 lo presiona y obliga a que sea el rival quien decida —retirarlo, perdiendo tiempo, o dejarse cambiar en la casilla y del modo que más le convenga a las blancas—. Cambiarlo directo con Cxd5 (A) puede regalarle al rival una estructura de peones sana después de …exd5 o …cxd5; ignorarlo (B) deja esa pieza controlando el centro toda la partida; e4-e5 sin más (D) abre líneas sin haber resuelto primero qué pasa con el caballo.",
       fuente: "Posición ilustrativa: caballo centralizado que conviene presionar antes de decidir el cambio.",
     },
     {
@@ -472,13 +472,13 @@
       fen: "1kr4r/p1p1q1p1/1p1p1p2/4n3/3P4/2N2N2/PPP1QPPP/1KR4R w - - 0 20",
       enunciado: "El caballo negro de e5 controla el centro; a cambio, las blancas tienen un peón de más espacio. ¿Cuál es el plan correcto respecto a ese caballo?",
       opciones: [
-        "Cambiarlo cuanto antes con Nxe5, aunque eso sane la estructura rival.",
+        "Cambiarlo cuanto antes con Cxe5, aunque eso sane la estructura rival.",
         "Dejarlo ahí para siempre y jugar en otro sector del tablero.",
         "Presionarlo con f2-f4 y decidir después cómo se resuelve.",
         "Avanzar d4-d5 de inmediato, sin mirar qué pasa con el propio centro.",
       ],
       correcta: 2,
-      explica: "Un caballo centralizado en un puesto fuerte no siempre conviene cambiarlo de cualquier manera: f2-f4 lo presiona y obliga a que sea el rival quien decida —retirarlo, perdiendo tiempo, o dejarse cambiar en la casilla y del modo que más le convenga a las blancas—. Cambiarlo directo con Nxe5 (A) puede regalarle al rival una estructura de peones sana después de …exe5 o …cxe5; ignorarlo (B) deja esa pieza controlando el centro toda la partida; d4-d5 sin más (D) abre líneas sin haber resuelto primero qué pasa con el caballo.",
+      explica: "Un caballo centralizado en un puesto fuerte no siempre conviene cambiarlo de cualquier manera: f2-f4 lo presiona y obliga a que sea el rival quien decida —retirarlo, perdiendo tiempo, o dejarse cambiar en la casilla y del modo que más le convenga a las blancas—. Cambiarlo directo con Cxe5 (A) puede regalarle al rival una estructura de peones sana después de …exe5 o …cxe5; ignorarlo (B) deja esa pieza controlando el centro toda la partida; d4-d5 sin más (D) abre líneas sin haber resuelto primero qué pasa con el caballo.",
       fuente: "Posición ilustrativa: caballo centralizado que conviene presionar antes de decidir el cambio.",
     },
     {
@@ -486,13 +486,13 @@
       fen: "r4rk1/pppq1ppp/2n2n2/4p3/3N4/2P1P1P1/1P1Q1P1P/R4RK1 b - - 0 20",
       enunciado: "El caballo blanco de d4 controla el centro; a cambio, las negras tienen un peón de más espacio. ¿Cuál es el plan correcto respecto a ese caballo?",
       opciones: [
-        "Cambiarlo cuanto antes con Nxd4, aunque eso sane la estructura rival.",
+        "Cambiarlo cuanto antes con Cxd4, aunque eso sane la estructura rival.",
         "Dejarlo ahí para siempre y jugar en otro sector del tablero.",
         "Presionarlo con c7-c5 y decidir después cómo se resuelve.",
         "Avanzar e5-e4 de inmediato, sin mirar qué pasa con el propio centro.",
       ],
       correcta: 2,
-      explica: "Un caballo centralizado en un puesto fuerte no siempre conviene cambiarlo de cualquier manera: c7-c5 lo presiona y obliga a que sea el rival quien decida —retirarlo, perdiendo tiempo, o dejarse cambiar en la casilla y del modo que más le convenga a las negras—. Cambiarlo directo con Nxd4 (A) puede regalarle al rival una estructura de peones sana después de …exd4 o …cxd4; ignorarlo (B) deja esa pieza controlando el centro toda la partida; e5-e4 sin más (D) abre líneas sin haber resuelto primero qué pasa con el caballo.",
+      explica: "Un caballo centralizado en un puesto fuerte no siempre conviene cambiarlo de cualquier manera: c7-c5 lo presiona y obliga a que sea el rival quien decida —retirarlo, perdiendo tiempo, o dejarse cambiar en la casilla y del modo que más le convenga a las negras—. Cambiarlo directo con Cxd4 (A) puede regalarle al rival una estructura de peones sana después de …exd4 o …cxd4; ignorarlo (B) deja esa pieza controlando el centro toda la partida; e5-e4 sin más (D) abre líneas sin haber resuelto primero qué pasa con el caballo.",
       fuente: "Posición ilustrativa: caballo centralizado que conviene presionar antes de decidir el cambio.",
     },
     {
@@ -500,13 +500,13 @@
       fen: "1kr4r/ppp1qppp/2n2n2/3p4/4N3/1P1P1P2/P1P1Q1P1/1KR4R b - - 0 20",
       enunciado: "El caballo blanco de e4 controla el centro; a cambio, las negras tienen un peón de más espacio. ¿Cuál es el plan correcto respecto a ese caballo?",
       opciones: [
-        "Cambiarlo cuanto antes con Nxe4, aunque eso sane la estructura rival.",
+        "Cambiarlo cuanto antes con Cxe4, aunque eso sane la estructura rival.",
         "Dejarlo ahí para siempre y jugar en otro sector del tablero.",
         "Presionarlo con f7-f5 y decidir después cómo se resuelve.",
         "Avanzar d5-d4 de inmediato, sin mirar qué pasa con el propio centro.",
       ],
       correcta: 2,
-      explica: "Un caballo centralizado en un puesto fuerte no siempre conviene cambiarlo de cualquier manera: f7-f5 lo presiona y obliga a que sea el rival quien decida —retirarlo, perdiendo tiempo, o dejarse cambiar en la casilla y del modo que más le convenga a las negras—. Cambiarlo directo con Nxe4 (A) puede regalarle al rival una estructura de peones sana después de …exe4 o …cxe4; ignorarlo (B) deja esa pieza controlando el centro toda la partida; d5-d4 sin más (D) abre líneas sin haber resuelto primero qué pasa con el caballo.",
+      explica: "Un caballo centralizado en un puesto fuerte no siempre conviene cambiarlo de cualquier manera: f7-f5 lo presiona y obliga a que sea el rival quien decida —retirarlo, perdiendo tiempo, o dejarse cambiar en la casilla y del modo que más le convenga a las negras—. Cambiarlo directo con Cxe4 (A) puede regalarle al rival una estructura de peones sana después de …exe4 o …cxe4; ignorarlo (B) deja esa pieza controlando el centro toda la partida; d5-d4 sin más (D) abre líneas sin haber resuelto primero qué pasa con el caballo.",
       fuente: "Posición ilustrativa: caballo centralizado que conviene presionar antes de decidir el cambio.",
     },
     {

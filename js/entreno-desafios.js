@@ -347,8 +347,27 @@ function montarComandos(){
     tablero: () => teclado,
     onEnviar: jugarEscribiendo,
   });
-  comandos.ayuda('Jugada: "Cf3", "Nf3", "Dxh7+", "e2 e4". Pregunta: "caballos", "qué hay en e4". Escribe "ayuda" para todo.');
+  comandos.ayuda(AYUDA_RECUADRO);
 }
+const AYUDA_RECUADRO = 'Jugada: «Cf3», «Dxh7+», «e2 e4». Pregunta: «caballos», «qué hay en e4». «pista», «solución» (dice la jugada; no cuenta como resuelto) o «saltar» (pasa al siguiente). Escribe «ayuda» para todo.';
+
+/* «solución» y «saltar» / «siguiente» escritos: los contesta la página antes
+   que la capa de la cuenta ciega (js/vision-cuenta.js), que apretaría el
+   botón y diría «Listo: Saltar.» encima del desafío nuevo. Antes no había
+   ninguna de las dos: un desafío atascado no se podía pasar. */
+EjercicioTablero.palabrasPrimero(() => comandos && comandos.input, (texto) => {
+  if(!currentSet || document.getElementById('play-area').style.display === 'none' || document.getElementById('set-view').style.display === 'none') return false;
+  const que = EjercicioTablero.accionEscrita(texto);
+  if(!que) return false;
+  if(esperandoSiguiente){
+    if(que === 'saltar') avanzarRonda();
+    else setStatus('Este desafío ya está resuelto. Escribe «siguiente» para seguir, o «leer» para volver a oír la explicación.');
+    return true;
+  }
+  if(roundLocked){ setStatus('Espera un momento: ya viene el siguiente desafío.'); return true; }
+  if(que === 'solucion') verSolucion(); else saltarRonda();
+  return true;
+});
 
 function jugarEscribiendo(texto, api){
   if(esperandoSiguiente){
@@ -409,6 +428,7 @@ let errorsThisRound = 0; // jugadas equivocadas en este desafío: también bajan
 let roundStartTime = 0;
 let setStarsEarned = [];
 let setStartTime = 0;
+let saltados = 0;   // desafíos de la serie que se pasaron sin resolver
 
 function setsFor(cat){ return SETS.filter(s => s.cat === cat); }
 
@@ -510,7 +530,7 @@ function loadRound(){
   const round = currentRound();
   esperandoSiguiente = false;
   document.getElementById('next-round-btn').hidden = true;
-  if(comandos) comandos.ayuda('Jugada: "Cf3", "Nf3", "Dxh7+", "e2 e4". Pregunta: "caballos", "qué hay en e4". Escribe "ayuda" para todo.');
+  if(comandos) comandos.ayuda(AYUDA_RECUADRO);
   game = new MiniChess(round.fen);
   selectedSquare = null;
   roundLocked = false;
@@ -519,7 +539,7 @@ function loadRound(){
   roundStartTime = Date.now();
   document.getElementById('hint-btn').disabled = false;
   pistas.reiniciar();
-  document.getElementById('round-text').textContent = round.text;
+  document.getElementById('round-text').textContent = textoDicho(round.text);
   document.getElementById('round-source').textContent = round.source;
   drawBoard();
   buildRoundDots();
@@ -606,7 +626,7 @@ function finishRound(moveResult){
   if(!conSolucion) bumpStreak();
   const fast = !conSolucion && seconds < 4 && hintsUsedThisRound === 0 && errorsThisRound === 0;
   const san = jugadaDicha(moveResult ? moveResult.san : round.san[0]);
-  const inicio = conSolucion ? 'Solución:' : '✅ ¡Correcto!';
+  const inicio = conSolucion ? 'Solución (no cuenta como resuelto):' : '✅ ¡Correcto!';
   const explicacion = textoDicho(round.explain || '');
   setStatus(`${inicio} ${san}${explicacion ? ' — ' + explicacion : ''}${fast ? ' ⚡' : ''}`, conSolucion ? '' : 'ok');
   if(window.BlindNotation && window.BlindNotation.speak){
@@ -627,20 +647,23 @@ function finishRound(moveResult){
 }
 
 /* La jugada como la oye quien usa Modo Adaptado: «alfil a ce 5» y no «Bc5»,
-   que en inglés y en letras sueltas no dice nada. Con el modo normal, la de
-   siempre. */
+   que en inglés y en letras sueltas no dice nada. Con el modo normal, en
+   algebraica española («Ac5»). */
 function jugadaDicha(san){
-  return blindMode && window.BlindNotation && BlindNotation.sanSpoken ? BlindNotation.sanSpoken(san) : san;
+  if(blindMode && window.BlindNotation && BlindNotation.sanSpoken) return BlindNotation.sanSpoken(san);
+  return ComandosTablero.jugadaParaMostrar(san);
 }
 /* Lo mismo dentro de un texto: más de la mitad de las explicaciones y pistas
    del banco (entreno/data/desafios.json) traen jugadas en SAN inglés («Primero
    Be6 y después…»), que el lector deletrea: «be seis». En Modo Adaptado cada
    jugada y cada casilla sueltas pasan a palabras («alfil eva 6», «cesar 8»).
-   El banco no se toca: con el modo normal se ven como están. */
+   El banco no se toca: con el modo normal, cada jugada pasa a algebraica
+   española («Ae6»), o a palabras si la cuenta es de quien no ve. */
 const TOKEN_SAN = /\b(O-O-O|O-O|[KQRBN][a-h]?[1-8]?x?[a-h][1-8](?:=[QRBN])?[+#]?|[a-h]x[a-h][1-8](?:=[QRBN])?[+#]?|[a-h][1-8](?:=[QRBN])?[+#]?)(?![\w-])/g;
 function textoDicho(texto){
-  if(!texto || !blindMode || !window.BlindNotation || !BlindNotation.sanSpoken) return texto;
-  return String(texto).replace(TOKEN_SAN, (t) => BlindNotation.sanSpoken(t));
+  if(!texto) return texto;
+  if(blindMode && window.BlindNotation && BlindNotation.sanSpoken) return String(texto).replace(TOKEN_SAN, (t) => BlindNotation.sanSpoken(t));
+  return ComandosTablero.textoParaMostrar(texto);
 }
 
 let esperandoSiguiente = false;
@@ -665,8 +688,10 @@ function finishSet(){
   document.getElementById('celebration-stars').innerHTML = starString(stars);
   const totalSeconds = ((Date.now() - setStartTime) / 1000).toFixed(0);
   const limpia = setStarsEarned.every(s => s === 3);
+  const total = currentSet.rounds.length;
   document.getElementById('celebration-stats').textContent =
-    `${currentSet.rounds.length} de ${currentSet.rounds.length} desafíos en ${totalSeconds}s` +
+    `${total - saltados} de ${total} desafíos en ${totalSeconds}s` +
+    (saltados ? ` (saltaste ${saltados})` : '') +
     (limpia ? ' — ¡sin pistas ni errores!' : '');
   document.getElementById('celebration-title').textContent =
     stars === 3 ? '¡Desafíos perfectos! 🏆' : (stars === 2 ? '¡Desafíos completados! 🎉' : 'Completados — ¡a repetirlos para subir de estrellas!');
@@ -714,10 +739,39 @@ function giveHint(){
 document.getElementById('hint-btn').addEventListener('click', giveHint);
 document.getElementById('retry-round-btn').addEventListener('click', loadRound);
 document.getElementById('next-round-btn').addEventListener('click', avanzarRonda);
+document.getElementById('solution-btn').addEventListener('click', verSolucion);
+document.getElementById('skip-round-btn').addEventListener('click', saltarRonda);
+
+/* «Saltar →» (o «saltar», «siguiente» escritos antes de resolverlo): pasa al
+   siguiente sin resolverlo. Cuenta como no resuelto: cero estrellas en la
+   serie y corta la racha. */
+function saltarRonda(){
+  if(!currentSet) return;
+  if(esperandoSiguiente){ avanzarRonda(); return; }
+  if(roundLocked) return;
+  roundLocked = true;
+  resetStreak();
+  saltados++;
+  setStarsEarned.push(0);
+  const n = currentSet.rounds.length;
+  if(currentRoundIndex >= n - 1){ finishSet(); return; }
+  currentRoundIndex++;
+  loadRound();
+  const round = currentRound();
+  setStatus(`Saltaste el desafío: no cuenta como resuelto. Desafío ${currentRoundIndex + 1} de ${n}: ${textoDicho(round.text || '')} ` +
+    (blindMode ? 'Escribe la jugada que quieres hacer.' : 'Haz clic en la pieza que quieres mover.'));
+}
+/* «Solución»: directo a la última etapa de las pistas (dice la jugada, la
+   juega y muestra la explicación). No suma a la racha ni cuenta como limpio. */
+function verSolucion(){
+  if(roundLocked || !currentSet) return;
+  pistas.solucion();
+}
 
 function openSet(set){
   currentSet = set;
   currentRoundIndex = 0;
+  saltados = 0;
   setStarsEarned = [];
   setStartTime = Date.now();
   document.getElementById('list-view').style.display = 'none';

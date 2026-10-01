@@ -58,7 +58,8 @@
  *       Cada página dice cuáles usa (`etapas()`) y cuál es la jugada
  *       (`jugada()` → { from, to, promotion }). El botón dice lo que va a
  *       hacer: «Pista», «Otra pista», «Ver solución». Devuelve
- *       { dar, reiniciar, marcas, usadas }; `marcas()` va a dibujar().
+ *       { dar, reiniciar, solucion, marcas, usadas }; `marcas()` va a
+ *       dibujar() y `solucion()` salta directo a la última etapa.
  *
  *   EjercicioTablero.refutacion(juego)
  *       Con la jugada EQUIVOCADA ya hecha en `juego` (le toca al rival): qué
@@ -74,6 +75,20 @@
  *       «Siguiente →» (el alumno decide cuándo) y «Ver la línea», que abre la
  *       línea jugada desde `desde` en js/visor-linea.js (recorrible con
  *       ◀ ▶, teclado y lector de pantalla). Devuelve { cerrar, activo }.
+ *
+ *   EjercicioTablero.palabrasPrimero(campo, contestar)
+ *       Las palabras que la página contesta ANTES que la capa del recuadro de
+ *       la cuenta ciega (js/vision-cuenta.js): «siguiente», «saltar»,
+ *       «solución»… `contestar(texto)` devuelve true si lo trató (y entonces
+ *       ni la capa ni el resto de la página lo ven, y el recuadro se vacía).
+ *       Sin esto la capa apretaba el botón «Saltar →» y decía «Listo:
+ *       Saltar.» encima del ejercicio nuevo, que no se oía. `campo` es el
+ *       <input> o una función que lo devuelve.
+ *
+ *   EjercicioTablero.accionEscrita(texto)
+ *       "solucion" («solución», «ver la solución», «me rindo»), "saltar"
+ *       («saltar», «siguiente», «otra posición»…) o null. Las mismas palabras
+ *       en todas las páginas que tienen las dos cosas.
  */
 (function () {
   "use strict";
@@ -243,11 +258,21 @@
       const casilla = (sq) => (enPalabras && BlindNotation.squareSpoken ? BlindNotation.squareSpoken(sq) : sq);
       return j.from && j.to ? "La solución era: de " + casilla(j.from) + " a " + casilla(j.to) + "." : "";
     }
-    return { dar, reiniciar, marcas: () => marcas, usadas: () => n };
+    /* «solución» escrita: directo a la última etapa, contando todas las
+       pistas que se saltó (para las estrellas es lo mismo que haberlas pedido). */
+    function solucion() {
+      const etapas = o.etapas();
+      n = Math.max(n, etapas.length - 1);
+      dar();
+    }
+    return { dar, reiniciar, solucion, marcas: () => marcas, usadas: () => n };
   }
 
   const PIEZAS_ES = { N: "C", B: "A", R: "T", Q: "D", K: "R" };
+  /* La jugada para la pantalla: en algebraica española («Cf3»), o en palabras
+     para quien no ve (ComandosTablero.jugadaParaMostrar, la de todo el sitio). */
   function jugadaEs(san) {
+    if (typeof window !== "undefined" && window.ComandosTablero && ComandosTablero.jugadaParaMostrar) return ComandosTablero.jugadaParaMostrar(san);
     if (typeof window !== "undefined" && window.VisorLinea) return VisorLinea.aEspanol(san);
     return String(san).replace(/[NBRQK]/g, (l) => PIEZAS_ES[l]);
   }
@@ -323,7 +348,38 @@
     return { cerrar, activo: () => activo, siguiente: () => sig.click() };
   }
 
-  const api = { racha, casillas, esAcierto, jugarCoronando, dibujar, marcarDestinos, destello, pistas, refutacion, jugadaEs, fin };
+  /* En la fase de captura de `window`, que va antes que la de `document`
+     (donde escucha js/vision-cuenta.js). */
+  function palabrasPrimero(campo, contestar) {
+    if (typeof window === "undefined") return;
+    const actual = () => (typeof campo === "function" ? campo() : campo);
+    const tratar = (e, c) => {
+      if (!c || !String(c.value || "").trim()) return;
+      if (contestar(c.value) !== true) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      c.value = "";
+    };
+    window.addEventListener("submit", (e) => {
+      const c = actual();
+      if (c && c.form && c.form === e.target) tratar(e, c);
+    }, true);
+    window.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter" || e.altKey || e.ctrlKey || e.metaKey) return;
+      const c = actual();
+      if (c && !c.form && e.target === c) tratar(e, c);
+    }, true);
+  }
+
+  function accionEscrita(texto) {
+    const t = String(texto || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
+      .replace(/[.,;:!?¡¿«»"'()]/g, " ").replace(/\s+/g, " ").trim();
+    if (/^((ver|dame|dime|mostrar|muestrame) )?(la )?(solucion|respuesta)$|^me rindo$/.test(t)) return "solucion";
+    if (/^(saltar|salta|saltarla|saltarlo|pasar|siguiente|sig|otro|otra)( (ejercicio|posicion|desafio|este|esta|este ejercicio|esta posicion|este desafio))?$/.test(t)) return "saltar";
+    return null;
+  }
+
+  const api = { racha, casillas, esAcierto, jugarCoronando, dibujar, marcarDestinos, destello, pistas, refutacion, jugadaEs, fin, palabrasPrimero, accionEscrita };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (typeof window !== "undefined") window.EjercicioTablero = api;
 })();

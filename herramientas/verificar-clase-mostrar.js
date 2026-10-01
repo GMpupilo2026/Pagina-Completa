@@ -114,11 +114,11 @@ async function pruebaAlumna(browser) {
   await page.waitForFunction(() => /Así lo resolvió/.test(document.getElementById("vista-profe").textContent), null, { timeout: 10000 });
   igual("se ve", await seVe(page, "#vista-profe"), true);
   igual("con el nombre", await page.textContent("#vista-profe"),
-    "📺 Así lo resolvió Beto Mora: 1. e4 e5 2. Nf3. La partida sigue guardada: cuando vuelva al final, la verás de nuevo.");
+    "📺 Así lo resolvió Beto Mora: 1. e4 e5 2. Cf3. La partida sigue guardada: cuando vuelva al final, la verás de nuevo.");
   igual("y su tablero la muestra", await page.evaluate(() => board.currentView().path), ["e4", "e5", "Nf3"]);
   await page.evaluate((f) => window.__cambioEnBase("game_state", f), fila([], vista(null)));
   igual("sin el nombre, «un compañero»", await page.textContent("#vista-profe"),
-    "📺 Así lo resolvió un compañero: 1. e4 e5 2. Nf3. La partida sigue guardada: cuando vuelva al final, la verás de nuevo.");
+    "📺 Así lo resolvió un compañero: 1. e4 e5 2. Cf3. La partida sigue guardada: cuando vuelva al final, la verás de nuevo.");
   await page.evaluate((f) => window.__cambioEnBase("game_state", f), fila([], null));
   igual("cuando el profe vuelve, se va", await seVe(page, "#vista-profe"), false);
   igual("sin errores en consola", errores, []);

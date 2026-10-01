@@ -569,6 +569,28 @@ async function pruebaProfesor(browser) {
      («dardo 78% Precisión»). Va con aria-hidden. */
   igual("el emoji de las tarjetas no lo lee el lector", await page.evaluate(() =>
     [...document.querySelectorAll("#stat-cards > div")].filter((d) => d.children[0].getAttribute("aria-hidden") !== "true").length), 0);
+  /* Las cifras se leían en un texto corrido («78% Precisión 3/4 Asistencia…»)
+     sin saber qué número iba con qué: cada tarjeta es un elemento de la lista
+     y se lee con el nombre delante («Precisión: 78 %»). Se mide lo que llega
+     al lector: el texto sin lo que va con aria-hidden. */
+  igual("las cifras son una lista, una tarjeta por elemento", await page.evaluate(() => {
+    const c = document.getElementById("stat-cards");
+    return [c.getAttribute("role"), [...c.children].every((d) => d.getAttribute("role") === "listitem")];
+  }), ["list", true]);
+  igual("y cada una se lee «nombre: cifra»", await page.evaluate(() => {
+    const leido = (el) => { const k = el.cloneNode(true); k.querySelectorAll('[aria-hidden="true"]').forEach((x) => x.remove()); return k.textContent.replace(/\s+/g, " ").trim(); };
+    const cards = [...document.querySelectorAll("#stat-cards > div")];
+    const de = (nombre) => { const d = cards.find((x) => x.children[2] && x.children[2].textContent.trim() === nombre); return d ? leido(d) : null; };
+    return [de("Precisión"), de("Asistencia (75%)")];
+  }), ["Precisión: 78 %", "Asistencia (75 %): 3/4"]);
+  /* El resumen desplegable del diagnóstico («🧭 … +»): ni la brújula ni el
+     «+» llegan al lector. */
+  await page.waitForFunction(() => /Diagnóstico y plan/.test(document.getElementById("diagnostico-title").textContent), null, { timeout: 5000 }).catch(() => {});
+  igual("el título del diagnóstico no lee la brújula ni el «+»", await page.evaluate(() => {
+    const s = document.querySelector("#diagnostico-report > summary").cloneNode(true);
+    s.querySelectorAll('[aria-hidden="true"]').forEach((x) => x.remove());
+    return /🧭|\+/.test(s.textContent) ? s.textContent.trim() : /^Diagnóstico y plan de entrenamiento — /.test(s.textContent.trim());
+  }), true);
   igual("Pendientes de revisar", await tarjeta(page, "Pendientes de revisar"), "1");
   igual("Asistencia", await tarjeta(page, "Asistencia (75%)"), "3/4");
   igual("Tiempo total en la plataforma", await tarjeta(page, "Tiempo total en la plataforma"), "1 h 35 min");

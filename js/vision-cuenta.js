@@ -142,9 +142,14 @@ window.VisionCuenta = (function () {
   /* Salir de la clase en vivo o de un examen tiene su propio camino (cierra la
      asistencia, congela el examen): ahí los atajos solo mueven el foco, nunca
      cambian de página. Es la misma excepción que js/atajo-buscar.js. */
+  /* En la clase y en el examen no se sale con un atajo: se perdería la clase
+     o el examen a medias. Pero solo mientras hay algo en marcha (un recuadro
+     para contestar): con «Todavía no hay clase» o el examen sin empezar o ya
+     entregado, los atajos sí llevan al panel. */
   function puedeSalir() {
     var p = paginaActual();
-    return p !== "sesion.html" && p !== "examen.html";
+    if (p !== "sesion.html" && p !== "examen.html") return true;
+    return !campoPrincipal();
   }
 
   function esNoAdaptada(href) {
@@ -166,7 +171,7 @@ window.VisionCuenta = (function () {
     { tecla: "a", que: "Volver a la página anterior", foco: "atras" },
     { tecla: "m", que: "Saltar al contenido de esta página", foco: "contenido" },
     { tecla: "b", que: "Oír la posición del tablero", foco: "posicion" },
-    { tecla: "c", que: "Volver al recuadro donde se escribe la jugada", foco: "comandos" },
+    { tecla: "c", que: "Ir al recuadro donde se escribe (la jugada o, en las páginas sin ejercicio, «Ir a»)", foco: "comandos" },
     { tecla: "h", que: "Oír esta lista de atajos", foco: "ayuda" },
   ];
 
@@ -251,8 +256,8 @@ window.VisionCuenta = (function () {
       return;
     }
     if (que === "comandos") {
-      var campo = campoPrincipal();
-      if (!campo || !enfocar(campo)) anunciar("En esta página no hay un recuadro para escribir la jugada.");
+      var campo = campoPrincipal() || document.getElementById("vc-ir");
+      if (!campo || !enfocar(campo)) anunciar("En esta página no hay un recuadro para escribir.");
     }
     if (que === "posicion") {
       /* La posición, dicha, sin salir del recuadro: la del tablero más grande a
@@ -310,6 +315,8 @@ window.VisionCuenta = (function () {
      2.03 abría la de la 2.01. Se sube de padre en padre y se para antes del
      que ya incluye otro recuadro (o en el diálogo, la sección o el main). */
   function zonaDe(campo) {
+    // El recuadro «Ir a…» de los accesos rápidos habla de TODA la página.
+    if (campo && campo.id === "vc-ir") return document.getElementById("main-content") || document.querySelector("main") || document.body;
     var dialogo = campo.closest("dialog[open], [role=dialog], [role=alertdialog]");
     var zona = campo.form || campo.parentElement, el = zona;
     while (el && el.parentElement && el !== document.body) {
@@ -368,6 +375,17 @@ window.VisionCuenta = (function () {
     if (!window.ComandosTablero) return false;
     try { return !!ComandosTablero.interpretar(texto, { juego: JUEGO_VACIO }).manejado; } catch (e) { return false; }
   }
+  /* Un botón que ES una respuesta (una opción de la pregunta) no se aprieta
+     por una palabra suelta: en el diagnóstico «volver» marcó la opción D, «Una
+     jugada ilegal que hay que volver atrás». Una acción se nombra en pocas
+     palabras («Siguiente →», «Volver a los niveles»); una opción es una frase,
+     o va marcada como opción. Por su nombre exacto se sigue pudiendo apretar. */
+  function esRespuesta(el, n) {
+    if (el.matches("[role=radio], [role=option], [aria-pressed], [data-opcion], [data-option]")) return true;
+    if (el.closest("[role=radiogroup], [role=listbox], [role=group][aria-labelledby]")) return true;
+    if (/^(opcion|respuesta)\b/.test(n) || /^[a-h1-9][).:-]\s/.test(n)) return true;
+    return n.split(" ").length > 5;
+  }
   function buscarAccion(t, campo) {
     var todas = accionesDe(campo);
     var exacta = todas.filter(function (el) { return nombreDe(el) === t; });
@@ -385,7 +403,7 @@ window.VisionCuenta = (function () {
          propio «siguiente», y apretarlo destapaba la solución en los cursos. */
       var hit = todas.filter(function (el) {
         var n = nombreDe(el);
-        return !el.matches("input[type=checkbox], input[type=radio]") && tienePalabras(n, lista[i]) &&
+        return !el.matches("input[type=checkbox], input[type=radio]") && !esRespuesta(el, n) && tienePalabras(n, lista[i]) &&
           !(t === "siguiente" && /\bjugada\b/.test(n));
       });
       if (hit.length) return hit[0];
@@ -524,7 +542,7 @@ window.VisionCuenta = (function () {
      quien no ve empieza escribiendo y no buscando dónde. No se lo quita a
      nada que la persona haya elegido (otro recuadro, un botón, un enlace). */
   var buscandoFoco = null;
-  function llevarAlRecuadro() {
+  function llevarAlRecuadro(alCargar) {
     if (!esCiego()) return;
     clearTimeout(buscandoFoco);
     buscandoFoco = setTimeout(function () {
@@ -533,7 +551,15 @@ window.VisionCuenta = (function () {
         a.id === "main-content" || a.tagName === "MAIN";
       if (!sinLugar) return;
       var c = campoPrincipal();
-      if (c) c.focus();
+      if (c) { c.focus(); return; }
+      /* Sin recuadro (el panel, Tareas, Informes): al cargar, el foco al
+         título, que es lo primero que el lector dice; no a mitad de la
+         página, que quien no ve no sabe dónde quedó. Solo al cargar: después,
+         mover el foco cada vez que la página cambia le cortaría la lectura. */
+      if (alCargar) {
+        var h1 = document.querySelector("main h1, #main-content h1, h1");
+        if (h1 && visible(h1)) { if (!h1.hasAttribute("tabindex")) h1.setAttribute("tabindex", "-1"); h1.focus(); }
+      }
     }, 200);
   }
 
@@ -657,17 +683,77 @@ window.VisionCuenta = (function () {
     h.focus();
   }
 
+  /* Las páginas sin recuadro de comandos (el panel, Tareas, Informes, Logros)
+     también se manejan escribiendo: en los accesos rápidos va un recuadro
+     «Ir a…» que entiende lo mismo que los demás («acciones», «leer», «dónde
+     estoy», «atajos», el nombre de un botón o enlace) y, además, parte de un
+     nombre: «tareas», «examen», «entrenar» llevan al enlace o a la sección que
+     lo nombra. En los ejercicios no se pone: ahí ya está su recuadro. */
+  function ponerRecuadroIr() {
+    var nav = document.getElementById("accesos-rapidos");
+    if (!nav || document.getElementById("vc-ir") || campoPrincipal()) return;
+    var li = document.createElement("li");
+    var form = document.createElement("form");
+    form.setAttribute("role", "search");
+    var etiqueta = document.createElement("label");
+    etiqueta.setAttribute("for", "vc-ir");
+    etiqueta.textContent = "Ir a: ";
+    var campo = document.createElement("input");
+    campo.id = "vc-ir";
+    campo.type = "text";
+    campo.autocomplete = "off";
+    campo.setAttribute("aria-describedby", "vc-ir-ayuda");
+    campo.style.cssText = "color:#102a43;background:#fff;border-radius:.375rem;padding:.4rem .5rem;min-height:44px;max-width:14rem";
+    var ayuda = document.createElement("span");
+    ayuda.id = "vc-ir-ayuda";
+    ayuda.className = "sr-only";
+    ayuda.textContent = "Escribe a dónde quieres ir (por ejemplo «tareas» o «entrenar»), o «acciones» para oír los enlaces y botones de esta página.";
+    form.append(etiqueta, campo, ayuda);
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var texto = campo.value.trim();
+      if (!texto) return;
+      campo.value = "";
+      if (comandoGeneral(texto, campo)) return;
+      var t = norm(texto);
+      var palabras = t.split(" ");
+      var zona = zonaDe(campo);
+      var todos = Array.prototype.filter.call(zona.querySelectorAll("a[href], button, h2, h3"), function (el) {
+        if (el.closest("[aria-hidden=true], #accesos-rapidos") || !visible(el)) return false;
+        var n = nombreDe(el);
+        return n && palabras.every(function (p) { return (" " + n + " ").indexOf(" " + p) !== -1; });
+      });
+      var enlace = todos.filter(function (el) { return !/^H[23]$/.test(el.tagName); })[0];
+      var titulo = todos.filter(function (el) { return /^H[23]$/.test(el.tagName); })[0];
+      if (titulo && (!enlace || nombreDe(titulo) === t)) {
+        if (!titulo.hasAttribute("tabindex")) titulo.setAttribute("tabindex", "-1");
+        titulo.focus();
+        return;
+      }
+      if (enlace) {
+        var nombre = String(enlace.getAttribute("aria-label") || textoDe(enlace)).replace(/^[^0-9A-Za-zÁÉÍÓÚÑáéíóúñ¿¡]+/, "").trim();
+        anunciar("Abriendo: " + nombre + ".");
+        enlace.click();
+        return;
+      }
+      anunciar("No encontré «" + texto + "» en esta página. Escribe «acciones» para oír sus enlaces y botones, «dónde estoy» para oír sus secciones, o «panel» para volver a tu panel.");
+    });
+    li.appendChild(form);
+    nav.querySelector("ul").appendChild(li);
+  }
+
   var observador = null;
   function montarCiego() {
     if (!document.body) return;
     llevarAlRecuadro();
-    setTimeout(llevarAlRecuadro, 1200);   // lo que la página pinta después de cargar
+    setTimeout(function () { llevarAlRecuadro(true); }, 1200);   // lo que la página pinta después de cargar
     ponerAccesos();
+    setTimeout(ponerRecuadroIr, 1500);
     ocultarNoAdaptado(document);
     avisarPaginaNoAdaptada();
     if (!observador && window.MutationObserver) {
       observador = new MutationObserver(function (registros) {
-        llevarAlRecuadro();
+        llevarAlRecuadro(false);
         registros.forEach(function (r) {
           Array.prototype.forEach.call(r.addedNodes, function (n) {
             if (n.nodeType !== 1) return;

@@ -260,6 +260,24 @@ function decirDonde() {
     (partida.tesoros.length > 1 ? "Quedan dos tesoros. " : "") + textoLectura(partida.lecturas[partida.lecturas.length - 1]));
 }
 
+/* La posición del Sonar es lo que se sabe: la pieza, las casillas por donde
+   ya pasó, los tesoros recogidos y la última lectura. */
+function decirPosicion() {
+  const p = pieza();
+  const pisadas = [];
+  partida.lecturas.forEach((l) => { if (pisadas.indexOf(l.casilla) === -1) pisadas.push(l.casilla); });
+  const antes = pisadas.filter((sq) => sq !== partida.pos);
+  avisar("Nivel " + nivelActual + ". Tu " + p.nombre + " está en " + hablada(partida.pos) + ". Llevas " + cuantas(partida.jugadas, p) + "." +
+    (antes.length ? " Ya pasaste por " + lista(antes.map(hablada)) + "." : " Todavía no te has movido.") +
+    (partida.recogidos.length ? " Tesoros recogidos: " + lista(partida.recogidos.map(hablada)) + "." : "") +
+    (partida.terminada ? " La partida terminó: escribe «nuevo» para otra." :
+      " " + (partida.tesoros.length > 1 ? "Quedan dos tesoros. " : "") + textoLectura(partida.lecturas[partida.lecturas.length - 1])));
+}
+
+function normalizarPedido(t) {
+  return String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim();
+}
+
 function decirJugadas() {
   const vistas = {};
   partida.lecturas.forEach((l) => { vistas[l.casilla] = true; });
@@ -303,6 +321,21 @@ $("cmd-form").addEventListener("submit", (e) => {
     if (partida.terminada) { empezar(sig ? sig.id : nivelActual); return; }
     avisar("La partida sigue: todavía no encontraste el tesoro. Para dejarla, escribe «nuevo» (otra partida de este nivel)" +
       (sig ? " o «nivel " + sig.id + "» para el siguiente." : "."));
+    return;
+  }
+  /* «tiempo» y «cómo está la posición»: lo que se pregunta en todos los
+     recuadros del sitio. Acá no hay reloj, y la posición es lo que se sabe: dónde
+     está la pieza, por dónde pasó y qué tesoros ya recogió. Antes las dos daban
+     «No entendí». */
+  const pedido = normalizarPedido(texto);
+  if (/^(tiempo|el tiempo|reloj|cuanto tiempo|cuanto tiempo me queda|cuanto tiempo queda|segundos)$/.test(pedido)) {
+    input.value = "";
+    avisar("En este ejercicio no hay «tiempo»: no hay reloj, piensa con calma.");
+    return;
+  }
+  if (/^(como esta la posicion|cual es la posicion|la posicion|describe la posicion|describir la posicion|leer la posicion|lee la posicion|tablero|el tablero|que hay en el tablero)$/.test(pedido)) {
+    input.value = "";
+    decirPosicion();
     return;
   }
   const c = S.leerComando(texto);

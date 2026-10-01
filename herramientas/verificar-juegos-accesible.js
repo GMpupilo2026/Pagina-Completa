@@ -82,6 +82,7 @@ window.__consultas = [];
       is() { return b; }, not() { return b; }, or() { return b; },
       order() { return b; }, limit(n) { filas2 = filas2.slice(0, n); return b; }, range() { return b; },
       insert(fila) { resultado = fila; return b; },
+      upsert(fila) { resultado = fila; return b; },   // Racha táctica guarda la mejor racha así
       // Como la base: devuelve las filas que cumplen los filtros, ya actualizadas.
       // Las páginas encadenan .eq("status", "playing").select("id") y miran si volvió
       // alguna: devolver el parche suelto las haría creer que no se guardó nada.
@@ -628,6 +629,28 @@ async function pruebaLasRachas(browser) {
     /* Legal pero no era la del ejercicio: empieza por «Respuesta incorrecta» y
        dice la jugada que se hizo, en palabras. */
     ok("    y empieza por «Respuesta incorrecta: caballo gustav 5»", /^Respuesta incorrecta: caballo gustav 5 /.test(fallo), fallo);
+    /* Terminada la racha, todo contestaba «Ahora mismo no se puede contestar» y
+       quien no ve tenía que salir a buscar el botón «Jugar de nuevo». El final
+       dice qué escribir, y «otra vez» / «siguiente» arrancan otra racha. */
+    ok("    el final dice qué escribir para seguir", /Escribe «otra vez» para jugar de nuevo\.$/.test(fallo), fallo);
+    const dice = async (texto, espera) => {
+      await page.fill(".cc-input", texto);
+      await page.press(".cc-input", "Enter");
+      await page.waitForTimeout(espera || 250);
+      return page.evaluate(() => ({ msg: (document.querySelector(".cc-msg") || {}).textContent || "",
+        res: document.getElementById("result-text").textContent }));
+    };
+    let d = await dice("Ac4");
+    ok("    una jugada con la racha terminada lo dice (no «Ahora mismo no se puede»)", /^La racha terminó\. Escribe «otra vez»/.test(d.msg), d.msg);
+    d = await dice("otra vez", 500);
+    ok("    «otra vez» empieza otra racha", /Ejercicio nuevo/.test(d.res) && !/no se puede/.test(d.msg), d);
+    // Un acierto y un fallo: con racha 1 se guarda el récord (Racha táctica, upsert).
+    await dice("Ac4", 700);
+    d = await dice("Cg5", 700);
+    ok("    se puede volver a fallar", /^Respuesta incorrecta/.test(d.res) && /Racha final: 1\./.test(d.res), d.res);
+    d = await dice("siguiente", 500);
+    ok("    y «siguiente» también empieza otra", /Ejercicio nuevo/.test(d.res), d);
+    igual("    sin errores de JavaScript en todo el ida y vuelta", errores.length, 0);
     await ctx.close();
   }
 
@@ -692,6 +715,54 @@ async function pruebaElEnroqueDichoYLosMensajes(browser) {
   const reyC1 = await a.page.evaluate(() => { const p = document.getElementById("chessboard").__tableroAccesibleCfg.juego().get("c1"); return p ? p.type + p.color : null; });
   ok("tablero.html: «enroque largo» enroca contra Oscar", reyC1 === "kw" && /enroque largo/.test(d) && !/legal|entend/i.test(d), { reyC1, d });
   await a.ctx.close();
+}
+
+/* «siguiente» contra Oscar con la cuenta ciega. La capa del recuadro aprieta el
+   botón que «hace siguiente», y en tablero.html ese botón es «🎲 Otra posición»
+   del Modo Desafío: a mitad de una partida normal cambiaba la tarjeta del
+   desafío sin decir nada. En una partida no hay «siguiente»; con el Modo
+   Desafío activo, sí. */
+async function pruebaSiguienteContraOscar(browser) {
+  console.log("\n▶ Contra Oscar: «siguiente» en una partida y en el Modo Desafío");
+  const ctx = await browser.newContext({ serviceWorkers: "block" });
+  await ctx.addInitScript(preferencias(true));
+  await ctx.addInitScript(() => { try { localStorage.setItem("ai_vision_v1", JSON.stringify({ persona: "u-ana", vision: "ciego" })); } catch (e) {} });
+  const page = await ctx.newPage();
+  const errores = [];
+  page.on("pageerror", (e) => errores.push(String(e)));
+  await page.goto(BASE + "/tablero.html");
+  await page.waitForFunction(() => document.documentElement.classList.contains("modo-ciego"), { timeout: 8000 }).catch(() => {});
+  await page.waitForTimeout(800);
+  const tarjeta = () => page.evaluate(() => document.getElementById("challenge-info").textContent);
+  const antes = await tarjeta();
+  await escribir(page, "e4");
+  await page.waitForTimeout(1500);   // Oscar contesta
+  const jugadas = await page.evaluate(() => document.getElementById("chessboard").__tableroAccesibleCfg.juego().history().length);
+  await escribir(page, "siguiente");
+  let d = await loQueDijoElRecuadro(page);
+  ok("en una partida normal «siguiente» dice que no hay siguiente y cómo empezar otra",
+    /^En una partida no hay «siguiente»/.test(d) && /escribe «rendirse» y después «nueva partida»/.test(d), d);
+  igual("  y no cambia la tarjeta del Modo Desafío", await tarjeta(), antes);
+  igual("  ni la partida", await page.evaluate(() => document.getElementById("chessboard").__tableroAccesibleCfg.juego().history().length), jugadas);
+
+  await escribir(page, "jugar esta posición");
+  await page.waitForTimeout(600);
+  const fen1 = await page.evaluate(() => document.getElementById("chessboard").__tableroAccesibleCfg.juego().fen());
+  await escribir(page, "siguiente");
+  await page.waitForTimeout(600);
+  d = await loQueDijoElRecuadro(page);
+  const fen2 = await page.evaluate(() => document.getElementById("chessboard").__tableroAccesibleCfg.juego().fen());
+  ok("con el Modo Desafío activo «siguiente» trae otra posición y la dice", /^Otra posición del Modo Desafío/.test(d) && fen1 !== fen2, { d, fen1, fen2 });
+  // Lo que se le dice que escriba funciona: «rendirse» y después «nueva partida».
+  await escribir(page, "rendirse");
+  d = await loQueDijoElRecuadro(page);
+  ok("«rendirse» termina la partida y dice qué escribir", /^Te rendiste: Oscar gana\. Escribe «nueva partida»/.test(d), d);
+  await escribir(page, "nueva partida");
+  await page.waitForTimeout(600);
+  d = await loQueDijoElRecuadro(page);
+  ok("«nueva partida» empieza otra", /^Partida nueva contra Oscar/.test(d), d);
+  igual("sin errores de la página", errores.length, 0);
+  await ctx.close();
 }
 
 // ======================= 10. estandar y niebla: turno, reloj, última jugada, coronar
@@ -869,6 +940,7 @@ async function pruebaLoQueQuedaEscritoYLoQueSeDice(browser) {
     await pruebaLasRachas(browser);
     pruebaElRelojHablado();
     await pruebaElEnroqueDichoYLosMensajes(browser);
+    await pruebaSiguienteContraOscar(browser);
     await pruebaElTurnoElRelojYLaUltima(browser);
     await pruebaLoQueQuedaEscritoYLoQueSeDice(browser);
   } finally {

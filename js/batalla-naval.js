@@ -258,6 +258,26 @@ function decirHistorial() {
   avisar("Tus disparos. " + ds.map((d) => hablada(d.casilla) + ": " + (d.resultado === "hundido" ? B.PIEZAS[d.tipo].nombre + " " + hundida(d.tipo) : "agua, " + d.cuenta)).join(". ") + ".");
 }
 
+/* La posición de la Batalla naval es lo que se sabe del mar: las casillas
+   disparadas y qué dijo cada una, lo que queda a flote y, en el duelo, tu flota. */
+function decirPosicion() {
+  const ds = partida.mar.disparos;
+  const agua = ds.filter((d) => d.resultado !== "hundido").map((d) => hablada(d.casilla) + " (" + d.cuenta + ")");
+  let t = "Nivel " + nivelActual + ". " + (ds.length
+    ? "Llevas " + disparos(ds.length) + "." + (agua.length ? " Agua en " + lista(agua) + "; el número es cuántas piezas apuntan ahí." : "")
+    : "Todavía no disparaste.");
+  t += " " + textoFlota(partida.mar);
+  if (partida.duelo) {
+    t += " Tu flota: " + lista(partida.miMar.flota.map((p) => conArticulo(p.tipo) + " en " + hablada(p.casilla) + (p.hundida ? ", " + hundida(p.tipo) : ""))) + ".";
+  }
+  if (partida.terminada) t += " La partida terminó: escribe «nuevo» para otra.";
+  avisar(t);
+}
+
+function normalizarPedido(t) {
+  return String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim();
+}
+
 function decirFlota() {
   avisar("La flota de la computadora. " + textoFlota(partida.mar) + (partida.duelo ? " Tu flota. " + textoFlota(partida.miMar) : ""));
 }
@@ -312,6 +332,21 @@ $("cmd-form").addEventListener("submit", (e) => {
     if (partida.terminada) { empezar(sig ? sig.id : nivelActual); return; }
     avisar("La partida sigue: todavía queda flota a flote. Para dejarla, escribe «nuevo» (otra partida de este nivel)" +
       (sig ? " o «nivel " + sig.id + "» para el siguiente." : "."));
+    return;
+  }
+  /* «tiempo» y «posición» (o «cómo está la posición»): lo que se pregunta en
+     todos los recuadros del sitio. Acá no hay reloj, y la posición es lo que se
+     sabe del mar: los disparos, lo que queda a flote y, en el duelo, tu flota.
+     Antes las dos daban «No entendí». */
+  const pedido = normalizarPedido(texto);
+  if (/^(tiempo|el tiempo|reloj|cuanto tiempo|cuanto tiempo me queda|cuanto tiempo queda|segundos)$/.test(pedido)) {
+    input.value = "";
+    avisar("En este ejercicio no hay «tiempo»: no hay reloj, piensa con calma.");
+    return;
+  }
+  if (/^(posicion|la posicion|como esta la posicion|cual es la posicion|describe la posicion|describir la posicion|leer la posicion|lee la posicion|tablero|el tablero|que hay en el tablero|como voy|como va)$/.test(pedido)) {
+    input.value = "";
+    decirPosicion();
     return;
   }
   const c = B.leerComando(texto);

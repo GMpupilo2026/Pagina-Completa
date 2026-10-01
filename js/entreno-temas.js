@@ -486,7 +486,7 @@ function refrescarComandos(){
          cambiado —la jugada del rival, la pista—. Se pide con «posición». */
       posicionViva: false,
     });
-    comandos.ayuda('Jugada: "Cf3", "Nf3", "e4", "Dxh7+", "e8=D". Pregunta: "caballos", "qué hay en e4". Escribe "ayuda" para todo.');
+    comandos.ayuda('Jugada: "Cf3", "e4", "Dxh7+", "e8=D". Pregunta: "caballos", "qué hay en e4". Escribe "ayuda" para todo.');
   }
   comandos.posicion(game);
 }
@@ -524,8 +524,7 @@ function setStatus(text, cls){
 // Una jugada como se oye: en palabras en Modo Adaptado («caballo felix 3»),
 // en castellano si no («Cf3»).
 function jugadaDicha(san){
-  return document.documentElement.classList.contains('adaptive-mode') && window.BlindNotation
-    ? window.BlindNotation.sanSpoken(san) : EjercicioTablero.jugadaEs(san);
+  return ComandosTablero.jugadaParaMostrar(san);
 }
 function highlightTargets(square){ EjercicioTablero.marcarDestinos(document.getElementById('board'), game, square); }
 

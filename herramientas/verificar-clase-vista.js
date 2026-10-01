@@ -124,14 +124,14 @@ async function pruebaAlumna(browser) {
   igual("al entrar ya ve la variante: caballo en f6", /caballo negro/.test(await casilla(page, "f6")), true);
   igual("y no el de la partida en c6", /vacía/.test(await casilla(page, "c6")), true);
   igual("con el aviso escrito", await seVe(page, "vista-profe"), true);
-  igual("que dice cuál es", /variante: 2… Nf6\./.test(await page.textContent("#vista-profe")), true);
+  igual("que dice cuál es", /variante: 2… Cf6\./.test(await page.textContent("#vista-profe")), true);
   igual("el turno es el de lo que ve", await page.textContent("#turn-indicator"), "Turno: Blancas");
 
   // El profe baja por la variante.
   await page.evaluate((v) => window.__cambioEnBase("game_state", v),
     fila({ vista: { path: ["e4", "e5", "Nf3", "Nf6", "Bc4"], parent: "n2", root: 3 } }));
   igual("sigue la variante: alfil en c4", /alfil blanco/.test(await casilla(page, "c4")), true);
-  igual("el aviso la nombra entera", /variante: 2… Nf6 3\. Bc4\./.test(await page.textContent("#vista-profe")), true);
+  igual("el aviso la nombra entera", /variante: 2… Cf6 3\. Ac4\./.test(await page.textContent("#vista-profe")), true);
 
   // El profe se devuelve en la partida.
   await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ vista: { path: ["e4", "e5"], parent: null, root: 2 } }));

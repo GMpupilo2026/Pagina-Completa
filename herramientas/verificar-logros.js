@@ -291,6 +291,17 @@ async function abrir(browser, ruta, sesion, stats, opts) {
     igual("el motivo del ajuste se ve como texto, no como HTML",
       await page.evaluate(() => [document.querySelector("#trofeos-body b") === null, document.getElementById("trofeos-body").textContent.includes("<b>Buen</b> trabajo")]), [true, true]);
 
+    /* Los emojis son adorno: el lector decía «0 fuego días seguidos», «trofeo 12
+       trofeos». Se mide lo que llega al lector: el texto sin lo que va con
+       aria-hidden. */
+    igual("la racha, los trofeos y las insignias no leen el emoji", await page.evaluate(() => {
+      const leido = (el) => { if (!el) return null; const k = el.cloneNode(true); k.querySelectorAll('[aria-hidden="true"]').forEach((x) => x.remove()); return k.textContent.replace(/\s+/g, " ").trim(); };
+      return [leido(document.getElementById("racha-actual").nextElementSibling),
+        leido(document.querySelector("#trofeos-body [data-trofeos-total]")),
+        leido(document.querySelector("#trofeos-body [data-insignias] p")),
+        leido(Array.from(document.querySelectorAll("#logros-grid li")).find((li) => li.textContent.includes("Conseguido")).querySelector(".mt-auto span:last-child"))];
+    }), ["días seguidos", "12 trofeos", "7 insignias", "Conseguido"]);
+
     // Un logro ya conseguido no debe verse "bloqueado": ni con 🔒 ni apagado.
     const primeraRacha = await page.evaluate(() => document.querySelector("#logros-grid li"));
     igual("el primer logro (racha de 3 días, ya conseguido) no muestra el candado",

@@ -759,8 +759,19 @@ function turnoDelBot() {
     if (ad.turno() !== miColor) setTimeout(turnoDelBot, BotOscar.demora(nivel));
 }
 
+/* El historial va en algebraica española («Cf3», «Txe8+»). Las variantes de
+   js/variantes-engines.js ya anotan en español; chess.js (niebla), Crazyhouse
+   y Cartas dan la letra inglesa, que se cambia acá: solo la de la pieza del
+   principio y la de la coronación («Rey salta a e4» de Cartas queda igual). */
+const LETRA_ES = { K: "R", Q: "D", R: "T", B: "A", N: "C" };
+function jugadaEnEspanol(san) {
+    if (MODALIDADES[modalidad].tablero === "niebla" && window.ComandosTablero) return ComandosTablero.jugadaParaMostrar(san);
+    return String(san).replace(/^[KQRBN](?=[a-h1-8x@])/, (l) => LETRA_ES[l]).replace(/=([QRBN])/, (_, l) => "=" + LETRA_ES[l]);
+}
 function anotar(hecho, jugada) {
-    const texto = (hecho && (hecho.san || hecho.sanEs)) || `${jugada.from}${jugada.to}`;
+    const tablero = MODALIDADES[modalidad].tablero;
+    const enIngles = hecho && hecho.san && (tablero === "niebla" || tablero === "crazyhouse" || tablero === "cartas");
+    const texto = enIngles ? jugadaEnEspanol(hecho.san) : ((hecho && (hecho.san || hecho.sanEs)) || `${jugada.from}${jugada.to}`);
     historial.push(texto);
     pintarHistorial();
 }
@@ -828,8 +839,8 @@ function avisar(texto, tipo) {
 }
 
 /* ---------------- A ciegas: la jugada se escribe ----------------
-   Se pasa por moveText() del motor, que es el que entiende la notación en
-   español y en inglés y también las coordenadas (Cf3, Nf3, g1f3, 0-0). Es el
+   Se pasa por moveText() del motor, que es el que entiende la notación
+   algebraica española (la R es el rey) y también las coordenadas (Cf3, g1f3, 0-0). Es el
    mismo camino que usa la página de partida. */
 function jugarEscrita() {
     if (!ad || terminada || pensando || ad.turno() !== miColor) return;

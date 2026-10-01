@@ -202,13 +202,27 @@ function responderEscribiendo(texto, api) {
   if (/^(saltar|saltarla|dejar en blanco|en blanco)$/.test(t)) { api.limpiar(); pasarALaSiguiente(); return; }
   if (/^(siguiente|sig)$/.test(t)) {
     api.limpiar();
-    if (sinContestar() && avisadoSinContestar !== idx) { avisarSinContestar(); return; }
+    if (sinContestar() && avisadoSinContestar !== idx) { avisarSinContestar(true); return; }
     pasarALaSiguiente();
+    return;
+  }
+  // «volver» / «anterior»: la posición de antes, como «← Anterior». Antes daba «No entendí».
+  if (/^(volver|anterior|atras|la anterior|posicion anterior)$/.test(t)) {
+    api.limpiar();
+    if (idx === 0) { api.decir('Es la primera posición: no hay una anterior. «salir» deja la ronda y vuelve al inicio de Precisión posicional.'); return; }
+    idx--; pintarPregunta(); api.decir(`Volviste a la anterior. ${preguntaDicha()}`);
+    return;
+  }
+  if (/^(salir|volver al inicio|dejar la ronda)$/.test(t)) {
+    api.limpiar();
+    irA('intro-view', $('intro-titulo'));
+    pintarPrevio();
+    anunciar('Dejaste la ronda sin terminar. Estás en el inicio de Precisión posicional: el botón «Empezar» arranca una ronda nueva.');
     return;
   }
   const i = CuadroComandos.opcionPedida(texto, item.opciones.length);
   if (i === null) {
-    api.decir(`No entendí "${texto}". Escribe la letra de una opción, de la A a la ${CuadroComandos.letra(item.opciones.length - 1)}. «opciones» las vuelve a decir.`);
+    api.decir(`No entendí «${texto.trim()}». Escribe la letra de una opción, de la A a la ${CuadroComandos.letra(item.opciones.length - 1)}. «opciones» las vuelve a decir.`);
     return;
   }
   // `i` es la POSICIÓN en la lista barajada; lo que se guarda es cuál opción
@@ -391,11 +405,24 @@ $('prev-btn').addEventListener('click', () => { if (idx > 0) { idx--; pintarPreg
    «Listo: Siguiente.» enseguida del clic y lo taparía. */
 let avisadoSinContestar = -1;
 function sinContestar() { return respuestas[tanda[idx].id] === undefined; }
-function avisarSinContestar() {
+function avisarSinContestar(escrito) {
   avisadoSinContestar = idx;
   const texto = `Todavía no contestaste esta; escribe la letra (de la A a la ${CuadroComandos.letra(tanda[idx].opciones.length - 1)}) o «saltar» para dejarla en blanco.`;
+  if (escrito) { if (comandos) comandos.decir(texto); return; }
   setTimeout(() => { if (comandos) comandos.decir(texto); }, 150);
 }
+/* «siguiente» escrito lo contesta la página ANTES que la capa de la cuenta
+   ciega (js/vision-cuenta.js): esa apretaba «Siguiente →» y se oía «Listo:
+   Siguiente. ‖ Todavía no contestaste esta», como si hubiera pasado. Ahora,
+   sin respuesta, lo único que se oye es el aviso, y la pregunta no cambia. Lo
+   mismo «volver», «anterior» y «salir». */
+if (window.EjercicioTablero) EjercicioTablero.palabrasPrimero(() => (comandos ? comandos.input : null), (texto) => {
+  if (!comandos || $('pregunta-view').classList.contains('hidden') || !tanda[idx]) return false;
+  const t = CuadroComandos.normalizar(texto);
+  if (!/^(siguiente|sig|volver|anterior|atras|la anterior|posicion anterior|salir|volver al inicio|dejar la ronda)$/.test(t)) return false;
+  responderEscribiendo(texto, comandos);
+  return true;
+});
 function pasarALaSiguiente() {
   avisadoSinContestar = -1;
   if (idx === tanda.length - 1) { terminar(); return; }

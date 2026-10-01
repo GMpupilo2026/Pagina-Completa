@@ -119,11 +119,11 @@ async function pruebaProfesor(browser) {
   });
   await page.waitForFunction(() => document.querySelectorAll("#move-list button").length === 4, null, { timeout: 10000 });
   igual("el editor se ve, sobre la última jugada", await seVe(page, "#comentar-jugada"), true);
-  igual("y dice cuál es", await page.textContent("#comentar-jugada-cual"), "31… Kh7");
+  igual("y dice cuál es", await page.textContent("#comentar-jugada-cual"), "31… Rh7");
 
   // Comentar la jugada 31. Ra8+: se va a ella y se comenta.
   await page.click("#move-nav-prev");
-  igual("al volver una jugada, comenta esa", await page.textContent("#comentar-jugada-cual"), "31. Ra8+");
+  igual("al volver una jugada, comenta esa", await page.textContent("#comentar-jugada-cual"), "31. Ta8+");
   await page.click('#comentar-signos button[data-nag="1"]');
   igual("el signo elegido se marca", await page.getAttribute('#comentar-signos button[data-nag="1"]', "aria-pressed"), "true");
   await page.fill("#comentar-texto", "El mate del pasillo");
@@ -134,7 +134,7 @@ async function pruebaProfesor(browser) {
     return u.length ? u[u.length - 1].campos.comentarios : null;
   }), { "h6 Ra8+": { nag: 1, texto: "El mate del pasillo" } });
   igual("la lista marca la jugada", await page.evaluate(() =>
-    [...document.querySelectorAll("#move-list button")].map((b) => b.textContent).includes("Ra8+! 💬")), true);
+    [...document.querySelectorAll("#move-list button")].map((b) => b.textContent).includes("Ta8+! 💬")), true);
 
   // Guardar el PGN: posición de arranque, variante y comentario.
   await page.click("#move-nav-last");
@@ -164,7 +164,7 @@ async function pruebaAlumna(browser) {
   await page.waitForFunction(() => !!document.querySelector('#chessboard [data-square="a8"]'), null, { timeout: 10000 });
   igual("lo ve debajo del tablero", await seVe(page, "#comentario-profe"), true);
   igual("con la jugada, el signo dicho y el texto", await page.textContent("#comentario-profe"),
-    "📝 Tu profe comentó 31. Ra8+! (buena jugada): El mate del pasillo");
+    "📝 Tu profe comentó 31. Ta8+! (buena jugada): El mate del pasillo");
   await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ comentarios, vista: null }));
   igual("mirando otra jugada, no", await seVe(page, "#comentario-profe"), false);
   igual("no tiene el editor", await seVe(page, "#comentar-jugada"), false);

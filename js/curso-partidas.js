@@ -87,6 +87,26 @@
     return out.join(" ") + (turn === "w" ? " Juegan blancas." : " Juegan negras.");
   }
   function moveLabel(m) { return (m.color === "w" ? m.n + "." : m.n + "…") + esSan(m.san) + (m.nag || ""); }
+  /* El nombre de un botón de la lista de jugadas: «Ir a la jugada 10: e4?!» y
+     no «10.e4?!» ni «e4?!» a secas. Con la cuenta ciega, lo escrito en el
+     recuadro aprieta el botón que se llama IGUAL (js/vision-cuenta.js), y
+     escribir «e4» saltaba a la jugada 10 de la partida en vez de contestar. */
+  function nombreDeJugada(m) {
+    return "Ir a la jugada " + m.n + (m.color === "b" ? " de las negras" : "") + ": " + esSan(m.san) + (m.nag || "");
+  }
+  /* Cada visor en su propia <section>. «leer» y los botones que se aprietan
+     escribiendo (js/vision-cuenta.js) se buscan en la «zona» del recuadro: el
+     contenedor más grande que lo tiene a él y a ningún otro, parando en la
+     primera <section>. Sin la suya, la zona era la lección entera y «leer»
+     leía la introducción del curso en vez del ejercicio. Sin nombre, la
+     <section> no es un punto de referencia más para el lector. */
+  function zonaPropia(el) {
+    if (!el.parentElement || (el.parentElement.matches && el.parentElement.matches("section.cp-zona"))) return;
+    const sec = document.createElement("section");
+    sec.className = "cp-zona";
+    el.parentElement.insertBefore(sec, el);
+    sec.appendChild(el);
+  }
 
   // ---------- tablero SVG ----------
   function boardSvg(fen, opts) {
@@ -303,6 +323,7 @@
     const moves = g.moves, claves = g.claves || [];
     const claveAt = {}; claves.forEach((c) => { claveAt[c.ply] = c; });
     const state = { ply: 0, flip: g.orientacion === "b", mode: "ver", guess: null, intentos: 0, aciertos: 0, fallos: 0, pendientes: null };
+    zonaPropia(el);
     el.classList.add("cp-viewer");
     el.innerHTML =
       '<div class="cp-head"><span class="cp-players">' + esc(g.blancas) + " – " + esc(g.negras) + '</span><span class="cp-event">' + esc(g.evento || "") + '</span><span class="cp-res" data-res="' + esc(g.resultado) + '">' + esc(g.resultado || "") + "</span></div>" +
@@ -361,7 +382,7 @@
         const ply = i + 1;
         if (hideFrom != null && ply >= hideFrom) return;
         const pre = m.color === "w" ? m.n + "." : (i === 0 || m.gap ? m.n + "…" : "");
-        html += '<button type="button" data-ply="' + ply + '"' + (m.comentario ? ' class="hasc"' : "") + (claveAt[ply] ? ' data-key="1" title="Momento clave"' : "") + ">" + esc(pre + esSan(m.san) + (m.nag || "")) + "</button>";
+        html += '<button type="button" data-ply="' + ply + '" aria-label="' + esc(nombreDeJugada(m)) + '"' + (m.comentario ? ' class="hasc"' : "") + (claveAt[ply] ? ' data-key="1" title="Momento clave"' : "") + ">" + esc(pre + esSan(m.san) + (m.nag || "")) + "</button>";
       });
       if (hideFrom == null && g.resultado) html += '<span class="cp-h"> ' + esc(g.resultado) + "</span>";
       movesEl.innerHTML = html;
@@ -423,7 +444,19 @@
       if (/^(practicar|jugar|jugar contra el motor)$/.test(t)) { api.limpiar(); startPractice(); return; }
       if (/^girar( el tablero)?$/.test(t)) { api.limpiar(); state.flip = !state.flip; renderView(); api.decir(state.flip ? "Ahora ves el tablero desde las negras." : "Ahora ves el tablero desde las blancas."); return; }
       const n = window.VisorLinea ? window.VisorLinea.pasoPedido(texto, state.ply, moves.length) : null;
-      if (n === null) { api.decir("No entendí «" + texto.trim() + "». Escribe «siguiente», «anterior», «jugada 12», «adivinar», «practicar», o una pregunta como «caballos»."); return; }
+      if (n === null) {
+        /* Una jugada escrita mientras se mira la partida: aquí no se juega, y
+           se dice qué hacer. «no es una jugada legal» solo si no se puede hacer. */
+        const vistaJ = chessDe(vista, fenAt(state.ply));
+        if (vistaJ && jugadaEscrita(vistaJ, texto)) {
+          api.decir("Aquí no se juega: escribe «adivinar» para practicar las jugadas clave, o «practicar» para jugar desde esta posición contra el motor.");
+          try { api.input.select(); } catch (e) {}
+          return;
+        }
+        if (window.ComandosTablero && ComandosTablero.pareceJugada && ComandosTablero.pareceJugada(texto)) { api.decir(noSePudoJugar(texto.trim())); try { api.input.select(); } catch (e) {} return; }
+        api.decir("No entendí «" + texto.trim() + "». Escribe «siguiente», «anterior», «jugada 12», «adivinar», «practicar», o una pregunta como «caballos».");
+        return;
+      }
       if (n < 0) { api.decir("Ya estás en la posición inicial."); return; }
       if (n > moves.length) { api.decir("Ya estás en la última jugada de la partida."); return; }
       api.limpiar().decir("");
@@ -588,6 +621,7 @@
   function makeExercise(el, x) {
     const sol = x.solucion || [];
     const state = { ply: 0, flip: parseFen(x.fen).turn === "b", solved: false, tries: 0 };
+    zonaPropia(el);
     el.classList.add("cp-viewer", "cp-ej");
     el.innerHTML =
       '<div class="cp-head"><span class="cp-players">' + esc(x.titulo || ("Ejercicio " + x.n)) + '</span><span class="cp-res">' + (parseFen(x.fen).turn === "w" ? "Juegan blancas" : "Juegan negras") + "</span></div>" +
@@ -676,7 +710,7 @@
     function solve(byUser) {
       state.solved = true; input.enable(false);
       ctr.hidden = false; el.querySelector('[data-act="show"]').hidden = true; el.querySelector('[data-act="hint"]').hidden = true;
-      movesEl.innerHTML = sol.map((m, i) => '<button type="button" data-ply="' + (i + 1) + '">' + esc(moveLabel(m)) + "</button>").join("") + (x.resultado ? '<span class="cp-h"> ' + esc(x.resultado) + "</span>" : "");
+      movesEl.innerHTML = sol.map((m, i) => '<button type="button" data-ply="' + (i + 1) + '" aria-label="' + esc(nombreDeJugada(m)) + '">' + esc(moveLabel(m)) + "</button>").join("") + (x.resultado ? '<span class="cp-h"> ' + esc(x.resultado) + "</span>" : "");
       state.ply = 1; render(byUser ? { good: [sol[0].uci.slice(0, 2), sol[0].uci.slice(2, 4)] } : {});
       comEl.innerHTML = '<p class="cp-c ' + (byUser ? "cp-good" : "") + '"><strong>' + (byUser ? "¡Correcto! " : "Solución: ") + esc(spokenSan(sol[0].san)) + ".</strong> " + esc(x.explicacion || sol[0].comentario || "") + " Recorre la línea completa con los botones o escribiendo «siguiente».</p>";
       guardar(x.id, { tipo: "ejercicio", ok: !!byUser, intentos: state.tries });

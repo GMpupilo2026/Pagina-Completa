@@ -289,6 +289,12 @@ async function respuestaGuardada(page, cuantasAtras) {
    es una carrera que se pierde de vez en cuando sin que nada esté roto. Y
    mirarlo "a ver si no está vacío" no probaba nada: ya empieza con el "Haz clic
    en la pieza que quieres mover". */
+/* Se escribe como escribe la gente del sitio: en algebraica española. chess.js
+   da el SAN en inglés, y «Rxb8+» (torre, en inglés) aquí es el REY. */
+function enEspanol(san) {
+  return String(san).replace(/[KQRBN]/g, (l) => ({ K: "R", Q: "D", R: "T", B: "A", N: "C" })[l]);
+}
+
 async function vigilar(page, sel) {
   await page.evaluate((s) => {
     const el = document.querySelector(s);
@@ -409,7 +415,7 @@ async function pruebaDiagnostico(browser) {
 
     if (!mv) mal("no se pudo leer la posición del tablero para probar una jugada (" + fen + ")");
     else {
-      await page.fill("#q-comandos .cc-input", mv.san);
+      await page.fill("#q-comandos .cc-input", enEspanol(mv.san));
       await page.press("#q-comandos .cc-input", "Enter");
       igual(`una jugada escrita (${mv.san}) pasa sola a la siguiente`,
         (await enPantalla(page, "#q-counter")) !== contador, "true");
@@ -629,7 +635,7 @@ async function pruebaTemas(browser) {
     // se dice con todas las letras); lo que NO puede pasar es que escribirla no
     // haga nada. Se vigila el renglón de estado desde antes de escribir.
     await vigilar(page, "#round-status");
-    await page.fill(".cc-input", mv.san);
+    await page.fill(".cc-input", enEspanol(mv.san));
     await page.press(".cc-input", "Enter");
     // Con la máquina cargada (el CI corre varios a la vez) 700 ms no alcanzan:
     // se espera a que el renglón cambie, con tope.
@@ -701,7 +707,7 @@ async function pruebaContrarreloj(browser, ruta, nombre) {
     // Igual que en Ejercicios por tema: se vigila el renglón desde antes, que al
     // acertar lo borra el ejercicio siguiente a los 350 ms.
     await vigilar(page, "#result-text");
-    await page.fill(".cc-input", mv.san);
+    await page.fill(".cc-input", enEspanol(mv.san));
     await page.press(".cc-input", "Enter");
     await page.waitForFunction(() => (window.__vistos || []).some((t) => /Correcto|❌|✅|^Respuesta incorrecta: /.test(t)), null, { timeout: 5000 }).catch(() => {});
     const vistos = await loVisto(page);
