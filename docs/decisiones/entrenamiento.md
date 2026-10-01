@@ -139,7 +139,7 @@ categoría de medallas «Trofeos de clase»: 1, 10, 25, 50, 100 y 250).
   trofeo se va solo; una tabla de «trofeos ganados» habría quedado con uno de
   más sin que nada fallara.
 - **El profesor ajusta a mano** con el botón 🏆 del renglón del alumno
-  (pestaña Alumnos): +1, −1, +5 o una cantidad escrita (−100 a 100) con un
+  (en «Alumnos conectados»): +1, −1, +5 o una cantidad escrita (−100 a 100) con un
   motivo que el alumno ve. Cada ajuste es una fila de `trofeos_ajustes` (quién,
   cuánto, por qué y cuándo), no un total sobreescrito: así el alumno ve de
   dónde salió cada trofeo y un ajuste no borra otro.

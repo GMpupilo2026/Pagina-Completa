@@ -756,8 +756,9 @@ como siempre, y sin él contesta que falta, sin crear nada.
 
 ### Las dos puertas de alta
 
-Las dos —`formularios.html` (el diálogo "Crear cuenta") y `sesion.html`
-(invitar desde la clase en vivo)— traen la casilla **"No tiene correo propio"**:
+`formularios.html` (el diálogo "Crear cuenta") trae la casilla **"No tiene
+correo propio"** (la otra puerta, «Invitar» en la clase en vivo, se quitó: ver
+«La clase en vivo, reordenada» en clase-en-vivo.md):
 
 - el campo del correo del alumno se **apaga**, no se esconde: así se ve que
   sigue ahí y que lo que cambió es que ya no hace falta;
@@ -801,7 +802,7 @@ distintos con el mismo correo de la casa.
 ## La invitación pide la contraseña y explica cómo se entra
 
 Las dos puertas de alta —el formulario de inscripción (`inscribir-alumno`) y la
-invitación directa del profesor desde la clase en vivo (`create-student`)—
+alta directa desde `formularios.html` (`create-student`)—
 mandan **el mismo correo**, y ese correo hace dos cosas que antes no hacía:
 pedirle al alumno que **cree su contraseña** y explicarle **cómo entra a partir
 de ahora**.

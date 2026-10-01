@@ -12,7 +12,6 @@
    siendo globales, como antes. Ver «El código de las páginas sale del HTML»
    en docs/decisiones/sitio-e-infraestructura.md. */
 
-        const EDGE_FUNCTION_URL = `${window.SUPABASE_URL}/functions/v1/create-student`;
         // Cada profesor tiene su propio tablero, su propia clase, sus propias
         // preguntas y su propia práctica — completamente independientes de los de
         // cualquier otro profesor, para que dos puedan dar clase al mismo tiempo sin
@@ -116,14 +115,15 @@
             btn.classList.toggle("hidden", !canMoveNow() || board.isViewingHistory());
         }
 
-        // ---------- Pestañas del profesor (Controles/Preguntar/Practicar/Alumnos/Motor) ----------
+        // ---------- Pestañas del profesor (Mi plan/Táctica/Habilidades/Preguntar/Practicar) ----------
         // Un solo panel visible a la vez, para no obligar a hacer scroll por una barra
         // lateral con los 5 a la vez. Se recuerda la última pestaña abierta en este navegador.
+        // El motor y los alumnos conectados NO son pestañas: van siempre a la vista.
         const TEACHER_TAB_KEY = "sesion_teacher_tab_v1";
         /* El orden manda dos cosas: el de los botones de arriba y, sobre todo, CUÁL SE
            ABRE la primera vez (TEACHER_TABS[0]). Para quien entra por primera vez eso
            es "Mi plan": lo que va a dar. Después se recuerda la última que usó. */
-        const TEACHER_TABS = ["plan", "tactica", "tipos", "preguntar", "practicar", "alumnos", "controles"];
+        const TEACHER_TABS = ["plan", "tactica", "tipos", "preguntar", "practicar"];
         const TEACHER_TAB_ACTIVE = "teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-accent-500 text-brand-900";
         const TEACHER_TAB_INACTIVE = "teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200";
 
@@ -141,6 +141,14 @@
             if (tab === "tipos") ensureTiposLoaded();
         }
 
+        /* «Alumnos conectados» ya no es una pestaña: va siempre a la vista. Lo que
+           antes la abría (dar el turno, anotar, elegir al azar) solo tiene que
+           acercarla, sin cambiar la pestaña que el profe tenga abierta. */
+        function mostrarPanelAlumnos() {
+            const panel = document.getElementById("students-panel");
+            if (panel && panel.checkVisibility && panel.checkVisibility()) panel.scrollIntoView({ block: "nearest" });
+        }
+
         document.querySelectorAll(".teacher-tab-btn").forEach((btn) => {
             btn.addEventListener("click", () => {
                 activateTeacherTab(btn.dataset.tab);
@@ -151,9 +159,10 @@
         /* ---------- El modo sencillo ----------
            Catorce controles delante, con la clase mirando, es demasiado para la
            primera clase. En modo sencillo se ve lo que hace falta para darla: el
-           tablero (el grupo «El tablero — lo ve toda la clase»), el motor, «Mi
-           plan», «Alumnos» e «Invitar». Táctica, Preguntar, Practicar y el grupo
-           «Tu material» quedan detrás de «Ver todas las herramientas».
+           tablero (el grupo «El tablero — lo ve toda la clase»), el motor, los
+           alumnos conectados y «Mi plan». Táctica, Habilidades, Preguntar,
+           Practicar y el grupo «Tu material» quedan detrás de «Ver todas las
+           herramientas».
 
            Arranca en modo sencillo SOLO quien lleva menos de tres clases dadas: a
            quien ya da clases no se le mueve nada de lugar. Tres y no una porque
@@ -169,9 +178,9 @@
 
         function aplicarModoSencillo(activo) {
             modoSencillo = activo;
+            // «Tu material» es lo único de su tarjeta: se guarda la tarjeta entera.
             document.getElementById("toolbar-material").hidden = activo;
-            // La línea que separa los dos grupos no separa nada si el de arriba no está.
-            ["border-t", "pt-3"].forEach((c) => document.getElementById("toolbar-tablero").classList.toggle(c, !activo));
+            document.getElementById("teacher-toolbar").hidden = activo;
             TABS_AVANZADAS.forEach((t) => { document.getElementById("teacher-tab-" + t).hidden = activo; });
             // Si la pestaña que estaba abierta se escondió, se vuelve a «Mi plan».
             const abierta = document.querySelector('.teacher-tab-btn[aria-selected="true"]');
@@ -179,7 +188,7 @@
             document.getElementById("modo-sencillo-btn").textContent = activo
                 ? "🧰 Ver todas las herramientas" : "🪶 Volver al modo sencillo";
             document.getElementById("modo-sencillo-nota").textContent = activo
-                ? "Modo sencillo: el tablero, tu plan y tus alumnos. Táctica, Entrenamientos, Preguntar, Practicar y tu material están a un clic."
+                ? "Modo sencillo: el tablero, el motor, tus alumnos y tu plan. Táctica, Entrenamientos, Preguntar, Practicar y tu material están a un clic."
                 : "";
         }
 
@@ -2613,7 +2622,7 @@
 
         // Anotar desde donde se está mirando: se abre su bitácora con esa posición.
         function anotarDesde(studentId, nombre, posicion) {
-            activateTeacherTab("alumnos");
+            mostrarPanelAlumnos();
             abrirNotasEnClase(studentId, nombre, posicion);
             const caja = document.getElementById("notas-en-clase");
             caja.scrollIntoView({ block: "nearest" });
@@ -4048,7 +4057,7 @@
             document.getElementById("pensar-terminar-btn").addEventListener("click", () => guardarPensar(null));
             document.getElementById("pensar-elegir-btn").addEventListener("click", async () => {
                 await guardarPensar(null);
-                activateTeacherTab("alumnos");
+                mostrarPanelAlumnos();
                 elegirAlAzar();
             });
         }
@@ -7032,6 +7041,8 @@
 
             if (isTeacher) {
                 document.getElementById("teacher-toolbar").classList.remove("hidden");
+                document.getElementById("toolbar-tablero").classList.remove("hidden");
+                document.getElementById("students-panel").classList.remove("hidden");
                 acomodarChatDelProfe();
                 document.getElementById("modo-sencillo-fila").classList.remove("hidden");
                 document.getElementById("engine-panel").classList.remove("hidden");
@@ -7047,7 +7058,6 @@
                 try { savedTab = localStorage.getItem(TEACHER_TAB_KEY) || savedTab; } catch (e) {}
                 activateTeacherTab(savedTab);
                 await arrancarModoSencillo();
-                cargarCupoInvitaciones();
                 cargarPlanesEnClase();
                 setupTeacherLessonTools();
                 setupArchivosTools();
@@ -7134,207 +7144,6 @@
         });
 
         document.getElementById("clear-marks-btn").addEventListener("click", () => board.clearMarks());
-
-        /* Cuántos alumnos nuevos puede invitar este profesor. El tope lo pone quien
-         * administra (profiles.invitaciones_max) y el descuento lo hace la función
-         * create-student al invitar: esto es solo para que el profesor lo sepa
-         * antes de escribir el correo, no es lo que manda. */
-        let cupoRestante = null;   // null = sin tope (quien administra)
-
-        function pintarCupo(restantes) {
-            cupoRestante = restantes;
-            const el = document.getElementById("create-student-cupo");
-            const btn = document.getElementById("create-student-btn");
-            if (!el) return;
-            if (restantes === null) { el.textContent = ""; return; }
-            if (restantes <= 0) {
-                el.textContent = "No te quedan invitaciones. Pídele más a la persona administradora.";
-                el.className = "text-xs font-semibold text-accent-700 dark:text-accent-400";
-                if (btn) btn.disabled = true;
-            } else {
-                el.textContent = restantes === 1 ? "Te queda 1 invitación." : `Te quedan ${restantes} invitaciones.`;
-                el.className = "text-xs text-brand-450 dark:text-brand-350";
-                if (btn) btn.disabled = false;
-            }
-        }
-
-        async function cargarCupoInvitaciones() {
-            try {
-                const { data } = await sb.from("profiles")
-                    .select("is_admin, invitaciones_max, invitaciones_usadas")
-                    .eq("id", session.user.id).single();
-                if (!data) return;
-                if (data.is_admin) { pintarCupo(null); return; }
-                pintarCupo(Math.max((data.invitaciones_max || 0) - (data.invitaciones_usadas || 0), 0));
-            } catch (e) { /* si no se puede leer, el servidor igual lo hace cumplir */ }
-        }
-
-        /* Qué se ve y qué se pide según haya correo propio o no. El campo del
-           correo se apaga en vez de esconderse: así se ve que sigue ahí y que
-           lo que cambió es que ya no hace falta. */
-        function pintarModoAlumno() {
-            const sinCorreo = document.getElementById("student-sin-correo").checked;
-            const correo = document.getElementById("student-email");
-            const usuario = document.getElementById("student-usuario");
-            correo.disabled = sinCorreo;
-            correo.required = !sinCorreo;
-            correo.classList.toggle("opacity-50", sinCorreo);
-            document.getElementById("student-casa").classList.toggle("hidden", !sinCorreo);
-            document.getElementById("student-usuario-dominio").textContent = "@" + UsuarioAlumno.DOMINIO;
-            // Con la contraseña puesta no sale ningún correo: la casa pasa a
-            // ser opcional y el botón dice lo que de verdad va a hacer.
-            const conClave = sinCorreo && document.getElementById("student-contrasena").value !== "";
-            document.getElementById("student-encargado-ayuda").textContent = conClave
-                ? "Opcional: ahí llegan los informes de cómo le va. Con la contraseña puesta no hace falta para entrar."
-                : "Ahí llega el enlace para crear la contraseña. Sin esto no hay forma de escribirle a esta familia.";
-            document.getElementById("create-student-btn").textContent = textoBotonAlta();
-            // Se propone desde el nombre, pero lo escrito a mano no se pisa.
-            if (sinCorreo && !usuario.dataset.tocado) {
-                usuario.value = baseDeUsuarioEnPantalla(document.getElementById("student-name").value);
-            }
-        }
-
-        /* La misma regla que `baseDeUsuario()` de la Edge Function: primer
-           nombre y primer apellido, sin tildes. Acá solo PROPONE lo que se ve;
-           quien decide es el servidor, que además desempata si ya está tomado.
-           Que las dos coincidan lo comprueba verificar-alumno-sin-correo.js. */
-        function baseDeUsuarioEnPantalla(nombre) {
-            const pedazos = String(nombre || "")
-                .normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ñ/gi, "n")
-                .toLowerCase().replace(/[^a-z0-9\s]/g, " ").trim().split(/\s+/).filter(Boolean);
-            if (!pedazos.length) return "";
-            const apellido = pedazos.length >= 4 ? pedazos[2] : pedazos[1];
-            return [pedazos[0], apellido].filter(Boolean).join(".").slice(0, 40);
-        }
-
-        function textoBotonAlta() {
-            return document.getElementById("student-sin-correo").checked
-                && document.getElementById("student-contrasena").value !== ""
-                ? "Crear la cuenta" : "Enviar invitación";
-        }
-
-        document.getElementById("student-sin-correo").addEventListener("change", pintarModoAlumno);
-        document.getElementById("student-contrasena").addEventListener("input", pintarModoAlumno);
-        document.getElementById("student-contrasena-proponer").addEventListener("click", () => {
-            const campo = document.getElementById("student-contrasena");
-            campo.value = ContrasenaAlumno.claveFacil();
-            campo.focus();
-            pintarModoAlumno();
-        });
-        document.getElementById("student-name").addEventListener("input", () => {
-            if (!document.getElementById("student-usuario").dataset.tocado) pintarModoAlumno();
-        });
-        document.getElementById("student-usuario").addEventListener("input", (e) => {
-            e.target.dataset.tocado = "1";
-        });
-        pintarModoAlumno();
-
-        document.getElementById("create-student-form").addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const msg = document.getElementById("create-student-msg");
-            const btn = document.getElementById("create-student-btn");
-            msg.textContent = "";
-            btn.disabled = true; btn.textContent = "Enviando...";
-
-            const email = document.getElementById("student-email").value.trim();
-            const full_name = document.getElementById("student-name").value.trim();
-            const sinCorreo = document.getElementById("student-sin-correo").checked;
-            const encargadoEmail = document.getElementById("student-encargado-correo").value.trim();
-            const encargadoNombre = document.getElementById("student-encargado-nombre").value.trim();
-            const usuario = document.getElementById("student-usuario").value.trim();
-            // Sin recortar: un espacio al final se dice, no se arregla callado.
-            const contrasena = sinCorreo ? document.getElementById("student-contrasena").value : "";
-
-            // Sin buzón propio y sin contraseña, el correo de la casa es la
-            // ÚNICA forma de mandar el enlace: sin él la cuenta queda creada y
-            // muda. Con la contraseña puesta ya entra, y la casa es opcional.
-            const problema = !sinCorreo ? ""
-                : !full_name ? "Para armarle un usuario hace falta el nombre del alumno."
-                : !usuario ? "Falta el usuario con el que va a entrar."
-                : contrasena && contrasena.length < ContrasenaAlumno.MINIMO
-                    ? `La contraseña tiene que tener al menos ${ContrasenaAlumno.MINIMO} caracteres.`
-                : contrasena && contrasena.trim() !== contrasena
-                    ? "La contraseña no puede empezar ni terminar con espacios."
-                : !contrasena && !encargadoEmail
-                    ? "Falta el correo de la casa: es a donde va el enlace para crear la contraseña. O ponle tú la contraseña."
-                : "";
-            if (problema) {
-                msg.textContent = problema;
-                msg.className = "text-xs text-red-600 dark:text-red-400";
-                btn.disabled = false; btn.textContent = textoBotonAlta();
-                return;
-            }
-
-            try {
-                const res = await fetch(EDGE_FUNCTION_URL, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${session.access_token}`,
-                        "apikey": window.SUPABASE_ANON_KEY,
-                    },
-                    body: JSON.stringify({
-                        email: sinCorreo ? "" : email,
-                        full_name,
-                        sin_correo: sinCorreo,
-                        usuario: sinCorreo ? usuario : "",
-                        encargado_email: sinCorreo ? encargadoEmail : "",
-                        encargado_nombre: sinCorreo ? encargadoNombre : "",
-                        contrasena,
-                    }),
-                });
-                const result = await res.json();
-                if (!res.ok) throw new Error(result.error || "Error desconocido");
-                // Con qué entra lo dice el servidor: el usuario pudo salir con
-                // un número al final si ya estaba tomado.
-                const entra = result.usuario || result.email;
-                if (result.con_contrasena) {
-                    // No salió ningún correo: el usuario y la contraseña se los
-                    // da quien lo invitó, así que se enseñan los dos, y el
-                    // usuario sin el dominio, que es lo que el niño escribe.
-                    msg.textContent = `Listo: ${full_name} entra con el usuario «${UsuarioAlumno.soloUsuario(entra)}» ` +
-                        `y la contraseña «${contrasena}». Dáselos en la clase; no salió ningún correo.`;
-                    msg.className = "text-xs text-green-600 dark:text-green-400";
-                } else if (result.correo_enviado === false) {
-                    msg.textContent = `La cuenta quedó creada (entra con ${entra}), pero el correo NO salió. ` +
-                        "Vuelve a intentarlo más tarde o dile que entre con «¿Olvidaste tu contraseña?» en la pantalla de acceso.";
-                    msg.className = "text-xs font-semibold text-accent-700 dark:text-accent-400";
-                } else if (result.sin_correo) {
-                    // El usuario es el dato nuevo y hay que enseñarlo: no es un
-                    // correo y nadie lo adivina. Y el correo salió a la casa, no
-                    // al alumno — quien invitó tiene que poder decírselo.
-                    msg.textContent = `Listo: entra con ${entra}. El enlace para crear la contraseña salió a ` +
-                        `${result.correo_destino || encargadoEmail}, no al alumno — ese usuario no recibe correo.`;
-                    msg.className = "text-xs text-green-600 dark:text-green-400";
-                } else {
-                    msg.textContent = `Invitación enviada a ${entra}. Recibirá un correo para crear su contraseña, con los pasos para entrar.`;
-                    msg.className = "text-xs text-green-600 dark:text-green-400";
-                }
-                document.getElementById("create-student-form").reset();
-                // reset() limpia los campos pero no la marca de "lo puso a
-                // mano" ni vuelve a pintar el modo: sin esto, la invitación
-                // siguiente arranca con los bloques abiertos de la anterior y
-                // el usuario del alumno de antes todavía escrito.
-                delete document.getElementById("student-usuario").dataset.tocado;
-                pintarModoAlumno();
-                // El servidor devuelve cuántas quedan: así el número de la pantalla
-                // es el que de verdad tiene la base, no una cuenta del navegador.
-                if (!result.ilimitado && typeof result.restantes === "number") {
-                    pintarCupo(result.restantes);
-                }
-            } catch (err) {
-                msg.textContent = err.message;
-                msg.className = "text-xs text-red-600 dark:text-red-400";
-                // El servidor es el que manda: si dice que no queda cupo, se
-                // vuelve a leer para que la pantalla diga lo mismo que la base.
-                if (/invitaciones/i.test(err.message)) cargarCupoInvitaciones();
-            } finally {
-                btn.textContent = textoBotonAlta();
-                // Se vuelve a habilitar solo si de verdad queda cupo: si no, el
-                // botón tiene que quedarse apagado después de la última invitación.
-                btn.disabled = cupoRestante !== null && cupoRestante <= 0;
-            }
-        });
 
         // Modal de cambio de contraseña
         const pwModal = document.getElementById("pw-modal");

@@ -121,15 +121,24 @@ async function pruebaProfeCelular(browser) {
   await page.waitForFunction(() => document.getElementById("teacher-tabs-wrap").checkVisibility(), null, { timeout: 10000 });
   igual("nada se sale a lo ancho", await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
   igual("el tablero se ve entero sin bajar", (await caja(page, "chessboard")).bottom <= 740, true);
-  const [barra, pestanas, chat] = await Promise.all(["teacher-toolbar", "teacher-tabs-wrap", "chat-caja"].map((i) => caja(page, i)));
+  const [barra, pestanas, chat, alumnos, motor] = await Promise.all(
+    ["teacher-toolbar", "teacher-tabs-wrap", "chat-caja", "students-panel", "engine-panel"].map((i) => caja(page, i)));
   igual("sus herramientas y las pestañas van antes que el chat", barra.top < chat.top && pestanas.top < chat.top, true);
+  /* Entre el tablero y sus botones solo va la barra de girar y recorrer la
+     partida (que en el celular ocupa dos o tres renglones): nada más. */
+  igual("lo que toca el tablero va justo debajo de él", await page.evaluate(() => {
+    let e = document.getElementById("toolbar-tablero").previousElementSibling;
+    while (e && !e.checkVisibility()) e = e.previousElementSibling;
+    return e && e.contains(document.getElementById("flip-board-btn")) ? "debajo de la barra del tablero" : (e ? e.id || e.className : "nada");
+  }), "debajo de la barra del tablero");
+  igual("el motor y los alumnos van antes que las pestañas", motor.top < pestanas.top && alumnos.top < pestanas.top, true);
   igual("◀ ▶ para recorrer la partida miden 44 px", await page.evaluate(() => ["move-nav-first", "move-nav-prev", "move-nav-next", "move-nav-last"]
     .every((i) => document.getElementById(i).getBoundingClientRect().height >= 44)), true);
   // Pestaña por pestaña: lo de adentro también se toca con el dedo.
   const chicos = [];
-  for (const t of ["plan", "tactica", "preguntar", "practicar", "alumnos", "controles"]) {
+  for (const t of ["plan", "tactica", "preguntar", "practicar"]) {
     await page.click("#teacher-tab-" + t);
-    (await page.evaluate(() => [...document.querySelectorAll(".proyector-contenido > aside button, .proyector-contenido > aside select, .proyector-contenido > aside summary")]
+    (await page.evaluate(() => [...document.querySelectorAll(".proyector-contenido > aside button, .proyector-contenido > aside select, .proyector-contenido > aside summary, #toolbar-tablero button, #toolbar-tablero select")]
       .filter((e) => e.checkVisibility()).filter((e) => e.getBoundingClientRect().height < 44).map((e) => (e.textContent || e.id).trim().slice(0, 25))))
       .forEach((x) => { if (!chicos.includes(x)) chicos.push(x); });
   }

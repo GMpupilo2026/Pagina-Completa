@@ -532,47 +532,6 @@ async function pruebaAlta(browser) {
   await page.close();
 }
 
-/* ------------------------------ 6. invitar desde la clase, con contraseña
-   La otra puerta de alta: «Invitar a un alumno» de sesion.html. Se abre con
-   el doble de las pruebas de la clase, y create-student se contesta acá. */
-async function pruebaInvitarDesdeClase(browser) {
-  console.log("\n=== Invitar desde la clase con la contraseña puesta ===");
-  const R = require("./verificar-clase-registrada.js");
-  const CLASE = { id: "c-viva", created_by: "u-profe", started_at: new Date().toISOString(), ended_at: null };
-  const { page, ctx, errores } = await R.abrir(browser, "u-profe", CLASE);
-  const pedidos = [];
-  await page.route("**/functions/v1/create-student", async (r) => {
-    const cuerpo = JSON.parse(r.request().postData() || "{}");
-    pedidos.push(cuerpo);
-    await r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
-      ok: true, usuario: cuerpo.usuario + "@alumno.ajedrez-integral.com", sin_correo: true,
-      con_contrasena: !!cuerpo.contrasena, correo_enviado: null, correo_destino: null, restantes: null, ilimitado: true,
-    }) });
-  });
-  await page.click("#teacher-tab-controles");
-  await page.fill("#student-name", "Lucía Rojas Mora");
-  await page.check("#student-sin-correo");
-  cierto("el campo de la contraseña SE VE",
-    await page.evaluate(() => document.getElementById("student-contrasena").checkVisibility()));
-  igual("sin contraseña, el botón invita", await page.textContent("#create-student-btn"), "Enviar invitación");
-  await page.click("#create-student-btn");
-  cierto("sin correo de la casa ni contraseña, no se manda nada", pedidos.length === 0);
-  await page.click("#student-contrasena-proponer");
-  const clave = await page.inputValue("#student-contrasena");
-  igual("con la contraseña, el botón dice lo que hace", await page.textContent("#create-student-btn"), "Crear la cuenta");
-  await page.click("#create-student-btn");
-  await page.waitForFunction(() => /Listo/.test(document.getElementById("create-student-msg").textContent), null, { timeout: 5000 });
-  igual("se manda la contraseña", pedidos[0] && pedidos[0].contrasena, clave);
-  igual("y el usuario propuesto", pedidos[0] && pedidos[0].usuario, "lucia.rojas");
-  const texto = await page.textContent("#create-student-msg");
-  cierto("el aviso enseña el usuario sin el dominio y la contraseña",
-    texto.includes("«lucia.rojas»") && texto.includes("«" + clave + "»"), texto);
-  igual("el formulario queda limpio para el siguiente", await page.inputValue("#student-contrasena"), "");
-  igual("y el botón vuelve a invitar", await page.textContent("#create-student-btn"), "Enviar invitación");
-  cierto("la página no tiró ningún error", errores.length === 0, errores.join("\n      "));
-  await ctx.close();
-}
-
 (async () => {
   pruebaDominio();
   const browser = await chromium.launch({ executablePath: CHROME });
@@ -582,7 +541,6 @@ async function pruebaInvitarDesdeClase(browser) {
     await pruebaLogin(browser);
     await pruebaOlvido(browser);
     await pruebaAlta(browser);
-    await pruebaInvitarDesdeClase(browser);
   } finally {
     await browser.close();
   }

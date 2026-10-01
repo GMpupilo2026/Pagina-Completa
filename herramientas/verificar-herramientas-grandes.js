@@ -48,7 +48,7 @@ async function pruebaProfe(browser) {
   igual("el botón se ve", await seVe(page, "#grandes-abrir-btn"), true);
   igual("la barra de la ventana no se ve con la ventana cerrada", await seVe(page, "#grandes-barra"), false);
   igual("antes de abrir, el centro del tablero es el tablero", await centroDelTablero(page), "otra cosa");
-  const antes = await alto(page, "#reset-board-btn");
+  const antes = await alto(page, "#toggle-lesson-btn");
 
   await page.click("#grandes-abrir-btn");
   igual("abierta: tapa el tablero", await centroDelTablero(page), "la ventana");
@@ -58,7 +58,7 @@ async function pruebaProfe(browser) {
   }), "la ventana");
   igual("se ve «Volver al tablero»", await seVe(page, "#grandes-cerrar-btn"), true);
   igual("y adentro no se repite el botón que la abrió", await seVe(page, "#grandes-abrir-btn"), false);
-  const despues = await alto(page, "#reset-board-btn");
+  const despues = await alto(page, "#toggle-lesson-btn");
   igual("los botones son más grandes (al menos 1,3 veces)", despues >= antes * 1.3 ? "sí" : antes + " → " + despues, "sí");
   igual("es un diálogo con su título", await page.evaluate(() => {
     const a = document.getElementById("herramientas-profe");
@@ -70,27 +70,24 @@ async function pruebaProfe(browser) {
   igual("el botón dice que está abierta", await page.getAttribute("#grandes-abrir-btn", "aria-expanded"), "true");
 
   // Cambiar de pestaña adentro no la cierra.
-  await page.click("#teacher-tab-alumnos");
+  await page.click("#teacher-tab-preguntar");
   igual("cambiar de pestaña no la cierra", await centroDelTablero(page), "la ventana");
-  igual("y la pestaña se abrió", await seVe(page, "#students-panel"), true);
+  igual("y la pestaña se abrió", await seVe(page, "#question-panel"), true);
+  igual("los alumnos conectados también están en la ventana", await seVe(page, "#students-panel"), true);
 
   await page.keyboard.press("Escape");
   igual("Esc la cierra", await centroDelTablero(page), "otra cosa");
   igual("y el foco vuelve al botón", await page.evaluate(() => document.activeElement.id), "grandes-abrir-btn");
   igual("lo de atrás deja de estar inerte", await page.evaluate(() =>
     [document.getElementById("header").inert, document.querySelector(".proyector-columna").inert]), [false, false]);
-  igual("los botones vuelven a su tamaño", await alto(page, "#reset-board-btn"), antes);
-  igual("la pestaña elegida adentro sigue abierta", await seVe(page, "#students-panel"), true);
+  igual("los botones vuelven a su tamaño", await alto(page, "#toggle-lesson-btn"), antes);
+  igual("la pestaña elegida adentro sigue abierta", await seVe(page, "#question-panel"), true);
 
   await page.click("#grandes-abrir-btn");
   await page.click("#grandes-cerrar-btn");
   igual("«Volver al tablero» la cierra", await centroDelTablero(page), "otra cosa");
 
-  // Un botón de la barra hace su efecto fuera: se vuelve al tablero.
-  await page.click("#grandes-abrir-btn");
-  await page.click("#clear-marks-btn");
-  igual("«🧹 Flechas» la cierra para ver el tablero", await centroDelTablero(page), "otra cosa");
-  if (await page.evaluate(() => window.HerramientasGrandes.abierta())) await page.keyboard.press("Escape");
+  // Un botón de «Tu material» hace su efecto fuera: se vuelve al tablero.
   await page.click("#grandes-abrir-btn");
   await page.click("#toggle-archivos-btn");
   igual("«📂 Archivos» la cierra", await centroDelTablero(page), "otra cosa");
@@ -106,7 +103,7 @@ async function pruebaCelular(browser) {
   await page.setViewportSize({ width: 375, height: 740 });
   await page.waitForSelector("#grandes-abrir-btn", { state: "visible", timeout: 10000 });
   await page.click("#grandes-abrir-btn");
-  for (const t of ["plan", "alumnos", "controles"]) {
+  for (const t of ["plan", "tactica", "preguntar", "practicar"]) {
     await page.click("#teacher-tab-" + t);
     igual("pestaña " + t + ": nada se sale a lo ancho", await page.evaluate(() => {
       const a = document.getElementById("herramientas-profe");
