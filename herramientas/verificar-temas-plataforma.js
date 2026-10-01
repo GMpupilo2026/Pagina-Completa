@@ -321,12 +321,20 @@ async function pruebaConfiguracion(navegador) {
   igual("y las oscuras", d.sqDark, CASILLAS.THEMES[p.casillas].dark);
   cierto("las tarjetas se redondean más", d.radio2xl === "28px", d.radio2xl);
   cierto("aparece el fondo decorativo", /url\(/.test(d.bodyImagen || ""), d.bodyImagen);
-  cierto("y se pide la letra del tema", (await page.locator(`link[href*="${p.fuente}"]`).count()) > 0,
-         "no se agregó el <link> de " + p.fuente);
-  // La familia DECLARADA, no la dibujada: acá la red a Google Fonts está
-  // cortada a propósito, así que lo que se comprueba es que la regla del tema
-  // llegue al título — y que detrás quede la de siempre por si la fuente no
-  // baja.
+  // La letra del tema la sirve el sitio (css/fuentes.css): ya no se agrega
+  // ningún <link> a Google. Lo que tiene que pasar es que se BAJE, y del
+  // propio sitio, apenas el tema la usa.
+  const letra = await page.evaluate(async (fam) => {
+    await document.fonts.ready;
+    const cargada = [...document.fonts].some((f) => f.family.replace(/["']/g, "") === fam && f.status === "loaded");
+    const pedida = performance.getEntriesByType("resource").map((e) => e.name).filter((u) => /\.woff2/.test(u) && u.toLowerCase().includes(fam.toLowerCase()));
+    return { cargada, pedida };
+  }, p.fuente);
+  cierto("y se baja la letra del tema, del propio sitio",
+         letra.cargada && letra.pedida.length > 0 && letra.pedida.every((u) => !/gstatic|googleapis/.test(u)),
+         letra);
+  // Y la regla del tema llega al título, con la de siempre detrás por si la
+  // fuente no baja.
   cierto("y los títulos la piden, con la de siempre detrás",
          /^["']?Quicksand/.test(d.tituloFuente || "") && /Merriweather/.test(d.tituloFuente || ""),
          d.tituloFuente);

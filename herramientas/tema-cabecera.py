@@ -57,12 +57,9 @@ BLOQUE = (
     + "var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();"
     + "var m=document.querySelector('meta[name=\"theme-color\"]');"
     + "if(b&&m)m.setAttribute('content','rgb('+b.replace(/\\s+/g,',')+')');"
-    + "var f=localStorage.getItem('plataforma_tema_fuente_v1');"
-    + "if(!f||!/^[A-Za-z0-9 ]{2,32}$/.test(f))return;"
-    + "var l=document.createElement('link');l.rel='stylesheet';"
-    + "l.href='https://fonts.googleapis.com/css2?family='+f.replace(/ /g,'+')"
-    + "+':wght@400;500;600;700&display=swap';"
-    + "document.head.appendChild(l);"
+    # La fuente del tema (Quicksand) ya no se pide acá: está declarada en
+    # css/fuentes.css, servida por el sitio, y el navegador la baja solo cuando
+    # el tema la usa. Antes este bloque la pedía a Google en cada página.
     + "}catch(e){}})();</script>"
     + FIN
 )

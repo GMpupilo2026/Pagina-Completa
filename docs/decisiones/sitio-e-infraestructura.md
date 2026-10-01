@@ -775,6 +775,10 @@ el compilador ya mira los `.js` de hasta 350 KB.
 
 #### Cuatro scripts en línea, iguales en todas las páginas
 
+**Hoy son tres**: el de `fuentes` desapareció cuando las fuentes pasaron a
+servirse desde el sitio (ver «Las fuentes las sirve el sitio»). La marca
+`<!-- fuentes: inicio/fin -->` sigue, pero lo que pone es un `<link>`.
+
 Lo que tiene que correr ANTES del primer pintado sigue escrito en la página:
 un `<script src>` más en el `<head>` de cien páginas frena el pintado de
 todas para tres líneas (ver `tema-cabecera.py`). Son cuatro, y los pone cada
@@ -784,7 +788,6 @@ uno su generador, detrás de su marca:
 |---|---|---|
 | `guardia` | sin ninguna sesión guardada, al login antes de bajar nada | `academia-cabecera.py` |
 | `oscuro` | la clase `dark` según lo guardado o el sistema | `cabecera-en-linea.py` |
-| `fuentes` | pasa la hoja de Google Fonts de `print` a `all` al llegar | `cabecera-en-linea.py` |
 | `tema` | el tema de plataforma (`data-tema`) | `tema-cabecera.py` |
 
 **Cada uno es idéntico, byte por byte, en todas las páginas**: es lo que deja
@@ -933,14 +936,62 @@ donde se comparte esto, y sin `og:image` el enlace sale pelado.
 - **Todo esto se comprueba de una corrida**, sin instalar nada:
   `python3 herramientas/verificar-metadatos.py` (unos 330 chequeos). **Al tocar
   metadatos, correrlo**, y volver a generar sitemap y datos estructurados.
-- Las fuentes: solo se piden los pesos que el sitio usa. Inter en 400, 500, 600
-  y 700; **Merriweather solo en 700**, porque `font-serif` aparece 963 veces y
+- Las fuentes (servidas por el sitio: ver «Las fuentes las sirve el sitio»):
+  solo los pesos que el sitio usa. Inter en 400, 500, 600 y 700;
+  **Merriweather solo en 700**, porque `font-serif` aparece 963 veces y
   siempre con `font-bold`, ni una sin peso. Antes se bajaban nueve archivos de
   fuente y se usaban cinco.
 - `js/adaptive-mode.js` **sigue sin `defer` a propósito**: aplica la clase
   `adaptive-mode` en el `<html>` al ejecutarse, igual que el script del tema que
   está justo arriba. Con `defer` correría después de parsear el HTML y quien
   tiene el modo adaptado encendido vería un parpadeo con la página sin adaptar.
+
+## Las fuentes las sirve el sitio
+
+Inter, Merriweather y Quicksand salen de `fonts/` con su hoja `css/fuentes.css`,
+y ya no de Google Fonts. Pedirlas a Google eran **dos conexiones a terceros
+antes de poder pintar bien el texto**: una por la hoja y, recién cuando esa
+llegaba, otra por el `.woff2`. Se había hecho en el PR #248 (19/9), que quedó
+sin mergear; se rehizo sobre lo de hoy, con sus mismas mediciones.
+
+- **Lo generan scripts, no se edita a mano**: `herramientas/fuentes-bajar.js`
+  baja de Google los subconjuntos `latin` y `latin-ext` (el sitio está en
+  español) y escribe la hoja; Inter es **variable**, un solo archivo para los
+  cuatro pesos. `herramientas/fuentes-metricas.js` mide en un navegador el
+  respaldo y lo agrega al final; `herramientas/fuentes-cabecera.py` pone el
+  `<link>` en cada página, con la ruta relativa de su carpeta.
+- **El respaldo se calcula, y por eso el texto no brinca.** Mientras la
+  fuente viaja se pinta con Arial o Times ajustadas (`size-adjust` y los
+  `override`) para que ocupen lo mismo: sin eso, al llegar la fuente cada línea
+  se reacomodaba un 5,9 % (12,6 % en las serif). En la portada con 4G lenta el
+  CLS bajó de 0,0868 a 0,0202 (medido en #248). Las pilas de
+  `css-construir.js` llevan `Inter respaldo` y `Merriweather respaldo`.
+- **No se precargan**, aunque el manual diga que sí: medido, precargar las dos
+  deja el LCP de la portada en 1488 ms y no precargar ninguna en 1060 ms. Lo
+  más grande de la pantalla es texto y lo que lo demora es `tailwind.css`; un
+  `preload` le saca banda justo a eso. El salto ya lo evita el respaldo.
+- **Quicksand, la de los títulos de tres temas** (Princesas, Unicornio,
+  Sirenas), va declarada en la misma hoja y solo en 700. Declarada no le
+  cuesta a nadie: el navegador baja una fuente solo cuando algo la usa. Antes
+  el `<head>` (`tema-cabecera.py`) y `js/temas-plataforma.js` la pedían a
+  Google al poner el tema; eso se quitó, y la clave vieja
+  `plataforma_tema_fuente_v1` se borra al aplicar un tema.
+- **La CSP ya no deja pasar a Google** (`style-src` y `font-src` solo
+  `'self'`): una etiqueta de Google copiada de una cabecera vieja se bloquea
+  y se ve, en vez de funcionar a escondidas.
+- La navegación anticipada (`prefetch` al pasar el mouse) que traía también
+  #248 no entró: era un `<script type="speculationrules">` en línea, y la CSP
+  de hoy no lo deja. Si se retoma, va por la cabecera `Speculation-Rules` con
+  un archivo aparte, y **siempre `prefetch`, nunca `prerender`**:
+  `prerender` ejecuta la página y `js/tiempo-plataforma.js` apuntaría minutos
+  de páginas que nadie abrió.
+
+`verificar-fuentes.js` lo sostiene: nada le pide fuentes a Google y la CSP no
+lo deja, las 128 páginas piden la hoja con la ruta de su carpeta, los `.woff2`
+existen, la pila de Tailwind lleva los respaldos, y en el navegador (una
+página de cada profundidad pública) la hoja carga, Inter carga del propio sitio
+y nada se precarga; con el tema Princesas, Quicksand se baja del sitio, y sin
+tema no se baja. Falla con las fuentes de Google (probado antes del cambio).
 
 ## El encabezado ocupa su propio espacio
 
