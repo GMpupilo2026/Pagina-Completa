@@ -91,6 +91,19 @@ Deno.serve(async (req) => {
     return json({ error: "La imagen es demasiado grande. Prueba con una foto más liviana." }, 413);
   }
 
+  // Cada foto se le paga a Google: antes de mandarla se gasta un uso del tope
+  // diario (30 por persona, 500 en total; ver la migración
+  // lector_planilla_tope_diario). Lo cuenta la base, con el token de quien
+  // llama. Si la base no contesta, NO se manda: sin cuenta no hay tope.
+  const { data: freno, error: frenoError } = await callerClient.rpc("lector_planilla_gastar");
+  if (frenoError) {
+    console.error("No se pudo contar el uso del lector:", frenoError);
+    return json({ error: "No se pudo leer la planilla en este momento. Prueba de nuevo en un rato." }, 503);
+  }
+  if (freno) {
+    return json({ error: freno }, 429);
+  }
+
   let visionRes: Response;
   try {
     visionRes = await fetch(

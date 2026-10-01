@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261001131626
+# al-dia-con: 20261001143746
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -66,6 +66,7 @@ tabla  insignias  rls=true
 tabla  insignias_tipos  rls=true
 tabla  interno.clase_espectadores_ip  rls=true
 tabla  interno.envios_publicos  rls=true
+tabla  interno.lector_planilla_uso  rls=true
 tabla  interno.salud_base  rls=true
 tabla  justificaciones_ausencia  rls=true
 tabla  notas_alumno  rls=true
@@ -652,6 +653,9 @@ columna  interno.envios_publicos.creado  timestamp with time zone
 columna  interno.envios_publicos.id  bigint
 columna  interno.envios_publicos.ip  text
 columna  interno.envios_publicos.tipo  text
+columna  interno.lector_planilla_uso.dia  date
+columna  interno.lector_planilla_uso.persona  uuid
+columna  interno.lector_planilla_uso.usos  integer
 columna  interno.salud_base.aviso_enviado  boolean
 columna  interno.salud_base.cron_fallidos  integer
 columna  interno.salud_base.lenta  boolean
@@ -1270,6 +1274,7 @@ funcion  jugadores_de_asientos(p_asientos jsonb)  invoker  anon=false  auth=true
 funcion  justificaciones_pendientes()  invoker  anon=false  auth=true
 funcion  justificaciones_recibidas(p_estado text, p_busqueda text, p_limite integer, p_desde integer)  invoker  anon=false  auth=true
 funcion  justificar_ausencia(p_desde date, p_hasta date, p_motivo text, p_detalle text, p_adjuntos jsonb, p_privacidad text)  definer  anon=false  auth=true
+funcion  lector_planilla_gastar()  definer  anon=false  auth=true
 funcion  lectores_de_aviso(p_aviso uuid)  definer  anon=false  auth=true
 funcion  ligar_a_la_clase_abierta()  invoker  anon=false  auth=false
 funcion  logros_hitos(alumno uuid)  invoker  anon=false  auth=true
@@ -2004,6 +2009,8 @@ indice  interno.envios_publicos  envios_publicos_creado
 indice  interno.envios_publicos  envios_publicos_ip
 indice  interno.envios_publicos  envios_publicos_pkey
 indice  interno.envios_publicos  envios_publicos_tipo_ambito
+indice  interno.lector_planilla_uso  lector_planilla_uso_dia
+indice  interno.lector_planilla_uso  lector_planilla_uso_pkey
 indice  interno.salud_base  salud_base_pkey
 indice  justificaciones_ausencia  justificaciones_ausencia_pkey
 indice  justificaciones_ausencia  justificaciones_por_fecha
