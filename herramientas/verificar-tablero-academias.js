@@ -130,13 +130,10 @@ async function pruebaAdmin(browser) {
   igual("el horario dice cuántas se dieron y lo que faltó, escrito", await celdaTexto(page, "ac-1", "horario"), "7 de 8 | dadas de las programadas | ⚠ 1 sin dar");
   igual("sin horario no dice «0 de 0»", await celdaTexto(page, "ac-2", "horario"), "Sin horario | nadie cargó su horario");
   igual("alumnos activos contra inscritos", await celdaTexto(page, "ac-1", "alumnos"), "17 de 53 | entrenaron este mes");
-  /* El mes se da por cerrado con la hora de Costa Rica, igual que en la página
-     (ActividadProfesor.hoyCR). Con la hora UTC, entre las 00:00 y las 06:00 UTC
-     del día 1 la prueba esperaba un mes cerrado que en Costa Rica todavía no
-     terminó, y fallaba sin que la página tuviera nada mal. */
-  const hoyCR = await page.evaluate(() => ActividadProfesor.hoyCR());
   igual("los informes que faltan van escritos", await celdaTexto(page, "ac-1", "informes"),
-    "0 de 2 enviados | 2 profesores | ⚠ 2 sin enviar" + (mes < hoyCR.slice(0, 7) + "-01" ? "" : " (el mes no ha terminado)"));
+    // El mes se cuenta en hora de Costa Rica, como la página: con new Date() en UTC,
+    // entre las 00:00 y las 06:00 UTC del día 1 la prueba creía cerrado un mes abierto.
+    "0 de 2 enviados | 2 profesores | ⚠ 2 sin enviar" + (mes < (await page.evaluate(() => ActividadProfesor.hoyCR())).slice(0, 7) + "-01" ? "" : " (el mes no ha terminado)"));
   igual("el gasto de IA contra su tope", await celdaTexto(page, "ac-1", "ia"), "US$0.42 | de US$5.00 de tope");
   igual("sin modelo lo dice", await celdaTexto(page, "ac-2", "ia"), "US$0.00 | sin IA configurada");
   const cob = await celdaTexto(page, "ac-1", "cobros");

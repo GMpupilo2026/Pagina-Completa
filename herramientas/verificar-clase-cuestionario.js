@@ -39,7 +39,7 @@ function laParteQueNoTocaLaPagina() {
   console.log("\n=== Cuestionario, solo ===");
   global.window = {};
   global.Chess = require("chess.js").Chess;
-  const s = fs.readFileSync(path.join(__dirname, "..", "js", "clase-cuestionario.js"), "utf8");
+  const s = fs.readFileSync(path.join(__dirname, "..", "js", "cuestionario-editor.js"), "utf8");
   const i = s.indexOf("window."), j = s.indexOf("})();", i) + 5;
   eval(s.slice(i, j));
   const C = global.window.Cuestionario;
@@ -178,12 +178,37 @@ async function pruebaAlumno(browser) {
   }
 }
 
+
+async function pruebaListoEnClase(browser) {
+  console.log("\n=== Uno listo, desde cuestionarios.html (sesion.html?cuestionario=) ===");
+  const listo = { id: "l-1", titulo: "El tablero", nivel: "inicial", listo: true, profesor_id: null, updated_at: "2026-09-30T10:00:00Z",
+    preguntas: [{ texto: "¿Cuántas casillas tiene el tablero?", opciones: ["48", "64", "81"], correcta: 1, tiempo: 30, fen: null }] };
+  const mio = { id: "m-1", titulo: "Repaso", nivel: null, listo: false, profesor_id: "u-profe", updated_at: "2026-09-30T12:00:00Z",
+    preguntas: [{ texto: "¿Qué vale más?", opciones: ["La torre", "El alfil"], correcta: 0, tiempo: 20, fen: null }] };
+  const { page, ctx, errores } = await abrir(browser, "u-profe", CLASE, { game_state: [fila()], cuestionarios: [mio, listo] },
+    { ruta: "/sesion.html?cuestionario=l-1" });
+  await page.waitForFunction(() => document.getElementById("cuestionario-listo").checkVisibility(), null, { timeout: 10000 });
+  igual("abre la caja con ese elegido, para mirarlo (no para editarlo)", [await page.evaluate(() => document.getElementById("cuestionario-caja").open),
+    await page.inputValue("#cuestionario-select"), await seVe(page, "#cuestionario-editor")], [true, "l-1", false]);
+  igual("la lista: los tuyos y los listos por nivel", await page.evaluate(() => [...document.querySelectorAll("#cuestionario-select optgroup")].map((g) => g.label)),
+    ["Tus cuestionarios", "Listos · Inicial"]);
+  await page.getByRole("button", { name: "▶️ Jugarlo con la clase" }).click();
+  await page.waitForFunction(() => (window.__rpcs || []).some((r) => r.n === "hacer_pregunta_de_opciones"), null, { timeout: 5000 });
+  const r = await page.evaluate(() => window.__rpcs.find((x) => x.n === "hacer_pregunta_de_opciones").args);
+  igual("se juega tal cual: su pregunta, su clave y su tiempo", [r.p_prompt, r.p_correcta, r.p_tiempo_limite, r.p_sin_tablero],
+    ["🎯 Pregunta 1 de 1: ¿Cuántas casillas tiene el tablero?", 1, 30, true]);
+  igual("y no se guardó ninguna copia", await page.evaluate(() => window.__inserts.filter((i) => i.tabla === "cuestionarios").length), 0);
+  igual("sin errores en consola", errores, []);
+  await ctx.close();
+}
+
 (async () => {
   laParteQueNoTocaLaPagina();
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
     await pruebaProfe(browser);
     await pruebaAlumno(browser);
+    await pruebaListoEnClase(browser);
   } catch (e) {
     console.log("  ✗ la prueba se cayó: " + (e && e.stack || e));
     fallos += 1;

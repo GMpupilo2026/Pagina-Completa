@@ -168,6 +168,13 @@ sin ellas `profiles` queda apuntando a gente que no existe y nadie puede
 iniciar sesión. Para llevarlas hay que volcar también el esquema `auth`
 (`-n auth`), o volver a invitar a todo el mundo, que es peor.
 
+**Los 30 cuestionarios listos** (`cuestionarios` con `listo = true`) vienen en
+el volcado como cualquier fila. Si faltan —una base armada solo con las
+migraciones—, se vuelven a sembrar desde el repositorio: `node
+herramientas/cuestionarios-listos.js` escribe `herramientas/cuestionarios/semilla.sql`,
+que se corre en la base. Borra los listos y los vuelve a poner: no toca los que
+armaron los profes.
+
 ### 4. Las Edge Functions
 
 ```

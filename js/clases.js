@@ -541,7 +541,7 @@
         const PANEL_DOCENTE = [
             { title: "Clase en vivo", destacado: true, hrefs: ["sesion.html"] },
             { title: "Tus alumnos", hrefs: ["tareas.html", "examenes.html", "informes.html", "justificaciones.html", "subgrupos.html"] },
-            { title: "Tus clases", hrefs: ["planes.html", "asistencia.html", "repasar-clases.html", "partidas.html", "preparacion-rivales.html", "informe-mensual.html"] },
+            { title: "Tus clases", hrefs: ["planes.html", "cuestionarios.html", "asistencia.html", "repasar-clases.html", "partidas.html", "preparacion-rivales.html", "informe-mensual.html"] },
             { title: "Coordinación", hrefs: ["coordinacion.html", "solicitudes.html", "formularios.html", "cobros.html"] },
             { title: "Aprender", hrefs: ["entreno/index.html", "entreno/estudio.html", "cursos/academia/index.html", "articulos.html"] },
             { title: "Jugar y competir", hrefs: ["juegos.html", "competir.html", "tablero.html"] },
@@ -1268,6 +1268,7 @@
             "academias.html": "academia supervisor",
             "tablero-academias.html": "cifras numeros del mes",
             "planes.html": "planificar preparar clase posiciones",
+            "cuestionarios.html": "kahoot preguntas opciones quiz concurso juego de preguntas trivia",
             "asistencia.html": "pasar lista presencial aula",
             "justificaciones.html": "justificar ausencia falta faltas falte excusa constancia medica dictamen incapacidad permiso",
             "informe-mensual.html": "informe del mes supervision",
@@ -3698,6 +3699,10 @@
                    en la lista con un descProfe. */
                 TILE_GROUPS.find((g) => g.title === "Herramientas").tiles.push(
                     { emoji: "🗒️", label: "Planes de clase", desc: "Prepara la clase antes de darla: las posiciones y las lecciones, en orden", href: "planes.html" },
+                    /* Las preguntas al estilo Kahoot: se arman acá (o se toma
+                       uno de los 30 listos, por nivel) y se juegan en la clase
+                       en vivo. */
+                    { emoji: "🎯", label: "Cuestionarios", desc: "Preguntas al estilo Kahoot para jugar en clase: arma las tuyas o usa las 30 listas, por nivel", href: "cuestionarios.html" },
                     /* La clase del aula también queda registrada. Va acá, al
                        lado de los planes, porque es el otro extremo de la misma
                        clase: uno la prepara antes y el otro la anota después.
