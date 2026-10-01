@@ -69,6 +69,7 @@ try { localStorage.setItem("oscarMoveHelpShown_v1", "1"); } catch (e) {}
 function doble(datos, usuarioId) {
   return `
 window.__consultas = [];
+window.__escrituras = [];
 (function () {
   const DATOS = ${JSON.stringify(datos)};
   function constructor(tabla, filas) {
@@ -91,6 +92,8 @@ window.__consultas = [];
       maybeSingle() { unica = true; return b; },
       single() { unica = true; return b; },
       then(res, rej) {
+        // Lo que la página escribe, para mirar qué mandó (estoy listo, rendirse).
+        if (cambio !== null) window.__escrituras.push({ tabla, cambio, filas: filas2.length });
         let d = cambio !== null ? filas2.map((r) => Object.assign({}, r, cambio)) : (resultado !== null ? resultado : filas2);
         if (Array.isArray(d) && unica) d = d.length ? d[0] : null;
         return Promise.resolve({ data: d, error: null }).then(res, rej);
@@ -792,6 +795,31 @@ async function pruebaElTurnoElRelojYLaUltima(browser) {
   ok("«última jugada» sin jugadas dice que no hay", /todav[ií]a no/i.test(await loQueDijoElRecuadro(a.page)));
   await a.ctx.close();
 
+  /* El reloj es de js/sala-juego.js para todas las salas. Antes cada una tenía
+     su copia y solo Estándar y Niebla decían de quién era: en Crazyhouse,
+     Cartas y las variantes el lector de pantalla leía «10:00» suelto. */
+  const CON_RELOJ = [
+    ["/crazyhouse.html?room=r1", "crazyhouse", "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR[] w KQkq - 0 1"],
+    ["/cartas.html?room=r1", "cartas", INICIAL],
+    ["/variante.html?room=r1", "camaleon", INICIAL],
+  ];
+  // La de Cartas necesita también su mano y su mazo, como la crea juegos-comun.js.
+  // Su motor espera un `window`: se carga aparte, sin tocar el de esta prueba.
+  const caja = { window: {}, Chess: require("chess.js").Chess };
+  require("vm").runInNewContext(fs.readFileSync(path.join(__dirname, "..", "js", "cartas-engine.js"), "utf8"), caja);
+  const Cartas = caja.window.CartasChess;
+  for (const [url, variant, fen] of CON_RELOJ) {
+    const fila = sala("r1", variant, fen);
+    if (variant === "cartas") fila.cartas_state = Cartas.Game.iniciar().toJSON();
+    const b = await abrir(browser, url, { tablas: { game_rooms: [fila], profiles: PERFILES } }, "u-bruno", true);
+    const abajo = await b.page.evaluate(() => (document.getElementById("bottom-clock") || {}).getAttribute("aria-label"));
+    const arriba = await b.page.evaluate(() => (document.getElementById("top-clock") || {}).getAttribute("aria-label"));
+    ok(variant + ": el reloj de abajo dice que es el tuyo, de negras", /tu reloj/i.test(abajo || "") && /negras/.test(abajo || ""), abajo);
+    ok(variant + ": y el de arriba, que es el del rival", /rival/i.test(arriba || "") && /blancas/.test(arriba || ""), arriba);
+    ok(variant + ": sin errores de la página", b.errores.length === 0, b.errores);
+    await b.ctx.close();
+  }
+
   const TRAS_E4_D5 = "rnbqkbnr/ppp1pppp/8/3p4/4P3/8/PPPP1PPP/RNBQKBNR w KQkq d6 0 2";
   const conJugadas = (variant) => ({ tablas: { game_rooms: [Object.assign(sala("r1", variant, TRAS_E4_D5), { moves: ["e4", "d5"] })], profiles: PERFILES } });
   a = await abrir(browser, "/estandar.html?room=r1", conJugadas("estandar"), "u-ana", true);
@@ -959,6 +987,42 @@ async function pruebaElOtroMate(browser) {
   }
 }
 
+/* «Estoy listo» y «Rendirse» son de js/sala-juego.js para todas las salas
+   (antes, seis copias). Se aprietan como una persona y se mira lo que se
+   escribió en la sala: el que confirma segundo arranca el reloj en la misma
+   escritura, y rendirse le da la partida al rival solo si sigue en juego. */
+async function pruebaListoYRendirse(browser) {
+  console.log("\n▶ Salas: «Estoy listo» y «Rendirse»");
+  const SALAS = [["/estandar.html?room=r1", "estandar"], ["/variante.html?room=r1", "camaleon"], ["/duelo.html?room=r1", "duelo"]];
+  for (const [url, variant] of SALAS) {
+    const fila = Object.assign(sala("r1", variant, INICIAL), { black_ready: false });
+    if (variant === "duelo") {
+      // Como cartas: el duelo lleva su estado, armado con su motor y aparte.
+      const caja = { window: {}, Chess: require("chess.js").Chess };
+      require("vm").runInNewContext(fs.readFileSync(path.join(__dirname, "..", "js", "duelo-engine.js"), "utf8"), caja);
+      fila.duelo_state = new caja.window.DueloSimultaneo.Game().toJSON();
+    }
+    const a = await abrir(browser, url, { tablas: { game_rooms: [fila], profiles: PERFILES } }, "u-bruno", false);
+    const listo = a.page.locator("#ready-btn");
+    if (await listo.count() && await listo.isVisible()) {
+      await listo.click();
+      await a.page.waitForTimeout(300);
+      const e = await a.page.evaluate(() => window.__escrituras.filter((x) => x.tabla === "game_rooms").map((x) => x.cambio));
+      const c = e[e.length - 1] || {};
+      ok(variant + ": «Estoy listo» marca a negras listas", c.black_ready === true, e);
+      ok(variant + ": y, como blancas ya estaban, arranca el reloj ahí mismo", typeof c.clock_updated_at === "string", e);
+    }
+    await a.page.click("#resign-btn");
+    await a.page.getByRole("button", { name: "Rendirme" }).click();
+    await a.page.waitForTimeout(300);
+    const r = await a.page.evaluate(() => window.__escrituras.filter((x) => x.tabla === "game_rooms").map((x) => x.cambio));
+    const ult = r[r.length - 1] || {};
+    ok(variant + ": rendirse con negras le da la partida a blancas", ult.status === "finished" && ult.result === "white", r);
+    ok(variant + ": sin errores de la página", a.errores.length === 0, a.errores);
+    await a.ctx.close();
+  }
+}
+
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
@@ -976,6 +1040,7 @@ async function pruebaElOtroMate(browser) {
     await pruebaElEnroqueDichoYLosMensajes(browser);
     await pruebaSiguienteContraOscar(browser);
     await pruebaElTurnoElRelojYLaUltima(browser);
+    await pruebaListoYRendirse(browser);
     await pruebaLoQueQuedaEscritoYLoQueSeDice(browser);
   } finally {
     await browser.close();

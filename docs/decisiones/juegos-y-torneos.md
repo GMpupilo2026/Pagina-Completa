@@ -855,6 +855,35 @@ página calcule el reloj con `Date.now()` a secas, y que el desfase se mida
 contra un servidor que va siete segundos por delante. Está probado que falla de
 verdad: quitando el recorte de la captura al paso, salta.
 
+## Una sola copia de lo que comparten los juegos
+
+Cada juego había nacido copiando al anterior, y las copias ya se habían
+separado sin que nadie lo notara (la página se veía bien y hacía otra cosa):
+
+- **`js/sala-juego.js`: las salas de partida en línea** (Estándar, Niebla,
+  Crazyhouse, Cartas, las variantes y Duelo). El reloj y su rótulo dicho, la
+  caída de bandera, «Estoy listo», «Rendirse», volver a leer la sala y escuchar
+  sus cambios. Eran seis copias, y **solo Estándar y Niebla decían de quién era
+  cada reloj**: en Crazyhouse, Cartas y las variantes el lector de pantalla leía
+  «10:00» suelto. Lo único que cambia de un juego a otro es a quién se le
+  pregunta el turno (`board.game` o `engine`), y por eso se pasa ya calculado.
+  Cada página conserva sus funciones (`renderClocks`, `releerSala`…), pero de
+  una línea. Crazyhouse sigue con su propia triple repetición: cuenta con su
+  motor, no con chess.js.
+- **`js/racha-tablero.js`: el tablero de los ejercicios contra reloj**
+  (Racha táctica y Te reto): el tablero, el teclado, el arrastre, el cuadro de
+  comandos, la coronación y la corrección. **Te reto marcaba «Respuesta
+  incorrecta» a un mate que no era el guardado** (hay unas 140 posiciones con
+  más de un mate); Racha táctica ya lo aceptaba. Se carga antes del script de
+  cada página y usa las variables de la página solo dentro de funciones.
+
+Lo que queda repetido entre los juegos (el estado de la partida en palabras,
+guardar la jugada) cambia de verdad en cada uno: lo que se unió es lo que era
+igual. `verificar-juegos-accesible.js` prueba en todas las salas el rótulo de
+los relojes, «Estoy listo» y «Rendirse» (con un doble que anota lo escrito), y
+en las dos rachas que el otro mate cuenta. Las tres pruebas fallan con las
+copias viejas o rompiendo el módulo a propósito.
+
 ## La sala de cine de las transmisiones
 
 `torneos-en-vivo.html` (el enlace «Torneos» junto a «¡Te reto!» y «TV en
