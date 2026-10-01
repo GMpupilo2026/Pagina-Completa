@@ -926,6 +926,39 @@ async function pruebaLoQueQuedaEscritoYLoQueSeDice(browser) {
   await a.ctx.close();
 }
 
+/* Un ejercicio de mate con DOS mates (Tf8# es la guardada; Td8# también es
+   mate). Racha táctica y Te reto comparten el tablero (js/racha-tablero.js):
+   cuando cada una tenía su copia, Te reto marcaba «Respuesta incorrecta» a un
+   mate perfecto, y no daba ningún error. Las dos tienen que darlo por bueno. */
+const DOS_MATES = ["6k1/p1p3pp/4N3/1p6/2q1r1n1/2B5/PP4PP/3R1R1K w - - 0 29", "f1f8", "Rf8#", 1500];
+
+async function pruebaElOtroMate(browser) {
+  console.log("\n▶ ¡Te reto! y Racha táctica: otro mate también es acierto");
+  const RACHAS = [
+    { nombre: "te-reto.html", url: "/te-reto.html",
+      datos: { tablas: { public_streak_leaderboard: [] } },
+      empezar: async (page) => { await page.fill("#name-input", "Ana"); await page.press("#name-input", "Enter"); } },
+    { nombre: "racha-tactica.html", url: "/racha-tactica.html",
+      datos: { tablas: { profiles: PERFILES, puzzle_rush_scores: [] } },
+      empezar: async (page) => { await page.click("#start-btn"); } },
+  ];
+  for (const r of RACHAS) {
+    for (const jugada of ["Tf8#", "Td8#"]) {
+      const { ctx, page, errores } = await abrir(browser, r.url, r.datos, "u-ana", true);
+      await page.evaluate((ej) => { window.PUZZLE_RUSH_DATA = [ej]; }, DOS_MATES);
+      await r.empezar(page);
+      await page.waitForTimeout(400);
+      await page.fill(".cc-input", jugada);
+      await page.press(".cc-input", "Enter");
+      await page.waitForTimeout(250);
+      const racha = await page.evaluate(() => document.getElementById("current-streak").textContent);
+      igual("  " + r.nombre + ": " + jugada + " cuenta como acierto", racha, "1");
+      igual("  " + r.nombre + ": sin errores de JavaScript", errores.length, 0);
+      await ctx.close();
+    }
+  }
+}
+
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
@@ -938,6 +971,7 @@ async function pruebaLoQueQuedaEscritoYLoQueSeDice(browser) {
     await pruebaLosComandosDeSiempre(browser);
     await pruebaRevisarLaPartida(browser);
     await pruebaLasRachas(browser);
+    await pruebaElOtroMate(browser);
     pruebaElRelojHablado();
     await pruebaElEnroqueDichoYLosMensajes(browser);
     await pruebaSiguienteContraOscar(browser);
