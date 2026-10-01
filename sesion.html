@@ -46,12 +46,15 @@
         <section class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             <!-- En el celular lo de arriba va más junto: el tablero es lo que el alumno vino a ver. -->
             <div class="flex items-center justify-between flex-wrap gap-3 mb-3 sm:mb-6">
-                <h1 class="font-serif text-2xl sm:text-3xl font-bold text-brand-800 dark:text-white">Sesión en vivo <span aria-hidden="true">♟️</span></h1>
-                <div class="flex items-center gap-3">
+                <!-- El título y los dos botones caben en UNA línea a 375 px con Inter y
+                     Merriweather de verdad (servidas por el sitio): con 24 px de título
+                     los botones bajaban a otra línea y el tablero quedaba 52 px más abajo. -->
+                <h1 class="font-serif text-xl sm:text-3xl font-bold text-brand-800 dark:text-white">Sesión en vivo <span aria-hidden="true">♟️</span></h1>
+                <div class="flex items-center gap-2 sm:gap-3">
                     <span id="role-badge" class="hidden sm:inline-block text-xs font-bold uppercase tracking-wide px-3 py-1 rounded-full"></span>
                     <span id="selector-clase-wrap" class="hidden items-center gap-2"></span>
                     <button id="change-pw-btn" class="text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors">Contraseña</button>
-                    <button id="logout-btn" class="bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">Salir</button>
+                    <button id="logout-btn" class="bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-3 sm:px-4 py-2 rounded-lg text-sm transition-colors">Salir</button>
                 </div>
             </div>
 
