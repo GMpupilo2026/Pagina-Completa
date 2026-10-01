@@ -2832,7 +2832,8 @@
         async function cargarSeguirCurso() {
             const { data, error } = await sb.rpc("informes_cursos_alumnos");
             if (error || !data || !data.length) return;
-            const mios = data.filter((c) => (!c.student_id || c.student_id === alumnoDelPanel()) && c.hechos > 0 && c.hechos < c.total);
+            const mios = data.filter((c) => (!c.student_id || c.student_id === alumnoDelPanel()) && c.hechos > 0 && c.hechos < c.total
+                && !(window.CursosOcultos && CursosOcultos.es(c.slug)));   // uno escondido no se puede retomar
             if (!mios.length) return;   // sin ningún curso a medias no hay nada que retomar
             mios.sort((a, b) => new Date(b.ultima_fecha || 0) - new Date(a.ultima_fecha || 0));
             const c = mios[0];

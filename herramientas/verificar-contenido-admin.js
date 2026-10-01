@@ -93,8 +93,9 @@ async function abrir(browser, ruta, quien) {
 // "cuántas hay" y "cuántas están abiertas".
 const CASOS = [
   {
-    nombre: "Curso en Academia (Finales prácticos)",
-    ruta: "/cursos/academia/finales-practicos.html",
+    // Uno que no esté escondido (js/cursos-ocultos.js): esos no los abre ni el alumno.
+    nombre: "Curso en Academia (Estrategia en el final)",
+    ruta: "/cursos/academia/estrategia-en-el-final.html",
     listo: () => document.querySelectorAll("#course-content-body details > summary > .ac-marca").length > 0,
     contar: () => {
       // Las lecciones van dentro de su bloque, así que no son hijas directas:

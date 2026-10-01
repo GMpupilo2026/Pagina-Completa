@@ -666,6 +666,12 @@
             { slug: "partidas-modelo", titulo: "Partidas modelo del ajedrez moderno" },
             { slug: "preparacion-para-torneos", titulo: "Preparación para Torneos" },
         ];
+        // Los escondidos (js/cursos-ocultos.js) no se ofrecen en clase: el worker no se los sirve.
+        if (window.CursosOcultos) {
+            for (let i = CLASS_LESSON_CATALOG.length - 1; i >= 0; i--) {
+                if (CursosOcultos.es(CLASS_LESSON_CATALOG[i].slug)) CLASS_LESSON_CATALOG.splice(i, 1);
+            }
+        }
         const leccionesPorCurso = {}; // slug -> [{titulo}, ...] en caché, una vez pedidas
 
         // Un <details> de nivel superior (con su propio <summary>) es una lección; se
