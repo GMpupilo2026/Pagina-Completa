@@ -263,6 +263,35 @@ aparecían.
 comprueba que llame al freno antes del insert y haga caso de lo que devuelve.
 Se pierde callado: basta con copiar la versión vieja de la función.
 
+### El lector de planilla tiene tope diario
+
+`ocr-scoresheet` le manda cada foto a Google Vision, y cada foto se paga. La
+podía usar cualquier cuenta con sesión sin ningún límite: un script con la
+sesión de un alumno gastaba lo que quisiera. Desde `20261001143746`, antes de
+llamar a Google la función gasta un uso de `public.lector_planilla_gastar()`,
+que cuenta en `interno.lector_planilla_uso` por persona y por día de Costa
+Rica:
+
+- **30 fotos por persona al día.** Una planilla es una foto: alcanza para pasar
+  en limpio una ronda entera de un torneo. Quien administra no tiene tope
+  personal.
+- **500 en total al día**, para quien administra también: es el techo si
+  alguien reparte el gasto entre muchas cuentas.
+- **El tope por persona lo garantiza el upsert, no un `if`**: solo suma si
+  todavía no llegó, así que dos fotos mandadas a la vez no se cuelan. El total
+  es un techo blando (se mira antes de sumar); para lo que cuida, alcanza.
+- Se llama con el token de quien sube la foto (pasa por PostgREST y por la
+  verificación en dos pasos). **Si la base no contesta, la foto no se manda**:
+  sin cuenta no hay tope, y aquí lo que se pierde es dinero, no material.
+- Comprobado impersonando roles en SQL: el uso 31 de un alumno se frena con
+  el mensaje, quien administra pasa de 30, el techo total frena a todos y
+  `anon` no tiene `execute`.
+
+Para cambiar los topes, una migración nueva que vuelva a crear la función con
+otros números. `node herramientas/verificar-lector-planilla.js` (sin red ni
+base) comprueba que la Edge Function gaste el uso antes de llamar a Google y
+que la última versión de la función siga contando con el upsert.
+
 ### Compartir un formulario con otro coordinador
 
 Un formulario ya lo veía quien lo coordinaba (`bajo_mi_coordinacion(creado_por)`,
