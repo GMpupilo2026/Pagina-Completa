@@ -1,0 +1,19 @@
+{
+  "prefetch": [
+    {
+      "where": {
+        "and": [
+          {
+            "href_matches": "/*"
+          },
+          {
+            "not": {
+              "selector_matches": "[target=\"_blank\"], [download], [rel~=\"nofollow\"], [href$=\".pdf\"], [href*=\"/cursos/recursos/\"], [href*=\"logout\"], [href^=\"mailto:\"], [href^=\"tel:\"], [href^=\"https://wa.me\"]"
+            }
+          }
+        ]
+      },
+      "eagerness": "moderate"
+    }
+  ]
+}
