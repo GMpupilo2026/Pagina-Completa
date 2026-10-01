@@ -12,7 +12,7 @@
  *
  * Comprueba, en todas las páginas del sitio:
  *   · que todo <script> escrito en la página sea uno de los que ponen los
- *     generadores, justo después de su marca (<!-- guardia/tema/oscuro/fuentes:
+ *     generadores, justo después de su marca (<!-- guardia/tema/oscuro:
  *     inicio -->), y que cada uno sea IDÉNTICO en todas: el código de una
  *     página va en js/ (ver «El código de las páginas sale del HTML»);
  *   · que ninguna etiqueta lleve un atributo on… (onclick, onload…), ni un
@@ -26,7 +26,9 @@ const fs = require("fs");
 const path = require("path");
 
 const RAIZ = path.join(__dirname, "..");
-const PERMITIDOS = ["guardia", "tema", "oscuro", "fuentes"];
+// La marca «fuentes» sigue existiendo, pero lo que pone ahora es un <link>, no
+// un script (ver herramientas/fuentes-cabecera.py).
+const PERMITIDOS = ["guardia", "tema", "oscuro"];
 
 let fallos = 0;
 const mal = (m) => { console.log("  ✗ " + m); fallos += 1; };

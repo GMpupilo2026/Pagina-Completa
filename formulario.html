@@ -11,13 +11,10 @@
          Antes venía del CDN, que baja ~400 KB de JavaScript y compila el CSS
          dentro del navegador en cada visita. -->
     <link rel="stylesheet" href="css/tailwind.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link id="fuentes" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@700&display=swap" rel="stylesheet" media="print"><!-- fuentes: inicio --><script>(function(l){if(!l)return;function a(){l.media='all';}if(l.sheet)a();else l.addEventListener('load',a);})(document.getElementById('fuentes'));</script><!-- fuentes: fin -->
     <link rel="stylesheet" href="css/styles.css">
     <!-- oscuro: inicio --><script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');}catch(e){}})();</script><!-- oscuro: fin -->
     <script src="js/adaptive-mode.js"></script>
-</head>
+<!-- fuentes: inicio --><link rel="stylesheet" href="css/fuentes.css"><!-- fuentes: fin --></head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
     <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">

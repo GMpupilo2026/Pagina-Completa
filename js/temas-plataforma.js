@@ -38,11 +38,11 @@
   "use strict";
 
   const KEY = "plataforma_tema_v1";
-  // La fuente decorativa se guarda APARTE, y no es una segunda fuente de
-  // verdad: es una copia que deja este archivo para que el script del <head>
-  // (ver herramientas/tema-cabecera.py) pueda pedir la fuente sin bajarse esta
-  // tabla entera en las 100 páginas. Quien la escribe es siempre `aplicar()`.
-  const KEY_FUENTE = "plataforma_tema_fuente_v1";
+  // Antes se guardaba aparte la fuente del tema, para que el <head> la pidiera
+  // a Google. Ya no hace falta (Quicksand está en css/fuentes.css, servida por
+  // el sitio, y el navegador la baja solo cuando el tema la usa): la clave
+  // vieja se borra al aplicar, para no dejar basura en el navegador de nadie.
+  const KEY_FUENTE_VIEJA = "plataforma_tema_fuente_v1";
   const POR_OMISION = "clasico";
 
   const TEMAS = {
@@ -136,31 +136,9 @@
     if (id === POR_OMISION) html.removeAttribute("data-tema");
     else html.setAttribute("data-tema", id);
 
-    try {
-      if (tema.fuente) localStorage.setItem(KEY_FUENTE, tema.fuente);
-      else localStorage.removeItem(KEY_FUENTE);
-    } catch (e) {}
-    pedirFuente(tema.fuente);
+    try { localStorage.removeItem(KEY_FUENTE_VIEJA); } catch (e) {}
     pintarBarra(tema);
     return id;
-  }
-
-  /* La fuente decorativa se baja SOLO si el tema elegido la pide. Declararla
-   * en el <head> de las 100 páginas la bajaría siempre, también a quien no
-   * eligió ningún tema — y este sitio ya recortó las fuentes a los pesos que
-   * de verdad usa (ver «Metadatos» en CLAUDE.md). */
-  function pedirFuente(familia) {
-    if (!familia || typeof document === "undefined") return;
-    const id = "tema-fuente-" + familia.replace(/[^A-Za-z]/g, "");
-    if (document.getElementById(id)) return;
-    const link = document.createElement("link");
-    link.id = id;
-    link.rel = "stylesheet";
-    link.href =
-      "https://fonts.googleapis.com/css2?family=" +
-      encodeURIComponent(familia).replace(/%20/g, "+") +
-      ":wght@400;500;600;700&display=swap";
-    document.head.appendChild(link);
   }
 
   /* El color de la barra del sistema en el celular (la app instalada) lo pone
@@ -181,7 +159,7 @@
     return id;
   }
 
-  const API = { TEMAS, POR_OMISION, KEY, KEY_FUENTE, getPreference, setPreference, aplicar };
+  const API = { TEMAS, POR_OMISION, KEY, getPreference, setPreference, aplicar };
 
   // Corre en el navegador Y en Node (herramientas/css-construir.js y su
   // verificador lo cargan con require para no volver a escribir las paletas).

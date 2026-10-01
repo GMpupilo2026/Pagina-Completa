@@ -17,7 +17,7 @@
  *   · un <script> metido en la página NO corre (si corriera, la CSP no se
  *     estaría aplicando y todo lo demás pasaría sin comprobar nada);
  *   · sin sesión, la guardia (que corre antes que todo) manda al login;
- *   · con la CSP puesta, el modo oscuro y la hoja de fuentes siguen andando
+ *   · con la CSP puesta, el modo oscuro y las fuentes del sitio siguen andando
  *     (la hoja se contesta acá, sin red).
  *
  * Necesita el sitio servido en BASE_URL (por defecto http://localhost:8777).
@@ -51,9 +51,6 @@ async function contexto(browser, opciones = {}) {
   const ctx = await browser.newContext({ serviceWorkers: "block", ...opciones });
   await ctx.route("**/*", async (route) => {
     const req = route.request();
-    // La hoja de fuentes se contesta acá (sin red), para ver que el bloque
-    // «fuentes» corre con la CSP puesta y la aplica al llegar.
-    if (req.url().startsWith("https://fonts.googleapis.com/")) return route.fulfill({ status: 200, contentType: "text/css", body: "body{}" });
     if (!req.url().startsWith(BASE)) return route.abort();
     if (req.resourceType() !== "document") return route.continue();
     const resp = await route.fetch();
@@ -88,9 +85,10 @@ async function contexto(browser, opciones = {}) {
     if (!r.violaciones) mal("y el navegador no avisó ninguna violación: así no se vería ninguna");
     else bien("y el navegador lo avisa como violación de la CSP");
     await p.waitForTimeout(300);
-    const media = await p.evaluate(() => (document.getElementById("fuentes") || {}).media);
-    if (media === "all") bien("la hoja de fuentes se aplica al llegar (el bloque «fuentes» corre con la CSP)");
-    else mal("la hoja de fuentes quedó con media=\"" + media + "\": el bloque «fuentes» no corrió");
+    // Las fuentes las sirve el sitio: con font-src 'self' tienen que cargar.
+    const inter = await p.evaluate(async () => { await document.fonts.ready; return [...document.fonts].some((f) => /Inter/.test(f.family) && f.status === "loaded"); });
+    if (inter) bien("con la CSP puesta, Inter carga desde el propio sitio");
+    else mal("con la CSP puesta, Inter no cargó: ¿font-src deja pasar /fonts/?");
     await ctx.close();
   }
 

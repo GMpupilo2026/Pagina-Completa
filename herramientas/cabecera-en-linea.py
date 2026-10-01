@@ -16,12 +16,11 @@ la guardia de sesión, academia-cabecera.py; el tema, tema-cabecera.py):
     que no sea exactamente uno de esos cuatro NO se toca: sería código
     distinto, y cambiarlo a ciegas cambiaría lo que hace.
 
-  · la hoja de FUENTES de Google: va con media="print" para no frenar el
-    pintado y pasaba a "all" con un onload="this.media='all'" escrito en el
-    <link>. Un atributo on… es JavaScript en línea que ningún hash autoriza.
-    Queda el <link id="fuentes" … media="print"> y, justo después, un script
-    que hace lo mismo: si la hoja ya llegó la aplica, y si no, la aplica al
-    llegar.
+  · las FUENTES ya no son de este generador. Antes ponía acá un script que
+    pasaba la hoja de Google Fonts de media="print" a "all" al llegar; desde
+    que las fuentes las sirve el sitio (css/fuentes.css) no queda ningún
+    script que poner, y la marca <!-- fuentes: inicio/fin --> es de
+    herramientas/fuentes-cabecera.py, que pone un <link> normal.
 
 Se puede correr todas las veces que se quiera: reconoce lo suyo por las marcas.
 
@@ -46,13 +45,6 @@ _VARIANTES = {re.sub(r"\s+", "", v) for v in (
     OSCURO,
     "(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark');}}catch(e){}})();",
 )}
-
-FUENTES_INICIO, FUENTES_FIN = "<!-- fuentes: inicio -->", "<!-- fuentes: fin -->"
-FUENTES = ("(function(l){if(!l)return;function a(){l.media='all';}"
-           "if(l.sheet)a();else l.addEventListener('load',a);})"
-           "(document.getElementById('fuentes'));")
-FUENTES_BLOQUE = FUENTES_INICIO + "<script>" + FUENTES + "</script>" + FUENTES_FIN
-LINK_VIEJO = re.compile(r'<link href="(https://fonts\.googleapis\.com/css2\?[^"]+)" rel="stylesheet" media="print" onload="this\.media=\'all\'">')
 
 SCRIPT = re.compile(r"<script>(.*?)</script>", re.S)
 
@@ -86,18 +78,11 @@ def arreglar(s):
             if re.sub(r"\s+", "", m.group(1)) in _VARIANTES:
                 s = s[:m.start()] + OSCURO_BLOQUE + s[m.end():]
                 break
-    # Fuentes: el <link> sin onload, con su id, y el script justo después.
-    s, _ = sin_marcas(s, FUENTES_INICIO, FUENTES_FIN)
-    s = LINK_VIEJO.sub(lambda m: '<link id="fuentes" href="' + m.group(1) + '" rel="stylesheet" media="print">', s)
-    k = s.find('<link id="fuentes" ')
-    if k >= 0:
-        fin = s.find(">", k) + 1
-        s = s[:fin] + FUENTES_BLOQUE + s[fin:]
     return s
 
 
 def main():
-    tocadas = oscuro = fuentes = 0
+    tocadas = oscuro = 0
     for ruta in paginas():
         s = open(ruta, encoding="utf-8").read()
         nuevo = arreglar(s)
@@ -105,8 +90,7 @@ def main():
             open(ruta, "w", encoding="utf-8").write(nuevo)
             tocadas += 1
         oscuro += OSCURO_BLOQUE in nuevo
-        fuentes += FUENTES_BLOQUE in nuevo
-    print(f"{tocadas} páginas tocadas · {oscuro} con el modo oscuro · {fuentes} con las fuentes")
+    print(f"{tocadas} páginas tocadas · {oscuro} con el modo oscuro")
 
 
 if __name__ == "__main__":

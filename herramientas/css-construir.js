@@ -250,7 +250,7 @@ function decoracion(id, tema) {
         // minutos, y la fuente redondeada de un tema no se eligió por
         // legibilidad. La baja js/temas-plataforma.js, y solo si el tema está
         // puesto.
-        css += `${sel} .font-serif{font-family:"${tema.fuente}",Merriweather,serif;letter-spacing:-0.01em}`;
+        css += `${sel} .font-serif{font-family:"${tema.fuente}",Merriweather,"Merriweather respaldo",serif;letter-spacing:-0.01em}`;
     }
     return css;
 }
@@ -318,7 +318,16 @@ function compilar(nombre, paleta, archivos, extra) {
         darkMode: "class",
         content: archivos,
         theme: { extend: { colors: paleta,
-                 fontFamily: { sans: ["Inter", "sans-serif"], serif: ["Merriweather", "serif"] } } },
+                 fontFamily: {
+                     // El respaldo NO es "sans-serif" a secas: es el @font-face
+                     // ajustado de css/fuentes.css, que ocupa el mismo espacio
+                     // que Inter. Sin él, el primer cuadro se pinta con la
+                     // fuente del sistema y al llegar la buena el texto se
+                     // reacomoda un 5,9 % (12,6 % en las serif). Los números los
+                     // mide herramientas/fuentes-metricas.js.
+                     sans: ["Inter", "Inter respaldo", "sans-serif"],
+                     serif: ["Merriweather", "Merriweather respaldo", "serif"],
+                 } } },
     }, null, 1) + ";\n");
     const salida = path.join(CSS, nombre + ".css");
     execFileSync(binario(), ["-c", cfg, "-i", path.join(__dirname, "css/entrada.css"),

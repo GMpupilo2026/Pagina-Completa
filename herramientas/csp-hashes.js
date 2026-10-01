@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /* Escribe en la CSP de _headers los hashes de los scripts que van en línea.
  *
- * En todo el sitio van escritos en la página solo cuatro scripts, los de los
- * generadores (guardia, tema, oscuro y fuentes: ver «Cuatro scripts en línea,
+ * En todo el sitio van escritos en la página solo tres scripts, los de los
+ * generadores (guardia, tema y oscuro: ver «Cuatro scripts en línea,
  * iguales en todas las páginas» en docs/decisiones/sitio-e-infraestructura.md),
  * y cada uno es idéntico en todas. La CSP los autoriza por su hash y así
  * script-src no necesita 'unsafe-inline': un <script> que alguien lograra
@@ -19,7 +19,9 @@ const path = require("path");
 const crypto = require("crypto");
 
 const RAIZ = path.join(__dirname, "..");
-const BLOQUES = ["guardia", "tema", "oscuro", "fuentes"];
+// Eran cuatro: el de «fuentes» pasaba la hoja de Google de print a all. Desde
+// que las fuentes las sirve el sitio (css/fuentes.css), ya no hay script.
+const BLOQUES = ["guardia", "tema", "oscuro"];
 
 function paginas(dir, acc = []) {
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
