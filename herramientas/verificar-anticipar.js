@@ -56,7 +56,10 @@ function servidor(bloques) {
     let ruta = decodeURIComponent(req.url.split("?")[0]);
     if (ruta.endsWith("/")) ruta += "index.html";
     const archivo = path.join(RAIZ, ruta);
-    if (!archivo.startsWith(RAIZ) || !fs.existsSync(archivo) || fs.statSync(archivo).isDirectory()) { res.writeHead(404); return res.end(); }
+    // Dentro del repositorio y nada más: con startsWith(RAIZ) a secas, una
+    // carpeta vecina (`…/Pagina-Completa-otra`) también pasaba.
+    const dentro = path.relative(RAIZ, archivo);
+    if (!dentro || dentro.startsWith("..") || path.isAbsolute(dentro) || !fs.existsSync(archivo) || fs.statSync(archivo).isDirectory()) { res.writeHead(404); return res.end(); }
     const cab = { "content-type": TIPOS[path.extname(archivo)] || "application/octet-stream" };
     for (const b of bloques) if (b.ruta === "/*" || b.ruta === ruta) Object.assign(cab, b.cabeceras);
     res.writeHead(200, cab);
