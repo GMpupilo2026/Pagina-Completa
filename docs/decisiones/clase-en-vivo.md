@@ -1240,6 +1240,73 @@ del tema y la dificultad que se están mirando, sin repetir.
 - No arranca si hay una partida votada en curso, y termina al cerrar la
   clase.
 
+### El calentamiento de 20 ejercicios
+
+«🔥 Calentamiento: 20 ejercicios de Táctica para cada alumno», en la pestaña
+Preguntar (`js/clase-tanda.js`, `game_state.tanda_calentamiento`). Es para
+que entren en calor antes de la clase. El profe elige el nivel (en puntos Elo,
+de 600 a 2200) y el tiempo (de 5 a 30 minutos). Cada alumno resuelve los suyos
+en su tablero, debajo del de la clase; si falla, ve cuál era y pasa al
+siguiente. Al terminar los 20, o al acabarse el tiempo, ve su nota.
+
+- **Lo que viaja es la receta, no los ejercicios**: `{at, semilla, elo,
+  cantidad, segundos, alumnos}`. Cada alumno arma su tanda con la semilla y su
+  id (`TandaCalentamiento.paraAlumno`, un azar con semilla: el mismo en todas
+  las computadoras), y el profe rehace la de cualquiera para mirar el
+  ejercicio en que está. Veinte posiciones por alumno en `game_state` serían
+  varios KB de JSON en cada eco de Realtime.
+- **Los ejercicios salen de `entreno/data/temas.json`**, los de Táctica de la
+  clase: de Lichess, con su rating. Los que no tienen rating (los de
+  `temas_extra.json`) quedan fuera: sin rating no hay nivel.
+- **El mismo nivel para todos.** La banda son los ejercicios a ±100 del nivel
+  (se abre de 50 en 50 hasta ±300 si no llega a 300). Se parte en 20 tramos
+  seguidos y a cada alumno le toca uno de cada tramo: todos tienen el mismo
+  reparto de dificultad, de más fácil a más difícil. La media de cada uno no
+  se separa más de 30 puntos de la de otro (lo mide el verificador).
+- **Distintos para cada uno.** Con un azar por alumno, en los niveles con pocos
+  ejercicios (600, 2200) dos alumnos compartían 2 o 3. Por eso el profe manda
+  en `alumnos` a los conectados, en orden, y al k-ésimo le toca el ejercicio k
+  lugares después del punto de partida del tramo: mientras la clase no tenga
+  más de 15 alumnos, no se repite ninguno. Quien entra después cae en un lugar
+  al azar con su id, y a él sí le puede coincidir alguno.
+- **Una sola respuesta buena.** Los ejercicios de Lichess tienen UNA jugada
+  buena en cada paso; la excepción es el mate final, que a veces se da de más
+  de una forma. Vale la jugada de la solución o cualquiera que dé mate
+  (`TandaCalentamiento.revisar`), en UCI. Hay que jugar la línea entera: el
+  rival contesta solo con la jugada de la solución. Un ejercicio cuya solución
+  no se reproduce con chess.js, o que termina con una jugada del rival, no se
+  usa.
+- **Si falla, pasa.** El tablero vuelve a la posición de antes con la buena
+  marcada y escrita («Era Ta4#»), y a los 2 segundos viene el siguiente.
+  «No sé: pasar al siguiente» hace lo mismo. Ninguno de los dos suma.
+- **La nota va de 0 a 100**: buenas sobre 20. Lo que no llegó a hacer cuenta
+  como no resuelto; si no, terminar 3 de 3 daba 100.
+- **El tiempo lo cuenta la base.** `at` lo pone el trigger con `now()` al
+  mandar una tanda nueva (otra semilla), como el de `pensar`, y cada uno cuenta
+  con `RelojServidor`: con la hora de cada computadora, una adelantada cortaba
+  antes. «Terminar ya y dar las notas» acorta `segundos` hasta lo que pasó,
+  con la misma semilla (el trigger no mueve `at`), y cada alumno ve su nota.
+- **Lo que lleva cada uno va en la presencia** (`tanda` en
+  `metaDePresencia()`: hechos, buenas, en cuál va), como el calentamiento de
+  una posición: es de ese rato. El profe lo junta en `tandaVistos`, y quien se
+  desconecta no se borra de la lista («(se desconectó)»). El alumno guarda en
+  `localStorage` lo que hizo: al recargar sigue donde iba, y no puede volver a
+  intentar el que falló.
+- **No se guarda en ninguna tabla.** Es un calentamiento, no un examen: la
+  corrección la hace la computadora del alumno (la base de ejercicios es
+  pública), así que una nota guardada no valdría más que la de la presencia.
+  Si algún día cuenta para algo, va a una tabla y la corrige la base.
+- Solo el profe la pone (`protect_game_state_teacher_columns`, comprobado
+  impersonando: el alumno no la puede quitar). El CHECK de forma va envuelto
+  en `coalesce(…, false)`, y el trigger solo hace `jsonb_set` sobre un objeto:
+  con `[]` daba un error de jsonb en vez de rechazarlo el CHECK.
+- Se quita al cerrar la clase (`limpiarLoDeLaClase`). En Modo Adaptado se
+  contesta escribiendo (`ClaseAdaptada.montar`), y la nota se dice en voz.
+
+**Al tocar esto, correr `node herramientas/verificar-todo.js clase-tanda`.**
+Está probado que falla de verdad: con un azar por alumno en vez del lugar en la
+lista (se repiten), o sin aceptar otro mate, salta.
+
 ### El cuestionario al estilo Kahoot
 
 «🎯 Cuestionario al estilo Kahoot», en la pestaña Preguntar
