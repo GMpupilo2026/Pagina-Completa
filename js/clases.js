@@ -3132,13 +3132,8 @@
             return m ? `${h} h ${m} min` : `${h} h`;   // "6 h", no "6 h 0 min"
         }
 
-        // PostgREST arma el filtro `or=(...)` con comas y paréntesis, así que un
-        // texto que los traiga rompe la consulta entera. Se limpian (y se corta
-        // el largo) antes de mandarlo: lo que se busca es un título, no una
-        // expresión.
-        function limpiarBusqueda(t) {
-            return t.replace(/[,()%*\\"']/g, " ").trim().slice(0, 60);
-        }
+        // Ver js/busqueda-base.js: las comas y los paréntesis romperían el `or`.
+        function limpiarBusqueda(t) { return BusquedaBase.limpiar(t); }
 
         function consultaSesiones() {
             let q = sb.from("class_sessions").select("*", { count: "exact" }).eq("created_by", boardOwnerId);
