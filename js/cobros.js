@@ -623,9 +623,8 @@ function consultaCobros(conCuenta) {
     if (alumno) q = q.eq("student_id", alumno);
     if (buscar) {
         // PostgREST arma el `or=(...)` con comas y paréntesis: un concepto con
-        // una coma rompería la consulta entera. Misma limpieza que el registro
-        // de clases.
-        const limpio = buscar.replace(/[(),*]/g, " ").trim();
+        // una coma rompería la consulta entera (ver js/busqueda-base.js).
+        const limpio = BusquedaBase.limpiar(buscar);
         if (limpio) q = q.or(`concepto.ilike.%${limpio}%,consecutivo.ilike.%${limpio}%`);
     }
     return q.order("vence", { ascending: false });

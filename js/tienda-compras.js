@@ -51,7 +51,7 @@
      paréntesis se quitan porque son la sintaxis del `or` de PostgREST: un
      nombre con coma rompería el filtro en vez de buscar. */
   async function buscar() {
-    const texto = $("compra-buscar").value.replace(/[,()%*\\]/g, " ").trim();
+    const texto = BusquedaBase.limpiar($("compra-buscar").value);
     const turno = ++buscando;
     const lista = $("compra-resultados");
     if (texto.length < 2) { lista.classList.add("hidden"); lista.innerHTML = ""; return; }

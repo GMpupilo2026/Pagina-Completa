@@ -110,13 +110,18 @@ async function cerrarDeLaRonda() {
 }
 
 /* Se califica sola: la solución del ejercicio es conocida. Así cuenta para
-   los puntos y los trofeos como si el profe la hubiera marcado. */
+   los puntos y los trofeos como si el profe la hubiera marcado. Van dos
+   pedidos como mucho (las buenas y las malas), no uno por alumno: con la
+   clase entera eran veinte viajes en fila antes de la siguiente pregunta. */
 async function calificarDeLaRonda(p) {
     const { data } = await sb.from("question_answers").select("id, student_id, moves, is_correct").eq("question_id", p.id);
+    const cambian = { true: [], false: [] };
     for (const a of data || []) {
         const bien = RondaRapida.esBuena(p.fen, a.moves, p.solucion);
-        if (a.is_correct !== bien) await sb.from("question_answers").update({ is_correct: bien }).eq("id", a.id);
+        if (a.is_correct !== bien) cambian[bien].push(a.id);
     }
+    await Promise.all([true, false].filter((bien) => cambian[bien].length).map((bien) =>
+        sb.from("question_answers").update({ is_correct: bien }).in("id", cambian[bien])));
 }
 
 async function terminarRonda(mensaje) {

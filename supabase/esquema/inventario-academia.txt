@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261001060028
+# al-dia-con: 20261001131626
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -1904,15 +1904,19 @@ indice  coordinador_profesores  coordinador_profesores_por_profesor
 indice  course_unlocks  course_unlocks_granted_by_fk
 indice  course_unlocks  course_unlocks_pkey
 indice  course_unlocks  course_unlocks_student_id_curso_key
+indice  cuestionario_intentos  cuestionario_intentos_alumno_id_fk
+indice  cuestionario_intentos  cuestionario_intentos_cuestionario_id_fk
 indice  cuestionario_intentos  cuestionario_intentos_item_idx
 indice  cuestionario_intentos  cuestionario_intentos_pkey
 indice  cuestionarios  cuestionarios_listo_titulo_unico
 indice  cuestionarios  cuestionarios_pkey
 indice  cuestionarios  cuestionarios_profesor_idx
+indice  curso_adjuntos  curso_adjuntos_created_by_fk
 indice  curso_adjuntos  curso_adjuntos_curso_clase_idx
 indice  curso_adjuntos  curso_adjuntos_path_key
 indice  curso_adjuntos  curso_adjuntos_pkey
 indice  curso_contenido  curso_contenido_pkey
+indice  curso_contenido  curso_contenido_updated_by_fk
 indice  datos_facturacion  datos_facturacion_pkey
 indice  desafios  desafios_de_pendiente
 indice  desafios  desafios_para_pendiente
