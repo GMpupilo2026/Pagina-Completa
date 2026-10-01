@@ -114,6 +114,20 @@ posición de Lucena del curso "Estrategia en el final" tenía el rey negro
 demasiado cerca y la técnica del puente no ganaba, aunque todas las jugadas
 fueran legales.
 
+### Los adjuntos de un curso van en un bucket privado
+
+`curso-adjuntos` (migración `20261001021252`) nació **público**, y en un bucket
+público el archivo se baja con su enlace (`/storage/v1/object/public/…`) sin
+pasar por ninguna política: las de `storage.objects`, que lo dejaban solo a
+administración, no contaban. Lo que se adjunta a un curso es lo que se vende,
+así que con el enlace cualquiera se saltaba el candado de arriba. Se hizo
+privado antes de que tuviera un solo archivo (`20261001142925`): cada bajada
+pasa por `curso_adjuntos_archivos_select` y por la verificación en dos pasos de
+`storage.objects`. **Quien deba verlo después (un alumno con el acceso
+vigente) lo abre con un enlace firmado de pocos minutos**, nunca haciendo
+público el bucket, y la política que lo permita pregunta lo mismo que el
+worker (`puede_bajar()`).
+
 ### Los cursos escondidos
 
 Seis cursos están **escondidos a alumnos y profesores** (octubre de 2026, a
