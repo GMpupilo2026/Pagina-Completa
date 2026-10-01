@@ -16,10 +16,16 @@
   "gradiente": "from-accent-700 to-brand-900",
   "resumen": "Reglamento FIDE, normativa JDE, sistemas de competencia y arbitraje práctico, con torneo real de cierre.",
   "descripcion_larga": "Curso para personas docentes, asesoras regionales y árbitras de ajedrez: el reglamento de la FIDE, la normativa vigente de los Juegos Deportivos Estudiantiles (JDE) y el arbitraje práctico, con una sesión presencial de cierre en la que se organiza y arbitra un torneo real.",
-  "duracion_texto": "30 horas en total (22 horas virtuales sincrónicas por Microsoft Teams y 8 horas presenciales), con quiz, práctica y tarea en cada sesión.",
+  "duracion_texto": "40 horas en total: 8 sesiones de 5 horas (7 virtuales sincrónicas por Microsoft Teams y 1 presencial de cierre), cada una con su cronograma, contenido con ejemplos y casos, presentación, práctica, quiz y tarea.",
   "unidad": "sesiones",
-  "anterior": { "href": "preparacion-para-torneos.html", "titulo": "Preparación para Torneos" },
-  "siguiente": { "href": "fundamentos-del-ajedrez.html", "titulo": "Fundamentos del Ajedrez" },
+  "anterior": {
+    "href": "preparacion-para-torneos.html",
+    "titulo": "Preparación para Torneos"
+  },
+  "siguiente": {
+    "href": "arbitro-nacional.html",
+    "titulo": "Árbitro Nacional"
+  },
   "bloques": [
     {
       "titulo": "Reglamento y reglas de competición",
@@ -38,10 +44,245 @@
           "practica_titulo": "Identificación de jugadas legales y finales de partida",
           "practica": "A partir de un set de 8 posiciones, cada participante determina si hay jaque, jaque mate, ahogado o tablas, y justifica su respuesta con base en el reglamento.",
           "quiz": [
-            { "pregunta": "Un rey está en jaque y no existe ninguna jugada legal que lo saque de esa condición. ¿Cómo se denomina esta situación?", "respuesta": "Jaque mate." },
-            { "pregunta": "Un jugador no está en jaque, pero no dispone de ninguna jugada legal en su turno. ¿Qué resultado corresponde?", "respuesta": "Partida ahogada (tablas)." }
+            {
+              "pregunta": "Un rey está en jaque y no existe ninguna jugada legal que lo saque de esa condición. ¿Cómo se denomina esta situación?",
+              "respuesta": "Jaque mate."
+            },
+            {
+              "pregunta": "Un jugador no está en jaque, pero no dispone de ninguna jugada legal en su turno. ¿Qué resultado corresponde?",
+              "respuesta": "Partida ahogada (tablas)."
+            },
+            {
+              "pregunta": "¿Cuándo se pierde para siempre el derecho a enrocar de un lado?",
+              "respuesta": "Cuando ya se movió el rey o la torre de ese lado, aunque hayan vuelto a su casilla."
+            },
+            {
+              "pregunta": "Quedan en el tablero rey contra rey. ¿Qué corresponde?",
+              "respuesta": "Tablas de inmediato: es posición muerta, sin necesidad de reclamo."
+            },
+            {
+              "pregunta": "¿Cuándo puede un jugador decir «compongo» para acomodar una pieza?",
+              "respuesta": "Solo en su turno y antes de tocar la pieza."
+            },
+            {
+              "pregunta": "¿Qué debe anotar cada jugador en su planilla en una partida de ritmo clásico?",
+              "respuesta": "Sus jugadas y las del rival, jugada a jugada, en notación algebraica y de forma legible."
+            }
           ],
-          "tarea": "Leer el capítulo de reglas básicas de las Leyes de Ajedrez de la FIDE y completar una ficha breve de reflexión sobre una situación de arbitraje básica vivida en su contexto educativo."
+          "tarea": "Leer el capítulo de reglas básicas de las Leyes de Ajedrez de la FIDE y completar una ficha breve de reflexión sobre una situación de arbitraje básica vivida en su contexto educativo.",
+          "objetivos": [
+            "Conocer la organización del curso, sus evaluaciones y la sesión presencial de cierre.",
+            "Describir el rol, los deberes y los límites de la persona árbitra y asesora en los JDE.",
+            "Aplicar las reglas básicas del movimiento, incluidas las jugadas especiales y la regla de pieza tocada.",
+            "Distinguir sin dudar jaque, jaque mate, ahogado, posición muerta y las demás formas de tablas.",
+            "Leer y escribir partidas en notación algebraica y conocer las obligaciones de la planilla."
+          ],
+          "cronograma": [
+            [
+              15,
+              "Bienvenida y encuadre del curso",
+              "Presentación de las 8 sesiones de 5 horas, la forma de evaluación y la sesión presencial de cierre. Acuerdos de la sala virtual (cámara, micrófono, chat y salas de trabajo)."
+            ],
+            [
+              30,
+              "El rol de la persona árbitra y asesora",
+              "Deberes del árbitro según el art. 12, imparcialidad, árbitro principal y adjuntos, qué puede explicar y qué no debe decir durante una partida."
+            ],
+            [
+              45,
+              "Reglas básicas I: tablero, piezas y jugadas especiales",
+              "Colocación del tablero, movimiento de cada pieza, enroque, captura al paso y coronación. Pieza tocada y «compongo». Presentación y casos 1, 2 y 4."
+            ],
+            [
+              15,
+              "Receso",
+              ""
+            ],
+            [
+              45,
+              "Reglas básicas II: cómo termina una partida",
+              "Jaque, jaque mate, ahogado, posición muerta, tablas por acuerdo, triple repetición y 50 jugadas. Posiciones comentadas y caso 3."
+            ],
+            [
+              30,
+              "Notación algebraica y planilla",
+              "Notación del apéndice C, qué se anota y cuándo, planilla a la vista, firma del resultado y a quién pertenecen las planillas."
+            ],
+            [
+              15,
+              "Receso",
+              ""
+            ],
+            [
+              50,
+              "Práctica en salas de trabajo",
+              "Identificación de jugadas legales y finales de partida: las 8 posiciones de los ejercicios, resueltas en grupos y justificadas con el artículo. Plenaria de respuestas."
+            ],
+            [
+              35,
+              "Quiz de la sesión y errores frecuentes en el aula",
+              "Quiz individual, revisión de respuestas y repaso de los errores más comunes en torneos escolares."
+            ],
+            [
+              20,
+              "Cierre",
+              "Dudas, explicación de la tarea y evaluación breve de la sesión."
+            ]
+          ],
+          "temas": [
+            {
+              "titulo": "La persona árbitra: deberes y límites",
+              "texto": "El deber central de quien arbitra es que se cumplan las Leyes y cuidar la competición. De ahí salen los demás: supervisar las partidas (en especial en apuro de tiempo), mantener el orden en la sala, aplicar sanciones proporcionadas y tomar medidas especiales para personas con discapacidad o que necesitan atención médica.",
+              "puntos": [
+                "Una sola voz decide: el árbitro principal. Los adjuntos observan, informan y aplican lo acordado.",
+                "Quien arbitra no puede jugar el torneo que dirige.",
+                "Explica una regla si el jugador lo pide, pero no aconseja sobre la posición.",
+                "No avisa que el rival ya movió ni que el jugador olvidó presionar el reloj."
+              ],
+              "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.9, 12.1, 12.2, 12.3 y 12.6"
+            },
+            {
+              "titulo": "El tablero y el inicio de la partida",
+              "texto": "El tablero se coloca con una casilla clara en la esquina derecha de cada jugador («clara a la derecha»): h1 y a8 son claras, y la dama empieza en la casilla de su color. Empiezan siempre las blancas y luego se juega por turnos.",
+              "puntos": [
+                "Si se descubre que la posición inicial estaba mal armada, la partida se anula y se juega de nuevo.",
+                "Si solo el tablero estaba mal orientado, la posición se pasa a un tablero bien colocado y la partida sigue.",
+                "Si los colores estaban invertidos y cada bando hizo menos de 10 jugadas, se empieza otra partida con los colores correctos; con 10 o más, se sigue."
+              ],
+              "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 1.1, 2.1, 7.2 y 7.3"
+            },
+            {
+              "titulo": "Movimientos y jugadas especiales",
+              "texto": "Solo el caballo salta por encima de otras piezas. El enroque es una jugada de rey: se toca primero el rey. La captura al paso solo se puede hacer en la jugada inmediatamente siguiente al avance doble. La coronación forma parte de la misma jugada: el peón se cambia en ese momento por dama, torre, alfil o caballo del mismo color.",
+              "puntos": [
+                "Mover el rey hace perder los dos enroques; mover una torre, solo el de ese lado, aunque vuelva a su casilla.",
+                "Nunca se enroca estando en jaque.",
+                "Pieza tocada, pieza jugada: si se toca deliberadamente una pieza propia que tiene jugada legal, hay que moverla.",
+                "«Compongo» se dice antes de tocar la pieza y solo en el propio turno.",
+                "Si con intención de enrocar se toca primero la torre, hay que mover la torre y ya no se puede enrocar con ella."
+              ],
+              "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 3.5, 3.7.4, 3.7.5, 3.8.2, 4.2, 4.3 y 4.4.2"
+            },
+            {
+              "titulo": "Cómo termina una partida",
+              "texto": "Hay jaque cuando el rey está atacado; se sale capturando la pieza que da jaque, tapando o moviendo el rey. Si no existe ninguna jugada legal para salir del jaque, es jaque mate y la partida termina. Si el bando que mueve no está en jaque pero no tiene ninguna jugada legal, es ahogado: tablas.",
+              "puntos": [
+                "Posición muerta: ninguna serie de jugadas legales puede dar mate (por ejemplo, rey contra rey, o rey y alfil contra rey). Son tablas de inmediato, sin reclamo.",
+                "Tablas por acuerdo: la oferta se hace después de mover y antes de presionar el reloj; la partida termina cuando el rival acepta.",
+                "Triple repetición y regla de las 50 jugadas: son tablas por reclamo del jugador, con el procedimiento del art. 9.",
+                "Darse la mano sin una oferta previa no es un acuerdo de tablas."
+              ],
+              "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 3.9, 5.1, 5.2, 9.1, 9.2 y 9.3"
+            },
+            {
+              "titulo": "Notación algebraica y planilla",
+              "texto": "En competencias de ritmo clásico cada jugador anota sus jugadas y las del rival, jugada a jugada, de forma legible y en notación algebraica. Las iniciales de las piezas pueden ser las del idioma del jugador (R, D, T, A, C en español).",
+              "puntos": [
+                "No se anota la jugada antes de hacerla, salvo para reclamar tablas.",
+                "La planilla debe estar a la vista del árbitro durante toda la partida.",
+                "Las ofertas de tablas se anotan con el signo (=).",
+                "Al terminar, ambos jugadores firman las dos planillas con el resultado. Firmar no quita el derecho a apelar.",
+                "Las planillas pertenecen al organizador."
+              ],
+              "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 8.1, 8.3, 8.7 y apéndice C"
+            },
+            {
+              "titulo": "Errores frecuentes en el ámbito escolar",
+              "texto": "En los torneos estudiantiles se repiten siempre las mismas confusiones. Conocerlas permite anticiparlas en la charla técnica previa a la primera ronda.",
+              "puntos": [
+                "Llamar «mate» a un ahogado, o al revés.",
+                "Dejar el peón en la octava fila sin cambiarlo y presionar el reloj: es una jugada ilegal.",
+                "Enrocar después de haber movido el rey y haberlo devuelto a su casilla.",
+                "Capturar al paso una o dos jugadas tarde.",
+                "Seguir jugando con rey contra rey «para ver qué pasa»: la partida ya terminó en tablas."
+              ],
+              "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 3.7, 3.8, 5.2.2 y 7.5"
+            }
+          ],
+          "casos": [
+            {
+              "titulo": "El enroque que empezó por la torre",
+              "situacion": "Con el rey y la torre de h1 sin mover, un estudiante toma primero la torre para enrocar corto.",
+              "decision": "Aplica pieza tocada: como tocó primero la torre, debe mover esa torre y no puede enrocar con ella. El enroque se hace tocando primero el rey.",
+              "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 4.4.2"
+            },
+            {
+              "titulo": "El peón que llegó a la octava",
+              "situacion": "Un peón blanco llega a e8, el jugador lo deja como peón y presiona el reloj.",
+              "decision": "Es una jugada ilegal completada: el cambio del peón es parte de la misma jugada. Se repone la posición anterior y se aplica la sanción de la primera jugada ilegal.",
+              "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 3.7.5 y 7.5"
+            },
+            {
+              "titulo": "Rey contra rey",
+              "situacion": "Tras varios cambios quedan solo los dos reyes. Los jugadores quieren seguir moviendo.",
+              "decision": "La partida terminó en tablas en el momento en que se llegó a esa posición: es posición muerta y no hace falta ningún reclamo.",
+              "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 5.2.2"
+            },
+            {
+              "titulo": "La captura al paso tardía",
+              "situacion": "Un peón negro avanzó de d7 a d5 hace dos jugadas. Ahora el peón blanco de e5 lo captura al paso.",
+              "decision": "Es una jugada ilegal: el derecho a capturar al paso solo existe en la respuesta inmediata al avance doble.",
+              "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 3.7.4.1 y 7.5"
+            }
+          ],
+          "ejercicios": [
+            {
+              "enunciado": "Posición 1. Juegan las negras. ¿Hay jaque, jaque mate, ahogado o posición muerta? ¿Sigue la partida?",
+              "fen": "R5k1/5ppp/8/8/8/8/8/6K1 b - - 1 1",
+              "posicion": "Blancas: rey en g1; torre en a8. Negras: rey en g8; peones en f7, g7, h7. Juegan las negras.",
+              "estado": "mate",
+              "respuesta": "Jaque mate: el rey está en jaque y no tiene ninguna jugada legal. La partida terminó (art. 5.1)."
+            },
+            {
+              "enunciado": "Posición 2. Juegan las negras. ¿Qué situación es y cuál es el resultado?",
+              "fen": "7k/5Q2/6K1/8/8/8/8/8 b - - 0 1",
+              "posicion": "Blancas: rey en g6; dama en f7. Negras: rey en h8. Juegan las negras.",
+              "estado": "ahogado",
+              "respuesta": "Ahogado: el rey no está en jaque y el bando que mueve no tiene ninguna jugada legal. Tablas (art. 5.2.1)."
+            },
+            {
+              "enunciado": "Posición 3. Juegan las negras. ¿Qué situación es? ¿Sigue la partida?",
+              "fen": "4k3/8/8/8/8/8/8/4R1K1 b - - 0 1",
+              "posicion": "Blancas: rey en g1; torre en e1. Negras: rey en e8. Juegan las negras.",
+              "estado": "jaque",
+              "respuesta": "Jaque, pero no mate: el rey tiene al menos una jugada legal para salir del jaque. La partida sigue (art. 3.9)."
+            },
+            {
+              "enunciado": "Posición 4. Juegan las blancas. ¿Puede seguir la partida?",
+              "fen": "8/8/4k3/8/8/2B5/8/4K3 w - - 0 1",
+              "posicion": "Blancas: rey en e1; alfil en c3. Negras: rey en e6. Juegan las blancas.",
+              "estado": "muerta",
+              "respuesta": "Posición muerta: ninguna serie de jugadas legales puede terminar en mate. Tablas de inmediato, sin reclamo (art. 5.2.2)."
+            },
+            {
+              "enunciado": "Posición 5. Juegan las blancas. Se llegó tras 1.f3 e5 2.g4 Dh4. ¿Qué situación es?",
+              "fen": "rnb1kbnr/pppp1ppp/8/4p3/6Pq/5P2/PPPPP2P/RNBQKBNR w KQkq - 1 3",
+              "posicion": "Blancas: rey en e1; dama en d1; torres en a1, h1; alfiles en c1, f1; caballos en b1, g1; peones en a2, b2, c2, d2, e2, f3, g4, h2. Negras: rey en e8; dama en h4; torres en a8, h8; alfiles en c8, f8; caballos en b8, g8; peones en a7, b7, c7, d7, e5, f7, g7, h7. Juegan las blancas.",
+              "estado": "mate",
+              "respuesta": "Jaque mate: el rey está en jaque y no tiene ninguna jugada legal. La partida terminó (art. 5.1)."
+            },
+            {
+              "enunciado": "Posición 6. Juegan las negras. ¿Puede seguir la partida?",
+              "fen": "8/8/4k3/8/8/2N5/8/4K3 b - - 0 1",
+              "posicion": "Blancas: rey en e1; caballo en c3. Negras: rey en e6. Juegan las negras.",
+              "estado": "muerta",
+              "respuesta": "Posición muerta: ninguna serie de jugadas legales puede terminar en mate. Tablas de inmediato, sin reclamo (art. 5.2.2)."
+            },
+            {
+              "enunciado": "Posición 7. Juegan las negras. ¿Puede seguir la partida?",
+              "fen": "8/8/4k3/8/8/2R5/8/4K3 b - - 0 1",
+              "posicion": "Blancas: rey en e1; torre en c3. Negras: rey en e6. Juegan las negras.",
+              "estado": "sigue",
+              "respuesta": "No hay jaque y sí hay material para dar mate: la partida sigue."
+            },
+            {
+              "enunciado": "Posición 8. Juegan las negras. ¿Qué situación es y cuál es el resultado?",
+              "fen": "k7/P7/1K6/8/8/8/8/8 b - - 0 1",
+              "posicion": "Blancas: rey en b6; peón en a7. Negras: rey en a8. Juegan las negras.",
+              "estado": "ahogado",
+              "respuesta": "Ahogado: el rey no está en jaque y el bando que mueve no tiene ninguna jugada legal. Tablas (art. 5.2.1)."
+            }
+          ]
         },
         {
           "titulo": "Reglas de competición",
@@ -55,10 +296,214 @@
           "practica_titulo": "Simulación de reclamos en salas de trabajo",
           "practica": "En subgrupos, cada participante asume el rol de árbitro ante un reclamo distinto y debe resolverlo aplicando el procedimiento correcto.",
           "quiz": [
-            { "pregunta": "Un jugador toca una pieza propia que puede mover legalmente. ¿Qué debe hacer?", "respuesta": "Debe moverla si tiene jugada legal." },
-            { "pregunta": "¿Qué debe hacer la persona árbitra ante el uso de un dispositivo electrónico no autorizado?", "respuesta": "Aplicar la sanción establecida en el reglamento de competición." }
+            {
+              "pregunta": "Un jugador toca una pieza propia que puede mover legalmente. ¿Qué debe hacer?",
+              "respuesta": "Debe moverla si tiene jugada legal."
+            },
+            {
+              "pregunta": "¿Qué debe hacer la persona árbitra ante el uso de un dispositivo electrónico no autorizado?",
+              "respuesta": "Aplicar la sanción establecida en el reglamento de competición."
+            },
+            {
+              "pregunta": "¿En qué momento queda completada una jugada ilegal a efectos de sanción?",
+              "respuesta": "Cuando el jugador puso en marcha el reloj del rival."
+            },
+            {
+              "pregunta": "En rápidas, ¿cuánto tiempo recibe el rival por la primera jugada ilegal completada?",
+              "respuesta": "Un minuto (en ritmo clásico son dos)."
+            },
+            {
+              "pregunta": "¿Con qué tiempo repone las piezas quien las volcó?",
+              "respuesta": "Con su propio tiempo."
+            },
+            {
+              "pregunta": "¿Cuál es la primera sanción de la lista del art. 12.9?",
+              "respuesta": "La advertencia."
+            }
           ],
-          "tarea": "Redactar el análisis de un caso de reclamo (real o hipotético) indicando la normativa aplicada y la decisión arbitral justificada."
+          "tarea": "Redactar el análisis de un caso de reclamo (real o hipotético) indicando la normativa aplicada y la decisión arbitral justificada.",
+          "objetivos": [
+            "Aplicar las normas de conducta y de la zona de juego durante una ronda.",
+            "Resolver incidencias con dispositivos electrónicos según el art. 11.3 y el reglamento del torneo.",
+            "Tratar jugadas ilegales, piezas desplazadas y posiciones incorrectas con el procedimiento del art. 7.",
+            "Elegir una sanción proporcionada del catálogo del art. 12.9.",
+            "Atender un reclamo de principio a fin: escuchar, verificar, decidir y registrar."
+          ],
+          "cronograma": [
+            [
+              15,
+              "Repaso y revisión de la tarea",
+              "Se comentan dos fichas de reflexión de la tarea de la sesión 1."
+            ],
+            [
+              45,
+              "Conducta y zona de juego",
+              "Obligación de no desprestigiar el juego, salir de la sala con permiso, fuentes de información prohibidas, jugadores que terminaron, molestias al rival. Casos 4 y 5."
+            ],
+            [
+              30,
+              "Dispositivos electrónicos",
+              "Regla general y lo que puede prever el reglamento, dispositivos apagados en el bolso, inspección en privado. Caso 1."
+            ],
+            [
+              15,
+              "Receso",
+              ""
+            ],
+            [
+              45,
+              "Irregularidades",
+              "Jugada ilegal completada (primera y segunda), piezas desplazadas, posición inicial incorrecta, tablero mal orientado y colores invertidos. Casos 2, 3 y 6."
+            ],
+            [
+              30,
+              "Sanciones, reclamos y apelaciones",
+              "El catálogo del art. 12.9 de menor a mayor, cómo se presenta un reclamo, el derecho a pedir que se explique una regla y la apelación."
+            ],
+            [
+              15,
+              "Receso",
+              ""
+            ],
+            [
+              50,
+              "Simulación de reclamos en salas de trabajo",
+              "En subgrupos, cada participante arbitra un reclamo distinto de los ejercicios y justifica su decisión con el artículo. Plenaria."
+            ],
+            [
+              35,
+              "Quiz de la sesión y revisión",
+              "Quiz individual y discusión de las respuestas más divididas."
+            ],
+            [
+              20,
+              "Cierre",
+              "Dudas, tarea y evaluación de la sesión."
+            ]
+          ],
+          "temas": [
+            {
+              "titulo": "Conducta y zona de juego",
+              "texto": "Las Leyes abren el capítulo de conducta con una obligación general: los jugadores no deben desprestigiar el juego. Esa cláusula permite actuar ante conductas que ningún artículo previó.",
+              "puntos": [
+                "Para salir de la sala de juego se necesita permiso del árbitro; la zona de juego (sala, baños, zona de descanso) no se abandona sin autorización.",
+                "Durante la partida está prohibido usar notas, fuentes de información o consejos, y analizar en otro tablero.",
+                "Quien terminó su partida pasa a ser espectador: no puede analizar en la sala ni interferir con otras mesas.",
+                "Está prohibido distraer o molestar al rival, por ejemplo con ofertas de tablas repetidas.",
+                "Nadie puede comentar una partida que todavía se está jugando."
+              ],
+              "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.1 a 11.5 y 12.7"
+            },
+            {
+              "titulo": "Dispositivos electrónicos",
+              "texto": "Por regla general, un jugador no puede tener encima un dispositivo electrónico no autorizado en la zona de juego. Lo que se prohíbe es tenerlo, no que suene: apagado cuenta igual. Si lo tiene, pierde la partida, salvo que el reglamento del torneo prevea una sanción menos severa.",
+              "puntos": [
+                "El reglamento puede permitir guardarlo en el bolso completamente apagado, en el lugar que acuerde el árbitro.",
+                "Ante una sospecha, el árbitro puede pedir revisar ropa, bolsos y persona, siempre en privado.",
+                "Salvo autorización del árbitro, nadie puede usar el celular en la sala ni en las zonas contiguas que el árbitro designe.",
+                "En torneos escolares conviene anunciar en la charla técnica dónde se dejan los teléfonos."
+              ],
+              "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.3.2, 11.3.3 y 12.8"
+            },
+            {
+              "titulo": "Irregularidades: jugada ilegal y piezas desplazadas",
+              "texto": "Una jugada ilegal queda completada cuando el jugador puso en marcha el reloj del rival. Mientras no lo haya presionado, puede corregirla sin sanción, aunque la pieza tocada lo sigue obligando. Si ya la completó, se repone la posición inmediatamente anterior y se aplica la sanción.",
+              "puntos": [
+                "Primera jugada ilegal completada en ritmo clásico: dos minutos más para el rival. En rápidas y relámpago: un minuto.",
+                "Segunda jugada ilegal del mismo jugador: pierde la partida, salvo que el rival no pueda dar mate por ninguna serie de jugadas legales (tablas).",
+                "Si no se puede reconstruir la posición anterior, se sigue desde la última posición identificable.",
+                "Quien vuelca piezas las repone con su propio tiempo; el árbitro puede sancionarlo, pero no está obligado.",
+                "El árbitro fija los tiempos del reloj con su criterio y puede ajustar el contador de jugadas."
+              ],
+              "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 7.1, 7.4, 7.5.1, 7.5.5 y apéndice A.3"
+            },
+            {
+              "titulo": "Sanciones: de menor a mayor",
+              "texto": "El art. 12.9 enumera las sanciones que puede aplicar el árbitro, ordenadas de la más suave a la más dura. Se elige la proporcionada: aplicar la más severa a una falta menor es tan mal arbitraje como no sancionar.",
+              "puntos": [
+                "Advertencia.",
+                "Aumentar el tiempo del rival o reducir el del infractor.",
+                "Reducir los puntos obtenidos en la partida o aumentar los del rival.",
+                "Declarar perdida la partida.",
+                "Multa anunciada de antemano, exclusión de una o más rondas o expulsión de la competición."
+              ],
+              "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.6 y 12.9"
+            },
+            {
+              "titulo": "Reclamos y apelaciones",
+              "texto": "El jugador puede pausar el reloj para llamar al árbitro. Quien arbitra escucha a las dos partes, verifica los hechos (planillas, testigos, posición), decide con el artículo y registra la incidencia. La decisión de reanudar la partida es del árbitro.",
+              "puntos": [
+                "El jugador tiene derecho a que se le explique la regla que se aplica.",
+                "Quien toca una pieza con intención de moverla o capturarla pierde el derecho a reclamar contra una infracción del rival a la regla de pieza tocada (art. 4.1 a 4.7).",
+                "Firmar la planilla no impide apelar; los plazos y la forma de la apelación los fija el reglamento del torneo."
+              ],
+              "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 4.8, 6.11, 11.9 y 11.10"
+            }
+          ],
+          "casos": [
+            {
+              "titulo": "Suena un celular",
+              "situacion": "En plena ronda suena el celular de un jugador dentro de la sala. El reglamento del torneo no dice nada sobre dispositivos.",
+              "decision": "Pierde la partida: es la regla general del art. 11.3.2. Solo si el reglamento previera una sanción menor se aplicaría esa.",
+              "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.3.2"
+            },
+            {
+              "titulo": "Primera jugada ilegal en ritmo clásico",
+              "situacion": "Un jugador deja su rey en jaque y presiona el reloj. Es su primera jugada ilegal de la partida.",
+              "decision": "Se repone la posición anterior, el jugador debe hacer una jugada legal (respetando pieza tocada) y el rival recibe dos minutos adicionales.",
+              "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 3.9.2, 7.5.1 y 7.5.5"
+            },
+            {
+              "titulo": "La misma situación en rápidas",
+              "situacion": "La misma jugada ilegal, en un torneo a 15 minutos más 10 segundos.",
+              "decision": "Mismo procedimiento, pero el rival recibe un minuto en lugar de dos. Una segunda jugada ilegal le haría perder la partida.",
+              "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 7.5.5 y apéndice A.3"
+            },
+            {
+              "titulo": "Notas de apertura",
+              "situacion": "El árbitro ve que un jugador consulta una hoja con variantes de apertura durante la partida.",
+              "decision": "Está prohibido usar cualquier fuente de información. Se sanciona con el art. 12.9 según la gravedad; puede llegar a la pérdida de la partida.",
+              "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.3.1 y 12.9"
+            },
+            {
+              "titulo": "Análisis en la sala",
+              "situacion": "Dos estudiantes que ya terminaron analizan su partida en un tablero de la sala, junto a mesas que siguen jugando.",
+              "decision": "Ya son espectadores y no pueden interferir. El árbitro les pide ir a la sala de análisis o salir; si insisten, aplica una sanción.",
+              "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.4 y 12.7"
+            },
+            {
+              "titulo": "Piezas volcadas",
+              "situacion": "En apuro de tiempo, un jugador vuelca varias piezas al mover y presiona el reloj sin reponerlas.",
+              "decision": "Debe reponerlas con su propio tiempo; el rival puede pausar el reloj y llamar al árbitro. El árbitro puede sancionarlo por conducta si lo hace de forma repetida.",
+              "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 7.4"
+            }
+          ],
+          "ejercicios": [
+            {
+              "enunciado": "Un jugador hace una jugada ilegal, se da cuenta antes de presionar el reloj y la corrige moviendo otra pieza. ¿Qué decides?",
+              "respuesta": "La jugada no estaba completada: se corrige sin sanción, pero con la pieza que tocó, si tiene una jugada legal (pieza tocada). No puede cambiar de pieza. Art. 4.3 y 7.5.1."
+            },
+            {
+              "enunciado": "En ritmo clásico, un jugador completa su segunda jugada ilegal. Su rival solo tiene el rey. ¿Resultado?",
+              "respuesta": "Tablas: la segunda ilegal hace perder, salvo que el rival no pueda dar mate por ninguna serie de jugadas legales. Art. 7.5.5."
+            },
+            {
+              "enunciado": "Un jugador ofrece tablas tres veces en diez jugadas pese a las negativas. ¿Cómo actúas?",
+              "respuesta": "Es una molestia al rival: primero una advertencia y, si sigue, una sanción mayor del art. 12.9. Art. 11.5 y 12.9."
+            },
+            {
+              "enunciado": "El reglamento permite guardar el celular en el bolso. Durante la partida el teléfono de un jugador vibra dentro del bolso. ¿Qué decides?",
+              "respuesta": "Incumplió la condición de tenerlo completamente apagado, así que se aplica la sanción prevista por el reglamento o, si no prevé otra, la pérdida de la partida. Art. 11.3.2."
+            },
+            {
+              "enunciado": "A las 12 jugadas de cada bando se descubre que la partida empezó con los colores invertidos. ¿Qué se hace?",
+              "respuesta": "Como ya hicieron 10 o más jugadas cada uno, la partida sigue con los colores que se jugaron. Art. 7.3."
+            },
+            {
+              "enunciado": "Un jugador firma la planilla y luego quiere apelar tu decisión. ¿Puede?",
+              "respuesta": "Sí: firmar no quita el derecho a apelar. Los plazos y la forma los fija el reglamento del torneo. Art. 8.7 y 11.10."
+            }
+          ]
         }
       ]
     },
@@ -77,10 +522,186 @@
           "practica_titulo": "Cálculo de desempates de un torneo simulado",
           "practica": "Con los resultados de un torneo simulado de 8 jugadores, cada participante calcula la tabla final aplicando Buchholz y Sonneborn-Berger.",
           "quiz": [
-            { "pregunta": "¿Cuál es el criterio de desempate que suma los puntajes finales de los rivales enfrentados?", "respuesta": "Buchholz." },
-            { "pregunta": "¿Qué distingue principalmente al ajedrez relámpago del ajedrez rápido?", "respuesta": "El control de tiempo asignado a cada jugador." }
+            {
+              "pregunta": "¿Cuál es el criterio de desempate que suma los puntajes finales de los rivales enfrentados?",
+              "respuesta": "Buchholz."
+            },
+            {
+              "pregunta": "¿Qué distingue principalmente al ajedrez relámpago del ajedrez rápido?",
+              "respuesta": "El control de tiempo asignado a cada jugador."
+            },
+            {
+              "pregunta": "¿Cómo se clasifica un ritmo que tiene incremento?",
+              "respuesta": "Con el tiempo base más 60 veces el incremento por jugada."
+            },
+            {
+              "pregunta": "¿En qué tipo de torneo es habitual el Sonneborn-Berger?",
+              "respuesta": "En los de todos contra todos (round robin)."
+            },
+            {
+              "pregunta": "Se agotó la lista de desempates y dos jugadores siguen empatados. ¿Qué corresponde?",
+              "respuesta": "Un sorteo, salvo que el reglamento del torneo diga otra cosa."
+            },
+            {
+              "pregunta": "En rápidas, ¿es obligatorio anotar las jugadas?",
+              "respuesta": "No, salvo que el reglamento del evento lo exija; el jugador conserva sus reclamos."
+            }
           ],
-          "tarea": "Analizar un caso de inscripción o de categorización de una persona estudiante y determinar el procedimiento correcto según la normativa JDE vigente."
+          "tarea": "Analizar un caso de inscripción o de categorización de una persona estudiante y determinar el procedimiento correcto según la normativa JDE vigente.",
+          "objetivos": [
+            "Clasificar un control de tiempo como clásico, rápido o relámpago con la fórmula de 60 jugadas.",
+            "Aplicar las diferencias de las rápidas y el relámpago, con y sin supervisión adecuada.",
+            "Calcular Buchholz, Buchholz con corte, Sonneborn-Berger y encuentro directo.",
+            "Ubicar en la normativa vigente de los JDE lo que el árbitro necesita antes de cada torneo."
+          ],
+          "cronograma": [
+            [
+              15,
+              "Repaso y revisión de la tarea",
+              "Dos casos de reclamo de la tarea de la sesión 2, comentados en plenaria."
+            ],
+            [
+              40,
+              "Ritmos de juego: los apéndices A y B",
+              "Definición de rápidas y relámpago, fórmula del tiempo base más 60 veces el incremento y ejemplos."
+            ],
+            [
+              40,
+              "Rápidas y relámpago en la sala",
+              "Anotación no obligatoria, sanciones de un minuto, supervisión adecuada, reclamos sin supervisión y la bandera en relámpago."
+            ],
+            [
+              15,
+              "Receso",
+              ""
+            ],
+            [
+              45,
+              "Sistemas de desempate",
+              "Buchholz y sus cortes, Sonneborn-Berger, encuentro directo, número de victorias y sorteo. Ejemplos resueltos paso a paso."
+            ],
+            [
+              30,
+              "Normativa de los Juegos Deportivos Estudiantiles",
+              "Cómo leer la normativa vigente: categorías, inscripción, ritmo, sistema, desempates, tolerancia, dispositivos, reclamos y plazos."
+            ],
+            [
+              15,
+              "Receso",
+              ""
+            ],
+            [
+              50,
+              "Práctica: cálculo de desempates",
+              "En salas de trabajo se resuelven los ejercicios de desempate y la ficha de lectura de la normativa JDE. Plenaria."
+            ],
+            [
+              30,
+              "Quiz de la sesión",
+              "Quiz individual y revisión."
+            ],
+            [
+              20,
+              "Cierre",
+              "Dudas, tarea y evaluación de la sesión."
+            ]
+          ],
+          "temas": [
+            {
+              "titulo": "Cómo se clasifica un ritmo",
+              "texto": "Para clasificar un control de tiempo se supone una partida de 60 jugadas: se suma el tiempo base más 60 veces el incremento. Con 10 minutos o menos por jugador es relámpago; con más de 10 y menos de 60 es rápidas; con 60 o más es ritmo clásico.",
+              "puntos": [
+                "3 min + 2 s: 3 + 2 = 5 minutos, relámpago.",
+                "15 min + 10 s: 15 + 10 = 25 minutos, rápidas.",
+                "90 min + 30 s: 90 + 30 = 120 minutos, clásico.",
+                "En rápidas y relámpago rigen las Leyes con los cambios que fijan sus apéndices."
+              ],
+              "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), apéndices A.1 y B.1"
+            },
+            {
+              "titulo": "Rápidas y relámpago en la práctica",
+              "texto": "En estos ritmos no es obligatorio anotar, salvo que el reglamento del evento lo exija; aun así, el jugador conserva sus reclamos. Las sanciones de tiempo de los art. 7 y 9 son de un minuto en lugar de dos.",
+              "puntos": [
+                "Supervisión adecuada: un árbitro para pocas partidas, que puede ver cada mesa y registrar las partidas. Con ella rigen casi las mismas reglas que en ritmo clásico.",
+                "Sin supervisión adecuada, pasadas 10 jugadas de cada bando ya no se admiten reclamos por el tablero mal armado u orientado.",
+                "En relámpago sin supervisión, la caída de bandera la reclama el jugador deteniendo el reloj, siempre que su propio tiempo no se haya agotado.",
+                "El mate termina la partida al instante: si un jugador da mate y un instante después cae su bandera, gana quien dio mate."
+              ],
+              "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), apéndices A.2 a A.5 y B.3"
+            },
+            {
+              "titulo": "Buchholz y sus cortes",
+              "texto": "El Buchholz suma los puntos finales de todos los rivales que enfrentó el jugador: mide la dureza de su recorrido. Es el desempate más usado en el sistema suizo. El Buchholz con corte 1 quita el resultado más bajo de esa suma, para que un rival que se hundió pese menos.",
+              "puntos": [
+                "Ejemplo: los rivales de Ana terminaron con 3, 2½, 4, 1 y 2 puntos. Buchholz = 12½; con corte 1 (se quita el 1) = 11½.",
+                "Los rivales de Bruno terminaron con 3½, 3, 2, 2 y 2 puntos. Buchholz = 12½; con corte 1 (se quita un 2) = 10½.",
+                "Empatan en Buchholz, pero el corte 1 ordena primero a Ana.",
+                "El reglamento del torneo anuncia de antemano la lista de desempates y su orden."
+              ],
+              "fuente": "Reglamento de desempates de la FIDE (Handbook C.07)"
+            },
+            {
+              "titulo": "Sonneborn-Berger y encuentro directo",
+              "texto": "El Sonneborn-Berger suma los puntos finales de los rivales a los que el jugador venció, más la mitad de los puntos de aquellos con quienes empató. Premia haberles ganado a los que terminaron arriba y es el desempate habitual en el sistema de todos contra todos. El encuentro directo ordena a los empatados según el resultado de sus partidas entre sí.",
+              "puntos": [
+                "Si los empatados no se enfrentaron o el encuentro no define nada, se pasa al siguiente desempate de la lista.",
+                "Si se agota la lista y sigue el empate, se resuelve por sorteo, salvo que el reglamento diga otra cosa.",
+                "Si el reglamento no dice nada sobre cómo ordenar a los empatados, se usan desempates fuera del tablero, no una partida extra."
+              ],
+              "fuente": "Reglamento de desempates de la FIDE (Handbook C.07)"
+            },
+            {
+              "titulo": "La normativa de los Juegos Deportivos Estudiantiles",
+              "texto": "Cada edición de los JDE publica su normativa, con reglas generales para todos los deportes y un apartado propio del ajedrez. Antes de cada torneo, quien arbitra debe leer la versión vigente y dejar anotado lo que va a aplicar en la sala. Cuando la normativa no dice algo, se aplican las Leyes de la FIDE.",
+              "puntos": [
+                "Categorías, edades y ramas; requisitos y documentos de inscripción.",
+                "Modalidad (individual o por equipos), sistema de competencia y número de rondas.",
+                "Ritmo de juego y tiempo de incomparecencia.",
+                "Desempates y su orden.",
+                "Dispositivos electrónicos, conducta y sanciones propias del evento.",
+                "Reclamos y apelaciones: ante quién, en qué plazo y con qué requisitos."
+              ],
+              "fuente": "Normativa vigente de los Juegos Deportivos Estudiantiles (edición del año en curso)"
+            }
+          ],
+          "casos": [
+            {
+              "titulo": "¿Rápidas o relámpago?",
+              "situacion": "Un torneo escolar se anuncia a 5 minutos más 3 segundos por jugada.",
+              "decision": "5 + 60 × 3 s = 5 + 3 = 8 minutos: es relámpago, porque no pasa de 10 minutos.",
+              "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), apéndice B.1"
+            },
+            {
+              "titulo": "Justo en el límite",
+              "situacion": "Un torneo se anuncia a 45 minutos más 15 segundos.",
+              "decision": "45 + 15 = 60 minutos. Las rápidas son de más de 10 y menos de 60, así que este ritmo ya es clásico.",
+              "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), apéndice A.1"
+            },
+            {
+              "titulo": "Mate y bandera",
+              "situacion": "En relámpago, un estudiante da mate y, un instante después, cae su bandera.",
+              "decision": "Gana quien dio mate: el mate termina la partida en el momento en que se produce.",
+              "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 5.1.1 y apéndice B.3"
+            }
+          ],
+          "ejercicios": [
+            {
+              "enunciado": "Clasifica estos ritmos: a) 10 min sin incremento; b) 10 min + 5 s; c) 25 min + 10 s; d) 60 min sin incremento.",
+              "respuesta": "a) 10 minutos: relámpago (10 o menos). b) 10 + 5 = 15: rápidas. c) 25 + 10 = 35: rápidas. d) 60: clásico."
+            },
+            {
+              "enunciado": "Torneo de todos contra todos con 6 jugadores (A a F). A: ½ con B, ganó a C, D y F, perdió con E. B: ½ con A, perdió con C, ganó a D, E y F. C: 3 puntos. D: 2½. E: 1½. F: 1. A y B terminan con 3½. ¿Quién queda primero por Sonneborn-Berger?",
+              "respuesta": "A: venció a C (3), D (2½) y F (1) = 6½, más la mitad de B (3½) = 1¾. Total 8¼. B: venció a D (2½), E (1½) y F (1) = 5, más la mitad de A = 1¾. Total 6¾. Queda primero A. (El encuentro directo no los separaba: empataron entre sí.)"
+            },
+            {
+              "enunciado": "En un suizo a 5 rondas, los rivales de Carla terminaron con 4, 3, 3, 2 y ½ puntos, y los de Diego con 3½, 3, 3, 2½ y 1. Ambos tienen 4 puntos. Calcula Buchholz y Buchholz con corte 1.",
+              "respuesta": "Carla: Buchholz 12½; corte 1 (se quita ½) = 12. Diego: Buchholz 13; corte 1 (se quita 1) = 12. Si el primer desempate es Buchholz, gana Diego; si fuera Buchholz con corte 1, siguen empatados y se pasa al siguiente criterio."
+            },
+            {
+              "enunciado": "Ficha de lectura: con la normativa JDE vigente en la mano, anota para ajedrez la categoría, el ritmo, el sistema de competencia, los desempates en orden, el tiempo de incomparecencia y el plazo para presentar un reclamo.",
+              "respuesta": "Se completa con el texto vigente de la normativa y se revisa en plenaria. Lo que la normativa no regule se resuelve con las Leyes de la FIDE: por ejemplo, si no fija tiempo de incomparecencia, es cero (art. 6.7)."
+            }
+          ]
         },
         {
           "titulo": "Sistemas de emparejamiento para torneos",
@@ -94,10 +715,186 @@
           "practica_titulo": "Construcción de un cuadro de emparejamiento",
           "practica": "Con una lista de 12 jugadores ficticios, cada participante construye la primera ronda bajo sistema suizo y, luego, la calendarización equivalente en round robin.",
           "quiz": [
-            { "pregunta": "¿Qué sistema resulta más adecuado cuando hay muchos participantes y tiempo limitado?", "respuesta": "El sistema suizo." },
-            { "pregunta": "En el sistema todos contra todos (round robin), ¿qué característica lo define?", "respuesta": "Cada jugador se enfrenta una vez a todos los demás participantes." }
+            {
+              "pregunta": "¿Qué sistema resulta más adecuado cuando hay muchos participantes y tiempo limitado?",
+              "respuesta": "El sistema suizo."
+            },
+            {
+              "pregunta": "En el sistema todos contra todos (round robin), ¿qué característica lo define?",
+              "respuesta": "Cada jugador se enfrenta una vez a todos los demás participantes."
+            },
+            {
+              "pregunta": "¿Cómo se ordena la lista inicial de un suizo?",
+              "respuesta": "Por rating, de mayor a menor, con criterios para los empates."
+            },
+            {
+              "pregunta": "Publicado el emparejamiento, ¿en qué único caso se puede cambiar?",
+              "respuesta": "Si hace jugar dos veces al mismo par de jugadores."
+            },
+            {
+              "pregunta": "¿Qué recibe en un suizo quien queda libre por número impar?",
+              "respuesta": "Un punto, sin color asignado."
+            },
+            {
+              "pregunta": "¿Cuántas partidas tiene un todos contra todos de 8 jugadores?",
+              "respuesta": "28 partidas, en 7 rondas."
+            }
           ],
-          "tarea": "A partir de los resultados de la ronda 1, elaborar el emparejamiento de la ronda 2 bajo sistema suizo."
+          "tarea": "A partir de los resultados de la ronda 1, elaborar el emparejamiento de la ronda 2 bajo sistema suizo.",
+          "objetivos": [
+            "Aplicar las reglas básicas del sistema suizo: rivales, colores y descansos.",
+            "Ordenar la lista inicial y emparejar la primera ronda.",
+            "Emparejar una ronda siguiente por grupos de puntuación.",
+            "Calendarizar un torneo de todos contra todos con las tablas de Berger.",
+            "Elegir el sistema adecuado según participantes, tiempo y objetivo del torneo."
+          ],
+          "cronograma": [
+            [
+              15,
+              "Repaso y revisión de la tarea",
+              "Revisión de dos fichas de normativa JDE de la tarea anterior."
+            ],
+            [
+              45,
+              "El sistema suizo: reglas básicas",
+              "No repetir rival, límites de color, descanso (bye), lista inicial ordenada por rating y número de rondas anunciado de antemano."
+            ],
+            [
+              40,
+              "La primera ronda",
+              "Mitad superior contra mitad inferior y alternancia de colores por tablero. Ejemplo con 12 jugadores."
+            ],
+            [
+              15,
+              "Receso",
+              ""
+            ],
+            [
+              40,
+              "Las rondas siguientes",
+              "Grupos de puntuación, flotantes, publicación del emparejamiento, ausencias y retiros. Ejemplo resuelto de la ronda 2."
+            ],
+            [
+              30,
+              "Todos contra todos (round robin)",
+              "Número de rondas y partidas, tablas de Berger, número impar de jugadores y control de resultados."
+            ],
+            [
+              15,
+              "Receso",
+              ""
+            ],
+            [
+              50,
+              "Práctica: construcción de cuadros",
+              "Con la lista de 12 jugadores, primera ronda suiza y calendario round robin equivalente. Plenaria."
+            ],
+            [
+              30,
+              "Quiz de la sesión",
+              "Quiz individual y revisión."
+            ],
+            [
+              20,
+              "Cierre",
+              "Dudas, tarea y evaluación de la sesión."
+            ]
+          ],
+          "temas": [
+            {
+              "titulo": "Reglas básicas de todo sistema suizo",
+              "texto": "En el suizo se empareja ronda a ronda a jugadores con puntuaciones iguales o parecidas. Su regla absoluta es que dos jugadores no se enfrentan más de una vez, por encima de puntuaciones y colores.",
+              "puntos": [
+                "La diferencia entre partidas con blancas y con negras de un jugador no puede superar 2 ni bajar de -2.",
+                "Ningún jugador recibe el mismo color tres veces seguidas (con excepciones en la última ronda).",
+                "Con número impar, un jugador queda libre (bye): recibe un punto sin color, y no puede recibirlo dos veces.",
+                "El número de rondas se fija y se anuncia antes de empezar."
+              ],
+              "fuente": "Reglas básicas del sistema suizo (Handbook C.04.1)"
+            },
+            {
+              "titulo": "La lista inicial y la primera ronda",
+              "texto": "Antes de la primera ronda se ordena a los jugadores por rating, de mayor a menor, con criterios para los empates (en torneos escolares sin rating, suele usarse el orden alfabético o un sorteo que el reglamento anuncia). Ese número de orden acompaña al jugador todo el torneo. En la primera ronda se divide la lista en dos mitades y la superior juega contra la inferior.",
+              "puntos": [
+                "Con 12 jugadores: 1–7, 2–8, 3–9, 4–10, 5–11 y 6–12.",
+                "El color del número 1 se sortea y se alterna tablero a tablero: si el 1 lleva blancas, el 2 lleva negras, el 3 blancas, y así.",
+                "Resultado con el 1 de blancas: 1–7, 8–2, 3–9, 10–4, 5–11, 12–6 (el primero de cada pareja lleva blancas)."
+              ],
+              "fuente": "Reglas generales de manejo del sistema suizo (Handbook C.04.2) y Sistema holandés de la FIDE (Handbook C.04.3)"
+            },
+            {
+              "titulo": "Las rondas siguientes",
+              "texto": "Desde la segunda ronda se forman grupos de puntuación. Dentro de cada grupo, ordenado por el número inicial, se cruza la mitad superior con la inferior, respetando los colores y la prohibición de repetir rival. Quien no se puede emparejar en su grupo baja al siguiente como flotante.",
+              "puntos": [
+                "Una vez publicado, el emparejamiento solo se cambia si hace jugar dos veces al mismo par.",
+                "A quien se sabe que no jugará una ronda no se le empareja y anota cero, salvo que el reglamento prevea otra cosa (por ejemplo, medio punto por descanso solicitado).",
+                "Quien falta sin avisar se considera retirado, salvo que explique su ausencia antes del siguiente emparejamiento.",
+                "Está prohibido alterar el emparejamiento correcto para favorecer a alguien.",
+                "En la práctica se usa un programa de emparejamiento reconocido por la FIDE; quien arbitra debe entender lo que hace para poder revisarlo."
+              ],
+              "fuente": "Reglas generales de manejo del sistema suizo (Handbook C.04.2) y Sistema holandés de la FIDE (Handbook C.04.3)"
+            },
+            {
+              "titulo": "Todos contra todos (round robin)",
+              "texto": "Cada jugador se enfrenta una vez con todos los demás. Con n jugadores (n par) hay n - 1 rondas y n × (n - 1) / 2 partidas. Si n es impar, se agrega un «descanso» como jugador más y en cada ronda descansa quien le toque enfrentarlo. El orden de las partidas sale de las tablas de Berger.",
+              "puntos": [
+                "Tabla de Berger para 4 jugadores. Ronda 1: 1–4, 2–3. Ronda 2: 4–3, 1–2. Ronda 3: 2–4, 3–1.",
+                "Con 6 jugadores: 5 rondas y 15 partidas. Con 8: 7 rondas y 28 partidas.",
+                "Los números se sortean antes de empezar.",
+                "El desempate habitual es el Sonneborn-Berger, porque el Buchholz no distingue: todos enfrentaron a los mismos."
+              ],
+              "fuente": "Tablas de Berger; Reglamento de desempates de la FIDE (Handbook C.07)"
+            },
+            {
+              "titulo": "¿Suizo o todos contra todos?",
+              "texto": "La decisión depende de cuántas personas juegan, del tiempo disponible y del objetivo del torneo.",
+              "puntos": [
+                "Pocos participantes (hasta 8 o 10) y tiempo suficiente: todos contra todos, que da la clasificación más justa.",
+                "Muchos participantes y pocas rondas posibles: suizo.",
+                "Regla práctica: con n jugadores, un suizo necesita al menos tantas rondas como veces hay que dividir n entre 2 para llegar a 1, y conviene sumar una o dos más para separar bien los primeros puestos.",
+                "Si el objetivo es clasificar a una etapa siguiente, las bases deben decir cuántos clasifican y con qué desempates."
+              ],
+              "fuente": "Reglas básicas del sistema suizo (Handbook C.04.1)"
+            }
+          ],
+          "casos": [
+            {
+              "titulo": "La ronda 2 de un suizo de 8 jugadores",
+              "situacion": "Ronda 1 (primero, las blancas): 1–5, 6–2, 3–7, 8–4. Resultados: ganan 1, 2, 7 y 8. ¿Cómo queda la ronda 2?",
+              "decision": "Grupo de 1 punto: 1, 2, 7 y 8 (mitades {1, 2} y {7, 8}): 1 contra 7 y 2 contra 8. Grupo de 0: 3, 4, 5 y 6: 3 contra 5 y 4 contra 6. Colores alternados: 7 (tuvo negras) lleva blancas contra 1; 2 (tuvo negras) lleva blancas contra 8; 5 (tuvo negras) blancas contra 3; 4 (tuvo negras) blancas contra 6. Emparejamiento: 7–1, 2–8, 5–3, 4–6.",
+              "fuente": "Sistema holandés de la FIDE (Handbook C.04.3)"
+            },
+            {
+              "titulo": "El error del emparejamiento publicado",
+              "situacion": "Tras publicar la ronda 4, un padre de familia pide cambiar un emparejamiento porque su hijo «ya jugó con alguien de su colegio».",
+              "decision": "No se cambia: jugar con alguien del mismo centro educativo no es una causa. Solo se corrige si el emparejamiento hace jugar dos veces a los mismos dos jugadores (salvo que la normativa del evento prevea evitar cruces del mismo centro, y en ese caso debe estar anunciado).",
+              "fuente": "Reglas generales de manejo del sistema suizo (Handbook C.04.2)"
+            },
+            {
+              "titulo": "Siete jugadores en round robin",
+              "situacion": "Se inscriben 7 estudiantes y se quiere un todos contra todos.",
+              "decision": "Se agrega un descanso como octavo número: 7 rondas, 21 partidas, y en cada ronda descansa un jugador.",
+              "fuente": "Tablas de Berger"
+            }
+          ],
+          "ejercicios": [
+            {
+              "enunciado": "Con 12 jugadores ordenados por rating (1 a 12) y el 1 con blancas por sorteo, escribe la primera ronda del suizo.",
+              "respuesta": "1–7, 8–2, 3–9, 10–4, 5–11, 12–6 (el primero de cada pareja lleva blancas)."
+            },
+            {
+              "enunciado": "¿Cuántas rondas y cuántas partidas tiene un todos contra todos con 10 jugadores? ¿Y con 9?",
+              "respuesta": "10 jugadores: 9 rondas y 45 partidas. 9 jugadores: se agrega un descanso, 9 rondas y 36 partidas, con un jugador libre por ronda."
+            },
+            {
+              "enunciado": "Escribe el calendario completo de un todos contra todos de 4 jugadores con la tabla de Berger.",
+              "respuesta": "Ronda 1: 1–4, 2–3. Ronda 2: 4–3, 1–2. Ronda 3: 2–4, 3–1 (el primero de cada pareja lleva blancas)."
+            },
+            {
+              "enunciado": "Un suizo tiene 11 jugadores. ¿Qué pasa en cada ronda con el número impar?",
+              "respuesta": "Un jugador queda libre (bye) y recibe un punto sin color. No puede recibirlo quien ya lo tuvo ni quien ya ganó por incomparecencia."
+            }
+          ]
         },
         {
           "titulo": "Uso, configuración y control del reloj de ajedrez",
@@ -111,10 +908,185 @@
           "practica_titulo": "Configuración de un reloj según escenario",
           "practica": "Con un simulador de reloj digital en línea, cada participante configura el control de tiempo correspondiente a tres escenarios: partida clásica, rápida y relámpago.",
           "quiz": [
-            { "pregunta": "¿Qué es el incremento o «tiempo Fischer» en el reloj de ajedrez?", "respuesta": "Un tiempo adicional que se suma después de cada jugada." },
-            { "pregunta": "Si a un jugador se le agota el tiempo, ¿qué debe verificar primero la persona árbitra?", "respuesta": "Si el rival tiene material suficiente para dar mate." }
+            {
+              "pregunta": "¿Qué es el incremento o «tiempo Fischer» en el reloj de ajedrez?",
+              "respuesta": "Un tiempo adicional que se suma después de cada jugada."
+            },
+            {
+              "pregunta": "Si a un jugador se le agota el tiempo, ¿qué debe verificar primero la persona árbitra?",
+              "respuesta": "Si el rival tiene material suficiente para dar mate."
+            },
+            {
+              "pregunta": "¿Qué reloj se pone en marcha al empezar la ronda?",
+              "respuesta": "El de las blancas, esté o no el jugador en la mesa."
+            },
+            {
+              "pregunta": "¿Con qué mano se presiona el reloj?",
+              "respuesta": "Con la misma mano con la que se hizo la jugada."
+            },
+            {
+              "pregunta": "En el modo de demora, ¿cuándo empieza a descontarse el tiempo principal?",
+              "respuesta": "Cuando se agota el tiempo fijo de esa jugada."
+            },
+            {
+              "pregunta": "Si el reglamento no fija tiempo de incomparecencia, ¿cuál es?",
+              "respuesta": "Cero."
+            }
           ],
-          "tarea": "Completar una ficha con la configuración correcta del reloj (tiempo base e incremento) para tres modalidades, según la normativa JDE."
+          "tarea": "Completar una ficha con la configuración correcta del reloj (tiempo base e incremento) para tres modalidades, según la normativa JDE.",
+          "objetivos": [
+            "Aplicar las reglas del art. 6 sobre el uso del reloj durante la partida.",
+            "Distinguir controles sin incremento, con incremento (Fischer), con demora y por períodos.",
+            "Configurar el reloj para partidas clásicas, rápidas y relámpago.",
+            "Resolver incidencias de tiempo: caída de bandera, incomparecencia y reloj defectuoso."
+          ],
+          "cronograma": [
+            [
+              15,
+              "Repaso y revisión de la tarea",
+              "Se revisan dos emparejamientos de ronda 2 de la tarea anterior."
+            ],
+            [
+              40,
+              "El reloj en las Leyes",
+              "Quién lo pone en marcha, de qué lado va, con qué mano se presiona, manejo indebido y cuándo se puede pausar. Casos 1 y 2."
+            ],
+            [
+              40,
+              "Sistemas de control de tiempo",
+              "Sin incremento, incremento o tiempo Fischer, demora y controles por períodos. Cómo afecta cada uno a la obligación de anotar."
+            ],
+            [
+              15,
+              "Receso",
+              ""
+            ],
+            [
+              45,
+              "Configuración según la modalidad",
+              "Demostración con un simulador de reloj digital: clásico, rápidas y relámpago. Clasificación con la fórmula de 60 jugadas."
+            ],
+            [
+              30,
+              "Incidencias de tiempo",
+              "Caída de bandera y material para dar mate, verificación del control de jugadas, incomparecencia, reloj defectuoso y apuro de tiempo. Casos 3 y 4."
+            ],
+            [
+              15,
+              "Receso",
+              ""
+            ],
+            [
+              45,
+              "Práctica: configurar el reloj por escenario",
+              "Cada participante configura en el simulador los tres escenarios de los ejercicios y resuelve los casos de tiempo. Plenaria."
+            ],
+            [
+              35,
+              "Quiz de la sesión",
+              "Quiz individual y revisión."
+            ],
+            [
+              20,
+              "Cierre",
+              "Dudas, tarea y evaluación de la sesión."
+            ]
+          ],
+          "temas": [
+            {
+              "titulo": "El uso del reloj durante la partida",
+              "texto": "A la hora de inicio se pone en marcha el reloj de las blancas, esté o no el jugador en la mesa. El árbitro decide de qué lado del tablero va el reloj. Cada jugador mueve y después presiona el reloj, con la misma mano con la que movió.",
+              "puntos": [
+                "No se puede dejar el dedo sobre el botón ni presionar con fuerza, levantar o volcar el reloj.",
+                "Solo quien tiene su reloj en marcha puede acomodar sus piezas.",
+                "Un jugador puede pausar el reloj para llamar al árbitro; la partida se reanuda cuando el árbitro lo decide.",
+                "La jugada queda hecha al soltar la pieza y completada al presionar el reloj."
+              ],
+              "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 6.2, 6.5, 6.6 y 6.11"
+            },
+            {
+              "titulo": "Sistemas de control de tiempo",
+              "texto": "El reloj puede funcionar de varias maneras, y quien arbitra debe saber configurarlas y explicarlas.",
+              "puntos": [
+                "Sin incremento («a finish»): un tiempo fijo para toda la partida.",
+                "Incremento o tiempo Fischer: se suma un tiempo fijo después de cada jugada, desde la primera.",
+                "Demora (delay): cada jugada trae un tiempo fijo; el tiempo principal empieza a descontarse cuando ese tiempo se agota.",
+                "Por períodos: por ejemplo, 40 jugadas en 90 minutos y luego 30 minutos más; el tiempo nuevo se suma al completar la jugada 40.",
+                "Con menos de 5 minutos y sin incremento de al menos 30 segundos, el jugador puede dejar de anotar."
+              ],
+              "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 6.3 y 8.4"
+            },
+            {
+              "titulo": "Configurar el reloj según la modalidad",
+              "texto": "Antes de la ronda se configuran y revisan todos los relojes con el ritmo que anuncia el reglamento del torneo. Un reloj mal configurado es la causa de muchas incidencias que después no tienen buena solución.",
+              "puntos": [
+                "Revisa el tiempo base, el incremento y, si lo hay, el período siguiente.",
+                "Comprueba que los dos lados muestren el mismo tiempo antes de empezar.",
+                "Deja relojes de repuesto configurados.",
+                "Si a mitad de partida se descubre un reloj mal configurado o con un defecto evidente, el árbitro lo corrige o lo reemplaza y fija los tiempos con su criterio."
+              ],
+              "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 6.10"
+            },
+            {
+              "titulo": "Caída de bandera e incidencias de tiempo",
+              "texto": "Cuando a un jugador se le agota el tiempo, pierde la partida, salvo que el rival no pueda dar mate por ninguna serie de jugadas legales: en ese caso son tablas. La prueba es «cualquier serie de jugadas legales», aunque sea con la peor defensa.",
+              "puntos": [
+                "Al caer una bandera, se comprueba si el jugador cumplió el número de jugadas del control.",
+                "En ritmo clásico con árbitro presente, el árbitro declara la caída de bandera de oficio; en relámpago sin supervisión, la reclama el jugador.",
+                "Si el reglamento no fija tiempo de incomparecencia, es cero: quien llega tarde pierde, salvo decisión del árbitro.",
+                "En apuro de tiempo, el árbitro observa especialmente esas partidas y puede nombrar asistentes."
+              ],
+              "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 6.4, 6.7, 6.8, 6.9, 12.3 y 12.4"
+            }
+          ],
+          "casos": [
+            {
+              "titulo": "Las blancas no llegaron",
+              "situacion": "Es la hora de inicio y el jugador de blancas no está en la mesa. El reglamento fija 15 minutos de incomparecencia.",
+              "decision": "Se pone en marcha el reloj de las blancas igual. Si llega antes de los 15 minutos, juega con el tiempo que le quede; si no, pierde por incomparecencia.",
+              "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 6.6 y 6.7"
+            },
+            {
+              "titulo": "Presionar antes de mover",
+              "situacion": "En apuro de tiempo, un jugador presiona el reloj antes de soltar la pieza.",
+              "decision": "Es un manejo indebido del reloj: el árbitro interviene y aplica una sanción del art. 12.9, de menor a mayor.",
+              "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 6.2.1, 6.2.4 y 12.9"
+            },
+            {
+              "titulo": "Bandera con rey y caballo",
+              "situacion": "Cae la bandera de las blancas. Las negras solo tienen rey y caballo, y las blancas tienen rey y peón.",
+              "decision": "Pierden las blancas: con ese material existe al menos una serie de jugadas legales que termina en mate. Por ejemplo, rey blanco en h1 con su peón en h2, rey negro en f1 y caballo negro en f2: el peón le quita al rey su última casilla. Solo serían tablas si el rival no pudiera dar mate de ninguna manera, como con rey y caballo contra rey solo.",
+              "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 6.9"
+            },
+            {
+              "titulo": "Reloj con defecto evidente",
+              "situacion": "A mitad de partida, la pantalla de un reloj deja de funcionar.",
+              "decision": "El árbitro lo reemplaza y fija los tiempos del reloj nuevo con su mejor criterio, apoyándose en las planillas y en lo que recuerden los jugadores.",
+              "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 6.10.1"
+            }
+          ],
+          "ejercicios": [
+            {
+              "enunciado": "Configura el reloj para una partida clásica de 90 minutos con 30 segundos de incremento desde la jugada 1. ¿Deben anotar los jugadores toda la partida?",
+              "respuesta": "Tiempo base 90:00 e incremento de 30 s por jugada, en ambos lados. Sí: con incremento de 30 segundos o más no se puede dejar de anotar (art. 8.4)."
+            },
+            {
+              "enunciado": "Configura el reloj para rápidas a 15 minutos más 10 segundos. ¿Qué ritmo es según la fórmula?",
+              "respuesta": "Tiempo base 15:00 e incremento de 10 s. 15 + 10 = 25 minutos: rápidas."
+            },
+            {
+              "enunciado": "Configura el reloj para relámpago a 3 minutos más 2 segundos. ¿Qué ritmo es?",
+              "respuesta": "Tiempo base 3:00 e incremento de 2 s. 3 + 2 = 5 minutos: relámpago."
+            },
+            {
+              "enunciado": "Cae la bandera de un jugador. Su rival solo tiene el rey. ¿Resultado?",
+              "respuesta": "Tablas: el rival no puede dar mate por ninguna serie de jugadas legales (art. 6.9)."
+            },
+            {
+              "enunciado": "El reglamento no dice nada sobre la tolerancia. Un jugador llega 3 minutos tarde. ¿Qué pasa?",
+              "respuesta": "El tiempo de incomparecencia es cero: pierde, salvo que el árbitro decida otra cosa en ese caso puntual (art. 6.7)."
+            }
+          ]
         }
       ]
     },
@@ -133,10 +1105,168 @@
           "practica_titulo": "Resolución grupal de casos integradores",
           "practica": "En grupos, se analiza un caso integrador que combina reglas de competición, desempates y logística, y se presenta la solución fundamentada.",
           "quiz": [
-            { "pregunta": "¿Cuál de estos elementos NO forma parte de la logística previa a un torneo escolar?", "respuesta": "El resultado final de las partidas." },
-            { "pregunta": "Ante una situación arbitral no contemplada explícitamente en el reglamento, ¿qué debe primar?", "respuesta": "Aplicar el criterio más cercano del reglamento con imparcialidad, y justificarlo." }
+            {
+              "pregunta": "¿Cuál de estos elementos NO forma parte de la logística previa a un torneo escolar?",
+              "respuesta": "El resultado final de las partidas."
+            },
+            {
+              "pregunta": "Ante una situación arbitral no contemplada explícitamente en el reglamento, ¿qué debe primar?",
+              "respuesta": "Aplicar el criterio más cercano del reglamento con imparcialidad, y justificarlo."
+            },
+            {
+              "pregunta": "¿Cuáles son los cuatro pasos para resolver un caso arbitral?",
+              "respuesta": "Hechos, artículo, decisión y registro."
+            },
+            {
+              "pregunta": "¿Qué se revisa antes de emparejar la ronda siguiente?",
+              "respuesta": "Que todos los resultados estén firmados, revisados e ingresados."
+            },
+            {
+              "pregunta": "¿Dónde se atienden las inquietudes del público durante una ronda?",
+              "respuesta": "Fuera de la sala de juego: el público no interviene en las partidas."
+            }
           ],
-          "tarea": "Elaborar una propuesta logística breve (inscripción, espacios, materiales, personal de apoyo) para un torneo estudiantil de su región."
+          "tarea": "Elaborar una propuesta logística breve (inscripción, espacios, materiales, personal de apoyo) para un torneo estudiantil de su región.",
+          "objetivos": [
+            "Resolver casos complejos con un método: hechos, artículo, decisión y registro.",
+            "Planificar la logística de un torneo estudiantil antes, durante y después de las rondas.",
+            "Comunicar decisiones arbitrales con claridad a estudiantes, familias y docentes.",
+            "Redactar el informe de una incidencia."
+          ],
+          "cronograma": [
+            [
+              15,
+              "Repaso y revisión de la tarea",
+              "Se revisan dos configuraciones de reloj de la tarea anterior."
+            ],
+            [
+              40,
+              "Método para resolver un caso arbitral",
+              "Los cuatro pasos (hechos, artículo, decisión y registro) aplicados a un caso de las sesiones anteriores."
+            ],
+            [
+              45,
+              "Logística de un torneo estudiantil",
+              "Inscripción, lista inicial, sala y mesas, materiales, personal de apoyo, horarios, charla técnica y publicación de resultados."
+            ],
+            [
+              15,
+              "Receso",
+              ""
+            ],
+            [
+              60,
+              "Casos integradores en grupos",
+              "Cada grupo resuelve uno de los tres casos integradores y prepara su presentación."
+            ],
+            [
+              40,
+              "Plenaria de soluciones",
+              "Cada grupo presenta su solución fundamentada y el resto la discute."
+            ],
+            [
+              15,
+              "Receso",
+              ""
+            ],
+            [
+              30,
+              "Fortalecer el desempeño como persona asesora y árbitra",
+              "Comunicación de decisiones, trato con familias y docentes, informe arbitral y trabajo en equipo."
+            ],
+            [
+              25,
+              "Quiz de la sesión",
+              "Quiz individual y revisión."
+            ],
+            [
+              15,
+              "Cierre",
+              "Dudas, tarea y evaluación de la sesión."
+            ]
+          ],
+          "temas": [
+            {
+              "titulo": "Método para resolver un caso",
+              "texto": "Un caso bien resuelto se puede explicar y defender. Estos cuatro pasos evitan decidir de memoria o por presión.",
+              "puntos": [
+                "1. Hechos: qué pasó, en qué orden, con qué pruebas (planillas, reloj, testigos, posición).",
+                "2. Artículo: qué regla se aplica (Leyes de la FIDE y normativa del evento). Si no hay una regla exacta, la más cercana, con imparcialidad.",
+                "3. Decisión: clara, proporcionada y comunicada a las dos partes, con el artículo.",
+                "4. Registro: se anota en la planilla o en el acta y en el informe del torneo."
+              ],
+              "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 12.1 y 12.2"
+            },
+            {
+              "titulo": "Logística antes del torneo",
+              "texto": "La mayoría de los problemas de un torneo escolar se evitan antes de la primera ronda.",
+              "puntos": [
+                "Inscripción con los datos que pide la normativa y verificación de la categoría de cada estudiante.",
+                "Lista inicial ordenada y publicada; número de rondas y desempates anunciados en las bases.",
+                "Sala con buena luz y ventilación, mesas numeradas, espacio entre mesas y zona separada para público.",
+                "Materiales: tableros, juegos de piezas y relojes revisados y configurados, repuestos, planillas, actas, formularios y cinta para numerar.",
+                "Personal: árbitro principal, adjuntos, mesa de control y apoyo para la inscripción.",
+                "Charla técnica antes de la ronda 1: ritmo, dispositivos, tolerancia, reclamos y conducta del público."
+              ],
+              "fuente": "Buenas prácticas de organización; normativa vigente de los JDE"
+            },
+            {
+              "titulo": "Durante y después de las rondas",
+              "texto": "Durante el torneo, el orden de las tareas se repite ronda a ronda.",
+              "puntos": [
+                "Publicar el emparejamiento con tiempo y en un lugar visible.",
+                "Iniciar puntual, recorrer la sala y observar en especial las partidas en apuro de tiempo.",
+                "Recoger resultados firmados, revisarlos e ingresarlos antes de emparejar la ronda siguiente.",
+                "Al final: tabla con desempates, acta del torneo, informe de incidencias y premiación."
+              ],
+              "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 8.7 y 12.3; Reglas generales de manejo del sistema suizo (Handbook C.04.2)"
+            },
+            {
+              "titulo": "Comunicar decisiones",
+              "texto": "En un torneo estudiantil, la decisión arbitral la escuchan estudiantes, familias y docentes. Una decisión correcta mal comunicada genera tanto conflicto como una incorrecta.",
+              "puntos": [
+                "Habla primero con los dos jugadores, en voz baja y lejos de otras mesas.",
+                "Explica la regla y el artículo, sin discutir la posición.",
+                "Las familias y el público no intervienen en las partidas; sus inquietudes se atienden fuera de la sala.",
+                "Si hay una apelación, informa ante quién y en qué plazo según el reglamento."
+              ],
+              "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.9, 11.10 y 12.7"
+            }
+          ],
+          "casos": [
+            {
+              "titulo": "Caso integrador 1: la ronda que empezó tarde",
+              "situacion": "Un suizo escolar a 15 minutos más 5 segundos, 5 rondas. La ronda 3 se publicó con 20 minutos de retraso. Un jugador de blancas llega 5 minutos después de la hora de inicio publicada; el reglamento fija 10 minutos de tolerancia. En su partida, el rival completa una jugada ilegal y, más tarde, suena el celular del jugador que llegó tarde. El reglamento sanciona el celular con la pérdida de la partida.",
+              "decision": "El jugador juega: llegó dentro de la tolerancia, con 5 minutos menos en su reloj. La jugada ilegal del rival (primera, en rápidas) se corrige: se repone la posición y el que llegó tarde recibe un minuto. El celular: pierde la partida según el reglamento. Se registra todo en el acta y se revisa por qué la ronda se publicó tarde.",
+              "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 6.7, 7.5, 11.3.2 y apéndice A.3"
+            },
+            {
+              "titulo": "Caso integrador 2: empate en el primer lugar",
+              "situacion": "En un todos contra todos de 6 jugadores, dos estudiantes empatan en el primer lugar. Las bases anuncian: 1) encuentro directo, 2) Sonneborn-Berger, 3) número de victorias. Empataron su partida entre sí.",
+              "decision": "El encuentro directo no los separa. Se calcula el Sonneborn-Berger de cada uno (ver el ejemplo de la sesión 3) y, si siguen empatados, el número de victorias. Si todo se agota, sorteo, salvo que las bases digan otra cosa.",
+              "fuente": "Reglamento de desempates de la FIDE (Handbook C.07)"
+            },
+            {
+              "titulo": "Caso integrador 3: la logística que falló",
+              "situacion": "Al empezar la ronda 1 faltan 4 relojes y 3 tableros tienen piezas incompletas. Hay 30 estudiantes inscritos.",
+              "decision": "Se reorganiza sin perder la puntualidad: se usan los repuestos, se completa con piezas de otros juegos revisando cada tablero, y las mesas sin reloj juegan con un control anunciado por el árbitro o se ubican cerca de la mesa de control con un adjunto. Se registra la incidencia y, para el día presencial, la lista de materiales incluye repuestos.",
+              "fuente": "Buenas prácticas de organización"
+            }
+          ],
+          "ejercicios": [
+            {
+              "enunciado": "Aplica los cuatro pasos del método al caso «suena un celular» de la sesión 2 y redacta el registro para el acta.",
+              "respuesta": "Hechos: suena el celular del jugador X en la mesa N, ronda R, a tal hora. Artículo: 11.3.2 y el reglamento del torneo. Decisión: pérdida de la partida (o la sanción menor que prevea el reglamento), comunicada a las dos partes. Registro: «Ronda R, mesa N: suena el celular del jugador X durante la partida; se aplica el art. 11.3.2 y se declara la partida perdida. Firma del árbitro»."
+            },
+            {
+              "enunciado": "Escribe la lista de materiales para un torneo de 40 estudiantes (20 mesas).",
+              "respuesta": "20 tableros y 20 juegos de piezas completos, más 2 o 3 de repuesto; 20 relojes configurados, más 2 o 3 de repuesto; planillas para cada ronda; actas de resultados; formularios de inscripción; lista de cotejo; numeración de mesas; hojas de emparejamiento y tabla para publicar."
+            },
+            {
+              "enunciado": "Un familiar le señala a su hija una jugada desde el público. ¿Qué haces?",
+              "respuesta": "Nadie puede comentar ni interferir en una partida en curso. Se retira al familiar de la zona de juego y se evalúa si hubo ayuda: si la hubo, se sanciona a la jugadora según el art. 12.9. Se registra la incidencia (art. 11.3.1 y 12.7)."
+            }
+          ]
         },
         {
           "titulo": "Talleres prácticos y simulacros de arbitraje",
@@ -150,17 +1280,162 @@
           "practica_titulo": "Simulacro de arbitraje con observación entre pares",
           "practica": "Cada participante arbitra una partida simulada mientras otra persona observa y completa la lista de cotejo; luego se intercambian los roles.",
           "quiz": [
-            { "pregunta": "Durante un simulacro, no se aplicó la sanción por uso de dispositivo electrónico. ¿Qué instrumento documenta esa observación?", "respuesta": "La lista de cotejo." },
-            { "pregunta": "¿Cuál es el propósito principal de asignar roles antes de la sesión presencial?", "respuesta": "Garantizar una organización clara y una evaluación práctica ordenada." }
+            {
+              "pregunta": "Durante un simulacro, no se aplicó la sanción por uso de dispositivo electrónico. ¿Qué instrumento documenta esa observación?",
+              "respuesta": "La lista de cotejo."
+            },
+            {
+              "pregunta": "¿Cuál es el propósito principal de asignar roles antes de la sesión presencial?",
+              "respuesta": "Garantizar una organización clara y una evaluación práctica ordenada."
+            },
+            {
+              "pregunta": "Un reclamo de triple repetición resulta incorrecto. ¿Qué efecto tiene además?",
+              "respuesta": "Cuenta como una oferta de tablas."
+            },
+            {
+              "pregunta": "¿En qué orden se ofrecen tablas correctamente?",
+              "respuesta": "Primero la jugada, después la oferta y por último presionar el reloj."
+            }
           ],
-          "tarea": "Confirmar el rol asignado, revisar la lista de cotejo y reunir los materiales solicitados para el día presencial."
+          "tarea": "Confirmar el rol asignado, revisar la lista de cotejo y reunir los materiales solicitados para el día presencial.",
+          "objetivos": [
+            "Arbitrar una ronda simulada aplicando todo lo visto en el curso.",
+            "Observar a otra persona con la lista de cotejo y dar retroalimentación útil.",
+            "Conocer los formularios que se usarán en la sesión presencial.",
+            "Confirmar los roles y los materiales para el torneo real."
+          ],
+          "cronograma": [
+            [
+              15,
+              "Repaso y revisión de la tarea",
+              "Se revisan dos propuestas logísticas de la tarea anterior."
+            ],
+            [
+              30,
+              "Guía del simulacro y roles",
+              "Cómo funciona el simulacro en salas de trabajo: persona árbitra, jugadores que actúan las incidencias y persona observadora."
+            ],
+            [
+              30,
+              "La lista de cotejo y los formularios",
+              "Qué observa cada ítem de la lista de cotejo oficial y cómo se completan los formularios de inscripción y el acta."
+            ],
+            [
+              15,
+              "Receso",
+              ""
+            ],
+            [
+              60,
+              "Simulacro 1 en salas de trabajo",
+              "Cada sala representa una ronda con las incidencias guionizadas de los casos. Una persona arbitra y otra observa con la lista de cotejo."
+            ],
+            [
+              30,
+              "Retroalimentación del simulacro 1",
+              "La persona observadora comparte la lista de cotejo; se comentan las decisiones dudosas en plenaria."
+            ],
+            [
+              15,
+              "Receso",
+              ""
+            ],
+            [
+              60,
+              "Simulacro 2 con rotación de roles",
+              "Se intercambian los roles y se representan nuevas incidencias."
+            ],
+            [
+              25,
+              "Asignación de roles para la sesión presencial",
+              "Árbitro principal, árbitros auxiliares y mesa de control; revisión de la lista de materiales."
+            ],
+            [
+              20,
+              "Cierre",
+              "Quiz breve, tarea y evaluación de la sesión."
+            ]
+          ],
+          "temas": [
+            {
+              "titulo": "Cómo funciona el simulacro",
+              "texto": "En cada sala de trabajo hay tres roles: la persona árbitra, dos personas que representan a los jugadores y actúan una incidencia de la guía, y una persona observadora con la lista de cotejo. La persona árbitra no conoce la incidencia de antemano.",
+              "puntos": [
+                "La incidencia se actúa con un tablero y un reloj reales o con un simulador en pantalla.",
+                "La persona árbitra aplica el método de cuatro pasos y comunica su decisión en voz alta.",
+                "La persona observadora marca Sí o No en cada ítem y anota observaciones concretas.",
+                "Al final de cada incidencia se rotan los roles."
+              ],
+              "fuente": "Metodología del curso"
+            },
+            {
+              "titulo": "La lista de cotejo de desempeño arbitral",
+              "texto": "La lista de cotejo es el instrumento con el que se evalúa el desempeño en el torneo real de la sesión presencial. Conocerla de antemano permite prepararse para cada ítem.",
+              "puntos": [
+                "Verifica la acreditación y el emparejamiento antes de iniciar la ronda.",
+                "Aplica correctamente las reglas básicas y resuelve reclamos con el procedimiento del reglamento.",
+                "Gestiona con criterio las incidencias con el reloj.",
+                "Aplica las sanciones correspondientes ante faltas o dispositivos no autorizados.",
+                "Calcula correctamente los desempates.",
+                "Mantiene un trato respetuoso e imparcial y documenta cada incidencia."
+              ],
+              "fuente": "Lista de cotejo oficial del curso (formularios de la Sesión 8)"
+            },
+            {
+              "titulo": "Roles en el torneo presencial",
+              "texto": "En la sesión presencial se organiza y arbitra un torneo real. Cada participante tiene un rol asignado y rota durante las rondas.",
+              "puntos": [
+                "Árbitro principal: decide las incidencias y coordina al equipo.",
+                "Árbitros auxiliares: supervisan un grupo de mesas, informan y aplican lo acordado.",
+                "Mesa de control: inscripción, emparejamientos, resultados y desempates.",
+                "Todas las personas completan la lista de cotejo de otra en al menos una ronda."
+              ],
+              "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 12.4; Manual del árbitro de la FIDE"
+            }
+          ],
+          "casos": [
+            {
+              "titulo": "Guion A: el enroque dudoso",
+              "situacion": "El jugador de negras enroca largo; el de blancas reclama que el rey ya se había movido en la jugada 9 y había vuelto.",
+              "decision": "Se revisan las planillas. Si el rey se movió, el enroque fue una jugada ilegal: se repone la posición, el jugador debe mover el rey (pieza tocada) y el rival recibe la compensación de tiempo que corresponde al ritmo.",
+              "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 3.8.2.1, 4.3 y 7.5"
+            },
+            {
+              "titulo": "Guion B: reclamo de triple repetición",
+              "situacion": "Un jugador detiene el reloj y dice que la posición se repitió tres veces. Todavía no hizo la jugada que produciría la tercera repetición.",
+              "decision": "Correcto si anotó la jugada sin hacerla y llamó al árbitro sin tocar ninguna pieza. Se verifica con las planillas; si el reclamo es correcto, son tablas de inmediato. Si no lo es, el reclamo cuenta como oferta de tablas y, en ritmo clásico, el rival recibe dos minutos.",
+              "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 9.1, 9.2, 9.4 y 9.5"
+            },
+            {
+              "titulo": "Guion C: la oferta de tablas en el turno del rival",
+              "situacion": "Un jugador ofrece tablas mientras corre el reloj de su rival.",
+              "decision": "La oferta es válida, pero hacerla en el turno del rival es una molestia: se le recuerda el procedimiento correcto (jugada, oferta y reloj) y, si se repite, se sanciona según el art. 12.9.",
+              "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 9.1.2 y 11.5"
+            },
+            {
+              "titulo": "Guion D: el público que ayuda",
+              "situacion": "Un docente acompañante comenta en voz baja con su estudiante una partida en curso.",
+              "decision": "Se retira al docente de la zona de juego; si hubo ayuda, se sanciona al estudiante según el art. 12.9. Se registra la incidencia.",
+              "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.3.1 y 12.7"
+            }
+          ],
+          "ejercicios": [
+            {
+              "enunciado": "Durante el simulacro, la persona árbitra resolvió bien un reclamo, pero no lo anotó en el acta. ¿Cómo lo marcas en la lista de cotejo?",
+              "respuesta": "«Resuelve los reclamos siguiendo el procedimiento»: Sí. «Documenta cada incidencia en la planilla o en el acta»: No, con una observación concreta (qué incidencia faltó registrar)."
+            },
+            {
+              "enunciado": "Escribe una retroalimentación útil para una persona que aplicó la sanción máxima a una primera falta leve.",
+              "respuesta": "Por ejemplo: «La decisión tuvo base en el art. 12.9, pero la sanción no fue proporcionada: para una primera falta leve correspondía una advertencia. Te sugiero empezar por la sanción más baja de la lista y subir si la falta se repite»."
+            }
+          ]
         },
         {
           "titulo": "Torneo real, evaluación final y certificación",
           "presencial": true,
           "archivo_formularios": "08-torneo-real-evaluacion-formularios",
           "archivo_prueba": "08-prueba-final",
-          "resumen": "Sesión presencial, 8 horas.",
+          "resumen": "Sesión presencial, 5 horas.",
           "contenido": [
             "Acreditación y bienvenida presencial.",
             "Organización integral de un torneo real: inscripción, emparejamiento y logística de mesas.",
@@ -170,13 +1445,38 @@
             "Entrega de certificados a las personas que aprobaron el curso."
           ],
           "agenda": [
-            ["8:00 a. m.", "Acreditación y bienvenida."],
-            ["8:30 a. m.", "Organización del torneo: inscripción y emparejamiento de la ronda 1."],
-            ["9:30 a. m.", "Rondas del torneo con arbitraje en vivo y rotación de roles."],
-            ["12:30 p. m.", "Receso para almuerzo."],
-            ["1:30 p. m.", "Evaluación final teórica integradora."],
-            ["2:30 p. m.", "Cierre de listas de cotejo y autoevaluación."],
-            ["3:30 p. m.", "Plenaria de cierre y entrega de certificados."]
+            [
+              "8:00 a. m.",
+              "Acreditación y bienvenida (20 minutos)."
+            ],
+            [
+              "8:20 a. m.",
+              "Organización del torneo: inscripción, lista inicial, charla técnica y emparejamiento de la ronda 1 (40 minutos)."
+            ],
+            [
+              "9:00 a. m.",
+              "Rondas 1 y 2 a 10 minutos más 5 segundos, con arbitraje en vivo y rotación de roles (1 hora 40 minutos)."
+            ],
+            [
+              "10:40 a. m.",
+              "Receso (15 minutos)."
+            ],
+            [
+              "10:55 a. m.",
+              "Ronda 3, cierre del torneo y cálculo de desempates en la mesa de control (50 minutos)."
+            ],
+            [
+              "11:45 a. m.",
+              "Evaluación final teórica integradora: prueba escrita de 20 preguntas (45 minutos)."
+            ],
+            [
+              "12:30 p. m.",
+              "Cierre de listas de cotejo, autoevaluación, plenaria y entrega de certificados (30 minutos)."
+            ],
+            [
+              "1:00 p. m.",
+              "Fin de la sesión."
+            ]
           ],
           "evaluacion": "Prueba teórica integradora (20 preguntas), lista de cotejo de desempeño arbitral y organizativo durante el torneo real, y autoevaluación final. Las personas que aprueben reciben su certificado en la plenaria de cierre."
         }
