@@ -209,8 +209,8 @@
             {
               "titulo": "El peón que llegó a la octava",
               "situacion": "Un peón blanco llega a e8, el jugador lo deja como peón y presiona el reloj.",
-              "decision": "Es una jugada ilegal completada: el cambio del peón es parte de la misma jugada. Se repone la posición anterior y se aplica la sanción de la primera jugada ilegal.",
-              "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 3.7.5 y 7.5"
+              "decision": "Es una jugada ilegal completada: el cambio del peón es parte de la misma jugada. No se repone la posición: el peón se cambia por una dama del mismo color y se aplica la sanción de la primera jugada ilegal (dos minutos más para el rival en ritmo clásico, uno en rápidas y relámpago).",
+              "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 3.7.5, 7.5.2 y 7.5.5"
             },
             {
               "titulo": "Rey contra rey",
