@@ -193,6 +193,75 @@ Lo que se rompe acá no da error: un renglón que cuenta la actividad equivocada
 un enlace sin su recorte, o una tarea que se le manda a todos los alumnos en
 vez de a los marcados.
 
+### El cuestionario como tarea
+
+Un renglón «Cuestionario» en Tareas: el profe elige uno de los suyos o de los
+30 listos de la Academia, y el alumno lo contesta en su casa, sin reloj, en
+`cuestionario-tarea.html` (lo que Blooket llama «Homework»). Desde
+`cuestionarios.html`, «📨 Mandarlo como tarea» abre Tareas con el renglón
+armado (`?material=cuestionario&recorte=<id>`, lo mismo que «Mandarle 10
+de…» desde Informes). Migración `cuestionario_como_tarea`.
+
+- **La correcta no sale de la base hasta que el alumno entrega.** Vive en
+  `cuestionarios`, que el alumno no puede leer, así que todo pasa por dos
+  funciones `SECURITY DEFINER`: `cuestionario_de_tarea(item)` le da las
+  preguntas SIN la correcta, y `contestar_cuestionario_de_tarea(item,
+  respuestas)` califica, guarda el intento y recién ahí devuelve cuáles eran.
+  Las dos piden que quien llama sea el alumno de esa tarea y que ya se haya
+  destapado (`interno.cuestionario_del_renglon()`). Contestar exige además el
+  acceso vigente, el mismo candado que entrenar.
+- **El cuestionario tiene que ser listo o del profe que mandó la tarea.**
+  `filtro_clave` lo escribe el profe (un insert pasa por la RLS de
+  `tarea_items`, que no mira qué id trae): sin esa condición, pegando el id de
+  un cuestionario ajeno le abriría a su alumno las preguntas de otro profe.
+- **Los intentos van en `cuestionario_intentos`**, sin políticas de escritura:
+  solo la llena la función que califica. Los lee quien ve el renglón (la RLS
+  de `tarea_items` → `tareas`: el alumno, el profe que la mandó,
+  administración y quien supervisa), con el conjunto armado una vez. Se borran
+  con la tarea; si el profe borra el cuestionario, el intento se queda.
+- **No se cuenta desde `training_progress`.** El alumno puede escribir ahí
+  desde la consola, y un «ya lo hice» falso daría la tarea por cumplida sin
+  nota. `tareas_con_avance()` cuenta los intentos del renglón y le agrega
+  `cuestionario`: cuántos, el primero, el mejor y el total. En el catálogo
+  (`js/material-plataforma.js`) lleva `cuentaDesde`, y `verificar-tareas.js`
+  pide que `tareas_con_avance()` sepa contarlo (al resto le revisa el CHECK de
+  `training_progress`). `actividades` es `['cuestionario']` solo porque la
+  tabla exige una actividad en las metas que se miden.
+- **La nota es la primera vez.** Al entregar ve las correctas, así que la
+  segunda ya no mide nada. Puede repetirlo para practicar (hasta 20 veces), y
+  el profe ve en «Tareas enviadas» «✔ «El tablero»: 12 de 16 la primera vez
+  (lo hizo 3 veces; la mejor, 16 de 16)». El alumno lo lee también en la
+  página antes de empezar otra vez.
+- **Se pide una vez** (`unaVez`, como el diagnóstico) y no tiene «— todo —»
+  (`recorteObligatorio`): sin un cuestionario elegido no hay nada que
+  contestar, y no se manda. Sin ninguno a la vista, el renglón dice que se
+  arman en Cuestionarios.
+- **El enlace del alumno lleva el renglón** (`&item=<id>`, lo agrega
+  `tareas.html`): es lo que las funciones usan para dejarlo entrar y dónde se
+  guarda lo que contesta. Un cuestionario contestado dos veces se cuenta
+  «1/1», no «2/1».
+- **En la página** las respuestas son botones de opción, de a una por
+  pregunta (se contestan con el teclado), y la que trae posición lleva su
+  tablero para mirarla (`TableroPregunta`, tipo `mirar`). Con alguna en
+  blanco pregunta antes de entregar; las que quedan en blanco van como `null`.
+  Al entregar, cada pregunta dice ESCRITO si estuvo bien y cuál era la
+  correcta, el foco va al resultado y la voz lo dice.
+
+Comprobado impersonando roles en SQL, dentro de una transacción que se
+revierte: el profe no lee las preguntas por esa vía; el alumno recibe las 16
+sin ninguna `correcta`; un cuestionario ajeno puesto en `filtro_clave` se
+rechaza; el insert directo en `cuestionario_intentos` da «permission denied»;
+una respuesta de más, un texto, un decimal o una opción que no existe se
+rechazan; el primer intento (1 de 16) y el segundo (16 de 16) quedan, y
+`tareas_con_avance()` le da al alumno y al profe `{intentos: 2, primero: 1,
+mejor: 16}`; otro profe ve 0 intentos y no puede contestar; `anon` no tiene
+permiso. `tareas_con_avance()` de quien administra siguió en ~70 ms.
+
+**Al tocar esto, correr `node herramientas/verificar-todo.js
+cuestionario-tarea tareas`.** Está probado que falla de verdad: sin el
+`&item=` en el enlace, sin escribir cuál era la correcta, con «— todo —» en
+la lista de cuestionarios o mandando 0 en vez de `null` por una en blanco.
+
 ## El plan de clase: preparar la clase antes de darla
 
 `sesion.html` es potentísimo EN VIVO —editor de posición, PDF, lección de curso,

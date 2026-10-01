@@ -2,7 +2,8 @@
 
    Los cuestionarios al estilo Kahoot, fuera de la clase: el profe arma los
    suyos y mira los listos de la Academia (30, por nivel). Jugarlos es de la
-   clase en vivo: cada uno lleva a sesion.html?cuestionario=<id>. El armador es
+   clase en vivo: cada uno lleva a sesion.html?cuestionario=<id>. O se manda
+   como tarea, para contestarlo en la casa (tareas.html?material=cuestionario). El armador es
    el mismo de la clase (js/cuestionario-editor.js); esto pone la lista y lo
    que cambia afuera: la posición de una pregunta se pega como FEN, porque acá
    no hay tablero. Ver «Los cuestionarios listos» en
@@ -38,7 +39,7 @@ async function init() {
     CQ.textoPosicion = { usar: "Poner una posición (FEN)", cambiar: "Cambiar la posición (FEN)" };
     CQ.estado = () => {};
     CQ.pintarLista = pintarListas;
-    CQ.accionesListo = (c, botones) => botones.prepend(enlaceJugar(c.id));
+    CQ.accionesListo = (c, botones) => botones.prepend(enlaceJugar(c.id), enlaceTarea(c.id));
     CQ.alBorrar = () => { $("cuestionario-vacio").hidden = false; };
     montarArmador();
     montarFiltro();
@@ -60,6 +61,20 @@ function enlaceJugar(id) {
     a.href = "sesion.html?cuestionario=" + encodeURIComponent(id);
     a.className = "text-xs font-semibold px-3 py-2 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
     a.textContent = "▶️ Jugarlo en la clase en vivo";
+    return a;
+}
+
+/* Mandarlo como tarea: Tareas con el renglón ya armado (el mismo
+   ?material=&recorte= que usa «Mandarle 10 de…» desde Informes). Allá se
+   eligen los alumnos y la fecha. */
+function hrefTarea(id) {
+    return "tareas.html?material=cuestionario&recorte=" + encodeURIComponent(id);
+}
+function enlaceTarea(id) {
+    const a = document.createElement("a");
+    a.href = hrefTarea(id);
+    a.className = "text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+    a.textContent = "📨 Mandarlo como tarea";
     return a;
 }
 
@@ -141,6 +156,9 @@ function pintarListas() {
     const id = cuestionarioEditado && cuestionarioEditado.id;
     enlace.hidden = !id;
     if (id) enlace.href = "sesion.html?cuestionario=" + encodeURIComponent(id);
+    const tarea = $("cuestionario-tarea-enlace");
+    tarea.hidden = !id;
+    if (id) tarea.href = hrefTarea(id);
 }
 
 init();
