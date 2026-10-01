@@ -1299,6 +1299,66 @@ clase-cuestionario`.** Está probado que falla de verdad: contando la hora de
 la primera respuesta en vez de la última, sin mandar `p_sin_tablero` o con el
 tablero a la vista en una pregunta sin posición, salta.
 
+#### Los cuestionarios listos y `cuestionarios.html`
+
+El profe arma sus cuestionarios también **fuera de la clase**, en
+`cuestionarios.html` (en su panel, «Tus clases»), y tiene **30 listos de la
+Academia**: diez por nivel —inicial, intermedio y avanzado—, de 16 a 19
+preguntas cada uno, 485 en total. Migración `cuestionarios_listos_y_nivel`,
+comprobada impersonando roles.
+
+- **Un solo armador para las dos pantallas** (`js/cuestionario-editor.js`):
+  la parte pura (`Cuestionario`), el armador y sus botones (`montarArmador`).
+  La clase (`js/clase-cuestionario.js`) y la página (`js/cuestionarios.js`)
+  tienen los mismos id y cada una pone en `CQ` lo suyo: de dónde sale la
+  posición (en la clase, el tablero; afuera, un FEN pegado, que pasa por la
+  misma `PosicionValida` de la clase en vivo), cómo se avisa y qué más se
+  hace con uno listo (jugarlo en la clase, o ir a jugarlo).
+- **`nivel`** (inicial, intermedio, avanzado o ninguno) y **`listo`** en
+  `cuestionarios`. Uno listo no tiene dueño (`profesor_id` nulo; un CHECK lo
+  ata a `listo`). Lo leen quienes dan clase y quien administra; **los alumnos
+  no**, porque trae las respuestas. Nadie lo cambia ni lo borra desde la
+  página: las políticas de escritura siguen siendo solo de lo propio.
+  Comprobado: el profe ve los 30, su `update` y su `delete` sobre ellos no
+  tocan ninguna fila y no puede crear uno «listo»; el alumno no ve ninguno.
+- **Uno listo se juega tal cual o se copia.** «📋 Copiarlo a mis
+  cuestionarios» crea uno propio, con el mismo nivel y las mismas preguntas,
+  que ya se puede cambiar. En la clase, «▶️ Jugarlo con la clase» lo juega
+  sin copiarlo. Desde la página, cada uno lleva a
+  `sesion.html?cuestionario=<id>`, que abre la caja con ese elegido: empezar
+  lo decide el profe, con la clase ya conectada.
+- **El nivel se guarda al elegirlo**, no al guardar: el armador se vuelve a
+  pintar al poner una posición o mover una pregunta, y lo pintaba con el de
+  antes (lo encontró `verificar-cuestionarios-pagina.js`).
+- **La fuente es `herramientas/cuestionarios-listos.js`**, con cada pregunta
+  escrita **con la correcta primero** para revisarla de un vistazo; el script
+  reparte su lugar entre A, B, C y D (con un hash del texto: sembrar dos
+  veces da lo mismo) y escribe `herramientas/cuestionarios/semilla.sql` (no
+  se commitea), que borra los listos y los vuelve a sembrar. Un nivel por
+  sentencia, con cada pregunta como `[texto, opciones, correcta, tiempo]`:
+  la base arma el objeto y el SQL pesa un cuarto menos. Lo sembrado se
+  comparó con el script con un md5 por cuestionario: los 30 idénticos.
+- **Ninguna pregunta trae posición**: ninguna se inventa. Las aperturas se
+  nombran por sus jugadas, y el verificador las juega todas con chess.js
+  desde la posición inicial; las dos que afirman algo del tablero (qué ataca
+  6.Cxf7 en el Fegatello, que 3...Ab4 clava el caballo de c3) se comprueban
+  en el tablero. El Fegatello decía «¿qué ataca?» y el caballo también ataca
+  el peón de e5: ahora pregunta por las dos **piezas**.
+- **Los distractores tientan y fallan por algo**: nombres de aperturas
+  vecinas, campeones de la misma época, reglas parecidas. Nada que se
+  descarte sin saber ajedrez.
+
+**Al tocar el banco, correr `node herramientas/verificar-cuestionarios-listos.js`**
+(sin navegador): que sean 30, diez por nivel y de 15 preguntas o más; que cada
+uno pase el armador tal cual, sin que se recorte nada; que ninguna opción ni
+pregunta se repita; que la correcta caiga en cada letra entre el 18 % y el
+32 % de las veces; que las jugadas sean legales, y que el SQL no se rompa.
+Después, volver a sembrar. **Al tocar la página, `verificar-cuestionarios-pagina`**,
+y la clase sigue en `clase-cuestionario`. Está probado que fallan de verdad:
+con una jugada ilegal, con la correcta siempre en la A, sin el filtro de
+nivel, perdiendo el nivel al poner la posición o copiando el listo antes de
+jugarlo, saltan.
+
 ### La participación pareja
 
 Arriba de las pestañas del profe, y solo para él (nunca lo ve la clase):

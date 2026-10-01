@@ -7079,7 +7079,7 @@
                 document.getElementById("app").classList.remove("hidden");
                 return;
             }
-            if (isTeacher) { montarControlesDePreguntas(); montarControlesDePractica(); }
+            if (isTeacher) { montarControlesDePreguntas(); montarControlesDePractica(); abrirCuestionarioPedido(); }
             await loadCurrentQuestion();
             subscribeQuestions();
             await loadCurrentPractice();

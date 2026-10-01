@@ -501,9 +501,9 @@ async function pruebaProfesora(browser) {
      `soloAdmin`, igual que la guía del profesor, así que a quien da clase se le
      QUITAN — no se le apagan: una tarjeta gris dice «esto vuelve», y lo que se
      quiere decir es que no es suyo. */
-  igual("«Tus clases»: prepararlas, darlas, repasarlas e informarlas",
+  igual("«Tus clases»: prepararlas (planes y cuestionarios), darlas, repasarlas e informarlas",
     grupo(grupos, "Tus clases").tiles.map((t) => t.enlace),
-    ["planes.html", "asistencia.html", "repasar-clases.html", "partidas.html", "informe-mensual.html"]);
+    ["planes.html", "cuestionarios.html", "asistencia.html", "repasar-clases.html", "partidas.html", "informe-mensual.html"]);
   /* La tienda de materiales entra en la misma regla: todavía no está abierta,
      así que a quien da clase no se le pinta ni escondida — un enlace
      invisible pero presente sigue siendo una parada de tabulador, y encima

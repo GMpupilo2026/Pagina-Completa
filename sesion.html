@@ -1057,16 +1057,20 @@
                         <details id="cuestionario-caja" class="mb-3 rounded-lg border border-brand-100 dark:border-brand-800">
                             <summary class="cursor-pointer px-3 py-2 text-xs font-semibold text-brand-700 dark:text-brand-200"><span aria-hidden="true">🎯 </span>Cuestionario al estilo Kahoot: preguntas con opciones, puntos por rapidez y podio</summary>
                             <div class="px-3 pb-3 space-y-2">
-                                <p class="text-xs text-brand-450 dark:text-brand-350">Arma tus preguntas una vez y guárdalas para jugarlas con cualquier clase. Cada pregunta sale con su tiempo; al terminar, la clase ve qué contestó el grupo, cuál era la correcta y cómo va el podio. <span id="cuestionario-regla"></span></p>
+                                <p class="text-xs text-brand-450 dark:text-brand-350">Elige uno de los listos de la Academia o arma el tuyo (también en <a href="cuestionarios.html" class="underline underline-offset-2">Cuestionarios</a>, fuera de la clase). Cada pregunta sale con su tiempo; al terminar, la clase ve qué contestó el grupo, cuál era la correcta y cómo va el podio. <span id="cuestionario-regla"></span></p>
                                 <div id="cuestionario-elegir" class="flex flex-wrap items-center gap-2">
                                     <label for="cuestionario-select" class="text-xs text-brand-700 dark:text-brand-200">Tus cuestionarios</label>
                                     <select id="cuestionario-select" class="flex-1 min-w-0 text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-brand-700 dark:text-brand-200"><option value="">Cargando…</option></select>
                                     <button id="cuestionario-nuevo-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">➕ </span>Nuevo cuestionario</button>
                                 </div>
                                 <p id="cuestionario-aviso" class="text-xs font-semibold text-brand-700 dark:text-brand-200" aria-live="polite"></p>
+                                <!-- Uno listo de la Academia: se mira, se juega o se copia para cambiarlo. -->
+                                <div id="cuestionario-listo" hidden class="rounded-lg bg-brand-50 dark:bg-brand-800/50 px-3 py-2 space-y-2"></div>
                                 <div id="cuestionario-editor" hidden class="space-y-2">
                                     <label for="cuestionario-titulo" class="block text-xs text-brand-700 dark:text-brand-200">Título</label>
                                     <input id="cuestionario-titulo" type="text" maxlength="80" placeholder="Las piezas y cómo se mueven" class="w-full text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500">
+                                    <label for="cuestionario-nivel" class="block text-xs text-brand-700 dark:text-brand-200">Nivel</label>
+                                    <select id="cuestionario-nivel" class="w-full text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-brand-700 dark:text-brand-200"><option value="">Sin nivel</option><option value="inicial">Inicial</option><option value="intermedio">Intermedio</option><option value="avanzado">Avanzado</option></select>
                                     <ol id="cuestionario-preguntas" class="space-y-2" aria-label="Preguntas del cuestionario"></ol>
                                     <div class="flex flex-wrap gap-2">
                                         <button id="cuestionario-agregar-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">➕ </span>Agregar una pregunta</button>
@@ -1409,6 +1413,7 @@
     <script src="js/clase-calentamiento.js"></script>
     <script src="js/clase-puntos.js"></script>
     <script src="js/clase-ronda.js"></script>
+    <script src="js/cuestionario-editor.js"></script>
     <script src="js/clase-cuestionario.js"></script>
     <script src="js/clase-callados.js"></script>
     <script src="js/clase-qr.js"></script>
