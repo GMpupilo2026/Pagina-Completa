@@ -48,6 +48,13 @@ function igual(nombre, hallado, esperado) {
     igual("el enunciado con HTML no crea nodos", await page.evaluate(() => document.querySelectorAll("#lo-que-costo b").length), 0);
     igual("con su posición, de verdad en pantalla", await page.evaluate(() => [...document.querySelectorAll("#lo-que-costo .nota-posicion")]
       .map((d) => [d.children.length, d.checkVisibility(), d.querySelectorAll(".piece-white, .piece-black").length])), [[64, true, 9], [64, true, 32]]);
+    /* Con filas automáticas, la fila con pieza crecía con el glifo, la vacía
+       se encogía y el tablero salía cortado abajo: se mide en pantalla. */
+    igual("cuadrado y con las 8 filas iguales", await page.evaluate(() => [...document.querySelectorAll("#lo-que-costo .nota-posicion")].map((d) => {
+      const r = d.getBoundingClientRect();
+      const altos = [...d.children].filter((_, i) => i % 8 === 0).map((c) => Math.round(c.getBoundingClientRect().height * 10) / 10);
+      return [Math.round(r.width) === Math.round(r.height), new Set(altos).size, Math.abs(altos[0] * 8 - r.height) < 3];
+    })), [[true, 1, true], [true, 1, true]]);
     igual("la pide para 30 días", await page.evaluate(() => window.__consultas.filter((c) => c.tabla === "preguntas_que_costaron").map((c) => c.args)), [{ p_dias: 30 }]);
 
     await page.getByRole("button", { name: "Armar un plan de repaso con estas 2" }).click();

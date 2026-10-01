@@ -84,7 +84,7 @@ window.LoQueCosto = (function () {
         if (d) {
             d.setAttribute("aria-label", "La posición de la pregunta (le toca a las " + (String(f.fen).split(" ")[1] === "b" ? "negras" : "blancas") + ")");
             d.classList.remove("w-40", "mt-1.5");
-            d.classList.add("w-28", "shrink-0");
+            d.classList.add("w-36", "shrink-0");
             li.appendChild(d);
         }
         const t = el("div", "text-sm");
