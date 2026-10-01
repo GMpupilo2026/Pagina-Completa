@@ -19,13 +19,18 @@
 # (bucket público academia-marca): se ven en el encabezado y en los
 # formularios públicos. Es el mismo origen que ya está en connect-src.
 # script-src NO lleva 'unsafe-inline': un <script> que alguien lograra meter en
-# una página no corre. Los cuatro scripts que sí van escritos en las páginas
-# (la guardia de sesión, el tema, el modo oscuro y las fuentes; los ponen sus
-# generadores, idénticos en todas) se autorizan por su hash, que escribe
+# una página no corre. Los tres scripts que sí van escritos en las páginas
+# (la guardia de sesión, el tema y el modo oscuro; los ponen sus generadores,
+# idénticos en todas) se autorizan por su hash, que escribe
 # herramientas/csp-hashes.js. Si un generador cambia su bloque,
 # verificar-csp.js falla hasta que se corre ese script.
 #
+# Speculation-Rules: las reglas de navegación anticipada van en /anticipar.json
+# y no en un <script type="speculationrules"> escrito en la página, que la CSP
+# bloquearía. Son de `prefetch` y NUNCA `prerender` (ver «La navegación se
+# adelanta» en docs/decisiones/sitio-e-infraestructura.md).
 /*
+  Speculation-Rules: "/anticipar.json"
   Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-r2M0L8lRXIwjTnGxyAl9KAsnqTxGnnN5EB9HoLxbWas=' 'sha256-GlqPKFylJ8uJT5to/2SDtNi0GLVagujpaAgZ+sXOn+0=' 'sha256-xSZSNs7SoW2z079LAKuoPTu3HSvpR9fVjN0be2TWovk=' 'unsafe-eval' 'wasm-unsafe-eval' https://cdn.jsdelivr.net https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://bgtijpimpcokxatxxbki.supabase.co; connect-src 'self' https://cdn.jsdelivr.net https://huggingface.co https://*.huggingface.co https://*.hf.co https://bgtijpimpcokxatxxbki.supabase.co wss://bgtijpimpcokxatxxbki.supabase.co https://prcfbzvshnusisczlpxl.supabase.co wss://prcfbzvshnusisczlpxl.supabase.co https://ajedrez-inscripciones.gmpupilo.workers.dev https://api.hacienda.go.cr https://lichess.org https://api.chess.com; frame-src https://challenges.cloudflare.com https://lichess.org https://www.youtube-nocookie.com https://player.twitch.tv; worker-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
@@ -42,6 +47,10 @@
 
 /manifest.json
   Cache-Control: no-cache
+
+# Sin este tipo, el navegador baja las reglas y no las aplica: no da ningún error.
+/anticipar.json
+  Content-Type: application/speculationrules+json
 
 # Los datos del bot: el libro de aperturas de Oscar y la procedencia de cada
 # jugada. Son 7 MB entre los dos y cambian cuando se regeneran con partidas

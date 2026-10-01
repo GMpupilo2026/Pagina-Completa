@@ -979,12 +979,8 @@ sin mergear; se rehizo sobre lo de hoy, con sus mismas mediciones.
 - **La CSP ya no deja pasar a Google** (`style-src` y `font-src` solo
   `'self'`): una etiqueta de Google copiada de una cabecera vieja se bloquea
   y se ve, en vez de funcionar a escondidas.
-- La navegación anticipada (`prefetch` al pasar el mouse) que traía también
-  #248 no entró: era un `<script type="speculationrules">` en línea, y la CSP
-  de hoy no lo deja. Si se retoma, va por la cabecera `Speculation-Rules` con
-  un archivo aparte, y **siempre `prefetch`, nunca `prerender`**:
-  `prerender` ejecuta la página y `js/tiempo-plataforma.js` apuntaría minutos
-  de páginas que nadie abrió.
+- La navegación anticipada que traía también #248 va aparte: ver «La
+  navegación se adelanta».
 
 `verificar-fuentes.js` lo sostiene: nada le pide fuentes a Google y la CSP no
 lo deja, las 128 páginas piden la hoja con la ruta de su carpeta, los `.woff2`
@@ -992,6 +988,43 @@ existen, la pila de Tailwind lleva los respaldos, y en el navegador (una
 página de cada profundidad pública) la hoja carga, Inter carga del propio sitio
 y nada se precarga; con el tema Princesas, Quicksand se baja del sitio, y sin
 tema no se baja. Falla con las fuentes de Google (probado antes del cambio).
+
+## La navegación se adelanta, y solo con `prefetch`
+
+Cada clic pedía la página en frío. Ahora, cuando alguien deja el mouse encima
+de un enlace (~200 ms) o apoya el dedo, el navegador se baja la página antes
+del clic: al soltar ya la tiene. Venía en #248 y se rehízo aparte, porque allá
+eran un `<script type="speculationrules">` escrito en cada página, y la CSP de
+hoy no deja pasar scripts en línea.
+
+- **Las reglas van en `anticipar.json`** y las anuncia la cabecera
+  `Speculation-Rules: "/anticipar.json"` del bloque `/*` de `_headers`. El
+  archivo lleva `Content-Type: application/speculationrules+json`: **con otro
+  tipo el navegador lo baja y no lo aplica**, sin dar ningún error.
+- **Es `prefetch` y NUNCA `prerender`.** `prerender` ejecuta la página, y
+  `js/tiempo-plataforma.js` inserta al arrancar una fila en
+  `platform_activity_log`: pasar el mouse por «4×4» le apuntaría al alumno
+  minutos de una página que nunca abrió, y esos minutos son los que el profesor
+  ve en Informes y los que llegan a la casa. `prefetch` solo trae el HTML.
+- `eagerness: moderate`: se dispara con intención (mouse quieto o dedo
+  apoyado). Con `eager` bajaría todo lo que hay en pantalla —en el panel son
+  veinte tarjetas— y gastaría los datos de todos para acertarle a una.
+- **Se excluye** lo que no es una página o pesa: los `.pdf`, `cursos/recursos/`,
+  cerrar sesión, `mailto:`, `tel:`, WhatsApp, `target="_blank"`, `download`.
+  Se excluye por `selector_matches` (mira el enlace) y **no** por
+  `href_matches`: ahí el `?` separa la dirección de sus parámetros, y un `/*\?*`
+  dentro de un `not` excluía el sitio entero. La regla seguía bien formada y el
+  navegador la aceptaba sin aplicarla.
+- Las respuestas que arma el worker (`cursos/protegido/`) no llevan las
+  cabeceras de `_headers`, así que ahí no hay reglas: es lo esperado.
+
+`verificar-anticipar.js` lo sostiene sin creerle al archivo: levanta un
+servidor propio que manda las cabeceras de `_headers` tal cual (CSP incluida;
+reescritas por Playwright, el navegador ignora `Speculation-Rules`), pasa el
+mouse por «Cursos» y mira que la descarga salga con `Sec-Purpose: prefetch`;
+comprueba que un PDF y cerrar sesión no se adelanten, que no haya `prerender`
+ni `eager`, y que la CSP no se queje. Probado rompiéndolo: sin el tipo, con la
+trampa del `?` y con `prerender`, falla.
 
 ## El encabezado ocupa su propio espacio
 
