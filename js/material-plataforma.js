@@ -158,7 +158,9 @@ window.MaterialPlataforma = (function () {
     try {
       const r = await fetch("herramientas/cursos/catalogo.json");
       const d = await r.json();
-      cursosCache = (d.cursos || []).map((c) => ({
+      // Los escondidos (js/cursos-ocultos.js) no se asignan: el alumno no los
+      // puede abrir.
+      cursosCache = (d.cursos || []).filter((c) => !(window.CursosOcultos && CursosOcultos.es(c.slug))).map((c) => ({
         slug: c.slug,
         label: c.titulo,
         href: `cursos/academia/${c.slug}.html`,

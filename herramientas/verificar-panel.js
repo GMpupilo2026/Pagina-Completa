@@ -1153,11 +1153,15 @@ const RESUMEN_ANA = [{ puzzles: 37, lecciones: 9, mejor_coord: 24 }];
 const CURSOS_ANA = [
   // El más reciente de los dos a medias es el que hay que ofrecer, y el
   // terminado no se ofrece nunca: no hay nada que continuar ahí.
-  { student_id: "u-ana", slug: "fundamentos-del-ajedrez", titulo: "Fundamentos del Ajedrez", total: 20, hechos: 7,
+  { student_id: "u-ana", slug: "desequilibrios-de-material", titulo: "Desequilibrios de material", total: 20, hechos: 7,
     ultimo_titulo: "La clavada", ultima_fecha: new Date(Date.now() - 2 * 86400000).toISOString() },
-  { student_id: "u-ana", slug: "finales-practicos", titulo: "Finales prácticos", total: 15, hechos: 3,
+  { student_id: "u-ana", slug: "el-mapa-de-los-finales", titulo: "El mapa de los finales", total: 15, hechos: 3,
     ultimo_titulo: "Oposición", ultima_fecha: new Date(Date.now() - 30 * 86400000).toISOString() },
-  { student_id: "u-ana", slug: "estrategia-y-tactica", titulo: "Estrategia y táctica", total: 12, hechos: 12,
+  // Uno escondido (js/cursos-ocultos.js), más reciente que todos: no se puede
+  // retomar, así que no se ofrece.
+  { student_id: "u-ana", slug: "finales-practicos", titulo: "Finales prácticos", total: 14, hechos: 4,
+    ultimo_titulo: "Oposición", ultima_fecha: new Date(Date.now() - 86400000).toISOString() },
+  { student_id: "u-ana", slug: "partidas-modelo", titulo: "Partidas modelo", total: 12, hechos: 12,
     ultimo_titulo: "Final", ultima_fecha: new Date().toISOString() },
 ];
 /* `por_actividad` iba en {} con 80 ejercicios al lado, que es imposible: el
@@ -1849,9 +1853,9 @@ async function pruebaProgresoAlumna(browser) {
     barra: document.getElementById("seguir-curso-barra").style.width,
   }));
   igual("«Continúa donde ibas» se ve", seguir.display !== "none", "true");
-  igual("y ofrece el curso a medias más reciente, no el terminado ni el viejo",
-    seguir.href, "cursos/academia/fundamentos-del-ajedrez.html");
-  igual("diciendo por dónde iba", seguir.texto, "Fundamentos del Ajedrez — 7 de 20 temas. Lo último: La clavada.");
+  igual("y ofrece el curso a medias más reciente, no el terminado, ni el viejo, ni uno escondido",
+    seguir.href, "cursos/academia/desequilibrios-de-material.html");
+  igual("diciendo por dónde iba", seguir.texto, "Desequilibrios de material — 7 de 20 temas. Lo último: La clavada.");
   igual("y la barra mide lo que dice", seguir.barra, "35%");
 
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");

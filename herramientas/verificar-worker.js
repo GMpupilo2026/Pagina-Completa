@@ -126,7 +126,7 @@ async function cargarWorker() {
     return { estado: res.status, aArchivos: !!pedido, preguntas, cuerpo: await res.text(), cache: res.headers.get("cache-control"),
       csp: res.headers.get("content-security-policy"), xfo: res.headers.get("x-frame-options") };
   };
-  const PDF = "/cursos/recursos/finales-practicos/01-la-oposicion-material.pdf";
+  const PDF = "/cursos/recursos/el-mapa-de-los-finales/01-rey-y-peon-contra-rey-material.pdf";
   {
     const r = await abrir(PDF);
     igual("sin cookie, el material no se sirve", r.estado, 401);
@@ -137,7 +137,7 @@ async function cargarWorker() {
     const r = await abrir(PDF, { pagina: true });
     igual("abierto como página, explica y ofrece iniciar sesión", r.cuerpo.includes("Iniciar sesión"), true);
     igual("y vuelve a la portada de SU curso (el login solo acepta .html)",
-      r.cuerpo.includes("login.html?next=cursos%2Ffinales-practicos.html"), true);
+      r.cuerpo.includes("login.html?next=cursos%2Fel-mapa-de-los-finales.html"), true);
     // _headers no se aplica a lo que arma el worker: sin esto la página sale
     // sin CSP ni X-Frame-Options, y nada lo avisa.
     igual("con sus propias cabeceras de seguridad", !!(r.csp && r.csp.includes("frame-ancestors 'none'")) && r.xfo === "DENY", true);
@@ -168,13 +168,13 @@ async function cargarWorker() {
     // con el acceso vigente basta (lo bajan también los alumnos).
     igual("le pregunta a puede_bajar() del proyecto", p.u, URL_SB + "/rest/v1/rpc/puede_bajar");
     igual("por el producto de la carpeta, y con el acceso basta", p.opciones.body,
-      JSON.stringify({ p_producto: "finales-practicos", p_basta_acceso: true }));
+      JSON.stringify({ p_producto: "el-mapa-de-los-finales", p_basta_acceso: true }));
     igual("con el token de la persona", p.opciones.headers.Authorization, "Bearer " + bueno);
     igual("y con la clave pública", p.opciones.headers.apikey === valor(fuenteCliente, "SUPABASE_ANON_KEY"), true);
     igual("el navegador tiene que volver a preguntar antes de reusarlo", r.cache, "private, no-cache");
   }
   {
-    const r = await abrir("/cursos/recursos/finales-practicos/02-otro-archivo.pdf", { cookie: bueno });
+    const r = await abrir("/cursos/recursos/el-mapa-de-los-finales/02-otro-archivo.pdf", { cookie: bueno });
     igual("el mismo token no vuelve a preguntar en cada archivo del producto", r.estado + "/" + r.preguntas.length, "200/0");
   }
   {
@@ -186,7 +186,7 @@ async function cargarWorker() {
       JSON.stringify({ p_producto: "partidas-modelo", p_basta_acceso: true }));
   }
   {
-    const r = await abrir("/cursos/protegido/finales-practicos.html", { cookie: token() });
+    const r = await abrir("/cursos/protegido/el-mapa-de-los-finales.html", { cookie: token() });
     igual("el contenido de los cursos sigue preguntando acceso_vigente()", (r.preguntas[0] || {}).u, URL_SB + "/rest/v1/rpc/acceso_vigente");
   }
   {
@@ -225,6 +225,32 @@ async function cargarWorker() {
     igual("Supabase con un 5xx: pasa", r2.estado, 200);
     const r3 = await abrir(PDF, { cookie: token({ iss: "https://otro.supabase.co/auth/v1" }) });
     igual("pero ni así pasa un token que no es de este proyecto", r3.estado, 401);
+  }
+  {
+    // Los cursos escondidos: la lista del worker es la de js/cursos-ocultos.js.
+    // Si se separan, uno se pinta escondido y se sigue bajando (o al revés).
+    const delCliente = (fs.readFileSync(path.join(raiz, "js", "cursos-ocultos.js"), "utf8").match(/var SLUGS = \[([^\]]*)\]/) || [])[1] || "";
+    const delWorker = (fuenteWorker.match(/const OCULTOS = new Set\(\[([^\]]*)\]/) || [])[1] || "";
+    const lista = (t) => (t.match(/"[a-z0-9-]+"/g) || []).sort().join(",");
+    igual("los cursos escondidos son los mismos en el worker y en el navegador", lista(delWorker), lista(delCliente));
+    igual("y la lista no está vacía", lista(delCliente).length > 0, true);
+
+    contesta = () => new Response("false", { status: 200 });
+    const r = await abrir("/cursos/protegido/fundamentos-del-ajedrez.html", { cookie: token() });
+    igual("el contenido de un curso escondido pregunta puede_bajar()", (r.preguntas[0] || {}).u, URL_SB + "/rest/v1/rpc/puede_bajar");
+    igual("sin que el acceso a la Academia baste", (r.preguntas[0] || {}).opciones && r.preguntas[0].opciones.body,
+      JSON.stringify({ p_producto: "fundamentos-del-ajedrez", p_basta_acceso: false }));
+    igual("y a quien no es de administración no se le sirve", r.estado + "/" + r.aArchivos, "403/false");
+    const d = await abrir("/cursos/recursos/preparacion-para-torneos/01.pdf", { cookie: token() });
+    igual("su material tampoco, aunque tenga el acceso vigente", d.estado + "/" + (d.preguntas[0] || {}).opciones.body,
+      "403/" + JSON.stringify({ p_producto: "preparacion-para-torneos", p_basta_acceso: false }));
+    const n = await abrir("/cursos/protegido/finales-practicos.html", { cookie: token(), pagina: true });
+    igual("como página dice que el curso no está disponible", n.cuerpo.includes("no está disponible") && n.cuerpo.includes("/cursos/academia/index.html"), true);
+    contesta = () => new Response("true", { status: 200 });
+    const a = await abrir("/cursos/protegido/estrategia-y-tactica.html", { cookie: token() });
+    igual("administración (puede_bajar dice que sí) lo sigue abriendo", a.estado + "/" + a.aArchivos, "200/true");
+    const v = await abrir("/cursos/protegido/el-mapa-de-los-finales.html", { cookie: token() });
+    igual("un curso que no está escondido sigue con acceso_vigente()", (v.preguntas[0] || {}).u, URL_SB + "/rest/v1/rpc/acceso_vigente");
   }
   {
     const r = await abrir("/cursos/finales-practicos.html");

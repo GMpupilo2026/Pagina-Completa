@@ -114,6 +114,42 @@ posición de Lucena del curso "Estrategia en el final" tenía el rey negro
 demasiado cerca y la técnica del puente no ganaba, aunque todas las jugadas
 fueran legales.
 
+### Los cursos escondidos
+
+Seis cursos están **escondidos a alumnos y profesores** (octubre de 2026, a
+pedido del dueño): Fundamentos del Ajedrez, Aperturas y Defensas, Cálculo y
+Visualización, Finales Prácticos, Estrategia y Táctica y Preparación para
+Torneos. Siguen en el repositorio y quien administra los sigue abriendo, para
+revisarlos o terminarlos. La lista vive en **dos lugares que tienen que decir
+lo mismo** (`verificar-worker.js` lo comprueba):
+
+- `js/cursos-ocultos.js` decide qué se **pinta**: «Mis cursos» les quita la
+  tarjeta (vienen con `hidden` en el HTML para que no se asomen mientras se
+  pregunta quién mira; a administración se le muestran con «Escondido a
+  alumnos y profesores»), la página del curso dice que no está disponible sin
+  pedir el contenido, y los enlaces «curso anterior / siguiente» que llevan a
+  uno escondido se van. Tampoco se ofrecen en el material de la clase
+  (`sesion.js`), en tareas y exámenes (`MaterialPlataforma.cursos()`), ni en
+  «Sigue con tu curso» o el «Continuar» de Informes. En la clase, tareas y
+  exámenes se esconden **también para administración**: quien administra no da
+  clase. Con «Ver como: profesor» o «alumno» `AccesoAdmin.esAdmin()` dice que
+  no, así que los ve escondidos como ellos.
+- `worker.js` (`OCULTOS`) decide qué se **baja**: para esos cursos,
+  `cursos/protegido/` y `cursos/recursos/` preguntan
+  `puede_bajar(curso, false)`: el acceso a la Academia no basta, pasan
+  administración y quien compró ese material en la tienda (pagó por él). La
+  página de 403 dice «Este curso no está disponible».
+- Los recursos de esos cursos se sacaron del plan de entrenamiento
+  (`js/plan-entrenamiento.js`): mandaban a una portada de un curso que el
+  alumno no puede abrir. Si un curso se vuelve a abrir, se quita de las dos
+  listas y se le devuelve su renglón al plan.
+- **Lo que queda igual a propósito**: las portadas públicas (`cursos/<curso>.html`,
+  el catálogo `cursos.html`) y la tienda no se tocaron, y el avance que un
+  alumno ya tenía en esos cursos sigue en sus informes: es historia, no se
+  borra.
+
+`node herramientas/verificar-todo.js cursos-ocultos worker` lo comprueba.
+
 ### «Marcar lección como estudiada» nunca guardó nada
 
 `curso-academia.js` guarda cada lección estudiada en `training_progress` con

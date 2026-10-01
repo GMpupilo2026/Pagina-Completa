@@ -67,10 +67,44 @@
   function pct(n, t) { return t ? Math.round((100 * n) / t) : 0; }
   function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
 
+  // ---------- los cursos escondidos (js/cursos-ocultos.js) ----------
+  // Las tarjetas vienen con «hidden» en el HTML, para que no se asomen mientras
+  // se pregunta quién mira: a administración se le muestran, marcadas; a los
+  // demás se les quitan. Y los enlaces «curso anterior / siguiente» que llevan
+  // a uno escondido se van, para no mandar a nadie a una puerta cerrada.
+  function visible(slug) { return !window.CursosOcultos || window.CursosOcultos.visible(slug); }
+  function cursoDelEnlace(a) {
+    var m = (a.getAttribute("href") || "").match(/^([a-z0-9-]+)\.html$/);
+    return m ? m[1] : "";
+  }
+  async function aplicarOcultos() {
+    if (window.AccesoAdmin) await window.AccesoAdmin.init();
+    if (catalogo) {
+      catalogo.querySelectorAll("[data-curso]").forEach(function (card) {
+        var slug = card.dataset.curso;
+        if (!window.CursosOcultos || !window.CursosOcultos.es(slug)) return;
+        if (!visible(slug)) { card.remove(); return; }
+        card.hidden = false;
+        var marca = card.querySelector(".ac-oculto");
+        if (!marca) {
+          var nivel = card.querySelector(".p-6 > span");
+          marca = el("span", "ac-oculto block mt-1 text-xs font-semibold text-brand-500 dark:text-brand-300", "Escondido a alumnos y profesores");
+          if (nivel) nivel.after(marca);
+        }
+      });
+    }
+    document.querySelectorAll("main a[href$='.html']").forEach(function (a) {
+      var slug = cursoDelEnlace(a);
+      // Un hueco en su lugar: el otro enlace de la barra se queda de su lado.
+      if (slug && !visible(slug)) a.replaceWith(document.createElement("span"));
+    });
+  }
+
   // ---------- catálogo: barra de progreso por curso ----------
   async function catalogoInit() {
     var s = await sesion();
     if (!s) { irALogin(); return; }
+    await aplicarOcultos();
     var prog = await progresoCursos(s.user.id);
     catalogo.querySelectorAll("[data-curso]").forEach(function (card) {
       var slug = card.dataset.curso, total = parseInt(card.dataset.total, 10) || 0;
@@ -316,6 +350,12 @@
     uid = s.user.id;
     prog = document.getElementById("ac-progreso");
     live = document.getElementById("ac-avisos");
+    await aplicarOcultos();
+    if (!visible(slug)) {
+      body.innerHTML = '<p class="text-sm text-brand-600 dark:text-brand-300">Este curso no está disponible por ahora. <a href="index.html" class="underline font-semibold">Ver mis cursos</a></p>';
+      if (prog) prog.hidden = true;
+      return;
+    }
     var html;
     // La cookie que mira worker.js, escrita ANTES de pedir el fragmento.
     if (window.SesionCursos) window.SesionCursos.guardar(s);
@@ -337,7 +377,6 @@
     var todo = await progresoCursos(uid);
     hechas = todo[slug] || {};
     unlockHasta = await desbloqueoManual(uid, slug);
-    if (window.AccesoAdmin) await window.AccesoAdmin.init();
     aplicarEstados();
     // #lec-… en la dirección: se abre si está disponible; si no, se va a la siguiente pendiente.
     var pedido = location.hash && location.hash.indexOf("#") === 0 ? location.hash.slice(1) : null;

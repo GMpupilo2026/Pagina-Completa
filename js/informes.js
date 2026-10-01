@@ -310,7 +310,7 @@
                     nota.className = "text-xs text-brand-450 dark:text-brand-350 mt-1";
                     const fecha = c.ultimo ? new Date(c.ultimo.fecha).toLocaleDateString("es-CR", { day: "2-digit", month: "short", year: "numeric" }) : "";
                     nota.textContent = c.total && c.hechos >= c.total ? `🏁 Curso completo (último tema el ${fecha})` : c.ultimo ? `Último tema estudiado: ${c.ultimo.titulo} (${fecha})` : "";
-                    if (propio) {
+                    if (propio && !(window.CursosOcultos && CursosOcultos.es(c.slug))) {
                         const a = document.createElement("a"); a.href = "cursos/academia/" + c.slug + ".html"; a.className = "ml-2 text-accent-600 dark:text-accent-400 hover:underline"; a.textContent = "Continuar →";
                         nota.appendChild(a);
                     }

@@ -91,7 +91,7 @@ async function abrirCurso(browser, curso, adaptado, ciega) {
 
 async function pruebaEncabezados(browser) {
   console.log("\n=== Los encabezados del curso ===");
-  const { page, ctx, errores } = await abrirCurso(browser, "fundamentos-del-ajedrez", false);
+  const { page, ctx, errores } = await abrirCurso(browser, "estrategia-en-el-final", false);
 
   const niveles = await page.evaluate(() =>
     Array.from(document.querySelectorAll("main h1, main h2, main h3, main h4, main h5, main h6"))
@@ -141,7 +141,7 @@ async function pruebaEncabezados(browser) {
 async function pruebaMaterial(browser) {
   console.log("\n=== El material, en cada modo ===");
   for (const adaptado of [false, true]) {
-    const { page, ctx } = await abrirCurso(browser, "fundamentos-del-ajedrez", adaptado);
+    const { page, ctx } = await abrirCurso(browser, "estrategia-en-el-final", adaptado);
     const m = await page.evaluate(() => {
       const enlaces = Array.from(document.querySelectorAll("#course-content-body a[href]"));
       const visible = (a) => getComputedStyle(a).display !== "none";

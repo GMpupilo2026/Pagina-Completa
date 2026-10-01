@@ -51,7 +51,6 @@ window.PlanEntrenamiento = (function () {
         { texto: 'Ejercicios de captura al paso', href: 'entreno/temas.html?tema=enPassant' },
         { texto: 'Ejercicios de coronación', href: 'entreno/temas.html?tema=promotion' },
         { texto: 'Ficha: el rey ahogado', href: 'entreno/estudio.html?ficha=rey-ahogado' },
-        { texto: 'Curso: Fundamentos del Ajedrez', href: 'cursos/fundamentos-del-ajedrez.html' },
       ],
     },
     {
@@ -90,7 +89,6 @@ window.PlanEntrenamiento = (function () {
         { texto: 'Ejercicios sobre f2 y f7, el error típico', href: 'entreno/temas.html?tema=attackingF2F7' },
         { texto: 'Ficha: el desarrollo', href: 'entreno/estudio.html?ficha=desarrollo' },
         { texto: 'Ficha: el centro', href: 'entreno/estudio.html?ficha=el-centro' },
-        { texto: 'Curso: Aperturas y Defensas', href: 'cursos/aperturas-y-defensas.html' },
         { texto: 'Artículo: el centro del tablero', href: 'articulos/el-centro-del-tablero.html' },
         { texto: 'Habilidades: ¿Qué apertura es?', href: 'entreno/tipos.html#apertura' },
       ],
@@ -112,7 +110,6 @@ window.PlanEntrenamiento = (function () {
         { texto: 'Ejercicios de desviación', href: 'entreno/temas.html?tema=deflection' },
         { texto: 'Racha táctica', href: 'racha-tactica.html' },
         { texto: 'Ficha: la horquilla', href: 'entreno/estudio.html?ficha=horquilla' },
-        { texto: 'Curso: Estrategia y Táctica', href: 'cursos/estrategia-y-tactica.html' },
         { texto: 'Habilidades: ¿Qué quiere el rival?', href: 'entreno/tipos.html#amenaza' },
         { texto: 'Habilidades: Aguanta (la única jugada que defiende)', href: 'entreno/tipos.html#aguanta' },
       ],
@@ -177,7 +174,6 @@ window.PlanEntrenamiento = (function () {
         { texto: 'Ejercicios de peón avanzado', href: 'entreno/temas.html?tema=advancedPawn' },
         { texto: 'Ficha: el peón pasado', href: 'entreno/estudio.html?ficha=peon-pasado' },
         { texto: 'Ficha: la columna abierta', href: 'entreno/estudio.html?ficha=columna-abierta' },
-        { texto: 'Curso: Estrategia y Táctica', href: 'cursos/estrategia-y-tactica.html' },
         { texto: 'Artículo: peones doblados', href: 'articulos/peones-doblados.html' },
         { texto: 'Precisión posicional: elegir el plan', href: 'entreno/precision-posicional.html' },
         { texto: 'Habilidades: Remata la ventaja', href: 'entreno/tipos.html#remata' },
@@ -200,7 +196,6 @@ window.PlanEntrenamiento = (function () {
         { texto: 'Ejercicios de jugada intermedia', href: 'entreno/temas.html?tema=intermezzo' },
         { texto: 'Coordenadas', href: 'entreno/coordenadas.html' },
         { texto: 'Concentración', href: 'concentracion.html' },
-        { texto: 'Curso: Cálculo y Visualización', href: 'cursos/calculo-y-visualizacion.html' },
         { texto: 'Habilidades: Fotografía', href: 'entreno/tipos.html#fotografia' },
         { texto: 'Habilidades: El Barrido', href: 'entreno/tipos.html#barrido' },
         { texto: 'Memoria: ver la posición y reconstruirla', href: 'entreno/memoria.html' },
@@ -229,7 +224,6 @@ window.PlanEntrenamiento = (function () {
       { texto: 'Ejercicios de partidas de súper GM', href: 'entreno/temas.html?tema=superGM' },
       { texto: 'Diagnóstico de arbitraje', href: 'nivel-de-arbitraje.html' },
       { texto: 'Curso: Partidas modelo del ajedrez moderno', href: 'cursos/partidas-modelo.html' },
-      { texto: 'Curso: Preparación para Torneos', href: 'cursos/preparacion-para-torneos.html' },
     ],
   });
 
