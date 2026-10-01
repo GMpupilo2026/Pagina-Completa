@@ -1771,6 +1771,13 @@ grande; «✕ Volver al tablero» o Esc la cierran.
   computadora), porque los `text-xs` y los px de Tailwind no crecen con el
   `font-size` del contenedor. Se mide: los botones de la barra salen al menos
   1,3 veces más altos.
+- **El fondo es transparente pero oscurecido**: cada tarjeta lleva el suyo y
+  entre ellas se ve el tablero apagado (azul de la marca al 55 %; en modo
+  oscuro, negro al 60 %, porque el azul no se distinguía de las tarjetas). Se
+  probó del todo transparente y las pestañas quedaban encima de las piezas,
+  difíciles de leer, que es justo lo que la ventana vino a arreglar. La barra
+  de arriba es una tarjeta fija y la nota del modo sencillo lleva su propio
+  fondo.
 - **Encima del encabezado (z-55) y debajo de lo que sí tiene que verse**: la
   pregunta al alumno (z-60), los avisos (z-70 y la capa superior de
   `<dialog>`).
