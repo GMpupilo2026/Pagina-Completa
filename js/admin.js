@@ -600,6 +600,10 @@
            `let` más abajo no existe hasta que se evalúa su línea — el mismo
            "Cannot access before initialization" que dejó a 4x4.html colgada. */
         let coordinadosPor = new Map();   // coordinador_id -> [profesor_id…]
+        /* De qué alumnos está abierto «Usuario y contraseña». Vive fuera de la
+           fila porque la tabla se repinta entera (al cambiar un profesor, al
+           buscar): sin esto el panel se cerraría en la cara de quien lo usa. */
+        const accesoAbierto = new Set();
 
         function teacherLabel(u) {
             return u.full_name || u.email;
@@ -860,6 +864,33 @@
                 });
                 tdActions.appendChild(resetBtn);
 
+                let detalleAcceso = null;
+                if (u.role === "alumno") {
+                    const accesoBtn = document.createElement("button");
+                    accesoBtn.type = "button";
+                    accesoBtn.className = "text-xs text-brand-500 dark:text-brand-300 hover:text-accent-500 hover:underline mr-3";
+                    accesoBtn.textContent = "Usuario y contraseña";
+                    accesoBtn.setAttribute("aria-label", "Usuario y contraseña de " + (u.full_name || u.email));
+                    accesoBtn.setAttribute("aria-controls", "acceso-" + u.id);
+                    accesoBtn.setAttribute("aria-expanded", accesoAbierto.has(u.id) ? "true" : "false");
+                    accesoBtn.addEventListener("click", () => {
+                        if (accesoAbierto.has(u.id)) {
+                            accesoAbierto.delete(u.id);
+                            detalleAcceso?.remove();
+                            detalleAcceso = null;
+                            accesoBtn.setAttribute("aria-expanded", "false");
+                        } else {
+                            accesoAbierto.add(u.id);
+                            detalleAcceso = renderAccesoFila(u);
+                            tr.after(detalleAcceso);
+                            accesoBtn.setAttribute("aria-expanded", "true");
+                            detalleAcceso.querySelector("input")?.focus();
+                        }
+                    });
+                    tdActions.appendChild(accesoBtn);
+                    if (accesoAbierto.has(u.id)) detalleAcceso = renderAccesoFila(u);
+                }
+
                 if (u.foto_path && window.FotoPerfil) {
                     const fotoBtn = document.createElement("button");
                     fotoBtn.type = "button";
@@ -939,7 +970,132 @@
                 }
 
                 tr.append(tdCuenta, tdRole, tdGrupo, tdTeacher, tdVision, tdCreated, tdActions);
-                return tr;
+                if (!detalleAcceso) return tr;
+                const ambas = document.createDocumentFragment();
+                ambas.append(tr, detalleAcceso);
+                return ambas;
+        }
+
+        /* «Usuario y contraseña»: para que un alumno pueda entrar sin abrir
+           ningún correo. Se le da un usuario de la Academia si no lo tiene (o
+           se le cambia) y se le pone la contraseña, y quien administra se los
+           da a él o a su familia.
+
+           No hay regla nueva acá: es lo mismo que la ficha de
+           coordinacion.html. El usuario lo cambia la acción `cuenta` de
+           `correos-alumno` (el desempate numerando lo hace el servidor, y
+           exige un encargado para que la cuenta no quede muda) y la
+           contraseña la pone `js/contrasena-alumno.js`, que solo sirve con
+           usuario de la Academia: la de quien tiene correo propio es de esa
+           persona y la crea con su enlace. */
+        function renderAccesoFila(u) {
+            const tr = document.createElement("tr");
+            tr.className = "border-b border-brand-50 dark:border-brand-800/60 bg-brand-50/60 dark:bg-brand-950/40";
+            const td = document.createElement("td");
+            td.colSpan = 8;
+            td.id = "acceso-" + u.id;
+            td.className = "px-3 py-4";
+            const caja = document.createElement("div");
+            caja.className = "max-w-xl";
+            const nombre = u.full_name || u.email;
+
+            const titulo = document.createElement("h3");
+            titulo.className = "font-semibold text-sm text-brand-700 dark:text-brand-200 mb-1";
+            titulo.textContent = "Cómo entra " + nombre;
+            const estado = document.createElement("p");
+            estado.className = "text-sm text-brand-600 dark:text-brand-300 mb-3";
+            caja.append(titulo, estado);
+
+            const etiqueta = document.createElement("label");
+            etiqueta.className = "block";
+            const texto = document.createElement("span");
+            texto.className = "block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1";
+            etiqueta.appendChild(texto);
+            const fila = document.createElement("div");
+            fila.className = "flex flex-wrap items-center gap-2";
+            const input = document.createElement("input");
+            input.type = "text";
+            input.className = "min-w-[12rem] flex-1 px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+            input.placeholder = "Vacío: se arma con su nombre";
+            ["autocomplete", "off", "autocapitalize", "none", "autocorrect", "off", "spellcheck", "false"].forEach((v, i, a) => {
+                if (i % 2 === 0) input.setAttribute(v, a[i + 1]);
+            });
+            const dominio = document.createElement("span");
+            dominio.className = "text-xs text-brand-450 dark:text-brand-350";
+            dominio.textContent = "@" + UsuarioAlumno.DOMINIO;
+            fila.append(input, dominio);
+            etiqueta.appendChild(fila);
+            caja.appendChild(etiqueta);
+            const ayuda = document.createElement("p");
+            ayuda.className = "text-xs text-brand-450 dark:text-brand-350 mt-2";
+            caja.appendChild(ayuda);
+            const boton = document.createElement("button");
+            boton.type = "button";
+            boton.className = "mt-3 border border-brand-200 dark:border-brand-700 hover:border-accent-400 px-4 py-2 rounded-lg text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+            caja.appendChild(boton);
+
+            // La contraseña aparece en cuanto tiene usuario, sin cerrar el panel.
+            const clave = ContrasenaAlumno.montar(caja, { alumnoId: u.id, nombre, usuario: () => u.email });
+
+            function pintar() {
+                const interno = UsuarioAlumno.esInterno(u.email);
+                estado.textContent = interno
+                    ? "Entra con el usuario «" + UsuarioAlumno.soloUsuario(u.email) + "» y la contraseña que le pongas abajo."
+                    : "Entra con su correo, " + u.email + ", y la contraseña la crea con el enlace de «Reenviar acceso». "
+                      + "Si no puede abrir ese correo, dale un usuario de la Academia y ponle tú la contraseña.";
+                texto.textContent = interno ? "Su usuario" : "Usuario de la Academia";
+                input.setAttribute("aria-label", (interno ? "Usuario de " : "Usuario de la Academia para ") + nombre);
+                input.value = interno ? UsuarioAlumno.soloUsuario(u.email) : "";
+                ayuda.textContent = "Sin tildes ni espacios: es lo que va a escribir cada vez que entra. Si ya es de otro alumno, "
+                    + "se le agrega un número. Hace falta tener apuntado el correo de la persona encargada, "
+                    + "que es a donde le llegan los informes.";
+                boton.textContent = interno ? "Cambiar su usuario" : "Darle este usuario";
+                clave.pintar();
+            }
+
+            async function darUsuario() {
+                const interno = UsuarioAlumno.esInterno(u.email);
+                if (!interno && !(await Avisos.confirmar(
+                    "Desde ese momento ya no entra con " + u.email + " sino con el usuario, y lo que el sitio le escribe va al correo de la persona encargada.",
+                    { titulo: "¿Darle un usuario a " + nombre + "?", aceptar: "Darle el usuario" }))) return;
+                boton.disabled = true;
+                const antes = boton.textContent;
+                boton.textContent = "Guardando…";
+                try {
+                    const datos = await llamarCorreos({
+                        action: "cuenta",
+                        alumno_id: u.id,
+                        sin_correo: true,
+                        usuario: input.value.trim(),
+                    });
+                    if (datos.sin_cambios) {
+                        Avisos.avisar("Ese ya era su usuario: no se cambió nada.");
+                    } else {
+                        /* Lo que se enseña es lo que devolvió el SERVIDOR: el
+                           desempate lo hace él, y enseñar el escrito dejaría a
+                           la familia intentando entrar con uno que no es. */
+                        u.email = datos.cambiado || u.email;
+                        Avisos.avisar("Listo: " + nombre + " entra con el usuario «" + UsuarioAlumno.soloUsuario(u.email) + "». Ahora ponle la contraseña.", { tipo: "ok" });
+                        // La celda del correo de la fila de arriba también cambia.
+                        const correo = tr.previousElementSibling?.querySelector("a[href^='mailto:']");
+                        if (correo) { correo.href = "mailto:" + u.email; correo.textContent = u.email; correo.title = u.email; }
+                    }
+                    pintar();
+                } catch (err) {
+                    Avisos.avisar("No se pudo: " + err.message, { tipo: "error" });
+                }
+                boton.disabled = false;
+                if (boton.textContent === "Guardando…") boton.textContent = antes;
+            }
+            boton.addEventListener("click", darUsuario);
+            input.addEventListener("keydown", (e) => {
+                if (e.key === "Enter") { e.preventDefault(); darUsuario(); }
+            });
+
+            pintar();
+            td.appendChild(caja);
+            tr.appendChild(td);
+            return tr;
         }
 
         // `cuantas` es cuántas CUENTAS hay en el grupo y `alumnosDelGrupo` cuáles de

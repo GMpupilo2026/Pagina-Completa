@@ -688,6 +688,78 @@ async function pruebaElNombreNoSeCorta(browser) {
   await ctx.close();
 }
 
+/* ============ admin.html · darle usuario y ponerle la contraseña ============
+   Desde Cuentas, quien administra le da a un alumno un usuario de la Academia
+   (si entraba con correo) y le pone la contraseña, para que entre sin abrir
+   ningún correo. Las dos cosas van a `correos-alumno` —la misma puerta que la
+   ficha de coordinación—: acá se dobla y se anota lo que la página le manda.
+   Lo que se comprueba es lo que se rompería callado: que el panel diga si está
+   abierto, que la contraseña NO se ofrezca a quien entra con su correo (el
+   servidor la rechazaría), que aparezca en cuanto tiene usuario, que se enseñe
+   el usuario que devolvió el SERVIDOR y no el escrito, y que el panel siga
+   abierto después de que la tabla se repinta. */
+async function pruebaUsuarioYContrasena(browser) {
+  console.log("\n=== Usuario y contraseña de un alumno, desde Cuentas ===");
+  const { page, ctx, errores } = await abrir(browser, "/admin.html", ADMIN, { viewport: { width: 1280, height: 900 } });
+  const aCorreos = [];
+  await ctx.route("**/functions/v1/correos-alumno", async (r) => {
+    const cuerpo = JSON.parse(r.request().postData() || "{}");
+    aCorreos.push(cuerpo);
+    // El servidor desempata numerando: devuelve un usuario distinto del escrito.
+    const respuesta = cuerpo.action === "cuenta"
+      ? { ok: true, cambiado: "ana.ramirez2@alumno.ajedrez-integral.com" }
+      : { ok: true, usuario: "ana.ramirez2@alumno.ajedrez-integral.com" };
+    await r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(respuesta) });
+  });
+  await page.goto(BASE + "/admin.html", { waitUntil: "networkidle" });
+  await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
+  await page.evaluate(contestarAvisos);
+  await irA(page, "cuentas");
+  await page.fill("#user-search", "ramirez");
+  const boton = page.locator('#users-body button[aria-controls="acceso-u-7"]');
+  await boton.waitFor({ timeout: 10000 });
+    igual("cerrado, dice que está cerrado", await boton.getAttribute("aria-expanded"), "false");
+
+  await boton.click();
+  igual("abierto, dice que está abierto", await boton.getAttribute("aria-expanded"), "true");
+  const panel = page.locator("#acceso-u-7");
+  igual("el panel se ve", await panel.evaluate((e) => e.checkVisibility()), "true");
+  const claveVisible = () => page.evaluate(() => {
+    const t = [...document.querySelectorAll("#acceso-u-7 h3")].find((h) => h.textContent === "Su contraseña");
+    return !!t && t.parentElement.checkVisibility();
+  });
+  igual("con correo propio NO se ofrece la contraseña (el servidor la rechaza)", await claveVisible(), "false");
+
+  await panel.locator("input").first().fill("ana.ramirez");
+  await panel.getByRole("button", { name: "Darle este usuario" }).click();
+  await page.waitForFunction(() => /ana\.ramirez2/.test(document.getElementById("acceso-u-7").textContent), { timeout: 10000 });
+  const cuenta = aCorreos.find((c) => c.action === "cuenta");
+  igual("le pide a correos-alumno un usuario de la Academia",
+    cuenta && [cuenta.alumno_id, cuenta.sin_correo, cuenta.usuario], ["u-7", true, "ana.ramirez"]);
+  igual("enseña el usuario que devolvió el servidor, no el escrito",
+    await panel.locator("input").first().inputValue(), "ana.ramirez2");
+  igual("en cuanto tiene usuario aparece la contraseña", await claveVisible(), "true");
+
+  await panel.getByRole("button", { name: "Poner esta contraseña" }).waitFor();
+  await panel.locator('input[type="text"]').nth(1).fill("caballo482");
+  await panel.getByRole("button", { name: "Poner esta contraseña" }).click();
+  await page.waitForFunction(() => (window.__avisos || []).some((a) => /caballo482/.test(a)), { timeout: 10000 });
+  const clave = aCorreos.find((c) => c.action === "contrasena");
+  igual("la contraseña va a correos-alumno con ese alumno",
+    clave && [clave.alumno_id, clave.contrasena], ["u-7", "caballo482"]);
+  igual("el aviso dice el usuario sin el dominio y la contraseña",
+    await page.evaluate(() => (window.__avisos || []).some((a) => /«ana\.ramirez2» y la contraseña «caballo482»/.test(a))), "true");
+
+  // Repintar la tabla (otra búsqueda que la encuentra igual) no cierra el panel.
+  await page.fill("#user-search", "ana ramirez");
+  await page.waitForFunction(() => !!document.getElementById("acceso-u-7"), { timeout: 10000 });
+  igual("después de repintar, el panel sigue abierto y lo dice",
+    await page.locator('#users-body button[aria-controls="acceso-u-7"]').getAttribute("aria-expanded"), "true");
+
+  igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+}
+
 /* ====================== inscripciones.html ====================== */
 
 /* Las URL firmadas que da la función. La tercera ruta NO trae firma, como
@@ -1030,6 +1102,7 @@ async function pruebaVolcarEnUnEquipo(browser) {
     await pruebaCuentasDeUnGrupo(browser);
     await pruebaBuscarEntreGrupos(browser);
     await pruebaElNombreNoSeCorta(browser);
+    await pruebaUsuarioYContrasena(browser);
     await pruebaInscripciones(browser);
     await pruebaInscripcionesDenegado(browser);
     await pruebaPdfSoloAdmin(browser);

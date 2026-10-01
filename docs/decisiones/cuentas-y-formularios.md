@@ -714,6 +714,29 @@ pantalla decía «enviado». Ahora esas cuentas van por `reenviar-acceso` (al
 correo de la casa), y `admin-manage-users` rechaza el caso por si alguien lo
 llama directo.
 
+### «Usuario y contraseña» en las Cuentas de administración
+
+Quien administra también le pone la contraseña desde **Cuentas** de
+`admin.html`, sin pasar por la ficha de coordinación: cada alumno trae en
+Acciones **«Usuario y contraseña»**, que abre un panel debajo de su fila (dice
+si está abierto con `aria-expanded`, y sigue abierto cuando la tabla se
+repinta). Ahí:
+
+- **Si entra con su correo, se le puede dar un usuario de la Academia** (o
+  cambiarle el que tiene): la acción `cuenta` de `correos-alumno` con
+  `sin_correo`, la misma de la ficha. El usuario se puede escribir o dejar
+  vacío para que se arme con su nombre; el desempate lo hace el servidor y lo
+  que se enseña es lo que devolvió. Antes de quitarle el correo se pregunta,
+  porque desde ese momento ya no entra con él. Hace falta tener apuntado a su
+  encargado: el servidor lo exige para que la cuenta no quede muda.
+- **La contraseña es `js/contrasena-alumno.js`**, el mismo control de
+  coordinación e informes, y aparece en cuanto tiene usuario. Con correo propio
+  no se ofrece: esa contraseña es de la persona y el servidor la rechaza.
+
+No hay regla nueva ni función que desplegar: todo va por `correos-alumno`, que
+ya acepta a quien administra. Lo revisa `verificar-admin.js`
+(«Usuario y contraseña de un alumno, desde Cuentas»).
+
 ### La contraseña se puede poner al crear la cuenta
 
 Con «Su contraseña» el niño ya podía entrar sin abrir ningún correo, pero
