@@ -56,7 +56,7 @@ window.HerramientasGrandes = (function () {
     function abrir() {
         if (abierta) return;
         abierta = true;
-        aside.classList.add("herramientas-en-grande", "bg-brand-50", "dark:bg-brand-950");
+        aside.classList.add("herramientas-en-grande");
         aside.setAttribute("role", "dialog");
         aside.setAttribute("aria-modal", "true");
         aside.setAttribute("aria-labelledby", "grandes-titulo");
@@ -82,7 +82,7 @@ window.HerramientasGrandes = (function () {
         if (observador) { observador.disconnect(); observador = null; }
         inertes.forEach((h) => { h.inert = false; });
         inertes = [];
-        aside.classList.remove("herramientas-en-grande", "bg-brand-50", "dark:bg-brand-950");
+        aside.classList.remove("herramientas-en-grande");
         aside.removeAttribute("role");
         aside.removeAttribute("aria-modal");
         aside.removeAttribute("aria-labelledby");
