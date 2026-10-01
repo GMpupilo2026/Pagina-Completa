@@ -131,7 +131,9 @@ async function pruebaAdmin(browser) {
   igual("sin horario no dice «0 de 0»", await celdaTexto(page, "ac-2", "horario"), "Sin horario | nadie cargó su horario");
   igual("alumnos activos contra inscritos", await celdaTexto(page, "ac-1", "alumnos"), "17 de 53 | entrenaron este mes");
   igual("los informes que faltan van escritos", await celdaTexto(page, "ac-1", "informes"),
-    "0 de 2 enviados | 2 profesores | ⚠ 2 sin enviar" + (mes < new Date().toISOString().slice(0, 7) + "-01" ? "" : " (el mes no ha terminado)"));
+    // El mes cerrado se cuenta en hora de Costa Rica, como la página: con
+    // new Date() (UTC) fallaba de las 18:00 a la medianoche del último día.
+    "0 de 2 enviados | 2 profesores | ⚠ 2 sin enviar" + (mes < (await page.evaluate(() => ActividadProfesor.hoyCR())).slice(0, 7) + "-01" ? "" : " (el mes no ha terminado)"));
   igual("el gasto de IA contra su tope", await celdaTexto(page, "ac-1", "ia"), "US$0.42 | de US$5.00 de tope");
   igual("sin modelo lo dice", await celdaTexto(page, "ac-2", "ia"), "US$0.00 | sin IA configurada");
   const cob = await celdaTexto(page, "ac-1", "cobros");
