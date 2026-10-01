@@ -35,7 +35,7 @@
             ciegas: {
                 titulo: "🙈 A ciegas",
                 reglas: [
-                    "Ajedrez normal, pero <strong>sin ver las piezas</strong>: el tablero se muestra vacío y cada jugada se <strong>escribe</strong> en el panel (Cf3, Nf3, g1f3; enroque 0-0).",
+                    "Ajedrez normal, pero <strong>sin ver las piezas</strong>: el tablero se muestra vacío y cada jugada se <strong>escribe</strong> en el panel (Cf3, g1f3; enroque 0-0).",
                     "La jugada del rival aparece escrita frente al tablero durante <strong>10 segundos</strong> y después desaparece. Si escribes una jugada ilegal, el panel te avisa y no cuenta.",
                     "Cada jugador tiene <strong>5 oportunidades</strong> de desbloquear la planilla de jugadas durante <strong>20 segundos</strong> para repasar; luego se vuelve a ocultar.",
                     "Se gana por jaque mate como siempre. Al terminar la partida, el tablero y la planilla se muestran completos.",

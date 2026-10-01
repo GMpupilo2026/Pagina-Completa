@@ -310,9 +310,16 @@
                     posicionViva: false,
                 });
             }
-            comandos.ayuda('Jugada, en español o en inglés: "Cf3", "Nf3", "e4", "Dxh7+", "e8=D". Pregunta: "caballos", "qué hay en e4". Escribe "ayuda" para todo. '
+            comandos.ayuda('Jugada: "Cf3", "e4", "Dxh7+", "e8=D". Pregunta: "caballos", "qué hay en e4". Escribe "ayuda" para todo. '
                 + "Tienes " + (limiteMs() / 1000) + " segundos por ejercicio.");
             comandos.posicion(game);
+        }
+
+        // Lo que se escribe para empezar otra racha al terminar (o la primera).
+        const PIDE_OTRA = /^(otra vez|otra|siguiente|de nuevo|jugar de nuevo|jugar otra vez|volver a jugar|otra racha|empezar|comenzar|empezar de nuevo|reiniciar|nueva racha)$/;
+        let yaTermino = false;
+        function normalizarPedido(t) {
+            return String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z ]+/g, " ").replace(/\s+/g, " ").trim();
         }
 
         function jugarEscribiendo(texto, api) {
@@ -322,7 +329,18 @@
                 api.limpiar().decir(relojHablado.texto());
                 return;
             }
-            if (!running || resultLocked) { api.decir("Ahora mismo no se puede contestar."); return; }
+            /* Terminada la racha (o antes de empezar), «otra vez», «siguiente» o
+               «jugar de nuevo» arrancan otra: antes todo contestaba «Ahora mismo no
+               se puede contestar» y quien no ve tenía que salir del recuadro a
+               buscar el botón. */
+            if (!running) {
+                if (PIDE_OTRA.test(normalizarPedido(texto))) { api.limpiar().decir(""); beginRun(); return; }
+                api.decir(yaTermino ? "La racha terminó. Escribe «otra vez» para jugar de nuevo."
+                    : "La racha no ha empezado. Escribe «empezar» para jugar.");
+                try { api.input.select(); } catch (e) {}
+                return;
+            }
+            if (resultLocked) { api.decir("Espera un momento: ya viene el ejercicio siguiente."); return; }
             // El intérprete HACE la jugada sobre la partida que se le pasa, así
             // que se le pasa una copia: quien decide si entra es attemptMove(),
             // la misma puerta por la que pasa el clic.
@@ -400,14 +418,18 @@
             /* La jugada se pudo hacer pero no era la del ejercicio: el mensaje
                EMPIEZA por «Respuesta incorrecta» (ComandosTablero.incorrecta), que es
                lo que se dice en todo el sitio; «no es legal» queda para la que no se
-               puede hacer. La jugada, en palabras. */
-            const dicha = sanJugada && window.BlindNotation ? BlindNotation.sanSpoken(sanJugada) : (sanJugada || "");
+               puede hacer. La jugada, en español (en palabras para quien no ve). */
+            const dicha = sanJugada ? ComandosTablero.jugadaParaMostrar(sanJugada) : "";
             const reasonText = reason === "timeout" ? "⏱️ ¡Se acabó el tiempo!"
                 : (window.ComandosTablero && dicha ? ComandosTablero.incorrecta(dicha) : "Respuesta incorrecta: esa no era la jugada.");
-            // La jugada, dicha en palabras ("caballo efe 3", no "Nf3"): el SAN en
-            // inglés lo deletrea el lector de pantalla y no se entiende.
-            const correcta = window.BlindNotation ? BlindNotation.sanSpoken(currentSan) : currentSan;
-            setResultText(reasonText + " La respuesta correcta era " + correcta + ". Racha final: " + finalStreak + ".", "text-red-600 dark:text-red-400");
+            // La jugada en algebraica española («Cf3»), y en palabras para quien
+            // no ve («caballo felix 3»): el SAN en inglés no va nunca en pantalla.
+            const correcta = ComandosTablero.jugadaParaMostrar(currentSan);
+            yaTermino = true;
+            /* Con el recuadro, el final dice qué escribir para seguir: el botón
+               «Jugar de nuevo» no lo encuentra quien no ve. */
+            setResultText(reasonText + " La respuesta correcta era " + correcta + ". Racha final: " + finalStreak + "."
+                + (modoAdaptado() ? " Escribe «otra vez» para jugar de nuevo." : ""), "text-red-600 dark:text-red-400");
             setMilestoneText("");
             running = false;
             streak = 0;

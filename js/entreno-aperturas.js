@@ -36,12 +36,12 @@ const GLYPH = {
   b: { p: "♟", n: "♞", b: "♝", r: "♜", q: "♛", k: "♚" },
 };
 // Las jugadas se guardan en inglés porque es lo que entiende chess.js, y se
-// enseñan en la notación de acá. La tabla es la misma que usa el verificador.
-const PIEZAS_ES = { N: "C", B: "A", R: "T", Q: "D", K: "R" };
+// enseñan en algebraica española (o en palabras, para quien no ve): lo decide
+// ComandosTablero.jugadaParaMostrar, la misma en todo el sitio.
 const NIVELES = { 1: "Principiante", 2: "Intermedio", 3: "Avanzado" };
 const TIPOS = { celada: "Celada", apertura: "Apertura" };
 
-function aEspanol(san) { return String(san).replace(/[NBRQK]/g, (l) => PIEZAS_ES[l]); }
+function aEspanol(san) { return ComandosTablero.jugadaParaMostrar(san); }
 
 let estado = {};          // id → ficha de repaso
 let cola = [];            // los ids que toca repasar, en orden
@@ -208,7 +208,7 @@ function montarComandos() {
     tablero: () => teclado,
     onEnviar: jugarEscribiendo,
   });
-  comandos.ayuda('Jugada: "Cf3", "Nf3", "Dxh7+", "e2 e4". Pregunta: "caballos", "qué hay en e4". Escribe "ayuda" para todo.');
+  comandos.ayuda('Jugada: "Cf3", "Dxh7+", "e2 e4". Pregunta: "caballos", "qué hay en e4". Escribe "ayuda" para todo.');
 }
 
 function jugarEscribiendo(texto, api) {
@@ -300,7 +300,7 @@ function jugarRival() {
        Se dice con el nombre de la pieza y las columnas habladas
        (js/blind-notation.js), no deletreando "Cf3". */
     if (hecha && comandos) {
-      const dicha = window.BlindNotation ? BlindNotation.sanSpoken(hecha.san) : hecha.san;
+      const dicha = window.BlindNotation ? BlindNotation.sanSpoken(hecha.san) : aEspanol(hecha.san);
       comandos.decir("El rival juega " + dicha + ".");
     }
     if (indice >= linea.jugadas.length) terminar();

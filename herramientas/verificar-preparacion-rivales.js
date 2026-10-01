@@ -931,6 +931,8 @@ async function pruebaConPermiso(browser) {
    su evaluación en cada paso, y al cerrar el foco vuelve al botón que lo abrió. */
 async function pruebaEtapa3(browser) {
   console.log("\n=== Etapa 3: las líneas en un tablero ===");
+  // Con el Modo Adaptado: las jugadas van en el formato de ciegos («caballo
+  // felix 3»), no en letras sueltas (ComandosTablero.jugadaParaMostrar).
   const { page, ctx, errores } = await abrir(browser, true, [], true);
   await page.setInputFiles("#pgn-archivo", { name: "rival.pgn", mimeType: "application/x-chess-pgn", buffer: Buffer.from(pgnDePrueba(), "utf8") });
   await page.click("#leer");
@@ -962,15 +964,15 @@ async function pruebaEtapa3(browser) {
   cierto("el peón de e4 está pintado", abierto.e4);
   await page.waitForFunction(() => /Jugada 2 de/.test(document.querySelector("#visor .visor-escrita").textContent), null, { timeout: 3000 });
   const paso2 = await page.evaluate(() => [document.querySelector("#visor .visor-escrita").textContent, document.querySelector("#visor .visor-nota").textContent]);
-  cierto("la jugada va contada, no solo en SAN (" + paso2[0] + ")", /^Jugada 2 de \d+: e5\. El peón negro va de eva 7 a eva 5\.$/.test(paso2[0].replace(/\s+/g, " ")));
+  cierto("la jugada va contada, no solo en SAN (" + paso2[0] + ")", /^Jugada 2 de \d+: eva 5\. El peón negro va de eva 7 a eva 5\.$/.test(paso2[0].replace(/\s+/g, " ")));
   cierto("y con su nota: cuánto la juega y cuánto saca (" + paso2[1] + ")", /^Él la juega el \d+ % de las veces; él saca .* en \d+ partidas\.$/.test(paso2[1]));
   await page.waitForFunction(() => /^Stockfish: /.test(document.querySelector("#visor .visor-motor").textContent), null, { timeout: 5000 });
-  igual("Stockfish evalúa la posición que se ve", await page.textContent("#visor .visor-motor"), "Stockfish: +0,20 · lo mejor: a3.");
+  igual("Stockfish evalúa la posición que se ve", await page.textContent("#visor .visor-motor"), "Stockfish: +0,20 · lo mejor: anna 3.");
 
   // Adelante con el botón, atrás escribiendo.
   await page.click("#visor button[aria-label='Jugada siguiente']");
   await page.waitForFunction(() => /^Jugada 3 de/.test(document.querySelector("#visor .visor-escrita").textContent), null, { timeout: 3000 });
-  igual("▶ avanza una jugada y la marca en la lista", await page.evaluate(() => document.querySelector("#visor .visor-jugada[aria-current='step']").textContent), "Cf3");
+  igual("▶ avanza una jugada y la marca en la lista", await page.evaluate(() => document.querySelector("#visor .visor-jugada[aria-current='step']").textContent), "caballo felix 3");
   await page.fill("#visor .cc-input", "anterior");
   await page.press("#visor .cc-input", "Enter");
   await page.waitForFunction(() => /^Jugada 2 de/.test(document.querySelector("#visor .visor-escrita").textContent), null, { timeout: 3000 });

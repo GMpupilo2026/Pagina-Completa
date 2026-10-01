@@ -26,6 +26,7 @@
  *     npm install playwright        # una vez, en cualquier carpeta temporal
  *     pip install pypdf
  *     node herramientas/diagnostico-libro.js
+ *     node herramientas/diagnostico-libro.js --solo-accesible   # sin PDF ni pypdf
  *
  * Con CHROMIUM=/ruta/al/chrome se le puede indicar un Chromium ya instalado.
  */
@@ -434,6 +435,30 @@ const htmlMarca = `<!doctype html><html lang="es"><head><meta charset="utf-8">
    de pantalla, así que el mismo contenido sale también acá. Los encabezados van
    en orden (un h1, h2 por área, h3 por escalón) para poder saltar de sección en
    sección sin leerlo todo. */
+/* Las jugadas, en la versión accesible, van en el formato de ajedrez para
+   ciegos, con las columnas dichas («alfil captura felix 6», «Enroque corto»):
+   «Axf6» el lector de pantalla lo deletrea y no se entiende. El banco está
+   escrito en algebraica española y NO se toca; se convierte al escribir (ver
+   lib/notacion.js). Las preguntas que enseñan a anotar se dejan tal cual:
+   ahí «Axf6» es lo que se pregunta. */
+const N = require("./lib/notacion.js");
+const { Chess } = require("chess.js");
+function oidoDe(item) {
+  if (/notacion/.test(item.id)) return (t) => t;
+  return (t) => N.textoHablado(t, "espanol");
+}
+/* La respuesta de una pregunta de tablero, en voz: la jugada que da chess.js
+   desde la posición, no «e2–e4», que se oye como dos casillas sueltas. */
+function respuestaDicha(item) {
+  if (item.tipo !== "jugada" || !item.fen) return N.textoHablado(respuestaCorta(item), "espanol");
+  return [item.solucion].concat(item.alternas || []).map((j) => {
+    const juego = new Chess(item.fen);
+    const m = juego.move({ from: j.from, to: j.to, promotion: j.promotion || "q" });
+    if (!m) throw new Error(`La solución de ${item.id} no es legal en su posición: ${j.from}-${j.to}`);
+    return N.sanHablada(m.san);
+  }).join(" o ");
+}
+
 function accesible() {
   const capitulos = PE.AREAS.map((area) => {
     const delArea = BANCO.filter((i) => i.area === area.id);
@@ -442,6 +467,7 @@ function accesible() {
       if (!grupo.length) return "";
       return `<h3>Escalón ${peso} · ${grupo.length} ${grupo.length === 1 ? "pregunta" : "preguntas"}</h3>` +
         grupo.map((item) => {
+          const oido = oidoDe(item);
           let pos = "";
           if (item.fen) {
             const d = describir(item.fen);
@@ -454,18 +480,20 @@ function accesible() {
             const orden = ordenOpciones(item);
             cuerpo = "<ol>" + orden.map((original, i) => {
               const bien = original === item.correcta;
-              return `<li>${esc(item.opciones[original])}${bien ? " <strong>(correcta)</strong>" : ""}</li>`;
+              return `<li>${esc(oido(item.opciones[original]))}${bien ? " <strong>(correcta)</strong>" : ""}</li>`;
             }).join("") + "</ol>";
           } else {
-            cuerpo = `<p class="respuesta"><strong>Respuesta correcta:</strong> ${esc(respuestaCorta(item))}.</p>`;
+            cuerpo = `<p class="respuesta"><strong>Respuesta correcta:</strong> ${esc(respuestaDicha(item))}.</p>`;
           }
-          return `<article>
+          // La que pregunta cómo se anota queda escrita, con la marca que
+          // respeta verificar-notacion-espanola.js.
+          return `<article${/notacion/.test(item.id) ? ' data-notacion="escrita"' : ""}>
             <h4>Pregunta ${esc(item.id)} · dificultad ${item.peso} de 5</h4>
-            <p class="enunciado">${esc(item.enunciado)}</p>
+            <p class="enunciado">${esc(oido(item.enunciado))}</p>
             ${pos}
             ${cuerpo}
-            <p class="explica"><strong>Por qué.</strong> ${esc(item.explica)}</p>
-            ${item.prueba ? `<p class="comprobado"><strong>Cómo se comprobó:</strong> ${esc(item.prueba)}</p>` : ""}
+            <p class="explica"><strong>Por qué.</strong> ${esc(oido(item.explica))}</p>
+            ${item.prueba ? `<p class="comprobado"><strong>Cómo se comprobó:</strong> ${esc(oido(item.prueba))}</p>` : ""}
           </article>`;
         }).join("");
     }).join("");
@@ -540,6 +568,9 @@ fs.writeFileSync(destinoAccesible, accesible());
 console.log(`Maqueta: ${htmlTemporal}\nTapa:    ${htmlPortadaTemporal}`);
 console.log(`${BANCO.length} preguntas · ${PE.AREAS.length} áreas · ${BANCO.filter((i) => i.fen).length} con posición`);
 console.log("Accesible:", destinoAccesible);
+/* --solo-accesible rehace solo el HTML accesible: no necesita Playwright ni
+   pypdf, y el PDF (que sale distinto byte por byte en cada corrida) no se toca. */
+if (process.argv.includes("--solo-accesible")) process.exit(0);
 
 (async () => {
   const { chromium } = require("playwright");

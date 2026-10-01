@@ -283,13 +283,21 @@
 
         // La jugada con su signo (!, ?…) y un 💬 si tiene comentario, que también
         // se dice al lector de pantalla (el 💬 solo no le dice nada).
+        /* Las jugadas se guardan como las da chess.js (en inglés) y se muestran
+           en algebraica española («Cf3»), o en palabras para quien no ve. */
+        function jugadasVista(lista, sep) {
+            return (lista || []).map((m) => ComandosTablero.jugadaParaMostrar(m)).join(sep || " ");
+        }
+
         function ponerTextoDeJugada(btn, san, camino) {
             const c = PgnClase.comentarioDe(comentariosClase, camino);
-            btn.textContent = san + (c && c.nag ? PgnClase.signoDe(c.nag) : "") + (c && c.texto ? " 💬" : "");
+            // Se guarda en inglés (chess.js) y se ve en algebraica española.
+            const vista = ComandosTablero.jugadaParaMostrar(san);
+            btn.textContent = vista + (c && c.nag ? PgnClase.signoDe(c.nag) : "") + (c && c.texto ? " 💬" : "");
             if (c) {
                 const dicho = [c.nag ? PgnClase.nombreDelSigno(c.nag) : "", c.texto].filter(Boolean).join(": ");
                 btn.title = dicho;
-                btn.setAttribute("aria-label", san + ", comentada: " + dicho);
+                btn.setAttribute("aria-label", vista + ", comentada: " + dicho);
             }
         }
 
@@ -461,7 +469,7 @@
             if (error) { console.error(error); ultimaVistaEnviada = null; }
         }
 
-        // "12. Nf3 Nc6 13. e4", o "12… Nc6 13. e4" si arranca con negras.
+        // "12. Cf3 Cc6 13. e4", o "12… Cc6 13. e4" si arranca con negras.
         // Las jugadas numeradas y qué muestra el profe: js/clase-adaptada.js,
         // que también usa la página de los invitados (ver-clase.html).
         function numerarJugadas(path, desde) {
@@ -2942,7 +2950,7 @@
                 const sans = ClasesEngine.pvToSan(fen, line.pvUci, 6);
                 const li = document.createElement("li");
                 li.innerHTML = '<span class="font-semibold text-brand-800 dark:text-white">' + line.multipv + ') ' +
-                    formatScore(line, turnAtEval) + '</span> — ' + (sans.join(" ") || "—");
+                    formatScore(line, turnAtEval) + '</span> — ' + (jugadasVista(sans) || "—");
                 linesEl.appendChild(li);
             }
         }
@@ -3571,7 +3579,7 @@
             const el = document.getElementById("question-tiempo-alumno");
             if (!el) return;
             el.hidden = quedan === null;
-            el.textContent = PreguntaClase.textoRestante(quedan);
+            textoConEmojiMudo(el, PreguntaClase.textoRestante(quedan));   // el ⏱️, fuera del lector
             if (quedan === null) return;
             const aviso = document.getElementById("question-tiempo-aviso");
             const clave = q.id + ":" + (quedan <= 0 ? "fin" : quedan <= 10 ? "10" : "");
@@ -3705,13 +3713,41 @@
             if (/^(pregunta|la pregunta|repetir pregunta|repite la pregunta|leer pregunta)$/.test(pedido)) {
                 return { texto: preguntaDicha(currentQuestion) };
             }
-            if (!PreguntaClase.esDeOpciones(currentQuestion)) return null;
+            /* «cambiar respuesta»: lo que hace el botón, dicho en el recuadro. Antes
+               el aviso decía «usa el botón "Cambiar respuesta"», y quien no ve tenía
+               que salir a buscarlo. En las de opciones se cambia escribiendo otra letra. */
+            const esOpc = PreguntaClase.esDeOpciones(currentQuestion);
+            const letrasDichas = () => {
+                const ls = currentQuestion.opciones.map((_, k) => CuadroComandos.letra(k));
+                return ls.length > 1 ? ls.slice(0, -1).join(", ") + " y " + ls[ls.length - 1] : ls.join("");
+            };
+            const cerrada = () => currentQuestion.closed_at || PreguntaClase.segundosRestantes(currentQuestion) === 0;
+            if (/^(cambiar respuesta|cambiar la respuesta|cambiar mi respuesta|cambiar|otra respuesta|volver a contestar|contestar de nuevo)$/.test(pedido)) {
+                if (esOpc) return { texto: "Para cambiar tu opción, escribe la letra de otra: " + letrasDichas() + "." };
+                if (!myAnswer) return { texto: "Todavía no contestaste: escribe tu jugada." };
+                if (cerrada()) return { fallo: true, texto: "Ya no se puede cambiar: la pregunta se cerró o se acabó el tiempo." };
+                document.getElementById("question-retry-btn").click();
+                return { texto: "Puedes volver a contestar: escribe tu jugada." };
+            }
+            // «siguiente» con la respuesta ya enviada: lo siguiente lo trae el profe.
+            if (myAnswer && /^(siguiente|continuar|seguir|otra|la siguiente|siguiente pregunta)$/.test(pedido)) {
+                return { texto: "Ya enviaste tu respuesta: espera a que tu profe pase a lo siguiente. "
+                    + (cerrada() ? "" : esOpc ? "Si quieres cambiarla, escribe la letra de otra opción." : "Si quieres cambiarla, escribe «cambiar respuesta».") };
+            }
+            if (!esOpc) return null;
             const n = currentQuestion.opciones.length;
             // «opciones», «repetir»: las opciones con su letra (como al llegar la pregunta).
             if (/^(opciones|las opciones|leer opciones|di las opciones|repetir|repite|repetir opciones|otra vez las opciones)$/.test(pedido)) {
                 return { texto: opcionesDichas(currentQuestion) };
             }
             let i = CuadroComandos.opcionPedida(texto, n);
+            /* Una letra que no es de ninguna opción («D» con tres): se dice cuáles
+               hay, no «No entendí». */
+            const letraSuelta = i === null && pedido.match(/^(?:la )?(?:opcion )?([a-h]|[1-9])$/);
+            if (letraSuelta) {
+                const k = /\d/.test(letraSuelta[1]) ? Number(letraSuelta[1]) - 1 : "abcdefgh".indexOf(letraSuelta[1]);
+                if (k >= n) return { fallo: true, texto: "No hay opción " + CuadroComandos.letra(k) + ": las opciones son " + letrasDichas() + "." };
+            }
             /* El TEXTO de una opción («Están iguales», o «iguales») también la
                elige, si nombra una sola: quien acaba de oír las opciones repite lo
                que oyó, no la letra. Primero el texto entero; si no, una opción que
@@ -4450,10 +4486,10 @@
             const suyas = Math.ceil(moves.length / 2);
             const total = q.expected_plies || 1;
             if (fin) {
-                t.estadoEl.textContent = "Respondió: " + (moves.join(" ") || "—")
+                t.estadoEl.textContent = "Respondió: " + (jugadasVista(moves) || "—")
                     + (fin.is_correct === true ? " · ✅ correcta" : fin.is_correct === false ? " · ❌ a revisar" : " · sin calificar");
             } else if (moves.length) {
-                t.estadoEl.textContent = "Pensando… lleva " + suyas + " de " + total + (total === 1 ? " jugada" : " jugadas") + ": " + moves.join(" ");
+                t.estadoEl.textContent = "Pensando… lleva " + suyas + " de " + total + (total === 1 ? " jugada" : " jugadas") + ": " + jugadasVista(moves);
             } else {
                 t.estadoEl.textContent = "Todavía no mueve.";
             }
@@ -4537,7 +4573,7 @@
                 movesEl.className = "text-brand-500 dark:text-brand-300 font-mono text-xs break-words";
                 movesEl.textContent = PreguntaClase.esDeOpciones(currentQuestion)
                     ? (a.opcion != null ? PreguntaClase.textoDeOpcion(currentQuestion, a.opcion) : "—")
-                    : (a.moves || []).join(" ") || "—";
+                    : jugadasVista(a.moves) || "—";
                 const actions = document.createElement("span");
                 actions.className = "flex items-center gap-1 shrink-0";
                 const correctBtn = document.createElement("button");
@@ -4601,7 +4637,7 @@
             const scoreText = answer.score.type === "mate"
                 ? "mate en " + Math.abs(answer.score.value)
                 : (answer.score.value >= 0 ? "+" : "") + (answer.score.value / 100).toFixed(1);
-            el.textContent = "Mejor respuesta del motor: " + answer.moves.join(" ") + " (" + scoreText + ")";
+            el.textContent = "Mejor respuesta del motor: " + jugadasVista(answer.moves) + " (" + scoreText + ")";
             if (retryBtn) retryBtn.classList.add("hidden");
         }
 
@@ -5344,7 +5380,7 @@
                 ? "«" + PreguntaClase.textoDeOpcion(currentQuestion, myAnswer.opcion) + "»"
                 : enPalabras
                     ? (myAnswer.moves || []).map(ClaseAdaptada.hablarJugada).join(", ")
-                    : (myAnswer.moves || []).join(" ");
+                    : jugadasVista(myAnswer.moves);
             let text = "Tu respuesta: " + movesText + " ✓ enviada";
             if (myAnswer.is_correct === true) text = "Tu respuesta: " + movesText + " — ✅ ¡Correcto!";
             else if (myAnswer.is_correct === false) text = "Respuesta incorrecta: " + movesText + " no era la que buscaba tu profe. Revisa de nuevo.";
@@ -5524,7 +5560,7 @@
                     etiqueta: "Escribe tu jugada, o una pregunta sobre la posición",
                     contestar: contestarOpcionEscrita,
                     porQueNoPuedes: () => myAnswer
-                        ? "Ya enviaste tu respuesta. Si quieres cambiarla, usa el botón «Cambiar respuesta»."
+                        ? "Ya enviaste tu respuesta. Si quieres cambiarla, escribe «cambiar respuesta»."
                         : (questionEngineBusy ? "El motor está pensando su respuesta: espera un momento." : "Ahora no te toca mover."),
                 }) : null;
             }
@@ -5536,9 +5572,9 @@
             questionMovesDone = 0;
             questionEngineLastFailed = false;
             questionBoard.setFlipped(questionStudentColor === "b");
-            document.getElementById("question-color-hint").textContent = questionStudentColor === "b"
-                ? "Te toca jugar con ⚫ Negras"
-                : "Te toca jugar con ⚪ Blancas";
+            // El círculo de color, fuera del lector: «leer» decía «círculo negro».
+            document.getElementById("question-color-hint").replaceChildren("Te toca jugar con ",
+                emojiMudo(questionStudentColor === "b" ? "⚫ " : "⚪ "), questionStudentColor === "b" ? "Negras" : "Blancas");
             questionBoard.loadFen(currentQuestion.fen);
             if (preguntaAcc) preguntaAcc.actualizar();
             // El foco va a la pregunta en cuanto aparece: sin eso, quien usa lector de
@@ -5850,7 +5886,7 @@
             if (miTurno && relojTurnoDesde === null) relojTurnoDesde = Date.now();
             if (!miTurno) relojTurnoDesde = null;
             const quedan = relojRestanteMs();
-            el.textContent = "⏱️ Tu reloj: " + PartidasClase.reloj(quedan);
+            textoConEmojiMudo(el, "⏱️ Tu reloj: " + PartidasClase.reloj(quedan));
             const aviso = document.getElementById("practice-reloj-aviso");
             const clave = myPracticeGame.id + ":" + (myPracticeGame.attempts || 1) + ":" + (quedan <= 0 ? "fin" : quedan <= 10000 ? "10" : "");
             if (quedan <= 10000 && miTurno && relojDichoPara !== clave) {
@@ -6503,8 +6539,16 @@
                 });
                 practicaAcc = window.ClaseAdaptada ? ClaseAdaptada.montar(document.getElementById("practice-cmd"), () => practiceBoard, {
                     etiqueta: "Escribe tu jugada, o una pregunta sobre la posición",
+                    // «otra vez» / «reintentar», escrito: lo que hace el botón «↻ Reintentar».
+                    contestar: (texto) => {
+                        const btn = document.getElementById("practice-retry-btn");
+                        const pedido = CuadroComandos.normalizar(texto).replace(/[.!¡¿?]+/g, "").trim();
+                        if (!btn || btn.classList.contains("hidden") || !/^(reintentar|otra vez|jugar de nuevo|de nuevo|empezar de nuevo|volver a empezar)$/.test(pedido)) return null;
+                        btn.click();
+                        return { texto: "Empezaste la partida de nuevo." };
+                    },
                     porQueNoPuedes: () => !myPracticeGame || myPracticeGame.status !== "playing"
-                        ? "Esta partida ya terminó. Usa «Reintentar» para empezarla de nuevo."
+                        ? "Esta partida ya terminó. Escribe «reintentar» para empezarla de nuevo."
                         : "El motor está pensando su jugada: espera un momento.",
                 }) : null;
             }

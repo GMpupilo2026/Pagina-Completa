@@ -331,10 +331,10 @@ function setStatus(text, cls){
 }
 
 function adaptado(){ return document.documentElement.classList.contains('adaptive-mode'); }
-/* La jugada en palabras para quien la oye («torre a de 8, jaque») y no «Rd8+»,
-   que es inglés y letras sueltas. Sin el Modo Adaptado, la notación de siempre. */
+/* La jugada en palabras para quien no ve («torre a de 8, jaque») y no letras
+   sueltas; para los demás, en algebraica española («Td8+»), nunca en inglés. */
 function jugadaDicha(san){
-  return adaptado() && window.BlindNotation && BlindNotation.sanSpoken ? BlindNotation.sanSpoken(san) : san;
+  return ComandosTablero.jugadaParaMostrar(san);
 }
 
 function flashWrongInput(){
@@ -349,11 +349,11 @@ function renderLog(){
     '<span class="pending">Todavía no escribiste ninguna jugada.</span>';
 }
 function logJugadaPropia(san){
-  logLineas.push(`<b>${san}</b>`);
+  logLineas.push(`<b>${ComandosTablero.jugadaParaMostrar(san)}</b>`);
   renderLog();
 }
 function logRespuestaRival(san){
-  logLineas.push(`<span class="reply">${san}</span>`);
+  logLineas.push(`<span class="reply">${ComandosTablero.jugadaParaMostrar(san)}</span>`);
   renderLog();
 }
 
@@ -394,18 +394,21 @@ function loadPuzzle(){
     `Juegan <b>${turnColor}</b> — encuentra ${typeof info.propias === 'number' ? (info.propias + (info.propias === 1 ? ' jugada tuya' : ' jugadas tuyas')) : info.propias + ' jugadas tuyas'} sin mirar el tablero moverse.`;
   const meta = puzzle.rating ? `Dificultad ${puzzle.rating}` : '';
   document.getElementById('puzzle-meta').textContent = meta;
-  setStatus('Escribe tu primera jugada. El tablero de arriba no se va a mover.');
+  /* En Modo Adaptado dice CUÁL es el ejercicio: con el mismo texto de antes, la
+     región viva no volvía a leer nada al pasar de uno a otro, y con
+     «siguiente» solo se oía «Listo: Saltar». */
+  const cuantos = idsOf(currentLevel).length;
+  setStatus(adaptado()
+    ? `Ejercicio ${currentIndex + 1} de ${cuantos}. ${document.getElementById('turn-banner').textContent} Escribe tu primera jugada.`
+    : 'Escribe tu primera jugada. El tablero de arriba no se va a mover.');
   document.getElementById('answer-input').focus();
 }
 
-/* "R" es el rey en castellano y la torre (rook) en inglés; ChessMoveParser
-   prueba primero el inglés. Con rey y torre que pueden ir a la misma casilla,
-   quien escribía «Rd2» queriendo mover el rey movía la torre, y la página le
-   decía que no era la jugada de la línea (y le cortaba la racha). Como acá se
-   sabe qué jugada pide la línea, se prueban las dos lecturas y, si una es la
-   esperada, gana esa. Si ninguna lo es, queda la de siempre. Las pruebas se
-   hacen sobre copias: la partida solo se mueve con la jugada elegida. */
-const ES_EN = { R: 'K', D: 'Q', T: 'R', A: 'B', C: 'N' };
+/* En el sitio R es SIEMPRE el rey y la torre es T (algebraica española).
+   Se prueban la lectura tal cual y la traducida; si una es la que pide la
+   línea, gana esa. Las pruebas se hacen sobre copias: la partida solo se
+   mueve con la jugada elegida. */
+const ES_EN = { R: 'K', D: 'Q', T: 'T', A: 'B', C: 'N' };
 function jugadaDeLaLinea(texto, esperada){
   const t = String(texto || '').trim();
   const lecturas = [t];
@@ -501,7 +504,7 @@ document.getElementById('answer-form').addEventListener('submit', (e) => {
     const r = ComandosTablero.interpretar(input.value, { juego: () => posicionDeSalida, tablero: () => teclado });
     if(r.manejado){
       input.value = '';
-      setStatus(r.tipo === 'ayuda' ? 'Jugada: "Cf3", "Nf3", "Dxh7+". Pregunta sobre la posición del tablero: "caballos", "qué hay en e4", "posición".' : r.respuesta);
+      setStatus(r.tipo === 'ayuda' ? 'Jugada: «Cf3», «Dxh7+». Pregunta sobre la posición del tablero: «caballos», «qué hay en e4», «posición». También «pista», «solución» (dice la línea; no cuenta como resuelto) y «saltar».' : r.respuesta);
       return;
     }
   }
@@ -520,7 +523,9 @@ function avanzarEjercicio(){
   }
 }
 
-function finishPuzzle(){
+/* `dicho`: lo que se dijo al terminar («La solución era: …»), que va antes
+   del aviso de que no cuenta. */
+function finishPuzzle(dicho){
   locked = true;
   const enAdaptado = adaptado();
   // En Modo Adaptado el campo sigue vivo: ahí se escribe «siguiente».
@@ -532,6 +537,7 @@ function finishPuzzle(){
   const limpio = !missedThisPuzzle && !usedHintThisPuzzle;
   if(limpio) bumpStreak(); else resetStreak();
   if(limpio) setStatus(game.in_checkmate() ? '✅ ¡Jaque mate! Visualizaste la línea entera.' : '✅ ¡Correcto! Calculaste toda la línea sin ver el tablero moverse.', 'ok');
+  else if(dicho) setStatus(dicho + ' No cuenta como resuelto y va a volver a salir.');
   else setStatus('Llegaste al final, pero con pista o con algún error: este ejercicio no cuenta como resuelto y va a volver a salir.');
   drawStaticBoard(game.fen(), game.turn() === 'w' ? 'b' : 'w');
   /* Solo cuenta lo resuelto sin pista ni error. Antes se marcaba igual y el
@@ -584,7 +590,30 @@ function giveHint(){
 document.getElementById('hint-btn').addEventListener('click', giveHint);
 document.getElementById('next-puzzle-btn').addEventListener('click', avanzarEjercicio);
 document.getElementById('retry-btn').addEventListener('click', loadPuzzle);
-document.getElementById('skip-btn').addEventListener('click', () => {
+/* «Ver solución» (o «solución» escrita): dice la línea que faltaba, en
+   palabras en Modo Adaptado, la juega y cuenta como no resuelto (vuelve a
+   salir). */
+function verSolucion(){
+  if(locked) return;
+  const puzzle = currentPuzzle();
+  if(!puzzle) return;
+  usedHintThisPuzzle = true;
+  missedThisPuzzle = true;
+  const resto = puzzle.solution.slice(solutionStep);
+  const dichas = [];
+  resto.forEach((san, i) => {
+    const hecha = game.move(san);
+    if(!hecha) return;
+    if((solutionStep + i) % 2 === 0) logJugadaPropia(hecha.san); else logRespuestaRival(hecha.san);
+    dichas.push(((solutionStep + i) % 2 === 1 ? 'el rival, ' : '') + jugadaDicha(hecha.san));
+  });
+  solutionStep = puzzle.solution.length;
+  finishPuzzle(dichas.length ? `La solución era: ${dichas.join('; ')}.` : 'Esta era la solución.');
+}
+/* «Saltar →» (o «saltar», «siguiente» escritos antes de terminar): al
+   siguiente sin resolverlo, y se DICE que se saltó y cuál es el nuevo. */
+function saltarEjercicio(){
+  if(esperandoSiguiente){ avanzarEjercicio(); return; }
   resetStreak();
   if(currentIndex < idsOf(currentLevel).length - 1){
     currentIndex++;
@@ -592,6 +621,27 @@ document.getElementById('skip-btn').addEventListener('click', () => {
     currentIndex = 0;
   }
   loadPuzzle();
+  const st = document.getElementById('round-status');
+  setStatus('Saltaste el ejercicio. ' + st.textContent);
+}
+document.getElementById('skip-btn').addEventListener('click', saltarEjercicio);
+document.getElementById('solution-btn').addEventListener('click', verSolucion);
+
+/* «siguiente», «saltar» y «solución» escritos los contesta la página antes
+   que la capa de la cuenta ciega (js/vision-cuenta.js): esa apretaba
+   «Saltar →» y decía «Listo: Saltar.», sin decir cuál era el ejercicio nuevo. */
+EjercicioTablero.palabrasPrimero(() => document.getElementById('answer-input'), (texto) => {
+  if(document.getElementById('play-area').style.display === 'none' || !currentPuzzle()) return false;
+  const que = EjercicioTablero.accionEscrita(texto);
+  if(!que) return false;
+  if(esperandoSiguiente){
+    if(que === 'saltar') avanzarEjercicio();
+    else setStatus('Este ejercicio ya terminó. Escribe «siguiente» para seguir.');
+    return true;
+  }
+  if(locked){ setStatus('Espera: el rival está respondiendo.'); return true; }
+  if(que === 'solucion') verSolucion(); else saltarEjercicio();
+  return true;
 });
 document.getElementById('celebration-replay-btn').addEventListener('click', () => {
   currentIndex = 0;

@@ -930,7 +930,7 @@
           "titulo": "Todo ejercicio se puede contestar escribiendo",
           "intro": "Hay un cuadro de comandos donde se escribe la respuesta: una jugada, una casilla, la letra de una opción o «no lo sé».",
           "pasos": [
-            "Entiende la jugada en español, en inglés y en coordenadas, y perdona los errores de tipeo.",
+            "Entiende la jugada en algebraica española (R rey, D dama, T torre, A alfil, C caballo) y en coordenadas, y perdona los errores de tipeo.",
             "La casilla se puede escribir como se dice: «eva 4» llega a e4.",
             "En los diagnósticos, el Enter que contesta también pasa a la siguiente pregunta."
           ],

@@ -72,8 +72,8 @@ window.ClaseAdaptada = (function () {
     var textos = [];
     path.forEach(function (san, i) {
       if (i >= desde) {
-        if (turno === "w") textos.push(numero + ". " + san);
-        else textos.push(i === desde ? numero + "… " + san : san);
+        if (turno === "w") textos.push(numero + ". " + mostrarJugada(san));
+        else textos.push(i === desde ? numero + "… " + mostrarJugada(san) : mostrarJugada(san));
       }
       if (turno === "b") numero++;
       turno = turno === "w" ? "b" : "w";
@@ -102,8 +102,15 @@ window.ClaseAdaptada = (function () {
     return "Tu profe está mostrando una variante: " + numerarJugadas(vista.path, root, startFen) + ".";
   }
 
+  /* La jugada escrita para la pantalla: en algebraica española («Cf3»), o en
+     palabras si quien mira no ve (lo decide ComandosTablero). */
+  function mostrarJugada(san) {
+    return window.ComandosTablero ? ComandosTablero.jugadaParaMostrar(san) : hablarJugada(san);
+  }
+
   function hablarJugada(san) {
-    return window.BlindNotation && BlindNotation.sanSpoken ? BlindNotation.sanSpoken(san) : san;
+    return window.BlindNotation && BlindNotation.sanSpoken ? BlindNotation.sanSpoken(san)
+      : (window.ComandosTablero ? ComandosTablero.sanEspanol(san) : san);
   }
 
   function casillaDicha(sq) {
@@ -242,6 +249,14 @@ window.ClaseAdaptada = (function () {
           }
           if (propia) { decirEnCaja(api, propia); return; }
           if (propia === "") return;   // ya contesta él, cuando termine
+        }
+        /* Lo que no es una jugada («hola») no se entendió, tenga o no el control:
+           decirle «Ahora mueve tu profe» a un «hola» le hace creer que escribió
+           una jugada a destiempo. Lo de esperar al profe es solo para las jugadas. */
+        if (!b.piecesHidden && !b.interactive && window.ComandosTablero && ComandosTablero.pareceJugada
+            && !ComandosTablero.pareceJugada(texto.trim())) {
+          noSePudo(api, ComandosTablero.noSePudoJugar(texto.trim()));
+          return;
         }
         if (b.piecesHidden) {
           noSePudo(api, "Las piezas están ocultas: el ejercicio es verlas de memoria. "

@@ -36,14 +36,18 @@ window.ChessMoveParser = (function () {
     if (!s) return [];
 
     const candidates = new Set();
+    // En el sitio R es SIEMPRE el rey (algebraica española); la torre es T.
+    // Leída en inglés, «Rf1» movía la torre.
+    if (/^R/i.test(s)) s = "K" + s.slice(1);
+    s = s.replace(/=R([+#]?)$/i, "=K$1");   // no se corona a rey (y «=R» no es la torre)
     candidates.add(s);
 
     if (/^0-0-0[+#]?$/.test(s) || /^0-0[+#]?$/.test(s)) candidates.add(s.replace(/0/g, "O"));
 
     const first = s[0];
     if (first && SAN_PIECE_LETTERS.indexOf(first.toUpperCase()) !== -1 && s.length >= 3) {
-      candidates.add(first.toUpperCase() + s.slice(1));
       candidates.add(mapSpanishPieceLetter(first) + s.slice(1));
+      candidates.add(first.toUpperCase() + s.slice(1));
     }
 
     const promoMatch = s.match(/=([a-zA-Z])([+#]?)$/);

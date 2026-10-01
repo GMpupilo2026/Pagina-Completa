@@ -132,7 +132,7 @@ function montarComandos(){
     tablero: () => teclado,
     onEnviar: jugarEscribiendo,
   });
-  comandos.ayuda('Jugada: "Cf3", "Nf3", "Dxh7+", "e1 g1". Pregunta: "caballos", "qué hay en e4". Escribe "ayuda" para todo.');
+  comandos.ayuda('Jugada: "Cf3", "Dxh7+", "e1 g1". Pregunta: "caballos", "qué hay en e4". Escribe "ayuda" para todo.');
 }
 
 /* Cambiar de categoría escribiendo: «mate en 2», «categorías». Las pestañas
@@ -159,6 +159,12 @@ function listaDeCategorias(){
 let prefijoAviso = '';
 
 function jugarEscribiendo(texto, api){
+  // «volver»: a donde se vino, diciendo adónde (js/entreno-progress.js). Antes: «No entendí».
+  if(/^(volver|atras|salir|volver a entrenar)$/.test(CuadroComandos.normalizar(texto).replace(/[.!¡]/g, ''))){
+    api.limpiar();
+    EntrenoProgress.volver((t) => api.decir(t));
+    return;
+  }
   const cat = categoriaEscrita(texto);
   if(cat === 'lista'){ api.limpiar().decir(listaDeCategorias()); return; }
   if(cat){

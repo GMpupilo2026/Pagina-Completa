@@ -282,17 +282,19 @@ function pintarPregunta() {
 let comandos = null;
 function adaptado() { return document.documentElement.classList.contains("adaptive-mode"); }
 
+function montarComandos() {
+  if (comandos || !window.CuadroComandos) return comandos;
+  comandos = CuadroComandos.montar($("q-comandos"), {
+    etiqueta: "Escribe tu respuesta, o una pregunta sobre la posición",
+    juego: () => (tablero ? new Chess(tablero.fen()) : null),
+    tablero: () => (tablero ? tablero.teclado() : null),
+    onEnviar: contestarEscribiendo,
+  });
+  return comandos;
+}
+
 function prepararComandos(it, numero, total) {
-  if (!window.CuadroComandos) return;
-  if (!comandos) {
-    comandos = CuadroComandos.montar($("q-comandos"), {
-      etiqueta: "Escribe tu respuesta, o una pregunta sobre la posición",
-      juego: () => (tablero ? new Chess(tablero.fen()) : null),
-      tablero: () => (tablero ? tablero.teclado() : null),
-      onEnviar: contestarEscribiendo,
-    });
-    if (!comandos) return;
-  }
+  if (!montarComandos()) return;
   const que = it.tipo === "opcion" || it.tipo === "opcion_tablero" ? "la letra de la opción, por ejemplo «B»"
     : it.tipo === "casilla" ? "la casilla, por ejemplo «e4»"
     : "la jugada, por ejemplo «Cf3»";
@@ -305,7 +307,49 @@ function prepararComandos(it, numero, total) {
   // La pregunta nueva se dice sola: el foco sigue en el recuadro.
   // El punto se pone solo si la opción no termina ya en uno: «e4..» se oía.
   const opciones = (it.visible.opciones || []).map((t, i) => `Opción ${String.fromCharCode(65 + i)}: ${conPunto(t)}`).join(" ");
-  comandos.decir(`Pregunta ${numero} de ${total}. ${it.visible.enunciado || ""} ${opciones} ${$("q-pista").textContent}`.replace(/\s+/g, " ").trim());
+  // Si se llegó con «siguiente» o «responder», primero se dice qué se entregó.
+  const antes = entregadaDicha;
+  entregadaDicha = "";
+  comandos.decir(`${antes}Pregunta ${numero} de ${total}. ${it.visible.enunciado || ""} ${opciones} ${$("q-pista").textContent}`.replace(/\s+/g, " ").trim());
+}
+
+/* Lo que se entrega, dicho: «siguiente» entregaba y pasaba sin decir qué, y
+   quien no ve no sabía si había mandado la opción que quería. */
+let entregadaDicha = "";
+function respuestaDicha(it) {
+  const r = respuestaActual || {};
+  const sanDicha = (san) => ComandosTablero.jugadaParaMostrar(san);
+  if (r.opcion != null) {
+    const i = Number(r.opcion);
+    return `la opción ${String.fromCharCode(65 + i)}, ${conPunto((it.visible.opciones || [])[i])}`;
+  }
+  if (r.casilla) return "la casilla " + (window.BlindNotation && BlindNotation.squareSpoken ? BlindNotation.squareSpoken(r.casilla) : r.casilla) + ".";
+  if (Array.isArray(r.jugadas)) return "tu línea, " + r.jugadas.map(sanDicha).join(", ") + ".";
+  if (r.san) return sanDicha(r.san) + ".";
+  return "tu respuesta.";
+}
+function queEscribir(it) {
+  const n = (it.visible.opciones || []).length;
+  return it.tipo === "opcion" || it.tipo === "opcion_tablero" ? `Escribe la letra de una opción, de la A a la ${String.fromCharCode(64 + n)}`
+    : it.tipo === "casilla" ? "Escribe una casilla, por ejemplo «e4»"
+    : "Escribe tu jugada, por ejemplo «Cf3»";
+}
+
+/* Con el examen entregado, el recuadro sigue contestando: antes la pantalla de
+   preguntas se iba con él, y «tiempo» o «acciones» no le llegaban a nadie. */
+let examenCerrado = false;
+let resultadoDicho = "";
+function contestarCerrado(t, api) {
+  const pedido = t.replace(/[?¿!¡.]/g, "").trim();
+  if (/^(tiempo|el tiempo|reloj|el reloj|cuanto tiempo|cuanto tiempo queda|cuanto tiempo me queda|cuanto queda|cuanto me queda)$/.test(pedido)) {
+    api.decir("El examen ya está entregado: ya no corre el tiempo.");
+  } else if (/^(nota|mi nota|resultado|el resultado|repetir)$/.test(pedido)) {
+    api.decir(resultadoDicho || "El examen ya está entregado. Tu resultado todavía se está cargando.");
+  } else if (/^(mis examenes|examenes|volver|salir|lista)$/.test(pedido)) {
+    location.href = "examenes.html";
+  } else {
+    api.decir("El examen ya está entregado: ya no se contesta. Escribe «nota» para oír tu resultado, o «mis exámenes» para volver a la lista.");
+  }
 }
 
 function conPunto(t) {
@@ -334,16 +378,24 @@ function sinAnunciar(el, cambiar) {
 
 let eleccionEscrita = "";
 function contestarEscribiendo(texto, api) {
-  const it = pendientes[indice];
   const t = CuadroComandos.normalizar(texto);
   api.limpiar();
+  if (examenCerrado) { contestarCerrado(t, api); return; }
+  const it = pendientes[indice];
   // Con tablero, «posición» la contesta el recuadro antes de llegar acá.
   if (!tablero && /^(posicion|la posicion|tablero|el tablero)$/.test(t)) {
     api.decir("Esta pregunta no tiene tablero.");
     return;
   }
-  if (/^(responder|entregar|listo|siguiente|responder y seguir)$/.test(t)) {
-    if ($("responder-btn").disabled) { api.decir("Todavía no elegiste ninguna respuesta."); return; }
+  /* «siguiente» entrega: antes lo hacía callado. Se dice qué se entrega, y sin
+     nada elegido no se entrega vacía: se dice qué escribir. */
+  if (/^(responder|entregar|listo|siguiente|responder y seguir|la siguiente|siguiente pregunta)$/.test(t)) {
+    if ($("responder-btn").disabled) {
+      api.decir(respuestaActual ? "Espera: se está guardando tu respuesta."
+        : "Todavía no elegiste ninguna respuesta, así que no se entrega. " + queEscribir(it) + " y después «responder».");
+      return;
+    }
+    entregadaDicha = "Entregada: " + respuestaDicha(it) + " ";
     responder();
     return;
   }
@@ -359,8 +411,17 @@ function contestarEscribiendo(texto, api) {
     return;
   }
   if (it.tipo === "opcion" || it.tipo === "opcion_tablero") {
-    const i = CuadroComandos.opcionPedida(texto, (it.visible.opciones || []).length);
-    if (i === null) { api.decir("No entendí la opción. Escribe su letra, por ejemplo «B»."); return; }
+    const n = (it.visible.opciones || []).length;
+    const i = CuadroComandos.opcionPedida(texto, n);
+    if (i === null) {
+      const suelta = t.match(/^(?:la )?(?:opcion )?([a-h]|[1-9])$/);
+      const k = suelta ? (/\d/.test(suelta[1]) ? Number(suelta[1]) - 1 : "abcdefgh".indexOf(suelta[1])) : -1;
+      const letras = (it.visible.opciones || []).map((_, j) => String.fromCharCode(65 + j));
+      api.decir(k >= n
+        ? `No hay opción ${String.fromCharCode(65 + k)}: las opciones son ${letras.slice(0, -1).join(", ")} y ${letras[letras.length - 1]}.`
+        : `No entendí «${texto.trim()}». ${queEscribir(it)}, por ejemplo «B».`);
+      return;
+    }
     elegirOpcion(i);
     api.decir(`Elegiste la opción ${String.fromCharCode(65 + i)}. Escribe «responder» para entregarla, o elige otra.`);
     return;
@@ -374,7 +435,7 @@ function contestarEscribiendo(texto, api) {
   });
   if (!r) {
     api.decir(it.tipo === "casilla"
-      ? "No entendí la casilla. Escríbela con su letra y su número, por ejemplo «e4»."
+      ? `No entendí «${texto.trim()}». Escribe la casilla con su letra y su número, por ejemplo «e4».`
       /* Lo mismo que en todo el sitio: «no es una jugada legal» solo si lo
          escrito ES una jugada; si no («hola»), que no se entendió. */
       : (window.ComandosTablero ? ComandosTablero.noSePudoJugar(texto)
@@ -458,7 +519,7 @@ function prepararLinea(it) {
       const mov = g.move(jugadas[dadas.length]);
       if (!mov) break;
       dadas.push(mov.san);
-      suyas.push(window.BlindNotation && BlindNotation.sanSpoken ? BlindNotation.sanSpoken(mov.san) : mov.san);
+      suyas.push(ComandosTablero.jugadaParaMostrar(mov.san));
     }
     return suyas.length ? " El rival jugó " + suyas.join(", ") + "." : "";
   }
@@ -502,7 +563,13 @@ async function responder() {
   const { data, error } = await sb.rpc("responder_examen", {
     p_item: it.id, p_respuesta: respuestaActual, p_segundos: segundos,
   });
-  if (error) { btn.disabled = false; $("q-status").textContent = "No se pudo guardar: " + error.message; return; }
+  if (error) {
+    btn.disabled = false;
+    $("q-status").textContent = "No se pudo guardar: " + error.message;
+    if (entregadaDicha && comandos) comandos.decir("No se pudo guardar tu respuesta: " + error.message);
+    entregadaDicha = "";
+    return;
+  }
 
   // El servidor puede decir que se acabó el tiempo o que el examen se
   // cerró: eso manda sobre lo que crea esta página.
@@ -534,6 +601,19 @@ const MOTIVO_TEXTO = {
 };
 
 async function mostrarResultado(motivo) {
+  /* El recuadro se muda a la pantalla del resultado y sigue contestando
+     («tiempo», «nota», «mis exámenes»): con la pantalla de preguntas se iba
+     también él, y lo que se escribía no le llegaba a nadie. */
+  examenCerrado = true;
+  tablero = null;
+  if (montarComandos()) {
+    const caja = $("q-comandos");
+    const enlace = $("resultado").querySelector('a[href="examenes.html"]');
+    if (enlace) enlace.parentNode.insertBefore(caja, enlace); else $("resultado").appendChild(caja);
+    comandos.posicion("");
+    comandos.etiqueta("El examen ya está entregado: escribe «nota» o «mis exámenes»");
+    comandos.ayuda("Escribe «nota» para oír tu resultado, o «mis exámenes» para volver a la lista.");
+  }
   $("prueba").classList.add("hidden");
   $("antesala").classList.add("hidden");
   $("loading").classList.add("hidden");
@@ -583,7 +663,14 @@ async function mostrarResultado(motivo) {
 function anunciarResultado(texto) {
   const titulo = $("r-titulo");
   titulo.setAttribute("tabindex", "-1");
-  try { titulo.focus({ preventScroll: false }); } catch (e) {}
+  const antes = entregadaDicha;
+  entregadaDicha = "";
+  texto = antes + texto;
+  resultadoDicho = texto.replace(/\s+/g, " ").trim();
+  /* Con la cuenta ciega el foco se queda en el recuadro, que sigue ahí: todo
+     se hace escribiendo. Si no, al título, que es lo primero que se oye. */
+  const alRecuadro = document.documentElement.classList.contains("modo-ciego") && comandos && comandos.input;
+  try { (alRecuadro ? comandos.input : titulo).focus({ preventScroll: false }); } catch (e) {}
   const viva = $("r-anuncio");
   if (!viva) return;
   viva.textContent = "";

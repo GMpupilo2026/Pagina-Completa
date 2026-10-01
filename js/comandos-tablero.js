@@ -342,8 +342,36 @@ window.ComandosTablero = (function () {
   function historiaDe(juego) {
     try { return juego.history ? (juego.history() || []) : null; } catch (e) { return null; }
   }
+  /* La jugada escrita en algebraica española: «Nf3» → «Cf3», «Rxe8» → «Txe8»,
+     «e8=Q» → «e8=D». Las mayúsculas de una jugada (SAN) son solo piezas. */
+  var PIEZA_ES = { K: "R", Q: "D", R: "T", B: "A", N: "C" };
+  function sanEspanol(san) {
+    return String(san == null ? "" : san).replace(/[KQRBN]/g, function (l) { return PIEZA_ES[l]; });
+  }
+  /* LA regla para mostrar o decir una jugada, en todo el sitio:
+     - quien no ve (Modo Adaptado o cuenta ciega) la oye en el formato de
+       ajedrez para ciegos, con las columnas dichas: «caballo felix 3»,
+       «alfil captura cesar 6 jaque» (js/blind-notation.js). «Cf3» el lector
+       lo deletrea y no se entiende;
+     - los demás la leen en algebraica española: «Cf3», «Axc6+».
+     Los bancos guardan el SAN inglés que necesita chess.js; se convierte acá,
+     al mostrar. */
+  function paraQuienNoVe() {
+    var c = document.documentElement.classList;
+    return (c.contains("adaptive-mode") || c.contains("modo-ciego")) && !!(window.BlindNotation && BlindNotation.sanSpoken);
+  }
+  function jugadaParaMostrar(san) {
+    if (san == null || san === "") return san;
+    return paraQuienNoVe() ? BlindNotation.sanSpoken(String(san)) : sanEspanol(san);
+  }
+  // Lo mismo dentro de un texto («Tras Nf3 las negras…»): cada jugada de la prosa.
+  var JUGADA_EN_TEXTO = /\b(?:[KQRBN][a-h]?[1-8]?x?[a-h][1-8](?:=[QRBN])?|[a-h]x[a-h][1-8](?:=[QRBN])?|[a-h][1-8]=[QRBN])[+#]?/g;
+  function textoParaMostrar(texto) {
+    if (texto == null) return texto;
+    return String(texto).replace(JUGADA_EN_TEXTO, function (j) { return jugadaParaMostrar(j); });
+  }
   function sanHablada(san) {
-    return window.BlindNotation && BlindNotation.sanSpoken ? BlindNotation.sanSpoken(san) : san;
+    return window.BlindNotation && BlindNotation.sanSpoken ? BlindNotation.sanSpoken(san) : sanEspanol(san);
   }
   function ultimaJugada(juego) {
     var h = historiaDe(juego);
@@ -448,7 +476,12 @@ window.ComandosTablero = (function () {
      orden al revés, escribir la jugada que la propia página acaba de nombrar
      movería el rey en vez de la torre, y sería legal las dos veces. */
   var LETRA_PIEZA = { t: "r", c: "n", a: "b", d: "q", n: "n", q: "q", k: "k" };
-  var LETRA_AMBIGUA = { r: ["r", "k"], b: ["b"] };
+  /* En el sitio todo va en algebraica española: R es SIEMPRE el rey y la
+     torre es T. «Rf1» movía la torre (en inglés R es torre) y en el examen eso
+     era la pregunta perdida sin haberse equivocado. Las demás iniciales
+     inglesas (N, Q, K) no chocan con nada y se siguen entendiendo; la R no,
+     porque es una jugada distinta. */
+  var LETRA_AMBIGUA = { r: ["k"], b: ["b"] };
   function tiposDe(inicial) {
     var l = String(inicial || "").toLowerCase();
     if (LETRA_AMBIGUA[l]) return LETRA_AMBIGUA[l];
@@ -486,6 +519,7 @@ window.ComandosTablero = (function () {
     var m = t.toLowerCase().match(/^([a-h][1-8])[x\-,]?([a-h][1-8])([tcadqrbn])?$/);
     if (m) {
       var coronaA = m[3] ? (tiposDe(m[3])[0] || null) : null;
+      if (coronaA === "k") return null;
       var caben = legales.filter(function (j) {
         return j.from === m[1] && j.to === m[2] && (!coronaA || j.promotion === coronaA);
       });
@@ -509,6 +543,7 @@ window.ComandosTablero = (function () {
     if (inicial && !esPieza && !m[2] && !m[3]) { m[2] = inicial.toLowerCase(); }
     var destino = m[4].toLowerCase();
     var corona = m[5] ? (tiposDe(m[5])[0] || null) : null;
+    if (corona === "k") return null;   // no se corona a rey: «=R» no es una jugada
 
     /* Se prueba tipo por tipo y gana el PRIMERO que dé exactamente una jugada.
        Así "Rd4" sale bien tanto cuando quien escribe piensa en la torre como
@@ -562,7 +597,9 @@ window.ComandosTablero = (function () {
   var ACCIONES_CONOCIDAS = /^(siguiente|anterior|solucion|la solucion|ver la solucion|pista|otra pista|otra vez|reiniciar|comprobar|volver|saltar|tiempo|reloj)$/;
   function noSePudoJugar(texto) {
     var dicho = String(texto || "").trim();
-    if (pareceJugada(dicho)) return "«" + dicho + "» no es una jugada legal en esta posición.";
+    if (pareceJugada(dicho)) return "«" + dicho + "» no es una jugada legal en esta posición." +
+      // Quien viene del inglés escribe R por la torre: aquí R es el rey.
+      (/^R[a-h1-8x]/.test(dicho) ? " R es el rey; la torre se escribe con T." : "");
     if (ACCIONES_CONOCIDAS.test(normalizar(dicho))) {
       return "En este ejercicio no hay «" + dicho + "». Escribe «acciones» para oír lo que sí puedes hacer.";
     }
@@ -668,7 +705,8 @@ window.ComandosTablero = (function () {
   }
 
   return {
-    interpretar: interpretar, jugadaEscrita: jugadaEscrita,
+    interpretar: interpretar, jugadaEscrita: jugadaEscrita, sanEspanol: sanEspanol,
+    jugadaParaMostrar: jugadaParaMostrar, textoParaMostrar: textoParaMostrar,
     pareceJugada: pareceJugada, noSePudoJugar: noSePudoJugar, incorrecta: incorrecta,
     AYUDA: AYUDA, ayudaHTML: ayudaHTML, ayudaTexto: ayudaTexto,
     dondeEsta: dondeEsta, queHayEn: queHayEn, jugadasDe: jugadasDe,

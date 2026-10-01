@@ -267,6 +267,253 @@ async function precision(browser) {
   await ctx.close();
 }
 
+/* ============ La tercera recorrida con la cuenta ciega ============ */
+const texto = (page, sel) => page.evaluate((s) => { const e = document.querySelector(s); return e ? e.textContent.replace(/\s+/g, " ").trim() : ""; }, sel);
+// Escribe en un recuadro dado (el suyo propio, no el .cc-input común) con Intro.
+async function escribirEn(page, sel, t, ms) {
+  await page.focus(sel);
+  await page.fill(sel, t);
+  await page.press(sel, "Enter");
+  await esperar(ms || 350);
+}
+
+async function practicarYDesafios(browser) {
+  console.log("\n=== Practicar y Desafíos: «solución» y «saltar» escribiendo ===");
+  let { page, ctx, errores } = await abrir(browser, "/entreno/practicas.html");
+  await page.waitForFunction("typeof SETS !== 'undefined' && document.querySelector('.set-card')", null, { timeout: 20000 });
+  await page.evaluate(() => openSet(SETS.find((s) => s.id === "pasillo")));
+  await page.waitForSelector(".cc-input", { state: "visible" });
+  const acciones = await escribir(page, "acciones", 400);
+  cierto("«acciones» ofrece «Solución» y «Saltar»", /Solución/.test(acciones) && /Saltar/.test(acciones), acciones);
+  cierto("la ayuda del recuadro dice «solución» y «saltar»",
+    /«solución»/.test(await texto(page, "#q-comandos .cc-ayuda")) && /«saltar»/.test(await texto(page, "#q-comandos .cc-ayuda")), await texto(page, "#q-comandos .cc-ayuda"));
+  await escuchar(page);
+  await escribir(page, "saltar", 400);
+  igual("«saltar» antes de resolverla pasa a la posición 2", await page.evaluate(() => currentRoundIndex), 1);
+  let oidos = (await oido(page)).join(" ‖ ");
+  cierto("y dice que la saltó y cuál es la nueva, sin «Listo: Saltar»",
+    /Saltaste la posición: no cuenta como resuelta\. Posición 2 de 5/.test(oidos) && !/Listo: Saltar/.test(oidos), oidos);
+  igual("el foco sigue en el recuadro", await foco(page), ".cc-input");
+  // «solución»: la jugada en palabras, no cuenta, y espera «siguiente».
+  const r = await page.evaluate(() => { const x = currentSet.rounds[currentRoundIndex]; const g = new Chess(x.fen); return BlindNotation.sanSpoken(g.move({ from: x.from, to: x.to }).san); });
+  await escuchar(page);
+  await escribir(page, "solución", 1400);
+  const st = await texto(page, "#round-status");
+  cierto("«solución» dice la jugada en palabras («La solución era: " + r + ".») y que no cuenta",
+    st.startsWith("La solución era: " + r + ".") && /No cuenta como resuelta\. Escribe «siguiente»/.test(st), st);
+  igual("y no pasa sola (espera «siguiente»)", await page.evaluate(() => currentRoundIndex), 1);
+  await escribir(page, "siguiente", 400);
+  igual("«siguiente» pasa a la posición 3", await page.evaluate(() => currentRoundIndex), 2);
+  igual("sin racha: la posición vista con la solución no suma", await page.evaluate(() => getStreak()), 0);
+  sinErrores(errores, "Practicar");
+  await ctx.close();
+
+  ({ page, ctx, errores } = await abrir(browser, "/entreno/desafios.html"));
+  await page.waitForFunction("typeof SETS !== 'undefined' && SETS.length > 0 && document.querySelector('.set-card')", null, { timeout: 20000 });
+  await page.evaluate(() => openSet(SETS[0]));
+  await page.waitForSelector(".cc-input", { state: "visible" });
+  await escuchar(page);
+  await escribir(page, "siguiente", 400);
+  igual("Desafíos: «siguiente» antes de resolverlo pasa al 2", await page.evaluate(() => currentRoundIndex), 1);
+  oidos = (await oido(page)).join(" ‖ ");
+  cierto("y dice que lo saltó y cuál es el nuevo", /Saltaste el desafío: no cuenta como resuelto\. Desafío 2 de/.test(oidos) && !/Listo:/.test(oidos), oidos);
+  await escribir(page, "solución", 600);
+  const sd = await texto(page, "#round-status");
+  cierto("«solución» dice la jugada y que no cuenta", /^Solución \(no cuenta como resuelto\):/.test(sd), sd);
+  sinErrores(errores, "Desafíos");
+  await ctx.close();
+}
+
+async function visualizacion(browser) {
+  console.log("\n=== Visualización: «siguiente» dice que saltó y cuál es el nuevo; «solución» ===");
+  const { page, ctx, errores } = await abrir(browser, "/entreno/visualizacion.html");
+  await page.waitForFunction("typeof DATA !== 'undefined' && DATA && Object.keys(POOLS).length", null, { timeout: 20000 });
+  await page.evaluate(() => openLevel(Object.keys(POOLS).find((k) => POOLS[k].length > 2)));
+  await page.waitForSelector("#answer-input", { state: "visible" });
+  await esperar(300);
+  const antes = await page.evaluate(() => currentIndex);
+  await escuchar(page);
+  await escribirEn(page, "#answer-input", "siguiente", 500);
+  const oidos = (await oido(page)).join(" ‖ ");
+  igual("«siguiente» pasa al ejercicio siguiente", await page.evaluate(() => currentIndex), antes + 1);
+  cierto("y dice «Saltaste el ejercicio. Ejercicio N de M…», no «Listo: Saltar»",
+    new RegExp("Saltaste el ejercicio\\. Ejercicio " + (antes + 2) + " de \\d+\\. Juegan").test(oidos) && !/Listo: Saltar/.test(oidos), oidos);
+  const linea = await page.evaluate(() => currentPuzzle().solution.map((s) => BlindNotation.sanSpoken(s)));
+  await escribirEn(page, "#answer-input", "solución", 500);
+  const st = await texto(page, "#round-status");
+  cierto("«solución» dice la línea en palabras y que no cuenta («La solución era: " + linea[0] + "…»)",
+    st.startsWith("La solución era: " + linea[0]) && /No cuenta como resuelto/.test(st), st);
+  igual("y el foco sigue en el recuadro", await foco(page), "#answer-input");
+  sinErrores(errores, "Visualización");
+  await ctx.close();
+}
+
+async function aprenderBloqueadas(browser) {
+  console.log("\n=== Aprender: lecciones cerradas en el Tab, «pista» y «solución» en las de casillas ===");
+  const { page, ctx, errores } = await abrir(browser, "/entreno/aprender.html");
+  await page.waitForFunction("typeof LESSONS !== 'undefined' && document.querySelectorAll('#lesson-list .lesson-item').length > 1", null, { timeout: 20000 });
+  const cerradas = await page.evaluate(() => Array.from(document.querySelectorAll("#lesson-list .lesson-item[aria-disabled=true]")).map((b) => ({ disabled: b.disabled, tab: b.tabIndex })));
+  cierto("las lecciones cerradas van con aria-disabled y siguen en el Tab (no `disabled`)",
+    cerradas.length > 0 && cerradas.every((c) => !c.disabled && c.tab >= 0), JSON.stringify(cerradas));
+  await page.evaluate(() => document.querySelector("#lesson-list .lesson-item[aria-disabled=true]").click());
+  await esperar(250);
+  const aviso = await texto(page, "#list-status");
+  cierto("activar una cerrada dice por qué («… está bloqueada: se abre cuando termines «…»»)", /está bloqueada: se abre cuando termines «/.test(aviso), aviso);
+  igual("y no la abre", await page.evaluate(() => document.getElementById("lesson-view").style.display), "none");
+  await page.evaluate(() => openLesson(LESSONS.find((l) => l.type === "squares")));
+  await page.waitForSelector(".cc-input", { state: "visible" });
+  await escribir(page, "pista", 300);
+  const pista = await texto(page, "#lesson-status");
+  cierto("en una lección de casillas, «pista» da una pista (no «Esa no es una casilla»)", /^Pista: te falta/.test(pista), pista);
+  await escribir(page, "solución", 300);
+  const sol = await texto(page, "#lesson-status");
+  const cas = await page.evaluate(() => currentLesson.targets.map((s) => BlindNotation.squareSpoken(s)));
+  cierto("y «solución» dice las casillas que faltan", /^La solución: /.test(sol) && cas.every((c) => sol.includes(c)), sol);
+  await page.evaluate(() => openLesson(LESSONS.find((l) => l.type === "move" && l.solution)));
+  await escribir(page, "solución", 300);
+  cierto("en una de jugada, «solución» dice la jugada", /^La solución es: /.test(await texto(page, "#lesson-status")), await texto(page, "#lesson-status"));
+  sinErrores(errores, "Aprender");
+  await ctx.close();
+}
+
+async function cuatroPorCuatro(browser) {
+  console.log("\n=== 4×4: «cómo está la posición», sin capturas y «volver» ===");
+  const { page, ctx, errores } = await abrir(browser, "/entreno/4x4.html", "#solo-panel:not([hidden])");
+  await page.waitForSelector("#cmd-input", { state: "visible" });
+  await page.evaluate(() => { window.__pos = 0; const o = window.announcePosition; window.announcePosition = function () { window.__pos++; return o.apply(this, arguments); }; });
+  await escribirEn(page, "#cmd-input", "cómo está la posición", 300);
+  igual("«cómo está la posición» dice la posición, como «posición»", await page.evaluate(() => window.__pos), 1);
+  // Dos piezas que no se pueden capturar: un caballo en a1 y un alfil en d1.
+  await page.evaluate(() => { boardState = { "3,0": "N", "3,3": "B" }; checkWin(); });
+  await esperar(200);
+  const sin = await texto(page, "#board-announcer");
+  cierto("sin capturas dice «Respuesta incorrecta: … no quedan capturas. Escribe «otra vez»…»",
+    /^Respuesta incorrecta: .*no quedan capturas\. Escribe «otra vez» para empezar de nuevo\.$/.test(sin), sin);
+  cierto("sin verbos de mirar la pantalla (pulsa, toca, haz clic)", !/pulsa|toca|haz clic/i.test(sin + " " + await texto(page, "#board-status")), sin);
+  await page.fill("#cmd-input", "volver");
+  await page.press("#cmd-input", "Enter");
+  await esperar(150);
+  const volver = await texto(page, "#cmd-status");
+  cierto("«volver» dice adónde va («Volviendo a …»)", /^Volviendo a (Entrenar, en tu panel|Entrenamiento|tu panel|la página anterior)…$/.test(volver), volver);
+  sinErrores(errores, "4×4");
+  await ctx.close();
+}
+
+async function precisionSinListo(browser) {
+  console.log("\n=== Precisión posicional: «siguiente» sin contestar no se oye como «Listo: Siguiente»; «volver» ===");
+  const { page, ctx, errores } = await abrir(browser, "/entreno/precision-posicional.html", "#start-btn");
+  await page.click("#start-btn");
+  await page.waitForSelector(".cc-input", { state: "visible" });
+  await escribir(page, "a", 500);
+  const n2 = await texto(page, "#q-counter");
+  await escuchar(page);
+  await escribir(page, "siguiente", 500);
+  const oidos = (await oido(page)).join(" ‖ ");
+  cierto("«siguiente» sin contestar: solo «Todavía no contestaste…», sin «Listo: Siguiente»",
+    /Todavía no contestaste esta/.test(oidos) && !/Listo/.test(oidos), oidos);
+  igual("y no pasa", await texto(page, "#q-counter"), n2);
+  await escribir(page, "volver", 400);
+  igual("«volver» lleva a la anterior", await texto(page, "#q-counter"), "Posición 1 de " + n2.split(" de ")[1]);
+  cierto("y lo dice", /^Volviste a la anterior\. Posición 1/.test(await texto(page, "#q-comandos .cc-msg")), await texto(page, "#q-comandos .cc-msg"));
+  sinErrores(errores, "Precisión posicional");
+  await ctx.close();
+}
+
+async function volverYMemoria(browser) {
+  console.log("\n=== Coordenadas, Memoria y Mates: «volver»; Memoria dice qué faltó ===");
+  let { page, ctx, errores } = await abrir(browser, "/entreno/coordenadas.html");
+  await page.click("#start-btn");
+  await page.waitForSelector("#blind-input", { state: "visible" });
+  await escribirEn(page, "#blind-input", "volver", 200);
+  const c = await texto(page, "#blind-announcer");
+  cierto("Coordenadas: «volver» dice adónde va (no «No entendí»)", /^Volviendo a /.test(c), c);
+  await ctx.close();
+
+  ({ page, ctx, errores } = await abrir(browser, "/entreno/mates.html"));
+  await page.waitForFunction(() => PUZZLES.mate1.length > 0 && document.querySelector(".cc-input"), null, { timeout: 20000 });
+  const m = await escribir(page, "volver", 150);
+  cierto("Mates: «volver» dice adónde va", /^Volviendo a /.test(m), m);
+  await ctx.close();
+
+  ({ page, ctx, errores } = await abrir(browser, "/entreno/memoria.html?piezas=4&segundos=3", "#vista-juego:not(.hidden)"));
+  await page.waitForSelector(".cc-input", { state: "visible" });
+  await escribir(page, "ya la tengo", 300);
+  // Se pone una sola pieza, bien, más una que sobra: faltan las otras.
+  const plan = await page.evaluate(() => {
+    const it = MemoriaEntreno.item();
+    const tab = TiposReglas.tablero(it.fen);
+    const puestas = [];
+    for (let i = 0; i < 64; i++) if (tab[i]) puestas.push({ s: TiposReglas.sq(i), c: tab[i].c, t: tab[i].t });
+    const vacia = ["a1", "h1", "a8", "h8", "d4", "e5"].find((s) => !puestas.some((p) => p.s === s));
+    return { primera: puestas[0], faltan: puestas.slice(1).map((p) => TableroAccesible.piezaDicha({ color: p.c, type: p.t }) + " en " + TableroAccesible.casillaHablada(p.s)), vacia,
+      letra: { k: "R", q: "D", r: "T", b: "A", n: "C", p: "P" }[puestas[0].t] };
+  });
+  await escribir(page, (plan.primera.c === "w" ? "blancas: " : "negras: ") + plan.letra + plan.primera.s, 300);
+  await escribir(page, (plan.primera.c === "w" ? "negras: " : "blancas: ") + "C" + plan.vacia, 300);
+  await escribir(page, "comprobar", 500);
+  const est = await texto(page, "#estado");
+  cierto("Memoria: al comprobar dice cuáles faltaron, con la pieza y la casilla («Te faltaron: " + plan.faltan[0] + "…»)",
+    /Te falt(ó|aron): /.test(est) && plan.faltan.every((f) => est.includes(f)), est);
+  cierto("y cuál sobró", /Sobró: caballo (blanco|negro) en /.test(est), est);
+  await escribir(page, "volver", 400);
+  cierto("Memoria: «volver» lleva a los ajustes y lo dice",
+    (await page.evaluate(() => !document.getElementById("vista-ajustes").classList.contains("hidden"))) && /^Volviste al inicio de Memoria/.test(await texto(page, "#aviso-ajustes")),
+    await texto(page, "#aviso-ajustes"));
+  sinErrores(errores, "Memoria");
+  await ctx.close();
+}
+
+async function hubYDiagnostico(browser) {
+  console.log("\n=== El hub con la cuenta ciega, y el diagnóstico con comillas latinas ===");
+  const { page, ctx, errores } = await abrir(browser, "/entreno/index.html");
+  await esperar(400);
+  igual("en el hub, el foco empieza en el título (no en el <body>)", await foco(page), "#hub-titulo");
+  cierto("Estudio está en el hub", await page.evaluate(() => !!document.querySelector('#app h3 a[href="estudio.html"]')));
+  sinErrores(errores, "Hub");
+  await ctx.close();
+  const fs = require("fs");
+  const diag = fs.readFileSync(require("path").join(__dirname, "..", "js", "entreno-diagnostico.js"), "utf8");
+  cierto("el diagnóstico dice «No entendí «…»» con comillas latinas, no rectas", !/No entendí "/.test(diag) && /No entendí «/.test(diag));
+}
+
+async function habilidades(browser) {
+  console.log("\n=== Habilidades: «pista» y «solución» en las de elegir, y el recuadro no cambia al terminar ===");
+  const fs = require("fs");
+  const DATOS = JSON.parse(fs.readFileSync(require("path").join(__dirname, "..", "entreno", "data", "tipos.json"), "utf8"));
+  const casos = [["detective", 1], ["apertura", 1], ["intercambios", 1], ["peones", 1]];
+  for (const [tipo, nivel] of casos) {
+    const item = DATOS[tipo].find((x) => x.nivel === nivel);
+    const { page, ctx, errores } = await abrir(browser, "/entreno/tipos.html#" + tipo + "/" + nivel + "/" + item.id, "#jugada-input");
+    await page.waitForSelector("#jugada-input", { state: "visible" });
+    await esperar(400);
+    await escribirEn(page, "#jugada-input", "pista", 300);
+    const p = await texto(page, "#estado");
+    cierto(`${tipo}: «pista» da la pista o dice que no hay (no «No entendí»)`, /^(Pista: |En este ejercicio no hay pista; escribe «opciones»)/.test(p), p);
+    await escribirEn(page, "#jugada-input", "solución", 300);
+    const sl = await texto(page, "#estado");
+    cierto(`${tipo}: «solución» dice la respuesta y que cuenta como no resuelto`, /^La solución: .*Cuenta como no resuelto/.test(sl), sl);
+    igual(`${tipo}: y la opción buena queda marcada`, await page.evaluate(() => !!Array.from(document.querySelectorAll("#controles button, #controles input")).find((b) => b.disabled) &&
+      (!!Array.from(document.querySelectorAll("#controles button")).find((b) => /^✓/.test(b.textContent)) || !!document.querySelector("#controles input[type=radio]:checked"))), true);
+    igual(`${tipo}: el foco sigue en el recuadro del ejercicio`, await foco(page), "#jugada-input");
+    sinErrores(errores, "Habilidades · " + tipo);
+    await ctx.close();
+  }
+  // Rey y peón 3 (una sola jugada gana): al acertar, el recuadro no pasa a ser «Pregunta sobre la posición».
+  const item = DATOS.peones.find((x) => x.nivel === 3);
+  const { page, ctx, errores } = await abrir(browser, "/entreno/tipos.html#peones/3/" + item.id, "#jugada-input");
+  await page.waitForSelector("#jugada-input", { state: "visible" });
+  await esperar(400);
+  const antes = await texto(page, "#jugada-label");
+  await escribirEn(page, "#jugada-input", item.jugada, 500);
+  cierto("Rey y peón: acertó", /^✓/.test(await texto(page, "#estado")), await texto(page, "#estado"));
+  igual("y el recuadro sigue siendo el del ejercicio (no «Pregunta sobre la posición»)", await texto(page, "#jugada-label"), antes);
+  igual("con el foco ahí", await foco(page), "#jugada-input");
+  await escribirEn(page, "#jugada-input", "Rh1", 300);
+  cierto("y lo que se escriba después dice que terminó y cómo seguir", /^Este ejercicio ya terminó\. Escribe «siguiente»/.test(await texto(page, "#estado")), await texto(page, "#estado"));
+  sinErrores(errores, "Habilidades · peones 3");
+  await ctx.close();
+}
+
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
@@ -275,6 +522,14 @@ async function precision(browser) {
     await desafios(browser);
     await aprender(browser);
     await precision(browser);
+    await practicarYDesafios(browser);
+    await visualizacion(browser);
+    await aprenderBloqueadas(browser);
+    await cuatroPorCuatro(browser);
+    await precisionSinListo(browser);
+    await volverYMemoria(browser);
+    await hubYDiagnostico(browser);
+    await habilidades(browser);
   } finally {
     await browser.close();
   }

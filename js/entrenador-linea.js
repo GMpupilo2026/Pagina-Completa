@@ -155,7 +155,7 @@ window.EntrenadorLinea = (function () {
             else intentar({ from: mv.from, to: mv.to, promotion: mv.promotion });
           },
         });
-        comandos.ayuda("Jugada: «Cf3», «Nf3», «e2 e4». «pista» si no la recuerdas. Pregunta: «caballos», «qué hay en e4».");
+        comandos.ayuda("Jugada: «Cf3», «e2 e4». «pista» si no la recuerdas. Pregunta: «caballos», «qué hay en e4».");
       }
     }
 

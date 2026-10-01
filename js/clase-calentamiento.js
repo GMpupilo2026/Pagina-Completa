@@ -22,12 +22,29 @@ let calentamientoBoard = null;
 let calentamientoPintadoPara = null;
 let calentamientoAcc = null;
 
+/* Los emojis de adorno («⚪ Blancas», «⏱️ Quedan…») van en un <span
+   aria-hidden>: «leer» (js/vision-cuenta.js) y el lector de pantalla los decían
+   («círculo blanco», «cronómetro»). Las usa también sesion.js, que carga después. */
+function emojiMudo(emoji) {
+    const s = document.createElement("span");
+    s.setAttribute("aria-hidden", "true");
+    s.textContent = emoji;
+    return s;
+}
+// Pone `texto` en `el` con su emoji del principio (si tiene) fuera del lector.
+function textoConEmojiMudo(el, texto) {
+    const m = String(texto || "").match(/^((?:[\u{1F000}-\u{1FAFF}\u{2300}-\u{23FF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}][\u{FE0F}\u{200D}]?)+)\s*/u);
+    if (!m) { el.textContent = texto || ""; return; }
+    el.replaceChildren(emojiMudo(m[1] + " "), String(texto).slice(m[0].length));
+}
+
 const aUci = (m) => m.from + m.to + (m.promotion || "");
 /* En Modo Adaptado la jugada se escribe en palabras («caballo felix 3»): la
    notación inglesa de chess.js («Nf3») el lector de pantalla la deletrea, y
-   quien no ve el tablero no sabe qué le están diciendo que jugó. */
+   quien no ve el tablero no sabe qué le están diciendo que jugó. Los demás la
+   ven en algebraica española («Cf3»). */
 const sanDelCalentamiento = (san) => (window.ClaseAdaptada && window.CuadroComandos && CuadroComandos.activo()
-    ? ClaseAdaptada.hablarJugada(san) : san);
+    ? ClaseAdaptada.hablarJugada(san) : (window.ComandosTablero ? ComandosTablero.jugadaParaMostrar(san) : san));
 function solucionEnUci(fen, jugadas) {
     const g = new Chess(fen);
     const out = [];
@@ -85,8 +102,24 @@ function empezarCalentamiento() {
         });
         calentamientoAcc = window.ClaseAdaptada ? ClaseAdaptada.montar(document.getElementById("calentamiento-cmd"), () => calentamientoBoard, {
             etiqueta: "Escribe tu jugada del calentamiento",
+            /* Después de fallar, el tablero se queda con la jugada equivocada y
+               sin control. Antes todo lo escrito contestaba «Toca "Intentarlo otra
+               vez"»: quien no ve tenía que salir a buscar el botón. Ahora «otra vez»
+               lo reinicia, y una jugada nueva se intenta directo (se vuelve a la
+               posición y la jugada sigue su camino por el tablero). */
+            contestar: (texto) => {
+                const otraBtn = document.getElementById("calentamiento-otra-btn");
+                if (!calentamientoActual || !otraBtn || otraBtn.hidden) return null;
+                const pedido = CuadroComandos.normalizar(texto).replace(/[.!¡¿?]+/g, "").trim();
+                if (/^(otra vez|intentarlo otra vez|intentar otra vez|intentar de nuevo|reintentar|reiniciar|de nuevo|volver a intentar)$/.test(pedido)) {
+                    otraBtn.click();
+                    return { texto: "Volviste a la posición del calentamiento. Escribe tu jugada." };
+                }
+                if (window.ComandosTablero && ComandosTablero.pareceJugada(texto.trim())) otraBtn.click();
+                return null;
+            },
             porQueNoPuedes: () => calentamientoResuelto === (calentamientoActual && calentamientoActual.at)
-                ? "Ya lo resolviste." : "Toca «Intentarlo otra vez» para volver a jugar.",
+                ? "Ya lo resolviste." : "Escribe «otra vez» para volver a la posición, o escribe tu jugada nueva.",
         }) : null;
     }
     const color = cal.fen.split(" ")[1] === "b" ? "b" : "w";
@@ -94,7 +127,9 @@ function empezarCalentamiento() {
     calentamientoBoard.loadFen(cal.fen);
     calentamientoBoard.setInteractive(calentamientoResuelto !== cal.at);
     if (calentamientoAcc) calentamientoAcc.actualizar();
-    document.getElementById("calentamiento-turno").textContent = (color === "b" ? "Juegan ⚫ Negras" : "Juegan ⚪ Blancas") + ": encuentra la mejor jugada.";
+    // El círculo de color es adorno: va con aria-hidden, y «leer» no dice «círculo negro».
+    const turnoEl = document.getElementById("calentamiento-turno");
+    turnoEl.replaceChildren("Juegan ", emojiMudo(color === "b" ? "⚫ " : "⚪ "), (color === "b" ? "Negras" : "Blancas") + ": encuentra la mejor jugada.");
     document.getElementById("calentamiento-msg").textContent = calentamientoResuelto === cal.at ? "✅ ¡Ya lo resolviste!" : "";
     document.getElementById("calentamiento-otra-btn").hidden = true;
     document.getElementById("calentamiento-solucion-btn").hidden = !cal.solucion || calentamientoResuelto === cal.at;
@@ -155,7 +190,7 @@ document.getElementById("calentamiento-solucion-btn").addEventListener("click", 
     calentamientoBoard.setInteractive(false);
     calentamientoBoard.setMarks([{ from: cal.solucion[0].slice(0, 2), to: cal.solucion[0].slice(2, 4), color: "verde" }], []);
     document.getElementById("calentamiento-msg").textContent = "La solución: "
-        + (CuadroComandos.activo() ? sans.map(sanDelCalentamiento).join(", ") : sans.join(" ")) + ".";
+        + (CuadroComandos.activo() ? sans.map(sanDelCalentamiento).join(", ") : sans.map(sanDelCalentamiento).join(" ")) + ".";
     document.getElementById("calentamiento-otra-btn").hidden = true;
     document.getElementById("calentamiento-solucion-btn").hidden = true;
 });

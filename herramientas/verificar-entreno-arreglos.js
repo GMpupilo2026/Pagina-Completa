@@ -8,7 +8,7 @@
    - Desafíos: con «Ver solución» no se festeja «¡Correcto!» ni sube la racha.
    - Aprender: en el quiz de dos botones, fallar ya no se arregla apretando el
      otro; la lección solo se completa sin errores.
-   - Visualización: «Rd2» se lee como el rey cuando la línea pide el rey; y un
+   - Visualización: «Rd2» es SIEMPRE el rey y «Td2» la torre; y un
      ejercicio sacado con pista o con error no cuenta como resuelto.
    - Visualización va de fácil a difícil; Racha táctica sin sesión manda al
      login con ?next=; Precisión posicional enlaza fichas en «a reforzar» y
@@ -120,7 +120,7 @@ async function desafios(browser) {
     [3, 2, 2, 1, 1]);
   await page.evaluate(() => { openSet(SETS[0]); setStreak(4); giveHint(); giveHint(); giveHint(); });
   igual("con «Ver solución» la racha no sube", await page.evaluate(() => getStreak()), "0");
-  igual("y el aviso dice «Solución», no «¡Correcto!»", /^Solución:/.test(await estado(page)), "true");
+  igual("y el aviso dice «Solución» (y que no cuenta), no «¡Correcto!»", /^Solución( \(no cuenta como resuelto\))?:/.test(await estado(page)), "true");
   sinErrores(errores, "desafíos");
   await ctx.close();
 }
@@ -160,16 +160,18 @@ async function visualizacion(browser) {
   await page.evaluate(() => openLevel(NIVELES[0].id));
   await page.waitForFunction(() => typeof currentId === "function" && currentId() !== undefined && game !== null, { timeout: 15000 });
 
-  // Rey en e1 y torre en a2: los dos pueden ir a d2. «Rd2» es el rey en
-  // castellano y la torre en inglés; gana la que pide la línea.
+  // Rey en e1 y torre en a2: los dos pueden ir a d2. En el sitio R es SIEMPRE
+  // el rey y la torre es T, aunque la línea pida la torre.
   const leida = await page.evaluate(() => {
     const fen = "7k/8/8/8/8/8/R7/4K3 w - - 0 1";
     game = new Chess(fen); const rey = jugadaDeLaLinea("Rd2", "Kd2");
-    game = new Chess(fen); const torre = jugadaDeLaLinea("Rd2", "Rd2");
+    game = new Chess(fen); const torre = jugadaDeLaLinea("Td2", "Rd2");
     game = new Chess(fen); const ninguna = jugadaDeLaLinea("Rd2", "Kf2");
     return [rey && rey.san, torre && torre.san, ninguna && ninguna.san];
   });
-  igual("«Rd2» es el rey si la línea pide el rey, la torre si pide la torre, y si no, la de siempre", leida, ["Kd2", "Rd2", "Rd2"]);
+  igual("«Rd2» es el rey (pida lo que pida la línea) y «Td2» la torre", leida, ["Kd2", "Rd2", "Kd2"]);
+  const rdConTorre = await page.evaluate(() => { game = new Chess("7k/8/8/8/8/8/R7/4K3 w - - 0 1"); const m = jugadaDeLaLinea("Rd2", "Rd2"); return m && m.san; });
+  igual("«Rd2» nunca mueve la torre, aunque la línea la pida", rdConTorre, "Kd2");
 
   await page.evaluate(() => { openLevel(NIVELES[0].id); });
   await page.waitForFunction(() => game !== null && currentId() !== undefined, { timeout: 15000 });

@@ -121,7 +121,7 @@ const CON_TABLERO = [
     } },
   { nombre: "Mates", ruta: "/entreno/mates.html", sel: "#board" },
   { nombre: "Aprender", ruta: "/entreno/aprender.html", sel: "#board", antes: async (p) => {
-      await p.click(".lesson-item:not([disabled])", { timeout: 4000 }).catch(() => {});
+      await p.click(".lesson-item:not([disabled]):not([aria-disabled=true])", { timeout: 4000 }).catch(() => {});
     } },
   { nombre: "Practicar", ruta: "/entreno/practicas.html", sel: "#board", antes: async (p) => {
       await p.click(".set-card, [data-set]", { timeout: 4000 }).catch(() => {});
@@ -448,13 +448,14 @@ async function pruebaLetrasNoSonPiezas(browser) {
     const gg = new Chess(); const antes = gg.fen(); CT.jugadaEscrita(gg, "Cf3"); return gg.fen() === antes;
   })(), true);
 
-  /* "R" es Rey en español y Rook (torre) en inglés: dos jugadas distintas
-     escritas igual. Se prueban las dos y gana la que sea legal. Leído en un solo
-     idioma no fallaría nada: movería la pieza que no era, legalmente, y quien
-     escribió su jugada vería moverse otra cosa sin entender por qué. */
+  /* En el sitio R es SIEMPRE el rey (algebraica española) y la torre es T.
+     Leída en inglés, «Rf1» movía la torre, y en el examen era la pregunta
+     perdida sin haberse equivocado. */
   const torres = new Chess("4k3/8/8/8/8/8/8/R3K2R w KQ - 0 1");
   const rd1 = CT.jugadaEscrita(torres, "Rd1");
-  igual('"Rd1" donde la torre puede llegar es la TORRE (inglés)', rd1 && rd1.piece + rd1.from + rd1.to, "ra1d1");
+  igual('"Rd1" donde llegan el rey y la torre es el REY', rd1 && rd1.piece + rd1.from + rd1.to, "ke1d1");
+  const rb1 = CT.jugadaEscrita(torres, "Rb1");
+  igual('"Rb1" donde solo llega la torre no es ninguna jugada (la torre es T)', rb1 && rb1.piece + rb1.from + rb1.to, null);
   const re2 = CT.jugadaEscrita(torres, "Re2");
   igual('"Re2" donde la torre NO puede llegar es el REY (español)', re2 && re2.piece + re2.from + re2.to, "ke1e2");
   const td1 = CT.jugadaEscrita(torres, "Td1");

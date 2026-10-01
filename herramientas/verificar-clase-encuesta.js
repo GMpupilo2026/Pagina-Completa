@@ -70,7 +70,7 @@ async function pruebaElMapa(browser) {
     ["url(#clases-arrowhead-verde)", "url(#clases-arrowhead-azul)"]);
   igual("la leyenda se ve, con el color y el dato escritos", [await seVe(page, "#encuesta-caja"),
     await page.evaluate(() => [...document.querySelectorAll("#encuesta-lineas li")].map((li) => li.textContent))],
-    [true, ["Verde: e4 — 2 alumnos", "Azul: Nf3 — 1 alumno"]]);
+    [true, ["Verde: e4 — 2 alumnos", "Azul: Cf3 — 1 alumno"]]);
 
   await page.click("#clear-marks-btn");
   await page.waitForFunction(() => window.__updates.filter((u) => u.tabla === "game_state").slice(-1)[0].campos.encuesta === null, null, { timeout: 5000 });
@@ -130,11 +130,11 @@ async function pruebaCalentamientoDelAlumno(browser) {
   const jugar = async (de, a) => { await page.click('#calentamiento-tablero [data-square="' + de + '"]'); await page.click('#calentamiento-tablero [data-square="' + a + '"]'); };
   await jugar("g1", "f1");
   igual("una jugada que no es: lo dice y deja intentarlo otra vez", [await page.textContent("#calentamiento-msg"), await seVe(page, "#calentamiento-otra-btn")],
-    ["Respuesta incorrecta: Kf1 no es la jugada que buscamos. Inténtalo otra vez.", true]);
+    ["Respuesta incorrecta: Rf1 no es la jugada que buscamos. Inténtalo otra vez.", true]);
   igual("y todavía no se anuncia como resuelto", await page.evaluate(() => (window.__tracks || []).some((t) => t.calentamiento)), false);
   await page.click("#calentamiento-otra-btn");
   await jugar("a1", "a8");
-  igual("la buena", await page.textContent("#calentamiento-msg"), "✅ ¡Bien! Ra8# es la jugada.");
+  igual("la buena", await page.textContent("#calentamiento-msg"), "✅ ¡Bien! Ta8# es la jugada.");
   igual("se anuncia en la presencia, con el «at» de este calentamiento",
     await page.evaluate(() => (window.__tracks || []).slice(-1)[0].calentamiento), at);
   igual("sin errores en consola", errores, []);

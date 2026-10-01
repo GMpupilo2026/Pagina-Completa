@@ -400,6 +400,42 @@ y describa en palabras el diagrama que el PDF dibuja. Lo que se rompe acá no da
 error en pantalla: un PDF sin proteger se baja igual y un enlace roto solo lo ve
 el alumno.
 
+### Las jugadas: en español, y dichas en lo accesible
+
+Regla del dueño: **todo lo que se escribe va en algebraica española** (R rey,
+D dama, T torre, A alfil, C caballo: «Cf3», «Axc6», «Txe8+», «e8=D», «O-O»), y
+**en lo hecho para quien no ve —todo archivo «-accesible»— la jugada va dicha**
+en el formato de ajedrez para ciegos: «caballo felix 3», «alfil captura cesar 6
+jaque», «eva 8 corona dama», «Enroque corto». «Cf3» el lector de pantalla lo
+deletrea y no se entiende.
+
+- Los archivos de datos (`cursos/protegido/data/*.json`, el banco del
+  diagnóstico) guardan el SAN inglés que lee chess.js y **no se tocan**: se
+  convierte al escribir, con `herramientas/lib/notacion.js`. El formato dicho
+  no se escribe a mano: lo da `BlindNotation.sanSpoken` de
+  `js/blind-notation.js`, cargado con `vm`, que es lo mismo que oye el alumno
+  en el sitio.
+- **La R es el problema**: en inglés es la torre y en español el rey. Por eso
+  el generador no adivina cuando sabe: `linea` es inglesa y `linea_es`
+  española (`lib/leer-curso.js` devuelve `lineaOrigen`), y el título de una
+  jugada comentada sale de `m.san` (`tituloOrigen: "ingles"`). En un texto
+  libre decide por las letras que no dejan duda (N, B, Q, K inglesas; C, A, D,
+  T españolas); si trae de las dos y además una R, avisa en vez de elegir.
+- Lo que **enseña a anotar** se deja escrito también en lo accesible: el
+  concepto «La notación y la planilla», la lección de notación de Fundamentos
+  y las preguntas `*notacion*` del diagnóstico. Van con
+  `data-notacion="escrita"`, que el verificador respeta.
+- `node herramientas/verificar-notacion-espanola.js` (sin navegador) recorre
+  `articulos/`, `cursos/` y `material/` y falla con una jugada inglesa en el
+  texto visible de una página, o con una jugada escrita en un «-accesible». No
+  mira atributos ni `<script>`: ahí va el SAN de chess.js. No puede ver una
+  línea inglesa hecha solo de jugadas de torre y de peón («1.Rd1 e5»), que es
+  igual a una de rey en español: por eso el origen se dice, no se adivina.
+- Las presentaciones `.pptx` de las lecciones no tienen generador en el
+  repositorio; se corrigieron editando el texto de sus diapositivas. Los
+  cuadernillos PDF sí: el generador ya los escribe en español, pero hace falta
+  `pypdf` para volver a imprimirlos.
+
 ### Lo que queda por hacer
 
 De las 186 lecciones, **92 traen posiciones de ejemplo**. Las que no son sobre

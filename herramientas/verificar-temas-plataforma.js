@@ -381,6 +381,53 @@ async function pruebaModoAdaptado(navegador) {
   await ctx.close();
 }
 
+/* Configuración con el teclado y con la cuenta ciega. Cada tarjeta de un
+   grupo de temas era una parada de Tab: unas noventa antes de llegar a «Voz».
+   Los grupos son radios de verdad (una parada, las flechas eligen) y, con la
+   cuenta ciega, lo que es pura imagen no se muestra y la voz va primero. */
+async function pruebaConfiguracionTeclado(navegador) {
+  console.log("\n=== Configuración: grupos con flechas y la cuenta ciega ===");
+  const { page, ctx } = await abrir(navegador, "/configuracion.html");
+  await page.waitForSelector("#tema-plataforma-grid button", { timeout: 15000 });
+  const paradas = await page.evaluate(() => ["#tema-plataforma-grid", "#board-theme-grid", "#board-color-theme-grid", "#piece-style-theme-grid", "#piece-color-theme-grid"]
+    .map((g) => Array.from(document.querySelectorAll(g + " [role=radio]")).filter((b) => b.tabIndex >= 0).length));
+  igual("cada grupo de opciones es UNA parada de Tab", paradas, [1, 1, 1, 1, 1]);
+  await page.focus('#tema-plataforma-grid [role=radio][aria-checked="true"]');
+  const antes = await page.evaluate(() => document.activeElement.textContent.trim());
+  await page.keyboard.press("ArrowRight");
+  await page.waitForTimeout(200);
+  const tras = await page.evaluate(() => {
+    const a = document.activeElement;
+    return { enGrupo: !!a.closest("#tema-plataforma-grid"), marcado: a.getAttribute("aria-checked"), texto: a.textContent.trim(),
+      marcados: document.querySelectorAll('#tema-plataforma-grid [aria-checked="true"]').length };
+  });
+  igual("la flecha elige la opción siguiente y el foco se queda en ella (no cae al <body>)",
+    [tras.enGrupo, tras.marcado, tras.marcados, tras.texto !== antes], [true, "true", 1, true]);
+
+  // La cuenta ciega (js/vision-cuenta.js pone modo-ciego y avisa con vision:cambio).
+  await page.evaluate(() => { document.documentElement.classList.add("modo-ciego"); document.dispatchEvent(new CustomEvent("vision:cambio", { detail: { vision: "ciego" } })); });
+  await page.waitForTimeout(200);
+  const ciega = await page.evaluate(() => {
+    const visuales = Array.from(document.querySelectorAll("[data-solo-visual]"));
+    const campos = Array.from(document.querySelectorAll("#app a[href], #app button, #app input, #app select, #app textarea, #app [tabindex]"))
+      .filter((e) => e.tabIndex >= 0 && !e.disabled && e.checkVisibility());
+    return {
+      visuales: visuales.length,
+      ocultas: visuales.filter((v) => getComputedStyle(v).display === "none").length,
+      vozPrimero: (document.querySelector("#app h1 + p") || {}).nextElementSibling === document.getElementById("voz-tarjeta"),
+      antesDeVoz: campos.indexOf(document.getElementById("speech-voice-select")),
+    };
+  });
+  igual("con la cuenta ciega, las tarjetas de temas, colores y piezas no se muestran (display: none)", [ciega.visuales >= 8, ciega.ocultas === ciega.visuales], [true, true]);
+  igual("y la de la voz va primero", ciega.vozPrimero, true);
+  cierto("y la voz se alcanza con pocas paradas de Tab", ciega.antesDeVoz >= 0 && ciega.antesDeVoz < 5, ciega.antesDeVoz);
+  await page.evaluate(() => { document.documentElement.classList.remove("modo-ciego"); document.dispatchEvent(new CustomEvent("vision:cambio", { detail: { vision: null } })); });
+  await page.waitForTimeout(100);
+  igual("sin la marca, todo vuelve a su lugar", await page.evaluate(() =>
+    [document.getElementById("voz-tarjeta").nextElementSibling === null, getComputedStyle(document.getElementById("baja-vision")).display !== "none"]), [true, true]);
+  await ctx.close();
+}
+
 async function pruebaCasillasElegidas(navegador) {
   console.log("\n=== La elección de casillas del alumno le gana al tema ===");
   const { page, ctx } = await abrir(navegador, "/configuracion.html",
@@ -533,6 +580,7 @@ async function pruebaLegibilidad(navegador) {
   const navegador = await chromium.launch({ executablePath: CHROME, args: ["--no-sandbox"] });
   try {
     await pruebaConfiguracion(navegador);
+    await pruebaConfiguracionTeclado(navegador);
     await pruebaTodaLaPlataforma(navegador);
     await pruebaCasillasElegidas(navegador);
     await pruebaModoAdaptado(navegador);

@@ -1038,7 +1038,7 @@ window.PreparacionMotor = {
     // Jugar el del final: al cerrar dice de qué final fue y a cuál ir.
     await page.evaluate(() => { location.hash = "#errores/1/juego-f-90"; });
     await page.waitForSelector("#vista-juego:not(.hidden) #jugada-input");
-    await page.fill("#jugada-input", R.sanEs ? legales[1] : legales[1]);
+    await page.fill("#jugada-input", R.sanEs(legales[1]));
     await page.press("#jugada-input", "Enter");
     await esperarEstado(page, /buena/);
     ok("al cerrar: fue en un final de torres, con el enlace al del banco", /Fue en un final de torres/.test(await page.textContent("#explicacion")) && (await page.getAttribute('#explicacion a[href^="finales.html"]', "href")) === "finales.html?final=" + torres[1], await page.textContent("#explicacion"));
@@ -1405,10 +1405,12 @@ window.PreparacionMotor = {
     ok("una jugada que no se puede hacer: «no es una jugada legal»", /«Dh8» no es una jugada legal/.test(t), t);
     await escribirR(page, "a3");
     t = await esperarEstado(page, /incorrecta|legal/);
-    ok("la de la partida: «Respuesta incorrecta», y que fue el error", /^Respuesta incorrecta: a3 es la que jugaste en la partida/.test(t), t);
+    // Con la cuenta ciega la jugada se dice en el formato de ciegos («anna 3»),
+    // no en letras sueltas (ComandosTablero.jugadaParaMostrar).
+    ok("la de la partida: «Respuesta incorrecta», y que fue el error (dicha: «anna 3»)", /^Respuesta incorrecta: anna 3 es la que jugaste en la partida/.test(t), t);
     await escribirR(page, "h3");
-    t = await esperarEstado(page, /h3/);
-    ok("otra que se puede jugar pero no sirve: «Respuesta incorrecta: h3 no es la jugada que buscamos»", /^Respuesta incorrecta: h3 no es la jugada que buscamos/.test(t), t);
+    t = await esperarEstado(page, /hector 3/);
+    ok("otra que se puede jugar pero no sirve: «Respuesta incorrecta: hector 3 no es la jugada que buscamos»", /^Respuesta incorrecta: hector 3 no es la jugada que buscamos/.test(t), t);
     await escribirR(page, "Ac4");
     t = await esperarEstado(page, /buena/);
     ok("«Ac4» escrita es buena", /Esa es buena/.test(t), t);

@@ -141,7 +141,7 @@ async function pruebaACiegas(browser) {
   const { page, ctx, errores } = await abrir(browser, "u-ana", CLASE, { game_state: [fila] });
   await page.waitForFunction(() => !document.getElementById("jugadas-a-ciegas").hidden, null, { timeout: 10000 });
   igual("con las piezas ocultas ve las jugadas", await page.textContent("#jugadas-a-ciegas"),
-    "🙈 Piezas ocultas: síguela de memoria. Jugadas: 1. e4 e5 2. Nf3.");
+    "🙈 Piezas ocultas: síguela de memoria. Jugadas: 1. e4 e5 2. Cf3.");
   await page.evaluate((f) => window.__cambioEnBase("game_state", Object.assign({}, f, { pieces_hidden: false })), fila);
   igual("con las piezas a la vista, no", await seVe(page, "#jugadas-a-ciegas"), false);
   igual("sin errores en consola", errores, []);

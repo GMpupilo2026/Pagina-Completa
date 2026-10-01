@@ -158,7 +158,9 @@ function python(guion, args, queHacia) {
       // jugadas comentadas, no posiciones sueltas que se le parezcan.
       const posics = partida && partida.comentadas.length
         ? partida.comentadas.slice(0, 3).map((m) => ({
-            fen: m.fen, titulo: `Después de ${m.n}${m.color === "w" ? "." : "..."}${m.san}`,
+            // m.san es el SAN inglés del archivo de datos: curso-material.js
+            // lo escribe en español o en voz según el origen que se le dice.
+            fen: m.fen, titulo: `Después de ${m.n}${m.color === "w" ? "." : "..."}${m.san}`, tituloOrigen: "ingles",
             pregunta: "", comentario: m.comentario, linea: "", resultado: "",
           }))
         : M.posicionesDe(leccion, todas, acervo);

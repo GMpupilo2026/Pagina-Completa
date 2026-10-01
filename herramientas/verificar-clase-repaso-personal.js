@@ -157,7 +157,8 @@ async function elAlumno(browser) {
   await inp.fill("Td8");
   await inp.press("Enter");
   await page.waitForFunction(() => /Bien/.test(document.getElementById("repaso-msg").textContent), null, { timeout: 5000 });
-  igual("escrita también vale", await page.textContent("#repaso-msg"), "✅ ¡Bien! Td8# es la jugada.");
+  // Con Modo Adaptado la jugada va en el formato de ciegos (ComandosTablero.jugadaParaMostrar).
+  igual("escrita también vale", await page.textContent("#repaso-msg"), "✅ ¡Bien! torre david 8 jaque mate es la jugada.");
   await page.waitForFunction(() => (window.__updates || []).length > 0, null, { timeout: 5000 });
   igual("al terminar lo dice", await page.textContent("#repaso-fin"), "🎉 Terminaste tu repaso: resolviste todas las preguntas que te habían quedado.");
   const u = await page.evaluate(() => window.__updates.map((x) => [x.tabla, !!x.campos.completada_at, x.filas]));

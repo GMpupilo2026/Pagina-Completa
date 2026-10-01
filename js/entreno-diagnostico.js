@@ -375,11 +375,11 @@ function prepararComandos(esOpcion) {
     comandos.posicion(itemActual.fen ? new Chess(itemActual.fen) : '');
   } else if (itemActual.tipo === 'casilla') {
     comandos.etiqueta('Escribe la casilla');
-    comandos.ayuda('Por ejemplo "e4" o "eva 4", como se leen las columnas. También vale "no lo sé".' + queHace);
+    comandos.ayuda('Por ejemplo «e4» o «eva 4», como se leen las columnas. También vale «no lo sé».' + queHace);
     comandos.posicion(new Chess(itemActual.fen));
   } else {
     comandos.etiqueta('Escribe tu jugada');
-    comandos.ayuda('Una sola jugada, en español o en inglés: "Cf3", "Nf3", "e4", "Dxh7+", "e8=D". También vale "no lo sé".' + queHace);
+    comandos.ayuda('Una sola jugada, en algebraica española: «Cf3», «e4», «Dxh7+», «e8=D». También vale «no lo sé».' + queHace);
     comandos.posicion(new Chess(itemActual.fen));
   }
   // Con el recuadro a la vista, la pregunta (y sus opciones) se dice ahí, también al llegar con «Siguiente».
@@ -443,7 +443,7 @@ function responderEscribiendo(texto, api) {
   if (itemActual.tipo === 'opcion' || itemActual.tipo === 'opcion_tablero') {
     const i = CuadroComandos.opcionPedida(texto, itemActual.opciones.length);
     if (i === null) {
-      api.decir(`No entendí "${texto}". Escribe la letra de una opción, de la A a la ${CuadroComandos.letra(itemActual.opciones.length - 1)}.`);
+      api.decir(`No entendí «${String(texto).trim()}». Escribe la letra de una opción, de la A a la ${CuadroComandos.letra(itemActual.opciones.length - 1)}.`);
       return;
     }
     const dicho = `Anotado: opción ${CuadroComandos.letra(i)}, ${enPalabras(itemActual.opciones[ordenOpciones[i]])}.`;
@@ -454,7 +454,7 @@ function responderEscribiendo(texto, api) {
   }
   if (itemActual.tipo === 'casilla') {
     const sq = CuadroComandos.casillaPedida(texto);
-    if (!sq) { api.decir(`No entendí "${texto}". Escribe una casilla, por ejemplo "e4".`); return; }
+    if (!sq) { api.decir(`No entendí «${String(texto).trim()}». Escribe una casilla, por ejemplo «e4».`); return; }
     seleccion = sq;
     pintarTablero(new Chess(itemActual.fen), [sq]);
     const noSe = document.getElementById('no-se-btn');
@@ -473,7 +473,7 @@ function responderEscribiendo(texto, api) {
     const mv = CuadroComandos.jugadaPedida(juego, texto);
     /* «no es una jugada legal» solo si parece una jugada; si no, «No entendí»
        (ComandosTablero.noSePudoJugar, la misma frase en todo el sitio). */
-    if (!mv) { api.decir(window.ComandosTablero && ComandosTablero.noSePudoJugar ? ComandosTablero.noSePudoJugar(texto) : `"${texto}" no es una jugada legal en esta posición.`); return; }
+    if (!mv) { api.decir(window.ComandosTablero && ComandosTablero.noSePudoJugar ? ComandosTablero.noSePudoJugar(texto) : `«${String(texto).trim()}» no es una jugada legal en esta posición.`); return; }
     seleccion = { from: mv.from, to: mv.to, promotion: mv.promotion, san: mv.san };
     origenElegido = null;
     pintarTablero(juego, [mv.from, mv.to]);
@@ -493,7 +493,7 @@ function responderEscribiendo(texto, api) {
    tiene que decir eso. */
 function pistaDeJugada(){
   return document.documentElement.classList.contains('adaptive-mode')
-    ? 'Se responde con una sola jugada: escríbela en el recuadro, por ejemplo "Cf3" o "e4".'
+    ? 'Se responde con una sola jugada: escríbela en el recuadro, por ejemplo «Cf3» o «e4».'
     : 'Se responde con una sola jugada: haz clic en la pieza y después en su casilla de destino.';
 }
 
@@ -642,13 +642,17 @@ function clicEnCasilla(square) {
   responderJugada(juego, intento);
 }
 
-/* La pista se lee en voz alta (lector de pantalla o «Activar voz»): la jugada y
-   la casilla van en palabras, como en todo el sitio («Jugaste caballo felix 3»,
-   «Elegiste eva 4»), no en la notación inglesa, que se deletrea letra por letra. */
+/* La pista: para quien no ve, la jugada va en palabras, como en todo el sitio
+   («Jugaste caballo felix 3»); para los demás, en algebraica española
+   («Jugaste Cf3»), nunca en la notación inglesa. La casilla, en palabras. */
 function casillaDicha(sq) {
   return window.BlindNotation && BlindNotation.squareSpoken ? BlindNotation.squareSpoken(sq) : sq;
 }
 function jugadaDicha(san) {
+  if (window.ComandosTablero && ComandosTablero.jugadaParaMostrar) {
+    const vista = ComandosTablero.jugadaParaMostrar(san);
+    return vista === ComandosTablero.sanEspanol(san) ? vista : vista.replace(/^\S/, (c) => c.toLowerCase());
+  }
   return window.BlindNotation && BlindNotation.sanSpoken ? BlindNotation.sanSpoken(san).replace(/^\S/, (c) => c.toLowerCase()) : san;
 }
 

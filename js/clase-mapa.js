@@ -56,12 +56,12 @@ async function pasarEncuestaAlTablero() {
     const { error } = await sb.from("game_state").update({ arrows, circles: [], encuesta }).eq("id", myGameStateId);
     if (error) { console.error(error); setStatus("No se pudo pasar el mapa: " + error.message); return; }
     pintarEncuesta(encuesta);
-    setStatus("🗺️ La clase ve en el tablero lo que jugó: " + lineas.map((l) => l.jugada + " (" + l.cuantos + ")").join(", ") + ".");
+    setStatus("🗺️ La clase ve en el tablero lo que jugó: " + lineas.map((l) => ComandosTablero.jugadaParaMostrar(l.jugada) + " (" + l.cuantos + ")").join(", ") + ".");
 }
 
 function pintarEncuesta(encuesta) {
     encuestaActual = encuesta && Array.isArray(encuesta.lineas) && encuesta.lineas.length ? encuesta : null;
-    const dicha = (san) => (window.BlindNotation && BlindNotation.sanSpoken ? BlindNotation.sanSpoken(san) : san);
+    const dicha = (san) => (window.BlindNotation && BlindNotation.sanSpoken ? BlindNotation.sanSpoken(san) : ComandosTablero.sanEspanol(san));
     anunciarALaClase("encuesta", encuestaActual ? encuestaActual.question_id + ":" + encuestaActual.lineas.map((l) => l.jugada + l.cuantos).join(",") : null,
         "Tu profe pasó al tablero lo que jugó la clase: " + (encuestaActual ? encuestaActual.lineas.map((l) => {
             const n = Number(l.cuantos) || 0;
@@ -84,7 +84,7 @@ function pintarEncuesta(encuesta) {
         const t = document.createElement("span");
         const n = Number(l.cuantos) || 0;
         // El color va escrito: la flecha sola no dice cuál es cuál.
-        t.textContent = NOMBRE_COLOR[color] + ": " + String(l.jugada || "") + " — " + n + (n === 1 ? " alumno" : " alumnos");
+        t.textContent = NOMBRE_COLOR[color] + ": " + ComandosTablero.jugadaParaMostrar(String(l.jugada || "")) + " — " + n + (n === 1 ? " alumno" : " alumnos");
         li.append(muestra, t);
         ul.appendChild(li);
     });

@@ -21,7 +21,21 @@ async function unlock(alumnoId){
   await ProgresoUsuario.init();
   showTemasProgress();
   pintarHoy(alumnoId);
+  enfocarTitulo();
 }
+
+/* Con la cuenta ciega, el foco al título al llegar: el hub no tiene recuadro
+   donde escribir, y el foco se quedaba en el <body> (el lector no decía
+   dónde se había llegado). Sin la marca, como siempre: no se mueve. */
+function enfocarTitulo(){
+  if(!document.documentElement.classList.contains('modo-ciego')) return;
+  const a = document.activeElement;
+  if(a && a !== document.body && a !== document.documentElement) return;
+  const h = document.getElementById('hub-titulo');
+  if(h) h.focus();
+}
+// La marca puede llegar de la base un momento después (js/vision-cuenta.js).
+document.addEventListener('vision:cambio', () => { if(!app.classList.contains('hidden')) enfocarTitulo(); });
 
 /* «Hoy te toca» vive en js/hoy-te-toca.js: es el mismo que se pinta en el
    panel del alumno. Acá, las direcciones van relativas a entreno/. */

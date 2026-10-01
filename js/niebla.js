@@ -142,6 +142,9 @@
             checkFlagFall();
         }, 250);
 
+        // Las jugadas se guardan como las da chess.js (en inglés) y se muestran
+        // en algebraica española («Cf3»), o en palabras para quien no ve.
+        const jugadaVista = (san) => (window.ComandosTablero ? ComandosTablero.jugadaParaMostrar(san) : san);
         function renderMoveHistory(moves) {
             const listEl = document.getElementById("moves-list");
             const emptyEl = document.getElementById("moves-empty");
@@ -157,7 +160,7 @@
             for (let i = 0; i < moves.length; i += 2) {
                 const li = document.createElement("li");
                 const num = Math.floor(i / 2) + 1;
-                li.textContent = num + ". " + moves[i] + (moves[i + 1] ? " " + moves[i + 1] : "");
+                li.textContent = num + ". " + jugadaVista(moves[i]) + (moves[i + 1] ? " " + jugadaVista(moves[i + 1]) : "");
                 listEl.appendChild(li);
             }
         }

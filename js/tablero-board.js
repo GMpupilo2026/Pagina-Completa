@@ -1026,14 +1026,18 @@
     else if (dicho === "enroquelargo") s = "O-O-O";
 
     const candidates = new Set();
+    // En el sitio R es SIEMPRE el rey (algebraica española); la torre es T.
+    // Leída en inglés, «Rf1» movía la torre.
+    if (/^R/i.test(s)) s = "K" + s.slice(1);
+    s = s.replace(/=R([+#]?)$/i, "=K$1");   // no se corona a rey (y «=R» no es la torre)
     candidates.add(s);
 
     if (/^0-0-0[+#]?$/.test(s) || /^0-0[+#]?$/.test(s)) candidates.add(s.replace(/0/g, "O"));
 
     const first = s[0];
     if (first && SAN_PIECE_LETTERS.indexOf(first.toUpperCase()) !== -1 && s.length >= 3) {
-      candidates.add(first.toUpperCase() + s.slice(1));
       candidates.add(mapSpanishPieceLetter(first) + s.slice(1));
+      candidates.add(first.toUpperCase() + s.slice(1));
     }
 
     const promoMatch = s.match(/=([a-zA-Z])([+#]?)$/);
@@ -1726,6 +1730,50 @@
   }
 
   if (moveFormEl) moveFormEl.addEventListener("submit", handleMoveFormSubmit);
+
+  /* «siguiente» con la cuenta ciega. La capa del recuadro (js/vision-cuenta.js)
+     aprieta el botón que «hace siguiente», y acá ese botón es «🎲 Otra
+     posición» del Modo Desafío: a mitad de una partida normal cambiaba la
+     tarjeta del desafío sin decir nada que tuviera que ver con la partida. En
+     una partida no hay «siguiente»; se dice cómo empezar otra. Con el Modo
+     Desafío activo, sí: otra posición, y se empieza a jugar. Va en la captura de
+     `window`, que corre antes que la de `document` (la de vision-cuenta.js). */
+  if (moveFormEl && challengeShuffleBtn) {
+    window.addEventListener("submit", (e) => {
+      if (e.target !== moveFormEl || !moveInputEl) return;
+      if (!document.documentElement.classList.contains("modo-ciego")) return;
+      const t = moveInputEl.value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z ]+/g, " ").replace(/\s+/g, " ").trim();
+      const pideSiguiente = /^(siguiente|otra posicion|siguiente posicion)$/.test(t);
+      const pideNueva = /^(nueva partida|otra partida|jugar de nuevo|jugar otra vez|empezar de nuevo)$/.test(t);
+      // «rendirse» dicho en español (el botón se llama «Rendirse y terminar la partida»).
+      const pideRendirse = /^(rendirse|me rindo|abandonar)$/.test(t);
+      if (!pideSiguiente && !pideNueva && !pideRendirse) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      moveInputEl.value = "";
+      const color = () => (userColor === "w" ? "blancas" : "negras");
+      if (pideRendirse) {
+        if (isGameOver()) announceMoveInput("La partida ya terminó. Escribe «nueva partida» para jugar otra.");
+        else { resign(); announceMoveInput("Te rendiste: Oscar gana. Escribe «nueva partida» para jugar otra."); }
+      } else if (pideSiguiente && startFen && hasChallengePositions()) {
+        challengeShuffleBtn.click();
+        startChallenge(currentPositionIndex);
+        const entry = positionEntryFromRow(window.OSCAR_POSITIONS[currentPositionIndex]);
+        announceMoveInput("Otra posición del Modo Desafío, de la partida de Oscar contra " + entry.opponent
+          + ". Juegas con las " + color() + ". Escribe «posición» para oírla.");
+      } else if (isGameOver()) {
+        resetGame();
+        announceMoveInput("Partida nueva contra Oscar. Juegas con las " + color() + ".");
+      } else if (pideSiguiente && t === "siguiente") {
+        announceMoveInput("En una partida no hay «siguiente»: sigue jugando contra Oscar. Para empezar otra, escribe «rendirse» y después «nueva partida». Para el Modo Desafío, escribe «jugar esta posición».");
+      } else if (pideSiguiente) {
+        announceMoveInput("El Modo Desafío no está activo: escribe «jugar esta posición» para empezarlo.");
+      } else {
+        announceMoveInput("La partida sigue. Para empezar otra, escribe «rendirse» y después «nueva partida».");
+      }
+      moveInputEl.focus();
+    }, true);
+  }
 
   // ---------- Accesibilidad: repetir en voz alta las jugadas realizadas ----------
   // Útil para quien usa lector de pantalla y se le pasó por alto una jugada, o simplemente

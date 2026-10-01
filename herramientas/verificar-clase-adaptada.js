@@ -107,6 +107,11 @@ async function pruebaClase(browser) {
   await escribir(page, "#clase-cmd", "Td1");
   si("sin el control, escribir una jugada explica por qué", /mueve tu profe/i.test(await aviso(page, "#clase-cmd")), await aviso(page, "#clase-cmd"));
   igual("y no manda nada a la base", await page.evaluate(() => window.__updates.filter((u) => u.tabla === "game_state").length), 0);
+  /* Lo que no es una jugada no se entendió, con o sin el control: decirle
+     «Ahora mueve tu profe» a un «hola» le hace creer que jugó a destiempo. */
+  await escribir(page, "#clase-cmd", "hola");
+  const hola = await aviso(page, "#clase-cmd");
+  si("sin el control, «hola» dice «No entendí «hola»» (no «mueve tu profe»)", /^No entendí «hola»/.test(hola) && !/mueve tu profe/i.test(hola), hola);
 
   await page.evaluate((f) => window.__cambioEnBase("game_state", f), fila({ moves: ["Rd1+"] }));
   await page.waitForTimeout(300);
@@ -213,11 +218,25 @@ async function pruebaPregunta(browser) {
   igual("la pregunta es un diálogo", d.rol, "dialog");
   igual("y se lleva el foco al abrirse", d.foco, "question-titulo");
   igual("con su recuadro a la vista", d.caja, true);
+  const colorHint = await page.evaluate(() => { const c = document.getElementById("question-color-hint").cloneNode(true); c.querySelectorAll("[aria-hidden=true]").forEach((x) => x.remove()); return c.textContent; });
+  igual("el círculo del color va fuera del lector («leer» no dice «círculo blanco»)", colorHint, "Te toca jugar con Blancas");
   await page.evaluate(() => { window.__inserts.length = 0; });
   await escribir(page, "#question-cmd", "Td1");
   await page.waitForTimeout(400);
   const r = await page.evaluate(() => window.__inserts.filter((i) => i.tabla === "question_answers").map((i) => i.fila.moves));
   si("la jugada escrita se envía como respuesta", r.length && JSON.stringify(r[0]) === JSON.stringify(["Rd1+"]), JSON.stringify(r));
+  /* Después de contestar, «siguiente» decía «usa el botón "Cambiar
+     respuesta"»: se dice qué escribir, y escribirlo funciona. */
+  await escribir(page, "#question-cmd", "siguiente");
+  const sig = await aviso(page, "#question-cmd");
+  si("«siguiente» con la respuesta enviada dice qué escribir para cambiarla", /Ya enviaste tu respuesta/.test(sig) && /escribe «cambiar respuesta»/.test(sig) && !/bot[oó]n/.test(sig), sig);
+  await escribir(page, "#question-cmd", "Td8");
+  const ya = await aviso(page, "#question-cmd");
+  si("una jugada con la respuesta enviada tampoco dice «usa el botón»", /escribe «cambiar respuesta»/.test(ya) && !/bot[oó]n/.test(ya), ya);
+  await escribir(page, "#question-cmd", "cambiar respuesta");
+  const cambia = await aviso(page, "#question-cmd");
+  igual("«cambiar respuesta» deja volver a contestar", await page.evaluate(() => [questionBoard.interactive, document.getElementById("question-retry-btn").classList.contains("hidden")].join(",")), "true,true");
+  si("y lo dice", /^Puedes volver a contestar/.test(cambia), cambia);
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
 }
@@ -244,6 +263,9 @@ async function pruebaOpciones(browser) {
   await escribir(page, "#question-cmd", "la de arriba");
   si("lo que no se entiende se dice, no se marca cualquier cosa", /No entendí/.test(await aviso(page, "#question-cmd")), await aviso(page, "#question-cmd"));
   igual("…y no manda nada", await page.evaluate(() => window.__inserts.filter((i) => i.tabla === "question_answers").length), 0);
+  await escribir(page, "#question-cmd", "D");
+  const d4 = await aviso(page, "#question-cmd");
+  igual("una letra que no es de ninguna opción dice cuáles hay", d4, "No hay opción D: las opciones son A, B y C.");
   await escribir(page, "#question-cmd", "B");
   await page.waitForTimeout(400);
   const env = await page.evaluate(() => window.__inserts.filter((i) => i.tabla === "question_answers").map((i) => i.fila.opcion));
@@ -313,6 +335,8 @@ async function pruebaSinVer(browser) {
   await escribir(page, "#question-cmd", "tiempo");
   const tiempo = await aviso(page, "#question-cmd");
   si("«tiempo» dice cuánto queda", /Te quedan (\d+ segundos|1 minuto)/.test(tiempo), tiempo);
+  const reloj = await page.evaluate(() => { const c = document.getElementById("question-tiempo-alumno").cloneNode(true); c.querySelectorAll("[aria-hidden=true]").forEach((x) => x.remove()); return c.textContent; });
+  si("el ⏱️ del tiempo de la pregunta va fuera del lector", /^Quedan /.test(reloj) && !/⏱/.test(reloj), reloj);
   igual("y no queda escrito", await page.inputValue("#question-cmd .cc-input"), "");
   igual("lo que no se entiende queda SELECCIONADO", await enviarYVer("#question-cmd", "la de arriba"), "la de arriba");
   await page.waitForTimeout(250);
@@ -379,10 +403,27 @@ async function pruebaCalentamiento(browser) {
   await page.waitForTimeout(800);
   igual("el foco va al recuadro del calentamiento", await page.evaluate(() =>
     !!document.activeElement && !!document.activeElement.closest("#calentamiento-cmd")), true);
+  /* Después de fallar, todo contestaba «Toca "Intentarlo otra vez"». Ahora
+     «otra vez» vuelve a la posición, y una jugada nueva se intenta directo. */
+  await escribir(page, "#calentamiento-cmd", "Tc2");
+  await page.waitForTimeout(300);
+  si("fallar dice «Respuesta incorrecta»", /^Respuesta incorrecta: torre cesar 2/.test(await page.textContent("#calentamiento-msg")), await page.textContent("#calentamiento-msg"));
+  await escribir(page, "#calentamiento-cmd", "hola");
+  const hola = await aviso(page, "#calentamiento-cmd");
+  si("después de fallar, «hola» no se entendió (sin «toca»)", /^No entendí «hola»/.test(hola) && !/toca/i.test(hola), hola);
+  await escribir(page, "#calentamiento-cmd", "otra vez");
+  const otra = await aviso(page, "#calentamiento-cmd");
+  si("«otra vez» vuelve a la posición y lo dice", /^Volviste a la posición del calentamiento/.test(otra) && await page.evaluate(() => calentamientoBoard.interactive && !calentamientoBoard.moves().length), otra);
+  await escribir(page, "#calentamiento-cmd", "Tc3");
+  await page.waitForTimeout(300);
+  const turno = await page.evaluate(() => { const el = document.getElementById("calentamiento-turno"); const c = el.cloneNode(true); c.querySelectorAll("[aria-hidden=true]").forEach((x) => x.remove()); return c.textContent; });
+  si("el círculo del color del turno va fuera del lector", /^Juegan Blancas: /.test(turno) && !/[⚪⚫]/.test(turno), turno);
+  // Una jugada nueva después de fallar se intenta directo, sin pasar por «otra vez».
   await escribir(page, "#calentamiento-cmd", "Td1");
   await page.waitForTimeout(300);
   const msg = await page.textContent("#calentamiento-msg");
   si("y la confirmación dice la jugada en palabras, no «Rd1+»", /torre david 1/.test(msg) && !/Rd1/.test(msg), msg);
+  si("la jugada nueva después de fallar se intentó directo", /^✅ ¡Bien!/.test(msg), msg);
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
 }
