@@ -207,30 +207,14 @@
         // el tablero: se usa cuando una escritura propia no quedó guardada y lo que se
         // ve en pantalla ya no es lo que hay en la base.
         async function releerSala(mensaje) {
-            const { data: fila, error } = await sb.from("game_rooms").select("*").eq("id", ROOM_ID).single();
-            if (error || !fila) console.error(error);
-            else applyRemoteRoom(fila, true);
+            const fila = await SalaJuego.releer(ROOM_ID);
+            if (fila) applyRemoteRoom(fila, true);
             setStatus(mensaje);
         }
 
-        function subscribeRoom() {
-            sb.channel("game-room-" + ROOM_ID)
-                .on("postgres_changes", { event: "UPDATE", schema: "public", table: "game_rooms", filter: "id=eq." + ROOM_ID }, (payload) => applyRemoteRoom(payload.new))
-                .subscribe();
-        }
+        function subscribeRoom() { SalaJuego.suscribir(ROOM_ID, (fila) => applyRemoteRoom(fila)); }
 
-        document.getElementById("resign-btn").addEventListener("click", async () => {
-            if (!myColor || room.status !== "playing") return;
-            if (!(await Avisos.confirmar("La partida se termina y la gana tu rival.", { titulo: "¿Rendirte?", aceptar: "Rendirme", peligro: true }))) return;
-            // El diálogo pudo quedar abierto un buen rato: si mientras tanto la partida
-            // terminó (por ejemplo, al rival se le cayó la bandera), rendirse no puede
-            // pisar ese resultado. Por eso se vuelve a mirar, y la base lo exige también.
-            if (room.status !== "playing") { setStatus("La partida ya había terminado."); return; }
-            const result = myColor === "w" ? "black" : "white";
-            const { data: rendida, error } = await sb.from("game_rooms").update({ status: "finished", result: result, updated_at: new Date().toISOString() }).eq("id", ROOM_ID).eq("status", "playing").select("id");
-            if (error) { console.error(error); setStatus("No se pudo registrar la rendición: " + error.message); return; }
-            if (!rendida || !rendida.length) await releerSala("La partida ya había terminado: la rendición no se registró.");
-        });
+        SalaJuego.montarRendirse({ salaId: ROOM_ID, sala: () => room, miColor: () => myColor, decir: setStatus, releer: releerSala });
 
         async function init() {
             const { data } = await sb.auth.getSession();

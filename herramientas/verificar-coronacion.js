@@ -48,8 +48,10 @@ function sinComentarios(s) {
 
 // Los tableros donde juega una persona y que antes coronaban en dama solos.
 const TABLEROS = [
-  "clases-board", "tablero-pregunta", "racha-tactica", "te-reto", "entreno-diagnostico",
+  "clases-board", "tablero-pregunta", "entreno-diagnostico",
   "entreno-aprender", "entreno-practicas", "entreno-tipos", "bot",
+  // Racha táctica y Te reto comparten el tablero (antes cada una tenía su copia).
+  "racha-tablero",
   // El módulo común de ejercicios: Temas, Mates y Desafíos coronan por acá.
   "ejercicio-tablero",
 ];

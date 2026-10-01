@@ -63,86 +63,24 @@
 
         document.getElementById("ready-btn").addEventListener("click", async () => {
             if (!myColor || room.status !== "playing") return;
-            const myKey = myColor === "w" ? "white_ready" : "black_ready";
-            const otherAlreadyReady = myColor === "w" ? room.black_ready : room.white_ready;
-            const patch = { [myKey]: true };
-            if (otherAlreadyReady && room.initial_seconds != null && !room.clock_updated_at) {
-                patch.clock_updated_at = new Date().toISOString();
-            }
-            const { error } = await sb.from("game_rooms").update(patch).eq("id", ROOM_ID);
-            if (error) { console.error(error); setStatus("No se pudo confirmar: " + error.message); return; }
-            room = Object.assign({}, room, patch);
+            const { cambio, error } = await SalaJuego.marcarListo(room, ROOM_ID, myColor);
+            if (error) { setStatus("No se pudo confirmar: " + error.message); return; }
+            room = Object.assign({}, room, cambio);
             board.setInteractive(!!myColor && room.status === "playing" && bothReady(room));
             updateStatusText();
             renderClocks();
         });
 
-        function formatClock(seconds) {
-            if (seconds == null) return "";
-            const s = Math.max(0, Math.ceil(seconds));
-            const m = Math.floor(s / 60);
-            const r = s % 60;
-            return m + ":" + String(r).padStart(2, "0");
-        }
+        function formatClock(seconds) { return SalaJuego.formatear(seconds); }
 
-        function liveTimeLeft(color) {
-            const stored = color === "w" ? room.white_time_left : room.black_time_left;
-            if (stored == null) return null;
-            const isRunning = room.status === "playing" && room.clock_updated_at && board.game.turn() === color;
-            if (!isRunning) return stored;
-            const elapsed = RelojServidor.desde(room.clock_updated_at);
-            return Math.max(0, stored - elapsed);
-        }
+        function liveTimeLeft(color) { return SalaJuego.restante(room, color, board.game.turn()); }
 
+        // El reloj y su rótulo dicho son de js/sala-juego.js (una sola copia).
         function renderClocks() {
-            const topEl = document.getElementById("top-clock");
-            const bottomEl = document.getElementById("bottom-clock");
-            if (room.initial_seconds == null) {
-                topEl.classList.add("hidden");
-                bottomEl.classList.add("hidden");
-                return;
-            }
-            const bottomColor = myColor || "w";
-            const topColor = bottomColor === "w" ? "b" : "w";
-            const topSeconds = liveTimeLeft(topColor);
-            const bottomSeconds = liveTimeLeft(bottomColor);
-            topEl.textContent = formatClock(topSeconds);
-            bottomEl.textContent = formatClock(bottomSeconds);
-            /* De quién es cada reloj, dicho: "4:05" suelto no dice si es el tuyo o
-               el del rival, y quien no ve la pantalla no sabe cuál está arriba. */
-            rotularReloj(topEl, topColor, topSeconds);
-            rotularReloj(bottomEl, bottomColor, bottomSeconds);
-            topEl.classList.remove("hidden");
-            bottomEl.classList.remove("hidden");
-            const LOW_SECONDS = 30;
-            [[topEl, topSeconds], [bottomEl, bottomSeconds]].forEach(([el, secs]) => {
-                const isLow = room.status === "playing" && secs != null && secs <= LOW_SECONDS;
-                el.classList.toggle("text-red-600", isLow);
-                el.classList.toggle("dark:text-red-400", isLow);
-            });
+            SalaJuego.pintarRelojes(room, { miColor: myColor, turno: board.game.turn(), nombreDe: (c) => nameFor(c === "w" ? room.white_id : room.black_id) });
         }
 
-        function rotularReloj(el, color, segundos) {
-            const lado = color === "w" ? "blancas" : "negras";
-            const dueno = myColor ? (color === myColor ? "tu reloj" : "reloj del rival")
-                : "reloj de " + nameFor(color === "w" ? room.white_id : room.black_id);
-            const tiempo = window.JuegosBlind && JuegosBlind.tiempoDicho ? JuegosBlind.tiempoDicho(segundos) : formatClock(segundos);
-            const etiqueta = dueno.charAt(0).toUpperCase() + dueno.slice(1) + ", " + lado + ": " + tiempo;
-            if (el.getAttribute("aria-label") !== etiqueta) el.setAttribute("aria-label", etiqueta);
-        }
-
-        async function checkFlagFall() {
-            if (room.status !== "playing" || room.initial_seconds == null) return;
-            const turnColor = board.game.turn();
-            const secondsLeft = liveTimeLeft(turnColor);
-            if (secondsLeft === null || secondsLeft > 0) return;
-            const winner = turnColor === "w" ? "black" : "white";
-            const timeKey = turnColor === "w" ? "white_time_left" : "black_time_left";
-            const { error } = await sb.from("game_rooms")
-                .update({ status: "finished", result: winner, [timeKey]: 0, updated_at: new Date().toISOString() })
-                .eq("id", ROOM_ID).eq("status", "playing");
-            if (error) console.error(error);
-        }
+        function checkFlagFall() { return SalaJuego.revisarBandera(room, ROOM_ID, board.game.turn()); }
 
         setInterval(() => {
             if (!room || !board) return;
@@ -189,9 +127,7 @@
         // Triple repetición: el tablero se recarga desde la FEN con cada jugada del
         // rival y chess.js pierde el historial, así que se cuenta reproduciendo la
         // lista de jugadas guardada (ver js/repeticion.js).
-        function esTripleRepeticion(jugadas, fen) {
-            return !!window.Repeticion && Repeticion.esTriple("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", jugadas, (f) => new Chess(f), fen);
-        }
+        function esTripleRepeticion(jugadas, fen) { return SalaJuego.esTripleRepeticion(jugadas, fen); }
 
         /* El tablero se recarga desde la FEN con cada jugada del rival, y
            `load()` borra la historia de chess.js: en Modo Adaptado «historial»
@@ -267,30 +203,14 @@
         // el tablero: se usa cuando una escritura propia no quedó guardada y lo que se
         // ve en pantalla ya no es lo que hay en la base.
         async function releerSala(mensaje) {
-            const { data: fila, error } = await sb.from("game_rooms").select("*").eq("id", ROOM_ID).single();
-            if (error || !fila) console.error(error);
-            else applyRemoteRoom(fila, true);
+            const fila = await SalaJuego.releer(ROOM_ID);
+            if (fila) applyRemoteRoom(fila, true);
             setStatus(mensaje);
         }
 
-        function subscribeRoom() {
-            sb.channel("game-room-" + ROOM_ID)
-                .on("postgres_changes", { event: "UPDATE", schema: "public", table: "game_rooms", filter: "id=eq." + ROOM_ID }, (payload) => applyRemoteRoom(payload.new))
-                .subscribe();
-        }
+        function subscribeRoom() { SalaJuego.suscribir(ROOM_ID, (fila) => applyRemoteRoom(fila)); }
 
-        document.getElementById("resign-btn").addEventListener("click", async () => {
-            if (!myColor || room.status !== "playing") return;
-            if (!(await Avisos.confirmar("La partida se termina y la gana tu rival.", { titulo: "¿Rendirte?", aceptar: "Rendirme", peligro: true }))) return;
-            // El diálogo pudo quedar abierto un buen rato: si mientras tanto la partida
-            // terminó (por ejemplo, al rival se le cayó la bandera), rendirse no puede
-            // pisar ese resultado. Por eso se vuelve a mirar, y la base lo exige también.
-            if (room.status !== "playing") { setStatus("La partida ya había terminado."); return; }
-            const result = myColor === "w" ? "black" : "white";
-            const { data: rendida, error } = await sb.from("game_rooms").update({ status: "finished", result: result, updated_at: new Date().toISOString() }).eq("id", ROOM_ID).eq("status", "playing").select("id");
-            if (error) { console.error(error); setStatus("No se pudo registrar la rendición: " + error.message); return; }
-            if (!rendida || !rendida.length) await releerSala("La partida ya había terminado: la rendición no se registró.");
-        });
+        SalaJuego.montarRendirse({ salaId: ROOM_ID, sala: () => room, miColor: () => myColor, decir: setStatus, releer: releerSala });
 
         async function init() {
             const { data } = await sb.auth.getSession();
