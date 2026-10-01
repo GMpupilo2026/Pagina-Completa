@@ -136,6 +136,20 @@ window.MaterialPlataforma = (function () {
     { slug: "arbitraje", label: "Diagnóstico de arbitraje", href: "nivel-de-arbitraje.html",
       actividades: [], metas: ["completar"], unidad: "" },
 
+    /* Un cuestionario (los del profe y los listos de la Academia), para
+       contestarlo en la casa. Se pide UNA vez y se cumple al entregarlo. Lo
+       cuenta tareas_con_avance() desde cuestionario_intentos, que solo escribe
+       la base al calificar, no desde training_progress: `actividades` está
+       porque la tabla exige una en las metas que se miden. El recorte es el
+       cuestionario y no tiene «— todo —»: sin uno elegido no hay nada que
+       contestar. Ver «El cuestionario como tarea» en seguimiento-del-alumno.md. */
+    { slug: "cuestionario", label: "Cuestionario", href: "cuestionario-tarea.html",
+      actividades: ["cuestionario"], metas: ["cantidad"], unidad: "cuestionarios",
+      cuentaDesde: "cuestionario_intentos",
+      recortes: "cuestionarios", recorteLabel: "Cuestionario", recorteObligatorio: true,
+      hrefRecorte: (c) => `cuestionario-tarea.html?c=${encodeURIComponent(c)}`,
+      unaVez: true, frase: (r) => `Contestar el cuestionario «${r.filtro_label || "sin título"}»` },
+
     /* El plan contra un rival: no se elige en Tareas, porque cada plan es de un
        alumno. Lo manda la preparación de rivales (mandar_plan_rival(), con el
        id del plan en filtro_clave) y está acá para que la tarea se lea bien
@@ -192,8 +206,35 @@ window.MaterialPlataforma = (function () {
   async function recortesDe(slug) {
     const h = HERRAMIENTAS.find((x) => x.slug === slug);
     if (!h || !h.recortes) return [];
+    if (h.recortes === "cuestionarios") return cuestionarios();
     const m = await metas();
     return m[h.recortes] || [];
+  }
+
+  /* Los cuestionarios no están en metas.json: son de cada profe y viven en la
+     base. La RLS decide cuáles ve (los suyos y los listos). Los suyos primero,
+     y los listos por nivel, como en cuestionarios.html. */
+  async function cuestionarios() {
+    if (!window.sb) return [];
+    try {
+      const { data, error } = await window.sb.from("cuestionarios")
+        .select("id, titulo, nivel, listo, preguntas").order("titulo");
+      if (error || !data) return [];
+      const NIVEL = { inicial: "Inicial", intermedio: "Intermedio", avanzado: "Avanzado" };
+      // Los tuyos (0), los listos sin nivel (1) y los de cada nivel (2, 3, 4).
+      const orden = (c) => (c.listo ? 2 + ["inicial", "intermedio", "avanzado"].indexOf(c.nivel) : 0);
+      return data.slice().sort((a, b) => orden(a) - orden(b)).map((c) => {
+        const n = Array.isArray(c.preguntas) ? c.preguntas.length : 0;
+        return {
+          clave: c.id,
+          label: c.titulo,
+          detalle: n + (n === 1 ? " pregunta" : " preguntas"),
+          grupo: c.listo ? "Listos de la Academia · " + (NIVEL[c.nivel] || "Sin nivel") : "Tus cuestionarios",
+        };
+      });
+    } catch (e) {
+      return [];
+    }
   }
 
   /* Con qué nombre apunta ESTE renglón en training_progress. Un recorte puede

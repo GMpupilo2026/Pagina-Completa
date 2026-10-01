@@ -311,9 +311,18 @@ async function main() {
       const check = ((fs.readFileSync(path.join(dir, ultima), "utf8").match(/add constraint training_progress_activity_check[\s\S]*?array\[([\s\S]*?)\]/) || [])[1] || "")
         .match(/'([a-z0-9_-]+)'/g).map((x) => x.replace(/'/g, ""));
       const fueraDelCheck = [];
-      M.HERRAMIENTAS.filter((h) => h.metas.includes("cantidad")).forEach((h) =>
+      /* Lo que no se cuenta de training_progress (`cuentaDesde`: el
+         cuestionario, que cuenta los intentos que guarda la base al
+         calificar) no pasa por ese CHECK, pero entonces tareas_con_avance()
+         tiene que saber contarlo: si no, también se quedaría en cero. */
+      M.HERRAMIENTAS.filter((h) => h.metas.includes("cantidad") && !h.cuentaDesde).forEach((h) =>
         (h.actividades || []).forEach((a) => { if (!check.includes(a)) fueraDelCheck.push(h.slug + ":" + a); }));
       ok(!fueraDelCheck.length, `herramientas que piden cantidad de una actividad que la base rechaza (${ultima}): ${fueraDelCheck.join(", ")}`);
+      const avance = fs.readdirSync(dir).sort().filter((f) => /function public\.tareas_con_avance/.test(fs.readFileSync(path.join(dir, f), "utf8"))).pop();
+      const textoAvance = fs.readFileSync(path.join(dir, avance), "utf8");
+      M.HERRAMIENTAS.filter((h) => h.cuentaDesde).forEach((h) =>
+        ok(textoAvance.includes(`material_slug = '${h.slug}'`) && textoAvance.includes("public." + h.cuentaDesde),
+          `${h.slug} se cuenta desde ${h.cuentaDesde}, pero tareas_con_avance() (${avance}) no lo cuenta`));
     }
   }
 

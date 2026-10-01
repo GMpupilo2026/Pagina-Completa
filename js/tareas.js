@@ -57,7 +57,7 @@ function fraseDe(r) {
        el nombre del material, que tiene que sobrevivir a que lo renombren. */
     const h = MaterialPlataforma.herramienta(r.material_slug);
     // Lo que se pide una sola vez no dice «Hacer 1 diagnósticos de…».
-    if (h && h.frase) return h.frase;
+    if (h && h.frase) return typeof h.frase === "function" ? h.frase(r) : h.frase;
     const unidad = (h && h.unidad) || "ejercicios";
     const verbo = VERBO[unidad] || "Hacer";
     return `${verbo} ${r.meta_cantidad} ${unidad} de ${nombre}`;
@@ -309,9 +309,12 @@ async function refrescarRenglon(div, cambioMaterial) {
         const recortes = h ? await MaterialPlataforma.recortesDe(h.slug) : [];
         recSel.innerHTML = "";
         if (recortes.length) {
-            const todo = document.createElement("option");
-            todo.value = ""; todo.textContent = "— todo —";
-            recSel.appendChild(todo);
+            // Un cuestionario hay que elegirlo: «— todo —» no es nada que contestar.
+            if (!(h && h.recorteObligatorio)) {
+                const todo = document.createElement("option");
+                todo.value = ""; todo.textContent = "— todo —";
+                recSel.appendChild(todo);
+            }
             // Agrupados como vienen en su página, que es como el profesor los
             // tiene en la cabeza ("Táctica de ataque", "Aperturas").
             const grupos = new Map();
@@ -326,7 +329,7 @@ async function refrescarRenglon(div, cambioMaterial) {
                 lista.forEach((r) => {
                     const o = document.createElement("option");
                     o.value = r.clave;
-                    o.textContent = r.total > 1 ? `${r.label} (${r.total})` : r.label;
+                    o.textContent = r.detalle ? `${r.label} (${r.detalle})` : r.total > 1 ? `${r.label} (${r.total})` : r.label;
                     o.dataset.total = String(r.total || 0);
                     o.dataset.label = r.label;
                     o.dataset.actividades = JSON.stringify(r.actividades || []);
@@ -335,6 +338,10 @@ async function refrescarRenglon(div, cambioMaterial) {
             });
         }
         recWrap.classList.toggle("hidden", !recortes.length);
+        /* Sin ningún cuestionario a la vista no hay qué elegir: se dice dónde
+           se arman, en vez de un renglón que no se puede mandar. */
+        const sinRecortes = div.querySelector(".r-sin-recortes");
+        if (sinRecortes) sinRecortes.classList.toggle("hidden", !(h && h.recorteObligatorio && !recortes.length));
         div.querySelector(".r-recorte-label").textContent = (h && h.recorteLabel) || "Tema";
 
         // Qué se le puede pedir a esto. Una herramienta que no escribe en
@@ -455,6 +462,11 @@ async function enviarTarea(ev) {
     for (const d of divs) {
         const r = leerRenglon(d);
         if (!r) { status.textContent = "Hay un renglón sin material."; return; }
+        const hr = MaterialPlataforma.herramienta(r.material_slug);
+        if (hr && hr.recorteObligatorio && !r.filtro_clave) {
+            status.textContent = `Elige qué ${String(hr.recorteLabel || "recorte").toLowerCase()} mandar.`;
+            return;
+        }
         if (r.meta_tipo !== "completar" && !(r.meta_cantidad > 0)) {
             status.textContent = `Ponle una cantidad a «${r.filtro_label || r.material_label}».`;
             return;
@@ -543,6 +555,16 @@ function tarjetaEnviada(t) {
             return `<span class="text-green-600 dark:text-green-400">✔ Ya hizo el diagnóstico</span>`
                 + ` <a href="${escapeHtml(resultado)}" class="font-semibold text-accent-700 dark:text-accent-400 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded">Ver su resultado →</a>`;
         }
+        /* El cuestionario tampoco: el profe viene a ver cuánto sacó. Vale el
+           primer intento (después ya vio las correctas); el mejor y cuántas
+           veces lo hizo van al lado. Los números los calcula la base. */
+        if (r.material_slug === "cuestionario") {
+            const nombre = `«${escapeHtml(r.filtro_label || "Cuestionario")}»`;
+            const c = r.cuestionario;
+            if (!c) return `<span>🎯 ${t.situacion === "programada" ? "Cuestionario " + nombre : "Todavía no contesta " + nombre}</span>`;
+            const extra = c.intentos > 1 ? ` (lo hizo ${c.intentos} veces; la mejor, ${c.mejor} de ${c.total})` : "";
+            return `<span class="text-green-600 dark:text-green-400">✔ ${nombre}: ${c.primero} de ${c.total} la primera vez${extra}</span>`;
+        }
         const meta = r.meta_tipo === "completar" ? 1 : r.meta_cantidad;
         return `<span class="${r.cumplido ? "text-green-600 dark:text-green-400" : ""}">${r.cumplido ? "✔" : ""} ${escapeHtml(r.filtro_label || r.material_label)} ${r.hecho}/${meta}</span>`;
     }).join(" · ");
@@ -601,6 +623,8 @@ async function cargarMisTareas() {
 function renglonAlumno(r, tareaId, tareaTitulo) {
     const li = document.createElement("li");
     const meta = r.meta_tipo === "completar" ? 1 : r.meta_cantidad;
+    /* Un cuestionario contestado dos veces no es «2/1»: se pidió una. */
+    if (r.material_slug === "cuestionario") r = Object.assign({}, r, { hecho: Math.min(Number(r.hecho) || 0, meta) });
     const pct = Math.min(100, Math.round((100 * r.hecho) / (meta || 1)));
     // material_href lo escribe quien pone la tarea: un "javascript:" ahí se
     // ejecutaría con la sesión del alumno al tocar "Ir". Solo valen direcciones
@@ -615,16 +639,20 @@ function renglonAlumno(r, tareaId, tareaTitulo) {
         const u = new URL(href, location.href);
         seguro = u.origin === location.origin;
     } catch (e) {}
-    const enlace = seguro ? href + (href.includes("?") ? "&" : "?") + "tarea=" + encodeURIComponent(tareaId) : "tareas.html";
+    /* El cuestionario necesita saber de qué renglón es: lo que contesta se
+       guarda en ese renglón, y es lo que la base usa para dejarlo entrar. */
+    const extra = r.material_slug === "cuestionario" ? "&item=" + encodeURIComponent(r.id) : "";
+    const enlace = seguro ? href + (href.includes("?") ? "&" : "?") + "tarea=" + encodeURIComponent(tareaId) + extra : "tareas.html";
 
     /* Con lector de pantalla, la lista de enlaces de la página era «Ir, Ir,
        Repasar, Ir»: el nombre dice a qué va y de qué tarea es. Empieza con la
        palabra que se ve («Ir», «Repasar»), para quien lo dice en voz alta. */
     const nombreEnlace = `${r.cumplido ? "Repasar" : "Ir"}: ${fraseDe(r)}${tareaTitulo ? ` (tarea «${tareaTitulo}»)` : ""}`;
+    const cq = r.material_slug === "cuestionario" ? r.cuestionario : null;
     li.className = "border-l-2 pl-3 py-1 " + (r.cumplido ? "border-green-500" : "border-brand-200 dark:border-brand-700");
     li.innerHTML = `
         <div class="flex items-center justify-between gap-2 flex-wrap">
-            <span class="text-sm ${r.cumplido ? "text-green-700 dark:text-green-400" : "text-brand-700 dark:text-brand-100"}">${r.cumplido ? "✔ " : ""}${escapeHtml(fraseDe(r))}</span>
+            <span class="text-sm ${r.cumplido ? "text-green-700 dark:text-green-400" : "text-brand-700 dark:text-brand-100"}">${r.cumplido ? "✔ " : ""}${escapeHtml(fraseDe(r))}${cq ? ` · acertaste ${cq.primero} de ${cq.total}` : ""}</span>
             <a href="${escapeHtml(enlace)}" aria-label="${escapeHtml(nombreEnlace)}" class="text-xs font-semibold text-accent-700 dark:text-accent-400 hover:underline shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded">${r.cumplido ? "Repasar" : "Ir"} <span aria-hidden="true">→</span></a>
         </div>`;
 

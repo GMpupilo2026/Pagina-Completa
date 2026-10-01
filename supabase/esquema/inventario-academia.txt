@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20260930222921
+# al-dia-con: 20261001060028
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -32,7 +32,10 @@ tabla  compras_tienda  rls=true
 tabla  coordinador_funciones_quitadas  rls=true
 tabla  coordinador_profesores  rls=true
 tabla  course_unlocks  rls=true
+tabla  cuestionario_intentos  rls=true
 tabla  cuestionarios  rls=true
+tabla  curso_adjuntos  rls=true
+tabla  curso_contenido  rls=true
 tabla  datos_facturacion  rls=true
 tabla  desafios  rls=true
 tabla  diagnosticos_publicos  rls=true
@@ -321,6 +324,14 @@ columna  course_unlocks.hasta_leccion  integer
 columna  course_unlocks.id  uuid
 columna  course_unlocks.student_id  uuid
 columna  course_unlocks.updated_at  timestamp with time zone
+columna  cuestionario_intentos.aciertos  integer
+columna  cuestionario_intentos.alumno_id  uuid
+columna  cuestionario_intentos.created_at  timestamp with time zone
+columna  cuestionario_intentos.cuestionario_id  uuid
+columna  cuestionario_intentos.id  uuid
+columna  cuestionario_intentos.respuestas  jsonb
+columna  cuestionario_intentos.tarea_item_id  uuid
+columna  cuestionario_intentos.total  integer
 columna  cuestionarios.created_at  timestamp with time zone
 columna  cuestionarios.id  uuid
 columna  cuestionarios.listo  boolean
@@ -329,6 +340,20 @@ columna  cuestionarios.preguntas  jsonb
 columna  cuestionarios.profesor_id  uuid
 columna  cuestionarios.titulo  text
 columna  cuestionarios.updated_at  timestamp with time zone
+columna  curso_adjuntos.clase  integer
+columna  curso_adjuntos.created_at  timestamp with time zone
+columna  curso_adjuntos.created_by  uuid
+columna  curso_adjuntos.curso  text
+columna  curso_adjuntos.id  uuid
+columna  curso_adjuntos.nombre  text
+columna  curso_adjuntos.path  text
+columna  curso_adjuntos.tamano  bigint
+columna  curso_adjuntos.tipo  text
+columna  curso_contenido.clase  integer
+columna  curso_contenido.curso  text
+columna  curso_contenido.datos  jsonb
+columna  curso_contenido.updated_at  timestamp with time zone
+columna  curso_contenido.updated_by  uuid
 columna  datos_facturacion.actividad_economica  text
 columna  datos_facturacion.actualizado_at  timestamp with time zone
 columna  datos_facturacion.cedula  text
@@ -1116,6 +1141,7 @@ funcion  cobros_morosos()  invoker  anon=true  auth=true
 funcion  cobros_resumen()  invoker  anon=true  auth=true
 funcion  color_con_texto_blanco(p text)  invoker  anon=true  auth=true
 funcion  consumir_invitacion(p_profesor uuid)  definer  anon=false  auth=false
+funcion  contestar_cuestionario_de_tarea(p_item uuid, p_respuestas jsonb)  definer  anon=false  auth=true
 funcion  coord_equipo_create(p_nombre text)  definer  anon=false  auth=true
 funcion  coord_equipo_delete(p_equipo uuid)  definer  anon=false  auth=true
 funcion  coord_equipo_rename(p_equipo uuid, p_nombre text)  definer  anon=false  auth=true
@@ -1130,6 +1156,7 @@ funcion  correo_de_contacto(p_alumno uuid)  invoker  anon=true  auth=true
 funcion  correos_de_supervision(p_alumno uuid)  definer  anon=false  auth=false
 funcion  crear_examen(p_alumnos uuid[], p_titulo text, p_instrucciones text, p_minutos integer, p_vence timestamp with time zone, p_items jsonb, p_salidas_permitidas integer, p_disponible_desde timestamp with time zone)  invoker  anon=true  auth=true
 funcion  crear_tarea(p_alumnos uuid[], p_titulo text, p_instrucciones text, p_vence timestamp with time zone, p_items jsonb, p_disponible_desde timestamp with time zone)  invoker  anon=true  auth=true
+funcion  cuestionario_de_tarea(p_item uuid)  definer  anon=false  auth=true
 funcion  detalle_informe_mensual(p_informe uuid)  definer  anon=false  auth=true
 funcion  detalle_mensual_crudo(p_profesor uuid, p_periodo date)  definer  anon=false  auth=false
 funcion  detalle_mensual_profesor(p_profesor uuid, p_periodo date)  definer  anon=false  auth=true
@@ -1220,6 +1247,7 @@ funcion  interno.clases_que_coordino()  definer  anon=false  auth=true
 funcion  interno.clases_que_superviso()  definer  anon=false  auth=true
 funcion  interno.comparten_academia(p_a uuid, p_b uuid)  definer  anon=false  auth=true
 funcion  interno.coordinadores_de(p_persona uuid)  definer  anon=false  auth=false
+funcion  interno.cuestionario_del_renglon(p_item uuid)  definer  anon=false  auth=false
 funcion  interno.enlaces_de_sala_validos(p jsonb)  invoker  anon=true  auth=true
 funcion  interno.frenar_envio_publico(p_tipo text, p_ambito text, p_correo text, p_ip text)  invoker  anon=false  auth=false
 funcion  interno.gente_de_mis_academias()  definer  anon=false  auth=true
@@ -1456,10 +1484,19 @@ politica  course_unlocks  course_unlocks_insert  INSERT
 politica  course_unlocks  course_unlocks_select  SELECT
 politica  course_unlocks  course_unlocks_select_supervisor  SELECT
 politica  course_unlocks  course_unlocks_update  UPDATE
+politica  cuestionario_intentos  cuestionario_intentos_select  SELECT
 politica  cuestionarios  cuestionarios_delete  DELETE
 politica  cuestionarios  cuestionarios_insert  INSERT
 politica  cuestionarios  cuestionarios_select  SELECT
 politica  cuestionarios  cuestionarios_update  UPDATE
+politica  curso_adjuntos  curso_adjuntos_delete  DELETE
+politica  curso_adjuntos  curso_adjuntos_insert  INSERT
+politica  curso_adjuntos  curso_adjuntos_select  SELECT
+politica  curso_adjuntos  curso_adjuntos_update  UPDATE
+politica  curso_contenido  curso_contenido_delete  DELETE
+politica  curso_contenido  curso_contenido_insert  INSERT
+politica  curso_contenido  curso_contenido_select  SELECT
+politica  curso_contenido  curso_contenido_update  UPDATE
 politica  datos_facturacion  facturacion_coordinacion  ALL
 politica  datos_facturacion  facturacion_lee_alumno  SELECT
 politica  desafios  desafios_exige_acceso_ins  INSERT  restrictiva
@@ -1867,9 +1904,15 @@ indice  coordinador_profesores  coordinador_profesores_por_profesor
 indice  course_unlocks  course_unlocks_granted_by_fk
 indice  course_unlocks  course_unlocks_pkey
 indice  course_unlocks  course_unlocks_student_id_curso_key
+indice  cuestionario_intentos  cuestionario_intentos_item_idx
+indice  cuestionario_intentos  cuestionario_intentos_pkey
 indice  cuestionarios  cuestionarios_listo_titulo_unico
 indice  cuestionarios  cuestionarios_pkey
 indice  cuestionarios  cuestionarios_profesor_idx
+indice  curso_adjuntos  curso_adjuntos_curso_clase_idx
+indice  curso_adjuntos  curso_adjuntos_path_key
+indice  curso_adjuntos  curso_adjuntos_pkey
+indice  curso_contenido  curso_contenido_pkey
 indice  datos_facturacion  datos_facturacion_pkey
 indice  desafios  desafios_de_pendiente
 indice  desafios  desafios_para_pendiente
@@ -2345,6 +2388,7 @@ grant  course_unlocks  authenticated  SELECT
 grant  course_unlocks  authenticated  TRIGGER
 grant  course_unlocks  authenticated  TRUNCATE
 grant  course_unlocks  authenticated  UPDATE
+grant  cuestionario_intentos  authenticated  SELECT
 grant  cuestionarios  authenticated  DELETE
 grant  cuestionarios  authenticated  INSERT
 grant  cuestionarios  authenticated  REFERENCES
@@ -2352,6 +2396,34 @@ grant  cuestionarios  authenticated  SELECT
 grant  cuestionarios  authenticated  TRIGGER
 grant  cuestionarios  authenticated  TRUNCATE
 grant  cuestionarios  authenticated  UPDATE
+grant  curso_adjuntos  anon  DELETE
+grant  curso_adjuntos  anon  INSERT
+grant  curso_adjuntos  anon  REFERENCES
+grant  curso_adjuntos  anon  SELECT
+grant  curso_adjuntos  anon  TRIGGER
+grant  curso_adjuntos  anon  TRUNCATE
+grant  curso_adjuntos  anon  UPDATE
+grant  curso_adjuntos  authenticated  DELETE
+grant  curso_adjuntos  authenticated  INSERT
+grant  curso_adjuntos  authenticated  REFERENCES
+grant  curso_adjuntos  authenticated  SELECT
+grant  curso_adjuntos  authenticated  TRIGGER
+grant  curso_adjuntos  authenticated  TRUNCATE
+grant  curso_adjuntos  authenticated  UPDATE
+grant  curso_contenido  anon  DELETE
+grant  curso_contenido  anon  INSERT
+grant  curso_contenido  anon  REFERENCES
+grant  curso_contenido  anon  SELECT
+grant  curso_contenido  anon  TRIGGER
+grant  curso_contenido  anon  TRUNCATE
+grant  curso_contenido  anon  UPDATE
+grant  curso_contenido  authenticated  DELETE
+grant  curso_contenido  authenticated  INSERT
+grant  curso_contenido  authenticated  REFERENCES
+grant  curso_contenido  authenticated  SELECT
+grant  curso_contenido  authenticated  TRIGGER
+grant  curso_contenido  authenticated  TRUNCATE
+grant  curso_contenido  authenticated  UPDATE
 grant  datos_facturacion  authenticated  DELETE
 grant  datos_facturacion  authenticated  INSERT
 grant  datos_facturacion  authenticated  REFERENCES

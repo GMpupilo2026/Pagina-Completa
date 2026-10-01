@@ -1321,6 +1321,9 @@ comprobada impersonando roles.
   página: las políticas de escritura siguen siendo solo de lo propio.
   Comprobado: el profe ve los 30, su `update` y su `delete` sobre ellos no
   tocan ninguna fila y no puede crear uno «listo»; el alumno no ve ninguno.
+- **También se manda como tarea**, para contestarlo en la casa: «📨
+  Mandarlo como tarea», en uno listo y en uno propio ya guardado. Ver «El
+  cuestionario como tarea» en `seguimiento-del-alumno.md`.
 - **Uno listo se juega tal cual o se copia.** «📋 Copiarlo a mis
   cuestionarios» crea uno propio, con el mismo nivel y las mismas preguntas,
   que ya se puede cambiar. En la clase, «▶️ Jugarlo con la clase» lo juega
