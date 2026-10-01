@@ -58,6 +58,9 @@
       return sb.rpc("respuestas_satisfaccion", { p_desde: hoy.slice(0, 8) + "01", p_hasta: hoy, p_profesor: null, p_solo_se_van: true }, CABEZA);
     },
     morosos: (sb) => sb.rpc("cobros_morosos", {}, CABEZA),
+    // Quien coordina registra el pago; el recibo lo revisa y lo entrega quien
+    // supervisa. Lo que todavía nadie entregó (ni por correo ni en mano).
+    recibosSinEntregar: (sb) => sb.from("recibos").select("id", CABEZA).eq("estado", "emitido").is("entrega", null),
     inactivos: (sb) => sb.rpc("informes_inactivos", { p_dias: 4 }, CABEZA),
     /* El informe mensual PROPIO (de quien da clase): 1 si el del mes pasado
        no se envió, 0 si ya salió. Solo a quien tiene supervisión
@@ -105,6 +108,10 @@
       titulo: (n) => pl(n, "informe mensual de un profesor sin leer", "informes mensuales de tus profesores sin leer"),
       porque: "Te lo mandaron y esperan que lo leas y lo comentes.",
       accion: "Leer", href: "supervision.html", alDia: "Informes mensuales leídos" },
+    { clave: "recibosSinEntregar", nivel: "urgente", emoji: "🧾",
+      titulo: (n) => pl(n, "recibo de pago por revisar y entregar", "recibos de pago por revisar y entregar"),
+      porque: "Se registró el pago y la familia espera su recibo. Revísalo y mándalo por correo o márcalo como entregado en mano.",
+      accion: "Revisar", href: "cobros.html#recibos", alDia: "Recibos entregados" },
     { clave: "seVan", nivel: "vigilar", emoji: "🚪",
       titulo: (n) => pl(n, "alumno dijo este mes que no sigue", "alumnos dijeron este mes que no siguen"),
       porque: "Lo contestaron en la encuesta de satisfacción con su profesor.",

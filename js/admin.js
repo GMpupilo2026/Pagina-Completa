@@ -233,6 +233,7 @@
                   titulo: (n) => pl(n, "coordinador sin profesores asignados", "coordinadores sin profesores asignados"),
                   porque: "Solo ven a sus propios alumnos, y no tienen forma de saber por qué.",
                   accion: "Asignarles profesores", ir: "profesores", alDia: "Cada coordinador tiene profesores" },
+                deLaBase("recibosSinEntregar"),
                 deLaBase("seVan"),
                 deLaBase("morosos"),
                 deLaBase("inactivos"),
@@ -384,7 +385,7 @@
             if (revisando) return revisando;
             revisando = (async () => {
                 pintarUrgentes();
-                const [conteos] = await Promise.all([Pendientes.contarEnLaBase(sb, ["solicitudes", "justificaciones", "seVan", "morosos", "inactivos"]), cargarCobertura()]);
+                const [conteos] = await Promise.all([Pendientes.contarEnLaBase(sb, ["solicitudes", "justificaciones", "recibosSinEntregar", "seVan", "morosos", "inactivos"]), cargarCobertura()]);
                 conteosRemotos = conteos;
             })();
             try { await revisando; } finally { revisando = null; }

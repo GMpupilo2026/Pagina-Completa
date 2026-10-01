@@ -31,7 +31,7 @@ const VIGILADAS = [
   "coordinador_profesores", "coordinador_funciones_quitadas", "supervisor_cuentas",
   "academias", "academia_miembros", "academia_ia", "preparacion_rivales_profesores",
   "acceso_config", "paquetes_acceso", "paquete_alumnos", "pruebas_gratis",
-  "planes_cobro", "suscripciones", "cobros", "pagos",
+  "planes_cobro", "suscripciones", "cobros", "pagos", "recibos",
   // No reparte permisos: es un dato de salud, y quién lo marcó queda anotado.
   "vision_personas",
 ];

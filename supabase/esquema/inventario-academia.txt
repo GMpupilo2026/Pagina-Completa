@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261001143746
+# al-dia-con: 20261001222735
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -100,6 +100,8 @@ tabla  questions  rls=true
 tabla  quiniela_participantes  rls=true
 tabla  quiniela_partidas  rls=true
 tabla  quiniela_pronosticos  rls=true
+tabla  recibo_contadores  rls=true
+tabla  recibos  rls=true
 tabla  recordatorios_informe  rls=true
 tabla  respuestas_en_curso  rls=true
 tabla  salas_torneo  rls=true
@@ -150,6 +152,7 @@ columna  academias.created_by  uuid
 columna  academias.id  uuid
 columna  academias.logo_path  text
 columna  academias.nombre  text
+columna  academias.prefijo_recibo  text
 columna  academias.supervisor_id  uuid
 columna  academias.updated_at  timestamp with time zone
 columna  academias.whatsapp  text
@@ -587,6 +590,7 @@ columna  game_state.podio  jsonb
 columna  game_state.shown_curso  text
 columna  game_state.shown_leccion  integer
 columna  game_state.start_fen  text
+columna  game_state.tanda_calentamiento  jsonb
 columna  game_state.updated_at  timestamp with time zone
 columna  game_state.updated_by  uuid
 columna  game_state.vista  jsonb
@@ -694,6 +698,7 @@ columna  pagos.id  uuid
 columna  pagos.metodo  text
 columna  pagos.monto  numeric(12,2)
 columna  pagos.nota  text
+columna  pagos.recibo_id  uuid
 columna  pagos.referencia  text
 columna  pagos.registrado_por  uuid
 columna  paquete_alumnos.agregado_at  timestamp with time zone
@@ -909,6 +914,24 @@ columna  quiniela_pronosticos.participante_id  uuid
 columna  quiniela_pronosticos.partida_id  text
 columna  quiniela_pronosticos.pronostico  text
 columna  quiniela_pronosticos.sala_id  uuid
+columna  recibo_contadores.anio  integer
+columna  recibo_contadores.prefijo  text
+columna  recibo_contadores.ultimo  integer
+columna  recibos.academia_id  uuid
+columna  recibos.anulado_motivo  text
+columna  recibos.created_at  timestamp with time zone
+columna  recibos.emitido_por  uuid
+columna  recibos.entrega  text
+columna  recibos.enviado_a  text[]
+columna  recibos.enviado_at  timestamp with time zone
+columna  recibos.estado  text
+columna  recibos.fecha  date
+columna  recibos.id  uuid
+columna  recibos.metodo  text
+columna  recibos.nota  text
+columna  recibos.numero  text
+columna  recibos.referencia  text
+columna  recibos.student_id  uuid
 columna  recordatorios_informe.enviado_at  timestamp with time zone
 columna  recordatorios_informe.periodo  date
 columna  recordatorios_informe.persona_id  uuid
@@ -1096,11 +1119,13 @@ columna  vision_personas.actualizado_por  uuid
 columna  vision_personas.persona_id  uuid
 columna  vision_personas.vision  text
 vista  cobros_vista
+vista  recibos_vista
 funcion  academia_borrar(p_id uuid)  definer  anon=false  auth=true
 funcion  academia_crear_desde_grupo(p_nombre text, p_supervisor uuid, p_personas uuid[])  definer  anon=false  auth=true
 funcion  academia_guardar(p_id uuid, p_nombre text, p_supervisor uuid, p_whatsapp text, p_correo text)  definer  anon=false  auth=true
 funcion  academia_guardar_contacto(p_id uuid, p_whatsapp text, p_correo text)  definer  anon=false  auth=true
 funcion  academia_guardar_marca(p_id uuid, p_color text, p_logo_path text)  definer  anon=false  auth=true
+funcion  academia_guardar_prefijo_recibo(p_academia uuid, p_prefijo text)  definer  anon=false  auth=true
 funcion  academia_personas(p_academia uuid)  definer  anon=false  auth=true
 funcion  academia_set_funciones_coordinador(p_academia uuid, p_coordinador uuid, p_permitidas text[])  definer  anon=false  auth=true
 funcion  academia_set_miembros(p_academia uuid, p_personas uuid[])  definer  anon=false  auth=true
@@ -1115,6 +1140,7 @@ funcion  alumnos_de_para_ver_como(p_profesor uuid)  definer  anon=false  auth=tr
 funcion  alumnos_del_profesor(p_profesor uuid)  invoker  anon=false  auth=true
 funcion  alumnos_del_profesor_con_nombre(p_profesor uuid)  invoker  anon=true  auth=true
 funcion  antes_de_cada_pedido()  definer  anon=true  auth=true
+funcion  anular_recibo(p_recibo uuid, p_anular boolean, p_motivo text)  definer  anon=false  auth=true
 funcion  avance_del_plan(p_alumno uuid, p_desde timestamp with time zone)  invoker  anon=false  auth=true
 funcion  avisar_clase_abierta()  definer  anon=false  auth=false
 funcion  avisar_desafio()  definer  anon=false  auth=false
@@ -1155,6 +1181,7 @@ funcion  coord_guardar_cuenta(p_persona uuid, p_nombre text, p_grupo text)  defi
 funcion  coord_set_profesores(p_alumno uuid, p_profesores uuid[])  definer  anon=false  auth=true
 funcion  coordinador_puede(p_funcion text)  definer  anon=true  auth=true
 funcion  coordinadores_disponibles()  definer  anon=false  auth=true
+funcion  corregir_recibo(p_recibo uuid, p_fecha date, p_metodo text, p_referencia text, p_nota text, p_montos jsonb)  definer  anon=false  auth=true
 funcion  correo_cobro(p_alumno uuid)  invoker  anon=true  auth=true
 funcion  correo_de_contacto(p_alumno uuid)  invoker  anon=true  auth=true
 funcion  correos_de_supervision(p_alumno uuid)  definer  anon=false  auth=false
@@ -1239,6 +1266,7 @@ funcion  informes_tipo_mas_flojo()  invoker  anon=false  auth=true
 funcion  informes_totales()  invoker  anon=false  auth=true
 funcion  iniciar_examen(p_examen uuid)  definer  anon=false  auth=true
 funcion  interno.academia_activa()  definer  anon=false  auth=true
+funcion  interno.academia_para_recibo(p_alumno uuid)  definer  anon=false  auth=false
 funcion  interno.academias_de(p_persona uuid)  definer  anon=false  auth=true
 funcion  interno.alumnos_de(p_profesor uuid)  definer  anon=false  auth=true
 funcion  interno.auditar()  definer  anon=false  auth=false
@@ -1249,15 +1277,21 @@ funcion  interno.bajo_mi_coordinacion_conjunto()  definer  anon=false  auth=true
 funcion  interno.clases_donde_aparezco(p_desde timestamp with time zone)  definer  anon=false  auth=true
 funcion  interno.clases_que_coordino()  definer  anon=false  auth=true
 funcion  interno.clases_que_superviso()  definer  anon=false  auth=true
+funcion  interno.cobros_corrige_supervision()  definer  anon=false  auth=false
 funcion  interno.comparten_academia(p_a uuid, p_b uuid)  definer  anon=false  auth=true
 funcion  interno.coordinadores_de(p_persona uuid)  definer  anon=false  auth=false
+funcion  interno.corrijo_cobros_de(p_alumno uuid)  definer  anon=false  auth=true
 funcion  interno.cuestionario_del_renglon(p_item uuid)  definer  anon=false  auth=false
+funcion  interno.emitir_cobros(p_hasta date, p_suscripcion uuid)  definer  anon=false  auth=false
+funcion  interno.emitir_recibo(p_alumno uuid, p_fecha date, p_metodo text, p_referencia text, p_nota text, p_emitido_por uuid)  definer  anon=false  auth=false
 funcion  interno.enlaces_de_sala_validos(p jsonb)  invoker  anon=true  auth=true
 funcion  interno.frenar_envio_publico(p_tipo text, p_ambito text, p_correo text, p_ip text)  invoker  anon=false  auth=false
 funcion  interno.gente_de_mis_academias()  definer  anon=false  auth=true
 funcion  interno.jsonb_o_nulo(p text)  invoker  anon=false  auth=true
 funcion  interno.nombre_libre_de_subgrupo(p_profesor uuid, p_base text, p_excepto uuid)  definer  anon=false  auth=false
+funcion  interno.pagar(p_pagos jsonb, p_metodo text, p_referencia text, p_nota text, p_fecha date)  definer  anon=false  auth=false
 funcion  interno.pizarras_de_sala_validas(p jsonb)  invoker  anon=true  auth=true
+funcion  interno.prefijo_de_nombre(p_nombre text)  invoker  anon=false  auth=true
 funcion  interno.profesores_de(p_alumno uuid)  definer  anon=false  auth=true
 funcion  interno.profesores_que_coordino()  definer  anon=false  auth=true
 funcion  interno.profiles_foto_por_funcion()  definer  anon=false  auth=false
@@ -1309,6 +1343,7 @@ funcion  nombres_de_jugadores(p_ids uuid[])  definer  anon=false  auth=true
 funcion  notas_alumno_clase_propia()  definer  anon=false  auth=false
 funcion  ocurrencias_horario(p_profesor uuid, p_desde date, p_hasta date)  invoker  anon=false  auth=false
 funcion  otorgar_insignia(p_alumno uuid, p_tipo text, p_motivo text)  definer  anon=false  auth=true
+funcion  pago_adelantado(p_suscripcion uuid, p_periodos integer, p_metodo text, p_referencia text, p_nota text, p_fecha date)  definer  anon=false  auth=true
 funcion  panel_profesor()  invoker  anon=false  auth=true
 funcion  panel_profesor_de(p_profesor uuid)  definer  anon=false  auth=true
 funcion  panel_supervisor_de(p_supervisor uuid)  definer  anon=false  auth=true
@@ -1321,6 +1356,7 @@ funcion  personas_para_ver_como()  definer  anon=false  auth=true
 funcion  plan_compartido_conmigo(p_plan uuid)  definer  anon=true  auth=true
 funcion  planes_compartidos_conmigo()  definer  anon=false  auth=true
 funcion  practica_ayuda_proteger()  invoker  anon=false  auth=false
+funcion  prefijo_recibo(p_academia uuid)  invoker  anon=false  auth=true
 funcion  preguntas_que_costaron(p_dias integer)  invoker  anon=false  auth=true
 funcion  preguntas_que_le_costaron(p_alumno uuid, p_dias integer)  invoker  anon=false  auth=true
 funcion  premios_de_alumno(p_alumno uuid, p_desde timestamp with time zone, p_hasta timestamp with time zone)  definer  anon=false  auth=true
@@ -1348,6 +1384,7 @@ funcion  puede_ver_paquete(p_paquete uuid)  definer  anon=false  auth=true
 funcion  pueden_jugar_entre_si(a uuid, b uuid)  definer  anon=false  auth=true
 funcion  puedo_armar_partida_con(p_jugadores uuid[])  definer  anon=false  auth=true
 funcion  puedo_cambiar_fide_id(p_persona uuid)  invoker  anon=false  auth=true
+funcion  puedo_corregir_cobros(p_alumno uuid)  invoker  anon=false  auth=true
 funcion  puedo_preparar_rivales()  definer  anon=false  auth=true
 funcion  push_llaves_guardar(p_publica text, p_privada text)  definer  anon=false  auth=false
 funcion  push_llaves_leer()  definer  anon=false  auth=false
@@ -1359,9 +1396,12 @@ funcion  quiniela_yo(p_sala uuid, p_token text)  definer  anon=false  auth=false
 funcion  quitar_foto(p_persona uuid)  definer  anon=false  auth=true
 funcion  quitar_insignia(p_id uuid)  definer  anon=false  auth=true
 funcion  quitar_verificacion_en_dos_pasos(p_persona uuid)  definer  anon=false  auth=true
+funcion  recibo_entregado_en_mano(p_recibo uuid, p_entregado boolean)  definer  anon=false  auth=true
 funcion  recordar_informes_mensuales(p_hoy date)  definer  anon=false  auth=false
 funcion  registrar_arbitraje_publico(p_nombre text, p_email text, p_porcentaje integer, p_nivel text, p_detalle jsonb)  definer  anon=true  auth=true
+funcion  registrar_cobro_pagado(p_alumno uuid, p_concepto text, p_monto numeric, p_moneda text, p_metodo text, p_referencia text, p_nota text, p_fecha date)  definer  anon=false  auth=true
 funcion  registrar_compra(p_profile uuid, p_producto text, p_registrar boolean)  definer  anon=false  auth=true
+funcion  registrar_pago(p_pagos jsonb, p_metodo text, p_referencia text, p_nota text, p_fecha date)  definer  anon=false  auth=true
 funcion  registrar_salida_examen(p_examen uuid, p_segundos integer)  definer  anon=false  auth=true
 funcion  reporte_actividades(p_desde date, p_hasta date)  invoker  anon=false  auth=true
 funcion  responder_encuesta_curso(p_slug text, p_respuestas jsonb, p_version_privacidad text)  definer  anon=true  auth=true
@@ -1578,6 +1618,8 @@ politica  notas_alumno  notas_alumno_insert  INSERT
 politica  notas_alumno  notas_alumno_select_alumno  SELECT
 politica  notas_alumno  notas_alumno_select_profesor  SELECT
 politica  notas_alumno  notas_alumno_update  UPDATE
+politica  pagos  pagos_borra_solo_supervision  DELETE  restrictiva
+politica  pagos  pagos_cambia_solo_supervision  UPDATE  restrictiva
 politica  pagos  pagos_coordinacion  ALL
 politica  pagos  pagos_lee_alumno  SELECT
 politica  paquete_alumnos  paquete_alumnos_select  SELECT
@@ -1672,6 +1714,8 @@ politica  questions  verificacion_en_dos_pasos  ALL  restrictiva
 politica  quiniela_participantes  quiniela_participantes_admin  SELECT
 politica  quiniela_partidas  quiniela_partidas_admin  SELECT
 politica  quiniela_pronosticos  quiniela_pronosticos_admin  SELECT
+politica  recibos  recibos_coordinacion  SELECT
+politica  recibos  recibos_lee_alumno  SELECT
 politica  respuestas_en_curso  respuestas_en_curso_exige_acceso_ins  INSERT  restrictiva
 politica  respuestas_en_curso  respuestas_en_curso_exige_acceso_upd  UPDATE  restrictiva
 politica  respuestas_en_curso  respuestas_en_curso_insert  INSERT
@@ -1770,6 +1814,7 @@ trigger  auditoria  auditoria_sin_truncate
 trigger  class_presence_log  class_presence_log_protege_tiempos
 trigger  class_sessions  class_sessions_avisa_push
 trigger  cobros  auditar
+trigger  cobros  cobros_corrige_supervision
 trigger  cobros_contacto  cobros_contacto_protegido
 trigger  coordinador_funciones_quitadas  auditar
 trigger  coordinador_profesores  auditar
@@ -1817,6 +1862,7 @@ trigger  question_answers  protect_answer_grading_trigger
 trigger  question_answers  respuesta_calificar_y_plazo_trigger
 trigger  question_answers  respuesta_hora_de_la_base_trigger
 trigger  questions  questions_ligar_a_la_clase
+trigger  recibos  auditar
 trigger  salas_torneo  salas_torneo_sello
 trigger  saved_games  saved_games_ligar_a_la_clase
 trigger  supervisor_cuentas  auditar
@@ -2022,6 +2068,7 @@ indice  notas_alumno  notas_alumno_pkey
 indice  notas_alumno  notas_alumno_profesor_alumno_idx
 indice  pagos  pagos_pkey
 indice  pagos  pagos_por_cobro
+indice  pagos  pagos_recibo_id_fk
 indice  pagos  pagos_registrado_por_fk
 indice  paquete_alumnos  paquete_alumnos_alumno_idx
 indice  paquete_alumnos  paquete_alumnos_pkey
@@ -2088,6 +2135,13 @@ indice  quiniela_participantes  quiniela_participantes_un_correo_por_sala
 indice  quiniela_partidas  quiniela_partidas_pkey
 indice  quiniela_pronosticos  quiniela_pronosticos_pkey
 indice  quiniela_pronosticos  quiniela_pronosticos_sala
+indice  recibo_contadores  recibo_contadores_pkey
+indice  recibos  recibos_academia_id_fk
+indice  recibos  recibos_emitido_por_fk
+indice  recibos  recibos_numero_key
+indice  recibos  recibos_pkey
+indice  recibos  recibos_por_alumno
+indice  recibos  recibos_por_fecha
 indice  recordatorios_informe  recordatorios_informe_persona_id_fk
 indice  recordatorios_informe  recordatorios_informe_pkey
 indice  respuestas_en_curso  respuestas_en_curso_pkey
@@ -2647,7 +2701,6 @@ grant  notas_alumno  authenticated  TRIGGER
 grant  notas_alumno  authenticated  TRUNCATE
 grant  notas_alumno  authenticated  UPDATE
 grant  pagos  authenticated  DELETE
-grant  pagos  authenticated  INSERT
 grant  pagos  authenticated  REFERENCES
 grant  pagos  authenticated  SELECT
 grant  pagos  authenticated  TRIGGER
@@ -2875,6 +2928,17 @@ grant  questions  authenticated  UPDATE
 grant  quiniela_participantes  authenticated  SELECT
 grant  quiniela_partidas  authenticated  SELECT
 grant  quiniela_pronosticos  authenticated  SELECT
+grant  recibos  authenticated  REFERENCES
+grant  recibos  authenticated  SELECT
+grant  recibos  authenticated  TRIGGER
+grant  recibos  authenticated  TRUNCATE
+grant  recibos_vista  authenticated  DELETE
+grant  recibos_vista  authenticated  INSERT
+grant  recibos_vista  authenticated  REFERENCES
+grant  recibos_vista  authenticated  SELECT
+grant  recibos_vista  authenticated  TRIGGER
+grant  recibos_vista  authenticated  TRUNCATE
+grant  recibos_vista  authenticated  UPDATE
 grant  respuestas_en_curso  authenticated  DELETE
 grant  respuestas_en_curso  authenticated  INSERT
 grant  respuestas_en_curso  authenticated  REFERENCES
