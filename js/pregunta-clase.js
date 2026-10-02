@@ -35,12 +35,17 @@ window.PreguntaClase = (function () {
 
     // Segundos que le quedan, contando desde que la base creó la pregunta.
     // null si no tiene límite; nunca negativo.
+    // `created_at` es hora de la BASE, así que el «ahora» también: con la hora
+    // de la computadora a secas, a un alumno cuyo celular andaba adelantado más
+    // que el plazo le salía «Se acabó el tiempo» desde el primer segundo, en
+    // todas las preguntas (ver «El reloj de las preguntas es el de la base»).
     function segundosRestantes(pregunta, ahora) {
         if (!pregunta || !pregunta.tiempo_limite) return null;
         const inicio = new Date(pregunta.created_at).getTime();
         if (!isFinite(inicio)) return null;
         const fin = inicio + pregunta.tiempo_limite * 1000;
-        return Math.max(0, Math.ceil((fin - (ahora == null ? Date.now() : ahora)) / 1000));
+        if (ahora == null) ahora = window.RelojServidor ? RelojServidor.ahora() : Date.now();
+        return Math.max(0, Math.ceil((fin - ahora) / 1000));
     }
 
     function reloj(segundos) {
