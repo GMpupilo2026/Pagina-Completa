@@ -1953,10 +1953,12 @@
         // ---------- Ocultar piezas a los alumnos (solo profesor) ----------
         function updateHideBoardBtn() {
             if (!isTeacher) return;
+            // Botón de solo icono: el texto va en su .boton-icono-ayuda, que es lo que sale al
+            // pasar el ratón y lo que lee el lector de pantalla.
             const btn = document.getElementById("toggle-hide-btn");
             const hidden = !!lastPiecesHidden;
-            btn.textContent = hidden ? "👁️ Mostrar" : "🙈 Ocultar";
-            btn.title = hidden ? "Mostrar piezas a los alumnos" : "Ocultar piezas a los alumnos";
+            btn.querySelector("[aria-hidden]").textContent = hidden ? "👁️" : "🙈";
+            btn.querySelector(".boton-icono-ayuda").textContent = hidden ? "Mostrar las piezas a los alumnos" : "Ocultar las piezas a los alumnos";
         }
         let lastPiecesHidden = false;
 
@@ -7042,6 +7044,7 @@
             if (isTeacher) {
                 document.getElementById("teacher-toolbar").classList.remove("hidden");
                 document.getElementById("toolbar-tablero").classList.remove("hidden");
+                document.getElementById("botones-tablero").classList.replace("hidden", "flex");
                 document.getElementById("students-panel").classList.remove("hidden");
                 acomodarChatDelProfe();
                 document.getElementById("modo-sencillo-fila").classList.remove("hidden");
@@ -7049,9 +7052,8 @@
                 document.getElementById("teacher-tabs-wrap").classList.remove("hidden");
                 document.getElementById("clear-chat-btn").classList.remove("hidden");
                 if (!modoProyector && !modoControl) {
-                    document.getElementById("proyector-btn").classList.remove("hidden");
-                    document.getElementById("control-btn").classList.remove("hidden");
-                    document.getElementById("vista-alumno-btn").classList.remove("hidden");
+                    // Proyector, ver como alumno y control remoto: su grupo de la barra del tablero.
+                    document.getElementById("botones-ventanas").classList.replace("hidden", "flex");
                 }
                 document.getElementById("chat-student-picker").classList.remove("hidden");
                 let savedTab = TEACHER_TABS[0];

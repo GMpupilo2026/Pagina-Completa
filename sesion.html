@@ -340,39 +340,49 @@
                         <div id="chessboard" class="grid grid-cols-8 grid-rows-[repeat(8,minmax(0,1fr))] w-full max-w-[560px] aspect-square rounded-xl overflow-hidden shadow-2xl border-4 border-brand-700 select-none"></div>
                     </div>
 
-                    <!-- Barra del tablero: girar y coordenadas (para todos); levantar la mano (solo alumnos);
-                         navegar jugadas (solo profesor) -->
-                    <div class="flex items-center justify-center flex-wrap gap-2 mt-3">
-                        <button id="flip-board-btn" type="button" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors min-h-[44px] sm:min-h-0" title="Girar el tablero (negras abajo)">⇅ Girar</button>
-                        <button id="show-coords-btn" type="button" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors min-h-[44px] sm:min-h-0" aria-pressed="false" title="Mostrar el nombre de cada casilla (las coordenadas de afuera siempre se ven)">🔢 Coordenadas</button>
-                        <button id="proyector-btn" type="button" class="hidden text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors min-h-[44px] sm:min-h-0" title="Abrir el tablero solo, en otra ventana: para el proyector o la tele del aula">📽️ Proyector</button>
-                        <button id="vista-alumno-btn" type="button" class="hidden text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors min-h-[44px] sm:min-h-0" title="Abrir tu clase como la ve un alumno, en otra ventana (no se manda nada)">👁️ Como alumno</button>
-                        <button id="control-btn" type="button" class="hidden text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors min-h-[44px] sm:min-h-0" aria-expanded="false" aria-controls="control-enlace" title="Manejar la clase desde tu celular">📱 Control remoto</button>
-                        <button id="raise-hand-btn" type="button" class="hidden text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors min-h-[44px] sm:min-h-0" aria-pressed="false" title="Pedirle la palabra al profesor">🖐️ Levantar la mano</button>
-                        <span id="move-nav" class="hidden items-center gap-1 ml-1">
-                            <button id="move-nav-first" type="button" class="text-xs font-semibold w-11 h-11 sm:w-8 sm:h-8 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors" title="Primera jugada">⏮</button>
-                            <button id="move-nav-prev" type="button" class="text-xs font-semibold w-11 h-11 sm:w-8 sm:h-8 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors" title="Jugada anterior">◀</button>
-                            <button id="move-nav-next" type="button" class="text-xs font-semibold w-11 h-11 sm:w-8 sm:h-8 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors" title="Jugada siguiente">▶</button>
-                            <button id="move-nav-last" type="button" class="text-xs font-semibold w-11 h-11 sm:w-8 sm:h-8 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors" title="Última jugada">⏭</button>
+                    <!-- La barra del tablero: UNA fila de botones de solo icono; lo que hace cada
+                         uno sale escrito al pasar el ratón o llegar con Tab (.boton-icono-ayuda, que es
+                         también su nombre para el lector de pantalla). Van en grupos, separados por una
+                         raya: girar y coordenadas (para todos); lo que toca el tablero que ve toda la
+                         clase (solo el profesor, #botones-tablero); recorrer la partida (solo el
+                         profesor); otras ventanas (solo el profesor); levantar la mano (solo alumnos,
+                         con su texto: es lo único que el alumno toca acá). Ver «La barra del tablero,
+                         de solo iconos» en docs/decisiones/clase-en-vivo.md. -->
+                    <div id="barra-tablero" class="flex items-center justify-center flex-wrap gap-1.5 mt-3">
+                        <span class="flex items-center gap-1.5">
+                            <button id="flip-board-btn" type="button" class="boton-icono"><span aria-hidden="true">⇅</span><span class="boton-icono-ayuda">Girar el tablero</span></button>
+                            <button id="show-coords-btn" type="button" class="boton-icono" aria-pressed="false"><span aria-hidden="true">🔢</span><span class="boton-icono-ayuda">El nombre en cada casilla</span></button>
                         </span>
+                        <span id="botones-tablero" role="group" aria-label="El tablero — lo ve toda la clase" class="barra-grupo hidden items-center gap-1.5">
+                            <button id="reset-board-btn" type="button" class="boton-icono"><span aria-hidden="true">🔄</span><span class="boton-icono-ayuda">Reiniciar el tablero (lo ve toda la clase)</span></button>
+                            <button id="clear-marks-btn" type="button" class="boton-icono"><span aria-hidden="true">🧹</span><span class="boton-icono-ayuda">Borrar flechas y círculos</span></button>
+                            <button id="toggle-hide-btn" type="button" class="boton-icono"><span aria-hidden="true">🙈</span><span class="boton-icono-ayuda">Ocultar las piezas a los alumnos</span></button>
+                            <button id="save-game-btn" type="button" class="boton-icono"><span aria-hidden="true">💾</span><span class="boton-icono-ayuda">Guardar PGN</span></button>
+                        </span>
+                        <span id="move-nav" class="barra-grupo hidden items-center gap-1.5">
+                            <button id="move-nav-first" type="button" class="boton-icono"><span aria-hidden="true">⏮</span><span class="boton-icono-ayuda">Primera jugada</span></button>
+                            <button id="move-nav-prev" type="button" class="boton-icono"><span aria-hidden="true">◀</span><span class="boton-icono-ayuda">Jugada anterior</span></button>
+                            <button id="move-nav-next" type="button" class="boton-icono"><span aria-hidden="true">▶</span><span class="boton-icono-ayuda">Jugada siguiente</span></button>
+                            <button id="move-nav-last" type="button" class="boton-icono"><span aria-hidden="true">⏭</span><span class="boton-icono-ayuda">Última jugada</span></button>
+                        </span>
+                        <span id="botones-ventanas" class="barra-grupo hidden items-center gap-1.5">
+                            <button id="proyector-btn" type="button" class="boton-icono"><span aria-hidden="true">📽️</span><span class="boton-icono-ayuda">Proyector: el tablero solo, en otra ventana</span></button>
+                            <button id="vista-alumno-btn" type="button" class="boton-icono"><span aria-hidden="true">🎓</span><span class="boton-icono-ayuda">Ver tu clase como un alumno, en otra ventana</span></button>
+                            <button id="control-btn" type="button" class="boton-icono" aria-expanded="false" aria-controls="control-enlace"><span aria-hidden="true">📱</span><span class="boton-icono-ayuda">Control remoto desde tu celular</span></button>
+                        </span>
+                        <button id="raise-hand-btn" type="button" class="hidden text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors min-h-[44px] sm:min-h-[2.25rem]" aria-pressed="false" title="Pedirle la palabra al profesor">🖐️ Levantar la mano</button>
                     </div>
 
-                    <!-- «El tablero — lo ve toda la clase» (solo el profesor): Reiniciar, Borrar
-                         flechas, Ocultar, Guardar PGN y Tiempo para pensar van DEBAJO del tablero
-                         que tocan, no en la columna de herramientas: son los que más se usan
-                         dando clase, y así quedan a la vista sin buscar. Ver «La pantalla se
+                    <!-- «El tablero — lo ve toda la clase» (solo el profesor): Tiempo para pensar, la
+                         ayuda de las flechas y sus colores van DEBAJO del tablero que tocan, no en la
+                         columna de herramientas (Reiniciar, Borrar flechas, Ocultar y Guardar PGN
+                         subieron a la barra del tablero, como iconos). Ver «La pantalla se
                          ordena por QUIÉN VE CADA COSA» en docs/decisiones/clase-en-vivo.md. -->
                     <div id="toolbar-tablero" class="hidden max-w-[560px] mx-auto mt-3 bg-white dark:bg-brand-900 rounded-xl shadow-md p-3">
                         <p class="text-[0.6875rem] font-semibold uppercase tracking-wide text-brand-450 dark:text-brand-350 mb-1.5">El tablero — lo ve toda la clase</p>
-                        <div class="flex flex-wrap gap-1.5">
-                            <button id="reset-board-btn" type="button" title="Reiniciar tablero a la posición inicial" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">🔄 Reiniciar</button>
-                            <button id="clear-marks-btn" type="button" title="Borrar las flechas y los círculos dibujados en el tablero" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">🧹 Borrar flechas</button>
-                            <button id="toggle-hide-btn" type="button" title="Ocultar piezas a los alumnos" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">🙈 Ocultar</button>
-                            <button id="save-game-btn" type="button" title="Guardar la partida actual (queda en Partidas guardadas) y descargar su PGN" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">💾 Guardar PGN</button>
-                        </div>
                         <!-- Tiempo para pensar: una cuenta regresiva que ve toda la clase, sin abrir una
                              pregunta (game_state.pensar). El texto es opcional. -->
-                        <div id="pensar-caja" class="flex flex-wrap items-center gap-1.5 mt-2">
+                        <div id="pensar-caja" class="flex flex-wrap items-center gap-1.5">
                             <label for="pensar-segundos" class="sr-only">Cuánto tiempo para pensar</label>
                             <select id="pensar-segundos" class="text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-2 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500"></select>
                             <label for="pensar-texto" class="sr-only">Qué tienen que pensar (opcional)</label>

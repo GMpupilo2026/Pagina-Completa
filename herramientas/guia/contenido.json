@@ -215,7 +215,7 @@
           "intro": "Alrededor del tablero hay herramientas que no mandan nada a la clase pero te resuelven el día.",
           "pasos": [
             "«♞ Motor de análisis» y «👥 Alumnos conectados»: arriba de la columna, siempre a la vista. El motor es solo para ti.",
-            "Debajo del tablero: «🔄 Reiniciar», «🧹 Borrar flechas», «🙈 Ocultar», «💾 Guardar PGN» y «⏳ Tiempo para pensar».",
+            "Debajo del tablero, una fila de iconos (al pasar el ratón dicen qué hacen): ⇅ girar, 🔢 coordenadas, 🔄 reiniciar, 🧹 borrar flechas, 🙈 ocultar, 💾 guardar PGN, ⏮ ◀ ▶ ⏭ para recorrer la partida, 📽️ proyector, 🎓 ver como alumno y 📱 control remoto. Más abajo, «⏳ Tiempo para pensar».",
             "«💬 Chat privado con el profesor»: un hilo por alumno, continuo, no «de una clase».",
             "«🖐️ Levantar la mano»: el alumno pide turno y te sale en la lista.",
             "«📝» junto a cada alumno conectado: le escribes una nota de bitácora en el momento."

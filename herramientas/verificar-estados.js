@@ -92,7 +92,7 @@ function pruebaVacias() {
   const nombrados = [
     ["tareas.html", "Asignar una tarea"], ["examenes.html", "Poner un examen"], ["planes.html", "Plan nuevo"],
     ["asistencia.html", "➕ Agregar una clase a tu horario"], ["partidas.html", "Elegir uno o más archivos PGN"],
-    ["sesion.html", "💾 Guardar PGN"],
+    ["sesion.html", "Guardar PGN"],
   ];
   for (const [rel, texto] of nombrados) {
     const s = fs.readFileSync(path.join(RAIZ, rel), "utf8");

@@ -1325,3 +1325,45 @@ html.con-herramientas-en-grande { overflow: hidden; }
     .solo-tactil { display: inline; }
     .solo-raton { display: none; }
 }
+
+/* La barra del tablero de la clase en vivo (sesion.html): botones de SOLO ICONO.
+   Lo que hace cada uno va escrito en su .boton-icono-ayuda, que es a la vez su
+   nombre para el lector de pantalla (el icono va aria-hidden) y el rótulo que sale
+   encima al pasar el ratón o al llegar con Tab. Escondido, es un sr-only: sigue en
+   el árbol de accesibilidad. No es `title`: ese no sale con el teclado ni en el
+   celular, tarda en aparecer y el lector lo lee dos veces junto con el nombre.
+   44 px en el celular (para el dedo), 36 en la computadora. El estado apretado
+   (las coordenadas) va con su color y con aria-pressed, que es lo que se lee. */
+.boton-icono {
+  position: relative; display: inline-flex; align-items: center; justify-content: center;
+  width: 2.75rem; height: 2.75rem; border-radius: 0.5rem; font-size: 1rem; line-height: 1;
+  background-color: rgb(var(--c-brand-100, 220 228 238));
+  color: rgb(var(--c-brand-700, 51 78 104));
+  transition: background-color 0.15s;
+}
+@media (min-width: 640px) { .boton-icono { width: 2.25rem; height: 2.25rem; } }
+.boton-icono:hover { background-color: rgb(var(--c-brand-200, 188 204 220)); }
+.dark .boton-icono { background-color: rgb(var(--c-brand-800, 16 42 67)); color: rgb(var(--c-brand-200, 188 204 220)); }
+.dark .boton-icono:hover { background-color: rgb(var(--c-brand-700, 51 78 104)); }
+.boton-icono[aria-pressed="true"], .dark .boton-icono[aria-pressed="true"] { background-color: rgb(var(--c-accent-500, 222 145 29)); color: rgb(var(--c-brand-900, 10 31 51)); }
+.boton-icono:focus { outline: none; }
+.boton-icono:focus-visible { outline: 2px solid rgb(var(--c-accent-400, 240 180 41)); outline-offset: 2px; }
+.boton-icono-ayuda {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
+.boton-icono:focus-visible .boton-icono-ayuda,
+.boton-icono:hover .boton-icono-ayuda {
+  clip: auto; overflow: visible; width: max-content; max-width: 16rem; height: auto; margin: 0;
+  white-space: normal; text-align: center; pointer-events: none; z-index: 40;
+  bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+  padding: 0.3rem 0.55rem; border-radius: 0.375rem;
+  font-size: 0.75rem; font-weight: 600; line-height: 1.25;
+  background: rgb(var(--c-brand-800, 16 42 67)); color: #fff;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.2);
+}
+.dark .boton-icono:focus-visible .boton-icono-ayuda,
+.dark .boton-icono:hover .boton-icono-ayuda { background: #fff; color: rgb(var(--c-brand-900, 10 31 51)); }
+/* Una raya entre los grupos: el de quién lo ve no se pierde por ir todo en una fila. */
+.barra-grupo { border-left: 1px solid rgb(var(--c-brand-200, 188 204 220)); padding-left: 0.375rem; }
+.dark .barra-grupo { border-left-color: rgb(var(--c-brand-700, 51 78 104)); }
