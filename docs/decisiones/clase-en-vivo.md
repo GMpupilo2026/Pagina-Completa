@@ -189,12 +189,43 @@ pierde.
   antes: el orden decide dónde se entra, no dónde se vuelve. Una guardada que
   ya no existe («alumnos», «controles») abre «Mi plan».
 
+#### La barra del tablero, de solo iconos
+
+Lo pidió el dueño del sitio: las dos filas de botones de debajo del tablero
+(girar, coordenadas, proyector, como alumno, control remoto y ◀ ▶ arriba;
+Reiniciar, Borrar flechas, Ocultar y Guardar PGN en la tarjeta de abajo)
+ocupaban demasiado. Ahora son **una sola fila de botones de solo icono**
+(`#barra-tablero`) y cada uno dice lo que hace al pasar el ratón.
+
+- **El texto no se fue: es el rótulo.** Cada botón lleva su
+  `.boton-icono-ayuda`, escondida como `sr-only` y mostrada encima al pasar el
+  ratón **o al llegar con Tab**. Es a la vez su nombre para el lector de
+  pantalla (el icono va `aria-hidden`). No es `title`: no sale con el teclado
+  ni en el celular, tarda en aparecer y el lector lo lee junto con el nombre.
+- **Quién lo ve sigue diciéndose.** Los cuatro que tocan el tablero de la clase
+  van en su grupo, `#botones-tablero`, con `aria-label="El tablero — lo ve
+  toda la clase"`, y la barra separa los grupos con una raya: para todos
+  (girar, coordenadas), lo que ve toda la clase, recorrer la partida, y las
+  otras ventanas (proyector, como alumno, control remoto). En la tarjeta de
+  abajo, con el mismo rótulo de siempre, quedan el tiempo para pensar, la
+  ayuda de las flechas y sus colores.
+- **«Levantar la mano» conserva su texto**: es lo único que el alumno toca
+  ahí, y un 🖐️ solo no le dice a un niño qué pasa si lo aprieta.
+- 44 px en el celular (para el dedo), 36 en la computadora; ◀ ▶ pasaron de 32 a
+  36 para que la fila sea pareja. «👁️ Como alumno» pasó a 🎓, porque 👁️ es
+  también el de «Mostrar las piezas».
+- `verificar-sesion-orden.js` mide que el rótulo no se vea quieto y sí al pasar
+  el ratón (cambiándolo a `:active`, salta), que sea el nombre accesible y que
+  el grupo traiga sus cuatro botones en orden.
+
 #### La clase en vivo, reordenada
 
 Lo pidió el dueño del sitio: lo que se usa todo el tiempo
 tenía que estar a la vista sin buscarlo.
 
-- **«El tablero — lo ve toda la clase» va DEBAJO del tablero**
+- **«El tablero — lo ve toda la clase» va DEBAJO del tablero** (sus cuatro
+  botones subieron después a la barra del tablero, como iconos: ver «La barra
+  del tablero, de solo iconos»)
   (`#toolbar-tablero`, en la columna del tablero, debajo de la barra de girar
   y recorrer), no en la columna de herramientas. Son los botones que tocan lo
   que la clase está mirando, y se usan a cada rato: al lado de lo que cambian

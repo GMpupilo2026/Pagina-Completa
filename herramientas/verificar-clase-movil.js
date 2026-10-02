@@ -161,9 +161,11 @@ async function pruebaProfeComputadora(browser) {
   const { page, ctx, errores } = await abrirEn(browser, { game_state: [fila()] }, { width: 1280, height: 800 }, false, "u-profe");
   await page.waitForFunction(() => document.getElementById("teacher-tabs-wrap").checkVisibility(), null, { timeout: 10000 });
   igual("el chat sigue en la columna del tablero", await page.evaluate(() => document.getElementById("chat-caja").parentElement.classList.contains("proyector-columna")), true);
-  igual("◀ ▶ y las pestañas, de su tamaño de siempre", await page.evaluate(() => [
+  // ◀ ▶ miden 36 px como los demás iconos de la barra del tablero (.boton-icono): con el
+  // ratón no hace falta el tamaño del dedo, pero sí que la fila sea pareja.
+  igual("◀ ▶ y las pestañas, de su tamaño de computadora", await page.evaluate(() => [
     Math.round(document.getElementById("move-nav-prev").getBoundingClientRect().height),
-    [...document.querySelectorAll("#teacher-tabs-wrap button")].filter((e) => e.checkVisibility()).every((e) => e.getBoundingClientRect().height < 44)]), [32, true]);
+    [...document.querySelectorAll("#teacher-tabs-wrap button")].filter((e) => e.checkVisibility()).every((e) => e.getBoundingClientRect().height < 44)]), [36, true]);
   igual("y la ayuda de las flechas habla del clic derecho", await page.evaluate(() => {
     const h = document.getElementById("arrows-hint");
     return [h.querySelector(".solo-raton").checkVisibility(), h.querySelector(".solo-tactil").checkVisibility()];

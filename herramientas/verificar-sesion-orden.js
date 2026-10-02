@@ -14,7 +14,8 @@
  *   1. LOS BOTONES VAN EN SUS DOS GRUPOS, CON SU RÓTULO. El rótulo no dice qué
  *      hace la herramienta sino QUIÉN LA VE, que es la línea de toda la clase
  *      en vivo. «Tu material» va en la columna de herramientas; «El tablero»
- *      (Reiniciar, Borrar flechas, Ocultar, Guardar PGN, Tiempo para pensar)
+ *      (Tiempo para pensar; Reiniciar, Borrar flechas, Ocultar y Guardar PGN van en
+ *      la barra del tablero, como iconos, en su grupo #botones-tablero)
  *      DEBAJO del tablero que tocan. Un botón suelto fuera de los grupos es el
  *      principio de la rejilla sin criterio de antes, así que acá se cuentan.
  *
@@ -52,8 +53,9 @@ const GRUPOS = [
   { donde: "teacher-toolbar", rotulo: "Tu material — solo lo ves tú",
     botones: ["toggle-lesson-btn", "toggle-archivos-btn", "toggle-pdf-btn", "toggle-free-mode-btn"] },
   { donde: "toolbar-tablero", rotulo: "El tablero — lo ve toda la clase",
-    // El tiempo para pensar va al final: no toca el tablero, pero lo ve toda la clase.
-    botones: ["reset-board-btn", "clear-marks-btn", "toggle-hide-btn", "save-game-btn", "pensar-btn"] },
+    // Reiniciar, Borrar flechas, Ocultar y Guardar PGN subieron a la barra del tablero
+    // (#botones-tablero, abajo); acá queda el tiempo para pensar, que también lo ve toda la clase.
+    botones: ["pensar-btn"] },
 ];
 
 // El orden de la clase: qué voy a dar, qué le pongo delante, qué le pido.
@@ -85,7 +87,31 @@ async function pruebaProfesor(browser) {
       ((g || {}).botones || []).join(", "), esperado.botones.join(", "));
     igual(esperado.donde + ": se ve", (g || {}).seVe, true);
   }
-  igual("«Borrar flechas» dice lo que borra", (await page.textContent("#clear-marks-btn")).trim(), "🧹 Borrar flechas");
+  /* La barra del tablero es UNA fila de botones de solo icono. Lo que toca el tablero
+     que ve toda la clase va en su grupo, que lo dice; y cada botón dice lo que hace
+     al pasar el ratón: se mide que el rótulo NO se vea quieto y SÍ al pasar encima
+     (la pantalla, no la clase), y que sea también su nombre accesible. */
+  igual("lo que toca el tablero, en su grupo de la barra y en su orden", await page.evaluate(() => {
+    const g = document.getElementById("botones-tablero");
+    return [g.getAttribute("aria-label"), [...g.querySelectorAll("button")].map((b) => b.id).join(", "), g.checkVisibility(),
+            !!g.closest("#barra-tablero")];
+  }), ["El tablero — lo ve toda la clase", "reset-board-btn, clear-marks-btn, toggle-hide-btn, save-game-btn", true, true]);
+  const ayuda = () => page.evaluate(() => {
+    const r = document.querySelector("#clear-marks-btn .boton-icono-ayuda").getBoundingClientRect();
+    return r.width > 40 && r.height > 12;
+  });
+  igual("quieto, el botón es solo su icono", await ayuda(), false);
+  await page.hover("#clear-marks-btn");
+  igual("al pasar el ratón dice lo que hace", await ayuda(), true);
+  await page.mouse.move(0, 0);
+  igual("y eso mismo es su nombre accesible", await page.evaluate(() => {
+    const b = document.getElementById("clear-marks-btn");
+    return [b.querySelector('[aria-hidden="true"]').textContent, b.querySelector(".boton-icono-ayuda").textContent];
+  }), ["🧹", "Borrar flechas y círculos"]);
+  await page.click("#toggle-hide-btn");
+  igual("«Ocultar» cambia a «Mostrar», icono y texto", await page.evaluate(() =>
+    document.getElementById("toggle-hide-btn").textContent), "👁️Mostrar las piezas a los alumnos");
+  await page.click("#toggle-hide-btn");
 
   console.log("-- Lo que toca el tablero va DEBAJO del tablero");
   igual("«El tablero» está en la columna del tablero, no en la de herramientas", await page.evaluate(() =>
