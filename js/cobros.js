@@ -96,6 +96,8 @@ async function cargarTodo() {
     llenarSelectorPlanes();
     pintarSuscripciones();
     pintarListaAlumnos();
+    if (document.getElementById("pa-alumno").options.length) pintarQuePaga();
+    contarRecibosSinEntregar();
     await cargarCobros(true);
     await pintarMorosos();
     await cargarRecordatoriosProgramados();
@@ -733,8 +735,20 @@ function tarjetaCobro(c, conBotones) {
     fila.appendChild(der);
     d.appendChild(fila);
 
-    if (conBotones && c.situacion !== "anulado" && Number(c.saldo) > 0) {
+    const conPago = conBotones && c.situacion !== "anulado" && Number(c.saldo) > 0;
+    /* Quien supervisa (o administra) corrige lo ya emitido: el concepto, el
+       monto o el vencimiento, y vuelve a abrir uno anulado. La base lo exige
+       (trigger cobros_corrige_supervision); quien coordina solo anula. */
+    const conCorregir = conBotones && corrige;
+    if (conPago || conCorregir) {
         const botones = el("div", "flex flex-wrap gap-2 mt-3 pt-3 border-t border-brand-100 dark:border-brand-800");
+        d.appendChild(botones);
+        if (conCorregir && c.situacion === "anulado") {
+            botones.appendChild(boton("Reactivar", BTN_RECIBO_SUAVE, () => reactivarCobro(c)));
+            return d;
+        }
+        if (conCorregir) botones.appendChild(boton("Corregir", BTN_RECIBO_SUAVE, () => corregirCobro(c)));
+        if (!conPago) return d;
         const pagar = el("button", "bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-3 py-1.5 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "💵 Registrar pago");
         pagar.type = "button";
         pagar.addEventListener("click", () => registrarPago(c));
@@ -744,7 +758,6 @@ function tarjetaCobro(c, conBotones) {
         anular.type = "button";
         anular.addEventListener("click", () => anularCobro(c));
         botones.appendChild(anular);
-        d.appendChild(botones);
     }
     return d;
 }
@@ -761,6 +774,7 @@ async function registrarPago(c) {
             { nombre: "metodo", etiqueta: "¿Cómo pagó?", tipo: "select", valor: "sinpe",
               opciones: Object.entries(METODOS) },
             { nombre: "referencia", etiqueta: "Número de comprobante o referencia (opcional)", valor: "" },
+            { nombre: "fecha", etiqueta: "Fecha del pago (AAAA-MM-DD)", valor: hoyCR(), inputmode: "numeric" },
         ],
     });
     if (r === null) return;
@@ -769,12 +783,52 @@ async function registrarPago(c) {
     const metodo = String(r.metodo || "").trim().toLowerCase();
     if (!METODOS[metodo]) return avisar("Método desconocido. Usa sinpe, transferencia, efectivo, tarjeta u otro.", true);
     const referencia = String(r.referencia || "").trim() || null;
+    const fechaPago = String(r.fecha || "").trim() || hoyCR();
+    if (!fechaValida(fechaPago)) return avisar("La fecha va como AAAA-MM-DD, por ejemplo " + hoyCR() + ".", true);
+    if (fechaPago > hoyCR()) return avisar("La fecha del pago no puede ser en el futuro.", true);
 
-    const { error } = await sb.from("pagos").insert({
-        cobro_id: c.id, monto, metodo, referencia, registrado_por: session.user.id,
+    /* El pago lo escribe registrar_pago(), que en la misma transacción le da
+       su recibo con el número de la academia: un pago sin recibo no puede
+       existir (ya no hay permiso para insertar en `pagos` directo). */
+    const { data, error } = await sb.rpc("registrar_pago", {
+        p_pagos: [{ cobro_id: c.id, monto }], p_metodo: metodo, p_referencia: referencia, p_nota: null, p_fecha: fechaPago,
     });
     if (error) return avisar("No se pudo registrar: " + error.message, true);
-    avisar("Pago registrado: " + plata(monto, c.moneda) + " por " + METODOS[metodo] + ".");
+    await cargarTodo();
+    await trasRegistrarPago(data);
+}
+
+async function corregirCobro(c) {
+    const r = await Avisos.formulario({
+        titulo: "Corregir el cobro " + c.consecutivo,
+        texto: "Vale solo para este cobro. El monto no puede quedar por debajo de lo que ya se pagó.",
+        campos: [
+            { nombre: "concepto", etiqueta: "Concepto", valor: c.concepto },
+            { nombre: "monto", etiqueta: "Monto (" + (c.moneda === "USD" ? "$" : "₡") + ")", valor: String(c.monto), inputmode: "decimal" },
+            { nombre: "vence", etiqueta: "Vence (AAAA-MM-DD)", valor: c.vence, inputmode: "numeric" },
+        ],
+        aceptar: "Guardar los cambios",
+    });
+    if (!r) return;
+    const concepto = String(r.concepto || "").trim();
+    const monto = Number(String(r.monto || "").replace(",", "."));
+    const vence = String(r.vence || "").trim();
+    if (!concepto) return avisar("El cobro necesita un concepto.", true);
+    if (String(r.monto || "").trim() === "" || !(monto >= 0)) return avisar("El monto tiene que ser un número (0 o más).", true);
+    if (monto < Number(c.pagado)) return avisar("Ya se pagaron " + plata(c.pagado, c.moneda) + ": el monto no puede quedar por debajo.", true);
+    if (!fechaValida(vence)) return avisar("El vencimiento va como AAAA-MM-DD.", true);
+    const { error } = await sb.from("cobros").update({ concepto, monto, vence }).eq("id", c.id);
+    if (error) return avisar("No se pudo corregir: " + error.message, true);
+    avisar("Cobro " + c.consecutivo + " corregido.");
+    await cargarTodo();
+}
+
+async function reactivarCobro(c) {
+    if (!(await Avisos.confirmar("Vuelve a contar como pendiente, con su monto y su vencimiento.", {
+        titulo: "¿Reactivar el cobro " + c.consecutivo + "?", aceptar: "Reactivar el cobro" }))) return;
+    const { error } = await sb.from("cobros").update({ estado: "emitido", anulado_motivo: null }).eq("id", c.id);
+    if (error) return avisar("No se pudo reactivar: " + error.message, true);
+    avisar("Cobro " + c.consecutivo + " reactivado.");
     await cargarTodo();
 }
 
@@ -1021,6 +1075,7 @@ async function vistaAlumno() {
         saldo.appendChild(d);
     }
     lista.forEach((c) => caja.appendChild(tarjetaCobro(c, false)));
+    await recibosDelAlumno();
 }
 
 
@@ -1363,7 +1418,7 @@ function dibujarCorreos(panel, alumnoId, datos) {
 }
 
 // ------------------------------------------------------------------ fichas
-const FICHAS = ["cobros", "morosidad", "suscripciones", "planes", "contacto"];
+const FICHAS = ["cobros", "recibos", "morosidad", "suscripciones", "planes", "contacto"];
 
 function mostrarFicha(cual) {
     if (!FICHAS.includes(cual)) cual = "cobros";
@@ -1375,6 +1430,7 @@ function mostrarFicha(cual) {
     // obliga a buscar otra vez dónde se estaba.
     try { localStorage.setItem("cobros_ficha", cual); } catch (e) {}
     if (cual === "contacto") cargarContacto();
+    if (cual === "recibos") llenarPagoAdelantado();
     if (cual === "morosidad") { cargarParametrosAvisos(); cargarTextosCorreo(); }
     document.querySelectorAll(".ficha-btn").forEach((b) => {
         const activa = b.dataset.ficha === cual;
@@ -1397,6 +1453,7 @@ async function init() {
     const { data: p } = await sb.from("profiles").select("*").eq("id", session.user.id).maybeSingle();
     perfil = p;
     coordina = !!(perfil && (perfil.es_coordinador || perfil.es_supervisor || perfil.is_admin));
+    corrige = !!(perfil && (perfil.es_supervisor || perfil.is_admin));
 
     if (!coordina) {
         document.getElementById("loading").classList.add("hidden");
@@ -1432,6 +1489,10 @@ async function init() {
     document.getElementById("f-alumno").innerHTML = opciones("Todos");
     llenarGrupos();
     document.getElementById("c-alumno").innerHTML = opciones("— Elige —");
+    document.getElementById("rc-alumno").innerHTML = opciones("Todos");
+    pintarQuienEntrega();
+    // Quien revisa los recibos llega desde «Lo urgente» a lo que le falta.
+    if (corrige && location.hash === "#recibos") document.getElementById("rc-estado").value = "sin-entregar";
     document.getElementById("s-inicio").value = hoyCR();
 
     try {
@@ -1445,7 +1506,9 @@ async function init() {
     document.getElementById("app").classList.remove("hidden");
     let ultima = "cobros";
     try { ultima = localStorage.getItem("cobros_ficha") || "cobros"; } catch (e) {}
+    if (location.hash === "#recibos") ultima = "recibos";
     mostrarFicha(ultima);
+    await Promise.all([cargarRecibos(true), cargarPrefijos()]);
 }
 
 document.querySelectorAll(".ficha-btn").forEach((b) => b.addEventListener("click", () => mostrarFicha(b.dataset.ficha)));
@@ -1501,6 +1564,7 @@ document.getElementById("av-guardar").addEventListener("click", guardarParametro
 document.getElementById("tx-guardar").addEventListener("click", guardarTextosCorreo);
 document.querySelectorAll(".tx-muestra").forEach((b) => b.addEventListener("click", () => verMuestraCorreo(b)));
 document.getElementById("c-alumno").addEventListener("change", pintarCorreos);
+engancharRecibos();
 document.getElementById("generar-btn").addEventListener("click", async () => {
     const btn = document.getElementById("generar-btn");
     btn.disabled = true; btn.textContent = "Emitiendo…";

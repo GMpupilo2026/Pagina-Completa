@@ -193,6 +193,8 @@ window.__consultas = [];
     questions: DATOS.questions || [],
     question_answers: DATOS.question_answers || [],
     solicitudes_academia: DATOS.solicitudes_academia || [],
+    // Los recibos que quien supervisa tiene por revisar y entregar.
+    recibos: DATOS.recibos || [],
     informes_profesor: DATOS.informes_profesor || [],
     /* La visión que marcó administración (verificar-vision-cuenta.js). */
     vision_personas: DATOS.vision_personas || [],

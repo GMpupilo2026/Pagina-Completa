@@ -68,6 +68,13 @@ async function pruebaSupervisor(browser) {
     respuestas_satisfaccion: [{ id: "e-1", seguir: "no" }],
   },
   solicitudes_academia: [],
+  /* Los recibos de su academia: uno por revisar y entregar, uno ya mandado
+     por correo y uno anulado. Solo el primero es pendiente. */
+  recibos: [
+    { id: "r-1", estado: "emitido", entrega: null },
+    { id: "r-2", estado: "emitido", entrega: "correo" },
+    { id: "r-3", estado: "anulado", entrega: null },
+  ],
   /* Dos informes mensuales enviados sin leer, uno ya leído, y uno SUYO (quien
      supervisa también es profesor): ese no cuenta. */
   informes_profesor: [
@@ -110,9 +117,10 @@ async function pruebaSupervisor(browser) {
           .map((li) => li.dataset.pendiente + " · " + li.querySelector("a > span:nth-child(2)").innerText.replace(/\s+/g, " ").trim() + " → " + li.querySelector("a").getAttribute("href"))),
         ["justificaciones · URGENTE 2 justificaciones de ausencia por revisar → justificaciones.html",
          "informesSinLeer · URGENTE 2 informes mensuales de tus profesores sin leer → supervision.html",
+         "recibosSinEntregar · URGENTE 1 recibo de pago por revisar y entregar → cobros.html#recibos",
          "seVan · A VIGILAR 1 alumno dijo este mes que no sigue → satisfaccion.html"]);
   igual("lo que está en cero se dice", await page.textContent("#urgente-panel-al-dia"), "✓ Al día: Solicitudes de ingreso · Pagos al día.");
-  igual("el resumen lo cuenta", await page.textContent("#urgente-panel-estado"), "2 cosas urgentes: alguien está esperando.");
+  igual("el resumen lo cuenta", await page.textContent("#urgente-panel-estado"), "3 cosas urgentes: alguien está esperando.");
   igual("los informes se cuentan en la base, sin los suyos",
         await page.evaluate(() => window.__consultas.filter((c) => c.tabla === "informes_profesor").map((c) => [c.count, !!c.head, c.eq.estado, c.neq && c.neq.profesor_id])),
         [[true, true, "enviado", "u-sup"]]);

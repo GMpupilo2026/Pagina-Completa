@@ -52,6 +52,17 @@
             <p id="alumno-vacio" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-8 text-center text-brand-450 dark:text-brand-350 text-sm">
                 Todavía no tienes ningún cobro registrado.
             </p>
+            <!-- Los recibos de lo que pagó: los mismos que le llegan por correo. -->
+            <div id="alumno-recibos-caja" hidden class="mt-8">
+                <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-3"><span aria-hidden="true">🧾</span> Tus recibos</h2>
+                <div id="alumno-previa" hidden class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-4">
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                        <h3 id="alumno-previa-titulo" tabindex="-1" class="font-serif text-lg font-bold text-brand-800 dark:text-white"></h3>
+                        <div id="alumno-previa-botones" class="flex flex-wrap gap-2"></div>
+                    </div>
+                </div>
+                <div id="alumno-recibos" class="space-y-3"></div>
+            </div>
             <!-- El número sale del mismo ajuste que llevan los correos a la
                  casa, no escrito acá: con dos copias, quien coordina cambia el
                  número y esta línea se queda con el viejo sin que nada falle.
@@ -80,6 +91,7 @@
             <!-- Fichas -->
             <div class="flex flex-wrap gap-2 mb-6 border-b border-brand-200 dark:border-brand-700" role="tablist">
                 <button type="button" role="tab" class="ficha-btn px-4 py-2.5 text-sm font-semibold rounded-t-lg" data-ficha="cobros" aria-selected="true">📄 Cobros</button>
+                <button type="button" role="tab" class="ficha-btn px-4 py-2.5 text-sm font-semibold rounded-t-lg" data-ficha="recibos" aria-selected="false">🧾 Recibos<span id="rc-pendientes-ficha"></span></button>
                 <button type="button" role="tab" class="ficha-btn px-4 py-2.5 text-sm font-semibold rounded-t-lg" data-ficha="morosidad" aria-selected="false">⏰ Morosidad</button>
                 <button type="button" role="tab" class="ficha-btn px-4 py-2.5 text-sm font-semibold rounded-t-lg" data-ficha="suscripciones" aria-selected="false">👥 Quién paga qué</button>
                 <button type="button" role="tab" class="ficha-btn px-4 py-2.5 text-sm font-semibold rounded-t-lg" data-ficha="planes" aria-selected="false">🏷️ Planes</button>
@@ -116,6 +128,138 @@
                 </div>
                 <p id="cobros-vacio" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-8 text-center text-brand-450 dark:text-brand-350 text-sm">
                     No hay cobros con ese filtro. Si todavía no has creado ningún plan, empieza por la ficha «Planes».
+                </p>
+            </section>
+
+            <!-- ---------------- Recibos ----------------
+                 Cada pago queda en un recibo con su número por academia. Quien
+                 coordina registra; quien supervisa (o administración) lo revisa
+                 y lo entrega: por correo o impreso, en mano. La base es la que
+                 lo hace cumplir (puedo_corregir_cobros), la pantalla solo
+                 esconde los botones. Ver «Recibos por academia» en
+                 docs/decisiones/cobros-acceso-y-tienda.md. -->
+            <section id="ficha-recibos" class="hidden">
+                <!-- Un pago que se adelanta (meses de un plan que todavía no se
+                     cobraron) o que no tenía cobro (una inscripción, un torneo). -->
+                <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6">
+                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1"><span aria-hidden="true">💵</span> Pago adelantado o sin cobro previo</h2>
+                    <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">
+                        Para cuando pagan antes de que salga el cobro: los meses que se adelantan se emiten y quedan pagados, y la
+                        corrida diaria ya no los vuelve a cobrar. El pago de un cobro que ya salió se registra en la ficha «Cobros».
+                    </p>
+                    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                        <div class="sm:col-span-2">
+                            <label for="pa-alumno" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Alumno</label>
+                            <select id="pa-alumno" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label for="pa-que" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Qué paga</label>
+                            <select id="pa-que" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
+                        </div>
+                        <div id="pa-plan-cell">
+                            <label for="pa-periodos" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Cuántos periodos</label>
+                            <input id="pa-periodos" type="number" min="1" max="24" value="1" aria-describedby="pa-plan-ayuda" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        </div>
+                        <div id="pa-otro-cell" class="hidden sm:col-span-2 lg:col-span-3 grid gap-3 grid-cols-3">
+                            <div>
+                                <label for="pa-concepto" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Concepto</label>
+                                <input id="pa-concepto" type="text" maxlength="200" placeholder="Inscripción al torneo" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            </div>
+                            <div>
+                                <label for="pa-monto" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Monto</label>
+                                <input id="pa-monto" type="number" min="0" step="1" placeholder="15000" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            </div>
+                            <div>
+                                <label for="pa-moneda" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Moneda</label>
+                                <select id="pa-moneda" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                    <option value="CRC">Colones (₡)</option>
+                                    <option value="USD">Dólares ($)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="pa-metodo" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Cómo pagó</label>
+                            <select id="pa-metodo" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                <option value="sinpe">SINPE Móvil</option>
+                                <option value="transferencia">Transferencia</option>
+                                <option value="efectivo">Efectivo</option>
+                                <option value="tarjeta">Tarjeta</option>
+                                <option value="otro">Otro</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="pa-referencia" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Comprobante (opcional)</label>
+                            <input id="pa-referencia" type="text" maxlength="120" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        </div>
+                        <div>
+                            <label for="pa-fecha" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Fecha del pago</label>
+                            <input id="pa-fecha" type="date" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        </div>
+                        <div class="flex items-end">
+                            <button type="button" id="pa-guardar" class="w-full bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Registrar el pago</button>
+                        </div>
+                    </div>
+                    <p id="pa-plan-ayuda" class="text-xs text-brand-500 dark:text-brand-300 mt-3" aria-live="polite"></p>
+                </div>
+
+                <!-- El prefijo de los números: solo quien supervisa o administra. -->
+                <div id="rc-prefijo-caja" hidden class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6">
+                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1"><span aria-hidden="true">🔢</span> Cómo empiezan los números de recibo</h2>
+                    <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">Cada academia lleva su propia numeración. Los recibos que ya salieron conservan su número.</p>
+                    <div class="flex flex-wrap items-end gap-3">
+                        <div>
+                            <label for="rc-academia" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Academia</label>
+                            <select id="rc-academia" class="bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
+                        </div>
+                        <div>
+                            <label for="rc-prefijo" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Prefijo</label>
+                            <input id="rc-prefijo" type="text" maxlength="10" autocomplete="off" aria-describedby="rc-prefijo-ejemplo" class="w-36 uppercase bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        </div>
+                        <button type="button" id="rc-prefijo-guardar" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Guardar</button>
+                    </div>
+                    <p id="rc-prefijo-ejemplo" class="text-xs text-brand-500 dark:text-brand-300 mt-2" aria-live="polite"></p>
+                </div>
+
+                <div class="flex flex-wrap items-end gap-3 mb-4">
+                    <div>
+                        <label for="rc-estado" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Mostrar</label>
+                        <select id="rc-estado" class="bg-white dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            <option value="">Todos</option>
+                            <option value="sin-entregar">Por revisar y entregar</option>
+                            <option value="entregados">Entregados</option>
+                            <option value="anulados">Anulados</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="rc-alumno" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Alumno</label>
+                        <select id="rc-alumno" class="bg-white dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
+                    </div>
+                    <div class="flex-1 min-w-[10rem]">
+                        <label for="rc-buscar" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Buscar</label>
+                        <input id="rc-buscar" type="search" placeholder="Número de recibo…" class="w-full bg-white dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                    </div>
+                </div>
+                <p id="rc-quien" class="text-xs text-brand-500 dark:text-brand-300 mb-3"></p>
+
+                <!-- Lo que se ve, se imprime y se manda es el MISMO recibo: lo arma
+                     cobros-recordatorios. El marco no corre código (sin
+                     allow-scripts); allow-same-origin y allow-modals son para
+                     poder imprimirlo desde el botón. -->
+                <div id="rc-previa" hidden class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-4">
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                        <h2 id="rc-previa-titulo" tabindex="-1" class="font-serif text-lg font-bold text-brand-800 dark:text-white"></h2>
+                        <div id="rc-previa-botones" class="flex flex-wrap gap-2"></div>
+                    </div>
+                    <p id="rc-previa-destinos" class="text-xs text-brand-500 dark:text-brand-300 mb-3"></p>
+                </div>
+
+                <p id="rc-cuenta" class="text-xs text-brand-450 dark:text-brand-350 mb-3" aria-live="polite"></p>
+                <div id="rc-lista" class="space-y-3"></div>
+                <div class="text-center mt-4">
+                    <button type="button" id="rc-mas" class="hidden bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 hover:border-accent-400 px-5 py-2 rounded-lg text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Ver más recibos</button>
+                </div>
+                <p id="rc-vacio" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-8 text-center text-brand-450 dark:text-brand-350 text-sm">
+                    No hay recibos con ese filtro.
                 </p>
             </section>
 
@@ -432,6 +576,7 @@
     <script src="js/avisos.js"></script>
     <script src="js/main.js"></script>
     <script src="js/busqueda-base.js"></script>
+    <script src="js/cobros-recibos.js"></script>
     <script src="js/cobros.js"></script>
 <!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- aviso-profe: inicio --><script src="js/aviso-profe.js" defer></script><!-- aviso-profe: fin --><!-- tanda: inicio --><script src="js/tanda-diez.js" defer></script><!-- tanda: fin --><!-- modo-vista: inicio --><script src="js/modo-vista.js" defer></script><!-- modo-vista: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- ayuda: inicio --><script src="js/ayuda-guia.js" defer></script><!-- ayuda: fin --><!-- atajo: inicio --><script src="js/atajo-buscar.js" data-arriba="" defer></script><!-- atajo: fin --></body>
 </html>

@@ -8,6 +8,10 @@
    3. Qué manda al crear un plan, al poner a un alumno en un plan, al registrar
       un pago y al anular un cobro.
    4. El CSV: punto y coma, BOM y los totales de cada fila.
+   5. Los recibos: el pago pasa por registrar_pago() (que da el recibo), quien
+      coordina no ve cómo mandarlo ni corregirlo, y quien supervisa lo revisa,
+      lo manda (o lo marca entregado en mano), lo corrige, lo anula, adelanta
+      pagos y cambia el prefijo. La alumna ve los suyos.
 
    Lo que la base hace cumplir (la RLS, y que el estado se calcule y no se
    guarde) no se prueba acá: eso se comprobó en SQL. Esto es lo otro — que la
@@ -29,6 +33,8 @@ const HOY = new Date();
    bloque abierto, donde se le registra el pago a c-2), c-3 el mes pasado y c-4
    el antepasado. `mesAtras(0)` es el último día de este mes. */
 const HOY_ISO = HOY.toISOString().slice(0, 10);
+// El «hoy» que pone la página en la fecha de un pago: el de Costa Rica.
+const HOY_CR = HOY.toLocaleDateString("en-CA", { timeZone: "America/Costa_Rica" });
 const mesAtras = (atras, diaDelMes) => {
   const d = new Date(Date.UTC(HOY.getUTCFullYear(), HOY.getUTCMonth() - atras + (diaDelMes ? 0 : 1), diaDelMes || 0));
   return d.toISOString().slice(0, 10);
@@ -67,6 +73,23 @@ const COBROS = [
   { id: "c-4", student_id: "u-bruno", consecutivo: "AI-2026-000004", concepto: "Mensualidad · julio 2026",     periodo_inicio: "2026-07-01", periodo_fin: "2026-07-31", monto: 25000, pagado: 0,     saldo: 25000, moneda: "CRC", vence: mesAtras(2, 10), situacion: "anulado",   dias_atraso: 0,  estado: "anulado" },
 ];
 const RESUMEN = [{ moneda: "CRC", cobrado_mes: 35000, pendiente: 22500, vencido: 12500, alumnos_morosos: 1 }];
+/* Los recibos, ya con su total y su detalle (recibos_vista). Uno por entregar,
+   uno mandado por correo y uno anulado: las tres caras de la lista. */
+const RECIBOS = [
+  { id: "r-1", numero: "R-ADAPZ-2026-0001", student_id: "u-ana", fecha: "2026-09-10", metodo: "sinpe", referencia: "123", nota: null,
+    estado: "emitido", anulado_motivo: null, entrega: null, enviado_at: null, enviado_a: null, total: 10000, moneda: "CRC",
+    created_at: "2026-09-10T15:00:00Z",
+    detalle: [{ pago_id: "pg-1", cobro_id: "c-2", concepto: "Mensualidad · agosto 2026", consecutivo: "AI-2026-000002", monto: 10000 }] },
+  { id: "r-2", numero: "R-ADAPZ-2026-0002", student_id: "u-bruno", fecha: "2026-08-12", metodo: "efectivo", referencia: null, nota: null,
+    estado: "emitido", anulado_motivo: null, entrega: "correo", enviado_at: "2026-08-12T16:00:00Z", enviado_a: ["mama@x.cr"], total: 25000, moneda: "CRC",
+    created_at: "2026-08-12T15:00:00Z",
+    detalle: [{ pago_id: "pg-2", cobro_id: "c-3", concepto: "Mensualidad · agosto 2026", consecutivo: "AI-2026-000003", monto: 25000 }] },
+  { id: "r-3", numero: "R-ADAPZ-2026-0003", student_id: "u-bruno", fecha: "2026-07-05", metodo: "sinpe", referencia: null, nota: null,
+    estado: "anulado", anulado_motivo: "Pago duplicado", entrega: null, enviado_at: null, enviado_a: null, total: 25000, moneda: "CRC",
+    created_at: "2026-07-05T15:00:00Z",
+    detalle: [{ pago_id: "pg-3", cobro_id: "c-3", concepto: "Mensualidad · agosto 2026", consecutivo: "AI-2026-000003", monto: 25000 }] },
+];
+const RECIBO_NUEVO = { id: "r-nuevo", numero: "R-ADAPZ-2026-0004" };
 const MOROSOS = [{ student_id: "u-ana", alumno: "Ana Rojas", correo: "ana@x.cr", grupo: "7A", moneda: "CRC", deuda: 12500, cobros: 1, dias_atraso: 20, vence_mas_viejo: VENCE_C2 }];
 
 function clienteFalso(perfil, cobrosVisibles) {
@@ -90,6 +113,10 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
       { clave: "cobros_mensaje_moroso", valor: "Texto guardado del aviso de moroso." },
     ],
     cobros_contacto: [],
+    recibos_vista: ${JSON.stringify(RECIBOS)},
+    recibos: ${JSON.stringify(RECIBOS)},
+    academias: [{ id: "a-adapz", nombre: "ADAPZ", prefijo_recibo: null, supervisor_id: "u-sofia" },
+                { id: "a-otra", nombre: "Otra academia", prefijo_recibo: null, supervisor_id: "u-otro" }],
     cobros_recordatorios_programados: [
       { id: "rp-1", student_id: "u-bruno", programado_para: "2026-12-01T15:00:00.000Z", estado: "pendiente", correos: null, nota: null },
     ],
@@ -100,6 +127,14 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
     informes_resumen_alumnos: ${JSON.stringify([ANA, BRUNO, CARLA])},
     eliminar_plan_cobro: { suscripciones: 2, anulados: 1 },
     generar_cobros: 3,
+    registrar_pago: ${JSON.stringify(RECIBO_NUEVO)},
+    pago_adelantado: ${JSON.stringify(RECIBO_NUEVO)},
+    registrar_cobro_pagado: ${JSON.stringify(RECIBO_NUEVO)},
+    prefijo_recibo: "ADAPZ",
+    academia_guardar_prefijo_recibo: "ADZ",
+    corregir_recibo: null,
+    anular_recibo: null,
+    recibo_entregado_en_mano: null,
   };
   /* Este doble FILTRA, ORDENA, CUENTA Y RECORTA de verdad.
      Uno que devolviera siempre la tabla entera daría por buena una página que
@@ -107,7 +142,7 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
      techo de PostgREST que esta pantalla acaba de dejar de cruzar, y el fallo
      no se ve: la lista se pinta igual de bien hasta que hay más de mil. */
   function constructor(filas, tabla) {
-    let unica = false, conCuenta = false, insertados = null, escritura = null;
+    let unica = false, conCuenta = false, insertados = null, escritura = null, cuentaAntesDelRango = null;
     // Los filtros de un update/delete se apuntan al RESOLVER (then), no en
     // update(): el .eq/.in llega después, y es lo que dice A QUIÉN se tocó.
     const filtros = [];
@@ -135,8 +170,17 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
                       } return b; },
       limit(n) { if (Array.isArray(datos)) datos = datos.slice(0, n); return b; },
       range(a, z) { window.__consultas.push({ tabla, verbo: "range", desde: a, hasta: z });
-                    if (Array.isArray(datos)) datos = datos.slice(a, z + 1); return b; },
-      is() { return b; }, not() { return b; },
+                    if (Array.isArray(datos)) { cuentaAntesDelRango = datos.length; datos = datos.slice(a, z + 1); } return b; },
+      // .is(col, null) y .not(col, "is", null): los recibos por entregar y los
+      // entregados se piden así, y un doble que no filtrara daría por buena una
+      // página que se olvida del filtro.
+      is(col, val) { window.__consultas.push({ tabla, verbo: "is", col, val });
+                     aplicar((f) => (val === null ? f[col] == null : f[col] === val)); return b; },
+      not(col, op, val) { window.__consultas.push({ tabla, verbo: "not", col, op, val });
+                          if (op === "is" && val === null) aplicar((f) => f[col] != null); return b; },
+      ilike(col, patron) { window.__consultas.push({ tabla, verbo: "ilike", col, patron });
+                           const t = String(patron).replace(/%/g, "").toLowerCase();
+                           aplicar((f) => String(f[col] || "").toLowerCase().includes(t)); return b; },
       insert(v) { window.__llamadas.push({ tabla, verbo: "insert", datos: v });
                   insertados = Array.isArray(v) ? v : [v]; return b; },
       update(v) { escritura = { tabla, verbo: "update", datos: v }; window.__llamadas.push(escritura); return b; },
@@ -145,10 +189,12 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
       maybeSingle() { unica = true; return b; },
       single() { unica = true; return b; },
       then(res, rej) {
-        // El total es el de ANTES de recortar, como hace PostgREST con
-        // count: "exact": si fuera el de la página, "de N cobros" mentiría.
+        // El total es el de lo que cumple los filtros, ANTES de recortar con
+        // range(), como hace PostgREST con count: "exact": si fuera el de la
+        // página, "de N cobros" mentiría; si fuera el de la tabla entera, un
+        // conteo filtrado («1 por entregar») también.
         if (escritura) escritura.filtros = filtros.slice();
-        const total = Array.isArray(filas) ? filas.length : null;
+        const total = cuentaAntesDelRango !== null ? cuentaAntesDelRango : Array.isArray(datos) ? datos.length : null;
         // Un .insert(...).select().single() devuelve lo que se insertó, con un
         // id nuevo — no la tabla de siempre. Sin esto, crearSuscripcion() con
         // un cobro personalizado "funcionaría" en la prueba usando el id del
@@ -198,6 +244,10 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
       window.__llamadas.push({ funcion: cuerpo });
       const respuesta = String(url).indexOf("correos-alumno") !== -1
         ? RETRATO
+        : cuerpo.action === "recibo_ver"
+        ? { ok: true, numero: "R-ADAPZ-2026-0001", asunto: "Recibo", html: "<p id='recibo'>Recibo de prueba</p>", correos: ["rosa@x.cr"] }
+        : cuerpo.action === "recibo_enviar"
+        ? { ok: true, correos: ["rosa@x.cr"], fallos: [] }
         : cuerpo.action === "muestra"
         ? { ok: true, asunto: "Asunto de muestra (" + cuerpo.tipo + ")",
             html: "<p id='muestra'>Correo de muestra</p>",
@@ -579,17 +629,30 @@ async function pruebaCoordinacion(browser) {
   await page.evaluate(() => { window.__llamadas = []; window.__respuestas = [{ monto: "5000", metodo: "transferencia", referencia: "REF-99" }]; });
   await page.locator("#cobros-lista .cobro-fila").nth(1).locator("button").first().click();
   await page.waitForTimeout(300);
-  const pago = await page.evaluate(() => window.__llamadas.find((l) => l.tabla === "pagos" && l.verbo === "insert"));
-  igual("lo que manda al registrar un pago",
-    pago && { cobro_id: pago.datos.cobro_id, monto: pago.datos.monto, metodo: pago.datos.metodo, referencia: pago.datos.referencia },
-    { cobro_id: "c-2", monto: 5000, metodo: "transferencia", referencia: "REF-99" });
+  /* El pago lo escribe registrar_pago(), que da el recibo en la misma
+     transacción: un insert directo en `pagos` dejaría un pago sin recibo (y
+     la base ya no lo permite). */
+  const pago = await page.evaluate(() => window.__llamadas.find((l) => l.rpc === "registrar_pago"));
+  igual("registrar un pago pasa por registrar_pago, con la fecha de hoy",
+    pago && pago.args,
+    { p_pagos: [{ cobro_id: "c-2", monto: 5000 }], p_metodo: "transferencia", p_referencia: "REF-99", p_nota: null, p_fecha: HOY_CR });
+  igual("y nunca escribe en `pagos` directo",
+    await page.evaluate(() => window.__llamadas.some((l) => l.tabla === "pagos")), "false");
+  igual("quien coordina sabe que el recibo lo entrega quien supervisa",
+    await page.evaluate(() => window.__avisos.some((a) => a.includes("R-ADAPZ-2026-0004") && a.includes("lo revisa y lo entrega quien supervisa"))), "true");
 
   // Un monto que no es número no se manda.
   await page.evaluate(() => { window.__llamadas = []; window.__respuestas = [{ monto: "nada", metodo: "sinpe", referencia: "" }]; });
   await page.locator("#cobros-lista .cobro-fila").nth(1).locator("button").first().click();
   await page.waitForTimeout(300);
   igual("un monto que no es número no se manda",
-    await page.evaluate(() => window.__llamadas.filter((l) => l.tabla === "pagos").length), 0);
+    await page.evaluate(() => window.__llamadas.filter((l) => l.rpc === "registrar_pago").length), 0);
+  // Una fecha en el futuro tampoco: un pago que todavía no entró.
+  await page.evaluate(() => { window.__llamadas = []; window.__respuestas = [{ monto: "5000", metodo: "sinpe", referencia: "", fecha: "2099-01-01" }]; });
+  await page.locator("#cobros-lista .cobro-fila").nth(1).locator("button").first().click();
+  await page.waitForTimeout(300);
+  igual("un pago con fecha futura no se manda",
+    await page.evaluate(() => window.__llamadas.filter((l) => l.rpc === "registrar_pago").length), 0);
 
   // El método ya no se escribe: se elige de una lista que solo tiene los que existen.
   igual("el formulario del pago ofrece los cinco métodos, y nada más",
@@ -602,7 +665,48 @@ async function pruebaCoordinacion(browser) {
   await page.locator("#cobros-lista .cobro-fila").nth(1).locator("button").first().click();
   await page.waitForTimeout(300);
   igual("un método desconocido no se manda",
-    await page.evaluate(() => window.__llamadas.filter((l) => l.tabla === "pagos").length), 0);
+    await page.evaluate(() => window.__llamadas.filter((l) => l.rpc === "registrar_pago").length), 0);
+
+  // -------- los recibos, vistos por quien coordina: los ve, no los entrega
+  await page.click('[data-ficha="recibos"]');
+  await page.waitForTimeout(300);
+  igual("ve los recibos con cómo le llegó cada uno a la familia",
+    await page.evaluate(() => [...document.querySelectorAll("#rc-lista .recibo-entrega")].map((e) => e.textContent)),
+    ["Por revisar y entregar", "Enviado por correo", "Anulado"]);
+  igual("pero no tiene cómo mandarlos, corregirlos ni anularlos",
+    await page.evaluate(() => [...document.querySelectorAll("#rc-lista button")].map((b) => b.textContent)
+      .filter((t) => !t.includes("Ver o imprimir")).length), 0);
+  igual("y se le dice quién los entrega",
+    /los revisa y los entrega quien supervisa/.test(await page.evaluate(() => document.getElementById("rc-quien").textContent)), "true");
+  igual("el prefijo de los números no es cosa suya",
+    await page.evaluate(() => document.getElementById("rc-prefijo-caja").checkVisibility()), "false");
+  // Ver el recibo: lo arma la función del correo y no ofrece mandarlo.
+  await page.evaluate(() => { window.__llamadas = []; });
+  await page.locator("#rc-lista .recibo-fila").first().locator("button", { hasText: "Ver o imprimir" }).click();
+  await page.waitForFunction(() => { const m = document.querySelector("#rc-previa iframe"); return m && m.srcdoc; });
+  igual("ver el recibo se lo pide a la función, con ESE recibo",
+    await page.evaluate(() => (window.__llamadas.find((l) => l.funcion && l.funcion.action === "recibo_ver") || {}).funcion),
+    { action: "recibo_ver", recibo_id: "r-1" });
+  igual("el marco del recibo no corre código",
+    await page.evaluate(() => document.querySelector("#rc-previa iframe").getAttribute("sandbox")), "allow-same-origin allow-modals");
+  igual("y a quien coordina no se le ofrece mandarlo",
+    await page.evaluate(() => [...document.querySelectorAll("#rc-previa-botones button")].some((b) => /mandar/i.test(b.textContent))), "false");
+  // Los filtros los hace la base.
+  await page.evaluate(() => { window.__consultas = []; });
+  await page.selectOption("#rc-estado", "sin-entregar");
+  await page.waitForTimeout(300);
+  igual("«Por revisar y entregar» se le pregunta a la base",
+    await page.evaluate(() => window.__consultas.some((c) => c.tabla === "recibos_vista" && c.verbo === "is" && c.col === "entrega")), "true");
+  igual("y deja solo el que falta entregar",
+    await page.evaluate(() => [...document.querySelectorAll("#rc-lista .recibo-fila")].map((d) => d.dataset.id)), ["r-1"]);
+  await page.selectOption("#rc-estado", "entregados");
+  await page.waitForTimeout(300);
+  igual("«Entregados» deja el que ya salió",
+    await page.evaluate(() => [...document.querySelectorAll("#rc-lista .recibo-fila")].map((d) => d.dataset.id)), ["r-2"]);
+  await page.selectOption("#rc-estado", "");
+  await page.waitForTimeout(300);
+  await page.click('[data-ficha="cobros"]');
+  await abrirMeses();
 
   // -------- anular
   await page.evaluate(() => { window.__llamadas = []; window.__respuestas = ["Se dio de baja"]; });
@@ -658,7 +762,7 @@ async function pruebaCoordinacion(browser) {
   // -------- qué dice el correo (asunto, mensaje y «Cómo pagar»)
   await page.waitForFunction(() => document.getElementById("tx-asunto-proximo").placeholder !== "");
   igual("el marco de la vista previa no existe hasta que se pide",
-    await page.evaluate(() => document.querySelectorAll("iframe").length), 0);
+    await page.evaluate(() => document.querySelectorAll("#tx-previa iframe").length), 0);
   igual("el mensaje guardado arranca escrito en su casilla",
     await page.inputValue("#tx-mensaje-moroso"), "Texto guardado del aviso de moroso.");
   igual("lo que no está guardado queda en blanco, con el de fábrica de guía",
@@ -856,6 +960,167 @@ async function pruebaCoordinacion(browser) {
   await page.close();
 }
 
+const SUPERVISORA = { id: "u-sofia", full_name: "Sofía Vargas", email: "sofia@x.cr", role: "profesor", es_coordinador: false, es_supervisor: true, is_admin: false };
+
+/* Quien supervisa: revisa el recibo antes de que salga, lo entrega (por
+   correo o en mano), lo corrige, lo anula, corrige cobros, adelanta pagos y
+   cambia el prefijo de los números de su academia. */
+async function pruebaSupervisora(browser) {
+  console.log("\n=== Quien supervisa ===");
+  const { page, errores } = await abrir(browser, SUPERVISORA, ["c-1", "c-2", "c-3", "c-4"]);
+  await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
+  await page.click('[data-ficha="recibos"]');
+  await page.waitForTimeout(300);
+  const fila = (id) => page.locator('#rc-lista .recibo-fila[data-id="' + id + '"]');
+
+  igual("la ficha dice cuántos recibos faltan por entregar",
+    await page.evaluate(() => document.getElementById("rc-pendientes-ficha").textContent), " (1 por entregar)");
+  igual("el que falta ofrece mandarlo, entregarlo en mano, corregirlo y anularlo",
+    await fila("r-1").locator("button").allTextContents(),
+    ["👁️ Ver o imprimir", "📧 Mandar por correo", "Marcar como entregado en mano", "Corregir", "Anular"]);
+  igual("el anulado solo se ve o se reactiva",
+    await fila("r-3").locator("button").allTextContents(), ["👁️ Ver o imprimir", "Reactivar"]);
+
+  // Mandar: primero se ve (es la revisión) y después se manda ESE.
+  await page.evaluate(() => { window.__llamadas = []; });
+  await fila("r-1").locator("button", { hasText: "Mandar por correo" }).click();
+  await page.waitForFunction(() => { const m = document.querySelector("#rc-previa iframe"); return m && m.srcdoc; });
+  igual("antes de mandarlo se ve, y dice a qué correo sale",
+    /Se manda a: rosa@x\.cr/.test(await page.evaluate(() => document.getElementById("rc-previa-destinos").textContent)), "true");
+  igual("y todavía no se mandó nada",
+    await page.evaluate(() => window.__llamadas.some((l) => l.funcion && l.funcion.action === "recibo_enviar")), "false");
+  await page.locator("#rc-previa-botones button", { hasText: "Ya lo revisé: mandarlo" }).click();
+  await page.waitForTimeout(400);
+  igual("«Ya lo revisé: mandarlo» manda ESE recibo",
+    await page.evaluate(() => (window.__llamadas.find((l) => l.funcion && l.funcion.action === "recibo_enviar") || {}).funcion),
+    { action: "recibo_enviar", recibo_id: "r-1" });
+
+  await page.evaluate(() => { window.__llamadas = []; });
+  await fila("r-1").locator("button", { hasText: "Marcar como entregado en mano" }).click();
+  await page.waitForTimeout(300);
+  igual("«Marcar como entregado en mano» lo apunta en la base",
+    await page.evaluate(() => (window.__llamadas.find((l) => l.rpc === "recibo_entregado_en_mano") || {}).args),
+    { p_recibo: "r-1", p_entregado: true });
+
+  // Corregir: solo viaja el monto que cambió.
+  await page.evaluate(() => { window.__llamadas = []; window.__respuestas = [{ fecha: "2026-09-11", metodo: "transferencia", referencia: "T-1", nota: "", m0: "8000" }]; });
+  await fila("r-1").locator("button", { hasText: "Corregir" }).click();
+  await page.waitForTimeout(300);
+  igual("corregir manda la fecha, el método y el monto nuevo de esa línea",
+    await page.evaluate(() => (window.__llamadas.find((l) => l.rpc === "corregir_recibo") || {}).args),
+    { p_recibo: "r-1", p_fecha: "2026-09-11", p_metodo: "transferencia", p_referencia: "T-1", p_nota: null, p_montos: { "pg-1": 8000 } });
+  await page.evaluate(() => { window.__llamadas = []; window.__respuestas = [{ fecha: "2026-09-11", metodo: "sinpe", referencia: "", nota: "", m0: "10000" }]; });
+  await fila("r-1").locator("button", { hasText: "Corregir" }).click();
+  await page.waitForTimeout(300);
+  igual("sin cambiar montos, no se manda ninguno",
+    await page.evaluate(() => (window.__llamadas.find((l) => l.rpc === "corregir_recibo") || {}).args.p_montos), null);
+  await page.evaluate(() => { window.__llamadas = []; window.__respuestas = [{ fecha: "2099-01-01", metodo: "sinpe", referencia: "", nota: "", m0: "10000" }]; });
+  await fila("r-1").locator("button", { hasText: "Corregir" }).click();
+  await page.waitForTimeout(300);
+  igual("una fecha futura no se manda",
+    await page.evaluate(() => window.__llamadas.filter((l) => l.rpc === "corregir_recibo").length), 0);
+
+  await page.evaluate(() => { window.__llamadas = []; window.__respuestas = ["Se registró dos veces"]; });
+  await fila("r-1").locator("button", { hasText: "Anular" }).click();
+  await page.waitForTimeout(300);
+  igual("anular manda ESE recibo con el motivo",
+    await page.evaluate(() => (window.__llamadas.find((l) => l.rpc === "anular_recibo") || {}).args),
+    { p_recibo: "r-1", p_anular: true, p_motivo: "Se registró dos veces" });
+  await page.evaluate(() => { window.__llamadas = []; });
+  await fila("r-3").locator("button", { hasText: "Reactivar" }).click();
+  await page.waitForTimeout(300);
+  igual("reactivar uno anulado",
+    await page.evaluate(() => (window.__llamadas.find((l) => l.rpc === "anular_recibo") || {}).args),
+    { p_recibo: "r-3", p_anular: false, p_motivo: null });
+
+  // -------- el pago adelantado
+  await page.selectOption("#pa-alumno", "u-ana");
+  igual("ofrece adelantar el plan de ese alumno o pagar otra cosa",
+    await page.evaluate(() => [...document.getElementById("pa-que").options].map((o) => o.value)), ["s-1", "otro"]);
+  igual("y dice cuánto es cada periodo, con la beca",
+    /Cada mes de este plan es de ₡22500/.test(sinSeparadores(await page.evaluate(() => document.getElementById("pa-plan-ayuda").textContent))), "true");
+  await page.fill("#pa-periodos", "3");
+  await page.selectOption("#pa-metodo", "transferencia");
+  await page.fill("#pa-referencia", "BN-77");
+  await page.evaluate(() => { window.__llamadas = []; });
+  await page.click("#pa-guardar");
+  await page.waitForTimeout(500);
+  igual("adelantar tres meses lo hace la base con ESA suscripción",
+    await page.evaluate(() => (window.__llamadas.find((l) => l.rpc === "pago_adelantado") || {}).args),
+    { p_suscripcion: "s-1", p_periodos: 3, p_metodo: "transferencia", p_referencia: "BN-77", p_nota: null, p_fecha: HOY_CR });
+  igual("y enseguida se le pone delante el recibo para revisarlo",
+    await page.evaluate(() => window.__avisos.some((a) => a.includes("Revisa el recibo R-ADAPZ-2026-0004"))), "true");
+  await page.fill("#pa-periodos", "30");
+  await page.evaluate(() => { window.__llamadas = []; });
+  await page.click("#pa-guardar");
+  await page.waitForTimeout(300);
+  igual("más de 24 periodos no se manda",
+    await page.evaluate(() => window.__llamadas.filter((l) => l.rpc === "pago_adelantado").length), 0);
+
+  await page.selectOption("#pa-que", "otro");
+  igual("«Otra cosa» cambia los campos",
+    await page.evaluate(() => [document.getElementById("pa-plan-cell").checkVisibility(), document.getElementById("pa-otro-cell").checkVisibility()]),
+    [false, true]);
+  await page.fill("#pa-concepto", "Inscripción al torneo");
+  await page.fill("#pa-monto", "15000");
+  await page.evaluate(() => { window.__llamadas = []; });
+  await page.click("#pa-guardar");
+  await page.waitForTimeout(500);
+  igual("un pago sin cobro previo emite su cobro pagado, con su recibo",
+    await page.evaluate(() => (window.__llamadas.find((l) => l.rpc === "registrar_cobro_pagado") || {}).args),
+    { p_alumno: "u-ana", p_concepto: "Inscripción al torneo", p_monto: 15000, p_moneda: "CRC", p_metodo: "transferencia",
+      p_referencia: null, p_nota: null, p_fecha: HOY_CR });
+
+  // -------- el prefijo de los números: solo las academias que supervisa
+  igual("ve el prefijo de su academia y nada más",
+    await page.evaluate(() => [document.getElementById("rc-prefijo-caja").checkVisibility(),
+      [...document.getElementById("rc-academia").options].map((o) => o.textContent), document.getElementById("rc-prefijo").value]),
+    [true, ["ADAPZ"], "ADAPZ"]);
+  await page.fill("#rc-prefijo", "A B");
+  await page.evaluate(() => { window.__llamadas = []; });
+  await page.click("#rc-prefijo-guardar");
+  await page.waitForTimeout(300);
+  igual("un prefijo con espacios no se manda",
+    await page.evaluate(() => window.__llamadas.filter((l) => l.rpc === "academia_guardar_prefijo_recibo").length), 0);
+  await page.fill("#rc-prefijo", "adz");
+  await page.click("#rc-prefijo-guardar");
+  await page.waitForTimeout(300);
+  igual("guardar el prefijo manda la academia y el prefijo en mayúscula",
+    await page.evaluate(() => (window.__llamadas.find((l) => l.rpc === "academia_guardar_prefijo_recibo") || {}).args),
+    { p_academia: "a-adapz", p_prefijo: "ADZ" });
+
+  // -------- corregir un cobro y reactivar uno anulado
+  await page.click('[data-ficha="cobros"]');
+  await page.evaluate(() => document.querySelectorAll("#cobros-lista > details").forEach((d) => { d.open = true; }));
+  igual("en el cobro pagado y en el anulado, quien supervisa tiene qué corregir",
+    await page.evaluate(() => [...document.querySelectorAll("#cobros-lista .cobro-fila")].map((d) =>
+      [...d.querySelectorAll("button")].map((b) => b.textContent).join("|"))),
+    ["Corregir|💵 Registrar pago|Anular", "Corregir|💵 Registrar pago|Anular", "Corregir", "Reactivar"]);
+  await page.evaluate(() => { window.__llamadas = []; window.__respuestas = [{ concepto: "Mensualidad · agosto (corregida)", monto: "20000", vence: "2026-08-10" }]; });
+  await page.locator("#cobros-lista .cobro-fila").nth(1).locator("button", { hasText: "Corregir" }).click();
+  await page.waitForTimeout(300);
+  const corrige = await page.evaluate(() => window.__llamadas.find((l) => l.tabla === "cobros" && l.verbo === "update"));
+  igual("corregir un cobro manda concepto, monto y vencimiento, a ESE cobro",
+    corrige && { datos: corrige.datos, filtros: corrige.filtros },
+    { datos: { concepto: "Mensualidad · agosto (corregida)", monto: 20000, vence: "2026-08-10" }, filtros: [{ col: "id", eq: "c-2" }] });
+  await page.evaluate(() => { window.__llamadas = []; window.__respuestas = [{ concepto: "Mensualidad", monto: "5000", vence: "2026-08-10" }]; });
+  await page.locator("#cobros-lista .cobro-fila").nth(1).locator("button", { hasText: "Corregir" }).click();
+  await page.waitForTimeout(300);
+  igual("por debajo de lo ya pagado (₡10 000) no se manda",
+    await page.evaluate(() => window.__llamadas.filter((l) => l.tabla === "cobros").length), 0);
+  // Guardar recarga la lista, que vuelve a cerrar los meses de atrás.
+  await page.evaluate(() => { window.__llamadas = []; document.querySelectorAll("#cobros-lista > details").forEach((d) => { d.open = true; }); });
+  await page.locator("#cobros-lista .cobro-fila").nth(3).locator("button", { hasText: "Reactivar" }).click();
+  await page.waitForTimeout(300);
+  const reactiva = await page.evaluate(() => window.__llamadas.find((l) => l.tabla === "cobros" && l.verbo === "update"));
+  igual("reactivar un cobro anulado",
+    reactiva && { datos: reactiva.datos, filtros: reactiva.filtros },
+    { datos: { estado: "emitido", anulado_motivo: null }, filtros: [{ col: "id", eq: "c-4" }] });
+
+  if (errores.length) { console.log("  ✗ errores en la página: " + errores.join(" | ")); fallos += 1; }
+  await page.close();
+}
+
 async function pruebaAlumna(browser) {
   console.log("\n=== Una alumna ===");
   // La RLS solo le devuelve los suyos: eso es lo que ve el cliente falso.
@@ -869,8 +1134,19 @@ async function pruebaAlumna(browser) {
   const saldo = sinSeparadores(await page.evaluate(() => document.querySelector("#alumno-saldo").textContent));
   igual("le suma su saldo (22.500 + 12.500)", /₡35000/.test(saldo), "true");
   igual("y avisa que hay algo vencido", /vencido/.test(saldo), "true");
-  igual("ve sus dos recibos",
+  igual("ve sus dos cobros",
     await page.evaluate(() => document.querySelectorAll("#alumno-lista > div").length), 2);
+  igual("y sus recibos, que son solo los suyos",
+    await page.evaluate(() => [document.getElementById("alumno-recibos-caja").checkVisibility(),
+      [...document.querySelectorAll("#alumno-recibos > div p:first-child")].map((p) => p.textContent.split(" · ")[0])]),
+    [true, ["R-ADAPZ-2026-0001"]]);
+  await page.evaluate(() => { window.__llamadas = []; });
+  await page.locator("#alumno-recibos button", { hasText: "Ver recibo" }).click();
+  await page.waitForFunction(() => { const m = document.querySelector("#alumno-previa iframe"); return m && m.srcdoc; });
+  igual("ve su recibo, sin cómo mandarlo",
+    await page.evaluate(() => [(window.__llamadas.find((l) => l.funcion && l.funcion.action === "recibo_ver") || {}).funcion,
+      [...document.querySelectorAll("#alumno-previa-botones button")].map((b) => b.textContent)]),
+    [{ action: "recibo_ver", recibo_id: "r-1" }, ["🖨️ Imprimir o guardar en PDF", "Cerrar"]]);
   /* El número al que escribir sale del MISMO ajuste que llevan los correos, no
      escrito en la página: con dos copias, quien coordina lo cambia y esta
      línea se queda con el viejo sin que nada falle. */
@@ -909,6 +1185,7 @@ async function pruebaProfesora(browser) {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
     await pruebaCoordinacion(browser);
+    await pruebaSupervisora(browser);
     await pruebaProfesora(browser);
     await pruebaAlumna(browser);
   } finally {

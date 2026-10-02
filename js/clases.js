@@ -357,7 +357,7 @@
            hay algo. Su panel ya tiene la franja del primer paso y «Tu semana»;
            un «todo al día» de todos los días deja de leerse (la lección de la
            franja: con todo al día no se dice nada). */
-        const URGENTE_SUPERVISOR = ["solicitudes", "justificaciones", "informesSinLeer", "seVan", "morosos"];
+        const URGENTE_SUPERVISOR = ["solicitudes", "justificaciones", "informesSinLeer", "recibosSinEntregar", "seVan", "morosos"];
         async function cargarUrgente(claves, opciones) {
             const op = opciones || {};
             const caja = document.getElementById("urgente-panel");

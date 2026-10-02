@@ -110,6 +110,8 @@ window.__consultas = [];
     solicitudes_academia: [
       { id: "s-1", estado: "pendiente" }, { id: "s-2", estado: "pendiente" }, { id: "s-3", estado: "aprobada" },
     ],
+    // Un recibo por revisar y entregar, uno ya entregado: solo el primero cuenta.
+    recibos: [{ id: "r-1", estado: "emitido", entrega: null }, { id: "r-2", estado: "emitido", entrega: "mano" }],
   };
   /* Quién supervisa a cada profesor (supervisores_de) y quién lleva 4 días
      sin entrenar (informes_inactivos). Cada prueba pone los suyos. */
@@ -130,6 +132,8 @@ window.__consultas = [];
       conCabeza(op) { if (op && op.head) { cabeza = true; anotado.head = true; } return b; },
       eq(col, val) { anotado.eq[col] = val; filas2 = filas2.filter((r) => String(r[col]) === String(val)); return b; },
       in(col, vals) { anotado.in = { [col]: vals }; filas2 = filas2.filter((r) => vals.includes(r[col])); return b; },
+      // .is(col, null): los recibos por entregar se cuentan así.
+      is(col, val) { anotado.is = { [col]: val }; filas2 = filas2.filter((r) => (val === null ? r[col] == null : r[col] === val)); return b; },
       order() { return b; },
       range(a, z) { anotado.range = [a, z]; filas2 = filas2.slice(a, z + 1); return b; },
       single() { unica = true; return b; },
@@ -410,7 +414,7 @@ async function pruebaUrgente(browser) {
     "solicitudes · Urgente · 2 solicitudes de ingreso sin responder",
     "justificaciones · Urgente · 3 justificaciones de ausencia por revisar",
     "sin-profesor · Urgente · 1 alumno sin profesor asignado",
-    "profes-sin-nadie · Urgente · 2 profesores que nadie supervisa ni coordina",
+    "profes-sin-nadie · Urgente · 2 profesores que nadie supervisa ni coordina","recibosSinEntregar · Urgente · 1 recibo de pago por revisar y entregar",
     "coord-vacios · A vigilar · 1 coordinador sin profesores asignados",
     "seVan · A vigilar · 1 alumno dijo este mes que no sigue",
     "inactivos · A vigilar · 2 alumnos llevan 4 días o más sin entrenar",
@@ -418,9 +422,9 @@ async function pruebaUrgente(browser) {
   igual("lo que está en cero se dice «al día», no desaparece",
     await page.evaluate(() => Array.from(document.querySelectorAll("#urgentes-al-dia li")).filter((li) => li.checkVisibility()).map((li) => li.textContent)),
     ["✓ Cada supervisor tiene gente a cargo", "✓ Pagos al día"]);
-  igual("el resumen lo cuenta", (await page.textContent("#urgentes-resumen")).replace(/ Revisado.*/, ""), "4 cosas urgentes y 3 para vigilar.");
+  igual("el resumen lo cuenta", (await page.textContent("#urgentes-resumen")).replace(/ Revisado.*/, ""), "5 cosas urgentes y 3 para vigilar.");
   igual("y el menú lleva el número de lo urgente",
-    await page.evaluate(() => { const b = document.getElementById("nav-urgentes"); return b.checkVisibility() ? b.textContent : "no se ve"; }), "4");
+    await page.evaluate(() => { const b = document.getElementById("nav-urgentes"); return b.checkVisibility() ? b.textContent : "no se ve"; }), "5");
 
   // Se cuenta en la base, no bajándose la lista.
   const consultas = await page.evaluate(() => window.__consultas.filter((c) => ["solicitudes_academia", "cobros_morosos", "respuestas_satisfaccion"].includes(c.tabla)).map((c) => c.tabla + (c.head ? ":head" : ":LISTA")));

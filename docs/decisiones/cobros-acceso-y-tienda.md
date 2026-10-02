@@ -174,8 +174,8 @@ siempre — el fijado a mano, si hay; si no sus encargados; si no, su cuenta).
   desde el navegador** con `sb.from(...).insert(...)`: su RLS ya exige
   `soy_coordinador() and bajo_mi_coordinacion(student_id)` para las cuatro
   operaciones, así que no hace falta una Edge Function solo para guardar el
-  dato — la misma razón por la que `anularCobro()` y `registrarPago()`
-  escriben directo. Cancelar es la misma fila con `estado: 'cancelado'`.
+  dato — la misma razón por la que `anularCobro()` escribe directo
+  (`registrarPago()` ya no: ver «Recibos por academia»). Cancelar es la misma fila con `estado: 'cancelado'`.
 - **Mandarlo sí necesita la service role**, porque el correo tiene que salir
   aunque quien lo programó no tenga la pestaña abierta esa hora: eso es
   `"tanda_programados"`, una acción más de la Edge Function
@@ -404,6 +404,97 @@ plan…»; no se borran, porque el consecutivo ya se usó. Se comprobó
 impersonando roles: una alumna y una llamada sin sesión reciben «Solo quien
 coordina…», `anon` no tiene execute, y como administración borra el plan y
 anula el cobro sin pagos.
+
+### Recibos por academia: quien coordina registra, quien supervisa entrega
+
+Cada pago queda en un **recibo** (`public.recibos`), con número propio de su
+academia: `R-ADAPZ-2026-0001`. Se ve, se imprime o se guarda en PDF y se manda
+a la familia desde la ficha «🧾 Recibos» de `cobros.html`. El alumno ve los
+suyos en «Tus recibos».
+
+- **Quien coordina registra; quien supervisa revisa y entrega.** Lo pidió el
+  dueño: el recibo no sale a la familia hasta que el supervisor de la academia
+  (o administración) lo revisa. Entregar es mandarlo por correo
+  (`recibo_enviar` de la Edge Function `cobros-recordatorios`) o marcarlo
+  «entregado en mano» (`recibo_entregado_en_mano()`), para el que se imprime.
+  Mientras nadie lo entrega, sale en «Lo urgente» del supervisor y de
+  administración («recibos de pago por revisar y entregar», `js/pendientes.js`)
+  y la ficha dice cuántos faltan. La pregunta es **una**,
+  `interno.corrijo_cobros_de(alumno)` (`is_admin`, o `es_supervisor` y
+  `supervisado_por_mi()`), y la Edge Function la hace con el JWT de quien pide
+  el envío (`puedo_corregir_cobros()`): la pantalla solo esconde los botones.
+- **Quien supervisa corrige todo lo ya registrado**, y quien coordina nada de
+  eso: el monto, la fecha y el método de un recibo (`corregir_recibo()`, que
+  cambia también sus pagos; un monto en 0 quita esa línea), anularlo o
+  reactivarlo (`anular_recibo()`), y el concepto, el monto o el vencimiento de
+  un cobro, o reactivar uno anulado. Lo de los cobros es un `update` directo,
+  pero el trigger `cobros_corrige_supervision` lo rechaza si no corrige quien
+  llama; anular sigue siendo de quien coordina. Un pago borrado o cambiado en
+  silencio es plata que desaparece, por eso la escritura de `pagos` (update y
+  delete) quedó solo para quien corrige.
+- **Un pago sin recibo no puede existir.** `pagos` ya no se inserta desde el
+  navegador (se le quitó el permiso a `authenticated`): lo escriben
+  `registrar_pago()`, `pago_adelantado()` y `registrar_cobro_pagado()`, que
+  validan (que no se pague de más, una sola moneda y un solo alumno por recibo,
+  la fecha no en el futuro) y dan el recibo en la misma transacción. Los 15
+  pagos que ya había recibieron uno cada uno al aplicar la migración.
+- **El número lo da un contador en la base** (`recibo_contadores`, por prefijo
+  y año, con un upsert que bloquea la fila): un `max()+1` le daría el mismo
+  número a dos pagos registrados al mismo tiempo. El prefijo es el de la
+  academia (`academias.prefijo_recibo`, o la primera palabra del nombre: ADAPZ,
+  CENFOTEC, CCDR); lo cambia su supervisor o administración, y los recibos que
+  ya salieron conservan su número. Sin academia, `AI`. De qué academia es el
+  recibo lo dice `interno.academia_para_recibo()`: la que tiene abierta quien
+  supervisa varias, o la única del alumno.
+- **Anular no borra.** Un recibo anulado se queda con su número (es el registro
+  de lo que pasó) y sus pagos dejan de contar: `cobros_vista` suma solo los
+  pagos de recibos no anulados, así que el cobro vuelve a quedar pendiente sin
+  tocar nada más. Reactivarlo los vuelve a contar, y se rechaza si con eso un
+  cobro quedaría pagado de más.
+- **El total del recibo se calcula** (`recibos_vista`, la suma de sus pagos),
+  no se guarda: corregir un monto lo cambia solo.
+- **El recibo es UN HTML** (`cobros-recordatorios/recibo-html.ts`): el mismo
+  para la vista previa, para imprimir y para el correo, con la marca de la
+  academia DEL RECIBO. Dice que es un recibo interno y no una factura
+  electrónica, y uno anulado lo dice con palabras arriba, porque impreso no hay
+  colores. En la página va en un marco `sandbox="allow-same-origin
+  allow-modals"`: sin `allow-scripts` no corre código, y los otros dos hacen
+  falta para imprimirlo desde el botón.
+
+#### Pagar por adelantado
+
+«💵 Pago adelantado o sin cobro previo», en la misma ficha:
+
+- **Adelantar N periodos de un plan** (`pago_adelantado()`): paga los periodos
+  que siguen sin pagar, del más viejo al más nuevo (si debe algo, eso va
+  primero), y emite los que todavía no salieron con `interno.emitir_cobros()`:
+  **el mismo cuerpo que `generar_cobros()`**, acotado a esa suscripción, para
+  que el concepto, la beca y el día de vencimiento salgan iguales que en la
+  corrida diaria. El índice único `(suscripcion_id, periodo_inicio)` hace que la
+  corrida de mañana no los vuelva a emitir, y como ya están pagados no generan
+  avisos de cobro. Hasta 24 periodos y tres años; respeta el `fin` del plan.
+- **Algo que no tenía cobro** (una inscripción, un torneo):
+  `registrar_cobro_pagado()` emite el cobro y lo paga entero, con su recibo.
+
+Comprobado en la base impersonando roles, en una transacción revertida, con
+la supervisora real de ADAPZ y una alumna suya: adelantar 2 periodos de un
+plan anual emitió los dos (octubre 2026 y 2027) y los dejó pagados con un
+recibo de ₡40 000; pagar lo ya pagado y corregir un monto de más se rechazan;
+corregir baja el total; anular deja los dos cobros pendientes y reactivar los
+vuelve a contar; un pago sin cobro previo queda pagado; con el prefijo nuevo
+la cuenta arranca en `R-ADZ-2026-0001`; el supervisor de OTRA academia ve 0
+recibos de ADAPZ y no anula, no adelanta ni cambia el prefijo; la alumna ve
+sus 3 recibos y ninguno ajeno, y no se paga ni toca la entrega; un profesor
+cualquiera ve 0 recibos y 0 pagos; `anon` no tiene permiso ni sobre la tabla
+ni sobre las funciones; y la corrida diaria, hasta 400 días adelante, no
+vuelve a emitir lo adelantado (0 nuevos). **Pendiente**: la misma prueba con
+una cuenta que SOLO coordina (no hay ninguna real; hay que marcar una dentro
+de la transacción). Su caso lo cubren `corrijo_cobros_de()`, que da `false` a
+quien no supervisa ni administra, y `verificar-cobros.js` en la página.
+
+**Al tocar esto, correr `node herramientas/verificar-cobros.js`** (las tres
+caras: quien coordina, quien supervisa y la alumna) **y
+`node herramientas/verificar-recibo.js`** (el HTML del recibo, sin navegador).
 
 ### Pasarela y factura electrónica
 

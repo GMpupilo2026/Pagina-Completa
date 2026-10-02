@@ -12,6 +12,14 @@
 //   "muestra"           { tipo, textos } -> cómo queda el correo con unos textos
 //                                          todavía sin guardar, sobre un cobro de
 //                                          ejemplo (y los textos de fábrica)
+//   "recibo_ver"        { recibo_id }   -> el HTML del recibo de un pago, para
+//                                          verlo, imprimirlo o guardarlo en PDF
+//   "recibo_enviar"     { recibo_id, correos? } -> lo manda a la familia
+//
+// EL RECIBO LO MANDA QUIEN SUPERVISA, no quien coordina: quien coordina
+// registra el pago, y el supervisor de la academia (o administración) lo
+// revisa antes de que salga. Lo pregunta puedo_corregir_cobros() con el JWT
+// de quien llama; la pantalla solo esconde el botón.
 //
 // QUIÉN PUEDE QUÉ. Las dos primeras las llama una persona desde cobros.html con
 // su sesión, y el permiso NO se comprueba aquí a mano: se leen las filas con un
@@ -34,6 +42,8 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { avisoHtml, asuntoDe, DE_FABRICA, type Tipo, type Textos } from "./aviso-html.ts";
+import { reciboHtml, asuntoRecibo } from "./recibo-html.ts";
+import type { Marca } from "./marca-correo.ts";
 import { esCorreoInterno } from "./usuario-alumno.ts";
 import { contactoDeConsultas } from "./contacto-academia.ts";
 import { remitenteDe, type Remitente } from "./remitente-academia.ts";
@@ -205,6 +215,23 @@ async function nombreDe(studentId: string, cliente = admin) {
   return (data?.full_name as string) || (data?.email as string) || "el alumno";
 }
 
+// La marca de la academia DEL RECIBO (nombre, color y logo), o null: es la que
+// lleva el número, así que es la que firma, aunque el alumno esté en dos.
+async function marcaDeAcademia(academiaId: string | null): Promise<Marca | null> {
+  if (!academiaId) return null;
+  try {
+    const { data } = await admin.from("academias").select("nombre, color, logo_path").eq("id", academiaId).maybeSingle();
+    const nombre = String(data?.nombre ?? "").trim();
+    if (!nombre) return null;
+    const logoUrl = data?.logo_path
+      ? `${SUPABASE_URL.replace(/\/$/, "")}/storage/v1/object/public/academia-marca/${String(data.logo_path).split("/").map(encodeURIComponent).join("/")}`
+      : null;
+    return { nombre, color: (data?.color as string) ?? null, logoUrl };
+  } catch {
+    return null;
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "Método no permitido" }, 405);
@@ -372,6 +399,71 @@ Deno.serve(async (req) => {
   });
   const { data: userData, error: userError } = await comoQuienLlama.auth.getUser(jwt);
   if (userError || !userData?.user) return json({ error: "Token inválido" }, 401);
+
+  // ------------------------------------------------------------ el recibo
+  // Lo puede ver quien la RLS de recibos_vista deje: quien coordina a ese
+  // alumno y el propio alumno (su «Mis pagos»). Mandarlo, solo quien corrige.
+  if (accion === "recibo_ver" || accion === "recibo_enviar") {
+    const reciboId = typeof body.recibo_id === "string" ? body.recibo_id : "";
+    if (!reciboId) return json({ error: "Falta el recibo" }, 400);
+    const { data: rec } = await comoQuienLlama.from("recibos_vista").select("*").eq("id", reciboId).maybeSingle();
+    if (!rec) return json({ error: "Ese recibo no existe o no es tuyo" }, 404);
+
+    const nombre = await nombreDe(rec.student_id as string, comoQuienLlama);
+    const marca = await marcaDeAcademia(rec.academia_id as string | null);
+    const firma = firmaDe(marca);
+    const datos = {
+      numero: rec.numero as string, fecha: rec.fecha as string, alumno: nombre,
+      metodo: rec.metodo as string, referencia: rec.referencia as string | null, nota: rec.nota as string | null,
+      moneda: (rec.moneda as string) || "CRC",
+      lineas: ((rec.detalle as { concepto: string; consecutivo: string; monto: number }[]) || []),
+      anulado: rec.estado === "anulado", anuladoMotivo: rec.anulado_motivo as string | null,
+      firma, sitio: SITE_URL, cabecera: (t: string, c?: string) => cabeceraCorreo(marca, t, c),
+    };
+
+    const { data: corrige } = await comoQuienLlama.rpc("puedo_corregir_cobros", { p_alumno: rec.student_id });
+    if (accion === "recibo_ver") {
+      // A dónde saldría, solo para quien lo puede mandar: al alumno no se le
+      // enseñan los correos de su familia.
+      const correos = corrige === true ? (await destinatariosDe(rec.student_id as string)).map((d) => d.email) : undefined;
+      return json({ ok: true, numero: rec.numero, asunto: asuntoRecibo(rec.numero as string, nombre, firma),
+                    html: reciboHtml(datos), correos });
+    }
+
+    if (corrige !== true) {
+      return json({ error: "El recibo lo manda quien supervisa la academia, después de revisarlo." }, 403);
+    }
+    if (rec.estado === "anulado") return json({ error: "Ese recibo está anulado: no se manda." }, 400);
+    const pedidos = Array.isArray(body.correos) ? (body.correos as unknown[]).map((c) => String(c).trim().toLowerCase()).filter(Boolean) : [];
+    if (pedidos.some((c) => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c) || esCorreoInterno(c))) {
+      return json({ error: "Alguno de esos correos no sirve para mandar el recibo." }, 400);
+    }
+    const destinos = pedidos.length
+      ? pedidos.map((email) => ({ nombre: "", email }))
+      : await destinatariosDe(rec.student_id as string);
+    if (!destinos.length) return json({ error: "Ese alumno no tiene ningún correo al que mandarle el recibo" }, 400);
+
+    const remite = await remitenteDe(admin, rec.student_id as string, DE);
+    // El nombre de quien manda es el de la academia DEL RECIBO, que puede no
+    // ser la única del alumno.
+    if (marca) {
+      const direccion = (DE.match(/<([^>]+)>/)?.[1] ?? DE).trim();
+      remite.from = `${marca.nombre.replace(/["<>\r\n]/g, "").slice(0, 80).trim()} <${direccion}>`;
+    }
+    const enviados: string[] = [];
+    const fallos: string[] = [];
+    for (const d of destinos) {
+      const r = await mandar(d.email, asuntoRecibo(rec.numero as string, nombre, firma),
+        reciboHtml({ ...datos, destinatario: d.nombre }), remite);
+      if (r.ok) enviados.push(d.email); else fallos.push(`${d.email}: ${r.error}`);
+    }
+    if (!enviados.length) return json({ error: fallos.join(" | ") || "No se pudo mandar" }, 502);
+    const antes = Array.isArray(rec.enviado_a) ? rec.enviado_a as string[] : [];
+    await admin.from("recibos").update({
+      entrega: "correo", enviado_at: new Date().toISOString(), enviado_a: [...new Set([...antes, ...enviados])],
+    }).eq("id", reciboId);
+    return json({ ok: true, correos: enviados, fallos });
+  }
 
   // Ver a dónde sale el aviso y mandarlo es de coordinación. Que la RLS de
   // cobros_vista devuelva filas no alcanza: al alumno le devuelve SUS cobros, y
