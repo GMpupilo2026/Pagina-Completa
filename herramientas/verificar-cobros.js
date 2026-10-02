@@ -829,9 +829,11 @@ async function pruebaCoordinacion(browser) {
   igual("programar manda el alumno, el momento en ISO y los correos",
     programado && { student_id: programado.student_id, correos: programado.correos, creado_por: programado.creado_por },
     { student_id: "u-ana", correos: ["mama@x.cr", "papa@x.cr"], creado_por: "u-oscar" });
-  igual("y el momento es el de verdad, no una hora distinta",
+  // El campo es hora de Costa Rica (UTC−6), sea cual sea la zona de la
+  // computadora: las 8:30 de la mañana son las 14:30 UTC.
+  igual("y el momento es el de verdad, en hora de Costa Rica",
     programado && new Date(programado.programado_para).toISOString().slice(0, 16),
-    new Date("2027-01-15T08:30").toISOString().slice(0, 16));
+    "2027-01-15T14:30");
 
   // Un correo mal escrito no se manda, y se dice por qué.
   await page.fill("#rp-correos", "esto no es un correo");
