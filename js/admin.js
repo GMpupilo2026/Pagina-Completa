@@ -398,7 +398,7 @@
         document.getElementById("urgentes-actualizar").addEventListener("click", () => revisarPendientes());
 
         function fmtDate(iso) {
-            return new Date(iso).toLocaleDateString("es-CR", { day: "2-digit", month: "short", year: "numeric" });
+            return new Date(iso).toLocaleDateString("es-CR", { day: "2-digit", month: "short", year: "numeric", timeZone: "America/Costa_Rica" });
         }
         function escapeHtml(s) {
             return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));

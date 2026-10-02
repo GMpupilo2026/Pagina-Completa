@@ -51,7 +51,7 @@
                 const g = groups[key];
                 const li = document.createElement("li");
                 li.className = "border-b border-brand-100 dark:border-brand-800 pb-3 last:border-0";
-                const fecha = new Date(g.row.finished_at).toLocaleDateString("es-CR", { year: "numeric", month: "long", day: "numeric" });
+                const fecha = new Date(g.row.finished_at).toLocaleDateString("es-CR", { year: "numeric", month: "long", day: "numeric", timeZone: "America/Costa_Rica" });
                 li.innerHTML =
                     "<p class='font-semibold text-brand-800 dark:text-white'>" + escapeHtml(g.row.tournament_name) + "</p>" +
                     "<p class='text-xs text-brand-450 dark:text-brand-350'>" + (FORMAT_LABEL[g.row.format] || g.row.format) + " · " + (VARIANT_LABEL[g.row.variant] || g.row.variant) + " · " + fecha + "</p>" +

@@ -1517,10 +1517,10 @@
 
         // ---------- Estado de la clase (class_sessions) ----------
         function fmtTime(iso) {
-            return new Date(iso).toLocaleTimeString("es-CR", { hour: "2-digit", minute: "2-digit" });
+            return new Date(iso).toLocaleTimeString("es-CR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Costa_Rica" });
         }
         function fmtDate(iso) {
-            return new Date(iso).toLocaleDateString("es-CR", { day: "2-digit", month: "short", year: "numeric" });
+            return new Date(iso).toLocaleDateString("es-CR", { day: "2-digit", month: "short", year: "numeric", timeZone: "America/Costa_Rica" });
         }
         function fmtDuration(startIso, endIso) {
             const mins = Math.max(0, Math.round((new Date(endIso) - new Date(startIso)) / 60000));
@@ -2820,7 +2820,7 @@
         // y no por horas: una tarea de mañana a las 8 a. m. vence mañana,
         // aunque falten menos de 24 horas.
         function venceEnPalabras(iso) {
-            const dia = (d) => Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
+            const dia = (d) => Date.parse(d.toLocaleDateString("en-CA", { timeZone: "America/Costa_Rica" }));   // el día en Costa Rica
             const dias = Math.round((dia(new Date(iso)) - dia(new Date())) / 86400000);
             if (dias <= 0) return "hoy";
             if (dias === 1) return "mañana";
@@ -3118,12 +3118,13 @@
         // omisión: abierto el más reciente, cerrados los de atrás.
         const sesionesMeses = new Map();
 
+        // El mes de la clase en Costa Rica (con la zona de la computadora, una clase
+        // del 31 a las 7 p. m. caía en el mes siguiente en una que esté en UTC).
         function claveMes(iso) {
-            const d = new Date(iso);
-            return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+            return HoraCR.mes(iso);
         }
         function nombreMes(iso) {
-            const t = new Date(iso).toLocaleDateString("es-CR", { month: "long", year: "numeric" });
+            const t = HoraCR.fecha(iso, { month: "long", year: "numeric" });
             return t.charAt(0).toUpperCase() + t.slice(1);
         }
         function fmtMinutos(mins) {

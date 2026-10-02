@@ -763,7 +763,7 @@
     const conFecha = lista.filter((x) => x.fecha).sort((a, b) => (a.fecha < b.fecha ? 1 : a.fecha > b.fecha ? -1 : 0));
     if (conFecha.length < 40) return null;
     const ultima = new Date(conFecha[0].fecha + "T00:00:00Z");
-    const corte = new Date(ultima.getTime() - DIAS_RECIENTES * 86400000).toISOString().slice(0, 10);
+    const corte = new Date(ultima.getTime() - DIAS_RECIENTES * 86400000).toISOString().slice(0, 10);   // calendario en UTC
     let recientes = conFecha.filter((x) => x.fecha >= corte);
     if (recientes.length < 20) recientes = conFecha.slice(0, 30);
     const antes = conFecha.slice(recientes.length);

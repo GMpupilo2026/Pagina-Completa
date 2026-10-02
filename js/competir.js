@@ -19,7 +19,7 @@
         let ritmoReto = null;
 
         function fmtDateTime(iso) {
-            return new Date(iso).toLocaleString("es-CR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+            return new Date(iso).toLocaleString("es-CR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "America/Costa_Rica" });
         }
 
         function resultLabel(row) {

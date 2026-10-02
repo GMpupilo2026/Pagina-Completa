@@ -2332,10 +2332,14 @@ este informe se imprime y lo lee alguien que no sabe nada de la plataforma.
 **Al tocar `asistencia.html`, `js/reporte-armar.js` o la tabla
 `class_sessions`, correr `node herramientas/verificar-asistencia.js`** (con el
 sitio en localhost:8777 y playwright). Todo lo que se rompe acá se rompe
-callado, así que se mira desde afuera: que **la hora local viaje como el instante
-que fue** —el verificador fija la zona en `America/Costa_Rica` y comprueba que
+callado, así que se mira desde afuera: que **la hora de Costa Rica viaje como el
+instante que fue** —el verificador fija la zona en `America/Costa_Rica` y comprueba que
 las 15:00 salgan como las 21:00 UTC; mandar los dos campos como si fueran UTC
-deja la clase fechada el día siguiente sin dar ningún error—, que el buscador
+deja la clase fechada el día siguiente sin dar ningún error. Los dos campos se
+leen como hora de Costa Rica con `HoraCR.desdeCampo()`, no en la zona de la
+computadora: una mal configurada, o la de alguien de viaje, corría la clase
+sin avisar (ver «Las fechas y las horas, siempre en hora de Costa Rica» en
+sitio-e-infraestructura.md)—, que el buscador
 **esconda las casillas en vez de sacarlas del DOM** (con media lista fuera, el
 selector de subgrupos dejaría marcada a gente que no fue), que «los del martes»
 marque a los suyos y desmarque al resto, que guardar sin nadie marcado pida un

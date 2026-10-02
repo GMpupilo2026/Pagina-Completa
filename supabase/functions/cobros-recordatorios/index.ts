@@ -48,6 +48,7 @@ import { esCorreoInterno } from "./usuario-alumno.ts";
 import { contactoDeConsultas } from "./contacto-academia.ts";
 import { remitenteDe, type Remitente } from "./remitente-academia.ts";
 import { cabeceraCorreo, firmaDe } from "./marca-correo.ts";
+import { diaCR } from "./hora-cr.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -143,7 +144,9 @@ function tipoDe(c: Cobro, hoy: Date, p: ParametrosAvisos): Tipo | null {
   if (Number(c.saldo) <= 0) return null;
   if (c.dias_atraso >= p.diasMoroso) return "moroso";
   if (c.dias_atraso >= p.diasVencido) return "vencido";
-  const faltan = Math.ceil((new Date(c.vence + "T00:00:00Z").getTime() - hoy.getTime()) / 86400000);
+  // Días de calendario entre hoy EN COSTA RICA y el vencimiento: contado desde
+  // el instante en UTC, el «faltan» cambiaba según la hora a la que corriera.
+  const faltan = Math.round((Date.parse(c.vence + "T00:00:00Z") - Date.parse(diaCR(hoy) + "T00:00:00Z")) / 86400000);
   if (faltan >= 0 && faltan <= p.diasAntes) return "proximo";
   return null;
 }
@@ -481,8 +484,8 @@ Deno.serve(async (req) => {
     const tipo: Tipo = TIPOS.includes(body.tipo as Tipo) ? body.tipo as Tipo : "proximo";
     const pedidos = (body.textos && typeof body.textos === "object" ? body.textos : {}) as Textos;
     const alumno = "María Pérez";
-    const vence = new Date(Date.now() + (tipo === "proximo" ? 2 : tipo === "vencido" ? -3 : -20) * 86400000)
-      .toISOString().slice(0, 10);
+    // El día del ejemplo, contado desde hoy en Costa Rica.
+    const vence = diaCR(new Date(Date.now() + (tipo === "proximo" ? 2 : tipo === "vencido" ? -3 : -20) * 86400000));
     const atraso = tipo === "proximo" ? 0 : tipo === "vencido" ? 3 : 20;
     const ejemplo = [{ consecutivo: "AI-0000-000000", concepto: "Mensualidad (ejemplo)", monto: 25000, pagado: 0,
       saldo: 25000, moneda: "CRC", vence, situacion: atraso ? "vencido" : "pendiente", dias_atraso: atraso }];

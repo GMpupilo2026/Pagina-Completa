@@ -41,8 +41,10 @@ function escapar(t: unknown) {
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
+// El día del pago, leído al mediodía y dicho en hora de Costa Rica (como el
+// fecha() de aviso-html.ts; la zona va escrita acá por lo mismo que allá).
 function fecha(iso: string) {
-  return new Date(iso + "T12:00:00Z").toLocaleDateString("es-CR", { day: "numeric", month: "long", year: "numeric" });
+  return new Date(iso + "T12:00:00-06:00").toLocaleDateString("es-CR", { day: "numeric", month: "long", year: "numeric", timeZone: "America/Costa_Rica" });
 }
 
 /** El asunto del correo: una línea, con el número y la academia. */

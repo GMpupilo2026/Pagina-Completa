@@ -41,10 +41,10 @@ function igual(nombre, hallado, esperado) {
 function sinErrores(errores, pagina) {
   igual(`${pagina}: sin errores en la página`, errores.length ? errores.join(" | ") : "ninguno", "ninguno");
 }
-const hoy = () => {
-  const d = new Date();
-  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
-};
+// El día en Costa Rica, como lo cuenta js/repaso-espaciado.js (no el de la zona
+// de quien corre esto: de las 6 p. m. a la medianoche, en UTC ya es mañana).
+const diaCR = (ms) => new Date(ms).toLocaleDateString("en-CA", { timeZone: "America/Costa_Rica" });
+const hoy = () => diaCR(Date.now());
 const inserts = (page) => page.evaluate(() => window.__inserts.filter((i) => i.tabla === "training_progress").length);
 
 async function temas(browser) {
@@ -162,8 +162,8 @@ async function mates(browser) {
 
 async function hub(browser) {
   console.log("\n=== El hub: «Hoy te toca» ===");
-  const ayer = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
-  const manana = new Date(Date.now() + 2 * 86400000).toISOString().slice(0, 10);
+  const ayer = diaCR(Date.now() - 86400000);
+  const manana = diaCR(Date.now() + 2 * 86400000);
   const ficha = (vence, ultimo) => ({ facilidad: 2.5, intervalo: 1, repasos: 1, fallos: 0, vence, ultimo });
   const local = {
     [CLAVE]: JSON.stringify({ a: Object.assign(ficha(ayer, "2026-01-01T00:00:00Z"), { tema: "fork" }), b: Object.assign(ficha(hoy(), "2026-01-01T00:00:00Z"), { tema: "pin" }), c: Object.assign(ficha(manana, "2026-01-01T00:00:00Z"), { tema: "pin" }) }),
@@ -447,7 +447,7 @@ async function hub(browser) {
      limpios y los repasos de mañana. */
   {
     const fresco = { diagnostico_resultado_v1: JSON.stringify({ fecha: new Date().toISOString() }) };
-    const dia = (n) => { const d = new Date(Date.now() + n * 86400000); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); };
+    const dia = (n) => diaCR(Date.now() + n * 86400000);
     const ficha = (vence) => ({ facilidad: 2.5, intervalo: 1, repasos: 1, fallos: 0, vence, ultimo: "2026-01-01T00:00:00Z" });
     const local = Object.assign({}, fresco, {
       // Mañana tocan dos: el que vence mañana y el de hoy (si no se hace); el de pasado mañana y el que ya salió, no.

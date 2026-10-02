@@ -281,9 +281,9 @@
 
   // Desde cuándo: las opciones son relativas a hoy.
   function haceAnios(n) {
-    const d = new Date();
-    d.setFullYear(d.getFullYear() - n);
-    return d.toISOString().slice(0, 10);
+    // Un día de calendario: hoy en Costa Rica, n años atrás.
+    const [y, m, d] = new Date().toLocaleDateString("en-CA", { timeZone: "America/Costa_Rica" }).split("-");
+    return (Number(y) - n) + "-" + m + "-" + d;
   }
   const DESDE = [
     { etiqueta: "Todas", valor: "" },
@@ -577,10 +577,7 @@
 
   // Dentro de una semana, a las 8 de la noche: la fecha de siempre de una tarea.
   function venceSugerido() {
-    const d = new Date(Date.now() + 7 * 86400000);
-    d.setHours(20, 0, 0, 0);
-    const dos = (n) => String(n).padStart(2, "0");
-    return d.getFullYear() + "-" + dos(d.getMonth() + 1) + "-" + dos(d.getDate()) + "T20:00";
+    return HoraCR.dia(Date.now() + 7 * 86400000) + "T20:00";   // las 8 de la noche de Costa Rica
   }
 
   async function cargarAlumnos() {
@@ -639,7 +636,7 @@
     if (!alumnos.length) { estado.textContent = "Marca al menos un alumno."; return; }
     const vence = $("mandar-vence").value;
     if (!vence) { estado.textContent = "Ponle una fecha límite."; return; }
-    if (new Date(vence) <= new Date()) { estado.textContent = "La fecha límite ya pasó."; return; }
+    if (HoraCR.desdeCampo(vence) <= new Date()) { estado.textContent = "La fecha límite ya pasó."; return; }
     const { r, lado } = mandando;
     const b = $("mandar-enviar");
     b.disabled = true;
@@ -650,7 +647,7 @@
       p_lado: lado,
       p_plan: L.planDelAlumno(r, lado),
       p_nota: $("mandar-nota").value.trim(),
-      p_vence: new Date(vence).toISOString(),
+      p_vence: HoraCR.desdeCampo(vence).toISOString(),   // lo escrito es hora de Costa Rica
     });
     b.disabled = false;
     if (error) { estado.textContent = "No se pudo mandar: " + (error.message || error); return; }

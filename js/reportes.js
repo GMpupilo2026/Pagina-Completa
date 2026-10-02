@@ -449,11 +449,9 @@
         /* ------------------------------- arranque ------------------------------- */
 
         function mesActual() {
-            const hoy = new Date();
-            const p = (n) => String(n).padStart(2, "0");
-            const primero = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
-            const fmt = (d) => d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
-            return { desde: fmt(primero), hasta: fmt(hoy) };
+            // El mes en curso en Costa Rica.
+            const hoy = new Date().toLocaleDateString("en-CA", { timeZone: "America/Costa_Rica" });
+            return { desde: hoy.slice(0, 8) + "01", hasta: hoy };
         }
 
         async function init() {

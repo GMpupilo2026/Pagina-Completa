@@ -208,7 +208,7 @@ async function init() {
     if (f.cierra_el) {
         const c = document.getElementById("cierre");
         c.textContent = "Se puede llenar hasta el " +
-            new Date(f.cierra_el).toLocaleDateString("es-CR", { day: "numeric", month: "long", year: "numeric" }) + ".";
+            new Date(f.cierra_el).toLocaleDateString("es-CR", { day: "numeric", month: "long", year: "numeric", timeZone: "America/Costa_Rica" }) + ".";
         c.classList.remove("hidden");
     }
 

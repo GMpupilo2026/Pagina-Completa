@@ -100,8 +100,13 @@ export function plata(monto: number, moneda: string) {
   }
 }
 
+// Un día de calendario (el vencimiento), leído al mediodía y dicho en hora de
+// Costa Rica, que es donde se paga. La zona va escrita acá y no importada de
+// hora-cr.ts: este archivo lo corren también las pruebas de herramientas/ con
+// Node, donde el compartido no está copiado al lado (por eso los demás imports
+// son solo de tipos).
 function fecha(iso: string) {
-  return new Date(iso + "T12:00:00Z").toLocaleDateString("es-CR", { day: "numeric", month: "long", year: "numeric" });
+  return new Date(iso + "T12:00:00-06:00").toLocaleDateString("es-CR", { day: "numeric", month: "long", year: "numeric", timeZone: "America/Costa_Rica" });
 }
 
 type Fila = {

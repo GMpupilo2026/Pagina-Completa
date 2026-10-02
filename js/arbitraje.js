@@ -49,7 +49,8 @@ const $ = (id) => document.getElementById(id);
 const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const estrellas = (n) => '★'.repeat(n) + '☆'.repeat(5 - n);
 const reloj = (s) => String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
-const fechaCorta = (iso) => new Date(iso).toLocaleDateString('es-CR', { day: 'numeric', month: 'long', year: 'numeric' });
+// En hora de Costa Rica, sea un momento o un día de calendario (js/hora-cr.js).
+const fechaCorta = (iso) => HoraCR.fecha(iso, { day: 'numeric', month: 'long', year: 'numeric' });
 
 function irA(vista) {
   ['intro-view', 'examen-view', 'resultado-view'].forEach((id) => $(id).classList.toggle('hidden', id !== vista));

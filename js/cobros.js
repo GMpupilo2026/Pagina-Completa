@@ -52,7 +52,7 @@ function plata(monto, moneda) {
 }
 function fecha(iso) {
     if (!iso) return "";
-    return new Date(iso + "T12:00:00Z").toLocaleDateString("es-CR", { day: "numeric", month: "short", year: "numeric" });
+    return HoraCR.fecha(iso, { day: "numeric", month: "short", year: "numeric" });   // un día de calendario
 }
 function el(tag, clase, texto) {
     const n = document.createElement(tag);
@@ -698,8 +698,7 @@ function pintarCobros() {
 function mesLargo(clave) {
     if (!clave) return "Sin fecha";
     const [a, m] = clave.split("-");
-    const nombre = new Date(Number(a), Number(m) - 1, 1)
-        .toLocaleDateString("es-CR", { month: "long", year: "numeric" });
+    const nombre = HoraCR.fecha(a + "-" + m + "-01", { month: "long", year: "numeric" });
     return nombre.charAt(0).toUpperCase() + nombre.slice(1);
 }
 
@@ -903,7 +902,7 @@ const ESTADO_PROGRAMADO = {
 };
 
 function fechaHora(iso) {
-    return new Date(iso).toLocaleString("es-CR", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+    return new Date(iso).toLocaleString("es-CR", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "America/Costa_Rica" });
 }
 
 async function cargarRecordatoriosProgramados() {
@@ -953,7 +952,7 @@ async function programarRecordatorio() {
     const cuando = document.getElementById("rp-cuando").value;
     if (!studentId) return avisar("Elige un alumno.", true);
     if (!cuando) return avisar("Elige el día y la hora.", true);
-    const momento = new Date(cuando);
+    const momento = HoraCR.desdeCampo(cuando);   // lo escrito es hora de Costa Rica
     if (isNaN(momento.getTime())) return avisar("Esa fecha no es válida.", true);
     if (momento.getTime() <= Date.now()) return avisar("Elige un momento que todavía no haya pasado.", true);
 

@@ -570,7 +570,7 @@ async function verRespuestas(f) {
    Solo filtra la tabla: el CSV sigue bajando todas las respuestas. */
 function textoDeRespuesta(r, campos) {
     return sinTildes([
-        new Date(r.created_at).toLocaleDateString("es-CR", { day: "2-digit", month: "short", year: "numeric" }),
+        new Date(r.created_at).toLocaleDateString("es-CR", { day: "2-digit", month: "short", year: "numeric", timeZone: "America/Costa_Rica" }),
         r.cuenta_id ? "cuenta creada" : "sin cuenta",
     ].concat((campos || []).map((c) => valorLegible(r.respuestas[c.id], c))).join(" "));
 }
@@ -622,7 +622,7 @@ function pintarRespuestas() {
                 td.appendChild(celdaAdjuntos(r.respuestas[c.id], c, r));
             } else {
                 td.textContent = c.id === "__fecha"
-                    ? new Date(r.created_at).toLocaleDateString("es-CR", { day: "2-digit", month: "short", year: "numeric" })
+                    ? new Date(r.created_at).toLocaleDateString("es-CR", { day: "2-digit", month: "short", year: "numeric", timeZone: "America/Costa_Rica" })
                     : valorLegible(r.respuestas[c.id]);
             }
             tr.appendChild(td);
@@ -641,7 +641,7 @@ const bajarAdjunto = (ruta) => sb.storage.from("formulario-adjuntos").download(r
 function celdaAdjuntos(v, c, r) {
     const idNombre = (respuestasActuales.papeles || {}).alumno_nombre;
     const quien = idNombre ? valorLegible(r.respuestas[idNombre])
-        : new Date(r.created_at).toISOString().slice(0, 10);
+        : new Date(r.created_at).toLocaleDateString("en-CA", { timeZone: "America/Costa_Rica" });
     return Adjuntos.celda(v, bajarAdjunto, quien, c.etiqueta);
 }
 
@@ -654,7 +654,7 @@ function celdaCuenta(r) {
         const listo = document.createElement("span");
         listo.className = "whitespace-nowrap text-green-700 dark:text-green-400";
         listo.textContent = "✅ Creada" + (r.cuenta_creada_at
-            ? " el " + new Date(r.cuenta_creada_at).toLocaleDateString("es-CR", { day: "2-digit", month: "short" })
+            ? " el " + new Date(r.cuenta_creada_at).toLocaleDateString("es-CR", { day: "2-digit", month: "short", timeZone: "America/Costa_Rica" })
             : "");
         return listo;
     }
@@ -1046,7 +1046,7 @@ function bajarCsv() {
     const lineas = [columnas.map((c) => celda(c.etiqueta)).join(";")];
     filas.forEach((r) => {
         lineas.push(columnas.map((c) => celda(
-            c.id === "__fecha" ? new Date(r.created_at).toLocaleString("es-CR")
+            c.id === "__fecha" ? new Date(r.created_at).toLocaleString("es-CR", { timeZone: "America/Costa_Rica" })
             : c.id === "__cuenta" ? (r.cuenta_id ? "Sí" : "No")
             : valorLegible(r.respuestas[c.id], c)
         )).join(";"));

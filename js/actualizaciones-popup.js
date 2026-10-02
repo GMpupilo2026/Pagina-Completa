@@ -69,7 +69,7 @@
 
   function fechaLegible(iso) {
     try {
-      return new Date(iso).toLocaleDateString("es-CR", { day: "numeric", month: "long", year: "numeric" });
+      return new Date(iso).toLocaleDateString("es-CR", { day: "numeric", month: "long", year: "numeric", timeZone: "America/Costa_Rica" });
     } catch (e) {
       return "";
     }

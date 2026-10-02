@@ -35,13 +35,13 @@
   var TOPE_DIAS = 180;   // más allá de medio año no tiene sentido programar nada
 
   function hoy() {
-    var d = new Date();
-    return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+    // El día de hoy en Costa Rica (antes, el de la zona de la computadora).
+    return new Date().toLocaleDateString("en-CA", { timeZone: "America/Costa_Rica" });
   }
   function sumarDias(fechaISO, dias) {
     var d = new Date(fechaISO + "T12:00:00Z");
     d.setUTCDate(d.getUTCDate() + dias);
-    return d.toISOString().slice(0, 10);
+    return d.toISOString().slice(0, 10);   // calendario en UTC
   }
   function entre(n, min, max) { return Math.min(max, Math.max(min, n)); }
 

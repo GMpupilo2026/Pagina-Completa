@@ -47,7 +47,7 @@ const FUNCIONES = {
   // número al que la casa escribe, que es el mismo en los tres correos.
   "informe-examen": ["contacto-academia.ts", "remitente-academia.ts", "marca-correo.ts"],
   "informes-encargados": ["contacto-academia.ts", "remitente-academia.ts", "marca-correo.ts"],
-  "cobros-recordatorios": ["usuario-alumno.ts", "contacto-academia.ts", "remitente-academia.ts", "marca-correo.ts"],
+  "cobros-recordatorios": ["usuario-alumno.ts", "contacto-academia.ts", "remitente-academia.ts", "marca-correo.ts", "hora-cr.ts"],
   "mejorar-informe": [],
   // Pública (verify_jwt en false): ver su cabecera.
   "prueba-gratis": ["usuario-alumno.ts"],

@@ -212,7 +212,7 @@ function pintarPrevio() {
   const previo = resultadoGuardado();
   const box = document.getElementById('previo');
   if (!previo) return;
-  const fecha = new Date(previo.fecha).toLocaleDateString('es-CR', { day: 'numeric', month: 'long', year: 'numeric' });
+  const fecha = new Date(previo.fecha).toLocaleDateString('es-CR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'America/Costa_Rica' });
   box.innerHTML = `
     <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Ya hiciste el diagnóstico</h2>
     <p class="text-sm text-brand-500 dark:text-brand-300 mb-3">El ${fecha} quedaste en <strong class="text-brand-800 dark:text-white">${previo.nivel}</strong> con ${previo.porcentaje}% de la prueba. Repetirlo cada cuatro semanas es la forma de ver si el plan está funcionando.</p>
@@ -983,7 +983,7 @@ function mostrarResultado(detalle, reciente) {
   const plan = PE.generarPlan(resumen);
   irA('result-view');
   if (!reciente) {
-    const fecha = new Date(detalle.fecha).toLocaleDateString('es-CR', { day: 'numeric', month: 'long', year: 'numeric' });
+    const fecha = new Date(detalle.fecha).toLocaleDateString('es-CR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'America/Costa_Rica' });
     document.getElementById('result-saved').textContent = `Diagnóstico del ${fecha}.`;
   }
 

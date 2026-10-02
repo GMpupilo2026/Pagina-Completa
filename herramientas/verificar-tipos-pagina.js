@@ -912,8 +912,10 @@ window.PreparacionMotor = {
       const cola = await page.evaluate(() => {
         const e = JSON.parse(localStorage.getItem("entreno_tipos_repaso_v1") || "{}");
         const f = e["errores:juego-g-pedida-6"];
-        const d = new Date(); d.setDate(d.getDate() + 1);
-        const man = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+        // Mañana en Costa Rica, como lo cuenta js/repaso-espaciado.js (no en la zona
+        // de quien corre esto: de las 6 p. m. a la medianoche, en UTC ya es mañana).
+        const [y, m, dd] = new Date().toLocaleDateString("en-CA", { timeZone: "America/Costa_Rica" }).split("-").map(Number);
+        const man = new Date(Date.UTC(y, m - 1, dd + 1)).toISOString().slice(0, 10);
         return f ? { vence: f.vence === man, fuera: !!f.fuera, racha: f.limpiosSeguidos } : null;
       });
       ok("limpio a la primera, igual entra al repaso y vuelve mañana", !!cola && cola.vence && !cola.fuera && cola.racha === 1, JSON.stringify(cola));

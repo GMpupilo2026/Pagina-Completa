@@ -1779,3 +1779,75 @@ Edge Function `alerta-base`).
   racha de ayer y 2 ejercicios hoy le sale el aviso con «faltan 3»; la segunda
   corrida no repite; a quien lo apagó no le sale. La página, en
   `verificar-notificaciones.js`.
+
+## Las fechas y las horas, siempre en hora de Costa Rica
+
+La Academia está en Costa Rica (UTC−6 todo el año, sin horario de verano),
+pero casi nada de lo que muestra una fecha corre ahí: la base y las Edge
+Functions corren en UTC, y el navegador usa la zona de la computadora de quien
+mira. Nada de eso da ningún error: la fecha sale perfecta y es la de otro día.
+Lo que se encontró al revisarlo todo (octubre de 2026):
+
+- **Un formato sin zona usa la de quien mira.** `toLocaleDateString()`,
+  `toLocaleTimeString()`, `toLocaleString()` e `Intl.DateTimeFormat` sin
+  `timeZone` dan la hora de la computadora: en una mal configurada, o en la de
+  alguien de viaje, una clase de las 3 p. m. salía a otra hora. En una Edge
+  Function es peor, porque el servidor está en UTC: el informe a la casa
+  armado a las 7 de la noche decía «al 2 de octubre» el 1, y el resultado de un
+  examen entregado de noche salía con el día siguiente.
+- **Un día de calendario («2026-09-30», una columna `date`) no tiene hora**, y
+  `new Date("2026-09-30")` lo lee como la medianoche UTC, que en Costa Rica es
+  el 29 a las 6 de la tarde: la fecha de nacimiento de las inscripciones, el
+  vencimiento de un acceso o de un cobro salían **un día antes**.
+- **`toISOString().slice(0, 10)` es el día en UTC**: de las 6 de la tarde a la
+  medianoche ya es «mañana». El «hoy» de una racha, de los finales de curso, de
+  «Te reto», el mes de los reportes y el nombre de un archivo descargado
+  cambiaban de día seis horas antes.
+- **Un `<input type="datetime-local">` se leía en la zona de la computadora**
+  (`new Date(valor)`): el vencimiento de una tarea, de un examen, de una
+  preparación o de un recordatorio de cobro se corría con ella.
+- **En la base, `current_date` es el día de UTC**: un cobro que vencía hoy
+  salía «vencido», con un día de atraso, desde las 6 p. m. del día en que
+  todavía se podía pagar, y «lo cobrado este mes» arrancaba el último día del
+  mes anterior a las 6 p. m. (migraciones `cobros_dia_de_costa_rica` y `cobros_vista_dia_cr_y_recibos_anulados`, que le devuelve el filtro de los recibos anulados de #672 que la primera pisó:
+  `cobros_vista` y `cobros_resumen()` cuentan con
+  `(now() at time zone 'America/Costa_Rica')::date`).
+
+Cómo quedó:
+
+- **`js/hora-cr.js` (`HoraCR`) es la copia única para las páginas**:
+  `fecha()`, `hora()`, `fechaHora()` formatean siempre con
+  `timeZone: "America/Costa_Rica"`; `dia()`, `hoy()` y `mes()` dan el día y el
+  mes de Costa Rica; `momento()` lee un día de calendario como el **mediodía**
+  de ese día en Costa Rica (el mismo día en cualquier zona);
+  `desdeCampo()` y `paraCampo()` leen y llenan un campo de fecha y hora como
+  hora de Costa Rica, sea cual sea la zona de la computadora. Una página que
+  usa `HoraCR.` carga `js/hora-cr.js` antes.
+- **Lo que no puede depender de otro archivo** (los módulos que se comparten
+  entre páginas, lo generado, los cálculos sueltos) lleva la zona escrita en la
+  misma llamada: `{ ..., timeZone: "America/Costa_Rica" }`, y el día de hoy es
+  `new Date().toLocaleDateString("en-CA", { timeZone: "America/Costa_Rica" })`.
+- **La cuenta de días de calendario se hace en UTC a propósito**
+  (`Date.UTC(y, m - 1, d + n)` y `toISOString().slice(0, 10)`): ahí no hay horas
+  que se corran. Esas líneas llevan el comentario `// calendario en UTC`, y un
+  día de calendario armado así se muestra con `timeZone: "UTC"`.
+- **Las Edge Functions**: `supabase/functions/_compartido/hora-cr.ts`
+  (`fechaCR`, `diaCR`) para el `index.ts` que lo necesite (hoy,
+  `cobros-recordatorios`, que cuenta los días que faltan para el vencimiento
+  desde el día de hoy en Costa Rica y no desde el instante en UTC). **Los
+  `*-html.ts` de los correos no lo importan**: los corren también las pruebas
+  de `herramientas/` con Node, donde el compartido no está copiado al lado
+  (por eso sus otros imports son solo de tipos), así que llevan la zona escrita
+  en su propio `fecha()`.
+- Los horarios de pg_cron siguen en UTC, como los pide pg_cron, y cada uno dice
+  en su migración a qué hora de Costa Rica corresponde.
+
+**`node herramientas/verificar-hora-cr.js`** (sin navegador) lee todo el código
+propio (`js/`, `entreno/`, `cursos/`, `supabase/functions/`, el worker; no
+`js/vendor/` ni lo minificado) y falla si un formato de fecha u hora no dice su
+zona, si un día se saca con `toISOString()` sin el comentario
+`calendario en UTC`, o si una página usa `HoraCR` sin cargar antes
+`js/hora-cr.js` (se caería con «HoraCR is not defined» al pintar la primera
+fecha). Comprobado rompiéndolo a propósito: quitarle la zona a un formato de
+`cobros.js` o del informe a la casa, sacar `hora-cr.js` de `tareas.html` y
+agregar un `toISOString().slice(0, 10)` lo hacen fallar cada uno.

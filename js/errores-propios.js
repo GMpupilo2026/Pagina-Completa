@@ -261,7 +261,7 @@
      Devuelve los últimos `meses` que tienen alguna partida, del más viejo al
      más nuevo: [{ mes: "2026-09", partidas, regalados, escapados, porPartida }].
      Pura (la prueba verificar-errores-propios.js). */
-  const MES_CR = (iso) => { try { return new Date(new Date(iso).getTime() - 6 * 3600000).toISOString().slice(0, 7); } catch (e) { return null; } };
+  const MES_CR = (iso) => { try { return new Date(iso).toLocaleDateString("en-CA", { timeZone: "America/Costa_Rica" }).slice(0, 7); } catch (e) { return null; } };
   function curva(vistasObj, meses) {
     const por = {};
     Object.values(vistasObj || {}).forEach((v) => {

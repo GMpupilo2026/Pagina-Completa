@@ -213,13 +213,13 @@
 
         function calcularEdad(fechaNacimientoStr) {
             if (!fechaNacimientoStr) return null;
-            const hoy = new Date();
-            const nacimiento = new Date(fechaNacimientoStr);
-            let edad = hoy.getFullYear() - nacimiento.getFullYear();
-            const mes = hoy.getMonth() - nacimiento.getMonth();
-            if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) {
-                edad--;
-            }
+            /* La fecha de nacimiento es un día de calendario: new Date("2010-05-04") es la
+               medianoche UTC, que en Costa Rica es el 3. Se comparan los números tal cual,
+               contra hoy en Costa Rica: el día del cumpleaños ya cuenta. */
+            const [ay, am, ad] = new Date().toLocaleDateString("en-CA", { timeZone: "America/Costa_Rica" }).split("-").map(Number);
+            const [ny, nm, nd] = String(fechaNacimientoStr).slice(0, 10).split("-").map(Number);
+            let edad = ay - ny;
+            if (am < nm || (am === nm && ad < nd)) edad--;
             return edad;
         }
 

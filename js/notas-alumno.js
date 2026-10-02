@@ -80,7 +80,7 @@ window.NotasAlumno = (function () {
     }
 
     function fechaCorta(iso) {
-        return new Date(iso).toLocaleDateString("es-CR", { day: "numeric", month: "short", year: "numeric" });
+        return new Date(iso).toLocaleDateString("es-CR", { day: "numeric", month: "short", year: "numeric", timeZone: "America/Costa_Rica" });
     }
 
     /* El enlace que convierte la nota en tarea. Lleva el id de la nota y no su

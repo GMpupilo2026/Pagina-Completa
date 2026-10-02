@@ -696,7 +696,7 @@
       if (expected === "½") txt += res === "½" ? "¡Bien! Sostuviste las tablas, como dice la teoría." : humanWon ? "¡Ganaste! El motor se equivocó en una posición de tablas." : "La teoría dice tablas: repasa la defensa y vuelve a intentarlo.";
       else if (ok) txt += humanWon ? "¡Bien! Ganaste la posición como dice la teoría." : "El motor ganó, como dice la teoría. Fíjate cuántas jugadas resististe.";
       else txt += humanWon ? "¡Ganaste una posición que la teoría da por perdida!" : "La teoría dice " + RES_TXT[expected] + ": repasa la línea principal y prueba de nuevo.";
-      guardar(d.id, { resultado: res, esperado: expected, jugaste: human, nivel: levelKey(), ok: ok, jugadas: game.history().length, fecha: new Date().toISOString().slice(0, 10) });
+      guardar(d.id, { resultado: res, esperado: expected, jugaste: human, nivel: levelKey(), ok: ok, jugadas: game.history().length, fecha: new Date().toLocaleDateString("en-CA", { timeZone: "America/Costa_Rica" }) });
       renderPractice(txt); stopPractice(true); msgEl.textContent = txt;
       return true;
     }

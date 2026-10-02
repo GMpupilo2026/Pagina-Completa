@@ -34,9 +34,13 @@ function escapar(t: unknown) {
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
+// En hora de Costa Rica: el servidor de la función corre en UTC, y sin zona
+// un examen entregado a las 7 de la noche salía con el día siguiente. Va escrita
+// acá y no importada de hora-cr.ts: este archivo lo corren también las pruebas
+// de herramientas/ con Node, donde el compartido no está copiado al lado.
 function fecha(iso: string | null) {
   if (!iso) return "";
-  return new Date(iso).toLocaleDateString("es-CR", { day: "numeric", month: "long", year: "numeric" });
+  return new Date(iso).toLocaleDateString("es-CR", { day: "numeric", month: "long", year: "numeric", timeZone: "America/Costa_Rica" });
 }
 
 export function informeExamenHtml(d: Record<string, any>, sitio: string, contacto: Contacto | null | undefined, cabecera: Cabecera) {

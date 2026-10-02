@@ -141,7 +141,7 @@
   // ---------- progreso ----------
   function progreso() { try { return JSON.parse(localStorage.getItem("cp:" + slug) || "{}"); } catch (e) { return {}; } }
   function guardar(id, rec) {
-    try { const p = progreso(); p[id] = Object.assign({ fecha: new Date().toISOString().slice(0, 10) }, rec); localStorage.setItem("cp:" + slug, JSON.stringify(p)); } catch (e) {}
+    try { const p = progreso(); p[id] = Object.assign({ fecha: new Date().toLocaleDateString("en-CA", { timeZone: "America/Costa_Rica" }) }, rec); localStorage.setItem("cp:" + slug, JSON.stringify(p)); } catch (e) {}
     if (window.EntrenoProgress) { try { window.EntrenoProgress.log(slug, Object.assign({ item: id }, rec)); } catch (e) {} }
     document.dispatchEvent(new CustomEvent("cp:progreso", { detail: { id, rec } }));
   }
