@@ -1367,3 +1367,24 @@ html.con-herramientas-en-grande { overflow: hidden; }
 /* Una raya entre los grupos: el de quién lo ve no se pierde por ir todo en una fila. */
 .barra-grupo { border-left: 1px solid rgb(var(--c-brand-200, 188 204 220)); padding-left: 0.375rem; }
 .dark .barra-grupo { border-left-color: rgb(var(--c-brand-700, 51 78 104)); }
+/* Vacío no ocupa lugar: el boton-icono escondido (deshacer, que se ve solo cuando
+   se puede) y la franja de estado de la clase en vivo, que al profesor se le
+   deja vacía hasta que haya algo que avisarle. La franja sigue en la página
+   (es una región viva: con display:none, el aviso que llegue podría no leerse). */
+.boton-icono.hidden { display: none; }
+section:has(> .proyector-contenido) > #status-banner:empty { padding: 0; margin: 0; }
+
+/* La ayuda de las flechas (sesion.html), como rótulo de los colores: con ratón
+   sale al pasar por encima o al llegar con Tab; en el celular, que no tiene
+   ratón ni dónde pasar por encima, se queda escrita debajo. */
+.colores-con-ayuda { position: relative; }
+@media (hover: hover) {
+  .colores-con-ayuda .ayuda-colores {
+    display: none; position: absolute; top: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+    width: max-content; max-width: 20rem; z-index: 40; margin: 0; padding: 0.4rem 0.6rem; border-radius: 0.375rem;
+    font-weight: 600; background: rgb(var(--c-brand-800)); color: #fff; box-shadow: 0 2px 8px rgb(0 0 0 / 0.2);
+  }
+  .dark .colores-con-ayuda .ayuda-colores { background: #fff; color: rgb(var(--c-brand-900)); }
+  .colores-con-ayuda:hover .ayuda-colores:not(.hidden),
+  .colores-con-ayuda:focus-within .ayuda-colores:not(.hidden) { display: block; }
+}

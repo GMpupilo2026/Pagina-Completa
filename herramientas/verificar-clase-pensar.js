@@ -60,14 +60,23 @@ function pruebaCuenta() {
 async function pruebaProfe(browser) {
   console.log("\n=== El profe da tiempo para pensar ===");
   const { page, ctx, errores } = await abrir(browser, "u-profe", CLASE, { game_state: [fila(null)] });
-  await page.waitForSelector("#pensar-btn", { state: "attached", timeout: 10000 });
-  igual("el control se ve", await seVe(page, "#pensar-btn"), true);
+  await page.waitForSelector("#pensar-abrir-btn", { state: "visible", timeout: 10000 });
+  /* «⏳ Tiempo para pensar» es un botón que abre dónde elegir el tiempo: cerrado no
+     ocupa lugar debajo del tablero, y dice si está abierto. */
+  igual("cerrado, solo se ve el botón", [await seVe(page, "#pensar-abrir-btn"), await seVe(page, "#pensar-btn"),
+    await page.getAttribute("#pensar-abrir-btn", "aria-expanded")], [true, false, "false"]);
+  await page.click("#pensar-abrir-btn");
+  igual("al tocarlo se abre, con el foco en el tiempo", [await seVe(page, "#pensar-btn"),
+    await page.getAttribute("#pensar-abrir-btn", "aria-expanded"), await page.evaluate(() => document.activeElement.id)],
+    [true, "true", "pensar-segundos"]);
   await page.selectOption("#pensar-segundos", "120");
   await page.fill("#pensar-texto", "¿Cuál es el plan de las blancas?");
   await page.click("#pensar-btn");
   await page.waitForFunction(() => window.__updates.some((u) => u.tabla === "game_state" && u.campos.pensar), null, { timeout: 5000 });
   const p1 = (await pensares(page))[0];
   igual("manda segundos y qué pensar", [p1.segundos, p1.texto, typeof p1.at], [120, "¿Cuál es el plan de las blancas?", "string"]);
+  igual("y al empezar la cuenta se vuelve a cerrar", [await seVe(page, "#pensar-btn"),
+    await page.getAttribute("#pensar-abrir-btn", "aria-expanded")], [false, "false"]);
   igual("el aviso se ve", await seVe(page, "#pensar-aviso-caja"), true);
   igual("con el reloj", /^[12]:[0-5]\d$/.test(await page.textContent("#pensar-reloj")), true);
   igual("y qué pensar", await page.textContent("#pensar-que"), "¿Cuál es el plan de las blancas?");
