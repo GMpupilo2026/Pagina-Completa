@@ -54,7 +54,9 @@ administra, como siempre, todos.
   la segunda corrida devuelve 0. Comprobado, y también que al mes siguiente
   emite exactamente uno más.
 - El periodo arranca en el **mes** de `inicio`, no el día: la mensualidad de
-  quien entra el 20 cubre ese mes completo.
+  quien entra el 20 cubre ese mes completo. Para cobrarle solo los días que quedan,
+  o nada hasta una fecha que ya pagó, está `pagado_hasta` (ver «De qué día a
+  qué día cubre un cobro»).
 - `cobros_resumen()` devuelve **una fila por moneda**: sumar colones con dólares
   daría un número que no significa nada.
 - Las tres funciones de cuenta son **`SECURITY INVOKER`**, igual que las de
@@ -495,6 +497,114 @@ quien no supervisa ni administra, y `verificar-cobros.js` en la página.
 **Al tocar esto, correr `node herramientas/verificar-cobros.js`** (las tres
 caras: quien coordina, quien supervisa y la alumna) **y
 `node herramientas/verificar-recibo.js`** (el HTML del recibo, sin navegador).
+
+### De qué día a qué día cubre un cobro
+
+Cada cobro dice qué días cubre (`periodo_inicio` a `periodo_fin`) y todo eso
+se puede elegir y corregir: hay quien ya pagó por fuera y le queda menos
+tiempo, quien entra a mitad de mes, quien paga dos semanas o mes y medio,
+quien cambia de plan a medio periodo. Hasta esto el periodo era siempre el del
+calendario, y la corrida diaria decidía si ya estaba emitido mirando **solo el
+día en que arranca** (el índice único `suscripcion_id + periodo_inicio`):
+cualquier cobro que no arrancara el día 1 dejaba el mes «libre» y la corrida
+lo volvía a cobrar entero, sin dar ningún error.
+
+**La pregunta de la corrida ahora es «¿qué parte de este periodo ya está
+cubierta?»** (`interno.emitir_cobros()`, migración `cobros_periodo_editable`).
+Lo cubren dos cosas: cualquier cobro de esa suscripción que se le cruce
+—también uno anulado: anular un mes sigue queriendo decir «este mes no se
+cobra»— y `suscripciones.pagado_hasta`.
+
+- Cubierto entero: no se emite nada. Alargar un cobro de setiembre hasta
+  noviembre hace que octubre y noviembre ya no salgan.
+- Cubierto a medias: lo decide `suscripciones.medio_periodo`.
+  `proporcional` (el de fábrica) emite un cobro por los días que faltan, con
+  el precio por la fracción de días («Mensualidad · 21 al 31 de octubre 2026
+  (proporcional)», 11/31 del mes); `siguiente` no cobra nada y espera al
+  periodo siguiente, completo.
+- Nada cubierto: el cobro de siempre, con el mismo concepto y el mismo monto.
+  Con `pagado_hasta` vacío la corrida hace exactamente lo de antes.
+- Lo que queda ANTES de un cobro dentro del mismo periodo no se cobra: si se
+  pagaron del 15 de octubre al 14 de noviembre, del 1 al 14 de octubre queda
+  libre. Para cobrar esos días se registra otro pago a la medida.
+- Un periodo a medias nunca se cobra más allá de `fin`, y el vencimiento de un
+  cobro proporcional nunca cae antes del primer día que cubre.
+
+**Dos cobros vigentes de un mismo plan no pueden cubrir el mismo día**, y eso
+lo garantiza la restricción de exclusión `cobros_sin_periodos_cruzados` (con
+`btree_gist`), no un `if`: un cobro corregido a mano, un pago a la medida o
+reactivar un anulado que se cruce con otro se rechazan con 23P01, que la
+página traduce (`errorDeCobro()`). Solo cuenta entre cobros `emitido` con
+plan: un anulado no cobra nada y uno suelto (una inscripción) no cubre ningún
+periodo.
+
+**En la página:**
+
+- **«Poner alumnos en un plan» → «El primer cobro»**: el periodo completo (lo
+  de siempre, `pagado_hasta` vacío), solo los días que quedan desde «Desde»
+  (`pagado_hasta` = el día antes, `proporcional`) o «ya tiene pagado hasta»
+  una fecha, con qué hacer si termina a mitad de un periodo. Son las mismas
+  dos columnas vistas de tres maneras.
+- **«Editar» en cada suscripción** cambia todo lo suyo: desde, pagado hasta,
+  qué hacer a medias, termina el, día de vencimiento y beca. Lo escribe quien
+  coordina con la RLS de siempre (`suscripciones_coordinacion`) y vale de acá
+  en adelante: lo ya emitido no cambia.
+- **«Corregir» un cobro** (quien supervisa o administra, como el resto de la
+  corrección: `cobros_corrige_supervision` ya miraba el periodo) trae «Cubre
+  desde» y «Cubre hasta». Se escribe un día (`2026-10-15`) o un mes entero
+  (`2026-10`: desde el 1, hasta el último día; `leerFecha()`). Si el concepto
+  no se tocó y termina en el periodo («Mensualidad · agosto 2026»), se rehace
+  con el periodo nuevo usando `rango_es()`, la misma función que usa la
+  corrida: si no, el recibo diría agosto y cubriría otra cosa. Uno cambiado a
+  mano se respeta.
+- **«Pago adelantado o sin cobro previo»** ofrece, por cada plan del alumno,
+  «un periodo a la medida»: se eligen las dos fechas y
+  `cobro_cotizar()` propone el concepto y el monto (la misma cuenta de la
+  corrida, `interno.monto_rango()`: cada periodo del plan aporta su precio por
+  la fracción de sus días que cae adentro, con la beca), que se pueden
+  cambiar; si esos días ya están en un cobro vigente del plan lo dice antes
+  de apretar. Lo registra `registrar_cobro_pagado_con_periodo()`, que ata el
+  cobro al plan (`suscripcion_id`), así la corrida ya no cobra esos días. La
+  moneda es la del plan, siempre. En «Otra cosa» las dos fechas son
+  opcionales.
+- **Cada cobro dice qué días cubre** en su tarjeta: siempre los de un plan, y
+  los sueltos solo si se les dijo un periodo (si no, su «periodo» es el día en
+  que se pagaron y no cubre nada).
+
+**`registrar_cobro_pagado()` quedó como una línea** que llama a
+`registrar_cobro_pagado_con_periodo()` sin periodo. La función nueva lleva
+otro nombre porque con el mismo y dos firmas PostgREST elegiría una según los
+parámetros que lleguen (ver `paquete_guardar()`); y la vieja no se borró
+porque un `DROP` desde las herramientas de la sesión pide una confirmación que
+una sesión sin nadie mirando no puede dar, y se queda esperando. Borrarla es
+seguro el día que alguien lo haga desde el SQL editor: la página ya no la
+llama.
+
+Comprobado en la base, en transacciones revertidas: con `pagado_hasta` del 20
+de agosto, `proporcional` emitió del 21 al 31 de agosto (₡10 645,16 de
+₡30 000), setiembre y octubre completos, y la segunda corrida 0; con
+`siguiente`, solo setiembre y octubre; alargar setiembre hasta noviembre se
+rechaza mientras octubre esté vigente, y anulado octubre sí, y la corrida a
+diciembre emite solo diciembre; acortar octubre al 15 hace que la corrida
+cobre del 16 al 31 (₡15 483,87); impersonando a administración, cotizar del
+15 de octubre al 14 de noviembre da ₡30 451,61 (17/31 + 14/30), pagarlo emite
+el cobro atado al plan con su recibo, pagar noviembre encima se rechaza con
+el nombre del cobro que choca, una sola fecha y fechas al revés se rechazan,
+un pago suelto con periodo y la función vieja siguen andando, y después la
+corrida emite solo del 15 al 30 de noviembre (proporcional) y diciembre; una
+alumna recibe «Ese alumno no es de tu coordinación» al cotizar y al pagar, y
+`anon` no tiene execute sobre las funciones nuevas.
+
+**Al tocar esto, correr `node herramientas/verificar-cobros.js`**: comprueba
+qué manda cada una de las tres opciones del primer cobro, que sin la fecha de
+lo pagado no se mande, que «Editar» mande todo a ESA suscripción (y que
+`2026-10` sea hasta el 31, que un 30 de febrero y terminar antes de empezar
+no se manden), que corregir el periodo mande las dos fechas y rehaga el
+concepto (y respete uno cambiado a mano), que el periodo a la medida le
+pregunte a la base, escriba lo que propone y lo registre atado al plan, y que
+cada cobro diga qué cubre. Rompiendo a propósito el día antes de «Desde», el
+plan del pago a la medida y el periodo de la corrección saltan 4
+comprobaciones.
 
 ### Pasarela y factura electrónica
 

@@ -414,9 +414,23 @@ function pintarSuscripciones() {
                          "vence el " + s.dia_cobro,
                          Number(s.descuento_pct) > 0 ? "beca " + Number(s.descuento_pct) + " %" : ""].filter(Boolean);
         txt.appendChild(el("p", "text-sm text-brand-500 dark:text-brand-300", detalle.join(" · ")));
-        txt.appendChild(el("p", "text-xs text-brand-450 dark:text-brand-350", "Desde " + fecha(s.inicio)));
+        const fechas = ["Desde " + fecha(s.inicio)];
+        if (s.pagado_hasta) {
+            fechas.push("pagado hasta el " + fecha(s.pagado_hasta)
+                + (s.medio_periodo === "siguiente" ? " (después, desde el periodo siguiente)" : ""));
+        }
+        if (s.fin) fechas.push("termina el " + fecha(s.fin));
+        txt.appendChild(el("p", "text-xs text-brand-450 dark:text-brand-350", fechas.join(" · ")));
         izq.appendChild(txt);
         d.appendChild(izq);
+
+        const acciones = el("div", "flex flex-wrap gap-2");
+        const editar = el("button", BTN_CHICO + " border-brand-200 dark:border-brand-700 hover:border-accent-400 text-brand-600 dark:text-brand-300", "Editar");
+        editar.type = "button";
+        editar.dataset.accion = "editar-suscripcion";
+        editar.setAttribute("aria-label", "Editar el plan de " + nombreDe(s.student_id));
+        editar.addEventListener("click", () => editarSuscripcion(s));
+        acciones.appendChild(editar);
 
         const btn = el("button", "text-sm font-semibold px-3 py-1.5 rounded-lg border border-brand-200 dark:border-brand-700 hover:border-red-400 text-brand-600 dark:text-brand-300 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "Dar de baja");
         btn.type = "button";
@@ -428,7 +442,8 @@ function pintarSuscripciones() {
             avisar("Dado de baja.");
             await cargarTodo();
         });
-        d.appendChild(btn);
+        acciones.appendChild(btn);
+        d.appendChild(acciones);
         caja.appendChild(d);
     });
     if (suscripciones.length && !ordenadas.length) {
@@ -461,6 +476,49 @@ async function darDeBaja(lista) {
         if (error) return error;
     }
     return null;
+}
+
+/* Todo lo de una suscripción se puede cambiar, y vale de acá en adelante: la
+   corrida lo usa para los cobros que todavía no salieron. Lo ya emitido no
+   cambia (lo corrige quien supervisa desde «Cobros», o se anula). */
+async function editarSuscripcion(s) {
+    const plan = planes.find((p) => p.id === s.plan_id);
+    const r = await Avisos.formulario({
+        titulo: "Plan de " + nombreDe(s.student_id) + (plan ? " · " + plan.nombre : ""),
+        texto: "Vale para los cobros que salgan de ahora en adelante. Los que ya salieron no cambian: se corrigen o se anulan en la ficha «Cobros».",
+        campos: [
+            { nombre: "inicio", etiqueta: "Desde (AAAA-MM-DD)", valor: s.inicio, inputmode: "numeric" },
+            { nombre: "pagado", etiqueta: "Tiene pagado hasta (opcional)", valor: s.pagado_hasta || "", inputmode: "numeric",
+              ayuda: "AAAA-MM-DD, o AAAA-MM para todo ese mes. Antes de esa fecha no se le cobra nada. En blanco: nada pagado de antes." },
+            { nombre: "medio", etiqueta: "Si eso termina a mitad de un periodo", tipo: "select", valor: s.medio_periodo || "proporcional",
+              opciones: [["proporcional", "Se cobran solo los días que faltan de ese periodo"],
+                         ["siguiente", "Se empieza a cobrar el periodo siguiente, completo"]] },
+            { nombre: "fin", etiqueta: "Termina el (opcional)", valor: s.fin || "", inputmode: "numeric",
+              ayuda: "AAAA-MM-DD. El último periodo que se cobra es el que empieza antes de esa fecha. En blanco: sigue." },
+            { nombre: "dia", etiqueta: "Vence el día (1 al 31)", valor: String(s.dia_cobro), inputmode: "numeric" },
+            { nombre: "beca", etiqueta: "Beca (%)", valor: String(Number(s.descuento_pct) || 0), inputmode: "decimal" },
+        ],
+        aceptar: "Guardar los cambios",
+    });
+    if (!r) return;
+    const inicio = leerFecha(r.inicio, "inicio");
+    const pagado = leerFecha(r.pagado, "fin");
+    const fin = leerFecha(r.fin, "fin");
+    const dia = Number(r.dia);
+    const beca = Number(String(r.beca || "").replace(",", "."));
+    if (!inicio) return avisar("«Desde» va como AAAA-MM-DD.", true);
+    if (pagado === null) return avisar("«Tiene pagado hasta» va como AAAA-MM-DD o AAAA-MM, o en blanco.", true);
+    if (fin === null) return avisar("«Termina el» va como AAAA-MM-DD, o en blanco.", true);
+    if (fin && fin < inicio) return avisar("No puede terminar antes de empezar: revisa «Desde» y «Termina el».", true);
+    if (!Number.isInteger(dia) || dia < 1 || dia > 31) return avisar("El día de vencimiento tiene que ser un número del 1 al 31.", true);
+    if (String(r.beca || "").trim() === "" || !(beca >= 0 && beca <= 100)) return avisar("La beca tiene que ser un número del 0 al 100.", true);
+    const { error } = await sb.from("suscripciones").update({
+        inicio, pagado_hasta: pagado || null, medio_periodo: r.medio === "siguiente" ? "siguiente" : "proporcional",
+        fin: fin || null, dia_cobro: dia, descuento_pct: beca,
+    }).eq("id", s.id);
+    if (error) return avisar("No se pudo guardar: " + error.message, true);
+    avisar("Listo. Los cobros que salgan de ahora en adelante para " + nombreDe(s.student_id) + " ya lo toman en cuenta.");
+    await cargarTodo();
 }
 
 function marcadasDeLaLista() {
@@ -513,6 +571,22 @@ async function bajaEnGrupo() {
     await cargarTodo();
 }
 
+/* «El primer cobro» en las dos columnas que lee la corrida. Las tres opciones
+   son lo mismo visto de otra forma: lo que ya está cubierto llega hasta
+   `pagado_hasta`, y si eso cae a mitad de un periodo, `medio_periodo` dice si
+   lo que queda se cobra proporcional o se espera al siguiente.
+     - el periodo completo: nada cubierto (lo de siempre);
+     - solo los días que quedan: cubierto hasta el día antes de «Desde»;
+     - ya pagado: hasta la fecha que se escriba. */
+function primerCobroElegido(inicio) {
+    const como = document.getElementById("s-primero").value;
+    if (como === "dias") return { pagado_hasta: diaAntes(inicio), medio_periodo: "proporcional" };
+    if (como !== "pagado") return { pagado_hasta: null, medio_periodo: "proporcional" };
+    const hasta = document.getElementById("s-pagado-hasta").value;
+    if (!leerFecha(hasta, "fin")) return { error: "Escribe hasta qué día tiene pagado." };
+    return { pagado_hasta: hasta, medio_periodo: document.getElementById("s-medio").value };
+}
+
 async function crearSuscripcion() {
     const ids = alumnos.map((a) => a.id).filter((id) => marcados.has(id));
     if (!ids.length) return avisar("Marca al menos un alumno en la lista.", true);
@@ -526,9 +600,12 @@ async function crearSuscripcion() {
     if (!(descuento >= 0 && descuento <= 100)) return avisar("La beca tiene que ser un número del 0 al 100.", true);
     const personalizado = document.getElementById("s-personalizado").checked;
     const inicio = document.getElementById("s-inicio").value || hoyCR();
+    const cubierto = primerCobroElegido(inicio);
+    if (cubierto.error) return avisar(cubierto.error, true);
     const fila = (studentId, planId) => ({
         student_id: studentId, plan_id: planId, inicio, dia_cobro: diaCobro,
         descuento_pct: descuento, creado_por: session.user.id,
+        pagado_hasta: cubierto.pagado_hasta, medio_periodo: cubierto.medio_periodo,
     });
     let filas = [], saltados = 0, nombrePlan = "";
 
@@ -582,6 +659,8 @@ async function crearSuscripcion() {
         + (saltados ? " " + (saltados === 1 ? "1 ya estaba y se dejó igual." : saltados + " ya estaban y se dejaron igual.") : "")
         + " Los cobros de los periodos que correspondan salen con «Emitir los que falten» o solos mañana.");
     marcados.clear();
+    document.getElementById("s-primero").value = "mes";
+    document.getElementById("s-pagado-cell").classList.add("hidden");
     if (personalizado) {
         document.getElementById("s-manual-nombre").value = "";
         document.getElementById("s-manual-monto").value = "";
@@ -720,7 +799,12 @@ function tarjetaCobro(c, conBotones) {
     linea.appendChild(el("span", "ml-1 inline-block px-2 py-0.5 rounded-full text-xs font-semibold " + s.clase, s.texto));
     izq.appendChild(linea);
     if (conBotones) izq.appendChild(el("p", "text-sm text-brand-500 dark:text-brand-300", nombreDe(c.student_id)));
-    const pie = [c.consecutivo, "vence el " + fecha(c.vence)];
+    const pie = [c.consecutivo];
+    /* Lo que cubre: siempre en los de un plan; en uno suelto (una inscripción)
+       solo si se le dijo un periodo, porque si no su «periodo» es el día en
+       que se pagó y no cubre nada. */
+    if (c.suscripcion_id || c.periodo_inicio !== c.periodo_fin) pie.push("cubre " + periodoTexto(c.periodo_inicio, c.periodo_fin));
+    pie.push("vence el " + fecha(c.vence));
     if (c.dias_atraso > 0) pie.push(c.dias_atraso + (c.dias_atraso === 1 ? " día de atraso" : " días de atraso"));
     if (Number(c.pagado) > 0 && Number(c.saldo) > 0) pie.push("abonado " + plata(c.pagado, c.moneda));
     izq.appendChild(el("p", "text-xs text-brand-450 dark:text-brand-350 mt-1", pie.join(" · ")));
@@ -797,28 +881,61 @@ async function registrarPago(c) {
     await trasRegistrarPago(data);
 }
 
+/* El periodo (de qué día a qué día cubre) se corrige como lo demás. En un
+   cobro de un plan es lo que la corrida diaria mira para no volver a cobrar
+   esos días: alargarlo hasta diciembre hace que noviembre y diciembre ya no se
+   emitan, y si dentro de un periodo quedan días sin cubrir, la corrida los
+   cobra aparte según lo que diga la suscripción (proporcional o nada). Que
+   dos cobros vigentes del mismo plan no cubran el mismo día lo impide la base. */
 async function corregirCobro(c) {
+    const deUnPlan = !!c.suscripcion_id;
     const r = await Avisos.formulario({
         titulo: "Corregir el cobro " + c.consecutivo,
-        texto: "Vale solo para este cobro. El monto no puede quedar por debajo de lo que ya se pagó.",
+        texto: "Vale solo para este cobro. El monto no puede quedar por debajo de lo que ya se pagó."
+            + (deUnPlan ? "\n\nEl periodo dice qué días cubre: esos días ya no se vuelven a cobrar. Si dentro del mes quedan días sin cubrir, "
+                + "la corrida diaria los cobra aparte (proporcional), salvo que el plan del alumno diga que se espere al mes siguiente." : ""),
         campos: [
             { nombre: "concepto", etiqueta: "Concepto", valor: c.concepto },
             { nombre: "monto", etiqueta: "Monto (" + (c.moneda === "USD" ? "$" : "₡") + ")", valor: String(c.monto), inputmode: "decimal" },
+            { nombre: "desde", etiqueta: "Cubre desde", valor: c.periodo_inicio, inputmode: "numeric",
+              ayuda: "AAAA-MM-DD para un día exacto, o AAAA-MM para empezar el primer día de ese mes." },
+            { nombre: "hasta", etiqueta: "Cubre hasta", valor: c.periodo_fin, inputmode: "numeric",
+              ayuda: "AAAA-MM-DD, o AAAA-MM para terminar el último día de ese mes." },
             { nombre: "vence", etiqueta: "Vence (AAAA-MM-DD)", valor: c.vence, inputmode: "numeric" },
         ],
         aceptar: "Guardar los cambios",
     });
     if (!r) return;
-    const concepto = String(r.concepto || "").trim();
+    let concepto = String(r.concepto || "").trim();
     const monto = Number(String(r.monto || "").replace(",", "."));
     const vence = String(r.vence || "").trim();
+    const desde = leerFecha(r.desde, "inicio");
+    const hasta = leerFecha(r.hasta, "fin");
     if (!concepto) return avisar("El cobro necesita un concepto.", true);
     if (String(r.monto || "").trim() === "" || !(monto >= 0)) return avisar("El monto tiene que ser un número (0 o más).", true);
     if (monto < Number(c.pagado)) return avisar("Ya se pagaron " + plata(c.pagado, c.moneda) + ": el monto no puede quedar por debajo.", true);
+    if (!desde || !hasta) return avisar("El periodo va como AAAA-MM-DD (un día) o AAAA-MM (el mes entero), por ejemplo 2026-10.", true);
+    if (hasta < desde) return avisar("El periodo termina antes de empezar: revisa las dos fechas.", true);
     if (!fechaValida(vence)) return avisar("El vencimiento va como AAAA-MM-DD.", true);
-    const { error } = await sb.from("cobros").update({ concepto, monto, vence }).eq("id", c.id);
-    if (error) return avisar("No se pudo corregir: " + error.message, true);
-    avisar("Cobro " + c.consecutivo + " corregido.");
+
+    const cambio = { concepto, monto, vence };
+    const otroPeriodo = desde !== c.periodo_inicio || hasta !== c.periodo_fin;
+    if (otroPeriodo) {
+        cambio.periodo_inicio = desde;
+        cambio.periodo_fin = hasta;
+        /* Si el concepto no se tocó y dice el periodo (lo que va después del
+           último « · », como en «Mensualidad · octubre 2026»), se cambia por
+           el periodo nuevo: si no, el recibo diría octubre y cubriría otra
+           cosa. El texto lo arma la base (rango_es), el mismo de la corrida. */
+        const corte = c.concepto.lastIndexOf(" · ");
+        if (concepto === c.concepto && corte > 0) {
+            const { data: rango } = await sb.rpc("rango_es", { p_desde: desde, p_hasta: hasta });
+            if (rango) concepto = cambio.concepto = c.concepto.slice(0, corte) + " · " + rango;
+        }
+    }
+    const { error } = await sb.from("cobros").update(cambio).eq("id", c.id);
+    if (error) return avisar("No se pudo corregir: " + errorDeCobro(error), true);
+    avisar("Cobro " + c.consecutivo + " corregido." + (otroPeriodo ? " Ahora cubre " + periodoTexto(desde, hasta) + ": «" + concepto + "»." : ""));
     await cargarTodo();
 }
 
@@ -826,7 +943,7 @@ async function reactivarCobro(c) {
     if (!(await Avisos.confirmar("Vuelve a contar como pendiente, con su monto y su vencimiento.", {
         titulo: "¿Reactivar el cobro " + c.consecutivo + "?", aceptar: "Reactivar el cobro" }))) return;
     const { error } = await sb.from("cobros").update({ estado: "emitido", anulado_motivo: null }).eq("id", c.id);
-    if (error) return avisar("No se pudo reactivar: " + error.message, true);
+    if (error) return avisar("No se pudo reactivar: " + errorDeCobro(error), true);
     avisar("Cobro " + c.consecutivo + " reactivado.");
     await cargarTodo();
 }
@@ -1545,6 +1662,9 @@ document.getElementById("sl-baja").addEventListener("click", bajaEnGrupo);
 document.getElementById("s-personalizado").addEventListener("change", (e) => {
     document.getElementById("s-plan-cell").classList.toggle("hidden", e.target.checked);
     document.getElementById("s-manual-cell").classList.toggle("hidden", !e.target.checked);
+});
+document.getElementById("s-primero").addEventListener("change", (e) => {
+    document.getElementById("s-pagado-cell").classList.toggle("hidden", e.target.value !== "pagado");
 });
 document.getElementById("rp-guardar").addEventListener("click", programarRecordatorio);
 document.getElementById("f-situacion").addEventListener("change", () => cargarCobros(true));

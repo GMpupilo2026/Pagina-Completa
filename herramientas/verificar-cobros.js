@@ -33,8 +33,13 @@ const HOY = new Date();
    bloque abierto, donde se le registra el pago a c-2), c-3 el mes pasado y c-4
    el antepasado. `mesAtras(0)` es el último día de este mes. */
 const HOY_ISO = HOY.toISOString().slice(0, 10);
-// El «hoy» que pone la página en la fecha de un pago: el de Costa Rica.
-const HOY_CR = HOY.toLocaleDateString("en-CA", { timeZone: "America/Costa_Rica" });
+/* El «hoy» que pone la página en la fecha de un pago: el de Costa Rica, y el de
+   la PÁGINA, no uno sacado al arrancar la prueba. Una corrida que cruza la
+   medianoche de Costa Rica (las 6:00 UTC) esperaba el 1 y la página ya ponía
+   el 2. El registro de un pago usa hoyCR() en el momento; el pago adelantado,
+   lo que dice su casilla «Fecha del pago». */
+const hoyDeLaPagina = (page) => page.evaluate(() => hoyCR());
+const fechaDelPago = (page) => page.evaluate(() => document.getElementById("pa-fecha").value);
 const mesAtras = (atras, diaDelMes) => {
   const d = new Date(Date.UTC(HOY.getUTCFullYear(), HOY.getUTCMonth() - atras + (diaDelMes ? 0 : 1), diaDelMes || 0));
   return d.toISOString().slice(0, 10);
@@ -60,15 +65,15 @@ const PLANES = [
   { id: "p-custom", nombre: "Beca especial de Carla", monto: 5000, moneda: "CRC", periodicidad: "mensual", personalizado: true, activo: true, descripcion: null, created_at: "2026-01-03T00:00:00Z" },
 ];
 const SUSCRIPCIONES = [
-  { id: "s-1", student_id: "u-ana", plan_id: "p-mes", inicio: "2026-06-01", dia_cobro: 5, descuento_pct: 10, activa: true },
+  { id: "s-1", student_id: "u-ana", plan_id: "p-mes", inicio: "2026-06-01", dia_cobro: 5, descuento_pct: 10, activa: true, pagado_hasta: null, medio_periodo: "proporcional", fin: null },
   // Una que todavía no arranca: darla de baja hoy no puede mandar fin = hoy,
   // porque la base exige fin >= inicio (suscripciones_check).
-  { id: "s-2", student_id: "u-bruno", plan_id: "p-mes", inicio: "2099-10-15", dia_cobro: 5, descuento_pct: 0, activa: true },
+  { id: "s-2", student_id: "u-bruno", plan_id: "p-mes", inicio: "2099-10-15", dia_cobro: 5, descuento_pct: 0, activa: true, pagado_hasta: "2099-11-20", medio_periodo: "siguiente", fin: null },
 ];
 // Las cuatro situaciones, ya calculadas por la base. La página solo las pinta.
 const COBROS = [
-  { id: "c-1", student_id: "u-ana",   consecutivo: "AI-2026-000001", concepto: "Mensualidad · setiembre 2026", periodo_inicio: "2026-09-01", periodo_fin: "2026-09-30", monto: 22500, pagado: 0,     saldo: 22500, moneda: "CRC", vence: mesAtras(0), situacion: "pendiente", dias_atraso: 0,  estado: "emitido" },
-  { id: "c-2", student_id: "u-ana",   consecutivo: "AI-2026-000002", concepto: "Mensualidad · agosto 2026",    periodo_inicio: "2026-08-01", periodo_fin: "2026-08-31", monto: 22500, pagado: 10000, saldo: 12500, moneda: "CRC", vence: VENCE_C2, situacion: "vencido",   dias_atraso: 20, estado: "emitido" },
+  { id: "c-1", student_id: "u-ana",   suscripcion_id: "s-1", consecutivo: "AI-2026-000001", concepto: "Mensualidad · setiembre 2026", periodo_inicio: "2026-09-01", periodo_fin: "2026-09-30", monto: 22500, pagado: 0,     saldo: 22500, moneda: "CRC", vence: mesAtras(0), situacion: "pendiente", dias_atraso: 0,  estado: "emitido" },
+  { id: "c-2", student_id: "u-ana",   suscripcion_id: "s-1", consecutivo: "AI-2026-000002", concepto: "Mensualidad · agosto 2026",    periodo_inicio: "2026-08-01", periodo_fin: "2026-08-31", monto: 22500, pagado: 10000, saldo: 12500, moneda: "CRC", vence: VENCE_C2, situacion: "vencido",   dias_atraso: 20, estado: "emitido" },
   { id: "c-3", student_id: "u-bruno", consecutivo: "AI-2026-000003", concepto: "Mensualidad · agosto 2026",    periodo_inicio: "2026-08-01", periodo_fin: "2026-08-31", monto: 25000, pagado: 25000, saldo: 0,     moneda: "CRC", vence: mesAtras(1, 10), situacion: "pagado",    dias_atraso: 0,  estado: "emitido" },
   { id: "c-4", student_id: "u-bruno", consecutivo: "AI-2026-000004", concepto: "Mensualidad · julio 2026",     periodo_inicio: "2026-07-01", periodo_fin: "2026-07-31", monto: 25000, pagado: 0,     saldo: 25000, moneda: "CRC", vence: mesAtras(2, 10), situacion: "anulado",   dias_atraso: 0,  estado: "anulado" },
 ];
@@ -130,6 +135,11 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
     registrar_pago: ${JSON.stringify(RECIBO_NUEVO)},
     pago_adelantado: ${JSON.stringify(RECIBO_NUEVO)},
     registrar_cobro_pagado: ${JSON.stringify(RECIBO_NUEVO)},
+    registrar_cobro_pagado_con_periodo: ${JSON.stringify(RECIBO_NUEVO)},
+    // Lo que propone la base para un periodo a la medida (cobro_cotizar) y el
+    // periodo en palabras con el que se rehace un concepto (rango_es).
+    cobro_cotizar: { concepto: "Mensualidad · 15 de octubre al 14 de noviembre 2026", monto: 22906.45, moneda: "CRC", se_cruza_con: null },
+    rango_es: "agosto a setiembre 2026",
     prefijo_recibo: "ADAPZ",
     academia_guardar_prefijo_recibo: "ADZ",
     corregir_recibo: null,
@@ -339,6 +349,11 @@ async function pruebaCoordinacion(browser) {
     [...document.querySelectorAll("#cobros-lista .rounded-full")].map((e) => e.textContent.trim()));
   igual("una etiqueta por cobro, tal cual la base", etiquetas, ["Pendiente", "Vencido", "Pagado", "Anulado"]);
 
+  // Lo que cubre: en los de un plan siempre; en uno suelto, si tiene periodo.
+  igual("cada cobro dice qué días cubre",
+    await page.evaluate(() => [...document.querySelectorAll("#cobros-lista .cobro-fila")].map((d) => /cubre 1 .+ al 3[01] .+2026/.test(d.textContent))),
+    [true, true, true, true]);
+
   // Botones solo donde tiene sentido: ni en el pagado ni en el anulado.
   const conBotones = await page.evaluate(() =>
     [...document.querySelectorAll("#cobros-lista .cobro-fila")].map((d) => !!d.querySelector("button")));
@@ -448,6 +463,9 @@ async function pruebaCoordinacion(browser) {
   igual("manda UNA tanda, sin los que ya estaban en ese plan",
     sus && sus.datos.map((d) => ({ student_id: d.student_id, plan_id: d.plan_id, dia_cobro: d.dia_cobro, descuento_pct: d.descuento_pct })),
     [{ student_id: "u-carla", plan_id: "p-mes", dia_cobro: 31, descuento_pct: 25 }]);
+  igual("por omisión el primer cobro cubre el periodo entero: nada pagado de antes",
+    sus && { pagado_hasta: sus.datos[0].pagado_hasta, medio_periodo: sus.datos[0].medio_periodo },
+    { pagado_hasta: null, medio_periodo: "proporcional" });
   igual("y dice que los otros dos se dejaron igual",
     await page.evaluate(() => window.__avisos.some((a) => a.includes("1 alumno en «Mensualidad»") && a.includes("2 ya estaban"))), "true");
   igual("después de agregar, la lista queda sin marcar",
@@ -532,11 +550,63 @@ async function pruebaCoordinacion(browser) {
   await page.check("#s-personalizado");
   await page.uncheck("#s-personalizado");
 
+  // -------- el primer cobro: el periodo entero, solo los días que quedan, o ya pagado hasta una fecha
+  const agregarCarla = async () => {
+    await page.check(casilla("u-carla"));
+    await page.evaluate(() => { window.__llamadas = []; window.__avisos = []; });
+    await page.click("#s-guardar");
+    await page.waitForTimeout(300);
+    const l = await page.evaluate(() => window.__llamadas.find((x) => x.tabla === "suscripciones" && x.verbo === "insert"));
+    return l ? { pagado_hasta: l.datos[0].pagado_hasta, medio_periodo: l.datos[0].medio_periodo } : null;
+  };
+  await page.selectOption("#s-plan", "p-mes");
+  await page.fill("#s-dia", "5");
+  await page.fill("#s-inicio", "2026-10-21");
+  await page.selectOption("#s-primero", "dias");
+  igual("«solo los días que quedan» no pide otra fecha",
+    await page.evaluate(() => document.getElementById("s-pagado-cell").checkVisibility()), false);
+  igual("«solo los días que quedan» deja cubierto hasta el día antes de «Desde»",
+    await agregarCarla(), { pagado_hasta: "2026-10-20", medio_periodo: "proporcional" });
+  igual("y después vuelve a «el periodo completo»",
+    await page.evaluate(() => document.getElementById("s-primero").value), "mes");
+  await page.selectOption("#s-primero", "pagado");
+  igual("«ya tiene pagado» pide hasta cuándo y qué hacer con lo que queda",
+    await page.evaluate(() => document.getElementById("s-pagado-cell").checkVisibility()), true);
+  igual("sin la fecha de lo pagado no se manda",
+    [await agregarCarla(), await page.evaluate(() => window.__avisos.some((a) => a.includes("hasta qué día tiene pagado")))], [null, true]);
+  await page.fill("#s-pagado-hasta", "2026-11-15");
+  await page.selectOption("#s-medio", "siguiente");
+  igual("«ya tiene pagado» manda la fecha y que se espere al periodo siguiente",
+    await agregarCarla(), { pagado_hasta: "2026-11-15", medio_periodo: "siguiente" });
+
+  igual("la lista dice hasta cuándo tiene pagado",
+    /pagado hasta el .*2099 \(después, desde el periodo siguiente\)/.test(await page.evaluate(() =>
+      document.querySelector("#suscripciones-lista").textContent)), "true");
+
+  // -------- editar una suscripción: todo lo suyo, de acá en adelante
+  const editarAna = async (respuesta) => {
+    await page.evaluate((r) => { window.__llamadas = []; window.__avisos = []; window.__respuestas = [r]; }, respuesta);
+    await page.locator("#suscripciones-lista > div").filter({ hasText: "Ana" }).locator('button[data-accion="editar-suscripcion"]').click();
+    await page.waitForTimeout(300);
+    const l = await page.evaluate(() => window.__llamadas.find((x) => x.tabla === "suscripciones" && x.verbo === "update"));
+    return l ? { datos: l.datos, filtros: l.filtros } : null;
+  };
+  igual("editar manda todo lo de ESA suscripción; «2026-10» es hasta el último día de octubre",
+    await editarAna({ pagado: "2026-10", medio: "siguiente", fin: "2027-06-30", dia: "10", beca: "15" }),
+    { datos: { inicio: "2026-06-01", pagado_hasta: "2026-10-31", medio_periodo: "siguiente", fin: "2027-06-30", dia_cobro: 10, descuento_pct: 15 },
+      filtros: [{ col: "id", eq: "s-1" }] });
+  igual("sin tocar nada, deja lo que había (nada pagado, sin fin)",
+    await editarAna({}),
+    { datos: { inicio: "2026-06-01", pagado_hasta: null, medio_periodo: "proporcional", fin: null, dia_cobro: 5, descuento_pct: 10 },
+      filtros: [{ col: "id", eq: "s-1" }] });
+  igual("una fecha que no existe (30 de febrero) no se manda", await editarAna({ pagado: "2026-02-30" }), null);
+  igual("terminar antes de empezar no se manda", await editarAna({ fin: "2026-05-31" }), null);
+
   // -------- dar de baja: termina hoy, o el día en que iba a empezar si aún no arranca
   const bajaDe = async (id) => {
     await page.evaluate(() => { window.__llamadas = []; });
     const fila = page.locator("#suscripciones-lista > div").filter({ hasText: id === "s-1" ? "Ana" : "Bruno" }).filter({ hasText: id === "s-1" ? "2026" : "2099" });
-    await fila.locator("button").click();
+    await fila.locator("button", { hasText: "Dar de baja" }).click();
     await page.waitForTimeout(300);
     const l = await page.evaluate(() => window.__llamadas.find((x) => x.tabla === "suscripciones" && x.verbo === "update"));
     return l && l.datos;
@@ -635,7 +705,7 @@ async function pruebaCoordinacion(browser) {
   const pago = await page.evaluate(() => window.__llamadas.find((l) => l.rpc === "registrar_pago"));
   igual("registrar un pago pasa por registrar_pago, con la fecha de hoy",
     pago && pago.args,
-    { p_pagos: [{ cobro_id: "c-2", monto: 5000 }], p_metodo: "transferencia", p_referencia: "REF-99", p_nota: null, p_fecha: HOY_CR });
+    { p_pagos: [{ cobro_id: "c-2", monto: 5000 }], p_metodo: "transferencia", p_referencia: "REF-99", p_nota: null, p_fecha: await hoyDeLaPagina(page) });
   igual("y nunca escribe en `pagos` directo",
     await page.evaluate(() => window.__llamadas.some((l) => l.tabla === "pagos")), "false");
   igual("quien coordina sabe que el recibo lo entrega quien supervisa",
@@ -1037,8 +1107,8 @@ async function pruebaSupervisora(browser) {
 
   // -------- el pago adelantado
   await page.selectOption("#pa-alumno", "u-ana");
-  igual("ofrece adelantar el plan de ese alumno o pagar otra cosa",
-    await page.evaluate(() => [...document.getElementById("pa-que").options].map((o) => o.value)), ["s-1", "otro"]);
+  igual("ofrece adelantar el plan de ese alumno, un periodo a la medida de ese plan, o pagar otra cosa",
+    await page.evaluate(() => [...document.getElementById("pa-que").options].map((o) => o.value)), ["s-1", "medida:s-1", "otro"]);
   igual("y dice cuánto es cada periodo, con la beca",
     /Cada mes de este plan es de ₡22500/.test(sinSeparadores(await page.evaluate(() => document.getElementById("pa-plan-ayuda").textContent))), "true");
   await page.fill("#pa-periodos", "3");
@@ -1049,7 +1119,7 @@ async function pruebaSupervisora(browser) {
   await page.waitForTimeout(500);
   igual("adelantar tres meses lo hace la base con ESA suscripción",
     await page.evaluate(() => (window.__llamadas.find((l) => l.rpc === "pago_adelantado") || {}).args),
-    { p_suscripcion: "s-1", p_periodos: 3, p_metodo: "transferencia", p_referencia: "BN-77", p_nota: null, p_fecha: HOY_CR });
+    { p_suscripcion: "s-1", p_periodos: 3, p_metodo: "transferencia", p_referencia: "BN-77", p_nota: null, p_fecha: await fechaDelPago(page) });
   igual("y enseguida se le pone delante el recibo para revisarlo",
     await page.evaluate(() => window.__avisos.some((a) => a.includes("Revisa el recibo R-ADAPZ-2026-0004"))), "true");
   await page.fill("#pa-periodos", "30");
@@ -1068,10 +1138,53 @@ async function pruebaSupervisora(browser) {
   await page.evaluate(() => { window.__llamadas = []; });
   await page.click("#pa-guardar");
   await page.waitForTimeout(500);
-  igual("un pago sin cobro previo emite su cobro pagado, con su recibo",
-    await page.evaluate(() => (window.__llamadas.find((l) => l.rpc === "registrar_cobro_pagado") || {}).args),
+  igual("un pago sin cobro previo emite su cobro pagado, con su recibo (sin periodo, si no se dijo)",
+    await page.evaluate(() => (window.__llamadas.find((l) => l.rpc === "registrar_cobro_pagado_con_periodo") || {}).args),
     { p_alumno: "u-ana", p_concepto: "Inscripción al torneo", p_monto: 15000, p_moneda: "CRC", p_metodo: "transferencia",
-      p_referencia: null, p_nota: null, p_fecha: HOY_CR });
+      p_referencia: null, p_nota: null, p_fecha: await fechaDelPago(page), p_suscripcion: null, p_desde: null, p_hasta: null });
+  await page.fill("#pa-concepto", "Campamento");
+  await page.fill("#pa-monto", "40000");
+  await page.fill("#pa-desde", "2026-12-01");
+  await page.evaluate(() => { window.__llamadas = []; window.__avisos = []; });
+  await page.click("#pa-guardar");
+  await page.waitForTimeout(300);
+  igual("con una sola de las dos fechas no se manda",
+    [await page.evaluate(() => window.__llamadas.filter((l) => String(l.rpc || "").startsWith("registrar_cobro")).length),
+     await page.evaluate(() => window.__avisos.some((a) => a.includes("Falta una de las dos fechas")))], [0, true]);
+  await page.fill("#pa-hasta", "2026-12-15");
+  await page.click("#pa-guardar");
+  await page.waitForTimeout(500);
+  igual("otra cosa con periodo lo manda",
+    await page.evaluate(() => { const a = (window.__llamadas.find((l) => l.rpc === "registrar_cobro_pagado_con_periodo") || {}).args || {};
+                                return [a.p_concepto, a.p_desde, a.p_hasta, a.p_suscripcion]; }),
+    ["Campamento", "2026-12-01", "2026-12-15", null]);
+
+  // -------- un periodo a la medida de un plan: de qué día a qué día
+  await page.selectOption("#pa-que", "medida:s-1");
+  igual("pide las fechas, el concepto y el monto, pero no la moneda (es la del plan)",
+    await page.evaluate(() => ["pa-periodo-cell", "pa-otro-cell", "pa-moneda-cell", "pa-plan-cell"]
+      .map((id) => document.getElementById(id).checkVisibility())), [true, true, false, false]);
+  await page.evaluate(() => { window.__llamadas = []; });
+  await page.fill("#pa-desde", "2026-10-15");
+  await page.fill("#pa-hasta", "2026-11-14");
+  await page.waitForTimeout(300);
+  igual("le pregunta a la base cuánto es por esos días de ESE plan",
+    await page.evaluate(() => (window.__llamadas.filter((l) => l.rpc === "cobro_cotizar").pop() || {}).args),
+    { p_suscripcion: "s-1", p_desde: "2026-10-15", p_hasta: "2026-11-14" });
+  igual("y escribe el concepto y el monto que propone",
+    await page.evaluate(() => [document.getElementById("pa-concepto").value, document.getElementById("pa-monto").value]),
+    ["Mensualidad · 15 de octubre al 14 de noviembre 2026", "22906.45"]);
+  await page.fill("#pa-monto", "22000");
+  await page.evaluate(() => { window.__llamadas = []; });
+  await page.click("#pa-guardar");
+  await page.waitForTimeout(500);
+  igual("registrar el periodo a la medida lo ata al plan, con el monto que se dejó",
+    await page.evaluate(() => (window.__llamadas.find((l) => l.rpc === "registrar_cobro_pagado_con_periodo") || {}).args),
+    { p_alumno: "u-ana", p_concepto: "Mensualidad · 15 de octubre al 14 de noviembre 2026", p_monto: 22000, p_moneda: "CRC",
+      p_metodo: "transferencia", p_referencia: null, p_nota: null, p_fecha: await fechaDelPago(page),
+      p_suscripcion: "s-1", p_desde: "2026-10-15", p_hasta: "2026-11-14" });
+  igual("y después se limpian las fechas",
+    await page.evaluate(() => [document.getElementById("pa-desde").value, document.getElementById("pa-hasta").value]), ["", ""]);
 
   // -------- el prefijo de los números: solo las academias que supervisa
   igual("ve el prefijo de su academia y nada más",
@@ -1110,6 +1223,35 @@ async function pruebaSupervisora(browser) {
   await page.waitForTimeout(300);
   igual("por debajo de lo ya pagado (₡10 000) no se manda",
     await page.evaluate(() => window.__llamadas.filter((l) => l.tabla === "cobros").length), 0);
+  // El periodo: «2026-08» a «2026-09» es del 1 de agosto al 30 de setiembre,
+  // y el concepto, que decía «agosto 2026», se rehace con el periodo nuevo.
+  await page.evaluate(() => { window.__llamadas = []; window.__respuestas = [{ desde: "2026-08", hasta: "2026-09" }];
+    document.querySelectorAll("#cobros-lista > details").forEach((d) => { d.open = true; }); });
+  await page.locator("#cobros-lista .cobro-fila").nth(1).locator("button", { hasText: "Corregir" }).click();
+  await page.waitForTimeout(300);
+  const periodo = await page.evaluate(() => ({
+    rango: (window.__llamadas.find((l) => l.rpc === "rango_es") || {}).args,
+    cambio: (window.__llamadas.find((l) => l.tabla === "cobros" && l.verbo === "update") || {}).datos,
+  }));
+  igual("corregir el periodo manda las dos fechas y rehace el concepto con el periodo nuevo",
+    periodo,
+    { rango: { p_desde: "2026-08-01", p_hasta: "2026-09-30" },
+      cambio: { concepto: "Mensualidad · agosto a setiembre 2026", monto: 22500, vence: VENCE_C2, periodo_inicio: "2026-08-01", periodo_fin: "2026-09-30" } });
+  await page.evaluate(() => { window.__llamadas = []; window.__respuestas = [{ desde: "2026-09-10", hasta: "2026-09-01" }];
+    document.querySelectorAll("#cobros-lista > details").forEach((d) => { d.open = true; }); });
+  await page.locator("#cobros-lista .cobro-fila").nth(1).locator("button", { hasText: "Corregir" }).click();
+  await page.waitForTimeout(300);
+  igual("un periodo que termina antes de empezar no se manda",
+    await page.evaluate(() => window.__llamadas.filter((l) => l.tabla === "cobros").length), 0);
+  await page.evaluate(() => { window.__llamadas = []; window.__respuestas = [{ concepto: "A mano", desde: "2026-08-15" }];
+    document.querySelectorAll("#cobros-lista > details").forEach((d) => { d.open = true; }); });
+  await page.locator("#cobros-lista .cobro-fila").nth(1).locator("button", { hasText: "Corregir" }).click();
+  await page.waitForTimeout(300);
+  igual("si el concepto se cambió a mano, se respeta aunque cambie el periodo",
+    await page.evaluate(() => [(window.__llamadas.find((l) => l.tabla === "cobros" && l.verbo === "update") || {}).datos,
+                               window.__llamadas.some((l) => l.rpc === "rango_es")]),
+    [{ concepto: "A mano", monto: 22500, vence: VENCE_C2, periodo_inicio: "2026-08-15", periodo_fin: "2026-08-31" }, false]);
+
   // Guardar recarga la lista, que vuelve a cerrar los meses de atrás.
   await page.evaluate(() => { window.__llamadas = []; document.querySelectorAll("#cobros-lista > details").forEach((d) => { d.open = true; }); });
   await page.locator("#cobros-lista .cobro-fila").nth(3).locator("button", { hasText: "Reactivar" }).click();

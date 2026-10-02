@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261002034439
+# al-dia-con: 20261002053547
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -1006,7 +1006,9 @@ columna  suscripciones.dia_cobro  smallint
 columna  suscripciones.fin  date
 columna  suscripciones.id  uuid
 columna  suscripciones.inicio  date
+columna  suscripciones.medio_periodo  text
 columna  suscripciones.nota  text
+columna  suscripciones.pagado_hasta  date
 columna  suscripciones.plan_id  uuid
 columna  suscripciones.student_id  uuid
 columna  tarea_items.actividades  text[]
@@ -1167,6 +1169,7 @@ funcion  clase_invitado_info(p_token text)  definer  anon=true  auth=true
 funcion  clase_invitado_modo(p_token text, p_secreto text, p_adaptado boolean)  definer  anon=true  auth=true
 funcion  clase_invitado_salio(p_token text, p_secreto text)  definer  anon=true  auth=true
 funcion  clase_invitado_ver(p_token text, p_secreto text)  definer  anon=true  auth=true
+funcion  cobro_cotizar(p_suscripcion uuid, p_desde date, p_hasta date)  definer  anon=false  auth=true
 funcion  cobros_morosos()  invoker  anon=true  auth=true
 funcion  cobros_resumen()  invoker  anon=true  auth=true
 funcion  color_con_texto_blanco(p text)  invoker  anon=true  auth=true
@@ -1288,6 +1291,7 @@ funcion  interno.enlaces_de_sala_validos(p jsonb)  invoker  anon=true  auth=true
 funcion  interno.frenar_envio_publico(p_tipo text, p_ambito text, p_correo text, p_ip text)  invoker  anon=false  auth=false
 funcion  interno.gente_de_mis_academias()  definer  anon=false  auth=true
 funcion  interno.jsonb_o_nulo(p text)  invoker  anon=false  auth=true
+funcion  interno.monto_rango(p_base date, p_meses integer, p_precio numeric, p_desde date, p_hasta date)  invoker  anon=false  auth=false
 funcion  interno.nombre_libre_de_subgrupo(p_profesor uuid, p_base text, p_excepto uuid)  definer  anon=false  auth=false
 funcion  interno.pagar(p_pagos jsonb, p_metodo text, p_referencia text, p_nota text, p_fecha date)  definer  anon=false  auth=false
 funcion  interno.pizarras_de_sala_validas(p jsonb)  invoker  anon=true  auth=true
@@ -1301,6 +1305,7 @@ funcion  interno.sesiones_de_supervisados()  definer  anon=false  auth=true
 funcion  interno.subgrupo_del_equipo_al_dia(p_equipo uuid, p_profesor uuid)  definer  anon=false  auth=false
 funcion  interno.supervisados_de(p_supervisor uuid)  definer  anon=false  auth=false
 funcion  interno.supervisados_por_mi()  definer  anon=false  auth=true
+funcion  interno.validar_periodo(p_desde date, p_hasta date)  invoker  anon=false  auth=false
 funcion  interno.verificacion_al_dia()  definer  anon=false  auth=true
 funcion  interno.version_legal_valida(p text)  invoker  anon=false  auth=false
 funcion  json_seguro(p_texto text)  invoker  anon=false  auth=true
@@ -1396,10 +1401,12 @@ funcion  quiniela_yo(p_sala uuid, p_token text)  definer  anon=false  auth=false
 funcion  quitar_foto(p_persona uuid)  definer  anon=false  auth=true
 funcion  quitar_insignia(p_id uuid)  definer  anon=false  auth=true
 funcion  quitar_verificacion_en_dos_pasos(p_persona uuid)  definer  anon=false  auth=true
+funcion  rango_es(p_desde date, p_hasta date)  invoker  anon=false  auth=true
 funcion  recibo_entregado_en_mano(p_recibo uuid, p_entregado boolean)  definer  anon=false  auth=true
 funcion  recordar_informes_mensuales(p_hoy date)  definer  anon=false  auth=false
 funcion  registrar_arbitraje_publico(p_nombre text, p_email text, p_porcentaje integer, p_nivel text, p_detalle jsonb)  definer  anon=true  auth=true
 funcion  registrar_cobro_pagado(p_alumno uuid, p_concepto text, p_monto numeric, p_moneda text, p_metodo text, p_referencia text, p_nota text, p_fecha date)  definer  anon=false  auth=true
+funcion  registrar_cobro_pagado_con_periodo(p_alumno uuid, p_concepto text, p_monto numeric, p_moneda text, p_metodo text, p_referencia text, p_nota text, p_fecha date, p_suscripcion uuid, p_desde date, p_hasta date)  definer  anon=false  auth=true
 funcion  registrar_compra(p_profile uuid, p_producto text, p_registrar boolean)  definer  anon=false  auth=true
 funcion  registrar_pago(p_pagos jsonb, p_metodo text, p_referencia text, p_nota text, p_fecha date)  definer  anon=false  auth=true
 funcion  registrar_salida_examen(p_examen uuid, p_segundos integer)  definer  anon=false  auth=true
@@ -1939,6 +1946,7 @@ indice  cobros  cobros_creado_por_fk
 indice  cobros  cobros_pkey
 indice  cobros  cobros_por_alumno
 indice  cobros  cobros_por_vencimiento
+indice  cobros  cobros_sin_periodos_cruzados
 indice  cobros  cobros_un_periodo_por_suscripcion
 indice  cobros_contacto  cobros_contacto_actualizado_por_fk
 indice  cobros_contacto  cobros_contacto_pkey
@@ -2206,6 +2214,7 @@ indice  variant_nodes  variant_nodes_parent_id_fk
 indice  variant_nodes  variant_nodes_pkey
 indice  variant_nodes  variant_nodes_teacher_id_fk
 indice  vision_personas  vision_personas_pkey
+extension  btree_gist  1.7
 extension  pg_cron  1.6.4
 extension  pg_net  0.20.4
 extension  pg_stat_statements  1.11
