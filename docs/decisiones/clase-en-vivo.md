@@ -2520,6 +2520,28 @@ diagnóstico— ya las tiene siempre, así que su ausencia justo acá se nota.
   falla de verdad: dejando el tope pegado al tablero saltan 5 comprobaciones, y
   volviendo a mudarlo como estilo en línea, las mismas 5.
 
+### En un monitor ancho, la clase se ensancha
+
+La sesión topaba en 1024 px (`max-w-5xl`) con el tablero en 560: en un monitor
+de 1920 quedaba media pantalla vacía a los lados. Ahora, **solo desde 1440 px de
+ancho y 801 de alto**, `css/styles.css` ensancha la sección a 88rem, la columna
+de herramientas pasa de 320 a 380 px y el tablero crece con la altura de la
+ventana, `clamp(560px, 100vh - 220px, 720px)`. Debajo de eso no cambia nada.
+
+- **El tope va a todo lo que lleva `max-w-[560px]` en `.proyector-columna`**: el
+  envoltorio de las coordenadas (que es quien decide el ancho del tablero, ver
+  arriba) y las cajas de abajo, que así siguen midiendo lo mismo que él.
+- **No pisa la regla del laptop de 13"**: una dice `max-height: 800px` y la otra
+  `min-height: 801px`, así que nunca valen a la vez.
+- **El proyector y el control remoto quedan fuera** (`html:not(.modo-proyector)
+  :not(.modo-control)`): tienen sus propias medidas, y con la especificidad de
+  esta regla le habría ganado a la del proyector.
+- **Se acota con `:has(.proyector-contenido)`**: `styles.css` lo carga todo el
+  sitio y hay otras veinte páginas con un `#app`. El encabezado y las migas se
+  ensanchan lo mismo para que el logo siga alineado con el contenido.
+- `verificar-sesion-curso.js` lo mide a 1920 y a 1280 px; quitándole la regla
+  salta.
+
 ### Las miniaturas de la práctica: a 16 px no se distingue una pieza
 
 Mientras la clase practica contra el motor, el profesor ve una miniatura por alumno

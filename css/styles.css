@@ -89,6 +89,25 @@ body { -webkit-font-smoothing: antialiased; }
   #app .board-coords-outer { max-width: min(92vw, 420px); }
 }
 
+/* Lo contrario, en un monitor ancho (1440 px o más) y no bajo: la página topaba en
+   1024 px y dejaba media pantalla vacía a los lados. Ahí la sesión se ensancha, la
+   columna de herramientas gana un poco y el tablero crece con la altura de la
+   ventana, entre sus 560 px de siempre y 720. Debajo de 1440 px o de 801 px de alto
+   no cambia NADA (la regla de arriba sigue mandando en el laptop de 13"). El tope se
+   le pone a todo lo que va alineado con el tablero en su columna —su envoltorio de
+   coordenadas, que es quien decide el ancho, y las cajas de abajo—, porque todas
+   llevan el mismo `max-w-[560px]`: así siguen midiendo lo mismo que él. El proyector
+   y el control remoto tienen sus propias medidas y quedan fuera. El `:has` acota
+   esto a `sesion.html`: hay otras veinte páginas con un `#app`. El encabezado y las
+   migas se ensanchan lo mismo para que el logo siga alineado con el contenido. */
+@media (min-width: 1440px) and (min-height: 801px) {
+  html:not(.modo-proyector):not(.modo-control) #app > section:has(> .proyector-contenido),
+  html:not(.modo-proyector):not(.modo-control):has(.proyector-contenido) #header > nav,
+  html:not(.modo-proyector):not(.modo-control):has(.proyector-contenido) #migas { max-width: 88rem; }
+  html:not(.modo-proyector):not(.modo-control) #app .proyector-contenido { grid-template-columns: minmax(0, 1fr) 380px; }
+  html:not(.modo-proyector):not(.modo-control) #app .proyector-columna .max-w-\[560px\] { max-width: clamp(560px, calc(100vh - 220px), 720px); }
+}
+
 /* Los glifos Unicode de piezas "blancas" (♔♕♖♗♘♙) son solo un contorno hueco: sin un color
    propio quedan indistinguibles de las negras (heredan el mismo color de texto de la página).
    Contorno duro en 4 direcciones + sombra suave para que se lean claramente en cualquier
