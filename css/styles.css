@@ -1243,14 +1243,19 @@ html.adaptive-mode .vc-tablero { width: min(calc(100vw - 3rem), 60vh); }
 
 /* ===== La clase en el celular del profe (sesion.html) =====
    Ver «La clase en el celular del profe» en docs/decisiones/clase-en-vivo.md.
-   - Lo que se toca en la columna de herramientas (pestañas, barra, listas)
-     mide al menos 44 px de alto para el dedo; en la computadora, como era.
+   - Lo que se toca en la columna de herramientas (pestañas, barra, listas) y
+     en los botones de debajo del tablero mide al menos 44 px de alto para el
+     dedo; en la computadora, como era.
    - La ayuda de las flechas dice lo del dedo en una pantalla táctil y lo del
      clic derecho con mouse: con el dedo no hay clic derecho. */
 @media (max-width: 639px) {
     .proyector-contenido > aside button,
     .proyector-contenido > aside select,
-    .proyector-contenido > aside summary { min-height: 44px; }
+    .proyector-contenido > aside summary,
+    #toolbar-tablero button,
+    #toolbar-tablero select { min-height: 44px; }
+    /* Los colores de las flechas, redondos: 44 de alto y 44 de ancho. */
+    #marks-color-picker button { min-width: 44px; }
 }
 /* ===== Las herramientas en grande (sesion.html, solo el profe) =====
    «🔎 Herramientas en grande» vuelve la columna de herramientas una ventana

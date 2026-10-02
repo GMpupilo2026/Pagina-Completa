@@ -357,6 +357,37 @@
                         </span>
                     </div>
 
+                    <!-- «El tablero — lo ve toda la clase» (solo el profesor): Reiniciar, Borrar
+                         flechas, Ocultar, Guardar PGN y Tiempo para pensar van DEBAJO del tablero
+                         que tocan, no en la columna de herramientas: son los que más se usan
+                         dando clase, y así quedan a la vista sin buscar. Ver «La pantalla se
+                         ordena por QUIÉN VE CADA COSA» en docs/decisiones/clase-en-vivo.md. -->
+                    <div id="toolbar-tablero" class="hidden max-w-[560px] mx-auto mt-3 bg-white dark:bg-brand-900 rounded-xl shadow-md p-3">
+                        <p class="text-[0.6875rem] font-semibold uppercase tracking-wide text-brand-450 dark:text-brand-350 mb-1.5">El tablero — lo ve toda la clase</p>
+                        <div class="flex flex-wrap gap-1.5">
+                            <button id="reset-board-btn" type="button" title="Reiniciar tablero a la posición inicial" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">🔄 Reiniciar</button>
+                            <button id="clear-marks-btn" type="button" title="Borrar las flechas y los círculos dibujados en el tablero" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">🧹 Borrar flechas</button>
+                            <button id="toggle-hide-btn" type="button" title="Ocultar piezas a los alumnos" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">🙈 Ocultar</button>
+                            <button id="save-game-btn" type="button" title="Guardar la partida actual (queda en Partidas guardadas) y descargar su PGN" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">💾 Guardar PGN</button>
+                        </div>
+                        <!-- Tiempo para pensar: una cuenta regresiva que ve toda la clase, sin abrir una
+                             pregunta (game_state.pensar). El texto es opcional. -->
+                        <div id="pensar-caja" class="flex flex-wrap items-center gap-1.5 mt-2">
+                            <label for="pensar-segundos" class="sr-only">Cuánto tiempo para pensar</label>
+                            <select id="pensar-segundos" class="text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-2 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500"></select>
+                            <label for="pensar-texto" class="sr-only">Qué tienen que pensar (opcional)</label>
+                            <input id="pensar-texto" type="text" maxlength="140" placeholder="Qué pensar (opcional)" class="flex-1 min-w-[120px] text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-2 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500">
+                            <button id="pensar-btn" type="button" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors"><span aria-hidden="true">⏳ </span>Tiempo para pensar</button>
+                        </div>
+                        <p id="arrows-hint" class="hidden text-center text-brand-450 dark:text-brand-350 text-xs mt-2"><span class="solo-raton">Clic derecho + arrastrar dibuja una flecha (repetirla en el mismo color la borra) · clic derecho sobre una casilla la marca con un círculo · elige el color abajo</span><span class="solo-tactil">Mantén el dedo sobre una casilla y arrástralo: dibuja una flecha (repetirla en el mismo color la borra) · sin moverlo, la marca con un círculo · elige el color abajo</span></p>
+                        <!-- Color con el que se dibujan las PRÓXIMAS flechas/círculos (ver
+                             js/clases-board.js#MARK_COLORS y setMarkColor). Los botones los arma
+                             initMarksColorPicker() leyendo esa misma tabla, para no repetir los
+                             cinco hex acá. Solo el profesor dibuja, así que solo a él se le
+                             destapa (junto con #arrows-hint, ver initBoardForRole). -->
+                        <div id="marks-color-picker" class="hidden items-center justify-center gap-2 mt-1.5" role="radiogroup" aria-label="Color con el que se dibuja"></div>
+                    </div>
+
                     <!-- De quién es el turno, pegado al tablero del que habla. -->
                     <p id="turn-indicator" class="proyector-se-ve control-se-ve text-center text-brand-500 dark:text-brand-300 text-sm mt-4"></p>
                     <!-- Va justo debajo del tablero: es lo más urgente de la pantalla, y en el celular
@@ -521,13 +552,6 @@
                     <p id="pregunta-para-otro" hidden class="max-w-[560px] mx-auto mt-2 rounded-xl border-2 border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 px-4 py-2 text-center text-sm text-brand-700 dark:text-brand-200" aria-live="polite"><span aria-hidden="true">❓ </span>Tu profe le hizo una pregunta a <strong id="pregunta-para-otro-nombre" class="font-bold"></strong>. Piensa tu respuesta en silencio.</p>
                     <p id="jugadas-a-ciegas" hidden class="max-w-[560px] mx-auto mt-2 rounded-xl bg-brand-100 dark:bg-brand-900 px-4 py-2 text-sm font-mono text-brand-700 dark:text-brand-200"></p>
                     <p id="comentario-profe" hidden class="max-w-[560px] mx-auto mt-2 rounded-xl border border-accent-400/60 bg-white dark:bg-brand-900 px-4 py-2 text-sm text-brand-700 dark:text-brand-200"></p>
-                    <p id="arrows-hint" class="hidden text-center text-brand-450 dark:text-brand-350 text-xs mt-1"><span class="solo-raton">Clic derecho + arrastrar dibuja una flecha (repetirla en el mismo color la borra) · clic derecho sobre una casilla la marca con un círculo · elige el color abajo</span><span class="solo-tactil">Mantén el dedo sobre una casilla y arrástralo: dibuja una flecha (repetirla en el mismo color la borra) · sin moverlo, la marca con un círculo · elige el color abajo</span></p>
-                    <!-- Color con el que se dibujan las PRÓXIMAS flechas/círculos (ver
-                         js/clases-board.js#MARK_COLORS y setMarkColor). Los botones los arma
-                         initMarksColorPicker() leyendo esa misma tabla, para no repetir los
-                         cinco hex acá. Solo el profesor dibuja, así que solo a él se le
-                         destapa (junto con #arrows-hint, ver initBoardForRole). -->
-                    <div id="marks-color-picker" class="hidden items-center justify-center gap-2 mt-1.5" role="radiogroup" aria-label="Color con el que se dibuja"></div>
 
                     <!-- Lección de un curso que el profesor abrió para darla (ver
                          #lesson-picker-panel). SOLO la ve él, como el PDF: nunca se sincroniza por
@@ -810,20 +834,19 @@
                         <p class="font-semibold"><span aria-hidden="true">🙋 </span>Llevan un rato sin contestar</p>
                         <ul id="callados-lista" class="mt-1.5 space-y-1.5"></ul>
                     </div>
-                    <!-- Las ocho acciones rápidas estaban en una sola rejilla sin ningún
-                         criterio, y el panel de abajo tenía que explicar con un párrafo dónde
-                         encontrarlas. Van en DOS grupos con su rótulo, y el rótulo no describe
-                         la herramienta sino QUIÉN LO VE — que es la línea de toda la clase en
-                         vivo y lo único que de verdad hay que entender acá: los cuatro de arriba
-                         abren un panel que es solo del profesor (de ahí se manda al tablero lo
-                         que él elija); los cuatro de abajo tocan el tablero que está viendo la
-                         clase entera. Sin ese rótulo son ocho botones iguales y ninguna pista de
-                         cuál se puede apretar con la clase mirando. -->
+                    <!-- La columna va en el orden en que se mira dando clase: primero lo que
+                         se consulta todo el tiempo (el motor y los alumnos conectados, siempre a
+                         la vista), después lo que se busca para una actividad (tu material y las
+                         pestañas). Lo que toca el tablero de la clase va debajo del tablero.
+                         Los botones van en DOS grupos con su rótulo, y el rótulo no describe la
+                         herramienta sino QUIÉN LO VE: «Tu material — solo lo ves tú» (acá) y
+                         «El tablero — lo ve toda la clase» (#toolbar-tablero, bajo el tablero).
+                         Ver «La pantalla se ordena por QUIÉN VE CADA COSA». -->
                     <!-- El modo sencillo: para quien todavía no ha dado ninguna clase,
-                         la pantalla arranca con lo básico —el tablero, su plan, sus
-                         alumnos y el botón de invitar— y lo demás queda a un clic. Va
-                         FUERA de la barra: dentro de ella solo viven sus dos grupos
-                         (verificar-sesion-orden.js no deja ni un botón suelto). Ver «El
+                         la pantalla arranca con lo básico —el tablero, el motor, sus
+                         alumnos y su plan— y lo demás queda a un clic. Va FUERA de los
+                         grupos: dentro de ellos solo viven sus botones
+                         (verificar-sesion-orden.js no deja ni uno suelto). Ver «El
                          modo sencillo de la clase en vivo» en docs/decisiones/clase-en-vivo.md. -->
                     <div id="modo-sencillo-fila" class="hidden flex flex-wrap items-center justify-between gap-2">
                         <p id="modo-sencillo-nota" class="text-xs text-brand-500 dark:text-brand-300 empty:hidden"></p>
@@ -832,36 +855,6 @@
                             <button id="modo-sencillo-btn" type="button" aria-controls="toolbar-material teacher-tabs" class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 text-brand-700 dark:text-brand-200 hover:border-accent-500 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></button>
                         </div>
                     </div>
-                    <div id="teacher-toolbar" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-3 space-y-3">
-                        <div id="toolbar-material">
-                            <p class="text-[0.6875rem] font-semibold uppercase tracking-wide text-brand-450 dark:text-brand-350 mb-1.5">Tu material — solo lo ves tú</p>
-                            <div class="flex flex-wrap gap-1.5">
-                                <button id="toggle-lesson-btn" type="button" title="Abrir una lección de cualquier curso en tu pantalla, para darla con sus posiciones a mano (los alumnos no la ven)" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">📚 Curso</button>
-                                <button id="toggle-archivos-btn" type="button" title="Jalar al tablero un PGN que subiste en Archivos, jugada a jugada" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">📂 Archivos</button>
-                                <button id="toggle-pdf-btn" type="button" title="Leer un PDF durante la clase (solo tú lo ves) y reconocer sus diagramas para pasarlos al tablero" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">📄 PDF</button>
-                                <button id="toggle-free-mode-btn" type="button" title="Armar una posición a mano, o cargarla desde un FEN o un PGN" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">✏️ Armar posición</button>
-                            </div>
-                        </div>
-                        <div id="toolbar-tablero" class="border-t border-brand-100 dark:border-brand-800 pt-3">
-                            <p class="text-[0.6875rem] font-semibold uppercase tracking-wide text-brand-450 dark:text-brand-350 mb-1.5">El tablero — lo ve toda la clase</p>
-                            <div class="flex flex-wrap gap-1.5">
-                                <button id="reset-board-btn" type="button" title="Reiniciar tablero a la posición inicial" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">🔄 Reiniciar</button>
-                                <button id="clear-marks-btn" type="button" title="Borrar flechas y círculos dibujados" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">🧹 Flechas</button>
-                                <button id="toggle-hide-btn" type="button" title="Ocultar piezas a los alumnos" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">🙈 Ocultar</button>
-                                <button id="save-game-btn" type="button" title="Guardar la partida actual (queda en Partidas guardadas) y descargar su PGN" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">💾 Guardar PGN</button>
-                            </div>
-                            <!-- Tiempo para pensar: una cuenta regresiva que ve toda la clase, sin abrir una
-                                 pregunta (game_state.pensar). El texto es opcional. -->
-                            <div id="pensar-caja" class="flex flex-wrap items-center gap-1.5 mt-2">
-                                <label for="pensar-segundos" class="sr-only">Cuánto tiempo para pensar</label>
-                                <select id="pensar-segundos" class="text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-2 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500"></select>
-                                <label for="pensar-texto" class="sr-only">Qué tienen que pensar (opcional)</label>
-                                <input id="pensar-texto" type="text" maxlength="140" placeholder="Qué pensar (opcional)" class="flex-1 min-w-[120px] text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-2 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500">
-                                <button id="pensar-btn" type="button" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors"><span aria-hidden="true">⏳ </span>Tiempo para pensar</button>
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- Motor de análisis (solo profesor): siempre visible, no es una pestaña más —
                          se consulta todo el tiempo mientras se enseña, no tiene sentido esconderlo
                          detrás de un clic. -->
@@ -890,92 +883,110 @@
                         </div>
                     </div>
 
-                    <!-- Pestañas del profesor: un solo panel visible a la vez, sin scroll para
-                         cambiar de herramienta.
-
-                         VAN EN EL ORDEN DE LA CLASE, que es el orden en que se usan: qué voy a
-                         dar, qué le pongo delante, qué le pido, a quién se lo estoy dando. Antes
-                         abría "Controles" —una pestaña cuyo contenido era un párrafo explicando
-                         dónde estaban los otros botones, más el formulario de invitar a un alumno,
-                         que no es algo que se haga dando clase— y el PLAN, que es justamente lo
-                         que ordena la clase entera, estaba quinto. -->
-                    <div id="teacher-tabs-wrap" class="hidden">
-                        <div id="teacher-tabs" class="flex flex-wrap gap-1.5 mb-4" role="tablist" aria-label="Herramientas del profesor">
-                            <button type="button" id="teacher-tab-plan" class="teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" data-tab="plan" role="tab" aria-selected="false" aria-controls="plan-panel">📋 Mi plan</button>
-                            <button type="button" id="teacher-tab-tactica" class="teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" data-tab="tactica" role="tab" aria-selected="false" aria-controls="tactics-panel">🧩 Táctica</button>
-                            <button type="button" id="teacher-tab-tipos" class="teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" data-tab="tipos" role="tab" aria-selected="false" aria-controls="tipos-panel">🧠 Habilidades</button>
-                            <button type="button" id="teacher-tab-preguntar" class="teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" data-tab="preguntar" role="tab" aria-selected="false" aria-controls="question-panel">❓ Preguntar</button>
-                            <button type="button" id="teacher-tab-practicar" class="teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" data-tab="practicar" role="tab" aria-selected="false" aria-controls="practice-panel">🎯 Practicar</button>
-                            <button type="button" id="teacher-tab-alumnos" class="teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" data-tab="alumnos" role="tab" aria-selected="false" aria-controls="students-panel">👥 Alumnos<span id="hand-raised-badge" class="hidden ml-1 inline-block w-2 h-2 rounded-full bg-red-500 align-middle" title="Alguien pidió la palabra"></span></button>
-                            <button type="button" id="teacher-tab-controles" class="teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" data-tab="controles" role="tab" aria-selected="false" aria-controls="teacher-panel">➕ Invitar</button>
-                        </div>
-
-                        <div id="teacher-panel" data-tab-panel="controles" role="tabpanel" aria-labelledby="teacher-tab-controles" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
-                            <!-- Acá vivía un párrafo explicando dónde estaban los otros
-                                 botones. Una pantalla que necesita explicarse es una
-                                 pantalla mal ordenada: ahora los botones llevan su rótulo
-                                 y el párrafo sobra. -->
-                            <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-2"><span aria-hidden="true">➕</span> Invitar a un alumno</h2>
-                            <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">Le llega un correo con el enlace para <strong>crear su contraseña</strong> y los pasos para entrar a la plataforma.</p>
-                            <form id="create-student-form" class="space-y-3">
-                                <label for="student-name" class="sr-only">Nombre del alumno</label>
-                                <input id="student-name" type="text" placeholder="Nombre del alumno" class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
-                                <label for="student-email" class="sr-only">Correo del alumno</label>
-                                <input id="student-email" type="email" required placeholder="correo@ejemplo.com" class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
-
-                                <!-- Una familia con dos hijos pequeños tiene UN correo, y
-                                     no se puede repetir: es la llave con la que se inicia
-                                     sesión. En vez de pedirle un buzón al niño se le arma
-                                     un usuario, y el enlace sale hacia la casa. -->
-                                <label class="flex items-start gap-2 cursor-pointer">
-                                    <input type="checkbox" id="student-sin-correo" class="mt-0.5 rounded border-brand-300 dark:border-brand-600 text-accent-500 focus:ring-accent-400">
-                                    <span class="text-xs text-brand-600 dark:text-brand-300">
-                                        <strong class="text-brand-800 dark:text-white">No tiene correo propio</strong>
-                                        — se le arma un usuario; la contraseña se la pones tú o la crea la casa con el correo.
-                                    </span>
-                                </label>
-
-                                <div id="student-casa" class="hidden space-y-3">
-                                    <div>
-                                        <label for="student-usuario" class="block text-xs font-semibold text-brand-700 dark:text-brand-200 mb-1">Usuario con el que va a entrar</label>
-                                        <div class="flex items-center gap-1">
-                                            <input id="student-usuario" type="text" maxlength="40" autocapitalize="none" autocorrect="off" spellcheck="false" class="flex-1 min-w-0 bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
-                                            <span id="student-usuario-dominio" class="text-xs text-brand-450 dark:text-brand-350 whitespace-nowrap"></span>
-                                        </div>
-                                        <p class="text-xs text-brand-450 dark:text-brand-350 mt-1">Sale del nombre; corrígelo si hace falta.</p>
-                                    </div>
-                                    <!-- Con la contraseña puesta entra hoy mismo, sin que nadie
-                                         abra un correo: se la das en la clase. De texto y no de
-                                         contraseña a propósito, para poder dictársela. -->
-                                    <div>
-                                        <label for="student-contrasena" class="block text-xs font-semibold text-brand-700 dark:text-brand-200 mb-1">Contraseña (si se la pones tú)</label>
-                                        <div class="flex items-center gap-2">
-                                            <input id="student-contrasena" type="text" maxlength="72" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" class="flex-1 min-w-0 bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
-                                            <button type="button" id="student-contrasena-proponer" class="text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 whitespace-nowrap transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Proponer una fácil</button>
-                                        </div>
-                                        <p class="text-xs text-brand-450 dark:text-brand-350 mt-1">Al menos 8 caracteres. Con ella entra hoy mismo: dale el usuario y la contraseña en la clase. Si la dejas en blanco, el enlace para crearla sale al correo de la casa.</p>
-                                    </div>
-                                    <div>
-                                        <label for="student-encargado-nombre" class="block text-xs font-semibold text-brand-700 dark:text-brand-200 mb-1">Nombre de la persona encargada</label>
-                                        <input id="student-encargado-nombre" type="text" maxlength="120" class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
-                                    </div>
-                                    <div>
-                                        <label for="student-encargado-correo" class="block text-xs font-semibold text-brand-700 dark:text-brand-200 mb-1">Correo de la casa</label>
-                                        <input id="student-encargado-correo" type="email" maxlength="200" placeholder="correo@ejemplo.com" class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
-                                        <p id="student-encargado-ayuda" class="text-xs text-brand-450 dark:text-brand-350 mt-1">Ahí llega el enlace para crear la contraseña. Sin esto no hay forma de escribirle a esta familia.</p>
-                                    </div>
+                    <!-- Alumnos conectados (solo profesor): siempre a la vista, no es una pestaña.
+                         Es a quien se le está dando la clase: quién llegó, quién pide la
+                         palabra, a quién darle el control. Primero la lista; lo demás
+                         (elegir al azar, puntos, equipos) debajo. -->
+                    <section id="students-panel" aria-labelledby="students-panel-titulo" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
+                        <h2 id="students-panel-titulo" class="font-serif font-bold text-brand-800 dark:text-white mb-1 flex items-center gap-2 flex-wrap"><span><span aria-hidden="true">👥</span> Alumnos conectados</span><span id="hand-raised-badge" class="hidden text-xs font-semibold px-2 py-0.5 rounded-full bg-accent-500 text-brand-900"><span aria-hidden="true">✋ </span>Piden la palabra</span></h2>
+                        <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">Dale el control a un alumno para que pueda mover piezas él mismo.</p>
+                        <ul id="students-list" class="space-y-2 text-sm mb-4">
+                            <li class="text-brand-450 dark:text-brand-350">Nadie conectado todavía…</li>
+                        </ul>
+                        <!-- Elegir a quién le toca responder, al azar entre los conectados
+                             (game_state.elegido). Al elegido le sale en grande en su pantalla. -->
+                        <div id="elegir-azar" class="mb-4 rounded-lg border border-accent-400/60 bg-accent-50 dark:bg-brand-950 p-3">
+                            <button id="elegir-azar-btn" type="button" class="w-full bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🎲 </span>Elegir a un alumno al azar</button>
+                            <p class="text-xs text-brand-500 dark:text-brand-300 mt-1.5">Entre los conectados, sin repetir hasta que les toque a todos. Al elegido le sale en grande en su pantalla.</p>
+                            <div id="elegido-caja" hidden class="mt-3">
+                                <p id="elegido-titulo" class="text-xs text-brand-500 dark:text-brand-300">Le toca responder a:</p>
+                                <div class="flex items-center gap-3">
+                                    <!-- Su foto de perfil (js/foto-perfil.js), o su inicial. -->
+                                    <span id="elegido-foto" aria-hidden="true" class="w-14 h-14 rounded-full bg-brand-700 text-white flex items-center justify-center font-serif text-xl font-bold shrink-0 overflow-hidden"></span>
+                                    <p id="elegido-nombre" class="min-w-0 font-serif text-2xl font-bold text-brand-800 dark:text-white break-words" aria-live="polite"></p>
                                 </div>
-
-                                <button type="submit" id="create-student-btn" class="w-full bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2 rounded-lg text-sm transition-colors">Enviar invitación</button>
-                                <p id="create-student-cupo" class="text-xs text-brand-450 dark:text-brand-350"></p>
-                                <p id="create-student-msg" class="text-xs"></p>
-                            </form>
-
-                            <!-- La clase vista por invitados sin cuenta: js/clase-invitados.js.
-                                 Ver «La clase vista por invitados sin cuenta» en
-                                 docs/decisiones/clase-en-vivo.md. -->
-                            <section id="invitados" hidden aria-labelledby="invitados-titulo" class="mt-5 pt-4 border-t border-brand-100 dark:border-brand-800">
-                                <h2 id="invitados-titulo" class="font-serif font-bold text-brand-800 dark:text-white mb-2"><span aria-hidden="true">🔗</span> Que vean la clase sin cuenta</h2>
+                                <div class="flex flex-wrap gap-2 mt-2">
+                                    <button id="elegido-insignia-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🏅 </span>Darle una insignia o trofeos</button>
+                                    <button id="elegido-preguntar-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">❓ </span>Preguntarle con el tablero</button>
+                                    <button id="elegido-anotar-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">📝 </span>Anotar en su bitácora</button>
+                                    <button id="elegido-otro-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🎲 </span>Elegir a otro</button>
+                                </div>
+                                <!-- Cómo respondió: queda en clase_elegidos.resultado y en el resumen
+                                     de la clase. Cualquiera de los tres termina el turno. -->
+                                <p class="text-xs text-brand-500 dark:text-brand-300 mt-3">¿Cómo respondió? (termina el turno)</p>
+                                <div class="flex flex-wrap gap-2 mt-1">
+                                    <button id="elegido-bien-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">✅ </span>Bien</button>
+                                    <button id="elegido-casi-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🤔 </span>Casi</button>
+                                    <button id="elegido-listo-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Terminar sin anotar</button>
+                                </div>
+                            </div>
+                            <!-- Cuántas veces le tocó a cada uno en ESTA clase (clase_elegidos). El
+                                 sorteo elige entre los que llevan menos. -->
+                            <details id="elegidos-cuenta-caja" hidden open class="mt-3 border-t border-accent-400/40 pt-2">
+                                <summary class="cursor-pointer text-xs font-semibold text-brand-700 dark:text-brand-200">Participación en esta clase: cuántas veces le tocó a cada uno y cómo le fue</summary>
+                                <ul id="elegidos-cuenta" class="mt-2 space-y-1 text-sm"></ul>
+                            </details>
+                        </div>
+                        <!-- Los puntos de ESTA clase (js/puntos-clase.js): salen de resumen_de_la_clase,
+                             no se guardan. «Mostrar el podio» manda una foto a game_state.podio. -->
+                        <details id="puntos-caja" class="mb-3 rounded-lg border border-brand-100 dark:border-brand-800 px-3 py-2">
+                            <summary class="cursor-pointer text-xs font-semibold text-brand-700 dark:text-brand-200"><span aria-hidden="true">🏆 </span>Puntos de esta clase</summary>
+                            <div id="puntos-lista" class="mt-2 text-sm" aria-live="polite"></div>
+                            <p id="puntos-regla" class="mt-2 text-xs text-brand-500 dark:text-brand-300"></p>
+                            <div class="flex flex-wrap items-center gap-2 mt-2">
+                                <button id="puntos-actualizar-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🔄 </span>Volver a contar</button>
+                                <label class="text-xs text-brand-700 dark:text-brand-200 flex items-center gap-1"><input id="podio-con-nombres" type="checkbox" checked class="accent-accent-500"> Con nombres</label>
+                                <button id="podio-mostrar-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🏆 </span>Mostrar el podio a la clase</button>
+                            </div>
+                            <!-- Los del mes (resumen_del_mes): las clases de este mes, con la misma regla. -->
+                            <button id="puntos-mes-btn" type="button" aria-expanded="false" aria-controls="puntos-mes-lista" class="mt-3 text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">📅 </span>Ver los puntos del mes</button>
+                            <div id="puntos-mes-lista" hidden class="mt-2 text-sm" aria-live="polite"></div>
+                        </details>
+                        <!-- Los equipos que compiten por puntos (game_state.equipos). -->
+                        <details id="equipos-profe" class="mb-3 rounded-lg border border-brand-100 dark:border-brand-800 px-3 py-2">
+                            <summary class="cursor-pointer text-xs font-semibold text-brand-700 dark:text-brand-200"><span aria-hidden="true">👥 </span>Equipos</summary>
+                            <p class="mt-2 text-xs text-brand-500 dark:text-brand-300">Reparte al azar a los conectados. Los puntos de cada equipo son la suma de los de sus integrantes, y salen en el podio.</p>
+                            <div class="flex flex-wrap items-center gap-2 mt-2">
+                                <label class="text-xs text-brand-700 dark:text-brand-200">Cuántos
+                                    <select id="equipos-cuantos" class="ml-1 text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500">
+                                        <option value="2">2 equipos</option>
+                                        <option value="3">3 equipos</option>
+                                        <option value="4">4 equipos</option>
+                                    </select>
+                                </label>
+                                <button id="equipos-armar-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🎲 </span>Armar al azar con los conectados</button>
+                            </div>
+                            <div id="equipos-lista-profe" class="mt-2 text-sm space-y-2" aria-live="polite"></div>
+                            <button id="equipos-quitar-btn" type="button" hidden class="mt-2 text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Quitar los equipos</button>
+                        </details>
+                        <!-- La bitácora del alumno que se esté mirando. Se abre con el
+                             botón 📝 de su renglón: acá, en medio de la clase, es CUANDO
+                             se ve lo que hay que anotar. Solo lo ve el profesor, como el
+                             PDF y la lección de curso. -->
+                        <div id="notas-en-clase" class="hidden mt-4 border-t border-brand-100 dark:border-brand-800 pt-4">
+                            <div class="flex items-center justify-between gap-2 mb-2">
+                                <h3 id="notas-en-clase-titulo" class="font-semibold text-sm text-brand-700 dark:text-brand-200"></h3>
+                                <button type="button" id="notas-en-clase-cerrar" class="text-xs font-semibold px-2 py-1 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">✖ Cerrar</button>
+                            </div>
+                            <div id="notas-en-clase-body"></div>
+                        </div>
+                        <!-- Los trofeos y las insignias del alumno, con el botón 🏆 de su
+                             renglón: sumar trofeos por un buen trabajo, quitar uno contado de
+                             más, o darle una insignia (buen estudiante, buena respuesta…). -->
+                        <div id="trofeos-en-clase" class="hidden mt-4 border-t border-brand-100 dark:border-brand-800 pt-4">
+                            <div class="flex items-center justify-between gap-2 mb-2">
+                                <h3 id="trofeos-en-clase-titulo" class="font-semibold text-sm text-brand-700 dark:text-brand-200"></h3>
+                                <button type="button" id="trofeos-en-clase-cerrar" class="text-xs font-semibold px-2 py-1 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">✖ Cerrar</button>
+                            </div>
+                            <div id="trofeos-en-clase-body"></div>
+                        </div>
+                        <!-- La clase vista por invitados sin cuenta: js/clase-invitados.js.
+                             Cerrado: la pestaña «Invitar» se quitó de la clase y el enlace
+                             quedó acá, a un clic, junto a quienes miran. Ver «La clase vista
+                             por invitados sin cuenta» en docs/decisiones/clase-en-vivo.md. -->
+                        <details id="invitados" hidden class="mt-3 rounded-lg border border-brand-100 dark:border-brand-800 px-3 py-2">
+                            <summary id="invitados-titulo" class="cursor-pointer text-xs font-semibold text-brand-700 dark:text-brand-200"><span aria-hidden="true">🔗 </span>Que vean la clase sin cuenta</summary>
+                            <div class="mt-2">
                                 <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">Un enlace para quien todavía no tiene usuario: ve tu tablero en pantalla completa, sigue lo que vas explicando y <strong>no puede mover nada</strong>. Solo se ve con la clase abierta. Si se sale de la pantalla, te avisamos y se le advierte; <strong>la segunda vez deja de ver el tablero</strong>.</p>
                                 <button type="button" id="invitados-crear" class="w-full text-sm font-semibold px-4 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors"><span aria-hidden="true">🔗 </span>Crear el enlace para invitados</button>
                                 <div id="invitados-enlace" hidden class="space-y-2">
@@ -1000,7 +1011,41 @@
                                 <p id="invitados-msg" class="text-xs text-brand-600 dark:text-brand-300 mt-2" role="status" aria-live="polite"></p>
                                 <h3 class="text-xs font-semibold text-brand-700 dark:text-brand-200 mt-3 mb-1">Invitados mirando</h3>
                                 <ul id="invitados-lista" class="space-y-1 text-xs"></ul>
-                            </section>
+                            </div>
+                        </details>
+                    </section>
+
+                    <!-- «Tu material — solo lo ves tú»: abre un panel que es solo del profesor; de ahí
+                         se manda al tablero lo que él elija. -->
+                    <div id="teacher-toolbar" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-3">
+                        <div id="toolbar-material">
+                            <p class="text-[0.6875rem] font-semibold uppercase tracking-wide text-brand-450 dark:text-brand-350 mb-1.5">Tu material — solo lo ves tú</p>
+                            <div class="flex flex-wrap gap-1.5">
+                                <button id="toggle-lesson-btn" type="button" title="Abrir una lección de cualquier curso en tu pantalla, para darla con sus posiciones a mano (los alumnos no la ven)" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">📚 Curso</button>
+                                <button id="toggle-archivos-btn" type="button" title="Jalar al tablero un PGN que subiste en Archivos, jugada a jugada" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">📂 Archivos</button>
+                                <button id="toggle-pdf-btn" type="button" title="Leer un PDF durante la clase (solo tú lo ves) y reconocer sus diagramas para pasarlos al tablero" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">📄 PDF</button>
+                                <button id="toggle-free-mode-btn" type="button" title="Armar una posición a mano, o cargarla desde un FEN o un PGN" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">✏️ Armar posición</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pestañas del profesor: un solo panel visible a la vez, sin scroll para
+                         cambiar de herramienta.
+
+                         VAN EN EL ORDEN DE LA CLASE, que es el orden en que se usan: qué voy a
+                         dar, qué le pongo delante, qué le pido. Antes abría "Controles" —una
+                         pestaña cuyo contenido era un párrafo explicando dónde estaban los otros
+                         botones— y el PLAN, que es justamente lo que ordena la clase entera,
+                         estaba quinto. «Alumnos» dejó de ser pestaña (va siempre a la vista,
+                         arriba) e «Invitar» se quitó: invitar no se hace dando clase, se hace
+                         desde Formularios. -->
+                    <div id="teacher-tabs-wrap" class="hidden">
+                        <div id="teacher-tabs" class="flex flex-wrap gap-1.5 mb-4" role="tablist" aria-label="Herramientas del profesor">
+                            <button type="button" id="teacher-tab-plan" class="teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" data-tab="plan" role="tab" aria-selected="false" aria-controls="plan-panel">📋 Mi plan</button>
+                            <button type="button" id="teacher-tab-tactica" class="teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" data-tab="tactica" role="tab" aria-selected="false" aria-controls="tactics-panel">🧩 Táctica</button>
+                            <button type="button" id="teacher-tab-tipos" class="teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" data-tab="tipos" role="tab" aria-selected="false" aria-controls="tipos-panel">🧠 Habilidades</button>
+                            <button type="button" id="teacher-tab-preguntar" class="teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" data-tab="preguntar" role="tab" aria-selected="false" aria-controls="question-panel">❓ Preguntar</button>
+                            <button type="button" id="teacher-tab-practicar" class="teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" data-tab="practicar" role="tab" aria-selected="false" aria-controls="practice-panel">🎯 Practicar</button>
                         </div>
 
                         <!-- Preguntar a la clase (solo profesor) -->
@@ -1269,101 +1314,6 @@
                             <p id="plan-msg" class="text-xs text-brand-500 dark:text-brand-300 mt-2" aria-live="polite"></p>
                         </div>
 
-                        <!-- Alumnos conectados (solo profesor) -->
-                        <div id="students-panel" data-tab-panel="alumnos" role="tabpanel" aria-labelledby="teacher-tab-alumnos" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
-                            <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-1">Alumnos conectados</h2>
-                            <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">Dale el control a un alumno para que pueda mover piezas él mismo.</p>
-                            <!-- Elegir a quién le toca responder, al azar entre los conectados
-                                 (game_state.elegido). Al elegido le sale en grande en su pantalla. -->
-                            <div id="elegir-azar" class="mb-4 rounded-lg border border-accent-400/60 bg-accent-50 dark:bg-brand-950 p-3">
-                                <button id="elegir-azar-btn" type="button" class="w-full bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🎲 </span>Elegir a un alumno al azar</button>
-                                <p class="text-xs text-brand-500 dark:text-brand-300 mt-1.5">Entre los conectados, sin repetir hasta que les toque a todos. Al elegido le sale en grande en su pantalla.</p>
-                                <div id="elegido-caja" hidden class="mt-3">
-                                    <p id="elegido-titulo" class="text-xs text-brand-500 dark:text-brand-300">Le toca responder a:</p>
-                                    <div class="flex items-center gap-3">
-                                        <!-- Su foto de perfil (js/foto-perfil.js), o su inicial. -->
-                                        <span id="elegido-foto" aria-hidden="true" class="w-14 h-14 rounded-full bg-brand-700 text-white flex items-center justify-center font-serif text-xl font-bold shrink-0 overflow-hidden"></span>
-                                        <p id="elegido-nombre" class="min-w-0 font-serif text-2xl font-bold text-brand-800 dark:text-white break-words" aria-live="polite"></p>
-                                    </div>
-                                    <div class="flex flex-wrap gap-2 mt-2">
-                                        <button id="elegido-insignia-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🏅 </span>Darle una insignia o trofeos</button>
-                                        <button id="elegido-preguntar-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">❓ </span>Preguntarle con el tablero</button>
-                                        <button id="elegido-anotar-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">📝 </span>Anotar en su bitácora</button>
-                                        <button id="elegido-otro-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🎲 </span>Elegir a otro</button>
-                                    </div>
-                                    <!-- Cómo respondió: queda en clase_elegidos.resultado y en el resumen
-                                         de la clase. Cualquiera de los tres termina el turno. -->
-                                    <p class="text-xs text-brand-500 dark:text-brand-300 mt-3">¿Cómo respondió? (termina el turno)</p>
-                                    <div class="flex flex-wrap gap-2 mt-1">
-                                        <button id="elegido-bien-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">✅ </span>Bien</button>
-                                        <button id="elegido-casi-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🤔 </span>Casi</button>
-                                        <button id="elegido-listo-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Terminar sin anotar</button>
-                                    </div>
-                                </div>
-                                <!-- Cuántas veces le tocó a cada uno en ESTA clase (clase_elegidos). El
-                                     sorteo elige entre los que llevan menos. -->
-                                <details id="elegidos-cuenta-caja" hidden open class="mt-3 border-t border-accent-400/40 pt-2">
-                                    <summary class="cursor-pointer text-xs font-semibold text-brand-700 dark:text-brand-200">Participación en esta clase: cuántas veces le tocó a cada uno y cómo le fue</summary>
-                                    <ul id="elegidos-cuenta" class="mt-2 space-y-1 text-sm"></ul>
-                                </details>
-                            </div>
-                            <!-- Los puntos de ESTA clase (js/puntos-clase.js): salen de resumen_de_la_clase,
-                                 no se guardan. «Mostrar el podio» manda una foto a game_state.podio. -->
-                            <details id="puntos-caja" class="mb-3 rounded-lg border border-brand-100 dark:border-brand-800 px-3 py-2">
-                                <summary class="cursor-pointer text-xs font-semibold text-brand-700 dark:text-brand-200"><span aria-hidden="true">🏆 </span>Puntos de esta clase</summary>
-                                <div id="puntos-lista" class="mt-2 text-sm" aria-live="polite"></div>
-                                <p id="puntos-regla" class="mt-2 text-xs text-brand-500 dark:text-brand-300"></p>
-                                <div class="flex flex-wrap items-center gap-2 mt-2">
-                                    <button id="puntos-actualizar-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🔄 </span>Volver a contar</button>
-                                    <label class="text-xs text-brand-700 dark:text-brand-200 flex items-center gap-1"><input id="podio-con-nombres" type="checkbox" checked class="accent-accent-500"> Con nombres</label>
-                                    <button id="podio-mostrar-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🏆 </span>Mostrar el podio a la clase</button>
-                                </div>
-                                <!-- Los del mes (resumen_del_mes): las clases de este mes, con la misma regla. -->
-                                <button id="puntos-mes-btn" type="button" aria-expanded="false" aria-controls="puntos-mes-lista" class="mt-3 text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">📅 </span>Ver los puntos del mes</button>
-                                <div id="puntos-mes-lista" hidden class="mt-2 text-sm" aria-live="polite"></div>
-                            </details>
-                            <!-- Los equipos que compiten por puntos (game_state.equipos). -->
-                            <details id="equipos-profe" class="mb-3 rounded-lg border border-brand-100 dark:border-brand-800 px-3 py-2">
-                                <summary class="cursor-pointer text-xs font-semibold text-brand-700 dark:text-brand-200"><span aria-hidden="true">👥 </span>Equipos</summary>
-                                <p class="mt-2 text-xs text-brand-500 dark:text-brand-300">Reparte al azar a los conectados. Los puntos de cada equipo son la suma de los de sus integrantes, y salen en el podio.</p>
-                                <div class="flex flex-wrap items-center gap-2 mt-2">
-                                    <label class="text-xs text-brand-700 dark:text-brand-200">Cuántos
-                                        <select id="equipos-cuantos" class="ml-1 text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500">
-                                            <option value="2">2 equipos</option>
-                                            <option value="3">3 equipos</option>
-                                            <option value="4">4 equipos</option>
-                                        </select>
-                                    </label>
-                                    <button id="equipos-armar-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🎲 </span>Armar al azar con los conectados</button>
-                                </div>
-                                <div id="equipos-lista-profe" class="mt-2 text-sm space-y-2" aria-live="polite"></div>
-                                <button id="equipos-quitar-btn" type="button" hidden class="mt-2 text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Quitar los equipos</button>
-                            </details>
-                            <ul id="students-list" class="space-y-2 text-sm">
-                                <li class="text-brand-450 dark:text-brand-350">Nadie conectado todavía…</li>
-                            </ul>
-                            <!-- La bitácora del alumno que se esté mirando. Se abre con el
-                                 botón 📝 de su renglón: acá, en medio de la clase, es CUANDO
-                                 se ve lo que hay que anotar. Solo lo ve el profesor, como el
-                                 PDF y la lección de curso. -->
-                            <div id="notas-en-clase" class="hidden mt-4 border-t border-brand-100 dark:border-brand-800 pt-4">
-                                <div class="flex items-center justify-between gap-2 mb-2">
-                                    <h3 id="notas-en-clase-titulo" class="font-semibold text-sm text-brand-700 dark:text-brand-200"></h3>
-                                    <button type="button" id="notas-en-clase-cerrar" class="text-xs font-semibold px-2 py-1 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">✖ Cerrar</button>
-                                </div>
-                                <div id="notas-en-clase-body"></div>
-                            </div>
-                            <!-- Los trofeos y las insignias del alumno, con el botón 🏆 de su
-                                 renglón: sumar trofeos por un buen trabajo, quitar uno contado de
-                                 más, o darle una insignia (buen estudiante, buena respuesta…). -->
-                            <div id="trofeos-en-clase" class="hidden mt-4 border-t border-brand-100 dark:border-brand-800 pt-4">
-                                <div class="flex items-center justify-between gap-2 mb-2">
-                                    <h3 id="trofeos-en-clase-titulo" class="font-semibold text-sm text-brand-700 dark:text-brand-200"></h3>
-                                    <button type="button" id="trofeos-en-clase-cerrar" class="text-xs font-semibold px-2 py-1 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">✖ Cerrar</button>
-                                </div>
-                                <div id="trofeos-en-clase-body"></div>
-                            </div>
-                        </div>
                     </div>
 
                     <!-- Quien SUPERVISA mirando la clase de uno de sus profesores
@@ -1475,8 +1425,6 @@
     <script src="js/pdf-diagramas.js"></script>
     <script src="js/avisos.js"></script>
     <script src="js/main.js"></script>
-    <script src="js/usuario-alumno.js"></script>
-    <script src="js/contrasena-alumno.js"></script>
     <script src="js/clase-elegida.js"></script>
     <!-- Partes de la clase en vivo con vida propia: van ANTES que sesion.js (ver «sesion.js en partes»). -->
     <script src="js/clase-votacion.js"></script>

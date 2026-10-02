@@ -400,8 +400,9 @@ async function pruebaProfe(browser) {
   console.log("\n=== El profe: el enlace y los avisos ===");
   const CLASE = { id: "c-viva", created_by: "u-profe", started_at: new Date().toISOString(), ended_at: null };
   const { page, ctx, errores } = await abrir(browser, "u-profe", CLASE);
-  await page.click("#teacher-tab-controles");
-  igual("la sección se ve en «Invitar»", await seVe(page, "#invitados"), true);
+  igual("ya no hay pestaña «Invitar»", await page.evaluate(() => !document.getElementById("teacher-tab-controles")), true);
+  igual("el enlace va en «Alumnos conectados», cerrado", [await seVe(page, "#invitados"), await page.evaluate(() => document.getElementById("invitados").open)], [true, false]);
+  await page.click("#invitados summary");
   igual("sin enlace, lo ofrece crear", [await seVe(page, "#invitados-crear"), await seVe(page, "#invitados-enlace")], [true, false]);
   await page.click("#invitados-crear");
   await page.waitForFunction(() => document.getElementById("invitados-url").value, null, { timeout: 5000 });

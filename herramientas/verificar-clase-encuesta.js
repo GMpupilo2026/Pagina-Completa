@@ -190,7 +190,6 @@ async function pruebaLosPuntos(browser) {
     clase_elegidos: [{ class_session_id: "c-viva", student_id: "u-ana", resultado: "bien" }],
   };
   const { page, ctx, errores } = await abrir(browser, "u-profe", CLASE, semilla);
-  await page.evaluate(() => activateTeacherTab("alumnos"));
   await page.click("#puntos-caja summary");
   await page.waitForFunction(() => /Ana/.test(document.getElementById("puntos-lista").textContent), null, { timeout: 5000 });
   // 1 contestada + 2 correcta + 2 turno bien.

@@ -50,7 +50,6 @@ async function pruebaProfesor(browser) {
   console.log("\n=== El profesor ajusta los trofeos del alumno que es ===");
   const { page, ctx, errores } = await abrir(browser, "u-profe", CLASE_ABIERTA, SEMILLA);
   await page.evaluate(() => window.__entraAlumno());
-  await page.click("#teacher-tab-alumnos");
   const boton = page.locator('#students-list button[aria-label="Trofeos e insignias de Ana Rojas"]');
   await boton.waitFor({ timeout: 8000 });
   igual("el panel de trofeos arranca cerrado", await seVe(page, "#trofeos-en-clase"), "no");

@@ -99,10 +99,10 @@ window.HerramientasGrandes = (function () {
         e.preventDefault();
         cerrar();
     });
-    /* Los botones de la barra hacen su efecto FUERA de la ventana: los de «El
-       tablero» lo cambian para toda la clase, y los de «Tu material» abren su
-       panel al lado del tablero. Después del clic se vuelve al tablero, para
-       ver lo que pasó. El clic llega acá después del del botón. */
+    /* Los botones de «Tu material» hacen su efecto FUERA de la ventana: abren
+       su panel al lado del tablero. Después del clic se vuelve al tablero, para
+       ver lo que pasó. El clic llega acá después del del botón. («El tablero»
+       ya no vive en esta columna: va debajo del tablero.) */
     const barra = document.getElementById("teacher-toolbar");
     if (barra) barra.addEventListener("click", (e) => {
         if (abierta && e.target.closest("button")) cerrar({ foco: false });

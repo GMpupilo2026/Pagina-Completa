@@ -169,39 +169,77 @@ pierde.
 
 - **Los nueve botones van en dos grupos, y el rótulo dice QUIÉN LO VE**: «Tu
   material — solo lo ves tú» (Curso, Archivos, PDF, Armar posición) y «El
-  tablero — lo ve toda la clase» (Reiniciar, Flechas, Ocultar, Guardar PGN y
-  Tiempo para pensar). No
+  tablero — lo ve toda la clase» (Reiniciar, Borrar flechas, Ocultar, Guardar
+  PGN y Tiempo para pensar). No
   es una agrupación estética: es **la misma línea que ordena toda la clase en
   vivo** —el material del profesor no es el de la clase— puesta donde de verdad
   hace falta saberla, que es antes de apretar. Sin ese rótulo son ocho botones
   iguales y ninguna pista de cuál se puede tocar con la clase delante.
 - **Las pestañas van en el orden de la clase**, que es el orden en que se usan:
-  qué voy a dar (Mi plan) → qué le pongo delante (Táctica) → qué le pido
-  (Preguntar, Practicar) → a quién se lo estoy dando (Alumnos) → y al final lo
-  que no se hace dando clase (Invitar).
+  qué voy a dar (Mi plan) → qué le pongo delante (Táctica, Habilidades) → qué
+  le pido (Preguntar, Practicar).
 - **La que abre sola la primera vez es «Mi plan»**, o sea `TEACHER_TABS[0]`:
   es lo único que contesta «¿qué voy a dar?» y estaba quinta. Abría
   «Controles», cuyo contenido era **un párrafo explicando dónde estaban los
   otros ocho botones** — una pantalla que necesita explicarse es una pantalla
-  mal ordenada. Ese párrafo se fue con el rótulo que lo reemplaza, y la pestaña
-  quedó en lo único que de verdad hacía: «➕ Invitar».
+  mal ordenada.
 - «✏️ Editar» pasó a **«✏️ Armar posición»**: lo que hace no es editar nada que
   ya exista, es poner una posición en el tablero a mano.
 - Después de la primera vez **se recuerda la última pestaña abierta**, como
-  antes: el orden decide dónde se entra, no dónde se vuelve.
+  antes: el orden decide dónde se entra, no dónde se vuelve. Una guardada que
+  ya no existe («alumnos», «controles») abre «Mi plan».
+
+#### La clase en vivo, reordenada
+
+Lo pidió el dueño del sitio: lo que se usa todo el tiempo
+tenía que estar a la vista sin buscarlo.
+
+- **«El tablero — lo ve toda la clase» va DEBAJO del tablero**
+  (`#toolbar-tablero`, en la columna del tablero, debajo de la barra de girar
+  y recorrer), no en la columna de herramientas. Son los botones que tocan lo
+  que la clase está mirando, y se usan a cada rato: al lado de lo que cambian
+  se encuentran sin pensar. Con ellos bajaron la ayuda de las flechas y los
+  colores con que se dibujan, junto a «🧹 Borrar flechas» (antes decía solo
+  «Flechas», que no dice qué hace). En el proyector y el control remoto no se
+  ven (no llevan `proyector-se-ve` ni `control-se-ve`).
+- **El motor y los alumnos conectados se ven siempre**, arriba de la columna
+  y en ese orden, con cualquier pestaña abierta. «Alumnos» dejó de ser
+  pestaña: es a quién se le está dando la clase (quién llegó, quién pide la
+  palabra, a quién darle el control), y escondida detrás de un clic no se
+  veía quién levantaba la mano. Dentro, la lista va primero y lo demás
+  (elegir al azar, puntos, equipos) debajo. El aviso de manos levantadas pasó
+  de un punto rojo en la pestaña a «✋ Piden la palabra» escrito junto al
+  título. Lo que antes abría esa pestaña (dar el turno desde «Llevan un rato
+  sin contestar», anotar desde donde se mira, elegir al acabar el tiempo para
+  pensar) ahora solo la acerca (`mostrarPanelAlumnos()`), sin cambiar la
+  pestaña que el profe tenga abierta.
+- **Después, lo que se busca para una actividad**: la tarjeta «Tu material» y
+  las pestañas.
+- **«➕ Invitar» se quitó de la clase.** Dar de alta a un alumno no se hace
+  dando clase: se hace en `formularios.html` («＋ Alumno nuevo»), con el
+  mismo `create-student`, la misma casilla de «No tiene correo propio» y el
+  mismo cupo. El enlace para que vean la clase sin cuenta, que vivía en esa
+  pestaña, quedó en «Alumnos conectados» como un desplegable cerrado: es
+  sobre quién mira la clase, no sobre dar de alta a nadie.
+- En el celular, los botones de debajo del tablero también miden 44 px, y los
+  cinco colores de las flechas son círculos de 44 × 44 (con solo el alto
+  quedaban óvalos).
 
 **Al tocar la barra de herramientas o las pestañas, correr `node
 herramientas/verificar-sesion-orden.js`** (con el sitio en localhost:8777,
 playwright y `npm install chess.js@0.10.3`). Reusa el Supabase de mentira de
 `verificar-clase-registrada.js` —dos copias del mismo doble se irían separando a
-la primera corrección—. Comprueba que los ocho botones estén en sus dos grupos y
+la primera corrección—. Comprueba que los botones estén en sus dos grupos (y
+el de «El tablero» debajo del tablero, centrado con él) y
 **que no quede ninguno fuera** (un botón suelto es el principio de la rejilla sin
 criterio de antes), que cada rótulo diga quién lo ve, que el orden de las
 pestañas sea el de la clase y que la que abre sola sea «Mi plan», que cada
 pestaña apunte a **su** panel (un `aria-controls` al de al lado manda a quien usa
 lector de pantalla a un sitio que no era), que abrir una herramienta propia **no
 escriba en `game_state`** —que es justo lo que promete el rótulo «solo lo ves
-tú»— y que a la alumna no se le pinte nada de esto.
+tú»—, que el motor y los alumnos conectados se vean con cada pestaña y arriba
+de la columna, que «Invitar» ya no esté, y que a la alumna no se le pinte nada
+de esto.
 
 ### Los alumnos siguen lo que mira el profesor
 
@@ -485,7 +523,7 @@ Estudio):
 
 ### El alumno elegido al azar para responder
 
-«🎲 Elegir a un alumno al azar», en la pestaña Alumnos: sale uno de los
+«🎲 Elegir a un alumno al azar», en «Alumnos conectados»: sale uno de los
 conectados y al elegido le sale en grande en su pantalla, «¡Te eligieron para
 responder!». El profe ve a quién eligió y ahí mismo le puede dar una insignia o
 trofeos (el mismo panel de Trofeos de su renglón), elegir a otro o marcar que ya
@@ -741,7 +779,7 @@ proponiéndolo aunque el tema haya quedado, salta.
 ### Notas rápidas desde donde se mira
 
 La bitácora en la clase ya existía (el 📝 del renglón de cada alumno), pero
-había que ir a la pestaña Alumnos, buscarlo y escribir todo. Ahora se anota
+había que ir a la lista de alumnos, buscarlo y escribir todo. Ahora se anota
 desde donde el profe está mirando, con lo que vio. Migración
 `notas_en_clase_y_clase_para_ausentes`, comprobada impersonando.
 
@@ -838,7 +876,7 @@ aprobado**, y con una clave que falta (`{"lineas": []}` sin `question_id`)
   `game_state.podio`). Los puntos salen de `resumen_de_la_clase` (lo contesta
   la base, con su RLS) con una regla que se lee escrita en la pantalla. No se
   guardan: se derivan de las filas de la clase. Se ven en «🏆 Puntos de esta
-  clase» (pestaña Alumnos), con de dónde sale cada uno, y en el cierre. Los
+  clase» (en «Alumnos conectados»), con de dónde sale cada uno, y en el cierre. Los
   empatados comparten puesto: nadie queda segundo por el orden alfabético.
   «Mostrar el podio a la clase» manda una foto a `game_state.podio`, **con o
   sin nombres**: sin nombres, cada alumno se reconoce por su id y ve igual
@@ -966,7 +1004,7 @@ se da desde la ventana de siempre.
 
 ### Los equipos
 
-«👥 Equipos» (pestaña Alumnos): el profe reparte a los conectados en dos a
+«👥 Equipos» (en «Alumnos conectados»): el profe reparte a los conectados en dos a
 cuatro equipos (`PuntosClase.repartir`: al azar y parejos, a lo sumo uno de
 diferencia) y puede cambiar a cualquiera de equipo con un selector. Quien se
 conecta después queda «sin equipo» hasta que el profe lo pone en uno.
@@ -1548,7 +1586,8 @@ modo claro y oscuro. Está probado que falla de verdad:
 ### La clase vista por invitados sin cuenta
 
 Para que alguien conozca la clase antes de tener usuario, el profe comparte un
-enlace desde «➕ Invitar» → «🔗 Que vean la clase sin cuenta»
+enlace desde «👥 Alumnos conectados» → «🔗 Que vean la clase sin cuenta» (un desplegable
+cerrado; antes vivía en la pestaña «➕ Invitar», que se quitó)
 (`js/clase-invitados.js`). Quien lo abre (`ver-clase.html#t=<token>`) escribe
 su nombre, acepta la privacidad y ve el tablero en pantalla completa,
 siguiendo lo que mira el profe, **sin poder tocar nada**. La idea es que quiera
@@ -1722,9 +1761,9 @@ primera clase se da con los alumnos mirando. El modo sencillo deja a la vista lo
 que hace falta para darla y guarda el resto a un clic.
 
 - **Qué se ve en modo sencillo**: el grupo «El tablero — lo ve toda la clase»
-  (Reiniciar, Flechas, Ocultar, Guardar PGN, Tiempo para pensar), el motor de análisis y las
-  pestañas «Mi plan», «Alumnos» e «Invitar». **Qué se guarda**: el grupo «Tu
-  material» (Curso, Archivos, PDF, Armar posición) y las pestañas Táctica,
+  (debajo del tablero), el motor de análisis, los alumnos conectados y la
+  pestaña «Mi plan». **Qué se guarda**: la tarjeta «Tu material» (Curso,
+  Archivos, PDF, Armar posición) y las pestañas Táctica, Habilidades,
   Preguntar y Practicar. Una nota encima lo dice con esas palabras, y el
   botón «🧰 Ver todas las herramientas» las devuelve.
 - **Arranca así solo quien lleva menos de tres clases**
@@ -1740,12 +1779,12 @@ que hace falta para darla y guarda el resto a un clic.
 - Si la pestaña abierta se esconde (se vuelve al modo sencillo con Táctica
   delante), se abre «Mi plan», que es la primera. Una pestaña escondida con su
   panel abierto sería un panel al que no se puede volver.
-- **El botón va FUERA de la barra de herramientas**, en su propia fila: dentro
-  de la barra solo viven sus dos grupos, y `verificar-sesion-orden.js` no deja
-  ni un botón suelto. En modo sencillo se quita la línea que separaba los dos
-  grupos, porque no separa nada.
+- **El botón va FUERA de los grupos**, en su propia fila: dentro de cada grupo
+  solo viven sus botones, y `verificar-sesion-orden.js` no deja ni uno suelto.
+  En modo sencillo se esconde la tarjeta entera de «Tu material» (es lo único
+  que lleva), no solo sus botones: una tarjeta vacía no dice nada.
 - Lo prueba `pruebaModoSencillo` en `verificar-sesion-orden.js`:
-  - con una clase arranca sencillo; con tres, completo;
+  - con una clase arranca sencillo (solo «Mi plan», y los alumnos a la vista); con tres, completo;
   - lo elegido en el aparato manda;
   - volver al sencillo con Táctica abierta abre «Mi plan»;
   - a la alumna no se le pinta nada.
@@ -1786,8 +1825,7 @@ grande; «✕ Volver al tablero» o Esc la cierran.
   hasta `<body>`, y solo lo que no estaba inerte ya) y al cerrar el foco
   vuelve al botón que la abrió.
 - **Lo que pasa fuera de la ventana la cierra**, para que se vea: un botón de
-  la barra («El tablero» cambia el tablero de la clase; «Tu material» abre su
-  panel al lado) y cualquier panel o diálogo que aparezca en la columna del
+  «Tu material» (abre su panel al lado del tablero) y cualquier panel o diálogo que aparezca en la columna del
   tablero mientras está abierta (el panel del curso, mirar la práctica de un
   alumno…). Si no, quedaría tapado por la ventana e inerte. Cambiar de pestaña
   adentro no la cierra.

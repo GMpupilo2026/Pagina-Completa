@@ -81,7 +81,7 @@ function pintarCallados(lista) {
         b.setAttribute("aria-label", "Darle el turno a " + x.nombre);
         b.addEventListener("click", async () => {
             if (!currentOpenSessionId) return;
-            activateTeacherTab("alumnos");
+            mostrarPanelAlumnos();
             if (await darTurno(x.id, "profe")) setStatus("🎯 Le toca responder a " + x.nombre + ": ya le salió el aviso en su pantalla.");
         });
         li.append(t, b);

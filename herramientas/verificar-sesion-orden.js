@@ -9,17 +9,22 @@
  * primera vez no sabe por dónde empezar ni cuál puede apretar con la clase
  * mirando.
  *
- * Cuatro cosas, y ninguna se puede comprobar leyendo el HTML:
+ * Cinco cosas, y ninguna se puede comprobar leyendo el HTML:
  *
  *   1. LOS BOTONES VAN EN SUS DOS GRUPOS, CON SU RÓTULO. El rótulo no dice qué
  *      hace la herramienta sino QUIÉN LA VE, que es la línea de toda la clase
- *      en vivo. Un botón suelto fuera de los dos grupos es el principio de la
- *      rejilla sin criterio de antes, así que acá se cuenta: ocho, cuatro y
- *      cuatro, cada uno bajo el suyo.
+ *      en vivo. «Tu material» va en la columna de herramientas; «El tablero»
+ *      (Reiniciar, Borrar flechas, Ocultar, Guardar PGN, Tiempo para pensar)
+ *      DEBAJO del tablero que tocan. Un botón suelto fuera de los grupos es el
+ *      principio de la rejilla sin criterio de antes, así que acá se cuentan.
  *
  *   2. LAS PESTAÑAS VAN EN EL ORDEN DE LA CLASE, y sobre todo: la que se abre
  *      sola la primera vez es «Mi plan». Es la única pestaña que contesta "¿qué
- *      voy a dar?", y estaba quinta.
+ *      voy a dar?", y estaba quinta. «Invitar» ya no está: invitar no se hace
+ *      dando clase (se hace en Formularios).
+ *
+ *   2b. EL MOTOR Y LOS ALUMNOS CONECTADOS SE VEN SIEMPRE, sin abrir nada y con
+ *      cualquier pestaña delante, arriba de la columna: se miran toda la clase.
  *
  *   3. ABRIR UNA HERRAMIENTA PROPIA NO TOCA EL TABLERO DE LA CLASE. Es lo que
  *      promete el rótulo «solo lo ves tú». Si alguna abriera escribiendo en
@@ -39,21 +44,21 @@ const { clienteFalso, abrir, igual, CHROME } = require("./verificar-clase-regist
 const CLASE_ABIERTA = { id: "s-1", title: null, created_by: "u-profe",
                         ended_at: null, started_at: "2026-09-20T15:00:00Z", notes: null };
 
-/* Los dos grupos, con el orden en que tienen que salir. El orden no es estético:
-   dentro de "tu material" van primero los que traen algo ya preparado (un curso,
-   un archivo, un PDF) y de último el de armar una posición a mano, que es el
-   trabajo. */
+/* Los dos grupos, con el orden en que tienen que salir y DÓNDE. El orden no es
+   estético: dentro de "tu material" van primero los que traen algo ya preparado
+   (un curso, un archivo, un PDF) y de último el de armar una posición a mano,
+   que es el trabajo. */
 const GRUPOS = [
-  { rotulo: "Tu material — solo lo ves tú",
+  { donde: "teacher-toolbar", rotulo: "Tu material — solo lo ves tú",
     botones: ["toggle-lesson-btn", "toggle-archivos-btn", "toggle-pdf-btn", "toggle-free-mode-btn"] },
-  { rotulo: "El tablero — lo ve toda la clase",
+  { donde: "toolbar-tablero", rotulo: "El tablero — lo ve toda la clase",
     // El tiempo para pensar va al final: no toca el tablero, pero lo ve toda la clase.
     botones: ["reset-board-btn", "clear-marks-btn", "toggle-hide-btn", "save-game-btn", "pensar-btn"] },
 ];
 
-// El orden de la clase: qué voy a dar, qué le pongo delante, qué le pido, a
-// quién se lo doy, y al final lo que no se hace dando clase.
-const PESTANAS = ["plan", "tactica", "tipos", "preguntar", "practicar", "alumnos", "controles"];
+// El orden de la clase: qué voy a dar, qué le pongo delante, qué le pido.
+// «Alumnos» no es pestaña (se ve siempre) e «Invitar» se quitó de la clase.
+const PESTANAS = ["plan", "tactica", "tipos", "preguntar", "practicar"];
 
 async function pruebaProfesor(browser) {
   console.log("\n=== La pantalla del profesor se puede recorrer ===");
@@ -61,24 +66,60 @@ async function pruebaProfesor(browser) {
   await page.waitForSelector("#teacher-toolbar:not(.hidden)", { timeout: 10000 });
 
   console.log("-- Los botones, en sus dos grupos");
-  /* Se leen del DOM ya renderizado: cada grupo es el bloque que cuelga del
-     rótulo. Un botón suelto, fuera de los dos, no aparecería en ninguno — que
-     es exactamente lo que hay que impedir. */
-  const grupos = await page.evaluate(() =>
-    [...document.querySelectorAll("#teacher-toolbar > div")].map((bloque) => ({
-      rotulo: (bloque.querySelector("p") || {}).textContent || "(sin rótulo)",
-      botones: [...bloque.querySelectorAll("button")].map((b) => b.id),
-    })));
+  /* Se leen del DOM ya renderizado: cada grupo es su tarjeta, con el rótulo
+     arriba. Un botón suelto no aparecería en ninguno — que es exactamente lo
+     que hay que impedir. Los colores de las flechas (#marks-color-picker) no
+     cuentan: no son una herramienta, son el color con que se dibuja. */
+  for (const esperado of GRUPOS) {
+    const g = await page.evaluate((id) => {
+      const bloque = document.getElementById(id);
+      if (!bloque) return null;
+      return {
+        rotulo: (bloque.querySelector("p") || {}).textContent || "(sin rótulo)",
+        botones: [...bloque.querySelectorAll("button")].filter((b) => !b.closest("#marks-color-picker")).map((b) => b.id),
+        seVe: bloque.checkVisibility(),
+      };
+    }, esperado.donde);
+    igual(esperado.donde + ": su rótulo dice quién lo ve", (g || {}).rotulo, esperado.rotulo);
+    igual(esperado.donde + ": sus botones, en su orden y ninguno de más",
+      ((g || {}).botones || []).join(", "), esperado.botones.join(", "));
+    igual(esperado.donde + ": se ve", (g || {}).seVe, true);
+  }
+  igual("«Borrar flechas» dice lo que borra", (await page.textContent("#clear-marks-btn")).trim(), "🧹 Borrar flechas");
 
-  igual("hay dos grupos y no una rejilla suelta", grupos.length, 2);
-  GRUPOS.forEach((esperado, i) => {
-    igual("grupo " + (i + 1) + ": su rótulo dice quién lo ve",
-      (grupos[i] || {}).rotulo, esperado.rotulo);
-    igual("grupo " + (i + 1) + ": sus botones y en su orden",
-      ((grupos[i] || {}).botones || []).join(", "), esperado.botones.join(", "));
-  });
-  igual("y no quedó ningún botón fuera de los dos grupos",
-    await page.evaluate(() => document.querySelectorAll("#teacher-toolbar button").length), 9);
+  console.log("-- Lo que toca el tablero va DEBAJO del tablero");
+  igual("«El tablero» está en la columna del tablero, no en la de herramientas", await page.evaluate(() =>
+    !!document.getElementById("toolbar-tablero").closest(".proyector-columna")
+    && !document.getElementById("toolbar-tablero").closest("aside")), true);
+  /* Justo debajo: entre el tablero y sus botones solo va la barra de girar y
+     recorrer la partida, y quedan centrados con él. */
+  igual("y justo debajo de él, centrado", await page.evaluate(() => {
+    let e = document.getElementById("toolbar-tablero").previousElementSibling;
+    while (e && !e.checkVisibility()) e = e.previousElementSibling;
+    if (!e || !e.contains(document.getElementById("flip-board-btn"))) return "antes va " + (e ? e.id || e.className : "nada");
+    // Con sus coordenadas de afuera: el tablero con sus letras y números es lo que se ve.
+    const tablero = document.getElementById("chessboard");
+    const t = (tablero.closest(".board-coords-outer") || tablero).getBoundingClientRect();
+    const b = document.getElementById("toolbar-tablero").getBoundingClientRect();
+    const centrado = Math.abs((t.left + t.right) / 2 - (b.left + b.right) / 2) < 4;
+    return b.top >= t.bottom && centrado ? "sí" : JSON.stringify([t, b].map((r) => [r.left, r.top, r.right, r.bottom].map(Math.round)));
+  }), "sí");
+
+  console.log("-- El motor y los alumnos se ven siempre");
+  for (const tab of PESTANAS) {
+    await page.click("#teacher-tab-" + tab);
+    igual("con «" + tab + "» abierta se ven el motor y los alumnos conectados", await page.evaluate(() =>
+      ["engine-panel", "students-panel", "students-list"].map((i) => document.getElementById(i).checkVisibility())), [true, true, true]);
+  }
+  await page.click("#teacher-tab-plan");
+  igual("arriba de la columna: el motor, luego los alumnos, luego lo demás", await page.evaluate(() => {
+    const y = (i) => document.getElementById(i).getBoundingClientRect().top;
+    return y("engine-panel") < y("students-panel") && y("students-panel") < y("teacher-toolbar") && y("teacher-toolbar") < y("teacher-tabs-wrap");
+  }), true);
+
+  console.log("-- Invitar ya no está en la clase");
+  igual("ni la pestaña ni el formulario", await page.evaluate(() =>
+    [!!document.getElementById("teacher-tab-controles"), !!document.getElementById("create-student-form")]), [false, false]);
 
   console.log("-- Las pestañas, en el orden de la clase");
   igual("el orden es el de la clase", await page.evaluate(() =>
@@ -134,6 +175,8 @@ async function pruebaAlumna(browser) {
   }, id);
 
   igual("ni la barra de herramientas", await oculto("teacher-toolbar"), "oculto");
+  igual("ni los botones de debajo del tablero", await oculto("toolbar-tablero"), "oculto");
+  igual("ni la lista de alumnos conectados", await oculto("students-panel"), "oculto");
   igual("ni las pestañas", await oculto("teacher-tabs-wrap"), "oculto");
   igual("ni el motor de análisis", await oculto("engine-panel"), "oculto");
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
@@ -141,7 +184,7 @@ async function pruebaAlumna(browser) {
 }
 
 /* El modo sencillo: quien lleva menos de tres clases arranca viendo lo básico
-   (el tablero, su plan, sus alumnos e invitar), y lo demás queda a un clic.
+   (el tablero, el motor, sus alumnos y su plan), y lo demás queda a un clic.
    Se mide con checkVisibility(), no con el atributo. */
 async function pruebaModoSencillo(browser) {
   console.log("\n=== El modo sencillo de la clase en vivo ===");
@@ -154,20 +197,21 @@ async function pruebaModoSencillo(browser) {
 
   // 1. Una profesora con su primera clase: no hay preferencia guardada, decide la cuenta.
   let r = await abrir(browser, "u-profe", CLASE_ABIERTA, null, { modoSencillo: null });
-  await r.page.waitForSelector("#teacher-toolbar:not(.hidden)", { timeout: 10000 });
+  await r.page.waitForSelector("#teacher-tabs-wrap:not(.hidden)", { timeout: 10000 });
   await r.page.waitForFunction(() => document.getElementById("modo-sencillo-btn").textContent !== "");
-  igual("con una sola clase, arranca en modo sencillo: solo Mi plan, Alumnos e Invitar",
-    (await pestanas(r.page)).join(","), "plan,alumnos,controles");
-  igual("«Tu material» queda guardado", await seVe(r.page, "#toolbar-material"), false);
+  igual("con una sola clase, arranca en modo sencillo: solo Mi plan",
+    (await pestanas(r.page)).join(","), "plan");
+  igual("«Tu material» queda guardado, con su tarjeta", [await seVe(r.page, "#toolbar-material"), await seVe(r.page, "#teacher-toolbar")], [false, false]);
+  igual("los alumnos conectados siguen a la vista", await seVe(r.page, "#students-panel"), true);
   igual("pero el tablero de la clase sigue a mano", await seVe(r.page, "#reset-board-btn"), true);
   igual("y el motor también", await seVe(r.page, "#engine-panel"), true);
   igual("se dice qué está guardado y dónde", /Táctica, Entrenamientos, Preguntar, Practicar y tu material/.test(await r.page.textContent("#modo-sencillo-nota")), true);
   igual("y el botón dice lo que hace", await r.page.textContent("#modo-sencillo-btn"), "🧰 Ver todas las herramientas");
 
   await r.page.click("#modo-sencillo-btn");
-  igual("«Ver todas las herramientas» devuelve las siete pestañas",
-    (await pestanas(r.page)).join(","), "plan,tactica,tipos,preguntar,practicar,alumnos,controles");
-  igual("y «Tu material»", await seVe(r.page, "#toolbar-material"), true);
+  igual("«Ver todas las herramientas» devuelve las cinco pestañas",
+    (await pestanas(r.page)).join(","), PESTANAS.join(","));
+  igual("y «Tu material»", [await seVe(r.page, "#toolbar-material"), await seVe(r.page, "#teacher-toolbar")], [true, true]);
   igual("la nota se va", await r.page.textContent("#modo-sencillo-nota"), "");
   igual("y queda anotado en el aparato", await r.page.evaluate(() => localStorage.getItem("sesion_modo_sencillo_v1")), "0");
 
@@ -184,17 +228,17 @@ async function pruebaModoSencillo(browser) {
   const VIEJA = (n) => ({ id: "s-v" + n, title: null, created_by: "u-profe", ended_at: "2026-09-1" + n + "T16:00:00Z",
                           started_at: "2026-09-1" + n + "T15:00:00Z", notes: null });
   r = await abrir(browser, "u-profe", CLASE_ABIERTA, { class_sessions: [CLASE_ABIERTA, VIEJA(1), VIEJA(2)] }, { modoSencillo: null });
-  await r.page.waitForSelector("#teacher-toolbar:not(.hidden)", { timeout: 10000 });
+  await r.page.waitForSelector("#teacher-tabs-wrap:not(.hidden)", { timeout: 10000 });
   await r.page.waitForFunction(() => document.getElementById("modo-sencillo-btn").textContent !== "");
-  igual("con tres clases dadas, todas las herramientas", (await pestanas(r.page)).length, 7);
+  igual("con tres clases dadas, todas las herramientas", (await pestanas(r.page)).length, PESTANAS.length);
   igual("y el botón ofrece el modo sencillo", await r.page.textContent("#modo-sencillo-btn"), "🪶 Volver al modo sencillo");
   await r.ctx.close();
 
   // 3. Lo que eligió en este aparato manda sobre la cuenta.
   r = await abrir(browser, "u-profe", CLASE_ABIERTA, { class_sessions: [CLASE_ABIERTA, VIEJA(1), VIEJA(2)] }, { modoSencillo: "1" });
-  await r.page.waitForSelector("#teacher-toolbar:not(.hidden)", { timeout: 10000 });
+  await r.page.waitForSelector("#teacher-tabs-wrap:not(.hidden)", { timeout: 10000 });
   await r.page.waitForFunction(() => document.getElementById("modo-sencillo-btn").textContent !== "");
-  igual("si eligió el modo sencillo, se queda aunque ya dé clases", (await pestanas(r.page)).join(","), "plan,alumnos,controles");
+  igual("si eligió el modo sencillo, se queda aunque ya dé clases", (await pestanas(r.page)).join(","), "plan");
   await r.ctx.close();
 
   // 4. A la alumna, nada de esto.
