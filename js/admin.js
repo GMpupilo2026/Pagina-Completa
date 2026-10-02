@@ -225,6 +225,8 @@
                   titulo: (n) => pl(n, "profesor que nadie supervisa ni coordina", "profesores que nadie supervisa ni coordina"),
                   porque: "Nadie revisa sus clases ni sus informes.",
                   accion: "Ver quiénes son", ir: "profesores", alDia: "Todos los profesores están a cargo de alguien" },
+                // Urgente: va con los urgentes, antes de lo que es para vigilar.
+                deLaBase("recibosSinEntregar"),
                 { clave: "sup-vacios", nivel: "vigilar", emoji: "🧭", n: supVacios,
                   titulo: (n) => pl(n, "supervisor sin nadie a cargo", "supervisores sin nadie a cargo"),
                   porque: "Tienen la marca pero ninguna cuenta asignada: su panel sale vacío.",
@@ -233,7 +235,6 @@
                   titulo: (n) => pl(n, "coordinador sin profesores asignados", "coordinadores sin profesores asignados"),
                   porque: "Solo ven a sus propios alumnos, y no tienen forma de saber por qué.",
                   accion: "Asignarles profesores", ir: "profesores", alDia: "Cada coordinador tiene profesores" },
-                deLaBase("recibosSinEntregar"),
                 deLaBase("seVan"),
                 deLaBase("morosos"),
                 deLaBase("inactivos"),

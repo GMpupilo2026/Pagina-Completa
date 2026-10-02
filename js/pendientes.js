@@ -35,9 +35,12 @@
     return { fecha: anio + "-" + String(mes).padStart(2, "0") + "-01", nombre: nombre };
   }
 
-  async function contar(promesa) {
+  /* Recibe la FUNCIÓN que arma la consulta, no la consulta ya armada: si armarla
+     lanza (un cliente sin .is(), un nombre mal escrito), eso también vale null
+     para ESE conteo, y no se lleva a los demás con él. */
+  async function contar(armar) {
     try {
-      const r = await promesa;
+      const r = await armar();
       if (r.error) return null;
       if (typeof r.count === "number") return r.count;
       return typeof r.data === "number" ? r.data : null;
@@ -79,7 +82,7 @@
 
   async function contarEnLaBase(sb, claves, opciones) {
     const op = opciones || {};
-    const valores = await Promise.all(claves.map((c) => contar(CONTEOS[c](sb, op))));
+    const valores = await Promise.all(claves.map((c) => contar(() => CONTEOS[c](sb, op))));
     const r = {};
     claves.forEach((c, i) => { r[c] = valores[i]; });
     return r;
