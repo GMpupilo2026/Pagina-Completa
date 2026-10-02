@@ -608,6 +608,7 @@ window.PracticeEngine = {
   LEVELS: { max: {} }, preload() {}, jugadaDeRespaldo() { return null; },
   async getMove(fen) { const m = new Chess(fen).moves({ verbose: true })[0]; return m ? m.from + m.to + (m.promotion || "") : null; },
   async evaluate() { if (window.__evals && window.__evals.length) return window.__evals.shift(); return window.__eval === undefined ? { type: "cp", value: -400 } : window.__eval; },
+  async responder(fen, nivel) { return { uci: await this.getMove(fen, nivel), respaldo: false }; },
 };`;
     const conMotor = (evals, eval1) => async (ctx) => {
       await ctx.route("**/js/shared-engine.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));

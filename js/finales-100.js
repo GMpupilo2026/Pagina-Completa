@@ -709,7 +709,8 @@
       if (checkEnd()) return;
       thinking = true; pst.textContent = "El motor piensa…";
       let uci = null;
-      try { uci = await PracticeEngine.getMove(game.fen(), levelKey()); } catch (e) { uci = null; }
+      // Con plazo y con respaldo: el motor siempre contesta (PracticeEngine.responder).
+      try { uci = (await PracticeEngine.responder(game.fen(), levelKey())).uci; } catch (e) { uci = null; }
       if (!uci) uci = PracticeEngine.jugadaDeRespaldo(game.fen());
       thinking = false;
       if (state.mode !== "practicar") return;

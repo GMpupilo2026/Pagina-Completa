@@ -673,7 +673,8 @@
       }
       estado("La máquina piensa…");
       let uci = null;
-      try { uci = window.PracticeEngine ? await PracticeEngine.getMove(juego.fen(), "max") : null; } catch (e) { uci = null; }
+      // Con plazo y con respaldo: la máquina siempre contesta (PracticeEngine.responder).
+      try { uci = window.PracticeEngine ? (await PracticeEngine.responder(juego.fen(), "max")).uci : null; } catch (e) { uci = null; }
       if (!vivo) return;
       const r = uci ? juego.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci[4] || undefined }) : null;
       ocupado = false;

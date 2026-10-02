@@ -147,6 +147,50 @@ que el motor no respondía.
   los tres niveles de práctica y las tres dificultades del bot de Oscar. Sin el
   tope de profundidad saltan cuatro comprobaciones.
 
+## El bot siempre contesta, y su tiempo no se le cobra al alumno
+
+Contra el bot, el reloj del alumno baja **solo mientras le toca pensar a él**,
+y el bot **siempre** contesta: un tablero «pensando» para siempre era lo peor
+que podía pasar, y no daba ningún error.
+
+- **`PracticeEngine.responder(fen, nivel)`** es lo que usa todo el que JUEGA
+  contra el motor (la práctica y «la clase juega» de `sesion.html`, los cursos,
+  Los 100 finales, Finales contra la máquina, Remata la ventaja y Salva las
+  tablas). Resuelve a `{ uci, respaldo }` y siempre trae una jugada legal (solo
+  `null` si ya no hay jugadas). `getMove()` sola podía devolver null, una
+  jugada que ya no era legal (el tablero había cambiado: en `sesion.js` eso
+  dejaba «Esperando la jugada del motor…» sin el botón de reintentar), o
+  **tardar sin fin** si la cola del motor se trababa (otra búsqueda colgada,
+  el WASM que no termina de cargar): el timeout de cada búsqueda empieza a
+  contar cuando le toca, no cuando se pide.
+- **El plazo**: el tiempo del nivel más 3,5 s con el motor ya cargado
+  (`SharedEngine.listo()`), o más 15 s la primera vez. Si vuelve vacía o
+  ilegal se pide una vez más; si se pasó del plazo, no (el motor está trabado
+  y esperar otro tanto no sirve): juega `jugadaDeRespaldo`.
+- **«stop» a los 800 ms de pasado su tiempo**: Stockfish contesta ya con la
+  mejor que tenga. A los 4 s, el Worker se tira y la próxima levanta otro
+  (también en `js/chess-bot.js`, que antes lo dejaba vivo y cada jugada volvía
+  a esperar 4 s a un Worker muerto). El bot de Oscar tiene además su plazo al
+  bajar el libro (8 s) y al motor; vencido, juega su heurístico.
+- **El reloj de la práctica de la clase** (`tickRelojPractica`) corre solo con
+  `miTurno`: le toca al alumno y el motor no está ocupado. `practiceEngineBusy`
+  sigue en true hasta que la jugada del bot **quedó guardada**: antes se
+  soltaba al recibirla, y el reloj corría durante el guardado con el tablero
+  todavía sin dejarle mover. Y la jugada del bot se pide ANTES que la
+  evaluación para el profe: el motor atiende de a una y la respuesta no
+  espera detrás.
+- Los dobles de los verificadores que reemplazan `PracticeEngine` entero
+  llevan su `responder`; `responder` llama a `getMove` por
+  `window.PracticeEngine`, así los que cambian solo `getMove` siguen sirviendo.
+- `verificar-bot-siempre-contesta.js`: con `getMove` que no contesta nunca, o
+  que contesta una ilegal, `responder` juega la de respaldo dentro del plazo;
+  en la práctica con reloj, 3 s del motor no se le descuentan al alumno, y con
+  el motor colgado el bot juega igual y le vuelve a tocar. Sin el arreglo de
+  `sesion.js` saltan cuatro comprobaciones.
+- El calentamiento de 20 ejercicios (`js/clase-tanda.js`) no es contra el bot:
+  el rival contesta solo con la jugada de la solución, en medio segundo, y el
+  tiempo es uno para toda la clase, contado con la hora de la base.
+
 ## Las partidas de un torneo se pueden VER, y el candado lo pone la base
 
 Durante una ronda, las partidas eran invisibles. El único acceso a un cruce en

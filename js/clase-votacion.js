@@ -205,7 +205,8 @@ async function jugarMotorEnLaPartida() {
     pintarPartidaClase("🤖 El motor está pensando…");
     const fen = board.fen();
     let uci = null;
-    try { uci = typeof PracticeEngine !== "undefined" ? await PracticeEngine.getMove(fen, partidaClase ? partidaClase.nivel : "1500") : null; } catch (e) { uci = null; }
+    // Con plazo y con respaldo: el motor siempre contesta (PracticeEngine.responder).
+    try { uci = typeof PracticeEngine !== "undefined" ? (await PracticeEngine.responder(fen, partidaClase ? partidaClase.nivel : "1500")).uci : null; } catch (e) { uci = null; }
     if (!uci && typeof PracticeEngine !== "undefined") uci = PracticeEngine.jugadaDeRespaldo(fen);
     motorPensandoPartida = false;
     if (!partidaClase) return;
