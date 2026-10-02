@@ -41,6 +41,7 @@ window.PracticeEngine = {
     return m ? m.from + m.to + (m.promotion || "") : null;
   },
   async evaluate() { return window.__eval === undefined ? { type: "cp", value: 0 } : window.__eval; },
+  async responder(fen, nivel) { return { uci: await this.getMove(fen, nivel), respaldo: false }; },
 };`;
 
 /* Un banco chico para las pruebas, con posiciones que se resuelven en una o

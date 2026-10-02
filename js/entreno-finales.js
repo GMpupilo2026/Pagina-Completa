@@ -355,11 +355,14 @@ async function maquinaJuega(){
   locked = true;
   setStatus('La máquina piensa…');
   let uci = null;
-  try { uci = window.PracticeEngine ? await PracticeEngine.getMove(game.fen(), 'max') : null; } catch (e) { uci = null; }
-  if(miTurno !== turno) return;   // mientras pensaba se cambió de final
-  // Si el motor no contesta, la partida no se queda colgada (ver
-  // js/practice-engine.js): una jugada legal cualquiera, y se dice.
+  // Si el motor no contesta a tiempo, la partida no se queda colgada (ver
+  // PracticeEngine.responder): una jugada legal cualquiera, y se dice.
   let deRespaldo = false;
+  try {
+    const r = window.PracticeEngine ? await PracticeEngine.responder(game.fen(), 'max') : null;
+    if (r) { uci = r.uci; deRespaldo = r.respaldo; }
+  } catch (e) { uci = null; }
+  if(miTurno !== turno) return;   // mientras pensaba se cambió de final
   if(!uci && window.PracticeEngine){ uci = PracticeEngine.jugadaDeRespaldo(game.fen()); deRespaldo = true; }
   const mv = uci ? game.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci[4] || undefined }) : null;
   locked = false;

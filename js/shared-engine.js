@@ -20,6 +20,7 @@
  *   SharedEngine.setMessageHandler(fn)       (quien tenga la tarea en curso decide
  *                                             quién procesa los mensajes del Worker)
  *   SharedEngine.discardEngine()             (ver nota "Motor que se cae" abajo)
+ *   SharedEngine.listo() -> boolean          (el Worker ya está cargado)
  *
  * ---- Motor que se cae con una posición imposible ----
  * Una posición armada a mano en el editor de Clases (piezas sueltas, sin las
@@ -158,5 +159,9 @@
   // Misma cifra en js/chess-bot.js, que no usa este archivo.
   const PROFUNDIDAD_MAXIMA = 40;
 
-  window.SharedEngine = { ensureEngine, runTask, setMessageHandler, discardEngine, PROFUNDIDAD_MAXIMA, URL: STOCKFISH_URL };
+  // true si el Worker ya cargó y contestó «uciok» (la próxima búsqueda no
+  // tiene que esperar el WASM).
+  function listo() { return !!engine; }
+
+  window.SharedEngine = { ensureEngine, runTask, listo, setMessageHandler, discardEngine, PROFUNDIDAD_MAXIMA, URL: STOCKFISH_URL };
 })();

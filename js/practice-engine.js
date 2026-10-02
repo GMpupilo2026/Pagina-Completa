@@ -23,6 +23,8 @@
  * API:
  *   PracticeEngine.LEVELS -> { "1500": {label, elo}, "1800": {...}, "max": {...} }
  *   PracticeEngine.getMove(fen, levelKey) -> Promise<string|null>  (jugada UCI, ej. "e2e4")
+ *   PracticeEngine.responder(fen, levelKey) -> Promise<{uci, respaldo}>  la que usa quien
+ *     JUEGA contra el bot: siempre una jugada legal y con plazo (ver abajo).
  *   PracticeEngine.evaluate(fen) -> Promise<{type:"cp"|"mate", value:number}|null>
  *     Evaluación siempre a máxima fuerza (independiente del nivel elegido), desde el
  *     punto de vista de quien tiene el turno en ese FEN — igual que evaluatePosition()
@@ -81,6 +83,11 @@
         }
         engine.postMessage("position fen " + fen);
         engine.postMessage("go movetime " + movetimeMs + " depth " + SharedEngine.PROFUNDIDAD_MAXIMA);
+        // Pasado su tiempo, se le exige la jugada: «stop» hace que Stockfish
+        // conteste ya con la mejor que tenga, en vez de seguir profundizando.
+        setTimeout(() => {
+          if (pendingResolve === resolve) { try { engine.postMessage("stop"); } catch (e) {} }
+        }, movetimeMs + 800);
         setTimeout(() => {
           if (pendingResolve === resolve) {
             pendingResolve = null;
@@ -136,5 +143,49 @@
     return mejor.from + mejor.to + (mejor.promotion || "");
   }
 
-  window.PracticeEngine = { LEVELS, getMove, evaluate, preload, jugadaDeRespaldo };
+  /* La jugada del bot cuando alguien juega contra él: SIEMPRE trae una jugada
+     legal (salvo que la partida ya haya terminado), y en un tiempo acotado.
+     getMove() solo puede devolver null, una jugada que ya no es legal o, con
+     la cola del motor trabada (otra búsqueda colgada, el WASM que no termina
+     de cargar), tardar sin fin: el tablero se quedaba «pensando» y el alumno
+     sin poder seguir. Aquí la consulta tiene plazo; si vuelve vacía se
+     intenta una vez más, y si tampoco, o si se pasó del plazo, juega la de
+     respaldo. Resuelve a { uci, respaldo } (respaldo: true si no fue del
+     motor), o { uci: null } si no hay jugadas legales. */
+  const ESPERA_EXTRA_MS = 3500;     // motor ya cargado: su tiempo y este margen
+  const ESPERA_ARRANQUE_MS = 15000; // la primera vez, cargar el WASM tarda más
+  function conPlazo(promesa, ms) {
+    let t = null;
+    const vencido = {};
+    return Promise.race([
+      Promise.resolve(promesa).catch(() => null),
+      new Promise((r) => { t = setTimeout(() => r(vencido), ms); }),
+    ]).then((v) => { clearTimeout(t); return v === vencido ? { vencido: true } : { valor: v }; });
+  }
+  function esLegal(fen, uci) {
+    if (!uci || !/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(uci)) return false;
+    if (typeof Chess === "undefined") return true;
+    try {
+      return !!new Chess(fen).move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci[4] || "q" });
+    } catch (e) { return false; }
+  }
+  async function responder(fen, levelKey) {
+    const api = window.PracticeEngine || publico;
+    const level = LEVELS[levelKey] || LEVELS["1500"];
+    for (let intento = 0; intento < 2; intento++) {
+      const listo = window.SharedEngine && SharedEngine.listo && SharedEngine.listo();
+      const r = await conPlazo(api.getMove(fen, levelKey), level.movetime + (listo ? ESPERA_EXTRA_MS : ESPERA_ARRANQUE_MS));
+      if (!r.vencido && esLegal(fen, r.valor)) return { uci: r.valor, respaldo: false };
+      // Se pasó del plazo: el motor está trabado y otro intento haría esperar
+      // otro tanto. Vacía o ilegal: un tropiezo, vale la pena una vez más.
+      if (r.vencido) break;
+    }
+    const uci = api.jugadaDeRespaldo(fen);
+    return { uci, respaldo: !!uci };
+  }
+
+  // responder() llama a getMove y al respaldo a través de window.PracticeEngine:
+  // un verificador que cambia solo PracticeEngine.getMove también cambia esto.
+  const publico = { LEVELS, getMove, evaluate, preload, jugadaDeRespaldo, responder };
+  window.PracticeEngine = publico;
 })();

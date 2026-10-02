@@ -6659,11 +6659,11 @@
         // rendirse o reiniciar toda la partida.
         let practiceEngineLastFailed = false;
 
-        // Le pide al motor la respuesta a la posición actual y la aplica. Reintenta un par
-        // de veces antes de rendirse (el motor corre en un Worker de este mismo navegador:
-        // un solo hiccup transitorio no debería dejar al alumno esperando para siempre) y,
-        // si de plano no contesta, lo deja en claro en pantalla con un botón para reintentar
-        // (ver updatePracticeCardInteractivity). Se llama tanto justo después de la jugada
+        // Le pide al motor la respuesta a la posición actual y la aplica. Con plazo y con
+        // jugada de respaldo (PracticeEngine.responder): el motor corre en un Worker de
+        // este mismo navegador y un tropiezo no puede dejar al alumno esperando para
+        // siempre. El botón para reintentar (ver updatePracticeCardInteractivity) queda
+        // solo para lo que ni el respaldo arregla. Se llama tanto justo después de la jugada
         // del alumno como al recargar la página a mitad de una espera (ver
         // renderStudentPracticeCardNow) — por eso vuelve a leer el turno actual en vez de
         // asumir que ya le toca al motor.
@@ -6676,53 +6676,65 @@
             practiceEngineLastFailed = false;
             updatePracticeCardInteractivity();
             const levelAtRequest = latestPracticeSession ? latestPracticeSession.level : "1500";
+            const sigueSiendoLaMisma = () => myPracticeGame && myPracticeGame.id === gameIdAtMove
+                && myPracticeGame.attempts === attemptsAtMove && myPracticeGame.status === "playing";
+            // Siempre trae una jugada legal y con plazo: si el motor no contesta a
+            // tiempo, juega la de respaldo (ver PracticeEngine.responder). El bot
+            // nunca se queda pegado.
             let uci = null;
-            for (let attempt = 0; attempt < 3 && !uci; attempt++) {
-                const fen = practiceBoard.game.fen();
-                uci = typeof PracticeEngine !== "undefined" ? await PracticeEngine.getMove(fen, levelAtRequest) : null;
-                // Mientras el motor pensaba pudo cerrarse esta ronda, el profesor pudo lanzar
-                // una nueva, o el propio alumno pudo rendirse o reintentar esta misma partida:
-                // en cualquiera de esos casos, no seguir insistiendo con datos ya viejos.
-                if (!myPracticeGame || myPracticeGame.id !== gameIdAtMove || myPracticeGame.attempts !== attemptsAtMove || myPracticeGame.status !== "playing") {
-                    /* La ronda nueva se pintó con el motor ocupado —el tablero
-                       quieto y «el motor está pensando»— y su propio pedido
-                       salió de inmediato por ese mismo `busy`. Sin repintar y
-                       sin volver a pedir, al alumno le tocaría mover en un
-                       tablero que no responde nunca. */
-                    practiceEngineBusy = false;
-                    updatePracticeCardInteractivity();
-                    if (myPracticeGame && myPracticeGame.status === "playing") {
-                        requestEngineReply(myPracticeGame.id, myPracticeGame.attempts);
-                    }
-                    return;
+            const fen = practiceBoard.game.fen();
+            try {
+                uci = typeof PracticeEngine !== "undefined" ? (await PracticeEngine.responder(fen, levelAtRequest)).uci : null;
+            } catch (e) { uci = null; }
+            // Mientras el motor pensaba pudo cerrarse esta ronda, el profesor pudo lanzar
+            // una nueva, o el propio alumno pudo rendirse o reintentar esta misma partida:
+            // en cualquiera de esos casos, no seguir con datos ya viejos.
+            if (!sigueSiendoLaMisma()) {
+                /* La ronda nueva se pintó con el motor ocupado —el tablero
+                   quieto y «el motor está pensando»— y su propio pedido
+                   salió de inmediato por ese mismo `busy`. Sin repintar y
+                   sin volver a pedir, al alumno le tocaría mover en un
+                   tablero que no responde nunca. */
+                practiceEngineBusy = false;
+                updatePracticeCardInteractivity();
+                if (myPracticeGame && myPracticeGame.status === "playing") {
+                    requestEngineReply(myPracticeGame.id, myPracticeGame.attempts);
                 }
+                return;
             }
-            practiceEngineBusy = false;
-            // Tres intentos sin respuesta: el bot mueve igual (ver jugadaDeRespaldo).
-            if (!uci && typeof PracticeEngine !== "undefined") uci = PracticeEngine.jugadaDeRespaldo(practiceBoard.game.fen());
+            const aplicar = (u) => (u ? practiceBoard.game.move({
+                from: u.slice(0, 2), to: u.slice(2, 4),
+                promotion: u.length > 4 ? u.slice(4, 5) : "q",
+            }) : null);
+            let move = aplicar(uci);
+            // El tablero pudo cambiar mientras pensaba (un eco de Realtime que lo
+            // volvió a cargar): una jugada que ya no es legal tampoco deja pegado
+            // al bot, juega la de respaldo de la posición que hay.
+            if (!move && practiceBoard.game.turn() !== myPracticeGame.student_color && typeof PracticeEngine !== "undefined") {
+                move = aplicar(PracticeEngine.jugadaDeRespaldo(practiceBoard.game.fen()));
+            }
 
-            if (uci) {
-                const move = practiceBoard.game.move({
-                    from: uci.slice(0, 2), to: uci.slice(2, 4),
-                    promotion: uci.length > 4 ? uci.slice(4, 5) : "q",
-                });
-                if (move) {
-                    practiceBoard.render();
-                    pintarAyudaAlumno();
-                    if (practicaAcc) {
-                        practicaAcc.actualizar();
-                        practicaAcc.decir("El motor jugó " + ClaseAdaptada.hablarJugada(move.san) + ". "
-                            + (practiceBoard.game.game_over() ? "" : "Te toca."));
-                    }
-                    const newFen = practiceBoard.game.fen();
-                    const newMoves = practiceBoard.game.history();
-                    const newStatus = practiceResultForStudent(practiceBoard.game, myPracticeGame.student_color);
-                    await savePracticeGameRow({ fen: newFen, moves: newMoves, status: newStatus });
-                    updatePracticeGameEval(newFen, gameIdAtMove, attemptsAtMove);
+            if (move) {
+                practiceBoard.render();
+                pintarAyudaAlumno();
+                if (practicaAcc) {
+                    practicaAcc.actualizar();
+                    practicaAcc.decir("El motor jugó " + ClaseAdaptada.hablarJugada(move.san) + ". "
+                        + (practiceBoard.game.game_over() ? "" : "Te toca."));
                 }
+                const newFen = practiceBoard.game.fen();
+                const newMoves = practiceBoard.game.history();
+                const newStatus = practiceResultForStudent(practiceBoard.game, myPracticeGame.student_color);
+                /* `busy` sigue en true hasta que la jugada quedó guardada: el reloj
+                   del alumno (tickRelojPractica) no corre mientras el motor piensa
+                   NI mientras se guarda su jugada, porque el tablero todavía no le
+                   deja mover. Arranca cuando de verdad le toca pensar a él. */
+                await savePracticeGameRow({ fen: newFen, moves: newMoves, status: newStatus });
+                updatePracticeGameEval(newFen, gameIdAtMove, attemptsAtMove);
             } else {
                 practiceEngineLastFailed = true;
             }
+            practiceEngineBusy = false;
             updatePracticeCardInteractivity();
         }
 
@@ -6736,9 +6748,13 @@
             const status = practiceResultForStudent(practiceBoard.game, myPracticeGame.student_color);
             const reloj = relojDespuesDeMover();
             await savePracticeGameRow(Object.assign({ fen, moves, status }, reloj === null ? {} : { reloj_ms: reloj }));
-            updatePracticeGameEval(fen, gameIdAtMove, attemptsAtMove); // en segundo plano, no bloquea la jugada del motor
-            if (status !== "playing") { updatePracticeCardInteractivity(); return; }
-            await requestEngineReply(gameIdAtMove, attemptsAtMove);
+            if (status !== "playing") { updatePracticeGameEval(fen, gameIdAtMove, attemptsAtMove); updatePracticeCardInteractivity(); return; }
+            // Primero se pide la jugada del motor y DESPUÉS la evaluación para el
+            // profe: el motor atiende de a una (SharedEngine.runTask), y así la
+            // respuesta del bot no espera detrás de la evaluación.
+            const respuesta = requestEngineReply(gameIdAtMove, attemptsAtMove);
+            updatePracticeGameEval(fen, gameIdAtMove, attemptsAtMove); // en segundo plano
+            await respuesta;
         }
 
         // El alumno se rinde a mitad de partida (incluso mientras el motor está "pensando" su

@@ -250,6 +250,23 @@ const OscarBot = (function () {
     return engineInitPromise;
   }
 
+  function descartarMotor() {
+    if (engine) { try { engine.terminate(); } catch (e) {} }
+    engine = null;
+    engineInitPromise = null;
+  }
+
+  /* Ninguna espera del bot es sin fin: si el libro no baja o la cola del motor
+     se traba, el bot igual juega (heuristicMove). Resuelve a `valor` o, vencido
+     el plazo, a `siVence`. */
+  function conPlazo(promesa, ms, siVence) {
+    let t = null;
+    return Promise.race([
+      Promise.resolve(promesa).catch(() => siVence),
+      new Promise((r) => { t = setTimeout(() => r(siVence), ms); }),
+    ]).then((v) => { clearTimeout(t); return v; });
+  }
+
   // pendingResolve/lastScoreSeen sólo se tocan dentro de una tarea encolada (runEngineTask),
   // así que nunca hay dos búsquedas del motor en vuelo a la vez pisándose los resultados.
   let pendingResolve = null;
@@ -294,9 +311,16 @@ const OscarBot = (function () {
         }
         engine.postMessage("position fen " + fen);
         engine.postMessage("go movetime " + movetimeMs + " depth " + PROFUNDIDAD_MAXIMA);
+        // Pasado su tiempo, se le exige la jugada («stop»: contesta ya con la mejor).
+        setTimeout(() => {
+          if (pendingResolve === resolve) { try { engine.postMessage("stop"); } catch (e) {} }
+        }, movetimeMs + 800);
         setTimeout(() => {
           if (pendingResolve === resolve) {
             pendingResolve = null;
+            // Ni con «stop» contestó: el Worker está colgado. Se tira, y la
+            // próxima jugada levanta uno nuevo en vez de esperar otra vez a este.
+            descartarMotor();
             resolve({ uci: null, score: null });
           }
         }, movetimeMs + 4000);
@@ -364,7 +388,7 @@ const OscarBot = (function () {
     const plyCount = game.history().length;
 
     if (plyCount < diff.bookMaxPly) {
-      await cargarLibro();
+      await conPlazo(cargarLibro(), 8000, null);
       const fen = game.fen();
       const hash = positionHash(fen);
       const uci = getBookMoveForHash(hash, diff.bookBias);
@@ -383,7 +407,7 @@ const OscarBot = (function () {
       if (rm) return rm;
     }
 
-    const uci = await getEngineMove(game.fen(), diff);
+    const uci = await conPlazo(getEngineMove(game.fen(), diff), diff.movetime + (engine ? 4500 : 14000), null);
     if (uci) {
       const found = findLegalMatch(game, uciToParts(uci));
       if (found) return found;
