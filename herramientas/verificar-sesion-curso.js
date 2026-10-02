@@ -755,6 +755,26 @@ async function pruebaCoordenadasDelAlumno(browser) {
     await tres.page.setViewportSize({ width: 1280, height: v.height });
     await alineacion(tres.page, "chessboard", "el tablero de la clase " + v.nombre);
   }
+
+  /* En un monitor ancho la sesión se ensancha y el tablero crece (la regla de
+     `min-width: 1440px` de css/styles.css): antes se quedaba en 560 px con media
+     pantalla vacía a los lados. Se mide que crezca, que las coordenadas lo sigan y
+     que las cajas de abajo midan lo mismo que él; y que a 1280 px no cambie nada. */
+  const anchos = () => tres.page.evaluate(() => {
+    const w = (s) => Math.round(document.querySelector(s).getBoundingClientRect().width);
+    return { seccion: w("#app > section"), envoltorio: w(".board-coords-outer:has(#chessboard)"),
+             barra: w("#clase-cmd"), desborde: document.documentElement.scrollWidth > innerWidth };
+  });
+  await tres.page.setViewportSize({ width: 1920, height: 1000 });
+  const ancho = await anchos();
+  if (ancho.seccion > 1024 && ancho.envoltorio > 600) bien("en un monitor ancho la clase se ensancha (" + ancho.seccion + " px) y el tablero crece (" + ancho.envoltorio + " px)");
+  else mal("en un monitor ancho la clase no aprovecha el espacio: sección de " + ancho.seccion + " px, tablero de " + ancho.envoltorio);
+  igual("y lo de abajo del tablero mide lo mismo que él", ancho.barra, ancho.envoltorio);
+  igual("sin nada que se salga a lo ancho", ancho.desborde, false);
+  await alineacion(tres.page, "chessboard", "el tablero de la clase en un monitor ancho");
+  await tres.page.setViewportSize({ width: 1280, height: 1000 });
+  const angosto = await anchos();
+  igual("a 1280 px todo sigue como antes", [angosto.seccion, angosto.envoltorio], [1024, 560]);
   igual("sin errores en consola", tres.errores.join(" | ") || "ninguno", "ninguno");
   await tres.ctx.close();
 }
