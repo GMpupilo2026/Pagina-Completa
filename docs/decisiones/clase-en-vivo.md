@@ -218,6 +218,38 @@ ocupaban demasiado. Ahora son **una sola fila de botones de solo icono**
   el ratón (cambiándolo a `:active`, salta), que sea el nombre accesible y que
   el grupo traiga sus cuatro botones en orden.
 
+#### Tiempo para pensar, a un toque, y el tablero más arriba
+
+Lo pidió el dueño del sitio, después de la barra de iconos: que el tablero
+quedara entero a la vista, sin la tarjeta «El tablero — lo ve toda la clase».
+
+- **Debajo de la barra solo queda «⏳ Tiempo para pensar»** (y los colores de
+  las flechas). Al tocarlo se abre dónde elegir el tiempo y qué pensar
+  (`aria-expanded`, el foco va al tiempo); «Empezar la cuenta» la arranca y la
+  vuelve a cerrar. El rótulo «lo ve toda la clase» ya no hacía falta escrito
+  ahí: los cuatro botones que tocan el tablero lo llevan en su grupo de la
+  barra (`aria-label`), y el aviso del tiempo lo ve toda la clase de por sí.
+- **La ayuda de las flechas es el rótulo de los colores**: con ratón sale al
+  pasar por encima o al llegar con Tab (`aria-describedby` la une a los
+  colores). En el celular no hay por dónde pasar el ratón, así que ahí se
+  queda escrita, como antes.
+- **Una sola franja arriba del tablero.** Al profesor ya no se le pone «Mueve
+  el tablero: cada jugada se transmite…»: la franja de la clase (abierta o no,
+  con su botón) ya dice lo que pasa. La de estado queda vacía y, vacía, sin
+  alto (`#status-banner:empty`), hasta que haya algo que avisar; no se
+  esconde con `display: none` porque es una región viva y el aviso que llegue
+  podría no leerse. La franja de la clase quedó más baja. Con todo, en 1920 ×
+  950 el tablero pasó de empezar a 352 px a 239, y su barra se ve entera.
+- **«↶ Deshacer jugada» es un icono más de la barra**, al lado de ◀ ▶. Sigue
+  apareciendo solo cuando se puede deshacer (`.boton-icono.hidden`).
+- **«🔎 Herramientas en grande» se acortó a «🔎 En grande»** para caber en un
+  renglón con «Volver al modo sencillo».
+- `verificar-sesion-orden.js` mide que la franja vacía no ocupe alto y que
+  debajo de la barra solo quede el botón; `verificar-clase-movil.js`, que la
+  ayuda no se vea quieta y sí al pasar el ratón; `verificar-clase-pensar.js`,
+  que se abra, lleve el foco y se cierre al empezar. Rompiendo las dos reglas
+  de CSS, saltan.
+
 #### La clase en vivo, reordenada
 
 Lo pidió el dueño del sitio: lo que se usa todo el tiempo
@@ -1827,7 +1859,7 @@ que hace falta para darla y guarda el resto a un clic.
 ### Las herramientas en grande
 
 En la columna de 320 px, con letra de 11-12 px, a veces cuesta encontrar lo que
-se busca. «🔎 Herramientas en grande» (en la fila del modo sencillo, fuera de la
+se busca. «🔎 En grande» (antes «Herramientas en grande»; en la fila del modo sencillo, fuera de la
 barra) vuelve esa columna una ventana por encima del tablero, con todo más
 grande; «✕ Volver al tablero» o Esc la cierran.
 

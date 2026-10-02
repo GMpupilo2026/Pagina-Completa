@@ -166,6 +166,10 @@ async function pruebaProfeComputadora(browser) {
   igual("◀ ▶ y las pestañas, de su tamaño de computadora", await page.evaluate(() => [
     Math.round(document.getElementById("move-nav-prev").getBoundingClientRect().height),
     [...document.querySelectorAll("#teacher-tabs-wrap button")].filter((e) => e.checkVisibility()).every((e) => e.getBoundingClientRect().height < 44)]), [36, true]);
+  // Con ratón, la ayuda es el rótulo de los colores: sale al pasar por encima.
+  igual("quieta, la ayuda de las flechas no ocupa lugar", await page.evaluate(() =>
+    document.getElementById("arrows-hint").checkVisibility()), false);
+  await page.hover("#marks-color-picker");
   igual("y la ayuda de las flechas habla del clic derecho", await page.evaluate(() => {
     const h = document.getElementById("arrows-hint");
     return [h.querySelector(".solo-raton").checkVisibility(), h.querySelector(".solo-tactil").checkVisibility()];

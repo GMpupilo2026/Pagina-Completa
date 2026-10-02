@@ -1696,7 +1696,7 @@
             caja.classList.remove("hidden");
 
             if (currentOpenSessionId) {
-                caja.className = "mb-6 rounded-xl px-5 py-3 flex items-center justify-between gap-3 flex-wrap bg-green-50 dark:bg-green-950/30";
+                caja.className = "mb-3 rounded-xl px-5 py-2 flex items-center justify-between gap-3 flex-wrap bg-green-50 dark:bg-green-950/30";
                 texto.className = "text-sm font-semibold text-green-700 dark:text-green-400";
                 texto.textContent = "🔴 Clase en curso: se está registrando la asistencia y el tiempo de tus alumnos.";
                 abrir.classList.add("hidden");
@@ -1704,7 +1704,7 @@
                 // Una clase nueva: el enlace a la tarea era de la anterior.
                 document.getElementById("clase-despues").hidden = true;
             } else {
-                caja.className = "mb-6 rounded-xl px-5 py-3 flex items-center justify-between gap-3 flex-wrap bg-brand-100 dark:bg-brand-900";
+                caja.className = "mb-3 rounded-xl px-5 py-2 flex items-center justify-between gap-3 flex-wrap bg-brand-100 dark:bg-brand-900";
                 texto.className = "text-sm font-semibold text-brand-600 dark:text-brand-300";
                 /* Dice la CONSECUENCIA, no el mecanismo: mientras la clase no
                    esté abierta, sus alumnos no pueden entrar —lo hace cumplir la
@@ -4043,11 +4043,27 @@
                 if (t.segundos === 60) o.selected = true;
                 sel.appendChild(o);
             });
+            /* «⏳ Tiempo para pensar» abre y cierra dónde se elige el tiempo; la cuenta
+               arranca con «Empezar la cuenta», y al arrancar se vuelve a cerrar. */
+            const pensarAbrir = document.getElementById("pensar-abrir-btn");
+            const pensarCaja = document.getElementById("pensar-caja");
+            const abrirPensar = (abierta) => {
+                pensarCaja.classList.toggle("hidden", !abierta);
+                pensarCaja.classList.toggle("flex", abierta);
+                pensarAbrir.setAttribute("aria-expanded", abierta ? "true" : "false");
+            };
+            pensarAbrir.addEventListener("click", () => {
+                const abrir = pensarCaja.classList.contains("hidden");
+                abrirPensar(abrir);
+                if (abrir) sel.focus();
+            });
             document.getElementById("pensar-btn").addEventListener("click", async () => {
                 const segundos = parseInt(sel.value, 10) || 60;
                 const texto = document.getElementById("pensar-texto").value.trim().slice(0, 140);
                 // Un «at» nuevo: la base lo cambia por su hora (ver la migración).
                 if (await guardarPensar({ at: new Date().toISOString(), segundos, texto: texto || null })) {
+                    abrirPensar(false);
+                    pensarAbrir.focus();
                     setStatus("⏳ " + PreguntaClase.textoDeTiempo(segundos) + " para pensar: toda la clase ve la cuenta regresiva.");
                 }
             });
@@ -7074,10 +7090,14 @@
                 document.getElementById("raise-hand-btn").classList.remove("hidden");
                 cargarMisTrofeos();
             }
+            /* Al profesor no se le pone nada de entrada: la franja de la clase (abierta o
+               no, con su botón) ya dice lo que pasa, y dos franjas apiladas empujaban el
+               tablero hacia abajo. La de estado queda vacía —y sin alto, ver
+               css/styles.css— hasta que haya algo que avisarle. */
             setStatus(esObservador
                 ? "Estás mirando la clase de " + nombreObservado + " en vivo. El tablero se mueve solo con cada jugada."
                 : isTeacher
-                ? "Mueve el tablero: cada jugada se transmite en vivo a todos los alumnos conectados."
+                ? ""
                 : "Bienvenido a la clase. Verás el tablero moverse en vivo mientras el profesor juega.");
 
             initBoardForRole();

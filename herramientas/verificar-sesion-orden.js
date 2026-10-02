@@ -52,11 +52,10 @@ const CLASE_ABIERTA = { id: "s-1", title: null, created_by: "u-profe",
 const GRUPOS = [
   { donde: "teacher-toolbar", rotulo: "Tu material — solo lo ves tú",
     botones: ["toggle-lesson-btn", "toggle-archivos-btn", "toggle-pdf-btn", "toggle-free-mode-btn"] },
-  { donde: "toolbar-tablero", rotulo: "El tablero — lo ve toda la clase",
-    // Reiniciar, Borrar flechas, Ocultar y Guardar PGN subieron a la barra del tablero
-    // (#botones-tablero, abajo); acá queda el tiempo para pensar, que también lo ve toda la clase.
-    botones: ["pensar-btn"] },
 ];
+/* «El tablero — lo ve toda la clase» ya no es una tarjeta: sus cuatro botones van en
+   la barra del tablero, en su grupo #botones-tablero (que lleva ese rótulo como
+   aria-label), y debajo solo queda «⏳ Tiempo para pensar», que se abre al tocarlo. */
 
 // El orden de la clase: qué voy a dar, qué le pongo delante, qué le pido.
 // «Alumnos» no es pestaña (se ve siempre) e «Invitar» se quitó de la clase.
@@ -87,6 +86,21 @@ async function pruebaProfesor(browser) {
       ((g || {}).botones || []).join(", "), esperado.botones.join(", "));
     igual(esperado.donde + ": se ve", (g || {}).seVe, true);
   }
+  igual("debajo de la barra, solo «Tiempo para pensar» (y los colores de las flechas)", await page.evaluate(() =>
+    [...document.querySelectorAll("#toolbar-tablero button")].filter((b) => b.checkVisibility() && !b.closest("#marks-color-picker"))
+      .map((b) => b.id).join(", ")), "pensar-abrir-btn");
+  igual("sin rótulo de tarjeta", await page.evaluate(() =>
+    /lo ve toda la clase/i.test(document.getElementById("toolbar-tablero").textContent)), false);
+  /* La franja de estado empieza vacía para el profe —la de la clase ya dice lo que
+     pasa— y vacía no ocupa lugar: dos franjas apiladas empujaban el tablero. */
+  igual("la franja de estado, vacía, no ocupa alto", await page.evaluate(() => {
+    const b = document.getElementById("status-banner");
+    return [b.textContent, Math.round(b.getBoundingClientRect().height)];
+  }), ["", 0]);
+  igual("«Deshacer» va en la barra del tablero, como icono", await page.evaluate(() => {
+    const b = document.getElementById("undo-move-btn");
+    return [!!b.closest("#barra-tablero"), b.checkVisibility(), b.querySelector(".boton-icono-ayuda").textContent];
+  }), [true, true, "Deshacer la última jugada"]);
   /* La barra del tablero es UNA fila de botones de solo icono. Lo que toca el tablero
      que ve toda la clase va en su grupo, que lo dice; y cada botón dice lo que hace
      al pasar el ratón: se mide que el rótulo NO se vea quieto y SÍ al pasar encima
