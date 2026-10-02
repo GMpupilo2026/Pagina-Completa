@@ -216,6 +216,48 @@ function fechaValida(t) {
     return /^\d{4}-\d{2}-\d{2}$/.test(t) && !isNaN(new Date(t + "T12:00:00Z").getTime());
 }
 
+/* El periodo de un cobro se escribe como un día exacto (AAAA-MM-DD) o como un
+   mes entero (AAAA-MM): «del 2026-10 al 2026-12» es de octubre a diciembre.
+   `extremo` dice qué día del mes tomar: el primero para «desde», el último
+   para «hasta». Devuelve "AAAA-MM-DD", "" si viene en blanco, o null si no se
+   entiende (un 31 de febrero tampoco: se arma la fecha y se compara). Son días
+   de calendario, así que se cuenta en UTC y no hay zona horaria que los corra. */
+function leerFecha(texto, extremo) {
+    const t = String(texto || "").trim();
+    if (!t) return "";
+    let m = /^(\d{4})-(\d{1,2})$/.exec(t);
+    if (m) {
+        const anio = Number(m[1]), mes = Number(m[2]);
+        if (mes < 1 || mes > 12) return null;
+        const dia = extremo === "fin" ? new Date(Date.UTC(anio, mes, 0)).getUTCDate() : 1;
+        return m[1] + "-" + String(mes).padStart(2, "0") + "-" + String(dia).padStart(2, "0");
+    }
+    m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(t);
+    if (!m) return null;
+    const d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
+    if (d.getUTCMonth() !== Number(m[2]) - 1 || d.getUTCDate() !== Number(m[3])) return null;
+    return d.toISOString().slice(0, 10);   // calendario en UTC: armada con Date.UTC
+}
+
+// Un día antes de una fecha "AAAA-MM-DD".
+function diaAntes(iso) { return HoraCR.sumarDias(iso, -1); }
+
+// «1 oct 2026 al 31 oct 2026», o un solo día si empieza y termina igual.
+function periodoTexto(desde, hasta) {
+    if (!desde) return "";
+    return desde === hasta || !hasta ? fecha(desde) : fecha(desde) + " al " + fecha(hasta);
+}
+
+/* Dos cobros vigentes de un mismo plan no pueden cubrir el mismo día: lo
+   impide la restricción cobros_sin_periodos_cruzados (23P01), que contesta en
+   inglés. */
+function errorDeCobro(error) {
+    if (error && error.code === "23P01") {
+        return "Ese periodo se cruza con otro cobro vigente del mismo plan. Anula o corrige el otro primero.";
+    }
+    return error ? error.message : "";
+}
+
 async function corregirRecibo(r) {
     const lineas = r.detalle || [];
     const r2 = await Avisos.formulario({
@@ -323,6 +365,9 @@ function pintarQuePaga() {
         const o = el("option", null, "Adelantar «" + p.nombre + "»");
         o.value = s.id;
         sel.appendChild(o);
+        const medida = el("option", null, "«" + p.nombre + "»: un periodo a la medida (de qué día a qué día)");
+        medida.value = "medida:" + s.id;
+        sel.appendChild(medida);
     });
     const otro = el("option", null, "Otra cosa (sin cobro previo)");
     otro.value = "otro";
@@ -331,52 +376,102 @@ function pintarQuePaga() {
     pintarAyudaAdelanto();
 }
 
-function pintarAyudaAdelanto() {
+/* Qué se eligió en «Qué paga»: adelantar periodos de un plan, un periodo a la
+   medida de un plan, u otra cosa sin plan. */
+function queSePaga() {
     const que = document.getElementById("pa-que").value;
-    const esOtro = que === "otro" || !que;
-    document.getElementById("pa-plan-cell").classList.toggle("hidden", esOtro);
-    document.getElementById("pa-otro-cell").classList.toggle("hidden", !esOtro);
+    if (!que || que === "otro") return { modo: "otro" };
+    if (que.startsWith("medida:")) return { modo: "medida", suscripcion: que.slice(7) };
+    return { modo: "adelantar", suscripcion: que };
+}
+
+function pintarAyudaAdelanto() {
+    const { modo, suscripcion } = queSePaga();
+    document.getElementById("pa-plan-cell").classList.toggle("hidden", modo !== "adelantar");
+    document.getElementById("pa-otro-cell").classList.toggle("hidden", modo === "adelantar");
+    document.getElementById("pa-periodo-cell").classList.toggle("hidden", modo === "adelantar");
+    // En un periodo a la medida la moneda es la del plan: no se elige.
+    document.getElementById("pa-moneda-cell").classList.toggle("hidden", modo === "medida");
     const ayuda = document.getElementById("pa-plan-ayuda");
-    if (esOtro) {
+    if (modo === "otro") {
         ayuda.textContent = document.getElementById("pa-alumno").value
-            ? "Se emite un cobro con ese concepto y queda pagado, con su recibo." : "";
+            ? "Se emite un cobro con ese concepto y queda pagado, con su recibo. «Cubre desde / hasta» es opcional." : "";
         return;
     }
-    const s = suscripciones.find((x) => x.id === que);
+    const s = suscripciones.find((x) => x.id === suscripcion);
     const p = s && planes.find((x) => x.id === s.plan_id);
     if (!p) { ayuda.textContent = ""; return; }
+    if (modo === "medida") return cotizarMedida();
     const cada = plata(p.monto * (1 - (Number(s.descuento_pct) || 0) / 100), p.moneda);
     ayuda.textContent = "Cada " + (PERIODO_DE[p.periodicidad] || "periodo") + " de este plan es de " + cada
         + ". Se pagan los periodos que siguen sin pagar, empezando por el más viejo (si debe algo, eso va primero).";
 }
 
+/* Lo que propone la base para un periodo a la medida: el concepto con el
+   periodo en palabras y el monto proporcional (cobro_cotizar(), la misma
+   cuenta que usa la corrida para los días sueltos). Se escribe en las
+   casillas y se puede cambiar. Si esos días ya están en un cobro vigente del
+   plan, se dice antes de apretar: la base igual lo rechazaría. */
+let cotizacionPeticion = 0;
+async function cotizarMedida() {
+    const { modo, suscripcion } = queSePaga();
+    const ayuda = document.getElementById("pa-plan-ayuda");
+    if (modo !== "medida") return;
+    const desde = document.getElementById("pa-desde").value;
+    const hasta = document.getElementById("pa-hasta").value;
+    if (!desde || !hasta) {
+        ayuda.textContent = "Elige de qué día a qué día cubre este pago: el concepto y el monto se proponen solos (y se pueden cambiar).";
+        return;
+    }
+    if (hasta < desde) { ayuda.textContent = "El periodo termina antes de empezar: revisa las dos fechas."; return; }
+    const mia = ++cotizacionPeticion;
+    const { data, error } = await sb.rpc("cobro_cotizar", { p_suscripcion: suscripcion, p_desde: desde, p_hasta: hasta });
+    if (mia !== cotizacionPeticion) return;
+    if (error) { ayuda.textContent = "No se pudo calcular: " + error.message; return; }
+    document.getElementById("pa-concepto").value = data.concepto || "";
+    document.getElementById("pa-monto").value = data.monto != null ? String(data.monto) : "";
+    ayuda.textContent = data.se_cruza_con
+        ? "⚠️ Esos días ya están en otro cobro de este plan (" + data.se_cruza_con + "). Paga ese cobro desde «Cobros», o anúlalo o corrige su periodo primero."
+        : "Por esos días el plan da " + plata(data.monto, data.moneda) + " (proporcional a su precio). Puedes cambiar el monto o el concepto. "
+          + "La corrida diaria ya no cobra esos días; si dentro del mes quedan otros sin cubrir, los cobra aparte según el plan del alumno.";
+}
+
 async function registrarPagoAdelantado() {
     const alumno = document.getElementById("pa-alumno").value;
-    const que = document.getElementById("pa-que").value;
+    const { modo, suscripcion } = queSePaga();
     const metodo = document.getElementById("pa-metodo").value;
     const referencia = document.getElementById("pa-referencia").value.trim() || null;
     const fechaPago = document.getElementById("pa-fecha").value || hoyCR();
     if (!alumno) return avisar("Elige el alumno.", true);
     if (fechaPago > hoyCR()) return avisar("La fecha del pago no puede ser en el futuro.", true);
     let res;
-    if (que && que !== "otro") {
+    if (modo === "adelantar") {
         const periodos = Number(document.getElementById("pa-periodos").value);
         if (!Number.isInteger(periodos) || periodos < 1 || periodos > 24) return avisar("Se pueden adelantar de 1 a 24 periodos.", true);
-        res = await sb.rpc("pago_adelantado", { p_suscripcion: que, p_periodos: periodos, p_metodo: metodo,
+        res = await sb.rpc("pago_adelantado", { p_suscripcion: suscripcion, p_periodos: periodos, p_metodo: metodo,
             p_referencia: referencia, p_nota: null, p_fecha: fechaPago });
     } else {
         const concepto = document.getElementById("pa-concepto").value.trim();
-        const monto = Number(document.getElementById("pa-monto").value);
-        if (!concepto) return avisar("Escribe qué se paga.", true);
-        if (!(monto > 0)) return avisar("El monto tiene que ser mayor que cero.", true);
-        res = await sb.rpc("registrar_cobro_pagado", { p_alumno: alumno, p_concepto: concepto, p_monto: monto,
+        const textoMonto = document.getElementById("pa-monto").value.trim();
+        const monto = Number(textoMonto);
+        const desde = document.getElementById("pa-desde").value;
+        const hasta = document.getElementById("pa-hasta").value;
+        if (modo === "medida" && (!desde || !hasta)) return avisar("Elige de qué día a qué día cubre este pago.", true);
+        if (!desde !== !hasta) return avisar("Falta una de las dos fechas de «Cubre desde / hasta» (o deja las dos en blanco).", true);
+        if (desde && hasta < desde) return avisar("El periodo termina antes de empezar: revisa las dos fechas.", true);
+        if (modo === "otro" && !concepto) return avisar("Escribe qué se paga.", true);
+        // En un periodo a la medida, en blanco quiere decir «lo que propone la base».
+        if ((modo === "otro" || textoMonto) && !(monto > 0)) return avisar("El monto tiene que ser mayor que cero.", true);
+        res = await sb.rpc("registrar_cobro_pagado_con_periodo", {
+            p_alumno: alumno, p_concepto: concepto || null, p_monto: textoMonto ? monto : null,
             p_moneda: document.getElementById("pa-moneda").value, p_metodo: metodo,
-            p_referencia: referencia, p_nota: null, p_fecha: fechaPago });
+            p_referencia: referencia, p_nota: null, p_fecha: fechaPago,
+            p_suscripcion: modo === "medida" ? suscripcion : null,
+            p_desde: desde || null, p_hasta: hasta || null,
+        });
     }
-    if (res.error) return avisar("No se pudo registrar: " + res.error.message, true);
-    document.getElementById("pa-referencia").value = "";
-    document.getElementById("pa-concepto").value = "";
-    document.getElementById("pa-monto").value = "";
+    if (res.error) return avisar("No se pudo registrar: " + errorDeCobro(res.error), true);
+    ["pa-referencia", "pa-concepto", "pa-monto", "pa-desde", "pa-hasta"].forEach((id) => { document.getElementById(id).value = ""; });
     document.getElementById("pa-periodos").value = "1";
     await cargarTodo();
     await trasRegistrarPago(res.data);
@@ -456,6 +551,7 @@ function engancharRecibos() {
     document.getElementById("rc-mas").addEventListener("click", () => cargarRecibos(false));
     document.getElementById("pa-alumno").addEventListener("change", pintarQuePaga);
     document.getElementById("pa-que").addEventListener("change", pintarAyudaAdelanto);
+    ["pa-desde", "pa-hasta"].forEach((id) => document.getElementById(id).addEventListener("change", cotizarMedida));
     // Un doble clic registraría dos pagos: mientras guarda, el botón no responde.
     document.getElementById("pa-guardar").addEventListener("click", async (ev) => {
         const b = ev.currentTarget;
