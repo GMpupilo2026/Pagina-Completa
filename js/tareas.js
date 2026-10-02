@@ -37,7 +37,7 @@ function escapeHtml(text) {
     return div.innerHTML.replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
 function formatoFecha(iso) {
-    return new Date(iso).toLocaleString("es-CR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+    return new Date(iso).toLocaleString("es-CR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "America/Costa_Rica" });
 }
 
 /* Cómo se lee un renglón. Es lo único que el alumno va a leer de la tarea, así
@@ -483,7 +483,7 @@ async function enviarTarea(ev) {
     // anticipación sin que el alumno la vea todavía — el candado de verdad lo
     // pone la RLS (crear_tarea lo vuelve a comprobar del lado del servidor).
     const desdeVal = document.getElementById("t-desde").value;
-    if (desdeVal && new Date(desdeVal) >= new Date(venceVal)) {
+    if (desdeVal && HoraCR.desdeCampo(desdeVal) >= HoraCR.desdeCampo(venceVal)) {
         status.textContent = "La tarea tiene que empezar antes de vencer.";
         return;
     }
@@ -498,9 +498,9 @@ async function enviarTarea(ev) {
         p_alumnos: seleccionados,
         p_titulo: titulo,
         p_instrucciones: document.getElementById("t-instrucciones").value.trim(),
-        p_vence: new Date(venceVal).toISOString(),
+        p_vence: HoraCR.desdeCampo(venceVal).toISOString(),   // lo escrito es hora de Costa Rica
         p_items: items,
-        p_disponible_desde: desdeVal ? new Date(desdeVal).toISOString() : null,
+        p_disponible_desde: desdeVal ? HoraCR.desdeCampo(desdeVal).toISOString() : null,
     });
     boton.disabled = false;
     if (error) { status.textContent = "No se pudo enviar: " + error.message; return; }

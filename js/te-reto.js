@@ -73,13 +73,13 @@
         // racha de venir todos los días".
         function registerDailyVisit() {
             try {
-                const today = new Date().toISOString().slice(0, 10);
+                const today = new Date().toLocaleDateString("en-CA", { timeZone: "America/Costa_Rica" });
                 const last = localStorage.getItem(DAY_STREAK_KEY);
                 let count = parseInt(localStorage.getItem(DAY_STREAK_KEY + "_count") || "0", 10) || 0;
                 if (last === today) {
                     // ya contado hoy, no hacer nada
                 } else {
-                    const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+                    const yesterday = new Date(Date.now() - 86400000).toLocaleDateString("en-CA", { timeZone: "America/Costa_Rica" });
                     count = last === yesterday ? count + 1 : 1;
                     localStorage.setItem(DAY_STREAK_KEY, today);
                     localStorage.setItem(DAY_STREAK_KEY + "_count", String(count));

@@ -83,8 +83,7 @@
   // ------------------------------------------------------------ el plan en PGN
 
   function hoyPgn() {
-    const d = new Date();
-    return d.getFullYear() + "." + String(d.getMonth() + 1).padStart(2, "0") + "." + String(d.getDate()).padStart(2, "0");
+    return new Date().toLocaleDateString("en-CA", { timeZone: "America/Costa_Rica" }).replace(/-/g, ".");   // hoy en Costa Rica
   }
 
   function sinLlaves(t) { return String(t).replace(/[{}]/g, ""); }

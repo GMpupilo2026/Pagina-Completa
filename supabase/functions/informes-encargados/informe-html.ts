@@ -205,12 +205,22 @@ function duracion(minutos: number) {
   return h > 0 ? `${h} h ${mm} min` : `${mm} min`;
 }
 
+/* Las fechas, en hora de Costa Rica: el servidor de la función corre en UTC, y
+   sin zona un informe armado a las 7 de la noche decía «al 2 de octubre» el 1.
+   Un día de calendario («2026-09-30», una columna `date`) se lee al mediodía de
+   Costa Rica; si no, la medianoche UTC lo corría al día anterior. La zona va
+   escrita acá y no importada de hora-cr.ts: este archivo lo corren también las
+   pruebas de herramientas/ con Node, donde el compartido no está copiado al lado. */
+function momentoCR(iso: string) {
+  return new Date(/^\d{4}-\d{2}-\d{2}$/.test(String(iso)) ? iso + "T12:00:00-06:00" : iso);
+}
+
 function fecha(iso: string) {
-  return new Date(iso).toLocaleDateString("es-CR", { day: "numeric", month: "long", year: "numeric" });
+  return momentoCR(iso).toLocaleDateString("es-CR", { day: "numeric", month: "long", year: "numeric", timeZone: "America/Costa_Rica" });
 }
 
 function fechaCorta(iso: string) {
-  return new Date(iso).toLocaleDateString("es-CR", { day: "numeric", month: "long" });
+  return momentoCR(iso).toLocaleDateString("es-CR", { day: "numeric", month: "long", timeZone: "America/Costa_Rica" });
 }
 
 function plural(n: number, uno: string, varios: string) {

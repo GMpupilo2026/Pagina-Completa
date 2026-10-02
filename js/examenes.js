@@ -43,7 +43,7 @@ let informeActual = null;
 function $(id) { return document.getElementById(id); }
 function escapeHtml(t) { const d = document.createElement("div"); d.textContent = t == null ? "" : String(t); return d.innerHTML.replace(/"/g, "&quot;").replace(/'/g, "&#39;"); }
 function fecha(iso) {
-  return new Date(iso).toLocaleString("es-CR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  return new Date(iso).toLocaleString("es-CR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "America/Costa_Rica" });
 }
 
 async function init() {
@@ -494,7 +494,7 @@ async function ponerExamen(ev) {
   // pone la RLS (crear_examen e iniciar_examen lo vuelven a comprobar del
   // lado del servidor).
   const desde = $("e-desde").value;
-  if (desde && new Date(desde) >= new Date(vence)) {
+  if (desde && HoraCR.desdeCampo(desde) >= HoraCR.desdeCampo(vence)) {
     status.textContent = "El examen tiene que empezar antes de vencer.";
     return;
   }
@@ -510,13 +510,13 @@ async function ponerExamen(ev) {
     p_titulo: titulo,
     p_instrucciones: $("e-instrucciones").value.trim(),
     p_minutos: minutos,
-    p_vence: new Date(vence).toISOString(),
+    p_vence: HoraCR.desdeCampo(vence).toISOString(),   // lo escrito es hora de Costa Rica
     p_items: items,
     // "" es "no congelar nunca". Va como null y no como 0: cero significa
     // lo contrario —congela a la primera— y confundirlos le cerraría el
     // examen en la cara al primer despiste.
     p_salidas_permitidas: $("e-salidas").value === "" ? null : parseInt($("e-salidas").value, 10),
-    p_disponible_desde: desde ? new Date(desde).toISOString() : null,
+    p_disponible_desde: desde ? HoraCR.desdeCampo(desde).toISOString() : null,
   });
   btn.disabled = false;
   if (error) { status.textContent = "No se pudo poner: " + error.message; return; }

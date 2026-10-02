@@ -74,7 +74,7 @@
   function fecha(iso) {
     if (!iso) return "";
     const [y, m, d] = String(iso).split("-").map(Number);
-    return new Date(y, m - 1, d).toLocaleDateString("es-CR", { day: "numeric", month: "long", year: "numeric" });
+    return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString("es-CR", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });   // un día de calendario
   }
 
   function fechaHora(iso) {

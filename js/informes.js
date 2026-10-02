@@ -308,7 +308,7 @@
                     wrap.appendChild(barRow(c.titulo, c.hechos, c.total || c.hechos));
                     const nota = document.createElement("p");
                     nota.className = "text-xs text-brand-450 dark:text-brand-350 mt-1";
-                    const fecha = c.ultimo ? new Date(c.ultimo.fecha).toLocaleDateString("es-CR", { day: "2-digit", month: "short", year: "numeric" }) : "";
+                    const fecha = c.ultimo ? HoraCR.fecha(c.ultimo.fecha, { day: "2-digit", month: "short", year: "numeric" }) : "";
                     nota.textContent = c.total && c.hechos >= c.total ? `🏁 Curso completo (último tema el ${fecha})` : c.ultimo ? `Último tema estudiado: ${c.ultimo.titulo} (${fecha})` : "";
                     if (propio && !(window.CursosOcultos && CursosOcultos.es(c.slug))) {
                         const a = document.createElement("a"); a.href = "cursos/academia/" + c.slug + ".html"; a.className = "ml-2 text-accent-600 dark:text-accent-400 hover:underline"; a.textContent = "Continuar →";
@@ -453,7 +453,7 @@
                 list.slice(0, 15).forEach((a) => {
                     const li = document.createElement("li");
                     li.className = "flex items-center justify-between border-b border-brand-50 dark:border-brand-800/60 last:border-0 pb-2";
-                    const date = new Date(a.created_at).toLocaleDateString("es-CR", { day: "2-digit", month: "short", year: "numeric" });
+                    const date = HoraCR.fecha(a.created_at, { day: "2-digit", month: "short", year: "numeric" });
                     let badge = "Pendiente";
                     if (a.is_correct === true) badge = "<span aria-hidden=\"true\">✅ </span>Correcta";
                     else if (a.is_correct === false) badge = "<span aria-hidden=\"true\">❌ </span>Incorrecta";
@@ -1060,7 +1060,7 @@
                 list.slice(0, 15).forEach((a) => {
                     const li = document.createElement("li");
                     li.className = "flex items-center justify-between border-b border-brand-50 dark:border-brand-800/60 last:border-0 pb-2";
-                    const date = new Date(a.created_at).toLocaleDateString("es-CR", { day: "2-digit", month: "short", year: "numeric" });
+                    const date = HoraCR.fecha(a.created_at, { day: "2-digit", month: "short", year: "numeric" });
                     let badge = "Pendiente";
                     if (a.is_correct === true) badge = "<span aria-hidden=\"true\">✅ </span>Correcta";
                     else if (a.is_correct === false) badge = "<span aria-hidden=\"true\">❌ </span>Incorrecta";
@@ -1401,7 +1401,7 @@
         }
 
         function fechaCortaES(iso) {
-            return new Date(iso).toLocaleDateString("es-CR", { day: "numeric", month: "long" });
+            return HoraCR.fecha(iso, { day: "numeric", month: "long" });
         }
 
         /* ---------------- La bitácora ----------------
@@ -1787,7 +1787,7 @@
                 const detalle = document.createElement("p");
                 detalle.className = "text-xs text-brand-450 dark:text-brand-350";
                 detalle.textContent = (e.nombre ? e.email + " · " : "") + (e.ultimo_envio_at
-                    ? "último envío el " + new Date(e.ultimo_envio_at).toLocaleDateString("es-CR", { day: "2-digit", month: "short", year: "numeric" })
+                    ? "último envío el " + HoraCR.fecha(e.ultimo_envio_at, { day: "2-digit", month: "short", year: "numeric" })
                     : "todavía sin mandar");
                 quien.append(titulo, detalle);
 
@@ -2301,7 +2301,7 @@
         const PE = window.PlanEntrenamiento;
 
         function fmtFecha(iso) {
-            return new Date(iso).toLocaleDateString("es-CR", { day: "numeric", month: "long", year: "numeric" });
+            return HoraCR.fecha(iso, { day: "numeric", month: "long", year: "numeric" });
         }
 
         function barrasAreasHTML(resumen) {

@@ -62,7 +62,7 @@ window.DosPasos = (function () {
   async function empezar() {
     var previos = (await factores()).filter(function (f) { return f.status !== "verified"; });
     for (var i = 0; i < previos.length; i++) await mfa().unenroll({ factorId: previos[i].id });
-    var r = await mfa().enroll({ factorType: "totp", issuer: "Ajedrez Integral", friendlyName: "App de códigos " + new Date().toISOString().slice(0, 16) });
+    var r = await mfa().enroll({ factorType: "totp", issuer: "Ajedrez Integral", friendlyName: "App de códigos " + new Date().toLocaleString("sv-SE", { timeZone: "America/Costa_Rica" }).slice(0, 16) });
     if (r.error) throw r.error;
     return { id: r.data.id, qr: r.data.totp.qr_code, secreto: r.data.totp.secret };
   }

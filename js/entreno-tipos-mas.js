@@ -872,7 +872,7 @@
   // ejercicio vuelve a tocar en «Repasar fallados».
   function cuandoVuelve(vence) {
     const SRS = window.RepasoEspaciado;
-    const hoy = SRS ? SRS.hoy() : new Date().toISOString().slice(0, 10);
+    const hoy = SRS ? SRS.hoy() : new Date().toLocaleDateString("en-CA", { timeZone: "America/Costa_Rica" });
     if (vence <= hoy) return "hoy mismo";
     if (SRS && vence === SRS.sumarDias(hoy, 1)) return "mañana";
     return "el " + new Date(vence + "T12:00:00Z").toLocaleDateString("es-CR", { day: "numeric", month: "long", timeZone: "UTC" });

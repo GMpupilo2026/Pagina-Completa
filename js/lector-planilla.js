@@ -406,7 +406,7 @@
         });
 
         document.getElementById("download-pgn-btn").addEventListener("click", () => {
-            downloadText("planilla-" + new Date().toISOString().slice(0, 10) + ".pgn", document.getElementById("pgn-output").value);
+            downloadText("planilla-" + new Date().toLocaleDateString("en-CA", { timeZone: "America/Costa_Rica" }) + ".pgn", document.getElementById("pgn-output").value);
         });
 
         document.getElementById("save-shared-btn").addEventListener("click", async () => {

@@ -24,7 +24,7 @@
         }
 
         function openViewer(g) {
-            document.getElementById("view-modal-title").textContent = (g.title || new Date(g.created_at).toLocaleString("es-CR")) + " · " + g.move_count + " jugadas";
+            document.getElementById("view-modal-title").textContent = (g.title || new Date(g.created_at).toLocaleString("es-CR", { timeZone: "America/Costa_Rica" })) + " · " + g.move_count + " jugadas";
             document.getElementById("view-modal").classList.remove("hidden");
             if (!viewBoard) viewBoard = new ClasesBoard(document.getElementById("view-board"), { interactive: false });
             const game = new Chess();
@@ -47,10 +47,10 @@
                 const info = document.createElement("div");
                 const title = document.createElement("h2");
                 title.className = "font-semibold text-brand-800 dark:text-white";
-                title.textContent = g.title || new Date(g.created_at).toLocaleDateString("es-CR", { day: "2-digit", month: "long", year: "numeric" });
+                title.textContent = g.title || new Date(g.created_at).toLocaleDateString("es-CR", { day: "2-digit", month: "long", year: "numeric", timeZone: "America/Costa_Rica" });
                 const meta = document.createElement("p");
                 meta.className = "text-xs text-brand-450 dark:text-brand-350";
-                meta.textContent = g.move_count + " jugadas · guardada el " + new Date(g.created_at).toLocaleString("es-CR");
+                meta.textContent = g.move_count + " jugadas · guardada el " + new Date(g.created_at).toLocaleString("es-CR", { timeZone: "America/Costa_Rica" });
                 info.append(title, meta);
 
                 const actions = document.createElement("div");
@@ -151,7 +151,7 @@
             const elegidos = ultimosArchivosCargados.filter((a) => archivosSeleccionados.has(a.id));
             if (!elegidos.length) return;
             const texto = elegidos.map((a) => a.pgn.trim()).join("\n\n");
-            downloadText("archivos-pgn-" + new Date().toISOString().slice(0, 10) + ".pgn", texto);
+            downloadText("archivos-pgn-" + new Date().toLocaleDateString("en-CA", { timeZone: "America/Costa_Rica" }) + ".pgn", texto);
         }
 
         async function eliminarSeleccionArchivos() {

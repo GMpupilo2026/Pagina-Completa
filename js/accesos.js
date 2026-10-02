@@ -35,11 +35,11 @@
             const [y, m, d] = iso.split("-").map(Number);
             const f = new Date(Date.UTC(y, m - 1 + meses, d));
             f.setUTCDate(f.getUTCDate() - 1);   // "un mes" desde el 1 vale hasta el último día del mes
-            return f.toISOString().slice(0, 10);
+            return f.toISOString().slice(0, 10);   // calendario en UTC
         }
         function fecha(iso) {
             const [y, m, d] = String(iso).split("-").map(Number);
-            return new Date(y, m - 1, d).toLocaleDateString("es-CR", { day: "numeric", month: "long", year: "numeric" });
+            return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString("es-CR", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });   // un día de calendario
         }
         function diasEntre(a, b) {
             return Math.round((Date.parse(b + "T00:00:00Z") - Date.parse(a + "T00:00:00Z")) / 86400000);

@@ -18,7 +18,7 @@
             return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
         }
         function fmtDate(iso) {
-            return new Date(iso).toLocaleDateString("es-CR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+            return new Date(iso).toLocaleDateString("es-CR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "America/Costa_Rica" });
         }
         async function callAdmin(action, payload) {
             const res = await fetch(FUNCTION_URL, {

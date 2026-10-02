@@ -46,18 +46,19 @@ window.ReporteArmar = (function () {
     return "del " + fechaLarga(desde) + " al " + fechaLarga(hasta);
   }
 
+  // En hora de Costa Rica: con la zona de la computadora, una clase de las 7 p. m.
+  // salía al día siguiente en un reporte armado en otra zona.
   function fechaCorta(iso) {
     const d = new Date(iso);
     if (isNaN(d.getTime())) return "";
-    const p = (n) => String(n).padStart(2, "0");
-    return p(d.getDate()) + "/" + p(d.getMonth() + 1) + "/" + d.getFullYear();
+    const [y, m, dia] = d.toLocaleDateString("en-CA", { timeZone: "America/Costa_Rica" }).split("-");
+    return dia + "/" + m + "/" + y;
   }
 
   function hora(iso) {
     const d = new Date(iso);
     if (isNaN(d.getTime())) return "";
-    const p = (n) => String(n).padStart(2, "0");
-    return p(d.getHours()) + ":" + p(d.getMinutes());
+    return d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone: "America/Costa_Rica" });
   }
 
   function duracionLarga(minutos) {

@@ -37,7 +37,8 @@ let juego = null;      // partida de chess.js de la pregunta actual
 
 const $ = (id) => document.getElementById(id);
 const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const fechaCorta = (iso) => new Date(iso).toLocaleDateString('es-CR', { day: 'numeric', month: 'long', year: 'numeric' });
+// En hora de Costa Rica, sea un momento o un día de calendario (js/hora-cr.js).
+const fechaCorta = (iso) => HoraCR.fecha(iso, { day: 'numeric', month: 'long', year: 'numeric' });
 
 /* `foco`: lo que recibe el foco en la vista nueva. La vista de antes se
    esconde con el botón que lo tenía, y el foco caía al <body>: quien no ve no

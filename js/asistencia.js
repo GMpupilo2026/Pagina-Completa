@@ -84,34 +84,30 @@ const MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio",
     "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
 
 function fechaLarga(iso) {
-    const d = new Date(iso);
-    if (isNaN(d.getTime())) return "";
-    const p = (n) => String(n).padStart(2, "0");
-    return d.getDate() + " de " + MESES[d.getMonth()] + " de " + d.getFullYear() +
-           ", " + p(d.getHours()) + ":" + p(d.getMinutes());
+    const t = HoraCR.paraCampo(iso);   // «2026-09-30T15:20», en hora de Costa Rica
+    if (!t) return "";
+    const [y, m, d] = t.slice(0, 10).split("-").map(Number);
+    return d + " de " + MESES[m - 1] + " de " + y + ", " + t.slice(11, 16);
 }
 
 /* ------------------------------------------------------------ la fecha y la hora
-   Los dos campos son LOCALES —lo que el profesor tiene en su reloj— y lo que
-   viaja es un instante. Armarlo con `new Date(y, m, d, hh, mm)` usa el huso de
-   su computadora, que es el de la clase; pegar los dos textos y mandarlos como
-   si fueran UTC le correría la clase seis horas sin dar ningún error: quedaría
-   fechada el día siguiente en el informe. */
+   Los dos campos son hora de COSTA RICA y lo que viaja es un instante. Antes se
+   armaban con el huso de la computadora (`new Date(y, m, d, hh, mm)`): una mal
+   configurada corría la clase sin dar ningún error. Pegar los dos textos y
+   mandarlos como si fueran UTC la correría seis horas: quedaría fechada el día
+   siguiente en el informe. */
 function instante() {
     const f = document.getElementById("fecha").value;
     const h = document.getElementById("hora").value;
     if (!f || !h) return null;
-    const [y, m, d] = f.split("-").map(Number);
-    const [hh, mm] = h.split(":").map(Number);
-    const fecha = new Date(y, m - 1, d, hh, mm, 0, 0);
+    const fecha = HoraCR.desdeCampo(f + "T" + h);
     return isNaN(fecha.getTime()) ? null : fecha;
 }
 
 function ponerInstante(iso) {
-    const d = iso ? new Date(iso) : new Date();
-    const p = (n) => String(n).padStart(2, "0");
-    document.getElementById("fecha").value = d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
-    document.getElementById("hora").value = p(d.getHours()) + ":" + p(d.getMinutes());
+    const t = HoraCR.paraCampo(iso || new Date());   // en hora de Costa Rica
+    document.getElementById("fecha").value = t.slice(0, 10);
+    document.getElementById("hora").value = t.slice(11, 16);
 }
 
 /* ------------------------------------------------------------ pasar lista
@@ -501,7 +497,7 @@ function hoyCR() {
 }
 function sumarDias(fecha, n) {
     const [y, m, d] = fecha.split("-").map(Number);
-    return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10);
+    return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10);   // calendario en UTC
 }
 function diaDe(fecha) {
     const [y, m, d] = fecha.split("-").map(Number);

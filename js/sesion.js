@@ -3101,7 +3101,7 @@
                 }
                 const time = document.createElement("span");
                 time.className = "text-[10px] ml-auto shrink-0 " + (isOwn ? "text-brand-900/60" : "text-brand-450 dark:text-brand-350");
-                time.textContent = new Date(m.created_at).toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" });
+                time.textContent = new Date(m.created_at).toLocaleTimeString("es-CR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Costa_Rica" });
                 header.appendChild(time);
                 const body = document.createElement("p");
                 body.className = "text-sm break-words " + (isOwn ? "text-brand-900" : "");

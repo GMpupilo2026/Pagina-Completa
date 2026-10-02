@@ -60,8 +60,9 @@ function sinTildes(t) {
 }
 function fmtFecha(iso) {
     if (!iso) return "—";
-    const d = new Date(iso);
-    return isNaN(d) ? "—" : d.toLocaleDateString("es-CR", { day: "2-digit", month: "short", year: "numeric" });
+    // La fecha de nacimiento es un día de calendario: new Date("2010-05-04") la leía
+    // como la medianoche UTC y salía el 3 de mayo. HoraCR la lee como ese día.
+    return HoraCR.fecha(iso, { day: "2-digit", month: "short", year: "numeric" }) || "—";
 }
 function nombreCompleto(i) {
     return [i.nombre, i.apellido1, i.apellido2].filter(Boolean).join(" ") || "(sin nombre)";

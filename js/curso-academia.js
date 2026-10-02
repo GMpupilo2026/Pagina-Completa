@@ -62,7 +62,7 @@
   }
 
   function fechaCorta(iso) {
-    try { return new Date(iso).toLocaleDateString("es-CR", { day: "2-digit", month: "short", year: "numeric" }); } catch (e) { return ""; }
+    try { return new Date(iso).toLocaleDateString("es-CR", { day: "2-digit", month: "short", year: "numeric", timeZone: "America/Costa_Rica" }); } catch (e) { return ""; }
   }
   function pct(n, t) { return t ? Math.round((100 * n) / t) : 0; }
   function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
