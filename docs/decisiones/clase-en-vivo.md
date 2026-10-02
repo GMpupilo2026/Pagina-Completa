@@ -2520,27 +2520,35 @@ diagnóstico— ya las tiene siempre, así que su ausencia justo acá se nota.
   falla de verdad: dejando el tope pegado al tablero saltan 5 comprobaciones, y
   volviendo a mudarlo como estilo en línea, las mismas 5.
 
-### En un monitor ancho, la clase se ensancha
+### En un monitor ancho, los alumnos conectados van a la izquierda
 
-La sesión topaba en 1024 px (`max-w-5xl`) con el tablero en 560: en un monitor
-de 1920 quedaba media pantalla vacía a los lados. Ahora, **solo desde 1440 px de
-ancho y 801 de alto**, `css/styles.css` ensancha la sección a 88rem, la columna
-de herramientas pasa de 320 a 380 px y el tablero crece con la altura de la
-ventana, `clamp(560px, 100vh - 220px, 720px)`. Debajo de eso no cambia nada.
+La sesión topaba en 1024 px (`max-w-5xl`): en un monitor de 1920 quedaba media
+pantalla vacía a los lados. Ahora, **solo desde 1440 px de ancho y 801 de alto**,
+`css/styles.css` ensancha la sección a 88rem y arma tres columnas: **«Alumnos
+conectados» a la izquierda**, el tablero en el centro y a la derecha el motor, el
+material y las pestañas. Debajo de esas medidas no cambia nada.
 
-- **El tope va a todo lo que lleva `max-w-[560px]` en `.proyector-columna`**: el
-  envoltorio de las coordenadas (que es quien decide el ancho del tablero, ver
-  arriba) y las cajas de abajo, que así siguen midiendo lo mismo que él.
-- **No pisa la regla del laptop de 13"**: una dice `max-height: 800px` y la otra
-  `min-height: 801px`, así que nunca valen a la vez.
-- **El proyector y el control remoto quedan fuera** (`html:not(.modo-proyector)
-  :not(.modo-control)`): tienen sus propias medidas, y con la especificidad de
-  esta regla le habría ganado a la del proyector.
-- **Se acota con `:has(.proyector-contenido)`**: `styles.css` lo carga todo el
-  sitio y hay otras veinte páginas con un `#app`. El encabezado y las migas se
-  ensanchan lo mismo para que el logo siga alineado con el contenido.
-- `verificar-sesion-curso.js` lo mide a 1920 y a 1280 px; quitándole la regla
-  salta.
+- **El tablero se queda en sus 560 px.** Primero se probó hacerlo crecer con la
+  altura de la ventana (hasta 720, #675) y al profesor le quedó demasiado
+  grande: lo que pedía era usar el espacio de los lados, no agrandar el tablero.
+- **No se mueve ningún nodo.** «Herramientas en grande» abre esa misma columna
+  como ventana, con los alumnos adentro (ver «Las herramientas en grande»). En
+  vez de mudar el panel, la columna se vuelve `display: contents` y sus tarjetas
+  se acomodan en la cuadrícula de afuera; con la ventana abierta
+  (`.herramientas-en-grande`) la regla deja de valer y todo vuelve a su sitio.
+- **La última fila es `1fr`** y el tablero y los alumnos ocupan todas las filas:
+  así lo alto de la columna del tablero cae en esa fila y no estira las de las
+  tarjetas de la derecha. Por eso el espacio entre tarjetas va como margen y no
+  como `row-gap`, que contaría también las filas vacías de las escondidas.
+- **Solo con el panel de alumnos a la vista** (`:has(#students-panel:not(.hidden))`):
+  el alumno no lo tiene, y le quedaría una columna vacía.
+- **El proyector y el control remoto quedan fuera**, y el `:has` de la sección
+  acota todo a `sesion.html`: `styles.css` lo carga todo el sitio y hay otras
+  veinte páginas con un `#app`. El encabezado y las migas se ensanchan lo mismo
+  para que el logo siga alineado con el contenido.
+- `verificar-sesion-curso.js` mide a 1920 y a 1280 px dónde cae cada tarjeta y
+  que la ventana grande siga trayendo a los alumnos; devolviendo el panel a la
+  derecha, salta.
 
 ### Las miniaturas de la práctica: a 16 px no se distingue una pieza
 
