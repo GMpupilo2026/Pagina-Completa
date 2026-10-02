@@ -33,8 +33,13 @@ const HOY = new Date();
    bloque abierto, donde se le registra el pago a c-2), c-3 el mes pasado y c-4
    el antepasado. `mesAtras(0)` es el último día de este mes. */
 const HOY_ISO = HOY.toISOString().slice(0, 10);
-// El «hoy» que pone la página en la fecha de un pago: el de Costa Rica.
-const HOY_CR = HOY.toLocaleDateString("en-CA", { timeZone: "America/Costa_Rica" });
+/* El «hoy» que pone la página en la fecha de un pago: el de Costa Rica, y el de
+   la PÁGINA, no uno sacado al arrancar la prueba. Una corrida que cruza la
+   medianoche de Costa Rica (las 6:00 UTC) esperaba el 1 y la página ya ponía
+   el 2. El registro de un pago usa hoyCR() en el momento; el pago adelantado,
+   lo que dice su casilla «Fecha del pago». */
+const hoyDeLaPagina = (page) => page.evaluate(() => hoyCR());
+const fechaDelPago = (page) => page.evaluate(() => document.getElementById("pa-fecha").value);
 const mesAtras = (atras, diaDelMes) => {
   const d = new Date(Date.UTC(HOY.getUTCFullYear(), HOY.getUTCMonth() - atras + (diaDelMes ? 0 : 1), diaDelMes || 0));
   return d.toISOString().slice(0, 10);
@@ -700,7 +705,7 @@ async function pruebaCoordinacion(browser) {
   const pago = await page.evaluate(() => window.__llamadas.find((l) => l.rpc === "registrar_pago"));
   igual("registrar un pago pasa por registrar_pago, con la fecha de hoy",
     pago && pago.args,
-    { p_pagos: [{ cobro_id: "c-2", monto: 5000 }], p_metodo: "transferencia", p_referencia: "REF-99", p_nota: null, p_fecha: HOY_CR });
+    { p_pagos: [{ cobro_id: "c-2", monto: 5000 }], p_metodo: "transferencia", p_referencia: "REF-99", p_nota: null, p_fecha: await hoyDeLaPagina(page) });
   igual("y nunca escribe en `pagos` directo",
     await page.evaluate(() => window.__llamadas.some((l) => l.tabla === "pagos")), "false");
   igual("quien coordina sabe que el recibo lo entrega quien supervisa",
@@ -1114,7 +1119,7 @@ async function pruebaSupervisora(browser) {
   await page.waitForTimeout(500);
   igual("adelantar tres meses lo hace la base con ESA suscripción",
     await page.evaluate(() => (window.__llamadas.find((l) => l.rpc === "pago_adelantado") || {}).args),
-    { p_suscripcion: "s-1", p_periodos: 3, p_metodo: "transferencia", p_referencia: "BN-77", p_nota: null, p_fecha: HOY_CR });
+    { p_suscripcion: "s-1", p_periodos: 3, p_metodo: "transferencia", p_referencia: "BN-77", p_nota: null, p_fecha: await fechaDelPago(page) });
   igual("y enseguida se le pone delante el recibo para revisarlo",
     await page.evaluate(() => window.__avisos.some((a) => a.includes("Revisa el recibo R-ADAPZ-2026-0004"))), "true");
   await page.fill("#pa-periodos", "30");
@@ -1136,7 +1141,7 @@ async function pruebaSupervisora(browser) {
   igual("un pago sin cobro previo emite su cobro pagado, con su recibo (sin periodo, si no se dijo)",
     await page.evaluate(() => (window.__llamadas.find((l) => l.rpc === "registrar_cobro_pagado_con_periodo") || {}).args),
     { p_alumno: "u-ana", p_concepto: "Inscripción al torneo", p_monto: 15000, p_moneda: "CRC", p_metodo: "transferencia",
-      p_referencia: null, p_nota: null, p_fecha: HOY_CR, p_suscripcion: null, p_desde: null, p_hasta: null });
+      p_referencia: null, p_nota: null, p_fecha: await fechaDelPago(page), p_suscripcion: null, p_desde: null, p_hasta: null });
   await page.fill("#pa-concepto", "Campamento");
   await page.fill("#pa-monto", "40000");
   await page.fill("#pa-desde", "2026-12-01");
@@ -1176,7 +1181,7 @@ async function pruebaSupervisora(browser) {
   igual("registrar el periodo a la medida lo ata al plan, con el monto que se dejó",
     await page.evaluate(() => (window.__llamadas.find((l) => l.rpc === "registrar_cobro_pagado_con_periodo") || {}).args),
     { p_alumno: "u-ana", p_concepto: "Mensualidad · 15 de octubre al 14 de noviembre 2026", p_monto: 22000, p_moneda: "CRC",
-      p_metodo: "transferencia", p_referencia: null, p_nota: null, p_fecha: HOY_CR,
+      p_metodo: "transferencia", p_referencia: null, p_nota: null, p_fecha: await fechaDelPago(page),
       p_suscripcion: "s-1", p_desde: "2026-10-15", p_hasta: "2026-11-14" });
   igual("y después se limpian las fechas",
     await page.evaluate(() => [document.getElementById("pa-desde").value, document.getElementById("pa-hasta").value]), ["", ""]);
