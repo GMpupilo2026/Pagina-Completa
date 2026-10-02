@@ -420,6 +420,16 @@ Lo que manda está en la base (migración
   consola. Al alumno se le dice en voz a los 10 s y al terminar, desde una
   región viva aparte: el texto que cambia cada segundo no lo es, o el lector
   lo leería sin parar.
+- **El reloj de las preguntas es el de la base.** `created_at` lo pone la
+  base, así que la cuenta regresiva (`PreguntaClase.segundosRestantes`) resta
+  `RelojServidor.ahora()`, no `Date.now()`, y `sesion.js` mide el desfase al
+  entrar (`RelojServidor.iniciar`). Con la hora de cada aparato, a un alumno
+  cuyo celular andaba adelantado más que el plazo le salía «Se acabó el
+  tiempo: esta vez no alcanzaste a contestar» desde el primer segundo, en
+  todas las preguntas (pasó en una votación contra el profe); uno atrasado
+  veía tiempo de sobra y la base le rechazaba la respuesta. No daba ningún
+  error. Si la medición falla, el desfase queda en cero, como antes. Lo
+  revisa `verificar-pregunta-reloj.js`.
 - **Una sola puerta crea las de «¿qué jugarías?»**: `crearPregunta()`. Había
   cinco inserts (el botón, Táctica, el plan, los archivos y los Tipos), y el
   tiempo elegido tenía que viajar en todos: el que se olvidara dejaría esa

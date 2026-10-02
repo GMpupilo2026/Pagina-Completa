@@ -7006,6 +7006,8 @@
             const { data } = await sb.auth.getSession();
             session = data.session;
             if (!session) { window.location.href = "login.html"; return; }
+            // La hora de la base, para las cuentas regresivas (preguntas con tiempo, calentamiento).
+            if (window.RelojServidor) RelojServidor.iniciar(sb);
 
             const { data: profileData, error: profileError } = window.MiPerfil ? await window.MiPerfil.obtener(session.user.id)
                 : await sb.from("profiles").select("*").eq("id", session.user.id).single();
