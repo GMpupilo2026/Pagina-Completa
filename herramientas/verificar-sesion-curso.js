@@ -756,25 +756,39 @@ async function pruebaCoordenadasDelAlumno(browser) {
     await alineacion(tres.page, "chessboard", "el tablero de la clase " + v.nombre);
   }
 
-  /* En un monitor ancho la sesión se ensancha y el tablero crece (la regla de
-     `min-width: 1440px` de css/styles.css): antes se quedaba en 560 px con media
-     pantalla vacía a los lados. Se mide que crezca, que las coordenadas lo sigan y
-     que las cajas de abajo midan lo mismo que él; y que a 1280 px no cambie nada. */
-  const anchos = () => tres.page.evaluate(() => {
-    const w = (s) => Math.round(document.querySelector(s).getBoundingClientRect().width);
-    return { seccion: w("#app > section"), envoltorio: w(".board-coords-outer:has(#chessboard)"),
-             barra: w("#clase-cmd"), desborde: document.documentElement.scrollWidth > innerWidth };
+  /* En un monitor ancho la sesión se ensancha y «Alumnos conectados» pasa a una
+     columna a la izquierda del tablero (la regla de `min-width: 1440px` de
+     css/styles.css): antes quedaba media pantalla vacía a los lados. El tablero se
+     queda en sus 560 px. Se mide la PANTALLA —dónde cae cada tarjeta—, que a 1280 px
+     no cambie nada y que «Herramientas en grande» siga trayendo a los alumnos. */
+  const donde = () => tres.page.evaluate(() => {
+    const caja = (s) => { const r = document.querySelector(s).getBoundingClientRect(); return { izq: Math.round(r.left), der: Math.round(r.right), arriba: Math.round(r.top), ancho: Math.round(r.width) }; };
+    return { seccion: caja("#app > section").ancho, tablero: caja(".board-coords-outer:has(#chessboard)"),
+             alumnos: caja("#students-panel"), motor: caja("#engine-panel"), barra: caja("#clase-cmd").ancho,
+             desborde: document.documentElement.scrollWidth > innerWidth };
   });
   await tres.page.setViewportSize({ width: 1920, height: 1000 });
-  const ancho = await anchos();
-  if (ancho.seccion > 1024 && ancho.envoltorio > 600) bien("en un monitor ancho la clase se ensancha (" + ancho.seccion + " px) y el tablero crece (" + ancho.envoltorio + " px)");
-  else mal("en un monitor ancho la clase no aprovecha el espacio: sección de " + ancho.seccion + " px, tablero de " + ancho.envoltorio);
-  igual("y lo de abajo del tablero mide lo mismo que él", ancho.barra, ancho.envoltorio);
+  const ancho = await donde();
+  if (ancho.seccion > 1024) bien("en un monitor ancho la clase se ensancha (" + ancho.seccion + " px)");
+  else mal("en un monitor ancho la clase no aprovecha el espacio: sección de " + ancho.seccion + " px");
+  if (ancho.alumnos.der < ancho.tablero.izq && Math.abs(ancho.alumnos.arriba - ancho.tablero.arriba) <= 4) bien("los alumnos conectados van a la izquierda del tablero, a su altura");
+  else mal("los alumnos conectados no quedaron a la izquierda del tablero: " + JSON.stringify([ancho.alumnos, ancho.tablero]));
+  if (ancho.motor.izq > ancho.tablero.der) bien("y el motor sigue a la derecha");
+  else mal("el motor no quedó a la derecha del tablero: " + JSON.stringify([ancho.motor, ancho.tablero]));
+  igual("el tablero se queda en sus 560 px", ancho.tablero.ancho, 560);
+  igual("y lo de abajo del tablero mide lo mismo que él", ancho.barra, ancho.tablero.ancho);
   igual("sin nada que se salga a lo ancho", ancho.desborde, false);
   await alineacion(tres.page, "chessboard", "el tablero de la clase en un monitor ancho");
+  await tres.page.click("#grandes-abrir-btn");
+  igual("«Herramientas en grande» sigue trayendo a los alumnos", await tres.page.evaluate(() => {
+    const ventana = document.getElementById("herramientas-profe").getBoundingClientRect();
+    const a = document.getElementById("students-panel").getBoundingClientRect();
+    return a.left >= ventana.left && a.right <= ventana.right && a.width > 600;
+  }), true);
+  await tres.page.click("#grandes-cerrar-btn");
   await tres.page.setViewportSize({ width: 1280, height: 1000 });
-  const angosto = await anchos();
-  igual("a 1280 px todo sigue como antes", [angosto.seccion, angosto.envoltorio], [1024, 560]);
+  const angosto = await donde();
+  igual("a 1280 px todo sigue como antes", [angosto.seccion, angosto.tablero.ancho, angosto.alumnos.izq > angosto.tablero.der], [1024, 560, true]);
   igual("sin errores en consola", tres.errores.join(" | ") || "ninguno", "ninguno");
   await tres.ctx.close();
 }
