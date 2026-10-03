@@ -188,6 +188,9 @@ for (const archivo of archivos) {
   malos(renglonMal, "renglones de tarea que no se llenarían o no abrirían");
   ok(gen.tareas.some((t) => t.items.some((r) => ["batalla-naval", "sonar", "confites", "ilumina", "memoria"].includes(r.material_slug))),
     "las tareas traen también juegos, no solo ejercicios");
+  const frases = gen.tareas.flatMap((t) => t.items.map((r) => Material.frase(r)));
+  ok(!frases.some((f) => /\b1 (ejercicios|líneas|lecciones|partidas|posiciones|finales|niveles|rondas|series|tandas)\b/.test(f)),
+    "ningún renglón dice «1 líneas»: con 1 va en singular");
 }
 
 console.log("\nLa página, conectada");
