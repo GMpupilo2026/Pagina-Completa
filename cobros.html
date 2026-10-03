@@ -144,9 +144,10 @@
                 <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6">
                     <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1"><span aria-hidden="true">💵</span> Pago adelantado o sin cobro previo</h2>
                     <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">
-                        Para cuando pagan antes de que salga el cobro: los meses que se adelantan se emiten y quedan pagados, y la
-                        corrida diaria ya no los vuelve a cobrar. También un periodo a la medida de un plan (de qué día a qué día:
-                        dos semanas, mes y medio, lo que quedaba de un mes). El pago de un cobro que ya salió se registra en la ficha «Cobros».
+                        Para cuando pagan antes de que salga el cobro: se propone el periodo que sigue y su monto, y puedes cambiar
+                        de qué día a qué día cubre (dos semanas, mes y medio, lo que quedaba de un mes), el monto y cuánto paga hoy.
+                        Si paga una parte, lo que falta queda pendiente en ese cobro. La corrida diaria ya no vuelve a cobrar esos días.
+                        El pago de un cobro que ya salió se registra en la ficha «Cobros».
                     </p>
                     <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                         <div class="sm:col-span-2">
@@ -161,27 +162,10 @@
                             <label for="pa-periodos" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Cuántos periodos</label>
                             <input id="pa-periodos" type="number" min="1" max="24" value="1" aria-describedby="pa-plan-ayuda" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
                         </div>
-                        <div id="pa-otro-cell" class="hidden sm:col-span-2 lg:col-span-3 grid gap-3 grid-cols-3">
-                            <div>
-                                <label for="pa-concepto" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Concepto</label>
-                                <input id="pa-concepto" type="text" maxlength="200" placeholder="Inscripción al torneo" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
-                            </div>
-                            <div>
-                                <label for="pa-monto" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Monto</label>
-                                <input id="pa-monto" type="number" min="0" step="0.01" placeholder="15000" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
-                            </div>
-                            <div id="pa-moneda-cell">
-                                <label for="pa-moneda" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Moneda</label>
-                                <select id="pa-moneda" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
-                                    <option value="CRC">Colones (₡)</option>
-                                    <option value="USD">Dólares ($)</option>
-                                </select>
-                            </div>
-                        </div>
-                        <!-- De qué día a qué día cubre: obligatorio en «un periodo a la
-                             medida» de un plan (esos días ya no los vuelve a cobrar la
+                        <!-- De qué día a qué día cubre: obligatorio en un plan (se propone
+                             el periodo que sigue; esos días ya no los vuelve a cobrar la
                              corrida) y opcional en «Otra cosa». -->
-                        <div id="pa-periodo-cell" class="hidden sm:col-span-2 grid gap-3 grid-cols-2">
+                        <div id="pa-periodo-cell" class="sm:col-span-2 grid gap-3 grid-cols-2">
                             <div>
                                 <label for="pa-desde" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Cubre desde</label>
                                 <input id="pa-desde" type="date" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
@@ -189,6 +173,30 @@
                             <div>
                                 <label for="pa-hasta" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Cubre hasta</label>
                                 <input id="pa-hasta" type="date" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            </div>
+                        </div>
+                        <div id="pa-otro-cell" class="sm:col-span-2 lg:col-span-4 grid gap-3 grid-cols-2 lg:grid-cols-4">
+                            <div>
+                                <label for="pa-concepto" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Concepto</label>
+                                <input id="pa-concepto" type="text" maxlength="200" placeholder="Inscripción al torneo" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            </div>
+                            <div>
+                                <label for="pa-monto" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Monto del cobro</label>
+                                <input id="pa-monto" type="number" min="0" step="0.01" placeholder="15000" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            </div>
+                            <!-- Pago parcial: en blanco paga todo; menos, y lo que falta
+                                 queda pendiente en ese cobro. -->
+                            <div>
+                                <label for="pa-pagado" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Paga hoy</label>
+                                <input id="pa-pagado" type="number" min="0" step="0.01" placeholder="Todo" aria-describedby="pa-pagado-ayuda" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                <p id="pa-pagado-ayuda" class="text-xs text-brand-450 dark:text-brand-350 mt-1">En blanco, todo. Si es menos, lo que falta queda pendiente.</p>
+                            </div>
+                            <div id="pa-moneda-cell">
+                                <label for="pa-moneda" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Moneda</label>
+                                <select id="pa-moneda" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                    <option value="CRC">Colones (₡)</option>
+                                    <option value="USD">Dólares ($)</option>
+                                </select>
                             </div>
                         </div>
                         <div>

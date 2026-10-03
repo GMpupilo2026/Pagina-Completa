@@ -346,8 +346,6 @@ function llenarPagoAdelantado() {
     pintarQuePaga();
 }
 
-const PERIODO_DE = { mensual: "mes", trimestral: "trimestre", semestral: "semestre", anual: "año" };
-
 let paAlumnoPintado = null;
 
 function pintarQuePaga() {
@@ -362,12 +360,9 @@ function pintarQuePaga() {
     suscripciones.filter((s) => s.student_id === alumno).forEach((s) => {
         const p = planes.find((x) => x.id === s.plan_id);
         if (!p || !p.activo) return;
-        const o = el("option", null, "Adelantar «" + p.nombre + "»");
+        const o = el("option", null, "«" + p.nombre + "»: adelantar o un periodo a la medida");
         o.value = s.id;
         sel.appendChild(o);
-        const medida = el("option", null, "«" + p.nombre + "»: un periodo a la medida (de qué día a qué día)");
-        medida.value = "medida:" + s.id;
-        sel.appendChild(medida);
     });
     const otro = el("option", null, "Otra cosa (sin cobro previo)");
     otro.value = "otro";
@@ -376,38 +371,67 @@ function pintarQuePaga() {
     pintarAyudaAdelanto();
 }
 
-/* Qué se eligió en «Qué paga»: adelantar periodos de un plan, un periodo a la
-   medida de un plan, u otra cosa sin plan. */
+/* Qué se eligió en «Qué paga»: un periodo de un plan (el que sigue, o el que
+   se diga) u otra cosa sin plan. */
 function queSePaga() {
     const que = document.getElementById("pa-que").value;
     if (!que || que === "otro") return { modo: "otro" };
-    if (que.startsWith("medida:")) return { modo: "medida", suscripcion: que.slice(7) };
-    return { modo: "adelantar", suscripcion: que };
+    return { modo: "plan", suscripcion: que };
 }
 
+/* En un plan todo se propone y todo se puede cambiar: «Cuántos periodos»
+   llena las dos fechas con el periodo que sigue (cobro_siguiente()), y las
+   fechas, el concepto y el monto (cobro_cotizar()). Antes «adelantar» no
+   dejaba tocar nada, y contaba un pedazo de mes como un periodo: a quien ya
+   tenía pagado hasta el 15, «adelantar 1» le cobraba del 16 al 31. */
 function pintarAyudaAdelanto() {
     const { modo, suscripcion } = queSePaga();
-    document.getElementById("pa-plan-cell").classList.toggle("hidden", modo !== "adelantar");
-    document.getElementById("pa-otro-cell").classList.toggle("hidden", modo === "adelantar");
-    document.getElementById("pa-periodo-cell").classList.toggle("hidden", modo === "adelantar");
-    // En un periodo a la medida la moneda es la del plan: no se elige.
-    document.getElementById("pa-moneda-cell").classList.toggle("hidden", modo === "medida");
+    document.getElementById("pa-plan-cell").classList.toggle("hidden", modo !== "plan");
+    // En un plan la moneda es la del plan: no se elige.
+    document.getElementById("pa-moneda-cell").classList.toggle("hidden", modo === "plan");
     const ayuda = document.getElementById("pa-plan-ayuda");
     if (modo === "otro") {
         ayuda.textContent = document.getElementById("pa-alumno").value
-            ? "Se emite un cobro con ese concepto y queda pagado, con su recibo. «Cubre desde / hasta» es opcional." : "";
+            ? "Se emite un cobro con ese concepto y queda pagado (o con lo que falte pendiente), con su recibo. «Cubre desde / hasta» es opcional." : "";
         return;
     }
     const s = suscripciones.find((x) => x.id === suscripcion);
     const p = s && planes.find((x) => x.id === s.plan_id);
     if (!p) { ayuda.textContent = ""; return; }
-    if (modo === "medida") return cotizarMedida();
-    const cada = plata(p.monto * (1 - (Number(s.descuento_pct) || 0) / 100), p.moneda);
-    ayuda.textContent = "Cada " + (PERIODO_DE[p.periodicidad] || "periodo") + " de este plan es de " + cada
-        + ". Se pagan los periodos que siguen sin pagar, empezando por el más viejo (si debe algo, eso va primero).";
+    return proponerPeriodo();
 }
 
-/* Lo que propone la base para un periodo a la medida: el concepto con el
+let paPendientes = null;    // los cobros del plan que siguen sin pagar
+
+/* El periodo que sigue: desde el primer día que nada cubre, «Cuántos
+   periodos» del plan de largo. Lo dice la base, que sabe qué está pagado. */
+let siguientePeticion = 0;
+async function proponerPeriodo() {
+    const { modo, suscripcion } = queSePaga();
+    if (modo !== "plan") return;
+    const periodos = Number(document.getElementById("pa-periodos").value);
+    const ayuda = document.getElementById("pa-plan-ayuda");
+    if (!Number.isInteger(periodos) || periodos < 1 || periodos > 24) {
+        ayuda.textContent = "Se pueden adelantar de 1 a 24 periodos.";
+        return;
+    }
+    const mia = ++siguientePeticion;
+    const { data, error } = await sb.rpc("cobro_siguiente", { p_suscripcion: suscripcion, p_periodos: periodos });
+    if (mia !== siguientePeticion) return;
+    if (error) { ayuda.textContent = "No se pudo calcular el periodo que sigue: " + error.message; return; }
+    paPendientes = data.pendientes || null;
+    document.getElementById("pa-desde").value = data.desde || "";
+    document.getElementById("pa-hasta").value = data.hasta || "";
+    if (!data.hasta) {
+        ayuda.textContent = "Ese plan ya está cubierto hasta que termina: no queda nada que adelantar.";
+        return;
+    }
+    // El monto que se propone es el del periodo: lo pagado hoy vuelve a «todo».
+    document.getElementById("pa-pagado").value = "";
+    return cotizarMedida();
+}
+
+/* Lo que propone la base para el periodo de un plan: el concepto con el
    periodo en palabras y el monto proporcional (cobro_cotizar(), la misma
    cuenta que usa la corrida para los días sueltos). Se escribe en las
    casillas y se puede cambiar. Si esos días ya están en un cobro vigente del
@@ -416,7 +440,7 @@ let cotizacionPeticion = 0;
 async function cotizarMedida() {
     const { modo, suscripcion } = queSePaga();
     const ayuda = document.getElementById("pa-plan-ayuda");
-    if (modo !== "medida") return;
+    if (modo !== "plan") return;
     const desde = document.getElementById("pa-desde").value;
     const hasta = document.getElementById("pa-hasta").value;
     if (!desde || !hasta) {
@@ -430,10 +454,13 @@ async function cotizarMedida() {
     if (error) { ayuda.textContent = "No se pudo calcular: " + error.message; return; }
     document.getElementById("pa-concepto").value = data.concepto || "";
     document.getElementById("pa-monto").value = data.monto != null ? String(data.monto) : "";
+    const debe = paPendientes
+        ? " Ojo: este plan tiene cobros sin pagar (" + paPendientes + "); esos se pagan en la ficha «Cobros», o se anulan si no van."
+        : "";
     ayuda.textContent = data.se_cruza_con
         ? "⚠️ Esos días ya están en otro cobro de este plan (" + data.se_cruza_con + "). Paga ese cobro desde «Cobros», o anúlalo o corrige su periodo primero."
-        : "Por esos días el plan da " + plata(data.monto, data.moneda) + " (proporcional a su precio). Puedes cambiar el monto o el concepto. "
-          + "La corrida diaria ya no cobra esos días; si dentro del mes quedan otros sin cubrir, los cobra aparte según el plan del alumno.";
+        : "Por esos días el plan da " + plata(data.monto, data.moneda) + ". Puedes cambiar las fechas, el monto, el concepto y cuánto paga hoy. "
+          + "La corrida diaria ya no cobra esos días." + debe;
 }
 
 async function registrarPagoAdelantado() {
@@ -444,37 +471,37 @@ async function registrarPagoAdelantado() {
     const fechaPago = document.getElementById("pa-fecha").value || hoyCR();
     if (!alumno) return avisar("Elige el alumno.", true);
     if (fechaPago > hoyCR()) return avisar("La fecha del pago no puede ser en el futuro.", true);
-    let res;
-    if (modo === "adelantar") {
-        const periodos = Number(document.getElementById("pa-periodos").value);
-        if (!Number.isInteger(periodos) || periodos < 1 || periodos > 24) return avisar("Se pueden adelantar de 1 a 24 periodos.", true);
-        res = await sb.rpc("pago_adelantado", { p_suscripcion: suscripcion, p_periodos: periodos, p_metodo: metodo,
-            p_referencia: referencia, p_nota: null, p_fecha: fechaPago });
-    } else {
-        const concepto = document.getElementById("pa-concepto").value.trim();
-        const textoMonto = document.getElementById("pa-monto").value.trim();
-        const monto = Number(textoMonto);
-        const desde = document.getElementById("pa-desde").value;
-        const hasta = document.getElementById("pa-hasta").value;
-        if (modo === "medida" && (!desde || !hasta)) return avisar("Elige de qué día a qué día cubre este pago.", true);
-        if (!desde !== !hasta) return avisar("Falta una de las dos fechas de «Cubre desde / hasta» (o deja las dos en blanco).", true);
-        if (desde && hasta < desde) return avisar("El periodo termina antes de empezar: revisa las dos fechas.", true);
-        if (modo === "otro" && !concepto) return avisar("Escribe qué se paga.", true);
-        // En un periodo a la medida, en blanco quiere decir «lo que propone la base».
-        if ((modo === "otro" || textoMonto) && !(monto > 0)) return avisar("El monto tiene que ser mayor que cero.", true);
-        res = await sb.rpc("registrar_cobro_pagado_con_periodo", {
-            p_alumno: alumno, p_concepto: concepto || null, p_monto: textoMonto ? monto : null,
-            p_moneda: document.getElementById("pa-moneda").value, p_metodo: metodo,
-            p_referencia: referencia, p_nota: null, p_fecha: fechaPago,
-            p_suscripcion: modo === "medida" ? suscripcion : null,
-            p_desde: desde || null, p_hasta: hasta || null,
-        });
-    }
+    const concepto = document.getElementById("pa-concepto").value.trim();
+    const textoMonto = document.getElementById("pa-monto").value.trim();
+    const monto = Number(textoMonto);
+    const textoPagado = document.getElementById("pa-pagado").value.trim();
+    const pagado = Number(textoPagado);
+    const desde = document.getElementById("pa-desde").value;
+    const hasta = document.getElementById("pa-hasta").value;
+    if (modo === "plan" && (!desde || !hasta)) return avisar("Elige de qué día a qué día cubre este pago.", true);
+    if (!desde !== !hasta) return avisar("Falta una de las dos fechas de «Cubre desde / hasta» (o deja las dos en blanco).", true);
+    if (desde && hasta < desde) return avisar("El periodo termina antes de empezar: revisa las dos fechas.", true);
+    if (modo === "otro" && !concepto) return avisar("Escribe qué se paga.", true);
+    // En un plan, en blanco quiere decir «lo que propone la base».
+    if ((modo === "otro" || textoMonto) && !(monto > 0)) return avisar("El monto tiene que ser mayor que cero.", true);
+    // Lo que paga hoy: en blanco, todo; menos, y lo que falta queda pendiente.
+    if (textoPagado && !(pagado > 0)) return avisar("Lo que paga hoy tiene que ser mayor que cero (o déjalo en blanco si paga todo).", true);
+    if (textoPagado && textoMonto && pagado > monto) return avisar("Lo que paga hoy es más que el monto del cobro.", true);
+    const res = await sb.rpc("registrar_cobro_y_abono", {
+        p_alumno: alumno, p_concepto: concepto || null, p_monto: textoMonto ? monto : null,
+        p_moneda: document.getElementById("pa-moneda").value, p_metodo: metodo,
+        p_referencia: referencia, p_nota: null, p_fecha: fechaPago,
+        p_suscripcion: modo === "plan" ? suscripcion : null,
+        p_desde: desde || null, p_hasta: hasta || null,
+        p_pagado: textoPagado ? pagado : null,
+    });
     if (res.error) return avisar("No se pudo registrar: " + errorDeCobro(res.error), true);
-    ["pa-referencia", "pa-concepto", "pa-monto", "pa-desde", "pa-hasta"].forEach((id) => { document.getElementById(id).value = ""; });
+    ["pa-referencia", "pa-concepto", "pa-monto", "pa-pagado", "pa-desde", "pa-hasta"].forEach((id) => { document.getElementById(id).value = ""; });
     document.getElementById("pa-periodos").value = "1";
     await cargarTodo();
     await trasRegistrarPago(res.data);
+    // Lo que se acaba de pagar ya cubre esos días: se propone el periodo que sigue.
+    pintarAyudaAdelanto();
 }
 
 // ------------------------------------------------------------ el prefijo
@@ -551,6 +578,7 @@ function engancharRecibos() {
     document.getElementById("rc-mas").addEventListener("click", () => cargarRecibos(false));
     document.getElementById("pa-alumno").addEventListener("change", pintarQuePaga);
     document.getElementById("pa-que").addEventListener("change", pintarAyudaAdelanto);
+    document.getElementById("pa-periodos").addEventListener("change", proponerPeriodo);
     ["pa-desde", "pa-hasta"].forEach((id) => document.getElementById(id).addEventListener("change", cotizarMedida));
     // Un doble clic registraría dos pagos: mientras guarda, el botón no responde.
     document.getElementById("pa-guardar").addEventListener("click", async (ev) => {

@@ -1089,12 +1089,25 @@ async function programarRecordatorio() {
     await cargarRecordatoriosProgramados();
 }
 
+/* El token se pide fresco en cada llamada, no del `session` que se guardó al
+   cargar la página: ese access_token vence a la hora y sb lo renueva por
+   dentro sin que la variable se entere. Con el viejo, la función contestaba
+   «Token inválido» (al ver un recibo con la página abierta un rato). Igual
+   que llamarInformes() en js/informes.js. */
+async function tokenFresco() {
+    const { data } = await sb.auth.getSession();
+    if (!data.session) { window.location.href = "login.html"; throw new Error("La sesión se cerró: vuelve a entrar."); }
+    session = data.session;
+    return data.session.access_token;
+}
+
 async function llamarCobros(cuerpo) {
+    const token = await tokenFresco();
     const res = await fetch(FUNCION_COBROS, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${session.access_token}`,
+            "Authorization": `Bearer ${token}`,
             "apikey": window.SUPABASE_ANON_KEY,
         },
         body: JSON.stringify(cuerpo),
@@ -1382,11 +1395,12 @@ async function verMuestraCorreo(boton) {
 }
 
 async function llamarCorreos(cuerpo) {
+    const token = await tokenFresco();
     const res = await fetch(FUNCION_CORREOS, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${session.access_token}`,
+            "Authorization": `Bearer ${token}`,
             "apikey": window.SUPABASE_ANON_KEY,
         },
         body: JSON.stringify(cuerpo),

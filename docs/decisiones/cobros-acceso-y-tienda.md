@@ -494,6 +494,53 @@ una cuenta que SOLO coordina (no hay ninguna real; hay que marcar una dentro
 de la transacción). Su caso lo cubren `corrijo_cobros_de()`, que da `false` a
 quien no supervisa ni administra, y `verificar-cobros.js` en la página.
 
+#### El pago adelantado se puede editar entero, y pagar en partes
+
+Lo pidió el dueño después de usarlo: «adelantar N periodos» no dejaba tocar
+nada (ni las fechas, ni el monto, ni cuánto se paga) y daba montos que «no
+son». El caso real: una alumna con `pagado_hasta` del 15 de diciembre;
+«adelantar 1» le emitió y le cobró **del 16 al 31 de diciembre (₡5 202,58)**,
+porque `pago_adelantado()` contaba ese pedazo de mes como un periodo.
+
+Ahora la ficha ya no llama a `pago_adelantado()` (queda en la base, sin uso):
+
+- **Un plan se ofrece una sola vez** en «Qué paga». Se elige y la base propone
+  el periodo que sigue (`cobro_siguiente(suscripción, periodos)`): desde el
+  primer día que nada cubre —el inicio del plan, `pagado_hasta` o un cobro
+  vigente del plan— y N periodos del plan desde ahí, así que desde el 16 de
+  diciembre un mes llega al 15 de enero y vale un mes (₡10 080 con la beca del
+  28 %, no ₡5 202,58). Respeta el `fin` del plan. Después `cobro_cotizar()`
+  propone el concepto y el monto.
+- **Todo se puede cambiar antes de registrar**: las dos fechas (vuelve a
+  cotizar), el concepto y el monto.
+- **Pago parcial**: «Paga hoy» (en blanco, todo). El cobro se emite por el
+  monto entero y se paga solo lo que trajo, con su recibo; lo que falta queda
+  pendiente en ESE cobro, como cualquier saldo (sale en «Cobros», con sus
+  avisos, y se termina de pagar desde ahí). Vale también para «Otra cosa».
+- **Lo que el plan debe se dice, no se paga callado.** `cobro_siguiente()`
+  devuelve los cobros del plan que siguen pendientes y la ayuda los nombra:
+  se pagan en «Cobros», o se anulan si no van. Antes «adelantar» los pagaba
+  primero sin decirlo, y eso es parte de por qué el monto sorprendía.
+- Lo registra `registrar_cobro_y_abono()`: el cuerpo de
+  `registrar_cobro_pagado_con_periodo()` con `p_pagado`, que no puede ser 0 ni
+  más que el monto. Lleva otro nombre por lo de PostgREST con dos firmas (ver
+  `paquete_guardar()`), y la de siempre quedó como una línea que la llama.
+
+Comprobado en la base, en una transacción revertida, con la cuenta real de la
+coordinadora de ADAPZ y esa alumna: el periodo que sigue sale del 1 al 31 de
+enero (el cobro del 16 al 31 de diciembre sigue vigente con su recibo
+anulado, y la respuesta lo nombra entre los pendientes junto con los ₡80 de
+octubre); del 16 de diciembre al 15 de enero cotiza ₡10 080 y dice con qué
+choca; pagar ₡4 000 de enero deja el cobro en ₡10 080 con ₡6 080 pendientes;
+y pagar 200 de un cobro de 100 se rechaza.
+
+**El «Token inválido» al ver un recibo** era el token guardado al cargar la
+página: vence a la hora y `sb` lo renueva por dentro sin que la variable
+`session` se entere. `llamarCobros()` y `llamarCorreos()` lo piden fresco en
+cada llamada (`tokenFresco()`), como ya hacía `llamarInformes()`.
+`verificar-cobros.js` cambia el token después de cargar y mira que vaya el
+nuevo.
+
 **Al tocar esto, correr `node herramientas/verificar-cobros.js`** (las tres
 caras: quien coordina, quien supervisa y la alumna) **y
 `node herramientas/verificar-recibo.js`** (el HTML del recibo, sin navegador).
