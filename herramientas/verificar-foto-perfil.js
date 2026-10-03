@@ -347,8 +347,8 @@ async function pruebasClase(browser) {
     caja.id = "prueba-puntos";
     document.body.appendChild(caja);
     pintarListaDePuntos(caja, [
-      { student_id: "u-beto", nombre: "Beto Mora", correctas: 3, respuestas: 3 },
-      { student_id: "u-ana", nombre: "Ana Rojas", correctas: 1, respuestas: 2 },
+      { student_id: "u-beto", nombre: "Beto Mora", correctas: 3, respuestas: 3, puntos_preguntas: 90 },
+      { student_id: "u-ana", nombre: "Ana Rojas", correctas: 1, respuestas: 2, puntos_preguntas: 25 },
     ]);
     return [...caja.querySelectorAll("li")].length;
   });
