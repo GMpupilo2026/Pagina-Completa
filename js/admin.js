@@ -838,12 +838,16 @@
                 resetBtn.textContent = "Reenviar acceso";
                 resetBtn.addEventListener("click", async () => {
                     try {
-                        /* Un alumno con usuario de la Academia no tiene buzón:
-                           el enlace va al correo de su casa, y eso lo sabe
-                           hacer `reenviar-acceso` (correo_de_contacto()).
-                           Por el camino de siempre salía a la dirección
-                           muerta y la pantalla decía «enviado». */
-                        if (UsuarioAlumno.esInterno(u.email)) {
+                        /* Todas las cuentas van por `reenviar-acceso`: con un
+                           usuario de la Academia el enlace sale al correo de
+                           su casa (correo_de_contacto()), y con un correo de
+                           verdad, a ese correo, con nuestro texto y la hora en
+                           el asunto. La plantilla de Supabase («Reset your
+                           password», igual siempre) hacía que Gmail juntara los
+                           correos y la persona abriera uno ya anulado. Solo la
+                           cuenta que administra sigue por admin-manage-users:
+                           reenviar-acceso no la toca. */
+                        if (!u.is_admin) {
                             const res = await fetch(`${window.SUPABASE_URL}/functions/v1/reenviar-acceso`, {
                                 method: "POST",
                                 headers: {

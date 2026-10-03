@@ -37,11 +37,33 @@ function clienteFalso(haySesion) {
 window.SUPABASE_URL = "https://ejemplo.supabase.co";
 window.SUPABASE_ANON_KEY = "anon-de-mentira";
 window.__claves = [];     // lo que se mandó a updateUser
-window.__enlaces = [];    // lo que se mandó a resetPasswordForEmail
+window.__enlaces = [];    // lo que se mandó a resetPasswordForEmail (no debe usarse)
+window.__pedidos = [];    // lo que se le pidió a recuperar-acceso
+window.__canjes = [];     // lo que se mandó a verifyOtp
+window.__sesion = ${haySesion
+  ? `{ user: { id: "u-1", email: ${JSON.stringify(CORREO)} } }` : "null"};
+(function () {
+  const original = window.fetch;
+  window.fetch = function (url, opciones) {
+    if (String(url).indexOf("/functions/v1/") !== -1) {
+      window.__pedidos.push({ url: String(url), cuerpo: JSON.parse((opciones && opciones.body) || "{}") });
+      return Promise.resolve(new Response('{"ok":true}', { status: 200, headers: { "Content-Type": "application/json" } }));
+    }
+    return original.apply(this, arguments);
+  };
+})();
 window.sb = {
   auth: {
-    getSession: () => Promise.resolve({ data: { session: ${haySesion
-      ? `{ user: { id: "u-1", email: ${JSON.stringify(CORREO)} } }` : "null"} } }),
+    getSession: () => Promise.resolve({ data: { session: window.__sesion } }),
+    // El token "bueno" abre la sesión; cualquier otro es uno anulado.
+    verifyOtp: (datos) => {
+      window.__canjes.push(datos);
+      if (datos.token_hash === "token-bueno") {
+        window.__sesion = { user: { id: "u-1", email: ${JSON.stringify(CORREO)} } };
+        return Promise.resolve({ data: { session: window.__sesion }, error: null });
+      }
+      return Promise.resolve({ data: { session: null }, error: { message: "Email link is invalid or has expired" } });
+    },
     updateUser: (cambios) => {
       window.__claves.push(cambios);
       return Promise.resolve({ data: {}, error: window.__falloClave || null });
@@ -167,9 +189,12 @@ async function enlaceVencido(browser) {
 
   ok("no pide una contraseña que no podría guardar", !(await seVe(p, "#paso-crear")));
   ok("ofrece pedir otro enlace", await seVe(p, "#paso-sin-enlace"));
-  ok("dice que se venció",
-     (await p.textContent("#sin-enlace-motivo")).includes("venció"),
-     await p.textContent("#sin-enlace-motivo"));
+  const motivo = await p.textContent("#sin-enlace-motivo");
+  ok("dice que el enlace ya no sirve", motivo.includes("ya no sirve"), motivo);
+  /* Lo que de verdad pasaba: la persona abría un correo viejo, ya anulado por
+     uno más nuevo, y pedía otro, y otro. Tiene que leer eso ANTES de pedir. */
+  ok("dice que pedir uno nuevo anula los anteriores y que abra el más reciente",
+     /los anteriores dejan de funcionar/.test(motivo) && /más reciente/.test(motivo), motivo);
   ok("deja ir a iniciar sesión si ya tiene contraseña",
      (await p.textContent("#paso-sin-enlace")).includes("Inicia sesión"));
   ok("y sigue explicando cómo se entra", await seVe(p, "#como-entrar"));
@@ -177,15 +202,57 @@ async function enlaceVencido(browser) {
   await p.fill("#correo-otro", CORREO);
   await p.click("#pedir-otro");
   await p.waitForTimeout(200);
-  const pedidos = await p.evaluate(() => window.__enlaces);
-  igual("pide el enlace nuevo para ese correo", pedidos.length && pedidos[0].correo, CORREO);
-  ok("y el enlace nuevo vuelve a esta misma página",
-     pedidos[0].opciones.redirectTo.endsWith("/bienvenida.html"), pedidos[0].opciones.redirectTo);
-  ok("no le cuenta a nadie si esa cuenta existe",
-     /si esa cuenta existe/i.test(await p.textContent("#otro-msg")),
-     await p.textContent("#otro-msg"));
+  const pedidos = await p.evaluate(() => window.__pedidos);
+  igual("pide el enlace nuevo a recuperar-acceso, para ese correo",
+        pedidos.map((x) => [x.url.replace("https://ejemplo.supabase.co", ""), x.cuerpo.usuario]),
+        [["/functions/v1/recuperar-acceso", CORREO]]);
+  igual("NO va por resetPasswordForEmail (la plantilla de Supabase, en inglés y siempre igual)",
+        await p.evaluate(() => window.__enlaces.length), 0);
+  const dice = await p.textContent("#otro-msg");
+  ok("no le cuenta a nadie si esa cuenta existe", /si esa cuenta existe/i.test(dice), dice);
+  ok("dice a qué hora salió, para que abra ESE correo",
+     /pedido a las \d{1,2}:\d{2}/.test(dice) && /los de antes ya no sirven/.test(dice), dice);
 
   await contexto.close();
+}
+
+// ---------------------------------------------------------------- 3b. Enlace con token_hash
+/* El enlace de recuperar-acceso / reenviar-acceso apunta al sitio y trae el
+   token en la dirección: lo canjea la página, no el clic. Así un filtro de
+   correo que visita el enlace antes que la persona no lo gasta. */
+async function enlaceConToken(browser) {
+  console.log("\nEnlace con token_hash — se canjea en la página");
+  {
+    const { p, contexto, errores } = await abrir(browser, {
+      haySesion: false, ruta: "/bienvenida.html?token_hash=token-bueno&type=recovery",
+    });
+    igual("lo canjea con verifyOtp, como recuperación",
+          await p.evaluate(() => window.__canjes), [{ token_hash: "token-bueno", type: "recovery" }]);
+    ok("con el token bueno pide la contraseña nueva", await seVe(p, "#paso-crear"));
+    ok("y lo dice como recuperación", (await p.textContent("#titulo")).includes("nueva"),
+       await p.textContent("#titulo"));
+    ok("el token ya no queda en la barra", !p.url().includes("token_hash"), p.url());
+    errores.forEach((e) => { console.log("  ✗ error de la página: " + e); fallos += 1; });
+    await contexto.close();
+  }
+  {
+    const { p, contexto } = await abrir(browser, {
+      haySesion: false, ruta: "/bienvenida.html?token_hash=token-anulado&type=recovery",
+    });
+    ok("con un token anulado no pide una contraseña que no podría guardar", !(await seVe(p, "#paso-crear")));
+    ok("ofrece pedir otro", await seVe(p, "#paso-sin-enlace"));
+    const motivo = await p.textContent("#sin-enlace-motivo");
+    ok("y antes explica que abra el correo más reciente", /más reciente/.test(motivo), motivo);
+    await contexto.close();
+  }
+  {
+    // Recargar con el token ya gastado: la sesión ya está, no es un error.
+    const { p, contexto } = await abrir(browser, {
+      haySesion: true, ruta: "/bienvenida.html?token_hash=token-anulado&type=recovery",
+    });
+    ok("si la sesión ya estaba (recargó la página), sigue pidiendo la contraseña", await seVe(p, "#paso-crear"));
+    await contexto.close();
+  }
 }
 
 // ---------------------------------------------------------------- 4. Sin sesión, sin error
@@ -307,6 +374,7 @@ async function redDeSeguridad(browser) {
     await conEnlaceBueno(browser);
     await verLaContrasena(browser);
     await enlaceVencido(browser);
+    await enlaceConToken(browser);
     await sinSesion(browser);
     await olvidoLaClave(browser);
     await queSeVea(browser);

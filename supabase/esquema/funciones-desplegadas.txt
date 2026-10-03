@@ -26,5 +26,5 @@ explorador-maestros            true         las partidas de maestros de Lichess 
 pizarra-torneo                 true         las posiciones oficiales de chess-results para la sala de cine
 quiniela                       true         la quiniela de resultados de la sala de cine: anotarse, pronosticar, la tabla
 prueba-gratis                  true         la prueba gratis de 3 dias: la crea administracion, sin correo
-recuperar-acceso               false        el olvido de contrasena de un usuario sin buzon
+recuperar-acceso               false        el olvido de contrasena de cualquier cuenta
 reenviar-acceso                true         reenvia el acceso a una cuenta
