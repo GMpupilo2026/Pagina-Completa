@@ -1488,6 +1488,11 @@ siguiente sin buscarlo a mano.
     directamente.
   - En la clase, cada renglón trae sus botones de siempre: «Al tablero»,
     «Preguntar», «Jugar votando» y «Calentamiento».
+- **Se pliega a una línea.** Con diez posiciones ocupaba media pantalla del
+  panel, y el profe no siempre la quiere ver. «Ocultar» deja solo el título y
+  el botón «Mostrar»; queda así en ese aparato (`localStorage`,
+  `panel_lo_que_costo_plegada_v1`), como los grupos plegables del panel. No
+  se quita del todo: plegada sigue a mano para cuando haga falta repasar.
 - **Mirando a otra persona («Ver como») no se muestra**: la función contesta
   con las preguntas de quien entra, no de la persona que se mira.
 - El diagrama es `NotasAlumno.diagrama`, que ahora se exporta: el mismo de
@@ -1501,7 +1506,8 @@ panel`.** Está probado que falla de verdad:
 - sin el enunciado;
 - con los renglones sin orden;
 - con `planes.html` que no abre el plan;
-- con la tarjeta vacía a la vista.
+- con la tarjeta vacía a la vista;
+- con «Ocultar» que no se recuerda al volver al panel.
 
 ### La ronda rápida
 
