@@ -254,6 +254,12 @@ window.MaterialPlataforma = (function () {
      a mano que después pueda decir otra cosa que la barra de al lado. La usan
      tareas.html y proyecto.html (las tareas semanales de un proyecto). */
   const VERBO = { ejercicios: "Resolver", líneas: "Aprender", lecciones: "Hacer" };
+  const SINGULAR = {
+    ejercicios: "ejercicio", líneas: "línea", lecciones: "lección", partidas: "partida",
+    posiciones: "posición", finales: "final", fichas: "ficha", niveles: "nivel",
+    rondas: "ronda", series: "serie", tandas: "tanda", cuestionarios: "cuestionario",
+    diagnósticos: "diagnóstico",
+  };
   function frase(r) {
     const nombre = r.filtro_label || r.material_label;
     if (r.meta_tipo === "minutos") return `Hacer ${r.meta_cantidad} minutos de ${nombre}`;
@@ -270,7 +276,9 @@ window.MaterialPlataforma = (function () {
     if (h && h.frase) return typeof h.frase === "function" ? h.frase(r) : h.frase;
     const unidad = (h && h.unidad) || "ejercicios";
     const verbo = VERBO[unidad] || "Hacer";
-    return `${verbo} ${r.meta_cantidad} ${unidad} de ${nombre}`;
+    // «Aprender 1 línea», no «1 líneas».
+    const palabra = Number(r.meta_cantidad) === 1 ? (SINGULAR[unidad] || unidad) : unidad;
+    return `${verbo} ${r.meta_cantidad} ${palabra} de ${nombre}`;
   }
 
   return { HERRAMIENTAS, META_LABEL, cursos, metas, recortesDe, actividadesDe, herramienta, frase };

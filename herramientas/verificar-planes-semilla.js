@@ -126,7 +126,9 @@ posiciones.forEach(({ p, it }) => {
     if (!it.pregunta) return;
     // Los finales escriben "Línea:" y la táctica "Solución:": las dos son la
     // respuesta que el profesor va a leer en voz alta, así que las dos se juegan.
-    const m = it.pregunta.match(/(?:Solución|Línea):\s*(.+?)(?:\s·|$)/);
+    // En el paso a paso de un proyecto la respuesta va en «④ Respuesta: …» y
+    // termina donde empieza «⑤ Explica por qué».
+    const m = it.pregunta.match(/(?:Solución|Línea):\s*(.+?)(?:\s·|\.?\s*⑤|$)/);
     const linea = m && m[1];
     if (!linea || linea === "—") return;
     conSolucion += 1;

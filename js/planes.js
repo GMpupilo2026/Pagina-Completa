@@ -329,7 +329,7 @@ function pintarItems() {
         const detalle = it.pregunta || it.nota || it.fen;
         if (detalle) {
             const d = document.createElement("p");
-            d.className = "text-xs text-brand-450 dark:text-brand-350 break-words" + (it.fen && !it.pregunta && !it.nota ? " font-mono" : "");
+            d.className = "text-xs text-brand-450 dark:text-brand-350 break-words whitespace-pre-wrap" + (it.fen && !it.pregunta && !it.nota ? " font-mono" : "");
             d.textContent = detalle;
             izq.appendChild(d);
         }

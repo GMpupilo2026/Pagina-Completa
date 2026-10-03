@@ -89,8 +89,42 @@ for (const archivo of archivos) {
   console.log("\nLos planes de la clase en vivo");
   const totalSesiones = fuente.grupos.reduce((n, g) => n + g.sesiones.length, 0);
   ok(gen.planes.length === totalSesiones, `un plan por sesión (${gen.planes.length} de ${totalSesiones})`);
-  malos(gen.planes.filter((p) => !p.items.some((i) => i.tipo === "nota" && /Momento divertido/.test(i.titulo) && String(i.nota || "").trim())).map((p) => p.titulo),
-    "planes sin la nota «🎉 Momento divertido»");
+  /* Cada clase dura 2 horas y va en cinco partes, en orden, cada una con su
+     paso a paso: es lo que el profesor lee de arriba abajo en la clase en vivo. */
+  const PARTES = [["🔥", "Calentamiento"], ["📘", "Contenido"], ["🎉", "Actividad recreativa"], ["✅", "Cierre"], ["📨", "Tarea"]];
+  const partesDe = (p) => p.items.filter((i) => i.tipo === "nota" && /^(🔥|📘|🎉|✅|📨) \d\. .* · \d+ min$/.test(i.titulo));
+  malos(gen.planes.filter((p) => JSON.stringify(partesDe(p).map((i) => i.titulo.split(" ")[0])) !== JSON.stringify(PARTES.map((x) => x[0])))
+    .map((p) => p.titulo + ": " + partesDe(p).map((i) => i.titulo).join(" | ")), "planes sin las cinco partes en orden (calentamiento, contenido, actividad recreativa, cierre, tarea)");
+  malos(gen.planes.filter((p) => partesDe(p).reduce((t, i) => t + Number(i.titulo.match(/(\d+) min$/)[1]), 0) !== 120)
+    .map((p) => p.titulo), "clases que no suman 2 horas (120 minutos)");
+  malos(gen.planes.filter((p) => partesDe(p).some((i) => (String(i.nota || "").match(/^\d+\. /gm) || []).length < 2))
+    .map((p) => p.titulo + ": " + partesDe(p).filter((i) => (String(i.nota || "").match(/^\d+\. /gm) || []).length < 2).map((i) => i.titulo).join(", ")),
+    "partes sin paso a paso (al menos dos pasos numerados)");
+  malos(gen.planes.filter((p) => {
+    const t = p.items.map((i) => i.titulo);
+    const k = (re) => t.findIndex((x) => re.test(x));
+    // Los ejercicios de cada parte van debajo de su nota y antes de la parte siguiente.
+    return p.items.some((i, n) => i.tipo === "posicion" && (/^Calentamiento · /.test(i.titulo) ? !(n > k(/^🔥/) && n < k(/^📘/)) : !(n > k(/^📘/) && n < k(/^🎉/))));
+  }).map((p) => p.titulo), "ejercicios fuera de su parte");
+  malos(gen.planes.filter((p) => p.items.filter((i) => /^Calentamiento · Ejercicio /.test(i.titulo)).length < 2).map((p) => p.titulo), "clases con menos de dos ejercicios de calentamiento");
+  malos(gen.planes.flatMap((p) => p.items.filter((i) => i.tipo === "posicion" && !/② Pregunta: «.+» ③ ⏳ \d+ min.* ④ Respuesta: ./.test(i.pregunta || "")).map((i) => p.titulo + " · " + i.titulo)),
+    "ejercicios sin su paso a paso (pregunta, tiempo y respuesta)");
+  malos(gen.planes.flatMap((p) => p.items.filter((i) => (i.nota || "").length > 2000 || (i.pregunta || "").length > 500 || i.titulo.length > 200).map((i) => p.titulo + " · " + i.titulo)),
+    "renglones que la base rechazaría por largos");
+  const calientes = gen.planes.flatMap((p) => p.items.filter((i) => /^Calentamiento · /.test(i.titulo)).map((i) => i.fen));
+  const delContenido = new Set(gen.planes.flatMap((p) => p.items.filter((i) => /^Contenido · /.test(i.titulo)).map((i) => i.fen)));
+  ok(new Set(calientes).size === calientes.length && !calientes.some((f) => delContenido.has(f)),
+    `los ${calientes.length} ejercicios de calentamiento no se repiten ni repiten uno del contenido`);
+  malos(gen.planes.filter((p) => { const r = partesDe(p)[2]; return !r || /^Qué es: [^\n]*$/.test(r.nota); }).map((p) => p.titulo),
+    "actividades recreativas sin su paso a paso");
+  for (const g of fuente.grupos) {
+    malos(g.sesiones.filter((s) => {
+      const p = gen.planes.find((x) => x.grupo === g.slug && x.numero === s.numero);
+      const t = g.tareas.find((x) => x.desde <= s.fecha && s.fecha < x.vence);
+      const nota = p && partesDe(p)[4];
+      return !t || !nota || !nota.nota.includes("«" + t.titulo + "»");
+    }).map((s) => "sesión " + s.numero), `«${g.nombre}»: clases cuya parte «Tarea» no presenta la tarea de esa semana`);
+  }
   malos(gen.planes.filter((p) => !p.items.some((i) => i.tipo === "posicion" || i.tipo === "leccion") &&
     !/Minilecciones|Cierre|Retroalimentación final|Torneo|Arranque|Analizar/.test(p.titulo)).map((p) => p.titulo),
     "clases de contenido sin ninguna posición ni lección para el tablero");
@@ -154,6 +188,9 @@ for (const archivo of archivos) {
   malos(renglonMal, "renglones de tarea que no se llenarían o no abrirían");
   ok(gen.tareas.some((t) => t.items.some((r) => ["batalla-naval", "sonar", "confites", "ilumina", "memoria"].includes(r.material_slug))),
     "las tareas traen también juegos, no solo ejercicios");
+  const frases = gen.tareas.flatMap((t) => t.items.map((r) => Material.frase(r)));
+  ok(!frases.some((f) => /\b1 (ejercicios|líneas|lecciones|partidas|posiciones|finales|niveles|rondas|series|tandas)\b/.test(f)),
+    "ningún renglón dice «1 líneas»: con 1 va en singular");
 }
 
 console.log("\nLa página, conectada");

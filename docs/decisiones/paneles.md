@@ -3137,10 +3137,42 @@ calentamiento en modo competencia, duelos de equipos, Niebla de Guerra o
 Crazyhouse entre compañeros. `verificar-proyectos.js` falla si una clase no lo
 tiene.
 
+**Cada clase dura 2 horas, en cinco partes y con su paso a paso.** Se pidió
+que el profesor solo tenga que leer y aplicar. El plan de cada sesión va, de
+arriba abajo, en el orden en que se da: 🔥 Calentamiento, 📘 Contenido, 🎉
+Actividad recreativa, ✅ Cierre y 📨 Tarea. Una clase normal reparte 15, 55,
+30, 12 y 8 minutos; una de evaluación o especial, 10, 70, 25, 10 y 5. Cada
+parte es una nota «N. Parte · M min» con sus pasos numerados, y sus ejercicios
+van justo debajo. Cada ejercicio trae en su propio renglón qué preguntar, el
+tiempo, la respuesta y el porqué: ① al tablero, ② la pregunta, ③ el tiempo y
+cómo contestan, ④ la respuesta, ⑤ por qué. La base deja 500 caracteres ahí, y
+lo que se recorta es el porqué, nunca la respuesta. El porqué sale del banco
+(el comentario o la clave del diagrama, la clave de la línea) o, en los
+ejercicios de Lichess, de lo que significa su tema. Los dos ejercicios del
+calentamiento salen del banco de temas según el nivel del grupo (finales y
+cálculo en el avanzado, ataque y defensa en el intermedio, mates y táctica
+básica en el inicial), sin repetir ninguno del proyecto ni del contenido. El
+Contenido trae lo que dice cada lección (su texto, para leerlo o contarlo), las
+ideas que tienen que quedar, los ejercicios guiados, la práctica y la
+microenseñanza. La actividad recreativa se explica paso a paso según lo que
+sea: la clase vota contra el motor o el profe, Kahoot, ronda rápida, el
+calentamiento en competencia, una variante de Juegos, Batalla naval o el Sonar
+votando, a ciegas, simultánea, Habilidades por equipos, torneo, partidas
+temáticas, los juegos para el taller y los duelos por equipos. Si una no se
+reconoce, el generador falla. La Tarea presenta la de esa semana con la frase
+de cada renglón, dónde la ven y cuándo vence. Una nota no pasa de 2000
+caracteres (lo exige la base): si no cabe, sigue en otra. La sesión ya no
+guarda los bloques de 90 minutos; guarda los minutos de cada parte, y la
+página del grupo muestra el plan mismo: una sola copia del paso a paso.
+`proyecto-semilla.js` escribe también un `-actualizar.sql`, que cambia la
+guía, el detalle de cada sesión y los renglones de su plan sin cambiarles el
+id, así que sigue valiendo lo compartido con el profesor.
+
 **La página del grupo.** `proyecto.html` sin `?grupo=` lista los grupos que la
 persona ve; un profesor con un solo grupo va directo a él. Con `?grupo=`:
-la próxima clase arriba, cada clase con su objetivo, sus bloques, el momento
-divertido y «Ver el plan» y «Dar esta clase» (`sesion.html?plan=`), las tareas
+la próxima clase arriba, cada clase con su objetivo, lo que dura cada parte,
+«Ver el plan» y «Dar esta clase» (`sesion.html?plan=`) y su plan entero en
+las cinco partes, las tareas
 de cada semana dichas con la frase de Tareas (`MaterialPlataforma.frase`), la
 evaluación, la rúbrica, el portafolio y la guía. «Mandar a mis alumnos» abre un
 formulario debajo de esa tarea, con los alumnos pedidos de mil en mil, el

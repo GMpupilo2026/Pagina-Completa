@@ -49,13 +49,25 @@ const SESIONES = [
   { id: "s-1", grupo_id: "g-1", numero: 1, fecha: "2020-01-07", titulo: "Arranque", tipo: "especial", plan_id: "plan-1",
     detalle: { objetivo: "Conocer el plan.", bloques: [["0–15'", "Presentar."]], divertido: "Reto relámpago con podio.", sitio: "La clase en vivo." } },
   { id: "s-2", grupo_id: "g-1", numero: 2, fecha: "2099-01-09", titulo: "Rey y peón", tipo: "clase", plan_id: "plan-2",
-    detalle: { objetivo: "La oposición.", bloques: [["Contenido (35')", "Regla del cuadrado."]], divertido: "«🗳️ La clase juega» contra el motor.", taller: "Ficha 1.", sitio: "Finales prácticos." } },
+    detalle: { objetivo: "La oposición.", minutos: { calentamiento: 15, contenido: 55, recreativa: 30, cierre: 12, tarea: 8 }, divertido: "«🗳️ La clase juega» contra el motor.", taller: "Ficha 1.", sitio: "Finales prácticos." } },
   { id: "s-3", grupo_id: "g-1", numero: 3, fecha: "2099-01-13", titulo: "Evaluación 4", tipo: "evaluacion", plan_id: "plan-3",
     detalle: { objetivo: "Comprobar.", bloques: [], divertido: "Niebla de Guerra.", sitio: "Exámenes." } },
 ];
 const ITEMS = [
   { material_tipo: "curso", material_slug: "finales-practicos", material_label: "Finales Prácticos", material_href: "cursos/academia/finales-practicos.html", filtro_clave: "", filtro_label: "", leccion: "1", actividades: [], meta_tipo: "completar", meta_cantidad: null },
   { material_tipo: "herramienta", material_slug: "batalla-naval", material_label: "Batalla naval", material_href: "batalla-naval.html", filtro_clave: "", filtro_label: "", leccion: "", actividades: ["batalla-naval"], meta_tipo: "cantidad", meta_cantidad: 2 },
+];
+/* El plan de la clase 2, como lo arma herramientas/proyecto-semilla.js: las
+   cinco partes con su paso a paso y los ejercicios debajo de su parte. */
+const PLAN_ITEMS = [
+  { plan_id: "plan-2", orden: 0, tipo: "nota", titulo: "🔥 1. Calentamiento · 15 min", nota: "Para qué: activar el cálculo.\n1. Saluda.\n2. Da los ejercicios de abajo." },
+  { plan_id: "plan-2", orden: 1, tipo: "posicion", titulo: "Calentamiento · Ejercicio 1 de 1 · Final de torres 41", pregunta: "① 📥 Al tablero. ② Pregunta: «¿Mejor jugada?» ③ ⏳ 3 min. ④ Respuesta: Solución: Txe3+." },
+  { plan_id: "plan-2", orden: 2, tipo: "nota", titulo: "📘 2. Contenido · 55 min", nota: "1. Di el objetivo.\n2. Explica la lección <b>de abajo</b>." },
+  { plan_id: "plan-2", orden: 3, tipo: "leccion", titulo: "Finales Prácticos · 2. Oposición de reyes", curso: "finales-practicos", leccion: 1 },
+  { plan_id: "plan-2", orden: 4, tipo: "posicion", titulo: "Contenido · Ejercicio 1 de 1 · La oposición", pregunta: "② Pregunta: «¿Ganan?» ③ ⏳ 3 min. ④ Respuesta: Tablas." },
+  { plan_id: "plan-2", orden: 5, tipo: "nota", titulo: "🎉 3. Actividad recreativa · 30 min", nota: "Qué es: La clase juega.\n1. Abre «La clase juega».\n2. Que voten." },
+  { plan_id: "plan-2", orden: 6, tipo: "nota", titulo: "✅ 4. Cierre · 12 min", nota: "1. Pregunta de salida.\n2. Terminar clase." },
+  { plan_id: "plan-2", orden: 7, tipo: "nota", titulo: "📨 5. Tarea · 8 min", nota: "Esta semana: «Semana 2 · Lucena».\n1. Preséntala.\n2. Explícala." },
 ];
 const TAREAS = [
   { id: "t-1", grupo_id: "g-1", semana: 1, desde: "2020-01-06", vence: "2020-01-13", titulo: "Semana 1 · Rey y peón", instrucciones: "Repasa el cuadrado.", items: ITEMS },
@@ -76,6 +88,8 @@ window.__consultas = [];
     proyecto_grupos: GRUPOS,
     proyecto_sesiones: ${JSON.stringify(SESIONES)}.filter((s) => ids.includes(s.grupo_id)),
     proyecto_tareas: ${JSON.stringify(TAREAS)}.filter((t) => ids.includes(t.grupo_id)),
+    // Los renglones de un plan los ve quien ve la sesión (al profesor se le comparten).
+    plan_items: ${JSON.stringify(PLAN_ITEMS)}.filter((it) => ${JSON.stringify(SESIONES)}.some((s) => s.plan_id === it.plan_id && ids.includes(s.grupo_id))),
   };
   function constructor(tabla, filas) {
     const anotado = { tabla: tabla, eq: {}, range: null };
@@ -84,6 +98,7 @@ window.__consultas = [];
     const b = {
       select() { return b; },
       eq(c, v) { anotado.eq[c] = v; f = f.filter((r) => String(r[c]) === String(v)); return b; },
+      in(c, vs) { anotado.in = { [c]: vs }; f = f.filter((r) => vs.map(String).includes(String(r[c]))); return b; },
       order(c) { f.sort((x, y) => (String(x[c]) < String(y[c]) ? -1 : 1)); return b; },
       range(a, z) { anotado.range = [a, z]; f = f.slice(a, z + 1); return b; },
       single() { unica = true; return b; },
@@ -154,12 +169,25 @@ const visible = (page, sel) => page.evaluate((s) => { const e = document.querySe
       igual("con su momento divertido", await page.evaluate(() => document.getElementById("proxima").textContent.includes("Momento divertido: «🗳️ La clase juega» contra el motor.")), true);
       const clases = await page.evaluate(() => Array.from(document.querySelectorAll("#g-sesiones details")).map((d) => ({
         resumen: d.querySelector("summary").textContent, abierta: d.open,
-        divertido: Array.from(d.querySelectorAll("p")).some((p) => /^🎉 Momento divertido: /.test(p.textContent)),
+        divertido: Array.from(d.querySelectorAll("p")).some((p) => /^🎉 Momento divertido: /.test(p.textContent)) || Array.from(d.querySelectorAll("h4")).some((h) => /Actividad recreativa/.test(h.textContent)),
+        partes: Array.from(d.querySelectorAll("h4")).map((h) => h.textContent.trim()),
+        ejercicios: Array.from(d.querySelectorAll("div.rounded-lg")).map((x) => /④ Respuesta: ./.test(x.textContent)),
+        minutos: (Array.from(d.querySelectorAll("p")).find((p) => /^⏱️/.test(p.textContent)) || {}).textContent || "",
         enlaces: Array.from(d.querySelectorAll("a")).map((a) => [a.textContent.trim(), a.getAttribute("href")]) })));
       igual("las tres clases, con el tipo escrito y la próxima abierta", clases.map((c) => [c.resumen.includes("Evaluación") && /evaluacion|Evaluación 4/.test(c.resumen), c.abierta]),
         [[false, false], [false, true], [true, false]]);
       igual("cada una con su momento divertido", clases.map((c) => c.divertido), [true, true, true]);
-      igual("y su plan: verlo y darlo en la clase en vivo", clases[1].enlaces, [["📋 Ver el plan", "planes.html?plan=plan-2"], ["▶️ Dar esta clase", "sesion.html?plan=plan-2"]]);
+      igual("y su plan: verlo, darlo en la clase en vivo y la lección del contenido", clases[1].enlaces, [["📋 Ver el plan", "planes.html?plan=plan-2"], ["▶️ Dar esta clase", "sesion.html?plan=plan-2"],
+        ["📖 Lección: Finales Prácticos · 2. Oposición de reyes", "cursos/academia/finales-practicos.html"]]);
+      igual("la clase muestra su paso a paso en las cinco partes, en orden", clases[1].partes,
+        ["🔥 1. Calentamiento · 15 min", "📘 2. Contenido · 55 min", "🎉 3. Actividad recreativa · 30 min", "✅ 4. Cierre · 12 min", "📨 5. Tarea · 8 min"]);
+      igual("con cada ejercicio y su respuesta, debajo de su parte", clases[1].ejercicios, [true, true]);
+      igual("y lo que dura cada parte", clases[1].minutos, "⏱️ 2 horas: calentamiento 15, contenido 55, actividad recreativa 30, cierre 12, tarea 8");
+      igual("los renglones del plan se piden juntos y con tope", await page.evaluate(() =>
+        window.__consultas.filter((c) => c.tabla === "plan_items").map((c) => [c.in && c.in.plan_id, c.range])), [[["plan-1", "plan-2", "plan-3"], [0, 4999]]]);
+      igual("el texto del plan va como texto", await page.evaluate(() => document.querySelectorAll("#g-sesiones b").length), 0);
+      igual("el emoji de cada parte no se lee", await page.evaluate(() =>
+        Array.from(document.querySelectorAll("#g-sesiones h4 > span:first-child")).map((x) => x.getAttribute("aria-hidden"))), ["true", "true", "true", "true", "true"]);
       igual("los emojis de los botones no se leen", await page.evaluate(() =>
         Array.from(document.querySelectorAll("#g-sesiones a > span:first-child")).every((s) => s.getAttribute("aria-hidden") === "true")), true);
 
@@ -200,7 +228,7 @@ const visible = (page, sel) => page.evaluate((s) => { const e = document.querySe
         Array.from(document.querySelectorAll("#g-evaluacion h3")).map((h) => h.textContent),
         Array.from(document.querySelectorAll("#g-guia h3")).map((h) => h.textContent)]), [
         ["Qué se evalúa", "Las clases de evaluación", "Anexo B · Rúbrica de la minilección y la microenseñanza", "Portafolio del instructor"],
-        ["Punto de partida del grupo", "Las unidades", "Cómo va cada clase de 90 minutos", "Acuerdos del grupo", "Anexo A · Plantilla del plan de taller"]]);
+        ["Punto de partida del grupo", "Las unidades", "Cómo va cada clase de 2 horas", "Acuerdos del grupo", "Anexo A · Plantilla del plan de taller"]]);
       igual("sin errores en la página", errores, []);
       await ctx.close();
     }

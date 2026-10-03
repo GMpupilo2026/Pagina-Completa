@@ -552,7 +552,7 @@ async function pruebaProyectos(browser) {
   igual("una ficha por grupo, en su orden, y el nombre con HTML va como texto", f.map((x) => x.nombre), ["Finales", "<b>Aperturas</b>"]);
   igual("el HTML de un nombre no crea nodos", await page.evaluate(() => document.querySelectorAll("#proy-lista b").length), 0);
   igual("cada ficha dice lo que trae (y el emoji no se lee)", f[0].lineas, [
-    "📚 3 clases con su plan y sus ejercicios listos para el tablero", "🎉 Un momento divertido en cada clase",
+    "📚 3 clases de 2 horas, con su paso a paso y los ejercicios en orden", "🎉 Un momento divertido en cada clase",
     "📨 2 tareas semanales listas para mandar", "📝 1 clase de evaluación"]);
   igual("los emojis van escondidos del lector de pantalla", await page.evaluate(() =>
     Array.from(document.querySelectorAll("#proy-lista li > span:first-child")).every((s) => s.getAttribute("aria-hidden") === "true")), true);
