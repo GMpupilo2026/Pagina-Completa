@@ -471,7 +471,7 @@
         let teacherData = null;
 
         async function fetchTeacherData() {
-            const [{ alumnos, cursosPorAlumno, diagnosticoPorAlumno, modulosPorAlumno }, totalesRes, planes, visitantes, arbitrajes, subgruposRes, inactivosRes] = await Promise.all([
+            const [{ alumnos, cursosPorAlumno, diagnosticoPorAlumno, modulosPorAlumno }, totalesRes, planes, visitantes, arbitrajes, subgruposRes, inactivosRes, misAlumnosRes] = await Promise.all([
                 cargarResumen(),
                 sb.rpc("informes_totales").maybeSingle(),
                 traerTodo(() => sb.from("training_plans").select("*").order("student_id")),
@@ -501,6 +501,14 @@
                 // Misma definición de "entrenar" que panel_profesor() en clases.html
                 // (Tu semana): una fila en training_progress en los últimos 4 días.
                 sb.rpc("informes_inactivos", { p_dias: 4 }),
+                /* A quién le puede escribir el plan: la política de
+                   training_plans pide is_admin o soy_profesor_de(). Quien
+                   supervisa y además da clase ve en el informe a alumnos que
+                   solo supervisa, y uno solo de ellos en el lote hacía que la
+                   base rechazara el lote ENTERO («0 de 28»). Quien administra
+                   los puede todos; «Ver como» no escribe nada. */
+                profile.is_admin || profile._persona ? null
+                    : sb.rpc("alumnos_del_profesor_con_nombre", { p_profesor: session.user.id }),
             ]);
             if (totalesRes.error) throw totalesRes.error;
             const totales = totalesRes.data || { clases_cerradas: 0, preguntas: 0, partidas: 0 };
@@ -539,13 +547,20 @@
                 const { data: sups } = await sb.from("profiles").select("id, full_name").in("id", conEnlace);
                 (sups || []).forEach((p) => { nombresSupervisores[p.id] = p.full_name || "un supervisor"; });
             }
+            // null = todos (quien administra); un Set vacío = ninguno.
+            let planEscribible = null;
+            if (profile._persona) planEscribible = new Set();
+            else if (misAlumnosRes) {
+                if (misAlumnosRes.error) throw misAlumnosRes.error;
+                planEscribible = new Set((misAlumnosRes.data || []).map((a) => a.id));
+            }
             const plansByStudent = {}, resumenPorAlumno = {};
             planes.forEach((pl) => { plansByStudent[pl.student_id] = pl; });
             alumnosDelInforme.forEach((a) => { resumenPorAlumno[a.id] = a; });
             teacherData = {
                 totales, closedSessions: totales.clases_cerradas,
                 students: alumnosDelInforme, resumenPorAlumno, cursosPorAlumno, diagnosticoPorAlumno, modulosPorAlumno,
-                plansByStudent, visitantes, arbitrajes, enlaceDiagnostico, nombresSupervisores,
+                plansByStudent, planEscribible, visitantes, arbitrajes, enlaceDiagnostico, nombresSupervisores,
                 subgrupos: subgruposRes?.data || [],
                 inactivos: inactivosDelInforme,
             };
@@ -2695,6 +2710,8 @@
             // del plan recién calculado (ver el comentario de aplicarEdicionManual).
             if (guardado && guardado.plan && guardado.plan.editado) aplicarEdicionManual(plan, guardado.plan.editado);
             const editadoNota = guardado && guardado.plan && guardado.plan.editado ? " · con ajustes a mano" : "";
+            // Lo mismo que el lote: si la base no le deja escribirlo, no se le ofrece.
+            const escribible = puedeEscribirPlan(studentId);
             const estado = !guardado
                 ? "Sin guardar todavía."
                 : guardado.shared
@@ -2724,25 +2741,26 @@
                 </div>
                 <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
                     <h3 class="font-serif font-bold text-brand-800 dark:text-white">Plan de entrenamiento · 4 semanas</h3>
-                    <div class="flex gap-2">
+                    ${!escribible ? "" : `<div class="flex gap-2">
                         <button type="button" id="plan-editar" class="text-xs border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-3 py-1.5 rounded-lg hover:border-accent-500 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">✏️ Editar a mano</button>
                         <button type="button" id="plan-recalcular" class="text-xs border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-3 py-1.5 rounded-lg hover:border-accent-500 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">🔄 Recalcular</button>
-                    </div>
+                    </div>`}
                 </div>
                 <div id="plan-cuerpo">${planHTML(plan)}</div>
                 <div class="mt-5 border-t border-brand-100 dark:border-brand-800 pt-4">
                     <label for="plan-nota" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Nota para el alumno (opcional)</label>
                     <textarea id="plan-nota" rows="2" class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500" placeholder="Ej.: Empieza por los finales; el jueves los repasamos juntos.">${escVis(guardado && guardado.nota ? guardado.nota : "")}</textarea>
                     <p id="plan-estado" class="text-xs text-brand-450 dark:text-brand-350 mt-2">${estado}</p>
-                    <div class="flex flex-wrap gap-2 mt-3">
+                    ${!escribible ? `<p class="text-xs text-brand-500 dark:text-brand-300 mt-3">Es de solo lectura: el plan lo guarda y lo comparte quien le da clase.</p>` : `<div class="flex flex-wrap gap-2 mt-3">
                         <button type="button" id="plan-compartir" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">${guardado && guardado.shared ? "Actualizar lo compartido" : "Compartir con el alumno"}</button>
                         <button type="button" id="plan-guardar" class="border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-4 py-2 rounded-lg text-sm hover:border-accent-500 transition-colors">Guardar sin compartir</button>
                         ${guardado && guardado.shared ? '<button type="button" id="plan-ocultar" class="border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-4 py-2 rounded-lg text-sm hover:border-red-500 transition-colors">Dejar de compartir</button>' : ""}
-                    </div>
+                    </div>`}
                 </div>`;
 
             conectarEloEditor(student);
             marcarAvanceDelPlan(document.getElementById("plan-cuerpo"), studentId, entreno.diagnostico.created_at);
+            if (!escribible) return;
             document.getElementById("plan-editar").addEventListener("click", () => activarEdicionPlan(plan));
             document.getElementById("plan-recalcular").addEventListener("click", async () => {
                 if (!(await Avisos.confirmar("Se pierden los ajustes que hiciste a mano.", { titulo: "¿Volver al plan que calcula el diagnóstico?", aceptar: "Recalcular", peligro: true }))) return;
@@ -3204,23 +3222,42 @@ function areasFlojasArbitraje(fila) {
 
            El botón NO aparece cuando ya están todos: un control que no cambia
            nada es peor que no tenerlo. */
+        /* Los que la base le deja escribir: el lote es UN insert, y una sola
+           fila rechazada por la RLS tumba las demás. Los que no son suyos
+           (alumnos que solo supervisa) se cuentan aparte: su plan lo comparte
+           quien les da clase. */
+        function puedeEscribirPlan(id) {
+            const s = teacherData.planEscribible;
+            return !s || s.has(id);
+        }
+
         function planesQueFaltan(conDiagnostico) {
             const guardados = teacherData.plansByStudent || {};
-            const nuevos = [], soloCompartir = [];
+            const nuevos = [], soloCompartir = [], ajenos = [];
             for (const d of conDiagnostico) {
                 const g = guardados[d.id];
                 if (g && g.shared) continue;                    // ya está: no se toca
-                if (g) soloCompartir.push(d);                   // tiene borrador guardado
+                if (!puedeEscribirPlan(d.id)) ajenos.push(d);   // no es alumno suyo
+                else if (g) soloCompartir.push(d);              // tiene borrador guardado
                 else nuevos.push(d);
             }
-            return { nuevos, soloCompartir, total: nuevos.length + soloCompartir.length };
+            return { nuevos, soloCompartir, ajenos, total: nuevos.length + soloCompartir.length };
         }
 
         function bloqueCompartirPlanes(conDiagnostico) {
-            const { total } = planesQueFaltan(conDiagnostico);
-            const compartidos = conDiagnostico.length - total;
+            // «Ver como» otra persona no publica nada.
+            if (profile._persona) return "";
+            const { total, ajenos } = planesQueFaltan(conDiagnostico);
+            const compartidos = conDiagnostico.length - total - ajenos.length;
+            const lineaAjenos = !ajenos.length ? "" : ajenos.length === 1
+                ? "1 alumno sin plan compartido no es alumno tuyo: lo comparte su profesor."
+                : `${ajenos.length} alumnos sin plan compartido no son alumnos tuyos: los comparte su profesor.`;
             if (!total) {
                 // Todos al día: se dice en una línea y sin botón.
+                if (ajenos.length) {
+                    return `<p class="mb-5 text-sm text-brand-500 dark:text-brand-300">
+                        ✅ Tus alumnos con diagnóstico tienen su plan compartido. ${lineaAjenos}</p>`;
+                }
                 return `<p class="mb-5 text-sm text-brand-500 dark:text-brand-300">
                     ✅ Los ${conDiagnostico.length} alumnos con diagnóstico tienen su plan compartido:
                     lo ven en su página y va en el informe que llega a su casa.</p>`;
@@ -3233,7 +3270,7 @@ function areasFlojasArbitraje(fila) {
                     <p class="text-xs text-brand-500 dark:text-brand-300 mb-3">
                         A ${total === 1 ? "el que falta no lo ve" : `los ${total} que faltan no los ven`}
                         ni ellos ni su casa. El plan ya está armado a partir de su diagnóstico:
-                        esto solo lo publica.
+                        esto solo lo publica.${lineaAjenos ? ` ${lineaAjenos}` : ""}
                     </p>
                     <button type="button" id="compartir-planes"
                         class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">

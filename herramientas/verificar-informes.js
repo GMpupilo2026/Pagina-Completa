@@ -1182,6 +1182,35 @@ async function pruebaCompartirPlanes(browser) {
   igual("y se dice en una línea, sin números que pidan nada",
     (await page.textContent("#diagnosticos-clase")).includes("tienen su plan compartido"), "true");
   await page.close();
+
+  /* ---- Profesora que además supervisa: solo van SUS alumnos ----
+     Pasó en producción: el informe le muestra también a los que solo
+     supervisa, la política de training_plans pide soy_profesor_de(), y como
+     el lote es UN insert, uno solo de ellos tumbó los 28 («Se compartieron 0
+     de 28 … violates row-level security policy»). El doble no tiene RLS, así
+     que lo que se mira es que ese alumno NI SE MANDE. */
+  const mixta = base([]);
+  mixta.tablas.profiles = [{ id: "u-sup", role: "profesor", is_admin: false, es_supervisor: true, full_name: "Marta", email: "m@x.cr" }];
+  mixta.rpc.mis_supervisados = ["a-1", "a-2", "a-3"];
+  mixta.rpcPorArgs = { alumnos_del_profesor_con_nombre: { [JSON.stringify({ p_profesor: "u-sup" })]: [{ id: "a-1" }, { id: "a-2" }] } };
+  ({ page, errores } = await abrir(browser, mixta, "u-sup"));
+  const textoMixta = await page.textContent("#diagnosticos-clase");
+  igual("pregunta cuáles son SUS alumnos, con su id",
+    await page.evaluate(() => (window.__rpcArgs || []).filter(([n]) => n === "alumnos_del_profesor_con_nombre").map(([, a]) => JSON.stringify(a)).join(" ")),
+    JSON.stringify({ p_profesor: "u-sup" }));
+  igual("el botón cuenta solo los suyos", (await page.textContent("#compartir-planes")).trim(), "Compartir los 2 planes que faltan");
+  igual("y dice que el otro lo comparte su profesor", textoMixta.includes("1 alumno sin plan compartido no es alumno tuyo"), "true");
+  await page.click("#compartir-planes");
+  await page.click("#compartir-planes");
+  await page.waitForFunction(() => {
+    const el = document.getElementById("compartir-planes-estado");
+    return !el || /Listo|No se pudo/.test(el.textContent);
+  }, null, { timeout: 10000 });
+  esc = await escrituras(page);
+  igual("el lote lleva solo a los suyos, no al que supervisa",
+    esc.flatMap((e) => (Array.isArray(e.fila) ? e.fila : []).map((f) => f.student_id)).sort(), ["a-1", "a-2"]);
+  igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+  await page.close();
 }
 
 async function pruebaNombreAjeno(browser) {
@@ -1267,6 +1296,8 @@ async function pruebaClaseGrande(browser) {
       informes_diagnosticos_alumnos: ["g1", "g2", "g3", "g4", "g5"].map((id) => (
         { student_id: id, detalle: DIAGNOSTICO, fecha: "2026-09-10T12:00:00Z", a_medias_pregunta: null, a_medias_fecha: null })),
       informes_totales: { clases_cerradas: 4, preguntas: 10, partidas: 2 },
+      // Los 45 son alumnos suyos: el plan de todos lo puede compartir él.
+      alumnos_del_profesor_con_nombre: alumnos.map((a) => ({ id: a.id })),
       // Tres que llevan tiempo sin entrenar, el de en medio hace más que el resto.
       informes_inactivos: [
         { id: "g45", full_name: "Sofía Núñez", email: "g45@x.cr", grupo: "7A", ultima_actividad: null },

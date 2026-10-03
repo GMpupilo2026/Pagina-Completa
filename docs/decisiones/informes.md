@@ -1288,6 +1288,24 @@ sin compartir no lo ve ni el alumno ni su casa, o sea que cuenta como que no
 existe. Con todo al día no se dice nada. Va en **ámbar y no en rojo**: esto no
 se venció, está por hacer.
 
+#### El lote solo lleva a los alumnos que la base te deja escribir
+
+Una profesora que además supervisa apretó el botón y le salió «Se compartieron
+0 de 28 … new row violates row-level security policy». El informe de quien
+supervisa muestra también a los alumnos que **solo supervisa**, y la política de
+`training_plans` pide `is_admin` o `soy_profesor_de()`. Como el lote es **un
+solo insert**, bastó uno de esos para que la base rechazara los 28.
+
+- La página pregunta a la base cuáles son sus alumnos
+  (`alumnos_del_profesor_con_nombre()`, que usa `interno.alumnos_de()`, lo
+  mismo que `soy_profesor_de()`: comprobado con su cuenta, coinciden los 62) y
+  el lote, el contador «N planes sin compartir» y el plan de cada alumno solo
+  ofrecen escribir esos. Los demás se cuentan aparte: «no son alumnos tuyos: los
+  comparte su profesor». Quien administra los puede todos; «Ver como» no
+  publica nada.
+- Al alumno ajeno el plan se le ve igual, pero **de solo lectura**: sin
+  «Editar», «Recalcular» ni los botones de guardar, que la base rechazaría.
+
 **Al tocar el lote, correr `node herramientas/verificar-informes.js`.** Su
 Supabase de mentira tuvo que aprender dos cosas para esto, y las dos son de las
 que dan verde sobre una página rota: **`upsert()`**, que no tenía —sin él,
