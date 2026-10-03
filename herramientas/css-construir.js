@@ -34,7 +34,7 @@ const CSS = path.join(RAIZ, "css");
 //
 // <alpha-value> es lo que deja seguir usando `bg-brand-800/50` y
 // `border-accent-400/30`: Tailwind lo reemplaza por la opacidad de la clase.
-const TEMAS = require("../js/temas-plataforma.js").TEMAS;
+const { TEMAS, LETRAS } = require("../js/temas-plataforma.js");
 
 function variables(familia) {
     const salida = {};
@@ -125,6 +125,14 @@ const PATRONES = {
     hojas: (c, o) =>
         `<path d='M8 22c0-8 6-14 14-14 0 8-6 14-14 14z' fill='${c}' opacity='${o}'/>` +
         `<path d='M52 38c0 8-6 14-14 14 0-8 6-14 14-14z' fill='${c}' opacity='${o}'/>`,
+    // Magia: una luna creciente y estrellitas. La luna son dos arcos (el de
+    // afuera y el de adentro), no un círculo tapado con otro del color del
+    // fondo: acá no hay un fondo fijo debajo.
+    lunas: (c, o) =>
+        `<path d='M22 5 A11 11 0 0 0 22 27 A14 14 0 0 1 22 5 Z' fill='${c}' opacity='${o}'/>` +
+        `<path d='M46 38l1.5 3.7L51 43l-3.5 1.4L46 48l-1.5-3.6L41 43l3.5-1.3z' fill='${c}' opacity='${o}'/>` +
+        `<circle cx='50' cy='14' r='1.6' fill='${c}' opacity='${o}'/>` +
+        `<circle cx='12' cy='50' r='1.3' fill='${c}' opacity='${o}'/>`,
     escamas: (c, o) =>
         `<path d='M0 20a15 15 0 0 1 30 0M30 20a15 15 0 0 1 30 0M-15 50a15 15 0 0 1 30 0M15 50a15 15 0 0 1 30 0M45 50a15 15 0 0 1 30 0' fill='none' stroke='${c}' stroke-width='1.6' opacity='${o}'/>`,
 };
@@ -170,6 +178,30 @@ const VOLADORES = {
         // volando al lado.
         `<path d='M82 22 C95 18 107 21 118 28 C107 26 98 27 89 31 C95 27 92 25 82 27 Z' fill='${a}'/>` +
         `<path d='M86 17 C94 14 101 14 108 16 C100 18 94 20 89 23 Z' fill='${a}'/>`,
+    magos: (c, a) =>
+        // La capa va PRIMERO (detrás), ondeando hacia atrás: es lo que dice
+        // que el mago vuela y no que está sentado.
+        `<path d='M30 24 C22 27 14 31 4 31 C10 35 9 39 2 43 C12 44 22 42 32 38 Z' fill='${c}'/>` +
+        // La escoba: el palo y las cerdas abiertas atrás.
+        `<path d='M8 49 L74 41 L74 44 L8 52 Z' fill='${c}'/>` +
+        `<path d='M10 47 L-10 40 L-6 48 L-12 53 L-5 55 L-9 61 L11 54 Z' fill='${c}'/>` +
+        // La túnica, sentada sobre la escoba.
+        `<path d='M30 22 C38 20 46 22 49 28 L52 46 L26 50 C27 40 27 30 30 22 Z' fill='${c}'/>` +
+        // La cabeza, la barba (hacia adelante) y el sombrero de punta doblada.
+        `<circle cx='42' cy='16' r='5.5' fill='${c}'/>` +
+        `<path d='M44 19 C50 20 53 25 54 31 C49 28 45 25 42 21 Z' fill='${c}'/>` +
+        `<path d='M31 13 L55 11 L54 14 L32 16 Z' fill='${c}'/>` +
+        `<path d='M36 13 L50 12 C47 4 42 -2 33 -6 C37 0 38 6 36 13 Z' fill='${c}'/>` +
+        // El brazo estirado y la varita.
+        `<path d='M44 26 L62 22 L63 26 L46 31 Z' fill='${c}'/>` +
+        `<path d='M61 23 L80 14 L81 16 L62 25 Z' fill='${c}'/>` +
+        // El hechizo ARRANCA EN LA PUNTA de la varita, como el fuego en la boca
+        // del dragón: despegado se leería como una estrella más del fondo.
+        `<path d='M79 14 C86 11 92 11 98 12 C92 14 87 16 81 17 Z' fill='${a}'/>` +
+        `<path d='M106 3 L109 10 L116 12 L109 14 L106 21 L103 14 L96 12 L103 10 Z' fill='${a}'/>` +
+        `<circle cx='92' cy='5' r='1.8' fill='${a}'/>` +
+        `<circle cx='95' cy='20' r='1.5' fill='${a}'/>` +
+        `<circle cx='119' cy='4' r='1.3' fill='${a}'/>`,
 };
 
 /* Cada capa es un mosaico con dos figuras puestas a mano: una sola en el
@@ -182,6 +214,9 @@ const CAPAS = {
     dragones: {
         lejos: { w: 460, h: 320, seg: 40, figuras: [[20, 40, 1.15, -8], [250, 200, 0.85, -4]] },
         cerca: { w: 620, h: 400, seg: 26, figuras: [[60, 250, 1.9, -10]] },
+    },    magos: {
+        lejos: { w: 460, h: 320, seg: 40, figuras: [[30, 50, 1.1, -8], [260, 210, 0.85, -4]] },
+        cerca: { w: 620, h: 400, seg: 26, figuras: [[70, 250, 1.8, -10]] },
     },
 };
 
@@ -201,7 +236,7 @@ function capa(nombre, capa, color, acento, opacidad) {
  * cero la figura de al lado está justo donde estaba la anterior. */
 function vuelo(id, nombre, tema) {
     const sel = `:root[data-tema="${id}"]`;
-    const tramos = { cohetes: 1, dragones: 2 };
+    const tramos = { cohetes: 1, dragones: 2, magos: 2 };
     let css =
         `${sel} body::before,${sel} body::after{content:"";position:fixed;top:-50%;left:-50%;` +
         `width:200%;height:200%;pointer-events:none;z-index:-1;background-repeat:repeat}`;
@@ -255,12 +290,33 @@ function decoracion(id, tema) {
     return css;
 }
 
+/* La LETRA que eligió la persona (js/temas-plataforma.js, LETRAS). Va DESPUÉS
+ * de los temas y con la misma especificidad que la letra de un tema
+ * (:root[data-letra] .font-serif, 0,3,0): así la que se eligió a mano le gana
+ * a la del tema, sin que ninguno de los dos pregunte por el otro — igual que
+ * las casillas. El respaldo de cada pila es el ajustado de css/fuentes.css. */
+function cssDeLetras() {
+    let css = "";
+    for (const [id, letra] of Object.entries(LETRAS)) {
+        const sel = `:root[data-letra="${id}"]`;
+        if (letra.titulos) {
+            css += `${sel} .font-serif{font-family:"${letra.titulos}",Merriweather,"Merriweather respaldo",serif;` +
+                   `letter-spacing:${letra.titulos === "Quicksand" ? "-0.01em" : "normal"}}`;
+        }
+        if (letra.texto) {
+            css += `${sel},${sel} .font-sans{font-family:"${letra.texto}",Inter,"Inter respaldo",sans-serif}`;
+        }
+    }
+    return css;
+}
+
 function cssDeTemas() {
     let css = `:root{${tonos(TEMAS.clasico)}}`;
     for (const [id, tema] of Object.entries(TEMAS)) {
         if (id === "clasico") continue;
         css += `:root[data-tema="${id}"]{${tonos(tema)}}` + decoracion(id, tema);
     }
+    css += cssDeLetras();
     return "\n" + css + "\n";
 }
 

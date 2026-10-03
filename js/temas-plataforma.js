@@ -115,6 +115,41 @@
       decorado: "escamas",
       vuelan: "dragones",
     },
+    magia: {
+      label: "Magia",
+      icono: "🪄",
+      descripcion: "Añil y verde esmeralda, con magos lanzando hechizos al fondo.",
+      brand: { 50: "#f2f3fb", 100: "#dfdff4", 200: "#c6c7eb", 300: "#abace1", 350: "#9699da", 400: "#6e71cc", 450: "#5f62c7", 500: "#5256c2", 600: "#3b3ea7", 700: "#2d2f7f", 800: "#20225a", 900: "#171943", 950: "#10112f" },
+      accent: { 50: "#f0fef9", 100: "#d4fbee", 300: "#13eba3", 400: "#11d896", 500: "#0fb87f", 600: "#0c996a", 700: "#0a7e57", 900: "#075a3e" },
+      casillas: "azul",
+      fuente: "Cinzel",
+      decorado: "lunas",
+      vuelan: "magos",
+    },
+  };
+
+  /* La LETRA es una preferencia aparte del tema: quien quiere los colores de
+   * Princesas puede querer otra letra, y quien lee con dificultad necesita una
+   * letra clara con cualquier tema. «Como el tema» es la que trae quien nunca
+   * eligió: los títulos con la letra del tema (Merriweather en el Clásico) y
+   * el texto en Inter.
+   *
+   * `titulos` cambia lo que va en .font-serif (todos los títulos del sitio);
+   * `texto`, todo lo demás. Solo cambian el texto las que se eligieron por
+   * legibilidad: una letra decorativa en una tarea de veinte minutos cansa.
+   * Las fuentes están en css/fuentes.css, servidas por el sitio, y el navegador
+   * baja una solo si alguien la eligió. Las reglas las escribe
+   * herramientas/css-construir.js bajo :root[data-letra="<id>"]. */
+  const KEY_LETRA = "plataforma_letra_v1";
+  const LETRA_POR_OMISION = "tema";
+
+  const LETRAS = {
+    tema: { label: "Como el tema", descripcion: "La que trae el tema que elegiste." },
+    clasica: { label: "Clásica", descripcion: "Títulos con serifa y texto de siempre.", titulos: "Merriweather", texto: "Inter" },
+    redondeada: { label: "Redondeada", descripcion: "Títulos suaves y redondos.", titulos: "Quicksand" },
+    legible: { label: "Fácil de leer", descripcion: "Letras bien distintas entre sí, en todo el texto.", titulos: "Atkinson Hyperlegible", texto: "Atkinson Hyperlegible" },
+    escolar: { label: "Escolar", descripcion: "Como escrita a mano, en todo el texto.", titulos: "Comic Neue", texto: "Comic Neue" },
+    magica: { label: "Mágica", descripcion: "Títulos de libro antiguo de hechizos.", titulos: "Cinzel" },
   };
 
   function getPreference() {
@@ -138,6 +173,34 @@
 
     try { localStorage.removeItem(KEY_FUENTE_VIEJA); } catch (e) {}
     pintarBarra(tema);
+    aplicarLetra();
+    return id;
+  }
+
+  function getLetra() {
+    let id = LETRA_POR_OMISION;
+    try {
+      id = localStorage.getItem(KEY_LETRA) || LETRA_POR_OMISION;
+    } catch (e) {}
+    return LETRAS[id] ? id : LETRA_POR_OMISION;
+  }
+
+  function aplicarLetra() {
+    if (typeof document === "undefined") return LETRA_POR_OMISION;
+    const id = getLetra();
+    const html = document.documentElement;
+    if (id === LETRA_POR_OMISION) html.removeAttribute("data-letra");
+    else html.setAttribute("data-letra", id);
+    return id;
+  }
+
+  function setLetra(id) {
+    if (!LETRAS[id]) id = LETRA_POR_OMISION;
+    try {
+      if (id === LETRA_POR_OMISION) localStorage.removeItem(KEY_LETRA);
+      else localStorage.setItem(KEY_LETRA, id);
+    } catch (e) {}
+    aplicarLetra();
     return id;
   }
 
@@ -159,7 +222,10 @@
     return id;
   }
 
-  const API = { TEMAS, POR_OMISION, KEY, getPreference, setPreference, aplicar };
+  const API = {
+    TEMAS, POR_OMISION, KEY, getPreference, setPreference, aplicar,
+    LETRAS, LETRA_POR_OMISION, KEY_LETRA, getLetra, setLetra,
+  };
 
   // Corre en el navegador Y en Node (herramientas/css-construir.js y su
   // verificador lo cargan con require para no volver a escribir las paletas).
