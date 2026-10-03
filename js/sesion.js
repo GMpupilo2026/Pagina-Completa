@@ -1531,6 +1531,7 @@
             const cerrada = currentOpenSessionId;
             currentOpenSessionId = null;
             await limpiarLoDeLaClase();
+            cargarSacados();
             const paraAusentes = document.getElementById("clase-para-ausentes").checked;
             document.getElementById("clase-titulo").value = "";
             document.getElementById("clase-notas").value = "";
@@ -1774,6 +1775,9 @@
             refrescarPlanHecho();
             cargarTurnos();
             mostrarSalidaPasada();
+            // Si lo sacaron de esta clase, recargar no lo vuelve a meter.
+            if (openSession && await meSacaronDe(openSession.id)) { await quedarFueraDeLaClase(); return; }
+            if (isTeacher) cargarSacados();
             if (openSession) {
                 await markAttendance(openSession.id);
                 await startPresenceLog(openSession.id);
@@ -1793,6 +1797,7 @@
                     if (payload.eventType === "INSERT" && !payload.new.ended_at) {
                         currentOpenSessionId = payload.new.id;
                         currentOpenSessionStartedAt = payload.new.started_at || null;
+                        if (isTeacher) cargarSacados();
                         markAttendance(payload.new.id);
                         startPresenceLog(payload.new.id);
                         pintarEstadoDeClase();
@@ -1807,6 +1812,7 @@
                             // La pudo cerrar desde el panel, o desde otra pestaña:
                             // la franja de acá tiene que decir la verdad igual.
                             currentOpenSessionId = null;
+                            cargarSacados();
                             pintarEstadoDeClase();
                         }
                     }
@@ -2367,6 +2373,15 @@
                 btn.setAttribute("aria-pressed", hasControl ? "true" : "false");
                 btn.addEventListener("click", () => setActivePlayer(hasControl ? null : studentId, "both"));
                 fila.appendChild(btn);
+                // Sacarlo de la clase, por si entró por error (js/clase-sacar.js).
+                const sacarBtn = document.createElement("button");
+                sacarBtn.type = "button";
+                sacarBtn.className = ICONO_GRIS;
+                sacarBtn.textContent = "🚪";
+                sacarBtn.title = "Sacarlo de la clase (por si entró por error)";
+                sacarBtn.setAttribute("aria-label", "Sacar a " + nombreVisible + " de la clase");
+                sacarBtn.addEventListener("click", () => sacarDeLaClase(studentId, nombreVisible));
+                fila.appendChild(sacarBtn);
                 li.appendChild(fila);
 
                 // Lo que es solo de este alumno, en su segundo renglón.
@@ -2914,6 +2929,7 @@
                             : (meta && meta.full_name) || "Tu profe");
                     }
                     if (meta && meta.role === "alumno") {
+                        if (isTeacher && sacadosDeLaClase.has(key)) continue;
                         onlineStudents.set(key, { email: meta.email, full_name: meta.full_name, hand_raised: !!meta.hand_raised, hand_at: meta.hand_at || null, calentamiento: meta.calentamiento || null, tanda: meta.tanda || null });
                     } else if (meta && meta.role === "supervision") {
                         // Si además está mirando la partida de un alumno, el profe lo sabe.
@@ -2952,6 +2968,7 @@
             presenceChannel.on("broadcast", { event: "fotografia" }, (msg) => {
                 if (!isTeacher) dictarFotografia(msg.payload);
             });
+            presenceChannel.on("broadcast", { event: "sacar" }, (msg) => { recibirAvisoDeSacar(msg.payload); });
             presenceChannel.on("broadcast", { event: "lower_hand" }, (msg) => {
                 if (!isTeacher && handRaised && msg.payload && msg.payload.studentId === profile.id) {
                     setHandRaised(false);
@@ -7248,6 +7265,7 @@
             subscribeRealtime();
             subscribePresence();
             await checkOpenClassSession();
+            if (meSacaron) return;
             subscribeClassSessions();
             conectarControlesDeClase();
             await loadVariantTree();
@@ -7272,6 +7290,7 @@
             subscribePractice();
             if (isTeacher) { await loadChatStudents(); } else { await loadChatMessages(); }
             subscribeChat();
+            if (meSacaron) return;
 
             document.getElementById("loading").classList.add("hidden");
             document.getElementById("app").classList.remove("hidden");

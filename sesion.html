@@ -932,10 +932,15 @@
                          (elegir al azar, puntos, equipos) debajo. -->
                     <section id="students-panel" aria-labelledby="students-panel-titulo" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
                         <h2 id="students-panel-titulo" class="font-serif font-bold text-brand-800 dark:text-white mb-1 flex items-center gap-2 flex-wrap"><span><span aria-hidden="true">👥</span> Alumnos conectados <span id="students-count" class="text-sm font-sans font-semibold text-brand-450 dark:text-brand-350"></span></span><span id="hand-raised-badge" class="hidden text-xs font-semibold px-2 py-0.5 rounded-full bg-accent-500 text-brand-900"><span aria-hidden="true">✋ </span>Piden la palabra</span></h2>
-                        <p class="text-xs text-brand-450 dark:text-brand-350 mb-3"><span aria-hidden="true">📝</span> bitácora · <span aria-hidden="true">🏆</span> trofeos · <span aria-hidden="true">🎮</span> darle el control del tablero, para que mueva él mismo.</p>
+                        <p class="text-xs text-brand-450 dark:text-brand-350 mb-3"><span aria-hidden="true">📝</span> bitácora · <span aria-hidden="true">🏆</span> trofeos · <span aria-hidden="true">🎮</span> darle el control del tablero, para que mueva él mismo · <span aria-hidden="true">🚪</span> sacarlo de la clase, si entró por error.</p>
                         <ul id="students-list" class="space-y-2 text-sm mb-4">
                             <li class="text-brand-450 dark:text-brand-350">Nadie conectado todavía…</li>
                         </ul>
+                        <!-- Los que el profe sacó de esta clase (js/clase-sacar.js), para dejarlos volver si fue un error. -->
+                        <details id="sacados-caja" hidden class="mb-4 rounded-lg border border-brand-200 dark:border-brand-700 p-2 text-sm">
+                            <summary class="cursor-pointer font-semibold text-brand-700 dark:text-brand-200 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🚪 </span>Sacados de esta clase <span id="sacados-cuenta"></span></summary>
+                            <ul id="sacados-lista" class="space-y-1.5 mt-2"></ul>
+                        </details>
                         <!-- Elegir a quién le toca responder, al azar entre los conectados
                              (game_state.elegido). Al elegido le sale en grande en su pantalla. -->
                         <div id="elegir-azar" class="mb-4 rounded-lg border border-accent-400/60 bg-accent-50 dark:bg-brand-950 p-3">
@@ -1497,6 +1502,7 @@
     <script src="js/clase-callados.js"></script>
     <script src="js/clase-qr.js"></script>
     <script src="js/clase-invitados.js"></script>
+    <script src="js/clase-sacar.js"></script>
     <script src="js/clase-herramientas-grandes.js"></script>
     <script src="js/foto-perfil.js"></script>
     <script src="js/cursos-ocultos.js"></script>

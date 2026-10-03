@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261003061045
+# al-dia-con: 20261003163323
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -21,6 +21,7 @@ tabla  clase_elegidos  rls=true
 tabla  clase_enlaces  rls=true
 tabla  clase_espectadores  rls=true
 tabla  clase_plan_hecho  rls=true
+tabla  clase_sacados  rls=true
 tabla  class_attendance  rls=true
 tabla  class_chat_messages  rls=true
 tabla  class_presence_log  rls=true
@@ -258,6 +259,10 @@ columna  clase_espectadores.visto_at  timestamp with time zone
 columna  clase_plan_hecho.class_session_id  uuid
 columna  clase_plan_hecho.created_at  timestamp with time zone
 columna  clase_plan_hecho.plan_item_id  uuid
+columna  clase_sacados.class_session_id  uuid
+columna  clase_sacados.created_at  timestamp with time zone
+columna  clase_sacados.devuelto_at  timestamp with time zone
+columna  clase_sacados.student_id  uuid
 columna  class_attendance.id  uuid
 columna  class_attendance.joined_at  timestamp with time zone
 columna  class_attendance.minutos_tarde  integer
@@ -1244,6 +1249,7 @@ funcion  correos_de_supervision(p_alumno uuid)  definer  anon=false  auth=false
 funcion  crear_examen(p_alumnos uuid[], p_titulo text, p_instrucciones text, p_minutos integer, p_vence timestamp with time zone, p_items jsonb, p_salidas_permitidas integer, p_disponible_desde timestamp with time zone)  invoker  anon=true  auth=true
 funcion  crear_tarea(p_alumnos uuid[], p_titulo text, p_instrucciones text, p_vence timestamp with time zone, p_items jsonb, p_disponible_desde timestamp with time zone)  invoker  anon=true  auth=true
 funcion  cuestionario_de_tarea(p_item uuid)  definer  anon=false  auth=true
+funcion  dejar_volver_a_la_clase(p_clase uuid, p_alumno uuid)  definer  anon=false  auth=true
 funcion  detalle_informe_mensual(p_informe uuid)  definer  anon=false  auth=true
 funcion  detalle_mensual_crudo(p_profesor uuid, p_periodo date)  definer  anon=false  auth=false
 funcion  detalle_mensual_profesor(p_profesor uuid, p_periodo date)  definer  anon=false  auth=true
@@ -1344,6 +1350,8 @@ funcion  interno.enlaces_de_sala_validos(p jsonb)  invoker  anon=true  auth=true
 funcion  interno.frenar_envio_publico(p_tipo text, p_ambito text, p_correo text, p_ip text)  invoker  anon=false  auth=false
 funcion  interno.gente_de_mis_academias()  definer  anon=false  auth=true
 funcion  interno.jsonb_o_nulo(p text)  invoker  anon=false  auth=true
+funcion  interno.me_sacaron_de(p_clase uuid)  definer  anon=false  auth=true
+funcion  interno.me_sacaron_de_la_pregunta(p_pregunta uuid)  definer  anon=false  auth=true
 funcion  interno.monto_rango(p_base date, p_meses integer, p_precio numeric, p_desde date, p_hasta date)  invoker  anon=false  auth=false
 funcion  interno.nombre_libre_de_subgrupo(p_profesor uuid, p_base text, p_excepto uuid)  definer  anon=false  auth=false
 funcion  interno.pagar(p_pagos jsonb, p_metodo text, p_referencia text, p_nota text, p_fecha date)  definer  anon=false  auth=false
@@ -1352,6 +1360,7 @@ funcion  interno.prefijo_de_nombre(p_nombre text)  invoker  anon=false  auth=tru
 funcion  interno.profesores_de(p_alumno uuid)  definer  anon=false  auth=true
 funcion  interno.profesores_que_coordino()  definer  anon=false  auth=true
 funcion  interno.profiles_foto_por_funcion()  definer  anon=false  auth=false
+funcion  interno.puedo_sacar_de(p_clase uuid)  definer  anon=false  auth=true
 funcion  interno.puestos_de_la_clase(p_clase uuid)  definer  anon=false  auth=true
 funcion  interno.puestos_de_tandas(p_clase uuid)  definer  anon=false  auth=true
 funcion  interno.puntos_de_una_respuesta(p_dificultad integer, p_intentos integer, p_puesto integer)  invoker  anon=false  auth=true
@@ -1490,6 +1499,7 @@ funcion  resumen_satisfaccion(p_desde date, p_hasta date)  invoker  anon=false  
 funcion  resumen_tareas_examenes(p_alumno uuid, p_desde timestamp with time zone, p_hasta timestamp with time zone)  definer  anon=false  auth=true
 funcion  retirar_justificacion(p_id uuid)  definer  anon=false  auth=true
 funcion  revisar_informe_mensual(p_id uuid, p_comentario text)  definer  anon=false  auth=true
+funcion  sacar_de_la_clase(p_clase uuid, p_alumno uuid)  definer  anon=false  auth=true
 funcion  salida_de_la_clase(p_clase uuid)  invoker  anon=false  auth=true
 funcion  se_caen_del_plan(p_dias integer)  invoker  anon=false  auth=true
 funcion  secreto_alerta_base()  definer  anon=false  auth=false
@@ -1557,11 +1567,14 @@ politica  clase_enlaces  clase_enlaces_select  SELECT
 politica  clase_espectadores  clase_espectadores_select  SELECT
 politica  clase_espectadores  verificacion_en_dos_pasos  ALL  restrictiva
 politica  clase_plan_hecho  clase_plan_hecho_de_quien_da_la_clase  ALL
+politica  clase_sacados  clase_sacados_lee  SELECT
+politica  clase_sacados  verificacion_en_dos_pasos  ALL  restrictiva
 politica  class_attendance  class_attendance_delete_profesor  DELETE
 politica  class_attendance  class_attendance_exige_acceso_ins  INSERT  restrictiva
 politica  class_attendance  class_attendance_exige_acceso_upd  UPDATE  restrictiva
 politica  class_attendance  class_attendance_insert_own  INSERT
 politica  class_attendance  class_attendance_insert_profesor  INSERT
+politica  class_attendance  class_attendance_no_sacado  INSERT  restrictiva
 politica  class_attendance  class_attendance_select  SELECT
 politica  class_attendance  class_attendance_select_supervisor  SELECT
 politica  class_attendance  class_attendance_update_profesor  UPDATE
@@ -1575,6 +1588,7 @@ politica  class_presence_log  class_presence_log_exige_acceso_ins  INSERT  restr
 politica  class_presence_log  class_presence_log_exige_acceso_upd  UPDATE  restrictiva
 politica  class_presence_log  class_presence_log_insert_own  INSERT
 politica  class_presence_log  class_presence_log_insert_profesor  INSERT
+politica  class_presence_log  class_presence_log_no_sacado  INSERT  restrictiva
 politica  class_presence_log  class_presence_log_select  SELECT
 politica  class_presence_log  class_presence_log_select_supervisor  SELECT
 politica  class_presence_log  class_presence_log_update_own  UPDATE
@@ -1771,6 +1785,8 @@ politica  puzzle_rush_scores  puzzle_rush_scores_update_own  UPDATE
 politica  question_answers  question_answers_exige_acceso_ins  INSERT  restrictiva
 politica  question_answers  question_answers_exige_acceso_upd  UPDATE  restrictiva
 politica  question_answers  question_answers_insert_own  INSERT
+politica  question_answers  question_answers_no_sacado_ins  INSERT  restrictiva
+politica  question_answers  question_answers_no_sacado_upd  UPDATE  restrictiva
 politica  question_answers  question_answers_select  SELECT
 politica  question_answers  question_answers_select_supervisor  SELECT
 politica  question_answers  question_answers_update  UPDATE
@@ -1821,6 +1837,7 @@ politica  suscripciones  suscripciones_lee_alumno  SELECT
 politica  tanda_resultados  tanda_resultados_exige_acceso_ins  INSERT  restrictiva
 politica  tanda_resultados  tanda_resultados_inserta_alumno  INSERT
 politica  tanda_resultados  tanda_resultados_lee  SELECT
+politica  tanda_resultados  tanda_resultados_no_sacado  INSERT  restrictiva
 politica  tanda_resultados  verificacion_en_dos_pasos  ALL  restrictiva
 politica  tarea_items  tarea_items_delete  DELETE
 politica  tarea_items  tarea_items_exige_acceso_upd  UPDATE  restrictiva
@@ -2001,6 +2018,8 @@ indice  clase_espectadores  clase_espectadores_pkey
 indice  clase_espectadores  clase_espectadores_secreto_hash_key
 indice  clase_plan_hecho  clase_plan_hecho_item_idx
 indice  clase_plan_hecho  clase_plan_hecho_pkey
+indice  clase_sacados  clase_sacados_alumno
+indice  clase_sacados  clase_sacados_pkey
 indice  class_attendance  class_attendance_pkey
 indice  class_attendance  class_attendance_session_id_student_id_key
 indice  class_attendance  class_attendance_student_idx
@@ -2440,6 +2459,20 @@ grant  clase_plan_hecho  authenticated  SELECT
 grant  clase_plan_hecho  authenticated  TRIGGER
 grant  clase_plan_hecho  authenticated  TRUNCATE
 grant  clase_plan_hecho  authenticated  UPDATE
+grant  clase_sacados  anon  DELETE
+grant  clase_sacados  anon  INSERT
+grant  clase_sacados  anon  REFERENCES
+grant  clase_sacados  anon  SELECT
+grant  clase_sacados  anon  TRIGGER
+grant  clase_sacados  anon  TRUNCATE
+grant  clase_sacados  anon  UPDATE
+grant  clase_sacados  authenticated  DELETE
+grant  clase_sacados  authenticated  INSERT
+grant  clase_sacados  authenticated  REFERENCES
+grant  clase_sacados  authenticated  SELECT
+grant  clase_sacados  authenticated  TRIGGER
+grant  clase_sacados  authenticated  TRUNCATE
+grant  clase_sacados  authenticated  UPDATE
 grant  class_attendance  anon  DELETE
 grant  class_attendance  anon  INSERT
 grant  class_attendance  anon  REFERENCES

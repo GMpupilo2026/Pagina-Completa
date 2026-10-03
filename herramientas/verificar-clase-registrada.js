@@ -157,6 +157,8 @@ window.__deletes = [];
     notas_alumno: [], trofeos_ajustes: [], insignias: [], respuestas_en_curso: [],
     // El enlace para invitados sin cuenta (verificar-clase-invitados.js).
     clase_enlaces: [], clase_espectadores: [],
+    // Los sacados de una clase (verificar-clase-sacar.js).
+    clase_sacados: [],
     // El catálogo es de la base (insignias_tipos): dos de muestra alcanzan.
     insignias_tipos: [
       { tipo: "buen_estudiante", nombre: "Estrella de buen estudiante", emoji: "⭐", descripcion: "Por su actitud.", orden: 1 },
@@ -457,6 +459,16 @@ window.__deletes = [];
         return constructor(n, Object.values(suma));
       }
       // Una semilla puede traer sus propias clases (un alumno con dos profes).
+      /* Sacar a un alumno y dejarlo volver, como en la base: un renglón por
+         clase y alumno, y dejarlo volver marca devuelto_at (no se borra). */
+      if (n === "sacar_de_la_clase" || n === "dejar_volver_a_la_clase") {
+        const ya = TABLAS.clase_sacados.find((r) => r.class_session_id === args.p_clase && r.student_id === args.p_alumno);
+        if (n === "sacar_de_la_clase") {
+          if (ya) ya.devuelto_at = null;
+          else TABLAS.clase_sacados.push({ class_session_id: args.p_clase, student_id: args.p_alumno, created_at: new Date().toISOString(), devuelto_at: null });
+        } else if (ya) ya.devuelto_at = new Date().toISOString();
+        return constructor(n, []);
+      }
       if (n === "mis_clases" && TABLAS.mis_clases) return constructor(n, TABLAS.mis_clases);
       return constructor(n, n === "mis_clases"
       ? [{ profesor_id: "u-profe", profesor: "Karina Rojas", es_principal: true,
@@ -494,6 +506,8 @@ window.__deletes = [];
       presenceState: () => estado,
     }),
     removeChannel: () => {},
+    // Quedar fuera de la clase se desconecta de todo: queda anotado.
+    removeAllChannels: () => { window.__desconectado = true; return Promise.resolve([]); },
   };
 })();
 `;

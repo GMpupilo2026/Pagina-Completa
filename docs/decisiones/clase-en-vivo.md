@@ -648,8 +648,8 @@ del nombre y caían en dos renglones más, y el selector de color solo sirve par
 el que tiene el control.
 
 - **Un renglón por alumno**: el punto, su foto, el nombre (cortado si no cabe,
-  entero al pasar el puntero) y tres iconos: 📝 bitácora, 🏆 trofeos y 🎮
-  control. Cada uno dice qué hace y a quién (`aria-label`: «Darle el control a
+  entero al pasar el puntero) y cuatro iconos: 📝 bitácora, 🏆 trofeos, 🎮
+  control y 🚪 sacarlo de la clase (ver «Sacar a un alumno de la clase»). Cada uno dice qué hace y a quién (`aria-label`: «Darle el control a
   Ana Rojas»); la leyenda de arriba los explica en palabras. El título dice
   cuántos hay conectados.
 - **Lo que es de uno solo va en su segundo renglón**: el color con que mueve y
@@ -667,6 +667,43 @@ el que tiene el control.
 clase-participacion clase-elegido clase-notas trofeos foto-perfil
 clase-movil`.** Está probado que falla de verdad: sin repintar al dar el
 control, salta.
+
+### Sacar a un alumno de la clase
+
+Por si alguien entra por error (un alumno de otro grupo del mismo profe, por
+ejemplo): el profe lo saca y el alumno deja de ver la clase al instante.
+
+- **Quien decide es la base** (migración `clase_sacados`, comprobada
+  impersonando). `clase_sacados` guarda un renglón por clase y alumno, sin
+  política de escritura: la escriben `sacar_de_la_clase()` y
+  `dejar_volver_a_la_clase()`, que solo deja usar al dueño de la clase o a
+  quien administra (`interno.puedo_sacar_de()`). Mientras esté sacado, las
+  políticas restrictivas `*_no_sacado` le rechazan, en ESA clase, la
+  asistencia, el tiempo en clase, las respuestas a las preguntas (también
+  cambiarlas) y los resultados del calentamiento. Una consola no lo salta.
+- **No se borra nada.** Dejarlo volver marca `devuelto_at`; sacarlo otra vez
+  lo deja en nulo. Lo que hizo antes de que lo sacaran (asistencia, lo que
+  contestó) se queda: si el profe se equivocó de alumno, no pierde nada.
+  También porque la base pide confirmación para un `delete` en una
+  migración, y una que borraba la asistencia al sacarlo se canceló.
+- **El profe**: el 🚪 de su renglón, con confirmación («Sacarlo de la
+  clase»). Sale de la lista de conectados y aparece en «Sacados de esta
+  clase» (cerrada, a un clic), con «↩️ Dejarlo volver». Si una pestaña vieja
+  del sacado se sigue anunciando en la presencia, el profe no lo ve.
+- **El alumno**: le llega el aviso `sacar` por el canal de presencia. Ese
+  aviso lo puede mandar cualquiera conectado al canal, así que no se le cree:
+  la página pregunta a la base (`clase_sacados`, que el alumno lee solo lo
+  suyo) y solo si es verdad se va: deja de anunciarse, cierra su tiempo en
+  clase, se desconecta de todos los canales y ve «🚪 Tu profe te sacó de esta
+  clase», con «🔄 Intentar de nuevo» y «Volver a la Academia». El foco va al
+  título, para que el lector de pantalla lo diga. Al cargar la página se
+  pregunta igual (`checkOpenClassSession`), así que recargar no lo vuelve a
+  meter, y no marca asistencia.
+- Vale para ESA clase: en la siguiente que abra el profe entra normal.
+
+**Al tocar esto, correr `node herramientas/verificar-todo.js clase-sacar
+clase-participacion`.** Está probado que falla de verdad: sin la pregunta a
+la base al cargar, salta.
 
 ### La participación oral: cómo respondió, y la cola de manos levantadas
 

@@ -108,13 +108,13 @@ async function pruebaListaOrdenada(browser) {
   });
   await page.waitForFunction(() => document.querySelectorAll("#students-list li").length === 2, null, { timeout: 5000 });
   igual("dice cuántos hay conectados", await page.textContent("#students-count"), "(2)");
-  igual("cada alumno en un renglón, con sus tres iconos y sin el selector de color",
+  igual("cada alumno en un renglón, con sus cuatro iconos y sin el selector de color",
     await page.evaluate(() => [...document.querySelectorAll("#students-list li")].map((li) => [
       li.children.length, [...li.querySelectorAll("button")].map((b) => b.textContent).join(" "), li.querySelectorAll("select").length])),
-    [[1, "📝 🏆 🎮", 0], [1, "📝 🏆 🎮", 0]]);
+    [[1, "📝 🏆 🎮 🚪", 0], [1, "📝 🏆 🎮 🚪", 0]]);
   igual("los iconos dicen qué hacen y a quién", await page.evaluate(() =>
     [...document.querySelectorAll("#students-list li:first-child button")].map((b) => b.getAttribute("aria-label"))),
-    ["Bitácora de Ana Rojas", "Trofeos e insignias de Ana Rojas", "Darle el control a Ana Rojas"]);
+    ["Bitácora de Ana Rojas", "Trofeos e insignias de Ana Rojas", "Darle el control a Ana Rojas", "Sacar a Ana Rojas de la clase"]);
   await page.click('#students-list button[aria-label="Darle el control a Beto Mora"]');
   await page.waitForFunction(() => document.querySelector('#students-list select'), null, { timeout: 3000 }).catch(() => {});
   igual("le da el control con ambos colores", await page.evaluate(() => {
