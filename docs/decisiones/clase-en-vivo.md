@@ -1127,6 +1127,58 @@ Se comprobó que el código movido es idéntico, línea por línea sin la sangr�
   página. Sin esa línea, un verificador que busca algo del código de la clase
   dejaría de encontrarlo, y podría pasar sin comprobar nada.
 
+### Treinta alumnos a la vez: la reconexión y los anuncios de la tanda
+
+Revisión del 3/10/2026, antes de una clase con 30 alumnos (la más grande hasta
+entonces había tenido 24, el 29/9). La base, en Pro con la máquina Small, venía
+sin una sola medición lenta desde el cambio. Lo que pesa con 30 es Realtime:
+el plan Pro deja **500 mensajes por segundo para todo el proyecto**, y un
+mensaje es cada uno que **llega a** o **sale de** un navegador. Pasado el tope,
+Realtime **desconecta** a la gente (`tenant_events`) y `supabase-js` reconecta
+solo cuando baja. Dos cosas se arreglaron:
+
+- **Volver a suscribirse no trae lo que se perdió.** Un canal que se cae (el
+  celular se bloquea, el wifi parpadea, o el corte de arriba) se vuelve a
+  suscribir solo, pero los cambios de ese rato no se reenvían: el alumno se
+  quedaba con la posición vieja hasta la jugada siguiente del profe, y con la
+  pregunta de antes. Ahora `alVolverASuscribir()` (en `js/sesion.js`) relee
+  `game_state` y la pregunta en curso cada vez que el canal queda suscrito,
+  **salvo la primera** (ya tiene su carga). Releer el tablero es seguro porque
+  `applyGameStateRow()` ya trata el eco idéntico como eco: no anuncia dos
+  veces. **El profe no relee su tablero** (el proyector y el control remoto
+  sí): manda él, y una lectura que vuelve antes que la jugada que todavía
+  viaja se la desharía un instante.
+- **La tanda hacía anunciar a los 30 en el mismo segundo.** Al empezar el
+  calentamiento o la competencia, al acabarse el tiempo y al quitarla el
+  profe, cada alumno hacía `track()` en el acto, y cada anuncio le llega a
+  todos los conectados: 30 × 31 ≈ 900 mensajes de golpe. Ahora
+  `anunciarTanda()` (`js/clase-tanda.js`) espera un rato al azar (0,3-4 s) y
+  manda lo último que haya: los anuncios se reparten y varios cambios seguidos
+  salen en uno. Lo que cuesta: el profe ve la cuenta y el alumno su puesto en
+  la competencia hasta 4 s tarde.
+
+Lo que se miró y queda como está, anotado para la próxima vez:
+
+- **Los otros `track()` de la clase** (mano levantada, calentamiento de una
+  posición, a quién mira el profe) los dispara una persona cada vez: no caen
+  todos juntos.
+- **Cada respuesta a una pregunta** le hace al profe una lectura de las
+  respuestas (`loadAnswersFor`): 30 pequeñas en unos segundos, que la base
+  aguanta. Si llegan desordenadas, la lista puede quedarse con una vieja hasta
+  la respuesta siguiente.
+- **Una clase olvidada abierta** se come la de hoy: el índice
+  `class_sessions_una_abierta_por_profesor` no deja abrir otra, y la página se
+  cuelga de la vieja (ver «Cerrar la clase tiene que SIGNIFICAR cerrarla»). El
+  3/10 había dos abiertas desde el 29/9. La franja lo dice («Clase abierta»
+  con su hora): antes de empezar, si dice abierta y no la abriste hoy,
+  cerrarla y abrir otra.
+
+`verificar-clase-reconexion.js` corta la conexión de mentira (cambia la base
+sin aviso y vuelve a llamar lo que la página hace al quedar suscrita) y mira
+que la alumna vea la jugada y la pregunta, y que el profe no relea.
+`verificar-clase-tanda.js` comprueba que el anuncio no sale en el acto. Los
+dos fallan sin el arreglo.
+
 ### Lo de la clase se limpia al cerrar
 
 El mapa, el calentamiento, el podio, los equipos, el tiempo para pensar y el

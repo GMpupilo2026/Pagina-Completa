@@ -367,7 +367,22 @@ function puestoMioEnLaTanda() {
     return { puesto: TandaCalentamiento.puestos(filas).get(profile.id), de: filas.length };
 }
 
-async function anunciarTanda() {
+/* Al empezar la tanda, al acabarse el tiempo o al quitarla el profe, los 30
+   alumnos anunciarían en el MISMO segundo, y cada anuncio le llega a todos los
+   conectados: unos 900 mensajes de golpe, por encima de los 500 por segundo
+   que Realtime deja en el plan Pro (pasado el tope corta a todo el proyecto).
+   Cada alumno espera un rato al azar (0,3-4 s) y manda lo último que tenga:
+   varios cambios seguidos salen en un solo anuncio. */
+let tandaAnuncioPendiente = null;
+function anunciarTanda() {
+    if (tandaAnuncioPendiente) return;
+    tandaAnuncioPendiente = setTimeout(() => {
+        tandaAnuncioPendiente = null;
+        enviarAnuncioDeTanda().catch((e) => console.error(e));
+    }, 300 + Math.random() * 3700);
+}
+
+async function enviarAnuncioDeTanda() {
     const buenas = tandaMia ? tandaMia.resultados.filter(Boolean).length : 0;
     const nuevo = tandaMia ? { at: tandaMia.at, hechos: tandaMia.resultados.length, buenas, i: tandaMia.i, fin: !!tandaMia.fin } : null;
     if (JSON.stringify(nuevo) === JSON.stringify(tandaPresencia)) return;
