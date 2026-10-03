@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
- * Baja Inter, Merriweather y Quicksand de Google Fonts y las deja autoalojadas
+ * Baja Inter, Merriweather, Quicksand, Atkinson Hyperlegible, Comic Neue y
+ * Cinzel de Google Fonts y las deja autoalojadas
  * en fonts/,
  * con su hoja css/fuentes.css.
  *
@@ -33,7 +34,13 @@ const PEDIDO =
   // Unicornio, Sirenas), y va solo en 700: la usan en .font-serif, que siempre
   // va en negrita. Declarada acá no le cuesta nada a nadie más: el navegador
   // baja una fuente solo cuando algo en la página la usa de verdad.
-  "&family=Quicksand:wght@700&display=swap";
+  "&family=Quicksand:wght@700" +
+  // Las de «Letra» en Configuración (js/temas-plataforma.js, LETRAS), más
+  // Cinzel, la de los títulos del tema Magia. Igual que Quicksand: solo se
+  // bajan si alguien elige esa letra o ese tema.
+  "&family=Atkinson+Hyperlegible:wght@400;700" +
+  "&family=Comic+Neue:wght@400;700" +
+  "&family=Cinzel:wght@700&display=swap";
 
 // Solo lo que el sitio puede llegar a pintar.
 const SUBCONJUNTOS = ["latin", "latin-ext"];
@@ -130,7 +137,8 @@ function trocear(css) {
   }
 
   const cabecera = [
-    "/* Inter, Merriweather y Quicksand, autoalojadas.",
+    "/* Inter, Merriweather, Quicksand, Atkinson Hyperlegible, Comic Neue y Cinzel,",
+    " * autoalojadas.",
     " *",
     " * NO SE EDITA A MANO: la genera herramientas/fuentes-bajar.js.",
     " *",

@@ -298,7 +298,7 @@ así que para quien no elige nada no cambió ni un píxel.
   tiene la MISMA luminancia WCAG que el tono equivalente del Clásico, así que
   los 49 pares de color que el sitio usa de verdad —`text-brand-600` sobre
   blanco, `dark:text-brand-300` sobre `brand-900`, `text-brand-900` sobre
-  `accent-500`— dan el mismo contraste en los siete temas. Es la misma regla de
+  `accent-500`— dan el mismo contraste en los ocho temas. Es la misma regla de
   «el color nunca se elige a ojo», llevada a donde más fácil se rompe: un rosa
   bonito deja el texto secundario en 3,2 y la página se ve preciosa mientras
   hay quien ya no la puede leer. Los hex van **escritos** en la tabla y no
@@ -343,10 +343,11 @@ pie en degradado, y la letra de los **títulos** redondeada.
 - **Son SVG escritos dentro del CSS**, no archivos de `img/`: son 400 bytes cada
   uno, así que una petición por tema costaría más que el CSS entero.
 
-#### Los que VUELAN: los cohetes de Galaxia y los dragones de Dragones
+#### Los que VUELAN: los cohetes de Galaxia, los dragones de Dragones y los magos de Magia
 
-Dos temas traen además figuras que **cruzan el fondo**: cohetes en Galaxia y
-dragones tirando fuego en Dragones. Lo declara el campo `vuelan` de la tabla, y
+Tres temas traen además figuras que **cruzan el fondo**: cohetes en Galaxia,
+dragones tirando fuego en Dragones y magos en escoba lanzando hechizos en
+Magia. Lo declara el campo `vuelan` de la tabla, y
 el patrón de siempre (las estrellas, las escamas) se queda quieto debajo.
 
 - **Son DOS capas y no una**, `body::before` y `body::after`, con figuras de
@@ -367,6 +368,15 @@ el patrón de siempre (las estrellas, las escamas) se queda quieto debajo.
   mirándolo, no calculándolo. Lo mismo el ala del dragón, que va dibujada
   PRIMERO (o sea detrás): encima le corta el cuello y sus muescas se leen como
   agujeros en el cuerpo.
+- **El hechizo del mago ARRANCA EN LA PUNTA DE LA VARITA**, por lo mismo que
+  el fuego en la boca: despegado se lee como una estrella más del fondo. El
+  mago va en escoba y con la capa ondeando hacia atrás, que es lo que dice que
+  vuela y no que está parado. Se dibujó y se miró en grande antes de darlo por
+  bueno.
+- **La paleta de Magia (añil y verde esmeralda) salió de una cuenta**, no de
+  elegir colores: para cada tono se buscó, con el tono y la saturación fijos,
+  la luminosidad que da la MISMA luminancia WCAG que el tono del Clásico.
+  Sus títulos van en Cinzel, la letra de libro antiguo.
 - **Van en `z-index: -1` y `pointer-events: none`**: detrás de todo el contenido
   y sin comerse un solo clic. Una capa fija a pantalla completa por delante sería
   una página entera que no responde, y eso tampoco daría ningún error.
@@ -395,6 +405,41 @@ el patrón de siempre (las estrellas, las escamas) se queda quieto debajo.
   Por eso el nombre de la familia se guarda también en `localStorage`: no es una
   segunda fuente de verdad, es una copia que deja `js/temas-plataforma.js` para
   que el script del `<head>` pueda pedirla sin bajarse la tabla entera.
+
+### La letra se elige aparte del tema
+
+En `configuracion.html`, debajo del tema, la tarjeta **«Letra»**: Como el tema,
+Clásica, Redondeada, Fácil de leer (Atkinson Hyperlegible), Escolar (Comic
+Neue) y Mágica (Cinzel). La tabla es `LETRAS`, en `js/temas-plataforma.js`.
+
+- **Es otra preferencia y no otro tema** (`plataforma_letra_v1`): quien quiere
+  los colores de Princesas puede querer otra letra, y quien lee con dificultad
+  necesita una letra clara con cualquier tema. Con ocho temas y seis letras,
+  meterlas en la tabla de temas serían 48 temas.
+- **Solo «Fácil de leer» y «Escolar» cambian TODO el texto**; las demás, solo
+  los títulos (`.font-serif`). Es la regla de siempre: una letra decorativa en
+  una tarea de veinte minutos cansa. Las que cambian el cuerpo son las que se
+  eligen para leer mejor.
+- **La elegida le gana a la del tema por la cascada, no por un `if`**:
+  `:root[data-letra="x"] .font-serif` tiene la misma especificidad que la regla
+  del tema y va DESPUÉS en `css/tailwind.css` (`cssDeLetras()` en
+  `herramientas/css-construir.js`). «Como el tema» no escribe nada, y al volver
+  a ella se BORRA la clave: igual que las casillas en `auto`.
+- **El `data-letra` lo pone el script del `<head>`**, antes que el del tema
+  (que sale temprano con el Clásico). Puesto después, la página se pintaría con
+  una letra y saltaría a la otra.
+- **Las fuentes las sirve el sitio** (`herramientas/fuentes-bajar.js` las
+  agrega a `fonts/` y a `css/fuentes.css`), y el navegador baja una solo si
+  alguien la eligió: a quien no elige nada no le cuesta ni un byte.
+- Cada tarjeta trae una muestra escrita CON esa letra, porque el nombre de una
+  fuente no le dice nada a nadie. La de «Como el tema» enseña la del tema
+  puesto.
+
+`verificar-temas-plataforma.js` comprueba que cada letra tenga su `@font-face`,
+su `.woff2` y su regla; que puesta desde el `<head>` cambie el cuerpo y los
+títulos y **se baje de verdad**; que le gane a la del tema (Princesas con
+Mágica: títulos en Cinzel, texto en Inter); y que en Configuración se ponga,
+se guarde y se quite. Con la regla de una letra rota, saltan tres.
 
 ### El script del `<head>`, y por qué va en línea
 

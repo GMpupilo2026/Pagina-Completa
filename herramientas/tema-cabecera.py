@@ -44,6 +44,11 @@ _spec.loader.exec_module(_pwa)
 BLOQUE = (
     INICIO
     + "<script>(function(){try{"
+    # La letra que eligió la persona (js/temas-plataforma.js, LETRAS) va
+    # PRIMERO: es independiente del tema, y con el tema Clásico el resto del
+    # bloque sale antes de llegar abajo.
+    + "var l=localStorage.getItem('plataforma_letra_v1');"
+    + "if(l&&/^[a-z]{2,24}$/.test(l)&&l!=='tema')document.documentElement.setAttribute('data-letra',l);"
     + "var t=localStorage.getItem('plataforma_tema_v1');"
     + "if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;"
     + "document.documentElement.setAttribute('data-tema',t);"

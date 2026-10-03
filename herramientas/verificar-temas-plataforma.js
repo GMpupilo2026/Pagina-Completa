@@ -16,7 +16,7 @@
       no la puede leer. Por eso las paletas de js/temas-plataforma.js tienen
       cada tono con la MISMA luminancia WCAG que el tono equivalente del tema
       Clásico, y acá se comprueban los 49 pares de color que el sitio usa de
-      verdad, en los siete temas: ninguno puede quedar por debajo de AA, y
+      verdad, en los ocho temas: ninguno puede quedar por debajo de AA, y
       ninguno puede quedar peor que el Clásico en los pares donde el propio
       Clásico no llega (`text-accent-600` sobre blanco está en 3,63 desde
       siempre, y esto no es el lugar donde se arregla eso).
@@ -42,7 +42,7 @@ const path = require("path");
 const { chromium } = require("./lib/playwright-con-sesion");
 const { clienteFalso, PROFE, ALUMNOS } = require("./guia-capturas.js");
 const { cssDeTemas } = require("./css-construir.js");
-const { TEMAS } = require("../js/temas-plataforma.js");
+const { TEMAS, LETRAS } = require("../js/temas-plataforma.js");
 const CASILLAS = require("../js/board-color-themes.js");
 
 const RAIZ = path.join(__dirname, "..");
@@ -255,6 +255,7 @@ async function abrir(navegador, url, sembrar) {
       ${sembrar.fuente ? `localStorage.setItem("plataforma_tema_fuente_v1", ${JSON.stringify(sembrar.fuente)});` : ""}
       ${sembrar.casillas ? `localStorage.setItem("board_color_theme_v1", ${JSON.stringify(sembrar.casillas)});` : ""}
       ${sembrar.oscuro ? `localStorage.setItem("theme","dark");` : ""}
+      ${sembrar.letra ? `localStorage.setItem("plataforma_letra_v1", ${JSON.stringify(sembrar.letra)});` : ""}
     }catch(e){}`);
   }
   const page = await ctx.newPage();
@@ -579,8 +580,76 @@ async function pruebaLegibilidad(navegador) {
   }
 }
 
+/* ---------- la letra, aparte del tema ---------- */
+function pruebaLetrasArchivos() {
+  console.log("\n=== Cada letra que se ofrece la sirve el sitio ===");
+  const hoja = fs.readFileSync(path.join(RAIZ, "css", "fuentes.css"), "utf8");
+  const familias = new Set();
+  Object.values(LETRAS).forEach((l) => { if (l.titulos) familias.add(l.titulos); if (l.texto) familias.add(l.texto); });
+  Object.values(TEMAS).forEach((t) => { if (t.fuente) familias.add(t.fuente); });
+  const faltan = [...familias].filter((f) => !new RegExp(`font-family: '${f}'`).test(hoja));
+  igual("cada familia tiene su @font-face en css/fuentes.css", faltan.join(", ") || "todas", "todas");
+  const archivos = [...hoja.matchAll(/url\('\/fonts\/([^']+)'\)/g)].map((m) => m[1]);
+  const sinArchivo = archivos.filter((a) => !fs.existsSync(path.join(RAIZ, "fonts", a)));
+  igual("y cada .woff2 que nombra existe", sinArchivo.join(", ") || "todos", "todos");
+  const css = fs.readFileSync(path.join(RAIZ, "css", "tailwind.css"), "utf8");
+  const sinRegla = Object.keys(LETRAS).filter((id) => id !== "tema" && !css.includes(`:root[data-letra="${id}"]`));
+  igual("cada letra tiene su regla en css/tailwind.css", sinRegla.join(", ") || "todas", "todas");
+}
+
+async function letraDe(page) {
+  return page.evaluate(async () => {
+    await document.fonts.ready;
+    const prim = (n) => n ? getComputedStyle(n).fontFamily.split(",")[0].replace(/["']/g, "").trim() : null;
+    const titulo = document.querySelector("h1.font-serif, h2.font-serif, .font-serif");
+    const fam = prim(titulo);
+    return { attr: document.documentElement.getAttribute("data-letra"), cuerpo: prim(document.body), titulo: fam,
+             // Que se haya bajado DE VERDAD (y del sitio): una familia nombrada
+             // que no carga pinta la de respaldo y se ve «casi igual».
+             cargada: document.fonts.check(`700 16px "${fam}"`) && [...document.fonts].some((f) => f.family.replace(/["']/g, "") === fam && f.status === "loaded"),
+             guardado: (() => { try { return localStorage.getItem("plataforma_letra_v1"); } catch (e) { return "?"; } })() };
+  });
+}
+
+async function pruebaLetra(navegador) {
+  console.log("\n=== La letra: se elige aparte y le gana a la del tema ===");
+  let { page, ctx } = await abrir(navegador, "/clases.html", { tema: "" });
+  let d = await letraDe(page);
+  igual("sin elegir, el cuerpo es Inter y los títulos Merriweather", [d.attr, d.cuerpo, d.titulo], [null, "Inter", "Merriweather"]);
+  await ctx.close();
+
+  ({ page, ctx } = await abrir(navegador, "/clases.html", { tema: "", letra: "legible" }));
+  d = await letraDe(page);
+  igual("«Fácil de leer» cambia el cuerpo y los títulos, desde el <head>", [d.attr, d.cuerpo, d.titulo], ["legible", "Atkinson Hyperlegible", "Atkinson Hyperlegible"]);
+  cierto("y la letra se baja de verdad", d.cargada, JSON.stringify(d));
+  await ctx.close();
+
+  ({ page, ctx } = await abrir(navegador, "/clases.html", { tema: "princesas", letra: "magica" }));
+  d = await letraDe(page);
+  igual("con Princesas, la letra elegida le gana a la del tema (y el texto sigue en Inter)", [d.cuerpo, d.titulo], ["Inter", "Cinzel"]);
+  await ctx.close();
+
+  ({ page, ctx } = await abrir(navegador, "/clases.html", { tema: "magia" }));
+  d = await letraDe(page);
+  igual("«Como el tema» con Magia: los títulos en Cinzel", [d.attr, d.titulo], [null, "Cinzel"]);
+  await ctx.close();
+
+  ({ page, ctx } = await abrir(navegador, "/configuracion.html", { tema: "" }));
+  await page.waitForSelector("#letra-plataforma-grid [role=radio]", { timeout: 15000 });
+  igual("Configuración ofrece todas las letras", await page.locator("#letra-plataforma-grid [role=radio]").count(), Object.keys(LETRAS).length);
+  await page.locator('#letra-plataforma-grid [data-letra="escolar"]').click();
+  d = await letraDe(page);
+  igual("tocar «Escolar» la pone en el momento y la guarda", [d.attr, d.cuerpo, d.guardado], ["escolar", "Comic Neue", "escolar"]);
+  igual("y queda marcada", await page.locator('#letra-plataforma-grid [aria-checked="true"]').getAttribute("data-letra"), "escolar");
+  await page.locator('#letra-plataforma-grid [data-letra="tema"]').click();
+  d = await letraDe(page);
+  igual("«Como el tema» la quita y borra lo guardado", [d.attr, d.cuerpo, d.guardado], [null, "Inter", null]);
+  await ctx.close();
+}
+
 (async () => {
   pruebaTabla();
+  pruebaLetrasArchivos();
   pruebaContraste();
   pruebaCompilado();
   pruebaCabecera();
@@ -595,6 +664,7 @@ async function pruebaLegibilidad(navegador) {
     await pruebaVuelan(navegador);
     await pruebaMenosMovimiento(navegador);
     await pruebaLegibilidad(navegador);
+    await pruebaLetra(navegador);
   } finally {
     await navegador.close();
   }
