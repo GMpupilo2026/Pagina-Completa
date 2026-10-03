@@ -75,12 +75,15 @@ window.EntrenosClase = (function () {
         return g.fen();
     }
 
-    // Una jugada {from, to} de Aprender en SAN (para preguntarla y para el calentamiento).
-    function sanDe(fen, from, to) {
+    /* La solución {from, to, promotion} de una lección de Aprender en SAN (para
+       preguntarla y para el calentamiento). No es la jugada de una persona: es
+       la que espera la lección, y si corona sin decir en qué, es en dama, como
+       la corrige js/entreno-aprender.js. */
+    function sanDe(fen, from, to, promotion) {
         let g;
         try { g = new Chess(fen); } catch (e) { return null; }
         let m = null;
-        try { m = g.move({ from, to, promotion: "q" }); } catch (e) { m = null; }
+        try { m = g.move({ from, to, promotion: promotion || "q" }); } catch (e) { m = null; }
         return m ? m.san : null;
     }
 
@@ -263,7 +266,7 @@ const ADAPTADORES_ENTRENO = {
             return L.CATEGORY_ORDER.filter((c) => L.LESSONS.some((l) => l.cat === c)).map((c) => {
                 const items = L.LESSONS.filter((l) => l.cat === c).map((l) => {
                     const fen = l.fen || (l.rounds && l.rounds[0] && l.rounds[0].fen) || null;
-                    const san = l.type === "move" && l.solution ? EntrenosClase.sanDe(l.fen, l.solution.from, l.solution.to) : null;
+                    const san = l.type === "move" && l.solution ? EntrenosClase.sanDe(l.fen, l.solution.from, l.solution.to, l.solution.promotion) : null;
                     return { id: l.id, titulo: l.title, fen, solucion: san ? [san] : null, prompt: l.type === "move" ? l.text : null,
                         guion: [l.text].concat(san ? ["La jugada: " + san + "."] : []).concat(l.targets ? ["Las casillas: " + l.targets.join(", ") + "."] : []) };
                 });
