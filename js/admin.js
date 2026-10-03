@@ -36,7 +36,7 @@
          * para que atrás/adelante y un enlace guardado lleven a la misma.
          * Todo lo que ya estaba sigue con sus mismos ids: solo cambia qué se ve.
          */
-        const SECCIONES = ["inicio", "cuentas", "crear", "profesores", "supervisores", "equipos", "novedades", "torneos", "preparacion", "auditoria"];
+        const SECCIONES = ["inicio", "cuentas", "crear", "profesores", "supervisores", "equipos", "novedades", "torneos", "proyectos", "preparacion", "auditoria"];
 
         function seccionDelEnlace() {
             const h = location.hash.replace("#", "");
@@ -2231,6 +2231,7 @@
             pintarCuentas();
             pintarBarraDeLote();
             pintarInicio();
+            if (window.AdminProyectos) AdminProyectos.pintar();
             if (window.AdminPreparacion) AdminPreparacion.pintar();
         }
 
@@ -2321,6 +2322,9 @@
             if (window.AdminSalasTorneo) AdminSalasTorneo.iniciar();
             // A qué profesores se les activa la preparación de rivales
             // (js/admin-preparacion.js). Recibe la lista ya cargada.
+            // Los proyectos (js/admin-proyectos.js): fichas por grupo y a quién
+            // se le asigna. Recibe la lista de cuentas ya cargada.
+            if (window.AdminProyectos) AdminProyectos.iniciar(() => allUsers);
             if (window.AdminPreparacion) AdminPreparacion.iniciar(() => allUsers);
             if (window.AdminAuditoria) AdminAuditoria.iniciar(() => allUsers);
             document.getElementById("app").classList.remove("hidden");

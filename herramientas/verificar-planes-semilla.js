@@ -16,11 +16,14 @@
  *  3. UN MATE QUE NO ES MATE. Donde la solución promete mate (#), tiene que
  *     serlo. Es el mismo criterio del banco del diagnóstico y del de fichas.
  *
+ *  (Revisa los planes de arranque y los de cada proyecto de herramientas/proyectos/.)
+ *
  *  4. UN PLAN VACÍO O REPETIDO. Un plan sin renglones es una tarjeta que se abre
  *     en clase para nada, y dos con el mismo título no se distinguen en la lista.
  *
  * Uso:  npm install chess.js@0.10.3
- *       node herramientas/planes-semilla.js && node herramientas/verificar-planes-semilla.js
+ *       node herramientas/planes-semilla.js && node herramientas/proyecto-semilla.js
+ *       node herramientas/verificar-planes-semilla.js
  */
 const fs = require("fs");
 const path = require("path");
@@ -28,12 +31,19 @@ const path = require("path");
 const RAIZ = path.join(__dirname, "..");
 const Chess = require(path.join(RAIZ, "node_modules", "chess.js")).Chess;
 
+/* Los de arranque y los de cada proyecto (herramientas/proyecto-semilla.js):
+   los dos salen de los mismos bancos y los dos se dan en la misma clase en
+   vivo, así que se revisan igual. */
 const SEMILLA = path.join(__dirname, "planes", "semilla.json");
-if (!fs.existsSync(SEMILLA)) {
-    console.error("Falta " + path.relative(RAIZ, SEMILLA) + ". Corré antes: node herramientas/planes-semilla.js");
-    process.exit(2);
+const PROYECTOS = fs.readdirSync(path.join(__dirname, "proyectos")).filter((f) => f.endsWith(".json"))
+    .map((f) => path.join(__dirname, "planes", "proyecto-" + f));
+for (const archivo of [SEMILLA, ...PROYECTOS]) {
+    if (!fs.existsSync(archivo)) {
+        console.error("Falta " + path.relative(RAIZ, archivo) + ". Corre antes: node herramientas/planes-semilla.js && node herramientas/proyecto-semilla.js");
+        process.exit(2);
+    }
 }
-const { planes } = JSON.parse(fs.readFileSync(SEMILLA, "utf8"));
+const planes = [SEMILLA, ...PROYECTOS].flatMap((archivo) => JSON.parse(fs.readFileSync(archivo, "utf8")).planes);
 
 /* La regla de la clase en vivo, cargada TAL CUAL del archivo que usa el sitio.
    Compararla contra una copia escrita acá no probaría nada: probaría la copia. */
@@ -158,7 +168,7 @@ require(path.join(RAIZ, "js", "aperturas-lineas.js"));
 const api = global.window.AperturasLineas;
 const LINEAS = api.todas ? api.todas() : (api.LINEAS || []);
 let comprobadas = 0;
-planes.filter((p) => /^(Apertura|Celadas)/.test(p.titulo)).forEach((p) => {
+planes.forEach((p) => {
     p.items.filter((it) => it.tipo === "posicion").forEach((it) => {
         const l = LINEAS.find((x) => x.nombre === it.titulo);
         if (!l) return;
@@ -194,5 +204,5 @@ planes.filter((p) => /^(Apertura|Celadas)/.test(p.titulo)).forEach((p) => {
 });
 console.log("  ✓ " + comprobadas + " posiciones de apertura salen de jugar su línea (o la de justo antes del mate, con su remate comprobado)");
 
-console.log(fallos ? "\n" + fallos + " fallo(s)." : "\nTodo bien: los planes de arranque se pueden dar tal cual.");
+console.log(fallos ? "\n" + fallos + " fallo(s)." : "\nTodo bien: los planes de arranque y los de los proyectos se pueden dar tal cual.");
 process.exit(fallos ? 1 : 0);

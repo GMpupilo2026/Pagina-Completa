@@ -40,28 +40,10 @@ function formatoFecha(iso) {
     return new Date(iso).toLocaleString("es-CR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "America/Costa_Rica" });
 }
 
-/* Cómo se lee un renglón. Es lo único que el alumno va a leer de la tarea, así
-   que se arma del material y la meta, no de un texto escrito a mano que
-   después pueda decir otra cosa que la barra de al lado. */
-const VERBO = { ejercicios: "Resolver", líneas: "Aprender", lecciones: "Hacer" };
-function fraseDe(r) {
-    const nombre = r.filtro_label || r.material_label;
-    if (r.meta_tipo === "minutos") return `Hacer ${r.meta_cantidad} minutos de ${nombre}`;
-    if (r.meta_tipo === "completar") {
-        return r.leccion ? `Estudiar la lección ${r.leccion} de ${nombre}` : `Terminar ${nombre}`;
-    }
-    /* La unidad no se guarda en el renglón: se busca en el catálogo por el
-       slug. Guardarla sería una segunda copia que se separaría de la primera
-       el día que Aprender deje de contar "lecciones" — y las tareas ya
-       enviadas seguirían diciendo la palabra vieja. Lo que sí es una foto es
-       el nombre del material, que tiene que sobrevivir a que lo renombren. */
-    const h = MaterialPlataforma.herramienta(r.material_slug);
-    // Lo que se pide una sola vez no dice «Hacer 1 diagnósticos de…».
-    if (h && h.frase) return typeof h.frase === "function" ? h.frase(r) : h.frase;
-    const unidad = (h && h.unidad) || "ejercicios";
-    const verbo = VERBO[unidad] || "Hacer";
-    return `${verbo} ${r.meta_cantidad} ${unidad} de ${nombre}`;
-}
+/* Cómo se lee un renglón: vive en js/material-plataforma.js
+   (MaterialPlataforma.frase), porque también la usa la página de un proyecto
+   (proyecto.html) para mostrar las tareas semanales antes de mandarlas. */
+const fraseDe = (r) => MaterialPlataforma.frase(r);
 
 async function init() {
     const { data } = await sb.auth.getSession();

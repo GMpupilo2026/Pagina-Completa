@@ -369,9 +369,11 @@ async function pruebaPlanAjeno(browser) {
 }
 
 /* Que el módulo y el armador cuenten las lecciones igual es lo que hace que el
-   renglón abra la que el profesor quiso: `abrirLeccionLocal()` cuenta desde 0 y
-   la pantalla desde 1. Si se separan, el plan abre la lección de al lado — y
-   eso no da ningún error, solo se da la clase que no era. */
+   renglón abra la que el profesor quiso: la base cuenta desde 0 y la pantalla
+   desde 1 (y `abrirLeccionLocal()` también desde 1, por eso la clase en vivo le
+   suma uno; lo comprueba verificar-proyectos.js). Si se separan, el plan abre
+   la lección de al lado — y eso no da ningún error, solo se da la clase que no
+   era. */
 async function pruebaResumen(browser) {
   console.log("\n=== Cómo se lee un renglón ===");
   const page = await browser.newPage();

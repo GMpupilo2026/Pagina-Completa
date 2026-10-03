@@ -80,6 +80,7 @@
                                 <ul class="flex lg:flex-col gap-1" aria-labelledby="nav-grupo-plataforma">
                                     <li><a href="#novedades" data-ir="novedades" class="admin-nav flex items-center gap-3 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold text-brand-100 hover:bg-brand-800 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true" class="w-5 text-center">📣</span><span>Avisos internos</span></a></li>
                                     <li><a href="#torneos" data-ir="torneos" class="admin-nav flex items-center gap-3 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold text-brand-100 hover:bg-brand-800 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true" class="w-5 text-center">🏆</span><span>Salas de torneos</span></a></li>
+                                    <li><a href="#proyectos" data-ir="proyectos" class="admin-nav flex items-center gap-3 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold text-brand-100 hover:bg-brand-800 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true" class="w-5 text-center">📁</span><span>Proyectos</span></a></li>
                                     <li><a href="#preparacion" data-ir="preparacion" class="admin-nav flex items-center gap-3 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold text-brand-100 hover:bg-brand-800 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true" class="w-5 text-center">🔭</span><span>Preparación de rivales</span></a></li>
                                     <li><a href="#auditoria" data-ir="auditoria" class="admin-nav flex items-center gap-3 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold text-brand-100 hover:bg-brand-800 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true" class="w-5 text-center">🧾</span><span>Registro de cambios</span></a></li>
                                 </ul>
@@ -491,6 +492,20 @@
                     </div>
                 </section>
 
+                <!-- ===== Proyectos =====
+                     Programas de clases armados de antemano (Campeones Colegiales 2026…):
+                     una ficha por grupo, con su plan completo y sus tareas semanales, y a
+                     qué profesor se le asigna. Asignar lo hace asignar_grupo_proyecto() en
+                     la base, que le comparte los planes de las sesiones. Lo pinta
+                     js/admin-proyectos.js. Ver «Los proyectos» en docs/decisiones/paneles.md. -->
+                <section data-seccion="proyectos" aria-labelledby="titulo-proyectos" hidden>
+                    <h2 id="titulo-proyectos" class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-1">Proyectos</h2>
+                    <p class="text-sm text-brand-500 dark:text-brand-300 mb-5">Cada grupo trae su plan completo: las clases con sus ejercicios listos para el tablero de la clase en vivo, un momento divertido en cada una y las tareas de cada semana para mandar a los alumnos. Asígnale el grupo a su profesor y le aparece todo en su panel.</p>
+                    <p id="proy-cargando" class="text-sm text-brand-500 dark:text-brand-300">Cargando los proyectos…</p>
+                    <p id="proy-vacio" hidden class="text-sm text-brand-500 dark:text-brand-300">Todavía no hay proyectos.</p>
+                    <div id="proy-lista" class="space-y-8"></div>
+                </section>
+
                 <!-- ===== Preparación de rivales =====
                      A qué profesores se les activa preparacion-rivales.html. La
                      lista la escribe activar_preparacion_rivales() en la base;
@@ -536,6 +551,8 @@
     <script src="js/video-embebido.js"></script>
     <script src="js/escenarios-sala.js"></script>
     <script src="js/admin-salas-torneo.js"></script>
+    <script src="js/hora-cr.js"></script>
+    <script src="js/admin-proyectos.js"></script>
     <script src="js/admin-preparacion.js"></script>
     <script src="js/admin-auditoria.js"></script>
     <script src="js/pendientes.js"></script>

@@ -541,7 +541,7 @@
         const PANEL_DOCENTE = [
             { title: "Clase en vivo", destacado: true, hrefs: ["sesion.html"] },
             { title: "Tus alumnos", hrefs: ["tareas.html", "examenes.html", "informes.html", "justificaciones.html", "subgrupos.html"] },
-            { title: "Tus clases", hrefs: ["planes.html", "cuestionarios.html", "asistencia.html", "repasar-clases.html", "partidas.html", "preparacion-rivales.html", "informe-mensual.html"] },
+            { title: "Tus clases", hrefs: ["proyecto.html", "planes.html", "cuestionarios.html", "asistencia.html", "repasar-clases.html", "partidas.html", "preparacion-rivales.html", "informe-mensual.html"] },
             { title: "Coordinación", hrefs: ["coordinacion.html", "solicitudes.html", "formularios.html", "cobros.html"] },
             { title: "Aprender", hrefs: ["entreno/index.html", "entreno/estudio.html", "cursos/academia/index.html", "articulos.html"] },
             { title: "Jugar y competir", hrefs: ["juegos.html", "competir.html", "tablero.html"] },
@@ -3749,6 +3749,19 @@
                     if (puedePreparar) {
                         TILE_GROUPS.find((g) => g.title === "Herramientas").tiles.push(
                             { emoji: "🔭", label: "Preparación de rivales", desc: "Carga un PGN de un rival y arma su FODA y qué jugarle, revisado con Stockfish", href: "preparacion-rivales.html" }
+                        );
+                    }
+                } catch (e) { console.error(e); }
+                /* Proyectos: solo si administración le asignó un grupo
+                   (admin.html#proyectos). Se pregunta por el profesor del
+                   panel —la persona mirada con «Ver como»—, no por quien mira;
+                   la RLS de proyecto_grupos es la que de verdad decide. */
+                try {
+                    const quien = profile._persona ? profile._persona.id : profile.id;
+                    const { count } = await sb.from("proyecto_grupos").select("id", { count: "exact", head: true }).eq("profesor_id", quien);
+                    if (count > 0) {
+                        TILE_GROUPS.find((g) => g.title === "Herramientas").tiles.push(
+                            { emoji: "📁", label: "Proyectos", desc: "El plan completo de tu grupo: cada clase con sus ejercicios listos y las tareas de cada semana para mandar", href: "proyecto.html" }
                         );
                     }
                 } catch (e) { console.error(e); }
