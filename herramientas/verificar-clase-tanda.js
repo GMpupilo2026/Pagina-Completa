@@ -128,6 +128,13 @@ async function pruebaDelAlumno(browser) {
   igual("son los de su tanda (los que el profe puede rehacer)", ejs.map((e) => e.id).join(),
     await page.evaluate((t) => TandaCalentamiento.paraAlumno(tandaBanco, t, "u-ana").map((e) => e.id).join(), tanda));
   igual("el tablero tiene la posición del primero", await page.evaluate(() => tandaBoard.fen().split(" ")[0]), ejs[0].fen.split(" ")[0]);
+  // El anuncio sale con una espera al azar (0,3-4 s): los 30 no anuncian en el mismo segundo.
+  igual("el anuncio no sale en el acto: espera su turno", await page.evaluate(() => {
+    const antes = (window.__tracks || []).length;
+    anunciarTanda();
+    return [!!tandaAnuncioPendiente, (window.__tracks || []).length === antes];
+  }), [true, true]);
+  await page.waitForFunction(() => (window.__tracks || []).some((x) => x.tanda), null, { timeout: 6000 });
   igual("anuncia que empezó, con cero hechos (el profe lo ve en la lista)", await page.evaluate(() => {
     const t = (window.__tracks || []).filter((x) => x.tanda).slice(-1)[0].tanda;
     return [t.hechos, t.buenas, t.i, t.fin];
@@ -142,6 +149,7 @@ async function pruebaDelAlumno(browser) {
   igual("lo resolvió", (await page.textContent("#tanda-msg")).startsWith("✅"), true);
   await page.waitForFunction(() => /Ejercicio 2 de 20/.test(document.getElementById("tanda-estado").textContent), null, { timeout: 5000 });
   igual("pasa al segundo, con una buena", await page.textContent("#tanda-estado"), "Ejercicio 2 de 20 · llevas 1 bien");
+  await page.waitForFunction(() => window.__tracks.slice(-1)[0].tanda.hechos === 1, null, { timeout: 6000 });
   igual("y lo anuncia en la presencia", await page.evaluate(() => { const t = window.__tracks.slice(-1)[0].tanda; return [t.hechos, t.buenas, t.i, t.fin]; }), [1, 1, 1, false]);
 
   // El segundo: una jugada legal que no es la de la solución ni da mate.
@@ -173,11 +181,13 @@ async function pruebaDelAlumno(browser) {
     [await page.textContent("#tanda-final-titulo"), await page.textContent("#tanda-nota"), await page.textContent("#tanda-detalle")],
     ["⏱️ Se acabó el tiempo.", "Tu nota: 5", "1 de 20 ejercicios resueltos (17 sin llegar a hacer)."]);
   igual("el tablero ya no se ve, y el reloj no se queda corriendo", [await seVe(page, "#tanda-tablero"), await page.textContent("#tanda-reloj")], [false, "⏱️ Se acabó el tiempo"]);
+  await page.waitForFunction(() => window.__tracks.slice(-1)[0].tanda.fin === true, null, { timeout: 6000 });
   igual("y anuncia que terminó", await page.evaluate(() => window.__tracks.slice(-1)[0].tanda.fin), true);
 
   // El profe le da más tiempo: sigue donde iba, sin repetir lo hecho.
   await page.evaluate((t) => pintarTanda(Object.assign({}, t, { segundos: 900 })), tanda);
   await page.waitForFunction(() => document.getElementById("tanda-juego").checkVisibility(), null, { timeout: 5000 });
+  await page.waitForFunction(() => window.__tracks.slice(-1)[0].tanda.fin === false, null, { timeout: 6000 });
   igual("con más tiempo sigue donde iba", [await page.textContent("#tanda-estado"), await seVe(page, "#tanda-final"),
     await page.evaluate(() => tandaBoard.interactive), await page.evaluate(() => window.__tracks.slice(-1)[0].tanda.fin)],
     ["Ejercicio 4 de 20 · llevas 1 bien", false, true, false]);

@@ -479,7 +479,13 @@ window.__deletes = [];
         }
         return this;
       },
-      subscribe(cb) { if (cb) cb("SUBSCRIBED"); return this; },
+      /* Lo que la página hace cuando un canal queda suscrito queda a mano
+         (window.__suscritos[nombre]): llamarlo otra vez es lo que pasa cuando
+         Realtime se cae y vuelve (verificar-clase-reconexion.js). */
+      subscribe(cb) {
+        if (cb) { (window.__suscritos = window.__suscritos || {})[nombre] = cb; cb("SUBSCRIBED"); }
+        return this;
+      },
       // Lo que cada uno anuncia de sí mismo al conectarse: con qué rol entra.
       track(meta) { (window.__tracks = window.__tracks || []).push(meta); return Promise.resolve(); },
       untrack() { return Promise.resolve(); },
@@ -637,7 +643,7 @@ async function pruebaMandaPosicion(browser) {
 async function pruebaClaseYaAbierta(browser) {
   console.log("\n=== Con la clase ya abierta ===");
   const abierta = { id: "s-1", title: null, created_by: "u-profe", ended_at: null,
-                    started_at: "2026-09-20T15:00:00Z", notes: null };
+                    started_at: new Date().toISOString(), notes: null };
   const { page, ctx, errores } = await abrir(browser, "u-profe", abierta);
   await page.waitForFunction(() =>
     document.getElementById("clase-estado-texto").textContent.includes("Clase en curso"), null, { timeout: 10000 });
@@ -713,6 +719,24 @@ async function pruebaClaseYaAbierta(browser) {
    simplemente no le entrega `game_state` y él vería un tablero vacío sin
    entender por qué. Lo que tiene que pasar es que se le diga, con el nombre de
    quien tiene que abrirla. */
+/* La clase que se olvidó cerrar otro día: el índice no deja abrir la de hoy y
+   todo se suma a esa. Pasó de verdad (dos abiertas desde el 29/9, vistas el
+   3/10). La franja tiene que decirlo con la fecha, no «Clase en curso». */
+async function pruebaClaseOlvidada(browser) {
+  console.log("\n=== Una clase de otro día quedó abierta ===");
+  const vieja = { id: "s-vieja", title: null, created_by: "u-profe", ended_at: null,
+                  started_at: "2026-09-30T00:28:00Z", notes: null };
+  const { page, ctx, errores } = await abrir(browser, "u-profe", vieja);
+  await page.waitForFunction(() =>
+    /quedó abierta/.test(document.getElementById("clase-estado-texto").textContent), null, { timeout: 10000 }).catch(() => {});
+  igual("la franja dice desde cuándo, en hora de Costa Rica, y qué hacer",
+    (await page.textContent("#clase-estado-texto")).replace(/\s/g, " "),
+    "⚠️ Esta clase quedó abierta desde el 29 de septiembre a las 6:28 p. m.: lo de hoy se está sumando a esa. Ciérrala y abre una nueva.");
+  igual("con el botón para cerrarla a la vista", await seVe(page, "clase-cerrar-btn"), "sí");
+  igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+}
+
 async function pruebaAlumnaSinClase(browser) {
   console.log("\n=== La alumna entra sin clase abierta ===");
   const { page, ctx, errores } = await abrir(browser, "u-ana", null);
@@ -776,6 +800,7 @@ if (require.main !== module) return;
     await pruebaLaAbreElProfesor(browser);
     await pruebaMandaPosicion(browser);
     await pruebaClaseYaAbierta(browser);
+    await pruebaClaseOlvidada(browser);
     await pruebaAlumnaSinClase(browser);
     await pruebaAlumna(browser);
   } finally {

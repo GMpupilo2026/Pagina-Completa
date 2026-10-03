@@ -1343,16 +1343,39 @@
             applyGameStateRow(created);
         }
 
+        /* Un canal que se cae (el celular se bloquea, el wifi parpadea) se vuelve a
+           suscribir solo, pero lo que cambió mientras tanto NO llega: el alumno se
+           quedaba con la posición vieja hasta la jugada siguiente del profe. Cada vez
+           que el canal vuelve a quedar suscrito (no la primera: esa ya tiene su
+           carga), se vuelve a leer. El profe no: su tablero manda, y releer en medio
+           de una jugada que todavía viaja se la desharía un instante. */
+        function alVolverASuscribir(releer) {
+            let yaSuscrito = false;
+            return (status) => {
+                if (status !== "SUBSCRIBED") return;
+                if (yaSuscrito) Promise.resolve().then(releer).catch((e) => console.error(e));
+                yaSuscrito = true;
+            };
+        }
+
         function subscribeRealtime() {
             sb.channel("game_state-changes:" + boardOwnerId)
                 .on("postgres_changes", { event: "UPDATE", schema: "public", table: "game_state", filter: "owner_id=eq." + boardOwnerId }, (payload) => {
                     applyGameStateRow(payload.new);
                 })
-                .subscribe();
+                .subscribe(alVolverASuscribir(async () => {
+                    if (isTeacher && !modoProyector && !modoControl) return;
+                    const { data, error } = await sb.from("game_state").select("*").eq("owner_id", boardOwnerId).maybeSingle();
+                    if (error) { console.error(error); return; }
+                    // El mismo eco que manda Realtime: lo que no cambió no se vuelve a anunciar.
+                    if (data) applyGameStateRow(data);
+                }));
         }
 
         // ---------- Registro de clases: asistencia, tiempo real conectado y cierre en vivo ----------
         let currentOpenSessionId = null;
+        // Cuándo se abrió: una clase de OTRO día abierta es una que se olvidó cerrar.
+        let currentOpenSessionStartedAt = null;
 
         async function markAttendance(sessionId) {
             // Tampoco cuenta como asistencia.
@@ -1457,7 +1480,7 @@
                     + " — la asistencia de tus alumnos no se está registrando.");
                 return;
             }
-            if (data) currentOpenSessionId = data.id;
+            if (data) { currentOpenSessionId = data.id; currentOpenSessionStartedAt = data.started_at || null; }
             pintarEstadoDeClase();
         }
 
@@ -1686,6 +1709,13 @@
            con todas las letras y no solo con un color: un punto gris no le dice
            a un entrenador nuevo que la asistencia de sus alumnos se está
            perdiendo. */
+        function claseDeOtroDia() {
+            if (!currentOpenSessionStartedAt) return false;
+            const dia = (d) => d.toLocaleDateString("en-CA", { timeZone: "America/Costa_Rica" });
+            const desde = new Date(currentOpenSessionStartedAt);
+            return !isNaN(desde) && dia(desde) !== dia(new Date());
+        }
+
         function pintarEstadoDeClase() {
             if (!isTeacher) return;
             const caja = document.getElementById("clase-estado");
@@ -1695,7 +1725,21 @@
             const campos = document.getElementById("clase-cerrar-campos");
             caja.classList.remove("hidden");
 
-            if (currentOpenSessionId) {
+            if (currentOpenSessionId && claseDeOtroDia()) {
+                /* Quedó abierta de otro día: el índice de una abierta por profe no
+                   deja abrir la de hoy, y todo lo de hoy (asistencia, minutos,
+                   puntos) se suma a esa. «Clase en curso» a secas no lo deja ver. */
+                caja.className = "mb-3 rounded-xl px-5 py-2 flex items-center justify-between gap-3 flex-wrap bg-brand-100 dark:bg-brand-900";
+                texto.className = "text-sm font-semibold text-brand-600 dark:text-brand-300";
+                const desde = new Date(currentOpenSessionStartedAt);
+                texto.textContent = "⚠️ Esta clase quedó abierta desde el "
+                    + desde.toLocaleDateString("es-CR", { day: "numeric", month: "long", timeZone: "America/Costa_Rica" })
+                    + " a las " + desde.toLocaleTimeString("es-CR", { hour: "numeric", minute: "2-digit", timeZone: "America/Costa_Rica" })
+                    + ": lo de hoy se está sumando a esa. Ciérrala y abre una nueva.";
+                abrir.classList.add("hidden");
+                cerrar.classList.remove("hidden");
+                document.getElementById("clase-despues").hidden = true;
+            } else if (currentOpenSessionId) {
                 caja.className = "mb-3 rounded-xl px-5 py-2 flex items-center justify-between gap-3 flex-wrap bg-green-50 dark:bg-green-950/30";
                 texto.className = "text-sm font-semibold text-green-700 dark:text-green-400";
                 texto.textContent = "🔴 Clase en curso: se está registrando la asistencia y el tiempo de tus alumnos.";
@@ -1726,6 +1770,7 @@
             const { data } = await sb.from("class_sessions").select("*").eq("created_by", boardOwnerId).is("ended_at", null).order("started_at", { ascending: false }).limit(1);
             const openSession = (data && data[0]) || null;
             currentOpenSessionId = openSession ? openSession.id : null;
+            currentOpenSessionStartedAt = openSession ? openSession.started_at || null : null;
             refrescarPlanHecho();
             cargarTurnos();
             mostrarSalidaPasada();
@@ -1747,6 +1792,7 @@
                 .on("postgres_changes", { event: "*", schema: "public", table: "class_sessions", filter: "created_by=eq." + boardOwnerId }, (payload) => {
                     if (payload.eventType === "INSERT" && !payload.new.ended_at) {
                         currentOpenSessionId = payload.new.id;
+                        currentOpenSessionStartedAt = payload.new.started_at || null;
                         markAttendance(payload.new.id);
                         startPresenceLog(payload.new.id);
                         pintarEstadoDeClase();
@@ -4276,7 +4322,7 @@
         function subscribeQuestions() {
             sb.channel("questions-changes:" + boardOwnerId)
                 .on("postgres_changes", { event: "*", schema: "public", table: "questions", filter: "created_by=eq." + boardOwnerId }, () => loadCurrentQuestion())
-                .subscribe();
+                .subscribe(alVolverASuscribir(() => loadCurrentQuestion()));
             if (isTeacher) {
                 sb.channel("question-answers-changes")
                     .on("postgres_changes", { event: "*", schema: "public", table: "question_answers" }, () => {
