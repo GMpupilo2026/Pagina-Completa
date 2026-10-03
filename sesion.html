@@ -490,10 +490,12 @@
                     <!-- El calentamiento de 20 ejercicios (game_state.tanda_calentamiento, js/clase-tanda.js):
                          cada alumno resuelve los SUYOS, distintos a los de los demás y del mismo nivel, con
                          el tiempo que puso el profe; si falla, pasa al siguiente, y al final ve su nota. El
-                         profe ve cuántos lleva cada uno (va en la presencia) y el ejercicio en que está. -->
+                         profe ve cuántos lleva cada uno (va en la presencia) y el ejercicio en que está.
+                         En la competencia (modo "reto") todos tienen los mismos y gana quien resuelva más.
+                         El profe cambia el tiempo mientras corre. -->
                     <div id="tanda-caja" hidden class="max-w-[560px] mx-auto mt-3 rounded-xl border-2 border-accent-500 bg-accent-50 dark:bg-brand-900 px-4 py-3">
                         <div class="flex flex-wrap items-baseline justify-between gap-2">
-                            <p class="text-sm font-semibold text-brand-700 dark:text-brand-200"><span aria-hidden="true">🔥 </span>Calentamiento</p>
+                            <p id="tanda-titulo" class="text-sm font-semibold text-brand-700 dark:text-brand-200"><span aria-hidden="true">🔥 </span>Calentamiento</p>
                             <p id="tanda-reloj" class="text-sm font-semibold tabular-nums text-brand-800 dark:text-white"></p>
                         </div>
                         <div id="tanda-alumno" hidden>
@@ -525,6 +527,15 @@
                                 <div class="flex justify-center mt-1">
                                     <div id="tanda-mirando-tablero" class="grid grid-cols-8 grid-rows-[repeat(8,minmax(0,1fr))] w-full max-w-[240px] aspect-square rounded-lg overflow-hidden shadow border-2 border-brand-700 select-none"></div>
                                 </div>
+                            </div>
+                            <!-- Cambiar el tiempo mientras corre (y dar más cuando ya se acabó). -->
+                            <div id="tanda-tiempo" role="group" aria-label="Cambiar el tiempo" class="flex flex-wrap items-center gap-2 mt-2">
+                                <span class="text-xs font-semibold text-brand-700 dark:text-brand-200"><span aria-hidden="true">⏱️ </span>Tiempo:</span>
+                                <button id="tanda-menos-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Quitar 1 minuto</button>
+                                <button id="tanda-mas-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Sumar 1 minuto</button>
+                                <label for="tanda-quedan" class="text-xs text-brand-700 dark:text-brand-200">Que queden (minutos)</label>
+                                <input id="tanda-quedan" type="number" min="0" max="120" step="1" value="5" inputmode="numeric" class="w-16 text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500">
+                                <button id="tanda-quedan-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Cambiar el tiempo</button>
                             </div>
                             <div class="flex flex-wrap gap-2 mt-2">
                                 <button id="tanda-terminar-btn" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Terminar ya y dar las notas</button>
@@ -1145,17 +1156,26 @@
                                 </div>
                             </div>
                         </details>
-                        <!-- El calentamiento de 20 ejercicios (js/clase-tanda.js): distintos para cada alumno,
-                             del mismo nivel, con tiempo y nota. -->
+                        <!-- El calentamiento con ejercicios de Táctica (js/clase-tanda.js): con nota (20 distintos
+                             para cada alumno, del mismo nivel) o en competencia (los mismos para todos, gana
+                             quien resuelva más en el tiempo). -->
                         <details id="tanda-config" class="mb-3 rounded-lg border border-brand-100 dark:border-brand-800">
-                            <summary class="cursor-pointer px-3 py-2 text-xs font-semibold text-brand-700 dark:text-brand-200"><span aria-hidden="true">🔥 </span>Calentamiento: 20 ejercicios de Táctica para cada alumno, con tiempo y nota</summary>
+                            <summary class="cursor-pointer px-3 py-2 text-xs font-semibold text-brand-700 dark:text-brand-200"><span aria-hidden="true">🔥 </span>Calentamiento con ejercicios de Táctica: con nota o en competencia</summary>
                             <div class="px-3 pb-3 space-y-2">
-                                <p class="text-xs text-brand-450 dark:text-brand-350">Cada alumno recibe 20 ejercicios de Táctica elegidos al azar: <strong>distintos a los de sus compañeros pero del mismo nivel</strong>, de más fácil a más difícil. Cada uno tiene una sola jugada buena en cada paso; si falla, pasa al siguiente. Al terminar o al acabarse el tiempo, ve su nota (de 0 a 100). Tú ves cuántos lleva cada uno y el ejercicio en que está.</p>
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <label for="tanda-modo" class="text-xs text-brand-700 dark:text-brand-200">Modo</label>
+                                    <select id="tanda-modo" class="text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-brand-700 dark:text-brand-200">
+                                        <option value="nota" selected>Con nota: 20 distintos para cada alumno</option>
+                                        <option value="reto">Competencia: los mismos para todos</option>
+                                    </select>
+                                </div>
+                                <p id="tanda-explica-nota" class="text-xs text-brand-450 dark:text-brand-350">Cada alumno recibe 20 ejercicios de Táctica elegidos al azar: <strong>distintos a los de sus compañeros pero del mismo nivel</strong>, de más fácil a más difícil. Cada uno tiene una sola jugada buena en cada paso; si falla, pasa al siguiente. Al terminar o al acabarse el tiempo, ve su nota (de 0 a 100). Tú ves cuántos lleva cada uno y el ejercicio en que está.</p>
+                                <p id="tanda-explica-reto" hidden class="text-xs text-brand-450 dark:text-brand-350">Una competencia por tiempo: <strong>todos reciben los mismos ejercicios, en el mismo orden</strong>, variados y de más fácil a más difícil. Cada uno tiene una sola jugada buena en cada paso; si falla, pasa al siguiente. <strong>Gana quien resuelva más</strong> antes de que se acabe el tiempo. Tú ves la tabla en vivo y cada alumno ve en qué puesto va.</p>
                                 <div class="flex flex-wrap items-center gap-2">
                                     <label for="tanda-nivel" class="text-xs text-brand-700 dark:text-brand-200">Nivel</label>
                                     <select id="tanda-nivel" class="text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-brand-700 dark:text-brand-200"></select>
-                                    <label for="tanda-minutos" class="text-xs text-brand-700 dark:text-brand-200">Tiempo</label>
-                                    <select id="tanda-minutos" class="text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-brand-700 dark:text-brand-200"></select>
+                                    <label for="tanda-minutos" class="text-xs text-brand-700 dark:text-brand-200">Tiempo (minutos)</label>
+                                    <input id="tanda-minutos" type="number" min="1" max="60" step="1" value="10" inputmode="numeric" class="w-16 text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500">
                                 </div>
                                 <button id="tanda-mandar-btn" type="button" class="w-full text-xs font-semibold px-3 py-2 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🔥 </span>Mandar el calentamiento</button>
                             </div>
