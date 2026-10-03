@@ -129,8 +129,19 @@
     (guia.objetivos || []).forEach((o) => obj.appendChild(el("li", null, o)));
 
     const sesiones = s.data || [];
+    /* El paso a paso de cada clase es su plan: los mismos renglones que se dan
+       en la clase en vivo, en el orden de las cinco partes. Se leen de ahí y no
+       de una copia en la sesión (al profesor se le comparten al asignarlo). */
+    const ids = sesiones.map((x) => x.plan_id).filter(Boolean);
+    const renglones = {};
+    if (ids.length) {
+      const r = await sb.from("plan_items").select("plan_id, orden, tipo, titulo, pregunta, curso, leccion, nota")
+        .in("plan_id", ids).order("orden").range(0, 4999);
+      for (const it of r.data || []) (renglones[it.plan_id] = renglones[it.plan_id] || []).push(it);
+      Object.values(renglones).forEach((xs) => xs.sort((a, b2) => a.orden - b2.orden));
+    }
     pintarProxima(sesiones);
-    pintarSesiones(sesiones, s.error);
+    pintarSesiones(sesiones, s.error, renglones);
     pintarTareas(t.data || [], t.error);
     pintarEvaluacion(guia, sesiones);
     pintarGuia(guia);
@@ -168,13 +179,46 @@
       "Clase " + s.numero + " · " + s.titulo);
     h.id = "proxima-titulo";
     sec.appendChild(h);
-    sec.appendChild(el("p", "text-sm text-brand-600 dark:text-brand-200 mb-2", diaLargo(s.fecha)));
+    sec.appendChild(el("p", "text-sm text-brand-600 dark:text-brand-200 mb-2", diaLargo(s.fecha) + (d.minutos ? " · " + resumenMinutos(d.minutos) : "")));
     if (d.objetivo) sec.appendChild(el("p", "text-sm text-brand-700 dark:text-brand-100 mb-2", d.objetivo));
     if (d.divertido) sec.appendChild(conEmoji("p", "text-sm text-brand-700 dark:text-brand-100 mb-3", "🎉", "Momento divertido: " + d.divertido));
     sec.appendChild(botonesDeClase(s));
   }
 
-  function pintarSesiones(sesiones, error) {
+  // «2 horas: calentamiento 15, contenido 55, …»
+  const PARTES = [["calentamiento", "calentamiento"], ["contenido", "contenido"], ["recreativa", "actividad recreativa"], ["cierre", "cierre"], ["tarea", "tarea"]];
+  function resumenMinutos(m) {
+    const total = PARTES.reduce((t, [k]) => t + (m[k] || 0), 0);
+    return (total === 120 ? "2 horas" : total + " min") + ": " + PARTES.filter(([k]) => m[k]).map(([k, n]) => n + " " + m[k]).join(", ");
+  }
+
+  /* Un renglón del plan, como se lee en la página: las notas son las partes
+     de la clase (con su paso a paso), las posiciones son los ejercicios (con
+     qué preguntar, el tiempo, la respuesta y el porqué) y las lecciones, el
+     curso que se abre. */
+  function renglon(it) {
+    if (it.tipo === "nota") {
+      const parte = /^(🔥|📘|🎉|✅|📨) /.test(it.titulo);
+      const caja = el("section", parte ? "pt-3 mt-1 border-t border-brand-100 dark:border-brand-800" : "");
+      const i = it.titulo.indexOf(" ");
+      caja.appendChild(parte
+        ? conEmoji("h4", "font-serif text-base font-bold text-brand-800 dark:text-white mb-1", it.titulo.slice(0, i), it.titulo.slice(i + 1))
+        : el("h5", "font-semibold text-brand-800 dark:text-white", it.titulo));
+      if (it.nota) caja.appendChild(el("p", "whitespace-pre-wrap", it.nota));
+      return caja;
+    }
+    if (it.tipo === "posicion") {
+      const caja = el("div", "bg-brand-50 dark:bg-brand-950 rounded-lg p-3");
+      caja.appendChild(conEmoji("p", "font-semibold text-brand-800 dark:text-white", "♟️", it.titulo));
+      if (it.pregunta) caja.appendChild(el("p", "mt-1 whitespace-pre-wrap", it.pregunta));
+      return caja;
+    }
+    const a = conEmoji("a", "self-start font-semibold text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline rounded " + BTN, "📖", "Lección: " + it.titulo);
+    a.href = "cursos/academia/" + encodeURIComponent(it.curso) + ".html";
+    return a;
+  }
+
+  function pintarSesiones(sesiones, error, renglones) {
     const cont = $("g-sesiones");
     cont.textContent = "";
     if (error) { cont.appendChild(el("p", "text-sm text-brand-500 dark:text-brand-300", "No se pudieron cargar las clases: " + error.message)); return; }
@@ -197,20 +241,11 @@
         p.append(el("span", "font-semibold text-brand-800 dark:text-white", "Objetivo: "), d.objetivo);
         cuerpo.appendChild(p);
       }
-      if (Array.isArray(d.bloques) && d.bloques.length) {
-        const dl = el("dl", "grid gap-2");
-        for (const b of d.bloques) {
-          const fila = el("div", "grid sm:grid-cols-[11rem_1fr] gap-x-3");
-          fila.appendChild(el("dt", "font-semibold text-brand-800 dark:text-white", b[0]));
-          fila.appendChild(el("dd", null, b[1]));
-          dl.appendChild(fila);
-        }
-        cuerpo.appendChild(dl);
-      }
-      if (d.divertido) cuerpo.appendChild(conEmoji("p", "bg-accent-50 dark:bg-brand-950 border-l-4 border-accent-400 rounded-r-lg p-3 text-brand-700 dark:text-brand-100", "🎉", "Momento divertido: " + d.divertido));
-      if (d.taller) cuerpo.appendChild(conEmoji("p", null, "🏫", "Para el taller: " + d.taller));
-      if (d.sitio) cuerpo.appendChild(conEmoji("p", null, "💻", "En ajedrez-integral.com: " + d.sitio));
+      if (d.minutos) cuerpo.appendChild(conEmoji("p", "font-semibold text-brand-700 dark:text-brand-100", "⏱️", resumenMinutos(d.minutos)));
       cuerpo.appendChild(botonesDeClase(s));
+      const lista = (renglones || {})[s.plan_id] || [];
+      if (lista.length) lista.forEach((it) => cuerpo.appendChild(renglon(it)));
+      else if (d.divertido) cuerpo.appendChild(conEmoji("p", null, "🎉", "Momento divertido: " + d.divertido));
       det.appendChild(cuerpo);
       cont.appendChild(det);
     }
@@ -400,7 +435,7 @@
     cont.textContent = "";
     if (Array.isArray(guia.partida) && guia.partida.length) cont.appendChild(tabla("Punto de partida del grupo", null, guia.partida));
     if (Array.isArray(guia.unidades) && guia.unidades.length) cont.appendChild(tabla("Las unidades", ["Unidad", "Fechas", "Clases"], guia.unidades));
-    if (Array.isArray(guia.estructura) && guia.estructura.length) cont.appendChild(tabla("Cómo va cada clase de 90 minutos", ["Minutos", "Parte", "Qué se hace"], guia.estructura));
+    if (Array.isArray(guia.estructura) && guia.estructura.length) cont.appendChild(tabla("Cómo va cada clase de 2 horas", ["Minutos", "Parte", "Qué se hace"], guia.estructura));
     if (Array.isArray(guia.reglas) && guia.reglas.length) cont.appendChild(lista("Acuerdos del grupo", guia.reglas));
     const anexos = guia.anexos || {};
     for (const k of Object.keys(anexos).sort()) {

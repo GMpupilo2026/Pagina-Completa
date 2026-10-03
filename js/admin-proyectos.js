@@ -80,7 +80,7 @@
     const susTareas = tareas.filter((t) => t.grupo_id === g.id);
     const evaluaciones = susSesiones.filter((s) => s.tipo === "evaluacion").length;
     const resumen = el("ul", "text-sm text-brand-600 dark:text-brand-200 grid gap-1");
-    resumen.appendChild(el("li", null, "📚 " + susSesiones.length + " clases con su plan y sus ejercicios listos para el tablero"));
+    resumen.appendChild(el("li", null, "📚 " + susSesiones.length + " clases de 2 horas, con su paso a paso y los ejercicios en orden"));
     resumen.appendChild(el("li", null, "🎉 Un momento divertido en cada clase"));
     resumen.appendChild(el("li", null, "📨 " + susTareas.length + " tareas semanales listas para mandar"));
     if (evaluaciones) resumen.appendChild(el("li", null, "📝 " + evaluaciones + (evaluaciones === 1 ? " clase de evaluación" : " clases de evaluación")));
