@@ -87,7 +87,7 @@ async function siguienteDeLaRonda() {
     const ex = ronda.ejercicios[ronda.i];
     const n = ronda.ejercicios.length;
     if (!(await aplicarPosicionEnClase(ex.fen))) { await terminarRonda("La posición " + (ronda.i + 1) + " no se pudo mandar: la ronda terminó."); return; }
-    const { data, error } = await crearPregunta(ex.fen, 1, null, false, { prompt: "⚡ Ronda rápida: " + (ronda.i + 1) + " de " + n, tiempo: ronda.segundos });
+    const { data, error } = await crearPregunta(ex.fen, 1, null, false, { prompt: "⚡ Ronda rápida: " + (ronda.i + 1) + " de " + n, tiempo: ronda.segundos, dificultad: ex.rating });
     if (error || !data) { console.error(error); await terminarRonda("No se pudo abrir la pregunta: la ronda terminó."); return; }
     ronda.preguntas.push({ id: data.id, fen: ex.fen, solucion: ex.solucion || null });
     // La base acepta respuestas hasta 5 segundos después del plazo: se cierra un poco después.

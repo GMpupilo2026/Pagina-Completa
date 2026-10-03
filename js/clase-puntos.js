@@ -63,7 +63,7 @@ async function contarPuntos() {
         return;
     }
     caja.textContent = "Contando…";
-    const { filas, error } = await ResumenClase.cargar(sb, currentOpenSessionId);
+    const { filas, error } = await ResumenClase.cargarConPuntos(sb, currentOpenSessionId);
     if (error) { console.error(error); caja.textContent = "No se pudieron contar los puntos: " + error.message; return; }
     filasDePuntos = filas;
     pintarListaDePuntos(caja, filas);
@@ -72,7 +72,7 @@ async function contarPuntos() {
 
 async function mostrarPodio(conNombres) {
     if (!currentOpenSessionId) { setStatus("Abre la clase para contar los puntos."); return; }
-    const { filas, error } = await ResumenClase.cargar(sb, currentOpenSessionId);
+    const { filas, error } = await ResumenClase.cargarConPuntos(sb, currentOpenSessionId);
     if (error) { console.error(error); setStatus("No se pudieron contar los puntos: " + error.message); return; }
     filasDePuntos = filas;
     const podio = PuntosClase.podioParaLaClase(filas, conNombres);

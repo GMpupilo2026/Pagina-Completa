@@ -207,6 +207,71 @@ window.TandaCalentamiento = (function () {
         return Math.max(0, Math.min(SEGUNDOS_MAX, nuevo));
     }
 
+    /* De qué banco salen los ejercicios (`banco` en la receta; sin él, Táctica)
+       y qué parte de él (`filtro`): así la pestaña Entrenamientos manda a
+       practicar un tema, una categoría de Mates, un nivel de Visualización o
+       los Desafíos con el mismo calentamiento. Todo queda en la forma de
+       temas.json —{id: {fen, solution (SAN), rating}}— para que banda(),
+       paraAlumno() y revisar() no cambien. Los que no traen rating llevan uno
+       fijo (el centro de su categoría): sin eso no entrarían en ninguna banda. */
+    const BANCOS = {
+        temas: { url: "entreno/data/temas.json", nombre: "Táctica" },
+        mates: { url: "entreno/data/mates.json", nombre: "Mates" },
+        desafios: { url: "entreno/data/desafios.json", nombre: "Desafíos" },
+    };
+    // Los niveles de Visualización: cuántas jugadas tiene la solución (js/entreno-visualizacion.js).
+    const LARGOS = { l1: [3, 3], l2: [5, 5], l3: [7, 7], l4: [9, 9], l5: [11, 99] };
+    const CENTRO_DESAFIOS = 1100;
+
+    // Un rey de cada color: sin eso la posición no va al tablero de la clase ni la juega chess.js.
+    function tieneLosDosReyes(fen) {
+        const tablero = String(fen || "").split(" ")[0];
+        return (tablero.match(/K/g) || []).length === 1 && (tablero.match(/k/g) || []).length === 1;
+    }
+
+    function normalizar(banco, datos, extra) {
+        if (!banco || banco === "temas") return (datos && datos.puzzles) || {};
+        const out = {};
+        if (banco === "mates") {
+            const dif = extra || {};
+            (Array.isArray(datos) ? datos : []).forEach((m) => {
+                const centro = dif.categorias && dif.categorias[m.category] ? dif.categorias[m.category].centro : 1200;
+                out[m.id] = { fen: m.fen, solution: m.solution, rating: (dif.elo && dif.elo[m.id]) || centro, cat: m.category };
+            });
+        } else if (banco === "desafios") {
+            ((datos && datos.challenges) || []).forEach((d) => {
+                if (!tieneLosDosReyes(d.fen) || !d.solution || !Array.isArray(d.solution.san)) return;
+                out["desafio-" + d.n] = { fen: d.fen, solution: d.solution.san, rating: CENTRO_DESAFIOS, cat: d.cat };
+            });
+        }
+        return out;
+    }
+
+    /* La parte del banco: "tema:fork" (los ids de ese tema en temas.json),
+       "cat:mate2" (la categoría) o "largo:l3" (el largo de la solución). */
+    function filtrar(puzzles, filtro, temasIndice) {
+        if (!filtro) return puzzles;
+        const [tipo, valor] = String(filtro).split(":");
+        const out = {};
+        if (tipo === "tema") {
+            ((temasIndice || {})[valor] || []).forEach((id) => { if (puzzles[id]) out[id] = puzzles[id]; });
+            return out;
+        }
+        Object.keys(puzzles).forEach((id) => {
+            const p = puzzles[id];
+            if (tipo === "cat" && p.cat === valor) out[id] = p;
+            if (tipo === "largo" && LARGOS[valor] && p.solution && p.solution.length >= LARGOS[valor][0] && p.solution.length <= LARGOS[valor][1]) out[id] = p;
+        });
+        return out;
+    }
+
+    // El nivel de una parte del banco: la mediana de sus ratings (para que la banda caiga sobre ella).
+    function eloDe(puzzles) {
+        const r = Object.values(puzzles || {}).map((p) => p.rating).filter((x) => typeof x === "number").sort((a, b) => a - b);
+        if (!r.length) return 1200;
+        return Math.max(400, Math.min(3000, Math.round(r[Math.floor(r.length / 2)])));
+    }
+
     function nombreDeNivel(elo) {
         const n = NIVELES.find((x) => x.elo === elo);
         return (n ? n.nombre + ", " : "") + "alrededor de " + elo + " puntos Elo";
@@ -218,13 +283,13 @@ window.TandaCalentamiento = (function () {
         return a[0].toString(36) + a[1].toString(36);
     }
 
-    return { CANTIDAD, CANTIDAD_RETO, NIVELES, MINUTOS_MIN, MINUTOS_MAX, SEGUNDOS_MAX, BANDA_MINIMA, hash, azarDesde, banda, preparar, paraAlumno, paraTodos,
+    return { BANCOS, LARGOS, tieneLosDosReyes, normalizar, filtrar, eloDe, CANTIDAD, CANTIDAD_RETO, NIVELES, MINUTOS_MIN, MINUTOS_MAX, SEGUNDOS_MAX, BANDA_MINIMA, hash, azarDesde, banda, preparar, paraAlumno, paraTodos,
         puestos, revisar, nota, quedan, segundosParaQueQueden, segundosSumando, nombreDeNivel, semillaNueva };
 })();
 
 let tandaActual = null;        // la de game_state: {at, semilla, elo, cantidad, segundos, modo}
-let tandaBanco = null;         // los ejercicios de Táctica (entreno/data/temas.json)
-let tandaBancoPromesa = null;
+let tandaBanco = null;         // los ejercicios de la tanda en curso, ya filtrados ({id: {fen, solution, rating}})
+const tandaBancos = new Map(); // "banco|filtro" → promesa de esos ejercicios
 let tandaMia = null;           // alumno: {at, ejercicios, i, paso, resultados: [true|false…], fin, porTiempo}
 let tandaPresencia = null;     // lo que el alumno anuncia en la presencia: {at, hechos, buenas, i, fin}
 let tandaBoard = null;
@@ -245,16 +310,31 @@ function relojDeLaTanda() {
     return window.RelojServidor ? RelojServidor.ahora() : Date.now();
 }
 
-function cargarBancoDeLaTanda() {
-    if (tandaBanco) return Promise.resolve(tandaBanco);
-    if (typeof tacticsData !== "undefined" && tacticsData && tacticsData.puzzles) { tandaBanco = tacticsData.puzzles; return Promise.resolve(tandaBanco); }
-    if (!tandaBancoPromesa) {
-        tandaBancoPromesa = fetch("entreno/data/temas.json")
-            .then((r) => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
-            .then((d) => { tandaBanco = d.puzzles || {}; return tandaBanco; })
-            .catch((e) => { tandaBancoPromesa = null; throw e; });
+const bajarJson = (url) => fetch(url).then((r) => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); });
+
+/* Los ejercicios de una receta (su banco y su filtro), los mismos en la
+   computadora del profe y en la de cada alumno. Sin `banco`, Táctica (temas.json). */
+function cargarBancoDeLaTanda(t) {
+    const banco = (t && t.banco) || "temas", filtro = (t && t.filtro) || "";
+    const clave = banco + "|" + filtro;
+    if (!tandaBancos.has(clave)) {
+        let datos;
+        if (banco === "temas") {
+            datos = typeof tacticsData !== "undefined" && tacticsData && tacticsData.puzzles
+                ? Promise.resolve([tacticsData, null]) : bajarJson(TandaCalentamiento.BANCOS.temas.url).then((d) => [d, null]);
+        } else if (banco === "mates") {
+            datos = Promise.all([bajarJson(TandaCalentamiento.BANCOS.mates.url), bajarJson("entreno/data/mates-dificultad.json").catch(() => null)]);
+        } else if (TandaCalentamiento.BANCOS[banco]) {
+            datos = bajarJson(TandaCalentamiento.BANCOS[banco].url).then((d) => [d, null]);
+        } else datos = Promise.reject(new Error("Banco desconocido: " + banco));
+        const p = datos.then(([d, extra]) => {
+            const todos = TandaCalentamiento.normalizar(banco, d, extra);
+            return TandaCalentamiento.filtrar(todos, filtro, banco === "temas" ? d.themes : null);
+        });
+        p.catch(() => tandaBancos.delete(clave));
+        tandaBancos.set(clave, p);
     }
-    return tandaBancoPromesa;
+    return tandaBancos.get(clave).then((b) => { tandaBanco = b; return b; });
 }
 
 const claveDeLaTanda = (t) => "clase_tanda_v1:" + myGameStateId + ":" + t.at + ":" + t.semilla;
@@ -324,7 +404,8 @@ function pintarTanda(t) {
         const q = TandaCalentamiento.quedan(tandaActual, relojDeLaTanda());
         if (q > 0) anunciarALaClase("tanda-tiempo", tandaActual.semilla + ":" + tandaActual.segundos, "Tu profe cambió el tiempo: quedan " + PreguntaClase.textoDeTiempo(q) + ".");
     }
-    textoConEmojiMudo(document.getElementById("tanda-titulo"), tandaEsReto() ? "🏁 Competencia de ejercicios" : "🔥 Calentamiento");
+    textoConEmojiMudo(document.getElementById("tanda-titulo"), (tandaEsReto() ? "🏁 Competencia de ejercicios" : "🔥 Calentamiento")
+        + (tandaActual.titulo ? ": " + tandaActual.titulo : ""));
     pintarBotonTanda();
     if (isTeacher) {
         if (tandaVistosDe !== tandaActual.semilla) { tandaVistos.clear(); tandaVistosDe = tandaActual.semilla; tandaMirando = null; }
@@ -346,7 +427,7 @@ async function empezarTandaMia() {
     document.getElementById("tanda-estado").textContent = "Preparando tus ejercicios…";
     msg.textContent = "";
     let banco = null;
-    try { banco = await cargarBancoDeLaTanda(); } catch (e) {
+    try { banco = await cargarBancoDeLaTanda(t); } catch (e) {
         console.error(e);
         document.getElementById("tanda-estado").textContent = "No se pudieron cargar los ejercicios. Recarga la página.";
         return;
@@ -502,9 +583,24 @@ function juzgarTanda() {
     }, 500);
 }
 
+/* Cada ejercicio terminado queda en la base (tanda_resultados): de ahí salen
+   sus puntos de la clase. La base pone la hora, el plazo y el orden, así que
+   van de a uno, en fila: si el 3 llegara antes que el 2, lo rechazaría. Si
+   uno no se pudo guardar (sin conexión), el calentamiento sigue igual. */
+let tandaGuardando = Promise.resolve();
+function guardarResultadoDeLaTanda(semilla, indice, bien) {
+    if (isTeacher || esObservador || vistaPrevia || !semilla) return;
+    tandaGuardando = tandaGuardando.then(async () => {
+        const { error } = await sb.from("tanda_resultados").insert({ semilla, indice, bien: !!bien });
+        // El mismo dos veces (al recargar) no es un error: ya estaba.
+        if (error && error.code !== "23505") console.error(error);
+    }).catch((e) => console.error(e));
+}
+
 function cerrarEjercicioDeLaTanda(bien, espera) {
     // Mientras se ve cómo terminó este, no hay nada que pasar.
     document.getElementById("tanda-pasar-btn").hidden = true;
+    guardarResultadoDeLaTanda(tandaMia.semilla, tandaMia.i, bien);
     tandaMia.resultados.push(!!bien);
     tandaMia.i += 1;
     if (tandaMia.i >= tandaMia.ejercicios.length) tandaMia.fin = true;
@@ -548,7 +644,7 @@ function pintarTandaProfe() {
     const reto = tandaEsReto();
     const q = TandaCalentamiento.quedan(tandaActual, relojDeLaTanda());
     document.getElementById("tanda-profe-nivel").textContent = (reto ? "Competencia: los mismos ejercicios para todos (hasta " + total + "), gana quien resuelva más · "
-        : total + " ejercicios por alumno · ") + TandaCalentamiento.nombreDeNivel(tandaActual.elo);
+        : total + " ejercicios por alumno · ") + (tandaActual.titulo ? "«" + tandaActual.titulo + "»" : TandaCalentamiento.nombreDeNivel(tandaActual.elo));
     pintarRelojDeLaTanda();
     const filas = [...tandaVistos.entries()].map(([id, v]) => Object.assign({ id }, v));
     const terminaron = filas.filter((v) => v.fin || v.hechos >= total).length;
@@ -614,7 +710,7 @@ async function pintarEjercicioQueMiro() {
     const total = tandaActual ? tandaActual.cantidad : 0;
     if (!v || !tandaActual || v.fin || v.hechos >= total || TandaCalentamiento.quedan(tandaActual, relojDeLaTanda()) <= 0) { caja.hidden = true; return; }
     let banco = null;
-    try { banco = await cargarBancoDeLaTanda(); } catch (e) { caja.hidden = true; return; }
+    try { banco = await cargarBancoDeLaTanda(tandaActual); } catch (e) { caja.hidden = true; return; }
     // Se arma una vez por alumno y tanda: esto corre con cada eco de la presencia.
     const clave = tandaActual.semilla + ":" + tandaMirando;
     if (!tandasRehechas.has(clave)) tandasRehechas.set(clave, TandaCalentamiento.paraAlumno(banco, tandaActual, tandaMirando));
@@ -636,36 +732,55 @@ function pintarBotonTanda() {
         : reto ? "Empezar la competencia" : "Mandar el calentamiento"));
 }
 
+// Desde la pestaña Preguntar: el nivel, el modo y el tiempo de su recuadro (ejercicios de Táctica).
 async function mandarTanda() {
-    const elo = parseInt(document.getElementById("tanda-nivel").value, 10) || 1200;
-    const reto = document.getElementById("tanda-modo").value === "reto";
     const minutos = Number(document.getElementById("tanda-minutos").value);
-    if (!Number.isInteger(minutos) || minutos < TandaCalentamiento.MINUTOS_MIN || minutos > TandaCalentamiento.MINUTOS_MAX) {
-        setStatus("Escribe el tiempo en minutos: de " + TandaCalentamiento.MINUTOS_MIN + " a " + TandaCalentamiento.MINUTOS_MAX + ".");
-        document.getElementById("tanda-minutos").focus();
-        return;
-    }
+    if (!minutosValidos(minutos)) { document.getElementById("tanda-minutos").focus(); return; }
+    await mandarTandaCon({ elo: parseInt(document.getElementById("tanda-nivel").value, 10) || 1200,
+        reto: document.getElementById("tanda-modo").value === "reto", minutos });
+}
+
+function minutosValidos(minutos) {
+    if (Number.isInteger(minutos) && minutos >= TandaCalentamiento.MINUTOS_MIN && minutos <= TandaCalentamiento.MINUTOS_MAX) return true;
+    setStatus("Escribe el tiempo en minutos: de " + TandaCalentamiento.MINUTOS_MIN + " a " + TandaCalentamiento.MINUTOS_MAX + ".");
+    return false;
+}
+
+/* Manda la receta. `o`: {reto, minutos} y, o el nivel (`elo`, de Táctica), o
+   una parte de un banco ({banco, filtro, titulo}: lo que manda la pestaña
+   Entrenamientos), cuyo nivel es el de sus propios ejercicios. Devuelve si salió. */
+async function mandarTandaCon(o) {
+    const reto = !!o.reto;
     if (tandaActual && TandaCalentamiento.quedan(tandaActual, relojDeLaTanda()) > 0) {
         const si = await Avisos.confirmar("Ya hay un calentamiento en curso. Si mandas otro, tus alumnos empiezan de cero con ejercicios nuevos.",
             { aceptar: "Mandar otro", cancelar: "Seguir con el de ahora" });
-        if (!si) return;
+        if (!si) return false;
     }
+    const receta = { banco: o.banco && o.banco !== "temas" ? o.banco : undefined, filtro: o.filtro || undefined };
     let banco = null;
-    try { banco = await cargarBancoDeLaTanda(); } catch (e) { setStatus("No se pudo cargar la base de ejercicios. Recarga la página e inténtalo de nuevo."); return; }
+    try { banco = await cargarBancoDeLaTanda(receta); } catch (e) { console.error(e); setStatus("No se pudo cargar la base de ejercicios. Recarga la página e inténtalo de nuevo."); return false; }
+    const elo = o.elo || TandaCalentamiento.eloDe(banco);
     const n = TandaCalentamiento.banda(banco, elo).length;
-    if (n < TandaCalentamiento.CANTIDAD) { setStatus("No hay suficientes ejercicios de ese nivel."); return; }
+    // De una parte chica del banco (un tema, los Desafíos) van los que haya, si llegan a cinco.
+    const minimo = o.elo ? TandaCalentamiento.CANTIDAD : 5;
+    if (n < minimo) { setStatus("No hay suficientes ejercicios de ese nivel."); return false; }
     // Los conectados, en orden: a cada uno le toca otro ejercicio de cada tramo (ver paraAlumno).
     // En la competencia todos tienen los mismos: la lista no hace falta.
     const alumnos = reto ? [] : [...onlineStudents.keys()].sort().slice(0, 60);
-    const tanda = { at: new Date().toISOString(), semilla: TandaCalentamiento.semillaNueva(), elo,
-        cantidad: reto ? TandaCalentamiento.CANTIDAD_RETO : TandaCalentamiento.CANTIDAD, segundos: minutos * 60, alumnos };
+    const cantidad = Math.min(reto ? TandaCalentamiento.CANTIDAD_RETO : TandaCalentamiento.CANTIDAD, n);
+    const tanda = { at: new Date().toISOString(), semilla: TandaCalentamiento.semillaNueva(), elo, cantidad, segundos: o.minutos * 60, alumnos };
     if (reto) tanda.modo = "reto";
+    if (receta.banco) tanda.banco = receta.banco;
+    if (receta.filtro) tanda.filtro = String(receta.filtro).slice(0, 60);
+    if (o.titulo) tanda.titulo = String(o.titulo).slice(0, 80);
     const { data, error } = await sb.from("game_state").update({ tanda_calentamiento: tanda }).eq("id", myGameStateId).select("tanda_calentamiento").single();
-    if (error) { console.error(error); setStatus("No se pudo mandar el calentamiento: " + error.message); return; }
+    if (error) { console.error(error); setStatus("No se pudo mandar el calentamiento: " + error.message); return false; }
     pintarTanda(data && data.tanda_calentamiento ? data.tanda_calentamiento : tanda);
+    const de = tanda.titulo ? " de «" + tanda.titulo + "»" : "";
     setStatus(reto
-        ? "🏁 Competencia en marcha: los mismos ejercicios para todos, con " + PreguntaClase.textoDeTiempo(tanda.segundos) + ". Debajo del tablero ves cuántos resolvió cada uno."
-        : "🔥 Calentamiento enviado: " + TandaCalentamiento.CANTIDAD + " ejercicios distintos para cada alumno, con " + PreguntaClase.textoDeTiempo(tanda.segundos) + ". Debajo del tablero ves cuántos lleva cada uno.");
+        ? "🏁 Competencia" + de + " en marcha: los mismos ejercicios para todos, con " + PreguntaClase.textoDeTiempo(tanda.segundos) + ". Debajo del tablero ves cuántos resolvió cada uno."
+        : "🔥 Calentamiento" + de + " enviado: " + cantidad + " ejercicios distintos para cada alumno, con " + PreguntaClase.textoDeTiempo(tanda.segundos) + ". Debajo del tablero ves cuántos lleva cada uno.");
+    return true;
 }
 
 /* El profe cambia el plazo de la tanda que corre: la misma semilla (la base

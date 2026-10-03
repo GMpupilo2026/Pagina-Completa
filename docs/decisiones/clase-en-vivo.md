@@ -1193,14 +1193,77 @@ escribirla o copiarla.
 - **La partida votada no se maneja desde acá.** Vive en la ventana donde se
   empezó (ver «La clase juega votando»).
 
+### Los puntos de la clase: dificultad, intentos y quién acierta primero
+
+«Que todo en la clase tenga puntos y determine el mejor de la clase, que cada
+puntaje sea proporcional a su dificultad, baje con varios intentos y premie a
+los que lo hacen a la primera y de primero.» Antes cada respuesta correcta
+valía 2 y cada contestada 1, fuera un mate en 1 o un mate en 3.
+
+- **Por cada respuesta correcta** (migración `puntos_de_la_clase`):
+  - **base según la dificultad**: de 10 (600 puntos Elo o menos) a 50 (2200 o
+    más), en línea recta. Sin dificultad anotada (una posición armada a mano,
+    un cuestionario), la de 1200: 25;
+  - **intentos**: a la primera, todo; al 2.º, el 60 %; del 3.º en adelante,
+    el 30 %;
+  - **puesto**: el 1.º en acertar suma un 50 % más; el 2.º, un 30 %; el 3.º,
+    un 15 %. El orden es el de la hora de la base de su última respuesta (la
+    que acertó), no la de la computadora de nadie.
+  - Lo incorrecto no suma, y contestar por contestar tampoco.
+  - Lo demás, en la misma escala (una pregunta media son 25): turno de palabra
+    bien 20, casi 10; práctica ganada al motor 30, tablas 15; partida ganada a
+    un compañero 30, tablas 15.
+- **La dificultad va en la pregunta** (`questions.dificultad`, de 400 a 3000,
+  CHECK): el rating del ejercicio de Táctica, de la ronda rápida, de
+  Habilidades (o el de su nivel) y de cada entrenamiento (Mates: el de su
+  categoría; Precisión, Aperturas, Fichas: el de su nivel). `crearPregunta`
+  la recibe en `extra.dificultad`; la de opciones la anota después en su fila
+  (`hacer_pregunta_de_opciones` no la recibe).
+- **Los intentos los cuenta la base** (`question_answers.intentos`): el
+  trigger `respuesta_hora_de_la_base` pone 1 al contestar y suma uno cada vez
+  que cambia la opción o las jugadas. Comprobado impersonando a un alumno:
+  escribirse `intentos = 0` no cambia nada; cambiar la respuesta, sí suma.
+- **El puesto necesita ver las respuestas de los demás**, y un alumno, por la
+  RLS, solo ve las suyas. Por eso `interno.puestos_de_la_clase` es `SECURITY
+  DEFINER` y devuelve solo los renglones que quien llama ya puede ver en
+  `question_answers` (las mismas reglas que sus políticas de SELECT).
+  Comprobado: el profe ve los 114 aciertos de sus 17 alumnos; un alumno, solo
+  los suyos.
+- **No se cambió `resumen_de_la_clase` ni `resumen_del_mes`**: cambiarles lo
+  que devuelven obliga a borrarlas y crearlas de nuevo, y todo lo que ya las
+  usa (el registro del panel, los informes) se habría enterado. Los puntos van
+  en dos funciones nuevas, `puntos_de_la_clase` y `puntos_del_mes` (`SECURITY
+  INVOKER`, con el mismo filtro de quién ve qué), y la página las junta por
+  alumno (`PuntosClase.juntar`, `ResumenClase.cargarConPuntos`). El registro
+  de clases del panel no las pide: no muestra puntos.
+- **La cuenta está dos veces, a propósito y vigilada**: en la base
+  (`interno.puntos_de_una_respuesta`) y en `PuntosClase.puntosDeUnaRespuesta`,
+  que solo sirve para escribir la regla y para el doble de los verificadores.
+  `verificar-clase-encuesta.js` comprueba los mismos seis casos que se
+  probaron en la base (75, 39, 11, 10, 10, 50).
+- **El calentamiento con nota y la competencia también suman**
+  (`tanda_resultados`, migración `tanda_resultados`): cada ejercicio
+  terminado deja un renglón, y cada uno bien vale lo de una respuesta a la
+  primera con el nivel de la tanda; en la competencia, donde todos tienen los
+  mismos, el 1.º, 2.º y 3.º en resolver cada ejercicio suman como en las
+  preguntas (`puntos_de_tandas`, `puntos_de_tandas_del_mes`, con su
+  `interno.puestos_de_tandas` igual que el de las preguntas). Ver «El
+  calentamiento de 20 ejercicios».
+- **Quien solo hizo el calentamiento también entra** en los puntos:
+  `PuntosClase.juntar` lo agrega aunque no esté en el resumen.
+
+**Al tocar esto, correr `node herramientas/verificar-todo.js clase-encuesta
+clase-remoto`.**
+
 ### Los puntos del mes
 
 `resumen_del_mes(p_profesor)` es una función `SECURITY INVOKER` de la base.
 Suma `resumen_de_la_clase` de las clases del mes en curso, en hora de Costa
 Rica.
 
-- **Devuelve los conteos, no los puntos.** La regla de los puntos vive una
-  sola vez, en `js/puntos-clase.js`.
+- **Devuelve los conteos, no los puntos.** Los puntos de las preguntas los
+  suma `puntos_del_mes` (ver «Los puntos de la clase: dificultad, intentos y
+  quién acierta primero»); lo demás, con la regla de `js/puntos-clase.js`.
 - **Quién ve qué.** Cada fila es de quien pregunta o de una clase suya:
   - el profe ve a sus alumnos;
   - el alumno ve solo lo suyo;
@@ -1403,10 +1466,18 @@ siguiente. Al terminar los 20, o al acabarse el tiempo, ve su nota.
   desconecta no se borra de la lista («(se desconectó)»). El alumno guarda en
   `localStorage` lo que hizo: al recargar sigue donde iba, y no puede volver a
   intentar el que falló.
-- **No se guarda en ninguna tabla.** Es un calentamiento, no un examen: la
-  corrección la hace la computadora del alumno (la base de ejercicios es
-  pública), así que una nota guardada no valdría más que la de la presencia.
-  Si algún día cuenta para algo, va a una tabla y la corrige la base.
+- **Desde que suma puntos, cada ejercicio terminado queda en
+  `tanda_resultados`.** La corrección la sigue haciendo la computadora del
+  alumno: la base de ejercicios es pública, así que corregir en la base no
+  impediría nada que no se pueda hacer mirando la solución. Lo que pone la
+  base es lo que no se puede inventar: la hora, el plazo (el tiempo de la
+  tanda más 15 segundos de gracia), el orden (el ejercicio k solo después del
+  k − 1), uno por ejercicio (índice único), quién es, de qué profe y de qué
+  clase, el modo y el nivel (de `game_state`, no de lo que manda el alumno).
+  El alumno manda solo `{semilla, indice, bien}`, de a uno y en fila.
+  Comprobado impersonando: saltarse uno, repetirlo, una semilla inventada,
+  fuera de tiempo o un alumno de otro profe se rechazan; nadie lo cambia ni lo
+  borra; otro alumno no lee nada.
 - Solo el profe la pone (`protect_game_state_teacher_columns`, comprobado
   impersonando: el alumno no la puede quitar). El CHECK de forma va envuelto
   en `coalesce(…, false)`, y el trigger solo hace `jsonb_set` sobre un objeto:
@@ -3046,12 +3117,73 @@ viera lo que entra por ahí dejaría la galería en blanco), que al cambiar de t
 una siga funcionando. Está probado que falla de verdad: dibujándolas todas de
 golpe saltan 3 comprobaciones, sin la persistencia 1 y cruzando las posiciones 8.
 
-### Los Tipos de entrenamiento, en la clase
+### Los entrenamientos, en la clase
 
-> En pantalla, la pestaña y el panel se llaman «Habilidades» (ver «Los Tipos
+La pestaña **«🧠 Entrenamientos»** del profe (antes «Habilidades», que ahora
+es una de sus tarjetas) trae todos los entrenamientos del sitio a la clase:
+Mates, Aprender, Desafíos, Fichas de estudio, Aperturas y celadas,
+Visualización, Precisión posicional, Finales contra la máquina, Memoria,
+Habilidades, y los que se hacen en su propia página (Coordenadas, 4×4,
+Practicar, el Sonar…). Es `js/clase-entrenamientos.js`. Para cada ejercicio:
+mostrarlo para explicarlo, preguntarlo a la clase y que lo practiquen.
+
+- **La lista no está escrita en la clase: sale de
+  `MaterialPlataforma.HERRAMIENTAS`** (`js/material-plataforma.js`), la misma
+  de Tareas. Un entrenamiento nuevo que se agrega ahí aparece solo, en «Se
+  hacen en su página» con «📲 Que lo abran todos»; si además se le escribe su
+  adaptador (`ADAPTADORES_ENTRENO`), pasa a «Con el tablero de la clase» con
+  su lista. `verificar-clase-entrenamientos.js` revisa que cada tarjeta del hub
+  (`entreno/index.html`) esté en esa lista: si alguien agrega una tarjeta y no
+  la anota, salta. Quedan afuera Táctica (tiene su pestaña), los diagnósticos,
+  los cuestionarios y el plan contra un rival.
+- **Los datos son los de cada página, sin copia.** Los JSON de `entreno/data`
+  y los módulos de `js/` (`aperturas-lineas.js`, `fichas-estudio.js`,
+  `precision-posicional-items.js`, `aprender-lecciones.js`) se cargan recién
+  al abrir esa tarjeta. Las lecciones de Aprender vivían dentro de
+  `js/entreno-aprender.js`, que pinta la página: se mudaron tal cual a
+  `js/aprender-lecciones.js` (siguen siendo los mismos globales), y
+  `verificar-practicar-aprender.js` y `contenido-panel.js` las leen de ahí.
+- **Cada ejercicio trae sus puertas, las de siempre**: «👁 Vista previa»
+  (`crearVistaPreviaLote`), «📥 Al tablero» (`aplicarPosicionEnClase`),
+  «❓ Preguntar» (`crearPregunta`, con las jugadas del alumno sacadas de la
+  solución; Precisión posicional, de opciones, con
+  `hacer_pregunta_de_opciones`, así la correcta queda en la base), «🔥
+  Calentamiento» (`mandarCalentamiento`), «🤖 Que lo jueguen contra la
+  máquina» (Finales, `crearPractica`), «📸 Mostrar y ocultar» (Memoria, la
+  Fotografía de Habilidades) y «🔎 Guion»: lo que ve solo el profe para
+  explicarlo (la solución, la idea, la explicación de la ficha).
+- **«Que lo practiquen» es el calentamiento de `js/clase-tanda.js`** con los
+  ejercicios de ese grupo, con nota o en competencia: la receta lleva `banco`
+  (`mates`, `desafios`; sin él, Táctica) y `filtro` (`cat:mate2`,
+  `tema:fork`, `largo:l3`), y cada alumno arma sus ejercicios de ahí
+  (`TandaCalentamiento.normalizar`/`filtrar`). Los que no tienen rating llevan
+  el centro de su categoría; el nivel de la receta es la mediana de esa parte
+  del banco. Así practicar Mates, un tema de una ficha o un nivel de
+  Visualización no necesitó otro mecanismo.
+- **Ninguna posición se inventa ni se cuela una inválida.** El verificador
+  carga TODOS los ejercicios de todos los adaptadores (más de 3000) y
+  comprueba que el tablero de la clase acepta cada posición y que cada
+  solución se juega con chess.js (las de Mates, hasta el mate). De Desafíos
+  solo van los que tienen los dos reyes: los otros se hacen en su página.
+- **«📲 Que lo abran todos» no manda una dirección**: manda el slug (y el
+  recorte) en la presencia del profe, como la Fotografía, y cada alumno arma
+  el enlace con la lista del sitio (`EntrenosClase.enlaceDe`). Solo cuenta lo
+  que anuncia el dueño del tablero: lo que anuncie otro no abre nada. Se abre
+  en otra pestaña: la clase sigue abierta.
+- **Ordenado, sin saturar**: el catálogo en dos partes, cada entrenamiento en
+  grupos, y las listas de a 30 con «Mostrar más». Las migas («‹
+  Entrenamientos ‹ Mates») dicen dónde se está.
+
+**Al tocar esto, correr `node herramientas/verificar-todo.js
+clase-entrenamientos sesion-curso`.** Está probado que falla de verdad: con
+una solución cortada (no da mate) o aceptando el pedido de cualquiera, salta.
+
+#### Habilidades (los Tipos de entrenamiento)
+
+> En pantalla, la tarjeta y el panel se llaman «Habilidades» (ver «Los Tipos
 > de entrenamiento» en `entrenamiento.md`).
 
-La pestaña **"🧠 Entrenamientos"** del profesor lista los diecinueve Tipos de
+La tarjeta «🧩 Habilidades» de la pestaña **"🧠 Entrenamientos"** lista los diecinueve Tipos de
 entrenamiento de `entreno/tipos.html` (ver «Los Tipos de entrenamiento» en
 entrenamiento.md) en cascada tipo → nivel → ejercicio, con las mismas
 posiciones (`entreno/data/tipos.json`) y el mismo catálogo

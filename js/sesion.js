@@ -115,7 +115,7 @@
             btn.classList.toggle("hidden", !canMoveNow() || board.isViewingHistory());
         }
 
-        // ---------- Pestañas del profesor (Mi plan/Táctica/Habilidades/Preguntar/Practicar) ----------
+        // ---------- Pestañas del profesor (Mi plan/Táctica/Entrenamientos/Preguntar/Practicar) ----------
         // Un solo panel visible a la vez, para no obligar a hacer scroll por una barra
         // lateral con los 5 a la vez. Se recuerda la última pestaña abierta en este navegador.
         // El motor y los alumnos conectados NO son pestañas: van siempre a la vista.
@@ -138,7 +138,7 @@
                 panel.classList.toggle("hidden", panel.dataset.tabPanel !== tab);
             });
             try { localStorage.setItem(TEACHER_TAB_KEY, tab); } catch (e) {}
-            if (tab === "tipos") ensureTiposLoaded();
+            if (tab === "tipos") pintarEntrenos();
         }
 
         /* «Alumnos conectados» ya no es una pestaña: va siempre a la vista. Lo que
@@ -160,7 +160,7 @@
            Catorce controles delante, con la clase mirando, es demasiado para la
            primera clase. En modo sencillo se ve lo que hace falta para darla: el
            tablero (el grupo «El tablero — lo ve toda la clase»), el motor, los
-           alumnos conectados y «Mi plan». Táctica, Habilidades, Preguntar,
+           alumnos conectados y «Mi plan». Táctica, Entrenamientos, Preguntar,
            Practicar y el grupo «Tu material» quedan detrás de «Ver todas las
            herramientas».
 
@@ -1669,7 +1669,7 @@
             const caja = document.getElementById("clase-resumen");
             if (!caja || !claseId) return;
             caja.textContent = "Contando lo que hizo cada alumno en esta clase…";
-            const { filas, error } = await ResumenClase.cargar(sb, claseId);
+            const { filas, error } = await ResumenClase.cargarConPuntos(sb, claseId);
             if (error) { console.error(error); caja.textContent = "No se pudo contar lo que hizo cada alumno: " + error.message; return; }
             ResumenClase.pintar(caja, filas);
             const podio = document.getElementById("cierre-podio-lista");
@@ -2742,6 +2742,8 @@
                 tanda: tandaPresencia || undefined,
                 // La Fotografía en curso (solo el profe): ver dictarFotografiaDeLaPresencia.
                 fotografia: fotoEnCurso || undefined,
+                // El entrenamiento que el profe pide abrir (js/clase-entrenamientos.js).
+                entreno: entrenoEnCurso || undefined,
             };
         }
 
@@ -2820,6 +2822,7 @@
                     }
                 }
                 dictarFotografiaDeLaPresencia(state);
+                if (!isTeacher && !esObservador) pintarEntrenoDelProfe(state);
                 renderStudentsList();
                 pintarCuentaCalentamiento();
                 if (isTeacher && tandaActual) { anotarTandaDeLaPresencia(); pintarTandaProfe(); }
@@ -3324,17 +3327,27 @@
         // paraAlumno: la pregunta dirigida, solo para quien tiene el turno. Los
         // demás la ven pero no la contestan (lo rechaza la base).
         // deSalida: la pregunta de salida, la última de la clase (ver hacerPreguntaDeSalida).
-        // extra: {prompt, tiempo} para las que arma la página sola (la votación de la clase).
+        // extra: {prompt, tiempo} para las que arma la página sola (la votación de la clase),
+        // y {dificultad}: el rating del ejercicio, en puntos Elo, del que salen sus puntos
+        // (ver «Los puntos de la clase»). Sin ella, la base cuenta la de 1200.
         async function crearPregunta(fen, expectedPlies, paraAlumno, deSalida, extra) {
             await sb.from("questions").update({ closed_at: new Date().toISOString() })
                 .eq("created_by", boardOwnerId).is("closed_at", null);
             const fila = { fen, created_by: session.user.id, expected_plies: expectedPlies,
                 tiempo_limite: extra && extra.tiempo ? extra.tiempo : tiempoElegido(), para_alumno: paraAlumno || null, de_salida: !!deSalida };
             if (extra && extra.prompt) fila.prompt = extra.prompt;
+            const dif = dificultadValida(extra && extra.dificultad);
+            if (dif) fila.dificultad = dif;
             return sb.from("questions").insert(fila).select().single();
         }
 
-        async function crearPreguntaDeOpciones(prompt, opciones, correcta) {
+        // La dificultad que acepta la base (questions_dificultad_rango): de 400 a 3000, entera.
+        function dificultadValida(d) {
+            const n = Math.round(Number(d));
+            return Number.isFinite(n) && n > 0 ? Math.max(400, Math.min(3000, n)) : null;
+        }
+
+        async function crearPreguntaDeOpciones(prompt, opciones, correcta, dificultad) {
             const fen = board.fen();
             const motivo = motivoPosicionInvalida(fen);
             if (motivo) { setStatus(motivo); return false; }
@@ -3345,7 +3358,14 @@
             if (error) { console.error(error); setStatus("No se pudo crear la pregunta: " + error.message); return false; }
             setStatus("Pregunta enviada a la clase: " + prompt);
             // La fila de la pregunta (la de salida la marca después).
-            return (Array.isArray(data) ? data[0] : data) || true;
+            const fila = (Array.isArray(data) ? data[0] : data) || true;
+            // La dificultad no la recibe la función de la base: se anota después, en la fila del profe.
+            const dif = dificultadValida(dificultad);
+            if (dif && fila && fila.id) {
+                const { error: e2 } = await sb.from("questions").update({ dificultad: dif }).eq("id", fila.id);
+                if (e2) console.error(e2);
+            }
+            return fila;
         }
 
         /* ---------- La pregunta de salida ----------
@@ -4100,7 +4120,8 @@
            entra con su propio rol («vista-previa»), que no cuenta como alumno:
            ni asistencia, ni turno, ni aviso de quién no contesta. */
         const RPC_DE_LECTURA = new Set(["mis_clases", "premios_de_alumno", "trofeos_de", "resultados_de_la_pregunta",
-            "nombres_de_jugadores", "alumnos_del_profesor", "resumen_de_la_clase", "salida_de_la_clase", "resumen_del_mes"]);
+            "nombres_de_jugadores", "alumnos_del_profesor", "resumen_de_la_clase", "salida_de_la_clase", "resumen_del_mes",
+            "puntos_de_la_clase", "puntos_del_mes", "puntos_de_tandas", "puntos_de_tandas_del_mes"]);
         function nadaQueMandar() {
             const p = Promise.resolve({ data: null, error: null });
             const cadena = new Proxy({}, { get: (_, k) => (k === "then" ? p.then.bind(p) : k === "catch" ? p.catch.bind(p) : () => cadena) });
@@ -4894,7 +4915,7 @@
                 rondaBtn.className = "mt-2 w-full text-xs font-semibold px-3 py-2 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
                 rondaBtn.textContent = "⚡ Ronda rápida con " + Math.min(RondaRapida.TAMANO, ids.length) + " de estos, al azar";
                 rondaBtn.addEventListener("click", () => empezarRonda(RondaRapida.elegir(ids, RondaRapida.TAMANO)
-                    .map((id) => ({ fen: tacticsData.puzzles[id].fen, solucion: tacticsData.puzzles[id].solution }))));
+                    .map((id) => ({ fen: tacticsData.puzzles[id].fen, solucion: tacticsData.puzzles[id].solution, rating: tacticsData.puzzles[id].rating }))));
                 body.appendChild(barra);
                 let rondaFila = null;
                 if (ids.length) {
@@ -5023,7 +5044,7 @@
             const expectedPlies = Math.max(1, Math.min(6, Math.ceil((ex.solution || [""]).length / 2)));
             if (!(await aplicarPosicionEnClase(fen))) return;
             document.getElementById("question-plies-input").value = expectedPlies;
-            const { data, error } = await crearPregunta(fen, expectedPlies);
+            const { data, error } = await crearPregunta(fen, expectedPlies, null, false, { dificultad: ex.rating });
             if (error) { console.error(error); setStatus("No se pudo crear la pregunta: " + error.message); return; }
             activateTeacherTab("preguntar");
             setStatus("Ejercicio de táctica enviado a la clase como pregunta.");
@@ -5037,7 +5058,7 @@
         // aplicarPosicionEnClase(), como Táctica y Archivos. Lo que es la RESPUESTA
         // (la opción buena del Detective, la amenaza, qué candidatas pierden, el número
         // del motor) va en «🔎 Respuesta», que se abre solo en esta pantalla: la clase
-        // no ve nada de este panel. Ver «Los Tipos de entrenamiento, en la clase» en
+        // no ve nada de este panel. Ver «Habilidades (los Tipos de entrenamiento)» en
         // docs/decisiones/clase-en-vivo.md.
         let tiposData = null;
         let tiposLoadPromise = null;
@@ -5171,10 +5192,12 @@
             }, segundos * 1000);
         }
 
-        async function tiposPreguntar(fen, aviso) {
+        // La dificultad de un ejercicio de Habilidades: su rating o, si no tiene, la de su nivel.
+        const tiposDificultad = (item) => (item && item.rating) || (item && item.nivel ? 600 + 400 * item.nivel : null);
+        async function tiposPreguntar(fen, aviso, dificultad) {
             if (!(await aplicarPosicionEnClase(fen))) return;
             document.getElementById("question-plies-input").value = 1;
-            const { data, error } = await crearPregunta(fen, 1);
+            const { data, error } = await crearPregunta(fen, 1, null, false, { dificultad });
             if (error) { console.error(error); setStatus("No se pudo crear la pregunta: " + error.message); return; }
             activateTeacherTab("preguntar");
             setStatus(aviso);
@@ -5313,17 +5336,17 @@
                     }, "Poner esta posición en el tablero de la clase, sin preguntar nada");
                     acciones.appendChild(envio);
                 }
-                if (t.id === "amenaza") acciones.appendChild(tiposBoton("❓ Preguntar", TIPOS_BTN_ACCION, () => tiposPreguntar(item.fenRival, "Pregunta abierta: cada alumno hace la jugada que amenaza el rival."), "Abre la pregunta con el turno del rival: la respuesta correcta es su amenaza"));
+                if (t.id === "amenaza") acciones.appendChild(tiposBoton("❓ Preguntar", TIPOS_BTN_ACCION, () => tiposPreguntar(item.fenRival, "Pregunta abierta: cada alumno hace la jugada que amenaza el rival.", tiposDificultad(item)), "Abre la pregunta con el turno del rival: la respuesta correcta es su amenaza"));
                 if (t.id === "diferencias" && item.salvan) acciones.appendChild(tiposBoton("❓ Preguntar la refutación", TIPOS_BTN_ACCION, () => {
                     const g = new Chess(item.fen);
                     g.move(item.golpe);
-                    tiposPreguntar(g.fen(), "Pregunta abierta: en B, tras " + item.golpeEs.replace(/[+#]$/, "") + ", ¿cómo se defiende el rival?");
+                    tiposPreguntar(g.fen(), "Pregunta abierta: en B, tras " + item.golpeEs.replace(/[+#]$/, "") + ", ¿cómo se defiende el rival?", tiposDificultad(item));
                 }, "Abre la pregunta con B después del golpe: cada alumno busca la defensa"));
-                if (t.id === "descarte") acciones.appendChild(tiposBoton("❓ Preguntar", TIPOS_BTN_ACCION, () => tiposPreguntar(item.fen, "Pregunta abierta: ¿qué jugarías? Después comenten cuáles de las candidatas pierden."), "Abre la pregunta «¿qué jugarías?» con esta posición"));
-                if (t.id === "peones" && item.nivel === 3) acciones.appendChild(tiposBoton("❓ Preguntar", TIPOS_BTN_ACCION, () => tiposPreguntar(item.fen, "Pregunta abierta: ¿cuál es la única jugada que gana?"), "Cada alumno busca la única jugada que gana"));
+                if (t.id === "descarte") acciones.appendChild(tiposBoton("❓ Preguntar", TIPOS_BTN_ACCION, () => tiposPreguntar(item.fen, "Pregunta abierta: ¿qué jugarías? Después comenten cuáles de las candidatas pierden.", tiposDificultad(item)), "Abre la pregunta «¿qué jugarías?» con esta posición"));
+                if (t.id === "peones" && item.nivel === 3) acciones.appendChild(tiposBoton("❓ Preguntar", TIPOS_BTN_ACCION, () => tiposPreguntar(item.fen, "Pregunta abierta: ¿cuál es la única jugada que gana?", tiposDificultad(item)), "Cada alumno busca la única jugada que gana"));
                 if (t.id === "peones" && item.nivel === 4) acciones.appendChild(tiposBoton("🎯 Practicar", TIPOS_BTN_ACCION, () => tiposPracticar(item.fen), "Cada alumno lo juega contra el motor hasta coronar"));
-                if (t.id === "maestro") acciones.appendChild(tiposBoton("❓ Preguntar", TIPOS_BTN_ACCION, () => tiposPreguntar(tiposFen(item), "Pregunta abierta: ¿qué jugarías aquí? Después miren la jugada del maestro."), "Abre la pregunta con la primera posición del tramo"));
-                if (t.id === "aguanta") acciones.appendChild(tiposBoton("❓ Preguntar", TIPOS_BTN_ACCION, () => tiposPreguntar(item.fen, "Pregunta abierta: solo una jugada aguanta. ¿Cuál?"), "Cada alumno busca la única defensa en su tablero"));
+                if (t.id === "maestro") acciones.appendChild(tiposBoton("❓ Preguntar", TIPOS_BTN_ACCION, () => tiposPreguntar(tiposFen(item), "Pregunta abierta: ¿qué jugarías aquí? Después miren la jugada del maestro.", tiposDificultad(item)), "Abre la pregunta con la primera posición del tramo"));
+                if (t.id === "aguanta") acciones.appendChild(tiposBoton("❓ Preguntar", TIPOS_BTN_ACCION, () => tiposPreguntar(item.fen, "Pregunta abierta: solo una jugada aguanta. ¿Cuál?", tiposDificultad(item)), "Cada alumno busca la única defensa en su tablero"));
                 if (t.id === "remata") acciones.appendChild(tiposBoton("🎯 Practicar", TIPOS_BTN_ACCION, () => tiposPracticar(item.fen), "Cada alumno juega la posición contra el motor para rematar la ventaja"));
                 if (t.id === "tablas") acciones.appendChild(tiposBoton("🎯 Practicar", TIPOS_BTN_ACCION, () => tiposPracticar(item.fen), "Cada alumno juega la posición contra el motor para salvar las tablas"));
                 if (t.id === "con-lo-justo") acciones.appendChild(tiposBoton("🎯 Practicar", TIPOS_BTN_ACCION, () => tiposPracticar(item.fen), "Cada alumno juega el final contra el motor"));

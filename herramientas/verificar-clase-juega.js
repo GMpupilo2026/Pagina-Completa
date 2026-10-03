@@ -145,10 +145,11 @@ async function pruebaEquipos(browser) {
   await page.click("#podio-mostrar-btn");
   await page.waitForFunction(() => window.__updates.some((u) => u.tabla === "game_state" && u.campos.podio), null, { timeout: 5000 });
   const podio = await page.evaluate(() => window.__updates.filter((u) => u.campos.podio).pop().campos.podio);
+  // Ana acertó primera y a la primera una pregunta sin dificultad anotada: 25 × 1,5 = 38.
   igual("el podio suma los puntos de cada equipo (Ana: contestó y bien)", podio.equipos.map((e) => [e.nombre, e.puntos, e.puesto]),
-    [[deAna, 3, 1], [deAna === "Azul" ? "Verde" : "Azul", 0, 2]]);
+    [[deAna, 38, 1], [deAna === "Azul" ? "Verde" : "Azul", 0, 2]]);
   igual("y se ve en el podio", await page.evaluate(() => [...document.querySelectorAll("#podio-equipos li")].map((l) => l.textContent)),
-    ["🥇 1.º Equipo " + deAna + " — 3 puntos", "🥈 2.º Equipo " + (deAna === "Azul" ? "Verde" : "Azul") + " — 0 puntos"]);
+    ["🥇 1.º Equipo " + deAna + " — 38 puntos", "🥈 2.º Equipo " + (deAna === "Azul" ? "Verde" : "Azul") + " — 0 puntos"]);
 
   await page.click("#equipos-armar-btn");
   igual("armar otros pregunta antes", await page.getByRole("button", { name: "Armar equipos nuevos" }).isVisible(), true);
