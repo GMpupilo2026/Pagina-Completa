@@ -995,6 +995,10 @@ sin mergear; se rehizo sobre lo de hoy, con sus mismas mediciones.
   el `<head>` (`tema-cabecera.py`) y `js/temas-plataforma.js` la pedían a
   Google al poner el tema; eso se quitó, y la clave vieja
   `plataforma_tema_fuente_v1` se borra al aplicar un tema.
+- **Atkinson Hyperlegible, Comic Neue y Cinzel** son las de «Letra» en
+  Configuración (y Cinzel, la de los títulos del tema Magia). Van igual que
+  Quicksand: en la misma hoja, y se bajan solo si alguien las eligió. Ver «La
+  letra se elige aparte del tema» en `tableros-y-apariencia.md`.
 - **La CSP ya no deja pasar a Google** (`style-src` y `font-src` solo
   `'self'`): una etiqueta de Google copiada de una cabecera vieja se bloquea
   y se ve, en vez de funcionar a escondidas.

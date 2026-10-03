@@ -481,7 +481,53 @@
                     // tablero tienen una tarjeta "Como el tema", y su vista previa
                     // enseña el color que acaba de cambiar.
                     renderTemaPlataformaGrid();
+                    renderLetraPlataformaGrid();
                     renderBoardColorThemeGrids();
+                });
+                grid.appendChild(btn);
+            });
+            radiosConFlechas(grid);
+        }
+
+        // ---------- La letra de la plataforma (js/temas-plataforma.js, LETRAS) ----------
+        // Como con el tema, se elige viendo: cada tarjeta trae una muestra escrita
+        // CON esa letra. «Como el tema» enseña la del tema puesto, que es la que
+        // de verdad se ve con ella.
+        function renderLetraPlataformaGrid() {
+            const grid = document.getElementById("letra-plataforma-grid");
+            if (!grid || !window.TemasPlataforma || !window.TemasPlataforma.LETRAS) return;
+            const TP = window.TemasPlataforma;
+            const actual = TP.getLetra();
+            const delTema = (TP.TEMAS[TP.getPreference()] || {}).fuente || "Merriweather";
+            grid.innerHTML = "";
+            Object.keys(TP.LETRAS).forEach((id) => {
+                const letra = TP.LETRAS[id];
+                const btn = document.createElement("button");
+                btn.type = "button";
+                btn.dataset.letra = id;
+                btn.className = id === actual ? THEME_ACTIVE : THEME_INACTIVE;
+                btn.setAttribute("role", "radio");
+                btn.setAttribute("aria-checked", id === actual ? "true" : "false");
+                const muestra = document.createElement("span");
+                muestra.className = "block text-lg font-bold text-brand-800 dark:text-white leading-tight";
+                muestra.style.fontFamily = '"' + (letra.titulos || delTema) + '", serif';
+                muestra.textContent = "Jaque mate";
+                muestra.setAttribute("aria-hidden", "true");
+                const cuerpo = document.createElement("span");
+                cuerpo.className = "block text-xs text-brand-600 dark:text-brand-300 mt-0.5";
+                cuerpo.style.fontFamily = '"' + (letra.texto || "Inter") + '", sans-serif';
+                cuerpo.textContent = "Abc 123";
+                cuerpo.setAttribute("aria-hidden", "true");
+                const nombre = document.createElement("span");
+                nombre.className = "block text-xs font-semibold text-brand-700 dark:text-brand-200 mt-1";
+                nombre.textContent = letra.label;
+                const desc = document.createElement("span");
+                desc.className = "block text-[11px] leading-snug text-brand-450 dark:text-brand-350 mt-0.5";
+                desc.textContent = letra.descripcion;
+                btn.append(muestra, cuerpo, nombre, desc);
+                btn.addEventListener("click", () => {
+                    TP.setLetra(id);
+                    renderLetraPlataformaGrid();
                 });
                 grid.appendChild(btn);
             });
@@ -576,6 +622,7 @@
         }
         renderBoardColorThemeGrids();
         renderTemaPlataformaGrid();
+        renderLetraPlataformaGrid();
 
         // ---------- Color de las piezas, normal y Modo Adaptado (js/piece-color-themes.js) —
         // mismo renderColorThemeGrid de arriba, con una vista previa propia: acá el par es
