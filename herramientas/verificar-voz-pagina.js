@@ -16,6 +16,7 @@
  *   - una caja nueva que ya es región viva (como «Partida asignada») se dice;
  *   - lo de un panel escondido no se dice;
  *   - lo que ya estaba al cargar no se dice;
+ *   - la tecla Control sola calla lo que se está diciendo (y otra tecla no);
  *   - una cuenta atrás no se dice cada segundo;
  *   - el mismo cartel repintado no se repite;
  *   - con la voz encendida, «Decir la posición» dice la del tablero principal
@@ -54,7 +55,7 @@ function vozFalsa() {
   window.SpeechSynthesisUtterance = function (t) { this.text = t; };
   const falso = {
     speak(u) { window.__dichos.push(u.text); setTimeout(() => { if (u.onend) u.onend(); }, 5); },
-    cancel() {}, getVoices() { return []; }, pending: false, speaking: false,
+    cancel() { window.__callada = (window.__callada || 0) + 1; }, getVoices() { return []; }, pending: false, speaking: false,
   };
   Object.defineProperty(window, "speechSynthesis", { value: falso, configurable: true });
 }
@@ -298,6 +299,15 @@ async function botonEn(browser, ruta) {
     await c.page.waitForTimeout(2200);
     igual("sale encendida", await c.page.getAttribute("#voz-toggle", "aria-pressed"), "true");
     igual("y no lee lo que ya estaba", (await dichos(c.page)).some((t) => /ya estaba al cargar/.test(t)), false);
+    /* La tecla Control sola calla la voz, como en NVDA y JAWS; las otras no. */
+    const calladas = () => c.page.evaluate(() => window.__callada || 0);
+    let antes = await calladas();
+    await c.page.keyboard.press("Shift");
+    igual("otra tecla no la calla", (await calladas()) - antes, 0);
+    antes = await calladas();
+    await c.page.keyboard.press("Control");
+    igual("la tecla Control la calla", (await calladas()) - antes, 1);
+    igual("y el título lo dice", /tecla Control calla/.test(await c.page.getAttribute("#voz-toggle", "title") || ""), true);
     await c.ctx.close();
 
     console.log("\n=== Los tableros de los ejercicios dicen qué hay en cada casilla ===");

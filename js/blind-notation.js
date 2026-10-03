@@ -268,6 +268,20 @@ window.BlindNotation = (function () {
     } catch (e) { return false; }
   }
 
+  // La tecla Control, sola, calla lo que se está diciendo: es la misma tecla
+  // que usan los lectores de pantalla (NVDA, JAWS) y quien ya los conoce la
+  // prueba primero. Solo corta la frase en curso (y lo que esperaba en fila);
+  // la voz sigue encendida para el próximo aviso. Va en la fase de captura
+  // para que ninguna página la ataje, y no hace nada más: no frena la tecla,
+  // así que Ctrl + C y los demás atajos siguen funcionando igual.
+  function callarConControl(e) {
+    if (e.key !== 'Control' || e.repeat) return;
+    try { window.speechSynthesis.cancel(); } catch (err) {}
+  }
+  if (hasSpeechApi && typeof document !== 'undefined') {
+    document.addEventListener('keydown', callarConControl, true);
+  }
+
   // Botón "🗣️ Voz" reutilizable: se coloca junto al interruptor normal/adaptado de
   // cada página. Disponible en modo normal y en modo adaptado por igual — decir en
   // voz alta cada jugada es útil aunque no se esté usando la interacción por
@@ -303,6 +317,8 @@ window.BlindNotation = (function () {
       btn.title = on
         ? 'El navegador lee en voz alta cada anuncio — clic para apagarlo'
         : 'Además del lector de pantalla, el navegador puede leer en voz alta cada anuncio — clic para activarlo';
+      // Con la voz encendida, el título dice también cómo callarla (ver callarConControl).
+      if (on) btn.title += '. La tecla Control calla lo que está diciendo';
     }
     btn.addEventListener('click', function () {
       setSpeechEnabled(!isSpeechEnabled());
