@@ -487,13 +487,24 @@
                         </div>
                     </div>
 
-                    <!-- El profe pide abrir un entrenamiento (js/clase-entrenamientos.js): el botón para
-                         abrirlo en otra pestaña, sin salir de la clase. -->
+                    <!-- El profe abre un entrenamiento para la clase (js/clase-entrenamientos.js): a cada
+                         alumno se le abre en una ventana encima de la clase (#entreno-ventana), como la
+                         práctica contra el motor. Si la cierra, este aviso le deja volver a abrirla. -->
                     <div id="entreno-aviso" hidden class="max-w-[560px] mx-auto mt-3 rounded-xl border-2 border-accent-500 bg-accent-50 dark:bg-brand-900 px-4 py-3">
                         <p class="text-sm font-semibold text-brand-800 dark:text-white"><span aria-hidden="true">📲 </span><span id="entreno-aviso-texto"></span></p>
                         <div class="flex flex-wrap items-center gap-2 mt-2">
-                            <a id="entreno-aviso-abrir" href="#" target="_blank" rel="noopener" class="text-sm font-semibold px-3 py-2 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></a>
+                            <button id="entreno-aviso-abrir" type="button" class="text-sm font-semibold px-3 py-2 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></button>
                             <button id="entreno-aviso-cerrar" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Cerrar el aviso</button>
+                        </div>
+                    </div>
+                    <div id="entreno-ventana" role="dialog" aria-modal="true" aria-labelledby="entreno-ventana-titulo" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-2 sm:px-4">
+                        <div class="bg-white dark:bg-brand-900 border-2 border-accent-500 rounded-xl shadow-2xl w-full max-w-5xl h-[94vh] flex flex-col overflow-hidden">
+                            <div class="flex flex-wrap items-center justify-between gap-2 px-3 py-2 border-b border-brand-100 dark:border-brand-800">
+                                <h2 id="entreno-ventana-titulo" tabindex="-1" class="font-serif font-bold text-brand-800 dark:text-white flex-1 min-w-0 focus:outline-none"></h2>
+                                <a id="entreno-ventana-pestana" href="#" target="_blank" rel="noopener" class="text-xs font-semibold text-accent-700 dark:text-accent-400 underline">Abrir en otra pestaña</a>
+                                <button id="entreno-ventana-cerrar" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Volver a la clase</button>
+                            </div>
+                            <iframe id="entreno-ventana-marco" title="" class="flex-1 w-full border-0 bg-white dark:bg-brand-900"></iframe>
                         </div>
                     </div>
 
@@ -1341,7 +1352,7 @@
                             <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-2"><span aria-hidden="true">🧠</span> Entrenamientos</h2>
                             <div id="entreno-pedido" hidden class="mb-2 flex flex-wrap items-center gap-2 rounded-lg bg-accent-50 dark:bg-brand-800 border border-accent-500 px-3 py-2">
                                 <p id="entreno-pedido-texto" class="text-xs text-brand-800 dark:text-white flex-1 min-w-0"></p>
-                                <button id="entreno-pedido-quitar" type="button" class="text-xs font-semibold px-2 py-1 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-700 dark:hover:bg-brand-600 text-brand-700 dark:text-brand-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Dejar de pedirlo</button>
+                                <button id="entreno-pedido-quitar" type="button" class="text-xs font-semibold px-2 py-1 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-700 dark:hover:bg-brand-600 text-brand-700 dark:text-brand-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Cerrar la ventana a todos</button>
                             </div>
                             <div id="entrenos-body"><p class="text-sm text-brand-450 dark:text-brand-350">Cargando…</p></div>
                             <div id="tipos-body" hidden><p class="text-sm text-brand-450 dark:text-brand-350">Cargando…</p></div>
