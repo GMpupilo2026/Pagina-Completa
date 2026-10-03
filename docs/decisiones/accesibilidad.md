@@ -639,6 +639,14 @@ hacer nada.
 - **No sale donde ya hay un botón de voz** (`#speech-toggle-btn`, `#btn-voz`):
   esas páginas dicen cada jugada a su manera, y dos botones para lo mismo es uno
   de más. La preferencia es la misma (`oscarSpeechMode_v1`) en todos lados.
+- **La tecla Control, sola, calla la voz**, como en NVDA y JAWS: quien ya usó
+  un lector de pantalla la prueba primero, y quien ve poco necesita cortar una
+  frase larga (la posición entera, un aviso que no le interesa) sin buscar el
+  botón. Solo corta lo que se está diciendo y lo que esperaba en fila: la voz
+  sigue encendida para el próximo aviso. Lo hace `js/blind-notation.js`, que
+  está en toda página que habla, así que vale también para las que tienen su
+  propio botón de voz. No frena la tecla: Ctrl + C y los demás atajos siguen
+  igual. Con la voz encendida, el `title` del botón lo dice.
 - El nombre accesible dice para quién es («solo si no usas lector de
   pantalla»: con lector, esta voz habla encima de la suya), con `aria-pressed`
   para el estado. Se ve solo el ícono, como sus vecinos del encabezado, y cabe
@@ -657,7 +665,7 @@ un aviso dicha en palabras, y que Temas, Visualización y el diagrama de un
 artículo digan qué hay en cada casilla (en Temas, además, que la jugada del
 alumno se oiga sin deletrear notación), y el ♙: que aparezca con la voz y un
 tablero, que diga la posición del tablero principal agrupada y sin lo oculto,
-que a 360 px no saque nada de ancho y que la respuesta del recuadro no se corte. El examen lo mira
+que a 360 px no saque nada de ancho y que la respuesta del recuadro no se corte, y que la tecla Control calle la voz (y otra tecla no). El examen lo mira
 `verificar-examenes.js`: sus casillas y su pista en palabras. Está probado que falla
 de verdad: sin mirar el botón propio, sin mirar lo que llega entero, sin la
 regla de los números y con el tablero callado salta cada uno.
