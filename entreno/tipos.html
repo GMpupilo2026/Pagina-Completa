@@ -20,7 +20,7 @@
      elegido (--sq-light / --sq-dark), y las piezas las pinta PiezaPreferida
      con el juego de piezas elegido. */
   .tp-tablero{display:grid; grid-template-columns:repeat(8,minmax(0,1fr)); grid-template-rows:repeat(8,minmax(0,1fr));
-    width:100%; max-width:420px; aspect-ratio:1/1; margin:0 auto; border:2px solid rgb(var(--c-brand-700)); position:relative;}
+    width:100%; max-width:min(420px, var(--alto-cabe, 420px)); aspect-ratio:1/1; margin:0 auto; border:2px solid rgb(var(--c-brand-700)); position:relative;}
   .tp-tablero .sq{position:relative; display:flex; align-items:center; justify-content:center; min-height:0; min-width:0;
     font-size:min(7vw,34px); line-height:1; border:0; padding:0; margin:0; cursor:default; user-select:none;}
   .tp-tablero button.sq{cursor:pointer;}
@@ -115,7 +115,7 @@
             <p id="lectura-a" class="hidden mt-2 text-sm text-brand-600 dark:text-brand-300 bg-white dark:bg-brand-900 rounded-lg p-3"></p>
           </div>
           <p id="juego-turno" class="text-center text-sm text-brand-600 dark:text-brand-300 mb-2"></p>
-          <div id="tablero" class="tp-tablero" aria-label="Tablero del ejercicio"></div>
+          <div id="tablero" class="tp-tablero" data-cabe aria-label="Tablero del ejercicio"></div>
         </div>
         <div>
           <h2 id="juego-enunciado" class="font-semibold text-brand-800 dark:text-white mb-3"></h2>
@@ -155,6 +155,7 @@
 <script src="../js/tiempo-plataforma.js" data-activity="tipos"></script>
 <script src="../js/main.js"></script>
 <script src="../js/coordenadas-tablero.js"></script>
+<script src="../js/tablero-cabe.js"></script>
 <script src="../js/vendor/chess.js"></script>
 <script src="../js/tablero-accesible.js"></script>
 <script src="../js/comandos-tablero.js"></script>
