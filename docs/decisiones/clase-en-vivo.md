@@ -1414,9 +1414,60 @@ siguiente. Al terminar los 20, o al acabarse el tiempo, ve su nota.
 - Se quita al cerrar la clase (`limpiarLoDeLaClase`). En Modo Adaptado se
   contesta escribiendo (`ClaseAdaptada.montar`), y la nota se dice en voz.
 
+- **El profe cambia el tiempo mientras corre** («Quitar 1 minuto», «Sumar 1
+  minuto» y «Que queden N minutos», debajo de la lista). El tiempo al mandarlo
+  se escribe (de 1 a 60 minutos), ya no se elige de una lista fija. Lo que
+  cambia es `segundos`, con la misma semilla: la base no mueve `at` (lo mismo
+  que «Terminar ya»), así que no hizo falta tocar el trigger. «Que queden 3»
+  es lo que ya pasó más 3 minutos; restar no corta antes de ahora, y con el
+  tiempo acabado solo se ofrece «Dar 1 minuto más», que cuenta desde ahora
+  (`TandaCalentamiento.segundosSumando`, pura y probada). Nunca más de 2 horas
+  en total (el CHECK ya decía 7200).
+- **Si el profe da más tiempo cuando ya se acabó, cada alumno sigue donde
+  iba.** El alumno guarda si terminó por el tiempo (`porTiempo`, también en
+  `localStorage`) o porque hizo todos: solo en el primer caso se vuelve a abrir
+  (`reabrirTandaSiHayTiempo`), en el ejercicio en que iba y sin repetir lo
+  hecho. Sin eso, alargar el plazo no servía de nada a quien ya había visto
+  «Se acabó el tiempo». Al alumno se le dice en voz «Tu profe cambió el
+  tiempo: quedan…».
+
 **Al tocar esto, correr `node herramientas/verificar-todo.js clase-tanda`.**
 Está probado que falla de verdad: con un azar por alumno en vez del lugar en la
-lista (se repiten), o sin aceptar otro mate, salta.
+lista (se repiten), sin aceptar otro mate, sin que el alumno siga al dar más
+tiempo, o con los empatados en puestos distintos, salta.
+
+### La competencia de ejercicios
+
+El otro modo del mismo calentamiento («Modo: Competencia», `modo: "reto"` en
+`game_state.tanda_calentamiento`): el profe pone el nivel y el tiempo, **todos
+reciben los mismos ejercicios en el mismo orden**, y gana quien resuelva más
+antes de que se acabe. Es el mismo código de la tanda (`js/clase-tanda.js`):
+el tablero, «si falla, pasa», el reloj de la base, la presencia y el cambio de
+tiempo son los de arriba.
+
+- **Los mismos para todos** (`TandaCalentamiento.paraTodos`): la banda del
+  nivel se baraja con la semilla —por eso salen variados, de temas distintos:
+  el verificador pide 5 temas o más entre los primeros 20— y se toman 100,
+  ordenados de más fácil a más difícil, como una carrera de ejercicios. No
+  depende del alumno: no hace falta la lista de conectados (`alumnos: []`).
+  100 son más de los que alguien alcanza en 30 minutos (18 segundos cada uno);
+  quien los hace todos termina antes («¡Hiciste todos los ejercicios!»).
+- **Una sola respuesta buena**, como en el calentamiento con nota: los de
+  Lichess tienen una jugada buena en cada paso; vale también otro mate.
+- **Gana quien resuelva más; los empatados comparten puesto**
+  (`TandaCalentamiento.puestos`, la regla del podio): nadie queda segundo por el
+  orden alfabético. No hay nota: lo que cuenta son los resueltos.
+- **El profe ve la tabla en vivo**, siempre ordenada por resueltos, con el
+  puesto delante del nombre. **Cada alumno ve en qué puesto va** («vas 2.º de
+  8») y, al final, en cuál quedó: lo arma con lo que anuncian los demás en la
+  presencia (el canal de la clase, que ya ve cada alumno). Cuenta solo a los
+  conectados; la tabla del profe guarda también a quien se desconectó.
+- **No se guarda en ninguna tabla**, por lo mismo que el calentamiento con
+  nota: lo corrige la computadora de cada alumno.
+- La migración `game_state_tanda_competencia` subió el tope de `cantidad` a
+  200 (era 40) y admite `modo` ("nota" o "reto"); el CHECK sigue envuelto en
+  `coalesce(…, false)`. Comprobado contra la base: un `modo` inventado, `modo:
+  null` o 300 ejercicios se rechazan.
 
 ### El cuestionario al estilo Kahoot
 

@@ -2823,6 +2823,8 @@
                 renderStudentsList();
                 pintarCuentaCalentamiento();
                 if (isTeacher && tandaActual) { anotarTandaDeLaPresencia(); pintarTandaProfe(); }
+                // En la competencia, el alumno ve su puesto: sale de lo que anuncian los demás.
+                else if (!isTeacher && !esObservador && tandaMia && tandaEsReto()) pintarTandaAlumno();
                 pintarEquiposProfe();
                 if (isTeacher) { anotarConectados(); revisarCallados(); pintarQuienesEntraron(); }
                 pintarObservadores(mirando);

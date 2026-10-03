@@ -8,6 +8,11 @@
    mirar el ejercicio en que está. Ver «El calentamiento de 20 ejercicios» en
    docs/decisiones/clase-en-vivo.md.
 
+   La competencia (modo "reto"): los MISMOS ejercicios para todos, variados y
+   de más fácil a más difícil, y gana quien resuelva más en el tiempo. Ver
+   «La competencia de ejercicios». En los dos modos el profe cambia el tiempo
+   mientras corre (y puede dar más cuando ya se acabó).
+
    Como las demás partes de la clase (ver «sesion.js en partes»), es un script
    clásico cargado ANTES que sesion.js: usa lo de sesion.js (sb, profile,
    isTeacher, myGameStateId, onlineStudents, presenceChannel, setStatus…)
@@ -23,7 +28,10 @@ window.TandaCalentamiento = (function () {
         { elo: 1400, nombre: "Intermedio" }, { elo: 1600, nombre: "Intermedio alto" },
         { elo: 1800, nombre: "Avanzado" }, { elo: 2000, nombre: "Fuerte" }, { elo: 2200, nombre: "Experto" },
     ];
-    const MINUTOS = [5, 8, 10, 12, 15, 20, 25, 30];
+    // El tiempo lo escribe el profe: de 1 a 60 minutos al mandarlo, y hasta 2 horas en total si lo alarga.
+    const MINUTOS_MIN = 1, MINUTOS_MAX = 60, SEGUNDOS_MAX = 7200;
+    // En la competencia: más de los que alguien alcanza a hacer (18 segundos cada uno en 30 minutos).
+    const CANTIDAD_RETO = 100;
     // Cuántos ejercicios tiene que tener la banda del nivel para que a cada alumno le toquen otros.
     const BANDA_MINIMA = 300;
 
@@ -90,6 +98,7 @@ window.TandaCalentamiento = (function () {
        azar con su id: a él sí le puede coincidir alguno. Si el que toca no se
        reproduce, va el siguiente del mismo tramo. */
     function paraAlumno(puzzles, tanda, alumnoId) {
+        if (tanda.modo === "reto") return paraTodos(puzzles, tanda);
         const lista = banda(puzzles, tanda.elo);
         const n = Math.min(tanda.cantidad || CANTIDAD, lista.length);
         const comun = azarDesde(tanda.semilla);
@@ -112,6 +121,44 @@ window.TandaCalentamiento = (function () {
                 break;
             }
         }
+        return out;
+    }
+
+    /* La competencia: los MISMOS para todos (no depende del alumno). La banda
+       se baraja con la semilla —así salen variados: de temas distintos— y de
+       ahí se toman `cantidad`, ordenados de más fácil a más difícil, como en
+       una carrera de ejercicios: todos empiezan por los mismos fáciles. */
+    function paraTodos(puzzles, tanda) {
+        const lista = banda(puzzles, tanda.elo);
+        const azar = azarDesde(tanda.semilla);
+        for (let i = lista.length - 1; i > 0; i--) {
+            const j = Math.floor(azar() * (i + 1));
+            [lista[i], lista[j]] = [lista[j], lista[i]];
+        }
+        const n = tanda.cantidad || CANTIDAD_RETO;
+        const out = [];
+        const usados = new Set();
+        for (const id of lista) {
+            if (out.length >= n) break;
+            const p = preparar(puzzles[id]);
+            if (!p || usados.has(p.fen)) continue;
+            usados.add(p.fen);
+            out.push(Object.assign({ id }, p));
+        }
+        return out.sort((a, b) => a.rating - b.rating || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+    }
+
+    /* El puesto de cada uno en la competencia, por resueltos. Los empatados
+       comparten puesto (como en el podio): nadie queda segundo por el orden
+       alfabético. Devuelve id → puesto. */
+    function puestos(filas) {
+        const orden = (filas || []).slice().sort((a, b) => (b.buenas || 0) - (a.buenas || 0));
+        const out = new Map();
+        let puesto = 0, anterior = null;
+        orden.forEach((f, i) => {
+            if ((f.buenas || 0) !== anterior) { puesto = i + 1; anterior = f.buenas || 0; }
+            out.set(f.id, puesto);
+        });
         return out;
     }
 
@@ -145,6 +192,21 @@ window.TandaCalentamiento = (function () {
         return Math.max(0, Math.ceil((fin - (ahora == null ? Date.now() : ahora)) / 1000));
     }
 
+    /* El profe cambia el tiempo. Lo que se guarda es `segundos` desde el
+       arranque (`at` no se mueve: lo cuida la base), así que «que queden 3
+       minutos» es lo que ya pasó más 3 minutos. Al sumar con el tiempo ya
+       acabado, se suma desde ahora; al restar, no se corta antes de ahora. */
+    function segundosParaQueQueden(tanda, ahora, quedanSeg) {
+        const pasaron = Math.max(0, Math.floor((ahora - new Date(tanda.at).getTime()) / 1000));
+        return Math.max(0, Math.min(SEGUNDOS_MAX, pasaron + Math.max(0, Math.round(quedanSeg))));
+    }
+    function segundosSumando(tanda, ahora, delta) {
+        const pasaron = Math.max(0, Math.floor((ahora - new Date(tanda.at).getTime()) / 1000));
+        const s = tanda.segundos || 0;
+        const nuevo = delta > 0 ? Math.max(s, pasaron) + delta : Math.max(Math.min(s, pasaron), s + delta);
+        return Math.max(0, Math.min(SEGUNDOS_MAX, nuevo));
+    }
+
     function nombreDeNivel(elo) {
         const n = NIVELES.find((x) => x.elo === elo);
         return (n ? n.nombre + ", " : "") + "alrededor de " + elo + " puntos Elo";
@@ -156,13 +218,14 @@ window.TandaCalentamiento = (function () {
         return a[0].toString(36) + a[1].toString(36);
     }
 
-    return { CANTIDAD, NIVELES, MINUTOS, BANDA_MINIMA, hash, azarDesde, banda, preparar, paraAlumno, revisar, nota, quedan, nombreDeNivel, semillaNueva };
+    return { CANTIDAD, CANTIDAD_RETO, NIVELES, MINUTOS_MIN, MINUTOS_MAX, SEGUNDOS_MAX, BANDA_MINIMA, hash, azarDesde, banda, preparar, paraAlumno, paraTodos,
+        puestos, revisar, nota, quedan, segundosParaQueQueden, segundosSumando, nombreDeNivel, semillaNueva };
 })();
 
-let tandaActual = null;        // la de game_state: {at, semilla, elo, cantidad, segundos}
+let tandaActual = null;        // la de game_state: {at, semilla, elo, cantidad, segundos, modo}
 let tandaBanco = null;         // los ejercicios de Táctica (entreno/data/temas.json)
 let tandaBancoPromesa = null;
-let tandaMia = null;           // alumno: {at, ejercicios, i, paso, resultados: [true|false…], fin}
+let tandaMia = null;           // alumno: {at, ejercicios, i, paso, resultados: [true|false…], fin, porTiempo}
 let tandaPresencia = null;     // lo que el alumno anuncia en la presencia: {at, hechos, buenas, i, fin}
 let tandaBoard = null;
 let tandaAcc = null;
@@ -173,6 +236,10 @@ let tandaMirando = null;       // profe: el alumno cuyo ejercicio está mirando
 let tandaProfeBoard = null;
 let tandaFinDicho = null;
 const tandasRehechas = new Map(); // profe: "semilla:alumno" → su tanda, ya armada
+
+// La competencia (los mismos para todos, gana quien resuelva más) o la de siempre, con nota.
+const tandaEsReto = () => !!(tandaActual && tandaActual.modo === "reto");
+const resueltosEnTexto = (n) => n + (n === 1 ? " resuelto" : " resueltos");
 
 function relojDeLaTanda() {
     return window.RelojServidor ? RelojServidor.ahora() : Date.now();
@@ -194,7 +261,30 @@ const claveDeLaTanda = (t) => "clase_tanda_v1:" + myGameStateId + ":" + t.at + "
 
 function guardarTandaMia() {
     if (!tandaMia) return;
-    try { localStorage.setItem(tandaMia.clave, JSON.stringify({ i: tandaMia.i, resultados: tandaMia.resultados, fin: tandaMia.fin })); } catch (e) {}
+    try { localStorage.setItem(tandaMia.clave, JSON.stringify({ i: tandaMia.i, resultados: tandaMia.resultados, fin: tandaMia.fin, porTiempo: !!tandaMia.porTiempo })); } catch (e) {}
+}
+
+/* Si terminó porque se acabó el tiempo (no porque hizo todos) y el profe
+   dio más, sigue donde iba. Devuelve si volvió a abrir. */
+function reabrirTandaSiHayTiempo() {
+    if (!tandaMia || !tandaMia.fin || !tandaMia.porTiempo || !tandaActual) return false;
+    if (tandaMia.i >= tandaMia.ejercicios.length || TandaCalentamiento.quedan(tandaActual, relojDeLaTanda()) <= 0) return false;
+    tandaMia.fin = false;
+    tandaMia.porTiempo = false;
+    tandaFinDicho = null;
+    guardarTandaMia();
+    anunciarTanda();
+    return true;
+}
+
+// Alumno, en la competencia: su puesto entre los que están conectados, por resueltos.
+function puestoMioEnLaTanda() {
+    if (!tandaActual || !tandaMia) return null;
+    const filas = [{ id: profile.id, buenas: tandaMia.resultados.filter(Boolean).length }];
+    for (const [id, s] of onlineStudents.entries()) {
+        if (id !== profile.id && s.tanda && s.tanda.at === tandaActual.at) filas.push({ id, buenas: s.tanda.buenas || 0 });
+    }
+    return { puesto: TandaCalentamiento.puestos(filas).get(profile.id), de: filas.length };
 }
 
 async function anunciarTanda() {
@@ -224,9 +314,17 @@ function pintarTanda(t) {
         pintarBotonTanda();
         return;
     }
-    if (window.RelojServidor && (!antes || antes.semilla !== tandaActual.semilla)) RelojServidor.iniciar(sb);
-    anunciarALaClase("tanda", tandaActual.at + ":" + tandaActual.semilla,
-        "Tu profe mandó un calentamiento de " + tandaActual.cantidad + " ejercicios, con " + PreguntaClase.textoDeTiempo(tandaActual.segundos) + ". Resuélvelos en tu tablero, debajo del de la clase.");
+    const misma = antes && antes.semilla === tandaActual.semilla;
+    if (window.RelojServidor && !misma) RelojServidor.iniciar(sb);
+    anunciarALaClase("tanda", tandaActual.at + ":" + tandaActual.semilla, tandaEsReto()
+        ? "Tu profe empezó una competencia de ejercicios, con " + PreguntaClase.textoDeTiempo(tandaActual.segundos) + ": los mismos para todos, y gana quien resuelva más. Resuélvelos en tu tablero, debajo del de la clase."
+        : "Tu profe mandó un calentamiento de " + tandaActual.cantidad + " ejercicios, con " + PreguntaClase.textoDeTiempo(tandaActual.segundos) + ". Resuélvelos en tu tablero, debajo del de la clase.");
+    // El profe cambió el tiempo (la misma tanda, otro plazo).
+    if (misma && antes.segundos !== tandaActual.segundos) {
+        const q = TandaCalentamiento.quedan(tandaActual, relojDeLaTanda());
+        if (q > 0) anunciarALaClase("tanda-tiempo", tandaActual.semilla + ":" + tandaActual.segundos, "Tu profe cambió el tiempo: quedan " + PreguntaClase.textoDeTiempo(q) + ".");
+    }
+    textoConEmojiMudo(document.getElementById("tanda-titulo"), tandaEsReto() ? "🏁 Competencia de ejercicios" : "🔥 Calentamiento");
     pintarBotonTanda();
     if (isTeacher) {
         if (tandaVistosDe !== tandaActual.semilla) { tandaVistos.clear(); tandaVistosDe = tandaActual.semilla; tandaMirando = null; }
@@ -235,7 +333,7 @@ function pintarTanda(t) {
         return;
     }
     if (esObservador) return;
-    if (tandaMia && tandaMia.semilla === tandaActual.semilla) { pintarTandaAlumno(); return; }
+    if (tandaMia && tandaMia.semilla === tandaActual.semilla) { pintarTandaAlumno(reabrirTandaSiHayTiempo()); return; }
     if (antes && antes.semilla === tandaActual.semilla && tandaMia) return;
     empezarTandaMia();
 }
@@ -263,9 +361,11 @@ async function empezarTandaMia() {
             tandaMia.resultados = g.resultados.slice(0, ejercicios.length).map(Boolean);
             tandaMia.i = tandaMia.resultados.length;
             tandaMia.fin = !!g.fin;
+            tandaMia.porTiempo = !!g.porTiempo;
         }
     } catch (e) {}
     if (tandaMia.i >= ejercicios.length) tandaMia.fin = true;
+    reabrirTandaSiHayTiempo();
     pintarTandaAlumno(true);
     anunciarTanda();
 }
@@ -299,22 +399,40 @@ function pintarTandaAlumno(nuevo) {
         const noEstuvo = !tandaMia.resultados.length;
         document.getElementById("tanda-nota").hidden = noEstuvo;
         document.getElementById("tanda-detalle").hidden = noEstuvo;
-        const se = noEstuvo ? "⏱️ Este calentamiento ya terminó." : tandaMia.resultados.length < total ? "⏱️ Se acabó el tiempo." : "🏁 ¡Terminaste el calentamiento!";
+        const reto = tandaEsReto();
+        const se = noEstuvo ? (reto ? "⏱️ Esta competencia ya terminó." : "⏱️ Este calentamiento ya terminó.")
+            : tandaMia.resultados.length < total ? "⏱️ Se acabó el tiempo."
+                : reto ? "🏁 ¡Hiciste todos los ejercicios!" : "🏁 ¡Terminaste el calentamiento!";
         textoConEmojiMudo(document.getElementById("tanda-final-titulo"), se);
-        document.getElementById("tanda-nota").textContent = "Tu nota: " + TandaCalentamiento.nota(buenas, total);
-        document.getElementById("tanda-detalle").textContent = buenas + " de " + total + " ejercicios resueltos"
-            + (tandaMia.resultados.length < total ? " (" + (total - tandaMia.resultados.length) + " sin llegar a hacer)." : ".");
+        let resultado;
+        if (reto) {
+            // En la competencia no hay nota: cuenta cuántos resolvió, y su puesto.
+            const p = puestoMioEnLaTanda();
+            resultado = "Resolviste " + buenas + (buenas === 1 ? " ejercicio." : " ejercicios.");
+            document.getElementById("tanda-nota").textContent = "Resolviste " + buenas;
+            document.getElementById("tanda-detalle").textContent = p && p.de > 1 ? "Quedaste en el " + p.puesto + ".º lugar de " + p.de + "." : "";
+            if (p && p.de > 1) resultado += " Quedaste en el " + p.puesto + ".º lugar de " + p.de + ".";
+        } else {
+            resultado = "Tu nota: " + TandaCalentamiento.nota(buenas, total) + ".";
+            document.getElementById("tanda-nota").textContent = "Tu nota: " + TandaCalentamiento.nota(buenas, total);
+            document.getElementById("tanda-detalle").textContent = buenas + " de " + total + " ejercicios resueltos"
+                + (tandaMia.resultados.length < total ? " (" + (total - tandaMia.resultados.length) + " sin llegar a hacer)." : ".");
+        }
         document.getElementById("tanda-estado").textContent = "";
         if (tandaFinDicho !== tandaMia.clave) {
             tandaFinDicho = tandaMia.clave;
-            if (tandaAcc) tandaAcc.decir(se.replace(/^\S+\s/, "") + (noEstuvo ? "" : " Tu nota: " + TandaCalentamiento.nota(buenas, total) + "."));
+            if (tandaAcc) tandaAcc.decir(se.replace(/^\S+\s/, "") + (noEstuvo ? "" : " " + resultado));
         }
         return;
     }
     juego.hidden = false;
     final.hidden = true;
     if (!total) { document.getElementById("tanda-estado").textContent = "No hay ejercicios de este nivel."; return; }
-    document.getElementById("tanda-estado").textContent = "Ejercicio " + (tandaMia.i + 1) + " de " + total + " · llevas " + buenas + " bien";
+    if (tandaEsReto()) {
+        const p = puestoMioEnLaTanda();
+        document.getElementById("tanda-estado").textContent = "Ejercicio " + (tandaMia.i + 1) + " · llevas " + resueltosEnTexto(buenas)
+            + (p && p.de > 1 ? " · vas " + p.puesto + ".º de " + p.de : "");
+    } else document.getElementById("tanda-estado").textContent = "Ejercicio " + (tandaMia.i + 1) + " de " + total + " · llevas " + buenas + " bien";
     if (!nuevo) return;
     document.getElementById("tanda-pasar-btn").hidden = false;
     const ej = tandaMia.ejercicios[tandaMia.i];
@@ -404,6 +522,8 @@ function cerrarEjercicioDeLaTanda(bien, espera) {
 function terminarTandaMia() {
     if (!tandaMia || tandaMia.fin) return;
     tandaMia.fin = true;
+    // Por el tiempo: si el profe da más, sigue donde iba.
+    tandaMia.porTiempo = true;
     clearTimeout(tandaEsperando);
     if (tandaBoard) tandaBoard.setInteractive(false);
     guardarTandaMia();
@@ -425,17 +545,23 @@ function anotarTandaDeLaPresencia() {
 function pintarTandaProfe() {
     if (!isTeacher || !tandaActual) return;
     const total = tandaActual.cantidad;
+    const reto = tandaEsReto();
     const q = TandaCalentamiento.quedan(tandaActual, relojDeLaTanda());
-    document.getElementById("tanda-profe-nivel").textContent = total + " ejercicios por alumno · " + TandaCalentamiento.nombreDeNivel(tandaActual.elo);
+    document.getElementById("tanda-profe-nivel").textContent = (reto ? "Competencia: los mismos ejercicios para todos (hasta " + total + "), gana quien resuelva más · "
+        : total + " ejercicios por alumno · ") + TandaCalentamiento.nombreDeNivel(tandaActual.elo);
     pintarRelojDeLaTanda();
     const filas = [...tandaVistos.entries()].map(([id, v]) => Object.assign({ id }, v));
     const terminaron = filas.filter((v) => v.fin || v.hechos >= total).length;
     const conectados = filas.filter((v) => v.conectado).length;
+    const enConectados = conectados + (conectados === 1 ? " conectado." : " conectados.");
     document.getElementById("tanda-cuenta").textContent = !filas.length ? "Todavía no hay alumnos conectados."
-        : q > 0 ? terminaron + " de " + filas.length + (filas.length === 1 ? " ya terminó" : " ya terminaron") + " · " + conectados + (conectados === 1 ? " conectado." : " conectados.")
-            : "Se acabó el tiempo: estas son las notas.";
-    if (q <= 0) filas.sort((a, b) => b.buenas - a.buenas || String(a.nombre).localeCompare(String(b.nombre)));
+        : reto ? (q > 0 ? "Competencia en curso · " + enConectados : "Se acabó el tiempo: así quedó la competencia.")
+            : q > 0 ? terminaron + " de " + filas.length + (filas.length === 1 ? " ya terminó" : " ya terminaron") + " · " + enConectados
+                : "Se acabó el tiempo: estas son las notas.";
+    // En la competencia, la tabla va siempre por resueltos: es una carrera.
+    if (reto || q <= 0) filas.sort((a, b) => b.buenas - a.buenas || String(a.nombre).localeCompare(String(b.nombre)));
     else filas.sort((a, b) => String(a.nombre).localeCompare(String(b.nombre)));
+    const puestos = reto ? TandaCalentamiento.puestos(filas) : null;
     const ul = document.getElementById("tanda-lista");
     ul.replaceChildren();
     for (const v of filas) {
@@ -444,18 +570,23 @@ function pintarTandaProfe() {
         const nombre = document.createElement("span");
         nombre.className = "font-semibold flex-1 min-w-0";
         // El nombre lo escribió una persona: textContent.
-        nombre.textContent = v.nombre + (v.conectado ? "" : " (se desconectó)");
+        nombre.textContent = (puestos ? puestos.get(v.id) + ".º · " : "") + v.nombre + (v.conectado ? "" : " (se desconectó)");
         const cuenta = document.createElement("span");
         const termino = v.fin || v.hechos >= total || q <= 0;
-        cuenta.textContent = termino
-            ? "Nota " + TandaCalentamiento.nota(v.buenas, total) + " · " + v.buenas + " de " + total + " bien"
-            : v.hechos + " de " + total + " hechos · " + v.buenas + " bien";
-        const barra = document.createElement("progress");
-        barra.max = total;
-        barra.value = Math.min(total, v.hechos);
-        barra.className = "w-20 h-2";
-        barra.setAttribute("aria-hidden", "true");
-        li.append(nombre, barra, cuenta);
+        if (reto) {
+            cuenta.textContent = resueltosEnTexto(v.buenas) + (v.hechos >= total ? " · hizo todos" : "");
+            li.append(nombre, cuenta);
+        } else {
+            cuenta.textContent = termino
+                ? "Nota " + TandaCalentamiento.nota(v.buenas, total) + " · " + v.buenas + " de " + total + " bien"
+                : v.hechos + " de " + total + " hechos · " + v.buenas + " bien";
+            const barra = document.createElement("progress");
+            barra.max = total;
+            barra.value = Math.min(total, v.hechos);
+            barra.className = "w-20 h-2";
+            barra.setAttribute("aria-hidden", "true");
+            li.append(nombre, barra, cuenta);
+        }
         if (!termino && v.conectado) {
             const ver = document.createElement("button");
             ver.type = "button";
@@ -467,7 +598,12 @@ function pintarTandaProfe() {
         }
         ul.appendChild(li);
     }
-    document.getElementById("tanda-terminar-btn").hidden = q <= 0;
+    const terminar = document.getElementById("tanda-terminar-btn");
+    terminar.hidden = q <= 0;
+    terminar.textContent = reto ? "Terminar ya" : "Terminar ya y dar las notas";
+    // Cambiar el tiempo: con el tiempo acabado solo se puede dar más.
+    document.getElementById("tanda-menos-btn").hidden = q <= 0;
+    document.getElementById("tanda-mas-btn").textContent = q > 0 ? "Sumar 1 minuto" : "Dar 1 minuto más";
     pintarEjercicioQueMiro();
 }
 
@@ -494,12 +630,21 @@ async function pintarEjercicioQueMiro() {
 
 function pintarBotonTanda() {
     const btn = document.getElementById("tanda-mandar-btn");
-    if (btn) textoConEmojiMudo(btn, tandaActual ? "🔥 Mandar otro calentamiento (reemplaza el de ahora)" : "🔥 Mandar el calentamiento");
+    const modo = document.getElementById("tanda-modo");
+    const reto = modo && modo.value === "reto";
+    if (btn) textoConEmojiMudo(btn, (reto ? "🏁 " : "🔥 ") + (tandaActual ? (reto ? "Empezar otra competencia" : "Mandar otro calentamiento") + " (reemplaza el de ahora)"
+        : reto ? "Empezar la competencia" : "Mandar el calentamiento"));
 }
 
 async function mandarTanda() {
     const elo = parseInt(document.getElementById("tanda-nivel").value, 10) || 1200;
-    const minutos = parseInt(document.getElementById("tanda-minutos").value, 10) || 10;
+    const reto = document.getElementById("tanda-modo").value === "reto";
+    const minutos = Number(document.getElementById("tanda-minutos").value);
+    if (!Number.isInteger(minutos) || minutos < TandaCalentamiento.MINUTOS_MIN || minutos > TandaCalentamiento.MINUTOS_MAX) {
+        setStatus("Escribe el tiempo en minutos: de " + TandaCalentamiento.MINUTOS_MIN + " a " + TandaCalentamiento.MINUTOS_MAX + ".");
+        document.getElementById("tanda-minutos").focus();
+        return;
+    }
     if (tandaActual && TandaCalentamiento.quedan(tandaActual, relojDeLaTanda()) > 0) {
         const si = await Avisos.confirmar("Ya hay un calentamiento en curso. Si mandas otro, tus alumnos empiezan de cero con ejercicios nuevos.",
             { aceptar: "Mandar otro", cancelar: "Seguir con el de ahora" });
@@ -510,22 +655,56 @@ async function mandarTanda() {
     const n = TandaCalentamiento.banda(banco, elo).length;
     if (n < TandaCalentamiento.CANTIDAD) { setStatus("No hay suficientes ejercicios de ese nivel."); return; }
     // Los conectados, en orden: a cada uno le toca otro ejercicio de cada tramo (ver paraAlumno).
-    const alumnos = [...onlineStudents.keys()].sort().slice(0, 60);
-    const tanda = { at: new Date().toISOString(), semilla: TandaCalentamiento.semillaNueva(), elo, cantidad: TandaCalentamiento.CANTIDAD, segundos: minutos * 60, alumnos };
+    // En la competencia todos tienen los mismos: la lista no hace falta.
+    const alumnos = reto ? [] : [...onlineStudents.keys()].sort().slice(0, 60);
+    const tanda = { at: new Date().toISOString(), semilla: TandaCalentamiento.semillaNueva(), elo,
+        cantidad: reto ? TandaCalentamiento.CANTIDAD_RETO : TandaCalentamiento.CANTIDAD, segundos: minutos * 60, alumnos };
+    if (reto) tanda.modo = "reto";
     const { data, error } = await sb.from("game_state").update({ tanda_calentamiento: tanda }).eq("id", myGameStateId).select("tanda_calentamiento").single();
     if (error) { console.error(error); setStatus("No se pudo mandar el calentamiento: " + error.message); return; }
     pintarTanda(data && data.tanda_calentamiento ? data.tanda_calentamiento : tanda);
-    setStatus("🔥 Calentamiento enviado: " + TandaCalentamiento.CANTIDAD + " ejercicios distintos para cada alumno, con " + PreguntaClase.textoDeTiempo(tanda.segundos) + ". Debajo del tablero ves cuántos lleva cada uno.");
+    setStatus(reto
+        ? "🏁 Competencia en marcha: los mismos ejercicios para todos, con " + PreguntaClase.textoDeTiempo(tanda.segundos) + ". Debajo del tablero ves cuántos resolvió cada uno."
+        : "🔥 Calentamiento enviado: " + TandaCalentamiento.CANTIDAD + " ejercicios distintos para cada alumno, con " + PreguntaClase.textoDeTiempo(tanda.segundos) + ". Debajo del tablero ves cuántos lleva cada uno.");
+}
+
+/* El profe cambia el plazo de la tanda que corre: la misma semilla (la base
+   no mueve `at`), otros `segundos`. Si ya se había acabado y da más, cada
+   alumno sigue donde iba. */
+async function cambiarTiempoDeLaTanda(segundos, queHizo) {
+    if (!tandaActual) return;
+    const tanda = Object.assign({}, tandaActual, { segundos });
+    const { data, error } = await sb.from("game_state").update({ tanda_calentamiento: tanda }).eq("id", myGameStateId).select("tanda_calentamiento").single();
+    if (error) { console.error(error); setStatus("No se pudo cambiar el tiempo: " + error.message); return; }
+    pintarTanda(data && data.tanda_calentamiento ? data.tanda_calentamiento : tanda);
+    if (queHizo) {
+        const q = TandaCalentamiento.quedan(tandaActual, relojDeLaTanda());
+        setStatus(q > 0 ? "⏱️ " + queHizo + ": quedan " + PreguntaClase.textoDeTiempo(q) + "." : "⏱️ Se acabó el tiempo.");
+    }
 }
 
 // «Terminar ya»: el plazo se acorta EN LA BASE hasta ahora, y cada alumno ve su nota.
 async function terminarTandaYa() {
     if (!tandaActual) return;
     const pasaron = Math.max(0, Math.floor((relojDeLaTanda() - new Date(tandaActual.at).getTime()) / 1000));
-    const tanda = Object.assign({}, tandaActual, { segundos: Math.min(tandaActual.segundos, pasaron) });
-    const { data, error } = await sb.from("game_state").update({ tanda_calentamiento: tanda }).eq("id", myGameStateId).select("tanda_calentamiento").single();
-    if (error) { console.error(error); setStatus("No se pudo terminar: " + error.message); return; }
-    pintarTanda(data && data.tanda_calentamiento ? data.tanda_calentamiento : tanda);
+    await cambiarTiempoDeLaTanda(Math.min(tandaActual.segundos, pasaron), null);
+}
+
+async function sumarTiempoALaTanda(delta) {
+    if (!tandaActual) return;
+    await cambiarTiempoDeLaTanda(TandaCalentamiento.segundosSumando(tandaActual, relojDeLaTanda(), delta), delta > 0 ? "Tiempo sumado" : "Tiempo quitado");
+}
+
+async function ponerTiempoQueQueda() {
+    if (!tandaActual) return;
+    const input = document.getElementById("tanda-quedan");
+    const minutos = Number(input.value);
+    if (!Number.isInteger(minutos) || minutos < 0 || minutos > TandaCalentamiento.SEGUNDOS_MAX / 60) {
+        setStatus("Escribe cuántos minutos quedan: de 0 a " + TandaCalentamiento.SEGUNDOS_MAX / 60 + ".");
+        input.focus();
+        return;
+    }
+    await cambiarTiempoDeLaTanda(TandaCalentamiento.segundosParaQueQueden(tandaActual, relojDeLaTanda(), minutos * 60), "Tiempo cambiado");
 }
 
 async function quitarTanda() {
@@ -553,16 +732,20 @@ if (document.getElementById("tanda-mandar-btn")) {
         if (n.elo === 1200) o.selected = true;
         nivel.appendChild(o);
     });
-    const min = document.getElementById("tanda-minutos");
-    TandaCalentamiento.MINUTOS.forEach((m) => {
-        const o = document.createElement("option");
-        o.value = m;
-        o.textContent = m + " minutos";
-        if (m === 10) o.selected = true;
-        min.appendChild(o);
-    });
+    // Cada modo con su explicación, y el botón dice cuál manda.
+    const modo = document.getElementById("tanda-modo");
+    const pintarModo = () => {
+        document.getElementById("tanda-explica-nota").hidden = modo.value === "reto";
+        document.getElementById("tanda-explica-reto").hidden = modo.value !== "reto";
+        pintarBotonTanda();
+    };
+    modo.addEventListener("change", pintarModo);
+    pintarModo();
     document.getElementById("tanda-mandar-btn").addEventListener("click", mandarTanda);
     document.getElementById("tanda-terminar-btn").addEventListener("click", terminarTandaYa);
+    document.getElementById("tanda-menos-btn").addEventListener("click", () => sumarTiempoALaTanda(-60));
+    document.getElementById("tanda-mas-btn").addEventListener("click", () => sumarTiempoALaTanda(60));
+    document.getElementById("tanda-quedan-btn").addEventListener("click", ponerTiempoQueQueda);
     document.getElementById("tanda-quitar-btn").addEventListener("click", quitarTanda);
 }
 if (document.getElementById("tanda-pasar-btn")) {
