@@ -899,6 +899,57 @@ página calcule el reloj con `Date.now()` a secas, y que el desfase se mida
 contra un servidor que va siete segundos por delante. Está probado que falla de
 verdad: quitando el recorte de la captura al paso, salta.
 
+## Niebla de Guerra: sin jaques, gana quien se come el rey
+
+La niebla jugaba con las reglas de chess.js, las del ajedrez de siempre: no se
+podía dejar al rey en jaque, y la partida terminaba con jaque mate. Con niebla
+eso no tiene sentido —no se sabe si el rey está atacado— y además **delataba
+lo que la niebla tapa**: si una pieza no se dejaba mover (estaba clavada) o el
+rey no podía ir a una casilla, eso decía dónde estaba la pieza rival, y la
+página avisaba «¡Estás en jaque!». Ahora, como en la Niebla de Guerra de
+siempre (la de chess.com):
+
+- **no hay jaque ni jaque mate**: vale toda jugada que la pieza pueda hacer,
+  aunque deje al rey atacado (las «pseudolegales» de chess.js, `legal:
+  false`);
+- se **enroca** aunque el rey esté atacado o pase por una casilla atacada:
+  alcanza con el derecho y las casillas de por medio vacías;
+- **gana quien se come el rey**. No hay ahogado; quedan las tablas por
+  material insuficiente, por las 50 jugadas y por triple repetición.
+
+Las reglas están una sola vez, en `NieblaGuerra.reglas` (`js/niebla-engine.js`):
+`jugadas`, `jugar`, `moverTexto` (la jugada escrita del Modo Adaptado),
+`reyComido` y `desenlace`. chess.js no aplica una jugada que deja al rey en
+jaque: esas se aplican a mano (`fenTras`: la pieza, el al paso, la torre del
+enroque, los derechos de enroque y los contadores) y se vuelve a cargar la
+posición. Las jugadas se anotan **sin «+» ni «#»**: el signo del jaque delataría
+al rey.
+
+- **Dónde valen**: el tablero las usa con `sinJaques` (`js/niebla-board.js`).
+  Lo prende `niebla.html` —las salas de Juegos, los retos y **los torneos de
+  niebla**, que juegan ahí— y la modalidad Niebla de `bot.html`. El estándar
+  del bot usa el mismo tablero sin la opción, con las reglas de siempre.
+- **El Modo Adaptado tampoco dice «jaque»** (`in_check` da falso) y ofrece las
+  mismas jugadas que el tablero.
+- **El bot** las entiende sin saber de la variante (`adaptadorNiebla` en
+  `js/bot.js`): el bando sin rey «no tiene jugadas y está en jaque», que es como
+  el bot reconoce una partida perdida, y un rey comido vale como partida ganada
+  en el material (el rey vale cero en `VALOR`, y sin eso no vería la captura al
+  final de la búsqueda).
+- `niebla.html` escribe la regla arriba del tablero y, al terminar, dice cómo
+  se ganó («… ganó con blancas: se comió el rey.»).
+- La triple repetición se cuenta reproduciendo las jugadas con chess.js
+  (`js/repeticion.js`): una partida con una jugada que chess.js no acepta no
+  llega a la posición guardada, y entonces no se declara nada. Antes que una
+  repetición equivocada, ninguna.
+
+**Al tocarlo, correr `node herramientas/verificar-todo.js niebla-reglas
+juegos-accesible bot-oscar`.** `verificar-niebla-reglas.js` prueba las reglas
+sin navegador (la pieza clavada, el rey a una casilla atacada, el enroque
+pasando por jaque, la posición que queda, la jugada escrita) y `niebla.html`
+con el doble de `verificar-juegos-accesible.js`, que ahora lo exporta. Está
+probado que falla de verdad: sin `sinJaques` en `niebla.js`, salta.
+
 ## Una sola copia de lo que comparten los juegos
 
 Cada juego había nacido copiando al anterior, y las copias ya se habían

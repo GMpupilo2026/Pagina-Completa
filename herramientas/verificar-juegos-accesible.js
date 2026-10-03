@@ -1023,7 +1023,10 @@ async function pruebaListoYRendirse(browser) {
   }
 }
 
-(async () => {
+// El doble y la sala los usa también verificar-niebla-reglas.js.
+module.exports = { doble, sala, abrir, PERFILES, CHROME, BASE };
+
+if (require.main === module) (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
     await pruebaLaRegionVivaYElInterruptor(browser);

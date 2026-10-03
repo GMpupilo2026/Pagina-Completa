@@ -153,8 +153,8 @@ const MODALIDADES = {
     },
     niebla: {
         emoji: "🌫️", titulo: "Niebla de Guerra",
-        resumen: "Solo ves lo que tus piezas alcanzan a ver.",
-        crear: () => adaptadorChess(new Chess()),
+        resumen: "Solo ves lo que tus piezas alcanzan a ver. No hay jaques: gana quien se come el rey.",
+        crear: () => adaptadorNiebla(new Chess()),
         tablero: "niebla", spectator: false,
     },
     crazyhouse: {
@@ -347,6 +347,43 @@ function adaptadorChess(juego) {
             if (juego.in_stalemate()) return { fin: true, ganador: null, texto: "Ahogado: tablas" };
             if (juego.game_over()) return { fin: true, ganador: null, texto: "Tablas" };
             return { fin: false };
+        },
+        posicion: () => juego.fen(),
+    };
+}
+
+/* Niebla de Guerra: sin jaques, gana quien se come el rey (las reglas son de
+   NieblaGuerra.reglas, en js/niebla-engine.js, las mismas de niebla.html y de
+   los torneos). Para que el bot las entienda sin saber de la variante:
+   - el bando que se quedó sin rey «no tiene jugadas y está en jaque», que es
+     como el bot reconoce una partida perdida (valorSinJugadas);
+   - el material cuenta un rey comido como una partida ganada: el rey vale
+     cero en VALOR, y sin esto el bot no vería la captura al final de la
+     búsqueda. */
+const REY_COMIDO = 50000;
+function adaptadorNiebla(juego) {
+    const R = NieblaGuerra.reglas;
+    const sinRey = () => R.reyComido(juego);
+    return {
+        motor: juego,
+        turno: () => juego.turn(),
+        jugadas: () => (sinRey() ? [] : R.jugadas(juego)),
+        probar(j) {
+            const copia = new Chess(juego.fen());
+            return R.jugar(copia, j) ? adaptadorNiebla(copia) : null;
+        },
+        material() {
+            const c = sinRey();
+            if (c) return c === "w" ? -REY_COMIDO : REY_COMIDO;
+            return materialDeTablero((s) => juego.get(s), TODAS_LAS_CASILLAS);
+        },
+        valorJugada: (j) => valorDeJugada((s) => juego.get(s), j) + (j.captured === "k" ? REY_COMIDO : 0),
+        enJaque: () => !!sinRey(),
+        jugar(j) { return R.jugar(juego, j); },
+        terminada: () => R.desenlace(juego).fin,
+        desenlace() {
+            const d = R.desenlace(juego);
+            return d.fin ? { fin: true, ganador: d.ganador, texto: d.texto } : { fin: false };
         },
         posicion: () => juego.fen(),
     };
@@ -683,7 +720,8 @@ function montarTablero(m) {
         onPromotionNeeded: elegirCoronacion,
     };
     if (m.tablero === "niebla") {
-        board = new NieblaBoard(el, Object.assign({ spectator: !!m.spectator }, comun));
+        // Las reglas de la niebla (sin jaques) solo en la niebla: el estándar usa este mismo tablero.
+        board = new NieblaBoard(el, Object.assign({ spectator: !!m.spectator, sinJaques: modalidad === "niebla" }, comun));
         board.loadFen(ad.posicion());
     } else if (m.tablero === "crazyhouse") {
         board = new CrazyhouseBoard(el, $("top-pocket"), $("bottom-pocket"), comun);

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="img/favicon.svg">
     <title>Niebla de Guerra — Ajedrez Integral</title>
-    <meta name="description" content="Ajedrez de siempre, pero el tablero está cubierto: solo ves las casillas que tus propias piezas alcanzan a atacar o defender.">
+    <meta name="description" content="El tablero está cubierto: solo ves las casillas que tus propias piezas alcanzan a atacar o defender. No hay jaques: gana quien se come el rey.">
     <meta name="robots" content="noindex">
     <!-- Tailwind compilado: lo genera herramientas/css-construir.js.
          Antes venía del CDN, que baja ~400 KB de JavaScript y compila el CSS
@@ -40,6 +40,9 @@
                 <h1 class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white"><span aria-hidden="true">🌫️</span> Niebla de Guerra</h1>
                 <button id="resign-btn" class="hidden text-xs font-semibold px-3 py-1.5 rounded-lg bg-red-100 hover:bg-red-200 dark:bg-red-900/40 dark:hover:bg-red-900/60 text-red-700 dark:text-red-300 transition-colors">🏳️ Rendirse</button>
             </div>
+
+            <!-- La regla que cambia todo: sin jaques (la niebla no deja saber si el rey está atacado). -->
+            <p id="regla-niebla" class="text-sm text-brand-700 dark:text-brand-200 mb-3"><span aria-hidden="true">👑 </span>No hay jaques: puedes dejar a tu rey atacado sin saberlo, y <strong>gana quien se come el rey</strong>.</p>
 
             <div class="flex items-center justify-end gap-2 mb-3 text-[11px]">
                 <span class="text-brand-450 dark:text-brand-350">Modo:</span>
