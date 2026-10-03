@@ -28,7 +28,23 @@
         // de vuelta, y así en rueda.
         async function entrarOPedirCodigo() {
             if (window.DosPasos && await DosPasos.necesitaCodigo()) return pedirCodigo();
-            window.location.href = destination;
+            await irAlDestino();
+        }
+
+        /* Quien entra con la contraseña provisional del correo de bienvenida
+           pasa primero por bienvenida.html a cambiarla por una suya (la marca
+           la pone la invitación y la quita cualquier cambio de contraseña).
+           Puede decir «Ahora no»: se le vuelve a ofrecer la próxima vez. Ver
+           «La contraseña provisional» en docs/decisiones/cuentas-y-formularios.md. */
+        async function irAlDestino() {
+            let provisional = false;
+            try {
+                const { data: { session } } = await sb.auth.getSession();
+                provisional = session?.user?.user_metadata?.contrasena_provisional === true;
+            } catch (_) { }
+            window.location.href = provisional
+                ? "bienvenida.html?provisional=1&next=" + encodeURIComponent(destination)
+                : destination;
         }
 
         (async () => {
@@ -83,7 +99,7 @@
             codigoBtn.disabled = true;
             codigoBtn.textContent = "Revisando…";
             const r = await DosPasos.verificar(codigoInput.value);
-            if (r.ok) { window.location.href = destination; return; }
+            if (r.ok) { await irAlDestino(); return; }
             codigoMsg.textContent = r.error;
             codigoBtn.disabled = false;
             codigoBtn.textContent = "Entrar con el código";

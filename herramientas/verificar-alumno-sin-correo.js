@@ -438,8 +438,8 @@ async function pruebaAlta(browser) {
     "se mide con checkVisibility(), no con la clase");
   cierto("el campo del correo queda apagado",
     await page.evaluate(() => document.getElementById("alta-alumno-correo").disabled));
-  igual("la ayuda del encargado dice que ahí va el enlace",
-    await page.evaluate(() => /enlace para crear la contraseña/.test(
+  igual("la ayuda del encargado dice que ahí van el usuario y la contraseña",
+    await page.evaluate(() => /usuario y la contraseña provisional/.test(
       document.getElementById("alta-encargado-ayuda").textContent)), "true");
 
   const antesDeJuan = await cuantos();

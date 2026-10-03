@@ -47,8 +47,8 @@
 // informes-encargados, escrita una sola vez.
 //
 // EL CORREO ES EL MISMO QUE EL DE LA INVITACIÓN DIRECTA
-// Lo arma invitacion-email.ts, compartido con create-student: pide crear la
-// contraseña y explica cómo se entra. Antes esta puerta no mandaba ningún
+// Lo arma invitacion-email.ts, compartido con create-student: trae el usuario
+// y una contraseña provisional y explica cómo se entra. Antes esta puerta no mandaba ningún
 // correo propio — el alumno del formulario recibía solo la invitación de
 // Supabase, sin explicación y sin el PDF de instrucciones adaptadas que sí
 // recibía el invitado por el profesor.

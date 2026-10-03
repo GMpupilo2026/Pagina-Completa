@@ -23,9 +23,9 @@
 // EL CORREO PIDE LA CONTRASEÑA Y EXPLICA CÓMO SE ENTRA
 // Antes el alumno recibía la invitación que arma Supabase, entraba ya
 // autenticado y su contraseña quedaba sin poner: para volver al día siguiente
-// tenía que adivinar. Ahora el enlace lleva a /bienvenida.html, que lo primero
-// que hace es pedirle crear su contraseña y explicarle el modo de ingreso.
-// Ese correo lo arma invitacion-email.ts, compartido con inscribir-alumno.
+// tenía que adivinar. Ahora el correo trae su usuario y una contraseña
+// provisional, y al entrar el sitio le ofrece cambiarla por una suya. Ese
+// correo lo arma invitacion-email.ts, compartido con inscribir-alumno.
 //
 // EL ALUMNO QUE NO TIENE CORREO
 // Un niño pequeño no tiene buzón, y una familia con dos hijos tiene UNO solo

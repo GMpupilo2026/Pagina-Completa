@@ -14,7 +14,7 @@
           "pasos": [
             "Entra a la Academia y escribe tu correo y tu contraseña.",
             "Si se te olvidó, usa «¿Olvidaste tu contraseña?»: te llega un enlace para poner una nueva.",
-            "La primera vez, el enlace del correo de bienvenida te lleva a crear la contraseña. Ese enlace se usa UNA sola vez."
+            "La primera vez, entras con el usuario y la contraseña provisional del correo de bienvenida, y el sitio te pide cambiarla por una tuya."
           ],
           "ojo": [
             "Los alumnos pequeños no siempre entran con un correo: muchos entran con un usuario del tipo sofia.munoz, que no recibe correo. Ellos escriben solo el usuario, sin el arroba.",
@@ -993,7 +993,7 @@
             "Aprieta «Crear cuenta» en la respuesta.",
             "Se abre un diálogo con los cuatro datos ya puestos y editables: nombre y correo del alumno, nombre y correo de quien está a cargo.",
             "Revisa que estén donde van y confirma.",
-            "El correo de invitación sale con el enlace para crear la contraseña y el PDF de instrucciones."
+            "El correo de invitación sale con el usuario, una contraseña provisional y el PDF de instrucciones."
           ],
           "ojo": [
             "El diálogo NO manda de una a propósito: el sitio deduce qué campo es cuál por la etiqueta, y deducir no es saber. Mandarle la invitación al correo de la mamá en vez de al del alumno no da ningún error: entra la persona que no era y el correo ya salió.",
