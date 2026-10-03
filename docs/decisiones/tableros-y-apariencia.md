@@ -596,3 +596,30 @@ ejercicios que la piden la respuesta correcta era imposible.
 mano, mira que cada página con esos tableros cargue el módulo, y en el
 navegador prueba el diálogo (teclado, Escape, foco, contraste en claro y
 oscuro) y que el tablero del examen juegue `a8=C` cuando se elige el caballo.
+
+## El tablero cabe en la pantalla (js/tablero-cabe.js)
+
+En Habilidades (`entreno/tipos.html`) el tablero solo tenía un ancho máximo
+(420 px), y en una pantalla baja —una laptop de 1366 × 768 con el navegador al
+125 %, o con la barra de tareas— se cortaba por abajo: se veía la fila 1 y no
+la 8. El alto de la pantalla no se puede adivinar con un `vh` fijo, porque lo
+que hay arriba del tablero (encabezado, título, descripción, la posición A de
+Siete diferencias) cambia de un ejercicio a otro.
+
+- `js/tablero-cabe.js` mide, en cada tablero con `data-cabe`, cuánto queda
+  desde su borde de arriba hasta el de abajo de la ventana y lo deja en la
+  variable `--alto-cabe`. La página la usa como un tope más:
+  `max-width: min(420px, var(--alto-cabe, 420px))`. El tamaño máximo lo sigue
+  poniendo la página; sin el módulo, queda como antes.
+- **Nunca baja de 260 px**: más chico, las piezas no se distinguen. Si para
+  entrar sin bajar tendría que ser más chico, se toma el alto que entra entero
+  al bajar hasta él, debajo del encabezado fijo.
+- Se vuelve a medir al cambiar el tamaño de la ventana y al cambiar el alto de
+  la página (`ResizeObserver` del `body`), y solo escribe si cambió: así no se
+  queda dando vueltas.
+- Para usarlo en otra página: el script, `data-cabe` en el tablero y el
+  `min(…, var(--alto-cabe, …))` en su `max-width`.
+
+`verificar-tablero-cabe.js` mide la pantalla de verdad en una laptop baja, una
+pantalla alta (sigue de 420 px), un celular de pie (lo manda el ancho) y una
+pantalla muy baja.
