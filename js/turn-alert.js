@@ -14,11 +14,22 @@
  * cada repintado — para no sonar en cada actualización mientras se sigue
  * esperando. El parpadeo del título se apaga solo en cuanto la pestaña
  * vuelve a estar a la vista.
+ *
+ * Contra un bot (la práctica de la clase, el bot de Oscar, bot.html) se avisa
+ * con TurnAlert.botJugo("Cf6"): la jugada ya está hecha cuando se llama, así
+ * que no hay transición que detectar. El sonido se puede apagar
+ * (TurnAlert.ponerSonido(false)); se recuerda en el aparato, como el tema.
+ * El aviso escrito ("El bot jugó Cf6. Te toca.") lo pone cada página en su
+ * línea de estado: el sonido nunca va solo.
  */
 (function () {
   "use strict";
 
   let wasMyTurn = false;
+  const CLAVE_SONIDO = "aviso_bot_sonido";
+  function sonidoActivo() {
+    try { return localStorage.getItem(CLAVE_SONIDO) !== "no"; } catch (e) { return true; }
+  }
   let flashTimer = null;
   let audioCtx = null;
   const originalTitle = document.title;
@@ -39,11 +50,11 @@
     } catch (e) { /* sin audio (autoplay bloqueado, etc.): no rompe la página */ }
   }
 
-  function startTitleFlash() {
+  function startTitleFlash(texto) {
     if (flashTimer) return;
     let on = false;
     flashTimer = setInterval(() => {
-      document.title = on ? originalTitle : "🔔 ¡Tu turno! — Ajedrez Integral";
+      document.title = on ? originalTitle : (texto || "🔔 ¡Tu turno!") + " — Ajedrez Integral";
       on = !on;
     }, 1000);
   }
@@ -68,7 +79,27 @@
     if (!document.hidden) stopTitleFlash();
   });
 
+  // La notificación del sistema contra un bot: solo si ya hay permiso. Pedirlo
+  // en medio de una partida de práctica sería un cartel más del navegador.
+  function notificarSiHayPermiso(cuerpo) {
+    if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
+    try { new Notification("♟️ " + cuerpo, { body: originalTitle, tag: "turno-ajedrez-integral" }); } catch (e) {}
+  }
+
   window.TurnAlert = {
+    // El bot acaba de jugar `san` y le toca a la persona.
+    botJugo(san) {
+      wasMyTurn = true;
+      if (sonidoActivo()) beep();
+      if (document.hidden) {
+        startTitleFlash("🔔 Jugó el bot");
+        notificarSiHayPermiso("El bot jugó" + (san ? " " + san : "") + ". Te toca.");
+      }
+    },
+    sonidoActivo,
+    ponerSonido(si) {
+      try { localStorage.setItem(CLAVE_SONIDO, si ? "si" : "no"); } catch (e) { /* sin almacenamiento: queda como estaba */ }
+    },
     // Llamar en cada repintado del estado con el booleano "¿me toca mover
     // ahora mismo?" — internamente detecta la transición y decide si avisar.
     check(isMyTurnNow) {

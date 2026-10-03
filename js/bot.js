@@ -591,6 +591,9 @@ function adaptadorDuelo(dueloGame, colorFijo) {
 const $ = (id) => document.getElementById(id);
 let modalidad = "estandar", nivel = 2, miColor = "w";
 let ad = null, board = null, historial = [], terminada = false, pensando = false;
+// Lo último que jugó el bot, para decirlo en la línea de estado («El bot jugó Cf6»).
+// En la niebla no se dice: ahí la jugada del rival es justamente lo que no se ve.
+let ultimaDelBot = null;
 
 function pintarOpciones() {
     const caja = $("modalidades");
@@ -647,6 +650,7 @@ function empezar() {
     const m = MODALIDADES[modalidad];
     prepararVistaJuego(m);
     historial = [];
+    ultimaDelBot = null;
     terminada = false;
     pensando = false;
 
@@ -745,6 +749,7 @@ function alMover(info) {
 function turnoDelBot() {
     if (terminada || ad.turno() === miColor) return;
     pensando = true;
+    ultimaDelBot = null;
     actualizar();
     if (MODALIDADES[modalidad].tablero === "cartas") jugarCartaBot(ad.motor, ad.turno());
     const jugada = BotOscar.jugar(ad, nivel);
@@ -752,11 +757,14 @@ function turnoDelBot() {
     if (!jugada) { revisarFinal(); return; }
     const hecho = ad.jugar(jugada);
     anotar(hecho, jugada);
+    ultimaDelBot = historial[historial.length - 1] || null;
     refrescar();
     if (revisarFinal()) return;
     // "Doble turno" (Ajedrez de Cartas) le devuelve el turno a quien acaba de
     // mover: si sigue siendo el del bot, que juegue otra vez.
     if (ad.turno() !== miColor) setTimeout(turnoDelBot, BotOscar.demora(nivel));
+    // Ya jugó y le toca a la persona: pitido (y el título, si no está mirando).
+    else if (window.TurnAlert) TurnAlert.botJugo(MODALIDADES[modalidad].tablero === "niebla" ? "" : ultimaDelBot);
 }
 
 /* El historial va en algebraica española («Cf3», «Txe8+»). Las variantes de
@@ -806,7 +814,9 @@ function pintarHistorial() {
 function actualizar() {
     if (terminada) return;
     const miTurno = ad.turno() === miColor;
-    avisar(pensando ? "El bot está pensando…" : (miTurno ? "Es tu turno." : "Juega el bot…"), "normal");
+    avisar(pensando ? "El bot está pensando…"
+        : miTurno ? (ultimaDelBot && MODALIDADES[modalidad].tablero !== "niebla" ? "El bot jugó " + ultimaDelBot + ". Es tu turno." : "Es tu turno.")
+        : "Juega el bot…", "normal");
     if (MODALIDADES[modalidad].ciegas) $("ciegas-input").disabled = !miTurno;
 }
 

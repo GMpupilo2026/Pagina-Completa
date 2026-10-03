@@ -1268,14 +1268,19 @@
            que dejó a 4x4.html colgada en "Comprobando tu sesión…". */
         function motivoPosicionInvalida(fen) { return PosicionValida.motivo(fen); }
 
-        async function aplicarPosicionEnClase(fen, aviso) {
+        /* `jugadas` (opcional): la partida entera desde `fen`, para llevar a la clase
+           la partida de un alumno (js/clase-traer-partida.js). Sin ellas, la posición
+           sola, como siempre. */
+        async function aplicarPosicionEnClase(fen, aviso, jugadas) {
             const motivo = motivoPosicionInvalida(fen);
             if (motivo) { setStatus(motivo); return false; }
-            board.loadMoves([], fen);
+            board.loadMoves(jugadas || [], fen);
             board.viewLive();
             ultimaVistaEnviada = "null";
+            const moves = board.moves();
             const { error } = await sb.from("game_state").update({
-                fen, moves: [], start_fen: fen, last_move: null, vista: null, comentarios: {},
+                fen: moves.length ? board.fen() : fen, moves, start_fen: fen,
+                last_move: moves.length ? moves[moves.length - 1] : null, vista: null, comentarios: {},
                 arrows: [], circles: [], encuesta: null, active_player_id: null, active_player_color: "both",
                 updated_by: session.user.id, updated_at: new Date().toISOString(),
             }).eq("id", myGameStateId);
@@ -5916,8 +5921,24 @@
         // interesa al profesor, que es quien puede estar viendo muchos tableros a la vez).
         function practiceStatusLabelWithAttempts(row) {
             const attempts = row.attempts || 1;
-            return practiceStatusLabel(row.status) + " · intento " + attempts;
+            const tope = intentosDeLaRonda();
+            return practiceStatusLabel(row.status) + " · intento " + attempts + (tope ? " de " + tope : "");
         }
+
+        // Cuántas partidas deja jugar la ronda a cada alumno (practice_sessions.max_intentos;
+        // null = sin límite). La primera cuenta. Lo hace cumplir la base (el trigger
+        // practica_ayuda_proteger rechaza un reintento de más): esto solo lo dice y esconde
+        // el botón. Ver «La práctica con un límite de intentos» en
+        // docs/decisiones/clase-en-vivo.md.
+        function intentosDeLaRonda() {
+            const n = latestPracticeSession && Number(latestPracticeSession.max_intentos);
+            return n > 0 ? n : null;
+        }
+        function quedanIntentos(row) {
+            const tope = intentosDeLaRonda();
+            return tope === null ? Infinity : Math.max(0, tope - ((row && row.attempts) || 1));
+        }
+        function textoIntentos(n) { return n === 1 ? "1 intento" : n + " intentos"; }
 
         // Resultado desde el punto de vista del alumno, justo después de aplicar una jugada
         // (suya o del motor) sobre `g`. Se llama con el turno YA pasado al otro lado.
@@ -5938,11 +5959,13 @@
             await sb.from("practice_sessions").update({ ended_at: new Date().toISOString() }).eq("created_by", boardOwnerId).is("ended_at", null);
             const reloj = parseInt((document.getElementById("practice-reloj") || {}).value, 10);
             const inc = parseInt((document.getElementById("practice-incremento") || {}).value, 10);
-            return sb.from("practice_sessions").insert({
+            const intentos = parseInt((document.getElementById("practice-intentos") || {}).value, 10);
+            return sb.from("practice_sessions").insert(Object.assign({
                 fen, level, created_by: session.user.id,
                 reloj_segundos: isFinite(reloj) && reloj > 0 ? reloj : null,
                 incremento_segundos: isFinite(reloj) && reloj > 0 && isFinite(inc) ? inc : 0,
-            });
+            // Sin límite no se manda la columna: es lo mismo que null.
+            }, intentos > 0 ? { max_intentos: intentos } : {}));
         }
 
         function montarControlesDePractica() {
@@ -5989,11 +6012,14 @@
             const { parejas, sobra } = PartidasClase.emparejar(ids);
             const btn = document.getElementById("emparejar-btn");
             btn.disabled = true;
-            const filas = parejas.map((p) => ({
+            const desdeTablero = document.getElementById("partidas-desde-tablero").checked;
+            const filas = parejas.map((p) => Object.assign({
                 variant: "estandar", white_id: p.blancas, black_id: p.negras, created_by: session.user.id, fen,
                 initial_seconds: ritmo.inicial, increment_seconds: ritmo.incremento,
                 white_time_left: ritmo.inicial, black_time_left: ritmo.inicial,
-            }));
+            // game_rooms no guarda la posición de salida: sin ella, sus jugadas no se pueden
+            // reproducir para llevar la partida a la clase (js/clase-traer-partida.js).
+            }, desdeTablero ? { variant_state: { inicio: fen } } : {}));
             const { error } = await sb.from("game_rooms").insert(filas);
             btn.disabled = false;
             if (error) { console.error(error); msg.textContent = "No se pudieron armar las partidas: " + error.message; return; }
@@ -6009,7 +6035,7 @@
             if (!lista) return;
             if (!currentOpenSessionId) { lista.innerHTML = ""; return; }
             const { data, error } = await sb.from("game_rooms")
-                .select("id, white_id, black_id, status, result, moves")
+                .select("id, white_id, black_id, status, result, moves, fen, variant_state")
                 .eq("class_session_id", currentOpenSessionId).order("created_at");
             if (error) { console.error(error); return; }
             const { data: nombres } = await sb.rpc("nombres_de_jugadores", {
@@ -6031,7 +6057,10 @@
                 a.className = "shrink-0 font-semibold text-accent-700 dark:text-accent-400 hover:underline";
                 a.textContent = "Mirar";
                 a.setAttribute("aria-label", "Mirar la partida de " + nombre(r.white_id) + " y " + nombre(r.black_id) + " (se abre en otra pestaña)");
-                li.append(t, a);
+                const acciones = document.createElement("div");
+                acciones.className = "shrink-0 flex items-center gap-3";
+                acciones.append(botonPartidaEnLineaALaClase(r, "la partida de " + nombre(r.white_id) + " y " + nombre(r.black_id)), a);
+                li.append(t, acciones);
                 lista.appendChild(li);
             });
         }
@@ -6201,6 +6230,8 @@
             document.getElementById("practice-boards-section").classList.toggle("hidden", !active);
             if (active) {
                 document.getElementById("practice-active-level").textContent = practiceLevelLabel(latestPracticeSession.level);
+                const tope = intentosDeLaRonda();
+                document.getElementById("practice-active-intentos").textContent = tope ? " · " + textoIntentos(tope) + " por alumno" : "";
                 loadPracticeGamesForSession(latestPracticeSession.id);
             } else {
                 cerrarMirada();
@@ -6728,7 +6759,9 @@
                         return { texto: "Empezaste la partida de nuevo." };
                     },
                     porQueNoPuedes: () => !myPracticeGame || myPracticeGame.status !== "playing"
-                        ? "Esta partida ya terminó. Escribe «reintentar» para empezarla de nuevo."
+                        ? (myPracticeGame && quedanIntentos(myPracticeGame) <= 0
+                            ? "Esta partida ya terminó y ya usaste los intentos de esta práctica."
+                            : "Esta partida ya terminó. Escribe «reintentar» para empezarla de nuevo.")
                         : "El motor está pensando su jugada: espera un momento.",
                 }) : null;
             }
@@ -6753,12 +6786,17 @@
             const resignBtn = document.getElementById("practice-resign-btn");
             const retryBtn = document.getElementById("practice-retry-btn");
             const retryEngineBtn = document.getElementById("practice-retry-engine-btn");
+            pintarIntentosAlumno();
+            pintarUltimaDelMotor();
             if (!myPracticeGame || myPracticeGame.status !== "playing") {
                 if (practiceBoard) practiceBoard.setInteractive(false);
-                statusEl.textContent = myPracticeGame ? practiceStatusLabel(myPracticeGame.status) : "";
+                const sinIntentos = !!myPracticeGame && quedanIntentos(myPracticeGame) <= 0;
+                statusEl.textContent = !myPracticeGame ? ""
+                    : practiceStatusLabel(myPracticeGame.status)
+                        + (sinIntentos ? ". Ya usaste " + (intentosDeLaRonda() === 1 ? "tu intento" : "tus " + textoIntentos(intentosDeLaRonda())) + " de esta práctica." : "");
                 resignBtn.classList.add("hidden");
                 retryEngineBtn.classList.add("hidden");
-                retryBtn.classList.toggle("hidden", !myPracticeGame);
+                retryBtn.classList.toggle("hidden", !myPracticeGame || sinIntentos);
                 return;
             }
             resignBtn.classList.remove("hidden");
@@ -6774,11 +6812,63 @@
                 : (myTurn ? "Es tu turno." : (stuck ? "El motor no respondió — toca \"Pedir jugada del motor\" para intentarlo de nuevo." : "Esperando la jugada del motor…"));
         }
 
+        // Devuelve el error, si lo hubo (null si se guardó).
         async function savePracticeGameRow(patch) {
-            if (!myPracticeGame) return;
+            if (!myPracticeGame) return null;
             const { error } = await sb.from("practice_games").update(patch).eq("id", myPracticeGame.id);
-            if (error) { console.error(error); return; }
+            if (error) { console.error(error); return error; }
             myPracticeGame = Object.assign({}, myPracticeGame, patch);
+            return null;
+        }
+
+        // «Intento 2 de 3», junto al nivel y el color. Sin límite no se dice nada.
+        function pintarIntentosAlumno() {
+            const el = document.getElementById("practice-card-intentos");
+            if (!el) return;
+            const tope = intentosDeLaRonda();
+            el.textContent = tope && myPracticeGame ? " · Intento " + (myPracticeGame.attempts || 1) + " de " + tope : "";
+        }
+
+        /* ---------- Avisar que el motor ya jugó ----------
+           El alumno mueve, el motor piensa un momento y contesta: si en ese rato miró
+           otra cosa (el chat, la llamada, otra pestaña), no se enteraba de que ya le
+           tocaba. Ahora la jugada queda escrita encima del tablero, suena un pitido
+           (se puede apagar) y, si la pestaña no está a la vista, el título parpadea
+           (js/turn-alert.js, el mismo aviso de las partidas en línea). Si cerró la
+           tarjeta con la ✖, el botón para volver lo dice. */
+        let ultimaDelMotor = null; // {san, jugadas}: lo que jugó y en qué jugada de la partida
+        function pintarUltimaDelMotor() {
+            const el = document.getElementById("practice-card-ultima");
+            const reabrir = document.getElementById("practice-reopen-btn");
+            if (!el) return;
+            const jugadas = practiceBoard ? practiceBoard.game.history().length : 0;
+            // Solo mientras sea la última jugada de la partida y le toque al alumno.
+            const vigente = !!(ultimaDelMotor && myPracticeGame && myPracticeGame.status === "playing"
+                && ultimaDelMotor.jugadas === jugadas && practiceBoard.game.turn() === myPracticeGame.student_color);
+            el.hidden = !vigente;
+            el.textContent = vigente ? "🔔 El motor jugó " + ComandosTablero.jugadaParaMostrar(ultimaDelMotor.san) + ". Te toca." : "";
+            if (reabrir) reabrir.textContent = vigente ? "🎯 Volver a tu práctica · ¡te toca!" : "🎯 Volver a tu práctica";
+        }
+        function avisarJugadaDelMotor(san) {
+            ultimaDelMotor = { san, jugadas: practiceBoard.game.history().length };
+            pintarUltimaDelMotor();
+            if (!practiceBoard.game.game_over() && window.TurnAlert) TurnAlert.botJugo(ComandosTablero.jugadaParaMostrar(san));
+        }
+
+        function pintarBotonSonido() {
+            const btn = document.getElementById("practice-sonido-btn");
+            if (!btn || !window.TurnAlert) return;
+            const si = TurnAlert.sonidoActivo();
+            btn.setAttribute("aria-pressed", si ? "true" : "false");
+            btn.textContent = si ? "🔔 Sonido cuando juega el motor: encendido" : "🔕 Sonido cuando juega el motor: apagado";
+        }
+        const botonSonido = document.getElementById("practice-sonido-btn");
+        if (botonSonido) {
+            pintarBotonSonido();
+            botonSonido.addEventListener("click", () => {
+                TurnAlert.ponerSonido(!TurnAlert.sonidoActivo());
+                pintarBotonSonido();
+            });
         }
 
         // gameIdAtMove/attemptsAtMove: por si mientras el motor pensaba el alumno se rindió o
@@ -6858,6 +6948,7 @@
 
             if (move) {
                 practiceBoard.render();
+                avisarJugadaDelMotor(move.san);
                 pintarAyudaAlumno();
                 if (practicaAcc) {
                     practicaAcc.actualizar();
@@ -6915,10 +7006,19 @@
         // tablero por alumno) y suma un intento — el profesor ve ese número en su grilla.
         async function retryPracticeGame() {
             if (!myPracticeGame || !latestPracticeSession || latestPracticeSession.ended_at) return;
-            await savePracticeGameRow({
+            if (quedanIntentos(myPracticeGame) <= 0) { updatePracticeCardInteractivity(); return; }
+            // La base lo puede rechazar (se acabaron los intentos): entonces no se
+            // reinicia nada en la pantalla, y se dice por qué.
+            const error = await savePracticeGameRow({
                 fen: latestPracticeSession.fen, moves: [], status: "playing",
                 eval_cp: null, attempts: (myPracticeGame.attempts || 1) + 1, reloj_ms: null,
             });
+            if (error) {
+                updatePracticeCardInteractivity();
+                document.getElementById("practice-card-status").textContent = "No se pudo empezar otra vez: " + error.message;
+                return;
+            }
+            ultimaDelMotor = null;
             // La base borra la ayuda al reintentar: era de la partida anterior.
             myPracticeGame = Object.assign({}, myPracticeGame, { ayuda: null, pide_ayuda_at: null, respuesta: null });
             practiceBoard.loadMoves([], latestPracticeSession.fen);
@@ -7283,7 +7383,7 @@
                 document.getElementById("app").classList.remove("hidden");
                 return;
             }
-            if (isTeacher) { montarControlesDePreguntas(); montarControlesDePractica(); abrirCuestionarioPedido(); }
+            if (isTeacher) { montarControlesDePreguntas(); montarControlesDePractica(); montarTraerPartida(); abrirCuestionarioPedido(); }
             await loadCurrentQuestion();
             subscribeQuestions();
             await loadCurrentPractice();

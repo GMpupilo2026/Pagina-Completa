@@ -849,6 +849,12 @@
     showEndGameModal(info);
   }
 
+  // «Nf3» → «Cf3»: en el sitio la notación es la española (R es el rey, T la torre).
+  const LETRA_ES = { K: "R", Q: "D", R: "T", B: "A", N: "C" };
+  function sanEnEspanol(san) {
+    return String(san).replace(/^[KQRBN]/, (l) => LETRA_ES[l]).replace(/=([QRBN])/, (_, l) => "=" + LETRA_ES[l]);
+  }
+
   function updateStatus() {
     const info = getGameOverInfo();
     if (info.over) {
@@ -866,7 +872,11 @@
     } else if (isBotThinking) {
       statusEl.textContent = "Oscar está pensando…";
     } else if (turn === userColor) {
-      statusEl.textContent = game.in_check() ? "¡Jaque! Tu turno" : "¡Tu turno!";
+      // Si le toca a la persona, la última jugada fue de Oscar: se dice cuál,
+      // para que se entere de que ya jugó aunque no estuviera mirando el tablero.
+      const hist = game.history();
+      const ultima = hist.length ? "Oscar jugó " + sanEnEspanol(hist[hist.length - 1]) + ". " : "";
+      statusEl.textContent = ultima + (game.in_check() ? "¡Jaque! Tu turno" : "¡Tu turno!");
     } else {
       statusEl.textContent = "Oscar está pensando…";
     }
@@ -953,6 +963,10 @@
     }
     renderBoard();
     updateStatus();
+    // Avisa que ya jugó (pitido, y el título si la pestaña no está a la vista).
+    if (move && !isGameOver() && game.turn() === userColor && window.TurnAlert) {
+      TurnAlert.botJugo(sanEnEspanol(game.history().slice(-1)[0] || ""));
+    }
   }
 
   // Si le toca mover al bot (y la partida sigue), dispara su jugada. Devuelve una promesa

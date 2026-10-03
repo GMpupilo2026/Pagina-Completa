@@ -3105,6 +3105,95 @@ Escape cierra el diálogo escuchando en todo el documento, no en el diálogo:
 al mandar, el botón se desactiva mientras guarda y el foco se cae al `body`,
 así que un Escape escuchado en el diálogo dejaba de cerrarlo.
 
+### Llevar la partida de un alumno a la clase
+
+Para corregir cómo juega un alumno hay que mirar SU partida con toda la clase, y
+hasta ahora solo se podía mirar de a uno (la miniatura, «👁 Mirar y ayudar») o
+abrirla en otra pestaña. Ahora el profe la pone en el tablero de todos
+(`js/clase-traer-partida.js`), por tres puertas que van a una sola función,
+`llevarPartidaALaClase()`:
+
+- **«📥 Llevarla a la clase»** en «👁 Mirar y ayudar»: la práctica contra el
+  motor que está jugando ahora. Solo quien da la clase: quien supervisa ayuda,
+  pero no cambia el tablero.
+- **«📥 A la clase»** en cada renglón de «Partidas entre alumnos».
+- **«📥 La partida de un alumno, en la clase»** (pestaña Practicar): se elige
+  al alumno (los que están en la clase primero) y salen sus últimas partidas
+  —las prácticas contra el motor y las partidas en línea estándar—, de la más
+  nueva a la más vieja, con el rival por su nombre (`nombres_de_jugadores`,
+  sin el correo). Qué partidas ve el profe lo decide la RLS: `practice_games`
+  y `game_rooms` ya le dejaban leer las de sus alumnos.
+
+**La partida entra entera y se muestra desde la primera jugada.** Pasa por
+`aplicarPosicionEnClase()` —que ahora acepta las jugadas— como todo lo que pone
+algo en el tablero de la clase: limpia variantes, comentarios y el control del
+alumno. Y la vista (`game_state.vista`) queda en la jugada 0: se recorre con la
+clase y se corrige con las variantes y los comentarios de siempre. Una jugada
+que no se puede reproducir corta la partida ahí, y se dice.
+
+**`game_rooms` no guarda la posición de salida**, solo la actual y las
+jugadas. Se comprueba reproduciendo: desde `variant_state.inicio` (lo guarda
+ahora «Emparejar» cuando arma las partidas desde la posición del tablero) o
+desde la inicial; si las jugadas no llevan a la posición guardada, la historia
+no se conoce, y el renglón lo dice («no se sabe desde dónde empezó») en vez de
+ofrecer una partida equivocada.
+
+### La práctica con un límite de intentos
+
+El profe elige, al lanzar la práctica, **cuántas partidas puede jugar cada
+alumno** (`practice_sessions.max_intentos`: sin límite, 1, 2, 3 o 5; la primera
+cuenta, así que «3» es la partida y dos reintentos). Sin límite no se manda la
+columna. La ronda lo dice («3 intentos por alumno»), la miniatura «intento 2 de
+3», y el alumno «Intento 2 de 2» junto al nivel; sin intentos, «Reintentar» no
+sale y se le dice por qué («Ya usaste tus 2 intentos de esta práctica.»).
+
+**Lo hace cumplir la base**, porque reintentar es un update de su propia fila
+y se puede mandar desde la consola (migración `practica_limite_de_intentos`,
+en el trigger `practica_ayuda_proteger`, rama del alumno):
+
+- `attempts` sube **de a uno** y nunca baja: si no, se reiniciaría la cuenta
+  mandando `attempts = 1`;
+- no pasa del tope de la ronda;
+- una partida terminada **no vuelve a «jugando» sin gastar un intento**: si
+  no, se reintentaría con `moves = []` y `status = 'playing'` con el mismo
+  número;
+- al crear su fila, arranca en el intento 1 mande lo que mande
+  (`practica_intento_inicial`).
+
+Si la base rechaza el reintento, la pantalla no reinicia nada y lo dice.
+
+### El aviso de que el bot ya jugó
+
+El alumno mueve, el motor piensa un momento y contesta; si en ese rato miró
+otra cosa —el chat, la llamada, otra pestaña— no se enteraba de que ya le
+tocaba. Ahora, en la práctica de la clase:
+
+- **la jugada queda escrita** encima del tablero, «🔔 El motor jugó Cf6. Te
+  toca.» (en notación española, o dicha en palabras en Modo Adaptado), hasta
+  que el alumno juega. No es región viva: en voz ya lo dice el cuadro de
+  comandos, y dos regiones diciendo lo mismo lo harían oír dos veces;
+- **suena un pitido** y, si la pestaña no está a la vista, el título
+  parpadea y sale la notificación del sistema si ya había permiso
+  (`TurnAlert.botJugo`, en `js/turn-alert.js`, el mismo aviso de las
+  partidas en línea). No se pide permiso de notificaciones en medio de la
+  práctica;
+- **el sonido se apaga** con «🔔 Sonido cuando juega el motor» (`aria-pressed`):
+  en un aula con veinte computadoras pitando a la vez hace falta. Se recuerda
+  en el aparato (`aviso_bot_sonido`), y vale para todos los bots del sitio;
+- si cerró la tarjeta con la ✖, el botón para volver dice «¡te toca!».
+
+Lo mismo en el bot de Oscar (`js/tablero-board.js`: «Oscar jugó Cf3. ¡Tu
+turno!») y en `bot.html` («El bot jugó Cf3. Es tu turno.»), salvo en la
+niebla, donde la jugada del rival es justamente lo que no se ve: ahí suena,
+pero no se dice cuál fue.
+
+**Al tocar cualquiera de las tres cosas, correr `node
+herramientas/verificar-todo.js clase-traer-partida clase-partidas
+practica-ayuda`.** Está probado que falla de verdad: sin mostrar la partida
+desde la jugada 0, o con «Reintentar» a la vista sin intentos, salta. El doble
+de `verificar-clase-registrada.js` contesta ahora `nombres_de_jugadores` como
+la base (`{id, nombre}`), así que `verificar-clase-partidas.js` nombra a Ana.
+
 ### Táctica por tema: la vista previa y su botón
 
 - **El tablero de la vista previa lo dibuja el mismo diagrama de ejemplo que los
